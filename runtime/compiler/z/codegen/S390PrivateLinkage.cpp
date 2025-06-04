@@ -2261,7 +2261,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          TR::Instruction * cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, RegRA, returnLocationLabel, cursor, cg());
          cursor = generateLastITableAndITableInstructions(cg(), callNode, methodSymRef, vftReg, NULL, NULL, vTableIndexRegister, postDeps, cursor);
 
-         gcPoint = generateSnippetCall(cg(), callNode, ifcSnippet, dependencies,methodSymRef);
+         cursor = generateSnippetCall(cg(), callNode, ifcSnippet, dependencies, methodSymRef, cursor);
 
          // NOP is necessary so that the VM doesn't confuse Virtual Dispatch (expected to always use BASR
          // with interface dispatch (which must guarantee that RA-2 != 0x0D ie. BASR)
