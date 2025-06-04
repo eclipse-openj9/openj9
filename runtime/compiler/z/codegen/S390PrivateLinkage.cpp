@@ -2246,9 +2246,11 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          //Disabled interface call caching
          TR::LabelSymbol * hitLabel = generateLabelSymbol(cg());
          TR::LabelSymbol * snippetLabel = generateLabelSymbol(cg());
+         TR::LabelSymbol * returnLocationLabel = generateLabelSymbol(cg());
+         TR::Register * RegRA = dependencies->searchPostConditionRegister(getReturnAddressRegister());
 
          // Make a copy of input deps, but add on 3 new slots.
-         TR::RegisterDependencyConditions * postDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(dependencies, 0, 3, cg());
+         TR::RegisterDependencyConditions * postDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(dependencies, 0, 5, cg());
          postDeps->setAddCursorForPre(0);        // Ignore all pre-deps that were copied.
          postDeps->setNumPreConditions(0, trMemory());        // Ignore all pre-deps that were copied.
 
@@ -2256,20 +2258,22 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          // Add instructions for LastITable and ITable check.
          // methodRegister and snippetReg are used as scratch registers and the existing value is not used.
          // The current value of vTableIndexRegister does not matter and the vTableIndex value will be loaded there if dispatch.
-         //cursor = generateLastITableAndITableInstructions(cg(), callNode, methodSymRef, vftReg, snippetReg, methodRegister, vTableIndexRegister, postDeps, cursor);
+         TR::Instruction * cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, RegRA, returnLocationLabel, cursor, cg());
+         cursor = generateLastITableAndITableInstructions(cg(), callNode, methodSymRef, vftReg, snippetReg, methodRegister, vTableIndexRegister, postDeps, cursor);
 
          gcPoint = generateSnippetCall(cg(), callNode, ifcSnippet, dependencies,methodSymRef);
 
          // NOP is necessary so that the VM doesn't confuse Virtual Dispatch (expected to always use BASR
          // with interface dispatch (which must guarantee that RA-2 != 0x0D ie. BASR)
          //
-         TR::Instruction * cursor = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, callNode, cg());
+         cursor = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, callNode, cg());
 
          // Fool the snippet into setting up the return address to be after the NOP
          //
          gcPoint = cursor;
          ((TR::S390CallSnippet *) ifcSnippet)->setBranchInstruction(gcPoint);
-         cursor->setDependencyConditions(postDeps);
+         cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::label, callNode, returnLocationLabel, postDeps);
+         //cursor->setDependencyConditions(postDeps);
          }
       else
          {
