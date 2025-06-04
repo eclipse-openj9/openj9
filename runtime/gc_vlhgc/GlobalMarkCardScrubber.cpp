@@ -307,8 +307,9 @@ MM_GlobalMarkCardScrubber::scrubClassLoaderObject(MM_EnvironmentVLHGC *env, J9Ob
 			J9Module **modulePtr = (J9Module **)hashTableStartDo(classLoader->moduleHashTable, &walkState);
 			while (doScrub && (NULL != modulePtr)) {
 				J9Module * const module = *modulePtr;
-				Assert_MM_true(NULL != module->moduleObject);
-				doScrub = mayScrubReference(env, classLoaderObject, module->moduleObject);
+				if (NULL != module->moduleObject) {
+					doScrub = mayScrubReference(env, classLoaderObject, module->moduleObject);
+				}
 				if (doScrub) {
 					doScrub = mayScrubReference(env, classLoaderObject, module->version);
 				}
@@ -316,9 +317,10 @@ MM_GlobalMarkCardScrubber::scrubClassLoaderObject(MM_EnvironmentVLHGC *env, J9Ob
 			}
 
 			if (classLoader == javaVM->systemClassLoader) {
-				Assert_MM_true(NULL != javaVM->unnamedModuleForSystemLoader->moduleObject);
 				if (doScrub) {
-					doScrub = mayScrubReference(env, classLoaderObject, javaVM->unnamedModuleForSystemLoader->moduleObject);
+					if (NULL != javaVM->unnamedModuleForSystemLoader->moduleObject) {
+						doScrub = mayScrubReference(env, classLoaderObject, javaVM->unnamedModuleForSystemLoader->moduleObject);
+					}
 				}
 			}
 		}

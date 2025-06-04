@@ -1366,14 +1366,14 @@ MM_WriteOnceCompactor::fixupClassLoaderObject(MM_EnvironmentVLHGC* env, J9Object
 				J9Module * const module = *modulePtr;
 
 				slotPtr = &module->moduleObject;
-
 				originalObject = *slotPtr;
-				J9Object* forwardedObject = getForwardWrapper(env, originalObject, cache);
-				*slotPtr = forwardedObject;
-				_interRegionRememberedSet->rememberReferenceForCompact(env, classLoaderObject, forwardedObject);
+				if (NULL != originalObject) {
+					J9Object* forwardedObject = getForwardWrapper(env, originalObject, cache);
+					*slotPtr = forwardedObject;
+					_interRegionRememberedSet->rememberReferenceForCompact(env, classLoaderObject, forwardedObject);
+				}
 
 				slotPtr = &module->version;
-
 				originalObject = *slotPtr;
 				if (NULL != originalObject) {
 					J9Object* forwardedObject = getForwardWrapper(env, originalObject, cache);
@@ -1385,6 +1385,12 @@ MM_WriteOnceCompactor::fixupClassLoaderObject(MM_EnvironmentVLHGC* env, J9Object
 			}
 
 			if (classLoader == _javaVM->systemClassLoader) {
+
+				Assert_GC_true_with_message(
+						env, (NULL != _javaVM->unnamedModuleForSystemLoader->moduleObject),
+						"Unnamed Module For System Loader %p has moduleObject set to NULL\n",
+						_javaVM->unnamedModuleForSystemLoader);
+
 				slotPtr = &_javaVM->unnamedModuleForSystemLoader->moduleObject;
 
 				originalObject = *slotPtr;

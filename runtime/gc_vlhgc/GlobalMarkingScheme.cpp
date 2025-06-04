@@ -926,9 +926,10 @@ MM_GlobalMarkingScheme::scanClassLoaderObject(MM_EnvironmentVLHGC *env, J9Object
 			J9Module **modulePtr = (J9Module **)hashTableStartDo(classLoader->moduleHashTable, &walkState);
 			while (NULL != modulePtr) {
 				J9Module * const module = *modulePtr;
-				Assert_MM_true(NULL != module->moduleObject);
-				markObject(env, module->moduleObject);
-				rememberReferenceIfRequired(env, classLoaderObject, module->moduleObject);
+				if (NULL != module->moduleObject) {
+					markObject(env, module->moduleObject);
+					rememberReferenceIfRequired(env, classLoaderObject, module->moduleObject);
+				}
 				if (NULL != module->version) {
 					markObject(env, module->version);
 					rememberReferenceIfRequired(env, classLoaderObject, module->version);
@@ -937,9 +938,10 @@ MM_GlobalMarkingScheme::scanClassLoaderObject(MM_EnvironmentVLHGC *env, J9Object
 			}
 
 			if (classLoader == _javaVM->systemClassLoader) {
-				Assert_MM_true(NULL != _javaVM->unnamedModuleForSystemLoader->moduleObject);
-				markObject(env, _javaVM->unnamedModuleForSystemLoader->moduleObject);
-				rememberReferenceIfRequired(env, classLoaderObject, _javaVM->unnamedModuleForSystemLoader->moduleObject);
+				if (NULL != _javaVM->unnamedModuleForSystemLoader->moduleObject) {
+					markObject(env, _javaVM->unnamedModuleForSystemLoader->moduleObject);
+					rememberReferenceIfRequired(env, classLoaderObject, _javaVM->unnamedModuleForSystemLoader->moduleObject);
+				}
 			}
 		}
 	}

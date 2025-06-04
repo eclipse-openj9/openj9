@@ -1040,14 +1040,19 @@ MM_MetronomeDelegate::doClassTracing(MM_EnvironmentRealtime *env)
 						J9Module **modulePtr = (J9Module **)hashTableStartDo(classLoader->moduleHashTable, &walkState);
 						while (NULL != modulePtr) {
 							J9Module * const module = *modulePtr;
-
-							didWork |= _markingScheme->markObject(env, module->moduleObject);
-							didWork |= _markingScheme->markObject(env, module->version);
+							if (NULL != module->moduleObject) {
+								didWork |= _markingScheme->markObject(env, module->moduleObject);
+							}
+							if (NULL != module->version) {
+								didWork |= _markingScheme->markObject(env, module->version);
+							}
 							modulePtr = (J9Module**)hashTableNextDo(&walkState);
 						}
 
 						if (classLoader == _javaVM->systemClassLoader) {
-							didWork |= _markingScheme->markObject(env, _javaVM->unnamedModuleForSystemLoader->moduleObject);
+							if (NULL != _javaVM->unnamedModuleForSystemLoader->moduleObject) {
+								didWork |= _markingScheme->markObject(env, _javaVM->unnamedModuleForSystemLoader->moduleObject);
+							}
 						}
 					}
 				}
