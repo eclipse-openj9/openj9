@@ -2259,7 +2259,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          // methodRegister and snippetReg are used as scratch registers and the existing value is not used.
          // The current value of vTableIndexRegister does not matter and the vTableIndex value will be loaded there if dispatch.
          TR::Instruction * cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, RegRA, returnLocationLabel, cursor, cg());
-         cursor = generateLastITableAndITableInstructions(cg(), callNode, methodSymRef, vftReg, snippetReg, methodRegister, vTableIndexRegister, postDeps, cursor);
+         cursor = generateLastITableAndITableInstructions(cg(), callNode, methodSymRef, vftReg, NULL, NULL, vTableIndexRegister, postDeps, cursor);
 
          gcPoint = generateSnippetCall(cg(), callNode, ifcSnippet, dependencies,methodSymRef);
 
