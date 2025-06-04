@@ -1001,7 +1001,7 @@ j9gc_get_unique_GC_count(J9JavaVM *javaVM)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
 	OMR_VM *omrVm = javaVM->omrVM;
-	U_64 result = 0;
+	UDATA result = 0;
 
 	switch (omrVm->gcPolicy) {
 		case OMR_GC_POLICY_OPTTHRUPUT:
