@@ -844,12 +844,12 @@ MM_StandardAccessBarrier::preObjectRead(J9VMThread *vmThread, J9Object *srcObjec
 					}
 
 					if (env->_scavengerStats._flipBytes > GLOBAL_READ_BARRIR_STATS_UPDATE_BYTES_THRESHOLD) {
-						MM_AtomicOperations::addU64(&_extensions->incrementScavengerStats._readObjectBarrierFlipBytes, env->_scavengerStats._flipBytes);
+						MM_AtomicOperations::add(&_extensions->incrementScavengerStats._readObjectBarrierFlipBytes, env->_scavengerStats._flipBytes);
 						env->_scavengerStats._flipBytes = 0;
 					}
 
 					if (env->_scavengerStats._tenureAggregateBytes > GLOBAL_READ_BARRIR_STATS_UPDATE_BYTES_THRESHOLD) {
-						MM_AtomicOperations::addU64(&_extensions->incrementScavengerStats._readObjectBarrierTenureBytes, env->_scavengerStats._tenureAggregateBytes);
+						MM_AtomicOperations::add(&_extensions->incrementScavengerStats._readObjectBarrierTenureBytes, env->_scavengerStats._tenureAggregateBytes);
 						env->_scavengerStats._tenureAggregateBytes = 0;
 					}
 				}
