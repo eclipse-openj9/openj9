@@ -187,6 +187,7 @@
 #define J9SH_DIRPERM (0700)
 #define J9SH_DIRPERM_GROUPACCESS (0770)
 #define J9SH_DIRPERM_DEFAULT_TMP (0777)
+#define J9SH_DIRPERM_HOME (01700)
 
 #define J9SH_PARENTDIRPERM (01777)
 #define J9SH_DIRPERM_DEFAULT (0000)
@@ -226,6 +227,7 @@
 /* Flags passed to "flags" argument of j9shmem_getDir(). */
 #define J9SHMEM_GETDIR_APPEND_BASEDIR		0x1
 #define J9SHMEM_GETDIR_USE_USERHOME			0x2
+#define J9SHMEM_GETDIR_DO_NOT_APPEND_HIDDENDIR 0x4
 
 /* Maximum id we should try when we do ftok */
 #define J9SH_MAX_PROJ_ID 20
