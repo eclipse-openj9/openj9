@@ -6121,23 +6121,16 @@ TR_InlinerFailureReason
          }
       if (rm == TR::java_lang_StringCoding_hasNegatives)
          {
+#if JAVA_SPEC_VERSION >= 19
+         // Take advantage of performance anomaly mentioned above by inlining both countPositives (which only exists for JDK 19+) and hasNegatives
+         return InlineableTarget;
+#else
          // hasNegatives can only be accelerated if target is 64 bit, arrays are contiguous, and offheap allocation is disabled, so inline it if not
          if (!comp->target().is64Bit() || TR::Compiler->om.canGenerateArraylets() || TR::Compiler->om.isOffHeapAllocationEnabled())
-            {
             return InlineableTarget;
-            }
-         // Even if target is 64 bit, arrays are contiguous, and offheap allocation is disabled, take advantage of performance anomaly mentioned above
-         // by inlining both countPositives (which only exists for JDK 19+) and hasNegatives
          else
-            {
-#if JAVA_SPEC_VERSION >= 19
-            return InlineableTarget;
-#else
-            // If target is 64 bit, arrays are contiguous, offheap allocation is disabled, and JDK < 19 (i.e. countPositives doesn't exist),
-            // don't inline hasNegatives and accelerate it instead
             return DontInline_Callee;
-#endif /* JAVA_SPEC_VERSION >= 19 */
-            }
+#endif /* JAVA_SPEC_VERSION >=19 */
          }
       }
 

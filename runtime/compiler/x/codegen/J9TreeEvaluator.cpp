@@ -10577,6 +10577,9 @@ inlineCompareAndSwapNative(
  * \param node
  *   The tree node
  *
+ * \param recognizedMethod
+ *   The method being inlined, should be either hasNegatives or countPositives
+ *
  * \param cg
  *   The Code Generator
  */
@@ -12643,7 +12646,7 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
 #endif /* JAVA_SPEC_VERSION < 19 */
       case TR::java_lang_StringCoding_countPositives:
          {
-         if (cg->comp()->target().is64Bit())
+         if (cg->comp()->target().is64Bit() && !TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.isOffHeapAllocationEnabled())
             {
             return inlineHasNegativesOrCountPositives(node, symbol->getRecognizedMethod(), cg);
             }
