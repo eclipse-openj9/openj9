@@ -802,9 +802,11 @@ final class Access implements JavaLangAccess {
 		return local;
 	}
 
+	/*[IF (JAVA_SPEC_VERSION < 25) | INLINE-TYPES]*/
 	public boolean isCarrierThreadLocalPresent(CarrierThreadLocal<?> carrierThreadlocal) {
 		return asThreadLocal(carrierThreadlocal).isCarrierThreadLocalPresent();
 	}
+	/*[ENDIF] (JAVA_SPEC_VERSION < 25) | INLINE-TYPES */
 
 	public <T> T getCarrierThreadLocal(CarrierThreadLocal<T> carrierThreadlocal) {
 		return asThreadLocal(carrierThreadlocal).getCarrierThreadLocal();

@@ -479,6 +479,7 @@ if(JAVA_SPEC_VERSION LESS 25)
 	)
 else()
 	jvm_add_exports(jvm
+		JVM_CreateThreadSnapshot
 		JVM_NeedsClassInitBarrierForCDS
 	)
 endif()
