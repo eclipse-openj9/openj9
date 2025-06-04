@@ -191,6 +191,7 @@ const char *messageNames[] =
    "VM_getVMIndexOffset",
    "VM_inSnapshotMode",
    "VM_isInvokeCacheEntryAnArray",
+   "VM_getVarHandleAccessDescriptorMode",
    "VM_getMethodHandleTableEntryIndex",
    "VM_getLayoutVarHandle",
    "VM_mutableCallSiteEpoch",
