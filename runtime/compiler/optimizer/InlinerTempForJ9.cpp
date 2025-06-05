@@ -5719,7 +5719,7 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
             return true;
             }
       case TR::java_lang_StringLatin1_inflate_BIBII:
-         if (cg->getSupportsArrayTranslateTROTNoBreak() && !comp->target().cpu.isPower())
+         if (cg->getSupportsArrayTranslateTROTNoBreak())
             {
             return true;
             }
