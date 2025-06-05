@@ -1592,6 +1592,8 @@ generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callN
    TR_OpaqueClassBlock *declaringClass = NULL;
 
    static bool EnableLastITableCache = feGetEnv("TR_interfaceDispatchUsingLastITable") != NULL;
+   /********* Enable by default for testing. *********/
+   EnableLastITableCache = true;
 
    if ( EnableLastITableCache && (declaringClass = methodSymRef->getOwningMethod(comp)->getResolvedInterfaceMethod(methodSymRef->getCPIndex(), &itableIndex))
       && performTransformation(comp, "O^O useLastITableCache for n%dn itableIndex=%d\n",
@@ -2244,7 +2246,6 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
 
       if (numInterfaceCallCacheSlots == 0 )
          {
-         printf("Generating no PIC sequence!\n");
          //Disabled interface call caching
          TR::Instruction * cursor = NULL;
          TR::LabelSymbol * hitLabel = generateLabelSymbol(cg());
@@ -2266,31 +2267,30 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          postDeps->setNumPreConditions(0, trMemory());        // Ignore all pre-deps that were copied.
 
          // Check the thisChild to see if anyone uses this object after the call (if not, we won't add it to post Deps)
+         // TODO: make sure it is necessary. Code works without it.
          if (callNode->getChild(callNode->getFirstArgumentIndex())->getReferenceCount() > 0)
             postDeps->addPostCondition(RegThis, TR::RealRegister::AssignAny);
          // Add this reg to post deps to ensure no reg motion
+         // TODO: make sure it is necessary. Code works without it.
          postDeps->addPostConditionIfNotAlreadyInserted(vftReg,  TR::RealRegister::AssignAny);
 
          cursor = generateRILInstruction(cg(), TR::InstOpCode::LARL, callNode, RegRA, returnLocationLabel, cursor);
-         iComment("EH:Load RegRA");
          // We need a dummy label to hook dependencies.
+         // TODO: Code does not work without this but only with my changes! Why?
          cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::label, callNode, paramSetupDummyLabel, preDeps, cursor);
 
          cursor = generateLastITableAndITableInstructions(cg(), callNode, methodSymRef, vftReg, RegEP, NULL, vTableIndexRegister, postDeps, cursor);
 
          cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, RegEP, ifcSnippet, cursor, cg());
-         iComment("EH:Load RegEP");
-
+         // TODO: Maybe we can jump directly from lastITable if not match!
          cursor = generateS390RegInstruction(cg(), TR::InstOpCode::BCR, callNode, RegEP, cursor);
          ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BCR);
-
+         // TODO: remove this if has no use!
          cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::dd, callNode,
             ifcSnippet->getDataConstantSnippet()->getSnippetLabel());
-         iComment("EH:DD");
 
          // Added NOP so that the pattern matching code in jit2itrg icallVMprJavaSendPatchupVirtual
          cursor = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, callNode, cg());
-         iComment("EH:NOP");
          gcPoint = cursor;
          ((TR::S390CallSnippet *) ifcSnippet)->setBranchInstruction(gcPoint);
 
@@ -2330,7 +2330,6 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
 
          if (comp()->getOption(TR_enableInterfaceCallCachingSingleDynamicSlot))
             {
-            printf("Generating single PIC sequence!\n");
             cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, snippetReg, ifcSnippet->getDataConstantSnippet(), cg());
 
             // Single dynamic slot case
@@ -2380,7 +2379,6 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
             }
          else
             {
-            printf("Generating multi PIC sequence!\n");
             useCLFIandBRCL = false && (comp()->target().is64Bit() &&  // Support for 64-bit
                                    TR::Compiler->om.generateCompressedObjectHeaders() // Classes are <2GB on CompressedRefs only.
                                    );
