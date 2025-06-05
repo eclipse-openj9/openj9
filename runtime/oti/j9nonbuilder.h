@@ -5407,7 +5407,7 @@ typedef struct J9InternalVMFunctions {
 	struct J9ObjectMonitor * (*monitorTablePeek)(struct J9JavaVM *vm, j9object_t object);
 	jobject (*takeVirtualThreadListToUnblock)(struct J9VMThread *currentThread);
 	UDATA (*preparePinnedVirtualThreadForUnmount)(struct J9VMThread *currentThread, j9object_t syncObj, BOOLEAN isObjectWait);
-	J9ObjectMonitor * (*detachMonitorInfo)(struct J9VMThread *currentThread, j9object_t lockObject);
+	J9ObjectMonitor * (*detachMonitorInfo)(struct J9VMThread *currentThread, j9object_t lockObject, BOOLEAN *alreadyDetached);
 #endif /* JAVA_SPEC_VERSION >= 24 */
 	jobjectArray (*getSystemPropertyList)(JNIEnv *env);
 } J9InternalVMFunctions;

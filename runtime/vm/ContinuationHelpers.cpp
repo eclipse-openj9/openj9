@@ -758,7 +758,7 @@ exitVThreadTransitionCritical(J9VMThread *currentThread, jobject thread)
 
 #if JAVA_SPEC_VERSION >= 24
 J9ObjectMonitor *
-detachMonitorInfo(J9VMThread *currentThread, j9object_t lockObject)
+detachMonitorInfo(J9VMThread *currentThread, j9object_t lockObject, BOOLEAN *alreadyDetached)
 {
 	J9ObjectMonitor *objectMonitor = NULL;
 	j9objectmonitor_t lock = 0;
@@ -783,11 +783,19 @@ detachMonitorInfo(J9VMThread *currentThread, j9object_t lockObject)
 		objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
 	}
 
-	J9ThreadAbstractMonitor *monitor = (J9ThreadAbstractMonitor *)objectMonitor->monitor;
-	Trc_VM_detachMonitorInfo_Detach(currentThread, currentThread->currentContinuation, objectMonitor, monitor, monitor->owner, monitor->count, currentThread->osThread);
-	monitor->owner = (J9Thread *)J9_OBJECT_MONITOR_OWNER_DETACHED;
 	Assert_VM_notNull(currentThread->currentContinuation);
-	objectMonitor->ownerContinuation = currentThread->currentContinuation;
+	J9ThreadAbstractMonitor *monitor = (J9ThreadAbstractMonitor *)objectMonitor->monitor;
+	*alreadyDetached = IS_J9_OBJECT_MONITOR_OWNER_DETACHED(monitor->owner);
+	if (*alreadyDetached) {
+		/* If the monitor is detached, its ownerContinuation should be set to currentContinuation already. */
+		Assert_VM_true(objectMonitor->ownerContinuation == currentThread->currentContinuation);
+	} else if (NULL == objectMonitor->ownerContinuation) {
+		objectMonitor->ownerContinuation = currentThread->currentContinuation;
+		Trc_VM_detachMonitorInfo_Detach(currentThread, currentThread->currentContinuation, objectMonitor, monitor, monitor->owner, monitor->count, currentThread->osThread);
+		monitor->owner = (J9Thread *)J9_OBJECT_MONITOR_OWNER_DETACHED;
+	} else {
+		Assert_VM_unreachable();
+	}
 
 	return objectMonitor;
 }
@@ -796,9 +804,15 @@ void
 updateMonitorInfo(J9VMThread *currentThread, J9ObjectMonitor *objectMonitor)
 {
 	J9ThreadAbstractMonitor *monitor = (J9ThreadAbstractMonitor *)objectMonitor->monitor;
-	Trc_VM_updateMonitorInfo_Attach(currentThread, currentThread->currentContinuation, objectMonitor, monitor, monitor->owner, monitor->count, currentThread->osThread);
-	monitor->owner = currentThread->osThread;
-	objectMonitor->ownerContinuation = NULL;
+	if (IS_J9_OBJECT_MONITOR_OWNER_DETACHED(monitor->owner)) {
+		Assert_VM_true(objectMonitor->ownerContinuation == currentThread->currentContinuation);
+		Trc_VM_updateMonitorInfo_Attach(currentThread, currentThread->currentContinuation, objectMonitor, monitor, monitor->owner, monitor->count, currentThread->osThread);
+		monitor->owner = currentThread->osThread;
+		objectMonitor->ownerContinuation = NULL;
+	} else {
+		Assert_VM_true(monitor->owner == currentThread->osThread);
+		Assert_VM_true(NULL == objectMonitor->ownerContinuation);
+	}
 }
 
 UDATA
@@ -823,13 +837,15 @@ walkFrameMonitorEnterRecords(J9VMThread *currentThread, J9StackWalkState *walkSt
 		) {
 		j9object_t obj = monitorEnterRecords->object;
 		if (obj != targetSyncObject) {
-			J9ObjectMonitor *mon = detachMonitorInfo(currentThread, obj);
+			BOOLEAN alreadyDetached = FALSE;
+			J9ObjectMonitor *mon = detachMonitorInfo(currentThread, obj, &alreadyDetached);
 			if (NULL == mon) {
 				return J9_STACKWALK_RC_NO_MEMORY;
+			} else if (!alreadyDetached) {
+				mon->next = objMonitorHead;
+				objMonitorHead = mon;
+				monitorCount++;
 			}
-			mon->next = objMonitorHead;
-			objMonitorHead = mon;
-			monitorCount++;
 		}
 		monitorEnterRecords = monitorEnterRecords->next;
 	}
@@ -854,13 +870,15 @@ walkFrameMonitorEnterRecords(J9VMThread *currentThread, J9StackWalkState *walkSt
 		}
 
 		if (syncObject != targetSyncObject) {
-			J9ObjectMonitor *mon = detachMonitorInfo(currentThread, syncObject);
+			BOOLEAN alreadyDetached = FALSE;
+			J9ObjectMonitor *mon = detachMonitorInfo(currentThread, syncObject, &alreadyDetached);
 			if (NULL == mon) {
 				return J9_STACKWALK_RC_NO_MEMORY;
+			} else if (!alreadyDetached) {
+				mon->next = objMonitorHead;
+				objMonitorHead = mon;
+				monitorCount++;
 			}
-			mon->next = objMonitorHead;
-			objMonitorHead = mon;
-			monitorCount++;
 		}
 	}
 
@@ -1073,14 +1091,16 @@ restart:
 			j9object_t object = monitorRecords->object;
 
 			if (syncObj != object) {
-				J9ObjectMonitor *objectMonitor = detachMonitorInfo(currentThread, object);
+				BOOLEAN alreadyDetached = FALSE;
+				J9ObjectMonitor *objectMonitor = detachMonitorInfo(currentThread, object, &alreadyDetached);
 				if (NULL == objectMonitor) {
 					result = J9_OBJECT_MONITOR_OOM;
 					goto done;
+				} else if (!alreadyDetached) {
+					objectMonitor->next = enteredMonitorsList;
+					enteredMonitorsList = objectMonitor;
+					monitorCount++;
 				}
-				objectMonitor->next = enteredMonitorsList;
-				enteredMonitorsList = objectMonitor;
-				monitorCount++;
 			}
 			monitorRecords = monitorRecords->next;
 		}
