@@ -2243,11 +2243,13 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
 
       if (numInterfaceCallCacheSlots == 0 )
          {
+         printf("Generating no PIC sequence!\n");
          //Disabled interface call caching
          TR::LabelSymbol * hitLabel = generateLabelSymbol(cg());
          TR::LabelSymbol * snippetLabel = generateLabelSymbol(cg());
          TR::LabelSymbol * returnLocationLabel = generateLabelSymbol(cg());
          TR::Register * RegRA = dependencies->searchPostConditionRegister(getReturnAddressRegister());
+         TR::Register * RegEP = dependencies->searchPostConditionRegister(getEntryPointRegister());
 
          // Make a copy of input deps, but add on 3 new slots.
          TR::RegisterDependencyConditions * postDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(dependencies, 0, 5, cg());
@@ -2259,21 +2261,24 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          // methodRegister and snippetReg are used as scratch registers and the existing value is not used.
          // The current value of vTableIndexRegister does not matter and the vTableIndex value will be loaded there if dispatch.
          TR::Instruction * cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, RegRA, returnLocationLabel, cursor, cg());
-         cursor = generateLastITableAndITableInstructions(cg(), callNode, methodSymRef, vftReg, NULL, NULL, vTableIndexRegister, postDeps, cursor);
 
-         cursor = generateSnippetCall(cg(), callNode, ifcSnippet, dependencies, methodSymRef, cursor);
+         cursor = generateLastITableAndITableInstructions(cg(), callNode, methodSymRef, vftReg, RegEP, NULL, vTableIndexRegister, postDeps, cursor);
+         
+         cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, RegEP, ifcSnippet,cursor, cg());
 
-         // NOP is necessary so that the VM doesn't confuse Virtual Dispatch (expected to always use BASR
-         // with interface dispatch (which must guarantee that RA-2 != 0x0D ie. BASR)
-         //
+         // Cache miss.
+         cursor = generateS390RegInstruction(cg(), TR::InstOpCode::BCR, callNode, RegEP, cursor);
+         ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BCR);
+
+         cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::dd, callNode,
+            ifcSnippet->getDataConstantSnippet()->getSnippetLabel());
+
+         // Added NOP so that the pattern matching code in jit2itrg icallVMprJavaSendPatchupVirtual
          cursor = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, callNode, cg());
-
-         // Fool the snippet into setting up the return address to be after the NOP
-         //
          gcPoint = cursor;
          ((TR::S390CallSnippet *) ifcSnippet)->setBranchInstruction(gcPoint);
+
          cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::label, callNode, returnLocationLabel, postDeps);
-         //cursor->setDependencyConditions(postDeps);
          }
       else
          {
@@ -2309,6 +2314,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
 
          if (comp()->getOption(TR_enableInterfaceCallCachingSingleDynamicSlot))
             {
+            printf("Generating single PIC sequence!\n");
             cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, snippetReg, ifcSnippet->getDataConstantSnippet(), cg());
 
             // Single dynamic slot case
@@ -2358,6 +2364,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
             }
          else
             {
+            printf("Generating multi PIC sequence!\n");
             useCLFIandBRCL = false && (comp()->target().is64Bit() &&  // Support for 64-bit
                                    TR::Compiler->om.generateCompressedObjectHeaders() // Classes are <2GB on CompressedRefs only.
                                    );
