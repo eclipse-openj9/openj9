@@ -2262,6 +2262,8 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          // Check the thisChild to see if anyone uses this object after the call (if not, we won't add it to post Deps)
          if (callNode->getChild(callNode->getFirstArgumentIndex())->getReferenceCount() > 0)
             postDeps->addPostCondition(RegThis, TR::RealRegister::AssignAny);
+         // Add this reg to post deps to ensure no reg motion
+         postDeps->addPostConditionIfNotAlreadyInserted(vftReg,  TR::RealRegister::AssignAny);
 
          cursor = generateRILInstruction(cg(), TR::InstOpCode::LARL, callNode, RegRA, returnLocationLabel, cursor);
          iComment("EH:Load RegRA");
