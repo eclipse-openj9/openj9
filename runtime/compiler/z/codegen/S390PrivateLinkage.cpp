@@ -2254,6 +2254,11 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          TR::Register * RegEP = dependencies->searchPostConditionRegister(getEntryPointRegister());
          TR::Register * RegThis = dependencies->searchPreConditionRegister(TR::RealRegister::GPR1);
 
+         // We split dependencies to make sure the RA doesn't insert any register motion code in the fixed
+         // block sequence and to only enforce parameter setup on head of block.
+         TR::RegisterDependencyConditions * preDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(
+            dependencies->getPreConditions(), NULL, dependencies->getAddCursorForPre(), 0, cg());
+
          // Make a copy of input deps, but add on 3 new slots.
          TR::RegisterDependencyConditions * postDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(dependencies, 0, 5, cg());
          postDeps->setAddCursorForPre(0);        // Ignore all pre-deps that were copied.
