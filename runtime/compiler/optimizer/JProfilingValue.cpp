@@ -463,7 +463,8 @@ TR_JProfilingValue::lowerCalls()
  * |  treetop (incIndexTreeTop)                    |                                   |
  * |     l/iselect                                 |                                   |
  * |        l/icmpeq (conditionNode)               |                                   |
- * |           value                               |                                   |
+ * |           value    OR   aloadi <vft-symbol>   |                                   |
+ * |                            value              |                                   |
  * |           i/lloadi                            |                                   |
  * |              al/aiadd                         |                                   |
  * |                 addressOfKeys                 |                                   |
@@ -482,19 +483,20 @@ TR_JProfilingValue::lowerCalls()
  *                         |                                                           |
  *                         |--------------------------------|                          |
  *                         |                                |                          |
- *                         v                                v                          |
- *          |------------------------------|        |-------------------------------|  |
- *          | quickInc                     |        | helper                        |  |
- *          |------------------------------|        |-------------------------------|  |
- *          | istorei                      |        | call TR_jProfile32/64BitValue |  |
- *          |    al/aiadd                  |        |    value                      |  |
- *          |       aconst <table address> |        |       OR                      |  |
- *          |       l/imul                 |        |    aloadi <vft-symbol>        |  |
- *          |           l/iselect          |        |      value                    |  |
- *          |          width               |        |    table address              |  |
- *          |     iadd                     |        |-------------------------------|  |
- *          |        iloadi                |                         |                 |
- *          |           => al/aiadd        |                         |                 |
+ *                         v                                |                          |
+ *          |------------------------------|                |                          |
+ *          | quickInc                     |                |                          |
+ *          |------------------------------|                |                          |
+ *          | istorei                      |                v                          |
+ *          |    al/aiadd                  |     |-------------------------------|     |
+ *          |       aconst <table address> |     | helper                        |     |
+ *          |       l/imul                 |     |-------------------------------|     |
+ *          |           l/iselect          |     | call TR_jProfile32/64BitValue |     |
+ *          |          width               |     |    value   OR   aloadi <vft-symbol> |
+ *          |     iadd                     |     |                    value      |     |
+ *          |        iloadi                |     |    table address              |     |
+ *          |           => al/aiadd        |     |-------------------------------|     |
+ *          |        iconst 1              |                         |                 |
  *          |------------------------------|                         |                 |
  *                         |                                         |                 |
  *                         |                                         |                 |
@@ -633,7 +635,14 @@ TR_JProfilingValue::addProfilingTrees(
       }
 
    /********************* quickTest Block *********************/
-   TR::Node *quickTestValue = convertType(value, roundedType);
+   TR::Node *actualValueToTest = value;
+   if (addNullCheck)
+      {
+      actualValueToTest = TR::Node::createWithSymRef(value, TR::aloadi, 1, value,
+                                       comp->getSymRefTab()->findOrCreateVftSymbolRef());
+      }
+
+   TR::Node *quickTestValue = convertType(actualValueToTest, roundedType);
    TR::Node *address = TR::Node::aconst(value, table->getBaseAddress());
    TR::Node *hashIndex = computeHash(comp, table, quickTestValue, address);
 
