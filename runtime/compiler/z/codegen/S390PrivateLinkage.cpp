@@ -2252,11 +2252,16 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          TR::LabelSymbol * returnLocationLabel = generateLabelSymbol(cg());
          TR::Register * RegRA = dependencies->searchPostConditionRegister(getReturnAddressRegister());
          TR::Register * RegEP = dependencies->searchPostConditionRegister(getEntryPointRegister());
+         TR::Register * RegThis = dependencies->searchPreConditionRegister(TR::RealRegister::GPR1);
 
          // Make a copy of input deps, but add on 3 new slots.
          TR::RegisterDependencyConditions * postDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(dependencies, 0, 5, cg());
          postDeps->setAddCursorForPre(0);        // Ignore all pre-deps that were copied.
          postDeps->setNumPreConditions(0, trMemory());        // Ignore all pre-deps that were copied.
+
+         // Check the thisChild to see if anyone uses this object after the call (if not, we won't add it to post Deps)
+         if (callNode->getChild(callNode->getFirstArgumentIndex())->getReferenceCount() > 0)
+            postDeps->addPostCondition(RegThis, TR::RealRegister::AssignAny);
 
          cursor = generateRILInstruction(cg(), TR::InstOpCode::LARL, callNode, RegRA, returnLocationLabel, cursor);
          iComment("EH:Load RegRA");
