@@ -1759,6 +1759,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
    TR::Instruction * gcPoint = NULL;
    TR::Snippet *unresolvedSnippet = NULL;
    TR_Debug * debugObj = cg()->getDebug();
+   #define iComment(str) if (debugObj) debugObj->addInstructionComment(cursor, (const_cast<char*>(str)));
 
    TR_ResolvedMethod *  profiledMethod    = NULL;
    TR_OpaqueClassBlock *profiledClass     = NULL;
@@ -2245,6 +2246,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          {
          printf("Generating no PIC sequence!\n");
          //Disabled interface call caching
+         TR::Instruction * cursor = NULL;
          TR::LabelSymbol * hitLabel = generateLabelSymbol(cg());
          TR::LabelSymbol * snippetLabel = generateLabelSymbol(cg());
          TR::LabelSymbol * returnLocationLabel = generateLabelSymbol(cg());
@@ -2256,25 +2258,24 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          postDeps->setAddCursorForPre(0);        // Ignore all pre-deps that were copied.
          postDeps->setNumPreConditions(0, trMemory());        // Ignore all pre-deps that were copied.
 
-
-         // Add instructions for LastITable and ITable check.
-         // methodRegister and snippetReg are used as scratch registers and the existing value is not used.
-         // The current value of vTableIndexRegister does not matter and the vTableIndex value will be loaded there if dispatch.
-         TR::Instruction * cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, RegRA, returnLocationLabel, cursor, cg());
+         cursor = generateRILInstruction(cg(), TR::InstOpCode::LARL, callNode, RegRA, returnLocationLabel, cursor);
+         iComment("EH:Load RegRA");
 
          cursor = generateLastITableAndITableInstructions(cg(), callNode, methodSymRef, vftReg, RegEP, NULL, vTableIndexRegister, postDeps, cursor);
-         
-         cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, RegEP, ifcSnippet,cursor, cg());
 
-         // Cache miss.
+         cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, RegEP, ifcSnippet, cursor, cg());
+         iComment("EH:Load RegEP");
+
          cursor = generateS390RegInstruction(cg(), TR::InstOpCode::BCR, callNode, RegEP, cursor);
          ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BCR);
 
          cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::dd, callNode,
             ifcSnippet->getDataConstantSnippet()->getSnippetLabel());
+         iComment("EH:DD");
 
          // Added NOP so that the pattern matching code in jit2itrg icallVMprJavaSendPatchupVirtual
          cursor = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, callNode, cg());
+         iComment("EH:NOP");
          gcPoint = cursor;
          ((TR::S390CallSnippet *) ifcSnippet)->setBranchInstruction(gcPoint);
 
