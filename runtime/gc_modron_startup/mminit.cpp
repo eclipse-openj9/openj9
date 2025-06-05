@@ -3018,6 +3018,38 @@ gcInitializeDefaults(J9JavaVM* vm)
 		if ((-1 != memoryParameterTable[opt_Xms]) && (extensions->initialMemorySize > extensions->memoryMax)) {
 			extensions->memoryMax = extensions->initialMemorySize;
 		}
+	} else {
+#if defined(J9ZOS390) && !defined(OMR_ENV_DATA64)
+		/*
+		 *  Maximum heap size for ZOS 31-bit should not exceed 2047m
+		 *  This explicit check is necessary to prevent ZOS failure at
+		 *  attempt to allocate too large piece of memory.
+		 *  Please note that size of memory can be allocated in reality
+		 *  is much smaller, something about 1750m. An allocation request
+		 *  in the higher range under 2047m is going to fail normally.
+		 *  The error message here is exactly the same as in regular failure.
+		 */
+#define MAX_HEAP_SIZE_FOR_ZOS31	((UDATA)2047 * 1024 * 1024)
+		if (MAX_HEAP_SIZE_FOR_ZOS31 < extensions->memoryMax) {
+			/* Obtain the qualified size */
+			UDATA size = extensions->memoryMax;
+			const char* qualifier = NULL;
+			qualifiedSize(&size, &qualifier);
+
+			const char *format = j9nls_lookup_message(
+				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+				J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED,
+				"Failed to instantiate heap; %zu%s requested");
+			UDATA formatLength = strlen(format) + 32; /* 2^64 is 20 digits, so have a few extra */
+
+			char *buffer = (char *)j9mem_allocate_memory(formatLength, OMRMEM_CATEGORY_MM);
+			if (NULL != buffer) {
+				j9str_printf(buffer, formatLength, format, size, qualifier);
+			}
+			vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, buffer, TRUE);
+			goto error;
+		}
+#endif /* defined(J9ZOS390) && !defined(OMR_ENV_DATA64) */
 	}
 
 	/* Since the user is not specifying a value, ensure that -Xmdx is set to the same value
