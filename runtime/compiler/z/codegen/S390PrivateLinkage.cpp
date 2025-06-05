@@ -2250,6 +2250,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          TR::LabelSymbol * hitLabel = generateLabelSymbol(cg());
          TR::LabelSymbol * snippetLabel = generateLabelSymbol(cg());
          TR::LabelSymbol * returnLocationLabel = generateLabelSymbol(cg());
+         TR::LabelSymbol * paramSetupDummyLabel = generateLabelSymbol(cg());
          TR::Register * RegRA = dependencies->searchPostConditionRegister(getReturnAddressRegister());
          TR::Register * RegEP = dependencies->searchPostConditionRegister(getEntryPointRegister());
          TR::Register * RegThis = dependencies->searchPreConditionRegister(TR::RealRegister::GPR1);
@@ -2272,6 +2273,8 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
 
          cursor = generateRILInstruction(cg(), TR::InstOpCode::LARL, callNode, RegRA, returnLocationLabel, cursor);
          iComment("EH:Load RegRA");
+         // We need a dummy label to hook dependencies.
+         cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::label, callNode, paramSetupDummyLabel, preDeps, cursor);
 
          cursor = generateLastITableAndITableInstructions(cg(), callNode, methodSymRef, vftReg, RegEP, NULL, vTableIndexRegister, postDeps, cursor);
 
