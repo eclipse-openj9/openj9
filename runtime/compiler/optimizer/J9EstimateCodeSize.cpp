@@ -1431,17 +1431,9 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       {
       TR_OpaqueMethodBlock *method = calltarget->_myCallSite->_callerResolvedMethod->getPersistentIdentifier();
       uint32_t bcIndex = calltarget->_myCallSite->_bcInfo.getByteCodeIndex();
-      int32_t callCount = profileManager->getCallGraphProfilingCount(method,
-            bcIndex, comp());
-      cfg._calledFrequency = callCount;
 
-      if (callCount <= 0 && _lastCallBlockFrequency > 0)
+      if (_lastCallBlockFrequency > 0)
          cfg._calledFrequency = _lastCallBlockFrequency;
-
-      heuristicTrace(tracer(),
-            "Depth %d: Setting called count for caller index %d, bytecode index %d of %d", _recursionDepth,
-            calltarget->_myCallSite->_bcInfo.getCallerIndex(),
-            calltarget->_myCallSite->_bcInfo.getByteCodeIndex(), callCount);
       }
    else if (callGraphEnabled)
       {
@@ -1717,14 +1709,6 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
 
             if (callGraphEnabled && !currentBlock->isCold())
                {
-               // if call-graph profiling is enabled and the call is special or static (!indirect)
-               // then update the block frequency information because we don't profile predictable calls
-               if (!callSites[i]->isIndirectCall())
-                  {
-                  profileManager->updateCallGraphProfilingCount( currentBlock, calltarget->_calleeMethod->getPersistentIdentifier(), i, comp());
-                  heuristicTrace(tracer(),"Depth %d: Updating Call Graph Profiling Count for calltarget %p count = %d",_recursionDepth, calltarget,profileManager->getCallGraphProfilingCount(calltarget->_calleeMethod->getPersistentIdentifier(), i, comp()));
-                  }
-
                // TODO: This coldCallInfoIsReliable logic should be in a more
                // central place so everyone agrees on it.  It shouldn't just be
                // for inliner.
@@ -1764,16 +1748,13 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                   static const char *fc = feGetEnv("TR_FrequencyCutoff");
                   static const int32_t freqCutoff = fc ? atoi(fc) : DEFAULT_FREQ_CUTOFF;
 
-                  bool isColdCall = ((comp()->getMethodHotness() <= warm \
-                                       && profileManager->isColdCall(targetCallee->_calleeMethod->getPersistentIdentifier(),
-                                                                        calltarget->_calleeMethod->getPersistentIdentifier(), i, comp())) \
-                                       || currentBlock->getFrequency() < freqCutoff \
-                                       || isInterpretedCallWithLowFrequency) \
+                  bool isColdCall = (currentBlock->getFrequency() < freqCutoff || isInterpretedCallWithLowFrequency)
                                     && !(_inliner->alwaysWorthInlining(targetCallee->_calleeMethod, NULL));
 
                   if (coldCallInfoIsReliable && isColdCall)
                      {
-                     heuristicTrace(tracer(),"Depth %d: Skipping estimate on call %s, with count=%d and block frequency %d, because it's cold.",_recursionDepth,calleeName,profileManager->getCallGraphProfilingCount(targetCallee->_calleeMethod->getPersistentIdentifier(), calltarget->_calleeMethod->getPersistentIdentifier(), i, comp()), currentBlock->getFrequency());
+                     heuristicTrace(tracer(),"Depth %d: Skipping estimate on call %s, with block frequency %d, because it's cold.",
+                        _recursionDepth, calleeName, currentBlock->getFrequency());
                      callSites[i]->removecalltarget(j, tracer(), Cold_Call);
                      j--;
                      continue;
@@ -1781,10 +1762,8 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
 
                   if (comp()->getMethodHotness() <= warm && comp()->isServerInlining() && calltarget->_calleeMethod->isWarmCallGraphTooBig(i, comp()) && !_inliner->alwaysWorthInlining(targetCallee->_calleeMethod, NULL))
                      {
-                     heuristicTrace(tracer(), "Depth %d: Skipping estimate on call %s, with count=%d, because its warm call graph is too big.",
-                                            _recursionDepth, calleeName,
-                                            profileManager->getCallGraphProfilingCount(calltarget->_calleeMethod->getPersistentIdentifier(),i, comp())
-                                          );
+                     heuristicTrace(tracer(), "Depth %d: Skipping estimate on call %s because its warm call graph is too big.",
+                                            _recursionDepth, calleeName);
                      callSites[i]->removecalltarget(j, tracer(), Cold_Call);
                      j--;
                      continue;
@@ -1830,8 +1809,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                   int32_t freqCutoff = comp()->getMethodHotness() <= warm ?
                                           comp()->getOptions()->getBigCalleeFrequencyCutoffAtWarm() :
                                          comp()->getOptions()->getBigCalleeFrequencyCutoffAtHot();
-                  bool isColdCall = ((profileManager->isColdCall(targetCallee->_calleeMethod->getPersistentIdentifier(), calltarget->_calleeMethod->getPersistentIdentifier(), i, comp()) ||
-                        (currentBlock->getFrequency() <= freqCutoff)) && !_inliner->alwaysWorthInlining(targetCallee->_calleeMethod, NULL));
+                  bool isColdCall = (currentBlock->getFrequency() <= freqCutoff) && !_inliner->alwaysWorthInlining(targetCallee->_calleeMethod, NULL);
 
                   if (comp()->getMethodHotness() <= warm)
                      {

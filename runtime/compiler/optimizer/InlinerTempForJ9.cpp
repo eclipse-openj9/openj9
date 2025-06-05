@@ -4309,7 +4309,7 @@ void TR_MultipleCallTargetInliner::weighCallSite( TR_CallStack * callStack , TR_
                }
             }
 
-          int32_t frequency1 = 0, frequency2 = 0;
+          int32_t frequency2 = 0;
           int32_t origSize = size;
           bool isCold;
           TR::TreeTop *callNodeTreeTop = calltarget->_myCallSite->_callNodeTreeTop;
@@ -4318,7 +4318,6 @@ void TR_MultipleCallTargetInliner::weighCallSite( TR_CallStack * callStack , TR_
             // HACK: Get frequency from both sources, and use both.  You're
             // only cold if you're cold according to both.
 
-            frequency1 = comp()->convertNonDeterministicInput(comp()->fej9()->getIProfilerCallCount(callsite->_callNode->getByteCodeInfo(), comp()), MAX_BLOCK_COUNT + MAX_COLD_BLOCK_COUNT, randomGenerator(), 0);
             TR::Block * block = callNodeTreeTop->getEnclosingBlock();
             frequency2 = comp()->convertNonDeterministicInput(block->getFrequency(), MAX_BLOCK_COUNT + MAX_COLD_BLOCK_COUNT, randomGenerator(), 0);
 
@@ -4337,7 +4336,7 @@ void TR_MultipleCallTargetInliner::weighCallSite( TR_CallStack * callStack , TR_
                tt = tt->getPrevTreeTop();
                }
 
-            if ((frequency1 <= 0) && ((0 <= frequency2) &&  (frequency2 <= MAX_COLD_BLOCK_COUNT)))
+            if ((0 <= frequency2) &&  (frequency2 <= MAX_COLD_BLOCK_COUNT))
                {
                isCold = true;
                }
@@ -4951,19 +4950,15 @@ TR_MultipleCallTargetInliner::exceedsSizeThreshold(TR_CallSite *callSite, int by
      // TODO: we should ignore frequency for thunk archetype, however, this require performance evaluation
      bool frequencyIsInaccurate = isLambdaFormGeneratedMethod;
 
-     frequency1 = comp()->convertNonDeterministicInput(comp()->fej9()->getIProfilerCallCount(bcInfo, comp()), MAX_BLOCK_COUNT + MAX_COLD_BLOCK_COUNT, randomGenerator(), 0);
      frequency2 = comp()->convertNonDeterministicInput(block->getFrequency(), MAX_BLOCK_COUNT + MAX_COLD_BLOCK_COUNT, randomGenerator(), 0);
-     if (frequency1 > frequency2 && callerResolvedMethod->convertToMethod()->isArchetypeSpecimen())
-        frequency2 = frequency1;
 
-     if ((frequency1 <= 0) && ((0 <= frequency2) &&  (frequency2 <= MAX_COLD_BLOCK_COUNT)) &&
-        !alwaysWorthInlining(calleeResolvedMethod, callNode) &&
-        !frequencyIsInaccurate)
+     if ((0 <= frequency2) &&  (frequency2 <= MAX_COLD_BLOCK_COUNT) &&
+         !alwaysWorthInlining(calleeResolvedMethod, callNode) && !frequencyIsInaccurate)
         {
         isCold = true;
         }
 
-     debugTrace(tracer(), "exceedsSizeThreshold: Call with block_%d has frequency1 %d frequency2 %d ", block->getNumber(), frequency1, frequency2);
+     debugTrace(tracer(), "exceedsSizeThreshold: Call with block_%d has frequency2 %d ", block->getNumber(), frequency2);
 
      if (allowBiggerMethods() &&
          !comp()->getMethodSymbol()->doJSR292PerfTweaks() &&
@@ -7560,12 +7555,6 @@ TR_J9InlinerUtil::addTargetIfMethodIsNotOverridenInReceiversHierarchy(TR_Indirec
       return true;
       }
    return false;
-   }
-
-int32_t
-TR_J9InlinerUtil::getCallCount(TR::Node *callNode)
-   {
-   return comp()->fej9()->getIProfilerCallCount(callNode->getByteCodeInfo(), comp());
    }
 
 TR_ResolvedMethod*
