@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE-OpenJ9 & !OPENJDK_METHODHANDLES]*/
+/*[INCLUDE-IF !VENDOR_UMA & !OPENJDK_METHODHANDLES]*/
 
 /*
  * Copyright IBM Corp. and others 2017

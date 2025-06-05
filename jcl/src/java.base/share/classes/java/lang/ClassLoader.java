@@ -1071,8 +1071,8 @@ static void completeInitialization() {
 	initSystemClassLoader = true;
 }
 
-/*[IF Sidecar18-SE-OpenJ9]*/
-//Returns incoming class's classloader without going through security checking
+/*[IF !VENDOR_UMA]*/
+// Returns incoming class's classloader without going through security checking.
 static ClassLoader getClassLoader(Class<?> clz) {
 	if (null != clz) {
 		return clz.getClassLoader0();
@@ -1080,7 +1080,7 @@ static ClassLoader getClassLoader(Class<?> clz) {
 		return null;
 	}
 }
-/*[ENDIF] Sidecar18-SE-OpenJ9 */
+/*[ENDIF] !VENDOR_UMA */
 
 /*[IF JAVA_SPEC_VERSION >= 9]*/
 /**
