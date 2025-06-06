@@ -5495,6 +5495,14 @@ initializeSnapshotJ9Class(J9JavaVM *javaVM, J9Class *clazz);
 
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
+/**
+ * Iterate over a class segment
+ *
+ * @param state[in] pointer to J9ClassSegmentWalkState
+ */
+J9Class *
+segmentIteratorNextClass(J9ClassSegmentWalkState *state);
+
 #if JAVA_SPEC_VERSION >= 16
 
 /* ------------------- UpcallThunkGen.cpp ----------------- */
