@@ -286,6 +286,13 @@ resolveNativeAddress(J9VMThread *currentThread, J9Method *nativeMethod, UDATA ru
 /* ---------------- classallocation.c ---------------- */
 
 /**
+* @brief Free the cached maps for a ClassLoader.
+* @param classLoader The J9ClassLoader struct
+*/
+void
+freeMapCaches(J9ClassLoader *classLoader);
+
+/**
 * @brief
 *
 * This method has potential GC point.

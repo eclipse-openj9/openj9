@@ -129,6 +129,7 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 	UDATA * nextA0;
 	UDATA savedFlags = walkState->flags;
 	J9StackWalkState * oldState = NULL;
+	U_8 *impdep2PC = NULL;
 #if defined(J9VM_INTERP_STACKWALK_TRACING) 
 	void  (*savedOSlotIterator) (struct J9VMThread * vmThread, struct J9StackWalkState * walkState, j9object_t * objectSlot, const void * stackLocation) =
 		walkState->objectSlotWalkFunction;
@@ -191,7 +192,7 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 	walkState->resolveFrameFlags = 0;
 #endif
 #endif
-
+	impdep2PC = walkState->javaVM->callInReturnPC;
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 	swPrintf(walkState, 1, "\n");
@@ -346,7 +347,7 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 				}
 #endif
 
-				if (*(walkState->pc) == 0xFF) /* impdep2 = 0xFF - indicates a JNI call-in frame */
+				if ((impdep2PC == walkState->pc) || ((impdep2PC + 3) == walkState->pc)) /* impdep2 = 0xFF - indicates a JNI call-in frame */
 				{
 					walkJNICallInFrame(walkState);
 				} else {
@@ -753,11 +754,12 @@ walkMethodFrame(J9StackWalkState * walkState)
 			if (walkState->argCount) {
 				/* Max size as argCount always <= 255 */
 				U_32 result[8];
+				J9Class *methodClass = UNTAGGED_METHOD_CP(walkState->method)->ramClass;
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 				swPrintf(walkState, 4, "\tUsing signature mapper\n");
 #endif
-				j9localmap_ArgBitsForPC0(UNTAGGED_METHOD_CP(walkState->method)->ramClass->romClass, romMethod, result);
+				j9cached_ArgBitsForPC0(methodClass->romClass, romMethod, result, walkState->javaVM, methodClass->classLoader);
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 				swPrintf(walkState, 4, "\tArguments starting at %p for %d slots\n", walkState->arg0EA, walkState->argCount);
@@ -1519,8 +1521,7 @@ getLocalsMap(J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * 
 			/* j9localmap_ArgBitsForPC0 only deals with args, so zero out the result array to make sure the temps are non-object */
 
 			memset(result, 0, ((argTempCount + 31) / 32) * sizeof(U_32));
-
-			j9localmap_ArgBitsForPC0(romClass, romMethod, result);
+			j9cached_ArgBitsForPC0(romClass, romMethod, result, walkState->javaVM, UNTAGGED_METHOD_CP(walkState->method)->ramClass->classLoader);
 			return;
 		}
 	}
@@ -1528,7 +1529,7 @@ getLocalsMap(J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 	swPrintf(walkState, 4, "\tUsing local mapper\n");
 #endif
-	errorCode = vm->localMapFunction(PORTLIB, romClass, romMethod, offsetPC, result, vm, j9mapmemory_GetBuffer, j9mapmemory_ReleaseBuffer);
+	errorCode = j9cached_LocalBitsForPC(romClass, romMethod, offsetPC, result, vm, j9mapmemory_GetBuffer, j9mapmemory_ReleaseBuffer, vm, J9_CLASS_FROM_METHOD(walkState->method)->classLoader);
 
 	if (errorCode < 0) {
 		if (J9_ARE_NO_BITS_SET(walkState->flags, J9_STACKWALK_NO_ERROR_REPORT)) {
@@ -1552,7 +1553,7 @@ getStackMap(J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * r
 	PORT_ACCESS_FROM_WALKSTATE(walkState);
 	IDATA errorCode;
 
-	errorCode = j9stackmap_StackBitsForPC(PORTLIB, offsetPC, romClass, romMethod, result, pushCount, walkState->walkThread->javaVM, j9mapmemory_GetBuffer, j9mapmemory_ReleaseBuffer);
+	errorCode = j9cached_StackBitsForPC(offsetPC, romClass, romMethod, result, pushCount, walkState->walkThread->javaVM, j9mapmemory_GetBuffer, j9mapmemory_ReleaseBuffer, walkState->javaVM, UNTAGGED_METHOD_CP(walkState->method)->ramClass->classLoader);
 	if (errorCode < 0) {
 		if (J9_ARE_NO_BITS_SET(walkState->flags, J9_STACKWALK_NO_ERROR_REPORT)) {
 			/* Local map failed, result = %p - aborting VM */
