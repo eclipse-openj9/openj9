@@ -37,7 +37,7 @@
  * @return NULL if there are no more classes in the segment
  */
 J9Class *
-GC_ClassHeapIterator::nextClass() 
+GC_ClassHeapIterator::nextClassInternal()
 {
 	J9Class *currentScanPtr;
 #if defined(J9VM_OPT_FRAGMENT_RAM_CLASSES)
@@ -60,6 +60,21 @@ GC_ClassHeapIterator::nextClass()
 	}
 #endif
 	return NULL;
+}
+
+/**
+ * @return call nextClassInternal() on RCP condition
+ * @return NULL if there are no more classes in the segment
+ */
+J9Class *
+GC_ClassHeapIterator::nextClass()
+{
+	J9Class *clazz = nextClassInternal();
+	while(_vm->internalVMFunctions->isFrozenClass(_vm, clazz)) {
+		clazz = nextClassInternal();
+	}
+
+	return clazz;
 }
 
 

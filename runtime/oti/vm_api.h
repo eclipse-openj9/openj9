@@ -5495,6 +5495,15 @@ initializeSnapshotJ9Class(J9JavaVM *javaVM, J9Class *clazz);
 
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
+/**
+ * Check if a class is frozen
+ *
+ * @param javaVM[in] pointer to J9JavaVM
+ * @param clazz[in] pointer to J9Class
+ */
+BOOLEAN
+isFrozenClass(J9JavaVM *javaVM, J9Class *clazz);
+
 #if JAVA_SPEC_VERSION >= 16
 
 /* ------------------- UpcallThunkGen.cpp ----------------- */

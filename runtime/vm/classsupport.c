@@ -1096,6 +1096,20 @@ done:
 }
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
+BOOLEAN
+isFrozenClass(struct J9JavaVM *vm, J9Class *clazz)
+{
+	int isFrozen = FALSE;
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_RESTORE_RUN(vm) && NULL != clazz && NULL == clazz->classObject && J9_ARE_ALL_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
+		isFrozen = TRUE;
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+
+	return isFrozen;
+}
+
 /**
  * Load non-array class.
  * @param vmThread Current VM thread
