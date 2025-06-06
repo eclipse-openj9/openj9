@@ -183,9 +183,15 @@ MM_AllocationContextBalanced::allocateTLH(MM_EnvironmentBase *env, MM_AllocateDe
 		result = lockedReplenishAndAllocate(env, objectAllocationInterface, allocateDescription, MM_MemorySubSpace::ALLOCATION_TYPE_TLH);
 	}
 	unlockCommon();
+
+	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	j9tty_printf(PORTLIB, "allocateTLH env=%p, shouldCollectOnFailure=%zu, result=%p\n", env, shouldCollectOnFailure, result);
+
 	/* if that still fails, try to invoke the collector */
 	if (shouldCollectOnFailure && (NULL == result)) {
 		result = _subspace->replenishAllocationContextFailed(env, _subspace, this, objectAllocationInterface, allocateDescription, MM_MemorySubSpace::ALLOCATION_TYPE_TLH);
+
+		j9tty_printf(PORTLIB, "replenishAllocationContextFailed-allocateTLH result=%p\n", result);
 	}
 	return result;
 }
@@ -256,9 +262,15 @@ MM_AllocationContextBalanced::allocateObject(MM_EnvironmentBase *env, MM_Allocat
 		result = lockedReplenishAndAllocate(env, NULL, allocateDescription, MM_MemorySubSpace::ALLOCATION_TYPE_OBJECT);
 	}
 	unlockCommon();
+
+	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	j9tty_printf(PORTLIB, "allocateObject env=%p, shouldCollectOnFailure=%zu, result=%p\n", env, shouldCollectOnFailure, result);
+
 	/* if that still fails, try to invoke the collector */
 	if (shouldCollectOnFailure && (NULL == result)) {
 		result = _subspace->replenishAllocationContextFailed(env, _subspace, this, NULL, allocateDescription, MM_MemorySubSpace::ALLOCATION_TYPE_OBJECT);
+
+		j9tty_printf(PORTLIB, "replenishAllocationContextFailed-allocateObject result=%p\n", result);
 	}
 	if (NULL != result) {
 		allocateDescription->setObjectFlags(_subspace->getObjectFlags());
@@ -321,9 +333,15 @@ MM_AllocationContextBalanced::allocateArrayletLeaf(MM_EnvironmentBase *env, MM_A
 	lockCommon();
 	result = lockedReplenishAndAllocate(env, NULL, allocateDescription, MM_MemorySubSpace::ALLOCATION_TYPE_LEAF);
 	unlockCommon();
+
+	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	j9tty_printf(PORTLIB, "allocateArrayletLeaf env=%p, shouldCollectOnFailure=%zu, result=%p\n", env, shouldCollectOnFailure, result);
+
 	/* if that fails, try to invoke the collector */
 	if (shouldCollectOnFailure && (NULL == result)) {
 		result = _subspace->replenishAllocationContextFailed(env, _subspace, this, NULL, allocateDescription, MM_MemorySubSpace::ALLOCATION_TYPE_LEAF);
+
+		j9tty_printf(PORTLIB, "replenishAllocationContextFailed result=%p\n", result);
 	}
 	if (NULL != result) {
 		/* for off-heap case zeroing leaf is unecessary */
