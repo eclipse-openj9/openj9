@@ -183,9 +183,18 @@ MM_AllocationContextBalanced::allocateTLH(MM_EnvironmentBase *env, MM_AllocateDe
 		result = lockedReplenishAndAllocate(env, objectAllocationInterface, allocateDescription, MM_MemorySubSpace::ALLOCATION_TYPE_TLH);
 	}
 	unlockCommon();
+
+	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	j9tty_printf(PORTLIB, "allocateTLH env=%p, shouldCollectOnFailure=%zu, result=%p\n", env, shouldCollectOnFailure, result);
+
 	/* if that still fails, try to invoke the collector */
 	if (shouldCollectOnFailure && (NULL == result)) {
+
+		j9tty_printf(PORTLIB, "replenishAllocationContextFailed-allocateTLH before env=%p, result=%p\n", env, result);
+
 		result = _subspace->replenishAllocationContextFailed(env, _subspace, this, objectAllocationInterface, allocateDescription, MM_MemorySubSpace::ALLOCATION_TYPE_TLH);
+
+		j9tty_printf(PORTLIB, "replenishAllocationContextFailed-allocateTLH after env=%p, result=%p\n", env, result);
 	}
 	return result;
 }
@@ -256,9 +265,18 @@ MM_AllocationContextBalanced::allocateObject(MM_EnvironmentBase *env, MM_Allocat
 		result = lockedReplenishAndAllocate(env, NULL, allocateDescription, MM_MemorySubSpace::ALLOCATION_TYPE_OBJECT);
 	}
 	unlockCommon();
+
+	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	j9tty_printf(PORTLIB, "allocateObject env=%p, shouldCollectOnFailure=%zu, result=%p\n", env, shouldCollectOnFailure, result);
+
 	/* if that still fails, try to invoke the collector */
 	if (shouldCollectOnFailure && (NULL == result)) {
+
+		j9tty_printf(PORTLIB, "replenishAllocationContextFailed-allocateObject before env=%p, result=%p\n", env, result);
+
 		result = _subspace->replenishAllocationContextFailed(env, _subspace, this, NULL, allocateDescription, MM_MemorySubSpace::ALLOCATION_TYPE_OBJECT);
+
+		j9tty_printf(PORTLIB, "replenishAllocationContextFailed-allocateObject after env=%p, result=%p\n", env, result);
 	}
 	if (NULL != result) {
 		allocateDescription->setObjectFlags(_subspace->getObjectFlags());
@@ -321,9 +339,17 @@ MM_AllocationContextBalanced::allocateArrayletLeaf(MM_EnvironmentBase *env, MM_A
 	lockCommon();
 	result = lockedReplenishAndAllocate(env, NULL, allocateDescription, MM_MemorySubSpace::ALLOCATION_TYPE_LEAF);
 	unlockCommon();
+
+	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	j9tty_printf(PORTLIB, "allocateArrayletLeaf env=%p, shouldCollectOnFailure=%zu, result=%p\n", env, shouldCollectOnFailure, result);
+
 	/* if that fails, try to invoke the collector */
 	if (shouldCollectOnFailure && (NULL == result)) {
+		j9tty_printf(PORTLIB, "replenishAllocationContextFailed before env=%p, result=%p\n", env, result);
+
 		result = _subspace->replenishAllocationContextFailed(env, _subspace, this, NULL, allocateDescription, MM_MemorySubSpace::ALLOCATION_TYPE_LEAF);
+
+		j9tty_printf(PORTLIB, "replenishAllocationContextFailed after env=%p, result=%p\n", env, result);
 	}
 	if (NULL != result) {
 		/* for off-heap case zeroing leaf is unecessary */
@@ -355,30 +381,32 @@ MM_AllocationContextBalanced::lockedAllocateArrayletLeaf(MM_EnvironmentBase *env
 	/* look up the spine region since we need to add this region to its leaf list */
 	MM_HeapRegionDescriptorVLHGC *spineRegion = (MM_HeapRegionDescriptorVLHGC *)_heapRegionManager->tableDescriptorForAddress(spine);
 	/* the leaf requires a pointer back to the spine object so that it can verify its liveness elsewhere in the collector */
-	leafAllocateData->setSpine(spine);
+	if (!MM_GCExtensions::getExtensions(env)->isVirtualLargeObjectHeapEnabled) {
+		leafAllocateData->setSpine(spine);
+		/* add the leaf to the spine region's leaf list */
+		/* We own the lock on the spine region's context when this call is made so we can safely manipulate this list.
+		 * An exceptional scenario: A thread allocates a spine (and possibly a few arraylets), but does not complete the allocation. A global GC (or a series of regular PGCs) occurs
+		 * that age out regions to max age. The spine moves into a common context. Now, we successfully resume the leaf allocation, but the common lock that
+		 * we already hold is not sufficient any more. We need to additionally acquire common context' common lock, since multiple spines from different ACs could have come into this state,
+		 * and worse multiple spines originally allocated from different ACs may end up in a single common context region.
+		 */
+
+		MM_AllocationContextTarok *spineContext = spineRegion->_allocateData._owningContext;
+		if (this != spineContext) {
+			Assert_MM_true(env->getCommonAllocationContext() == spineContext);
+			/* The common allocation context is always an instance of AllocationContextBalanced */
+			((MM_AllocationContextBalanced *)spineContext)->lockCommon();
+		}
+
+		leafAllocateData->addToArrayletLeafList(spineRegion);
+
+		if (this != spineContext) {
+			/* The common allocation context is always an instance of AllocationContextBalanced */
+			((MM_AllocationContextBalanced *)spineContext)->unlockCommon();
+		}
+	}
+
 	freeRegionForArrayletLeaf->resetAge(env, (U_64)_subspace->getBytesRemainingBeforeTaxation());
-	/* add the leaf to the spine region's leaf list */
-	/* We own the lock on the spine region's context when this call is made so we can safely manipulate this list.
-	 * An exceptional scenario: A thread allocates a spine (and possibly a few arraylets), but does not complete the allocation. A global GC (or a series of regular PGCs) occurs
-	 * that age out regions to max age. The spine moves into a common context. Now, we successfully resume the leaf allocation, but the common lock that
-	 * we already hold is not sufficient any more. We need to additionally acquire common context' common lock, since multiple spines from different ACs could have come into this state,
-	 * and worse multiple spines originally allocated from different ACs may end up in a single common context region.
-	 */
-
-	MM_AllocationContextTarok *spineContext = spineRegion->_allocateData._owningContext;
-	if (this != spineContext) {
-		Assert_MM_true(env->getCommonAllocationContext() == spineContext);
-		/* The common allocation context is always an instance of AllocationContextBalanced */
-		((MM_AllocationContextBalanced *)spineContext)->lockCommon();
-	}
-
-	leafAllocateData->addToArrayletLeafList(spineRegion);
-	
-	if (this != spineContext) {
-		/* The common allocation context is always an instance of AllocationContextBalanced */
-		((MM_AllocationContextBalanced *)spineContext)->unlockCommon();
-	}
-
 	/* store the base address of the leaf for the memset and the return */
 	return freeRegionForArrayletLeaf->getLowAddress();
 }
