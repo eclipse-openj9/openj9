@@ -135,6 +135,7 @@ public:
 	void setInitialMethods(J9Method **cInitialStaticMethod, J9Method **cInitialSpecialMethod, J9Method **cInitialVirtualMethod);
 
 	J9ITable *getInvalidITable() { return _invalidITable; }
+	void initBaseClasses();
 };
 
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */

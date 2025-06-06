@@ -37,15 +37,7 @@
  * @return NULL if there are no more classes in the segment
  */
 J9Class *
-GC_ClassHeapIterator::nextClass() 
+GC_ClassHeapIterator::nextClass()
 {
-	J9Class *currentScanPtr;
-	if(_scanPtr != NULL) {
-		currentScanPtr = _scanPtr;
-		_scanPtr = _scanPtr->nextClassInSegment;
-		return currentScanPtr;
-	}
-	return NULL;
+	return _vm->internalVMFunctions->segmentIteratorNextClass(&_nextClass);
 }
-
-
