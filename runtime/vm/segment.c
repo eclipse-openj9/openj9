@@ -585,6 +585,27 @@ J9MemorySegmentList *allocateMemorySegmentListWithSize(J9JavaVM * javaVM, U_32 n
 	return segmentList;
 }
 
+J9Class *
+segmentIteratorNextClass(J9Class **nextClass)
+{
+	for (;;) {
+		J9Class *current = *nextClass;
+
+		if (NULL == current) {
+			break;
+		}
+		*nextClass = current->nextClassInSegment;
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (J9_ARE_NO_BITS_SET(current->classFlags, J9ClassIsFrozen))
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			return current;
+		}
+	}
+
+	return NULL;
+}
+
 static void
 prepareClassWalkState(J9ClassWalkState* state, J9JavaVM* vm, J9ClassLoader* classLoader)
 {
@@ -611,18 +632,18 @@ allClassesStartDo(J9ClassWalkState* state, J9JavaVM* vm, J9ClassLoader* classLoa
 	return allClassesNextDo(state);
 }
 
-J9Class*
-allClassesNextDo(J9ClassWalkState* state)
+static J9Class *
+allClassesNextDoInternal(J9ClassWalkState *state)
 {
-	J9Class* clazzPtr = NULL;
+	J9Class *clazzPtr = NULL;
 	while ((state->nextSegment != NULL) && (clazzPtr == NULL)) {
-		J9MemorySegment* nextSegment = state->nextSegment;
+		J9MemorySegment *nextSegment = state->nextSegment;
 		if ((nextSegment->type & MEMORY_TYPE_RAM_CLASS) == MEMORY_TYPE_RAM_CLASS) {
 			if (state->heapPtr < nextSegment->heapBase || state->heapPtr > nextSegment->heapAlloc) {
 				state->heapPtr = *(U_8 **)nextSegment->heapBase;
 			}
 			if (state->heapPtr != NULL) {
-				clazzPtr = (J9Class*)state->heapPtr;
+				clazzPtr = (J9Class *)state->heapPtr;
 				state->heapPtr = (U_8 *)clazzPtr->nextClassInSegment;
 			}
 			if (state->heapPtr != NULL) {
@@ -637,6 +658,22 @@ allClassesNextDo(J9ClassWalkState* state)
 	}
 
 	return clazzPtr;
+}
+
+J9Class *
+allClassesNextDo(J9ClassWalkState *state)
+{
+	J9Class *clazz = allClassesNextDoInternal(state);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_RESTORE_RUN(state->vm)) {
+		while ((NULL != clazz) && J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
+			clazz = allClassesNextDoInternal(state);
+		}
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+
+	return clazz;
 }
 
 void allClassesEndDo(J9ClassWalkState* state)

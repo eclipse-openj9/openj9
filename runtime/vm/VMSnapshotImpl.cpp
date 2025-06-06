@@ -93,6 +93,23 @@ VMSnapshotImpl::~VMSnapshotImpl()
 	j9mem_free_memory((void *)_snapshotHeader);
 }
 
+void
+VMSnapshotImpl::initBaseClasses()
+{
+	struct J9InternalVMFunctions *vmFuncs = _vm->internalVMFunctions;
+	J9VMThread *vmThread = currentVMThread(_vm);
+
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->voidReflectClass);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->booleanReflectClass);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->charReflectClass);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->floatReflectClass);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->doubleReflectClass);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->byteReflectClass);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->shortReflectClass);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->intReflectClass);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->longReflectClass);
+}
+
 bool
 VMSnapshotImpl::initializeMonitor()
 {
@@ -643,6 +660,7 @@ VMSnapshotImpl::fixupClass(J9Class *clazz)
 	clazz->replacedClass = NULL;
 	clazz->gcLink = NULL;
 	clazz->jitMetaDataList = NULL;
+	clazz->classFlags |= J9ClassIsFrozen;
 
 	UDATA totalStaticSlots = totalStaticSlotsForClass(clazz->romClass);
 	memset(clazz->ramStatics, 0, totalStaticSlots * sizeof(UDATA));
@@ -736,6 +754,7 @@ VMSnapshotImpl::fixupArrayClass(J9ArrayClass *clazz)
 	clazz->varHandleMethodTypes = NULL;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	clazz->gcLink = NULL;
+	clazz->classFlags |= J9ClassIsFrozen;
 
 	UDATA i;
 	if (NULL != clazz->staticSplitMethodTable) {
@@ -1182,6 +1201,15 @@ setInitialVMMethods(J9JavaVM *javaVM, J9Method **cInitialStaticMethod, J9Method 
 	Assert_VM_notNull(vmSnapshotImpl);
 
 	vmSnapshotImpl->setInitialMethods(cInitialStaticMethod, cInitialSpecialMethod, cInitialVirtualMethod);
+}
+
+extern "C" void
+initializeBaseClasses(J9JavaVM *javaVM)
+{
+	VMSnapshotImpl *vmSnapshotImpl = (VMSnapshotImpl *)javaVM->vmSnapshotImplPortLibrary->vmSnapshotImpl;
+	Assert_VM_notNull(vmSnapshotImpl);
+
+	vmSnapshotImpl->initBaseClasses();
 }
 
 void *

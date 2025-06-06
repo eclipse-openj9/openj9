@@ -1058,13 +1058,6 @@ loadWarmClassFromSnapshot(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Cl
 		}
 
 		initializeSnapshotJ9Class(vm, clazz);
-
-		if (J9_ARE_ALL_BITS_SET(vmThread->javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_CLASS_OBJECT_ASSIGNED)
-			&& (NULL == clazz->classObject)
-		) {
-			clazz = initializeSnapshotClassObject(vm, classLoader, clazz);
-		}
-
 		TRIGGER_J9HOOK_VM_INTERNAL_CLASS_LOAD(vm->hookInterface, vmThread, clazz, failed);
 		TRIGGER_J9HOOK_VM_CLASS_LOAD(vm->hookInterface, vmThread, clazz);
 
@@ -1083,6 +1076,13 @@ loadWarmClassFromSnapshot(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Cl
 				goto done;
 			}
 		}
+		if (J9_ARE_ANY_BITS_SET(vmThread->javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_CLASS_OBJECT_ASSIGNED)) {
+			Assert_VM_Null(clazz->classObject);
+			clazz = initializeSnapshotClassObject(vm, classLoader, clazz);
+			if (NULL == clazz) {
+				goto done;
+			}
+		}
 
 		/* TODO: Handle/trace error/NULL paths. */
 		classObject = clazz->classObject;
@@ -1098,7 +1098,7 @@ loadWarmClassFromSnapshot(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Cl
 
 		Trc_VM_snapshot_loadWarmClassFromSnapshot_ClassInfo(vmThread, clazz, className);
 	}
-
+	clazz->classFlags &= ~J9ClassIsFrozen;
 	rc = TRUE;
 
 done:
