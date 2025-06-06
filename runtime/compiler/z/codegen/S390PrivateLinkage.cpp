@@ -1529,7 +1529,6 @@ J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
 static int32_t
 getITableIterationsNumber(TR::Compilation * comp, TR::SymbolReference * methodSymRef, TR_OpaqueClassBlock *declaringClass)
    {
-   // TODO: Get the numbers from settings or explain why these arbitrary bumbers are selected.
    const int32_t MAX_IMPLEMENTERS_TO_EVALUATE = 30;
    const int32_t MIN_ITABLE_ITERATIONS = 1;
    const int32_t MAX_ITABLE_ITERATIONS = 4;
@@ -1541,7 +1540,7 @@ getITableIterationsNumber(TR::Compilation * comp, TR::SymbolReference * methodSy
    if (disableITableIterationsAfterLastITableCacheCheck)
       {
       if (trace)
-         traceMsg(comp, "Itable iteration after lastITable check is disabled.\n");
+         traceMsg(comp, "ITable iteration after lastITable check is disabled.\n");
       return 0;
       }
    // Set a fix number between 1 and 32767 (int16_MAX) of iterations. Check all iTableEntries if a number larger than 32767 is provided.
@@ -1550,7 +1549,7 @@ getITableIterationsNumber(TR::Compilation * comp, TR::SymbolReference * methodSy
       {
       iterations = atoi(numITableIterationsAfterLastITableCacheCheck);
       if (trace)
-         traceMsg(comp, "Itable iteration is %d because TR_NumITableIterationsAfterLastITableCacheCheck was set.\n", iterations);
+         traceMsg(comp, "ITable iteration is %d because TR_NumITableIterationsAfterLastITableCacheCheck was set.\n", iterations);
       return iterations;
       }
 
@@ -1558,7 +1557,6 @@ getITableIterationsNumber(TR::Compilation * comp, TR::SymbolReference * methodSy
    TR_PersistentCHTable *chTable = comp->getPersistentInfo()->getPersistentCHTable();
    int32_t cpIndex = methodSymRef->getCPIndex();
    // Find out how many implementers are for the declaring interface class.
-   // TODO: if fail, it return MAX_IMPLEMENTERS_TO_EVALUATE+1, why on x86 they pass MAX_IMPLEMENTERS_TO_EVALUATE+1 to this function? also it check TR_DisableCHOpts so no redundant cheking!
    int32_t numImplementers = chTable->findnInterfaceImplementers(declaringClass, MAX_IMPLEMENTERS_TO_EVALUATE, implArray, cpIndex, methodSymRef->getOwningMethod(comp), comp);
    if ((numImplementers != 0) && (numImplementers <= MAX_IMPLEMENTERS_TO_EVALUATE))
       {
@@ -1578,13 +1576,13 @@ getITableIterationsNumber(TR::Compilation * comp, TR::SymbolReference * methodSy
          traceMsg(comp, "ITable declaringClass %p numImplementers %d maxInterfaces %d iterations %d\n", declaringClass, numImplementers, maxInterfaces, iterations);
       }
    else if (trace)
-      traceMsg(comp, "Itable iteration is %d from a fix value.\n", iterations);
+      traceMsg(comp, "ITable iteration is the default value of %d.\n", iterations);
    return iterations;
    }
 
 TR::Instruction *
-generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callNode, TR::SymbolReference * methodSymRef,
-   TR::Register * vftReg, TR::Register * scratchRegister, TR::Register * loopCountRegister, TR::Register * vTableIndexRegister, TR::RegisterDependencyConditions * postDeps, TR::Instruction * cursor)
+generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callNode, TR::SymbolReference * methodSymRef, TR::Register * vftReg, TR::Register * scratchRegister,
+   TR::Register * loopCountRegister, TR::Register * vTableIndexRegister, TR::RegisterDependencyConditions * postDeps, TR::Instruction * cursor)
    {
    TR::Compilation * comp = cg->comp(); 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
@@ -1592,8 +1590,6 @@ generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callN
    TR_OpaqueClassBlock *declaringClass = NULL;
 
    static bool EnableLastITableCache = feGetEnv("TR_interfaceDispatchUsingLastITable") != NULL;
-   /********* Enable by default for testing. *********/
-   EnableLastITableCache = true;
 
    if ( EnableLastITableCache && (declaringClass = methodSymRef->getOwningMethod(comp)->getResolvedInterfaceMethod(methodSymRef->getCPIndex(), &itableIndex))
       && performTransformation(comp, "O^O useLastITableCache for n%dn itableIndex=%d\n",
@@ -1655,7 +1651,6 @@ generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callN
 
 
       /********* Step 3: Check iTable entries. *********/
-      // TODO: Check if it is better to put this instructions OOL!
       // jump here if no itable match was found!
       cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, callNode, noMatchLabel, cursor);
 
@@ -2261,33 +2256,28 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          TR::RegisterDependencyConditions * preDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(
             dependencies->getPreConditions(), NULL, dependencies->getAddCursorForPre(), 0, cg());
 
-         // Make a copy of input deps, but add on 3 new slots.
+         // Make a copy of input deps, but add on 5 new slots.
          TR::RegisterDependencyConditions * postDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(dependencies, 0, 5, cg());
-         postDeps->setAddCursorForPre(0);        // Ignore all pre-deps that were copied.
+         postDeps->setAddCursorForPre(0);                     // Ignore all pre-deps that were copied.
          postDeps->setNumPreConditions(0, trMemory());        // Ignore all pre-deps that were copied.
 
-         // Check the thisChild to see if anyone uses this object after the call (if not, we won't add it to post Deps)
-         // TODO: make sure it is necessary. Code works without it.
+         // Check the thisChild to see if anyone uses this object after the call (if not, we won't add it to post Deps).
          if (callNode->getChild(callNode->getFirstArgumentIndex())->getReferenceCount() > 0)
             postDeps->addPostCondition(RegThis, TR::RealRegister::AssignAny);
          // Add this reg to post deps to ensure no reg motion
-         // TODO: make sure it is necessary. Code works without it.
          postDeps->addPostConditionIfNotAlreadyInserted(vftReg,  TR::RealRegister::AssignAny);
 
          cursor = generateRILInstruction(cg(), TR::InstOpCode::LARL, callNode, RegRA, returnLocationLabel, cursor);
+
          // We need a dummy label to hook dependencies.
-         // TODO: Code does not work without this but only with my changes! Why?
          cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::label, callNode, paramSetupDummyLabel, preDeps, cursor);
 
          cursor = generateLastITableAndITableInstructions(cg(), callNode, methodSymRef, vftReg, RegEP, NULL, vTableIndexRegister, postDeps, cursor);
 
          cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, RegEP, ifcSnippet, cursor, cg());
-         // TODO: Maybe we can jump directly from lastITable if not match!
+         
          cursor = generateS390RegInstruction(cg(), TR::InstOpCode::BCR, callNode, RegEP, cursor);
          ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BCR);
-         // TODO: remove this if has no use!
-         cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::dd, callNode,
-            ifcSnippet->getDataConstantSnippet()->getSnippetLabel());
 
          // Added NOP so that the pattern matching code in jit2itrg icallVMprJavaSendPatchupVirtual
          cursor = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, callNode, cg());
