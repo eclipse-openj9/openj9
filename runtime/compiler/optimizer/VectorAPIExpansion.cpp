@@ -32,6 +32,7 @@
 #include "env/VMAccessCriticalSection.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "optimizer/VectorAPIExpansion.hpp"
 #include "optimizer/TransformUtil.hpp"
