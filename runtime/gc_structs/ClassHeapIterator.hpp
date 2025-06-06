@@ -40,12 +40,14 @@
  */
 class GC_ClassHeapIterator
 {
-	J9Class *_scanPtr;
+	J9ClassSegmentWalkState _state;
 
 public:
-	GC_ClassHeapIterator(J9JavaVM *javaVM, J9MemorySegment *memorySegment) :
-		_scanPtr(*((J9Class **)memorySegment->heapBase))
-	{};
+	GC_ClassHeapIterator(J9JavaVM *javaVM, J9MemorySegment *memorySegment)
+	{
+		_state.startClass = *((J9Class **)memorySegment->heapBase);
+		_state.vm = javaVM;
+	}
 
 	J9Class *nextClass();
 };

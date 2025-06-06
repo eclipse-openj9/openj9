@@ -4940,7 +4940,9 @@ internalError:
 			J9ClassWalkState classWalkState;
 			J9Class* clazz = allClassesStartDo(&classWalkState, _vm, classLoaderStruct);
 			while (NULL != clazz) {
-				J9VMJAVALANGCLASS_SET_CLASSLOADER(_currentThread, clazz->classObject, classLoaderObject);
+				if (J9_ARE_NO_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
+					J9VMJAVALANGCLASS_SET_CLASSLOADER(_currentThread, clazz->classObject, classLoaderObject);
+				}
 				clazz = allClassesNextDo(&classWalkState);
 			}
 			allClassesEndDo(&classWalkState);

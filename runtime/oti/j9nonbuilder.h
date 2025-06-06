@@ -98,6 +98,7 @@
 #define J9ClassNeedToPruneMemberNames 0x1000000
 #define J9ClassArrayIsNullRestricted 0x2000000
 #define J9ClassIsLoadedFromSnapshot 0x4000000
+#define J9ClassIsFrozen 0x8000000
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 
@@ -1798,6 +1799,11 @@ typedef struct J9ClassWalkState {
 	U_8* heapPtr;
 	struct J9ClassLoader* classLoader;
 } J9ClassWalkState;
+
+typedef struct J9ClassSegmentWalkState {
+	struct J9Class *startClass;
+	struct J9JavaVM *vm;
+} J9ClassSegmentWalkState;
 
 typedef struct J9DbgStringInternTable {
 	struct J9JavaVM* vm;
@@ -4989,6 +4995,7 @@ typedef struct J9InternalVMFunctions {
 	UDATA  ( *hashClassTableAtPut)(struct J9VMThread *vmThread, struct J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength, struct J9Class *value) ;
 	UDATA  ( *hashClassTableDelete)(struct J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength) ;
 	void  ( *hashClassTableReplace)(struct J9VMThread* vmThread, struct J9ClassLoader *classLoader, struct J9Class *originalClass, struct J9Class *replacementClass) ;
+	struct J9Class *(*segmentIteratorNextClass)(struct J9ClassSegmentWalkState *state);
 	struct J9ObjectMonitor *  ( *monitorTableAt)(struct J9VMThread* vmStruct, j9object_t object) ;
 	struct J9VMThread*  ( *allocateVMThread)(struct J9JavaVM *vm, omrthread_t osThread, UDATA privateFlags, void *memorySpace, J9Object *threadObject) ;
 	void  ( *deallocateVMThread)(struct J9VMThread * vmThread, UDATA decrementZombieCount, UDATA sendThreadDestroyEvent) ;
