@@ -5882,56 +5882,6 @@ TR_J9VMBase::getSupportsRecognizedMethods()
    return true;
    }
 
-
-int32_t
-TR_J9VMBase::getMaxCallGraphCallCount()
-   {
-   TR_IProfiler *profiler = getIProfiler();
-
-   if (!profiler)
-      return -1;
-
-   return profiler->getMaxCallCount();
-   }
-
-int32_t
-TR_J9VMBase::getIProfilerCallCount(TR_OpaqueMethodBlock *caller, int32_t bcIndex, TR::Compilation * comp)
-   {
-   TR_IProfiler *profiler = getIProfiler();
-   if (profiler)
-      return profiler->getCallCount(caller, bcIndex, comp);
-
-   return -1;
-   }
-
-int32_t
-TR_J9VMBase::getIProfilerCallCount(TR_OpaqueMethodBlock *callee, TR_OpaqueMethodBlock *caller, int32_t bcIndex, TR::Compilation * comp)
-   {
-   TR_IProfiler *profiler = getIProfiler();
-   if (profiler)
-      return profiler->getCallCount(callee, caller, bcIndex, comp);
-
-   return -1;
-   }
-
-int32_t
-TR_J9VMBase::getIProfilerCallCount(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp)
-   {
-   TR_IProfiler *profiler = getIProfiler();
-   if (profiler)
-      return profiler->getCallCount(bcInfo, comp);
-
-   return 0;
-   }
-
-void
-TR_J9VMBase::setIProfilerCallCount(TR_OpaqueMethodBlock *caller, int32_t bcIndex, int32_t count, TR::Compilation * comp)
-   {
-   TR_IProfiler *profiler = getIProfiler();
-   if (profiler)
-      profiler->setCallCount(caller, bcIndex, count, comp);
-   }
-
 bool
 TR_J9VMBase::isCallGraphProfilingEnabled()
    {

@@ -268,8 +268,6 @@ enum MessageType : uint16_t
    // for JITServerIProfiler
    IProfiler_profilingSample,
    IProfiler_searchForMethodSample,
-   IProfiler_getMaxCallCount,
-   IProfiler_setCallCount,
 
    Recompilation_getJittedBodyInfoFromPC,
 

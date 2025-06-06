@@ -2721,24 +2721,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          handler_IProfiler_profilingSample(client, fe, comp);
          }
          break;
-      case MessageType::IProfiler_getMaxCallCount:
-         {
-         TR_IProfiler *iProfiler = fe->getIProfiler();
-         client->write(response, iProfiler->getMaxCallCount());
-         }
-         break;
-      case MessageType::IProfiler_setCallCount:
-         {
-         auto recv = client->getRecvData<TR_OpaqueMethodBlock*, int32_t, int32_t>();
-         auto method = std::get<0>(recv);
-         auto bcIndex = std::get<1>(recv);
-         auto count = std::get<2>(recv);
-         TR_IProfiler * iProfiler = fe->getIProfiler();
-         iProfiler->setCallCount(method, bcIndex, count, comp);
-
-         client->write(response, TR::CompilationInfo::isCompiled((J9Method *)method));
-         }
-         break;
       case MessageType::Recompilation_getJittedBodyInfoFromPC:
          {
          void *startPC = std::get<0>(client->getRecvData<void *>());

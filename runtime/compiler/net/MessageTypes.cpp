@@ -247,8 +247,6 @@ const char *messageNames[] =
    "CHTable_clearReservable",
    "IProfiler_profilingSample",
    "IProfiler_searchForMethodSample",
-   "IProfiler_getMaxCallCount",
-   "IProfiler_setCallCount",
    "Recompilation_getJittedBodyInfoFromPC",
    "KnownObjectTable_getOrCreateIndex",
    "KnownObjectTable_getOrCreateIndexAt",

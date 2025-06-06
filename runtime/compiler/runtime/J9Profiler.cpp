@@ -943,89 +943,11 @@ TR_ValueProfileInfoManager::getValueInfo(TR_ByteCodeInfo &bcInfo, TR::Compilatio
    return info;
    }
 
-int32_t
-TR_ValueProfileInfoManager::getCallGraphProfilingCount(TR_OpaqueMethodBlock * method, int32_t byteCodeIndex, TR::Compilation * comp)
-   {
-   // the call count information is stored in the interpreter profiler
-   // persistent database
-   return comp->fej9()->getIProfilerCallCount(method, byteCodeIndex, comp);
-   }
-
-int32_t
-TR_ValueProfileInfoManager::getCallGraphProfilingCount(TR_OpaqueMethodBlock *calleeMethod, TR_OpaqueMethodBlock * method, int32_t byteCodeIndex, TR::Compilation * comp)
-   {
-   // the call count information is stored in the interpreter profiler
-   // persistent database
-   return comp->fej9()->getIProfilerCallCount(calleeMethod, method, byteCodeIndex, comp);
-   }
-
-int32_t
-TR_ValueProfileInfoManager::getCallGraphProfilingCount(TR::Node *node, TR::Compilation *comp)
-   {
-   return comp->fej9()->getIProfilerCallCount(node->getByteCodeInfo(), comp);
-   }
-
-bool
-TR_ValueProfileInfoManager::isColdCall(TR_OpaqueMethodBlock *method, int32_t byteCodeIndex, TR::Compilation *comp)
-   {
-   return (getCallGraphProfilingCount(method, byteCodeIndex, comp) < (comp->getFlowGraph()->getLowFrequency()));
-   }
-
-bool
-TR_ValueProfileInfoManager::isColdCall(TR_OpaqueMethodBlock *calleeMethod, TR_OpaqueMethodBlock *method, int32_t byteCodeIndex, TR::Compilation *comp)
-   {
-   return (getCallGraphProfilingCount(calleeMethod, method, byteCodeIndex, comp) < (comp->getFlowGraph()->getLowFrequency()));
-   }
-
-bool
-TR_ValueProfileInfoManager::isColdCall(TR::Node* node, TR::Compilation *comp)
-   {
-   return (comp->fej9()->getIProfilerCallCount(node->getByteCodeInfo(), comp) < (comp->getFlowGraph()->getLowFrequency()));
-   }
-
-bool
-TR_ValueProfileInfoManager::isWarmCall(TR::Node* node, TR::Compilation *comp)
-   {
-   return (comp->fej9()->getIProfilerCallCount(node->getByteCodeInfo(), comp) < (comp->getFlowGraph()->getLowFrequency()<<1));
-   }
-
-bool
-TR_ValueProfileInfoManager::isHotCall(TR::Node* node, TR::Compilation *comp)
-   {
-   int32_t maxCallCount = comp->fej9()->getMaxCallGraphCallCount();
-
-   // if the maximum call count is very low then don't bother
-   if (maxCallCount < (comp->getFlowGraph()->getLowFrequency()<<1))
-      return false;
-
-   int32_t currentCallCount = comp->fej9()->getIProfilerCallCount(node->getByteCodeInfo(), comp);
-   float ratio = (float)currentCallCount/(float)maxCallCount;
-
-   // if the current call count is within 80% of the maximum call count in the program
-   // it's hot and help out inliner to boost its inlining priority
-   return (ratio >= 0.8f);
-   }
 
 float
 TR_ValueProfileInfoManager::getAdjustedInliningWeight(TR::Node *callNode, int32_t weight, TR::Compilation *comp)
    {
-   if (!isCallGraphProfilingEnabled(comp))
-      return (float)weight;
-
-   float callGraphAdjustedWeight = (float)weight;
-   int32_t callGraphWeight = getCallGraphProfilingCount(callNode, comp);
-
-   if (isWarmCall(callNode, comp))
-      callGraphAdjustedWeight = 5000.0f;
-   else if (isHotCall(callNode, comp))
-      {
-      if (weight < 0)
-         callGraphAdjustedWeight = ((float)weight)*1.5f;
-      else
-         callGraphAdjustedWeight = ((float)weight)/1.5f;
-      }
-
-   return callGraphAdjustedWeight;
+   return (float)weight;
    }
 
 bool
@@ -1059,31 +981,6 @@ TR_ValueProfileInfoManager::isCallGraphProfilingEnabled(TR::Compilation *comp)
       }
 
    return comp->fej9()->isCallGraphProfilingEnabled();
-   }
-
-void
-TR_ValueProfileInfoManager::updateCallGraphProfilingCount(
-      TR::Block *block,
-      TR_OpaqueMethodBlock *method,
-      int32_t byteCodeIndex,
-      TR::Compilation *comp)
-   {
-
-   if(comp->getMethodHotness() > hot)  // don't update using jit profiling info
-      return;
-
-   // Cannot use JIT profiling info on dummy blocks from ECS.
-   int32_t currentBlockFreq = 0;
-
-   // if we don't have proper JIT profiling info get it using interpreter profiler
-   // set frequency
-   //if (currentBlockFreq <= 0)
-   currentBlockFreq = block->getFrequency();
-
-   if (currentBlockFreq > 0)
-      {
-      comp->fej9()->setIProfilerCallCount(method, byteCodeIndex, currentBlockFreq, comp);
-      }
    }
 
 float

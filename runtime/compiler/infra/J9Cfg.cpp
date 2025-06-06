@@ -887,9 +887,6 @@ J9::CFG::setBlockFrequenciesBasedOnInterpreterProfiler()
 
       if (temp->asBlock()->getEntry() && initialCallScanFreq < 0)
          {
-         int32_t methodScanFreq = scanForFrequencyOnSimpleMethod(temp->asBlock()->getEntry(), temp->asBlock()->getExit());
-         if (methodScanFreq > 0)
-            initialCallScanFreq = methodScanFreq;
          inlinedSiteIndex = temp->asBlock()->getEntry()->getNode()->getInlinedSiteIndex();
          methodScanEntry = temp->asBlock()->getEntry();
          }
@@ -1310,9 +1307,6 @@ J9::CFG::computeInitialBlockFrequencyBasedOnExternalProfiler(TR::Compilation *co
 
       if (temp->asBlock()->getEntry() && initialCallScanFreq < 0)
          {
-         int32_t methodScanFreq = scanForFrequencyOnSimpleMethod(temp->asBlock()->getEntry(), temp->asBlock()->getExit());
-         if (methodScanFreq > 0)
-            initialCallScanFreq = methodScanFreq;
          inlinedSiteIndex = temp->asBlock()->getEntry()->getNode()->getInlinedSiteIndex();
          methodScanEntry = temp->asBlock()->getEntry();
          }
@@ -1538,49 +1532,6 @@ J9::CFG::setBlockFrequency(TR::CFGNode *node, int32_t frequency, bool addFrequen
       }
    return;
    }
-
-
-// We currently don't handle well straight line methods without branches
-// when using interpreter profiler. If there are no branches or calls
-// we don't have a frequency to set. The function below tries to find any
-// possible interpreter profiling information to continue on.
-int32_t
-J9::CFG::scanForFrequencyOnSimpleMethod(TR::TreeTop *tt, TR::TreeTop *endTT)
-   {
-   if (comp()->getOption(TR_TraceBFGeneration))
-      traceMsg(comp(), "Starting method scan...\n");
-   for (; tt && tt!=endTT; tt = tt->getNextTreeTop())
-      {
-      if (!tt->getNode()) continue;
-
-      TR::Node *node = tt->getNode();
-
-      if (node->getOpCode().isTreeTop() && node->getNumChildren()>0 && node->getFirstChild()->getOpCode().isCall())
-         node = node->getFirstChild();
-
-      if (comp()->getOption(TR_TraceBFGeneration))
-         traceMsg(comp(), "Scanning node %p, isBranch = %d, isCall = %d, isVirtualCall =%d\n",
-            node, node->getOpCode().isBranch(),
-            node->getOpCode().isCall(), node->getOpCode().isCallIndirect());
-
-      if (node->getOpCode().isBranch()) return -1;
-
-      if (node->getOpCode().isCallIndirect())
-         {
-         int32_t newFrequency = comp()->fej9()->getIProfilerCallCount(node->getByteCodeInfo(), comp());
-
-         if (newFrequency >0)
-            {
-            if (comp()->getOption(TR_TraceBFGeneration))
-               traceMsg(comp(), "Method scan found frequency %d\n", newFrequency);
-            return newFrequency;
-            }
-         }
-      }
-
-   return -1;
-   }
-
 
 void
 J9::CFG::getBranchCountersFromProfilingData(TR::Node *node, TR::Block *block, int32_t *taken, int32_t *notTaken)

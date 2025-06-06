@@ -91,7 +91,6 @@ public:
    void getInterpreterProfilerBranchCountersOnDoubleton(TR::CFGNode *cfgNode, int32_t *taken, int32_t *nottaken);
    void setSwitchEdgeFrequenciesOnNode(TR::CFGNode *node, TR::Compilation *comp);
    void setBlockFrequency(TR::CFGNode *node, int32_t frequency, bool addFrequency = false);
-   int32_t scanForFrequencyOnSimpleMethod(TR::TreeTop *tt, TR::TreeTop *endTT);
 
    bool hasBranchProfilingData() { return _externalProfiler ? true : false; }
    void getBranchCountersFromProfilingData(TR::Node *node, TR::Block *block, int32_t *taken, int32_t *notTaken);
