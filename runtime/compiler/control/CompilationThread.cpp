@@ -9230,6 +9230,9 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             compiler->setStream(that->_methodBeingCompiled->_stream);
             auto compInfoPTRemote = static_cast<TR::CompilationInfoPerThreadRemote *>(that);
             compiler->setAOTCacheStore(compInfoPTRemote->isAOTCacheStore());
+
+            // Only use the default code cache on the server
+            compiler->getOptions()->setCodeCacheKind(TR::CodeCacheKind::DEFAULT_CC);
             }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 

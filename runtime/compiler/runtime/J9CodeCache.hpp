@@ -59,14 +59,16 @@ public:
     * @param[in] manager : the TR::CodeCacheManager
     * @param[in] codeCacheSegment : the code cache memory segment that has been allocated
     * @param[in] allocatedCodeCacheSizeInBytes : the size (in bytes) of the allocated code cache
+    * @param[in] kind : the kind of this code cache
     *
     * @return true on a successful initialization; false otherwise.
     */
    bool                       initialize(TR::CodeCacheManager *manager,
                                          TR::CodeCacheMemorySegment *codeCacheSegment,
-                                         size_t allocatedCodeCacheSizeInBytes);
+                                         size_t allocatedCodeCacheSizeInBytes,
+                                         TR::CodeCacheKind kind);
 
-   static TR::CodeCache *     allocate(TR::CodeCacheManager *cacheManager, size_t segmentSize, int32_t reservingCompThreadID);
+   static TR::CodeCache *     allocate(TR::CodeCacheManager *cacheManager, size_t segmentSize, int32_t reservingCompThreadID, TR::CodeCacheKind kind);
 
    // Code Cache Reclamation
    void                       addFreeBlock(OMR::FaintCacheBlock *block);
