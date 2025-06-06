@@ -2959,17 +2959,17 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
    TR_ASSERT_FATAL(broadcastType == MODE_BROADCAST || broadcastType == MODE_BITS_COERCED_LONG_TO_MASK,
                    "Unexpected broadcast type in node %p\n", node);
 
-   bool mask = (broadcastType == MODE_BITS_COERCED_LONG_TO_MASK);
+   bool longToMask = (broadcastType == MODE_BITS_COERCED_LONG_TO_MASK);
 
    if (mode == checkScalarization)
-      return mask ? NULL : node;
+      return longToMask ? NULL : node;
 
    if (mode == checkVectorization)
       {
-      if (objectType == Mask)
-         return NULL; // TODO: support Mask
+      if (objectType == Mask && !longToMask)
+         return NULL; // TODO: support MODE_BROADCAST for masks
 
-      TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(mask ? TR::mLongBitsToMask : TR::vsplats,
+      TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(longToMask ? TR::mLongBitsToMask : TR::vsplats,
                                                                     TR::DataType::createVectorType(elementType, vectorLength));
 
       if (!isOpCodeImplemented(comp, splatsOpCode))
@@ -2987,8 +2987,8 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
    anchorOldChildren(opt, treeTop, node);
 
    TR::Node *newNode;
+   TR::DataType type = longToMask ? TR::Int64 : elementType;
 
-   int32_t type = mask ? TR::Int64 : elementType;
    switch (type) {
       case TR::Float:
           newNode = TR::Node::create(node, TR::ibits2f, 1, TR::Node::create(node, TR::l2i, 1, valueToBroadcast));
@@ -3036,7 +3036,7 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
       {
       node->setAndIncChild(0, newNode);
       node->setNumChildren(1);
-      TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(mask ? TR::mLongBitsToMask : TR::vsplats,
+      TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(longToMask ? TR::mLongBitsToMask : TR::vsplats,
                                                                     TR::DataType::createVectorType(elementType, vectorLength));
 
       TR::Node::recreate(node, splatsOpCode);
