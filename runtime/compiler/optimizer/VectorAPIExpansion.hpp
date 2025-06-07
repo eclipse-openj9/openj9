@@ -217,12 +217,12 @@ class TR_VectorAPIExpansion : public TR::Optimization
       {
       Unknown = 0,
       Vector,
+      Mask,
+      Shuffle,
       Species,
       ElementType,
       NumLanes,
-      Mask,
       Scalar,
-      Shuffle,
       Invalid
       };
 
@@ -248,7 +248,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
       };
 
   static const char *vapiOpCodeTypeNames[];
-
+  static const char *vapiElementTypeNames[];
 
   /** \brief
    *  Entry of the method handlers table
@@ -258,6 +258,10 @@ class TR_VectorAPIExpansion : public TR::Optimization
       TR::Node * (* _methodHandler)(TR_VectorAPIExpansion *, TR::TreeTop *, TR::Node *, TR::DataType, TR::VectorLength,
                                     vapiObjType, int32_t, handlerMode);
       vapiObjType  _returnType;
+
+      int32_t      _firstClassIndex;
+      int32_t      _secondClassIndex;
+
       int32_t      _elementTypeIndex;
       int32_t      _numLanesIndex;
       int32_t      _firstOperandIndex;
@@ -344,9 +348,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
 
    TR_Array<vectorAliasTableElement> _aliasTable;
    TR_Array<nodeTableElement> _nodeTable;
-
-   TR_OpaqueClassBlock *_classByte128Vector;
-   TR_OpaqueClassBlock *_classByte128Mask;
+   TR_Array<TR_Array<TR_Array<TR_OpaqueClassBlock *> *> *> _boxingClasses;
 
    static methodTableEntry methodTable[];
 
@@ -455,19 +457,34 @@ class TR_VectorAPIExpansion : public TR::Optimization
    bool isVectorizedOrScalarizedNode(TR::Node *node, TR::DataType &elementType, int32_t &bitsLength,
                                      vapiObjType &objectType, bool &scalarized);
 
-
    /** \brief
-    *     Creates and caches Vector and Mask classes for the given element type and bit length
+    *     Finds original Vector or Mask class for a node
     *
+    *  \param node
+    *     Node
     *
+    *  \param methodElementType
+    *     element data type
+    *
+    *  \param bitsLength
+    *     vector length in bits
+    *
+    *  \param objectType
+    *     Object type
+    *
+    *  \return
+    *     Class block
     */
-   void createClassesForBoxing(TR_ResolvedMethod *owningMethod, TR::DataType methodElementType, vec_sz_t bitsLength);
+   TR_OpaqueClassBlock *getClassForBoxing(TR::Node *node, TR::DataType methodElementType, vec_sz_t bitsLength, vapiObjType objectType);
 
    /** \brief
     *     Depending on the checkBoxing parameter checks if boxing of node supported
     *     or performs boxing
+    *
+    *  \return
+    *     true if boxing was successful, and false otherthise
     */
-   void boxChild(TR::TreeTop *treeTop, TR::Node *node, uint32_t i, bool checkBoxing);
+   bool boxChild(TR::TreeTop *treeTop, TR::Node *node, uint32_t i, bool checkBoxing);
 
 
    /** \brief
@@ -548,6 +565,31 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *     Index of a child node that contains element type
    */
    int32_t getElementTypeIndex(TR::MethodSymbol *methodSymbol);
+
+  /** \brief
+   *     Returns index of a child node that contains first Class object
+   *     passed to intrinsic
+   *
+   *  \param methodSymbol
+   *     Method symbol
+   *
+   *  \return
+   *     Index of a child node that contains first Class object
+   */
+   int32_t getFirstClassIndex(TR::MethodSymbol *methodSymbol);
+
+  /** \brief
+   *     Returns index of a child node that contains second Class object
+   *     passed to intrinsic
+   *
+   *  \param methodSymbol
+   *     Method symbol
+   *
+   *  \return
+   *     Index of a child node that contains second Class object
+   */
+   int32_t getSecondClassIndex(TR::MethodSymbol *methodSymbol);
+
 
   /** \brief
    *     Returns index of a child node that contains number of lanes
@@ -725,7 +767,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *  \param classNode
    *     Node that loads \c java/lang/Class
    */
-   static vapiObjType getObjectTypeFromClassNode(TR::Compilation *comp, TR::Node *classNode);
+   vapiObjType getObjectTypeFromClassNode(TR::Compilation *comp, TR::Node *classNode);
 
   /** \brief
    *     Maps object of type \c java/lang/Class (e.g., \c java/lang/Float.TYPE)
@@ -800,10 +842,10 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *     Vector API opcode enum
    *
    *  \param elementType
-   *     Element type
+   *     Result element type
    *
    *  \param vectorLength
-   *     return scalar opcode if vectorLength == 0 and vector opcode otherwise
+   *     Result vector length
    *
    *  \param objectType
    *     Vector API object type (Vector, Mask, Shuffle, etc.)
@@ -814,11 +856,11 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *  \param withMask
    *     true if mask is present, false otherwise
    *
-   *  \param resultElementType
-   *     Result element type
+   *  \param sourceElementType
+   *     Source element type
    *
-   *  \param resultVectorLength
-   *     Result vector length
+   *  \param sourceVectorLength
+   *     Source vector length
    *
    *  \return
    *     scalar TR::IL opcode if scalar is true, otherwise vector opcode
@@ -826,8 +868,8 @@ class TR_VectorAPIExpansion : public TR::Optimization
    static TR::ILOpCodes ILOpcodeFromVectorAPIOpcode(TR::Compilation *comp, int32_t vectorOpCode, TR::DataType elementType,
                                                     TR::VectorLength vectorLength, vapiObjType objectType,
                                                     vapiOpCodeType opCodeType, bool withMask,
-                                                    TR::DataType resultElementType = TR::NoType,
-                                                    TR::VectorLength resultVectorLength = TR::NoVectorLength);
+                                                    TR::DataType sourceElementType = TR::NoType,
+                                                    TR::VectorLength sourceVectorLength = TR::NoVectorLength);
 
   /** \brief
    *    For the node's symbol reference, creates and records(if it does not exist yet)
@@ -1678,7 +1720,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
          {
          bool twoTypes = opCode.isTwoTypeVectorOpCode();
 
-         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "%s%s%s%s is not implemented in %s\n",
+         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "%s%s%s%s is not implemented in %s",
                                   opCode.getName(),
                                   twoTypes? TR::DataType::getName(opCode.getVectorSourceDataType()) : "",
                                   twoTypes? "_" : "",
@@ -1715,7 +1757,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
       {
       if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
          {
-         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "IL is missing for vectorAPIOpCode %s %d on %s %s in %s\n",
+         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "IL is missing for vectorAPIOpCode %s %d on %s %s in %s",
                                   vapiOpCodeTypeNames[opCodeType],
                                   vectorAPIOpCode,
                                   vapiObjTypeNames[objectType],
