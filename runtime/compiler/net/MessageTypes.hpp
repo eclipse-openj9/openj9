@@ -202,6 +202,7 @@ enum MessageType : uint16_t
    VM_getVMIndexOffset,
    VM_inSnapshotMode,
    VM_isInvokeCacheEntryAnArray,
+   VM_getVarHandleAccessDescriptorMode,
    VM_getMethodHandleTableEntryIndex,
    VM_getLayoutVarHandle,
 

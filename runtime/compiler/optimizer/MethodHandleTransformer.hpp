@@ -147,6 +147,18 @@ class TR_MethodHandleTransformer : public TR::Optimization
     */
    void process_java_lang_invoke_Invokers_checkCustomized(TR::TreeTop* tt, TR::Node* node);
 
+   /**
+    * \brief
+    *    Eliminates calls to Invokers.checkVarHandleGenericType when its VarHandle and AccessDescriptor
+    *    args are known objects
+    *
+    * \param tt
+    *    The treetop of the call node
+    * \param node
+    *    The call node representing the call to java/lang/invoke/Invokers.checkVarHandleGenericType
+    */
+   void process_java_lang_invoke_Invokers_checkVarHandleGenericType(TR::TreeTop* tt, TR::Node* node);
+
    private:
    int32_t _numLocals; // Number of parms, autos and temps
    ObjectInfo * _currentObjectInfo;  // Object info for current block being processed
