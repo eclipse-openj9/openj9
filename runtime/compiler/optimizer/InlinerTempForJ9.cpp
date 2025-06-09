@@ -6096,18 +6096,17 @@ TR_InlinerFailureReason
       {
       if (rm == TR::java_lang_StringCoding_countPositives)
          {
-         // countPositives can only be accelerated if target is 64 bit, arrays are contiguous, and offheap allocation is disabled, so inline it if not
-         // Even if target is 64 bit, arrays are contiguous, and offheap allocation is disabled,
-         // a performance anomaly occurs when countPositives is inlined into hasNegatives, causing it to perform faster than accelerated implementation
+         // countPositives can only be accelerated if target is 64 bit and arrays are contiguous, so inline it if not
+         // Even if target is 64 bit and arrays are contiguous, a performance anomaly occurs when countPositives is inlined into hasNegatives,
+         // causing it to perform faster than accelerated implementation
          // For that reason, countPositives will be inlined into hasNegatives no matter what
          if (!comp->target().is64Bit()
             || TR::Compiler->om.canGenerateArraylets()
-            || TR::Compiler->om.isOffHeapAllocationEnabled()
             || callsite->_callerResolvedMethod->getRecognizedMethod() == TR::java_lang_StringCoding_hasNegatives)
             {
             return InlineableTarget;
             }
-         // If target is 64 bit, arrays are contiguous, offheap allocation is disabled, and caller is not hasNegatives,
+         // If target is 64 bit, arrays are contiguous, and caller is not hasNegatives,
          // don't inline countPositives and accelerate it instead
          else
             {
@@ -6120,8 +6119,8 @@ TR_InlinerFailureReason
          // Take advantage of performance anomaly mentioned above by inlining both countPositives (which only exists for JDK 19+) and hasNegatives
          return InlineableTarget;
 #else
-         // hasNegatives can only be accelerated if target is 64 bit, arrays are contiguous, and offheap allocation is disabled, so inline it if not
-         if (!comp->target().is64Bit() || TR::Compiler->om.canGenerateArraylets() || TR::Compiler->om.isOffHeapAllocationEnabled())
+         // hasNegatives can only be accelerated if target is 64 bit and arrays are contiguous, so inline it if not
+         if (!comp->target().is64Bit() || TR::Compiler->om.canGenerateArraylets())
             return InlineableTarget;
          else
             return DontInline_Callee;

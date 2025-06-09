@@ -10587,7 +10587,7 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
    {
    // Arguments to hasNegatives or countPositives
    // Byte array
-   TR::Register *bufReg = cg->evaluate(node->getChild(0));
+   TR::Register *bufReg = cg->longClobberEvaluate(node->getChild(0));
    // Offset (i.e. index to begin counting from)
    TR::Register *offsetReg = cg->evaluate(node->getChild(1));
    // Length of byte array
@@ -10595,6 +10595,9 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
 
    // Store a boolean indicating whether we are generating code for hasNegatives or countPositives
    bool isHasNegatives = recognizedMethod == TR::java_lang_StringCoding_hasNegatives;
+
+   // The offset of the start of array data
+   int32_t offsetToDataElements = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
 
    // A key part of the main loop of this algorithm is the pmovmskb instruction,
    // which extracts the sign bits from a source register and collects them into a destination register
@@ -10667,6 +10670,18 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
 
    generateLabelInstruction(TR::InstOpCode::label, node, begLabel, cg);
 
+   // If offheap is enabled, we will update bufReg to point to the actual start of the array data
+   // and set offsetToDataElements to zero
+#ifdef J9VM_GC_SPARSE_HEAP_ALLOCATION
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      {
+      generateRegMemInstruction(TR::InstOpCode::L8RegMem, node, bufReg, generateX86MemoryReference(bufReg, cg->comp()->fej9()->getOffsetOfContiguousDataAddrField(), cg), cg);
+
+      // We'll be loading first data element address from array header so no need for offset
+      offsetToDataElements = 0;
+      }
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
+
    // index = offset
    generateRegRegInstruction(TR::InstOpCode::MOV4RegReg, node, indexReg, offsetReg, cg);
 
@@ -10698,7 +10713,7 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
    if (useVectorInstructions)
       {
       // Load 16 bytes from address [buf + index]
-      generateRegMemInstruction(TR::InstOpCode::MOVDQURegMem, node, xmmChunkReg, generateX86MemoryReference(bufReg, indexReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
+      generateRegMemInstruction(TR::InstOpCode::MOVDQURegMem, node, xmmChunkReg, generateX86MemoryReference(bufReg, indexReg, 0, offsetToDataElements, cg), cg);
 
       // Extract bitmask of sign bits
       generateRegRegInstruction(TR::InstOpCode::PMOVMSKB4RegReg, node, maskReg, xmmChunkReg, cg, pmovmskbEncoding);
@@ -10711,7 +10726,7 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
    else
       {
       // Load 8 bytes from address [buf + index]
-      generateRegMemInstruction(TR::InstOpCode::L8RegMem, node, chunkReg, generateX86MemoryReference(bufReg, indexReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
+      generateRegMemInstruction(TR::InstOpCode::L8RegMem, node, chunkReg, generateX86MemoryReference(bufReg, indexReg, 0, offsetToDataElements, cg), cg);
 
       // Check if any negative values exist
       generateRegRegInstruction(TR::InstOpCode::TEST8RegReg, node, chunkReg, maskReg, cg);
@@ -10794,9 +10809,9 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
 
    // Case in which there are one or two residual bytes
    // Load the byte at address [buf + index] into the chunk register
-   generateRegMemInstruction(TR::InstOpCode::L1RegMem, node, chunkReg, generateX86MemoryReference(bufReg, indexReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
+   generateRegMemInstruction(TR::InstOpCode::L1RegMem, node, chunkReg, generateX86MemoryReference(bufReg, indexReg, 0, offsetToDataElements, cg), cg);
    // OR the second byte (which is the same byte again in the 1 byte case)
-   generateRegMemInstruction(TR::InstOpCode::OR1RegMem, node, chunkReg, generateX86MemoryReference(bufReg, limitReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes() - 1, cg), cg);
+   generateRegMemInstruction(TR::InstOpCode::OR1RegMem, node, chunkReg, generateX86MemoryReference(bufReg, limitReg, 0, offsetToDataElements - 1, cg), cg);
 
    generateLabelInstruction(TR::InstOpCode::JMP4, node, residualTestLabel, cg);
 
@@ -10809,9 +10824,9 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
    generateLabelInstruction(TR::InstOpCode::JG4, node, fiveOrMoreBytesLabel, cg);
 
    // Load the first two bytes at address [buf + index] into the chunk register
-   generateRegMemInstruction(TR::InstOpCode::L2RegMem, node, chunkReg, generateX86MemoryReference(bufReg, indexReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
+   generateRegMemInstruction(TR::InstOpCode::L2RegMem, node, chunkReg, generateX86MemoryReference(bufReg, indexReg, 0, offsetToDataElements, cg), cg);
    // OR the second two bytes at address [buf + (limit - 2)] into the chunk register
-   generateRegMemInstruction(TR::InstOpCode::OR2RegMem, node, chunkReg, generateX86MemoryReference(bufReg, limitReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes() - 2, cg), cg);
+   generateRegMemInstruction(TR::InstOpCode::OR2RegMem, node, chunkReg, generateX86MemoryReference(bufReg, limitReg, 0, offsetToDataElements - 2, cg), cg);
 
    generateLabelInstruction(TR::InstOpCode::JMP4, node, residualTestLabel, cg);
 
@@ -10820,9 +10835,9 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
    generateLabelInstruction(TR::InstOpCode::label, node, fiveOrMoreBytesLabel, cg);
 
    // Load the first four bytes at address [buf + index] into the chunk register
-   generateRegMemInstruction(TR::InstOpCode::L4RegMem, node, chunkReg, generateX86MemoryReference(bufReg, indexReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
+   generateRegMemInstruction(TR::InstOpCode::L4RegMem, node, chunkReg, generateX86MemoryReference(bufReg, indexReg, 0, offsetToDataElements, cg), cg);
    // OR the second four bytes at address [buf + (limit - 4)] into the chunk register
-   generateRegMemInstruction(TR::InstOpCode::OR4RegMem, node, chunkReg, generateX86MemoryReference(bufReg, limitReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes() - 4, cg), cg);
+   generateRegMemInstruction(TR::InstOpCode::OR4RegMem, node, chunkReg, generateX86MemoryReference(bufReg, limitReg, 0, offsetToDataElements - 4, cg), cg);
 
    generateLabelInstruction(TR::InstOpCode::JMP4, node, residualTestLabel, cg);
 
@@ -10831,9 +10846,9 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
    generateLabelInstruction(TR::InstOpCode::label, node, nineOrMoreBytesLabel, cg);
 
    // Load the first eight bytes at address [buf + index] into the chunk register
-   generateRegMemInstruction(TR::InstOpCode::L8RegMem, node, chunkReg, generateX86MemoryReference(bufReg, indexReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
+   generateRegMemInstruction(TR::InstOpCode::L8RegMem, node, chunkReg, generateX86MemoryReference(bufReg, indexReg, 0, offsetToDataElements, cg), cg);
    // OR the second eight bytes at address [buf + (limit - 8)] into the chunk register
-   generateRegMemInstruction(TR::InstOpCode::OR8RegMem, node, chunkReg, generateX86MemoryReference(bufReg, limitReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes() - 8, cg), cg);
+   generateRegMemInstruction(TR::InstOpCode::OR8RegMem, node, chunkReg, generateX86MemoryReference(bufReg, limitReg, 0, offsetToDataElements - 8, cg), cg);
 
 
    // Examine the chunk register now that all of the residual bytes have been ORed into it
@@ -12646,7 +12661,7 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
 #endif /* JAVA_SPEC_VERSION < 19 */
       case TR::java_lang_StringCoding_countPositives:
          {
-         if (cg->comp()->target().is64Bit() && !TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.isOffHeapAllocationEnabled())
+         if (cg->comp()->target().is64Bit() && !TR::Compiler->om.canGenerateArraylets())
             {
             return inlineHasNegativesOrCountPositives(node, symbol->getRecognizedMethod(), cg);
             }
