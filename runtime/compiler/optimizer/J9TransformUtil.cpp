@@ -2178,6 +2178,9 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp,
             }
          else if (symRef->getSymbol()->isCollectedReference())
             {
+            TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
+            if (!knot)
+               return false;
             TR::KnownObjectTable::Index knotIndex = TR::KnownObjectTable::UNKNOWN;
 #if defined(J9VM_OPT_JITSERVER)
             if (isServer)
@@ -2214,7 +2217,6 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp,
 
                   if (stableArrayRank > 0)
                      {
-                     TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
                      knot->addStableArray(improvedSymRef->getKnownObjectIndex(), stableArrayRank);
                      }
                   }
