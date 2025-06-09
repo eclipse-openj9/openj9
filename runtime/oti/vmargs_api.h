@@ -120,17 +120,6 @@ IDATA
 addOptionsDefaultFile(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, char *optionsDirectory, UDATA verboseFlags);
 
 /*
- * Add implied VM argument -Xjcl:
- * This allocates memory for the options string and adds the argument to the list.
- * @param portLib port library
- * @param vmArgumentsList current list of arguments
- * @param j2seVersion java version number
- * @return 0 on success, negative value on failure
- */
-IDATA
-addXjcl(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA j2seVersion);
-
-/*
  * Add argument to set com.ibm.oti.vm.bootstrap.library.path or sun.boot.library.path
  * This allocates memory for the options string and contents of the file
  * @param portLib port library

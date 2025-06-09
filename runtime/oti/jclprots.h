@@ -763,15 +763,12 @@ extern J9_CFUNC j9object_t
 getStackTraceForThread (J9VMThread *vmThread, J9VMThread *targetThread, UDATA skipCount, j9object_t threadObject);
 
 /* J9SourceJclStandardInit*/
-jint JCL_OnUnload (J9JavaVM* vm, void* reserved);
-jint standardPreconfigure ( JavaVM *jvm);
-void
-internalInitializeJavaLangClassLoader (JNIEnv * env);
-IDATA checkJCL (J9VMThread * vmThread, U_8* dllValue, U_8* jclConfig, UDATA j9Version, UDATA jclVersion);
-jint
-completeInitialization (J9JavaVM * vm);
-jint standardInit ( J9JavaVM *vm, char* dllName);
-jint JNICALL JVM_OnUnload (JavaVM* jvm, void* reserved);
+jint JCL_OnUnload(J9JavaVM *vm, void *reserved);
+jint standardPreconfigure(JavaVM *jvm);
+void internalInitializeJavaLangClassLoader(JNIEnv *env);
+jint completeInitialization(J9JavaVM *vm);
+jint standardInit(J9JavaVM *vm, char *dllName);
+jint JNICALL JVM_OnUnload(JavaVM *jvm, void *reserved);
 
 /* J9SourceJclBPInit*/
 #if (defined(J9VM_OPT_DYNAMIC_LOAD_SUPPORT)) /* priv. proto (autogen) */

@@ -2042,20 +2042,19 @@ j9print_internal_version(J9PortLibrary *portLib)
 IDATA
 VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 {
-	J9VMDllLoadInfo *loadInfo;
+	J9VMDllLoadInfo *loadInfo = NULL;
 	IDATA returnVal = J9VMDLLMAIN_OK;
 	IDATA argIndex = -1;
 	IDATA argIndex2 = -1;
-	IDATA optionValueSize = 0;
-	char* optionValue, *optionExtra;
-	char* parseErrorOption = NULL;
-	IDATA parseError;
+	char *optionValue = NULL;
+	char *parseErrorOption = NULL;
+	IDATA parseError = 0;
 	BOOLEAN lockwordWhat = FALSE;
 	UDATA rc = 0;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
-	switch(stage) {
+	switch (stage) {
 		case PORT_LIBRARY_GUARANTEED :
 			processMemoryInterleaveOptions(vm);
 			if (OPTION_OK != (parseError = setMemoryOptionToOptElse(vm, &(vm->classLoadingMaxStack), VMOPT_XMSCL, 0, TRUE))) {
@@ -2586,25 +2585,6 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			if ((argIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XXDECOMP_COLON, NULL)) >= 0) {
 				GET_OPTION_VALUE(argIndex, ':', &optionValue);
 				vm->decompileName = optionValue;
-			}
-
-			/* Parse jcl options */
-			argIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XJCL_COLON, NULL);
-			if (argIndex >= 0) {
-				loadInfo = FIND_DLL_TABLE_ENTRY(J9_JAVA_SE_DLL_NAME);
-				/* we know there is a colon */
-				GET_OPTION_VALUE(argIndex, ':', &optionValue);
-				GET_OPTION_OPTION(argIndex, ':', ':', &optionExtra);			/* Eg. -jcl:cldc:library=foo */
-				if (NULL != optionExtra) {
-					optionValueSize = optionExtra - optionValue - 1;
-					strncpy(loadInfo->dllName, optionValue, optionValueSize);
-					loadInfo->dllName[optionValueSize] = '\0';
-				} else {
-					strncpy(loadInfo->dllName, optionValue, (DLLNAME_LEN-1));
-				}
-				vm->jclDLLName = (char *)(loadInfo->dllName);
-			} else {
-				vm->jclDLLName = J9_JAVA_SE_DLL_NAME;
 			}
 
 			/* Warm up the VM Interface */

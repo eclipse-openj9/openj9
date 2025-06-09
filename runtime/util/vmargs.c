@@ -682,35 +682,6 @@ addOptionsDefaultFile(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsL
 }
 
 IDATA
-addXjcl(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA j2seVersion)
-{
-	char *dllName = J9_JAVA_SE_DLL_NAME;
-	size_t dllNameLength = sizeof(J9_JAVA_SE_DLL_NAME);
-	size_t argumentLength = -1;
-	char *argString = NULL;
-	UDATA j2seReleaseValue = j2seVersion & J2SE_RELEASE_MASK;
-	J9JavaVMArgInfo *optArg = NULL;
-
-	PORT_ACCESS_FROM_PORT(portLib);
-#ifdef J9VM_IVE_RAW_BUILD /* J9VM_IVE_RAW_BUILD is not enabled by default */
-	Assert_Util_unreachable();
-#endif /* J9VM_IVE_RAW_BUILD */
-
-	argumentLength = sizeof(VMOPT_XJCL_COLON) + dllNameLength - 1; /* sizeof called twice, each includes the \0 */
-	argString = j9mem_allocate_memory(argumentLength, OMRMEM_CATEGORY_VM);
-	if (NULL == argString) {
-		return -1;
-	}
-	j9str_printf(argString, argumentLength, VMOPT_XJCL_COLON "%s", dllName);
-	optArg = newJavaVMArgInfo(vmArgumentsList, argString, ARG_MEMORY_ALLOCATION | CONSUMABLE_ARG);
-	if (NULL == optArg) {
-		j9mem_free_memory(argString);
-		return -1;
-	}
-	return 0;
-}
-
-IDATA
 addBootLibraryPath(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, char *propertyNameEquals, char *j9binPath, char *jrebinPath)
 {
 	char *optionsArgumentBuffer = NULL;
