@@ -126,7 +126,7 @@ class VM_JFRChunkWriter {
 private:
 	J9VMThread *_currentThread;
 	J9JavaVM *_vm;
-	BuildResult _buildResult;
+	JfrBuildResult _buildResult;
 	bool _debug;
 	J9PortLibrary *privatePortLibrary; //PORT_ACCESS_FROM...
 	bool _finalWrite;
@@ -272,7 +272,7 @@ public:
 		return _buildResult == OK;
 	}
 
-	BuildResult buildResult()
+	JfrBuildResult buildResult()
 	{
 		return _buildResult;
 	}

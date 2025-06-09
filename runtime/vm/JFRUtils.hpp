@@ -28,7 +28,7 @@
 
 #if defined(J9VM_OPT_JFR)
 
-enum BuildResult {
+enum JfrBuildResult {
 	OK,
 	OutOfMemory,
 	InternalVMError,
@@ -57,7 +57,7 @@ protected:
 
 public:
 
-	static U_64 getCurrentTimeNanos(J9PortLibrary *privatePortLibrary, BuildResult &buildResult)
+	static U_64 getCurrentTimeNanos(J9PortLibrary *privatePortLibrary, JfrBuildResult &buildResult)
 	{
 		UDATA success = 0;
 		U_64 result = (U_64) j9time_current_time_nanos(&success);
