@@ -570,14 +570,6 @@ JITServerIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
    return entry;
    }
 
-int32_t
-JITServerIProfiler::getMaxCallCount()
-   {
-   auto stream = TR::CompilationInfo::getStream();
-   stream->write(JITServer::MessageType::IProfiler_getMaxCallCount, JITServer::Void());
-   return std::get<0>(stream->read<int32_t>());
-   }
-
 void
 JITServerIProfiler::printStats()
    {
@@ -676,93 +668,6 @@ JITServerIProfiler::validateCachedIPEntry(TR_IPBytecodeHashTableEntry *entry, TR
             default:
                TR_ASSERT_FATAL(false, "Unknown type of IP info %u", clientData->ID);
             }
-         }
-      }
-   }
-
-// Direct method calls are not tracked by the IProfiler, so the optimizer will
-// actually create an IProfiler entry and insert it into the IProfiler hashtable
-// The server must send this request to the client. However, if the server has
-// already cached this bcIndex corresponding to the call and if the new count
-// is not different than the old count, the message to the client can be skipped
-void
-JITServerIProfiler::setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, int32_t count, TR::Compilation * comp)
-   {
-   uintptr_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
-   uint8_t bytecode = *((uint8_t*)(methodStart+bcIndex));
-   // The following bytecode types are tracked by IProfiler, so we
-   // don't need to artificially set a call count for them
-   if (bytecode == JBinvokevirtual ||
-       bytecode == JBinvokeinterface ||
-       bytecode == JBinvokeinterface2)
-      return;
-
-   bool sendRemoteMessage = false;
-   bool createNewEntry = false;
-   bool methodInfoPresentInPersistent = false;
-   ClientSessionData *clientData = comp->getClientData(); // Find clientSessionData
-   auto compInfoPT = (TR::CompilationInfoPerThreadRemote *)comp->fej9()->_compInfoPT;
-   if (_useCaching)
-      {
-      OMR::CriticalSection getRemoteROMClass(clientData->getROMMapMonitor());
-      bool methodInfoPresentInHeap = false;
-      // Check persistent cache first, then per-compilation cache
-      TR_IPBytecodeHashTableEntry *entry = clientData->getCachedIProfilerInfo(method, bcIndex, &methodInfoPresentInPersistent);
-      if (!methodInfoPresentInPersistent)
-         entry = compInfoPT->getCachedIProfilerInfo(method, bcIndex, &methodInfoPresentInHeap);
-
-      // Note that methodInfoPresent means that a profiled method is in the map of (J9Method *) to (IPTable_t *),
-      // it does not mean that an entry for a profiled bcIndex is cached.
-      if (methodInfoPresentInPersistent || methodInfoPresentInHeap)
-         {
-         if (entry && entry->asIPBCDataDirectCall())
-            {
-            TR_IPBCDataDirectCall *directCallEntry = entry->asIPBCDataDirectCall();
-            if (directCallEntry->getNumSamples() != count)
-               {
-               directCallEntry->setData(count); // update
-               sendRemoteMessage = true;
-               }
-            else
-               {
-               // Nothing to do because the correct data is already in place
-               }
-            }
-         else // Info for this bcIndex is missing.
-            {
-            sendRemoteMessage = true;
-            createNewEntry = true;
-            }
-         }
-      else
-         {
-         // There is no info about this method, thus just send a remote call
-         sendRemoteMessage = true;
-         }
-      }
-   else // no caching allowed
-      {
-      sendRemoteMessage = true;
-      }
-   if (sendRemoteMessage)
-      {
-      auto stream = comp->getStream();
-      stream->write(JITServer::MessageType::IProfiler_setCallCount, method, bcIndex, count);
-      auto recv = stream->read<bool>();
-      bool isCompiled = std::get<0>(recv);
-
-      if (createNewEntry)
-         {
-         // Create a new entry, add it to the cache and send a remote message as well
-         uintptr_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
-         TR_AllocationKind allocKind = methodInfoPresentInPersistent ? persistentAlloc : heapAlloc;
-         auto *directCallEntry = (TR_IPBCDataDirectCall*)comp->trMemory()->allocateMemory(sizeof(TR_IPBCDataDirectCall), allocKind, TR_Memory::IPBCDataDirectCall);
-         directCallEntry = new (directCallEntry) TR_IPBCDataDirectCall(methodStart + bcIndex);
-         directCallEntry->setData(count);
-         if (methodInfoPresentInPersistent)
-            clientData->cacheIProfilerInfo(method, bcIndex, directCallEntry, isCompiled);
-         else
-            compInfoPT->cacheIProfilerInfo(method, bcIndex, directCallEntry);
          }
       }
    }

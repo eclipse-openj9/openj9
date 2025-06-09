@@ -3404,45 +3404,6 @@ TR_IProfiler::getCGProfilingData(TR_OpaqueMethodBlock *method, uint32_t byteCode
    }
 
 void
-TR_IProfiler::setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, int32_t count, TR::Compilation * comp)
-   {
-   TR_IPBytecodeHashTableEntry *entry = profilingSample(method, bcIndex, comp, 0, true);
-   if (entry && entry->asIPBCDataDirectCall())
-      {
-      entry->setData(count);
-      if (count > _maxCallFrequency)
-         _maxCallFrequency = count;
-      }
-   }
-
-int32_t
-TR_IProfiler::getCallCount(TR_OpaqueMethodBlock *calleeMethod, TR_OpaqueMethodBlock *method, int32_t bcIndex, TR::Compilation * comp)
-   {
-   TR_IPBytecodeHashTableEntry *entry = profilingSample(method, bcIndex, comp);
-
-   if (entry && (entry->asIPBCDataDirectCall() || entry->asIPBCDataCallGraph()))
-      return entry->getNumSamples();
-
-   uint32_t weight = 0;
-   bool foundEntry = getCallerWeight(calleeMethod,method, &weight, bcIndex, comp);
-   if (foundEntry)
-      return weight;
-
-   return 0;
-   }
-
-int32_t
-TR_IProfiler::getCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, TR::Compilation * comp)
-   {
-   TR_IPBytecodeHashTableEntry *entry = profilingSample(method, bcIndex, comp);
-
-   if (entry && (entry->asIPBCDataDirectCall() || entry->asIPBCDataCallGraph()))
-      return entry->getNumSamples();
-
-   return 0;
-   }
-
-void
 TR_IProfiler::setWarmCallGraphTooBig(TR_OpaqueMethodBlock *method, int32_t bcIndex, TR::Compilation *comp, bool set)
    {
    TR_IPBytecodeHashTableEntry *entry = profilingSample(method, bcIndex, comp);
@@ -3475,18 +3436,6 @@ TR_IProfiler::isWarmCallGraphTooBig(TR_OpaqueMethodBlock *method, int32_t bcInde
       return entry->isWarmCallGraphTooBig();
 
    return false;
-   }
-
-int32_t
-TR_IProfiler::getCallCount(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp)
-   {
-   return getCallCount(getMethodFromBCInfo(bcInfo, comp), (int32_t)bcInfo.getByteCodeIndex(), comp);
-   }
-
-int32_t
-TR_IProfiler::getMaxCallCount()
-   {
-   return _maxCallFrequency;
    }
 
 void
