@@ -68,4 +68,54 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
+
+	<test>
+		<testCaseName>cmdLineTester_IllegalAccessErrorTest_SE80</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
+		-DTEST_RESROOT=$(Q)$(TEST_RESROOT)$(D)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) \
+		-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)illegalAccessErrorTest.xml$(Q) \
+		-explainExcludes -nonZeroExitWhenError; \
+		$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<versions>
+			<version>8</version>
+		</versions>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+
+	<test>
+		<testCaseName>cmdLineTester_IllegalAccessErrorTest</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
+		-DTEST_RESROOT=$(Q)$(TEST_RESROOT)$(D)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) \
+		-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) --add-opens=java.base/java.lang=ALL-UNNAMED$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)illegalAccessErrorTest.xml$(Q) \
+		-explainExcludes -nonZeroExitWhenError; \
+		$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<versions>
+			<version>11+</version>
+		</versions>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
 </playlist>
