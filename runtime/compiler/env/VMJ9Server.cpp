@@ -663,11 +663,16 @@ TR_J9ServerVM::isGetImplAndRefersToInliningSupported()
 bool
 TR_J9ServerVM::compiledAsDLTBefore(TR_ResolvedMethod *method)
    {
+   // The server keeps track of DLT compilations that have been performed,
+   // so no messages need to be sent to the client
 #if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   auto mirror = static_cast<TR_ResolvedJ9JITServerMethod *>(method)->getRemoteMirror();
-   stream->write(JITServer::MessageType::VM_compiledAsDLTBefore, static_cast<TR_ResolvedMethod *>(mirror));
-   return std::get<0>(stream->read<bool>());
+   TR_ResolvedJ9JITServerMethod *serverMethod = static_cast<TR_ResolvedJ9JITServerMethod*>(method);
+   J9Method *j9method = serverMethod->ramMethod();
+
+   ClientSessionData *clientData = _compInfoPT->getClientData();
+   auto &dltedMethodSet = clientData->getDLTedMethodSet();
+   OMR::CriticalSection cs(clientData->getDLTSetMonitor());
+   return dltedMethodSet.find(j9method) != dltedMethodSet.end();
 #else
    return 0;
 #endif

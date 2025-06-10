@@ -47,6 +47,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_Pers
    _romClassMap(decltype(_romClassMap)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _J9MethodMap(decltype(_J9MethodMap)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _classBySignatureMap(decltype(_classBySignatureMap)::allocator_type(persistentMemory->_persistentAllocator.get())),
+   _DLTedMethodSet(decltype(_DLTedMethodSet)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _classChainDataMap(decltype(_classChainDataMap)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _constantPoolToClassMap(decltype(_constantPoolToClassMap)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _unloadedClassAddresses(NULL),
@@ -72,6 +73,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_Pers
    _numActiveThreads = 0;
    _romMapMonitor = TR::Monitor::create("JIT-JITServerROMMapMonitor");
    _classMapMonitor = TR::Monitor::create("JIT-JITServerClassMapMonitor");
+   _DLTSetMonitor = TR::Monitor::create("JIT-JITServerDLTSetMonitor");
    _classChainDataMapMonitor = TR::Monitor::create("JIT-JITServerClassChainDataMapMonitor");
    _sequencingMonitor = TR::Monitor::create("JIT-JITServerSequencingMonitor");
    _cacheInitMonitor = TR::Monitor::create("JIT-JITServerCacheInitMonitor");
@@ -124,6 +126,7 @@ ClientSessionData::destroyMonitors()
    {
    TR::Monitor::destroy(_romMapMonitor);
    TR::Monitor::destroy(_classMapMonitor);
+   TR::Monitor::destroy(_DLTSetMonitor);
    TR::Monitor::destroy(_classChainDataMapMonitor);
    TR::Monitor::destroy(_sequencingMonitor);
    TR::Monitor::destroy(_cacheInitMonitor);
@@ -230,7 +233,17 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
             }
 
          J9Method *methods = it->second._methodsOfClass;
-         // delete all the cached J9Methods belonging to this unloaded class
+            {
+            // Delete unloaded j9methods from the set of DLTed methods.
+            OMR::CriticalSection cs(getDLTSetMonitor());
+            for (size_t i = 0; i < romClass->romMethodCount; i++)
+               {
+               J9Method *j9method = methods + i;
+               _DLTedMethodSet.erase(j9method);
+               }
+            } // end critical section getDLTSetMonitor()
+
+         // Delete all the cached J9Methods belonging to this unloaded class.
          for (size_t i = 0; i < romClass->romMethodCount; i++)
             {
             J9Method *j9method = methods + i;
@@ -260,7 +273,7 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
          {
          purgeCache(unloadedClasses, _classRecordMap, &ClassUnloadedData::_record);
          }
-      }
+      } // end critical section getROMMapMonitor()
 
    // remove the class chain data from the cache for the unloaded class.
    {
@@ -1428,6 +1441,8 @@ ClientSessionData::clearCaches(bool locked)
       it.second.freeClassInfo(_persistentMemory);
 
    _romClassMap.clear();
+
+   _DLTedMethodSet.clear();
 
    _classChainDataMap.clear();
    _constantPoolToClassMap.clear();

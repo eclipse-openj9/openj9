@@ -115,7 +115,6 @@ enum MessageType : uint16_t
    VM_getClassFromSignature,
    VM_jitFieldsOrStaticsAreSame,
    VM_classHasBeenExtended,
-   VM_compiledAsDLTBefore,
    VM_isThunkArchetype,
    VM_printTruncatedSignature,
    VM_getStaticHookAddress,
