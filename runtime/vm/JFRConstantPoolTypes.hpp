@@ -352,7 +352,7 @@ class VM_JFRConstantPoolTypes {
 private:
 	J9VMThread *_currentThread;
 	J9JavaVM *_vm;
-	BuildResult _buildResult;
+	JfrBuildResult _buildResult;
 	bool _debug;
 	J9PortLibrary *privatePortLibrary;
 
@@ -967,7 +967,7 @@ public:
 
 	void printTables();
 
-	BuildResult getBuildResult()
+	JfrBuildResult getBuildResult()
 	{
 		return _buildResult;
 	}
@@ -1085,7 +1085,7 @@ done:
 	 *
 	 * @param vm[in] the J9JavaVM
 	 */
-	static void initializeJFRConstantEvents(J9JavaVM *vm, J9VMThread *currentThread, BuildResult *result)
+	static void initializeJFRConstantEvents(J9JavaVM *vm, J9VMThread *currentThread, JfrBuildResult *result)
 	{
 		initializeJVMInformationEvent(vm, currentThread, result);
 		initializeCPUInformationEvent(vm, currentThread, result);
@@ -1116,7 +1116,7 @@ done:
 	 *
 	 * @param vm[in] the J9JavaVM
 	 */
-	static void initializeJVMInformationEvent(J9JavaVM *vm, J9VMThread *currentThread, BuildResult *result)
+	static void initializeJVMInformationEvent(J9JavaVM *vm, J9VMThread *currentThread, JfrBuildResult *result)
 	{
 		PORT_ACCESS_FROM_JAVAVM(vm);
 		/* Initialize JVM Information */
@@ -1183,7 +1183,7 @@ done:
 	 *
 	 * @param vm[in] the J9JavaVM
 	 */
-	static void initializeCPUInformationEvent(J9JavaVM *vm, J9VMThread *currentThread, BuildResult *result)
+	static void initializeCPUInformationEvent(J9JavaVM *vm, J9VMThread *currentThread, JfrBuildResult *result)
 	{
 		PORT_ACCESS_FROM_JAVAVM(vm);
 		OMRPORT_ACCESS_FROM_J9PORT(privatePortLibrary);
@@ -1265,7 +1265,7 @@ done:
 	 *
 	 * @param vm[in] the J9JavaVM
 	 */
-	static void initializeOSInformation(J9JavaVM *vm, BuildResult *result)
+	static void initializeOSInformation(J9JavaVM *vm, JfrBuildResult *result)
 	{
 		PORT_ACCESS_FROM_JAVAVM(vm);
 
