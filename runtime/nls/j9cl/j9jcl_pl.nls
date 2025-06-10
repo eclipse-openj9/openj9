@@ -54,66 +54,46 @@
 J9NLS.MODULE=J9CL
 J9NLS.HEADER=j9jclnls.h
 
-J9NLS_JCL_INCOMPATIBLE_CL=Niekompatybilna biblioteka klas
+J9NLS_JCL_INCOMPATIBLE_CL=
 # START NON-TRANSLATABLE
-J9NLS_JCL_INCOMPATIBLE_CL.explanation=The class library jar is incompatible with the class library natives.
-J9NLS_JCL_INCOMPATIBLE_CL.system_action=The JVM will fail to start.
-J9NLS_JCL_INCOMPATIBLE_CL.user_response=Ensure that the vm.jar is of the same version as the JVM.
-
+J9NLS_JCL_INCOMPATIBLE_CL.explanation=NOTAG
+J9NLS_JCL_INCOMPATIBLE_CL.system_action=
+J9NLS_JCL_INCOMPATIBLE_CL.user_response=
 # END NON-TRANSLATABLE
 
-# This error occurs if the default jcl, or the jcl specified with the -jcl: option
-# is not the same as the class library found in the bootpath
-# The message indicates the correct input to use with the -jcl option. e.g midp20, foun11, etc..
-J9NLS_JCL_TRY_JCL=Spr\u00f3buj uruchomi\u0107 z opcj\u0105 -jcl:%s
+J9NLS_JCL_TRY_JCL=
 # START NON-TRANSLATABLE
-J9NLS_JCL_TRY_JCL.sample_input_1=midp20
-J9NLS_JCL_TRY_JCL.explanation=The class library jar is incompatible with the class library natives and the JVM.
-J9NLS_JCL_TRY_JCL.system_action=The JVM will fail to start.
-J9NLS_JCL_TRY_JCL.user_response=Ensure that the class library natives and the JVM are compatible with the specified class library jar.
-
+J9NLS_JCL_TRY_JCL.explanation=NOTAG
+J9NLS_JCL_TRY_JCL.system_action=
+J9NLS_JCL_TRY_JCL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_NOTJ9=Klasy pochodz\u0105 z biblioteki innej ni\u017c J9 lub z niepoprawnie zredukowanego pliku JXE
+J9NLS_JCL_NOTJ9=
 # START NON-TRANSLATABLE
-J9NLS_JCL_NOTJ9.explanation=The class library jar is incompatible with this VM.
-J9NLS_JCL_NOTJ9.system_action=The JVM will fail to start.
-J9NLS_JCL_NOTJ9.user_response=Ensure that the class library is compatible with the JVM.
-
+J9NLS_JCL_NOTJ9.explanation=NOTAG
+J9NLS_JCL_NOTJ9.system_action=
+J9NLS_JCL_NOTJ9.user_response=
 # END NON-TRANSLATABLE
 
-# This error occurs if the JCL and VM doesn't have the same branch version
-# (i.e. JCL and VM come from different development streams)
-J9NLS_JCL_INCOMPATIBLE_CL_VERSION=Niekompatybilna wersja biblioteki klas: JCL %1$x, VM %2$x
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION=
 # START NON-TRANSLATABLE
-J9NLS_JCL_INCOMPATIBLE_CL_VERSION.sample_input_1=24a
-J9NLS_JCL_INCOMPATIBLE_CL_VERSION.sample_input_2=231
-J9NLS_JCL_INCOMPATIBLE_CL_VERSION.explanation=The class library is not from the same release as the JVM.
-J9NLS_JCL_INCOMPATIBLE_CL_VERSION.system_action=The JVM will fail to start.
-J9NLS_JCL_INCOMPATIBLE_CL_VERSION.user_response=Ensure the JVM and the class libraries are from the same release.
-
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION.explanation=NOTAG
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION.system_action=
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION.user_response=
 # END NON-TRANSLATABLE
 
-# This error occurs if the JCL is older than what VM requires
-J9NLS_JCL_INCOMPATIBLE_CL_VERSION_JCL=Niekompatybilna wersja biblioteki klas: oczekiwano JCL v%1$i, znaleziono v%2$i
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION_JCL=
 # START NON-TRANSLATABLE
-J9NLS_JCL_INCOMPATIBLE_CL_VERSION_JCL.sample_input_1=12
-J9NLS_JCL_INCOMPATIBLE_CL_VERSION_JCL.sample_input_2=7
-J9NLS_JCL_INCOMPATIBLE_CL_VERSION_JCL.explanation=The class library is not from the same release as the JVM.
-J9NLS_JCL_INCOMPATIBLE_CL_VERSION_JCL.system_action=The JVM will fail to start.
-J9NLS_JCL_INCOMPATIBLE_CL_VERSION_JCL.user_response=Ensure the JVM and the class libraries are from the same release.
-
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION_JCL.explanation=NOTAG
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION_JCL.system_action=
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION_JCL.user_response=
 # END NON-TRANSLATABLE
 
-# This error occurs if the VM is older than what JCL requires
-J9NLS_JCL_INCOMPATIBLE_CL_VERSION_VM=Niekompatybilna wersja biblioteki klas: wymaga VM v%1$i, znaleziono v%2$i
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION_VM=
 # START NON-TRANSLATABLE
-J9NLS_JCL_INCOMPATIBLE_CL_VERSION_VM.sample_input_1=28
-J9NLS_JCL_INCOMPATIBLE_CL_VERSION_VM.sample_input_2=26
-J9NLS_JCL_INCOMPATIBLE_CL_VERSION_VM.explanation=The class library is not from the same release as the JVM.
-J9NLS_JCL_INCOMPATIBLE_CL_VERSION_VM.system_action=The JVM will fail to start.
-J9NLS_JCL_INCOMPATIBLE_CL_VERSION_VM.user_response=Ensure the JVM and the class libraries are from the same release.
-
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION_VM.explanation=NOTAG
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION_VM.system_action=
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION_VM.user_response=
 # END NON-TRANSLATABLE
 
 # This fatal error can only occur if -verify:all is used with a JXE which provides no preverify
