@@ -37,6 +37,9 @@
  *   OMR_SHA: String - the last commit SHA of the OMR repository
  *   ADOPTOPENJDK_REPO: String - the Adoptium AQA testing repository URL: e.g. https://github.com/adoptium/aqa-tests.git
  *   ADOPTOPENJDK_BRANCH: String - the Adoptium AQA testing branch: e.g. master
+ *   VENDOR_CODE_REPO: String - the vendor code git repository URL
+ *   VENDOR_CODE_BRANCH: String - the vendor code branch to clone from: e.g. master (no default)
+ *   VENDOR_CODE_SHA: String - the last commit SHA of the vendor code repository
  *   TESTS_TARGETS: String - The test targets to run. Expected values: _sanity, _extended, none
  *   VARIABLE_FILE: String - the custom variables file. Uses defaults.yml when no value is provided.
  *   VENDOR_REPO: String - the repository URL of a Git repository that stores a custom variables file
@@ -302,7 +305,7 @@ try {
                     // parse variables file and initialize variables
                     variableFile.set_job_variables('wrapper')
 
-                    SHAS = buildFile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH)
+                    SHAS = buildFile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, VENDOR_CODE_REPO, VENDOR_CODE_BRANCH)
 
                     if (PERSONAL_BUILD.equalsIgnoreCase('true')) {
                         // update build description
@@ -350,7 +353,7 @@ try {
                                         }
                                     }
                                     pipelinesStatus[job_name] = 'RUNNING'
-                                    build(job_name, REPO, BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION, CUSTOM_DESCRIPTION, ARCHIVE_JAVADOC, CODE_COVERAGE, USE_TESTENV_PROPERTIES)
+                                    build(job_name, REPO, BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, VENDOR_CODE_REPO, VENDOR_CODE_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION, CUSTOM_DESCRIPTION, ARCHIVE_JAVADOC, CODE_COVERAGE, USE_TESTENV_PROPERTIES)
                                 }
                             }
                         }
@@ -414,7 +417,7 @@ try {
     draw_summary_table()
 }
 
-def build(JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION, CUSTOM_DESCRIPTION, ARCHIVE_JAVADOC, CODE_COVERAGE, USE_TESTENV_PROPERTIES) {
+def build(JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, VENDOR_CODE_REPO, VENDOR_CODE_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION, CUSTOM_DESCRIPTION, ARCHIVE_JAVADOC, CODE_COVERAGE, USE_TESTENV_PROPERTIES) {
     stage ("${JOB_NAME}") {
         JOB = build job: JOB_NAME,
                 parameters: [
@@ -427,6 +430,9 @@ def build(JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRAN
                     string(name: 'OMR_REPO', value: OMR_REPO),
                     string(name: 'OMR_BRANCH', value: OMR_BRANCH),
                     string(name: 'OMR_SHA', value: SHAS['OMR']),
+                    string(name: 'VENDOR_CODE_REPO', value: VENDOR_CODE_REPO),
+                    string(name: 'VENDOR_CODE_BRANCH', value: VENDOR_CODE_BRANCH),
+                    string(name: 'VENDOR_CODE_SHA', value: SHAS['VENDOR_CODE']),
                     string(name: 'ADOPTOPENJDK_REPO', value: ADOPTOPENJDK_REPO),
                     string(name: 'ADOPTOPENJDK_BRANCH', value: ADOPTOPENJDK_BRANCH),
                     string(name: 'TESTS_TARGETS', value: TESTS_TARGETS),

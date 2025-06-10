@@ -37,9 +37,18 @@ def get_source() {
         OMR_BRANCH_OPTION = (OMR_BRANCH != "")? "-omr-branch=${OMR_BRANCH}" : ""
         OMR_SHA_OPTION = (OMR_SHA != "") ? "-omr-sha=${OMR_SHA}" : ""
 
+        VENDOR_CODE_REPO_OPTION = (VENDOR_CODE_REPO != "") ? "-vendor-repo=${VENDOR_CODE_REPO}" : ""
+        VENDOR_CODE_BRANCH_OPTION = (VENDOR_CODE_BRANCH != "") ? "-vendor-branch=${VENDOR_CODE_BRANCH}" : ""
+        VENDOR_CODE_SHA_OPTION = (VENDOR_CODE_SHA != "") ? "-vendor-sha=${VENDOR_CODE_SHA}" : ""
+
         if (OPENJDK_REFERENCE_REPO) {
             OPENJ9_REFERENCE = "-openj9-reference=${OPENJDK_REFERENCE_REPO}"
             OMR_REFERENCE = "-omr-reference=${OPENJDK_REFERENCE_REPO}"
+            if (SDK_VERSION == "8" || SPEC.contains('zos')) {
+                VENDOR_CODE_REFERENCE = "-vendor-reference=${OPENJDK_REFERENCE_REPO}"
+            } else {
+                VENDOR_CODE_REFERENCE = ""
+            }
         }
 
         // use sshagent with Jenkins credentials ID for all platforms except zOS
@@ -59,7 +68,7 @@ def get_sources_with_authentication() {
 }
 
 def get_source_call(gskit_cred="") {
-    sh "bash get_source.sh ${EXTRA_GETSOURCE_OPTIONS} ${gskit_cred} ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OPENJ9_REFERENCE} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION} ${OMR_REFERENCE}"
+    sh "bash get_source.sh ${EXTRA_GETSOURCE_OPTIONS} ${gskit_cred} ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OPENJ9_REFERENCE} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION} ${OMR_REFERENCE} ${VENDOR_CODE_REPO_OPTION} ${VENDOR_CODE_BRANCH_OPTION} ${VENDOR_CODE_SHA_OPTION} ${VENDOR_CODE_REFERENCE}"
 }
 
 def get_source_call_optional_gskit() {
