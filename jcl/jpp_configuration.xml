@@ -37,7 +37,7 @@
 	<!-- START SET DEFINITIONS -->
 	<set
 		label="newflags"
-		flags="CRAC_SUPPORT,CRIU_SUPPORT,INLINE-TYPES,JFR_SUPPORT,OPENJCEPLUS_SUPPORT,OPENJDK_METHODHANDLES"/>
+		flags="CRAC_SUPPORT,CRIU_SUPPORT,INLINE-TYPES,JFR_SUPPORT,OPENJCEPLUS_SUPPORT,OPENJDK_METHODHANDLES,VENDOR_UMA"/>
 
 	<set
 		label="oldflags"
@@ -98,6 +98,48 @@
 		<source path="src/openj9.sharedclasses/share/classes"/>
 		<source path="src/openj9.traceformat/share/classes"/>
 		<source path="src/openj9.zosconditionhandling/share/classes"/>
+		<parameter name="macro:define" value="JAVA_SPEC_VERSION=8"/>
+		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>
+		<parameter name="jxerules:outputdir" value="java/lang"/>
+	</configuration>
+
+	<configuration
+		  label="SIDECAR18-SE-VENDOR"
+		  outputpath="SIDECAR18-SE-OPENJ9/src"
+		  flags="DAA"
+		  dependencies="SIDECAR18-SE"
+		  jdkcompliance="1.8">
+		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
+		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun180.jar"/>
+		<source path="src/java.base/share/classes"/>
+		<source path="src/java.desktop/share/classes"/>
+		<source path="src/java.logging/share/classes"/>
+		<source path="src/java.management/share/classes"/>
+		<source path="src/jdk.attach/share/classes"/>
+		<source path="src/jdk.jcmd/share/classes"/>
+		<source path="src/jdk.management/share/classes"/>
+		<source path="src/openj9.criu/share/classes" />
+		<source path="src/openj9.cuda/share/classes" />
+		<source path="src/openj9.dataaccess/share/classes"/>
+		<source path="src/openj9.dtfj/share/classes"/>
+		<source path="src/openj9.dtfjview/share/classes"/>
+		<source path="src/openj9.gpu/share/classes" />
+		<source path="src/openj9.jvm/share/classes"/>
+		<source path="src/openj9.sharedclasses/share/classes"/>
+		<source path="src/openj9.traceformat/share/classes"/>
+		<source path="src/openj9.zosconditionhandling/share/classes"/>
+		<parameter name="macro:define" value="JAVA_SPEC_VERSION=8"/>
+		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>
+		<parameter name="jxerules:outputdir" value="java/lang"/>
+	</configuration>
+
+	<configuration
+		  label="SIDECAR18-SE-VENDORSRC"
+		  outputpath="SIDECAR18-SE/src"
+		  dependencies="SIDECAR18-SE"
+		  jdkcompliance="1.8">
+		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun180.jar"/>
+		<source path="src/java.base/share/classes"/>
 		<parameter name="macro:define" value="JAVA_SPEC_VERSION=8"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>

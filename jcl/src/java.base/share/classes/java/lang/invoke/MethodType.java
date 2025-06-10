@@ -56,9 +56,9 @@ import com.ibm.oti.util.Msg;
 import openj9.internal.criu.NotCheckpointSafe;
 /*[ENDIF] CRIU_SUPPORT*/
 
-/*[IF Sidecar18-SE-OpenJ9]*/
+/*[IF !VENDOR_UMA]*/
 import java.lang.invoke.MethodTypeForm;
-/*[ENDIF]*/
+/*[ENDIF] !VENDOR_UMA */
 
 /**
  * MethodTypes are immutable objects used to correlate MethodHandles with their invocation sites.
@@ -956,7 +956,7 @@ public final class MethodType implements Serializable
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
-/*[IF Sidecar18-SE-OpenJ9]*/
+/*[IF !VENDOR_UMA]*/
 	MethodType basicType() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
@@ -996,7 +996,7 @@ public final class MethodType implements Serializable
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
-/*[ENDIF] Sidecar18-SE-OpenJ9 */
+/*[ENDIF] !VENDOR_UMA */
 
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
