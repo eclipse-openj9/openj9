@@ -1703,7 +1703,7 @@ JITServerNoSCCAOTDeserializer::cacheRecord(const ThunkSerializationRecord *recor
    isNew = true;
 
    TR::CompilationInfoPerThread *compInfoPT = fej9vm->_compInfoPT;
-   uint8_t *thunkStart = TR_JITServerRelocationRuntime::copyDataToCodeCache(record->thunkStart(), record->thunkSize(), fej9vm);
+   uint8_t *thunkStart = TR_JITServerRelocationRuntime::copyDataToCodeCache(record->thunkStart(), record->thunkSize(), fej9vm, comp->codeCacheKind());
    if (!thunkStart)
       compInfoPT->getCompilation()->failCompilation<TR::CodeCacheError>("Failed to allocate space in the code cache");
 

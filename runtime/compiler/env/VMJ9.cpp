@@ -5688,7 +5688,7 @@ TR_J9VMBase::getDesignatedCodeCache(TR::Compilation *comp) // MCT
    bool hadClassUnloadMonitor;
    bool hadVMAccess = releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(comp, &hadClassUnloadMonitor);
 
-   TR::CodeCache * result = TR::CodeCacheManager::instance()->reserveCodeCache(false, 0, compThreadID, &numReserved);
+   TR::CodeCache * result = TR::CodeCacheManager::instance()->reserveCodeCache(false, 0, compThreadID, &numReserved, comp->codeCacheKind());
 
    acquireClassUnloadMonitorAndReleaseVMAccessIfNeeded(comp, hadVMAccess, hadClassUnloadMonitor);
    if (!result)
@@ -5785,7 +5785,7 @@ TR_J9VMBase::reserveTrampolineIfNecessary(TR::Compilation * comp, TR::SymbolRefe
             if (retValue == OMR::CodeCacheErrorCode::ERRORCODE_INSUFFICIENTSPACE && !inBinaryEncoding) // code cache full, allocate a new one
                {
                // Allocate a new code cache and try again
-               newCache = TR::CodeCacheManager::instance()->getNewCodeCache(comp->getCompThreadID()); // class unloading may happen here
+               newCache = TR::CodeCacheManager::instance()->getNewCodeCache(comp->getCompThreadID(), curCache->_kind); // class unloading may happen here
                if (newCache)
                   {
                   // check for class unloading that can happen in getNewCodeCache
@@ -7209,7 +7209,7 @@ TR_J9VM::getResolvedTrampoline(TR::Compilation *comp, TR::CodeCache* curCache, J
          if (!isAOT_DEPRECATED_DO_NOT_USE())
             {
             // Allocate a new code cache and try again
-            newCache = TR::CodeCacheManager::instance()->getNewCodeCache(comp->getCompThreadID()); // class unloading may happen here
+            newCache = TR::CodeCacheManager::instance()->getNewCodeCache(comp->getCompThreadID(), curCache->_kind); // class unloading may happen here
             if (newCache)
                {
                // check for class unloading that can happen in getNewCodeCache
@@ -9430,7 +9430,7 @@ TR_J9SharedCacheVM::getDesignatedCodeCache(TR::Compilation *comp)
    int32_t compThreadID = comp ? comp->getCompThreadID() : -1;
    bool hadClassUnloadMonitor;
    bool hadVMAccess = releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(comp, &hadClassUnloadMonitor);
-   TR::CodeCache * codeCache = TR::CodeCacheManager::instance()->reserveCodeCache(true, 0, compThreadID, &numReserved);
+   TR::CodeCache * codeCache = TR::CodeCacheManager::instance()->reserveCodeCache(true, 0, compThreadID, &numReserved, comp->codeCacheKind());
    acquireClassUnloadMonitorAndReleaseVMAccessIfNeeded(comp, hadVMAccess, hadClassUnloadMonitor);
    // For AOT we need some alignment
    if (codeCache)

@@ -792,7 +792,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             {
             // For non-AOT, copy thunk to code cache and relocate the vm helper address right away.
             // Also do this if we're ignoring the local SCC.
-            uint8_t *thunkStart = TR_JITServerRelocationRuntime::copyDataToCodeCache(serializedThunk.data(), serializedThunk.size(), fe);
+            uint8_t *thunkStart = TR_JITServerRelocationRuntime::copyDataToCodeCache(serializedThunk.data(), serializedThunk.size(), fe, comp->codeCacheKind());
             if (!thunkStart)
                compInfoPT->getCompilation()->failCompilation<TR::CodeCacheError>("Failed to allocate space in the code cache");
 
@@ -828,7 +828,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
 
          // Do not need relocation here, because helper address should have been originally
          // fetched from the client.
-         uint8_t *thunkStart = TR_JITServerRelocationRuntime::copyDataToCodeCache(serializedThunk.data(), serializedThunk.size(), fe);
+         uint8_t *thunkStart = TR_JITServerRelocationRuntime::copyDataToCodeCache(serializedThunk.data(), serializedThunk.size(), fe, comp->codeCacheKind());
          if (!thunkStart)
             compInfoPT->getCompilation()->failCompilation<TR::CodeCacheError>("Failed to allocate space in the code cache");
 
