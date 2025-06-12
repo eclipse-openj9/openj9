@@ -503,6 +503,12 @@ typedef struct J9JFRSystemGC {
 	I_64 duration;
 } J9JFRSystemGC;
 
+typedef struct J9JFRModuleRequire {
+	J9JFR_EVENT_COMMON_FIELDS;
+	struct J9Module *source;
+	struct J9Module *requiredModule;
+} J9JFRModuleRequire;
+
 #define J9JFRSYSTEMGC_STACKTRACE(jfrEvent) ((UDATA *)(((J9JFRSystemGC *)(jfrEvent)) + 1))
 
 #endif /* defined(J9VM_OPT_JFR) */

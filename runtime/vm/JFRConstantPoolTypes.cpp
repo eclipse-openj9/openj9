@@ -1299,6 +1299,30 @@ done:
 }
 
 void
+VM_JFRConstantPoolTypes::addModuleRequireEntry(J9JFRModuleRequire *moduleRequireData)
+{
+	ModuleRequireEntry *entry = (ModuleRequireEntry *)pool_newElement(_moduleRequireTable);
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = moduleRequireData->startTicks;
+	entry->sourceModuleIndex = addModuleEntry(moduleRequireData->source);
+	if (isResultNotOKay()) goto done;
+
+	entry->requiredModuleIndex= addModuleEntry(moduleRequireData->requiredModule);
+	if (isResultNotOKay()) goto done;
+
+	_moduleRequireCount += 1;
+
+done:
+	return;
+
+}
+
+void
 VM_JFRConstantPoolTypes::printTables()
 {
 	j9tty_printf(PORTLIB, "--------------- StringUTF8Table ---------------\n");
