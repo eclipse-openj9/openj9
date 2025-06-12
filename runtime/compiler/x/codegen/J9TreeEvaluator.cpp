@@ -10886,6 +10886,7 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
 
    generateLabelInstruction(TR::InstOpCode::label, node, endLabel, dependencies, cg);
 
+   cg->stopUsingRegister(bufReg);
    cg->stopUsingRegister(loopLimitReg);
    cg->stopUsingRegister(limitReg);
    cg->stopUsingRegister(maskReg);
