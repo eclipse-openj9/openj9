@@ -83,8 +83,6 @@ char *iniBootpath = NULL;
 
 #endif
 
-const U_64 jclConfig = J9CONST64(0x7363617237306200);		/* 'scar70b' */
-
 #if defined(WIN32)
 #define J9_AWTPRINTERJOB_VALUE	"sun.awt.windows.WPrinterJob"
 #define J9_AWTTOOLKIT_VALUE	"sun.awt.windows.WToolkit"
@@ -325,12 +323,12 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	IDATA returnVal = J9VMDLLMAIN_OK;
 	IDATA result = 0;
-	IDATA* returnPointer = &result;
+	IDATA *returnPointer = &result;
 	I_32 hookReturnValue = JNI_OK;
-	I_32* returnValuePointer = &hookReturnValue;
+	I_32 *returnValuePointer = &hookReturnValue;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
-	switch(stage) {
+	switch (stage) {
 		case ALL_LIBRARIES_LOADED:
 			returnVal = initializeUnsafeMemoryTracking(vm);
 			if (returnVal != JNI_OK) {
@@ -364,7 +362,7 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 			break;
 
 		case ALL_VM_ARGS_CONSUMED :
-			FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XJCL_COLON, NULL);
+			FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, "-Xjcl:", NULL);
 			break;
 
 		case JCL_INITIALIZED :

@@ -1073,7 +1073,6 @@ typedef struct J9VMCustomSpinOptions {
 #define J9SYSPROP_ERROR_NOT_FOUND  1
 #define J9SYSPROP_ERROR_READ_ONLY  2
 #define J9SYSPROP_ERROR_OUT_OF_MEMORY  3
-#define J9SYSPROP_ERROR_INVALID_JCL  4
 #define J9SYSPROP_ERROR_UNSUPPORTED_PROP 5
 #define J9SYSPROP_ERROR_ARG_MISSING 6
 #define J9SYSPROP_ERROR_INVALID_VALUE  7
@@ -6078,7 +6077,6 @@ typedef struct J9JavaVM {
 	UDATA threadDllHandle;
 	struct J9ROMImageHeader* arrayROMClasses;
 	struct J9BytecodeVerificationData* bytecodeVerificationData;
-	char* jclDLLName;
 	UDATA defaultOSStackSize;
 #if defined(J9VM_ENV_SHARED_LIBS_USE_GLOBAL_TABLE) || defined(J9VM_ENV_CALL_VIA_TABLE)
 	UDATA magicLinkageValue;

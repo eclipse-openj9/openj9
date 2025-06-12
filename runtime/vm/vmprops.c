@@ -604,7 +604,6 @@ initializeSystemProperties(J9JavaVM *vm)
 	J9VMSystemProperty *javaEndorsedDirsProperty = NULL;
 	jint i = 0;
 	JavaVMInitArgs *initArgs = NULL;
-	char *jclName = J9_JAVA_SE_DLL_NAME;
 	UDATA j2seVersion = J2SE_VERSION(vm);
 	const char *propValue = NULL;
 	UDATA rc = J9SYSPROP_ERROR_NONE;
@@ -617,19 +616,6 @@ initializeSystemProperties(J9JavaVM *vm)
 
 	/* Count the number of -D properties and find the JCL config */
 	initArgs = vm->vmArgsArray->actualVMArgs;
-	for (i = 0; i < initArgs->nOptions; ++i) {
-		char *optionString = initArgs->options[i].optionString;
-		Assert_VM_notNull(optionString);
-
-		if (0 == strncmp("-Xjcl:", optionString, 6)) {
-			jclName = optionString + 6;
-		}
-	}
-
-	/* error if not a valid JCL config */
-	if (0 != strncmp(jclName, "jclse", 5)) {
-		return J9SYSPROP_ERROR_INVALID_JCL;
-	}
 
 	/* Allocate the properties pool */
 	vm->systemProperties = pool_new(sizeof(J9VMSystemProperty), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(vm->portLibrary));

@@ -221,7 +221,6 @@ enum INIT_STAGE {
 #define VMOPT_BP_JXE "_jxe"
 #define VMOPT_NEEDS_JCL "_needs_jcl"
 #define VMOPT_J2SE_J9 "_j2se_j9"
-#define VMOPT_XJCL_COLON "-Xjcl:"
 #define VMOPT_XFUTURE "-Xfuture"
 #define VMOPT_ALL "all"
 #define VMOPT_XSIGQUITTOFILE "-XsigquitToFile"

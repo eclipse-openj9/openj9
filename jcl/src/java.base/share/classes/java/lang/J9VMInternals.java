@@ -56,22 +56,6 @@ import com.ibm.oti.util.Msg;
 
 @J9UnmodifiableClass
 final class J9VMInternals {
-	/*[PR VMDESIGN 1891] Move j9Version and j9Config from Class to J9VMInternals */
-	/*[IF]*/
-	/**
-	 * It is important that these remain static final
-	 * because the VM peeks for them before running the <clinit>
-	 */
-	/*[ENDIF]*/
-	/*[IF]*/
-	// j9Version - 0xAABBCCCC
-	// AA - vm version, BB - jcl version, CCCC - master version
-	// Up the JCL version (BB) when adding functionality
-	/*[ENDIF]*/
-
-	private static final int j9Version = 0x06040270;
-
-	private static final long j9Config = 0x7363617237306200L;	// 'scar70b\0'
 
 	/*[REM] this field will be folded into methods compiled by the JIT and is needed for the fastIdentityHashCode optimization below */
 	/*[REM] the real value of this field is set in the System.afterClinitInitialization since this class starts too early */

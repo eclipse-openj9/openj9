@@ -44,28 +44,13 @@
 #include "omr.h"
 #include "vendor_version.h"
 
-/* The vm version which must match the JCL.
- * It has the format 0xAABBCCCC
- *	AA - vm version, BB - jcl version, CCCC - main version
- * CCCC must match exactly with the JCL
- * Up the vm version (AA) when adding natives
- * BB is the required level of JCL to run the vm
- */
-#define JCL_VERSION 0x06040270
-
-extern void *jclConfig;
-
-static UDATA
-doJCLCheck(J9JavaVM *vm, J9Class *j9VMInternalsClass);
-
-
 /*
-	Calculate the value for java.vm.info (and java.fullversion) system/vm properties.
-	Currently allocates into a fixed-size buffer. This really should be fixed.
-*/
-jint computeFullVersionString(J9JavaVM* vm)
+ * Calculate the value for java.vm.info (and java.fullversion) system/vm properties.
+ * Currently allocates into a fixed-size buffer. This really should be fixed.
+ */
+jint computeFullVersionString(J9JavaVM *vm)
 {
-	VMI_ACCESS_FROM_JAVAVM((JavaVM*)vm);
+	VMI_ACCESS_FROM_JAVAVM((JavaVM *)vm);
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	const char *osarch = NULL;
 	const char *osname = NULL;
@@ -114,7 +99,7 @@ jint computeFullVersionString(J9JavaVM* vm)
 	osarch = j9sysinfo_get_CPU_architecture();
 
 #ifdef J9VM_ENV_DATA64
-	memInfo = J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? "64-Bit Compressed References": "64-Bit";
+	memInfo = J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? "64-Bit Compressed References" : "64-Bit";
 #else
 	#if defined(J9ZOS390) || defined(S390)
 		memInfo = "31-Bit";
@@ -355,35 +340,6 @@ jint initializeKnownClasses(J9JavaVM* vm, U_32 runtimeFlags)
 	Trc_JCL_initializeKnownClasses_Exit(vm->mainThread);
 
 	return JNI_OK;
-}
-
-
-static UDATA
-doJCLCheck(J9JavaVM *vm, J9Class *j9VMInternalsClass)
-{
-	J9VMThread *vmThread = vm->mainThread;
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	J9ROMStaticFieldShape *jclField;
-	U_8 *cConfigPtr;
-	U_8 *jclConfigPtr = NULL;
-	UDATA jclVersion = -1;
-
-	/* get the jcl specified by the class library (i.e. java.lang.J9VMInternals) */
-	vmFuncs->staticFieldAddress(vmThread, j9VMInternalsClass, (U_8*)"j9Config", sizeof("j9Config") - 1, (U_8*)"J", 1, NULL, (UDATA *)&jclField, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL, NULL);
-	if (jclField != NULL) {
-		jclConfigPtr = (U_8 *)&jclField->initialValue;
-		/* get the jcl version from the class library (i.e. java.lang.J9VMInternals) */
-		vmFuncs->staticFieldAddress(vmThread, j9VMInternalsClass, (U_8*)"j9Version", sizeof("j9Version") - 1, (U_8*)"I", 1, NULL, (UDATA *)&jclField, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL, NULL);
-		if (jclField != NULL) {
-			jclVersion = jclField->initialValue;
-		}
-	}
-
-	/* get the jcl specified by the DLL */
-	cConfigPtr = (U_8 *)&jclConfig;
-
-	/* check the values and report any errors */
-	return checkJCL(vmThread, cConfigPtr, jclConfigPtr, JCL_VERSION, jclVersion);
 }
 
 /**
@@ -673,10 +629,6 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	}
 	vmInternalsClass->initializeStatus = J9ClassInitSucceeded;
 	if (JNI_OK != intializeVMConstants(vmThread)) {
-		return 1;
-	}
-
-	if (doJCLCheck(vm, vmInternalsClass) != 0) {
 		return 1;
 	}
 
