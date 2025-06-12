@@ -4381,6 +4381,17 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 	}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
+	{
+		IDATA cacheMaps = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXCACHEMAPS, NULL);
+		IDATA noCacheMaps = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOCACHEMAPS, NULL);
+
+		if (cacheMaps > noCacheMaps) {
+			vm->extendedRuntimeFlags3 &= ~J9_EXTENDED_RUNTIME3_CACHE_MAPS;
+		} else if (cacheMaps < noCacheMaps) {
+			vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_CACHE_MAPS;
+		}
+	}
+
 	if (FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXKEEPJNIIDS, NULL) != -1) {
 		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ALWAYS_KEEP_JNI_IDS;
 	}
@@ -8371,7 +8382,10 @@ vmHookAnonClassesUnload(J9HookInterface** hook, UDATA eventNum, void* eventData,
 	J9JavaVM *vm = vmThread->javaVM;
 	for (J9Class* j9clazz = unloadedEvent->anonymousClassesToUnload; j9clazz; j9clazz = j9clazz->gcLink) {
 		/* AnonClass->classLoader points to the hostclass->classLoader not the anonClassLoader. */
-		if (J9VM_SHOULD_CLEAR_JNIIDS_FOR_ASGCT(vm, j9clazz->classLoader)) {
+		J9ClassLoader *classLoader = j9clazz->classLoader;
+		/* Anon classes are unloaded piecemeal, so clear the map cache where the anon maps may be cached */
+		freeMapCaches(classLoader);
+		if (J9VM_SHOULD_CLEAR_JNIIDS_FOR_ASGCT(vm, classLoader)) {
 			void **jniIDs = j9clazz->jniIDs;
 			if (NULL != jniIDs) {
 				UDATA size = J9VM_NUM_OF_ENTRIES_IN_CLASS_JNIID_TABLE(j9clazz->romClass);
