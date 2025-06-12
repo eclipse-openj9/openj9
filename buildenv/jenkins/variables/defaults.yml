@@ -170,7 +170,6 @@ boot_jdk_default:
     url:
       all: 'https://api.adoptopenjdk.net/v3/binary/latest/${bootJDKVersion}/ga/${os}/${arch}/jdk/openj9/normal/adoptopenjdk?project=jdk'
       24: 'https://api.adoptium.net/v3/binary/latest/${bootJDKVersion}/ga/${os}/${arch}/jdk/hotspot/normal/eclipse'
-      25: 'https://api.adoptium.net/v3/binary/latest/${bootJDKVersion}/ga/${os}/${arch}/jdk/hotspot/normal/eclipse'
 #========================================#
 # CUDA
 #========================================#
@@ -271,7 +270,6 @@ ppc64_aix:
     url:
       all: 'https://api.adoptopenjdk.net/v3/binary/latest/${bootJDKVersion}/ga/${os}/${arch}/jdk/openj9/normal/adoptopenjdk?project=jdk'
       24: 'https://openj9-artifactory.osuosl.org/artifactory/ci-openj9/Build_JDK24_ppc64_aix_Nightly/98/OpenJ9-JDK24-ppc64_aix-20250607-020253.tar.gz'
-      25: 'https://openj9-artifactory.osuosl.org/artifactory/ci-openj9/Build_JDK24_ppc64_aix_Nightly/98/OpenJ9-JDK24-ppc64_aix-20250607-020253.tar.gz'
   release:
     all: 'aix-ppc64-server-release'
     8: 'aix-ppc64-normal-server-release'
