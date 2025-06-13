@@ -49,6 +49,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.openj9.test.util.FileUtilities;
 import org.openj9.test.util.HelloWorld;
@@ -78,8 +79,8 @@ public class VmArgumentTests {
 	private static final String XCHECK_MEMORY = "-Xcheck:memory";
 	private static final String XCOMPRESSEDREFS = "-Xcompressedrefs";
 	private static final String XNOCOMPRESSEDREFS = "-Xnocompressedrefs";
-	private static final String[] XARGENCODING = new String[] {"-Xargencoding"};
-	private static final String DJAVA_LIBRARY_PATH = "-D"+"java.library.path";
+	private static final String[] XARGENCODING = new String[] { "-Xargencoding" };
+	private static final String DJAVA_LIBRARY_PATH = "-D" + "java.library.path";
 	private static final String FILE_SEPARATOR = System.getProperty("file.separator");
 	private static final String USER_DIR = System.getProperty("user.dir");
 	private static final String OS_NAME_PROPERTY = System.getProperty("os.name");
@@ -87,7 +88,7 @@ public class VmArgumentTests {
 	private static final String XJIT = "-Xjit";
 	private static final String XINT = "-Xint";
 	private static final String XPROD = "-Xprod";
-	private static final String HELLO_WORLD_SCRIPT = "#!/bin/sh\n"+ "echo hello, world\n";
+	private static final String HELLO_WORLD_SCRIPT = "#!/bin/sh\n" + "echo hello, world\n";
 
 	private static final String JAVA_OPTIONS = "_JAVA_OPTIONS"; //$NON-NLS-1$
 	private static final String IBM_JAVA_OPTIONS = "IBM_JAVA_OPTIONS"; //$NON-NLS-1$
@@ -97,26 +98,26 @@ public class VmArgumentTests {
 	private static final String ENV_LIBPATH = "LIBPATH";
 	private static final String DJAVA_HOME = "-Djava.home";
 	private static final String XOPTIONSFILE = "-Xoptionsfile=";
-	private static final String CLASSPATH=System.getProperty("java.class.path");
-	private static final String JAVA_COMMAND=System.getProperty("java.home")+File.separatorChar+"bin"+File.separatorChar+"java";
+	private static final String CLASSPATH = System.getProperty("java.class.path");
+	private static final String JAVA_COMMAND = System.getProperty("java.home") + File.separatorChar + "bin" + File.separatorChar + "java";
 	private static final String APPLICATION_NAME = ArgumentDumper.class.getCanonicalName();
 	private static final String HELLO_WORLD = HelloWorld.class.getCanonicalName();
 
 	private static final String[] mandatoryArgumentsJava8;
 
 	private static final String[] mandatoryArguments;
-	private static final String[] TEST_ARG_LIST = {"-Dtest.option1=testJavaToolOptions1", "-Dtest.option2=testJavaToolOptions2", 
-			"-Dtest.option3=testJavaToolOptions3", "-Dtest.option4=testJavaToolOptions4"};
+	private static final String[] TEST_ARG_LIST = { "-Dtest.option1=testJavaToolOptions1", "-Dtest.option2=testJavaToolOptions2",
+			"-Dtest.option3=testJavaToolOptions3", "-Dtest.option4=testJavaToolOptions4" };
 	private static final String OPTIONS_FILE_SUFFIX = ".test_options_file";
 	private static final String DASH_D_CMDLINE_ARG = "-DcmdlineArg";
 
 	private static final String MIXED_MODE_THRESHOLD_VALUE = "1";
 	private static final String IBM_MIXED_MODE_THRESHOLD = "IBM_MIXED_MODE_THRESHOLD";
-	private static final String  MAPOPT_XJIT_COUNT_EQUALS = "-Xjit:count="+MIXED_MODE_THRESHOLD_VALUE;
+	private static final String MAPOPT_XJIT_COUNT_EQUALS = "-Xjit:count=" + MIXED_MODE_THRESHOLD_VALUE;
 
 	private static final String JAVA_COMPILER = "JAVA_COMPILER";
 	private static final String JAVA_COMPILER_VALUE = System.getProperty(VersionCheck.major() < 21 ? "java.compiler" : "openj9.compiler");
-	private static final String SYSPROP_DJAVA_COMPILER_EQUALS = "-Djava.compiler="+JAVA_COMPILER_VALUE;
+	private static final String SYSPROP_DJAVA_COMPILER_EQUALS = "-Djava.compiler=" + JAVA_COMPILER_VALUE;
 
 	private static final boolean isIBM;
 	private static final boolean isJava8;
@@ -135,53 +136,53 @@ public class VmArgumentTests {
 		isIBM = System.getProperty("java.vm.vendor").equals("IBM Corporation");
 		mandatoryArgumentsJava8 = new String[] {
 				isIBM ? XOPTIONSFILE : null,
-						"-Xlockword:mode",
-						"-Xjcl:",
-						"-Dcom.ibm.oti.vm.bootstrap.library.path",
-						"-Dsun.boot.library.path",
-						"-Djava.library.path",
-						"-Djava.ext.dirs",
-						DJAVA_HOME,
-						"-Duser.dir",
-						/* "-Djava.runtime.version", doesn't show up if -Xcheck:memory is used */
-						"-Djava.class.path",
-						"-Dsun.java.command",
-						"-Dsun.java.launcher"
+				"-Xlockword:mode",
+				"-Xjcl:",
+				"-Dcom.ibm.oti.vm.bootstrap.library.path",
+				"-Dsun.boot.library.path",
+				"-Djava.library.path",
+				"-Djava.ext.dirs",
+				DJAVA_HOME,
+				"-Duser.dir",
+				/* "-Djava.runtime.version", doesn't show up if -Xcheck:memory is used */
+				"-Djava.class.path",
+				"-Dsun.java.command",
+				"-Dsun.java.launcher"
 		};
 
 		mandatoryArguments = new String[] {
 				isIBM ? XOPTIONSFILE : null,
-						"-Xlockword:mode",
-						"-Xjcl:",
-						"-Dcom.ibm.oti.vm.bootstrap.library.path",
-						"-Dsun.boot.library.path",
-						"-Djava.library.path",
-						DJAVA_HOME,
-						"-Duser.dir",
-						/* "-Djava.runtime.version", doesn't show up if -Xcheck:memory is used */
-						"-Djava.class.path",
-						"-Dsun.java.command",
-						"-Dsun.java.launcher"
-		};	
+				"-Xlockword:mode",
+				"-Xjcl:",
+				"-Dcom.ibm.oti.vm.bootstrap.library.path",
+				"-Dsun.boot.library.path",
+				"-Djava.library.path",
+				DJAVA_HOME,
+				"-Duser.dir",
+				/* "-Djava.runtime.version", doesn't show up if -Xcheck:memory is used */
+				"-Djava.class.path",
+				"-Dsun.java.command",
+				"-Dsun.java.launcher"
+		};
 		int javaMajorVersion = VersionCheck.major();
 		isJava8 = (8 == javaMajorVersion);
 		vmargsJarFilename = "vmargs.jar";
 	}
 
-	/* 
+	/*
 	 * set the method name in case the test needs it.
 	 * Delineate the tests in the log file.
 	 */
 	@BeforeMethod
 	protected void setUp(Method testMethod) throws Exception {
-		testName = testMethod.getName(); 
+		testName = testMethod.getName();
 		logger.debug("\n------------------------------------------------------\nstarting " + testName);
 	}
 
 	/* sanity test */
 	@Test
 	public void testNoOptions() {
-		ArrayList<String> actualArguments = null;
+		List<String> actualArguments = null;
 		try {
 			ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
 			actualArguments = runAndGetArgumentList(pb);
@@ -195,12 +196,12 @@ public class VmArgumentTests {
 	@Test
 	public void testWindowsPath() {
 		if (isWindows()) {
-			ArrayList<String> actualArguments = null;
+			List<String> actualArguments = null;
 			boolean foundPath = false;
 			try {
 				ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
 				actualArguments = runAndGetArgumentList(pb);
-				for (String arg: actualArguments) {
+				for (String arg : actualArguments) {
 					if (arg.startsWith("-Djava.library.path")) {
 						foundPath = true;
 						assertTrue("Windows java.library.path missing '.'", arg.endsWith("."));
@@ -217,17 +218,17 @@ public class VmArgumentTests {
 	/* PMR 83349,500,624: Command line property "-Djava.util.prefs.PreferencesFactory" value not set or overwritten with default property value */
 	@Test
 	public void testPreferencesFactory() {
-		final String PREFS_FACTORY="java.util.prefs.PreferencesFactory";
-		final String D_PREFS_FACTORY = "-D"+PREFS_FACTORY + '=';
-		final String PREFS_FACTORY_VALUE="testPreferencesFactory";
+		final String PREFS_FACTORY = "java.util.prefs.PreferencesFactory";
+		final String D_PREFS_FACTORY = "-D" + PREFS_FACTORY + '=';
+		final String PREFS_FACTORY_VALUE = "testPreferencesFactory";
 
-		ArrayList<String> cmdlineArguments = new ArrayList<String>(1);
-		HashMap<String, String> expectedProperties = new HashMap<String, String>();
+		List<String> cmdlineArguments = new ArrayList<>(1);
+		Map<String, String> expectedProperties = new HashMap<>();
 		expectedProperties.put(PREFS_FACTORY, PREFS_FACTORY_VALUE);
 		cmdlineArguments.add(D_PREFS_FACTORY + PREFS_FACTORY_VALUE);
 		final String[] cmdlineArgs = cmdlineArguments.toArray(new String[cmdlineArguments.size()]);
 		ProcessBuilder pb = makeProcessBuilder(cmdlineArgs, CLASSPATH);
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
+		List<String> actualArguments = runAndGetArgumentList(pb);
 		try {
 			checkArguments(actualArguments, cmdlineArgs);
 			checkSystemPropertyValues(expectedProperties);
@@ -239,8 +240,8 @@ public class VmArgumentTests {
 
 	@Test
 	public void testSystemProperties() {
-		ArrayList<String> cmdlineArguments = new ArrayList<String>(1);
-		HashMap<String, String> expectedProperties = new HashMap<String, String>();
+		List<String> cmdlineArguments = new ArrayList<>(1);
+		Map<String, String> expectedProperties = new HashMap<>();
 		String bfuProperties[] = {
 				"java.awt.graphicsenv",
 				"java.awt.fonts",
@@ -256,15 +257,15 @@ public class VmArgumentTests {
 				"sun.io.unicode.encoding"
 		};
 		int count = 1;
-		for (String s: bfuProperties) {
-			final String propValue = s+"_testValue"+count;
+		for (String s : bfuProperties) {
+			final String propValue = s + "_testValue" + count;
 			expectedProperties.put(s, propValue);
-			cmdlineArguments.add("-D"+s+'='+propValue);
+			cmdlineArguments.add("-D" + s + '=' + propValue);
 			++count;
 		}
 		final String[] cmdlineArgs = cmdlineArguments.toArray(new String[cmdlineArguments.size()]);
 		ProcessBuilder pb = makeProcessBuilder(cmdlineArgs, CLASSPATH);
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
+		List<String> actualArguments = runAndGetArgumentList(pb);
 		try {
 			checkArguments(actualArguments, cmdlineArgs);
 			checkSystemPropertyValues(expectedProperties);
@@ -277,7 +278,7 @@ public class VmArgumentTests {
 	/* -Xint test */
 	@Test
 	public void testXint() {
-		ArrayList<String> actualArguments = new ArrayList<String>(1);
+		List<String> actualArguments = new ArrayList<>(1);
 		try {
 			actualArguments.add(XINT);
 			final String[] actualArgs = actualArguments.toArray(new String[actualArguments.size()]);
@@ -293,7 +294,7 @@ public class VmArgumentTests {
 	/* -Xcheck:memory test */
 	@Test
 	public void testXcheckMemory() {
-		ArrayList<String> actualArguments = new ArrayList<String>(1);
+		List<String> actualArguments = new ArrayList<>(1);
 		try {
 			actualArguments.add(XINT);
 			actualArguments.add(XCHECK_MEMORY);
@@ -315,11 +316,11 @@ public class VmArgumentTests {
 		Map<String, String> env = pb.environment();
 		String ibmJavaOptionsArg = "-Dtest.name=testIbmJavaOptions";
 		env.put(IBM_JAVA_OPTIONS, ibmJavaOptionsArg);
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] {ibmJavaOptionsArg});
-		assertTrue("missing argument: "+ibmJavaOptionsArg, argumentPositions.containsKey(ibmJavaOptionsArg));
+		List<String> actualArguments = runAndGetArgumentList(pb);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] { ibmJavaOptionsArg });
+		assertTrue("missing argument: " + ibmJavaOptionsArg, argumentPositions.containsKey(ibmJavaOptionsArg));
 		/* environment variables should come after implicit arguments */
-		assertTrue(IBM_JAVA_OPTIONS+ " should come last", argumentPositions.get(ibmJavaOptionsArg).intValue() > argumentPositions.get(DJAVA_HOME).intValue()); 
+		assertTrue(IBM_JAVA_OPTIONS + " should come last", argumentPositions.get(ibmJavaOptionsArg).intValue() > argumentPositions.get(DJAVA_HOME).intValue());
 	}
 
 	/* test IBM_JAVA_OPTIONS environment variable */
@@ -329,11 +330,11 @@ public class VmArgumentTests {
 		Map<String, String> env = pb.environment();
 		String ibmJavaOptionsArg = "-Xargencoding";
 		env.put(IBM_JAVA_OPTIONS, ibmJavaOptionsArg);
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] {ibmJavaOptionsArg});
-		assertTrue("missing argument: "+ibmJavaOptionsArg, argumentPositions.containsKey(ibmJavaOptionsArg));
+		List<String> actualArguments = runAndGetArgumentList(pb);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] { ibmJavaOptionsArg });
+		assertTrue("missing argument: " + ibmJavaOptionsArg, argumentPositions.containsKey(ibmJavaOptionsArg));
 		/* environment variables should come after implicit arguments */
-		assertTrue(IBM_JAVA_OPTIONS+ " should come last", argumentPositions.get(ibmJavaOptionsArg).intValue() > argumentPositions.get(DJAVA_HOME).intValue());
+		assertTrue(IBM_JAVA_OPTIONS + " should come last", argumentPositions.get(ibmJavaOptionsArg).intValue() > argumentPositions.get(DJAVA_HOME).intValue());
 	}
 
 	/* test _JAVA_OPTIONS environment variable */
@@ -343,18 +344,17 @@ public class VmArgumentTests {
 		Map<String, String> env = pb.environment();
 		String javaOptionsArg = "-Dtest.name=testJavaOptions"; //$NON-NLS-1$
 		env.put(JAVA_OPTIONS, javaOptionsArg);
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] {javaOptionsArg});
+		List<String> actualArguments = runAndGetArgumentList(pb);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] { javaOptionsArg });
 		if (isJava8 && isIBM) {
 			assertFalse("Unexpected: " + javaOptionsArg, argumentPositions.containsKey(javaOptionsArg));
 		} else {
 			assertTrue(MISSING_ARGUMENT + javaOptionsArg, argumentPositions.containsKey(javaOptionsArg));
 			/* environment variables should come after implicit arguments */
-			assertTrue(JAVA_OPTIONS + SHOULD_COME_AFTER + DJAVA_HOME, 
+			assertTrue(JAVA_OPTIONS + SHOULD_COME_AFTER + DJAVA_HOME,
 					argumentPositions.get(javaOptionsArg).intValue() > argumentPositions.get(DJAVA_HOME).intValue());
 		}
 	}
-
 
 	/* test OPENJ9_JAVA_OPTIONS environment variable */
 	@Test
@@ -363,38 +363,36 @@ public class VmArgumentTests {
 		Map<String, String> env = pb.environment();
 		String openJ9JavaOptionsArg = "-Dtest.name=testOpenJ9Options"; //$NON-NLS-1$
 		env.put(OPENJ9_JAVA_OPTIONS, openJ9JavaOptionsArg);
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] {openJ9JavaOptionsArg});
-		assertTrue(MISSING_ARGUMENT+openJ9JavaOptionsArg, argumentPositions.containsKey(openJ9JavaOptionsArg));
+		List<String> actualArguments = runAndGetArgumentList(pb);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] { openJ9JavaOptionsArg });
+		assertTrue(MISSING_ARGUMENT + openJ9JavaOptionsArg, argumentPositions.containsKey(openJ9JavaOptionsArg));
 		/* environment variables should come after implicit arguments */
-		assertTrue(OPENJ9_JAVA_OPTIONS+ SHOULD_COME_AFTER+DJAVA_HOME, 
-				argumentPositions.get(openJ9JavaOptionsArg).intValue() > argumentPositions.get(DJAVA_HOME).intValue()); 
+		assertTrue(OPENJ9_JAVA_OPTIONS + SHOULD_COME_AFTER + DJAVA_HOME,
+				argumentPositions.get(openJ9JavaOptionsArg).intValue() > argumentPositions.get(DJAVA_HOME).intValue());
 	}
-
 
 	/* this test does not apply to OpenJ9 as OpenJ9 is default compressedrefs and nocompressedrefs is not available */
 	@Test
 	public void testCrNocr() {
 		String noCrArg = XNOCOMPRESSEDREFS;
-		ProcessBuilder pb = makeProcessBuilder(new String[] {noCrArg}, CLASSPATH);
+		ProcessBuilder pb = makeProcessBuilder(new String[] { noCrArg }, CLASSPATH);
 		Map<String, String> env = pb.environment();
 		String crArg = XCOMPRESSEDREFS;
 		env.put(IBM_JAVA_OPTIONS, crArg);
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] {XCOMPRESSEDREFS, XNOCOMPRESSEDREFS});
-		assertTrue("missing argument: "+crArg, argumentPositions.containsKey(crArg));
-		assertTrue("missing argument: "+noCrArg, argumentPositions.containsKey(noCrArg));
-		assertTrue(noCrArg+ " should come after "+DJAVA_HOME, argumentPositions.get(crArg).intValue() < argumentPositions.get(noCrArg).intValue());
+		List<String> actualArguments = runAndGetArgumentList(pb);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] { XCOMPRESSEDREFS, XNOCOMPRESSEDREFS });
+		assertTrue("missing argument: " + crArg, argumentPositions.containsKey(crArg));
+		assertTrue("missing argument: " + noCrArg, argumentPositions.containsKey(noCrArg));
+		assertTrue(noCrArg + " should come after " + DJAVA_HOME, argumentPositions.get(crArg).intValue() < argumentPositions.get(noCrArg).intValue());
 	}
 
 	/* test options in runnable jar files */
 	@Test
 	public void testJarArguments() throws URISyntaxException {
 		URL jarUrl = ClassLoader.getSystemClassLoader().getResource(vmargsJarFilename);
-		assertNotNull(vmargsJarFilename+" not found", jarUrl);
-		Path jarPath = null;
-			jarPath = Paths.get(jarUrl.toURI()).toFile().toPath();
-			checkJarArgs(jarPath.toString());
+		assertNotNull(vmargsJarFilename + " not found", jarUrl);
+		Path jarPath = Paths.get(jarUrl.toURI()).toFile().toPath();
+		checkJarArgs(jarPath.toString());
 	}
 
 	/**
@@ -405,15 +403,15 @@ public class VmArgumentTests {
 		final String HWVMARGS = "hwvmargs.jar";
 		URL jarUrl = ClassLoader.getSystemClassLoader().getResource(vmargsJarFilename);
 		final String pathString = HWVMARGS;
-		assertNotNull(pathString+" not found", jarUrl);		
+		assertNotNull(pathString + " not found", jarUrl);
 		Path jarPath = null;
 		try {
 			jarPath = Paths.get(jarUrl.toURI()).toFile().toPath();
 		} catch (URISyntaxException e) {
-			fail("cannot convert "+jarUrl.toString()+" to path", e);
-		}		
-		
-		try {			
+			fail("cannot convert " + jarUrl.toString() + " to path", e);
+		}
+
+		try {
 			File outFile = new File(pathString);
 			outFile.delete();
 			FileOutputStream outStream = new FileOutputStream(outFile);
@@ -422,8 +420,8 @@ public class VmArgumentTests {
 			outStream.close();
 		} catch (IOException e) {
 			logStackTrace(e, logger);
-			fail("Error creating "+pathString+" from "+jarPath, e);
-		}		
+			fail("Error creating " + pathString + " from " + jarPath, e);
+		}
 		checkJarArgs(pathString);
 	}
 
@@ -434,27 +432,27 @@ public class VmArgumentTests {
 		Map<String, String> env = pb.environment();
 		String javaToolOptionsArg = "-Dtest.name=testJavaToolOptions";
 		env.put(JAVA_TOOL_OPTIONS, javaToolOptionsArg);
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] {javaToolOptionsArg});
-		assertTrue("missing argument: "+javaToolOptionsArg, argumentPositions.containsKey(javaToolOptionsArg));
+		List<String> actualArguments = runAndGetArgumentList(pb);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] { javaToolOptionsArg });
+		assertTrue("missing argument: " + javaToolOptionsArg, argumentPositions.containsKey(javaToolOptionsArg));
 		/* environment variables should come after implicit arguments */
-		assertTrue(JAVA_TOOL_OPTIONS+ " should come last", argumentPositions.get(javaToolOptionsArg).intValue() > argumentPositions.get(DJAVA_HOME).intValue());
+		assertTrue(JAVA_TOOL_OPTIONS + " should come last", argumentPositions.get(javaToolOptionsArg).intValue() > argumentPositions.get(DJAVA_HOME).intValue());
 	}
 
 	@Test
 	public void testOptionsWithLeadingSpacesInEnvVars() {
-		ArrayList<String> actualArguments = null;
+		List<String> actualArguments = null;
 		try {
 			final String javaToolOptionsArg = "-Dtest.name=testOptionsWithLeadingSpacesInEnvVars";
 			ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
 			Map<String, String> env = pb.environment();
-			env.put(JAVA_TOOL_OPTIONS, "          "+javaToolOptionsArg+"               ");
+			env.put(JAVA_TOOL_OPTIONS, "          " + javaToolOptionsArg + "               ");
 			actualArguments = runAndGetArgumentList(pb);
-			final String[] expectedArguments = new String[] {javaToolOptionsArg};
-			HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArguments);
+			final String[] expectedArguments = new String[] { javaToolOptionsArg };
+			Map<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArguments);
 			checkArgumentSequence(expectedArguments, argumentPositions, true);
 		} catch (AssertionError e) {
-			dumpDiagnostics(e,actualArguments);
+			dumpDiagnostics(e, actualArguments);
 			throw e;
 		}
 	}
@@ -462,24 +460,24 @@ public class VmArgumentTests {
 	/* test arguments containing newlines in the environment variables */
 	@Test
 	public void testMultipleArgumentsInEnvVars() {
-		ArrayList<String> actualArguments = null;
+		List<String> actualArguments = null;
 		try {
 			final String JTO1 = "-Dtest.javatooloption1=foo";
 			final String JTO2 = "-Dtest.javatooloption2=bar";
-			final String javaToolOptionsArg = JTO1+'\n' + JTO2; 
+			final String javaToolOptionsArg = JTO1 + '\n' + JTO2;
 			final String IJO1 = "-Dtest.ibmjavaoption1=hello";
 			final String IJO2 = "-Dtest.ibmjavaoption2=goodbye";
-			final String ibmJavaOptionsArg = IJO1+'\n' + IJO2;
+			final String ibmJavaOptionsArg = IJO1 + '\n' + IJO2;
 			ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
 			Map<String, String> env = pb.environment();
 			env.put(JAVA_TOOL_OPTIONS, javaToolOptionsArg);
 			env.put(IBM_JAVA_OPTIONS, ibmJavaOptionsArg);
 			actualArguments = runAndGetArgumentList(pb);
-			final String[] expectedArguments = new String[] {JTO1, JTO2, IJO1, IJO2};
-			HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArguments);
+			final String[] expectedArguments = new String[] { JTO1, JTO2, IJO1, IJO2 };
+			Map<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArguments);
 			checkArgumentSequence(expectedArguments, argumentPositions, true);
 		} catch (AssertionError e) {
-			dumpDiagnostics(e,actualArguments);
+			dumpDiagnostics(e, actualArguments);
 			throw e;
 		}
 	}
@@ -487,7 +485,7 @@ public class VmArgumentTests {
 	/* test environment variables which map to JVM options */
 	@Test
 	public void testMappedOptions() {
-		ArrayList<String> actualArguments = null;
+		List<String> actualArguments = null;
 		try {
 			ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
 			Map<String, String> env = pb.environment();
@@ -501,16 +499,16 @@ public class VmArgumentTests {
 			actualArguments = runAndGetArgumentList(pb);
 			final String[] expectedArguments;
 			if (VersionCheck.major() < 21) {
-				expectedArguments = new String[] {MAPOPT_XJIT_COUNT_EQUALS, SYSPROP_DJAVA_COMPILER_EQUALS, VMOPT_XRS, ibmJavaOptionsArg};
+				expectedArguments = new String[] { MAPOPT_XJIT_COUNT_EQUALS, SYSPROP_DJAVA_COMPILER_EQUALS, VMOPT_XRS, ibmJavaOptionsArg };
 			} else {
-				expectedArguments = new String[] {MAPOPT_XJIT_COUNT_EQUALS, VMOPT_XRS, ibmJavaOptionsArg};
+				expectedArguments = new String[] { MAPOPT_XJIT_COUNT_EQUALS, VMOPT_XRS, ibmJavaOptionsArg };
 			}
-			HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArguments);
+			Map<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArguments);
 			checkArgumentSequence(expectedArguments, argumentPositions, true);
 			/* mapped options in environment variables should come before other non-implicit arguments */
-			assertTrue("Mapped options should come at the beginning of the list", argumentPositions.get(MAPOPT_XJIT_COUNT_EQUALS).intValue() < argumentPositions.get(VMOPT_XRS).intValue());				
+			assertTrue("Mapped options should come at the beginning of the list", argumentPositions.get(MAPOPT_XJIT_COUNT_EQUALS).intValue() < argumentPositions.get(VMOPT_XRS).intValue());
 		} catch (AssertionError e) {
-			dumpDiagnostics(e,actualArguments);
+			dumpDiagnostics(e, actualArguments);
 			throw e;
 		}
 	}
@@ -518,7 +516,7 @@ public class VmArgumentTests {
 	/* test environment variables which map to JVM options. Jazz 75469 */
 	@Test
 	public void testNullMappedOptions() {
-		ArrayList<String> actualArguments = null;
+		List<String> actualArguments = null;
 		try {
 			ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
 			Map<String, String> env = pb.environment();
@@ -530,11 +528,11 @@ public class VmArgumentTests {
 			env.put(IBM_JAVA_OPTIONS, ibmJavaOptionsArg);
 
 			actualArguments = runAndGetArgumentList(pb);
-			final String[] expectedArguments = new String[] {ibmJavaOptionsArg};
-			HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArguments);
+			final String[] expectedArguments = new String[] { ibmJavaOptionsArg };
+			Map<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArguments);
 			checkArgumentSequence(expectedArguments, argumentPositions, true);
 		} catch (AssertionError e) {
-			dumpDiagnostics(e,actualArguments);
+			dumpDiagnostics(e, actualArguments);
 			throw e;
 		}
 	}
@@ -544,10 +542,10 @@ public class VmArgumentTests {
 	public void testMultipleOptionsInEnvironmentVariable() {
 		ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
 		Map<String, String> env = pb.environment();
-		String javaToolOptionsArg = TEST_ARG_LIST[0]+' '+TEST_ARG_LIST[1]+' '+TEST_ARG_LIST[2]+' '+TEST_ARG_LIST[3];
+		String javaToolOptionsArg = TEST_ARG_LIST[0] + ' ' + TEST_ARG_LIST[1] + ' ' + TEST_ARG_LIST[2] + ' ' + TEST_ARG_LIST[3];
 		env.put(JAVA_TOOL_OPTIONS, javaToolOptionsArg);
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, TEST_ARG_LIST);
+		List<String> actualArguments = runAndGetArgumentList(pb);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments, TEST_ARG_LIST);
 
 		checkArgumentSequence(TEST_ARG_LIST, argumentPositions, true);
 	}
@@ -556,8 +554,8 @@ public class VmArgumentTests {
 	@Test
 	public void testCommandlineArguments() {
 		ProcessBuilder pb = makeProcessBuilder(TEST_ARG_LIST, CLASSPATH);
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, TEST_ARG_LIST);
+		List<String> actualArguments = runAndGetArgumentList(pb);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments, TEST_ARG_LIST);
 		checkArgumentSequence(TEST_ARG_LIST, argumentPositions, true);
 	}
 
@@ -571,20 +569,19 @@ public class VmArgumentTests {
 			longArg = longArgBuilder.toString();
 		}
 
-		String[] vmArgs = new String[] {"-Dtest.preamble", "-Dtest.data="+longArg, "-Dtest.postamble"};
+		String[] vmArgs = new String[] { "-Dtest.preamble", "-Dtest.data=" + longArg, "-Dtest.postamble" };
 		ProcessBuilder pb = makeProcessBuilder(vmArgs, CLASSPATH);
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, vmArgs);
+		List<String> actualArguments = runAndGetArgumentList(pb);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments, vmArgs);
 		checkArgumentSequence(vmArgs, argumentPositions, true);
 	}
 
 	/* verify that -Xprod is removed from the command line */
 	@Test
 	public void testXprod() {
-
-		ArrayList<String> cmdlineArgsBuffer = new ArrayList<String>(1);
+		List<String> cmdlineArgsBuffer = new ArrayList<>(1);
 		try {
-			String[] vmArgs = new String[] {XINT, XJIT};
+			String[] vmArgs = new String[] { XINT, XJIT };
 			cmdlineArgsBuffer.add(XPROD);
 			cmdlineArgsBuffer.add(XINT);
 			cmdlineArgsBuffer.add(XPROD);
@@ -592,8 +589,8 @@ public class VmArgumentTests {
 			cmdlineArgsBuffer.add(XJIT);
 			final String[] cmdlineArgs = cmdlineArgsBuffer.toArray(new String[cmdlineArgsBuffer.size()]);
 			ProcessBuilder pb = makeProcessBuilder(cmdlineArgs, CLASSPATH);
-			ArrayList<String> actualArgs = runAndGetArgumentList(pb);
-			HashMap<String, Integer> argumentPositions = checkArguments(actualArgs, cmdlineArgs);
+			List<String> actualArgs = runAndGetArgumentList(pb);
+			Map<String, Integer> argumentPositions = checkArguments(actualArgs, cmdlineArgs);
 			checkArgumentSequence(vmArgs, argumentPositions, true);
 		} catch (AssertionError e) {
 			dumpDiagnostics(e, cmdlineArgsBuffer);
@@ -603,16 +600,15 @@ public class VmArgumentTests {
 
 	@Test
 	public void testDisableXcheckMemory() {
-
-		ArrayList<String> actualArguments = null;
+		List<String> actualArguments = null;
 		try {
-			ArrayList<String> cmdlineArgBuffer = new ArrayList<String>();
-			ArrayList<String> expectedArgBuffer = new ArrayList<String>();
-			String xCheckMemory=XCHECK_MEMORY;
+			List<String> cmdlineArgBuffer = new ArrayList<>();
+			List<String> expectedArgBuffer = new ArrayList<>();
+			String xCheckMemory = XCHECK_MEMORY;
 			cmdlineArgBuffer.add(xCheckMemory);
 			expectedArgBuffer.add(xCheckMemory);
 
-			String xCheckClasspath="-Xcheck:none";
+			String xCheckClasspath = "-Xcheck:none";
 			cmdlineArgBuffer.add(xCheckClasspath);
 			expectedArgBuffer.add(xCheckClasspath);
 
@@ -620,19 +616,19 @@ public class VmArgumentTests {
 
 			actualArguments = runAndGetArgumentList(pb);
 			final String[] expectedArgs = expectedArgBuffer.toArray(new String[expectedArgBuffer.size()]);
-			HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
+			Map<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
 			checkArgumentSequence(expectedArgs, argumentPositions, false);
 			String stderrText = stderrReader.getStreamOutput();
-			assertFalse("All allocated blocks were freed.", stderrText.contains( "-Xcheck:memory failed"));
+			assertFalse("All allocated blocks were freed.", stderrText.contains("-Xcheck:memory failed"));
 		} catch (AssertionError e) {
-			dumpDiagnostics(e,actualArguments);
+			dumpDiagnostics(e, actualArguments);
 			throw e;
 		}
 	}
 
 	@Test
 	public void testVerboseInitOptions() {
-		ArrayList<String> actualArguments = new ArrayList<String>(1);
+		List<String> actualArguments = new ArrayList<>(1);
 		try {
 			actualArguments.add("-verbose:init");
 			final String[] actualArgs = actualArguments.toArray(new String[actualArguments.size()]);
@@ -649,8 +645,7 @@ public class VmArgumentTests {
 
 	@Test
 	public void testCheckMemoryViaEnvironmentVariable() {
-
-		ArrayList<String> cmdlineArguments = new ArrayList<String>(1);
+		List<String> cmdlineArguments = new ArrayList<>(1);
 		try {
 			cmdlineArguments.add(XINT);
 			final String[] actualArgs = cmdlineArguments.toArray(new String[cmdlineArguments.size()]);
@@ -667,28 +662,26 @@ public class VmArgumentTests {
 			assertTrue("stderr reader join failed", stderrReader.getState() == State.TERMINATED);
 			checkArguments(cmdlineArguments, actualArgs);
 			String stderrText = stderrReader.getStreamOutput();
-			assertTrue("check memory using environment variable failed: stderr = "+stderrText, stderrText.contains("Memory checker statistics:"));
+			assertTrue("check memory using environment variable failed: stderr = " + stderrText, stderrText.contains("Memory checker statistics:"));
 		} catch (AssertionError e) {
 			dumpDiagnostics(e, cmdlineArguments);
 			throw e;
 		}
-
 	}
 
-	/* test whitespace before and after  */
+	/* test whitespace before and after */
 	@Test
 	public void testCommandlineArgumentsWithLeadingAndTrailingSpaces() {
-		ArrayList<String> actualArguments=null;
+		List<String> actualArguments = null;
 		try {
-
 			String cmdlineArg1 = "-Dtest.name=cmdlineArg1";
 			String cmdlineArg2 = "-Dtest.name=cmdlineArg2";
-			String[] vmArgs = new String[] {cmdlineArg1+"                 ", "                "+cmdlineArg2};
+			String[] vmArgs = new String[] { cmdlineArg1 + "                 ", "                " + cmdlineArg2 };
 			ProcessBuilder pb = makeProcessBuilder(vmArgs, CLASSPATH);
 			int exitStatus = runAndGetExitStatus(pb);
 			assertFalse("VM did not fail on empty argument", exitStatus == 0);
 		} catch (AssertionError e) {
-			dumpDiagnostics(e,actualArguments);
+			dumpDiagnostics(e, actualArguments);
 			throw e;
 		}
 	}
@@ -706,28 +699,28 @@ public class VmArgumentTests {
 		env.put(JAVA_OPTIONS, javaOptionsArg);
 		env.put(JAVA_TOOL_OPTIONS, javaToolOptionsArg);
 		env.put(OPENJ9_JAVA_OPTIONS, openJ9JavaOptionsArg);
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, 
-				new String[] {ibmJavaOptionsArg, javaOptionsArg, javaToolOptionsArg, openJ9JavaOptionsArg});
-		assertTrue(MISSING_ARGUMENT+ibmJavaOptionsArg, 
+		List<String> actualArguments = runAndGetArgumentList(pb);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments,
+				new String[] { ibmJavaOptionsArg, javaOptionsArg, javaToolOptionsArg, openJ9JavaOptionsArg });
+		assertTrue(MISSING_ARGUMENT + ibmJavaOptionsArg,
 				argumentPositions.containsKey(ibmJavaOptionsArg));
 		if (!isJava8 || !isIBM) {
-			assertTrue(MISSING_ARGUMENT + javaOptionsArg, 
+			assertTrue(MISSING_ARGUMENT + javaOptionsArg,
 					argumentPositions.containsKey(javaOptionsArg));
 		} else {
-			assertFalse("unexpected: " + javaOptionsArg, 
+			assertFalse("unexpected: " + javaOptionsArg,
 					argumentPositions.containsKey(javaOptionsArg));
 		}
-		assertTrue(MISSING_ARGUMENT+javaToolOptionsArg, 
+		assertTrue(MISSING_ARGUMENT + javaToolOptionsArg,
 				argumentPositions.containsKey(javaToolOptionsArg));
-		assertTrue(MISSING_ARGUMENT+openJ9JavaOptionsArg, 
+		assertTrue(MISSING_ARGUMENT + openJ9JavaOptionsArg,
 				argumentPositions.containsKey(openJ9JavaOptionsArg));
-		assertTrue(IBM_JAVA_OPTIONS+ SHOULD_COME_AFTER+OPENJ9_JAVA_OPTIONS, 
+		assertTrue(IBM_JAVA_OPTIONS + SHOULD_COME_AFTER + OPENJ9_JAVA_OPTIONS,
 				argumentPositions.get(ibmJavaOptionsArg).intValue() > argumentPositions.get(openJ9JavaOptionsArg).intValue());
-		assertTrue(OPENJ9_JAVA_OPTIONS + SHOULD_COME_AFTER + JAVA_TOOL_OPTIONS, 
+		assertTrue(OPENJ9_JAVA_OPTIONS + SHOULD_COME_AFTER + JAVA_TOOL_OPTIONS,
 				argumentPositions.get(openJ9JavaOptionsArg).intValue() > argumentPositions.get(javaToolOptionsArg).intValue());
 		if (!(isJava8 && isIBM)) {
-			assertTrue(JAVA_OPTIONS + SHOULD_COME_AFTER + IBM_JAVA_OPTIONS, 
+			assertTrue(JAVA_OPTIONS + SHOULD_COME_AFTER + IBM_JAVA_OPTIONS,
 					argumentPositions.get(javaOptionsArg).intValue() > argumentPositions.get(ibmJavaOptionsArg).intValue());
 		}
 	}
@@ -739,9 +732,9 @@ public class VmArgumentTests {
 	 * z/OS
 	 */
 	@Test
-	public void testLD_LIBRARY_PATH () {
+	public void testLD_LIBRARY_PATH() {
 		if (!OS_NAME_PROPERTY.startsWith("Linux")) {
-			logger.debug("Skipping "+testName+" on non-Linux systems");
+			logger.debug("Skipping " + testName + " on non-Linux systems");
 			return;
 		}
 		if ((null == USER_DIR) || (USER_DIR.length() == 0)) {
@@ -750,18 +743,18 @@ public class VmArgumentTests {
 
 		ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
 		Map<String, String> env = pb.environment();
-		String ldLibraryPath = USER_DIR+FILE_SEPARATOR+testName;
+		String ldLibraryPath = USER_DIR + FILE_SEPARATOR + testName;
 		env.put(ENV_LD_LIBRARY_PATH, ldLibraryPath);
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
+		List<String> actualArguments = runAndGetArgumentList(pb);
 		String javaPathDir = getArgumentValue(actualArguments, DJAVA_LIBRARY_PATH);
-		assertTrue(DJAVA_LIBRARY_PATH+"=\n\""+javaPathDir+"\"\ndoes not contain value from "+ENV_LD_LIBRARY_PATH,
+		assertTrue(DJAVA_LIBRARY_PATH + "=\n\"" + javaPathDir + "\"\ndoes not contain value from " + ENV_LD_LIBRARY_PATH,
 				javaPathDir.contains(ldLibraryPath));
 	}
 
 	@Test
-	public void testLD_LIBRARY_PATH_And_LIBPATH () {
+	public void testLD_LIBRARY_PATH_And_LIBPATH() {
 		if (!OS_NAME_PROPERTY.startsWith("AIX")) {
-			logger.debug("Skipping "+testName+" on non-AIX systems");
+			logger.debug("Skipping " + testName + " on non-AIX systems");
 			return;
 		}
 		if ((null == USER_DIR) || (USER_DIR.length() == 0)) {
@@ -773,21 +766,21 @@ public class VmArgumentTests {
 		}
 		ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
 		Map<String, String> env = pb.environment();
-		String libpath = tmpDir+FILE_SEPARATOR+testName;
-		String ldLibraryPath = USER_DIR+FILE_SEPARATOR+testName;
+		String libpath = tmpDir + FILE_SEPARATOR + testName;
+		String ldLibraryPath = USER_DIR + FILE_SEPARATOR + testName;
 		env.put(ENV_LD_LIBRARY_PATH, ldLibraryPath);
 		env.put(ENV_LIBPATH, libpath);
-		String expectedSubstring = libpath+File.pathSeparatorChar+ldLibraryPath;
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
+		String expectedSubstring = libpath + File.pathSeparatorChar + ldLibraryPath;
+		List<String> actualArguments = runAndGetArgumentList(pb);
 		String javaPathDir = getArgumentValue(actualArguments, DJAVA_LIBRARY_PATH);
-		assertTrue(DJAVA_LIBRARY_PATH+"=\n\""+javaPathDir+"\"\ndoes not contain value from "+ENV_LD_LIBRARY_PATH,
+		assertTrue(DJAVA_LIBRARY_PATH + "=\n\"" + javaPathDir + "\"\ndoes not contain value from " + ENV_LD_LIBRARY_PATH,
 				javaPathDir.contains(expectedSubstring));
 	}
 
 	@Test
-	public void testLIBPATH () {
+	public void testLIBPATH() {
 		if (!OS_NAME_PROPERTY.startsWith("z/OS")) {
-			logger.debug("Skipping "+testName+" on non-z/OS systems");
+			logger.debug("Skipping " + testName + " on non-z/OS systems");
 			return;
 		}
 		if ((null == USER_DIR) || (USER_DIR.length() == 0)) {
@@ -795,12 +788,12 @@ public class VmArgumentTests {
 		}
 		ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
 		Map<String, String> env = pb.environment();
-		String libpath = USER_DIR+FILE_SEPARATOR+testName;
+		String libpath = USER_DIR + FILE_SEPARATOR + testName;
 		env.put(ENV_LIBPATH, libpath);
 		String expectedSubstring = libpath;
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
+		List<String> actualArguments = runAndGetArgumentList(pb);
 		String javaPathDir = getArgumentValue(actualArguments, DJAVA_LIBRARY_PATH);
-		assertTrue(DJAVA_LIBRARY_PATH+"=\n\""+javaPathDir+"\"\ndoes not contain value from "+ENV_LD_LIBRARY_PATH,
+		assertTrue(DJAVA_LIBRARY_PATH + "=\n\"" + javaPathDir + "\"\ndoes not contain value from " + ENV_LD_LIBRARY_PATH,
 				javaPathDir.contains(expectedSubstring));
 	}
 
@@ -809,34 +802,33 @@ public class VmArgumentTests {
 	public void testServiceOptions() {
 		String svcArg = "-Dtest.name=testServiceOptions";
 		String xServiceArgString = "-Xservice=" + svcArg;
-		String[] vmArgs = new String[] {xServiceArgString};
+		String[] vmArgs = new String[] { xServiceArgString };
 		ProcessBuilder pb = makeProcessBuilder(vmArgs, CLASSPATH);
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] {svcArg, xServiceArgString});
+		List<String> actualArguments = runAndGetArgumentList(pb);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] { svcArg, xServiceArgString });
 		Integer scvArgPosn = argumentPositions.get(svcArg);
-		assertNotNull("argument missing: "+svcArg, scvArgPosn);
+		assertNotNull("argument missing: " + svcArg, scvArgPosn);
 		int numArgs = actualArguments.size();
-		assertEquals(xServiceArgString+" not last argument", numArgs-1, scvArgPosn.intValue());
+		assertEquals(xServiceArgString + " not last argument", numArgs - 1, scvArgPosn.intValue());
 	}
 
-	/* test multiple instances of -Xservice=<arg>.  The last one takes priority. */
+	/* Test multiple instances of -Xservice=<arg>. The last one takes priority. */
 	@Test
 	public void testMultipleServiceArgs() {
-		ArrayList<String> actualArguments=null;
+		List<String> actualArguments = null;
 		try {
-
 			String svcArg1 = "-Dtest.name=testServiceOptions1";
 			String xServiceArg1String = "-Xservice=" + svcArg1;
 			String svcArg2 = "-Dtest.name=testServiceOptions2";
 			String xServiceArg2String = "-Xservice=" + svcArg2;
-			String[] vmArgs = new String[] {xServiceArg1String, xServiceArg2String};
+			String[] vmArgs = new String[] { xServiceArg1String, xServiceArg2String };
 			ProcessBuilder pb = makeProcessBuilder(vmArgs, CLASSPATH);
 			actualArguments = runAndGetArgumentList(pb);
-			final String[] expectedArgs = new String[] {xServiceArg1String, xServiceArg2String, svcArg2};
-			HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
+			final String[] expectedArgs = new String[] { xServiceArg1String, xServiceArg2String, svcArg2 };
+			Map<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
 			checkArgumentSequence(expectedArgs, argumentPositions, false);
 		} catch (AssertionError e) {
-			dumpDiagnostics(e,actualArguments);
+			dumpDiagnostics(e, actualArguments);
 			throw e;
 		}
 	}
@@ -844,7 +836,7 @@ public class VmArgumentTests {
 	/* -Xservice argument is not parsed if it is in an environment variable */
 	@Test
 	public void testServiceArgsInEnvironmentVariable() {
-		ArrayList<String> actualArguments=null;
+		List<String> actualArguments = null;
 		try {
 			String svcArg = "-Dtest.name=testServiceOptionsInEnvironmentVariable";
 			String xServiceArgString = "-Xservice=" + svcArg;
@@ -854,10 +846,10 @@ public class VmArgumentTests {
 			env.put(IBM_JAVA_OPTIONS, xServiceArgString);
 
 			actualArguments = runAndGetArgumentList(pb);
-			HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
-			assertNull("Argument to -Xservice should not be placed in command line if -Xservice is in environment variable: "+svcArg, argumentPositions.get(svcArg));
+			Map<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
+			assertNull("Argument to -Xservice should not be placed in command line if -Xservice is in environment variable: " + svcArg, argumentPositions.get(svcArg));
 		} catch (AssertionError e) {
-			dumpDiagnostics(e,actualArguments);
+			dumpDiagnostics(e, actualArguments);
 			throw e;
 		}
 	}
@@ -867,43 +859,43 @@ public class VmArgumentTests {
 	public void testServiceMultipleArgs() {
 		String serviceFoo = "-Dtest.xservice.opt1=foo";
 		String serviceBar = "-Dtest.xservice.opt1=bar";
-		String xServiceArg = "-Xservice="+serviceFoo+' '+serviceBar;
-		String[] vmArgs = new String[] {xServiceArg};
+		String xServiceArg = "-Xservice=" + serviceFoo + ' ' + serviceBar;
+		String[] vmArgs = new String[] { xServiceArg };
 		ProcessBuilder pb = makeProcessBuilder(vmArgs, CLASSPATH);
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] {serviceFoo, serviceBar, xServiceArg});
-		assertNotNull("argument missing: "+xServiceArg, argumentPositions.get(xServiceArg));
+		List<String> actualArguments = runAndGetArgumentList(pb);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] { serviceFoo, serviceBar, xServiceArg });
+		assertNotNull("argument missing: " + xServiceArg, argumentPositions.get(xServiceArg));
 		int numArgs = actualArguments.size();
 		int fooPos = argumentPositions.get(serviceFoo).intValue();
 		int barPos = argumentPositions.get(serviceBar).intValue();
-		assertEquals(fooPos+" not penultimate argument", numArgs-2, fooPos);
-		assertEquals(barPos+" not last argument", numArgs-1, barPos);
+		assertEquals(fooPos + " not penultimate argument", numArgs - 2, fooPos);
+		assertEquals(barPos + " not last argument", numArgs - 1, barPos);
 	}
 
 	/* -Xservice arguments should come after cmdline arguments */
 	@Test
 	public void testCmdlineServiceArgsOrdering() {
-		ArrayList<String> actualArguments=null;
+		List<String> actualArguments = null;
 		try {
 			final String svcArgContents = "-Dtest.name=testCmdlineServiceOptionsOrdering";
-			String xServiceArg = "-Xservice="+svcArgContents;
+			String xServiceArg = "-Xservice=" + svcArgContents;
 			String cmdlineArg = "-Dtest.cmdline.arg1";
-			String[] vmArgs = new String[] {xServiceArg, cmdlineArg};
-			String[] expectedArgs = new String[] {xServiceArg, svcArgContents, cmdlineArg};
+			String[] vmArgs = new String[] { xServiceArg, cmdlineArg };
+			String[] expectedArgs = new String[] { xServiceArg, svcArgContents, cmdlineArg };
 			ProcessBuilder pb = makeProcessBuilder(vmArgs, CLASSPATH);
 			actualArguments = runAndGetArgumentList(pb);
-			HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
+			Map<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
 
 			Integer cmdlineArgPosn = argumentPositions.get(cmdlineArg);
 			Integer xServicePosn = argumentPositions.get(xServiceArg);
 			Integer svcArgContentsPosn = argumentPositions.get(svcArgContents);
-			assertNotNull("argument missing: "+xServiceArg, xServicePosn);
-			assertNotNull("argument missing: "+svcArgContents, svcArgContentsPosn);
+			assertNotNull("argument missing: " + xServiceArg, xServicePosn);
+			assertNotNull("argument missing: " + svcArgContents, svcArgContentsPosn);
 			final int cmdlineArgPosnIntValue = cmdlineArgPosn.intValue();
-			assertTrue(xServiceArg+ " should come before "+cmdlineArg, xServicePosn.intValue() < cmdlineArgPosnIntValue);
-			assertTrue(svcArgContents+ " should come after "+cmdlineArg, svcArgContentsPosn.intValue() > cmdlineArgPosnIntValue);
+			assertTrue(xServiceArg + " should come before " + cmdlineArg, xServicePosn.intValue() < cmdlineArgPosnIntValue);
+			assertTrue(svcArgContents + " should come after " + cmdlineArg, svcArgContentsPosn.intValue() > cmdlineArgPosnIntValue);
 		} catch (AssertionError e) {
-			dumpDiagnostics(e,actualArguments);
+			dumpDiagnostics(e, actualArguments);
 			throw e;
 		}
 	}
@@ -912,167 +904,167 @@ public class VmArgumentTests {
 	@Test
 	public void testEnvironmentCmdlineOrdering() {
 		String cmdlineArg = "-Dtest.cmdline.arg1";
-		ProcessBuilder pb = makeProcessBuilder(new String[] {cmdlineArg}, CLASSPATH);
+		ProcessBuilder pb = makeProcessBuilder(new String[] { cmdlineArg }, CLASSPATH);
 		Map<String, String> env = pb.environment();
 		String ibmJavaOptionsArg = "-Dtest.name=ibmJavaOptionsArg";
 		env.put(IBM_JAVA_OPTIONS, ibmJavaOptionsArg);
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] {ibmJavaOptionsArg, cmdlineArg});
-		assertTrue("missing argument: "+ibmJavaOptionsArg, argumentPositions.containsKey(ibmJavaOptionsArg));
-		assertTrue(cmdlineArg+ " should come after "+DJAVA_HOME, argumentPositions.get(ibmJavaOptionsArg).intValue() < argumentPositions.get(cmdlineArg).intValue());
+		List<String> actualArguments = runAndGetArgumentList(pb);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] { ibmJavaOptionsArg, cmdlineArg });
+		assertTrue("missing argument: " + ibmJavaOptionsArg, argumentPositions.containsKey(ibmJavaOptionsArg));
+		assertTrue(cmdlineArg + " should come after " + DJAVA_HOME, argumentPositions.get(ibmJavaOptionsArg).intValue() < argumentPositions.get(cmdlineArg).intValue());
 	}
 
 	@Test
 	public void testOptionsFile() {
 		String optionFilePath = makeOptionsFile("test1", TEST_ARG_LIST);
-		String optionFileArg=XOPTIONSFILE+optionFilePath;
-		ProcessBuilder pb = makeProcessBuilder(new String[] {optionFileArg}, CLASSPATH);
-		String[] expectedArgs = new String[TEST_ARG_LIST.length+1];
-		expectedArgs[0]=optionFileArg;
+		String optionFileArg = XOPTIONSFILE + optionFilePath;
+		ProcessBuilder pb = makeProcessBuilder(new String[] { optionFileArg }, CLASSPATH);
+		String[] expectedArgs = new String[TEST_ARG_LIST.length + 1];
+		expectedArgs[0] = optionFileArg;
 		System.arraycopy(TEST_ARG_LIST, 0, expectedArgs, 1, TEST_ARG_LIST.length);
 
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
+		List<String> actualArguments = runAndGetArgumentList(pb);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
 		checkArgumentSequence(expectedArgs, argumentPositions, true);
 	}
 
 	@Test
 	public void testShowOptionsInOptionsFile() {
-		final String[] testArgList = new String[] {"-Dtest.option1=testJavaToolOptions1", 
+		final String[] testArgList = new String[] {"-Dtest.option1=testJavaToolOptions1",
 				"-showversion",
 				"-Dtest.option2=testJavaToolOptions2"};
 		String optionFilePath = makeOptionsFile("test1", testArgList);
-		String optionFileArg=XOPTIONSFILE+optionFilePath;
-		ProcessBuilder pb = makeProcessBuilder(new String[] {optionFileArg}, CLASSPATH);
-		String[] expectedArgs = new String[testArgList.length+1];
-		expectedArgs[0]=optionFileArg;
+		String optionFileArg = XOPTIONSFILE + optionFilePath;
+		ProcessBuilder pb = makeProcessBuilder(new String[] { optionFileArg }, CLASSPATH);
+		String[] expectedArgs = new String[testArgList.length + 1];
+		expectedArgs[0] = optionFileArg;
 		System.arraycopy(testArgList, 0, expectedArgs, 1, testArgList.length);
 
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
+		List<String> actualArguments = runAndGetArgumentList(pb);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
 		checkArgumentSequence(expectedArgs, argumentPositions, true);
 	}
 
 	@Test
 	public void testBadOptionsFile() {
-		String badOptionFileArg=XOPTIONSFILE+"bogus";
-		String missingOptionFileArg=XOPTIONSFILE;
-		ProcessBuilder pb = makeProcessBuilder(new String[] {badOptionFileArg, missingOptionFileArg}, CLASSPATH);
+		String badOptionFileArg = XOPTIONSFILE + "bogus";
+		String missingOptionFileArg = XOPTIONSFILE;
+		ProcessBuilder pb = makeProcessBuilder(new String[] { badOptionFileArg, missingOptionFileArg }, CLASSPATH);
 		String[] expectedArgs = new String[0];
-		if (false) { /* fix this when Issue #399 is fixed.  Change length of expectedArgs */
-			expectedArgs[0]=badOptionFileArg;
-			expectedArgs[1]=missingOptionFileArg;
-		}		
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
+		if (false) { /* Fix this when Issue #399 is fixed. Change length of expectedArgs. */
+			expectedArgs[0] = badOptionFileArg;
+			expectedArgs[1] = missingOptionFileArg;
+		}
+		List<String> actualArguments = runAndGetArgumentList(pb);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
 		checkArgumentSequence(expectedArgs, argumentPositions, true);
 	}
 
 	@Test
 	public void testXargencodingInOptionsFile() {
 		String optionFilePath = makeOptionsFile("test1", XARGENCODING);
-		String optionFileArg=XOPTIONSFILE+optionFilePath;
-		ProcessBuilder pb = makeProcessBuilder(new String[] {optionFileArg}, CLASSPATH);
-		String[] expectedArgs = new String[XARGENCODING.length+1];
-		expectedArgs[0]=optionFileArg;
+		String optionFileArg = XOPTIONSFILE + optionFilePath;
+		ProcessBuilder pb = makeProcessBuilder(new String[] { optionFileArg }, CLASSPATH);
+		String[] expectedArgs = new String[XARGENCODING.length + 1];
+		expectedArgs[0] = optionFileArg;
 		System.arraycopy(XARGENCODING, 0, expectedArgs, 1, XARGENCODING.length);
 
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
+		List<String> actualArguments = runAndGetArgumentList(pb);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
 		checkArgumentSequence(expectedArgs, argumentPositions, true);
 	}
 
 	/* -Xservice in an options file should not be used */
 	@Test
 	public void testXserviceInOptionsFile() {
-		String xServiceArg = "-Xservice="+XINT;
-		String optionFilePath = makeOptionsFile("testXserviceInOptionsFile", new String[] {xServiceArg});
-		String optionFileArg=XOPTIONSFILE+optionFilePath;
-		ProcessBuilder pb = makeProcessBuilder(new String[] {optionFileArg}, CLASSPATH);
-		ArrayList<String> expectedArguments=new ArrayList<String>();
+		String xServiceArg = "-Xservice=" + XINT;
+		String optionFilePath = makeOptionsFile("testXserviceInOptionsFile", new String[] { xServiceArg });
+		String optionFileArg = XOPTIONSFILE + optionFilePath;
+		ProcessBuilder pb = makeProcessBuilder(new String[] { optionFileArg }, CLASSPATH);
+		List<String> expectedArguments = new ArrayList<>();
 		expectedArguments.add(optionFileArg);
 		expectedArguments.add(xServiceArg);
 
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, 
+		List<String> actualArguments = runAndGetArgumentList(pb);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments,
 				expectedArguments.toArray(new String[expectedArguments.size()]));
 		assertNull("-Xservice options in options files should not take effect", argumentPositions.get(XINT));
 	}
 
 	@Test
 	public void testOptionsFileAndNormalArguments() {
-		ArrayList<String> expectedArgsBuffer = new ArrayList<String>();
-		final String PROLOGUE_ARG="-Dtest.prologue";
+		List<String> expectedArgsBuffer = new ArrayList<>();
+		final String PROLOGUE_ARG = "-Dtest.prologue";
 		expectedArgsBuffer.add(PROLOGUE_ARG);
 
 		String optionFilePath = makeOptionsFile("test1", TEST_ARG_LIST);
-		String optionFileArg=XOPTIONSFILE+optionFilePath;
+		String optionFileArg = XOPTIONSFILE + optionFilePath;
 		expectedArgsBuffer.add(optionFileArg);
-		for (String a: TEST_ARG_LIST) {
+		for (String a : TEST_ARG_LIST) {
 			expectedArgsBuffer.add(a);
 		}
 
-		final String EPILOGUE_ARG="-Dtest.epilogue";
+		final String EPILOGUE_ARG = "-Dtest.epilogue";
 		expectedArgsBuffer.add(EPILOGUE_ARG);
 
-		ProcessBuilder pb = makeProcessBuilder(new String[] {PROLOGUE_ARG, optionFileArg, EPILOGUE_ARG}, CLASSPATH);
+		ProcessBuilder pb = makeProcessBuilder(new String[] { PROLOGUE_ARG, optionFileArg, EPILOGUE_ARG }, CLASSPATH);
 		String[] expectedArgs = expectedArgsBuffer.toArray(new String[expectedArgsBuffer.size()]);
 
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
+		List<String> actualArguments = runAndGetArgumentList(pb);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
 		checkArgumentSequence(expectedArgs, argumentPositions, true);
 	}
 
 	@Test
 	public void testOptionsFileWithLeadingAndTrailingBlanks() {
-		String testArgs[] = new String[TEST_ARG_LIST.length]; 
+		String testArgs[] = new String[TEST_ARG_LIST.length];
 		System.arraycopy(TEST_ARG_LIST, 0, testArgs, 0, TEST_ARG_LIST.length);
-		testArgs[0] = "               "+TEST_ARG_LIST[0];
-		testArgs[1] = TEST_ARG_LIST[1]+"               ";
+		testArgs[0] = "               " + TEST_ARG_LIST[0];
+		testArgs[1] = TEST_ARG_LIST[1] + "               ";
 		String optionFilePath = makeOptionsFile("test1", testArgs);
-		String optionFileArg=XOPTIONSFILE+optionFilePath;
-		ProcessBuilder pb = makeProcessBuilder(new String[] {optionFileArg}, CLASSPATH);
-		String[] expectedArgs = new String[TEST_ARG_LIST.length+1];
-		expectedArgs[0]=optionFileArg;
+		String optionFileArg = XOPTIONSFILE + optionFilePath;
+		ProcessBuilder pb = makeProcessBuilder(new String[] { optionFileArg }, CLASSPATH);
+		String[] expectedArgs = new String[TEST_ARG_LIST.length + 1];
+		expectedArgs[0] = optionFileArg;
 		System.arraycopy(TEST_ARG_LIST, 0, expectedArgs, 1, TEST_ARG_LIST.length);
 
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
+		List<String> actualArguments = runAndGetArgumentList(pb);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
 		checkArgumentSequence(expectedArgs, argumentPositions, true);
 	}
 
 	@Test
 	public void testMultipleOptionsFiles() {
 		String optionFile1Path = makeOptionsFile("test1", TEST_ARG_LIST);
-		String optionFile1Arg=XOPTIONSFILE+optionFile1Path;
+		String optionFile1Arg = XOPTIONSFILE + optionFile1Path;
 		String cmdlineArg = "-Dtest.cmdline.arg1";
 		String optFile2Content = "-Dtest.postamble";
-		String optionFile2Path = makeOptionsFile("test2", new String[] {optFile2Content});
-		String optionFile2Arg=XOPTIONSFILE+optionFile2Path;
-		ProcessBuilder pb = makeProcessBuilder(new String[] {optionFile1Arg, cmdlineArg, optionFile2Arg}, CLASSPATH);
+		String optionFile2Path = makeOptionsFile("test2", new String[] { optFile2Content });
+		String optionFile2Arg = XOPTIONSFILE + optionFile2Path;
+		ProcessBuilder pb = makeProcessBuilder(new String[] { optionFile1Arg, cmdlineArg, optionFile2Arg }, CLASSPATH);
 
-		ArrayList<String> expectedArgsBuffer = new ArrayList<String>();
+		List<String> expectedArgsBuffer = new ArrayList<>();
 		expectedArgsBuffer.add(optionFile1Arg);
-		for (String s: TEST_ARG_LIST) {
+		for (String s : TEST_ARG_LIST) {
 			expectedArgsBuffer.add(s);
 		}
 		expectedArgsBuffer.add(cmdlineArg);
 		expectedArgsBuffer.add(optionFile2Arg);
 		expectedArgsBuffer.add(optFile2Content);
 
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
+		List<String> actualArguments = runAndGetArgumentList(pb);
 		String[] expectedArgs = expectedArgsBuffer.toArray(new String[expectedArgsBuffer.size()]);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
 		checkArgumentSequence(expectedArgs, argumentPositions, true);
 	}
 
 	/* Note: -showversion on the command line is not tested, as it is applicable only to IBM Java 8. */
 	@Test
 	public void testXintAndOtherVmArguments() {
-		String[] argList = new String[] {"-Dtest.preamble", XINT, "-verbose:gc", "-Xmx10M", "-Dtest.postamble"};
+		String[] argList = new String[] { "-Dtest.preamble", XINT, "-verbose:gc", "-Xmx10M", "-Dtest.postamble" };
 		ProcessBuilder pb = makeProcessBuilder(argList, CLASSPATH);
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, argList);
+		List<String> actualArguments = runAndGetArgumentList(pb);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments, argList);
 		checkArgumentSequence(argList, argumentPositions, true);
 	}
 
@@ -1080,8 +1072,8 @@ public class VmArgumentTests {
 	public void testXXArguments() {
 		String[] argList = new String[] {"-Dtest.preamble", "-XXallowvmshutdown:true", "-XX:-StackTraceInThrowable", "-XX:undefinedOption", "-Dtest.postamble"};
 		ProcessBuilder pb = makeProcessBuilder(argList, CLASSPATH);
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, argList);
+		List<String> actualArguments = runAndGetArgumentList(pb);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments, argList);
 		checkArgumentSequence(argList, argumentPositions, true);
 	}
 
@@ -1089,39 +1081,39 @@ public class VmArgumentTests {
 	@Test
 	public void testOptionsFileInOptionsFile() {
 		String optFile2Content = "-Dtest.postamble";
-		String optionFile2Path = makeOptionsFile("test2", new String[] {optFile2Content});
-		String optionFile2Arg=XOPTIONSFILE+optionFile2Path;
+		String optionFile2Path = makeOptionsFile("test2", new String[] { optFile2Content });
+		String optionFile2Arg = XOPTIONSFILE + optionFile2Path;
 
-		String optionFile1Path = makeOptionsFile("test1", new String[] {optionFile2Arg});
-		String optionFile1Arg=XOPTIONSFILE+optionFile1Path;
-		ProcessBuilder pb = makeProcessBuilder(new String[] {optionFile1Arg}, CLASSPATH);
+		String optionFile1Path = makeOptionsFile("test1", new String[] { optionFile2Arg });
+		String optionFile1Arg = XOPTIONSFILE + optionFile1Path;
+		ProcessBuilder pb = makeProcessBuilder(new String[] { optionFile1Arg }, CLASSPATH);
 
-		ArrayList<String> expectedArgsBuffer = new ArrayList<String>();
+		List<String> expectedArgsBuffer = new ArrayList<>();
 		expectedArgsBuffer.add(optionFile1Arg);
 		expectedArgsBuffer.add(optionFile2Arg);
 
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
+		List<String> actualArguments = runAndGetArgumentList(pb);
 		String[] expectedArgs = expectedArgsBuffer.toArray(new String[expectedArgsBuffer.size()]);
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
 		checkArgumentSequence(expectedArgs, argumentPositions, true);
 		assertNull("option file specified in option file should not be processed", argumentPositions.get(optFile2Content));
 	}
 
-	/* 
-	 * specifying -Xoptionsfile=foo inside an environment variable results in the contents of the options file 
-	 * appearing in the argument list, but the -Xoptionsfile= argument itself does not appear in the argument list. 
+	/*
+	 * Specifying -Xoptionsfile=foo inside an environment variable results in the contents of the options file
+	 * appearing in the argument list, but the -Xoptionsfile= argument itself does not appear in the argument list.
 	 */
 	@Test
 	public void testOptionsFileInEnvironmentVariable() {
-		ArrayList<String> actualArguments = null;
+		List<String> actualArguments = null;
 		try {
 			String ibmOptFileContent = "-Dtest=1";
-			String ibmOptFilePath = makeOptionsFile("test1", new String[] {ibmOptFileContent});
-			String ibmOptFileArg=XOPTIONSFILE+ibmOptFilePath;
+			String ibmOptFilePath = makeOptionsFile("test1", new String[] { ibmOptFileContent });
+			String ibmOptFileArg = XOPTIONSFILE + ibmOptFilePath;
 
 			String javaOptFileContent = "-Dtest=2";
-			String javaOptFilePath = makeOptionsFile("test2", new String[] {javaOptFileContent});
-			String javaOptFileArg=XOPTIONSFILE+javaOptFilePath;
+			String javaOptFilePath = makeOptionsFile("test2", new String[] { javaOptFileContent });
+			String javaOptFileArg = XOPTIONSFILE + javaOptFilePath;
 
 			ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
 			Map<String, String> env = pb.environment();
@@ -1129,13 +1121,12 @@ public class VmArgumentTests {
 			env.put(JAVA_TOOL_OPTIONS, javaOptFileArg);
 
 			actualArguments = runAndGetArgumentList(pb);
-			String[] expectedArgs = null;
 			/* new VM args processing puts the options file argument in the list for consistency */
-			expectedArgs = new String[] {javaOptFileArg, javaOptFileContent, ibmOptFileArg, ibmOptFileContent};
-			HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
+			String[] expectedArgs = new String[] { javaOptFileArg, javaOptFileContent, ibmOptFileArg, ibmOptFileContent };
+			Map<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
 			checkArgumentSequence(expectedArgs, argumentPositions, true);
 		} catch (AssertionError e) {
-			dumpDiagnostics(e,actualArguments);
+			dumpDiagnostics(e, actualArguments);
 			throw e;
 		}
 	}
@@ -1143,7 +1134,7 @@ public class VmArgumentTests {
 	@Test
 	public void testEmptyArgument() {
 		String cmdlineArg = " ";
-		String[] vmArgs = new String[] {cmdlineArg};
+		String[] vmArgs = new String[] { cmdlineArg };
 		ProcessBuilder pb = makeProcessBuilder(vmArgs, CLASSPATH);
 		int exitStatus = runAndGetExitStatus(pb);
 		assertFalse("VM did not fail on empty argument", exitStatus == 0);
@@ -1152,7 +1143,7 @@ public class VmArgumentTests {
 	/* options specified in IBM_JAVA_OPTIONS or JAVA_TOOL_OPTIONS should take precedence over inferred arguments created by the VM */
 	@Test
 	public void testOverrideExtDirs() {
-		ArrayList<String> actualArguments = null;
+		List<String> actualArguments = null;
 		try {
 			ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
 			Map<String, String> env = pb.environment();
@@ -1161,14 +1152,14 @@ public class VmArgumentTests {
 			String javaToolOptionsArg = "-Dtest.name=testJavaToolOptions";
 			env.put(JAVA_TOOL_OPTIONS, javaToolOptionsArg);
 			actualArguments = runAndGetArgumentList(pb);
-			HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] {javaToolOptionsArg, ibmJavaOptionsArg});
-			assertTrue("missing argument: "+ibmJavaOptionsArg, argumentPositions.containsKey(ibmJavaOptionsArg));
-			assertTrue("missing argument: "+javaToolOptionsArg, argumentPositions.containsKey(javaToolOptionsArg));
+			Map<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] { javaToolOptionsArg, ibmJavaOptionsArg });
+			assertTrue("missing argument: " + ibmJavaOptionsArg, argumentPositions.containsKey(ibmJavaOptionsArg));
+			assertTrue("missing argument: " + javaToolOptionsArg, argumentPositions.containsKey(javaToolOptionsArg));
 			int extDirsPosn = argumentPositions.get(DJAVA_HOME).intValue();
-			assertTrue(JAVA_TOOL_OPTIONS+ " should come after "+DJAVA_HOME, argumentPositions.get(javaToolOptionsArg).intValue() > extDirsPosn); /* this will fail on current VMs */
-			assertTrue(IBM_JAVA_OPTIONS+ " should come after "+DJAVA_HOME, argumentPositions.get(ibmJavaOptionsArg).intValue() > extDirsPosn); /* this will fail on current VMs */
+			assertTrue(JAVA_TOOL_OPTIONS + " should come after " + DJAVA_HOME, argumentPositions.get(javaToolOptionsArg).intValue() > extDirsPosn); /* this will fail on current VMs */
+			assertTrue(IBM_JAVA_OPTIONS + " should come after " + DJAVA_HOME, argumentPositions.get(ibmJavaOptionsArg).intValue() > extDirsPosn); /* this will fail on current VMs */
 		} catch (AssertionError e) {
-			dumpDiagnostics(e,actualArguments);
+			dumpDiagnostics(e, actualArguments);
 			throw e;
 		}
 	}
@@ -1177,23 +1168,23 @@ public class VmArgumentTests {
 	 * IBM_JAVA_OPTIONS
 	 * JAVA_TOOL_OPTIONS
 	 * command line options
-	 * options file 
+	 * options file
 	 * -XX options
 	 * -Xservice options
 	 */
 	@Test
 	public void testEverything() {
-		ArrayList<String> actualArguments = null;
+		List<String> actualArguments = null;
 		try {
-			ArrayList<String> cmdlineArgBuffer = new ArrayList<String>();
-			ArrayList<String> expectedArgBuffer = new ArrayList<String>();
+			List<String> cmdlineArgBuffer = new ArrayList<>();
+			List<String> expectedArgBuffer = new ArrayList<>();
 			final String envOptionsFileContent = "-Dtest.env.options.file=test1";
-			String envOptionFilePath = makeOptionsFile("test2", new String[] {envOptionsFileContent});
-			String envOptionFileArg=XOPTIONSFILE+envOptionFilePath;
+			String envOptionFilePath = makeOptionsFile("test2", new String[] { envOptionsFileContent });
+			String envOptionFileArg = XOPTIONSFILE + envOptionFilePath;
 
 			String javaToolOptionsArg = "-Dtest.name=testJavaToolOptions";
 			String ibmJavaOptionsArg = "-Dtest.name=testIbmJavaOptions";
-			final String envOptionsList = ibmJavaOptionsArg+' '+envOptionFileArg; /* keep this separate because the -Xoptionsfile arg is deleted */
+			final String envOptionsList = ibmJavaOptionsArg + ' ' + envOptionFileArg; /* keep this separate because the -Xoptionsfile arg is deleted */
 			expectedArgBuffer.add(javaToolOptionsArg);
 			expectedArgBuffer.add(ibmJavaOptionsArg);
 			expectedArgBuffer.add(envOptionsFileContent);
@@ -1204,13 +1195,13 @@ public class VmArgumentTests {
 			String cmdlineOption = "-Dtest.cmdlineOption=1";
 			cmdlineArgBuffer.add(cmdlineOption);
 
-			String xxArgument="-XXallowvmshutdown:true";
+			String xxArgument = "-XXallowvmshutdown:true";
 			cmdlineArgBuffer.add(xxArgument);
 			expectedArgBuffer.add(xxArgument);
 
 			final String optionsFileContent = "-Dtest.options.file=test1";
-			String optionFilePath = makeOptionsFile("test1", new String[] {optionsFileContent});
-			String optionFileArg=XOPTIONSFILE+optionFilePath;
+			String optionFilePath = makeOptionsFile("test1", new String[] { optionsFileContent });
+			String optionFileArg = XOPTIONSFILE + optionFilePath;
 			cmdlineArgBuffer.add(optionFileArg);
 			cmdlineArgBuffer.add(optionsFileContent);
 			expectedArgBuffer.add(optionFileArg);
@@ -1224,30 +1215,30 @@ public class VmArgumentTests {
 
 			actualArguments = runAndGetArgumentList(pb);
 			final String[] expectedArgs = expectedArgBuffer.toArray(new String[expectedArgBuffer.size()]);
-			HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
+			Map<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
 			checkArgumentSequence(expectedArgs, argumentPositions, false);
 		} catch (AssertionError e) {
-			dumpDiagnostics(e,actualArguments);
+			dumpDiagnostics(e, actualArguments);
 			throw e;
 		}
 	}
 
-	/* 
-	 * Test multiple options with -Xcheck:memory
+	/*
+	 * Test multiple options with -Xcheck:memory.
 	 */
 	@Test
 	public void testMemoryLeaks() {
-		ArrayList<String> actualArguments = null;
+		List<String> actualArguments = null;
 		try {
-			ArrayList<String> cmdlineArgBuffer = new ArrayList<String>();
-			ArrayList<String> expectedArgBuffer = new ArrayList<String>();
+			List<String> cmdlineArgBuffer = new ArrayList<>();
+			List<String> expectedArgBuffer = new ArrayList<>();
 			final String envOptionsFileContent = "-Dtest.env.options.file=test1";
-			String envOptionFilePath = makeOptionsFile("test2", new String[] {envOptionsFileContent});
-			String envOptionFileArg=XOPTIONSFILE+envOptionFilePath;
+			String envOptionFilePath = makeOptionsFile("test2", new String[] { envOptionsFileContent });
+			String envOptionFileArg = XOPTIONSFILE + envOptionFilePath;
 
 			String javaToolOptionsArg = "-Dtest.name=testJavaToolOptions";
 			String ibmJavaOptionsArg = "-Dtest.name=testIbmJavaOptions";
-			final String envOptionsList = ibmJavaOptionsArg+' '+envOptionFileArg; /* keep this separate because the -Xoptionsfile arg is deleted */
+			final String envOptionsList = ibmJavaOptionsArg + ' ' + envOptionFileArg; /* keep this separate because the -Xoptionsfile arg is deleted */
 			expectedArgBuffer.add(javaToolOptionsArg);
 			expectedArgBuffer.add(ibmJavaOptionsArg);
 			expectedArgBuffer.add(envOptionsFileContent);
@@ -1258,11 +1249,11 @@ public class VmArgumentTests {
 			String cmdlineOption = "-Dtest.cmdlineOption=1";
 			cmdlineArgBuffer.add(cmdlineOption);
 
-			String xxArgument="-XXallowvmshutdown:true";
+			String xxArgument = "-XXallowvmshutdown:true";
 			cmdlineArgBuffer.add(xxArgument);
 			expectedArgBuffer.add(xxArgument);
 
-			String xInt=XINT;
+			String xInt = XINT;
 			cmdlineArgBuffer.add(xInt);
 			expectedArgBuffer.add(xInt);
 
@@ -1271,13 +1262,13 @@ public class VmArgumentTests {
 			cmdlineArgBuffer.add(FORCE_COMMON_CLEANER_SHUTDOWN);
 			expectedArgBuffer.add(FORCE_COMMON_CLEANER_SHUTDOWN);
 
-			String xCheckClasspath="-Xcheck:classpath";
+			String xCheckClasspath = "-Xcheck:classpath";
 			cmdlineArgBuffer.add(xCheckClasspath);
 			expectedArgBuffer.add(xCheckClasspath);
 
 			final String optionsFileContent = "-Dtest.options.file=test1";
-			String optionFilePath = makeOptionsFile("test1", new String[] {optionsFileContent});
-			String optionFileArg=XOPTIONSFILE+optionFilePath;
+			String optionFilePath = makeOptionsFile("test1", new String[] { optionsFileContent });
+			String optionFileArg = XOPTIONSFILE + optionFilePath;
 			cmdlineArgBuffer.add(optionFileArg);
 			cmdlineArgBuffer.add(optionsFileContent);
 			expectedArgBuffer.add(optionFileArg);
@@ -1298,12 +1289,12 @@ public class VmArgumentTests {
 			}
 			assertTrue("stderr reader join failed", stderrReader.getState() == State.TERMINATED);
 			final String[] expectedArgs = expectedArgBuffer.toArray(new String[expectedArgBuffer.size()]);
-			HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
+			Map<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
 			checkArgumentSequence(expectedArgs, argumentPositions, false);
 			String stderrText = stderrReader.getStreamOutput();
-			assertTrue("-Xcheck:memory failed: stderr = "+stderrText, stderrText.contains("All allocated blocks were freed."));
+			assertTrue("-Xcheck:memory failed: stderr = " + stderrText, stderrText.contains("All allocated blocks were freed."));
 		} catch (AssertionError e) {
-			dumpDiagnostics(e,actualArguments);
+			dumpDiagnostics(e, actualArguments);
 			throw e;
 		}
 	}
@@ -1311,14 +1302,14 @@ public class VmArgumentTests {
 	@Test
 	public void testWAS80Cmdline() {
 		if (!OS_NAME_PROPERTY.startsWith("Windows") && (Integer.getInteger("com.ibm.vm.bitmode").intValue() == 64)) {
-			ArrayList<String> actualArguments = null;
-			final String WAS_CLASSPATH=
+			List<String> actualArguments = null;
+			final String WAS_CLASSPATH =
 					"/opt/IBM/WebSphere/AppServer80/profiles/AppSrv01/properties:/opt/IBM/WebSphere/AppServer80/properties:/opt/IBM/WebSphere/AppServer80/lib/startup.jar" +
 							":/opt/IBM/WebSphere/AppServer80/lib/bootstrap.jar:/opt/IBM/WebSphere/AppServer80/lib/jsf-nls.jar:/opt/IBM/WebSphere/AppServer80/lib/lmproxy.jar" +
 							":/opt/IBM/WebSphere/AppServer80/lib/urlprotocols.jar:/opt/IBM/WebSphere/AppServer80/deploytool/itp/batchboot.jar:/opt/IBM/WebSphere/AppServer80/deploytool/itp/batch2.jar" +
-							":/opt/IBM/WebSphere/AppServer80/java/lib/tools.jar"+":"+CLASSPATH;
+							":/opt/IBM/WebSphere/AppServer80/java/lib/tools.jar" + ":" + CLASSPATH;
 
-			String[] initialCmdLineArgs = {"-Declipse.security",
+			String[] initialCmdLineArgs = { "-Declipse.security",
 					"-Dosgi.install.area=/opt/IBM/WebSphere/AppServer80",
 					"-Dosgi.configuration.area=/opt/IBM/WebSphere/AppServer80/profiles/AppSrv01/servers/server1/configuration",
 					"-Djava.awt.headless=true",
@@ -1344,15 +1335,15 @@ public class VmArgumentTests {
 					"-Dcom.ibm.security.jgss.debug=off",
 					"-Dcom.ibm.security.krb5.Krb5Debug=off",
 					"-Djava.library.path=/opt/IBM/WebSphere/AppServer80/lib/native/linux/x86_64/:/opt/IBM/WebSphere/AppServer80/java/jre/lib/amd64/default:/opt/IBM/WebSphere/AppServer80/java/jre/lib/amd64:/opt/IBM/WebSphere/AppServer80/lib/native/linux/x86_64/:/opt/IBM/WebSphere/AppServer80/bin:.:/usr/lib:",
-					"-Djava.security.auth.login.config=/opt/IBM/WebSphere/AppServer80/profiles/AppSrv01/properties/wsjaas.conf"};
+					"-Djava.security.auth.login.config=/opt/IBM/WebSphere/AppServer80/profiles/AppSrv01/properties/wsjaas.conf" };
 
-			String[] initialExpectedArgs = {"-Declipse.security",
+			String[] initialExpectedArgs = { "-Declipse.security",
 					"-Dosgi.install.area=/opt/IBM/WebSphere/AppServer80",
 					"-Dosgi.configuration.area=/opt/IBM/WebSphere/AppServer80/profiles/AppSrv01/servers/server1/configuration",
 					"-Djava.awt.headless=true",
 					"-Dosgi.framework.extensions=com.ibm.cds,com.ibm.ws.eclipse.adaptors",
 					"-Xshareclasses:name=webspherev80_%g,groupAccess,nonFatal",
-					"-Djava.class.path="+WAS_CLASSPATH,
+					"-Djava.class.path=" + WAS_CLASSPATH,
 					"-Dibm.websphere.internalClassAccessMode=allow",
 					"-Xms50m",
 					"-Xmx256m",
@@ -1371,7 +1362,7 @@ public class VmArgumentTests {
 					"-Dcom.ibm.security.jgss.debug=off",
 					"-Dcom.ibm.security.krb5.Krb5Debug=off",
 					"-Djava.library.path=/opt/IBM/WebSphere/AppServer80/lib/native/linux/x86_64/:/opt/IBM/WebSphere/AppServer80/java/jre/lib/amd64/default:/opt/IBM/WebSphere/AppServer80/java/jre/lib/amd64:/opt/IBM/WebSphere/AppServer80/lib/native/linux/x86_64/:/opt/IBM/WebSphere/AppServer80/bin:.:/usr/lib:",
-					"-Djava.security.auth.login.config=/opt/IBM/WebSphere/AppServer80/profiles/AppSrv01/properties/wsjaas.conf"};
+					"-Djava.security.auth.login.config=/opt/IBM/WebSphere/AppServer80/profiles/AppSrv01/properties/wsjaas.conf" };
 
 			String[] cmdLineArgs;
 			String[] expectedArgs;
@@ -1411,16 +1402,15 @@ public class VmArgumentTests {
 			try {
 				ProcessBuilder pb = makeProcessBuilder(cmdLineArgs, null); /* classpath set in the arguments already */
 				actualArguments = runAndGetArgumentList(pb);
-				HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
+				Map<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
 				checkArgumentSequence(expectedArgs, argumentPositions, true);
 			} catch (AssertionError e) {
-				dumpDiagnostics(e,actualArguments);
+				dumpDiagnostics(e, actualArguments);
 				throw e;
 			}
 		} else {
-			logger.debug("Skipping "+testName+" on Windows and non 64-bit systems");
+			logger.debug("Skipping " + testName + " on Windows and non 64-bit systems");
 		}
-
 	}
 
 	/**
@@ -1431,16 +1421,16 @@ public class VmArgumentTests {
 	@Test
 	public void testDumpDirectory() throws IOException, InterruptedException {
 		File pwd = new File(System.getProperty("user.dir"));
-		logger.debug("user.dir="+pwd.getPath());
+		logger.debug("user.dir=" + pwd.getPath());
 		/* remove any existing heapdumps */
 		File pwdContents[] = pwd.listFiles();
-		for (File f: pwdContents) {
+		for (File f : pwdContents) {
 			if (f.isFile() && f.getName().contains(HEAPDUMP)) {
 				f.delete();
 			}
 		}
 		/* first, just try defaults. */
-		ProcessBuilder pb = makeProcessBuilder(HELLO_WORLD, new String[] {XMX10M, "-Xdump:heap:events=vmstop"}, CLASSPATH);
+		ProcessBuilder pb = makeProcessBuilder(HELLO_WORLD, new String[] { XMX10M, "-Xdump:heap:events=vmstop" }, CLASSPATH);
 		/* Run a trivial process to create a dump */
 		runProcess(pb);
 		/* check that the dump was created, and remove it. */
@@ -1452,21 +1442,21 @@ public class VmArgumentTests {
 		}
 		dumpDir.mkdir();
 		final String dumpDirPath = dumpDir.getPath();
-		logger.debug("dumpDirPath="+dumpDirPath);
-		
-		for (String dumpOption: new String [] {"-Xdump:directory=", "-XX:HeapDumpPath="} ) {
-			logger.debug("dumpOption="+dumpOption);
-			for (String dumpConfig[]: new String[][] {{"java", "javacore"}, {"heap", "heapdump"}}) { 
-				logger.debug("dumpType="+dumpConfig[0]);
-				pb = makeProcessBuilder(HELLO_WORLD, new String[] {XMX10M, 
-						"-Xdump:"+dumpConfig[0]+":events=vmstop",dumpOption+dumpDirPath},
+		logger.debug("dumpDirPath=" + dumpDirPath);
+
+		for (String dumpOption : new String[] { "-Xdump:directory=", "-XX:HeapDumpPath=" }) {
+			logger.debug("dumpOption=" + dumpOption);
+			for (String dumpConfig[] : new String[][] { { "java", "javacore" }, { "heap", "heapdump" } }) {
+				logger.debug("dumpType=" + dumpConfig[0]);
+				pb = makeProcessBuilder(HELLO_WORLD, new String[] { XMX10M,
+						"-Xdump:" + dumpConfig[0] + ":events=vmstop", dumpOption + dumpDirPath },
 						CLASSPATH);
 				logger.debug("starting process");
 				runProcess(pb);
 				searchAndDestroy(dumpDir, dumpConfig[1]);
 			}
 		}
-		
+
 		FileUtilities.deleteRecursive(dumpDir);
 	}
 
@@ -1478,26 +1468,26 @@ public class VmArgumentTests {
 	@Test
 	public void testHeapDumpOnOOM() throws IOException, InterruptedException {
 		ProcessRunner pr = runHelloWorld();
-		assertTrue(NOT_ALL_OOM_TYPES_ENABLED_WITH+"default options", checkXdumpOOM(pr, true));
-		
+		assertTrue(NOT_ALL_OOM_TYPES_ENABLED_WITH + "default options", checkXdumpOOM(pr, true));
+
 		pr = runHelloWorld(XDUMP_NONE);
-		assertFalse(SOME_OOM_TYPES_ENABLED_WITH+XDUMP_NONE, checkXdumpOOM(pr, false));
-		
+		assertFalse(SOME_OOM_TYPES_ENABLED_WITH + XDUMP_NONE, checkXdumpOOM(pr, false));
+
 		pr = runHelloWorld(XX_HEAP_NO_DUMP_ON_OOM);
-		assertFalse(SOME_OOM_TYPES_ENABLED_WITH+XX_HEAP_NO_DUMP_ON_OOM, checkXdumpOOM(pr, false));
-		
+		assertFalse(SOME_OOM_TYPES_ENABLED_WITH + XX_HEAP_NO_DUMP_ON_OOM, checkXdumpOOM(pr, false));
+
 		pr = runHelloWorld(XDUMP_NONE, XX_HEAP_DUMP_ON_OOM);
-		assertTrue(NOT_ALL_OOM_TYPES_ENABLED_WITH+XDUMP_NONE+" "+XX_HEAP_DUMP_ON_OOM, 
+		assertTrue(NOT_ALL_OOM_TYPES_ENABLED_WITH + XDUMP_NONE + " " + XX_HEAP_DUMP_ON_OOM,
 				checkXdumpOOM(pr, true));
-		
+
 		pr = runHelloWorld(XX_HEAP_DUMP_ON_OOM, XDUMP_NONE);
-		assertFalse(SOME_OOM_TYPES_ENABLED_WITH+" "+XX_HEAP_DUMP_ON_OOM+XDUMP_NONE, checkXdumpOOM(pr, false));
+		assertFalse(SOME_OOM_TYPES_ENABLED_WITH + " " + XX_HEAP_DUMP_ON_OOM + XDUMP_NONE, checkXdumpOOM(pr, false));
 	}
 
-	private static ProcessRunner runHelloWorld(String ... args) throws IOException, InterruptedException {
+	private static ProcessRunner runHelloWorld(String... args) throws IOException, InterruptedException {
 		ProcessBuilder pb;
 		ProcessRunner pr;
-		ArrayList<String>  argList = new ArrayList<>();
+		List<String> argList = new ArrayList<>();
 		argList.addAll(Arrays.asList(args));
 		argList.add(XDUMP_WHAT);
 		String argArray[] = new String[argList.size()];
@@ -1510,12 +1500,12 @@ public class VmArgumentTests {
 	private static boolean checkXdumpOOM(ProcessRunner pr, boolean allExpected) {
 		boolean allFound = true;
 		boolean someFound = false;
-		for (String kind: new String[] {"heap", "java", "snap", "system"}) {
+		for (String kind : new String[] { "heap", "java", "snap", "system" }) {
 			boolean kindFound = false;
 			Iterator<String> iter = pr.getStderr().iterator();
 			while (!kindFound && iter.hasNext()) {
 				String l = iter.next();
-				if (l.contains("Xdump:"+kind)) {
+				if (l.contains("Xdump:" + kind)) {
 					while (!kindFound && iter.hasNext()) {
 						l = iter.next();
 						if (l.contains("OutOfMemoryError")) {
@@ -1528,11 +1518,11 @@ public class VmArgumentTests {
 			}
 			allFound &= kindFound;
 			someFound |= kindFound;
-			if (allExpected ? !allFound: someFound) {
+			if (allExpected ? !allFound : someFound) {
 				break; /* stop if we encounter sufficient conditions for result */
 			}
 		}
-		return allExpected? allFound: someFound;		
+		return allExpected ? allFound : someFound;
 	}
 
 	/**
@@ -1544,27 +1534,27 @@ public class VmArgumentTests {
 	 */
 	private void searchAndDestroy(File searchDir, String searchPattern) {
 		boolean found = false;
-		for (File f: searchDir.listFiles()) {
+		for (File f : searchDir.listFiles()) {
 			if (f.isFile() && f.getName().contains(searchPattern)) {
 				found = true;
 				f.delete();
 			}
 		}
-		assertTrue("file containing "+searchPattern+" not found in "+searchDir.getAbsolutePath(), found);
+		assertTrue("file containing " + searchPattern + " not found in " + searchDir.getAbsolutePath(), found);
 	}
 
 	/* ===================================== Utility methods ===================================================== */
 	private String makeOptionsFile(String fileName, String[] argList) {
-		String filePath = fileName+OPTIONS_FILE_SUFFIX;
+		String filePath = fileName + OPTIONS_FILE_SUFFIX;
 		try {
 			PrintStream optFileWriter = new PrintStream(filePath);
-			for (String a: argList) {
+			for (String a : argList) {
 				optFileWriter.println(a);
 			}
 			optFileWriter.close();
 		} catch (IOException e) {
 			logStackTrace(e, logger);
-			fail("could not write options file "+fileName+" "+e.getMessage());
+			fail("could not write options file " + fileName + " " + e.getMessage());
 		}
 		return filePath;
 	}
@@ -1575,14 +1565,14 @@ public class VmArgumentTests {
 	}
 
 	private static ProcessBuilder makeProcessBuilder(String appName, String[] vmArgs, String targetClasspath) {
-		ArrayList<String> vmArgsList = new ArrayList<String>(vmArgs.length+5);
+		List<String> vmArgsList = new ArrayList<>(vmArgs.length + 5);
 		vmArgsList.add(JAVA_COMMAND);
 		if (null != targetClasspath) {
 			vmArgsList.add("-classpath");
 			vmArgsList.add(CLASSPATH);
 		}
 
-		for (String s: vmArgs) {
+		for (String s : vmArgs) {
 			vmArgsList.add(s);
 		}
 		if (null != appName) {
@@ -1592,11 +1582,10 @@ public class VmArgumentTests {
 		return pb;
 	}
 
-	private ArrayList<String> runAndGetArgumentList(ProcessBuilder pb) {
-		ArrayList<String> actualArguments = null;
-
+	private List<String> runAndGetArgumentList(ProcessBuilder pb) {
+		List<String> actualArguments = null;
 		ProcessRunner pr = runProcess(pb);
-		ArrayList<String> actualArguments1 = new ArrayList<String>();
+		List<String> actualArguments1 = new ArrayList<>();
 		Iterator<String> olIterator = pr.getStdout().iterator();
 		String l = "";
 		while (olIterator.hasNext() && isNotTag(l)) {
@@ -1623,10 +1612,10 @@ public class VmArgumentTests {
 			stderrReader = pr.getStderrRdr();
 			stdoutReader = pr.getStdoutRdr();
 		} catch (IOException | InterruptedException e) {
-			/* 
+			/*
 			 * Catch the checked exceptions so callers of this method don't need to declare them as thrown.
 			 */
-			fail("unexpected Exception: "+e.getMessage(), e);
+			fail("unexpected Exception: " + e.getMessage(), e);
 			return null;
 		}
 		if (0 != pr.getExitStatus()) {
@@ -1645,13 +1634,13 @@ public class VmArgumentTests {
 	}
 
 	private static void logStrings(List<String> cmd) {
-		for (String s: cmd) {
+		for (String s : cmd) {
 			logger.debug(s);
 		}
 	}
 
 	private static void dumpStrings(List<String> cmd) {
-		for (String s: cmd) {
+		for (String s : cmd) {
 			System.out.println(s);
 		}
 	}
@@ -1673,27 +1662,23 @@ public class VmArgumentTests {
 			return rc;
 		} catch (IOException | InterruptedException e) {
 			logStackTrace(e, logger);
-			fail("unexpected InterruptedException: "+e.getMessage());
+			fail("unexpected InterruptedException: " + e.getMessage());
 		}
 		return -1;
 	}
 
-	private HashMap<String, Integer> checkArguments(ArrayList<String> actualArguments,
+	private Map<String, Integer> checkArguments(List<String> actualArguments,
 			String[] optionalArguments) {
-		HashMap<String, Integer> argPositions = new HashMap<String, Integer>();
-		String[] mArgs;
-		if (isJava8) {
-			mArgs = mandatoryArgumentsJava8.clone();
-		} else {
-			mArgs = mandatoryArguments.clone();
-		}
-		for (String m: mArgs) {
+		Map<String, Integer> argPositions = new HashMap<>();
+		String[] mArgs = (isJava8 ? mandatoryArgumentsJava8 : mandatoryArguments).clone();
+		List<String> missing = new ArrayList<>();
+		for (String m : mArgs) {
 			if (null == m) {
 				continue;
 			}
 			boolean found = false;
 			int p = 0;
-			for (String a: actualArguments) {
+			for (String a : actualArguments) {
 				if (a.startsWith(m)) {
 					argPositions.put(m, Integer.valueOf(p));
 					found = true;
@@ -1702,12 +1687,18 @@ public class VmArgumentTests {
 					++p;
 				}
 			}
-			assertTrue("mandatory argument not found: "+m, found);
+			if (!found) {
+				missing.add(m);
+			}
 		}
 
-		for (String op: optionalArguments) {
+		if (!missing.isEmpty()) {
+			fail("mandatory arguments not found: " + missing.stream().collect(Collectors.joining(",")));
+		}
+
+		for (String op : optionalArguments) {
 			int p = 0;
-			for (String a: actualArguments) {
+			for (String a : actualArguments) {
 				if (a.startsWith(op)) {
 					argPositions.put(op, Integer.valueOf(p));
 					break;
@@ -1720,26 +1711,26 @@ public class VmArgumentTests {
 		return argPositions;
 	}
 
-	/* verify that the arguments appear in the correct order*/
+	/* verify that the arguments appear in the correct order */
 	/**
 	 * @param expectedArguments list of arguments in the order in which they are expected
 	 * @param argumentPositions listy of actual argument positions
 	 * @param contiguous true of the arguments are expected to be contiguous
 	 */
 	private void checkArgumentSequence(String[] expectedArguments,
-			HashMap<String, Integer> argumentPositions, boolean contiguous) {
-		int lastPosition=-1;
+			Map<String, Integer> argumentPositions, boolean contiguous) {
+		int lastPosition = -1;
 		String lastArg = null;
-		for (int i=0;i<expectedArguments.length;++i) {
+		for (int i = 0; i < expectedArguments.length; ++i) {
 			String arg = expectedArguments[i];
 			Integer optPos = argumentPositions.get(arg);
-			assertNotNull("argument missing: "+arg, optPos);
+			assertNotNull("argument missing: " + arg, optPos);
 			final int optPosInt = optPos.intValue();
 			if (i > 0) {
 				if (contiguous) {
-					assertEquals("argument in wrong position: "+arg, lastPosition+1, optPosInt);			
-				} else { 	
-					assertTrue("argument "+arg+" in wrong order to "+lastArg, lastPosition < optPosInt);			
+					assertEquals("argument in wrong position: " + arg, lastPosition + 1, optPosInt);
+				} else {
+					assertTrue("argument " + arg + " in wrong order to " + lastArg, lastPosition < optPosInt);
 				}
 			}
 			lastPosition = optPosInt;
@@ -1748,19 +1739,19 @@ public class VmArgumentTests {
 	}
 
 	private void checkJarArgs(final String pathString) {
-		ProcessBuilder pb = makeProcessBuilder(null, new String[] {DASH_D_CMDLINE_ARG, "-jar", pathString}, null);
+		ProcessBuilder pb = makeProcessBuilder(null, new String[] { DASH_D_CMDLINE_ARG, "-jar", pathString }, null);
 		Map<String, String> env = pb.environment();
 		String javaToolOptionsArg = "-DjavaToolOptionsArg";
-		env.put(JAVA_TOOL_OPTIONS, javaToolOptionsArg );
+		env.put(JAVA_TOOL_OPTIONS, javaToolOptionsArg);
 		String ibmJavaOptionsArg = "-DibmJavaOptionsArg";
-		env.put(IBM_JAVA_OPTIONS, ibmJavaOptionsArg );
-		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
+		env.put(IBM_JAVA_OPTIONS, ibmJavaOptionsArg);
+		List<String> actualArguments = runAndGetArgumentList(pb);
 		String fooBar = "-Dfoo=bar";
 		String longProp = "-Da.long.system.property=this is a long system property value to demonstrate long JVM arguments in the manifest file";
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, 
-				new String[] {javaToolOptionsArg, ibmJavaOptionsArg, DASH_D_CMDLINE_ARG, fooBar, longProp});
-		assertTrue("missing argument: "+fooBar, argumentPositions.containsKey(fooBar));
-		assertTrue("missing argument: "+longProp, argumentPositions.containsKey(longProp));
+		Map<String, Integer> argumentPositions = checkArguments(actualArguments,
+				new String[] { javaToolOptionsArg, ibmJavaOptionsArg, DASH_D_CMDLINE_ARG, fooBar, longProp });
+		assertTrue("missing argument: " + fooBar, argumentPositions.containsKey(fooBar));
+		assertTrue("missing argument: " + longProp, argumentPositions.containsKey(longProp));
 		/* environment variables should come after implicit arguments */
 		int toolsPosn = argumentPositions.get(javaToolOptionsArg).intValue();
 		int ibmPropPosn = argumentPositions.get(ibmJavaOptionsArg).intValue();
@@ -1773,24 +1764,24 @@ public class VmArgumentTests {
 		assertTrue("Wrong order of properties", longPropPosn == fooBarPropPosn + 1);
 	}
 
-	private void checkSystemPropertyValues(HashMap<String, String> expectedPropertyValues) throws AssertionError {
-		HashMap<String, String> actualPropertyValues = new HashMap<String, String>();
+	private void checkSystemPropertyValues(Map<String, String> expectedPropertyValues) throws AssertionError {
+		Map<String, String> actualPropertyValues = new HashMap<>();
 		final String stdoutContents = stdoutReader.getStreamOutput();
 		String[] outputLines = stdoutContents.split("\n");
-		for (String s: outputLines) {
+		for (String s : outputLines) {
 			String[] keyValue = s.split("=");
 			if (keyValue.length == 2) {
 				actualPropertyValues.put(keyValue[0], keyValue[1]);
 			}
 		}
-		for (String s: expectedPropertyValues.keySet()) {
-			assertEquals("wrong value for property "+s, expectedPropertyValues.get(s), actualPropertyValues.get(s));
+		for (String s : expectedPropertyValues.keySet()) {
+			assertEquals("wrong value for property " + s, expectedPropertyValues.get(s), actualPropertyValues.get(s));
 		}
 	}
 
-	private String getArgumentValue(ArrayList<String> actualArguments,
+	private String getArgumentValue(List<String> actualArguments,
 			String propertyName) {
-		for (String s: actualArguments) {
+		for (String s : actualArguments) {
 			String[] keyValue = s.split("=");
 			if (!keyValue[0].equals(propertyName)) {
 				continue;
@@ -1802,15 +1793,16 @@ public class VmArgumentTests {
 		return null;
 	}
 
-	private void dumpVmArgs(PrintStream er, ArrayList<String> actualArguments) {
+	private void dumpVmArgs(PrintStream er, List<String> actualArguments) {
 		if (null != actualArguments) {
 			er.println("\n\nActual VM arguments:");
-			for (String a: actualArguments) {
+			for (String a : actualArguments) {
 				er.println(a);
 			}
 		}
 	}
-	private void dumpDiagnostics(Throwable e, ArrayList<String> actualArguments) {
+
+	private void dumpDiagnostics(Throwable e, List<String> actualArguments) {
 		PrintStream diagStream = StringPrintStream.factory();
 		if (null != e) {
 			diagStream.print(e.getMessage());
@@ -1820,6 +1812,7 @@ public class VmArgumentTests {
 		dumpStdoutStderr(diagStream);
 		logger.debug(diagStream.toString());
 	}
+
 	/**
 	 * read and buffer an input stream, e.g. stderr from a process, as soon as it is produced.
 	 * CMVC 194775 - child process blocked writing tracepoint output.
@@ -1828,9 +1821,9 @@ public class VmArgumentTests {
 	static class ProcessStreamReader extends Thread {
 		BufferedReader processStream;
 		StringBuffer psBuffer = new StringBuffer();
-		ArrayList<String> outputLines = new ArrayList<>();
+		List<String> outputLines = new ArrayList<>();
 
-		public ArrayList<String> getOutputLines() {
+		public List<String> getOutputLines() {
 			return outputLines;
 		}
 
@@ -1866,11 +1859,11 @@ public class VmArgumentTests {
 	static class ProcessRunner {
 		private ProcessBuilder pb;
 		private int exitStatus;
-		private ArrayList<String> stdout;
-		private ArrayList<String> stderr;
+		private List<String> stdout;
+		private List<String> stderr;
 		private ProcessStreamReader stdoutRdr;
 		private ProcessStreamReader stderrRdr;
-		
+
 		static ProcessRunner runAndGetOutputs(ProcessBuilder pb) throws IOException, InterruptedException {
 			ProcessRunner result = new ProcessRunner(pb);
 			result.run(pb);
@@ -1891,25 +1884,29 @@ public class VmArgumentTests {
 			stdout = stdoutRdr.getOutputLines();
 			stderr = stderrRdr.getOutputLines();
 		}
+
 		private ProcessRunner(ProcessBuilder pb) {
 			this.pb = pb;
 			stdout = new ArrayList<>();
 			stderr = new ArrayList<>();
 		}
-		
+
 		List<String> getStdout() {
 			return stdout;
 		}
-		
+
 		List<String> getStderr() {
 			return stderr;
 		}
+
 		public int getExitStatus() {
 			return exitStatus;
 		}
+
 		public ProcessStreamReader getStdoutRdr() {
 			return stdoutRdr;
 		}
+
 		public ProcessStreamReader getStderrRdr() {
 			return stderrRdr;
 		}
