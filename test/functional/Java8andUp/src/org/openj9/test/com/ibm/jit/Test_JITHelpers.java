@@ -250,7 +250,7 @@ public class Test_JITHelpers {
 	}};
 
 	/**
-	 * @tests com.ibm.jit.JITHelpers#(char[], char[], int)
+	 * @tests com.ibm.jit.JITHelpers#toUpperIntrinsicUTF16(char[], char[], int)
 	 */
 	public static void test_toUpperIntrinsicUTF16() {
 		for (Map.Entry<Character, Character> pair : toUpperCaseMap.entrySet()) {
@@ -268,7 +268,7 @@ public class Test_JITHelpers {
 	}
 
 	/**
-	 * @tests com.ibm.jit.JITHelpers#(char[], char[], int)
+	 * @tests com.ibm.jit.JITHelpers#toLowerIntrinsicUTF16(char[], char[], int)
 	 */
 	public static void test_toLowerIntrinsicUTF16() {
 		for (Map.Entry<Character, Character> pair : toLowerCaseMap.entrySet()) {
@@ -286,7 +286,7 @@ public class Test_JITHelpers {
 	}
 
 	/**
-	 * @tests com.ibm.jit.JITHelpers#(byte[], byte[], int)
+	 * @tests com.ibm.jit.JITHelpers#toUpperIntrinsicLatin1(byte[], byte[], int)
 	 */
 	public static void test_toUpperIntrinsicLatin1() {
 		for (Map.Entry<Character, Character> pair : toUpperCaseMap.entrySet()) {
@@ -304,7 +304,7 @@ public class Test_JITHelpers {
 	}
 
 	/**
-	 * @tests com.ibm.jit.JITHelpers#(byte[], byte[], int)
+	 * @tests com.ibm.jit.JITHelpers#toLowerIntrinsicLatin1(byte[], byte[], int)
 	 */
 	public static void test_toLowerIntrinsicLatin1() {
 		for (Map.Entry<Character, Character> pair : toLowerCaseMap.entrySet()) {
@@ -322,7 +322,7 @@ public class Test_JITHelpers {
 	}
 
 	/**
-	 * @tests com.ibm.jit.JITHelpers#(char[], char[], int)
+	 * @tests com.ibm.jit.JITHelpers#toUpperIntrinsicUTF16(char[], char[], int)
 	 */
 	public static void test_toUpperIntrinsicUTF16_edgecaseLengths() {
 		for (int j : edgecaseLengths){
