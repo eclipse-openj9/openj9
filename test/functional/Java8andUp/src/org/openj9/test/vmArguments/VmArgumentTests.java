@@ -103,9 +103,7 @@ public class VmArgumentTests {
 	private static final String APPLICATION_NAME = ArgumentDumper.class.getCanonicalName();
 	private static final String HELLO_WORLD = HelloWorld.class.getCanonicalName();
 
-	private static final String[] mandatoryArgumentsJava8;
-
-	private static final String[] mandatoryArguments;
+	private static final List<String> mandatoryArguments;
 	private static final String[] TEST_ARG_LIST = { "-Dtest.option1=testJavaToolOptions1", "-Dtest.option2=testJavaToolOptions2",
 			"-Dtest.option3=testJavaToolOptions3", "-Dtest.option4=testJavaToolOptions4" };
 	private static final String OPTIONS_FILE_SUFFIX = ".test_options_file";
@@ -133,39 +131,26 @@ public class VmArgumentTests {
 	protected static Logger logger = Logger.getLogger(VmArgumentTests.class);
 
 	static {
-		isIBM = System.getProperty("java.vm.vendor").equals("IBM Corporation");
-		mandatoryArgumentsJava8 = new String[] {
-				isIBM ? XOPTIONSFILE : null,
-				"-Xlockword:mode",
-				"-Xjcl:",
-				"-Dcom.ibm.oti.vm.bootstrap.library.path",
-				"-Dsun.boot.library.path",
-				"-Djava.library.path",
-				"-Djava.ext.dirs",
-				DJAVA_HOME,
-				"-Duser.dir",
-				/* "-Djava.runtime.version", doesn't show up if -Xcheck:memory is used */
-				"-Djava.class.path",
-				"-Dsun.java.command",
-				"-Dsun.java.launcher"
-		};
+		isIBM = "IBM Corporation".equals(System.getProperty("java.vm.vendor"));
+		isJava8 = (8 == VersionCheck.major());
 
-		mandatoryArguments = new String[] {
-				isIBM ? XOPTIONSFILE : null,
-				"-Xlockword:mode",
-				"-Xjcl:",
-				"-Dcom.ibm.oti.vm.bootstrap.library.path",
-				"-Dsun.boot.library.path",
-				"-Djava.library.path",
-				DJAVA_HOME,
-				"-Duser.dir",
-				/* "-Djava.runtime.version", doesn't show up if -Xcheck:memory is used */
-				"-Djava.class.path",
-				"-Dsun.java.command",
-				"-Dsun.java.launcher"
-		};
-		int javaMajorVersion = VersionCheck.major();
-		isJava8 = (8 == javaMajorVersion);
+		mandatoryArguments = new ArrayList<>();
+		if (isIBM) {
+			mandatoryArguments.add(XOPTIONSFILE);
+		}
+		mandatoryArguments.add("-Xlockword:mode");
+		mandatoryArguments.add("-Dcom.ibm.oti.vm.bootstrap.library.path");
+		mandatoryArguments.add("-Dsun.boot.library.path");
+		mandatoryArguments.add("-Djava.library.path");
+		if (isJava8) {
+			mandatoryArguments.add("-Djava.ext.dirs");
+		}
+		mandatoryArguments.add(DJAVA_HOME);
+		mandatoryArguments.add("-Duser.dir");
+		mandatoryArguments.add("-Djava.class.path");
+		mandatoryArguments.add("-Dsun.java.command");
+		mandatoryArguments.add("-Dsun.java.launcher");
+
 		vmargsJarFilename = "vmargs.jar";
 	}
 
@@ -1670,12 +1655,8 @@ public class VmArgumentTests {
 	private Map<String, Integer> checkArguments(List<String> actualArguments,
 			String[] optionalArguments) {
 		Map<String, Integer> argPositions = new HashMap<>();
-		String[] mArgs = (isJava8 ? mandatoryArgumentsJava8 : mandatoryArguments).clone();
 		List<String> missing = new ArrayList<>();
-		for (String m : mArgs) {
-			if (null == m) {
-				continue;
-			}
+		for (String m : mandatoryArguments) {
 			boolean found = false;
 			int p = 0;
 			for (String a : actualArguments) {
