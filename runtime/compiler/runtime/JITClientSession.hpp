@@ -404,6 +404,7 @@ public:
    PersistentUnorderedMap<J9Class *, ClassInfo> &getROMClassMap() { return _romClassMap; }
    PersistentUnorderedMap<J9Method *, J9MethodInfo> &getJ9MethodMap() { return _J9MethodMap; }
    PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock *> &getClassBySignatureMap() { return _classBySignatureMap; }
+   PersistentUnorderedSet<J9Method*> &getDLTedMethodSet() { return _DLTedMethodSet; }
    PersistentUnorderedMap<J9Class *, ClassChainData> &getClassChainDataMap() { return _classChainDataMap; }
    PersistentUnorderedMap<J9ConstantPool *, TR_OpaqueClassBlock *> &getConstantPoolToClassMap() { return _constantPoolToClassMap; }
    void initializeUnloadedClassAddrRanges(const std::vector<TR_AddressRange> &unloadedClassRanges, int32_t maxRanges);
@@ -411,6 +412,7 @@ public:
    void processIllegalFinalFieldModificationList(const std::vector<TR_OpaqueClassBlock*> &classes);
    TR::Monitor *getROMMapMonitor() { return _romMapMonitor; }
    TR::Monitor *getClassMapMonitor() { return _classMapMonitor; }
+   TR::Monitor *getDLTSetMonitor() { return _DLTSetMonitor; }
    TR::Monitor *getClassChainDataMapMonitor() { return _classChainDataMapMonitor; }
    TR_IPBytecodeHashTableEntry *getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent);
    bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry, bool isCompiled);
@@ -421,7 +423,7 @@ public:
    bool loadBytecodeDataFromSharedProfileCache(J9Method *method, bool stable, TR::Compilation *comp, const std::string &ipdata);
    bool storeBytecodeProfileInSharedRepository(TR_OpaqueMethodBlock *method, const std::string &ipdata, uint64_t numSamples, bool isStable, TR::Compilation *);
    VMInfo *getOrCacheVMInfo(JITServer::ServerStream *stream);
-   void clearCaches(bool locked=false); // destroys _chTableClassMap, _romClassMap, _J9MethodMap and _unloadedClassAddresses
+   void clearCaches(bool locked=false); // destroys _chTableClassMap, _romClassMap, _J9MethodMap, _unloadedClassAddresses and _DLTedMethodSet
    void clearCachesLocked(TR_J9VMBase *fe);
    bool cachesAreCleared() const { return _requestUnloadedClasses; }
    void setCachesAreCleared(bool b) { _requestUnloadedClasses = b; }
@@ -580,12 +582,15 @@ private:
    // The following hashtable caches <classname> --> <J9Class> mappings
    // All classes in here are loaded by the systemClassLoader so we know they cannot be unloaded
    PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> _classBySignatureMap;
+   // The set of j9methods that have been DLTed. This may be queried by the Inliner. Protected by _DLTSetMonitor.
+   PersistentUnorderedSet<J9Method*> _DLTedMethodSet;
 
    PersistentUnorderedMap<J9Class *, ClassChainData> _classChainDataMap;
    //Constant pool to class map
    PersistentUnorderedMap<J9ConstantPool *, TR_OpaqueClassBlock *> _constantPoolToClassMap;
    TR::Monitor *_romMapMonitor;
    TR::Monitor *_classMapMonitor;
+   TR::Monitor *_DLTSetMonitor; // Protects the set of methods that have been DLTed: _DLTedMethodSet
    TR::Monitor *_classChainDataMapMonitor;
    // The following monitor is used to protect access to _lastProcessedCriticalSeqNo and
    // the list of out-of-sequence compilation requests (_OOSequenceEntryList)

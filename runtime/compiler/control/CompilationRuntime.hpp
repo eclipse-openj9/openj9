@@ -40,6 +40,7 @@
 #include "control/rossa.h"
 #include "runtime/RelocationRuntime.hpp"
 #if defined(J9VM_OPT_JITSERVER)
+#include <vector>
 #include "control/JITServerHelpers.hpp"
 #include "env/PersistentCollections.hpp"
 #include "net/ServerStream.hpp"
@@ -788,6 +789,9 @@ public:
    void  cleanDLTRecordOnUnload();
    DLTTracking *getDLT_HT() const { return _dltHT; }
    void setDLT_HT(DLTTracking *dltHT) { _dltHT = dltHT; }
+#if defined(J9VM_OPT_JITSERVER)
+   std::vector<J9Method*> collectDLTedMethods();
+#endif /* defined(J9VM_OPT_JITSERVER) */
 #else
    DLTTracking *getDLT_HT() const { return NULL; }
 #endif // J9VM_JIT_DYNAMIC_LOOP_TRANSFER
@@ -1229,6 +1233,7 @@ private:
    TR::Monitor *_dltMonitor;
    struct DLT_record     *_freeDLTRecord;
    struct DLT_record     *_dltHash[DLT_HASHSIZE];
+   int32_t _numDLTRecords;
 #endif
    DLTTracking           *_dltHT;
 

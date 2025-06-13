@@ -3100,6 +3100,7 @@ TR::CompilationInfo::startCompilationThread(int32_t priority, int32_t threadId, 
    }
 
 #if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)
+
 void *TR::CompilationInfo::searchForDLTRecord(J9Method *method, int32_t bcIndex)
    {
    int32_t hashVal = (intptr_t)method * bcIndex % DLT_HASHSIZE;
@@ -3187,6 +3188,7 @@ void TR::CompilationInfo::insertDLTRecord(J9Method *method, int32_t bcIndex, voi
    // Doing this means we don't need locking when reading the _dltHash linked lists
    FLUSH_MEMORY(TR::Compiler->target.isSMP());
    _dltHash[hashVal] = myRecord;
+   _numDLTRecords++;
    }
    }
 
@@ -3213,6 +3215,7 @@ void TR::CompilationInfo::cleanDLTRecordOnUnload()
             // FIXME: free the codeCache
             curr->_next = _freeDLTRecord;
             _freeDLTRecord = curr;
+            _numDLTRecords--;
             }
          else
             prev = curr;
@@ -3220,7 +3223,29 @@ void TR::CompilationInfo::cleanDLTRecordOnUnload()
          }
       }
    }
-#endif
+
+#if defined(J9VM_OPT_JITSERVER)
+// Method executed by the client to gather all methods that have been DLTed before.
+// The result is put into a vector of J9Method* which will be sent to the server.
+// This operation is only needed when the client connects to a brand new server.
+std::vector<J9Method*> TR::CompilationInfo::collectDLTedMethods()
+   {
+   std::vector<J9Method*> dltedMethods;
+   dltedMethods.reserve(_numDLTRecords); // overestimate
+   OMR::CriticalSection cs(_dltMonitor);
+   for (int32_t i = 0; i < DLT_HASHSIZE; i++)
+      {
+      struct DLT_record *dltPtr = _dltHash[i];
+      while (dltPtr)
+         {
+         dltedMethods.push_back(dltPtr->_method);
+         dltPtr = dltPtr->_next;
+         }
+      }
+   return dltedMethods;
+   }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+#endif /* defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER) */
 
 #ifdef INVOCATION_STATS
 extern "C" J9Method * getNewInstancePrototype(J9VMThread * context);
@@ -10287,6 +10312,11 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          if (startPC) // compilation succeeded
             {
             outOfProcessCompilationEnd(entry, comp);
+            // Update the set of DLT compilations maintained by the server
+            ClientSessionData *clientSession = comp->getClientData();
+            J9Method *method = details.getMethod();
+            OMR::CriticalSection cs(clientSession->getDLTSetMonitor());
+            clientSession->getDLTedMethodSet().insert(method);
             }
          else if (entry) // failure
             {

@@ -265,13 +265,13 @@ outOfProcessCompilationEnd(TR_MethodToBeCompiled *entry, TR::Compilation *comp)
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
          {
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d has successfully compiled %s memoryState=%d",
-            compInfoPT->getCompThreadId(), compInfoPT->getCompilation()->signature(), memoryState);
+            compInfoPT->getCompThreadId(), comp->signature(), memoryState);
          }
       }
    compInfoPT->clearPerCompilationCaches();
 
    Trc_JITServerCompileEnd(compInfoPT->getCompilationThread(), compInfoPT->getCompThreadId(),
-         compInfoPT->getCompilation()->signature(), compInfoPT->getCompilation()->getHotnessName());
+      comp->signature(), comp->getHotnessName());
 
    // Check whether we need to save a copy of the AOTcache in a file
    if (compInfoPT->getCompilationInfo()->getPersistentInfo()->getJITServerUseAOTCachePersistence())
@@ -750,11 +750,12 @@ TR::CompilationInfoPerThreadRemote::processCompilationRequest(CompilationRequest
                getCompThreadId(), (unsigned long long)clientId);
 
          stream->write(JITServer::MessageType::getUnloadedClassRangesAndCHTable, compInfo->getPersistentInfo()->getServerUID());
-         auto response = stream->read<std::vector<TR_AddressRange>, int32_t, std::string>();
+         auto response = stream->read<std::vector<TR_AddressRange>, int32_t, std::string, std::vector<J9Method*>>();
          // TODO: we could send JVM info that is global and does not change together with CHTable
          auto &unloadedClassRanges = std::get<0>(response);
          auto maxRanges = std::get<1>(response);
          std::string &serializedCHTable = std::get<2>(response);
+         std::vector<J9Method*> &dltedMethods = std::get<3>(response);
 
          clientSession->initializeUnloadedClassAddrRanges(unloadedClassRanges, maxRanges);
          if (!unloadedClasses.empty())
@@ -771,6 +772,13 @@ TR::CompilationInfoPerThreadRemote::processCompilationRequest(CompilationRequest
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d will initialize CHTable for clientUID %llu size=%zu",
                getCompThreadId(), (unsigned long long)clientId, serializedCHTable.size());
          chTable->initializeCHTable(_vm, serializedCHTable);
+#if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)
+         {
+         OMR::CriticalSection cs(clientSession->getDLTSetMonitor());
+         clientSession->getDLTedMethodSet().insert(dltedMethods.begin(), dltedMethods.end());
+         }
+#endif /* defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER) */
+
          clientSession->setCachesAreCleared(false);
          initializedCHTable = true;
          }

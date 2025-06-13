@@ -263,6 +263,13 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             compInfo->getclassesCachedAtServer().clear();
             }
 
+         // Add the list of methods that were DLTed
+#if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)
+         std::vector<J9Method*> dltedMethods = compInfo->collectDLTedMethods();
+#else
+         std::vector<J9Method*> dltedMethods; // empty
+#endif /* defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER) */
+
          // This is a connection to a new server after a previous disconnection
          if (hasEverConnectedToServer && (previousUID != serverUID))
             {
@@ -276,7 +283,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             compInfo->getPersistentInfo()->setDoNotRequestJITServerAOTCacheStore(false);
             }
 
-         client->write(response, ranges, unloadedClasses->getMaxRanges(), serializedCHTable);
+         client->write(response, ranges, unloadedClasses->getMaxRanges(), serializedCHTable, dltedMethods);
 
          if ((previousUID != serverUID) && TR::Options::getVerboseOption(TR_VerboseJITServerConns))
             {
@@ -352,12 +359,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          f2 = findField(fe->vmThread(), cp2, cpIndex2, isStatic, &declaringClass2);
          client->write(response, declaringClass1, declaringClass2, f1, f2);
          };
-         break;
-      case MessageType::VM_compiledAsDLTBefore:
-         {
-         auto clazz = std::get<0>(client->getRecvData<TR_ResolvedMethod *>());
-         client->write(response, fe->compiledAsDLTBefore(clazz));
-         }
          break;
       case MessageType::VM_classHasBeenExtended:
          {
