@@ -117,6 +117,9 @@ jfrEventSize(J9JFREvent *jfrEvent)
 	case J9JFR_EVENT_TYPE_SYSTEM_GC:
 		size = sizeof(J9JFRSystemGC) + (((J9JFRSystemGC *)jfrEvent)->stackTraceSize * sizeof(UDATA));
 		break;
+	case J9JFR_EVENT_TYPE_MODULE_REQUIRE:
+		size = sizeof(J9JFRModuleRequire);
+		break;
 	default:
 		Assert_VM_unreachable();
 		break;
@@ -739,6 +742,28 @@ jfrSystemGC(J9HookInterface **hook, UDATA eventNum, void *eventData, void* userD
 	}
 }
 
+/**
+ * Hook for ReadsModuleAdded. Called without VM access.
+ *
+ * @param hook[in] the VM hook interface
+ * @param eventNum[in] the event number
+ * @param eventData[in] the event data
+ * @param userData[in] the registered user data
+ */
+static void
+jfrReadsModuleAdded(J9HookInterface **hook, UDATA eventNum, void *eventData, void* userData)
+{
+	J9VMReadsModuleAddedEvent *event = (J9VMReadsModuleAddedEvent *)eventData;
+	J9VMThread *currentThread = event->currentThread;
+
+	J9JFRModuleRequire *jfrEvent = (J9JFRModuleRequire *)reserveBuffer(currentThread, sizeof(*jfrEvent));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_MODULE_REQUIRE);
+		jfrEvent->source = event->fromModule;
+		jfrEvent->requiredModule = event->toModule;
+	}
+}
+
 jint
 initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 {
@@ -798,6 +823,9 @@ initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 		goto fail;
 	}
 	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_SYSTEM_GC_CALLED, jfrSystemGC, OMR_GET_CALLSITE(), NULL)) {
+		goto fail;
+	}
+	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_READS_MODULE_ADDED, jfrReadsModuleAdded, OMR_GET_CALLSITE(), NULL)) {
 		goto fail;
 	}
 
@@ -934,6 +962,7 @@ tearDownJFR(J9JavaVM *vm)
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_MONITOR_CONTENDED_ENTERED, jfrVMMonitorEntered, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_UNPARKED, jfrVMThreadParked, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_SYSTEM_GC_CALLED, jfrSystemGC, NULL);
+	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_READS_MODULE_ADDED, jfrReadsModuleAdded, NULL);
 
 	/* Free global data */
 	VM_JFRConstantPoolTypes::freeJFRConstantEvents(vm);

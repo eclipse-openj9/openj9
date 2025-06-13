@@ -1309,6 +1309,7 @@ JVM_AddReadsModule(JNIEnv * env, jobject fromModule, jobject toModule)
 				if (ERRCODE_SUCCESS != rc) {
 					throwExceptionHelper(currentThread, rc);
 				} else {
+					TRIGGER_J9HOOK_READS_MODULE_ADDED(((J9JavaVM *)vm)->hookInterface, currentThread, j9FromMod, j9ToMod);
 					if (TrcEnabled_Trc_MODULE_addReadsModule) {
 						trcModulesAddReadsModule(currentThread, toModule, j9FromMod, j9ToMod);
 					}

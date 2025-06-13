@@ -1398,4 +1398,29 @@ VM_JFRChunkWriter::writeSystemGCEvent(void *anElement, void *userData)
 	writeEventSize(bufferWriter, dataStart);
 }
 
+void
+VM_JFRChunkWriter::writeModuleRequire(void *anElement, void *userData)
+{
+	ModuleRequireEntry *entry = (ModuleRequireEntry *)anElement;
+	VM_BufferWriter *bufferWriter = (VM_BufferWriter *)userData;
+
+	/* Reserve size field */
+	U_8 *dataStart = reserveEventSize(bufferWriter);
+
+	/* Write event type */
+	bufferWriter->writeLEB128(ModuleRequireID);
+
+	/* Write start time */
+	bufferWriter->writeLEB128(entry->ticks);
+
+	/* Write source module index */
+	bufferWriter->writeLEB128(entry->sourceModuleIndex);
+
+	/* Write required module index */
+	bufferWriter->writeLEB128(entry->requiredModuleIndex);
+
+	/* Write size */
+	writeEventSize(bufferWriter, dataStart);
+}
+
 #endif /* defined(J9VM_OPT_JFR) */
