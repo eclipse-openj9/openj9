@@ -57,6 +57,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	hashClassTableAtPut,
 	hashClassTableDelete,
 	hashClassTableReplace,
+	isFrozenClass,
 	monitorTableAt,
 	allocateVMThread,
 	deallocateVMThread,

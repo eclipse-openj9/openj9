@@ -643,6 +643,7 @@ VMSnapshotImpl::fixupClass(J9Class *clazz)
 	clazz->replacedClass = NULL;
 	clazz->gcLink = NULL;
 	clazz->jitMetaDataList = NULL;
+	clazz->classFlags |= J9ClassIsFrozen;
 
 	UDATA totalStaticSlots = totalStaticSlotsForClass(clazz->romClass);
 	memset(clazz->ramStatics, 0, totalStaticSlots * sizeof(UDATA));
@@ -736,6 +737,7 @@ VMSnapshotImpl::fixupArrayClass(J9ArrayClass *clazz)
 	clazz->varHandleMethodTypes = NULL;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	clazz->gcLink = NULL;
+	clazz->classFlags |= J9ClassIsFrozen;
 
 	UDATA i;
 	if (NULL != clazz->staticSplitMethodTable) {
@@ -1133,6 +1135,7 @@ initializeSnapshotClassObject(J9JavaVM *javaVM, J9ClassLoader *classLoader, J9Cl
 	J9VMJAVALANGCLASS_SET_CLASSLOADER(vmThread, classObject, classLoader->classLoaderObject);
 	J9VMJAVALANGCLASS_SET_VMREF(vmThread, classObject, clazz);
 	J9STATIC_OBJECT_STORE(vmThread, clazz, (j9object_t *)&clazz->classObject, (j9object_t)classObject);
+	clazz->classFlags &= ~J9ClassIsFrozen;
 
 	return clazz;
 }
