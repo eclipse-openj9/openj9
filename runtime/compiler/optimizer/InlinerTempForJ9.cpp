@@ -6090,6 +6090,44 @@ TR_InlinerFailureReason
       return Recognized_Callee;
       }
 
+   // Deciding whether to perform our acceleration of countPositives and hasNegatives on x86 requires some extra logic,
+   // see the comments below
+   if (comp->target().cpu.isX86())
+      {
+      if (rm == TR::java_lang_StringCoding_countPositives)
+         {
+         // countPositives can only be accelerated if target is 64 bit and arrays are contiguous, so inline it if not
+         // Even if target is 64 bit and arrays are contiguous, a performance anomaly occurs when countPositives is inlined into hasNegatives,
+         // causing it to perform faster than accelerated implementation
+         // For that reason, countPositives will be inlined into hasNegatives no matter what
+         if (!comp->target().is64Bit()
+            || TR::Compiler->om.canGenerateArraylets()
+            || callsite->_callerResolvedMethod->getRecognizedMethod() == TR::java_lang_StringCoding_hasNegatives)
+            {
+            return InlineableTarget;
+            }
+         // If target is 64 bit, arrays are contiguous, and caller is not hasNegatives,
+         // don't inline countPositives and accelerate it instead
+         else
+            {
+            return DontInline_Callee;
+            }
+         }
+      if (rm == TR::java_lang_StringCoding_hasNegatives)
+         {
+#if JAVA_SPEC_VERSION >= 19
+         // Take advantage of performance anomaly mentioned above by inlining both countPositives (which only exists for JDK 19+) and hasNegatives
+         return InlineableTarget;
+#else
+         // hasNegatives can only be accelerated if target is 64 bit and arrays are contiguous, so inline it if not
+         if (!comp->target().is64Bit() || TR::Compiler->om.canGenerateArraylets())
+            return InlineableTarget;
+         else
+            return DontInline_Callee;
+#endif /* JAVA_SPEC_VERSION >=19 */
+         }
+      }
+
    return InlineableTarget;
    }
 
