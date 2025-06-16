@@ -1666,39 +1666,6 @@ J9::SymbolReferenceTable::findOrCreateMethodHandleSymbol(TR::ResolvedMethodSymbo
 
 
 TR::SymbolReference *
-J9::SymbolReferenceTable::findOrCreateClassStaticsSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex)
-   {
-   TR_ResolvedMethod * owningMethod = owningMethodSymbol->getResolvedMethod();
-
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-   void * classStatics = fej9->addressOfFirstClassStatic(owningMethod->classOfStatic(cpIndex, true));
-
-   ListIterator<TR::SymbolReference> i(&_classStaticsSymbolRefs);
-   TR::SymbolReference * symRef;
-   for (symRef = i.getFirst(); symRef; symRef = i.getNext())
-      if (symRef->getSymbol()->getStaticSymbol()->getStaticAddress() == classStatics)
-         return symRef;
-
-   TR::StaticSymbol * sym = TR::StaticSymbol::create(trHeapMemory(),TR::Address);
-   sym->setStaticAddress(classStatics);
-   if (!TR::Compiler->cls.classObjectsMayBeCollected())
-      sym->setNotCollected();
-   // cpIndex for resolved Class statics symbol is unused. Furthermore having a cpIndex here might create illusion for cases where we
-   // care about cpIndex and also as Two or more (resolved) static field references belonging to same class will
-   // share the same information (inlined call site index, cpIndex) , using a cpIndex for these cases will
-   // need further changes to prevent any sharing hence it is set to -1 for static resolved fields.
-   // For more detailed information take a look at PR#4322 in eclipse-openj9/openj9 repo
-   symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), -1);
-
-   aliasBuilder.addressStaticSymRefs().set(symRef->getReferenceNumber()); // add the symRef to the statics list to get correct aliasing info
-
-   _classStaticsSymbolRefs.add(symRef);
-
-   return symRef;
-   }
-
-
-TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateClassFromJavaLangClassAsPrimitiveSymbolRef()
    {
    if (!element(classFromJavaLangClassAsPrimitiveSymbol))
