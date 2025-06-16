@@ -52,54 +52,119 @@ JITServerIProfiler::JITServerIProfiler(J9JITConfig *jitConfig)
    _useCaching = feGetEnv("TR_DisableIPCaching") ? false: true;
    }
 
-TR_IPMethodHashTableEntry *
-JITServerIProfiler::deserializeMethodEntry(TR_ContiguousIPMethodHashTableEntry *serialEntry, TR_Memory *trMemory)
+
+/**
+ * @brief Get a summary of the fanin profile info for the indicated method.
+ *        The summary is allocated with "heap" memory to be cached in a resolvedMethod.
+ *        There are two possible sources for the fanin profile information:
+ *        (1) Fresh information sent by the client
+ *        (2) Fanin info stored in the JITServer shared profile cache
+ *        The server will pick the sources with a higher "quality", where the
+ *        quality is given by heuristics that look at the number of samples.
+ *
+ * @param method The method for which we want to obtain fanin information. This is a "callee" method.
+ * @param clientFaninData Fanin information sent by the client
+ * @param fe Frontend
+ * @param trMemory Pointer to TR_memory onject used for "heap" allocations
+ * @return Pointer to "heap" allocated TR_FaninSummaryInfo struct containing
+ */
+TR_FaninSummaryInfo *
+JITServerIProfiler::cacheFaninDataForMethod(TR_OpaqueMethodBlock *method, const std::string &clientFaninData, TR_FrontEnd *fe, TR_Memory *trMemory)
    {
-   // caching is done inside TR_ResolvedJ9JITServerMethod so we need to use heap memory.
-   TR_IPMethodHashTableEntry *entry = (TR_IPMethodHashTableEntry *) trMemory->allocateHeapMemory(sizeof(TR_IPMethodHashTableEntry));
+   const TR_ContiguousIPMethodHashTableEntry *serialEntry = !clientFaninData.empty() ? (TR_ContiguousIPMethodHashTableEntry*) &clientFaninData[0] : NULL;
+
+   auto compInfoPT = (TR::CompilationInfoPerThreadRemote *)(((TR_J9VMBase*)fe)->_compInfoPT);
+   ClientSessionData *clientSession = compInfoPT->getClientData();
+   TR_ASSERT_FATAL(!serialEntry || method == serialEntry->_method, "method missmatch when receiving fanin info"); // TODO: make this a normal assert
+
+   int sharedProfileQuality = 0;
+   if (clientSession->useSharedProfileCache())
+      {
+      // Retrieve the shared fanin profile info and compare it to the info we got from the client
+      ProfiledMethodEntry *sharedProfile = clientSession->getSharedProfileCacheForMethod((J9Method*)method);
+      FaninProfileSummary clientProfileSummary(serialEntry ? serialEntry->_totalSamples : 0);
+      FaninProfileSummary sharedProfileSummary = sharedProfile ? sharedProfile->getFaninProfileSummary() : FaninProfileSummary(0);
+      sharedProfileQuality = JITServerSharedProfileCache::compareFaninProfiles(sharedProfileSummary, clientProfileSummary);
+      if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfileDetails))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Compare fanin data for method %p: ClientSamples=%" OMR_PRIu64 " ServerSamples=%" OMR_PRIu64 " while compiling %s",
+                                                            method, clientProfileSummary._numSamples, sharedProfileSummary._numSamples, TR::comp() ? TR::comp()->signature() : NULL);
+         }
+      }
+   if (sharedProfileQuality > 0)
+      {
+      // The quality of the shared fanin profile is better than the quality of the fanin info sent by client.
+      // Load the fanin profile from the shared repository.
+      TR_FaninSummaryInfo *result = clientSession->loadFaninDataFromSharedProfileCache(method, trMemory);
+      if (!result) // failed, so use client data if available
+         {
+         return deserializeFaninMethodEntry(serialEntry, trMemory);
+         }
+      }
+   else if (sharedProfileQuality < 0)
+      {
+      // The quality of the fanin info sent by the client is better. Use that and maybe store it in the shared repo.
+      TR_ASSERT(serialEntry, "serialEntry cannot be NULL if we decided that fanin info sent by the client is better");
+      TR_FaninSummaryInfo *result = deserializeFaninMethodEntry(serialEntry, trMemory);
+
+      if (clientSession->useSharedProfileCache())
+         {
+         clientSession->storeFaninDataInSharedProfileCache(method, serialEntry);
+         }
+      return result;
+      }
+   else // It's a wash between the two sources of fanin info. Use the info from the client.
+      {
+      return deserializeFaninMethodEntry(serialEntry, trMemory);
+      }
+   return NULL;
+   }
+
+/**
+ * @brief Deserialize the fanin profile info sent by the client and allocate a
+ *        TR_FaninSummaryInfo entry using "heap" memory
+ *
+ * @param serialEntry The fanin info sent by the client in serialized format
+ * @param trMemory TR_Memory object used for "heap" allocations
+ * @return TR_FaninSummaryInfo*
+ */
+TR_FaninSummaryInfo *
+JITServerIProfiler::deserializeFaninMethodEntry(const TR_ContiguousIPMethodHashTableEntry *serialEntry, TR_Memory *trMemory)
+   {
+   if (!serialEntry)
+      return NULL;
+   // Caching is done inside TR_ResolvedJ9JITServerMethod so we need to use heap memory.
+   TR_FaninSummaryInfo *entry = (TR_FaninSummaryInfo *) trMemory->allocateHeapMemory(sizeof(TR_FaninSummaryInfo));
    if (entry)
       {
-      memset(entry, 0, sizeof(TR_IPMethodHashTableEntry));
-      entry->_next = NULL;
-      entry->_method = serialEntry->_method;
-      entry->_otherBucket = serialEntry->_otherBucket;
-
-      size_t callerCount = serialEntry->_callerCount;
-
-      TR_IPMethodData *callerStore = (TR_IPMethodData*) trMemory->allocateHeapMemory(callerCount * sizeof(TR_IPMethodData));
-      if (callerStore)
-         {
-         TR_IPMethodData *caller = &entry->_caller;
-         for (size_t i = 0; i < callerCount; i++)
-            {
-            auto &serialCaller = serialEntry->_callers[i];
-            TR_ASSERT(serialCaller._method, "callerCount was computed incorrectly");
-
-            if (i != 0)
-               {
-               TR_IPMethodData* newCaller = &callerStore[i];
-               caller->next = newCaller;
-               caller = newCaller;
-               }
-
-            caller->setMethod(serialCaller._method);
-            caller->setPCIndex(serialCaller._pcIndex);
-            caller->setWeight(serialCaller._weight);
-            caller->next = NULL;
-            }
-         }
+      entry->_totalSamples = serialEntry->_totalSamples;
+      entry->_samplesOther = serialEntry->_otherBucket.getWeight();
+      entry->_numCallers  = serialEntry->_callerCount;
       }
    return entry;
    }
 
-void
-TR_ContiguousIPMethodHashTableEntry::serialize(TR_IPMethodHashTableEntry *entry, TR_ContiguousIPMethodHashTableEntry *serialEntry)
+/**
+ * @brief Serialize the information from an entry in the fanin hashtable
+ *
+ * @param entry The fanin hashtable entry that needs to be serialized.
+ * @param serialEntry OUTPUT. The serialized version of the fanin hashtable entry.
+ */
+std::string
+TR_ContiguousIPMethodHashTableEntry::serialize(const TR_IPMethodHashTableEntry *faninEntry)
    {
-   serialEntry->_method = entry->_method;
-   serialEntry->_otherBucket = entry->_otherBucket;
+   if (!faninEntry)
+      return std::string();
+   std::string entryStr(sizeof(TR_ContiguousIPMethodHashTableEntry), 0);
+   TR_ContiguousIPMethodHashTableEntry *serialEntry = reinterpret_cast<TR_ContiguousIPMethodHashTableEntry *>(&entryStr[0]);
+
+   uint64_t totalSamples = faninEntry->_otherBucket.getWeight();
+
+   serialEntry->_method = faninEntry->_method;
+   serialEntry->_otherBucket = faninEntry->_otherBucket;
 
    size_t callerIdx = 0;
-   for (TR_IPMethodData *caller = &entry->_caller; caller; caller = caller->next)
+   for (const TR_IPMethodData *caller = &faninEntry->_caller; caller; caller = caller->next)
       {
       if (callerIdx >= TR_IPMethodHashTableEntry::MAX_IPMETHOD_CALLERS)
          break;
@@ -107,9 +172,12 @@ TR_ContiguousIPMethodHashTableEntry::serialize(TR_IPMethodHashTableEntry *entry,
       serialCaller._method = caller->getMethod();
       serialCaller._pcIndex = caller->getPCIndex();
       serialCaller._weight = caller->getWeight();
+      totalSamples += caller->getWeight();
       callerIdx++;
       }
    serialEntry->_callerCount = callerIdx;
+   serialEntry->_totalSamples = totalSamples;
+   return entryStr;
    }
 
 TR_IPBytecodeHashTableEntry*
@@ -151,20 +219,8 @@ JITServerIProfiler::ipBytecodeHashTableEntryFactory(TR_IPBCDataStorageHeader *st
 TR_IPMethodHashTableEntry *
 JITServerIProfiler::searchForMethodSample(TR_OpaqueMethodBlock *omb, int32_t bucket)
    {
-   auto stream = TR::CompilationInfo::getStream();
-   if (!stream)
-      {
-      return NULL;
-      }
-   stream->write(JITServer::MessageType::IProfiler_searchForMethodSample, omb);
-   auto recv = stream->read<std::string>();
-   auto &entryStr = std::get<0>(recv);
-   if (entryStr.empty())
-      {
-      return NULL;
-      }
-   auto serialEntry = (TR_ContiguousIPMethodHashTableEntry *)entryStr.data();
-   return deserializeMethodEntry(serialEntry, TR::comp()->trMemory());
+   TR_ASSERT_FATAL(false, "Unexpected call to searchForMethodSample made by the server");
+   return NULL;
    }
 
 // This method is used to search only the hash table
@@ -319,7 +375,7 @@ JITServerIProfiler::cacheProfilingDataForMethod(TR_OpaqueMethodBlock *method,
 // We pick the best source of the two.
 TR_IPBytecodeHashTableEntry*
 JITServerIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex,
-                                  TR::Compilation *comp, uintptr_t data, bool addIt)
+                                    TR::Compilation *comp, uintptr_t data, bool addIt)
    {
    if (addIt)
       return NULL; // Server should not create any samples
@@ -964,27 +1020,16 @@ JITClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock *
    }
 
 /**
- * @brief Code executed by the JITClient to serialize faninfo for a method
+ * @brief Code executed by the JITClient to serialize fanin info for a method
  *
  * @param omb J9Method in question
  * @return The serialized fanin info as a string
  */
 std::string
-JITClientIProfiler::serializeIProfilerMethodEntry(TR_OpaqueMethodBlock *omb)
+JITClientIProfiler::serializeFaninMethodEntry(TR_OpaqueMethodBlock *omb)
    {
    // Find entry in a IProfiler hash table, if it exists
    auto entry = findOrCreateMethodEntry(NULL, (J9Method *) omb, false);
-   if (entry)
-      {
-      std::string entryStr(sizeof(TR_ContiguousIPMethodHashTableEntry), 0);
-      // TODO: make the following method return the desired string and return it immediately
-      // return TR_ContiguousIPMethodHashTableEntry::serialize(entry)
-      TR_ContiguousIPMethodHashTableEntry::serialize(entry, reinterpret_cast<TR_ContiguousIPMethodHashTableEntry *>(&entryStr[0]));
-      return entryStr;
-      }
-   else
-      {
-      return std::string();
-      }
+   return TR_ContiguousIPMethodHashTableEntry::serialize(entry);
    }
 

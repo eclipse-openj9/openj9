@@ -42,12 +42,23 @@ struct TR_ContiguousIPMethodData
    uint32_t _weight;
    };
 
+// The following structure is used by JITServer to keep a summary of the fanin info.
+// We don't need to track the identity of the callee because this info will be stored
+// into TR_ResolvedJ9JITServerMethod which already includes the j9method for the callee.
+struct TR_FaninSummaryInfo
+   {
+   uint64_t _totalSamples; // Number of samples across all callers
+   uint64_t _samplesOther; // Number of samples received by callers that could not be tracked individually
+   uint32_t _numCallers;   // Number of distinct callers that received samples. Capped at MAX_IPMETHOD_CALLERS
+   };
+
 struct TR_ContiguousIPMethodHashTableEntry
    {
-   static void serialize(TR_IPMethodHashTableEntry *entry, TR_ContiguousIPMethodHashTableEntry *serialEntry);
+   static std::string serialize(const TR_IPMethodHashTableEntry *entry);
 
    TR_OpaqueMethodBlock *_method; // callee
    size_t _callerCount;
+   uint64_t _totalSamples; // This includes the samples in the _otherBucket
    TR_ContiguousIPMethodData _callers[TR_IPMethodHashTableEntry::MAX_IPMETHOD_CALLERS]; // array of callers and their weights. null _method means EOL
    TR_DummyBucket _otherBucket;
    };
@@ -105,7 +116,8 @@ public:
 
    static TR_IPBytecodeHashTableEntry *ipBytecodeHashTableEntryFactory(TR_IPBCDataStorageHeader *storage, uintptr_t pc, TR_Memory* mem, TR_AllocationKind allocKind);
    // This is used for fanin data
-   TR_IPMethodHashTableEntry *deserializeMethodEntry(TR_ContiguousIPMethodHashTableEntry *serialEntry, TR_Memory *trMemory);
+   TR_FaninSummaryInfo *cacheFaninDataForMethod(TR_OpaqueMethodBlock *method, const std::string &clientFaninData, TR_FrontEnd *fe, TR_Memory *trMemory);
+   TR_FaninSummaryInfo *deserializeFaninMethodEntry(const TR_ContiguousIPMethodHashTableEntry *serialEntry, TR_Memory *trMemory);
    // This is used for bytecode profile data
    static void deserializeIProfilerData(J9Method *method, const std::string &ipdata, Vector<TR_IPBytecodeHashTableEntry *> &ipEntries, TR_Memory *trMemory, bool cgEntriesOnly = false);
    void printStats();
@@ -148,7 +160,7 @@ public:
 
    bool serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock*method, TR::Compilation *comp, JITServer::ClientStream *client,
                                               bool usePersistentCache, bool isCompiled, bool sharedProfile);
-   std::string serializeIProfilerMethodEntry(TR_OpaqueMethodBlock *omb);
+   std::string serializeFaninMethodEntry(TR_OpaqueMethodBlock *omb);
    void gatherUncachedClassesUsedInCGEntry(TR_IPBCDataCallGraph *cgEntry, TR::Compilation *comp,
                                            std::vector<J9Class *> &uncachedClasses,
                                            std::vector<JITServerHelpers::ClassInfoTuple> &classInfos);

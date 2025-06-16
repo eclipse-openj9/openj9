@@ -39,6 +39,7 @@ class TR_OpaqueMethodBlock;
 class TR_PersistentClassInfo;
 class J9ConstantPool;
 class TR_IPBytecodeHashTableEntry;
+class TR_IPMethodHashTableEntry;
 class TR_MethodToBeCompiled;
 class TR_AddressRange;
 class TR_PersistentCHTable;
@@ -418,10 +419,12 @@ public:
    bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry, bool isCompiled);
    bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, const Vector<TR_IPBytecodeHashTableEntry *> &entries, bool isCompiled);
    void checkProfileDataMatching(J9Method *method, const std::string &ipdata);
-   uint64_t getNumSamplesForMethodInSharedProfileCache(J9Method* method);
+   ProfiledMethodEntry *getSharedProfileCacheForMethod(J9Method* method);
    BytecodeProfileSummary getSharedBytecodeProfileSummary(J9Method* method);
    bool loadBytecodeDataFromSharedProfileCache(J9Method *method, bool stable, TR::Compilation *comp, const std::string &ipdata);
    bool storeBytecodeProfileInSharedRepository(TR_OpaqueMethodBlock *method, const std::string &ipdata, uint64_t numSamples, bool isStable, TR::Compilation *);
+   TR_FaninSummaryInfo *loadFaninDataFromSharedProfileCache(TR_OpaqueMethodBlock *method, TR_Memory *trMemory);
+   bool storeFaninDataInSharedProfileCache(TR_OpaqueMethodBlock *method, const TR_ContiguousIPMethodHashTableEntry *serialEntry);
    VMInfo *getOrCacheVMInfo(JITServer::ServerStream *stream);
    void clearCaches(bool locked=false); // destroys _chTableClassMap, _romClassMap, _J9MethodMap, _unloadedClassAddresses and _DLTedMethodSet
    void clearCachesLocked(TR_J9VMBase *fe);
@@ -665,6 +668,11 @@ private:
    uint32_t _numSharedProfileCacheMethodLoadsFailed;
    uint32_t _numSharedProfileCacheMethodStores;
    uint32_t _numSharedProfileCacheMethodStoresFailed;
+
+   uint32_t _numSharedFaninCacheMethodLoads;
+   uint32_t _numSharedFaninCacheMethodLoadsFailed;
+   uint32_t _numSharedFaninCacheMethodStores;
+   uint32_t _numSharedFaninCacheMethodStoresFailed;
    }; // class ClientSessionData
 
 

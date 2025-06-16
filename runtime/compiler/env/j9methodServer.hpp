@@ -260,7 +260,7 @@ private:
    bool _virtualMethodIsOverridden; // cached information coming from client
    TR_PersistentJittedBodyInfo *_bodyInfo; // cached info coming from the client; uses heap memory
                                            // If method is not yet compiled this is null
-   TR_IPMethodHashTableEntry *_iProfilerMethodEntry;
+   TR_FaninSummaryInfo *_faninSummaryInfo;
    bool _isLambdaFormGeneratedMethod;
    bool _isForceInline;
    bool _isDontInline;
