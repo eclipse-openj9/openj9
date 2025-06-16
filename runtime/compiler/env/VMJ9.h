@@ -838,7 +838,6 @@ public:
    virtual bool               isBeingCompiled(TR_OpaqueMethodBlock *methodInfo, void *startPC);
    virtual uint32_t           virtualCallOffsetToVTableSlot(uint32_t offset);
    virtual int32_t            vTableSlotToVirtualCallOffset(uint32_t vTableSlot);
-   virtual void *             addressOfFirstClassStatic(TR_OpaqueClassBlock *);
 
    virtual TR_ResolvedMethod * getDefaultConstructor(TR_Memory *, TR_OpaqueClassBlock *);
 

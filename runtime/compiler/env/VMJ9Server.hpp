@@ -183,7 +183,6 @@ public:
    virtual void reportHotField(int32_t reducedCpuUtil, J9Class* clazz, uint8_t fieldOffset,  uint32_t reducedFrequency) override;
    virtual int32_t * getReferenceSlotsInClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazz) override;
    virtual uint32_t getMethodSize(TR_OpaqueMethodBlock *method) override;
-   virtual void * addressOfFirstClassStatic(TR_OpaqueClassBlock *clazz) override;
    virtual void * getStaticFieldAddress(TR_OpaqueClassBlock *clazz, unsigned char *fieldName, uint32_t fieldLen, unsigned char *sig, uint32_t sigLen) override;
    virtual int32_t getInterpreterVTableSlot(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *clazz) override;
    virtual void revertToInterpreted(TR_OpaqueMethodBlock *method) override;
