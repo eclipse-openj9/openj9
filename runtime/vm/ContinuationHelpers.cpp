@@ -33,7 +33,6 @@
 #include "ContinuationHelpers.hpp"
 #include "HeapIteratorAPI.h"
 #include "OutOfLineINL.hpp"
-#include "VMHelpers.hpp"
 
 
 extern "C" {
