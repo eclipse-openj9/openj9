@@ -121,6 +121,12 @@ public:
 #endif /* JAVA_SPEC_VERSION >= 24 */
 	}
 
+	static VMINLINE void
+	sendUnblockerThreadSignal(J9JavaVM *vm)
+	{
+		J9VM_SEND_VIRTUAL_UNBLOCKER_THREAD_SIGNAL(vm);
+	}
+
 	static VMINLINE ContinuationState volatile *
 	getContinuationStateAddress(J9VMThread *vmThread , j9object_t object)
 	{
@@ -410,7 +416,7 @@ public:
 				current->nextWaitingContinuation = vm->blockedContinuations;
 				vm->blockedContinuations = current;
 			}
-			omrthread_monitor_notify(vm->blockedVirtualThreadsMutex);
+			VM_ContinuationHelpers::sendUnblockerThreadSignal(vm);
 		}
 
 		omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);

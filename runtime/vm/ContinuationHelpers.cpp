@@ -1177,8 +1177,17 @@ waitForSignal(J9VMThread *currentThread)
 	 */
 	omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
 	vmFuncs->internalExitVMToJNI(currentThread);
+
+	/* There is a timing hole right here and after the next monitor exit where a notify
+	 * can be sent and it will not be responded to because the unblocker thread is not
+	 * waiting yet. To address this a check for a pending notify is done and if there
+	 * is one the wait is skipped.
+	 */
 	omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
-	omrthread_monitor_wait_interruptable(vm->blockedVirtualThreadsMutex, 0, 0);
+	if (!vm->pendingBlockedVirtualThreadsNotify) {
+		omrthread_monitor_wait_interruptable(vm->blockedVirtualThreadsMutex, 0, 0);
+	}
+	vm->pendingBlockedVirtualThreadsNotify = FALSE;
 	omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
@@ -1311,7 +1320,6 @@ restart:
 				current = next;
 			}
 			if ((NULL == unblockedList) && !hasPlatformThreadWaiting) {
-
 				waitForSignal(currentThread);
 				goto restart;
 			} else {
