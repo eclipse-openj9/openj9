@@ -504,7 +504,7 @@ typedef struct J9JFRSystemGC {
 } J9JFRSystemGC;
 
 typedef struct J9JFRModuleRequire {
-	J9JFR_EVENT_COMMON_FIELDS;
+	J9JFR_EVENT_COMMON_FIELDS
 	struct J9Module *source;
 	struct J9Module *requiredModule;
 } J9JFRModuleRequire;
