@@ -3091,7 +3091,6 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
                                                                  int32_t numLanes, handlerMode mode)
    {
    TR::Compilation *comp = opt->comp();
-
    TR::Node *broadcastTypeNode = node->getChild(4);
 
    if (!broadcastTypeNode->getOpCode().isLoadConst())
@@ -3105,23 +3104,27 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
    TR_ASSERT_FATAL(broadcastType == MODE_BROADCAST || broadcastType == MODE_BITS_COERCED_LONG_TO_MASK,
                    "Unexpected broadcast type in node %p\n", node);
 
-   bool longToMask = (broadcastType == MODE_BITS_COERCED_LONG_TO_MASK);
+   TR::VectorOperation vectorOperation;
+
+   if (broadcastType == MODE_BITS_COERCED_LONG_TO_MASK)
+      {
+      TR_ASSERT_FATAL(objectType == Mask, "Object type should be mask");
+      vectorOperation = TR::mLongBitsToMask;
+      }
+   else
+      {
+      vectorOperation = (objectType == Mask) ? TR::msplats : TR::vsplats;
+      }
 
    if (mode == checkScalarization)
-      return longToMask ? NULL : node;
-
-   if (mode == checkVectorization)
       {
-      if (objectType == Mask && !longToMask)
-         return NULL; // TODO: support MODE_BROADCAST for masks
+      return (vectorOperation == TR::mLongBitsToMask) ? NULL : node;
+      }
+   else if (mode == checkVectorization)
+      {
+      TR::ILOpCodes opCode = TR::ILOpCode::createVectorOpCode(vectorOperation, TR::DataType::createVectorType(elementType, vectorLength));
 
-      TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(longToMask ? TR::mLongBitsToMask : TR::vsplats,
-                                                                    TR::DataType::createVectorType(elementType, vectorLength));
-
-      if (!isOpCodeImplemented(comp, splatsOpCode))
-         return NULL;
-
-      return node;
+      return isOpCodeImplemented(comp, opCode) ? node : NULL;
       }
 
    if (opt->_trace)
@@ -3133,9 +3136,9 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
    anchorOldChildren(opt, treeTop, node);
 
    TR::Node *newNode;
-   TR::DataType type = longToMask ? TR::Int64 : elementType;
+   TR::DataType newChildtype = (objectType == Mask) ? TR::Int64 : elementType;
 
-   switch (type) {
+   switch (newChildtype) {
       case TR::Float:
           newNode = TR::Node::create(node, TR::ibits2f, 1, TR::Node::create(node, TR::l2i, 1, valueToBroadcast));
           break;
@@ -3152,8 +3155,7 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
           newNode = TR::Node::create(node, TR::l2i, 1, valueToBroadcast);
           break;
       case TR::Int64:
-          // redundant conversion to simplify node recreation
-          newNode = TR::Node::create(node, TR::dbits2l, 1, TR::Node::create(node, TR::lbits2d, 1, valueToBroadcast));
+          newNode = valueToBroadcast;
           break;
       default:
          TR_ASSERT_FATAL(false, "Unexpected vector element type for the Vector API\n");
@@ -3182,16 +3184,15 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
       {
       node->setAndIncChild(0, newNode);
       node->setNumChildren(1);
-      TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(longToMask ? TR::mLongBitsToMask : TR::vsplats,
-                                                                    TR::DataType::createVectorType(elementType, vectorLength));
+      TR::ILOpCodes opCode = TR::ILOpCode::createVectorOpCode(vectorOperation, TR::DataType::createVectorType(elementType, vectorLength));
 
-      TR::Node::recreate(node, splatsOpCode);
+      TR::Node::recreate(node, opCode);
 
       if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
          {
-         TR::ILOpCode opcode(splatsOpCode);
-         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Vectorized using %s%s in %s at %s %s", opcode.getName(),
-                                  TR::DataType::getName(opcode.getVectorResultDataType()), comp->signature(),
+         TR::ILOpCode ilOpCode(opCode);
+         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Vectorized using %s%s in %s at %s %s", ilOpCode.getName(),
+                                  TR::DataType::getName(ilOpCode.getVectorResultDataType()), comp->signature(),
                                   comp->getHotnessName(comp->getMethodHotness()), comp->isDLT() ? "DLT" : "");
          }
       }
