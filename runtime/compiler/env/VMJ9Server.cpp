@@ -1706,14 +1706,6 @@ TR_J9ServerVM::getMethodSize(TR_OpaqueMethodBlock *method)
    }
 
 void *
-TR_J9ServerVM::addressOfFirstClassStatic(TR_OpaqueClassBlock *clazz)
-   {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_addressOfFirstClassStatic, clazz);
-   return std::get<0>(stream->read<void *>());
-   }
-
-void *
 TR_J9ServerVM::getStaticFieldAddress(TR_OpaqueClassBlock *clazz, unsigned char *fieldName, uint32_t fieldLen, unsigned char *sig, uint32_t sigLen)
    {
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;

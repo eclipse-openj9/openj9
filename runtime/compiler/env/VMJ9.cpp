@@ -6016,12 +6016,6 @@ TR_J9VMBase:: virtualCallOffsetToVTableSlot(U_32 offset)
    return TR::Compiler->vm.getInterpreterVTableOffset() - offset;
    }
 
-void *
-TR_J9VMBase:: addressOfFirstClassStatic(TR_OpaqueClassBlock * j9Class)
-   {
-   return (void *)(TR::Compiler->cls.convertClassOffsetToClassPtr(j9Class)->ramStatics);
-   }
-
 U_32
 TR_J9VMBase::offsetOfIsOverriddenBit()
    {

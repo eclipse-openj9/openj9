@@ -968,12 +968,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fe->getMethodSize(method));
          }
          break;
-      case MessageType::VM_addressOfFirstClassStatic:
-         {
-         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(response, fe->addressOfFirstClassStatic(clazz));
-         }
-         break;
       case MessageType::VM_getStaticFieldAddress:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, std::string, std::string>();

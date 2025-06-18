@@ -148,7 +148,6 @@ const char *messageNames[] =
    "VM_reportHotField",
    "VM_getReferenceSlotsInClass",
    "VM_getMethodSize",
-   "VM_addressOfFirstClassStatic",
    "VM_getStaticFieldAddress",
    "VM_getInterpreterVTableSlot",
    "VM_revertToInterpreted",
