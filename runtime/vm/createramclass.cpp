@@ -77,6 +77,12 @@ enum J9ClassFragments {
 	RAM_CLASS_FRAGMENT_COUNT
 };
 
+enum IllegalAccessErrorTypes {
+	ILLEGAL_ACCESS_OTHERS,
+	ILLEGAL_ACCESS_SUPER_CLASS,
+	ILLEGAL_ACCESS_SUPER_INTERFACE
+};
+
 /*
  * RAM_CLASS_FRAGMENT_LIMIT is the inclusive lower bound of "large" RAM class free blocks. Its value
  * is the largest alignment constraint amongst RAM class fragments: J9_REQUIRED_CLASS_ALIGNMENT.
@@ -162,7 +168,7 @@ static void setCurrentExceptionForBadClass(J9VMThread *vmThread, J9UTF8 *badClas
 static BOOLEAN verifyClassLoadingStack(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass);
 static void popFromClassLoadingStack(J9VMThread *vmThread);
 static VMINLINE BOOLEAN loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA options, J9Class *elementClass, BOOLEAN hotswapping, UDATA classPreloadFlags, J9Class **superclassOut, J9Module *module);
-static VMINLINE BOOLEAN checkSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA options, UDATA packageID, BOOLEAN hotswapping, J9Class *superclass, J9Module *module, J9ROMClass **badClassOut, bool *incompatibleOut);
+static VMINLINE BOOLEAN checkSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA options, UDATA packageID, BOOLEAN hotswapping, J9Class *superclass, J9Module *module, J9ROMClass **badClassOut, bool *incompatibleOut, J9Class **interfaceClassOut, IllegalAccessErrorTypes *illegalAccessErrorTypes);
 static J9Class* internalCreateRAMClassDropAndReturn(J9VMThread *vmThread, J9ROMClass *romClass, J9CreateRAMClassState *state);
 static J9Class* internalCreateRAMClassDoneNoMutex(J9VMThread *vmThread, J9ROMClass *romClass, UDATA options, J9CreateRAMClassState *state);
 static J9Class* internalCreateRAMClassDone(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ClassLoader *hostClassLoader, J9ROMClass *romClass, UDATA options, J9Class *elementClass,
@@ -189,6 +195,8 @@ static void checkForCustomSpinOptions(void *element, void *userData);
 static void trcModulesSettingPackage(J9VMThread *vmThread, J9Class *ramClass, J9ClassLoader *classLoader, J9UTF8 *className);
 #endif /* JAVA_SPEC_VERSION >= 11 */
 static void initializeClassLinks(J9Class *ramClass, J9Class *superclass, J9MemorySegment *segment, UDATA options);
+static void setIllegalAccessErrorForSuperClassOrInterface(J9VMThread *currentThread, J9ClassLoader *subClassLoader, J9ROMClass *subClassRomClass, J9Module *subClassModule, J9Class *superClassOrInterface, bool isSuperclass);
+
 /*
  * A class which extends (perhaps indirectly) the 'magic'
  * accessor class is exempt from the normal access rules.
@@ -1824,7 +1832,8 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
  */
 static VMINLINE BOOLEAN
 checkSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA options,
-	UDATA packageID, BOOLEAN hotswapping, J9Class *superclass, J9Module *module, J9ROMClass **badClassOut, bool *incompatibleOut)
+	UDATA packageID, BOOLEAN hotswapping, J9Class *superclass, J9Module *module, J9ROMClass **badClassOut, bool *incompatibleOut,
+	J9Class **interfaceClassOut, IllegalAccessErrorTypes *illegalAccessErrorTypes)
 {
 #if JAVA_SPEC_VERSION >= 11
 	J9JavaVM *vm = vmThread->javaVM;
@@ -1849,6 +1858,7 @@ checkSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J
 			if (!isClassInTheSameModuleOrPackageAsSealedSuper(vmThread, superclass, romClass, module, packageID)) {
 				*badClassOut = romClass;
 				*incompatibleOut = true;
+				*illegalAccessErrorTypes = ILLEGAL_ACCESS_SUPER_CLASS;
 				return FALSE;
 			}
 #endif /* JAVA_SPEC_VERSION >= 16 */
@@ -1870,6 +1880,7 @@ checkSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J
 #endif /* JAVA_SPEC_VERSION >= 11 */
 				) {
 					Trc_VM_CreateRAMClassFromROMClass_superclassNotVisible(vmThread, superclass, superclass->classLoader, classLoader);
+					*illegalAccessErrorTypes = ILLEGAL_ACCESS_SUPER_CLASS;
 					return FALSE;
 				}
 			}
@@ -1893,6 +1904,8 @@ checkSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J
 				if (!isClassInTheSameModuleOrPackageAsSealedSuper(vmThread, interfaceClass, romClass, module, packageID)) {
 					*badClassOut = romClass;
 					*incompatibleOut = true;
+					*interfaceClassOut = interfaceClass;
+					*illegalAccessErrorTypes = ILLEGAL_ACCESS_SUPER_INTERFACE;
 					return FALSE;
 				}
 #endif /* JAVA_SPEC_VERSION >= 16 */
@@ -1913,6 +1926,8 @@ checkSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J
 #endif /* JAVA_SPEC_VERSION >= 11 */
 					) {
 						Trc_VM_CreateRAMClassFromROMClass_interfaceNotVisible(vmThread, interfaceClass, interfaceClass->classLoader, classLoader);
+						*interfaceClassOut = interfaceClass;
+						*illegalAccessErrorTypes = ILLEGAL_ACCESS_SUPER_INTERFACE;
 						return FALSE;
 					}
 				}
@@ -1920,6 +1935,7 @@ checkSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J
 		}
 	}
 
+	/* no change to *illegalAccessErrorTypes */
 	return TRUE;
 }
 
@@ -2549,6 +2565,99 @@ initializeClassLinks(J9Class *ramClass, J9Class *superclass, J9MemorySegment *se
 	}
 }
 
+/**
+ * Set IllegalAccessError and the error message when the superclass or superinterface is not visible.
+ *
+ * @param currentThread the current J9VMThread
+ * @param subClassLoader the subclass classloader
+ * @param subClassRomClass the subclass ROM class
+ * @param subClassModule the subclass module
+ * @param superClassOrInterface the superclass or superinterface
+ * @param isSuperclass true if superClassOrInterface is the superclass or false otherwise
+ */
+static void
+setIllegalAccessErrorForSuperClassOrInterface(J9VMThread *currentThread, J9ClassLoader *subClassLoader, J9ROMClass *subClassRomClass, J9Module *subClassModule,
+		J9Class *superClassOrInterface, bool isSuperclass)
+{
+	bool isSubClassInterface = J9_ARE_ANY_BITS_SET(subClassRomClass->modifiers, J9AccInterface);
+	J9UTF8 *subClassName = J9ROMCLASS_CLASSNAME(subClassRomClass);
+	J9UTF8 *subClassLoaderName = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(currentThread, subClassLoader->classLoaderObject)->romClass);
+	J9UTF8 *superClassOrInterfaceName = J9ROMCLASS_CLASSNAME(superClassOrInterface->romClass);
+	J9UTF8 *superClassOrInterfaceLoaderName = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(currentThread, superClassOrInterface->classLoader->classLoaderObject)->romClass);
+#if JAVA_SPEC_VERSION >= 11
+	char subClassModuleBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
+	char *subClassModuleName = getModuleNameUTF(currentThread, subClassModule, subClassModuleBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+	char superClassOrInterfaceModuleBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
+	char *superClassOrInterfaceModuleName = getModuleNameUTF(currentThread, superClassOrInterface->module, superClassOrInterfaceModuleBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+#endif /* JAVA_SPEC_VERSION >= 11 */
+
+	PORT_ACCESS_FROM_VMC(currentThread);
+	char *errorMsg = NULL;
+
+	const char *nlsMessage = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+#if JAVA_SPEC_VERSION >= 11
+			J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS,
+#else /* JAVA_SPEC_VERSION >= 11 */
+			J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8,
+#endif /* JAVA_SPEC_VERSION >= 11 */
+			NULL);
+
+	if (NULL != nlsMessage) {
+#define TYPE_CLASS "class"
+#define TYPE_INTERFACE "interface"
+#define SUPER_CLASS "superclass"
+#define SUPER_INTERFACE "superinterface"
+		UDATA errorMsgLen = j9str_printf(NULL, 0, nlsMessage,
+				isSubClassInterface ? TYPE_INTERFACE : TYPE_CLASS,
+				J9UTF8_LENGTH(subClassName), J9UTF8_DATA(subClassName),
+#if JAVA_SPEC_VERSION >= 11
+				subClassModuleName,
+#endif /* JAVA_SPEC_VERSION >= 11 */
+				J9UTF8_LENGTH(subClassLoaderName), J9UTF8_DATA(subClassLoaderName),
+				isSuperclass ? SUPER_CLASS : SUPER_INTERFACE,
+				J9UTF8_LENGTH(superClassOrInterfaceName), J9UTF8_DATA(superClassOrInterfaceName),
+#if JAVA_SPEC_VERSION >= 11
+				superClassOrInterfaceModuleName,
+#endif /* JAVA_SPEC_VERSION >= 11 */
+				J9UTF8_LENGTH(superClassOrInterfaceLoaderName), J9UTF8_DATA(superClassOrInterfaceLoaderName));
+		errorMsg = (char*)j9mem_allocate_memory(errorMsgLen, OMRMEM_CATEGORY_VM);
+		if (NULL == errorMsg) {
+			j9object_t detailMessage = currentThread->javaVM->memoryManagerFunctions->j9gc_createJavaLangString(currentThread, J9UTF8_DATA(subClassName), J9UTF8_LENGTH(subClassName), J9_STR_XLAT);
+			setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR, (UDATA *)detailMessage);
+			return;
+		}
+		j9str_printf(errorMsg, errorMsgLen, nlsMessage,
+				isSubClassInterface ? TYPE_INTERFACE : TYPE_CLASS,
+				J9UTF8_LENGTH(subClassName), J9UTF8_DATA(subClassName),
+#if JAVA_SPEC_VERSION >= 11
+				subClassModuleName,
+#endif /* JAVA_SPEC_VERSION >= 11 */
+				J9UTF8_LENGTH(subClassLoaderName), J9UTF8_DATA(subClassLoaderName),
+				isSuperclass ? SUPER_CLASS : SUPER_INTERFACE,
+				J9UTF8_LENGTH(superClassOrInterfaceName), J9UTF8_DATA(superClassOrInterfaceName),
+#if JAVA_SPEC_VERSION >= 11
+				superClassOrInterfaceModuleName,
+#endif /* JAVA_SPEC_VERSION >= 11 */
+				J9UTF8_LENGTH(superClassOrInterfaceLoaderName), J9UTF8_DATA(superClassOrInterfaceLoaderName));
+#undef TYPE_CLASS
+#undef TYPE_INTERFACE
+#undef SUPER_INTERFACE
+#undef SUPER_CLASS
+	}
+
+#if JAVA_SPEC_VERSION >= 11
+	if (subClassModuleName != subClassModuleBuf) {
+		j9mem_free_memory(subClassModuleName);
+	}
+	if (superClassOrInterfaceModuleName != superClassOrInterfaceModuleBuf) {
+		j9mem_free_memory(superClassOrInterfaceModuleName);
+	}
+#endif /* JAVA_SPEC_VERSION >= 11 */
+
+	setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR, errorMsg);
+	j9mem_free_memory(errorMsg);
+}
+
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 static J9Class*
 internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass,
@@ -2663,7 +2772,9 @@ fail:
 
 	J9ROMClass *badClass = NULL;
 	bool incompatible = false;
-	if (!checkSuperClassAndInterfaces(vmThread, hostClassLoader, romClass, options, packageID, hotswapping, superclass, module, &badClass, &incompatible)
+	IllegalAccessErrorTypes illegalAccessErrorTypes = ILLEGAL_ACCESS_OTHERS;
+	J9Class *interfaceClassOut = NULL;
+	if (!checkSuperClassAndInterfaces(vmThread, hostClassLoader, romClass, options, packageID, hotswapping, superclass, module, &badClass, &incompatible, &interfaceClassOut, &illegalAccessErrorTypes)
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		|| !checkFlattenableFieldValueClasses(vmThread, hostClassLoader, romClass, packageID, module, &badClass)
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
@@ -2675,8 +2786,11 @@ fail:
 		J9UTF8 *className = J9ROMCLASS_CLASSNAME(badClass);
 		if (incompatible) {
 			setCurrentExceptionForBadClass(vmThread, className, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE);
-		} else {
+		} else if (ILLEGAL_ACCESS_OTHERS == illegalAccessErrorTypes) {
 			setCurrentExceptionForBadClass(vmThread, className, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR, J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_CLASS_OR_INTERFACE);
+		} else {
+			bool isSuperClass = (ILLEGAL_ACCESS_SUPER_CLASS == illegalAccessErrorTypes);
+			setIllegalAccessErrorForSuperClassOrInterface(vmThread, classLoader, romClass, module, isSuperClass ? superclass : interfaceClassOut, isSuperClass);
 		}
 		state->ramClass = NULL;
 		return internalCreateRAMClassDoneNoMutex(vmThread, romClass, options, state);

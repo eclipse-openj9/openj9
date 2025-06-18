@@ -724,6 +724,23 @@ cleanupEnsureHashedConfig(J9JavaVM *jvm);
 UDATA
 parseEnsureHashedConfig(J9JavaVM *jvm, char *options, BOOLEAN isAdd);
 
+#if JAVA_SPEC_VERSION >= 11
+/**
+ * Get Module Name.
+ *
+ * *** The caller must free the memory from this pointer if the return value is NOT the buffer argument. ***
+ *
+ * @param[in] currentThread the current J9VMThread
+ * @param[in] module the module
+ * @param[in] buffer the buffer for the module name
+ * @param[in] bufferLength the buffer length
+ *
+ * @return a char pointer to the module name
+ */
+char *
+getModuleNameUTF(J9VMThread *currentThread, J9Module *module, char *buffer, UDATA bufferLength);
+#endif /* JAVA_SPEC_VERSION >= 11 */
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
