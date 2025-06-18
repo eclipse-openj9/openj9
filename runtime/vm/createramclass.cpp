@@ -2584,24 +2584,29 @@ setIllegalAccessErrorForSuperClassOrInterface(J9VMThread *currentThread, J9Class
 	J9UTF8 *subClassLoaderName = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(currentThread, subClassLoader->classLoaderObject)->romClass);
 	J9UTF8 *superClassOrInterfaceName = J9ROMCLASS_CLASSNAME(superClassOrInterface->romClass);
 	J9UTF8 *superClassOrInterfaceLoaderName = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(currentThread, superClassOrInterface->classLoader->classLoaderObject)->romClass);
+	char *subClassModuleName = NULL;
+	char *superClassOrInterfaceModuleName = NULL;
 #if JAVA_SPEC_VERSION >= 11
 	char subClassModuleBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
-	char *subClassModuleName = getModuleNameUTF(currentThread, subClassModule, subClassModuleBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
 	char superClassOrInterfaceModuleBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
-	char *superClassOrInterfaceModuleName = getModuleNameUTF(currentThread, superClassOrInterface->module, superClassOrInterfaceModuleBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+	subClassModuleName = getModuleNameUTF(currentThread, subClassModule, subClassModuleBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+	superClassOrInterfaceModuleName = getModuleNameUTF(currentThread, superClassOrInterface->module, superClassOrInterfaceModuleBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
 	PORT_ACCESS_FROM_VMC(currentThread);
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 	char *errorMsg = NULL;
-
-	const char *nlsMessage = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 #if JAVA_SPEC_VERSION >= 11
-			J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS,
+	uint32_t messageNum = J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS__ID;
 #else /* JAVA_SPEC_VERSION >= 11 */
-			J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8,
+	uint32_t messageNum = J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8__ID;
 #endif /* JAVA_SPEC_VERSION >= 11 */
+	const char *nlsMessage = omrnls_lookup_message(
+			J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+			/* it is same as J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8__MODULE */
+			J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS__MODULE,
+			messageNum,
 			NULL);
-
 	if (NULL != nlsMessage) {
 #define TYPE_CLASS "class"
 #define TYPE_INTERFACE "interface"
@@ -2610,15 +2615,11 @@ setIllegalAccessErrorForSuperClassOrInterface(J9VMThread *currentThread, J9Class
 		UDATA errorMsgLen = j9str_printf(NULL, 0, nlsMessage,
 				isSubClassInterface ? TYPE_INTERFACE : TYPE_CLASS,
 				J9UTF8_LENGTH(subClassName), J9UTF8_DATA(subClassName),
-#if JAVA_SPEC_VERSION >= 11
 				subClassModuleName,
-#endif /* JAVA_SPEC_VERSION >= 11 */
 				J9UTF8_LENGTH(subClassLoaderName), J9UTF8_DATA(subClassLoaderName),
 				isSuperclass ? SUPER_CLASS : SUPER_INTERFACE,
 				J9UTF8_LENGTH(superClassOrInterfaceName), J9UTF8_DATA(superClassOrInterfaceName),
-#if JAVA_SPEC_VERSION >= 11
 				superClassOrInterfaceModuleName,
-#endif /* JAVA_SPEC_VERSION >= 11 */
 				J9UTF8_LENGTH(superClassOrInterfaceLoaderName), J9UTF8_DATA(superClassOrInterfaceLoaderName));
 		errorMsg = (char*)j9mem_allocate_memory(errorMsgLen, OMRMEM_CATEGORY_VM);
 		if (NULL == errorMsg) {
@@ -2629,15 +2630,11 @@ setIllegalAccessErrorForSuperClassOrInterface(J9VMThread *currentThread, J9Class
 		j9str_printf(errorMsg, errorMsgLen, nlsMessage,
 				isSubClassInterface ? TYPE_INTERFACE : TYPE_CLASS,
 				J9UTF8_LENGTH(subClassName), J9UTF8_DATA(subClassName),
-#if JAVA_SPEC_VERSION >= 11
 				subClassModuleName,
-#endif /* JAVA_SPEC_VERSION >= 11 */
 				J9UTF8_LENGTH(subClassLoaderName), J9UTF8_DATA(subClassLoaderName),
 				isSuperclass ? SUPER_CLASS : SUPER_INTERFACE,
 				J9UTF8_LENGTH(superClassOrInterfaceName), J9UTF8_DATA(superClassOrInterfaceName),
-#if JAVA_SPEC_VERSION >= 11
 				superClassOrInterfaceModuleName,
-#endif /* JAVA_SPEC_VERSION >= 11 */
 				J9UTF8_LENGTH(superClassOrInterfaceLoaderName), J9UTF8_DATA(superClassOrInterfaceLoaderName));
 #undef TYPE_CLASS
 #undef TYPE_INTERFACE

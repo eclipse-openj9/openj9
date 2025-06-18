@@ -2452,22 +2452,26 @@ J9NLS_VM_JAVA_COMPILER_WARNING_XINT.user_response=Use the -Xint option to disabl
 # Java 8 message for an IllegalAccessError when the class or interface can't access its super class or interface.
 # argument 1 is "class" or "interface"
 # arguments 2 and 3 are the class or interface name
-# arguments 4 and 5 are the classloader name of the class or interface
-# argument 6 is "superclass" or "superinterface"
-# arguments 7 and 8 are the super class or interface name
-# arguments 9 and 10 are the classloader name of the super class or interface
-J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8=%1$s %3$.*2$s (from loader %5$.*4$s) cannot access its %6$s %8$.*7$s (from loader %10$.*9$s)
+# argument 4 is empty to match Java 11 message format
+# arguments 5 and 6 are the classloader name of the class or interface
+# argument 7 is "superclass" or "superinterface"
+# arguments 8 and 9 are the super class or interface name
+# argument 10 is empty to match Java 11 message format
+# arguments 11 and 12 are the classloader name of the super class or interface
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8=%1$s %3$.*2$s (%4$sfrom loader %6$.*5$s) cannot access its %7$s %9$.*8$s (%10$sfrom loader %12$.*11$s)
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_1=class
 J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_2=59
 J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_3=org/openj9/test/illegalAccessError/ExtendsDefaultVisibility
-J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_4=23
-J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_5=java/net/URLClassLoader
-J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_6=superclass
-J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_7=52
-J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_8=org/openj9/test/illegalAccessError/DefaultVisibility
-J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_9=47
-J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_10=jdk/internal/loader/ClassLoaders$AppClassLoader
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_4=
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_5=23
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_6=java/net/URLClassLoader
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_7=superclass
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_8=52
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_9=org/openj9/test/illegalAccessError/DefaultVisibility
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_10=
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_11=47
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_12=jdk/internal/loader/ClassLoaders$AppClassLoader
 J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.explanation=The specified class or interface is not visible
 J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.system_action=The JVM will throw an IllegalAccessError.
 J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.user_response=Contact the provider of the classfile for a corrected version.
