@@ -9692,13 +9692,13 @@ done:
 			 *		_sp[0] = MemberName
 			 *		_sp[1] = Argument ...
 			 */
-			if ((jitResolvedCall != (IDATA)_currentThread->floatTemp1) && (NULL == ((j9object_t *)_sp)[1])) {
-				stackOffset = 2;
-			}
 
-			/* Shift arguments by stackOffset and place memberNameObject before the first argument. */
-			memmove(_sp, _sp + stackOffset, methodArgCount * sizeof(UDATA));
-			_sp[methodArgCount] = (UDATA)memberNameObject;
+			// we only want the args on the stack when calling the target method
+			if ((jitResolvedCall != (IDATA)_currentThread->floatTemp1) && (NULL == ((j9object_t *)_sp)[1])) {
+				_sp += 2;
+			} else {
+				_sp += 1;
+			}
 
 			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, (void *)_literals);
 			rc = j2iTransition(REGISTER_ARGS, true);
@@ -9785,13 +9785,7 @@ throw_npe:
 		}
 
 		if (fromJIT) {
-			/* Restore SP to before popping memberNameObject. */
-			_sp -= 1;
-
-			/* Shift arguments by 1 and place memberNameObject before the first argument. */
-			memmove(_sp, _sp + 1, methodArgCount * sizeof(UDATA));
-			_sp[methodArgCount] = (UDATA)memberNameObject;
-
+			// run the method with the arguments from the stack - do not restore pointer to MN
 			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, (void *)_literals);
 			rc = j2iTransition(REGISTER_ARGS, true);
 		}
@@ -9894,13 +9888,7 @@ foundITable:
 		}
 
 		if (fromJIT) {
-			/* Restore SP to before popping memberNameObject. */
-			_sp -= 1;
-
-			/* Shift arguments by 1 and place memberNameObject before the first argument. */
-			memmove(_sp, _sp + 1, methodArgCount * sizeof(UDATA));
-			_sp[methodArgCount] = (UDATA)memberNameObject;
-
+			// run the method with the arguments from the stack - do not restore pointer to MN
 			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, (void *)_literals);
 			rc = j2iTransition(REGISTER_ARGS, true);
 		}
