@@ -376,7 +376,8 @@ class TR_VectorAPIExpansion : public TR::Optimization
          // General check for supported infrastructure
          if (!comp->target().cpu.isPower() &&
                !(comp->target().cpu.isZ() && comp->cg()->getSupportsVectorRegisters()) &&
-               !comp->target().cpu.isARM64())
+               !comp->target().cpu.isARM64() &&
+               !comp->target().cpu.isX86())
             {
             length = TR::NoVectorLength;
             }
