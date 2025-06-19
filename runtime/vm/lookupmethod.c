@@ -991,9 +991,24 @@ defaultMethodConflictExceptionMessage(J9VMThread *currentThread, J9Class *target
 }
 
 #if JAVA_SPEC_VERSION >= 11
-char *
-getModuleNameUTF(J9VMThread *currentThread, J9Module *module, char *buffer, UDATA bufferLength)
+/**
+ * Get Module Name
+ *
+ * ***The caller must free the memory from this pointer if the return value is NOT the buffer argument ***
+ *
+ * @param[in] currentThread the current J9VMThread
+ * @param[in] module the module
+ * @param[in] buffer the buffer for the module name
+ * @param[in] bufferLength the buffer length
+ *
+ * @return a char pointer to the module name
+ */
+static char *
+getModuleNameUTF(J9VMThread *currentThread, j9object_t moduleObject, char *buffer, UDATA bufferLength)
 {
+	J9JavaVM const *const vm = currentThread->javaVM;
+	J9InternalVMFunctions const *const vmFuncs = vm->internalVMFunctions;
+	J9Module *module = J9OBJECT_ADDRESS_LOAD(currentThread, moduleObject, vm->modulePointerOffset);
 	char *nameBuffer = NULL;
 
 	if ((NULL == module) || (NULL == module->moduleName)) {
@@ -1001,11 +1016,11 @@ getModuleNameUTF(J9VMThread *currentThread, J9Module *module, char *buffer, UDAT
 		/* ensure bufferLength is not less than 128 which is enough for unnamed module */
 		PORT_ACCESS_FROM_VMC(currentThread);
 		Assert_VM_true(bufferLength >= 128);
-		j9str_printf(buffer, bufferLength, "%s0x%p", UNNAMED_MODULE, (NULL == module) ? NULL : module->moduleObject);
+		j9str_printf(buffer, bufferLength, "%s0x%p", UNNAMED_MODULE, moduleObject);
 		nameBuffer = buffer;
 #undef UNNAMED_MODULE
 	} else {
-		nameBuffer = copyJ9UTF8ToUTF8WithMemAlloc(
+		nameBuffer = vmFuncs->copyJ9UTF8ToUTF8WithMemAlloc(
 				currentThread, module->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, buffer, bufferLength);
 	}
 
@@ -1120,18 +1135,15 @@ illegalAccessMessage(J9VMThread *currentThread, IDATA badMemberModifier, J9Class
 		}
 	} else if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR != errorType) {
 		/* illegal module access */
-		UDATA modulePointerOffset = currentThread->javaVM->modulePointerOffset;
 		j9object_t srcModuleObject = J9VMJAVALANGCLASS_MODULE(currentThread, senderClass->classObject);
 		j9object_t destModuleObject = J9VMJAVALANGCLASS_MODULE(currentThread, targetClass->classObject);
 		/* caller of illegalAccessMessage already performed Assert_VM_true((NULL != srcClassObject) && (NULL != destClassObject)); */
 
-		srcModuleMsg = getModuleNameUTF(currentThread, J9OBJECT_ADDRESS_LOAD(currentThread, srcModuleObject, modulePointerOffset),
-				srcModuleBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+		srcModuleMsg = getModuleNameUTF(currentThread, srcModuleObject, srcModuleBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
 		if (NULL == srcModuleMsg) {
 			goto allocationFailure;
 		}
-		destModuleMsg = getModuleNameUTF(currentThread, J9OBJECT_ADDRESS_LOAD(currentThread, destModuleObject, modulePointerOffset),
-				destModuleBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+		destModuleMsg = getModuleNameUTF(currentThread, destModuleObject, destModuleBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
 		if (NULL == destModuleMsg) {
 			goto allocationFailure;
 		}
