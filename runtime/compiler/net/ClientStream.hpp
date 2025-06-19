@@ -163,6 +163,9 @@ public:
       _versionCheckStatus = PASSED;
       }
 
+   size_t numPermanentLoadersSent() { return _numPermanentLoadersSent; }
+   void addPermanentLoadersSent(size_t n) { _numPermanentLoadersSent += n; }
+
    /**
       @brief Function called when JITServer was discovered to be incompatible with the client
    */
@@ -212,6 +215,8 @@ private:
    static const int INCOMPATIBILITY_COUNT_LIMIT;
 
    static SSL_CTX *_sslCtx;
+
+   size_t _numPermanentLoadersSent;
    };
 
 }
