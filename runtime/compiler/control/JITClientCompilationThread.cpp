@@ -2721,7 +2721,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto recv = client->getRecvData<TR_OpaqueMethodBlock*>();
          auto method = std::get<0>(recv);
          JITClientIProfiler *iProfiler = (JITClientIProfiler *) fe->getIProfiler();
-         client->write(response, iProfiler->serializeIProfilerMethodEntry(method));
+         client->write(response, iProfiler->serializeFaninMethodEntry(method));
          }
          break;
       case MessageType::IProfiler_profilingSample:

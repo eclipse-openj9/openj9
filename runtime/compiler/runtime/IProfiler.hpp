@@ -300,12 +300,12 @@ class TR_IPMethodData
    {
    public:
    TR_IPMethodData() : _method(0),_pcIndex(0),_weight(0) {}
-   TR_OpaqueMethodBlock *getMethod() { return _method; }
+   TR_OpaqueMethodBlock *getMethod() const { return _method; }
    void setMethod (TR_OpaqueMethodBlock *meth) { _method = meth; }
-   uint32_t getWeight() { return _weight; }
+   uint32_t getWeight() const { return _weight; }
    void     incWeight() { ++_weight; }
    void     setWeight(uint32_t weight) { _weight = weight; }
-   uint32_t getPCIndex() { return _pcIndex; }
+   uint32_t getPCIndex() const { return _pcIndex; }
    void     setPCIndex(uint32_t i) { _pcIndex = i; }
 
    TR_IPMethodData* next;

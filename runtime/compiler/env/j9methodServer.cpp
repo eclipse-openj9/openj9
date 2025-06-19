@@ -1374,60 +1374,41 @@ TR_ResolvedJ9JITServerMethod::getExistingJittedBodyInfo()
 void
 TR_ResolvedJ9JITServerMethod::getFaninInfo(uint32_t *count, uint32_t *weight, uint32_t *otherBucketWeight)
    {
-   uint32_t i = 0;
-   uint32_t w = 0;
-   if (otherBucketWeight)
-      *otherBucketWeight = 0;
-
-   TR_IPMethodHashTableEntry *entry = _iProfilerMethodEntry;
+   TR_FaninSummaryInfo *entry = _faninSummaryInfo;
    if (entry)
       {
-      w = entry->_otherBucket.getWeight();
-      // Iterate through all the callers and add their weight
-      for (TR_IPMethodData* it = &entry->_caller; it; it = it->next)
-         {
-         w += it->getWeight();
-         i++;
-         }
+      *count = entry->_numCallers;
+      *weight = entry->_totalSamples;
       if (otherBucketWeight)
-         *otherBucketWeight = entry->_otherBucket.getWeight();
+         *otherBucketWeight = entry->_samplesOther;
       }
-   *weight = w;
-   *count = i;
+   else
+      {
+      *count = 0;
+      *weight = 0;
+      if (otherBucketWeight)
+         *otherBucketWeight = 0;
+      }
    }
 
 bool
 TR_ResolvedJ9JITServerMethod::getCallerWeight(TR_ResolvedJ9Method *caller, uint32_t *weight, uint32_t pcIndex)
    {
-   TR_OpaqueMethodBlock *callerMethod = caller->getPersistentIdentifier();
-   bool useTuples = (pcIndex != ~0);
-
-   //adjust pcIndex for interface calls (see getSearchPCFromMethodAndBCIndex)
-   //otherwise we won't be able to locate a caller-callee-bcIndex triplet
-   //even if it is in a TR_IPMethodHashTableEntry
-   TR_IProfiler *iProfiler = _fe->getIProfiler();
-   if (!iProfiler)
+   if (!_fe->getIProfiler())
       return false;
 
-   uintptr_t pcAddress = iProfiler->getSearchPCFromMethodAndBCIndex(callerMethod, pcIndex, 0);
-
-   TR_IPMethodHashTableEntry *entry = _iProfilerMethodEntry;
-
-   if(!entry)   // if there are no entries, we have no callers!
+   if(!_faninSummaryInfo)   // if there are no entries, we have no callers!
       {
       *weight = ~0;
-      return false;
       }
-   for (TR_IPMethodData* it = &entry->_caller; it; it = it->next)
+   else
       {
-      if( it->getMethod() == callerMethod && (!useTuples || ((((uintptr_t) it->getPCIndex()) + TR::Compiler->mtd.bytecodeStart(callerMethod)) == pcAddress)))
-         {
-         *weight = it->getWeight();
-         return true;
-         }
+      // Assume the caller is not found and return the weight of the "other" category.
+      // This is ok performance wise because `getCallerWeight()` is used when there
+      // are more than 20 callers and the number of samples in the "other" category
+      // is more than half the total samples.
+      *weight = _faninSummaryInfo->_samplesOther;
       }
-
-   *weight = entry->_otherBucket.getWeight();
    return false;
    }
 
@@ -1569,7 +1550,7 @@ TR_ResolvedJ9JITServerMethod::packMethodInfo(TR_ResolvedJ9JITServerMethodInfo &m
    // set IP method data string.
    // fanin info is not used at cold opt level, so there is no point sending this information to the server
    JITClientIProfiler *iProfiler = (JITClientIProfiler *)((TR_J9VMBase *) fe)->getIProfiler();
-   std::get<3>(methodInfo) = (comp && comp->getOptLevel() >= warm && iProfiler) ? iProfiler->serializeIProfilerMethodEntry(resolvedMethod->getPersistentIdentifier()) : std::string();
+   std::get<3>(methodInfo) = (comp && comp->getOptLevel() >= warm && iProfiler) ? iProfiler->serializeFaninMethodEntry(resolvedMethod->getPersistentIdentifier()) : std::string();
    }
 
 void
@@ -1630,8 +1611,7 @@ TR_ResolvedJ9JITServerMethod::unpackMethodInfo(TR_OpaqueMethodBlock * aMethod, T
 
    JITServerIProfiler *iProfiler = (JITServerIProfiler *) ((TR_J9VMBase *) fe)->getIProfiler();
    const std::string &entryStr = std::get<3>(methodInfo);
-   const auto serialEntry = (TR_ContiguousIPMethodHashTableEntry*) &entryStr[0];
-   _iProfilerMethodEntry = (iProfiler && !entryStr.empty()) ? iProfiler->deserializeMethodEntry(serialEntry, trMemory) : NULL;
+   _faninSummaryInfo = iProfiler ? iProfiler->cacheFaninDataForMethod((TR_OpaqueMethodBlock*)_ramMethod, entryStr, fe, trMemory) : NULL;
    }
 
 bool

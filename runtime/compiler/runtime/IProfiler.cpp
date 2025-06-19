@@ -3626,6 +3626,13 @@ TR_IProfiler::getFaninInfo(TR_OpaqueMethodBlock *calleeMethod, uint32_t *count, 
    return;
    }
 
+/**
+ * @brief Search for the calee-caller-bcIndex triplet in the method hashtable.
+ *        If the triplet is found, return 'true' and set '*weight' to the number of samples for that caller-bcIndex.
+ *        If there is cached info for the callee, but the desired caller-bcIndex is not found, return 'false'
+ *        and set '*weight' to the "other" bucket weight.
+ *        If there is no cached info for the callee, return 'false' and set '*weight' to ~0
+ */
 bool TR_IProfiler::getCallerWeight(TR_OpaqueMethodBlock *calleeMethod,TR_OpaqueMethodBlock *callerMethod, uint32_t *weight, uint32_t pcIndex, TR::Compilation *comp)
 {
    // First: hash the method

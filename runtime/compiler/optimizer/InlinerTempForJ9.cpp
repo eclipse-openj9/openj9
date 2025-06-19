@@ -2967,9 +2967,6 @@ TR_J9InlinerPolicy::adjustFanInSizeInWeighCallSite(int32_t& weight,
 
       INLINE_fanInCallGraphFactor is an integer number divided by 100. This allows us to avoid using float numbers for specifying the factor.
       */
-
-
-
       if (comp()->getMethodHotness() > warm)
          return;
 

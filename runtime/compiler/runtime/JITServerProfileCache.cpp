@@ -91,7 +91,7 @@ ProfiledMethodEntry::BytecodeProfile::addBytecodeData(const Vector<TR_IPBytecode
 
 ProfiledMethodEntry::ProfiledMethodEntry(const AOTCacheMethodRecord *methodRecord, const J9ROMMethod *romMethod, J9ROMClass *romClass) :
    _methodRecord(methodRecord), _romMethod(romMethod), _romClass(romClass),
-   _bytecodeProfile(NULL), _faninProfile(NULL)
+   _bytecodeProfile(NULL), _faninProfile()
    {
    // Increase the reference count to prevent deletion of this romClass from the shared repository
    TR::CompilationInfo::get()->getJITServerSharedROMClassCache()->acquire(_romClass);
@@ -103,14 +103,7 @@ ProfiledMethodEntry::~ProfiledMethodEntry()
    TR::CompilationInfo::get()->getJITServerSharedROMClassCache()->release(_romClass);
 
    deleteBytecodeData();
-
-   if (_faninProfile)
-      {
-      // TODO: free more stuff here once we add it
-      _faninProfile->~FanInProfile();
-      TR::Compiler->persistentGlobalMemory()->freePersistentMemory(_faninProfile);
-      _faninProfile = NULL;
-      }
+   // Note: fanin profile is embedded and does not have to be deleted explicitely
    }
 
 BytecodeProfileSummary
@@ -318,6 +311,93 @@ JITServerSharedProfileCache::addBytecodeData(const Vector<TR_IPBytecodeHashTable
    // TODO: We may also fail due to reaching limit for AOT cache space
    }
 
+/**
+ * @brief Store fanin profile data to the shared profile repository
+ *
+ * @param serialEntry Serialized fanin data received from the client
+ * @param methodRecord The method record for which we add the fanin profiling data
+ * @param romMethod ROMMethod corresponding to the method for which we add the data
+ * @param romClass ROMClass of the romMethod for which we add the data
+ * @return 'true' if the profiling data was successfully added to the shared repository, 'false' otherwise
+ * @note Acquires the shared profile monitor
+ */
+bool
+JITServerSharedProfileCache::addFaninData(const TR_ContiguousIPMethodHashTableEntry *serialEntry,
+                                          const AOTCacheMethodRecord *methodRecord,
+                                          const J9ROMMethod *romMethod,
+                                          J9ROMClass *romClass)
+   {
+   OMR::CriticalSection cs(monitor());
+   auto it = _methodProfileMap.find(methodRecord);
+   if (it == _methodProfileMap.end())
+      {
+      // At the moment there is no data for the method in question. Create an empty map.
+      // TODO: check the limit on the amount of memory for JITServer AOT cache
+      try
+         {
+         it = _methodProfileMap.emplace_hint(it, std::piecewise_construct, std::forward_as_tuple(methodRecord),
+                                                 std::forward_as_tuple(methodRecord, romMethod, romClass));
+         }
+      catch (const std::bad_alloc &)
+         {
+         return false;
+         }
+      }
+   else // Some data already exists and could be overwritten
+      {
+      const ProfiledMethodEntry::FaninProfile &storedProfile = it->second.getFaninProfileRef();
+      // Two threads may want to store the same data one after another.
+      // Prevent unnecesary work if the quality of the new data is the same or lower.
+      FaninProfileSummary clientProfileSummary(serialEntry->_totalSamples);
+      FaninProfileSummary sharedProfileSummary = storedProfile.getSummary();
+      int sharedProfileQuality = compareFaninProfiles(sharedProfileSummary, clientProfileSummary);
+      if (sharedProfileQuality >= 0) // EXisting data is at least as good as the new data
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfile))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+               "WARNING: Avoiding overwriting existing shared fanin profile data."
+               "newSamples=%" OMR_PRIu64 " oldSamples=%" OMR_PRIu64, serialEntry->_totalSamples, storedProfile.getNumSamples());
+         return false; // Refuse the add
+         }
+      else // Existing data will be overwitten
+         {
+         _numOverwrites++; // TODO: should we have a different stat for fanin?
+         }
+      }
+   _numStores++; // failed or not
+   ProfiledMethodEntry &profiledMethodEntry = it->second;
+   profiledMethodEntry.addFanInData(serialEntry->_totalSamples, serialEntry->_otherBucket.getWeight(), serialEntry->_callerCount);
+   return true;
+   // TODO: We may also fail due to reaching limit for AOT cache space
+   }
+
+/**
+ * @brief Use "heap" memory to clone-out the fanin data for the method of interest.
+ *
+ * @param methodRecord The AOTCacheMethodRecord corresponding to the J9Method for which we want to get the fanin data
+ * @param trMemory  Pointer to TR_Memory object used for "heap" allocations.
+ * @return TR_FaninSummaryInfo*
+ */
+TR_FaninSummaryInfo *
+JITServerSharedProfileCache::getFaninData(const AOTCacheMethodRecord *methodRecord, TR_Memory *trMemory)
+   {
+   TR_FaninSummaryInfo *entry = NULL;
+   OMR::CriticalSection cs(monitor());
+   auto it = _methodProfileMap.find(methodRecord);
+   if (it != _methodProfileMap.end())
+      {
+      const ProfiledMethodEntry::FaninProfile &storedProfile = it->second.getFaninProfileRef();
+      entry = (TR_FaninSummaryInfo *)trMemory->allocateHeapMemory(sizeof(TR_FaninSummaryInfo));
+      if (entry)
+         {
+         entry->_totalSamples = storedProfile.getNumSamples();
+         entry->_samplesOther = storedProfile.getNumSamplesOtherBucket();
+         entry->_numCallers  = storedProfile.getNumCallers();
+         }
+      }
+   return entry;
+   }
+
 void
 JITServerSharedProfileCache::printStats(FILE *f) const
    {
@@ -392,5 +472,29 @@ JITServerSharedProfileCache::compareBytecodeProfiles(const BytecodeProfileSummar
          return 1;
       else
          return -1;
+      }
+   }
+
+/**
+ * @brief Compare two fanin profiles based on heuristics.
+ * @return If the first profile has better "quality" than the second profile, return 1.
+ *         If the second profile has better "quality" than the first profile, return -1.
+ *         If the "quality" of the two sources is comparable, return 0.
+ */
+int
+JITServerSharedProfileCache::compareFaninProfiles(const FaninProfileSummary &profile1, const FaninProfileSummary &profile2)
+   {
+   static const uint64_t LOW_QUALITY_THRESHOLD = 10;
+   if (profile1._numSamples > profile2._numSamples + LOW_QUALITY_THRESHOLD)
+      {
+      return 1;
+      }
+   else if (profile2._numSamples > profile1._numSamples + LOW_QUALITY_THRESHOLD)
+      {
+      return -1;
+      }
+   else
+      {
+      return 0;
       }
    }

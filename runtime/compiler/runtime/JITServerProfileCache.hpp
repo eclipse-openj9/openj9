@@ -29,6 +29,8 @@
 class TR_IPBytecodeHashTableEntry;
 class TR_IPBCDataCallGraph;
 class AOTCacheMethodRecord;
+class TR_ContiguousIPMethodHashTableEntry;
+class TR_FaninSummaryInfo;
 namespace TR { class Monitor; }
 
 
@@ -40,6 +42,13 @@ struct BytecodeProfileSummary
    uint64_t _numSamples;
    size_t _numProfiledBytecodes;
    bool _stable;
+   };
+
+struct FaninProfileSummary
+   {
+   FaninProfileSummary(uint64_t samples) : _numSamples(samples) {}
+   uint64_t _numSamples;
+   // Other fields could be added here if they are useful to comparing the quality of two sources
    };
 
 // Profiling information at the server is kept on a per-method basis.
@@ -76,9 +85,28 @@ class ProfiledMethodEntry
       bool _stable; // 'true' if method was compiled (or was under compilation) at the time when the profiling
                     // info was stored. Thus, we don't expect the quality of this data to increase in the buture.
       }; // BytecodeProfile
-   class FanInProfile
+   class FaninProfile
       {
-      }; // FanInProfile
+      public:
+      FaninProfile() : _numSamples(0), _numSamplesOtherBucket(0), _numCallers(0) {}
+      uint64_t getNumSamples() const { return _numSamples; }
+      void setNumSamples(uint64_t num) { _numSamples = num; }
+      uint64_t getNumSamplesOtherBucket() const { return _numSamplesOtherBucket; }
+      void setNumSamplesOtherBucket(uint64_t num) { _numSamplesOtherBucket = num; }
+      uint32_t getNumCallers() const { return _numCallers; }
+      void setNumCallers(uint32_t n) { _numCallers = n; }
+      FaninProfileSummary getSummary() const { return FaninProfileSummary(getNumSamples()); }
+      // The fanin information kept by the client has 20 method buckets to track 20 different callers.
+      // It also includes an 'otherBucket' to catch samples that fall on callers not captured by the 20
+      // method buckets mentioned above.
+      // To simplify implementation, the shared fanin profile kept by the server will not keep the
+      // identity of the 20 tracked callers. Instead, the server will only remember the total number
+      // of callers (capped at 20), the total number of samples for this callee and the number
+      // of samples that fall in the 'otherBucket'
+      uint64_t _numSamples; // Total number of fanin samples for this callee. TODO: do we need 64 bits for this?
+      uint64_t _numSamplesOtherBucket; // Number of samples falling in the 'otherBucket'
+      uint32_t _numCallers; // Number of different callers (max is MAX_IPMETHOD_CALLERS+1)
+      }; // FaninProfile
 
    ProfiledMethodEntry(const AOTCacheMethodRecord *methodRecord, const J9ROMMethod *romMethod, J9ROMClass *romClass);
    ~ProfiledMethodEntry();
@@ -89,6 +117,16 @@ class ProfiledMethodEntry
    void cloneBytecodeData(TR_Memory &trMemory, bool stable,
                           Vector<TR_IPBytecodeHashTableEntry *> &newEntries,
                           Vector<TR_IPBCDataCallGraph *> &cgEntries) const;
+
+   FaninProfile &getFaninProfileRef() { return _faninProfile; }
+   FaninProfileSummary getFaninProfileSummary() const { return _faninProfile.getSummary(); };
+   void addFanInData(uint64_t numSamples, uint64_t numSamplesOtherBucket, uint32_t numCallers)
+      {
+      _faninProfile.setNumSamples(numSamples);
+      _faninProfile.setNumSamplesOtherBucket(numSamplesOtherBucket);
+      _faninProfile.setNumCallers(numCallers);
+      }
+
    private:
    void deleteBytecodeData();
 
@@ -98,7 +136,8 @@ class ProfiledMethodEntry
 
    // Created on demand; will stay NULL if we never attempted to store corresponding data for this method
    BytecodeProfile *_bytecodeProfile;
-   FanInProfile *_faninProfile;
+   // FaninProfile is allocated inline since it has a small size. 0 samples is like the fanin profile has never been cached
+   FaninProfile _faninProfile;
    }; // class ProfiledMethodEntry
 
 class JITServerSharedProfileCache
@@ -117,10 +156,14 @@ class JITServerSharedProfileCache
    // Returns NULL with 'present' set to true if data for method is cached but empty
    TR_IPBytecodeHashTableEntry *getBytecodeData(const AOTCacheMethodRecord *methodRecord, uint32_t bci,
                                                 bool &present, TR_Memory &trMemory, TR::Region &cgEntryRegion);
+   bool addFaninData(const TR_ContiguousIPMethodHashTableEntry *serialEntry, const AOTCacheMethodRecord *methodRecord,
+                     const J9ROMMethod *romMethod, J9ROMClass *romClass);
+   TR_FaninSummaryInfo *getFaninData(const AOTCacheMethodRecord *methodRecord, TR_Memory *trMemory);
    size_t getNumStores() const { return _numStores; }
    size_t getNumOverwrites() const { return _numOverwrites; }
    void printStats(FILE *f) const;
    static int compareBytecodeProfiles(const BytecodeProfileSummary &profile1, const BytecodeProfileSummary &profile2);
+   static int compareFaninProfiles(const FaninProfileSummary &profile1, const FaninProfileSummary &profile2);
    private:
    PersistentUnorderedMap<const AOTCacheMethodRecord *, ProfiledMethodEntry> _methodProfileMap;
    TR::Monitor *const _monitor;

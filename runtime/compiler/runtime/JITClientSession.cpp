@@ -65,7 +65,11 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_Pers
    _numSharedProfileCacheMethodLoads(0),
    _numSharedProfileCacheMethodLoadsFailed(0),
    _numSharedProfileCacheMethodStores(0),
-   _numSharedProfileCacheMethodStoresFailed(0)
+   _numSharedProfileCacheMethodStoresFailed(0),
+   _numSharedFaninCacheMethodLoads(0),
+   _numSharedFaninCacheMethodLoadsFailed(0),
+   _numSharedFaninCacheMethodStores(0),
+   _numSharedFaninCacheMethodStoresFailed(0)
    {
    updateTimeOfLastAccess();
    _javaLangClassPtr = NULL;
@@ -581,19 +585,16 @@ ClientSessionData::checkProfileDataMatching(J9Method *method, const std::string 
    }
 
 
-//TODO: change this so that it outputs methodProfile as well
-// so that we don't have to find it again in subsequent code
 /**
- * @brief Obtain the number of samples for a method in the shared profile cache
+ * @brief Obtain a pointer to the method profiling info in the shared profile cache
  *
  * @param method The j9method of interest
- * @return The total number of profiling samples for the method
+ * @return A pointer to the shared profile entry for the requested j9method
  * @note Acquires/releases ROMMapMonitor and sharedProfileCache monitor
  */
-uint64_t
-ClientSessionData::getNumSamplesForMethodInSharedProfileCache(J9Method* method)
+ProfiledMethodEntry *
+ClientSessionData::getSharedProfileCacheForMethod(J9Method* method)
    {
-   uint64_t numSharedSamples = 0;
    // Convert from J9method to AOTCacheMethodRecord.
    const AOTCacheMethodRecord *methodRecord = NULL;
       {
@@ -607,9 +608,8 @@ ClientSessionData::getNumSamplesForMethodInSharedProfileCache(J9Method* method)
       {
       OMR::CriticalSection cs(_sharedProfileCache->monitor());
       methodProfile = _sharedProfileCache->getProfileForMethod(methodRecord);
-      numSharedSamples = methodProfile ? methodProfile->getNumSamples() : 0;
       }
-   return numSharedSamples;
+   return methodProfile;
    }
 
    /**
@@ -1037,6 +1037,8 @@ ClientSessionData::storeBytecodeProfileInSharedRepository(TR_OpaqueMethodBlock *
    {
    // Get the J9MethodInfo where the private IProfiler info resides
    // TODO: can we obtain the methodInfo from the caller?
+
+   // TODO: We can use   methodRecord = getMethodRecord(method, &methodInfo);
    J9MethodInfo *methodInfo = NULL;
    const AOTCacheMethodRecord *methodRecord = NULL;
       {
@@ -1265,6 +1267,106 @@ ClientSessionData::storeBytecodeProfileInSharedRepository(TR_OpaqueMethodBlock *
          TR_VerboseLog::CriticalSection vlogLock;
          TR_VerboseLog::write(TR_Vlog_JITServer, "WARNING: Failed to store profiling info into the shared repo for method %p ",
                                                   method);
+         TR::CompilationInfo::printMethodNameToVlog(methodInfo->definingROMClass(), methodInfo->_romMethod);
+         TR_VerboseLog::writeLine(" ROMMethod %p ROMClass=%p", methodInfo->_romMethod, methodInfo->definingROMClass());
+         }
+      }
+   return success;
+   }
+
+/**
+ * @brief Load the fanin data from the shared profile cache, and return it as a
+ *        TR_FaninSummaryInfo struct allocated with "heap" memory.
+ *
+ * @param method RAMMethod for which we want to obtain the fanin info
+ * @param trMemory TR_Memory object for alocating "heap" memory
+ * @return Pointer to the TR_FaninSummaryInfo struct allocated with heap memory
+ * @note Acquires/releases ROMMapMonitor and shared profile repository monitor
+ */
+TR_FaninSummaryInfo *
+ClientSessionData::loadFaninDataFromSharedProfileCache(TR_OpaqueMethodBlock *method, TR_Memory *trMemory)
+   {
+   const J9MethodInfo *methodInfo = NULL;
+   const AOTCacheMethodRecord *methodRecord = getMethodRecord((J9Method *)method, &methodInfo);
+   if (!methodRecord)
+      {
+      _numSharedFaninCacheMethodLoadsFailed++;
+      if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfile))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "ERROR: Failed to get method record for profiled method %p while compiling %s for clientUID %llu",
+                                                            method, TR::comp()->signature(), (unsigned long long)_clientUID);
+      return NULL;
+      }
+   TR_ASSERT_FATAL(methodInfo, "We cannot obtain a methodRecord without a methodInfo"); // TODO change this to not fatal
+   TR_FaninSummaryInfo *faninMethodEntry = _sharedProfileCache->getFaninData(methodRecord, trMemory);
+   if (!faninMethodEntry)
+      {
+      _numSharedFaninCacheMethodLoadsFailed++;
+      if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfile))
+         {
+         TR_VerboseLog::CriticalSection vlogLock;
+         TR_VerboseLog::write(TR_Vlog_JITServer, "WARNING: Failed to load fanin info from shared profile repository for method %p ", method);
+         TR::CompilationInfo::printMethodNameToVlog(methodInfo->definingROMClass(), methodInfo->_romMethod);
+         TR_VerboseLog::writeLine(" ROMMethod %p ROMClass=%p", methodInfo->_romMethod, methodInfo->definingROMClass());
+         }
+      }
+   else
+      {
+      _numSharedFaninCacheMethodLoads++;
+      if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfile))
+         {
+         TR_VerboseLog::CriticalSection vlogLock;
+         TR_VerboseLog::write(TR_Vlog_JITServer, "Loaded fanin info (%" OMR_PRIu64 " samples, %" OMR_PRIu32 "  callers) from shared profile repository for method %p ",
+                                                  faninMethodEntry->_totalSamples, faninMethodEntry->_numCallers, method);
+         TR::CompilationInfo::printMethodNameToVlog(methodInfo->definingROMClass(), methodInfo->_romMethod);
+         TR_VerboseLog::writeLine(" ROMMethod %p ROMClass=%p", methodInfo->_romMethod, methodInfo->definingROMClass());
+         }
+      }
+   return faninMethodEntry;
+   }
+
+/**
+ * @brief Take the serialized fanin data sent by the client for the indicated method and store it in the shared profile cache.
+ *
+ * @param method j9method for which profiling information is stored
+ * @param serialEntry The fanin data in serialized format received from the client
+ * @return true if the data was added to shared profile repository
+ * @note Acquires/releases ROMMapMonitor and shared profile repository monitor
+ */
+bool
+ClientSessionData::storeFaninDataInSharedProfileCache(TR_OpaqueMethodBlock *method, const TR_ContiguousIPMethodHashTableEntry *serialEntry)
+   {
+   const J9MethodInfo *methodInfo = NULL;
+   const AOTCacheMethodRecord *methodRecord = getMethodRecord((J9Method *)method, &methodInfo);
+   if (!methodRecord)
+      {
+      _numSharedFaninCacheMethodStoresFailed++;
+      if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfile))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "ERROR: Failed to get method record for profiled method %p while compiling %s for clientUID %llu",
+                                                            method, TR::comp()->signature(), (unsigned long long)_clientUID);
+      return false;
+      }
+   TR_ASSERT_FATAL(methodInfo, "We cannot obtain a methodRecord without a methodInfo"); // TODO change this to not fatal
+   // Note: methodInfo should still be valid because classUnloding cannot happen without us being informed.
+   bool success = _sharedProfileCache->addFaninData(serialEntry, methodRecord, methodInfo->_romMethod, methodInfo->definingROMClass());
+   if (success)
+      {
+      _numSharedFaninCacheMethodStores++;
+      if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfile))
+         {
+         TR_VerboseLog::CriticalSection vlogLock;
+         TR_VerboseLog::write(TR_Vlog_JITServer, "Stored fanin info (%" OMR_PRIu64 " samples, %" OMR_PRIu32 " callers) to shared profile repository for method %p ",
+                                                 serialEntry->_totalSamples, serialEntry->_callerCount, method);
+         TR::CompilationInfo::printMethodNameToVlog(methodInfo->definingROMClass(), methodInfo->_romMethod);
+         TR_VerboseLog::writeLine(" ROMMethod %p ROMClass=%p", methodInfo->_romMethod, methodInfo->definingROMClass());
+         }
+      }
+   else
+      {
+      _numSharedFaninCacheMethodStoresFailed++;
+      if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfile))
+         {
+         TR_VerboseLog::CriticalSection vlogLock;
+         TR_VerboseLog::write(TR_Vlog_JITServer, "WARNING: Failed to store fanin info to shared profile repository for method %p ", method);
          TR::CompilationInfo::printMethodNameToVlog(methodInfo->definingROMClass(), methodInfo->_romMethod);
          TR_VerboseLog::writeLine(" ROMMethod %p ROMClass=%p", methodInfo->_romMethod, methodInfo->definingROMClass());
          }
@@ -2115,6 +2217,16 @@ ClientSessionData::printSharedProfileCacheStats() const
          _numSharedProfileCacheMethodLoadsFailed,
          _numSharedProfileCacheMethodStores,
          _numSharedProfileCacheMethodStoresFailed);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Client=%" OMR_PRIu64
+         " numSharedFaninCacheMethodLoads=%" OMR_PRIu32
+         " numSharedFaninCacheMethodLoadsFailed=%" OMR_PRIu32
+         " numSharedFaninCacheMethodStores=%" OMR_PRIu32
+         " numSharedFaninCacheMethodStoresFailed=%" OMR_PRIu32 "",
+         getClientUID(),
+         _numSharedFaninCacheMethodLoads,
+         _numSharedFaninCacheMethodLoadsFailed,
+         _numSharedFaninCacheMethodStores,
+         _numSharedFaninCacheMethodStoresFailed);
       }
    }
 

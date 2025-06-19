@@ -28,7 +28,7 @@ There are two different kinds of entries that we handle: method entries and byte
 
 ## Method entries
 
-Holds profiling data relating to a method. This data is currently not cached. When the method `searchForMethodSample` is called on the server, it sends a message to the client. The client serializes the data using `TR_ContiguousIPMethodHashTableEntry::serialize` and the server deserializes it with `deserializeMethodEntry`.
+Holds profiling data relating to a method. This data is currently not cached. When the method `searchForMethodSample` is called on the server, it sends a message to the client. The client serializes the data using `TR_ContiguousIPMethodHashTableEntry::serialize` and the server deserializes it with `deserializeFaninMethodEntry`.
 
 ## Bytecode entries
 
