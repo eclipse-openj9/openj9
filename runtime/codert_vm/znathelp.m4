@@ -527,7 +527,7 @@ END_CURRENT
 
 ifelse(eval(ASM_JAVA_SPEC_VERSION >= 24), 1, {
 BEGIN_RETURN_POINT(jitExitInterpreter0RestoreAll)
-	RESTORE_ALL_REGS
+    RESTORE_ALL_REGS
 END_RETURN_POINT(jitExitInterpreter0RestoreAll)
 }) dnl jitExitInterpreter0RestoreAll is only supported on JAVA 24+
 
@@ -859,7 +859,7 @@ END_CURRENT
 
 ifelse(eval(ASM_JAVA_SPEC_VERSION >= 24), 1, {
 BEGIN_FUNC(yieldAtMonitorEnter)
-	CINTERP(J9TR_bcloop_yield_monent, 0)
+    CINTERP(J9TR_bcloop_yield_monent, 0)
 END_CURRENT(yieldAtMonitorEnter)
 }) dnl yieldAtMonitorEnter is only supported on JAVA 24+
 
