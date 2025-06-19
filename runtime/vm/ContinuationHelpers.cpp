@@ -1239,6 +1239,28 @@ restart:
 				case JAVA_LANG_VIRTUALTHREAD_TIMED_WAIT:
 					/* WAIT/TIMED_WAIT can only be added to blocked list if they have been notified. */
 					Assert_VM_true(J9VMJAVALANGVIRTUALTHREAD_NOTIFIED(currentThread, current->vthread));
+					/* The transition to BLOCKED may have been missed if vthread was in a WAITING state while notified. */
+					if (MM_ObjectAccessBarrierAPI(currentThread).inlineMixedObjectCompareAndSwapU32(
+									currentThread,
+									current->vthread,
+									J9VMJAVALANGVIRTUALTHREAD_STATE_OFFSET(currentThread),
+									state,
+									JAVA_LANG_VIRTUALTHREAD_BLOCKED,
+									true)
+					) {
+						Assert_VM_true(syncObjectMonitor->virtualThreadWaitCount > 0);
+						omrthread_monitor_t monitor = syncObjectMonitor->monitor;
+						/* All blocking/waiting monitor have to be inflated, if the monitor has not been inflated,
+						* then the owner have not yet released the flatlock.
+						*/
+						if (J9_ARE_ANY_BITS_SET(((J9ThreadMonitor *)monitor)->flags, J9THREAD_MONITOR_INFLATED)) {
+							if (0 == monitor->count) {
+								unblocked = true;
+								syncObjectMonitor->virtualThreadWaitCount -= 1;
+								J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(currentThread, current->vthread, JNI_TRUE);
+							}
+						}
+					}
 					break;
 				case JAVA_LANG_VIRTUALTHREAD_BLOCKED:
 				{
