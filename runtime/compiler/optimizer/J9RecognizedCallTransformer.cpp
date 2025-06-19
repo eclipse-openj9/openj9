@@ -653,23 +653,6 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
    TR::Node* bOffset = node->getChild(3);
    TR::Node* length = node->getChild(4);
    TR::Node* log2ArrayIndexScale = node->getChild(5);
-   TR::Node* log2ArrayIndexScale64Bits = TR::Node::create(node, TR::iu2l, 1, log2ArrayIndexScale);
-
-   TR::Node* lengthInBytes = TR::Node::create(node, TR::lshl, 2,
-      TR::Node::create(node, TR::iu2l, 1, length),
-      log2ArrayIndexScale);
-
-   TR::Node* mask = TR::Node::create(node, TR::lor, 2,
-      TR::Node::create(node, TR::lshl, 2,
-         log2ArrayIndexScale64Bits,
-         TR::Node::iconst(node, 1)),
-      TR::Node::lconst(node, 3));
-
-   TR::Node* lengthToCompare = TR::Node::create(node, TR::land, 2,
-      lengthInBytes,
-      TR::Node::create(node, TR::lxor, 2, mask, TR::Node::lconst(node, -1)));
-
-   TR::Node* mismatchByteIndex = TR::Node::create(node, TR::arraycmplen, 3);
 
    anchorAllChildren(node, treetop);
 
@@ -751,6 +734,10 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
             a = insertVectorizedMisMatchArgumentChecksAndAdjustForOffHeap(comp(),
                a, currentBlock, callBlock, aCheckNeeded, cfg);
             }
+         else
+            {
+            a = a->duplicateTree();
+            }
 
          if (bAdjustmentNeeded)
             {
@@ -759,9 +746,38 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
             b = insertVectorizedMisMatchArgumentChecksAndAdjustForOffHeap(comp(),
                b, currentBlock, callBlock, bCheckNeeded, cfg);
             }
+         else
+            {
+            b = b->duplicateTree();
+            }
+
+         // all the children need to be duplicated after the block split
+         aOffset = aOffset->duplicateTree();
+         bOffset = bOffset->duplicateTree();
+         length = length->duplicateTree();
+         log2ArrayIndexScale = log2ArrayIndexScale->duplicateTree();
          }
       }
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+
+   TR::Node* log2ArrayIndexScale64Bits = TR::Node::create(node, TR::iu2l, 1, log2ArrayIndexScale);
+
+   TR::Node* lengthInBytes = TR::Node::create(node, TR::lshl, 2,
+      TR::Node::create(node, TR::iu2l, 1, length),
+      log2ArrayIndexScale);
+
+   TR::Node* mask = TR::Node::create(node, TR::lor, 2,
+      TR::Node::create(node, TR::lshl, 2,
+         log2ArrayIndexScale64Bits,
+         TR::Node::iconst(node, 1)),
+      TR::Node::lconst(node, 3));
+
+   TR::Node* lengthToCompare = TR::Node::create(node, TR::land, 2,
+      lengthInBytes,
+      TR::Node::create(node, TR::lxor, 2, mask, TR::Node::lconst(node, -1)));
+
+   TR::Node* mismatchByteIndex = TR::Node::create(node, TR::arraycmplen, 3);
+
 
    mismatchByteIndex->setAndIncChild(0, TR::Node::create(node, TR::aladd, 2, a, aOffset));
    mismatchByteIndex->setAndIncChild(1, TR::Node::create(node, TR::aladd, 2, b, bOffset));
