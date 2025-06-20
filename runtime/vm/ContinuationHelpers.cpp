@@ -33,7 +33,6 @@
 #include "ContinuationHelpers.hpp"
 #include "HeapIteratorAPI.h"
 #include "OutOfLineINL.hpp"
-#include "VMHelpers.hpp"
 
 
 extern "C" {
@@ -1208,6 +1207,7 @@ restart:
 			J9VMContinuation *current = vm->blockedContinuations;
 			J9VMContinuation *next = NULL;
 			bool hasPlatformThreadWaiting = false;
+			MM_ObjectAccessBarrierAPI barrier(currentThread);
 			while (NULL != current) {
 				bool unblocked = false;
 				J9ObjectMonitor *syncObjectMonitor = current->objectWaitMonitor;
@@ -1240,7 +1240,7 @@ restart:
 					/* WAIT/TIMED_WAIT can only be added to blocked list if they have been notified. */
 					Assert_VM_true(J9VMJAVALANGVIRTUALTHREAD_NOTIFIED(currentThread, current->vthread));
 					/* The transition to BLOCKED may have been missed if vthread was in a WAITING state while notified. */
-					if (MM_ObjectAccessBarrierAPI(currentThread).inlineMixedObjectCompareAndSwapU32(
+					if (barrier.inlineMixedObjectCompareAndSwapU32(
 									currentThread,
 									current->vthread,
 									J9VMJAVALANGVIRTUALTHREAD_STATE_OFFSET(currentThread),
