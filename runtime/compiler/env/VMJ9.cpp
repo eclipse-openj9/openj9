@@ -798,6 +798,7 @@ TR_J9VMBase::TR_J9VMBase(
      _shouldSleep(false)
 #if defined(J9VM_OPT_JITSERVER)
      ,_deserializerSharedCache(NULL)
+     ,_deserializerWasReset(false)
 #endif /* defined(J9VM_OPT_JITSERVER) */
    {
    for (int32_t i = 0; i < UT_MODULE_INFO.count; ++i)

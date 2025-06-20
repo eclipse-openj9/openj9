@@ -1169,7 +1169,6 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
       {
       _classesThatShouldNotBeNewlyExtended = NULL;
       }
-   _deserializerWasReset = false;
 #endif /* defined(J9VM_OPT_JITSERVER) */
    }
 
@@ -13374,7 +13373,10 @@ TR::CompilationInfo::notifyCompilationThreadsOfDeserializerReset()
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
-      curCompThreadInfoPT->setDeserializerWasReset();
+
+      // The curCompThreadInfoPT->_vm may not be set yet
+      auto vm = TR_J9VMBase::get(_jitConfig, curCompThreadInfoPT->getCompilationThread());
+      vm->setDeserializerWasReset();
       }
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */

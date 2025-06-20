@@ -119,6 +119,9 @@ public:
 
    virtual J9Class *getRAMClass(uintptr_t id, TR::Compilation *comp, bool &wasReset) = 0;
 
+   void registerThreadToNotifyOnReset(J9VMThread *vmThread);
+   void unregisterThreadToNotifyOnReset(J9VMThread *vmThread);
+
 protected:
    // Keeps track of runtime-generated classes for a specific class loader and deterministic class name prefix.
    // E.g., for lambdas there will be one instance of this struct for each host class that defines any lambdas.
@@ -133,14 +136,14 @@ protected:
       PersistentUnorderedMap<J9Class *, JITServerROMClassHash> _classPtrMap;
       };
 
-   bool deserializerWasReset(TR::Compilation *comp, bool &wasReset);
+   bool deserializerWasReset(TR_J9VMBase *vm, bool &wasReset);
    bool deserializationFailure(const SerializedAOTMethod *method, TR::Compilation *comp, bool wasReset);
 
    // Returns true if ROMClass hash matches the one in the serialization record
    bool isClassMatching(const ClassSerializationRecord *record, J9Class *ramClass, TR::Compilation *comp);
 
    template<typename V> V
-   findInMap(const PersistentUnorderedMap<uintptr_t, V> &map, uintptr_t id, TR::Monitor *monitor, TR::Compilation *comp, bool &wasReset);
+   findInMap(const PersistentUnorderedMap<uintptr_t, V> &map, uintptr_t id, TR::Monitor *monitor, TR_J9VMBase *vm, bool &wasReset);
 
    TR_PersistentClassLoaderTable *const getClassLoaderTable() const { return _loaderTable; }
    TR::Monitor *const getClassLoaderMonitor() const { return _classLoaderMonitor; }
@@ -226,6 +229,8 @@ private:
    TR::Monitor *const _resetMonitor;
 
    PersistentUnorderedSet<uintptr_t/*idAndType*/> _newKnownIds;
+
+   PersistentUnorderedSet<J9VMThread *> _threadsToNotifyOnReset;
 
    // Statistics
    size_t _numCacheBypasses;
@@ -363,7 +368,7 @@ private:
    virtual bool cacheRecord(const ThunkSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset) override;
 
    virtual bool updateSCCOffsets(SerializedAOTMethod *method, TR::Compilation *comp, bool &wasReset, bool &usesSVM) override;
-   bool revalidateRecord(AOTSerializationRecordType type, uintptr_t id, TR::Compilation *comp, bool &wasReset);
+   bool revalidateRecord(AOTSerializationRecordType type, uintptr_t id, TR_J9VMBase *vm, bool &wasReset);
 
    void getRAMClassChain(TR::Compilation *comp, J9Class *clazz, J9Class **chainBuffer, size_t &chainLength);
 
