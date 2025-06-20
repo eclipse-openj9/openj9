@@ -669,6 +669,11 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 		}
 		J9VMJAVALANGJ9VMINTERNALSCLASSINITIALIZATIONLOCK_SET_THECLASS(vmThread, lockObject, (j9object_t)classObj);
 		J9VMJAVALANGCLASS_SET_INITIALIZATIONLOCK(vmThread, (j9object_t)classObj, lockObject);
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_RESTORE_RUN(vm)) {
+			clazz->classFlags &= ~J9ClassIsFrozen;
+		}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	} while ((clazz = vmFuncs->allClassesNextDo(&state)) != NULL);
 	vmFuncs->allClassesEndDo(&state);
 

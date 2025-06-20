@@ -1092,9 +1092,29 @@ loadWarmClassFromSnapshot(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Cl
 	rc = TRUE;
 
 done:
+
 	return rc;
 }
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
+
+J9Class *
+segmentIteratorNextClass(J9ClassSegmentWalkState *state)
+{
+	J9Class *current;
+
+	while ((NULL != (current = state->startClass)))
+	{
+		state->startClass = current->nextClassInSegment;
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (!IS_RESTORE_RUN(state->vm) || J9_ARE_NO_BITS_SET(current->classFlags, J9ClassIsFrozen))
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			return current;
+		}
+	}
+
+	return NULL;
+}
 
 /**
  * Load non-array class.
