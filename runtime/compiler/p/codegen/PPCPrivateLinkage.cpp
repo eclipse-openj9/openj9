@@ -1072,6 +1072,28 @@ void J9::Power::PrivateLinkage::createPrologue(TR::Instruction *cursor)
       cg()->addSnippet(snippet);
       cursor = generateLabelInstruction(cg(), TR::InstOpCode::label, firstNode, reStartLabel, cursor);
       }
+   else
+      {
+      // For DLT compilations that have a gc-map for the last instruction it causes an issue
+      // as the return-address for that gc-map would be outside the compilation body range.
+      // To solve it add a buffer nop instruction at the end of the compilation body. 
+      if (cg()->getSnippetList().empty())
+         {
+         TR::Instruction *lastInstr = cg()->getAppendInstruction();
+         TR::Instruction *currInstr = lastInstr;
+         while (true)
+            {
+            if (currInstr->getOpCode().getFormat() == FORMAT_NONE) // skips pseudo instructions (label/vgdnop/assocreg)
+               currInstr = currInstr->getPrev();
+            else
+               break;
+            }
+         if (currInstr->getGCMap())
+            {
+            cg()->generateNop(NULL, lastInstr);
+            }
+         }
+      }
 
    if (intSavedFirst <= TR::RealRegister::LastGPR)
       {
