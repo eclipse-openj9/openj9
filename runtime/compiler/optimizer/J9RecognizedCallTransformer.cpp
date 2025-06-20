@@ -1682,7 +1682,7 @@ void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_linkTo
       "java/lang/invoke/MemberName.vmindex J");
 
    TR::Node *vftOffset =
-      TR::Node::createWithSymRef(node, TR::aloadi, 1, memberNameNode, vmIndexSymRef);
+      TR::Node::createWithSymRef(node, TR::lloadi, 1, memberNameNode, vmIndexSymRef);
 
    if (!comp()->target().is64Bit())
       vftOffset = TR::Node::create(node, TR::l2i, 1, vftOffset);
