@@ -247,7 +247,7 @@ void
 TR_VectorAPIExpansion::buildVectorAliases(bool verifyMode)
    {
    if (_trace)
-      traceMsg(comp(), "%s Aliasing symrefs verifyMode=%\n", OPT_DETAILS_VECTOR, verifyMode);
+      traceMsg(comp(), "%s Aliasing symrefs verifyMode=%d\n", OPT_DETAILS_VECTOR, verifyMode);
 
    _visitedNodes.empty();
 
@@ -409,14 +409,7 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
          if (getSecondClassIndex(methodSymbol) != -1)
             getObjectTypeFromClassNode(comp(), node->getChild(getSecondClassIndex(methodSymbol)));
 
-         if (methodSymbol->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_load ||
-             methodSymbol->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_store ||
-             methodSymbol->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_fromBitsCoerced ||
-             methodSymbol->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_binaryOp)
-            {
-            objectType = objectTypeFromClass;
-            }
-         else if (methodSymbol->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_compressExpandOp)
+         if (methodSymbol->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_compressExpandOp)
             {
             if (!node->getFirstChild()->getOpCode().isLoadConst())
                {
@@ -431,9 +424,9 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
                objectType = Vector;
                }
             }
-         else
+         else if (objectType == Unknown)
             {
-            TR_ASSERT_FATAL (objectType != Unknown, "Object type should be known");
+            objectType = objectTypeFromClass;
             }
          }
 
@@ -674,7 +667,8 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
       }
    else if (boxingAllowed() &&
             (node->getOpCodeValue() == TR::checkcast ||
-             node->getOpCodeValue() == TR::athrow))
+             node->getOpCodeValue() == TR::athrow ||
+             node->getOpCodeValue() == TR::awrtbar))
       {
       // do nothing here to allow this treetop when boxing is enabled
       }
@@ -1054,7 +1048,7 @@ TR_VectorAPIExpansion::getObjectTypeFromClassNode(TR::Compilation *comp, TR::Nod
 
     if ((*(*_boxingClasses[objectType - 1])[vectorLength - 1])[elementType - 1] == NULL)
        {
-       traceMsg(comp, "Caching class for boxing: %d %d %d", objectType, vectorLength, elementType);
+       traceMsg(comp, "Caching class for boxing: %d %d %d\n", objectType, vectorLength, elementType);
 
        (*(*_boxingClasses[objectType - 1])[vectorLength - 1])[elementType - 1] = clazz;
        }
@@ -1427,8 +1421,8 @@ TR_VectorAPIExpansion::dontVectorizeNode(TR::Node *node)
 
 
 bool
-TR_VectorAPIExpansion::isVectorizedOrScalarizedNode(TR::Node *node, TR::DataType &elementType, int32_t &bitsLength,
-                                                    vapiObjType &objectType, bool &scalarized)
+TR_VectorAPIExpansion::isVectorizedOrScalarizedNode(TR::Node *node, TR::DataType &elementType, vec_sz_t &bitsLength,
+                                                    vapiObjType &objectType, bool &scalarized, bool sourceType)
    {
    // TODO: do not override if not vectorized
    elementType = TR::NoType;
@@ -1482,9 +1476,23 @@ TR_VectorAPIExpansion::isVectorizedOrScalarizedNode(TR::Node *node, TR::DataType
       if (_aliasTable[classId]._classId <= 0)
          return false;
 
-      elementType = _nodeTable[nodeIndex]._elementType;
-      bitsLength = _nodeTable[nodeIndex]._vecLen;
       objectType = _nodeTable[nodeIndex]._objectType;
+
+      TR::MethodSymbol *methodSymbol = node->getSymbolReference()->getSymbol()->castToMethodSymbol();
+
+      if (sourceType &&
+          methodSymbol->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_convert)
+         {
+         // source type of two-type opcodes is not stored in the _nodeTable
+         // so we need to analyze the node again
+         bool result = getConvertSourceType(this, node, elementType, bitsLength);
+         TR_ASSERT_FATAL(result, "Conversion source type should be known\n");
+         }
+      else
+         {
+         elementType = _nodeTable[nodeIndex]._elementType;
+         bitsLength = _nodeTable[nodeIndex]._vecLen;
+         }
 
       if (!_nodeTable[nodeIndex]._canVectorize)
          scalarized = true;
@@ -1502,9 +1510,16 @@ TR_VectorAPIExpansion::isVectorizedOrScalarizedNode(TR::Node *node, TR::DataType
          {
          ncount_t nodeIndex = node->getGlobalIndex();
 
+         objectType = _nodeTable[nodeIndex]._objectType;
+
+         TR::MethodSymbol *methodSymbol = origSymRef->getSymbol()->castToMethodSymbol();
+
+
+         TR_ASSERT_FATAL(!sourceType, "Node could not be vectorized if we are asking for its source type\n");
+
          elementType = _nodeTable[nodeIndex]._elementType;
          bitsLength = _nodeTable[nodeIndex]._vecLen;
-         objectType = _nodeTable[nodeIndex]._objectType;
+
          return true;
          }
 
@@ -1558,7 +1573,7 @@ TR_VectorAPIExpansion::boxChild(TR::TreeTop *treeTop, TR::Node *node, uint32_t i
    TR::Node *child = node->getChild(i);
 
    TR::DataType elementType;
-   int32_t bitsLength;
+   vec_sz_t bitsLength;
    vapiObjType objectType;
    bool scalarized;
    TR::ILOpCodes maskStoreOpCode;
@@ -1590,7 +1605,12 @@ TR_VectorAPIExpansion::boxChild(TR::TreeTop *treeTop, TR::Node *node, uint32_t i
       {
       vecClass = getClassForBoxing(child, elementType, bitsLength, objectType);
       if (!vecClass)
+         {
+         if (_trace)
+            traceMsg(comp(), "Missing class for boxing of %d child of node %p\n", i, node);
+
          boxingSupported = false;
+         }
       }
 
    if (!boxingSupported ||
@@ -1603,8 +1623,7 @@ TR_VectorAPIExpansion::boxChild(TR::TreeTop *treeTop, TR::Node *node, uint32_t i
       _aliasTable[classId]._classId = -1;
 
       if (_trace)
-         traceMsg(comp(), "Invalidated class #%d due to unsupported boxing of %d child of node %p in %s\n",
-                          classId, i, node, comp()->signature());
+         traceMsg(comp(), "Invalidated class #%d due to unsupported boxing of %d child of node %p\n", classId, i, node);
       return false;
       }
 
@@ -1677,7 +1696,9 @@ TR_VectorAPIExpansion::boxChild(TR::TreeTop *treeTop, TR::Node *node, uint32_t i
    treeTop->insertBefore(TR::TreeTop::create(comp(), fence));
 
    if (_trace)
-      traceMsg(comp(), "Boxed child %d of node %p into %p\n", i, node, newObject);
+      traceMsg(comp(), "Boxed %s%d%s child %d of node %p into %p\n",
+                        objectType == Vector ? "Vector" : "Mask", bitsLength, TR::DataType::getName(elementType),
+                        i, node, newObject);
 
    if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
       {
@@ -1695,11 +1716,11 @@ TR_VectorAPIExpansion::unboxNode(TR::Node *parentNode, TR::Node *operand, vapiOb
                                  bool checkBoxing)
    {
    TR::DataType elementType;
-   int32_t bitsLength;
+   vec_sz_t bitsLength;
    vapiObjType parentType;
    bool parentScalarized;
    bool parentVectorizedOrScalarized = isVectorizedOrScalarizedNode(parentNode, elementType, bitsLength,
-                                                                    parentType, parentScalarized);
+                                                                    parentType, parentScalarized, true);
 
    TR_ASSERT_FATAL(parentVectorizedOrScalarized, "Node %p should be vectorized or scalarized since we are trying to unbox its operand %p",
                    parentNode, operand);
@@ -1728,7 +1749,12 @@ TR_VectorAPIExpansion::unboxNode(TR::Node *parentNode, TR::Node *operand, vapiOb
       {
       vecClass = getClassForBoxing(operand, elementType, bitsLength, operandObjectType);
       if (!vecClass)
+         {
+         if (_trace)
+            traceMsg(comp(), "Missing class for unboxing of operand %p of node %p\n", operand, parentNode);
+
          unboxingSupported = false;
+         }
       }
 
    if (!unboxingSupported)
@@ -1741,8 +1767,8 @@ TR_VectorAPIExpansion::unboxNode(TR::Node *parentNode, TR::Node *operand, vapiOb
          _aliasTable[classId]._classId = -1;
 
       if (_trace)
-         traceMsg(comp(), "Invalidated class #%d due to unsupported unboxing of operand %p of node %p in %s\n",
-                           classId, operand, parentNode, comp()->signature());
+         traceMsg(comp(), "Invalidated class #%d due to unsupported unboxing of operand %p of node %p\n",
+                           classId, operand, parentNode);
 
       return NULL;
       }
@@ -1784,7 +1810,9 @@ TR_VectorAPIExpansion::unboxNode(TR::Node *parentNode, TR::Node *operand, vapiOb
       }
 
    if (_trace)
-      traceMsg(comp(), "Unboxed node %p into new node %p for parent %p\n", operand, newOperand, parentNode);
+      traceMsg(comp(), "Unboxed %s%d%s node %p into new node %p for parent %p\n",
+                        operandObjectType == Vector ? "Vector" : "Mask", bitsLength, TR::DataType::getName(elementType),
+                        operand, newOperand, parentNode);
 
    if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
       {
@@ -1857,10 +1885,13 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
 
       bool scalarized;
       TR::DataType elementType;
-      int32_t bitsLength;
+      vec_sz_t bitsLength;
       vapiObjType objectType;
-
       bool vectorizedOrScalarizedNode = isVectorizedOrScalarizedNode(node, elementType, bitsLength, objectType, scalarized);
+
+      if (_trace)
+        traceMsg(comp(), "Node %p (%s) vectorizedOrScalarized=%d elementType=%d bitsLength=%d objectType=%d scalarized=%d\n",
+                 node, opCode.getName(), vectorizedOrScalarizedNode, elementType.getDataType(), bitsLength, objectType, scalarized);
 
       // Vectorize intrinsic if its operands are known
       if (boxingAllowed() &&
@@ -1879,7 +1910,7 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
 
                    bool operandScalarized;
                    TR::DataType operandElementType;
-                   int32_t operandBitsLength;
+                   vec_sz_t operandBitsLength;
                    vapiObjType operandObjectType;
 
                    bool operandVectorizedOrScalarized = isVectorizedOrScalarizedNode(operand, operandElementType, operandBitsLength,
@@ -1935,7 +1966,8 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
            opCodeValue == TR::areturn ||
            opCodeValue == TR::aRegStore ||
            opCodeValue == TR::checkcast ||
-           opCodeValue == TR::athrow))
+           opCodeValue == TR::athrow ||
+           opCodeValue == TR::awrtbar))
          {
          if (_trace)
             traceMsg(comp(), "Checking if children of non-vector node %p need to be boxed\n", node);
@@ -2028,7 +2060,7 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
          if (boxingAllowed())
             {
             TR::DataType rhsElementType;
-            int32_t rhsBitsLength;
+            vec_sz_t rhsBitsLength;
             vapiObjType rhsObjectType;
             bool rhsScalarized;
             bool rhsVectorizedOrScalarized = isVectorizedOrScalarizedNode(node->getFirstChild(), rhsElementType, rhsBitsLength,
@@ -2079,7 +2111,7 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
                   bool vectorizedOrScalarized = false;
 
                   TR::DataType operandElementType;
-                  int32_t operandBitsLength;
+                  vec_sz_t operandBitsLength;
                   vapiObjType operandObjectType;
                   bool operandScalarized;
 
@@ -2088,8 +2120,10 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
 
                   if (!vectorizedOrScalarized)
                      {
-                     TR_ASSERT_FATAL(operand->getOpCodeValue() == TR::aload || operand->getOpCodeValue() == TR::acall,
-                                     "Operand can only be aload or acall");
+                     TR_ASSERT_FATAL(operand->getOpCodeValue() == TR::aload ||
+                                     operand->getOpCodeValue() == TR::acall ||
+                                     operand->getOpCodeValue() == TR::New,
+                                     "Operand can only be aload, acall, or New (child %d)", i);
                      vapiObjType operandObjectType = Vector;
 
                      if (getArgumentType(methodSymbol, i) == Mask)
@@ -2874,6 +2908,41 @@ TR::Node *TR_VectorAPIExpansion::transformRORtoROL(TR_VectorAPIExpansion *opt, T
    return subNode;
    }
 
+bool
+TR_VectorAPIExpansion::getConvertSourceType(TR_VectorAPIExpansion *opt, TR::Node *node,
+                                            TR::DataType &sourceElementType, vec_sz_t &bitsLength)
+   {
+   TR::Compilation *comp = opt->comp();
+   bitsLength = vec_len_default;
+
+   // For convert, source vector type info is in children 2 and 3
+   TR::Node *sourceElementTypeNode = node->getChild(2);
+   sourceElementType = getDataTypeFromClassNode(comp, sourceElementTypeNode);
+
+   TR::Node *sourceNumLanesNode = node->getChild(3);
+
+   if (sourceNumLanesNode->getOpCode().isLoadConst())
+      {
+      int32_t elementSize = OMR::DataType::getSize(sourceElementType);
+      bitsLength = sourceNumLanesNode->get32bitIntegralValue()*8*elementSize;
+
+      if (supportedOnPlatform(comp, bitsLength) == TR::NoVectorLength)
+         {
+         traceMsg(comp, "Platform does not support conversion source length %d in node %p\n",
+                  bitsLength, node);
+         return false;
+         }
+      }
+
+   if (sourceElementType == TR::NoType || bitsLength == vec_len_default)
+      {
+      traceMsg(comp, "Unknown conversion source type in node %p\n", node);
+      return false;
+      }
+
+   return true;
+   }
+
 
 TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
                                                       TR::DataType elementType, TR::VectorLength vectorLength, vapiObjType objectType,
@@ -2964,32 +3033,12 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
 
       if (opCodeType == Convert)
          {
-         // source vector type info is in children 2 and 3
-         TR::Node *sourceElementTypeNode = node->getChild(2);
-         sourceElementType = getDataTypeFromClassNode(comp, sourceElementTypeNode);
+         vec_sz_t bitsLength = vec_len_default;
 
-         TR::Node *sourceNumLanesNode = node->getChild(3);
-
-         if (sourceNumLanesNode->getOpCode().isLoadConst())
-            {
-            int32_t elementSize = OMR::DataType::getSize(sourceElementType);
-            vec_sz_t bitsLength = sourceNumLanesNode->get32bitIntegralValue()*8*elementSize;
-
-            if (supportedOnPlatform(comp, bitsLength) == TR::NoVectorLength)
-               {
-               traceMsg(comp, "Platform does not support conversion source length %d in node %p",
-                        bitsLength, node);
-               return NULL;
-               }
-
-            sourceVectorLength = OMR::DataType::bitsToVectorLength(bitsLength);
-            }
-
-         if (sourceElementType == TR::NoType || sourceVectorLength == TR::NoVectorLength)
-            {
-            traceMsg(comp, "Unknown conversion source type in node %p", node);
+         if (!getConvertSourceType(opt, node, sourceElementType, bitsLength))
             return NULL;
-            }
+
+         sourceVectorLength = OMR::DataType::bitsToVectorLength(bitsLength);
          }
       else if (opCodeType == Compare)
          {
@@ -3248,6 +3297,8 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
    if (opCodeType == Convert)
       {
       if (scalar) return TR::BadILOp;
+
+      if (objectType == Mask) return reportMissingOpCode(comp, vectorAPIOpCode, objectType, opCodeType, withMask);
 
       switch (vectorAPIOpCode)
          {
@@ -3674,12 +3725,12 @@ TR_VectorAPIExpansion::vapiObjTypeNames[] =
    {
    "Unknown",
    "Vector",
+   "Mask",
+   "Shuffle",
    "Species",
    "ElementType",
    "NumLanes",
-   "Mask",
    "Scalar",
-   "Shuffle",
    "Invalid"
    };
 

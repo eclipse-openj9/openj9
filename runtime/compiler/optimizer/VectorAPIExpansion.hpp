@@ -76,9 +76,9 @@ class TR_VectorAPIExpansion : public TR::Optimization
    virtual int32_t perform();
    virtual const char * optDetailString() const throw();
 
-   private:
-
    typedef int32_t vec_sz_t;
+
+   private:
 
    static int32_t const _firstMethod = TR::FirstVectorMethod;
    static int32_t const _lastMethod = TR::LastVectorMethod;
@@ -395,8 +395,8 @@ class TR_VectorAPIExpansion : public TR::Optimization
          if (length == TR::NoVectorLength &&
              TR::Options::getVerboseOption(TR_VerboseVectorAPI))
             {
-            TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "VectorLength%d is not implemented in %s\n",
-                                  vectorLength, comp->signature());
+            TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "VectorLength%d is not implemented in %s at %s %s\n",
+                                     vectorLength, comp->signature(), comp->getHotnessName(comp->getMethodHotness()), comp->isDLT() ? "DLT" : "");
             }
 
          return length;
@@ -453,9 +453,27 @@ class TR_VectorAPIExpansion : public TR::Optimization
     *     Sets element type, bit length, object type, and whether it's scalarized
     *     if it is.
     *
+    *  \param node
+    *     Node
+    *
+    *  \param elementType
+    *     Element type
+    *
+    *  \param bitsLength
+    *     Vector length in bits
+    *
+    *  \param objectType
+    *     Object type
+    *
+    *  \param scalarized
+    *     True iff node was scalarized
+    *
+    *  \param sourceType
+    *     Find source type
+    *
     */
-   bool isVectorizedOrScalarizedNode(TR::Node *node, TR::DataType &elementType, int32_t &bitsLength,
-                                     vapiObjType &objectType, bool &scalarized);
+   bool isVectorizedOrScalarizedNode(TR::Node *node, TR::DataType &elementType, vec_sz_t &bitsLength,
+                                     vapiObjType &objectType, bool &scalarized, bool sourceType = false);
 
    /** \brief
     *     Finds original Vector or Mask class for a node
@@ -1322,6 +1340,26 @@ class TR_VectorAPIExpansion : public TR::Optimization
    */
    static TR::Node *transformRORtoROL(TR_VectorAPIExpansion *opt, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, vapiOpCodeType opCodeType);
 
+
+  /** \brief
+   *   Sets element type and vector length for the source vector of "convert" intrinsic
+   *
+   *   \param opt
+   *      This optimization object
+   *
+   *   \param node
+   *      node that is a call to the intrinsic
+   *
+   *   \param sourceElementType
+   *      Source element type, set by this call
+   *
+   *   \param bitsLength
+   *      Source vector length, set by this call
+   *
+   *   \return
+   *      true if info was found and false otherwise
+   */
+   static bool getConvertSourceType(TR_VectorAPIExpansion *opt, TR::Node *node, TR::DataType &sourceElementType, vec_sz_t &bitsLength);
 
   /** \brief
    *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.unaryOp(),binaryOp(), etc. intrinsic.
