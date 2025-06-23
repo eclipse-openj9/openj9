@@ -90,6 +90,7 @@ enum MetadataTypeID {
 	ThreadDumpID = 111,
 	NativeLibraryID = 112,
 	ModuleRequireID = 113,
+	ModuleExportID = 114,
 	GCHeapConfigID = 133,
 	YoungGenerationConfigID = 134,
 	ThreadID = 164,
@@ -409,6 +410,8 @@ done:
 			pool_do(_constantPoolTypes.getSystemGCTable(), &writeSystemGCEvent, _bufferWriter);
 
 			pool_do(_constantPoolTypes.getModuleRequireTable(), &writeModuleRequire, _bufferWriter);
+
+			pool_do(_constantPoolTypes.getModuleExportTable(), &writeModuleExport, _bufferWriter);
 
 			/* Only write constant events in first chunk */
 			if (0 == _vm->jfrState.jfrChunkCount) {
@@ -853,6 +856,8 @@ done:
 	static void writeSystemGCEvent(void *anElement, void *userData);
 
 	static void writeModuleRequire(void *anElement, void *userData);
+
+	static void writeModuleExport(void *anElement, void *userData);
 
 	UDATA
 	calculateRequiredBufferSize()
