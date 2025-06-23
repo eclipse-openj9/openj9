@@ -483,7 +483,6 @@ VM_JFRConstantPoolTypes::addPackageEntry(J9Class *clazz)
 
 	pkgID = hashPkgTableAt(clazz->classLoader, clazz->romClass);
 	entry->romClass = clazz->romClass;
-	entry->ramClass = clazz;
 
 	if (NULL == pkgID) {
 		/* default pacakge */
@@ -533,6 +532,94 @@ VM_JFRConstantPoolTypes::addPackageEntry(J9Class *clazz)
 
 	index = entry->index;
 done:
+	return index;
+}
+
+U_32
+VM_JFRConstantPoolTypes::addPackageEntry(J9Module *fromModule, J9Package *package, BOOLEAN exported)
+{
+	U_32 index = U_32_MAX;
+	J9PackageIDTableEntry *pkgID = NULL;
+	PackageEntry *entry = NULL;
+	PackageEntry entryBuffer = {0};
+
+	const U_16 NAME_BUFFER_SIZE = 256;
+	U_8 nameBuffer[NAME_BUFFER_SIZE];
+	J9UTF8 *pkgNameUTF8 = (J9UTF8 *)nameBuffer;
+
+	J9ROMClass tempClass = {0};
+	J9ROMClass *queryROMClass = &tempClass;
+
+	const U_16 pkgNameLen = J9UTF8_LENGTH(package->packageName);
+
+	/* Account for the length field. */
+	if (pkgNameLen > (NAME_BUFFER_SIZE - sizeof(J9UTF8))) {
+		UDATA allocationSize = sizeof(J9ROMClass) + sizeof(J9UTF8) + pkgNameLen;
+		queryROMClass = (J9ROMClass *)j9mem_allocate_memory(allocationSize, J9MEM_CATEGORY_VM);
+		if (NULL == queryROMClass) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+		pkgNameUTF8 = (J9UTF8 *)(queryROMClass + 1);
+	}
+
+	memcpy(J9UTF8_DATA(pkgNameUTF8), J9UTF8_DATA(package->packageName), pkgNameLen);
+	J9UTF8_SET_LENGTH(pkgNameUTF8, pkgNameLen);
+
+	memset(queryROMClass, 0, sizeof(*queryROMClass));
+	NNSRP_SET(queryROMClass->className, pkgNameUTF8);
+
+	entry = &entryBuffer;
+	_buildResult = OK;
+
+	pkgID = hashPkgTableAt(_vm->systemClassLoader, queryROMClass);
+
+	if (NULL == pkgID) {
+		index = 0;
+		goto done;
+	}
+
+	entry->romClass = (J9ROMClass *)(pkgID->taggedROMClass & ~(UDATA)(J9PACKAGE_ID_TAG | J9PACKAGE_ID_GENERATED));
+
+	entry = (PackageEntry *)hashTableFind(_packageTable, entry);
+
+	if (NULL != entry) {
+		index = entry->index;
+		goto done;
+	} else {
+		entry = &entryBuffer;
+	}
+
+	entry->moduleIndex = addModuleEntry(fromModule);
+	if (isResultNotOKay()) goto done;
+
+	entry->packageName = J9UTF8_DATA(package->packageName);
+	entry->packageNameLength = pkgNameLen;
+
+	entry->exported = exported;
+	entry->index = _packageCount;
+	_packageCount++;
+
+	entry = (PackageEntry *)hashTableAdd(_packageTable, entry);
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	if (NULL == _firstPackageEntry) {
+		_firstPackageEntry = entry;
+	}
+
+	if (NULL != _previousPackageEntry) {
+		_previousPackageEntry->next = entry;
+	}
+	_previousPackageEntry = entry;
+
+	index = entry->index;
+done:
+	if ((NULL != queryROMClass) && (&tempClass != queryROMClass)) {
+		j9mem_free_memory(queryROMClass);
+	}
 	return index;
 }
 
@@ -1320,6 +1407,35 @@ VM_JFRConstantPoolTypes::addModuleRequireEntry(J9JFRModuleRequire *moduleRequire
 done:
 	return;
 
+}
+
+void
+VM_JFRConstantPoolTypes::addModuleExportEntry(J9JFRModuleExport *moduleExportData)
+{
+	U_32 exportedPackageIndex = addPackageEntry(moduleExportData->fromModule, moduleExportData->exportedPackage, TRUE);
+	/* Skip this entry if no class from the package has been loaded. */
+	if (0 == exportedPackageIndex) {
+		return;
+	}
+
+	ModuleExportEntry *entry = (ModuleExportEntry *)pool_newElement(_moduleExportTable);
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = moduleExportData->startTicks;
+	entry->exportedPackageIndex = exportedPackageIndex;
+	if (isResultNotOKay()) goto done;
+
+	entry->targetModuleIndex = addModuleEntry(moduleExportData->targetModule);
+	if (isResultNotOKay()) goto done;
+
+	_moduleExportCount += 1;
+
+done:
+	return;
 }
 
 void

@@ -791,8 +791,11 @@ exportPackageToModule(J9VMThread * currentThread, J9Module * fromModule, const c
 			retval = ERRCODE_MODULE_WASNT_FOUND;
 		}
 	}
-	if (ERRCODE_SUCCESS == retval && TrcEnabled_Trc_MODULE_addModuleExports) {
-		trcModulesAddModuleExports(currentThread, fromModule, package, toModule);
+	if (ERRCODE_SUCCESS == retval) {
+		TRIGGER_J9HOOK_PACKAGE_EXPORTED_TO_MODULE(currentThread->javaVM->hookInterface, currentThread, fromModule, j9package, toModule);
+		if (TrcEnabled_Trc_MODULE_addModuleExports) {
+			trcModulesAddModuleExports(currentThread, fromModule, package, toModule);
+		}
 	}
 
 	return retval;
