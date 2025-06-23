@@ -1207,6 +1207,7 @@ J9::Compilation::getReloTypeForMethodToBeInlined(TR_VirtualGuardSelection *guard
             }
          else if (receiverClass
                   && TR::Compiler->cls.isAbstractClass(self(), receiverClass)
+                  && methodSymbol->isResolvedMethod()
                   && methodSymbol->getResolvedMethodSymbol()->getResolvedMethod()->isAbstract())
             {
             reloKind = TR_InlinedAbstractMethod;
