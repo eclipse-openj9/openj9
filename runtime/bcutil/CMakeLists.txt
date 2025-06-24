@@ -71,6 +71,12 @@ target_link_libraries(j9dyn_sources
 # also add explicit dependency on running tracegen, because cmake wont pick this up outside of this dir
 add_dependencies(j9dyn_sources trc_j9bcu)
 
+if(OMR_OS_AIX AND (OMR_TOOLCONFIG STREQUAL "xlc"))
+	# Append xlc "-qcompact" option to avoid an internal compiler error on AIX.
+	# See https://github.com/eclipse-openj9/openj9/issues/21825.
+	set_property(SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/ClassFileOracle.cpp" APPEND PROPERTY COMPILE_FLAGS "-qcompact")
+endif()
+
 j9vm_add_library(j9dyn STATIC)
 target_compile_definitions(j9dyn PRIVATE J9_INTERNAL_TO_VM)
 
