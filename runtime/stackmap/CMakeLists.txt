@@ -28,6 +28,7 @@ j9vm_add_library(j9stackmap STATIC
 	debuglocalmap.c
 	fixreturns.c
 	localmap.c
+	mapcache.cpp
 	mapmemorybuffer.c
 	maxmap.c
 	stackmap.c

@@ -3907,13 +3907,16 @@ notifyGCOfClassReplacement(J9VMThread * currentThread, J9HashTable * classPairs,
 {
 	J9JavaVM *vm = currentThread->javaVM;
 	J9MemoryManagerFunctions *mmFunctions = vm->memoryManagerFunctions;
+	J9InternalVMFunctions *vmFunctions = vm->internalVMFunctions;
 	J9JVMTIClassPair *classPair = NULL;
 	J9HashTableState hashTableState = {0};
 
 	classPair = hashTableStartDo(classPairs, &hashTableState);
 	while (classPair != NULL) {
 		if (J9_ARE_ALL_BITS_SET(classPair->flags, J9JVMTI_CLASS_PAIR_FLAG_REDEFINED)) {
-			mmFunctions->j9gc_notifyGCOfClassReplacement(currentThread, classPair->originalRAMClass, classPair->replacementClass.ramClass, isFastHCR);
+			J9Class *originalRAMClass = classPair->originalRAMClass;
+			vmFunctions->freeMapCaches(originalRAMClass->classLoader);
+			mmFunctions->j9gc_notifyGCOfClassReplacement(currentThread, originalRAMClass, classPair->replacementClass.ramClass, isFastHCR);
 		}
 		classPair = hashTableNextDo(&hashTableState);
 	}
