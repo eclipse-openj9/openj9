@@ -101,7 +101,7 @@ final class MemoryNotificationThread implements Runnable {
 			if (bean instanceof GarbageCollectorMXBeanImpl && bean.getName().equals(gcName)) {
 				Notification notification = new Notification(
 						GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION,
-						"java.lang:type=GarbageCollector", //$NON-NLS-1$
+						bean.getObjectName().getCanonicalName(),
 						sequenceNumber);
 				notification.setUserData(GarbageCollectionNotificationInfoUtil.toCompositeData(info));
 				((GarbageCollectorMXBeanImpl) bean).sendNotification(notification);
