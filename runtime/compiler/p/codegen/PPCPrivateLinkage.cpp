@@ -1075,7 +1075,7 @@ void J9::Power::PrivateLinkage::createPrologue(TR::Instruction *cursor)
    else
       {
       // DLT compilations that have a gc-map for the last instruction of the compilation
-      // body causes an issue as the look-up address for that gc-map would be outsied
+      // body causes an issue as the look-up address for that gc-map would be outside
       // the compilation body range.
       // This causes an invalid JIT return-address when walking the stack.
       // To solve it a buffer nop instruction is added to the end of the compilation body.
