@@ -4386,9 +4386,9 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		IDATA noCacheMaps = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOCACHEMAPS, NULL);
 
 		if (cacheMaps > noCacheMaps) {
-			vm->extendedRuntimeFlags3 &= ~J9_EXTENDED_RUNTIME3_CACHE_MAPS;
-		} else if (cacheMaps < noCacheMaps) {
 			vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_CACHE_MAPS;
+		} else if (cacheMaps < noCacheMaps) {
+			vm->extendedRuntimeFlags3 &= ~J9_EXTENDED_RUNTIME3_CACHE_MAPS;
 		}
 	}
 
