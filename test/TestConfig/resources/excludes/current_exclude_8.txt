@@ -1,0 +1,50 @@
+##############################################################################
+# Copyright IBM Corp. and others 2016
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] https://openjdk.org/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+##############################################################################
+
+# Exclude tests temporarily
+
+#Temporarily keep them as comment to facilitate testing
+#org.openj9.test.jsr335.interfacePrivateMethod.Test_ITestRunner															123456 generic-all
+#org.openj9.test.jsr335.interfacePrivateMethod.Test_ReflectionAndMethodHandles:testFindMethodsUsingGetMethods 			456789 linux_x86-64
+org.openj9.test.vm.Test_MsgHelp:test_loadMessages_EN																	124199 generic-all
+org.openj9.test.runlast.Test_JavaNetWithSideEffectsShouldRunLast:test_getResource										124199 generic-all
+#org.openj9.test.java.lang.Test_Class:testDefaultMethodInheritance														DaveW-58  generic-all
+#org.openj9.test.java.lang.Test_Class:testInterfaceMethodInheritance														DaveW-58 generic-all
+org.openj9.test.java.lang.Test_Class:test_getModifiers_classTypes														JTC-JAT-133182 generic-all
+org.openj9.test.java.lang.Test_Class:test_hideUnsafe																	124199 generic-all
+#org.openj9.test.java.lang.Test_Class:test_reflectConstructor															124199 generic-all
+#org.openj9.test.java.lang.Test_Class:test_reflectField																	124199 generic-all
+#org.openj9.test.java.lang.Test_Class:test_reflectMethod																124199 generic-all
+#org.openj9.test.java.lang.Test_String:test_toLowerCase																	124199 generic-all
+#org.openj9.test.java.lang.Test_Thread:test_stop3																		124199 generic-all
+#org.openj9.test.java.lang.Test_Thread:test_stop4																		124199 generic-all
+#org.openj9.test.java.lang.Test_Thread:test_stop5																		124199 generic-all
+org.openj9.test.com.ibm.jit.Test_FunctionalCrypt:test_Cipher1															124199 generic-all
+org.openj9.test.com.ibm.jit.Test_FunctionalCrypt:test_Cipher2															124199 generic-all
+org.openj9.test.com.ibm.jit.Test_FunctionalCrypt:test_Cipher3															124199 generic-all
+org.openj9.test.com.ibm.jit.Test_FunctionalCrypt:test_ECC1																124199 generic-all
+org.openj9.test.com.ibm.jit.Test_FunctionalCrypt:test_ECC2																124199 generic-all
+org.openj9.test.com.ibm.jit.Test_FunctionalCrypt:test_NIST_AES															124199 generic-all
+org.openj9.test.com.ibm.jit.Test_FunctionalCrypt:test_NIST_SHA															124199 generic-all
+jit.test.vich.CurrentTimeMillis:testCurrentTimeMillis																	158622 generic-all
+org.openj9.test.java.lang.Test_Thread:test_getContextClassLoader														125908 generic-all
+org.openj9.test.java.lang.Test_ClassLoader																				134754 generic-all
