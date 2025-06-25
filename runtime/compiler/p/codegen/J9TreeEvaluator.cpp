@@ -1964,9 +1964,6 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    // class pointer of objects in the array - in the 2D case this is the class of the 1D array
    TR::Register *classReg = cg->evaluate(node->getThirdChild());
 
-   // the class of the object rather than the class of the array
-   TR::Register *componentClassReg = cg->allocateRegister();
-
    // points to the resulting array allocated
    TR::Register *targetReg = cg->allocateRegister();
 
@@ -2036,23 +2033,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateMemSrc1Instruction(cg, storeClassOp, node,
       TR::MemoryReference::createWithDisplacement(cg, targetReg,
          TR::Compiler->om.offsetOfObjectVftField(), classPtrLen), classReg);
-   // initialise the size and mustBeZero ('0') fields in the header to 0
-   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, temp1Reg, 0);
-   generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
-      TR::MemoryReference::createWithDisplacement(cg, targetReg,
-         offsetOfMustBeZeroField, 4), temp1Reg);
-   generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
-      TR::MemoryReference::createWithDisplacement(cg, targetReg,
-         fej9->getOffsetOfDiscontiguousArraySizeField(), 4), temp1Reg);
-
-#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
-   if (isOffHeapAllocationEnabled) // initialise the dataAddr field to 0 as well
-      {
-      generateMemSrc1Instruction(cg, TR::InstOpCode::Op_st, node,
-         TR::MemoryReference::createWithDisplacement(cg, targetReg,
-            fej9->getOffsetOfDiscontiguousDataAddrField(), addrSize), temp1Reg);
-      }
-#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
+   // the size and mustBeZero ('0') fields should be zero by default, so is dataAddr for Offheap
 
    generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
 
@@ -2149,6 +2130,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
          fej9->getOffsetOfContiguousArraySizeField(), 4), firstDimLenReg);
 
    // load the component class
+   TR::Register *componentClassReg = secondDimLenReg; // we don't need the secondDimLenReg anymore
    generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, componentClassReg,
       TR::MemoryReference::createWithDisplacement(cg, classReg,
          offsetof(J9ArrayClass, componentType), addrSize));
@@ -2172,29 +2154,14 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
 
    // --- ready the loop
    generateSrc1Instruction(cg, TR::InstOpCode::mtctr, node, firstDimLenReg);
-   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, secondDimLenReg, 0); // a temp of 0
 
    // === loop
    generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
-   // initialise a header in the second dimension with class = component, size = 0, mustBeZero = 0
+   // initialise a header in the second dimension with class = component
    generateMemSrc1Instruction(cg, storeClassOp, node,
       TR::MemoryReference::createWithDisplacement(cg, temp2Reg,
          TR::Compiler->om.offsetOfObjectVftField(), classPtrLen), componentClassReg);
-   generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
-      TR::MemoryReference::createWithDisplacement(cg, temp2Reg, offsetOfMustBeZeroField, 4), secondDimLenReg);
-   generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
-      TR::MemoryReference::createWithDisplacement(cg, temp2Reg,
-         fej9->getOffsetOfDiscontiguousArraySizeField(), 4), secondDimLenReg);
-
-#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
-   if (isOffHeapAllocationEnabled)
-      {
-      // the dataAddr field of the 2nd dimension array is zero and discontiguous
-      generateMemSrc1Instruction(cg, TR::InstOpCode::Op_st, node,
-         TR::MemoryReference::createWithDisplacement(cg, temp2Reg,
-            fej9->getOffsetOfDiscontiguousDataAddrField(), addrSize), secondDimLenReg);
-      }
-#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
+   // size and mustBeZero are already zero by default, so is dataAddr for Offheap
 
    // Store 2nd dim element into 1st dim array slot, compress temp2 if needed
    if (comp->useCompressedPointers()) // only possible with 64-bit
@@ -2253,7 +2220,6 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    dependencies->addPostCondition(classReg, TR::RealRegister::NoReg);
    dependencies->getPostConditions()->getRegisterDependency(dependencies->getAddCursorForPost() - 1)->setExcludeGPR0();
 
-   dependencies->addPostCondition(componentClassReg, TR::RealRegister::NoReg);
 
    dependencies->addPostCondition(targetReg, TR::RealRegister::NoReg);
    dependencies->getPostConditions()->getRegisterDependency(dependencies->getAddCursorForPost() - 1)->setExcludeGPR0();
@@ -2296,7 +2262,6 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    cg->stopUsingRegister(targetReg);
    cg->stopUsingRegister(dimsPtrReg);
    cg->stopUsingRegister(classReg);
-   cg->stopUsingRegister(componentClassReg);
    cg->stopUsingRegister(firstDimLenReg);
    cg->stopUsingRegister(secondDimLenReg);
    cg->stopUsingRegister(temp1Reg);
