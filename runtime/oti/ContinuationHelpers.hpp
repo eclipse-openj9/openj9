@@ -25,6 +25,7 @@
 #include "j9.h"
 #include "j9consts.h"
 #include "j9vmconstantpool.h"
+#include "VMHelpers.hpp"
 
 /* These should match the error code values in enum Pinned within class Continuation. */
 #define J9VM_CONTINUATION_PINNED_REASON_NATIVE 1
@@ -376,7 +377,14 @@ public:
 				U_32 state = J9VMJAVALANGVIRTUALTHREAD_STATE(vmThread, vthread);
 				if ((JAVA_LANG_VIRTUALTHREAD_WAIT == state) || (JAVA_LANG_VIRTUALTHREAD_TIMED_WAIT == state)) {
 					/* Update the thread state to BLOCKED. */
-					J9VMJAVALANGVIRTUALTHREAD_SET_STATE(vmThread, vthread, JAVA_LANG_VIRTUALTHREAD_BLOCKED);
+					MM_ObjectAccessBarrierAPI barrier(vmThread);
+					barrier.inlineMixedObjectCompareAndSwapU32(
+							vmThread,
+							vthread,
+							J9VMJAVALANGVIRTUALTHREAD_STATE_OFFSET(vmThread),
+							state,
+							JAVA_LANG_VIRTUALTHREAD_BLOCKED,
+							true);
 				}
 
 				current->objectWaitMonitor->virtualThreadWaitCount += 1;

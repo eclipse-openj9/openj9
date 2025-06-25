@@ -33,7 +33,6 @@
 #include "ContinuationHelpers.hpp"
 #include "HeapIteratorAPI.h"
 #include "OutOfLineINL.hpp"
-#include "VMHelpers.hpp"
 
 
 extern "C" {
@@ -1201,6 +1200,7 @@ takeVirtualThreadListToUnblock(J9VMThread *currentThread)
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
+	MM_ObjectAccessBarrierAPI barrier(currentThread);
 	while (NULL == unblockedList) {
 		if (NULL != vm->blockedContinuations) {
 restart:
@@ -1240,13 +1240,13 @@ restart:
 					/* WAIT/TIMED_WAIT can only be added to blocked list if they have been notified. */
 					Assert_VM_true(J9VMJAVALANGVIRTUALTHREAD_NOTIFIED(currentThread, current->vthread));
 					/* The transition to BLOCKED may have been missed if vthread was in a WAITING state while notified. */
-					if (MM_ObjectAccessBarrierAPI(currentThread).inlineMixedObjectCompareAndSwapU32(
-									currentThread,
-									current->vthread,
-									J9VMJAVALANGVIRTUALTHREAD_STATE_OFFSET(currentThread),
-									state,
-									JAVA_LANG_VIRTUALTHREAD_BLOCKED,
-									true)
+					if (barrier.inlineMixedObjectCompareAndSwapU32(
+							currentThread,
+							current->vthread,
+							J9VMJAVALANGVIRTUALTHREAD_STATE_OFFSET(currentThread),
+							state,
+							JAVA_LANG_VIRTUALTHREAD_BLOCKED,
+							true)
 					) {
 						Assert_VM_true(syncObjectMonitor->virtualThreadWaitCount > 0);
 						omrthread_monitor_t monitor = syncObjectMonitor->monitor;
