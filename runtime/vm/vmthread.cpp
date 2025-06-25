@@ -710,6 +710,10 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 #endif /* OMR_THR_ADAPTIVE_SPIN */
 
 #if defined(OMR_THR_THREE_TIER_LOCKING)
+	/* There is no advantage from spinning when running on a single processor. */
+	if (cpus <= 1) {
+		**(UDATA**)omrthread_global((char*)"defaultMonitorSpinCount1") = 1;
+	}
 	omrthread_lib_clear_flags(J9THREAD_LIB_FLAG_SECONDARY_SPIN_OBJECT_MONITORS_ENABLED | J9THREAD_LIB_FLAG_FAST_NOTIFY);
 #if defined(OMR_THR_SPIN_WAKE_CONTROL)
 	{
