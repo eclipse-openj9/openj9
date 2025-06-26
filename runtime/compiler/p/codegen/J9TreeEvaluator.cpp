@@ -12256,6 +12256,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    TR::LabelSymbol *serialPrepLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *serialUnrollLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *serialLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *serialLoopLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *matchLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *resultLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
@@ -12425,6 +12426,9 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    generateLabelInstruction(cg, TR::InstOpCode::b, node, serialUnrollLabel);
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, serialLabel);
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 1);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, serialLoopLabel);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr6, indexReg, lengthReg);
    // if we reach the end, indexReg is len already, so we don't need to do anything for countPositives
    if (isCountPositives)
@@ -12432,17 +12436,14 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    else
       generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, resultLabel, cr6);
 
-   generateTrg1MemInstruction(cg, TR::InstOpCode::lbzx, node, tempReg,
+   generateTrg1MemInstruction(cg, TR::InstOpCode::lbzx, node, storeReg,
       TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 1));
    // check the negative bit
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, tempReg, tempReg, 0x80);
-   if (isCountPositives)
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
-   else
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, matchLabel, cr0);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, storeReg, storeReg, 0x80);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
 
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 1);
-   generateLabelInstruction(cg, TR::InstOpCode::b, node, serialLabel);
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, serialLoopLabel);
 
    // --- load the length for countPositves; load 0 for hasNegative
    generateLabelInstruction(cg, TR::InstOpCode::label, node, resultLabel);
