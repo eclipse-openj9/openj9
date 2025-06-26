@@ -6579,6 +6579,267 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, TR::CodeGenerator* c
    }
 
 /**
+ * \brief
+ *   Generate inlined instructions equivalent to java/lang/StringLatin1.indexOf([BI[BII)I
+ *
+ * \param node
+ *   The tree node
+ *
+ * \param cg
+ *   The Code Generator
+ *
+ * Note that this version does not support discontiguous arrays
+ */
+static TR::Register *inlineIntrinsicStringIndexOfString(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   static bool verboseInlineStrIdxOfStr = (feGetEnv("TR_verboseInlineStrIdxOfStr") != NULL);
+   if (verboseInlineStrIdxOfStr)
+      {
+      fprintf(stderr, "*Latin1.indexOfString(): %s @%s\n", cg->comp()->signature(), cg->comp()->getHotnessName());
+      }
+
+   TR_ASSERT_FATAL(!TR::Compiler->om.canGenerateArraylets(), "Discontiguous array is not supported");
+
+   // This evaluator function handles different indexOf() intrinsics, some of which are static calls without a
+   // receiver. Hence, the need for static call check.
+   const bool isStaticCall = node->getSymbolReference()->getSymbol()->castToMethodSymbol()->isStatic();
+   const uint8_t firstCallArgIdx = isStaticCall ? 0 : 1;
+   TR::Register *s1Reg = cg->evaluate(node->getChild(firstCallArgIdx));
+   TR::Node *s1lenNode = node->getChild(firstCallArgIdx+1);
+   TR::Register *s1lenReg = cg->evaluate(s1lenNode);
+   TR::Register *s2Reg = cg->evaluate(node->getChild(firstCallArgIdx+2));
+   TR::Register *s2lenReg = cg->evaluate(node->getChild(firstCallArgIdx+3));
+   TR::Node *offsetNode = node->getChild(firstCallArgIdx+4);
+   TR::Register *offsetReg = cg->evaluate(offsetNode);
+
+   TR::Register *maxReg;
+   if (s1lenNode->getReferenceCount() == 1)
+      {
+      maxReg = s1lenReg;
+      }
+   else
+      {
+      maxReg = cg->allocateRegister(TR_GPR);
+      generateMovInstruction(cg, node, maxReg, s1lenReg);
+      }
+
+   TR::Register *resultReg;
+   if (offsetNode->getReferenceCount() == 1)
+      {
+      resultReg = offsetReg;
+      }
+   else
+      {
+      resultReg = cg->allocateRegister(TR_GPR);
+      generateMovInstruction(cg, node, resultReg, offsetReg);
+      }
+
+   TR::Register *s1addrReg = cg->allocateRegister(TR_GPR);
+   TR::Register *s1idxReg = cg->allocateRegister(TR_GPR);
+   TR::Register *s2addrReg = cg->allocateRegister(TR_GPR);
+   TR::Register *s2idxReg = cg->allocateRegister(TR_GPR);
+   TR::Register *tmp1Reg = cg->allocateRegister(TR_GPR);
+   TR::Register *tmp2Reg = cg->allocateRegister(TR_GPR);
+   TR::Register *s2firstCharReg = cg->allocateRegister(TR_VRF);
+   TR::Register *vtmp1Reg = cg->allocateRegister(TR_VRF);
+   TR::Register *vtmp2Reg = cg->allocateRegister(TR_VRF);
+
+   TR::RegisterDependencyConditions *dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(14, 14, cg->trMemory());
+   dependencies->addPreCondition(s1Reg, TR::RealRegister::NoReg);
+   dependencies->addPreCondition(s2Reg, TR::RealRegister::NoReg);
+   dependencies->addPreCondition(s2lenReg, TR::RealRegister::NoReg);
+   dependencies->addPreCondition(maxReg, TR::RealRegister::NoReg);
+   dependencies->addPreCondition(resultReg, TR::RealRegister::NoReg);
+   dependencies->addPreCondition(s1addrReg, TR::RealRegister::NoReg);
+   dependencies->addPreCondition(s1idxReg, TR::RealRegister::NoReg);
+   dependencies->addPreCondition(s2addrReg, TR::RealRegister::NoReg);
+   dependencies->addPreCondition(s2idxReg, TR::RealRegister::NoReg);
+   dependencies->addPreCondition(tmp1Reg, TR::RealRegister::NoReg);
+   dependencies->addPreCondition(tmp2Reg, TR::RealRegister::NoReg);
+   dependencies->addPreCondition(s2firstCharReg, TR::RealRegister::NoReg);
+   dependencies->addPreCondition(vtmp1Reg, TR::RealRegister::NoReg);
+   dependencies->addPreCondition(vtmp2Reg, TR::RealRegister::NoReg);
+
+   dependencies->addPostCondition(s1Reg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(s2Reg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(s2lenReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(maxReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(resultReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(s1addrReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(s1idxReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(s2addrReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(s2idxReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(tmp1Reg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(tmp2Reg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(s2firstCharReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(vtmp1Reg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(vtmp2Reg, TR::RealRegister::NoReg);
+
+   TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *outerLoopLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *firstCharLoopLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *firstCharMatchedLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *arrayCmpVectorLoopLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *arrayCmpByteLoopLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *unmatchedLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *notFoundLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+
+   startLabel->setStartInternalControlFlow();
+   doneLabel->setEndInternalControlFlow();
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, startLabel);
+
+   const int32_t vecWidth = 16;
+
+   // Addresses of array elements
+#ifdef J9VM_GC_SPARSE_HEAP_ALLOCATION
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      {
+      uint32_t dataAddrOffset = static_cast<int32_t>(cg->comp()->fej9()->getOffsetOfContiguousDataAddrField());
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, s1addrReg, TR::MemoryReference::createWithDisplacement(cg, s1Reg, dataAddrOffset));
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, s2addrReg, TR::MemoryReference::createWithDisplacement(cg, s2Reg, dataAddrOffset));
+      }
+   else
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
+      {
+      uint32_t hdrSize = static_cast<uint32_t>(TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, s1addrReg, s1Reg, hdrSize);
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, s2addrReg, s2Reg, hdrSize);
+      }
+
+   // First character of s2
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrbimm, node, tmp1Reg, TR::MemoryReference::createWithDisplacement(cg, s2addrReg, 0));
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::vdup16b, node, s2firstCharReg, tmp1Reg);
+
+   // Calculate max
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::subw, node, maxReg, s1lenReg, s2lenReg);
+
+   // Outer loop
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, outerLoopLabel);
+   generateCompareInstruction(cg, node, resultReg, maxReg, /* is64bit */ false);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, notFoundLabel, TR::CC_GT);
+
+   // Search for the first character
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, tmp1Reg, s1addrReg, resultReg);
+   generateLogicalImmInstruction(cg, TR::InstOpCode::andimmx, node, tmp2Reg, tmp1Reg, true, 3); // N = true, immr:imms = 3 for immediate value 0xf
+   generateCompareBranchInstruction(cg, TR::InstOpCode::cbzw, node, tmp2Reg, firstCharLoopLabel);
+
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::subx, node, tmp1Reg, tmp1Reg, tmp2Reg); // tmp1Reg is 16-byte aligned
+   generateTrg1MemInstruction(cg, TR::InstOpCode::vldrimmq, node, vtmp1Reg, TR::MemoryReference::createWithDisplacement(cg, tmp1Reg, 0));
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vcmeq16b, node, vtmp1Reg, vtmp1Reg, s2firstCharReg);
+   generateVectorShiftImmediateInstruction(cg, TR::InstOpCode::vshrn_8b, node, vtmp1Reg, vtmp1Reg, 4); // 8 bits x 16 -> 4 bits x 16
+   generateMovVectorElementToGPRInstruction(cg, TR::InstOpCode::umovxd, node, tmp1Reg, vtmp1Reg, 0);
+   generateLogicalShiftLeftImmInstruction(cg, node, s1idxReg, tmp2Reg, 2, /* is64bit */ false); // s1idxReg is used for other purpose here
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::lsrvx, node, tmp1Reg, tmp1Reg, s1idxReg);
+   generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, tmp1Reg, firstCharMatchedLabel);
+
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmw, node, resultReg, resultReg, vecWidth);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::subw, node, resultReg, resultReg, tmp2Reg);
+
+   generateCompareInstruction(cg, node, resultReg, maxReg, /* is64bit */ false);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, notFoundLabel, TR::CC_GT);
+
+   // (s1addrReg + resultReg) is 16-byte aligned here
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, firstCharLoopLabel);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::vldroffq, node, vtmp1Reg, TR::MemoryReference::createWithIndexReg(cg, s1addrReg, resultReg));
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vcmeq16b, node, vtmp1Reg, vtmp1Reg, s2firstCharReg);
+   generateVectorShiftImmediateInstruction(cg, TR::InstOpCode::vshrn_8b, node, vtmp1Reg, vtmp1Reg, 4); // 8 bits x 16 -> 4 bits x 16
+   generateMovVectorElementToGPRInstruction(cg, TR::InstOpCode::umovxd, node, tmp1Reg, vtmp1Reg, 0);
+   generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, tmp1Reg, firstCharMatchedLabel);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmw, node, resultReg, resultReg, vecWidth);
+   generateCompareInstruction(cg, node, resultReg, maxReg, /* is64bit */ false);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, firstCharLoopLabel, TR::CC_LE);
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, notFoundLabel);
+
+   // First character matched in vector
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, firstCharMatchedLabel);
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::rbitx, node, tmp1Reg, tmp1Reg);
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::clzx, node, tmp1Reg, tmp1Reg);
+   generateLogicalShiftRightImmInstruction(cg, node, tmp1Reg, tmp1Reg, 2, /* is64bit */ true); // div by 4
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, resultReg, resultReg, tmp1Reg);
+
+   generateCompareInstruction(cg, node, resultReg, maxReg, /* is64bit */ false);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, notFoundLabel, TR::CC_GT);
+
+   // Compare the rest of s2
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmw, node, s1idxReg, resultReg, 1); // s1idx = offset + 1
+   loadConstant32(cg, node, 1, s2idxReg); // s2idx = 1
+
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmw, node, tmp2Reg, s2lenReg, 1);
+   generateLogicalShiftRightImmInstruction(cg, node, tmp2Reg, tmp2Reg, 4, /* is64bit */ false); // div by 16
+   generateCompareBranchInstruction(cg, TR::InstOpCode::cbzw, node, tmp2Reg, arrayCmpByteLoopLabel);
+
+   // Vector comparison
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, arrayCmpVectorLoopLabel);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::vldroffq, node, vtmp1Reg, TR::MemoryReference::createWithIndexReg(cg, s1addrReg, s1idxReg));
+   generateTrg1MemInstruction(cg, TR::InstOpCode::vldroffq, node, vtmp2Reg, TR::MemoryReference::createWithIndexReg(cg, s2addrReg, s2idxReg));
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vcmeq16b, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
+   generateVectorShiftImmediateInstruction(cg, TR::InstOpCode::vshrn_8b, node, vtmp1Reg, vtmp1Reg, 4); // 8 bits x 16 -> 4 bits x 16
+   generateMovVectorElementToGPRInstruction(cg, TR::InstOpCode::umovxd, node, tmp1Reg, vtmp1Reg, 0);
+   generateCompareImmInstruction(cg, node, tmp1Reg, -1, /* is64bit */ true);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, unmatchedLabel, TR::CC_NE);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmw, node, s1idxReg, s1idxReg, vecWidth);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmw, node, s2idxReg, s2idxReg, vecWidth);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmw, node, tmp2Reg, tmp2Reg, 1);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, arrayCmpVectorLoopLabel, TR::CC_NE);
+
+   // Byte comparison
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, arrayCmpByteLoopLabel);
+   generateCompareInstruction(cg, node, s2lenReg, s2idxReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_LE); // resultReg has the result
+
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrbimm, node, tmp1Reg, TR::MemoryReference::createWithIndexReg(cg, s1addrReg, s1idxReg));
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrbimm, node, tmp2Reg, TR::MemoryReference::createWithIndexReg(cg, s2addrReg, s2idxReg));
+   generateCompareInstruction(cg, node, tmp1Reg, tmp2Reg, /* is64bit */ false);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, unmatchedLabel, TR::CC_NE);
+
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmw, node, s1idxReg, s1idxReg, 1);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmw, node, s2idxReg, s2idxReg, 1);
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, arrayCmpByteLoopLabel);
+
+   // s2 unmatched
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, unmatchedLabel);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmw, node, resultReg, resultReg, 1);
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, outerLoopLabel);
+
+   // Not found
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, notFoundLabel);
+   loadConstant32(cg, node, -1, resultReg);
+   // fall through to doneLabel
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, dependencies);
+
+   cg->stopUsingRegister(s1addrReg);
+   cg->stopUsingRegister(s1idxReg);
+   cg->stopUsingRegister(s2addrReg);
+   cg->stopUsingRegister(s2idxReg);
+   cg->stopUsingRegister(tmp1Reg);
+   cg->stopUsingRegister(tmp2Reg);
+   cg->stopUsingRegister(s2firstCharReg);
+   cg->stopUsingRegister(vtmp1Reg);
+   cg->stopUsingRegister(vtmp2Reg);
+
+   if (maxReg != s1lenReg)
+      {
+      cg->stopUsingRegister(maxReg);
+      }
+
+   node->setRegister(resultReg);
+
+   if (!isStaticCall)
+      {
+      cg->recursivelyDecReferenceCount(node->getChild(0));
+      }
+   for (int32_t i = firstCallArgIdx; i < node->getNumChildren(); i++)
+      {
+      cg->decReferenceCount(node->getChild(i));
+      }
+
+   return resultReg;
+   }
+
+/**
  * @brief Generates inlined instructions equivalent to java/lang/StringLatin1.inflate(byte[] src, int srcOff, char[] dst, int dstOff, int len)
  *
  * @param node: node
@@ -6873,6 +7134,15 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             if (cg->getSupportsInlineStringIndexOf())
                {
                resultReg = inlineIntrinsicIndexOf(node, cg, false);
+               return true;
+               }
+            break;
+
+         case TR::java_lang_StringLatin1_indexOf:
+         case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringLatin1:
+            if (cg->getSupportsInlineStringIndexOfString())
+               {
+               resultReg = inlineIntrinsicStringIndexOfString(node, cg);
                return true;
                }
             break;
