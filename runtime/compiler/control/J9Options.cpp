@@ -689,16 +689,6 @@ Options::vmStateOption(const char *option, void *base, TR::OptionTable *entry)
                   {
                   j9tty_printf(PORTLIB, "vmState [0x%x]: {%s} {ILGeneration}\n", state, vmStateArray[index]._xname);
                   }
-               else if ((state & J9VMSTATE_JIT_OPTIMIZER) == J9VMSTATE_JIT_OPTIMIZER)
-                  {
-                  OMR::Optimizations opts = static_cast<OMR::Optimizations>((state & 0xFF00) >> 8);
-                  if (opts < OMR::numOpts)
-                     {
-                      j9tty_printf(PORTLIB, "vmState [0x%x]: {%s} {%s}\n", state, vmStateArray[index]._xname, OMR::Optimizer::getOptimizationName(opts));
-                     }
-                  else
-                     j9tty_printf(PORTLIB, "vmState [0x%x]: {%s} {Illegal optimization number}\n", state, vmStateArray[index]._xname);
-                  }
                else if ((state & J9VMSTATE_JIT_CODEGEN) == J9VMSTATE_JIT_CODEGEN)
                   {
                   TR::CodeGenPhase::PhaseValue phase = static_cast<TR::CodeGenPhase::PhaseValue>(state & 0xFF);
@@ -708,7 +698,17 @@ Options::vmStateOption(const char *option, void *base, TR::OptionTable *entry)
                      j9tty_printf(PORTLIB, "vmState [0x%x]: {%s} {Illegal codegen phase number}\n", state, vmStateArray[index]._xname);
                   }
                else
-                  invalidState = true;
+                  {
+                  OMR::Optimizations opts = static_cast<OMR::Optimizations>((state & 0xFF00) >> 8);
+                  OMR::Optimizer::AnalysisPhases phase = static_cast<OMR::Optimizer::AnalysisPhases>(state & 0xFF);
+
+                  if (opts < OMR::numOpts)
+                     {
+                     j9tty_printf(PORTLIB, "vmState [0x%x]: {%s} {%s} {%s}\n", state, vmStateArray[index]._xname, OMR::Optimizer::getOptimizationName(opts), OMR::Optimizer::getAnalysisPhaseName(phase));
+                     }
+                  else
+                     j9tty_printf(PORTLIB, "vmState [0x%x]: {%s} {Illegal optimization number}\n", state, vmStateArray[index]._xname);
+                  }
                }
                break;
             default:
