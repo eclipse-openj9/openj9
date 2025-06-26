@@ -97,7 +97,7 @@ monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos
 		j9objectmonitor_t volatile *lwEA = VM_ObjectMonitor::inlineGetLockAddress(vmThread, object);
 		j9objectmonitor_t lock = J9_LOAD_LOCKWORD(vmThread, lwEA);
 		J9ObjectMonitor *objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
-		objectMonitor->platformThreadWaitCount += 1;
+		VM_AtomicSupport::addU32(&objectMonitor->platformThreadWaitCount, 1);
 #endif /* JAVA_SPEC_VERSION >= 24 */
 		omrthread_monitor_pin(monitor, vmThread->osThread);
 		/* We need to put the blocking object in the special frame since calling out to the hooks could cause
@@ -119,7 +119,7 @@ monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos
 		J9VMTHREAD_SET_BLOCKINGENTEROBJECT(vmThread, vmThread, NULL);
 		omrthread_monitor_unpin(monitor, vmThread->osThread);
 #if JAVA_SPEC_VERSION >= 24
-		objectMonitor->platformThreadWaitCount -= 1;
+		VM_AtomicSupport::subtractU32(&objectMonitor->platformThreadWaitCount, 1);
 #endif /* JAVA_SPEC_VERSION >= 24 */
 		TRIGGER_J9HOOK_VM_MONITOR_WAITED(javaVM->hookInterface, vmThread, monitor, millis, nanos, rc, startTicks, (UDATA) monitor, VM_VMHelpers::currentClass(monitorClass));
 
