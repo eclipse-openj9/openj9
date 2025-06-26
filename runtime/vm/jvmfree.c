@@ -452,34 +452,13 @@ cleanUpClassLoader(J9VMThread *vmThread, J9ClassLoader* classLoader)
 		classLoader->romClassOrphansHashTable = NULL;
 	}
 
-	if (classLoader == javaVM->systemClassLoader) {
-		if (NULL != classLoader->classPathEntries) {
-			PORT_ACCESS_FROM_VMC(vmThread);
-			/* Free the class path entries  in system class loader */
-			freeClassLoaderEntries(vmThread, classLoader->classPathEntries, classLoader->classPathEntryCount, classLoader->initClassPathEntryCount);
-#if defined(J9VM_OPT_SNAPSHOTS)
-			VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM);
-			if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
-				vmsnapshot_free_memory(classLoader->classPathEntries);
-			} else
-#endif /* defined(J9VM_OPT_SNAPSHOTS) */
-			{
-				j9mem_free_memory(classLoader->classPathEntries);
-			}
-			classLoader->classPathEntryCount = 0;
-			classLoader->classPathEntries = NULL;
-			if (NULL != classLoader->cpEntriesMutex) {
-				j9thread_rwmutex_destroy(classLoader->cpEntriesMutex);
-				classLoader->cpEntriesMutex = NULL;
-			}
-		}
-	} else {
-		/* Free the class path entries in non-system class loaders.
-		 * classLoader->classPathEntries is set to NULL inside freeSharedCacheCLEntries().
-		 */
-		if (NULL != classLoader->classPathEntries) {
-			freeSharedCacheCLEntries(vmThread, classLoader);
-		}
+	/* Free the class path entries. Note that because classLoader is getting unloaded,
+	 * we know that it isn't the system class loader.
+	 *
+	 * classLoader->classPathEntries is set to NULL inside freeSharedCacheCLEntries().
+	 */
+	if (NULL != classLoader->classPathEntries) {
+		freeSharedCacheCLEntries(vmThread, classLoader);
 	}
 
 	Trc_VM_cleanUpClassLoaders_Exit(vmThread);
