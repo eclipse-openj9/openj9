@@ -28,6 +28,9 @@
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
+#if defined(ZOS)
+#include <unistd.h>
+#endif /* defined(ZOS) */
 
 #include "jvmti.h"
 #include "ibmjvmti.h"
