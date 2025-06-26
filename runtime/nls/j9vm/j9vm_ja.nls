@@ -2448,3 +2448,55 @@ J9NLS_VM_JAVA_COMPILER_WARNING_XINT.explanation=The java.compiler system propert
 J9NLS_VM_JAVA_COMPILER_WARNING_XINT.system_action=Setting the java.compiler system property is ignored.
 J9NLS_VM_JAVA_COMPILER_WARNING_XINT.user_response=Use the -Xint option to disable the JIT.
 # END NON-TRANSLATABLE
+
+# Java 8 message for an IllegalAccessError when the class or interface can't access its super class or interface.
+# argument 1 is "class" or "interface"
+# arguments 2 and 3 are the class or interface name
+# arguments 4 and 5 are the classloader name of the class or interface
+# argument 6 is "superclass" or "superinterface"
+# arguments 7 and 8 are the super class or interface name
+# arguments 9 and 10 are the classloader name of the super class or interface
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8=%1$s %3$.*2$s (from loader %5$.*4$s ) \u306f\u3001\u305d\u306e %6$s %8$.*7$s (from loader %10$.*9$s ) \u306b\u30a2\u30af\u30bb\u30b9\u3067\u304d\u306a\u3044
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_1=class
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_2=59
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_3=org/openj9/test/illegalAccessError/ExtendsDefaultVisibility
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_4=23
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_5=java/net/URLClassLoader
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_6=superclass
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_7=52
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_8=org/openj9/test/illegalAccessError/DefaultVisibility
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_9=47
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_10=jdk/internal/loader/ClassLoaders$AppClassLoader
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.explanation=The specified class or interface is not visible
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.system_action=The JVM will throw an IllegalAccessError.
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Java 11+ message for an IllegalAccessError when the class or interface can't access its super class or interface.
+# argument 1 is "class" or "interface"
+# arguments 2 and 3 are the class or interface name
+# argument 4 is the module name of the class or interface
+# arguments 5 and 6 are the classloader name of the class or interface
+# argument 7 is "superclass" or "superinterface"
+# arguments 8 and 9 are the super class or interface name
+# argument 10 is the module name of the super class or interface
+# arguments 11 and 12 are the classloader name of the super class or interface
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS=%1$s %3$.*2$s (in %4$s from loader %6$.*5$s ) cannot access its %7$s %9$.*8$s (in %10$s from loader %12$.*11$s )
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.sample_input_1=class
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.sample_input_2=59
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.sample_input_3=org/openj9/test/illegalAccessError/ExtendsDefaultVisibility
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.sample_input_4=unnamed module 0x0000000000000000
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.sample_input_5=23
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.sample_input_6=java/net/URLClassLoader
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.sample_input_7=superclass
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.sample_input_8=52
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.sample_input_9=org/openj9/test/illegalAccessError/DefaultVisibility
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.sample_input_10=unnamed module 0x0000000000000000
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.sample_input_11=47
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.sample_input_12=jdk/internal/loader/ClassLoaders$AppClassLoader
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.explanation=The specified class or interface is not visible
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.system_action=The JVM will throw an IllegalAccessError.
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
