@@ -29,6 +29,10 @@ if(OMR_TOOLCONFIG STREQUAL "msvc")
 	omr_append_flags(CMAKE_ASM_MASM_FLAGS /W2)
 endif()
 
+# Remove -qsourcetype=assembler which doesn't appear to work with OpenXL.
+if(CMAKE_C_COMPILER_IS_XLCLANG)
+	omr_remove_flags(CMAKE_ASM_FLAGS -qsourcetype=assembler)
+endif()
 
 j9vm_add_library(ffi STATIC
 	closures.c
