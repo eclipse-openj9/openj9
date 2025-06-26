@@ -3031,13 +3031,14 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          if (auto deserializer = compInfo->getJITServerAOTDeserializer())
             {
             bool wasReset = false;
-            deserializer->cacheRecords((const uint8_t *)recordsStr.data(), recordsStr.size(), comp,
+            auto context = DeserializerContext(comp);
+            deserializer->cacheRecords((const uint8_t *)recordsStr.data(), recordsStr.size(), context,
                                        /*ignoreFailures=*/true, wasReset);
             if (!wasReset)
                {
                for (uintptr_t id : classIds)
                   {
-                  J9Class *ramClass = deserializer->getRAMClass(id, comp, wasReset);
+                  J9Class *ramClass = deserializer->getRAMClass(id, context, wasReset);
                   if (wasReset)
                      {
                      ramClasses.clear();
@@ -3446,7 +3447,8 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
    // 2. Accesses the JITServer AOT deserializer in any way.
    // That moment is currently right here, when we get the new known IDs that are cached in the deserializer.
    compInfoPT->getJ9VM()->clearDeserializerWasReset();
-   std::vector<uintptr_t> newKnownIds = deserializer ? deserializer->getNewKnownIds(compiler) : std::vector<uintptr_t>();
+   auto context = DeserializerContext(compiler);
+   std::vector<uintptr_t> newKnownIds = deserializer ? deserializer->getNewKnownIds(context) : std::vector<uintptr_t>();
 
    // TODO: make this a synchronized region to avoid bad_alloc exceptions
    compInfo->getSequencingMonitor()->enter();
@@ -3564,7 +3566,8 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
 
          auto method = SerializedAOTMethod::get(methodStr);
          bool usesSVM = false;
-         if (deserializer->deserialize(method, records, compiler, usesSVM))
+         auto context = DeserializerContext(compiler);
+         if (deserializer->deserialize(method, records, context, usesSVM))
             {
             compiler->setDeserializedAOTMethodStore(true);
             compiler->setDeserializedAOTMethod(true);
@@ -3598,7 +3601,8 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
 
          auto method = SerializedAOTMethod::get(methodStr);
          bool usesSVM = false;
-         if (deserializer->deserialize(method, records, compiler, usesSVM))
+         auto context = DeserializerContext(compiler);
+         if (deserializer->deserialize(method, records, context, usesSVM))
             {
             compiler->setDeserializedAOTMethod(true);
             compiler->setDeserializedAOTMethodUsingSVM(usesSVM);
