@@ -40,25 +40,11 @@ J9Class *
 GC_ClassHeapIterator::nextClass() 
 {
 	J9Class *currentScanPtr;
-#if defined(J9VM_OPT_FRAGMENT_RAM_CLASSES)
 	if(_scanPtr != NULL) {
 		currentScanPtr = _scanPtr;
 		_scanPtr = _scanPtr->nextClassInSegment;
 		return currentScanPtr;
 	}
-#else
-	if(_scanPtr < (J9Class *)_memorySegment->heapAlloc) {
-#if defined(J9VM_INTERP_NATIVE_SUPPORT)
-		/* Skip the JIT VTable if there is one */
-		if(_vm->jitConfig) {
-			_scanPtr = (J9Class *)( ((UDATA)_scanPtr) + *((UDATA *)_scanPtr) );
-		}
-#endif
-		currentScanPtr = _scanPtr;
-		_scanPtr = (J9Class *)( ((UDATA)_scanPtr) + GC_ClassModel::getSizeInBytes(_scanPtr) );
-		return currentScanPtr;
-	}
-#endif
 	return NULL;
 }
 

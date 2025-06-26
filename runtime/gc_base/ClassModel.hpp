@@ -42,28 +42,6 @@
 class GC_ClassModel
 {
 public:
-#if !defined(J9VM_OPT_FRAGMENT_RAM_CLASSES)
-	/**
-	 * Returns the size of a class, in bytes.
-	 * @param clazzPtr Pointer to the class whose size is required
-	 * @return Size of class in bytes
-	 */
-	MMINLINE static UDATA getSizeInBytes(J9Class *clazzPtr)
-	{
-		return clazzPtr->size;
-	}
-
-	/**
-	 * Returns the size of a class, in slots.
-	 * @param clazzPtr Pointer to the class whose size is required
-	 * @return Size of class in slots
-	 */	
-	MMINLINE static UDATA getSizeInSlots(J9Class *clazzPtr)
-	{
-		return MM_Bits::convertBytesToSlots(getSizeInBytes(clazzPtr));
-	}
-#endif
-
 	/**
 	 * Returns the depth of a class.
 	 * @param clazzPtr Pointer to the class whose depth is required

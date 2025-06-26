@@ -44,11 +44,7 @@ class GC_ClassHeapIterator
 
 public:
 	GC_ClassHeapIterator(J9JavaVM *javaVM, J9MemorySegment *memorySegment) :
-#if defined(J9VM_OPT_FRAGMENT_RAM_CLASSES)
 		_scanPtr(*((J9Class **)memorySegment->heapBase))
-#else
-		_scanPtr(memorySegment->heapBase)
-#endif
 	{};
 
 	J9Class *nextClass();
