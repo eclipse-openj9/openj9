@@ -1059,8 +1059,29 @@ triggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags
 		if (dumpTaken == 1) {
 			/* Release accumulated locks */
 			state = unwindAfterDump(vm, &context, state);
+
 			if (printed == 1) {
-				j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_PROCESSED_EVENT_STR, mapDumpEvent(eventFlags), detailLength, detailData);
+				OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+				int64_t end = j9time_current_time_millis();
+				int64_t duration = end - now;
+				char dateStamp[64];
+
+				omrstr_ftime_ex(
+						dateStamp,
+						sizeof(dateStamp),
+						"%Y/%m/%d %H:%M:%S",
+						end,
+						OMRSTR_FTIME_FLAG_LOCAL);
+				j9nls_printf(
+						PORTLIB,
+						J9NLS_INFO | J9NLS_STDERR,
+						J9NLS_DMP_PROCESSED_EVENT_TIME,
+						mapDumpEvent(eventFlags),
+						detailLength,
+						detailData,
+						dateStamp,
+						duration / 1000,
+						duration % 1000);
 			}
 		}
 
