@@ -83,16 +83,16 @@ J9::ARM64::CodeGenerator::initialize()
       {
       cg->setSupportsInlineVectorizedMismatch();
       }
-   if ((!TR::Compiler->om.canGenerateArraylets()) && (!comp->getOption(TR_DisableSIMDStringHashCode)) && !TR::Compiler->om.isOffHeapAllocationEnabled())
+   if ((!TR::Compiler->om.canGenerateArraylets()) && (!comp->getOption(TR_DisableSIMDStringHashCode)))
       {
       cg->setSupportsInlineStringHashCode();
       }
-   if ((!TR::Compiler->om.canGenerateArraylets()) && (!comp->getOption(TR_DisableFastStringIndexOf)) && !TR::Compiler->om.isOffHeapAllocationEnabled())
+   if ((!TR::Compiler->om.canGenerateArraylets()) && (!comp->getOption(TR_DisableFastStringIndexOf)))
       {
       cg->setSupportsInlineStringIndexOf();
       }
    static bool disableInlineStringLatin1Inflate = feGetEnv("TR_disableInlineStringLatin1Inflate") != NULL;
-   if ((!TR::Compiler->om.canGenerateArraylets()) && (!disableInlineStringLatin1Inflate) && !TR::Compiler->om.isOffHeapAllocationEnabled())
+   if ((!TR::Compiler->om.canGenerateArraylets()) && (!disableInlineStringLatin1Inflate))
       {
       cg->setSupportsInlineStringLatin1Inflate();
       }
