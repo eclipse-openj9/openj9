@@ -441,8 +441,8 @@ static_assert((LITERAL_STRLEN(J9_UNMODIFIABLE_CLASS_ANNOTATION) < (size_t)'/'), 
 #define J9VM_SEND_VIRTUAL_UNBLOCKER_THREAD_SIGNAL(vm) \
 		do {															\
 			omrthread_monitor_enter((vm)->blockedVirtualThreadsMutex); 	\
-			omrthread_monitor_notify((vm)->blockedVirtualThreadsMutex);	\
 			(vm)->pendingBlockedVirtualThreadsNotify = TRUE; 			\
+			omrthread_monitor_notify((vm)->blockedVirtualThreadsMutex);	\
 			omrthread_monitor_exit((vm)->blockedVirtualThreadsMutex);	\
 		} while (0)
 
