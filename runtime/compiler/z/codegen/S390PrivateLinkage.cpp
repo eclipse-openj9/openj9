@@ -54,6 +54,11 @@
 #include "runtime/J9ValueProfiler.hpp"
 
 #define MIN_PROFILED_CALL_FREQUENCY (.075f)
+#define MAX_IMPLEMENTERS_TO_EVALUATE 30
+#define MIN_ITABLE_ITERATIONS 1
+#define MAX_ITABLE_ITERATIONS 4
+#define iComment(str) if (debugObj) debugObj->addInstructionComment(cursor, (const_cast<char*>(str)));
+#define ITABLE_DYNAMIC_LOOP_THRESHOLD 2
 
 ////////////////////////////////////////////////////////////////////////////////
 // J9::Z::PrivateLinkage for J9
@@ -1526,6 +1531,227 @@ J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
 
    }
 
+static int32_t
+getITableIterationsNumber(TR::Compilation * comp, TR::SymbolReference * methodSymRef, TR_OpaqueClassBlock *declaringClass)
+   {
+   int32_t iterations = MAX_ITABLE_ITERATIONS;
+
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
+   bool trace = comp->getOption(TR_TraceCG);
+   static bool disableITableIterationsAfterLastITableCacheCheck = feGetEnv("TR_DisableITableIterationsAfterLastITableCacheCheck") != NULL;
+
+   if (disableITableIterationsAfterLastITableCacheCheck)
+      {
+      if (trace)
+         traceMsg(comp, "ITable iteration after lastITable check is disabled.\n");
+      return 0;
+      }
+   // Set a fix number between 1 and 32767 (int16_MAX) of iterations. Check all iTableEntries if a number larger than 32767 is provided.
+   static char *numITableIterationsAfterLastITableCacheCheck = feGetEnv("TR_NumITableIterationsAfterLastITableCacheCheck");
+   if (numITableIterationsAfterLastITableCacheCheck)
+      {
+      iterations = atoi(numITableIterationsAfterLastITableCacheCheck);
+      if (trace)
+         traceMsg(comp, "ITable iteration is %d because TR_NumITableIterationsAfterLastITableCacheCheck was set.\n", iterations);
+      return iterations;
+      }
+
+   if (!comp->getOption(TR_DisableCHOpts))
+      {
+      TR_ResolvedMethod **implArray = new (comp->trStackMemory()) TR_ResolvedMethod*[MAX_IMPLEMENTERS_TO_EVALUATE+1];
+      TR_PersistentCHTable *chTable = comp->getPersistentInfo()->getPersistentCHTable();
+      int32_t cpIndex = methodSymRef->getCPIndex();
+      // Find out how many implementers are for the declaring interface class.
+      int32_t numImplementers = chTable->findnInterfaceImplementers(declaringClass, MAX_IMPLEMENTERS_TO_EVALUATE, implArray, cpIndex, methodSymRef->getOwningMethod(comp), comp);
+      if ((numImplementers != 0) && (numImplementers <= MAX_IMPLEMENTERS_TO_EVALUATE))
+         {
+         // Find out how many interfaces each implementer implements
+         int32_t maxInterfaces = MIN_ITABLE_ITERATIONS;
+
+         for (int32_t i=0; i < numImplementers; ++i)
+            {
+            TR_OpaqueClassBlock *containingClass = implArray[i]->containingClass();
+            int32_t numInterfaces = fej9->numInterfacesImplemented((J9Class *)containingClass);
+            maxInterfaces = (numInterfaces > maxInterfaces) ? numInterfaces : maxInterfaces;
+            }
+
+         iterations = (maxInterfaces > MAX_ITABLE_ITERATIONS) ? MAX_ITABLE_ITERATIONS : maxInterfaces;
+
+         if (trace)
+            traceMsg(comp, "ITable declaringClass %p numImplementers %d maxInterfaces %d iterations %d\n", declaringClass, numImplementers, maxInterfaces, iterations);
+         }
+      }
+   else if (trace)
+      traceMsg(comp, "ITable iteration is the default value of %d.\n", iterations);
+   return iterations;
+   }
+
+TR::Instruction *
+generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callNode, TR::Register * vftReg,
+   TR::Register * entryPointRegister, TR::Register * vTableIndexRegister, TR_S390ScratchRegisterManager *srm, TR::Instruction * cursor)
+   {
+   TR::Compilation * comp = cg->comp();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
+   uintptr_t itableIndex;
+   TR_OpaqueClassBlock *declaringClass = NULL;
+   TR_Debug * debugObj = cg->getDebug();
+   TR::SymbolReference * methodSymRef = callNode->getSymbolReference();
+
+   static bool enableLastITableCache = feGetEnv("TR_interfaceDispatchUsingLastITable") != NULL;
+
+   if ( enableLastITableCache && (declaringClass = methodSymRef->getOwningMethod(comp)->getResolvedInterfaceMethod(methodSymRef->getCPIndex(), &itableIndex))
+      && performTransformation(comp, "O^O useLastITableCache for n%dn itableIndex=%d\n",
+            callNode->getGlobalIndex(), (int)itableIndex))
+      {
+      TR::LabelSymbol * noMatchLabel = generateLabelSymbol(cg);
+      TR::LabelSymbol * matchLabel = generateLabelSymbol(cg);
+
+      int32_t iTableIterations = getITableIterationsNumber(comp, methodSymRef, declaringClass);
+      // if the iteration is larger than 0x7fff, check all entries without counting.
+      bool checkAllITableEnrties = iTableIterations > INT16_MAX;
+      bool checkLimitedNumberOfITableEntries = !checkAllITableEnrties && iTableIterations > ITABLE_DYNAMIC_LOOP_THRESHOLD;
+      bool checkITableEntries = iTableIterations > 0;
+
+      static bool breakBeforeIPICUsingLastITable = feGetEnv("TR_breakBeforeIPICUsingLastITable") != NULL;
+      if (breakBeforeIPICUsingLastITable)
+         cursor = generateS390EInstruction(cg, TR::InstOpCode::BREAK, callNode, cursor);
+
+
+      /********* Step 1: Check if LastITable is the target interface. *********/
+      // Load the declaringClass on the vTableIndexRegister.
+      cursor = genLoadAddressConstant(cg, callNode, (int64_t)declaringClass, vTableIndexRegister, cursor);
+      iComment("Loading resolved interface method.")
+      // Creating a pointer to the LastITable of the current vft.
+      cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), callNode, entryPointRegister,
+         generateS390MemoryReference(vftReg, (int32_t)fej9->getOffsetOfLastITableFromClassField(), cg),
+         cursor);
+      iComment("Loading lastITable.")
+      // Compare the declaringClass with the LastItable->J9Class.
+      cursor = generateRXInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), callNode, vTableIndexRegister,
+         generateS390MemoryReference(entryPointRegister, fej9->getOffsetOfInterfaceClassFromITableField(), cg),
+         cursor);
+      // If not matching, jump over dispatch instaructions.
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, callNode, noMatchLabel, cursor);
+      iComment("Exit if not match.")
+
+
+      /********* Step 2: Dispatch to the method implementation. *********/
+      if (checkITableEntries)
+         cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, callNode, matchLabel, cursor);
+      // Calculating vTableIndex value. vTableIndexRegister must have the vTableIndex value when dispatching.
+      cursor = generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode() , callNode, vTableIndexRegister, fej9->getITableEntryJitVTableOffset(), cursor);
+      iComment("Start calculating entry point.")
+      cursor = generateRXInstruction(cg, TR::InstOpCode::getSubstractOpCode(), callNode, vTableIndexRegister,
+                               generateS390MemoryReference(entryPointRegister, fej9->convertITableIndexToOffset(itableIndex), cg), cursor);
+      // vTableIndexRegister is R0 so we can not use it in a memory reference. Copy the value to entryPointRegister, to use in memory reference.
+      cursor = generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), callNode, entryPointRegister, vTableIndexRegister, cursor);
+
+      // Jump to the entry point. Return address register already has the correct value.
+      cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), callNode, entryPointRegister,
+         generateS390MemoryReference(entryPointRegister, vftReg, 0, cg),
+         cursor);
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BCR, callNode, TR::InstOpCode::COND_B, entryPointRegister, cursor);
+      iComment("Branch to entry point.")
+
+
+      /********* Step 3: Check iTable entries. *********/
+      if (checkITableEntries)
+         {
+         TR::LabelSymbol * exitLabel = generateLabelSymbol(cg);
+         TR_S390OutOfLineCodeSection *outlinedITableCheckSequence = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(noMatchLabel, exitLabel, cg);
+         cg->getS390OutOfLineCodeSectionList().push_front(outlinedITableCheckSequence);
+         outlinedITableCheckSequence->swapInstructionListsWithCompilation();
+         TR::Register * loopCountRegister = NULL;
+         cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, callNode, noMatchLabel);
+         iComment("Start comparing interface with iTable entries.")
+         if (checkLimitedNumberOfITableEntries)
+            {
+            // Load the limit to the loop count register.
+            loopCountRegister = srm->findOrCreateScratchRegister();
+            cursor = generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode() , callNode, loopCountRegister, iTableIterations, cursor);
+            }
+
+         if (checkAllITableEnrties || checkLimitedNumberOfITableEntries)
+            {
+            // Use a loop to check all or first few iTable entries.
+            const int16_t initialOffsetFromVft = (int16_t)(offsetof(J9Class, iTable) - offsetof(J9ITable, next));
+            TR::LabelSymbol * loopTopLabel = generateLabelSymbol(cg);
+            if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
+               {
+               cursor = generateRIEInstruction(cg, TR::InstOpCode::getAddHalfWordImmDistinctOperandOpCode(), callNode, entryPointRegister, vftReg, initialOffsetFromVft, cursor);
+               }
+            else
+               {
+               cursor = generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), callNode, entryPointRegister, vftReg, cursor);
+               cursor = generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), callNode, entryPointRegister, initialOffsetFromVft, cursor);
+               }
+            // Start of the loop.
+            cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, callNode, loopTopLabel, cursor);
+            cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), callNode, entryPointRegister,
+               generateS390MemoryReference(entryPointRegister, offsetof(J9ITable, next), cg),
+               cursor);
+            // Exit if the value is NULL.
+            cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, callNode, exitLabel, cursor);
+            iComment("Exit if null.")
+            // Compare the class with the target interface and jump to the dispatch sequence if match.
+            // vTableIndexRegister contains the value of the target interface.
+            cursor = generateRXInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), callNode, vTableIndexRegister,
+               generateS390MemoryReference(entryPointRegister, fej9->getOffsetOfInterfaceClassFromITableField(), cg),
+               cursor);
+            cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, callNode, matchLabel, cursor);
+            iComment("Branch if match.")
+            if (checkAllITableEnrties)
+               {
+               // Check the next entry. It will exit the loop at the last entry because the "next"  pointer will be null.
+               cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_B, callNode, loopTopLabel, cursor);
+               iComment("Check next entry.")
+               }
+            else
+               {
+               // Check the next entry for "iTableIterations" time or until the last entry.
+               cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRCT, callNode, loopCountRegister, loopTopLabel, cursor);
+               iComment("Check next entry.")
+               srm->reclaimScratchRegister(loopCountRegister);
+               }
+            }
+         else
+            {
+            for (int32_t i = 0; i < iTableIterations; i++)
+               {
+                  TR::MemoryReference * iTablePointerReference;
+                  if (i == 0)
+                     iTablePointerReference = generateS390MemoryReference(vftReg, offsetof(J9Class, iTable), cg);
+                  else
+                     iTablePointerReference = generateS390MemoryReference(entryPointRegister, offsetof(J9ITable, next), cg);
+
+                  cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), callNode, entryPointRegister, iTablePointerReference, cursor);
+                  // Exit if the value is NULL.
+                  cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, callNode, exitLabel, cursor);
+                  iComment("Exit if null.")
+                  cursor = generateRXInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), callNode, vTableIndexRegister,
+                     generateS390MemoryReference(entryPointRegister, fej9->getOffsetOfInterfaceClassFromITableField(), cg),
+                     cursor);
+                  // Compare the class with the target interface and jump to the dispatch sequence if match.
+                  // vTableIndexRegister contains the value of the target interface.
+                  cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, callNode, matchLabel, cursor);
+                  iComment("Branch if match.")
+               }
+            }
+         // End of OOL.
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_B, callNode, exitLabel, cursor);
+         iComment("Back to main line.")
+         outlinedITableCheckSequence->swapInstructionListsWithCompilation();
+         // No iTable entry matches the target interface. Exit the sequence.
+         cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, callNode, exitLabel);
+         }
+      else
+         {
+         cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, callNode, noMatchLabel, cursor);
+         }
+      }
+   return cursor;
+   }
+
 ////////////////////////////////////////////////////////////////////////////////
 // J9::Z::PrivateLinkage::buildVirtualDispatch - build virtual function call
 ////////////////////////////////////////////////////////////////////////////////
@@ -1938,10 +2164,11 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
    else if (methodSymbol->isInterface())
       {
       int32_t i=0;
-      TR::Register * thisClassRegister;
-      TR::Register * methodRegister ;
       TR::RegisterPair * classMethodEPPairRegister;
       int32_t numInterfaceCallCacheSlots =  comp()->getOptions()->getNumInterfaceCallCacheSlots();
+      TR::Register * vTableIndexRegister = getVTableIndexArgumentRegisterRealRegister();
+      TR::Register * RegEP = dependencies->searchPostConditionRegister(getEntryPointRegister());
+      TR_S390ScratchRegisterManager *srm = cg()->generateScratchRegisterManager(1);
 
       if (comp()->getOption(TR_disableInterfaceCallCaching))
          {
@@ -2023,26 +2250,45 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
       if (numInterfaceCallCacheSlots == 0 )
          {
          //Disabled interface call caching
+         TR::Instruction * cursor = NULL;
          TR::LabelSymbol * hitLabel = generateLabelSymbol(cg());
          TR::LabelSymbol * snippetLabel = generateLabelSymbol(cg());
+         TR::LabelSymbol * returnLocationLabel = generateLabelSymbol(cg());
+         TR::LabelSymbol * paramSetupDummyLabel = generateLabelSymbol(cg());
+         TR::Register * RegRA = dependencies->searchPostConditionRegister(getReturnAddressRegister());
 
-         // Make a copy of input deps, but add on 3 new slots.
-         TR::RegisterDependencyConditions * postDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(dependencies, 0, 3, cg());
-         postDeps->setAddCursorForPre(0);        // Ignore all pre-deps that were copied.
+         // We split dependencies to make sure the RA doesn't insert any register motion code in the fixed
+         // block sequence and to only enforce parameter setup on head of block.
+         TR::RegisterDependencyConditions * preDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(
+            dependencies->getPreConditions(), NULL, dependencies->getAddCursorForPre(), 0, cg());
+
+         // Make a copy of input deps, but add on 2 new slots.
+         TR::RegisterDependencyConditions * postDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(dependencies, 0, 2, cg());
+         postDeps->setAddCursorForPre(0);                     // Ignore all pre-deps that were copied.
          postDeps->setNumPreConditions(0, trMemory());        // Ignore all pre-deps that were copied.
 
-         gcPoint = generateSnippetCall(cg(), callNode, ifcSnippet, dependencies,methodSymRef);
+         // Add this reg to post deps to ensure no reg motion
+         postDeps->addPostConditionIfNotAlreadyInserted(vftReg,  TR::RealRegister::AssignAny);
 
-         // NOP is necessary so that the VM doesn't confuse Virtual Dispatch (expected to always use BASR
-         // with interface dispatch (which must guarantee that RA-2 != 0x0D ie. BASR)
-         //
-         TR::Instruction * cursor = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, callNode, cg());
+         cursor = generateRILInstruction(cg(), TR::InstOpCode::LARL, callNode, RegRA, returnLocationLabel, cursor);
 
-         // Fool the snippet into setting up the return address to be after the NOP
-         //
+         // We need a dummy label to hook dependencies.
+         cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::label, callNode, paramSetupDummyLabel, preDeps, cursor);
+
+         cursor = generateLastITableAndITableInstructions(cg(), callNode, vftReg, RegEP, vTableIndexRegister, srm, cursor);
+
+         cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, RegEP, ifcSnippet, cursor, cg());
+
+         cursor = generateS390RegInstruction(cg(), TR::InstOpCode::BCR, callNode, RegEP, cursor);
+         ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BCR);
+
+         // Added NOP so that the pattern matching code in jit2itrg icallVMprJavaSendPatchupVirtual
+         cursor = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, callNode, cg());
          gcPoint = cursor;
          ((TR::S390CallSnippet *) ifcSnippet)->setBranchInstruction(gcPoint);
-         cursor->setDependencyConditions(postDeps);
+         srm->addScratchRegistersToDependencyList(postDeps);
+
+         cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::label, callNode, returnLocationLabel, postDeps);
          }
       else
          {
@@ -2050,19 +2296,16 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          TR::LabelSymbol * paramSetupDummyLabel = generateLabelSymbol(cg());
          TR::LabelSymbol * returnLocationLabel = generateLabelSymbol(cg());
          TR::LabelSymbol * cacheFailLabel = generateLabelSymbol(cg());
-
-         TR::Register * RegEP = dependencies->searchPostConditionRegister(getEntryPointRegister());
          TR::Register * RegRA = dependencies->searchPostConditionRegister(getReturnAddressRegister());
          TR::Register * RegThis = dependencies->searchPreConditionRegister(TR::RealRegister::GPR1);
          TR::Register * snippetReg = RegEP;
-
 
          // We split dependencies to make sure the RA doesn't insert any register motion code in the fixed
          // block sequence and to only enforce parameter setup on head of block.
          TR::RegisterDependencyConditions * preDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(
             dependencies->getPreConditions(), NULL, dependencies->getAddCursorForPre(), 0, cg());
 
-         // Make a copy of input deps, but add on 3 new slots.
+         // Make a copy of input deps, but add on 5 new slots.
          TR::RegisterDependencyConditions * postDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(dependencies, 0, 5, cg());
          postDeps->setAddCursorForPre(0);        // Ignore all pre-deps that were copied.
          postDeps->setNumPreConditions(0, trMemory());        // Ignore all pre-deps that were copied.
@@ -2111,7 +2354,12 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
             cursor = generateS390RegInstruction(cg(), TR::InstOpCode::BCR, callNode, methodRegister, cursor);
             ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BER);
 
-            cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, snippetReg, ifcSnippet,cursor, cg());
+            // methodRegister is free now so donate it to srm to reduce register pressure.
+            srm->donateScratchRegister(methodRegister);
+            // Add instructions for LastITable and ITable check.
+            cursor = generateLastITableAndITableInstructions(cg(), callNode, vftReg, snippetReg, vTableIndexRegister, srm, cursor);
+
+            cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, RegEP, ifcSnippet,cursor, cg());
 
             // Cache miss... Too bad.. go to the slow path through the interface call snippet
             cursor = generateS390RegInstruction(cg(), TR::InstOpCode::BCR, callNode, snippetReg, cursor);
@@ -2130,7 +2378,6 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
             if (!useCLFIandBRCL)
                {
                cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, snippetReg, ifcSnippet->getDataConstantSnippet(), cg());
-               methodRegister = cg()->allocateRegister();
                }
             else
                {
@@ -2192,15 +2439,21 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
                         generateS390MemoryReference(snippetReg, slotOffset, cg()), cursor);
 
                   //load cached methodEP from current cache slot
+                  TR::Register * methodRegister = srm->findOrCreateScratchRegister();
                   cursor = generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode, methodRegister,
                         generateS390MemoryReference(snippetReg, slotOffset+TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
 
                   cursor = generateS390RegInstruction(cg(), TR::InstOpCode::BCR, callNode, methodRegister, cursor);
                   ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BER);
 
+                  srm->reclaimScratchRegister(methodRegister);
+
                   slotOffset += 2*TR::Compiler->om.sizeofReferenceAddress();
                   }
                }
+
+            // Add instructions for LastITable and ITable check.
+            cursor = generateLastITableAndITableInstructions(cg(), callNode, vftReg, RegEP, vTableIndexRegister, srm, cursor);
 
             cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, snippetReg, ifcSnippet,cursor, cg());
 
@@ -2213,11 +2466,8 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
 
             // Added NOP so that the pattern matching code in jit2itrg icallVMprJavaSendPatchupVirtual
             cursor = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, callNode, cg());
-
-            if (!useCLFIandBRCL)
-              postDeps->addPostCondition(methodRegister, TR::RealRegister::AssignAny);
+            srm->addScratchRegistersToDependencyList(postDeps);
             }
-
          gcPoint = cursor;
          ((TR::S390CallSnippet *) ifcSnippet)->setBranchInstruction(gcPoint);
 
@@ -2227,12 +2477,8 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
             {
             cg()->stopUsingRegister(classMethodEPPairRegister);
             }
-         else
-            {
-            if (!useCLFIandBRCL)
-               cg()->stopUsingRegister(methodRegister);
-            }
          }
+      srm->stopUsingRegisters();
       }
    else if (methodSymbol->isComputed())
       {
