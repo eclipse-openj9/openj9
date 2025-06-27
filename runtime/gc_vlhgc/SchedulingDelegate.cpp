@@ -1362,13 +1362,18 @@ MM_SchedulingDelegate::calculateEdenSize(MM_EnvironmentVLHGC *env)
 	 * Note: the eden sizing logic knows how much free memory is available in the heap, and knows to not grow too much.
 	 * eden size can not be bigger than free region size.
 	 */
-	maxEdenChange = freeRegions - _edenRegionCount;
+	if (freeRegions < _edenRegionCount) {
+		maxEdenChange = freeRegions - _edenRegionCount;
+	}
 
 	if (0 == maxHeapExpansionRegions) {
 		_extensions->globalVLHGCStats._heapSizingData.edenRegionChange = 0;
 	} else {
 		/* Eden will inform the total heap resizing logic, that it needs to change total heap size in order to maintain same "tenure" size */
-		maxEdenChange += maxHeapExpansionRegions;
+		if (maxEdenChange > maxHeapExpansionRegions) {
+			maxEdenChange = maxHeapExpansionRegions;
+		}
+
 		intptr_t edenChangeWithSurvivorHeadroom = desiredEdenChangeSize;
 
 		/* Total heap needs to be aware that by changing eden size, the amount of survivor space might also need to change */
@@ -1385,7 +1390,7 @@ MM_SchedulingDelegate::calculateEdenSize(MM_EnvironmentVLHGC *env)
 
 	desiredEdenChangeSize = OMR_MIN(maxEdenChange, desiredEdenChangeSize);
 
-	_edenRegionCount = (uintptr_t)OMR_MAX(1, ((intptr_t)_edenRegionCount + desiredEdenChangeSize));
+	_edenRegionCount = (uintptr_t)OMR_MAX(0, ((intptr_t)_edenRegionCount + desiredEdenChangeSize));
 
 	Trc_MM_SchedulingDelegate_calculateEdenSize_Exit(env->getLanguageVMThread(), (_edenRegionCount * regionSize));
 }
