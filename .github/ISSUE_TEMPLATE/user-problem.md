@@ -37,7 +37,7 @@ JVMDUMP032I JVM requested Snap dump using '/home/jenkins/cmdLineTest_gpTest_0/Sn
 JVMDUMP010I Snap dump written to /home/jenkins/cmdLineTest_gpTest_0/Snap.20190304.015802.21708.0003.trc
 JVMDUMP007I JVM Requesting JIT dump using '/home/jenkins/cmdLineTest_gpTest_0/jitdump.20190304.015802.21708.0004.dmp'
 JVMDUMP010I JIT dump written to /home/jenkins/cmdLineTest_gpTest_0/jitdump.20190304.015802.21708.0004.dmp
-JVMDUMP013I Processed dump event "abort", detail "".
+JVMDUMP056I Processed dump event "abort", detail "" at 2019/03/04 01:58:03 (1.374 seconds).
 ```
 
 OutOfMemoryError: Java Heap Space

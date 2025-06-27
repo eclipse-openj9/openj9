@@ -83,7 +83,7 @@
 	
 	The string 'corrupt' is checked because it can appear several messages like below.
 		JVMSHRC443E Cache CRC is incorrect indicating a corrupt cache. Incorrect cache CRC: 0x0.
-		JVMDUMP013I Processed dump event "corruptcache", detail "".
+		JVMDUMP056I Processed dump event "corruptcache", detail "" at yyyy/mm/dd HH:MM:SS.
 		JVMSHRC442E Shared cache "jim" is corrupt. Corruption code is -1. Corrupt value is 0x0. No new JVMs will be allowed to connect to the cache.
 	-->
 		

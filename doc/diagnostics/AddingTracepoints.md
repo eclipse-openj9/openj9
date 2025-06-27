@@ -385,14 +385,14 @@ Example of an assert tracepoint firing, in this case GC assert j9mm.107:
 ```
 09:41:07.450 0x40600700 j9mm.107 ** ASSERTION FAILED ** at ../gc_modron_base/HeapRegionManager.hpp:233:
                  ((false && (heapAddress < (void *)((UDATA)(this)->_highTableEdge))))
-JVMDUMP006I Processing dump event "traceassert", detail "" - please wait.
-JVMDUMP032I JVM requested System dump using 'core.20110329.054107.4797.0001.dmp' in response to an event
-JVMDUMP010I System dump written to core.20110329.054107.4797.0001.dmp
+JVMDUMP039I Processing dump event "traceassert", detail "" at 2025/06/27 10:43:24 - please wait.
+JVMDUMP032I JVM requested System dump using 'core.20250627.104324.612361.0001.dmp' in response to an event
+JVMDUMP010I System dump written to core.20250627.104324.612361.0001.dmp
 JVMDUMP032I JVM requested Java dump using ...
 JVMDUMP010I Java dump written to ...
 JVMDUMP032I JVM requested Snap dump using ...
 JVMDUMP010I Snap dump written to ...
-JVMDUMP013I Processed dump event "traceassert", detail "".
+JVMDUMP056I Processed dump event "traceassert", detail "" at 2025/06/27 10:43:25 (0.271 seconds).
 ```
 
 ## Parameters to Assertions/Tracepoints and Side-effects (A warning)
