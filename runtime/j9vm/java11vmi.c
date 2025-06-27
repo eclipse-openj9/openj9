@@ -364,26 +364,29 @@ restoreModule(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *mod
 			 * code with with non-restore (and else) path.
 			 */
 			while (NULL != clazz) {
-				J9Module *clazzModule = clazz->module;
+				if (J9_ARE_NO_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
+					J9Module *clazzModule = clazz->module;
 
-				if (NULL != clazzModule) {
-					J9UTF8 *moduleName = clazzModule->moduleName;
-					if ((NULL != moduleName) && (0 == strcmp(J9UTF8_DATA(moduleName), JAVA_BASE_MODULE))) {
-						J9VMJAVALANGCLASS_SET_MODULE(currentThread, clazz->classObject, moduleObject);
-					} else {
-						if (classLoader == systemClassLoader) {
-							const char *moduleName = "openj9.sharedclasses";
+					if (NULL != clazzModule) {
+						J9UTF8 *moduleName = clazzModule->moduleName;
+						if ((NULL != moduleName) && (0 == strcmp(J9UTF8_DATA(moduleName), JAVA_BASE_MODULE))) {
+							J9VMJAVALANGCLASS_SET_MODULE(currentThread, clazz->classObject, moduleObject);
+						} else {
+							if (classLoader == systemClassLoader) {
+								const char *moduleName = "openj9.sharedclasses";
 
-							if (0 == strcmp(moduleNameData, moduleName)) {
-								J9VMDllLoadInfo *entry = FIND_DLL_TABLE_ENTRY(J9_SHARED_DLL_NAME);
+								if (0 == strcmp(moduleNameData, moduleName)) {
+									J9VMDllLoadInfo *entry = FIND_DLL_TABLE_ENTRY(J9_SHARED_DLL_NAME);
 
-								if ((NULL == entry) || (J9_ARE_ALL_BITS_SET(entry->loadFlags, FAILED_TO_LOAD))) {
-									j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL, J9_SHARED_DLL_NAME, moduleName);
+									if ((NULL == entry) || (J9_ARE_ALL_BITS_SET(entry->loadFlags, FAILED_TO_LOAD))) {
+										j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL, J9_SHARED_DLL_NAME, moduleName);
+									}
 								}
 							}
 						}
 					}
 				}
+
 				clazz = vmFuncs->allClassesNextDo(&classWalkState);
 			}
 			vmFuncs->allClassesEndDo(&classWalkState);
@@ -395,8 +398,11 @@ restoreModule(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *mod
 				Assert_SC_notNull(vm->anonClassLoader);
 				clazzAnon = vmFuncs->allClassesStartDo(&classWalkStateAnon, vm, vm->anonClassLoader);
 				while (NULL != clazzAnon) {
-					Assert_SC_true(clazzAnon->module == vm->javaBaseModule);
-					J9VMJAVALANGCLASS_SET_MODULE(currentThread, clazzAnon->classObject, moduleObject);
+					if (J9_ARE_NO_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
+						Assert_SC_true(clazzAnon->module == vm->javaBaseModule);
+						J9VMJAVALANGCLASS_SET_MODULE(currentThread, clazzAnon->classObject, moduleObject);
+					}
+
 					clazzAnon = vmFuncs->allClassesNextDo(&classWalkStateAnon);
 				}
 				vmFuncs->allClassesEndDo(&classWalkStateAnon);
@@ -1032,8 +1038,10 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 
 							clazz = vmFuncs->allClassesStartDo(&classWalkState, vm, systemClassLoader);
 							while (NULL != clazz) {
-								Assert_SC_true(clazz->module == vm->javaBaseModule);
-								J9VMJAVALANGCLASS_SET_MODULE(currentThread, clazz->classObject, modObj);
+								if (J9_ARE_NO_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
+									Assert_SC_true(clazz->module == vm->javaBaseModule);
+									J9VMJAVALANGCLASS_SET_MODULE(currentThread, clazz->classObject, modObj);
+								}
 								clazz = vmFuncs->allClassesNextDo(&classWalkState);
 							}
 							vmFuncs->allClassesEndDo(&classWalkState);

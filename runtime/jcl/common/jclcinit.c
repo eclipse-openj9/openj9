@@ -650,25 +650,31 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	if ((NULL == classClass) || (NULL != vmThread->currentException)) {
 		return 1;
 	}
-
 	clazz = vmFuncs->allClassesStartDo(&state, vm, vm->systemClassLoader);
 	do {
-		j9object_t classObj = gcFuncs->J9AllocateObject(vmThread, classClass, J9_GC_ALLOCATE_OBJECT_TENURED | J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE | J9_GC_ALLOCATE_OBJECT_HASHED);
-		j9object_t lockObject;
-		UDATA allocateFlags = J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE;
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_RESTORE_RUN(vm)) {
+			vmFuncs->initializeSnapshotClassObject(vm, vm->systemClassLoader, clazz);
+		} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			j9object_t classObj = gcFuncs->J9AllocateObject(vmThread, classClass, J9_GC_ALLOCATE_OBJECT_TENURED | J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE | J9_GC_ALLOCATE_OBJECT_HASHED);
+			j9object_t lockObject;
+			UDATA allocateFlags = J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE;
 
-		if (NULL == classObj) {
-			return 1;
+			if (NULL == classObj) {
+				return 1;
+			}
+			J9VMJAVALANGCLASS_SET_VMREF(vmThread, classObj, clazz);
+			clazz->classObject = classObj;
+			lockObject = gcFuncs->J9AllocateObject(vmThread, lockClass, allocateFlags);
+			classObj = clazz->classObject;
+			if (lockObject == NULL) {
+				return 1;
+			}
+			J9VMJAVALANGJ9VMINTERNALSCLASSINITIALIZATIONLOCK_SET_THECLASS(vmThread, lockObject, (j9object_t)classObj);
+			J9VMJAVALANGCLASS_SET_INITIALIZATIONLOCK(vmThread, (j9object_t)classObj, lockObject);
 		}
-		J9VMJAVALANGCLASS_SET_VMREF(vmThread, classObj, clazz);
-		clazz->classObject = classObj;
-		lockObject = gcFuncs->J9AllocateObject(vmThread, lockClass, allocateFlags);
-		classObj = clazz->classObject;
-		if (lockObject == NULL) {
-			return 1;
-		}
-		J9VMJAVALANGJ9VMINTERNALSCLASSINITIALIZATIONLOCK_SET_THECLASS(vmThread, lockObject, (j9object_t)classObj);
-		J9VMJAVALANGCLASS_SET_INITIALIZATIONLOCK(vmThread, (j9object_t)classObj, lockObject);
 	} while ((clazz = vmFuncs->allClassesNextDo(&state)) != NULL);
 	vmFuncs->allClassesEndDo(&state);
 
@@ -681,8 +687,20 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 		if (0 != vmFuncs->internalCreateBaseTypePrimitiveAndArrayClasses(vmThread)) {
 			return 1;
 		}
+	} else {
+#if defined(J9VM_OPT_SNAPSHOTS)
+		/* TODO May put this code into its own function in ie. VMSnapshot::initBaseClasses */
+		vmFuncs->loadWarmClassFromSnapshot(vmThread, vm->systemClassLoader, vm->voidReflectClass);
+		vmFuncs->loadWarmClassFromSnapshot(vmThread, vm->systemClassLoader, vm->booleanReflectClass);
+		vmFuncs->loadWarmClassFromSnapshot(vmThread, vm->systemClassLoader, vm->charReflectClass);
+		vmFuncs->loadWarmClassFromSnapshot(vmThread, vm->systemClassLoader, vm->floatReflectClass);
+		vmFuncs->loadWarmClassFromSnapshot(vmThread, vm->systemClassLoader, vm->doubleReflectClass);
+		vmFuncs->loadWarmClassFromSnapshot(vmThread, vm->systemClassLoader, vm->byteReflectClass);
+		vmFuncs->loadWarmClassFromSnapshot(vmThread, vm->systemClassLoader, vm->shortReflectClass);
+		vmFuncs->loadWarmClassFromSnapshot(vmThread, vm->systemClassLoader, vm->intReflectClass);
+		vmFuncs->loadWarmClassFromSnapshot(vmThread, vm->systemClassLoader, vm->longReflectClass);
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	}
-
 	/* Initialize early since sendInitialize() uses this */ 
 	if (initializeStaticMethod(vm, J9VMCONSTANTPOOL_JAVALANGJ9VMINTERNALS_INITIALIZATIONALREADYFAILED)) {
 		return 1;
