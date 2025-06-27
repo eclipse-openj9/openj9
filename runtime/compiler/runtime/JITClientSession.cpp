@@ -56,6 +56,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_Pers
    _rtResolve(false),
    _registeredJ2IThunksMap(decltype(_registeredJ2IThunksMap)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _registeredInvokeExactJ2IThunksSet(decltype(_registeredInvokeExactJ2IThunksSet)::allocator_type(persistentMemory->_persistentAllocator.get())),
+   _permanentLoaders(decltype(_permanentLoaders)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _wellKnownClasses(),
    _isInStartupPhase(false),
    _aotCacheName(), _aotCache(NULL), _aotHeaderRecord(NULL),
@@ -86,6 +87,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_Pers
    _staticMapMonitor = TR::Monitor::create("JIT-JITServerStaticMapMonitor");
    _markedForDeletion = false;
    _thunkSetMonitor = TR::Monitor::create("JIT-JITServerThunkSetMonitor");
+   _permanentLoadersMonitor = TR::Monitor::create("JIT-JITServerPermanentLoadersMonitor");
 
    _bClassUnloadingAttempt = false;
    _classUnloadRWMutex = NULL;
@@ -137,6 +139,7 @@ ClientSessionData::destroyMonitors()
    TR::Monitor::destroy(_constantPoolMapMonitor);
    TR::Monitor::destroy(_staticMapMonitor);
    TR::Monitor::destroy(_thunkSetMonitor);
+   TR::Monitor::destroy(_permanentLoadersMonitor);
    omrthread_rwmutex_destroy(_classUnloadRWMutex);
    _classUnloadRWMutex = NULL;
    TR::Monitor::destroy(_wellKnownClassesMonitor);
@@ -1727,6 +1730,27 @@ ClientSessionData::writeReleaseClassUnloadRWMutex()
    {
    _bClassUnloadingAttempt = false;
    omrthread_rwmutex_exit_write(_classUnloadRWMutex);
+   }
+
+void
+ClientSessionData::addPermanentLoaders(const std::vector<J9ClassLoader*> &loaders)
+   {
+   if (loaders.empty())
+      {
+      return;
+      }
+
+   OMR::CriticalSection lock(_permanentLoadersMonitor);
+   _permanentLoaders.insert(loaders.begin(), loaders.end());
+   }
+
+void
+ClientSessionData::getPermanentLoaders(TR::vector<J9ClassLoader*, TR::Region&> &dest) const
+   {
+   OMR::CriticalSection lock(_permanentLoadersMonitor);
+   dest.clear();
+   dest.reserve(_permanentLoaders.size());
+   dest.insert(dest.end(), _permanentLoaders.begin(), _permanentLoaders.end());
    }
 
 const void *

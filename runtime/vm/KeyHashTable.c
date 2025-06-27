@@ -851,3 +851,102 @@ findClassLocationForClass(J9VMThread *currentThread, J9Class *clazz)
 
 	return targetPtr;
 }
+
+static UDATA
+classLoaderPtrHashFn(void *entry, void *userData)
+{
+	return (UDATA)*(J9ClassLoader **)entry;
+}
+
+static UDATA
+classLoaderPtrHashEqualFn(void *a, void *b, void *userData)
+{
+	return *(J9ClassLoader **)a == *(J9ClassLoader **)b;
+}
+
+static J9HashTable *
+outlivingLoadersTableNew(J9JavaVM *javaVM, U_32 initialSize)
+{
+	return hashTableNew(
+			OMRPORT_FROM_J9PORT(javaVM->portLibrary),
+			J9_GET_CALLSITE(),
+			initialSize,
+			sizeof(J9ClassLoader *),
+			sizeof(J9ClassLoader *),
+			0,
+			J9MEM_CATEGORY_CLASSES,
+			classLoaderPtrHashFn,
+			classLoaderPtrHashEqualFn,
+			NULL,
+			NULL);
+}
+
+void
+addOutlivingLoader(J9VMThread *currentThread, J9ClassLoader *classLoader, J9ClassLoader *outlivingLoader)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+
+	Assert_VM_false(outlivingLoader == classLoader);
+	Assert_VM_mustOwnMonitor(vm->classTableMutex);
+
+	if (J9CLASSLOADER_OUTLIVING_LOADERS_PERMANENT == outlivingLoader->outlivingLoaders) {
+		/* Nothing to do. */
+	} else if (J9CLASSLOADER_OUTLIVING_LOADERS_PERMANENT == classLoader->outlivingLoaders) {
+		markLoaderPermanent(currentThread, outlivingLoader);
+	} else if (NULL == classLoader->outlivingLoaders) {
+		classLoader->outlivingLoaders = (void *)((UDATA)outlivingLoader | J9CLASSLOADER_OUTLIVING_LOADERS_SINGLE_TAG);
+	} else if (J9_ARE_ANY_BITS_SET((UDATA)classLoader->outlivingLoaders, J9CLASSLOADER_OUTLIVING_LOADERS_SINGLE_TAG)) {
+		J9ClassLoader *existing = (J9ClassLoader *)((UDATA)classLoader->outlivingLoaders & ~(UDATA)J9CLASSLOADER_OUTLIVING_LOADERS_SINGLE_TAG);
+		if (existing != outlivingLoader) {
+			J9HashTable *table = outlivingLoadersTableNew(vm, 2);
+			if (NULL != table) {
+				J9ClassLoader **entry0 = (J9ClassLoader **)hashTableAdd(table, &existing);
+				J9ClassLoader **entry1 = (J9ClassLoader **)hashTableAdd(table, &outlivingLoader);
+				if ((NULL != entry0) && (NULL != entry1)) {
+					classLoader->outlivingLoaders = table;
+				} else {
+					hashTableFree(table);
+				}
+			}
+		}
+	} else {
+		hashTableAdd((J9HashTable *)classLoader->outlivingLoaders, &outlivingLoader);
+	}
+}
+
+void
+markLoaderPermanent(J9VMThread *currentThread, J9ClassLoader *classLoader)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	void *outlivingLoaders = NULL;
+
+	Assert_VM_mustOwnMonitor(vm->classTableMutex);
+
+	outlivingLoaders = classLoader->outlivingLoaders;
+	if (J9CLASSLOADER_OUTLIVING_LOADERS_PERMANENT != outlivingLoaders) {
+		/* Update now to ensure that recursion terminates in the presence of cycles. */
+		classLoader->outlivingLoaders = J9CLASSLOADER_OUTLIVING_LOADERS_PERMANENT;
+
+		if (NULL != vm->jitConfig) {
+			vm->jitConfig->jitAddPermanentLoader(currentThread, classLoader);
+		}
+
+		/* Any loader previously known to outlive classLoader is also permanent. */
+		if (NULL != outlivingLoaders) {
+			if (J9_ARE_ANY_BITS_SET((UDATA)outlivingLoaders, J9CLASSLOADER_OUTLIVING_LOADERS_SINGLE_TAG)) {
+				J9ClassLoader *outlivingLoader = (J9ClassLoader *)((UDATA)outlivingLoaders & ~(UDATA)J9CLASSLOADER_OUTLIVING_LOADERS_SINGLE_TAG);
+				markLoaderPermanent(currentThread, outlivingLoader);
+			} else {
+				J9HashTable *table = (J9HashTable *)outlivingLoaders;
+				J9HashTableState state;
+				J9ClassLoader **entry = (J9ClassLoader **)hashTableStartDo(table, &state);
+				while (NULL != entry) {
+					markLoaderPermanent(currentThread, *entry);
+					entry = (J9ClassLoader **)hashTableNextDo(&state);
+				}
+
+				hashTableFree(table);
+			}
+		}
+	}
+}

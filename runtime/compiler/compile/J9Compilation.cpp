@@ -41,6 +41,7 @@
 #include "control/Options_inlines.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
+#include "env/ClassLoaderTable.hpp"
 #include "env/j9method.h"
 #include "env/TRMemory.hpp"
 #include "env/VMJ9.h"
@@ -209,8 +210,10 @@ J9::Compilation::Compilation(int32_t id,
 #if !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED)
    _aotMethodDependencies(decltype(_aotMethodDependencies)::allocator_type(heapMemoryRegion)),
 #endif /* !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED) */
+   _permanentLoaders(self()->region()),
    _osrProhibitedOverRangeOfTrees(false),
-   _wasFearPointAnalysisDone(false)
+   _wasFearPointAnalysisDone(false),
+   _permanentLoadersInitialized(false)
    {
    _symbolValidationManager = new (self()->region()) TR::SymbolValidationManager(self()->region(), compilee, self());
 
@@ -1588,6 +1591,32 @@ J9::Compilation::canAddOSRAssumptions()
       && self()->isOSRTransitionTarget(TR::postExecutionOSR)
       && self()->getOSRMode() == TR::voluntaryOSR
       && !self()->wasFearPointAnalysisDone();
+   }
+
+const TR::vector<J9ClassLoader*, TR::Region&>&
+J9::Compilation::permanentLoaders()
+   {
+   if (!_permanentLoadersInitialized)
+      {
+      _permanentLoadersInitialized = true;
+#if defined(J9VM_OPT_JITSERVER)
+      if (self()->isOutOfProcessCompilation())
+         {
+         ClientSessionData *clientData = self()->getClientData();
+         clientData->getPermanentLoaders(_permanentLoaders);
+         }
+      else
+#endif
+         {
+         TR::PersistentInfo *persistentInfo = self()->getPersistentInfo();
+         TR_PersistentClassLoaderTable *loaderTable =
+            persistentInfo->getPersistentClassLoaderTable();
+
+         loaderTable->getPermanentLoaders(fej9()->vmThread(), _permanentLoaders);
+         }
+      }
+
+   return _permanentLoaders;
    }
 
 #if !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED)

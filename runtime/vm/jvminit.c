@@ -7851,6 +7851,15 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		goto error;
 	}
 
+	/* At this point the systemClassLoader and classTableMutex both exist, and
+	 * (if using the JIT) the jitConfig is fully initialized (so in particular
+	 * the JIT can be notified of permanent loaders). Mark systemClassLoader
+	 * permanent before we run (and therefore before we compile) any Java code.
+	 */
+	omrthread_monitor_enter(vm->classTableMutex);
+	markLoaderPermanent(vm->mainThread, vm->systemClassLoader);
+	omrthread_monitor_exit(vm->classTableMutex);
+
 	/* Set the BFUjavaVM obtained from vm_args to the created vm */
 	BFUjavaVM = initArgs->globalJavaVM;
 	if (NULL != BFUjavaVM) {
@@ -7860,6 +7869,15 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	if (JNI_OK != (stageRC = runInitializationStage(vm, JCL_INITIALIZED))) {
 		goto error;
 	}
+
+	/* With JCL initialization complete, extensionClassLoader and
+	 * applicationClassLoader are immutable from now on, so the loaders they
+	 * point to are now guaranteed never to be unloaded.
+	 */
+	omrthread_monitor_enter(vm->classTableMutex);
+	markLoaderPermanent(vm->mainThread, vm->extensionClassLoader);
+	markLoaderPermanent(vm->mainThread, vm->applicationClassLoader);
+	omrthread_monitor_exit(vm->classTableMutex);
 
 	if (JNI_OK != (stageRC = runInitializationStage(vm, VM_INITIALIZATION_COMPLETE))) {
 		goto error;

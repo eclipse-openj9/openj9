@@ -3728,6 +3728,35 @@ typedef struct J9ClassLoader {
 #if defined(J9VM_OPT_JFR)
 	J9HashTable *typeIDs;
 #endif /* defined(J9VM_OPT_JFR) */
+
+	/**
+	 * The set of class loaders directly observed to outlive this one.
+	 *
+	 * These are the defining loaders of classes for which this loader is an
+	 * initiating loader but not itself the defining loader. As long as this
+	 * loader remains live, such classes and therefore their defining loaders
+	 * are also live. Every loader in the transitive closure will outlive this
+	 * loader.
+	 *
+	 * Here the term "outlive" should be understood to be non-strict. That is,
+	 * two loaders with the exact same lifetime outlive each other.
+	 *
+	 * Permanent loaders are excluded, since they would be uninformative
+	 * (systemClassLoader, applicationClassLoader, and extensionClassLoader).
+	 * Similarly, there's no need to maintain a graph of the permanent loaders,
+	 * so for them nothing will be added to the outliving loader set. Instead,
+	 * the field will be set to a special value to indicate that the loader is
+	 * permanent.
+	 *
+	 * The value is one of the following representations:
+	 * - empty set, permanent loader: J9CLASSLOADER_OUTLIVING_LOADERS_PERMANENT
+	 * - empty set: null
+	 * - singleton set: J9ClassLoader pointer tagged with J9CLASSLOADER_OUTLIVING_LOADERS_SINGLE_TAG
+	 * - set of two or more: untagged pointer to J9HashTable of J9ClassLoader pointers
+	 *
+	 * Protected by J9JavaVM.classTableMutex.
+	 */
+	void *outlivingLoaders;
 } J9ClassLoader;
 
 #define J9CLASSLOADER_CONTAINS_JXES 0x1
@@ -3745,6 +3774,14 @@ typedef struct J9ClassLoader {
 #define J9CLASSLOADER_CLASSLOADEROBJECT(currentThread, object) J9VMTHREAD_JAVAVM(currentThread)->memoryManagerFunctions->j9gc_objaccess_readObjectFromInternalVMSlot((currentThread), J9VMTHREAD_JAVAVM(currentThread), (j9object_t*)&((object)->classLoaderObject))
 #define J9CLASSLOADER_SET_CLASSLOADEROBJECT(currentThread, object, value) J9VMTHREAD_JAVAVM(currentThread)->memoryManagerFunctions->j9gc_objaccess_storeObjectToInternalVMSlot((currentThread), (j9object_t*)&((object)->classLoaderObject), (value))
 #define TMP_J9CLASSLOADER_CLASSLOADEROBJECT(object) ((object)->classLoaderObject)
+
+#define J9CLASSLOADER_OUTLIVING_LOADERS_SINGLE_TAG 1
+
+/* Use 2 so that J9CLASSLOADER_OUTLIVING_LOADERS_SINGLE_TAG won't be set.
+ * This way it's possible to test for J9CLASSLOADER_OUTLIVING_LOADERS_PERMANENT
+ * and J9CLASSLOADER_OUTLIVING_LOADERS_SINGLE_TAG in either order.
+ */
+#define J9CLASSLOADER_OUTLIVING_LOADERS_PERMANENT ((void *)(UDATA)2)
 
 #if defined(_MSC_VER)
 #pragma warning(push)
@@ -4337,6 +4374,7 @@ typedef struct J9JITConfig {
 	void  ( *jitFlushCompilationQueue)(struct J9VMThread * currentThread, J9JITFlushCompilationQueueReason reason) ;
 	void  ( *jitDecompileMethodForFramePop)(struct J9VMThread * currentThread, UDATA skipCount) ;
 	void  ( *jitExceptionCaught)(struct J9VMThread * currentThread) ;
+	void  ( *jitAddPermanentLoader)(struct J9VMThread *currentThread, struct J9ClassLoader *loader);
 	void  ( *j9jit_printf)(void *voidConfig, const char *format, ...) ;
 	void* tracingHook;
 	void  ( *jitCheckScavengeOnResolve)(struct J9VMThread *currentThread) ;

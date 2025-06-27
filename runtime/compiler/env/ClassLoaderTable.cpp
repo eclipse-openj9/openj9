@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "AtomicSupport.hpp"
+#include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #include "env/ClassLoaderTable.hpp"
 #include "env/J9SharedCache.hpp"
@@ -160,8 +161,10 @@ hash<Name>(const void *keyPtr)
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 
-TR_PersistentClassLoaderTable::TR_PersistentClassLoaderTable(TR_PersistentMemory *persistentMemory) :
-   _persistentMemory(persistentMemory), _sharedCache(NULL)
+TR_PersistentClassLoaderTable::TR_PersistentClassLoaderTable(TR_PersistentMemory *persistentMemory)
+   : _persistentMemory(persistentMemory)
+   , _sharedCache(NULL)
+   , _permanentLoaders(ClassLoaderPtrAlloc(persistentMemory->_persistentAllocator.get()))
    {
    memset(_loaderTable, 0, sizeof(_loaderTable));
    memset(_chainTable, 0, sizeof(_chainTable));
@@ -463,3 +466,82 @@ TR_PersistentClassLoaderTable::removeClassLoader(J9VMThread *vmThread, void *loa
 
    _persistentMemory->freePersistentMemory(info);
    }
+
+void
+TR_PersistentClassLoaderTable::addPermanentLoader(
+   J9VMThread *vmThread, J9ClassLoader *loader)
+   {
+   TR_ASSERT_FATAL(
+      loader->outlivingLoaders == J9CLASSLOADER_OUTLIVING_LOADERS_PERMANENT,
+      "loader %p is not permanent",
+      loader);
+
+   jitAcquireClassTableMutex(vmThread);
+   try
+      {
+      _permanentLoaders.push_back(loader);
+      }
+   catch (...)
+      {
+      // OOM. There's no strict requirement to remember this loader, so just don't.
+      }
+
+   jitReleaseClassTableMutex(vmThread);
+   }
+
+void
+TR_PersistentClassLoaderTable::getPermanentLoaders(
+   J9VMThread *vmThread, TR::vector<J9ClassLoader*, TR::Region&> &dest) const
+   {
+   jitAcquireClassTableMutex(vmThread);
+   try
+      {
+      dest.clear();
+      dest.reserve(_permanentLoaders.size());
+      dest.insert(dest.end(), _permanentLoaders.begin(), _permanentLoaders.end());
+      }
+   catch (...)
+      {
+      jitReleaseClassTableMutex(vmThread);
+      throw;
+      }
+
+   jitReleaseClassTableMutex(vmThread);
+   }
+
+#if defined(J9VM_OPT_JITSERVER)
+
+size_t
+TR_PersistentClassLoaderTable::numPermanentLoadersSentToServer(
+   TR::CompilationInfo *compInfo) const
+   {
+   assertSequencingMonitorHeld(compInfo);
+   return _numPermanentLoadersSentToServer;
+   }
+
+void
+TR_PersistentClassLoaderTable::addPermanentLoadersSentToServer(
+   size_t n, TR::CompilationInfo *compInfo)
+   {
+   assertSequencingMonitorHeld(compInfo);
+   _numPermanentLoadersSentToServer += n;
+   }
+
+void
+TR_PersistentClassLoaderTable::resetPermanentLoadersSentToServer(
+   TR::CompilationInfo *compInfo)
+   {
+   assertSequencingMonitorHeld(compInfo);
+   _numPermanentLoadersSentToServer = 0;
+   }
+
+void
+TR_PersistentClassLoaderTable::assertSequencingMonitorHeld(
+   TR::CompilationInfo *compInfo) const
+   {
+   TR_ASSERT_FATAL(
+      compInfo->getSequencingMonitor()->owned_by_self(),
+      "caller must hold the sequencing monitor");
+   }
+
+#endif // defined(J9VM_OPT_JITSERVER)
