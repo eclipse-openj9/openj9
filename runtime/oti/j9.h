@@ -438,6 +438,7 @@ static_assert((LITERAL_STRLEN(J9_UNMODIFIABLE_CLASS_ANNOTATION) < (size_t)'/'), 
 #define J9VM_SHOULD_CLEAR_JNIIDS_FOR_ASGCT(vm, classLoader) (J9_ARE_NO_BITS_SET((vm)->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_NEVER_KEEP_JNI_IDS) \
 		&& ((classLoader)->asyncGetCallTraceUsed || J9_ARE_ANY_BITS_SET((vm)->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ALWAYS_KEEP_JNI_IDS)))
 
+#if JAVA_SPEC_VERSION >= 24
 #define J9VM_SEND_VIRTUAL_UNBLOCKER_THREAD_SIGNAL(vm) \
 		do {															\
 			omrthread_monitor_enter((vm)->blockedVirtualThreadsMutex); 	\
@@ -445,6 +446,7 @@ static_assert((LITERAL_STRLEN(J9_UNMODIFIABLE_CLASS_ANNOTATION) < (size_t)'/'), 
 			(vm)->pendingBlockedVirtualThreadsNotify = TRUE; 			\
 			omrthread_monitor_exit((vm)->blockedVirtualThreadsMutex);	\
 		} while (0)
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
 #define DIR_LIB_STR "lib"
 

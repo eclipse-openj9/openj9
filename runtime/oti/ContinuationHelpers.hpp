@@ -121,11 +121,13 @@ public:
 #endif /* JAVA_SPEC_VERSION >= 24 */
 	}
 
+#if JAVA_SPEC_VERSION >= 24
 	static VMINLINE void
 	sendUnblockerThreadSignal(J9JavaVM *vm)
 	{
 		J9VM_SEND_VIRTUAL_UNBLOCKER_THREAD_SIGNAL(vm);
 	}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
 	static VMINLINE ContinuationState volatile *
 	getContinuationStateAddress(J9VMThread *vmThread , j9object_t object)
