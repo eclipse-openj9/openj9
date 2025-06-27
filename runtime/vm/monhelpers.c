@@ -103,9 +103,7 @@ restart:
 				if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
 				&& (0 != objectMonitor->virtualThreadWaitCount)
 				) {
-					omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
-					omrthread_monitor_notify(vm->blockedVirtualThreadsMutex);
-					omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
+					J9VM_SEND_VIRTUAL_UNBLOCKER_THREAD_SIGNAL(vm);
 				}
 			}
 		} else {
@@ -301,9 +299,7 @@ restart:
 		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
 		&& (0 != objectMonitor->virtualThreadWaitCount)
 		) {
-			omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
-			omrthread_monitor_notify(vm->blockedVirtualThreadsMutex);
-			omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
+			J9VM_SEND_VIRTUAL_UNBLOCKER_THREAD_SIGNAL(vm);
 		}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 		Trc_VM_objectMonitorExit_Exit_InflatedLock(vmStruct, rc);

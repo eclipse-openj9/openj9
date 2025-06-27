@@ -1578,7 +1578,7 @@ obj:
 				/* Notify unblocker if the blocking monitor is unlocked or
 				 * if a platform thread is currently waiting on the monitor.
 				 */
-				omrthread_monitor_notify(_vm->blockedVirtualThreadsMutex);
+				VM_ContinuationHelpers::sendUnblockerThreadSignal(_vm);
 			}
 			omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
 		}
