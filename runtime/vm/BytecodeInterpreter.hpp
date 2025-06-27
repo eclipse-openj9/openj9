@@ -9696,9 +9696,17 @@ done:
 				stackOffset = 2;
 			}
 
+			/* On x86-32 we do not want to preserve the MemberName object since this would cause it to
+			 * end up in the EIP register when the caller of the MH's target returns, since the target will only
+			 * pop off its own arguments in the call cleanup.
+			 */
+#if (defined(J9VM_ARCH_X86) && !defined(J9VM_ENV_DATA64))
+			_sp += stackOffset;
+#else /* (defined(J9VM_ARCH_X86) && !defined(J9VM_ENV_DATA64)) */
 			/* Shift arguments by stackOffset and place memberNameObject before the first argument. */
 			memmove(_sp, _sp + stackOffset, methodArgCount * sizeof(UDATA));
 			_sp[methodArgCount] = (UDATA)memberNameObject;
+#endif /* (defined(J9VM_ARCH_X86) && !defined(J9VM_ENV_DATA64)) */
 
 			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, (void *)_literals);
 			rc = j2iTransition(REGISTER_ARGS, true);
@@ -9785,12 +9793,18 @@ throw_npe:
 		}
 
 		if (fromJIT) {
+			/* On x86-32 we do not want to preserve the MemberName object since this would cause it to
+			 * end up in the EIP register when the caller of the MH's target returns, since the target will only
+			 * pop off its own arguments in the call cleanup.
+			 */
+#if (!defined(J9VM_ARCH_X86) || defined(J9VM_ENV_DATA64))
 			/* Restore SP to before popping memberNameObject. */
 			_sp -= 1;
 
 			/* Shift arguments by 1 and place memberNameObject before the first argument. */
 			memmove(_sp, _sp + 1, methodArgCount * sizeof(UDATA));
 			_sp[methodArgCount] = (UDATA)memberNameObject;
+#endif /* (!defined(J9VM_ARCH_X86) || defined(J9VM_ENV_DATA64)) */
 
 			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, (void *)_literals);
 			rc = j2iTransition(REGISTER_ARGS, true);
@@ -9894,12 +9908,18 @@ foundITable:
 		}
 
 		if (fromJIT) {
+			/* On x86-32 we do not want to preserve the MemberName object since this would cause it to
+			 * end up in the EIP register when the caller of the MH's target returns, since the target will only
+			 * pop off its own arguments in the call cleanup.
+			 */
+#if (!defined(J9VM_ARCH_X86) || defined(J9VM_ENV_DATA64))
 			/* Restore SP to before popping memberNameObject. */
 			_sp -= 1;
 
 			/* Shift arguments by 1 and place memberNameObject before the first argument. */
 			memmove(_sp, _sp + 1, methodArgCount * sizeof(UDATA));
 			_sp[methodArgCount] = (UDATA)memberNameObject;
+#endif /* (!defined(J9VM_ARCH_X86) || defined(J9VM_ENV_DATA64)) */
 
 			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, (void *)_literals);
 			rc = j2iTransition(REGISTER_ARGS, true);
