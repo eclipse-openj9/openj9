@@ -20,7 +20,15 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 ################################################################################
 
-cmake_minimum_required(VERSION 3.4 FATAL_ERROR)
+# CMAKE_VERSION is not defined before 2.6.3.
+if ((CMAKE_MAJOR_VERSION LESS 3) OR (CMAKE_VERSION VERSION_LESS "3.12"))
+	cmake_minimum_required(VERSION 3.4 FATAL_ERROR)
+else()
+	# Beginning with version 3.12, cmake supports a version range here
+	# as a declaration from this project that new policy behaviors
+	# (up to the second version) are acceptable.
+	cmake_minimum_required(VERSION 3.12...3.28 FATAL_ERROR)
+endif()
 
 project(openj9)
 
