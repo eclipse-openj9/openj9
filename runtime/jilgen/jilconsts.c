@@ -532,6 +532,7 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 
 			/* J9Class */
 			writeConstant(OMRPORTLIB, fd, "J9TR_J9Class_classLoader", offsetof(J9Class, classLoader)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_J9Class_iTable", offsetof(J9Class, iTable)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_J9Class_lastITable", offsetof(J9Class, lastITable)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_J9Class_lockOffset", offsetof(J9Class, lockOffset)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_ArrayClass_componentType", offsetof(J9ArrayClass, componentType)) |
@@ -539,6 +540,7 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			/* J9ITable */
 			writeConstant(OMRPORTLIB, fd, "J9TR_ITableOffset", sizeof(J9ITable)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_J9ITable_interfaceClass", offsetof(J9ITable, interfaceClass)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_J9ITable_next", offsetof(J9ITable, next)) |
 
 			/* J9Method */
 			writeConstant(OMRPORTLIB, fd, "J9TR_MethodFlagsOffset", offsetof(J9Method, constantPool)) |
