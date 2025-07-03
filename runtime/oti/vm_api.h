@@ -4679,6 +4679,8 @@ threadParseArguments(J9JavaVM *vm, char *optArg);
 UDATA
 getJavaThreadPriority(struct J9JavaVM *vm, J9VMThread* thread );
 
+void startcpuUtilCalcProc(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
+
 #if JAVA_SPEC_VERSION >= 19
 /* ---------------- ContinuationHelpers.cpp ---------------- */
 
