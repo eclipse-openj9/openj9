@@ -2456,7 +2456,7 @@ J9NLS_VM_JAVA_COMPILER_WARNING_XINT.user_response=Use the -Xint option to disabl
 # argument 6 is "superclass" or "superinterface"
 # arguments 7 and 8 are the super class or interface name
 # arguments 9 and 10 are the classloader name of the super class or interface
-J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8=%1$s %3$.*2$s (from loader %5$.*4$s) cannot access its %6$s %8$.*7$s (from loader %10$.*9$s)
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8=%1$s %3$.*2$s ( %5$.*4$s y\u00fckleyicisinden) %6$s %8$.*7$s ( %10$.*9$s y\u00fckleyicisinden) eri\u015femiyor
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_1=class
 J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.sample_input_2=59
@@ -2482,7 +2482,7 @@ J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA8.user_respon
 # arguments 8 and 9 are the super class or interface name
 # argument 10 is the module name of the super class or interface
 # arguments 11 and 12 are the classloader name of the super class or interface
-J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS=%1$s %3$.*2$s (in %4$s from loader %6$.*5$s) cannot access its %7$s %9$.*8$s (in %10$s from loader %12$.*11$s)
+J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS=%1$s %3$.*2$s (in %4$s from loader %6$.*5$s ) cannot access its %7$s %9$.*8$s (in %10$s from loader %12$.*11$s )
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.sample_input_1=class
 J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.sample_input_2=59
