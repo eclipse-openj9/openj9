@@ -2628,6 +2628,107 @@ void J9::X86::PrivateLinkage::buildVPIC(TR::X86CallSite &site, TR::LabelSymbol *
    cg()->reserveNTrampolines(VPicParameters.defaultNumberOfSlots);
    }
 
+/**
+ * \brief
+ *    Generate a sequence of instructions that compares the `declaringClass` with x number of entries on the iTable.
+ *
+ * \parm iterations
+ *    The number of entries on the iTable.
+ *
+ * \parm callNode
+ *    The call node.
+ *
+ * \parm scratchReg
+ *    The temporary register.
+ *
+ * \parm vftReg
+ *    The VFT register.
+ *
+ * \parm interfaceClassReg
+ *    The register that will be used to load the interface class.
+ *
+ * \parm declaringClass
+ *    The class that is to be compared.
+ *
+ * \parm use32BitInterfacePointers
+ *    Whether or not using 32 bit interface class pointer.
+ *
+ * \parm lookupDispatchSnippetLabel
+ *    The label that dispatches to interface look up snippet if the comparison fails.
+ *
+ * \parm gotoLastITableDispatchLabel
+ *    The label that dispatches to invoke the interface call if the comparison succeeds.
+ *
+ * \parm comp
+ *    The compilation object
+ *
+ * \parm cg
+ *    The CodeGenerator object
+ *
+ */
+static void generateITableEntryCompare(uint32_t iterations,
+                                       TR::Node *callNode,
+                                       TR::Register *scratchReg,
+                                       TR::Register *vftReg,
+                                       TR::Register *interfaceClassReg,
+                                       TR_OpaqueClassBlock *declaringClass,
+                                       bool use32BitInterfacePointers,
+                                       TR::LabelSymbol *lookupDispatchSnippetLabel,
+                                       TR::LabelSymbol *gotoLastITableDispatchLabel,
+                                       TR_J9VMBase *fej9,
+                                       TR::Compilation *comp,
+                                       TR::CodeGenerator *cg)
+   {
+   for (uint32_t i = 0; i<iterations; i++)
+      {
+      // First entry
+      if (0 == i)
+         {
+         // scratchReg = j9class->iTable
+         generateRegMemInstruction(TR::InstOpCode::LRegMem(), callNode, scratchReg, generateX86MemoryReference(vftReg, offsetof(J9Class, iTable), cg), cg);
+         }
+      else
+         {
+         // scratchReg = iTable->next
+         generateRegMemInstruction(TR::InstOpCode::LRegMem(), callNode, scratchReg, generateX86MemoryReference(scratchReg, offsetof(J9ITable, next), cg), cg);
+         }
+
+      // Test if iTable == NULL?
+      generateRegRegInstruction(TR::InstOpCode::TESTRegReg(), callNode, scratchReg, scratchReg, cg);
+      generateLabelInstruction(TR::InstOpCode::JE4, callNode, lookupDispatchSnippetLabel, cg);
+
+      if (use32BitInterfacePointers)
+         {
+         // The field is 8 bytes, but only 4 matter
+         generateMemImmInstruction(TR::InstOpCode::CMP4MemImm4,
+                                  callNode,
+                                  generateX86MemoryReference(scratchReg, fej9->getOffsetOfInterfaceClassFromITableField(), cg),
+                                  (int32_t)(intptr_t)declaringClass,
+                                  cg);
+         }
+      else
+         {
+         TR_ASSERT_FATAL(comp->target().is64Bit(), "Only 64-bit path should reach here.");
+         auto cds = cg->findOrCreate8ByteConstant(callNode, (intptr_t)declaringClass);
+         TR::MemoryReference *interfaceClassAddr = generateX86MemoryReference(cds, cg);
+         generateRegMemInstruction(TR::InstOpCode::LRegMem(), callNode, interfaceClassReg, interfaceClassAddr, cg);
+         generateMemRegInstruction(TR::InstOpCode::CMPMemReg(),
+                                   callNode,
+                                   generateX86MemoryReference(scratchReg, fej9->getOffsetOfInterfaceClassFromITableField(), cg),
+                                   interfaceClassReg, cg);
+         }
+
+      generateLongLabelInstruction(TR::InstOpCode::JE4, callNode, gotoLastITableDispatchLabel, cg);
+
+      // Last iteration: There is no match found.
+      if (i == (iterations - 1))
+         {
+         generateLabelInstruction(TR::InstOpCode::JMP4, callNode, lookupDispatchSnippetLabel, cg);
+         break;
+         }
+      }
+   }
+
 void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86CallSite &site, int32_t numIPicSlots, TR::X86PICSlot &lastPicSlot, TR::Instruction *&slotPatchInstruction, TR::LabelSymbol *doneLabel, TR::LabelSymbol *lookupDispatchSnippetLabel, TR_OpaqueClassBlock *declaringClass, uintptr_t itableIndex )
    {
    static char *breakBeforeInterfaceDispatchUsingLastITable = feGetEnv("TR_breakBeforeInterfaceDispatchUsingLastITable");
@@ -2653,7 +2754,7 @@ void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86Call
       // TODO: This is lame.  Without IPIC slots, generating this sequence
       // upside-down is sub-optimal.
       //
-         generateLabelInstruction(TR::InstOpCode::JMP4, callNode, lastITableTestLabel, cg());
+      generateLabelInstruction(TR::InstOpCode::JMP4, callNode, lastITableTestLabel, cg());
       }
 
    TR::Register *vftReg          = site.evaluateVFT();
@@ -2688,20 +2789,37 @@ void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86Call
    //
    // The final layout looks like this:
    //
-   //          jne lastITableTest                                 ; PREVIOUS PIC SLOT
-   //          call xxx                                           ; PREVIOUS PIC SLOT
-   //          jmp done                                           ; PREVIOUS PIC SLOT
-   //    lastITableDispatch:
-   //          mov r8, sizeof(J9Class)
-   //          sub r8, [rdi + ITableSlotOffset]                   ; r8 = jit vtable offset
-   //          jmp [vft + r8]                                     ; vtable dispatch
-   //    lastITableTest:
-   //          mov rdi, [vft + lastITableOffset]                  ; cached ITable
-   //          cmp [rdi + interfaceClassOffset], interfaceClass   ; check if it's our interface class
-   //          jne lookupDispatchSnippet                          ; if not, jump to the slow path
-   //          call lastITableDispatch                            ; if so, call the dispatch sequence with return address pointing here
-   //    done:
-   //          ...
+   //          jne lastITableTest  -----------------------------------+            ; PREVIOUS PIC SLOT
+   //          call xxx                                               |            ; PREVIOUS PIC SLOT
+   //          jmp done            -----------------------------------|----+       ; PREVIOUS PIC SLOT
+   //    lastITableDispatch:       <------------------------------+   |    |
+   //          mov r8, sizeof(J9Class)                            |   |    |       ; r8 = jit vtable offset
+   //          sub r8, [rdi + ITableSlotOffset]                   |   |    |       ; vtable dispatch
+   //          jmp [vft + r8]                                     |   |    |
+   //    lastITableTest:           <------------------------------|---+    |
+   //          mov rdi, [vft + lastITableOffset]                  |        |       ; cached ITable
+   //          cmp [rdi + interfaceClassOffset], interfaceClass   |        |       ; check if it's our interface class
+   //          jne Outlined Label iterateITableLabel  ------------|---+    |       ; iterate a few entries on iTable
+   //          jne lookupDispatchSnippet  ------------------------|---|----|-----> ; if not, jump to the slow path
+   //    gotoLastITableDispatchLabel:     <-----------------------|---| -+ |
+   //          call lastITableDispatch    ------------------------+   |  | |       ; if so, call the dispatch sequence with return address pointing here
+   //     done:    <--------------------------------------------------|--|-+
+   //          ...                                                    |  |
+   //                                                                 |  |
+   //                                                                 |  |
+   //    Outlined Label iterateITableLabel:     <---------------------+  |
+   //          mov  rdi, qword ptr [vft + iTableOffset]                  |
+   //          test rdi, rdi                                             |
+   //          je   lookupDispatchSnippet       -------------------------|------>  ; If iTable[0] is NULL, jump to the slow path
+   //          cmp  dword ptr [rdi], interfaceClass                      |         ; Check if it is our interface class
+   //          je   gotoLastITableDispatchLabel -------------------------+         ; If yes, jmp to the call of the dispatch sequence
+   //          mov  rdi, qword ptr [rdi + nextITableOffset]              |
+   //          test rdi, rdi                                             |
+   //          je   lookupDispatchSnippet       -------------------------|------>  ; If iTable[1] is NULL, jump to the slow path
+   //          cmp  dword ptr [rdi], interfaceClass                      |         ; Check if it is our interface class
+   //          je   gotoLastITableDispatchLabel -------------------------+         ; If yes, jmp to the call of the dispatch sequence
+   //          jmp  lookupDispatchSnippet       -------------------------------->  ; Done iterating the iTable, jump to the slow path
+
 
    // The dispatch sequence
    //
@@ -2752,10 +2870,120 @@ void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86Call
                                 interfaceClassReg, cg());
       }
 
-   generateLongLabelInstruction(TR::InstOpCode::JNE4, callNode, lookupDispatchSnippetLabel, cg()); // PICBuilder needs this to have a 4-byte offset
-   if (comp()->target().is32Bit())
-      generatePaddingInstruction(3, callNode, cg());
-   generateLabelInstruction(TR::InstOpCode::CALLImm4, callNode, lastITableDispatchLabel, vtableIndexRegDeps, cg());
+   static char *disableITableIterationsAfterLastITableCacheCheck = feGetEnv("TR_DisableITableIterationsAfterLastITableCacheCheck");
+   if (disableITableIterationsAfterLastITableCacheCheck)
+      {
+      generateLongLabelInstruction(TR::InstOpCode::JNE4, callNode, lookupDispatchSnippetLabel, cg()); // PICBuilder needs this to have a 4-byte offset
+      if (comp()->target().is32Bit())
+         generatePaddingInstruction(3, callNode, cg());
+      generateLabelInstruction(TR::InstOpCode::CALLImm4, callNode, lastITableDispatchLabel, vtableIndexRegDeps, cg());
+      }
+   else
+      {
+      uint32_t MIN_ITABLE_ITERATIONS = 1;
+      uint32_t MAX_ITABLE_ITERATIONS = 4;
+      uint32_t iterations = MAX_ITABLE_ITERATIONS;
+
+      bool trace = comp()->getOption(TR_TraceCG);
+
+      //------------
+      // Estimate how many entries to iterate on the iTable by looking at how many
+      // interfaces the receiver class might implement:
+      // First finds all possible implementers of the declaring interface class.
+      // For each implementer, look at how many interfaces an implementer
+      // implements. We take the max number of the interfaces the implementer
+      // implements, which is eventually capped at MAX_ITABLE_ITERATIONS.
+      //
+      // By default or if CHTable is disabled, the number of iterations is
+      // capped at MAX_ITABLE_ITERATIONS.
+      //
+      if (!comp()->getOption(TR_DisableCHOpts))
+         {
+         uint32_t MAX_IMPLEMENTERS_TO_EVALUATE = 30;
+
+         TR_ResolvedMethod **implArray = new (comp()->trStackMemory()) TR_ResolvedMethod*[MAX_IMPLEMENTERS_TO_EVALUATE+1];
+         TR_PersistentCHTable *chTable = comp()->getPersistentInfo()->getPersistentCHTable();
+         TR::SymbolReference *methodSymRef = site.getSymbolReference();
+         int32_t cpIndex = methodSymRef->getCPIndex();
+
+         // Find out how many implementers are for the declaring interface class
+         int32_t numImplementers = chTable->findnInterfaceImplementers(declaringClass, MAX_IMPLEMENTERS_TO_EVALUATE+1, implArray, cpIndex, methodSymRef->getOwningMethod(comp()), comp());
+
+         if ((numImplementers != 0) && (numImplementers <= MAX_IMPLEMENTERS_TO_EVALUATE))
+            {
+            // Find out how many interfaces each implementer implements
+            uint32_t maxInterfaces = MIN_ITABLE_ITERATIONS;
+
+            for (int32_t i=0; i < numImplementers; ++i)
+               {
+               TR_OpaqueClassBlock *containingClass = implArray[i]->containingClass();
+               uint32_t numInterfaces = fej9->numInterfacesImplemented((J9Class *)containingClass);
+               maxInterfaces = (numInterfaces > maxInterfaces) ? numInterfaces : maxInterfaces;
+               }
+
+            iterations = (maxInterfaces > MAX_ITABLE_ITERATIONS) ? MAX_ITABLE_ITERATIONS : maxInterfaces;
+
+            if (trace)
+               traceMsg(comp(), "%s: declaringClass 0x%p numImplementers %d maxInterfaces %d iterations %d\n", __FUNCTION__, declaringClass, numImplementers, maxInterfaces, iterations);
+            }
+         }
+
+      //------------
+      static char *numITableIterationsAfterLastITableCacheCheck = feGetEnv("TR_NumITableIterationsAfterLastITableCacheCheck");
+      static const int32_t numITableIterationsAfterLastITableCacheCheckValue = numITableIterationsAfterLastITableCacheCheck ? atoi(numITableIterationsAfterLastITableCacheCheck) : MAX_ITABLE_ITERATIONS;
+
+      iterations = numITableIterationsAfterLastITableCacheCheck ? numITableIterationsAfterLastITableCacheCheckValue : iterations;
+
+      if (trace)
+         traceMsg(comp(), "%s: Final iterations %d before generating the iTable entry comparison\n", __FUNCTION__, iterations);
+
+      //------------
+      TR::LabelSymbol *iterateITableLabel = generateLabelSymbol(cg());
+      TR::LabelSymbol *gotoLastITableDispatchLabel = generateLabelSymbol(cg());
+
+      generateLongLabelInstruction(TR::InstOpCode::JNE4, callNode, iterateITableLabel, cg());
+
+      // The following sequence of instructions that iterate through the iTable cannot be inserted
+      // after the test of the lastITableCache in the mainline code.  The routines in X86PicBuilder,
+      // such as resolveIPicClass, expects IPIC slots have a JNE1 to the done label to correctly
+      // calculate the offset to get to the look up snippet. Adding the sequence in the mainline code
+      // will increase the length of the instructions from the previous IPIC slots to the done label.
+      // The JNE in IPIC slots will become JNE4 which messes up multiple routines in X86PicBuilder that
+      // have an assumption in its offset calculations that the JNE in a IPIC slot is JNE1.
+      //
+      //------------ start out-of-line instructions
+      //
+      TR_OutlinedInstructionsGenerator og(iterateITableLabel, callNode, cg());
+
+      generateITableEntryCompare(iterations,
+                                 callNode,
+                                 scratchReg,
+                                 vftReg,
+                                 vtableIndexReg,
+                                 declaringClass,
+                                 use32BitInterfacePointers,
+                                 lookupDispatchSnippetLabel,
+                                 gotoLastITableDispatchLabel,
+                                 fej9,
+                                 comp(),
+                                 cg());
+
+
+      //------------ end out-of-line instructions
+      //
+      og.endOutlinedInstructionSequence();
+
+      //----------------------------------------------
+      // This extra JNE to lookupDispatchSnippetLabel is required because routines in X86PicBuilder,
+      // such as resolveIPicClass, expects the last JNE before the done label must jmp to the look up routine.
+      //
+      generateLongLabelInstruction(TR::InstOpCode::JNE4, callNode, lookupDispatchSnippetLabel, cg()); // PICBuilder needs this to have a 4-byte offset
+
+      generateLabelInstruction(TR::InstOpCode::label, callNode, gotoLastITableDispatchLabel, cg());
+      if (comp()->target().is32Bit())
+         generatePaddingInstruction(3, callNode, cg());
+      generateLabelInstruction(TR::InstOpCode::CALLImm4, callNode, lastITableDispatchLabel, vtableIndexRegDeps, cg());
+      }
 
    cg()->stopUsingRegister(vtableIndexReg);
    TR::RealRegister::RegNum otherScratchRegister = getProperties().getJ9MethodArgumentRegister(); // scratch reg other than the vtable index reg
