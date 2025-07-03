@@ -4154,6 +4154,118 @@ inline void generateInlinedCheckCastForDynamicCastClass(TR::Node* node, TR::Code
    cg->decReferenceCount(node->getSecondChild());
    }
 
+static void
+generateInlinedCheckCastOrInstanceOfForArrayClass(TR::Node *node, TR_OpaqueClassBlock *clazz, bool isCheckCast, TR::CodeGenerator *cg)
+   {
+   TR::Compilation *comp = cg->comp();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+
+   static char *disableInlineObjectArrayCheckCast = feGetEnv("TR_DisableInlineObjectArrayCheckCast");
+
+   if (!disableInlineObjectArrayCheckCast && isCheckCast && clazz && TR::Compiler->cls.isClassArray(comp, clazz))
+      {
+      TR_OpaqueClassBlock *componentClass = fej9->getComponentClassFromArrayClass(clazz);
+      if (fej9->isJavaLangObject(componentClass))
+         {
+         if (comp->getOption(TR_TraceCG))
+            traceMsg(comp, "Inline checkcast for [jlO : node=%p", node);
+
+         TR::LabelSymbol *outlinedCallLabel = generateLabelSymbol(cg);
+         TR::LabelSymbol *fallThruLabel = generateLabelSymbol(cg);
+
+         TR::Node *objectNode = node->getFirstChild();
+         TR::Node *castClassNode = node->getSecondChild();
+         TR::Register *objectReg = cg->evaluate(objectNode);
+         TR::Register *objectClassReg = cg->allocateRegister();
+         TR::Register *scratchReg = cg->allocateRegister();
+
+         TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::call, NULL, outlinedCallLabel, fallThruLabel, cg);
+         cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
+
+         static char *breakOnInlineObjectArrayCheckCast = feGetEnv("TR_BreakOnInlineObjectArrayCheckCast");
+         if (breakOnInlineObjectArrayCheckCast)
+            generateInstruction(TR::InstOpCode::INT3, node, cg);
+
+         // If the objectRef is NULL, the cast will succeed
+         //
+         if (!objectNode->isNonNull())
+            {
+            generateRegRegInstruction(TR::InstOpCode::TESTRegReg(), node, objectReg, objectReg, cg);
+            generateLabelInstruction(TR::InstOpCode::JE4, node, fallThruLabel, cg);
+            }
+
+         // The cast class is an array of j/l/Objects. Check if the
+         // object class is a non-primitive array
+         //
+         generateLoadJ9Class(node, objectClassReg, objectReg, cg);
+
+         // Aliases for code readability only
+         TR::Register *romClassReg = scratchReg,
+                      *componentClassReg = scratchReg;
+
+         // Check if romClass is an array
+         //
+         generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, romClassReg, generateX86MemoryReference(objectClassReg, offsetof(J9Class, romClass), cg), cg);
+         generateMemImmInstruction(TR::InstOpCode::TEST4MemImm4, node,
+            generateX86MemoryReference(romClassReg, offsetof(J9ROMClass, modifiers), cg), J9AccClassArray, cg);
+         generateLabelInstruction(TR::InstOpCode::JE4, node, outlinedCallLabel, cg);
+
+         // Check if object class is a primitive array
+         generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, componentClassReg, generateX86MemoryReference(objectClassReg, offsetof(J9ArrayClass, componentType), cg), cg);
+         generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, romClassReg, generateX86MemoryReference(componentClassReg, offsetof(J9Class, romClass), cg), cg);
+         generateMemImmInstruction(TR::InstOpCode::TEST4MemImm4, node,
+            generateX86MemoryReference(romClassReg, offsetof(J9ROMClass, modifiers), cg), J9AccClassInternalPrimitiveType, cg);
+         generateLabelInstruction(TR::InstOpCode::JNE4, node, outlinedCallLabel, cg);
+
+         TR::RegisterDependencyConditions  *deps = generateRegisterDependencyConditions((uint8_t)0, 5, cg);
+         deps->addPostCondition(objectReg, TR::RealRegister::NoReg, cg);
+         deps->addPostCondition(objectClassReg, TR::RealRegister::NoReg, cg);
+         deps->addPostCondition(scratchReg, TR::RealRegister::NoReg, cg);
+
+         TR::Node *callNode = outlinedHelperCall->getCallNode();
+         TR::Register *reg;
+
+         if (callNode->getFirstChild() == node->getFirstChild())
+            {
+            reg = callNode->getFirstChild()->getRegister();
+            if (reg)
+               deps->unionPostCondition(reg, TR::RealRegister::NoReg, cg);
+            }
+
+         if (callNode->getSecondChild() == node->getSecondChild())
+            {
+            reg = callNode->getSecondChild()->getRegister();
+            if (reg)
+               deps->unionPostCondition(reg, TR::RealRegister::NoReg, cg);
+            }
+
+         deps->stopAddingConditions();
+         generateLabelInstruction(TR::InstOpCode::label, node, fallThruLabel, deps, cg);
+
+         cg->stopUsingRegister(scratchReg);
+         cg->stopUsingRegister(objectClassReg);
+
+         cg->decReferenceCount(objectNode);
+         cg->decReferenceCount(castClassNode);
+
+         return;
+         }
+      }
+
+   if (node->getOpCodeValue() == TR::checkcastAndNULLCHK)
+      {
+      auto object = cg->evaluate(node->getChild(0));
+      // Just touch the memory in case this is a NULL pointer and we need to throw
+      // the exception after the checkcast. If the checkcast was combined with nullpointer
+      // there's nobody after the checkcast to throw the exception.
+      auto instr = generateMemImmInstruction(TR::InstOpCode::TEST1MemImm1, node, generateX86MemoryReference(object, TR::Compiler->om.offsetOfObjectVftField(), cg), 0, cg);
+      cg->setImplicitExceptionPoint(instr);
+      instr->setNeedsGCMap(0xFF00FFFF);
+      instr->setNode(comp->findNullChkInfo(node));
+      }
+
+   TR::TreeEvaluator::performHelperCall(node, NULL, isCheckCast ? TR::call : TR::icall, false, cg);
+   }
 
 /**
  * @brief Generate instructions to perform an interface table walk to search
@@ -4655,7 +4767,7 @@ TR::Register *J9::X86::TreeEvaluator::checkcastinstanceofEvaluator(TR::Node *nod
          TR_ASSERT(false, "Incorrect Op Code %d.", node->getOpCodeValue());
          break;
       }
-   auto clazz = TR::TreeEvaluator::getCastClassAddress(node->getChild(1));
+   TR_OpaqueClassBlock *clazz = TR::TreeEvaluator::getCastClassAddress(node->getChild(1));
    if (isCheckCast && !clazz && !comp->getOption(TR_DisableInlineCheckCast) && (!comp->compileRelocatableCode() || comp->getOption(TR_UseSymbolValidationManager)))
       {
       generateInlinedCheckCastForDynamicCastClass(node, cg);
@@ -4687,18 +4799,7 @@ TR::Register *J9::X86::TreeEvaluator::checkcastinstanceofEvaluator(TR::Node *nod
       }
    else
       {
-      if (node->getOpCodeValue() == TR::checkcastAndNULLCHK)
-         {
-         auto object = cg->evaluate(node->getChild(0));
-         // Just touch the memory in case this is a NULL pointer and we need to throw
-         // the exception after the checkcast. If the checkcast was combined with nullpointer
-         // there's nobody after the checkcast to throw the exception.
-         auto instr = generateMemImmInstruction(TR::InstOpCode::TEST1MemImm1, node, generateX86MemoryReference(object, TR::Compiler->om.offsetOfObjectVftField(), cg), 0, cg);
-         cg->setImplicitExceptionPoint(instr);
-         instr->setNeedsGCMap(0xFF00FFFF);
-         instr->setNode(comp->findNullChkInfo(node));
-         }
-      TR::TreeEvaluator::performHelperCall(node, NULL, isCheckCast ? TR::call : TR::icall, false, cg);
+      generateInlinedCheckCastOrInstanceOfForArrayClass(node, clazz, isCheckCast, cg);
       }
    return node->getRegister();
    }
