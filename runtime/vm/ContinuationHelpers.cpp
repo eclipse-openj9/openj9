@@ -329,7 +329,7 @@ yieldContinuation(J9VMThread *currentThread, BOOLEAN isFinished, UDATA returnSta
 	currentThread->currentContinuation = NULL;
 	VM_ContinuationHelpers::swapFieldsWithContinuation(currentThread, continuation, continuationObject);
 #if JAVA_SPEC_VERSION >= 24
-	Trc_VM_yieldContinuation_Unmount(currentThread, continuation, continuation->returnState, continuation->ownedMonitorCount, continuation->enteredMonitors);
+	Trc_VM_yieldContinuation_Unmount(currentThread, continuation, returnState, continuation->ownedMonitorCount, continuation->enteredMonitors);
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
 	/* We need a full fence here to preserve happens-before relationship on PPC and other weakly
