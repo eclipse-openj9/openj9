@@ -241,7 +241,8 @@ tgcHookLocalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, v
 {
 	MM_LocalGCEndEvent* event = (MM_LocalGCEndEvent*)eventData;
 	J9VMThread* vmThread = (J9VMThread*)event->currentThread->_language_vmthread;
-	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vmThread->javaVM);
+	J9JavaVM* javaVM = vmThread->javaVM;
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
 	MM_TgcExtensions *tgcExtensions = MM_TgcExtensions::getExtensions(extensions);
 
 	J9VMThread *walkThread;
@@ -259,7 +260,7 @@ tgcHookLocalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, v
 	tgcExtensions->printf("                   (micros) (micros)  freelist  freelist  scanlist  scanlist      lock    arrays arraysize copycache   lists  deep objs    list\n");
 
 	scavengeTotalTime = event->incrementEndTime - event->incrementStartTime;
-	uintptr_t gcCount = extensions->scavengerStats._gcCount;
+	uintptr_t gcCount = j9gc_get_unique_GC_count(javaVM);
 
 	GC_VMThreadListIterator scavengeThreadListIterator(vmThread);
 	while ((walkThread = scavengeThreadListIterator.nextVMThread()) != NULL) {
@@ -267,7 +268,7 @@ tgcHookLocalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, v
 		MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(walkThread->omrVMThread);
 		if ((walkThread == vmThread) || (env->getThreadType() == GC_WORKER_THREAD)) {
 			/* check if this thread participated in the GC */ 
-			if (env->_scavengerStats._gcCount == extensions->scavengerStats._gcCount) {
+			if (env->_scavengerStats._gcCount == extensions->incrementScavengerStats._gcCount) {
 				intptr_t avgArraySplitAmount = 0;
 				if (0 != env->_scavengerStats._arraySplitCount) {
 					avgArraySplitAmount = env->_scavengerStats._arraySplitAmount / env->_scavengerStats._arraySplitCount;
