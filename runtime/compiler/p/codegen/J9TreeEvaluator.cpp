@@ -12454,7 +12454,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    generateLabelInstruction(cg, TR::InstOpCode::b, node, serialLoopLabel);
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, hnLabel);
-   generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, tempReg, tempReg, 1, 0x1);
+   generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, tempReg, tempReg, 25, 0x1);
    generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
 
    // --- load the length for countPositves; load 0 for hasNegative
