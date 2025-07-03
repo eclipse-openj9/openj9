@@ -5872,10 +5872,9 @@ typedef struct J9VMThread {
 #if defined(J9VM_OPT_JFR)
 	J9ThreadJFRState threadJfrState;
 #endif /* defined(J9VM_OPT_JFR) */
-	U_64 parkWaitTime;
+	U_64 prevParkRateTime;
 	U_64 parkCount;
-	U_64 parkWaitSlidingWindowIndex;
-	U_64 *parkWaitSlidingWindow;
+	double parkRate;
 	volatile UDATA prePark;
 } J9VMThread;
 
@@ -6168,23 +6167,18 @@ typedef struct J9JavaVM {
 	UDATA thrDeflationPolicy;
 	UDATA thrParkSpinCount1;
 	UDATA thrParkSpinCount2;
-	U_64 parkSpinWaitThreshold;
-	U_64 parkWaitSlidingWindowSize;
-	double parkSpinRatioOfAvgWait;
-	UDATA parkYield;
-	UDATA parkLock;
-	U_64 parkSleepMultiplier;
+	UDATA parkSleepMultiplier;
+	UDATA parkSleepTime;
+	UDATA parkPolicy;
 	U_64 yieldUsleepMultiplier;
 	UDATA gcOptions;
 	UDATA  ( *unhookVMEvent)(struct J9JavaVM *javaVM, UDATA eventNumber, void * currentHandler, void * oldHandler) ;
 	UDATA classLoadingMaxStack;
 	U_8* callInReturnPC;
-	float machineTotal;
-	float jvmUser;
-	float jvmSystem;
-	J9SysinfoCPUTime prevSysCPUTime;
-	j9thread_process_time_t prevProcCPUTimes;
-	I_64 prevProcTimestamp;
+	float contextSwitchRate;
+	omrthread_t cpuUtilCalcThread;
+	omrthread_monitor_t cpuUtilCalcMutex;
+	I_64 prevContextSwitchTimestamp;
 	double thresholdMedium;
 	double thresholdHigh;
 	UDATA recalcThresholdNanos;

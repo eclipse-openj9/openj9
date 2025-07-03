@@ -462,73 +462,72 @@ continueTimeCompensation:
 		break;
 	case HELPER_TYPE_THREAD_PARK:
 		{
+			if (vm->parkPolicy == 0) {
+				rc = omrthread_park(millis, nanos);
+				break;
+			}
 			PORT_ACCESS_FROM_VMC(vmThread);
-			UDATA policy = 0;
 			BOOLEAN earlyBreak = false;
 			I_64 currentTime = j9time_nano_time();
 
 			vmThread->prePark = 1;
 
-			if ((vm->prevProcTimestamp == 0)
-			|| ((UDATA)(currentTime - vm->prevProcTimestamp) > vm->recalcThresholdNanos)
-			) {
+			// TODO enable park rate all the time
+			if (vm->parkPolicy == 4) {
+				vmThread->parkCount += 1;
 
-				J9SysinfoCPUTime currentSysCPUTime = {0};
-				j9sysinfo_get_CPU_utilization(&currentSysCPUTime);
-
-				UDATA numberOfCpus = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
-
-				if (vm->prevSysCPUTime.timestamp == 0) {
-					// first run
-				} else {
-					vm->machineTotal = OMR_MIN((currentSysCPUTime.cpuTime - vm->prevSysCPUTime.cpuTime) / ((double)numberOfCpus * (currentSysCPUTime.timestamp - vm->prevSysCPUTime.timestamp)), 1.0);
-					Trc_VM_ThreadHelp_timeCompensationHelper_parkMachine(vmThread, currentSysCPUTime.cpuTime, vm->prevSysCPUTime.cpuTime, numberOfCpus, currentTime, vm->prevProcTimestamp);
-				}
-				vm->prevProcTimestamp = currentTime;
-				vm->prevSysCPUTime = currentSysCPUTime;
-
-				Trc_VM_ThreadHelp_timeCompensationHelper_parkWait(vmThread, vm->machineTotal, currentTime);
-			}
-
-			if (vm->machineTotal != 0) {
-				if (vm->machineTotal > (float)vm->thresholdHigh) {
-					policy = 2;
-				} else if (vm->machineTotal > (float)vm->thresholdMedium) {
-					policy = 1;
-				} else {
-					policy = 0;
+				if ((vmThread->prevParkRateTime == 0)
+				|| ((UDATA)(currentTime - vmThread->prevParkRateTime) > vm->recalcThresholdNanos)
+				) {
+					if (vmThread->prevParkRateTime != 0) {
+						vmThread->parkRate = double(vmThread->parkCount) / (currentTime - vmThread->prevParkRateTime) * 1e9;
+					}
+					vmThread->prevParkRateTime = currentTime;
+					vmThread->parkCount = 0;
 				}
 			}
 
 			UDATA count = 0;
+			UDATA policy = -1;
+			if (vm->parkPolicy <= 2) {
+				policy = vm->parkPolicy;
+			} else if (vm->parkPolicy == 3) {
+				double contextSwitchRate = vm->contextSwitchRate;
+				if (contextSwitchRate > vm->thresholdHigh) policy = 2;
+				else if (contextSwitchRate > vm->thresholdMedium) policy = 1;
+				else policy = 0;
+			} else {
+				double parkRate = vmThread->parkRate;
+				if (parkRate > vm->thresholdHigh) policy = 2;
+				else if (parkRate > vm->thresholdMedium) policy = 1;
+				else policy = 0;
+			}
 
-			if (0 != policy) {
-
-				if (1 == policy) {
-					/* spin */
-					for (IDATA spinCount1 = vm->thrParkSpinCount1; spinCount1 > 0; --spinCount1) {
-						VM_AtomicSupport::yieldCPU();
-						count++;
-						if (vmThread->prePark == 0) {
-							earlyBreak = TRUE;
-							break;
-						}
-					}
-				} else if (2 == policy) {
-					for (IDATA spinCount2 = vm->thrParkSpinCount2; spinCount2 > 0; --spinCount2) {
-						count++;
-						usleep(((spinCount2 * vm->parkSleepMultiplier) + 1) * vm->yieldUsleepMultiplier);
-						if (vmThread->prePark == 0) {
-							earlyBreak = TRUE;
-							break;
-						}
+			if (1 == policy) {
+				/* spin */
+				for (IDATA spinCount1 = vm->thrParkSpinCount1; spinCount1 > 0; --spinCount1) {
+					VM_AtomicSupport::yieldCPU();
+					count++;
+					if (vmThread->prePark == 0) {
+						earlyBreak = TRUE;
+						break;
 					}
 				}
-				rc = omrthread_park(millis, nanos);
-			} else {
-				rc = omrthread_park(millis, nanos);
+			} else if (2 == policy) {
+				for (IDATA spinCount2 = vm->thrParkSpinCount2; spinCount2 > 0; --spinCount2) {
+					count++;
+					usleep(((spinCount2 * vm->parkSleepMultiplier) + 1) * vm->parkSleepTime);
+					if (vmThread->prePark == 0) {
+						earlyBreak = TRUE;
+						break;
+					}
+				}
 			}
-			Trc_VM_ThreadHelp_timeCompensationHelper_parkWaited(vmThread, j9time_nano_time()-currentTime, policy, earlyBreak, count);
+
+			rc = omrthread_park(millis, nanos);
+
+			// TODO add context switch rate
+			Trc_VM_ThreadHelp_timeCompensationHelper_parkWaited(vmThread, j9time_nano_time()-currentTime, policy, earlyBreak, count, vmThread->parkRate, vm->contextSwitchRate);
 			break;
 		}
 	case HELPER_TYPE_THREAD_SLEEP:
