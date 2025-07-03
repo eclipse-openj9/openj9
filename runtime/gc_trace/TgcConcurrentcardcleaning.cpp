@@ -55,7 +55,7 @@ tgcHookCardCleaningComplete(J9HookInterface** hook, UDATA eventNum, void* eventD
 
 	tgcExtensions->printf("Card cleaning for GC(%zu)\n",
 #if defined(J9VM_GC_MODRON_SCAVENGER)
-		extensions->scavengerStats._gcCount +
+		extensions->incrementScavengerStats._gcCount +
 #endif /* J9VM_GC_MODRON_SCAVENGER */
 		extensions->globalGCStats.gcCount + 
 		1

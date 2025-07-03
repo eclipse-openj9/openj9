@@ -48,7 +48,7 @@ tgcHookConcurrentBackgroundThreadActivated(J9HookInterface** hook, UDATA eventNu
 
 	concurrentExtensions->gcCountAtBackgroundThreadActivation = 
 #if defined(J9VM_GC_MODRON_SCAVENGER)
-		extensions->scavengerStats._gcCount +
+		extensions->incrementScavengerStats._gcCount +
 #endif /* J9VM_GC_MODRON_SCAVENGER */
 		extensions->globalGCStats.gcCount;
 

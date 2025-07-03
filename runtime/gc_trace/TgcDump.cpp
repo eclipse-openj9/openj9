@@ -61,7 +61,7 @@ tgcHookGlobalGcSweepEnd(J9HookInterface** hook, UDATA eventNum, void* eventData,
 		gcCount = extensions->globalGCStats.gcCount;
 		if (extensions->isStandardGC()) {
 #if defined(J9VM_GC_MODRON_SCAVENGER)
-			gcCount += extensions->scavengerStats._gcCount;
+			gcCount += extensions->incrementScavengerStats._gcCount;
 #endif /* J9VM_GC_MODRON_SCAVENGER */
 		}
 #endif /* J9VM_GC_MODRON_STANDARD || J9VM_GC_REALTIME */
