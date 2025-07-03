@@ -281,6 +281,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             // Do not forbid AOT cache stores or loads (this server might be able to fulfill them)
             compInfo->getPersistentInfo()->setDoNotRequestJITServerAOTCacheLoad(false);
             compInfo->getPersistentInfo()->setDoNotRequestJITServerAOTCacheStore(false);
+
+            auto loaderTable = compInfo->getPersistentInfo()->getPersistentClassLoaderTable();
+            OMR::CriticalSection lock(compInfo->getSequencingMonitor());
+            loaderTable->resetPermanentLoadersSentToServer(compInfo);
             }
 
          client->write(response, ranges, unloadedClasses->getMaxRanges(), serializedCHTable, dltedMethods);
@@ -3448,28 +3452,70 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
    compInfoPT->getJ9VM()->clearDeserializerWasReset();
    std::vector<uintptr_t> newKnownIds = deserializer ? deserializer->getNewKnownIds(compiler) : std::vector<uintptr_t>();
 
-   // TODO: make this a synchronized region to avoid bad_alloc exceptions
-   compInfo->getSequencingMonitor()->enter();
-   // Collect the list of unloaded classes
-   std::vector<TR_OpaqueClassBlock *> unloadedClasses(compInfo->getUnloadedClassesTempList()->begin(),
-                                                      compInfo->getUnloadedClassesTempList()->end());
-   compInfo->getUnloadedClassesTempList()->clear();
-   std::vector<TR_OpaqueClassBlock *> illegalModificationList(compInfo->getIllegalFinalFieldModificationList()->begin(),
-                                                              compInfo->getIllegalFinalFieldModificationList()->end());
-   compInfo->getIllegalFinalFieldModificationList()->clear();
-   // Collect and encode the CHTable updates; this will acquire CHTable mutex
    auto chTable = (JITClientPersistentCHTable *)persistentInfo->getPersistentCHTable();
-   std::pair<std::string, std::string> chtableUpdates = chTable->serializeUpdates();
-   // Update the sequence number for these updates
-   uint32_t seqNo = compInfo->incCompReqSeqNo();
-   uint32_t lastCriticalSeqNo = !details.isJitDumpMethod() ? compInfo->getLastCriticalSeqNo() : 0;
-   // If needed, update the seqNo of the last request that carried information that needed to be processed in order
-   if (!chtableUpdates.first.empty() || !chtableUpdates.second.empty() ||
-       !illegalModificationList.empty() || !unloadedClasses.empty() || details.isJitDumpMethod())
+   auto permanentLoaders = compiler->permanentLoaders();
+   std::vector<TR_OpaqueClassBlock *> unloadedClasses;
+   std::vector<TR_OpaqueClassBlock *> illegalModificationList;
+   std::pair<std::string, std::string> chtableUpdates("", "");
+   std::vector<J9ClassLoader *> newPermanentLoaders; // doesn't affect critical seq. no.
+   uint32_t seqNo = 0;
+   uint32_t lastCriticalSeqNo = 0;
+
+   // sequencing monitor critical section scope
       {
-      compInfo->setLastCriticalSeqNo(seqNo);
+      OMR::CriticalSection sequencingLock(compInfo->getSequencingMonitor());
+
+      // Collect the list of unloaded classes
+         {
+         auto src = compInfo->getUnloadedClassesTempList();
+         unloadedClasses.reserve(src->size());
+         unloadedClasses.insert(unloadedClasses.end(), src->begin(), src->end());
+         src->clear();
+         }
+
+      // Collect the illegal final field modifications
+         {
+         auto src = compInfo->getIllegalFinalFieldModificationList();
+         illegalModificationList.reserve(src->size());
+         illegalModificationList.insert(illegalModificationList.end(), src->begin(), src->end());
+         src->clear();
+         }
+
+      // Collect and encode the CHTable updates; this will acquire CHTable mutex
+      chtableUpdates = chTable->serializeUpdates();
+
+      // Update the sequence number for these updates
+      seqNo = compInfo->incCompReqSeqNo();
+      lastCriticalSeqNo = !details.isJitDumpMethod() ? compInfo->getLastCriticalSeqNo() : 0;
+
+      // If needed, update the seqNo of the last request that carried information that needed to be processed in order
+      if (!chtableUpdates.first.empty() || !chtableUpdates.second.empty() ||
+          !illegalModificationList.empty() || !unloadedClasses.empty() || details.isJitDumpMethod())
+         {
+         compInfo->setLastCriticalSeqNo(seqNo);
+         }
+
+      // Determine which permanent loaders (if any) to send to the server.
+      auto loaderTable = persistentInfo->getPersistentClassLoaderTable();
+      size_t numPermanentLoadersSent =
+         loaderTable->numPermanentLoadersSentToServer(compInfo);
+
+      // It's possible to have numPermanentLoadersSent > permanentLoaders.size()
+      // in some interleavings. Only send loaders if our permanentLoaders contains
+      // entries that haven't been sent yet. This also prevents the subtraction
+      // from overflowing.
+      if (numPermanentLoadersSent < permanentLoaders.size())
+         {
+         size_t n = permanentLoaders.size() - numPermanentLoadersSent;
+         newPermanentLoaders.reserve(n);
+         newPermanentLoaders.insert(
+            newPermanentLoaders.end(),
+            permanentLoaders.begin() + numPermanentLoadersSent,
+            permanentLoaders.end());
+
+         loaderTable->addPermanentLoadersSentToServer(n, compInfo);
+         }
       }
-   compInfo->getSequencingMonitor()->exit();
 
    uint32_t statusCode = compilationFailure;
    std::string codeCacheStr;
@@ -3502,7 +3548,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          detailsStr, details.getType(), unloadedClasses, illegalModificationList, classInfoTuple, optionsStr,
          recompMethodInfoStr, chtableUpdates.first, chtableUpdates.second, useAotCompilation,
          TR::Compiler->vm.isVMInStartupPhase(compInfoPT->getJitConfig()), aotCacheStore, aotCacheLoad, methodIndex,
-         classChainOffset, ramClassChain, uncachedRAMClasses, uncachedClassInfos, newKnownIds
+         classChainOffset, ramClassChain, uncachedRAMClasses, uncachedClassInfos, newKnownIds, newPermanentLoaders
       );
 
       JITServer::MessageType response;

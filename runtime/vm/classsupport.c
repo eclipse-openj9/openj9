@@ -747,6 +747,7 @@ callLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9Cla
 {
 	j9object_t classNameString, sendLoadClassResult;
 	J9Class *foundClass = NULL;
+	BOOLEAN addedClassToInitiatingLoader = FALSE;
 
 	Assert_VM_mustHaveVMAccess(vmThread);
 
@@ -821,7 +822,9 @@ callLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9Cla
 
 					/* Add the found class to our class table since we are an initiating loader */
 
-					if (hashClassTableAtPut(vmThread, classLoader, className, classNameLength, foundClass)) {
+					if (!hashClassTableAtPut(vmThread, classLoader, className, classNameLength, foundClass)) {
+						addedClassToInitiatingLoader = TRUE;
+					} else {
 						/* Failed to store the class - GC and retry */
 
 						omrthread_monitor_exit(vm->classTableMutex);
@@ -832,7 +835,9 @@ callLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9Cla
 
 						ramClass = hashClassTableAt(classLoader, className, classNameLength);
 						if (NULL == ramClass) {
-							if (hashClassTableAtPut(vmThread, classLoader, className, classNameLength, foundClass)) {
+							if (!hashClassTableAtPut(vmThread, classLoader, className, classNameLength, foundClass)) {
+								addedClassToInitiatingLoader = TRUE;
+							} else {
 								/* Add failed again, throw native OOM */
 
 								omrthread_monitor_exit(vm->classTableMutex);
@@ -855,6 +860,11 @@ callLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9Cla
 					}
 				}
 			}
+
+			if (addedClassToInitiatingLoader) {
+				addOutlivingLoader(vmThread, classLoader, foundClass->classLoader);
+			}
+
 			omrthread_monitor_exit(vm->classTableMutex);
  		}
 	} else {

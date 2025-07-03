@@ -310,6 +310,16 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 		}
 	}
 
+	/* Free the outliving loader set. */
+	if (NULL != classLoader->outlivingLoaders) {
+		if ((J9CLASSLOADER_OUTLIVING_LOADERS_PERMANENT != classLoader->outlivingLoaders)
+			&& J9_ARE_NO_BITS_SET((UDATA)classLoader->outlivingLoaders, J9CLASSLOADER_OUTLIVING_LOADERS_SINGLE_TAG)
+		) {
+			hashTableFree((J9HashTable *)classLoader->outlivingLoaders);
+		}
+		classLoader->outlivingLoaders = NULL;
+	}
+
 #ifdef J9VM_NEEDS_JNI_REDIRECTION
 	if (classLoader->jniRedirectionBlocks != NULL) {
 		J9JNIRedirectionBlock* block = classLoader->jniRedirectionBlocks;

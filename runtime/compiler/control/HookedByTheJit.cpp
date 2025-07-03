@@ -2807,6 +2807,17 @@ void jitFlushCompilationQueue(J9VMThread * currentThread, J9JITFlushCompilationQ
 
 #endif // #if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
 
+void jitAddPermanentLoader(J9VMThread *currentThread, J9ClassLoader *loader)
+   {
+   // NOTE: Caller holds the class table mutex.
+   TR_PersistentMemory *persistentMemory = TR::Compiler->persistentMemory();
+   TR::PersistentInfo *persistentInfo = persistentMemory->getPersistentInfo();
+   TR_PersistentClassLoaderTable *loaderTable =
+      persistentInfo->getPersistentClassLoaderTable();
+
+   loaderTable->addPermanentLoader(currentThread, loader);
+   }
+
 void jitMethodBreakpointed(J9VMThread *currentThread, J9Method *j9method)
    {
    J9JITConfig * jitConfig = currentThread->javaVM->jitConfig;
