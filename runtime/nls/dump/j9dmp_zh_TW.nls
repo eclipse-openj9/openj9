@@ -100,18 +100,12 @@ J9NLS_DMP_MISSING_EXECUTABLE_STR.sample_input_1=bogus
 J9NLS_DMP_MISSING_EXECUTABLE_STR.link=dita:///diag/tools/dumpagents_exec.dita
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_PROCESSING_EVENT_STR=\u6b63\u5728\u8655\u7406\u50be\u51fa\u4e8b\u4ef6 "%1$s"\uff0c\u8a73\u7d30\u8cc7\u6599 "%3$.*2$s" - \u8acb\u7a0d\u5019\u3002
+J9NLS_DMP_PROCESSING_EVENT_STR=
 # START NON-TRANSLATABLE
-J9NLS_DMP_PROCESSING_EVENT_STR.explanation=A dump event has occurred and is being handled.
-J9NLS_DMP_PROCESSING_EVENT_STR.system_action=The JVM attempts to process the event.
-J9NLS_DMP_PROCESSING_EVENT_STR.user_response=No response is required.
-# vmstop is not translatable
-J9NLS_DMP_PROCESSING_EVENT_STR.sample_input_1=vmstop
-J9NLS_DMP_PROCESSING_EVENT_STR.sample_input_2=9
-J9NLS_DMP_PROCESSING_EVENT_STR.sample_input_3=#00000000
-J9NLS_DMP_PROCESSING_EVENT_STR.link=dita:///diag/tools/dump_agents.dita
+J9NLS_DMP_PROCESSING_EVENT_STR.explanation=NOTAG
+J9NLS_DMP_PROCESSING_EVENT_STR.system_action=
+J9NLS_DMP_PROCESSING_EVENT_STR.user_response=
 # END NON-TRANSLATABLE
-
 
 J9NLS_DMP_REQUESTING_DUMP_STR=JVM \u6b63\u5728\u5229\u7528 '%2$s' \u8981\u6c42 %1$s \u50be\u51fa
 # START NON-TRANSLATABLE
@@ -179,16 +173,11 @@ J9NLS_DMP_ERROR_IN_DUMP_STR.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_PROCESSED_EVENT_STR=\u5df2\u8655\u7406\u50be\u51fa\u4e8b\u4ef6 "%1$s"\uff0c\u8a73\u7d30\u8cc7\u6599 "%3$.*2$s"\u3002
+J9NLS_DMP_PROCESSED_EVENT_STR=
 # START NON-TRANSLATABLE
-J9NLS_DMP_PROCESSED_EVENT_STR.explanation=A dump event has occurred and has been handled.
-J9NLS_DMP_PROCESSED_EVENT_STR.system_action=The JVM continues.
-J9NLS_DMP_PROCESSED_EVENT_STR.user_response=Refer to other messages issued by the JVM for the location of the dump file, or for other actions required.
-J9NLS_DMP_PROCESSED_EVENT_STR.sample_input_1=vmstop
-J9NLS_DMP_PROCESSED_EVENT_STR.sample_input_2=9
-J9NLS_DMP_PROCESSED_EVENT_STR.sample_input_3=#00000000
-J9NLS_DMP_PROCESSED_EVENT_STR.link=
-
+J9NLS_DMP_PROCESSED_EVENT_STR.explanation=NOTAG
+J9NLS_DMP_PROCESSED_EVENT_STR.system_action=
+J9NLS_DMP_PROCESSED_EVENT_STR.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_DMP_UNRECOGNISED_REQUEST_STR=\u7121\u6cd5\u8fa8\u8b58 VM \u52d5\u4f5c\uff1a...%s
@@ -457,7 +446,7 @@ J9NLS_DMP_PROCESSING_EVENT_TIME.user_response=No response is required.
 J9NLS_DMP_PROCESSING_EVENT_TIME.sample_input_1=vmstop
 J9NLS_DMP_PROCESSING_EVENT_TIME.sample_input_2=9
 J9NLS_DMP_PROCESSING_EVENT_TIME.sample_input_3=#00000000
-J9NLS_DMP_PROCESSING_EVENT_TIME.sample_input_4=20110901.134521
+J9NLS_DMP_PROCESSING_EVENT_TIME.sample_input_4=2011/09/01 13:45:21
 J9NLS_DMP_PROCESSING_EVENT_TIME.link=dita:///diag/tools/dump_agents.dita
 # END NON-TRANSLATABLE
 
@@ -617,4 +606,18 @@ J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.sample_input_4=12
 J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.sample_input_5=No such file
 J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.sample_input_6=20220919.114434
 J9NLS_DMP_PROCESSING_DETAILED_EVENT_TIME.link=dita:///diag/tools/dump_agents.dita
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_PROCESSED_EVENT_TIME=\u5df2\u8655\u7406\u8f49\u5132\u4e8b\u4ef6 " %1$s \u300c, \u8a73\u7d30\u8cc7\u8a0a \u300d %3$.*2$s " \u65bc %4$s ( %5$d.%6$03d \u79d2)\u3002
+# START NON-TRANSLATABLE
+J9NLS_DMP_PROCESSED_EVENT_TIME.explanation=A dump event has occurred and has been handled.
+J9NLS_DMP_PROCESSED_EVENT_TIME.system_action=The JVM continues.
+J9NLS_DMP_PROCESSED_EVENT_TIME.user_response=Refer to other messages issued by the JVM for the location of the dump file, or for other actions required.
+J9NLS_DMP_PROCESSED_EVENT_TIME.sample_input_1=vmstop
+J9NLS_DMP_PROCESSED_EVENT_TIME.sample_input_2=9
+J9NLS_DMP_PROCESSED_EVENT_TIME.sample_input_3=#00000000
+J9NLS_DMP_PROCESSED_EVENT_TIME.sample_input_4=2025/06/25 15:36:02
+J9NLS_DMP_PROCESSED_EVENT_TIME.sample_input_5=3
+J9NLS_DMP_PROCESSED_EVENT_TIME.sample_input_6=450
+J9NLS_DMP_PROCESSED_EVENT_TIME.link=dita:///diag/tools/dump_agents.dita
 # END NON-TRANSLATABLE
