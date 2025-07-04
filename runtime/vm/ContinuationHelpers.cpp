@@ -266,7 +266,7 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 
 	currentThread->currentContinuation = continuation;
 #if JAVA_SPEC_VERSION >= 24
-	Trc_VM_enterContinuation_Mount(currentThread, continuation, continuation->returnState, continuation->ownedMonitorCount, continuation->enteredMonitors);
+	Trc_VM_enterContinuation_Mount(currentThread, continuation, continuation->returnState, currentThread->ownedMonitorCount, continuation->enteredMonitors);
 #endif /* JAVA_SPEC_VERSION >= 24 */
 	/* Reset counters which determine if the current continuation is pinned. */
 	currentThread->continuationPinCount = 0;
