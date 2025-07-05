@@ -5862,6 +5862,10 @@ typedef struct J9VMThread {
 #if defined(J9VM_OPT_JFR)
 	J9ThreadJFRState threadJfrState;
 #endif /* defined(J9VM_OPT_JFR) */
+	U_64 prevParkRateTime;
+	U_64 parkCount;
+	double parkRate;
+	volatile UDATA prePark;
 } J9VMThread;
 
 #if defined(J9VM_ENV_DATA64)
@@ -6151,10 +6155,23 @@ typedef struct J9JavaVM {
 	UDATA thrNestedSpinning;
 	UDATA thrTryEnterNestedSpinning;
 	UDATA thrDeflationPolicy;
+	UDATA thrParkSpinCount1;
+	UDATA thrParkSpinCount2;
+	UDATA parkSleepMultiplier;
+	UDATA parkSleepTime;
+	UDATA parkPolicy;
+	U_64 yieldUsleepMultiplier;
 	UDATA gcOptions;
 	UDATA  ( *unhookVMEvent)(struct J9JavaVM *javaVM, UDATA eventNumber, void * currentHandler, void * oldHandler) ;
 	UDATA classLoadingMaxStack;
 	U_8* callInReturnPC;
+	float contextSwitchRate;
+	omrthread_t cpuUtilCalcThread;
+	omrthread_monitor_t cpuUtilCalcMutex;
+	I_64 prevContextSwitchTimestamp;
+	double thresholdMedium;
+	double thresholdHigh;
+	UDATA recalcThresholdNanos;
 #if defined(J9VM_OPT_METHOD_HANDLE)
 	U_8* impdep1PC;
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */

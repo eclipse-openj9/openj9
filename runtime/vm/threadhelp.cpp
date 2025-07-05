@@ -436,9 +436,9 @@ IDATA
 timeCompensationHelper(J9VMThread *vmThread, U_8 threadHelperType, omrthread_monitor_t monitor, I_64 millis, I_32 nanos)
 {
 	IDATA rc = 0;
+	J9JavaVM *vm = vmThread->javaVM;
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-	J9JavaVM *vm = vmThread->javaVM;
 	/* Time compensation only supports CRIURestoreNonPortableMode which is default mode. */
 	bool waitTimed = (millis > 0) || (nanos > 0);
 	bool compensationMightBeRequired = waitTimed && !J9_IS_CRIU_RESTORED(vm) && isTimeCompensationEnabled(vmThread);
@@ -461,8 +461,69 @@ continueTimeCompensation:
 		rc = omrthread_monitor_wait_timed(monitor, millis, nanos);
 		break;
 	case HELPER_TYPE_THREAD_PARK:
-		rc = omrthread_park(millis, nanos);
-		break;
+		{
+			PORT_ACCESS_FROM_VMC(vmThread);
+			BOOLEAN earlyBreak = false;
+			I_64 currentTime = j9time_nano_time();
+
+			vmThread->prePark = 1;
+
+			if (vm->parkPolicy == 4) {
+				vmThread->parkCount += 1;
+
+				if ((vmThread->prevParkRateTime == 0)
+				|| ((UDATA)(currentTime - vmThread->prevParkRateTime) > vm->recalcThresholdNanos)
+				) {
+					if (vmThread->prevParkRateTime != 0) {
+						vmThread->parkRate = double(vmThread->parkCount) / (currentTime - vmThread->prevParkRateTime) * 1e9;
+					}
+					vmThread->prevParkRateTime = currentTime;
+					vmThread->parkCount = 0;
+				}
+			}
+
+			UDATA count = 0;
+			UDATA policy = -1;
+			if (vm->parkPolicy <= 2) {
+				policy = vm->parkPolicy;
+			} else if (vm->parkPolicy == 3) {
+				double contextSwitchRate = vm->contextSwitchRate;
+				if (contextSwitchRate > vm->thresholdHigh) policy = 2;
+				else if (contextSwitchRate > vm->thresholdMedium) policy = 1;
+				else policy = 0;
+			} else {
+				double parkRate = vmThread->parkRate;
+				if (parkRate > vm->thresholdHigh) policy = 2;
+				else if (parkRate > vm->thresholdMedium) policy = 1;
+				else policy = 0;
+			}
+
+			if (1 == policy) {
+				/* spin */
+				for (IDATA spinCount1 = vm->thrParkSpinCount1; spinCount1 > 0; --spinCount1) {
+					VM_AtomicSupport::yieldCPU();
+					count++;
+					if (vmThread->prePark == 0) {
+						earlyBreak = TRUE;
+						break;
+					}
+				}
+			} else if (2 == policy) {
+				for (IDATA spinCount2 = vm->thrParkSpinCount2; spinCount2 > 0; --spinCount2) {
+					count++;
+					usleep(((spinCount2 * vm->parkSleepMultiplier) + 1) * vm->parkSleepTime);
+					if (vmThread->prePark == 0) {
+						earlyBreak = TRUE;
+						break;
+					}
+				}
+			}
+
+			rc = omrthread_park(millis, nanos);
+
+			Trc_VM_ThreadHelp_timeCompensationHelper_parkWaited(vmThread, j9time_nano_time()-currentTime, policy, earlyBreak, count, vmThread->parkRate);
+			break;
+		}
 	case HELPER_TYPE_THREAD_SLEEP:
 		/* Returns 0 when the timeout specified passed.
 		 * A timeout of 0 (0ms, 0ns) indicates an immediate return.
