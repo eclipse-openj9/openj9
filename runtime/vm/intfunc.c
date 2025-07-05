@@ -57,6 +57,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	hashClassTableAtPut,
 	hashClassTableDelete,
 	hashClassTableReplace,
+	segmentIteratorNextClass,
 	monitorTableAt,
 	allocateVMThread,
 	deallocateVMThread,
@@ -482,6 +483,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	initializeSnapshotClassLoaderObject,
 	initializeSnapshotClassObject,
 	loadWarmClassFromSnapshot,
+	initializeBaseClasses,
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 #if JAVA_SPEC_VERSION >= 24
 	monitorTablePeek,
