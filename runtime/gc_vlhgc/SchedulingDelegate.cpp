@@ -1369,6 +1369,7 @@ MM_SchedulingDelegate::calculateEdenSize(MM_EnvironmentVLHGC *env)
 	} else {
 		/* Eden will inform the total heap resizing logic, that it needs to change total heap size in order to maintain same "tenure" size */
 		maxEdenChange += maxHeapExpansionRegions;
+
 		intptr_t edenChangeWithSurvivorHeadroom = desiredEdenChangeSize;
 
 		/* Total heap needs to be aware that by changing eden size, the amount of survivor space might also need to change */
@@ -1378,14 +1379,20 @@ MM_SchedulingDelegate::calculateEdenSize(MM_EnvironmentVLHGC *env)
 			/* If eden is shrinking, only factor adjusting in survivor regions for total heap resizing when eden is not very small.
 			 * Factoring in survivor regions when eden is tiny can lead to some innacuracies, and reduce free non-eden regions, which may impact performance
 			 */
-			edenChangeWithSurvivorHeadroom = desiredEdenChangeSize + (intptr_t)floor(((double)desiredEdenChangeSize * _edenSurvivalRateCopyForward));
+			edenChangeWithSurvivorHeadroom = desiredEdenChangeSize - (intptr_t)floor(((double)desiredEdenChangeSize * _edenSurvivalRateCopyForward));
 		}
-		_extensions->globalVLHGCStats._heapSizingData.edenRegionChange = OMR_MIN(maxEdenChange, edenChangeWithSurvivorHeadroom);
+		if (freeRegions > _edenRegionCount) {
+			_extensions->globalVLHGCStats._heapSizingData.edenRegionChange = OMR_MIN(maxHeapExpansionRegions, edenChangeWithSurvivorHeadroom);
+		} else {
+		     /* PGC has not recovered enough regions to accommodate even for the current Eden size.
+		      * So, lets expand heap by that deficit (capped to the maximum that heap expansion allows), plus whatever the new Eden size requires)
+		      */
+		    __extensions->globalVLHGCStats._heapSizingData.edenRegionChange = OMR_MIN(maxHeapExpansionRegions, edenChangeWithSurvivorHeadroom + _edenRegionCount - freeRegions);
+		}
 	}
 
 	desiredEdenChangeSize = OMR_MIN(maxEdenChange, desiredEdenChangeSize);
-
-	_edenRegionCount = (uintptr_t)OMR_MAX(1, ((intptr_t)_edenRegionCount + desiredEdenChangeSize));
+	_edenRegionCount = (uintptr_t)OMR_MAX(0, ((intptr_t)_edenRegionCount + desiredEdenChangeSize));
 
 	Trc_MM_SchedulingDelegate_calculateEdenSize_Exit(env->getLanguageVMThread(), (_edenRegionCount * regionSize));
 }
