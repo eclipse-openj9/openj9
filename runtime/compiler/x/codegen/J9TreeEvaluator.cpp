@@ -10209,7 +10209,7 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, TR::CodeGenerator* c
 
 /**
  * \brief
- *   Generate inlined instructions equivalent to java/lang/StringLatin1.indexOf([BI[BII)I
+ *   Generate inlined instructions equivalent to java/lang/StringLatin1.indexOf([BI[BII)I or java/lang/StringUTF16.indexOf([BI[BII)I
  *
  * \param node
  *   The tree node
@@ -10217,9 +10217,12 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, TR::CodeGenerator* c
  * \param cg
  *   The Code Generator
  *
+ * \param isLatin1
+ *   True when the string is Latin1, False when the string is UTF16
+ *
  * Note that this version does not support discontiguous arrays
  */
-static TR::Register* inlineIntrinsicStringIndexOfString(TR::Node* node, TR::CodeGenerator* cg)
+static TR::Register* inlineIntrinsicStringIndexOfString(TR::Node* node, TR::CodeGenerator* cg, bool isLatin1)
    {
    static bool disableStrIdxOfStr = (feGetEnv("TR_disableStrIdxOfStr") != NULL);
    if (disableStrIdxOfStr) return NULL;
@@ -10227,7 +10230,7 @@ static TR::Register* inlineIntrinsicStringIndexOfString(TR::Node* node, TR::Code
    static bool verboseStrIdxOfStr = (feGetEnv("TR_verboseStrIdxOfStr") != NULL);
    if (verboseStrIdxOfStr)
       {
-      fprintf(stderr, "*Latin1.indexOfString(): %s @%s\n", cg->comp()->signature(), cg->comp()->getHotnessName());
+      fprintf(stderr, "*%s.indexOfString: %s @%s\n", isLatin1 ? "Latin1" : "UTF16", cg->comp()->signature(), cg->comp()->getHotnessName());
       }
 
    TR_ASSERT_FATAL(cg->comp()->target().is64Bit(), "Not supported on 32-bit platform");
@@ -10273,15 +10276,37 @@ static TR::Register* inlineIntrinsicStringIndexOfString(TR::Node* node, TR::Code
       0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00,
       };
+   static uint8_t MASKOFSIZETWO[] =
+      {
+      0x00, 0x01, 0x00, 0x01,
+      0x00, 0x01, 0x00, 0x01,
+      0x00, 0x01, 0x00, 0x01,
+      0x00, 0x01, 0x00, 0x01,
+      };
 
    const uint8_t width = 16;
+   uint8_t shift = 0;
+   uint8_t *shuffleMask = NULL;
+   TR::InstOpCode::Mnemonic compareOp = TR::InstOpCode::bad;
+   if (isLatin1)
+      {
+      shuffleMask = MASKOFSIZEONE;
+      compareOp = TR::InstOpCode::PCMPEQBRegReg;
+      shift = 0;
+      }
+   else
+      {
+      shuffleMask = MASKOFSIZETWO;
+      compareOp = TR::InstOpCode::PCMPEQWRegReg;
+      shift = 1;
+      }
 
    TR::Register *ECX = cg->allocateRegister(TR_GPR);
    TR::Register *tmpReg = cg->allocateRegister(TR_GPR);
    TR::Register *xmmReg1 = cg->allocateRegister(TR_VRF);
    TR::Register *xmmReg2 = cg->allocateRegister(TR_VRF);
    TR::Register *xmmReg3 = cg->allocateRegister(TR_VRF);
-   TR::Register *s1idxReg = cg->allocateRegister(TR_GPR);
+   TR::Register *s1addrReg = cg->allocateRegister(TR_GPR);
    TR::Register *s2idxReg = cg->allocateRegister(TR_GPR);
 
    TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions((uint8_t)12, (uint8_t)12, cg);
@@ -10295,7 +10320,7 @@ static TR::Register* inlineIntrinsicStringIndexOfString(TR::Node* node, TR::Code
    dependencies->addPreCondition(xmmReg1, TR::RealRegister::NoReg, cg);
    dependencies->addPreCondition(xmmReg2, TR::RealRegister::NoReg, cg);
    dependencies->addPreCondition(xmmReg3, TR::RealRegister::NoReg, cg);
-   dependencies->addPreCondition(s1idxReg, TR::RealRegister::NoReg, cg);
+   dependencies->addPreCondition(s1addrReg, TR::RealRegister::NoReg, cg);
    dependencies->addPreCondition(s2idxReg, TR::RealRegister::NoReg, cg);
 
    dependencies->addPostCondition(s1Reg, TR::RealRegister::NoReg, cg);
@@ -10308,7 +10333,7 @@ static TR::Register* inlineIntrinsicStringIndexOfString(TR::Node* node, TR::Code
    dependencies->addPostCondition(xmmReg1, TR::RealRegister::NoReg, cg);
    dependencies->addPostCondition(xmmReg2, TR::RealRegister::NoReg, cg);
    dependencies->addPostCondition(xmmReg3, TR::RealRegister::NoReg, cg);
-   dependencies->addPostCondition(s1idxReg, TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(s1addrReg, TR::RealRegister::NoReg, cg);
    dependencies->addPostCondition(s2idxReg, TR::RealRegister::NoReg, cg);
 
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
@@ -10330,9 +10355,9 @@ static TR::Register* inlineIntrinsicStringIndexOfString(TR::Node* node, TR::Code
    int32_t hdrSize = static_cast<int32_t>(TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
 
    // load first char of s2
-   generateRegMemInstruction(TR::InstOpCode::MOVZXReg4Mem1, node, tmpReg, generateX86MemoryReference(s2Reg, hdrSize, cg), cg);
+   generateRegMemInstruction(isLatin1 ? TR::InstOpCode::MOVZXReg4Mem1 : TR::InstOpCode::MOVZXReg4Mem2, node, tmpReg, generateX86MemoryReference(s2Reg, hdrSize, cg), cg);
    generateRegRegInstruction(TR::InstOpCode::MOVDRegReg4, node, xmmReg2, tmpReg, cg);
-   generateRegMemInstruction(TR::InstOpCode::PSHUFBRegMem, node, xmmReg2, generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, MASKOFSIZEONE), cg), cg);
+   generateRegMemInstruction(TR::InstOpCode::PSHUFBRegMem, node, xmmReg2, generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, shuffleMask), cg), cg);
 
    // calculate max
    generateRegRegInstruction(TR::InstOpCode::SUB4RegReg, node, maxReg, s2lenReg, cg); // s1len - s2len
@@ -10342,31 +10367,35 @@ static TR::Register* inlineIntrinsicStringIndexOfString(TR::Node* node, TR::Code
    generateRegRegInstruction(TR::InstOpCode::CMP4RegReg, node, resultReg, maxReg, cg);
    generateLabelInstruction(TR::InstOpCode::JG4, node, notFoundLabel, cg);
 
-   generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, tmpReg, generateX86MemoryReference(s1Reg, resultReg, 0, hdrSize, cg), cg);
+   generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, tmpReg, generateX86MemoryReference(s1Reg, resultReg, shift, hdrSize, cg), cg);
    generateRegRegInstruction(TR::InstOpCode::MOV4RegReg, node, ECX, tmpReg, cg);
    generateRegImmInstruction(TR::InstOpCode::AND4RegImms, node, ECX, width - 1, cg);
    generateLabelInstruction(TR::InstOpCode::JE1, node, firstCharLoopLabel, cg);
 
    generateRegImmInstruction(TR::InstOpCode::ANDRegImms(), node, tmpReg, ~(width - 1), cg);
    generateRegMemInstruction(TR::InstOpCode::MOVDQURegMem, node, xmmReg1, generateX86MemoryReference(tmpReg, 0, cg), cg);
-   generateRegRegInstruction(TR::InstOpCode::PCMPEQBRegReg, node, xmmReg1, xmmReg2, cg);
+   generateRegRegInstruction(compareOp, node, xmmReg1, xmmReg2, cg);
    generateRegRegInstruction(TR::InstOpCode::PMOVMSKB4RegReg, node, tmpReg, xmmReg1, cg);
    generateRegInstruction(TR::InstOpCode::SHR4RegCL, node, tmpReg, cg);
    generateRegRegInstruction(TR::InstOpCode::TEST4RegReg, node, tmpReg, tmpReg, cg);
    generateLabelInstruction(TR::InstOpCode::JNE1, node, firstCharMatchedLabel, cg);
-   generateRegImmInstruction(TR::InstOpCode::ADD4RegImms, node, resultReg, width, cg);
+   if (!isLatin1)
+      {
+      generateRegImmInstruction(TR::InstOpCode::SHR4RegImm1, node, ECX, 1, cg);
+      }
+   generateRegImmInstruction(TR::InstOpCode::ADD4RegImms, node, resultReg, width >> shift, cg);
    generateRegRegInstruction(TR::InstOpCode::SUB4RegReg, node, resultReg, ECX, cg);
    generateRegRegInstruction(TR::InstOpCode::CMP4RegReg, node, resultReg, maxReg, cg);
    generateLabelInstruction(TR::InstOpCode::JG4, node, notFoundLabel, cg);
 
    // loop for finding the first char
    generateLabelInstruction(TR::InstOpCode::label, node, firstCharLoopLabel, cg);
-   generateRegMemInstruction(TR::InstOpCode::MOVDQURegMem, node, xmmReg1, generateX86MemoryReference(s1Reg, resultReg, 0, hdrSize, cg), cg);
-   generateRegRegInstruction(TR::InstOpCode::PCMPEQBRegReg, node, xmmReg1, xmmReg2, cg);
+   generateRegMemInstruction(TR::InstOpCode::MOVDQURegMem, node, xmmReg1, generateX86MemoryReference(s1Reg, resultReg, shift, hdrSize, cg), cg);
+   generateRegRegInstruction(compareOp, node, xmmReg1, xmmReg2, cg);
    generateRegRegInstruction(TR::InstOpCode::PMOVMSKB4RegReg, node, tmpReg, xmmReg1, cg);
    generateRegRegInstruction(TR::InstOpCode::TEST4RegReg, node, tmpReg, tmpReg, cg);
    generateLabelInstruction(TR::InstOpCode::JNE1, node, firstCharMatchedLabel, cg);
-   generateRegImmInstruction(TR::InstOpCode::ADD4RegImms, node, resultReg, width, cg);
+   generateRegImmInstruction(TR::InstOpCode::ADD4RegImms, node, resultReg, width >> shift, cg);
    generateRegRegInstruction(TR::InstOpCode::CMP4RegReg, node, resultReg, maxReg, cg);
    generateLabelInstruction(TR::InstOpCode::JLE1, node, firstCharLoopLabel, cg);
    generateLabelInstruction(TR::InstOpCode::JMP4, node, notFoundLabel, cg);
@@ -10375,29 +10404,32 @@ static TR::Register* inlineIntrinsicStringIndexOfString(TR::Node* node, TR::Code
    generateLabelInstruction(TR::InstOpCode::label, node, firstCharMatchedLabel, cg);
 
    generateRegRegInstruction(TR::InstOpCode::BSF4RegReg, node, tmpReg, tmpReg, cg);
+   if (!isLatin1)
+      {
+      generateRegImmInstruction(TR::InstOpCode::SHR4RegImm1, node, tmpReg, 1, cg);
+      }
    generateRegRegInstruction(TR::InstOpCode::ADD4RegReg, node, resultReg, tmpReg, cg);
 
    generateRegRegInstruction(TR::InstOpCode::CMP4RegReg, node, resultReg, maxReg, cg);
    generateLabelInstruction(TR::InstOpCode::JG4, node, notFoundLabel, cg);
 
-   generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, s1idxReg, generateX86MemoryReference(resultReg, 1, cg), cg); // s1idx = offset + 1
+   generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, s1addrReg, generateX86MemoryReference(s1Reg, resultReg, shift, hdrSize, cg), cg); // s1addr = &(s1[resultReg << shift])
    generateRegImmInstruction(TR::InstOpCode::MOV4RegImm4, node, s2idxReg, 1, cg); // s2idx = 1
 
    generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, ECX, generateX86MemoryReference(s2lenReg, -1, cg), cg); // ECX = s2len - 1: 1st char has already matched
-   generateRegImmInstruction(TR::InstOpCode::SHR4RegImm1, node, ECX, 4, cg);
+   generateRegImmInstruction(TR::InstOpCode::SHR4RegImm1, node, ECX, 4 - shift, cg); // div by 16 or 8
    generateLabelInstruction(TR::InstOpCode::JE1, node, byteLoopLabel, cg);
 
    // Compare by 16 bytes
    generateLabelInstruction(TR::InstOpCode::label, node, qwordLoopLabel, cg);
-   generateRegMemInstruction(TR::InstOpCode::MOVDQURegMem, node, xmmReg1, generateX86MemoryReference(s1Reg, s1idxReg, 0, hdrSize, cg), cg);
-   generateRegMemInstruction(TR::InstOpCode::MOVDQURegMem, node, xmmReg3, generateX86MemoryReference(s2Reg, s2idxReg, 0, hdrSize, cg), cg);
+   generateRegMemInstruction(TR::InstOpCode::MOVDQURegMem, node, xmmReg1, generateX86MemoryReference(s1addrReg, s2idxReg, shift, 0, cg), cg);
+   generateRegMemInstruction(TR::InstOpCode::MOVDQURegMem, node, xmmReg3, generateX86MemoryReference(s2Reg, s2idxReg, shift, hdrSize, cg), cg);
    generateRegRegInstruction(TR::InstOpCode::PCMPEQBRegReg, node, xmmReg1, xmmReg3, cg);
    generateRegRegInstruction(TR::InstOpCode::PMOVMSKB4RegReg, node, tmpReg, xmmReg1, cg);
    generateRegImmInstruction(TR::InstOpCode::CMP4RegImm4, node, tmpReg, 0xffff, cg);
    generateLabelInstruction(TR::InstOpCode::JNE1, node, unmatchedLabel, cg);
 
-   generateRegImmInstruction(TR::InstOpCode::ADD4RegImms, node, s1idxReg, width, cg);
-   generateRegImmInstruction(TR::InstOpCode::ADD4RegImms, node, s2idxReg, width, cg);
+   generateRegImmInstruction(TR::InstOpCode::ADD4RegImms, node, s2idxReg, width >> shift, cg);
    generateRegImmInstruction(TR::InstOpCode::SUB4RegImms, node, ECX, 1, cg);
    generateLabelInstruction(TR::InstOpCode::JG1, node, qwordLoopLabel, cg);
 
@@ -10406,11 +10438,10 @@ static TR::Register* inlineIntrinsicStringIndexOfString(TR::Node* node, TR::Code
    generateRegRegInstruction(TR::InstOpCode::CMP4RegReg, node, s2lenReg, s2idxReg, cg);
    generateLabelInstruction(TR::InstOpCode::JLE1, node, doneLabel, cg); // resultReg has the result
 
-   generateRegMemInstruction(TR::InstOpCode::L1RegMem, node, tmpReg, generateX86MemoryReference(s2Reg, s2idxReg, 0, hdrSize, cg), cg);
-   generateMemRegInstruction(TR::InstOpCode::CMP1MemReg, node, generateX86MemoryReference(s1Reg, s1idxReg, 0, hdrSize, cg), tmpReg, cg);
+   generateRegMemInstruction(isLatin1 ? TR::InstOpCode::L1RegMem : TR::InstOpCode::L2RegMem, node, tmpReg, generateX86MemoryReference(s2Reg, s2idxReg, shift, hdrSize, cg), cg);
+   generateMemRegInstruction(isLatin1 ? TR::InstOpCode::CMP1MemReg : TR::InstOpCode::CMP2MemReg, node, generateX86MemoryReference(s1addrReg, s2idxReg, shift, 0, cg), tmpReg, cg);
    generateLabelInstruction(TR::InstOpCode::JNE1, node, unmatchedLabel, cg);
 
-   generateRegImmInstruction(TR::InstOpCode::ADD4RegImms, node, s1idxReg, 1, cg);
    generateRegImmInstruction(TR::InstOpCode::ADD4RegImms, node, s2idxReg, 1, cg);
    generateLabelInstruction(TR::InstOpCode::JMP1, node, byteLoopLabel, cg);
 
@@ -10431,7 +10462,7 @@ static TR::Register* inlineIntrinsicStringIndexOfString(TR::Node* node, TR::Code
    cg->stopUsingRegister(xmmReg1);
    cg->stopUsingRegister(xmmReg2);
    cg->stopUsingRegister(xmmReg3);
-   cg->stopUsingRegister(s1idxReg);
+   cg->stopUsingRegister(s1addrReg);
    cg->stopUsingRegister(s2idxReg);
 
    if (maxReg != s1lenReg)
@@ -12948,7 +12979,15 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
       case TR::java_lang_StringLatin1_indexOf:
       case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringLatin1:
          if (cg->getSupportsInlineStringIndexOfString())
-            returnRegister = inlineIntrinsicStringIndexOfString(node, cg);
+            returnRegister = inlineIntrinsicStringIndexOfString(node, cg, true);
+
+         callInlined = (returnRegister != NULL);
+         break;
+
+      case TR::java_lang_StringUTF16_indexOf:
+      case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringUTF16:
+         if (cg->getSupportsInlineStringIndexOfString())
+            returnRegister = inlineIntrinsicStringIndexOfString(node, cg, false);
 
          callInlined = (returnRegister != NULL);
          break;
