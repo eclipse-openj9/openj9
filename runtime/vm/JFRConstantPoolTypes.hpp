@@ -95,7 +95,6 @@ struct ClassEntry {
 
 struct PackageEntry {
 	J9ROMClass *romClass;
-	J9Class *ramClass;
 	U_32 moduleIndex;
 	BOOLEAN exported;
 	U_32 packageNameLength;
@@ -288,6 +287,12 @@ struct ModuleRequireEntry {
 	U_32 requiredModuleIndex;
 };
 
+struct ModuleExportEntry {
+	I_64 ticks;
+	U_32 exportedPackageIndex;
+	U_32 targetModuleIndex;
+};
+
 struct JVMInformationEntry {
 	const char *jvmName;
 	const char *jvmVersion;
@@ -419,6 +424,8 @@ private:
 	UDATA _systemGCCount;
 	J9Pool *_moduleRequireTable;
 	UDATA _moduleRequireCount;
+	J9Pool *_moduleExportTable;
+	UDATA _moduleExportCount;
 
 	/* Processing buffers */
 	StackFrame *_currentStackFrameBuffer;
@@ -547,6 +554,8 @@ private:
 	U_32 getClassEntry(J9Class *clazz);
 
 	U_32 addPackageEntry(J9Class *clazz);
+
+	U_32 addPackageEntry(J9Module *fromModule, J9Package *package, BOOLEAN exported);
 
 	U_32 addModuleEntry(J9Module *module);
 
@@ -700,6 +709,8 @@ public:
 
 	void addModuleRequireEntry(J9JFRModuleRequire *moduleRequireData);
 
+	void addModuleExportEntry(J9JFRModuleExport *moduleExportData);
+
 	J9Pool *getExecutionSampleTable()
 	{
 		return _executionSampleTable;
@@ -785,6 +796,11 @@ public:
 		return _moduleRequireTable;
 	}
 
+	J9Pool *getModuleExportTable()
+	{
+		return _moduleExportTable;
+	}
+
 	UDATA getsystemGCCount()
 	{
 		return _systemGCCount;
@@ -868,6 +884,11 @@ public:
 	UDATA getModuleRequireCount()
 	{
 		return _moduleRequireCount;
+	}
+
+	UDATA getModuleExportCount()
+	{
+		return _moduleExportCount;
 	}
 
 	ClassloaderEntry *getClassloaderEntry()
@@ -1041,6 +1062,9 @@ public:
 				break;
 			case J9JFR_EVENT_TYPE_MODULE_REQUIRE:
 				addModuleRequireEntry((J9JFRModuleRequire *)event);
+				break;
+			case J9JFR_EVENT_TYPE_MODULE_EXPORT:
+				addModuleExportEntry((J9JFRModuleExport *)event);
 				break;
 			default:
 				Assert_VM_unreachable();
@@ -1522,6 +1546,8 @@ done:
 		, _systemGCCount(0)
 		, _moduleRequireTable(NULL)
 		, _moduleRequireCount(0)
+		, _moduleExportTable(NULL)
+		, _moduleExportCount(0)
 		, _previousStackTraceEntry(NULL)
 		, _firstStackTraceEntry(NULL)
 		, _previousThreadEntry(NULL)
@@ -1692,6 +1718,12 @@ done:
 			goto done;
 		}
 
+		_moduleExportTable = pool_new(sizeof(ModuleExportEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		if (NULL == _moduleExportTable) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+
 		/* Add reserved index for default entries. For strings zero is the empty or NUll string.
 		 * For package zero is the deafult package, for Module zero is the unnamed module. ThreadGroup
 		 * zero is NULL threadGroup.
@@ -1789,6 +1821,7 @@ done:
 		pool_kill(_nativeLibrariesTable);
 		pool_kill(_systemGCTable);
 		pool_kill(_moduleRequireTable);
+		pool_kill(_moduleExportTable);
 		j9mem_free_memory(_globalStringTable);
 	}
 
