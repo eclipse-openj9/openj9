@@ -149,6 +149,12 @@
        {r(TR::Symbol::Java_lang_invoke_PrimitiveHandle_rawModifiers,  "java/lang/invoke/PrimitiveHandle", "rawModifiers", "I")},
        {r(TR::Symbol::Java_lang_invoke_PrimitiveHandle_defc,          "java/lang/invoke/PrimitiveHandle", "defc", "Ljava/lang/Class;")},
        {r(TR::Symbol::Java_lang_invoke_ThunkTuple_invokeExactThunk,   "java/lang/invoke/ThunkTuple", "invokeExactThunk", "J")},
+       {r(TR::Symbol::Java_lang_invoke_VarHandle_typesAndInvokers,    "java/lang/invoke/VarHandle", "typesAndInvokers", "Ljava/lang/invoke/VarHandle$TypesAndInvokers;")},
+#if JAVA_SPEC_VERSION <= 17
+       {r(TR::Symbol::Java_lang_invoke_VarHandle_methodHandleTable,   "java/lang/invoke/VarHandle$TypesAndInvokers", "methodHandle_table", "[Ljava/lang/invoke/MethodHandle;")},
+#else
+       {r(TR::Symbol::Java_lang_invoke_VarHandle_methodHandleTable,   "java/lang/invoke/VarHandle", "methodHandleTable", "[Ljava/lang/invoke/MethodHandle;")},
+#endif /* JAVA_SPEC_VERSION <= 17 */
        {r(TR::Symbol::Java_util_Hashtable_elementCount,               "java/util/Hashtable", "count", "I")},
        {r(TR::Symbol::Java_math_BigInteger_ZERO,                      "java/math/BigInteger", "ZERO", "Ljava/math/BigInteger;")},
        {r(TR::Symbol::Java_math_BigInteger_useLongRepresentation,     "java/math/BigInteger", "useLongRepresentation", "Z")},

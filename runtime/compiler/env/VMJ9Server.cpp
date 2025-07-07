@@ -2504,6 +2504,19 @@ TR_J9ServerVM::getVMIndexOffset()
    return vmInfo->_vmindexOffset;
    }
 
+int32_t
+TR_J9ServerVM::getVarHandleAccessDescriptorMode(TR::Compilation *comp, TR::KnownObjectTable::Index adIndex)
+   {
+   TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+   if (!knot) return -1;
+
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITServer::MessageType::VM_getVarHandleAccessDescriptorMode, adIndex);
+   auto recv = stream->read<int32_t>();
+
+   return std::get<0>(recv);
+   }
+
 TR::KnownObjectTable::Index
 TR_J9ServerVM::getMethodHandleTableEntryIndex(TR::Compilation *comp, TR::KnownObjectTable::Index vhIndex, TR::KnownObjectTable::Index adIndex)
    {

@@ -1272,6 +1272,13 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, mhIndex, mhObj);
          }
          break;
+      case MessageType::VM_getVarHandleAccessDescriptorMode:
+         {
+         auto recv = client->getRecvData<TR::KnownObjectTable::Index>();
+         int32_t result = fe->getVarHandleAccessDescriptorMode(comp, std::get<0>(recv));
+         client->write(response, result);
+         }
+         break;
       case MessageType::VM_getLayoutVarHandle:
          {
          auto recv = client->getRecvData<TR::KnownObjectTable::Index>();

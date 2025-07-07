@@ -161,6 +161,8 @@ public:
       Java_lang_invoke_PrimitiveHandle_rawModifiers,
       Java_lang_invoke_PrimitiveHandle_defc,
       Java_lang_invoke_ThunkTuple_invokeExactThunk,
+      Java_lang_invoke_VarHandle_typesAndInvokers,
+      Java_lang_invoke_VarHandle_methodHandleTable,
       Java_util_Hashtable_elementCount,
       Java_math_BigInteger_ZERO,
       Java_math_BigInteger_useLongRepresentation,
