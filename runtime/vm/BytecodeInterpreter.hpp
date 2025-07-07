@@ -5809,8 +5809,9 @@ ffi_OOM:
 		}
 #if JAVA_SPEC_VERSION >= 24
 		j9object_t syncObject = J9VMJDKINTERNALVMCONTINUATION_BLOCKER(_currentThread, continuationObject);
-
-		switch (_currentThread->currentContinuation->returnState) {
+		UDATA returnState = _currentThread->currentContinuation->returnState;
+		_currentThread->currentContinuation->returnState = 0;
+		switch (returnState) {
 		case J9VM_CONTINUATION_RETURN_FROM_YIELD:
 			returnSingleFromINL(REGISTER_ARGS, JNI_TRUE, 1);
 			break;
@@ -5878,8 +5879,21 @@ ffi_OOM:
 		case J9VM_CONTINUATION_RETURN_FROM_JIT_MONITOR_ENTER: {
 			rc = tryEnterBlockingMonitor(REGISTER_ARGS, syncObject, J9VM_CONTINUATION_RETURN_FROM_JIT_MONITOR_ENTER);
 			if ((NULL != _currentThread->currentContinuation) && (EXECUTE_BYTECODE == rc)) {
-				void *returnAddress = restoreJITResolveFrame(REGISTER_ARGS);
-				VMStructHasBeenUpdated(REGISTER_ARGS);
+				J9SFJITResolveFrame *resolveFrame = (J9SFJITResolveFrame*)_currentThread->sp;
+				void *returnAddress = NULL;
+				J9JITDecompilationInfo *decompilationStack = _currentThread->decompilationStack;
+				if ((NULL != decompilationStack) && ((void **)&resolveFrame->returnAddress == (void **)decompilationStack->pcAddress)) {
+					/*
+					 * The return address has been patched to point to the decompile helper. This helper assumes the
+					 * JIT resolve frame is still on the stack. Instead of popping the resolve frame just jump to the return
+					 * address and leave the frame in place. The decompile helper will pop the frame.
+					 */
+					returnAddress = resolveFrame->returnAddress;
+				} else {
+					returnAddress = restoreJITResolveFrame(REGISTER_ARGS);
+					VMStructHasBeenUpdated(REGISTER_ARGS);
+				}
+
 				rc = promotedMethodOnTransitionFromJIT(REGISTER_ARGS, returnAddress, _vm->jitConfig->jitExitInterpreter0RestoreAll, true);
 			}
 			break;
