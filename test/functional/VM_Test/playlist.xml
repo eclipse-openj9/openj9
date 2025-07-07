@@ -224,6 +224,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</test>
 	<test>
 		<testCaseName>xlpCodeCacheTests</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/22143#issuecomment-3045722163</comment>
+				<platform>.*aix.*</platform>
+			</disable>
+		</disables>
 		<variations>
 			<variation>Mode109</variation>
 			<variation>Mode110</variation>
