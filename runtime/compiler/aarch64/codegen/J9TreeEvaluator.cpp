@@ -7129,6 +7129,189 @@ static TR::Register *inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenerator
    return NULL;
    }
 
+/**
+ * \brief
+ *   Generate inlined instructions equivalent to java/lang/StringCoding.hasNegatives or java/lang/StringCoding.countPositives
+ *
+ * \param node
+ *   The tree node
+ *
+ * \param isHasNegatives
+ *   True when the method to be inlined is hasNegatives, false when the method is countPositives
+ *
+ * \param cg
+ *   The Code Generator
+ *
+ * Note that this version does not support discontiguous arrays
+ */
+static TR::Register *inlineHasNegativesOrCountPositives(TR::Node *node, bool isHasNegatives, TR::CodeGenerator *cg)
+   {
+   TR_ASSERT_FATAL(!TR::Compiler->om.canGenerateArraylets(), "Discontiguous array is not supported");
+
+   // Registers
+   TR::Register *arrayReg = cg->evaluate(node->getChild(0));
+   TR::Register *offsetReg = cg->evaluate(node->getChild(1));
+   TR::Register *lengthReg = cg->evaluate(node->getChild(2));
+
+   TR::Register *dataAddrReg = cg->allocateRegister(TR_GPR);
+   TR::Register *countReg = cg->allocateRegister(TR_GPR);
+   TR::Register *indexReg = cg->allocateRegister(TR_GPR);
+   TR::Register *tmpReg = cg->allocateRegister(TR_GPR);
+   TR::Register *vtmpReg = cg->allocateRegister(TR_VRF);
+
+   TR::RegisterDependencyConditions *dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(8, 8, cg->trMemory());
+   dependencies->addPreCondition(arrayReg, TR::RealRegister::NoReg);
+   dependencies->addPreCondition(offsetReg, TR::RealRegister::NoReg);
+   dependencies->addPreCondition(lengthReg, TR::RealRegister::NoReg);
+   dependencies->addPreCondition(dataAddrReg, TR::RealRegister::NoReg);
+   dependencies->addPreCondition(countReg, TR::RealRegister::NoReg);
+   dependencies->addPreCondition(indexReg, TR::RealRegister::NoReg);
+   dependencies->addPreCondition(tmpReg, TR::RealRegister::NoReg);
+   dependencies->addPreCondition(vtmpReg, TR::RealRegister::NoReg);
+
+   dependencies->addPostCondition(arrayReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(offsetReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(lengthReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(dataAddrReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(countReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(indexReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(tmpReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(vtmpReg, TR::RealRegister::NoReg);
+
+   // Labels
+   TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *loop16Label = generateLabelSymbol(cg);
+   TR::LabelSymbol *lessThan16Label = generateLabelSymbol(cg);
+   TR::LabelSymbol *lessThan8Label = generateLabelSymbol(cg);
+   TR::LabelSymbol *loop1Label = generateLabelSymbol(cg);
+   TR::LabelSymbol *notFoundLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *foundVec16Label = generateLabelSymbol(cg);
+   TR::LabelSymbol *foundVec8Label = generateLabelSymbol(cg);
+   TR::LabelSymbol *adjustIndexLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *foundLabel = generateLabelSymbol(cg);
+
+   startLabel->setStartInternalControlFlow();
+   doneLabel->setEndInternalControlFlow();
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, startLabel);
+
+   generateMovInstruction(cg, node, indexReg, offsetReg);
+
+   // Address of array elements
+#ifdef J9VM_GC_SPARSE_HEAP_ALLOCATION
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      {
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, dataAddrReg, TR::MemoryReference::createWithDisplacement(cg, arrayReg, cg->comp()->fej9()->getOffsetOfContiguousDataAddrField()));
+      }
+   else
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
+      {
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, dataAddrReg, arrayReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+      }
+
+   generateLogicalShiftRightImmInstruction(cg, node, countReg, lengthReg, 4); // div by 16
+   generateCompareBranchInstruction(cg, TR::InstOpCode::cbzw, node, countReg, lessThan16Label);
+
+   // Loop for 128-bit vector comparison
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, loop16Label);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::vldroffq, node, vtmpReg, TR::MemoryReference::createWithIndexReg(cg, dataAddrReg, indexReg));
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::vcmlt16b_zero, node, vtmpReg, vtmpReg); // Lanes with negative numbers are set to 0xFF
+   generateVectorShiftImmediateInstruction(cg, TR::InstOpCode::vshrn_8b, node, vtmpReg, vtmpReg, 4); // 8 bits x 16 -> 4 bits x 16
+   generateMovVectorElementToGPRInstruction(cg, TR::InstOpCode::umovxd, node, tmpReg, vtmpReg, 0);
+   generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, tmpReg, isHasNegatives ? foundLabel : foundVec16Label);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmw, node, indexReg, indexReg, 16);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmw, node, countReg, countReg, 1);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, loop16Label, TR::CC_NE);
+
+   // Less than 16 bytes remaining
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, lessThan16Label);
+   generateLogicalImmInstruction(cg, TR::InstOpCode::andimmw, node, countReg, lengthReg, false, 3); // N = false, immr:imms = 3 for immediate value 0xf
+   generateCompareImmInstruction(cg, node, countReg, 8, /* is64bit */ false);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, lessThan8Label, TR::CC_LT);
+
+   // 64-bit vector comparison
+   generateTrg1MemInstruction(cg, TR::InstOpCode::vldroffd, node, vtmpReg, TR::MemoryReference::createWithIndexReg(cg, dataAddrReg, indexReg));
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::vcmlt8b_zero, node, vtmpReg, vtmpReg); // Lanes with negative numbers are set to 0xFF
+   generateMovVectorElementToGPRInstruction(cg, TR::InstOpCode::umovxd, node, tmpReg, vtmpReg, 0);
+   generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, tmpReg, isHasNegatives ? foundLabel : foundVec8Label);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmw, node, indexReg, indexReg, 8);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmw, node, countReg, countReg, 8);
+
+   // Less than 8 bytes remaining
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, lessThan8Label);
+   generateCompareBranchInstruction(cg, TR::InstOpCode::cbzw, node, countReg, notFoundLabel);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, loop1Label);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrsboffw, node, tmpReg, TR::MemoryReference::createWithIndexReg(cg, dataAddrReg, indexReg));
+   generateCompareImmInstruction(cg, node, tmpReg, 0, /* is64bit */ false);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, foundLabel, TR::CC_LT);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmw, node, indexReg, indexReg, 1);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmw, node, countReg, countReg, 1);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, loop1Label, TR::CC_NE);
+
+   // Found no negative value
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, notFoundLabel);
+   if (isHasNegatives)
+      {
+      loadConstant32(cg, node, 0, indexReg); // false
+      }
+   else
+      {
+      generateMovInstruction(cg, node, indexReg, lengthReg);
+      }
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, doneLabel);
+
+   if (!isHasNegatives)
+      {
+      // countPositives() only:
+
+      // Found a negative value in the loop of 128-bit vector comparison
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, foundVec16Label);
+      generateTrg1Src1Instruction(cg, TR::InstOpCode::rbitx, node, tmpReg, tmpReg);
+      generateTrg1Src1Instruction(cg, TR::InstOpCode::clzx, node, tmpReg, tmpReg);
+      generateLogicalShiftRightImmInstruction(cg, node, tmpReg, tmpReg, 2, /* is64bit */ false); // div by 4
+      generateLabelInstruction(cg, TR::InstOpCode::b, node, adjustIndexLabel);
+
+      // Found a negative value in 64-bit vector comparison
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, foundVec8Label);
+      generateTrg1Src1Instruction(cg, TR::InstOpCode::rbitx, node, tmpReg, tmpReg);
+      generateTrg1Src1Instruction(cg, TR::InstOpCode::clzx, node, tmpReg, tmpReg);
+      generateLogicalShiftRightImmInstruction(cg, node, tmpReg, tmpReg, 3, /* is64bit */ false); // div by 8
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, adjustIndexLabel);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::addw, node, indexReg, indexReg, tmpReg);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::subw, node, indexReg, indexReg, offsetReg);
+      generateLabelInstruction(cg, TR::InstOpCode::b, node, doneLabel);
+      }
+
+   // Found a negative value in hasNegatives() or in the byte comparison loop for countPositives()
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, foundLabel);
+   if (isHasNegatives)
+      {
+      loadConstant32(cg, node, 1, indexReg); // true
+      }
+   else
+      {
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::subw, node, indexReg, indexReg, offsetReg);
+      }
+   // fall through to doneLabel
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, dependencies);
+
+   cg->stopUsingRegister(dataAddrReg);
+   cg->stopUsingRegister(countReg);
+   cg->stopUsingRegister(tmpReg);
+   cg->stopUsingRegister(vtmpReg);
+
+   node->setRegister(indexReg);
+
+   for (int32_t i = 0; i < node->getNumChildren(); i++)
+      {
+      cg->decReferenceCount(node->getChild(i));
+      }
+   return indexReg;
+   }
+
 bool
 J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resultReg)
    {
@@ -7210,6 +7393,24 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
                }
             break;
             }
+
+         case TR::java_lang_StringCoding_hasNegatives:
+            if (cg->getSupportsInlineStringCodingHasNegatives())
+               {
+               resultReg = inlineHasNegativesOrCountPositives(node, true, cg);
+               return true;
+               }
+            break;
+
+#if JAVA_SPEC_VERSION >= 19
+         case TR::java_lang_StringCoding_countPositives:
+            if (cg->getSupportsInlineStringCodingCountPositives())
+               {
+               resultReg = inlineHasNegativesOrCountPositives(node, false, cg);
+               return true;
+               }
+            break;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
          case TR::java_nio_Bits_keepAlive:
          case TR::java_lang_ref_Reference_reachabilityFence:
