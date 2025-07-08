@@ -28,7 +28,7 @@ The CMake build system is designed to provide as seamless a transition as is pos
 As such, the normal OpenJ9 [build instructions](https://www.eclipse.org/openj9/oj9_build.html)
 can be followed with the following modifications:
 
-- Ensure that CMake version 3.4 or greater is installed
+- Ensure that CMake version 3.5 or greater is installed
   - The docker images will already have this provided
   - Windows users need to have the Cygwin CMake package via the Cygwin installer, rather than downloading
     the native windows version from the CMake website.

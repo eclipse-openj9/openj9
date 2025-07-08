@@ -516,7 +516,7 @@ The following dependencies can be installed by using [Homebrew](https://brew.sh/
 - [autoconf 2.6.9](https://formulae.brew.sh/formula/autoconf)
 - [bash 4.4.23](https://formulae.brew.sh/formula/bash)
 - [binutils 2.32](https://formulae.brew.sh/formula/binutils)
-- [cmake 3.4](https://formulae.brew.sh/formula/cmake)
+- [cmake 3.5](https://formulae.brew.sh/formula/cmake)
 - [freetype 2.9.1](https://formulae.brew.sh/formula/freetype)
 - [git 2.19.2](https://formulae.brew.sh/formula/git)
 - [gnu-tar 1.3](https://formulae.brew.sh/formula/gnu-tar)
