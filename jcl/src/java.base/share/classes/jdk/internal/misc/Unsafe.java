@@ -31,7 +31,11 @@ import java.util.Objects;
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.nio.ByteBuffer;
 import sun.nio.ch.DirectBuffer;
+/*[IF JAVA_SPEC_VERSION >= 26]*/
+import sun.nio.Cleaner;
+/*[ELSE] JAVA_SPEC_VERSION >= 26 */
 import jdk.internal.ref.Cleaner;
+/*[ENDIF] JAVA_SPEC_VERSION >= 26 */
 /*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 public final class Unsafe {
