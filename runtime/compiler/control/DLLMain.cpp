@@ -430,8 +430,6 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                      return rc;
                   }
 
-               codert_onload(vm);
-
                /* do initializations for -Xaot options */
                if (isAOT && argIndexXaot >= 0)
                   {
@@ -439,6 +437,8 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                   if (rc)
                      return rc;
                   }
+
+               codert_onload(vm);
 
                jitConfig = vm->jitConfig;
 
