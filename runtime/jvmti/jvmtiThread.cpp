@@ -513,7 +513,7 @@ done:
 				vm->vThreadInterrupt = vThreadInterrupt;
 			}
 
-			jniEnv->CallObjectMethod(thread, vm->vThreadInterrupt);
+			jniEnv->CallVoidMethod(thread, vm->vThreadInterrupt);
 
 			if (jniEnv->ExceptionCheck()) {
 				rc = JVMTI_ERROR_INTERNAL;

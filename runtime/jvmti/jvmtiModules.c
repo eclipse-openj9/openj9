@@ -129,13 +129,13 @@ addModuleExportsOrOpens(jvmtiEnv* jvmtiEnv, jobject fromModule, const char* pkgN
 			if (NULL == pkg) {
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;
 			} else {
-				(*env)->CallObjectMethod(env,
-										fromModule,
-										vm->addExports,
-										pkg,
-										toModule,
-										!exports,
-										JNI_TRUE);
+				(*env)->CallVoidMethod(env,
+						fromModule,
+						vm->addExports,
+						pkg,
+						toModule,
+						!exports,
+						JNI_TRUE);
 			}
 			if ((*env)->ExceptionCheck(env)) {
 				rc = JVMTI_ERROR_INTERNAL;
@@ -508,7 +508,7 @@ jvmtiAddModuleUses(jvmtiEnv* jvmtiEnv, jobject module, jclass service)
 
 				vm->addUses = addUses;
 			}
-			(*env)->CallObjectMethod(env, module, vm->addUses, service);
+			(*env)->CallVoidMethod(env, module, vm->addUses, service);
 			if ((*env)->ExceptionCheck(env)) {
 				rc = JVMTI_ERROR_INTERNAL;
 			}
