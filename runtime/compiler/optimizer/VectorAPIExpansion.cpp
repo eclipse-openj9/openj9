@@ -3238,16 +3238,6 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
                                                                  vapiObjType objectType, vapiOpCodeType opCodeType, bool withMask,
                                                                  TR::DataType sourceElementType, TR::VectorLength sourceVectorLength)
    {
-   // Skip some unsupported operations on Mask for now (e.g. binary operation on Mask). TODO: implement
-   if (objectType == Mask &&
-       vectorAPIOpCode != VECTOR_OP_MASK_COMPRESS &&
-       opCodeType != Test &&
-       opCodeType != MaskReduction &&
-       opCodeType != Compare)  // for Compare, objectType is Mask (the result) but the operands are always vectors
-      {
-      return reportMissingOpCode(comp, vectorAPIOpCode, objectType, opCodeType, withMask);
-      }
-
    // TODO: support more scalarization
 
    bool scalar = (vectorLength == TR::NoVectorLength);
@@ -3462,9 +3452,9 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
          case VECTOR_OP_DIV: return scalar ? TR::ILOpCode::divideOpCode(elementType) : TR::ILOpCode::createVectorOpCode(TR::vdiv, vectorType);
          case VECTOR_OP_MIN: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vmin, vectorType);
          case VECTOR_OP_MAX: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vmax, vectorType);
-         case VECTOR_OP_AND: return scalar ? TR::ILOpCode::andOpCode(elementType) : TR::ILOpCode::createVectorOpCode(TR::vand, vectorType);
-         case VECTOR_OP_OR:  return scalar ? TR::ILOpCode::orOpCode(elementType)  : TR::ILOpCode::createVectorOpCode(TR::vor, vectorType);
-         case VECTOR_OP_XOR: return scalar ? TR::ILOpCode::xorOpCode(elementType) : TR::ILOpCode::createVectorOpCode(TR::vxor, vectorType);
+         case VECTOR_OP_AND: return scalar ? TR::ILOpCode::andOpCode(elementType) : TR::ILOpCode::createVectorOpCode(objectType == Vector ? TR::vand : TR::mand, vectorType);
+         case VECTOR_OP_OR:  return scalar ? TR::ILOpCode::orOpCode(elementType)  : TR::ILOpCode::createVectorOpCode(objectType == Vector ? TR::vor : TR::mor, vectorType);
+         case VECTOR_OP_XOR: return scalar ? TR::ILOpCode::xorOpCode(elementType) : TR::ILOpCode::createVectorOpCode(objectType == Vector ? TR::vxor : TR::mxor, vectorType);
          case VECTOR_OP_FMA: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vfma, vectorType);
 
          case VECTOR_OP_LSHIFT:  return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vshl, vectorType);
