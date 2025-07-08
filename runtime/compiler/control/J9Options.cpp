@@ -2133,9 +2133,15 @@ bool J9::Options::preProcessCodeCacheXlpCodeCache(J9JavaVM *vm, J9JITConfig *jit
             }
          }
 
-      if (largePageSize > (0) && isNonNegativePowerOf2((int32_t)largePageSize))
+      if (largePageSize > (0)
+#if defined(J9VM_ENV_DATA64)
+            && isNonNegativePowerOf2((int64_t) largePageSize)
+#else
+            && isNonNegativePowerOf2((int32_t) largePageSize)
+#endif
+         )
          {
-         jitConfig->largeCodePageSize = (int32_t)largePageSize;
+         jitConfig->largeCodePageSize = largePageSize;
          jitConfig->largeCodePageFlags = (int32_t)largePageFlags;
          }
       }
