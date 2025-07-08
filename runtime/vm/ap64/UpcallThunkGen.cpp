@@ -40,6 +40,12 @@ extern "C" {
  */
 #define LD(rt, ra, si)        (0xE8000000 | ((rt) << 21) | ((ra) << 16) | ((si) & 0x0000ffff))
 #define STD(rs, ra, si)       (0xF8000000 | ((rs) << 21) | ((ra) << 16) | ((si) & 0x0000ffff))
+#define LWZ(rt, ra, si)       (0x80000000 | ((rt) << 21) | ((ra) << 16) | ((si) & 0x0000ffff))
+#define STW(rs, ra, si)       (0x90000000 | ((rs) << 21) | ((ra) << 16) | ((si) & 0x0000ffff))
+#define LHZ(rt, ra, si)       (0xA0000000 | ((rt) << 21) | ((ra) << 16) | ((si) & 0x0000ffff))
+#define STH(rs, ra, si)       (0xB0000000 | ((rs) << 21) | ((ra) << 16) | ((si) & 0x0000ffff))
+#define LBZ(rt, ra, si)       (0x88000000 | ((rt) << 21) | ((ra) << 16) | ((si) & 0x0000ffff))
+#define STB(rs, ra, si)       (0x98000000 | ((rs) << 21) | ((ra) << 16) | ((si) & 0x0000ffff))
 #define LFS(frt, ra, si)      (0xC0000000 | ((frt) << 21) | ((ra) << 16) | ((si) & 0x0000ffff))
 #define STFS(frs, ra, si)     (0xD0000000 | ((frs) << 21) | ((ra) << 16) | ((si) & 0x0000ffff))
 #define LFD(frt, ra, si)      (0xC8000000 | ((frt) << 21) | ((ra) << 16) | ((si) & 0x0000ffff))
@@ -55,6 +61,7 @@ extern "C" {
 #define BLR()                 (0x4E800020)
 
 #define ROUND_UP_SLOT(si)     (((si) + 7) / 8)
+#define ROUND_DOWN_SLOT(si)   ((si) / 8)
 
 /**
  * @brief Generate straight sequence of instructions to copy back result
@@ -71,21 +78,40 @@ extern "C" {
  *     load the result in sequence in no more than 8 registers starting from register 5
  *     store these registers back into the memory designated by the hidden parameter
  *
- *     short-cut convenience in handling the residue
+ *     since the hidden parameter could potentially point to non-stack memory (not multiple
+ *     of 8 in size, that is), we cannot do the copy in round-up integrals.
  */
 static void
 copyBackStraight(I_32 *instrArray, I_32 *currIdx, I_32 resSize, I_32 paramOffset)
 {
 	I_32 localIdx = *currIdx;
-	I_32 roundUpSlots = ROUND_UP_SLOT(resSize);
+	I_32 roundDownSlots = ROUND_DOWN_SLOT(resSize);
+	I_32 residueOffset = resSize & 0xFFFFFFF8;
 
 	instrArray[localIdx++] = LD(4, 1, paramOffset);
-	for (I_32 gIdx = 0; gIdx < roundUpSlots; gIdx++) {
+	for (I_32 gIdx = 0; gIdx < roundDownSlots; gIdx++) {
 		instrArray[localIdx++] = LD(gIdx + 5, 3, gIdx * 8);
 	}
 
-	for (I_32 gIdx = 0; gIdx < roundUpSlots; gIdx++) {
+	for (I_32 gIdx = 0; gIdx < roundDownSlots; gIdx++) {
 		instrArray[localIdx++] = STD(gIdx + 5, 4, gIdx * 8);
+	}
+
+        if (resSize & 0x4) {
+		instrArray[localIdx++] = LWZ(5, 3, residueOffset);
+		instrArray[localIdx++] = STW(5, 4, residueOffset);
+		residueOffset += 4;
+	}
+
+        if (resSize & 0x2) {
+		instrArray[localIdx++] = LHZ(5, 3, residueOffset);
+		instrArray[localIdx++] = STH(5, 4, residueOffset);
+		residueOffset += 2;
+	}
+
+        if (resSize & 0x1) {
+		instrArray[localIdx++] = LBZ(5, 3, residueOffset);
+		instrArray[localIdx++] = STB(5, 4, residueOffset);
 	}
 
 	*currIdx = localIdx;
@@ -108,13 +134,15 @@ copyBackStraight(I_32 *instrArray, I_32 *currIdx, I_32 resSize, I_32 paramOffset
  *     load the residue in sequence in no more than 4 registers starting from register 5
  *     store these registers back into the memory designated by the hidden parameter
  *
- *     short-cut convenience in handling the residue
+ *     since the hidden parameter could potentially point to non-stack memory (not multiple
+ *     of 8 in size, that is), we cannot do the copy in round-up integrals.
  */
 static void
 copyBackLoop(I_32 *instrArray, I_32 *currIdx, I_32 resSize, I_32 paramOffset)
 {
 	I_32 localIdx = *currIdx;
-	I_32 roundUpSlots = ROUND_UP_SLOT(resSize & 31);
+	I_32 roundDownSlots = ROUND_DOWN_SLOT(resSize & 31);
+	I_32 residueOffset = resSize & 0x18;
 
 	instrArray[localIdx++] = LD(4, 1, paramOffset);
 	instrArray[localIdx++] = ADDI(0, 0, resSize >> 5);
@@ -132,12 +160,29 @@ copyBackLoop(I_32 *instrArray, I_32 *currIdx, I_32 resSize, I_32 paramOffset)
 	instrArray[localIdx++] = ADDI(4, 4, 32);
 	instrArray[localIdx++] = BDNZ(-40);
 
-	for (I_32 gIdx = 0; gIdx < roundUpSlots; gIdx++) {
+	for (I_32 gIdx = 0; gIdx < roundDownSlots; gIdx++) {
 		instrArray[localIdx++] = LD(gIdx + 5, 3, gIdx * 8);
 	}
 
-	for (I_32 gIdx = 0; gIdx < roundUpSlots; gIdx++) {
+	for (I_32 gIdx = 0; gIdx < roundDownSlots; gIdx++) {
 		instrArray[localIdx++] = STD(gIdx + 5, 4, gIdx * 8);
+	}
+
+        if (resSize & 0x4) {
+		instrArray[localIdx++] = LWZ(5, 3, residueOffset);
+		instrArray[localIdx++] = STW(5, 4, residueOffset);
+		residueOffset += 4;
+	}
+
+        if (resSize & 0x2) {
+		instrArray[localIdx++] = LHZ(5, 3, residueOffset);
+		instrArray[localIdx++] = STH(5, 4, residueOffset);
+		residueOffset += 2;
+	}
+
+        if (resSize & 0x1) {
+		instrArray[localIdx++] = LBZ(5, 3, residueOffset);
+		instrArray[localIdx++] = STB(5, 4, residueOffset);
 	}
 
 	*currIdx = localIdx;
@@ -213,14 +258,20 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 			stackSlotCount += 1;
 			if (tempInt <= 64) {
 				/* Straight-forward copy: load hidden pointer, sequence of copy */
-				instructionCount += 1 + (ROUND_UP_SLOT(tempInt) * 2);
+				instructionCount += 1 + (ROUND_DOWN_SLOT(tempInt) * 2);
 			} else {
 				/* Loop 32-byte per iteration: load hidden pointer, set-up CTR for loop-count
 				 * 11-instruction loop body, residue copy
 				 * Note: didn't optimize for loop-entry alignment
 				 */
-				instructionCount += 3 + 11 + (ROUND_UP_SLOT(tempInt & 31) * 2);
+				instructionCount += 3 + 11 + (ROUND_DOWN_SLOT(tempInt & 31) * 2);
 			}
+			if (tempInt & 0x4)
+				instructionCount += 2;
+			if (tempInt & 0x2)
+				instructionCount += 2;
+			if (tempInt & 0x1)
+				instructionCount += 2;
 			break;
 		}
 		default:
