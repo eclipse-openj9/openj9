@@ -211,6 +211,7 @@ MM_HeapRegionManagerVLHGC::getHeapMemorySnapshot(MM_GCExtensionsBase *extensions
 		snapshot->_totalRegionEdenSize = allocateEdenTotal;
 	}
 
+	Assert_MM_true(snapshot->_totalRegionReservedSize >= (snapshot->_totalRegionEdenSize - allocateEdenTotal));
 	snapshot->_totalRegionReservedSize -= (snapshot->_totalRegionEdenSize - allocateEdenTotal);
 	snapshot->_freeRegionEdenSize += (snapshot->_totalRegionEdenSize - allocateEdenTotal);
 	snapshot->_freeRegionReservedSize = snapshot->_totalRegionReservedSize;
