@@ -6197,7 +6197,18 @@ static TR::Register *inlineStringHashCode(TR::Node *node, bool isCompressed, TR:
                                                                         comp->getHotnessName()), *srm);
       }
    TR::Register *resultReg = cg->allocateRegister();
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, dataAddrReg, arrayReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+
+#ifdef J9VM_GC_SPARSE_HEAP_ALLOCATION
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      {
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, dataAddrReg, TR::MemoryReference::createWithDisplacement(cg, arrayReg, cg->comp()->fej9()->getOffsetOfContiguousDataAddrField()));
+      }
+   else
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
+      {
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, dataAddrReg, arrayReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+      }
+
    loadConstant32(cg, node, 0, resultReg);
    generateCompareImmInstruction(cg, node, lengthReg, (isCompressed ? 16 : 8), false);
    TR::LabelSymbol *residualLabel = generateLabelSymbol(cg);
@@ -6402,7 +6413,17 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, TR::CodeGenerator* c
    TR::Register *resultReg = endReg;
    TR_Debug *debugObj = cg->getDebug();
 
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, dataAddrReg, arrayReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+#ifdef J9VM_GC_SPARSE_HEAP_ALLOCATION
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      {
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, dataAddrReg, TR::MemoryReference::createWithDisplacement(cg, arrayReg, cg->comp()->fej9()->getOffsetOfContiguousDataAddrField()));
+      }
+   else
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
+      {
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, dataAddrReg, arrayReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+      }
+
    if (isLatin1)
       {
       generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, endReg, dataAddrReg, savedLengthReg);
@@ -6932,8 +6953,21 @@ static TR::Register *inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenerator
       debugObj->addInstructionComment(branchToDoneIfZeroInstr, "Branch to doneLabel if the length is 0");
       }
 
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, srcAddrReg, srcReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, dstAddrReg, dstReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+#ifdef J9VM_GC_SPARSE_HEAP_ALLOCATION
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      {
+      uint32_t dataAddrOffset = static_cast<int32_t>(cg->comp()->fej9()->getOffsetOfContiguousDataAddrField());
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, srcAddrReg, TR::MemoryReference::createWithDisplacement(cg, srcReg, dataAddrOffset));
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, dstAddrReg, TR::MemoryReference::createWithDisplacement(cg, dstReg, dataAddrOffset));
+      }
+   else
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
+      {
+      uint32_t hdrSize = static_cast<uint32_t>(TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, srcAddrReg, srcReg, hdrSize);
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, dstAddrReg, dstReg, hdrSize);
+      }
+
    if (!isSrcOffsetConstZero)
       {
       generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, srcAddrReg, srcAddrReg, srcOffsetReg);
