@@ -5537,7 +5537,23 @@ loadWarmClassFromSnapshot(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Cl
 void
 initializeSnapshotJ9Class(J9JavaVM *javaVM, J9Class *clazz);
 
+/**
+ * Perform initialization of base classes.
+ *
+ * @param javaVM[in] pointer to J9JavaVM
+ */
+void
+initializeBaseClasses(J9JavaVM *javaVM);
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
+
+/**
+ * Iterate over a class segment.
+ *
+ * @param nextClass[in/out] pointer to pointer to J9Class
+ * @return a pointer to the next class or NULL
+ */
+J9Class *
+segmentIteratorNextClass(J9Class **nextClass);
 
 #if JAVA_SPEC_VERSION >= 16
 

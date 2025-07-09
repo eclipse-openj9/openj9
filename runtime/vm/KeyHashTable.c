@@ -516,7 +516,13 @@ hashClassTableStartDo(J9ClassLoader *classLoader, J9HashTableState *walkState, U
 			/* only report RAM classes */
 			continueToNext = TRUE;
 		} else {
-			if (skipHidden && J9ROMCLASS_IS_HIDDEN(first->ramClass->romClass)) {
+			J9Class *clazz = first->ramClass;
+
+			if ((skipHidden && J9ROMCLASS_IS_HIDDEN(clazz->romClass))
+#if defined(J9VM_OPT_SNAPSHOTS)
+				|| J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen)
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			) {
 				continueToNext = TRUE;
 			} else {
 				continueToNext = FALSE;
@@ -533,7 +539,13 @@ hashClassTableStartDo(J9ClassLoader *classLoader, J9HashTableState *walkState, U
 				/* only report RAM classes */
 				continueToNext = TRUE;
 			} else {
-				if (skipHidden && J9ROMCLASS_IS_HIDDEN(first->ramClass->romClass)) {
+				J9Class *clazz = first->ramClass;
+
+				if ((skipHidden && J9ROMCLASS_IS_HIDDEN(clazz->romClass))
+#if defined(J9VM_OPT_SNAPSHOTS)
+					|| J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen)
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+				) {
 					continueToNext = TRUE;
 				} else {
 					continueToNext = FALSE;
@@ -559,7 +571,13 @@ hashClassTableNextDo(J9HashTableState *walkState)
 			/* only report RAM classes */
 			continueToNext = TRUE;
 		} else {
-			if (skipHidden && J9ROMCLASS_IS_HIDDEN(next->ramClass->romClass)) {
+			J9Class *clazz = next->ramClass;
+
+			if ((skipHidden && J9ROMCLASS_IS_HIDDEN(clazz->romClass))
+#if defined(J9VM_OPT_SNAPSHOTS)
+				|| J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen)
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			) {
 				continueToNext = TRUE;
 			} else {
 				continueToNext = FALSE;
@@ -576,7 +594,13 @@ hashClassTableNextDo(J9HashTableState *walkState)
 				/* only report RAM classes */
 				continueToNext = TRUE;
 			} else {
-				if (skipHidden && J9ROMCLASS_IS_HIDDEN(next->ramClass->romClass)) {
+				J9Class *clazz = next->ramClass;
+
+				if ((skipHidden && J9ROMCLASS_IS_HIDDEN(clazz->romClass))
+#if defined(J9VM_OPT_SNAPSHOTS)
+					|| J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen)
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+				) {
 					continueToNext = TRUE;
 				} else {
 					continueToNext = FALSE;
