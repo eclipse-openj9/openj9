@@ -269,7 +269,7 @@ ppc64_aix:
     os: 'aix'
     url:
       all: 'https://api.adoptopenjdk.net/v3/binary/latest/${bootJDKVersion}/ga/${os}/${arch}/jdk/openj9/normal/adoptopenjdk?project=jdk'
-      24: 'https://openj9-artifactory.osuosl.org/artifactory/ci-openj9/Build_JDK24_ppc64_aix_Nightly/98/OpenJ9-JDK24-ppc64_aix-20250607-020253.tar.gz'
+      24: 'https://openj9-artifactory.osuosl.org/artifactory/ci-openj9/Build_JDK24_ppc64_aix_Nightly/118/OpenJ9-JDK24-ppc64_aix-20250708-015658.tar.gz'
   release:
     all: 'aix-ppc64-server-release'
     8: 'aix-ppc64-normal-server-release'
