@@ -91,6 +91,11 @@ J9::ARM64::CodeGenerator::initialize()
       {
       cg->setSupportsInlineStringIndexOf();
       }
+   static bool disableInlineStrIdxOfStr = feGetEnv("TR_disableInlineStrIdxOfStr") != NULL;
+   if ((!TR::Compiler->om.canGenerateArraylets()) && (!comp->getOption(TR_DisableFastStringIndexOf)) && !disableInlineStrIdxOfStr)
+      {
+      cg->setSupportsInlineStringIndexOfString();
+      }
    static bool disableInlineStringLatin1Inflate = feGetEnv("TR_disableInlineStringLatin1Inflate") != NULL;
    if ((!TR::Compiler->om.canGenerateArraylets()) && (!disableInlineStringLatin1Inflate) && !TR::Compiler->om.isOffHeapAllocationEnabled())
       {
