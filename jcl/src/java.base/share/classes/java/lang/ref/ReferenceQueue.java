@@ -22,15 +22,14 @@
  */
 package java.lang.ref;
 
-/*[IF JAVA_SPEC_VERSION >= 9]
-import jdk.internal.ref.Cleaner;
-/*[ELSE] JAVA_SPEC_VERSION >= 9 */
+/*[IF JAVA_SPEC_VERSION < 9]*/
 import sun.misc.Cleaner;
-/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+/*[ELSEIF JAVA_SPEC_VERSION < 26]*/
+import jdk.internal.ref.Cleaner;
+/*[ENDIF] JAVA_SPEC_VERSION < 9 */
 
 /*[IF JAVA_SPEC_VERSION >= 24]*/
 import jdk.internal.vm.Continuation;
-
 /*[ENDIF] JAVA_SPEC_VERSION >= 24*/
 
 /*[IF CRIU_SUPPORT]*/
@@ -59,17 +58,19 @@ public class ReferenceQueue<T> extends Object {
 	private static final Class classNameLockRefClass;
 
 	static {
+		/*[IF JAVA_SPEC_VERSION < 26]
 		/*[PR CMVC 114480] deadlock loading sun.misc.Cleaner */
 		// cause sun.misc.Cleaner to be loaded
-		Class cl = Cleaner.class;
+		Class<?> cl = Cleaner.class;
+		/*[ENDIF] JAVA_SPEC_VERSION < 26 */
 		/*[PR 125873] Improve reflection cache */
-		Class tmpClass = null;
+		Class<?> tmpClass = null;
 		try {
 			tmpClass = Class.forName("java.lang.Class$ReflectRef"); //$NON-NLS-1$
 		} catch (ClassNotFoundException e) {}
 		reflectRefClass = tmpClass;
 
-		Class tmpClass2 = null;
+		Class<?> tmpClass2 = null;
 		try {
 			tmpClass2 = Class.forName("java.lang.ClassLoader$ClassNameLockRef"); //$NON-NLS-1$
 		} catch (ClassNotFoundException e) {}
@@ -193,6 +194,7 @@ public Reference<? extends T> remove(long timeout) throws IllegalArgumentExcepti
  *					reference object to be enqueued.
  */
 void enqueue(Reference<? extends T> reference) {
+	/*[IF JAVA_SPEC_VERSION < 26]
 	/*[PR CMVC 96472] deadlock loading sun.misc.Cleaner */
 	/*[PR 102259] call Cleaner.clean(), do not enqueue */
 	if (reference instanceof Cleaner) {
@@ -200,11 +202,10 @@ void enqueue(Reference<? extends T> reference) {
 		((Cleaner)reference).clean();
 		return;
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 26 */
 	/*[PR 125873] Improve reflection cache */
-	Class refClass = reference.getClass();
-	if (refClass == reflectRefClass
-			||	refClass == classNameLockRefClass
-	) {
+	Class<?> refClass = reference.getClass();
+	if (refClass == reflectRefClass || refClass == classNameLockRefClass) {
 		reference.dequeue();
 		((Runnable)reference).run();
 		return;
