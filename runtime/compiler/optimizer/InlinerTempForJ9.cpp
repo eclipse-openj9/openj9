@@ -5420,7 +5420,7 @@ TR_J9InlinerPolicy::validateArguments(TR_CallTarget *calltarget, TR_LinkHead<TR_
    }
 
 bool
-TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, TR::Compilation* comp)
+TR_J9InlinerPolicy::suppressInliningRecognizedInitialCallee(TR_CallSite* callsite, TR::Compilation* comp)
    {
    TR::ResolvedMethodSymbol *initialCalleeSymbol = callsite->_initialCalleeSymbol;
    if (initialCalleeSymbol != NULL && initialCalleeSymbol->canReplaceWithHWInstr())
