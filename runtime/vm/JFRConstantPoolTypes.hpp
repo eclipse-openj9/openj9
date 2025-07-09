@@ -707,10 +707,6 @@ public:
 
 	void addSystemGCEntry(J9JFRSystemGC *systemGCData);
 
-	void addModuleRequireEntry(J9JFRModuleRequire *moduleRequireData);
-
-	void addModuleExportEntry(J9JFRModuleExport *moduleExportData);
-
 	J9Pool *getExecutionSampleTable()
 	{
 		return _executionSampleTable;
@@ -1060,12 +1056,6 @@ public:
 			case J9JFR_EVENT_TYPE_SYSTEM_GC:
 				addSystemGCEntry((J9JFRSystemGC *)event);
 				break;
-			case J9JFR_EVENT_TYPE_MODULE_REQUIRE:
-				addModuleRequireEntry((J9JFRModuleRequire *)event);
-				break;
-			case J9JFR_EVENT_TYPE_MODULE_EXPORT:
-				addModuleExportEntry((J9JFRModuleExport *)event);
-				break;
 			default:
 				Assert_VM_unreachable();
 				break;
@@ -1080,6 +1070,7 @@ public:
 		if (dumpCalled) {
 			loadSystemProcesses(_currentThread);
 			loadNativeLibraries(_currentThread);
+			loadModuleRequireAndModuleExportEvents();
 		}
 
 		shallowEntries = pool_new(sizeof(ClassEntry **), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
@@ -1485,6 +1476,88 @@ done:
 	{
 		OMRPORT_ACCESS_FROM_J9VMTHREAD(currentThread);
 		omrsl_get_libraries(processNativeLibrariesCallback, this);
+	}
+
+	void loadModuleRequireAndModuleExportEvents()
+	{
+		J9InternalVMFunctions *vmFuncs = _vm->internalVMFunctions;
+		J9ClassLoaderWalkState walkState;
+		J9ClassLoader *classLoader = vmFuncs->allClassLoadersStartDo(&walkState, _vm, 0);
+		int64_t time = j9time_nano_time();
+#ifdef J9VM_THR_PREEMPTIVE
+		omrthread_monitor_enter(_vm->classLoaderModuleAndLocationMutex);
+#endif
+
+		while (NULL != classLoader) {
+			J9HashTableState moduleWalkState;
+			J9Module **modulePtr = (J9Module **)hashTableStartDo(classLoader->moduleHashTable, &moduleWalkState);
+			J9HashTableState packageWalkState;
+			J9Package **packagePtr = NULL;
+
+			while (NULL != modulePtr) {
+				J9HashTableState fromModuleWalkState;
+				J9Module **fromModulePtr = (J9Module **)hashTableStartDo((*modulePtr)->readAccessHashTable, &fromModuleWalkState);
+				while (NULL != fromModulePtr) {
+					ModuleRequireEntry *entry = (ModuleRequireEntry *)pool_newElement(_moduleRequireTable);
+
+					if (NULL == entry) {
+						_buildResult = OutOfMemory;
+						goto done;
+					}
+
+					entry->ticks = time;
+					entry->sourceModuleIndex = addModuleEntry(*fromModulePtr);
+					if (isResultNotOKay()) goto done;
+
+					entry->requiredModuleIndex= addModuleEntry(*modulePtr);
+					if (isResultNotOKay()) goto done;
+
+					_moduleRequireCount += 1;
+
+					fromModulePtr = (J9Module **)hashTableNextDo(&fromModuleWalkState);
+				}
+
+				modulePtr = (J9Module **)hashTableNextDo(&moduleWalkState);
+			}
+
+			packagePtr = (J9Package **)hashTableStartDo(classLoader->packageHashTable, &packageWalkState);
+			while (NULL != packagePtr) {
+				J9HashTableState toModuleWalkState;
+				J9Module **toModulePtr = (J9Module **)hashTableStartDo((*packagePtr)->exportsHashTable, &toModuleWalkState);
+				while (NULL != toModulePtr) {
+					U_32 exportedPackageIndex = addPackageEntry((*packagePtr)->module, *packagePtr, TRUE);
+					/* Skip this entry if no class from the package has been loaded. */
+					if (0 != exportedPackageIndex) {
+						ModuleExportEntry *entry = (ModuleExportEntry *)pool_newElement(_moduleExportTable);
+
+						if (NULL == entry) {
+							_buildResult = OutOfMemory;
+							goto done;
+						}
+
+						entry->ticks = time;
+						entry->exportedPackageIndex = exportedPackageIndex;
+						if (isResultNotOKay()) goto done;
+
+						entry->targetModuleIndex = addModuleEntry(*toModulePtr);
+						if (isResultNotOKay()) goto done;
+
+						_moduleExportCount += 1;
+					}
+
+					toModulePtr  = (J9Module **)hashTableNextDo(&toModuleWalkState);
+				}
+
+				packagePtr = (J9Package **)hashTableNextDo(&packageWalkState);
+			}
+
+			classLoader = vmFuncs->allClassLoadersNextDo(&walkState);
+		}
+done:
+#ifdef J9VM_THR_PREEMPTIVE
+		omrthread_monitor_exit(_vm->classLoaderModuleAndLocationMutex);
+#endif
+		vmFuncs->allClassLoadersEndDo(&walkState);
 	}
 
 	VM_JFRConstantPoolTypes(J9VMThread *currentThread)

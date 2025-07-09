@@ -791,11 +791,8 @@ exportPackageToModule(J9VMThread * currentThread, J9Module * fromModule, const c
 			retval = ERRCODE_MODULE_WASNT_FOUND;
 		}
 	}
-	if (ERRCODE_SUCCESS == retval) {
-		TRIGGER_J9HOOK_PACKAGE_EXPORTED_TO_MODULE(currentThread->javaVM->hookInterface, currentThread, fromModule, j9package, toModule);
-		if (TrcEnabled_Trc_MODULE_addModuleExports) {
-			trcModulesAddModuleExports(currentThread, fromModule, package, toModule);
-		}
+	if ((ERRCODE_SUCCESS == retval) && TrcEnabled_Trc_MODULE_addModuleExports) {
+		trcModulesAddModuleExports(currentThread, fromModule, package, toModule);
 	}
 
 	return retval;
@@ -1311,11 +1308,8 @@ JVM_AddReadsModule(JNIEnv * env, jobject fromModule, jobject toModule)
 
 				if (ERRCODE_SUCCESS != rc) {
 					throwExceptionHelper(currentThread, rc);
-				} else {
-					TRIGGER_J9HOOK_READS_MODULE_ADDED(((J9JavaVM *)vm)->hookInterface, currentThread, j9FromMod, j9ToMod);
-					if (TrcEnabled_Trc_MODULE_addReadsModule) {
-						trcModulesAddReadsModule(currentThread, toModule, j9FromMod, j9ToMod);
-					}
+				} else if (TrcEnabled_Trc_MODULE_addReadsModule) {
+					trcModulesAddReadsModule(currentThread, toModule, j9FromMod, j9ToMod);
 				}
 			}
 		}
