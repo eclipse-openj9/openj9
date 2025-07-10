@@ -37,7 +37,7 @@ ifdef({ASM_J9VM_ENV_LITTLE_ENDIAN},{
 	staddr r0,LR_SAVE_OFFSET(r1)
 	mfcr r0
 	staddr r0,CR_SAVE_OFFSET(r1)
-ifdef({SAVE_R13},{
+ifdef({PRESERVE_R13_IN_C},{
 	SAVE_GPR(13)
 })
 	SAVE_GPR(14)
@@ -172,7 +172,7 @@ ifdef({ASM_J9VM_ENV_DATA64},{
 	lxvd2x 63,0,r3
 .L_no_VR_restore:
 }) dnl ASM_J9VM_ENV_DATA64
-ifdef({SAVE_R13},{
+ifdef({PRESERVE_R13_IN_C},{
 	RESTORE_GPR(13)
 })
 	RESTORE_GPR(14)

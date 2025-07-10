@@ -193,7 +193,7 @@ define({CALL_DIRECT},{
 })
 
 J9CONST({TOC_SAVE_OFFSET},J9TR_cframe_currentTOC)
-define({SAVE_R13})
+define({PRESERVE_R13_IN_C})
 define({GPR_SAVE_OFFSET},{eval(J9TR_cframe_preservedGPRs+((($1)-13)*ALen))})
 define({GPR_SAVE_SLOT},{GPR_SAVE_OFFSET($1)(r1)})
 define({FPR_SAVE_OFFSET},{eval(J9TR_cframe_preservedFPRs+((($1)-14)*8))})
@@ -379,7 +379,7 @@ define({RESTORE_R2_FOR_ALL},{laddr r2,JIT_GPR_SAVE_SLOT(2)})
 define({SAVE_R29_FOR_ALL})
 define({RESTORE_R29_FOR_ALL})
 
-define({SAVE_R13})
+define({PRESERVE_R13_IN_C})
 J9CONST({CR_SAVE_OFFSET},J9TR_cframe_preservedCR)
 define({GPR_SAVE_OFFSET},{eval(J9TR_cframe_preservedGPRs+((($1)-13)*ALen))})
 define({GPR_SAVE_SLOT},{GPR_SAVE_OFFSET($1)(r1)})
@@ -432,17 +432,13 @@ define({RESTORE_CR},{
 
 ifdef({ASM_J9VM_ENV_DATA64},{
 
-define({SAVE_R13},{staddr r13,JIT_GPR_SAVE_SLOT(13)})
-define({RESTORE_R13},{laddr r13,JIT_GPR_SAVE_SLOT(13)})
-define({SAVE_R15})
-define({RESTORE_R15})
+define({SAVE_R15_IF_NOT_VMTHREAD})
+define({RESTORE_R15_IF_NOT_VMTHREAD})
 
 },{
 
-define({SAVE_R13})
-define({RESTORE_R13})
-define({SAVE_R15},{staddr r15,JIT_GPR_SAVE_SLOT(15)})
-define({RESTORE_R15},{laddr r15,JIT_GPR_SAVE_SLOT(15)})
+define({SAVE_R15_IF_NOT_VMTHREAD},{staddr r15,JIT_GPR_SAVE_SLOT(15)})
+define({RESTORE_R15_IF_NOT_VMTHREAD},{laddr r15,JIT_GPR_SAVE_SLOT(15)})
 
 })
 
@@ -777,8 +773,7 @@ dnl No need to save/restore fp14-31 - the stack walker will never need to read
 dnl or modify them (no preserved FPRs in the JIT private linkage).
 
 define({SAVE_C_NONVOLATILE_REGS},{
-	SAVE_R13
-	SAVE_R15
+	SAVE_R15_IF_NOT_VMTHREAD
 	staddr r16,JIT_GPR_SAVE_SLOT(16)
 	staddr r17,JIT_GPR_SAVE_SLOT(17)
 	staddr r18,JIT_GPR_SAVE_SLOT(18)
@@ -798,8 +793,7 @@ define({SAVE_C_NONVOLATILE_REGS},{
 })
 
 define({RESTORE_C_NONVOLATILE_REGS},{
-	RESTORE_R13
-	RESTORE_R15
+	RESTORE_R15_IF_NOT_VMTHREAD
 	laddr r16,JIT_GPR_SAVE_SLOT(16)
 	laddr r17,JIT_GPR_SAVE_SLOT(17)
 	laddr r18,JIT_GPR_SAVE_SLOT(18)
@@ -824,7 +818,7 @@ define({SAVE_ALL_REGS},{
 })
 
 define({SAVE_PRESERVED_REGS},{
-	SAVE_R15
+	SAVE_R15_IF_NOT_VMTHREAD
 	staddr r16,JIT_GPR_SAVE_SLOT(16)
 	staddr r17,JIT_GPR_SAVE_SLOT(17)
 	staddr r18,JIT_GPR_SAVE_SLOT(18)
@@ -849,7 +843,7 @@ define({RESTORE_ALL_REGS},{
 })
 
 define({RESTORE_PRESERVED_REGS},{
-	RESTORE_R15
+	RESTORE_R15_IF_NOT_VMTHREAD
 	laddr r16,JIT_GPR_SAVE_SLOT(16)
 	laddr r17,JIT_GPR_SAVE_SLOT(17)
 	laddr r18,JIT_GPR_SAVE_SLOT(18)
