@@ -12255,7 +12255,9 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    TR::LabelSymbol *VSXLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *serialPrepLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *serialUnrollLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol *serialLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *serial1Label = generateLabelSymbol(cg);
+   TR::LabelSymbol *serial2Label = generateLabelSymbol(cg);
+   TR::LabelSymbol *serial3Label = generateLabelSymbol(cg);
    TR::LabelSymbol *matchLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *resultLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
@@ -12351,8 +12353,121 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
 
    // --- serialPrepLabel to deal with whatever remains
    generateLabelInstruction(cg, TR::InstOpCode::label, node, serialPrepLabel);
+
    // do we have enough elements to use the unroll loop?
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, tempReg, lengthReg, -3);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr6, indexReg, tempReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, serialUnrollLabel, cr6);
+
+   // --- special cases for very small sizes
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, serial1Label);
+   if (!isCountPositives)
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 1);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, maskReg, indexReg, lengthReg);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr6, maskReg, 1);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, serial2Label, cr6);
+   // fallthrough: confirmed to have one item
+   generateTrg1MemInstruction(cg, TR::InstOpCode::lbzx, node, storeReg,
+         TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 1));
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, storeReg, storeReg, 0x80);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, endLabel, cr6);
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, resultLabel);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, serial2Label);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr6, maskReg, 3);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, serial3Label, cr6);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr6, maskReg, 0);
+   if (isCountPositives)
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, endLabel, cr6);
+   else
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, resultLabel, cr6);
+   // fallthrough: confirmed to have 2 items
+   generateTrg1MemInstruction(cg, TR::InstOpCode::lhzx, node, storeReg,
+         TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 2));
+   if (isCountPositives) // when counting positives, we must consider every byte separately
+      {
+      if (isLE) // in LE, count the number of trailing zeroes or use masks
+         {
+         if (p9Plus)
+            {
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, storeReg, storeReg, 0x8080);
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::oris, node, storeReg, storeReg, 0xFFFF);
+            generateTrg1Src1Instruction(cg, TR::InstOpCode::cnttzw, node, storeReg, storeReg);
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::srawi, node, storeReg, storeReg, 3);
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, indexReg, storeReg, indexReg);
+            generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
+            }
+         else // before P9, we cannot count trailing zeroes
+            {
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, maskReg, storeReg, 0x80);
+            generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 1);
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, maskReg, storeReg, 0x8000);
+            generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 1);
+            generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
+            }
+         }
+      else // in BE, count the leading zeroes
+         {
+         TR_ASSERT_FATAL(false, "BE not supported yet\n");
+         }
+      }
+   else
+      {
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, storeReg, storeReg, 0x8080);
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr6, storeReg, 0);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr6);
+      generateLabelInstruction(cg, TR::InstOpCode::b, node, resultLabel);
+      }
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, serial3Label);
+   // fallthrough: confirmed to have 3 items
+   generateTrg1MemInstruction(cg, TR::InstOpCode::lhzx, node, storeReg,
+         TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 2));
+   if (isCountPositives) // when counting positives, we must consider every byte separately
+      {
+      if (isLE) // in LE, count the number of trailing zeroes or use masks
+         {
+         if (p9Plus)
+            {
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, storeReg, storeReg, 0x8080);
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::oris, node, storeReg, storeReg, 0xFFFF);
+            generateTrg1Src1Instruction(cg, TR::InstOpCode::cnttzw, node, storeReg, storeReg);
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::srawi, node, storeReg, storeReg, 3);
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, indexReg, storeReg, indexReg);
+            generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
+            }
+         else // before P9, we cannot count trailing zeroes
+            {
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, maskReg, storeReg, 0x80);
+            generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 1);
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, maskReg, storeReg, 0x8000);
+            generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 1);
+            generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
+            }
+         }
+      else // in BE, count the leading zeroes
+         {
+         TR_ASSERT_FATAL(false, "BE not supported yet\n");
+         }
+      }
+   else
+      {
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, storeReg, storeReg, 0x8080);
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr6, storeReg, 0);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr6);
+      generateLabelInstruction(cg, TR::InstOpCode::b, node, resultLabel);
+      }
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 2);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::lbzx, node, storeReg,
+         TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 1));
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, storeReg, storeReg, 0x80);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, endLabel, cr6);
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, resultLabel);
+
    // we need to use 4 individual masks instead for countPositves() in LE before P9
    if (!(isLE && isCountPositives && !p9Plus))
       {
@@ -12364,8 +12479,6 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
       }
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, serialUnrollLabel);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr6, indexReg, tempReg);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, serialLabel, cr6);
    // loading 4 bytes at once is slightly faster
    generateTrg1MemInstruction(cg, TR::InstOpCode::lwzx, node, storeReg,
          TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 4));
@@ -12422,27 +12535,14 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
       generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, matchLabel, cr6);
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 4);
       }
-   generateLabelInstruction(cg, TR::InstOpCode::b, node, serialUnrollLabel);
 
-   generateLabelInstruction(cg, TR::InstOpCode::label, node, serialLabel);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr6, indexReg, lengthReg);
-   // if we reach the end, indexReg is len already, so we don't need to do anything for countPositives
-   if (isCountPositives)
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, endLabel, cr6);
-   else
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, resultLabel, cr6);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr6, indexReg, tempReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, serialUnrollLabel, cr6);
 
-   generateTrg1MemInstruction(cg, TR::InstOpCode::lbzx, node, tempReg,
-      TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 1));
-   // check the negative bit
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, tempReg, tempReg, 0x80);
-   if (isCountPositives)
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
-   else
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, matchLabel, cr0);
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, serial1Label);
 
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 1);
-   generateLabelInstruction(cg, TR::InstOpCode::b, node, serialLabel);
+
+
 
    // --- load the length for countPositves; load 0 for hasNegative
    generateLabelInstruction(cg, TR::InstOpCode::label, node, resultLabel);
