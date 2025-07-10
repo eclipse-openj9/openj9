@@ -1000,38 +1000,7 @@ UDATA
 j9gc_get_unique_GC_count(J9JavaVM *javaVM)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
-	OMR_VM *omrVm = javaVM->omrVM;
-	UDATA result = 0;
-
-	switch (omrVm->gcPolicy) {
-		case OMR_GC_POLICY_OPTTHRUPUT:
-		case OMR_GC_POLICY_OPTAVGPAUSE:
-		case OMR_GC_POLICY_METRONOME:
-			result = extensions->globalGCStats.gcCount;
-			break;
-
-		case OMR_GC_POLICY_GENCON:
-			result = extensions->globalGCStats.gcCount;
-#if defined(OMR_GC_MODRON_SCAVENGER)
-			result += extensions->scavengerStats._gcCount;
-#endif
-			break;
-
-		case OMR_GC_POLICY_BALANCED:
-#if defined(OMR_GC_VLHGC)
-			result = extensions->globalVLHGCStats.gcCount;
-#endif
-			break;
-
-		case OMR_GC_POLICY_NOGC:
-			break;
-
-		default :
-			/* Unknown GC policy */
-			Assert_MM_unreachable();
-			break;
-	}
-	return result;
+	return extensions->getUniqueGCCycleCount();
 }
 
 /**
