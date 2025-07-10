@@ -2140,6 +2140,8 @@ void
 MM_IncrementalGenerationalGC::reportGCCycleStart(MM_EnvironmentBase *env)
 {
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	MM_CollectionStatisticsVLHGC *stats = (MM_CollectionStatisticsVLHGC *)env->_cycleState->_collectionStatistics;
+	stats->clearPauseStats();
 	MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(env);
 	MM_CommonGCData commonData;
 
@@ -2363,6 +2365,7 @@ MM_IncrementalGenerationalGC::reportGCIncrementEnd(MM_EnvironmentBase *env)
 	}
 
 	stats->_endTime = j9time_hires_clock();
+	stats->processPauseDuration();
 	stats->_stallTime = static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats.getTotalStallTime();
 	
 	TRIGGER_J9HOOK_MM_PRIVATE_GC_INCREMENT_END(

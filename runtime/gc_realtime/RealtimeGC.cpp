@@ -361,6 +361,7 @@ MM_RealtimeGC::internalPreCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *su
 	env->_cycleState->_gcCode = MM_GCCode(gcCode);
 	env->_cycleState->_type = _cycleType;
 	env->_cycleState->_activeSubSpace = subSpace;
+	env->_cycleState->_collectionStatistics = &_collectionStatistics;
 
 	/* If we are in an excessiveGC level beyond normal then an aggressive GC is
 	 * conducted to free up as much space as possible
@@ -387,6 +388,7 @@ MM_RealtimeGC::internalPreCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *su
 	}
 	/* we are about to collect so generate the appropriate cycle start and increment start events */
 	reportGCCycleStart(rtEnv);
+	reportGCIncrementStart(rtEnv);
 	_sched->reportStartGCIncrement(rtEnv);
 }
 
@@ -447,6 +449,7 @@ MM_RealtimeGC::internalPostCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *s
 	 * the METRONOME_INCREMENT_START/END events become out of order and verbose GC will fail.
 	 */
 	reportGCCycleFinalIncrementEnding(env);
+	reportGCIncrementEnd(env);
 
 	MM_EnvironmentRealtime *rtEnv = MM_EnvironmentRealtime::getEnvironment(env);
 	_sched->reportStopGCIncrement(rtEnv, true);
@@ -611,6 +614,24 @@ MM_RealtimeGC::reportGCCycleEnd(MM_EnvironmentBase *env)
 	omrthread_monitor_notify_all(env->getOmrVM()->_gcCycleOnMonitor);
 	
 	omrthread_monitor_exit(env->getOmrVM()->_gcCycleOnMonitor);
+}
+
+void
+MM_RealtimeGC::reportGCIncrementStart(MM_EnvironmentBase *env)
+{
+	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	MM_CollectionStatistics *stats = (MM_CollectionStatistics *)env->_cycleState->_collectionStatistics;
+	stats->_startTime = j9time_hires_clock();
+}
+
+void
+MM_RealtimeGC::reportGCIncrementEnd(MM_EnvironmentBase *env)
+{
+	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	MM_CollectionStatistics *stats = (MM_CollectionStatistics *)env->_cycleState->_collectionStatistics;
+
+	stats->_endTime = j9time_hires_clock();
+	stats->processPauseDuration();
 }
 
 /**
