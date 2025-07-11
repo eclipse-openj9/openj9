@@ -12330,27 +12330,6 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 16);
    generateLabelInstruction(cg, TR::InstOpCode::b, node, VSXLabel);
 
-   // --- when there is a match but we don't know the exact location yet
-   generateLabelInstruction(cg, TR::InstOpCode::label, node, matchLabel);
-   if (isCountPositives)
-      {
-      if (p9Plus) // just count for P9+
-         {
-         generateTrg1Src1Instruction(cg, TR::InstOpCode::vclzlsbb, node, tempReg, vtmp1Reg);
-         generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, indexReg, tempReg, indexReg);
-         generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
-         }
-      else // otherwise, we use the serial loop to go through the items
-         {
-         generateLabelInstruction(cg, TR::InstOpCode::b, node, serialPrepLabel);
-         }
-      }
-   else // just report 1
-      {
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 1);
-      generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
-      }
-
    // --- serialPrepLabel to deal with whatever remains
    generateLabelInstruction(cg, TR::InstOpCode::label, node, serialPrepLabel);
 
@@ -12545,8 +12524,26 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
 
    generateLabelInstruction(cg, TR::InstOpCode::b, node, serial1Label);
 
-
-
+   // --- when there is a match but we don't know the exact location yet
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, matchLabel);
+   if (isCountPositives)
+      {
+      if (p9Plus) // just count for P9+
+         {
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::vclzlsbb, node, tempReg, vtmp1Reg);
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, indexReg, tempReg, indexReg);
+         generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
+         }
+      else // otherwise, we use the serial loop to go through the items
+         {
+         generateLabelInstruction(cg, TR::InstOpCode::b, node, serialPrepLabel);
+         }
+      }
+   else // just report 1
+      {
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 1);
+      generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
+      }
 
    // --- load the length for countPositves; load 0 for hasNegative
    generateLabelInstruction(cg, TR::InstOpCode::label, node, resultLabel);
