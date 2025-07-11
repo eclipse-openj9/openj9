@@ -12376,11 +12376,6 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    generateLabelInstruction(cg, TR::InstOpCode::label, node, serial2Label);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr6, maskReg, 3);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, serial3Label, cr6);
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr6, maskReg, 0);
-   if (isCountPositives)
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, endLabel, cr6);
-   else
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, resultLabel, cr6);
    // fallthrough: confirmed to have 2 items
    generateTrg1MemInstruction(cg, TR::InstOpCode::lhzx, node, storeReg,
          TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 2));
@@ -12538,6 +12533,15 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
 
    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr6, indexReg, tempReg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, serialUnrollLabel, cr6);
+
+   // An inelegant solution to ensure a byte[4n+1] array can be parsed efficiently
+   // since the first byte is processed before any of the loops, the special cases
+   // have no provision to deal with 0.
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr6, indexReg, lengthReg);
+   if (isCountPositives)
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, endLabel, cr6);
+   else
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, resultLabel, cr6);
 
    generateLabelInstruction(cg, TR::InstOpCode::b, node, serial1Label);
 
