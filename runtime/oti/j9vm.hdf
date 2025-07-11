@@ -1429,23 +1429,4 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
 		<data type="I_64" name="startTicks" description="current ticks when GC began" />
 	</event>
-
-	<event>
-		<name>J9HOOK_READS_MODULE_ADDED</name>
-		<description>Triggered after a module dependency is added (after allowReadAccessToModule() is called)</description>
-		<struct>J9VMReadsModuleAddedEvent</struct>
-		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
-		<data type="struct J9Module*" name="fromModule" description="source module" />
-		<data type="struct J9Module*" name="toModule" description="required module" />
-	</event>
-
-	<event>
-		<name>J9HOOK_PACKAGE_EXPORTED_TO_MODULE</name>
-		<description>Triggered after a package is exported to a module (after exportPackageToModule() is called)</description>
-		<struct>J9VMPackageExportedToModuleEvent</struct>
-		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
-		<data type="struct J9Module*" name="fromModule" description="from module" />
-		<data type="struct J9Package*" name="exportedPackage" description="exported package" />
-		<data type="struct J9Module*" name="targetModule" description="target module" />
-	</event>
 </interface>
