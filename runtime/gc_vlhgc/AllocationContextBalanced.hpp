@@ -73,6 +73,7 @@ private:
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 	MM_HeapRegionDescriptorVLHGC *_leafRegionList; /** for Off-heap case only, adding and removing via region->_allocateData.pushRegionToLeafRegionList/popRegionFromLeafRegionList */
+	UDATA _leafRegionCount;
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 /* Methods */
 public:
@@ -278,6 +279,26 @@ public:
 	{
 		return &_leafRegionList;
 	}
+
+	UDATA getLeafRegionCount()
+	{
+		return _leafRegionCount;
+	}
+
+	void setLeafRegionCount(UDATA leafRegionCount)
+	{
+		_leafRegionCount = leafRegionCount;
+	}
+
+	void incrementLeafRegionCount()
+	{
+		_leafRegionCount += 1;
+	}
+
+	void decrementLeafRegionCount()
+	{
+		_leafRegionCount -= 1;
+	}
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 	
 protected:
@@ -304,6 +325,7 @@ protected:
 		, _freeProcessorNodeCount(0)
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 		, _leafRegionList(NULL)
+		, _leafRegionCount(0)
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 	{
 		_typeId = __FUNCTION__;

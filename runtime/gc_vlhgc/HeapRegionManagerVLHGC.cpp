@@ -228,7 +228,7 @@ MM_HeapRegionManagerVLHGC::getHeapMemorySnapshot(MM_GCExtensionsBase *extensions
 	PORT_ACCESS_FROM_JAVAVM(gcExtensions->getJavaVM());
 	for (uintptr_t idx = 0; idx < allocationContextCount; idx++) {
 		MM_AllocationContextTarok *context = (MM_AllocationContextTarok *) globalAllocationManager->getAllocationContextByIndex(idx);
-		j9tty_printf(PORTLIB, "getHeapMemorySnapshot gcEnd=%zu allocationContextIndex=%zu FreeRegionCount=%zu\n", gcEnd, idx, context->getFreeRegionCount());
+		j9tty_printf(PORTLIB, "getHeapMemorySnapshot gcEnd=%zu allocationContextIndex=%zu context=%p, FreeRegionCount=%zu\n", gcEnd, idx, context, context->getFreeRegionCount());
 	}
 
 	return snapshot;

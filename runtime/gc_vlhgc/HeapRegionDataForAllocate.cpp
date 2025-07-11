@@ -228,9 +228,11 @@ MM_HeapRegionDataForAllocate::pushRegionToLeafRegionList(MM_EnvironmentVLHGC *en
 	Assert_MM_true(NULL == _nextArrayletLeafRegion);
 
 	uintptr_t previousHead = (uintptr_t) *head;
-	while (previousHead != (uintptr_t) MM_AtomicOperations::lockCompareExchange((volatile uintptr_t*)head, (uintptr_t)previousHead, (uintptr_t)_region)) {
-		previousHead = (uintptr_t) *head;
-	}
+
+	*head = _region;
+//	while (previousHead != (uintptr_t) MM_AtomicOperations::lockCompareExchange((volatile uintptr_t*)head, (uintptr_t)previousHead, (uintptr_t)_region)) {
+//		previousHead = (uintptr_t) *head;
+//	}
 
 	_nextArrayletLeafRegion = (MM_HeapRegionDescriptorVLHGC *) previousHead;
 }

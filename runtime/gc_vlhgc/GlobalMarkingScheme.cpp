@@ -1431,7 +1431,10 @@ private:
 				uintptr_t arrayletLeafCount = MM_Math::roundToCeiling(arrayletLeafSize, dataSize) / arrayletLeafSize;
 
 				_extensions->largeObjectVirtualMemory->freeSparseRegionAndUnmapFromHeapObject(_env, dataAddr, objectPtr, dataSize, sparseDataEntryIterator);
-				_markingScheme->recycleLeafRegionsForVirtualLargeObjectHeap(env, arrayletLeafCount);
+
+				MM_HeapRegionDescriptorVLHGC *spineRegion = (MM_HeapRegionDescriptorVLHGC *)_extensions->heap->getHeapRegionManager()->tableDescriptorForAddress(objectPtr);
+				MM_AllocationContextTarok *spineContext = spineRegion->_allocateData._owningContext;
+				_markingScheme->recycleLeafRegionsForVirtualLargeObjectHeap(env, spineContext, arrayletLeafCount);
 			}
 		}
 	}
@@ -1877,13 +1880,17 @@ MM_GlobalMarkingScheme::flushBuffers(MM_EnvironmentVLHGC *env)
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 void
-MM_GlobalMarkingScheme::recycleLeafRegionsForVirtualLargeObjectHeap(MM_EnvironmentVLHGC *env, uintptr_t arrayletLeafCount)
+MM_GlobalMarkingScheme::recycleLeafRegionsForVirtualLargeObjectHeap(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *context, uintptr_t arrayletLeafCount)
 {
-	MM_HeapRegionDescriptorVLHGC **head = ((MM_AllocationContextBalanced *)env->getAllocationContext())->getLeafRegionListAddress();
+	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	j9tty_printf(PORTLIB, "MM_GlobalMarkingScheme::recycleLeafRegionsForVirtualLargeObjectHeap arrayletLeafCount=%zu, Context=%p, leafRegionCount=%zu\n", arrayletLeafCount, context, ((MM_AllocationContextBalanced *)context)->getLeafRegionCount());
+
+	MM_HeapRegionDescriptorVLHGC **head = ((MM_AllocationContextBalanced *)context)->getLeafRegionListAddress();
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 
 	while ((arrayletLeafCount > 0) && (NULL != (region = *head))) {
 		region->_allocateData.popRegionFromLeafRegionList(env, head);
+		((MM_AllocationContextBalanced *)context)->decrementLeafRegionCount();
 		region->getSubSpace()->recycleRegion(env, region);
 		arrayletLeafCount -= 1;
 	}

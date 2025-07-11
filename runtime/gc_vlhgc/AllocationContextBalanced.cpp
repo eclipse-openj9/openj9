@@ -384,7 +384,23 @@ MM_AllocationContextBalanced::lockedAllocateArrayletLeaf(MM_EnvironmentBase *env
 	}
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 	else {
-		leafAllocateData->pushRegionToLeafRegionList(env, &_leafRegionList);
+		MM_AllocationContextTarok *spineContext = spineRegion->_allocateData._owningContext;
+		if (this != spineContext) {
+			Assert_MM_true(env->getCommonAllocationContext() == spineContext);
+			/* The common allocation context is always an instance of AllocationContextBalanced */
+			((MM_AllocationContextBalanced *)spineContext)->lockCommon();
+		}
+
+		leafAllocateData->pushRegionToLeafRegionList(env, ((MM_AllocationContextBalanced *)spineContext)->getLeafRegionListAddress());
+		((MM_AllocationContextBalanced *)spineContext)->incrementLeafRegionCount();
+
+		PORT_ACCESS_FROM_ENVIRONMENT(env);
+		j9tty_printf(PORTLIB, "pushRegionToLeafRegionList context =%p,spineContext=%p,  _leafRegionCount=%zu\n", this, spineContext, _leafRegionCount);
+
+		if (this != spineContext) {
+			/* The common allocation context is always an instance of AllocationContextBalanced */
+			((MM_AllocationContextBalanced *)spineContext)->unlockCommon();
+		}
 	}
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 

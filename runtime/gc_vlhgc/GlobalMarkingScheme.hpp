@@ -523,7 +523,7 @@ public:
 	void doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slotPtr, J9StackWalkState *walkState, const void *stackLocation);
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
-	void recycleLeafRegionsForVirtualLargeObjectHeap(MM_EnvironmentVLHGC *env, uintptr_t arrayletLeafCount);
+	void recycleLeafRegionsForVirtualLargeObjectHeap(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *context, uintptr_t arrayletLeafCount);
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 
 	/**

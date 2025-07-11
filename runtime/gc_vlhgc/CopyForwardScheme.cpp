@@ -434,13 +434,17 @@ MM_CopyForwardScheme::clearGCStats(MM_EnvironmentVLHGC *env)
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 void
-MM_CopyForwardScheme::recycleLeafRegionsForVirtualLargeObjectHeap(MM_EnvironmentVLHGC *env, uintptr_t arrayletLeafCount)
+MM_CopyForwardScheme::recycleLeafRegionsForVirtualLargeObjectHeap(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *context, uintptr_t arrayletLeafCount)
 {
-	MM_HeapRegionDescriptorVLHGC **head = ((MM_AllocationContextBalanced *)env->getAllocationContext())->getLeafRegionListAddress();
+	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	j9tty_printf(PORTLIB, "MM_CopyForwardScheme::recycleLeafRegionsForVirtualLargeObjectHeap arrayletLeafCount=%zu, Context=%p, leafRegionCount=%zu\n", arrayletLeafCount, context, ((MM_AllocationContextBalanced *)context)->getLeafRegionCount());
+
+	MM_HeapRegionDescriptorVLHGC **head = ((MM_AllocationContextBalanced *)context)->getLeafRegionListAddress();
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 
 	while ((arrayletLeafCount > 0) && (NULL != (region = *head))) {
 		region->_allocateData.popRegionFromLeafRegionList(env, head);
+		((MM_AllocationContextBalanced *)context)->decrementLeafRegionCount();
 		region->getSubSpace()->recycleRegion(env, region);
 		arrayletLeafCount -= 1;
 	}
@@ -4193,7 +4197,10 @@ private:
 				void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous((J9IndexableObject *)objectPtr);
 				_extensions->largeObjectVirtualMemory->freeSparseRegionAndUnmapFromHeapObject(_env, dataAddr, objectPtr, dataSize, sparseDataEntryIterator);
 				/* recycleLeafRegions for off-heap case */
-				_copyForwardScheme->recycleLeafRegionsForVirtualLargeObjectHeap(env, arrayletLeafCount);
+
+				MM_HeapRegionDescriptorVLHGC *spineRegion = (MM_HeapRegionDescriptorVLHGC *)_extensions->heap->getHeapRegionManager()->tableDescriptorForAddress(objectPtr);
+				MM_AllocationContextTarok *spineContext = spineRegion->_allocateData._owningContext;
+				_copyForwardScheme->recycleLeafRegionsForVirtualLargeObjectHeap(env, spineContext, arrayletLeafCount);
 			} else {
 				void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous((J9IndexableObject *)fwdOjectPtr);
 				if (NULL != dataAddr) {
