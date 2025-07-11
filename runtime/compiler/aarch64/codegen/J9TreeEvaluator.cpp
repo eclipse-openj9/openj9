@@ -6413,16 +6413,7 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, TR::CodeGenerator* c
    TR::Register *resultReg = endReg;
    TR_Debug *debugObj = cg->getDebug();
 
-#ifdef J9VM_GC_SPARSE_HEAP_ALLOCATION
-   if (TR::Compiler->om.isOffHeapAllocationEnabled())
-      {
-      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, dataAddrReg, TR::MemoryReference::createWithDisplacement(cg, arrayReg, cg->comp()->fej9()->getOffsetOfContiguousDataAddrField()));
-      }
-   else
-#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
-      {
-      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, dataAddrReg, arrayReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
-      }
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, dataAddrReg, arrayReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
 
    if (isLatin1)
       {
