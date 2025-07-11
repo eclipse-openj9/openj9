@@ -25,7 +25,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 
 The JITServer AOT cache is a feature of the JITServer that allows a server to share AOT-compiled code with multiple client JVMs. This sort of sharing can save resources at the server, since it can serve cached data in response to a request instead of computing it on-demand, and can as a consequence improve server response times and client performance. The JITServer AOT cache relies on the existing AOT code relocation infrastructure, so we will go over the relevant properties of that mechanism in the next section, before moving on to an overview of the different components of the JITServer AOT cache.
 
-For more information, the [AOT documentation](/doc/compiler/aot/README.md) is a useful guide to AOT compilation in general. The initial JITServer AOT cache design was described in the paper [JITServer: Disaggregated Caching JIT Compiler for the JVM in the Cloud](https://www.usenix.org/conference/atc22/presentation/khrabrov) by Khrabrov et al, though the implementation details have changed somewhat over time.
+For more information, the [AOT documentation](/doc/compiler/aot/README.md) is a useful guide to AOT compilation in general. The initial JITServer AOT cache design was described in the paper [JITServer: Disaggregated Caching JIT Compiler for the JVM in the Cloud](https://www.usenix.org/conference/atc22/presentation/khrabrov) by Khrabrov et al, though the implementation details have changed somewhat over time. Also, see the [diagram below](#high-level-aotcache-diagram) to understand how all the relevant data structures fit together.
 
 ## Local AOT compilation
 
@@ -132,3 +132,7 @@ To save its caches, the server will save each named AOT cache at a configurable 
 Loading from a cache file will be triggered when a server receives an AOT cache compilation request for a cache that isn't currently loaded. If the server can find a cache file with that name, it will trigger the asynchronous loading of that cache. During this process, the serialization records will be re-linked into full `AOTCacheRecord`s.
 
 One implementation quirk to note is that a dummy compilation request is used for both the saving and loading of caches. This is done so that a single server compilation thread (and not the one that received an AOT cache request, notably) will be assigned to perform the persistence operation.
+
+## High Level AOTCache Diagram
+
+![Figure 1. AOTCache and related data structures](Datastructures.png)
