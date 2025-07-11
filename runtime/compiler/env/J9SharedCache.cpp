@@ -1428,7 +1428,8 @@ TR_J9SharedCache::lookupClassFromChainAndLoader(uintptr_t *chainData, void *clas
    if (!clazz && comp->isDeserializedAOTMethod())
       {
       auto deserializer = TR::CompilationInfo::get()->getJITServerAOTDeserializer();
-      clazz = deserializer->getGeneratedClass((J9ClassLoader *)classLoader, romClassOffset, comp);
+      auto context = DeserializerContext(comp);
+      clazz = deserializer->getGeneratedClass((J9ClassLoader *)classLoader, romClassOffset, context);
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
@@ -1870,7 +1871,8 @@ TR_J9DeserializerSharedCache::romClassFromOffsetInSharedCache(uintptr_t offset)
    {
    TR::Compilation *comp = _compInfoPT->getCompilation();
    bool wasReset = false;
-   auto romClass = _deserializer->romClassFromOffsetInSharedCache(offset, comp, wasReset);
+   auto context = DeserializerContext(comp);
+   auto romClass = _deserializer->romClassFromOffsetInSharedCache(offset, context, wasReset);
    if (wasReset)
       comp->failCompilation<J9::AOTDeserializerReset>(
          "Deserializer reset during relocation of method %s", comp->signature());
@@ -1886,7 +1888,8 @@ TR_J9DeserializerSharedCache::pointerFromOffsetInSharedCache(uintptr_t offset)
    {
    TR::Compilation *comp = _compInfoPT->getCompilation();
    bool wasReset = false;
-   auto ptr = _deserializer->pointerFromOffsetInSharedCache(offset, comp, wasReset);
+   auto context = DeserializerContext(comp);
+   auto ptr = _deserializer->pointerFromOffsetInSharedCache(offset, context, wasReset);
    if (wasReset)
       comp->failCompilation<J9::AOTDeserializerReset>(
          "Deserializer reset during relocation of method %s", comp->signature());
@@ -1916,7 +1919,8 @@ TR_J9DeserializerSharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *c
    // is equal to the one we are trying to validate.
    TR::Compilation *comp = _compInfoPT->getCompilation();
    bool wasReset = false;
-   auto ramClass = _deserializer->classFromOffset(chainData[1], comp, wasReset);
+   auto context = DeserializerContext(comp);
+   auto ramClass = _deserializer->classFromOffset(chainData[1], context, wasReset);
    if (wasReset)
       comp->failCompilation<J9::AOTDeserializerReset>(
          "Deserializer reset during relocation of method %s", comp->signature());
@@ -1935,7 +1939,8 @@ TR_J9DeserializerSharedCache::lookupClassFromChainAndLoader(uintptr_t *chainData
    // We do not need to perform that checking here, because during deserialization we will have already resolved the first class in the chain to
    // a J9Class and verified that it matches. Thus we can simply return that cached first J9Class.
    bool wasReset = false;
-   auto clazz = _deserializer->classFromOffset(chainData[1], comp, wasReset);
+   auto context = DeserializerContext(comp);
+   auto clazz = _deserializer->classFromOffset(chainData[1], context, wasReset);
    if (wasReset)
       comp->failCompilation<J9::AOTDeserializerReset>(
          "Deserializer reset during relocation of method %s", comp->signature());
@@ -1951,7 +1956,8 @@ TR_J9DeserializerSharedCache::romMethodFromOffsetInSharedCache(uintptr_t offset)
    {
    TR::Compilation *comp = _compInfoPT->getCompilation();
    bool wasReset = false;
-   auto romMethod = _deserializer->romMethodFromOffsetInSharedCache(offset, comp, wasReset);
+   auto context = DeserializerContext(comp);
+   auto romMethod = _deserializer->romMethodFromOffsetInSharedCache(offset, context, wasReset);
    if (wasReset)
       comp->failCompilation<J9::AOTDeserializerReset>(
          "Deserializer reset during relocation of method %s", comp->signature());
