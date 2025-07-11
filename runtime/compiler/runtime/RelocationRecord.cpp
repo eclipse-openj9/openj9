@@ -41,6 +41,8 @@
 #include "env/CHTable.hpp"
 #include "env/ClassLoaderTable.hpp"
 #include "env/DependencyTable.hpp"
+#include "env/J9RetainedMethodSet.hpp"
+#include "env/OMRRetainedMethodSet.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/jittypes.h"
 #include "env/VMAccessCriticalSection.hpp"
@@ -534,6 +536,101 @@ TR_RelocationRecordGroup::applyRelocations(TR_RelocationRuntime *reloRuntime,
          }
 
       recordPointer = reloRecord->nextBinaryRecord(reloTarget);
+      }
+
+   return checkInliningTable(reloRuntime);
+   }
+
+TR_RelocationErrorCode
+TR_RelocationRecordGroup::checkInliningTable(TR_RelocationRuntime *reloRuntime)
+   {
+   TR::Compilation *comp = TR::comp();
+
+#if defined(J9VM_OPT_JITSERVER)
+   if (comp->isRemoteCompilation()
+       && !comp->compileRelocatableCode()
+       && !comp->isDeserializedAOTMethod())
+      {
+      // We're relocating for a non-AOT remote compilation. The bonds have been
+      // determined during compilation and they will be handled during CH table
+      // commit, just like for an in-process JIT compilation. Only continue to
+      // create bonds below for AOT loads.
+      return TR_RelocationErrorCode::relocationOK;
+      }
+#endif
+
+   if (comp->getOption(TR_NoClassGC))
+      {
+      // Nothing will be unloaded.
+      return TR_RelocationErrorCode::relocationOK;
+      }
+
+   bool restrictInlining = comp->getOption(TR_DontInlineUnloadableMethods);
+   bool createBonds = !comp->getOption(TR_AllowJitBodyToOutliveInlinedCode);
+   if (!restrictInlining && !createBonds)
+      {
+      return TR_RelocationErrorCode::relocationOK;
+      }
+
+   J9JITExceptionTable *metadata = reloRuntime->exceptionTable();
+   uint32_t numSites = getNumInlinedCallSites(metadata);
+   if (numSites == 0)
+      {
+      return TR_RelocationErrorCode::relocationOK;
+      }
+
+   // Don't use comp->retainedMethods(). If we're relocating immediately
+   // after an AOT compilation (disableDelayRelocationForAOTCompilations)
+   // then it will be the OMR base implementation, which does no actual
+   // tracking.
+   auto &inliningTable = J9::RetainedMethodSet::copyInliningTable(comp, metadata);
+   OMR::RetainedMethodSet *root = J9::RetainedMethodSet::create(
+      comp, comp->getMethodBeingCompiled(), inliningTable);
+
+   TR::vector<OMR::RetainedMethodSet*, TR::Region&> retainedMethods(comp->region());
+   retainedMethods.resize(numSites, NULL);
+
+   // Build the tree of RetainedMethodSets that would exist during inlining if
+   // this were a regular JIT compilation and determine bonds.
+   for (uint32_t i = 0; i < numSites; i++)
+      {
+      J9::ResolvedInlinedCallSite site = inliningTable[i];
+      int32_t caller = site._bci.getCallerIndex();
+      OMR::RetainedMethodSet *parent = caller < 0 ? root : retainedMethods[caller];
+
+      // NOTE: There are no keepalives because there is not (yet) any support
+      // for the known object table in AOT.
+      OMR::RetainedMethodSet *callSiteSet = parent->withLinkedCalleeAttested(site._bci);
+      OMR::RetainedMethodSet *callTargetSet = callSiteSet;
+      TR_ResolvedMethod *callee = site._method;
+      if (!callTargetSet->willRemainLoaded(callee))
+         {
+         if (restrictInlining)
+            {
+            return TR_RelocationErrorCode::inlinedMethodRelocationFailure;
+            }
+
+         callTargetSet = callTargetSet->createChild(callee);
+         callTargetSet->bond();
+         }
+
+      retainedMethods[i] = callTargetSet;
+      }
+
+   // Create an assumption for each bond.
+   if (createBonds)
+      {
+      TR_ResolvedMethod *bondMethod = NULL;
+      auto bondMethods = root->bondMethods();
+      while (bondMethods.next(&bondMethod))
+         {
+         TR_ClassUnloadRecompile::make(
+            reloRuntime->fej9(),
+            reloRuntime->trMemory()->trPersistentMemory(),
+            bondMethod->containingClass(),
+            (uint8_t *)metadata->startPC,
+            (OMR::RuntimeAssumption**)&metadata->runtimeAssumptionList);
+         }
       }
 
    return TR_RelocationErrorCode::relocationOK;
