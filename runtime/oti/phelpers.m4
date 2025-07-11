@@ -193,6 +193,7 @@ define({CALL_DIRECT},{
 })
 
 J9CONST({TOC_SAVE_OFFSET},J9TR_cframe_currentTOC)
+define({PRESERVE_R13_IN_C})
 define({GPR_SAVE_OFFSET},{eval(J9TR_cframe_preservedGPRs+((($1)-13)*ALen))})
 define({GPR_SAVE_SLOT},{GPR_SAVE_OFFSET($1)(r1)})
 define({FPR_SAVE_OFFSET},{eval(J9TR_cframe_preservedFPRs+((($1)-14)*8))})
@@ -378,6 +379,7 @@ define({RESTORE_R2_FOR_ALL},{laddr r2,JIT_GPR_SAVE_SLOT(2)})
 define({SAVE_R29_FOR_ALL})
 define({RESTORE_R29_FOR_ALL})
 
+define({PRESERVE_R13_IN_C})
 J9CONST({CR_SAVE_OFFSET},J9TR_cframe_preservedCR)
 define({GPR_SAVE_OFFSET},{eval(J9TR_cframe_preservedGPRs+((($1)-13)*ALen))})
 define({GPR_SAVE_SLOT},{GPR_SAVE_OFFSET($1)(r1)})
