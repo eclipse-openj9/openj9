@@ -12254,6 +12254,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
 
    TR::LabelSymbol *VSXLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *serialPrepLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *serialUnrollPrepLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *serialUnrollLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *serial1Label = generateLabelSymbol(cg);
    TR::LabelSymbol *serial2Label = generateLabelSymbol(cg);
@@ -12336,7 +12337,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    // do we have enough elements to use the unroll loop?
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, tempReg, lengthReg, -3);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr6, indexReg, tempReg);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, serialUnrollLabel, cr6);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, serialUnrollPrepLabel, cr6);
 
    // --- special cases for very small sizes
    generateLabelInstruction(cg, TR::InstOpCode::label, node, serial1Label);
@@ -12442,6 +12443,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, endLabel, cr6);
    generateLabelInstruction(cg, TR::InstOpCode::b, node, resultLabel);
 
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, serialUnrollPrepLabel);
    // we need to use 4 individual masks instead for countPositves() in LE before P9
    if (!(isLE && isCountPositives && !p9Plus))
       {
