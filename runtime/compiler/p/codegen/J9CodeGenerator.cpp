@@ -143,6 +143,20 @@ J9::Power::CodeGenerator::initialize()
       cg->setEnableTLHPrefetching();
       }
 
+   static bool disableInlineStringCodingHasNegatives =
+      feGetEnv("TR_DisableInlineStringCodingHasNegatives") != NULL;
+   static bool disableInlineStringCodingCountPositives =
+      feGetEnv("TR_DisableInlineStringCodingCountPositives") != NULL;
+   if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) &&
+      comp->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX) &&
+      !TR::Compiler->om.canGenerateArraylets())
+      {
+      if (!disableInlineStringCodingHasNegatives)
+         cg->setSupportsInlineStringCodingHasNegatives();
+      if (!disableInlineStringCodingCountPositives)
+         cg->setSupportsInlineStringCodingCountPositives();
+      }
+
    //This env-var does 3 things:
    // 1. Prevents batch clear in frontend/j9/rossa.cpp
    // 2. Prevents all allocations to nonZeroTLH
