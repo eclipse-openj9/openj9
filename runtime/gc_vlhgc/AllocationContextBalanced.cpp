@@ -384,22 +384,21 @@ MM_AllocationContextBalanced::lockedAllocateArrayletLeaf(MM_EnvironmentBase *env
 	}
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 	else {
-		MM_AllocationContextTarok *spineContext = spineRegion->_allocateData._owningContext;
-		if (this != spineContext) {
-			Assert_MM_true(env->getCommonAllocationContext() == spineContext);
+		MM_AllocationContextTarok *commonContext = (MM_AllocationContextTarok *)env->getCommonAllocationContext();
+		if (this != commonContext) {
 			/* The common allocation context is always an instance of AllocationContextBalanced */
-			((MM_AllocationContextBalanced *)spineContext)->lockCommon();
+			((MM_AllocationContextBalanced *)commonContext)->lockCommon();
 		}
 
-		leafAllocateData->pushRegionToLeafRegionList(env, ((MM_AllocationContextBalanced *)spineContext)->getLeafRegionListAddress());
-		((MM_AllocationContextBalanced *)spineContext)->incrementLeafRegionCount();
+		leafAllocateData->pushRegionToLeafRegionList(env, ((MM_AllocationContextBalanced *)commonContext)->getLeafRegionListAddress());
+		((MM_AllocationContextBalanced *)commonContext)->incrementLeafRegionCount();
 
-		PORT_ACCESS_FROM_ENVIRONMENT(env);
-		j9tty_printf(PORTLIB, "pushRegionToLeafRegionList context =%p,spineContext=%p,  _leafRegionCount=%zu\n", this, spineContext, _leafRegionCount);
-
-		if (this != spineContext) {
+//		PORT_ACCESS_FROM_ENVIRONMENT(env);
+//		j9tty_printf(PORTLIB, "pushRegionToLeafRegionList context =%p,spineContext=%p,  leafRegionCount=%zu\n", this, commonContext, ((MM_AllocationContextBalanced *)commonContext)->gettLeafRegionCount());
+//
+		if (this != commonContext) {
 			/* The common allocation context is always an instance of AllocationContextBalanced */
-			((MM_AllocationContextBalanced *)spineContext)->unlockCommon();
+			((MM_AllocationContextBalanced *)commonContext)->unlockCommon();
 		}
 	}
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */

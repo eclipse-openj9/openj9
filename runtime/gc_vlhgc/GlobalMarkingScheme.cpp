@@ -1431,10 +1431,7 @@ private:
 				uintptr_t arrayletLeafCount = MM_Math::roundToCeiling(arrayletLeafSize, dataSize) / arrayletLeafSize;
 
 				_extensions->largeObjectVirtualMemory->freeSparseRegionAndUnmapFromHeapObject(_env, dataAddr, objectPtr, dataSize, sparseDataEntryIterator);
-
-				MM_HeapRegionDescriptorVLHGC *spineRegion = (MM_HeapRegionDescriptorVLHGC *)_extensions->heap->getHeapRegionManager()->tableDescriptorForAddress(objectPtr);
-				MM_AllocationContextTarok *spineContext = spineRegion->_allocateData._owningContext;
-				_markingScheme->recycleLeafRegionsForVirtualLargeObjectHeap(env, spineContext, arrayletLeafCount);
+				_markingScheme->recycleLeafRegionsForVirtualLargeObjectHeap(env, arrayletLeafCount);
 			}
 		}
 	}
@@ -1880,17 +1877,19 @@ MM_GlobalMarkingScheme::flushBuffers(MM_EnvironmentVLHGC *env)
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 void
-MM_GlobalMarkingScheme::recycleLeafRegionsForVirtualLargeObjectHeap(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *context, uintptr_t arrayletLeafCount)
+MM_GlobalMarkingScheme::recycleLeafRegionsForVirtualLargeObjectHeap(MM_EnvironmentVLHGC *env, uintptr_t arrayletLeafCount)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	j9tty_printf(PORTLIB, "MM_GlobalMarkingScheme::recycleLeafRegionsForVirtualLargeObjectHeap arrayletLeafCount=%zu, Context=%p, leafRegionCount=%zu\n", arrayletLeafCount, context, ((MM_AllocationContextBalanced *)context)->getLeafRegionCount());
+	MM_AllocationContextTarok *commonContext = (MM_AllocationContextTarok *)env->getCommonAllocationContext();
 
-	MM_HeapRegionDescriptorVLHGC **head = ((MM_AllocationContextBalanced *)context)->getLeafRegionListAddress();
+//	PORT_ACCESS_FROM_ENVIRONMENT(env);
+//	j9tty_printf(PORTLIB, "MM_GlobalMarkingScheme::recycleLeafRegionsForVirtualLargeObjectHeap arrayletLeafCount=%zu, Context=%p, leafRegionCount=%zu\n", arrayletLeafCount, commonContext, ((MM_AllocationContextBalanced *)commonContext)->getLeafRegionCount());
+//
+	MM_HeapRegionDescriptorVLHGC **head = ((MM_AllocationContextBalanced *)commonContext)->getLeafRegionListAddress();
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 
 	while ((arrayletLeafCount > 0) && (NULL != (region = *head))) {
 		region->_allocateData.popRegionFromLeafRegionList(env, head);
-		((MM_AllocationContextBalanced *)context)->decrementLeafRegionCount();
+		((MM_AllocationContextBalanced *)commonContext)->decrementLeafRegionCount();
 		region->getSubSpace()->recycleRegion(env, region);
 		arrayletLeafCount -= 1;
 	}

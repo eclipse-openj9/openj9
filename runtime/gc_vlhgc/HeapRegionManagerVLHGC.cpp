@@ -23,9 +23,12 @@
 #include "CardTable.hpp"
 #include "GCExtensionsBase.hpp"
 
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 #include "GCExtensions.hpp"
 #include "GlobalAllocationManagerTarok.hpp"
+#include "AllocationContextBalanced.hpp"
 #include "AllocationContextTarok.hpp"
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 
 #include "MemoryManager.hpp"
 #include "HeapRegionManagerVLHGC.hpp"
@@ -220,7 +223,7 @@ MM_HeapRegionManagerVLHGC::getHeapMemorySnapshot(MM_GCExtensionsBase *extensions
 	snapshot->_freeRegionEdenSize += (snapshot->_totalRegionEdenSize - allocateEdenTotal);
 	snapshot->_freeRegionReservedSize = snapshot->_totalRegionReservedSize;
 
-
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 	MM_GCExtensions *gcExtensions = (MM_GCExtensions *) extensions;
 	MM_GlobalAllocationManagerTarok *globalAllocationManager = (MM_GlobalAllocationManagerTarok *) gcExtensions->globalAllocationManager;
 	uintptr_t allocationContextCount= globalAllocationManager->getManagedAllocationContextCount();
@@ -228,8 +231,9 @@ MM_HeapRegionManagerVLHGC::getHeapMemorySnapshot(MM_GCExtensionsBase *extensions
 	PORT_ACCESS_FROM_JAVAVM(gcExtensions->getJavaVM());
 	for (uintptr_t idx = 0; idx < allocationContextCount; idx++) {
 		MM_AllocationContextTarok *context = (MM_AllocationContextTarok *) globalAllocationManager->getAllocationContextByIndex(idx);
-		j9tty_printf(PORTLIB, "getHeapMemorySnapshot gcEnd=%zu allocationContextIndex=%zu context=%p, FreeRegionCount=%zu\n", gcEnd, idx, context, context->getFreeRegionCount());
+		j9tty_printf(PORTLIB, "getHeapMemorySnapshot gcEnd=%zu allocationContextIndex=%zu context=%p, FreeRegionCount=%zu, LeafRegionCount=%zu\n", gcEnd, idx, context, context->getFreeRegionCount(), ((MM_AllocationContextBalanced *)context)->getLeafRegionCount());
 	}
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 
 	return snapshot;
 }
