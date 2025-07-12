@@ -57,7 +57,6 @@ class MM_InterRegionRememberedSet;
 class MM_MarkMap;
 class MM_MemoryPoolAddressOrderedList;
 class MM_ReferenceStats;
-
 /* Forward declaration of classes defined within the cpp */
 class MM_CopyForwardSchemeAbortScanner;
 class MM_CopyForwardSchemeRootScanner;
@@ -1019,6 +1018,10 @@ protected:
 	 * recycle any with spines remaining in evacuate space.
 	 */
 	void updateLeafRegions(MM_EnvironmentVLHGC *env);
+
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+	void recycleLeafRegionsForVirtualLargeObjectHeap(MM_EnvironmentVLHGC *env, uintptr_t arrayletLeafCount);
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 
 	/**
 	 * Before a copy forward operation, perform any pre processing required on regions.

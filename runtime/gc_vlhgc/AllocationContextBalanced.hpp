@@ -71,6 +71,10 @@ private:
 	UDATA *_freeProcessorNodes;	/**< The array listing all the NUMA node numbers which account for the nodes with processors but no memory plus an empty slot for each context to use (element 0 is used by this context) - this is used when setting affinity */
 	UDATA _freeProcessorNodeCount;	/**< The length, in elements, of the _freeProcessorNodes array (always at least 1 after startup) */
 
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+	MM_HeapRegionDescriptorVLHGC *_leafRegionList; /** for Off-heap case only, adding and removing via region->_allocateData.pushRegionToLeafRegionList/popRegionFromLeafRegionList */
+	UDATA _leafRegionCount;
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 /* Methods */
 public:
 	static MM_AllocationContextBalanced *newInstance(MM_EnvironmentBase *env, MM_MemorySubSpaceTarok *subspace, UDATA numaNode, UDATA allocationContextNumber);
@@ -270,6 +274,32 @@ public:
 	 */
 	virtual bool setNumaAffinityForThread(MM_EnvironmentBase *env);
 
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+	MM_HeapRegionDescriptorVLHGC **getLeafRegionListAddress()
+	{
+		return &_leafRegionList;
+	}
+
+	UDATA getLeafRegionCount()
+	{
+		return _leafRegionCount;
+	}
+
+	void setLeafRegionCount(UDATA leafRegionCount)
+	{
+		_leafRegionCount = leafRegionCount;
+	}
+
+	void incrementLeafRegionCount()
+	{
+		_leafRegionCount += 1;
+	}
+
+	void decrementLeafRegionCount()
+	{
+		_leafRegionCount -= 1;
+	}
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 	
 protected:
 	virtual void tearDown(MM_EnvironmentBase *env);
@@ -293,6 +323,10 @@ protected:
 		, _heapRegionManager(NULL)
 		, _freeProcessorNodes(NULL)
 		, _freeProcessorNodeCount(0)
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+		, _leafRegionList(NULL)
+		, _leafRegionCount(0)
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 	{
 		_typeId = __FUNCTION__;
 	}

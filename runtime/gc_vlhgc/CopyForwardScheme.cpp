@@ -35,6 +35,9 @@
 #include "CopyForwardScheme.hpp"
 
 #include "AllocateDescription.hpp"
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+#include "AllocationContextBalanced.hpp"
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 #include "AllocationContextTarok.hpp"
 #include "ArrayletLeafIterator.hpp"
 #include "AtomicOperations.hpp"
@@ -70,6 +73,7 @@
 #include "FinalizeListManager.hpp"
 #include "ForwardedHeader.hpp"
 #include "GlobalAllocationManager.hpp"
+#include "HashTableIterator.hpp"
 #include "Heap.hpp"
 #include "HeapMapIterator.hpp"
 #include "HeapMapWordIterator.hpp"
@@ -97,6 +101,7 @@
 #include "SlotObject.hpp"
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 #include "SparseVirtualMemory.hpp"
+#include "SparseAddressOrderedFixedSizeDataPool.hpp"
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 #include "StackSlotValidator.hpp"
 #include "SublistFragment.hpp"
@@ -304,7 +309,7 @@ MM_CopyForwardScheme::initialize(MM_EnvironmentVLHGC *env)
 	_maxCacheSize = _extensions->scavengerScanCacheMaximumSize;
 
 	/* Cached pointer to the inter region remembered set */
-	_interRegionRememberedSet = MM_GCExtensions::getExtensions(env)->interRegionRememberedSet;
+	_interRegionRememberedSet = _extensions->interRegionRememberedSet;
 
 	_cacheLineAlignment = CACHE_LINE_SIZE;
 
@@ -411,7 +416,7 @@ MM_CopyForwardScheme::raiseAbortFlag(MM_EnvironmentVLHGC *env)
 
 			Trc_MM_CopyForwardScheme_abortFlagRaised(env->getLanguageVMThread());
 			PORT_ACCESS_FROM_ENVIRONMENT(env);
-			TRIGGER_J9HOOK_MM_PRIVATE_COPY_FORWARD_ABORT(MM_GCExtensions::getExtensions(env)->privateHookInterface, env->getOmrVMThread(), j9time_hires_clock(), J9HOOK_MM_PRIVATE_COPY_FORWARD_ABORT);
+			TRIGGER_J9HOOK_MM_PRIVATE_COPY_FORWARD_ABORT(_extensions->privateHookInterface, env->getOmrVMThread(), j9time_hires_clock(), J9HOOK_MM_PRIVATE_COPY_FORWARD_ABORT);
 		}
 	}
 }
@@ -426,6 +431,28 @@ MM_CopyForwardScheme::clearGCStats(MM_EnvironmentVLHGC *env)
 	static_cast<MM_CycleStateVLHGC *>(env->_cycleState)->_vlhgcIncrementStats._workPacketStats.clear();
 	static_cast<MM_CycleStateVLHGC *>(env->_cycleState)->_vlhgcIncrementStats._continuationStats.clear();
 }
+
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+void
+MM_CopyForwardScheme::recycleLeafRegionsForVirtualLargeObjectHeap(MM_EnvironmentVLHGC *env, uintptr_t arrayletLeafCount)
+{
+	MM_AllocationContextTarok *commonContext = (MM_AllocationContextTarok *)env->getCommonAllocationContext();
+
+//	PORT_ACCESS_FROM_ENVIRONMENT(env);
+//	j9tty_printf(PORTLIB, "MM_CopyForwardScheme::recycleLeafRegionsForVirtualLargeObjectHeap arrayletLeafCount=%zu, Context=%p, leafRegionCount=%zu\n", arrayletLeafCount, commonContext, ((MM_AllocationContextBalanced *)commonContext)->getLeafRegionCount());
+//
+	MM_HeapRegionDescriptorVLHGC **head = ((MM_AllocationContextBalanced *)commonContext)->getLeafRegionListAddress();
+	MM_HeapRegionDescriptorVLHGC *region = NULL;
+
+	while ((arrayletLeafCount > 0) && (NULL != (region = *head))) {
+		region->_allocateData.popRegionFromLeafRegionList(env, head);
+		((MM_AllocationContextBalanced *)commonContext)->decrementLeafRegionCount();
+		region->getSubSpace()->recycleRegion(env, region);
+		arrayletLeafCount -= 1;
+	}
+	Assert_MM_true(0 == arrayletLeafCount);
+}
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 
 void
 MM_CopyForwardScheme::updateLeafRegions(MM_EnvironmentVLHGC *env)
@@ -1639,7 +1666,9 @@ MM_CopyForwardScheme::copyForwardPostProcess(MM_EnvironmentVLHGC *env)
 	/* Record the completion time of the copy forward cycle */
 	static_cast<MM_CycleStateVLHGC *>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._endTime = j9time_hires_clock();
 
-	updateLeafRegions(env);
+	if (!_extensions->isVirtualLargeObjectHeapEnabled) {
+		updateLeafRegions(env);
+	}
 
 	/* We used memory from the ACs for survivor space - make sure it doesn't hang around as allocation space */
 	clearReservedRegionLists(env);
@@ -3937,7 +3966,7 @@ private:
 			}
 		} else {
 			/* double check that there really was no work to do */
-			Assert_MM_true(!MM_GCExtensions::getExtensions(env)->finalizeListManager->isFinalizableObjectProcessingRequired());
+			Assert_MM_true(!_extensions->finalizeListManager->isFinalizableObjectProcessingRequired());
 		}
 		reportScanningEnded(RootScannerEntity_FinalizableObjects);
 	}
@@ -4149,7 +4178,7 @@ private:
 	}
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
-	virtual void doObjectInVirtualLargeObjectHeap(J9Object *objectPtr, bool *sparseHeapAllocation) {
+	virtual void doObjectInVirtualLargeObjectHeap(J9Object *objectPtr, GC_HashTableIterator *sparseDataEntryIterator) {
 		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(_env);
 		env->_copyForwardStats._offHeapRegionCandidates += 1;
 
@@ -4161,11 +4190,16 @@ private:
 
 			/* If forwarded object is NULL, free the sparse region occupied by the data of the indexable object */
 			if (NULL == fwdOjectPtr) {
+				const uintptr_t arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
+				uintptr_t dataSize = _extensions->indexableObjectModel.getDataSizeInBytes((J9IndexableObject *)objectPtr);
+				uintptr_t arrayletLeafCount = MM_Math::roundToCeiling(arrayletLeafSize, dataSize) / arrayletLeafSize;
+
 				Assert_MM_mustBeClass(_extensions->objectModel.getPreservedClass(&forwardedHeader));
 				env->_copyForwardStats._offHeapRegionsCleared += 1;
 				void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous((J9IndexableObject *)objectPtr);
-				_extensions->largeObjectVirtualMemory->freeSparseRegionAndUnmapFromHeapObject(_env, dataAddr, objectPtr, _extensions->indexableObjectModel.getDataSizeInBytes((J9IndexableObject *)objectPtr));
-				*sparseHeapAllocation = false;
+				_extensions->largeObjectVirtualMemory->freeSparseRegionAndUnmapFromHeapObject(_env, dataAddr, objectPtr, dataSize, sparseDataEntryIterator);
+				/* recycleLeafRegions for off-heap case */
+				_copyForwardScheme->recycleLeafRegionsForVirtualLargeObjectHeap(env, arrayletLeafCount);
 			} else {
 				void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous((J9IndexableObject *)fwdOjectPtr);
 				if (NULL != dataAddr) {
@@ -4754,17 +4788,19 @@ MM_CopyForwardScheme::verifyCopyForwardResult(MM_EnvironmentVLHGC *env)
 
 	while (NULL != (region = regionIterator.nextRegion())) {
 		if (region->isArrayletLeaf()) {
-			J9Object *spineObject = (J9Object *)region->_allocateData.getSpine();
-			Assert_MM_true(NULL != spineObject);
-			/* the spine must be marked if it was copied as a live object or if we aborted the copy-forward */
-			/* otherwise, it must not be forwarded (since that would imply that the spine survived but the pointer wasn't updated) */
-			if (!_markMap->isBitSet(spineObject)) {
-				MM_ForwardedHeader forwardedSpine(spineObject, _extensions->compressObjectReferences());
-				if (forwardedSpine.isForwardedPointer()) {
-					PORT_ACCESS_FROM_ENVIRONMENT(env);
-					j9tty_printf(PORTLIB, "Spine pointer is not marked and is forwarded (leaf region's pointer to spine not updated)!  Region %p Spine %p (should be %p)\n", region, spineObject, forwardedSpine.getForwardedObject());
-					verifyDumpObjectDetails(env, "spineObject", spineObject);
-					Assert_MM_unreachable();
+			if (!_extensions->isVirtualLargeObjectHeapEnabled) {
+				J9Object *spineObject = (J9Object *)region->_allocateData.getSpine();
+				Assert_MM_true(NULL != spineObject);
+				/* the spine must be marked if it was copied as a live object or if we aborted the copy-forward */
+				/* otherwise, it must not be forwarded (since that would imply that the spine survived but the pointer wasn't updated) */
+				if (!_markMap->isBitSet(spineObject)) {
+					MM_ForwardedHeader forwardedSpine(spineObject, _extensions->compressObjectReferences());
+					if (forwardedSpine.isForwardedPointer()) {
+						PORT_ACCESS_FROM_ENVIRONMENT(env);
+						j9tty_printf(PORTLIB, "Spine pointer is not marked and is forwarded (leaf region's pointer to spine not updated)!  Region %p Spine %p (should be %p)\n", region, spineObject, forwardedSpine.getForwardedObject());
+						verifyDumpObjectDetails(env, "spineObject", spineObject);
+						Assert_MM_unreachable();
+					}
 				}
 			}
 		} else {
@@ -4791,6 +4827,32 @@ MM_CopyForwardScheme::verifyCopyForwardResult(MM_EnvironmentVLHGC *env)
 			}
 		}
 	}
+
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+	if (_extensions->isVirtualLargeObjectHeapEnabled) {
+		MM_SparseVirtualMemory *largeObjectVirtualMemory = _extensions->largeObjectVirtualMemory;
+		J9HashTableState walkState;
+
+		MM_SparseDataTableEntry *sparseDataEntry = (MM_SparseDataTableEntry *)hashTableStartDo(largeObjectVirtualMemory->getSparseDataPool()->getObjectToSparseDataTable(), &walkState);
+		while (NULL != sparseDataEntry) {
+			J9Object *spineObject = (J9Object *)sparseDataEntry->_proxyObjPtr;
+			Assert_MM_true(NULL != spineObject);
+			/* the spine must be marked if it was copied as a live object or if we aborted the copy-forward */
+			/* otherwise, it must not be forwarded (since that would imply that the spine survived but the pointer wasn't updated) */
+			if (!_markMap->isBitSet(spineObject)) {
+				MM_ForwardedHeader forwardedSpine(spineObject, _extensions->compressObjectReferences());
+				if (forwardedSpine.isForwardedPointer()) {
+					PORT_ACCESS_FROM_ENVIRONMENT(env);
+					j9tty_printf(PORTLIB, "Spine pointer is not marked and is forwarded (leaf region's pointer to spine not updated)!  Region %p Spine %p (should be %p)\n", region, spineObject, forwardedSpine.getForwardedObject());
+					verifyDumpObjectDetails(env, "spineObject", spineObject);
+					Assert_MM_unreachable();
+				}
+			}
+
+			sparseDataEntry = (MM_SparseDataTableEntry *)hashTableNextDo(&walkState);
+		}
+	}
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 
 	MM_CopyForwardVerifyScanner scanner(env, this);
 	scanner.scanAllSlots(env);
@@ -5208,7 +5270,7 @@ MM_CopyForwardScheme:: cleanOverflowInRange(MM_EnvironmentVLHGC *env, uintptr_t 
 {
 	/* At this point, no copying should happen, so that reservingContext is irrelevant */
 	MM_AllocationContextTarok *reservingContext = _commonContext;
-	MM_HeapMapIterator objectIterator = MM_HeapMapIterator(MM_GCExtensions::getExtensions(env), env->_cycleState->_markMap, lowAddress, highAddress);
+	MM_HeapMapIterator objectIterator = MM_HeapMapIterator(_extensions, env->_cycleState->_markMap, lowAddress, highAddress);
 
 	J9Object *object = NULL;
 	while (NULL != (object = objectIterator.nextObject())) {
