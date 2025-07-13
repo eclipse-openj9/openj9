@@ -2120,10 +2120,8 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
 
                   if (!vectorizedOrScalarized)
                      {
-                     TR_ASSERT_FATAL(operand->getOpCodeValue() == TR::aload ||
-                                     operand->getOpCodeValue() == TR::acall ||
-                                     operand->getOpCodeValue() == TR::New,
-                                     "Operand can only be aload, acall, or New (child %d)", i);
+                     TR_ASSERT_FATAL(operand->getDataType() == TR::Address,
+                                     "Child %d of node %p should have address type", i, node);
                      vapiObjType operandObjectType = Vector;
 
                      if (getArgumentType(methodSymbol, i) == Mask)
@@ -3779,7 +3777,7 @@ TR_VectorAPIExpansion::methodTable[] =
    {broadcastIntIntrinsicHandler,         Vector,  1,  2, 3, 4,  5, 2,  7, {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Unknown, Mask}},  //jdk_internal_vm_vector_VectorSupport_broadcastInt
    {compareIntrinsicHandler,              Mask,    1,  2, 3, 4,  5, 2,  7, {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Mask}},   // jdk_internal_vm_vector_VectorSupport_compare
    {compressExpandOpIntrinsicHandler,     Unknown, 1,  2, 3, 4,  5, 2, -1, {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Mask}},           // jdk_internal_vm_vector_VectorSupport_compressExpandOp
-   {convertIntrinsicHandler,              Vector,  1,  4, 5, 6,  7, 1, -1, {Unknown, Unknown, ElementType, NumLanes, Unknown, Unknown, Unknown, Vector}},   // jdk_internal_vm_vector_VectorSupport_convert
+   {convertIntrinsicHandler,              Unknown,  1,  4, 5, 6,  7, 1, -1, {Unknown, Unknown, ElementType, NumLanes, Unknown, Unknown, Unknown, Vector}},   // jdk_internal_vm_vector_VectorSupport_convert
    {fromBitsCoercedIntrinsicHandler,      Unknown, 0, -1, 1, 2, -1, 0, -1, {Unknown, ElementType, NumLanes, Unknown, Unknown, Unknown}},                // jdk_internal_vm_vector_VectorSupport_fromBitsCoerced
    {maskReductionCoercedIntrinsicHandler, Scalar,  1, -1, 2, 3,  4, 1, -1, {Unknown, Unknown, ElementType, NumLanes, Mask}},                            // jdk_internal_vm_vector_VectorSupport_maskReductionCoerced
    {reductionCoercedIntrinsicHandler,     Scalar,  1,  2, 3, 4,  5, 1,  6, {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Mask}},           // jdk_internal_vm_vector_VectorSupport_reductionCoerced
