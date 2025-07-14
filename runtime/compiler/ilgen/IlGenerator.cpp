@@ -2951,26 +2951,6 @@ TR_J9ByteCodeIlGenerator::loadFromMethodTypeTable(TR::Node* methodHandleInvokeCa
    return methodType;
    }
 
-
-TR::Node*
-TR_J9ByteCodeIlGenerator::loadCallSiteMethodTypeFromCP(TR::Node* methodHandleInvokeCall)
-   {
-   int32_t cpIndex = next2Bytes();
-   TR_ASSERT(method()->isMethodTypeConstant(cpIndex), "Address-type CP entry %d must be methodType", cpIndex);
-   TR::SymbolReference *symRef = symRefTab()->findOrCreateMethodTypeSymbol(_methodSymbol, cpIndex);
-   TR::Node* methodType = TR::Node::createWithSymRef(methodHandleInvokeCall, TR::aload, 0, symRef);
-   return methodType;
-   }
-
-TR::Node*
-TR_J9ByteCodeIlGenerator::loadCallSiteMethodType(TR::Node* methodHandleInvokeCall)
-   {
-   if (fej9()->hasMethodTypesSideTable())
-      return loadFromMethodTypeTable(methodHandleInvokeCall);
-   else
-      return loadCallSiteMethodTypeFromCP(methodHandleInvokeCall);
-   }
-
 void TR_J9ByteCodeIlGenerator::insertCustomizationLogicTreeIfEnabled(TR::TreeTop* tree, TR::Node* methodHandle)
    {
    if (comp()->getOption(TR_EnableMHCustomizationLogicCalls))
@@ -3040,7 +3020,7 @@ void TR_J9ByteCodeIlGenerator::expandInvokeHandle(TR::TreeTop *tree)
    TR::Node * receiverHandle = callNode->getArgument(0);
    callNode->getByteCodeInfo().setDoNotProfile(true);
 
-   TR::Node* callSiteMethodType = loadCallSiteMethodType(callNode);
+   TR::Node* callSiteMethodType = loadFromMethodTypeTable(callNode);
 
    if (callSiteMethodType->getSymbolReference()->isUnresolved())
       {
@@ -3164,7 +3144,7 @@ void TR_J9ByteCodeIlGenerator::expandInvokeHandleGeneric(TR::TreeTop *tree)
    TR::Node * receiverHandle = callNode->getArgument(0);
    callNode->getByteCodeInfo().setDoNotProfile(true);
 
-   TR::Node* callSiteMethodType = loadCallSiteMethodType(callNode);
+   TR::Node* callSiteMethodType = loadFromMethodTypeTable(callNode);
    if (callSiteMethodType->getSymbolReference()->isUnresolved())
       {
       TR::Node *resolveChkOnMethodType = TR::Node::createWithSymRef(callNode, TR::ResolveCHK, 1, callSiteMethodType, comp()->getSymRefTab()->findOrCreateResolveCheckSymbolRef(_methodSymbol));
