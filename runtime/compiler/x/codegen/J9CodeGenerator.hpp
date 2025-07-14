@@ -52,6 +52,24 @@ public:
 
    void endInstructionSelection();
 
+   /**
+    * @brief Determines the maximum preferred vector length for compiler intrinsics based on the target microarchitecture.
+    *
+    * This function queries the underlying hardware capabilities and internal knowledge about
+    * CPU microarchitectures to recommend the optimal vector length (e.g., 128-bit, 256-bit, 512-bit)
+    * that is likely to yield the best performance without incurring significant frequency scaling
+    * penalties. This function does not take into account profiling data or any other runtime
+    * information in the decision making process.
+    *
+    * @note All new vectorized intrinsics that support 256 or 512-bit vectorization should query this
+    * function instead of relying strictly on whether the CPU supports vectorization at a given vector
+    * length.
+    *
+    * @return The maximum preferred vector length in bits (e.g., 128, 256, 512).
+    * This function will return a minimum of TR::VectorLength128 on all target hardware.
+    */
+   TR::VectorLength getMaxPreferredVectorLength();
+
    TR::Instruction *generateSwitchToInterpreterPrePrologue(
          TR::Instruction *prev,
          uint8_t alignment,
