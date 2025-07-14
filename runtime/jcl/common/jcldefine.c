@@ -169,9 +169,9 @@ retry:
 
 					if (!vmFuncs->loadWarmClassFromSnapshot(currentThread, classLoader, clazz)) {
 						clazz = NULL;
+						goto done;
 					}
 
-					clazz = vmFuncs->initializeSnapshotClassObject(vm, classLoader, clazz);
 					if (NULL != protectionDomain) {
 						J9VMJAVALANGCLASS_SET_PROTECTIONDOMAIN(
 							currentThread,
