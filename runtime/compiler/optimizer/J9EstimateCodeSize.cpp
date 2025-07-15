@@ -982,6 +982,9 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
             break;
          case J9BCinvokedynamic:
          case J9BCinvokehandle:
+            nph.setNeedsPeekingToTrue();
+            heuristicTrace(tracer(), "Depth %d: Enabled peeking ILGen for method %s due to invokedynamic/invokehandle bytecode at bc index %d.", _recursionDepth, callerName, i);
+            // intentional fallthrough
          case J9BCinvokehandlegeneric:
             // TODO:JSR292: Use getResolvedHandleMethod
          case J9BCmonitorenter:
