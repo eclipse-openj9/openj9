@@ -2783,29 +2783,29 @@ JavaCoreDumpWriter::writeClassSection(void)
 	_OutputStream.writeCharacters(
 		"0SECTION       CLASSES subcomponent dump routine\n"
 		"NULL           =================================\n"
-		"1CLTEXTCLLOS   \tClassloader summaries\n"
-		"1CLTEXTCLLSS   \t\t12345678: 1=primordial,2=extension,3=shareable,4=middleware,5=system,6=trusted,7=application,8=delegating\n"
+		"1CLTEXTCLLOS   Classloader summaries\n"
+		"1CLTEXTCLLSS       12345678: 1=primordial,2=extension,3=shareable,4=middleware,5=system,6=trusted,7=application,8=delegating\n"
 	);
 
 	pool_do(_VirtualMachine->classLoaderBlocks, writeLoaderCallBack, this);
 
 	/* Write the sub-section header */
 	_OutputStream.writeCharacters(
-		"1CLTEXTCLLIB   \tClassLoader loaded libraries\n"
+		"1CLTEXTCLLIB   ClassLoader loaded libraries\n"
 	);
 
 	pool_do(_VirtualMachine->classLoaderBlocks, writeLibrariesCallBack, this);
 
 	/* Write the sub-section header */
 	_OutputStream.writeCharacters(
-		"1CLTEXTCLLOD   \tClassLoader loaded classes\n"
+		"1CLTEXTCLLOD   ClassLoader loaded classes\n"
 	);
 
 	pool_do(_VirtualMachine->classLoaderBlocks, writeClassesCallBack, this);
 
 	/* Write the sub-section header. */
 	_OutputStream.writeCharacters(
-		"1CLTEXTCLOLL   \tClassLoader outliving loaders\n"
+		"1CLTEXTCLOLL   ClassLoader outliving loaders\n"
 	);
 
 	if (!avoidLocks() && !omrthread_monitor_try_enter(_VirtualMachine->classTableMutex)) {
@@ -5247,7 +5247,7 @@ JavaCoreDumpWriter::writeLoader(J9ClassLoader* classLoader)
 	flags[7] = false    ? 'd' : '-';
 	flags[8] = '\0';
 
-	_OutputStream.writeCharacters("2CLTEXTCLLOADER\t\t");
+	_OutputStream.writeCharacters("2CLTEXTCLLOADER    ");
 	_OutputStream.writeCharacters(flags);
 
 	/* Determine and write the description of the given loader */
@@ -5255,17 +5255,14 @@ JavaCoreDumpWriter::writeLoader(J9ClassLoader* classLoader)
 		_OutputStream.writeCharacters(" Loader *System*(");
 		_OutputStream.writePointer(object);
 		_OutputStream.writeCharacters(")\n");
-
 	} else if (unload && !isExt && !isApp) {
 		_OutputStream.writeCharacters(" Loader [locked](");
 		_OutputStream.writePointer(object);
 		_OutputStream.writeCharacters(")\n");
-
 	} else if (NULL == object) {
 		_OutputStream.writeCharacters(" Loader [missing](");
 		_OutputStream.writePointer(object);
 		_OutputStream.writeCharacters(")\n");
-
 	} else {
 		_OutputStream.writeCharacters(" Loader ");
 		_OutputStream.writeCharacters(J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ_VM(_VirtualMachine, object)->romClass));
@@ -5286,7 +5283,7 @@ JavaCoreDumpWriter::writeLoader(J9ClassLoader* classLoader)
 	}
 
 	/* Determine and write the number of loaded libraries */
-	_OutputStream.writeCharacters("3CLNMBRLOADEDLIB\t\tNumber of loaded libraries ");
+	_OutputStream.writeCharacters("3CLNMBRLOADEDLIB       Number of loaded libraries ");
 
 	if (NULL == classLoader->sharedLibraries) {
 		_OutputStream.writeInteger(0, "%zu");
@@ -5297,7 +5294,7 @@ JavaCoreDumpWriter::writeLoader(J9ClassLoader* classLoader)
 	_OutputStream.writeCharacters("\n");
 
 	if (avoidLocks()) {
-		_OutputStream.writeCharacters("3CLNMBRLOADEDCL\t\t\tNumber of loaded classes ");
+		_OutputStream.writeCharacters("3CLNMBRLOADEDCL        Number of loaded classes ");
 		_OutputStream.writeInteger(hashTableGetCount(classLoader->classHashTable), "%zu");
 		_OutputStream.writeCharacters("\n");
 		return;
@@ -5332,14 +5329,14 @@ JavaCoreDumpWriter::writeLoader(J9ClassLoader* classLoader)
 	_VirtualMachine->internalVMFunctions->allClassesEndDo(&classWalkState);
 
 	/* Determine and write the number of loaded classes */
-	_OutputStream.writeCharacters("3CLNMBRLOADEDCL\t\t\tNumber of loaded classes ");
+	_OutputStream.writeCharacters("3CLNMBRLOADEDCL        Number of loaded classes ");
 	_OutputStream.writeInteger(count, "%zu");
 	_OutputStream.writeCharacters("\n");
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 	if (NULL != sharedROMBoundsStart) {
 		/* Determine and write the number of loaded classes */
-		_OutputStream.writeCharacters("3CLNMBRSHAREDCL\t\t\tNumber of shared classes ");
+		_OutputStream.writeCharacters("3CLNMBRSHAREDCL        Number of shared classes ");
 		_OutputStream.writeInteger(sharedCount, "%zu");
 		_OutputStream.writeCharacters("\n");
 	}
@@ -5373,23 +5370,20 @@ JavaCoreDumpWriter::writeLibraries(J9ClassLoader* classLoader)
 	bool isExt = ((NULL != extLdr) ? classLoader == J9VMJAVALANGCLASSLOADER_VMREF_VM(_VirtualMachine, extLdr) : false);
 
 	/* Decode and write the status */
-	_OutputStream.writeCharacters("2CLTEXTCLLIB    \t");
+	_OutputStream.writeCharacters("2CLTEXTCLLIB       ");
 
 	if (isSystem) {
 		_OutputStream.writeCharacters("Loader *System*(");
 		_OutputStream.writePointer(object);
 		_OutputStream.writeCharacters(")\n");
-
 	} else if (unload && !isExt && !isApp) {
 		_OutputStream.writeCharacters("Loader [locked](");
 		_OutputStream.writePointer(object);
 		_OutputStream.writeCharacters(")\n");
-
 	} else if (NULL == object) {
 		_OutputStream.writeCharacters("Loader [missing](");
 		_OutputStream.writePointer(object);
 		_OutputStream.writeCharacters(")\n");
-
 	} else {
 		_OutputStream.writeCharacters("Loader ");
 		_OutputStream.writeCharacters(J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ_VM(_VirtualMachine, object)->romClass));
@@ -5413,13 +5407,13 @@ JavaCoreDumpWriter::writeLibraries(J9ClassLoader* classLoader)
 				}
 				/* Don't reclaim executable name returned by j9sysinfo_get_executable_name; system-owned. */
 			}
-			_OutputStream.writeCharacters("3CLTEXTSLIB   \t\t\t");
+			_OutputStream.writeCharacters("3CLTEXTSLIB            ");
 			_OutputStream.writeCharacters(executableName);
 			_OutputStream.writeCharacters(" (");
 			_OutputStream.writeCharacters(sharedLibrary->logicalName);
 			_OutputStream.writeCharacters(")");
 		} else {
-			_OutputStream.writeCharacters("3CLTEXTLIB   \t\t\t");
+			_OutputStream.writeCharacters("3CLTEXTLIB             ");
 			_OutputStream.writeCharacters(sharedLibrary->name);
 		}
 		_OutputStream.writeCharacters("\n");
@@ -5448,7 +5442,7 @@ JavaCoreDumpWriter::writeClasses(J9ClassLoader* classLoader)
 	bool isExt = ((NULL != extLdr) ? classLoader == J9VMJAVALANGCLASSLOADER_VMREF_VM(_VirtualMachine, extLdr) : false);
 	bool isAnon = (classLoader == _VirtualMachine->anonClassLoader);
 	/* Decode and write the status */
-	_OutputStream.writeCharacters("2CLTEXTCLLOAD  \t\t");
+	_OutputStream.writeCharacters("2CLTEXTCLLOAD      ");
 
 	if (isSystem) {
 		_OutputStream.writeCharacters("Loader *System*(");
@@ -5496,7 +5490,7 @@ JavaCoreDumpWriter::writeClasses(J9ClassLoader* classLoader)
 			/* Handle arrays and normal classes separately */
 			if (J9ROMCLASS_IS_ARRAY(clazz->romClass)) {
 				/* Write the prefix */
-				_OutputStream.writeCharacters("3CLTEXTCLASS   \t\t\t");
+				_OutputStream.writeCharacters("3CLTEXTCLASS           ");
 
 				/* Write out the arity */
 				J9ArrayClass* array = (J9ArrayClass*)clazz;
@@ -5530,7 +5524,7 @@ JavaCoreDumpWriter::writeClasses(J9ClassLoader* classLoader)
 
 			} else {
 				/* It's a normal class */
-				_OutputStream.writeCharacters("3CLTEXTCLASS   \t\t\t");
+				_OutputStream.writeCharacters("3CLTEXTCLASS           ");
 				_OutputStream.writeCharacters(J9ROMCLASS_CLASSNAME(clazz->romClass));
 				_OutputStream.writeCharacters("(");
 				_OutputStream.writePointer(clazz);
@@ -5557,7 +5551,7 @@ JavaCoreDumpWriter::writeClasses(J9ClassLoader* classLoader)
 void
 JavaCoreDumpWriter::writeOutlivingLoaders(J9ClassLoader *classLoader)
 {
-	_OutputStream.writeCharacters("2CLTEXTJ9CLLOAD\t\t");
+	_OutputStream.writeCharacters("2CLTEXTJ9CLLOAD    ");
 
 	_OutputStream.writeCharacters("J9ClassLoader(");
 	_OutputStream.writePointer(classLoader);
@@ -5581,7 +5575,7 @@ JavaCoreDumpWriter::writeOutlivingLoaders(J9ClassLoader *classLoader)
 
 	_OutputStream.writeCharacters("\n");
 	if (J9_ARE_ANY_BITS_SET((UDATA)classLoader->outlivingLoaders, J9CLASSLOADER_OUTLIVING_LOADERS_SINGLE_TAG)) {
-		_OutputStream.writeCharacters("3CLTEXTOUTLIVIN\t\t\t");
+		_OutputStream.writeCharacters("3CLTEXTOUTLIVIN        ");
 		_OutputStream.writePointer((J9ClassLoader *)((UDATA)classLoader->outlivingLoaders & ~(UDATA)J9CLASSLOADER_OUTLIVING_LOADERS_SINGLE_TAG));
 		_OutputStream.writeCharacters("\n");
 	} else if (NULL != classLoader->outlivingLoaders) {
@@ -5589,7 +5583,7 @@ JavaCoreDumpWriter::writeOutlivingLoaders(J9ClassLoader *classLoader)
 		J9HashTableState state;
 		J9ClassLoader **entry = (J9ClassLoader **)hashTableStartDo(table, &state);
 		while (NULL != entry) {
-			_OutputStream.writeCharacters("3CLTEXTOUTLIVIN\t\t\t");
+			_OutputStream.writeCharacters("3CLTEXTOUTLIVIN        ");
 			_OutputStream.writePointer(*entry);
 			_OutputStream.writeCharacters("\n");
 			entry = (J9ClassLoader **)hashTableNextDo(&state);
