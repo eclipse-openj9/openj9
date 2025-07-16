@@ -2496,7 +2496,7 @@ TR::Register *J9::Power::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, 
    uint32_t nDims = secondChild->get32bitIntegralValue();
    static bool disableInlineMultianewArray = feGetEnv("TR_DisableInlineMultianewArray") != NULL;
 
-   if (nDims > 1 && !disableInlineMultianewArray && comp->getOption(TR_DisableInterpreterProfiling)
+   if (nDims > 1 && !disableInlineMultianewArray
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) /* offheap not enabled for now */
 //         && !TR::Compiler->om.isOffHeapAllocationEnabled()
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
