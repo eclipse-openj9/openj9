@@ -269,7 +269,7 @@ public class DumpAPITriggerTests extends TestCase {
 	 */
 	public void doTestTriggerDumpX(String options, DumpType expectedType) {
 		String userDir = System.getProperty("user.dir");
-		String dumpFilePattern = ".*\\.*";
+		String dumpFilePattern = ".*\\..*";
 		
 		/* Count the number of files before and after. Should increase by one. */
 		String[] beforeFileNames = getFilesByPattern(userDir, dumpFilePattern);
@@ -313,7 +313,7 @@ public class DumpAPITriggerTests extends TestCase {
 
 	public void doSTDOUTTestTriggerDumpX(String options) {
 		String userDir = System.getProperty("user.dir");
-		String dumpFilePattern = ".*\\.*";
+		String dumpFilePattern = ".*\\..*";
 		
 		/* Count the number of files before and after. Should increase by one. */
 		String[] beforeFileNames = getFilesByPattern(userDir, dumpFilePattern);
@@ -344,7 +344,7 @@ public class DumpAPITriggerTests extends TestCase {
 	 */
 	public InvalidDumpOptionException doTestTriggerBadDumpX(String options) {
 		String userDir = System.getProperty("user.dir");
-		String dumpFilePattern = ".*\\.*";
+		String dumpFilePattern = ".*\\..*";
 		
 		/* Count the number of files before and after. Should increase by one. */
 		String[] beforeFileNames = getFilesByPattern(userDir, dumpFilePattern);
