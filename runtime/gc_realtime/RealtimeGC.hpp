@@ -40,6 +40,7 @@
 #include "OMRVMInterface.hpp"
 #include "Scheduler.hpp"
 #include "WorkPacketsRealtime.hpp"
+#include "CollectionStatistics.hpp"
 
 class MM_ParallelDispatcher;
 class MM_EnvironmentBase;
@@ -69,6 +70,7 @@ private:
 	uintptr_t _gcPhase; /**< What gc phase are we currently in? */
 	
 	MM_CycleState _cycleState;  /**< Embedded cycle state to be used as the main cycle state for GC activity */
+	MM_CollectionStatistics _collectionStatistics;  /** Common collect stats (memory, time etc.) */
 
 	bool _moreTracingRequired; /**< Is used to decide if there needs to be another pass of the tracing loop. */
 
@@ -105,6 +107,8 @@ protected:
 	void reportSweepEnd(MM_EnvironmentBase *env);
 	void reportGCStart(MM_EnvironmentBase *env);
 	void reportGCEnd(MM_EnvironmentBase *env);
+	void reportGCIncrementStart(MM_EnvironmentBase *env);
+	void reportGCIncrementEnd(MM_EnvironmentBase *env);
 	
 public:
 	void mainSetupForGC(MM_EnvironmentBase *env);
