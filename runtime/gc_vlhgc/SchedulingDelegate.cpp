@@ -1358,28 +1358,31 @@ MM_SchedulingDelegate::calculateEdenSize(MM_EnvironmentVLHGC *env)
 	uintptr_t maxEdenRegionCount = _extensions->getHeap()->getHeapRegionManager()->getTableRegionCount();
 	bool edenIsVerySmall = (_edenRegionCount * 64) < maxEdenRegionCount;
 
-	intptr_t edenChangeWithSurvivorHeadroom = desiredEdenChangeSize;
-
-	/* Total heap needs to be aware that by changing eden size, the amount of survivor space might also need to change */
-	if (0 < desiredEdenChangeSize) {
-		edenChangeWithSurvivorHeadroom = desiredEdenChangeSize + (intptr_t)ceil(((double)desiredEdenChangeSize * _edenSurvivalRateCopyForward));
-	} else if ((0 > desiredEdenChangeSize) && !edenIsVerySmall) {
-//	} else if (0 > desiredEdenChangeSize) {
-		/* If eden is shrinking, only factor adjusting in survivor regions for total heap resizing when eden is not very small.
-		 * Factoring in survivor regions when eden is tiny can lead to some innacuracies, and reduce free non-eden regions, which may impact performance
-		 */
-		edenChangeWithSurvivorHeadroom = desiredEdenChangeSize - (intptr_t)floor(((double)desiredEdenChangeSize * _edenSurvivalRateCopyForward));
-	}
-	/* Eden will inform the total heap resizing logic, that it needs to change total heap size in order to maintain same "tenure" size. */
-	if (freeRegions > _edenRegionCount) {
-		_extensions->globalVLHGCStats._heapSizingData.edenRegionChange = OMR_MIN(maxHeapExpansionRegions, edenChangeWithSurvivorHeadroom);
+	if (0 == maxHeapExpansionRegions) {
+		_extensions->globalVLHGCStats._heapSizingData.edenRegionChange = 0;
 	} else {
-		 /* PGC has not recovered enough regions to accommodate even for the current Eden size.
-		  * So, lets expand heap by that deficit (capped to the maximum that heap expansion allows), plus whatever the new Eden size requires)
-		  */
-		_extensions->globalVLHGCStats._heapSizingData.edenRegionChange = OMR_MIN(maxHeapExpansionRegions, edenChangeWithSurvivorHeadroom + (intptr_t)(_edenRegionCount - freeRegions));
-	}
+		intptr_t edenChangeWithSurvivorHeadroom = desiredEdenChangeSize;
 
+		/* Total heap needs to be aware that by changing eden size, the amount of survivor space might also need to change */
+		if (0 < desiredEdenChangeSize) {
+			edenChangeWithSurvivorHeadroom = desiredEdenChangeSize + (intptr_t)ceil(((double)desiredEdenChangeSize * _edenSurvivalRateCopyForward));
+		} else if ((0 > desiredEdenChangeSize) && !edenIsVerySmall) {
+	//	} else if (0 > desiredEdenChangeSize) {
+			/* If eden is shrinking, only factor adjusting in survivor regions for total heap resizing when eden is not very small.
+			 * Factoring in survivor regions when eden is tiny can lead to some innacuracies, and reduce free non-eden regions, which may impact performance
+			 */
+			edenChangeWithSurvivorHeadroom = desiredEdenChangeSize - (intptr_t)floor(((double)desiredEdenChangeSize * _edenSurvivalRateCopyForward));
+		}
+		/* Eden will inform the total heap resizing logic, that it needs to change total heap size in order to maintain same "tenure" size. */
+		if (freeRegions > _edenRegionCount) {
+			_extensions->globalVLHGCStats._heapSizingData.edenRegionChange = OMR_MIN(maxHeapExpansionRegions, edenChangeWithSurvivorHeadroom);
+		} else {
+			 /* PGC has not recovered enough regions to accommodate even for the current Eden size.
+			  * So, lets expand heap by that deficit (capped to the maximum that heap expansion allows), plus whatever the new Eden size requires)
+			  */
+			_extensions->globalVLHGCStats._heapSizingData.edenRegionChange = OMR_MIN(maxHeapExpansionRegions, edenChangeWithSurvivorHeadroom + (intptr_t)(_edenRegionCount - freeRegions));
+		}
+	}
 	/* Eden size can not be bigger than free region size. */
 	maxEdenChange = freeRegions - _edenRegionCount + maxHeapExpansionRegions;
 
