@@ -1355,16 +1355,16 @@ MM_SchedulingDelegate::calculateEdenSize(MM_EnvironmentVLHGC *env)
 	 * If heap is fully expanded (or close to) make sure that there are enough free regions to satisfy given eden size change
 	 */
 	intptr_t maxEdenChange = 0;
-//	uintptr_t maxEdenRegionCount = _extensions->getHeap()->getHeapRegionManager()->getTableRegionCount();
-//	bool edenIsVerySmall = (_edenRegionCount * 64) < maxEdenRegionCount;
+	uintptr_t maxEdenRegionCount = _extensions->getHeap()->getHeapRegionManager()->getTableRegionCount();
+	bool edenIsVerySmall = (_edenRegionCount * 64) < maxEdenRegionCount;
 
 	intptr_t edenChangeWithSurvivorHeadroom = desiredEdenChangeSize;
 
 	/* Total heap needs to be aware that by changing eden size, the amount of survivor space might also need to change */
 	if (0 < desiredEdenChangeSize) {
 		edenChangeWithSurvivorHeadroom = desiredEdenChangeSize + (intptr_t)ceil(((double)desiredEdenChangeSize * _edenSurvivalRateCopyForward));
-//	} else if ((0 > desiredEdenChangeSize) && !edenIsVerySmall) {
-	} else if (0 > desiredEdenChangeSize) {
+	} else if ((0 > desiredEdenChangeSize) && !edenIsVerySmall) {
+//	} else if (0 > desiredEdenChangeSize) {
 		/* If eden is shrinking, only factor adjusting in survivor regions for total heap resizing when eden is not very small.
 		 * Factoring in survivor regions when eden is tiny can lead to some innacuracies, and reduce free non-eden regions, which may impact performance
 		 */
