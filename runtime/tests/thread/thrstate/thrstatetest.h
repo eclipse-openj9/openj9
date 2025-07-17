@@ -41,7 +41,7 @@ extern void setJ9ThreadState(omrthread_t thr, UDATA flags, omrthread_monitor_t b
 		omrthread_t owner, UDATA count);
 extern void setVMThreadState(J9VMThread *vmthread, omrthread_t osThread,
 		UDATA publicFlags, j9object_t blockingEnterObject, UDATA lockWord);
-extern void setJ9MonitorState(omrthread_monitor_t monitor, omrthread_t owner,	UDATA count);
+extern void setJ9MonitorState(omrthread_monitor_t monitor, omrthread_t owner, UDATA count);
 extern UDATA getFlatLock(J9VMThread *owner, UDATA count);
 extern UDATA getInflLock(J9ObjectMonitor *monitor);
 
@@ -69,19 +69,17 @@ typedef struct testdata_t {
 
 	j9object_t objectNoMonitor;
 	jobject objectNoMonitorRef;
-	
+
 	volatile IDATA selfOsthreadDone;
 	volatile IDATA otherOsthreadDone;
 	volatile IDATA unattachedOsthreadDone;
 	volatile IDATA thirdOsthreadDone;
-	
+
 	/* unused */
 	jobject ownableSyncRef;
 	j9object_t ownableSync;
 } testdata_t;
 extern testdata_t GlobalTestData;
-
-#define J9OBJECT_FROM_JOBJECT(jobj) (*((j9object_t *)(jobj)))
 
 #define MON_COUNT ((UDATA)3)
 #define TESTDATA(zzz) (GlobalTestData.zzz)
@@ -98,34 +96,34 @@ extern testdata_t GlobalTestData;
 /*
  * v = vmthread
  * n = osthread
- * 
+ *
  * state flags:
- * 	St = started
- * 	D = dead
- * 	Z = suspended
- * 	B = blocked
- * 	W = waiting
- * 	N = notified
- * 	P = parked
- * 	S = sleeping
- * 
+ *  St = started
+ *  D = dead
+ *  Z = suspended
+ *  B = blocked
+ *  W = waiting
+ *  N = notified
+ *  P = parked
+ *  S = sleeping
+ *
  * object monitors:
  * z = null blockingEnterObject
  * f = flat blockingEnterObject monitor
  * a = inflated blockingEnterObject monitor
  * U = out-of-line blockingEnterObject monitor, has montable entry
  * u = out-of-line blockingEnterObject monitor, no montable entry
- * 
+ *
  * raw monitors:
  * m = null monitor
  * M = non-null monitor (raw)
- * 
+ *
  * monitor owners:
  * o = null owner
  * O = self
  * N = other (not attached)
  * V = other (attached)
- * 
+ *
  * owned count:
  * c = 0 count
  * C = >0 count
