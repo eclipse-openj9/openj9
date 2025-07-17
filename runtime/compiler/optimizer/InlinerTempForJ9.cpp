@@ -2200,7 +2200,7 @@ TR_J9InlinerPolicy::createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *calleeSy
                           prevTreeTop, newSymbolReferenceForAddress,
                           directAccessTreeTop, arrayDirectAccessTreeTop,
                           indirectAccessTreeTop, directAccessWithConversionTreeTop,
-                          needNullCheck, false, conversionNeeded,
+                          needNullCheck, true, conversionNeeded,
                           arrayBlockNeeded, typeTestsNeeded);
 
    for (int32_t j=0; j<unsafeCall->getNumChildren(); j++)
