@@ -910,8 +910,6 @@ public:
 
    virtual MethodOfHandle methodOfDirectOrVirtualHandle(uintptr_t *mh, bool isVirtual);
 
-   bool hasMethodTypesSideTable();
-
    // Openjdk implementation
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    /*

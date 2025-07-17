@@ -349,9 +349,7 @@ private:
    void expandInvokeHandleGeneric(TR::TreeTop *tree);
    void expandMethodHandleInvokeCall(TR::TreeTop *tree);
    void insertCustomizationLogicTreeIfEnabled(TR::TreeTop *tree, TR::Node* methodHandle);
-   TR::Node* loadCallSiteMethodTypeFromCP(TR::Node* methodHandleInvokeCall);
    TR::Node* loadFromMethodTypeTable(TR::Node* methodHandleInvokeCall);
-   TR::Node* loadCallSiteMethodType(TR::Node* methodHandleInvokeCall);
 
    // inline functions
    //

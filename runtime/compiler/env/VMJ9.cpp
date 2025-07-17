@@ -4811,12 +4811,6 @@ TR_J9VMBase::MethodOfHandle TR_J9VMBase::methodOfDirectOrVirtualHandle(
    return result;
    }
 
-bool
-TR_J9VMBase::hasMethodTypesSideTable()
-   {
-   return true;
-   }
-
 void *
 TR_J9VMBase::methodHandle_jitInvokeExactThunk(uintptr_t methodHandle)
    {
