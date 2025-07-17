@@ -587,6 +587,15 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
    }
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+static void anchorAllChildren_T(TR::Node * node, TR::TreeTop *anchorTree, TR::Compilation* comp)
+   {
+   TR_ASSERT(anchorTree != NULL, "Can't anchor children to a NULL TR::TreeTop\n");
+   for (int i = 0; i <node->getNumChildren(); i++)
+      {
+      TR::TreeTop *tt = TR::TreeTop::create(comp, TR::Node::create(TR::treetop, 1, node->getChild(i)));
+      anchorTree->insertBefore(tt);
+      }
+   }
 // helper function for process_jdk_internal_util_ArraysSupport_vectorizedMismatch
 // see comments there for more details
 static TR::Node* insertVectorizedMisMatchArgumentChecksAndAdjustForOffHeap(TR::Compilation* comp,
@@ -614,8 +623,10 @@ static TR::Node* insertVectorizedMisMatchArgumentChecksAndAdjustForOffHeap(TR::C
                                                 node->duplicateTree(),
                                                 TR::Node::aconst(node, 0),
                                                 newCallBlock->getEntry());
-   nullCheckBlock->append(TR::TreeTop::create(comp, nullCheckNode));
+   TR::TreeTop *nullCheckTT = TR::TreeTop::create(comp, nullCheckNode);
+   nullCheckBlock->append(nullCheckTT);
    cfg->addEdge(nullCheckBlock, newCallBlock);
+   anchorAllChildren_T(nullCheckNode, nullCheckTT, comp);
 
    // insert array check tree 2/3
    if (insertArrayCheck)
@@ -629,8 +640,10 @@ static TR::Node* insertVectorizedMisMatchArgumentChecksAndAdjustForOffHeap(TR::C
                                                    TR::Node::iconst(node, 0),
                                                    newCallBlock->getEntry());
 
-      arrayCheckBlock->append(TR::TreeTop::create(comp, arrayCheckNode, NULL, NULL));
+      TR::TreeTop *arrayCheckTT = TR::TreeTop::create(comp, arrayCheckNode, NULL, NULL);
+      arrayCheckBlock->append(arrayCheckTT);
       cfg->addEdge(callBlock, newCallBlock);
+      anchorAllChildren_T(arrayCheckNode, arrayCheckTT, comp);
       }
 
    // insert newStoreTree 3/3
@@ -639,6 +652,7 @@ static TR::Node* insertVectorizedMisMatchArgumentChecksAndAdjustForOffHeap(TR::C
    TR::Node* newStore = TR::Node::createStore(symRef, adjustedNode);
    TR::TreeTop* newStoreTree = TR::TreeTop::create(comp, newStore);
    adjustBlock->append(newStoreTree);
+   anchorAllChildren_T(adjustedNode, newStoreTree, comp);
 
    TR::Node* resultNode = TR::Node::createLoad(node, symRef);
    return resultNode;
