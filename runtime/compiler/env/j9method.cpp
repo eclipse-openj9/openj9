@@ -3796,6 +3796,11 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::sun_nio_cs_SingleByteDecoder_decodeToLatin1Impl,      "decodeToLatin1Impl", "([BII[BI[B)I")},
       {  TR::unknownMethod}
       };
+   static X SingleByteEncoderMethods[] =
+      {
+      {x(TR::sun_nio_cs_SingleByteEncoder_encodeFromLatin1Impl,"encodeFromLatin1Impl", "([BII[BI[B)I")},
+      {   TR::unknownMethod}
+      };
 
    static X IBM1388EncoderMethods[] =
       {
@@ -4250,6 +4255,7 @@ void TR_ResolvedJ9Method::construct()
       { "java/lang/ScopedValue$Carrier", ScopedValueMethods },
       { "jdk/internal/value/ValueClass", ValueClassMethods },
       { "sun/nio/cs/SingleByte$Decoder", SingleByteDecoderMethods },
+      { "sun/nio/cs/SingleByte$Encoder", SingleByteEncoderMethods },
       { 0 }
       };
 
