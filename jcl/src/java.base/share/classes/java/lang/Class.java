@@ -1409,7 +1409,7 @@ private List<Method> cacheDeclaredPublicMethods(List<Method> methods, CacheKey c
 				methods.set(i, methodPut);
 			}
 		}
-		cache.insert(cacheKey, methods);
+		cache.insertRoot(cacheKey, methods);
 	} finally {
 		if (cache != null) {
 			cache.release();
@@ -4549,19 +4549,23 @@ private String getParameterTypesSignature(boolean throwException, String name, C
 	return signature.toString();
 }
 
+/*[IF JAVA_SPEC_VERSION <= 11] */
+private static Method getRootMethod;
 /*[IF JAVA_SPEC_VERSION == 8]*/
 /*[PR CMVC 114820, CMVC 115873, CMVC 116166] add reflection cache */
 private static Method copyMethod, copyField, copyConstructor;
+private static Field rootField;
 private static Field methodParameterTypesField;
 private static Field constructorParameterTypesField;
-private static final Object[] NoArgs = new Object[0];
 /*[ENDIF] JAVA_SPEC_VERSION == 8 */
+private static final Object[] NoArgs = new Object[0];
+/*[ENDIF] JAVA_SPEC_VERSION <= 11 */
 
 /*[PR JAZZ 107786] constructorParameterTypesField should be initialized regardless of reflectCacheEnabled or not */
 static void initCacheIds(boolean cacheEnabled, boolean cacheDebug) {
 	reflectCacheEnabled = cacheEnabled;
 	reflectCacheDebug = cacheDebug;
-	/*[IF JAVA_SPEC_VERSION == 8]*/
+	/*[IF JAVA_SPEC_VERSION <= 11]*/
 	AccessController.doPrivileged(new PrivilegedAction<Void>() {
 		@Override
 		public Void run() {
@@ -4569,12 +4573,14 @@ static void initCacheIds(boolean cacheEnabled, boolean cacheDebug) {
 			return null;
 		}
 	});
-	/*[ENDIF] JAVA_SPEC_VERSION == 8 */
+	/*[ENDIF] JAVA_SPEC_VERSION <= 11 */
 }
+
 static void setReflectCacheAppOnly(boolean cacheAppOnly) {
 	reflectCacheAppOnly = cacheAppOnly;
 }
-/*[IF JAVA_SPEC_VERSION == 8]*/
+
+/*[IF JAVA_SPEC_VERSION <= 11]*/
 @SuppressWarnings("nls")
 static void doInitCacheIds() {
 	/*
@@ -4585,6 +4591,7 @@ static void doInitCacheIds() {
 	 * not done (we're in the process of initializing the caching mechanisms).
 	 * We must ensure the classes that own the fields of interest are prepared.
 	 */
+	/*[IF JAVA_SPEC_VERSION == 8]*/
 	J9VMInternals.prepare(Constructor.class);
 	J9VMInternals.prepare(Method.class);
 	try {
@@ -4596,12 +4603,28 @@ static void doInitCacheIds() {
 	constructorParameterTypesField.setAccessible(true);
 	methodParameterTypesField.setAccessible(true);
 	if (reflectCacheEnabled) {
+		J9VMInternals.prepare(Executable.class);
+		J9VMInternals.prepare(Field.class);
 		copyConstructor = getAccessibleMethod(Constructor.class, "copy");
 		copyMethod = getAccessibleMethod(Method.class, "copy");
 		copyField = getAccessibleMethod(Field.class, "copy");
+		getRootMethod = getAccessibleMethod(Executable.class, "getRoot");
+		try {
+			rootField = Field.class.getDeclaredFieldImpl("root");
+		} catch (NoSuchFieldException e) {
+			throw newInternalError(e);
+		}
+		rootField.setAccessible(true);
 	}
+	/*[ELSE] JAVA_SPEC_VERSION == 8 */
+	J9VMInternals.prepare(AccessibleObject.class);
+	if (reflectCacheEnabled) {
+		getRootMethod = getAccessibleMethod(AccessibleObject.class, "getRoot");
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 }
-/*[ENDIF] JAVA_SPEC_VERSION == 8 */
+/*[ENDIF] JAVA_SPEC_VERSION <= 11 */
+
 private static Method getAccessibleMethod(Class<?> cls, String name) {
 	try {
 		Method method = cls.getDeclaredMethod(name, EmptyParameters);
@@ -4974,16 +4997,24 @@ private static final class ReflectCache extends ConcurrentHashMap<CacheKey, Refl
 		return ref != null ? ref.get() : null;
 	}
 
-	void insert(CacheKey key, Object value) {
+	void insert(CacheKey key, AccessibleObject value) {
+		insertRoot(key, retrieveRoot(value));
+	}
+
+	/*
+	 * This method must only be called with known roots or aggregates of roots.
+	 */
+	void insertRoot(CacheKey key, Object value) {
 		put(key, new ReflectRef(this, key, value));
 	}
 
-	<T> T insertIfAbsent(CacheKey key, T value) {
-		ReflectRef newRef = new ReflectRef(this, key, value);
+	<T extends AccessibleObject> T insertIfAbsent(CacheKey key, T value) {
+		T rootValue = retrieveRoot(value);
+		ReflectRef newRef = new ReflectRef(this, key, rootValue);
 		for (;;) {
 			ReflectRef oldRef = putIfAbsent(key, newRef);
 			if (oldRef == null) {
-				return value;
+				return rootValue;
 			}
 			T oldValue = (T) oldRef.get();
 			if (oldValue != null) {
@@ -4992,8 +5023,20 @@ private static final class ReflectCache extends ConcurrentHashMap<CacheKey, Refl
 			// The entry addressed by key has been cleared, but not yet removed from this map.
 			// One thread will successfully replace the entry; the value stored will be shared.
 			if (replace(key, oldRef, newRef)) {
-				return value;
+				return rootValue;
 			}
+		}
+	}
+
+	private static <T extends AccessibleObject> T retrieveRoot(T value) {
+		T root = getRoot(value);
+		if (root != null) {
+			if (reflectCacheDebug) {
+				System.err.println("extracted root from non-root accessible object before caching: " + value);
+			}
+			return root;
+		} else {
+			return value;
 		}
 	}
 
@@ -5120,7 +5163,7 @@ private Method cacheMethod(Method method) {
 		try {
 			// cache the Method with the largest depth with a null returnType
 			CacheKey lookupKey = CacheKey.newMethodKey(method.getName(), parameterTypes, null);
-			cache.insert(lookupKey, method);
+			cache.insertRoot(lookupKey, method);
 		} finally {
 			cache.release();
 		}
@@ -5188,7 +5231,7 @@ private Field cacheField(Field field) {
 		if (declaringClass == this) {
 			// cache the Field returned from getField() with a null returnType
 			CacheKey lookupKey = CacheKey.newFieldKey(field.getName(), null);
-			cache.insert(lookupKey, field);
+			cache.insertRoot(lookupKey, field);
 		}
 	} finally {
 		cache.release();
@@ -5349,7 +5392,7 @@ private Method[] cacheMethods(Method[] methods, CacheKey cacheKey) {
 		if (cache == null) {
 			cache = acquireReflectCache();
 		}
-		cache.insert(cacheKey, methods);
+		cache.insertRoot(cacheKey, methods);
 	} finally {
 		if (cache != null) {
 			cache.release();
@@ -5433,7 +5476,7 @@ private Field[] cacheFields(Field[] fields, CacheKey cacheKey) {
 		if (cache == null) {
 			cache = acquireReflectCache();
 		}
-		cache.insert(cacheKey, fields);
+		cache.insertRoot(cacheKey, fields);
 	} finally {
 		if (cache != null) {
 			cache.release();
@@ -5499,7 +5542,7 @@ private Constructor<T>[] cacheConstructors(Constructor<T>[] constructors, CacheK
 			CacheKey key = CacheKey.newConstructorKey(getParameterTypes(constructors[i]));
 			constructors[i] = cache.insertIfAbsent(key, constructors[i]);
 		}
-		cache.insert(cacheKey, constructors);
+		cache.insertRoot(cacheKey, constructors);
 	} finally {
 		cache.release();
 	}
@@ -5546,6 +5589,30 @@ Object setMethodHandleCache(Object cache) {
 		}
 	}
 	return result;
+}
+
+static <T extends AccessibleObject> T getRoot(T object) {
+	/*[IF JAVA_SPEC_VERSION >= 17]*/
+	return SharedSecrets.getJavaLangReflectAccess().getRoot(object);
+	/*[ELSEIF JAVA_SPEC_VERSION >= 11] */
+	try {
+		return (T) getRootMethod.invoke(object, NoArgs);
+	} catch (IllegalAccessException | InvocationTargetException e) {
+		throw newInternalError(e);
+	}
+	/*[ELSE] JAVA_SPEC_VERSION >= 11 */
+	try {
+		if (object instanceof Executable) {
+			return (T) getRootMethod.invoke(object, NoArgs);
+		} else if (object instanceof Field) {
+			return (T) rootField.get(object);
+		} else {
+			throw newInternalError(new IllegalArgumentException("Unexpected AccessibleObject subclass: " + object.getClass().getSimpleName()));
+		}
+	} catch (IllegalAccessException | InvocationTargetException e) {
+		throw newInternalError(e);
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 }
 
 ConstantPool getConstantPool() {
