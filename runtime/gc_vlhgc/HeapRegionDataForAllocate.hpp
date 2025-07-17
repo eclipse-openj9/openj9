@@ -83,6 +83,10 @@ public:
 	void taskAsArrayletLeaf(MM_EnvironmentBase *env);
 	void removeFromArrayletLeafList(MM_EnvironmentVLHGC *env);
 	void addToArrayletLeafList(MM_HeapRegionDescriptorVLHGC* spineRegion);
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+	MM_HeapRegionDescriptorVLHGC *popRegionFromArrayReservedRegionList(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC **head);
+	void pushRegionToArrayReservedRegionList(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC **head);
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 	MM_HeapRegionDescriptorVLHGC *getNextArrayletLeafRegion() { return _nextArrayletLeafRegion; }
 	J9IndexableObject *getSpine() { return _spine; }
 	void setSpine(J9IndexableObject *spineObject);

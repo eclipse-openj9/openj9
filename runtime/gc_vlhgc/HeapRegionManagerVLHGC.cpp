@@ -22,6 +22,7 @@
 
 #include "CardTable.hpp"
 #include "GCExtensionsBase.hpp"
+
 #include "MemoryManager.hpp"
 #include "HeapRegionManagerVLHGC.hpp"
 #include "HeapMemorySnapshot.hpp"
@@ -177,7 +178,6 @@ MM_HeapRegionManagerVLHGC::getHeapMemorySnapshot(MM_GCExtensionsBase *extensions
 	uintptr_t free = 0;
 	uintptr_t allocateEdenTotal = 0;
 
-
 	while (NULL != (region = regionIterator.nextRegion())) {
 		if (region->isFreeOrIdle()) {
 			snapshot->_totalRegionReservedSize += regionSize;
@@ -214,5 +214,6 @@ MM_HeapRegionManagerVLHGC::getHeapMemorySnapshot(MM_GCExtensionsBase *extensions
 	snapshot->_totalRegionReservedSize -= (snapshot->_totalRegionEdenSize - allocateEdenTotal);
 	snapshot->_freeRegionEdenSize += (snapshot->_totalRegionEdenSize - allocateEdenTotal);
 	snapshot->_freeRegionReservedSize = snapshot->_totalRegionReservedSize;
+
 	return snapshot;
 }
