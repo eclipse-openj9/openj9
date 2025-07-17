@@ -1436,7 +1436,7 @@ static void reflectCacheDebugHelper(Class<?>[] parameters, int posInsert, String
 				if (j != 0) {
 					output.append(", "); //$NON-NLS-1$
 				}
-				output.append(parameters[i].getName());
+				output.append(parameters[j].getName());
 			}
 			output.append(')');
 		}
