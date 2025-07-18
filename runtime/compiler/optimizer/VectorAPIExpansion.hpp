@@ -540,11 +540,14 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *  \param methodSymbol
    *     Method symbol
    *
+   *  \param reportAllMethods
+   *     if true, report all vector methods, even not described in the table
+   *
    *  \return
    *     \c true if \c methodSymbol is a recognized Vector API method(high level or intrinsic),
    *     \c false otherwise
    */
-   static bool isVectorAPIMethod(TR::MethodSymbol * methodSymbol);
+   static bool isVectorAPIMethod(TR::MethodSymbol * methodSymbol, bool reportAllMethods = false);
 
 
   /** \brief

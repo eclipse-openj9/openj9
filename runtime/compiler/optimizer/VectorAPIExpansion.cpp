@@ -67,12 +67,19 @@ TR_VectorAPIExpansion::perform()
    }
 
 bool
-TR_VectorAPIExpansion::isVectorAPIMethod(TR::MethodSymbol *methodSymbol)
+TR_VectorAPIExpansion::isVectorAPIMethod(TR::MethodSymbol *methodSymbol, bool reportAllMethods)
    {
    TR::RecognizedMethod index = methodSymbol->getRecognizedMethod();
 
-   return (index >= _firstMethod &&
-           index <= _lastMethod);
+   if  (index >= _firstMethod && index <= _lastMethod)
+      {
+      return (reportAllMethods ||
+              (methodTable[index - _firstMethod]._returnType != Invalid));
+      }
+   else
+      {
+      return false;
+      }
    }
 
 TR_VectorAPIExpansion::vapiObjType
@@ -1082,7 +1089,7 @@ TR_VectorAPIExpansion::findVectorMethods(TR::Compilation *comp, bool reportFound
          {
          TR::MethodSymbol *methodSymbol = node->getSymbolReference()->getSymbol()->castToMethodSymbol();
 
-         if (isVectorAPIMethod(methodSymbol))
+         if (isVectorAPIMethod(methodSymbol, reportFoundMethods))
             {
             if (reportFoundMethods &&
                 TR::Options::getVerboseOption(TR_VerboseVectorAPI))
@@ -3787,26 +3794,26 @@ TR_VectorAPIExpansion::methodTable[] =
    {compareIntrinsicHandler,              Mask,    1,  2, 3, 4,  5, 2,  7, {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Mask}},   // jdk_internal_vm_vector_VectorSupport_compare
    {compressExpandOpIntrinsicHandler,     Unknown, 1,  2, 3, 4,  5, 2, -1, {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Mask}},           // jdk_internal_vm_vector_VectorSupport_compressExpandOp
    {convertIntrinsicHandler,              Unknown,  1,  4, 5, 6,  7, 1, -1, {Unknown, Unknown, ElementType, NumLanes, Unknown, Unknown, Unknown, Vector}},   // jdk_internal_vm_vector_VectorSupport_convert
-   {unsupportedHandler},  // jdk_internal_vm_vector_VectorSupport_extract
+   {unsupportedHandler,                   Invalid},  // jdk_internal_vm_vector_VectorSupport_extract
    {fromBitsCoercedIntrinsicHandler,      Unknown, 0, -1, 1, 2, -1, 0, -1, {Unknown, ElementType, NumLanes, Unknown, Unknown, Unknown}},                // jdk_internal_vm_vector_VectorSupport_fromBitsCoerced
-   {unsupportedHandler},  // jdk_internal_vm_vector_VectorSupport_indexPartiallyInUpperRange
-   {unsupportedHandler},  // jdk_internal_vm_vector_VectorSupport_indexVector
-   {unsupportedHandler},  // jdk_internal_vm_vector_VectorSupport_insert
-   {unsupportedHandler},  // jdk_internal_vm_vector_VectorSupport_loadMasked
-   {unsupportedHandler},  // jdk_internal_vm_vector_VectorSupport_loadWithMap
+   {unsupportedHandler,                   Invalid},  // jdk_internal_vm_vector_VectorSupport_indexPartiallyInUpperRange
+   {unsupportedHandler,                   Invalid},  // jdk_internal_vm_vector_VectorSupport_indexVector
+   {unsupportedHandler,                   Invalid},  // jdk_internal_vm_vector_VectorSupport_insert
+   {unsupportedHandler,                   Invalid},  // jdk_internal_vm_vector_VectorSupport_loadMasked
+   {unsupportedHandler,                   Invalid},  // jdk_internal_vm_vector_VectorSupport_loadWithMap
    {maskReductionCoercedIntrinsicHandler, Scalar,  1, -1, 2, 3,  4, 1, -1, {Unknown, Unknown, ElementType, NumLanes, Mask}},                            // jdk_internal_vm_vector_VectorSupport_maskReductionCoerced
-   {unsupportedHandler},  // jdk_internal_vm_vector_VectorSupport_rearrangeOp
+   {unsupportedHandler,                   Invalid},  // jdk_internal_vm_vector_VectorSupport_rearrangeOp
    {reductionCoercedIntrinsicHandler,     Scalar,  1,  2, 3, 4,  5, 1,  6, {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Mask}},           // jdk_internal_vm_vector_VectorSupport_reductionCoerced
-   {unsupportedHandler},  // jdk_internal_vm_vector_VectorSupport_selectFromOp
-   {unsupportedHandler},  // jdk_internal_vm_vector_VectorSupport_selectFromTwoVectorOp
-   {unsupportedHandler},  // jdk_internal_vm_vector_VectorSupport_shuffleIota
-   {unsupportedHandler},  // jdk_internal_vm_vector_VectorSupport_shuffleToVector
-   {unsupportedHandler},  // jdk_internal_vm_vector_VectorSupport_storeMasked
-   {unsupportedHandler},  // jdk_internal_vm_vector_VectorSupport_storeWithMap
+   {unsupportedHandler,                   Invalid},  // jdk_internal_vm_vector_VectorSupport_selectFromOp
+   {unsupportedHandler,                   Invalid},  // jdk_internal_vm_vector_VectorSupport_selectFromTwoVectorOp
+   {unsupportedHandler,                   Invalid},  // jdk_internal_vm_vector_VectorSupport_shuffleIota
+   {unsupportedHandler,                   Invalid},  // jdk_internal_vm_vector_VectorSupport_shuffleToVector
+   {unsupportedHandler,                   Invalid},  // jdk_internal_vm_vector_VectorSupport_storeMasked
+   {unsupportedHandler,                   Invalid},  // jdk_internal_vm_vector_VectorSupport_storeWithMap
    {ternaryIntrinsicHandler,              Vector,  1,  2, 3, 4,  5, 3,  8, {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Vector, Mask}},  // jdk_internal_vm_vector_VectorSupport_ternaryOp
    {testIntrinsicHandler,                 Scalar,  1, -1, 2, 3,  4, 1,  5, {Unknown, Unknown, ElementType, NumLanes, Mask, Mask, Unknown}},             // jdk_internal_vm_vector_VectorSupport_test
    {unaryIntrinsicHandler,                Vector,  1,  2, 3, 4,  5, 1,  6, {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Mask}},           // jdk_internal_vm_vector_VectorSupport_unaryOp
-   {unsupportedHandler},  // jdk_internal_vm_vector_VectorSupport_wrapShuffleIndexes
+   {unsupportedHandler,                   Invalid},  // jdk_internal_vm_vector_VectorSupport_wrapShuffleIndexes
    };
 
 
