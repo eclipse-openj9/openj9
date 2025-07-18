@@ -83,6 +83,6 @@ ifneq (,$(findstring ibm-clang,$(notdir $(CC))))
     CONFIGURE_ARGS += 'GLOBAL_CXXFLAGS=-fstack-protector'
 else
     CONFIGURE_ARGS += 'OMR_TOOLCHAIN=xlc'
-    CONFIGURE_ARGS += 'GLOBAL_CFLAGS=-qstackprotect'
-    CONFIGURE_ARGS += 'GLOBAL_CXXFLAGS=-qstackprotect'
+    CONFIGURE_ARGS += 'GLOBAL_CFLAGS=-qstackprotect -qc_stdinc'
+    CONFIGURE_ARGS += 'GLOBAL_CXXFLAGS=-qstackprotect -qcpp_stdinc'
 endif
