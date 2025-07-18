@@ -139,7 +139,9 @@ Fast_java_lang_Class_isIdentity(J9VMThread *currentThread, j9object_t classObjec
 	J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, classObject);
 	return J9_IS_J9CLASS_IDENTITY(receiverClazz) ? JNI_TRUE : JNI_FALSE;
 }
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
+#if (JAVA_SPEC_VERSION >= 20) || defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 /* java.lang.Class: private native int getClassFileVersion0(); */
 jint JNICALL
 Fast_java_lang_Class_getClassFileVersion0(J9VMThread *currentThread, j9object_t classObject)
@@ -147,7 +149,7 @@ Fast_java_lang_Class_getClassFileVersion0(J9VMThread *currentThread, j9object_t 
 	J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, classObject);
 	return (jint)getClassFileVersion(currentThread, receiverClazz);
 }
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* (JAVA_SPEC_VERSION >= 20) || defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 /* java.lang.Class: public native boolean isInstance(Object object); */
 jboolean JNICALL
