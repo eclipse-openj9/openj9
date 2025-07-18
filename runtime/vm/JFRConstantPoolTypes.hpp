@@ -1243,7 +1243,7 @@ done:
 		/* Set CPU description */
 		OMRProcessorDesc desc = {};
 		omrsysinfo_get_processor_description(&desc);
-		char buffer[512];
+		char buffer[1024];
 		omrsysinfo_get_processor_feature_string(&desc, buffer, sizeof(buffer));
 		UDATA len = strlen(buffer) + 1;
 		cpuInformation->description = (char *)j9mem_allocate_memory(len, OMRMEM_CATEGORY_VM);
