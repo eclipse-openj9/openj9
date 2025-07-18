@@ -2634,16 +2634,50 @@ _interfaceSlotsUnavailable:
 	staddr	r10, -8*ALen(J9SP)				! Replaced staddru r10, -8*ALen(J9SP) for P6 perf
 	staddr	r9, -7*ALen(J9SP)
 #ifndef NO_HELPER_LASTITABLE_CHECK
-        ! Before going to the VM helper, check if the receiver class lastITable matches the interface class
-        ! of the method being called and if so, use it to quickly look up the vtable offset and make the call
+        ! Before iTable walk or going to the VM helper, check if the receiver class lastITable matches the interface
+        ! class of the method being called and if so, use it to quickly look up the vtable offset and make the call
         LOAD_CLASS(r10,r3)										! Load the class
         maskVFT(r10)
         laddr   r12, 3*ALen(r11)                                ! Load the interface class of the method from the snippet
         laddr   r9, J9TR_J9Class_lastITable(r10)                ! Load the cached last ITable
         laddr   r0, J9TR_J9ITable_interfaceClass(r9)            ! Load the interface class whose ITable this is
         cmpl    cr0, CmpAddr, r12, r0
+#ifndef NO_ITABLEWALK_CHECK
+        beq     .L.hitITable
+        ! Before going to the VM helper do iTable walk N times
+        ! check iTable[0]
+        laddr   r9, J9TR_J9Class_iTable(r10)                    ! Load the iTable pointer
+        cmpi	cr0, CmpAddr, r9, 0                             ! check iTable != null
+        beq     .L.callHelper
+        laddr	r0, J9TR_J9ITable_interfaceClass(r9)            ! Load iTable class
+        cmpl    cr0, CmpAddr, r12, r0
+        beq     .L.hitITable
+        ! check iTable[1]
+        laddr   r9, J9TR_J9ITable_next(r9)                      ! Load the next iTable pointer
+        cmpi	cr0, CmpAddr, r9, 0                             ! check iTable != null
+        beq     .L.callHelper
+        laddr	r0, J9TR_J9ITable_interfaceClass(r9)            ! Load iTable class
+        cmpl    cr0, CmpAddr, r12, r0
+        beq     .L.hitITable
+        ! check iTable[2]
+        laddr   r9, J9TR_J9ITable_next(r9)                      ! Load the next iTable pointer
+        cmpi	cr0, CmpAddr, r9, 0                             ! check iTable != null
+        beq     .L.callHelper
+        laddr	r0, J9TR_J9ITable_interfaceClass(r9)            ! Load iTable class
+        cmpl    cr0, CmpAddr, r12, r0
+        beq     .L.hitITable
+        ! check iTable[3]
+        laddr   r9, J9TR_J9ITable_next(r9)                      ! Load the next iTable pointer
+        cmpi	cr0, CmpAddr, r9, 0                             ! check iTable != null
+        beq     .L.callHelper
+        laddr	r0, J9TR_J9ITable_interfaceClass(r9)            ! Load iTable class
+        cmpl    cr0, CmpAddr, r12, r0
         bne     .L.callHelper
+#else
+        bne     .L.callHelper
+#endif /* ~NO_ITABLEWALK_CHECK */
         ! lastITable is a match
+.L.hitITable:
         laddr   r12, 4*ALen(r11)                                ! Load the itable offset from the snippet
         andi.   r0, r12, J9TR_J9_ITABLE_OFFSET_TAG_BITS         ! Call the helper if the itable offset is tagged
         bne     .L.callHelper
