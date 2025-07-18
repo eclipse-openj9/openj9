@@ -25,6 +25,11 @@
 #include <algorithm>
 #include <ctype.h>
 #include <stdint.h>
+#if defined(LINUX)
+#include <sys/statfs.h>
+#include <linux/magic.h>
+#endif /* LINUX */
+
 #include "jitprotos.h"
 #include "j2sever.h"
 #include "j9.h"
@@ -2988,6 +2993,7 @@ J9::Options::fePostProcessJIT(void * base)
 bool
 J9::Options::disableMemoryDisclaimIfNeeded(J9JITConfig *jitConfig)
    {
+#if defined (LINUX)
    J9JavaVM * javaVM = jitConfig->javaVM;
    PORT_ACCESS_FROM_JAVAVM(javaVM); // for j9vmem_supported_page_sizes
    OMRPORT_ACCESS_FROM_J9PORT(javaVM->portLibrary); // for omrsysinfo_os_kernel_info
@@ -3019,6 +3025,52 @@ J9::Options::disableMemoryDisclaimIfNeeded(J9JITConfig *jitConfig)
             }
          }
       }
+   if (!shouldDisableMemoryDisclaim)
+      {
+      // The backing file for the disclaimed memory is on /tmp.
+      // Do not disclaim if the filesystem for /tmp is tmpfs or ramfs because they use RAM memory.
+      // Also, do not disclaim if /tmp is on nfs because the latency is unpredictable.
+      // In these cases, attempt to disclaim on swap if possible.
+       TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
+       if (TR::Options::getCmdLineOptions()->getOption(TR_DontDisclaimMemoryOnSwap) ||
+          !TR::Options::getCmdLineOptions()->getOption(TR_DisclaimMemoryOnSwap) ||
+          compInfo->isSwapMemoryDisabled())
+         {
+         // Disclaim on backing file is preferred (or the only possibility)
+         // TODO: enhance the omr portlib (omrfile_stat/updateJ9FileStat/J9FileStat) to give us the desired information
+         struct statfs statfsbuf;
+         int retVal = statfs("/tmp", &statfsbuf);
+         if (retVal != 0 ||
+            statfsbuf.f_type == TMPFS_MAGIC ||
+            statfsbuf.f_type == RAMFS_MAGIC ||
+            statfsbuf.f_type == NFS_SUPER_MAGIC)
+            {
+            // Check whether swap is available and whether the user allows the usage of swap.
+            if (TR::Options::getCmdLineOptions()->getOption(TR_DontDisclaimMemoryOnSwap) || compInfo->isSwapMemoryDisabled())
+               {
+               shouldDisableMemoryDisclaim = true;
+               if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+                  {
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "WARNING: Disclaim feature disabled because /tmp is not suitable and swap is not available/allowed");
+                  }
+               TR::Options::getCmdLineOptions()->setOption(TR_DisclaimMemoryOnSwap, false);
+               }
+            else
+               {
+               // Force the usage of swap space for disclaiming.
+               TR::Options::getCmdLineOptions()->setOption(TR_DisclaimMemoryOnSwap);
+               if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+                  {
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Memory disclaim will be done on swap because /tmp is not suitable");
+                  }
+               }
+            }
+         }
+      else // Disclaim on swap is preferred
+         {
+
+         }
+      }
    if (shouldDisableMemoryDisclaim)
       {
       TR::Options::getCmdLineOptions()->setOption(TR_DisableDataCacheDisclaiming);
@@ -3027,6 +3079,9 @@ J9::Options::disableMemoryDisclaimIfNeeded(J9JITConfig *jitConfig)
       TR::Options::getCmdLineOptions()->setOption(TR_EnableSharedCacheDisclaiming, false);
       }
    return shouldDisableMemoryDisclaim;
+#else /* if defined(LINUX) */
+   return true;
+#endif
    }
 
 bool
