@@ -863,3 +863,10 @@ if(NOT JAVA_SPEC_VERSION LESS 24)
 		Java_com_ibm_oti_vm_VM_isYieldBlockedVirtualThreadsEnabled
 	)
 endif()
+
+# Java 25+
+if(NOT JAVA_SPEC_VERSION LESS 25)
+	omr_add_exports(jclse
+		Java_jdk_internal_vm_vector_VectorSupport_getCPUFeatures
+	)
+endif()

@@ -706,7 +706,10 @@ jint JNICALL
 Java_jdk_internal_vm_vector_VectorSupport_registerNatives(JNIEnv *env, jclass clazz);
 jint JNICALL
 Java_jdk_internal_vm_vector_VectorSupport_getMaxLaneCount(JNIEnv *env, jclass clazz, jclass elementType);
-
+#if JAVA_SPEC_VERSION >= 25
+jstring JNICALL
+Java_jdk_internal_vm_vector_VectorSupport_getCPUFeatures(JNIEnv *env, jclass clazz);
+#endif /* JAVA_SPEC_VERSION >= 25 */
 
 /* BBjclNativesCommonVM*/
 jint JNICALL Java_com_ibm_oti_vm_VM_getBootClassPathCount (JNIEnv * env, jclass clazz);
