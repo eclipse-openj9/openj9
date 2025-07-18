@@ -57,6 +57,8 @@ class TR_RelocationRecordGroup
                                               TR_RelocationTarget *reloTarget,
                                               uint8_t *reloOrigin);
    private:
+      TR_RelocationErrorCode checkInliningTable(TR_RelocationRuntime *reloRuntime);
+
       TR_RelocationErrorCode handleRelocation(TR_RelocationRuntime *reloRuntime,
                                               TR_RelocationTarget *reloTarget,
                                               TR_RelocationRecord *reloRecord,
