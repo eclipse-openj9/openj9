@@ -182,6 +182,10 @@ VMSnapshotImpl::setupRestoreRun()
 		return false;
 	}
 
+	if (0 != omrthread_monitor_init_with_name(&_vm->rcpCacheMutex, 0, "JVM RCP class Warm Load Monitor")) {
+		return false;
+	}
+
 	return true;
 }
 

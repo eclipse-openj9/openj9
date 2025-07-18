@@ -1024,9 +1024,8 @@ arbitratedLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength,
 }
 
 #if defined(J9VM_OPT_SNAPSHOTS)
-/* TODO: Revisit this function. */
 BOOLEAN
-loadWarmClassFromSnapshot(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Class *clazz)
+loadWarmClassFromSnapshotInternal(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Class *clazz)
 {
 	BOOLEAN rc = FALSE;
 	BOOLEAN failed = FALSE;
@@ -1102,6 +1101,23 @@ loadWarmClassFromSnapshot(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Cl
 	rc = TRUE;
 
 done:
+	return rc;
+}
+
+BOOLEAN
+loadWarmClassFromSnapshot(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Class *clazz)
+{
+	BOOLEAN rc = TRUE;
+	J9JavaVM *vm = currentThread->javaVM;
+
+	if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
+		omrthread_monitor_enter(vm->rcpCacheMutex);
+		if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
+			rc = loadWarmClassFromSnapshotInternal(currentThread, classLoader, clazz);
+		}
+		omrthread_monitor_exit(vm->rcpCacheMutex);
+	}
+
 	return rc;
 }
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */

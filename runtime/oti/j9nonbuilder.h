@@ -6517,6 +6517,7 @@ typedef struct J9JavaVM {
 #if defined(J9VM_OPT_SNAPSHOTS)
 	VMSnapshotImplPortLibrary *vmSnapshotImplPortLibrary;
 	const char *vmSnapshotFilePath;
+	omrthread_monitor_t rcpCacheMutex;
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 #if defined(J9VM_OPT_JFR)
 	UDATA loadedClassCount;
