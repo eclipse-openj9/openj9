@@ -498,8 +498,8 @@ continueTimeCompensation:
 				else policy = 0;
 			} else {
 				double parkRate = vmThread->parkRate;
-				if (parkRate > vm->thresholdHigh) policy = 2;
-				else if (parkRate > vm->thresholdMedium) policy = 1;
+				if (parkRate < vm->thresholdHigh) policy = 2;
+				else if (parkRate < vm->thresholdMedium) policy = 1;
 				else policy = 0;
 			}
 
