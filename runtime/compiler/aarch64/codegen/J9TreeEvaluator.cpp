@@ -50,6 +50,8 @@
 #include "infra/ILWalk.hpp"
 #include "OMR/Bytes.hpp"
 
+#define OPT_DETAILS "O^O J9 TREE EVALUATOR: "
+
 /*
  * J9 ARM64 specific tree evaluator table overrides
  */
@@ -3352,7 +3354,7 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    const bool isVariableLength = (objectSize == 0);
 
    static long count = 0;
-   if (!performTransformation(comp, "O^O <%3d> Inlining Allocation of %s [0x%p].\n", count++, node->getOpCode().getName(), node))
+   if (!performTransformation(comp, "%s<%3d> Inlining Allocation of %s [0x%p].\n", OPT_DETAILS, count++, node->getOpCode().getName(), node))
       return NULL;
 
 
