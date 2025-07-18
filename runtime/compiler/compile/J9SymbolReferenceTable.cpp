@@ -605,8 +605,25 @@ J9::SymbolReferenceTable::findOrCreateVarHandleMethodTypeTableEntrySymbol(TR::Re
    TR::StaticSymbol *sym = TR::StaticSymbol::createMethodTypeTableEntry(trHeapMemory(),cpIndex);
    sym->setStaticAddress(entryLocation);
    bool isUnresolved = owningMethod->isUnresolvedVarHandleMethodTypeTableEntry(cpIndex);
-   symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), -1,
-                                                       isUnresolved ? _numUnresolvedSymbols++ : 0);
+
+   TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN;
+   if (!isUnresolved)
+      {
+      TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
+      if (knot != NULL)
+         {
+         knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)entryLocation);
+         }
+      }
+
+   symRef = new (trHeapMemory()) TR::SymbolReference(
+      self(),
+      sym,
+      owningMethodSymbol->getResolvedMethodIndex(),
+      -1,
+      isUnresolved ? _numUnresolvedSymbols++ : 0,
+      knownObjectIndex);
+
    if (isUnresolved)
       {
       // Resolving method type table entries causes java code to run
@@ -1583,8 +1600,22 @@ J9::SymbolReferenceTable::findOrCreateConstantDynamicSymbol(TR::ResolvedMethodSy
       }
    else
       {
-      symRef = findOrCreateCPSymbol(owningMethodSymbol, cpIndex, TR::Address, true, dynamicConst);
+      TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN;
+      TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
+      if (knot != NULL)
+         {
+         knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)dynamicConst);
+         }
+
+      symRef = findOrCreateCPSymbol(
+         owningMethodSymbol,
+         cpIndex,
+         TR::Address,
+         true,
+         dynamicConst,
+         knownObjectIndex);
       }
+
    TR::StaticSymbol * sym = (TR::StaticSymbol *)symRef->getSymbol();
    sym->setConstantDynamic();
    sym->makeConstantDynamic(symbolTypeSig, symbolTypeSigLength, isCondyPrimitive);
@@ -1633,7 +1664,20 @@ J9::SymbolReferenceTable::findOrCreateMethodTypeSymbol(TR::ResolvedMethodSymbol 
       }
    else
       {
-      symRef = findOrCreateCPSymbol(owningMethodSymbol, cpIndex, TR::Address, true, methodTypeConst);
+      TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN;
+      TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
+      if (knot != NULL)
+         {
+         knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)methodTypeConst);
+         }
+
+      symRef = findOrCreateCPSymbol(
+         owningMethodSymbol,
+         cpIndex,
+         TR::Address,
+         true,
+         methodTypeConst,
+         knownObjectIndex);
       }
    TR::StaticSymbol * sym = (TR::StaticSymbol *)symRef->getSymbol();
    sym->setConstMethodType();
