@@ -243,6 +243,7 @@
    java_lang_StringUTF16_getChar,
    java_lang_StringUTF16_indexOf,
    java_lang_StringUTF16_indexOfCharUnsafe,
+   java_lang_StringUTF16_indexOfUnsafe,
    java_lang_StringUTF16_length,
    java_lang_StringUTF16_newBytesFor,
    java_lang_StringUTF16_putChar,
