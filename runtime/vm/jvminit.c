@@ -7656,6 +7656,15 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		}
 	}
 #endif /* defined(J9VM_OPT_JFR) */
+	if (omrthread_monitor_init_with_name(&vm->cpuUtilCalcMutex, 0, "CPU Util Calc Mutex")) {
+		printf("error mutex\n");
+		goto error;
+	}
+	vmHooks = getVMHookInterface(vm);
+	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZED, startcpuUtilCalcProc, OMR_GET_CALLSITE(), NULL)) {
+		printf("error thread\n");
+		goto error;
+	}
 
 	/* Use this stage to load libraries which need to set up hooks as early as possible */
 	if (JNI_OK != runLoadStage(vm, EARLY_LOAD)) {
