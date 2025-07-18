@@ -465,12 +465,12 @@ internalInitializeJavaLangClassLoader(JNIEnv * env)
 
 	vmFuncs->internalEnterVMFromJNI(vmThread);
 
-#if defined(J9VM_OPT_SNAPSHOT)
+#if defined(J9VM_OPT_SNAPSHOTS)
 	/* Always use the persisted applicationClassLoader in restore runs. */
 	if (IS_RESTORE_RUN(vm)) {
 		vmFuncs->initializeSnapshotClassLoaderObject(vm, vm->applicationClassLoader, J9_JNI_UNWRAP_REFERENCE(appClassLoader));
 	} else
-#endif /* defined(J9VM_OPT_SNAPSHOT) */
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	{
 		vm->applicationClassLoader = J9VMJAVALANGCLASSLOADER_VMREF(vmThread, J9_JNI_UNWRAP_REFERENCE(appClassLoader));
 
