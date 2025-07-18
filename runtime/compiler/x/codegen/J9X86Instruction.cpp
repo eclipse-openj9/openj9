@@ -71,14 +71,11 @@ TR::Snippet *TR::X86MemImmSnippetInstruction::getSnippetForGC()
 void TR::X86MemImmSnippetInstruction::assignRegisters(TR_RegisterKinds kindsToBeAssigned)
    {
    TR::X86MemImmInstruction::assignRegisters(kindsToBeAssigned);
-   if (kindsToBeAssigned & (TR_X87_Mask | TR_FPR_Mask))
+   if (kindsToBeAssigned & TR_FPR_Mask)
       {
       TR::UnresolvedDataSnippet *snippet = getMemoryReference()->getUnresolvedDataSnippet();
       if (snippet)
          {
-         if (kindsToBeAssigned & TR_X87_Mask)
-            snippet->setNumLiveX87Registers(cg()->machine()->fpGetNumberOfLiveFPRs());
-
          if (kindsToBeAssigned & TR_FPR_Mask)
             snippet->setHasLiveXMMRegisters((cg()->machine()->fpGetNumberOfLiveXMMRs() > 0) ? true : false);
          }
