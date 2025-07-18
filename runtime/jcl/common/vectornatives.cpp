@@ -70,4 +70,19 @@ Java_jdk_internal_vm_vector_VectorSupport_getMaxLaneCount(JNIEnv *env, jclass cl
 	return laneCount;
 }
 
+#if JAVA_SPEC_VERSION >= 25
+jstring JNICALL
+Java_jdk_internal_vm_vector_VectorSupport_getCPUFeatures(JNIEnv *env, jclass clazz)
+{
+	char buf[1024];
+	OMRPORT_ACCESS_FROM_J9VMTHREAD((J9VMThread *)env);
+	OMRProcessorDesc processorDesc;
+	buf[0] = '\0';
+	if (0 == omrsysinfo_get_processor_description(&processorDesc)) {
+		omrsysinfo_get_processor_feature_string(&processorDesc, buf, sizeof(buf));
+	}
+	return env->NewStringUTF(buf);
 }
+#endif /* JAVA_SPEC_VERSION >= 25 */
+
+} /* extern "C" */
