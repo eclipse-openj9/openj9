@@ -12303,6 +12303,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
       generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 0);
    generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
 
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, serialCheckLabel);
    // get the starting address
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, startReg, startReg, indexReg);
 
@@ -12310,7 +12311,6 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, indexReg, 0);
 
    // --- go into the loop for sizes smaller than 4
-   generateLabelInstruction(cg, TR::InstOpCode::label, node, serialCheckLabel);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr6, lengthReg, 4);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, serialUnrollCheckLabel, cr6);
    // we already checked the first byte, so go to serial2
