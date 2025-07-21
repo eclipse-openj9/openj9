@@ -540,11 +540,14 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *  \param methodSymbol
    *     Method symbol
    *
+   *  \param reportAllMethods
+   *     if true, report all vector methods, even not described in the table
+   *
    *  \return
    *     \c true if \c methodSymbol is a recognized Vector API method(high level or intrinsic),
    *     \c false otherwise
    */
-   static bool isVectorAPIMethod(TR::MethodSymbol * methodSymbol);
+   static bool isVectorAPIMethod(TR::MethodSymbol * methodSymbol, bool reportAllMethods = false);
 
 
   /** \brief
@@ -1758,12 +1761,12 @@ class TR_VectorAPIExpansion : public TR::Optimization
          {
          bool twoTypes = opCode.isTwoTypeVectorOpCode();
 
-         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "%s%s%s%s is not implemented in %s",
+         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "%s%s%s%s is not implemented in %s at %s %S",
                                   opCode.getName(),
                                   twoTypes? TR::DataType::getName(opCode.getVectorSourceDataType()) : "",
                                   twoTypes? "_" : "",
                                   TR::DataType::getName(opCode.getVectorResultDataType()),
-                                  comp->signature());
+                                  comp->signature(), comp->getHotnessName(comp->getMethodHotness()), comp->isDLT() ? "DLT" : "");
          }
 
       return result;
@@ -1795,12 +1798,12 @@ class TR_VectorAPIExpansion : public TR::Optimization
       {
       if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
          {
-         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "IL is missing for vectorAPIOpCode %s %d on %s %s in %s",
+         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "IL is missing for vectorAPIOpCode %s %d on %s %s in %s at %s %S",
                                   vapiOpCodeTypeNames[opCodeType],
                                   vectorAPIOpCode,
                                   vapiObjTypeNames[objectType],
                                   withMask ? "with Mask" : "",
-                                  comp->signature());
+                                  comp->signature(), comp->getHotnessName(comp->getMethodHotness()), comp->isDLT() ? "DLT" : "");
          }
 
       return TR::BadILOp;
