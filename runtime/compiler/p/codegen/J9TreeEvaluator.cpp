@@ -12252,6 +12252,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    TR::Register *storeReg = cg->allocateRegister();
    TR::Register *maskReg = cg->allocateRegister();
 
+   TR::LabelSymbol *serialCheckLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *serial1Label = generateLabelSymbol(cg);
    TR::LabelSymbol *serial2Label = generateLabelSymbol(cg);
    TR::LabelSymbol *serial3Label = generateLabelSymbol(cg);
@@ -12285,15 +12286,35 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
                                      TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
       }
 
+   // --- check first byte
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr6, lengthReg, 1);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, serialCheckLabel, cr6);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::lbzx, node, storeReg,
+         TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 1));
+   if (isCountPositives)
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, indexReg, 0);
+   else
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 1);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, storeReg, storeReg, 0x80);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
+   if (isCountPositives)
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, indexReg, 1);
+   else
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 0);
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
+
    // get the starting address
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, startReg, startReg, indexReg);
+
    // make the index 0 since everything we need is relative to the offset
    generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, indexReg, 0);
 
-   // --- go into serial for sizes smaller than 4
-   // see if we have enough items to use the unrolled loop
+   // --- go into the loop for sizes smaller than 4
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, serialCheckLabel);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr6, lengthReg, 4);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, serialUnrollCheckLabel, cr6);
+   // we already checked the first byte, so go to serial2
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, serial2Label);
 
    // --- special cases for very small sizes
    generateLabelInstruction(cg, TR::InstOpCode::label, node, serial1Label);
