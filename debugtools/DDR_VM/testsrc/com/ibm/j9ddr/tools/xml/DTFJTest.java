@@ -38,7 +38,7 @@ import com.ibm.dtfj.java.JavaField;
 import com.ibm.dtfj.java.JavaObject;
 import com.ibm.dtfj.java.JavaRuntime;
 
-public abstract class DTFJTest extends XMLComparisonUnitTest {
+public abstract class DTFJTest {
 	private static Logger log = Logger.getLogger("j9ddr.view.dtfj");
 	private int indent = 0;
 	private FileWriter out = null;

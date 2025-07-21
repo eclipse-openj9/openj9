@@ -40,18 +40,6 @@ public class DTFJHeapSectionUnitTest extends DTFJTest {
 	
 	private boolean testJ9DDR = false;
 	private String[] filesToCompare = new String[2];
-	
-	
-	
-	@Override
-	public String getConfigPath() {
-		return "data/xpath configs/ DTFJHeapSectionUnitTest.properties";
-	}
-
-	@Override
-	public String[] getFilesToCompare() {
-		return filesToCompare;
-	}
 
 	@Override
 	public ImageFactory getImageFactory() {
