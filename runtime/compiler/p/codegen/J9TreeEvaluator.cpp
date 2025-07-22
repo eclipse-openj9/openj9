@@ -12305,11 +12305,16 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
       }
    else
       {
-      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, storeReg, storeReg, 0x80);
-      // tempReg = (a[0] < 0) ? 1 : 0
-      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, tempReg, storeReg, 25, 0x1);
       if (isCountPositives)
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::xori, node, indexReg, tempReg, 0x1);
+         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, indexReg, 0);
+      else
+         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 1);
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, storeReg, storeReg, 0x80);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
+      if (isCountPositives)
+         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, indexReg, 1);
+      else
+         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 0);
       }
    generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
 
