@@ -12314,6 +12314,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr6, lengthReg, 4);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, serialUnrollCheckLabel, cr6);
    // we already checked the first byte, so go to serial2
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, maskReg, lengthReg);
    generateLabelInstruction(cg, TR::InstOpCode::b, node, serial2Label);
 
    // --- special cases for very small sizes
