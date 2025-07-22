@@ -45,16 +45,6 @@ public class DTFJHeapUnitTest extends DTFJTest {
 	private String[] filesToCompare = new String[2];
 	
 	private HashSet<JavaClass> componentTypes = new HashSet<JavaClass>();
-	
-	@Override
-	public String getConfigPath() {
-		return "data/xpath configs/DTFJHeapUnitTest.properties";
-	}
-
-	@Override
-	public String[] getFilesToCompare() {
-		return filesToCompare;
-	}
 
 	@Override
 	public ImageFactory getImageFactory() {
