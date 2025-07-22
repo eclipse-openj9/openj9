@@ -12236,6 +12236,9 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    TR::Compilation *comp = cg->comp();
    bool isLE = comp->target().cpu.isLittleEndian();
    bool p9Plus = cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9);
+   bool p10Plus = cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10);
+   // just for debug
+   p10Plus = feGetEnv("TR_p10Plus") ? 1 : 0;
 
    TR::Register *startReg = cg->gprClobberEvaluate(node->getChild(0)); // array
    TR::Register *indexReg = cg->gprClobberEvaluate(node->getChild(1)); // offset
@@ -12291,16 +12294,23 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, serialCheckLabel, cr6);
    generateTrg1MemInstruction(cg, TR::InstOpCode::lbzx, node, storeReg,
          TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 1));
-   if (isCountPositives)
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, indexReg, 0);
+   if (p10Plus) // we can use setbc which is faster
+      {
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, storeReg, storeReg, 0x80);
+      // if the ZERO bit (bit 2) is zero, the value is negative
+      if (isCountPositives)
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::setbc, node, indexReg, cr0, 2);
+      else
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::setbcr, node, indexReg, cr0, 2);
+      }
    else
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 1);
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, storeReg, storeReg, 0x80);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
-   if (isCountPositives)
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, indexReg, 1);
-   else
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 0);
+      {
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, storeReg, storeReg, 0x80);
+      // tempReg = (a[0] < 0) ? 1 : 0
+      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, tempReg, storeReg, 1, 0x1);
+      if (isCountPositives)
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::xori, node, indexReg, tempReg, 0x1);
+      }
    generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, serialCheckLabel);
@@ -12313,7 +12323,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    // --- go into the loop for sizes smaller than 4
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr6, lengthReg, 4);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, serialUnrollCheckLabel, cr6);
-   // we already checked the first byte, so go to serial2
+   // the length cannot be 1; go to serial2
    generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, maskReg, lengthReg);
    generateLabelInstruction(cg, TR::InstOpCode::b, node, serial2Label);
 
