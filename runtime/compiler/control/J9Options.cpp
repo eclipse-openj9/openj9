@@ -3033,7 +3033,7 @@ J9::Options::disableMemoryDisclaimIfNeeded(J9JITConfig *jitConfig)
       // In these cases, attempt to disclaim on swap if possible.
        TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
        if (TR::Options::getCmdLineOptions()->getOption(TR_DontDisclaimMemoryOnSwap) ||
-          !TR::Options::getCmdLineOptions()->getOption(TR_DisclaimMemoryOnSwap) ||
+          !TR::Options::getCmdLineOptions()->getOption(TR_PreferSwapForMemoryDisclaim) ||
           compInfo->isSwapMemoryDisabled())
          {
          // Disclaim on backing file is preferred (or the only possibility)
@@ -3053,12 +3053,12 @@ J9::Options::disableMemoryDisclaimIfNeeded(J9JITConfig *jitConfig)
                   {
                   TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "WARNING: Disclaim feature disabled because /tmp is not suitable and swap is not available/allowed");
                   }
-               TR::Options::getCmdLineOptions()->setOption(TR_DisclaimMemoryOnSwap, false);
+               TR::Options::getCmdLineOptions()->setOption(TR_PreferSwapForMemoryDisclaim, false);
                }
             else
                {
                // Force the usage of swap space for disclaiming.
-               TR::Options::getCmdLineOptions()->setOption(TR_DisclaimMemoryOnSwap);
+               TR::Options::getCmdLineOptions()->setOption(TR_PreferSwapForMemoryDisclaim);
                if (TR::Options::getVerboseOption(TR_VerbosePerformance))
                   {
                   TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Memory disclaim will be done on swap because /tmp is not suitable");
