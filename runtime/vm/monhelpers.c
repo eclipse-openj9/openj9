@@ -84,7 +84,7 @@ restart:
 #endif /* if !(defined(AIXPPC) || defined(LINUXPPC)) */
 #endif /* ifndef J9VM_THR_LOCK_RESERVATION */
 #if JAVA_SPEC_VERSION >= 24
-		if (0x02 == count) {
+		if (OBJECT_HEADER_LOCK_FLC == count) {
 			/* FLC set, non-recursive. */
 			J9ObjectMonitor *objectMonitor = objectMonitorInflate(vmStruct, object, lock);
 
