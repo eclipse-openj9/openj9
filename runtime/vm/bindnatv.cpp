@@ -343,6 +343,9 @@ static J9OutOfLineINLMapping outOfLineINLmappings[] = {
 	{ "Java_openj9_internal_foreign_abi_InternalUpcallHandler_allocateUpcallStub__Lopenj9_internal_foreign_abi_UpcallMHMetaData_2_3Ljava_lang_String_2", OutOfLineINL_openj9_internal_foreign_abi_InternalUpcallHandler_allocateUpcallStub },
 	{ "Java_openj9_internal_foreign_abi_UpcallMHMetaData_resolveUpcallDataInfo__", OutOfLineINL_openj9_internal_foreign_abi_UpcallMHMetaData_resolveUpcallDataInfo },
 #endif /* JAVA_SPEC_VERSION >= 16 */
+#if defined(J9VM_OPT_SNAPSHOTS)
+	{ "Java_com_ibm_oti_vm_VM_rcpAssignClassLoader__Ljava_lang_ClassLoader_2I", OutOfLineINL_com_ibm_oti_vm_VM_rcpAssignClassLoader },
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 };
 
 static UDATA

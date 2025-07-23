@@ -119,6 +119,7 @@ public final class VM {
 	public static final int J9_CLASSLOADER_TYPE_OTHERS;
 	public static final int J9_CLASSLOADER_TYPE_BOOT;
 	public static final int J9_CLASSLOADER_TYPE_PLATFORM;
+	public static final int J9_CLASSLOADER_TYPE_APP;
 
 	/* Lock reservation */
 	public static final int J9CLASS_RESERVABLE_LOCK_WORD_INIT;
@@ -201,6 +202,7 @@ public final class VM {
 		J9_CLASSLOADER_TYPE_OTHERS = 0;
 		J9_CLASSLOADER_TYPE_BOOT = 0;
 		J9_CLASSLOADER_TYPE_PLATFORM = 0;
+		J9_CLASSLOADER_TYPE_APP = 0;
 
 		J9CLASS_RESERVABLE_LOCK_WORD_INIT = 0;
 		OBJECT_HEADER_LOCK_RESERVED = 0;
@@ -262,11 +264,27 @@ static final native ClassLoader getStackClassLoader(int depth);
  * @param loaderType
  *            J9_CLASSLOADER_TYPE_BOOT     - bootstrap classloader
  *            J9_CLASSLOADER_TYPE_PLATFORM - platform classloader
- *            J9_CLASSLOADER_TYPE_OTHERS   - other classloader
+ *            J9_CLASSLOADER_TYPE_APP      - application classloader if RAM_CLASS_CACHE_SUPPORT enabled from Java 11
+ *            J9_CLASSLOADER_TYPE_OTHERS   - other classloaders, includes application classloader if Java 8
+ *                                           or RAM_CLASS_CACHE_SUPPORT is not enabled
  * @param parallelCapable
  *            true if the loader has registered as parallel capable
  */
 public final static native void initializeClassLoader(ClassLoader loader, int loaderType, boolean parallelCapable);
+
+/*[IF RAM_CLASS_CACHE_SUPPORT] */
+/**
+ * RCP: assign the builtin classloaders in restore run.
+ *
+ * @param loader
+ *            ClassLoader the ClassLoader instance
+ * @param id
+ *            J9_CLASSLOADER_TYPE_BOOT     - bootstrap classloader
+ *            J9_CLASSLOADER_TYPE_PLATFORM - platform classloader
+ *            J9_CLASSLOADER_TYPE_APP      - application classloader
+ */
+public final static native void rcpAssignClassLoader(ClassLoader loader, int id);
+/*[ENDIF] RAM_CLASS_CACHE_SUPPORT */
 
 public final static native long getProcessId();
 public final static native long getUid();
@@ -587,6 +605,15 @@ public static native long getJ9ConstantPoolFromJ9Class(long j9clazz);
  * @return true if JVM is in single threaded mode, false otherwise
  */
 public static native boolean isJVMInSingleThreadedMode();
+
+/*[IF RAM_CLASS_CACHE_SUPPORT] */
+/**
+ * Queries whether the JVM is running in RCP restore run.
+ *
+ * @return true if JVM is in RCP restore run, false otherwise
+ */
+public static native boolean isRCPRestoreRun();
+/*[ENDIF] RAM_CLASS_CACHE_SUPPORT */
 
 /**
  * A J9ConstantPool* is appended to anntation parameter byte arrays
