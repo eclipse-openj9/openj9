@@ -1557,6 +1557,23 @@ public:
     */
    virtual bool isJ9VMThreadCurrentThreadImmutable();
 
+   /**
+    * \brief Answers whether live monitor map correctness is required.
+    *
+    * In the context of Dynamic Loop Transfer, the JIT compiler might not
+    * have complete information about which monitorenter bytecode operations
+    * have been executed.  With some versions of Java, that could result in
+    * an object being kept live longer than necessary, but does not cause
+    * problems for correctness.  For other versions of Java, the JVM consults
+    * the live monitor map to detect any monitor that needs to be detached from
+    * or attached to a carrier thread when a virtual thread is unmounted from
+    * or mounted on, respectively, the carrier thread.
+    *
+    * \returns True if live monitor map correctness is required; false,
+    *          otherwise.
+    */
+   virtual bool isLiveMonitorMapCorrectnessRequired();
+
 protected:
    bool isSignatureForPrimitiveType(const char * sig, int32_t sigLength)
       {
