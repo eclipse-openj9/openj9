@@ -434,16 +434,32 @@ private ClassLoader(Void staticMethodHolder, String classLoaderName, ClassLoader
 	}
 /*[IF JAVA_SPEC_VERSION > 8]*/
 	else {
-		if (bootstrapClassLoader == null) {
-			// BootstrapClassLoader.unnamedModule is set by JVM_SetBootLoaderUnnamedModule
-			unnamedModule = null;
-			bootstrapClassLoader = this;
-			VM.initializeClassLoader(bootstrapClassLoader, VM.J9_CLASSLOADER_TYPE_BOOT, false);
+		if (!VM.isRestoreRun()) {
+			if (bootstrapClassLoader == null) {
+				// BootstrapClassLoader.unnamedModule is set by JVM_SetBootLoaderUnnamedModule
+				unnamedModule = null;
+				bootstrapClassLoader = this;
+				VM.initializeClassLoader(bootstrapClassLoader, VM.J9_CLASSLOADER_TYPE_BOOT, false);
+			} else {
+				// Assuming the second classloader initialized is platform classloader
+				VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_PLATFORM, false);
+				specialLoaderInited = true;
+				unnamedModule = new Module(this);
+			}
 		} else {
-			// Assuming the second classloader initialized is platform classloader
-			VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_PLATFORM, false);
-			specialLoaderInited = true;
-			unnamedModule = new Module(this);
+			if (bootstrapClassLoader == null) {
+				// BootstrapClassLoader.unnamedModule is set by JVM_SetBootLoaderUnnamedModule
+				unnamedModule = null;
+				bootstrapClassLoader = this;
+				VM.rcpAssignClassLoader(bootstrapClassLoader, VM.J9_CLASSLOADER_TYPE_BOOT);
+			} else if (classLoaderName.equals("platform")) {
+				VM.rcpAssignClassLoader(this, VM.J9_CLASSLOADER_TYPE_PLATFORM);
+				unnamedModule = new Module(this);
+			} else {
+				VM.rcpAssignClassLoader(this, VM.J9_CLASSLOADER_TYPE_OTHERS);
+				specialLoaderInited = true;
+				unnamedModule = new Module(this);
+			}
 		}
 	}
 	this.classLoaderName = classLoaderName;
