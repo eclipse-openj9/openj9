@@ -9900,13 +9900,7 @@ J9::X86::TreeEvaluator::vectorizedHashCodeHelper(TR::Node *node, TR::DataType dt
    TR_ASSERT_FATAL(shift >= 0 && shift <= 2, "Unsupported datatype for vectorized hashcode");
 
    TR::Compilation *comp = cg->comp();
-   TR::VectorLength vl = TR::VectorLength128;
-
-   if (comp->target().cpu.supportsFeature(OMR_FEATURE_X86_AVX512F))
-      vl = TR::VectorLength512;
-   else if (comp->target().cpu.supportsFeature(OMR_FEATURE_X86_AVX2))
-      vl = TR::VectorLength256;
-
+   TR::VectorLength vl = cg->getMaxPreferredVectorLength();
    TR::Node *addressNode = node->getChild(0);
 
    bool nonZeroOffset = node->getChild(1)->getOpCodeValue() != TR::iconst || node->getChild(1)->getInt() != 0;
