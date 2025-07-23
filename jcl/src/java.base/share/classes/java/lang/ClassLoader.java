@@ -102,6 +102,7 @@ public abstract class ClassLoader {
 	private final static String DELEGATING_CL = "sun.reflect.DelegatingClassLoader"; //$NON-NLS-1$
 	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	private boolean isDelegatingCL = false;
+	static private int specialClassLoaderId = -1;
 
 	/*
 	 * This is the application ClassLoader
@@ -439,10 +440,18 @@ private ClassLoader(Void staticMethodHolder, String classLoaderName, ClassLoader
 			unnamedModule = null;
 			bootstrapClassLoader = this;
 			VM.initializeClassLoader(bootstrapClassLoader, VM.J9_CLASSLOADER_TYPE_BOOT, false);
+			specialClassLoaderId = VM.J9_CLASSLOADER_TYPE_BOOT;
 		} else {
-			// Assuming the second classloader initialized is platform classloader
-			VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_PLATFORM, false);
-			specialLoaderInited = true;
+			if (specialClassLoaderId == VM.J9_CLASSLOADER_TYPE_BOOT) {
+				// Assuming the second classloader initialized is platform classloader
+				VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_PLATFORM, false);
+				specialClassLoaderId = VM.J9_CLASSLOADER_TYPE_PLATFORM;
+			} else {
+				// Assuming the third classloader initialized is application classloader
+				VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_OTHERS, isParallelCapable);
+				specialLoaderInited = true;
+				specialClassLoaderId = VM.J9_CLASSLOADER_TYPE_OTHERS;
+			} 
 			unnamedModule = new Module(this);
 		}
 	}

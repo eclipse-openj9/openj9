@@ -4951,6 +4951,8 @@ internalError:
 #if defined(J9VM_OPT_SNAPSHOTS)
 			if (IS_RESTORE_RUN(_vm) && (J9_CLASSLOADER_TYPE_PLATFORM == loaderType)) {
 				_vm->internalVMFunctions->initializeSnapshotClassLoaderObject(_vm, _vm->extensionClassLoader, classLoaderObject);
+			} else if (IS_RESTORE_RUN(_vm) && (J9_CLASSLOADER_TYPE_OTHERS == loaderType) && (NULL == _vm->applicationClassLoader->classLoaderObject)) {
+				_vm->internalVMFunctions->initializeSnapshotClassLoaderObject(_vm, _vm->applicationClassLoader, classLoaderObject);
 			} else
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 			{
@@ -4963,6 +4965,8 @@ internalError:
 				if (J9_CLASSLOADER_TYPE_PLATFORM == loaderType) {
 					/* extensionClassLoader holds the platform class loader in Java 11+ */
 					_vm->extensionClassLoader = result;
+				} else if (J9_CLASSLOADER_TYPE_OTHERS == loaderType && NULL == _vm->applicationClassLoader) {
+					_vm->applicationClassLoader = result;
 				}
 			}
 		}
