@@ -1851,7 +1851,7 @@ obj:
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #if JAVA_SPEC_VERSION >= 24
 					case J9_OBJECT_MONITOR_YIELD_VIRTUAL: {
-						rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_SYNC_METHOD);
+						rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, j2i ? J9VM_CONTINUATION_RETURN_FROM_SYNC_METHOD_J2I : J9VM_CONTINUATION_RETURN_FROM_SYNC_METHOD);
 						break;
 					}
 #endif /* JAVA_SPEC_VERSION >= 24 */
@@ -5876,6 +5876,20 @@ ffi_OOM:
 			bytecodeFrame->savedA0 = (UDATA *)((UDATA)bytecodeFrame->savedA0 & ~((UDATA)J9SF_A0_INVISIBLE_TAG));
 			_arg0EA = bytecodeFrame->savedA0;
 			rc = inlineSendTarget(REGISTER_ARGS, VM_MAYBE, VM_MAYBE, VM_MAYBE, VM_MAYBE, false, false, true);
+			break;
+		}
+		case J9VM_CONTINUATION_RETURN_FROM_SYNC_METHOD_J2I: {
+			/* Reset interpreter state to what it would have been upon entry to inline send target. */
+			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_literals);
+			J9SFJ2IFrame *j2iFrame = (J9SFJ2IFrame *)_sp;
+			restoreJ2IValues(j2iFrame);
+			_sendMethod = _literals;
+			_literals = (J9Method *)j2iFrame->exitPoint;
+			_pc = (U_8 *)j2iFrame->returnAddress;
+			j2iFrame->taggedReturnSP = (UDATA *)((UDATA)j2iFrame->taggedReturnSP & ~((UDATA)J9SF_A0_INVISIBLE_TAG));
+			_arg0EA = (UDATA *)j2iFrame->taggedReturnSP;
+			_sp = (UDATA *)((J9SFJ2IFrame *)_sp + 1) + (romMethod->tempCount + 1);
+			rc = inlineSendTarget(REGISTER_ARGS, VM_MAYBE, VM_MAYBE, VM_MAYBE, VM_MAYBE, true, false, true);
 			break;
 		}
 		case J9VM_CONTINUATION_RETURN_FROM_JIT_MONITOR_ENTER: {
