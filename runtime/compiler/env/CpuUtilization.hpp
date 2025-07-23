@@ -66,6 +66,9 @@ public:
       {
       int64_t _timeStamp;
       int64_t _sampleSystemCpu;
+      int64_t _sampleUserTime;
+      int64_t _sampleSystemTime;
+      int64_t _sampleIdleTime;
       int64_t _sampleJvmCpu;
       } CpuUsageCircularBuffer;
 
@@ -105,10 +108,13 @@ private:
    int64_t _prevIntervalLength; // the duration (in ns) of the last update interval
 
    // values recorded at start of this update interval
-   int64_t _prevMachineUptime;  // absolute value (in ns) of machine uptime
-   int64_t _prevMachineCpuTime; // absolute value (in ns) of used CPU time on the machine
-   int64_t _prevVmSysTime;      // absolute value (in ns) of time VM spent in kernel space
-   int64_t _prevVmUserTime;     // absolute value (in ns) of time VM spent in user space
+   int64_t _prevMachineUptime;      // absolute value (in ns) of machine uptime
+   int64_t _prevMachineCpuTime;     // absolute value (in ns) of used CPU time on the machine
+   int64_t _prevMachineIdleTime;    // absolute value (in CPU ticks) of total idle time on the machine
+   int64_t _prevVmSysTime;          // absolute value (in ns) of time VM spent in kernel space
+   int64_t _prevVmUserTime;         // absolute value (in ns) of time VM spent in user space
+   int64_t _prevMachineUserTime;    // absolute value (in CPU ticks) of total user time on the machine
+   int64_t _prevMachineSystemTime;  // absolute value (in CPU ticks) of total kernel time on the machine
 
    CpuUsageCircularBuffer *_cpuUsageCircularBuffer;      // Circular buffer containing timestamp, system cpu usage sample, and jvm cpu use sample
    int32_t                 _cpuUsageCircularBufferIndex; // Current index of the buffer; contains the oldest data. Subtract 1 to get the most recent data
