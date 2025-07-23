@@ -109,6 +109,9 @@ private:
    int64_t _prevMachineCpuTime; // absolute value (in ns) of used CPU time on the machine
    int64_t _prevVmSysTime;      // absolute value (in ns) of time VM spent in kernel space
    int64_t _prevVmUserTime;     // absolute value (in ns) of time VM spent in user space
+   int64_t _prevMachineUserTime;
+   int64_t _prevMachineSystemTime;
+   int64_t _prevMachineIdleTime;
 
    CpuUsageCircularBuffer *_cpuUsageCircularBuffer;      // Circular buffer containing timestamp, system cpu usage sample, and jvm cpu use sample
    int32_t                 _cpuUsageCircularBufferIndex; // Current index of the buffer; contains the oldest data. Subtract 1 to get the most recent data
