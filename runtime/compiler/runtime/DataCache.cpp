@@ -271,7 +271,7 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
                // If swap is enabled, we can allocate memory with mmap(MAP_ANOYNMOUS|MAP_PRIVATE) and disclaim to swap
                // If swap is not enabled we can disclaim to a backing file
                TR::CompilationInfo * compInfo = TR::CompilationInfo::get(_jitConfig);
-               if (!TR::Options::getCmdLineOptions()->getOption(TR_DisclaimMemoryOnSwap) || compInfo->isSwapMemoryDisabled())
+               if (!TR::Options::getCmdLineOptions()->getOption(TR_PreferSwapForMemoryDisclaim) || compInfo->isSwapMemoryDisabled())
                   {
                   memoryType |= MEMORY_TYPE_DISCLAIMABLE_TO_FILE;
                   }
@@ -820,7 +820,7 @@ int TR_DataCacheManager::disclaimAllDataCaches()
    int numDisclaimed = 0;
 #ifdef LINUX
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(_jitConfig);
-   bool canDisclaimOnSwap = TR::Options::getCmdLineOptions()->getOption(TR_DisclaimMemoryOnSwap) && !compInfo->isSwapMemoryDisabled();
+   bool canDisclaimOnSwap = TR::Options::getCmdLineOptions()->getOption(TR_PreferSwapForMemoryDisclaim) && !compInfo->isSwapMemoryDisabled();
    OMR::CriticalSection criticalSection(_mutex);
    // Traverses all dataCache segments
    for (J9MemorySegment *dataCacheSeg = _jitConfig->dataCacheList->nextSegment; dataCacheSeg; dataCacheSeg = dataCacheSeg->nextSegment)

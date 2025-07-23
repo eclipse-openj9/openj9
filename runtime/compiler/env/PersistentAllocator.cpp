@@ -705,7 +705,7 @@ PersistentAllocator::disclaimAllSegments()
 #ifdef LINUX
    bool verbose = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance);
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(_javaVM.jitConfig);
-   bool canDisclaimOnSwap = TR::Options::getCmdLineOptions()->getOption(TR_DisclaimMemoryOnSwap) && !compInfo->isSwapMemoryDisabled();
+   bool canDisclaimOnSwap = TR::Options::getCmdLineOptions()->getOption(TR_PreferSwapForMemoryDisclaim) && !compInfo->isSwapMemoryDisabled();
    j9thread_monitor_enter(_segmentMonitor);
    for (auto segmentIterator = _segments.begin(); segmentIterator != _segments.end(); ++segmentIterator)
       {

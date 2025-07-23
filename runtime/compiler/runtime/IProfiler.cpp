@@ -577,7 +577,7 @@ TR_IProfiler::createPersistentAllocator(J9JITConfig *jitConfig)
       PORT_ACCESS_FROM_JITCONFIG(jitConfig);
       memoryType |= MEMORY_TYPE_VIRTUAL; // Force the usage of mmap for allocation
       TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
-      if (!TR::Options::getCmdLineOptions()->getOption(TR_DisclaimMemoryOnSwap) || compInfo->isSwapMemoryDisabled())
+      if (!TR::Options::getCmdLineOptions()->getOption(TR_PreferSwapForMemoryDisclaim) || compInfo->isSwapMemoryDisabled())
          {
          memoryType |= MEMORY_TYPE_DISCLAIMABLE_TO_FILE;
          }
