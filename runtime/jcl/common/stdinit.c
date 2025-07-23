@@ -468,7 +468,9 @@ internalInitializeJavaLangClassLoader(JNIEnv * env)
 #if defined(J9VM_OPT_SNAPSHOTS)
 	/* Always use the persisted applicationClassLoader in restore runs. */
 	if (IS_RESTORE_RUN(vm)) {
+#if JAVA_SPEC_VERSION == 8
 		vmFuncs->initializeSnapshotClassLoaderObject(vm, vm->applicationClassLoader, J9_JNI_UNWRAP_REFERENCE(appClassLoader));
+#endif /* JAVA_SPEC_VERSION == 8 */
 	} else
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	{
@@ -503,7 +505,9 @@ internalInitializeJavaLangClassLoader(JNIEnv * env)
 #if defined(J9VM_OPT_SNAPSHOTS)
 		/* Always use the persisted extensionClassLoader in restore runs. */
 		if (IS_RESTORE_RUN(vm)) {
+#if JAVA_SPEC_VERSION == 8
 			vmFuncs->initializeSnapshotClassLoaderObject(vm, vm->extensionClassLoader, classLoaderObject);
+#endif /* JAVA_SPEC_VERSION == 8 */
 		} else
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 		if (NULL == vm->extensionClassLoader) {

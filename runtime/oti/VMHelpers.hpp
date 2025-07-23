@@ -2301,6 +2301,44 @@ exit:
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		return oldState;
 	}
+
+	/**
+	 * Common function to initialize boot class loader.
+	 *
+	 * @param[in] currentThread the current J9VMThread
+	 * @param[in] classLoaderObject class loader object
+	 * @param[in] parallelCapable if true parallel capable, default false not capable (or ignored)
+	 * @return true if successful, false if failed
+	 */
+	static VMINLINE bool
+	initializeBootClassLoader(J9VMThread *currentThread, j9object_t classLoaderObject, bool parallelCapable = false)
+	{
+		J9JavaVM *vm = currentThread->javaVM;
+
+		/* If called with bootLoader, assign the system one to this instance. */
+		J9ClassLoader *classLoaderStruct = vm->systemClassLoader;
+		j9object_t loaderObject = J9CLASSLOADER_CLASSLOADEROBJECT(currentThread, classLoaderStruct);
+		if (NULL != loaderObject) {
+			return false;
+		}
+		J9CLASSLOADER_SET_CLASSLOADEROBJECT(currentThread, classLoaderStruct, classLoaderObject);
+		if (parallelCapable) {
+			classLoaderStruct->flags |= J9CLASSLOADER_PARALLEL_CAPABLE;
+		}
+		VM_AtomicSupport::writeBarrier();
+		J9VMJAVALANGCLASSLOADER_SET_VMREF(currentThread, classLoaderObject, classLoaderStruct);
+		TRIGGER_J9HOOK_VM_CLASS_LOADER_INITIALIZED(vm->hookInterface, currentThread, classLoaderStruct);
+
+		J9ClassWalkState classWalkState;
+		J9Class *clazz = allClassesStartDo(&classWalkState, vm, classLoaderStruct);
+		while (NULL != clazz) {
+			J9VMJAVALANGCLASS_SET_CLASSLOADER(currentThread, clazz->classObject, classLoaderObject);
+			clazz = allClassesNextDo(&classWalkState);
+		}
+		allClassesEndDo(&classWalkState);
+		return true;
+	}
+
 };
 
 #endif /* VMHELPERS_HPP_ */
