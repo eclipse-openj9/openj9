@@ -262,16 +262,33 @@ createPackage(J9VMThread *currentThread, J9Module *fromModule, J9UTF8 *packageNa
  *  @return Pointer to module's classloader
  */
 static J9ClassLoader *
-getModuleObjectClassLoader(J9VMThread * currentThread, j9object_t moduleObject)
+getModuleObjectClassLoader(J9VMThread *currentThread, j9object_t moduleObject)
 {
+	J9JavaVM *const vm = currentThread->javaVM;
 	j9object_t classLoader = J9VMJAVALANGMODULE_LOADER(currentThread, moduleObject);
 	if (NULL == classLoader) {
-		return currentThread->javaVM->systemClassLoader;
+		return vm->systemClassLoader;
 	} else {
 		J9ClassLoader *loader = J9VMJAVALANGCLASSLOADER_VMREF(currentThread, classLoader);
 		if (NULL == loader) {
-			J9JavaVM * const vm = currentThread->javaVM;
-			loader = vm->internalVMFunctions->internalAllocateClassLoader(vm, classLoader);
+#if defined(J9VM_OPT_SNAPSHOTS)
+			j9object_t jclassLoaderName = J9VMJAVALANGCLASSLOADER_CLASSLOADERNAME(currentThread, classLoader);
+			char nameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
+			PORT_ACCESS_FROM_JAVAVM(vm);
+			char *classLoaderNameUTF = vm->internalVMFunctions->copyStringToUTF8WithMemAlloc(
+				currentThread, jclassLoaderName, J9_STR_NULL_TERMINATE_RESULT, "", 0, nameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
+
+			BOOLEAN isAppClassLoader = ((NULL != classLoaderNameUTF) && strncmp("app", classLoaderNameUTF, 3) == 0);
+			if ((NULL != classLoaderNameUTF) && nameBuf != classLoaderNameUTF) {
+				j9mem_free_memory(classLoaderNameUTF);
+			}
+			if (IS_RESTORE_RUN(vm) && isAppClassLoader) {
+				loader = vm->applicationClassLoader;
+			} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				loader = vm->internalVMFunctions->internalAllocateClassLoader(vm, classLoader);
+			}
 		}
 		return loader;
 	}
