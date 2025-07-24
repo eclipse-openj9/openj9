@@ -12233,9 +12233,9 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
                                                                     TR::CodeGenerator *cg,
                                                                     bool isCountPositives)
    {
+   TR::Compilation *comp = cg->comp();
    TR_ASSERT_FATAL(comp->target().is64Bit(), "countPositives is only supported on 64-bit JVMs!");
 
-   TR::Compilation *comp = cg->comp();
    bool isLE = comp->target().cpu.isLittleEndian();
    bool p9Plus = cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9);
    bool p10Plus = cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10);
@@ -12344,6 +12344,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
          TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 1));
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, storeReg, storeReg, 0x80);
    if (p10Plus) // if the ZERO bit (bit 2) is zero, the value is negative
+      {
       if (isCountPositives) // indexReg = storeReg < 0 ? indexReg : indexReg + 1
          {
          generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::setbc, node, tempReg, cr0, 2);
@@ -12354,6 +12355,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
          generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::setbcr, node, tempReg, cr0, 2);
          }
       generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
+      }
    else
       {
       generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
@@ -12407,10 +12409,10 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
       {
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, storeReg, storeReg, 0x8080);
       if (p10Plus) // if the ZERO bit (bit 2) is zero, one of the values is negative
-            {
+         {
             generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::setbcr, node, tempReg, cr0, 2);
-            }
-         generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
+            generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
+         }
       else
          {
          generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
@@ -12468,10 +12470,10 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
       {
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, storeReg, storeReg, 0x8080);
       if (p10Plus) // if the ZERO bit (bit 2) is zero, one of the values is negative
-            {
-            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::setbcr, node, tempReg, cr0, 2);
-            }
+         {
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::setbcr, node, tempReg, cr0, 2);
          generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
+         }
       else
          {
          generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
@@ -12609,7 +12611,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
             generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
 
             // shift 4 bytes, then do it again
-            generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, storeReg, storeReg, 32
+            generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, storeReg, storeReg, 32,
                   CONSTANT64(0x00000000FFFFFFFF));
             generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 1);
             generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, maskReg, storeReg, 0x80);
