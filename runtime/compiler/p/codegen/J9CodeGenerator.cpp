@@ -149,7 +149,8 @@ J9::Power::CodeGenerator::initialize()
       feGetEnv("TR_DisableInlineStringCodingCountPositives") != NULL;
    if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) &&
       comp->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX) &&
-      !TR::Compiler->om.canGenerateArraylets())
+      !TR::Compiler->om.canGenerateArraylets() &&
+      comp->target().is64Bit())
       {
       if (!disableInlineStringCodingHasNegatives)
          cg->setSupportsInlineStringCodingHasNegatives();
