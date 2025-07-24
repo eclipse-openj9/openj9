@@ -1431,7 +1431,8 @@ private:
 				uintptr_t reservedRegionCount = MM_Math::roundToCeiling(regionSize, dataSize) / regionSize;
 
 				_extensions->largeObjectVirtualMemory->freeSparseRegionAndUnmapFromHeapObject(_env, dataAddr, objectPtr, dataSize, sparseDataEntryIterator);
-				_markingScheme->recycleReservedRegionsForVirtualLargeObjectHeap(env, reservedRegionCount);
+				MM_AllocationContextBalanced *commonContext = (MM_AllocationContextBalanced *)env->getCommonAllocationContext();
+				commonContext->recycleReservedRegionsForVirtualLargeObjectHeap(env, reservedRegionCount);
 			}
 		}
 	}
@@ -1874,29 +1875,6 @@ MM_GlobalMarkingScheme::flushBuffers(MM_EnvironmentVLHGC *env)
 	env->_workStack.flush(env);
 	env->getGCEnvironment()->_referenceObjectBuffer->flush(env);
 }
-
-#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
-void
-MM_GlobalMarkingScheme::recycleReservedRegionsForVirtualLargeObjectHeap(MM_EnvironmentVLHGC *env, uintptr_t reservedRegionCount)
-{
-	MM_AllocationContextTarok *commonContext = (MM_AllocationContextTarok *)env->getCommonAllocationContext();
-
-	MM_HeapRegionDescriptorVLHGC **head = ((MM_AllocationContextBalanced *)commonContext)->getArrayReservedRegionListAddress();
-	MM_HeapRegionDescriptorVLHGC *region = NULL;
-
-	while ((reservedRegionCount > 0) && (NULL != (region = *head))) {
-		region->_allocateData.popRegionFromArrayReservedRegionList(env, head);
-		((MM_AllocationContextBalanced *)commonContext)->decrementArrayReservedRegionCount();
-
-		/* Restore/Recommit the reserved region that have been previously decommitted. */
-		_extensions->heap->commitMemory(region->getLowAddress(), _extensions->heapRegionManager->getRegionSize());
-
-		region->getSubSpace()->recycleRegion(env, region);
-		reservedRegionCount -= 1;
-	}
-	Assert_MM_true(0 == reservedRegionCount);
-}
-#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 
 bool
 MM_ConcurrentGlobalMarkTask::shouldYieldFromTask(MM_EnvironmentBase *envBase)

@@ -31,6 +31,11 @@
 #include "HeapRegionDescriptorVLHGC.hpp"
 #include "HeapRegionIteratorVLHGC.hpp"
 
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+#include "AllocationContextBalanced.hpp"
+#include "EnvironmentVLHGC.hpp"
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+
 MM_HeapRegionManagerVLHGC::MM_HeapRegionManagerVLHGC(MM_EnvironmentBase *env, uintptr_t regionSize, uintptr_t tableDescriptorSize, MM_RegionDescriptorInitializer regionDescriptorInitializer, MM_RegionDescriptorDestructor regionDescriptorDestructor)
 	: MM_HeapRegionManagerTarok(env, regionSize, tableDescriptorSize, regionDescriptorInitializer, regionDescriptorDestructor)
 {
@@ -217,3 +222,14 @@ MM_HeapRegionManagerVLHGC::getHeapMemorySnapshot(MM_GCExtensionsBase *extensions
 
 	return snapshot;
 }
+
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+void
+MM_HeapRegionManagerVLHGC::recycleReservedRegionsForVirtualLargeObjectHeap(MM_EnvironmentBase *envBase, uintptr_t reservedRegionCount)
+{
+	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
+	MM_AllocationContextBalanced *commonContext = (MM_AllocationContextBalanced *)env->getCommonAllocationContext();
+
+	commonContext->recycleReservedRegionsForVirtualLargeObjectHeap(env, reservedRegionCount, true);
+}
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */

@@ -522,10 +522,6 @@ public:
 #endif /* JAVA_SPEC_VERSION >= 24 */
 	void doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slotPtr, J9StackWalkState *walkState, const void *stackLocation);
 
-#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
-	void recycleReservedRegionsForVirtualLargeObjectHeap(MM_EnvironmentVLHGC *env, uintptr_t reservedRegionCount);
-#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
-
 	/**
 	 * Create a GlobalMarkingScheme object.
 	 */

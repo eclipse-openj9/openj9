@@ -27,7 +27,8 @@
 #include "MemorySpace.hpp"
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) || defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 #include "ArrayletLeafIterator.hpp"
-#include "HeapRegionManager.hpp"
+//#include "HeapRegionManager.hpp"
+#include "HeapRegionManagerVLHGC.hpp"
 #include "HeapRegionDescriptorVLHGC.hpp"
 #include "Heap.hpp"
 #include "SparseVirtualMemory.hpp"
@@ -334,11 +335,11 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 MMINLINE J9IndexableObject *
-MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_EnvironmentBase *env, J9IndexableObject *spine)
+MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_EnvironmentBase *envBase, J9IndexableObject *spine)
 {
 	Assert_MM_true(_numberOfArraylets == _allocateDescription.getNumArraylets());
 
-	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(envBase);
 	GC_ArrayObjectModel *indexableObjectModel = &extensions->indexableObjectModel;
 	const uintptr_t regionSize = extensions->heapRegionManager->getRegionSize();
 
@@ -351,17 +352,16 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 
 	/* Allocate leaf for each arraylet and attach it to its leaf pointer in the spine. */
 	uintptr_t arrayoidIndex = 0;
-	Trc_MM_getSparseAddressAndDecommitLeaves_Entry(env->getLanguageVMThread(), spine, (void *)bytesRemaining, arrayReservedRegionCount, (void *)regionSize);
+	Trc_MM_getSparseAddressAndDecommitLeaves_Entry(envBase->getLanguageVMThread(), spine, (void *)bytesRemaining, arrayReservedRegionCount, (void *)regionSize);
 	while (0 < bytesRemaining) {
 		/* Allocate the next arraylet leaf - leaves are allocated solely for the purpose of
 		   decommitting the memory later on in this function. */
-		void *leaf = env->_objectAllocationInterface->allocateArrayletLeaf(
-				env, &_allocateDescription, _allocateDescription.getMemorySpace(), true);
+		void *leaf = envBase->_objectAllocationInterface->allocateArrayletLeaf(
+				envBase, &_allocateDescription, _allocateDescription.getMemorySpace(), true);
 
 		/* If leaf allocation failed set the result to NULL and return. */
 		if (NULL == leaf) {
-			/* Spine and preceding arraylets are now floating garbage. */
-			Trc_MM_allocateAndConnectNonContiguousArraylet_leafFailure(env->getLanguageVMThread());
+			Trc_MM_allocateAndConnectNonContiguousArraylet_leafFailure(envBase->getLanguageVMThread());
 			_allocateDescription.setSpine(NULL);
 			spine = NULL;
 			break;
@@ -399,7 +399,13 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 		}
 	}
 
-	Trc_MM_getSparseAddressAndDecommitLeaves_Exit(env->getLanguageVMThread(), spine, (void *)bytesRemaining);
+	if (NULL == spine) {
+		/* fail to reserve regions or allocateSparseFreeEntry, clean up reserved regions */
+		if (0 < arrayoidIndex) {
+			((MM_HeapRegionManagerVLHGC *)extensions->heapRegionManager)->recycleReservedRegionsForVirtualLargeObjectHeap(envBase, arrayoidIndex);
+		}
+	}
+	Trc_MM_getSparseAddressAndDecommitLeaves_Exit(envBase->getLanguageVMThread(), spine, (void *)bytesRemaining);
 
 	return spine;
 }

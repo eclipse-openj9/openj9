@@ -1102,3 +1102,33 @@ MM_AllocationContextBalanced::setNumaAffinityForThread(MM_EnvironmentBase *env)
 	return success;
 }
 
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+void
+MM_AllocationContextBalanced::recycleReservedRegionsForVirtualLargeObjectHeap(MM_EnvironmentVLHGC *env, uintptr_t reservedRegionCount, bool needLock)
+{
+	MM_HeapRegionDescriptorVLHGC **head = getArrayReservedRegionListAddress();
+	MM_HeapRegionDescriptorVLHGC *region = NULL;
+
+	if (needLock) {
+		lockCommon();
+	}
+
+	while ((reservedRegionCount > 0) && (NULL != (region = *head))) {
+		region->_allocateData.popRegionFromArrayReservedRegionList(env, head);
+		decrementArrayReservedRegionCount();
+
+		/* Restore/Recommit the reserved region that have been previously decommitted. */
+		 MM_GCExtensions::getExtensions(env)->heap->commitMemory(region->getLowAddress(), _heapRegionManager->getRegionSize());
+
+		region->getSubSpace()->recycleRegion(env, region);
+		reservedRegionCount -= 1;
+	}
+
+	if (needLock) {
+		unlockCommon();
+	}
+
+	Assert_MM_true(0 == reservedRegionCount);
+}
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+

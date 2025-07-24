@@ -432,29 +432,6 @@ MM_CopyForwardScheme::clearGCStats(MM_EnvironmentVLHGC *env)
 	static_cast<MM_CycleStateVLHGC *>(env->_cycleState)->_vlhgcIncrementStats._continuationStats.clear();
 }
 
-#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
-void
-MM_CopyForwardScheme::recycleReservedRegionsForVirtualLargeObjectHeap(MM_EnvironmentVLHGC *env, uintptr_t reservedRegionCount)
-{
-	MM_AllocationContextTarok *commonContext = (MM_AllocationContextTarok *)env->getCommonAllocationContext();
-
-	MM_HeapRegionDescriptorVLHGC **head = ((MM_AllocationContextBalanced *)commonContext)->getArrayReservedRegionListAddress();
-	MM_HeapRegionDescriptorVLHGC *region = NULL;
-
-	while ((reservedRegionCount > 0) && (NULL != (region = *head))) {
-		region->_allocateData.popRegionFromArrayReservedRegionList(env, head);
-		((MM_AllocationContextBalanced *)commonContext)->decrementArrayReservedRegionCount();
-
-		/* Restore/Recommit the reserved region that have been previously decommitted. */
-		_extensions->heap->commitMemory(region->getLowAddress(), _extensions->heapRegionManager->getRegionSize());
-
-		region->getSubSpace()->recycleRegion(env, region);
-		reservedRegionCount -= 1;
-	}
-	Assert_MM_true(0 == reservedRegionCount);
-}
-#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
-
 void
 MM_CopyForwardScheme::updateLeafRegions(MM_EnvironmentVLHGC *env)
 {
@@ -4200,7 +4177,8 @@ private:
 				void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous((J9IndexableObject *)objectPtr);
 				_extensions->largeObjectVirtualMemory->freeSparseRegionAndUnmapFromHeapObject(_env, dataAddr, objectPtr, dataSize, sparseDataEntryIterator);
 				/* recycleLeafRegions for off-heap case */
-				_copyForwardScheme->recycleReservedRegionsForVirtualLargeObjectHeap(env, reservedRegionCount);
+				MM_AllocationContextBalanced *commonContext = (MM_AllocationContextBalanced *)env->getCommonAllocationContext();
+				commonContext->recycleReservedRegionsForVirtualLargeObjectHeap(env, reservedRegionCount);
 			} else {
 				void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous((J9IndexableObject *)fwdOjectPtr);
 				if (NULL != dataAddr) {

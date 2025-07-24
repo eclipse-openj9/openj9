@@ -299,6 +299,8 @@ public:
 	{
 		_arrayReservedRegionCount -= 1;
 	}
+
+	void recycleReservedRegionsForVirtualLargeObjectHeap(MM_EnvironmentVLHGC *env, uintptr_t reservedRegionCount, bool needLock = false);
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 	
 protected:
