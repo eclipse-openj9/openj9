@@ -67,6 +67,12 @@ class CRRuntime
       CR_THR_LAST_STATE // must be the last one
       };
 
+   /**
+    * @brief Constructor of the CRRuntime class
+    *
+    * @param jitConfig Pointer to the J9JITConfig
+    * @param compInfo Pointer to the TR::CompilationInfo
+    */
    CRRuntime(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo);
 
    /**
@@ -76,21 +82,31 @@ class CRRuntime
     */
    void cacheEventsStatus();
 
-   /* The CR Monitor (Checkpoint/Restore Monitor) must always be acquired with
+   /**
+    * @brief Returns the CRMonitor
+    *
+    * The CR Monitor (Checkpoint/Restore Monitor) must always be acquired with
     * Comp Monitor in hand. If waiting on the CR Monitor, the Comp Monitor
     * should be released. After being notified, the CR Monitor should be
     * released before re-acquiring the Comp Monitor.
+    *
+    * @return The CRMonitor
     */
    TR::Monitor *getCRMonitor() { return _crMonitor; }
    void acquireCRMonitor();
    void releaseCRMonitor();
    void waitOnCRMonitor();
 
-   /* The CR Runtime Monitor can be acquired with the Comp Monitor in hand.
+   /**
+    * @brief Returns the CRRuntime Monitor
+    *
+    * The CR Runtime Monitor can be acquired with the Comp Monitor in hand.
     * However, if a does not already have the Comp Monitor, it should NOT
     * do so it once it acquires the CR Runtime Monitor. If the Comp Monitor is
     * desired, the CR Runtime Monitor should be released and re-acquired AFTER
     * acquring the Comp Monitor.
+    *
+    * @return The CRRuntime Monitor
     */
    TR::Monitor* getCRRuntimeMonitor() { return _crRuntimeMonitor;  }
    void acquireCRRuntimeMonitor();
@@ -209,6 +225,9 @@ class CRRuntime
 
    private:
 
+   /**
+    * @brief A class to encapsulate compilations to be memoized
+    */
    class TR_MemoizedComp : public TR_Link0<TR_MemoizedComp>
       {
       public:
@@ -227,6 +246,9 @@ class CRRuntime
       };
    typedef TR_LinkHead0<TR_MemoizedComp> TR_MemoizedCompilations;
 
+   /**
+    * @brief A class to encapsulate JNI method compilations to be memoized
+    */
    class TR_JNIMethodAddr : public TR_MemoizedComp
       {
       public:
@@ -243,6 +265,11 @@ class CRRuntime
       void *_oldJNIAddr;
       };
 
+   /**
+    * @brief A struct to encapsulate the logic needed to set up and tear down
+    *        the environment for proactive compilations performed prior to
+    *        checkpoint.
+    */
    struct ProactiveCompEnv
       {
 #if defined(J9VM_OPT_JITSERVER)
