@@ -6445,10 +6445,10 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
    J9JITConfig * jitConfig = (J9JITConfig *) entryarg;
    J9JavaVM * vm           = jitConfig->javaVM;
    UDATA samplingPeriod    = std::max(static_cast<UDATA>(TR::Options::_minSamplingPeriod), jitConfig->samplingFrequency);
-   uint64_t lastProcNumCheck = 0;
    bool idleMode = false;
    uint64_t lastSecondCheck = 0;
    uint64_t lastMinuteCheck = 0; // for activities that need to be done rarely (every minute)
+   uint64_t lastFiveMinuteCheck = 0;
    uint64_t lastVirtualMemoryCheck = 0;
    uint64_t lastMallocTrimIssueTime = 0;
    // initialize the startTime and elapsedTime here
@@ -6746,6 +6746,7 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
                   lowerCompilationLimitsOnLowVirtualMemory(compInfo, NULL);
                   }
 #endif
+               // Every minute
                if (crtTime - lastMinuteCheck >= 60 * 1000)
                   {
                   lastMinuteCheck = crtTime;
@@ -6762,6 +6763,51 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
                            scc->numROMClasses, scc->numAOTMethods, fe->sharedCache()->getSharedCacheDisabledReason());
                      }
 #endif
+                  // Every 5 minutes
+                  if (crtTime > lastFiveMinuteCheck + 5 * 60 * 1000)
+                     {
+                     lastFiveMinuteCheck = crtTime;
+
+                     if (trPersistentMemory && TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJitMemory))
+                        trPersistentMemory->printMemStatsToVlog();
+
+                     // Time to reevaluate the number of processors
+                     compInfo->computeAndCacheCpuEntitlement();
+
+                     loadFactorAdjustment = 100.0/(compInfo->getNumTargetCPUs()*TR::Options::_availableCPUPercentage);
+
+                     if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJitMemory))
+                        {
+                        bool incomplete;
+                        TR_PersistentMemory *persistentMemory = compInfo->persistentMemory();
+                        TR_VerboseLog::CriticalSection vlogLock;
+                        uint64_t phMemAvail = compInfo->computeAndCacheFreePhysicalMemory(incomplete);
+                        if (phMemAvail != OMRPORT_MEMINFO_NOT_AVAILABLE)
+                           TR_VerboseLog::writeLine(TR_Vlog_INFO, "Free Physical Memory: %lld MB %s", phMemAvail >> 20, incomplete ? "estimated" : "");
+                        else
+                           TR_VerboseLog::writeLine(TR_Vlog_INFO, "Free Physical Memory: Unavailable");
+
+                        //TR_VerboseLog::writeLine(TR_Vlog_MEMORY,"t=%6u JIT memory usage", (uint32_t)crtTime);
+                        //TR_VerboseLog::writeLine(TR_Vlog_MEMORY, "FIXME: Report JIT memory usage");
+                        // Show stats on assumptions
+                        // assumptionTableMutex is not used, so the numbers may be a little off
+                        TR_VerboseLog::writeLine(TR_Vlog_MEMORY,"\tStats on assumptions:");
+                        TR_RuntimeAssumptionTable * rat = persistentInfo->getRuntimeAssumptionTable();
+                        for (int32_t i=0; i < LastAssumptionKind; i++)
+                           TR_VerboseLog::writeLine(TR_Vlog_MEMORY,"\tAssumptionType=%d allocated=%d reclaimed=%d", i, rat->getAssumptionCount(i), rat->getReclaimedAssumptionCount(i));
+                        }
+#if defined(WINDOWS) && defined(TR_TARGET_32BIT)
+                     if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseVMemAvailable))
+                        {
+                        J9MemoryInfo memInfo;
+                        if (j9sysinfo_get_memory_info(&memInfo) == 0 &&
+                           memInfo.availVirtual != J9PORT_MEMINFO_NOT_AVAILABLE)
+                           {
+                           TR_VerboseLog::writeLineLocked(TR_Vlog_MEMORY,"t=%6u VMemAv=%u MB", (uint32_t)crtTime, (uint32_t)(memInfo.availVirtual>>20));
+                           }
+                        }
+#endif
+                     } // Every 5 minutes
                   } // Every minute
                } // Every second
             } // Every 100 ms
@@ -6981,54 +7027,7 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
              compInfo->getSamplerState() == TR::CompilationInfo::SAMPLER_DEEPIDLE)
             compInfo->_stats._ticksInIdleMode++;
 
-         // number of processors might change
-         if (crtTime > lastProcNumCheck + 300000) // every 5 mins
-            {
-            if (trPersistentMemory && TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJitMemory))
-               trPersistentMemory->printMemStatsToVlog();
-
-            // time to reevaluate the number of processors
-            compInfo->computeAndCacheCpuEntitlement();
-            uint32_t tempProc = compInfo->getNumTargetCPUs(); // TODO is this needed?
-            //compInfo->setNumTargetCPUs((tempProc = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET)) > 0 ? tempProc : 1);
-
-
-            loadFactorAdjustment = 100.0/(compInfo->getNumTargetCPUs()*TR::Options::_availableCPUPercentage);
-
-            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJitMemory))
-               {
-               bool incomplete;
-               TR_PersistentMemory *persistentMemory = compInfo->persistentMemory();
-               TR_VerboseLog::CriticalSection vlogLock;
-               uint64_t phMemAvail = compInfo->computeAndCacheFreePhysicalMemory(incomplete);
-               if (phMemAvail != OMRPORT_MEMINFO_NOT_AVAILABLE)
-                  TR_VerboseLog::writeLine(TR_Vlog_INFO, "Free Physical Memory: %lld MB %s", phMemAvail >> 20, incomplete ? "estimated" : "");
-               else
-                  TR_VerboseLog::writeLine(TR_Vlog_INFO, "Free Physical Memory: Unavailable");
-
-               //TR_VerboseLog::writeLine(TR_Vlog_MEMORY,"t=%6u JIT memory usage", (uint32_t)crtTime);
-               //TR_VerboseLog::writeLine(TR_Vlog_MEMORY, "FIXME: Report JIT memory usage");
-               // Show stats on assumptions
-               // assumptionTableMutex is not used, so the numbers may be a little off
-               TR_VerboseLog::writeLine(TR_Vlog_MEMORY,"\tStats on assumptions:");
-               TR_RuntimeAssumptionTable * rat = persistentInfo->getRuntimeAssumptionTable();
-               for (int32_t i=0; i < LastAssumptionKind; i++)
-                  TR_VerboseLog::writeLine(TR_Vlog_MEMORY,"\tAssumptionType=%d allocated=%d reclaimed=%d", i, rat->getAssumptionCount(i), rat->getReclaimedAssumptionCount(i));
-               }
-#if defined(WINDOWS) && defined(TR_TARGET_32BIT)
-            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseVMemAvailable))
-               {
-               J9MemoryInfo memInfo;
-               if (j9sysinfo_get_memory_info(&memInfo) == 0 &&
-                   memInfo.availVirtual != J9PORT_MEMINFO_NOT_AVAILABLE)
-                  {
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_MEMORY,"t=%6u VMemAv=%u MB", (uint32_t)crtTime, (uint32_t)(memInfo.availVirtual>>20));
-                  }
-               }
-#endif
-            lastProcNumCheck = crtTime;
-            }
-         uint32_t loadFactor = (uint32_t) ((numActiveThreads==0?1:numActiveThreads)*loadFactorAdjustment);
+         uint32_t loadFactor = (uint32_t) ((numActiveThreads == 0 ? 1 : numActiveThreads) * loadFactorAdjustment);
          persistentInfo->setLoadFactor(loadFactor);
          // if the loadfactor is 0, set a default of 1. This will allow us to
          // temporarily stop the sampling process by setting a very high samplingFrequency
