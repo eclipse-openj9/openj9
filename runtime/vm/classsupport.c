@@ -313,7 +313,7 @@ peekClassHashTable(J9VMThread* currentThread, J9ClassLoader* classLoader, U_8* c
 	return ramClass;
 }
 
-J9Class*  
+J9Class*
 internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9object_t className, J9ClassLoader* classLoader, UDATA options, UDATA allowedBitsForClassName)
 {
 	J9Class *result = NULL;
@@ -421,7 +421,7 @@ internalRunPreInitInstructions(J9Class * ramClass, J9VMThread * vmThread)
 		UDATA descriptionCount = 0;
 		U_32 description = 0;
 		UDATA i;
-		
+
 		BOOLEAN isAnonClass = J9_ARE_ANY_BITS_SET(romClass->extraModifiers, J9AccClassAnonClass | J9AccClassHidden);
 
 		for (i = 0; i < ramConstantPoolCount; ++i) {
@@ -508,7 +508,7 @@ internalRunPreInitInstructions(J9Class * ramClass, J9VMThread * vmThread)
 
 
 
-J9Class*  
+J9Class*
 resolveKnownClass(J9JavaVM * vm, UDATA index)
 {
 	J9VMThread * currentThread = currentVMThread(vm);
@@ -610,13 +610,14 @@ callFindLocallyDefinedClass(J9VMThread* vmThread, J9Module *j9module, U_8* class
 
 		findResult = (IDATA) returnVal;
 		if (0 == findResult) {
-			TRIGGER_J9HOOK_VM_FIND_LOCALLY_DEFINED_CLASS_FROM_FILESYSTEM(vmThread->javaVM->hookInterface, 
-																		 vmThread, 
-																		 (const char *)className, 
-																		 classNameLength,
-																		 classLoader,
-																		 &classFound,
-																		 returnPointer);
+			TRIGGER_J9HOOK_VM_FIND_LOCALLY_DEFINED_CLASS_FROM_FILESYSTEM(
+					vmThread->javaVM->hookInterface,
+					vmThread,
+					(const char *)className,
+					classNameLength,
+					classLoader,
+					&classFound,
+					returnPointer);
 
 			if (returnVal != NULL) {
 				findResult = classFound;
@@ -656,7 +657,7 @@ callFindLocallyDefinedClass(J9VMThread* vmThread, J9Module *j9module, U_8* class
  * Postcondition: class table mutex unlocked (NB)
  */
 
-static J9Class*  
+static J9Class*
 attemptDynamicClassLoad(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader, UDATA options)
 {
 	J9Class *foundClass = NULL;
@@ -742,7 +743,7 @@ attemptDynamicClassLoad(J9VMThread* vmThread, J9Module *j9module, U_8* className
  * Postcondition: no mutexes locked, vm access, loader object locked
 */
 
-static VMINLINE J9Class*   
+static VMINLINE J9Class*
 callLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader, j9object_t * classNotFoundException)
 {
 	j9object_t classNameString, sendLoadClassResult;
@@ -881,7 +882,7 @@ callLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9Cla
  * and class loader object
  * @param className: pointer to this thread's copy of the classname string
  * @param classNameLength: length of the classname string
- * 
+ *
  * @return loaded class object if success, NULL if fail
  *
  * Precondition: classTableMutex locked, vm access
@@ -890,7 +891,7 @@ callLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9Cla
  */
 
 
-static J9Class*   
+static J9Class*
 waitForContendedLoadClass(J9VMThread* vmThread, J9ContendedLoadTableEntry *tableEntry, U_8* className, UDATA classNameLength)
 {
 	UDATA recursionCount = 0;
@@ -959,7 +960,7 @@ waitForContendedLoadClass(J9VMThread* vmThread, J9ContendedLoadTableEntry *table
  * get classTable mutex
  */
 
-static VMINLINE J9Class*   
+static VMINLINE J9Class*
 arbitratedLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader, j9object_t * classNotFoundException)
 {
 	J9Class* foundClass;
@@ -1092,6 +1093,9 @@ loadWarmClassFromSnapshotInternal(J9VMThread *vmThread, J9ClassLoader *classLoad
 				if (NULL != moduleObject) {
 					J9VMJAVALANGCLASS_SET_MODULE(vmThread, classObject, moduleObject);
 				}
+			} else {
+				/* Unnamed module. */
+				J9VMJAVALANGCLASS_SET_MODULE(vmThread, classObject, J9VMJAVALANGCLASSLOADER_UNNAMEDMODULE(vmThread, clazz->classLoader->classLoaderObject));
 			}
 		}
 
@@ -1137,7 +1141,7 @@ loadWarmClassFromSnapshot(J9VMThread *currentThread, J9ClassLoader *classLoader,
  * Postcondition: either J9_FINDCLASS_FLAG_EXISTING_ONLY set or classTableMutex not owned by this thread; this thread has vm access
  */
 
-static VMINLINE J9Class *  
+static VMINLINE J9Class *
 loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader, UDATA options, j9object_t *exception)
 {
 	J9JavaVM * const vm = vmThread->javaVM;
@@ -1300,13 +1304,13 @@ done:
 /**
  * It is a wrapper around internalFindClassInModule().
  */
-J9Class*  
+J9Class*
 internalFindClassUTF8(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader, UDATA options)
 {
 	return internalFindClassInModule(vmThread, NULL, className, classNameLength, classLoader, options);
 }
 
-J9Class*  
+J9Class*
 internalFindClassInModule(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader, UDATA options)
 {
 	J9JavaVM *vm = vmThread->javaVM;
@@ -1389,7 +1393,7 @@ internalFindClassInModule(J9VMThread* vmThread, J9Module *j9module, U_8* classNa
 	return foundClass;
 }
 
-J9Class*  
+J9Class*
 internalFindKnownClass(J9VMThread *vmThread, UDATA index, UDATA flags)
 {
 	J9JavaVM *vm = vmThread->javaVM;
