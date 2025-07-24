@@ -5538,7 +5538,6 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
    if (lateDisclaimNeeded)
       {
       CpuUtilization *cpuUtil = compInfo->getCpuUtil();
-      cpuUtil->updateCpuUtil(jitConfig);
       if (cpuUtil->getVmTotalCpuTime() >= persistentInfo->getLateSCCDisclaimTime())
          {
          javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_LATE_SCC_DISCLAIM);
