@@ -154,6 +154,10 @@ MM_SchedulingDelegate::getInitialTaxationThreshold(MM_EnvironmentVLHGC *env)
 	_nextIncrementWillDoPartialGarbageCollection = false;
 	_taxationIndex = 0;
 	_remainingGMPIntermissionIntervals = _extensions->tarokGMPIntermission;
+
+	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	j9tty_printf(PORTLIB, "MM_SchedulingDelegate::getInitialTaxationThreshold calculateEdenSize\n");
+
 	calculateEdenSize(env);
 
 	/* initial value for _averageSurvivorSetRegionCount is arbitrarily chosen as 30% of Eden size (after first Eden is selected) */
@@ -415,6 +419,9 @@ MM_SchedulingDelegate::partialGarbageCollectCompleted(MM_EnvironmentVLHGC *env, 
 
 	/* Check eden size based off of new PGC stats */
 	checkEdenSizeAfterPgc(env, globalSweepHappened);
+
+	j9tty_printf(PORTLIB, "MM_SchedulingDelegate::partialGarbageCollectCompleted calculateEdenSize \n");
+
 	calculateEdenSize(env);
 	/* Recalculate GMP intermission after (possibly) resizing eden */
 	calculateAutomaticGMPIntermission(env);
@@ -1357,6 +1364,10 @@ MM_SchedulingDelegate::calculateEdenSize(MM_EnvironmentVLHGC *env)
 	/* Proportionally adjust survivor area. */
 	intptr_t edenChangeWithSurvivorHeadroom = desiredEdenChangeSize + (intptr_t)ceil(((double)desiredEdenChangeSize * _edenSurvivalRateCopyForward));
 
+	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	j9tty_printf(PORTLIB, "calculateEdenSize edenChangeWithSurvivorHeadroom=%d, desiredEdenChangeSize=%d, SurvivorHeadroom=%d, maxHeapExpansionRegions=%d, _edenRegionCount - freeRegions=%d, _edenRegionCount=%zu, freeRegions=%zu\n",
+			edenChangeWithSurvivorHeadroom, desiredEdenChangeSize, (intptr_t)ceil(((double)desiredEdenChangeSize * _edenSurvivalRateCopyForward)), maxHeapExpansionRegions, (intptr_t)(_edenRegionCount - freeRegions), _edenRegionCount, freeRegions);
+
 	/* Inform the total heap resizing logic, that it needs to change total heap size in order to maintain same "tenure" size. */
 	if (freeRegions > _edenRegionCount) {
 		_extensions->globalVLHGCStats._heapSizingData.edenRegionChange = OMR_MIN(maxHeapExpansionRegions, edenChangeWithSurvivorHeadroom);
@@ -1679,6 +1690,9 @@ MM_SchedulingDelegate::heapReconfigured(MM_EnvironmentVLHGC *env)
 	Assert_MM_true(_idealEdenRegionCount >= _minimumEdenRegionCount);
 	
 	/* recalculate Eden Size after resize heap */
+	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	j9tty_printf(PORTLIB, "MM_SchedulingDelegate::heapReconfigured calculateEdenSize recalculate Eden Size after resize heap\n");
+
 	calculateEdenSize(env);
 }
 
