@@ -1717,7 +1717,7 @@ void J9::RecognizedCallTransformer::makeIntoDispatchVirtualCall(
 
    int signatureLength;
    char *signature = getSignatureForComputedCall(
-      "JJ",
+      comp()->target().is64Bit() ? "JJ" : "II",
       "",
       comp(),
       node->getSymbol()->castToMethodSymbol()->getMethod()->signatureChars(),
