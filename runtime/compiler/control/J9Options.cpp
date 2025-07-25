@@ -3179,17 +3179,36 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    // vmLatePostProcess is called indirectly from the aboutToBootstrap hook
    //
    bool doAOT = true;
+
+   J9JITConfig * jitConfig = (J9JITConfig*)base;
+   TR_J9VMBase * vm = TR_J9VMBase::get(jitConfig, 0);
+
+   // If the JVM requires the JIT to produce correct live monitor maps
+   // the TR_DisableLiveMonitorMetadata option must not be true
+   //
+   if (vm->isLiveMonitorMapCorrectnessRequired())
+      {
+      self()->setOption(TR_DisableLiveMonitorMetadata, false);
+      }
+
+   // Determine whether or not to inline monitor enter/exit
+   //
+   if (self()->getOption(TR_DisableLiveMonitorMetadata))
+      {
+      self()->setOption(TR_DisableInlineMonEnt);
+      self()->setOption(TR_DisableInlineMonExit);
+      doAOT = false;
+      }
+
    if (optionSet)
       {
-      // nothing option set specific to do
+      // nothing else option set specific to do
       return true;
       }
 
-   J9JITConfig * jitConfig = (J9JITConfig*)base;
    J9JavaVM * javaVM = jitConfig->javaVM;
    J9HookInterface * * vmHooks = javaVM->internalVMFunctions->getVMHookInterface(javaVM);
 
-   TR_J9VMBase * vm = TR_J9VMBase::get(jitConfig, 0);
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
 
    // runtimeFlags are properly setup only in fePostProcessJit,
@@ -3306,15 +3325,6 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    // This option needs to be parsed late so that we can account for FullSpeedDebug
    JITServerParseLocalSyncCompiles(javaVM->vmArgsArray, javaVM, compInfo, self()->getOption(TR_FullSpeedDebug));
 #endif /* defined(J9VM_OPT_JITSERVER) */
-
-   // Determine whether or not to inline monitor enter/exit
-   //
-   if (self()->getOption(TR_DisableLiveMonitorMetadata))
-      {
-      self()->setOption(TR_DisableInlineMonEnt);
-      self()->setOption(TR_DisableInlineMonExit);
-      doAOT = false;
-      }
 
    // If the VM -Xrs or -Xrs:sync option has been specified the user is requesting
    // that we remove signals. Set the noResumableTrapHandler option to note this

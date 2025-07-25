@@ -1791,6 +1791,72 @@ TR_J9ByteCodeIlGenerator::genDLTransfer(TR::Block *firstBlock)
       haveSeenTargets[haveSeenCount++] = steerTarget;
       }
 
+   // With support for unmounting virtual threads at the point of a monitorenter
+   // bytecode in Java 24 and later, the JVM requires live monitor maps produced
+   // by the JIT to list monitors that might be live correctly.  In that case,
+   // isLiveMonitorMapCorrectnessRequired() will return true.
+   //
+   // With dynamic loop transfer, the JIT might not be able to determine statically
+   // whether some monitorenter bytecodes will necessarily have been executed, and
+   // hence, will be unable to report correctly which object was the operand of
+   // each such monitorenter.
+   //
+   // Scan bytecodes leading up to the point where DLT might occur looking for any
+   // monitorenter bytecodes.  If it's possible that a monitorenter was executed
+   // prior to dynamic loop transfer from the JVM into the JIT-compiled code,
+   // fail the compilation.
+   //
+   if (fej9()->isLiveMonitorMapCorrectnessRequired() && _methodSymbol->mayContainMonitors())
+      {
+      TR_ASSERT_FATAL(!comp()->getOption(TR_DisableLiveMonitorMetadata), "Live monitor metadata must not be disabled if the JVM requires it to be correct.\n");
+
+      TR::StackMemoryRegion stackMemoryRegion(*trMemory());
+
+      int32_t numBlocks = cfg()->getNextNodeNumber();
+
+      TR_BitVector hasMonent(numBlocks, trMemory(), stackAlloc);
+      TR_BitVector visited(numBlocks, trMemory(), stackAlloc);
+
+      // Record blocks that contain monent operations in hasMonent BitVector
+      //
+      for (TR::Block *block = firstBlock; block; block = block->getNextBlock())
+         {
+         TR::TreeTop *tt = block->getEntry();
+         for (; tt != block->getExit(); tt = tt->getNextTreeTop())
+            {
+            TR::Node *node = tt->getNode();
+
+            // A monent could be the root of a tree or it might be the child
+            // of a NULLCHK or treetop node.
+            //
+            if (node->getOpCodeValue() == TR::monent
+                || (node->getNumChildren() == 1
+                    && node->getFirstChild()->getOpCodeValue() == TR::monent))
+               {
+               hasMonent.set(block->getNumber());
+               break;
+               }
+            }
+         }
+
+      // Check whether any path leading back through predecssors from blocks
+      // that are potential entry points for DLT could pass through a
+      // monent operation.  If any is found, fail the compilation.
+      //
+      // It's possible for hasMonentOnPredecessorPath to return true for an
+      // unreachable path, as it doesn't test whether the path through
+      // predecessors can reach the entry block into the method.  That
+      // seems unlikely enough that it's not worth the extra complication.
+      //
+      for (int32_t targetIdx = 0; targetIdx < haveSeenCount; targetIdx++)
+         {
+         if (hasMonentOnPredecessorPath(haveSeenTargets[targetIdx]->getNode()->getBlock(), hasMonent, visited))
+            {
+            comp()->failCompilation<TR::ILGenFailure>("DLT into region where live monitor map correctness required, but cannot be guaranteed");
+            }
+         }
+      }
+
    // Transfer the data in
    comp()->setDltSlotDescription(fej9()->getCurrentLocalsMapForDLT(comp()));
    newFirstBlock = _methodSymbol->prependEmptyFirstBlock();
@@ -2110,6 +2176,38 @@ TR_J9ByteCodeIlGenerator::genDLTransfer(TR::Block *firstBlock)
       cfg()->addEdge(newFirstBlock, steerTarget->getNode()->getBlock());
       cfg()->removeEdge(newFirstBlock, firstBlock);
       }
+   }
+
+bool
+TR_J9ByteCodeIlGenerator::hasMonentOnPredecessorPath(TR::CFGNode *currBlock, TR_BitVector &hasMonent, TR_BitVector &visited)
+   {
+   TR_PredecessorIterator pit(currBlock);
+
+   // Walk through predecessors of the current block checking whether any contains
+   // a monent operation.  If a given predecessor does not have a monent and it's
+   // not already been visited, recursively repeat for that predecessor.
+   //
+   for (TR::CFGEdge *currEdge = pit.getFirst(); currEdge != NULL; currEdge = pit.getNext())
+      {
+      TR::CFGNode *predBlock = currEdge->getFrom();
+      int32_t predBlockIdx = predBlock->getNumber();
+
+      if (hasMonent.isSet(predBlockIdx))
+         {
+         return true;
+         }
+      else if (!visited.isSet(predBlockIdx))
+         {
+         visited.set(predBlockIdx);
+
+         if (hasMonentOnPredecessorPath(predBlock, hasMonent, visited))
+            {
+            return true;
+            }
+         }
+      }
+
+   return false;
    }
 
 void
