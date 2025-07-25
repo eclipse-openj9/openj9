@@ -211,6 +211,12 @@ MM_HeapRegionManagerVLHGC::getHeapMemorySnapshot(MM_GCExtensionsBase *extensions
 		snapshot->_totalRegionEdenSize = allocateEdenTotal;
 	}
 
+	if (snapshot->_totalRegionReservedSize < (snapshot->_totalRegionEdenSize - allocateEdenTotal)) {
+		PORT_ACCESS_FROM_JAVAVM(((MM_GCExtensions *)extensions)->getJavaVM());
+		j9tty_printf(PORTLIB, "getHeapMemorySnapshot snapshot->_totalRegionReservedSize=%d, allocateEdenTotal=%d, snapshot->_totalRegionEdenSize=%d, regionSize=%zu, snapshot->_totalHeapSize=%zu, snapshot->_freeHeapSize=%zu, snapshot->_totalRegionSurvivorSize=%zu, snapshot->_totalRegionOldSize=%zu\n",
+				snapshot->_totalRegionReservedSize, allocateEdenTotal, snapshot->_totalRegionEdenSize, regionSize, snapshot->_totalHeapSize, snapshot->_freeHeapSize, snapshot->_totalRegionSurvivorSize, snapshot->_totalRegionOldSize);
+	}
+	Assert_MM_true(snapshot->_totalRegionReservedSize >= (snapshot->_totalRegionEdenSize - allocateEdenTotal));
 	snapshot->_totalRegionReservedSize -= (snapshot->_totalRegionEdenSize - allocateEdenTotal);
 	snapshot->_freeRegionEdenSize += (snapshot->_totalRegionEdenSize - allocateEdenTotal);
 	snapshot->_freeRegionReservedSize = snapshot->_totalRegionReservedSize;

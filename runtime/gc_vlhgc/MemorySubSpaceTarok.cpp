@@ -991,6 +991,10 @@ MM_MemorySubSpaceTarok::checkResize(MM_EnvironmentBase *env, MM_AllocateDescript
 		} else if (heapSizeChange < 0) {
 			_extensions->heap->getResizeStats()->setLastContractReason(nonEdenHeapLastContractReason);
 		}
+
+		PORT_ACCESS_FROM_ENVIRONMENT(env);
+		j9tty_printf(PORTLIB, "checkResize heapSizeChange=%d, edenChangeRegions=%d\n",
+				heapSizeChange, edenChangeRegions);
 	}
 
 	/* Adjust the heap size by both the required amount for eden AND non-eden. Non-eden size should generally be kept the same size, so that GMP kickoff, and incremental defragmentation timing stays accurate */
@@ -1007,6 +1011,11 @@ MM_MemorySubSpaceTarok::checkResize(MM_EnvironmentBase *env, MM_AllocateDescript
 		_expansionSize = 0;
 	}
 
+	{
+		PORT_ACCESS_FROM_ENVIRONMENT(env);
+		j9tty_printf(PORTLIB, "checkResize heapSizeChange=%d, _contractionSize=%zu, _expansionSize=%zu\n",
+				heapSizeChange, _contractionSize, _expansionSize);
+	}
 	_extensions->globalVLHGCStats._heapSizingData.readyToResizeAtGlobalEnd = false;
 
 	env->popVMstate(oldVMState);
