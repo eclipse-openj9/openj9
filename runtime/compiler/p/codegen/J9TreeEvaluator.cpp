@@ -12262,6 +12262,8 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    TR::LabelSymbol *serial2Label = generateLabelSymbol(cg);
    TR::LabelSymbol *serial3Label = generateLabelSymbol(cg);
    TR::LabelSymbol *serialWordCheckLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *serialDWordCheckLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *CheckLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *serialWordLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *serialDWordLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *vectorLoopPrepLabel = generateLabelSymbol(cg);
@@ -12483,11 +12485,12 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
 
    // --- load one word
    generateLabelInstruction(cg, TR::InstOpCode::label, node, serialWordCheckLabel);
-   // tempReg marks the end where we can use the vector loop
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, tempReg, indexReg, lengthReg);
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr0, tempReg, 16);
+   // tempReg marks the end where we can use the vector loop; go there if that's positive
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addic_r, node, tempReg, lengthReg, -15);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, vectorLoopPrepLabel, cr0);
 
+   // check if we can load double words, but first do some common code
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, serialDWordCheckLabel);
    // we need to use 4 individual masks instead for countPositves() in LE before P9
    if (!(isLE && isCountPositives && !p9Plus))
       {
@@ -12497,8 +12500,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
       generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, maskReg, -32640);
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ori, node, maskReg, maskReg, 0x8080);
       }
-
-   // see if we have enough items to use the double word section
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, tempReg, indexReg, lengthReg);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr0, tempReg, 8);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, serialDWordLabel, cr0);
 
@@ -12690,7 +12692,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
       generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, noMatchLabel, cr0);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr0, tempReg, 4);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, serial1Label, cr0);
-   generateLabelInstruction(cg, TR::InstOpCode::b, node, serialWordCheckLabel);
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, serialDWordCheckLabel);
 
    // --- when there is a match but we don't know the exact location yet
    generateLabelInstruction(cg, TR::InstOpCode::label, node, matchLabel);
@@ -12706,7 +12708,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
          {
          // we are not worried about overwriting length, since we must be able to find a match
          generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, lengthReg, indexReg, 16);
-         generateLabelInstruction(cg, TR::InstOpCode::b, node, serialWordCheckLabel);
+         generateLabelInstruction(cg, TR::InstOpCode::b, node, serialDWordCheckLabel);
          }
       }
    else // just report 1
