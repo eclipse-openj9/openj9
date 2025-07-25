@@ -911,6 +911,9 @@ public class JITStackWalker
 
 						if ((walkState.flags & J9_STACKWALK_MAINTAIN_REGISTER_MAP) != 0) {
 							CLEAR_LOCAL_REGISTER_MAP_ENTRIES(walkState);
+							if (!inMethodPrologue) {
+								jitAddSpilledRegisters(walkState, VoidPointer.NULL);
+							}
 						}
 
 						UNWIND_TO_NEXT_FRAME(walkState);
