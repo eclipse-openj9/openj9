@@ -1581,6 +1581,8 @@ obj:
 				VM_ContinuationHelpers::sendUnblockerThreadSignal(_vm);
 			}
 			omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
+		} else if ((JAVA_LANG_VIRTUALTHREAD_WAITING == newThreadState) || (JAVA_LANG_VIRTUALTHREAD_TIMED_WAITING == newThreadState)) {
+			VM_ContinuationHelpers::sendUnblockerThreadSignal(_vm);
 		}
 
 		/* Enter critical transition after the prepare stage is complete and hooks dispatched. */

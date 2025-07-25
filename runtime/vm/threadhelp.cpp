@@ -96,6 +96,7 @@ monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos
 #if JAVA_SPEC_VERSION >= 24
 		j9objectmonitor_t volatile *lwEA = VM_ObjectMonitor::inlineGetLockAddress(vmThread, object);
 		j9objectmonitor_t lock = J9_LOAD_LOCKWORD(vmThread, lwEA);
+		Assert_VM_true(J9_LOCK_IS_INFLATED(lock));
 		J9ObjectMonitor *objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
 		VM_AtomicSupport::addU32(&objectMonitor->platformThreadWaitCount, 1);
 #endif /* JAVA_SPEC_VERSION >= 24 */
@@ -112,6 +113,9 @@ monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos
 #endif
 		J9VMTHREAD_SET_BLOCKINGENTEROBJECT(vmThread, vmThread, object);
 		object = NULL;
+#if JAVA_SPEC_VERSION >= 24
+		J9VM_SEND_VIRTUAL_UNBLOCKER_THREAD_SIGNAL(javaVM);
+#endif /* JAVA_SPEC_VERSION >= 24 */
 		internalReleaseVMAccessSetStatus(vmThread, thrstate);
 		rc = timeCompensationHelper(vmThread,
 			interruptable ? HELPER_TYPE_MONITOR_WAIT_INTERRUPTABLE : HELPER_TYPE_MONITOR_WAIT_TIMED, monitor, millis, nanos);
