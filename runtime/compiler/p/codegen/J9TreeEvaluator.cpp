@@ -12485,7 +12485,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    generateLabelInstruction(cg, TR::InstOpCode::label, node, serialWordCheckLabel);
    // tempReg marks the end where we can use the vector loop
    generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, tempReg, indexReg, lengthReg);
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr0, tempReg, 4);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr0, tempReg, 16);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, vectorLoopPrepLabel, cr0);
 
    // we need to use 4 individual masks instead for countPositves() in LE before P9
