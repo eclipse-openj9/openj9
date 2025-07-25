@@ -12611,7 +12611,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
             generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
 
             // shift 4 bytes, then do it again
-            generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, storeReg, storeReg, 32,
+            generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicl, node, storeReg, storeReg, 32,
                   CONSTANT64(0x00000000FFFFFFFF));
             generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 1);
             generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, maskReg, storeReg, 0x80);
