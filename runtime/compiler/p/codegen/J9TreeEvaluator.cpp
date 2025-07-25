@@ -12239,8 +12239,6 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    bool isLE = comp->target().cpu.isLittleEndian();
    bool p9Plus = cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9);
    bool p10Plus = cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10);
-   // just for debug
-   p10Plus = feGetEnv("TR_p10Plus") ? 1 : 0;
 
    TR::Register *startReg = cg->gprClobberEvaluate(node->getChild(0)); // array
    TR::Register *indexReg = cg->gprClobberEvaluate(node->getChild(1)); // offset
