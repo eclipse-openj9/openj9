@@ -12490,6 +12490,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, vectorLoopPrepLabel, cr0);
 
    // check if we can load double words, but first do some common code
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, tempReg, indexReg, lengthReg);
    generateLabelInstruction(cg, TR::InstOpCode::label, node, serialDWordCheckLabel);
    // we need to use 4 individual masks instead for countPositves() in LE before P9
    if (!(isLE && isCountPositives && !p9Plus))
@@ -12500,7 +12501,6 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
       generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, maskReg, -32640);
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ori, node, maskReg, maskReg, 0x8080);
       }
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, tempReg, indexReg, lengthReg);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr0, tempReg, 8);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, serialDWordLabel, cr0);
 
@@ -12685,7 +12685,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    // go to residue if we don't have enough items to do one load
    // We kinda have to tuck the code checking which residual handler to use here:
    //    1. no item - end; 2. 1-3 items - single; 3. 4-15 items - word/dword
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr0, indexReg, lengthReg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::subf_r, node, tempReg, indexReg, lengthReg);
    if (isCountPositives)
       generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, endLabel, cr0);
    else
