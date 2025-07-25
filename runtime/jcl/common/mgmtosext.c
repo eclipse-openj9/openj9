@@ -86,8 +86,11 @@ Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getSyste
 
 	J9JavaVM *vm = ((J9VMThread *)env)->javaVM;
 	double cpuLoad = 0.0;
+	intptr_t portLibraryStatus = 0;
+	BOOLEAN retried = FALSE;
 
-	intptr_t portLibraryStatus = omrsysinfo_get_CPU_load(&cpuLoad);
+retry:
+	portLibraryStatus = omrsysinfo_get_CPU_load(&cpuLoad);
 
 	if (portLibraryStatus < 0) {
 		switch (portLibraryStatus) {
@@ -98,10 +101,16 @@ Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getSyste
 			portLibraryStatus = -3;
 			break;
 		case OMRPORT_ERROR_INSUFFICIENT_DATA:
-			portLibraryStatus =
-				J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_CPU_LOAD_COMPATIBILITY)
-				? 0
-				: -1;
+			if (J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_CPU_LOAD_COMPATIBILITY)
+				&& !retried
+			) {
+				/* Retry once to collect a second data point if only a single data point exists. */
+				retried = TRUE;
+				/* 50 ms sleep to meet the evaluation condition within omrsysinfo_get_CPU_load. */
+				omrthread_nanosleep(50000000);
+				goto retry;
+			}
+			portLibraryStatus = -1;
 			break;
 		default:
 			portLibraryStatus = OMRPORT_ERROR_OPFAILED;
