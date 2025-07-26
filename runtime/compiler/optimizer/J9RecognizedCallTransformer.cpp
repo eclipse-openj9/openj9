@@ -589,13 +589,14 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 // helper function for process_jdk_internal_util_ArraysSupport_vectorizedMismatch
 // see comments there for more details
-static TR::Node* insertVectorizedMisMatchArgumentChecksAndAdjustForOffHeap(TR::Compilation* comp,
+static TR::Node* insertVectorizedMisMatchArgumentChecksAndAdjustForOffHeap(TR::Optimization* optimization,
                      TR::Node* node,               // node of the parameter a/b
                      TR::Block* currentBlock,      // the block before callBlock
                      TR::Block* callBlock,         // original callBlock
                      bool insertArrayCheck,        // whether we need to do a type check
                      TR::CFG* cfg)
    {
+   TR::Compilation* comp = optimization->comp();
    // create the storeTree to store the value of the array in a symRef
    TR::SymbolReference* symRef = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR::Address);
    symRef->getSymbol()->setNotCollected();
@@ -614,8 +615,10 @@ static TR::Node* insertVectorizedMisMatchArgumentChecksAndAdjustForOffHeap(TR::C
                                                 node->duplicateTree(),
                                                 TR::Node::aconst(node, 0),
                                                 newCallBlock->getEntry());
-   nullCheckBlock->append(TR::TreeTop::create(comp, nullCheckNode));
+   TR::TreeTop *nullCheckTT = TR::TreeTop::create(comp, nullCheckNode);
+   nullCheckBlock->append(nullCheckTT);
    cfg->addEdge(nullCheckBlock, newCallBlock);
+   optimization->anchorAllChildren(nullCheckNode, nullCheckTT);
 
    // insert array check tree 2/3
    if (insertArrayCheck)
@@ -629,8 +632,10 @@ static TR::Node* insertVectorizedMisMatchArgumentChecksAndAdjustForOffHeap(TR::C
                                                    TR::Node::iconst(node, 0),
                                                    newCallBlock->getEntry());
 
-      arrayCheckBlock->append(TR::TreeTop::create(comp, arrayCheckNode, NULL, NULL));
+      TR::TreeTop *arrayCheckTT = TR::TreeTop::create(comp, arrayCheckNode, NULL, NULL);
+      arrayCheckBlock->append(arrayCheckTT);
       cfg->addEdge(callBlock, newCallBlock);
+      optimization->anchorAllChildren(arrayCheckNode, arrayCheckTT);
       }
 
    // insert newStoreTree 3/3
@@ -639,6 +644,7 @@ static TR::Node* insertVectorizedMisMatchArgumentChecksAndAdjustForOffHeap(TR::C
    TR::Node* newStore = TR::Node::createStore(symRef, adjustedNode);
    TR::TreeTop* newStoreTree = TR::TreeTop::create(comp, newStore);
    adjustBlock->append(newStoreTree);
+   optimization->anchorAllChildren(adjustedNode, newStoreTree);
 
    TR::Node* resultNode = TR::Node::createLoad(node, symRef);
    return resultNode;
@@ -731,7 +737,7 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
             {
             // create and arrange nullCheckBlock, arrayCheckBlock, adjustBlock, and newCallBlock
             // also create storeTree in currentBlock
-            a = insertVectorizedMisMatchArgumentChecksAndAdjustForOffHeap(comp(),
+            a = insertVectorizedMisMatchArgumentChecksAndAdjustForOffHeap(this,
                a, currentBlock, callBlock, aCheckNeeded, cfg);
             }
          else
@@ -743,7 +749,7 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
             {
             // create and arrange nullCheckBlock, arrayCheckBlock, adjustBlock, and newCallBlock
             // also create storeTree in currentBlock
-            b = insertVectorizedMisMatchArgumentChecksAndAdjustForOffHeap(comp(),
+            b = insertVectorizedMisMatchArgumentChecksAndAdjustForOffHeap(this,
                b, currentBlock, callBlock, bCheckNeeded, cfg);
             }
          else
