@@ -112,6 +112,9 @@ monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos
 #endif
 		J9VMTHREAD_SET_BLOCKINGENTEROBJECT(vmThread, vmThread, object);
 		object = NULL;
+#if JAVA_SPEC_VERSION >= 24
+		J9VM_SEND_VIRTUAL_UNBLOCKER_THREAD_SIGNAL(javaVM);
+#endif /* JAVA_SPEC_VERSION >= 24 */
 		internalReleaseVMAccessSetStatus(vmThread, thrstate);
 		rc = timeCompensationHelper(vmThread,
 			interruptable ? HELPER_TYPE_MONITOR_WAIT_INTERRUPTABLE : HELPER_TYPE_MONITOR_WAIT_TIMED, monitor, millis, nanos);
