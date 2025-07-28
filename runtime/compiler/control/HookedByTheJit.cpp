@@ -6439,6 +6439,70 @@ static void suspendSamplerThreadForCheckpoint(J9VMThread *samplerThread, J9JITCo
    }
 #endif
 
+/* Compute a "CpuLoadFactor" for this JVM and machine. The more utilized the machine is,
+ * the larger the CpuLoadFactor. This CpuLoadFactor is used to multiply the sleeping time of
+ * the sampling thread, so that we sample less often on very busy systems were the JVM
+ * does not get all the CPU resources it needs.
+ * Roughly we want to:
+ * return 1, if the JVM has sufficient CPU resources at its disposal
+ * return > 1, if the JVM would benefit from extra CPU resources
+ * For values greater than 10 we can say that the JVM is starved of CPU resources.
+*/
+static uint32_t computeCpuLoadFactor(uint32_t numActiveThreads, TR::CompilationInfo *compInfo)
+   {
+   uint32_t loadFactor;
+   // If user provided an _availableCPUPercentage, use that. Otherwise, compute loadFactor dynamically.
+   if (TR::Options::_availableCPUPercentage != 100)
+      {
+      float loadFactorAdjustment = 100.0/(compInfo->getNumTargetCPUs()*TR::Options::_availableCPUPercentage);
+      loadFactor = (uint32_t) ((numActiveThreads == 0 ? 1 : numActiveThreads) * loadFactorAdjustment);
+      }
+   else
+      {
+      loadFactor = numActiveThreads == 0 ? 1 : numActiveThreads;
+
+      // If the JVM uses its entire CPU entitlement, then use the entitlement to adjust
+      // the loadFactor. Larger entitlement means a smaller loadfactor.
+      // JVM entitlement is recomputed every 5 minutes.
+      // JVM CPU utilization and idle information is recomputed every 0.5 sec (no more frequent that every 100 ms)
+      auto cpuUtil = compInfo->getCpuUtil();
+      if (cpuUtil->isFunctional())
+         {
+         int32_t cpuIdle = cpuUtil->getCpuIdle();
+         int32_t vmCpuUsage = cpuUtil->getVmCpuUsage();
+         if (vmCpuUsage + 5 < compInfo->getJvmCpuEntitlement()) // at least 5% unutilized by this JVM
+            {
+            // Is the unutilized entitlement due to starvation?
+            if (cpuIdle >= 50) // The JVM cannot be starved if there is half a CPU available to use
+               {
+               // Use the entitlement to adjust the loadFactor.
+               loadFactor = loadFactor * 100 / compInfo->getJvmCpuEntitlement();
+               }
+            else // Machine has very little idle CPU if any. It's likely this JVM cannot use its entitlement because of starvation.
+               {
+               // Use the effective CPU utilization of this JVM to compute the load factor.
+               loadFactor = loadFactor * 100 / (vmCpuUsage == 0 ? 1 : vmCpuUsage);
+               }
+            }
+         else // The JVM uses its entire entitlement.
+            {
+            loadFactor = loadFactor * 100 / compInfo->getJvmCpuEntitlement();
+            }
+         }
+      else
+         {
+         // We don't have support for reading the CPU utilization of the machine/JVM.
+         // Use only the number of Java active threads and JVM entitlement.
+         loadFactor = loadFactor * 100 / compInfo->getJvmCpuEntitlement();
+         }
+      }
+   // This loadFactor is used to multiply the sleeping time of the sampling thread.
+   // Prevent returning a zero value.
+   if (loadFactor == 0)
+      loadFactor = 1;
+   return loadFactor;
+   }
+
 static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
    {
    J9JITConfig * jitConfig = (J9JITConfig *) entryarg;
@@ -6615,7 +6679,6 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
          }
       }
 
-   float loadFactorAdjustment = 100.0/(compInfo->getNumTargetCPUs()*TR::Options::_availableCPUPercentage);
    if (TR::Options::getCmdLineOptions()->getOption(TR_AssumeStartupPhaseUntilToldNotTo))
       {
       persistentInfo->setClassLoadingPhase(true); // start in CLP
@@ -6772,8 +6835,6 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
 
                      // Time to reevaluate the number of processors
                      compInfo->computeAndCacheCpuEntitlement();
-
-                     loadFactorAdjustment = 100.0/(compInfo->getNumTargetCPUs()*TR::Options::_availableCPUPercentage);
 
                      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJitMemory))
                         {
@@ -7022,28 +7083,34 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
          compInfo->_intervalStats._samplesSentInInterval += numActiveThreads;
          compInfo->setNumAppThreadsActive(numActiveThreads, crtTime);
 
+         persistentInfo->setLoadFactor(numActiveThreads * 100 / compInfo->getJvmCpuEntitlement()); // This is used by the IProfiler.
+
          if (compInfo->getSamplerState() == TR::CompilationInfo::SAMPLER_IDLE ||
              compInfo->getSamplerState() == TR::CompilationInfo::SAMPLER_DEEPIDLE)
             compInfo->_stats._ticksInIdleMode++;
-
-         uint32_t loadFactor = (uint32_t) ((numActiveThreads == 0 ? 1 : numActiveThreads) * loadFactorAdjustment);
-         persistentInfo->setLoadFactor(loadFactor);
-         // if the loadfactor is 0, set a default of 1. This will allow us to
-         // temporarily stop the sampling process by setting a very high samplingFrequency
-         //
-         if (loadFactor == 0)
-            loadFactor = 1;
 
          // The following may change the state of the samplerThread and the sampling frequency
          // Must be protected by vm->vmThreadListMutex
          samplerThreadStateLogic(compInfo, fe, numActiveThreads);
 
+         // Determine the CPU load factor based on number of active threads and CPU utilization of the machine/JVM
+         uint32_t cpuLoadFactor = computeCpuLoadFactor(numActiveThreads, compInfo);
+
          UDATA samplingFreq = jitConfig->samplingFrequency;
          // TODO: Should the sampling frequency types in TR::Options be changed to more closely match the J9JITConfig types?
-         samplingPeriod = std::max(static_cast<UDATA>(TR::Options::_minSamplingPeriod), (samplingFreq == MAX_SAMPLING_FREQUENCY) ? samplingFreq : samplingFreq * loadFactor);
+         samplingPeriod = std::max(static_cast<UDATA>(TR::Options::_minSamplingPeriod), (samplingFreq == MAX_SAMPLING_FREQUENCY) ? samplingFreq : samplingFreq * cpuLoadFactor);
 
          j9thread_monitor_exit(vm->vmThreadListMutex);
 
+         // Print some info outside the critical section
+         if (TR::Options::getVerboseOption(TR_VerboseSampling) && TR::Options::getVerboseOption(TR_VerbosePerformance))
+            {
+            auto cpuUtil = compInfo->getCpuUtil();
+            int32_t vmCpuUsage = cpuUtil->isFunctional() ? cpuUtil->getVmCpuUsage() : -1;
+            int32_t cpuIdle = cpuUtil->isFunctional() ? cpuUtil->getCpuIdle() : -1;
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%" OMR_PRIu64 " loadFactor=%" OMR_PRIu32 " numActiveThreads=%" OMR_PRIu32 " entitlement=%.2f%% VmCpuUsage=%d%% idle=%d%% samplingPeriod=%d ms",
+               crtTime, cpuLoadFactor, numActiveThreads, compInfo->getJvmCpuEntitlement(), (int)vmCpuUsage, (int)cpuIdle, (int)samplingPeriod);
+            }
          } // while
 
       // This thread has been interrupted or shutdownSamplerThread flag was set
