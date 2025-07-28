@@ -23,11 +23,8 @@
 #include "jithash.h"
 #include "avl_api.h"
 #include "util_api.h"
-#include "infra/Monitor.hpp"
-#include "infra/CriticalSection.hpp"
 #include "runtime/CodeCache.hpp"
 #include "runtime/ArtifactManager.hpp"
-#include "infra/Monitor.hpp"
 
 TR_TranslationArtifactManager *TR_TranslationArtifactManager::globalManager = NULL;
 
@@ -46,6 +43,33 @@ TR_VMExclusiveAccess::~TR_VMExclusiveAccess()
       _vm->internalVMFunctions->releaseExclusiveVMAccess(_currentThread);
    }
 
+TR_TranslationArtifactManager::ArtifactMutexSection::ArtifactMutexSection(bool isWriter) :
+   _isWriter(isWriter)
+   {
+   if (getGlobalArtifactManager() == NULL)
+      {
+      TR_ASSERT_FATAL(false, "Global artifact manager must be initialized before acquiring mutex");
+      return;
+      }
+   if (_isWriter)
+      omrthread_rwmutex_enter_write(getGlobalArtifactManager()->getMutex());
+   else
+      omrthread_rwmutex_enter_read(getGlobalArtifactManager()->getMutex());
+   }
+
+
+TR_TranslationArtifactManager::ArtifactMutexSection::~ArtifactMutexSection()
+   {
+   if (getGlobalArtifactManager() == NULL)
+      {
+      TR_ASSERT_FATAL(false, "Global artifact manager must be initialized before acquiring mutex");
+      return;
+      }
+   if (_isWriter)
+      omrthread_rwmutex_exit_write(getGlobalArtifactManager()->getMutex());
+   else
+      omrthread_rwmutex_exit_read(getGlobalArtifactManager()->getMutex());
+   }
 
 bool
 TR_TranslationArtifactManager::initializeGlobalArtifactManager(J9AVLTree *translationArtifacts, J9JavaVM *vm)
@@ -57,10 +81,11 @@ TR_TranslationArtifactManager::initializeGlobalArtifactManager(J9AVLTree *transl
       }
    else
       {
-      TR::Monitor *monitor = TR::Monitor::create("JIT-ArtifactMonitor");
-      if (monitor)
+      omrthread_rwmutex_t mutex = NULL;
+      omrthread_rwmutex_init(&mutex, 0, "JIT-ArtifactMutex");
+      if (mutex)
          {
-         globalManager = new (PERSISTENT_NEW) TR_TranslationArtifactManager(translationArtifacts, vm, monitor);
+         globalManager = new (PERSISTENT_NEW) TR_TranslationArtifactManager(translationArtifacts, vm, mutex);
          if (globalManager)
             initSuccess = true;
          }
@@ -68,18 +93,18 @@ TR_TranslationArtifactManager::initializeGlobalArtifactManager(J9AVLTree *transl
    return initSuccess;
    }
 
-TR_TranslationArtifactManager::TR_TranslationArtifactManager(J9AVLTree *translationArtifacts, J9JavaVM *vm, TR::Monitor *monitor) :
+TR_TranslationArtifactManager::TR_TranslationArtifactManager(J9AVLTree *translationArtifacts, J9JavaVM *vm, omrthread_rwmutex_t mutex) :
    _translationArtifacts(translationArtifacts),
    _vm(vm),
    _portLibrary(vm->portLibrary),
-   _monitor(monitor),
+   _mutex(mutex),
    _cachedPC(0),
    _cachedHashTable(NULL),
    _retrievedArtifactCache(NULL)
    {
    TR_ASSERT(translationArtifacts, "translationArtifacts must not be null");
    TR_ASSERT(vm, "vm must not be null");
-   TR_ASSERT(monitor, "monitor must not be null");
+   TR_ASSERT(mutex, "mutex must not be null");
    }
 
 
@@ -114,7 +139,7 @@ bool
 TR_TranslationArtifactManager::insertArtifact(J9JITExceptionTable *artifact)
    {
    TR_ASSERT(artifact, "artifact must not be null");
-   OMR::CriticalSection insertingArtifact(_monitor);
+   TR_TranslationArtifactManager::ArtifactMutexSection insertingArtifact(true);
    bool insertSuccess = false;
    insertSuccess = insertRange(artifact, artifact->startPC, artifact->endWarmPC);
    if (insertSuccess && artifact->startColdPC)
@@ -140,7 +165,7 @@ bool
 TR_TranslationArtifactManager::removeArtifact(J9JITExceptionTable *artifact)
    {
    TR_ASSERT(artifact, "artifact must not be null");
-   OMR::CriticalSection removingArtifact(_monitor);
+   TR_TranslationArtifactManager::ArtifactMutexSection removingArtifact(true);
    bool removeSuccess = false;
    if (containsArtifact(artifact))
       {
@@ -159,7 +184,7 @@ const J9JITExceptionTable *
 TR_TranslationArtifactManager::retrieveArtifact(UDATA pc) const
    {
    TR_ASSERT(pc != 0, "attempting to query existing artifacts for a NULL PC");
-   OMR::CriticalSection searchingArtifacts(_monitor);
+   TR_TranslationArtifactManager::ArtifactMutexSection searchingArtifacts(false);
    updateCache(pc);
    if (!_retrievedArtifactCache)
       {
