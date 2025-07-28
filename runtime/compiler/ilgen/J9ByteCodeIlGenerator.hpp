@@ -410,6 +410,21 @@ private:
    void markRequiredKnownObjectIndex(TR::Node *node, TR::KnownObjectTable::Index koi);
    void assertFoldedAllRequiredConsts();
 
+   /**
+    * Answers whether some path through predecessors of a block contains a \ref TR::monent
+    * operation.
+    *
+    * \param[in] currBlock The block whose predecessor paths are being examined
+    * \param[in] hasMonent A \ref TR_BitVector of the blocks that contained
+    *                      \ref TR::monent operations
+    * \param[in] visited   A \ref TR_BitVector of blocks that have already been
+    *                      or are in the process of being visited
+    *
+    * \returns true if some path through predecessors contains a \ref TR::monent;
+    *          false, otherwise.
+    */
+   bool hasMonentOnPredecessorPath(TR::CFGNode *currBlock, TR_BitVector &hasMonent, TR_BitVector &visited);
+
    // data
    //
    TR::SymbolReferenceTable *         _symRefTab;
