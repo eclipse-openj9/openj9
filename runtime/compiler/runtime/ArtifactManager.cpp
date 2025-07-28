@@ -102,6 +102,7 @@ TR_TranslationArtifactManager::TR_TranslationArtifactManager(J9AVLTree *translat
    _cachedHashTable(NULL),
    _retrievedArtifactCache(NULL)
    {
+   vm->jitArtifactMutex = _mutex;
    TR_ASSERT(translationArtifacts, "translationArtifacts must not be null");
    TR_ASSERT(vm, "vm must not be null");
    TR_ASSERT(mutex, "mutex must not be null");
