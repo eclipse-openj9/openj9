@@ -2277,6 +2277,31 @@ exit:
 		targetThread->privateFlags2 |= J9_PRIVATE_FLAGS2_REENTER_INTERPRETER;
 		indicateAsyncMessagePending(targetThread);
 	}
+
+
+	static U_64
+	setThreadState(J9VMThread *currentThread, U_64 state)
+	{
+		U_64 oldState = 0;
+#if JAVA_SPEC_VERSION >= 19
+		j9object_t receiverObject = currentThread->carrierThreadObject;
+		if (NULL != receiverObject) {
+			/* Platform threads must have a non-null FieldHolder object. */
+			j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(currentThread, receiverObject);
+			if (NULL != threadHolder) {
+				oldState = J9VMJAVALANGTHREADFIELDHOLDER_THREADSTATUS(currentThread, threadHolder);
+				J9VMJAVALANGTHREADFIELDHOLDER_SET_THREADSTATUS(currentThread, threadHolder, state);
+			}
+		}
+#else /* JAVA_SPEC_VERSION >= 19 */
+		j9object_t receiverObject = currentThread->threadObject;
+		if (NULL != receiverObject) {
+			oldState = J9VMJAVALANGTHREAD_THREADSTATUS(currentThread, receiverObject);
+			J9VMJAVALANGTHREAD_SET_THREADSTATUS(currentThread, receiverObject, state);
+		}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+		return oldState;
+	}
 };
 
 #endif /* VMHELPERS_HPP_ */
