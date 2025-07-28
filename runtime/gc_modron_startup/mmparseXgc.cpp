@@ -1215,7 +1215,20 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		extensions->enableHybridMemoryPool = true;
 		goto _exit;
 	}
-	
+
+	if (try_scan(scan_start, "enableEstimateFragmentation")) {
+		extensions->estimateFragmentation = (GLOBALGC_ESTIMATE_FRAGMENTATION | LOCALGC_ESTIMATE_FRAGMENTATION);
+		extensions->processLargeAllocateStats = true;
+		goto _exit;
+	}
+
+	if (try_scan(scan_start, "disableEstimateFragmentation")) {
+		extensions->estimateFragmentation = NO_ESTIMATE_FRAGMENTATION;
+		extensions->processLargeAllocateStats = false;
+		extensions->darkMatterSampleRate = 0;
+		goto _exit;
+	}
+
 	/* Couldn't find a match for arguments */
 	return 2;
 
