@@ -1839,7 +1839,7 @@ TR_J9ByteCodeIlGenerator::genDLTransfer(TR::Block *firstBlock)
             }
          }
 
-      // Check whether any path leading back through predecssors from blocks
+      // Check whether any path leading back through predecessors from blocks
       // that are potential entry points for DLT could pass through a
       // monent operation.  If any is found, fail the compilation.
       //
