@@ -235,3 +235,7 @@ define({BRANCH_VIA_VMTHREAD},{
 
 define({SWITCH_TO_JAVA_STACK},{ldr J9SP,[J9VMTHREAD,{#}J9TR_VMThread_sp]})
 define({SWITCH_TO_C_STACK},{str J9SP,[J9VMTHREAD,{#}J9TR_VMThread_sp]})
+define({UPDATE_SP_IN_GPR_SAVE_SLOT},{
+	ldr J9SP,[J9VMTHREAD,{#}J9TR_VMThread_sp]
+	str J9SP,JIT_GPR_SAVE_SLOT(20)
+})
