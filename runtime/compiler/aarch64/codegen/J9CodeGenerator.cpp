@@ -87,7 +87,7 @@ J9::ARM64::CodeGenerator::initialize()
       {
       cg->setSupportsInlineStringHashCode();
       }
-   if ((!TR::Compiler->om.canGenerateArraylets()) && (!comp->getOption(TR_DisableFastStringIndexOf)) && !TR::Compiler->om.isOffHeapAllocationEnabled())
+   if ((!TR::Compiler->om.canGenerateArraylets()) && (!comp->getOption(TR_DisableFastStringIndexOf)))
       {
       cg->setSupportsInlineStringIndexOf();
       }
