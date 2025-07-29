@@ -195,6 +195,7 @@ private:
 	static constexpr int NATIVE_LIBRARY_ADDRESS_SIZE = (4 * sizeof(U_64)) + (2 * sizeof(UDATA)) + sizeof(U_8);
 	static constexpr int SYSTEM_GC_EVENT_SIZE = (2 * LEB128_64_SIZE) + (3 * LEB128_32_SIZE) + sizeof(U_8);
 	static constexpr int MODULE_REQUIRE_EVENT_SIZE = LEB128_64_SIZE + (4 * LEB128_32_SIZE);
+	static constexpr int MODULE_EXPORT_EVENT_SIZE = LEB128_64_SIZE + (4 * LEB128_32_SIZE);
 
 	static constexpr int METADATA_ID = 1;
 
@@ -940,6 +941,8 @@ done:
 		requiredBufferSize += (_constantPoolTypes.getsystemGCCount() * SYSTEM_GC_EVENT_SIZE);
 
 		requiredBufferSize += (_constantPoolTypes.getModuleRequireCount() * MODULE_REQUIRE_EVENT_SIZE);
+
+		requiredBufferSize += (_constantPoolTypes.getModuleExportCount() * MODULE_EXPORT_EVENT_SIZE);
 
 		return requiredBufferSize;
 	}
