@@ -449,6 +449,7 @@ END_PROC(cInterpreterFromJIT)
 
 ifelse(eval(ASM_JAVA_SPEC_VERSION >= 24), 1, {
 BEGIN_RETURN_POINT(jitExitInterpreter0RestoreAll)
+	UPDATE_SP_IN_GPR_SAVE_SLOT
 	RESTORE_ALL_REGS
 END_RETURN_POINT(jitExitInterpreter0RestoreAll)
 }) dnl jitExitInterpreter0RestoreAll is only supported on JAVA 24+
