@@ -82,6 +82,9 @@ UDATA debugBytecodeLoopCompressed(J9VMThread *currentThread);
 #define J9VM_DELAYCHECKPOINT_NOTCHECKPOINTSAFE 0x1
 #define J9VM_DELAYCHECKPOINT_CLINIT 0x2
 
+#define NOT_CHECKPOINT_SAFE_OPTIONS_SEPARATOR_CHAR ','
+
+#define SYS_PROP_OPENJ9_NOT_CHECKPOINT_SAFE "openj9.internal.criu.notcheckpointsafe"
 #define OPENJ9_RESTORE_OPTS_VAR "OPENJ9_RESTORE_JAVA_OPTIONS="
 
 BOOLEAN
@@ -1187,6 +1190,63 @@ toggleSuspendOnJavaThreads(J9VMThread *currentThread, U_8 suspendResumeFlag)
 	}
 }
 
+/**
+ * Get the package/class.method array specified via a system property
+ * -Dopenj9.internal.criu.notcheckpointsafe=package1/class1.method1,package2/class2.method2
+ *
+ * Caller must free the returning structure.
+ *
+ * @param[in] vmThread vmThread token
+ * @param[in/out] classMethodNumber the number of package/class.method specified
+ */
+static char**
+getNotCheckpointSafeClassMethodArray(J9VMThread *vmThread, UDATA *classMethodNumber)
+{
+	J9JavaVM *vm = vmThread->javaVM;
+	char **notcheckpointsafeArray = NULL;
+	J9VMSystemProperty *sysPropNotcheckpointsafe = NULL;
+	UDATA rc = getSystemProperty(vm, SYS_PROP_OPENJ9_NOT_CHECKPOINT_SAFE, &sysPropNotcheckpointsafe);
+
+	if (J9SYSPROP_ERROR_NONE == rc) {
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		UDATA classMethodCounter = 0;
+		char *notcheckpointsafeValue = sysPropNotcheckpointsafe->value;
+
+		Trc_VM_criu_getNotCheckpointSafeClassMethodArray_propValue(vmThread, notcheckpointsafeValue);
+		for (UDATA index = 0; index < strlen(notcheckpointsafeValue); index++) {
+			if (NOT_CHECKPOINT_SAFE_OPTIONS_SEPARATOR_CHAR == notcheckpointsafeValue[index]) {
+				classMethodCounter++;
+			}
+		}
+		/* the number of package/class.method is the number of separators plus one */
+		classMethodCounter += 1;
+		notcheckpointsafeArray = (char **)j9mem_allocate_memory(classMethodCounter * sizeof(char *), OMRMEM_CATEGORY_VM);
+		Trc_VM_criu_getNotCheckpointSafeClassMethodArray_classMethod_Counter_Array(vmThread, classMethodCounter, notcheckpointsafeArray);
+
+		classMethodCounter = 0;
+		while (NULL != strchr(notcheckpointsafeValue, NOT_CHECKPOINT_SAFE_OPTIONS_SEPARATOR_CHAR)) {
+			/* the return buffer must be freed by the caller */
+			notcheckpointsafeArray[classMethodCounter] = scan_to_delim(PORTLIB, &notcheckpointsafeValue, NOT_CHECKPOINT_SAFE_OPTIONS_SEPARATOR_CHAR);
+			Trc_VM_criu_getNotCheckpointSafeClassMethodArray_classMethodItem(vmThread, classMethodCounter, notcheckpointsafeArray[classMethodCounter]);
+			classMethodCounter += 1;
+		}
+		UDATA notcheckpointsafeValueLength = strlen(notcheckpointsafeValue);
+		/* allocate memory for the last entry separated by the separator */
+		notcheckpointsafeArray[classMethodCounter] = (char *)j9mem_allocate_memory(notcheckpointsafeValueLength + 1, OMRMEM_CATEGORY_VM);
+		if (NULL != notcheckpointsafeArray[classMethodCounter]) {
+			memcpy(notcheckpointsafeArray[classMethodCounter], notcheckpointsafeValue, notcheckpointsafeValueLength);
+			Trc_VM_criu_getNotCheckpointSafeClassMethodArray_classMethodItem(vmThread, classMethodCounter, notcheckpointsafeArray[classMethodCounter]);
+			*classMethodNumber = classMethodCounter + 1;
+		} else {
+			Trc_VM_criu_getNotCheckpointSafeClassMethodArray_oom(vmThread);
+		}
+	} else {
+		Trc_VM_criu_getNotCheckpointSafeClassMethodArray_noSysProp(vmThread);
+	}
+
+	return notcheckpointsafeArray;
+}
+
 static UDATA
 notCheckpointSafeOrClinitFrameWalkFunction(J9VMThread *vmThread, J9StackWalkState *walkState)
 {
@@ -1195,7 +1255,8 @@ notCheckpointSafeOrClinitFrameWalkFunction(J9VMThread *vmThread, J9StackWalkStat
 
 	if (NULL != method) {
 		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-		J9ClassLoader *methodLoader = J9_CLASS_FROM_METHOD(method)->classLoader;
+		J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
+		J9ClassLoader *methodLoader = methodClass->classLoader;
 		J9UTF8 *romMethodName = J9ROMMETHOD_NAME(romMethod);
 		/* only method names that start with '<' are <init> and <clinit>  */
 		if (0 == strncmp((char*)J9UTF8_DATA(romMethodName), "<c", 2)) {
@@ -1205,6 +1266,32 @@ notCheckpointSafeOrClinitFrameWalkFunction(J9VMThread *vmThread, J9StackWalkStat
 
 		/* we only enforce this in methods loaded by the bootloader */
 		if (methodLoader == vmThread->javaVM->systemClassLoader) {
+			const UDATA classMethodNumber = (const UDATA)walkState->userData3;
+			/* iterate the array retrieved from the system property value of openj9.internal.criu.notcheckpointsafe */
+			if (classMethodNumber > 0) {
+				const char **notcheckpointsafeArray = (const char **)walkState->userData2;
+				J9UTF8 *className = J9ROMCLASS_CLASSNAME(methodClass->romClass);
+				UDATA classNameLength = J9UTF8_LENGTH(className);
+				UDATA methodNameLength = J9UTF8_LENGTH(romMethodName);
+				UDATA classMethodNameTotalLength = classNameLength + sizeof('.') + methodNameLength;
+
+				for (UDATA index = 0; index < classMethodNumber; index++) {
+					const char *classMethodNameTarget = notcheckpointsafeArray[index];
+					if (classMethodNameTotalLength == strlen(classMethodNameTarget)) {
+						/* compare the class name */
+						if (0 == strncmp((char*)J9UTF8_DATA(className), classMethodNameTarget, classNameLength)) {
+							/* compare the method name */
+							if (0 == strncmp((char*)J9UTF8_DATA(romMethodName), classMethodNameTarget + classNameLength + 1, methodNameLength)) {
+								/* ignore the method signature for simplicity */
+								Trc_VM_criu_notCheckpointSafeOrClinitFrameWalkFunction_foundTargetItem(vmThread, classMethodNameTarget);
+								*(UDATA*)walkState->userData1 = J9VM_DELAYCHECKPOINT_NOTCHECKPOINTSAFE;
+								goto fail;
+							}
+						}
+					}
+				}
+			}
+
 			if (J9ROMMETHOD_HAS_EXTENDED_MODIFIERS(romMethod)) {
 				U_32 extraModifiers = getExtendedModifiersDataFromROMMethod(romMethod);
 				if (J9ROMMETHOD_HAS_NOT_CHECKPOINT_SAFE_ANNOTATION(extraModifiers)) {
@@ -1226,7 +1313,7 @@ fail:
 }
 
 static bool
-checkIfSafeToCheckpoint(J9VMThread *currentThread)
+checkIfSafeToCheckpoint(J9VMThread *currentThread, const char **notcheckpointsafeArray, const UDATA classMethodNumber)
 {
 	UDATA notSafeToCheckpoint = 0;
 	J9JavaVM *vm = currentThread->javaVM;
@@ -1243,6 +1330,8 @@ checkIfSafeToCheckpoint(J9VMThread *currentThread)
 			walkState.flags = J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_INCLUDE_NATIVES;
 			walkState.skipCount = 0;
 			walkState.userData1 = (void *)&notSafeToCheckpoint;
+			walkState.userData2 = (void *)notcheckpointsafeArray;
+			walkState.userData3 = (void *)classMethodNumber;
 			walkState.frameWalkFunction = notCheckpointSafeOrClinitFrameWalkFunction;
 
 			vm->walkStackFrames(walkThread, &walkState);
@@ -1600,6 +1689,9 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		U_32 intGhostFileLimit = 0;
 		IDATA criuDumpReturnCode = 0;
 		bool restoreFailure = false;
+		UDATA classMethodNumber = 0;
+		/* classMethodNumber stays 0 if returning notcheckpointsafeArray is null */
+		char **notcheckpointsafeArray = getNotCheckpointSafeClassMethodArray(currentThread, &classMethodNumber);
 
 		internalEnterVMFromJNI(currentThread);
 
@@ -1753,7 +1845,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 
 		acquireSafeOrExcusiveVMAccess(currentThread, safePoint);
 
-		notSafeToCheckpoint = checkIfSafeToCheckpoint(currentThread);
+		notSafeToCheckpoint = checkIfSafeToCheckpoint(currentThread, (const char **)notcheckpointsafeArray, classMethodNumber);
 
 		for (UDATA i = 0; (0 != notSafeToCheckpoint) && (i <= maxRetries); i++) {
 			releaseSafeOrExcusiveVMAccess(currentThread, safePoint);
@@ -1761,8 +1853,12 @@ criuCheckpointJVMImpl(JNIEnv *env,
 			omrthread_sleep(sleepMilliseconds);
 			internalEnterVMFromJNI(currentThread);
 			acquireSafeOrExcusiveVMAccess(currentThread, safePoint);
-			notSafeToCheckpoint = checkIfSafeToCheckpoint(currentThread);
+			notSafeToCheckpoint = checkIfSafeToCheckpoint(currentThread, (const char **)notcheckpointsafeArray, classMethodNumber);
 		}
+		for (UDATA index = 0; index < classMethodNumber; index++) {
+			j9mem_free_memory(notcheckpointsafeArray[index]);
+		}
+		j9mem_free_memory(notcheckpointsafeArray);
 
 		if ((J9VM_DELAYCHECKPOINT_NOTCHECKPOINTSAFE == notSafeToCheckpoint)
 			|| ((J9VM_DELAYCHECKPOINT_CLINIT == notSafeToCheckpoint) && J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_THROW_ON_DELAYED_CHECKPOINT_ENABLED))
