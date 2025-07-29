@@ -9807,6 +9807,195 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
    return resultReg;
    }
 
+// duplicate from the static method in Z
+static TR::SymbolReference *getClassSymRefAndDepth(TR::Node *classNode,
+      TR::Compilation *comp, int32_t &classDepth)
+   {
+   classDepth = -1;
+   TR::SymbolReference *classSymRef = NULL;
+   const TR::ILOpCodes opcode = classNode->getOpCodeValue();
+   bool isClassNodeLoadAddr = opcode == TR::loadaddr;
+
+   // getting the symbol ref
+   if (isClassNodeLoadAddr)
+      {
+      classSymRef = classNode->getSymbolReference();
+      }
+   else if (opcode == TR::aloadi)
+      {
+      // recognizedCallTransformer adds another layer of aloadi
+      while (classNode->getOpCodeValue() == TR::aloadi && classNode->getFirstChild()->getOpCodeValue() == TR::aloadi)
+         {
+         classNode = classNode->getFirstChild();
+         }
+
+      if (classNode->getOpCodeValue() == TR::aloadi && classNode->getFirstChild()->getOpCodeValue() == TR::loadaddr)
+         {
+         classSymRef = classNode->getFirstChild()->getSymbolReference();
+         }
+      }
+
+   // the class node being <loadaddr> is an edge case - likely will not happen since we shouldn't see
+   // Class.isAssignableFrom on classes known at compile (javac) time, but still possible.
+   if (!isClassNodeLoadAddr && (classNode->getOpCodeValue() != TR::aloadi ||
+        classNode->getSymbolReference() != comp->getSymRefTab()->findJavaLangClassFromClassSymbolRef() ||
+        classNode->getFirstChild()->getOpCodeValue() != TR::loadaddr))
+      {
+      return classSymRef; // cannot find class depth
+      }
+
+   TR::Node *classRef = isClassNodeLoadAddr ? classNode : classNode->getFirstChild();
+   TR::SymbolReference *symRef = classRef->getOpCode().hasSymbolReference() ? classRef->getSymbolReference() : NULL;
+
+   if (symRef != NULL && !symRef->isUnresolved())
+      {
+      TR::StaticSymbol *classSym = symRef->getSymbol()->getStaticSymbol();
+      TR_OpaqueClassBlock *clazz = (classSym != NULL) ? (TR_OpaqueClassBlock *) classSym->getStaticAddress() : NULL;
+      if (clazz != NULL)
+         classDepth = static_cast<int32_t>(TR::Compiler->cls.classDepthOf(clazz));
+      }
+
+   return classSymRef;
+   }
+
+static TR::Register *inlineCheckAssignableFromEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Compilation *comp = cg->comp();
+
+   // original form: toClass.isAssignableFrom(fromClass)
+   TR::Node *fromClass = node->getFirstChild();
+   TR::Node *toClass = node->getSecondChild();
+
+   TR::Register *fromClassReg = cg->evaluate(fromClass);
+   TR::Register *toClassReg = cg->evaluate(toClass);
+
+   TR::Register *cacheReg = cg->allocateRegister();
+
+   TR::Register *condReg = cg->allocateRegister(TR_CCR);
+
+   TR::Register *resultReg = cg->allocateRegister();
+
+   TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *oolJumpLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
+
+   TR::LabelSymbol *failLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *successLabel = endLabel;
+
+   TR_PPCScratchRegisterManager *srm = cg->generateScratchRegisterManager();
+
+   // jump to the out of line code if inlined code cannot handle it
+   TR_PPCOutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory())
+      TR_PPCOutOfLineCodeSection(node, TR::icall, resultReg, oolJumpLabel, endLabel, cg);
+   cg->getPPCOutOfLineCodeSectionList().push_front(outlinedHelperCall);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, startLabel);
+   startLabel->setStartInternalControlFlow();
+
+   // Checking at compile time if possible.
+   int32_t toClassDepth = -1;
+   TR::SymbolReference *toClassSymRef = getClassSymRefAndDepth(toClass, comp, toClassDepth);
+   bool fastFail = false;
+   if (comp->getOption(TR_TraceCG))
+      {
+      traceMsg(comp, "%s: toClassSymRef is %s\n", node->getOpCode().getName(),
+            NULL == toClassSymRef ? "null" : "non-null");
+      if (toClassSymRef)
+         {
+         traceMsg(comp, "%s: toClass is %s, %s, %s\n", node->getOpCode().getName(),
+               toClassSymRef->isClassInterface(comp) ? "an interface" : "not an interface",
+               toClassSymRef->isClassAbstract(comp) ? "abstract" : "non-abstract");
+         }
+      }
+   if ((NULL != toClassSymRef) && !toClassSymRef->isClassInterface(comp))
+      {
+      int32_t fromClassDepth = -1;
+      TR::SymbolReference *fromClassSymRef = getClassSymRefAndDepth(fromClass, comp, fromClassDepth);
+      if (comp->getOption(TR_TraceCG))
+         {
+         traceMsg(comp, "%s: fromClassSymRef is %s\n", node->getOpCode().getName(),
+               NULL == fromClassSymRef ? "null" : "non-null");
+         if (fromClassSymRef)
+            {
+            traceMsg(comp, "%s: fromClass is %s, %s, %s\n", node->getOpCode().getName(),
+                  fromClassSymRef->isClassInterface(comp) ? "an interface" : "not an interface",
+                  fromClassSymRef->isClassAbstract(comp) ? "abstract" : "non-abstract");
+            }
+         }
+      if ((NULL != fromClassSymRef) && !fromClassSymRef->isClassInterface(comp))
+         {
+         if (comp->getOption(TR_TraceCG))
+            traceMsg(comp, "depths %d %d\n", toClassDepth, fromClassDepth);
+         if (toClassDepth > -1 && fromClassDepth > -1 && toClassDepth > fromClassDepth)
+            {
+            // fall into the failLabel
+            fastFail = true;
+            }
+         }
+      }
+
+   if (!fastFail) // generate the inline tests if we cannot figure it out on compile time
+      {
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 0x777); // eyecatcher
+      // default to success
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 1);
+
+      // equality test
+      generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmpl, node, condReg, fromClassReg, toClassReg);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, successLabel, condReg);
+
+      // castClassCache test
+      if ((NULL == toClassSymRef) || (!toClassSymRef->isClassAbstract(comp)))
+         {
+         generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, cacheReg,
+               TR::MemoryReference::createWithDisplacement(cg, fromClassReg,
+                     offsetof(J9Class, castClassCache), TR::Compiler->om.sizeofReferenceAddress()));
+         generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmpl, node, condReg, cacheReg, toClassReg);
+         generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, successLabel, condReg);
+         }
+
+      // superClass test
+      if ((NULL == toClassSymRef) || (!toClassSymRef->isClassInterface(comp)))
+         {
+         genInstanceOfOrCheckCastSuperClassTest(node, condReg, fromClassReg, toClassReg,
+               toClassDepth, oolJumpLabel, srm, cg);
+         generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, successLabel, condReg);
+         }
+      // fallback to the helper
+      generateLabelInstruction(cg, TR::InstOpCode::b, node, oolJumpLabel);
+      }
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, failLabel);
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 0);
+
+   srm->stopUsingRegisters();
+   cg->stopUsingRegister(fromClassReg);
+   cg->stopUsingRegister(toClassReg);
+   cg->stopUsingRegister(cacheReg);
+
+   const short numReg = 4 + srm->numAvailableRegisters();
+   TR::RegisterDependencyConditions *dependencies =
+         new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0,
+               numReg, cg->trMemory());
+
+   srm->addScratchRegistersToDependencyList(dependencies);
+
+   dependencies->addPostCondition(fromClassReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(toClassReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(cacheReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(resultReg, TR::RealRegister::NoReg);
+
+   for (int i = 0; i < numReg; i++) {
+      dependencies->getPostConditions()->getRegisterDependency(i)->setExcludeGPR0();
+   }
+
+   generateDepLabelInstruction(cg, TR::InstOpCode::label, node, endLabel, dependencies);
+
+   endLabel->setEndInternalControlFlow();
+   node->setRegister(resultReg);
+   return resultReg;
+   }
+
 static TR::Register *inlineConcurrentLinkedQueueTMOffer(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = cg->comp();
@@ -12494,6 +12683,16 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
    else if (OMR::CodeGeneratorConnector::inlineDirectCall(node, resultReg))
       {
       return true;
+      }
+   else if (node->getSymbolReference()->getReferenceNumber() == TR_checkAssignable)
+      {
+      if (comp->getOption(TR_TraceCG))
+         {
+         printf("LkL inlining\n");
+         resultReg = inlineCheckAssignableFromEvaluator(node, cg);
+         return true;
+         }
+      return false;
       }
    else if (methodSymbol)
       {
