@@ -101,9 +101,9 @@ Java_java_lang_System_getSysPropBeforePropertiesInitialized(JNIEnv *env, jclass 
 #endif /* JAVA_SPEC_VERSION < 18 */
 		}
 #if defined(J9ZOS390)
-		if (__CSNameType(sysPropValue) == _CSTYPE_ASCII) {
+		if (__CSNameType((char *)sysPropValue) == _CSTYPE_ASCII) {
 			__ccsid_t ccsid;
-			ccsid = __toCcsid(sysPropValue);
+			ccsid = __toCcsid((char *)sysPropValue);
 			atoe_setFileTaggingCcsid(&ccsid);
 		}
 #endif /* defined(J9ZOS390) */
