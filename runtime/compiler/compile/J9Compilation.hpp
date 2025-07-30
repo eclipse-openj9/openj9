@@ -441,6 +441,7 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    void addAOTMethodDependency(TR_OpaqueClassBlock *ramClass);
    void addAOTMethodDependency(TR_OpaqueClassBlock *ramClass, uintptr_t chainOffset);
    uintptr_t populateAOTMethodDependencies(TR_OpaqueClassBlock *definingClass, Vector<uintptr_t> &chainBuffer);
+   uintptr_t numAOTMethodDependencies() { return _aotMethodDependencies.size(); }
 #endif
 
    /**
