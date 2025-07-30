@@ -627,7 +627,7 @@ JVM_GetCDSConfigStatus()
 }
 #endif /* JAVA_SPEC_VERSION >= 23 */
 
-#if JAVA_SPEC_VERSION >= 24
+#if JAVA_SPEC_VERSION >= 21
 /**
  * @brief Determine if the JVM is running inside a container.
  *
@@ -648,7 +648,9 @@ JVM_IsContainerized(void)
 
 	return isContainerized;
 }
+#endif /* JAVA_SPEC_VERSION >= 21 */
 
+#if JAVA_SPEC_VERSION >= 24
 /**
  * @brief Determine if the JVM is statically linked, always returns JNI_FALSE.
  *
