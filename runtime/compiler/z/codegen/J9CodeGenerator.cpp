@@ -290,6 +290,12 @@ J9::Z::CodeGenerator::initialize()
       }
 
    cg->setIgnoreDecimalOverflowException(false);
+
+   // Disable last iTable cache by default.
+   static bool enableLastITableCache = feGetEnv("TR_EnableLastITableCache") != NULL;
+   if (!enableLastITableCache)
+      comp->setOption(TR_DisableLastITableCache);
+
    }
 
 bool
