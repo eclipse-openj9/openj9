@@ -404,6 +404,21 @@ class TR_VectorAPIExpansion : public TR::Optimization
          }
 
    /** \brief
+    *     Returns method's name and its length
+    *
+    *  \param methodSymbol
+    *     Method symbol
+    *
+    *  \param nameLen
+    *     mathod name's length
+    *
+    *  \return
+    *     method name
+    *
+    */
+   static const char *getMethodName(TR::MethodSymbol *methodSymbol, uint16_t &nameLen);
+
+   /** \brief
     *     Checks if the method being compiled contains any recognized Vector API methods
     *
     *  \param comp
