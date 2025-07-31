@@ -371,6 +371,8 @@ public:
    SerializedAOTMethod &data() { return _data; }
    const AOTCacheRecord *const *records() const { return (const AOTCacheRecord *const *)_data.end(); }
    AOTCacheRecord **records() { return (AOTCacheRecord **)_data.end(); }
+   const AOTCacheRecord *const *deps() const { return records() + _data.numRecords(); }
+   AOTCacheRecord **deps() { return (AOTCacheRecord **)(records() + _data.numRecords()); }
 
    static const char *getRecordName() { return "cached AOT method"; }
    static CachedAOTMethod *create(const AOTCacheClassChainRecord *definingClassChainRecord,
@@ -378,6 +380,7 @@ public:
                                   TR_Hotness optLevel,
                                   const AOTCacheAOTHeaderRecord *aotHeaderRecord,
                                   const Vector<std::pair<const AOTCacheRecord *, uintptr_t>> &records,
+                                  const UnorderedMap<uintptr_t, bool> &dependencies,
                                   const void *code, size_t codeSize,
                                   const void *data, size_t dataSize,
                                   const char *signature);
@@ -393,20 +396,22 @@ private:
    CachedAOTMethod(const AOTCacheClassChainRecord *definingClassChainRecord, uint32_t index,
                    TR_Hotness optLevel, const AOTCacheAOTHeaderRecord *aotHeaderRecord,
                    const Vector<std::pair<const AOTCacheRecord *, uintptr_t>> &records,
+                   const UnorderedMap<uintptr_t, bool> &dependencies,
                    const void *code, size_t codeSize, const void *data, size_t dataSize,
                    const char *signature, size_t signatureSize);
    CachedAOTMethod(const JITServerAOTCacheReadContext &context, const SerializedAOTMethod &header);
 
    SerializedAOTMethod *dataAddr() { return &_data; }
 
-   static size_t size(size_t numRecords, size_t codeSize, size_t dataSize, size_t signatureSize)
+   static size_t size(size_t numRecords, size_t numDependencies, size_t codeSize, size_t dataSize, size_t signatureSize)
       {
       return offsetof(CachedAOTMethod, _data) +
-             SerializedAOTMethod::size(numRecords, codeSize, dataSize, signatureSize) +
-             numRecords * sizeof(AOTCacheRecord *);
+             SerializedAOTMethod::size(numRecords, numDependencies, codeSize, dataSize, signatureSize)
+             + numRecords * sizeof(AOTCacheRecord *)
+             + numDependencies * sizeof(AOTCacheRecord *);
       }
 
-   static size_t size(const SerializedAOTMethod &header) { return size(header.numRecords(), header.codeSize(), header.dataSize(), header.signatureSize()); }
+   static size_t size(const SerializedAOTMethod &header) { return size(header.numRecords(), header.numDependencies(), header.codeSize(), header.dataSize(), header.signatureSize()); }
 
    bool setSubrecordPointers(const JITServerAOTCacheReadContext &context);
 
@@ -463,6 +468,7 @@ public:
    bool storeMethod(const AOTCacheClassChainRecord *definingClassChainRecord, uint32_t index,
                     TR_Hotness optLevel, const AOTCacheAOTHeaderRecord *aotHeaderRecord,
                     const Vector<std::pair<const AOTCacheRecord *, uintptr_t/*reloDataOffset*/>> &records,
+                    const UnorderedMap<uintptr_t, bool> &dependencies,
                     const void *code, size_t codeSize, const void *data, size_t dataSize,
                     const char *signature, uint64_t clientUID, const CachedAOTMethod *&methodRecord);
 

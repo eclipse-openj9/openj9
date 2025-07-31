@@ -523,7 +523,20 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
     * \return The number of AOT Method Dependencies
     */
    uintptr_t populateAOTMethodDependencies(TR_OpaqueClassBlock *definingClass, Vector<uintptr_t> &chainBuffer);
+
+   /**
+    * \brief Return the number of dependencies for the method being compiled.
+    *
+    * \return The number of dependencies for the method being compiled.
+    */
    uintptr_t numAOTMethodDependencies() { return _aotMethodDependencies.size(); }
+
+   /**
+    * \brief Return a reference to the _aotMethodDependencies map
+    *
+    * \return reference to the _aotMethodDependencies map
+    */
+   UnorderedMap<uintptr_t, bool> & getAOTMethodDependencies() { return _aotMethodDependencies; }
 #endif
 
    /**
