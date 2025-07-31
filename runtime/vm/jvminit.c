@@ -3951,6 +3951,7 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		} else if (debugInterpreter < noDebugInterpreter) {
 			vm->extendedRuntimeFlags &= ~(UDATA)J9_EXTENDED_RUNTIME_DEBUG_MODE;
 		}
+		vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_DEBUG_MODE;
 	}
 
 	{
