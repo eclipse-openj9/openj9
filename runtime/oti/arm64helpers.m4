@@ -229,8 +229,8 @@ define({RESTORE_PRESERVED_REGS},{
 })
 
 define({BRANCH_VIA_VMTHREAD},{
-	ldr x8,[J9VMTHREAD,{#}$1]
-	br x8
+	ldr x16,[J9VMTHREAD,{#}$1]
+	br x16
 })
 
 define({SWITCH_TO_JAVA_STACK},{ldr J9SP,[J9VMTHREAD,{#}J9TR_VMThread_sp]})
