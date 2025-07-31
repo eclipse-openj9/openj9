@@ -65,6 +65,7 @@ namespace TR { class IlGenRequest; }
 struct SerializedRuntimeAssumption;
 class ClientSessionData;
 class AOTCacheRecord;
+class AOTCacheClassRecord;
 class AOTCacheThunkRecord;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
@@ -494,7 +495,33 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 #if defined(PERSISTENT_COLLECTIONS_UNSUPPORTED)
    void addAOTMethodDependency(TR_OpaqueClassBlock *ramClass, uintptr_t chainOffse = TR_SharedCache::INVALID_CLASS_CHAIN_OFFSETt) {}
 #else
+   /**
+    * \brief Add the provided class as an AOT Method Dependency
+    *
+    * In the case of JITServer with AOTCache, this method calls the private
+    * helper method addAOTMethodDependency with the associated
+    * AOTCacheClassRecord; otherwise, it passes the class chain offset. Failure
+    * to acquire the appropriate data in both cases results in a compilation
+    * failure.
+    *
+    * \param ramClass the J9Class which is a dependncy of the the currently
+    *                 method being compiled.
+    * \param chainOffset an optional parameter, in case the the caller already
+    *                    has the chain offset on hand.
+    *
+    */
    void addAOTMethodDependency(TR_OpaqueClassBlock *ramClass, uintptr_t chainOffset = TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET);
+
+   /**
+    * \brief Populated the provided buffer with position independent AOT Method
+    *        Dependencies.
+    *
+    * \param definingClass the defining class of the method being compiled.
+    * \param chainBuffer[out] the buffer to which the position independent
+    *                         dependencies will be stored.
+    *
+    * \return The number of AOT Method Dependencies
+    */
    uintptr_t populateAOTMethodDependencies(TR_OpaqueClassBlock *definingClass, Vector<uintptr_t> &chainBuffer);
    uintptr_t numAOTMethodDependencies() { return _aotMethodDependencies.size(); }
 #endif
@@ -520,8 +547,41 @@ private:
    TR_OpaqueClassBlock *getCachedClassPointer(CachedClassPointerId which);
 
 #if !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED)
+   /**
+    * \brief Helper method inserts the dependency into _aotMethodDependencies
+    *
+    * \param dependency the AOT method dependency. This could either be an
+    *                   offset into the SCC or a AOTCacheClassRecord pointer.
+    * \param classIsInitialized boolean to indicate whether the class that the
+    *                           dependency is associated with has been
+    *                           initialized.
+    */
    void insertAOTMethodDependency(uintptr_t dependency, bool classIsInitialized);
+
+   /**
+    * \brief Heleper method to store a dependency represented by an offset into
+    *        the SCC.
+    *
+    * \param offset the offset into the SCC of the class associated with the
+    *               dependency.
+    * \param classIsInitialized boolean to indicate wiether the class that the
+    *                           dependency is associated with has been
+    *                           initialized.
+    */
    void addAOTMethodDependency(uintptr_t offset, bool classIsInitialized);
+#if defined(J9VM_OPT_JITSERVER)
+   /**
+    * \brief Helper method to store a dependency represented by a
+    *        AOTCacheClassRecord.
+    *
+    * \param record The AOTCacheClassRecord pointer associated with the class
+    *               associated with the dependency.
+    * \param classIsInitialized boolean to indicate wiether the class that the
+    *                           dependency is associated with has been
+    *                           initialized.
+    */
+   void addAOTMethodDependency(const AOTCacheClassRecord *record, bool classIsInitialized);
+#endif
 #endif  /*  !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED) */
 
    J9VMThread *_j9VMThread;
