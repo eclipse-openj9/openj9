@@ -1961,8 +1961,10 @@ done:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_literals);
 		UDATA relativeBP = 0;
+		bool j2i = false;
 		if (*_sp & J9_STACK_FLAGS_J2_IFRAME) {
 			relativeBP = (((UDATA*)(((J9SFJ2IFrame*)_sp) + 1)) - 1) - _arg0EA;
+			j2i = true;
 		} else {
 			relativeBP = (((UDATA*)(((J9SFStackFrame*)_sp) + 1)) - 1) - _arg0EA;
 		}
@@ -2069,7 +2071,7 @@ throwStackOverflow:
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #if JAVA_SPEC_VERSION >= 24
 					case J9_OBJECT_MONITOR_YIELD_VIRTUAL: {
-						rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_SYNC_METHOD);
+						rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, j2i ? J9VM_CONTINUATION_RETURN_FROM_SYNC_METHOD_J2I : J9VM_CONTINUATION_RETURN_FROM_SYNC_METHOD);
 						break;
 					}
 #endif /* JAVA_SPEC_VERSION >= 24 */
