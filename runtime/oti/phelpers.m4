@@ -863,8 +863,8 @@ define({RESTORE_PRESERVED_REGS},{
 })
 
 define({BRANCH_VIA_VMTHREAD},{
-	laddr r0,$1(J9VMTHREAD)
-	mtctr r0
+	laddr r11,$1(J9VMTHREAD)
+	mtctr r11
 	bctr
 })
 
