@@ -1626,13 +1626,35 @@ J9::Compilation::addAOTMethodDependency(TR_OpaqueClassBlock *clazz, uintptr_t ch
    if (getOption(TR_DisableDependencyTracking))
       return;
 
-   if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == chainOffset)
-      chainOffset = self()->fej9()->sharedCache()->rememberClass(clazz);
+   bool ensureClassIsInitialized = self()->fej9()->isClassInitialized(clazz);
 
-   if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == chainOffset)
-      self()->failCompilation<J9::ClassChainPersistenceFailure>("classChainOffset == INVALID_CLASS_CHAIN_OFFSET");
+#if defined(J9VM_OPT_JITSERVER)
+   if (self()->isAOTCacheStore())
+      {
+      bool missingLoaderInfo = false;
+      const AOTCacheClassRecord *record =
+         self()->getClientData()->getClassRecord(
+            (J9Class *)clazz, self()->getStream(), missingLoaderInfo);
 
-   addAOTMethodDependency(chainOffset, self()->fej9()->isClassInitialized(clazz));
+      if (!record)
+         {
+         self()->failCompilation<J9::AOTCachePersistenceFailure>(
+            "addAOTMethodDependency: record == NULL");
+         }
+
+      addAOTMethodDependency(record, ensureClassIsInitialized);
+      }
+   else
+#endif
+      {
+      if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == chainOffset)
+         chainOffset = self()->fej9()->sharedCache()->rememberClass(clazz);
+
+      if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == chainOffset)
+         self()->failCompilation<J9::ClassChainPersistenceFailure>("classChainOffset == INVALID_CLASS_CHAIN_OFFSET");
+
+      addAOTMethodDependency(chainOffset, ensureClassIsInitialized);
+      }
    }
 
 void
@@ -1652,10 +1674,11 @@ J9::Compilation::insertAOTMethodDependency(uintptr_t dependency, bool ensureClas
 void
 J9::Compilation::addAOTMethodDependency(uintptr_t chainOffset, bool ensureClassIsInitialized)
    {
-   TR_ASSERT(TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != chainOffset, "Attempted to remember invalid chain offset");
-   TR_ASSERT(self()->compileRelocatableCode(), "Must be generating AOT code");
+   TR_ASSERT_FATAL(TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != chainOffset, "Attempted to remember invalid chain offset");
+   TR_ASSERT_FATAL(self()->compileRelocatableCode(), "Must be generating AOT code");
 
-   self()->insertAOTMethodDependency(chainOffset, ensureClassIsInitialized);
+   uintptr_t dependency = chainOffset;
+   self()->insertAOTMethodDependency(dependency, ensureClassIsInitialized);
 
    if (self()->getOptions()->getVerboseOption(TR_VerboseDependencyTrackingDetails))
       {
@@ -1666,6 +1689,24 @@ J9::Compilation::addAOTMethodDependency(uintptr_t chainOffset, bool ensureClassI
                                      method, chainOffset, romClassOffset, ensureClassIsInitialized);
       }
    }
+
+#if defined(J9VM_OPT_JITSERVER)
+void
+J9::Compilation::addAOTMethodDependency(const AOTCacheClassRecord *record, bool ensureClassIsInitialized)
+   {
+   TR_ASSERT_FATAL(self()->compileRelocatableCode(), "Must be generating AOT code");
+
+   uintptr_t dependency = (uintptr_t)record;
+   self()->insertAOTMethodDependency(dependency, ensureClassIsInitialized);
+
+   if (self()->getOptions()->getVerboseOption(TR_VerboseDependencyTrackingDetails))
+      {
+      auto method = self()->getMethodBeingCompiled()->getPersistentIdentifier();
+      TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Method %p dependency: AOTCacheClassRecord=%p needsInit=%d",
+                                     method, record, ensureClassIsInitialized);
+      }
+   }
+#endif // defined(J9VM_OPT_JITSERVER)
 
 // Populate the given dependencyBuffer with dependencies of this method, in the
 // format needed by TR_J9SharedCache::storeAOTMethodDependencies(). Returns the
