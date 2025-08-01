@@ -108,7 +108,7 @@ slack_channel: '#jenkins'
 build_discarder:
   logs:
     Nightly: 30
-    Release: 3
+    Release: 10
     OMR: 3
     OpenJDK8: 3
     OpenJDK11: 3
