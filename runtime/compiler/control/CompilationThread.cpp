@@ -8375,6 +8375,9 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
          trMemory,
          TR::CompileIlGenRequest(entry->getMethodDetails()),
          entry->_checkpointInProgress
+#if defined(J9VM_OPT_JITSERVER)
+         , entry->_numPermanentLoaders
+#endif
          );
    if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
       TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH,
@@ -9254,7 +9257,11 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                p->trMemory(),
                p->_optimizationPlan,
                reloRuntime,
-               &target);
+               &target
+#if defined(J9VM_OPT_JITSERVER)
+               , p->_numPermanentLoaders
+#endif
+               );
 
 #if defined(J9VM_OPT_JITSERVER)
          // JITServer TODO: put info in optPlan so that compilation constructor can do this

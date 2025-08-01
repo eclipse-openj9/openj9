@@ -95,6 +95,7 @@ const char *messageNames[] =
    "ResolvedRelocatableMethod_fieldAttributes",
    "ResolvedRelocatableMethod_staticAttributes",
    "ResolvedRelocatableMethod_getFieldType",
+   "ClientSessionData_getPermanentLoaders",
    "VM_isClassLibraryMethod",
    "VM_isClassArray",
    "VM_transformJlrMethodInvoke",

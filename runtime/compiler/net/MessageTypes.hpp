@@ -103,6 +103,9 @@ enum MessageType : uint16_t
    ResolvedRelocatableMethod_staticAttributes,
    ResolvedRelocatableMethod_getFieldType,
 
+   // For ClientSessionData
+   ClientSessionData_getPermanentLoaders,
+
    // For TR_J9ServerVM methods
    VM_isClassLibraryMethod,
    VM_isClassArray,

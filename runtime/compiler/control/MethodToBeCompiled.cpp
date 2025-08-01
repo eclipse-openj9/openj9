@@ -97,6 +97,7 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails &details, vo
    _doNotLoadFromJITServerAOTCache = false;
    _useAOTCacheCompilation = false;
    _origOptLevel = unknownHotness;
+   _numPermanentLoaders = SIZE_MAX;
    _stream = NULL;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
