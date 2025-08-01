@@ -146,7 +146,7 @@ initializeMonitorTable(J9JavaVM* vm)
 		return -1;
 	}
 	memset(vm->monitorTables, 0, sizeof(J9HashTable *) * tableCount);
-	
+
 	vm->monitorTableList = NULL;
 
 	for (tableIndex = 0; tableIndex < tableCount; tableIndex++) {
@@ -170,7 +170,7 @@ initializeMonitorTable(J9JavaVM* vm)
 	}
 
 	vm->monitorTableCount = tableCount;
-	
+
 	return 0;
 }
 
@@ -299,20 +299,20 @@ monitorTableAt(J9VMThread* vmStruct, j9object_t object)
 					((J9ThreadAbstractMonitor *)monitor)->spinCount1 = j9threadOptions->customThreeTierSpinCount1;
 					((J9ThreadAbstractMonitor *)monitor)->spinCount2 = j9threadOptions->customThreeTierSpinCount2;
 					((J9ThreadAbstractMonitor *)monitor)->spinCount3 = j9threadOptions->customThreeTierSpinCount3;
-			
+
 					Trc_VM_MonitorTableAt_CustomSpinOption(option->className,
 														   object,
 													   	   ((J9ThreadAbstractMonitor *)monitor)->spinCount1,
 													   	   ((J9ThreadAbstractMonitor *)monitor)->spinCount2,
 													       ((J9ThreadAbstractMonitor *)monitor)->spinCount3);
 #endif /* OMR_THR_THREE_TIER_LOCKING */
-#if defined(OMR_THR_ADAPTIVE_SPIN)													  
+#if defined(OMR_THR_ADAPTIVE_SPIN)
 					Trc_VM_MonitorTableAt_CustomSpinOption2(option->className,
-														    object,													       
+														    object,
 														    j9threadOptions->customAdaptSpin);
-#endif /* OMR_THR_ADAPTIVE_SPIN */							
+#endif /* OMR_THR_ADAPTIVE_SPIN */
 				}
-#endif /* OMR_THR_CUSTOM_SPIN_OPTIONS */				
+#endif /* OMR_THR_CUSTOM_SPIN_OPTIONS */
 #endif /* J9VM_INTERP_CUSTOM_SPIN_OPTIONS */
 
 				key_objectMonitor.monitor = monitor;
@@ -324,6 +324,7 @@ monitorTableAt(J9VMThread* vmStruct, j9object_t object)
 
 #if JAVA_SPEC_VERSION >= 24
 				key_objectMonitor.virtualThreadWaitCount = 0;
+				key_objectMonitor.platformThreadWaitCount = 0;
 				key_objectMonitor.ownerContinuation = NULL;
 				key_objectMonitor.waitingContinuations = NULL;
 				key_objectMonitor.next = NULL;

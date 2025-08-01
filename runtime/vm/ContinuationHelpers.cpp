@@ -1009,7 +1009,7 @@ restart:
 #if defined(J9VM_THR_LOCK_RESERVATION)
 						if (J9_ARE_ANY_BITS_SET(lock, OBJECT_HEADER_LOCK_RESERVED)) {
 							/* Lock is now reserved, exit the inflated monitor and restart to cancel lock reservation. */
-							omrthread_monitor_exit(monitor);
+							Assert_VM_true(0 == omrthread_monitor_exit(monitor));
 							goto restart;
 						}
 #endif /* J9VM_THR_LOCK_RESERVATION */
@@ -1020,6 +1020,8 @@ restart:
 							newLockword = (UDATA)J9_FLATLOCK_OWNER(lock)
 										| ((J9_FLATLOCK_COUNT(lock) - 1) << OBJECT_HEADER_LOCK_V2_RECURSION_OFFSET)
 										| OBJECT_HEADER_LOCK_FLC;
+
+							Assert_VM_true(J9_FLATLOCK_COUNT(lock) == J9_FLATLOCK_COUNT(newLockword));
 						} else {
 							/* Lock is unlocked, so try to directly acquire it as a flatlock. */
 							newLockword = (UDATA)currentThread;
@@ -1033,7 +1035,7 @@ restart:
 							/* CAS succeeded, we can proceed with using the inflated monitor. */
 							VM_ObjectMonitor::incrementCancelCounter(J9OBJECT_CLAZZ(currentThread, syncObj));
 							/* Either the lock is acquired or FLC bit set, safe to release the inflated monitor. */
-							omrthread_monitor_exit(monitor);
+							Assert_VM_true(0 == omrthread_monitor_exit(monitor));
 
 							if (J9_FLATLOCK_OWNER(newLockword) == currentThread) {
 								/* Lock is acquired. */
@@ -1132,7 +1134,7 @@ restart:
 			syncObjectMonitor->waitingContinuations = continuation;
 			omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
 
-			omrthread_monitor_exit(monitor);
+			Assert_VM_true(0 == omrthread_monitor_exit(monitor));
 		} else {
 			if (NULL != monitor) {
 				/* If we are blocking to wait on a contended monitor then we can't be the owner. */
