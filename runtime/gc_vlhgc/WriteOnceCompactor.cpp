@@ -57,6 +57,7 @@
 #include "FinalizeListManager.hpp"
 #endif /* J9VM_GC_FINALIZATION*/
 #include "WriteOnceFixupCardCleaner.hpp"
+#include "HashTableIterator.hpp"
 #include "Heap.hpp"
 #include "HeapLinkedFreeHeader.hpp"
 #include "HeapMapIterator.hpp"
@@ -1619,38 +1620,40 @@ MM_WriteOnceCompactor::flushRememberedSetIntoCardTable(MM_EnvironmentVLHGC *env)
 void
 MM_WriteOnceCompactor::tagArrayletLeafRegionsForFixup(MM_EnvironmentVLHGC *env)
 {
-	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
-	MM_HeapRegionDescriptorVLHGC *region = NULL;
-	while (NULL != (region = regionIterator.nextRegion())) {
-		Assert_MM_false(region->_compactData._shouldFixup);
-		if (region->isArrayletLeaf()) {
-			Assert_MM_false(region->_compactData._shouldCompact);
-			J9IndexableObject *spineObject = region->_allocateData.getSpine();
-			Assert_MM_true(NULL != spineObject);
-			if (_extensions->objectModel.isObjectArray(spineObject)) {
-				MM_HeapRegionDescriptorVLHGC* spineRegion = (MM_HeapRegionDescriptorVLHGC*)_regionManager->tableDescriptorForAddress(spineObject);
-				if (MM_CycleState::CT_PARTIAL_GARBAGE_COLLECTION != env->_cycleState->_collectionType) {
-					/* global collection - must fix up */
-					region->_compactData._shouldFixup = true;
-				} else if (spineRegion->_compactData._shouldCompact) {
-					/* the spine object is moving, so this leaf will need to be fixed up */
-					region->_compactData._shouldFixup = true;
-				} else  {
-					Card * spineCard = _extensions->cardTable->heapAddrToCardAddr(env, spineObject);
-					switch (*spineCard) {
-					case CARD_CLEAN:
-					case CARD_GMP_MUST_SCAN:
-						/* clean card - no fixup required */
-						break;
-					case CARD_REMEMBERED:
-					case CARD_REMEMBERED_AND_GMP_SCAN:
-					case CARD_DIRTY:
-					case CARD_PGC_MUST_SCAN:
-						/* the spine object is in a dirty card, so this leaf will need to be fixed up */
+	if (!_extensions->isVirtualLargeObjectHeapEnabled) {
+		GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
+		MM_HeapRegionDescriptorVLHGC *region = NULL;
+		while (NULL != (region = regionIterator.nextRegion())) {
+			Assert_MM_false(region->_compactData._shouldFixup);
+			if (region->isArrayletLeaf()) {
+				Assert_MM_false(region->_compactData._shouldCompact);
+				J9IndexableObject *spineObject = region->_allocateData.getSpine();
+				Assert_MM_true(NULL != spineObject);
+				if (_extensions->objectModel.isObjectArray(spineObject)) {
+					MM_HeapRegionDescriptorVLHGC* spineRegion = (MM_HeapRegionDescriptorVLHGC*)_regionManager->tableDescriptorForAddress(spineObject);
+					if (MM_CycleState::CT_PARTIAL_GARBAGE_COLLECTION != env->_cycleState->_collectionType) {
+						/* global collection - must fix up */
 						region->_compactData._shouldFixup = true;
-						break;
-					default:
-						Assert_MM_unreachable();
+					} else if (spineRegion->_compactData._shouldCompact) {
+						/* the spine object is moving, so this leaf will need to be fixed up */
+						region->_compactData._shouldFixup = true;
+					} else  {
+						Card * spineCard = _extensions->cardTable->heapAddrToCardAddr(env, spineObject);
+						switch (*spineCard) {
+						case CARD_CLEAN:
+						case CARD_GMP_MUST_SCAN:
+							/* clean card - no fixup required */
+							break;
+						case CARD_REMEMBERED:
+						case CARD_REMEMBERED_AND_GMP_SCAN:
+						case CARD_DIRTY:
+						case CARD_PGC_MUST_SCAN:
+							/* the spine object is in a dirty card, so this leaf will need to be fixed up */
+							region->_compactData._shouldFixup = true;
+							break;
+						default:
+							Assert_MM_unreachable();
+						}
 					}
 				}
 			}
@@ -1726,7 +1729,7 @@ public:
 	}
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
-	virtual void doObjectInVirtualLargeObjectHeap(J9Object *objectPtr, bool *sparseHeapAllocation) {
+	virtual void doObjectInVirtualLargeObjectHeap(J9Object *objectPtr, GC_HashTableIterator *sparseDataEntryIterator) {
 		J9IndexableObject *fwdOjectPtr = (J9IndexableObject *)_compactScheme->getForwardingPtr(objectPtr);
 		if ((J9IndexableObject *)objectPtr != fwdOjectPtr) {
 			void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous(fwdOjectPtr);
@@ -2028,30 +2031,32 @@ MM_WriteOnceCompactor::recycleFreeRegionsAndFixFreeLists(MM_EnvironmentVLHGC *en
 void
 MM_WriteOnceCompactor::fixupArrayletLeafRegionSpinePointers(MM_EnvironmentVLHGC *env)
 {
-	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
-	MM_HeapRegionDescriptorVLHGC *region = NULL;
-	
-	while (NULL != (region = regionIterator.nextRegion())) {
-		J9IndexableObject *spine = region->_allocateData.getSpine();
-		
-		if (NULL != spine) {
-			Assert_MM_true(region->isArrayletLeaf());
-			/* see if this spine has moved */
-			J9IndexableObject *newSpine = (J9IndexableObject *)getForwardingPtr((J9Object *)spine);
-			if (newSpine != spine) {
-				MM_HeapRegionDescriptorVLHGC *spineRegion = (MM_HeapRegionDescriptorVLHGC*)_regionManager->tableDescriptorForAddress(spine);
-				MM_HeapRegionDescriptorVLHGC *newSpineRegion = (MM_HeapRegionDescriptorVLHGC*)_regionManager->tableDescriptorForAddress(newSpine);
+	if (!_extensions->isVirtualLargeObjectHeapEnabled) {
+		GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
+		MM_HeapRegionDescriptorVLHGC *region = NULL;
 
-				/* Note that the previous spine region may be recycled while we are fixing up this region (recycling is done in parallel with
-				 * this method) so we can't assert anything about the state of the previous region.
-				 */
-				Assert_MM_true( newSpineRegion->containsObjects() );
-				if (spineRegion != newSpineRegion) {
-					/* we need to move the leaf to another region's leaf list since its spine has moved */
-					region->_allocateData.removeFromArrayletLeafList(env);
-					region->_allocateData.addToArrayletLeafList(newSpineRegion);
+		while (NULL != (region = regionIterator.nextRegion())) {
+			J9IndexableObject *spine = region->_allocateData.getSpine();
+
+			if (NULL != spine) {
+				Assert_MM_true(region->isArrayletLeaf());
+				/* see if this spine has moved */
+				J9IndexableObject *newSpine = (J9IndexableObject *)getForwardingPtr((J9Object *)spine);
+				if (newSpine != spine) {
+					MM_HeapRegionDescriptorVLHGC *spineRegion = (MM_HeapRegionDescriptorVLHGC*)_regionManager->tableDescriptorForAddress(spine);
+					MM_HeapRegionDescriptorVLHGC *newSpineRegion = (MM_HeapRegionDescriptorVLHGC*)_regionManager->tableDescriptorForAddress(newSpine);
+	
+					/* Note that the previous spine region may be recycled while we are fixing up this region (recycling is done in parallel with
+					 * this method) so we can't assert anything about the state of the previous region.
+					 */
+					Assert_MM_true( newSpineRegion->containsObjects() );
+					if (spineRegion != newSpineRegion) {
+						/* we need to move the leaf to another region's leaf list since its spine has moved */
+						region->_allocateData.removeFromArrayletLeafList(env);
+						region->_allocateData.addToArrayletLeafList(env, newSpineRegion);
+					}
+					region->_allocateData.setSpine(newSpine);
 				}
-				region->_allocateData.setSpine(newSpine);
 			}
 		}
 	}
@@ -2069,37 +2074,36 @@ MM_WriteOnceCompactor::fixupArrayletLeafRegionContentsAndObjectLists(MM_Environm
 			/* For off-heap/non-adjacent arrays, the fix up is done when any other
 			 *  contiguous/adjacent array is fixed up.
 			 */
-			if (!_extensions->isVirtualLargeObjectHeapEnabled) {
-				Assert_MM_true(region->isArrayletLeaf());
-				J9Object* spineObject = (J9Object*)region->_allocateData.getSpine();
-				Assert_MM_true(NULL != spineObject);
+			Assert_MM_false(_extensions->isVirtualLargeObjectHeapEnabled);
+			Assert_MM_true(region->isArrayletLeaf());
+			J9Object* spineObject = (J9Object*)region->_allocateData.getSpine();
+			Assert_MM_true(NULL != spineObject);
 
-				/* spine objects get fixed up later in fixupArrayletLeafRegionSpinePointers(), after a sync point */
-				spineObject = getForwardingPtr(spineObject);
+			/* spine objects get fixed up later in fixupArrayletLeafRegionSpinePointers(), after a sync point */
+			spineObject = getForwardingPtr(spineObject);
 
-				fj9object_t* slotPointer = (fj9object_t*)region->getLowAddress();
-				fj9object_t* endOfLeaf = (fj9object_t*)region->getHighAddress();
-				while (slotPointer < endOfLeaf) {
-					/* TODO: 4096 elements is an arbitrary number */
-					fj9object_t* endPointer = GC_SlotObject::addToSlotAddress(slotPointer, 4096, compressed);
-					if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-						while (slotPointer < endPointer) {
-							GC_SlotObject slotObject(_javaVM->omrVM, slotPointer);
-							J9Object *pointer = slotObject.readReferenceFromSlot();
-							if (NULL != pointer) {
-								J9Object *forwardedPtr = getForwardingPtr(pointer);
-								slotObject.writeReferenceToSlot(forwardedPtr);
-								_interRegionRememberedSet->rememberReferenceForCompact(env, spineObject, forwardedPtr);
-							}
-							slotPointer = GC_SlotObject::addToSlotAddress(slotPointer, 1, compressed);
+			fj9object_t* slotPointer = (fj9object_t*)region->getLowAddress();
+			fj9object_t* endOfLeaf = (fj9object_t*)region->getHighAddress();
+			while (slotPointer < endOfLeaf) {
+				/* TODO: 4096 elements is an arbitrary number */
+				fj9object_t* endPointer = GC_SlotObject::addToSlotAddress(slotPointer, 4096, compressed);
+				if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
+					while (slotPointer < endPointer) {
+						GC_SlotObject slotObject(_javaVM->omrVM, slotPointer);
+						J9Object *pointer = slotObject.readReferenceFromSlot();
+						if (NULL != pointer) {
+							J9Object *forwardedPtr = getForwardingPtr(pointer);
+							slotObject.writeReferenceToSlot(forwardedPtr);
+							_interRegionRememberedSet->rememberReferenceForCompact(env, spineObject, forwardedPtr);
 						}
+						slotPointer = GC_SlotObject::addToSlotAddress(slotPointer, 1, compressed);
 					}
-					slotPointer = endPointer;
 				}
-
-				/* prove we didn't miss anything at the end */
-				Assert_MM_true(slotPointer == endOfLeaf);
+				slotPointer = endPointer;
 			}
+
+			/* prove we didn't miss anything at the end */
+			Assert_MM_true(slotPointer == endOfLeaf);
 		} else if (region->_compactData._shouldCompact) {
 			if (!region->getUnfinalizedObjectList()->wasEmpty()) {
 				if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
