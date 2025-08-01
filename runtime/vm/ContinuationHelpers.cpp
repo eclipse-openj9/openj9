@@ -944,6 +944,7 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 	UDATA monitorCount = 0;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9VMContinuation *continuation = currentThread->currentContinuation;
+	IDATA monitorResult = 0;
 
 	if (NULL != syncObj) {
 		j9objectmonitor_t volatile *lwEA = VM_ObjectMonitor::inlineGetLockAddress(currentThread, syncObj);
@@ -1009,7 +1010,8 @@ restart:
 #if defined(J9VM_THR_LOCK_RESERVATION)
 						if (J9_ARE_ANY_BITS_SET(lock, OBJECT_HEADER_LOCK_RESERVED)) {
 							/* Lock is now reserved, exit the inflated monitor and restart to cancel lock reservation. */
-							Assert_VM_true(0 == omrthread_monitor_exit(monitor));
+							monitorResult = omrthread_monitor_exit(monitor);
+							Assert_VM_true(0 == monitorResult);
 							goto restart;
 						}
 #endif /* J9VM_THR_LOCK_RESERVATION */
@@ -1035,7 +1037,8 @@ restart:
 							/* CAS succeeded, we can proceed with using the inflated monitor. */
 							VM_ObjectMonitor::incrementCancelCounter(J9OBJECT_CLAZZ(currentThread, syncObj));
 							/* Either the lock is acquired or FLC bit set, safe to release the inflated monitor. */
-							Assert_VM_true(0 == omrthread_monitor_exit(monitor));
+							monitorResult = omrthread_monitor_exit(monitor);
+							Assert_VM_true(0 == monitorResult);
 
 							if (J9_FLATLOCK_OWNER(newLockword) == currentThread) {
 								/* Lock is acquired. */
@@ -1134,7 +1137,8 @@ restart:
 			syncObjectMonitor->waitingContinuations = continuation;
 			omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
 
-			Assert_VM_true(0 == omrthread_monitor_exit(monitor));
+			monitorResult = omrthread_monitor_exit(monitor);
+			Assert_VM_true(0 == monitorResult);
 		} else {
 			if (NULL != monitor) {
 				/* If we are blocking to wait on a contended monitor then we can't be the owner. */

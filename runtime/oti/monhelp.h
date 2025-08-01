@@ -44,10 +44,13 @@
 
 #define J9_LOCK_IS_INFLATED(lockWord) ((lockWord) & OBJECT_HEADER_LOCK_INFLATED)
 #define J9_INFLLOCK_OBJECT_MONITOR(lockWord) ((J9ObjectMonitor *)((UDATA)(lockWord) & (~(UDATA)OBJECT_HEADER_LOCK_INFLATED)))
-#define J9_INFLLOCK_MONITOR(lockWord) (J9_INFLLOCK_OBJECT_MONITOR((lockWord))->monitor)
+#define J9_INFLLOCK_MONITOR(lockWord) (J9_INFLLOCK_OBJECT_MONITOR(lockWord)->monitor)
 
-#define J9_INFLLOCK_ABSTRACT_MONITOR(lockWord) ((J9ThreadAbstractMonitor*)J9_INFLLOCK_MONITOR((lockWord)))
+#define J9_INFLLOCK_ABSTRACT_MONITOR(lockWord) ((J9ThreadAbstractMonitor*)J9_INFLLOCK_MONITOR(lockWord))
 
-#define J9_LOCK_IS_FLATLOCKED(lockWord) (!J9_LOCK_IS_INFLATED((lockWord)) && (J9_FLATLOCK_OWNER((lockWord)) != NULL && (J9_FLATLOCK_COUNT((lockWord)) > 0)))
+#define J9_LOCK_IS_FLATLOCKED(lockWord) \
+		(!J9_LOCK_IS_INFLATED(lockWord) \
+				&& (NULL != J9_FLATLOCK_OWNER(lockWord)) \
+				&& (J9_FLATLOCK_COUNT(lockWord) > 0))
 
 #endif /*J9_MONHELP_H_*/
