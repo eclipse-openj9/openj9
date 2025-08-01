@@ -353,6 +353,27 @@ J9::X86::CodeGenerator::endInstructionSelection()
       }
    }
 
+TR::VectorLength
+J9::X86::CodeGenerator::getMaxPreferredVectorLength()
+   {
+   TR::CPU *cpu = &self()->comp()->target().cpu;
+
+   // Regressive CPU frequency scaling when using 256 or 512-bit vectorization is
+   // a known issue on Intel x86 hardware. Some microarchitectures are known to be
+   // more affected than others.
+   if (cpu->supportsFeature(OMR_FEATURE_X86_AVX2))
+      {
+      // We set a minimum microarchitecture target of Broadwell for 256-bit
+      // vectorization on Intel. This decision is empirically driven.
+      if (cpu->isAuthenticAMD() || cpu->isAtLeast(OMR_PROCESSOR_X86_INTEL_SKYLAKE))
+         {
+         return TR::VectorLength256;
+         }
+      }
+
+   return TR::VectorLength128;
+   }
+
 TR::Instruction *
 J9::X86::CodeGenerator::generateSwitchToInterpreterPrePrologue(
       TR::Instruction *prev,
