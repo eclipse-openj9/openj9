@@ -303,9 +303,9 @@ public class Constants {
 	public static final String J9STATICS_SUCCESS_KEY = "j9romstaticfieldshape," + J9CLASS_TEST_SUCCESS_KEY;
 
 	public static final String CL_FOR_NAME_CMD = "classforname";
-	public static final String CL_FOR_NAME_CLASS = "java/lang/Object";
-	public static final String CL_FOR_NAME_SUCCESS_KEY = "!j9class,Found 1 class\\(es\\) named java/lang/Object";
-	public static final String CL_FOR_NAME_FAILURE_KEY = "Found 0 class(es) named java/lang/Object";
+	public static final String CL_FOR_NAME_CLASS = "j9vm/test/corehelper/CoreGen";
+	public static final String CL_FOR_NAME_SUCCESS_KEY = "!j9class,Found 1 class\\(es\\) named " + CL_FOR_NAME_CLASS;
+	public static final String CL_FOR_NAME_FAILURE_KEY = "Found 0 class(es) named " + CL_FOR_NAME_CLASS;
 	public static final String CL_FOR_NAME_CLASS_WC = "\\*Object\\*";
 	public static final String CL_FOR_NAME_SUCCESS_KEY_WC = "!j9class,java/lang/reflect/AccessibleObject";
 	public static final String CL_FOR_NAME_FAILURE_KEY_WC = "Found 0 class\\(es\\) named \\*Object\\*";
@@ -334,7 +334,7 @@ public class Constants {
 	public static final String DUMP_ROM_CLASS_LINEAR_FAILURE_KEY = "";
 
 	public static final String DUMP_ROM_CLASS_CMD = "dumpromclass";
-	public static final String DUMP_ROM_CLASS_SUCCESS_KEY = "ROM Size,Class Name: java/lang/Object,Superclass Name,Source File Name,Methods,Interfaces \\(0\\),Fields \\(0\\),CP Shape Description,Methods \\(14\\)";
+	public static final String DUMP_ROM_CLASS_SUCCESS_KEY = "ROM Size,Class Name: " + CL_FOR_NAME_CLASS + ",Superclass Name,Source File Name,Methods,Interfaces \\(0\\),Fields \\(0\\),CP Shape Description,Methods \\(2\\)";
 	public static final String DUMP_ROM_CLASS_FAILURE_KEY = "";
 
 	public static final String DUMP_ROM_CLASS_NAME_CMD = "name:";
@@ -347,7 +347,7 @@ public class Constants {
 	public static final String DUMP_ROM_CLASS_NAME_WC_FAILURE_KEY = "Found 0 class\\(es\\) with name \\*Object\\*";
 
 	public static final String DUMP_ROM_CLASS_MAPS_CMD = "maps";
-	public static final String DUMP_ROM_CLASS_MAPS_SUCCESS_KEY = "ROM Size,Class Name: java/lang/Object,Superclass Name,Source File Name: Object.java,Interfaces \\(0\\),Fields \\(0\\),CP Shape Description,Methods \\(14\\),lmap,dmap,smap";
+	public static final String DUMP_ROM_CLASS_MAPS_SUCCESS_KEY = "ROM Size,Class Name: " + CL_FOR_NAME_CLASS + ",Superclass Name,Source File Name: CoreGen.java,Interfaces \\(0\\),Fields \\(0\\),CP Shape Description,Methods \\(2\\),lmap,dmap,smap";
 	public static final String DUMP_ROM_CLASS_MAPS_FAILURE_KEY = "";
 
 	public static final String DUMP_ROM_CLASS_NAME_MAPS_SUCCESS_KEY = "ROM Size,Class Name: java/lang/Object,Superclass Name,Source File Name: Object.java,Interfaces \\(0\\),Fields \\(0\\),CP Shape Description,Methods \\(14\\),lmap,dmap,smap,Found 1 class\\(es\\) with name java/lang/Object";
