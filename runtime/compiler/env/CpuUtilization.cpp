@@ -39,8 +39,11 @@
  * typedef struct J9SysinfoCPUTime {
  *
  *    I_64 timestamp;    // time in nanoseconds from a fixed but arbitrary point in time
- *    I_64 cpuTime;      // cumulative CPU utilization (sum of system and user time in nanoseconds) of all CPUs on the system.
+ *    I_64 cpuTime;      // cumulative CPU utilization (sum of system and user time in nanoseconds) of all CPUs on the system
  *    I_32 numberOfCpus; // number of CPUs as reported by the operating system
+ *    I_64 userTime;     // total user time (in CPU ticks) across all CPUs on the system
+ *    I_64 systemTime;   // total kernel time (in CPU ticks) across all CPUs on the system
+ *    I_64 idleTime;     // total idle time (in CPU ticks) across all CPUs on the system
  *
  * } J9SysinfoCPUTime;
  *
@@ -108,22 +111,47 @@ int CpuUtilization::updateCpuUtil(J9JITConfig *jitConfig)
       {
       int64_t prevTotalTimeUsedByVm = _prevVmSysTime + _prevVmUserTime;
       int64_t newTotalTimeUsedByVm = vmCpuStats._systemTime + vmCpuStats._userTime;
+      double cpuLoad = 0.0;
+      double cpuIdle = 0.0;
 
-      _cpuUsage = (100 * (machineCpuStats.cpuTime - _prevMachineCpuTime)) / elapsedTime;
-      _cpuIdle = 100 * machineCpuStats.numberOfCpus - _cpuUsage;
+      if ((-1 != _prevMachineUserTime) && (-1 != _prevMachineSystemTime) && (-1 != _prevMachineIdleTime) &&
+            (-1 != machineCpuStats.userTime) && (-1 != machineCpuStats.systemTime) && (-1 != machineCpuStats.idleTime))
+         {
+         int64_t userDelta = machineCpuStats.userTime - _prevMachineUserTime;
+         int64_t systemDelta = machineCpuStats.systemTime - _prevMachineSystemTime;
+         int64_t idleDelta = machineCpuStats.idleTime - _prevMachineIdleTime;
+         int64_t totalDelta = userDelta + systemDelta + idleDelta;
+
+         if (totalDelta > 0)
+            {
+            cpuLoad = (userDelta + systemDelta) / (double)totalDelta;
+            cpuIdle = idleDelta / (double)totalDelta;
+            }
+         }
+      else
+         {
+         int64_t cpuTimeDelta = machineCpuStats.cpuTime - _prevMachineCpuTime;
+         cpuLoad = cpuTimeDelta / ((double)machineCpuStats.numberOfCpus * elapsedTime);
+         cpuIdle = 1 - cpuLoad;
+         }
+
+      _avgCpuUsage = 100.0 * cpuLoad;
+      _avgCpuIdle = 100.0 * cpuIdle;
+
+      if (machineCpuStats.numberOfCpus > 0)
+         {
+         _cpuUsage = 100.0 * machineCpuStats.numberOfCpus * cpuLoad;
+         _cpuIdle = 100.0 * machineCpuStats.numberOfCpus * cpuIdle;
+         }
       _vmCpuUsage = (100 * (newTotalTimeUsedByVm - prevTotalTimeUsedByVm)) / elapsedTime;
       }
-
-   if (machineCpuStats.numberOfCpus > 0)
-      {
-      _avgCpuUsage = _cpuUsage / machineCpuStats.numberOfCpus;
-      }
-
-   _avgCpuIdle = 100 - _avgCpuUsage;
 
    // remember values for next time
    _prevMachineUptime  = machineCpuStats.timestamp;
    _prevMachineCpuTime = machineCpuStats.cpuTime;
+   _prevMachineUserTime = machineCpuStats.userTime;
+   _prevMachineSystemTime = machineCpuStats.systemTime;
+   _prevMachineIdleTime = machineCpuStats.idleTime;
    _prevVmSysTime      = vmCpuStats._systemTime;
    _prevVmUserTime     = vmCpuStats._userTime;
 
@@ -147,6 +175,9 @@ int32_t CpuUtilization::updateCpuUsageCircularBuffer(J9JITConfig *jitConfig)
 
    _cpuUsageCircularBuffer[_cpuUsageCircularBufferIndex]._timeStamp = machineCpuStats.timestamp;
    _cpuUsageCircularBuffer[_cpuUsageCircularBufferIndex]._sampleSystemCpu = machineCpuStats.cpuTime;
+   _cpuUsageCircularBuffer[_cpuUsageCircularBufferIndex]._sampleUserTime = machineCpuStats.userTime;
+   _cpuUsageCircularBuffer[_cpuUsageCircularBufferIndex]._sampleSystemTime = machineCpuStats.systemTime;
+   _cpuUsageCircularBuffer[_cpuUsageCircularBufferIndex]._sampleIdleTime = machineCpuStats.idleTime;
    _cpuUsageCircularBuffer[_cpuUsageCircularBufferIndex]._sampleJvmCpu = vmCpuStats._systemTime + vmCpuStats._userTime;
 
    _cpuUsageCircularBufferIndex = (_cpuUsageCircularBufferIndex + 1)%_cpuUsageCircularBufferSize;
@@ -170,6 +201,9 @@ CpuUtilization::CpuUtilization(J9JITConfig *jitConfig):
 
    _prevMachineUptime (0),
    _prevMachineCpuTime (0),
+   _prevMachineUserTime (0),
+   _prevMachineSystemTime (0),
+   _prevMachineIdleTime (0),
    _prevVmSysTime (0),
    _prevVmUserTime (0),
 
