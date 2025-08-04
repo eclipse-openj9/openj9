@@ -216,9 +216,13 @@ voidpf ZLIB_INTERNAL zcalloc(voidpf opaque, unsigned items, unsigned size) {
      */
     if (bsize < 65520L) {
         buf = farmalloc(bsize);
+        						printf(" !j9x 0x%p,0x%zX %s\n", buf, bsize, "zutil.c:219");
+
         if (*(ush*)&buf != 0) return buf;
     } else {
         buf = farmalloc(bsize + 16L);
+                						printf(" !j9x 0x%p,0x%zX %s\n", buf, bsize + 16L, "zutil.c:224");
+
     }
     if (buf == NULL || next_ptr >= MAX_PTR) return NULL;
     table[next_ptr].org_ptr = buf;
