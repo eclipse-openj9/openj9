@@ -32,7 +32,6 @@
 #include "control/MethodToBeCompiled.hpp"
 #include "env/CpuUtilization.hpp"
 #include "env/Processors.hpp"
-#include "env/ProcessorInfo.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
 #include "infra/Flags.hpp"

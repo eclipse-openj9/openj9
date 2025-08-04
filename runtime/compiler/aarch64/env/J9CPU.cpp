@@ -46,19 +46,3 @@ J9::ARM64::CPU::isCompatible(const OMRProcessorDesc& processorDescription)
       }
    return true;
    }
-
-void
-J9::ARM64::CPU::enableFeatureMasks()
-   {
-   // Only enable the features that compiler currently uses
-   const uint32_t utilizedFeatures [] = {OMR_FEATURE_ARM64_FP, OMR_FEATURE_ARM64_ASIMD, OMR_FEATURE_ARM64_CRC32, OMR_FEATURE_ARM64_LSE};
-
-   memset(_supportedFeatureMasks.features, 0, OMRPORT_SYSINFO_FEATURES_SIZE*sizeof(uint32_t));
-   OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
-   for (size_t i = 0; i < sizeof(utilizedFeatures)/sizeof(uint32_t); i++)
-      {
-      omrsysinfo_processor_set_feature(&_supportedFeatureMasks, utilizedFeatures[i], TRUE);
-      }
-
-   _isSupportedFeatureMasksEnabled = true;
-   }
