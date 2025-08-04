@@ -374,6 +374,14 @@ class TR_HashTableProfilerInfo : public TR_AbstractHashTableProfilerInfo
     */
    virtual void addKey(T value) = 0;
 
+   /**
+    * Runtime helper, update frequency of the value
+    * 
+    * This helper function will be called at runtime by jit compiled code to
+    * increment the frequency of the value in the table.
+    */
+   virtual void updateFrequency(T value) = 0;
+
    protected:
    virtual uint32_t* getFrequencies() = 0;
    virtual T* getKeys() = 0;
@@ -441,6 +449,7 @@ class TR_EmbeddedHashTable : public TR_HashTableProfilerInfo<T>
     * Runtime helpers
     */
    void addKey(T value);
+   void updateFrequency(T value);
    T    recursivelySplit(T mask, T choices);
    void rearrange(HashFunction &hash);
    void reset();
@@ -711,6 +720,31 @@ TR_EmbeddedHashTable<T, bits>::reset()
    // Clear metadata, skip constants and locks
    memset(&(this->_hashConfig), 0, sizeof(HashFunction));
    this->_metaData.full = 0;
+   }
+
+/**
+ * A cheap helper to update the frequency of the value in the table or other
+ * without acquiring lock to add value to the table.
+ */
+template <typename T, size_t bits> void
+TR_EmbeddedHashTable<T, bits>::updateFrequency(T value)
+   {
+   size_t index = this->applyHash(this->_hashConfig, value);
+   if (_keys[index] == value)
+      {
+      _freqs[index]++;
+      }
+   else if (this->_metaData.otherIndex >=0)
+      {
+      // If other thread has locked the table or table is already at capacity,
+      // just increase the counter of other frequency.
+      _freqs[this->getOtherIndex()]++;
+      }
+   else
+      {
+      // There is a space in the table. Try to lock the table and add the value.
+      this->addKey(value);
+      }
    }
 
 /**
