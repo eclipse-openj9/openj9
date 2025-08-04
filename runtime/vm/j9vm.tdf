@@ -1019,10 +1019,10 @@ TraceEntry=Trc_VM_getTypeId_Entry Overhead=1 Level=5 Template="getTypeId clazz=%
 TraceExit=Trc_VM_getTypeId_Exit Overhead=1 Level=5 Template="getTypeId clazz=%p result=%lli"
 
 TraceEvent=Trc_systemPropertyIterator Overhead=1 Level=10 Template="systemPropertyIterator: added VM system property '%s'='%s'"
-TraceExit-Exception=Trc_VM_objectMonitorExit_Exit_LearningStateUnowned Overhead=1 Level=4 Template="objectMonitorExit (IllegalMonitorState: Lock in learning state but unowned. Flat lock=%p, object=%p)"
-TraceEvent=Trc_VM_objectMonitorExit_OMRThread_Monitor_Exit Overhead=1 Level=6 Template="objectMonitorExit: Exiting monior (%p) via omrthread_monitor_exit, monitor->count (%zu)"
-TraceEvent=Trc_VM_enterContinuation_Mount Overhead=1 Level=6 Template="enterContinuation: Mounted continuation %p, returnState (%zu), ownedMonitorCount (%zu), continuation->enteredMonitors (%p)"
-TraceEvent=Trc_VM_yieldContinuation_Unmount Overhead=1 Level=6 Template="yieldContinuation: Unmounted continuation %p, returnState (%zu), ownedMonitorCount (%zu), enteredMonitors (%p)"
+TraceExit-Exception=Trc_VM_objectMonitorExit_Exit_LearningStateUnowned Overhead=1 Level=1 Template="objectMonitorExit (IllegalMonitorState: Lock in learning state but unowned. Flat lock=%p, object=%p)"
+TraceEvent=Trc_VM_objectMonitorExit_OMRThread_Monitor_Exit Overhead=1 Level=1 Template="objectMonitorExit: Exiting monior (%p) via omrthread_monitor_exit, monitor->count (%zu)"
+TraceEvent=Trc_VM_enterContinuation_Mount Overhead=1 Level=1 Template="enterContinuation: Mounted continuation %p, returnState (%zu), ownedMonitorCount (%zu), continuation->enteredMonitors (%p)"
+TraceEvent=Trc_VM_yieldContinuation_Unmount Overhead=1 Level=1 Template="yieldContinuation: Unmounted continuation %p, returnState (%zu), ownedMonitorCount (%zu), enteredMonitors (%p)"
 TraceEvent=Trc_VM_detachMonitorInfo_Detach Overhead=1 Level=6 Template="Detach monitor: currentContinuation (%p), objectMonitor (%p), monitor (%p), monitor->owner (%p), monitor->count (%zu), osThread (%p)"
 TraceEvent=Trc_VM_updateMonitorInfo_Attach Overhead=1 Level=6 Template="Attach monitor: currentContinuation (%p), objectMonitor (%p), monitor (%p), monitor->owner (%p), monitor->count (%zu), osThread (%p)"
 
@@ -1040,3 +1040,10 @@ TraceEvent=Trc_Segment_disclaimClassMemory_error NoEnv Overhead=1 Level=3 Templa
 TraceEvent=Trc_VM_signal_pid Overhead=1 Level=1 Template="%s received from process id %zu name '%s'"
 
 TraceEvent=Trc_VM_timeCompensationHelper_CPU_util Overhead=1 Level=5 Template="CPU Util: numCPUs=%zu, timeDelta=%zu, CPUTimeDelta=%zu, util=%f"
+
+TraceEvent=Trc_VM_ThreadHelp_notifyUnblocker NoEnv Overhead=1 Level=1 Template="NotifyUnblocker"
+TraceEvent=Trc_VM_ThreadHelp_notifyUnblocker2 NoEnv Overhead=1 Level=1 Template="NotifyUnblocker v2"
+TraceEvent=Trc_VM_ThreadHelp_waitForSignal NoEnv Overhead=1 Level=1 Template="WaitForSignal"
+TraceEvent=Trc_VM_ThreadHelp_startUnblocker NoEnv Overhead=1 Level=1 Template="StartUnblocker"
+TraceEvent=Trc_VM_ThreadHelp_monitorWaitImpl NoEnv Overhead=1 Level=1 Template="monitorWaitImpl obj=%p lock=%p"
+
