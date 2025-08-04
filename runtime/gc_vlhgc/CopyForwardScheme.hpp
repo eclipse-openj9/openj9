@@ -1020,6 +1020,10 @@ protected:
 	 */
 	void updateLeafRegions(MM_EnvironmentVLHGC *env);
 
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+	void recycleLeafRegionsForVirtualLargeObjectHeap(MM_EnvironmentVLHGC *env, uintptr_t arrayletLeafCount);
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+
 	/**
 	 * Before a copy forward operation, perform any pre processing required on regions.
 	 */
