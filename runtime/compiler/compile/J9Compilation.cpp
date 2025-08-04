@@ -450,6 +450,7 @@ J9::Compilation::isConverterMethod(TR::RecognizedMethod rm)
       case TR::sun_nio_cs_US_ASCII_Decoder_decodeASCII:
       case TR::sun_nio_cs_ext_SBCS_Encoder_encodeSBCS:
       case TR::sun_nio_cs_ext_SBCS_Decoder_decodeSBCS:
+      case TR::sun_nio_cs_SingleByteEncoder_encodeFromLatin1Impl:
       case TR::sun_nio_cs_UTF_8_Encoder_encodeUTF_8:
       case TR::sun_nio_cs_UTF_8_Decoder_decodeUTF_8:
       case TR::sun_nio_cs_UTF16_Encoder_encodeUTF16Big:
@@ -496,6 +497,7 @@ J9::Compilation::canTransformConverterMethod(TR::RecognizedMethod rm)
          return genTRxx || self()->cg()->getSupportsArrayTranslateTROT() || genSIMD;
 
       case TR::sun_nio_cs_ext_SBCS_Encoder_encodeSBCS:
+      case TR::sun_nio_cs_SingleByteEncoder_encodeFromLatin1Impl:
          return genTRxx && self()->cg()->getSupportsTestCharComparisonControl();
 
       case TR::sun_nio_cs_ext_SBCS_Decoder_decodeSBCS:
