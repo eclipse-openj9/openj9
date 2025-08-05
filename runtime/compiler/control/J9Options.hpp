@@ -495,6 +495,8 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 
    static bool _xrsSync;
 
+   static int32_t _jvmStarvationThreshold;
+
    static ExternalOptionsMetadata _externalOptionsMetadata[ExternalOptions::TR_NumExternalOptions];
 
    /**

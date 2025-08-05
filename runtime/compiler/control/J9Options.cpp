@@ -316,6 +316,8 @@ bool J9::Options::_aggressiveLockReservation = false;
 
 bool J9::Options::_xrsSync = false;
 
+int32_t J9::Options::_jvmStarvationThreshold = 40; // 40% CPU utilization. Use 10 (or lower) to disable the feature
+
 void
 J9::Options::findExternalOptions(J9JavaVM *vm, bool consume)
    {
@@ -1117,6 +1119,8 @@ TR::OptionTable OMR::Options::_feOptions[] = {
 #endif /* defined(J9VM_OPT_JITSERVER) */
    {"jProfilingEnablementSampleThreshold=", "M<nnn>\tNumber of global samples to allow generation of JProfiling bodies",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_jProfilingEnablementSampleThreshold, 0, "F%d", NOT_IN_SUBSET },
+   {"jvmStarvationThreshold=", "M<nnn>\tCPU utilization of the JVM that determines whether the JVM is starved",
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_jvmStarvationThreshold , 0, "F%d", NOT_IN_SUBSET},
    {"kcaoffsets",         "I\tGenerate a header file with offset data for use with KCA", TR::Options::kcaOffsets, 0, 0, "F" },
    {"largeTranslationTime=", "D<nnn>\tprint IL trees for methods that take more than this value (usec)"
                              "to compile. Need to have a log file defined on command line",

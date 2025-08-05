@@ -1074,6 +1074,9 @@ public:
 
    void initCPUEntitlement();
 
+   bool isJVMStarved() const { return _jvmIsStarved; }
+   void setIsJVMStarved(bool val) { _jvmIsStarved = val; }
+
    bool getLowCompDensityMode() const { return _lowCompDensityMode; }
    void enterLowCompDensityMode() { _lowCompDensityMode = true; _hasEnteredLowCompDensityModeInThePast = true;}
    void exitLowCompDensityMode() { _lowCompDensityMode = false; }
@@ -1367,6 +1370,7 @@ private:
    bool _lowCompDensityMode; // set to true when compilations occur infrequently and are unlikely to contribute to JVM performance
    bool _hasEnteredLowCompDensityModeInThePast; // set to true when _lowCompDensityMode is set to true at least once
    bool _compileFromLPQRegardlessOfCPU;
+   bool _jvmIsStarved; // set to true if the JVM uses very little CPU because of external factors
 
 #if defined(J9VM_OPT_JITSERVER)
    ClientSessionHT               *_clientSessionHT; // JITServer hashtable that holds session information about JITClients

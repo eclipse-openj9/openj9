@@ -6439,6 +6439,44 @@ static void suspendSamplerThreadForCheckpoint(J9VMThread *samplerThread, J9JITCo
    }
 #endif
 
+static void computeJVMStarvation(int32_t jvmCPUUtil, TR::CompilationInfo *compInfo)
+   {
+   if (compInfo->isJVMStarved())
+      {
+      if (jvmCPUUtil >= TR::Options::_jvmStarvationThreshold + 10)
+         {
+         compInfo->setIsJVMStarved(false);
+         if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Exited JVM starvation mode. jvmCPUUtil=%d%%", (int)jvmCPUUtil);
+            }
+         }
+      }
+   else
+      {
+      if (jvmCPUUtil <= TR::Options::_jvmStarvationThreshold - 10)
+         {
+         compInfo->setIsJVMStarved(true);
+         if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Entered JVM starvation mode. jvmCPUUtil=%d%%", (int)jvmCPUUtil);
+            }
+         }
+      }
+   }
+
+static void clearJVMStarvation(int32_t cpuIdle, int32_t vmCpuUsage, TR::CompilationInfo *compInfo)
+   {
+   if (compInfo->isJVMStarved())
+      {
+      compInfo->setIsJVMStarved(false);
+      if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Exited JVM starvation mode. cpuIdle=%d vmCpuUsage=%d", (int)cpuIdle, (int)vmCpuUsage);
+         }
+      }
+   }
+
 /* Compute a "CpuLoadFactor" for this JVM and machine. The more utilized the machine is,
  * the larger the CpuLoadFactor. This CpuLoadFactor is used to multiply the sleeping time of
  * the sampling thread, so that we sample less often on very busy systems were the JVM
@@ -6477,16 +6515,22 @@ static uint32_t computeCpuLoadFactor(uint32_t numActiveThreads, TR::CompilationI
                {
                // Use the entitlement to adjust the loadFactor.
                loadFactor = loadFactor * 100 / compInfo->getJvmCpuEntitlement();
+
+               clearJVMStarvation(cpuIdle, vmCpuUsage, compInfo);
                }
             else // Machine has very little idle CPU if any. It's likely this JVM cannot use its entitlement because of starvation.
                {
                // Use the effective CPU utilization of this JVM to compute the load factor.
                loadFactor = loadFactor * 100 / (vmCpuUsage == 0 ? 1 : vmCpuUsage);
+               // Set the starvation flag if needed
+               computeJVMStarvation(vmCpuUsage, compInfo);
                }
             }
          else // The JVM uses its entire entitlement.
             {
             loadFactor = loadFactor * 100 / compInfo->getJvmCpuEntitlement();
+            // Set the starvation flag if needed
+            computeJVMStarvation(vmCpuUsage, compInfo);
             }
          }
       else
