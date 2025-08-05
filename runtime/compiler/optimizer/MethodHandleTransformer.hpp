@@ -103,9 +103,19 @@ class TR_MethodHandleTransformer : public TR::Optimization
    //
    void collectAutosFromTrees(List<TR::SymbolReference> &autosList);
 
-   // Given an address-typed node, try to figure out it's object info
+   // Given an address-typed node, try to figure out its object info. If a
+   // known object is found, then after this method returns, the known object
+   // index will be available in the IL directly from the node or its symref
+   // (and therefore via getObjectInfoOfNode()).
    //
-   TR::KnownObjectTable::Index getObjectInfoOfNode(TR::Node* node);
+   // The children of node have already been processed.
+   //
+   void computeObjectInfoOfNode(TR::TreeTop *tt, TR::Node *node);
+
+   // Given a visited address-typed node, retrieve its object info from the
+   // node itself or from its symref.
+   //
+   TR::KnownObjectTable::Index getObjectInfoOfNode(TR::Node *node);
 
    // The folowing visit functions will visit different types of node, update object info,
    // and/or do transformations
