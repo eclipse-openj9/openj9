@@ -221,8 +221,8 @@
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $EXPORTS$ $CRACCHECKPOINTTO$" $TESTNG$ $MAINCLASS_TESTJDKCRAC$ testCRaCRestoreFrom 1 false false true "-XX:CRaCRestoreFrom=./cpData -Dopenj9.internal.criu.logFile="</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
-    <output type="required" caseSensitive="no" regex="no">The value of the command line option -Dopenj9.internal.criu.logFile was not found</output>
-    <output type="required" caseSensitive="no" regex="no">Failed to get the CRIU log file, error</output>
+    <output type="required" caseSensitive="no" regex="no">The option -Dopenj9.internal.criu.logFile requires a value</output>
+    <output type="required" caseSensitive="no" regex="no">Failed to get the CRIU log file</output>
     <output type="required" caseSensitive="no" regex="no">Failed to restore from checkpoint, error</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
@@ -236,11 +236,11 @@
   </test>
 
   <test id="Test with -Dopenj9.internal.criu.logFile and -XX:CRaCRestoreFrom=PATH">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $EXPORTS$ $CRACCHECKPOINTTO$" $TESTNG$ $MAINCLASS_TESTJDKCRAC$ testCRaCRestoreFrom 1 false false true "-XX:CRaCRestoreFrom=./cpData -Dopenj9.internal.criu.logFile="</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $EXPORTS$ $CRACCHECKPOINTTO$" $TESTNG$ $MAINCLASS_TESTJDKCRAC$ testCRaCRestoreFrom 1 false false true "-XX:CRaCRestoreFrom=./cpData -Dopenj9.internal.criu.logFile"</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
-    <output type="required" caseSensitive="no" regex="no">The value of the command line option -Dopenj9.internal.criu.logFile was not found</output>
-    <output type="required" caseSensitive="no" regex="no">Failed to get the CRIU log file, error</output>
+    <output type="required" caseSensitive="no" regex="no">The option -Dopenj9.internal.criu.logFile requires a value</output>
+    <output type="required" caseSensitive="no" regex="no">Failed to get the CRIU log file</output>
     <output type="required" caseSensitive="no" regex="no">Failed to restore from checkpoint, error</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
@@ -258,7 +258,7 @@
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="required" caseSensitive="no" regex="no">The value of the command line option -XX:CRaCRestoreFrom was not found</output>
-    <output type="required" caseSensitive="no" regex="no">Failed to get the CRIU checkpoint directory, error</output>
+    <output type="required" caseSensitive="no" regex="no">Failed to get the CRIU checkpoint directory</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
@@ -275,7 +275,7 @@
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="required" caseSensitive="no" regex="no">The value of the command line option -XX:CRaCRestoreFrom was not found</output>
-    <output type="required" caseSensitive="no" regex="no">Failed to get the CRIU checkpoint directory, error</output>
+    <output type="required" caseSensitive="no" regex="no">Failed to get the CRIU checkpoint directory</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
     <!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
@@ -291,7 +291,7 @@
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $EXPORTS$ $CRACCHECKPOINTTO$" $TESTNG$ $MAINCLASS_TESTJDKCRAC$ testCRaCRestoreFrom 1 false false true "-XX:CRaCRestoreFrom=./cpData -Dopenj9.internal.criu.logLevel=5"</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
-    <output type="required" caseSensitive="no" regex="no">The value of the command line option is not valid, option=-Dopenj9.internal.criu.logLevel, value=5</output>
+    <output type="required" caseSensitive="no" regex="no">The option '-Dopenj9.internal.criu.logLevel=5' is not valid</output>
     <output type="required" caseSensitive="no" regex="no">Failed to get the CRIU log level</output>
     <output type="required" caseSensitive="no" regex="no">Failed to restore from checkpoint, error</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
@@ -309,7 +309,7 @@
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $EXPORTS$ $CRACCHECKPOINTTO$" $TESTNG$ $MAINCLASS_TESTJDKCRAC$ testCRaCRestoreFrom 1 false false true "-XX:CRaCRestoreFrom=./cpData -Dopenj9.internal.criu.logLevel=-1"</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
-    <output type="required" caseSensitive="no" regex="no">The value of the command line option is not valid, option=-Dopenj9.internal.criu.logLevel, value=-1</output>
+    <output type="required" caseSensitive="no" regex="no">The option '-Dopenj9.internal.criu.logLevel=-1' is not valid</output>
     <output type="required" caseSensitive="no" regex="no">Failed to get the CRIU log level</output>
     <output type="required" caseSensitive="no" regex="no">Failed to restore from checkpoint, error</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
