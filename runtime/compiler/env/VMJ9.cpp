@@ -79,6 +79,7 @@
 #include "env/CHTable.hpp"
 #include "env/ClassLoaderTable.hpp"
 #include "env/IO.hpp"
+#include "env/J9ConstProvenanceGraph.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/jittypes.h"
@@ -557,13 +558,19 @@ TR_J9VMBase::matchRAMclassFromROMclass(J9ROMClass * clazz, TR::Compilation * com
    {
    TR::VMAccessCriticalSection matchRAMclassFromROMclass(this);
    J9UTF8 *utf8 = J9ROMCLASS_CLASSNAME(clazz);
-   J9Class *ramClass = jitGetClassInClassloaderFromUTF8(vmThread(), ((TR_ResolvedJ9Method *)comp->getCurrentMethod())->getClassLoader(),
+   J9ClassLoader *classLoader = ((TR_ResolvedJ9Method *)comp->getCurrentMethod())->getClassLoader();
+   J9Class *ramClass = jitGetClassInClassloaderFromUTF8(vmThread(), classLoader,
       (char *) J9UTF8_DATA(utf8), J9UTF8_LENGTH(utf8));
    if (!ramClass)
       {
       ramClass = jitGetClassInClassloaderFromUTF8(vmThread(), (J9ClassLoader *) vmThread()->javaVM->systemClassLoader,
          (char *) J9UTF8_DATA(utf8), J9UTF8_LENGTH(utf8));
       }
+
+   // It might have been from systemClassLoader, but if so, then the graph will
+   // see that ramClass is permanent anyway.
+   comp->constProvenanceGraph()->addEdge(classLoader, ramClass);
+
    return ramClass;
    }
 
@@ -1212,6 +1219,9 @@ TR_J9VMBase::getObjectClassFromKnownObjectIndex(TR::Compilation *comp, TR::Known
    TR_OpaqueClassBlock *clazz =
       getObjectClass(comp->getKnownObjectTable()->getPointer(idx));
 
+   J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
+   cpg->addEdge(cpg->knownObject(idx), clazz);
+
    return clazz;
    }
 
@@ -1233,6 +1243,10 @@ TR_J9VMBase::getObjectClassFromKnownObjectIndex(TR::Compilation *comp,
       {
       clazz = getClassFromJavaLangClass(knot->getPointer(idx));
       }
+
+   J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
+   cpg->addEdge(cpg->knownObject(idx), clazz);
+
    return clazz;
    }
 uintptr_t
@@ -1246,26 +1260,40 @@ TR_J9VMBase::ObjectClassInfo
 TR_J9VMBase::getObjectClassInfoFromObjectReferenceLocation(TR::Compilation *comp,
                                                uintptr_t objectReferenceLocation)
    {
-   TR_J9VMBase::ObjectClassInfo ci = {};
+   // The objectReferenceLocation is required to have come from
+   // KnownObjectTable::getPointerLocation().
    TR::KnownObjectTable *knot = comp->getKnownObjectTable();
-   if (knot)
+   TR_ASSERT_FATAL(knot != NULL, "missing known object table");
+
+   TR::KnownObjectTable::Index knownObjectIndex =
+      knot->getExistingIndexAt((uintptr_t*)objectReferenceLocation);
+
+   TR_ASSERT_FATAL(
+      knownObjectIndex != TR::KnownObjectTable::UNKNOWN,
+      "objectReferenceLocation must originate from the known object table");
+
+   TR_J9VMBase::ObjectClassInfo ci = {};
+   TR::VMAccessCriticalSection vmAccess(comp);
+
+   uintptr_t objectReference = knot->getPointer(knownObjectIndex);
+   ci.clazz = getObjectClass(objectReference);
+   ci.isString = isString(ci.clazz);
+   ci.jlClass = getClassClassPointer(ci.clazz);
+   ci.isFixedJavaLangClass = (ci.jlClass == ci.clazz);
+   if (ci.isFixedJavaLangClass)
       {
-      TR::VMAccessCriticalSection getObjectReferenceLocation(comp);
-      uintptr_t objectReference = getStaticReferenceFieldAtAddress(objectReferenceLocation);
-      ci.clazz = getObjectClass(objectReference);
-      ci.isString = isString(ci.clazz);
-      ci.jlClass = getClassClassPointer(ci.clazz);
-      ci.isFixedJavaLangClass = (ci.jlClass == ci.clazz);
-      if (ci.isFixedJavaLangClass)
-         {
-         // A FixedClass constraint means something different
-         // when the class happens to be java/lang/Class.
-         // Must add constraints pertaining to the class that
-         // the java/lang/Class object represents.
-         ci.clazz = getClassFromJavaLangClass(objectReference);
-         }
-      ci.knownObjectIndex = knot->getOrCreateIndex(objectReference);
+      // A FixedClass constraint means something different
+      // when the class happens to be java/lang/Class.
+      // Must add constraints pertaining to the class that
+      // the java/lang/Class object represents.
+      ci.clazz = getClassFromJavaLangClass(objectReference);
       }
+
+   ci.knownObjectIndex = knownObjectIndex;
+
+   J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
+   cpg->addEdge(cpg->knownObject(knownObjectIndex), ci.clazz);
+
    return ci;
    }
 
@@ -4779,7 +4807,16 @@ TR::KnownObjectTable::Index TR_J9VMBase::mutableCallSiteEpoch(
       mutableCallSite, "epoch", "Ljava/lang/invoke/MethodHandle;");
 #endif
 
-   return mh == 0 ? TR::KnownObjectTable::UNKNOWN : knot->getOrCreateIndex(mh);
+   TR::KnownObjectTable::Index result = TR::KnownObjectTable::UNKNOWN;
+   if (mh != 0)
+      {
+      result = knot->getOrCreateIndex(mh);
+      }
+
+   J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
+   cpg->addEdge(cpg->knownObject(mcs), cpg->knownObject(result));
+
+   return result;
    }
 
 
@@ -4836,7 +4873,12 @@ TR_J9VMBase::targetMethodFromMemberName(TR::Compilation* comp, TR::KnownObjectTa
       {
       TR::VMAccessCriticalSection getTarget(this);
       uintptr_t object = knot->getPointer(objIndex);
-      return targetMethodFromMemberName(object);
+      TR_OpaqueMethodBlock *method = targetMethodFromMemberName(object);
+
+      J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
+      cpg->addEdge(cpg->knownObject(objIndex), method);
+
+      return method;
       }
    return NULL;
    }
@@ -4943,7 +4985,12 @@ TR_J9VMBase::targetMethodFromMethodHandle(TR::Compilation* comp, TR::KnownObject
             }
          }
 
-      return targetMethodFromMemberName(vmentry);
+      TR_OpaqueMethodBlock *method = targetMethodFromMemberName(vmentry);
+
+      J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
+      cpg->addEdge(cpg->knownObject(objIndex), method);
+
+      return method;
       }
 
    return NULL;
@@ -4987,6 +5034,11 @@ TR_J9VMBase::getMemberNameMethodInfo(
    out->vmindex = (uintptr_t)ix;
    out->clazz = getClassFromJavaLangClass(jlClass);
    out->refKind = MN_GET_REFERENCE_KIND(flags);
+
+   J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
+   cpg->addEdge(cpg->knownObject(objIndex), out->vmtarget);
+   cpg->addEdge(cpg->knownObject(objIndex), out->clazz);
+
    return true;
    }
 
@@ -5161,6 +5213,9 @@ TR_J9VMBase::delegatingMethodHandleTarget(
    if (trace)
       traceMsg(comp, "target is obj%d\n", targetIndex);
 
+   J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
+   cpg->addEdge(cpg->knownObject(dmhIndex), cpg->knownObject(targetIndex));
+
    return targetIndex;
    }
 
@@ -5177,6 +5232,10 @@ TR_J9VMBase::delegatingMethodHandleTargetHelper(
    uintptr_t dmh = knot->getPointer(dmhIndex);
    uintptr_t fieldAddress = getReferenceFieldAt(dmh, targetFieldOffset);
    TR::KnownObjectTable::Index targetIndex = knot->getOrCreateIndex(fieldAddress);
+
+   J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
+   cpg->addEdge(cpg->knownObject(dmhIndex), cpg->knownObject(targetIndex));
+
    return targetIndex;
    }
 
@@ -5201,7 +5260,12 @@ TR_J9VMBase::getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(TR::Compilatio
    TR::KnownObjectTable *knot = comp->getKnownObjectTable();
    uintptr_t mhObject = knot->getPointer(mhIndex);
    uintptr_t mnObject = getReferenceField(mhObject, fieldName, "Ljava/lang/invoke/MemberName;");
-   return knot->getOrCreateIndex(mnObject);
+   TR::KnownObjectTable::Index mnIndex = knot->getOrCreateIndex(mnObject);
+
+   J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
+   cpg->addEdge(cpg->knownObject(mhIndex), cpg->knownObject(mnIndex));
+
+   return mnIndex;
    }
 
 TR::KnownObjectTable::Index
@@ -5235,6 +5299,10 @@ TR_J9VMBase::getLayoutVarHandle(TR::Compilation *comp, TR::KnownObjectTable::Ind
                                  "Ljava/lang/invoke/VarHandle;");
    if (!vhObject) return result;
    result = knot->getOrCreateIndex(vhObject);
+
+   J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
+   cpg->addEdge(cpg->knownObject(layoutIndex), cpg->knownObject(result));
+
    return result;
    }
 
@@ -5343,6 +5411,9 @@ TR_J9VMBase::getMethodHandleTableEntryIndex(TR::Compilation *comp, TR::KnownObje
       return result;
 
    result = knot->getOrCreateIndex(methodHandleObj);
+
+   J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
+   cpg->addEdge(cpg->knownObject(vhIndex), cpg->knownObject(result));
 
    return result;
    }
@@ -6283,7 +6354,12 @@ TR_OpaqueClassBlock *
 TR_J9VMBase::getHostClass(TR_OpaqueClassBlock *clazzOffset)
    {
    J9Class *clazzPtr = TR::Compiler->cls.convertClassOffsetToClassPtr(clazzOffset);
-   return convertClassPtrToClassOffset(clazzPtr->hostClass);
+   TR_OpaqueClassBlock *hostClass = convertClassPtrToClassOffset(clazzPtr->hostClass);
+
+   TR::Compilation *comp = _compInfoPT->getCompilation();
+   comp->constProvenanceGraph()->addEdge(clazzOffset, hostClass);
+
+   return hostClass;
    }
 
 bool
@@ -6417,7 +6493,39 @@ TR_J9VMBase::getPersistentClassPointerFromClassPointer(TR_OpaqueClassBlock * cla
 void *
 TR_J9VMBase::getClassLoader(TR_OpaqueClassBlock * classPointer)
    {
-   return (void *) (TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)->classLoader);
+   J9Class *j9c = TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer);
+   J9ClassLoader *loader = j9c->classLoader;
+
+   // J9::ConstProvenanceGraph::place(TR_OpaqueClassBlock*) - used by addEdge() -
+   // calls getClassLoader() to identify non-anonymous classes with their loaders.
+   // If we were to call addEdge() unconditionally here, then other calls to
+   // addEdge() would end up doing a recursive call:
+   //
+   //    addEdge() -> place() -> getClassLoader() -> addEdge(),
+   //
+   // which would mess up the const provenance tracing. Additionally, this would
+   // be an infinite recursion, except that ConstProvenanceGraph remembers and
+   // ignores pairs of arguments that have already been passed to addEdge().
+   //
+   // With that in mind, an edge is necessary here only if an anonymous class is
+   // involved. By calling addEdge() only when it's actually needed, we can be
+   // sure to avoid the recursion.
+   //
+   TR_OpaqueClassBlock *maybeAnonClass = classPointer;
+   if (isClassArray(maybeAnonClass))
+      {
+      // same lifetime as component class
+      maybeAnonClass = getLeafComponentClassFromArrayClass(maybeAnonClass);
+      }
+
+   if (isAnonymousClass(maybeAnonClass))
+      {
+      // Passing the original classPointer will make tracing more informative.
+      TR::Compilation *comp = _compInfoPT->getCompilation();
+      comp->constProvenanceGraph()->addEdge(classPointer, loader);
+      }
+
+   return loader;
    }
 
 void *
@@ -6776,7 +6884,13 @@ TR_J9VM::getSuperClass(TR_OpaqueClassBlock * classPointer)
    {
    J9Class *clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer);
    UDATA classDepth = J9CLASS_DEPTH(clazz);
-   return convertClassPtrToClassOffset(classDepth >= 1 ? clazz->superclasses[classDepth - 1] : 0);
+   TR_OpaqueClassBlock *superclass =
+      convertClassPtrToClassOffset(classDepth >= 1 ? clazz->superclasses[classDepth - 1] : 0);
+
+   TR::Compilation *comp = _compInfoPT->getCompilation();
+   comp->constProvenanceGraph()->addEdge(classPointer, superclass);
+
+   return superclass;
    }
 
 bool
@@ -7414,6 +7528,10 @@ TR_J9VM::getClassFromSignature(const char * sig, int32_t sigLength, J9ConstantPo
       {
       returnValue = convertClassPtrToClassOffset(j9class);
       }
+
+   TR::Compilation *comp = _compInfoPT->getCompilation();
+   comp->constProvenanceGraph()->addEdge(constantPool, returnValue);
+
    return returnValue; // 0 means failure
    }
 

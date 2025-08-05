@@ -33,6 +33,7 @@
 #include "compile/ResolvedMethod.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/CHTable.hpp"
+#include "env/J9ConstProvenanceGraph.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/VMJ9.h"
 #include "env/jittypes.h"
@@ -6616,12 +6617,16 @@ TR_J9InlinerUtil::computePrexInfo(TR_InlinerBase *inliner, TR_CallSite* site, TR
              argFirstChild->getSymbol()->isClassObject() &&
              argFirstChild->getSymbol()->castToStaticSymbol()->getStaticAddress())
             {
-            uintptr_t objectReferenceLocation = (uintptr_t)argFirstChild->getSymbolReference()->getSymbol()->castToStaticSymbol()->getStaticAddress();
+            auto j9c = (J9Class*)argFirstChild->getSymbolReference()->getSymbol()->castToStaticSymbol()->getStaticAddress();
             TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
             if (knot)
                {
                TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-               auto knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)(objectReferenceLocation + fej9->getOffsetOfJavaLangClassFromClassField()));
+               auto knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)((uint8_t*)j9c + fej9->getOffsetOfJavaLangClassFromClassField()));
+
+               J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
+               cpg->addEdge(j9c, cpg->knownObject(knownObjectIndex));
+
                prexArg = new (comp->trHeapMemory()) TR_PrexArgument(knownObjectIndex, comp);
                if (tracePrex)
                   traceMsg(comp, "PREX.inl is known java/lang/Class obj%d\n", prexArg, knownObjectIndex);
@@ -6746,15 +6751,18 @@ void TR_J9InlinerUtil::checkForConstClass(TR_CallTarget *target, TR_LogTracer *t
              !argFirstChild->getSymbolReference()->isUnresolved() &&
              argFirstChild->getSymbol()->isClassObject())
             {
-            uintptr_t objectReferenceLocation = (uintptr_t)argFirstChild->getSymbolReference()->getSymbol()->castToStaticSymbol()->getStaticAddress();
-            if (objectReferenceLocation)
+            auto j9c = (J9Class*)argFirstChild->getSymbolReference()->getSymbol()->castToStaticSymbol()->getStaticAddress();
+            if (j9c != NULL)
                {
                TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
                if (knot)
                   {
                   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-                  knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)(objectReferenceLocation + fej9->getOffsetOfJavaLangClassFromClassField()));
+                  knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)((uint8_t*)j9c + fej9->getOffsetOfJavaLangClassFromClassField()));
                   knownObjectClass = true;
+
+                  J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
+                  cpg->addEdge(j9c, cpg->knownObject(knownObjectIndex));
                   }
                }
             }

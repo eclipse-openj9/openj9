@@ -45,6 +45,7 @@
 #include "optimizer/TransformUtil.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
+#include "env/J9ConstProvenanceGraph.hpp"
 #include "env/J9JitMemory.hpp"
 #include "optimizer/HCRGuardAnalysis.hpp"
 #include "optimizer/VectorAPIExpansion.hpp"
@@ -1849,6 +1850,10 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                if (knot)
                   {
                   TR::KnownObjectTable::Index knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)(arrayComponentClass + comp()->fej9()->getOffsetOfJavaLangClassFromClassField()));
+
+                  J9::ConstProvenanceGraph *cpg = comp()->constProvenanceGraph();
+                  cpg->addEdge(arrayComponentClass, cpg->knownObject(knownObjectIndex));
+
                   addBlockOrGlobalConstraint(node,
                         TR::VPClass::create(this,
                            TR::VPKnownObject::createForJavaLangClass(this, knownObjectIndex),
@@ -2037,6 +2042,10 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                if (knot)
                   {
                   TR::KnownObjectTable::Index knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)(superClass + comp()->fej9()->getOffsetOfJavaLangClassFromClassField()));
+
+                  J9::ConstProvenanceGraph *cpg = comp()->constProvenanceGraph();
+                  cpg->addEdge(superClass, cpg->knownObject(knownObjectIndex));
+
                   addBlockOrGlobalConstraint(node,
                         TR::VPClass::create(this,
                            TR::VPKnownObject::createForJavaLangClass(this, knownObjectIndex),

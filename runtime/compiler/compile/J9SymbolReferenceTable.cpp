@@ -31,6 +31,7 @@
 #include "cs2/hashtab.h"
 #include "env/CHTable.hpp"
 #include "env/CompilerEnv.hpp"
+#include "env/J9ConstProvenanceGraph.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "env/TRMemory.hpp"
@@ -519,11 +520,16 @@ J9::SymbolReferenceTable::findOrCreateCallSiteTableEntrySymbol(TR::ResolvedMetho
       {
       TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
       if (knot)
+         {
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
          knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)entryLocation, true);
 #else
          knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)entryLocation);
 #endif
+
+         J9::ConstProvenanceGraph *cpg = comp()->constProvenanceGraph();
+         cpg->addEdge(owningMethod, cpg->knownObject(knownObjectIndex));
+         }
       }
 
    symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), -1,
@@ -564,11 +570,16 @@ J9::SymbolReferenceTable::findOrCreateMethodTypeTableEntrySymbol(TR::ResolvedMet
       {
       TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
       if (knot)
+         {
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
          knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)entryLocation, true);
 #else
          knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)entryLocation);
 #endif
+
+         J9::ConstProvenanceGraph *cpg = comp()->constProvenanceGraph();
+         cpg->addEdge(owningMethod, cpg->knownObject(knownObjectIndex));
+         }
       }
 
    symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), -1,
@@ -1400,6 +1411,10 @@ J9::SymbolReferenceTable::findOrCreateDiscontiguousArraySizeSymbolRef()
 TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateClassLoaderSymbolRef(TR_ResolvedMethod * method)
    {
+   // NOTE: If this ever becomes a known object, then it will be necessary to
+   // add a constant provenance edge from the J9ClassLoader to the known object
+   // for its corresponding java/lang/ClassLoader instance.
+
    ListIterator<TR::SymbolReference> i(&_classLoaderSymbolRefs);
    TR::SymbolReference * symRef;
    for (symRef = i.getFirst(); symRef; symRef = i.getNext())
@@ -1552,6 +1567,9 @@ J9::SymbolReferenceTable::findOrCreateStringSymbol(TR::ResolvedMethodSymbol * ow
          if (knot)
             {
             knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)stringConst);
+
+            J9::ConstProvenanceGraph *cpg = comp()->constProvenanceGraph();
+            cpg->addEdge(owningMethod, cpg->knownObject(knownObjectIndex));
             }
          }
       symRef = findOrCreateCPSymbol(owningMethodSymbol, cpIndex, TR::Address, true, stringConst, knownObjectIndex);
@@ -1605,6 +1623,9 @@ J9::SymbolReferenceTable::findOrCreateConstantDynamicSymbol(TR::ResolvedMethodSy
       if (knot != NULL)
          {
          knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)dynamicConst);
+
+         J9::ConstProvenanceGraph *cpg = comp()->constProvenanceGraph();
+         cpg->addEdge(owningMethod, cpg->knownObject(knownObjectIndex));
          }
 
       symRef = findOrCreateCPSymbol(
@@ -1669,6 +1690,9 @@ J9::SymbolReferenceTable::findOrCreateMethodTypeSymbol(TR::ResolvedMethodSymbol 
       if (knot != NULL)
          {
          knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)methodTypeConst);
+
+         J9::ConstProvenanceGraph *cpg = comp()->constProvenanceGraph();
+         cpg->addEdge(owningMethod, cpg->knownObject(knownObjectIndex));
          }
 
       symRef = findOrCreateCPSymbol(
@@ -1700,7 +1724,13 @@ J9::SymbolReferenceTable::findOrCreateMethodHandleSymbol(TR::ResolvedMethodSymbo
       TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN;
       TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
       if (knot)
+         {
          knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)methodHandleConst);
+
+         J9::ConstProvenanceGraph *cpg = comp()->constProvenanceGraph();
+         cpg->addEdge(owningMethod, cpg->knownObject(knownObjectIndex));
+         }
+
       symRef = findOrCreateCPSymbol(owningMethodSymbol, cpIndex, TR::Address, true, methodHandleConst, knownObjectIndex);
       }
    TR::StaticSymbol * sym = (TR::StaticSymbol *)symRef->getSymbol();

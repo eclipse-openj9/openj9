@@ -31,6 +31,7 @@
 #include "runtime/CodeCacheExceptions.hpp"
 #include "control/JITServerHelpers.hpp"
 #include "env/JITServerPersistentCHTable.hpp"
+#include "env/J9ConstProvenanceGraph.hpp"
 #include "exceptions/AOTFailure.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "env/J2IThunk.hpp"
@@ -83,6 +84,10 @@ TR_J9ServerVM::getSuperClass(TR_OpaqueClassBlock *clazz)
 
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_PARENT_CLASS, (void *)&parentClass);
+
+   TR::Compilation *comp = _compInfoPT->getCompilation();
+   comp->constProvenanceGraph()->addEdge(clazz, parentClass);
+
    return parentClass;
    }
 
@@ -312,6 +317,11 @@ TR_J9ServerVM::getClassLoader(TR_OpaqueClassBlock *clazz)
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream,
                                              JITServerHelpers::CLASSINFO_CLASS_LOADER, &loader);
+
+   // NOTE: A const provenance edge is necessary if clazz is anonymous, but
+   // packRemoteROMClassInfo() has already taken care of that on the client by
+   // calling TR_J9VMBase::getClassLoader().
+
    return loader;
    }
 
@@ -1067,6 +1077,9 @@ TR_J9ServerVM::getHostClass(TR_OpaqueClassBlock *clazz)
    TR_OpaqueClassBlock *hostClass = NULL;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_HOST_CLASS, (void *)&hostClass);
+
+   TR::Compilation *comp = _compInfoPT->getCompilation();
+   comp->constProvenanceGraph()->addEdge(clazz, hostClass);
 
    return hostClass;
    }

@@ -28,6 +28,7 @@
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "env/CompilerEnv.hpp"
+#include "env/J9ConstProvenanceGraph.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "env/TypeLayout.hpp"
@@ -3492,6 +3493,10 @@ TR_J9ByteCodeIlGenerator::loadInvokeCacheArrayElements(TR::SymbolReference *tabl
 
       if (koi != TR::KnownObjectTable::UNKNOWN)
          {
+         // The caller got invokeCacheArray from _methodSymbol->getResolvedMethod().
+         J9::ConstProvenanceGraph *cpg = comp()->constProvenanceGraph();
+         cpg->addEdge(_methodSymbol->getResolvedMethod(), cpg->knownObject(koi));
+
          TR::Node *appendixNode = _stack->top();
          TR::SymbolReference *appendixSymRef =
             comp()->getSymRefTab()->findOrCreateSymRefWithKnownObject(

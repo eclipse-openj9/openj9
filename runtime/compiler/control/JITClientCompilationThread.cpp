@@ -35,6 +35,7 @@
 #include "env/j9methodServer.hpp"
 #include "env/JITServerPersistentCHTable.hpp"
 #include "env/JSR292Methods.h"
+#include "env/J9ConstProvenanceGraph.hpp"
 #include "env/J9RetainedMethodSet.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "env/TypeLayout.hpp"
@@ -58,6 +59,11 @@ extern TR::Monitor *assumptionTableMutex;
 
 // TODO: This method is copied from runtime/jit_vm/ctsupport.c,
 // in the future it's probably better to make that method publicly accessible
+//
+// NOTE: Do not call directly. Call jitFindField() instead. The two-layer
+// structure is there to avoid modifying the copied code for JIT-specific
+// purposes.
+//
 static UDATA
 findField(J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA index, BOOLEAN isStatic, J9Class **declaringClass)
    {
@@ -109,6 +115,21 @@ findField(J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA index, BOOLE
             }
          }
       }
+
+   return result;
+   }
+
+static UDATA
+jitFindField(
+   TR::Compilation *comp,
+   J9VMThread *vmStruct,
+   J9ConstantPool *constantPool,
+   UDATA index,
+   BOOLEAN isStatic,
+   J9Class **declaringClass)
+   {
+   UDATA result = findField(vmStruct, constantPool, index, isStatic, declaringClass);
+   comp->constProvenanceGraph()->addEdge(constantPool, *declaringClass);
    return result;
    }
 
@@ -371,8 +392,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          J9ConstantPool *cp1 = (J9ConstantPool *) method1->ramConstantPool();
          J9ConstantPool *cp2 = (J9ConstantPool *) method2->ramConstantPool();
 
-         f1 = findField(fe->vmThread(), cp1, cpIndex1, isStatic, &declaringClass1);
-         f2 = findField(fe->vmThread(), cp2, cpIndex2, isStatic, &declaringClass2);
+         f1 = jitFindField(comp, fe->vmThread(), cp1, cpIndex1, isStatic, &declaringClass1);
+         f2 = jitFindField(comp, fe->vmThread(), cp2, cpIndex2, isStatic, &declaringClass2);
          client->write(response, declaringClass1, declaringClass2, f1, f2);
          };
          break;
@@ -1153,7 +1174,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             {
             J9Class *declaringClass;
             // do we need to check if the field is resolved?
-            UDATA field = findField(fe->vmThread(), cp, cpIndices[i], isStatic[i], &declaringClass);
+            UDATA field = jitFindField(comp, fe->vmThread(), cp, cpIndices[i], isStatic[i], &declaringClass);
             declaringClasses.push_back(declaringClass);
             fields.push_back(field);
             }
@@ -2834,6 +2855,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                fieldAddress = fe->getReferenceFieldAtAddress(baseObjectAddress + fieldOffset);
                resultIndex = knot->getOrCreateIndex(fieldAddress);
                objectPointerReference = knot->getPointerLocation(resultIndex);
+
+               // No need to add a const provenance edge here. The server will
+               // deal with that in InterpreterEmulator::maintainStackForGetField()
+               // after it gets the response.
                }
             }
 
@@ -2859,6 +2884,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
 
             resultIndex = knot->getOrCreateIndex(fieldAddress);
             objectPointerReference = knot->getPointerLocation(resultIndex);
+
+            // No need to add a const provenance edge here. The server will
+            // deal with that in InterpreterEmulator::getReturnValue() after it
+            // gets the response.
             }
 
          client->write(response, resultIndex, objectPointerReference);
@@ -2946,7 +2975,13 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             uintptr_t objectPointer = fe->getReferenceFieldAtAddress(fieldAddress);
 
             if (objectPointer)
+               {
                resultIndex = knot->getOrCreateIndexAt(&objectPointer, isArrayWithConstantElements);
+
+               // No need to add a const provenance edge here. The server will
+               // deal with that in transformIndirectLoadChainImpl() after it
+               // gets the response.
+               }
             }
 
          uintptr_t *resultPointer = (resultIndex == TR::KnownObjectTable::UNKNOWN) ?

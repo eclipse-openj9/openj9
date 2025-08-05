@@ -27,6 +27,7 @@
 #include "compile/ResolvedMethod.hpp"
 #include "env/ClassLoaderTable.hpp"
 #include "env/ClassTableCriticalSection.hpp"
+#include "env/J9ConstProvenanceGraph.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "ilgen/J9ByteCode.hpp"
 #include "ilgen/J9ByteCodeIterator.hpp"
@@ -348,6 +349,8 @@ J9::RetainedMethodSet::withLinkedCalleeAttested(TR_ByteCodeInfo bci)
             comp()->fej9()->targetMethodFromInvokeCacheArrayMemberNameObj(
                comp(), caller, invokeCacheArray);
 
+         comp()->constProvenanceGraph()->addEdge(caller, linkedCallee);
+
          break;
          }
 
@@ -530,6 +533,8 @@ J9::RetainedMethodSet::scan(J9Class *clazz)
                loader,
                outlivingLoader);
             }
+
+         comp()->constProvenanceGraph()->addEdge(loader, outlivingLoader);
 
          if (willRemainLoaded(outlivingLoader))
             {

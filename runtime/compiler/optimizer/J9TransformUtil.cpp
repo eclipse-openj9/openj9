@@ -42,6 +42,7 @@
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "ilgen/J9ByteCodeIterator.hpp"
+#include "env/J9ConstProvenanceGraph.hpp"
 #include "env/OMRRetainedMethodSet.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
@@ -465,6 +466,7 @@ static bool verifyFieldAccess(void *curStruct, TR::SymbolReference *field, bool 
       }
    else
       {
+      // NOTE: Every case here must have a corresponding case in addConstProvenanceEdge().
       switch (field->getReferenceNumber() - comp->getSymRefTab()->getNumHelperSymbols())
          {
          // Fields that can be loaded from any RAM class (array or not).
@@ -1716,6 +1718,11 @@ J9::TransformUtil::staticFinalFieldValue(
    TR::Symbol::RecognizedField recField,
    TR::AnyConst *outValue)
    {
+   // This can be relaxed in the future, but we'll need to get the defining
+   // class some other way. For now, canFoldStaticFinalField() requires a valid
+   // CP index, so there will be one here as well.
+   TR_ASSERT_FATAL(cpIndex >= 0, "missing CP index");
+
    TR_J9VM *fej9 = (TR_J9VM *)comp->fej9();
    TR_StaticFinalData data = fej9->dereferenceStaticFinalAddress(staticAddr, loadType);
 
@@ -1800,12 +1807,17 @@ J9::TransformUtil::staticFinalFieldValue(
    if (knot->isNull(koi))
       return false;
 
-   if (cpIndex >= 0)
+   int32_t stableArrayRank = isArrayWithStableElements(cpIndex, owningMethod, comp);
+   if (stableArrayRank > 0)
       {
-      int32_t stableArrayRank = isArrayWithStableElements(cpIndex, owningMethod, comp);
-      if (stableArrayRank > 0)
-         knot->addStableArray(koi, stableArrayRank);
+      knot->addStableArray(koi, stableArrayRank);
       }
+
+   TR_OpaqueClassBlock *definingClass =
+      owningMethod->getDeclaringClassFromFieldOrStatic(comp, cpIndex);
+
+   J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
+   cpg->addEdge(definingClass, cpg->knownObject(koi));
 
    *outValue = TR::AnyConst::makeKnownObject(koi);
    return true;
@@ -1886,13 +1898,123 @@ J9::TransformUtil::transformIndirectLoadChain(TR::Compilation *comp, TR::Node *n
       {
       TR::VMAccessCriticalSection transformIndirectLoadChain(comp->fej9());
       result = TR::TransformUtil::transformIndirectLoadChainImpl(
-         comp, node, baseExpression, TR::KnownObjectTable::UNKNOWN,
+         comp, node, baseExpression, baseKnownObject,
          (void*)comp->getKnownObjectTable()->getPointer(baseKnownObject),
          stableArrayRank, removedNode
       );
       }
 
    return result;
+   }
+
+/**
+ * \brief Add a const provenance edge for transformIndirectLoadChain().
+ *
+ * The edge is from the value of \p base to \p referent. If \p base is known to
+ * produce a known object, then the source is \p baseKoi. Otherwise, it will be
+ * \p baseAddr, the type of which can be determined based on the innermost load
+ * based on \p base.
+ *
+ * \param comp the compilation object
+ * \param node the outermost node for transformIndirectLoadChain()
+ * \param base the base node for transformIndirectLoadChain()
+ * \param baseKoi the known object index for \p base, if known
+ * \param baseAddr the address resulting from \p base
+ * \param referent the final result of load chain, as a type suitable to pass
+ *                 to J9::ConstProvenanceGraph::addEdge().
+ */
+template <typename Referent>
+static void
+addConstProvenanceEdge(
+   TR::Compilation *comp,
+   TR::Node *node,
+   TR::Node *base,
+   TR::KnownObjectTable::Index baseKoi,
+   void *baseAddr,
+   Referent referent)
+   {
+   J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
+   if (baseKoi != TR::KnownObjectTable::UNKNOWN)
+      {
+      cpg->addEdge(cpg->knownObject(baseKoi), referent);
+      return;
+      }
+
+   // Base is a native struct. Find the innermost load to determine its type.
+   TR::Node *origNode = node;
+   TR::SymbolReference *symRef = NULL;
+   while (true)
+      {
+      symRef = node->getSymbolReference();
+      TR::Node *inner = node->getChild(0);
+      if (symRef->getSymbol()->isArrayShadowSymbol())
+         {
+         while (inner->getOpCode().isAdd() || inner->isDataAddrPointer())
+            {
+            inner = inner->getChild(0);
+            }
+         }
+
+      if (inner == base)
+         {
+         break;
+         }
+
+      node = inner;
+      }
+
+   // Need to handle every native struct field symref accepted by verifyFieldAccess().
+   switch (symRef->getReferenceNumber() - comp->getSymRefTab()->getNumHelperSymbols())
+      {
+      // Fields of J9Class (or J9ArrayClass).
+      case TR::SymbolReferenceTable::componentClassSymbol: // J9ArrayClass::componentType
+         // Add an edge even if base and the innermost load are pointers with
+         // the same lifetime (as is the case for <componentClass>). With one
+         // or more additional levels of deref, that lifetime could still
+         // differ from that of referent.
+         cpg->addEdge((J9Class*)baseAddr, referent);
+         break;
+
+      // ----------------------------------------------------------------------
+      // All of the following explicit cases are fields from which objects are
+      // not reachable at compile time. We should never encounter any of them
+      // here because we have supposedly found a referent.
+      // ----------------------------------------------------------------------
+
+      // J9Class::ramStatics contains primitives and references. Though there
+      // are references, we won't load a reference (or anything, really) at
+      // compile time due to a load based on <ramStaticsFromClass>. Even if the
+      // offset is constant, we don't know which static field is being loaded,
+      // and so we don't know that it's final.
+      //
+      // In the future, if both the class and the offset are constant, we
+      // could use them to determine which static field is being accessed,
+      // but then the access should be refined to use a fabricated static
+      // field symref instead. For loads, if the static field is final, it
+      // could then be folded like any other static final field. But such a
+      // scheme wouldn't involve transformIndirectLoadChain().
+      //
+      case TR::SymbolReferenceTable::ramStaticsFromClassSymbol:
+         // Fall through.
+
+      // Fields from which objects are plainly not reachable at all.
+      case TR::SymbolReferenceTable::classRomPtrSymbol: // ROM class
+      case TR::SymbolReferenceTable::arrayClassRomPtrSymbol: // ROM class
+      case TR::SymbolReferenceTable::indexableSizeSymbol: // integral
+      case TR::SymbolReferenceTable::isArraySymbol: // integral
+         // Fall through.
+
+      default:
+         TR_ASSERT_FATAL_WITH_NODE(
+            origNode,
+            false,
+            "transformIndirectLoadChain() unexpectedly found a const provenance "
+            "referent based on #%d (nonhelper index %d)",
+            symRef->getReferenceNumber(),
+            symRef->getReferenceNumber() - comp->getSymRefTab()->getNumHelperSymbols());
+
+         break;
+      }
    }
 
 /** Dereference node and fold it into a constant when possible
@@ -1976,7 +2098,10 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp,
 #if defined(J9VM_OPT_JITSERVER)
    bool isServer = comp->isOutOfProcessCompilation();
 
-   // baseKnownObject is used only for jitserver, otherwise we use baseAddress
+   // The access is usually based on baseAddress, but JITServer uses
+   // baseKnownObject instead. However, baseKnownObject is always specified
+   // when we're starting from a known object, since that information is
+   // necessary for tracking constant provenance.
    if (isServer)
       TR_ASSERT(baseKnownObject != TR::KnownObjectTable::UNKNOWN,
                 "invalid baseKnownObject in jitserver");
@@ -2150,6 +2275,14 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp,
                if (changeIndirectLoadIntoConst(node, TR::loadaddr, removedNode, comp))
                   {
                   TR_OpaqueClassBlock *clazz = *(TR_OpaqueClassBlock**)valuePtr;
+                  addConstProvenanceEdge(
+                     comp,
+                     node,
+                     baseExpression,
+                     baseKnownObject,
+                     baseAddress,
+                     clazz);
+
                   value = (uintptr_t)clazz;
                   node->setSymbolReference(comp->getSymRefTab()->findOrCreateClassSymbol(comp->getMethodSymbol(), -1, clazz));
 
@@ -2195,6 +2328,9 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp,
 #endif /* defined(J9VM_OPT_JITSERVER) */
             if (symRef->getReferenceNumber() - comp->getSymRefTab()->getNumHelperSymbols() == TR::SymbolReferenceTable::ramStaticsFromClassSymbol)
                {
+               // NOTE: No need to addConstProvenanceEdge() for ramStatics. See
+               // the comment about it within addConstProvenanceEdge().
+
                value = *(uintptr_t*)valuePtr;
                if (changeIndirectLoadIntoConst(node, TR::aconst, removedNode, comp))
                   {
@@ -2232,6 +2368,16 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp,
 
             if (knotIndex != TR::KnownObjectTable::UNKNOWN)
                {
+               // The result is already in the known object table, so take note
+               // of its provenance even if the transformation is denied.
+               addConstProvenanceEdge(
+                  comp,
+                  node,
+                  baseExpression,
+                  baseKnownObject,
+                  baseAddress,
+                  comp->constProvenanceGraph()->knownObject(knotIndex));
+
                TR::SymbolReference *improvedSymRef =
                   comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(symRef, knotIndex);
 

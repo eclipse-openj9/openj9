@@ -26,6 +26,7 @@
 #include "control/JITServerCompilationThread.hpp"
 #include "control/JITServerHelpers.hpp"
 #include "control/MethodToBeCompiled.hpp"
+#include "env/J9ConstProvenanceGraph.hpp"
 #include "env/VMJ9Server.hpp"
 #include "exceptions/DataCacheError.hpp"
 #include "ilgen/J9ByteCodeIterator.hpp"
@@ -106,6 +107,9 @@ TR_ResolvedJ9JITServerMethod::setRecognizedMethodInfo(TR::RecognizedMethod rm)
 J9ClassLoader *
 TR_ResolvedJ9JITServerMethod::getClassLoader()
    {
+   // NOTE: We may need a const provenance edge to the loader, in case the class
+   // is anonymous, but packMethodInfo() has already taken care of that on the
+   // client by calling TR_ResolvedJ9Method::getClassLoader().
    return _classLoader; // cached version
    }
 
@@ -185,8 +189,13 @@ TR_ResolvedJ9JITServerMethod::getClassFromConstantPool(TR::Compilation * comp, u
       auto &constantClassPoolCache = JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._constantClassPoolCache;
       auto it = constantClassPoolCache.find(cpIndex);
       if (it != constantClassPoolCache.end())
+         {
+         comp->constProvenanceGraph()->addEdge(this, it->second);
          return it->second;
+         }
       }
+
+   // client will add the const provenance edge
    _stream->write(JITServer::MessageType::ResolvedMethod_getClassFromConstantPool, _remoteMirror, cpIndex, returnClassForAOT);
    TR_OpaqueClassBlock *resolvedClass = std::get<0>(_stream->read<TR_OpaqueClassBlock *>());
 
@@ -208,8 +217,14 @@ TR_ResolvedJ9JITServerMethod::getDeclaringClassFromFieldOrStatic(TR::Compilation
       auto &cache = JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._fieldOrStaticDeclaringClassCache;
       auto it = cache.find(cpIndex);
       if (it != cache.end())
+         {
+         TR_OpaqueClassBlock *classFromCP = getClassFromFieldOrStatic(comp, cpIndex);
+         comp->constProvenanceGraph()->addEdge(classFromCP, it->second);
          return it->second;
+         }
       }
+
+   // client will add the provenance edge
    _stream->write(JITServer::MessageType::ResolvedMethod_getDeclaringClassFromFieldOrStatic, _remoteMirror, cpIndex);
    TR_OpaqueClassBlock *declaringClass = std::get<0>(_stream->read<TR_OpaqueClassBlock *>());
    if (declaringClass)
@@ -344,6 +359,8 @@ TR_ResolvedJ9JITServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Compil
             TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual");
             TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual:#bytes", sizeof(TR_ResolvedJ9Method));
             }
+
+         // No need to add a const provenance edge here. The cache is per-compilation.
          return resolvedMethod;
          }
 
@@ -401,6 +418,7 @@ TR_ResolvedJ9JITServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Compil
       TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual:#bytes", sizeof(TR_ResolvedJ9Method));
       }
 
+   comp->constProvenanceGraph()->addEdge(this, resolvedMethod);
    return resolvedMethod;
 #endif
    }
@@ -649,6 +667,8 @@ TR_ResolvedJ9JITServerMethod::getResolvedStaticMethod(TR::Compilation * comp, I_
       {
       if ((resolvedMethod == NULL) && unresolvedInCP)
          handleUnresolvedStaticMethodInCP(cpIndex, unresolvedInCP);
+
+      // No need to add a const provenance edge here. The cache is per-compilation.
       return resolvedMethod;
       }
 
@@ -709,6 +729,7 @@ TR_ResolvedJ9JITServerMethod::getResolvedStaticMethod(TR::Compilation * comp, I_
          );
       }
 
+   comp->constProvenanceGraph()->addEdge(this, resolvedMethod);
    return resolvedMethod;
    }
 
@@ -725,6 +746,8 @@ TR_ResolvedJ9JITServerMethod::getResolvedSpecialMethod(TR::Compilation * comp, I
       {
       if ((resolvedMethod == NULL) && unresolvedInCP)
          handleUnresolvedSpecialMethodInCP(cpIndex, unresolvedInCP);
+
+      // No need to add a const provenance edge here. The cache is per-compilation.
       return resolvedMethod;
       }
 
@@ -772,6 +795,7 @@ TR_ResolvedJ9JITServerMethod::getResolvedSpecialMethod(TR::Compilation * comp, I
          );
       }
 
+   comp->constProvenanceGraph()->addEdge(this, resolvedMethod);
    return resolvedMethod;
    }
 
@@ -833,6 +857,7 @@ TR_ResolvedJ9JITServerMethod::localName(U_32 slotNumber, U_32 bcIndex, I_32 &len
 TR_OpaqueClassBlock *
 TR_ResolvedJ9JITServerMethod::getResolvedInterfaceMethod(I_32 cpIndex, UDATA *pITableIndex)
    {
+   // client will add the const provenance edge
    _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedInterfaceMethod_2, _remoteMirror, cpIndex);
    auto recv = _stream->read<TR_OpaqueClassBlock *, UDATA>();
    *pITableIndex = std::get<1>(recv);
@@ -854,8 +879,12 @@ TR_ResolvedJ9JITServerMethod::getResolvedInterfaceMethod(TR::Compilation * comp,
    auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;
    TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock *) _ramClass;
    if (compInfoPT->getCachedResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Interface, clazz, cpIndex, classObject), this, &resolvedMethod))
+      {
+      // No need to add a const provenance edge here. The cache is per-compilation.
       return resolvedMethod;
+      }
 
+   // client will add the const provenance edge
    _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedInterfaceMethodAndMirror_3, getPersistentIdentifier(), classObject, cpIndex, _remoteMirror);
    auto recv = _stream->read<bool, J9Method*, TR_ResolvedJ9JITServerMethodInfo>();
    bool resolved = std::get<0>(recv);
@@ -942,7 +971,10 @@ TR_ResolvedJ9JITServerMethod::getResolvedImproperInterfaceMethod(TR::Compilation
       auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;
       TR_ResolvedMethod * resolvedMethod = NULL;
       if (compInfoPT->getCachedResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::ImproperInterface, (TR_OpaqueClassBlock *) _ramClass, cpIndex), this, &resolvedMethod))
+         {
+         // No need to add a const provenance edge here. The cache is per-compilation.
          return resolvedMethod;
+         }
 
       // query for resolved method and create its mirror at the same time
       _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedImproperInterfaceMethodAndMirror, _remoteMirror, cpIndex);
@@ -956,6 +988,8 @@ TR_ResolvedJ9JITServerMethod::getResolvedImproperInterfaceMethod(TR::Compilation
          if (!comp->getSymbolValidationManager()->addImproperInterfaceMethodFromCPRecord((TR_OpaqueMethodBlock *)j9method, cp(), cpIndex))
             j9method = NULL;
          }
+
+      comp->constProvenanceGraph()->addEdge(this, j9method);
 
       compInfoPT->cacheResolvedMethod(
          compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::ImproperInterface,
@@ -1004,9 +1038,13 @@ TR_ResolvedJ9JITServerMethod::getResolvedVirtualMethod(TR::Compilation * comp, T
    TR_ResolvedMethod *resolvedMethod = NULL;
    // If method is already cached, return right away
    if (compInfoPT->getCachedResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::VirtualFromOffset, clazz, virtualCallOffset, classObject), this, &resolvedMethod))
+      {
+      // No need to add a const provenance edge here. The cache is per-compilation.
       return resolvedMethod;
+      }
 
-   // Remote call finds RAM method at offset and creates a resolved method at the client
+   // Remote call finds RAM method at offset and creates a resolved method at the client.
+   // The client will add the const provenance edge.
    _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedVirtualMethod, classObject, virtualCallOffset, ignoreRtResolve, (TR_ResolvedJ9Method *) getRemoteMirror());
    auto recv = _stream->read<TR_OpaqueMethodBlock *, TR_ResolvedJ9JITServerMethodInfo>();
    auto ramMethod = std::get<0>(recv);
@@ -1113,6 +1151,7 @@ TR_ResolvedJ9JITServerMethod::getResolvedHandleMethod(TR::Compilation *comp, I_3
 #if TURN_OFF_INLINING
    return 0;
 #else
+   // client will add the const provenance edge
    _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedHandleMethod, _remoteMirror, cpIndex);
    auto recv = _stream->read<TR_OpaqueMethodBlock *, TR_ResolvedJ9JITServerMethodInfo, std::string, bool, bool>();
    auto ramMethod = std::get<0>(recv);
@@ -1208,6 +1247,7 @@ TR_ResolvedJ9JITServerMethod::getResolvedDynamicMethod(TR::Compilation *comp, I_
 #if TURN_OFF_INLINING
    return 0;
 #else
+   // client will add the const provenance edge
    _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedDynamicMethod, _remoteMirror, callSiteIndex);
    auto recv = _stream->read<TR_OpaqueMethodBlock *, TR_ResolvedJ9JITServerMethodInfo, std::string, bool, bool>();
    auto ramMethod = std::get<0>(recv);

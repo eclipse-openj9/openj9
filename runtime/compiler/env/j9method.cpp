@@ -40,6 +40,7 @@
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "env/CompilerEnv.hpp"
+#include "env/J9ConstProvenanceGraph.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "env/jittypes.h"
@@ -629,6 +630,11 @@ TR_ResolvedJ9MethodBase::getDeclaringClassFromFieldOrStatic(TR::Compilation *com
                                                                  NULL,
                                                                  J9_LOOK_NO_JAVA);
       }
+
+   // We could find the sequence of direct supertype relationships and add a
+   // separate edge for each, which would be more granular, but it's probably
+   // not worth bothering.
+   comp->constProvenanceGraph()->addEdge(cpClass, containingClass);
 
    return (TR_OpaqueClassBlock*)containingClass;
    }
@@ -5488,7 +5494,9 @@ TR_ResolvedJ9Method::constantPool()
 J9ClassLoader *
 TR_ResolvedJ9Method::getClassLoader()
    {
-   return cp()->ramClass->classLoader;
+   // NOTE: TR_J9VMBase::getClassLoader() adds a const provenance edge if needed.
+   TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock *)cp()->ramClass;
+   return (J9ClassLoader *)fej9()->getClassLoader(clazz);
    }
 
 J9ConstantPool *
@@ -6406,6 +6414,10 @@ TR_ResolvedJ9Method::getClassOfStaticFromCP(TR_J9VMBase *fej9, J9ConstantPool *c
    TR::VMAccessCriticalSection classOfStatic(fej9);
    TR_OpaqueClassBlock *result;
    result = fej9->convertClassPtrToClassOffset(cpIndex >= 0 ? jitGetClassOfFieldFromCP(fej9->vmThread(), cp, cpIndex) : 0);
+
+   TR::Compilation *comp = fej9->_compInfoPT->getCompilation();
+   comp->constProvenanceGraph()->addEdge(cp, result);
+
    return result;
    }
 
@@ -6723,6 +6735,7 @@ TR_ResolvedJ9Method::getClassFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, TR::C
        (resolvedClass = fej9->_vmFunctionTable->resolveClassRef(fej9->vmThread(), cp, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME)))
       {
       result = fej9->convertClassPtrToClassOffset(resolvedClass);
+      comp->constProvenanceGraph()->addEdge(cp, result);
       }
 
    return result;
@@ -6908,6 +6921,9 @@ TR_ResolvedJ9Method::getVirtualMethod(TR_J9VMBase *fej9, J9ConstantPool *cp, I_3
    if (isInvokePrivateVTableOffset(*vTableOffset))
       ramMethod = (((J9RAMVirtualMethodRef*) literals)[cpIndex]).method;
 
+   TR::Compilation *comp = fej9->_compInfoPT->getCompilation();
+   comp->constProvenanceGraph()->addEdge(cp, ramMethod);
+
    return (TR_OpaqueMethodBlock *)ramMethod;
    }
 
@@ -6918,7 +6934,12 @@ TR_ResolvedJ9Method::getInterfaceITableIndexFromCP(TR_J9VMBase *fej9, J9Constant
       return NULL;
 
    TR::VMAccessCriticalSection getResolvedInterfaceMethod(fej9);
-   return (TR_OpaqueClassBlock *)jitGetInterfaceITableIndexFromCP(fej9->vmThread(), cp, cpIndex, pITableIndex);
+   auto result = (TR_OpaqueClassBlock *)jitGetInterfaceITableIndexFromCP(fej9->vmThread(), cp, cpIndex, pITableIndex);
+
+   TR::Compilation *comp = fej9->_compInfoPT->getCompilation();
+   comp->constProvenanceGraph()->addEdge(cp, result);
+
+   return result;
    }
 
 TR_OpaqueClassBlock *
@@ -6940,6 +6961,7 @@ TR_ResolvedJ9Method::getResolvedInterfaceMethod(I_32 cpIndex, UDATA *pITableInde
          result = NULL;
       }
 
+   comp->constProvenanceGraph()->addEdge(this, result);
    return result;
 #endif
    }
@@ -6989,6 +7011,8 @@ TR_ResolvedJ9Method::getResolvedImproperInterfaceMethod(TR::Compilation * comp, 
       if (!comp->getSymbolValidationManager()->addImproperInterfaceMethodFromCPRecord((TR_OpaqueMethodBlock *)j9method, cp(), cpIndex))
          j9method = NULL;
       }
+
+   comp->constProvenanceGraph()->addEdge(this, j9method);
 
    if (j9method == NULL)
       return NULL;
@@ -7099,6 +7123,7 @@ TR_ResolvedJ9Method::getResolvedStaticMethod(TR::Compilation * comp, I_32 cpInde
 
 #endif
 
+   comp->constProvenanceGraph()->addEdge(this, resolvedMethod);
    return resolvedMethod;
    }
 
@@ -7151,6 +7176,7 @@ TR_ResolvedJ9Method::getResolvedSpecialMethod(TR::Compilation * comp, I_32 cpInd
 
 #endif
 
+   comp->constProvenanceGraph()->addEdge(this, resolvedMethod);
    return resolvedMethod;
    }
 
@@ -7251,6 +7277,7 @@ TR_ResolvedJ9Method::getResolvedPossiblyPrivateVirtualMethod(TR::Compilation * c
       TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual:#bytes", sizeof(TR_ResolvedJ9Method));
       }
 
+   comp->constProvenanceGraph()->addEdge(this, resolvedMethod);
    return resolvedMethod;
 #endif
    }
@@ -7376,6 +7403,7 @@ TR_ResolvedJ9Method::getResolvedDynamicMethod(TR::Compilation * comp, I_32 callS
          }
 
       TR_OpaqueMethodBlock * targetJ9MethodBlock = getTargetMethodFromMemberName(invokeCacheArray, &invokeCacheAppendixNull);
+      comp->constProvenanceGraph()->addEdge(this, targetJ9MethodBlock);
 
       if (comp->compileRelocatableCode())
          {
@@ -7450,6 +7478,7 @@ TR_ResolvedJ9Method::getResolvedHandleMethod(TR::Compilation * comp, I_32 cpInde
       uintptr_t * invokeCacheArray = (uintptr_t *) methodTypeTableEntryAddress(cpIndex);
 
       TR_OpaqueMethodBlock * targetJ9MethodBlock = getTargetMethodFromMemberName(invokeCacheArray, &invokeCacheAppendixNull);
+      comp->constProvenanceGraph()->addEdge(this, targetJ9MethodBlock);
 
       if (comp->compileRelocatableCode())
          {
@@ -7810,6 +7839,10 @@ TR_ResolvedJ9Method::definingClassAndFieldShapeFromCPFieldRef(TR::Compilation *c
       IDATA fieldOffset = javaVM->internalVMFunctions->instanceFieldOffset(vmThread, resolvedClass, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), &definingClass, (UDATA *)field, J9_LOOK_NO_JAVA);
       }
 
+   J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
+   cpg->addEdge(constantPool, resolvedClass);
+   cpg->addEdge(resolvedClass, definingClass);
+
    return (TR_OpaqueClassBlock *)definingClass;
    }
 
@@ -7957,6 +7990,10 @@ TR_J9VMBase::getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, I_32 vi
 
    TR_ASSERT(ramMethod, "getResolvedVirtualMethod should always find a ramMethod in the vtable slot");
 
+   // ramMethod might have been inherited from a superclass
+   TR::Compilation *comp = _compInfoPT->getCompilation();
+   comp->constProvenanceGraph()->addEdge(classObject, ramMethod);
+
    if (ramMethod &&
        (!(_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) ||
          ignoreRtResolve) &&
@@ -7979,6 +8016,10 @@ TR_J9VMBase::getResolvedInterfaceMethod(J9ConstantPool *ownerCP, TR_OpaqueClassB
                                                       ownerCP,
                                                       cpIndex,
                                                       TR::Compiler->cls.convertClassOffsetToClassPtr(classObject));
+
+   // ramMethod might have been inherited from a superclass
+   TR::Compilation *comp = _compInfoPT->getCompilation();
+   comp->constProvenanceGraph()->addEdge(classObject, ramMethod);
 
    return (TR_OpaqueMethodBlock *)ramMethod;
    }
