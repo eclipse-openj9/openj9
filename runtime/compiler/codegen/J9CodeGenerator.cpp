@@ -45,6 +45,7 @@
 #include "env/VMJ9.h"
 #include "env/jittypes.h"
 #include "env/j9method.h"
+#include "env/OMRRetainedMethodSet.hpp"
 #include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/LabelSymbol.hpp"
@@ -4807,11 +4808,13 @@ bool
 J9::CodeGenerator::mustGenerateSwitchToInterpreterPrePrologue()
    {
    TR::Compilation *comp = self()->comp();
+   TR_ResolvedMethod *bondMethod = NULL;
 
    return comp->usesPreexistence() ||
       comp->getOption(TR_EnableHCR) ||
       !comp->fej9()->isAsyncCompilation() ||
-      comp->getOption(TR_FullSpeedDebug);
+      comp->getOption(TR_FullSpeedDebug) ||
+      comp->retainedMethods()->bondMethods().next(&bondMethod);
    }
 
 extern void VMgenerateCatchBlockBBStartPrologue(TR::Node *node, TR::Instruction *fenceInstruction, TR::CodeGenerator *cg);
