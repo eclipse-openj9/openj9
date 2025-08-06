@@ -327,6 +327,7 @@ struct J9CfrClassFile;
 struct J9Class;
 struct J9ClassLoader;
 struct J9ConstantPool;
+struct J9ConstRefArray;
 struct J9HashTable;
 struct J9HookedNative;
 struct J9JavaVM;
@@ -712,6 +713,8 @@ typedef struct J9VTuneInterface {
 
 #define J9VTUNE_TRACE_LINE_NUMBERS  1
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+
 /* A description of a call instruction within a JIT body that may land directly
  * in the interpreter's invokeBasic() INL. From the JIT's perspective, the call
  * is either a direct call to invokeBasic() (for which the actual call instruction
@@ -736,9 +739,49 @@ typedef struct J9JITInvokeBasicCallInfo {
 	struct J9JITInvokeBasicCallSite sites[];
 } J9JITInvokeBasicCallInfo;
 
+typedef struct J9JITInvokeBasicCallInfo *J9JITInvokeBasicCallInfoPtrForJITMetadata;
+
 #if defined(_MSC_VER)
 #pragma warning(pop)
 #endif /* defined(_MSC_VER) */
+
+/**
+ * An array of references to be used as constants in a JIT body.
+ *
+ * The array belongs to some owning class as determined by the JIT compiler.
+ * From a GC perspective, the references will appear to be additional static
+ * slots in the owning class.
+ */
+typedef struct J9ConstRefArray {
+	/* The number of references. */
+	UDATA count;
+
+	/* A pointer to the actual references. */
+	j9object_t *references;
+
+	/* The metadata of the JIT body that owns these references. */
+	struct J9JITExceptionTable *jitBodyMetaData;
+
+	/* Circular doubly-linked list of all const ref arrays owned by the same class. */
+	struct J9ConstRefArray *prevInClass;
+	struct J9ConstRefArray *nextInClass;
+
+	/* Circular singly-linked list of const ref arrays in the same JIT body. */
+	struct J9ConstRefArray *nextInJITBody;
+} J9ConstRefArray;
+
+typedef struct J9ConstRefArray *J9ConstRefArrayPtrForJITMetadata;
+
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
+/* Typedefs to allow J9JITExceptionTable to have typed pointers even though the
+ * structs are not defined. A pointer to an incomplete type would be fine except
+ * that in some build configurations DDR expects the pointee type to be defined.
+ */
+typedef void *J9JITInvokeBasicCallInfoPtrForJITMetadata;
+typedef void *J9ConstRefArrayPtrForJITMetadata;
+
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 /* @ddr_namespace: map_to_type=J9JITExceptionTable */
 
@@ -778,11 +821,25 @@ typedef struct J9JITExceptionTable {
 	UDATA codeCacheAlloc;
 	void* gpuCode;
 	void* riData;
+
 	/* This is only needed for J9VM_OPT_OPENJDK_METHODHANDLE, but include this
 	 * field unconditionally so that the size and layout of J9JITExceptionTable
 	 * won't depend on configure options.
 	 */
-	struct J9JITInvokeBasicCallInfo* invokeBasicCallInfo;
+	J9JITInvokeBasicCallInfoPtrForJITMetadata invokeBasicCallInfo;
+
+	/**
+	 * The contant reference arrays within this body, if any, or else null.
+	 *
+	 * If there are multiple such arrays (e.g. owned by different classes),
+	 * then the choice of which one appears here is arbitrary. They can all be
+	 * found by following J9ConstRefArray.nextInJITBody.
+	 *
+	 * This is only needed for J9VM_OPT_OPENJDK_METHODHANDLE, but include this
+	 * field unconditionally so that the size and layout of J9JITExceptionTable
+	 * won't depend on configure options.
+	 */
+	J9ConstRefArrayPtrForJITMetadata constRefArrays;
 } J9JITExceptionTable;
 
 #define JIT_METADATA_FLAGS_USED_FOR_SIZE 0x1
@@ -3580,6 +3637,8 @@ typedef struct J9Class {
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 	/* A linked list of weak global references to every resolved MemberName whose clazz is this class. */
 	J9MemberNameListNode *memberNames;
+	/* JIT constant references belonging to this class. Protected by J9JavaVM.constRefsMutex. */
+	struct J9ConstRefArray *constRefArrays;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	struct J9Class *nullRestrictedArrayClass;
@@ -3679,6 +3738,8 @@ typedef struct J9ArrayClass {
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 	/* A linked list of weak global references to every resolved MemberName whose clazz is this class. */
 	J9MemberNameListNode *memberNames;
+	/* JIT constant references belonging to this class. Protected by J9JavaVM.constRefsMutex. */
+	struct J9ConstRefArray *constRefArrays;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	/*
@@ -6588,6 +6649,12 @@ typedef struct J9JavaVM {
 	omrthread_monitor_t cpuUtilCacheMutex;
 #endif /* defined(OMR_THR_YIELD_ALG) */
 	UDATA defaultPageSize;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	/* Pool for allocating J9ConstRefArray. Protected by constRefsMutex. */
+	struct J9Pool *constRefArrayPool;
+	/* Protects constRefArrayPool and J9Class.constRefArrays. */
+	omrthread_monitor_t constRefsMutex;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 } J9JavaVM;
 
 #define J9JFR_SAMPLER_STATE_UNINITIALIZED 0

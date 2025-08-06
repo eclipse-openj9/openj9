@@ -35,6 +35,7 @@
 #include "CallSitesIterator.hpp"
 #include "ClassStaticsIterator.hpp"
 #include "ConstantPoolObjectSlotIterator.hpp"
+#include "ConstRefsIterator.hpp"
 #include "EnvironmentBase.hpp"
 #include "GCExtensionsBase.hpp"
 #include "MethodTypesIterator.hpp"
@@ -55,6 +56,9 @@ enum {
 	classiterator_state_varhandlemethodtypes,
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 	classiterator_state_valuetypes,
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	classiterator_state_constrefs,
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	classiterator_state_end
 };
 
@@ -79,6 +83,9 @@ protected:
 	GC_MethodTypesIterator _varHandlesMethodTypesIterator;
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 	GC_ValueTypesIterator _valueTypesIterator;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	GC_ConstRefsIterator _constRefsIterator;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	const bool _shouldScanClassObject; /**< Boolean needed for balanced GC to prevent ClassObject from being scanned twice  */
 
 public:
@@ -96,6 +103,9 @@ public:
 		, _varHandlesMethodTypesIterator(clazz->romClass->varHandleMethodTypeCount, clazz->varHandleMethodTypes)
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		, _valueTypesIterator(clazz)
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+		, _constRefsIterator(clazz)
+#endif
 		, _shouldScanClassObject(shouldScanClassObject)
 	{}
 
@@ -113,6 +123,9 @@ public:
 		, _varHandlesMethodTypesIterator(clazz->romClass->varHandleMethodTypeCount, clazz->varHandleMethodTypes)
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		, _valueTypesIterator(clazz)
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+		, _constRefsIterator(clazz)
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		, _shouldScanClassObject(true)
 	{}
 
