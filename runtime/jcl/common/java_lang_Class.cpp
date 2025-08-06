@@ -1976,4 +1976,38 @@ Java_java_lang_Class_isHiddenImpl(JNIEnv *env, jobject recv)
 #endif /* JAVA_SPEC_VERSION >= 15 */
 }
 
+#if JAVA_SPEC_VERSION >= 26
+/*
+ * The javadoc for Class.getClassFileAccessFlags() describes the expected behavior:
+ * - for an array, return 0
+ * - for a primitive type or void, return PUBLIC | ABSTRACT | FINAL
+ * - otherwise, return the 16-bit 'access_flags' found in the bytecode that defined the class
+ */
+jint JNICALL
+Java_java_lang_Class_getClassFileAccessFlags(JNIEnv *env, jobject recv)
+{
+	jint flags = 0;
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+
+	J9Class *ramClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(recv));
+
+	if (!J9CLASS_IS_ARRAY(ramClass)) {
+		J9ROMClass *romClass = ramClass->romClass;
+
+		if (J9ROMCLASS_IS_PRIMITIVE_TYPE(romClass)) {
+			flags = J9AccPublic | J9AccAbstract | J9AccFinal;
+		} else {
+			/* Only include flags that originated in access_flags in the class file. */
+			flags = (jint)(romClass->modifiers & 0xFFFF);
+		}
+	}
+
+	vmFuncs->internalExitVMToJNI(currentThread);
+
+	return flags;
+}
+#endif /* JAVA_SPEC_VERSION >= 26 */
+
 } /* extern "C" */
