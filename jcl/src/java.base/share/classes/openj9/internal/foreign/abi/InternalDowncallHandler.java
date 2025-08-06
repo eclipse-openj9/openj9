@@ -337,6 +337,7 @@ public class InternalDowncallHandler {
 			heapArgInfo.set(info);
 		}
 		else {
+			/* Clear heap argument object to prevent dangling references */
 			info.clear();
 		}
 
