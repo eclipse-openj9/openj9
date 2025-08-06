@@ -99,9 +99,8 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 	}
 
 	/*
-	 * Performs 2 tests: runs !classforname java/lang/Object first, then uses
-	 * the address of j9class to run !whatis runs !methodforname sleep first,
-	 * then uses the address of the j9method to run !what is
+	 * Performs test: runs !classforname j9vm/test/corehelper/CoreGen first, then uses
+	 * the address of j9class to run !whatis.
 	 */
 	public void testWhatis() {
 		String classForNameOutput = exec(Constants.CL_FOR_NAME_CMD,
@@ -110,15 +109,6 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 		String output = exec(Constants.WHATIS_CMD, new String[] { classAddr });
 		assertTrue(validate(output, Constants.WHATIS_SUCCESS_KEY_FOR_CLASS,
 				Constants.WHATIS_FAILURE_KEY, true));
-		/*
-		 * String methodForNameOutput = exec(Constants.METHODFORNAME_CMD, new
-		 * String[]{Constants.METHODFORNAME_METHOD},false); String methodAddr =
-		 * extractMethodAddress(methodForNameOutput); output =
-		 * exec(Constants.WHATIS_CMD, new String[]{methodAddr},false);
-		 * assertTrue
-		 * (validate(Constants.WHATIS_CMD+" "+methodAddr,output,Constants
-		 * .WHATIS_SUCCESS_KEY_FOR_METHOD,Constants.WHATIS_FAILURE_KEY,false));
-		 */
 	}
 
 	/* searches for method named sleep */
