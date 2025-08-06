@@ -336,6 +336,9 @@ public class InternalDowncallHandler {
 			info = new HeapArgInfo(argLayoutArray.length);
 			heapArgInfo.set(info);
 		}
+		else {
+			info.clear();
+		}
 
 		if (!argValue.isNative() && options.allowsHeapAccess()) {
 			/* Store the heap argument's base object and offset. */
