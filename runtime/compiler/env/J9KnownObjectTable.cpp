@@ -534,10 +534,8 @@ J9::KnownObjectTable::addStableArray(Index index, int32_t stableArrayRank)
    TR_OpaqueClassBlock *clazz =
       fej9->getObjectClassFromKnownObjectIndex(comp(), index);
 
-   // Null is only possible on failure to get VM access. Most of the time we
-   // should find the class successfully anyway, so check only in that case.
    TR_ASSERT_FATAL(
-      clazz == NULL || fej9->isClassArray(clazz),
+      fej9->isClassArray(clazz),
       "addStableArray can only be called for arrays");
 
    if (_stableArrayRanks[index] < stableArrayRank)

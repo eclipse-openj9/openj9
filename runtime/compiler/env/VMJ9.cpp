@@ -5157,14 +5157,7 @@ TR_J9VMBase::delegatingMethodHandleTarget(
    TR_OpaqueClassBlock *dmhType =
       getObjectClassFromKnownObjectIndex(comp, dmhIndex);
 
-   if (dmhType == NULL)
-      {
-      if (trace)
-         traceMsg(comp, "failed to determine concrete DelegatingMethodHandle type\n");
-
-      return TR::KnownObjectTable::UNKNOWN;
-      }
-   else if (isInstanceOf(dmhType, cwClass, true) != TR_yes)
+   if (isInstanceOf(dmhType, cwClass, true) != TR_yes)
       {
       if (trace)
          traceMsg(comp, "object is not a CountingWrapper\n");
@@ -5238,7 +5231,6 @@ TR_J9VMBase::getLayoutVarHandle(TR::Compilation *comp, TR::KnownObjectTable::Ind
       getObjectClassFromKnownObjectIndex(comp, layoutIndex);
 
    if (layoutClass == NULL ||
-       layoutObjClass == NULL ||
        isInstanceOf(layoutObjClass, layoutClass, true, true) != TR_yes)
       {
       if (comp->getOption(TR_TraceOptDetails))
@@ -5271,7 +5263,6 @@ TR_J9VMBase::getVarHandleAccessDescriptorMode(TR::Compilation *comp, TR::KnownOb
       getObjectClassFromKnownObjectIndex(comp, adIndex);
 
    if (adClass == NULL ||
-       adObjClass == NULL ||
        isInstanceOf(adObjClass, adClass, true, true) != TR_yes)
       {
       if (comp->getOption(TR_TraceOptDetails))
