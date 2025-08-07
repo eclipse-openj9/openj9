@@ -47,20 +47,9 @@ SymbolReference::SymbolReference(
       int32_t cpIndex,
       int32_t unresolvedIndex,
       TR::KnownObjectTable::Index knownObjectIndex)
+   : OMR::SymbolReferenceConnector(
+      symRefTab, sym, owningMethodIndex, cpIndex, unresolvedIndex, knownObjectIndex)
    {
-   self()->init(symRefTab,
-        symRefTab->assignSymRefNumber(self()),
-        sym,
-        0,  // Offset 0
-        owningMethodIndex,
-        cpIndex,
-        unresolvedIndex);
-
-   _knownObjectIndex = knownObjectIndex;
-
-   if (sym->isResolvedMethod())
-      symRefTab->comp()->registerResolvedMethodSymbolReference(self());
-
    //Check for init method
    if (sym->isMethod() &&
        sym->castToMethodSymbol()->getMethod()->isConstructor())
