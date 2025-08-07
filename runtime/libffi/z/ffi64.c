@@ -811,7 +811,19 @@ ffi_check_struct_for_complex(ffi_type *arg_type)
   }
   return arg_type->type;
 }
+ffi_status
+ffi_prep_cif_machdep_var(ffi_cif *cif, unsigned int nfixedargs, unsigned int ntotalargs)
+{
+  cif->z_nfixedargs = nfixedargs;
+  return ffi_prep_cif_machdep_core(cif);
+}
 
+ffi_status
+ffi_prep_cif_machdep(ffi_cif *cif)
+{
+  cif->z_nfixedargs = cif->nargs;
+  return ffi_prep_cif_machdep_core(cif);
+}
 /*====================================================================*/
 /*                                                                    */
 /* Name     - ffi_prep_cif_machdep.                                   */
@@ -821,12 +833,13 @@ ffi_check_struct_for_complex(ffi_type *arg_type)
 /*====================================================================*/
 
 ffi_status
-ffi_prep_cif_machdep(ffi_cif *cif)
+ffi_prep_cif_machdep_core(ffi_cif *cif)
 {
   size_t struct_size = 0;
   int n_gpr = 0;
   int n_fpr = 0;
   int n_ov = 0;
+  int argID = 0;
 
   ffi_type **ptr;
   int i;
@@ -914,7 +927,7 @@ ffi_prep_cif_machdep(ffi_cif *cif)
 
   for (ptr = cif->arg_types, i = cif->nargs;
        i > 0;
-       i--, ptr++)
+       i--, argID++, ptr++)
     {
       int type = (*ptr)->type;
 
@@ -935,7 +948,12 @@ ffi_prep_cif_machdep(ffi_cif *cif)
 	  */
 	  type = ffi_check_struct_type (*ptr);
 
-	  (*ptr)->type = ffi_check_struct_for_complex(*ptr);
+	  /* If the argument is part of the variadic argument list, it must be passed in GPRs if available,
+	     or in the argument list. Therefore, only fixed arguments need to be checked for complex types
+	     to determine whether they should be passed in FPRs, if available.
+	  */
+	  if (argID < cif->z_nfixedargs)
+	    (*ptr)->type = ffi_check_struct_for_complex(*ptr);
 
 	  /* If we pass the struct via pointer, we must reserve space
 	     to copy its data for proper call-by-value semantics.  */
@@ -945,10 +963,20 @@ ffi_prep_cif_machdep(ffi_cif *cif)
       else if (type == FFI_TYPE_STRUCT_FF || type == FFI_TYPE_STRUCT_DD)
 	{
 	  /* If the ffi_type is STRUCT with two floating point parameters of the same type
-	     they will be passed in available FPRs. Logic to calculate bytes for the struct
-	     should be same as normal struct.
+	     they will be passed in available FPRs except argument is part of variadic argument list.
+	     Logic to calculate bytes for the struct should be same as normal struct.
 	  */
+	  if (cif->nargs != cif->z_nfixedargs && argID >= cif->z_nfixedargs)
+	    (*ptr)->type = FFI_TYPE_STRUCT;
 	  struct_size += ((*ptr)->size);
+	}
+      else if (type == FFI_TYPE_DOUBLE && cif->nargs != cif->z_nfixedargs && argID >= cif->z_nfixedargs)
+	{
+	  /* If argument in the variadic part of parameter is double, it needs to be passed in GPRs is available
+	     or in the argument list. Following change of type achieves correct passing of the double in variadic
+	     parameter.
+	  */
+	  (*ptr)->type = FFI_TYPE_SINT64;
 	}
 
       /* Now handle all primitive int/float data types.  */
