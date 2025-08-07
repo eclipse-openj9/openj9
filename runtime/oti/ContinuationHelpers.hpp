@@ -25,6 +25,9 @@
 #include "j9.h"
 #include "j9consts.h"
 #include "j9vmconstantpool.h"
+#if JAVA_SPEC_VERSION >= 24
+#include "thrtypes.h"
+#endif /* JAVA_SPEC_VERSION >= 24 */
 #include "VMHelpers.hpp"
 
 /* These should match the error code values in enum Pinned within class Continuation. */
@@ -461,6 +464,33 @@ public:
 
 		/* Virtual can only be in one list at a time. */
 		return !(foundInBlockedContinuationList && foundInMonitorList);
+	}
+
+	static VMINLINE bool
+	isBlockingMonitorUnowned(J9VMThread *currentThread, j9object_t vThreadObject)
+	{
+		bool result = false;
+		j9object_t continuationObject = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, vThreadObject);
+		j9object_t blockingObject = J9VMJDKINTERNALVMCONTINUATION_BLOCKER(currentThread, continuationObject);
+
+		/* blockingObject must be non-null. */
+		if (NULL != blockingObject) {
+			j9objectmonitor_t *lockEA = VM_ObjectMonitor::inlineGetLockAddress(currentThread, blockingObject);
+			if (NULL != lockEA) {
+				j9objectmonitor_t lock = J9_LOAD_LOCKWORD(currentThread, lockEA);
+
+				if (J9_LOCK_IS_INFLATED(lock)) {
+					omrthread_monitor_t monitor = J9_INFLLOCK_MONITOR(lock);
+					if (0 == monitor->count) {
+						result = true;
+					}
+				} else if (!J9_LOCK_IS_FLATLOCKED(lock)) {
+					result = true;
+				}
+			}
+		}
+
+		return result;
 	}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 };
