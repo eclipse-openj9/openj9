@@ -11843,28 +11843,38 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, TR::CodeGenerator *c
    return result;
    }
 
-static void performArrayCmp(TR::Node *node, TR::CodeGenerator *cg, TR::LabelSymbol *subStringMatchLabel, TR::Register *currentAddressReg, TR::Register *subStringAddressReg, TR::Register *subStringLenReg, TR::Register *subSearchOffsetReg, TR::Register *vec1Reg, TR::Register *vec2Reg, TR::Register *tempReg, TR::Register *temp2Reg, TR::Register *cr0Reg, TR::Register *cr6Reg)
+static void performArrayCmp(TR::Node *node, TR::CodeGenerator *cg, TR::LabelSymbol *subStringMatchLabel, TR::LabelSymbol *subStringMismatchLabel, TR::Register *currentAddressReg, TR::Register *subStringAddressReg, TR::Register *subStringLenReg, TR::Register *subSearchOffsetReg, TR::Register *vec1Reg, TR::Register *vec2Reg, TR::Register *tempReg, TR::Register *temp2Reg, TR::Register *cr0Reg, TR::Register *cr6Reg)
    {
    TR::LabelSymbol *load16LoopLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *skipLoad16Label = generateLabelSymbol(cg);
    TR::LabelSymbol *skipLoad8Label = generateLabelSymbol(cg);
    TR::LabelSymbol *skipLoad4Label = generateLabelSymbol(cg);
-   TR::LabelSymbol *subStringMismatchLabel = generateLabelSymbol(cg);
 
-   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, subSearchOffsetReg, 0);
+   bool createSubStringMismatchLabel = false;
+   if (nullptr == subStringMismatchLabel)
+      {
+      subStringMismatchLabel = generateLabelSymbol(cg);
+      createSubStringMismatchLabel = true;
+      }
 
    /* If array length is less than 4 jump to the byte by byte handling. */
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli8, node, cr6Reg, subStringLenReg, 4);
+   generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, tempReg, subStringLenReg, 0, CONSTANT64(0xfffffffffffffffe));
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli8, node, cr6Reg, tempReg, 2);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, subStringMatchLabel, cr6Reg);
+
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, subSearchOffsetReg, subStringLenReg, cr0Reg, 1); //TODO: replace with rldicl
+
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli8, node, cr6Reg, tempReg, 4);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, skipLoad4Label, cr6Reg);
 
    /* Array length is at least 4. If it is less than 8, jump to the section that loads 4 bytes from the array. */
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli8, node, cr6Reg, subStringLenReg, 8);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli8, node, cr6Reg, tempReg, 8);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, skipLoad8Label, cr6Reg);
 
    /*
     * Array length is at least 8. If it is less than 16, jump to the section that loads 8 bytes from the array.
     */
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli8, node, cr6Reg, subStringLenReg, 16);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli8, node, cr6Reg, tempReg, 16);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, skipLoad16Label, cr6Reg);
 
    /*
@@ -11941,35 +11951,15 @@ static void performArrayCmp(TR::Node *node, TR::CodeGenerator *cg, TR::LabelSymb
 
    /* Only 1 to 3 bytes left so they are handled byte by byte. */
    generateLabelInstruction(cg, TR::InstOpCode::label, node, skipLoad4Label);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::lbzx, node, tempReg, subSearchOffsetReg, currentAddressReg);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::lbzx, node, temp2Reg, subSearchOffsetReg, subStringAddressReg);
-   /* If a mismatch is found, the exact offset is in offsetReg because a byte load was used. */
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr6Reg, tempReg, temp2Reg);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, subStringMismatchLabel, cr6Reg);
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi2, node, subSearchOffsetReg, subSearchOffsetReg, 1);
-   /* If there are no more bytes, the arrays match each other. */
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmpl8, node, cr6Reg, subSearchOffsetReg, subStringLenReg);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, subStringMatchLabel, cr6Reg);
-
-   /* Only 1 or 2 bytes left. */
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::lbzx, node, tempReg, subSearchOffsetReg, currentAddressReg);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::lbzx, node, temp2Reg, subSearchOffsetReg, subStringAddressReg);
-   /* If a mismatch is found, the exact offset is in offsetReg because a byte load was used. */
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr6Reg, tempReg, temp2Reg);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, subStringMismatchLabel, cr6Reg);
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi2, node, subSearchOffsetReg, subSearchOffsetReg, 1);
-   /* If there are no more bytes, the arrays match each other. */
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmpl8, node, cr6Reg, subSearchOffsetReg, subStringLenReg);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, subStringMatchLabel, cr6Reg);
-
-   /* Last byte in the array */
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::lbzx, node, tempReg, subSearchOffsetReg, currentAddressReg);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::lbzx, node, temp2Reg, subSearchOffsetReg, subStringAddressReg);
-   /* If a mismatch is found, the exact offset is in offsetReg because a byte load was used. */
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::lhzx, node, tempReg, subSearchOffsetReg, currentAddressReg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::lhzx, node, temp2Reg, subSearchOffsetReg, subStringAddressReg);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr6Reg, tempReg, temp2Reg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, subStringMatchLabel, cr6Reg);
 
-   generateLabelInstruction(cg, TR::InstOpCode::label, node, subStringMismatchLabel);
+   if (createSubStringMismatchLabel)
+      {
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, subStringMismatchLabel);
+      }
    }
 
 static TR::Register *inlineIntrinsicIndexOfString(TR::Node *node, TR::CodeGenerator *cg, bool isLatin1)
@@ -12012,6 +12002,8 @@ static TR::Register *inlineIntrinsicIndexOfString(TR::Node *node, TR::CodeGenera
    //TR_PPCScratchRegisterManager *srm = cg->generateScratchRegisterManager(); //TODO: figure this out?
 
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *foundEarlyLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *notFoundEarlyLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *foundEndVectorLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *notSmallLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *firstContinueLabel = generateLabelSymbol(cg);
@@ -12085,11 +12077,12 @@ static TR::Register *inlineIntrinsicIndexOfString(TR::Node *node, TR::CodeGenera
       }
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, currentAddressReg, arrayAddressReg, resultReg);
 
-   /*
-    * Speculate an immediate match and perform an arraycmp
-    * TODO: maybe too aggressive and should do a first character check first.
-    */
-   performArrayCmp(node, cg, foundExactLabel, currentAddressReg, subStringAddressReg, subStringLenReg, subSearchOffsetReg, vec1Reg, vec2Reg, tempReg, temp2Reg, cr0Reg, cr6Reg);
+   generateTrg1MemInstruction(cg, isLatin1 ? TR::InstOpCode::lbz : TR::InstOpCode::lhz, node, tempReg, TR::MemoryReference::createWithDisplacement(cg, currentAddressReg, 0, isLatin1 ? 1 : 2));
+   generateTrg1MemInstruction(cg, isLatin1 ? TR::InstOpCode::lbz : TR::InstOpCode::lhz, node, zeroReg, TR::MemoryReference::createWithDisplacement(cg, subStringAddressReg, 0, isLatin1 ? 1 : 2));
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr0Reg, tempReg, zeroReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, foundEarlyLabel, cr0Reg);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, notFoundEarlyLabel);
 
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, resultReg, resultReg, isLatin1 ? 1 : 2);
    generateTrg1Src1Instruction(cg, TR::InstOpCode::extsw, node, endAddressReg, arrayLenReg);
@@ -12099,14 +12092,13 @@ static TR::Register *inlineIntrinsicIndexOfString(TR::Node *node, TR::CodeGenera
 
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, endAddressReg, endAddressReg, isLatin1 ? 1 : 2);
 
-   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, zeroReg, 0);
 
    // Calculate the actual addresses of the start and end points
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, endAddressReg, arrayAddressReg, endAddressReg);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, currentAddressReg, arrayAddressReg, resultReg);
 
-   generateTrg1MemInstruction(cg, isLatin1 ? TR::InstOpCode::lbz : TR::InstOpCode::lhz, node, tempReg, TR::MemoryReference::createWithDisplacement(cg, subStringAddressReg, 0, isLatin1 ? 1 : 2));
-   generateTrg1Src1Instruction(cg, TR::InstOpCode::mtvsrwz, node, targetVectorReg, tempReg);
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::mtvsrwz, node, targetVectorReg, zeroReg);
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, zeroReg, 0);
 
    if (isLatin1)
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::vspltb, node, targetVectorReg, targetVectorReg, 7);
@@ -12229,7 +12221,7 @@ static TR::Register *inlineIntrinsicIndexOfString(TR::Node *node, TR::CodeGenera
    // first matching element in the string. Finally, use this to calculate the corresponding index.
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, currentAddressReg, resultReg, currentAddressReg);
 
-   performArrayCmp(node, cg, foundLabel, currentAddressReg, subStringAddressReg, subStringLenReg, subSearchOffsetReg, vec1Reg, vec2Reg, tempReg, temp2Reg, cr0Reg, cr6Reg);
+   performArrayCmp(node, cg, foundLabel, nullptr, currentAddressReg, subStringAddressReg, subStringLenReg, subSearchOffsetReg, vec1Reg, vec2Reg, tempReg, temp2Reg, cr0Reg, cr6Reg);
 
    generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, currentAddressReg, resultReg, currentAddressReg);
 
@@ -12346,6 +12338,10 @@ static TR::Register *inlineIntrinsicIndexOfString(TR::Node *node, TR::CodeGenera
    generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, -1);
    generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
 
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, foundEarlyLabel);
+   performArrayCmp(node, cg, foundExactLabel, notFoundEarlyLabel, currentAddressReg, subStringAddressReg, subStringLenReg, subSearchOffsetReg, vec1Reg, vec2Reg, tempReg, temp2Reg, cr0Reg, cr6Reg);
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, notFoundEarlyLabel);
+
    generateLabelInstruction(cg, TR::InstOpCode::label, node, foundFirstVectorLabel);
 
    // Set permuteVector = 0x000102030405060708090a0b0c0d0e0f
@@ -12378,7 +12374,7 @@ static TR::Register *inlineIntrinsicIndexOfString(TR::Node *node, TR::CodeGenera
    // first matching element in the string. Finally, use this to calculate the corresponding index.
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, currentAddressReg, resultReg, currentAddressReg);
 
-   performArrayCmp(node, cg, foundLabel, currentAddressReg, subStringAddressReg, subStringLenReg, subSearchOffsetReg, vec1Reg, vec2Reg, tempReg, temp2Reg, cr0Reg, cr6Reg);
+   performArrayCmp(node, cg, foundLabel, nullptr, currentAddressReg, subStringAddressReg, subStringLenReg, subSearchOffsetReg, vec1Reg, vec2Reg, tempReg, temp2Reg, cr0Reg, cr6Reg);
 
    generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, currentAddressReg, resultReg, currentAddressReg);
 
@@ -12422,7 +12418,7 @@ static TR::Register *inlineIntrinsicIndexOfString(TR::Node *node, TR::CodeGenera
    // first matching element in the string. Finally, use this to calculate the corresponding index.
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, currentAddressReg, resultReg, currentAddressReg);
 
-   performArrayCmp(node, cg, foundLabel, currentAddressReg, subStringAddressReg, subStringLenReg, subSearchOffsetReg, vec1Reg, vec2Reg, tempReg, temp2Reg, cr0Reg, cr6Reg);
+   performArrayCmp(node, cg, foundLabel, nullptr, currentAddressReg, subStringAddressReg, subStringLenReg, subSearchOffsetReg, vec1Reg, vec2Reg, tempReg, temp2Reg, cr0Reg, cr6Reg);
 
    generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, currentAddressReg, resultReg, currentAddressReg);
 
