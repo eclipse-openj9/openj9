@@ -12979,6 +12979,7 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
          break;
 
       case TR::java_lang_StringUTF16_indexOf:
+      case TR::java_lang_StringUTF16_indexOfUnsafe:
       case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringUTF16:
          if (cg->getSupportsInlineStringIndexOfString())
             returnRegister = inlineIntrinsicStringIndexOfString(node, cg, false);
