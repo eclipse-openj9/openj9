@@ -869,6 +869,8 @@ jvmtiInternalGetStackTrace(
 		walkState.skipCount = framesWalked + start_depth;
 	}
 
+	walkState.maxFrames = max_frame_count;
+
 #if JAVA_SPEC_VERSION >= 20
 	/* Adjusts the second‑pass stack walk limit (maxFrames) to include the
 	 * number of frames skipped in the first pass (userData1).
@@ -880,9 +882,7 @@ jvmtiInternalGetStackTrace(
 	if (walkState.framesWalked > max_frame_count) {
 		UDATA skippedFrames = (UDATA)walkState.userData1;
 		Assert_JVMTI_true(skippedFrames <= (UDATA_MAX - max_frame_count));
-		walkState.maxFrames = max_frame_count + skippedFrames;
-	} else {
-		walkState.maxFrames = max_frame_count;
+		walkState.maxFrames += skippedFrames;
 	}
 #endif /* JAVA_SPEC_VERSION >= 20 */
 
