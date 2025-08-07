@@ -476,6 +476,9 @@ enum INIT_STAGE {
 /* Option to toggle on/off the feature to yield pinned virtual threads. */
 #define VMOPT_XXYIELDPINNEDVIRTUALTHREADS "-XX:+YieldPinnedVirtualThreads"
 #define VMOPT_XXNOYIELDPINNEDVIRTUALTHREADS "-XX:-YieldPinnedVirtualThreads"
+
+/* Option to set timed wait on unblocker thread. */
+#define VMOPT_XXUNBLOCKERTHREADWAITTIME_EQUALS "-XX:UnblockerThreadWaitTime="
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
 /* Option to turn on exception on synchronization on instances of value-based classes */
