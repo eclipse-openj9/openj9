@@ -9858,6 +9858,55 @@ static TR::SymbolReference *getClassSymRefAndDepth(TR::Node *classNode,
    return classSymRef;
    }
 
+// jumps to trueLabel if toClass is the interface of fromClass, falseLabel otherwise
+static void genCheckAssignableFromInterfaceTest(TR::Node *node, TR::CodeGenerator *cg,
+                                                TR::Register *condReg,
+                                                TR::Register *fromClassReg,
+                                                TR::Register *toClassReg,
+                                                TR::LabelSymbol *trueLabel,
+                                                TR::LabelSymbol *falseLabel,
+                                                TR_PPCScratchRegisterManager *srm)
+   {
+   TR::Compilation *comp = cg->comp();
+
+   TR::LabelSymbol *linkedListLabel = generateLabelSymbol(cg);
+
+   TR::Register *iTableReg = srm->findOrCreateScratchRegister();
+   TR::Register *interfaceClassReg = srm->findOrCreateScratchRegister();
+
+   // First, check if the cached iTable matches.
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, iTableReg,
+         TR::MemoryReference::createWithDisplacement(cg, fromClassReg,
+               offsetof(J9Class, lastITable), TR::Compiler->om.sizeofReferenceAddress()));
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, interfaceClassReg,
+         TR::MemoryReference::createWithDisplacement(cg, iTableReg,
+               offsetof(J9ITable, interfaceClass), TR::Compiler->om.sizeofReferenceAddress()));
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::Op_cmpl, node, condReg, interfaceClassReg, toClassReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, trueLabel, condReg);
+
+   // Then, go through the linked list of iTables to find the one that matches.
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, linkedListLabel);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, iTableReg,
+         TR::MemoryReference::createWithDisplacement(cg, fromClassReg,
+               offsetof(J9Class, iTable), TR::Compiler->om.sizeofReferenceAddress()));
+   // check null
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::Op_cmpi, node, condReg, iTableReg, 0);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, falseLabel, condReg);
+   // load the interface class candidate
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, interfaceClassReg,
+         TR::MemoryReference::createWithDisplacement(cg, iTableReg,
+               offsetof(J9ITable, interfaceClass), TR::Compiler->om.sizeofReferenceAddress()));
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::Op_cmpl, node, condReg, interfaceClassReg, toClassReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, trueLabel, condReg);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, iTableReg,
+         TR::MemoryReference::createWithDisplacement(cg, iTableReg,
+               offsetof(J9ITable, next), TR::Compiler->om.sizeofReferenceAddress()));
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, linkedListLabel);
+
+   srm->reclaimScratchRegister(iTableReg);
+   srm->reclaimScratchRegister(interfaceClassReg);
+   }
+
 static TR::Register *inlineCheckAssignableFromEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = cg->comp();
@@ -9961,6 +10010,15 @@ static TR::Register *inlineCheckAssignableFromEvaluator(TR::Node *node, TR::Code
                toClassDepth, oolJumpLabel, srm, cg);
          generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, successLabel, condReg);
          }
+
+      // interface test
+      if ((NULL == toClassSymRef) || (toClassSymRef->isClassInterface(comp)))
+         {
+         TR::LabelSymbol *notInterfaceLabel= generateLabelSymbol(cg);
+         genCheckAssignableFromInterfaceTest(node, cg, condReg, fromClassReg, toClassReg, endLabel,
+               notInterfaceLabel, srm);
+         }
+
       // fallback to the helper
       generateLabelInstruction(cg, TR::InstOpCode::b, node, oolJumpLabel);
       }
