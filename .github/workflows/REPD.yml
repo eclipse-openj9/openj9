@@ -1,0 +1,183 @@
+name: Bug Prediction
+
+on:
+  pull_request_target:
+    branches:
+      - main
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  predict:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        pip install tensorflow==2.12.0 pandas joblib
+        sudo apt-get update
+        sudo apt-get install -y cloc
+
+    - name: Download scripts from script repository
+      run: |
+        echo "Downloading scripts from aqa-test-tools repository..."
+        curl -L -o extract_traditional_features.sh "https://raw.githubusercontent.com/anirudhsengar/aqa-test-tools/GlitchWitchcer/BugPredict/GlitchWitcher/extract_traditional_features.sh"
+        curl -L -o predict.py "https://raw.githubusercontent.com/anirudhsengar/aqa-test-tools/GlitchWitchcer/BugPredict/GlitchWitcher/predict.py"
+        curl -L -o REPD_Impl.py "https://raw.githubusercontent.com/anirudhsengar/aqa-test-tools/GlitchWitchcer/BugPredict/GlitchWitcher/REPD_Impl.py"
+        curl -L -o autoencoder.py "https://raw.githubusercontent.com/anirudhsengar/aqa-test-tools/GlitchWitchcer/BugPredict/GlitchWitcher/autoencoder.py"
+        curl -L -o stat_util.py "https://raw.githubusercontent.com/anirudhsengar/aqa-test-tools/GlitchWitchcer/BugPredict/GlitchWitcher/stat_util.py"
+        chmod +x extract_traditional_features.sh
+
+    - name: Download trained model
+      run: |
+        echo "Downloading trained model from aqa-triage-data repository..."
+        mkdir -p trained_model
+        curl -L -o trained_model/metadata.json "https://raw.githubusercontent.com/anirudhsengar/aqa-triage-data/main/GlitchWitcher/Traditional%20Dataset/trained_model/metadata.json"
+        curl -L -o trained_model/model.pkl "https://raw.githubusercontent.com/anirudhsengar/aqa-triage-data/main/GlitchWitcher/Traditional%20Dataset/trained_model/model.pkl"
+        curl -L -o trained_model/preprocessor.pkl "https://raw.githubusercontent.com/anirudhsengar/aqa-triage-data/main/GlitchWitcher/Traditional%20Dataset/trained_model/preprocessor.pkl"
+
+    - name: Get changed files
+      id: changed-files
+      run: |
+        files=$(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | grep -E "\.(c|cpp|cxx|cc|h|hpp|hxx)\$" | xargs)
+        echo "all_changed_files=$files" >> $GITHUB_OUTPUT
+        if [ -n "$files" ]; then
+          echo "any_changed=true" >> $GITHUB_OUTPUT
+        else
+          echo "any_changed=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Extract features BEFORE changes (base)
+      if: steps.changed-files.outputs.any_changed == 'true'
+      run: |
+        git checkout ${{ github.event.pull_request.base.sha }}
+        
+        # Create base metrics directory
+        mkdir -p metrics_output_base
+        
+        # Initialize combined CSV with header
+        echo "File,loc,v(g),ev(g),iv(g),n,v,l,d,i,e,b,t,lOComment,lOBlank,LOCodeAndComment,uniq_Op,Uniq_Opnd,total_Op,total_Opnd,branchCount" > metrics_output_base/summary_metrics.csv
+        
+        # Process each file and accumulate results
+        for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+          echo "Processing $file for base metrics..."
+          ./extract_traditional_features.sh "$file"
+          
+          # Find the generated directory and append its CSV data (skip header)
+          generated_dir=$(ls -td metrics_output_* | head -n 1)
+          if [ -d "$generated_dir" ] && [ -f "$generated_dir/summary_metrics.csv" ]; then
+            # Append data rows (skip header line)
+            tail -n +2 "$generated_dir/summary_metrics.csv" >> metrics_output_base/summary_metrics.csv
+            # Clean up the temporary directory
+            rm -rf "$generated_dir"
+          fi
+        done
+
+    - name: Extract features AFTER changes (head)
+      if: steps.changed-files.outputs.any_changed == 'true'
+      run: |
+        git checkout ${{ github.event.pull_request.head.sha }}
+        
+        # Create head metrics directory
+        mkdir -p metrics_output_head
+        
+        # Initialize combined CSV with header
+        echo "File,loc,v(g),ev(g),iv(g),n,v,l,d,i,e,b,t,lOComment,lOBlank,LOCodeAndComment,uniq_Op,Uniq_Opnd,total_Op,total_Opnd,branchCount" > metrics_output_head/summary_metrics.csv
+        
+        # Process each file and accumulate results
+        for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+          echo "Processing $file for head metrics..."
+          ./extract_traditional_features.sh "$file"
+          
+          # Find the generated directory and append its CSV data (skip header)
+          generated_dir=$(ls -td metrics_output_* | head -n 1)
+          if [ -d "$generated_dir" ] && [ -f "$generated_dir/summary_metrics.csv" ]; then
+            # Append data rows (skip header line)
+            tail -n +2 "$generated_dir/summary_metrics.csv" >> metrics_output_head/summary_metrics.csv
+            # Clean up the temporary directory
+            rm -rf "$generated_dir"
+          fi
+        done
+
+    - name: Debug accumulated metrics
+      if: steps.changed-files.outputs.any_changed == 'true'
+      run: |
+        echo "=== Changed files ==="
+        echo "${{ steps.changed-files.outputs.all_changed_files }}"
+        echo "=== Base metrics CSV ==="
+        cat metrics_output_base/summary_metrics.csv
+        echo "=== Head metrics CSV ==="
+        cat metrics_output_head/summary_metrics.csv
+        echo "=== Row counts ==="
+        echo "Base rows: $(wc -l < metrics_output_base/summary_metrics.csv)"
+        echo "Head rows: $(wc -l < metrics_output_head/summary_metrics.csv)"
+
+    - name: Run prediction
+      if: steps.changed-files.outputs.any_changed == 'true'
+      id: prediction
+      run: |
+        echo "Running predictions with trained model..."
+        
+        # Create a Python script to handle the comparison
+        cat > compare_predictions.py << 'EOF'
+        import sys
+        import json
+        from predict import predict, format_results_for_comparison
+        
+        # Get predictions for base and head
+        base_results = predict('metrics_output_base/summary_metrics.csv')
+        head_results = predict('metrics_output_head/summary_metrics.csv')
+        
+        # Extract file names (should be the same for both)
+        file_names = [result['file'] for result in base_results if 'file' in result]
+        
+        # Convert to the format expected by format_results_for_comparison
+        base_data = [{'p_defective': r['p_defective'], 'p_non_defective': r['p_non_defective']} 
+                     for r in base_results if 'p_defective' in r]
+        head_data = [{'p_defective': r['p_defective'], 'p_non_defective': r['p_non_defective']} 
+                     for r in head_results if 'p_defective' in r]
+        
+        # Generate comparison table
+        comparison_output = format_results_for_comparison(file_names, base_data, head_data)
+        
+        print(comparison_output)
+        EOF
+        
+        comparison_result=$(python compare_predictions.py)
+        
+        {
+          echo "comment<<EOF"
+          echo "$comparison_result"
+          echo ""
+          echo "### 📋 Interpretation Note:"
+          echo "> The values shown are Probability Densities (PDFs), not probabilities. They represent the model's assessment of how likely a file's characteristics are to be 'defective' vs. 'non-defective'. A higher value indicates a better fit for that category. Very small values are expected and normal."
+          echo ""
+          echo "EOF"
+        } >> $GITHUB_OUTPUT
+
+    - name: Comment on PR
+      if: steps.changed-files.outputs.any_changed == 'true'
+      uses: actions/github-script@v6
+      env:
+        COMMENT_BODY: "${{ steps.prediction.outputs.comment }}"
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.payload.pull_request.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: process.env.COMMENT_BODY
+          })
