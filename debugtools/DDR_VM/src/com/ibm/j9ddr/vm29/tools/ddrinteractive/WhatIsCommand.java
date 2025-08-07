@@ -50,14 +50,14 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
+import com.ibm.j9ddr.vm29.types.I64;
 import com.ibm.j9ddr.vm29.types.Scalar;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
 /**
- * Implements !whatis and !whatissetdepth
+ * Implements !whatis and !whatissetdepth.
  *
  * @author andhall
- *
  */
 public class WhatIsCommand extends Command
 {
@@ -90,8 +90,8 @@ public class WhatIsCommand extends Command
 
 	public WhatIsCommand()
 	{
-		addCommand("whatis", "<address>", "Recursively searches fields for UDATA value" );
-		addCommand("whatissetdepth", "<n>", "Sets the maximum depth of the whatis search" );
+		addCommand("whatis", "<address>", "Recursively searches fields for UDATA value");
+		addCommand("whatissetdepth", "<n>", "Sets the maximum depth of the whatis search");
 	}
 
 	/* (non-Javadoc)
@@ -107,7 +107,7 @@ public class WhatIsCommand extends Command
 		} else if (command.equals(WHATIS_SET_DEPTH_COMMAND)) {
 			runWhatIsSetDepth(args, context, out);
 		} else {
-			throw new DDRInteractiveCommandException("WhatIsCommand plugin does not recogise command: " + command);
+			throw new DDRInteractiveCommandException("WhatIsCommand plugin does not recognise command: " + command);
 		}
 	}
 
@@ -123,7 +123,7 @@ public class WhatIsCommand extends Command
 		try {
 			depth = Integer.parseInt(args[0]);
 		} catch (NumberFormatException ex) {
-			out.println("Could not format " + args[0] + " as an integer");
+			out.println("Could not parse " + args[0] + " as an integer");
 			return;
 		}
 
@@ -163,7 +163,7 @@ public class WhatIsCommand extends Command
 
 		long startTime = System.currentTimeMillis();
 
-		//Walk from the VM
+		// Walk from the VM.
 		J9JavaVMPointer vm = null;
 		try {
 			vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
@@ -172,7 +172,7 @@ public class WhatIsCommand extends Command
 		}
 		boolean found = walkStructuresFrom(vm);
 
-		//Walk from each VM thread
+		// Walk from each VM thread.
 		if (!found) {
 			try {
 				J9VMThreadPointer mainThread = vm.mainThread();
@@ -182,9 +182,8 @@ public class WhatIsCommand extends Command
 
 					do {
 						threads.add(threadCursor);
-
 						threadCursor = threadCursor.linkNext();
-					} while (!threadCursor.eq(mainThread) && !found);
+					} while (!threadCursor.eq(mainThread));
 
 					/* Walk the thread list backwards so we will find the match next to the closest thread (prevents walkStructures from doing anything useful with the linkNext list) */
 					Collections.reverse(threads);
@@ -203,14 +202,13 @@ public class WhatIsCommand extends Command
 			}
 		}
 
-		//Walk from each class
+		// Walk from each class.
 		if (!found) {
 			try {
 				GCClassLoaderIterator it = GCClassLoaderIterator.from();
 
 				OUTER: while (it.hasNext()) {
 					J9ClassLoaderPointer loader = it.next();
-
 					Iterator<J9ClassPointer> classIt = ClassIterator.fromJ9Classloader(loader);
 
 					while (classIt.hasNext()) {
@@ -262,7 +260,7 @@ public class WhatIsCommand extends Command
 				out.println();
 			}
 
-			/* Reset search value - so if someone reruns the same (unsuccessful) search again it won't set skipCount to 1 */
+			/* Reset search value - so if someone reruns the same (unsuccessful) search again it won't set skipCount to 1. */
 			searchValue = null;
 		}
 
@@ -281,7 +279,7 @@ public class WhatIsCommand extends Command
 		shortestHammingDistance = new UDATA(0);
 		shortestHammingDistanceStack = null;
 		hammingDistance = Integer.MAX_VALUE;
-		/* Clear the fieldAccessorMap to avoid hogging memory */
+		/* Clear the fieldAccessorMap to avoid hogging memory. */
 		fieldAccessorMap.clear();
 	}
 
@@ -307,7 +305,7 @@ public class WhatIsCommand extends Command
 			int fieldIndex = current.fieldIndex++;
 
 			if (current.fieldAccessors.length <= fieldIndex) {
-				//We've walked all the fields on this object
+				// We've walked all the fields on this object.
 				searchStack.pop();
 				continue;
 			}
@@ -337,15 +335,24 @@ public class WhatIsCommand extends Command
 					Scalar s = (Scalar) result;
 
 					found = checkScalar(searchStack, s);
+				} else if (result instanceof Long) {
+					// enum type fields map to accessors returning long,
+					// e.g. OMRProcessorDesc.processor
+					I64 s = new I64(((Long) result).longValue());
+
+					found = checkScalar(searchStack, s);
+				} else if (result instanceof Boolean) {
+					// ignore bool fields, e.g. SH_OSCache._doCheckBuildID
 				} else {
-					out.println("Unexpected type walked: " + result.getClass().getName());
+					out.println("Unexpected type walked: " + result.getClass().getName()
+							+ " from " + current.fieldAccessors[fieldIndex]);
 					continue;
 				}
 			} catch (InvocationTargetException e) {
 				Throwable cause = e.getCause();
 
 				if (cause instanceof CorruptDataException || cause instanceof NoSuchFieldException || cause instanceof NoSuchFieldError || cause instanceof NoClassDefFoundError) {
-					//Skip this field
+					// Skip this field.
 					continue;
 				} else {
 					throw new DDRInteractiveCommandException("Unexpected exception during walk", cause);
@@ -435,13 +442,12 @@ public class WhatIsCommand extends Command
 	{
 		final StructurePointer ptr;
 		final Method[] fieldAccessors;
-		String fieldName = null;
-		int fieldIndex = 0;
+		String fieldName;
+		int fieldIndex;
 
 		SearchFrame(StructurePointer ptr)
 		{
-			this.ptr = ptr;
-			this.fieldAccessors = getFieldAccessors();
+			this(ptr, getFieldAccessors(ptr), null, 0);
 		}
 
 		private SearchFrame(StructurePointer ptr, Method[] fieldAccessors, String fieldName, int fieldIndex)
@@ -452,14 +458,13 @@ public class WhatIsCommand extends Command
 			this.fieldIndex = fieldIndex;
 		}
 
-		private Method[] getFieldAccessors()
+		private static Method[] getFieldAccessors(StructurePointer ptr)
 		{
 			Class<? extends StructurePointer> ptrClass = ptr.getClass();
+			Method[] accessorFieldArray = fieldAccessorMap.get(ptrClass);
 
-			if (fieldAccessorMap.containsKey(ptrClass)) {
-				return fieldAccessorMap.get(ptrClass);
-			} else {
-				Method[] allMethods = ptr.getClass().getMethods();
+			if (accessorFieldArray == null) {
+				Method[] allMethods = ptrClass.getMethods();
 				List<Method> fieldAccessors = new LinkedList<>();
 
 				for (Method m : allMethods) {
@@ -468,11 +473,11 @@ public class WhatIsCommand extends Command
 					}
 				}
 
-				Method[] accessorFieldArray = fieldAccessors.toArray(new Method[fieldAccessors.size()]);
+				accessorFieldArray = fieldAccessors.toArray(new Method[fieldAccessors.size()]);
 				fieldAccessorMap.put(ptrClass, accessorFieldArray);
-
-				return accessorFieldArray;
 			}
+
+			return accessorFieldArray;
 		}
 
 		public SearchFrame copy()
