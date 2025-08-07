@@ -251,7 +251,6 @@ public:
    virtual TR_OpaqueMethodBlock* targetMethodFromMethodHandle(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex) override;
    virtual TR_ResolvedMethod *targetMethodFromInvokeCacheArrayMemberNameObj(TR::Compilation *comp, TR_ResolvedMethod *owningMethod, uintptr_t *invokeCacheArray) override;
    virtual TR::KnownObjectTable::Index getKnotIndexOfInvokeCacheArrayAppendixElement(TR::Compilation *comp, uintptr_t *invokeCacheArray) override;
-   virtual TR::SymbolReference* refineInvokeCacheElementSymRefWithKnownObjectIndex(TR::Compilation *comp, TR::SymbolReference *originalSymRef, uintptr_t *invokeCacheArray) override;
    virtual bool isInvokeCacheEntryAnArray(uintptr_t *invokeCacheArray) override;
 
    virtual bool getMemberNameMethodInfo(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex, MemberNameMethodInfo *out) override;
