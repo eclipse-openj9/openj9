@@ -1191,7 +1191,7 @@ waitForSignal(J9VMThread *currentThread)
 	 */
 	omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
 	if (!vm->pendingBlockedVirtualThreadsNotify) {
-		omrthread_monitor_wait_interruptable(vm->blockedVirtualThreadsMutex, 0, 0);
+		omrthread_monitor_wait_interruptable(vm->blockedVirtualThreadsMutex, vm->unblockerWaitTime, 0);
 	}
 	vm->pendingBlockedVirtualThreadsNotify = FALSE;
 	omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);

@@ -4379,6 +4379,26 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			vm->extendedRuntimeFlags3 &= ~J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION;
 		}
 	}
+	{
+		IDATA argIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XXUNBLOCKERTHREADWAITTIME_EQUALS, NULL);
+		if (argIndex >= 0) {
+			UDATA value = 0;
+			char *optname = VMOPT_XXUNBLOCKERTHREADWAITTIME_EQUALS;
+
+			IDATA parseError = GET_INTEGER_VALUE(argIndex, optname, value);
+			if (OPTION_OK != parseError) {
+				PORT_ACCESS_FROM_JAVAVM(vm);
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_INVALID_CMD_LINE_OPT, VMOPT_XXUNBLOCKERTHREADWAITTIME_EQUALS);
+				return JNI_ERR;
+			}
+
+			vm->unblockerWaitTime = value;
+		} else {
+#define DEFAULT_UNBLOCKER_WAIT_TIME 64
+			/* Enable timed wait on unblocker thread by default to 64ms. */
+			vm->unblockerWaitTime = DEFAULT_UNBLOCKER_WAIT_TIME;
+		}
+	}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
 	{
