@@ -387,6 +387,12 @@ FLTSTR   DS 0H
          B CONT               Next parameter
 
 D        DS 0H                ffi_type_double
+         LG 15,(2176+(((DSASZ+31)/32)*32)+8)(,4)
+         LG 15,0(,15)         ecif->cif
+         L  15,32(,15)        cif->z_nfixedargs
+         SLL 15,3             offset of first vararg type
+         CR  10,15            argOffset >= z_nfixedargs << 3
+         BRNL SI64            Double from vararg, use GPR
          LA 15,FLD
          LR 11,14
          SLL 11,2             Pass in fpr or arg area
