@@ -925,4 +925,11 @@ final class Access implements JavaLangAccess {
 		return clazz.getClassFileVersion();
 	}
 /*[ENDIF] (JAVA_SPEC_VERSION >= 25) & !INLINE-TYPES */
+
+/*[IF (JAVA_SPEC_VERSION >= 26) & !INLINE-TYPES]*/
+	@Override
+	public int getClassFileAccessFlags(Class<?> clazz) {
+		return clazz.getClassFileAccessFlags();
+	}
+/*[ENDIF] (JAVA_SPEC_VERSION >= 26) & !INLINE-TYPES */
 }
