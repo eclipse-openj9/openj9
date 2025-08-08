@@ -716,6 +716,11 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
          {
          doDowngrade = true;
          }
+      // Downgrade if the JVM is starved of CPU
+      else if (isJVMStarved())
+         {
+         doDowngrade = true;
+         }
       else
          {
          // We may skip downgrading during grace period
@@ -9063,6 +9068,13 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                   options->setInsertGCRTrees(); // This is a recommendation not a directive
                   }
 
+               // If the JVM is starved of CPU, do less inlining.
+               // This is also what we do for -Xtune:virtualized.
+               if (that->_compInfo.isJVMStarved())
+                  {
+                  options->setInlinerOptionsForAggressiveAOT();
+                  }
+
                // Disable some expensive optimizations
                if (options->getOptLevel() <= warm && !options->getOption(TR_EnableExpensiveOptsAtWarm))
                   {
@@ -9075,7 +9087,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                   {
                   static char *forceExpensiveOptsAtWarm = feGetEnv("TR_EnableExpensiveOptsAtWarm");
                   bool enableExpensiveOptsAtWarm = forceExpensiveOptsAtWarm || // override
-                          vm->isAOT_DEPRECATED_DO_NOT_USE() || // AOT compilations
+                          (vm->isAOT_DEPRECATED_DO_NOT_USE() && !that->_compInfo.isJVMStarved()) || // AOT compilations, but not under starvation conditions
 #if defined(J9VM_OPT_CRIU_SUPPORT)
                           (jitConfig->javaVM->internalVMFunctions->isNonPortableRestoreMode(vmThread) &&
                           jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(jitConfig->javaVM)) ||
