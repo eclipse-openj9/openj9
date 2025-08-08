@@ -811,9 +811,12 @@ ffi_check_struct_for_complex(ffi_type *arg_type)
   }
   return arg_type->type;
 }
+
+/*======================== End of Routine ============================*/
+
 /*====================================================================*/
 /*                                                                    */
-/* Name     - ffi_prep_cif_machdep.                                   */
+/* Name     - ffi_prep_cif_machdep_core.                                   */
 /*                                                                    */
 /* Function - Perform machine dependent CIF processing.               */
 /*                                                                    */
@@ -1027,6 +1030,14 @@ ffi_prep_cif_machdep_core(ffi_cif *cif)
 }
 
 /*======================== End of Routine ============================*/
+
+/*====================================================================*/
+/*                                                                    */
+/* Name     - ffi_prep_cif_machdep_var.                               */
+/*                                                                    */
+/* Function - Perform machine dependent CIF processing for varargs.   */
+/*                                                                    */
+/*====================================================================*/
 ffi_status
 ffi_prep_cif_machdep_var(ffi_cif *cif, unsigned int nfixedargs, unsigned int ntotalargs)
 {
@@ -1034,12 +1045,24 @@ ffi_prep_cif_machdep_var(ffi_cif *cif, unsigned int nfixedargs, unsigned int nto
   return ffi_prep_cif_machdep_core(cif);
 }
 
+/*======================== End of Routine ============================*/
+
+/*====================================================================*/
+/*                                                                    */
+/* Name     - ffi_prep_cif_machdep.                                   */
+/*                                                                    */
+/* Function - Perform machine dependent CIF processing.               */
+/*                                                                    */
+/*====================================================================*/
 ffi_status
 ffi_prep_cif_machdep(ffi_cif *cif)
 {
   cif->z_nfixedargs = cif->nargs;
   return ffi_prep_cif_machdep_core(cif);
 }
+
+/*======================== End of Routine ============================*/
+
 /*====================================================================*/
 /*                                                                    */
 /* Name     - ffi_call.                                               */
