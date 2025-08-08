@@ -1026,12 +1026,8 @@ InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
                {
                TR_OpaqueClassBlock *callSiteType =
                   fe()->getObjectClassFromKnownObjectIndex(comp(), callSiteIndex);
-               if (callSiteType == NULL)
-                  {
-                  debugTrace(tracer(), "failed to determine concrete CallSite type");
-                  return NULL;
-                  }
-               else if (fe()->isInstanceOf(callSiteType, mutableCallsiteClass, true) != TR_yes)
+
+               if (fe()->isInstanceOf(callSiteType, mutableCallsiteClass, true) != TR_yes)
                   {
                   debugTrace(tracer(), "not a MutableCallSite");
                   return NULL;
