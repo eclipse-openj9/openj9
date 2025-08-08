@@ -811,19 +811,6 @@ ffi_check_struct_for_complex(ffi_type *arg_type)
   }
   return arg_type->type;
 }
-ffi_status
-ffi_prep_cif_machdep_var(ffi_cif *cif, unsigned int nfixedargs, unsigned int ntotalargs)
-{
-  cif->z_nfixedargs = nfixedargs;
-  return ffi_prep_cif_machdep_core(cif);
-}
-
-ffi_status
-ffi_prep_cif_machdep(ffi_cif *cif)
-{
-  cif->z_nfixedargs = cif->nargs;
-  return ffi_prep_cif_machdep_core(cif);
-}
 /*====================================================================*/
 /*                                                                    */
 /* Name     - ffi_prep_cif_machdep.                                   */
@@ -832,7 +819,7 @@ ffi_prep_cif_machdep(ffi_cif *cif)
 /*                                                                    */
 /*====================================================================*/
 
-ffi_status
+static ffi_status
 ffi_prep_cif_machdep_core(ffi_cif *cif)
 {
   size_t struct_size = 0;
@@ -963,14 +950,14 @@ ffi_prep_cif_machdep_core(ffi_cif *cif)
       else if (type == FFI_TYPE_STRUCT_FF || type == FFI_TYPE_STRUCT_DD)
 	{
 	  /* If the ffi_type is STRUCT with two floating point parameters of the same type
-	     they will be passed in available FPRs except argument is part of variadic argument list.
+	     they will be passed in available FPRs unless argument is part of variadic argument list.
 	     Logic to calculate bytes for the struct should be same as normal struct.
 	  */
-	  if (cif->nargs != cif->z_nfixedargs && argID >= cif->z_nfixedargs)
+	  if (argID >= cif->z_nfixedargs)
 	    (*ptr)->type = FFI_TYPE_STRUCT;
 	  struct_size += ((*ptr)->size);
 	}
-      else if (type == FFI_TYPE_DOUBLE && cif->nargs != cif->z_nfixedargs && argID >= cif->z_nfixedargs)
+      else if (type == FFI_TYPE_DOUBLE && argID >= cif->z_nfixedargs)
 	{
 	  /* If argument in the variadic part of parameter is double, it needs to be passed in GPRs is available
 	     or in the argument list. Following change of type achieves correct passing of the double in variadic
@@ -1040,7 +1027,19 @@ ffi_prep_cif_machdep_core(ffi_cif *cif)
 }
 
 /*======================== End of Routine ============================*/
+ffi_status
+ffi_prep_cif_machdep_var(ffi_cif *cif, unsigned int nfixedargs, unsigned int ntotalargs)
+{
+  cif->z_nfixedargs = nfixedargs;
+  return ffi_prep_cif_machdep_core(cif);
+}
 
+ffi_status
+ffi_prep_cif_machdep(ffi_cif *cif)
+{
+  cif->z_nfixedargs = cif->nargs;
+  return ffi_prep_cif_machdep_core(cif);
+}
 /*====================================================================*/
 /*                                                                    */
 /* Name     - ffi_call.                                               */

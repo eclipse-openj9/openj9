@@ -283,12 +283,6 @@ ffi_prep_args (unsigned char *stack, extended_cif *ecif)
 }
 
 /*======================== End of Routine ============================*/
-ffi_status
-ffi_prep_cif_machdep_var(ffi_cif *cif, unsigned int nfixedargs, unsigned int ntotalargs)
-{
-  cif->z_nfixedargs = nfixedargs;
-  return ffi_prep_cif_machdep(cif);
-}
 /*====================================================================*/
 /*                                                                    */
 /* Name     - ffi_prep_cif_machdep.                                   */
@@ -462,7 +456,12 @@ ffi_prep_cif_machdep(ffi_cif *cif)
 }
 
 /*======================== End of Routine ============================*/
-
+ffi_status
+ffi_prep_cif_machdep_var(ffi_cif *cif, unsigned int nfixedargs, unsigned int ntotalargs)
+{
+  cif->z_nfixedargs = nfixedargs;
+  return ffi_prep_cif_machdep(cif);
+}
 /*====================================================================*/
 /*                                                                    */
 /* Name     - ffi_call.                                               */
