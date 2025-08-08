@@ -24,9 +24,6 @@
 #include "j9protos.h"
 #include "j9vmnls.h"
 #include "objhelp.h"
-#if JAVA_SPEC_VERSION >= 24
-#include "thrtypes.h"
-#endif /* JAVA_SPEC_VERSION >= 24 */
 #include "ut_j9vm.h"
 #include "vm_api.h"
 #include "AtomicSupport.hpp"
@@ -1191,7 +1188,7 @@ waitForSignal(J9VMThread *currentThread)
 	 */
 	omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
 	if (!vm->pendingBlockedVirtualThreadsNotify) {
-		omrthread_monitor_wait_interruptable(vm->blockedVirtualThreadsMutex, 0, 0);
+		omrthread_monitor_wait_interruptable(vm->blockedVirtualThreadsMutex, vm->unblockerWaitTime, 0);
 	}
 	vm->pendingBlockedVirtualThreadsNotify = FALSE;
 	omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
@@ -1245,18 +1242,18 @@ restart:
 				switch (state) {
 				case JAVA_LANG_VIRTUALTHREAD_BLOCKING:
 				{
-					omrthread_monitor_t monitor = syncObjectMonitor->monitor;
-					/* For BLOCKING and BLOCKED states, VirtualThread.blockPermit will allow
+					/* For BLOCKING state, VirtualThread.blockPermit will allow
 					 * VirtualThread.afterYield() to reschedule the thread.
 					 *
 					 * Set blockPermit only if the monitor's blocker object is available.
 					 *
-					 * All blocking/waiting monitors have to be inflated. If the monitor has not been inflated,
+					 * All blocking monitors have to be inflated. If the monitor has not been inflated,
 					 * then the owner has not yet released the flat lock.
+					 *
+					 * There is a special case where the FLC bit maybe overwritten by fast exit code,
+					 * so also unblock thread if the blocking object has a unowned flatlock.
 					 */
-					if (J9_ARE_ANY_BITS_SET(((J9ThreadMonitor *)monitor)->flags, J9THREAD_MONITOR_INFLATED)
-						&& (0 == monitor->count)
-					) {
+					if (VM_ContinuationHelpers::isBlockingMonitorUnowned(currentThread, current->vthread)) {
 						J9VMJAVALANGVIRTUALTHREAD_SET_BLOCKPERMIT(currentThread, current->vthread, JNI_TRUE);
 					}
 					previous = current;
@@ -1284,9 +1281,9 @@ restart:
 					) {
 						Assert_VM_true(syncObjectMonitor->virtualThreadWaitCount > 0);
 						omrthread_monitor_t monitor = syncObjectMonitor->monitor;
-						/* All blocking/waiting monitors have to be inflated. If the monitor has not been inflated,
-						* then the owner has not yet released the flat lock.
-						*/
+						/* All waiting monitors have to be inflated. If the monitor has not been inflated,
+						 * then wait call have not been done correctly.
+						 */
 						if (J9_ARE_ANY_BITS_SET(((J9ThreadMonitor *)monitor)->flags, J9THREAD_MONITOR_INFLATED)
 							&& (0 == monitor->count)
 						) {
@@ -1299,18 +1296,16 @@ restart:
 				case JAVA_LANG_VIRTUALTHREAD_BLOCKED:
 				{
 					Assert_VM_true(syncObjectMonitor->virtualThreadWaitCount > 0);
-					omrthread_monitor_t monitor = syncObjectMonitor->monitor;
-					/* For BLOCKING and BLOCKED states, VirtualThread.blockPermit will allow
-					 * VirtualThread.afterYield() to reschedule the thread.
+					/* For BLOCKED state, set VirtualThread.onWaitingList and
+					 * add vthread to the unblock list so unblocker can reschedule.
 					 *
-					 * Set blockPermit only if the monitor's blocker object is available.
-					 *
-					 * All blocking/waiting monitors have to be inflated. If the monitor has not been inflated,
+					 * All blocked monitors have to be inflated. If the monitor has not been inflated,
 					 * then the owner has not yet released the flat lock.
+					 *
+					 * There is a special case where the FLC bit maybe overwritten by fast exit code,
+					 * so also unblock thread if the blocking object has a unowned flatlock.
 					 */
-					if (J9_ARE_ANY_BITS_SET(((J9ThreadMonitor *)monitor)->flags, J9THREAD_MONITOR_INFLATED)
-						&& (0 == monitor->count)
-					) {
+					if (VM_ContinuationHelpers::isBlockingMonitorUnowned(currentThread, current->vthread)) {
 						unblocked = true;
 						syncObjectMonitor->virtualThreadWaitCount -= 1;
 						J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(currentThread, current->vthread, JNI_TRUE);

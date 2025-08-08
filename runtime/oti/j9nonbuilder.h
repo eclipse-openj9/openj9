@@ -6526,6 +6526,7 @@ typedef struct J9JavaVM {
 	J9VMContinuation *blockedContinuations;
 	omrthread_monitor_t blockedVirtualThreadsMutex;
 	BOOLEAN pendingBlockedVirtualThreadsNotify;
+	I_64 unblockerWaitTime;
 #endif /* JAVA_SPEC_VERSION >= 24 */
 } J9JavaVM;
 
