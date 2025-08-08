@@ -3452,6 +3452,7 @@ done:
 				UDATA continuationWalkRC = J9_STACKWALK_RC_NONE;
 				J9StackWalkState continuationWalkState= {0};
 				if (J9_ARE_ALL_BITS_SET(_vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_SHOW_CARRIER_FRAMES)
+					&& (NULL != _currentThread->threadObject)
 					&& IS_JAVA_LANG_VIRTUALTHREAD(_currentThread, _currentThread->threadObject)
 				) {
 					continuationWalkState.flags = walkFlags;
