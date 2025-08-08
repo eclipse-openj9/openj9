@@ -64,10 +64,10 @@ public class DDRExtTesterBase extends TestCase {
 		if (SetupConfig.getDDRContxt() != null) {
 			// this means we are running from ddr plugin
 			DDROutputStream mps = SetupConfig.getPrintStream();
-			log.debug("Execute command: !" + ddrExtCmd + argStr);
 			if (ddrExtCmd.startsWith("!") == false) {
 				ddrExtCmd = "!" + ddrExtCmd;
 			}
+			log.debug("Execute command: " + ddrExtCmd + argStr);
 			currentCommand = "'" + ddrExtCmd + argStr + "'";
 			SetupConfig.getDDRContxt().execute(ddrExtCmd, arg,
 					SetupConfig.getPrintStream());
@@ -89,10 +89,10 @@ public class DDRExtTesterBase extends TestCase {
 			}
 			if (app != null) {
 				DDROutputStream mps = SetupConfig.getPrintStream();
-				log.debug("Execute command: !" + ddrExtCmd + argStr);
 				if (ddrExtCmd.startsWith("!") == false) {
 					ddrExtCmd = "!" + ddrExtCmd;
 				}
+				log.debug("Execute command: " + ddrExtCmd + argStr);
 				currentCommand = "'" + ddrExtCmd + argStr + "'";
 				app.execute(ddrExtCmd, arg);
 				output = mps.getOutBuffer().toString();
@@ -225,20 +225,20 @@ public class DDRExtTesterBase extends TestCase {
 			}
 		}
 
-		/* Performing exhaustive validation using all available structures (subcommands) in the output */
+		/* Performing exhaustive validation using all available structures (subcommands) in the output. */
 		if (goNextStep) {
-			int firstIndex = output.indexOf("!");
+			int firstIndex = output.indexOf('!');
 			String parentCmd = currentCommand;
 			boolean allNextCmdAlreadyCovered = true;
 			if (firstIndex != -1) { // if this output contains any !subcommand
 				ArrayList<String> structuresToRun = new ArrayList<>();
-				output = output.substring(output.indexOf("!") + 1); // chop off
+				output = output.substring(firstIndex + 1); // chop off
 				Scanner scanner = new Scanner(output).useDelimiter("!");
 				String structToRun = null;
 				String structAddress = null;
 				while (scanner.hasNext()) {
 					String nextToken = scanner.next();
-					String tokens[] = nextToken.split(" ");
+					String[] tokens = nextToken.split(" ");
 					if (tokens.length > 1) {
 						structToRun = tokens[0].trim();
 						if (coveredStructures.contains(structToRun) == false) {
@@ -260,7 +260,7 @@ public class DDRExtTesterBase extends TestCase {
 							+ parentCmd);
 					for (int i = 0; i < structuresToRun.size(); i++) {
 						currentCommand = structuresToRun.get(i);
-						log.info("Runing structure test with : !"
+						log.info("Running structure test with : !"
 								+ currentCommand);
 						String[] tokens = currentCommand.trim().split(" ");
 						String cmd = tokens[0];
@@ -274,9 +274,10 @@ public class DDRExtTesterBase extends TestCase {
 							continue;
 						}
 
-						if (nxtOutput.contains("{")
-								&& nxtOutput.contains("}")
-								&& nxtOutput.indexOf("{") < nxtOutput.indexOf("}")) {
+						int opener = nxtOutput.indexOf('{');
+						int closer = nxtOutput.indexOf('}');
+
+						if ((0 <= opener) && (opener < closer)) {
 							String structPropertyPattern = ".*=.* 0x.*|<FAULT>";
 							Pattern pattern = Pattern.compile(structPropertyPattern);
 							Matcher matcher = pattern.matcher(nxtOutput);
@@ -291,7 +292,7 @@ public class DDRExtTesterBase extends TestCase {
 						} else {
 							log.info("Can not validate: " + currentCommand
 									+ " output is not a structure");
-							log.debug(nxtOutput);
+							log.error(nxtOutput);
 						}
 					}
 					currentCommand = parentCmd;
@@ -309,26 +310,32 @@ public class DDRExtTesterBase extends TestCase {
 	 * @return
 	 */
 	private static String cleanse(String address) {
-		if (address.contains(Constants.NL)) {
-			address = address.substring(0, address.indexOf(Constants.NL));
-		}
-
-		/* We make sure we are in fact dealing with a hex value string */
+		/* Make sure we are in fact dealing with a hex value string. */
 		if (address.startsWith("0x") == false) {
 			return null;
 		}
 
-		if (address.contains(",")) {
-			address = address.split(",")[0];
+		int index;
+
+		index = address.indexOf(Constants.NL);
+		if (index >= 0) {
+			address = address.substring(0, index);
 		}
 
-		if (address.contains("\t")) {
-			address = address.split("\t")[0];
+		index = address.indexOf(',');
+		if (index >= 0) {
+			address = address.substring(0, index);
 		}
 
-		if (address.endsWith(")") || address.endsWith(">")) {
+		index = address.indexOf('\t');
+		if (index >= 0) {
+			address = address.substring(0, index);
+		}
+
+		if (address.endsWith(")") || address.endsWith(">") || address.endsWith(":")) {
 			address = address.substring(0, address.length() - 1);
 		}
+
 		return address;
 	}
 

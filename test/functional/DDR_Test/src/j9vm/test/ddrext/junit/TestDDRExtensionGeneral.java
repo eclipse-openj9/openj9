@@ -51,15 +51,15 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 	}
 
 	/*
-	 * runs !walkinterntable first, validate output of options, then runs
-	 * !walkinterntable with options 1-5, validates output for each option
+	 * Runs !walkinterntable first, validate output of options, then runs
+	 * !walkinterntable with options 1-5, validates output for each option.
 	 */
 	public void testWalkInternTable() {
 		String menuOutput = exec(Constants.WALKINTERNTABLE_CMD,
 				new String[] {});
 		assertTrue(validate(menuOutput,
 				Constants.WALKINTERNTABLE_MENU_SUCCESS_KEY, null, true));
-		
+
 		String helpOutput = exec(Constants.WALKINTERNTABLE_CMD,
 				new String[] {"help"});
 		assertTrue(validate(helpOutput,
@@ -99,19 +99,29 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 	}
 
 	/*
-	 * Performs test: runs !classforname j9vm/test/corehelper/CoreGen first, then uses
-	 * the address of j9class to run !whatis.
+	 * Runs !classforname j9vm/test/corehelper/CoreGen first, then uses the
+	 * address of the j9class to run !whatis repeatedly until a definitive
+	 * result is found (positive or negative).
 	 */
 	public void testWhatis() {
 		String classForNameOutput = exec(Constants.CL_FOR_NAME_CMD,
 				new String[] { Constants.CL_FOR_NAME_CLASS });
 		String classAddr = ClassForNameOutputParser.extractClassAddress(classForNameOutput);
-		String output = exec(Constants.WHATIS_CMD, new String[] { classAddr });
-		assertTrue(validate(output, Constants.WHATIS_SUCCESS_KEY_FOR_CLASS,
-				Constants.WHATIS_FAILURE_KEY, true));
+		for (;;) {
+			String output = exec(Constants.WHATIS_CMD, new String[] { classAddr });
+
+			if (!validate(output, null, Constants.WHATIS_FAILURE_KEY)
+					|| output.contains(" !j9class ")
+					|| output.contains("No match found")
+			) {
+				assertTrue(validate(output, Constants.WHATIS_SUCCESS_KEY_FOR_CLASS,
+						Constants.WHATIS_FAILURE_KEY, true));
+				break;
+			}
+		}
 	}
 
-	/* searches for method named sleep */
+	/* Searches for method named sleep. */
 	public void testMethodForName() {
 		String output = exec(Constants.METHODFORNAME_CMD,
 				new String[] { Constants.METHODFORNAME_METHOD });
@@ -120,14 +130,14 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 	}
 
 	/*
-	 * runs !methodforname sleep, gets !j9method <addr>, runs it, gets
-	 * !bytecodes <addr>, runs it and validates result
+	 * Runs !methodforname sleep, gets !j9method <addr>, runs it, gets
+	 * !bytecodes <addr>, runs it and validates result.
 	 */
 	public void testByteCodes() {
 		String methodForNameOutput = exec(Constants.METHODFORNAME_CMD,
 				new String[] { Constants.METHODFORNAME_METHOD });
 		String methodAddr = MethodForNameOutputParser.extractMethodAddress(methodForNameOutput, null, null);
-		if (methodAddr == null || methodAddr == "") {
+		if ((methodAddr == null) || methodAddr.isEmpty()) {
 			fail("Failed to obtain method address for method : "
 					+ Constants.METHODFORNAME_METHOD
 					+ ". Can not proceed further with test");
@@ -135,7 +145,7 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 		}
 		String j9methodOutput = exec("j9method", new String[] { methodAddr });
 		String byteCodesAddr = J9MethodOutputParser.extractByteCodesAddress(j9methodOutput);
-		if (byteCodesAddr == null || byteCodesAddr == "") {
+		if ((byteCodesAddr == null) || byteCodesAddr.isEmpty()) {
 			fail("Failed to obtain bytecodes address for method : "
 					+ Constants.METHODFORNAME_METHOD
 					+ ". Can not proceed further with test");
@@ -160,8 +170,9 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 	}
 
 	public void testRanges() {
-		if (SetupConfig.getDDRContxt() != null
-				&& SetupConfig.getDDRInstance() == null) {
+		if ((SetupConfig.getDDRContxt() != null)
+				&& (SetupConfig.getDDRInstance() == null)
+		) {
 			log.info("This test is not applicable in context of DDR pluigin for native debuggers");
 			return;
 		}
@@ -194,8 +205,9 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 	}
 
 	public void testContext() {
-		if (SetupConfig.getDDRContxt() != null
-				&& SetupConfig.getDDRInstance() == null) {
+		if ((SetupConfig.getDDRContxt() != null)
+				&& (SetupConfig.getDDRInstance() == null)
+		) {
 			log.info("This test is not applicable in context of DDR pluigin for native debuggers");
 			return;
 		}
@@ -293,13 +305,14 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 	 * then run cmd for reloaded plugin.
 	 */
 	public void testPlugins() {
-		if (SetupConfig.getDDRContxt() != null
-				&& SetupConfig.getDDRInstance() == null) {
+		if ((SetupConfig.getDDRContxt() != null)
+				&& (SetupConfig.getDDRInstance() == null)
+		) {
 			log.info("This test is not applicable in context of DDR plugin for native debuggers");
 			return;
 		}
-		
-		if (AutoRun.ddrPluginJar == null || AutoRun.ddrPluginJar.isEmpty()) {
+
+		if ((AutoRun.ddrPluginJar == null) || AutoRun.ddrPluginJar.isEmpty()) {
 			fail("Not able to find ddrPlugin.");
 			return;
 		}
@@ -331,7 +344,7 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 				Constants.PLUGINS_TEST_SUCCESS_KEY,
 				Constants.PLUGINS_TEST_FAILURE_KEY, false));
 	}
-	
+
 	/**
 	 * This junit method tests the !setvm DDR extension functionality
 	 */
@@ -339,15 +352,15 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 	{
 		BigInteger vmAddr;
 		BigInteger mainThreadAddr;
-		
+
 		/* Get the vm address from core file by using !findvm extension */
 		String findVMOutput = exec(Constants.FINDVM_CMD, new String[] {});
 		String j9javavmAddr = FindVMOutputParser.getJ9JavaVMAddress(findVMOutput);
 		if (null == j9javavmAddr) {
 			fail("j9javavm address could not be found in the !findvm output");
 			return;
-		} 
-		
+		}
+
 		try {
 			vmAddr = ParserUtil.toBigInteger(j9javavmAddr);
 		} catch (NumberFormatException e) {
@@ -355,13 +368,13 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 			fail(j9javavmAddr + " is not a valid number.");
 			return;
 		}
-		
+
 		String customSetVMSuccessKey = Constants.SETVM_SUCCESS_KEYS + Constants.HEXADDRESS_HEADER + "[0]*" + vmAddr.toString(Constants.HEXADECIMAL_RADIX);
-		
+
 		/* Try to set the vm to its actual address */
 		validate(exec(Constants.SETVM_CMD, new String[] {vmAddr.toString()}), customSetVMSuccessKey, Constants.SETVM_FAILURE_KEYS);
 		validate(exec(Constants.SETVM_CMD, new String[] {Constants.HEXADDRESS_HEADER + vmAddr.toString(Constants.HEXADECIMAL_RADIX)}), customSetVMSuccessKey, Constants.SETVM_FAILURE_KEYS);
-		
+
 		/* Find the mainThread address */
 		String j9javavmOutput = exec(Constants.J9JAVAVM_CMD, new String[] {j9javavmAddr});
 		String mainThreadAddress = J9JavaVmOutputParser.getMainThreadAddress(j9javavmOutput);
@@ -369,7 +382,7 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 			fail("mainThread address could not be found in the !j9javavm output");
 			return;
 		}
-		
+
 		try {
 			mainThreadAddr = ParserUtil.toBigInteger(mainThreadAddress);
 		} catch (NumberFormatException e) {
@@ -377,40 +390,37 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 			fail(mainThreadAddress + " is not a valid number.");
 			return;
 		}
-		
-		/* Try to set the vm to the mainThread  address */
+
+		/* Try to set the vm to the mainThread address. */
 		validate(exec(Constants.SETVM_CMD, new String[] {mainThreadAddr.toString()}), customSetVMSuccessKey, Constants.SETVM_FAILURE_KEYS);
 		validate(exec(Constants.SETVM_CMD, new String[] {Constants.HEXADDRESS_HEADER + mainThreadAddr.toString(Constants.HEXADECIMAL_RADIX)}), customSetVMSuccessKey, Constants.SETVM_FAILURE_KEYS);
-		
-		/* Try to set the vm to the invalid j9javavm address. 
-		 * j9javavm address + 8 can be used as an invalid since 
-		 * it is still in the j9javavm structure and 
-		 * can not be another valid j9javavm structure
+
+		/* Try to set the vm to the invalid j9javavm address.
+		 * j9javavm address + 8 can be used as an invalid since
+		 * it is still in the j9javavm structure and
+		 * can not be another valid j9javavm structure.
 		 */
 		validate(exec(Constants.SETVM_CMD, new String[] {vmAddr.add(new BigInteger("8")).toString()}), Constants.SETVM_FAILURE_KEY_1 + "," + Constants.SETVM_FAILURE_KEY_2, Constants.SETVM_SUCCESS_KEYS);
 		validate(exec(Constants.SETVM_CMD, new String[] {Constants.HEXADDRESS_HEADER + vmAddr.add(new BigInteger("8")).toString(Constants.HEXADECIMAL_RADIX)}),  Constants.SETVM_FAILURE_KEY_1 + "," + Constants.SETVM_FAILURE_KEY_2, Constants.SETVM_SUCCESS_KEYS);
-		
 	}
-	
+
 	/**
-	 * This junit method tests the !showdumpagents DDR extension functionality
+	 * This junit method tests the !showdumpagents DDR extension functionality.
 	 */
 	public void testShowdumpagents() {
-
 		String output = exec(Constants.SHOWDUMPAGENTS_CMD, new String[] {});
 		assertTrue(validate(output, Constants.SHOWDUMPAGENTS_SUCCESS_KEYS,
 				Constants.SHOWDUMPAGENTS_FAILURE_KEYS, false));
 	}
 
 	/**
-	 * This junit method tests the !sym DDR extension functionality
-	 * 
+	 * This junit method tests the !sym DDR extension functionality.
+	 *
 	 * run !methodforname to gets !j9method <addr>, run j9method to get
-	 * methodRunAddress, then run sym with the methodRunAddress
+	 * methodRunAddress, then run sym with the methodRunAddress.
 	 */
 	/* CMVC 192844 - temporarily remove sub test until I can find decent replacement for array copy
 	public void testSym() {
-
 		String methodForNameOutput = exec(Constants.METHODFORNAME_CMD,
 				new String[] { Constants.SYM_TEST_METHOD });
 		String methodAddr = MethodForNameOutputParser
@@ -426,16 +436,15 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 	*/
 
 	/**
-	 * This junit method tests the !dclibs DDR extension functionality
+	 * This junit method tests the !dclibs DDR extension functionality.
 	 */
 	public void testDclibs() {
-
 		String output = exec(Constants.DCLIBS_CMD, new String[] { });
 		assertTrue(validate(output, Constants.DCLIBS_SUCCESS_KEYS,
 				Constants.DCLIBS_FAILURE_KEYS, false));
-		
-		//if library is collected to the core, then test "!dclibs extract" command to extract libs to temp folder
-		if (output.contentEquals(Constants.DCLIBS_LIB_COLLENTED)){
+
+		// if library is collected to the core, then test "!dclibs extract" command to extract libs to temp folder
+		if (output.contentEquals(Constants.DCLIBS_LIB_COLLENTED)) {
 			String output2 = exec(Constants.DCLIBS_CMD, new String[] {"extract" });
 			assertTrue(validate(output2, Constants.DCLIBS_EXTRACT_SUCCESS_KEYS,
 					Constants.DCLIBS_FAILURE_KEYS, false));
@@ -443,20 +452,20 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 	}
 
 	/**
-	 * This junit method tests the !walkj9pool DDR extension functionality
+	 * This junit method tests the !walkj9pool DDR extension functionality.
 	 */
-	public void testWalkJ9Pool() 
-	{	
+	public void testWalkJ9Pool()
+	{
 		/* Get the vm address from core file by using !findvm extension */
 		String findVMOutput = exec(Constants.FINDVM_CMD, new String[] {});
 		String j9javavmAddr = FindVMOutputParser.getJ9JavaVMAddress(findVMOutput);
 		if (null == j9javavmAddr) {
 			fail("j9javavm address could not be found in the !findvm output");
 			return;
-		} 
-		
+		}
+
 		String j9javavmOutput = exec(Constants.J9JAVAVM_CMD, new String[] {j9javavmAddr});
-		
+
 		/* Test !walkj9pool with the pool used for classLoaderBlocks in J9JavaVm */
 		String classLoaderBlocks = J9JavaVmOutputParser.getClassLoaderBlocksAddress(j9javavmOutput);
 		testWalkJ9PoolFor(classLoaderBlocks);
@@ -473,12 +482,12 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 		String systemProperties = J9JavaVmOutputParser.getSystemPropertiesAddress(j9javavmOutput);
 		testWalkJ9PoolFor(systemProperties);
 	}
-	
+
 	/**
-	 * This method tests the !walkj9pool DDR extension with the given pool address
+	 * This method tests the !walkj9pool DDR extension with the given pool address.
 	 * @param poolAddr
 	 */
-	private void testWalkJ9PoolFor(String poolAddr) 
+	private void testWalkJ9PoolFor(String poolAddr)
 	{
 		String j9poolOutput = exec(Constants.J9POOL_CMD, new String[] {poolAddr});
 		String puddleListAddress = J9PoolOutputParser.getPuddleListAddress(j9poolOutput);
@@ -490,17 +499,17 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 		if (null == numElementsValue) {
 			fail("Failed to get numElements field value from !j9poolpuddlelist output: \n" + j9poolpuddlelistOutput);
 		}
-		
+
 		String walkJ9PoolOutput = exec(Constants.WALKJ9POOL_CMD, new String[] {poolAddr});
 		validate(walkJ9PoolOutput, Constants.WALKJ9POOL_SUCCESS_KEYS, Constants.WALKJ9POOL_FAILURE_KEY);
-		
+
 		/* Get the number of elements printed in !walkj9pool output */
 		long numElementsInWalkJ9Pool = getNumElementsInWalkJ9PoolOutput(walkJ9PoolOutput);
 		if (-1 == numElementsInWalkJ9Pool) {
 			/* Should never be here after being successful in above validate call */
 			fail("Unexpected !walkj9pool output : \n" + walkJ9PoolOutput);
 		}
-		
+
 		try {
 			long numElementsInPuddleList = CommandUtils.parseNumber(numElementsValue).longValue();
 			/* Check whether number of elements printed is same as number of elements in the poolpuddlelist */
@@ -510,15 +519,14 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 		} catch (DDRInteractiveCommandException e) {
 			fail(e.getMessage());
 		}
-		
 	}
-	
+
 	/**
-	 * This method calculates the number of elements printed in !walkj9pool address
+	 * This method calculates the number of elements printed in !walkj9pool address.
 	 * @param walkJ9PoolOutput Output of !walkj9pool <address> DDR extension
 	 * @return
 	 */
-	private long getNumElementsInWalkJ9PoolOutput(String walkJ9PoolOutput) 
+	private long getNumElementsInWalkJ9PoolOutput(String walkJ9PoolOutput)
 	{
 		long numElements = -1;
 		String lastInfoLine = null;
@@ -534,34 +542,34 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 				numElements = 0;
 			}
 		}
-		
-		if(null != lastInfoLine) {
+
+		if (null != lastInfoLine) {
 			int lastIndex = lastInfoLine.indexOf("]");
 			if (-1 != lastIndex) {
 				numElements = Long.parseLong(lastInfoLine.substring(1, lastIndex));
 				numElements++; /*Index starts from 0, so add 1 to get the element number */
-			} 
-		}	
+			}
+		}
 		return numElements;
 	}
 
 	/**
-	 * This junit method tests the !coreinfo DDR extension functionality
+	 * This junit method tests the !coreinfo DDR extension functionality.
 	 */
 	public void testCoreInfo()
 	{
 		String coreInfoOutput = exec(Constants.COREINFO_CMD, new String[] {});
-		
+
 		if (null == coreInfoOutput) {
 			fail("\"!coreinfo\" output is null");
 		}
-		
+
 		assertTrue(validate(coreInfoOutput, Constants.COREINFO_SUCCESS_KEYS,
-				Constants.COREINFO_FAILURE_KEYS, false));	
+				Constants.COREINFO_FAILURE_KEYS, false));
 	}
-	
+
 	/**
-	 * This junit method tests the !nativememinfo DDR extension functionality
+	 * This junit method tests the !nativememinfo DDR extension functionality.
 	 */
 	public void testNativeMemInfo()
 	{
@@ -573,16 +581,15 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 	}
 
 	/**
-	 * This junit method tests the !versioninfo output for "IBM J9 VM" or "Eclipse OpenJ9 VM"
+	 * This junit method tests the !versioninfo output for "IBM J9 VM" or "Eclipse OpenJ9 VM".
 	 */
 	public void testVersionInfo()
 	{
 		String versionInfoOutput = exec(Constants.COREINFO_CMD, new String[] {});
 		String impl = System.getProperty("java.vm.name");
-		if (impl.contains("Eclipse OpenJ9 VM")){
+		if (impl.contains("Eclipse OpenJ9 VM")) {
 			assertTrue(validate(versionInfoOutput, Constants.COREINFO_VERSION_OPENJ9_SUCCESS_KEYS, Constants.COREINFO_VERSION_FAILURE_KEYS));
-		}
-		else {
+		} else {
 			assertTrue(validate(versionInfoOutput, Constants.COREINFO_VERSION_IBM_SUCCESS_KEYS, Constants.COREINFO_VERSION_FAILURE_KEYS));
 		}
 	}
