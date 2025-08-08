@@ -681,6 +681,13 @@ public static native void stopJFR();
  * Trigger ExecutionSample JFR event on all Java threads.
  */
 public static native void triggerExecutionSample();
+
+/**
+ * Native used to get a jfr option string
+ *
+ * @return a String which is jfr option
+ */
+public static native String getjfrCMDLineOption();
 /*[ENDIF] JFR_SUPPORT */
 
 /*[IF JAVA_SPEC_VERSION >= 24]*/
