@@ -5137,7 +5137,7 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
       }
 
    // Control how much application threads will be sleeping to give
-   // application threads more time on the CPU
+   // compilation threads more time on the CPU
    TR_YesNoMaybe starvation = compInfo->detectCompThreadStarvation();
    bool newStarvationStatus = (starvation == TR_yes);
    if (newStarvationStatus != compInfo->getStarvationDetected()) // did the status change?

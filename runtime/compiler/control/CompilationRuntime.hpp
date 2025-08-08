@@ -1064,7 +1064,7 @@ public:
    void setAppSleepNano(int32_t t) { _appSleepNano = t; }
    int32_t computeAppSleepNano() const;
    TR_YesNoMaybe detectCompThreadStarvation();
-   bool getStarvationDetected() const { return _starvationDetected; }
+   bool getStarvationDetected() const { return _starvationDetected; } // This refers to compilation threads starvation
    void setStarvationDetected(bool b) { _starvationDetected = b; }
    int32_t getTotalCompThreadCpuUtilWhenStarvationComputed() const { return _totalCompThreadCpuUtilWhenStarvationComputed; }
    int32_t getNumActiveCompThreadsWhenStarvationComputed() const { return _numActiveCompThreadsWhenStarvationComputed; }
@@ -1343,7 +1343,7 @@ private:
    //----------------
    int32_t                _appSleepNano; // make app threads sleep when sampling
 
-   bool                   _starvationDetected;
+   bool                   _starvationDetected; // This refers to compilation threads starvation
    int32_t                _totalCompThreadCpuUtilWhenStarvationComputed;   // for RAS purposes
    int32_t                _numActiveCompThreadsWhenStarvationComputed; // for RAS purposes
    //--------------
