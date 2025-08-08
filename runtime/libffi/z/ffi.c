@@ -117,14 +117,14 @@ ffi_check_struct_type (ffi_type *arg)
       return FFI_TYPE_UINT32;
     case 4:
       if (arg->type == FFI_TYPE_FLOAT)
-       	return FFI_TYPE_FLOAT;
+        return FFI_TYPE_FLOAT;
       else
-       	return FFI_TYPE_UINT32;
+        return FFI_TYPE_UINT32;
     case 8:
       if (arg->type == FFI_TYPE_DOUBLE)
-       	return FFI_TYPE_DOUBLE;
+        return FFI_TYPE_DOUBLE;
       else
-       	return FFI_TYPE_UINT64;
+        return FFI_TYPE_UINT64;
     default:
       break;
   }
