@@ -998,6 +998,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
                                                   jint lookupMode, jboolean speculativeResolve
 #endif /* JAVA_SPEC_VERSION == 8 */
 ) {
+	printf("resolving method handle\n");
 	J9VMThread *currentThread = (J9VMThread*)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	const J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
@@ -1018,6 +1019,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
 	if (NULL == self) {
+		printf("self is null\n");
 		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
 	} else {
 		j9object_t membernameObject = J9_JNI_UNWRAP_REFERENCE(self);
@@ -1031,8 +1033,10 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 		Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_Data(env, membernameObject, caller, flags, vmindex, target);
 		/* Check if MemberName is already resolved */
 		if (0 != target) {
+			printf("target (MN) already resolved");
 			result = self;
 		} else {
+			printf("target (MN) not resolved yet");
 			/* Initialize nameObject after creating typeString which could trigger GC */
 			j9object_t nameObject = NULL;
 			j9object_t typeObject = J9VMJAVALANGINVOKEMEMBERNAME_TYPE(currentThread, membernameObject);
@@ -1173,6 +1177,8 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 							(lookupOptions & ~J9_LOOK_HANDLE_DEFAULT_METHOD_CONFLICTS));
 
 						if (!VM_VMHelpers::exceptionPending(currentThread)) {
+							printf("Defer default method conflict exception throw for %s.%s%s\n",
+							 J9UTF8_DATA(name), J9UTF8_DATA(signature), J9_ARE_ANY_BITS_SET(flags, MN_IS_CONSTRUCTOR) ? "()" : "");
 							/* Set placeholder values for MemberName fields. */
 							vmindex = (jlong)J9VM_RESOLVED_VMINDEX_FOR_DEFAULT_THROW;
 							new_clazz = J9VM_J9CLASS_TO_HEAPCLASS(J9_CLASS_FROM_METHOD(method));
@@ -1180,6 +1186,8 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 
 							/* Load special sendTarget to throw the exception during invocation */
 							target = JLONG_FROM_POINTER(vm->initialMethods.throwDefaultConflict);
+							J9Method *throwDefaultConflictMethod = (J9Method*)target;
+							throwDefaultConflictMethod->constantPool = J9_CP_FROM_CLASS(resolvedClass);
 						} else {
 							goto done;
 						}
