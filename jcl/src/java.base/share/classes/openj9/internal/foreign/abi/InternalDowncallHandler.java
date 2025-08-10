@@ -333,7 +333,7 @@ public class InternalDowncallHandler {
 		long address = argValue.address();
 		/*[IF JAVA_SPEC_VERSION >= 22]*/
 		if (info == null) {
-			info = new HeapArgInfo(256);
+			info = new HeapArgInfo(argLayoutArray.length);
 			heapArgInfo.set(info);
 		}
 
