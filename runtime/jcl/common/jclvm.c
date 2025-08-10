@@ -569,3 +569,16 @@ Java_com_ibm_oti_vm_VM_dumpString(JNIEnv * env, jclass clazz, jstring str)
 		}
 	}
 }
+
+#if defined(J9VM_OPT_JFR)
+jstring JNICALL
+Java_com_ibm_oti_vm_VM_getjfrCMDLineOption(JNIEnv *env, jclass clazz)
+{
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
+	jstring jfrOption = NULL;
+	if (NULL != javaVM->jfrState.jfrCMDLineOption) {
+		jfrOption = (*env)->NewStringUTF(env, javaVM->jfrState.jfrCMDLineOption);
+	}
+	return jfrOption;
+}
+#endif /* defined(J9VM_OPT_JFR) */
