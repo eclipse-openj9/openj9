@@ -9934,7 +9934,6 @@ static TR::Register *inlineCheckAssignableFromEvaluator(TR::Node *node, TR::Code
 
    TR_PPCScratchRegisterManager *srm = cg->generateScratchRegisterManager();
 
-      generateLabelInstruction(cg, TR::InstOpCode::b, node, oolJumpLabel);
    // jump to the out of line code if inlined code cannot handle it
    TR_PPCOutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory())
       TR_PPCOutOfLineCodeSection(node, TR::icall, resultReg, oolJumpLabel, endLabel, cg);
