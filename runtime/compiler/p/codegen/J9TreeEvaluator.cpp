@@ -11862,7 +11862,7 @@ static void performArrayCmp(TR::Node *node, TR::CodeGenerator *cg, TR::LabelSymb
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli8, node, cr6Reg, tempReg, 2);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, subStringMatchLabel, cr6Reg);
 
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, subSearchOffsetReg, subStringLenReg, cr0Reg, 1); //TODO: replace with rldicl
+   generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicl, node, subSearchOffsetReg, subStringLenReg, 0, 1);
 
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli8, node, cr6Reg, tempReg, 4);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, skipLoad4Label, cr6Reg);
