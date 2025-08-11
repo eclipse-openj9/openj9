@@ -4227,6 +4227,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
                resultReg = TR::TreeEvaluator::inlineVectorizedStringIndexOf(node, cg, false);
                return resultReg != NULL;
          case TR::java_lang_StringUTF16_indexOf:
+         case TR::java_lang_StringUTF16_indexOfUnsafe:
          case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringUTF16:
                resultReg = TR::TreeEvaluator::inlineVectorizedStringIndexOf(node, cg, true);
                return resultReg != NULL;
