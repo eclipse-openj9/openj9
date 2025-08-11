@@ -112,13 +112,14 @@ public class InternalDowncallHandler {
 		}
 
 		void append(Object base, long offset) {
-			bases[index] = base;
-			offsets[index] = offset;
+			bases[index % bases.length] = base;
+			offsets[index % offsets.length] = offset;
 			index += 1;
 		}
 
 		void clear() {
 			Arrays.fill(bases, null);
+			Arrays.fill(offsets, 0L);
 			index = 0;
 		}
 	}
@@ -335,9 +336,6 @@ public class InternalDowncallHandler {
 		if (info == null) {
 			info = new HeapArgInfo(argLayoutArray.length);
 			heapArgInfo.set(info);
-		}
-		else if (info.index == 0) {
-			info.clear();
 		}
 
 		if (!argValue.isNative() && options.allowsHeapAccess()) {
