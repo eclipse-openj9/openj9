@@ -9874,6 +9874,7 @@ static void genCheckAssignableFromInterfaceTest(TR::Node *node, TR::CodeGenerato
    TR::Register *iTableReg = srm->findOrCreateScratchRegister();
    TR::Register *interfaceClassReg = srm->findOrCreateScratchRegister();
 
+
    // First, check if the cached iTable matches.
    generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, iTableReg,
          TR::MemoryReference::createWithDisplacement(cg, fromClassReg,
@@ -9891,7 +9892,7 @@ static void genCheckAssignableFromInterfaceTest(TR::Node *node, TR::CodeGenerato
                offsetof(J9Class, iTable), TR::Compiler->om.sizeofReferenceAddress()));
    // check null
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::Op_cmpi, node, condReg, iTableReg, 0);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, falseLabel, condReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, falseLabel, condReg);
    // load the interface class candidate
    generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, interfaceClassReg,
          TR::MemoryReference::createWithDisplacement(cg, iTableReg,
@@ -9933,6 +9934,7 @@ static TR::Register *inlineCheckAssignableFromEvaluator(TR::Node *node, TR::Code
 
    TR_PPCScratchRegisterManager *srm = cg->generateScratchRegisterManager();
 
+      generateLabelInstruction(cg, TR::InstOpCode::b, node, oolJumpLabel);
    // jump to the out of line code if inlined code cannot handle it
    TR_PPCOutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory())
       TR_PPCOutOfLineCodeSection(node, TR::icall, resultReg, oolJumpLabel, endLabel, cg);
@@ -9985,7 +9987,7 @@ static TR::Register *inlineCheckAssignableFromEvaluator(TR::Node *node, TR::Code
 
    if (!fastFail) // generate the inline tests if we cannot figure it out on compile time
       {
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 0x777); // eyecatcher
+      //generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 0x777); // eyecatcher
       // default to success
       generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 1);
 
@@ -10006,17 +10008,20 @@ static TR::Register *inlineCheckAssignableFromEvaluator(TR::Node *node, TR::Code
       // superClass test
       if ((NULL == toClassSymRef) || (!toClassSymRef->isClassInterface(comp)))
          {
+         TR::LabelSymbol *notSuperLabel= generateLabelSymbol(cg);
          genInstanceOfOrCheckCastSuperClassTest(node, condReg, fromClassReg, toClassReg,
-               toClassDepth, oolJumpLabel, srm, cg);
+               toClassDepth, notSuperLabel, srm, cg);
          generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, successLabel, condReg);
+         generateLabelInstruction(cg, TR::InstOpCode::label, node, notSuperLabel);
          }
 
       // interface test
       if ((NULL == toClassSymRef) || (toClassSymRef->isClassInterface(comp)))
          {
          TR::LabelSymbol *notInterfaceLabel= generateLabelSymbol(cg);
-         genCheckAssignableFromInterfaceTest(node, cg, condReg, fromClassReg, toClassReg, endLabel,
-               notInterfaceLabel, srm);
+         genCheckAssignableFromInterfaceTest(node, cg, condReg, fromClassReg, toClassReg,
+               successLabel, notInterfaceLabel, srm);
+         generateLabelInstruction(cg, TR::InstOpCode::label, node, notInterfaceLabel);
          }
 
       // fallback to the helper
@@ -12744,13 +12749,8 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
       }
    else if (node->getSymbolReference()->getReferenceNumber() == TR_checkAssignable)
       {
-      if (comp->getOption(TR_TraceCG))
-         {
-         printf("LkL inlining\n");
-         resultReg = inlineCheckAssignableFromEvaluator(node, cg);
-         return true;
-         }
-      return false;
+      resultReg = inlineCheckAssignableFromEvaluator(node, cg);
+      return true;
       }
    else if (methodSymbol)
       {
