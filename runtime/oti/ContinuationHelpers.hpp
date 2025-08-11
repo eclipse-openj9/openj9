@@ -27,6 +27,13 @@
 #include "j9vmconstantpool.h"
 #if JAVA_SPEC_VERSION >= 24
 #include "thrtypes.h"
+/* thrtypes.h includes dependency to <fcntl.h> which on AIX contains:
+ *     #define open open64
+ * This conflicts with other uses of the name "open".
+ */
+#if defined(open)
+#undef open
+#endif /* defined(open) */
 #endif /* JAVA_SPEC_VERSION >= 24 */
 #include "VMHelpers.hpp"
 
