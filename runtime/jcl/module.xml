@@ -36,18 +36,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<xi:include href="uma/se8_exports.xml"></xi:include>
 	<xi:include href="uma/se8only_exports.xml"></xi:include>
 	<xi:include href="uma/se829_exports.xml"></xi:include>
-	<xi:include href="uma/se9_exports.xml"></xi:include>
-	<xi:include href="uma/se11_exports.xml"></xi:include>
-	<xi:include href="uma/se14_exports.xml"></xi:include>
-	<xi:include href="uma/se15_exports.xml"></xi:include>
-	<xi:include href="uma/se16_exports.xml"></xi:include>
-	<xi:include href="uma/se19only_exports.xml"></xi:include>
-	<xi:include href="uma/se19_exports.xml"></xi:include>
-	<xi:include href="uma/se20_exports.xml"></xi:include>
-	<xi:include href="uma/jfr_jdk11_exports.xml"></xi:include>
-	<xi:include href="uma/jfr_jdk17_exports.xml"></xi:include>
-	<xi:include href="uma/jfr_jdk21_exports.xml"></xi:include>
-	<xi:include href="uma/jfr_jdk23_exports.xml"></xi:include>
 
 	<xi:include href="uma/vendor_jcl_exports.xml">
 		<xi:fallback/>
@@ -65,10 +53,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<xi:include href="uma/jithelpers_objects.xml"></xi:include>
 	<xi:include href="uma/se8_objects.xml"></xi:include>
 	<xi:include href="uma/se8only_objects.xml"></xi:include>
-	<xi:include href="uma/se9_objects.xml"></xi:include>
-	<xi:include href="uma/se16_objects.xml"></xi:include>
-	<xi:include href="uma/se19_objects.xml"></xi:include>
-	<xi:include href="uma/jfr_objects.xml"></xi:include>
 
 	<!-- vendor_jcl.xml can contain vendor specific configuration -->
 	<xi:include href="uma/vendor_jcl.xml">
@@ -117,53 +101,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<group name="se626_orb_ludcl"/>
 			<group name="se8"/>
 			<group name="se829"/>
-			<group name="se8only">
-				<exclude-if condition="spec.java9"/>
-			</group>
-			<group name="se9">
-				<include-if condition="spec.java9"/>
-			</group>
-			<group name="se11">
-				<include-if condition="spec.java11"/>
-			</group>
-			<group name="se14">
-				<include-if condition="spec.java14"/>
-			</group>
-			<group name="se15">
-				<include-if condition="spec.java15"/>
-			</group>
-			<group name="se16">
-				<include-if condition="spec.java16"/>
-			</group>
-			<group name="se19only">
-				<include-if condition="spec.java19"/>
-				<exclude-if condition="spec.java20"/>
-			</group>
-			<group name="se19">
-				<include-if condition="spec.java19"/>
-			</group>
-			<group name="se20">
-				<include-if condition="spec.java20"/>
-			</group>
-			<group name="jfr_jdk11">
-				<include-if condition="spec.flags.opt_jfr"/>
-				<include-if condition="spec.java11"/>
-				<exclude-if condition="spec.java12"/>
-			</group>
-			<group name="jfr_jdk17">
-				<include-if condition="spec.flags.opt_jfr"/>
-				<include-if condition="spec.java17"/>
-				<exclude-if condition="spec.java18"/>
-			</group>
-			<group name="jfr_jdk21">
-				<include-if condition="spec.flags.opt_jfr"/>
-				<include-if condition="spec.java21"/>
-				<exclude-if condition="spec.java22"/>
-			</group>
-			<group name="jfr_jdk23">
-				<include-if condition="spec.flags.opt_jfr"/>
-				<include-if condition="spec.java23"/>
-			</group>
+			<group name="se8only"/>
 		</exports>
 
 		<includes>
@@ -217,29 +155,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<group name="se626_orb_ludcl"/>
 			<group name="se7"/>
 			<group name="se8"/>
-			<group name="se8only">
-				<exclude-if condition="spec.java9"/>
-			</group>
-			<group name="se9">
-				<include-if condition="spec.java9"/>
-			</group>
-			<!--
-			<group name="se11">
-				<include-if condition="spec.java11"/>
-			</group>
-			-->
-			<group name="se16">
-				<include-if condition="spec.java16"/>
-			</group>
-			<group name="se19">
-				<include-if condition="spec.java19"/>
-			</group>
+			<group name="se8only"/>
 
 			<group name="vendor_jcl"/>
-
-			<group name="jfr">
-				<include-if condition="spec.flags.opt_jfr"/>
-			</group>
 
 			<!-- Groups must be before Objects -->
 			<object name="j9vmconstantpool"/>

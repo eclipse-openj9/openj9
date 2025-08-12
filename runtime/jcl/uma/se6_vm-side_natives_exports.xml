@@ -1,23 +1,23 @@
 <!--
-	Copyright IBM Corp. and others 2009
+Copyright IBM Corp. and others 2009
 
-	This program and the accompanying materials are made available under
-	the terms of the Eclipse Public License 2.0 which accompanies this
-	distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-	or the Apache License, Version 2.0 which accompanies this distribution and
-	is available at https://www.apache.org/licenses/LICENSE-2.0.
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
 
-	This Source Code may also be made available under the following
-	Secondary Licenses when the conditions for such availability set
-	forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-	General Public License, version 2 with the GNU Classpath
-	Exception [1] and GNU General Public License, version 2 with the
-	OpenJDK Assembly Exception [2].
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
 
-	[1] https://www.gnu.org/software/classpath/license.html
-	[2] https://openjdk.org/legal/assembly-exception.html
+[1] https://www.gnu.org/software/classpath/license.html
+[2] https://openjdk.org/legal/assembly-exception.html
 
-	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 <exports group="se6_vm-side_natives">
 	<export name="Java_com_ibm_oti_vm_BootstrapClassLoader_addJar" />
@@ -39,7 +39,6 @@
 	<export name="Java_com_ibm_jvm_Dump_isToolDump" />
 	<export name="Java_com_ibm_jvm_Log_QueryOptionsImpl" />
 	<export name="Java_com_ibm_jvm_Log_SetOptionsImpl" />
-
 
 	<export name="Java_com_ibm_jvm_Trace_initTraceImpl" />
 	<export name="Java_com_ibm_jvm_Trace_registerApplicationImpl" />
@@ -170,9 +169,7 @@
 	<export name="Java_com_ibm_java_lang_management_internal_RuntimeMXBeanImpl_getStartTimeImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_RuntimeMXBeanImpl_getUptimeImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_RuntimeMXBeanImpl_isBootClassPathSupportedImpl" />
-	<export name="Java_com_ibm_lang_management_internal_ExtendedRuntimeMXBeanImpl_getProcessIDImpl">
-		<exclude-if condition="spec.java19" />
-	</export>
+	<export name="Java_com_ibm_lang_management_internal_ExtendedRuntimeMXBeanImpl_getProcessIDImpl" />
 	<export name="Java_com_ibm_lang_management_internal_ExtendedRuntimeMXBeanImpl_getVMIdleStateImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_findMonitorDeadlockedThreadsImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getAllThreadIdsImpl" />
@@ -249,9 +246,7 @@
 	<export name="Java_java_lang_reflect_Proxy_defineClassImpl" />
 	<export name="Java_java_lang_reflect_Array_multiNewArrayImpl" />
 	<export name="Java_java_lang_System_getSysPropBeforePropertiesInitialized" />
-	<export name="Java_java_lang_System_getPropertyList">
-		<exclude-if condition="spec.java17" />
-	</export>
+	<export name="Java_java_lang_System_getPropertyList" />
 	<export name="Java_java_lang_System_mapLibraryName" />
 	<export name="Java_java_lang_System_setFieldImpl" />
 	<export name="Java_java_lang_System_rasInitializeVersion" />
@@ -259,9 +254,7 @@
 	<export name="Java_java_lang_Thread_setPriorityNoVMAccessImpl" />
 	<export name="Java_java_lang_Thread_setNameImpl" />
 	<export name="Java_java_lang_Thread_yield" />
-	<export name="Java_java_security_AccessController_initializeInternal">
-		<exclude-if condition="spec.java24" />
-	</export>
+	<export name="Java_java_security_AccessController_initializeInternal" />
 	<export name="Java_java_lang_Class_allocateAndFillArray" />
 	<export name="Java_java_lang_Class_getConstructorImpl" />
 	<export name="Java_java_lang_Class_getConstructorsImpl" />
@@ -291,22 +284,12 @@
 	<export name="Java_java_lang_Thread_getStackTraceImpl" />
 	<export name="Java_java_lang_Thread_holdsLock" />
 	<export name="Java_java_lang_Thread_interruptImpl" />
-	<export name="Java_java_lang_Thread_resumeImpl">
-		<exclude-if condition="spec.java20" />
-	</export>
+	<export name="Java_java_lang_Thread_resumeImpl" />
 	<export name="Java_java_lang_Thread_startImpl" />
-	<export name="Java_java_lang_Thread_stopImpl">
-		<exclude-if condition="spec.java20" />
-	</export>
-	<export name="Java_java_lang_Thread_suspendImpl">
-		<exclude-if condition="spec.java20" />
-	</export>
-	<export name="Java_java_security_AccessController_getAccSnapshot">
-		<exclude-if condition="spec.java24"/>
-	</export>
-	<export name="Java_java_security_AccessController_getCallerPD">
-		<exclude-if condition="spec.java24"/>
-	</export>
+	<export name="Java_java_lang_Thread_stopImpl" />
+	<export name="Java_java_lang_Thread_suspendImpl" />
+	<export name="Java_java_security_AccessController_getAccSnapshot" />
+	<export name="Java_java_security_AccessController_getCallerPD" />
 	<export name="JCL_OnLoad" />
 	<export name="JNI_OnUnload" />
 	<export name="JVM_OnLoad" />
@@ -334,5 +317,4 @@
 
 	<export name="Java_com_ibm_jvm_Stats_getStats" />
 	<export name="Java_openj9_internal_tools_attach_target_DiagnosticUtils_dumpAllThreadsImpl" />
-
 </exports>
