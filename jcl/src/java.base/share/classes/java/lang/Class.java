@@ -325,7 +325,6 @@ private Class() {}
  * @param		security			the current SecurityManager
  * @param		callerClassLoader	the ClassLoader of the caller of the original protected API
  * @param		type				type of access, PUBLIC, DECLARED or INVALID
- *
  */
 void checkMemberAccess(SecurityManager security, ClassLoader callerClassLoader, int type) {
 	if (callerClassLoader != ClassLoader.bootstrapClassLoader) {
@@ -473,10 +472,12 @@ AnnotationType getAnnotationType() {
 	AnnotationVars localAnnotationVars = getAnnotationVars();
 	return localAnnotationVars.annotationType;
 }
+
 void setAnnotationType(AnnotationType t) {
 	AnnotationVars localAnnotationVars = getAnnotationVars();
 	localAnnotationVars.annotationType = t;
 }
+
 /**
  * Compare-And-Swap the AnnotationType instance corresponding to this class.
  * (This method only applies to annotation types.)
@@ -1388,6 +1389,7 @@ private List<Method> lookupCachedDeclaredPublicMethods(CacheKey cacheKey) {
 	}
 	return null;
 }
+
 @CallerSensitive
 private List<Method> cacheDeclaredPublicMethods(List<Method> methods, CacheKey cacheKey) {
 	if (!reflectCacheEnabled
@@ -2084,7 +2086,7 @@ private Method getMostSpecificMethodFromAllInterfacesOfCurrentClass(HashMap<Clas
 		if (null == mi.jlrMethods) {
 			bestMethod = getMostSpecificInterfaceMethod(name, parameterTypes, bestMethod, mi.me);
 		} else {
-			for (Method m: mi.jlrMethods) {
+			for (Method m : mi.jlrMethods) {
 				bestMethod = getMostSpecificInterfaceMethod(name, parameterTypes, bestMethod, m);
 				/*[IF JAVA_SPEC_VERSION == 8]*/
 				// Java 8 returns any matching method found
@@ -2102,7 +2104,6 @@ private Method getMostSpecificMethodFromAllInterfacesOfCurrentClass(HashMap<Clas
 	}
 
 	return bestMethod;
-
 }
 
 private static Method getMostSpecificInterfaceMethod(String name, Class<?>[] parameterTypes, Method bestMethod, Method candidateMethod) {
@@ -2215,7 +2216,7 @@ public Method[] getMethods()
 		return methods;
 	}
 
-	if(isPrimitive()) {
+	if (isPrimitive()) {
 		return new Method[0];
 	}
 
@@ -2224,11 +2225,11 @@ public Method[] getMethods()
 	HashMap<Class<?>, HashMap<MethodInfo, MethodInfo>> infoCache = new HashMap<>(16);
 	HashMap<MethodInfo, MethodInfo> myMethods = getMethodSet(infoCache, false, false);
 	ArrayList<Method> myMethodList = new ArrayList<>(16);
-	for (MethodInfo mi: myMethods.values()) { /* don't know how big this will be at the start */
+	for (MethodInfo mi : myMethods.values()) { /* don't know how big this will be at the start */
 		if (null == mi.jlrMethods) {
 			myMethodList.add(mi.me);
 		} else {
-			for (Method m: mi.jlrMethods) {
+			for (Method m : mi.jlrMethods) {
 				myMethodList.add(m);
 			}
 		}
@@ -2263,7 +2264,7 @@ private HashMap<MethodInfo, MethodInfo> getMethodSet(
 			} while (!noHotswap);
 			/* if we are here, this is the target class, so return static and virtual methods */
 			boolean scanInterfaces = false;
-			for (Method m: methods) {
+			for (Method m : methods) {
 				Class<?> mDeclaringClass = m.getDeclaringClass();
 				MethodInfo mi = new MethodInfo(m);
 				MethodInfo prevMI = myMethods.put(mi, mi);
@@ -2296,7 +2297,7 @@ private HashMap<MethodInfo, MethodInfo> getMethodSet(
 		} else {
 			if (!localInterfacesOnly || isInterface()) {
 				/* this is an interface and doesn't have a vTable, but may have static or private methods */
-				for (Method m: getDeclaredMethods()) {
+				for (Method m : getDeclaredMethods()) {
 					int methodModifiers = m.getModifiers();
 					if ((virtualOnly && Modifier.isStatic(methodModifiers)) || !Modifier.isPublic(methodModifiers)){
 						continue;
@@ -2339,15 +2340,15 @@ private HashMap<MethodInfo, MethodInfo> addInterfaceMethods(
 		if (!isInterface() && (Object.class != mySuperclass)) {
 			/* some interface methods are visible via the superclass */
 			HashMap<MethodInfo, MethodInfo> superclassMethods = mySuperclass.addInterfaceMethods(infoCache, methodFilter, null, localInterfacesOnly);
-			for (MethodInfo otherInfo: superclassMethods.values()) {
+			for (MethodInfo otherInfo : superclassMethods.values()) {
 				if ((null == methodFilter) || methodFilter.contains(otherInfo)) {
 					addMethod(myMethods, otherInfo);
 				}
 			}
 		}
-		for (Class intf: getInterfaces()) {
+		for (Class intf : getInterfaces()) {
 			HashMap<MethodInfo, MethodInfo> intfMethods = intf.getMethodSet(infoCache, true, localInterfacesOnly);
-			for (MethodInfo otherInfo: intfMethods.values()) {
+			for (MethodInfo otherInfo : intfMethods.values()) {
 				if ((null == methodFilter) || methodFilter.contains(otherInfo)) {
 					addMethod(myMethods, otherInfo);
 				}
@@ -2363,7 +2364,7 @@ private HashMap<MethodInfo, MethodInfo> addInterfaceMethods(
 
 /* this is called only to add methods from implemented interfaces of a class or superinterfaces of an interface */
 private void addMethod(HashMap<MethodInfo,  MethodInfo>  myMethods, MethodInfo otherMi) {
-	 MethodInfo oldMi = myMethods.get(otherMi);
+	MethodInfo oldMi = myMethods.get(otherMi);
 	if (null == oldMi) {
 		/* haven't seen this method's name & sig */
 		oldMi = new MethodInfo(otherMi);
@@ -2437,7 +2438,7 @@ public Module getModule()
 public String getName() {
 	/*[PR CMVC 105714] Remove classNameMap (PR 115275) and always use getClassNameStringImpl() */
 	String name = classNameString;
-	if (name != null){
+	if (name != null) {
 		return name;
 	}
 	//must have been null to set it
@@ -2595,7 +2596,7 @@ public URL getResource(String resName) {
 		}
 	}
 	if (null == result)
-		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	{
 		if (loader == ClassLoader.bootstrapClassLoader) {
 			result =ClassLoader.getSystemResource(absoluteResName);
@@ -2624,7 +2625,7 @@ public InputStream getResourceAsStream(String resName) {
 	ClassLoader loader = this.getClassLoaderImpl();
 	String absoluteResName = this.toResourceName(resName);
 	InputStream result = null;
-/*[IF JAVA_SPEC_VERSION >= 9]*/
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	Module thisModule = getModule();
 
 	if (useModularSearch(absoluteResName, thisModule, System.getCallerClass())) {
@@ -2635,7 +2636,7 @@ public InputStream getResourceAsStream(String resName) {
 		}
 	}
 	if (null == result)
-/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	{
 		if (loader == ClassLoader.bootstrapClassLoader) {
 			result = ClassLoader.getSystemResourceAsStream(absoluteResName);
@@ -2694,18 +2695,18 @@ private boolean useModularSearch(String absoluteResName, Module thisModule, Clas
  * @see			java.lang.Class
  */
 private String getSignature() {
-	if(isArray()) return getName(); // Array classes are named with their signature
-	if(isPrimitive()) {
+	if (isArray()) return getName(); // Array classes are named with their signature
+	if (isPrimitive()) {
 		// Special cases for each base type.
-		if(this == void.class) return "V"; //$NON-NLS-1$
-		if(this == boolean.class) return "Z"; //$NON-NLS-1$
-		if(this == byte.class) return "B"; //$NON-NLS-1$
-		if(this == char.class) return "C"; //$NON-NLS-1$
-		if(this == short.class) return "S"; //$NON-NLS-1$
-		if(this == int.class) return "I"; //$NON-NLS-1$
-		if(this == long.class) return "J"; //$NON-NLS-1$
-		if(this == float.class) return "F"; //$NON-NLS-1$
-		if(this == double.class) return "D"; //$NON-NLS-1$
+		if (this == void.class) return "V"; //$NON-NLS-1$
+		if (this == boolean.class) return "Z"; //$NON-NLS-1$
+		if (this == byte.class) return "B"; //$NON-NLS-1$
+		if (this == char.class) return "C"; //$NON-NLS-1$
+		if (this == short.class) return "S"; //$NON-NLS-1$
+		if (this == int.class) return "I"; //$NON-NLS-1$
+		if (this == long.class) return "J"; //$NON-NLS-1$
+		if (this == float.class) return "F"; //$NON-NLS-1$
+		if (this == double.class) return "D"; //$NON-NLS-1$
 	}
 
 	// General case.
@@ -2725,7 +2726,7 @@ private String getSignature() {
  */
 public Object[] getSigners() {
 	/*[PR CMVC 93861] allow setSigners() for bootstrap classes */
-	 return getClassLoaderImpl().getSigners(this);
+	return getClassLoaderImpl().getSigners(this);
 }
 
 /**
@@ -2766,7 +2767,6 @@ public native boolean isArray();
  *					the class to test
  * @throws	NullPointerException
  *					if the parameter is null
- *
  */
 public native boolean isAssignableFrom(Class<?> cls);
 
@@ -3278,7 +3278,7 @@ static final native Class<?>[] getStackClasses(int maxDepth, boolean stopAtPrivi
 @CallerSensitive
 static int classDepth (String name) {
 	Class<?>[] classes = getStackClasses(-1, false);
-	for (int i=1; i<classes.length; i++)
+	for (int i = 1; i < classes.length; i++)
 		if (classes[i].getName().equals(name))
 			return i - 1;
 	return -1;
@@ -3297,9 +3297,10 @@ static int classLoaderDepth() {
 	// the stack up to the first privileged method (or the end
 	// of the stack.
 	Class<?>[] classes = getStackClasses(-1, true);
-	for (int i=1; i<classes.length; i++) {
+	for (int i = 1; i < classes.length; i++) {
 		ClassLoader cl = classes[i].getClassLoaderImpl();
-		if (!cl.isASystemClassLoader()) return i - 1;
+		if (!cl.isASystemClassLoader())
+			return i - 1;
 	}
 	return -1;
 }
@@ -3317,9 +3318,10 @@ static ClassLoader currentClassLoader() {
 	// the stack up to the first privileged method (or the end
 	// of the stack.
 	Class<?>[] classes = getStackClasses(-1, true);
-	for (int i=1; i<classes.length; i++) {
+	for (int i = 1; i < classes.length; i++) {
 		ClassLoader cl = classes[i].getClassLoaderImpl();
-		if (!cl.isASystemClassLoader()) return cl;
+		if (!cl.isASystemClassLoader())
+			return cl;
 	}
 	return null;
 }
@@ -3337,9 +3339,10 @@ static Class<?> currentLoadedClass() {
 	// the stack up to the first privileged method (or the end
 	// of the stack.
 	Class<?>[] classes = getStackClasses(-1, true);
-	for (int i=1; i<classes.length; i++) {
+	for (int i = 1; i < classes.length; i++) {
 		ClassLoader cl = classes[i].getClassLoaderImpl();
-		if (!cl.isASystemClassLoader()) return classes[i];
+		if (!cl.isASystemClassLoader())
+			return classes[i];
 	}
 	return null;
 }
@@ -3554,7 +3557,8 @@ public <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationClass)
 		Class<?> sc = this;
 		while (0 == annotationsList.size()) {
 			sc = sc.getSuperclass();
-			if (null == sc) break;
+			if (null == sc)
+				break;
 			ArrayList<A> superAnnotations = sc.internalGetDeclaredAnnotationsByType(annotationClass);
 			if (superAnnotations != null) {
 				annotationsList.addAll(superAnnotations);
@@ -3670,7 +3674,7 @@ private String cacheSimpleName(String simpleName) {
 
 	if (cache.cachedSimpleName == null || cache.cachedSimpleName.get() == null) {
 		MetadataCache.cachedSimpleNameOffset = getFieldOffset(
-			MetadataCache.class, "cachedSimpleName", MetadataCache.cachedSimpleNameOffset); //$NON-NLS-1$
+				MetadataCache.class, "cachedSimpleName", MetadataCache.cachedSimpleNameOffset); //$NON-NLS-1$
 
 		writeFieldValue(cache, MetadataCache.cachedSimpleNameOffset, new SoftReference<>(simpleName));
 	}
@@ -4109,7 +4113,7 @@ private CoreReflectionFactory getFactory() {
 private ClassRepositoryHolder getClassRepositoryHolder() {
 	ClassRepositoryHolder localClassRepositoryHolder = classRepoHolder;
 	if (localClassRepositoryHolder == null) {
-		synchronized(this) {
+		synchronized (this) {
 			localClassRepositoryHolder = classRepoHolder;
 			if (localClassRepositoryHolder == null) {
 				String signature = getGenericSignature();
@@ -4283,7 +4287,7 @@ public Class<?> getEnclosingClass()
 		}
 		if (cachedEnclosingClass == null) {
 			Class<?> localEnclosingClass = getEnclosingObjectClass();
-			if (localEnclosingClass == null){
+			if (localEnclosingClass == null) {
 				localEnclosingClass = ClassReflectNullPlaceHolder.class;
 			}
 			writeFieldValue(cachedEnclosingClassOffset, localEnclosingClass);
@@ -4292,7 +4296,7 @@ public Class<?> getEnclosingClass()
 		 * ClassReflectNullPlaceHolder.class means the value of cachedEnclosingClass is null
 		 * @see ClassReflectNullPlaceHolder.class
 		 */
-		enclosingClass = cachedEnclosingClass == ClassReflectNullPlaceHolder.class ? null: cachedEnclosingClass;
+		enclosingClass = cachedEnclosingClass == ClassReflectNullPlaceHolder.class ? null : cachedEnclosingClass;
 	}
 	/*[IF JAVA_SPEC_VERSION < 24]*/
 	if (enclosingClass != null) {
@@ -4358,7 +4362,7 @@ public String getSimpleName() {
 			// remove the package name
 			int index = fullName.lastIndexOf('.');
 			if (index != -1) {
-				simpleName = fullName.substring(index+1);
+				simpleName = fullName.substring(index + 1);
 			} else {
 				// no periods in fully qualified name, thus simple name is also the full name
 				simpleName = fullName;
@@ -4394,7 +4398,7 @@ public String getSimpleName() {
 	/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 	if (arrayCount > 0) {
 		StringBuilder result = new StringBuilder(simpleName);
-		for (int i=0; i<arrayCount; i++) {
+		for (int i = 0; i < arrayCount; i++) {
 			result.append("[]"); //$NON-NLS-1$
 		}
 		return result.toString();
@@ -4461,7 +4465,7 @@ public String getCanonicalName() {
 
 	if (arrayCount > 0) {
 		StringBuilder result = new StringBuilder(canonicalName);
-		for (int i=0; i<arrayCount; i++) {
+		for (int i = 0; i < arrayCount; i++) {
 			result.append("[]"); //$NON-NLS-1$
 		}
 		return result.toString();
@@ -4637,8 +4641,7 @@ private static Method getAccessibleMethod(Class<?> cls, String name) {
 
 /*[PR RTC 104994 redesign getMethods]*/
 /**
- * represents all methods of a given name and signature visible from a given class or interface.
- *
+ * Represents all methods of a given name and signature visible from a given class or interface.
  */
 private class MethodInfo {
 	ArrayList<Method> jlrMethods;
@@ -4669,7 +4672,6 @@ private class MethodInfo {
 		} else {
 			jlrMethods = null;
 		}
-
 	}
 
 	private void initializeTypes() {
@@ -4814,7 +4816,6 @@ private class MethodInfo {
 	public int hashCode() {
 		return myHash;
 	}
-
 }
 
 static boolean methodAOverridesMethodB(Class<?> methodAClass,	boolean methodAIsAbstract, boolean methodAClassIsInterface,
@@ -4860,9 +4861,11 @@ private static final class ReflectRef extends SoftReference<Object> implements R
 private static final class CacheKey {
 	/*[PR CMVC 163440] java.lang.Class$CacheKey.PRIME should be static */
 	private static final int PRIME = 31;
+
 	private static int hashCombine(int partial, int itemHash) {
 		return partial * PRIME + itemHash;
 	}
+
 	private static int hashCombine(int partial, Object item) {
 		return hashCombine(partial, item == null ? 0 : item.hashCode());
 	}
@@ -4870,12 +4873,15 @@ private static final class CacheKey {
 	static CacheKey newConstructorKey(Class<?>[] parameterTypes) {
 		return new CacheKey("", parameterTypes, null); //$NON-NLS-1$
 	}
+
 	static CacheKey newFieldKey(String fieldName, Class<?> type) {
 		return new CacheKey(fieldName, null, type);
 	}
+
 	static CacheKey newMethodKey(String methodName, Class<?>[] parameterTypes, Class<?> returnType) {
 		return new CacheKey(methodName, parameterTypes, returnType);
 	}
+
 /*[IF JAVA_SPEC_VERSION >= 11]*/
 	static CacheKey newDeclaredPublicMethodsKey(String methodName, Class<?>[] parameterTypes) {
 		return new CacheKey("#m" + methodName, parameterTypes, null);	//$NON-NLS-1$
@@ -4894,6 +4900,7 @@ private static final class CacheKey {
 	private final Class<?>[] parameterTypes;
 	private final Class<?> returnType;
 	private final int hashCode;
+
 	private CacheKey(String name, Class<?>[] parameterTypes, Class<?> returnType) {
 		super();
 		int hash = hashCombine(name.hashCode(), returnType);
@@ -4907,6 +4914,7 @@ private static final class CacheKey {
 		this.returnType = returnType;
 		this.hashCode = hash;
 	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
@@ -4919,6 +4927,7 @@ private static final class CacheKey {
 		}
 		return false;
 	}
+
 	@Override
 	public int hashCode() {
 		return hashCode;
@@ -5070,6 +5079,7 @@ private ReflectCache acquireReflectCache() {
 	}
 	return cache.acquire();
 }
+
 private static long getReflectCacheOffset() {
 	long cacheOffset = reflectCacheOffset;
 	if (cacheOffset < 0) {
@@ -5084,6 +5094,7 @@ private static long getReflectCacheOffset() {
 	}
 	return cacheOffset;
 }
+
 void setReflectCache(ReflectCache cache) {
 	// Lazy initialization of a non-volatile field. Ensure the Object is initialized
 	// and flushed to memory before assigning to the annotationCache field.
@@ -5144,7 +5155,7 @@ private Method cacheMethod(Method method) {
 	if (copyMethod == null) return method;
 	/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 	if (reflectCacheDebug) {
-		reflectCacheDebugHelper(null, 0, "cache Method: ", getName(), ".", method.getName());	//$NON-NLS-1$ //$NON-NLS-2$
+		reflectCacheDebugHelper(null, 0, "cache Method: ", getName(), ".", method.getName()); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 	try {
 		Class<?>[] parameterTypes = getParameterTypes(method);
@@ -5255,7 +5266,7 @@ private Constructor<T> lookupCachedConstructor(Class<?>[] parameters) {
 	if (!reflectCacheEnabled) return null;
 
 	if (reflectCacheDebug) {
-		reflectCacheDebugHelper(parameters, 1, "lookup Constructor: ", getName());	//$NON-NLS-1$
+		reflectCacheDebugHelper(parameters, 1, "lookup Constructor: ", getName()); //$NON-NLS-1$
 	}
 	ReflectCache cache = peekReflectCache();
 	if (cache != null) {
@@ -5293,7 +5304,7 @@ private Constructor<T> cacheConstructor(Constructor<T> constructor) {
 	if (copyConstructor == null) return constructor;
 	/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 	if (reflectCacheDebug) {
-		reflectCacheDebugHelper(constructor.getParameterTypes(), 1, "cache Constructor: ", getName());	//$NON-NLS-1$
+		reflectCacheDebugHelper(constructor.getParameterTypes(), 1, "cache Constructor: ", getName()); //$NON-NLS-1$
 	}
 	ReflectCache cache = acquireReflectCache();
 	try {
@@ -5344,7 +5355,7 @@ private Method[] lookupCachedMethods(CacheKey cacheKey) {
 	if (!reflectCacheEnabled) return null;
 
 	if (reflectCacheDebug) {
-		reflectCacheDebugHelper(null, 0, "lookup Methods in: ", getName());	//$NON-NLS-1$
+		reflectCacheDebugHelper(null, 0, "lookup Methods in: ", getName()); //$NON-NLS-1$
 	}
 	ReflectCache cache = peekReflectCache();
 	if (cache != null) {
@@ -5366,7 +5377,7 @@ private Method[] cacheMethods(Method[] methods, CacheKey cacheKey) {
 	if (copyMethod == null) return methods;
 	/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 	if (reflectCacheDebug) {
-		reflectCacheDebugHelper(null, 0, "cache Methods in: ", getName());	//$NON-NLS-1$
+		reflectCacheDebugHelper(null, 0, "cache Methods in: ", getName()); //$NON-NLS-1$
 	}
 	ReflectCache cache = null;
 	Class<?> cacheOwner = null;
@@ -5428,7 +5439,7 @@ private Field[] lookupCachedFields(CacheKey cacheKey) {
 	if (!reflectCacheEnabled) return null;
 
 	if (reflectCacheDebug) {
-		reflectCacheDebugHelper(null, 0, "lookup Fields in: ", getName());	//$NON-NLS-1$
+		reflectCacheDebugHelper(null, 0, "lookup Fields in: ", getName()); //$NON-NLS-1$
 	}
 	ReflectCache cache = peekReflectCache();
 	if (cache != null) {
@@ -5538,7 +5549,7 @@ private Constructor<T>[] cacheConstructors(Constructor<T>[] constructors, CacheK
 	}
 	ReflectCache cache = acquireReflectCache();
 	try {
-		for (int i=0; i<constructors.length; i++) {
+		for (int i = 0; i < constructors.length; i++) {
 			CacheKey key = CacheKey.newConstructorKey(getParameterTypes(constructors[i]));
 			constructors[i] = cache.insertIfAbsent(key, constructors[i]);
 		}
@@ -5627,12 +5638,15 @@ ConstantPool getConstantPool(Object internalCP) {
 Map<Class<? extends Annotation>, Annotation> getDeclaredAnnotationMap() {
 	throw new Error("Class.getDeclaredAnnotationMap() unimplemented"); //$NON-NLS-1$
 }
+
 byte[] getRawAnnotations() {
 	throw new Error("Class.getRawAnnotations() unimplemented"); //$NON-NLS-1$
 }
+
 byte[] getRawTypeAnnotations() {
 	throw new Error("Class.getRawTypeAnnotations() unimplemented"); //$NON-NLS-1$
 }
+
 static byte[] getExecutableTypeAnnotationBytes(Executable exec) {
 	throw new Error("Class.getExecutableTypeAnnotationBytes() unimplemented"); //$NON-NLS-1$
 }
@@ -5705,7 +5719,6 @@ public Class<?> getNestHost()
  *
  * @param that The class to compare
  * @return true if class is a nestmate of this class; false otherwise.
- *
  */
 public boolean isNestmateOf(Class<?> that) {
 	Class<?> thisNestHost = this.nestHost;
@@ -5907,9 +5920,9 @@ public Class<?>[] getNestMembers()
 /*[IF JAVA_SPEC_VERSION >= 16]*/
 		Class superclazz = getSuperclass();
 		return ((superclazz == Record.class) && isRecordImpl());
-/*[ELSE] JAVA_SPEC_VERSION >= 16*/
+/*[ELSE] JAVA_SPEC_VERSION >= 16 */
 		return isRecordImpl();
-/*[ENDIF] JAVA_SPEC_VERSION >= 16*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 	}
 
 	private native boolean isRecordImpl();
@@ -6120,6 +6133,7 @@ public Class<?>[] getNestMembers()
 
 	private native int getClassFileVersion0();
 /*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+
 /*[IF JAVA_SPEC_VERSION == 21]*/
 	/**
 	 * Answers true if the class is an unnamed class.
@@ -6140,6 +6154,7 @@ public Class<?>[] getNestMembers()
 		return rc;
 	}
 /*[ENDIF] JAVA_SPEC_VERSION == 21 */
+
 /*[IF JAVA_SPEC_VERSION >= 22]*/
 	/**
 	 * Returns the Class object with the given primitive type name.
@@ -6153,7 +6168,7 @@ public Class<?>[] getNestMembers()
 	 * @since 22
 	 */
 	public static Class<?> forPrimitiveName(String typeName) {
-		return switch(typeName) {
+		return switch (typeName) {
 		case "boolean" -> boolean.class; //$NON-NLS-1$
 		case "byte" -> byte.class; //$NON-NLS-1$
 		case "char" -> char.class; //$NON-NLS-1$
@@ -6175,4 +6190,9 @@ public Class<?>[] getNestMembers()
 		}
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 22 */
+
+/*[IF JAVA_SPEC_VERSION >= 26]*/
+	native int getClassFileAccessFlags();
+/*[ENDIF] JAVA_SPEC_VERSION >= 26 */
+
 }

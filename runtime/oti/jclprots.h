@@ -928,6 +928,9 @@ jarray JNICALL Java_java_lang_Class_getDeclaredFieldsImpl(JNIEnv *env, jobject r
 jobject JNICALL Java_java_lang_Class_getNestHostImpl(JNIEnv *env, jobject recv);
 jobject JNICALL Java_java_lang_Class_getNestMembersImpl(JNIEnv *env, jobject recv);
 #endif /* JAVA_SPEC_VERSION >= 11 */
+#if JAVA_SPEC_VERSION >= 26
+jint JNICALL Java_java_lang_Class_getClassFileAccessFlags(JNIEnv *env, jobject recv);
+#endif /* JAVA_SPEC_VERSION >= 26 */
 
 /* sun_misc_Perf.c */
 void JNICALL Java_sun_misc_Perf_registerNatives(JNIEnv *env, jclass klass);
