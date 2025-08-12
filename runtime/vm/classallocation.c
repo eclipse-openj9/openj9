@@ -67,17 +67,9 @@ U_32 classPropagationTable[CLASS_PROPAGATION_TABLE_SIZE] = {
 void
 freeMapCaches(J9ClassLoader *classLoader)
 {
-	if (NULL != classLoader->localmapCache) {
-		hashTableFree(classLoader->localmapCache);
-		classLoader->localmapCache = NULL;
-	}
-	if (NULL != classLoader->argsbitsCache) {
-		hashTableFree(classLoader->argsbitsCache);
-		classLoader->argsbitsCache = NULL;
-	}
-	if (NULL != classLoader->stackmapCache) {
-		hashTableFree(classLoader->stackmapCache);
-		classLoader->stackmapCache = NULL;
+	if (NULL != classLoader->romMethodInfoCache) {
+		hashTableFree(classLoader->romMethodInfoCache);
+		classLoader->romMethodInfoCache = NULL;
 	}
 }
 
