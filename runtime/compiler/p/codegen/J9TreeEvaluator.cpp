@@ -12404,12 +12404,16 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    else
       {
       // For countPosives, we should return the existing index for a negative value, so we can
-      // jump straight to the end; if the last value is positive we return the length
-      // For hasNegatives, we pre-load a 1 in the case of negatives.
+      // jump straight to the end, otherwise we return the length
+      // For hasNegatives, we pre-load a 1 in the case of negatives, and load back a 0 otherwise
       if (!isCountPositives)
          generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 1);
       generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
-      generateLabelInstruction(cg, TR::InstOpCode::b, node, noMatchLabel);
+      if (isCountPositives)
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 1);
+      else
+         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 0);
+      generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
       }
 
    // This is actually where we do our main length checks; we don't do it earlier for speed.
