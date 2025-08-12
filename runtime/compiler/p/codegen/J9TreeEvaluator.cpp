@@ -12199,7 +12199,7 @@ static TR::Register *inlineIntrinsicIndexOfString(TR::Node *node, TR::CodeGenera
    // wasn't introduced until Power 9.
    if (comp->target().cpu.isLittleEndian())
       {
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisb, node, vec1Reg, 0x0f);
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisb, node, vec1Reg, 15);
       generateTrg1Src2Instruction(cg, TR::InstOpCode::vsububm, node, permuteVectorReg, vec1Reg, permuteVectorReg);
       }
 
@@ -12352,7 +12352,7 @@ static TR::Register *inlineIntrinsicIndexOfString(TR::Node *node, TR::CodeGenera
    // wasn't introduced until Power 9.
    if (comp->target().cpu.isLittleEndian())
       {
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisb, node, vec1Reg, 0x0f);
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisb, node, vec1Reg, 15);
       generateTrg1Src2Instruction(cg, TR::InstOpCode::vsububm, node, permuteVectorReg, vec1Reg, permuteVectorReg);
       }
 
@@ -12396,7 +12396,7 @@ static TR::Register *inlineIntrinsicIndexOfString(TR::Node *node, TR::CodeGenera
    // wasn't introduced until Power 9.
    if (comp->target().cpu.isLittleEndian())
       {
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisb, node, vec1Reg, 0x0f);
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisb, node, vec1Reg, 15);
       generateTrg1Src2Instruction(cg, TR::InstOpCode::vsububm, node, permuteVectorReg, vec1Reg, permuteVectorReg);
       }
 
