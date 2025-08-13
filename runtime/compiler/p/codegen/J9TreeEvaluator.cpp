@@ -12533,7 +12533,10 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, serialHWordLabel, cr0);
    generateLabelInstruction(cg, TR::InstOpCode::b, node, serial1Label);
 
-   // --- when there is a match but we don't know the exact location yet
+   // --- matchLabel is used when we know there is a match
+   // For countPositives, this is when a negative value is found in the vtmp1Reg, so
+   // we have to find its exact location.
+   // For hasNegatives, this can be used anywhere since it simply lets the function return 1.
    generateLabelInstruction(cg, TR::InstOpCode::label, node, matchLabel);
    if (isCountPositives)
       {
