@@ -55,42 +55,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<exports>
 			<group name="all"/>
 			<group name="j9vmnatives"/>
-			<group name="jdk11">
-				<include-if condition="spec.java11"/>
-			</group>
-			<group name="jdk14">
-				<include-if condition="spec.java14"/>
-			</group>
-			<group name="jdk15">
-				<include-if condition="spec.java15"/>
-			</group>
-			<group name="jdk16">
-				<include-if condition="spec.java16"/>
-			</group>
-			<group name="jdk17">
-				<include-if condition="spec.java17"/>
-			</group>
-			<group name="jdk18">
-				<include-if condition="spec.java18"/>
-			</group>
-			<group name="jdk19">
-				<include-if condition="spec.java19"/>
-			</group>
-			<group name="jdk20">
-				<include-if condition="spec.java20"/>
-			</group>
-			<group name="jdk21">
-				<include-if condition="spec.java21"/>
-			</group>
-			<group name="jdk22">
-				<include-if condition="spec.java22"/>
-			</group>
-			<group name="jdk23">
-				<include-if condition="spec.java23"/>
-			</group>
-			<group name="jdk24">
-				<include-if condition="spec.java24"/>
-			</group>
 		</exports>
 		<includes>
 			<include path="j9include"/>
@@ -114,19 +78,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<object name="vmi"/>
 			<object name="ut_j9scar"/>
 			<object name="j9memcategories"/>
-			<object name="java11vmi">
-				<!--
-				This object is mis-named and should have been separated into additions
-				for 9, 10 and 11. As Java 9 and 10 are out-of-service at this point it
-				isn't worth fixing.
-				-->
-				<!-- TODO include this object conditionally
-				<include-if condition="spec.java9"/>
-				-->
-			</object>
-			<object name="javanextvmi">
-				<include-if condition="spec.java11"/>
-			</object>
+			<object name="java11vmi"/>
 			<object name="valhallavmi">
 				<include-if condition="spec.flags.opt_valhallaValueTypes"/>
 			</object>
