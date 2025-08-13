@@ -12332,40 +12332,23 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
 
    // --- size 2-3: load a half word
    generateLabelInstruction(cg, TR::InstOpCode::label, node, serialHWordLabel);
-   // For count positives, we have to consider the endianness as well as the processor version:
-   // 1: LE after P9; 2: LE before P9; 3: BE after P9; 4: BE before P9
-   // Quadrant 1: with count trailing zero available, we can use a regular load for max performance
-   // Quadrant 2: we use byte-reverse loading to ensure the same byte ordering as BE, and use count leading zero
-   // Quadrant 3 and 4: for BE we can use a regular load plus the count leading zero which is always available
-   if (isCountPositives && isLE && !p9Plus) // Quadrant 2
+   // For countPositives, we use load-byte-reverse for LE so that we can count leading zeroes later.
+   if (isCountPositives && isLE)
       generateTrg1MemInstruction(cg, TR::InstOpCode::lhbrx, node, storeReg,
             TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 2));
-   else // Quadrant 1, 3, 4
+   else
       generateTrg1MemInstruction(cg, TR::InstOpCode::lhzx, node, storeReg,
             TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 2));
    if (isCountPositives) // when counting positives, we must consider every byte separately
       {
-      if (isLE && p9Plus) // Quadrant 1
-         {
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, storeReg, storeReg, 0x8080);
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::oris, node, storeReg, storeReg, 0xFFFF);
-         generateTrg1Src1Instruction(cg, TR::InstOpCode::cnttzw, node, storeReg, storeReg);
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::srawi, node, storeReg, storeReg, 3);
-         generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, indexReg, storeReg, indexReg);
-         // existence of negative values means we can jump away
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
-         }
-      else // Quadrant 2, 3, 4
-         {
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, storeReg, storeReg, 0x8080);
-         generateTrg1Src1Instruction(cg, TR::InstOpCode::cntlzw, node, storeReg, storeReg);
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::srawi, node, storeReg, storeReg, 3);
-         // ignore the first two bytes in the word
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, storeReg, storeReg, -2);
-         generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, indexReg, storeReg, indexReg);
-         // existence of negative values means we can jump away
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
-         }
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, storeReg, storeReg, 0x8080);
+      generateTrg1Src1Instruction(cg, TR::InstOpCode::cntlzw, node, storeReg, storeReg);
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::srawi, node, storeReg, storeReg, 3);
+      // ignore the first two bytes in the word
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, storeReg, storeReg, -2);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, indexReg, storeReg, indexReg);
+      // existence of negative values means we can jump away
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
       }
    else // for hasNegatives we don't care about the byte ordering
       {
@@ -12436,37 +12419,21 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
 
    // --- size 4-7: load one word
    generateLabelInstruction(cg, TR::InstOpCode::label, node, serialWordLabel);
-   // For count positives, we have to consider the endianness as well as the processor version:
-   // 1: LE after P9; 2: LE before P9; 3: BE after P9; 4: BE before P9
-   // Quadrant 1: with count trailing zero available, we can use a regular load for max performance
-   // Quadrant 2: we use byte-reverse loading to ensure the same byte ordering as BE, and use count leading zero
-   // Quadrant 3 and 4: for BE we can use a regular load plus the count leading zero which is always available
-   if (isCountPositives && isLE && !p9Plus) // Quadrant 2
+   // For countPositives, we use load-byte-reverse for LE so that we can count leading zeroes later.
+   if (isCountPositives && isLE)
       generateTrg1MemInstruction(cg, TR::InstOpCode::lwbrx, node, storeReg,
             TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 4));
-   else // Quadrant 1, 3, 4
+   else
       generateTrg1MemInstruction(cg, TR::InstOpCode::lwzx, node, storeReg,
             TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 4));
    if (isCountPositives) // when counting positives, we must consider every byte separately
       {
-      if (isLE && p9Plus) // Quadrant 1
-         {
-         generateTrg1Src2Instruction(cg, TR::InstOpCode::and_r, node, storeReg, storeReg, maskReg);
-         generateTrg1Src1Instruction(cg, TR::InstOpCode::cnttzw, node, storeReg, storeReg);
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::srawi, node, storeReg, storeReg, 3);
-         generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, indexReg, storeReg, indexReg);
-         // existence of negative values means we can jump away
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
-         }
-      else // Quadrant 2, 3, 4
-         {
-         generateTrg1Src2Instruction(cg, TR::InstOpCode::and_r, node, storeReg, storeReg, maskReg);
-         generateTrg1Src1Instruction(cg, TR::InstOpCode::cntlzw, node, storeReg, storeReg);
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::srawi, node, storeReg, storeReg, 3);
-         generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, indexReg, storeReg, indexReg);
-         // existence of negative values means we can jump away
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
-         }
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::and_r, node, storeReg, storeReg, maskReg);
+      generateTrg1Src1Instruction(cg, TR::InstOpCode::cntlzw, node, storeReg, storeReg);
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::srawi, node, storeReg, storeReg, 3);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, indexReg, storeReg, indexReg);
+      // existence of negative values means we can jump away
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
       }
    else
       {
@@ -12494,38 +12461,22 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldimi, node, maskReg, maskReg, 32,
          CONSTANT64(0xFFFFFFFF00000000));
 
-   // For count positives, we have to consider the endianness as well as the processor version:
-   // 1: LE after P9; 2: LE before P9; 3: BE after P9; 4: BE before P9
-   // Quadrant 1: with count trailing zero available, we can use a regular load for max performance
-   // Quadrant 2: we use byte-reverse loading to ensure the same byte ordering as BE, and use count leading zero
-   // Quadrant 3 and 4: for BE we can use a regular load plus the count leading zero which is always available
-   if (isCountPositives && isLE && !p9Plus) // Quadrant 2
+   // For countPositives, we use load-byte-reverse for LE so that we can count leading zeroes later.
+   if (isCountPositives && isLE)
       generateTrg1MemInstruction(cg, TR::InstOpCode::ldbrx, node, storeReg,
             TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 8));
    else
-      generateTrg1MemInstruction( // Quadrant 1, 3, 4cg, TR::InstOpCode::ld, node, storeReg,
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ld, node, storeReg,
             TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 8));
 
    if (isCountPositives) // when counting positives, we must consider every byte separately
       {
-      if (isLE && p9Plus) // Quadrant 1
-         {
-         generateTrg1Src2Instruction(cg, TR::InstOpCode::and_r, node, storeReg, storeReg, maskReg);
-         generateTrg1Src1Instruction(cg, TR::InstOpCode::cnttzd, node, storeReg, storeReg);
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::srawi, node, storeReg, storeReg, 3);
-         generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, indexReg, storeReg, indexReg);
-         // existence of negative values means we can jump away
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
-         }
-      else // Quadrant 2, 3, 4
-         {
-         generateTrg1Src2Instruction(cg, TR::InstOpCode::and_r, node, storeReg, storeReg, maskReg);
-         generateTrg1Src1Instruction(cg, TR::InstOpCode::cntlzd, node, storeReg, storeReg);
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::srawi, node, storeReg, storeReg, 3);
-         generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, indexReg, storeReg, indexReg);
-         // existence of negative values means we can jump away
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
-         }
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::and_r, node, storeReg, storeReg, maskReg);
+      generateTrg1Src1Instruction(cg, TR::InstOpCode::cntlzd, node, storeReg, storeReg);
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::srawi, node, storeReg, storeReg, 3);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, indexReg, storeReg, indexReg);
+      // existence of negative values means we can jump away
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
       }
    else
       {
@@ -12595,8 +12546,8 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
       else // otherwise, we simply go through the last 16 items as if they are the last 16
          {
          // Since there must be a match in the last 16 items, the residue loop
-         // will search the first 15 and return i+(0~14) if a match is found,
-         // and return the 'length' (i+15) if no match is found since the match is the 16th item
+         // will search a[i] to a[i+14] and return if a match is found,
+         // and return the 'length' (i+15) if no match is found since the match must be a[i+15].
          generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, lengthReg, indexReg, 15);
          generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, tempReg, indexReg, lengthReg);
          generateLabelInstruction(cg, TR::InstOpCode::b, node, serialDWordCheckLabel);
