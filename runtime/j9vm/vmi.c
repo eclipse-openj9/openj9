@@ -37,23 +37,22 @@
 #include "ut_j9scar.h"
 
 extern J9JavaVM *BFUjavaVM;
-SunVMI* g_VMI;
+SunVMI *g_VMI;
 
 /**
  * Initializes the VM-interface from the supplied JNIEnv.
- * 
  */
-void 
+void
 initializeVMI(void)
 {
 	PORT_ACCESS_FROM_JAVAVM(BFUjavaVM);
-	jint result;
-	
-	/* Register this module with trace */
+	jint result = 0;
+
+	/* Register this module with trace. */
 	UT_MODULE_LOADED(J9_UTINTERFACE_FROM_VM(BFUjavaVM));
 	Trc_SC_VMInitStages_Event1(BFUjavaVM->mainThread);
-	result = (BFUjavaVM)->internalVMFunctions->GetEnv((JavaVM*)BFUjavaVM, (void**)&g_VMI, SUNVMI_VERSION_1_1);
-	if (result != JNI_OK) {
+	result = (BFUjavaVM)->internalVMFunctions->GetEnv((JavaVM *)BFUjavaVM, (void **)&g_VMI, SUNVMI_VERSION_1_1);
+	if (JNI_OK != result) {
 		j9tty_printf(PORTLIB, "FATAL ERROR: Could not obtain SUNVMI from VM.\n");
 		exit(-1);
 	}
@@ -65,7 +64,6 @@ JVM_LatestUserDefinedLoader(JNIEnv *env)
 	ENSURE_VMI();
 	return g_VMI->JVM_LatestUserDefinedLoader(env);
 }
-
 
 jobject JNICALL
 #if JAVA_SPEC_VERSION >= 11
@@ -82,29 +80,28 @@ JVM_GetCallerClass(JNIEnv *env, jint depth)
 #endif /* JAVA_SPEC_VERSION >= 11 */
 }
 
-
 jobject JNICALL
-JVM_NewInstanceFromConstructor(JNIEnv * env, jobject c, jobjectArray args)
+JVM_NewInstanceFromConstructor(JNIEnv *env, jobject c, jobjectArray args)
 {
 	ENSURE_VMI();
 	return g_VMI->JVM_NewInstanceFromConstructor(env, c, args);
 }
 
-
 jobject JNICALL
-JVM_InvokeMethod(JNIEnv * env, jobject method, jobject obj, jobjectArray args)
+JVM_InvokeMethod(JNIEnv *env, jobject method, jobject obj, jobjectArray args)
 {
 	ENSURE_VMI();
 	return g_VMI->JVM_InvokeMethod(env, method, obj, args);
 }
 
-
+#if JAVA_SPEC_VERSION < 26
 jint JNICALL
-JVM_GetClassAccessFlags(JNIEnv * env, jclass clazzRef)
+JVM_GetClassAccessFlags(JNIEnv *env, jclass clazzRef)
 {
 	ENSURE_VMI();
 	return g_VMI->JVM_GetClassAccessFlags(env, clazzRef);
 }
+#endif /* JAVA_SPEC_VERSION < 26 */
 
 #if JAVA_SPEC_VERSION < 24
 jobject JNICALL
@@ -122,7 +119,6 @@ JVM_Halt(jint exitCode)
 	g_VMI->JVM_Halt(exitCode);
 }
 
-
 void JNICALL
 JVM_GCNoCompact(void)
 {
@@ -130,14 +126,12 @@ JVM_GCNoCompact(void)
 	g_VMI->JVM_GCNoCompact();
 }
 
-
 void JNICALL
 JVM_GC(void)
 {
 	ENSURE_VMI();
 	g_VMI->JVM_GC();
 }
-
 
 /**
  * JVM_TotalMemory
@@ -149,7 +143,6 @@ JVM_TotalMemory(void)
 	return g_VMI->JVM_TotalMemory();
 }
 
-
 jlong JNICALL
 JVM_FreeMemory(void)
 {
@@ -157,45 +150,41 @@ JVM_FreeMemory(void)
 	return g_VMI->JVM_FreeMemory();
 }
 
-
 jobject JNICALL
-JVM_GetSystemPackages(JNIEnv* env)
+JVM_GetSystemPackages(JNIEnv *env)
 {
 	ENSURE_VMI();
 	return g_VMI->JVM_GetSystemPackages(env);
 }
-
 
 /**
  * Returns the package information for the specified package name.  Package information is the directory or
  * jar file name from where the package was loaded (separator is to be '/' and for a directory the return string is
  * to end with a '/' character). If the package is not loaded then null is to be returned.
  *
- * @arg[in] env          - JNI environment.
+ * @arg[in] env     - JNI environment.
  * @arg[in] pkgName -  A Java string for the name of a package. The package must be separated with '/' and optionally end with a '/' character.
  *
  * @return Package information as a string.
  *
- * @note In the current implementation, the separator is not guaranteed to be '/', not is a directory guaranteed to be
+ * @note In the current implementation, the separator is not guaranteed to be '/', nor is a directory guaranteed to be
  * terminated with a slash. It is also unclear what the expected implementation is for UNC paths.
  *
  * @note see CMVC defects 81175 and 92979
  */
 jstring JNICALL
-JVM_GetSystemPackage(JNIEnv* env, jstring pkgName)
+JVM_GetSystemPackage(JNIEnv *env, jstring pkgName)
 {
 	ENSURE_VMI();
 	return g_VMI->JVM_GetSystemPackage(env, pkgName);
 }
 
-
 jobject JNICALL
-JVM_AllocateNewObject(JNIEnv *env, jclass caller, jclass current, jclass init) 
+JVM_AllocateNewObject(JNIEnv *env, jclass caller, jclass current, jclass init)
 {
 	ENSURE_VMI();
 	return g_VMI->JVM_AllocateNewObject(env, caller, current, init);
 }
-
 
 jobject JNICALL
 JVM_AllocateNewArray(JNIEnv *env, jclass caller, jclass current, jint length)
@@ -204,7 +193,6 @@ JVM_AllocateNewArray(JNIEnv *env, jclass caller, jclass current, jint length)
 	return g_VMI->JVM_AllocateNewArray(env, caller, current, length);
 }
 
-
 jobject JNICALL
 JVM_GetClassLoader(JNIEnv *env, jobject obj)
 {
@@ -212,14 +200,12 @@ JVM_GetClassLoader(JNIEnv *env, jobject obj)
 	return g_VMI->JVM_GetClassLoader(env, obj);
 }
 
-
-void* JNICALL
+void * JNICALL
 JVM_GetThreadInterruptEvent(void)
 {
 	ENSURE_VMI();
 	return g_VMI->JVM_GetThreadInterruptEvent();
 }
-
 
 jlong JNICALL
 JVM_MaxObjectInspectionAge(void)
