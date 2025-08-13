@@ -688,6 +688,13 @@ public static native void triggerExecutionSample();
  * @return a String which is jfr option
  */
 public static native String getjfrCMDLineOption();
+
+/**
+ * Native used to get a jfr configure option string
+ *
+ * @return a String which is jfr config option
+ */
+public static native String getjfrConfigCMDLineOption();
 /*[ENDIF] JFR_SUPPORT */
 
 /*[IF JAVA_SPEC_VERSION >= 24]*/

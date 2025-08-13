@@ -41,6 +41,7 @@ final class JFRHelpers {
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 	private static volatile boolean jfrClassesInitialized = false;
 	private static String jfrCMDLineOption = com.ibm.oti.vm.VM.getjfrCMDLineOption();
+	private static String jfrConfigOption = com.ibm.oti.vm.VM.getjfrConfigCMDLineOption();
 
 	private static Long convertToBytes(String sizeValue) {
 		long sizeInBytes = 0L;
@@ -198,6 +199,88 @@ final class JFRHelpers {
 		}
 	}
 
+	private static void initJFRConfigOptions() {
+		boolean verbose = false;
+		String repositoryPath = null;
+		String dumpPath = null;
+		Integer stackDepth = null;
+		Long globalBufferCount = null;
+		Long globalBufferSize = null;
+		Long threadBufferSize = null;
+		Long memorySize = null;
+		Long maxChunkSize = null;
+		Boolean sampleThreads = null;
+		String[] configPairs = jfrConfigOption.split(",");
+		for (String pair : configPairs) {
+			String[] configKeyValue = pair.split("=");
+			if (2 == configKeyValue.length) {
+				String key = configKeyValue[0];
+				String value = configKeyValue[1];
+				switch (key) {
+				case "maxchunksize":
+					maxChunkSize = convertToBytes(value);
+					break;
+				case "stackdepth":
+					stackDepth = Integer.parseInt(value);
+					if (2048 < stackDepth) {
+						/* Warning: Maximum stackdepth allowed is 2048 */
+						stackDepth = null;
+					}
+					break;
+				case "repository":
+					repositoryPath = value;
+					break;
+				}
+			}
+		}
+		if (null != maxChunkSize || null != stackDepth || null != repositoryPath) {
+			try {
+				Class<?> dcmdConfigClass = Class.forName("jdk.jfr.internal.dcmd.DCmdConfigure");
+				Constructor<?> constructor = dcmdConfigClass.getDeclaredConstructor();
+				constructor.setAccessible(true);
+				Object dcmdConfigInstance = constructor.newInstance();
+				Method executeMethod = dcmdConfigClass.getDeclaredMethod(
+					"execute",
+					boolean.class,
+					String.class,
+					String.class,
+					Integer.class,
+					Long.class,
+					Long.class,
+					Long.class,
+					Long.class,
+					Long.class,
+					Boolean.class
+				);
+				executeMethod.setAccessible(true);
+				String[] results = (String []) executeMethod.invoke(
+					dcmdConfigInstance,
+					verbose,
+					repositoryPath,
+					dumpPath,
+					stackDepth,
+					globalBufferCount,
+					globalBufferSize,
+					threadBufferSize,
+					memorySize,
+					maxChunkSize,
+					sampleThreads
+				);
+				if (null != results) {
+					for (String result : results) {
+						logJFR(result, 0, 2);
+					}
+				}
+			} catch (InvocationTargetException e) {
+				Throwable cause = e.getCause();
+				e.printStackTrace();
+				throw new InternalError(cause);
+			} catch (Exception e) {
+				throw new InternalError(e);
+			}
+		}
+	}
+
 	/**
 	 * Initializes the JFR reflect classes for loggin etc. Only call this if we
 	 * are certain to enter JFR mode.
@@ -271,6 +354,9 @@ final class JFRHelpers {
 		if (null != jfrCMDLineOption) {
 			initJFRClasses();
 			initJFRCmdlineOptions();
+			if (null != jfrConfigOption && !jfrConfigOption.isEmpty()) {
+				initJFRConfigOptions();
+			}
 		}
 	}
 }

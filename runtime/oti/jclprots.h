@@ -728,6 +728,7 @@ Java_com_ibm_oti_vm_VM_setDaemonThreadImpl (JNIEnv *env, jobject recv, jobject a
 void JNICALL Java_com_ibm_oti_vm_VM_dumpString(JNIEnv * env, jclass clazz, jstring str);
 #if defined(J9VM_OPT_JFR)
 jstring JNICALL Java_com_ibm_oti_vm_VM_getjfrCMDLineOption(JNIEnv *env, jclass clazz);
+jstring JNICALL Java_com_ibm_oti_vm_VM_getjfrConfigCMDLineOption(JNIEnv *env, jclass clazz);
 #endif /* defined(J9VM_OPT_JFR) */
 jboolean JNICALL Java_com_ibm_oti_vm_VM_appendToCPNativeImpl(JNIEnv * env, jclass clazz, jstring classPathAdditions, jstring newClassPath);
 jboolean JNICALL Java_com_ibm_oti_vm_VM_isApplicationClassLoaderPresent(JNIEnv * env, jclass clazz);
