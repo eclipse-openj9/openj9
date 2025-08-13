@@ -1924,8 +1924,19 @@ startJavaThread(J9VMThread * currentThread, j9object_t threadObject, UDATA priva
 	privateFlags &= ~J9_PRIVATE_FLAGS_NO_EXCEPTION_IN_START_JAVA_THREAD;
 
 #ifndef J9VM_IVE_RAW_BUILD /* J9VM_IVE_RAW_BUILD is not enabled by default */
+#if JAVA_SPEC_VERSION >= 19
+	j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(currentThread, threadObject);
+	if (NULL != threadHolder) {
+		J9VMJAVALANGTHREADFIELDHOLDER_SET_THREADSTATUS(currentThread, threadHolder, J9VMTHREAD_STATE_RUNNING);
+	}
+#else /* JAVA_SPEC_VERSION >= 19 */
+	J9VMJAVALANGTHREAD_SET_THREADSTATUS(currentThread, threadObject, J9VMTHREAD_STATE_RUNNING);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	/* Any attempt to start a Thread makes it illegal to attempt to start it again.
-	 * Oracle class libraries don't have the 'started' field */
+	 * Oracle class libraries don't have the 'started' field.
+	 *
+	 * Thread.started must be set after Thread.threadStatus to avoid timing issue in Thread.getState().
+	 */
 	J9VMJAVALANGTHREAD_SET_STARTED(currentThread, threadObject, TRUE);
 #endif /* !J9VM_IVE_RAW_BUILD */
 
@@ -2088,9 +2099,6 @@ startJavaThreadInternal(J9VMThread * currentThread, UDATA privateFlags, UDATA os
 		J9VMJAVALANGTHREAD_SET_LOCK(currentThread, threadObject, lock);
 	}
 	J9VMJAVALANGTHREAD_SET_THREADREF(currentThread, threadObject, newThread);
-
-	/* Set j.l.Thread status to RUNNABLE. */
-	VM_VMHelpers::setThreadState(currentThread, J9VMTHREAD_STATE_RUNNING);
 
 #if (JAVA_SPEC_VERSION >= 14)
 	/* If thread was interrupted before start, make sure interrupt flag is set for running thread. */
