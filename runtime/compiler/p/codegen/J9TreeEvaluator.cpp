@@ -9874,7 +9874,6 @@ static void genCheckAssignableFromInterfaceTest(TR::Node *node, TR::CodeGenerato
    TR::Register *iTableReg = srm->findOrCreateScratchRegister();
    TR::Register *interfaceClassReg = srm->findOrCreateScratchRegister();
 
-
    // First, check if the cached iTable matches.
    generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, iTableReg,
          TR::MemoryReference::createWithDisplacement(cg, fromClassReg,
@@ -9886,10 +9885,10 @@ static void genCheckAssignableFromInterfaceTest(TR::Node *node, TR::CodeGenerato
    generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, trueLabel, condReg);
 
    // Then, go through the linked list of iTables to find the one that matches.
-   generateLabelInstruction(cg, TR::InstOpCode::label, node, linkedListLabel);
    generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, iTableReg,
          TR::MemoryReference::createWithDisplacement(cg, fromClassReg,
                offsetof(J9Class, iTable), TR::Compiler->om.sizeofReferenceAddress()));
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, linkedListLabel);
    // check null
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::Op_cmpi, node, condReg, iTableReg, 0);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, falseLabel, condReg);
@@ -10018,6 +10017,20 @@ static TR::Register *inlineCheckAssignableFromEvaluator(TR::Node *node, TR::Code
       if ((NULL == toClassSymRef) || (toClassSymRef->isClassInterface(comp)))
          {
          TR::LabelSymbol *notInterfaceLabel= generateLabelSymbol(cg);
+         if (NULL == toClassSymRef) // check for interface at run time if we have to
+            {
+            TR::Register *sReg = srm->findOrCreateScratchRegister();
+            generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, sReg,
+                  TR::MemoryReference::createWithDisplacement(cg, toClassReg, offsetof(J9Class, romClass),
+                        TR::Compiler->om.sizeofReferenceAddress()));
+            generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, sReg,
+                  TR::MemoryReference::createWithDisplacement(cg, sReg,
+                        offsetof(J9ROMClass, modifiers), 4));
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andis_r, node, sReg, sReg, J9AccInterface>>16);
+            // At this point cr0[eq] will be set if this is not an interface or an array.
+            generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, notInterfaceLabel, condReg);
+            srm->reclaimScratchRegister(sReg);
+            }
          genCheckAssignableFromInterfaceTest(node, cg, condReg, fromClassReg, toClassReg,
                successLabel, notInterfaceLabel, srm);
          generateLabelInstruction(cg, TR::InstOpCode::label, node, notInterfaceLabel);
