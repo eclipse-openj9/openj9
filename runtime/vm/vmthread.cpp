@@ -44,6 +44,7 @@
 #include "ut_j9vm.h"
 #include "vm_internal.h"
 #include "vmaccess.h"
+#include "VMHelpers.hpp"
 #include "vmhook_internal.h"
 
 #include "HeapIteratorAPI.h"
@@ -459,6 +460,8 @@ void threadCleanup(J9VMThread * vmThread, UDATA forkedByVM)
 		/* Safe to call this whether handleUncaughtException clears the exception or not */
 		internalExceptionDescribe(vmThread);
 	}
+	/* Set j.l.Thread status to TERMINATED. */
+	VM_VMHelpers::setThreadState(vmThread, J9VMTHREAD_STATE_DEAD);
 	releaseVMAccess(vmThread);
 
 	/* Mark this thread as dead */
@@ -2029,6 +2032,9 @@ startJavaThreadInternal(J9VMThread * currentThread, UDATA privateFlags, UDATA os
 		J9VMJAVALANGTHREAD_SET_LOCK(currentThread, threadObject, lock);
 	}
 	J9VMJAVALANGTHREAD_SET_THREADREF(currentThread, threadObject, newThread);
+
+	/* Set j.l.Thread status to RUNNABLE. */
+	VM_VMHelpers::setThreadState(currentThread, J9VMTHREAD_STATE_RUNNING);
 
 #if (JAVA_SPEC_VERSION >= 14)
 	/* If thread was interrupted before start, make sure interrupt flag is set for running thread. */
