@@ -1349,7 +1349,7 @@ generatePTX(int tracing, const char *programSource, int deviceId, TR::Persistent
    if (detailsTrace) TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tAdded NVVM module size=%d", strlen(programSource));
 
 #define OPTIONLENGTH    6
-#define OPTIONMAXSIZE   24
+#define OPTIONMAXSIZE   28
 
    char optionStr[OPTIONLENGTH][OPTIONMAXSIZE] = {"-opt=0", "-ftz=1", "-prec-sqrt=1", "-prec-div=1", "-fma=0", "-arch=compute_MMMMmmmm"};
    char *options[OPTIONLENGTH];

@@ -1430,7 +1430,7 @@ createMethodMetaData(
    int32_t sizeOfCUmodule = 0;
 
 #ifdef ENABLE_GPU
-   int getCUmoduleSize();
+   extern int getCUmoduleSize(void);
    sizeOfCUmodule = getCUmoduleSize(); //get size of the CUmodule object from the CUDA library. Only used when the GPU is used
 #endif
 
