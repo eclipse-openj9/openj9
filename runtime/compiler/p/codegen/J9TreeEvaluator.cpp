@@ -12594,7 +12594,9 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
          }
       else // otherwise, we simply go through the last 16 items as if they are the last 16
          {
-         // we are not worried about overwriting length, since we must be able to find a match
+         // Since there must be a match in the last 16 items, the residue loop
+         // will search the first 15 and return i+(0~14) if a match is found,
+         // and return the 'length' (i+15) if no match is found since the match is the 16th item
          generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, lengthReg, indexReg, 15);
          generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, tempReg, indexReg, lengthReg);
          generateLabelInstruction(cg, TR::InstOpCode::b, node, serialDWordCheckLabel);
