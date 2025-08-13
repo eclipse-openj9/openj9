@@ -12406,7 +12406,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, vectorLoopPrepLabel, cr0);
 
    // check if we can load double words, but first do some common code
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, tempReg, indexReg, lengthReg);
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, tempReg, lengthReg);
    generateLabelInstruction(cg, TR::InstOpCode::label, node, serialDWordCheckLabel);
    // we want to load 0x80808080 into maskReg, but lis was designed for signed values,
    // and would throw an error for 0x8080, yet it could accept the equivalent negative value of it;
@@ -12549,7 +12549,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
          // will search a[i] to a[i+14] and return if a match is found,
          // and return the 'length' (i+15) if no match is found since the match must be a[i+15].
          generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, lengthReg, indexReg, 15);
-         generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, tempReg, indexReg, lengthReg);
+         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 15);
          generateLabelInstruction(cg, TR::InstOpCode::b, node, serialDWordCheckLabel);
          }
       }
