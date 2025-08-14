@@ -75,7 +75,6 @@ jvm_add_exports(jvm
 	_JVM_GC@0
 	_JVM_GCNoCompact@0
 	_JVM_GetAllThreads@8
-	_JVM_GetClassAccessFlags@8
 	_JVM_GetClassAnnotations@8
 	_JVM_GetClassConstantPool@8
 	_JVM_GetClassLoader@8
@@ -481,6 +480,12 @@ else()
 	jvm_add_exports(jvm
 		JVM_CreateThreadSnapshot
 		JVM_NeedsClassInitBarrierForCDS
+	)
+endif()
+
+if(JAVA_SPEC_VERSION LESS 26)
+	jvm_add_exports(jvm
+		_JVM_GetClassAccessFlags@8
 	)
 endif()
 

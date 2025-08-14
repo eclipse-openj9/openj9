@@ -61,7 +61,8 @@ _X(JVM_GetAllThreads,JNICALL,true,jobjectArray,JNIEnv *env, jclass aClass)
 _IF([JAVA_SPEC_VERSION < 11],
 	[_X(JVM_GetCallerClass,JNICALL,true,jobject,JNIEnv *env, jint depth)],
 	[_X(JVM_GetCallerClass,JNICALL,true,jobject,JNIEnv *env)])
-_X(JVM_GetClassAccessFlags,JNICALL,true,jint,JNIEnv *env, jclass clazzRef)
+_IF([JAVA_SPEC_VERSION < 26],
+	[_X(JVM_GetClassAccessFlags,JNICALL,true,jint,JNIEnv *env, jclass clazzRef)])
 _X(JVM_GetClassAnnotations,JNICALL,true,jbyteArray,JNIEnv *env, jclass target)
 _X(JVM_GetClassConstantPool,JNICALL,true,jobject,JNIEnv *env, jclass target)
 _IF([JAVA_SPEC_VERSION < 24],

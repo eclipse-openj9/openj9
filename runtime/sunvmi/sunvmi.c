@@ -38,7 +38,7 @@
 #include "ut_sunvmi.h"
 
 #include "sunvmi_api.h"
-#include "util_api.h"		/* for packageName() helpers */
+#include "util_api.h" /* for packageName() helpers */
 #include "jvminit.h"
 #include "mmhook.h"
 #include "mmomrhook.h"
@@ -51,7 +51,7 @@
 #include "jcl_internal.h"
 
 extern JNIEXPORT jobject JNICALL
-JVM_FindClassFromClassLoader(JNIEnv* env, char* className, jboolean init, jobject classLoader, jboolean throwError);
+JVM_FindClassFromClassLoader(JNIEnv *env, char *className, jboolean init, jobject classLoader, jboolean throwError);
 
 /**
  * Global pointer to JavaVM structure for functions that lack either
@@ -77,26 +77,26 @@ typedef struct SunVMGlobals {
 
 static SunVMGlobals VM;
 
-static void initializeReflectionGlobalsHook(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
-static jint initializeReflectionGlobals(JNIEnv * env, BOOLEAN includeAccessors);
-static UDATA latestUserDefinedLoaderIterator(J9VMThread * currentThread, J9StackWalkState * walkState);
-static UDATA getClassContextIterator(J9VMThread * currentThread, J9StackWalkState * walkState);
+static void initializeReflectionGlobalsHook(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
+static jint initializeReflectionGlobals(JNIEnv *env, BOOLEAN includeAccessors);
+static UDATA latestUserDefinedLoaderIterator(J9VMThread *currentThread, J9StackWalkState *walkState);
+static UDATA getClassContextIterator(J9VMThread *currentThread, J9StackWalkState *walkState);
 
 static UDATA
-latestUserDefinedLoaderIterator(J9VMThread * currentThread, J9StackWalkState * walkState)
+latestUserDefinedLoaderIterator(J9VMThread *currentThread, J9StackWalkState *walkState)
 {
-	J9JavaVM * vm = currentThread->javaVM;
-	J9Class * currentClass = J9_CLASS_FROM_CP(walkState->constantPool);
-	J9ClassLoader * classLoader = currentClass->classLoader;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9Class *currentClass = J9_CLASS_FROM_CP(walkState->constantPool);
+	J9ClassLoader *classLoader = currentClass->classLoader;
 
 	/* Ignore the system and extension/platform classloader. In jdk9+, vm->extensionClassLoader is the PlatformClassLoader. */
 	if ((classLoader != vm->systemClassLoader) && (classLoader != vm->extensionClassLoader)) {
 		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
 		Assert_SunVMI_mustHaveVMAccess(currentThread);
-		if ( (vm->srMethodAccessor && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t*) vm->srMethodAccessor)))) ||
-			 (vm->srConstructorAccessor && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t*) vm->srConstructorAccessor)))) ||
-			 (vm->jliArgumentHelper && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t*) vm->jliArgumentHelper))))
+		if ( (vm->srMethodAccessor && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t *) vm->srMethodAccessor)))) ||
+			 (vm->srConstructorAccessor && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t *) vm->srConstructorAccessor)))) ||
+			 (vm->jliArgumentHelper && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t *) vm->jliArgumentHelper))))
 		) {
 			/* skip reflection classes */
 		} else {
@@ -107,15 +107,14 @@ latestUserDefinedLoaderIterator(J9VMThread * currentThread, J9StackWalkState * w
 	return J9_STACKWALK_KEEP_ITERATING;
 }
 
-
 /**
  * JVM_LatestUserDefinedLoader
  */
 JNIEXPORT jobject JNICALL
 JVM_LatestUserDefinedLoader_Impl(JNIEnv *env)
 {
-	J9VMThread * vmThread = (J9VMThread *) env;
-	J9JavaVM * vm = vmThread->javaVM;
+	J9VMThread *vmThread = (J9VMThread *) env;
+	J9JavaVM *vm = vmThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9StackWalkState walkState;
 	jobject result;
@@ -150,7 +149,7 @@ JVM_GetFieldTypeAnnotations_Impl(JNIEnv *env, jobject jlrField) {
 
 JNIEXPORT jbyteArray JNICALL
 JVM_GetMethodTypeAnnotations_Impl(JNIEnv *env, jobject jlrMethod) {
-    return getMethodTypeAnnotationsAsByteArray(env, jlrMethod);
+	return getMethodTypeAnnotationsAsByteArray(env, jlrMethod);
 }
 
 JNIEXPORT jobjectArray JNICALL
@@ -159,10 +158,9 @@ JVM_GetMethodParameters_Impl(JNIEnv *env, jobject jlrExecutable) {
 }
 
 static UDATA
-getCallerClassIterator(J9VMThread * currentThread, J9StackWalkState * walkState)
+getCallerClassIterator(J9VMThread *currentThread, J9StackWalkState *walkState)
 {
-	J9JavaVM * vm = currentThread->javaVM;
-
+	J9JavaVM *vm = currentThread->javaVM;
 
 	if (J9_ARE_ALL_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9AccMethodFrameIteratorSkip)) {
 		/* Skip methods with java.lang.invoke.FrameIteratorSkip / jdk.internal.vm.annotation.Hidden / java.lang.invoke.LambdaForm$Hidden annotation */
@@ -177,13 +175,13 @@ getCallerClassIterator(J9VMThread * currentThread, J9StackWalkState * walkState)
 		&& (walkState->method != vm->jliMethodHandleInvokeWithArgsList)
 	) {
 		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-		J9Class * currentClass = J9_CLASS_FROM_CP(walkState->constantPool);
+		J9Class *currentClass = J9_CLASS_FROM_CP(walkState->constantPool);
 
 		Assert_SunVMI_mustHaveVMAccess(currentThread);
 
-		if ( (vm->srMethodAccessor && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t*) vm->srMethodAccessor)))) ||
-		     (vm->srConstructorAccessor && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t*) vm->srConstructorAccessor)))) ||
-		     (vm->jliArgumentHelper && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t*) vm->jliArgumentHelper))))
+		if ( (vm->srMethodAccessor && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t *) vm->srMethodAccessor)))) ||
+			 (vm->srConstructorAccessor && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t *) vm->srConstructorAccessor)))) ||
+			 (vm->jliArgumentHelper && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t *) vm->jliArgumentHelper))))
 		) {
 			/* skip reflection classes */
 		} else {
@@ -199,7 +197,6 @@ getCallerClassIterator(J9VMThread * currentThread, J9StackWalkState * walkState)
 	}
 	return J9_STACKWALK_KEEP_ITERATING;
 }
-
 
 static UDATA
 getCallerClassJEP176Iterator(J9VMThread *currentThread, J9StackWalkState *walkState)
@@ -265,8 +262,8 @@ JVM_GetCallerClass_Impl(JNIEnv *env)
 JVM_GetCallerClass_Impl(JNIEnv *env, jint depth)
 #endif /* JAVA_SPEC_VERSION >= 11 */
 {
-	J9VMThread * vmThread = (J9VMThread *) env;
-	J9JavaVM * vm = vmThread->javaVM;
+	J9VMThread *vmThread = (J9VMThread *)env;
+	J9JavaVM *vm = vmThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9StackWalkState walkState = {0};
 	jobject result = NULL;
@@ -311,19 +308,18 @@ JVM_GetCallerClass_Impl(JNIEnv *env, jint depth)
 	return result;
 }
 
-
 /**
  * JVM_NewInstanceFromConstructor
  */
 JNIEXPORT jobject JNICALL
-JVM_NewInstanceFromConstructor_Impl(JNIEnv * env, jobject c, jobjectArray args)
+JVM_NewInstanceFromConstructor_Impl(JNIEnv *env, jobject c, jobjectArray args)
 {
-	J9VMThread *vmThread = (J9VMThread *) env;
-	J9JavaVM * vm = vmThread->javaVM;
+	J9VMThread *vmThread = (J9VMThread *)env;
+	J9JavaVM *vm = vmThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	jobject obj;
 	j9object_t classObj;
-	jclass	classRef;
+	jclass classRef;
 	J9JNIMethodID *methodID;
 
 	Trc_SunVMI_NewInstanceFromConstructor_Entry(env, c, args);
@@ -348,14 +344,13 @@ JVM_NewInstanceFromConstructor_Impl(JNIEnv * env, jobject c, jobjectArray args)
 	return obj;
 }
 
-
 /**
  * JVM_InvokeMethod
  */
 JNIEXPORT jobject JNICALL
-JVM_InvokeMethod_Impl(JNIEnv * env, jobject method, jobject obj, jobjectArray args)
+JVM_InvokeMethod_Impl(JNIEnv *env, jobject method, jobject obj, jobjectArray args)
 {
-	J9VMThread *vmThread = (J9VMThread *) env;
+	J9VMThread *vmThread = (J9VMThread *)env;
 
 	Trc_SunVMI_InvokeMethod_Entry(vmThread, method, obj, args);
 
@@ -366,17 +361,17 @@ JVM_InvokeMethod_Impl(JNIEnv * env, jobject method, jobject obj, jobjectArray ar
 	return (jobject) vmThread->returnValue;
 }
 
-
+#if JAVA_SPEC_VERSION < 26
 /**
  * JVM_GetClassAccessFlags
  */
 JNIEXPORT jint JNICALL
-JVM_GetClassAccessFlags_Impl(JNIEnv * env, jclass clazzRef)
+JVM_GetClassAccessFlags_Impl(JNIEnv *env, jclass clazzRef)
 {
-	J9ROMClass *romClass;
+	J9ROMClass *romClass = NULL;
 	jint modifiers = 0;
 	J9VMThread *vmThread = (J9VMThread *)env;
-	J9JavaVM * vm = vmThread->javaVM;
+	J9JavaVM *vm = vmThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
 	Trc_SunVMI_GetClassAccessFlags_Entry(env, clazzRef);
@@ -387,8 +382,8 @@ JVM_GetClassAccessFlags_Impl(JNIEnv * env, jclass clazzRef)
 		Trc_SunVMI_GetClassAccessFlags_NullClassRef(env);
 		vmFuncs->setCurrentException(vmThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
 	} else {
-		Assert_SunVMI_true(J9VM_IS_INITIALIZED_HEAPCLASS(vmThread, *(j9object_t*)clazzRef));
-		romClass = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, *(j9object_t*)clazzRef)->romClass;
+		Assert_SunVMI_true(J9VM_IS_INITIALIZED_HEAPCLASS(vmThread, *(j9object_t *)clazzRef));
+		romClass = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, *(j9object_t *)clazzRef)->romClass;
 		if (J9ROMCLASS_IS_PRIMITIVE_TYPE(romClass)) {
 			modifiers = J9AccAbstract | J9AccFinal | J9AccPublic;
 		} else {
@@ -401,13 +396,16 @@ JVM_GetClassAccessFlags_Impl(JNIEnv * env, jclass clazzRef)
 
 	return modifiers;
 }
-
+#endif /* JAVA_SPEC_VERSION < 26 */
 
 static jint
-initializeReflectionGlobals(JNIEnv * env,BOOLEAN includeAccessors) {
-	J9VMThread *vmThread = (J9VMThread *) env;
-	J9JavaVM * vm = vmThread->javaVM;
-	jclass clazz, clazzConstructorAccessorImpl, clazzMethodAccessorImpl;
+initializeReflectionGlobals(JNIEnv *env, BOOLEAN includeAccessors)
+{
+	J9VMThread *vmThread = (J9VMThread *)env;
+	J9JavaVM *vm = vmThread->javaVM;
+	jclass clazz = NULL;
+	jclass clazzConstructorAccessorImpl = NULL;
+	jclass clazzMethodAccessorImpl = NULL;
 
 	clazz = (*env)->FindClass(env, "java/lang/Class");
 	if (NULL == clazz) {
@@ -454,14 +452,13 @@ initializeReflectionGlobals(JNIEnv * env,BOOLEAN includeAccessors) {
 	return JNI_OK;
 }
 
-
 static void
-initializeReflectionGlobalsHook(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
+initializeReflectionGlobalsHook(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
 {
 	J9VMThreadCreatedEvent *data = eventData;
 	J9VMThread *vmThread = data->vmThread;
-	J9JavaVM * vm = vmThread->javaVM;
-	JNIEnv *env = (JNIEnv*)(vmThread);
+	J9JavaVM *vm = vmThread->javaVM;
+	JNIEnv *env = (JNIEnv *)vmThread;
 
 	/* We only need to initialize handles to reflect for Sun libraries */
 	if (JNI_OK != initializeReflectionGlobals(env, TRUE)) {
@@ -470,7 +467,6 @@ initializeReflectionGlobalsHook(J9HookInterface** hookInterface, UDATA eventNum,
 
 	(*hookInterface)->J9HookUnregister(hookInterface, J9HOOK_VM_INITIALIZE_REQUIRED_CLASSES_DONE, initializeReflectionGlobalsHook, NULL);
 }
-
 
 #if JAVA_SPEC_VERSION < 24
 /**
@@ -501,7 +497,7 @@ JVM_GetClassContext_Impl(JNIEnv *env)
 	vm->walkStackFrames(vmThread, &walkState);
 	vmFuncs->internalExitVMToJNI(vmThread);
 
-	classCtx = (*env)->NewObjectArray(env, (jsize)(UDATA) walkState.userData1, VM.jlClass, 0);
+	classCtx = (*env)->NewObjectArray(env, (jsize)(UDATA)walkState.userData1, VM.jlClass, 0);
 	if (NULL != classCtx) {
 		/* fill in class context elements */
 		walkState.skipCount = 1;
@@ -518,11 +514,10 @@ JVM_GetClassContext_Impl(JNIEnv *env)
 }
 #endif /* JAVA_SPEC_VERSION < 24 */
 
-
 JNIEXPORT void JNICALL
 JVM_Halt_Impl(jint exitCode)
 {
-	J9VMThread* vmThread = VM.javaVM->internalVMFunctions->currentVMThread(VM.javaVM);
+	J9VMThread *vmThread = VM.javaVM->internalVMFunctions->currentVMThread(VM.javaVM);
 
 	Trc_SunVMI_Halt_Entry(vmThread, exitCode);
 
@@ -534,7 +529,6 @@ JVM_Halt_Impl(jint exitCode)
 
 	exit(exitCode);
 }
-
 
 JNIEXPORT void JNICALL
 JVM_GCNoCompact_Impl(void)
@@ -551,14 +545,13 @@ JVM_GCNoCompact_Impl(void)
 	Trc_SunVMI_GCNoCompact_Exit(currentThread);
 }
 
-
 /* Walk the stack, and for frames that should be visited:
- * 	1) update the frame count in userData1.
- * 	2) if userData2 isn't null, record the j.l.Class for the frame in the Class[]
+ *  1) update the frame count in userData1.
+ *  2) if userData2 isn't null, record the j.l.Class for the frame in the Class[]
  *
  * Special cases:
  * --------------
- * 	For JSR292, MethodHandles.lookup().find* methods need to store the Lookup's accessClass into the Class[] rather than MethodHandles.Lookup.class
+ *  For JSR292, MethodHandles.lookup().find* methods need to store the Lookup's accessClass into the Class[] rather than MethodHandles.Lookup.class
  *
  * WalkState userdata values:
  * --------------------------
@@ -566,9 +559,9 @@ JVM_GCNoCompact_Impl(void)
  * walkState->userData2 (Object) is null or a Class[] holding the j.l.Class for each visited frame.
  */
 static UDATA
-getClassContextIterator(J9VMThread * currentThread, J9StackWalkState * walkState)
+getClassContextIterator(J9VMThread *currentThread, J9StackWalkState *walkState)
 {
-	J9JavaVM * vm = currentThread->javaVM;
+	J9JavaVM *vm = currentThread->javaVM;
 
 	if (J9_ARE_ALL_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9AccMethodFrameIteratorSkip)) {
 		/* Skip methods with java.lang.invoke.FrameIteratorSkip / jdk.internal.vm.annotation.Hidden / java.lang.invoke.LambdaForm$Hidden annotation */
@@ -582,31 +575,33 @@ getClassContextIterator(J9VMThread * currentThread, J9StackWalkState * walkState
 		&& (walkState->method != vm->jliMethodHandleInvokeWithArgs)
 		&& (walkState->method != vm->jliMethodHandleInvokeWithArgsList)
 	) {
-		J9Class * currentClass = J9_CLASS_FROM_CP(walkState->constantPool);
+		J9Class *currentClass = J9_CLASS_FROM_CP(walkState->constantPool);
 		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
 		Assert_SunVMI_mustHaveVMAccess(currentThread);
 
-		if ( (vm->srMethodAccessor && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t*) vm->srMethodAccessor)))) ||
-			 (vm->srConstructorAccessor && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t*) vm->srConstructorAccessor)))) ||
-			 (vm->jliArgumentHelper && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t*) vm->jliArgumentHelper))))
+		if (((NULL != vm->srMethodAccessor)
+				&& vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t *) vm->srMethodAccessor))))
+		|| ((NULL != vm->srConstructorAccessor)
+				&& vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t *) vm->srConstructorAccessor))))
+		|| ((NULL != vm->jliArgumentHelper)
+			&& vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, *((j9object_t *) vm->jliArgumentHelper))))
 		) {
 			/* skip reflection classes */
 		} else {
-			IDATA n = (IDATA) walkState->userData1;
+			IDATA n = (IDATA)walkState->userData1;
 
 			/* first pass gets us the size of the array, second pass fills in the elements */
-			if (walkState->userData2 != NULL) {
+			if (NULL != walkState->userData2) {
 				j9object_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(currentClass);
 				J9JAVAARRAYOFOBJECT_STORE(currentThread, walkState->userData2, (I_32)n, classObject);
 			}
 
-			walkState->userData1 = (void *) (n + 1);
+			walkState->userData1 = (void *)(n + 1);
 		}
 	}
 	return J9_STACKWALK_KEEP_ITERATING;
 }
-
 
 /**
  * JVM_GC
@@ -651,14 +646,13 @@ JVM_GC_Impl(void)
 	Trc_SunVMI_GC_Exit(currentThread);
 }
 
-
 /**
  * JVM_TotalMemory
  */
 JNIEXPORT jlong JNICALL
 JVM_TotalMemory_Impl(void)
 {
-	jlong result;
+	jlong result = 0;
 
 	Trc_SunVMI_TotalMemory_Entry();
 
@@ -669,11 +663,10 @@ JVM_TotalMemory_Impl(void)
 	return result;
 }
 
-
 JNIEXPORT jlong JNICALL
 JVM_FreeMemory_Impl(void)
 {
-	jlong result;
+	jlong result = 0;
 
 	Trc_SunVMI_FreeMemory_Entry();
 	result = VM.javaVM->memoryManagerFunctions->j9gc_heap_free_memory(VM.javaVM);
@@ -682,25 +675,24 @@ JVM_FreeMemory_Impl(void)
 	return result;
 }
 
-
 /**
  * Returns an array of strings for the currently loaded system packages. The name returned for each package is to be '/' separated and end with a '/' character.
  *
  * @arg[in] env          - JNI environment.
  *
  * @return a jarray of jstrings
- *
  */
 JNIEXPORT jobject JNICALL
-JVM_GetSystemPackages_Impl(JNIEnv* env)
+JVM_GetSystemPackages_Impl(JNIEnv *env)
 {
-	J9VMThread* vmThread = (J9VMThread*)env;
-	J9JavaVM* vm = vmThread->javaVM;
-	J9InternalVMFunctions* funcs = vm->internalVMFunctions;
+	J9VMThread *vmThread = (J9VMThread *)env;
+	J9JavaVM *vm = vmThread->javaVM;
+	J9InternalVMFunctions *funcs = vm->internalVMFunctions;
 	J9HashTableState walkState;
-	J9PackageIDTableEntry* packageID;
-	J9PackageIDTableEntry** packageIDList;
-	UDATA packageCount, i;
+	J9PackageIDTableEntry *packageID = NULL;
+	J9PackageIDTableEntry **packageIDList = NULL;
+	UDATA packageCount = 0;
+	UDATA i = 0;
 	jarray result = NULL;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
@@ -713,13 +705,13 @@ JVM_GetSystemPackages_Impl(JNIEnv* env)
 	/* first count the packages */
 	packageCount = 0;
 	packageID = funcs->hashPkgTableStartDo(vm->systemClassLoader, &walkState);
-	while (packageID) {
+	while (NULL != packageID) {
 		packageCount += 1;
 		packageID = funcs->hashPkgTableNextDo(&walkState);
 	}
 
 	/* attempt to allocate a temporary array to hold them all */
-	packageIDList = j9mem_allocate_memory(packageCount * sizeof(J9PackageIDTableEntry*), OMRMEM_CATEGORY_VM);
+	packageIDList = j9mem_allocate_memory(packageCount * sizeof(J9PackageIDTableEntry *), OMRMEM_CATEGORY_VM);
 
 	/* fill in the list */
 	if (NULL == packageIDList) {
@@ -728,7 +720,7 @@ JVM_GetSystemPackages_Impl(JNIEnv* env)
 	} else {
 		packageCount = 0;
 		packageID = funcs->hashPkgTableStartDo(vm->systemClassLoader, &walkState);
-		while (packageID) {
+		while (NULL != packageID) {
 			packageIDList[packageCount++] = packageID;
 			packageID = funcs->hashPkgTableNextDo(&walkState);
 		}
@@ -739,16 +731,16 @@ JVM_GetSystemPackages_Impl(JNIEnv* env)
 
 	/* push local frame with room for the 3 elements: jlsClass, result, packageStringRef */
 	if (NULL != packageIDList) {
-		if ( (*env)->PushLocalFrame(env, 3) == 0 ) {
+		if (0 == (*env)->PushLocalFrame(env, 3)) {
 			jclass jlsClass = (*env)->FindClass(env, "java/lang/String");
-			if (jlsClass) {
+			if (NULL != jlsClass) {
 				result = (*env)->NewObjectArray(env, (jsize) packageCount, jlsClass, NULL);
-				if (result) {
+				if (NULL != result) {
 					for (i = 0; i < packageCount; i++) {
-						j9object_t packageString;
+						j9object_t packageString = NULL;
 						jobject packageStringRef = NULL;
-						const U_8* packageName = NULL;
-						UDATA packageNameLength;
+						const U_8 *packageName = NULL;
+						UDATA packageNameLength = 0;
 
 						funcs->internalEnterVMFromJNI(vmThread);
 						packageName = getPackageName(packageIDList[i], &packageNameLength);
@@ -758,11 +750,11 @@ JVM_GetSystemPackages_Impl(JNIEnv* env)
 						 */
 						if (J2SE_VERSION(vm) >= J2SE_V11) {
 							packageString = vm->memoryManagerFunctions->j9gc_createJavaLangString(vmThread,
-									(U_8*) packageName, packageNameLength, 0);
+									(U_8 *)packageName, packageNameLength, 0);
 						} else {
-							packageString = funcs->catUtfToString4(vmThread, packageName, packageNameLength, (U_8*)"/", 1, NULL, 0, NULL, 0);
+							packageString = funcs->catUtfToString4(vmThread, packageName, packageNameLength, (U_8 *)"/", 1, NULL, 0, NULL, 0);
 						}
-						if (packageString) {
+						if (NULL != packageString) {
 							packageStringRef = funcs->j9jni_createLocalRef(env, packageString);
 						}
 						funcs->internalExitVMToJNI(vmThread);
@@ -773,7 +765,7 @@ JVM_GetSystemPackages_Impl(JNIEnv* env)
 							break;
 						}
 
-						(*env)->SetObjectArrayElement(env, result, (jsize) i, packageStringRef);
+						(*env)->SetObjectArrayElement(env, result, (jsize)i, packageStringRef);
 						(*env)->DeleteLocalRef(env, packageStringRef);
 					}
 				}
@@ -787,7 +779,6 @@ JVM_GetSystemPackages_Impl(JNIEnv* env)
 
 	return result;
 }
-
 
 /**
  * Returns the package information for the specified package name.  Package information is the directory or
@@ -807,20 +798,20 @@ JVM_GetSystemPackages_Impl(JNIEnv* env)
 
 #define NAME_BUFFER_SIZE 256
 JNIEXPORT jstring JNICALL
-JVM_GetSystemPackage_Impl(JNIEnv* env, jstring pkgName)
+JVM_GetSystemPackage_Impl(JNIEnv *env, jstring pkgName)
 {
-	J9VMThread* vmThread = (J9VMThread*)env;
-	J9JavaVM* vm = vmThread->javaVM;
-	J9InternalVMFunctions* funcs = vm->internalVMFunctions;
-	const char* utfPkgName;
-	size_t utfPkgNameLen;
+	J9VMThread *vmThread = (J9VMThread *)env;
+	J9JavaVM *vm = vmThread->javaVM;
+	J9InternalVMFunctions *funcs = vm->internalVMFunctions;
+	const char *utfPkgName = NULL;
+	size_t utfPkgNameLen = 0;
 	J9Class *clazz = NULL;
 	jstring result = NULL;
 	J9ROMClass tempClass;
 	J9ROMClass *queryROMClass = &tempClass;
 	U_8 nameBuffer[NAME_BUFFER_SIZE];
-	J9UTF8 *pkgNameUTF8 = (J9UTF8 *) nameBuffer;
-	J9PackageIDTableEntry *idEntry;
+	J9UTF8 *pkgNameUTF8 = (J9UTF8 *)nameBuffer;
+	J9PackageIDTableEntry *idEntry = NULL;
 	j9object_t jlstringObject = NULL;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
@@ -830,7 +821,7 @@ JVM_GetSystemPackage_Impl(JNIEnv* env, jstring pkgName)
 		goto done;
 	}
 
-	utfPkgName = (const char *) (*env)->GetStringUTFChars(env, pkgName, NULL);
+	utfPkgName = (*env)->GetStringUTFChars(env, pkgName, NULL);
 	if (NULL == utfPkgName) {
 		goto done;
 	}
@@ -876,7 +867,7 @@ JVM_GetSystemPackage_Impl(JNIEnv* env, jstring pkgName)
 	idEntry =  funcs->hashPkgTableAt(vm->systemClassLoader, queryROMClass);
 	if (NULL != idEntry) {
 		J9ROMClass *resultROMClass = (J9ROMClass *)(idEntry->taggedROMClass & ~(UDATA)(J9PACKAGE_ID_TAG | J9PACKAGE_ID_GENERATED));
-		J9UTF8* className = J9ROMCLASS_CLASSNAME(resultROMClass);
+		J9UTF8 *className = J9ROMCLASS_CLASSNAME(resultROMClass);
 		clazz = funcs->hashClassTableAt(vm->systemClassLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className));
 	}
 	VM.monitorExit(vm->classTableMutex);
@@ -906,21 +897,20 @@ done:
 }
 #undef NAME_BUFFER_SIZE
 
-
-
 /**
  * NOTE THIS IS NOT REQUIRED FOR 1.4
  */
 JNIEXPORT jobject JNICALL
-JVM_AllocateNewObject_Impl(JNIEnv *env, jclass caller, jclass current, jclass init) {
+JVM_AllocateNewObject_Impl(JNIEnv *env, jclass caller, jclass current, jclass init)
+{
 	jobject result = NULL;
-	jmethodID mID;
+	jmethodID mID = NULL;
 
 	Trc_SunVMI_AllocateNewObject_Entry(env, caller, current, init);
 
 	mID = (*env)->GetMethodID(env, init, "<init>", "()V");
 
-	if (mID) {
+	if (NULL != mID) {
 		result = (*env)->NewObject(env, current, mID);
 	}
 
@@ -929,14 +919,13 @@ JVM_AllocateNewObject_Impl(JNIEnv *env, jclass caller, jclass current, jclass in
 	return result;
 }
 
-
 /**
  * NOTE THIS IS NOT REQUIRED FOR 1.4
  */
 JNIEXPORT jobject JNICALL
 JVM_AllocateNewArray_Impl(JNIEnv *env, jclass caller, jclass current, jint length)
 {
-	jobject result;
+	jobject result = NULL;
 
 	Trc_SunVMI_AllocateNewArray_Entry(env, caller, current, length);
 
@@ -957,9 +946,9 @@ JVM_AllocateNewArray_Impl(JNIEnv *env, jclass caller, jclass current, jint lengt
 	} else if ((*env)->IsSameObject(env, (*env)->FindClass(env, "[D"), current)) {
 		result = (*env)->NewDoubleArray(env, length);
 	} else {
-		J9VMThread *currentThread = (J9VMThread*)env;
-		J9ArrayClass *currentClass;
-		jclass elementType;
+		J9VMThread *currentThread = (J9VMThread *)env;
+		J9ArrayClass *currentClass = NULL;
+		jclass elementType = NULL;
 
 		currentThread->javaVM->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 		currentClass = (J9ArrayClass *)J9VM_J9CLASS_FROM_JCLASS(currentThread, current);
@@ -976,20 +965,15 @@ JVM_AllocateNewArray_Impl(JNIEnv *env, jclass caller, jclass current, jint lengt
 	return result;
 }
 
-
-
-
-
-
 /**
  * JVM_GetClassLoader
  */
 JNIEXPORT jobject JNICALL
 JVM_GetClassLoader_Impl(JNIEnv *env, jobject obj)
 {
-	j9object_t j9ClassLoader;
+	j9object_t j9ClassLoader = NULL;
 	jobject cloader = NULL;
-	J9JavaVM* vm = ((J9VMThread*)env)->javaVM;
+	J9JavaVM *vm = ((J9VMThread *)env)->javaVM;
 	J9VMThread *vmThread = (J9VMThread *)env;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
@@ -997,9 +981,9 @@ JVM_GetClassLoader_Impl(JNIEnv *env, jobject obj)
 
 	vmFuncs->internalEnterVMFromJNI(vmThread);
 
-	if(obj) {
+	if (NULL != obj) {
 		J9Class *clazz = NULL;
-		j9object_t localObject = *(j9object_t*)obj;
+		j9object_t localObject = *(j9object_t *)obj;
 		Assert_SunVMI_true(J9VM_IS_INITIALIZED_HEAPCLASS((J9VMThread *)env, localObject));
 		clazz = J9VM_J9CLASS_FROM_HEAPCLASS((J9VMThread *)env, localObject);
 		j9ClassLoader = J9CLASSLOADER_CLASSLOADEROBJECT(vmThread, clazz->classLoader);
@@ -1016,15 +1000,14 @@ JVM_GetClassLoader_Impl(JNIEnv *env, jobject obj)
 	return cloader;
 }
 
-
 /**
  * JVM_GetThreadInterruptEvent
  */
-JNIEXPORT void* JNICALL
+JNIEXPORT void * JNICALL
 JVM_GetThreadInterruptEvent_Impl(void)
 {
-	J9VMThread* vmThread = VM.javaVM->internalVMFunctions->currentVMThread(VM.javaVM);
-	void* result;
+	J9VMThread *vmThread = VM.javaVM->internalVMFunctions->currentVMThread(VM.javaVM);
+	void *result = NULL;
 
 	Trc_SunVMI_GetThreadInterruptEvent_Entry(vmThread);
 
@@ -1037,11 +1020,11 @@ JVM_GetThreadInterruptEvent_Impl(void)
 
 /**
  * JNIEXPORT jlong JNICALL JVM_MaxObjectInspectionAge()
- *  This function is used by a native in java.dll
+ * This function is used by a native in java.dll
  *
- *  @returns a jlong representing the max object inspection age
+ * @returns a jlong representing the max object inspection age
  *
- *	DLL: jvm
+ * DLL: jvm
  */
 JNIEXPORT jlong JNICALL
 JVM_MaxObjectInspectionAge_Impl(void)
@@ -1053,8 +1036,6 @@ JVM_MaxObjectInspectionAge_Impl(void)
 
 	return delta;
 }
-
-
 
 /**
  * Find the specified class in given class loader
@@ -1069,24 +1050,20 @@ JVM_MaxObjectInspectionAge_Impl(void)
  * Note: this call is implemented from info provided via CMVC 154874.
  */
 static jobject
-internalFindClassFromClassLoader(JNIEnv* env, char* className, jboolean init, jobject classLoader, jboolean throwError)
+internalFindClassFromClassLoader(JNIEnv *env, char *className, jboolean init, jobject classLoader, jboolean throwError)
 {
-	J9JavaVM* vm;
-	J9InternalVMFunctions *vmFuncs;
-	J9VMThread * currentThread;
-	J9ClassLoader * loader;
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9ClassLoader *loader = NULL;
 	UDATA options = 0;
 	BOOLEAN initializeSent = FALSE;
-	J9Class *clazz;
+	J9Class *clazz = NULL;
 	jobject classRef = NULL;
-
-	currentThread = (J9VMThread*) env;
-	vm = currentThread->javaVM;
-	vmFuncs = vm->internalVMFunctions;
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
-	if (classLoader == NULL) {
+	if (NULL == classLoader) {
 		loader = vm->systemClassLoader;
 	} else {
 		loader = J9VMJAVALANGCLASSLOADER_VMREF(currentThread, J9_JNI_UNWRAP_REFERENCE(classLoader));
@@ -1094,7 +1071,7 @@ internalFindClassFromClassLoader(JNIEnv* env, char* className, jboolean init, jo
 			loader = vmFuncs->internalAllocateClassLoader(vm, J9_JNI_UNWRAP_REFERENCE(classLoader));
 			if (NULL == loader) {
 				vmFuncs->internalExitVMToJNI((J9VMThread *)env);
-				if (throwError == JNI_FALSE) {
+				if (!throwError) {
 					(*env)->ExceptionClear(env);
 				}
 				return NULL;
@@ -1102,40 +1079,40 @@ internalFindClassFromClassLoader(JNIEnv* env, char* className, jboolean init, jo
 		}
 	}
 
-	if (throwError == JNI_TRUE) {
+	if (throwError) {
 		options |= J9_FINDCLASS_FLAG_THROW_ON_FAIL;
 	}
 
-	clazz = vmFuncs->internalFindClassUTF8(currentThread, (U_8*)className, strlen((const char*)className), loader, options);
+	clazz = vmFuncs->internalFindClassUTF8(currentThread, (U_8 *)className, strlen((const char *)className), loader, options);
 
 	if (NULL != clazz) {
-		if (init == JNI_TRUE) {
+		if (init) {
 			UDATA initStatus = clazz->initializeStatus;
-			if ((initStatus != J9ClassInitSucceeded) && (initStatus != (UDATA) currentThread)) {
+			if ((J9ClassInitSucceeded != initStatus) && (initStatus != (UDATA)currentThread)) {
 				vmFuncs->initializeClass(currentThread, clazz);
 
 				initializeSent = TRUE;
 
 				/* Check for a pending exception directly, do not use ExceptionCheck as it will
-				   cause jnichk to dump an error since we are calling it with vm access */
-				if (currentThread->currentException != NULL) {
+				 * cause jnichk to dump an error since we are calling it with vm access.
+				 */
+				if (NULL != currentThread->currentException) {
 					clazz = NULL;
 				}
 			}
 		}
 
-		/* Unsure whether this is supposed to be a local or global ref. JNI FindClass() returns a local ref so lets go
-		   with that. */
-
+		/* Unsure whether this is supposed to be a local or global ref.
+		 * JNI FindClass() returns a local ref so lets go with that.
+		 */
 		classRef = vmFuncs->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
 	}
 
 	vmFuncs->internalExitVMToJNI(currentThread);
 
-	if (initializeSent == TRUE) {
-
+	if (initializeSent) {
 		/* initializeClass might have thrown and the caller requested not to throw, clear the exception */
-		if (throwError == JNI_FALSE) {
+		if (!throwError) {
 			(*env)->ExceptionClear(env);
 		}
 	}
@@ -1144,8 +1121,8 @@ internalFindClassFromClassLoader(JNIEnv* env, char* className, jboolean init, jo
 }
 
 typedef struct {
-	JNIEnv* env;
-	char* className;
+	JNIEnv *env;
+	char *className;
 	jboolean init;
 	jobject classLoader;
 	jboolean throwError;
@@ -1154,13 +1131,13 @@ typedef struct {
 /**
  * This is an helper function to call internalFindClassFromClassLoader indirectly from gpProtectAndRun function.
  *
- * @param entryArg	Argument structure (J9RedirectedFindClassFromClassLoaderArgs).
+ * @param entryArg Argument structure (J9RedirectedFindClassFromClassLoaderArgs).
  */
 static UDATA
-gpProtectedInternalFindClassFromClassLoader(void * entryArg)
+gpProtectedInternalFindClassFromClassLoader(void *entryArg)
 {
-	J9RedirectedFindClassFromClassLoaderArgs * args = (J9RedirectedFindClassFromClassLoaderArgs *) entryArg;
-	return (UDATA) internalFindClassFromClassLoader(args->env, args->className, args->init, args->classLoader, args->throwError);
+	J9RedirectedFindClassFromClassLoaderArgs *args = (J9RedirectedFindClassFromClassLoaderArgs *)entryArg;
+	return (UDATA)internalFindClassFromClassLoader(args->env, args->className, args->init, args->classLoader, args->throwError);
 }
 
 /**
@@ -1172,17 +1149,15 @@ gpProtectedInternalFindClassFromClassLoader(void * entryArg)
  * @param classLoader  classloader of the class
  * @param throwError   set to true in order to throw errors
  * @return Assumed to be a jclass.
- *
- *
  */
 JNIEXPORT jobject JNICALL
-JVM_FindClassFromClassLoader_Impl(JNIEnv* env, char* className, jboolean init, jobject classLoader, jboolean throwError)
+JVM_FindClassFromClassLoader_Impl(JNIEnv *env, char *className, jboolean init, jobject classLoader, jboolean throwError)
 {
 	if (NULL == env) {
 		return NULL;
 	}
 
-	if (((J9VMThread*) env)->gpProtected) {
+	if (((J9VMThread *)env)->gpProtected) {
 		return internalFindClassFromClassLoader(env, className, init, classLoader, throwError);
 	} else {
 		J9RedirectedFindClassFromClassLoaderArgs args;
@@ -1191,29 +1166,27 @@ JVM_FindClassFromClassLoader_Impl(JNIEnv* env, char* className, jboolean init, j
 		args.init = init;
 		args.classLoader = classLoader;
 		args.throwError = throwError;
-		return (jobject) gpProtectAndRun(gpProtectedInternalFindClassFromClassLoader, env, &args);
+		return (jobject)gpProtectAndRun(gpProtectedInternalFindClassFromClassLoader, env, &args);
 	}
 }
 
-
 static void
-gcDidComplete(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
+gcDidComplete(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
 {
 	PORT_ACCESS_FROM_JAVAVM(VM.javaVM);
 	VM.lastGCTime = j9time_current_time_millis();
 }
-
 
 static BOOLEAN
 initializeThreadFunctions(J9JavaVM *vm)
 {
 	PORT_ACCESS_FROM_PORT(vm->portLibrary);
 
-	if (0 != j9sl_lookup_name(vm->threadDllHandle, "omrthread_monitor_enter", (UDATA*)&VM.monitorEnter, NULL)) {
+	if (0 != j9sl_lookup_name(vm->threadDllHandle, "omrthread_monitor_enter", (UDATA *)&VM.monitorEnter, NULL)) {
 		return FALSE;
 	}
 
-	if (0 != j9sl_lookup_name(vm->threadDllHandle, "omrthread_monitor_exit", (UDATA*)&VM.monitorExit, NULL)) {
+	if (0 != j9sl_lookup_name(vm->threadDllHandle, "omrthread_monitor_exit", (UDATA *)&VM.monitorExit, NULL)) {
 		return FALSE;
 	}
 
@@ -1221,7 +1194,7 @@ initializeThreadFunctions(J9JavaVM *vm)
 }
 
 JNIEXPORT jlong JNICALL JVM_MaxMemory_Impl(void) {
-	jlong result;
+	jlong result = 0;
 	PORT_ACCESS_FROM_JAVAVM(VM.javaVM);
 
 	Trc_SunVMI_MaxMemory_Entry();
@@ -1233,116 +1206,113 @@ JNIEXPORT jlong JNICALL JVM_MaxMemory_Impl(void) {
 	return result;
 }
 
-
 /**
  * Extend boot classpath
  *
  * @param env
- * @param pathSegment		path to add to the boot classpath
+ * @param pathSegment path to add to the boot classpath
  * @return void
  *
  * Append specified path segment to the boot classpath
  */
 JNIEXPORT void JNICALL
-JVM_ExtendBootClassPath_Impl(JNIEnv* env, const char * pathSegment)
+JVM_ExtendBootClassPath_Impl(JNIEnv *env, const char *pathSegment)
 {
-	J9JavaVM* vm = ((J9VMThread*) env)->javaVM;
+	J9JavaVM *vm = ((J9VMThread *)env)->javaVM;
 
-	if (vm->systemClassLoader->classLoaderObject == NULL) {
+	if (NULL == vm->systemClassLoader->classLoaderObject) {
 		vm->internalVMFunctions->addToBootstrapClassLoaderSearch(vm, pathSegment, CLS_TYPE_ADD_TO_SYSTEM_PROPERTY, FALSE);
 	} else {
 		vm->internalVMFunctions->addToBootstrapClassLoaderSearch(vm, pathSegment, CLS_TYPE_ADD_TO_SYSTEM_CLASSLOADER, FALSE);
 	}
-
-	return;
 }
 
 static SunVMI VMIFunctionTable = {
-		SUNVMI_VERSION_1_1,
-		JVM_AllocateNewArray_Impl,
-		JVM_AllocateNewObject_Impl,
-		JVM_FreeMemory_Impl,
-		JVM_GC_Impl,
-		JVM_GCNoCompact_Impl,
-		JVM_GetCallerClass_Impl,
-		JVM_GetClassAccessFlags_Impl,
+	SUNVMI_VERSION_1_1,
+	JVM_AllocateNewArray_Impl,
+	JVM_AllocateNewObject_Impl,
+	JVM_FreeMemory_Impl,
+	JVM_GC_Impl,
+	JVM_GCNoCompact_Impl,
+	JVM_GetCallerClass_Impl,
+#if JAVA_SPEC_VERSION < 26
+	JVM_GetClassAccessFlags_Impl,
+#endif /* JAVA_SPEC_VERSION < 26 */
 #if JAVA_SPEC_VERSION < 24
-		JVM_GetClassContext_Impl,
+	JVM_GetClassContext_Impl,
 #endif /* JAVA_SPEC_VERSION < 24 */
-		JVM_GetClassLoader_Impl,
-		JVM_GetSystemPackage_Impl,
-		JVM_GetSystemPackages_Impl,
-		JVM_GetThreadInterruptEvent_Impl,
-		JVM_Halt_Impl,
-		JVM_InvokeMethod_Impl,
-		JVM_LatestUserDefinedLoader_Impl,
-		JVM_MaxObjectInspectionAge_Impl,
-		JVM_NewInstanceFromConstructor_Impl,
-		JVM_TotalMemory_Impl,
-		JVM_MaxMemory_Impl,
-		JVM_FindClassFromClassLoader_Impl,
-		JVM_ExtendBootClassPath_Impl,
-		JVM_GetClassTypeAnnotations_Impl,
-		JVM_GetFieldTypeAnnotations_Impl,
-		JVM_GetMethodTypeAnnotations_Impl,
-		JVM_GetMethodParameters_Impl
+	JVM_GetClassLoader_Impl,
+	JVM_GetSystemPackage_Impl,
+	JVM_GetSystemPackages_Impl,
+	JVM_GetThreadInterruptEvent_Impl,
+	JVM_Halt_Impl,
+	JVM_InvokeMethod_Impl,
+	JVM_LatestUserDefinedLoader_Impl,
+	JVM_MaxObjectInspectionAge_Impl,
+	JVM_NewInstanceFromConstructor_Impl,
+	JVM_TotalMemory_Impl,
+	JVM_MaxMemory_Impl,
+	JVM_FindClassFromClassLoader_Impl,
+	JVM_ExtendBootClassPath_Impl,
+	JVM_GetClassTypeAnnotations_Impl,
+	JVM_GetFieldTypeAnnotations_Impl,
+	JVM_GetMethodTypeAnnotations_Impl,
+	JVM_GetMethodParameters_Impl
 };
-
 
 /**
  * Handle a GetEnv() request looking for the SUNVMI_VERSION_X_Y interface.
  */
 static void
-vmGetEnvHook(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
+vmGetEnvHook(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
 {
 	J9VMGetEnvEvent *data = eventData;
 
 	if (SUNVMI_VERSION_1_1 == data->version) {
-		*(data->penv) = (void*)&VMIFunctionTable;
+		*(data->penv) = (void *)&VMIFunctionTable;
 		data->rc = JNI_OK;
 		return;
 	}
 }
-
 
 /**
  * Called before class library initialization to allow the JVM interface layer to perform any
  * necessary initialization
  */
 IDATA
-SunVMI_LifecycleEvent(J9JavaVM* vm, IDATA stage, void* reserved)
+SunVMI_LifecycleEvent(J9JavaVM *vm, IDATA stage, void *reserved)
 {
 	IDATA returnVal = J9VMDLLMAIN_OK;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	/* Now figure out why we are initializing */
+	/* Now figure out why we are initializing. */
 	switch (stage) {
 
 	case JCL_INITIALIZED:
 	{
-		J9HookInterface** vmHooks;
-		IDATA anyErrors=-1;
+		J9HookInterface **vmHooks = NULL;
+		IDATA anyErrors = -1;
 
-		/* Register this module with trace */
+		/* Register this module with trace. */
 		UT_MODULE_LOADED(J9_UTINTERFACE_FROM_VM(vm));
 
-		/* Save the javaVM for future reference */
+		/* Save the javaVM for future reference. */
 		VM.javaVM = vm;
 
-		/* Look up thread functions */
+		/* Look up thread functions. */
 		if (!initializeThreadFunctions(vm)) {
 			return J9VMDLLMAIN_FAILED;
 		}
 
-		/* Register a hook to initialize reflection globals*/
+		/* Register a hook to initialize reflection globals. */
 		vmHooks = vm->internalVMFunctions->getVMHookInterface(vm);
 		anyErrors = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZE_REQUIRED_CLASSES_DONE, initializeReflectionGlobalsHook, OMR_GET_CALLSITE(), NULL);
-		if (anyErrors) {
+		if (0 != anyErrors) {
 			return J9VMDLLMAIN_FAILED;
 		}
 
 		anyErrors = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_GETENV, vmGetEnvHook, OMR_GET_CALLSITE(), NULL);
-		if (anyErrors) {
+		if (0 != anyErrors) {
 			return J9VMDLLMAIN_FAILED;
 		}
 		break;
@@ -1351,7 +1321,7 @@ SunVMI_LifecycleEvent(J9JavaVM* vm, IDATA stage, void* reserved)
 	case VM_INITIALIZATION_COMPLETE:
 	{
 		/* the VM is now ready to go so setup the end GC hook we require for getting the time for the last time a GC ended */
-		J9HookInterface** gcOmrHooks = vm->memoryManagerFunctions->j9gc_get_omr_hook_interface(vm->omrVM);
+		J9HookInterface **gcOmrHooks = vm->memoryManagerFunctions->j9gc_get_omr_hook_interface(vm->omrVM);
 		if ((*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_GLOBAL_GC_END, gcDidComplete, OMR_GET_CALLSITE(), NULL)) {
 			returnVal = J9VMDLLMAIN_FAILED;
 		}
