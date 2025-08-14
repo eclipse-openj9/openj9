@@ -163,6 +163,9 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
                                         cleanDirsStr += cleanDirs.join(" ${buildWorkspace}/../../")
                                         // shared classes cache
                                         cleanDirsStr += " ${buildWorkspace}/../../javasharedresources /tmp/javasharedresources /temp/javasharedresources"
+                                        // to remove {buildWorkspace}/../../test* directories except testDependency
+                                        cleanDirsStr = cleanDirsStr.replaceAll("${buildWorkspace}/../../test\\*", "")
+                                        sh(script: "ls -d ${buildWorkspace}/../../test* | grep -v '/testDependency\$' | xargs rm -rf", returnStdout: true).trim()
                                     }
 
                                     // cleanup test results
