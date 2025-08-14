@@ -12299,10 +12299,10 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
       {
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, storeReg, storeReg, 0x80);
       // if the ZERO bit (bit 2) is zero, the value is negative
-      if (isCountPositives)
+      if (isCountPositives) // indexReg = storeReg >= 0
          generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::setbc, node, indexReg, cr0, 2);
-      else
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::setbcr, node, indexReg, cr0, 2);
+      else // indexReg = storeReg < 0
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::setbcr, node, tempReg, cr0, 2);
       }
    else
       {
