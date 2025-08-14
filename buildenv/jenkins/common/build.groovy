@@ -826,29 +826,25 @@ def _build_all() {
 // TODO: remove this workaround when https://github.com/adoptium/infrastructure/issues/3597 resolved. related: infra 9292
 def create_docker_image_locally()
 {
-    new_image_name = DOCKER_IMAGE.split(':')[0] + '_cuda'
-    // check and return if image is already exists on node
+    new_image_name = DOCKER_IMAGE.replace(':','-') + '_cuda'
+    // Always build a new cuda image. Remove the old one if it exists.
     CUDA_DOCKER_IMAGE_ID = get_docker_image_id(new_image_name)
     if (CUDA_DOCKER_IMAGE_ID) {
-        DOCKER_IMAGE = new_image_name
-        return
+        sh "docker rmi $CUDA_DOCKER_IMAGE_ID"
     }
-    sh '''
-        echo 'ARG image
-            ARG cuda_ver=12.2.0
-            ARG cuda_distro=ubi8
-            FROM nvcr.io/nvidia/cuda:${cuda_ver}-devel-${cuda_distro} as cuda
-            FROM $image
+    sh """
+        echo "FROM nvcr.io/nvidia/cuda:12.2.0-devel-ubi8 AS cuda
+            FROM ${DOCKER_IMAGE}
             RUN mkdir -p /usr/local/cuda/nvvm
             COPY --from=cuda /usr/local/cuda/include         /usr/local/cuda/include
             COPY --from=cuda /usr/local/cuda/nvvm/include    /usr/local/cuda/nvvm/include
-            ENV CUDA_HOME="/usr/local/cuda"' > dockerFile
-    '''
+            ENV CUDA_HOME='/usr/local/cuda'" > dockerFile
+    """
     println "Preparing Docker image ${new_image_name} locally ..."
     dockerRegistry = getDockerRegistry(DOCKER_IMAGE)
     dockerCredentialID = variableFile.get_user_credentials_id(dockerRegistry.replaceAll('https://','') ?: 'dockerhub')
     docker.withRegistry(dockerRegistry, "${dockerCredentialID}") {
-            docker.build(new_image_name, "--build-arg image=${DOCKER_IMAGE} -f dockerFile .")
+            docker.build(new_image_name, "-f dockerFile .")
     }
     DOCKER_IMAGE = new_image_name
 }
