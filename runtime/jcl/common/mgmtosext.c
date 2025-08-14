@@ -86,29 +86,39 @@ Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getSyste
 
 	J9JavaVM *vm = ((J9VMThread *)env)->javaVM;
 	double cpuLoad = 0.0;
-
 	intptr_t portLibraryStatus = omrsysinfo_get_CPU_load(&cpuLoad);
 
 	if (portLibraryStatus < 0) {
-		switch (portLibraryStatus) {
-		case OMRPORT_ERROR_SYSINFO_INSUFFICIENT_PRIVILEGE:
-			portLibraryStatus = -2;
-			break;
-		case OMRPORT_ERROR_SYSINFO_NOT_SUPPORTED:
-			portLibraryStatus = -3;
-			break;
-		case OMRPORT_ERROR_INSUFFICIENT_DATA:
-			portLibraryStatus =
-				J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_CPU_LOAD_COMPATIBILITY)
-				? 0
-				: -1;
-			break;
-		default:
-			portLibraryStatus = OMRPORT_ERROR_OPFAILED;
-			break;
+		if ((OMRPORT_ERROR_INSUFFICIENT_DATA == portLibraryStatus)
+		&& J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_CPU_LOAD_COMPATIBILITY)
+		) {
+			/* Sleep 20 ms to ensure omrsysinfo_get_CPU_load's requirement of at least
+			 * a 10 ms gap between samples is met for preventing an error.
+			 */
+			omrthread_nanosleep(20000000);
+
+			/* Retry once immediately. */
+			portLibraryStatus = omrsysinfo_get_CPU_load(&cpuLoad);
 		}
 
-		cpuLoad = (double)portLibraryStatus;
+		if (portLibraryStatus < 0) {
+			switch (portLibraryStatus) {
+			case OMRPORT_ERROR_SYSINFO_INSUFFICIENT_PRIVILEGE:
+				portLibraryStatus = -2;
+				break;
+			case OMRPORT_ERROR_SYSINFO_NOT_SUPPORTED:
+				portLibraryStatus = -3;
+				break;
+			case OMRPORT_ERROR_INSUFFICIENT_DATA:
+				portLibraryStatus = -1;
+				break;
+			default:
+				portLibraryStatus = OMRPORT_ERROR_OPFAILED;
+				break;
+			}
+
+			cpuLoad = (double)portLibraryStatus;
+		}
 	}
 
 	return (jdouble)cpuLoad;
