@@ -4367,14 +4367,14 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 	{
 		IDATA jfrOptionIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XXSTARTOPENJ9EXPERIMENTALFLIGHTRECORDING, NULL);
 		if (0 <= jfrOptionIndex) {
-			char* jfrOptionBuffer = NULL;
+			char *jfrOptionBuffer = NULL;
 			if (0 <= FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XXSTARTOPENJ9EXPERIMENTALFLIGHTRECORDING_EQUALS, NULL)) {
 				GET_OPTION_VALUE(jfrOptionIndex, '=', &jfrOptionBuffer);
 			} else if (0 <= FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XXSTARTOPENJ9EXPERIMENTALFLIGHTRECORDING_COLON, NULL)) {
 				GET_OPTION_OPTION(jfrOptionIndex, ':', ':', &jfrOptionBuffer);
 			}
 			if (NULL == jfrOptionBuffer) {
-				vm->jfrState.jfrCMDLineOption = (char*)"dumponexit=false";
+				vm->jfrState.jfrCMDLineOption = "dumponexit=false";
 			} else {
 				vm->jfrState.jfrCMDLineOption = jfrOptionBuffer;
 			}
