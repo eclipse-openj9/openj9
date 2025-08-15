@@ -1444,8 +1444,7 @@ bool TR_DataAccessAccelerator::generateI2PD(TR::TreeTop *treeTop, TR::Node *call
        * With AddrNode2 and AddrNode3 commoned up, the LocalCSE is able to copy propagate pdshlOverflow to the pd2zd
        * tree and replace its pdloadi.
        */
-      TR::Node *outOfLineCopyBackAddr = constructAddressNode(callNode, pdNode, offsetNode);
-      TR::Node *storeAddressNode      = constructAddressNode(callNode, pdNode, offsetNode);
+      TR::Node *storeAddressNode = constructAddressNode(callNode, pdNode, offsetNode);
 
       TR::TreeTop *nextTT = treeTop->getNextTreeTop();
       TR::TreeTop *prevTT = treeTop->getPrevTreeTop();
@@ -1456,6 +1455,7 @@ bool TR_DataAccessAccelerator::generateI2PD(TR::TreeTop *treeTop, TR::Node *call
       TR::Node *bcdchkNode = NULL;
       if (needsBCDCHK)
          {
+         TR::Node *outOfLineCopyBackAddr = constructAddressNode(callNode, pdNode, offsetNode);
          i2pdNode->setDecimalPrecision((isI2PD)? 10:19);
          TR::Node *pdshlNode = TR::Node::create(TR::pdshlOverflow, 2, i2pdNode, TR::Node::create(callNode, TR::iconst, 0));
          pdshlNode->setDecimalPrecision(precision);
@@ -1528,7 +1528,7 @@ bool TR_DataAccessAccelerator::generateI2PD(TR::TreeTop *treeTop, TR::Node *call
          callBlock->createConditionalBlocksBeforeTree(treeTop, isValidAddrTreeTop, slowPathTreeTop, fastPathTreeTop, cfg, false, true);
          }
 
-      TR::SymbolReference *symRef = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::PackedDecimal, outOfLineCopyBackAddr, 8, fe());
+      TR::SymbolReference *symRef = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::PackedDecimal, storeAddressNode, 8, fe());
       pdstore->setSymbolReference(symRef);
       pdstore->setDecimalPrecision(precision);
 
