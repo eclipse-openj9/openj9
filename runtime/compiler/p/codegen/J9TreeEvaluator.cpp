@@ -2491,16 +2491,12 @@ TR::Register *J9::Power::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, 
    // The number of dimensions should always be an iconst
    TR_ASSERT_FATAL(secondChild->getOpCodeValue() == TR::iconst, "dims of multianewarray must be iconst");
 
-   // only generate inline code if nDims > 1
-   // anything with more than 2 dimensions will be replaced by a direct call when lowering trees
    uint32_t nDims = secondChild->get32bitIntegralValue();
    static bool disableInlineMultianewArray = feGetEnv("TR_DisableInlineMultianewArray") != NULL;
 
-   if (nDims > 1 && !disableInlineMultianewArray
-#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) /* offheap not enabled for now */
-//         && !TR::Compiler->om.isOffHeapAllocationEnabled()
-#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
-      )
+   // Anything with more than 2 dimensions will be replaced by a direct call when lowering trees,
+   // so this is functionally equivalent of saying only inline if the dimension is exactly 2.
+   if (nDims > 1 && !disableInlineMultianewArray)
       {
       return generateMultianewArrayWithInlineAllocators(node, cg);
       }
