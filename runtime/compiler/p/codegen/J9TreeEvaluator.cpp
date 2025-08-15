@@ -10023,10 +10023,11 @@ static TR::Register *inlineCheckAssignableFromEvaluator(TR::Node *node, TR::Code
                toClassSymRef->isClassAbstract(comp) ? "abstract" : "non-abstract");
          }
       }
+   TR::SymbolReference *fromClassSymRef = NULL;
    if ((NULL != toClassSymRef) && !toClassSymRef->isClassInterface(comp))
       {
       int32_t fromClassDepth = -1;
-      TR::SymbolReference *fromClassSymRef = getClassSymRefAndDepth(fromClass, comp, fromClassDepth);
+      fromClassSymRef = getClassSymRefAndDepth(fromClass, comp, fromClassDepth);
       if (comp->getOption(TR_TraceCG))
          {
          traceMsg(comp, "%s: fromClassSymRef is %s\n", node->getOpCode().getName(),
@@ -10121,14 +10122,14 @@ static TR::Register *inlineCheckAssignableFromEvaluator(TR::Node *node, TR::Code
             // At this point cr0[eq] will be set if this is not a primitive array.
             generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, failLabel, condReg);
          }
-         if (NULL == fromlassSymRef) {
+         if (NULL == fromClassSymRef) {
             genInstanceOfOrCheckCastObjectArrayTest(node, condReg, fromClassReg, notArrayLabel,
                   srm, cg);
             // unlike toClass, the C helper didn't preclude a primitive array being the fromClass.
          }
 
          genCheckAssignableFromSuperArrayTest(node, cg, condReg, fromClassReg, toClassReg,
-               successLabel, failLabel, srm);
+               startLabel, successLabel, failLabel, srm);
 
          generateLabelInstruction(cg, TR::InstOpCode::label, node, notArrayLabel);
          }
