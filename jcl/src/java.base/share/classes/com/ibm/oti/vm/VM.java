@@ -268,6 +268,18 @@ static final native ClassLoader getStackClassLoader(int depth);
  */
 public final static native void initializeClassLoader(ClassLoader loader, int loaderType, boolean parallelCapable);
 
+/**
+ * RCP: assign the classloader.
+ *
+ * @param loader
+ *            ClassLoader the ClassLoader instance
+ * @param id
+ *            J9_CLASSLOADER_TYPE_BOOT     - bootstrap classloader
+ *            J9_CLASSLOADER_TYPE_PLATFORM - platform classloader
+ *            J9_CLASSLOADER_TYPE_OTHERS   - Application classloader
+ */
+public final static native void rcpAssignClassLoader(ClassLoader loader, int id);
+
 public final static native long getProcessId();
 public final static native long getUid();
 /**
@@ -587,6 +599,13 @@ public static native long getJ9ConstantPoolFromJ9Class(long j9clazz);
  * @return true if JVM is in single threaded mode, false otherwise
  */
 public static native boolean isJVMInSingleThreadedMode();
+
+/**
+ * Queries whether the JVM is running in RCP restore run
+ *
+ * @return true if JVM is in RCP restore run, false otherwise
+ */
+public static native boolean isRestoreRun();
 
 /**
  * A J9ConstantPool* is appended to anntation parameter byte arrays

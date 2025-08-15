@@ -4981,6 +4981,57 @@ done:
 		return rc;
 	}
 
+	/* RCP version of inlVMInitializeClassLoader(). */
+	VMINLINE VM_BytecodeAction
+	inlVMInitializeRcpClassLoader(REGISTER_ARGS_LIST)
+	{
+		VM_BytecodeAction rc = EXECUTE_BYTECODE;
+		I_32 loaderType = *(I_32*)_sp;
+		j9object_t classLoaderObject = *(j9object_t*)(_sp + 1);
+		buildInternalNativeStackFrame(REGISTER_ARGS);
+		if (NULL != J9VMJAVALANGCLASSLOADER_VMREF(_currentThread, classLoaderObject)) {
+internalError:
+			updateVMStruct(REGISTER_ARGS);
+			setCurrentException(_currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+			VMStructHasBeenUpdated(REGISTER_ARGS);
+			rc = GOTO_THROW_CURRENT_EXCEPTION;
+			goto done;
+		}
+		if (J9_CLASSLOADER_TYPE_BOOT == loaderType) {
+			/* if called with bootLoader, assign the system one to this instance */
+			J9ClassLoader *classLoaderStruct = _vm->systemClassLoader;
+			j9object_t loaderObject = J9CLASSLOADER_CLASSLOADEROBJECT(_currentThread, classLoaderStruct);
+			if (NULL != loaderObject) {
+				goto internalError;
+			}
+			J9CLASSLOADER_SET_CLASSLOADEROBJECT(_currentThread, classLoaderStruct, classLoaderObject);
+
+			VM_AtomicSupport::writeBarrier();
+			J9VMJAVALANGCLASSLOADER_SET_VMREF(_currentThread, classLoaderObject, classLoaderStruct);
+			TRIGGER_J9HOOK_VM_CLASS_LOADER_INITIALIZED(_vm->hookInterface, _currentThread, classLoaderStruct);
+
+			J9ClassWalkState classWalkState;
+			J9Class* clazz = allClassesStartDo(&classWalkState, _vm, classLoaderStruct);
+			while (NULL != clazz) {
+				J9VMJAVALANGCLASS_SET_CLASSLOADER(_currentThread, clazz->classObject, classLoaderObject);
+				clazz = allClassesNextDo(&classWalkState);
+			}
+			allClassesEndDo(&classWalkState);
+		} else {
+			updateVMStruct(REGISTER_ARGS);
+
+			if ((J9_CLASSLOADER_TYPE_PLATFORM == loaderType)) {
+				_vm->internalVMFunctions->initializeSnapshotClassLoaderObject(_vm, _vm->extensionClassLoader, classLoaderObject);
+			} else {
+				_vm->internalVMFunctions->initializeSnapshotClassLoaderObject(_vm, _vm->applicationClassLoader, classLoaderObject);
+			}
+		}
+		restoreInternalNativeStackFrame(REGISTER_ARGS);
+		returnVoidFromINL(REGISTER_ARGS, 2);
+done:
+		return rc;
+	}
+
 	/* com.ibm.oti.vm.VM: public static final native int getClassPathEntryType(java.lang.ClassLoader classLoader, int cpIndex); */
 	VMINLINE VM_BytecodeAction
 	inlVMGetClassPathEntryType(REGISTER_ARGS_LIST)
@@ -10727,6 +10778,7 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_YIELD_CONTINUATION),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_ISPINNED_CONTINUATION),
 #endif /* JAVA_SPEC_VERSION >= 19 */
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_VM_RCP_ASSIGN_CLASS_LOADER),
 	};
 #endif /* !defined(USE_COMPUTED_GOTO) */
 
@@ -11386,6 +11438,8 @@ JUMP_TARGET(J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTONATIVE):
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_ISPINNED_CONTINUATION):
 		PERFORM_ACTION(isPinnedContinuationImpl(REGISTER_ARGS));
 #endif /* JAVA_SPEC_VERSION >= 19 */
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_VM_RCP_ASSIGN_CLASS_LOADER):
+		PERFORM_ACTION(inlVMInitializeRcpClassLoader(REGISTER_ARGS));
 #if !defined(USE_COMPUTED_GOTO)
 	default:
 		Assert_VM_unreachable();

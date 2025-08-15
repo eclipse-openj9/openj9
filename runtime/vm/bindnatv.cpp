@@ -318,6 +318,7 @@ static inlMapping mappings[] = {
 	{ "Java_jdk_internal_vm_Continuation_yieldImpl__Z", J9_BCLOOP_SEND_TARGET_YIELD_CONTINUATION },
 	{ "Java_jdk_internal_vm_Continuation_isPinnedImpl__", J9_BCLOOP_SEND_TARGET_ISPINNED_CONTINUATION },
 #endif /* JAVA_SPEC_VERSION >= 19 */
+	{ "Java_com_ibm_oti_vm_VM_rcpAssignClassLoader__Ljava_lang_ClassLoader_2I", J9_BCLOOP_SEND_TARGET_INL_VM_RCP_ASSIGN_CLASS_LOADER },
 };
 
 typedef struct J9OutOfLineINLMapping {
