@@ -12242,7 +12242,11 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
 
    TR::Register *startReg = cg->gprClobberEvaluate(node->getChild(0)); // array
    TR::Register *indexReg = cg->gprClobberEvaluate(node->getChild(1)); // offset
-   TR::Register *lengthReg = cg->evaluate(node->getChild(2)); // length
+   TR::Register *lengthReg = NULL; // length
+   if (p9Plus)
+      lengthReg = cg->evaluate(node->getChild(2));
+   else // on P8, we will use a weird trick to overwrite length later
+      lengthReg = cg->gprClobberEvaluate(node->getChild(2));
 
    TR::Register *tempReg = cg->allocateRegister();
 
