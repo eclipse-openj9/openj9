@@ -9909,10 +9909,12 @@ static void genCheckAssignableFromInterfaceTest(TR::Node *node, TR::CodeGenerato
 
 // jumps to trueLabel if toClass is an array of objects that is the superclass of
 // fromClass's elements, falseLabel otherwise
+// in some cases it needs to go back to the startLabel after getting the component classes
 static void genCheckAssignableFromSuperArrayTest(TR::Node *node, TR::CodeGenerator *cg,
                                                 TR::Register *condReg,
                                                 TR::Register *fromClassReg,
                                                 TR::Register *toClassReg,
+                                                TR::LabelSymbol *startLabel,
                                                 TR::LabelSymbol *trueLabel,
                                                 TR::LabelSymbol *falseLabel,
                                                 TR_PPCScratchRegisterManager *srm)
@@ -9921,14 +9923,52 @@ static void genCheckAssignableFromSuperArrayTest(TR::Node *node, TR::CodeGenerat
    TR::Register *temp1Reg = srm->findOrCreateScratchRegister();
    TR::Register *temp2Reg = srm->findOrCreateScratchRegister();
 
-   // temp1 = arity
+   TR::LabelSymbol *equalLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *retryLabel = generateLabelSymbol(cg);
+
+   // temp1 = toClass->arity
    generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, temp1Reg,
          TR::MemoryReference::createWithDisplacement(cg, toClassReg,
                offsetof(J9ArrayClass, arity), TR::Compiler->om.sizeofReferenceAddress()));
-   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, temp1Reg,
-         TR::MemoryReference::createWithDisplacement(cg, toClassReg,
+   // temp2 = fromClass->arity
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, temp2Reg,
+         TR::MemoryReference::createWithDisplacement(cg, fromClassReg,
                offsetof(J9ArrayClass, arity), TR::Compiler->om.sizeofReferenceAddress()));
 
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, condReg, temp2Reg, temp1Reg);
+   // fromClassArity < toClassArity
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, falseLabel, condReg);
+   // fromClassArity == toClassArity
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, equalLabel, condReg);
+   // fromClassArity > toClassArity
+   // In this case, we need to strip out the extra layers of '[' in the fromClass corresponding to
+   // the arity of the toClass.
+   // E.g. for [[a to be assignable from [[[b, a must be assignable from [b
+   generateSrc1Instruction(cg, TR::InstOpCode::mtctr, node, temp1Reg);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
+   // fromClass = fromClass->componentType
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, fromClassReg,
+         TR::MemoryReference::createWithDisplacement(cg, fromClassReg,
+               offsetof(J9ArrayClass, componentType), TR::Compiler->om.sizeofReferenceAddress()));
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bdnz, node, loopLabel, condReg);
+
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, retryLabel);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, equalLabel);
+   // fromClass = fromClass->leafComponentType
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, fromClassReg,
+         TR::MemoryReference::createWithDisplacement(cg, fromClassReg,
+               offsetof(J9ArrayClass, leafComponentType), TR::Compiler->om.sizeofReferenceAddress()));
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, retryLabel);
+   // toClass = toClass->leafComponentType
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, toClassReg,
+         TR::MemoryReference::createWithDisplacement(cg, toClassReg,
+               offsetof(J9ArrayClass, leafComponentType), TR::Compiler->om.sizeofReferenceAddress()));
+   // go back to start
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, startLabel);
 
    srm->reclaimScratchRegister(temp1Reg);
    srm->reclaimScratchRegister(temp2Reg);
@@ -10058,15 +10098,20 @@ static TR::Register *inlineCheckAssignableFromEvaluator(TR::Node *node, TR::Code
             generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, notInterfaceLabel, condReg);
             srm->reclaimScratchRegister(sReg);
             }
+         // Since we can confirm the toClass is an interface class, we can confidently jump to
+         // fail if this test failed.
          genCheckAssignableFromInterfaceTest(node, cg, condReg, fromClassReg, toClassReg,
-               successLabel, notInterfaceLabel, srm);
+               successLabel, failLabel, srm);
          generateLabelInstruction(cg, TR::InstOpCode::label, node, notInterfaceLabel);
          }
 
-      // array test
+      // super array test
       // Both to and from classes must be arrays, we try to check them on compile time first,
       // but fall back to runtime checks if needed.
-      if (((NULL == toClassSymRef) || (toClassSymRef->isClassArray(comp)))
+      // Since we know the classes are not equivalent from the previous test, nothing can be
+      // assignable to a primitive array; we similarly check on both compile and run time.
+      if (((NULL == toClassSymRef) || (toClassSymRef->isClassArray(comp)
+               && J9CLASS_IS_MIXED(((J9ArrayClass*) toClassSymRef)->leafComponentType)))
             && ((NULL == fromClassSymRef) || (fromClassSymRef->isClassArray(comp))))
          {
          TR::LabelSymbol *notArrayLabel = generateLabelSymbol(cg);
@@ -10074,15 +10119,17 @@ static TR::Register *inlineCheckAssignableFromEvaluator(TR::Node *node, TR::Code
             genInstanceOfOrCheckCastObjectArrayTest(node, condReg, toClassReg, notArrayLabel,
                   srm, cg);
             // At this point cr0[eq] will be set if this is not a primitive array.
-            generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, notArrayLabel, condReg);
+            generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, failLabel, condReg);
          }
          if (NULL == fromlassSymRef) {
             genInstanceOfOrCheckCastObjectArrayTest(node, condReg, fromClassReg, notArrayLabel,
                   srm, cg);
-            // At this point cr0[eq] will be set if this is not a primitive array.
-            generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, notArrayLabel, condReg);
+            // unlike toClass, the C helper didn't preclude a primitive array being the fromClass.
          }
-         
+
+         genCheckAssignableFromSuperArrayTest(node, cg, condReg, fromClassReg, toClassReg,
+               successLabel, failLabel, srm);
+
          generateLabelInstruction(cg, TR::InstOpCode::label, node, notArrayLabel);
          }
 
