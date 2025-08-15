@@ -381,7 +381,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
             {
             length = TR::NoVectorLength;
             }
-         else if (vectorLength != 128)
+         else if (vectorLength == 64 || (vectorLength != 128 && !(comp->target().cpu.isX86() && comp->getOption(TR_EnableVectorAPIExpansion))))
             {
             length = TR::NoVectorLength;
             }
