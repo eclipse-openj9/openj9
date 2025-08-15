@@ -1025,3 +1025,11 @@ TraceEvent=Trc_VM_enterContinuation_Mount Overhead=1 Level=6 Template="enterCont
 TraceEvent=Trc_VM_yieldContinuation_Unmount Overhead=1 Level=6 Template="yieldContinuation: Unmounted continuation %p, returnState (%zu), ownedMonitorCount (%zu), enteredMonitors (%p)"
 TraceEvent=Trc_VM_detachMonitorInfo_Detach Overhead=1 Level=6 Template="Detach monitor: currentContinuation (%p), objectMonitor (%p), monitor (%p), monitor->owner (%p), monitor->count (%zu), osThread (%p)"
 TraceEvent=Trc_VM_updateMonitorInfo_Attach Overhead=1 Level=6 Template="Attach monitor: currentContinuation (%p), objectMonitor (%p), monitor (%p), monitor->owner (%p), monitor->count (%zu), osThread (%p)"
+
+TraceEvent=Trc_VM_criu_getNotCheckpointSafeClassMethodArray_classMethod_Counter_Array Overhead=1 Level=5 Template="getNotCheckpointSafeClassMethodArray() classMethodCounter = %zu, notcheckpointsafeArray = %p"
+TraceEvent=Trc_VM_criu_getNotCheckpointSafeClassMethodArray_classMethodItem Overhead=1 Level=5 Template="getNotCheckpointSafeClassMethodArray() notcheckpointsafeArray[%zu] = %s"
+TraceEvent=Trc_VM_criu_getNotCheckpointSafeClassMethodArray_emptySysProp Overhead=1 Level=5 Template="getNotCheckpointSafeClassMethodArray() system property openj9.internal.criu.notcheckpointsafe is empty"
+TraceEvent=Trc_VM_criu_getNotCheckpointSafeClassMethodArray_propValue Overhead=1 Level=5 Template="getNotCheckpointSafeClassMethodArray() notcheckpointsafeValue = %s"
+TraceException=Trc_VM_criu_getNotCheckpointSafeClassMethodArray_noSysProp Overhead=1 Level=5 Template="getNotCheckpointSafeClassMethodArray() no system property openj9.internal.criu.notcheckpointsafe"
+TraceException=Trc_VM_criu_getNotCheckpointSafeClassMethodArray_oom Overhead=1 Level=1 Template="getNotCheckpointSafeClassMethodArray() OOM"
+TraceException=Trc_VM_criu_notCheckpointSafeOrClinitFrameWalkFunction_foundTargetItem Overhead=1 Level=1 Template="notCheckpointSafeOrClinitFrameWalkFunction() found a NotCheckpointSafe package/class.method %s"
