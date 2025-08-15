@@ -147,6 +147,12 @@ private:
 	 * Tooling report the end of an unload phase.
 	 */
 	void reportClassUnloadingEnd(MM_EnvironmentBase *env);
+
+	/**
+	 * Confirm free region count is equal or more than eden region count.
+	 */
+	void verifyHeapSizing(MM_EnvironmentVLHGC *env, bool isGlobalGC);
+
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
 protected:
@@ -413,6 +419,11 @@ public:
 	MMINLINE UDATA getCurrentEdenSizeInBytes(MM_EnvironmentVLHGC *env)
 	{
 		return _schedulingDelegate.getCurrentEdenSizeInBytes(env);
+	}
+
+	MMINLINE void recalculateEdenSize(MM_EnvironmentVLHGC *env)
+	{
+		_schedulingDelegate.recalculateEdenSize(env);
 	}
 
 	MM_IncrementalGenerationalGC(MM_EnvironmentVLHGC *env, MM_HeapRegionManager *manager);
