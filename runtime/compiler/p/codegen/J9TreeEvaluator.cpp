@@ -1973,7 +1973,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    TR::Register *dimsPtrReg = cg->evaluate(node->getFirstChild());
    // number of dimensions - compile time constant
    uint32_t nDims = node->getSecondChild()->get32bitIntegralValue();
-   // class pointer of objects in the array - in the 2D case this is the class of the 1D array
+   // class pointer of objects in the array - in the 2D case this is the class of the subarray
    TR::Register *classReg = cg->evaluate(node->getThirdChild());
 
    // points to the resulting array allocated
@@ -2008,7 +2008,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    endLabel->setEndInternalControlFlow();
    generateLabelInstruction(cg, TR::InstOpCode::label, node, startLabel);
 
-   // if the second dimension's length is not zero, we call the function to handle it
+   // the fallback helper function, currently only used when there's a risk of heap overflow
    TR_PPCOutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory())
       TR_PPCOutOfLineCodeSection(node, TR::acall, targetReg, oolFailLabel, endLabel, cg);
    cg->getPPCOutOfLineCodeSectionList().push_front(outlinedHelperCall);
