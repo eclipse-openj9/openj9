@@ -96,7 +96,11 @@ JITServerIProfiler::cacheFaninDataForMethod(TR_OpaqueMethodBlock *method, const 
       // The quality of the shared fanin profile is better than the quality of the fanin info sent by client.
       // Load the fanin profile from the shared repository.
       TR_FaninSummaryInfo *result = clientSession->loadFaninDataFromSharedProfileCache(method, trMemory);
-      if (!result) // failed, so use client data if available
+      if (result)
+         {
+         return result;
+         }
+      else // Loading shared fanin data failed, so use client data if available.
          {
          return deserializeFaninMethodEntry(serialEntry, trMemory);
          }
