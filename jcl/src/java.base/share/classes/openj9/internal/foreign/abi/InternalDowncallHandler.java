@@ -892,7 +892,8 @@ public class InternalDowncallHandler {
 
 		long returnVal;
 		/*[IF JAVA_SPEC_VERSION >= 22]*/
-		HeapArgInfo info = heapArgInfo.get();
+		Deque<HeapArgInfo> infoStack = heapArgInfo.get();
+		HeapArgInfo info = infoStack.peek();
 		/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 		/* The scope associated with memory specific arguments must be kept alive
 		 * during the downcall since JDK17, including the downcall adddress.
@@ -946,7 +947,6 @@ public class InternalDowncallHandler {
 			 * so as to reset the internal index and avoid retaining the references to the
 			 * unreachable objects.
 			 */
-			Deque<HeapArgInfo> infoStack = heapArgInfo.get();
 			if (!infoStack.isEmpty()) {
 				infoStack.pop();
 			}
