@@ -300,6 +300,9 @@ allocateVMThread(J9JavaVM *vm, omrthread_t osThread, UDATA privateFlags, void *m
 #if defined(J9VM_OPT_JFR)
 	newThread->threadJfrState.prevTimestamp = -1;
 #endif /* defined(J9VM_OPT_JFR) */
+	newThread->parkCount = 0;
+	newThread->prevParkRateTime = 0;
+	newThread->parkRate = 0;
 
 	/* If an exclusive access request is in progress, mark this thread */
 
@@ -591,6 +594,23 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 	{
 		vm->thrDeflationPolicy = J9VM_DEFLATION_POLICY_ASAP;
 	}
+	vm->thrDeflationPolicy = J9VM_DEFLATION_POLICY_ASAP;
+	vm->thrParkSpinCount1 = 0;
+	vm->thrParkSpinCount2 = 0;
+
+	vm->parkSleepMultiplier = 0;
+	vm->parkSleepTime = 0;
+	vm->yieldUsleepMultiplier = 0;
+
+	vm->prevContextSwitchTimestamp = 0;
+
+	vm->thresholdHigh = 0.9f;
+	vm->thresholdMedium = 0.6f;
+	// 0: always system park, 1: always spin, 2: always sleep,
+	// 3: controlled by context switch rate
+	// 4: controlled by park rate
+	vm->parkPolicy = 0;
+	vm->recalcThresholdNanos = 500*1000*1000;
 
 	if (cpus > 1) {
 #if (defined(LINUXPPC)) && !defined(J9VM_ENV_LITTLE_ENDIAN)
@@ -852,6 +872,54 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
+		if (try_scan(&scan_start, "parkSpinCount1=")) {
+			if (scan_udata(&scan_start, &vm->thrParkSpinCount1)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "parkSpinCount2=")) {
+			if (scan_udata(&scan_start, &vm->thrParkSpinCount2)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "parkSleepMultiplier=")) {
+			if (scan_udata(&scan_start, &vm->parkSleepMultiplier)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "parkSleepTime=")) {
+			if (scan_udata(&scan_start, &vm->parkSleepTime)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "parkPolicy=")) {
+			if (scan_udata(&scan_start, &vm->parkPolicy)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "thresholdHigh=")) {
+			if (scan_double(&scan_start, &vm->thresholdHigh)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "thresholdMedium=")) {
+			if (scan_double(&scan_start, &vm->thresholdMedium)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "recalcThresholdNanos=")) {
+			if (scan_udata(&scan_start, &vm->recalcThresholdNanos)) {
+				goto _error;
+			}
+			continue;
+		}
 #if !defined(WIN32) && defined(OMR_NOTIFY_POLICY_CONTROL)
 		if (try_scan(&scan_start, "notifyPolicy=")) {
 			char *oldScanStart = scan_start;
@@ -1233,6 +1301,8 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 				goto _error;
 			}
 			**(UDATA**)omrthread_global((char*)"yieldUsleepMultiplier") = yieldUsleepMultiplier;
+
+			vm->yieldUsleepMultiplier = yieldUsleepMultiplier;
 			continue;
 		}
 
@@ -2503,6 +2573,49 @@ threadAboutToStart(J9VMThread *currentThread)
 #endif
 
 	TRIGGER_J9HOOK_THREAD_ABOUT_TO_START(vm->hookInterface, currentThread);
+}
+
+static int J9THREAD_PROC
+cpuUtilCalcProc(void *entryArg)
+{
+	J9JavaVM *vm = (J9JavaVM *)entryArg;
+	J9VMThread *currentThread = NULL;
+	static uint64_t prev_switches = 0;
+
+	if (JNI_OK == attachSystemDaemonThread(vm, &currentThread, "CPU util calc thread")) {
+
+		omrthread_monitor_enter(vm->cpuUtilCalcMutex);
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+		while (1) {
+			I_64 currentTime = j9time_nano_time();
+			uint64_t switches = 0;
+
+			omrsysinfo_get_number_context_switches(&switches);
+
+			if (vm->prevContextSwitchTimestamp == 0) {
+				// first run
+			} else {
+				vm->contextSwitchRate = double(switches - prev_switches) / ((currentTime - vm->prevContextSwitchTimestamp) / 1e9);
+				Trc_VM_ThreadHelp_timeCompensationHelper_parkWait(currentThread, vm->contextSwitchRate);
+			}
+			prev_switches = switches;
+			vm->prevContextSwitchTimestamp = currentTime;
+			omrthread_monitor_wait_timed(vm->cpuUtilCalcMutex, vm->recalcThresholdNanos / 1e6, 0);
+		}
+		DetachCurrentThread((JavaVM*)vm);
+		omrthread_monitor_exit(vm->cpuUtilCalcMutex);
+	}
+
+	return 0;
+}
+
+void startcpuUtilCalcProc(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData) {
+	J9VMThread *currentThread = ((J9VMInitEvent *)eventData)->vmThread;
+	J9JavaVM *vm = currentThread->javaVM;
+	if (vm->parkPolicy == 3) {
+		omrthread_create(&(vm->cpuUtilCalcThread), vm->defaultOSStackSize, J9THREAD_PRIORITY_NORMAL, FALSE, cpuUtilCalcProc, (void*)vm);
+	}
 }
 
 } /* extern "C" */
