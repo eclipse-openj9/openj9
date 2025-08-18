@@ -150,6 +150,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<classref name="java/lang/invoke/MethodHandleNatives" flags="opt_openjdkMethodhandle" versions="18-"/>
 
 	<classref name="jdk/internal/vm/Continuation" versions="19-"/>
+	<classref name="jdk/internal/vm/ThreadSnapshot" versions="25-"/>
 
 	<classref name="openj9/internal/criu/JVMCheckpointException" flags="opt_criuSupport"/>
 	<classref name="openj9/internal/criu/JVMRestoreException" flags="opt_criuSupport"/>
@@ -435,6 +436,15 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 
 	<!-- Field references for Synchronize Virtual Threads without Pinning (JEP491). -->
 	<fieldref class="jdk/internal/vm/Continuation" name="blocker" signature="Ljava/lang/Object;" versions="24-"/>
+
+	<!-- Field references for ThreadSnapshot -->
+	<fieldref class="jdk/internal/vm/ThreadSnapshot" name="name" signature="Ljava/lang/String;" versions="25-"/>
+	<fieldref class="jdk/internal/vm/ThreadSnapshot" name="threadStatus" signature="I" versions="25-"/>
+	<fieldref class="jdk/internal/vm/ThreadSnapshot" name="carrierThread" signature="Ljava/lang/Thread;" versions="25-"/>
+	<fieldref class="jdk/internal/vm/ThreadSnapshot" name="stackTrace" signature="[Ljava/lang/StackTraceElement;" versions="25-"/>
+	<fieldref class="jdk/internal/vm/ThreadSnapshot" name="locks" signature="[Ljdk/internal/vm/ThreadSnapshot$ThreadLock;" versions="25-"/>
+	<fieldref class="jdk/internal/vm/ThreadSnapshot" name="blockerTypeOrdinal" signature="I" versions="25-"/>
+	<fieldref class="jdk/internal/vm/ThreadSnapshot" name="blockerObject" signature="Ljava/lang/Object;" versions="25-"/>
 
 	<!-- Field references needed to support Foreign Linker API. -->
 	<fieldref class="java/lang/invoke/NativeMethodHandle" name="invokeCache" signature="[Ljava/lang/Object;" flags="opt_openjdkFfi" versions="22-"/>
