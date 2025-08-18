@@ -269,7 +269,7 @@ ppc64_aix:
     os: 'aix'
     url:
       all: 'https://api.adoptopenjdk.net/v3/binary/latest/${bootJDKVersion}/ga/${os}/${arch}/jdk/openj9/normal/adoptopenjdk?project=jdk'
-      24: 'https://github.com/ibmruntimes/semeru24-binaries/releases/download/jdk-24.0.2%2B12_openj9-0.54.0-m1/ibm-semeru-open-jdk_ppc64_aix_24.0.2_12_openj9-0.54.0-m1.tar.gz'
+      24: 'https://github.com/ibmruntimes/semeru24-binaries/releases/download/jdk-24.0.2%2B12_openj9-0.54.0/ibm-semeru-open-jdk_ppc64_aix_24.0.2_12_openj9-0.54.0.tar.gz'
   release:
     all: 'aix-ppc64-server-release'
     8: 'aix-ppc64-normal-server-release'
