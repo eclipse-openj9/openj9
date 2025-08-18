@@ -9982,8 +9982,8 @@ static TR::Register *inlineCheckAssignableFromEvaluator(TR::Node *node, TR::Code
    TR::Node *fromClass = node->getFirstChild();
    TR::Node *toClass = node->getSecondChild();
 
-   TR::Register *fromClassReg = cg->evaluate(fromClass);
-   TR::Register *toClassReg = cg->evaluate(toClass);
+   TR::Register *fromClassReg = cg->gprClobberEvaluate(fromClass);
+   TR::Register *toClassReg = cg->gprClobberEvaluate(toClass);
 
    TR::Register *cacheReg = cg->allocateRegister();
 
