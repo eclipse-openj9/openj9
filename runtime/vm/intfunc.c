@@ -493,4 +493,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 #endif /* JAVA_SPEC_VERSION >= 24 */
 	getSystemPropertyList,
 	freeMapCaches,
+	getTargetVMThreadHelper,
+	releaseTargetVMThreadHelper,
 };

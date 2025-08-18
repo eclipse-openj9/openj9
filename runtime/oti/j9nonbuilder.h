@@ -5467,6 +5467,8 @@ typedef struct J9InternalVMFunctions {
 #endif /* JAVA_SPEC_VERSION >= 24 */
 	jobjectArray (*getSystemPropertyList)(JNIEnv *env);
 	void (*freeMapCaches)(struct J9ClassLoader *classLoader);
+	jvmtiError (*getTargetVMThreadHelper)(struct J9VMThread *currentThread, jthread thread, jvmtiError vThreadError, UDATA flags, struct J9VMThread **vmThreadPtr, BOOLEAN* isVirtualThread, BOOLEAN *isThreadAlive);
+	void (*releaseTargetVMThreadHelper)(struct J9VMThread *currentThread, struct J9VMThread *targetThread, jthread thread);
 } J9InternalVMFunctions;
 
 /* Jazz 99339: define a new structure to replace JavaVM so as to pass J9NativeLibrary to JVMTIEnv  */
