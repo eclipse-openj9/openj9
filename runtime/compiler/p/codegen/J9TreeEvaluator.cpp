@@ -2496,7 +2496,9 @@ TR::Register *J9::Power::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, 
 
    // Anything with more than 2 dimensions will be replaced by a direct call when lowering trees,
    // so this is functionally equivalent of saying only inline if the dimension is exactly 2.
-   if (nDims > 1 && !disableInlineMultianewArray)
+   // We also need to make sure the TLH is properly zeroed.
+   if (nDims > 1 && !disableInlineMultianewArray
+         && usingTLH && fej9->tlhHasBeenCleared() && !comp->getOptions()->realTimeGC())
       {
       return generateMultianewArrayWithInlineAllocators(node, cg);
       }
