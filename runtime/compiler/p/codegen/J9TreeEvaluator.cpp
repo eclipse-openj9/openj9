@@ -2033,7 +2033,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, temp2Reg,
       TR::MemoryReference::createWithDisplacement(cg, vmThreadReg,
          offsetof(J9VMThread, heapTop), addrSize));
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::Op_cmp, node, condReg, temp1Reg, temp2Reg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::Op_cmpl, node, condReg, temp1Reg, temp2Reg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, oolJumpLabel, condReg);
 
    // update the heapAlloc pointer to point to the next free space
@@ -2128,7 +2128,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, secondDimLenReg,
       TR::MemoryReference::createWithDisplacement(cg, vmThreadReg,
          offsetof(J9VMThread, heapTop), addrSize));
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::Op_cmp, node, condReg, temp2Reg, secondDimLenReg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::Op_cmpl, node, condReg, temp2Reg, secondDimLenReg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, oolJumpLabel, condReg);
    // update the heapAlloc pointer to point to the next free space
    generateMemSrc1Instruction(cg, TR::InstOpCode::Op_st, node,
@@ -2297,7 +2297,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, temp3Reg,
       TR::MemoryReference::createWithDisplacement(cg, vmThreadReg,
          offsetof(J9VMThread, heapTop), addrSize));
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::Op_cmp, node, condReg, temp2Reg, temp3Reg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::Op_cmpl, node, condReg, temp2Reg, temp3Reg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, oolJumpLabel, condReg);
    // update the heapAlloc pointer to point to the next free space
    generateMemSrc1Instruction(cg, TR::InstOpCode::Op_st, node,
