@@ -5272,6 +5272,33 @@ void
 freeTLS(J9VMThread *currentThread, j9object_t threadObj);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
+/**
+ * Get the target J9VMThread given a j.l.Thread
+ *
+ * @param[in] currentThread the current thread
+ * @param[in] thread the j.l.Thread
+ * @paarm[in] vThreadError the error code to return if a virtual thread is not allowed to get the J9VMThread
+ * @param[in] flags J9JVMTI_GETVMTHREAD_XX flags
+ * @param[out] J9VMThread the J9VMThread corresponding to the j.l.Thread
+ * @param[out] isVirtualThread Whether it is a virtual thread
+ * @param[out] isThreadAlive Whether the thread is alive
+ *
+ * @return jvmtiError
+ */
+jvmtiError
+getTargetVMThreadHelper(J9VMThread *currentThread, jthread thread, jvmtiError vThreadError, UDATA flags, J9VMThread **vmThreadPtr, BOOLEAN* isVirtualThread, BOOLEAN *isThreadAlive);
+
+/**
+ * Release the target J9VMThread retuned from getTargetVMThreadHelper()
+ *
+ * @param[in] currentThread the current thread
+ * @param[in] targetThread the J9VMThread retuned from getTargetVMThreadHelper()
+ * @param[in] thread the j.l.Thread corresponding to the targetThread
+ */
+void
+releaseTargetVMThreadHelper(J9VMThread *currentThread, J9VMThread *targetThread, jthread thread);
+
+
 /* -------------------- J9OMRHelpers.cpp ------------ */
 
 /**
