@@ -34,6 +34,9 @@ import java.security.BasicPermission;
  *
  * @since 1.5
  */
+/*[IF JAVA_SPEC_VERSION >= 25]*/
+@Deprecated(forRemoval=true, since="25")
+/*[ENDIF] JAVA_SPEC_VERSION >= 25 */
 public final class ManagementPermission extends BasicPermission {
 
 	/**
