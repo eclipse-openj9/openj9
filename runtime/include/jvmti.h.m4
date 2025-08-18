@@ -40,6 +40,10 @@ JNIEXPORT jint JNICALL Agent_OnAttach(JavaVM *vm, char *options, void *reserved)
  * JVMTI constants
  *-----------------------------------------------------------------------------
  */
+dnl /* JVMTI_VERSION = 0x30000000 + majorversion * 0x10000 + minorversion (always 0) * 0x100 */
+ifelse(eval(JAVA_SPEC_VERSION >= 15), 1, [[#]define JVMTI_VERSION (0x30000000 + (JAVA_SPEC_VERSION * 0x10000))], [
+ifelse(eval(JAVA_SPEC_VERSION >= 11), 1, [#define JVMTI_VERSION JVMTI_VERSION_11], [
+#define JVMTI_VERSION JVMTI_1_2_SPEC_VERSION])])
 
 #define JVMTI_VERSION_1_0 0x30010000
 #define JVMTI_VERSION_1_1 0x30010100
@@ -47,16 +51,13 @@ JNIEXPORT jint JNICALL Agent_OnAttach(JavaVM *vm, char *options, void *reserved)
 #define JVMTI_VERSION_1 (JVMTI_VERSION_1_0)
 ifelse(eval(JAVA_SPEC_VERSION > 8), 1, [#define JVMTI_VERSION_9  0x30090000
 #define JVMTI_VERSION_11 0x300b0000], [dnl])
+ifelse(eval(JAVA_SPEC_VERSION >= 19), 1, [#define JVMTI_VERSION_19 0x30130000], [dnl])
+ifelse(eval(JAVA_SPEC_VERSION >= 21), 1, [#define JVMTI_VERSION_21 0x30150000], [dnl])
 
 #define JVMTI_1_0_SPEC_VERSION          (JVMTI_VERSION_1_0 +  37) /* Spec version is 1.0.37 */
 #define JVMTI_1_1_SPEC_VERSION          (JVMTI_VERSION_1_1 + 102) /* Spec version is 1.1.102 */
 #define JVMTI_1_2_SPEC_VERSION          (JVMTI_VERSION_1_2 +   1) /* Spec version is 1.2.1 */
 #define JVMTI_1_2_3_SPEC_VERSION        (JVMTI_VERSION_1_2 +   3) /* Spec version is 1.2.3 */
-
-dnl /* JVMTI_VERSION = 0x30000000 + majorversion * 0x10000 + minorversion (always 0) * 0x100 */
-ifelse(eval(JAVA_SPEC_VERSION >= 15), 1, [[#]define JVMTI_VERSION (0x30000000 + (JAVA_SPEC_VERSION * 0x10000))], [
-ifelse(eval(JAVA_SPEC_VERSION >= 11), 1, [#define JVMTI_VERSION JVMTI_VERSION_11], [
-#define JVMTI_VERSION JVMTI_1_2_SPEC_VERSION])])
 
 #define JVMTI_CLASS_STATUS_VERIFIED     0x00000001
 #define JVMTI_CLASS_STATUS_PREPARED     0x00000002
