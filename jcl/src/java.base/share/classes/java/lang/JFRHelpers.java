@@ -25,6 +25,8 @@ package java.lang;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import jdk.internal.misc.Unsafe;
 
@@ -42,51 +44,76 @@ final class JFRHelpers {
 	private static volatile boolean jfrClassesInitialized = false;
 	private static String jfrCMDLineOption = com.ibm.oti.vm.VM.getjfrCMDLineOption();
 
-	private static Long convertToBytes(String sizeValue) {
-		long sizeInBytes = 0L;
-		String numericPart = sizeValue.replaceAll("[^0-9]", "");
-		String sizeUnit = sizeValue.replaceAll("[0-9]", "").toLowerCase();
-		long size = Long.parseLong(numericPart);
-		switch (sizeUnit) {
-		case "k": /* intentional fall through - KiloBytes */
-			sizeInBytes = size * 1_024L;
-			break;
-		case "m": /* intentional fall through - MegaBytes*/
-			sizeInBytes = size * 1_024L * 1_024L;
-			break;
-		case "g": /* intentional fall through - GigaBytes */
-			sizeInBytes = size * 1_024L * 1_024L * 1_024L;
-			break;
-		default: /* No unit or unrecognized unit, assume bytes */
-			sizeInBytes = size;
-			break;
+	private static Long convertToBytes(String text) {
+		Pattern pattern = Pattern.compile("(\\d+)([gkm]b?)?", Pattern.CASE_INSENSITIVE);
+		Matcher matcher = pattern.matcher(text);
+		if (!matcher.matches()) {
+			throw new IllegalArgumentException("Invalid memory size");
 		}
-		return sizeInBytes;
+		String textValue = matcher.group(1);
+		long bytes;
+		try {
+			bytes = Long.parseLong(textValue);
+		} catch (NumberFormatException nfe) {
+			throw new IllegalArgumentException("Invalid memory size");
+		}
+		String unit = matcher.group(2);
+		if ((null != unit) && !unit.isEmpty()) {
+			switch (unit.toLowerCase()) {
+			case "k":
+			case "kb":
+				bytes *= 1024L;
+				break;
+			case "m":
+			case "mb":
+				bytes *= 1024L * 1024L;
+				break;
+			case "g":
+			case "gb":
+				bytes *= 1024L * 1024L * 1024L;
+				break;
+			}
+		}
+		return bytes;
 	}
 
-	private static Long convertToNanoSeconds(String timeValue) {
-		long timeInNanos = 0L;
-		String numericPart = timeValue.replaceAll("[^0-9]", "");
-		String timeUnit = timeValue.replaceAll("[0-9]", "").toLowerCase();
-		long time = Long.parseLong(numericPart);
-		switch (timeUnit) {
-		case "d": /* days */
-			timeInNanos = time * 24 * 60 * 60 * 1_000_000_000L;
+	private static Long convertToNanoSeconds(String text) {
+		Pattern timePattern = Pattern.compile("(\\d+)(ns|us|ms|s|m|h|d)", Pattern.CASE_INSENSITIVE);
+		Matcher matcher = timePattern.matcher(text);
+		if (!matcher.matches()) {
+			throw new IllegalArgumentException("Invalid time value");
+		}
+		String textValue = matcher.group(1);
+		long time;
+		try {
+			time = Long.parseLong(textValue);
+		} catch (NumberFormatException nfe) {
+			throw new IllegalArgumentException("Invalid time value");
+		}
+		String unit = matcher.group(2);
+		switch (unit.toLowerCase()) {
+		case "ns":
 			break;
-		case "h": /* hours */
-			timeInNanos = time * 60 * 60 * 1_000_000_000L;
+		case "us":
+			time *= 1000L;
 			break;
-		case "m": /* minutes */
-			timeInNanos = time * 60 * 1_000_000_000L;
+		case "ms":
+			time *= 1000L * 1000L;
 			break;
-		case "s": /* seconds */
-			timeInNanos = time * 1_000_000_000L;
+		case "s":
+			time *= 1000L * 1000L * 1000L;
 			break;
-		default: /* No unit or unrecognized unit, assume nanoseconds */
-			timeInNanos = time;
+		case "m":
+			time *= 60 * 1000L * 1000L * 1000L;
+			break;
+		case "h":
+			time *= 60 * 60 * 1000L * 1000L * 1000L;
+			break;
+		case "d":
+			time *= 24 * 60 * 60 * 1000L * 1000L * 1000L;
 			break;
 		}
-		return timeInNanos;
+		return time;
 	}
 
 	private static void initJFRCmdlineOptions() {
@@ -176,9 +203,7 @@ final class JFRHelpers {
 			if (null != results) {
 				logJFR(results, 0, 2);
 			}
-			/*[ENDIF] JAVA_SPEC_VERSION == 11 */
-
-			/*[IF JAVA_SPEC_VERSION >= 17]*/
+			/*[ELSEIF JAVA_SPEC_VERSION >= 17]*/
 			Method executeMethod = dcmdStartClass.getSuperclass().getDeclaredMethod("execute", String.class, String.class, char.class);
 			executeMethod.setAccessible(true);
 
