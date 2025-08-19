@@ -41,6 +41,7 @@ j9jit_files(
 	z/codegen/S390AOTRelocation.cpp
 	z/codegen/S390CHelperLinkage.cpp
 	z/codegen/S390J9CallSnippet.cpp
+	z/codegen/S390J9HelperCallSnippet.cpp
 	z/codegen/S390PrivateLinkage.cpp
 	z/codegen/S390Recompilation.cpp
 	z/codegen/S390Register.cpp
