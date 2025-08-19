@@ -69,7 +69,7 @@ static DestroyVM globalDestroyVM=NULL;
 static JavaVM * globalVM = NULL;
 
 #if defined(AIXPPC)
-/* Used to keep track of whether or not opening of the "main redirector" has been attempted. 
+/* Used to keep track of whether or not opening of the "main redirector" has been attempted.
  * Avoiding an infinite loop when libjvm.a is soft linked to libjvm.so
  */
 static int attempted_to_open_main = 0;
@@ -299,7 +299,7 @@ showVMChoices(void)
 	if (isPackagedWithCompressedRefs()) {
 		fprintf(stdout, "\nThe following options control global VM configuration:\n\n");
 		fprintf(stdout, "  -Xcompressedrefs              use compressed heap references\n");
-	} 
+	}
 }
 
 static int xcompressed = -1;
@@ -492,7 +492,7 @@ checkEnvOptions(char *envOptions, int *gcPolicy, char **xcompressedstr, char **x
 		xnocompressed = 0;
 		*xnocompressedstr = VMOPT_XXNOUSECOMPRESSEDOOPS;
 	}
-	
+
 	*xjvmstr = strstr(envOptions, VMOPT_XJVM);
 	if (NULL != *xjvmstr) {
 		char *space = NULL;
@@ -546,7 +546,7 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 	char *xmxstr = NULL;
 	U_64 requestedHeapSize = 0;
 
-	/* 
+	/*
 	 * The command line is handled below but look into the multiple JAVA_OPTIONS environment variables here, since it is a special case.
 	 * First look at OPENJ9_JAVA_OPTIONS, or IBM_JAVA_OPTIONS if OPENJ9_JAVA_OPTIONS isn't defined.
 	 */
@@ -556,7 +556,7 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 		checkEnvOptions(envOptions, &gcPolicy, &xcompressedstr, &xnocompressedstr, &xjvmstr, &xjvm, &namedVM, &nameLength, &xmxstr);
 	}
 #endif /* (JAVA_SPEC_VERSION != 8) || defined(OPENJ9_BUILD) */
-	
+
 	envOptions = getenv(ENVVAR_OPENJ9_JAVA_OPTIONS);
 	if (NULL == envOptions) {
 		envOptions = getenv(ENVVAR_IBM_JAVA_OPTIONS);
@@ -757,6 +757,9 @@ JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args)
 	args->nOptions = ((JavaVMInitArgs *)vm_args)->nOptions;
 	args->options = ((JavaVMInitArgs *)vm_args)->options;
 	args->ignoreUnrecognized = ((JavaVMInitArgs *)vm_args)->ignoreUnrecognized;
+
+		printf(" !j9x 0x%p,0x%zX %s\n", args, sizeof( JavaVMInitArgs), "redirector.c:761");
+
 
 	memset(namedVM, 0, J9_VM_DIR_LENGTH);
 	chooseJVM(args, namedVM, J9_VM_DIR_LENGTH);
@@ -1114,8 +1117,8 @@ findDir(const char *libraryDir) {
  * opens the jvm.dll in directory named "libraryDir" at the same depth
  * as this directory.  Sets the global function pointers up for
  * passthrough.
- * 
- * on AIX this function is used in the generated.c functions to find the 'main' 
+ *
+ * on AIX this function is used in the generated.c functions to find the 'main'
  * redirector (see details in findDir()).
  */
 #if defined(AIXPPC)
@@ -1315,6 +1318,10 @@ getjvmBin(BOOLEAN removeSubdir)
 	/* get loader information */
 	linfoSize = 1024;
 	linfo = malloc(linfoSize);
+
+			printf(" !j9x 0x%p,0x%zX %s\n", linfo, linfoSize, "redirector.c:1322");
+
+
 	for(;;) {
 		rc = loadquery(L_GETINFO, linfo, linfoSize);
 		if (rc != -1) {
@@ -1382,6 +1389,10 @@ isFileInDir(char *dir, char *file)
 
 	l = strlen(dir) + strlen(file) + 2; /* 2= '/' + null char */
 	fullpath = malloc(l);
+
+				printf(" !j9x 0x%p,0x%zX %s\n", fullpath, l, "redirector.c:1393");
+
+
 	strcpy(fullpath, dir);
 	fullpath[strlen(dir)] = DIR_SLASH_CHAR;
 	strcpy(fullpath+strlen(dir)+1, file);
@@ -1497,6 +1508,10 @@ static J9StringBuffer* jvmBufferEnsure(J9StringBuffer* buffer, UDATA len) {
 	if (buffer == NULL) {
 		UDATA newSize = len > MIN_GROWTH ? len : MIN_GROWTH;
 		buffer = (J9StringBuffer*) malloc( newSize + 1 + sizeof(UDATA));	/* 1 for null terminator */
+
+				printf(" !j9x 0x%p,0x%zX %s\n", buffer,  newSize + 1 + sizeof(UDATA), "redirector.c:1512");
+
+
 		if (buffer != NULL) {
 			buffer->remaining = newSize;
 			buffer->data[0] = '\0';
@@ -1508,6 +1523,10 @@ static J9StringBuffer* jvmBufferEnsure(J9StringBuffer* buffer, UDATA len) {
 		UDATA newSize = len > MIN_GROWTH ? len : MIN_GROWTH;
 		const char* bufData = (const char*)buffer->data;
 		J9StringBuffer* new = (J9StringBuffer*) malloc(strlen(bufData) + newSize + sizeof(UDATA) + 1 );
+
+						printf(" !j9x 0x%p,0x%zX %s\n", new, strlen(bufData) + newSize + sizeof(UDATA) + 1, "redirector.c:1527");
+
+
 		if (new) {
 			new->remaining = newSize;
 			strcpy(new->data, bufData);

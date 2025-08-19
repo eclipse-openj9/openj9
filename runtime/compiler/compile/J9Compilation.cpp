@@ -88,7 +88,9 @@ void *operator new(size_t size)
       TR_ASSERT(0,"Invalid use of global operator new");
       }
 #endif
-   return malloc(size);
+   void *mem = malloc(size);
+   printf(" !j9x 0x%p,0x%zX %s\n", mem, size, "J9Compilation.cpp:90");
+   return mem;
    }
 
 // Avoid -Wimplicit-exception-spec-mismatch error on platforms that specify the global delete operator with throw()
