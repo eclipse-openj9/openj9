@@ -52,6 +52,13 @@ J9::CPU::enableFeatureMasks()
    {
    // Assume all features will be utilized by default
    memset(_supportedFeatureMasks.features, ~0, OMRPORT_SYSINFO_FEATURES_SIZE*sizeof(uint32_t));
+
+   OMRProcessorDesc omrFeatureMasks = TR::CPU::getEnabledFeatures();
+   for (size_t i = 0; i < OMRPORT_SYSINFO_FEATURES_SIZE; i++)
+      {
+      _supportedFeatureMasks.features[i] |= omrFeatureMasks.features[i];
+      }
+
    _isSupportedFeatureMasksEnabled = true;
    }
 

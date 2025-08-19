@@ -35,7 +35,6 @@
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "control/CompilationRuntime.hpp"
-#include "env/ProcessorInfo.hpp"
 #include "infra/Monitor.hpp"
 #include "infra/MonitorTable.hpp"
 #include "runtime/ArtifactManager.hpp"
@@ -574,35 +573,7 @@ UDATA lookupSendTargetForThunk(J9JavaVM * javaVM, int thunkNumber)
 #undef VIRTUAL_TARGET
    }
 
-
-TR_X86CPUIDBuffer *queryX86TargetCPUID(void * javaVM);
-
 #ifdef TR_HOST_X86
 #include "x/runtime/X86Runtime.hpp"
 #endif
-
-static TR_X86CPUIDBuffer *initializeX86CPUIDBuffer(void * javaVM)
-   {
-   static TR_X86CPUIDBuffer buf = { {'U','n','k','n','o','w','n','B','r','a','n','d'} };
-   J9JITConfig *jitConfig = ((J9JavaVM *)javaVM)->jitConfig;
-
-   PORT_ACCESS_FROM_PORT(((J9JavaVM *)javaVM)->portLibrary);
-
-#if defined(TR_HOST_X86)
-   // jitConfig can be NULL during AOT
-   if (jitConfig && jitConfig->processorInfo == NULL)
-      {
-      jitGetCPUID(&buf);
-      jitConfig->processorInfo = &buf;
-      }
-#endif
-
-   return &buf;
-   }
-
-TR_X86CPUIDBuffer *queryX86TargetCPUID(void * javaVM)
-   {
-   static TR_X86CPUIDBuffer *result = initializeX86CPUIDBuffer(javaVM);
-   return result;
-   }
 
