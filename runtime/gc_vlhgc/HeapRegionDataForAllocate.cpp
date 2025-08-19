@@ -188,14 +188,6 @@ MM_HeapRegionDataForAllocate::removeFromArrayletLeafList(MM_EnvironmentVLHGC *en
 	MM_HeapRegionDescriptorVLHGC *previous = _previousArrayletLeafRegion;
 	
 	Assert_MM_true(NULL != previous);
-	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-
-	if (extensions->isVirtualLargeObjectHeapEnabled) {
-		/* Restore/Recommit arraylet leaves that have been previously decommitted. */
-		const UDATA arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
-		void *leafAddress = _region->getLowAddress();
-		extensions->heap->commitMemory(leafAddress, arrayletLeafSize);
-	}
 
 	previous->_allocateData._nextArrayletLeafRegion = next;
 	if (NULL != next) {
@@ -219,7 +211,7 @@ MM_HeapRegionDataForAllocate::addToArrayletLeafList(MM_HeapRegionDescriptorVLHGC
 	Assert_MM_true(NULL == newSpineRegion->_allocateData._spine);
 	Assert_MM_true(NULL == _nextArrayletLeafRegion);
 	Assert_MM_true(NULL == _previousArrayletLeafRegion);
-	
+
 	_nextArrayletLeafRegion = newSpineRegion->_allocateData._nextArrayletLeafRegion;
 	if (NULL != _nextArrayletLeafRegion) {
 		Assert_MM_true(_nextArrayletLeafRegion->isArrayletLeaf());
@@ -229,7 +221,40 @@ MM_HeapRegionDataForAllocate::addToArrayletLeafList(MM_HeapRegionDescriptorVLHGC
 	_previousArrayletLeafRegion = newSpineRegion;
 }
 
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 void 
+MM_HeapRegionDataForAllocate::pushRegionToLeafRegionList(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC **head)
+{
+	Assert_MM_true(NULL == _nextArrayletLeafRegion);
+
+	uintptr_t previousHead = (uintptr_t) *head;
+	while (previousHead != (uintptr_t) MM_AtomicOperations::lockCompareExchange((volatile uintptr_t*)head, (uintptr_t)previousHead, (uintptr_t)_region)) {
+		previousHead = (uintptr_t) *head;
+	}
+
+	_nextArrayletLeafRegion = (MM_HeapRegionDescriptorVLHGC *) previousHead;
+}
+
+MM_HeapRegionDescriptorVLHGC *
+MM_HeapRegionDataForAllocate::popRegionFromLeafRegionList(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC **head)
+{
+	Assert_MM_true(NULL != *head);
+	MM_HeapRegionDescriptorVLHGC *region = *head;
+
+	*head = region->_allocateData._nextArrayletLeafRegion;
+	region->_allocateData._nextArrayletLeafRegion = NULL;
+
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	/* Restore/Recommit arraylet leaves that have been previously decommitted. */
+	const UDATA arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
+	void *leafAddress = region->getLowAddress();
+	extensions->heap->commitMemory(leafAddress, arrayletLeafSize);
+
+	return region;
+}
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+
+void
 MM_HeapRegionDataForAllocate::setSpine(J9IndexableObject *spineObject)
 {
 	Assert_MM_true(_region->isArrayletLeaf());
