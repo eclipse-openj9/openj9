@@ -2537,6 +2537,7 @@ J9::Z::PrivateLinkage::buildDirectCall(TR::Node * callNode, TR::SymbolReference 
    TR_ResolvedMethod * fem = (sym == NULL) ? NULL : sym->getResolvedMethod();
    bool myself;
    bool isJitInduceOSR = callSymRef->isOSRInductionHelper();
+   bool isJitDispatchJ9Method = callNode->isJitDispatchJ9MethodCall(comp());
    myself = comp()->isRecursiveMethodTarget(fem);
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
@@ -2548,7 +2549,7 @@ J9::Z::PrivateLinkage::buildDirectCall(TR::Node * callNode, TR::SymbolReference 
    if (comp()->getOption(TR_EnableRMODE64))
 #endif
       {
-      if (callSymRef->getReferenceNumber() >= TR_S390numRuntimeHelpers)
+      if ((callSymRef->getReferenceNumber() >= TR_S390numRuntimeHelpers) && !isJitDispatchJ9Method)
          {
          fej9->reserveTrampolineIfNecessary(comp(), callSymRef, false);
          }
@@ -2582,6 +2583,54 @@ J9::Z::PrivateLinkage::buildDirectCall(TR::Node * callNode, TR::SymbolReference 
       cg()->insertPad(callNode, reStartInstruction, 2, false);
 
       gcPoint->setNeedsGCMap(getPreservedRegisterMapForGC());
+
+      return gcPoint;
+      }
+
+   if (isJitDispatchJ9Method)
+      {
+      TR::Register *scratchReg = cg()->allocateRegister();
+      TR::Register *j9MethodReg = callNode->getChild(0)->getRegister();
+
+      TR::LabelSymbol *interpreterCallLabel = generateLabelSymbol(cg());
+      TR::LabelSymbol *doneLabel = generateLabelSymbol(cg());
+
+     TR::RegisterDependencyConditions * preDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(
+            dependencies->getPreConditions(), NULL, dependencies->getAddCursorForPre(), 0, cg());
+
+      TR::RegisterDependencyConditions * postDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(dependencies, 0, 1, cg());
+      postDeps->setAddCursorForPre(0);
+      postDeps->setNumPreConditions(0, trMemory());
+      postDeps->addPostConditionIfNotAlreadyInserted(scratchReg, getVTableIndexArgumentRegister());
+
+      // fetch J9Method::extra field
+      generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode, scratchReg,
+            generateS390MemoryReference(j9MethodReg, offsetof(J9Method, extra), cg()));
+      generateRIInstruction(cg(), TR::InstOpCode::TMLL, callNode, scratchReg, J9_STARTPC_NOT_TRANSLATED);
+
+      // always go through j2iTransition if stressJitDispatchJ9MethodJ2I is set
+      TR::InstOpCode::S390BranchCondition oolBranchOp = cg()->stressJitDispatchJ9MethodJ2I() ? TR::InstOpCode::COND_BRC : TR::InstOpCode::COND_MASK1;
+      TR::Instruction* interpCall = generateS390BranchInstruction(cg(), TR::InstOpCode::BRC, oolBranchOp, callNode, interpreterCallLabel, preDeps);
+
+      // find target address
+      generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode, j9MethodReg,
+            generateS390MemoryReference(scratchReg, -4, cg()));
+      generateRSInstruction(cg(), TR::InstOpCode::getShiftRightLogicalSingleOpCode(), callNode, j9MethodReg, 16);
+      generateRRInstruction(cg(), TR::InstOpCode::getAddRegOpCode(), callNode, scratchReg, j9MethodReg);
+      TR::Register *regRA = dependencies->searchPostConditionRegister(getReturnAddressRegister());
+      TR_ASSERT_FATAL(NULL != regRA, "Expected to find return address register in post conditions");
+      gcPoint = generateRRInstruction(cg(), TR::InstOpCode::BASR, callNode, regRA, scratchReg, dependencies);
+
+      TR::SymbolReference * j2iRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition);
+      TR::Snippet * snippet = new (trHeapMemory()) TR::S390HelperCallSnippet(cg(), callNode, interpreterCallLabel, j2iRef, doneLabel, argSize);
+      cg()->addSnippet(snippet);
+
+      auto* reStartInstruction = generateS390LabelInstruction(cg(), TR::InstOpCode::label, callNode, doneLabel);
+      cg()->insertPad(callNode, reStartInstruction, 2, false);
+
+      interpCall->setNeedsGCMap(getPreservedRegisterMapForGC());
+      printf("jitdistpatchJ9MethodGeneration done\n");
+      cg()->stopUsingRegister(scratchReg);
 
       return gcPoint;
       }
@@ -3404,13 +3453,17 @@ J9::Z::PrivateLinkage::addSpecialRegDepsForBuildArgs(TR::Node * callNode, TR::Re
          break;
       }
 
+   if (callNode->isJitDispatchJ9MethodCall(comp())) {
+      specialArgReg = getJ9MethodArgumentRegister();
+   }
+
    if (specialArgReg != TR::RealRegister::NoReg)
       {
       child = callNode->getChild(from);
       TR::Register *specialArg = copyArgRegister(callNode, child, cg()->evaluate(child)); // TODO:JSR292: We don't need a copy of the highOrder reg on 31-bit
       if (specialArg->getRegisterPair())
          specialArg = specialArg->getLowOrder(); // on 31-bit, the top half doesn't matter, so discard it
-      dependencies->addPreCondition(specialArg, specialArgReg );
+      dependencies->addPreCondition(specialArg, specialArgReg);
       cg()->decReferenceCount(child);
 
       if (comp()->getOption(TR_TraceCG))
