@@ -2337,7 +2337,11 @@ checkAttributes(J9PortLibrary* portLib, J9CfrClassFile* classfile, J9CfrAttribut
 			if (!cycleOfInnerClassFound) {
 				for (j = 0; j < classes->numberOfClasses; j++) {
 					for (k = j + 1; k < classes->numberOfClasses; k++) {
-						if (classes->classes[j].innerClassInfoIndex == classes->classes[k].innerClassInfoIndex) {
+						if ((classes->classes[j].innerClassInfoIndex == classes->classes[k].innerClassInfoIndex)
+							&& (classes->classes[j].outerClassInfoIndex == classes->classes[k].outerClassInfoIndex)
+							&& (classes->classes[j].innerNameIndex == classes->classes[k].innerNameIndex)
+							&& (classes->classes[j].innerClassAccessFlags == classes->classes[k].innerClassAccessFlags)
+						) {
 							errorCode = J9NLS_CFR_ERR_DUPLICATE_INNER_CLASS_ENTRY__ID;
 							goto _errorFound;
 						}
