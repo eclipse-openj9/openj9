@@ -63,12 +63,7 @@ vmState [0x501ff]: {J9VMSTATE_JIT} {inlining}
 ### JIT compiler
 
 If the current active component is the JIT compiler, the low-order
-half is divided into two bytes, one of which is 0xFF.
-
-In the low-order half, if the lower byte is 0xFF, the current active
-component is the optimizer, and the higher byte is the numeric
-identifier of the current optimization (defined in an [enum][2]),
-e.g. 0x000501FF means that the inliner is active.
+half is divided into two bytes.
 
 If the higher byte is 0xFF, the current active component is the code
 generator, and the lower byte is the numeric identifier of the current
@@ -79,8 +74,17 @@ If the entire low-order half of the VM state is 0xFFFF, then the
 active component is likely to be in the compiler initialization or
 the IL generator.
 
+Otherwise, the current active component is the optimizer, and the higher
+byte is the numeric identifier of the current optimization (defined in an [enum][2]),
+while the lower byte is the numeric identifier of the current phase of
+the optimization (defined in an [enum][3]).
+e.g. 0x000501FF means that the inliner is active, while 0x000514a1 means that
+the Building value numbers analysis phase of Global Value Numbering is active.
+
+
 [2]: https://github.com/eclipse-omr/omr/blob/master/compiler/optimizer/Optimizations.hpp
 [3]: https://github.com/eclipse-openj9/openj9/blob/master/runtime/compiler/codegen/J9CodeGenPhaseEnum.hpp
+[4]: https://github.com/eclipse-omr/omr/blob/master/compiler/optimizer/OMROptimizerAnalysisPhases.enum
 
 ## Finding the VM state examples
 
