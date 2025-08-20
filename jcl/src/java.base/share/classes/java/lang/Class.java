@@ -62,6 +62,9 @@ import java.lang.constant.Constable;
 /*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 import sun.reflect.generics.repository.ClassRepository;
+/*[IF JAVA_SPEC_VERSION >= 25]*/
+import sun.reflect.generics.repository.MethodRepository;
+/*[ENDIF] JAVA_SPEC_VERSION >= 25 */
 import sun.reflect.generics.factory.CoreReflectionFactory;
 import sun.reflect.generics.scope.ClassScope;
 import sun.reflect.annotation.AnnotationType;
@@ -4234,6 +4237,16 @@ public Constructor<?> getEnclosingConstructor()
 		/*[PR CMVC 201439] To remove CheckPackageAccess call from getEnclosingMethod of J9 */
 		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	}
+	/*[IF JAVA_SPEC_VERSION >= 25]*/
+	else if (enclosing instanceof String) {
+		// The enclosing constructor can't be found, returning string from getEnclosingObject()
+		// is the constructor descriptor, validate it for error handling.
+		MethodRepository typeInfo = MethodRepository.make((String) enclosing, getFactory());
+		typeInfo.getReturnType();
+		typeInfo.getParameterTypes();
+		throw new InternalError("Enclosing constructor not found for " + this); //$NON-NLS-1$
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 25 */
 	return constructor;
 }
 
@@ -4270,6 +4283,16 @@ public Method getEnclosingMethod()
 		/*[PR CMVC 201439] To remove CheckPackageAccess call from getEnclosingMethod of J9 */
 		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	}
+	/*[IF JAVA_SPEC_VERSION >= 25]*/
+	else if (enclosing instanceof String) {
+		// The enclosing method can't be found, returning string from getEnclosingObject()
+		// is the method descriptor, validate it for error handling.
+		MethodRepository typeInfo = MethodRepository.make((String) enclosing, getFactory());
+		typeInfo.getReturnType();
+		typeInfo.getParameterTypes();
+		throw new InternalError("Enclosing method not found for " + this); //$NON-NLS-1$
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 25 */
 	return method;
 }
 
