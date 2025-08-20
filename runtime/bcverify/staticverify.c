@@ -1686,7 +1686,10 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 			break;
 
 		case CFR_CONSTANT_NameAndType:
-			if (0 != (flags & CFR_Xfuture)) {
+#if JAVA_SPEC_VERSION < 25
+			if (J9_ARE_ANY_BITS_SET(flags, CFR_Xfuture))
+#endif /* JAVA_SPEC_VERSION < 25 */
+			{
 				/* TODO: use the flags field to determine if this entry has been verified already */
 				utf8 = &classfile->constantPool[info->slot2]; /* get the descriptor */
 				if ((U_8) '(' == (utf8->bytes)[0]) { /* method descriptor */
