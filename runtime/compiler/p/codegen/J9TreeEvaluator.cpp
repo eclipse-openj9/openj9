@@ -1930,7 +1930,9 @@ TR::Register *J9::Power::TreeEvaluator::anewArrayEvaluator(TR::Node *node, TR::C
       return TR::TreeEvaluator::VMnewEvaluator(node, cg);
    }
 
-static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node, TR::CodeGenerator *cg)
+static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
+                                                                 TR::CodeGenerator *cg,
+                                                                 int32_t arrayElementSize)
    {
    TR::Compilation *comp = cg->comp();
    TR_Debug *compDebug = comp->getDebug();
@@ -2221,7 +2223,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    //    2. (firstDimLen * referenceFieldSize) + padding for alignment;
    //    3. firstDimLen * size of a subarray (aligned):
    //       - header of a second dimension array;
-   //       - (secondDimLen * referenceFieldSize) + padding for alignment.
+   //       - (secondDimLen * arrayElementSize) + padding for alignment.
 
    // get the number of bytes needed for the reference fields for the first dimension
    switch (referenceFieldSize) // temp1Reg = firstDimLenReg * referenceFieldSize; always in 64 bit
@@ -2255,7 +2257,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
       }
 
    // Similarly, get the size of the referenceFields and header for a second dimension subarray.
-   switch (referenceFieldSize) // temp2Reg = secondDimLen * referenceFieldSize; always in 64 bit
+   switch (arrayElementSize) // temp2Reg = secondDimLen * arrayElementSize; always in 64 bit
       {
       case 16:
          generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, temp2Reg, secondDimLenReg, 4,
@@ -2285,7 +2287,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
                                        0, -refFieldSizeAligned);
       }
    // temp2Reg = subArraySizeReg * firstDimLenReg = the space required for all subarrays
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::mullw, node, temp2Reg, subArraySizeReg, firstDimLenReg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::mulld, node, temp2Reg, subArraySizeReg, firstDimLenReg);
 
    // temp2Reg = temp2Reg + temp1Reg + (targetReg = heapAlloc) = where heapAlloc will endup
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, temp2Reg, temp2Reg, temp1Reg);
@@ -2483,24 +2485,78 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
 TR::Register *J9::Power::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = cg->comp();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
    TR_ASSERT_FATAL(comp->target().is64Bit(), "multianewArrayEvaluator is only supported on 64-bit JVMs!");
 
    // Number of dimensions - this is fixed in the bytecode, so compile time constant
    TR::Node *secondChild = node->getSecondChild();
-
    // The number of dimensions should always be an iconst
    TR_ASSERT_FATAL(secondChild->getOpCodeValue() == TR::iconst, "dims of multianewarray must be iconst");
-
    uint32_t nDims = secondChild->get32bitIntegralValue();
    static bool disableInlineMultianewArray = feGetEnv("TR_DisableInlineMultianewArray") != NULL;
+
+   // Get the size of the elements in the leaf components
+   int32_t arrayElementSize = -1;
+   TR::Node *classNode = node->getThirdChild;
+   TR::SymbolReference *classSymRef = NULL;
+   const TR::ILOpCodes opcode = classNode->getOpCodeValue();
+   bool isClassNodeLoadAddr = opcode == TR::loadaddr;
+   // getting the symref
+   if (isClassNodeLoadAddr)
+      {
+      classSymRef = classNode->getSymbolReference();
+      }
+   else if (opcode == TR::aloadi)
+      {
+      // recognizedCallTransformer adds another layer of aloadi
+      while (classNode->getOpCodeValue() == TR::aloadi && classNode->getFirstChild()->getOpCodeValue() == TR::aloadi)
+         {
+         classNode = classNode->getFirstChild();
+         }
+
+      if (classNode->getOpCodeValue() == TR::aloadi && classNode->getFirstChild()->getOpCodeValue() == TR::loadaddr)
+         {
+         classSymRef = classNode->getFirstChild()->getSymbolReference();
+         }
+      }
+   // Infer the data type and length from the signature
+   if (classSymRef)
+      {
+      int32_t len;
+      const char *sig = symRef->getTypeSignature(len);
+      if (sig)
+         {
+         if (signature[0] == '[')
+            {
+            switch (signature[1])
+               {
+               case 'B': arrayElementSize = 1;
+               case 'C':
+               case 'S': arrayElementSize = 2;
+               case 'I':
+               case 'F': arrayElementSize = 4;
+               case 'D':
+               case 'J': arrayElementSize = 8;
+               case 'Z': arrayElementSize =
+                     static_cast<int32_t>(TR::Compiler->om.elementSizeOfBooleanArray());
+               case 'L':
+               default :
+                  arrayElementSize = TR::Compiler->om.sizeofReferenceField();
+               }
+            }
+         }
+      }
+
 
    // Anything with more than 2 dimensions will be replaced by a direct call when lowering trees,
    // so this is functionally equivalent of saying only inline if the dimension is exactly 2.
    // We also need to make sure the TLH is properly zeroed.
+   // Finally, we need to be sure we know the elementSize
    if (nDims > 1 && !disableInlineMultianewArray
-         && usingTLH && fej9->tlhHasBeenCleared() && !comp->getOptions()->realTimeGC())
+         && fej9->tlhHasBeenCleared() && !comp->getOptions()->realTimeGC()
+         && arrayElementSize != -1)
       {
-      return generateMultianewArrayWithInlineAllocators(node, cg);
+      return generateMultianewArrayWithInlineAllocators(node, cg, arrayElementSize);
       }
    else
       {
