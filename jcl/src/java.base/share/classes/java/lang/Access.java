@@ -383,6 +383,7 @@ final class Access implements JavaLangAccess {
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /*[IF JAVA_SPEC_VERSION >= 10]*/
+	/*[IF (JAVA_SPEC_VERSION < 26) | INLINE-TYPES]*/
 	public String newStringUTF8NoRepl(byte[] bytes, int offset, int length) {
 		/*[IF JAVA_SPEC_VERSION < 17]*/
 		return StringCoding.newStringUTF8NoRepl(bytes, offset, length);
@@ -394,6 +395,8 @@ final class Access implements JavaLangAccess {
 		/*[ENDIF] JAVA_SPEC_VERSION < 21 */
 		/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 	}
+	/*[ENDIF] (JAVA_SPEC_VERSION < 26) | INLINE-TYPES */
+
 	public byte[] getBytesUTF8NoRepl(String str) {
 		/*[IF JAVA_SPEC_VERSION < 17]*/
 		return StringCoding.getBytesUTF8NoRepl(str);
@@ -623,12 +626,16 @@ final class Access implements JavaLangAccess {
 	}
 	/*[ENDIF] (JAVA_SPEC_VERSION < 25) | INLINE-TYPES */
 
-	/*[IF (JAVA_SPEC_VERSION >= 25) & !INLINE-TYPES]*/
+	/*[IF (JAVA_SPEC_VERSION == 25) & !INLINE-TYPES]*/
 	public int uncheckedEncodeASCII(char[] sa, int sp, byte[] da, int dp, int len) {
-	/*[ELSE] (JAVA_SPEC_VERSION >= 25) & !INLINE-TYPES */
+	/*[ELSE] (JAVA_SPEC_VERSION == 25) & !INLINE-TYPES */
 	public int encodeASCII(char[] sa, int sp, byte[] da, int dp, int len) {
-	/*[ENDIF] (JAVA_SPEC_VERSION >= 25) & !INLINE-TYPES */
+	/*[ENDIF] (JAVA_SPEC_VERSION == 25) & !INLINE-TYPES */
+		/*[IF (JAVA_SPEC_VERSION >= 26) & !INLINE-TYPES]*/
+		return StringCoding.encodeAsciiArray(sa, sp, da, dp, len);
+		/*[ELSE] (JAVA_SPEC_VERSION >= 26) & !INLINE-TYPES */
 		return StringCoding.implEncodeAsciiArray(sa, sp, da, dp, len);
+		/*[ENDIF] (JAVA_SPEC_VERSION >= 26) & !INLINE-TYPES */
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
@@ -930,6 +937,11 @@ final class Access implements JavaLangAccess {
 	@Override
 	public int getClassFileAccessFlags(Class<?> clazz) {
 		return clazz.getClassFileAccessFlags();
+	}
+
+	@Override
+	public String uncheckedNewStringWithLatin1Bytes(byte[] src) {
+		return String.newStringWithLatin1Bytes(src);
 	}
 /*[ENDIF] (JAVA_SPEC_VERSION >= 26) & !INLINE-TYPES */
 }
