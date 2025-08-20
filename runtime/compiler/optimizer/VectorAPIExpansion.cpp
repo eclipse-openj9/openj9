@@ -1817,7 +1817,7 @@ TR_VectorAPIExpansion::unboxNode(TR::Node *parentNode, TR::Node *operand, vapiOb
 
    TR::SymbolReference *vectorShadow = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(opCodeType, NULL);
    TR::Node *newOperand = TR::Node::createWithSymRef(operand, opcode, 1, vectorShadow);
-   TR::Node *aladdNode = generateArrayElementAddressNode(comp(), payloadLoad, TR::Node::iconst(operand, 0), elementSize);
+   TR::Node *aladdNode = generateArrayElementAddressNode(comp(), payloadLoad, TR::Node::lconst(operand, 0), elementSize);
    newOperand->setAndIncChild(0, aladdNode);
 
    if (operandObjectType == Mask)
