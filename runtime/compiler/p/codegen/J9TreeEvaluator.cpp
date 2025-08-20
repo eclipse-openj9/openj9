@@ -10111,9 +10111,11 @@ static TR::Register *inlineCheckAssignableFromEvaluator(TR::Node *node, TR::Code
       // but fall back to runtime checks if needed.
       // Since we know the classes are not equivalent from the previous test, nothing can be
       // assignable to a primitive array; we similarly check on both compile and run time.
-      if (((NULL == toClassSymRef) || (toClassSymRef->isClassArray(comp)
-               && J9CLASS_IS_MIXED(((J9ArrayClass*) toClassSymRef)->leafComponentType)))
-            && ((NULL == fromClassSymRef) || (fromClassSymRef->isClassArray(comp))))
+      if (((NULL == toClassSymRef)
+               || (toClassSymRef->isClassArray(comp)
+                  // TODO: find a way to get whether the class is mixed on compile time
+                  && J9CLASS_IS_MIXED(((J9ArrayClass*) toClassSymRef->getSymbol()->getStaticSymbol()->getStaticAddress())->leafComponentType)))
+            && (NULL == fromClassSymRef || fromClassSymRef->isClassArray(comp)))
          {
          TR::LabelSymbol *notArrayLabel = generateLabelSymbol(cg);
          if (NULL == toClassSymRef) {
