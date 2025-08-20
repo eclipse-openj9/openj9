@@ -1930,7 +1930,50 @@ TR::Register *J9::Power::TreeEvaluator::anewArrayEvaluator(TR::Node *node, TR::C
       return TR::TreeEvaluator::VMnewEvaluator(node, cg);
    }
 
-static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
+// put source*imm in target as long as imm is a non-negative power of two
+static TR::Register *generateImmMultiplicationWithShift(TR::Node *node, TR::CodeGenerator *cg,
+                                                        TR::Register *targetReg,
+                                                        TR::Register *sourceReg,
+                                                        int32_t imm)
+   {
+   TR::Compilation *comp = cg->comp();
+   TR_ASSERT_FATAL(comp->target().is64Bit(),
+      "immMultiplicatoinWithShift is only supported on 64-bit JVMs!");
+
+   switch (imm) // temp1Reg = firstDimLenReg * referenceFieldSize; always in 64 bit
+      {
+      case 64:
+         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, targetReg, sourceReg, 6,
+                                         CONSTANT64(0x0000003FFFFFFFC0));
+         break;
+      case 32:
+         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, targetReg, sourceReg, 5,
+                                         CONSTANT64(0x0000001FFFFFFFE0));
+         break;
+      case 16:
+         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, targetReg, sourceReg, 4,
+                                         CONSTANT64(0x0000000FFFFFFFF0));
+         break;
+      case 8:
+         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, targetReg, sourceReg, 3,
+                                         CONSTANT64(0x00000007FFFFFFF8));
+         break;
+      case 4:
+         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, targetReg, sourceReg, 2,
+                                         CONSTANT64(0x00000003FFFFFFFC));
+         break;
+      case 2:
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, targetReg, sourceReg, sourceReg);
+         break;
+      case 1:
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, targetReg, sourceReg);
+         break;
+      default:
+         TR_ASSERT_FATAL(false, "immMultiplicatoinWithShift - unexpected referenceFieldSize!");
+      }
+   }
+
+static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
                                                                  TR::CodeGenerator *cg,
                                                                  int32_t arrayElementSize)
    {
@@ -2069,27 +2112,8 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    //    3. firstDimLen * zeroArraySizeAligned:
 
    // get the number of bytes needed for the reference fields
-   switch (referenceFieldSize) // temp1Reg = firstDimLenReg * referenceFieldSize; always in 64 bit
-      {
-      case 16:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, temp1Reg, firstDimLenReg, 4,
-                                         CONSTANT64(0x0000000FFFFFFFF0));
-         break;
-      case 8:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, temp1Reg, firstDimLenReg, 3,
-                                         CONSTANT64(0x00000007FFFFFFF8));
-         break;
-      case 4:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, temp1Reg, firstDimLenReg, 2,
-                                         CONSTANT64(0x00000003FFFFFFFC));
-         break;
-      case 2:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, temp1Reg, firstDimLenReg, 1,
-                                         CONSTANT64(0x00000001FFFFFFFE));
-         break;
-      default:
-         TR_ASSERT_FATAL(false, "multianewarray - unexpected referenceFieldSize!");
-      }
+   // temp1Reg = firstDimLenReg * referenceFieldSize
+   generateImmMultiplicationWithShift(node, cg, temp1Reg, firstDimLenReg, referenceFieldSize);
    // add alignment compensation, and the header size
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp1Reg, temp1Reg,
       TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + alignmentCompensation);
@@ -2099,27 +2123,8 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
                                        0, -refFieldSizeAligned);
       }
    // we also need space for N zero-sized arrays
-   switch (zeroArraySizeAligned) // temp2Reg = firstDimLenReg * zeroArraySizeAligned; always in 64 bit
-      {
-      case 16:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, temp2Reg, firstDimLenReg, 4,
-                                         CONSTANT64(0x0000000FFFFFFFF0));
-         break;
-      case 8:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, temp2Reg, firstDimLenReg, 3,
-                                         CONSTANT64(0x00000007FFFFFFF8));
-         break;
-      case 4:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, temp2Reg, firstDimLenReg, 2,
-                                         CONSTANT64(0x00000003FFFFFFFC));
-         break;
-      case 2:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, temp2Reg, firstDimLenReg, 1,
-                                         CONSTANT64(0x00000001FFFFFFFE));
-         break;
-      default:
-         TR_ASSERT_FATAL(false, "multianewarray - unexpected zeroArraySizeAligned!");
-      }
+   // temp2Reg = firstDimLenReg * zeroArraySizeAligned
+   generateImmMultiplicationWithShift(node, cg, temp2Reg, firstDimLenReg, zeroArraySizeAligned);
    // temp2Reg = temp2Reg + temp1Reg + (targetReg = heapAlloc) = where heapAlloc will endup
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, temp2Reg, temp2Reg, temp1Reg);
    generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, targetReg,
@@ -2226,27 +2231,8 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    //       - (secondDimLen * arrayElementSize) + padding for alignment.
 
    // get the number of bytes needed for the reference fields for the first dimension
-   switch (referenceFieldSize) // temp1Reg = firstDimLenReg * referenceFieldSize; always in 64 bit
-      {
-      case 16:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, temp1Reg, firstDimLenReg, 4,
-                                         CONSTANT64(0x0000000FFFFFFFF0));
-         break;
-      case 8:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, temp1Reg, firstDimLenReg, 3,
-                                         CONSTANT64(0x00000007FFFFFFF8));
-         break;
-      case 4:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, temp1Reg, firstDimLenReg, 2,
-                                         CONSTANT64(0x00000003FFFFFFFC));
-         break;
-      case 2:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, temp1Reg, firstDimLenReg, 1,
-                                         CONSTANT64(0x00000001FFFFFFFE));
-         break;
-      default:
-         TR_ASSERT_FATAL(false, "multianewarray - unexpected referenceFieldSize!");
-      }
+   // temp1Reg = firstDimLenReg * referenceFieldSize
+   generateImmMultiplicationWithShift(node, cg, temp1Reg, firstDimLenReg, referenceFieldSize);
    // add alignment compensation, and the header size
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp1Reg, temp1Reg,
       TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + alignmentCompensation);
@@ -2257,27 +2243,8 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
       }
 
    // Similarly, get the size of the referenceFields and header for a second dimension subarray.
-   switch (arrayElementSize) // temp2Reg = secondDimLen * arrayElementSize; always in 64 bit
-      {
-      case 16:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, temp2Reg, secondDimLenReg, 4,
-                                         CONSTANT64(0x0000000FFFFFFFF0));
-         break;
-      case 8:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, temp2Reg, secondDimLenReg, 3,
-                                         CONSTANT64(0x00000007FFFFFFF8));
-         break;
-      case 4:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, temp2Reg, secondDimLenReg, 2,
-                                         CONSTANT64(0x00000003FFFFFFFC));
-         break;
-      case 2:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, temp2Reg, secondDimLenReg, 1,
-                                         CONSTANT64(0x00000001FFFFFFFE));
-         break;
-      default:
-         TR_ASSERT_FATAL(false, "multianewarray - unexpected referenceFieldSize!");
-      }
+   // temp2Reg = secondDimLenReg * arrayElementSize
+   generateImmMultiplicationWithShift(node, cg, temp2Reg, secondDimLenReg, arrayElementSize);
    // add alignment compensation, and the header size
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, subArraySizeReg, temp2Reg,
       TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + alignmentCompensation);
@@ -2497,7 +2464,7 @@ TR::Register *J9::Power::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, 
 
    // Get the size of the elements in the leaf components
    int32_t arrayElementSize = -1;
-   TR::Node *classNode = node->getThirdChild;
+   TR::Node *classNode = node->getThirdChild();
    TR::SymbolReference *classSymRef = NULL;
    const TR::ILOpCodes opcode = classNode->getOpCodeValue();
    bool isClassNodeLoadAddr = opcode == TR::loadaddr;
@@ -2523,10 +2490,10 @@ TR::Register *J9::Power::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, 
    if (classSymRef)
       {
       int32_t len;
-      const char *sig = symRef->getTypeSignature(len);
+      const char *sig = classSymRef->getTypeSignature(len);
       if (sig)
          {
-         if (signature[0] == '[')
+         if (sig[0] == '[')
             {
             switch (signature[1])
                {
