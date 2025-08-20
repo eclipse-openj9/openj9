@@ -2495,7 +2495,7 @@ TR::Register *J9::Power::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, 
          {
          if (sig[0] == '[')
             {
-            switch (signature[1])
+            switch (sig[1])
                {
                case 'B': arrayElementSize = 1;
                case 'C':
