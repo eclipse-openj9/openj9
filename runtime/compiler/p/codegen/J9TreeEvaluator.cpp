@@ -1931,7 +1931,7 @@ TR::Register *J9::Power::TreeEvaluator::anewArrayEvaluator(TR::Node *node, TR::C
    }
 
 // put source*imm in target as long as imm is a non-negative power of two
-static TR::Register *generateImmMultiplicationWithShift(TR::Node *node, TR::CodeGenerator *cg,
+static void generateImmMultiplicationWithShift(TR::Node *node, TR::CodeGenerator *cg,
                                                         TR::Register *targetReg,
                                                         TR::Register *sourceReg,
                                                         int32_t imm)
