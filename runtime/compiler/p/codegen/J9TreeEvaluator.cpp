@@ -2493,22 +2493,33 @@ TR::Register *J9::Power::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, 
       const char *sig = classSymRef->getTypeSignature(len);
       if (sig)
          {
-         if (sig[0] == '[')
+         if (sig[0] == '[' && sig[1] == '[')
             {
-            switch (sig[1])
+            switch (sig[2])
                {
-               case 'B': arrayElementSize = 1;
+               case 'B':
+                  arrayElementSize = 1;
+                  break;
                case 'C':
-               case 'S': arrayElementSize = 2;
+               case 'S':
+                  arrayElementSize = 2;
+                  break;
                case 'I':
-               case 'F': arrayElementSize = 4;
+               case 'F':
+                  arrayElementSize = 4;
+                  break;
                case 'D':
-               case 'J': arrayElementSize = 8;
-               case 'Z': arrayElementSize =
+               case 'J':
+                  arrayElementSize = 8;
+                  break;
+               case 'Z':
+                  arrayElementSize =
                      static_cast<int32_t>(TR::Compiler->om.elementSizeOfBooleanArray());
+                  break;
                case 'L':
                default :
                   arrayElementSize = TR::Compiler->om.sizeofReferenceField();
+                  break;
                }
             }
          }
