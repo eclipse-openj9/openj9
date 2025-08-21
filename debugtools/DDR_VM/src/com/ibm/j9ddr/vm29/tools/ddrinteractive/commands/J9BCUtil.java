@@ -234,7 +234,7 @@ public class J9BCUtil {
 	 *			-ACC_TRANSIENT
 	 *			-ACC_SYNTHETIC
 	 *			-ACC_ENUM
-	 *			-ACC_STRICT
+	 *			-ACC_STRICT_INIT
 	 *			-J9FieldFlagConstant
 	 *			-J9FieldFlagIsNullRestricted
 	 *
@@ -435,9 +435,9 @@ public class J9BCUtil {
 				modifiers &= ~J9CfrClassFile.CFR_ACC_TRANSIENT;
 			}
 
-			if ((modifiers & J9CfrClassFile.CFR_ACC_STRICT) != 0) {
+			if ((modifiers & J9CfrClassFile.CFR_ACC_STRICT_INIT) != 0) {
 				out.append("strict ");
-				modifiers &= ~J9CfrClassFile.CFR_ACC_STRICT;
+				modifiers &= ~J9CfrClassFile.CFR_ACC_STRICT_INIT;
 			}
 		}
 

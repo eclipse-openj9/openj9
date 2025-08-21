@@ -1143,22 +1143,6 @@ public class ValueTypeGenerator extends ClassLoader {
 		generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
-	public static void generateTestFieldCantHaveAccFinalAndAccVolatile() {
-		generateAccStaticTestGeneric("TestFieldCantHaveAccFinalAndAccVolatile", ACC_FINAL | ACC_VOLATILE, true);
-	}
-
-	public static void generateTestFieldCantHaveAccStrictAndAccStatic() {
-		generateAccStaticTestGeneric("TestFieldCantHaveAccStrictAndAccStatic", ACC_STRICT | ACC_STATIC, true);
-	}
-
-	public static void generateTestAccStrictFieldMustHaveAccFinal() {
-		generateAccStaticTestGeneric("TestAccStrictFieldMustHaveAccFinal", ACC_STRICT, true);
-	}
-
-	public static void generateTestValueClassFieldMustHaveAccStaticOrAccStrict() {
-		generateAccStaticTestGeneric("TestValueClassFieldMustHaveAccStaticOrAccStrict", 0, false);
-	}
-
 	public static Class<?> generateTestValueClassPutStrictFieldAfterInitialization() {
 		return generateAccStaticTestGeneric("TestValueClassPutStrictFieldAfterInitialization", ACC_FINAL | ACC_STRICT, false, true);
 	}

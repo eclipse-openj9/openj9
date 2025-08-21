@@ -1706,29 +1706,6 @@ checkFields(J9PortLibrary* portLib, J9CfrClassFile * classfile, U_8 * segment, U
 			}
 		}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		if (J9_IS_CLASSFILE_VALUETYPE(classfile)) {
-			/* Each field of a value class must have exactly one of its ACC_STATIC or ACC_STRICT flags set. */
-			if (J9_ARE_NO_BITS_SET(value, CFR_ACC_STRICT | CFR_ACC_STATIC)) {
-				errorCode = J9NLS_CFR_ERR_VALUE_CLASS_FIELD_NOT_STATIC_OR_STRICT__ID;
-				goto _errorFound;
-			}
-		}
-
-		if (J9ROMFIELD_IS_STRICT(classfile, value)) {
-			/* A field must not have set both ACC_STRICT and ACC_STATIC. */
-			if (J9_ARE_ALL_BITS_SET(value, CFR_ACC_STATIC)) {
-				errorCode = J9NLS_CFR_ERR_FIELD_CANT_BE_STRICT_AND_STATIC__ID;
-				goto _errorFound;
-			}
-			/* A field that has set ACC_STRICT must also have set ACC_FINAL. */
-			if (J9_ARE_NO_BITS_SET(value, CFR_ACC_FINAL)) {
-				errorCode = J9NLS_CFR_ERR_STRICT_FIELD_MUST_BE_FINAL__ID;
-				goto _errorFound;
-			}
-		}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-
 		maskedValue = value & CFR_PUBLIC_PRIVATE_PROTECTED_MASK;
 		/* Check none or only one of the access flags set - result is 0 if no bits or only 1 bit is set */
 		if (maskedValue & (maskedValue - 1)) {

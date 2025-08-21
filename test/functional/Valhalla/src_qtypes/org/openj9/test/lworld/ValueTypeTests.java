@@ -2891,30 +2891,6 @@ public class ValueTypeTests {
 		ValueTypeGenerator.generateNonInterfaceClassWithMissingFlags("testNonInterfaceClassMustHaveFinalIdentityAbstractSet");
 	}
 
-	/* A field must not have set both ACC_FINAL and ACC_VOLATILE */
-	@Test(expectedExceptions = java.lang.ClassFormatError.class, expectedExceptionsMessageRegExp = ".*field cannot be both final and volatile.*")
-	static public void testFieldCantHaveAccFinalAndAccVolatile() {
-		ValueTypeGenerator.generateTestFieldCantHaveAccFinalAndAccVolatile();
-	}
-
-	/* A field must not have set both ACC_STRICT and ACC_STATIC */
-	@Test(expectedExceptions = java.lang.ClassFormatError.class, expectedExceptionsMessageRegExp = ".*A field must not have both ACC_STRICT and ACC_STATIC flags set.*")
-	static public void testFieldCantHaveAccStrictAndAccStatic() {
-		ValueTypeGenerator.generateTestFieldCantHaveAccStrictAndAccStatic();
-	}
-
-	/* A field that has set ACC_STRICT must also have set ACC_FINAL */
-	@Test(expectedExceptions = java.lang.ClassFormatError.class, expectedExceptionsMessageRegExp = ".*A field with ACC_STRICT set must also set ACC_FINAL.*")
-	static public void testAccStrictFieldMustHaveAccFinal() {
-		ValueTypeGenerator.generateTestAccStrictFieldMustHaveAccFinal();
-	}
-
-	/* Each field of a value class must have exactly one of its ACC_STATIC or ACC_STRICT flags set */
-	@Test(expectedExceptions = java.lang.ClassFormatError.class, expectedExceptionsMessageRegExp = ".*Value class fields must have either ACC_STATIC or ACC_STRICT set.*")
-	static public void testValueClassFieldMustHaveAccStaticOrAccStrict() {
-		ValueTypeGenerator.generateTestValueClassFieldMustHaveAccStaticOrAccStrict();
-	}
-
 	/* putfield is not allowed outside <init> for ACC_STRICT fields */
 	@Test(expectedExceptions = VerifyError.class)
 	static public void testValueClassWithIllegalSetters() throws Throwable {
