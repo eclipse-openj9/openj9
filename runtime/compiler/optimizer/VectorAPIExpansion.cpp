@@ -3053,6 +3053,10 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
             return NULL;
 
          sourceVectorLength = OMR::DataType::bitsToVectorLength(bitsLength);
+
+         // transformation of convert() should happen based on the source type
+         elementType = sourceElementType;
+         vectorLength = sourceVectorLength;
          }
       else if (opCodeType == Compare)
          {
