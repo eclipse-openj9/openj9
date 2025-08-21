@@ -4370,6 +4370,9 @@ typedef struct J9JITConfig {
 	void  ( *jitDecompileMethodForFramePop)(struct J9VMThread * currentThread, UDATA skipCount) ;
 	void  ( *jitExceptionCaught)(struct J9VMThread * currentThread) ;
 	void  ( *jitAddPermanentLoader)(struct J9VMThread *currentThread, struct J9ClassLoader *loader);
+#if JAVA_SPEC_VERSION >= 25
+	void  ( *jitFreeDecompilations)(struct J9VMThread *currentThread, struct J9JITDecompilationInfo **previous, UDATA reason, J9Method *method) ;
+#endif /* JAVA_SPEC_VERSION >= 25 */
 	void  ( *j9jit_printf)(void *voidConfig, const char *format, ...) ;
 	void* tracingHook;
 	void  ( *jitCheckScavengeOnResolve)(struct J9VMThread *currentThread) ;

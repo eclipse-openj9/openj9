@@ -184,3 +184,6 @@ TraceEntry=Trc_Decomp_DecompileAfterMonitorEnter_Entry Overhead=1 Level=2 Templa
 TraceExit=Trc_Decomp_DecompileAfterMonitorEnter_Exit Overhead=1 Level=2 Template="DecompileAfterMonitorEnter exit: exitPC = %p, method = %p"
 TraceEntry=Trc_Decomp_DecompileOnReturn_Entry Overhead=1 Level=2 Template="DecompileOnReturn entry: pc = %p, sp = %p"
 TraceExit=Trc_Decomp_DecompileOnReturn_Exit Overhead=1 Level=2 Template="DecompileOnReturn exit: pc = %p, sp = %p, returnVal = %p"
+
+TraceEntry=Trc_Decomp_jitFreeDecompilations_Entry Overhead=1 Level=1 Template="jitFreeDecompilations"
+TraceExit=Trc_Decomp_jitFreeDecompilations_Exit Overhead=1 Level=1 Template="jitFreeDecompilations"

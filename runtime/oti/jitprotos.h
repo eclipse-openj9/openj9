@@ -73,6 +73,10 @@ extern J9_CFUNC void   jitDecompileMethod (J9VMThread * currentThread, J9JITDeco
 extern J9_CFUNC void   jitCodeBreakpointRemoved (J9VMThread * currentThread, J9Method * method);
 extern J9_CFUNC UDATA  jitIsMethodBreakpointed(J9VMThread *currentThread, J9Method *method);
 
+#if JAVA_SPEC_VERSION >= 25
+extern J9_CFUNC void   jitFreeDecompilations(J9VMThread *currentThread, J9JITDecompilationInfo **previous, UDATA reason, J9Method *method);
+#endif /* JAVA_SPEC_VERSION >= 25 */
+
 extern J9_CFUNC void   c_jitDecompileAfterAllocation(J9VMThread * currentThread);
 extern J9_CFUNC void   c_jitDecompileAfterMonitorEnter(J9VMThread * currentThread);
 extern J9_CFUNC void   c_jitDecompileAtCurrentPC(J9VMThread * currentThread);
