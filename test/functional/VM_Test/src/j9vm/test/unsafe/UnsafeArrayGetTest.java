@@ -275,10 +275,15 @@ public class UnsafeArrayGetTest {
 			int bufferIndex = 0;
 			for (long offset = lowestOffset; offset <= highestOffset; offset += 1, bufferIndex += 1) {
 				short value = myUnsafe.getShort(array, offset);
-				short volatileValue = myUnsafe.getShortVolatile(array,offset);
-				if (value != volatileValue) {
-					throw new Error("getShort() != getShortVolatile() for offset=" + offset);
+
+				// volatile get is only valid for aligned offsets
+				if (offset % Short.BYTES == 0) {
+					short volatileValue = myUnsafe.getShortVolatile(array,offset);
+					if (value != volatileValue) {
+						throw new Error("getShort() != getShortVolatile() for offset=" + offset);
+					}
 				}
+
 				short bufferValue = getShort(buffer, bufferIndex);
 				if (value != bufferValue) {
 					throw new Error("getShort() != manual read for offset=" + offset + "; expecting " + bufferValue + "; got " + value);
@@ -304,10 +309,15 @@ public class UnsafeArrayGetTest {
 			int bufferIndex = 0;
 			for (long offset = lowestOffset; offset <= highestOffset; offset += 1, bufferIndex += 1) {
 				int value = myUnsafe.getInt(array, offset);
-				int volatileValue = myUnsafe.getIntVolatile(array,offset);
-				if (value != volatileValue) {
-					throw new Error("getInt() != getIntVolatile() for offset=" + offset);
+
+				// volatile get is only valid for aligned offsets
+				if (offset % Integer.BYTES == 0) {
+					int volatileValue = myUnsafe.getIntVolatile(array,offset);
+					if (value != volatileValue) {
+						throw new Error("getInt() != getIntVolatile() for offset=" + offset);
+					}
 				}
+
 				int bufferValue = getInt(buffer, bufferIndex);
 				if (value != bufferValue) {
 					throw new Error("getInt() != manual read for offset=" + offset + "; expecting " + bufferValue + "; got " + value);
@@ -333,10 +343,15 @@ public class UnsafeArrayGetTest {
 			int bufferIndex = 0;
 			for (long offset = lowestOffset; offset <= highestOffset; offset += 1, bufferIndex += 1) {
 				long value = myUnsafe.getLong(array, offset);
-				long volatileValue = myUnsafe.getLongVolatile(array,offset);
-				if (value != volatileValue) {
-					throw new Error("getLong() != getLongVolatile() for offset=" + offset);
+
+				// volatile get is only valid for aligned offsets
+				if (offset % Long.BYTES == 0) {
+					long volatileValue = myUnsafe.getLongVolatile(array,offset);
+					if (value != volatileValue) {
+						throw new Error("getLong() != getLongVolatile() for offset=" + offset);
+					}
 				}
+
 				long bufferValue = getLong(buffer, bufferIndex);
 				if (value != bufferValue) {
 					throw new Error("getLong() != manual read for offset=" + offset + "; expecting " + bufferValue + "; got " + value);
