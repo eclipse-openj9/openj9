@@ -31,13 +31,13 @@ import sun.misc.Unsafe;
 public class UnsafeArrayGetTest {
 	static Unsafe myUnsafe;
 	static final ByteOrder byteOrder = ByteOrder.nativeOrder();
-	
+
 	/* the small arrays are initialized with sequential, known values to make it easier to debug errors here */
 	static final byte[] byteArray = new byte[] { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
 	static final short[] shortArray = new short[] { 0x0001, 0x0203, 0x0405, 0x0607, 0x0809, 0x0a0b, 0x0c0d, 0x0e0f };
 	static final int[] intArray = new int[] { 0x00010203, 0x04050607, 0x080090a0b, 0x0c0d0e0f };
 	static final long[] longArray = new long[] { 0x0001020304050607L, 0x08090a0b0c0d0e0fL };
-	
+
 	/* the large arrays are initialized with random values to ensure good coverage */
 	static final byte[] largeByteArray = new byte[1024 * 1024];
 	static final short[] largeShortArray = new short[1024 * 1024 / 2];
@@ -57,7 +57,7 @@ public class UnsafeArrayGetTest {
 
 	static final Object[] arrays  = { byteArray,  shortArray,  intArray,  longArray,  largeByteArray,  largeShortArray,  largeIntArray,  largeLongArray  };
 	static final byte[][] buffers = { byteBuffer, shortBuffer, intBuffer, longBuffer, largeByteBuffer, largeShortBuffer, largeIntBuffer, largeLongBuffer };
-	
+
 	static void initializeData() {
 		Random random = new Random(0x80968096L);
 		for (int i = 0; i < largeByteArray.length; i++) {
@@ -72,7 +72,7 @@ public class UnsafeArrayGetTest {
 		for (int i = 0; i < largeLongArray.length; i++) {
 			largeLongArray[i] = random.nextLong();
 		}
-		
+
 		for (int i = 0; i < byteArray.length; i++) {
 			putByte(byteBuffer, i, byteArray[i]);
 		}
@@ -85,7 +85,7 @@ public class UnsafeArrayGetTest {
 		for (int i = 0; i < longArray.length; i++) {
 			putLong(longBuffer, i*8, longArray[i]);
 		}
-		
+
 		for (int i = 0; i < largeByteArray.length; i++) {
 			putByte(largeByteBuffer, i, largeByteArray[i]);
 		}
@@ -99,7 +99,7 @@ public class UnsafeArrayGetTest {
 			putLong(largeLongBuffer, i*8, largeLongArray[i]);
 		}
 	}
-	
+
 	private static byte getByte(byte[] buffer, int index) {
 		return buffer[index];
 	}
@@ -107,7 +107,7 @@ public class UnsafeArrayGetTest {
 	private static void putByte(byte[] buffer, int index, byte value) {
 		buffer[index] = value;
 	}
-	
+
 	private static short getShort(byte[] buffer, int index) {
 		int byte0 = buffer[index] & 0xff;
 		int byte1 = buffer[index + 1] & 0xff;
@@ -127,7 +127,7 @@ public class UnsafeArrayGetTest {
 			buffer[index] = (byte)(value >> 8);
 		}
 	}
-	
+
 	private static int getInt(byte[] buffer, int index) {
 		int byte0 = buffer[index] & 0xff;
 		int byte1 = buffer[index + 1] & 0xff;
@@ -169,7 +169,7 @@ public class UnsafeArrayGetTest {
 			return ((byte0 << 56) | (byte1 << 48) | (byte2 << 40) | (byte3 << 32) | (byte4 << 24) | (byte5 << 16) | (byte6 << 8) | byte7);
 		}
 	}
-	
+
 	private static void putLong(byte[] buffer, int index, long value) {
 		if (byteOrder == ByteOrder.LITTLE_ENDIAN) {
 			buffer[index] = (byte)value;
@@ -204,16 +204,16 @@ public class UnsafeArrayGetTest {
 		}
 		throw new Error("Unable to find an instance of Unsafe");
 	}
-	
+
 	public void testGetObject() {
 		Object[] array = new Object[] { "a", "b", "c", "d" };
-		
+
 		long arrayIndexScale = myUnsafe.arrayIndexScale(array.getClass());
 		long arrayIndexBase = myUnsafe.arrayBaseOffset(array.getClass());
-		
+
 		long lowestOffset = arrayIndexBase;
-		long highestOffset = arrayIndexBase + (arrayIndexScale * (array.length - 1)); 
-		
+		long highestOffset = arrayIndexBase + (arrayIndexScale * (array.length - 1));
+
 		System.out.println("Testing getObject() for " + array.getClass().getComponentType() + "[" + array.length + "]");
 		/* don't try to test misaligned offsets since that will result in invalid object pointers */
 		int index = 0;
@@ -228,20 +228,20 @@ public class UnsafeArrayGetTest {
 			}
 		}
 	}
-	
+
 	public void testGetByte() {
 		for (int i = 0; i < arrays.length; i++) {
 			Object array = arrays[i];
 			byte[] buffer = buffers[i];
-			
+
 			int arrayLength = Array.getLength(array);
 			long arrayIndexScale = myUnsafe.arrayIndexScale(array.getClass());
 			long arrayIndexBase = myUnsafe.arrayBaseOffset(array.getClass());
 			long elementSize = myUnsafe.arrayIndexScale(byte[].class);
 
 			long lowestOffset = arrayIndexBase;
-			long highestOffset = arrayIndexBase + (arrayIndexScale * arrayLength) - elementSize; 
-			
+			long highestOffset = arrayIndexBase + (arrayIndexScale * arrayLength) - elementSize;
+
 			System.out.println("Testing getByte() for " + array.getClass().getComponentType() + "[" + arrayLength + "]");
 			int bufferIndex = 0;
 			for (long offset = lowestOffset; offset <= highestOffset; offset += 1, bufferIndex += 1) {
@@ -257,7 +257,7 @@ public class UnsafeArrayGetTest {
 			}
 		}
 	}
-	
+
 	public void testGetShort() {
 		for (int i = 0; i < arrays.length; i++) {
 			Object array = arrays[i];
@@ -269,16 +269,21 @@ public class UnsafeArrayGetTest {
 			long elementSize = myUnsafe.arrayIndexScale(short[].class);
 
 			long lowestOffset = arrayIndexBase;
-			long highestOffset = arrayIndexBase + (arrayIndexScale * arrayLength) - elementSize; 
-			
+			long highestOffset = arrayIndexBase + (arrayIndexScale * arrayLength) - elementSize;
+
 			System.out.println("Testing getShort() for " + array.getClass().getComponentType() + "[" + arrayLength + "]");
 			int bufferIndex = 0;
 			for (long offset = lowestOffset; offset <= highestOffset; offset += 1, bufferIndex += 1) {
 				short value = myUnsafe.getShort(array, offset);
-				short volatileValue = myUnsafe.getShortVolatile(array,offset);
-				if (value != volatileValue) {
-					throw new Error("getShort() != getShortVolatile() for offset=" + offset);
+
+				// volatile get is only valid for aligned offsets
+				if (offset % Short.BYTES == 0) {
+					short volatileValue = myUnsafe.getShortVolatile(array,offset);
+					if (value != volatileValue) {
+						throw new Error("getShort() != getShortVolatile() for offset=" + offset);
+					}
 				}
+
 				short bufferValue = getShort(buffer, bufferIndex);
 				if (value != bufferValue) {
 					throw new Error("getShort() != manual read for offset=" + offset + "; expecting " + bufferValue + "; got " + value);
@@ -286,7 +291,7 @@ public class UnsafeArrayGetTest {
 			}
 		}
 	}
-	
+
 	public void testGetInt() {
 		for (int i = 0; i < arrays.length; i++) {
 			Object array = arrays[i];
@@ -296,18 +301,23 @@ public class UnsafeArrayGetTest {
 			long arrayIndexScale = myUnsafe.arrayIndexScale(array.getClass());
 			long arrayIndexBase = myUnsafe.arrayBaseOffset(array.getClass());
 			long elementSize = myUnsafe.arrayIndexScale(int[].class);
-			
+
 			long lowestOffset = arrayIndexBase;
-			long highestOffset = arrayIndexBase + (arrayIndexScale * arrayLength) - elementSize; 
-			
+			long highestOffset = arrayIndexBase + (arrayIndexScale * arrayLength) - elementSize;
+
 			System.out.println("Testing getInt() for " + array.getClass().getComponentType() + "[" + arrayLength + "]");
 			int bufferIndex = 0;
 			for (long offset = lowestOffset; offset <= highestOffset; offset += 1, bufferIndex += 1) {
 				int value = myUnsafe.getInt(array, offset);
-				int volatileValue = myUnsafe.getIntVolatile(array,offset);
-				if (value != volatileValue) {
-					throw new Error("getInt() != getIntVolatile() for offset=" + offset);
+
+				// volatile get is only valid for aligned offsets
+				if (offset % Integer.BYTES == 0) {
+					int volatileValue = myUnsafe.getIntVolatile(array,offset);
+					if (value != volatileValue) {
+						throw new Error("getInt() != getIntVolatile() for offset=" + offset);
+					}
 				}
+
 				int bufferValue = getInt(buffer, bufferIndex);
 				if (value != bufferValue) {
 					throw new Error("getInt() != manual read for offset=" + offset + "; expecting " + bufferValue + "; got " + value);
@@ -315,7 +325,7 @@ public class UnsafeArrayGetTest {
 			}
 		}
 	}
-	
+
 	public void testGetLong() {
 		for (int i = 0; i < arrays.length; i++) {
 			Object array = arrays[i];
@@ -325,18 +335,23 @@ public class UnsafeArrayGetTest {
 			long arrayIndexScale = myUnsafe.arrayIndexScale(array.getClass());
 			long arrayIndexBase = myUnsafe.arrayBaseOffset(array.getClass());
 			long elementSize = myUnsafe.arrayIndexScale(long[].class);
-			
+
 			long lowestOffset = arrayIndexBase;
-			long highestOffset = arrayIndexBase + (arrayIndexScale * arrayLength) - elementSize; 
-			
+			long highestOffset = arrayIndexBase + (arrayIndexScale * arrayLength) - elementSize;
+
 			System.out.println("Testing getLong() for " + array.getClass().getComponentType() + "[" + arrayLength + "]");
 			int bufferIndex = 0;
 			for (long offset = lowestOffset; offset <= highestOffset; offset += 1, bufferIndex += 1) {
 				long value = myUnsafe.getLong(array, offset);
-				long volatileValue = myUnsafe.getLongVolatile(array,offset);
-				if (value != volatileValue) {
-					throw new Error("getLong() != getLongVolatile() for offset=" + offset);
+
+				// volatile get is only valid for aligned offsets
+				if (offset % Long.BYTES == 0) {
+					long volatileValue = myUnsafe.getLongVolatile(array,offset);
+					if (value != volatileValue) {
+						throw new Error("getLong() != getLongVolatile() for offset=" + offset);
+					}
 				}
+
 				long bufferValue = getLong(buffer, bufferIndex);
 				if (value != bufferValue) {
 					throw new Error("getLong() != manual read for offset=" + offset + "; expecting " + bufferValue + "; got " + value);
@@ -344,12 +359,12 @@ public class UnsafeArrayGetTest {
 			}
 		}
 	}
-	
+
 	public static void main(String[] args) throws Exception {
 		System.out.println("Initializing data for " + UnsafeArrayGetTest.class);
 		myUnsafe = getUnsafeInstance();
 		initializeData();
-		
+
 		UnsafeArrayGetTest tester = new UnsafeArrayGetTest();
 		tester.testGetLong();
 		tester.testGetInt();
@@ -357,5 +372,5 @@ public class UnsafeArrayGetTest {
 		tester.testGetByte();
 		tester.testGetObject();
 	}
-	
+
 }
