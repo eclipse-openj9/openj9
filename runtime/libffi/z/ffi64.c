@@ -812,21 +812,24 @@ ffi_check_struct_for_complex(ffi_type *arg_type)
   return arg_type->type;
 }
 
+/*======================== End of Routine ============================*/
+
 /*====================================================================*/
 /*                                                                    */
-/* Name     - ffi_prep_cif_machdep.                                   */
+/* Name     - ffi_prep_cif_machdep_core.                              */
 /*                                                                    */
-/* Function - Perform machine dependent CIF processing.               */
+/* Function - Perform common machine dependent CIF processing.        */
 /*                                                                    */
 /*====================================================================*/
 
-ffi_status
-ffi_prep_cif_machdep(ffi_cif *cif)
+static ffi_status
+ffi_prep_cif_machdep_core(ffi_cif *cif)
 {
   size_t struct_size = 0;
   int n_gpr = 0;
   int n_fpr = 0;
   int n_ov = 0;
+  int argID = 0;
 
   ffi_type **ptr;
   int i;
@@ -914,7 +917,7 @@ ffi_prep_cif_machdep(ffi_cif *cif)
 
   for (ptr = cif->arg_types, i = cif->nargs;
        i > 0;
-       i--, ptr++)
+       i--, argID++, ptr++)
     {
       int type = (*ptr)->type;
 
@@ -935,7 +938,12 @@ ffi_prep_cif_machdep(ffi_cif *cif)
 	  */
 	  type = ffi_check_struct_type (*ptr);
 
-	  (*ptr)->type = ffi_check_struct_for_complex(*ptr);
+	  /* If the argument is part of the variadic argument list, it must be passed in GPRs if available,
+	     or in the argument list. Therefore, only fixed arguments need to be checked for complex types
+	     to determine whether they should be passed in FPRs, if available.
+	  */
+	  if (argID < cif->z_nfixedargs)
+	    (*ptr)->type = ffi_check_struct_for_complex(*ptr);
 
 	  /* If we pass the struct via pointer, we must reserve space
 	     to copy its data for proper call-by-value semantics.  */
@@ -945,9 +953,11 @@ ffi_prep_cif_machdep(ffi_cif *cif)
       else if (type == FFI_TYPE_STRUCT_FF || type == FFI_TYPE_STRUCT_DD)
 	{
 	  /* If the ffi_type is STRUCT with two floating point parameters of the same type
-	     they will be passed in available FPRs. Logic to calculate bytes for the struct
-	     should be same as normal struct.
+	     they will be passed in available FPRs unless argument is part of variadic argument list.
+	     Logic to calculate bytes for the struct should be same as normal struct.
 	  */
+	  if (argID >= cif->z_nfixedargs)
+	    (*ptr)->type = FFI_TYPE_STRUCT;
 	  struct_size += ((*ptr)->size);
 	}
 
@@ -1009,6 +1019,40 @@ ffi_prep_cif_machdep(ffi_cif *cif)
 /*  printf("prep_cif_machdep_cif_bytes: %d n_gpr=%d n_ov=%d n_fpr=%d\n",cif->bytes,n_gpr,n_ov,n_fpr); */
 
   return FFI_OK;
+}
+
+/*======================== End of Routine ============================*/
+
+/*====================================================================*/
+/*                                                                    */
+/* Name     - ffi_prep_cif_machdep_var.                               */
+/*                                                                    */
+/* Function - Perform machine dependent CIF processing for varargs.   */
+/*                                                                    */
+/*====================================================================*/
+
+ffi_status
+ffi_prep_cif_machdep_var(ffi_cif *cif, unsigned int nfixedargs, unsigned int ntotalargs)
+{
+  cif->z_nfixedargs = nfixedargs;
+  return ffi_prep_cif_machdep_core(cif);
+}
+
+/*======================== End of Routine ============================*/
+
+/*====================================================================*/
+/*                                                                    */
+/* Name     - ffi_prep_cif_machdep.                                   */
+/*                                                                    */
+/* Function - Perform machine dependent CIF processing.               */
+/*                                                                    */
+/*====================================================================*/
+
+ffi_status
+ffi_prep_cif_machdep(ffi_cif *cif)
+{
+  cif->z_nfixedargs = cif->nargs;
+  return ffi_prep_cif_machdep_core(cif);
 }
 
 /*======================== End of Routine ============================*/
@@ -1314,4 +1358,3 @@ ffi_prep_closure_loc (ffi_closure *closure,
 }
 
 /*======================== End of Routine ============================*/
-
