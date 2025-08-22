@@ -1930,7 +1930,7 @@ TR::Register *J9::Power::TreeEvaluator::anewArrayEvaluator(TR::Node *node, TR::C
       return TR::TreeEvaluator::VMnewEvaluator(node, cg);
    }
 
-// put source*imm in target as long as imm is a non-negative power of two
+// put source*imm in target, where imm = [1, 2, 4, 8, 16, 64], and source is unsigned 32-bit
 static void generateImmMultiplicationWithShift(TR::Node *node, TR::CodeGenerator *cg,
                                                         TR::Register *targetReg,
                                                         TR::Register *sourceReg,
@@ -1940,7 +1940,7 @@ static void generateImmMultiplicationWithShift(TR::Node *node, TR::CodeGenerator
    TR_ASSERT_FATAL(comp->target().is64Bit(),
       "immMultiplicatoinWithShift is only supported on 64-bit JVMs!");
 
-   switch (imm) // temp1Reg = firstDimLenReg * referenceFieldSize; always in 64 bit
+   switch (imm)
       {
       case 64:
          generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, targetReg, sourceReg, 6,
@@ -1975,7 +1975,7 @@ static void generateImmMultiplicationWithShift(TR::Node *node, TR::CodeGenerator
 
 static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
                                                                  TR::CodeGenerator *cg,
-                                                                 int32_t arrayElementSize)
+                                                                 int32_t leafArrayElementSize)
    {
    TR::Compilation *comp = cg->comp();
    TR_Debug *compDebug = comp->getDebug();
@@ -2228,7 +2228,7 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
    //    2. (firstDimLen * referenceFieldSize) + padding for alignment;
    //    3. firstDimLen * size of a subarray (aligned):
    //       - header of a second dimension array;
-   //       - (secondDimLen * arrayElementSize) + padding for alignment.
+   //       - (secondDimLen * leafArrayElementSize) + padding for alignment.
 
    // get the number of bytes needed for the reference fields for the first dimension
    // temp1Reg = firstDimLenReg * referenceFieldSize
@@ -2243,8 +2243,8 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
       }
 
    // Similarly, get the size of the referenceFields and header for a second dimension subarray.
-   // temp2Reg = secondDimLenReg * arrayElementSize
-   generateImmMultiplicationWithShift(node, cg, temp2Reg, secondDimLenReg, arrayElementSize);
+   // temp2Reg = secondDimLenReg * leafArrayElementSize
+   generateImmMultiplicationWithShift(node, cg, temp2Reg, secondDimLenReg, leafArrayElementSize);
    // add alignment compensation, and the header size
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, subArraySizeReg, temp2Reg,
       TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + alignmentCompensation);
@@ -2463,7 +2463,7 @@ TR::Register *J9::Power::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, 
    static bool disableInlineMultianewArray = feGetEnv("TR_DisableInlineMultianewArray") != NULL;
 
    // Get the size of the elements in the leaf components
-   int32_t arrayElementSize = -1;
+   int32_t leafArrayElementSize = -1;
    TR::Node *classNode = node->getThirdChild();
    TR::SymbolReference *classSymRef = NULL;
    const TR::ILOpCodes opcode = classNode->getOpCodeValue();
@@ -2498,27 +2498,27 @@ TR::Register *J9::Power::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, 
             switch (sig[2])
                {
                case 'B':
-                  arrayElementSize = 1;
+                  leafArrayElementSize = 1;
                   break;
                case 'C':
                case 'S':
-                  arrayElementSize = 2;
+                  leafArrayElementSize = 2;
                   break;
                case 'I':
                case 'F':
-                  arrayElementSize = 4;
+                  leafArrayElementSize = 4;
                   break;
                case 'D':
                case 'J':
-                  arrayElementSize = 8;
+                  leafArrayElementSize = 8;
                   break;
                case 'Z':
-                  arrayElementSize =
+                  leafArrayElementSize =
                      static_cast<int32_t>(TR::Compiler->om.elementSizeOfBooleanArray());
                   break;
                case 'L':
                default :
-                  arrayElementSize = TR::Compiler->om.sizeofReferenceField();
+                  leafArrayElementSize = TR::Compiler->om.sizeofReferenceField();
                   break;
                }
             }
@@ -2532,9 +2532,9 @@ TR::Register *J9::Power::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, 
    // Finally, we need to be sure we know the elementSize
    if (nDims > 1 && !disableInlineMultianewArray
          && fej9->tlhHasBeenCleared() && !comp->getOptions()->realTimeGC()
-         && arrayElementSize != -1)
+         && leafArrayElementSize != -1)
       {
-      return generateMultianewArrayWithInlineAllocators(node, cg, arrayElementSize);
+      return generateMultianewArrayWithInlineAllocators(node, cg, leafArrayElementSize);
       }
    else
       {
