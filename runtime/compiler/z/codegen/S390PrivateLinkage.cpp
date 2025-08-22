@@ -1617,9 +1617,6 @@ generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callN
       TR::LabelSymbol * exitLabel = generateLabelSymbol(cg);
       TR::LabelSymbol * noLastITableMatchLabel = iTableIterations ? generateLabelSymbol(cg) : exitLabel;
       TR::LabelSymbol * oolMergeLabel = generateLabelSymbol(cg);
-      // Reusing lastIpicMethodRegister for loopCount.
-      TR::Register * loopCountRegister = lastIpicMethodRegister;
-      bool stopUsingLoopCountRegister = false;
       // Jump OOL.
       if(lastIpicMethodRegister == NULL)
          {
@@ -1682,6 +1679,9 @@ generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callN
       /********* Step 3: Check iTable entries. *********/
       if (checkITableEntries)
          {
+         // Reusing lastIpicMethodRegister for loopCount.
+         TR::Register * loopCountRegister = lastIpicMethodRegister;
+         bool stopUsingLoopCountRegister = false;
          oolCursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, callNode, noLastITableMatchLabel, oolCursor);
          iComment("Start comparing interface with iTable entries.", oolCursor)
          if (checkLimitedNumberOfITableEntries)
@@ -1761,14 +1761,14 @@ generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callN
                   iComment("Branch to call dispatch sequence.", oolCursor)
                }
             }
+         if (stopUsingLoopCountRegister)
+            cg->stopUsingRegister(loopCountRegister);
          }
       oolCursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, callNode, oolMergeLabel);
       oolCursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_B, callNode, exitLabel, oolCursor);
       iComment("Back to main line.", oolCursor)
       outlinedITableCheckSequence->swapInstructionListsWithCompilation();
       cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, callNode, exitLabel);
-      if (stopUsingLoopCountRegister)
-         cg->stopUsingRegister(loopCountRegister);
       }
    return cursor;
    }
