@@ -1930,49 +1930,6 @@ TR::Register *J9::Power::TreeEvaluator::anewArrayEvaluator(TR::Node *node, TR::C
       return TR::TreeEvaluator::VMnewEvaluator(node, cg);
    }
 
-// put source*imm in target, where imm = [1, 2, 4, 8, 16, 64], and source is unsigned 32-bit
-static void generateImmMultiplicationWithShift(TR::Node *node, TR::CodeGenerator *cg,
-                                                        TR::Register *targetReg,
-                                                        TR::Register *sourceReg,
-                                                        int32_t imm)
-   {
-   TR::Compilation *comp = cg->comp();
-   TR_ASSERT_FATAL(comp->target().is64Bit(),
-      "immMultiplicatoinWithShift is only supported on 64-bit JVMs!");
-
-   switch (imm)
-      {
-      case 64:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, targetReg, sourceReg, 6,
-                                         CONSTANT64(0x0000003FFFFFFFC0));
-         break;
-      case 32:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, targetReg, sourceReg, 5,
-                                         CONSTANT64(0x0000001FFFFFFFE0));
-         break;
-      case 16:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, targetReg, sourceReg, 4,
-                                         CONSTANT64(0x0000000FFFFFFFF0));
-         break;
-      case 8:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, targetReg, sourceReg, 3,
-                                         CONSTANT64(0x00000007FFFFFFF8));
-         break;
-      case 4:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, targetReg, sourceReg, 2,
-                                         CONSTANT64(0x00000003FFFFFFFC));
-         break;
-      case 2:
-         generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, targetReg, sourceReg, sourceReg);
-         break;
-      case 1:
-         generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, targetReg, sourceReg);
-         break;
-      default:
-         TR_ASSERT_FATAL(false, "immMultiplicatoinWithShift - unexpected referenceFieldSize!");
-      }
-   }
-
 static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
                                                                  TR::CodeGenerator *cg,
                                                                  int32_t leafArrayElementSize)
@@ -2112,8 +2069,11 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
    //    3. firstDimLen * zeroArraySizeAligned:
 
    // get the number of bytes needed for the reference fields
-   // temp1Reg = firstDimLenReg * referenceFieldSize
-   generateImmMultiplicationWithShift(node, cg, temp1Reg, firstDimLenReg, referenceFieldSize);
+   // temp1Reg = firstDimLenReg * referenceFieldSize; referenceFieldSize can only be 4 or 8
+   if (referenceFieldSize == 8)
+      generateShiftLeftImmediateLong(cg, node, temp1Reg, firstDimLenReg, 3);
+   else
+      generateShiftLeftImmediateLong(cg, node, temp1Reg, firstDimLenReg, 2);
    // add alignment compensation, and the header size
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp1Reg, temp1Reg,
       TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + alignmentCompensation);
@@ -2123,8 +2083,8 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
                                        0, -refFieldSizeAligned);
       }
    // we also need space for N zero-sized arrays
-   // temp2Reg = firstDimLenReg * zeroArraySizeAligned
-   generateImmMultiplicationWithShift(node, cg, temp2Reg, firstDimLenReg, zeroArraySizeAligned);
+   // temp2Reg = firstDimLenReg * zeroArraySizeAligned; zeroArraySizeAligned should be 2^n | n > 0
+   generateShiftLeftImmediateLong(cg, node, temp2Reg, firstDimLenReg, trailingZeroes(zeroArraySizeAligned));
    // temp2Reg = temp2Reg + temp1Reg + (targetReg = heapAlloc) = where heapAlloc will endup
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, temp2Reg, temp2Reg, temp1Reg);
    generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, targetReg,
@@ -2231,8 +2191,11 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
    //       - (secondDimLen * leafArrayElementSize) + padding for alignment.
 
    // get the number of bytes needed for the reference fields for the first dimension
-   // temp1Reg = firstDimLenReg * referenceFieldSize
-   generateImmMultiplicationWithShift(node, cg, temp1Reg, firstDimLenReg, referenceFieldSize);
+   // temp1Reg = firstDimLenReg * referenceFieldSize; referenceFieldSize can only be 4 or 8
+   if (referenceFieldSize == 8)
+      generateShiftLeftImmediateLong(cg, node, temp1Reg, firstDimLenReg, 3);
+   else
+      generateShiftLeftImmediateLong(cg, node, temp1Reg, firstDimLenReg, 2);
    // add alignment compensation, and the header size
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp1Reg, temp1Reg,
       TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + alignmentCompensation);
@@ -2244,10 +2207,20 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
 
    // Similarly, get the size of the referenceFields and header for a second dimension subarray.
    // temp2Reg = secondDimLenReg * leafArrayElementSize
-   generateImmMultiplicationWithShift(node, cg, temp2Reg, secondDimLenReg, leafArrayElementSize);
-   // add alignment compensation, and the header size
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, subArraySizeReg, temp2Reg,
-      TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + alignmentCompensation);
+   // Since leafArrayElementSize could be 1, we can save an instruction in that case
+   if (leafArrayElementSize != 1)
+      {
+      generateShiftLeftImmediateLong(cg, node, temp2Reg, secondDimLenReg, trailingZeroes(leafArrayElementSize));
+      // add alignment compensation, and the header size
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, subArraySizeReg, temp2Reg,
+         TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + alignmentCompensation);
+      }
+   else
+      {
+      // add alignment compensation, and the header size
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, subArraySizeReg, secondDimLenReg,
+         TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + alignmentCompensation);
+      }
    if (needsAlignRefField) // do a mask to ensure alignment
       {
       generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, subArraySizeReg, subArraySizeReg,
