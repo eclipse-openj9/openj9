@@ -1078,15 +1078,17 @@ typedef struct J9VMCustomSpinOptions {
 #define J9SYSPROP_ERROR_ARG_MISSING 6
 #define J9SYSPROP_ERROR_INVALID_VALUE  7
 
+#define DLLNAME_LEN 32
+
 typedef struct J9VMDllLoadInfo {
-	char dllName[32];
-	char alternateDllName[32];
+	char dllName[DLLNAME_LEN];
+	char alternateDllName[DLLNAME_LEN];
 	U_32 loadFlags;
 	U_32 completedBits;
 	UDATA descriptor;
-	IDATA  ( *j9vmdllmain)(struct J9JavaVM *vm, IDATA stage, void *reserved) ;
-	const char* fatalErrorStr;
-	void* reserved;
+	IDATA ( *j9vmdllmain)(struct J9JavaVM *vm, IDATA stage, void *reserved);
+	const char *fatalErrorStr;
+	void *reserved;
 } J9VMDllLoadInfo;
 
 typedef struct J9SigContext {

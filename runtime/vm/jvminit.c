@@ -145,13 +145,13 @@ struct J9VMIgnoredOption {
 };
 
 typedef struct {
-	void * vm_args;
-	void * osMainThread;
-	J9JavaVM * vm;
-	J9JavaVM** globalJavaVM;
+	void *vm_args;
+	void *osMainThread;
+	J9JavaVM *vm;
+	J9JavaVM **globalJavaVM;
 	UDATA j2seVersion;
-	char* j2seRootDirectory;
-	char* j9libvmDirectory;
+	char *j2seRootDirectory;
+	char *j9libvmDirectory;
 } J9InitializeJavaVMArgs;
 
 #define IGNORE_ME_STRING "_ignore_me"
@@ -161,12 +161,6 @@ typedef struct {
 #define OPT_NONE_CAPS "NONE"
 #define DJCOPT_JITC "jitc"
 #define OPT_TRUE "true"
-
-#define XRUN_LEN (sizeof(VMOPT_XRUN)-1)
-#define DLLNAME_LEN 32									/* this value should be consistent with that in J9VMDllLoadInfo */
-#define SMALL_STRING_BUF_SIZE 64
-#define MED_STRING_BUF_SIZE 128
-#define LARGE_STRING_BUF_SIZE 256
 
 #define FUNCTION_VM_INIT "VMInitStages"
 #define FUNCTION_THREAD_INIT "threadInitStages"
@@ -1419,7 +1413,7 @@ initializeDllLoadTable(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDAT
 	IDATA i;
 	char* testString, *options;
 	J9VMDllLoadInfo* newEntry;
-	char dllNameBuffer[SMALL_STRING_BUF_SIZE];			/* Plenty big enough - needs to be at least DLLNAME_LEN */
+	char dllNameBuffer[SMALL_STRING_BUF_SIZE]; /* Plenty big enough - needs to be at least DLLNAME_LEN */
 	const char *gcDLLName = J9_GC_DLL_NAME;
 	const char *gccheckDLLName = J9_CHECK_GC_DLL_NAME;
 	const char *verboseDLLName = J9_VERBOSE_DLL_NAME;
@@ -7320,7 +7314,6 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 #if defined(LINUX)
 	int filter = -1;
 #endif
-	J9JavaVM** BFUjavaVM;
 	IDATA xxUseG1GC = 0; /* +1 if -XX:+UseG1GC used; -1 if -XX:-UseG1GC used */
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
@@ -7896,10 +7889,9 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	markLoaderPermanent(vm->mainThread, vm->systemClassLoader);
 	omrthread_monitor_exit(vm->classTableMutex);
 
-	/* Set the BFUjavaVM obtained from vm_args to the created vm */
-	BFUjavaVM = initArgs->globalJavaVM;
-	if (NULL != BFUjavaVM) {
-		*BFUjavaVM = vm;
+	/* Set the BFUjavaVM obtained from vm_args to the created VM. */
+	if (NULL != initArgs->globalJavaVM) {
+		*(initArgs->globalJavaVM) = vm;
 	}
 
 	if (JNI_OK != (stageRC = runInitializationStage(vm, JCL_INITIALIZED))) {
