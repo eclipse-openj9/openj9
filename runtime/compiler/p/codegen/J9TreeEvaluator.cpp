@@ -1938,14 +1938,15 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
    TR_Debug *compDebug = comp->getDebug();
    TR_ASSERT_FATAL(comp->target().is64Bit(), "multianewArrayEvaluator is only supported on 64-bit JVMs!");
    TR_J9VMBase *fej9 = comp->fej9();
+
+   // alignment requirement
+   int32_t alignmentInBytes = TR::Compiler->om.getObjectAlignmentInBytes();
+
    // size of reference field and address
    int32_t referenceFieldSize = TR::Compiler->om.sizeofReferenceField();
    TR_ASSERT_FATAL(referenceFieldSize <= 8,
       "multianewArrayEvaluator - referenceFieldSize cannot be greater than 8!");
    int32_t addrSize = TR::Compiler->om.sizeofReferenceAddress();
-   // the size of a length-0 array in bytes taking alignment into account
-   int32_t zeroArraySizeAligned = OMR::align(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(),
-                                             TR::Compiler->om.getObjectAlignmentInBytes());
    // we use 64 bit classes only in 64 bit arch without compression
    bool use64BitClasses = comp->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
    TR::InstOpCode::Mnemonic storeClassOp = use64BitClasses ? TR::InstOpCode::std : TR::InstOpCode::stw;
@@ -1958,13 +1959,21 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
    // the maximum number of elements we can handle without risking an overflow
    uintptr_t maxObjectSizeInElements = cg->getMaxObjectSizeGuaranteedNotToOverflow() / referenceFieldSize;
 
-   // When we allocate a block of pointers, we want to make sure all the block's size is aligned:
-   //    1. if the size of the referenceFields making up the block is aligned, do nothing;
-   //    2. otherwise, we first add refFieldSizeAligned-1 to the size, then mask the excess bits.
-   int32_t refFieldSizeAligned = OMR::align(referenceFieldSize,
-                                           TR::Compiler->om.getObjectAlignmentInBytes());
+   // the size of a length-0 array in bytes taking alignment into account
+   int32_t zeroArraySizeAligned = OMR::align(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(),
+                                             alignmentInBytes);
+
+   // a length>0 array object would *not* require alignment if both a single refField
+   // and the header are already the exact multiple of alignment; otherwise alignment is needed
+   int32_t refFieldSizeAligned = OMR::align(referenceFieldSize, alignmentInBytes);
    bool needsAlignRefField = (refFieldSizeAligned != referenceFieldSize);
-   int32_t alignmentCompensation = needsAlignRefField ? refFieldSizeAligned - 1 : 0;
+   int32_t contHeaderSizeAligned = OMR::align(TR::Compiler->om.contiguousArrayHeaderSizeInBytes(),
+                                              alignmentInBytes);
+   bool needsAlignNonZeroArray = needsAlignRefField
+         || (nonZeroArraySizeAligned != TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+   // if a non-zero array needs alignment at runtime, we first add alignmentCompensation,
+   // then mask with (-alignmentInBytes)
+   int32_t nzArrayAlignmentCompensation = needsAlignNonZeroArray ? alignmentInBytes - 1 : 0;
 
    // offHeap enabled
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
@@ -2064,9 +2073,11 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, nonZeroSecondDimLabel, condReg);
 
    // check if we have enough space by accounting for the following:
-   //    1. header of the first dimension array (aligned by default);
-   //    2. (firstDimLen * referenceFieldSize) + padding for alignment;
-   //    3. firstDimLen * zeroArraySizeAligned:
+   //    1. the object that is the first array:
+   //       a. the header of a contiguous array
+   //       b. (firstDimLen * referenceFieldSize)
+   //       c. alignment padding
+   //    2. firstDimLen * zeroArraySizeAligned
 
    // get the number of bytes needed for the reference fields
    // temp1Reg = firstDimLenReg * referenceFieldSize; referenceFieldSize can only be 4 or 8
@@ -2076,8 +2087,8 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
       generateShiftLeftImmediateLong(cg, node, temp1Reg, firstDimLenReg, 2);
    // add alignment compensation, and the header size
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp1Reg, temp1Reg,
-      TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + alignmentCompensation);
-   if (needsAlignRefField) // do a mask to ensure alignment
+      TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + nzArrayAlignmentCompensation);
+   if (needsAlignNonZeroArray) // do a mask to ensure alignment
       {
       generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, temp1Reg, temp1Reg,
                                        0, -refFieldSizeAligned);
@@ -2184,11 +2195,14 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, oolJumpLabel, condReg);
 
    // check if we have enough space by accounting for the following:
-   //    1. header of the first dimension array (aligned by default);
-   //    2. (firstDimLen * referenceFieldSize) + padding for alignment;
-   //    3. firstDimLen * size of a subarray (aligned):
-   //       - header of a second dimension array;
-   //       - (secondDimLen * leafArrayElementSize) + padding for alignment.
+   //    1. the object that is the first array:
+   //       a. the header of a contiguous array
+   //       b. (firstDimLen * referenceFieldSize)
+   //       c. alignment padding
+   //    2. firstDimLen * size of a subarray (aligned):
+   //       a. header of a second dimension array
+   //       b. (secondDimLen * leafArrayElementSize)
+   //       c. alignment padding
 
    // get the number of bytes needed for the reference fields for the first dimension
    // temp1Reg = firstDimLenReg * referenceFieldSize; referenceFieldSize can only be 4 or 8
@@ -2198,8 +2212,8 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
       generateShiftLeftImmediateLong(cg, node, temp1Reg, firstDimLenReg, 2);
    // add alignment compensation, and the header size
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp1Reg, temp1Reg,
-      TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + alignmentCompensation);
-   if (needsAlignRefField) // do a mask to ensure alignment
+      TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + nzArrayAlignmentCompensation);
+   if (needsAlignNonZeroArray) // do a mask to ensure alignment
       {
       generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, temp1Reg, temp1Reg,
                                        0, -refFieldSizeAligned);
@@ -2213,15 +2227,15 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
       generateShiftLeftImmediateLong(cg, node, temp2Reg, secondDimLenReg, trailingZeroes(leafArrayElementSize));
       // add alignment compensation, and the header size
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, subArraySizeReg, temp2Reg,
-         TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + alignmentCompensation);
+         TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + nzArrayAlignmentCompensation);
       }
    else
       {
       // add alignment compensation, and the header size
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, subArraySizeReg, secondDimLenReg,
-         TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + alignmentCompensation);
+         TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + nzArrayAlignmentCompensation);
       }
-   if (needsAlignRefField) // do a mask to ensure alignment
+   if (needsAlignNonZeroArray) // do a mask to ensure alignment
       {
       generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, subArraySizeReg, subArraySizeReg,
                                        0, -refFieldSizeAligned);
