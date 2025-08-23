@@ -5016,19 +5016,6 @@ TR_J9VMBase::targetMethodFromInvokeCacheArrayMemberNameObj(TR::Compilation *comp
    return createResolvedMethod(comp->trMemory(), targetMethodObj, owningMethod);
    }
 
-TR::SymbolReference*
-TR_J9VMBase::refineInvokeCacheElementSymRefWithKnownObjectIndex(TR::Compilation *comp, TR::SymbolReference *originalSymRef, uintptr_t *invokeCacheArray)
-   {
-   TR::VMAccessCriticalSection vmAccess(this);
-   uintptr_t arrayElementRef = (uintptr_t) getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayAppendixIndex);
-   TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
-   if (!knot) return originalSymRef;
-   TR::KnownObjectTable::Index arrayElementKnotIndex = TR::KnownObjectTable::UNKNOWN;
-   arrayElementKnotIndex = knot->getOrCreateIndex(arrayElementRef);
-   TR::SymbolReference *newRef = comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(originalSymRef, arrayElementKnotIndex);
-   return newRef;
-   }
-
 static char *
 getSignatureForLinkToStatic(
    const char * const extraParamsBefore,

@@ -2415,23 +2415,6 @@ TR_J9ServerVM::targetMethodFromInvokeCacheArrayMemberNameObj(TR::Compilation *co
    return createResolvedMethod(comp->trMemory(), targetMethodObj, owningMethod, methodInfo);
    }
 
-TR::SymbolReference*
-TR_J9ServerVM::refineInvokeCacheElementSymRefWithKnownObjectIndex(TR::Compilation *comp, TR::SymbolReference *originalSymRef, uintptr_t *invokeCacheArray)
-   {
-   TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
-   if (!knot) return originalSymRef;
-
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(
-      JITServer::MessageType::VM_refineInvokeCacheElementSymRefWithKnownObjectIndex,
-      invokeCacheArray
-      );
-   auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t *>();
-   TR::KnownObjectTable::Index idx = std::get<0>(recv);
-   knot->updateKnownObjectTableAtServer(idx, std::get<1>(recv));
-   return comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(originalSymRef, idx);
-   }
-
 bool
 TR_J9ServerVM::getMemberNameMethodInfo(
    TR::Compilation* comp,

@@ -1200,15 +1200,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, targetMethod->getPersistentIdentifier(), methodInfo);
          }
          break;
-      case MessageType::VM_refineInvokeCacheElementSymRefWithKnownObjectIndex:
-         {
-         auto recv = client->getRecvData<uintptr_t *>();
-         uintptr_t *invokeCacheArray = std::get<0>(recv);
-         uintptr_t arrayElementRef = (uintptr_t) fe->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayAppendixIndex);
-         TR::KnownObjectTable::Index arrayElementKnotIndex = knot->getOrCreateIndex(arrayElementRef);
-         client->write(response, arrayElementKnotIndex, knot->getPointerLocation(arrayElementKnotIndex));
-         }
-         break;
       case MessageType::VM_isLambdaFormGeneratedMethod:
          {
          auto recv = client->getRecvData<TR_OpaqueMethodBlock *>();

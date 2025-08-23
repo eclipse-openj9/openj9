@@ -3487,15 +3487,18 @@ TR_J9ByteCodeIlGenerator::loadInvokeCacheArrayElements(TR::SymbolReference *tabl
       // When the callSite table entry (for invokedynamic) or methodType table entry (for invokehandle)
       // is resolved, we can improve the appendix object symRef with known object index as we can get
       // the object reference of the appendix object from the invokeCacheArray entry
-      TR_ResolvedJ9Method* owningMethod = static_cast<TR_ResolvedJ9Method *>(_methodSymbol->getResolvedMethod());
-      TR::Node * appendixNode = _stack->top();
-      TR::SymbolReference * appendixSymRef =
-         fej9()->refineInvokeCacheElementSymRefWithKnownObjectIndex(
-                  comp(),
-                  appendixNode->getSymbolReference(),
-                  invokeCacheArray
-                  );
-      appendixNode->setSymbolReference(appendixSymRef);
+      TR::KnownObjectTable::Index koi =
+         fej9()->getKnotIndexOfInvokeCacheArrayAppendixElement(comp(), invokeCacheArray);
+
+      if (koi != TR::KnownObjectTable::UNKNOWN)
+         {
+         TR::Node *appendixNode = _stack->top();
+         TR::SymbolReference *appendixSymRef =
+            comp()->getSymRefTab()->findOrCreateSymRefWithKnownObject(
+               appendixNode->getSymbolReference(), koi);
+
+         appendixNode->setSymbolReference(appendixSymRef);
+         }
       }
    }
 

@@ -978,17 +978,6 @@ public:
     */
    virtual TR::KnownObjectTable::Index getKnotIndexOfInvokeCacheArrayAppendixElement(TR::Compilation *comp, uintptr_t *invokeCacheArray);
 
-   /**
-    * \brief
-    *    Refines invokeCache element symRef with known object index for invokehandle and invokedynamic bytecode
-    *
-    * \param comp the compilation object
-    * \param originalSymRef the original symref to refine
-    * \param invokeCacheArray the array containing the element we use to get known object index
-    * \return TR::SymbolReference* the refined symRef
-    */
-   virtual TR::SymbolReference* refineInvokeCacheElementSymRefWithKnownObjectIndex(TR::Compilation *comp, TR::SymbolReference *originalSymRef, uintptr_t *invokeCacheArray);
-
    /*
     * \brief
     *    Get the signature For MethodHandle.linkToStatic call for unresolved invokehandle
