@@ -1588,7 +1588,7 @@ getITableIterationsNumber(TR::Compilation * comp, TR::SymbolReference * methodSy
 
 TR::Instruction *
 generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callNode, TR::Register * vftReg, TR::Register * entryPointRegister,
-   TR::Register * vTableIndexRegister, TR::Register * loopCountRegister, TR::RegisterDependencyConditions * postDeps, TR::Instruction * cursor)
+   TR::Register * vTableIndexRegister, TR::Register * lastIpicMethodRegister, TR::RegisterDependencyConditions * postDeps, TR::Instruction * cursor)
    {
    TR::Compilation * comp = cg->comp();
    TR_J9VMBase *fej9 = reinterpret_cast<TR_J9VMBase *>(comp->fe());
@@ -1617,11 +1617,17 @@ generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callN
       TR::LabelSymbol * exitLabel = generateLabelSymbol(cg);
       TR::LabelSymbol * noLastITableMatchLabel = iTableIterations ? generateLabelSymbol(cg) : exitLabel;
       TR::LabelSymbol * oolMergeLabel = generateLabelSymbol(cg);
-      bool stopUsingLoopCountRegister = false;
-
       // Jump OOL.
-      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_B, callNode, entryLabel, cursor);
-
+      if(lastIpicMethodRegister == NULL)
+         {
+         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_B, callNode, entryLabel, cursor);
+         }
+      else
+         {
+         // If lastIpicMethodRegister exist, it should have a non NULL value. Otherwise the PIC slots are not fully populated.
+         cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), callNode, lastIpicMethodRegister, 0, TR::InstOpCode::COND_BNE,
+            entryLabel, false /* needsCC */, true /* targetIsFarAndCold */, cursor);
+         }
       TR_S390OutOfLineCodeSection *outlinedITableCheckSequence = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(entryLabel, exitLabel, cg);
       cg->getS390OutOfLineCodeSectionList().push_front(outlinedITableCheckSequence);
       outlinedITableCheckSequence->swapInstructionListsWithCompilation();
@@ -1673,6 +1679,9 @@ generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callN
       /********* Step 3: Check iTable entries. *********/
       if (checkITableEntries)
          {
+         // Reusing lastIpicMethodRegister for loopCount.
+         TR::Register * loopCountRegister = lastIpicMethodRegister;
+         bool stopUsingLoopCountRegister = false;
          oolCursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, callNode, noLastITableMatchLabel, oolCursor);
          iComment("Start comparing interface with iTable entries.", oolCursor)
          if (checkLimitedNumberOfITableEntries)
@@ -1752,14 +1761,14 @@ generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callN
                   iComment("Branch to call dispatch sequence.", oolCursor)
                }
             }
+         if (stopUsingLoopCountRegister)
+            cg->stopUsingRegister(loopCountRegister);
          }
       oolCursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, callNode, oolMergeLabel);
       oolCursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_B, callNode, exitLabel, oolCursor);
       iComment("Back to main line.", oolCursor)
       outlinedITableCheckSequence->swapInstructionListsWithCompilation();
       cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, callNode, exitLabel);
-      if (stopUsingLoopCountRegister)
-         cg->stopUsingRegister(loopCountRegister);
       }
    return cursor;
    }
