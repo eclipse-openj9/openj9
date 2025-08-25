@@ -2227,7 +2227,7 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
       generateShiftLeftImmediateLong(cg, node, temp2Reg, secondDimLenReg, trailingZeroes(leafArrayElementSize));
       // add alignment compensation, and the header size
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, subArraySizeReg, temp2Reg,
-         TR::Compiler->om.contiguousArrayHeaderSizeInBytes
+         TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
             + (needsAlignHeader || needsAlignLeaf) ? alignmentCompensation : 0);
       }
    else
