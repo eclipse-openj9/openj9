@@ -1963,17 +1963,15 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
    int32_t zeroArraySizeAligned = OMR::align(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(),
                                              alignmentInBytes);
 
-   // a length>0 array object would *not* require alignment if both a single refField
+   // a length>0 array object would *not* require alignment if both a single element
    // and the header are already the exact multiple of alignment; otherwise alignment is needed
-   int32_t refFieldSizeAligned = OMR::align(referenceFieldSize, alignmentInBytes);
-   bool needsAlignRefField = (refFieldSizeAligned != referenceFieldSize);
-   int32_t contHeaderSizeAligned = OMR::align(TR::Compiler->om.contiguousArrayHeaderSizeInBytes(),
-                                              alignmentInBytes);
-   bool needsAlignNonZeroArray = needsAlignRefField
-         || (contHeaderSizeAligned != TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
-   // if a non-zero array needs alignment at runtime, we first add alignmentCompensation,
+   bool needsAlignRefField = (OMR::align(referenceFieldSize, alignmentInBytes) != referenceFieldSize);
+   bool needsAlignLeaf = (OMR::align(leafArrayElementSize, alignmentInBytes) != leafArrayElementSize);
+   bool needsAlignHeader = (TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
+      == OMR::align(TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), alignmentInBytes));
+   // if an array needs alignment at runtime, we first add alignmentCompensation,
    // then mask with (-alignmentInBytes)
-   int32_t nzArrayAlignmentCompensation = needsAlignNonZeroArray ? alignmentInBytes - 1 : 0;
+   int32_t alignmentCompensation = alignmentInBytes - 1;
 
    // offHeap enabled
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
@@ -2085,13 +2083,14 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
       generateShiftLeftImmediateLong(cg, node, temp1Reg, firstDimLenReg, 3);
    else
       generateShiftLeftImmediateLong(cg, node, temp1Reg, firstDimLenReg, 2);
-   // add alignment compensation, and the header size
+   // add the header size, and the alignment compensation if needed
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp1Reg, temp1Reg,
-      TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + nzArrayAlignmentCompensation);
-   if (needsAlignNonZeroArray) // do a mask to ensure alignment
+      TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
+            + (needsAlignHeader || needsAlignRefField) ? alignmentCompensation : 0);
+   if (needsAlignHeader || needsAlignRefField) // do a mask to ensure alignment
       {
       generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, temp1Reg, temp1Reg,
-                                       0, -refFieldSizeAligned);
+                                       0, -alignmentInBytes);
       }
    // we also need space for N zero-sized arrays
    // temp2Reg = firstDimLenReg * zeroArraySizeAligned; zeroArraySizeAligned should be 2^n | n > 0
@@ -2210,13 +2209,14 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
       generateShiftLeftImmediateLong(cg, node, temp1Reg, firstDimLenReg, 3);
    else
       generateShiftLeftImmediateLong(cg, node, temp1Reg, firstDimLenReg, 2);
-   // add alignment compensation, and the header size
+   // add the header size, and the alignment compensation if needed
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp1Reg, temp1Reg,
-      TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + nzArrayAlignmentCompensation);
-   if (needsAlignNonZeroArray) // do a mask to ensure alignment
+      TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
+            + (needsAlignHeader || needsAlignRefField) ? alignmentCompensation : 0);
+   if (needsAlignHeader || needsAlignRefField) // do a mask to ensure alignment
       {
       generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, temp1Reg, temp1Reg,
-                                       0, -refFieldSizeAligned);
+                                       0, -alignmentInBytes);
       }
 
    // Similarly, get the size of the referenceFields and header for a second dimension subarray.
@@ -2227,18 +2227,20 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
       generateShiftLeftImmediateLong(cg, node, temp2Reg, secondDimLenReg, trailingZeroes(leafArrayElementSize));
       // add alignment compensation, and the header size
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, subArraySizeReg, temp2Reg,
-         TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + nzArrayAlignmentCompensation);
+         TR::Compiler->om.contiguousArrayHeaderSizeInBytes
+            + (needsAlignHeader || needsAlignLeaf) ? alignmentCompensation : 0);
       }
    else
       {
       // add alignment compensation, and the header size
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, subArraySizeReg, secondDimLenReg,
-         TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + nzArrayAlignmentCompensation);
+         TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
+            + (needsAlignHeader || needsAlignLeaf) ? alignmentCompensation : 0);
       }
-   if (needsAlignNonZeroArray) // do a mask to ensure alignment
+   if (needsAlignHeader || needsAlignLeaf) // do a mask to ensure alignment
       {
       generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, subArraySizeReg, subArraySizeReg,
-                                       0, -refFieldSizeAligned);
+                                       0, -alignmentInBytes);
       }
    // temp2Reg = subArraySizeReg * firstDimLenReg = the space required for all subarrays
    generateTrg1Src2Instruction(cg, TR::InstOpCode::mulld, node, temp2Reg, subArraySizeReg, firstDimLenReg);
