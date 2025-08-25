@@ -1970,7 +1970,7 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
    int32_t contHeaderSizeAligned = OMR::align(TR::Compiler->om.contiguousArrayHeaderSizeInBytes(),
                                               alignmentInBytes);
    bool needsAlignNonZeroArray = needsAlignRefField
-         || (nonZeroArraySizeAligned != TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+         || (contHeaderSizeAligned != TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
    // if a non-zero array needs alignment at runtime, we first add alignmentCompensation,
    // then mask with (-alignmentInBytes)
    int32_t nzArrayAlignmentCompensation = needsAlignNonZeroArray ? alignmentInBytes - 1 : 0;
