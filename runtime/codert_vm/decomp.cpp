@@ -1815,6 +1815,28 @@ jitSingleStepRemoved(J9VMThread * currentThread)
 	Trc_Decomp_jitSingleStepRemoved_Exit(currentThread);
 }
 
+#if JAVA_SPEC_VERSION >= 25
+/**
+ * @brief Free JIT decompilation entries for a given thread.
+ *
+ * This function removes decompilation entries from a thread's decompilation stack
+ * based on the specified reason and method.
+ *
+ * @param[in] currentThread The current VM thread performing the cleanup.
+ * @param[in,out] previous Pointer to the head of the decompilation stack.
+ * @param[in] reason The reason for decompilation entries to remove (e.g., JITDECOMP_POP_FRAMES).
+ * @param[in] method Optional method filter; if NULL, all entries matching the reason are removed.
+ */
+void
+jitFreeDecompilations(J9VMThread *currentThread, J9JITDecompilationInfo **previous, UDATA reason, J9Method *method)
+{
+	Trc_Decomp_jitFreeDecompilations_Entry(currentThread);
+
+	freeDecompilations(currentThread, currentThread, previous, reason, method);
+
+	Trc_Decomp_jitFreeDecompilations_Exit(currentThread);
+}
+#endif /* JAVA_SPEC_VERSION >= 25 */
 
 UDATA
 initializeFSD(J9JavaVM * vm)
@@ -1839,7 +1861,9 @@ initializeFSD(J9JavaVM * vm)
 	jitConfig->jitStackLocalsModified = jitStackLocalsModified;
 	jitConfig->jitLocalSlotAddress = jitLocalSlotAddress;
 	jitConfig->jitAddDecompilationForFramePop = jitAddDecompilationForFramePop;
-
+#if JAVA_SPEC_VERSION >= 25
+	jitConfig->jitFreeDecompilations = jitFreeDecompilations;
+#endif /* JAVA_SPEC_VERSION >= 25 */
 	jitConfig->fsdEnabled = TRUE;
 
 	return 0;

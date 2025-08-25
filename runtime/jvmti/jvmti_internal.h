@@ -2175,12 +2175,22 @@ jvmtiNotifyFramePop(jvmtiEnv* env,
 
 #if JAVA_SPEC_VERSION >= 25
 /**
- * @brief Clear all frame pop request to prevent generation of
- * FramePop events for any frames.
+ * @brief Clear all pending frame pop requests for a specified thread.
  *
- * @param env The JVMTI environment pointer
- * @param thread The thread whose FramePop events will be cleared
- * @return jvmtiError Error code returned by JVMTI function
+ * This function clears all frame pop requests so that no JVMTI FramePop events
+ * will be generated for any frames of the specified thread. It also resets any
+ * early return information and deletes corresponding JIT decompilation entries.
+ *
+ * The target thread must either be suspended or the current thread.
+ *
+ * @param[in] env The JVMTI environment.
+ * @param[in] thread The thread for which all frame pop events should be cleared.
+ *                   If NULL, the current thread is used.
+ *
+ * @return JVMTI_ERROR_NONE on success.
+ * @return JVMTI_ERROR_THREAD_NOT_SUSPENDED if the target thread is neither suspended
+ *         nor the current thread.
+ * @return Other JVMTI error codes in case of failure.
  */
 jvmtiError JNICALL
 jvmtiClearAllFramePops(jvmtiEnv *env, jthread thread);

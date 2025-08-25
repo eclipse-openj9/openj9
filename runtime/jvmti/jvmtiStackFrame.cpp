@@ -905,12 +905,94 @@ jvmtiInternalGetStackTrace(
 }
 
 #if JAVA_SPEC_VERSION >= 25
+/**
+ * @brief Iterator function used during a stack walk to clear frame pop requests.
+ *
+ * This function is called for each frame during a stack walk. It clears the
+ * J9SF_A0_REPORT_FRAME_POP_TAG flag from the frame's base pointer to prevent
+ * JVMTI FramePop events from being generated.
+ *
+ * @param[in] currentThread The current VM thread performing the stack walk.
+ * @param[in,out] walkState The stack walk state, containing the frame pointer.
+ *
+ * @return J9_STACKWALK_KEEP_ITERATING Always returns keep iterating to continue walking all frames.
+ */
+static UDATA
+clearAllFramePopsIterator(J9VMThread *currentThread, J9StackWalkState *walkState)
+{
+	if (NULL == walkState->jitInfo) {
+		/* The flag is cleared only for interpreted frames.
+		 * In JIT frames, bp may point to the return address slot;
+		 * unsetting the flag for JIT frames can lead to a crash.
+		 */
+		*walkState->bp &= ~(UDATA)J9SF_A0_REPORT_FRAME_POP_TAG;
+	}
+	return J9_STACKWALK_KEEP_ITERATING;
+}
+
 jvmtiError JNICALL
 jvmtiClearAllFramePops(jvmtiEnv *env, jthread thread)
 {
 	jvmtiError rc = JVMTI_ERROR_NONE;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	J9VMThread *currentThread = NULL;
 
 	Trc_JVMTI_jvmtiClearAllFramePops_Entry(env);
+
+	rc = getCurrentVMThread(vm, &currentThread);
+	if (JVMTI_ERROR_NONE == rc) {
+		J9VMThread *targetThread = NULL;
+		J9InternalVMFunctions* vmFuncs = vm->internalVMFunctions;
+
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+
+		ENSURE_PHASE_LIVE(env);
+		ENSURE_CAPABILITY(env, can_generate_frame_pop_events);
+
+		rc = getVMThread(
+				currentThread, thread, &targetThread, JVMTI_ERROR_NONE,
+				J9JVMTI_GETVMTHREAD_ERROR_ON_DEAD_THREAD);
+		if (JVMTI_ERROR_NONE == rc) {
+			j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
+
+			/* Error if the thread is not suspended and not the current thread. */
+			if ((currentThread != targetThread)
+			&& !VM_VMHelpers::isThreadSuspended(currentThread, threadObject)
+			) {
+				rc = JVMTI_ERROR_THREAD_NOT_SUSPENDED;
+			} else {
+				/* Walk frames while clearing the J9SF_A0_REPORT_FRAME_POP_TAG flag from the bp. */
+				J9StackWalkState walkState = {0};
+				J9VMThread *threadToWalk = targetThread;
+				J9VMThread stackThread = {0};
+				J9VMEntryLocalStorage els = {0};
+				J9VMContinuation *continuation = getJ9VMContinuationToWalk(currentThread, targetThread, threadObject);
+				if (NULL != continuation) {
+					vm->internalVMFunctions->copyFieldsFromContinuation(currentThread, &stackThread, &els, continuation);
+					threadToWalk = &stackThread;
+				}
+				walkState.walkThread = threadToWalk;
+				walkState.frameWalkFunction = clearAllFramePopsIterator;
+				walkState.skipCount = 0;
+				walkState.flags = J9_STACKWALK_INCLUDE_CALL_IN_FRAMES | J9_STACKWALK_INCLUDE_NATIVES
+						| J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_MAINTAIN_REGISTER_MAP;
+				vm->walkStackFrames(currentThread, &walkState);
+
+				/* Delete all frame pop decompilation entries for threadToWalk. */
+				vm->jitConfig->jitFreeDecompilations(currentThread, &threadToWalk->decompilationStack, JITDECOMP_POP_FRAMES, NULL);
+
+				/* Reset the early return info. */
+				targetThread->ferReturnType = 0;
+				targetThread->currentException = NULL;
+				targetThread->forceEarlyReturnObjectSlot = NULL;
+
+				vmFuncs->clearHaltFlag(targetThread, J9_PUBLIC_FLAGS_POP_FRAMES_INTERRUPT);
+			}
+			releaseVMThread(currentThread, targetThread, thread);
+		}
+done:
+		vmFuncs->internalExitVMToJNI(currentThread);
+	}
 
 	TRACE_JVMTI_RETURN(jvmtiClearAllFramePops);
 }
