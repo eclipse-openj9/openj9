@@ -118,17 +118,17 @@ You can request a Pull Request build from the Eclipse OpenJ9 repository - [openj
 - If you have dependent change(s) in either eclipse-omr/omr, eclipse-openj9/openj9-omr, or ibmruntimes/openj9-openjdk-jdk\*, you can build & test with all needed changes
 - Request a build by including the PR ref or branch name in your trigger comment
 - Ex. Dependent change in OMR Pull Request `#123`
-    - `Jenkins test sanity xlinux jdk8 depends eclipse/omr#123`
+    - `Jenkins test sanity xlinux jdk8 depends eclipse-omr/omr#123`
 - Ex. Dependent change in eclipse-omr/omr master branch (useful if a dependent OMR PR is already merged)
-    - `Jenkins test sanity xlinux jdk8 depends eclipse/omr#master`
+    - `Jenkins test sanity xlinux jdk8 depends eclipse-omr/omr#master`
 - Ex. Dependent change in OpenJ9-OMR Pull Request `#456`
     - `Jenkins test sanity xlinux jdk8 depends eclipse-openj9/openj9-omr#456`
 - Ex. Dependent change in OpenJDK Pull Request `#789`
     - `Jenkins test sanity xlinux jdk8 depends ibmruntimes/openj9-openjdk-jdk8#789`
 - Ex. Dependent changes in OMR and OpenJDK
-    - `Jenkins test sanity all jdk8 depends eclipse/omr#123 ibmruntimes/openj9-openjdk-jdk8#789`
+    - `Jenkins test sanity all jdk8 depends eclipse-omr/omr#123 ibmruntimes/openj9-openjdk-jdk8#789`
 - Ex. If you have a dependent change and only want one platform, depends comes last
-    - `Jenkins test sanity zlinux jdk8 depends eclipse/omr#123`
+    - `Jenkins test sanity zlinux jdk8 depends eclipse-omr/omr#123`
 
 ###### Note: When specifying a dependent change in an OpenJDK extensions repo, you can only build the SDK version that matches the repo where the dependent change lives. Eg. You cannot build JDK8 with a PR in openj9-openjdk-jdk11.
 
