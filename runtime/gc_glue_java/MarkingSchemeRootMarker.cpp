@@ -91,6 +91,7 @@ MM_MarkingSchemeRootMarker::doClassLoader(J9ClassLoader *classLoader)
 	 */
 	if(J9_GC_CLASS_LOADER_DEAD != (classLoader->gcFlags & J9_GC_CLASS_LOADER_DEAD)) {
 		_markingScheme->inlineMarkObject(_env, classLoader->classLoaderObject);
+		scanModularityObjects(classLoader);
 	}
 }
 

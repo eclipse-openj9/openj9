@@ -39,12 +39,14 @@ checkModuleAccess(J9VMThread *currentThread, J9JavaVM* vm, J9ROMClass* srcRomCla
 	if (srcModule != destModule) {
 		UDATA rc = ERRCODE_GENERAL_FAILURE;
 		if (!J9_ARE_ALL_BITS_SET(lookupOptions, J9_LOOK_REFLECT_CALL)) {
+			omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
 			if (!isAllowedReadAccessToModule(currentThread, srcModule, destModule, &rc)) {
 				Trc_VM_checkVisibility_failed_with_errortype_romclass(currentThread,
 						srcRomClass, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(srcRomClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(srcRomClass)), srcModule,
 						destRomClass, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(destRomClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(destRomClass)), destModule, rc, "read access not allowed");
 				result = J9_VISIBILITY_MODULE_READ_ACCESS_ERROR;
 			}
+			omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
 		}
 
 		if (J9_VISIBILITY_ALLOWED == result) {
@@ -161,8 +163,8 @@ checkVisibility(J9VMThread *currentThread, J9Class* sourceClass, J9Class* destCl
 			/* Protected */
 			if (sourceClass->packageID != destClass->packageID) {
 				if (J9_ARE_ANY_BITS_SET(sourceClass->romClass->modifiers, J9AccInterface)) {
-					/* Interfaces are types, not classes, and do not have protected access to 
-					 * their 'superclass' (java.lang.Object) 
+					/* Interfaces are types, not classes, and do not have protected access to
+					 * their 'superclass' (java.lang.Object)
 					 */
 					result = J9_VISIBILITY_NON_MODULE_ACCESS_ERROR;
 				} else {
@@ -309,7 +311,7 @@ loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options, J9Cla
 				 */
 				cacheNestHostInClass = FALSE;
 			}
-			while ((isCurClassHiddenNestMate) 
+			while ((isCurClassHiddenNestMate)
 					&& (curClazz != curClazz->hostClass)
 			) {
 				/* current class is the nestmate of its hostClass, so we need to find nesthost of the hostClass. */
@@ -357,7 +359,7 @@ loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options, J9Cla
 				result = J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR;
 			} else {
 				if (hiddenNestMate) {
-					/* The nest host of hidden class does not have a nestmembers attribute that claims the hidden class. 
+					/* The nest host of hidden class does not have a nestmembers attribute that claims the hidden class.
 					 * Set result to J9_VISIBILITY_ALLOWED in this case */
 					result = J9_VISIBILITY_ALLOWED;
 				} else {
@@ -390,9 +392,9 @@ loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options, J9Cla
 			 * JVM spec updated in Java 15:
 			 * If a class has problem finding/validating its nest host, then it is its own nest host (for hidden class, the nest host is its host class).
 			 * Any exception during finding/validating the nest host is not rethrown.
-			 * 
-			 * If canRunJavaCode is FALSE, the flag passed to internalFindClassUTF8() is J9_FINDCLASS_FLAG_EXISTING_ONLY, 
-			 * which tries to find the nest host in loaded classes only. It is possible that nest host is not loaded yet. 
+			 *
+			 * If canRunJavaCode is FALSE, the flag passed to internalFindClassUTF8() is J9_FINDCLASS_FLAG_EXISTING_ONLY,
+			 * which tries to find the nest host in loaded classes only. It is possible that nest host is not loaded yet.
 			 * So set clazz->nestHost only when canRunJavaCode is TRUE.
 			 */
 			*nestHostFound = curClazz;
