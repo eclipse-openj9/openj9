@@ -74,7 +74,7 @@ Java_com_ibm_jvm_Log_QueryOptionsImpl(JNIEnv *env, jclass clazz)
 				"Could not convert JVM log options native string");
 	}
 
-	return options;
+	return NULL;
 }
 
 /*
@@ -93,7 +93,7 @@ Java_com_ibm_jvm_Log_SetOptionsImpl(JNIEnv *env, jclass clazz, jstring options)
 	/* convert options into a char * */
 	nativeOptions = (*env)->GetStringUTFChars(env, options, 0);
 	if (NULL == nativeOptions) {
-		return JNI_ERR;
+		return 0;
 	}
 
 	rc = vm->internalVMFunctions->setLogOptions(vm, (char *)nativeOptions);
@@ -102,10 +102,10 @@ Java_com_ibm_jvm_Log_SetOptionsImpl(JNIEnv *env, jclass clazz, jstring options)
 	if (JVMTI_ERROR_NONE != rc) {
 		raiseException(env, "java/lang/RuntimeException", J9NLS_JVMTI_COM_IBM_LOG_SET_OPT_ERROR,
 				"Could not set JVM log options");
-		return JNI_ERR;
+		return 0;
 	}
 
-	return JNI_OK;
+	return 0;
 }
 
 /* Wrapper for throwing an error */

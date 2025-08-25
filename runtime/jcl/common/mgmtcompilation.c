@@ -27,39 +27,17 @@
 jlong JNICALL
 Java_com_ibm_java_lang_management_internal_CompilationMXBeanImpl_getTotalCompilationTimeImpl(JNIEnv *env, jobject beanInstance)
 {
-	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
-	jlong result;
-	J9JavaLangManagementData *mgmt = javaVM->managementData;
-	PORT_ACCESS_FROM_JAVAVM( javaVM );
-
-	omrthread_rwmutex_enter_read( mgmt->managementDataLock );
-
-	result = (jlong)mgmt->totalCompilationTime;
-	if( mgmt->threadsCompiling > 0 ) {
-		result += checkedTimeInterval((U_64)j9time_nano_time(), (U_64)mgmt->lastCompilationStart) * mgmt->threadsCompiling;
-	}
-
-	omrthread_rwmutex_exit_read( mgmt->managementDataLock );
-
-	return result / J9PORT_TIME_NS_PER_MS;
+	return 0;
 }
 
 jboolean JNICALL
 Java_com_ibm_java_lang_management_internal_CompilationMXBeanImpl_isCompilationTimeMonitoringSupportedImpl(JNIEnv *env, jobject beanInstance)
 {
-	return JNI_TRUE;
+	return 0;
 }
 
 jboolean JNICALL
 Java_com_ibm_java_lang_management_internal_CompilationMXBeanImpl_isJITEnabled(JNIEnv *env, jobject beanInstance)
 {
-#if defined(J9VM_INTERP_NATIVE_SUPPORT)
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
-
-	if (NULL != javaVM->jitConfig) {
-		return JNI_TRUE;
-	}
-#endif /* defined(J9VM_INTERP_NATIVE_SUPPORT) */
-
-	return JNI_FALSE;
+	return 0;
 }

@@ -30,7 +30,7 @@ Java_com_ibm_java_lang_management_internal_ClassLoadingMXBeanImpl_isVerboseImpl(
 {
 	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 
-	return ( (javaVM->verboseLevel & VERBOSE_CLASS) == VERBOSE_CLASS );
+	return 0;
 }
 
 jlong JNICALL
@@ -43,7 +43,7 @@ Java_openj9_internal_management_ClassLoaderInfoBaseImpl_getLoadedClassCountImpl(
 	result = (jlong)(mgmt->totalClassLoads - mgmt->totalClassUnloads);
 	omrthread_rwmutex_exit_read(mgmt->managementDataLock);
 
-	return result;
+	return 0;
 }
 
 jlong JNICALL
@@ -59,7 +59,7 @@ Java_com_ibm_java_lang_management_internal_ClassLoadingMXBeanImpl_getTotalLoaded
 
 	omrthread_rwmutex_exit_read( mgmt->managementDataLock );
 
-	return result;
+	return 0;
 }
 
 jlong JNICALL
@@ -75,7 +75,7 @@ Java_openj9_internal_management_ClassLoaderInfoBaseImpl_getUnloadedClassCountImp
 
 	omrthread_rwmutex_exit_read( mgmt->managementDataLock );
 
-	return result;
+	return 0;
 }
 
 void JNICALL

@@ -45,7 +45,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getHeapMemoryUsageIm
 		return NULL;
 	}
 
-	return (*env)->NewObject(env, memoryUsage, ctor, (jlong)javaVM->managementData->initialHeapSize, used, committed, (jlong)javaVM->managementData->maximumHeapSize);
+	return NULL;
 }
 
 jobject JNICALL
@@ -159,7 +159,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getNonHeapMemoryUsag
 		return NULL;
 	}
 
-	return (*env)->NewObject(env, memoryUsage, ctor, initial, used, committed, (jlong)-1);
+	return NULL;
 }
 
 jint JNICALL
@@ -167,9 +167,9 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getObjectPendingFina
 {
 #if defined(J9VM_GC_FINALIZATION)
 	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
-	return (jint)javaVM->memoryManagerFunctions->j9gc_get_objects_pending_finalization_count(javaVM);
+	return 0;
 #else
-	return (jint)0;
+	return 0;
 #endif
 }
 
@@ -178,7 +178,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_isVerboseImpl(JNIEnv
 {
 	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 
-	return VERBOSE_GC == (VERBOSE_GC & javaVM->verboseLevel) ;
+	return 0;
 }
 
 void JNICALL
@@ -299,7 +299,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getMaxHeapSizeLimitI
 {
 	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 
-	return javaVM->memoryManagerFunctions->j9gc_get_maximum_heap_size(javaVM);
+	return 0;
 }
 
 jlong JNICALL
@@ -312,7 +312,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getMaxHeapSizeImpl(J
 	if (0 == softmx) {
 		softmx = javaVM->memoryManagerFunctions->j9gc_get_maximum_heap_size(javaVM);
 	}
-	return softmx;
+	return 0;
 }
 
 jlong JNICALL
@@ -320,7 +320,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getMinHeapSizeImpl(J
 {
 	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 
-	return javaVM->memoryManagerFunctions->j9gc_get_initial_heap_size(javaVM);
+	return 0;
 }
 
 void JNICALL
@@ -345,7 +345,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_setSharedClassCacheS
 		}
 	}
 #endif /* defined(J9VM_OPT_SHARED_CLASSES) */
-	return ret;
+	return 0;
 }
 
 jboolean JNICALL
@@ -362,7 +362,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_setSharedClassCacheM
 		}
 	}
 #endif /* defined(J9VM_OPT_SHARED_CLASSES) */
-	return ret;
+	return 0;
 }
 
 jboolean JNICALL
@@ -379,7 +379,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_setSharedClassCacheM
 		}
 	}
 #endif /* defined(J9VM_OPT_SHARED_CLASSES) */
-	return ret;
+	return 0;
 }
 
 jboolean JNICALL
@@ -396,7 +396,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_setSharedClassCacheM
 		}
 	}
 #endif /* defined(J9VM_OPT_SHARED_CLASSES) */
-	return ret;
+	return 0;
 }
 
 jboolean JNICALL
@@ -413,7 +413,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_setSharedClassCacheM
 		}
 	}
 #endif /* defined(J9VM_OPT_SHARED_CLASSES) */
-	return ret;
+	return 0;
 }
 
 jlong JNICALL
@@ -428,7 +428,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getSharedClassCacheS
 		javaVM->sharedClassConfig->getUnstoredBytes(javaVM, &ret, NULL, NULL);
 	}
 #endif /* defined(J9VM_OPT_SHARED_CLASSES) */
-	return (jlong)ret;
+	return 0;
 }
 
 jlong JNICALL
@@ -443,7 +443,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getSharedClassCacheM
 		javaVM->sharedClassConfig->getUnstoredBytes(javaVM, NULL, &ret, NULL);
 	}
 #endif /* defined(J9VM_OPT_SHARED_CLASSES) */
-	return (jlong)ret;
+	return 0;
 }
 
 jlong JNICALL
@@ -458,13 +458,13 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getSharedClassCacheM
 		javaVM->sharedClassConfig->getUnstoredBytes(javaVM, NULL, NULL, &ret);
 	}
 #endif /* defined(J9VM_OPT_SHARED_CLASSES) */
-	return (jlong)ret;
+	return 0;
 }
 
 jboolean JNICALL
 Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_isSetMaxHeapSizeSupportedImpl(JNIEnv *env, jobject beanInstance)
 {
-	return JNI_TRUE;
+	return 0;
 }
 
 jstring JNICALL
@@ -474,7 +474,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getGCModeImpl(JNIEnv
 	const char *gcMode = javaVM->memoryManagerFunctions->j9gc_get_gcmodestring(javaVM);
 
 	if (NULL != gcMode) {
-		return (*env)->NewStringUTF(env, gcMode);
+		return NULL;
 	} else {
 		return NULL;
 	}
@@ -491,7 +491,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getGCMainThreadCpuUs
 	result = (jlong)mgmt->gcMainCpuTime;
 	omrthread_rwmutex_exit_read(mgmt->managementDataLock);
 
-	return result;
+	return 0;
 }
 
 jlong JNICALL
@@ -505,7 +505,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getGCWorkerThreadsCp
 	result = (jlong) mgmt->gcWorkerCpuTime;
 	omrthread_rwmutex_exit_read(mgmt->managementDataLock);
 
-	return result;
+	return 0;
 }
 
 jint JNICALL
@@ -519,7 +519,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getMaximumGCThreadsI
 	result = (jint) mgmt->gcMaxThreads;
 	omrthread_rwmutex_exit_read(mgmt->managementDataLock);
 
-	return result;
+	return 0;
 }
 
 jint JNICALL
@@ -533,7 +533,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getCurrentGCThreadsI
 	result = (jint) mgmt->gcCurrentThreads;
 	omrthread_rwmutex_exit_read(mgmt->managementDataLock);
 
-	return result;
+	return 0;
 }
 
 /* Implementation of the main loop of a thread that processes and dispatches memory usage notifications to Java handlers. */

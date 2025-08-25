@@ -58,10 +58,10 @@ Java_com_ibm_virtualization_management_internal_HypervisorMXBeanImpl_isEnvironme
 
 	/* Return Hypervisor detection not supported */
 	if (rc == J9PORT_ERROR_HYPERVISOR_UNSUPPORTED) {
-		return (jint)(HYPERVISOR_UNSUPPORTED);
+		return 0;
 	}
 	/* Return the value stored returned by j9hypervisor_hypervisor_present for all other cases */
-	return (jint)rc;
+	return 0;
 }
 
 /**
@@ -81,7 +81,7 @@ Java_com_ibm_virtualization_management_internal_HypervisorMXBeanImpl_getVendorIm
 	PORT_ACCESS_FROM_ENV(env);
 	J9HypervisorVendorDetails vendor;
 	if(0 == j9hypervisor_get_hypervisor_info(&vendor)) {
-		return ((*env)->NewStringUTF(env, (char *)vendor.hypervisorName));
+		return NULL;
 	}
 	return NULL; /* Error returned by j9hypervisor_get_hypervisor_info, Hypervisor name is NULL */
 }
@@ -206,7 +206,7 @@ Java_com_ibm_virtualization_management_internal_GuestOS_retrieveProcessorUsageIm
 				(jfloat)procUsage.cpuEntitlement,
 				(jlong)procUsage.hostCpuClockSpeed);
 
-	return procUsageObject;
+	return NULL;
 }
 
 /**
@@ -273,5 +273,5 @@ Java_com_ibm_virtualization_management_internal_GuestOS_retrieveMemoryUsageImpl(
 				(jlong)memUsage.timestamp,
 				(jlong)memUsage.maxMemLimit);
 
-	return memUsageObject;
+	return NULL;
 }

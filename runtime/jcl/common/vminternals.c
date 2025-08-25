@@ -42,7 +42,7 @@ Java_java_lang_J9VMInternals_newInstance(JNIEnv *env, jclass clazz, jobject inst
 		if (obj != NULL) {
 			(* env) -> CallVoidMethod(env, obj, mid);
 		}
-		return obj;
+		return NULL;
 	}
 }
 

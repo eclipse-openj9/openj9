@@ -33,14 +33,7 @@ Java_com_ibm_java_lang_management_internal_MemoryManagerMXBeanImpl_isManagedPool
 	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 	J9JavaLangManagementData *mgmt = javaVM->managementData;
 
-	if (0 != (J9VM_MANAGEMENT_GC_HEAP & id)) {
-		J9GarbageCollectorData *gc = &mgmt->garbageCollectors[getIndexFromManagerID(mgmt, id)];
-		if (javaVM->memoryManagerFunctions->j9gc_is_managedpool_by_collector(javaVM, (UDATA)(gc->id & J9VM_MANAGEMENT_GC_HEAP_ID_MASK), (UDATA)(poolID & J9VM_MANAGEMENT_POOL_HEAP_ID_MASK))) {
-			return JNI_TRUE;
-		}
-	}
-
-	return JNI_FALSE;
+	return 0;
 }
 
 static UDATA

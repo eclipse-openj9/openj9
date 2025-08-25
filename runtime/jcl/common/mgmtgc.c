@@ -45,43 +45,43 @@ static jlong getCollectorField(JNIEnv *env, jint id, GarbageCollectorField field
 jlong JNICALL
 Java_com_ibm_java_lang_management_internal_GarbageCollectorMXBeanImpl_getCollectionCountImpl(JNIEnv *env, jobject beanInstance, jint id)
 {
-	return getCollectorField(env, id, FIELD_COLLECTION_COUNT);
+	return 0;
 }
 
 jlong JNICALL
 Java_com_ibm_java_lang_management_internal_GarbageCollectorMXBeanImpl_getCollectionTimeImpl(JNIEnv *env, jobject beanInstance, jint id)
 {
-	return getCollectorField(env, id, FIELD_TOTAL_GC_TIME);
+	return 0;
 }
 
 jlong JNICALL
 Java_com_ibm_java_lang_management_internal_GarbageCollectorMXBeanImpl_getLastCollectionStartTimeImpl(JNIEnv *env, jobject beanInstance, jint id)
 {
-	return getCollectorField(env, id, FIELD_LASTGC_START_TIME);
+	return 0;
 }
 
 jlong JNICALL
 Java_com_ibm_java_lang_management_internal_GarbageCollectorMXBeanImpl_getLastCollectionEndTimeImpl(JNIEnv *env, jobject beanInstance, jint id)
 {
-	return getCollectorField(env, id, FIELD_LASTGC_END_TIME);
+	return 0;
 }
 
 jlong JNICALL
 Java_com_ibm_java_lang_management_internal_GarbageCollectorMXBeanImpl_getTotalMemoryFreedImpl(JNIEnv *env, jobject beanInstance, jint id)
 {
-	return getCollectorField(env, id, FIELD_TOTAL_MEMORY_FREED);
+	return 0;
 }
 
 jlong JNICALL
 Java_com_ibm_java_lang_management_internal_GarbageCollectorMXBeanImpl_getTotalCompactsImpl(JNIEnv *env, jobject beanInstance, jint id)
 {
-	return getCollectorField(env, id, FIELD_TOTAL_COMPACTS);
+	return 0;
 }
 
 jlong JNICALL
 Java_com_ibm_java_lang_management_internal_GarbageCollectorMXBeanImpl_getMemoryUsedImpl(JNIEnv *env, jobject beanInstance, jint id)
 {
-	return getCollectorField(env, id, FIELD_MEMORY_USED);
+	return 0;
 }
 
 static UDATA
@@ -227,15 +227,9 @@ Java_com_ibm_lang_management_internal_ExtendedGarbageCollectorMXBeanImpl_getLast
 		(*env)->ReleasePrimitiveArrayCritical(env, postMaxArray, postMaxArrayElems, 0);
 	}
 
-	return (*env)->CallStaticObjectMethod(env, gcBean, callBackID,
-			(jlong)gcInfo->index, (jlong)gcInfo->startTime, (jlong)gcInfo->endTime,
-			initialArray,
-			preUsedArray,
-			preCommittedArray,
-			preMaxArray,
-			postUsedArray,
-			postCommittedArray,
-			postMaxArray);
+	return NULL;
+	/* EMPTY_RETURNS: return empty object */
+	return NULL;
 fail2:
 	if (NULL != initialArrayElems) {
 		(*env)->ReleasePrimitiveArrayCritical(env, initialArray, initialArrayElems, 0);
@@ -304,5 +298,5 @@ getCollectorField(JNIEnv *env, jint id, GarbageCollectorField field)
 	}
 	omrthread_rwmutex_exit_read(mgmt->managementDataLock);
 
-	return result;
+	return 0;
 }

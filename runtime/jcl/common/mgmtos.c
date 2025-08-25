@@ -39,7 +39,7 @@ Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getTotal
 {
 	PORT_ACCESS_FROM_ENV(env);
 
-	return (jlong)j9sysinfo_get_physical_memory();
+	return 0;
 }
 
 jint JNICALL
@@ -47,7 +47,7 @@ Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getProce
 {
 	PORT_ACCESS_FROM_ENV(env);
 
-	return (jint)j9sysinfo_get_processing_capacity();
+	return 0;
 }
 
 jboolean JNICALL
@@ -55,7 +55,7 @@ Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_isDLPARE
 {
 	PORT_ACCESS_FROM_ENV(env);
 
-	return (jboolean)j9sysinfo_DLPAR_enabled();
+	return 0;
 }
 
 jdouble JNICALL
@@ -72,7 +72,7 @@ Java_com_ibm_java_lang_management_internal_OperatingSystemMXBeanImpl_getSystemLo
 		oneMinuteLoadAverage = (jdouble) loadData.oneMinuteAverage;
 	}
 
-	return oneMinuteLoadAverage;
+	return 0.0;
 }
 
 void JNICALL
