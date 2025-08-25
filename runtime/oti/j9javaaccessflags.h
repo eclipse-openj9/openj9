@@ -54,7 +54,9 @@
 #define J9AccInterface                     0x00000200 /* class */
 #define J9AccGetterMethod                  0x00000200 /* method */
 #define J9AccAbstract                      0x00000400 /* class method */
+/* Project Valhalla strict fields repurposes 0x00000800 as ACC_STRICT_INIT. ACC_STRICT has no effect after Java 17. */
 #define J9AccStrict                        0x00000800 /* method */
+#define J9AccStrictInit                    0x00000800 /* field */
 #define J9AccSynthetic                     0x00001000 /* class method field */
 #define J9AccAnnotation                    0x00002000 /* class */
 #define J9AccMethodUnused0x2000            0x00002000 /* method */
