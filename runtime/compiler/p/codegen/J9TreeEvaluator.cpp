@@ -1968,7 +1968,7 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
    bool needsAlignRefField = (OMR::align(referenceFieldSize, alignmentInBytes) != referenceFieldSize);
    bool needsAlignLeaf = (OMR::align(leafArrayElementSize, alignmentInBytes) != leafArrayElementSize);
    bool needsAlignHeader = (TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
-      == OMR::align(TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), alignmentInBytes));
+      != OMR::align(TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), alignmentInBytes));
    // if an array needs alignment at runtime, we first add alignmentCompensation,
    // then mask with (-alignmentInBytes)
    int32_t alignmentCompensation = alignmentInBytes - 1;
@@ -2086,7 +2086,7 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
    // add the header size, and the alignment compensation if needed
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp1Reg, temp1Reg,
       TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
-            + (needsAlignHeader || needsAlignRefField) ? alignmentCompensation : 0);
+            + ((needsAlignHeader || needsAlignRefField) ? alignmentCompensation : 0));
    if (needsAlignHeader || needsAlignRefField) // do a mask to ensure alignment
       {
       generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, temp1Reg, temp1Reg,
@@ -2212,7 +2212,7 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
    // add the header size, and the alignment compensation if needed
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp1Reg, temp1Reg,
       TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
-            + (needsAlignHeader || needsAlignRefField) ? alignmentCompensation : 0);
+            + ((needsAlignHeader || needsAlignRefField) ? alignmentCompensation : 0));
    if (needsAlignHeader || needsAlignRefField) // do a mask to ensure alignment
       {
       generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, temp1Reg, temp1Reg,
@@ -2228,14 +2228,14 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
       // add alignment compensation, and the header size
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, subArraySizeReg, temp2Reg,
          TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
-            + (needsAlignHeader || needsAlignLeaf) ? alignmentCompensation : 0);
+            + ((needsAlignHeader || needsAlignLeaf) ? alignmentCompensation : 0));
       }
    else
       {
       // add alignment compensation, and the header size
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, subArraySizeReg, secondDimLenReg,
          TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
-            + (needsAlignHeader || needsAlignLeaf) ? alignmentCompensation : 0);
+            + ((needsAlignHeader || needsAlignLeaf) ? alignmentCompensation : 0));
       }
    if (needsAlignHeader || needsAlignLeaf) // do a mask to ensure alignment
       {
