@@ -108,6 +108,8 @@ public class J9BCUtil {
 
 	public static int BCUtil_DumpAnnotations = 1;
 
+	private static final long CFR_ACC_STRICT_INIT = J9CfrClassFile.CFR_ACC_STRICT;
+
 	/*
 	 * Dump a printed representation of the specified @romMethod.
 	 */
@@ -435,9 +437,9 @@ public class J9BCUtil {
 				modifiers &= ~J9CfrClassFile.CFR_ACC_TRANSIENT;
 			}
 
-			if ((modifiers & J9CfrClassFile.CFR_ACC_STRICT_INIT) != 0) {
+			if ((modifiers & CFR_ACC_STRICT_INIT) != 0) {
 				out.append("strict ");
-				modifiers &= ~J9CfrClassFile.CFR_ACC_STRICT_INIT;
+				modifiers &= ~CFR_ACC_STRICT_INIT;
 			}
 		}
 
