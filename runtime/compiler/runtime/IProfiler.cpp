@@ -4629,19 +4629,26 @@ int compareByMethodName(const void *a, const void *b)
    }
 
 void
-TR_AggregationHT::sortByNameAndPrint()
+TR_AggregationHT::sortByNameAndPrint(const char *filename)
    {
    // Scan the aggregationTable and convert from romMethod to methodName so that
    // we can sort and print the information
-   fprintf(stderr, "Creating the sorting array ...\n");
    SortingPair *sortingArray = (SortingPair *)TR_IProfiler::allocator()->allocate(sizeof(SortingPair) * numTrackedMethods(), std::nothrow);
    if (!sortingArray)
       {
-      fprintf(stderr, "Cannot allocate sorting array. Bailing out.\n");
+      fprintf(stderr, "Warning: Cannot allocate sorting array. Bailing out IProfiler data dumping.\n");
       return;
       }
    memset(sortingArray, 0, sizeof(SortingPair) * numTrackedMethods());
    size_t methodIndex = 0;
+
+   FILE *logFile = fopen(filename, "w+");
+   if (!logFile)
+      {
+      fprintf(stderr, "Warning: Cannot dump IProfiler data to file %s\n", filename);
+      return;
+      }
+
    for (int32_t bucket = 0; bucket < getSize(); bucket++)
       {
       TR_AggregationHTNode *node = getBucket(bucket);
@@ -4659,7 +4666,7 @@ TR_AggregationHT::sortByNameAndPrint()
          // If memory cannot be allocated, break
          if (!wholeName)
             {
-            fprintf(stderr, "Cannot allocate memory. Incomplete data will be printed.\n");
+            fprintf(stderr, "Warning: Cannot allocate memory. Incomplete data will be printed during IProfiler data dumping.\n");
             break;
             }
          snprintf(wholeName, len, "%.*s.%.*s%.*s",
@@ -4672,36 +4679,59 @@ TR_AggregationHT::sortByNameAndPrint()
          methodIndex++;
          }
       }
-   // Sort my method name
-   fprintf(stderr, "Sorting ...\n");
+   // Sort by method name
    qsort(sortingArray, numTrackedMethods(), sizeof(*sortingArray), compareByMethodName);
 
    // Print sorted info
-   fprintf(stderr, "Printing ...\n");
    for (size_t i = 0; i < numTrackedMethods(); ++i)
       {
-      fprintf(stderr, "Method: %s\n", sortingArray[i]._methodName);
+      fprintf(logFile, "Method: %s\n", sortingArray[i]._methodName);
       J9ROMMethod *romMethod = sortingArray[i]._IPdata->getROMMethod();
-      TR_IPChainedEntry *cgEntry = sortingArray[i]._IPdata->getFirstIPEntry();
+      TR_IPChainedEntry *ipEntry = sortingArray[i]._IPdata->getFirstIPEntry();
       // Iterate through bytecodes with info from this method
-      for (; cgEntry; cgEntry = cgEntry->getNext())
+      for (; ipEntry; ipEntry = ipEntry->getNext())
          {
-         TR_IPBCDataCallGraph *ipbcCGData = cgEntry->getIPData()->asIPBCDataCallGraph();
+         TR_IPBytecodeHashTableEntry *entry = ipEntry->getIPData();
+         U_8 *pc = (U_8*)entry->getPC();
+         size_t bcOffset = pc - (U_8*)J9_BYTECODE_START_FROM_ROM_METHOD(romMethod);
+
+         TR_IPBCDataFourBytes *branchData = entry->asIPBCDataFourBytes();
+         if (branchData)
+            {
+            fprintf(logFile, "\tOffset %" OMR_PRIuSIZE "\tbranch samples=%" OMR_PRIu32 "\t taken=%" OMR_PRIu32 "\n",
+               bcOffset, branchData->getNumSamples(), (uint32_t)(branchData->getData() & 0xffff));
+            continue;
+            }
+         TR_IPBCDataEightWords *switchData = entry->asIPBCDataEightWords();
+         if (switchData)
+            {
+            fprintf(logFile, "\tOffset %" OMR_PRIuSIZE "\tswitch samples=%" OMR_PRIu32 "\n",
+               bcOffset, switchData->getNumSamples());
+            continue;
+            }
+         TR_IPBCDataDirectCall *ipbcDirectCallData = entry->asIPBCDataDirectCall();
+         if (ipbcDirectCallData)
+            {
+            fprintf(logFile, "\tOffset %" OMR_PRIuSIZE "\tDirectCall samples=%" OMR_PRIu32 " TooBig=%d\n",
+               bcOffset, ipbcDirectCallData->getNumSamples(), ipbcDirectCallData->isWarmCallGraphTooBig());
+            continue;
+            }
+         TR_IPBCDataCallGraph *ipbcCGData = entry->asIPBCDataCallGraph();
          if (!ipbcCGData)
             continue;
-         U_8* pc = (U_8*)ipbcCGData->getPC();
 
-         size_t bcOffset = pc - (U_8*)J9_BYTECODE_START_FROM_ROM_METHOD(romMethod);
-         fprintf(stderr, "\tOffset %" OMR_PRIuSIZE "\t", bcOffset);
+         fprintf(logFile, "\tOffset %" OMR_PRIuSIZE "\t", bcOffset);
          switch (*pc)
             {
-            case JBinvokeinterface:  fprintf(stderr, "JBinvokeinterface\n"); break;
-            case JBinvokeinterface2: fprintf(stderr, "JBinvokeinterface2\n"); break;
-            case JBinvokevirtual:    fprintf(stderr, "JBinvokevirtual\n"); break;
-            case JBinstanceof:       fprintf(stderr, "JBinstanceof\n"); break;
-            case JBcheckcast:        fprintf(stderr, "JBcheckcast\n"); break;
-            default:                 fprintf(stderr, "JBunknown\n");
+            case JBinvokeinterface:  fprintf(logFile, "JBinvokeinterface"); break;
+            case JBinvokeinterface2: fprintf(logFile, "JBinvokeinterface2"); break;
+            case JBinvokevirtual:    fprintf(logFile, "JBinvokevirtual"); break;
+            case JBinstanceof:       fprintf(logFile, "JBinstanceof"); break;
+            case JBcheckcast:        fprintf(logFile, "JBcheckcast"); break;
+            default:                 fprintf(logFile, "JBunknown");
             }
+         fprintf(logFile, " samples=%" OMR_PRIu32 " TooBig=%d\n", ipbcCGData->getNumSamples(), ipbcCGData->isWarmCallGraphTooBig());
+
          CallSiteProfileInfo *cgData = ipbcCGData->getCGData();
          for (int j = 0; j < NUM_CS_SLOTS; j++)
             {
@@ -4709,12 +4739,14 @@ TR_AggregationHT::sortByNameAndPrint()
                {
                int32_t len;
                const char * s = utf8Data(J9ROMCLASS_CLASSNAME(TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock*)cgData->getClazz(j))), len);
-               fprintf(stderr, "\t\tW:%4u\tM:%#" OMR_PRIxPTR "\t%.*s\n", cgData->_weight[j], cgData->getClazz(j), len, s);
+               fprintf(logFile, "\t\tW:%4u\tM:%#" OMR_PRIxPTR "\t%.*s\n", cgData->_weight[j], cgData->getClazz(j), len, s);
                }
             }
-         fprintf(stderr, "\t\tW:%4u\n", cgData->_residueWeight);
+         if (cgData->_residueWeight)
+            fprintf(logFile, "\t\tW:%4u\tM:0xffffffff\tOTHERBUCKET\n", cgData->_residueWeight);
          }
       }
+   fclose(logFile);
    // Free the memory we allocated
    for (size_t i = 0; i < numTrackedMethods(); i++)
       if (sortingArray[i]._methodName)
@@ -4814,7 +4846,27 @@ TR_IProfiler::dumpIPBCDataCallGraph(J9VMThread* vmThread)
       return;
       }
    traverseIProfilerTableAndCollectEntries(&aggregationHT, vmThread, true/*collectOnlyCallGraphEntries*/);
-   aggregationHT.sortByNameAndPrint();
+   char tmp[1025];
+   char *fn = _vm->getFormattedName(tmp, sizeof(tmp), "ipdata", NULL, true);
+   aggregationHT.sortByNameAndPrint(fn);
+
+   fprintf(stderr, "Finished dumping info\n");
+   }
+
+void
+TR_IProfiler::dumpAllBytecodeProfilingData(J9VMThread* vmThread)
+   {
+   fprintf(stderr, "Dumping BC profiling info ...\n");
+   TR_AggregationHT aggregationHT(TR::Options::_iProfilerBcHashTableSize);
+   if (aggregationHT.getSize() == 0) // OOM
+      {
+      fprintf(stderr, "Cannot allocate memory. Bailing out.\n");
+      return;
+      }
+   traverseIProfilerTableAndCollectEntries(&aggregationHT, vmThread, false/*collectOnlyCallGraphEntries*/);
+   char tmp[1025];
+   char *fn = _vm->getFormattedName(tmp, sizeof(tmp), "ipdata", NULL, true);
+   aggregationHT.sortByNameAndPrint(fn);
 
    fprintf(stderr, "Finished dumping info\n");
    }
