@@ -385,7 +385,9 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 					vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 					goto done;
 				}
+				omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
 				findResult = hashTableFind(classLoader->moduleHashTable, &modulePtr);
+				omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
 				if (NULL != findResult) {
 					j9module = *findResult;
 				}
