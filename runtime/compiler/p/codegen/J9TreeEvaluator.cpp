@@ -2062,8 +2062,8 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateLabelInstruction(cg, TR::InstOpCode::label, node, nonZeroFirstDimLabel);
    // jump away if the object size for the array object is too large
    // static cast and unsigned cmp copied from the x86 evaluator
-   loadConstant(cg, node, static_cast<int32_t>(maxObjectSizeInElements), temp1Reg);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmpl4, node, condReg, firstDimLenReg, temp1Reg);
+   loadConstant(cg, node, static_cast<int32_t>(maxObjectSizeInElements), temp3Reg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmpl4, node, condReg, firstDimLenReg, temp3Reg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, oolJumpLabel, condReg);
 
    // check if we have enough space by accounting for the outer array object:
@@ -2185,9 +2185,7 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateLabelInstruction(cg, TR::InstOpCode::label, node, nonZeroSecondDimLabel);
 
    // jump away if the object size for a subarray object is too large
-   // static cast and unsigned cmp copied from the x86 evaluator
-   loadConstant(cg, node, static_cast<int32_t>(maxObjectSizeInElements), temp1Reg);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmpl4, node, condReg, secondDimLenReg, temp1Reg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmpl4, node, condReg, secondDimLenReg, temp3Reg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, oolJumpLabel, condReg);
 
    // We need N subarrays; each subarray should contain the following:
