@@ -52,9 +52,7 @@ static const J9LogLevel logLevels[] = {
 #define XLOG_OPTION_FIRST_PRINTABLE 2
 #define XLOG_OPTION_NONE 1
 
-#define SMALL_STRING_BUF_SIZE 64
-
-static const UDATA numLogLevels = ( sizeof(logLevels) / sizeof(J9LogLevel) );
+static const UDATA numLogLevels = sizeof(logLevels) / sizeof(logLevels[0]);
 
 static const UDATA defaultLogOptions = J9NLS_ERROR | J9NLS_VITAL;
 

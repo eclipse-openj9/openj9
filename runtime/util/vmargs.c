@@ -62,10 +62,10 @@
 
 #if !defined(J9JAVA_PATH_SEPARATOR)
 #if defined(WIN32)
-#define	J9JAVA_PATH_SEPARATOR ";"
+#define J9JAVA_PATH_SEPARATOR ";"
 #define ALT_JAVA_HOME_DIR_STR L"_ALT_JAVA_HOME_DIR"
 #else
-#define	J9JAVA_PATH_SEPARATOR ":"
+#define J9JAVA_PATH_SEPARATOR ":"
 #endif
 #endif /* !defined(J9JAVA_PATH_SEPARATOR) */
 #define JAVA_HOME_EQUALS "-Djava.home="
@@ -74,9 +74,7 @@
 #define JAVA_USER_DIR_EQUALS "-Duser.dir="
 #define OPTIONS_DEFAULT "options.default"
 
-#define LARGE_STRING_BUF_SIZE 256
-
-static char * getStartOfOptionValue(J9VMInitArgs* j9vm_args, IDATA element, const char *optionName);
+static char *getStartOfOptionValue(J9VMInitArgs *j9vm_args, IDATA element, const char *optionName);
 
 IDATA
 findArgInVMArgs(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDATA match, const char* optionName, const char* optionValue, UDATA doConsumeArgs) {
@@ -1609,9 +1607,9 @@ createJvmInitArgs(J9PortLibrary * portLib, JavaVMInitArgs *launcherArgs, J9JavaV
 }
 
 void
-destroyJvmInitArgs(J9PortLibrary * portLib, J9VMInitArgs *vmArgumentsList)
+destroyJvmInitArgs(J9PortLibrary *portLib, J9VMInitArgs *vmArgumentsList)
 {
-	UDATA i;
+	UDATA i = 0;
 	JavaVMInitArgs *actualArgs = NULL;
 	PORT_ACCESS_FROM_PORT(portLib);
 

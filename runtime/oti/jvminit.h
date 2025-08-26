@@ -42,7 +42,7 @@ extern "C" {
 #define SILENT_NO_DLL 0x100
 #define FATAL_NO_DLL 0x200
 #define FREE_ERROR_STRING 0x400
-#define MAGIC_LOAD 0x800			/* Used by hook, which is loaded magically */
+#define MAGIC_LOAD 0x800 /* Used by hook, which is loaded magically. */
 #define NO_J9VMDLLMAIN 0x1000
 #define EARLY_LOAD 0x2000
 #define ALLOW_POST_INIT_LOAD 0x4000
@@ -53,12 +53,12 @@ extern "C" {
 #define BUNDLED_COMP 0x80000
 
 /* Value for RC_SILENT_EXIT should not be changed as this is
- * used by launcher to hide message "Could not create the Java virtual machine"
+ * used by launcher to hide message "Could not create the Java virtual machine".
  */
-#define RC_SILENT_EXIT -72
+#define RC_SILENT_EXIT (-72)
 
-#define J9VMDLLMAIN_SILENT_EXIT_VM -2
-#define J9VMDLLMAIN_FAILED -1
+#define J9VMDLLMAIN_SILENT_EXIT_VM (-2)
+#define J9VMDLLMAIN_FAILED (-1)
 #define J9VMDLLMAIN_OK 0
 #define J9VMDLLMAIN_NON_UTILITY_OK 1
 
@@ -83,9 +83,9 @@ extern "C" {
 #define MAP_ONE_COLON_TO_TWO 256
 #define MAP_WITH_INCLUSIVE_OPTIONS 512
 
-#define POSTINIT_LIBRARY_NOT_FOUND -100
-#define POSTINIT_NOT_PERMITTED -101
-#define POSTINIT_LOAD_FAILED -102
+#define POSTINIT_LIBRARY_NOT_FOUND (-100)
+#define POSTINIT_NOT_PERMITTED (-101)
+#define POSTINIT_LOAD_FAILED (-102)
 
 #define GET_OPTION 1
 #define GET_OPTIONS 2
@@ -97,13 +97,6 @@ extern "C" {
 #define GET_COMPOUND 8
 #define GET_COMPOUND_OPTS 9
 #define GET_DBL_VALUE 10
-
-#define OPTION_OK 0
-#define OPTION_MALFORMED -1
-#define OPTION_OVERFLOW -2
-#define OPTION_ERROR -3
-#define OPTION_BUFFER_OVERFLOW -4
-#define OPTION_OUTOFRANGE -5
 
 #define FIND_DLL_TABLE_ENTRY(name) vm->internalVMFunctions->findDllLoadInfo(vm->dllLoadTable, name)
 #define FIND_ARG_IN_VMARGS(match, optionName, optionValue) vm->internalVMFunctions->findArgInVMArgs(vm->portLibrary, vm->vmArgsArray, match, optionName, optionValue, FALSE)
@@ -130,8 +123,8 @@ extern "C" {
 #define GET_OPTION_VALUE2_ARGS(argsArray, element, delimChar, resultPtr) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, (argsArray), element, GET_OPTION, resultPtr, 0, delimChar, 0, NULL)
 /* *** */
 
-#define GET_OPTION_VALUE(element, delimChar, resultPtr) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, element, GET_OPTION, (char**)(resultPtr), 0, delimChar, 0, NULL)
-#define GET_OPTION_VALUE_ARGS(argsArray, element, delimChar, resultPtr) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, (argsArray), element, GET_OPTION, (char**)(resultPtr), 0, delimChar, 0, NULL)
+#define GET_OPTION_VALUE(element, delimChar, resultPtr) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, element, GET_OPTION, (char **)(resultPtr), 0, delimChar, 0, NULL)
+#define GET_OPTION_VALUE_ARGS(argsArray, element, delimChar, resultPtr) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, (argsArray), element, GET_OPTION, (char **)(resultPtr), 0, delimChar, 0, NULL)
 #define COPY_OPTION_VALUE(element, delimChar, buffer, bufSize) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, element, GET_OPTION, buffer, bufSize, delimChar, 0, NULL)
 #define COPY_OPTION_VALUE_ARGS(argsArray, element, delimChar, buffer, bufSize) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, (argsArray), element, GET_OPTION, buffer, bufSize, delimChar, 0, NULL)
 #define GET_OPTION_VALUES(element, delimChar, sepChar, buffer, bufSize) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, element, GET_OPTIONS, buffer, bufSize, delimChar, sepChar, NULL)
@@ -144,12 +137,12 @@ extern "C" {
 #define GET_MEMORY_VALUE_ARGS(argsArray, element, optname, result) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, (argsArray), (element), GET_MEM_VALUE, (char **)&(optname), 0, 0, 0, &(result))
 #define GET_INTEGER_VALUE(element, optname, result) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, (element), GET_INT_VALUE, (char **)&(optname), 0, 0, 0, &(result))
 #define GET_INTEGER_VALUE_ARGS(argsArray, element, optname, result) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, (argsArray), (element), GET_INT_VALUE, (char **)&(optname), 0, 0, 0, &(result))
-#define GET_PERCENT_VALUE(element, optname, result) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, (element), GET_PRC_VALUE,(char **) &(optname), 0, 0, 0, &(result))
-#define GET_PERCENT_VALUE_ARGS(argsArray, element, optname, result) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, (argsArray), (element), GET_PRC_VALUE,(char **) &(optname), 0, 0, 0, &(result))
+#define GET_PERCENT_VALUE(element, optname, result) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, (element), GET_PRC_VALUE,(char **)&(optname), 0, 0, 0, &(result))
+#define GET_PERCENT_VALUE_ARGS(argsArray, element, optname, result) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, (argsArray), (element), GET_PRC_VALUE, (char **)&(optname), 0, 0, 0, &(result))
 #define GET_OPTION_OPTION(element, delimChar, delimChar2, resultPtr) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, (element), GET_OPTION_OPT, (resultPtr), 0, (delimChar), (delimChar2), NULL)
 #define GET_OPTION_OPTION_ARGS(argsArray, element, delimChar, delimChar2, resultPtr) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, (argsArray), (element), GET_OPTION_OPT, (resultPtr), 0, (delimChar), (delimChar2), NULL)
-#define GET_DOUBLE_VALUE(element, optname, result) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, (element), GET_DBL_VALUE, (char **) &(optname), 0, 0, 0, &(result))
-#define GET_DOUBLE_VALUE_ARGS(argsArray, element, optname, result) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, (argsArray), (element), GET_DBL_VALUE, (char **) &(optname), 0, 0, 0, &(result))
+#define GET_DOUBLE_VALUE(element, optname, result) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, (element), GET_DBL_VALUE, (char **)&(optname), 0, 0, 0, &(result))
+#define GET_DOUBLE_VALUE_ARGS(argsArray, element, optname, result) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, (argsArray), (element), GET_DBL_VALUE, (char **)&(optname), 0, 0, 0, &(result))
 
 #define HAS_MAPPING(args, element) (NULL != (args)->j9Options[element].mapping)
 #define MAPPING_FLAGS(args, element) ((args)->j9Options[element].mapping->flags)
@@ -168,31 +161,32 @@ extern "C" {
 #define J9_ADDRMODE_64 64
 
 typedef struct CheckPostStageData {
-	J9JavaVM* vm;
+	J9JavaVM *vm;
 	IDATA stage;
 	jint success;
 } CheckPostStageData;
 
 typedef struct LoadInitData {
-	J9JavaVM* vm;
+	J9JavaVM *vm;
 	UDATA flags;
 } LoadInitData;
 
 typedef struct RunDllMainData {
-	J9JavaVM* vm;
+	J9JavaVM *vm;
 	IDATA stage;
-	void* reserved;
+	void *reserved;
 	UDATA filterFlags;
 } RunDllMainData;
 
-#define LOAD_STAGE -1
-#define UNLOAD_STAGE -2
-#define XRUN_INIT_STAGE -3
-#define JVM_EXIT_STAGE -4
-#define POST_INIT_STAGE -5
+#define LOAD_STAGE (-1)
+#define UNLOAD_STAGE (-2)
+#define XRUN_INIT_STAGE (-3)
+#define JVM_EXIT_STAGE (-4)
+#define POST_INIT_STAGE (-5)
 
 /* Do not have more than 32 stages, and remember to put an entry in
- * jvminit.c:getNameForStage()*/
+ * jvminit.c:getNameForStage().
+ */
 enum INIT_STAGE {
 	PORT_LIBRARY_GUARANTEED,
 	ALL_DEFAULT_LIBRARIES_LOADED,
@@ -378,8 +372,8 @@ enum INIT_STAGE {
 #define VMOPT_XXNOALWAYSUSEJNICRITICAL "-XX:-AlwaysUseJNICritical"
 #define VMOPT_XXDEBUGVMACCESS "-XX:+DebugVMAccess"
 #define VMOPT_XXNODEBUGVMACCESS "-XX:-DebugVMAccess"
-#define VMOPT_XXMHALLOWI2J	"-XX:+MHAllowI2J"
-#define VMOPT_XXNOMHALLOWI2J	"-XX:-MHAllowI2J"
+#define VMOPT_XXMHALLOWI2J "-XX:+MHAllowI2J"
+#define VMOPT_XXNOMHALLOWI2J "-XX:-MHAllowI2J"
 #define VMOPT_XXMHDEBUGTARGETS "-XX:+MHDebugTargets"
 #define VMOPT_XXNOMHDEBUGTARGETS "-XX:-MHDebugTargets"
 #define VMOPT_XXMHCOMPILECOUNT_EQUALS "-XX:MHCompileCount="
@@ -496,8 +490,8 @@ enum INIT_STAGE {
 #define VMOPT_XNOPRELOADUSER32 "-Xnopreloaduser32"
 #define VMOPT_XPROTECTCONTIGUOUS "-Xprotectcontiguous"
 #define VMOPT_XNOPROTECTCONTIGUOUS "-Xnoprotectcontiguous"
-#define VMOPT_XXDISCLAIMJITSCRATCH		"-XX:+DisclaimJitScratch"
-#define VMOPT_XXNODISCLAIMJITSCRATCH	"-XX:-DisclaimJitScratch"
+#define VMOPT_XXDISCLAIMJITSCRATCH "-XX:+DisclaimJitScratch"
+#define VMOPT_XXNODISCLAIMJITSCRATCH "-XX:-DisclaimJitScratch"
 
 #define VMOPT_TUNE_QUICKSTART "-Xtune:quickstart"
 #define VMOPT_TUNE_THROUGHPUT "-Xtune:throughput"
@@ -748,49 +742,67 @@ enum INIT_STAGE {
 
 #define VMOPT_XTRACE "-Xtrace"
 
+#if defined(J9VM_INTERP_VERBOSE)
 
-#ifdef J9VM_INTERP_VERBOSE
+#define JVMINIT_VERBOSE_INIT_TRACE(flags, txt) \
+	do { \
+		if (PORTLIB && (flags & VERBOSE_INIT)) { \
+			j9tty_printf(PORTLIB, txt); \
+		} \
+	} while (0)
 
-#define JVMINIT_VERBOSE_INIT_TRACE(flags, txt) do { \
-	if (PORTLIB && (flags & VERBOSE_INIT)) { \
-		j9tty_printf(PORTLIB, txt); \
-	} \
-} while (0);
-#define JVMINIT_VERBOSE_INIT_TRACE1(flags, txt, p1) do { \
-	if (PORTLIB && (flags & VERBOSE_INIT)) { \
-		j9tty_printf(PORTLIB, txt, p1); \
-	} \
-} while (0);
-#define JVMINIT_VERBOSE_INIT_TRACE2(flags, txt, p1, p2) do { \
-	if (PORTLIB && (flags & VERBOSE_INIT)) { \
-		j9tty_printf(PORTLIB, txt, p1, p2); \
-	} \
-} while (0);
-#define JVMINIT_VERBOSE_INIT_VM_TRACE(vm, txt) do { \
-	PORT_ACCESS_FROM_JAVAVM(vm); \
-	JVMINIT_VERBOSE_INIT_TRACE(vm->verboseLevel, txt); \
-} while (0);
-#define JVMINIT_VERBOSE_INIT_VM_TRACE1(vm, txt, p1) do { \
-	PORT_ACCESS_FROM_JAVAVM(vm); \
-	JVMINIT_VERBOSE_INIT_TRACE1(vm->verboseLevel, txt, p1); \
-} while (0);
-#define JVMINIT_VERBOSE_INIT_VM_TRACE2(vm, txt, p1, p2) do { \
-	PORT_ACCESS_FROM_JAVAVM(vm); \
-	JVMINIT_VERBOSE_INIT_TRACE2(vm->verboseLevel, txt, p1, p2); \
-} while (0);
+#define JVMINIT_VERBOSE_INIT_TRACE1(flags, txt, p1) \
+	do { \
+		if (PORTLIB && (flags & VERBOSE_INIT)) { \
+			j9tty_printf(PORTLIB, txt, p1); \
+		} \
+	} while (0)
 
-#else
+#define JVMINIT_VERBOSE_INIT_TRACE2(flags, txt, p1, p2) \
+	do { \
+		if (PORTLIB && (flags & VERBOSE_INIT)) { \
+			j9tty_printf(PORTLIB, txt, p1, p2); \
+		} \
+	} while (0)
+
+#define JVMINIT_VERBOSE_INIT_VM_TRACE(vm, txt) \
+	do { \
+		PORT_ACCESS_FROM_JAVAVM(vm); \
+		JVMINIT_VERBOSE_INIT_TRACE(vm->verboseLevel, txt); \
+	} while (0)
+
+#define JVMINIT_VERBOSE_INIT_VM_TRACE1(vm, txt, p1) \
+	do { \
+		PORT_ACCESS_FROM_JAVAVM(vm); \
+		JVMINIT_VERBOSE_INIT_TRACE1(vm->verboseLevel, txt, p1); \
+	} while (0)
+
+#define JVMINIT_VERBOSE_INIT_VM_TRACE2(vm, txt, p1, p2) \
+	do { \
+		PORT_ACCESS_FROM_JAVAVM(vm); \
+		JVMINIT_VERBOSE_INIT_TRACE2(vm->verboseLevel, txt, p1, p2); \
+	} while (0)
+
+#else /* defined(J9VM_INTERP_VERBOSE) */
+
 #define JVMINIT_VERBOSE_INIT_TRACE(flags, txt)
 #define JVMINIT_VERBOSE_INIT_TRACE1(flags, txt, p1)
 #define JVMINIT_VERBOSE_INIT_TRACE2(flags, txt, p1, p2)
 #define JVMINIT_VERBOSE_INIT_VM_TRACE(vm, txt)
 #define JVMINIT_VERBOSE_INIT_VM_TRACE1(vm, txt, p1)
 #define JVMINIT_VERBOSE_INIT_VM_TRACE2(vm, txt, p1, p2)
-#endif
+
+#endif /* defined(J9VM_INTERP_VERBOSE) */
 
 #ifndef JVMINIT_VERBOSE_INIT_TRACE_WORKING_SET
 #define JVMINIT_VERBOSE_INIT_TRACE_WORKING_SET(vm)
 #endif
+
+/* Constants formerly found in jvminitcommon.h. */
+
+#define XRUN_LEN (sizeof(VMOPT_XRUN) - 1)
+#define SMALL_STRING_BUF_SIZE 64
+#define LARGE_STRING_BUF_SIZE (SMALL_STRING_BUF_SIZE * 4)
 
 #ifdef __cplusplus
 }
