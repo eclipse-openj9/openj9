@@ -2066,18 +2066,10 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmpl4, node, condReg, firstDimLenReg, temp1Reg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, oolJumpLabel, condReg);
 
-   // jump away if the second dimension is not zero
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, condReg, secondDimLenReg, 0);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, nonZeroSecondDimLabel, condReg);
-
-   // check if we have enough space by accounting for the following:
-   //    1. the object that is the first array:
-   //       a. the header of a contiguous array
-   //       b. (firstDimLen * referenceFieldSize)
-   //       c. alignment padding
-   //    2. firstDimLen * zeroArraySizeAligned
-
-   // get the number of bytes needed for the reference fields
+   // check if we have enough space by accounting for the outer array object:
+   //    1. the header of a contiguous array
+   //    2. (firstDimLen * referenceFieldSize)
+   //    3. alignment padding
    // temp1Reg = firstDimLenReg * referenceFieldSize; referenceFieldSize can only be 4 or 8
    if (referenceFieldSize == 8)
       generateShiftLeftImmediateLong(cg, node, temp1Reg, firstDimLenReg, 3);
@@ -2092,7 +2084,12 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
       generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, temp1Reg, temp1Reg,
                                        0, -alignmentInBytes);
       }
-   // we also need space for N zero-sized arrays
+
+   // jump away if the second dimension is not zero
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, condReg, secondDimLenReg, 0);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, nonZeroSecondDimLabel, condReg);
+
+   // when the second dimension is zero, we allocate N zero-sized array headers padded for alignment
    // temp2Reg = firstDimLenReg * zeroArraySizeAligned; zeroArraySizeAligned should be 2^n | n > 0
    generateShiftLeftImmediateLong(cg, node, temp2Reg, firstDimLenReg, trailingZeroes(zeroArraySizeAligned));
    // temp2Reg = temp2Reg + temp1Reg + (targetReg = heapAlloc) = where heapAlloc will endup
@@ -2193,35 +2190,11 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmpl4, node, condReg, secondDimLenReg, temp1Reg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, oolJumpLabel, condReg);
 
-   // check if we have enough space by accounting for the following:
-   //    1. the object that is the first array:
-   //       a. the header of a contiguous array
-   //       b. (firstDimLen * referenceFieldSize)
-   //       c. alignment padding
-   //    2. firstDimLen * size of a subarray (aligned):
-   //       a. header of a second dimension array
-   //       b. (secondDimLen * leafArrayElementSize)
-   //       c. alignment padding
-
-   // get the number of bytes needed for the reference fields for the first dimension
-   // temp1Reg = firstDimLenReg * referenceFieldSize; referenceFieldSize can only be 4 or 8
-   if (referenceFieldSize == 8)
-      generateShiftLeftImmediateLong(cg, node, temp1Reg, firstDimLenReg, 3);
-   else
-      generateShiftLeftImmediateLong(cg, node, temp1Reg, firstDimLenReg, 2);
-   // add the header size, and the alignment compensation if needed
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp1Reg, temp1Reg,
-      TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
-            + ((needsAlignHeader || needsAlignRefField) ? alignmentCompensation : 0));
-   if (needsAlignHeader || needsAlignRefField) // do a mask to ensure alignment
-      {
-      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, temp1Reg, temp1Reg,
-                                       0, -alignmentInBytes);
-      }
-
-   // Similarly, get the size of the referenceFields and header for a second dimension subarray.
+   // We need N subarrays; each subarray should contain the following:
+   //    1. header of a second dimension array
+   //    2. (secondDimLen * leafArrayElementSize)
+   //    3. alignment padding
    // temp2Reg = secondDimLenReg * leafArrayElementSize
-   // Since leafArrayElementSize could be 1, we can save an instruction in that case
    if (leafArrayElementSize != 1)
       {
       generateShiftLeftImmediateLong(cg, node, temp2Reg, secondDimLenReg, trailingZeroes(leafArrayElementSize));
@@ -2230,7 +2203,7 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
          TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
             + ((needsAlignHeader || needsAlignLeaf) ? alignmentCompensation : 0));
       }
-   else
+   else // save an instruction if the leafArrayElementSize is 1
       {
       // add alignment compensation, and the header size
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, subArraySizeReg, secondDimLenReg,
@@ -2391,8 +2364,6 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
    dependencies->getPostConditions()->getRegisterDependency(dependencies->getAddCursorForPost() - 1)->setExcludeGPR0();
 
    dependencies->addPostCondition(subArraySizeReg, TR::RealRegister::NoReg);
-
-   dependencies->addPostCondition(vmThreadReg, TR::RealRegister::NoReg); // do we need this?
    dependencies->addPostCondition(condReg, TR::RealRegister::NoReg);
 
    TR::Register *reg;
