@@ -2555,6 +2555,10 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			if (OPTION_OK != parseError) {
 				parseErrorOption = VMOPT_XXMAXDIRECTMEMORYSIZEEQUALS;
 				goto _memParseError;
+			} else if (vm->directByteBufferMemoryMax != ~(UDATA)0 && vm->directByteBufferMemoryMax > I_64_MAX) {
+				parseErrorOption = VMOPT_XXMAXDIRECTMEMORYSIZEEQUALS;
+				parseError = OPTION_OUTOFRANGE;
+				goto _memParseError;
 			}
 
 			/* workaround option in case if OMRPORT_VMEM_ALLOC_QUICK Smart Address feature still be not reliable  */

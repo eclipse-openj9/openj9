@@ -578,8 +578,17 @@ optionValueOperations(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA
 					switch (*cursor) {
 						case '\0':
 							oldValue = value;
-							value = (value +  sizeof(UDATA) - 1) & ~(sizeof(UDATA) - 1);		/* round to nearest pointer value */
-							if (value < oldValue) return OPTION_OVERFLOW;
+							/* Round up to the next multiple of the pointer width */
+							value = (value + sizeof(UDATA) - 1) & ~(sizeof(UDATA) - 1);
+
+							if ((value < oldValue) || (((I_64) value) < ((I_64) oldValue))) {
+								/*
+								 * Truncate (round in a negative direction) when overflow is detected
+								 * in either the signed 64-bit or default unsigned representations.
+								 * This avoids sign issues regardless of downstream usage.
+								 */
+								value = oldValue & ~(sizeof(UDATA) - 1);
+							}
 							break;
 						case 'k':
 						case 'K':
