@@ -1449,9 +1449,27 @@ TR_VectorAPIExpansion::isVectorizedOrScalarizedNode(TR::Node *node, TR::DataType
    int32_t refId = -1;
 
    if (node->getOpCodeValue() == TR::aload ||
-       node->getOpCodeValue() == TR::astore)
+       node->getOpCodeValue() == TR::astore ||
+       (node->getOpCode().isVectorOpCode() &&
+        (node->getOpCode().getVectorOperation() == TR::vload ||
+         node->getOpCode().getVectorOperation() == TR::vstore)
+        ))
       {
-      refId = node->getSymbolReference()->getReferenceNumber();
+
+      if (node->getOpCodeValue() == TR::aload ||
+          node->getOpCodeValue() == TR::astore)
+         {
+         refId = node->getSymbolReference()->getReferenceNumber();
+         }
+      else
+         {
+         TR::SymbolReference *origSymRef = _nodeTable[node->getGlobalIndex()]._origSymRef;
+
+         if (!origSymRef)
+            return false;  // was vectorized earlier by auto-SIMD or another pass of VectorAPIExpansion
+
+         refId = origSymRef->getReferenceNumber();
+         }
 
       if (_aliasTable[refId]._vecLen == vec_len_boxed_unknown)
          return false;
