@@ -5366,7 +5366,8 @@ J9::CodeGenerator::addInvokeBasicCallSiteImpl(
    uint8_t numArgSlots = (uint8_t)numArgSlots32;
 
    void *j2iThunk = NULL;
-   if (rm == TR::com_ibm_jit_JITHelpers_dispatchVirtual)
+   if (rm == TR::com_ibm_jit_JITHelpers_dispatchVirtual &&
+       !(comp()->target().cpu.isX86() && self()->comp()->target().is32Bit()))
       {
       TR::Method *m = methodSymbol->getMethod();
       char *sig = fej9->getJ2IThunkSignatureForDispatchVirtual(
