@@ -629,7 +629,7 @@ public:
       void setNext(TR_IPChainedEntry *next) { _next = next; }
       TR_IPBytecodeHashTableEntry *getIPData() const { return _IPentry; }
       uintptr_t getPC() const { return _IPentry->getPC(); }
-      };
+      }; // class TR_IPChainedEntry
    class TR_AggregationHTNode
       {
       TR_AggregationHTNode *_next; // for chaining
@@ -645,7 +645,7 @@ public:
       J9ROMClass *getROMClass() const { return _romClass; }
       TR_IPChainedEntry *getFirstIPEntry() const { return _IPData; }
       void setFirstCGEntry(TR_IPChainedEntry *e) { _IPData = e; }
-      };
+      }; //class  TR_AggregationHTNode
    struct SortingPair
       {
       char *_methodName;
@@ -659,7 +659,7 @@ public:
    size_t numTrackedMethods() const { return _numTrackedMethods; }
    TR_AggregationHTNode* getBucket(size_t i) const { return _backbone[i]; }
    void add(J9ROMMethod *romMethod, J9ROMClass *romClass, TR_IPBytecodeHashTableEntry *cgEntry);
-   void sortByNameAndPrint();
+   void sortByNameAndPrint(const char *filename);
 private:
    size_t _sz; // size of the backbone of the hashtable
    size_t _numTrackedMethods; // only increasing
@@ -698,6 +698,7 @@ public:
    void shutdown();
    void outputStats();
    void dumpIPBCDataCallGraph(J9VMThread* currentThread);
+   void dumpAllBytecodeProfilingData(J9VMThread* vmThread);
    void startIProfilerThread(J9JavaVM *javaVM);
    void deallocateIProfilerBuffers();
    void stopIProfilerThread();

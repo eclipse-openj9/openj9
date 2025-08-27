@@ -4297,6 +4297,7 @@ void JitShutdown(J9JITConfig * jitConfig)
 
    J9JavaVM * javaVM = jitConfig->javaVM;
    J9VMThread *vmThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
 
    // Prevent calling this function twice;
    // Races cannot occur because only the main thread executes shutdown stages
@@ -4331,6 +4332,13 @@ void JitShutdown(J9JITConfig * jitConfig)
       {
       //if (options->getOption(TR_StoreIPInfoOnShutdown))
       //   iProfiler->persistAllEntries();
+#if defined(J9VM_OPT_JITSERVER)
+      if (compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
+#endif
+         {
+         if (feGetEnv("TR_DumpIProfilerData"))
+            iProfiler->dumpAllBytecodeProfilingData(vmThread);
+         }
 
       printIprofilerStats(options, jitConfig, iProfiler, "Shutdown");
       // Prevent the interpreter to accumulate more info
@@ -4359,8 +4367,6 @@ void JitShutdown(J9JITConfig * jitConfig)
       iProfiler->shutdown();
       }
 #endif // J9VM_INTERP_PROFILING_BYTECODES
-
-   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
 
 #if defined(J9VM_OPT_JITSERVER)
    PersistentUnorderedSet<std::string> *serverAOTMethodSet =
