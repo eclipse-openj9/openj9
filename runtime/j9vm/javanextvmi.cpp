@@ -691,7 +691,7 @@ JVM_CreateThreadSnapshot(JNIEnv *env, jobject thread)
 	J9InternalVMFunctions const * const vmfns = vm->internalVMFunctions;
 	j9object_t resultObject = NULL;
 	jobject result = NULL;
-	J9Class* clazz = J9VMJDKINTERNALVMTHREADSNAPSHOT_OR_NULL(vm);
+	J9Class *clazz = J9VMJDKINTERNALVMTHREADSNAPSHOT_OR_NULL(vm);
 	vmfns->internalEnterVMFromJNI(currentThread);
 
 	if ((NULL == thread)
@@ -700,8 +700,8 @@ JVM_CreateThreadSnapshot(JNIEnv *env, jobject thread)
 		vmfns->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
 	} else {
 		j9object_t threadObject = NULL;
-		BOOLEAN isVirtual = JNI_FALSE;
-		BOOLEAN isAlive = JNI_FALSE;
+		BOOLEAN isVirtual = FALSE;
+		BOOLEAN isAlive = FALSE;
 		J9VMThread *targetThread = NULL;
 		if (JVMTI_ERROR_NONE != vmfns->getTargetVMThreadHelper(
 				currentThread, thread, JVMTI_ERROR_NONE, 0,
