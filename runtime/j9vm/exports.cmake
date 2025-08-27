@@ -49,20 +49,6 @@ jvm_add_exports(jvm
 	_JVM_ClassLoaderDepth@4
 	_JVM_Close@4
 	_JVM_Connect@12
-	_JVM_ConstantPoolGetClassAt@16
-	_JVM_ConstantPoolGetClassAtIfLoaded@16
-	_JVM_ConstantPoolGetDoubleAt@16
-	_JVM_ConstantPoolGetFieldAt@16
-	_JVM_ConstantPoolGetFieldAtIfLoaded@16
-	_JVM_ConstantPoolGetFloatAt@16
-	_JVM_ConstantPoolGetIntAt@16
-	_JVM_ConstantPoolGetLongAt@16
-	_JVM_ConstantPoolGetMemberRefInfoAt@16
-	_JVM_ConstantPoolGetMethodAt@16
-	_JVM_ConstantPoolGetMethodAtIfLoaded@16
-	_JVM_ConstantPoolGetSize@12
-	_JVM_ConstantPoolGetStringAt@16
-	_JVM_ConstantPoolGetUTF8At@16
 	_JVM_CurrentClassLoader@4
 	_JVM_CurrentLoadedClass@4
 	_JVM_CurrentTimeMillis@8
@@ -485,7 +471,41 @@ endif()
 
 if(JAVA_SPEC_VERSION LESS 26)
 	jvm_add_exports(jvm
+		# the signatures of these functions changed in Java 26
+		_JVM_ConstantPoolGetClassAt@16
+		_JVM_ConstantPoolGetClassAtIfLoaded@16
+		_JVM_ConstantPoolGetDoubleAt@16
+		_JVM_ConstantPoolGetFieldAt@16
+		_JVM_ConstantPoolGetFieldAtIfLoaded@16
+		_JVM_ConstantPoolGetFloatAt@16
+		_JVM_ConstantPoolGetIntAt@16
+		_JVM_ConstantPoolGetLongAt@16
+		_JVM_ConstantPoolGetMemberRefInfoAt@16
+		_JVM_ConstantPoolGetMethodAt@16
+		_JVM_ConstantPoolGetMethodAtIfLoaded@16
+		_JVM_ConstantPoolGetSize@12
+		_JVM_ConstantPoolGetStringAt@16
+		_JVM_ConstantPoolGetUTF8At@16
+		#
 		_JVM_GetClassAccessFlags@8
+	)
+else()
+	jvm_add_exports(jvm
+		# the signatures of these functions changed in Java 26
+		_JVM_ConstantPoolGetClassAt@12
+		_JVM_ConstantPoolGetClassAtIfLoaded@12
+		_JVM_ConstantPoolGetDoubleAt@12
+		_JVM_ConstantPoolGetFieldAt@12
+		_JVM_ConstantPoolGetFieldAtIfLoaded@12
+		_JVM_ConstantPoolGetFloatAt@12
+		_JVM_ConstantPoolGetIntAt@12
+		_JVM_ConstantPoolGetLongAt@12
+		_JVM_ConstantPoolGetMemberRefInfoAt@12
+		_JVM_ConstantPoolGetMethodAt@12
+		_JVM_ConstantPoolGetMethodAtIfLoaded@12
+		_JVM_ConstantPoolGetSize@8
+		_JVM_ConstantPoolGetStringAt@12
+		_JVM_ConstantPoolGetUTF8At@12
 	)
 endif()
 

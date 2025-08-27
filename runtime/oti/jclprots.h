@@ -1074,6 +1074,9 @@ void JNICALL Java_lang_ref_Finalizer_runFinalizationImpl(JNIEnv *env, jclass rec
 jobject JNICALL Java_sun_misc_URLClassPath_getLookupCacheURLs(JNIEnv *env, jobject unusedObject, jobject classLoader);
 
 /* sun_reflect_ConstantPool.c */
+
+#if JAVA_SPEC_VERSION < 26
+
 jint JNICALL Java_sun_reflect_ConstantPool_getSize0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop);
 jclass JNICALL Java_sun_reflect_ConstantPool_getClassAt0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex);
 jclass JNICALL Java_sun_reflect_ConstantPool_getClassAtIfLoaded0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex);
@@ -1088,6 +1091,26 @@ jfloat JNICALL Java_sun_reflect_ConstantPool_getFloatAt0(JNIEnv *env, jobject un
 jdouble JNICALL Java_sun_reflect_ConstantPool_getDoubleAt0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex);
 jobject JNICALL Java_sun_reflect_ConstantPool_getStringAt0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex);
 jobject JNICALL Java_sun_reflect_ConstantPool_getUTF8At0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex);
+
+#else /* JAVA_SPEC_VERSION < 26 */
+
+jint JNICALL Java_sun_reflect_ConstantPool_getSize0(JNIEnv *env, jobject constantPoolOop);
+jclass JNICALL Java_sun_reflect_ConstantPool_getClassAt0(JNIEnv *env, jobject constantPoolOop, jint cpIndex);
+jclass JNICALL Java_sun_reflect_ConstantPool_getClassAtIfLoaded0(JNIEnv *env, jobject constantPoolOop, jint cpIndex);
+jobject JNICALL Java_sun_reflect_ConstantPool_getMethodAt0(JNIEnv *env, jobject constantPoolOop, jint cpIndex);
+jobject JNICALL Java_sun_reflect_ConstantPool_getMethodAtIfLoaded0(JNIEnv *env, jobject constantPoolOop, jint cpIndex);
+jobject JNICALL Java_sun_reflect_ConstantPool_getFieldAt0(JNIEnv *env, jobject constantPoolOop, jint cpIndex);
+jobject JNICALL Java_sun_reflect_ConstantPool_getFieldAtIfLoaded0(JNIEnv *env, jobject constantPoolOop, jint cpIndex);
+jobject JNICALL Java_sun_reflect_ConstantPool_getMemberRefInfoAt0(JNIEnv *env, jobject constantPoolOop, jint cpIndex);
+jint JNICALL Java_sun_reflect_ConstantPool_getIntAt0(JNIEnv *env, jobject constantPoolOop, jint cpIndex);
+jlong JNICALL Java_sun_reflect_ConstantPool_getLongAt0(JNIEnv *env, jobject constantPoolOop, jint cpIndex);
+jfloat JNICALL Java_sun_reflect_ConstantPool_getFloatAt0(JNIEnv *env, jobject constantPoolOop, jint cpIndex);
+jdouble JNICALL Java_sun_reflect_ConstantPool_getDoubleAt0(JNIEnv *env, jobject constantPoolOop, jint cpIndex);
+jobject JNICALL Java_sun_reflect_ConstantPool_getStringAt0(JNIEnv *env, jobject constantPoolOop, jint cpIndex);
+jobject JNICALL Java_sun_reflect_ConstantPool_getUTF8At0(JNIEnv *env, jobject constantPoolOop, jint cpIndex);
+
+#endif /* JAVA_SPEC_VERSION < 26 */
+
 jint JNICALL Java_java_lang_invoke_MethodHandleResolver_getCPTypeAt(JNIEnv *env, jclass unusedClass, jobject constantPoolOop, jint cpIndex);
 jobject JNICALL Java_java_lang_invoke_MethodHandleResolver_getCPMethodTypeAt(JNIEnv *env, jclass unusedClass, jobject constantPoolOop, jint cpIndex);
 jobject JNICALL Java_java_lang_invoke_MethodHandleResolver_getCPMethodHandleAt(JNIEnv *env, jclass unusedClass, jobject constantPoolOop, jint cpIndex);
