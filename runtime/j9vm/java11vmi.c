@@ -1488,7 +1488,11 @@ JVM_SetMethodInfo(JNIEnv *env, jobject arg1)
 }
 
 jint JNICALL
+#if JAVA_SPEC_VERSION < 26
 JVM_ConstantPoolGetNameAndTypeRefIndexAt(JNIEnv *env, jobject arg1, jobject arg2, jint arg3)
+#else /* JAVA_SPEC_VERSION < 26 */
+JVM_ConstantPoolGetNameAndTypeRefIndexAt(JNIEnv *env, jobject arg1, jint arg2)
+#endif /* JAVA_SPEC_VERSION < 26 */
 {
 	assert(!"JVM_ConstantPoolGetNameAndTypeRefIndexAt unimplemented"); /* Jazz 108925: Revive J9JCL raw pConfig build */
 	return -1;
@@ -1506,7 +1510,11 @@ JVM_MoreStackWalk(JNIEnv *env, jobject arg1, jlong arg2, jlong arg3, jint arg4, 
 }
 
 jint JNICALL
-JVM_ConstantPoolGetClassRefIndexAt(JNIEnv *env, jobject arg1, jlong arg2, jint arg3)
+#if JAVA_SPEC_VERSION < 26
+JVM_ConstantPoolGetClassRefIndexAt(JNIEnv *env, jobject arg1, jobject arg2, jint arg3)
+#else /* JAVA_SPEC_VERSION < 26 */
+JVM_ConstantPoolGetClassRefIndexAt(JNIEnv *env, jobject arg1, jint arg2)
+#endif /* JAVA_SPEC_VERSION < 26 */
 {
 	assert(!"JVM_ConstantPoolGetClassRefIndexAt unimplemented"); /* Jazz 108925: Revive J9JCL raw pConfig build */
 	return -1;
@@ -1569,14 +1577,22 @@ JVM_FindClassFromCaller(JNIEnv* env, const char* arg1, jboolean arg2, jobject ar
 }
 
 jobjectArray JNICALL
+#if JAVA_SPEC_VERSION < 26
 JVM_ConstantPoolGetNameAndTypeRefInfoAt(JNIEnv *env, jobject arg1, jobject arg2, jint arg3)
+#else /* JAVA_SPEC_VERSION < 26 */
+JVM_ConstantPoolGetNameAndTypeRefInfoAt(JNIEnv *env, jobject arg1, jint arg2)
+#endif /* JAVA_SPEC_VERSION < 26 */
 {
 	assert(!"JVM_ConstantPoolGetNameAndTypeRefInfoAt unimplemented"); /* Jazz 108925: Revive J9JCL raw pConfig build */
 	return NULL;
 }
 
 jbyte JNICALL
+#if JAVA_SPEC_VERSION < 26
 JVM_ConstantPoolGetTagAt(JNIEnv *env, jobject arg1, jobject arg2, jint arg3)
+#else /* JAVA_SPEC_VERSION < 26 */
+JVM_ConstantPoolGetTagAt(JNIEnv *env, jobject arg1, jint arg2)
+#endif /* JAVA_SPEC_VERSION < 26 */
 {
 	assert(!"JVM_ConstantPoolGetTagAt unimplemented"); /* Jazz 108925: Revive J9JCL raw pConfig build */
 	return 0;

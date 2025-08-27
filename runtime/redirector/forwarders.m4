@@ -18,7 +18,7 @@ dnl [2] https://openjdk.org/legal/assembly-exception.html
 dnl
 dnl SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 dnl
-dnl        (name,cc, decorate, ret, args..)
+dnl (name, cc, decorate, ret, args...)
 _X(jio_vfprintf,,false,int,FILE *stream, const char *format, va_list args)
 _X(jio_vsnprintf,,false,int,char *str, int n, const char *format, va_list args)
 _IF([defined(J9ZOS390)],
@@ -32,20 +32,64 @@ _X(JVM_ClassDepth,JNICALL,true,jint,JNIEnv *env, jstring name)
 _X(JVM_ClassLoaderDepth,JNICALL,true,jint,JNIEnv *env)
 _X(JVM_Close,JNICALL,true,jint,jint descriptor)
 _X(JVM_Connect,JNICALL,true,jint,jint descriptor, const struct sockaddr *address, int length)
-_X(JVM_ConstantPoolGetClassAt,JNICALL,true,jclass,JNIEnv *env, jobject anObject, jobject constantPool, jint index)
-_X(JVM_ConstantPoolGetClassAtIfLoaded,JNICALL,true,jclass,JNIEnv *env, jobject anObject, jobject constantPool, jint index)
-_X(JVM_ConstantPoolGetDoubleAt,JNICALL,true,jdouble,JNIEnv *env, jobject anObject, jobject constantPool, jint index)
-_X(JVM_ConstantPoolGetFieldAt,JNICALL,true,jobject,JNIEnv *env, jobject anObject, jobject constantPool, jint index)
-_X(JVM_ConstantPoolGetFieldAtIfLoaded,JNICALL,true,jobject,JNIEnv *env, jobject anObject, jobject constantPool, jint index)
-_X(JVM_ConstantPoolGetFloatAt,JNICALL,true,jfloat,JNIEnv *env, jobject anObject, jobject constantPool, jint index)
-_X(JVM_ConstantPoolGetIntAt,JNICALL,true,jint,JNIEnv *env, jobject anObject, jobject constantPool, jint index)
-_X(JVM_ConstantPoolGetLongAt,JNICALL,true,jlong,JNIEnv *env, jobject anObject, jobject constantPool, jint index)
-_X(JVM_ConstantPoolGetMemberRefInfoAt,JNICALL,true,jobjectArray,JNIEnv *env, jobject anObject, jobject constantPool, jint index)
-_X(JVM_ConstantPoolGetMethodAt,JNICALL,true,jobject,JNIEnv *env, jobject anObject, jobject constantPool, jint index)
-_X(JVM_ConstantPoolGetMethodAtIfLoaded,JNICALL,true,jobject,JNIEnv *env, jobject anObject, jobject constantPool, jint index)
-_X(JVM_ConstantPoolGetSize,JNICALL,true,jint,JNIEnv *env, jobject anObject, jobject constantPool)
-_X(JVM_ConstantPoolGetStringAt,JNICALL,true,jstring,JNIEnv *env, jobject anObject, jobject constantPool, jint index)
-_X(JVM_ConstantPoolGetUTF8At,JNICALL,true,jstring,JNIEnv *env, jobject anObject, jobject constantPool, jint index)
+_IF([JAVA_SPEC_VERSION < 26],
+	[_X(JVM_ConstantPoolGetClassAt,JNICALL,true,jclass,JNIEnv *env, jobject anObject, jobject constantPool, jint index)],
+	[_X(JVM_ConstantPoolGetClassAt,JNICALL,true,jclass,JNIEnv *env, jobject constantPool, jint index)])
+_IF([JAVA_SPEC_VERSION < 26],
+	[_X(JVM_ConstantPoolGetClassAtIfLoaded,JNICALL,true,jclass,JNIEnv *env, jobject anObject, jobject constantPool, jint index)],
+	[_X(JVM_ConstantPoolGetClassAtIfLoaded,JNICALL,true,jclass,JNIEnv *env, jobject constantPool, jint index)])
+_IF([(11 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 26)],
+	[_X(JVM_ConstantPoolGetClassRefIndexAt,JNICALL,false,jint,JNIEnv *env, jobject arg1, jobject arg2, jint arg3)])
+_IF([JAVA_SPEC_VERSION >= 26],
+	[_X(JVM_ConstantPoolGetClassRefIndexAt,JNICALL,false,jint,JNIEnv *env, jobject arg1, jint arg2)])
+_IF([JAVA_SPEC_VERSION < 26],
+	[_X(JVM_ConstantPoolGetDoubleAt,JNICALL,true,jdouble,JNIEnv *env, jobject anObject, jobject constantPool, jint index)],
+	[_X(JVM_ConstantPoolGetDoubleAt,JNICALL,true,jdouble,JNIEnv *env, jobject constantPool, jint index)])
+_IF([JAVA_SPEC_VERSION < 26],
+	[_X(JVM_ConstantPoolGetFieldAt,JNICALL,true,jobject,JNIEnv *env, jobject anObject, jobject constantPool, jint index)],
+	[_X(JVM_ConstantPoolGetFieldAt,JNICALL,true,jobject,JNIEnv *env, jobject constantPool, jint index)])
+_IF([JAVA_SPEC_VERSION < 26],
+	[_X(JVM_ConstantPoolGetFieldAtIfLoaded,JNICALL,true,jobject,JNIEnv *env, jobject anObject, jobject constantPool, jint index)],
+	[_X(JVM_ConstantPoolGetFieldAtIfLoaded,JNICALL,true,jobject,JNIEnv *env, jobject constantPool, jint index)])
+_IF([JAVA_SPEC_VERSION < 26],
+	[_X(JVM_ConstantPoolGetFloatAt,JNICALL,true,jfloat,JNIEnv *env, jobject anObject, jobject constantPool, jint index)],
+	[_X(JVM_ConstantPoolGetFloatAt,JNICALL,true,jfloat,JNIEnv *env, jobject constantPool, jint index)])
+_IF([JAVA_SPEC_VERSION < 26],
+	[_X(JVM_ConstantPoolGetIntAt,JNICALL,true,jint,JNIEnv *env, jobject anObject, jobject constantPool, jint index)],
+	[_X(JVM_ConstantPoolGetIntAt,JNICALL,true,jint,JNIEnv *env, jobject constantPool, jint index)])
+_IF([JAVA_SPEC_VERSION < 26],
+	[_X(JVM_ConstantPoolGetLongAt,JNICALL,true,jlong,JNIEnv *env, jobject anObject, jobject constantPool, jint index)],
+	[_X(JVM_ConstantPoolGetLongAt,JNICALL,true,jlong,JNIEnv *env, jobject constantPool, jint index)])
+_IF([JAVA_SPEC_VERSION < 26],
+	[_X(JVM_ConstantPoolGetMemberRefInfoAt,JNICALL,true,jobjectArray,JNIEnv *env, jobject anObject, jobject constantPool, jint index)],
+	[_X(JVM_ConstantPoolGetMemberRefInfoAt,JNICALL,true,jobjectArray,JNIEnv *env, jobject constantPool, jint index)])
+_IF([JAVA_SPEC_VERSION < 26],
+	[_X(JVM_ConstantPoolGetMethodAt,JNICALL,true,jobject,JNIEnv *env, jobject anObject, jobject constantPool, jint index)],
+	[_X(JVM_ConstantPoolGetMethodAt,JNICALL,true,jobject,JNIEnv *env, jobject constantPool, jint index)])
+_IF([JAVA_SPEC_VERSION < 26],
+	[_X(JVM_ConstantPoolGetMethodAtIfLoaded,JNICALL,true,jobject,JNIEnv *env, jobject anObject, jobject constantPool, jint index)],
+	[_X(JVM_ConstantPoolGetMethodAtIfLoaded,JNICALL,true,jobject,JNIEnv *env, jobject constantPool, jint index)])
+_IF([(11 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 26)],
+	[_X(JVM_ConstantPoolGetNameAndTypeRefIndexAt,JNICALL,false,jint,JNIEnv *env, jobject arg1, jobject arg2, jint arg3)])
+_IF([JAVA_SPEC_VERSION >= 26],
+	[_X(JVM_ConstantPoolGetNameAndTypeRefIndexAt,JNICALL,false,jint,JNIEnv *env, jobject arg1, jint arg2)])
+_IF([(11 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 26)],
+	[_X(JVM_ConstantPoolGetNameAndTypeRefInfoAt,JNICALL,false,jobjectArray,JNIEnv *env, jobject arg1, jobject arg2, jint arg3)])
+_IF([JAVA_SPEC_VERSION >= 26],
+	[_X(JVM_ConstantPoolGetNameAndTypeRefInfoAt,JNICALL,false,jobjectArray,JNIEnv *env, jobject arg1, jint arg2)])
+_IF([JAVA_SPEC_VERSION < 26],
+	[_X(JVM_ConstantPoolGetSize,JNICALL,true,jint,JNIEnv *env, jobject anObject, jobject constantPool)],
+	[_X(JVM_ConstantPoolGetSize,JNICALL,true,jint,JNIEnv *env, jobject constantPool)])
+_IF([JAVA_SPEC_VERSION < 26],
+	[_X(JVM_ConstantPoolGetStringAt,JNICALL,true,jstring,JNIEnv *env, jobject anObject, jobject constantPool, jint index)],
+	[_X(JVM_ConstantPoolGetStringAt,JNICALL,true,jstring,JNIEnv *env, jobject constantPool, jint index)])
+_IF([(11 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 26)],
+	[_X(JVM_ConstantPoolGetTagAt,JNICALL,false,jbyte,JNIEnv *env, jobject arg1, jobject arg2, jint arg3)])
+_IF([JAVA_SPEC_VERSION >= 26],
+	[_X(JVM_ConstantPoolGetTagAt,JNICALL,false,jbyte,JNIEnv *env, jobject arg2, jint arg3)])
+_IF([JAVA_SPEC_VERSION < 26],
+	[_X(JVM_ConstantPoolGetUTF8At,JNICALL,true,jstring,JNIEnv *env, jobject anObject, jobject constantPool, jint index)],
+	[_X(JVM_ConstantPoolGetUTF8At,JNICALL,true,jstring,JNIEnv *env, jobject constantPool, jint index)])
 _X(JVM_CurrentClassLoader,JNICALL,true,jobject,JNIEnv *env)
 _X(JVM_CurrentLoadedClass,JNICALL,true,jclass,JNIEnv *env)
 _X(JVM_CurrentTimeMillis,JNICALL,true,jlong,JNIEnv *env, jint unused1)
@@ -322,24 +366,16 @@ _IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_GetSimpleBinaryName,JNICALL,false,jstring,JNIEnv *env, jclass arg1)])
 _IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_SetMethodInfo,JNICALL,false,void,JNIEnv *env, jobject arg1)])
-_IF([JAVA_SPEC_VERSION >= 11],
-	[_X(JVM_ConstantPoolGetNameAndTypeRefIndexAt,JNICALL,false,jint,JNIEnv *env, jobject arg1, jobject arg2, jint arg3)])
 _IF([(11 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 22)],
 	[_X(JVM_MoreStackWalk,JNICALL,false,jint,JNIEnv *env, jobject arg1, jlong arg2, jlong arg3, jint arg4, jint arg5, jobjectArray arg6, jobjectArray arg7)])
 _IF([JAVA_SPEC_VERSION >= 22],
 	[_X(JVM_MoreStackWalk,JNICALL,false,jint,JNIEnv *env, jobject arg1, jint arg2, jlong arg3, jint arg4, jint arg5, jint arg6, jobjectArray arg7, jobjectArray arg8)])
-_IF([JAVA_SPEC_VERSION >= 11],
-	[_X(JVM_ConstantPoolGetClassRefIndexAt,JNICALL,false,jint,JNIEnv *env, jobject arg1, jlong arg2, jint arg3)])
 _IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_GetVmArguments,JNICALL,false,jobjectArray,JNIEnv *env)])
 _IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_FillStackFrames,JNICALL,false,void,JNIEnv *env, jclass arg1, jint arg2, jobjectArray arg3, jint arg4, jint arg5)])
 _IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_FindClassFromCaller,JNICALL,false,jclass,JNIEnv *env, const char *arg1, jboolean arg2, jobject arg3, jclass arg4)])
-_IF([JAVA_SPEC_VERSION >= 11],
-	[_X(JVM_ConstantPoolGetNameAndTypeRefInfoAt,JNICALL,false,jobjectArray,JNIEnv *env, jobject arg1, jobject arg2, jint arg3)])
-_IF([JAVA_SPEC_VERSION >= 11],
-	[_X(JVM_ConstantPoolGetTagAt,JNICALL,false,jbyte,JNIEnv *env, jobject arg1, jobject arg2, jint arg3)])
 _IF([(11 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 22)],
 	[_X(JVM_CallStackWalk,JNICALL,false,jobject,JNIEnv *env, jobject arg1, jlong arg2, jint arg3, jint arg4, jint arg5, jobjectArray arg6, jobjectArray arg7)])
 _IF([JAVA_SPEC_VERSION >= 22],
