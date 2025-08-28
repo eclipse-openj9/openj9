@@ -4297,7 +4297,9 @@ void JitShutdown(J9JITConfig * jitConfig)
 
    J9JavaVM * javaVM = jitConfig->javaVM;
    J9VMThread *vmThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
+#if defined(J9VM_OPT_CRIU_SUPPORT) || (defined(J9VM_OPT_JITSERVER) && defined(J9VM_INTERP_PROFILING_BYTECODES))
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
+#endif
 
    // Prevent calling this function twice;
    // Races cannot occur because only the main thread executes shutdown stages
