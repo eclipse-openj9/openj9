@@ -905,12 +905,18 @@ isFieldAccessCompatible(J9BytecodeVerificationData *verifyData, J9ROMFieldRef *f
 	if (JBputfield == bytecode) {
 		J9BranchTargetStack *liveStack = (J9BranchTargetStack *)verifyData->liveStack;
 		J9ROMFieldShape *field = findFieldFromCurrentRomClass(romClass, fieldRef);
-		IDATA isStrictField = (NULL != field) && J9ROMFIELD_IS_STRICT(romClass, field->modifiers);
+
+		/* A field declared by the current class with ACC_FINAL and ACC_STRICT flags
+		 * can't be set unless the initialization state is early larval.
+		 */
+		if ((NULL != field)
+			&& J9ROMFIELD_IS_STRICT_FINAL(romClass, field->modifiers)
+			&& (FALSE == liveStack->uninitializedThis)
+		) {
+			return (IDATA)FALSE;
+		}
+
 		if (J9_ARE_ALL_BITS_SET(receiver, BCV_SPECIAL_INIT)) {
-			if (isStrictField && (FALSE == liveStack->uninitializedThis)) {
-				/* ACC_STRICT field must be assigned before instance initialization method. */
-				return (IDATA)FALSE;
-			}
 			J9UTF8 *classString = ((J9UTF8 *) J9ROMCLASS_CLASSNAME(romClass));
 			if (utf8string != classString) {
 				/* The following test is not necessary if the class name is uniquely referenced in a class */
@@ -940,10 +946,6 @@ isFieldAccessCompatible(J9BytecodeVerificationData *verifyData, J9ROMFieldRef *f
 				 */
 				return (NULL != field) || !liveStack->uninitializedThis;
 			}
-		}
-		else if (isStrictField) {
-			/* putfield is not allowed outside of initialization for strict fields. */
-			return (IDATA)FALSE;
 		}
 	}
 	return isClassCompatibleByName(verifyData, receiver, J9UTF8_DATA(utf8string), J9UTF8_LENGTH(utf8string), reasonCode);

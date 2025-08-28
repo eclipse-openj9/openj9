@@ -60,4 +60,9 @@
 			<class name="org.openj9.test.lworld.ValueTypeSystemArraycopyTests"/>
 		</classes>
 	</test>
+	<test name="StrictFieldTests">
+		<classes>
+			<class name="org.openj9.test.lworld.StrictFieldTests"/>
+		</classes>
+	</test>
 </suite> <!-- Suite -->
