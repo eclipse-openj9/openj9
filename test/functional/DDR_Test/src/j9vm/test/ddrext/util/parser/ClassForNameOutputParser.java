@@ -19,10 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  */
-
-
 package j9vm.test.ddrext.util.parser;
-
 
 import java.util.ArrayList;
 
@@ -30,62 +27,62 @@ import org.testng.log4testng.Logger;
 import j9vm.test.ddrext.Constants;
 
 public class ClassForNameOutputParser {
-	
-	private static Logger log = Logger.getLogger(ClassForNameOutputParser.class);
+
+	private static final Logger log = Logger.getLogger(ClassForNameOutputParser.class);
 
 	/*
 	 * Sample !classforname output :
-	 * 
-	 * >!classforname java/lang/Object 
-	 * Searching for classes named 'java/lang/Object' in VM=1006d2f8 
-	 * !j9class 0x101B8300 named java/lang/Object 
+	 *
+	 * >!classforname java/lang/Object
+	 * Searching for classes named 'java/lang/Object' in VM=1006d2f8
+	 * !j9class 0x101B8300 named java/lang/Object
 	 * Found 1 class(es) named java/lang/Object
 	 */
 	/**
-	 * This method is used to extract the j9class address from !classforname output. 
-	 * 
-	 * @param fineClassForNameOutput !classforname output  
-	 * @return String representation of extracted j9class address from !classforname extension. 
-	 *         return null, if any error occurs or address can not be found in given !findVM output. 	
+	 * This method is used to extract the j9class address from !classforname output.
+	 *
+	 * @param fineClassForNameOutput !classforname output
+	 * @return String representation of extracted j9class address from !classforname extension.
+	 *         return null, if any error occurs or address can not be found in given !findVM output.
 	 */
 	public static String extractClassAddress(String classForNameOutput) {
 		if (null == classForNameOutput) {
 			log.error("!classforname output is null");
 			return null;
 		}
-		
+
 		String[] outputLines = classForNameOutput.split(Constants.NL);
 		for (String aLine : outputLines) {
 			if (aLine.startsWith("!j9class")) {
-				String[] tokens = aLine.split(" ");
+				String[] tokens = aLine.split("\\s");
 				return tokens[1].trim();
 			}
 		}
 		return null;
 	}
-	
+
 	/*
 	 * Sample !classforname output :
-	 * 
-	 * >!classforname java/lang/Object 
-	 * Searching for classes named 'java/lang/Object' in VM=1006d2f8 
+	 *
+	 * >!classforname java/lang/Object
+	 * Searching for classes named 'java/lang/Object' in VM=1006d2f8
 	 * !j9class 0x101B8300 named java/lang/Object
 	 * !j9class 0x102A9400 names java/lang/Object
 	 * Found 2 class(es) named java/lang/Object
 	 */
 	/**
-	 * This method is used to extract list of all j9class addresses from !classforname output. 
-	 * 
-	 * @param fineClassForNameOutput !classforname output  
-	 * @return ArrayList containing all extracted j9class addresses from !classforname extension. 
-	 *         return null, if any error occurs or address can not be found in given !findVM output. 	
+	 * This method is used to extract list of all j9class addresses from !classforname output.
+	 *
+	 * @param fineClassForNameOutput !classforname output
+	 * @return ArrayList containing all extracted j9class addresses from !classforname extension.
+	 *         return null, if any error occurs or address can not be found in given !findVM output.
 	 */
 	public static ArrayList<String> extractClassAddressList(String classForNameOutput) {
 		if (null == classForNameOutput) {
 			log.error("!classforname output is null");
 			return null;
 		}
-		ArrayList<String> addrList = new ArrayList<String>();
+		ArrayList<String> addrList = new ArrayList<>();
 		String[] outputLines = classForNameOutput.split(Constants.NL);
 		for (String aLine : outputLines) {
 			if (aLine.startsWith("!j9class")) {
