@@ -102,7 +102,9 @@ public abstract class ClassLoader {
 	private final static String DELEGATING_CL = "sun.reflect.DelegatingClassLoader"; //$NON-NLS-1$
 	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	private boolean isDelegatingCL = false;
-
+/*[IF JAVA_SPEC_VERSION > 8]*/
+	static private boolean isApplicationClassLoaderInited = false;
+/*[ENDIF] JAVA_SPEC_VERSION > 8 */
 	/*
 	 * This is the application ClassLoader
 	 */
@@ -163,7 +165,7 @@ public abstract class ClassLoader {
 	private NativeLibraries nativelibs = null;
 /*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 	private static native void initAnonClassLoader(InternalAnonymousClassLoader anonClassLoader);
-
+	private static boolean isRcpRestoreRun = VM.isRestoreRun();
 	/*[PR JAZZ 73143]: ClassLoader incorrectly discards class loading locks*/
 	static final class ClassNameLockRef extends WeakReference<Object> implements Runnable {
 		private static final ReferenceQueue<Object> queue = new ReferenceQueue<>();
@@ -425,6 +427,12 @@ private ClassLoader(Void staticMethodHolder, String classLoaderName, ClassLoader
 	specialLoaderInited = (bootstrapClassLoader != null);
 /*[ENDIF] JAVA_SPEC_VERSION == 8 */
 	if (specialLoaderInited) {
+/*[IF JAVA_SPEC_VERSION > 8]*/
+		if (!isApplicationClassLoaderInited) {
+			assignImmortalClassLoader( VM.J9_CLASSLOADER_TYPE_OTHERS);
+			isApplicationClassLoaderInited = true;
+		} else
+/*[ENDIF] JAVA_SPEC_VERSION > 8 */
 		if (!lazyClassLoaderInit) {
 			VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_OTHERS, isParallelCapable);
 		}
@@ -438,10 +446,10 @@ private ClassLoader(Void staticMethodHolder, String classLoaderName, ClassLoader
 			// BootstrapClassLoader.unnamedModule is set by JVM_SetBootLoaderUnnamedModule
 			unnamedModule = null;
 			bootstrapClassLoader = this;
-			VM.initializeClassLoader(bootstrapClassLoader, VM.J9_CLASSLOADER_TYPE_BOOT, false);
+			assignImmortalClassLoader( VM.J9_CLASSLOADER_TYPE_BOOT);
 		} else {
 			// Assuming the second classloader initialized is platform classloader
-			VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_PLATFORM, false);
+			assignImmortalClassLoader( VM.J9_CLASSLOADER_TYPE_PLATFORM);
 			specialLoaderInited = true;
 			unnamedModule = new Module(this);
 		}
@@ -2646,4 +2654,19 @@ static NativeLibraries nativeLibrariesFor(ClassLoader loader) {
 	return (loader == null) ? BootLoader.getNativeLibraries() : loader.nativelibs;
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+
+/**
+ * Assign immortal class loaders for restore run
+ *
+ * @param id   class loader type
+ *
+ */
+private final void assignImmortalClassLoader(int id) {
+	if (isRcpRestoreRun) {
+		VM.rcpAssignClassLoader(this, id);
+	} else {
+		VM.initializeClassLoader(this, id, false);
+	}
+}
+
 }

@@ -582,3 +582,17 @@ Java_com_ibm_oti_vm_VM_getjfrCMDLineOption(JNIEnv *env, jclass clazz)
 	return jfrOption;
 }
 #endif /* defined(J9VM_OPT_JFR) */
+
+jboolean JNICALL
+Java_com_ibm_oti_vm_VM_isRestoreRun(JNIEnv *env, jclass cl)
+{
+	jboolean result = JNI_FALSE;
+#if defined(J9VM_OPT_SNAPSHOTS)
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	if (IS_RESTORE_RUN(vm)) {
+		result = JNI_TRUE;
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	return result;
+}
