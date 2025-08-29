@@ -37,7 +37,7 @@ public class MEMCMP2CompareTo extends base {
          }
       }
       if (c.verify()) {
-         if (i != len) c.printerr("j != len!");
+         if (i != len) c.printerr("i != len!");
          if (k != 0) c.printerr("k != 0!");
       }
       end = System.currentTimeMillis();
