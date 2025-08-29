@@ -322,48 +322,45 @@ void TR_MethodHandleTransformer::mergeObjectInfo(ObjectInfo *first, ObjectInfo *
       }
    }
 
-// Given a address type node, try to retrieve or compute its value
-//
-TR::KnownObjectTable::Index
-TR_MethodHandleTransformer::getObjectInfoOfNode(TR::Node* node)
+void
+TR_MethodHandleTransformer::computeObjectInfoOfNode(TR::TreeTop *tt, TR::Node *node)
    {
-   TR_ASSERT(node->getType() == TR::Address, "Can't have object info on non-address type node n%dn %p", node->getGlobalIndex(), node);
-
-   if (trace())
+   if (getObjectInfoOfNode(node) != TR::KnownObjectTable::UNKNOWN)
       {
-      traceMsg(comp(), "Looking for object info of n%dn\n", node->getGlobalIndex());
+      return; // already immediately available by inspecting the node
       }
 
    if (!node->getOpCode().hasSymbolReference())
-      return TR::KnownObjectTable::UNKNOWN;
+      {
+      return; // no known object, nothing to do
+      }
 
    auto symRef = node->getSymbolReference();
-   auto symbol = symRef->getSymbol();
-
    if (symRef->isUnresolved())
-      return TR::KnownObjectTable::UNKNOWN;
-
-   if (symRef->hasKnownObjectIndex())
-      return symRef->getKnownObjectIndex();
-
-   if (node->getOpCode().isLoadDirect() &&
-       symbol->isAutoOrParm())
       {
-      TR::KnownObjectTable::Index koi = (*_currentObjectInfo)[symbol->getLocalIndex()];
-      node->setKnownObjectIndex(koi);
-
-      if (trace())
-         {
-         traceMsg(comp(), "getObjectInfoOfNode n%dn is load from auto or parm, local #%d, set node known object=%d\n", node->getGlobalIndex(), symbol->getLocalIndex(), koi);
-         }
-
-      return koi;
+      return; // no known object, nothing to do
       }
 
    auto knot = comp()->getKnownObjectTable();
-   if (knot &&
-       node->getOpCode().isCall() &&
-       !symbol->castToMethodSymbol()->isHelper())
+   if (knot == NULL)
+      {
+      return; // no known object, nothing to do
+      }
+
+   if (trace())
+      {
+      traceMsg(comp(), "Determining object info of n%dn\n", node->getGlobalIndex());
+      }
+
+   TR::KnownObjectTable::Index koi = TR::KnownObjectTable::UNKNOWN;
+   auto symbol = symRef->getSymbol();
+   if (node->getOpCode().isLoadDirect() &&
+       symbol->isAutoOrParm())
+      {
+      koi = (*_currentObjectInfo)[symbol->getLocalIndex()];
+      }
+   else if (node->getOpCode().isCall()
+            && !symbol->castToMethodSymbol()->isHelper())
       {
       auto rm = symbol->castToMethodSymbol()->getMandatoryRecognizedMethod();
       switch (rm)
@@ -372,27 +369,30 @@ TR_MethodHandleTransformer::getObjectInfoOfNode(TR::Node* node)
          case TR::java_lang_invoke_DirectMethodHandle_internalMemberNameEnsureInit:
             {
             auto mhIndex = getObjectInfoOfNode(node->getFirstArgument());
-            if (knot && isKnownObject(mhIndex) && !knot->isNull(mhIndex))
+            if (isKnownObject(mhIndex) && !knot->isNull(mhIndex))
                {
                auto mnIndex = comp()->fej9()->getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(comp(), mhIndex, "member");
                if (trace())
                   traceMsg(comp(), "Get DirectMethodHandle.member known object %d, update node n%dn known object\n", mnIndex, node->getGlobalIndex());
-               node->setKnownObjectIndex(mnIndex);
-               return mnIndex;
+
+               koi = mnIndex;
                }
+
             break;
             }
+
          case TR::java_lang_invoke_DirectMethodHandle_constructorMethod:
             {
             auto mhIndex = getObjectInfoOfNode(node->getFirstArgument());
-            if (knot && isKnownObject(mhIndex) && !knot->isNull(mhIndex))
+            if (isKnownObject(mhIndex) && !knot->isNull(mhIndex))
                {
                auto mnIndex = comp()->fej9()->getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(comp(), mhIndex, "initMethod");
                if (trace())
                   traceMsg(comp(), "Get DirectMethodHandle.initMethod known object %d, update node n%dn known object\n", mnIndex, node->getGlobalIndex());
-               node->setKnownObjectIndex(mnIndex);
-               return mnIndex;
+
+               koi = mnIndex;
                }
+
             break;
             }
 
@@ -402,8 +402,9 @@ TR_MethodHandleTransformer::getObjectInfoOfNode(TR::Node* node)
             TR::KnownObjectTable::Index dmhIndex =
                getObjectInfoOfNode(node->getArgument(0));
 
-            return comp()->fej9()->delegatingMethodHandleTarget(
+            koi = comp()->fej9()->delegatingMethodHandleTarget(
                comp(), dmhIndex, trace());
+            break;
             }
 #endif
          case TR::java_lang_invoke_Invokers_checkVarHandleGenericType:
@@ -419,18 +420,49 @@ TR_MethodHandleTransformer::getObjectInfoOfNode(TR::Node* node)
                auto mhIndex = comp()->fej9()->getMethodHandleTableEntryIndex(comp(), vhIndex, adIndex);
                if (trace())
                  traceMsg(comp(), "Invokers_checkVarHandleGenericType with known VarHandle object %d, updating node n%dn with known MH object %d from MH table\n", vhIndex, node->getGlobalIndex(), mhIndex);
-               node->setKnownObjectIndex(mhIndex);
-               return mhIndex;
+               koi = mhIndex;
                }
             break;
             }
 
          default:
             break;
-        }
+         }
       }
 
-   return TR::KnownObjectTable::UNKNOWN;
+   if (isKnownObject(koi)
+       && !knot->isNull(koi)
+       && performTransformation(
+            comp(),
+            "%snode n%un [%p] is obj%d\n",
+            optDetailString(),
+            node->getGlobalIndex(),
+            node,
+            koi))
+      {
+      node->setKnownObjectIndex(koi);
+      }
+   }
+
+TR::KnownObjectTable::Index
+TR_MethodHandleTransformer::getObjectInfoOfNode(TR::Node *node)
+   {
+   TR_ASSERT_FATAL_WITH_NODE(
+      node,
+      node->getType() == TR::Address,
+      "Can't have object info on non-address type node");
+
+   if (node->hasKnownObjectIndex())
+      {
+      return node->getKnownObjectIndex();
+      }
+
+   if (!node->getOpCode().hasSymbolReference())
+      {
+      return TR::KnownObjectTable::UNKNOWN;
+      }
+
+   return node->getSymbolReference()->getKnownObjectIndex(); // possibly UNKNOWN
    }
 
 // Store to local variable will change object info
@@ -550,15 +582,26 @@ void
 TR_MethodHandleTransformer::visitNode(TR::TreeTop* tt, TR::Node* node, TR::NodeChecklist &visitedNodes)
    {
    if (visitedNodes.contains(node))
+      {
       return;
+      }
 
    visitedNodes.add(node);
 
    if (trace() && node == tt->getNode())
+      {
       traceMsg(comp(), "Looking at treetop node n%dn\n", node->getGlobalIndex());
+      }
 
    for (int32_t i = 0; i < node->getNumChildren(); i++)
-       visitNode(tt, node->getChild(i), visitedNodes);
+      {
+      visitNode(tt, node->getChild(i), visitedNodes);
+      }
+
+   if (node->getType() == TR::Address)
+      {
+      computeObjectInfoOfNode(tt, node);
+      }
 
    if (node->getOpCode().isStoreDirect() && node->getSymbolReference()->getSymbol()->isAutoOrParm() && node->getType() == TR::Address)
       {
@@ -834,100 +877,118 @@ void
 TR_MethodHandleTransformer::process_java_lang_invoke_Invokers_checkVarHandleGenericType(TR::TreeTop* tt, TR::Node* node)
    {
    static const bool disableFoldingVHGenType = feGetEnv("TR_disableFoldingVHGenType") != NULL;
-   if (disableFoldingVHGenType) return;
+   if (disableFoldingVHGenType)
+      {
+      return;
+      }
 
    auto vhIndex = getObjectInfoOfNode(node->getFirstArgument());
    auto adIndex = getObjectInfoOfNode(node->getLastChild());
-   auto mhIndex = TR::KnownObjectTable::UNKNOWN;
    auto knot = comp()->getKnownObjectTable();
-   int32_t mhEntryIndex = -1;
-   if (knot
-      && isKnownObject(adIndex)
-      && isKnownObject(vhIndex)
-      && !knot->isNull(vhIndex)
-      && !knot->isNull(adIndex))
+   if (knot == NULL
+      || !isKnownObject(adIndex)
+      || !isKnownObject(vhIndex)
+      || knot->isNull(vhIndex)
+      || knot->isNull(adIndex))
       {
-      mhIndex = comp()->fej9()->getMethodHandleTableEntryIndex(comp(), vhIndex, adIndex);
-      mhEntryIndex = comp()->fej9()->getVarHandleAccessDescriptorMode(comp(), adIndex);
+      return;
+      }
 
-      if (mhIndex != TR::KnownObjectTable::UNKNOWN && mhEntryIndex >= 0)
-         {
-         if (trace())
-            traceMsg(comp(), "Replacing Invokers.checkVarHandleGenericType call at n%dn with its resulting MH table entry. VarHandle object %d, MH object %d\n", node->getGlobalIndex(), vhIndex, mhIndex);
+   auto mhIndex = comp()->fej9()->getMethodHandleTableEntryIndex(comp(), vhIndex, adIndex);
+   int32_t mhEntryIndex = comp()->fej9()->getVarHandleAccessDescriptorMode(comp(), adIndex);
+   if (mhIndex == TR::KnownObjectTable::UNKNOWN || mhEntryIndex < 0)
+      {
+      return;
+      }
 
-         // obtain symref(s) for creating load for the MH table base
+   if (!performTransformation(
+         comp(),
+         "%sReplacing Invokers.checkVarHandleGenericType call n%un [%p] "
+         "with VH obj%d MH table entry obj%d\n",
+         optDetailString(),
+         node->getGlobalIndex(),
+         node,
+         vhIndex,
+         mhIndex))
+      {
+      return;
+      }
+
+   // obtain symref(s) for creating load for the MH table base
 #if JAVA_SPEC_VERSION <= 17
-         uint32_t typesAndInvokersOffset = comp()->fej9()->getInstanceFieldOffsetIncludingHeader("Ljava/lang/invoke/VarHandle;", "typesAndInvokers", "Ljava/lang/invoke/VarHandle$TypesAndInvokers;", comp()->getCurrentMethod());
-         const char * tisFieldNameAndSig = "java/lang/invoke/VarHandle.typesAndInvokers Ljava/lang/invoke/VarHandle$TypesAndInvokers;";
-         TR::SymbolReference *tisSymRef = comp()->getSymRefTab()->findOrFabricateShadowSymbol(comp()->getMethodSymbol(),
-                                                                                 TR::Symbol::Java_lang_invoke_VarHandle_typesAndInvokers,
-                                                                                 TR::Address,
-                                                                                 typesAndInvokersOffset,
-                                                                                 false,
-                                                                                 false,
-                                                                                 false,
-                                                                                 tisFieldNameAndSig);
-         TR::Node *tisNode = TR::Node::createWithSymRef(TR::aloadi, 1, 1, node->getFirstArgument(), tisSymRef);
-         tisNode->copyByteCodeInfo(node);
-         if (comp()->useCompressedPointers())
-            tt->insertBefore(TR::TreeTop::create(comp(), TR::Node::createCompressedRefsAnchor(tisNode)));
+   uint32_t typesAndInvokersOffset = comp()->fej9()->getInstanceFieldOffsetIncludingHeader("Ljava/lang/invoke/VarHandle;", "typesAndInvokers", "Ljava/lang/invoke/VarHandle$TypesAndInvokers;", comp()->getCurrentMethod());
+   const char * tisFieldNameAndSig = "java/lang/invoke/VarHandle.typesAndInvokers Ljava/lang/invoke/VarHandle$TypesAndInvokers;";
+   TR::SymbolReference *tisSymRef = comp()->getSymRefTab()->findOrFabricateShadowSymbol(comp()->getMethodSymbol(),
+                                                                           TR::Symbol::Java_lang_invoke_VarHandle_typesAndInvokers,
+                                                                           TR::Address,
+                                                                           typesAndInvokersOffset,
+                                                                           false,
+                                                                           false,
+                                                                           false,
+                                                                           tisFieldNameAndSig);
+   TR::Node *tisNode = TR::Node::createWithSymRef(TR::aloadi, 1, 1, node->getFirstArgument(), tisSymRef);
+   tisNode->copyByteCodeInfo(node);
+   if (comp()->useCompressedPointers())
+      {
+      tt->insertBefore(TR::TreeTop::create(comp(), TR::Node::createCompressedRefsAnchor(tisNode)));
+      }
 
-         uint32_t mhTableOffset = comp()->fej9()->getInstanceFieldOffsetIncludingHeader("Ljava/lang/invoke/VarHandle$TypesAndInvokers;", "methodHandle_table", "[Ljava/lang/invoke/MethodHandle;", comp()->getCurrentMethod());
-         const char * mhTableFieldNameAndSig = "java/lang/invoke/VarHandle$TypesAndInvokers.methodHandle_table [Ljava/lang/invoke/MethodHandle;";
-         TR::Node *mhTableHolder = tisNode;
-         bool mhTableIsFinal = true;
+   uint32_t mhTableOffset = comp()->fej9()->getInstanceFieldOffsetIncludingHeader("Ljava/lang/invoke/VarHandle$TypesAndInvokers;", "methodHandle_table", "[Ljava/lang/invoke/MethodHandle;", comp()->getCurrentMethod());
+   const char * mhTableFieldNameAndSig = "java/lang/invoke/VarHandle$TypesAndInvokers.methodHandle_table [Ljava/lang/invoke/MethodHandle;";
+   TR::Node *mhTableHolder = tisNode;
+   bool mhTableIsFinal = true;
 #else
-         uint32_t mhTableOffset = comp()->fej9()->getInstanceFieldOffsetIncludingHeader("Ljava/lang/invoke/VarHandle;", "methodHandleTable", "[Ljava/lang/invoke/MethodHandle;", comp()->getCurrentMethod());
-         const char * mhTableFieldNameAndSig = "java/lang/invoke/VarHandle.methodHandleTable [Ljava/lang/invoke/MethodHandle;";
-         TR::Node *mhTableHolder = node->getFirstArgument();
-         bool mhTableIsFinal = false;
+   uint32_t mhTableOffset = comp()->fej9()->getInstanceFieldOffsetIncludingHeader("Ljava/lang/invoke/VarHandle;", "methodHandleTable", "[Ljava/lang/invoke/MethodHandle;", comp()->getCurrentMethod());
+   const char * mhTableFieldNameAndSig = "java/lang/invoke/VarHandle.methodHandleTable [Ljava/lang/invoke/MethodHandle;";
+   TR::Node *mhTableHolder = node->getFirstArgument();
+   bool mhTableIsFinal = false;
 #endif /* JAVA_SPEC_VERSION <= 17 */
-         TR::SymbolReference *mhTableSymRef = comp()->getSymRefTab()->findOrFabricateShadowSymbol(comp()->getMethodSymbol(),
-                                                                                 TR::Symbol::Java_lang_invoke_VarHandle_methodHandleTable,
-                                                                                 TR::Address,
-                                                                                 mhTableOffset,
-                                                                                 false,
-                                                                                 false,
-                                                                                 mhTableIsFinal,
-                                                                                 mhTableFieldNameAndSig);
-         TR::Node *mhTableNode = TR::Node::createWithSymRef(TR::aloadi, 1, 1, mhTableHolder, mhTableSymRef);
-         mhTableNode->copyByteCodeInfo(node);
-         if (comp()->useCompressedPointers())
-            tt->insertBefore(TR::TreeTop::create(comp(), TR::Node::createCompressedRefsAnchor(mhTableNode)));
+   TR::SymbolReference *mhTableSymRef = comp()->getSymRefTab()->findOrFabricateShadowSymbol(comp()->getMethodSymbol(),
+                                                                           TR::Symbol::Java_lang_invoke_VarHandle_methodHandleTable,
+                                                                           TR::Address,
+                                                                           mhTableOffset,
+                                                                           false,
+                                                                           false,
+                                                                           mhTableIsFinal,
+                                                                           mhTableFieldNameAndSig);
+   TR::Node *mhTableNode = TR::Node::createWithSymRef(TR::aloadi, 1, 1, mhTableHolder, mhTableSymRef);
+   mhTableNode->copyByteCodeInfo(node);
+   if (comp()->useCompressedPointers())
+      {
+      tt->insertBefore(TR::TreeTop::create(comp(), TR::Node::createCompressedRefsAnchor(mhTableNode)));
+      }
 
-         // create node representing index for the load
-         TR::Node *arrayIndexNode = TR::Node::create(TR::iconst, 0, mhEntryIndex);
-         arrayIndexNode->copyByteCodeInfo(node);
+   // create node representing index for the load
+   TR::Node *arrayIndexNode = TR::Node::create(TR::iconst, 0, mhEntryIndex);
+   arrayIndexNode->copyByteCodeInfo(node);
 
-         // calculate element address, transform call node into load from array, and improve MH symref with known object info
-         TR::Node *mhAddressNode = J9::TransformUtil::calculateElementAddress(comp(), mhTableNode, arrayIndexNode, TR::Address);
-         mhAddressNode->copyByteCodeInfo(node);
+   // calculate element address, transform call node into load from array, and improve MH symref with known object info
+   TR::Node *mhAddressNode = J9::TransformUtil::calculateElementAddress(comp(), mhTableNode, arrayIndexNode, TR::Address);
+   mhAddressNode->copyByteCodeInfo(node);
 
-         anchorAllChildren(node, tt);
-         node->removeAllChildren();
-         TR::Node::recreateWithSymRef(node, TR::aloadi, comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::Address, mhTableNode));
-         node->setNumChildren(1);
-         node->setAndIncChild(0, mhAddressNode);
-         TR::SymbolReference *improvedMHSymRef = comp()->getSymRefTab()->findOrCreateSymRefWithKnownObject(node->getSymbolReference(), mhIndex);
-         node->setSymbolReference(improvedMHSymRef);
+   anchorAllChildren(node, tt);
+   node->removeAllChildren();
+   TR::Node::recreateWithSymRef(node, TR::aloadi, comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::Address, mhTableNode));
+   node->setNumChildren(1);
+   node->setAndIncChild(0, mhAddressNode);
+   TR::SymbolReference *improvedMHSymRef = comp()->getSymRefTab()->findOrCreateSymRefWithKnownObject(node->getSymbolReference(), mhIndex);
+   node->setSymbolReference(improvedMHSymRef);
 
-         // Insert spine check for arraylets
-         if (TR::Compiler->om.canGenerateArraylets())
-            {
-            TR::SymbolReference * spineCHKSymRef = comp()->getSymRefTab()->findOrCreateArrayBoundsCheckSymbolRef(comp()->getMethodSymbol());
-            TR::Node * spineCHKNode = TR::Node::create(node, TR::SpineCHK, 3);
-            spineCHKNode->setAndIncChild(0, node);
-            spineCHKNode->setAndIncChild(1, mhTableNode);
-            spineCHKNode->setAndIncChild(2, arrayIndexNode);
-            spineCHKNode->setSymbolReference(spineCHKSymRef);
-            spineCHKNode->setSpineCheckWithArrayElementChild(true, comp());
-            tt->insertBefore(TR::TreeTop::create(comp(), spineCHKNode));
-            }
+   // Insert spine check for arraylets
+   if (TR::Compiler->om.canGenerateArraylets())
+      {
+      TR::SymbolReference * spineCHKSymRef = comp()->getSymRefTab()->findOrCreateArrayBoundsCheckSymbolRef(comp()->getMethodSymbol());
+      TR::Node * spineCHKNode = TR::Node::create(node, TR::SpineCHK, 3);
+      spineCHKNode->setAndIncChild(0, node);
+      spineCHKNode->setAndIncChild(1, mhTableNode);
+      spineCHKNode->setAndIncChild(2, arrayIndexNode);
+      spineCHKNode->setSymbolReference(spineCHKSymRef);
+      spineCHKNode->setSpineCheckWithArrayElementChild(true, comp());
+      tt->insertBefore(TR::TreeTop::create(comp(), spineCHKNode));
+      }
 
-         if (comp()->useCompressedPointers())
-            tt->insertBefore(TR::TreeTop::create(comp(), TR::Node::createCompressedRefsAnchor(node)));
-
-         }
-      else return;
+   if (comp()->useCompressedPointers())
+      {
+      tt->insertBefore(TR::TreeTop::create(comp(), TR::Node::createCompressedRefsAnchor(node)));
       }
    }
