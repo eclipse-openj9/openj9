@@ -2388,6 +2388,9 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
 
    // Copy the newly allocated object into a collected reference register
    TR::Register *targetRegisterFinal = cg->allocateCollectedReferenceRegister();
+   TR::RegisterDependencyConditions *finalDependency =
+      new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg->trMemory());
+   finalDependency->addPostCondition(targetRegisterFinal, TR::RealRegister::NoReg);
    generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, targetRegisterFinal, targetReg);
 
    cg->stopUsingRegister(targetReg);
