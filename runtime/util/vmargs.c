@@ -577,18 +577,17 @@ optionValueOperations(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA
 				} else {
 					switch (*cursor) {
 						case '\0':
-							oldValue = value;
-							/* Round up to the next multiple of the pointer width */
-							value = (value + sizeof(UDATA) - 1) & ~(sizeof(UDATA) - 1);
-
-							if ((value < oldValue) || (((I_64) value) < ((I_64) oldValue))) {
-								/*
-								 * Truncate (round in a negative direction) when overflow is detected
-								 * in either the signed 64-bit or default unsigned representations.
-								 * This avoids sign issues regardless of downstream usage.
-								 */
-								value = oldValue & ~(sizeof(UDATA) - 1);
+#if defined(J9VM_ENV_DATA64)
+#define MEM_MAX_LIMIT I_64_MAX
+#else /* defined(J9VM_ENV_DATA64) */
+#define MEM_MAX_LIMIT U_32_MAX
+#endif /* defined(J9VM_ENV_DATA64) */
+							/* Round (up if possible) to a multiple of the pointer width. */
+							if (value < ((UDATA)MEM_MAX_LIMIT & ~(sizeof(UDATA) - 1))) {
+								value += sizeof(UDATA) - 1;
 							}
+							value &= ~(sizeof(UDATA) - 1);
+#undef MEM_MAX_LIMIT
 							break;
 						case 'k':
 						case 'K':
