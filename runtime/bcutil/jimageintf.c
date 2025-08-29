@@ -30,16 +30,17 @@
 #include "vm_api.h"
 
 static I_32 maplibJImageToJImageIntfError(I_32 error);
-static I_32 lookupSymbolsInJImageLib(J9PortLibrary *portLibrary, UDATA libJImageHandle);
+static UDATA lookupSymbolsInJImageLib(J9PortLibrary *portLibrary, UDATA libJImageHandle);
 static UDATA loadJImageLib(J9JavaVM *vm);
 static I_32 initJImageIntfCommon(J9JImageIntf **jimageIntf, J9JavaVM *vm, J9PortLibrary *portLibrary, UDATA libJImageHandle);
-
 
 static libJImageOpenType libJImageOpen;
 static libJImageCloseType libJImageClose;
 static libJImageFindResourceType libJImageFindResource;
 static libJImageGetResourceType libJImageGetResource;
+#if JAVA_SPEC_VERSION < 26
 static libJImagePackageToModuleType libJImagePackageToModule;
+#endif /* JAVA_SPEC_VERSION < 26 */
 
 /**
  * Maps error code returned by libjimage library to internal error code of jimage interface.
@@ -49,8 +50,9 @@ static libJImagePackageToModuleType libJImagePackageToModule;
  * @return error code used by jimage interface
  */
 static I_32
-maplibJImageToJImageIntfError(I_32 error) {
-	switch(error) {
+maplibJImageToJImageIntfError(I_32 error)
+{
+	switch (error) {
 	case JIMAGE_BAD_MAGIC:
 		return J9JIMAGE_BAD_MAGIC;
 	case JIMAGE_BAD_VERSION:
@@ -72,38 +74,40 @@ maplibJImageToJImageIntfError(I_32 error) {
  *
  * @return 0 on success; any other value on failure
  */
-static I_32
+static UDATA
 lookupSymbolsInJImageLib(J9PortLibrary *portLibrary, UDATA libJImageHandle)
 {
-	I_32 rc = 0;
+	UDATA rc = 0;
 	PORT_ACCESS_FROM_PORT(portLibrary);
 
 	/* lookup functions in jimage library */
-	rc = (I_32)j9sl_lookup_name(libJImageHandle, "JIMAGE_Open", (UDATA *)&libJImageOpen, "LLI");
+	rc = j9sl_lookup_name(libJImageHandle, "JIMAGE_Open", (UDATA *)&libJImageOpen, "PPP");
 	if (0 != rc) {
 		j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_JIMAGE_INTF_LIBJIMAGE_SYMBOL_LOOKUP_FAILED, "JIMAGE_Open");
 		goto _end;
 	}
-	rc = (I_32)j9sl_lookup_name(libJImageHandle, "JIMAGE_Close", (UDATA *)&libJImageClose, "VL");
+	rc = j9sl_lookup_name(libJImageHandle, "JIMAGE_Close", (UDATA *)&libJImageClose, "VP");
 	if (0 != rc) {
 		j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_JIMAGE_INTF_LIBJIMAGE_SYMBOL_LOOKUP_FAILED, "JIMAGE_Close");
 		goto _end;
 	}
-	rc = (I_32)j9sl_lookup_name(libJImageHandle, "JIMAGE_FindResource", (UDATA *)&libJImageFindResource, "JLLLLL");
+	rc = j9sl_lookup_name(libJImageHandle, "JIMAGE_FindResource", (UDATA *)&libJImageFindResource, "JPPPPP");
 	if (0 != rc) {
 		j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_JIMAGE_INTF_LIBJIMAGE_SYMBOL_LOOKUP_FAILED, "JIMAGE_FindResource");
 		goto _end;
 	}
-	rc = (I_32)j9sl_lookup_name(libJImageHandle, "JIMAGE_GetResource", (UDATA *)&libJImageGetResource, "JLJLJ");
+	rc = j9sl_lookup_name(libJImageHandle, "JIMAGE_GetResource", (UDATA *)&libJImageGetResource, "JPJPJ");
 	if (0 != rc) {
 		j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_JIMAGE_INTF_LIBJIMAGE_SYMBOL_LOOKUP_FAILED, "JIMAGE_GetResource");
 		goto _end;
 	}
-	rc = (I_32)j9sl_lookup_name(libJImageHandle, "JIMAGE_PackageToModule", (UDATA *)&libJImagePackageToModule, "LLL");
+#if JAVA_SPEC_VERSION < 26
+	rc = j9sl_lookup_name(libJImageHandle, "JIMAGE_PackageToModule", (UDATA *)&libJImagePackageToModule, "PPP");
 	if (0 != rc) {
 		j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_JIMAGE_INTF_LIBJIMAGE_SYMBOL_LOOKUP_FAILED, "JIMAGE_PackageToModule");
 		goto _end;
 	}
+#endif /* JAVA_SPEC_VERSION < 26 */
 
 _end:
 	return rc;
@@ -121,23 +125,21 @@ loadJImageLib(J9JavaVM *vm)
 {
 	J9VMDllLoadInfo jimageLoadInfo = {0};
 	UDATA handle = 0;
-	I_32 rc = 0;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	jimageLoadInfo.loadFlags |= (XRUN_LIBRARY | SILENT_NO_DLL);
-	strncpy((char *) &jimageLoadInfo.dllName, JIMAGE_LIBRARY_NAME, sizeof(JIMAGE_LIBRARY_NAME));
-	if (J9_VM_FUNCTION_VIA_JAVAVM(vm, loadJ9DLL)(vm, &jimageLoadInfo) != TRUE) {
-		/* Disable this message for time being as the libjimage.so is not present in espresso builds */
-#if 0
-		j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_JIMAGE_INTF_LIBJIMAGE_OPEN_FAILED);
-#endif /* if 0 */
-	} else {
+	jimageLoadInfo.loadFlags = XRUN_LIBRARY | SILENT_NO_DLL;
+	strncpy(jimageLoadInfo.dllName, JIMAGE_LIBRARY_NAME, sizeof(jimageLoadInfo.dllName));
+	if (J9_VM_FUNCTION_VIA_JAVAVM(vm, loadJ9DLL)(vm, &jimageLoadInfo)) {
 		handle = jimageLoadInfo.descriptor;
-		rc = lookupSymbolsInJImageLib(PORTLIB, handle);
-		if (0 != rc) {
+		if (0 != lookupSymbolsInJImageLib(PORTLIB, handle)) {
 			j9sl_close_shared_library(handle);
 			handle = 0;
 		}
+#if 0
+	} else {
+		/* Disable this message for time being as the libjimage.so is not present in espresso builds. */
+		j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_JIMAGE_INTF_LIBJIMAGE_OPEN_FAILED);
+#endif /* if 0 */
 	}
 	return handle;
 }
@@ -155,11 +157,12 @@ loadJImageLib(J9JavaVM *vm)
 static I_32
 initJImageIntfCommon(J9JImageIntf **jimageIntf, J9JavaVM *vm, J9PortLibrary *portLibrary, UDATA libJImageHandle)
 {
-	J9JImageIntf *intf = NULL;
-	I_32 rc = J9JIMAGE_NO_ERROR;
+	I_32 rc = J9JIMAGE_OUT_OF_MEMORY;
 	PORT_ACCESS_FROM_PORT(portLibrary);
+	J9JImageIntf *intf = j9mem_allocate_memory(sizeof(*intf), J9MEM_CATEGORY_CLASSES);
 
-	intf = j9mem_allocate_memory(sizeof(J9JImageIntf), J9MEM_CATEGORY_CLASSES);
+	*jimageIntf = intf;
+
 	if (NULL != intf) {
 		intf->vm = vm;
 		intf->portLib = portLibrary;
@@ -170,12 +173,10 @@ initJImageIntfCommon(J9JImageIntf **jimageIntf, J9JavaVM *vm, J9PortLibrary *por
 		intf->jimageFindResource = jimageFindResource;
 		intf->jimageFreeResourceLocation = jimageFreeResourceLocation;
 		intf->jimageGetResource = jimageGetResource;
+#if JAVA_SPEC_VERSION < 26
 		intf->jimagePackageToModule = jimagePackageToModule;
-
-		 *jimageIntf = intf;
-	} else {
-		*jimageIntf = NULL;
-		rc = J9JIMAGE_OUT_OF_MEMORY;
+#endif /* JAVA_SPEC_VERSION < 26 */
+		rc = J9JIMAGE_NO_ERROR;
 	}
 
 	return rc;
@@ -235,28 +236,25 @@ initJImageIntfWithLibrary(J9JImageIntf **jimageIntf, J9PortLibrary *portLibrary,
 
 	Trc_BCU_Assert_True(NULL != jimageIntf);
 
-	rc = (I_32)j9sl_open_shared_library((char *)libjimage, &libJImageHandle, 0);
-	if (0 == rc) {
-		rc = lookupSymbolsInJImageLib(PORTLIB, libJImageHandle);
-		if (0 != rc) {
-			j9sl_close_shared_library(libJImageHandle);
-			libJImageHandle = 0;
-			rc = J9JIMAGE_LIBJIMAGE_LOAD_FAILED;
-		} else {
-			rc = initJImageIntfCommon(jimageIntf, NULL /* vm */, portLibrary, libJImageHandle);
-		}
-	} else {
+	if (0 != j9sl_open_shared_library((char *)libjimage, &libJImageHandle, 0)) {
 		rc = J9JIMAGE_LIBJIMAGE_LOAD_FAILED;
+	} else if (0 != lookupSymbolsInJImageLib(PORTLIB, libJImageHandle)) {
+		j9sl_close_shared_library(libJImageHandle);
+		libJImageHandle = 0;
+		rc = J9JIMAGE_LIBJIMAGE_LOAD_FAILED;
+	} else {
+		rc = initJImageIntfCommon(jimageIntf, NULL /* vm */, portLibrary, libJImageHandle);
 	}
 
 	return rc;
 }
 
 void
-closeJImageIntf(J9JImageIntf *jimageIntf) {
+closeJImageIntf(J9JImageIntf *jimageIntf)
+{
 	PORT_ACCESS_FROM_PORT(jimageIntf->portLib);
 
-	if (jimageIntf->libJImageHandle) {
+	if (0 != jimageIntf->libJImageHandle) {
 		j9sl_close_shared_library(jimageIntf->libJImageHandle);
 	}
 	j9mem_free_memory(jimageIntf);
@@ -270,7 +268,7 @@ jimageOpen(J9JImageIntf *jimageIntf, const char *name, UDATA *handle)
 
 	Trc_BCU_Assert_True(NULL != handle);
 
-	if (jimageIntf->libJImageHandle) {
+	if (0 != jimageIntf->libJImageHandle) {
 		I_32 error = 0;
 
 		JImageFile *jimageFile = libJImageOpen(name, &error);
@@ -300,7 +298,7 @@ jimageClose(J9JImageIntf *jimageIntf, UDATA handle)
 {
 	PORT_ACCESS_FROM_PORT(jimageIntf->portLib);
 
-	if (jimageIntf->libJImageHandle) {
+	if (0 != jimageIntf->libJImageHandle) {
 		JImageFile *jimage = (JImageFile *)handle;
 		libJImageClose(jimage);
 	} else {
@@ -318,9 +316,9 @@ jimageFindResource(J9JImageIntf *jimageIntf, UDATA handle, const char *moduleNam
 	Trc_BCU_Assert_True(NULL != resourceLocation);
 	Trc_BCU_Assert_True(NULL != size);
 
-	if (jimageIntf->libJImageHandle) {
+	if (0 != jimageIntf->libJImageHandle) {
 		JImageFile *jimage = (JImageFile *)handle;
-		JImageLocationRef *locationRef = (JImageLocationRef *)j9mem_allocate_memory(sizeof(JImageLocationRef), J9MEM_CATEGORY_CLASSES);
+		JImageLocationRef *locationRef = (JImageLocationRef *)j9mem_allocate_memory(sizeof(*locationRef), J9MEM_CATEGORY_CLASSES);
 
 		if (NULL != locationRef) {
 			*locationRef = libJImageFindResource(jimage, moduleName, JIMAGE_VERSION_NUMBER, name, (jlong *)size);
@@ -335,7 +333,7 @@ jimageFindResource(J9JImageIntf *jimageIntf, UDATA handle, const char *moduleNam
 		}
 	} else {
 		J9JImage *jimage = (J9JImage *)handle;
-		J9JImageLocation *j9jimageLocation = j9mem_allocate_memory(sizeof(J9JImageLocation), J9MEM_CATEGORY_CLASSES);
+		J9JImageLocation *j9jimageLocation = j9mem_allocate_memory(sizeof(*j9jimageLocation), J9MEM_CATEGORY_CLASSES);
 		IDATA resourceNameLen = 1 + strlen(moduleName) + 1 + strlen(name) + 1; /* +1 for preceding '/' and, +1 for '/' between module and resource name, and +1 for \0 character */
 		char *resourceName = j9mem_allocate_memory(resourceNameLen, J9MEM_CATEGORY_CLASSES);
 		if ((NULL != j9jimageLocation) && (NULL != resourceName)) {
@@ -368,8 +366,7 @@ jimageFreeResourceLocation(J9JImageIntf *jimageIntf, UDATA handle, UDATA resourc
 	PORT_ACCESS_FROM_PORT(jimageIntf->portLib);
 
 	if (0 != resourceLocation) {
-		if (jimageIntf->libJImageHandle) {
-
+		if (0 != jimageIntf->libJImageHandle) {
 			j9mem_free_memory((JImageLocationRef *)resourceLocation);
 		} else {
 			j9mem_free_memory((J9JImageLocation *)resourceLocation);
@@ -385,7 +382,7 @@ jimageGetResource(J9JImageIntf *jimageIntf, UDATA handle, UDATA resourceLocation
 
 	Trc_BCU_Assert_True(NULL != buffer);
 
-	if (jimageIntf->libJImageHandle) {
+	if (0 != jimageIntf->libJImageHandle) {
 		JImageFile *jimage = (JImageFile *)handle;
 		JImageLocationRef *location = (JImageLocationRef *)resourceLocation;
 		I_64 size = libJImageGetResource(jimage, *location, buffer, bufferSize);
@@ -414,12 +411,14 @@ jimageGetResource(J9JImageIntf *jimageIntf, UDATA handle, UDATA resourceLocation
 const char *
 jimagePackageToModule(J9JImageIntf *jimageIntf, UDATA handle, const char *packageName)
 {
-	PORT_ACCESS_FROM_PORT(jimageIntf->portLib);
-
-	if (jimageIntf->libJImageHandle) {
+#if JAVA_SPEC_VERSION < 26
+	if (0 != jimageIntf->libJImageHandle) {
 		JImageFile *jimage = (JImageFile *)handle;
 		return libJImagePackageToModule(jimage, packageName);
-	} else {
+	} else
+#endif /* JAVA_SPEC_VERSION < 26 */
+	{
+		PORT_ACCESS_FROM_PORT(jimageIntf->portLib);
 		J9JImage *jimage = (J9JImage *)handle;
 		return j9bcutil_findModuleForPackage(PORTLIB, jimage, packageName);
 	}
