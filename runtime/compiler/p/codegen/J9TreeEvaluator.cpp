@@ -2090,8 +2090,11 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, nonZeroSecondDimLabel, condReg);
 
    // when the second dimension is zero, we allocate N zero-sized array headers padded for alignment
-   // temp2Reg = firstDimLenReg * zeroArraySizeAligned; zeroArraySizeAligned should be 2^n | n > 0
-   generateShiftLeftImmediateLong(cg, node, temp2Reg, firstDimLenReg, trailingZeroes(zeroArraySizeAligned));
+   // temp2Reg = firstDimLenReg * zeroArraySizeAligned
+   if (zeroArraySizeAligned == 8 || zeroArraySizeAligned == 16) // we can do a shift most of the times
+      generateShiftLeftImmediateLong(cg, node, temp2Reg, firstDimLenReg, trailingZeroes(zeroArraySizeAligned));
+   else
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::mulli, node, temp2Reg, firstDimLenReg, zeroArraySizeAligned);
    // temp2Reg = temp2Reg + temp1Reg + (targetReg = heapAlloc) = where heapAlloc will endup
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, temp2Reg, temp2Reg, temp1Reg);
    generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, targetReg,
