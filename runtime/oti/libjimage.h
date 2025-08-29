@@ -31,22 +31,23 @@ typedef void JImageFile;
 typedef jlong JImageLocationRef;
 
 typedef JImageFile * (*libJImageOpenType)(const char *name, jint *error);
-typedef void (*libJImageCloseType)(JImageFile* jimage);
-typedef JImageLocationRef(*libJImageFindResourceType)(JImageFile* jimage,
-        const char* module_name, const char* version, const char* name, jlong* size);
-typedef jlong(*libJImageGetResourceType)(JImageFile* jimage, JImageLocationRef location,
-        char* buffer, jlong size);
-typedef const char* (*libJImagePackageToModuleType)(JImageFile* jimage, const char* package_name);
+typedef void (*libJImageCloseType)(JImageFile *jimage);
+typedef JImageLocationRef (*libJImageFindResourceType)(JImageFile *jimage,
+		const char *module_name, const char *version, const char *name, jlong *size);
+typedef jlong (*libJImageGetResourceType)(JImageFile *jimage, JImageLocationRef location,
+		char *buffer, jlong size);
+#if JAVA_SPEC_VERSION < 26
+typedef const char * (*libJImagePackageToModuleType)(JImageFile *jimage, const char *package_name);
+#endif /* JAVA_SPEC_VERSION < 26 */
 
 #define JIMAGE_VERSION_NUMBER "9.0"
-
 
 #define JIMAGE_MAX_PATH 4096
 
 /* Error codes */
 #define JIMAGE_NOT_FOUND 0
-#define JIMAGE_BAD_MAGIC -1
-#define JIMAGE_BAD_VERSION -2
-#define JIMAGE_CORRUPTED -3
+#define JIMAGE_BAD_MAGIC (-1)
+#define JIMAGE_BAD_VERSION (-2)
+#define JIMAGE_CORRUPTED (-3)
 
 #endif /* libjimage_h */
