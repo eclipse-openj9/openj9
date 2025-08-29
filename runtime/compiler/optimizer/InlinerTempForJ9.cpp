@@ -2070,28 +2070,32 @@ TR_J9InlinerPolicy::createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *calleeSy
       switch (calleeSymbol->getRecognizedMethod()) {
       //boolean and char are unsigned so we need an unsigned conversion
       case TR::sun_misc_Unsafe_getBoolean_jlObjectJ_Z:
-      case TR::sun_misc_Unsafe_putBooleanVolatile_jlObjectJZ_V:
       case TR::sun_misc_Unsafe_getBooleanVolatile_jlObjectJ_Z:
+      case TR::jdk_internal_misc_Unsafe_getBooleanAcquire_jlObjectJ_Z:
+      case TR::jdk_internal_misc_Unsafe_getBooleanOpaque_jlObjectJ_Z:
 
       case TR::sun_misc_Unsafe_getChar_jlObjectJ_C:
       case TR::sun_misc_Unsafe_getCharVolatile_jlObjectJ_C:
-      case TR::sun_misc_Unsafe_getChar_J_C:
+      case TR::jdk_internal_misc_Unsafe_getCharAcquire_jlObjectJ_C:
+      case TR::jdk_internal_misc_Unsafe_getCharOpaque_jlObjectJ_C:
       case TR::jdk_internal_misc_Unsafe_getCharUnaligned:
          unsignedType = true;
          break;
       //byte and short are signed so we need a signed conversion
       case TR::sun_misc_Unsafe_getByte_jlObjectJ_B:
-      case TR::sun_misc_Unsafe_getByte_J_B:
       case TR::sun_misc_Unsafe_getByteVolatile_jlObjectJ_B:
+      case TR::jdk_internal_misc_Unsafe_getByteAcquire_jlObjectJ_B:
+      case TR::jdk_internal_misc_Unsafe_getByteOpaque_jlObjectJ_B:
 
       case TR::sun_misc_Unsafe_getShort_jlObjectJ_S:
       case TR::sun_misc_Unsafe_getShortVolatile_jlObjectJ_S:
-      case TR::sun_misc_Unsafe_getShort_J_S:
+      case TR::jdk_internal_misc_Unsafe_getShortAcquire_jlObjectJ_S:
+      case TR::jdk_internal_misc_Unsafe_getShortOpaque_jlObjectJ_S:
       case TR::jdk_internal_misc_Unsafe_getShortUnaligned:
          unsignedType = false;
          break;
       default:
-         TR_ASSERT(false, "all TR::sun_misc_Unsafe.get* methods must be handled.");
+         TR_ASSERT_FATAL(false, "all TR::sun_misc_Unsafe_get* and  TR::jdk_internal_misc_Unsafe_get* methods must be handled.");
       }
 
       TR::ILOpCodes conversionOpCode =
