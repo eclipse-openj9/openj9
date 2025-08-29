@@ -113,7 +113,7 @@ MM_RegionValidator::validate(MM_EnvironmentBase *env)
 				result = false;
 			}
 		}
-	} else if (_region->isArrayletLeaf()) {
+	} else if (_region->isArrayletLeaf() && !MM_GCExtensions::getExtensions(env)->isVirtualLargeObjectHeapEnabled) {
 		/* Do a quick check to ensure that arraylets look reasonable before the collection to help debug problems like CMVC 174687 */
 		if (NULL == _region->_allocateData.getSpine()) {
 			reportRegion(env, "NULL spine object");

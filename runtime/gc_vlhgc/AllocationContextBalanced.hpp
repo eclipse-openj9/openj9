@@ -71,6 +71,10 @@ private:
 	UDATA *_freeProcessorNodes;	/**< The array listing all the NUMA node numbers which account for the nodes with processors but no memory plus an empty slot for each context to use (element 0 is used by this context) - this is used when setting affinity */
 	UDATA _freeProcessorNodeCount;	/**< The length, in elements, of the _freeProcessorNodes array (always at least 1 after startup) */
 
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+	MM_HeapRegionDescriptorVLHGC *_arrayReservedRegionList; /** for Off-heap case only, adding and removing via region->_allocateData.pushRegionToArrayReservedRegionList/popRegionFromArrayReservedRegionList */
+	uintptr_t _arrayReservedRegionCount;
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 /* Methods */
 public:
 	static MM_AllocationContextBalanced *newInstance(MM_EnvironmentBase *env, MM_MemorySubSpaceTarok *subspace, UDATA numaNode, UDATA allocationContextNumber);
@@ -270,6 +274,34 @@ public:
 	 */
 	virtual bool setNumaAffinityForThread(MM_EnvironmentBase *env);
 
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+	MM_HeapRegionDescriptorVLHGC **getArrayReservedRegionListAddress()
+	{
+		return &_arrayReservedRegionList;
+	}
+
+	uintptr_t getArrayReservedRegionCount()
+	{
+		return _arrayReservedRegionCount;
+	}
+
+	void setArrayReservedRegionCount(uintptr_t reservedRegionCount)
+	{
+		_arrayReservedRegionCount = reservedRegionCount;
+	}
+
+	void incrementArrayReservedRegionCount()
+	{
+		_arrayReservedRegionCount += 1;
+	}
+
+	void decrementArrayReservedRegionCount()
+	{
+		_arrayReservedRegionCount -= 1;
+	}
+
+	void recycleReservedRegionsForVirtualLargeObjectHeap(MM_EnvironmentVLHGC *env, uintptr_t reservedRegionCount, bool needLock = false);
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 	
 protected:
 	virtual void tearDown(MM_EnvironmentBase *env);
@@ -293,6 +325,10 @@ protected:
 		, _heapRegionManager(NULL)
 		, _freeProcessorNodes(NULL)
 		, _freeProcessorNodeCount(0)
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+		, _arrayReservedRegionList(NULL)
+		, _arrayReservedRegionCount(0)
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 	{
 		_typeId = __FUNCTION__;
 	}
