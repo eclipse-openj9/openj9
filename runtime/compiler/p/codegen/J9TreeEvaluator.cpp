@@ -1930,13 +1930,588 @@ TR::Register *J9::Power::TreeEvaluator::anewArrayEvaluator(TR::Node *node, TR::C
       return TR::TreeEvaluator::VMnewEvaluator(node, cg);
    }
 
+static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node,
+                                                                 TR::CodeGenerator *cg,
+                                                                 int32_t leafArrayElementSize)
+   {
+   TR::Compilation *comp = cg->comp();
+   TR_Debug *compDebug = comp->getDebug();
+   TR_ASSERT_FATAL(comp->target().is64Bit(), "multianewArrayEvaluator is only supported on 64-bit JVMs!");
+   TR_J9VMBase *fej9 = comp->fej9();
+
+   // alignment requirement
+   int32_t alignmentInBytes = TR::Compiler->om.getObjectAlignmentInBytes();
+
+   // size of reference field and address
+   int32_t referenceFieldSize = TR::Compiler->om.sizeofReferenceField();
+   TR_ASSERT_FATAL(referenceFieldSize <= 8,
+      "multianewArrayEvaluator - referenceFieldSize cannot be greater than 8!");
+   int32_t addrSize = TR::Compiler->om.sizeofReferenceAddress();
+   // we use 64 bit classes only in 64 bit arch without compression
+   bool use64BitClasses = comp->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
+   TR::InstOpCode::Mnemonic storeClassOp = use64BitClasses ? TR::InstOpCode::std : TR::InstOpCode::stw;
+   int8_t classPtrLen = use64BitClasses ? 8 : 4;
+
+   // Zero size arrays are considered "discontiguous", and the "mustBeZero" field
+   // of discontiguous arrays must be located where the "size" field of contiguous arrays is.
+   UDATA offsetOfMustBeZeroField = fej9->getOffsetOfContiguousArraySizeField();
+
+   // the maximum number of elements we can handle without risking an overflow
+   uintptr_t maxObjectSizeInElements = cg->getMaxObjectSizeGuaranteedNotToOverflow() / referenceFieldSize;
+
+   // the size of a length-0 array in bytes taking alignment into account
+   int32_t zeroArraySizeAligned = OMR::align(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(),
+                                             alignmentInBytes);
+
+   // a length>0 array object would *not* require alignment if both a single element
+   // and the header are already the exact multiple of alignment; otherwise alignment is needed
+   bool needsAlignRefField = (OMR::align(referenceFieldSize, alignmentInBytes) != referenceFieldSize);
+   bool needsAlignLeaf = (OMR::align(leafArrayElementSize, alignmentInBytes) != leafArrayElementSize);
+   bool needsAlignHeader = (TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
+      != OMR::align(TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), alignmentInBytes));
+   // if an array needs alignment at runtime, we first add alignmentCompensation,
+   // then mask with (-alignmentInBytes)
+   int32_t alignmentCompensation = alignmentInBytes - 1;
+
+   // offHeap enabled
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+   bool isOffHeapAllocationEnabled = TR::Compiler->om.isOffHeapAllocationEnabled();
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+
+   // ptr to array of sizes, with the highest dimension in the front
+   TR::Register *dimsPtrReg = cg->evaluate(node->getFirstChild());
+   // number of dimensions - compile time constant
+   uint32_t nDims = node->getSecondChild()->get32bitIntegralValue();
+   // class pointer of objects in the array - in the 2D case this is the class of the subarray
+   TR::Register *classReg = cg->evaluate(node->getThirdChild());
+
+   // points to the resulting array allocated
+   TR::Register *targetReg = cg->allocateRegister();
+
+   TR::Register *firstDimLenReg = cg->allocateRegister();
+   TR::Register *secondDimLenReg = cg->allocateRegister();
+   TR::Register *temp1Reg = cg->allocateRegister();
+   TR::Register *temp2Reg = cg->allocateRegister();
+   TR::Register *temp3Reg = cg->allocateRegister();
+   TR::Register *subArraySizeReg = cg->allocateRegister();
+
+   TR::Register *vmThreadReg = cg->getMethodMetaDataRegister();
+   TR::Register *condReg = cg->allocateRegister(TR_CCR);
+
+   TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *nonZeroFirstDimLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *nonZeroSecondDimLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *loop2Label = generateLabelSymbol(cg);
+   TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
+
+   // out of line labels
+   TR::LabelSymbol *oolFailLabel = generateLabelSymbol(cg);
+   // oolJumpLabel is a common point that all branches will jump to.
+   // From this label, we branch to OOL code.
+   // We do this instead of jumping directly to OOL code from mainline
+   // since according to the x and z implementation that is not possible
+   TR::LabelSymbol *oolJumpLabel = generateLabelSymbol(cg);
+
+   startLabel->setStartInternalControlFlow();
+   endLabel->setEndInternalControlFlow();
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, startLabel);
+
+   // the fallback helper function, currently only used when there's a risk of heap overflow
+   TR_PPCOutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory())
+      TR_PPCOutOfLineCodeSection(node, TR::acall, targetReg, oolFailLabel, endLabel, cg);
+   cg->getPPCOutOfLineCodeSectionList().push_front(outlinedHelperCall);
+
+   // load the dimensions
+   generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, firstDimLenReg,
+      TR::MemoryReference::createWithDisplacement(cg, dimsPtrReg, 4, 4));
+   generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, secondDimLenReg,
+      TR::MemoryReference::createWithDisplacement(cg, dimsPtrReg, 0, 4));
+
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, condReg, firstDimLenReg, 0);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, nonZeroFirstDimLabel, condReg);
+
+   // if we reach here, both dimensions are zero, just allocate a zero-length object array
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, targetReg,
+      TR::MemoryReference::createWithDisplacement(cg, vmThreadReg,
+         offsetof(J9VMThread, heapAlloc), addrSize));
+
+   // see if we will have a heap overflow, if so go back to the ool call
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp1Reg, targetReg,
+                                  zeroArraySizeAligned);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, temp2Reg,
+      TR::MemoryReference::createWithDisplacement(cg, vmThreadReg,
+         offsetof(J9VMThread, heapTop), addrSize));
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::Op_cmpl, node, condReg, temp1Reg, temp2Reg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, oolJumpLabel, condReg);
+
+   // update the heapAlloc pointer to point to the next free space
+   generateMemSrc1Instruction(cg, TR::InstOpCode::Op_st, node,
+      TR::MemoryReference::createWithDisplacement(cg, vmThreadReg,
+         offsetof(J9VMThread, heapAlloc), addrSize), temp1Reg);
+
+   // initialise the class field in the header
+   generateMemSrc1Instruction(cg, storeClassOp, node,
+      TR::MemoryReference::createWithDisplacement(cg, targetReg,
+         TR::Compiler->om.offsetOfObjectVftField(), classPtrLen), classReg);
+   // the size and mustBeZero ('0') fields should be zero by default, so is dataAddr for Offheap
+
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
+
+   // === if we reach here, the first dimension is not zero
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, nonZeroFirstDimLabel);
+   // jump away if the object size for the array object is too large
+   // static cast and unsigned cmp copied from the x86 evaluator
+   loadConstant(cg, node, static_cast<int32_t>(maxObjectSizeInElements), temp3Reg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmpl4, node, condReg, firstDimLenReg, temp3Reg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, oolJumpLabel, condReg);
+
+   // check if we have enough space by accounting for the outer array object:
+   //    1. the header of a contiguous array
+   //    2. (firstDimLen * referenceFieldSize)
+   //    3. alignment padding
+   // temp1Reg = firstDimLenReg * referenceFieldSize; referenceFieldSize can only be 4 or 8
+   if (referenceFieldSize == 8)
+      generateShiftLeftImmediateLong(cg, node, temp1Reg, firstDimLenReg, 3);
+   else
+      generateShiftLeftImmediateLong(cg, node, temp1Reg, firstDimLenReg, 2);
+   // add the header size, and the alignment compensation if needed
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp1Reg, temp1Reg,
+      TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
+            + ((needsAlignHeader || needsAlignRefField) ? alignmentCompensation : 0));
+   if (needsAlignHeader || needsAlignRefField) // do a mask to ensure alignment
+      {
+      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, temp1Reg, temp1Reg,
+                                       0, -alignmentInBytes);
+      }
+
+   // jump away if the second dimension is not zero
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, condReg, secondDimLenReg, 0);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, nonZeroSecondDimLabel, condReg);
+
+   // when the second dimension is zero, we allocate N zero-sized array headers padded for alignment
+   // temp2Reg = firstDimLenReg * zeroArraySizeAligned
+   if (zeroArraySizeAligned == 8 || zeroArraySizeAligned == 16) // we can do a shift most of the times
+      generateShiftLeftImmediateLong(cg, node, temp2Reg, firstDimLenReg, trailingZeroes(zeroArraySizeAligned));
+   else
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::mulli, node, temp2Reg, firstDimLenReg, zeroArraySizeAligned);
+   // temp2Reg = temp2Reg + temp1Reg + (targetReg = heapAlloc) = where heapAlloc will endup
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, temp2Reg, temp2Reg, temp1Reg);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, targetReg,
+      TR::MemoryReference::createWithDisplacement(cg, vmThreadReg,
+         offsetof(J9VMThread, heapAlloc), addrSize));
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, temp2Reg, temp2Reg, targetReg);
+   // then, load the heapTop to see if we still have space; the secondDimLenReg used as temp
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, secondDimLenReg,
+      TR::MemoryReference::createWithDisplacement(cg, vmThreadReg,
+         offsetof(J9VMThread, heapTop), addrSize));
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::Op_cmpl, node, condReg, temp2Reg, secondDimLenReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, oolJumpLabel, condReg);
+   // update the heapAlloc pointer to point to the next free space
+   generateMemSrc1Instruction(cg, TR::InstOpCode::Op_st, node,
+      TR::MemoryReference::createWithDisplacement(cg, vmThreadReg,
+         offsetof(J9VMThread, heapAlloc), addrSize), temp2Reg);
+
+   // initialise the first dimension array's header's class and size
+   generateMemSrc1Instruction(cg, storeClassOp, node,
+      TR::MemoryReference::createWithDisplacement(cg, targetReg,
+         TR::Compiler->om.offsetOfObjectVftField(), classPtrLen), classReg);
+   generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
+      TR::MemoryReference::createWithDisplacement(cg, targetReg,
+         fej9->getOffsetOfContiguousArraySizeField(), 4), firstDimLenReg);
+
+   // load the component class
+   TR::Register *componentClassReg = secondDimLenReg; // we don't need the secondDimLenReg anymore
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, componentClassReg,
+      TR::MemoryReference::createWithDisplacement(cg, classReg,
+         offsetof(J9ArrayClass, componentType), addrSize));
+
+   // temp2Reg = targetReg + temp1Reg = start of the 2nd dimension headers
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, temp2Reg, temp1Reg, targetReg);
+   // temp1Reg points to the first element of the 1st dimension array by jumping over the header
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp1Reg, targetReg,
+      TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+   if (isOffHeapAllocationEnabled)
+      {
+      // the dataAddr field of the 1st dimension array, which is non-zero and hence contiguous,
+      // should point to the first element of the array i.e. temp1Reg
+      generateMemSrc1Instruction(cg, TR::InstOpCode::Op_st, node,
+         TR::MemoryReference::createWithDisplacement(cg, targetReg,
+            fej9->getOffsetOfContiguousDataAddrField(), addrSize), temp1Reg);
+      }
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
+
+   // --- ready the loop
+   generateSrc1Instruction(cg, TR::InstOpCode::mtctr, node, firstDimLenReg);
+
+   // === loop
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
+   // initialise a header in the second dimension with class = component
+   generateMemSrc1Instruction(cg, storeClassOp, node,
+      TR::MemoryReference::createWithDisplacement(cg, temp2Reg,
+         TR::Compiler->om.offsetOfObjectVftField(), classPtrLen), componentClassReg);
+   // size and mustBeZero are already zero by default, so is dataAddr for Offheap
+
+   // Store 2nd dim element into 1st dim array slot, compress temp2 if needed
+   if (comp->useCompressedPointers()) // only possible with 64-bit
+      {
+      int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
+      if (shiftAmount != 0)
+         {
+         // firstDimLenReg can be used as a temp
+         generateShiftRightLogicalImmediateLong(cg, node, firstDimLenReg, temp2Reg, shiftAmount);
+         generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
+            TR::MemoryReference::createWithDisplacement(cg, temp1Reg, 0, 4), firstDimLenReg);
+         }
+      else
+         {
+         generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
+            TR::MemoryReference::createWithDisplacement(cg, temp1Reg, 0, 4), temp2Reg);
+         }
+      }
+   else
+      {
+      generateMemSrc1Instruction(cg, TR::InstOpCode::Op_st, node,
+         TR::MemoryReference::createWithDisplacement(cg, temp1Reg, 0, addrSize), temp2Reg);
+      }
+
+   // index cursors temp1 and temp2
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp1Reg, temp1Reg, referenceFieldSize);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp2Reg, temp2Reg, zeroArraySizeAligned);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bdnz, node, loopLabel, condReg);
+
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
+
+   // === if we reach here, the second dimension is not zero
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, nonZeroSecondDimLabel);
+
+   // jump away if the object size for a subarray object is too large
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmpl4, node, condReg, secondDimLenReg, temp3Reg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, oolJumpLabel, condReg);
+
+   // We need N subarrays; each subarray should contain the following:
+   //    1. header of a second dimension array
+   //    2. (secondDimLen * leafArrayElementSize)
+   //    3. alignment padding
+   // temp2Reg = secondDimLenReg * leafArrayElementSize
+   if (leafArrayElementSize != 1)
+      {
+      generateShiftLeftImmediateLong(cg, node, temp2Reg, secondDimLenReg, trailingZeroes(leafArrayElementSize));
+      // add alignment compensation, and the header size
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, subArraySizeReg, temp2Reg,
+         TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
+            + ((needsAlignHeader || needsAlignLeaf) ? alignmentCompensation : 0));
+      }
+   else // save an instruction if the leafArrayElementSize is 1
+      {
+      // add alignment compensation, and the header size
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, subArraySizeReg, secondDimLenReg,
+         TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
+            + ((needsAlignHeader || needsAlignLeaf) ? alignmentCompensation : 0));
+      }
+   if (needsAlignHeader || needsAlignLeaf) // do a mask to ensure alignment
+      {
+      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, subArraySizeReg, subArraySizeReg,
+                                       0, -alignmentInBytes);
+      }
+   // temp2Reg = subArraySizeReg * firstDimLenReg = the space required for all subarrays
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::mulld, node, temp2Reg, subArraySizeReg, firstDimLenReg);
+
+   // temp2Reg = temp2Reg + temp1Reg + (targetReg = heapAlloc) = where heapAlloc will endup
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, temp2Reg, temp2Reg, temp1Reg);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, targetReg,
+      TR::MemoryReference::createWithDisplacement(cg, vmThreadReg,
+         offsetof(J9VMThread, heapAlloc), addrSize));
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, temp2Reg, temp2Reg, targetReg);
+   // then, load the heapTop to see if we still have space
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, temp3Reg,
+      TR::MemoryReference::createWithDisplacement(cg, vmThreadReg,
+         offsetof(J9VMThread, heapTop), addrSize));
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::Op_cmpl, node, condReg, temp2Reg, temp3Reg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, oolJumpLabel, condReg);
+   // update the heapAlloc pointer to point to the next free space
+   generateMemSrc1Instruction(cg, TR::InstOpCode::Op_st, node,
+      TR::MemoryReference::createWithDisplacement(cg, vmThreadReg,
+         offsetof(J9VMThread, heapAlloc), addrSize), temp2Reg);
+
+   // initialise the first dimension array's header's class and size
+   generateMemSrc1Instruction(cg, storeClassOp, node,
+      TR::MemoryReference::createWithDisplacement(cg, targetReg,
+         TR::Compiler->om.offsetOfObjectVftField(), classPtrLen), classReg);
+   generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
+      TR::MemoryReference::createWithDisplacement(cg, targetReg,
+         fej9->getOffsetOfContiguousArraySizeField(), 4), firstDimLenReg);
+
+   // load the component class
+   componentClassReg = temp3Reg;
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, componentClassReg,
+      TR::MemoryReference::createWithDisplacement(cg, classReg,
+         offsetof(J9ArrayClass, componentType), addrSize));
+
+   // temp2Reg = targetReg + temp1Reg = start of the 2nd dimension subarrays
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, temp2Reg, temp1Reg, targetReg);
+   // temp1Reg points to the first element of the 1st dimension array by jumping over the header
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp1Reg, targetReg,
+      TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+   if (isOffHeapAllocationEnabled)
+      {
+      // the dataAddr field of the 1st dimension array, which is non-zero and hence contiguous,
+      // should point to the first element of the array i.e. temp1Reg
+      generateMemSrc1Instruction(cg, TR::InstOpCode::Op_st, node,
+         TR::MemoryReference::createWithDisplacement(cg, targetReg,
+            fej9->getOffsetOfContiguousDataAddrField(), addrSize), temp1Reg);
+      }
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
+
+   // --- ready the loop
+   generateSrc1Instruction(cg, TR::InstOpCode::mtctr, node, firstDimLenReg);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, loop2Label);
+   // initialise a header in the second dimension with class = component
+   generateMemSrc1Instruction(cg, storeClassOp, node,
+      TR::MemoryReference::createWithDisplacement(cg, temp2Reg,
+         TR::Compiler->om.offsetOfObjectVftField(), classPtrLen), componentClassReg);
+   // mustBeZero is already zero by default
+   // all the elements in the subarray are also null by default, hooray for no initialisation needed
+   generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
+      TR::MemoryReference::createWithDisplacement(cg, temp2Reg,
+         fej9->getOffsetOfContiguousArraySizeField(), 4), secondDimLenReg);
+
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+   if (isOffHeapAllocationEnabled)
+      {
+      // the dataAddr field of the 2nd dimension subarray, which is non-zero and hence contiguous,
+      // should point to where the first element should start, i.e. over the header
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, firstDimLenReg, temp2Reg,
+         TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+      generateMemSrc1Instruction(cg, TR::InstOpCode::Op_st, node,
+         TR::MemoryReference::createWithDisplacement(cg, temp2Reg,
+            fej9->getOffsetOfContiguousDataAddrField(), addrSize), firstDimLenReg);
+      }
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
+
+   // Store 2nd dim element into 1st dim array slot, compress temp2 if needed
+   if (comp->useCompressedPointers()) // only possible with 64-bit
+      {
+      int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
+      if (shiftAmount != 0)
+         {
+         // firstDimLenReg can be used as a temp
+         generateShiftRightLogicalImmediateLong(cg, node, firstDimLenReg, temp2Reg, shiftAmount);
+         generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
+            TR::MemoryReference::createWithDisplacement(cg, temp1Reg, 0, 4), firstDimLenReg);
+         }
+      else
+         {
+         generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
+            TR::MemoryReference::createWithDisplacement(cg, temp1Reg, 0, 4), temp2Reg);
+         }
+      }
+   else
+      {
+      generateMemSrc1Instruction(cg, TR::InstOpCode::Op_st, node,
+         TR::MemoryReference::createWithDisplacement(cg, temp1Reg, 0, addrSize), temp2Reg);
+      }
+   // index cursors temp1 and temp2
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp1Reg, temp1Reg, referenceFieldSize);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, temp2Reg, temp2Reg, subArraySizeReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bdnz, node, loop2Label, condReg);
+
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
+
+   // === jump point because according to the x and z implementation we can't jump straight to oolFail
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, oolJumpLabel);
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, oolFailLabel);
+
+   // we need to include post dependencies from the call node if they didn't copy the children nodes
+   // (in which case they should be handled inside the function), and they use registers different
+   // from the main line
+   // I don't know if this is possible at all, every time I tested the results are just all zeros
+   TR::Node *callNode = outlinedHelperCall->getCallNode();
+   int callUsesFirstChild = (callNode->getFirstChild() == node->getFirstChild()) &&
+                            (callNode->getFirstChild()->getRegister()) &&
+                            (callNode->getFirstChild()->getRegister() != dimsPtrReg);
+   int callUsesSecondChild = (callNode->getSecondChild() == node->getSecondChild()) &&
+                            (callNode->getSecondChild()->getRegister());
+   int callUsesThirdChild = (callNode->getThirdChild() == node->getThirdChild()) &&
+                            (callNode->getThirdChild()->getRegister()) &&
+                            (callNode->getThirdChild()->getRegister() != classReg);
+   int numDeps = 12 + callUsesFirstChild + callUsesSecondChild + callUsesThirdChild;
+
+   TR::RegisterDependencyConditions *dependencies =
+      new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, numDeps, cg->trMemory());
+   dependencies->addPostCondition(dimsPtrReg, TR::RealRegister::NoReg);
+   dependencies->getPostConditions()->getRegisterDependency(dependencies->getAddCursorForPost() - 1)->setExcludeGPR0();
+
+   dependencies->addPostCondition(classReg, TR::RealRegister::NoReg);
+   dependencies->getPostConditions()->getRegisterDependency(dependencies->getAddCursorForPost() - 1)->setExcludeGPR0();
+
+
+   dependencies->addPostCondition(targetReg, TR::RealRegister::NoReg);
+   dependencies->getPostConditions()->getRegisterDependency(dependencies->getAddCursorForPost() - 1)->setExcludeGPR0();
+
+   dependencies->addPostCondition(firstDimLenReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(secondDimLenReg, TR::RealRegister::NoReg);
+
+   dependencies->addPostCondition(temp1Reg, TR::RealRegister::NoReg);
+   dependencies->getPostConditions()->getRegisterDependency(dependencies->getAddCursorForPost() - 1)->setExcludeGPR0();
+
+   dependencies->addPostCondition(temp2Reg, TR::RealRegister::NoReg);
+   dependencies->getPostConditions()->getRegisterDependency(dependencies->getAddCursorForPost() - 1)->setExcludeGPR0();
+   dependencies->addPostCondition(temp3Reg, TR::RealRegister::NoReg);
+   dependencies->getPostConditions()->getRegisterDependency(dependencies->getAddCursorForPost() - 1)->setExcludeGPR0();
+
+   dependencies->addPostCondition(subArraySizeReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(condReg, TR::RealRegister::NoReg);
+
+   TR::Register *reg;
+   if (callUsesFirstChild)
+      {
+      dependencies->addPostCondition(callNode->getFirstChild()->getRegister(),
+                                     TR::RealRegister::NoReg);
+      }
+   if (callUsesSecondChild)
+      {
+      dependencies->addPostCondition(callNode->getSecondChild()->getRegister(),
+                                     TR::RealRegister::NoReg);
+      }
+   if (callUsesThirdChild)
+      {
+      dependencies->addPostCondition(callNode->getThirdChild()->getRegister(),
+                                     TR::RealRegister::NoReg);
+      }
+
+   generateDepLabelInstruction(cg, TR::InstOpCode::label, node, endLabel, dependencies);
+
+   // Copy the newly allocated object into a collected reference register
+   TR::Register *targetRegisterFinal = cg->allocateCollectedReferenceRegister();
+   TR::RegisterDependencyConditions *finalDependency =
+      new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg->trMemory());
+   finalDependency->addPostCondition(targetRegisterFinal, TR::RealRegister::NoReg);
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, targetRegisterFinal, targetReg);
+
+   cg->stopUsingRegister(targetReg);
+   cg->stopUsingRegister(dimsPtrReg);
+   cg->stopUsingRegister(classReg);
+   cg->stopUsingRegister(firstDimLenReg);
+   cg->stopUsingRegister(secondDimLenReg);
+   cg->stopUsingRegister(temp1Reg);
+   cg->stopUsingRegister(temp2Reg);
+   cg->stopUsingRegister(temp3Reg);
+   cg->stopUsingRegister(subArraySizeReg);
+   cg->stopUsingRegister(condReg);
+
+   cg->decReferenceCount(node->getFirstChild());
+   cg->decReferenceCount(node->getSecondChild());
+   cg->decReferenceCount(node->getThirdChild());
+
+   node->setRegister(targetRegisterFinal);
+   return targetRegisterFinal;
+   }
+
+
 TR::Register *J9::Power::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR::ILOpCodes opCode = node->getOpCodeValue();
-   TR::Node::recreate(node, TR::acall);
-   TR::Register *targetRegister = directCallEvaluator(node, cg);
-   TR::Node::recreate(node, opCode);
-   return targetRegister;
+   TR::Compilation *comp = cg->comp();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
+   TR_ASSERT_FATAL(comp->target().is64Bit(), "multianewArrayEvaluator is only supported on 64-bit JVMs!");
+
+   // Number of dimensions - this is fixed in the bytecode, so compile time constant
+   TR::Node *secondChild = node->getSecondChild();
+   // The number of dimensions should always be an iconst
+   TR_ASSERT_FATAL(secondChild->getOpCodeValue() == TR::iconst, "dims of multianewarray must be iconst");
+   uint32_t nDims = secondChild->get32bitIntegralValue();
+   static bool disableInlineMultianewArray = feGetEnv("TR_DisableInlineMultianewArray") != NULL;
+
+   // Get the size of the elements in the leaf components
+   int32_t leafArrayElementSize = -1;
+   TR::Node *classNode = node->getThirdChild();
+   TR::SymbolReference *classSymRef = NULL;
+   const TR::ILOpCodes opcode = classNode->getOpCodeValue();
+   bool isClassNodeLoadAddr = opcode == TR::loadaddr;
+   // getting the symref
+   if (isClassNodeLoadAddr)
+      {
+      classSymRef = classNode->getSymbolReference();
+      }
+   else if (opcode == TR::aloadi)
+      {
+      // recognizedCallTransformer adds another layer of aloadi
+      while (classNode->getOpCodeValue() == TR::aloadi && classNode->getFirstChild()->getOpCodeValue() == TR::aloadi)
+         {
+         classNode = classNode->getFirstChild();
+         }
+
+      if (classNode->getOpCodeValue() == TR::aloadi && classNode->getFirstChild()->getOpCodeValue() == TR::loadaddr)
+         {
+         classSymRef = classNode->getFirstChild()->getSymbolReference();
+         }
+      }
+   // Infer the data type and length from the signature
+   if (classSymRef)
+      {
+      int32_t len;
+      const char *sig = classSymRef->getTypeSignature(len);
+      if (sig)
+         {
+         if (sig[0] == '[' && sig[1] == '[')
+            {
+            switch (sig[2])
+               {
+               case 'B':
+                  leafArrayElementSize = 1;
+                  break;
+               case 'C':
+               case 'S':
+                  leafArrayElementSize = 2;
+                  break;
+               case 'I':
+               case 'F':
+                  leafArrayElementSize = 4;
+                  break;
+               case 'D':
+               case 'J':
+                  leafArrayElementSize = 8;
+                  break;
+               case 'Z':
+                  leafArrayElementSize =
+                     static_cast<int32_t>(TR::Compiler->om.elementSizeOfBooleanArray());
+                  break;
+               case 'L':
+               default :
+                  leafArrayElementSize = TR::Compiler->om.sizeofReferenceField();
+                  break;
+               }
+            }
+         }
+      }
+
+
+   // Anything with more than 2 dimensions will be replaced by a direct call when lowering trees,
+   // so this is functionally equivalent of saying only inline if the dimension is exactly 2.
+   // We also need to make sure the TLH is properly zeroed.
+   // Finally, we need to be sure we know the elementSize
+   if (nDims > 1 && !disableInlineMultianewArray
+         && fej9->tlhHasBeenCleared() && !comp->getOptions()->realTimeGC()
+         && leafArrayElementSize != -1)
+      {
+      return generateMultianewArrayWithInlineAllocators(node, cg, leafArrayElementSize);
+      }
+   else
+      {
+      if (comp->getOption(TR_TraceCG))
+         {
+         traceMsg(comp, "Disabling inline allocations for multianewarray of dim %d\n", nDims);
+         }
+      TR::ILOpCodes opCode = node->getOpCodeValue();
+      TR::Node::recreate(node, TR::acall);
+      TR::Register *targetRegister = TR::TreeEvaluator::performCall(node, false, cg);
+      TR::Node::recreate(node, opCode);
+      return targetRegister;
+      }
    }
 
 TR::Register *J9::Power::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::CodeGenerator *cg)
