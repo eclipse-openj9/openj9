@@ -47,7 +47,6 @@ OutOfLineINL_openj9_internal_foreign_abi_InternalUpcallHandler_allocateUpcallStu
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9UpcallMetaData *upcallMetaData = NULL;
-	j9object_t mhMetaData = NULL;
 	j9object_t invokeCache = NULL;
 	J9UpcallNativeSignature *nativeSig = NULL;
 	J9UpcallSigType *sigArray = NULL;
@@ -55,8 +54,11 @@ OutOfLineINL_openj9_internal_foreign_abi_InternalUpcallHandler_allocateUpcallStu
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	j9object_t cSigStrs = (j9object_t)currentThread->sp[0];
+	j9object_t mhMetaData = (j9object_t)currentThread->sp[1];
 	/* the last element of the array is the signature of return type */
 	U_32 sigCount  = J9INDEXABLEOBJECT_SIZE(currentThread, cSigStrs);
+
+	VM_OutOfLineINL_Helpers::buildInternalNativeStackFrame(currentThread, method);
 
 	/* Note: the J9UpcallMetaData pointer will be stored in the generated thunk as data
 	 * in which case it is released only when the generated thunk memory is released
@@ -112,7 +114,6 @@ OutOfLineINL_openj9_internal_foreign_abi_InternalUpcallHandler_allocateUpcallStu
 	upcallMetaData->vm = vm;
 	upcallMetaData->downCallThread = currentThread;
 	upcallMetaData->nativeFuncSignature = nativeSig;
-	mhMetaData = (j9object_t)currentThread->sp[1];
 	upcallMetaData->mhMetaData = j9jni_createGlobalRef((JNIEnv*)currentThread, mhMetaData, false);
 	if (NULL == upcallMetaData->mhMetaData) {
 		rc = GOTO_THROW_CURRENT_EXCEPTION;
@@ -123,7 +124,6 @@ OutOfLineINL_openj9_internal_foreign_abi_InternalUpcallHandler_allocateUpcallStu
 	/* The resolution is performed by MethodHandleResolver.ffiCallLinkCallerMethod()
 	 * to obtain a MemberName object plus appendix in a two element object array.
 	 */
-	VM_OutOfLineINL_Helpers::buildInternalNativeStackFrame(currentThread, method);
 	invokeCache = resolveFfiCallInvokeHandle(
 			currentThread,
 			J9VMOPENJ9INTERNALFOREIGNABIUPCALLMHMETADATA_CALLEEMH(
