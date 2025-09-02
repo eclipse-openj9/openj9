@@ -306,7 +306,7 @@ peekClassHashTable(J9VMThread* currentThread, J9ClassLoader* classLoader, U_8* c
 	if (!fastMode) {
 		omrthread_monitor_enter(vm->classTableMutex);
 	}
-	ramClass = hashClassTableAt(classLoader, className, classNameLength);
+	ramClass = hashClassTableAt(classLoader, className, classNameLength, J9_HASH_TABLE_LOOKUP_FLAG_JCL_DEFINE_CLASS);
 	if (!fastMode) {
 		omrthread_monitor_exit(vm->classTableMutex);
 	}
@@ -319,12 +319,18 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 	J9Class *result = NULL;
 	J9JavaVM* vm = currentThread->javaVM;
 	BOOLEAN fastMode = J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_FAST_CLASS_HASH_TABLE);
+	UDATA flags = J9_HASH_TABLE_LOOKUP_FLAG_JCL_DEFINE_CLASS;
 
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_RESTORE_RUN(vm)) {
+		flags = 0;
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	/* If -XX:+FastClassHashTable is enabled, do not lock anything to do the initial table peek */
 	if (!fastMode) {
 		omrthread_monitor_enter(vm->classTableMutex);
 	}
-	result = hashClassTableAtString(classLoader, (j9object_t) className);
+	result = hashClassTableAtString(classLoader, (j9object_t) className, flags);
 #if defined(J9VM_OPT_SNAPSHOTS)
 	if ((NULL != result) && IS_RESTORE_RUN(vm)) {
 		if (!loadWarmClassFromSnapshot(currentThread, classLoader, result)) {
@@ -808,7 +814,7 @@ callLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9Cla
 			} else {
 				/* See if a class of this name is already in the table - if not, add it */
 
-				ramClass = hashClassTableAt(classLoader, className, classNameLength);
+				ramClass = hashClassTableAt(classLoader, className, classNameLength, J9_HASH_TABLE_LOOKUP_FLAG_JCL_DEFINE_CLASS);
 				if (NULL == ramClass) {
 					/* Ensure loading constraints have not been violated */
 
@@ -836,7 +842,7 @@ callLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9Cla
 
 						/* See if a class of this name is already in the table - if not, try the add again */
 
-						ramClass = hashClassTableAt(classLoader, className, classNameLength);
+						ramClass = hashClassTableAt(classLoader, className, classNameLength, J9_HASH_TABLE_LOOKUP_FLAG_JCL_DEFINE_CLASS);
 						if (NULL == ramClass) {
 							if (!hashClassTableAtPut(vmThread, classLoader, className, classNameLength, foundClass)) {
 								addedClassToInitiatingLoader = TRUE;
@@ -902,7 +908,13 @@ waitForContendedLoadClass(J9VMThread* vmThread, J9ContendedLoadTableEntry *table
 	J9VMThread *monitorOwner = NULL;
 	UDATA status = CLASSLOADING_DUMMY;
 	J9JavaVM *vm = vmThread->javaVM;
+	UDATA flags = J9_HASH_TABLE_LOOKUP_FLAG_JCL_DEFINE_CLASS;
 
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_RESTORE_RUN(vm)) {
+		flags = 0;
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	Trc_VM_waitForContendedLoadClass_getObjectMonitorOwner(vmThread, vmThread, tableEntry->classLoader, classNameLength, className);
 	Assert_VM_mustHaveVMAccess(vmThread);
 	/* get here if and only if someone else is loading the class */
@@ -922,7 +934,7 @@ waitForContendedLoadClass(J9VMThread* vmThread, J9ContendedLoadTableEntry *table
 	} while ((status = tableEntry->status) == CLASSLOADING_LOAD_IN_PROGRESS);
 	/* still have classTableMutex here */
 	Trc_VM_waitForContendedLoadClass_waited(vmThread, vmThread, tableEntry->classLoader, classNameLength, className, status);
-	foundClass = hashClassTableAt(tableEntry->classLoader, className, classNameLength);
+	foundClass = hashClassTableAt(tableEntry->classLoader, className, classNameLength, flags);
 #if defined(J9VM_OPT_SNAPSHOTS)
 	if ((NULL != foundClass) && IS_RESTORE_RUN(vm)) {
 		if (!loadWarmClassFromSnapshot(vmThread, tableEntry->classLoader, foundClass)) {
@@ -1151,7 +1163,13 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 	BOOLEAN lockLoaderMonitor = FALSE;
 	BOOLEAN fastMode = J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_FAST_CLASS_HASH_TABLE);
 	BOOLEAN loaderMonitorLocked = FALSE;
+	UDATA flags = J9_HASH_TABLE_LOOKUP_FLAG_JCL_DEFINE_CLASS;
 
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_RESTORE_RUN(vm)) {
+		flags = 0;
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	vmThread->privateFlags &= ~J9_PRIVATE_FLAGS_CLOAD_NO_MEM;
 
 	if (J9CLASSLOADER_PARALLEL_CAPABLE == (J9CLASSLOADER_PARALLEL_CAPABLE & classLoader->flags)) {
@@ -1181,7 +1199,7 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 		omrthread_monitor_enter(vm->classTableMutex);
 	}
 
-	foundClass = hashClassTableAt(classLoader, className, classNameLength);
+	foundClass = hashClassTableAt(classLoader, className, classNameLength, flags);
 	if (NULL != foundClass) {
 #if defined(J9VM_OPT_SNAPSHOTS)
 		if (IS_RESTORE_RUN(vm)) {
@@ -1212,7 +1230,7 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 				omrthread_monitor_enter(vm->classTableMutex);
 
 				/* check again if somebody else already loaded the class */
-				foundClass = hashClassTableAt(classLoader, className, classNameLength);
+				foundClass = hashClassTableAt(classLoader, className, classNameLength, flags);
 				if (NULL != foundClass) {
 #if defined(J9VM_OPT_SNAPSHOTS)
 					if (IS_RESTORE_RUN(vm)
