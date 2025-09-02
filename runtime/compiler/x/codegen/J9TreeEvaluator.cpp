@@ -1864,7 +1864,7 @@ TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Cod
       if ((repMovsThresholdBytes < newThreshold) && ((newThreshold == 64) || (newThreshold == 128)))
          {
          // If the CPU doesn't support AVX512, reduce the threshold to 64 bytes
-         repMovsThresholdBytes = ((newThreshold == 128) && !comp->target().cpu.supportsFeature(OMR_FEATURE_X86_AVX512F)) ? 64 : newThreshold;
+         repMovsThresholdBytes = ((newThreshold == 128) && cg->getMaxPreferredVectorLength() != TR::VectorLength512) ? 64 : newThreshold;
          }
 
       if (enableInlineForSmallSize)
