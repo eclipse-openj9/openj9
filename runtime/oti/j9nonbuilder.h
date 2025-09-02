@@ -98,7 +98,17 @@
 #define J9ClassNeedToPruneMemberNames 0x1000000
 #define J9ClassArrayIsNullRestricted 0x2000000
 #define J9ClassIsLoadedFromSnapshot 0x4000000
+/*
+ * The frozen flag is set when a J9Class is returned from persisted state and has not yet
+ * been fully loaded for the restore run. Note, this flag can only be set in a restore run.
+ * As soon as the class is fully loaded, the frozen flag is removed.
+ */
 #define J9ClassIsFrozen 0x8000000
+/*
+ * Indicates that when the class was initially loaded in the snapshot run,
+ * it was loaded from defineClassCommon() in jcldefine.c.
+ */
+#define J9ClassIsJCLDefineClass 0x10000000
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 

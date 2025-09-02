@@ -459,6 +459,11 @@ extern "C" {
 #define J9_FINDCLASS_FLAG_LAMBDA 0x200000
 #define J9_FINDCLASS_FLAG_LAMBDAFORM 0x400000
 #define J9_FINDCLASS_FLAG_CLASS_OPTION_NULL_RESTRICTED_ARRAY 0x800000
+/*
+ * Used to permit a caller to find classes that are frozen and are originally
+ * loaded in defineClassesCommon().
+ */
+#define J9_FINDCLASS_FLAG_DONT_SKIP_FROZEN_JCL_DEFINE_CLASS 0x1000000
 
 #define J9_FINDKNOWNCLASS_FLAG_INITIALIZE 0x1
 #define J9_FINDKNOWNCLASS_FLAG_EXISTING_ONLY 0x2

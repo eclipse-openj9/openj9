@@ -349,6 +349,11 @@ hashClassTableAt(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLeng
 		if (J9ROMCLASS_IS_HIDDEN(clazz->romClass)) {
 			return NULL;
 		}
+		if (J9_ARE_NO_BITS_SET(flags, J9_FINDCLASS_FLAG_DONT_SKIP_FROZEN_JCL_DEFINE_CLASS)
+			&& J9_ARE_ALL_BITS_SET(clazz->classFlags, J9ClassIsJCLDefineClass | J9ClassIsFrozen)
+		) {
+			return NULL;
+		}
 		return clazz;
 	} else {
 		return NULL;
@@ -746,6 +751,11 @@ hashClassTableAtString(J9ClassLoader *classLoader, j9object_t stringObject, UDAT
 		J9Class *clazz = result->ramClass;
 		checkClassAlignment(clazz, "hashClassTableAtString");
 		if (J9ROMCLASS_IS_HIDDEN(clazz->romClass)) {
+			return NULL;
+		}
+		if (J9_ARE_NO_BITS_SET(flags, J9_FINDCLASS_FLAG_DONT_SKIP_FROZEN_JCL_DEFINE_CLASS)
+			&& J9_ARE_ALL_BITS_SET(clazz->classFlags, J9ClassIsJCLDefineClass | J9ClassIsFrozen)
+		) {
 			return NULL;
 		}
 		return clazz;
