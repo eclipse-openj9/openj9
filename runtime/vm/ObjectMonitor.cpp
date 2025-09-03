@@ -290,6 +290,8 @@ releasedAccess:
 				J9_STORE_LOCKWORD(currentThread, lwEA, lock);
 				goto done;
 			}
+			/* Set j.l.Thread status to BLOCKED. */
+			VM_VMHelpers::setThreadState(currentThread, J9VMTHREAD_STATE_BLOCKED);
 			internalReleaseVMAccessSetStatus(currentThread, J9_PUBLIC_FLAGS_THREAD_BLOCKED);
 			SET_IGNORE_ENTER(monitor);
 			omrthread_monitor_wait_timed(monitor, (I_64)waitTime, 0);
