@@ -127,4 +127,18 @@
 		<output type="failure" caseSensitive="yes" regex="no">Compressed References</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 	</test>
+
+	<test id="Verify 64-bit platforms reject MaxDirectMemorySize greater than Long.MAX_VALUE">
+		<command>$EXE$ -XX:MaxDirectMemorySize=9223372036854775808 -version</command>
+		<platformRequirements>bits.64</platformRequirements>
+		<return type="failure" value="0"/>
+		<output type="success" caseSensitive="no" javaUtilPattern="no" regex="no">Parse error for -XX:MaxDirectMemorySize= - value out of range.</output>
+	</test>
+
+	<test id="Verify 64-bit platforms allow MaxDirectMemorySize equal to Long.MAX_VALUE">
+		<command>$EXE$ -XX:MaxDirectMemorySize=9223372036854775807 -XX:+PrintFlagsFinal -version</command>
+		<platformRequirements>bits.64</platformRequirements>
+		<return type="success" value="0"/>
+		<output type="required" caseSensitive="no" javaUtilPattern="yes" regex="yes">MaxDirectMemorySize\s*=\s*9223372036854775800</output>
+	</test>
 </suite>
