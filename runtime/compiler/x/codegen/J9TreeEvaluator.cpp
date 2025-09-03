@@ -1570,17 +1570,17 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
 
    // calculate start of first leaf array
    TR::Register *leafArrReg = cg->allocateRegister();
-   generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, leafArrReg, generateX86MemoryReference(spineArrReg, spineSizeReg), cg);
+   generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, leafArrReg, generateX86MemoryReference(spineArrReg, spineSizeReg, cg), cg);
 
    // calculate end of allocation = first leaf array address + (first dimension * size of leaf array) - leaf padding bytes
    TR::Register *allocEndReg = cg->allocateRegister();
    generateRegRegInstruction(TR::InstOpCode::MOVSXReg8Reg4, node, allocEndReg, leafSizeReg, cg);
    generateRegRegInstruction(TR::InstOpCode::IMUL8RegReg, node, allocEndReg, firstDimLenReg, cg);
-   generateRegMemInstruction(TR::InstOpCode::ADD8RegReg, node, allocEndReg, leafArrReg, cg);
+   generateRegRegInstruction(TR::InstOpCode::ADD8RegReg, node, allocEndReg, leafArrReg, cg);
    // ignore removing extra leaf padding, a few extra bytes won't hurt, right?
 
    // if end of allocation > heap top jump to snippet to handle heap overflow
-   TR::LabelSymbol *oolFailLabel
+   TR::LabelSymbol *oolFailLabel = generateLabelSymbol(cg);
    TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::acall, spineArrReg, oolFailLabel, doneLabel, cg);
    cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
 
@@ -1651,7 +1651,7 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
       }
 
    // increment leafArrReg and loop back
-   generateRegMemInstruction(TR::InstOpCode::ADD8RegReg, node, leafArrReg, leafSizeReg, cg);
+   generateRegRegInstruction(TR::InstOpCode::ADD8RegReg, node, leafArrReg, leafSizeReg, cg);
    generateLabelInstruction(TR::InstOpCode::JMP4, node, loopTop, cg);
 
    generateLabelInstruction(TR::InstOpCode::label, node, loopBottom, cg);
@@ -2100,6 +2100,7 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
    // so this is functionally equivalent of saying only inline if the dimension is exactly 2.
    // We also need to make sure the TLH is properly zeroed.
    // Finally, we need to be sure we know the elementSize
+   TR_J9VMBase *fej9 = comp->fej9();
    uint32_t nDims = secondChild->get32bitIntegralValue();
    if (nDims > 1 && leafArrayElementSize != -1 && fej9->tlhHasBeenCleared() && !comp->getOptions()->realTimeGC())
       {
