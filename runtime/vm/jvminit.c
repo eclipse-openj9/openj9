@@ -6381,8 +6381,13 @@ testOptionValueOps(J9JavaVM* vm)
 	SET_TO(1, "-Xfok5347534875438758474");
 	optName = "-Xfok";
 	intResult = GET_INTEGER_VALUE(1, optName, uResult);
+#if defined(J9VM_ENV_DATA64)
+	TEST_INT(uResult, 5347534875438758474);
+	TEST_INT(intResult, OPTION_OK);
+#else /* defined(J9VM_ENV_DATA64) */
 	TEST_INT(uResult, 0);
 	TEST_INT(intResult, OPTION_MALFORMED);
+#endif /* defined(J9VM_ENV_DATA64) */
 
 	SET_TO(1, "-Xfoo31");
 	optName = "-Xfoo";
@@ -6399,8 +6404,35 @@ testOptionValueOps(J9JavaVM* vm)
 	SET_TO(1, "-Xfob4294967295");			/* (2^32 - 1) */
 	optName = "-Xfob";
 	intResult = GET_MEMORY_VALUE(1, optName, uResult);
+#if defined(J9VM_ENV_DATA64)
+	TEST_INT(uResult, 4294967296);
+	TEST_INT(intResult, OPTION_OK);
+#else /* defined(J9VM_ENV_DATA64) */
+	TEST_INT(uResult, 4294967292);
+	TEST_INT(intResult, OPTION_OK);
+#endif /* defined(J9VM_ENV_DATA64) */
+
+	SET_TO(1, "-Xfob9223372036854775807");			/* (2^63 - 1) */
+	optName = "-Xfob";
+	intResult = GET_MEMORY_VALUE(1, optName, uResult);
+#if defined(J9VM_ENV_DATA64)
+	TEST_INT(uResult, 9223372036854775800);
+	TEST_INT(intResult, OPTION_OK);
+#else /* defined(J9VM_ENV_DATA64) */
 	TEST_INT(uResult, 0);
-	TEST_INT(intResult, OPTION_OVERFLOW);
+	TEST_INT(intResult, OPTION_MALFORMED);
+#endif /* defined(J9VM_ENV_DATA64) */
+
+	SET_TO(1, "-Xfob9223372036854775809");			/* (2^63 + 1) */
+	optName = "-Xfob";
+	intResult = GET_MEMORY_VALUE(1, optName, uResult);
+#if defined(J9VM_ENV_DATA64)
+	TEST_INT(uResult, 9223372036854775808U);
+	TEST_INT(intResult, OPTION_OK);
+#else /* defined(J9VM_ENV_DATA64) */
+	TEST_INT(uResult, 0);
+	TEST_INT(intResult, OPTION_MALFORMED);
+#endif /* defined(J9VM_ENV_DATA64) */
 
 	SET_TO(1, "-Xfoc4294967280");			/* 0xfffffff0 */
 	optName = "-Xfoc";
@@ -6581,14 +6613,24 @@ testOptionValueOps(J9JavaVM* vm)
 	SET_TO(1, "-Xfou99999999999M");
 	optName = "-Xfou";
 	intResult = GET_MEMORY_VALUE(1, optName, uResult);
+#if defined(J9VM_ENV_DATA64)
+	TEST_INT(uResult, 104857599998951424);
+	TEST_INT(intResult, OPTION_OK);
+#else /* defined(J9VM_ENV_DATA64) */
 	TEST_INT(uResult, 0);
 	TEST_INT(intResult, OPTION_MALFORMED);
+#endif /* defined(J9VM_ENV_DATA64) */
 
 	SET_TO(1, "-Xfow99999M");
 	optName = "-Xfow";
 	intResult = GET_MEMORY_VALUE(1, optName, uResult);
+#if defined(J9VM_ENV_DATA64)
+	TEST_INT(uResult, 104856551424);
+	TEST_INT(intResult, OPTION_OK);
+#else /* defined(J9VM_ENV_DATA64) */
 	TEST_INT(uResult, 0);
 	TEST_INT(intResult, OPTION_OVERFLOW);
+#endif /* defined(J9VM_ENV_DATA64) */
 
 #ifdef J9VM_OPT_SIDECAR
 
