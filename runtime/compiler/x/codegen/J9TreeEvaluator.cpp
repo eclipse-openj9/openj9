@@ -1525,10 +1525,10 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 
    // load dimensions and class
-   TR::Register *dimsPtrReg = cg->longClobberEvaluate(sizeArrNode);
+   TR::Register *dimsPtrReg = cg->evaluate(sizeArrNode);
    TR::Register *secondDimLenReg = cg->allocateRegister();
    TR::Register *classReg = cg->longClobberEvaluate(classNode);
-   TR::Register *firstDimLenReg = dimsPtrReg;
+   TR::Register *firstDimLenReg = cg->allocateRegister();
 
    generateRegMemInstruction(TR::InstOpCode::L4RegMem, node, secondDimLenReg, generateX86MemoryReference(dimsPtrReg, 0, cg), cg);
    generateRegMemInstruction(TR::InstOpCode::MOVSXReg8Mem4, node, firstDimLenReg, generateX86MemoryReference(dimsPtrReg, 4, cg), cg);
@@ -1652,8 +1652,9 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
 
    generateLabelInstruction(TR::InstOpCode::label, node, loopBottom, cg);
 
-   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(0, 9, cg);
+   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(0, 10, cg);
 
+   deps->addPostCondition(dimsPtrReg, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(firstDimLenReg, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(secondDimLenReg, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(classReg, TR::RealRegister::NoReg, cg);
@@ -1701,6 +1702,7 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
    generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, targetReg, spineArrReg, deps2, cg);
    cg->stopUsingRegister(spineArrReg);
 
+   cg->stopUsingRegister(dimsPtrReg);
    cg->stopUsingRegister(firstDimLenReg);
    cg->stopUsingRegister(secondDimLenReg);
    cg->stopUsingRegister(classReg);
