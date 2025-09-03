@@ -1570,7 +1570,7 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
 
    // calculate start of first leaf array
    TR::Register *leafArrReg = cg->allocateRegister();
-   generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, leafArrReg, generateX86MemoryReference(spineArrReg, spineSizeReg, cg), cg);
+   generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, leafArrReg, generateX86MemoryReference(spineArrReg, spineSizeReg, 0, cg), cg);
 
    // calculate end of allocation = first leaf array address + (first dimension * size of leaf array) - leaf padding bytes
    TR::Register *allocEndReg = cg->allocateRegister();
@@ -1588,7 +1588,7 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
 
    TR::LabelSymbol *startControlFlow = generateLabelSymbol(cg);
    generateLabelInstruction(TR::InstOpCode::label, node, startControlFlow, cg);
-   startControlFlow->setStartInternalControlFlow(cg);
+   startControlFlow->setStartInternalControlFlow();
 
    TR::LabelSymbol *oolJumpPoint = generateLabelSymbol(cg);
    generateLabelInstruction(TR::InstOpCode::JA4, node, oolJumpPoint, cg);
