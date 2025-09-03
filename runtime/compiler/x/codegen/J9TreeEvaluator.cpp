@@ -1587,8 +1587,7 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
    generateLabelInstruction(TR::InstOpCode::label, node, startControlFlow, cg);
    startControlFlow->setStartInternalControlFlow();
 
-   TR::LabelSymbol *oolJumpPoint = generateLabelSymbol(cg);
-   generateLabelInstruction(TR::InstOpCode::JA4, node, oolJumpPoint, cg);
+   generateLabelInstruction(TR::InstOpCode::JA4, node, oolFailLabel, cg);
 
    // no heap overflow, advance heap alloc to end of allocation
    generateMemRegInstruction(TR::InstOpCode::SMemReg(), node, generateX86MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), allocEndReg, cg);
@@ -1640,11 +1639,11 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
          {
          generateRegImmInstruction(TR::InstOpCode::SHRRegImm1(), node, tempReg, shiftAmount, cg);
          }
-      generateMemRegInstruction(TR::InstOpCode::S4MemReg, node, generateX86MemoryReference(spineArrReg, firstDimLenReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), tempReg, cg);
+      generateMemRegInstruction(TR::InstOpCode::S4MemReg, node, generateX86MemoryReference(spineArrReg, firstDimLenReg, trailingZeroes(TR::Compiler->om.sizeofReferenceField()), TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), tempReg, cg);
       }
    else
       {
-      generateMemRegInstruction(TR::InstOpCode::SMemReg(), node, generateX86MemoryReference(spineArrReg, firstDimLenReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), leafArrReg, cg);
+      generateMemRegInstruction(TR::InstOpCode::S8MemReg, node, generateX86MemoryReference(spineArrReg, firstDimLenReg, trailingZeroes(TR::Compiler->om.sizeofReferenceField()), TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), leafArrReg, cg);
       }
 
    // increment leafArrReg and loop back
