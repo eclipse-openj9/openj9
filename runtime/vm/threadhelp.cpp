@@ -121,10 +121,12 @@ monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos
 #if JAVA_SPEC_VERSION >= 24
 		J9VM_SEND_VIRTUAL_UNBLOCKER_THREAD_SIGNAL(javaVM);
 #endif /* JAVA_SPEC_VERSION >= 24 */
-		/* Set j.l.Thread status to WAITING. */
-		U_32 oldState = J9_ARE_ANY_BITS_SET(thrstate, J9_PUBLIC_FLAGS_THREAD_TIMED)
-				? VM_VMHelpers::setThreadState(vmThread, J9VMTHREAD_STATE_WAITING_TIMED)
-				: VM_VMHelpers::setThreadState(vmThread, J9VMTHREAD_STATE_WAITING);
+		/* Set j.l.Thread status to UNKNOWN since the wait can be notified/interrupted
+		 * but blocked on re-acquiring the monitor.
+		 * In this case, the thread state will have to be determined by looking at
+		 * the vmThread->publicFlags field.
+		 */
+		U_32 oldState = VM_VMHelpers::setThreadState(vmThread, J9VMTHREAD_STATE_UNKNOWN);
 		internalReleaseVMAccessSetStatus(vmThread, thrstate);
 		rc = timeCompensationHelper(vmThread,
 			interruptable ? HELPER_TYPE_MONITOR_WAIT_INTERRUPTABLE : HELPER_TYPE_MONITOR_WAIT_TIMED, monitor, millis, nanos);

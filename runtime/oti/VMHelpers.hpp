@@ -2278,7 +2278,6 @@ exit:
 		indicateAsyncMessagePending(targetThread);
 	}
 
-
 	static U_32
 	setThreadState(J9VMThread *currentThread, U_32 state)
 	{
@@ -2289,14 +2288,14 @@ exit:
 			/* Platform threads must have a non-null FieldHolder object. */
 			j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(currentThread, receiverObject);
 			if (NULL != threadHolder) {
-				oldState = (U_32)J9VMJAVALANGTHREADFIELDHOLDER_THREADSTATUS(currentThread, threadHolder);
+				oldState = J9VMJAVALANGTHREADFIELDHOLDER_THREADSTATUS(currentThread, threadHolder);
 				J9VMJAVALANGTHREADFIELDHOLDER_SET_THREADSTATUS(currentThread, threadHolder, state);
 			}
 		}
 #else /* JAVA_SPEC_VERSION >= 19 */
 		j9object_t receiverObject = currentThread->threadObject;
 		if (NULL != receiverObject) {
-			oldState = (U_32)J9VMJAVALANGTHREAD_THREADSTATUS(currentThread, receiverObject);
+			oldState = J9VMJAVALANGTHREAD_THREADSTATUS(currentThread, receiverObject);
 			J9VMJAVALANGTHREAD_SET_THREADSTATUS(currentThread, receiverObject, state);
 		}
 #endif /* JAVA_SPEC_VERSION >= 19 */
