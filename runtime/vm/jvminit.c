@@ -5397,7 +5397,7 @@ testFindArgs(J9JavaVM* vm)
 #define FAIL (failed = "Failed ")
 #define PASS ("Passed ")
 #define SET_TO(element, string) vm->vmArgsArray->actualVMArgs->options[element].optionString = string; printf("\nTesting: %s \t\t", string)
-#define TEST_INT(value, expected) printf( (value==expected) ? PASS : FAIL )
+#define TEST_INT(value, expected) printf("%s", (value==expected) ? PASS : FAIL )
 
 #ifdef J9VM_OPT_SIDECAR
 #define SET_MAP_TO(element, j9opt, sovopt, mapflags) registerCmdLineMapping(vm, sovopt, j9opt, mapflags)
@@ -5825,13 +5825,13 @@ testOptionValueOps(J9JavaVM* vm)
 
 #define FAIL (failed = "Failed ")
 #define PASS ("Passed ")
-#define COMPARE(result, expected) printf((result==NULL) ? FAIL : ((strcmp(result, expected)==0) ? PASS : FAIL ))
-#define IS_NULL(result) printf((result==NULL) ? PASS : FAIL)
-#define IS_EMPTY_STRING(result) printf((result!=NULL && strlen(result)==0) ? PASS : FAIL)
-#define IS_0(result) printf((result=='\0') ? PASS : FAIL)
+#define COMPARE(result, expected) printf("%s", (result==NULL) ? FAIL : ((strcmp(result, expected)==0) ? PASS : FAIL ))
+#define IS_NULL(result) printf("%s", (result==NULL) ? PASS : FAIL)
+#define IS_EMPTY_STRING(result) printf("%s", (result!=NULL && strlen(result)==0) ? PASS : FAIL)
+#define IS_0(result) printf("%s", (result=='\0') ? PASS : FAIL)
 #define SET_TO(element, string) vm->vmArgsArray->actualVMArgs->options[element].optionString = string; printf("\nTesting: %s \t\t", string)
 #define NEXT_ELEMENT(array) (array += strlen(array) + 1)
-#define TEST_INT(value, expected) printf( (value==expected) ? PASS : FAIL )
+#define TEST_INT(value, expected) printf("%s", (value==expected) ? PASS : FAIL )
 
 #ifdef J9VM_OPT_SIDECAR
 #define SET_MAP_TO(element, j9opt, sovopt, mapflags) registerCmdLineMapping(vm, sovopt, j9opt, mapflags)
@@ -6622,7 +6622,7 @@ testOptionValueOps(J9JavaVM* vm)
 	vm->vmArgsArray->actualVMArgs->options[5].optionString = origOption5;
 	vm->vmArgsArray->actualVMArgs->options[6].optionString = origOption6;
 
-	printf((failed==NULL) ? "\n\nTESTS PASSED\n" : "\n\nTESTS FAILED\n");
+	printf("%s", (failed==NULL) ? "\n\nTESTS PASSED\n" : "\n\nTESTS FAILED\n");
 }
 
 
