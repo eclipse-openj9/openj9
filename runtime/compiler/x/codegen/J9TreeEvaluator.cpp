@@ -2099,7 +2099,7 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
    // Finally, we need to be sure we know the elementSize
    TR_J9VMBase *fej9 = comp->fej9();
    uint32_t nDims = secondChild->get32bitIntegralValue();
-   if (nDims > 1 && leafArrayElementSize != -1 && fej9->tlhHasBeenCleared() && !comp->getOptions()->realTimeGC())
+   if (nDims > 1 && leafArrayElementSize != -1 && (fej9->tlhHasBeenCleared() || node->canSkipZeroInitialization()) && !comp->getOptions()->realTimeGC())
       {
       return generate2DArrayWithInlineAllocators(node, cg, leafArrayElementSize);
       }
