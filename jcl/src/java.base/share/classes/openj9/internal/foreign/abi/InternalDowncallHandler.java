@@ -23,7 +23,9 @@
 package openj9.internal.foreign.abi;
 
 /*[IF JAVA_SPEC_VERSION >= 22]*/
+import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Deque;
 /*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 import java.util.HashMap;
 import java.util.List;
@@ -101,17 +103,23 @@ public class InternalDowncallHandler {
 	 * arguments to extract the heap address from the base object in native.
 	 */
 	private static final class HeapArgInfo {
-		final Object[] bases;
-		final long[] offsets;
-		int index;
+		private Object[] bases;
+		private long[] offsets;
+		private int index;
+		private final int size;
 
 		HeapArgInfo(int size) {
-			bases = new Object[size];
-			offsets = new long[size];
-			index = 0;
+			this.bases = null;
+			this.offsets = null;
+			this.size = size;
+			this.index = 0;
 		}
 
 		void append(Object base, long offset) {
+			if (bases == null) {
+				bases = new Object[size];
+				offsets = new long[size];
+			}
 			bases[index] = base;
 			offsets[index] = offset;
 			index += 1;
@@ -121,9 +129,22 @@ public class InternalDowncallHandler {
 			Arrays.fill(bases, null);
 			index = 0;
 		}
+
+		public Object[] getBases() {
+			return bases;
+		}
+
+		public long[] getOffsets() {
+			return offsets;
+		}
 	}
 
-	private final ThreadLocal<HeapArgInfo> heapArgInfo;
+	/* heapArgInfo holds a per-thread stack of HeapArgInfo structures.
+	 * Each entry tracks Java references to heap-allocated memory segments
+	 * Required for recursive downcalls.
+	 * Each downcall maintains its own set of references until completion.
+	 */
+	private static final ThreadLocal<Deque<HeapArgInfo>> heapArgInfo = ThreadLocal.withInitial(ArrayDeque::new);
 	/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 
 	/* The hashtables of sessions/scopes is intended for multithreading in which case
@@ -180,6 +201,7 @@ public class InternalDowncallHandler {
 	/*[IF JAVA_SPEC_VERSION >= 22]*/
 	private static native boolean isFfiProtoEnabled();
 	private static boolean isFfiProtoOn = isFfiProtoEnabled();
+	private MethodHandle pushHeapArgInfoMH;
 	/* This native resolves the downcall handle via MethodHandleResolver.ffiCallLinkCallerMethod()
 	 * given the handle must be resolved in advance when calling into the interpreter via
 	 * MH.linkToNative().
@@ -311,7 +333,8 @@ public class InternalDowncallHandler {
 	 */
 	private final long memSegmtOfPtrToLongArg(MemorySegment argValue, LinkerOptions options) throws IllegalStateException {
 		/*[IF JAVA_SPEC_VERSION >= 22]*/
-		HeapArgInfo info = heapArgInfo.get();
+		Deque<HeapArgInfo> infoStack = heapArgInfo.get();
+		HeapArgInfo info = infoStack.peek();
 		/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 
 		try {
@@ -323,19 +346,13 @@ public class InternalDowncallHandler {
 			 * is captured so as to reset the internal index and avoid retaining the references
 			 * to the unreachable objects.
 			 */
-			if (info != null) {
-				info.clear();
-			}
+			infoStack.pop();
 			/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 			throw e;
 		}
 
 		long address = argValue.address();
 		/*[IF JAVA_SPEC_VERSION >= 22]*/
-		if (info == null) {
-			info = new HeapArgInfo(argLayoutArray.length);
-			heapArgInfo.set(info);
-		}
 
 		if (!argValue.isNative() && options.allowsHeapAccess()) {
 			/* Store the heap argument's base object and offset. */
@@ -369,10 +386,8 @@ public class InternalDowncallHandler {
 			 * is captured so as to reset the internal index and avoid retaining the references
 			 * to the unreachable objects.
 			 */
-			HeapArgInfo info = heapArgInfo.get();
-			if (info != null) {
-				info.clear();
-			}
+			Deque<HeapArgInfo> infoStack = heapArgInfo.get();
+			infoStack.pop();
 			/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 			throw e;
 		}
@@ -447,6 +462,13 @@ public class InternalDowncallHandler {
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
+	/*[IF JAVA_SPEC_VERSION >= 22]*/
+	/* Intended for pushHeapArgInfoMH that pushes a HeapArgInfo into heapArgInfo per downcall. */
+	private static void pushHeapArgInfo(InternalDowncallHandler handler) {
+		heapArgInfo.get().push(new HeapArgInfo(handler.argLayoutArray.length));
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
+
 	/* Intended for objToMemSegmtRetFilter that simply casts the passed-in object to the memory segment
 	 * given the requested the memory segment is directly returned from runNativeMethod().
 	 * Note: the returned memory address is exactly the address of the memory previously allocated
@@ -506,10 +528,6 @@ public class InternalDowncallHandler {
 		scopeHandleMap = new ConcurrentHashMap<>();
 		/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 
-		/*[IF JAVA_SPEC_VERSION >= 22]*/
-		heapArgInfo = new ThreadLocal<>();
-		/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
-
 		try {
 			/*[IF JAVA_SPEC_VERSION >= 21]*/
 			longObjToMemSegmtRetFilter = lookup.bind(this, "longObjToMemSegmtRet", methodType(MemorySegment.class, Object.class));
@@ -518,6 +536,9 @@ public class InternalDowncallHandler {
 			memAddrToLongArgFilter = lookup.bind(this, "memAddrToLongArg", methodType(long.class, MemoryAddress.class));
 			/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 			memSegmtToLongArgFilter = lookup.bind(this, "memSegmtToLongArg", methodType(long.class, MemorySegment.class));
+			/*[IF JAVA_SPEC_VERSION >= 22]*/
+			pushHeapArgInfoMH = MethodHandles.lookup().findStatic(InternalDowncallHandler.class, "pushHeapArgInfo", MethodType.methodType(void.class, InternalDowncallHandler.class)).bindTo(this);
+			/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 		} catch (ReflectiveOperationException e) {
 			throw new InternalError(e);
 		}
@@ -609,10 +630,10 @@ public class InternalDowncallHandler {
 			boundMH = permuteMH(boundMH, funcMethodType);
 
 			/*[IF JAVA_SPEC_VERSION >= 22]*/
-			return isFfiProtoOn ? getNativeMHWithInvokeCache(boundMH) : boundMH;
-			/*[ELSE] JAVA_SPEC_VERSION >= 22 */
-			return boundMH;
+			boundMH = MethodHandles.foldArguments(boundMH, pushHeapArgInfoMH);
+			boundMH = isFfiProtoOn ? getNativeMHWithInvokeCache(boundMH) : boundMH;
 			/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
+			return boundMH;
 		} catch (ReflectiveOperationException e) {
 			throw new InternalError(e);
 		}
@@ -882,7 +903,8 @@ public class InternalDowncallHandler {
 
 		long returnVal;
 		/*[IF JAVA_SPEC_VERSION >= 22]*/
-		HeapArgInfo info = heapArgInfo.get();
+		Deque<HeapArgInfo> infoStack = heapArgInfo.get();
+		HeapArgInfo info = infoStack.peek();
 		/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 		/* The scope associated with memory specific arguments must be kept alive
 		 * during the downcall since JDK17, including the downcall adddress.
@@ -914,8 +936,8 @@ public class InternalDowncallHandler {
 					returnStateMemBase,
 					/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 					/*[IF JAVA_SPEC_VERSION >= 22]*/
-					(info != null) ? info.bases : null,
-					(info != null) ? info.offsets : null,
+					info.getBases(),
+					info.getOffsets(),
 					linkerOpts.isCritical(),
 					/*[ELSE] JAVA_SPEC_VERSION >= 22 */
 					linkerOpts.isTrivial(),
@@ -936,9 +958,7 @@ public class InternalDowncallHandler {
 			 * so as to reset the internal index and avoid retaining the references to the
 			 * unreachable objects.
 			 */
-			if (info != null) {
-				info.clear();
-			}
+			infoStack.pop();
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 		/*[ELSE] JAVA_SPEC_VERSION >= 21 */
