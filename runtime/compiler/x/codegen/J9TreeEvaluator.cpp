@@ -1466,10 +1466,6 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
 
    TR_J9VMBase *fej9 = comp->fej9();
 
-   TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol *oolFailLabel = generateLabelSymbol(cg);
-
    /*
     * For a new m*n array of X we allocate the first dimension array spine immediately followed
     * by the second dimension array leaves, inserting padding to align the arrays. This looks like the following:
@@ -1581,6 +1577,7 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
 
    // if end of allocation > heap top jump to snippet to handle heap overflow
    TR::LabelSymbol *oolFailLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
    TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::acall, spineArrReg, oolFailLabel, doneLabel, cg);
    cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
 
