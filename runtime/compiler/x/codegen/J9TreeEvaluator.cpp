@@ -1529,7 +1529,7 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 
    // load dimensions and class
-   TR::Register *dimsPtrReg = cg->longClobberEvaluate(firstChild);
+   TR::Register *dimsPtrReg = cg->longClobberEvaluate(sizeArrNode);
    TR::Register *secondDimLenReg = cg->allocateRegister();
    TR::Register *classReg = cg->longClobberEvaluate(classNode);
    TR::Register *firstDimLenReg = dimsPtrReg;
@@ -1551,11 +1551,11 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
    // pad array sizes so following leaf array is aligned
    if (needsAlignLeaf)
       {
-      generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, spineSizeReg, generateX86MemoryReference(spineSizeReg, alignmentInBytes-1), cg);
-      generateRegImmInstruction(TR::InstOpCode::AND4RegImm4, node, spineSizeReg, -alignmentInBytes cg);
+      generateRegImmInstruction(TR::InstOpCode::ADD4RegImms, node, spineSizeReg, alignmentInBytes-1, cg);
+      generateRegImmInstruction(TR::InstOpCode::AND4RegImm4, node, spineSizeReg, -alignmentInBytes, cg);
 
-      generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, leafSizeReg, generateX86MemoryReference(leafSizeReg, alignmentInBytes-1), cg);
-      generateRegImmInstruction(TR::InstOpCode::AND4RegImm4, node, leafSizeReg, -alignmentInBytes cg);
+      generateRegImmInstruction(TR::InstOpCode::ADD4RegImms, node, leafSizeReg, alignmentInBytes-1, cg);
+      generateRegImmInstruction(TR::InstOpCode::AND4RegImm4, node, leafSizeReg, -alignmentInBytes, cg);
       }
 
    // load heap alloc and pad so spine array is aligned
@@ -1564,8 +1564,8 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
    generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, spineArrReg, generateX86MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), cg);
    if (needsAlignHeader)
       {
-      generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, spineArrReg, generateX86MemoryReference(spineArrReg, alignmentInBytes-1), cg);
-      generateRegImmInstruction(TR::InstOpCode::AND8RegImm4, node, tempReg, -alignmentInBytes cg);
+      generateRegImmInstruction(TR::InstOpCode::ADD8RegImms, node, spineArrReg, alignmentInBytes-1, cg);
+      generateRegImmInstruction(TR::InstOpCode::AND8RegImm4, node, spineArrReg, -alignmentInBytes, cg);
       }
 
    // calculate start of first leaf array
