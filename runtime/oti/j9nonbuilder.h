@@ -506,6 +506,42 @@ typedef struct J9JFRSystemGC {
 
 #define J9JFRSYSTEMGC_STACKTRACE(jfrEvent) ((UDATA *)(((J9JFRSystemGC *)(jfrEvent)) + 1))
 
+typedef struct J9JFROldGarbageCollection {
+	I_64 startTicks;
+	I_64 duration;
+	U_32 gcID;
+} J9JFROldGarbageCollection;
+
+typedef struct J9JFRYoungGarbageCollection {
+	I_64 startTicks;
+	I_64 duration;
+	U_32 gcID;
+	U_32 tenureThreshold;
+} J9JFRYoungGarbageCollection;
+
+typedef struct J9JFRGarbageCollection {
+	I_64 startTicks;
+	I_64 duration;
+	U_32 gcID;
+	U_32 gcNameID;
+	U_32 gcCauseID;
+	I_64 sumOfPauses;
+	I_64 longestPause;
+} J9JFRGarbageCollection;
+
+typedef struct J9JFRGCHeapSummary {
+	I_64 startTicks;
+	I_64 duration;
+	U_32 gcID;
+	U_32 gcWhenID;
+	U_64 vStart;
+	U_64 vCommittedEnd;
+	U_64 vCommittedSize;
+	U_64 vReservedEnd;
+	U_64 vReservedSize;
+	I_64 heapUsed;
+} J9JFRGCHeapSummary;
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 /* @ddr_namespace: map_to_type=J9CfrError */

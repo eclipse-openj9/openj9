@@ -117,6 +117,18 @@ jfrEventSize(J9JFREvent *jfrEvent)
 	case J9JFR_EVENT_TYPE_SYSTEM_GC:
 		size = sizeof(J9JFRSystemGC) + (((J9JFRSystemGC *)jfrEvent)->stackTraceSize * sizeof(UDATA));
 		break;
+	case J9JFR_EVENT_TYPE_OLD_GC_ENTRY:
+		size = sizeof(J9JFROldGarbageCollection);
+		break;
+	case J9JFR_EVENT_TYPE_YOUNG_GC_ENTRY:
+		size = sizeof(J9JFRYoungGarbageCollection);
+		break;
+	case J9JFR_EVENT_TYPE_GARBAGE_COLLECTION_ENTRY:
+		size = sizeof(J9JFRGarbageCollection);
+		break;
+	case J9JFR_EVENT_TYPE_GC_HEAP_SUMMARY_ENTRY:
+		size = sizeof(J9JFRGCHeapSummary);
+		break;
 	default:
 		Assert_VM_unreachable();
 		break;
