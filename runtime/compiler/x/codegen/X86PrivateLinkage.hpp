@@ -27,7 +27,6 @@
 
 #include "env/jittypes.h"
 #include "codegen/RegisterDependency.hpp"
-#include "x/codegen/X86Register.hpp"
 
 class TR_MHJ2IThunk;
 class TR_ResolvedMethod;
