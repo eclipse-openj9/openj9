@@ -1595,7 +1595,7 @@ public class NewElfDump extends CoreReaderSupport {
 		if (overrideExecutableName == null) {
 			file = _findFileInPath(builder, executableName, classPath);
 		} else {
-			// Use override for the executable name. This supports the jextract -f <executable> option, for
+			// Use override for the executable name. This supports the jpackcore -f <executable> option, for
 			// cases where the launcher path+name is truncated by the 80 character OS limit, AND it was a
 			// custom launcher, so the alternative property OPENJ9_JAVA_COMMAND_LINE (or IBM_JAVA_COMMAND_LINE)
 			// was not set.
@@ -1644,12 +1644,12 @@ public class NewElfDump extends CoreReaderSupport {
 			if (_verbose) {
 				System.err.println("Warning: executable " + executableName //$NON-NLS-1$
 						+ " not found, unable to collect libraries." //$NON-NLS-1$
-						+ " Please retry with jextract -f option."); //$NON-NLS-1$
+						+ " Please retry with jpackcore -f option."); //$NON-NLS-1$
 			}
 		}
 
 		// Get all the loaded modules .so names to make sure we have the
-		// full list of libraries for jextract to zip up. CMVC 194366
+		// full list of libraries for jpackcore to zip up. CMVC 194366
 		for (Iterator<ProgramHeaderEntry> iter = _file.programHeaderEntries(); iter.hasNext();) {
 			ProgramHeaderEntry entry = iter.next();
 

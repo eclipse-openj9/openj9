@@ -688,7 +688,7 @@ public class NewZosDump implements ICoreFileReader {
 		log.fine("Building address space "+format(asid));
 		Object addressSpace = builder.buildAddressSpace("z/OS Address Space", asid);
 		AddressSpace adrJava;
-		// Optimization for JExtract - don't bother to build other information
+		// Optimization for jpackcore - don't bother to build other information
 		if (addressSpace.getClass() == java.lang.Object.class) {
 			adrJava = null;
 		} else {
@@ -732,7 +732,7 @@ public class NewZosDump implements ICoreFileReader {
 
 			//CMVC 156226 - DTFJ exception: XML and core file pointer sizes differ (zOS)
 			int addressSize = 31;			//default value for the address size we are dealing with
-			if(adrJava != null) {			//use the zebedee address space to determine the address size, however this not available when running jextract
+			if(adrJava != null) {			//use the zebedee address space to determine the address size, however this not available when running jpackcore
 				addressSize = adrJava.getWordLength() == 8 ? 64 : 31;
 			} else {						//fall back to the previous version
 				addressSize = is64Bit ? 64 : 32;

@@ -181,7 +181,7 @@ public class ZipExtractionResolver implements IFileLocationResolver, ResourceRel
 			String outerName = outerEntry.getName();
 
 			if (zipName.equals(outerName  + ".zip")) {
-				//outerEntry is the same name as the zip which is the JExtract convention for naming.  Therefore, this is the core file
+				//outerEntry is the same name as the zip which is the jpackcore convention for naming.  Therefore, this is the core file
 				coreName = outerName;
 			} else {
 				ZipEntry innerEntry = _container.getEntry(outerName + ".xml");
