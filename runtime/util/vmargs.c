@@ -341,7 +341,8 @@ optionValueOperations(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA
 	char *values, *scanStart;
 	char *cursor;
 	IDATA sepCount = 0;
-	UDATA value, oldValue, done;
+	UDATA value = 0;
+	UDATA done = 0;
 	IDATA errorFound = 0;
 	UDATA mapType;
 	double dvalue = 0.0;
