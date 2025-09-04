@@ -1726,7 +1726,7 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
  *
  * NB Must only be used for arrays of at least two dimensions
 */
-static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node, TR::CodeGenerator *cg)
+static TR::Register * generate2DZeroLengthArrayWithInlineAllocators(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = cg->comp();
 
@@ -2031,78 +2031,85 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
    TR_ASSERT_FATAL(secondChild->getOpCodeValue() == TR::iconst, "dims of multianewarray must be iconst");
 
    TR::Node *classNode   = node->getThirdChild();      // class of the outermost dimension
-
-   // Get the size of the elements in the leaf components
-   int32_t leafArrayElementSize = -1;
-   TR::SymbolReference *classSymRef = NULL;
-   const TR::ILOpCodes opcode = classNode->getOpCodeValue();
-   bool isClassNodeLoadAddr = opcode == TR::loadaddr;
-   // getting the symref
-   if (isClassNodeLoadAddr)
+   uint32_t nDims = secondChild->get32bitIntegralValue();
+   if (nDims > 1)
       {
-      classSymRef = classNode->getSymbolReference();
-      }
-   else if (opcode == TR::aloadi)
-      {
-      // recognizedCallTransformer adds another layer of aloadi
-      while (classNode->getOpCodeValue() == TR::aloadi && classNode->getFirstChild()->getOpCodeValue() == TR::aloadi)
+      // Get the size of the elements in the leaf components
+      int32_t leafArrayElementSize = -1;
+      TR::SymbolReference *classSymRef = NULL;
+      const TR::ILOpCodes opcode = classNode->getOpCodeValue();
+      bool isClassNodeLoadAddr = opcode == TR::loadaddr;
+      // getting the symref
+      if (isClassNodeLoadAddr)
          {
-         classNode = classNode->getFirstChild();
+         classSymRef = classNode->getSymbolReference();
          }
-
-      if (classNode->getOpCodeValue() == TR::aloadi && classNode->getFirstChild()->getOpCodeValue() == TR::loadaddr)
+      else if (opcode == TR::aloadi)
          {
-         classSymRef = classNode->getFirstChild()->getSymbolReference();
-         }
-      }
-   // Infer the data type and length from the signature
-   if (classSymRef)
-      {
-      int32_t len;
-      const char *sig = classSymRef->getTypeSignature(len);
-      if (sig)
-         {
-         if (sig[0] == '[' && sig[1] == '[')
+         // recognizedCallTransformer adds another layer of aloadi
+         while (classNode->getOpCodeValue() == TR::aloadi && classNode->getFirstChild()->getOpCodeValue() == TR::aloadi)
             {
-            switch (sig[2])
+            classNode = classNode->getFirstChild();
+            }
+
+         if (classNode->getOpCodeValue() == TR::aloadi && classNode->getFirstChild()->getOpCodeValue() == TR::loadaddr)
+            {
+            classSymRef = classNode->getFirstChild()->getSymbolReference();
+            }
+         }
+      // Infer the data type and length from the signature
+      if (classSymRef)
+         {
+         int32_t len;
+         const char *sig = classSymRef->getTypeSignature(len);
+         if (sig)
+            {
+            if (sig[0] == '[' && sig[1] == '[')
                {
-               case 'B':
-                  leafArrayElementSize = 1;
-                  break;
-               case 'C':
-               case 'S':
-                  leafArrayElementSize = 2;
-                  break;
-               case 'I':
-               case 'F':
-                  leafArrayElementSize = 4;
-                  break;
-               case 'D':
-               case 'J':
-                  leafArrayElementSize = 8;
-                  break;
-               case 'Z':
-                  leafArrayElementSize =
-                     static_cast<int32_t>(TR::Compiler->om.elementSizeOfBooleanArray());
-                  break;
-               case 'L':
-               default :
-                  leafArrayElementSize = TR::Compiler->om.sizeofReferenceField();
-                  break;
+               switch (sig[2])
+                  {
+                  case 'B':
+                     leafArrayElementSize = 1;
+                     break;
+                  case 'C':
+                  case 'S':
+                     leafArrayElementSize = 2;
+                     break;
+                  case 'I':
+                  case 'F':
+                     leafArrayElementSize = 4;
+                     break;
+                  case 'D':
+                  case 'J':
+                     leafArrayElementSize = 8;
+                     break;
+                  case 'Z':
+                     leafArrayElementSize =
+                        static_cast<int32_t>(TR::Compiler->om.elementSizeOfBooleanArray());
+                     break;
+                  case 'L':
+                  default :
+                     leafArrayElementSize = TR::Compiler->om.sizeofReferenceField();
+                     break;
+                  }
                }
             }
          }
-      }
 
-   // Anything with more than 2 dimensions will be replaced by a direct call when lowering trees,
-   // so this is functionally equivalent of saying only inline if the dimension is exactly 2.
-   // We also need to make sure the TLH is properly zeroed.
-   // Finally, we need to be sure we know the elementSize
-   TR_J9VMBase *fej9 = comp->fej9();
-   uint32_t nDims = secondChild->get32bitIntegralValue();
-   if (nDims > 1 && leafArrayElementSize != -1 && (fej9->tlhHasBeenCleared() || node->canSkipZeroInitialization()) && !comp->getOptions()->realTimeGC())
-      {
-      return generate2DArrayWithInlineAllocators(node, cg, leafArrayElementSize);
+      // Anything with more than 2 dimensions will be replaced by a direct call when lowering trees,
+      // so this is functionally equivalent of saying only inline if the dimension is exactly 2.
+      // If we know the element size and we don't need to zero the TLH, we can use the general
+      // inline allocator. Otherwise only generate inline for the 0 length special cases.
+      TR_J9VMBase *fej9 = comp->fej9();
+      static const bool disable = feGetEnv("TR_Disable2DArrayWithInlineAllocators") != NULL;
+      if (!disable && leafArrayElementSize != -1 && (fej9->tlhHasBeenCleared() || node->canSkipZeroInitialization()) && !comp->getOptions()->realTimeGC())
+         {
+         return generate2DArrayWithInlineAllocators(node, cg, leafArrayElementSize);
+         }
+      else
+         {
+         return generate2DZeroLengthArrayWithInlineAllocators(node, cg);
+         }
       }
    else
       {
