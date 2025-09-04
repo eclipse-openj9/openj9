@@ -151,6 +151,24 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 		}
 	}
 
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_RESTORE_RUN(vm)) {
+		clazz = vmFuncs->hashClassTableAt(classLoader, utf8Name, utf8Length);
+		if (NULL != clazz ) {
+			if (!vmFuncs->loadWarmClassFromSnapshot(currentThread, classLoader, clazz, FALSE)) {
+				clazz = NULL;
+				goto done;
+			}
+			if (NULL != protectionDomain) {
+				J9VMJAVALANGCLASS_SET_PROTECTIONDOMAIN(
+					currentThread,
+					clazz->classObject,
+					J9_JNI_UNWRAP_REFERENCE(protectionDomain));
+				goto done;
+			}
+		}
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 retry:
 
 	omrthread_monitor_enter(vm->classTableMutex);
@@ -167,7 +185,7 @@ retry:
 				if (IS_RESTORE_RUN(vm)) {
 					clazz = vmFuncs->hashClassTableAt(classLoader, utf8Name, utf8Length);
 
-					if (!vmFuncs->loadWarmClassFromSnapshot(currentThread, classLoader, clazz)) {
+					if (!vmFuncs->loadWarmClassFromSnapshot(currentThread, classLoader, clazz, FALSE)) {
 						clazz = NULL;
 						goto done;
 					}

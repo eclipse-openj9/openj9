@@ -99,15 +99,15 @@ VMSnapshotImpl::initBaseClasses()
 	struct J9InternalVMFunctions *vmFuncs = _vm->internalVMFunctions;
 	J9VMThread *vmThread = currentVMThread(_vm);
 
-	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->voidReflectClass);
-	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->booleanReflectClass);
-	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->charReflectClass);
-	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->floatReflectClass);
-	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->doubleReflectClass);
-	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->byteReflectClass);
-	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->shortReflectClass);
-	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->intReflectClass);
-	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->longReflectClass);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->voidReflectClass, FALSE);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->booleanReflectClass, FALSE);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->charReflectClass, FALSE);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->floatReflectClass, FALSE);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->doubleReflectClass, FALSE);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->byteReflectClass, FALSE);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->shortReflectClass, FALSE);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->intReflectClass, FALSE);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->systemClassLoader, _vm->longReflectClass, FALSE);
 }
 
 bool

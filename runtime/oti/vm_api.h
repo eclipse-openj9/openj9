@@ -5551,9 +5551,10 @@ setInitialVMMethods(J9JavaVM *javaVM, J9Method **cInitialStaticMethod, J9Method 
  * @param vmThread[in] the current VM thread
  * @param classLoader[in] classloader of the J9Class
  * @param clazz[in] J9Class to be loaded
+ * @param validateAppClasses flag to check app classes for protection domain
  */
 BOOLEAN
-loadWarmClassFromSnapshot(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Class *clazz);
+loadWarmClassFromSnapshot(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Class *clazz, BOOLEAN validateAppClasses);
 
 /**
  * Perform post-snapshot fixups on the provided J9Class.
