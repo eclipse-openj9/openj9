@@ -2550,6 +2550,15 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				parseErrorOption = VMOPT_XXMAXDIRECTMEMORYSIZEEQUALS;
 				goto _memParseError;
 			}
+#if defined(J9VM_ENV_DATA64)
+			if ((~(UDATA)0 != vm->directByteBufferMemoryMax)
+				&& (vm->directByteBufferMemoryMax > (((UDATA)I_64_MAX) & ~(sizeof(UDATA) - 1)))
+			) {
+				parseErrorOption = VMOPT_XXMAXDIRECTMEMORYSIZEEQUALS;
+				parseError = OPTION_OUTOFRANGE;
+				goto _memParseError;
+			}
+#endif /* defined(J9VM_ENV_DATA64) */
 
 			/* workaround option in case if OMRPORT_VMEM_ALLOC_QUICK Smart Address feature still be not reliable  */
 			argIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOFORCE_FULL_HEAP_ADDRESS_RANGE_SEARCH, NULL);
@@ -5382,7 +5391,7 @@ testFindArgs(J9JavaVM* vm)
 #define FAIL (failed = "Failed ")
 #define PASS ("Passed ")
 #define SET_TO(element, string) vm->vmArgsArray->actualVMArgs->options[element].optionString = string; printf("\nTesting: %s \t\t", string)
-#define TEST_INT(value, expected) printf( (value==expected) ? PASS : FAIL )
+#define TEST_INT(value, expected) printf("%s", (value==expected) ? PASS : FAIL )
 
 #ifdef J9VM_OPT_SIDECAR
 #define SET_MAP_TO(element, j9opt, sovopt, mapflags) registerCmdLineMapping(vm, sovopt, j9opt, mapflags)
@@ -5810,13 +5819,13 @@ testOptionValueOps(J9JavaVM* vm)
 
 #define FAIL (failed = "Failed ")
 #define PASS ("Passed ")
-#define COMPARE(result, expected) printf((result==NULL) ? FAIL : ((strcmp(result, expected)==0) ? PASS : FAIL ))
-#define IS_NULL(result) printf((result==NULL) ? PASS : FAIL)
-#define IS_EMPTY_STRING(result) printf((result!=NULL && strlen(result)==0) ? PASS : FAIL)
-#define IS_0(result) printf((result=='\0') ? PASS : FAIL)
+#define COMPARE(result, expected) printf("%s", (result==NULL) ? FAIL : ((strcmp(result, expected)==0) ? PASS : FAIL ))
+#define IS_NULL(result) printf("%s", (result==NULL) ? PASS : FAIL)
+#define IS_EMPTY_STRING(result) printf("%s", (result!=NULL && strlen(result)==0) ? PASS : FAIL)
+#define IS_0(result) printf("%s", (result=='\0') ? PASS : FAIL)
 #define SET_TO(element, string) vm->vmArgsArray->actualVMArgs->options[element].optionString = string; printf("\nTesting: %s \t\t", string)
 #define NEXT_ELEMENT(array) (array += strlen(array) + 1)
-#define TEST_INT(value, expected) printf( (value==expected) ? PASS : FAIL )
+#define TEST_INT(value, expected) printf("%s", (value==expected) ? PASS : FAIL )
 
 #ifdef J9VM_OPT_SIDECAR
 #define SET_MAP_TO(element, j9opt, sovopt, mapflags) registerCmdLineMapping(vm, sovopt, j9opt, mapflags)
@@ -6372,8 +6381,13 @@ testOptionValueOps(J9JavaVM* vm)
 	SET_TO(1, "-Xfok5347534875438758474");
 	optName = "-Xfok";
 	intResult = GET_INTEGER_VALUE(1, optName, uResult);
+#if defined(J9VM_ENV_DATA64)
+	TEST_INT(uResult, 5347534875438758474);
+	TEST_INT(intResult, OPTION_OK);
+#else /* defined(J9VM_ENV_DATA64) */
 	TEST_INT(uResult, 0);
 	TEST_INT(intResult, OPTION_MALFORMED);
+#endif /* defined(J9VM_ENV_DATA64) */
 
 	SET_TO(1, "-Xfoo31");
 	optName = "-Xfoo";
@@ -6390,8 +6404,35 @@ testOptionValueOps(J9JavaVM* vm)
 	SET_TO(1, "-Xfob4294967295");			/* (2^32 - 1) */
 	optName = "-Xfob";
 	intResult = GET_MEMORY_VALUE(1, optName, uResult);
+#if defined(J9VM_ENV_DATA64)
+	TEST_INT(uResult, 4294967296);
+	TEST_INT(intResult, OPTION_OK);
+#else /* defined(J9VM_ENV_DATA64) */
+	TEST_INT(uResult, 4294967292);
+	TEST_INT(intResult, OPTION_OK);
+#endif /* defined(J9VM_ENV_DATA64) */
+
+	SET_TO(1, "-Xfob9223372036854775807");			/* (2^63 - 1) */
+	optName = "-Xfob";
+	intResult = GET_MEMORY_VALUE(1, optName, uResult);
+#if defined(J9VM_ENV_DATA64)
+	TEST_INT(uResult, 9223372036854775800);
+	TEST_INT(intResult, OPTION_OK);
+#else /* defined(J9VM_ENV_DATA64) */
 	TEST_INT(uResult, 0);
-	TEST_INT(intResult, OPTION_OVERFLOW);
+	TEST_INT(intResult, OPTION_MALFORMED);
+#endif /* defined(J9VM_ENV_DATA64) */
+
+	SET_TO(1, "-Xfob9223372036854775809");			/* (2^63 + 1) */
+	optName = "-Xfob";
+	intResult = GET_MEMORY_VALUE(1, optName, uResult);
+#if defined(J9VM_ENV_DATA64)
+	TEST_INT(uResult, 9223372036854775808U);
+	TEST_INT(intResult, OPTION_OK);
+#else /* defined(J9VM_ENV_DATA64) */
+	TEST_INT(uResult, 0);
+	TEST_INT(intResult, OPTION_MALFORMED);
+#endif /* defined(J9VM_ENV_DATA64) */
 
 	SET_TO(1, "-Xfoc4294967280");			/* 0xfffffff0 */
 	optName = "-Xfoc";
@@ -6572,14 +6613,24 @@ testOptionValueOps(J9JavaVM* vm)
 	SET_TO(1, "-Xfou99999999999M");
 	optName = "-Xfou";
 	intResult = GET_MEMORY_VALUE(1, optName, uResult);
+#if defined(J9VM_ENV_DATA64)
+	TEST_INT(uResult, 104857599998951424);
+	TEST_INT(intResult, OPTION_OK);
+#else /* defined(J9VM_ENV_DATA64) */
 	TEST_INT(uResult, 0);
 	TEST_INT(intResult, OPTION_MALFORMED);
+#endif /* defined(J9VM_ENV_DATA64) */
 
 	SET_TO(1, "-Xfow99999M");
 	optName = "-Xfow";
 	intResult = GET_MEMORY_VALUE(1, optName, uResult);
+#if defined(J9VM_ENV_DATA64)
+	TEST_INT(uResult, 104856551424);
+	TEST_INT(intResult, OPTION_OK);
+#else /* defined(J9VM_ENV_DATA64) */
 	TEST_INT(uResult, 0);
 	TEST_INT(intResult, OPTION_OVERFLOW);
+#endif /* defined(J9VM_ENV_DATA64) */
 
 #ifdef J9VM_OPT_SIDECAR
 
@@ -6607,7 +6658,7 @@ testOptionValueOps(J9JavaVM* vm)
 	vm->vmArgsArray->actualVMArgs->options[5].optionString = origOption5;
 	vm->vmArgsArray->actualVMArgs->options[6].optionString = origOption6;
 
-	printf((failed==NULL) ? "\n\nTESTS PASSED\n" : "\n\nTESTS FAILED\n");
+	printf("%s", (failed==NULL) ? "\n\nTESTS PASSED\n" : "\n\nTESTS FAILED\n");
 }
 
 
