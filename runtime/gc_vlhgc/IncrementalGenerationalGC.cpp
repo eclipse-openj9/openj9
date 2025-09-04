@@ -483,6 +483,7 @@ MM_IncrementalGenerationalGC::internalPreCollect(MM_EnvironmentBase *env, MM_Mem
 		env->_cycleState->_collectionType = MM_CycleState::CT_GLOBAL_GARBAGE_COLLECTION;
 		env->_cycleState->_collectionStatistics = &_globalCollectionStatistics;
 		static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats.clear();
+		env->_cycleState->_currentCycleID = _extensions->getUniqueGCCycleCount();
 		
 		/* Regardless if we are transitioning from GMP , the cycle type will be set to Global GC. */
 		env->_cycleState->_type = OMR_GC_CYCLE_TYPE_VLHGC_GLOBAL_GARBAGE_COLLECT;

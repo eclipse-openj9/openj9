@@ -513,6 +513,42 @@ typedef struct J9JFRSystemGC {
 
 #define J9JFRSYSTEMGC_STACKTRACE(jfrEvent) ((UDATA *)(((J9JFRSystemGC *)(jfrEvent)) + 1))
 
+typedef struct J9JFROldGarbageCollection {
+	J9JFR_EVENT_COMMON_FIELDS
+	I_64 duration;
+	UDATA gcID;
+} J9JFROldGarbageCollection;
+
+typedef struct J9JFRYoungGarbageCollection {
+	J9JFR_EVENT_COMMON_FIELDS
+	I_64 duration;
+	UDATA gcID;
+	U_32 tenureThreshold;
+} J9JFRYoungGarbageCollection;
+
+typedef struct J9JFRGarbageCollection {
+	J9JFR_EVENT_COMMON_FIELDS
+	I_64 duration;
+	UDATA gcID;
+	U_32 gcNameID;
+	U_32 gcCauseID;
+	I_64 sumOfPauses;
+	I_64 longestPause;
+} J9JFRGarbageCollection;
+
+typedef struct J9JFRGCHeapSummary {
+	J9JFR_EVENT_COMMON_FIELDS
+	I_64 duration;
+	UDATA gcID;
+	U_32 gcWhenID;
+	U_64 vStart;
+	U_64 vCommittedEnd;
+	U_64 vCommittedSize;
+	U_64 vReservedEnd;
+	U_64 vReservedSize;
+	I_64 heapUsed;
+} J9JFRGCHeapSummary;
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 /* @ddr_namespace: map_to_type=J9CfrError */
@@ -4973,7 +5009,8 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA  ( *j9gc_get_object_size_in_bytes)(struct J9JavaVM* javaVM, j9object_t objectPtr) ;
 	UDATA  ( *j9gc_get_object_total_footprint_in_bytes)(struct J9JavaVM *javaVM, j9object_t objectPtr);
 	BOOLEAN ( *j9gc_get_explicit_GC_disabled)(struct J9JavaVM *javaVM) ;
-	UDATA  ( *j9gc_get_unique_GC_count)(struct J9JavaVM *javaVM) ;
+	UDATA  ( *j9gc_get_total_cycle_count)(struct J9JavaVM *javaVM) ;
+	UDATA  ( *j9gc_get_unique_cycle_ID)(struct OMR_VMThread *omrVMThread) ;
 	UDATA  ( *j9gc_modron_global_collect)(struct J9VMThread *vmThread) ;
 	UDATA  ( *j9gc_modron_global_collect_with_overrides)(struct J9VMThread *vmThread, U_32 overrideFlags) ;
 	UDATA  ( *j9gc_modron_local_collect)(struct J9VMThread *vmThread) ;

@@ -991,16 +991,36 @@ j9gc_get_explicit_GC_disabled(J9JavaVM *javaVM)
 }
 
 /**
- * API to return a unique GC ID based on all counts
+ * API to return a unique GC count based on all counts
  *
  * @parm[in] javaVM The J9JavaVM
- * @return unique GC ID count
+ * @return unique GC count
  */
 UDATA
-j9gc_get_unique_GC_count(J9JavaVM *javaVM)
+j9gc_get_total_cycle_count(J9JavaVM *javaVM)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
 	return extensions->getUniqueGCCycleCount();
+}
+
+/**
+ * API to return a unique GC ID based on what is set in cycle state
+ *
+ * @param[in] vmThread the J9VMThread
+ * @return unique GC ID
+ */
+UDATA
+j9gc_get_unique_cycle_ID(OMR_VMThread *omrVMThread)
+{
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(omrVMThread);
+	UDATA result = 0;
+	if (NULL != env) {
+		result = UDATA_MAX;
+		if (NULL != env->_cycleState) {
+			result = env->_cycleState->_currentCycleID;
+		}
+	}
+	return result;
 }
 
 /**

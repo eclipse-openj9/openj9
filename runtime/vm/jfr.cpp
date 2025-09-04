@@ -26,6 +26,7 @@
 #include "thread_api.h"
 #include "ut_j9vm.h"
 #include "vm_internal.h"
+#include "mmomrhook.h"
 
 #if defined(J9VM_OPT_JFR)
 
@@ -116,6 +117,18 @@ jfrEventSize(J9JFREvent *jfrEvent)
 		break;
 	case J9JFR_EVENT_TYPE_SYSTEM_GC:
 		size = sizeof(J9JFRSystemGC) + (((J9JFRSystemGC *)jfrEvent)->stackTraceSize * sizeof(UDATA));
+		break;
+	case J9JFR_EVENT_TYPE_OLD_GC_ENTRY:
+		size = sizeof(J9JFROldGarbageCollection);
+		break;
+	case J9JFR_EVENT_TYPE_YOUNG_GC_ENTRY:
+		size = sizeof(J9JFRYoungGarbageCollection);
+		break;
+	case J9JFR_EVENT_TYPE_GARBAGE_COLLECTION_ENTRY:
+		size = sizeof(J9JFRGarbageCollection);
+		break;
+	case J9JFR_EVENT_TYPE_GC_HEAP_SUMMARY_ENTRY:
+		size = sizeof(J9JFRGCHeapSummary);
 		break;
 	default:
 		Assert_VM_unreachable();
@@ -739,6 +752,35 @@ jfrSystemGC(J9HookInterface **hook, UDATA eventNum, void *eventData, void* userD
 	}
 }
 
+/**
+ * Hook for old garbage collection event. Called without VM access.
+ *
+ * @param hook[in] the VM hook interface
+ * @param eventNum[in] the event number
+ * @param eventData[in] the event data
+ * @param userData[in] the registered user data
+ */
+static void
+jfrOldGarbageCollection(J9HookInterface **hook, UDATA eventNum, void *eventData, void* userData)
+{
+	MM_GCCycleEndEvent *event = (MM_GCCycleEndEvent *)eventData;
+	if (OMR_GC_CYCLE_TYPE_SCAVENGE == event->cycleType) { // Wrong cycle type, is not an old garbage collection.
+		return;
+	}
+	OMR_VMThread *omrVMThread = (OMR_VMThread *)event->omrVMThread;
+	J9VMThread *currentThread = (J9VMThread *)omrVMThread->_language_vmthread;
+	J9JavaVM *javaVM = currentThread->javaVM;
+	PORT_ACCESS_FROM_JAVAVM(javaVM);
+
+	J9JFROldGarbageCollection *jfrEvent = (J9JFROldGarbageCollection *)reserveBuffer(currentThread, sizeof(J9JFROldGarbageCollection));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_OLD_GC_ENTRY);
+		jfrEvent->startTicks = 0;
+		jfrEvent->duration = j9time_nano_time();
+		jfrEvent->gcID = javaVM->memoryManagerFunctions->j9gc_get_unique_cycle_ID(omrVMThread);
+	}
+}
+
 jint
 initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 {
@@ -746,6 +788,7 @@ initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 	jint rc = JNI_ERR;
 	J9HookInterface **vmHooks = getVMHookInterface(vm);
+	J9HookInterface **gcOmrHooks = vm->memoryManagerFunctions->j9gc_get_omr_hook_interface(vm->omrVM);
 	U_8 *buffer = NULL;
 	UDATA timeSuccess = 0;
 
@@ -798,6 +841,9 @@ initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 		goto fail;
 	}
 	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_SYSTEM_GC_CALLED, jfrSystemGC, OMR_GET_CALLSITE(), NULL)) {
+		goto fail;
+	}
+	if ((*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_GC_CYCLE_END, jfrOldGarbageCollection, OMR_GET_CALLSITE(), NULL)) {
 		goto fail;
 	}
 
@@ -893,6 +939,7 @@ tearDownJFR(J9JavaVM *vm)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	J9VMThread *currentThread = currentVMThread(vm);
 	J9HookInterface **vmHooks = getVMHookInterface(vm);
+	J9HookInterface **gcOmrHooks = vm->memoryManagerFunctions->j9gc_get_omr_hook_interface(vm->omrVM);
 
 	Assert_VM_mustHaveVMAccess(currentThread);
 
@@ -933,6 +980,7 @@ tearDownJFR(J9JavaVM *vm)
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_MONITOR_CONTENDED_ENTERED, jfrVMMonitorEntered, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_UNPARKED, jfrVMThreadParked, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_SYSTEM_GC_CALLED, jfrSystemGC, NULL);
+	(*gcOmrHooks)->J9HookUnregister(gcOmrHooks, J9HOOK_MM_OMR_GC_CYCLE_END, jfrOldGarbageCollection, NULL);
 
 	/* Free global data */
 	VM_JFRConstantPoolTypes::freeJFRConstantEvents(vm);
