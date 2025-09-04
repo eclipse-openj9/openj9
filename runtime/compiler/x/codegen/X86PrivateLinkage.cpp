@@ -3028,14 +3028,10 @@ void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86Call
       og.endOutlinedInstructionSequence();
 
       //----------------------------------------------
-      // Typically a JNE to lookupDispatchSnippetLabel is required because of implementation details of routines in
-      // X86PicBuilder, such as resolveIPicClass, which expect a JNE before the done label must jmp to the lookup
-      // routine. Since we already have JNE to the outlined sequence where we check multiple entries before executing
-      // the slow path, we now need a JMP instruction to lookup routine. We add a one-byte nop to compensate for the
-      // smaller instruction.
+      // This extra JNE to lookupDispatchSnippetLabel is required because routines in X86PicBuilder,
+      // such as resolveIPicClass, expects the last JNE before the done label must jmp to the look up routine.
       //
-      generatePaddingInstruction(1, callNode, cg());
-      generateLongLabelInstruction(TR::InstOpCode::JMP4, callNode, lookupDispatchSnippetLabel, cg()); // PICBuilder needs this to have a 4-byte offset
+      generateLongLabelInstruction(TR::InstOpCode::JNE4, callNode, lookupDispatchSnippetLabel, cg()); // PICBuilder needs this to have a 4-byte offset
 
       generateLabelInstruction(TR::InstOpCode::label, callNode, gotoLastITableDispatchLabel, cg());
       if (comp()->target().is32Bit())
