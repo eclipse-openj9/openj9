@@ -35,6 +35,7 @@
 #include "env/j9methodServer.hpp"
 #include "env/JITServerPersistentCHTable.hpp"
 #include "env/JSR292Methods.h"
+#include "env/J9RetainedMethodSet.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "env/TypeLayout.hpp"
 #include "env/ut_j9jit.h"
@@ -3944,7 +3945,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
                }
             }
 
-         if (!compiler->getOption(TR_DisableCHOpts) && !useAotCompilation && (compiler->isDeserializedAOTMethodStore() || !compiler->isDeserializedAOTMethod()))
+         if (!useAotCompilation && (compiler->isDeserializedAOTMethodStore() || !compiler->isDeserializedAOTMethod()))
             {
             TR::ClassTableCriticalSection commit(compiler->fe());
 
