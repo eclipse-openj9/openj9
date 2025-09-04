@@ -22,7 +22,7 @@
  */
 package com.ibm.jvm.j9.dump.extract;
 
-public class JExtractFatalException extends RuntimeException {
+public class JPackCoreFatalException extends RuntimeException {
 	private static final long serialVersionUID = -4336525511241349351L;
 	private int code;
 
@@ -30,7 +30,7 @@ public class JExtractFatalException extends RuntimeException {
 		return code;
 	}
 
-	public JExtractFatalException(String message, int code) {
+	public JPackCoreFatalException(String message, int code) {
 		super(message);
 		this.code = code;
 	}

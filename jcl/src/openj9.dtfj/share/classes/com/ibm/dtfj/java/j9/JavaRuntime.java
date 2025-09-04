@@ -417,7 +417,7 @@ public class JavaRuntime implements com.ibm.dtfj.java.JavaRuntime
 		String value = getSystemProperty(key);
 
 		if (value == null) {
-			throw new CorruptDataException(new CorruptData("Required system property " + key + " not found in JExtract output", null));
+			throw new CorruptDataException(new CorruptData("Required system property " + key + " not found in jpackcore output", null));
 		}
 
 		return value;
