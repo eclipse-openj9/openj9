@@ -101,10 +101,10 @@ dbgFindPattern(U_8 *pattern, UDATA patternLength, UDATA patternAlignment, U_8 *s
 
 /*
  * Find the J9RAS structure and validate that it is correct.
- * This prevents jextract from one build or platform being used with a
+ * This prevents jpackcore from one build or platform being used with a
  * dump produced by a different build or platform.
  *
- * Return JNI_TRUE if the dump matches jextract.
+ * Return JNI_TRUE if the dump matches jpackcore.
  * Return JNI_FALSE and set a Java exception if the dump does not match.
  */
 static jboolean
@@ -142,7 +142,7 @@ validateDump(JNIEnv *env, jboolean disableBuildIdCheck)
 		if ((U_64)eyecatcher > (U_64)0xFFFFFFFF) {
 			j9str_printf(
 					errBuf, sizeof(errBuf),
-					"J9RAS is out of range for a 32-bit pointer (0x%16.16llx). This version of jextract is incompatible with this dump.",
+					"J9RAS is out of range for a 32-bit pointer (0x%16.16llx). This version of jpackcore is incompatible with this dump.",
 					eyecatcher);
 			(*env)->ThrowNew(env, errorClazz, errBuf);
 			return JNI_FALSE;
@@ -157,7 +157,7 @@ validateDump(JNIEnv *env, jboolean disableBuildIdCheck)
 				if (ras->version != J9RASVersion) {
 					j9str_printf(
 							errBuf, sizeof(errBuf),
-							"J9RAS.version is incorrect (found %u, expecting %u). This version of jextract is incompatible with this dump.",
+							"J9RAS.version is incorrect (found %u, expecting %u). This version of jpackcore is incompatible with this dump.",
 							ras->version,
 							J9RASVersion);
 					(*env)->ThrowNew(env, errorClazz, errBuf);
@@ -166,7 +166,7 @@ validateDump(JNIEnv *env, jboolean disableBuildIdCheck)
 				if (ras->length != sizeof(J9RAS)) {
 					j9str_printf(
 							errBuf, sizeof(errBuf),
-							"J9RAS.length is incorrect (found %u, expecting %u). This version of jextract is incompatible with this dump.",
+							"J9RAS.length is incorrect (found %u, expecting %u). This version of jpackcore is incompatible with this dump.",
 							ras->length,
 							sizeof(J9RAS));
 					(*env)->ThrowNew(env, errorClazz, errBuf);
@@ -176,14 +176,14 @@ validateDump(JNIEnv *env, jboolean disableBuildIdCheck)
 					if (disableBuildIdCheck) {
 						j9tty_printf(PORTLIB,
 							"Ignoring incorrect J9RAS.buildID (found %llx, expecting %llx)."
-							" This version of jextract may be incompatible with this dump.\n",
+							" This version of jpackcore may be incompatible with this dump.\n",
 							ras->buildID,
 							(U_64)J9UniqueBuildID);
 					} else {
 						j9str_printf(
 								errBuf, sizeof(errBuf),
 								"J9RAS.buildID is incorrect (found %llx, expecting %llx)."
-								" This version of jextract is incompatible with this dump"
+								" This version of jpackcore is incompatible with this dump"
 								" (use '-r' option to relax this check).",
 								ras->buildID,
 								(U_64)J9UniqueBuildID);
@@ -426,7 +426,7 @@ flushCache(void)
 /**
  * This function implements a very simple caching scheme to accelerate the reading of small objects.
  * A more sophisticated scheme is implemented in the Java code. This cache allows us to bypass
- * the relatively expensive call-in to Java for most objects. During a normal jextract run we expect
+ * the relatively expensive call-in to Java for most objects. During a normal jpackcore run we expect
  * the cache to have a hit rate of over 90%.
  */
 static void

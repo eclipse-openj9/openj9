@@ -255,13 +255,13 @@ public class Main {
 	private static final int ZIP_BUFFER_SIZE = 8 * 4096;
 
 	// return codes
-	private static int JEXTRACT_SUCCESS = 0;
-	private static int JEXTRACT_SYNTAX_ERROR = 1;
-	private static int JEXTRACT_FILE_ERROR = 2;
-	private static int JEXTRACT_NOJVM_ERROR = 3;
-	private static int JEXTRACT_ADDRESS_ERROR = 4;
-	private static int JEXTRACT_VERSION_ERROR = 5;
-	private static int JEXTRACT_INTERNAL_ERROR = 6;
+	private static int JPACKCORE_SUCCESS = 0;
+	private static int JPACKCORE_SYNTAX_ERROR = 1;
+	private static int JPACKCORE_FILE_ERROR = 2;
+	private static int JPACKCORE_NOJVM_ERROR = 3;
+	private static int JPACKCORE_ADDRESS_ERROR = 4;
+	private static int JPACKCORE_VERSION_ERROR = 5;
+	private static int JPACKCORE_INTERNAL_ERROR = 6;
 
 	public static void main(String[] args) {
 		Main dumper = new Main(args);
@@ -288,12 +288,12 @@ public class Main {
 
 	private void ensure(boolean condition, String errorMessage) {
 		if (false == condition) {
-			usageMessage(errorMessage, JEXTRACT_SYNTAX_ERROR);
+			usageMessage(errorMessage, JPACKCORE_SYNTAX_ERROR);
 		}
 	}
 
 	private void usageMessage(String message, int code) {
-		report("Usage: jextract [options] dump_name [output_filename]"); //$NON-NLS-1$
+		report("Usage: jpackcore [options] dump_name [output_filename]"); //$NON-NLS-1$
 		report("  output filename defaults to dump_name.zip"); //$NON-NLS-1$
 		report("  options:"); //$NON-NLS-1$
 		report("    -e                  throw exceptions instead of calling System.exit()"); //$NON-NLS-1$
@@ -309,7 +309,7 @@ public class Main {
 
 	private void errorMessage(String message, int code) {
 		if (_throwExceptions) {
-			throw new JExtractFatalException(message, code);
+			throw new JPackCoreFatalException(message, code);
 		} else {
 			if (message != null) {
 				report(message);
@@ -321,7 +321,7 @@ public class Main {
 	private void errorMessage(String message, int code, Throwable throwable) {
 		throwable.printStackTrace();
 		if (_throwExceptions) {
-			throw new JExtractFatalException(message, code);
+			throw new JPackCoreFatalException(message, code);
 		} else {
 			if (message != null) {
 				report(message);
@@ -344,7 +344,7 @@ public class Main {
 		File virtualRootDirectory = null;
 
 		if (args.length == 0) {
-			usageMessage(null, JEXTRACT_SUCCESS);
+			usageMessage(null, JPACKCORE_SUCCESS);
 		}
 
 		for (int i = 0; i < args.length; i++) {
@@ -353,7 +353,7 @@ public class Main {
 				if ("--".equals(arg)) { //$NON-NLS-1$
 					ignoreOptions = true;
 				} else if ("-help".equals(arg)) { //$NON-NLS-1$
-					usageMessage(null, JEXTRACT_SUCCESS);
+					usageMessage(null, JPACKCORE_SUCCESS);
 				} else if ("-f".equals(arg)) { //$NON-NLS-1$
 					// The next argument is the name of the executable
 					i += 1;
@@ -384,19 +384,19 @@ public class Main {
 				} else if (arg.equals("-x")) { //$NON-NLS-1$
 					excludeCoreFile = true;
 				} else {
-					usageMessage("Unrecognized option: " + arg, JEXTRACT_SYNTAX_ERROR); //$NON-NLS-1$
+					usageMessage("Unrecognized option: " + arg, JPACKCORE_SYNTAX_ERROR); //$NON-NLS-1$
 				}
 			} else if (dumpName == null) {
 				dumpName = arg;
 			} else if (outputName == null) {
 				outputName = arg;
 			} else {
-				usageMessage("Too many file arguments: " + arg, JEXTRACT_SYNTAX_ERROR); //$NON-NLS-1$
+				usageMessage("Too many file arguments: " + arg, JPACKCORE_SYNTAX_ERROR); //$NON-NLS-1$
 			}
 		}
 
 		if (dumpName == null) {
-			usageMessage("No dump file specified", JEXTRACT_SYNTAX_ERROR); //$NON-NLS-1$
+			usageMessage("No dump file specified", JPACKCORE_SYNTAX_ERROR); //$NON-NLS-1$
 		}
 
 		_dumpName = dumpName;
@@ -408,11 +408,11 @@ public class Main {
 		try {
 			System.loadLibrary(J9_LIB_NAME);
 		} catch (SecurityException e) {
-			errorMessage("Error. Security permissions don't allow required native library to be loaded.", JEXTRACT_INTERNAL_ERROR); //$NON-NLS-1$
+			errorMessage("Error. Security permissions don't allow required native library to be loaded.", JPACKCORE_INTERNAL_ERROR); //$NON-NLS-1$
 		} catch (UnsatisfiedLinkError e) {
-			errorMessage("Error. Native library " + J9_LIB_NAME + " cannot be found. Please check your path.", JEXTRACT_INTERNAL_ERROR); //$NON-NLS-1$ //$NON-NLS-2$
+			errorMessage("Error. Native library " + J9_LIB_NAME + " cannot be found. Please check your path.", JPACKCORE_INTERNAL_ERROR); //$NON-NLS-1$ //$NON-NLS-2$
 		} catch (Exception e) {
-			errorMessage("Error. Unexpected exception occurred loading: " + J9_LIB_NAME, JEXTRACT_INTERNAL_ERROR, e); //$NON-NLS-1$
+			errorMessage("Error. Unexpected exception occurred loading: " + J9_LIB_NAME, JPACKCORE_INTERNAL_ERROR, e); //$NON-NLS-1$
 		}
 
 		report("Loading dump file..."); //$NON-NLS-1$
@@ -423,14 +423,14 @@ public class Main {
 			reader = new ClosingFileReader(dumpFile);
 		} catch (FileNotFoundException e) {
 			if (false == dumpFile.exists()) {
-				errorMessage("Error. Could not find dump file: " + dumpName, JEXTRACT_FILE_ERROR); //$NON-NLS-1$
+				errorMessage("Error. Could not find dump file: " + dumpName, JPACKCORE_FILE_ERROR); //$NON-NLS-1$
 			} else if (false == dumpFile.canRead()) {
-				errorMessage("Error. Unable to read dump file (check permission): " + dumpName, JEXTRACT_FILE_ERROR); //$NON-NLS-1$
+				errorMessage("Error. Unable to read dump file (check permission): " + dumpName, JPACKCORE_FILE_ERROR); //$NON-NLS-1$
 			} else {
-				errorMessage("Error. Unexpected FileNotFoundException occurred opening: " + dumpName, JEXTRACT_FILE_ERROR, e); //$NON-NLS-1$
+				errorMessage("Error. Unexpected FileNotFoundException occurred opening: " + dumpName, JPACKCORE_FILE_ERROR, e); //$NON-NLS-1$
 			}
 		} catch (IOException e) {
-			errorMessage(e.getMessage(), JEXTRACT_FILE_ERROR);
+			errorMessage(e.getMessage(), JPACKCORE_FILE_ERROR);
 		}
 
 		ICoreFileReader dump = null;
@@ -438,11 +438,11 @@ public class Main {
 		try {
 			dump = DumpFactory.createDumpForCore(reader, _verbose);
 		} catch (Exception e) {
-			errorMessage("Error. Unexpected Exception occurred opening: " + dumpName, JEXTRACT_FILE_ERROR, e); //$NON-NLS-1$
+			errorMessage("Error. Unexpected Exception occurred opening: " + dumpName, JPACKCORE_FILE_ERROR, e); //$NON-NLS-1$
 		}
 
 		if (null == dump) {
-			errorMessage("Error. Dump type not recognised, file: " + dumpName, JEXTRACT_FILE_ERROR); //$NON-NLS-1$
+			errorMessage("Error. Dump type not recognised, file: " + dumpName, JPACKCORE_FILE_ERROR); //$NON-NLS-1$
 			try {
 				reader.close();
 			} catch (IOException e) {
@@ -458,7 +458,7 @@ public class Main {
 		try {
 			environmentPointer = getEnvironmentPointer(dump.getAddressSpace(), disableBuildIdCheck);
 		} catch (Throwable t) {
-			errorMessage("Error. Unable to locate executable for " + dumpName, JEXTRACT_INTERNAL_ERROR, t); //$NON-NLS-1$
+			errorMessage("Error. Unable to locate executable for " + dumpName, JPACKCORE_INTERNAL_ERROR, t); //$NON-NLS-1$
 		}
 
 		_builder = new DummyBuilder(virtualRootDirectory, environmentPointer);
@@ -511,10 +511,10 @@ public class Main {
 		try {
 			createZipFromFileNames(files, excluded, _builder);
 		} catch (Exception e) {
-			errorMessage(e.getMessage(), JEXTRACT_INTERNAL_ERROR, e);
+			errorMessage(e.getMessage(), JPACKCORE_INTERNAL_ERROR, e);
 		}
 
-		report("jextract complete."); //$NON-NLS-1$
+		report("jpackcore complete."); //$NON-NLS-1$
 	}
 
 	private void report(String message) {
