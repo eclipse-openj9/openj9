@@ -1382,7 +1382,102 @@ VM_JFRConstantPoolTypes::addSystemGCEntry(J9JFRSystemGC *systemGCData)
 
 done:
 	return;
+}
 
+void
+VM_JFRConstantPoolTypes::addOldGarbageCollectionEntry(J9JFROldGarbageCollection *oldGarbageCollectionData)
+{
+	OldGarbageCollectionEntry *entry = (OldGarbageCollectionEntry *)pool_newElement(_oldGarbageCollectionTable);
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = oldGarbageCollectionData->startTicks;
+	entry->duration = oldGarbageCollectionData->duration;
+	entry->gcID = oldGarbageCollectionData->gcID;
+
+	_oldGarbageCollectionCount += 1;
+
+	done:
+		return;
+}
+
+void
+VM_JFRConstantPoolTypes::addYoungGarbageCollectionEntry(J9JFRYoungGarbageCollection *youngGarbageCollectionData)
+{
+	YoungGarbageCollectionEntry *entry = (YoungGarbageCollectionEntry *)pool_newElement(_youngGarbageCollectionTable);
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = youngGarbageCollectionData->startTicks;
+	entry->duration = youngGarbageCollectionData->duration;
+	entry->gcID = youngGarbageCollectionData->gcID;
+	entry->tenureThreshold = youngGarbageCollectionData->tenureThreshold;
+
+	_youngGarbageCollectionCount += 1;
+
+	done:
+		return;
+}
+
+void
+VM_JFRConstantPoolTypes::addGarbageCollectionEntry(J9JFRGarbageCollection *garbageCollectionData)
+{
+	GarbageCollectionEntry *entry = (GarbageCollectionEntry *)pool_newElement(_garbageCollectionTable);
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = garbageCollectionData->startTicks;
+	entry->duration = garbageCollectionData->duration;
+	entry->gcID = garbageCollectionData->gcID;
+
+	entry->gcNameID = garbageCollectionData->gcNameID;
+	entry->gcCauseID = garbageCollectionData->gcCauseID;
+
+	entry->sumOfPauses = garbageCollectionData->sumOfPauses;
+	entry->longestPause = garbageCollectionData->longestPause;
+
+	_garbageCollectionCount += 1;
+
+	done:
+		return;
+}
+
+void
+VM_JFRConstantPoolTypes::addGCHeapSummaryEntry(J9JFRGCHeapSummary *gcHeapSummaryData)
+{
+	GCHeapSummaryEntry *entry = (GCHeapSummaryEntry *)pool_newElement(_gcHeapSummaryTable);
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = gcHeapSummaryData->startTicks;
+	entry->gcID = gcHeapSummaryData->gcID;
+
+	entry->gcWhenID = gcHeapSummaryData->gcWhenID;
+
+	entry->heapSpace.start = gcHeapSummaryData->vStart;
+	entry->heapSpace.committedEnd = gcHeapSummaryData->vCommittedEnd;
+	entry->heapSpace.committedSize = gcHeapSummaryData->vCommittedSize;
+	entry->heapSpace.reservedEnd = gcHeapSummaryData->vReservedEnd;
+	entry->heapSpace.reservedSize = gcHeapSummaryData->vReservedSize;
+
+	entry->heapUsed = gcHeapSummaryData->heapUsed;
+
+	_gcHeapSummaryCount += 1;
+
+	done:
+		return;
 }
 
 void
