@@ -75,11 +75,37 @@ public:
 
 	protected:
 	private:
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+		uintptr_t _fractionReservedRegion; /**< for calculating fraction of Reserved Regions */
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 
 	public:
 		RegionReclaimableStats() {};
 
 		void reset() { memset(this, 0, sizeof(RegionReclaimableStats)); }
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+		void resetFractionReservedRegion() { _fractionReservedRegion = 0; }
+
+		bool calculateFractionReservedRegion(const uintptr_t regionSize, uintptr_t fraction)
+		{
+			bool ret = false;
+			fraction = MM_Math::roundToCeiling(J9_GC_MINIMUM_OBJECT_SIZE, fraction);
+
+			if (regionSize == fraction) {
+				ret = true;
+			} else if (0 == _fractionReservedRegion) {
+				_fractionReservedRegion = fraction;
+				ret = true;
+			} else {
+				_fractionReservedRegion += fraction;
+				if (regionSize <= _fractionReservedRegion) {
+					_fractionReservedRegion -= regionSize;
+					ret = true;
+				}
+			}
+			return ret;
+		}
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 
 	protected:
 	private:
