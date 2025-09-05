@@ -1507,10 +1507,6 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
     *   - Leaf array headers
     */
 
-   static const bool breakOnInlineGenerate2DArray = feGetEnv("TR_BreakOnInlineGenerate2DArray") != NULL;
-   if (breakOnInlineGenerate2DArray)
-      generateInstruction(TR::InstOpCode::INT3, node, cg);
-
    // alignment requirement
    int32_t alignmentInBytes = TR::Compiler->om.getObjectAlignmentInBytes();
    // a length>0 array object would *not* require alignment if both a single element
@@ -1536,6 +1532,10 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
    TR::Register *secondDimLenReg = cg->allocateRegister();
    TR::Register *classReg = cg->longClobberEvaluate(classNode);
    TR::Register *firstDimLenReg = cg->allocateRegister();
+
+   static const bool breakOnInlineGenerate2DArray = feGetEnv("TR_BreakOnInlineGenerate2DArray") != NULL;
+   if (breakOnInlineGenerate2DArray)
+      generateInstruction(TR::InstOpCode::INT3, node, cg);
 
    generateRegMemInstruction(TR::InstOpCode::L4RegMem, node, secondDimLenReg, generateX86MemoryReference(dimsPtrReg, 0, cg), cg);
    generateRegMemInstruction(TR::InstOpCode::MOVSXReg8Mem4, node, firstDimLenReg, generateX86MemoryReference(dimsPtrReg, 4, cg), cg);
