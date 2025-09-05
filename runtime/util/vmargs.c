@@ -341,7 +341,8 @@ optionValueOperations(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA
 	char *values, *scanStart;
 	char *cursor;
 	IDATA sepCount = 0;
-	UDATA value, oldValue, done;
+	UDATA value = 0;
+	UDATA done = 0;
 	IDATA errorFound = 0;
 	UDATA mapType;
 	double dvalue = 0.0;
@@ -577,9 +578,17 @@ optionValueOperations(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA
 				} else {
 					switch (*cursor) {
 						case '\0':
-							oldValue = value;
-							value = (value +  sizeof(UDATA) - 1) & ~(sizeof(UDATA) - 1);		/* round to nearest pointer value */
-							if (value < oldValue) return OPTION_OVERFLOW;
+#if defined(J9VM_ENV_DATA64)
+#define MEM_MAX_LIMIT I_64_MAX
+#else /* defined(J9VM_ENV_DATA64) */
+#define MEM_MAX_LIMIT U_32_MAX
+#endif /* defined(J9VM_ENV_DATA64) */
+							/* Round (up if possible) to a multiple of the pointer width. */
+							if (value < ((UDATA)MEM_MAX_LIMIT & ~(sizeof(UDATA) - 1))) {
+								value += sizeof(UDATA) - 1;
+							}
+							value &= ~(sizeof(UDATA) - 1);
+#undef MEM_MAX_LIMIT
 							break;
 						case 'k':
 						case 'K':
