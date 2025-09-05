@@ -1598,10 +1598,11 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
    // zero out allocation
    if (!skipZeroInit)
       {
-      generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, eax, eax, cg);
+      generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, zeroReg, zeroReg, cg);
       // REPSTOSB fills rcx bytes at [rdi] with al
       // rcx = allocEndReg - leafArrReg
       // rdi = leafArrReg
+      // eax = zeroReg
       generateRegRegInstruction(TR::InstOpCode::SUB8RegReg, node, allocEndReg, leafArrReg, cg);
       generateInstruction(TR::InstOpCode::REPSTOSB, node, cg);
       cg->stopUsingRegister(zeroReg);
