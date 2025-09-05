@@ -1604,7 +1604,7 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
    if (!skipZeroInit)
       {
       generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, zeroReg, zeroReg, cg);
-      generateRegRegInstruction(TR::InstOpCode::MOV8RegReg, node, tmpReg, leafArrReg);
+      generateRegRegInstruction(TR::InstOpCode::MOV8RegReg, node, tmpReg, leafArrReg, cg);
       // REPSTOSB fills rcx bytes at [rdi] with al
       // rcx = allocEndReg - leafArrReg
       // rdi = leafArrReg
