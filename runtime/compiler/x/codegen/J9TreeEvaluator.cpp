@@ -1519,6 +1519,7 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
 
    bool skipZeroInit = fej9->tlhHasBeenCleared() || node->canSkipZeroInitialization();
    TR::Register *zeroReg = skipZeroInit ? NULL : cg->allocateRegister();
+   TR::Register *tmpReg = skipZeroInit ? NULL : cg->allocateRegister();
 
    uintptr_t classOffset = TR::Compiler->om.offsetOfObjectVftField();
    uintptr_t sizeOffset = fej9->getOffsetOfContiguousArraySizeField();
@@ -1603,6 +1604,7 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
    if (!skipZeroInit)
       {
       generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, zeroReg, zeroReg, cg);
+      generateRegRegInstruction(TR::InstOpCode::MOV8RegReg, node, tmpReg, leafArrReg);
       // REPSTOSB fills rcx bytes at [rdi] with al
       // rcx = allocEndReg - leafArrReg
       // rdi = leafArrReg
@@ -1610,6 +1612,7 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
       generateRegRegInstruction(TR::InstOpCode::SUB8RegReg, node, allocEndReg, leafArrReg, cg);
       generateInstruction(TR::InstOpCode::REPSTOSB, node, cg);
       cg->stopUsingRegister(zeroReg);
+      cg->stopUsingRegister(tmpReg);
       }
 
    // initialise spine array header
@@ -1672,7 +1675,7 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
 
    generateLabelInstruction(TR::InstOpCode::label, node, loopBottom, cg);
 
-   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(0, skipZeroInit ? 10 : 11, cg);
+   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(0, skipZeroInit ? 10 : 12, cg);
 
    deps->addPostCondition(dimsPtrReg, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(firstDimLenReg, TR::RealRegister::NoReg, cg);
@@ -1686,14 +1689,13 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
       {
       deps->addPostCondition(spineArrReg, TR::RealRegister::eax, cg);
       deps->addPostCondition(allocEndReg, TR::RealRegister::NoReg, cg);
-      deps->addPostCondition(leafArrReg, TR::RealRegister::NoReg, cg);
       }
    else
       {
       deps->addPostCondition(zeroReg, TR::RealRegister::eax, cg);
       deps->addPostCondition(spineArrReg, TR::RealRegister::NoReg, cg);
       deps->addPostCondition(allocEndReg, TR::RealRegister::ecx, cg);
-      deps->addPostCondition(leafArrReg, TR::RealRegister::edi, cg);
+      deps->addPostCondition(tmpReg, TR::RealRegister::edi, cg);
       }
 
    deps->addPostCondition(vmThreadReg, TR::RealRegister::ebp, cg);
