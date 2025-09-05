@@ -2427,68 +2427,7 @@ TR::Register *J9::Power::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, 
    static bool disableInlineMultianewArray = feGetEnv("TR_DisableInlineMultianewArray") != NULL;
 
    // Get the size of the elements in the leaf components
-   int32_t leafArrayElementSize = -1;
-   TR::Node *classNode = node->getThirdChild();
-   TR::SymbolReference *classSymRef = NULL;
-   const TR::ILOpCodes opcode = classNode->getOpCodeValue();
-   bool isClassNodeLoadAddr = opcode == TR::loadaddr;
-   // getting the symref
-   if (isClassNodeLoadAddr)
-      {
-      classSymRef = classNode->getSymbolReference();
-      }
-   else if (opcode == TR::aloadi)
-      {
-      // recognizedCallTransformer adds another layer of aloadi
-      while (classNode->getOpCodeValue() == TR::aloadi && classNode->getFirstChild()->getOpCodeValue() == TR::aloadi)
-         {
-         classNode = classNode->getFirstChild();
-         }
-
-      if (classNode->getOpCodeValue() == TR::aloadi && classNode->getFirstChild()->getOpCodeValue() == TR::loadaddr)
-         {
-         classSymRef = classNode->getFirstChild()->getSymbolReference();
-         }
-      }
-   // Infer the data type and length from the signature
-   if (classSymRef)
-      {
-      int32_t len;
-      const char *sig = classSymRef->getTypeSignature(len);
-      if (sig)
-         {
-         if (sig[0] == '[' && sig[1] == '[')
-            {
-            switch (sig[2])
-               {
-               case 'B':
-                  leafArrayElementSize = 1;
-                  break;
-               case 'C':
-               case 'S':
-                  leafArrayElementSize = 2;
-                  break;
-               case 'I':
-               case 'F':
-                  leafArrayElementSize = 4;
-                  break;
-               case 'D':
-               case 'J':
-                  leafArrayElementSize = 8;
-                  break;
-               case 'Z':
-                  leafArrayElementSize =
-                     static_cast<int32_t>(TR::Compiler->om.elementSizeOfBooleanArray());
-                  break;
-               case 'L':
-               default :
-                  leafArrayElementSize = TR::Compiler->om.sizeofReferenceField();
-                  break;
-               }
-            }
-         }
-      }
-
+   int32_t leafArrayElementSize = TR::Compiler->om.getTwoDimensionalArrayComponentSize(node->getThirdChild());
 
    // Anything with more than 2 dimensions will be replaced by a direct call when lowering trees,
    // so this is functionally equivalent of saying only inline if the dimension is exactly 2.

@@ -158,6 +158,18 @@ public:
 
    int32_t getObjectAlignmentInBytes();
 
+   /**
+   * \brief
+   * Calculate the leaf component size of a two dimensional array.
+   *
+   * \param classNode
+   * The class child of multianewarray node.
+   *
+   * \return
+   * The component size, or -1 if can not calculate the size.
+   */
+   int32_t getTwoDimensionalArrayComponentSize(TR::Node *classNode);
+
 private:
 
    bool                  _compressObjectReferences;
