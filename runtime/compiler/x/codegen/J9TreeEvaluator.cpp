@@ -1507,6 +1507,10 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
     *   - Leaf array headers
     */
 
+   static const bool breakOnInlineGenerate2DArray = feGetEnv("TR_BreakOnInlineGenerate2DArray") != NULL;
+   if (breakOnInlineGenerate2DArray)
+      generateInstruction(TR::InstOpCode::INT3, node, cg);
+
    // alignment requirement
    int32_t alignmentInBytes = TR::Compiler->om.getObjectAlignmentInBytes();
    // a length>0 array object would *not* require alignment if both a single element
