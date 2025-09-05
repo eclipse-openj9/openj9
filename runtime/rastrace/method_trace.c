@@ -175,7 +175,7 @@ traceMethodEnter(J9VMThread *thr, J9Method *method, void *receiverAddress, UDATA
 	j9object_t receiver = J9_ARE_ANY_BITS_SET(modifiers, J9AccStatic) ? NULL : *(j9object_t *)receiverAddress;
 
 	if (0 != isCompiled) {
-		if (modifiers & J9AccStatic) {
+		if (J9_ARE_ANY_BITS_SET(modifiers, J9AccStatic)) {
 			Trc_MethodEntryCS(thr, J9UTF8_LENGTH(className), J9UTF8_DATA(className), J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName), J9UTF8_LENGTH(methodSignature), J9UTF8_DATA(methodSignature));
 		} else {
 			Trc_MethodEntryC(thr, J9UTF8_LENGTH(className), J9UTF8_DATA(className), J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName), J9UTF8_LENGTH(methodSignature), J9UTF8_DATA(methodSignature), receiver);
@@ -183,8 +183,8 @@ traceMethodEnter(J9VMThread *thr, J9Method *method, void *receiverAddress, UDATA
 	} else {
 		char buf[1024];
 
-		if (modifiers & J9AccStatic) {
-			if (modifiers & J9AccNative) {
+		if (J9_ARE_ANY_BITS_SET(modifiers, J9AccStatic)) {
+			if (J9_ARE_ANY_BITS_SET(modifiers, J9AccNative)) {
 				Trc_MethodEntryNS(thr, J9UTF8_LENGTH(className), J9UTF8_DATA(className), J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName), J9UTF8_LENGTH(methodSignature), J9UTF8_DATA(methodSignature));
 			} else {
 				Trc_MethodEntryS(thr, J9UTF8_LENGTH(className), J9UTF8_DATA(className), J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName), J9UTF8_LENGTH(methodSignature), J9UTF8_DATA(methodSignature));
@@ -193,25 +193,35 @@ traceMethodEnter(J9VMThread *thr, J9Method *method, void *receiverAddress, UDATA
 				Trc_MethodArgumentsS(thr, traceMethodArguments(thr, methodSignature, (UDATA*)receiverAddress, buf, buf + sizeof(buf)));
 			}
 		} else {
-			J9Class* receiverClazz = J9OBJECT_CLAZZ(thr, receiver);
-			J9UTF8* receiverClassName = J9ROMCLASS_CLASSNAME(receiverClazz->romClass);
-
-			if (modifiers & J9AccNative) {
+			if (J9_ARE_ANY_BITS_SET(modifiers, J9AccNative)) {
 				Trc_MethodEntryN(thr, J9UTF8_LENGTH(className), J9UTF8_DATA(className), J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName), J9UTF8_LENGTH(methodSignature), J9UTF8_DATA(methodSignature), receiver);
 			} else {
 				Trc_MethodEntry(thr, J9UTF8_LENGTH(className), J9UTF8_DATA(className), J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName), J9UTF8_LENGTH(methodSignature), J9UTF8_DATA(methodSignature), receiver);
 			}
 		}
+		if (doParameters) {
+			J9Class *receiverClazz = NULL == receiver ? NULL : J9OBJECT_CLAZZ(thr, receiver);
+			J9UTF8 *receiverClassName = NULL;
+			if (receiverClazz) {
+				receiverClassName = J9ROMCLASS_CLASSNAME(receiverClazz->romClass);
+			}
+			Trc_MethodArguments(
+					thr,
+					(U_32)J9UTF8_LENGTH(receiverClassName),
+					J9UTF8_DATA(receiverClassName),
+					receiver,
+					traceMethodArguments(thr, methodSignature, (UDATA*)receiverAddress - 1, buf, buf + sizeof(buf)));
+		}
 	}
 
-	if (0 != doParameters) {
+	if (0 != doParameters && !J9_ARE_ANY_BITS_SET(modifiers, J9AccStatic)) {
 		J9Class *receiverClazz = NULL == receiver ? NULL : J9OBJECT_CLAZZ(thr, receiver);
 		J9JavaVM *vm = thr->javaVM;
 		const unsigned int maxStringLength = RAS_GLOBAL_FROM_JAVAVM(maxStringLength, vm);
 
 		if ((receiverClazz == J9VMJAVALANGSTRING_OR_NULL(vm))
 			&& (0 != maxStringLength)
-			&& (!J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(methodName), J9UTF8_LENGTH(methodName), "<init>"))
+			&& !J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(methodName), J9UTF8_LENGTH(methodName), "<init>")
 		) {
 			PORT_ACCESS_FROM_VMC(thr);
 			char utf8Buffer[RAS_MAX_STRING_LENGTH_LIMIT + 1];
