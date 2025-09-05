@@ -102,7 +102,9 @@ public abstract class ClassLoader {
 	private final static String DELEGATING_CL = "sun.reflect.DelegatingClassLoader"; //$NON-NLS-1$
 	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	private boolean isDelegatingCL = false;
-
+	/*[IF JAVA_SPEC_VERSION > 8]*/
+	private static boolean applicationClassLoaderInited = false;
+	/*[ENDIF] JAVA_SPEC_VERSION > 8 */
 	/*
 	 * This is the application ClassLoader
 	 */
@@ -163,7 +165,9 @@ public abstract class ClassLoader {
 	private NativeLibraries nativelibs = null;
 /*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 	private static native void initAnonClassLoader(InternalAnonymousClassLoader anonClassLoader);
-
+/*[IF SNAPSHOTS] */
+	private static boolean isRCPRestoreRun = VM.isRCPRestoreRun();
+/*[ENDIF] SNAPSHOTS */
 	/*[PR JAZZ 73143]: ClassLoader incorrectly discards class loading locks*/
 	static final class ClassNameLockRef extends WeakReference<Object> implements Runnable {
 		private static final ReferenceQueue<Object> queue = new ReferenceQueue<>();
@@ -425,8 +429,19 @@ private ClassLoader(Void staticMethodHolder, String classLoaderName, ClassLoader
 	specialLoaderInited = (bootstrapClassLoader != null);
 /*[ENDIF] JAVA_SPEC_VERSION == 8 */
 	if (specialLoaderInited) {
-		if (!lazyClassLoaderInit) {
-			VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_OTHERS, isParallelCapable);
+/*[IF JAVA_SPEC_VERSION > 8]*/
+		// Assuming the 3rd classloader initialized is application class loader as the order
+		// to initialize builtin class loaders is defined in the static block of
+		// openjdk/src/java.base/share/classes/jdk/internal/loader/ClassLoaders.java
+		if (!applicationClassLoaderInited) {
+			assignImmortalClassLoader(VM.J9_CLASSLOADER_TYPE_APP, isParallelCapable);
+			applicationClassLoaderInited = true;
+		} else
+/*[ENDIF] JAVA_SPEC_VERSION > 8 */
+		{
+			if (!lazyClassLoaderInit) {
+				VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_OTHERS, isParallelCapable);
+			}
 		}
 /*[IF JAVA_SPEC_VERSION > 8]*/
 		unnamedModule = new Module(this);
@@ -438,10 +453,10 @@ private ClassLoader(Void staticMethodHolder, String classLoaderName, ClassLoader
 			// BootstrapClassLoader.unnamedModule is set by JVM_SetBootLoaderUnnamedModule
 			unnamedModule = null;
 			bootstrapClassLoader = this;
-			VM.initializeClassLoader(bootstrapClassLoader, VM.J9_CLASSLOADER_TYPE_BOOT, false);
+			assignImmortalClassLoader( VM.J9_CLASSLOADER_TYPE_BOOT, false);
 		} else {
 			// Assuming the second classloader initialized is platform classloader
-			VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_PLATFORM, false);
+			assignImmortalClassLoader( VM.J9_CLASSLOADER_TYPE_PLATFORM, false);
 			specialLoaderInited = true;
 			unnamedModule = new Module(this);
 		}
@@ -2646,4 +2661,23 @@ static NativeLibraries nativeLibrariesFor(ClassLoader loader) {
 	return (loader == null) ? BootLoader.getNativeLibraries() : loader.nativelibs;
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+
+/**
+ * Assign immortal class loaders for restore run
+ *
+ * @param id   class loader type
+ * @param isParallelCapable   true if the loader has registered as parallel capable
+ *
+ */
+private final void assignImmortalClassLoader(int id, boolean isParallelCapable) {
+/*[IF SNAPSHOTS] */
+	if (isRCPRestoreRun) {
+		VM.rcpAssignClassLoader(this, id);
+	} else
+/*[ENDIF] SNAPSHOTS */
+	{
+		VM.initializeClassLoader(this, id, isParallelCapable);
+	}
+}
+
 }
