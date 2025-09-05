@@ -1013,6 +1013,29 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
          }
       }
 
+   if (comp()->isDLT() && cg()->getSnippetList().empty())
+      {
+      TR::Instruction *lastInstruction = cg()->getAppendInstruction();
+
+      while (lastInstruction != NULL)
+         {
+         if (!lastInstruction->getOpCode().isPseudoOp())
+            {
+            if (lastInstruction->getOpCode().isCallOp())
+               {
+               // In some cases, the last instruction in the function will be a call instruction. The return
+               // address of the function may be beyond the body of this function. In this case, we must add
+               // padding to end of the function to prevent the stack walker from detecting an illegal return
+               // address.
+               generatePaddingInstruction(lastInstruction, 1, cg());
+               }
+            break;
+            }
+
+         lastInstruction = lastInstruction->getPrev();
+         }
+      }
+
 #if defined(DEBUG)
    debugFrameSlotInfo = new (trHeapMemory()) TR_DebugFrameSegmentInfo(comp(),
       -localSize - preservedRegsSize - outgoingArgSize,
