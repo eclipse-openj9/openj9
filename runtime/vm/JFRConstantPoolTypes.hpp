@@ -281,6 +281,45 @@ struct SystemGCEntry {
 	U_32 stackTraceIndex;
 };
 
+struct OldGarbageCollectionEntry {
+	I_64 ticks;
+	I_64 duration;
+	U_32 gcID;
+};
+
+struct YoungGarbageCollectionEntry {
+	I_64 ticks;
+	I_64 duration;
+	U_32 gcID;
+	U_32 tenureThreshold;
+};
+
+struct GarbageCollectionEntry {
+	I_64 ticks;
+	I_64 duration;
+	U_32 gcID;
+	U_32 gcNameID;
+	U_32 gcCauseID;
+	I_64 sumOfPauses;
+	I_64 longestPause;
+};
+
+struct VirtualSpaceEntry {
+	U_64 start;
+	U_64 committedEnd;
+	U_64 committedSize;
+	U_64 reservedEnd;
+	U_64 reservedSize;
+};
+
+struct GCHeapSummaryEntry {
+	I_64 ticks;
+	U_32 gcID;
+	U_32 gcWhenID;
+	VirtualSpaceEntry heapSpace;
+	I_64 heapUsed;
+};
+
 struct ModuleRequireEntry {
 	I_64 ticks;
 	U_32 sourceModuleIndex;
@@ -426,6 +465,14 @@ private:
 	UDATA _moduleRequireCount;
 	J9Pool *_moduleExportTable;
 	UDATA _moduleExportCount;
+	J9Pool *_oldGarbageCollectionTable;
+	UDATA _oldGarbageCollectionCount;
+	J9Pool *_youngGarbageCollectionTable;
+	UDATA _youngGarbageCollectionCount;
+	J9Pool *_garbageCollectionTable;
+	UDATA _garbageCollectionCount;
+	J9Pool *_gcHeapSummaryTable;
+	UDATA _gcHeapSummaryCount;
 
 	/* Processing buffers */
 	StackFrame *_currentStackFrameBuffer;
@@ -707,6 +754,14 @@ public:
 
 	void addSystemGCEntry(J9JFRSystemGC *systemGCData);
 
+	void addOldGarbageCollectionEntry(J9JFROldGarbageCollection *oldGarbageCollectionData);
+
+	void addYoungGarbageCollectionEntry(J9JFRYoungGarbageCollection *youngGarbageCollectionData);
+
+	void addGarbageCollectionEntry(J9JFRGarbageCollection *garbageCollectionData);
+
+	void addGCHeapSummaryEntry(J9JFRGCHeapSummary *gcHeapSummaryData);
+
 	J9Pool *getExecutionSampleTable()
 	{
 		return _executionSampleTable;
@@ -800,6 +855,46 @@ public:
 	UDATA getsystemGCCount()
 	{
 		return _systemGCCount;
+	}
+
+	J9Pool *getOldGarbageCollectionTable()
+	{
+		return _oldGarbageCollectionTable;
+	}
+
+	UDATA getOldGarbageCollectionCount()
+	{
+		return _oldGarbageCollectionCount;
+	}
+
+	J9Pool *getYoungGarbageCollectionTable()
+	{
+		return _youngGarbageCollectionTable;
+	}
+
+	UDATA getYoungGarbageCollectionCount()
+	{
+		return _youngGarbageCollectionCount;
+	}
+
+	J9Pool *getGarbageCollectionTable()
+	{
+		return _garbageCollectionTable;
+	}
+
+	UDATA getGarbageCollectionCount()
+	{
+		return _garbageCollectionCount;
+	}
+
+	J9Pool *getGCHeapSummaryTable()
+	{
+		return _gcHeapSummaryTable;
+	}
+
+	UDATA getGCHeapSummaryCount()
+	{
+		return _gcHeapSummaryCount;
 	}
 
 	UDATA getThreadStartCount()
@@ -1621,6 +1716,14 @@ done:
 		, _moduleRequireCount(0)
 		, _moduleExportTable(NULL)
 		, _moduleExportCount(0)
+		, _oldGarbageCollectionTable(NULL)
+		, _oldGarbageCollectionCount(0)
+		, _youngGarbageCollectionTable(NULL)
+		, _youngGarbageCollectionCount(0)
+		, _garbageCollectionTable(NULL)
+		, _garbageCollectionCount(0)
+		, _gcHeapSummaryTable(NULL)
+		, _gcHeapSummaryCount(0)
 		, _previousStackTraceEntry(NULL)
 		, _firstStackTraceEntry(NULL)
 		, _previousThreadEntry(NULL)
@@ -1797,6 +1900,30 @@ done:
 			goto done;
 		}
 
+		_oldGarbageCollectionTable = pool_new(sizeof(OldGarbageCollectionEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		if (NULL == _oldGarbageCollectionTable) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+
+		_youngGarbageCollectionTable = pool_new(sizeof(YoungGarbageCollectionEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		if (NULL == _youngGarbageCollectionTable) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+
+		_garbageCollectionTable = pool_new(sizeof(GarbageCollectionEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		if (NULL == _garbageCollectionTable) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+
+		_gcHeapSummaryTable = pool_new(sizeof(GCHeapSummaryEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		if (NULL == _gcHeapSummaryTable) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+
 		/* Add reserved index for default entries. For strings zero is the empty or NUll string.
 		 * For package zero is the deafult package, for Module zero is the unnamed module. ThreadGroup
 		 * zero is NULL threadGroup.
@@ -1895,6 +2022,10 @@ done:
 		pool_kill(_systemGCTable);
 		pool_kill(_moduleRequireTable);
 		pool_kill(_moduleExportTable);
+		pool_kill(_oldGarbageCollectionTable);
+		pool_kill(_youngGarbageCollectionTable);
+		pool_kill(_garbageCollectionTable);
+		pool_kill(_gcHeapSummaryTable);
 		j9mem_free_memory(_globalStringTable);
 	}
 
