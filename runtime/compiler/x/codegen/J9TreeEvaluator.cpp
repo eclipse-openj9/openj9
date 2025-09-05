@@ -1517,6 +1517,9 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
 
    bool use64BitClasses = !TR::Compiler->om.generateCompressedObjectHeaders();
 
+   bool skipZeroInit = fej9->tlhHasBeenCleared() || node->canSkipZeroInitialization();
+   TR::Register *zeroReg = skipZeroInit ? NULL : cg->allocateRegister();
+
    uintptr_t classOffset = TR::Compiler->om.offsetOfObjectVftField();
    uintptr_t sizeOffset = fej9->getOffsetOfContiguousArraySizeField();
 
@@ -1592,6 +1595,18 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
    // no heap overflow, advance heap alloc to end of allocation
    generateMemRegInstruction(TR::InstOpCode::SMemReg(), node, generateX86MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), allocEndReg, cg);
 
+   // zero out allocation
+   if (!skipZeroInit)
+      {
+      generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, eax, eax, cg);
+      // REPSTOSB fills rcx bytes at [rdi] with al
+      // rcx = allocEndReg - leafArrReg
+      // rdi = leafArrReg
+      generateRegRegInstruction(TR::InstOpCode::SUB8RegReg, node, allocEndReg, leafArrReg, cg);
+      generateInstruction(TR::InstOpCode::REPSTOSB, node, cg);
+      cg->stopUsingRegister(zeroReg);
+      }
+
    // initialise spine array header
    generateMemRegInstruction(TR::InstOpCode::SMemReg(use64BitClasses), node, generateX86MemoryReference(spineArrReg, classOffset, cg), classReg, cg);
    generateMemRegInstruction(TR::InstOpCode::S4MemReg, node, generateX86MemoryReference(spineArrReg, sizeOffset, cg), firstDimLenReg, cg);
@@ -1652,7 +1667,7 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
 
    generateLabelInstruction(TR::InstOpCode::label, node, loopBottom, cg);
 
-   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(0, 10, cg);
+   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(0, skipZeroInit ? 10 : 11, cg);
 
    deps->addPostCondition(dimsPtrReg, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(firstDimLenReg, TR::RealRegister::NoReg, cg);
@@ -1661,9 +1676,21 @@ static TR::Register * generate2DArrayWithInlineAllocators(TR::Node *node, TR::Co
    deps->addPostCondition(spineSizeReg, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(leafSizeReg, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(leafArrReg, TR::RealRegister::NoReg, cg);
-   deps->addPostCondition(allocEndReg, TR::RealRegister::NoReg, cg);
 
-   deps->addPostCondition(spineArrReg, TR::RealRegister::eax, cg);
+   if (skipZeroInit)
+      {
+      deps->addPostCondition(spineArrReg, TR::RealRegister::eax, cg);
+      deps->addPostCondition(allocEndReg, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(leafArrReg, TR::RealRegister::NoReg, cg);
+      }
+   else
+      {
+      deps->addPostCondition(zeroReg, TR::RealRegister::eax, cg);
+      deps->addPostCondition(spineArrReg, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(allocEndReg, TR::RealRegister::ecx, cg);
+      deps->addPostCondition(leafArrReg, TR::RealRegister::edi, cg);
+      }
+
    deps->addPostCondition(vmThreadReg, TR::RealRegister::ebp, cg);
 
    TR::Node *callNode = outlinedHelperCall->getCallNode();
@@ -2031,6 +2058,11 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
    TR_ASSERT_FATAL(secondChild->getOpCodeValue() == TR::iconst, "dims of multianewarray must be iconst");
 
    TR::Node *classNode   = node->getThirdChild();      // class of the outermost dimension
+
+   // Anything with more than 2 dimensions will be replaced by a direct call when lowering trees,
+   // so this is functionally equivalent of saying only inline if the dimension is exactly 2.
+   // If we know the element size and we don't need to zero the TLH, we can use the general
+   // inline allocator. Otherwise only generate inline for the 0 length special cases.
    uint32_t nDims = secondChild->get32bitIntegralValue();
    if (nDims > 1)
       {
@@ -2096,13 +2128,9 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
             }
          }
 
-      // Anything with more than 2 dimensions will be replaced by a direct call when lowering trees,
-      // so this is functionally equivalent of saying only inline if the dimension is exactly 2.
-      // If we know the element size and we don't need to zero the TLH, we can use the general
-      // inline allocator. Otherwise only generate inline for the 0 length special cases.
       TR_J9VMBase *fej9 = comp->fej9();
       static const bool disable = feGetEnv("TR_Disable2DArrayWithInlineAllocators") != NULL;
-      if (!disable && leafArrayElementSize != -1 && (fej9->tlhHasBeenCleared() || node->canSkipZeroInitialization()) && !comp->getOptions()->realTimeGC())
+      if (!disable && leafArrayElementSize != -1 && !comp->getOptions()->realTimeGC())
          {
          return generate2DArrayWithInlineAllocators(node, cg, leafArrayElementSize);
          }
