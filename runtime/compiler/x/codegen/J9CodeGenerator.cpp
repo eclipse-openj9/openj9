@@ -361,6 +361,11 @@ J9::X86::CodeGenerator::getMaxPreferredVectorLength()
    // Regressive CPU frequency scaling when using 256 or 512-bit vectorization is
    // a known issue on Intel x86 hardware. Some microarchitectures are known to be
    // more affected than others.
+   if (cpu->supportsFeature(OMR_FEATURE_X86_AVX512F) && cpu->supportsFeature(OMR_FEATURE_X86_AVX_VNNI))
+      {
+      return TR::VectorLength512;
+      }
+
    if (cpu->supportsFeature(OMR_FEATURE_X86_AVX2))
       {
       // We set a minimum microarchitecture target of Broadwell for 256-bit
