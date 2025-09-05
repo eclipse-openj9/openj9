@@ -1681,7 +1681,7 @@ createMethodMetaData(
       )
       {
       TR_TranslationArtifactManager *artifactManager = TR_TranslationArtifactManager::getGlobalArtifactManager();
-      TR_TranslationArtifactManager::CriticalSection updateMetaData;
+      TR_TranslationArtifactManager::ArtifactMutexSection artifactManagerMutex(true);
 
       if ( !(artifactManager->insertArtifact( static_cast<J9JITExceptionTable *>(data) ) ) )
          {
