@@ -778,6 +778,10 @@ doVerify:
 				}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
+				if (clazz->strictStaticFieldCounter > 0) {
+					goto initFailed;
+				}
+
 				/* Initialize this class */
 				PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
 				initializeImpl(currentThread, clazz);

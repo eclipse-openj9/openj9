@@ -37,6 +37,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<classref name="java/lang/UnsupportedClassVersionError"/>
 	<classref name="java/lang/AbstractMethodError"/>
 	<classref name="java/lang/IncompatibleClassChangeError"/>
+	<classref name="java/lang/RuntimeException"/>
 	<classref name="java/lang/IllegalAccessError"/>
 	<classref name="java/lang/NoSuchMethodError"/>
 	<classref name="java/lang/CloneNotSupportedException"/>

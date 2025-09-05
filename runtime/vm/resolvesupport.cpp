@@ -865,6 +865,10 @@ illegalAccess:
 				if ((modifiers & J9AccFinal) == J9AccFinal) {
 					localClassAndFlagsData |= J9StaticFieldRefFinal;
 				}
+				if (J9_ARE_ALL_BITS_SET(modifiers, J9AccStrictInit)) {
+					localClassAndFlagsData |= J9StaticFieldRefStrictInit1;
+					localClassAndFlagsData |= J9StaticFieldRefStrictInit2;
+				}
 				if (0 != (resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER)) {
 					localClassAndFlagsData |= J9StaticFieldRefPutResolved;
 				}

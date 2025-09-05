@@ -3230,6 +3230,7 @@ fail:
 			ramClass->module = NULL;
 			ramClass->reservedCounter = 0;
 			ramClass->cancelCounter = 0;
+			ramClass->strictStaticFieldCounter = 0;
 
 			/* hostClass is exclusively defined only in Unsafe.defineAnonymousClass.
 			 * For all other cases, clazz->hostClass points to itself (clazz).
@@ -3642,6 +3643,18 @@ fail:
 			} else {
 				Assert_VM_unreachable();
 			}
+		}
+	}
+
+	/* TODO Update the class version check if strict fields is released before value types. */
+	if (J9_IS_CLASSFILE_OR_ROMCLASS_VALUETYPE_VERSION(romClass)) {
+		J9ROMFieldWalkState fieldWalkState = {0};
+		J9ROMFieldShape *field = romFieldsStartDo(romClass, &fieldWalkState);
+		while (NULL != field) {
+			if (J9_ARE_ALL_BITS_SET(field->modifiers, J9AccStatic | J9AccStrictInit)) {
+				ramClass->strictStaticFieldCounter++;
+			}
+			field = romFieldsNextDo(&fieldWalkState);
 		}
 	}
 

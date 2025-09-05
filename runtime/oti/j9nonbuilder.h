@@ -3553,6 +3553,7 @@ typedef struct J9Class {
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	struct J9Class *nullRestrictedArrayClass;
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+	U_16 strictStaticFieldCounter;
 } J9Class;
 
 /* Interface classes can never be instantiated, so the following fields in J9Class will not be used:
@@ -3656,6 +3657,7 @@ typedef struct J9ArrayClass {
 	 */
 	struct J9Class *companionArray;
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+	U_16 strictStaticFieldCounter;
 } J9ArrayClass;
 
 #if defined(LINUX) && defined(J9VM_ARCH_X86) && !defined(OSX)
