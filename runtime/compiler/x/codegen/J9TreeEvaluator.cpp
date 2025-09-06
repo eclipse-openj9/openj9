@@ -2073,70 +2073,8 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
    uint32_t nDims = secondChild->get32bitIntegralValue();
    if (nDims > 1)
       {
-      // Get the size of the elements in the leaf components
-      int32_t leafArrayElementSize = -1;
-      TR::SymbolReference *classSymRef = NULL;
-      const TR::ILOpCodes opcode = classNode->getOpCodeValue();
-      bool isClassNodeLoadAddr = opcode == TR::loadaddr;
-      // getting the symref
-      if (isClassNodeLoadAddr)
-         {
-         classSymRef = classNode->getSymbolReference();
-         }
-      else if (opcode == TR::aloadi)
-         {
-         // recognizedCallTransformer adds another layer of aloadi
-         while (classNode->getOpCodeValue() == TR::aloadi && classNode->getFirstChild()->getOpCodeValue() == TR::aloadi)
-            {
-            classNode = classNode->getFirstChild();
-            }
-
-         if (classNode->getOpCodeValue() == TR::aloadi && classNode->getFirstChild()->getOpCodeValue() == TR::loadaddr)
-            {
-            classSymRef = classNode->getFirstChild()->getSymbolReference();
-            }
-         }
-      // Infer the data type and length from the signature
-      if (classSymRef)
-         {
-         int32_t len;
-         const char *sig = classSymRef->getTypeSignature(len);
-         if (sig)
-            {
-            if (sig[0] == '[' && sig[1] == '[')
-               {
-               switch (sig[2])
-                  {
-                  case 'B':
-                     leafArrayElementSize = 1;
-                     break;
-                  case 'C':
-                  case 'S':
-                     leafArrayElementSize = 2;
-                     break;
-                  case 'I':
-                  case 'F':
-                     leafArrayElementSize = 4;
-                     break;
-                  case 'D':
-                  case 'J':
-                     leafArrayElementSize = 8;
-                     break;
-                  case 'Z':
-                     leafArrayElementSize =
-                        static_cast<int32_t>(TR::Compiler->om.elementSizeOfBooleanArray());
-                     break;
-                  case 'L':
-                  default :
-                     leafArrayElementSize = TR::Compiler->om.sizeofReferenceField();
-                     break;
-                  }
-               }
-            }
-         }
-
-      TR_J9VMBase *fej9 = comp->fej9();
       static const bool disable = feGetEnv("TR_Disable2DArrayWithInlineAllocators") != NULL;
+      int32_t leafArrayElementSize = TR::Compiler->om.getTwoDimensionalArrayComponentSize(classNode);
       if (!disable && leafArrayElementSize != -1 && !comp->getOptions()->realTimeGC())
          {
          return generate2DArrayWithInlineAllocators(node, cg, leafArrayElementSize);
