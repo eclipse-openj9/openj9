@@ -46,6 +46,7 @@
 #include "Task.hpp"
 #include "VMClassSlotIterator.hpp"
 
+class GC_HashTableIterator;
 class GC_SlotObject;
 class MM_MemoryPool;
 class MM_CollectorLanguageInterfaceImpl;
@@ -570,7 +571,7 @@ public:
 	 *
 	 * @param objectPtr[in] indexable object's spine
 	 */
-	virtual void doObjectInVirtualLargeObjectHeap(J9Object *objectPtr, bool *sparseHeapAllocation);
+	virtual void doObjectInVirtualLargeObjectHeap(J9Object *objectPtr, GC_HashTableIterator *sparseDataEntryIterator);
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 	
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
