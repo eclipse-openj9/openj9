@@ -56,9 +56,13 @@
 #include "ParallelDispatcher.hpp"
 #include "ParallelSweepChunk.hpp"
 #include "ParallelTask.hpp"
+#include "SparseVirtualMemory.hpp"
+#include "SparseAddressOrderedFixedSizeDataPool.hpp"
 #include "SweepHeapSectioningVLHGC.hpp"
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 #include "SweepPoolManagerVLHGC.hpp"
 #include "SweepPoolManagerAddressOrderedList.hpp"
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 #include "SweepPoolState.hpp"
 
 
@@ -1005,33 +1009,36 @@ MM_ParallelSweepSchemeVLHGC::recycleFreeRegions(MM_EnvironmentVLHGC *env)
 	/* now, see if we can free up any arraylet leaves due to dead spines */
 	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
-	
+
 	while(NULL != (region = regionIterator.nextRegion())) {
 		/* Region must be marked for sweep */
 		if (!region->_sweepData._alreadySwept && region->hasValidMarkMap()) {
 			MM_MemoryPool *regionPool = region->getMemoryPool();
 			Assert_MM_true(NULL != regionPool);
-			MM_HeapRegionDescriptorVLHGC *walkRegion = region;
-			MM_HeapRegionDescriptorVLHGC *next = walkRegion->_allocateData.getNextArrayletLeafRegion();
-			/* Try to walk list from this head */
-			while (NULL != (walkRegion = next)) {
-				Assert_MM_true(walkRegion->isArrayletLeaf());
-				J9Object *spineObject = (J9Object *)walkRegion->_allocateData.getSpine();
-				next = walkRegion->_allocateData.getNextArrayletLeafRegion();
-				Assert_MM_true( region->isAddressInRegion(spineObject) );
-				if (!_cycleState._markMap->isBitSet(spineObject)) {
-					/* Arraylet is dead */
 
-					/* remove arraylet leaf from list */
-					walkRegion->_allocateData.removeFromArrayletLeafList(env);
+			if (!_extensions->isVirtualLargeObjectHeapEnabled) {
+				/* recycling of regions reserved for offheap objects is already done in root clearable phase at the end of GMP. */
+				MM_HeapRegionDescriptorVLHGC *walkRegion = region;
+				MM_HeapRegionDescriptorVLHGC *next = walkRegion->_allocateData.getNextArrayletLeafRegion();
+				/* Try to walk list from this head */
+				while (NULL != (walkRegion = next)) {
+					Assert_MM_true(walkRegion->isArrayletLeaf());
+					J9Object *spineObject = (J9Object *)walkRegion->_allocateData.getSpine();
+					next = walkRegion->_allocateData.getNextArrayletLeafRegion();
+					Assert_MM_true( region->isAddressInRegion(spineObject) );
+					if (!_cycleState._markMap->isBitSet(spineObject)) {
+						/* Arraylet is dead */
 
-					/* recycle */
-					walkRegion->_allocateData.setSpine(NULL);
+						/* remove arraylet leaf from list */
+						walkRegion->_allocateData.removeFromArrayletLeafList(env);
 
-					walkRegion->getSubSpace()->recycleRegion(env, walkRegion);
+						/* recycle */
+						walkRegion->_allocateData.setSpine(NULL);
+
+						walkRegion->getSubSpace()->recycleRegion(env, walkRegion);
+					}
 				}
 			}
-
 			/* recycle if empty */
 			if (region->getSize() == regionPool->getActualFreeMemorySize()) {
 				Assert_MM_true(NULL == region->_allocateData.getSpine());

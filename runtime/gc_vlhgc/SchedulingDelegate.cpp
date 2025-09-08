@@ -46,6 +46,10 @@
 #include "HeapRegionManager.hpp"
 #include "IncrementalGenerationalGC.hpp"
 #include "MemoryPoolAddressOrderedList.hpp"
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+#include "SparseVirtualMemory.hpp"
+#include "SparseAddressOrderedFixedSizeDataPool.hpp"
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 
 /* NOTE: old logic for determining incremental thresholds has been deleted. Please 
  * see CVS history, version 1.14, if you need to find this logic
@@ -629,12 +633,30 @@ MM_SchedulingDelegate::updateLiveBytesAfterPartialCollect()
 			_liveSetBytesAfterPartialCollect += region->getSize();
 			_liveSetBytesAfterPartialCollect -= memoryPool->getActualFreeMemorySize();
 			_liveSetBytesAfterPartialCollect -= memoryPool->getDarkMatterBytes();
-		} else if (region->isArrayletLeaf()) {
+		} else if (region->isArrayletLeaf() && !_extensions->isVirtualLargeObjectHeapEnabled) {
 			if (_extensions->objectModel.isObjectArray(region->_allocateData.getSpine())) {
 				_liveSetBytesAfterPartialCollect += region->getSize();
 			}
 		} 
 	}
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+	if (_extensions->isVirtualLargeObjectHeapEnabled) {
+		MM_SparseVirtualMemory *largeObjectVirtualMemory = _extensions->largeObjectVirtualMemory;
+		J9HashTableState walkState;
+
+		MM_SparseDataTableEntry *sparseDataEntry = (MM_SparseDataTableEntry *)hashTableStartDo(largeObjectVirtualMemory->getSparseDataPool()->getObjectToSparseDataTable(), &walkState);
+		const uintptr_t regionSize = _regionManager->getRegionSize();
+		while (NULL != sparseDataEntry) {
+			J9Object *spineObject = (J9Object *)sparseDataEntry->_proxyObjPtr;
+
+			if (_extensions->objectModel.isObjectArray(spineObject)) {
+				_liveSetBytesAfterPartialCollect += MM_Math::roundToCeiling(regionSize, sparseDataEntry->_size);
+			}
+
+			sparseDataEntry = (MM_SparseDataTableEntry *)hashTableNextDo(&walkState);
+		}
+	}
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 }
 
 double
@@ -1355,7 +1377,7 @@ MM_SchedulingDelegate::calculateEdenSize(MM_EnvironmentVLHGC *env)
 	 * If heap is fully expanded (or close to) make sure that there are enough free regions to satisfy given eden size change
 	 */
 	intptr_t maxEdenChange = 0;
-	uintptr_t maxEdenRegionCount = _extensions->getHeap()->getHeapRegionManager()->getTableRegionCount();
+	uintptr_t maxEdenRegionCount = _regionManager->getTableRegionCount();
 	bool edenIsVerySmall = (_edenRegionCount * 64) < maxEdenRegionCount;
 
 	/* Eden will be stealing free regions from the entire heap, without telling the heap to grow.
