@@ -99,12 +99,15 @@ public class JavaPreprocessor {
 		 */
 		static final int ELSE_INACTIVE = 4;
 
+		final int ifLineNumber;
+
 		final boolean outerActive;
 
 		int state;
 
-		IfState(boolean active, Stack<IfState> stack) {
+		IfState(int ifLineNumber, boolean active, Stack<IfState> stack) {
 			super();
+			this.ifLineNumber = ifLineNumber;
 			this.outerActive = stack.isEmpty() || stack.peek().isActive();
 			this.state = active ? IF_ACTIVE : IF_INACTIVE;
 		}
@@ -552,7 +555,7 @@ public class JavaPreprocessor {
 			}
 		}
 
-		IfState top = new IfState(satisfied, ifResults);
+		IfState top = new IfState(lineCount, satisfied, ifResults);
 
 		ifResults.push(top);
 		echo = top.isActive();
@@ -1969,6 +1972,10 @@ public class JavaPreprocessor {
 			}
 		} else if (shouldInclude && !foundCopyright) {
 			warning("No copyright");
+		}
+
+		if (!ifResults.empty()) {
+			error("Missing ENDIF for IF on line " + ifResults.peek().ifLineNumber);
 		}
 
 		if (shouldInclude) {
