@@ -373,8 +373,7 @@ final class Access implements JavaLangAccess {
 		return fromModule.isReflectivelyExported(pkg, toModule);
 	}
 
-	/*[IF JAVA_SPEC_VERSION >= 10]*/
-	/*[IF (JAVA_SPEC_VERSION < 26) | INLINE-TYPES]*/
+	/*[IF ((10 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 26)) | INLINE-TYPES]*/
 	public String newStringUTF8NoRepl(byte[] bytes, int offset, int length) {
 		/*[IF JAVA_SPEC_VERSION < 17]*/
 		return StringCoding.newStringUTF8NoRepl(bytes, offset, length);
@@ -384,7 +383,6 @@ final class Access implements JavaLangAccess {
 		return String.newStringUTF8NoRepl(bytes, offset, length, true);
 		/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 	}
-	/*[ENDIF] (JAVA_SPEC_VERSION < 26) | INLINE-TYPES */
 
 	public byte[] getBytesUTF8NoRepl(String str) {
 		/*[IF JAVA_SPEC_VERSION < 17]*/
@@ -393,7 +391,7 @@ final class Access implements JavaLangAccess {
 		return String.getBytesUTF8NoRepl(str);
 		/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 	}
-	/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
+	/*[ENDIF] ((10 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 26)) | INLINE-TYPES */
 
 	/*[IF JAVA_SPEC_VERSION >= 11]*/
 	public void blockedOn(Interruptible interruptible) {
@@ -404,11 +402,8 @@ final class Access implements JavaLangAccess {
 		/*[ENDIF] JAVA_SPEC_VERSION >= 23 */
 	}
 
-	/*[IF (JAVA_SPEC_VERSION >= 25) & !INLINE-TYPES]*/
-	public byte[] uncheckedGetBytesNoRepl(String str, Charset charset) throws CharacterCodingException {
-	/*[ELSE] (JAVA_SPEC_VERSION >= 25) & !INLINE-TYPES */
+	/*[IF (JAVA_SPEC_VERSION < 25) | INLINE-TYPES]*/
 	public byte[] getBytesNoRepl(String str, Charset charset) throws CharacterCodingException {
-	/*[ENDIF] (JAVA_SPEC_VERSION >= 25) & !INLINE-TYPES */
 		/*[IF JAVA_SPEC_VERSION < 17]*/
 		return StringCoding.getBytesNoRepl(str, charset);
 		/*[ELSE] JAVA_SPEC_VERSION < 17 */
@@ -416,17 +411,22 @@ final class Access implements JavaLangAccess {
 		/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 	}
 
-	/*[IF (JAVA_SPEC_VERSION >= 25) & !INLINE-TYPES]*/
-	public String uncheckedNewStringNoRepl(byte[] bytes, Charset charset) throws CharacterCodingException {
-	/*[ELSE] (JAVA_SPEC_VERSION >= 25) & !INLINE-TYPES */
 	public String newStringNoRepl(byte[] bytes, Charset charset) throws CharacterCodingException {
-	/*[ENDIF] (JAVA_SPEC_VERSION >= 25) & !INLINE-TYPES */
 		/*[IF JAVA_SPEC_VERSION < 17]*/
 		return StringCoding.newStringNoRepl(bytes, charset);
 		/*[ELSE] JAVA_SPEC_VERSION < 17 */
 		return String.newStringNoRepl(bytes, charset);
 		/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 	}
+	/*[ELSEIF JAVA_SPEC_VERSION == 25]*/
+	public byte[] uncheckedGetBytesNoRepl(String str, Charset charset) throws CharacterCodingException {
+		return String.getBytesNoRepl(str, charset);
+	}
+
+	public String uncheckedNewStringNoRepl(byte[] bytes, Charset charset) throws CharacterCodingException {
+		return String.newStringNoRepl(bytes, charset);
+	}
+	/*[ENDIF] (JAVA_SPEC_VERSION < 25) | INLINE-TYPES] */
 	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 	/*[IF JAVA_SPEC_VERSION >= 12]*/
@@ -920,8 +920,23 @@ final class Access implements JavaLangAccess {
 
 	/*[IF (JAVA_SPEC_VERSION >= 26) & !INLINE-TYPES]*/
 	@Override
+	public byte[] getBytesUTF8OrThrow(String s) throws CharacterCodingException {
+		return String.getBytesUTF8OrThrow(s);
+	}
+
+	@Override
 	public int getClassFileAccessFlags(Class<?> clazz) {
 		return clazz.getClassFileAccessFlags();
+	}
+
+	@Override
+	public byte[] uncheckedGetBytesOrThrow(String s, Charset cs) throws CharacterCodingException {
+		return String.getBytesOrThrow(s, cs);
+	}
+
+	@Override
+	public String uncheckedNewStringOrThrow(byte[] bytes, Charset cs) throws CharacterCodingException {
+		return String.newStringOrThrow(bytes, cs);
 	}
 
 	@Override
