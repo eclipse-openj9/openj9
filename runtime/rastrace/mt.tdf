@@ -59,5 +59,8 @@ TraceExit-Exception=Trc_MethodExitNXS Overhead=1 Level=5 Group=throw,nativeMetho
 
 TraceEvent=Trc_MethodReturn Overhead=1 Level=5 Group=methodArguments Template="return value: %s"
 TraceEvent=Trc_MethodException Overhead=1 Level=5 Group=methodArguments Template="exception: %s"
-TraceEvent=Trc_MethodArgumentsStr Overhead=1 Level=5 Group=methodArguments Template="this: (String)@%p - %s method arguments: (%s)"
 
+TraceEvent=Trc_MethodArgumentsStr Overhead=1 Level=5 Group=methodArguments Template="this: (String)@%p - %s method arguments: (%s)"
+TraceEvent=Trc_MethodArgumentsCharArray Overhead=1 Level=5 Group=methodArguments Template="this: (char[])@%p - %s method arguments: (%s)"
+
+TraceEvent=Trc_MethodArgumentsByteArray Overhead=1 Level=5 Group=methodArguments Template="this: (byte[])@%p - %s method arguments: (%s)"
