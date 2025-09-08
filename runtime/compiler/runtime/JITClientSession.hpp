@@ -574,6 +574,7 @@ public:
       }
    void printSharedProfileCacheStats() const;
    void printIProfilerCacheStats();
+   void dumpAllBytecodeProfilingData();
 
 private:
    void destroyMonitors();
