@@ -5674,6 +5674,16 @@ TR_J9VMBase::reportPrexInvalidation(void * startPC)
    Trc_JIT_MethodPrexInvalidated(vmThread(), startPC);
    }
 
+void
+TR_J9VMBase::reportUnloadInvalidation(void *startPC)
+   {
+   if (!_vmThread)
+      {
+      return;
+      }
+
+   Trc_JIT_MethodUnloadInvalidated(vmThread(), startPC);
+   }
 
 // Multiple codeCache support
 
