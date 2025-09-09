@@ -331,22 +331,39 @@ struct SerializedSCCOffset
    {
 public:
    SerializedSCCOffset(uintptr_t recordId, AOTSerializationRecordType recordType, uintptr_t reloDataOffset) :
-      _recordIdAndType(AOTSerializationRecord::idAndType(recordId, recordType)), _reloDataOffset(reloDataOffset)
+      _recordIdAndType(AOTSerializationRecord::idAndType(recordId, recordType)), _data(reloDataOffset)
       {
       TR_ASSERT(recordType < AOTSerializationRecordType::AOTHeader, "Invalid record type: %u", recordType);
       }
 
    uintptr_t recordId() const { return AOTSerializationRecord::getId(_recordIdAndType); }
    AOTSerializationRecordType recordType() const { return AOTSerializationRecord::getType(_recordIdAndType); }
-   uintptr_t reloDataOffset() const { return _reloDataOffset; }
+   uintptr_t reloDataOffset() const { return _data; }
 
-private:
+protected:
    // ID and type of the corresponding serialization record
    const uintptr_t _recordIdAndType;
-   // Offset into AOT method relocation data where the SCC offset to be updated is stored
-   const uintptr_t _reloDataOffset;
+
+   // Offset into AOT method relocation data where the SCC offset to be updated
+   // is stored
+   //
+   // Child classes may use this to store other data instead
+   const uintptr_t _data;
    };
 
+// Repurpose SerializedSCCOffset to represent dependencies
+struct SerializedAOTDependency : public SerializedSCCOffset
+   {
+public:
+   SerializedAOTDependency(uintptr_t recordId, AOTSerializationRecordType recordType, bool ensureClassIsInitialized) :
+      SerializedSCCOffset(recordId, recordType, (uintptr_t)ensureClassIsInitialized)
+      {
+      TR_ASSERT_FATAL(recordType == AOTSerializationRecordType::Class, "Cannot create AOT depenency using recordType=%d\n", recordType);
+      }
+
+   uintptr_t reloDataOffset() const { TR_ASSERT_FATAL(false, "Should not be called\n"); return 0; }
+   bool ensureClassIsInitialized() const { return (bool)_data; }
+   };
 
 struct SerializedAOTMethod
    {
@@ -360,12 +377,19 @@ public:
    TR_Hotness optLevel() const { return _optLevel; }
    uintptr_t aotHeaderId() const { return _aotHeaderId; }
    size_t numRecords() const { return _numRecords; }
+   size_t numDependencies() const { return _numDependencies; }
    size_t codeSize() const { return _codeSize; }
    size_t dataSize() const { return _dataSize; }
    size_t signatureSize() const { return _signatureSize; }
+
    const SerializedSCCOffset *offsets() const { return (const SerializedSCCOffset *)_varSizedData; }
    SerializedSCCOffset *offsets() { return (SerializedSCCOffset *)_varSizedData; }
-   const uint8_t *code() const { return (const uint8_t *)(offsets() + _numRecords); }
+
+   const SerializedAOTDependency *deps() const { return (const SerializedAOTDependency *)(offsets() + _numRecords); }
+   SerializedAOTDependency *deps() { return (SerializedAOTDependency *)(offsets() + _numRecords); }
+
+   const uint8_t *code() const { return (const uint8_t *)(deps() + _numDependencies); }
+
    const uint8_t *data() const { return code() + _codeSize; }
    uint8_t *data() { return (uint8_t *)(code() + _codeSize); }
 
@@ -385,16 +409,19 @@ private:
    friend class CachedAOTMethod;
 
    SerializedAOTMethod(uintptr_t definingClassChainId, uint32_t index,
-                       TR_Hotness optLevel, uintptr_t aotHeaderId, size_t numRecords,
+                       TR_Hotness optLevel, uintptr_t aotHeaderId,
+                       size_t numRecords, size_t numDependencies,
                        const void *code, size_t codeSize,
                        const void *data, size_t dataSize,
                        const char *signature, size_t signatureSize);
    SerializedAOTMethod();
 
-   static size_t size(size_t numRecords, size_t codeSize, size_t dataSize, size_t signatureSize)
+   static size_t size(size_t numRecords, size_t numDependencies, size_t codeSize, size_t dataSize, size_t signatureSize)
       {
-      return sizeof(SerializedAOTMethod) + numRecords * sizeof(SerializedSCCOffset) +
-             OMR::alignNoCheck(codeSize + dataSize + signatureSize, sizeof(size_t));
+      return sizeof(SerializedAOTMethod)
+             + numRecords * sizeof(SerializedSCCOffset)
+             + numDependencies * sizeof(SerializedAOTDependency)
+             + OMR::alignNoCheck(codeSize + dataSize + signatureSize, sizeof(size_t));
       }
 
    bool isValidHeader(const JITServerAOTCacheReadContext &context) const;
@@ -408,14 +435,16 @@ private:
    const uintptr_t _aotHeaderId;
    // Number of serialization records and corresponding SCC offsets
    const size_t _numRecords;
+   const size_t _numDependencies;
    const size_t _codeSize;
    const size_t _dataSize;
 
    const size_t _signatureSize;
-   // Layout: SerializedSCCOffset offsets[_numRecords]
-   //         uint8_t             code[_codeSize]
-   //         uint8_t             data[_dataSize]
-   //         char*               signature[_signatureSize]
+   // Layout: SerializedSCCOffset     offsets[_numRecords]
+   //         SerializedAOTDependency deps[_numDependencies]
+   //         uint8_t                 code[_codeSize]
+   //         uint8_t                 data[_dataSize]
+   //         char*                   signature[_signatureSize]
    uint8_t _varSizedData[];
    }; // struct SerializedAOTMethod
 
