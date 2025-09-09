@@ -56,13 +56,13 @@
 #include "ParallelDispatcher.hpp"
 #include "ParallelSweepChunk.hpp"
 #include "ParallelTask.hpp"
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 #include "SparseVirtualMemory.hpp"
 #include "SparseAddressOrderedFixedSizeDataPool.hpp"
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 #include "SweepHeapSectioningVLHGC.hpp"
-#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 #include "SweepPoolManagerVLHGC.hpp"
 #include "SweepPoolManagerAddressOrderedList.hpp"
-#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 #include "SweepPoolState.hpp"
 
 
