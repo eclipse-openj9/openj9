@@ -43,7 +43,11 @@ public final class TargetDirectory {
 	 * All users must have write access in order to get an exclusive (i.e write) lock on the file.
 	 */
 	public static final int SYNC_FILE_PERMISSIONS = 0666;
-	static final int TARGET_DIRECTORY_PERMISSIONS = 01711;
+	/*[IF PLATFORM-wa64 | PLATFORM-wi32]*/
+	private static final int TARGET_DIRECTORY_PERMISSIONS = 0666;
+	/*[ELSE] PLATFORM-wa64 | PLATFORM-wi32 */
+	private static final int TARGET_DIRECTORY_PERMISSIONS = 01711;
+	/*[ENDIF] PLATFORM-wa64 | PLATFORM-wi32 */
 
 	private volatile static  File targetDirectoryFileObject;
 	private volatile static  File syncFileObject;
@@ -85,7 +89,7 @@ public final class TargetDirectory {
 			String targetDirectoryPath = tgtDir.getAbsolutePath();
 			/*
 			 * This fails if the file cannot be owned by the current user.
-			 * The actual permissions my not be the same as requested due to umask.
+			 * The actual permissions may not be the same as requested due to umask.
 			 */
 			IPC.mkdirWithPermissions(targetDirectoryPath, TARGET_DIRECTORY_PERMISSIONS);
 			IPC.checkOwnerAccessOnly(targetDirectoryPath);
