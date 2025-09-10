@@ -81,7 +81,6 @@ public:
    int64_t getUptime() const { return _prevMachineUptime; } // in nanoseconds
    int64_t getLastMeasurementInterval() const { return _prevIntervalLength; } // in nanoseconds
    int64_t getVmTotalCpuTime() const { return _prevVmSysTime + _prevVmUserTime; }
-   int32_t getCpuUtil(J9JITConfig *jitConfig, J9SysinfoCPUTime *machineCpuStats, j9thread_process_time_t *vmCpuStats);
    int32_t updateCpuUtil(J9JITConfig *jitConfig);
    void    disable() { _isFunctional = false;
                        _cpuUsage = _cpuIdle = _vmCpuUsage = _avgCpuUsage = _avgCpuIdle = -1;
@@ -96,6 +95,7 @@ public:
    int32_t  updateCpuUsageCircularBuffer(J9JITConfig *jitConfig);
 
 private:
+   int32_t getCpuUtil(J9JITConfig *jitConfig, J9SysinfoCPUTime *machineCpuStats, j9thread_process_time_t *vmCpuStats);
 
    int32_t _cpuUsage;    // percentage of used CPU on the whole machine for the last update interval
    int32_t _cpuIdle;     // percentage of idle CPU on the whole machine for the last update interval
