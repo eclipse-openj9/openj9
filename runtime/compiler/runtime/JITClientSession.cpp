@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
-
+#include "bcnames.h"
 #include "control/CompilationController.hpp"
 #include "control/CompilationRuntime.hpp" // for CompilationInfo
 #include "control/JITServerCompilationThread.hpp"
@@ -331,6 +331,104 @@ ClientSessionData::processIllegalFinalFieldModificationList(const std::vector<TR
          }
       }
    }
+void
+ClientSessionData::dumpAllBytecodeProfilingData()
+   {
+   // Open the file where the IP data will be dumped to.
+   // The file will be suffixed with the client ID for which the data is dumped.
+   FILE *logFile = NULL;
+   char filename[128];
+   int retVal = snprintf(filename, sizeof(filename), "ipdata.server.%llu", (unsigned long long)getClientUID());
+   if (retVal > 0 && retVal < sizeof(filename))
+      logFile = fopen(filename, "w+");
+
+   if (logFile)
+      {
+      OMR::CriticalSection getRemoteROMClass(getROMMapMonitor());
+      for (const auto &entry : getJ9MethodMap())
+         {
+         const struct J9MethodInfo &methodInfo = entry.second;
+         const auto iProfilerMap = methodInfo._IPData;
+         if (iProfilerMap)
+            {
+            J9ROMClass *romClass = methodInfo.definingROMClass();
+            J9ROMMethod *romMethod = methodInfo._romMethod;
+            J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
+            J9UTF8 *name = J9ROMMETHOD_NAME(romMethod);
+            J9UTF8 *signature = J9ROMMETHOD_SIGNATURE(romMethod);
+            fprintf(logFile, "Method: %.*s.%.*s%.*s\n", J9UTF8_LENGTH(className), (char *)J9UTF8_DATA(className),
+                                                        J9UTF8_LENGTH(name), (char *)J9UTF8_DATA(name),
+                                                        J9UTF8_LENGTH(signature), (char *)J9UTF8_DATA(signature));
+            // Each element in this map represents a bytecode that is profiled
+            for (const auto &bcEntry : *iProfilerMap)
+               {
+               uint32_t bcOffset = bcEntry.first;
+               TR_IPBytecodeHashTableEntry *ipEntry = bcEntry.second;
+               U_8 *pc = (U_8*)ipEntry->getPC();
+               TR_IPBCDataFourBytes *branchData = ipEntry->asIPBCDataFourBytes();
+               if (branchData)
+                  {
+                  fprintf(logFile, "\tOffset %" OMR_PRIu32 "\tbranch samples=%" OMR_PRIu32 "\t taken=%" OMR_PRIu32 "\n",
+                     bcOffset, branchData->getNumSamples(), (uint32_t)(branchData->getData() & 0xffff));
+                  continue;
+                  }
+               TR_IPBCDataEightWords *switchData = ipEntry->asIPBCDataEightWords();
+               if (switchData)
+                  {
+                  fprintf(logFile, "\tOffset %" OMR_PRIu32 "\tswitch samples=%" OMR_PRIu32 "\n",
+                     bcOffset, switchData->getNumSamples());
+                  continue;
+                  }
+               TR_IPBCDataDirectCall *ipbcDirectCallData = ipEntry->asIPBCDataDirectCall();
+               if (ipbcDirectCallData)
+                  {
+                  fprintf(logFile, "\tOffset %" OMR_PRIu32 "\tDirectCall samples=%" OMR_PRIu32 " TooBig=%d\n",
+                     bcOffset, ipbcDirectCallData->getNumSamples(), ipbcDirectCallData->isWarmCallGraphTooBig());
+                  continue;
+                  }
+               TR_IPBCDataCallGraph *ipbcCGData = ipEntry->asIPBCDataCallGraph();
+               if (!ipbcCGData)
+                  continue;
+               fprintf(logFile, "\tOffset %" OMR_PRIu32 "\t", bcOffset);
+               switch (*pc)
+                  {
+                  case JBinvokeinterface:  fprintf(logFile, "JBinvokeinterface"); break;
+                  case JBinvokeinterface2: fprintf(logFile, "JBinvokeinterface2"); break;
+                  case JBinvokevirtual:    fprintf(logFile, "JBinvokevirtual"); break;
+                  case JBinstanceof:       fprintf(logFile, "JBinstanceof"); break;
+                  case JBcheckcast:        fprintf(logFile, "JBcheckcast"); break;
+                  default:                 fprintf(logFile, "JBunknown");
+                  }
+               fprintf(logFile, " samples=%" OMR_PRIu32 " TooBig=%d\n", ipbcCGData->getNumSamples(), ipbcCGData->isWarmCallGraphTooBig());
+               CallSiteProfileInfo *cgData = ipbcCGData->getCGData();
+               for (int j = 0; j < NUM_CS_SLOTS; j++)
+                  {
+                  if (cgData->getClazz(j))
+                     {
+                     J9ROMClass *romClass = JITServerHelpers::getRemoteROMClassIfCached(this, (J9Class*)cgData->getClazz(j));
+                     int32_t len = 0;
+                     const char *s = NULL;
+                     if (romClass)
+                        {
+                        s = utf8Data(J9ROMCLASS_CLASSNAME(romClass), len);
+                        }
+                     else
+                        {
+                        s = "UNKNOWN";
+                        len = 7;
+                        }
+                     fprintf(logFile, "\t\tW:%4u\tM:%#" OMR_PRIxPTR "\t%.*s\n", cgData->_weight[j], cgData->getClazz(j), len, s);
+                     }
+                  }
+               if (cgData->_residueWeight)
+                  fprintf(logFile, "\t\tW:%4u\tM:0xffffffff\tOTHERBUCKET\n", cgData->_residueWeight);
+               }
+            }
+         }
+      } // end critical section
+   if (logFile)
+      fclose(logFile);
+   }
 
 /**
  * @brief Print to vlog stats about the per-client profile cache.
@@ -361,7 +459,7 @@ ClientSessionData::printIProfilerCacheStats()
             }
          }
       } // end critical section
-   TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Client %" OMR_PRIu64 " ProfileCache stats: methodProfileCached=%zu, bytecodes=%zu samples=%zu",
+   TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Client %" OMR_PRIu64 " ProfileCache stats: numMethodsCached=%zu, bytecodesProfiled=%zu samples=%zu",
                                   getClientUID(), numMethodsProfiled, numBytecodeEntries, numSamples);
    }
 
@@ -2375,6 +2473,8 @@ ClientSessionHT::deleteClientSession(uint64_t clientUID, bool forDeletion)
 
       if ((clientData->getInUse() == 0) && clientData->isMarkedForDeletion())
          {
+         if (feGetEnv("TR_DumpIProfilerData"))
+            clientData->dumpAllBytecodeProfilingData();
          clientData->printIProfilerCacheStats();
          clientData->printSharedProfileCacheStats();
          ClientSessionData::destroy(clientData); // delete the client data
