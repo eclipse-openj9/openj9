@@ -1122,7 +1122,7 @@ JVM_AddModuleExports(JNIEnv * env, jobject fromModule, const char *package, jobj
 #endif /* JAVA_SPEC_VERSION >= 15 */
 {
 	J9VMThread * const currentThread = (J9VMThread*)env;
-	J9JavaVM const * const vm = currentThread->javaVM;
+	J9JavaVM * const vm = currentThread->javaVM;
 	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
 #if JAVA_SPEC_VERSION >= 15
 	const char *package = NULL;
@@ -1131,6 +1131,8 @@ JVM_AddModuleExports(JNIEnv * env, jobject fromModule, const char *package, jobj
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	f_monitorEnter(vm->classLoaderModuleAndLocationMutex);
+
+	vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_MODULE_PACKAGES_INITIALIZED;
 
 #if JAVA_SPEC_VERSION >= 15
 	if (NULL != packageObj) {
@@ -1200,7 +1202,7 @@ JVM_AddModuleExportsToAll(JNIEnv * env, jobject fromModule, const char *package)
 #endif /* JAVA_SPEC_VERSION >= 15 */
 {
 	J9VMThread * const currentThread = (J9VMThread*)env;
-	J9JavaVM const * const vm = currentThread->javaVM;
+	J9JavaVM * const vm = currentThread->javaVM;
 	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
 #if JAVA_SPEC_VERSION >= 15
 	const char *package = NULL;
@@ -1209,6 +1211,8 @@ JVM_AddModuleExportsToAll(JNIEnv * env, jobject fromModule, const char *package)
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	f_monitorEnter(vm->classLoaderModuleAndLocationMutex);
+
+	vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_MODULE_PACKAGES_INITIALIZED;
 
 #if JAVA_SPEC_VERSION >= 15
 	if (NULL != packageObj) {
@@ -1426,7 +1430,7 @@ JVM_AddModuleExportsToAllUnnamed(JNIEnv * env, jobject fromModule, const char *p
 #endif /* JAVA_SPEC_VERSION >= 15 */
 {
 	J9VMThread * const currentThread = (J9VMThread*)env;
-	J9JavaVM const * const vm = currentThread->javaVM;
+	J9JavaVM * const vm = currentThread->javaVM;
 	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
 #if JAVA_SPEC_VERSION >= 15
 	const char *package = NULL;
@@ -1435,6 +1439,8 @@ JVM_AddModuleExportsToAllUnnamed(JNIEnv * env, jobject fromModule, const char *p
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	f_monitorEnter(vm->classLoaderModuleAndLocationMutex);
+
+	vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_MODULE_PACKAGES_INITIALIZED;
 
 #if JAVA_SPEC_VERSION >= 15
 	if (NULL != packageObj) {
