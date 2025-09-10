@@ -1157,8 +1157,14 @@ void TR_InlinerBase::getBorderFrequencies(int32_t &hotBorderFrequency, int32_t &
       {
       if (comp()->isServerInlining())
          {
-         hotBorderFrequency = 2000;
-         coldBorderFrequency = 50;
+         hotBorderFrequency = 500;
+         coldBorderFrequency = 500;
+
+         // Did the user specify specific values? If so, use those
+         if (comp()->getOptions()->getServerInlinerBorderFrequency() >= 0)
+            hotBorderFrequency = comp()->getOptions()->getServerInlinerBorderFrequency();
+         if (comp()->getOptions()->getServerInlinerVeryColdBorderFrequency() >= 0)
+            coldBorderFrequency = comp()->getOptions()->getServerInlinerVeryColdBorderFrequency();
          }
       else
          {
