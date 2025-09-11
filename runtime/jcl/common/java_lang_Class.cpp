@@ -845,7 +845,18 @@ Java_java_lang_Class_getEnclosingObject(JNIEnv *env, jobject recv)
 				if (NULL != resolvedClass) {
 					J9UTF8 *enclosingMethodNameUTF = J9ROMNAMEANDSIGNATURE_NAME(nas);
 					J9UTF8 *enclosingMethodSigUTF = J9ROMNAMEANDSIGNATURE_SIGNATURE(nas);
-					J9Method *method = vmFuncs->searchClassForMethod(resolvedClass, J9UTF8_DATA(enclosingMethodNameUTF), J9UTF8_LENGTH(enclosingMethodNameUTF), J9UTF8_DATA(enclosingMethodSigUTF), J9UTF8_LENGTH(enclosingMethodSigUTF));
+					J9Method *method = NULL;
+#if JAVA_SPEC_VERSION >= 25
+					if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_XFUTURE)) {
+						/* Use reflection behaviour for method lookup. */
+						method = (J9Method *)vmFuncs->javaLookupMethod(currentThread, resolvedClass, nas, clazz, J9_LOOK_REFLECT_CALL);
+					} else
+#endif /* JAVA_SPEC_VERSION >= 25 */
+					{
+						method = vmFuncs->searchClassForMethod(
+								resolvedClass, J9UTF8_DATA(enclosingMethodNameUTF), J9UTF8_LENGTH(enclosingMethodNameUTF),
+								J9UTF8_DATA(enclosingMethodSigUTF), J9UTF8_LENGTH(enclosingMethodSigUTF));
+					}
 					if (NULL != method) {
 						J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 						if (!isSpecialMethod(romMethod)) {
