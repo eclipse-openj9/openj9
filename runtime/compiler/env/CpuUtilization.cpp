@@ -107,44 +107,41 @@ int CpuUtilization::updateCpuUtil(J9JITConfig *jitConfig)
    _prevIntervalLength = elapsedTime;
 
    // calculate usage and idle percentages
-   if (elapsedTime > 0)
+   int64_t prevTotalTimeUsedByVm = _prevVmSysTime + _prevVmUserTime;
+   int64_t newTotalTimeUsedByVm = vmCpuStats._systemTime + vmCpuStats._userTime;
+   double cpuLoad = 0.0;
+   double cpuIdle = 0.0;
+
+   if ((-1 != _prevMachineUserTime) && (-1 != _prevMachineSystemTime) && (-1 != _prevMachineIdleTime) &&
+         (-1 != machineCpuStats.userTime) && (-1 != machineCpuStats.systemTime) && (-1 != machineCpuStats.idleTime))
       {
-      int64_t prevTotalTimeUsedByVm = _prevVmSysTime + _prevVmUserTime;
-      int64_t newTotalTimeUsedByVm = vmCpuStats._systemTime + vmCpuStats._userTime;
-      double cpuLoad = 0.0;
-      double cpuIdle = 0.0;
+      int64_t userDelta = machineCpuStats.userTime - _prevMachineUserTime;
+      int64_t systemDelta = machineCpuStats.systemTime - _prevMachineSystemTime;
+      int64_t idleDelta = machineCpuStats.idleTime - _prevMachineIdleTime;
+      int64_t totalDelta = userDelta + systemDelta + idleDelta;
 
-      if ((-1 != _prevMachineUserTime) && (-1 != _prevMachineSystemTime) && (-1 != _prevMachineIdleTime) &&
-            (-1 != machineCpuStats.userTime) && (-1 != machineCpuStats.systemTime) && (-1 != machineCpuStats.idleTime))
+      if (totalDelta > 0)
          {
-         int64_t userDelta = machineCpuStats.userTime - _prevMachineUserTime;
-         int64_t systemDelta = machineCpuStats.systemTime - _prevMachineSystemTime;
-         int64_t idleDelta = machineCpuStats.idleTime - _prevMachineIdleTime;
-         int64_t totalDelta = userDelta + systemDelta + idleDelta;
-
-         if (totalDelta > 0)
-            {
-            cpuLoad = (userDelta + systemDelta) / (double)totalDelta;
-            cpuIdle = idleDelta / (double)totalDelta;
-            }
+         cpuLoad = (userDelta + systemDelta) / (double)totalDelta;
+         cpuIdle = idleDelta / (double)totalDelta;
          }
-      else
-         {
-         int64_t cpuTimeDelta = machineCpuStats.cpuTime - _prevMachineCpuTime;
-         cpuLoad = cpuTimeDelta / ((double)machineCpuStats.numberOfCpus * elapsedTime);
-         cpuIdle = 1 - cpuLoad;
-         }
-
-      _avgCpuUsage = 100.0 * cpuLoad;
-      _avgCpuIdle = 100.0 * cpuIdle;
-
-      if (machineCpuStats.numberOfCpus > 0)
-         {
-         _cpuUsage = 100.0 * machineCpuStats.numberOfCpus * cpuLoad;
-         _cpuIdle = 100.0 * machineCpuStats.numberOfCpus * cpuIdle;
-         }
-      _vmCpuUsage = (100 * (newTotalTimeUsedByVm - prevTotalTimeUsedByVm)) / elapsedTime;
       }
+   else
+      {
+      int64_t cpuTimeDelta = machineCpuStats.cpuTime - _prevMachineCpuTime;
+      cpuLoad = cpuTimeDelta / ((double)machineCpuStats.numberOfCpus * elapsedTime);
+      cpuIdle = 1 - cpuLoad;
+      }
+
+   _avgCpuUsage = 100.0 * cpuLoad;
+   _avgCpuIdle = 100.0 * cpuIdle;
+
+   if (machineCpuStats.numberOfCpus > 0)
+      {
+      _cpuUsage = 100.0 * machineCpuStats.numberOfCpus * cpuLoad;
+      _cpuIdle = 100.0 * machineCpuStats.numberOfCpus * cpuIdle;
+      }
+   _vmCpuUsage = (100 * (newTotalTimeUsedByVm - prevTotalTimeUsedByVm)) / elapsedTime;
 
    // remember values for next time
    _prevMachineUptime  = machineCpuStats.timestamp;
