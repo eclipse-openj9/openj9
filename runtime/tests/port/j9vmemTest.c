@@ -1618,6 +1618,7 @@ j9vmem_test_commitOutsideOfReservedRange(struct J9PortLibrary *portLibrary)
 }
 
 #if defined(AIXPPC) || defined(LINUX) || defined(WIN32) || defined(WIN64) || defined(J9ZOS390)
+#pragma clang optimize off
 /**
  * Verify port library memory management.
  * 
@@ -1729,6 +1730,7 @@ j9vmem_test_reserveExecutableMemory(struct J9PortLibrary *portLibrary)
 
 	return reportTestExit(portLibrary, testName);
 }
+#pragma clang optimize on
 #endif /* defined(AIXPPC) || defined(LINUX) || defined(WIN32) || defined(WIN64) */
 
 #if defined(J9VM_GC_VLHGC)
