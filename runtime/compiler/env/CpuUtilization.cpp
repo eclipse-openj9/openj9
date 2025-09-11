@@ -71,7 +71,7 @@ int32_t CpuUtilization::getCpuUtil(J9JITConfig *jitConfig, J9SysinfoCPUTime *mac
    portLibraryStatusVm  = j9thread_get_process_times(vmCpuStats);
 
    // if either call failed, disable self
-   if (portLibraryStatusSys < 0 || portLibraryStatusVm < 0)
+   if (portLibraryStatusSys < 0 || portLibraryStatusVm < 0 || machineCpuStats->numberOfCpus <= 0)
       {
       disable();
       return (-1);
@@ -135,12 +135,8 @@ int CpuUtilization::updateCpuUtil(J9JITConfig *jitConfig)
 
    _avgCpuUsage = 100.0 * cpuLoad;
    _avgCpuIdle = 100.0 * cpuIdle;
-
-   if (machineCpuStats.numberOfCpus > 0)
-      {
-      _cpuUsage = 100.0 * machineCpuStats.numberOfCpus * cpuLoad;
-      _cpuIdle = 100.0 * machineCpuStats.numberOfCpus * cpuIdle;
-      }
+   _cpuUsage = 100.0 * machineCpuStats.numberOfCpus * cpuLoad;
+   _cpuIdle = 100.0 * machineCpuStats.numberOfCpus * cpuIdle;
    _vmCpuUsage = (100 * (newTotalTimeUsedByVm - prevTotalTimeUsedByVm)) / elapsedTime;
 
    // remember values for next time
