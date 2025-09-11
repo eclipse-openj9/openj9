@@ -36,10 +36,11 @@ import com.ibm.j9ddr.StructureReader.PackageNameType;
 import com.ibm.j9ddr.StructureReader.StructureDescriptor;
 
 /**
- * This class generates the same structure and pointer classes that
- * would be created at runtime from a DDR blob. The purpose of this
- * class is to produce class files that can be used to compile the
- * hand-written Java code in DDR_VM.
+ * This class generates the same structure and pointer classes that would
+ * be created at runtime from a DDR blob, but only with those fields that
+ * are guaranteed to be present. Fields not mentioned in AuxFieldInfo29.dat
+ * are omitted to avoid references in hand-written Java code in DDR_VM
+ * that might not be present in system dumps.
  */
 public final class ClassGenerator {
 
@@ -127,7 +128,7 @@ public final class ClassGenerator {
 				if (blobFile == null) {
 					blobFile = fileName;
 				} else {
-					duplicateOption(fileName);
+					duplicateOption(arg);
 					badOptions = true;
 				}
 				continue;
@@ -150,7 +151,7 @@ public final class ClassGenerator {
 				if (outDir == null) {
 					outDir = new File(fileName);
 				} else {
-					duplicateOption(fileName);
+					duplicateOption(arg);
 					badOptions = true;
 				}
 				continue;
