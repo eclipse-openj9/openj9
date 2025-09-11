@@ -53,6 +53,11 @@ public:
    void endInstructionSelection();
 
    /**
+    * @brief This function is a hook that executes immediately before Binary Encoding.
+    */
+   void preBinaryEncodingHook();
+
+   /**
     * @brief Determines the maximum preferred vector length for compiler intrinsics based on the target microarchitecture.
     *
     * This function queries the underlying hardware capabilities and internal knowledge about
