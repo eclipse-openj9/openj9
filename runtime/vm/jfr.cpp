@@ -1046,13 +1046,23 @@ jfrCPULoad(J9VMThread *currentThread)
 			jfrState->prevProcCPUTimes = currentProcCPUTimes;
 			jfrState->prevProcTimestamp = currentTime;
 
-			if (-1 == jfrState->prevSysCPUTime.timestamp) {
+			J9SysinfoCPUTime prevSysCPUTime = jfrState->prevSysCPUTime;
+			if (-1 == prevSysCPUTime.timestamp) {
 				jfrEvent->machineTotal = 0;
 			} else {
-				float machineTotal =
-						(currentSysCPUTime.cpuTime - jfrState->prevSysCPUTime.cpuTime)
-						/ ((float)numberOfCpus
-						* (currentSysCPUTime.timestamp - jfrState->prevSysCPUTime.timestamp));
+				float machineTotal = 0.0;
+				if ((-1 != currentSysCPUTime.idleTime) && (-1 != prevSysCPUTime.idleTime)) {
+					int64_t userDelta = currentSysCPUTime.userTime - prevSysCPUTime.userTime;
+					int64_t systemDelta = currentSysCPUTime.systemTime - prevSysCPUTime.systemTime;
+					int64_t idleDelta = currentSysCPUTime.idleTime - prevSysCPUTime.idleTime;
+					int64_t totalDelta = userDelta + systemDelta + idleDelta;
+					machineTotal = (userDelta + systemDelta) / (float)totalDelta;
+				} else {
+					machineTotal =
+							(currentSysCPUTime.cpuTime - prevSysCPUTime.cpuTime)
+							/ ((float)numberOfCpus
+							* (currentSysCPUTime.timestamp - prevSysCPUTime.timestamp));
+				}
 				jfrEvent->machineTotal = OMR_MIN(machineTotal, 1.0f);
 			}
 			jfrState->prevSysCPUTime = currentSysCPUTime;
