@@ -109,7 +109,11 @@ static IDATA criuReloadXDumpAgents(J9JavaVM *vm, J9VMInitArgs *j9vm_args);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 static omr_error_t printDumpUsage (J9JavaVM *vm);
 static omr_error_t pushDumpFacade (J9JavaVM *vm);
-static void abortHandler (int sig);
+#if defined(WIN32)
+static void abortHandler(int sig);
+#else /* defined(WIN32) */
+static void abortHandler(int sig, siginfo_t *siginfo, void *context);
+#endif /* defined(WIN32) */
 static void initRasDumpGlobalStorage(J9JavaVM *vm);
 static void freeRasDumpGlobalStorage(J9JavaVM *vm);
 static void hookVmInitialized PROTOTYPE((J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData));
@@ -182,7 +186,11 @@ omrsig_handler(int sig, void *siginfo, void *uc)
 #endif
 
 static void
+#if defined(WIN32)
 abortHandler(int sig)
+#else /* defined(WIN32) */
+abortHandler(int sig, siginfo_t *siginfo, void *context)
+#endif /* defined(WIN32) */
 {
 	J9VMThread *vmThread = cachedVM ? cachedVM->internalVMFunctions->currentVMThread(cachedVM) : NULL;
 
@@ -231,6 +239,7 @@ abortHandler(int sig)
 
 	if ( vmThread ) {
 		PORT_ACCESS_FROM_JAVAVM(cachedVM);
+		OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 		/* Check if we are running on the Java stack, by comparing the address of a local variable against the lower
 		 * and upper bounds of the Java stack. If we are on the Java stack it is not safe to run the RAS dump agents,
 		 * so just issue a message here and drop out to let the OS handle the abort. JTC-JAT Problem Report 77991.
@@ -244,7 +253,17 @@ abortHandler(int sig)
 			/* Running on Java stack, do not attempt to produce RAS dumps */
 			j9nls_printf(PORTLIB, J9NLS_WARNING | J9NLS_STDERR, J9NLS_DMP_ABORT_ON_JAVA_STACK);
 		} else {
-			if (OMR_ERROR_NONE == J9DMP_TRIGGER(cachedVM, vmThread, J9RAS_DUMP_ON_ABORT_SIGNAL)) {
+			omr_error_t rc = OMR_ERROR_NONE;
+			J9RASdumpEventData eventData = { 0 };
+#if !defined(WIN32)
+			eventData.siPid = siginfo->si_pid;
+			if (0 != eventData.siPid) {
+				eventData.detailData = omrsysinfo_get_process_name(eventData.siPid);
+			}
+#endif /* !defined(WIN32) */
+			rc = J9DMP_TRIGGER(cachedVM, vmThread, J9RAS_DUMP_ON_ABORT_SIGNAL, &eventData);
+			j9mem_free_memory(eventData.detailData);
+			if (OMR_ERROR_NONE == rc) {
 
 #if defined(J9ZOS390)
 				if (doTriggerAbend) {
@@ -295,6 +314,15 @@ triggerAbend(void)
 static omr_error_t
 installAbortHandler(J9JavaVM *vm)
 {
+#if !defined(WIN32)
+	struct sigaction action;
+	sigset_t sigset;
+	action.sa_sigaction = &abortHandler;
+	sigemptyset(&sigset);
+	action.sa_mask = sigset;
+	action.sa_flags = SA_SIGINFO;
+#endif /* !defined(WIN32) */
+
 	/* Handler can only map to one VM */
 	if ( cachedVM ) {
 		return OMR_ERROR_INTERNAL;
@@ -303,7 +331,11 @@ installAbortHandler(J9JavaVM *vm)
 	cachedVM = vm;
 
 	/* Install one-shot dump trigger */
+#if defined(WIN32)
 	OMRSIG_SIGNAL(SIGABRT, abortHandler);
+#else /* defined(WIN32) */
+	OMRSIG_SIGACTION(SIGABRT, &action, NULL);
+#endif /* defined(WIN32) */
 	return OMR_ERROR_NONE;
 }
 

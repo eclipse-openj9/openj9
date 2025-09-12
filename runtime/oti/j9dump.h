@@ -23,8 +23,8 @@
 #ifndef j9dump_h
 #define j9dump_h
 
-#define J9DMP_TRIGGER( vm, self, eventFlags ) \
-	(vm)->j9rasDumpFunctions->triggerDumpAgents(vm, self, eventFlags, NULL)
+#define J9DMP_TRIGGER(vm, self, eventFlags, userData) \
+	(vm)->j9rasDumpFunctions->triggerDumpAgents(vm, self, eventFlags, userData)
 
 /* Rasdump Global storage block */
 typedef struct RasDumpGlobalStorage {
@@ -122,7 +122,14 @@ typedef struct J9RASdumpEventData {
 	UDATA detailLength;
 	char* detailData;
 	j9object_t* exceptionRef;
+	U_64 siPid;
 } J9RASdumpEventData;
+
+typedef struct J9RASAsyncPidInfo {
+	struct J9JavaVM *vm;
+	U_64 siPid;
+	char *siPidName;
+} J9RASAsyncPidInfo;
 
 typedef omr_error_t (*J9RASdumpFn)(struct J9RASdumpAgent *agent, char *label, struct J9RASdumpContext *context);
 

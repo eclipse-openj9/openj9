@@ -250,14 +250,45 @@ consoleCtrlHandler(DWORD dwCtrlType)
 static UDATA
 processGroupSignalHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void* handlerInfo, void* userData)
 {
+	BOOLEAN success = FALSE;
 	PORT_ACCESS_FROM_PORT(portLibrary);
+	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
+
+	if (NULL == handlerInfo) {
+		fprintf(stdout, "Unexpected NULL handlerInfo");
+		fflush(stdout);
+	} else {
+		const char *infoName = NULL;
+		void *infoValue = NULL;
+		U_32 infoType = omrsig_info(handlerInfo, OMRPORT_SIG_SIGNAL, OMRPORT_SIG_SENDER_PID, &infoName, &infoValue);
+		if (J9PORT_SIG_VALUE_32 == infoType) {
+			if (0 == *(U_32 *)infoValue) {
+				fprintf(stdout, "Unexpected OMRPORT_SIG_SENDER_PID value");
+				fflush(stdout);
+			} else {
+				success = TRUE;
+			}
+		} else if (J9PORT_SIG_VALUE_64 == infoType) {
+			if (0 == *(U_64 *)infoValue) {
+				fprintf(stdout, "Unexpected OMRPORT_SIG_SENDER_PID value");
+				fflush(stdout);
+			} else {
+				success = TRUE;
+			}
+		} else {
+			fprintf(stdout, "Unexpected infoType %u", infoType);
+			fflush(stdout);
+		}
+	}
 
 	if (J9PORT_SIG_FLAG_SIGQUIT != gpType) {
 		fprintf(stdout, "Unexpected port library signal: %u", gpType);
 		fflush(stdout);
 	} else {
-		fprintf(stdout, HANDLER_INVOKED);
-		fflush(stdout);
+		if (success) {
+			fprintf(stdout, HANDLER_INVOKED);
+			fflush(stdout);
+		}
 	}
 
 	return 0;
