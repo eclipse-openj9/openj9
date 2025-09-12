@@ -625,7 +625,7 @@ addHiddenInstanceField(J9JavaVM *vm, const char *className, const char *fieldNam
 
 	/* Verify that the class hasn't yet been loaded. */
 	if ((NULL != vm->systemClassLoader)
-		&& (NULL != hashClassTableAt(vm->systemClassLoader, (U_8*)className, classNameLength))
+		&& (NULL != hashClassTableAt(vm->systemClassLoader, (U_8*)className, classNameLength, 0))
 	) {
 #if defined(J9VM_OPT_SNAPSHOTS)
 		/* By this point during a restore run, the hidden field is already added. Just fill in the offset. */

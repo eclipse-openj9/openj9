@@ -2171,20 +2171,22 @@ hashClassTableFree(J9ClassLoader* classLoader);
 * @param *classLoader
 * @param *className
 * @param classNameLength
+* @param flags
 * @return J9Class *
 */
 J9Class *
-hashClassTableAt(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength);
+hashClassTableAt(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength, UDATA flags);
 
 
 /**
 * @brief
 * @param *classLoader
 * @param stringObject
+* @param flags
 * @return J9Class *
 */
 J9Class *
-hashClassTableAtString(J9ClassLoader *classLoader, j9object_t stringObject);
+hashClassTableAtString(J9ClassLoader *classLoader, j9object_t stringObject, UDATA flags);
 
 
 /**

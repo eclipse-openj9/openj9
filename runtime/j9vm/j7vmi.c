@@ -2587,7 +2587,7 @@ retry:
 
 	threadEnv->monitor_enter(vm->classTableMutex);
 
-	if (vmFuncs->hashClassTableAt(classLoader, utf8Name, utf8Length) != NULL) {
+	if (NULL != vmFuncs->hashClassTableAt(classLoader, utf8Name, utf8Length, 0)) {
 		/* Bad, we have already defined this class - fail */
 		threadEnv->monitor_exit(vm->classTableMutex);
 		vmFuncs->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_JCL_DUPLICATE_CLASS_DEFINITION, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, utf8Length, utf8Name);
