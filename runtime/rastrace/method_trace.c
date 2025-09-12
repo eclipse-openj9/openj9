@@ -244,7 +244,7 @@ traceMethodEnter(J9VMThread *thr, J9Method *method, void *receiverAddress, UDATA
 							(U_32)J9UTF8_LENGTH(receiverClassName),
 							J9UTF8_DATA(receiverClassName),
 							receiver,
-							traceMethodArguments(thr, methodSignature, (UDATA*)receiverAddress - 1, buf, buf + sizeof(buf)));
+							traceMethodArguments(thr, methodSignature, (UDATA *)receiverAddress - 1, buf, buf + sizeof(buf)));
 				}
 			}
 		}
