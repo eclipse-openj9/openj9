@@ -2147,6 +2147,11 @@ setExceptionForErroredRomClass( J9ROMClass *romClass, J9VMThread *vmThread );
  */
 #define J9_HASH_TABLE_STATE_FLAG_SKIP_HIDDEN 1
 
+/* Flag(s) used by hashClassTableAt() and hashClassTableAtString() to control whether to return special
+ * classes, like JCL defined classes in the hash table lookup operations.
+ */
+#define J9_HASH_TABLE_LOOKUP_FLAG_JCL_DEFINE_CLASS 2
+
 /**
 * Searches classLoader for any loaded classes in a specific package
 *
@@ -2171,20 +2176,24 @@ hashClassTableFree(J9ClassLoader* classLoader);
 * @param *classLoader
 * @param *className
 * @param classNameLength
+* @param flags flags control whether to return a special class such as 
+*              J9_HASH_TABLE_LOOKUP_FLAG_JCL_DEFINE_CLASS, if not set return NULL
 * @return J9Class *
 */
 J9Class *
-hashClassTableAt(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength);
+hashClassTableAt(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength, UDATA flags);
 
 
 /**
 * @brief
 * @param *classLoader
 * @param stringObject
+* @param flags flags control whether to return a special class such as 
+*              J9_HASH_TABLE_LOOKUP_FLAG_JCL_DEFINE_CLASS, if not set return NULL
 * @return J9Class *
 */
 J9Class *
-hashClassTableAtString(J9ClassLoader *classLoader, j9object_t stringObject);
+hashClassTableAtString(J9ClassLoader *classLoader, j9object_t stringObject, UDATA flags);
 
 
 /**

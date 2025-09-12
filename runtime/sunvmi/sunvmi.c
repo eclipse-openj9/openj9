@@ -868,7 +868,7 @@ JVM_GetSystemPackage_Impl(JNIEnv *env, jstring pkgName)
 	if (NULL != idEntry) {
 		J9ROMClass *resultROMClass = (J9ROMClass *)(idEntry->taggedROMClass & ~(UDATA)(J9PACKAGE_ID_TAG | J9PACKAGE_ID_GENERATED));
 		J9UTF8 *className = J9ROMCLASS_CLASSNAME(resultROMClass);
-		clazz = funcs->hashClassTableAt(vm->systemClassLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className));
+		clazz = funcs->hashClassTableAt(vm->systemClassLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className), J9_HASH_TABLE_LOOKUP_FLAG_JCL_DEFINE_CLASS);
 	}
 	VM.monitorExit(vm->classTableMutex);
 
