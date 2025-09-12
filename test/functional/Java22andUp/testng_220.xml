@@ -26,6 +26,7 @@
 <suite name="Java22+ test suite" parallel="none" verbose="2">
 	<test name="Jep454Tests_testLinkerFfi_DownCall">
 		<classes>
+			<class name="org.openj9.test.jep454.downcall.ConfinedMemorySegmentDowncallTest"/>
 			<class name="org.openj9.test.jep454.downcall.DuplicateMixedCallTests"/>
 			<class name="org.openj9.test.jep454.downcall.DuplicateStructTests"/>
 			<class name="org.openj9.test.jep454.downcall.InvalidDownCallTests"/>
