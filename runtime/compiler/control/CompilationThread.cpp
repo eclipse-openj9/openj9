@@ -709,7 +709,7 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
       else if ((persistentInfo->getJitState() == IDLE_STATE && entry->_jitStateWhenQueued == IDLE_STATE) &&
                // but not if the machine uses very little CPU and we want to exploit idle
                !(TR::Options::getCmdLineOptions()->getOption(TR_UseIdleTime) &&
-                 getCpuUtil() && getCpuUtil()->isFunctional() &&
+                 getCpuUtil() && getCpuUtil()->hasValidData() &&
                  getCpuUtil()->getCpuUsage() < 10 &&
                  persistentInfo->getElapsedTime() < 600000) // Downgrade after 10 minutes to conserve CPU in idle mode
               )
@@ -1421,9 +1421,9 @@ TR_YesNoMaybe TR::CompilationInfo::detectCompThreadStarvation()
    // then the compilation threads should be able to use those cycles
    // The following is just an approximation because we look at idle
    // cyles on the entire machine
-   if (getCpuUtil()->isFunctional() &&
-      getCpuUtil()->getAvgCpuIdle() > 5 && // This is for the entire machine
-      getCpuUtil()->getVmCpuUsage() + 10 < getJvmCpuEntitlement()) // at least 10% unutilized by this JVM
+   if (getCpuUtil()->hasValidData() &&
+       getCpuUtil()->getAvgCpuIdle() > 5 && // This is for the entire machine
+       getCpuUtil()->getVmCpuUsage() + 10 < getJvmCpuEntitlement()) // at least 10% unutilized by this JVM
       return TR_no;
 
    // Large queue and small CPU utilization for the compilation thread
@@ -1467,7 +1467,7 @@ TR_YesNoMaybe TR::CompilationInfo::detectCompThreadStarvation()
 
    if (answer == TR_maybe && compCpuFunctional) // Didn't reach a conclusion yet
       {
-      if (getCpuUtil()->isFunctional())
+      if (getCpuUtil()->hasValidData())
          {
          // If the CPU utilization of all the active compilation threads is at least
          // half of the JVM utilization of the JVM, then compilation threads are not starved
@@ -1877,9 +1877,9 @@ bool TR::CompilationInfo::canProcessLowPriorityRequest()
    if (TR::Options::getCmdLineOptions()->getOption(TR_ConcurrentLPQ) &&
        _jitConfig->javaVM->phase == J9VM_PHASE_NOT_STARTUP) // ConcurrentLPQ is too damaging to startup
       {
-      if ((getCpuUtil() && getCpuUtil()->isFunctional() &&
-         getCpuUtil()->getAvgCpuIdle() > idleThreshold() && // enough idle time
-         getJvmCpuEntitlement() - getCpuUtil()->getVmCpuUsage() >= 200)) // at least 2 cpus should be not utilized
+      if (getCpuUtil() && getCpuUtil()->hasValidData() &&
+          getCpuUtil()->getAvgCpuIdle() > idleThreshold() && // enough idle time
+          getJvmCpuEntitlement() - getCpuUtil()->getVmCpuUsage() >= 200) // at least 2 cpus should be not utilized
          return true;
       // Fall through the next case where we allow LPQ if the JVM leaves 50% of a CPU
       // unutilized, but there should be nothing in the main queue
@@ -1894,8 +1894,8 @@ bool TR::CompilationInfo::canProcessLowPriorityRequest()
       if (curCompThreadInfoPT->getMethodBeingCompiled())
          return false;
       }
-   return (getCpuUtil() && getCpuUtil()->isFunctional() &&
-      getCpuUtil()->getAvgCpuIdle() > idleThreshold() && // enough idle time
+   return (getCpuUtil() && getCpuUtil()->hasValidData() &&
+           getCpuUtil()->getAvgCpuIdle() > idleThreshold() && // enough idle time
            getJvmCpuEntitlement() - getCpuUtil()->getVmCpuUsage() > 50); // at least half a processor should be empty
    }
 
@@ -7281,8 +7281,7 @@ TR::CompilationInfoPerThreadBase::isCPUCheapCompilation(uint32_t bcsz, TR_Hotnes
          }
       // If we have CPU available we could keep local even medium sized cold compilations
       CpuUtilization *cpuUtil = _compInfo.getCpuUtil();
-      if (cpuUtil->isFunctional() &&
-          _compInfo.getPersistentInfo()->getElapsedTime() >= TR::Options::_classLoadingPhaseInterval && // For first 0.5 sec we don't have valid data
+      if (cpuUtil->hasValidData() &&
           cpuUtil->getCpuIdle() >= 15 && // There is idle CPU to use
           cpuUtil->getVmCpuUsage() + 15 <= cpuEntitlement) // I am allowed to use 15% more CPU
          return true;
@@ -11203,7 +11202,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
             // print cached cpu usage (sampled elsewhere [samplerThreadProc])
 
             CpuUtilization *cpuUtil = _compInfo.getCpuUtil();
-            if (cpuUtil->isFunctional())
+            if (cpuUtil->hasValidData())
                {
                TR_VerboseLog::write(" CpuLoad=%d%%(%d%%avg) JvmCpu=%d%%",
                                     cpuUtil->getCpuUsage(), cpuUtil->getAvgCpuUsage(), cpuUtil->getVmCpuUsage());

@@ -139,6 +139,11 @@ int CpuUtilization::updateCpuUtil(J9JITConfig *jitConfig)
    _cpuIdle = 100.0 * machineCpuStats.numberOfCpus * cpuIdle;
    _vmCpuUsage = (100 * (newTotalTimeUsedByVm - prevTotalTimeUsedByVm)) / elapsedTime;
 
+   // If _prevMachineUptime is different than 0 (initial value) it means that we already
+   // had a readout and we can effectively compute CPU values of a given time interval.
+   if (_prevMachineUptime > 0)
+      _validData = true;
+
    // remember values for next time
    _prevMachineUptime  = machineCpuStats.timestamp;
    _prevMachineCpuTime = machineCpuStats.cpuTime;
@@ -201,6 +206,7 @@ CpuUtilization::CpuUtilization(J9JITConfig *jitConfig):
    _prevVmUserTime (0),
 
    _isFunctional (true),
+   _validData(false),
 
    _cpuUsageCircularBufferIndex(0)
 

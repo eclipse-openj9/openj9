@@ -73,6 +73,7 @@ public:
       } CpuUsageCircularBuffer;
 
    bool    isFunctional() const { return _isFunctional; }
+   bool    hasValidData() const { return _validData; }
    int32_t getCpuUsage() const { return _cpuUsage; }
    int32_t getCpuIdle() const { return _cpuIdle; }
    int32_t getVmCpuUsage() const { return _vmCpuUsage; }
@@ -82,9 +83,13 @@ public:
    int64_t getLastMeasurementInterval() const { return _prevIntervalLength; } // in nanoseconds
    int64_t getVmTotalCpuTime() const { return _prevVmSysTime + _prevVmUserTime; }
    int32_t updateCpuUtil(J9JITConfig *jitConfig);
-   void    disable() { _isFunctional = false;
-                       _cpuUsage = _cpuIdle = _vmCpuUsage = _avgCpuUsage = _avgCpuIdle = -1;
-                       disableCpuUsageCircularBuffer(); }
+   void    disable()
+      {
+      _isFunctional = false;
+      _validData = false;
+      _cpuUsage = _cpuIdle = _vmCpuUsage = _avgCpuUsage = _avgCpuIdle = -1;
+      disableCpuUsageCircularBuffer();
+      }
 
    // Circular Buffer related functions
    CpuUsageCircularBuffer *getCpuUsageCircularBuffer() const { return _cpuUsageCircularBuffer; }
@@ -121,6 +126,7 @@ private:
    int32_t                 _cpuUsageCircularBufferSize;  // Size of the circular buffer
 
    bool _isFunctional;
+   bool _validData; // Set to true if we have at least two measurements
    bool _isCpuUsageCircularBufferFunctional;
 
    }; // class CpuUtilization
