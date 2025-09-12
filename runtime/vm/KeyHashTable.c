@@ -333,7 +333,7 @@ hashClassTableNew(J9JavaVM *javaVM, U_32 initialSize)
 }
 
 J9Class *
-hashClassTableAt(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength)
+hashClassTableAt(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength, UDATA maskFlags)
 {
 	J9HashTable *table = classLoader->classHashTable;
 	KeyHashTableClassQueryEntry key;
@@ -347,6 +347,9 @@ hashClassTableAt(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLeng
 		J9Class *clazz = result->ramClass;
 		checkClassAlignment(clazz, "hashClassTableAt");
 		if (J9ROMCLASS_IS_HIDDEN(clazz->romClass)) {
+			return NULL;
+		}
+		if (J9_ARE_ANY_BITS_SET(clazz->classFlags, maskFlags)) {
 			return NULL;
 		}
 		return clazz;
@@ -733,7 +736,7 @@ hashPkgTableNextDo(J9HashTableState *walkState)
 }
 
 J9Class *
-hashClassTableAtString(J9ClassLoader *classLoader, j9object_t stringObject)
+hashClassTableAtString(J9ClassLoader *classLoader, j9object_t stringObject, UDATA maskFlags)
 {
 	J9HashTable *table = classLoader->classHashTable;
 	KeyHashTableClassQueryEntry key;
@@ -746,6 +749,9 @@ hashClassTableAtString(J9ClassLoader *classLoader, j9object_t stringObject)
 		J9Class *clazz = result->ramClass;
 		checkClassAlignment(clazz, "hashClassTableAtString");
 		if (J9ROMCLASS_IS_HIDDEN(clazz->romClass)) {
+			return NULL;
+		}
+		if (J9_ARE_ANY_BITS_SET(clazz->classFlags, maskFlags)) {
 			return NULL;
 		}
 		return clazz;
@@ -818,7 +824,7 @@ addLocationGeneratedClass(J9VMThread *vmThread, J9ClassLoader *classLoader, KeyH
 	J9UTF8 *className = J9ROMCLASS_CLASSNAME(resultROMClass);
 	J9Class *clazz = NULL;
 
-	clazz = funcs->hashClassTableAt(classLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className));
+	clazz = funcs->hashClassTableAt(classLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className), 0);
 	if (NULL != clazz) {
 		J9ClassLocation *classLocation = NULL;
 		J9ClassLocation newLocation = {0};

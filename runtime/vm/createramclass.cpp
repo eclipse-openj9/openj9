@@ -282,7 +282,7 @@ markInterfaces(J9ROMClass *romClass, J9Class *superclass, J9ClassLoader *classLo
 			J9ITable *iTable;
 			J9UTF8 *interfaceName = NNSRP_GET(interfaceNames[i], J9UTF8*);
 			/* peek the table, do not load */
-			J9Class *interfaceClass = hashClassTableAt(classLoader, J9UTF8_DATA(interfaceName), J9UTF8_LENGTH(interfaceName));
+			J9Class *interfaceClass = hashClassTableAt(classLoader, J9UTF8_DATA(interfaceName), J9UTF8_LENGTH(interfaceName), 0);
 			/* the interface classes are not NULL, as this was checked by the caller */
 			if ((foundCloneable != NULL) && (J9AccClassCloneable == (J9CLASS_FLAGS(interfaceClass) & J9AccClassCloneable))) {
 				*foundCloneable = TRUE;
@@ -2244,7 +2244,7 @@ internalCreateRAMClassDone(J9VMThread *vmThread, J9ClassLoader *classLoader, J9C
 
 			/* If the class was successfully loaded while we were GCing, use that one. */
 			if (elementClass == NULL) {
-				alreadyLoadedClass = hashClassTableAt(classLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className));
+				alreadyLoadedClass = hashClassTableAt(classLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className), 0);
 			} else {
 				alreadyLoadedClass = getArrayClass(elementClass, options);
 			}
@@ -2451,7 +2451,7 @@ nativeOOM:
 				if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_HIDDEN)) {
 					/* If the class was successfully loaded while we were GCing, use that one */
 					if (elementClass == NULL) {
-						alreadyLoadedClass = hashClassTableAt(classLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className));
+						alreadyLoadedClass = hashClassTableAt(classLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className), 0);
 					} else {
 						alreadyLoadedClass = getArrayClass(elementClass, options);
 					}
@@ -3038,7 +3038,7 @@ fail:
 
 	if (!hotswapping) {
 		if (elementClass == NULL) {
-			ramClass = hashClassTableAt(classLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className));
+			ramClass = hashClassTableAt(classLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className), 0);
 		} else {
 			ramClass = getArrayClass(elementClass, options);
 		}

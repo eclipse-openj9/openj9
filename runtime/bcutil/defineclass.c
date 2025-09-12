@@ -272,7 +272,8 @@ checkForExistingClass(J9VMThread* vmThread, J9LoadROMClassData * loadData)
 	existingClass = J9_VM_FUNCTION(vmThread, hashClassTableAt)(
 		loadData->classLoader,
 		loadData->className,
-		loadData->classNameLength);
+		loadData->classNameLength,
+		0);
 
 	if (existingClass != NULL) {
 		/* error! a class with this name is already loaded in this class loader */

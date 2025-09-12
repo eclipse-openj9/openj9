@@ -267,7 +267,7 @@ findJ9ClassForROMClass(J9VMThread *vmThread, J9ROMClass *romClass, J9ClassLoader
 		 * All ROMClasses from the SCC are owned by the bootstrap class loader. To minimize the chances to iterate all class loaders, probe
 		 * the booststrap loader, extensionClassLoader and application loader first to determine if they have the J9Class for the current class.
 		 */
-		ramClass = hashClassTableAt(*resultClassLoader, (U_8 *)J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
+		ramClass = hashClassTableAt(*resultClassLoader, (U_8 *)J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName), 0);
 		if ((NULL != ramClass)
 			&& (romClass == ramClass->romClass)
 		) {
@@ -278,7 +278,7 @@ findJ9ClassForROMClass(J9VMThread *vmThread, J9ROMClass *romClass, J9ClassLoader
 			goto cacheresult;
 		}
 
-		ramClass = hashClassTableAt(vm->extensionClassLoader, (U_8 *)J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
+		ramClass = hashClassTableAt(vm->extensionClassLoader, (U_8 *)J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName), 0);
 		if ((NULL != ramClass)
 			&& (romClass == ramClass->romClass)
 		) {
@@ -290,7 +290,7 @@ findJ9ClassForROMClass(J9VMThread *vmThread, J9ROMClass *romClass, J9ClassLoader
 			goto cacheresult;
 		}
 
-		ramClass = hashClassTableAt(vm->applicationClassLoader, (U_8 *)J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
+		ramClass = hashClassTableAt(vm->applicationClassLoader, (U_8 *)J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName), 0);
 		if ((NULL != ramClass)
 			&& (romClass == ramClass->romClass)
 		) {
@@ -308,7 +308,7 @@ findJ9ClassForROMClass(J9VMThread *vmThread, J9ROMClass *romClass, J9ClassLoader
 				&& (classLoader != vm->extensionClassLoader)
 				&& (classLoader != vm->applicationClassLoader)
 			) {
-				ramClass = hashClassTableAt(classLoader, (U_8 *)J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
+				ramClass = hashClassTableAt(classLoader, (U_8 *)J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName), 0);
 				if ((NULL != ramClass)
 					&& (romClass == ramClass->romClass)
 				) {

@@ -156,7 +156,7 @@ retry:
 	omrthread_monitor_enter(vm->classTableMutex);
 	/* Hidden class is never added into the hash table */
 	if ((NULL != utf8Name) && J9_ARE_NO_BITS_SET(*options, J9_FINDCLASS_FLAG_HIDDEN)) {
-		if (NULL != vmFuncs->hashClassTableAt(classLoader, utf8Name, utf8Length)) {
+		if (NULL != vmFuncs->hashClassTableAt(classLoader, utf8Name, utf8Length, 0)) {
 			/* Bad, we have already defined this class - fail */
 			omrthread_monitor_exit(vm->classTableMutex);
 			if (J9_ARE_NO_BITS_SET(*options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
@@ -165,7 +165,7 @@ retry:
 				 */
 #if defined(J9VM_OPT_SNAPSHOTS)
 				if (IS_RESTORE_RUN(vm)) {
-					clazz = vmFuncs->hashClassTableAt(classLoader, utf8Name, utf8Length);
+					clazz = vmFuncs->hashClassTableAt(classLoader, utf8Name, utf8Length, 0);
 
 					if (!vmFuncs->loadWarmClassFromSnapshot(currentThread, classLoader, clazz)) {
 						clazz = NULL;
