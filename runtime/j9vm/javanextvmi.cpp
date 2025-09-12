@@ -689,14 +689,14 @@ JVM_CreateThreadSnapshot(JNIEnv *env, jobject thread)
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions const * const vmfns = vm->internalVMFunctions;
-	j9object_t resultObject = NULL;
-	jobject result = NULL;
-	J9Class *clazz = J9VMJDKINTERNALVMTHREADSNAPSHOT_OR_NULL(vm);
+
 	vmfns->internalEnterVMFromJNI(currentThread);
 
-	if ((NULL == thread)
-		|| (NULL == clazz)
-	) {
+	J9Class *clazz = J9VMJDKINTERNALVMTHREADSNAPSHOT_OR_NULL(vm);
+	j9object_t resultObject = NULL;
+	jobject result = NULL;
+
+	if ((NULL == thread) || (NULL == clazz)) {
 		vmfns->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
 	} else {
 		j9object_t threadObject = NULL;
@@ -714,47 +714,53 @@ JVM_CreateThreadSnapshot(JNIEnv *env, jobject thread)
 			goto done;
 		}
 
+		if (NULL != targetThread) {
+			vmfns->haltThreadForInspection(currentThread, targetThread);
+		}
+
 		resultObject = vm->memoryManagerFunctions->J9AllocateObject(currentThread, clazz, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 		if (NULL == resultObject) {
 			vmfns->setHeapOutOfMemoryError(currentThread);
 			goto done;
 		}
-		if (NULL != targetThread) {
-			PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, resultObject);
-			vmfns->haltThreadForInspection(currentThread, targetThread);
-			resultObject = PEEK_OBJECT_IN_SPECIAL_FRAME(currentThread, 0);
-		}
+
 		threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
 		J9VMJDKINTERNALVMTHREADSNAPSHOT_SET_NAME(currentThread, resultObject, J9VMJAVALANGTHREAD_NAME(currentThread, threadObject));
 		if (isVirtual) {
 			j9object_t continuationObject = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObject);
+
 			J9VMJDKINTERNALVMTHREADSNAPSHOT_SET_CARRIERTHREAD(
 					currentThread, resultObject, J9VMJAVALANGVIRTUALTHREAD_CARRIERTHREAD(currentThread, threadObject));
-			J9VMJDKINTERNALVMTHREADSNAPSHOT_SET_BLOCKEROBJECT(
-					currentThread, resultObject, J9VMJDKINTERNALVMCONTINUATION_BLOCKER(currentThread, continuationObject));
-			/* blockerTypeOrdinal to be filled */
-			/* status to be filled */
-			/* stacktrace to be filled */
-			/* locks to be filled */
+
+			/* The following need to be filled for a virtual thread:
+			 * - blockerObject
+			 * - blockerTypeOrdinal to be filled
+			 * - status
+			 * - stacktrace
+			 * - locks
+			 */
 		} else {
-			J9VMJDKINTERNALVMTHREADSNAPSHOT_SET_BLOCKEROBJECT(
-					currentThread, resultObject, vmfns->j9jni_createLocalRef(env, targetThread->blockingEnterObject));
-			/* blockerTypeOrdinal to be filled */
-			/* status to be filled */
-			/* stacktrace to be filled */
-			/* locks to be filled */
+			/* The following need to be filled for a platform thread:
+			 * - blockerObject
+			 * - blockerTypeOrdinal to be filled
+			 * - status
+			 * - stacktrace
+			 * - locks
+			 */
 		}
+
+		if (NULL != resultObject) {
+			result = vmfns->j9jni_createLocalRef(env, resultObject);
+		}
+
 		if (NULL != targetThread) {
 			vmfns->resumeThreadForInspection(currentThread, targetThread);
-			resultObject = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 		}
+
 		vmfns->releaseTargetVMThreadHelper(currentThread, targetThread, thread);
 	}
 
 done:
-	if (NULL != resultObject) {
-		result = vmfns->j9jni_createLocalRef(env, resultObject);
-	}
 	vmfns->internalExitVMToJNI(currentThread);
 	return result;
 }
