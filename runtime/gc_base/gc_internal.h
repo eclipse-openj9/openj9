@@ -254,7 +254,8 @@ extern J9_CFUNC void j9gc_allocation_threshold_changed(J9VMThread* currentThread
 extern J9_CFUNC void j9gc_set_allocation_sampling_interval(J9JavaVM *vm, UDATA samplingInterval);
 extern J9_CFUNC void j9gc_set_allocation_threshold(J9VMThread* vmThread, UDATA low, UDATA high);
 extern J9_CFUNC void j9gc_objaccess_recentlyAllocatedObject(J9VMThread *vmThread, J9Object *dstObject);
-extern J9_CFUNC void j9gc_objaccess_postStoreClassToClassLoader(J9VMThread *vmThread, J9ClassLoader* destClassLoader, J9Class* srcClass);
+extern J9_CFUNC void j9gc_objaccess_postStoreClassToClassLoader(J9VMThread *vmThread, J9ClassLoader *destClassLoader, J9Class *srcClass);
+extern J9_CFUNC void j9gc_objaccess_postStoreModuleToClassLoader(J9VMThread *vmThread, J9ClassLoader *destClassLoader, J9Module *srcModule);
 extern J9_CFUNC I_32 j9gc_objaccess_getObjectHashCode(J9JavaVM *vm, J9Object* object);
 extern J9_CFUNC void* j9gc_objaccess_jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray array, jboolean *isCopy);
 extern J9_CFUNC void j9gc_objaccess_jniReleasePrimitiveArrayCritical(J9VMThread* vmThread, jarray array, void * elems, jint mode);
