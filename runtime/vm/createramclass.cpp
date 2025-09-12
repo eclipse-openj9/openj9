@@ -3230,7 +3230,9 @@ fail:
 			ramClass->module = NULL;
 			ramClass->reservedCounter = 0;
 			ramClass->cancelCounter = 0;
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 			ramClass->strictStaticFieldCounter = 0;
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 			/* hostClass is exclusively defined only in Unsafe.defineAnonymousClass.
 			 * For all other cases, clazz->hostClass points to itself (clazz).
@@ -3646,6 +3648,7 @@ fail:
 		}
 	}
 
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 	/* TODO Update the class version check if strict fields is released before value types. */
 	if (J9_IS_CLASSFILE_OR_ROMCLASS_VALUETYPE_VERSION(romClass)) {
 		J9ROMFieldWalkState fieldWalkState = {0};
@@ -3657,6 +3660,7 @@ fail:
 			field = romFieldsNextDo(&fieldWalkState);
 		}
 	}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	state->valueTypeFlags = *valueTypeFlags;

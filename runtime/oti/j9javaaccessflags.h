@@ -169,6 +169,7 @@
 #define J9StaticFieldRefVolatile 0x8
 #define J9StaticFieldRefPutResolved 0x10
 #define J9StaticFieldRefFinal 0x20
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 /**
  * Since only two flags are available they are
  * used as follows to represent three states
@@ -190,6 +191,7 @@
 #define J9_STATIC_FIELD_STRICT_INIT_WAS_WRITTEN(classAndFlags) \
     (J9_ARE_NO_BITS_SET(classAndFlags, J9StaticFieldRefStrictInit1) \
     && J9_ARE_ANY_BITS_SET(classAndFlags, J9StaticFieldRefStrictInit2))
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 /* ImplicitCreation attribute flags */
 #define J9AccImplicitCreateHasDefaultValue 0x1

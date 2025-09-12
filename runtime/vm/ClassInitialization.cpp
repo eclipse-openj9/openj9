@@ -778,9 +778,11 @@ doVerify:
 				}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 				if (clazz->strictStaticFieldCounter > 0) {
 					goto initFailed;
 				}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 				/* Initialize this class */
 				PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);

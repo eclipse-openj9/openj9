@@ -7685,7 +7685,6 @@ retry:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 		U_16 index = *(U_16*)(_pc + 1);
 		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
-		J9Class *ramClass = ramConstantPool->ramClass;
 		J9RAMStaticFieldRef *ramStaticFieldRef = ((J9RAMStaticFieldRef*)ramConstantPool) + index;
 		UDATA volatile valueOffset = ramStaticFieldRef->valueOffset;
 		IDATA volatile flagsAndClass = ramStaticFieldRef->flagsAndClass;
@@ -7717,7 +7716,8 @@ retry:
 		classAndFlags = J9CLASSANDFLAGS_FROM_FLAGSANDCLASS(flagsAndClass);
 		valueAddress = J9STATICADDRESS(flagsAndClass, valueOffset);
 
-		if (J9ClassInitNotInitialized == (ramClass->initializeStatus & J9ClassInitStatusMask)) {
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+		if (J9ClassInitNotInitialized == (ramConstantPool->ramClass->initializeStatus & J9ClassInitStatusMask)) {
 			if (J9_STATIC_FIELD_STRICT_INIT_IS_UNSET(classAndFlags)) {
 				/* If a strict field has never been set, fail. */
 				rc = THROW_RUNTIME_EXCEPTION;
@@ -7728,6 +7728,7 @@ retry:
 				ramStaticFieldRef->flagsAndClass = J9FLAGSANDCLASS_FROM_CLASSANDFLAGS(classAndFlags);
 			}
 		}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 #if defined(DO_HOOKS)
 		if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_GET_STATIC_FIELD)) {
@@ -7775,7 +7776,6 @@ done:
 		U_16 index = *(U_16*)(_pc + 1);
 		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
 		J9RAMStaticFieldRef *ramStaticFieldRef = ((J9RAMStaticFieldRef*)ramConstantPool) + index;
-		J9Class *ramClass = ramConstantPool->ramClass;
 		UDATA volatile valueOffset = ramStaticFieldRef->valueOffset;
 		IDATA volatile flagsAndClass = ramStaticFieldRef->flagsAndClass;
 		UDATA volatile classAndFlags = 0;
@@ -7810,10 +7810,11 @@ done:
 		classAndFlags = J9CLASSANDFLAGS_FROM_FLAGSANDCLASS(flagsAndClass);
 		valueAddress = J9STATICADDRESS(flagsAndClass, valueOffset);
 
-		if (J9ClassInitNotInitialized == (ramClass->initializeStatus & J9ClassInitStatusMask)) {
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+		if (J9ClassInitNotInitialized == (ramConstantPool->ramClass->initializeStatus & J9ClassInitStatusMask)) {
 			if (J9_STATIC_FIELD_STRICT_INIT_IS_UNSET(classAndFlags)) {
-				Assert_VM_true(ramClass->strictStaticFieldCounter > 0);
-				ramClass->strictStaticFieldCounter--;
+				Assert_VM_true(ramConstantPool->ramClass->strictStaticFieldCounter > 0);
+				ramConstantPool->ramClass->strictStaticFieldCounter--;
 				classAndFlags &= ~J9StaticFieldRefStrictInit1;
 				classAndFlags |= J9StaticFieldRefStrictInit2;
 				ramStaticFieldRef->flagsAndClass = J9FLAGSANDCLASS_FROM_CLASSANDFLAGS(classAndFlags);
@@ -7825,6 +7826,7 @@ done:
 				goto done;
 			}
 		}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 #if defined(DO_HOOKS)
 		if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_PUT_STATIC_FIELD)) {
