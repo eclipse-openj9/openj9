@@ -143,6 +143,7 @@ option(J9VM_OPT_OPENJDK_METHODHANDLE "Enables support for OpenJDK MethodHandles.
 
 option(J9VM_OPT_VALHALLA_VALUE_TYPES "Enables support for Project Valhalla Value Object")
 option(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES "Enables support for Project Valhalla Flattenable Value Types")
+option(J9VM_OPT_VALHALLA_STRICT_FIELDS "Enables support for Project Valhalla Strict Fields")
 
 option(J9VM_OPT_ROM_IMAGE_SUPPORT "Controls if the VM includes basic support for linked rom images")
 option(J9VM_OPT_SHARED_CLASSES "Support for class sharing")
