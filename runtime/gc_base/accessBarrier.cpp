@@ -771,10 +771,17 @@ j9gc_objaccess_recentlyAllocatedObject(J9VMThread *vmThread, J9Object *dstObject
 }
 
 void
-j9gc_objaccess_postStoreClassToClassLoader(J9VMThread *vmThread, J9ClassLoader* destClassLoader, J9Class* srcClass)
+j9gc_objaccess_postStoreClassToClassLoader(J9VMThread *vmThread, J9ClassLoader *destClassLoader, J9Class *srcClass)
 {
 	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
 	return barrier->postStoreClassToClassLoader(vmThread, destClassLoader, srcClass);
+}
+
+void
+j9gc_objaccess_postStoreModuleToClassLoader(J9VMThread *vmThread, J9ClassLoader *destClassLoader, J9Module *srcModule)
+{
+	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
+	return barrier->postStoreModuleToClassLoader(vmThread, destClassLoader, srcModule);
 }
 
 I_32
