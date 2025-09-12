@@ -865,7 +865,7 @@ illegalAccess:
 				if ((modifiers & J9AccFinal) == J9AccFinal) {
 					localClassAndFlagsData |= J9StaticFieldRefFinal;
 				}
-				if (J9_ARE_ALL_BITS_SET(modifiers, J9AccStrictInit)) {
+				if (J9_ARE_ANY_BITS_SET(modifiers, J9AccStrictInit)) {
 					localClassAndFlagsData |= J9StaticFieldRefStrictInit1;
 					localClassAndFlagsData |= J9StaticFieldRefStrictInit2;
 				}

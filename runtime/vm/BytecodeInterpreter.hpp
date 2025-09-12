@@ -7724,7 +7724,7 @@ retry:
 				goto done;
 			} else if (J9_STATIC_FIELD_STRICT_INIT_WAS_WRITTEN(classAndFlags)){
 				classAndFlags |= J9StaticFieldRefStrictInit1;
-				classAndFlags &= !J9StaticFieldRefStrictInit2;
+				classAndFlags &= ~J9StaticFieldRefStrictInit2;
 				ramStaticFieldRef->flagsAndClass = J9FLAGSANDCLASS_FROM_CLASSANDFLAGS(classAndFlags);
 			}
 		}
@@ -7814,11 +7814,11 @@ done:
 			if (J9_STATIC_FIELD_STRICT_INIT_IS_UNSET(classAndFlags)) {
 				Assert_VM_true(ramClass->strictStaticFieldCounter > 0);
 				ramClass->strictStaticFieldCounter--;
-				classAndFlags &= !J9StaticFieldRefStrictInit1;
+				classAndFlags &= ~J9StaticFieldRefStrictInit1;
 				classAndFlags |= J9StaticFieldRefStrictInit2;
 				ramStaticFieldRef->flagsAndClass = J9FLAGSANDCLASS_FROM_CLASSANDFLAGS(classAndFlags);
 			} else if (J9_STATIC_FIELD_STRICT_INIT_WAS_WRITTEN_AND_READ(classAndFlags)
-				&& J9_ARE_ALL_BITS_SET(classAndFlags, J9StaticFieldRefFinal)
+				&& J9_ARE_ANY_BITS_SET(classAndFlags, J9StaticFieldRefFinal)
 			) {
 				/* If the strict final field was read, fail. */
 				rc = THROW_RUNTIME_EXCEPTION;

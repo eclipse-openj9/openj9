@@ -185,11 +185,11 @@
 #define J9_STATIC_FIELD_STRICT_INIT_IS_UNSET(classAndFlags) \
     J9_ARE_ALL_BITS_SET(classAndFlags, J9StaticFieldRefStrictInit1 | J9StaticFieldRefStrictInit2)
 #define J9_STATIC_FIELD_STRICT_INIT_WAS_WRITTEN_AND_READ(classAndFlags) \
-    (J9_ARE_ALL_BITS_SET(classAndFlags, J9StaticFieldRefStrictInit1) && \
-    J9_ARE_NO_BITS_SET(classAndFlags, J9StaticFieldRefStrictInit2))
+    (J9_ARE_ANY_BITS_SET(classAndFlags, J9StaticFieldRefStrictInit1) \
+    && J9_ARE_NO_BITS_SET(classAndFlags, J9StaticFieldRefStrictInit2))
 #define J9_STATIC_FIELD_STRICT_INIT_WAS_WRITTEN(classAndFlags) \
-    (J9_ARE_NO_BITS_SET(classAndFlags, J9StaticFieldRefStrictInit1) && \
-    J9_ARE_ALL_BITS_SET(classAndFlags, J9StaticFieldRefStrictInit2))
+    (J9_ARE_NO_BITS_SET(classAndFlags, J9StaticFieldRefStrictInit1) \
+    && J9_ARE_ANY_BITS_SET(classAndFlags, J9StaticFieldRefStrictInit2))
 
 /* ImplicitCreation attribute flags */
 #define J9AccImplicitCreateHasDefaultValue 0x1
