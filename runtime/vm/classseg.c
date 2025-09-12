@@ -37,21 +37,21 @@ const U_32 GROWTH_STEPS = 5; /**< grow over GROWTH_STEPS allocations */
 
 /**
  * Calculate appropriate segment size for the loader.
- * 
+ *
  * The appropriate size is at least as large as the required size and is some
  * power-of-two fraction (i.e. 1/2 the size, 1/4, etc.) of the preferred allocation
  * increment. For class loaders other than the system and application class loaders:
  * the appropriate size of the first GROWTH_START segments for the given class loader
  * is exactly the required size; and the size of the next GROWTH_STEPS segments grows
  * exponentially up to the preferred allocation increment.
- * 
+ *
  * @param requiredSize Minimum segment size required
  * @param segmentType Type of segment required
  * @param classLoader Class loader requesting class segment
  * @param allocationIncrement Preferred segment allocation size
  * @return A segment size at least as large as requiredSize
  */
-static UDATA 
+static UDATA
 calculateAppropriateSegmentSize(J9JavaVM *javaVM, UDATA requiredSize, UDATA segmentType, J9ClassLoader *classLoader, UDATA allocationIncrement)
 {
 	UDATA segmentSize = allocationIncrement;
@@ -65,10 +65,10 @@ calculateAppropriateSegmentSize(J9JavaVM *javaVM, UDATA requiredSize, UDATA segm
 		UDATA allocatedSegments = 0;
 		UDATA allocatedType = segmentType | MEMORY_TYPE_ALLOCATED;
 		J9MemorySegment *segment = classLoader->classSegments;
-	
+
 		/* Count the segments for this classLoader.  If the count becomes == GROWTH_START + GROWTH_STEPS
 		 * stop since we handle all segment >= GROWTH_START + GROWTH_STEPS the same
-		 */ 
+		 */
 		while (NULL != segment) {
 			if (allocatedType == segment->type) {
 				allocatedSegments++;
@@ -78,7 +78,7 @@ calculateAppropriateSegmentSize(J9JavaVM *javaVM, UDATA requiredSize, UDATA segm
 			}
 			segment = segment->nextSegmentInClassLoader;
 	 	}
-	 	
+
 		/* Use alternative allocation strategy */
 		if (GROWTH_START > allocatedSegments) {
 			/* First GROWTH_START segments are an exact fit */
@@ -94,7 +94,7 @@ calculateAppropriateSegmentSize(J9JavaVM *javaVM, UDATA requiredSize, UDATA segm
 
 /**
  * Allocate and return a class memory segment.
- * 
+ *
  * @param requiredSize Minimum segment size required
  * @param segmentType Type of segment required
  * @param classLoader Class loader requesting class segment
@@ -115,13 +115,22 @@ allocateClassMemorySegment(J9JavaVM *javaVM, UDATA requiredSize, UDATA segmentTy
 
 	appropriateSize = calculateAppropriateSegmentSize(javaVM, requiredSize, segmentType, classLoader, allocationIncrement);
 	memorySegment = allocateMemorySegmentInList(javaVM, javaVM->classMemorySegments, appropriateSize, segmentType, J9MEM_CATEGORY_CLASSES);
-	
+
 	 if (NULL != memorySegment) {
 		memorySegment->classLoader = classLoader;
 		memorySegment->nextSegmentInClassLoader = classLoader->classSegments;
 		classLoader->classSegments = memorySegment;
 	}
-	
+
+	if (J9_ARE_ANY_BITS_SET(segmentType, MEMORY_TYPE_DISCLAIMABLE_TO_FILE)) {
+		if (J9_ARE_ANY_BITS_SET(segmentType, MEMORY_TYPE_RAM_CLASS)) {
+			javaVM->disclaimableRAMSegmentCount += 1;
+		} else {
+			javaVM->disclaimableROMSegmentCount += 1;
+		}
+	}
+
+
 	if (NULL != segmentMutex) {
 		omrthread_monitor_exit(segmentMutex);
 	}

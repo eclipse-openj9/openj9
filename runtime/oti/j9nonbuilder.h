@@ -5493,6 +5493,8 @@ typedef struct J9InternalVMFunctions {
 	void (*freeMapCaches)(struct J9ClassLoader *classLoader);
 	jvmtiError (*getTargetVMThreadHelper)(struct J9VMThread *currentThread, jthread thread, jvmtiError vThreadError, UDATA flags, struct J9VMThread **vmThreadPtr, BOOLEAN* isVirtualThread, BOOLEAN *isThreadAlive);
 	void (*releaseTargetVMThreadHelper)(struct J9VMThread *currentThread, struct J9VMThread *targetThread, jthread thread);
+	BOOLEAN (*disclaimClassMemory)(struct J9JavaVM *vm, UDATA flags);
+	UDATA (*totalNumberOfDisclaimableClassMemorySegments)(struct J9JavaVM *vm);
 } J9InternalVMFunctions;
 
 /* Jazz 99339: define a new structure to replace JavaVM so as to pass J9NativeLibrary to JVMTIEnv  */
@@ -6553,6 +6555,8 @@ typedef struct J9JavaVM {
 	BOOLEAN pendingBlockedVirtualThreadsNotify;
 	I_64 unblockerWaitTime;
 #endif /* JAVA_SPEC_VERSION >= 24 */
+	UDATA disclaimableRAMSegmentCount;
+	UDATA disclaimableROMSegmentCount;
 } J9JavaVM;
 
 #define J9JFR_SAMPLER_STATE_UNINITIALIZED 0

@@ -684,6 +684,12 @@ enum INIT_STAGE {
 #define VMOPT_XXENABLEDYNAMICAGENTLOADING "-XX:+EnableDynamicAgentLoading"
 #define VMOPT_XXNOENABLEDYNAMICAGENTLOADING "-XX:-EnableDynamicAgentLoading"
 
+#define VMOPT_XXCLASSMEMORYDISCLAIM "-XX:ClassMemoryDisclaim="
+#define VMOPT_XXCLASSMEMORYDISCLAIM_ALL "all"
+#define VMOPT_XXCLASSMEMORYDISCLAIM_NONE "none"
+#define VMOPT_XXCLASSMEMORYDISCLAIM_RAM "ram"
+#define VMOPT_XXCLASSMEMORYDISCLAIM_ROM "rom"
+
 /* Modularity command line options */
 #define VMOPT_MODULE_UPGRADE_PATH "--upgrade-module-path"
 #define VMOPT_MODULE_PATH "--module-path"

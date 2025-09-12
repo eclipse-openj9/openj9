@@ -89,7 +89,7 @@
  * @anchor PortSharedSemaphoreSuccessFlags
  * Success codes related to shared semaphore  operations.
  * @{
- * @internal J9PORT_INFO_SHSEM* range from at 100 to 109 to avoid overlap 
+ * @internal J9PORT_INFO_SHSEM* range from at 100 to 109 to avoid overlap
  */
 #define J9PORT_INFO_SHSEM_BASE 100
 #define J9PORT_INFO_SHSEM_CREATED (J9PORT_INFO_SHSEM_BASE)
@@ -146,7 +146,7 @@
  */
 #define MAX_SIZE_TOTAL_GPINFO 2048
 #define J9GP_VALUE_UNDEFINED 0
-#define J9GP_VALUE_32 1 
+#define J9GP_VALUE_32 1
 #define J9GP_VALUE_64 2
 #define J9GP_VALUE_STRING 3
 #define J9GP_VALUE_ADDRESS 4
@@ -158,7 +158,7 @@
 #define J9GP_OTHER 2  /* other information */
 #define J9GP_CONTROL 3 	/* control registers */
 #define J9GP_FPR 4 		/* floating point registers */
-#define J9GP_MODULE 5 	/* module information */	
+#define J9GP_MODULE 5 	/* module information */
 #define J9GP_NUM_CATEGORIES 6
 
 #define J9GP_CONTROL_PC (-1)
@@ -201,7 +201,7 @@
 #define J9SH_SYSV_OLDER_CONTROL_FILE 1
 #define J9SH_SYSV_OLDER_EMPTY_CONTROL_FILE 2
 
-/* 
+/*
  * Flags passed to "flag" argument of j9shmem_open(). Should be of type uintptr_t.
  * High order 4 bits are reserved for passing the storage key testing value to j9shmem.
  */
@@ -228,7 +228,7 @@
 #define J9SHMEM_GETDIR_USE_USERHOME			0x2
 
 /* Maximum id we should try when we do ftok */
-#define J9SH_MAX_PROJ_ID 20 
+#define J9SH_MAX_PROJ_ID 20
 
 #ifdef WIN32
 #define J9SH_BASEDIR "javasharedresources\\"
@@ -248,7 +248,7 @@ typedef struct J9ControlFileStatus {
 
 /**
  * @name J9PortShSemParameters
- * The caller is responsible creating storage for J9PortShSemParameters. 
+ * The caller is responsible creating storage for J9PortShSemParameters.
  * The structure is only needed for the lifetime of the call to @ref j9shsem_open
  * This structure must be initialized using @ref j9shsem_params_init
  */
@@ -264,7 +264,7 @@ typedef struct  J9PortShSemParameters {
 /**
  * @name Process Handle
  * J9ProcessHandle is a pointer to the opaque structure J9ProcessHandleStruct.
- * 
+ *
  * J9ProcessHandle represents a J9Port Library process.
  */
 typedef struct J9ProcessHandleStruct *J9ProcessHandle;
@@ -437,6 +437,7 @@ typedef struct J9CacheInfoQuery {
 #define J9PORT_CTLDATA_VMEM_ADVISE_HUGEPAGE OMRPORT_CTLDATA_VMEM_ADVISE_HUGEPAGE
 #define J9PORT_CTLDATA_VMEM_HUGE_PAGES_MMAP_ENABLED OMRPORT_CTLDATA_VMEM_HUGE_PAGES_MMAP_ENABLED
 #define J9PORT_CTLDATA_CRIU_SUPPORT_FLAGS "CRIU_SUPPORT_FLAGS"
+#define J9PORT_CTLDATA_MEM_32BIT OMRPORT_CTLDATA_MEM_32BIT
 
 #define J9PORT_CPU_ONLINE OMRPORT_CPU_ONLINE
 #define J9PORT_CPU_TARGET OMRPORT_CPU_TARGET
@@ -476,6 +477,8 @@ typedef struct J9CacheInfoQuery {
 #define J9PORT_ERROR_VMEM_INSUFFICENT_RESOURCES OMRPORT_ERROR_VMEM_INSUFFICENT_RESOURCES
 #define J9PORT_ERROR_VMEM_INSUFFICENT_RESOURCES OMRPORT_ERROR_VMEM_INSUFFICENT_RESOURCES
 #define J9PORT_ERROR_NOT_SUPPORTED_ON_THIS_PLATFORM OMRPORT_ERROR_NOT_SUPPORTED_ON_THIS_PLATFORM
+
+#define J9PORT_MEM_32BIT_FLAGS_TMP_FILE_BACKED_VMEM OMRPORT_MEM_32BIT_FLAGS_TMP_FILE_BACKED_VMEM
 
 #define J9PORT_TTY_OUT OMRPORT_TTY_OUT
 #define J9PORT_TTY_ERR OMRPORT_TTY_ERR

@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "j9.h"
 #include "j9user.h"
 #include "j9protos.h"
 #include "j9cfg.h"
@@ -36,6 +37,17 @@
 #include "segment.h"
 #include "j9modron.h"
 #include "omrutilbase.h"
+
+#if defined(LINUX)
+#include <sys/mman.h>
+#include <errno.h>
+#ifndef MADV_NOHUGEPAGE
+#define MADV_NOHUGEPAGE 15
+#endif /* MADV_NOHUGEPAGE */
+#ifndef MADV_PAGEOUT
+#define MADV_PAGEOUT 21
+#endif /* MADV_PAGEOUT */
+#endif /* defined(LINUX) */
 
 #define ROUND_TO(granularity, number) (((number) + (granularity) - 1) & ~((UDATA)(granularity) - 1))
 
@@ -471,7 +483,19 @@ static J9MemorySegment * allocateVirtualMemorySegmentInListInternal(J9JavaVM *ja
 	if(segment == NULL) {
 		Trc_VM_allocateMemorySegmentInList_EntryAllocFailed(segmentList, type);
 	} else {
+		PORT_ACCESS_FROM_JAVAVM(javaVM);
+		UDATA pageSize = j9vmem_supported_page_sizes()[0];
+
 		segment->type = type;
+
+		if (J9_ARE_ALL_BITS_SET(type, MEMORY_TYPE_RAM_CLASS | MEMORY_TYPE_DISCLAIMABLE_TO_FILE)) {
+			/*
+			 * If disclaiming is enabled increase the segement size by the page size so the segment
+			 * base can be aligned to a page boundary so that it can be disclaimed with madvise().
+			 */
+			size += (pageSize*2);
+		}
+
 		segment->size = size;
 
 		if (vmemParams != NULL) {
@@ -494,9 +518,14 @@ static J9MemorySegment * allocateVirtualMemorySegmentInListInternal(J9JavaVM *ja
 				issueWriteBarrier();
 				omrthread_jit_write_protect_enable();
 			}
+
 			segment->baseAddress = allocatedBase;
-			segment->heapBase = allocatedBase;
-			segment->heapTop = (U_8 *)&(segment->heapBase)[size];
+			segment->heapTop = (U_8 *)&(segment->baseAddress)[size];
+			if (J9_ARE_ALL_BITS_SET(type, MEMORY_TYPE_RAM_CLASS | MEMORY_TYPE_DISCLAIMABLE_TO_FILE)) {
+				segment->heapBase = (U_8 *)ROUND_UP_TO_POWEROF2((UDATA)allocatedBase, pageSize);
+			} else {
+				segment->heapBase = allocatedBase;
+			}
 			segment->heapAlloc = segment->heapBase;
 
 			segmentList->totalSegmentSize += segment->size;
@@ -880,3 +909,59 @@ printSegments(J9MemorySegment *s, void* data)
 	printf("\n");
 }
 #endif /* DEBUG_PRINT_SEGMENT_TYPES */
+
+
+BOOLEAN
+disclaimClassMemory(J9JavaVM *vm, UDATA flags)
+{
+	BOOLEAN rc = TRUE;
+#if defined(LINUX)
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9ClassLoaderWalkState walkState = {0};
+	J9ClassLoader *classLoader = vmFuncs->allClassLoadersStartDo(&walkState, vm, 0);
+	BOOLEAN enableROMClassDisclaim = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_DISCLAIM_ROM_CLASS_MEMORY);
+	BOOLEAN enableRAMClassDisclaim = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_DISCLAIM_RAM_CLASS_MEMORY);
+	BOOLEAN stopOnFirstFailure = J9_ARE_ANY_BITS_SET(flags, J9VM_DISCLAIMCLASSMEMORY_STOP_ON_FIRST_FAILURE);
+	UDATA pageSize = j9vmem_supported_page_sizes()[0];
+
+	while (NULL != classLoader) {
+		J9MemorySegment *segment = classLoader->classSegments;
+		while (NULL != segment) {
+			BOOLEAN isROM = J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_ROM_CLASS);
+			BOOLEAN isRAM = J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_RAM_CLASS);
+			if ((enableRAMClassDisclaim && isRAM && J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_DISCLAIMABLE_TO_FILE))
+			|| (enableROMClassDisclaim && isROM)
+			) {
+				I_32 result = madvise(segment->heapBase, ROUND_DOWN_TO(pageSize, (UDATA)segment->heapTop) - (UDATA)segment->heapBase, MADV_PAGEOUT);
+				Trc_Segment_disclaimClassMemory_result(
+					segment, segment->heapBase,
+					segment->size, segment->type, segment->baseAddress, result);
+
+				if (0 != result) {
+					Trc_Segment_disclaimClassMemory_error(result, errno);
+					rc = FALSE;
+					if (stopOnFirstFailure) {
+						goto done;
+					}
+				}
+			}
+			segment = segment->nextSegmentInClassLoader;
+		}
+		classLoader = vmFuncs->allClassLoadersNextDo(&walkState);
+	}
+
+done:
+	vmFuncs->allClassLoadersEndDo(&walkState);
+#else /* defined(LINUX) */
+	/* Support for other platforms may be added in the future. */
+	Assert_VM_unreachable();
+#endif /* defined(LINUX) */
+	return rc;
+}
+
+UDATA
+totalNumberOfDisclaimableClassMemorySegments(J9JavaVM *vm)
+{
+	return vm->disclaimableRAMSegmentCount + vm->disclaimableROMSegmentCount;
+}
