@@ -151,6 +151,27 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 		}
 	}
 
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_RESTORE_RUN(vm)) {
+		clazz = vmFuncs->hashClassTableAt(classLoader, utf8Name, utf8Length);
+		if (NULL != clazz ) {
+			if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassRequiresProtectionDomain)) {
+				clazz->classFlags &= ~J9ClassRequiresProtectionDomain;
+			}
+			if (!vmFuncs->loadWarmClassFromSnapshot(currentThread, classLoader, clazz)) {
+				clazz = NULL;
+				goto done;
+			}
+			if (NULL != protectionDomain) {
+				J9VMJAVALANGCLASS_SET_PROTECTIONDOMAIN(
+					currentThread,
+					clazz->classObject,
+					J9_JNI_UNWRAP_REFERENCE(protectionDomain));
+				goto done;
+			}
+		}
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 retry:
 
 	omrthread_monitor_enter(vm->classTableMutex);
@@ -166,7 +187,9 @@ retry:
 #if defined(J9VM_OPT_SNAPSHOTS)
 				if (IS_RESTORE_RUN(vm)) {
 					clazz = vmFuncs->hashClassTableAt(classLoader, utf8Name, utf8Length);
-
+					if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassRequiresProtectionDomain)) {
+						clazz->classFlags &= ~J9ClassRequiresProtectionDomain;
+					}
 					if (!vmFuncs->loadWarmClassFromSnapshot(currentThread, classLoader, clazz)) {
 						clazz = NULL;
 						goto done;
@@ -281,6 +304,11 @@ done:
 		}
 	} else {
 		result = vmFuncs->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOT_RUN(vm)) {
+			clazz->classFlags |= J9ClassRequiresProtectionDomain;
+		}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	}
 
 	vmFuncs->internalExitVMToJNI(currentThread);

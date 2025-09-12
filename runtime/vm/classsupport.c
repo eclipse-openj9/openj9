@@ -53,6 +53,36 @@ static J9Class* internalFindArrayClass(J9VMThread* vmThread, J9Module *j9module,
 extern J9Method initialStaticMethod;
 extern J9Method initialSpecialMethod;
 
+static J9Class *
+hashClassTableAtRcp(J9VMThread *currentThread, J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength) {
+	J9Class *foundClass = hashClassTableAt(classLoader, className, classNameLength);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	J9JavaVM *vm = currentThread->javaVM;
+
+	if (IS_RESTORE_RUN(vm)) {
+		if ((NULL != foundClass) && J9_ARE_ANY_BITS_SET(foundClass->classFlags, J9ClassRequiresProtectionDomain)) {
+			foundClass = NULL;
+		}
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	return foundClass;
+}
+
+static J9Class *
+hashClassTableAtStringRcp(J9VMThread *currentThread, J9ClassLoader *classLoader, j9object_t className) {
+	J9Class *result = hashClassTableAtString(classLoader, (j9object_t) className);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	J9JavaVM *vm = currentThread->javaVM;
+
+	if (IS_RESTORE_RUN(vm)) {
+		if ((NULL != result) && J9_ARE_ANY_BITS_SET(result->classFlags, J9ClassRequiresProtectionDomain)) {
+			result = NULL;
+		}
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	return result;
+}
+
 UDATA
 totalStaticSlotsForClass( J9ROMClass *romClass ) {
 	UDATA totalSlots;
@@ -324,10 +354,15 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 	if (!fastMode) {
 		omrthread_monitor_enter(vm->classTableMutex);
 	}
-	result = hashClassTableAtString(classLoader, (j9object_t) className);
+	result = hashClassTableAtStringRcp(currentThread, classLoader, (j9object_t) className);
 #if defined(J9VM_OPT_SNAPSHOTS)
 	if ((NULL != result) && IS_RESTORE_RUN(vm)) {
-		if (!loadWarmClassFromSnapshot(currentThread, classLoader, result)) {
+		if (J9_ARE_NO_BITS_SET(result->classFlags,J9ClassRequiresProtectionDomain)) {
+			if (!loadWarmClassFromSnapshot(currentThread, classLoader, result)) {
+				result = NULL;
+			}
+		}
+		else {
 			result = NULL;
 		}
 	}
@@ -808,7 +843,7 @@ callLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9Cla
 			} else {
 				/* See if a class of this name is already in the table - if not, add it */
 
-				ramClass = hashClassTableAt(classLoader, className, classNameLength);
+				ramClass = hashClassTableAtRcp(vmThread, classLoader, className, classNameLength);
 				if (NULL == ramClass) {
 					/* Ensure loading constraints have not been violated */
 
@@ -836,7 +871,7 @@ callLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9Cla
 
 						/* See if a class of this name is already in the table - if not, try the add again */
 
-						ramClass = hashClassTableAt(classLoader, className, classNameLength);
+						ramClass = hashClassTableAtRcp(vmThread,classLoader, className, classNameLength);
 						if (NULL == ramClass) {
 							if (!hashClassTableAtPut(vmThread, classLoader, className, classNameLength, foundClass)) {
 								addedClassToInitiatingLoader = TRUE;
@@ -922,10 +957,14 @@ waitForContendedLoadClass(J9VMThread* vmThread, J9ContendedLoadTableEntry *table
 	} while ((status = tableEntry->status) == CLASSLOADING_LOAD_IN_PROGRESS);
 	/* still have classTableMutex here */
 	Trc_VM_waitForContendedLoadClass_waited(vmThread, vmThread, tableEntry->classLoader, classNameLength, className, status);
-	foundClass = hashClassTableAt(tableEntry->classLoader, className, classNameLength);
+	foundClass = hashClassTableAtRcp(vmThread, tableEntry->classLoader, className, classNameLength);
 #if defined(J9VM_OPT_SNAPSHOTS)
 	if ((NULL != foundClass) && IS_RESTORE_RUN(vm)) {
-		if (!loadWarmClassFromSnapshot(vmThread, tableEntry->classLoader, foundClass)) {
+		if (J9_ARE_NO_BITS_SET(foundClass->classFlags,J9ClassRequiresProtectionDomain)) {
+			if(!loadWarmClassFromSnapshot(vmThread, tableEntry->classLoader, foundClass)) {
+				foundClass = NULL;
+			}
+		} else {
 			foundClass = NULL;
 		}
 	}
@@ -1181,11 +1220,15 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 		omrthread_monitor_enter(vm->classTableMutex);
 	}
 
-	foundClass = hashClassTableAt(classLoader, className, classNameLength);
+	foundClass = hashClassTableAtRcp(vmThread, classLoader, className, classNameLength);
 	if (NULL != foundClass) {
 #if defined(J9VM_OPT_SNAPSHOTS)
 		if (IS_RESTORE_RUN(vm)) {
-			if (!loadWarmClassFromSnapshot(vmThread, classLoader, foundClass)) {
+			if (J9_ARE_NO_BITS_SET(foundClass->classFlags,J9ClassRequiresProtectionDomain)) {
+				if (!loadWarmClassFromSnapshot(vmThread, classLoader, foundClass)) {
+					foundClass = NULL;
+				}
+			} else {
 				foundClass = NULL;
 			}
 		}
@@ -1212,13 +1255,17 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 				omrthread_monitor_enter(vm->classTableMutex);
 
 				/* check again if somebody else already loaded the class */
-				foundClass = hashClassTableAt(classLoader, className, classNameLength);
+				foundClass = hashClassTableAtRcp(vmThread, classLoader, className, classNameLength);
 				if (NULL != foundClass) {
 #if defined(J9VM_OPT_SNAPSHOTS)
-					if (IS_RESTORE_RUN(vm)
-						&& !loadWarmClassFromSnapshot(vmThread, classLoader, foundClass)
-					) {
-						foundClass = NULL;
+					if (IS_RESTORE_RUN(vm)) {
+						if (J9_ARE_NO_BITS_SET(foundClass->classFlags,J9ClassRequiresProtectionDomain)) {
+							if(!loadWarmClassFromSnapshot(vmThread, classLoader, foundClass)) {
+								foundClass = NULL;
+							}
+						} else {
+							foundClass = NULL;
+						}
 					} else
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 					{
