@@ -29,6 +29,7 @@
 	</listeners>
 	<test name="Jep442Tests_testLinkerFfi_DownCall">
 		<classes>
+			<class name="org.openj9.test.jep442.downcall.ConfinedMemorySegmentDowncallTest"/>
 			<class name="org.openj9.test.jep442.downcall.DuplicateMixedCallTests"/>
 			<class name="org.openj9.test.jep442.downcall.DuplicateStructTests"/>
 			<class name="org.openj9.test.jep442.downcall.InvalidDownCallTests"/>
