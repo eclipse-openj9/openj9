@@ -239,16 +239,33 @@ MM_VLHGCAccessBarrier::recentlyAllocatedObject(J9VMThread *vmThread, J9Object *d
 }
 
 void 
-MM_VLHGCAccessBarrier::postStoreClassToClassLoader(J9VMThread *vmThread, J9ClassLoader* destClassLoader, J9Class* srcClass)
+MM_VLHGCAccessBarrier::postStoreClassToClassLoader(J9VMThread *vmThread, J9ClassLoader *destClassLoader, J9Class *srcClass)
 {
-	J9Object* classLoaderObject = destClassLoader->classLoaderObject;
+	J9Object *classLoaderObject = destClassLoader->classLoaderObject;
 	/* unlikely, but during bootstrap the classLoaderObject can be NULL until j.l.ClassLoader is available */
 	if (NULL == classLoaderObject) {
 		/* only bootstrap classes can appear here, and it's safe to miss barriers for them since they're roots */
 		Assert_MM_true(srcClass->classLoader == vmThread->javaVM->systemClassLoader);
 	} else {
-		J9Object* classObject = J9VM_J9CLASS_TO_HEAPCLASS(srcClass);
+		J9Object *classObject = J9VM_J9CLASS_TO_HEAPCLASS(srcClass);
 		postObjectStoreImpl(vmThread, classLoaderObject, classObject);
+	}
+}
+
+void
+MM_VLHGCAccessBarrier::postStoreModuleToClassLoader(J9VMThread *vmThread, J9ClassLoader *destClassLoader, J9Module *srcModule)
+{
+	J9Object *classLoaderObject = destClassLoader->classLoaderObject;
+	/* unlikely, but during bootstrap the classLoaderObject can be NULL until j.l.ClassLoader is available */
+	if (NULL == classLoaderObject) {
+		/* only persistent class loaders can appear here, and it's safe to miss barriers for them since they're roots */
+		Assert_MM_true(
+				(destClassLoader == vmThread->javaVM->systemClassLoader)
+				|| (destClassLoader == vmThread->javaVM->applicationClassLoader)
+				|| (destClassLoader == vmThread->javaVM->extensionClassLoader));
+	} else {
+		J9Object *moduleObject = srcModule->moduleObject;
+		postObjectStoreImpl(vmThread, classLoaderObject, moduleObject);
 	}
 }
 

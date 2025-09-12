@@ -353,11 +353,26 @@ public:
 	 * @param[in] srcClass the referenced class
 	 */
 	virtual void 
-	postStoreClassToClassLoader(J9VMThread *vmThread, J9ClassLoader* destClassLoader, J9Class* srcClass)
+	postStoreClassToClassLoader(J9VMThread *vmThread, J9ClassLoader *destClassLoader, J9Class *srcClass)
 	{
 		/* Default behaviour is to do nothing. Only collectors which implement JAZZ 18309 require this barrier. */
 	}
 	
+	/**
+	 * Record that the specified module is stored in the specified ClassLoader.
+	 * There is one cases at the moment in which this must be called:
+	 * 1 - when a newly loaded module is stored in its defining loader's table
+	 *
+	 * @param[in] vmThread the current thread
+	 * @param[in] destClassLoader the referencing ClassLoader
+	 * @param[in] srcModule the referenced module
+	 */
+	virtual void
+	postStoreModuleToClassLoader(J9VMThread *vmThread, J9ClassLoader *destClassLoader, J9Module *srcModule)
+	{
+		/* Default behaviour is to do nothing. Only collectors which implement JAZZ 18309 require this barrier. */
+	}
+
 	/**
 	 * Converts token (e.g. compressed pointer value) into real heap pointer.
 	 * @return the heap pointer value.
