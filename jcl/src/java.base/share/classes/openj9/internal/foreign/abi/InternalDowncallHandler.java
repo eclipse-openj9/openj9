@@ -75,6 +75,7 @@ import jdk.incubator.foreign.ValueLayout;
 /*[IF JAVA_SPEC_VERSION >= 21]*/
 import static java.lang.foreign.ValueLayout.*;
 import static jdk.internal.foreign.abi.SharedUtils.*;
+import jdk.internal.foreign.MemorySessionImpl;
 /*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 /**
@@ -107,18 +108,21 @@ public class InternalDowncallHandler {
 		private long[] offsets;
 		private int index;
 		private final int size;
+		private MemorySessionImpl[] sessions;
 
 		HeapArgInfo(int size) {
 			this.bases = null;
 			this.offsets = null;
 			this.size = size;
 			this.index = 0;
+			this.sessions = null;
 		}
 
 		void append(Object base, long offset) {
 			if (bases == null) {
 				bases = new Object[size];
 				offsets = new long[size];
+				sessions = new MemorySessionImpl[size];
 			}
 			bases[index] = base;
 			offsets[index] = offset;
@@ -136,6 +140,21 @@ public class InternalDowncallHandler {
 
 		public long[] getOffsets() {
 			return offsets;
+		}
+
+		void addSession(MemorySessionImpl session) {
+			sessions[index - 1] = session;
+		}
+
+		void releaseSessions() {
+			if (sessions != null) {
+				for (int i = 0; i < index; i++) {
+					if (sessions[i] != null) {
+						sessions[i].release0();
+						sessions[i] = null;
+					}
+				}
+			}
 		}
 	}
 
@@ -346,6 +365,7 @@ public class InternalDowncallHandler {
 			 * is captured so as to reset the internal index and avoid retaining the references
 			 * to the unreachable objects.
 			 */
+			info.releaseSessions();
 			infoStack.pop();
 			/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 			throw e;
@@ -358,9 +378,20 @@ public class InternalDowncallHandler {
 			/* Store the heap argument's base object and offset. */
 			AbstractMemorySegmentImpl segment = (AbstractMemorySegmentImpl)argValue;
 			info.append(segment.unsafeGetBase(), segment.unsafeGetOffset());
+			MemorySessionImpl session = segment.sessionImpl();
+			if (session != null) {
+				session.acquire0();
+				info.addSession(session);
+			}
 		} else {
 			/* Set null to the heap base object to denote a native array. */
 			info.append(null, 0L);
+			AbstractMemorySegmentImpl segment = (AbstractMemorySegmentImpl)argValue;
+			MemorySessionImpl session = segment.sessionImpl();
+			if (session != null) {
+				session.acquire0();
+				info.addSession(session);
+			}
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 		return address;
@@ -387,7 +418,8 @@ public class InternalDowncallHandler {
 			 * to the unreachable objects.
 			 */
 			Deque<HeapArgInfo> infoStack = heapArgInfo.get();
-			infoStack.pop();
+			HeapArgInfo info = infoStack.pop();
+			info.releaseSessions();
 			/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 			throw e;
 		}
@@ -954,6 +986,8 @@ public class InternalDowncallHandler {
 		}
 		/*[IF JAVA_SPEC_VERSION >= 22]*/
 		finally {
+			/* Release all the acquired sessions after the downcall completes. */
+			info.releaseSessions();
 			/* Clear up the heap argument information for the current thread after the downcall
 			 * so as to reset the internal index and avoid retaining the references to the
 			 * unreachable objects.
