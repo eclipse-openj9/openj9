@@ -336,6 +336,9 @@ public:
    // See J9::CodeGenerator::guaranteesResolvedDirectDispatchForSVM
    bool guaranteesResolvedDirectDispatchForSVM() { return true; }
 
+   // See OMR::CodeGenerator::supportsNonHelper
+   bool supportsNonHelper(TR::SymbolReferenceTable::CommonNonhelperSymbol symbol);
+
    private:
 
    /** \brief
