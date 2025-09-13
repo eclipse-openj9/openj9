@@ -125,7 +125,7 @@ isDirectSuperInterface(J9VMThread *vmStruct, J9Class *resolvedClass, J9Class *cu
 			J9Class *interfaceClass = NULL;
 			J9UTF8 *interfaceName = NNSRP_GET(interfaceNames[i], J9UTF8*);
 			omrthread_monitor_enter(vm->classTableMutex);
-			interfaceClass = vm->internalVMFunctions->hashClassTableAt(resolvedClass->classLoader, J9UTF8_DATA(interfaceName), J9UTF8_LENGTH(interfaceName));
+			interfaceClass = vm->internalVMFunctions->hashClassTableAt(resolvedClass->classLoader, J9UTF8_DATA(interfaceName), J9UTF8_LENGTH(interfaceName), 0);
 			omrthread_monitor_exit(vm->classTableMutex);
 			if (interfaceClass == resolvedClass) {
 				/* Found resolvedClass in the currentClass ROMClass interface list */

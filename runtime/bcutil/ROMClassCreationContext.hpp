@@ -455,7 +455,7 @@ public:
 				}
 			} else { /* classname is null */
 				/* If a name was not provided with the load data, now is our first chance to check for a duplicate definition */
-				if ((NULL != _javaVM) && (NULL != J9_VM_FUNCTION_VIA_JAVAVM(_javaVM, hashClassTableAt)(_classLoader, className, classNameLength))) {
+				if ((NULL != _javaVM) && (NULL != J9_VM_FUNCTION_VIA_JAVAVM(_javaVM, hashClassTableAt)(_classLoader, className, classNameLength, 0))) {
 					PORT_ACCESS_FROM_PORT(_portLibrary);
 					U_8 *errorUTF = (U_8 *) j9mem_allocate_memory(classNameLength + 1, J9MEM_CATEGORY_CLASSES);
 					if (NULL != errorUTF) {

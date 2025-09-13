@@ -2171,20 +2171,22 @@ hashClassTableFree(J9ClassLoader* classLoader);
 * @param *classLoader
 * @param *className
 * @param classNameLength
+* @param maskFlags if any bit in maskFlags is set in classFlags of J9Class, return NULL
 * @return J9Class *
 */
 J9Class *
-hashClassTableAt(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength);
+hashClassTableAt(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength, UDATA maskFlags);
 
 
 /**
 * @brief
 * @param *classLoader
 * @param stringObject
+* @param maskFlags if any bit in maskFlags is set in classFlags of J9Class, return NULL
 * @return J9Class *
 */
 J9Class *
-hashClassTableAtString(J9ClassLoader *classLoader, j9object_t stringObject);
+hashClassTableAtString(J9ClassLoader *classLoader, j9object_t stringObject, UDATA maskFlags);
 
 
 /**

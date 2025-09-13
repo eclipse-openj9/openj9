@@ -131,8 +131,8 @@ j9bcv_checkClassLoadingConstraintForName (J9VMThread *vmThread, J9ClassLoader *l
 	Assert_RTV_validateClassLoadingConstraints(vmThread, loader1, loader2, name1, name2, length);
 
 	/* peek at the class tables to see if the class has been loaded yet */
-	class1 = vmFuncs->hashClassTableAt (loader1, name1, length);
-	class2 = vmFuncs->hashClassTableAt (loader2, name2, length);
+	class1 = vmFuncs->hashClassTableAt (loader1, name1, length, 0);
+	class2 = vmFuncs->hashClassTableAt (loader2, name2, length, 0);
 
 	if (class1 && class2) {
 		if (class1 != class2) {
