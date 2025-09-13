@@ -353,6 +353,33 @@ J9::X86::CodeGenerator::endInstructionSelection()
       }
    }
 
+void
+J9::X86::CodeGenerator::preBinaryEncodingHook()
+   {
+   if (self()->getSnippetList().empty())
+      {
+      TR::Instruction *lastInstruction = self()->getAppendInstruction();
+
+      while (lastInstruction != NULL)
+         {
+         if (!lastInstruction->getOpCode().isPseudoOp())
+            {
+            if (lastInstruction->getOpCode().isCallOp())
+               {
+               // In some cases, the last instruction in the function will be a call instruction. The return
+               // address of the function may be beyond the body of this function. In this case, we must add
+               // padding to end of the function to prevent the stack walker from detecting an illegal return
+               // address.
+               generatePaddingInstruction(lastInstruction, 1, self());
+               }
+            break;
+            }
+
+         lastInstruction = lastInstruction->getPrev();
+         }
+      }
+   }
+
 TR::VectorLength
 J9::X86::CodeGenerator::getMaxPreferredVectorLength()
    {
