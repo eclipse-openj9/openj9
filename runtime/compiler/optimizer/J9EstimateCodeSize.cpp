@@ -980,17 +980,50 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
             if (isInExceptionRange(calltarget->_calleeMethod, i))
                flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable);
             break;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
          case J9BCinvokedynamic:
-         case J9BCinvokehandle:
             {
-            const static bool enablePeekingForMHInvokes = feGetEnv("TR_enablePeekingForMHInvokes") ? true : false;
-            if (enablePeekingForMHInvokes)
+            int32_t callSiteTableEntryIndex = bci.next2Bytes();
+            isUnresolvedInCP = false;
+            resolvedMethod = calltarget->_calleeMethod->getResolvedDynamicMethod(comp(), callSiteTableEntryIndex, &isUnresolvedInCP);
+            if (resolvedMethod && !isUnresolvedInCP)
                {
                nph.setNeedsPeekingToTrue();
-               heuristicTrace(tracer(), "Depth %d: Enabled peeking ILGen for method %s due to invokedynamic/invokehandle bytecode at bc index %d.", _recursionDepth, callerName, i);
+               heuristicTrace(tracer(), "Depth %d: Resolved invokedynamic call at bc index %d has Signature %s, enabled peeking for caller to propagate prex arg info from caller.", _recursionDepth, i, tracer()->traceSignature(resolvedMethod));
                }
             }
-            // intentional fallthrough
+            flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable);
+            break;
+         case J9BCinvokehandle:
+            {
+            int32_t methodTypeTableEntryIndex = bci.next2Bytes();
+            isUnresolvedInCP = false;
+            resolvedMethod = calltarget->_calleeMethod->getResolvedHandleMethod(comp(), methodTypeTableEntryIndex, &isUnresolvedInCP);
+            if (resolvedMethod && !isUnresolvedInCP)
+               {
+               char topLevelMethodNameBuffer[1024];
+               const char *topLevelMethodName = NULL;
+                  topLevelMethodName = comp()->fej9()->sampleSignature(
+               comp()->getCurrentMethod()->getPersistentIdentifier(), topLevelMethodNameBuffer,
+               1024, comp()->trMemory());
+               // javax/imageio/stream/ImageInputStreamImpl.readlong()J is implemented with two back-to-back readInt() invocations,
+               // and deeper down those call graphs, there are VarHandle operation methods that we are able to inline if peeking
+               // ILGen is done for the method containing the invokehandle bytecode. However, in warm opt level, the inlining budget
+               // only allows one of the two readInt() methods to get inlined. This results in a functional issue that requires some
+               // additional work to address. This is a temporary workaround in place until the underlying problem exposed is fixed.
+               if (strncmp(topLevelMethodName, "javax/imageio/stream/ImageInputStreamImpl.readLong", 50))
+                     {
+                     nph.setNeedsPeekingToTrue();
+                     heuristicTrace(tracer(), "Depth %d: Resolved invokehandle call at bc index %d has Signature %s, enabled peeking for caller to propagate prex arg info from caller.", _recursionDepth, i, tracer()->traceSignature(resolvedMethod));
+                     }
+               }
+            }
+            flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable);
+            break;
+#else
+         case J9BCinvokedynamic:
+         case J9BCinvokehandle:
+#endif // J9VM_OPT_OPENJDK_METHODHANDLE
          case J9BCinvokehandlegeneric:
             // TODO:JSR292: Use getResolvedHandleMethod
          case J9BCmonitorenter:
