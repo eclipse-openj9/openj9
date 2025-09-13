@@ -884,6 +884,7 @@ extern "C" {
 #define J9_CLASSLOADER_TYPE_OTHERS		0
 #define J9_CLASSLOADER_TYPE_BOOT		1
 #define J9_CLASSLOADER_TYPE_PLATFORM	2
+#define J9_CLASSLOADER_TYPE_APP			3
 
 /* Flag for Nestmates invokeVirtual on private methods */
 #define J9_VTABLE_INDEX_DIRECT_METHOD_FLAG 0x1
