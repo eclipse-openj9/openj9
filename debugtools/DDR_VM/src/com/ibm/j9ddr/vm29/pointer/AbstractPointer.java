@@ -23,6 +23,7 @@ package com.ibm.j9ddr.vm29.pointer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.Arrays;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.NullPointerDereference;
@@ -48,24 +49,21 @@ import com.ibm.j9ddr.vm29.types.U64;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
 public abstract class AbstractPointer extends DataType {
-	private static int cacheSize = 32;
-	private static long[] keys;
-	private static J9ClassPointer[] values;
-	private static int[] counts;
-	private static long probes;
+	private static final int CACHE_SIZE = 32;
+	private static final int[] counts = new int[CACHE_SIZE];
 	private static long hits;
-	static {
-		initializeCache();
-	}
+	private static final long[] keys = new long[CACHE_SIZE];
+	private static long probes;
+	private static final J9ClassPointer[] values = new J9ClassPointer[CACHE_SIZE];
 
-	protected long address;
+	protected final long address;
 
 	protected AbstractPointer(long address) {
 		super();
-		this.address = address;
-
 		if (4 == DataType.getProcess().bytesPerPointer()) {
 			this.address = 0xFFFFFFFFL & address;
+		} else {
+			this.address = address;
 		}
 	}
 
@@ -153,6 +151,10 @@ public abstract class AbstractPointer extends DataType {
 		return address;
 	}
 
+	public final long nonNullFieldEA(long offset) throws NullPointerDereference {
+		return nonNullAddress() + offset;
+	}
+
 	public String getHexAddress() {
 		return String.format("0x%0" + (UDATA.SIZEOF * 2) + "X", address);
 	}
@@ -178,7 +180,7 @@ public abstract class AbstractPointer extends DataType {
 		if (this instanceof StructurePointer) {
 			bufferSize = UDATA.SIZEOF;
 		} else {
-			bufferSize = (int)sizeOfBaseType();
+			bufferSize = (int) sizeOfBaseType();
 		}
 		byte[] buffer = new byte[bufferSize];
 		getBytesAtOffset(index, buffer);
@@ -289,7 +291,7 @@ public abstract class AbstractPointer extends DataType {
 	protected abstract long sizeOfBaseType();
 
 	public int compare(AbstractPointer pointer) {
-		return address == pointer.address ? 0 : lt(pointer) ? -1 : 1;
+		return (address == pointer.address) ? 0 : lt(pointer) ? -1 : 1;
 	}
 
 	public String toString() {
@@ -310,7 +312,7 @@ public abstract class AbstractPointer extends DataType {
 			if (address == 0) {
 				return String.format("%s @ 00000", pointerType);
 			} else {
-				return String.format("%s @ 0x%08X %n%s", pointerType, address, getMemString(16));
+				return String.format("%s @ 0x%08X%n%s", pointerType, address, getMemString(16));
 			}
 		} catch (CorruptDataException e) {
 			return super.toString();
@@ -330,14 +332,13 @@ public abstract class AbstractPointer extends DataType {
 	 */
 	private void dumpHex(int words, PrintStream stream) {
 		if (isNull()) {
-			// Prevent gratuitous MemoryFaults when debugging
+			// Prevent gratuitous MemoryFaults when debugging.
 			return;
 		}
 		stream.println();
 		for (int i = 0; i < words; i++) {
-			int word;
 			try {
-				word = getAddressSpace().getIntAt(address + (i * 4));
+				int word = getIntAtOffset(i * 4);
 				if (i % 4 == 0) {
 					stream.print(String.format("%08X : ", getAddress() + (i * 4)));
 				}
@@ -352,56 +353,38 @@ public abstract class AbstractPointer extends DataType {
 		stream.println();
 	}
 
-	// Probably Nobody outside of generated code should call this
+	// This should probably only be used by generated code.
 	protected long getPointerAtOffset(long offset) throws CorruptDataException {
-		if (address == 0) {
-			throw new NullPointerDereference();
-		}
-		return getAddressSpace().getPointerAt(address + offset);
+		return getAddressSpace().getPointerAt(nonNullFieldEA(offset));
 	}
 
 	protected int getIntAtOffset(long offset) throws CorruptDataException {
-		if (address == 0) {
-			throw new NullPointerDereference();
-		}
-		return getAddressSpace().getIntAt(address + offset);
+		return getAddressSpace().getIntAt(nonNullFieldEA(offset));
 	}
 
 	protected double getDoubleAtOffset(long offset) throws CorruptDataException {
-		if (address == 0) {
-			throw new NullPointerDereference();
-		}
-		// On all the platforms we are about floating point bits are endian-ized to match the platform.
-		long bits = getAddressSpace().getLongAt(address + offset);
-		return Double.longBitsToDouble(bits);
+		// Floating point bits use the platform byte order.
+		return Double.longBitsToDouble(getLongAtOffset(offset));
 	}
 
 	protected float getFloatAtOffset(long offset) throws CorruptDataException {
-		if (address == 0) {
-			throw new NullPointerDereference();
-		}
-		// On all the platforms we are about floating point bits are endian-ized to match the platform.
-		int bits = getAddressSpace().getIntAt(address + offset);
-		return Float.intBitsToFloat(bits);
+		// Floating point bits use the platform byte order.
+		return Float.intBitsToFloat(getIntAtOffset(offset));
 	}
 
 	protected boolean getBoolAtOffset(long offset) throws CorruptDataException {
-		if (address == 0) {
-			throw new NullPointerDereference();
-		}
-
 		switch (SIZEOF_BOOL) {
 		case 1:
-			return 0 != getAddressSpace().getByteAt(address + offset);
+			return 0 != getByteAtOffset(offset);
 		case 2:
-			return 0 != getAddressSpace().getShortAt(address + offset);
+			return 0 != getShortAtOffset(offset);
 		case 4:
-			return 0 != getAddressSpace().getIntAt(address + offset);
+			return 0 != getIntAtOffset(offset);
 		case 8:
-			return 0 != getAddressSpace().getLongAt(address + offset);
+			return 0 != getLongAtOffset(offset);
 		default:
 			byte[] buffer = new byte[SIZEOF_BOOL];
-			getAddressSpace().getBytesAt(address + offset, buffer);
+			getBytesAtOffset(offset, buffer);
 			for (int i = 0; i < SIZEOF_BOOL; i++) {
 				if (0 != buffer[i]) {
 					return true;
@@ -412,46 +395,31 @@ public abstract class AbstractPointer extends DataType {
 	}
 
 	protected UDATA getUDATAAtOffset(long offset) throws CorruptDataException {
-		if (address == 0) {
-			throw new NullPointerDereference();
-		}
 		if (J9BuildFlags.J9VM_ENV_DATA64) {
-			return new UDATA(getAddressSpace().getLongAt(address + offset));
+			return new UDATA(getLongAtOffset(offset));
 		} else {
-			return new UDATA(getAddressSpace().getIntAt(address + offset));
+			return new UDATA(getIntAtOffset(offset));
 		}
 	}
 
 	protected IDATA getIDATAAtOffset(long offset) throws CorruptDataException {
-		if (address == 0) {
-			throw new NullPointerDereference();
-		}
 		if (J9BuildFlags.J9VM_ENV_DATA64) {
-			return new IDATA(getAddressSpace().getLongAt(address + offset));
+			return new IDATA(getLongAtOffset(offset));
 		} else {
-			return new IDATA(getAddressSpace().getIntAt(address + offset));
+			return new IDATA(getIntAtOffset(offset));
 		}
 	}
 
 	protected short getShortAtOffset(long offset) throws CorruptDataException {
-		if (address == 0) {
-			throw new NullPointerDereference();
-		}
-		return getAddressSpace().getShortAt(address + offset);
+		return getAddressSpace().getShortAt(nonNullFieldEA(offset));
 	}
 
 	protected byte getByteAtOffset(long offset) throws CorruptDataException {
-		if (address == 0) {
-			throw new NullPointerDereference();
-		}
-		return getAddressSpace().getByteAt(address + offset);
+		return getAddressSpace().getByteAt(nonNullFieldEA(offset));
 	}
 
 	public int getBytesAtOffset(long offset, byte[] data) throws CorruptDataException {
-		if (address == 0) {
-			throw new NullPointerDereference();
-		}
-		return getAddressSpace().getBytesAt(address + offset, data);
+		return getAddressSpace().getBytesAt(nonNullFieldEA(offset), data);
 	}
 
 	protected char getBaseCharAtOffset(long offset) throws CorruptDataException {
@@ -459,33 +427,26 @@ public abstract class AbstractPointer extends DataType {
 	}
 
 	protected long getLongAtOffset(long offset) throws CorruptDataException {
-		if (address == 0) {
-			throw new NullPointerDereference();
-		}
-		return getAddressSpace().getLongAt(address + offset);
+		return getAddressSpace().getLongAt(nonNullFieldEA(offset));
 	}
 
 	protected J9ObjectPointer getObjectReferenceAtOffset(long offset) throws CorruptDataException {
-		if (address == 0) {
-			throw new NullPointerDereference();
-		}
 		if (J9ObjectHelper.compressObjectReferences) {
-			return ObjectAccessBarrier.convertPointerFromToken(getAddressSpace().getIntAt(address + offset));
+			return ObjectAccessBarrier.convertPointerFromToken(getIntAtOffset(offset));
 		} else {
-			return J9ObjectPointer.cast(getAddressSpace().getPointerAt(address + offset));
+			return J9ObjectPointer.cast(getPointerAtOffset(offset));
 		}
 	}
 
 	protected J9ClassPointer getObjectClassAtOffset(long offset) throws CorruptDataException {
-		long location = address + offset;
 		long classPointer;
 		if (J9ObjectHelper.compressObjectReferences) {
-			classPointer = (long) getAddressSpace().getIntAt(location) & 0xFFFFFFFFL;
+			classPointer = (long) getIntAtOffset(offset) & 0xFFFFFFFFL;
 		} else {
-			classPointer = getAddressSpace().getPointerAt(location);
+			classPointer = getPointerAtOffset(offset);
 		}
 		if (classPointer == 0L) {
-			throw new MemoryFault(location, "Invalid class address found in object");
+			throw new MemoryFault(address + offset, "Invalid class address found in object");
 		}
 		J9ClassPointer cp = checkClassCache(classPointer);
 		if (cp == null) {
@@ -497,11 +458,11 @@ public abstract class AbstractPointer extends DataType {
 
 	private static J9ClassPointer checkClassCache(long pointer)
 	{
-		probes++;
-		for (int i = 0; i < cacheSize; i++) {
+		probes += 1;
+		for (int i = 0; i < CACHE_SIZE; i++) {
 			if (keys[i] == pointer) {
-				hits++;
-				counts[i]++;
+				hits += 1;
+				counts[i] += 1;
 				return values[i];
 			}
 		}
@@ -512,25 +473,22 @@ public abstract class AbstractPointer extends DataType {
 	{
 		int min = counts[0];
 		int minIndex = 0;
-		for (int i = 1; i < cacheSize; i++) {
-			if (counts[i] < min) {
+		for (int i = 1; i < CACHE_SIZE; i++) {
+			if (min > counts[i]) {
 				min = counts[i];
 				minIndex = i;
 			}
 		}
+		counts[minIndex] = 1;
 		keys[minIndex] = pointer;
 		values[minIndex] = cp;
-		counts[minIndex] = 1;
 	}
 
 	protected J9ObjectMonitorPointer getObjectMonitorAtOffset(long offset) throws CorruptDataException {
-		if (address == 0) {
-			throw new NullPointerDereference();
-		}
 		if (J9ObjectHelper.compressObjectReferences) {
-			return J9ObjectMonitorPointer.cast(0xFFFFFFFFL & (long)(getAddressSpace().getIntAt(address + offset)));
+			return J9ObjectMonitorPointer.cast(0xFFFFFFFFL & (long) getIntAtOffset(offset));
 		} else {
-			return J9ObjectMonitorPointer.cast(getAddressSpace().getPointerAt(address + offset));
+			return J9ObjectMonitorPointer.cast(getPointerAtOffset(offset));
 		}
 	}
 
@@ -564,19 +522,16 @@ public abstract class AbstractPointer extends DataType {
 		return "!" + name + " 0x" + Long.toHexString(this.getAddress());
 	}
 
-	private static void initializeCache()
-	{
-		keys = new long[cacheSize];
-		values = new J9ClassPointer[cacheSize];
-		counts = new int[cacheSize];
-		probes = 0;
-		hits = 0;
-	}
-
 	public static void reportClassCacheStats()
 	{
-		double hitRate = (double)hits / (double)probes * 100.0;
+		double hitRate = (double) hits / (double) probes * 100.0;
 		System.out.println("AbstractPointer probes: " + probes + " hit rate: " + hitRate + "%");
-		initializeCache();
+
+		// Clear cache.
+		Arrays.fill(counts, 0);
+		hits = 0;
+		Arrays.fill(keys, 0);
+		probes = 0;
+		Arrays.fill(values, null);
 	}
 }
