@@ -102,23 +102,6 @@ J9::TransformUtil::generateArrayElementShiftAmountTrees(
 // {{{
 //
 
-static bool isFinalFieldOfNativeStruct(TR::SymbolReference *symRef, TR::Compilation *comp)
-   {
-   switch (symRef->getReferenceNumber() - comp->getSymRefTab()->getNumHelperSymbols())
-      {
-      case TR::SymbolReferenceTable::componentClassSymbol:
-      case TR::SymbolReferenceTable::arrayClassRomPtrSymbol:
-      case TR::SymbolReferenceTable::indexableSizeSymbol:
-      case TR::SymbolReferenceTable::isArraySymbol:
-      case TR::SymbolReferenceTable::classRomPtrSymbol:
-      case TR::SymbolReferenceTable::ramStaticsFromClassSymbol:
-         TR_ASSERT(symRef->getSymbol()->isShadow(), "isFinalFieldOfNativeStruct expected shadow symbol");
-         return true;
-      default:
-         return false;
-      }
-   }
-
 static bool isFinalFieldPointingAtNativeStruct(TR::SymbolReference *symRef, TR::Compilation *comp)
    {
    switch (symRef->getReferenceNumber() - comp->getSymRefTab()->getNumHelperSymbols())
@@ -461,7 +444,6 @@ static bool verifyFieldAccess(void *curStruct, TR::SymbolReference *field, bool 
             return false;
          }
 
-
       return true;
       }
    else if (isFieldOfJavaObject(field, comp))
@@ -480,20 +462,40 @@ static bool verifyFieldAccess(void *curStruct, TR::SymbolReference *field, bool 
             return false;
          }
       }
-   else if (isFinalFieldOfNativeStruct(field, comp))
-      {
-      // These are implicitly verified by virtue of being verifiable
-      //
-      return true;
-      }
    else
       {
-      // Don't know how to verify this
-      //
-      return false;
-      }
+      switch (field->getReferenceNumber() - comp->getSymRefTab()->getNumHelperSymbols())
+         {
+         // Fields that can be loaded from any RAM class (array or not).
+         // (These two symrefs don't really need to be distinguished from each other.)
+         case TR::SymbolReferenceTable::classRomPtrSymbol:
+         case TR::SymbolReferenceTable::arrayClassRomPtrSymbol:
+            return true; // trivially verified by virtue of being verifiable.
 
-   return true;
+         // Fields that can be loaded from any ROM class (array or not).
+         case TR::SymbolReferenceTable::isArraySymbol:
+            return true; // trivially verified by virtue of being verifiable
+
+         // Fields that can be loaded from non-array RAM classes only.
+         case TR::SymbolReferenceTable::ramStaticsFromClassSymbol:
+            // Verifiability means curStruct points to some kind of RAM class.
+            return !J9CLASS_IS_ARRAY((J9Class *)curStruct);
+
+         // Fields that can be loaded from array RAM classes only.
+         case TR::SymbolReferenceTable::componentClassSymbol:
+            // Verifiability means curStruct points to some kind of RAM class.
+            return J9CLASS_IS_ARRAY((J9Class *)curStruct);
+
+         // Fields that can be loaded from array ROM classes only.
+         case TR::SymbolReferenceTable::indexableSizeSymbol:
+            // Verifiability means curStruct points to some kind of ROM class.
+            return J9ROMCLASS_IS_ARRAY((J9ROMClass *)curStruct);
+
+         default:
+            // Don't know how to verify this
+            return false;
+         }
+      }
    }
 
 /**
@@ -1949,6 +1951,12 @@ J9::TransformUtil::transformIndirectLoadChain(TR::Compilation *comp, TR::Node *n
  *    For C structs pointers:
  *     - Verifiable if it is known to point to a struct of the proper type or null
  *     - Verified trivially by virtue of being verifiable and non null
+ *     - Caveat: RAM classes and ROM classes have array and non-array variants
+ *       that differ in some fields.
+ *       - RAM class fields: Verifiable if it is known to point to any RAM class
+ *         (J9Class, J9ArrayClass). Verified if the field is common to both or
+ *         if the class is or is not an array class as appropriate.
+ *       - ROM class fields: Similar, but with J9ROMClass and J9ROMArrayClass.
  *
  *  The onus is on the caller to ensure that baseAddress/baseExpression is
  *  verifiable.  This is why we have separated the notion of "verifiable"
