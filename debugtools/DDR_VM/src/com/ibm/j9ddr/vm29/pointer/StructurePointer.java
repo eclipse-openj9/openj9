@@ -43,25 +43,21 @@ import com.ibm.j9ddr.vm29.types.U32;
  * Root of the hierarchy for VM C structures.
  */
 public abstract class StructurePointer extends AbstractPointer {
-	
+
 	private final static String nl = System.getProperty("line.separator");
-	
+
 	protected StructurePointer(long address) {
 		super(address);
-	}
-	
-	public final long nonNullFieldEA(long offset) throws NullPointerDereference {
-		return nonNullAddress() + offset;
 	}
 
 	public DataType at(long count) {
 		throw new UnsupportedOperationException("StructurePointers are implicitly dereferenced.  Use add(long count) instead.");
 	}
-	
+
 	public DataType at(Scalar count) {
 		throw new UnsupportedOperationException("StructurePointers are implicitly dereferenced.  Use add(Scalar count) instead.");
 	}
-	
+
 	protected int getStartingBit(int s, int b) {
 		switch (BITFIELD_FORMAT) {
 		case StructureReader.BIT_FIELD_FORMAT_LITTLE_ENDIAN:
@@ -81,7 +77,7 @@ public abstract class StructurePointer extends AbstractPointer {
 		returnValue = returnValue.rightShift(StructureReader.BIT_FIELD_CELL_SIZE - b);
 		return returnValue;
 	}
-	
+
 	protected I32 getI32Bitfield(int s, int b) throws CorruptDataException {
 		int cell = s/StructureReader.BIT_FIELD_CELL_SIZE;
 		I32 cellValue = new I32(getIntAtOffset(cell * StructureReader.BIT_FIELD_CELL_SIZE / 8));
@@ -90,11 +86,11 @@ public abstract class StructurePointer extends AbstractPointer {
 		returnValue = returnValue.rightShift(StructureReader.BIT_FIELD_CELL_SIZE - b);
 		return returnValue;
 	}
-	
+
 	public StructurePointer getAsRuntimeType()
 	{
 		// Design 42819
-		// To make debugging easier we provide the facility to obtain the pointer 
+		// To make debugging easier we provide the facility to obtain the pointer
 		// as its actual run-time type (if this information is available).
 
 		try {
@@ -113,15 +109,15 @@ public abstract class StructurePointer extends AbstractPointer {
 		}
 		return this;
 	}
-	
-	public static class StructureField implements Comparable<StructureField> 
-	{	
+
+	public static class StructureField implements Comparable<StructureField>
+	{
 		public final int offset;
 		public final String name;
 		public final DataType value;
 		public final String type;
 		public final CorruptDataException cde;
-		
+
 		StructureField(String name, String type, int offset, DataType value, CorruptDataException cde)
 		{
 			this.name = name;
@@ -130,12 +126,12 @@ public abstract class StructurePointer extends AbstractPointer {
 			this.type = type;
 			this.cde = cde;
 		}
-		
+
 		public int compareTo(StructureField o)
 		{
 			return offset - o.offset;
 		}
-		
+
 		public String toString()
 		{
 			StringBuilder builder = new StringBuilder();
@@ -144,7 +140,7 @@ public abstract class StructurePointer extends AbstractPointer {
 			builder.append(name);
 			builder.append(" (");
 			if(cde == null) {
-				builder.append(Integer.toHexString(offset));	
+				builder.append(Integer.toHexString(offset));
 			} else {
 				builder.append("<FAULT: " + cde.getMessage() + ">");
 			}
@@ -152,21 +148,21 @@ public abstract class StructurePointer extends AbstractPointer {
 			return builder.toString();
 		}
 	}
-	
+
 	@Override
 	public String formatFullInteractive()
 	{
 		StringBuilder builder = new StringBuilder();
-		
+
 		builder.append(this.getTargetName());
 		builder.append(" at ");
 		builder.append("0x");
 		builder.append(Long.toHexString(this.getAddress()));
 		builder.append(" {");
 		builder.append(nl);
-				
+
 		StructureField fields[] = getStructureFields();
-		
+
 		for (StructureField thisField : fields) {
 			builder.append("\t0x");
 			builder.append(Integer.toHexString(thisField.offset));
@@ -182,32 +178,32 @@ public abstract class StructurePointer extends AbstractPointer {
 			} else {
 				builder.append("null");
 			}
-			
+
 			builder.append(nl);
 		}
-		
+
 		builder.append("}");
 		builder.append("\n");
 		return builder.toString();
 	}
-	
+
 	public StructureField[] getStructureFields()
 	{
 		List<StructureField> fields = new LinkedList<StructureField>();
-		
+
 		Class<?> working = this.getClass();
-		
+
 		while (working != null) {
 			GeneratedPointerClass classAnnotation = working.getAnnotation(GeneratedPointerClass.class);
-			
+
 			if (null == classAnnotation) {
 				break;
 			}
-			
+
 			for (Method thisMethod : working.getMethods()) {
 				if (thisMethod.isAnnotationPresent(GeneratedFieldAccessor.class)) {
 					GeneratedFieldAccessor fieldAnnotation = thisMethod.getAnnotation(GeneratedFieldAccessor.class);
-					
+
 					Field offsetField = null;
 					try {
 						offsetField = classAnnotation.structureClass().getField(fieldAnnotation.offsetFieldName());
@@ -217,14 +213,14 @@ public abstract class StructurePointer extends AbstractPointer {
 						//This will happen if we reach for a field that doesn't exist on this level
 						continue;
 					}
-					
+
 					int offset = -1;
 					try {
 						offset = offsetField.getInt(null);
 					} catch (Exception e) {
 						throw new Error(e);
 					}
-			
+
 					DataType result = null;
 					CorruptDataException cde = null;
 					try {
@@ -235,7 +231,7 @@ public abstract class StructurePointer extends AbstractPointer {
 						throw new RuntimeException(e);
 					} catch (InvocationTargetException e) {
 						Throwable cause = e.getCause();
-						
+
 						if (cause instanceof CorruptDataException) {
 							cde = (CorruptDataException) cause;
 						} else {
@@ -245,15 +241,15 @@ public abstract class StructurePointer extends AbstractPointer {
 					fields.add(new StructureField(thisMethod.getName(), fieldAnnotation.declaredType(), offset, result, cde));
 				}
 			}
-			
+
 			working = working.getSuperclass();
 		}
-		
+
 		Collections.sort(fields);
-		
+
 		StructureField[] result = new StructureField[fields.size()];
 		fields.toArray(result);
 		return result;
 	}
-	
+
 }
