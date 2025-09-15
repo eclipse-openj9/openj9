@@ -595,7 +595,11 @@ addModuleDefinition(J9VMThread * currentThread, J9Module * fromModule, const cha
 			if (NULL != version) {
 				fromModule->version = J9_JNI_UNWRAP_REFERENCE(version);
 			}
-			if (!success) {
+			if (success) {
+				J9JavaVM *vm = currentThread->javaVM;
+				/* Adding module to the classloader hash table should trigger Write Barrier */
+				vm->memoryManagerFunctions->j9gc_objaccess_postStoreModuleToClassLoader(currentThread, classLoader, fromModule);
+			} else {
 				/* If we failed to add the module to the hash table */
 				if (NULL != packages) {
 					removeMulPackageDefinitions(currentThread, fromModule, packages, numPackages);

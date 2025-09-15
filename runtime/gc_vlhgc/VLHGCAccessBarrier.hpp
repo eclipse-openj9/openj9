@@ -66,7 +66,8 @@ public:
 	virtual bool postBatchObjectStore(J9VMThread *vmThread, J9Object *destObject, bool isVolatile=false);
 	virtual bool postBatchObjectStore(J9VMThread *vmThread, J9Class *destClass, bool isVolatile=false);
 	virtual void recentlyAllocatedObject(J9VMThread *vmThread, J9Object *object); 
-	virtual void postStoreClassToClassLoader(J9VMThread *vmThread, J9ClassLoader* destClassLoader, J9Class* srcClass);
+	virtual void postStoreClassToClassLoader(J9VMThread *vmThread, J9ClassLoader *destClassLoader, J9Class *srcClass);
+	virtual void postStoreModuleToClassLoader(J9VMThread *vmThread, J9ClassLoader *destClassLoader, J9Module *srcModule);
 	
 	virtual bool preWeakRootSlotRead(J9VMThread *vmThread, j9object_t *srcAddress);
 	virtual bool preWeakRootSlotRead(J9JavaVM *vm, j9object_t *srcAddress);
