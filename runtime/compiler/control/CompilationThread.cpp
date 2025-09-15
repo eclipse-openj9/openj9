@@ -4263,6 +4263,16 @@ TR::CompilationInfoPerThread::initializeSegmentCache(J9::J9SegmentProvider &segm
 void
 TR::CompilationInfoPerThread::processEntries()
    {
+   bool hasVMAccess = J9_ARE_ALL_BITS_SET(_compilationThread->publicFlags, J9_PUBLIC_FLAGS_VM_ACCESS);
+   if (!hasVMAccess) 
+      {
+      acquireVMAccess(_compilationThread);
+      }
+   TRIGGER_J9HOOK_VM_THREAD_STARTING(_jitConfig->javaVM->hookInterface, _compilationThread, _compilationThread);
+   if (!hasVMAccess) 
+      {
+      releaseVMAccess(_compilationThread);
+      }
    if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
       {
       TR_VerboseLog::writeLineLocked(
@@ -4470,6 +4480,7 @@ TR::CompilationInfoPerThread::processEntries()
          }
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
+   TRIGGER_J9HOOK_VM_THREAD_END(_jitConfig->javaVM->hookInterface, _compilationThread, 0);
    }
 
 void
