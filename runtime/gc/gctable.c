@@ -233,6 +233,7 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9gc_set_allocation_threshold,
 	j9gc_objaccess_recentlyAllocatedObject,
 	j9gc_objaccess_postStoreClassToClassLoader,
+	j9gc_objaccess_postStoreModuleToClassLoader,
 	j9gc_objaccess_getObjectHashCode,
 	j9gc_createJavaLangString,
 	j9gc_createJavaLangStringWithUTFCache,
