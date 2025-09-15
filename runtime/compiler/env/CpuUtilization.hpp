@@ -90,6 +90,8 @@ public:
       _cpuUsage = _cpuIdle = _vmCpuUsage = _avgCpuUsage = _avgCpuIdle = -1;
       disableCpuUsageCircularBuffer();
       }
+   void reset(J9JITConfig *jitConfig); // To be used after a CRIU restore operation
+
 
    // Circular Buffer related functions
    CpuUsageCircularBuffer *getCpuUsageCircularBuffer() const { return _cpuUsageCircularBuffer; }

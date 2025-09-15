@@ -58,6 +58,48 @@
  * } j9thread_process_time_t;
  */
 
+/**
+ * @brief Resets the CpuUtilization data after a CRIU restore operation
+ *
+ * @param jitConfig J9JITCoonfig for this JVM
+ */
+void CpuUtilization::reset(J9JITConfig *jitConfig)
+   {
+   _cpuUsage = 0;
+   _vmCpuUsage = 0;
+   _avgCpuUsage= 0;
+   _cpuIdle = 0;
+   _avgCpuIdle = 0;
+
+   _prevIntervalLength = 0;
+   _prevMachineUptime = 0;
+   _prevMachineCpuTime = 0;
+   _prevMachineUserTime = 0;
+   _prevMachineSystemTime = 0;
+   _prevMachineIdleTime = 0;
+   _prevVmSysTime = 0;
+   _prevVmUserTime = 0;
+
+   _isFunctional = true;
+   _validData = false;
+
+   if (_cpuUsageCircularBufferSize && _cpuUsageCircularBuffer)
+      {
+      _cpuUsageCircularBufferIndex = 0;
+      for (int32_t i = 0; i < _cpuUsageCircularBufferSize; i++)
+         {
+         _cpuUsageCircularBuffer[i]._timeStamp = 0;
+         }
+      _isCpuUsageCircularBufferFunctional = true;
+      }
+   else
+      {
+      _isCpuUsageCircularBufferFunctional= false;
+      }
+   // Get our first data point
+   updateCpuUtil(jitConfig);
+   }
+
 int32_t CpuUtilization::getCpuUtil(J9JITConfig *jitConfig, J9SysinfoCPUTime *machineCpuStats, j9thread_process_time_t *vmCpuStats)
    {
    IDATA portLibraryStatusSys; // port lib call return value for system cpu usage
@@ -242,7 +284,7 @@ CpuUtilization::CpuUtilization(J9JITConfig *jitConfig):
    // fields since we can just check if _timeStamp equals 0
    for (int32_t i = 0; i < _cpuUsageCircularBufferSize; i++)
       {
-      _cpuUsageCircularBuffer[_cpuUsageCircularBufferIndex]._timeStamp = 0;
+      _cpuUsageCircularBuffer[i]._timeStamp = 0;
       }
    } // CpuUtilization
 
