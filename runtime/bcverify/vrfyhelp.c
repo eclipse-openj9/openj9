@@ -906,6 +906,7 @@ isFieldAccessCompatible(J9BytecodeVerificationData *verifyData, J9ROMFieldRef *f
 		J9BranchTargetStack *liveStack = (J9BranchTargetStack *)verifyData->liveStack;
 		J9ROMFieldShape *field = findFieldFromCurrentRomClass(romClass, fieldRef);
 
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 		/* A field declared by the current class with ACC_FINAL and ACC_STRICT flags
 		 * can't be set unless the initialization state is early larval.
 		 */
@@ -915,6 +916,7 @@ isFieldAccessCompatible(J9BytecodeVerificationData *verifyData, J9ROMFieldRef *f
 		) {
 			return (IDATA)FALSE;
 		}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 		if (J9_ARE_ALL_BITS_SET(receiver, BCV_SPECIAL_INIT)) {
 			J9UTF8 *classString = ((J9UTF8 *) J9ROMCLASS_CLASSNAME(romClass));
