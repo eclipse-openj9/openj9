@@ -32,7 +32,7 @@ public class StrictFieldTests {
 	/* A strict final field cannot be set outside earlyLarvel.
 	 * Test in <init> after invokespecial (lateLarval).
 	 */
-	@Test(expectedExceptions = VerifyError.class)
+	@Test(expectedExceptions = VerifyError.class, expectedExceptionsMessageRegExp = ".*<init>.*JBputfield.*")
 	static public void testPutStrictFinalFieldLateLarval() throws Throwable{
 		Class<?> c = StrictFieldGenerator.generateTestPutStrictFinalFieldLateLarval();
 		c.newInstance();
@@ -41,7 +41,7 @@ public class StrictFieldTests {
 	/* A strict final field cannot be set outside earlyLarvel.
 	 * Test outside of <init> (initialization state unrestricted).
 	 */
-	@Test(expectedExceptions = VerifyError.class)
+	@Test(expectedExceptions = VerifyError.class, expectedExceptionsMessageRegExp = ".*putI.*JBputfield.*")
 	static public void testPutStrictFinalFieldUnrestricted() throws Throwable {
 		Class<?> c = StrictFieldGenerator.generateTestPutStrictFinalFieldUnrestricted();
 		c.newInstance();
