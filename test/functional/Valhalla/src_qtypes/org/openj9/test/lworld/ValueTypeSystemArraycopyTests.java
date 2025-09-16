@@ -27,8 +27,8 @@ import org.testng.annotations.Test;
 import org.testng.annotations.BeforeClass;
 
 import jdk.internal.value.ValueClass;
-import jdk.internal.vm.annotation.ImplicitlyConstructible;
 import jdk.internal.vm.annotation.NullRestricted;
+import jdk.internal.vm.annotation.Strict;
 
 @Test(groups = { "level.sanity" })
 public class ValueTypeSystemArraycopyTests {
@@ -59,12 +59,15 @@ public class ValueTypeSystemArraycopyTests {
 		}
 	}
 
-	@ImplicitlyConstructible
 	public static value class SomeValueClass implements SomeInterface {
+		@Strict
 		double val1;
+		@Strict
 		long val2;
+		@Strict
 		@NullRestricted
 		SomeValueClass2 val3;
+		@Strict
 		int val4;
 
 		SomeValueClass(int i) {
@@ -75,9 +78,10 @@ public class ValueTypeSystemArraycopyTests {
 		}
 	}
 
-	@ImplicitlyConstructible
 	public static value class SomeValueClass2 implements SomeInterface {
+		@Strict
 		long val1;
+		@Strict
 		double val2;
 
 		SomeValueClass2(int i) {
@@ -93,24 +97,24 @@ public class ValueTypeSystemArraycopyTests {
 	public static SomeValueClass[] vtArrayDst = new SomeValueClass[ARRAY_SIZE];
 	public static SomeValueClass[] vtArraySrc = new SomeValueClass[ARRAY_SIZE];
 	public static SomeValueClass[] nullRestrictedVtArraySrc =
-		(SomeValueClass[])ValueClass.newNullRestrictedArray(SomeValueClass.class, ARRAY_SIZE);
+		(SomeValueClass[])ValueClass.newNullRestrictedAtomicArray(SomeValueClass.class, ARRAY_SIZE, new SomeValueClass(0));
 	public static SomeValueClass[] nullRestrictedVtArrayDst =
-		(SomeValueClass[])ValueClass.newNullRestrictedArray(SomeValueClass.class, ARRAY_SIZE);
+		(SomeValueClass[])ValueClass.newNullRestrictedAtomicArray(SomeValueClass.class, ARRAY_SIZE, new SomeValueClass(0));
 	public static SomeInterface[] ifIdArrayDst = new SomeIdentityClass[ARRAY_SIZE];
 	public static SomeInterface[] ifIdArraySrc = new SomeIdentityClass[ARRAY_SIZE];
 	public static SomeInterface[] ifVtArrayDst = new SomeValueClass[ARRAY_SIZE];
 	public static SomeInterface[] ifVtArraySrc = new SomeValueClass[ARRAY_SIZE];
 	public static SomeInterface[] ifNullRestrictedVtArrayDst =
-		(SomeValueClass[])ValueClass.newNullRestrictedArray(SomeValueClass.class, ARRAY_SIZE);
+		(SomeValueClass[])ValueClass.newNullRestrictedAtomicArray(SomeValueClass.class, ARRAY_SIZE, new SomeValueClass(0));
 	public static SomeInterface[] ifNullRestrictedVtArraySrc =
-		(SomeValueClass[])ValueClass.newNullRestrictedArray(SomeValueClass.class, ARRAY_SIZE);
+		(SomeValueClass[])ValueClass.newNullRestrictedAtomicArray(SomeValueClass.class, ARRAY_SIZE, new SomeValueClass(0));
 	public static SomeInterface[] ifArray1 = new SomeInterface[ARRAY_SIZE];
 	public static SomeInterface[] ifArray2 = new SomeInterface[ARRAY_SIZE];
 	public static SomeInterface[] ifArray3 = new SomeInterface[ARRAY_SIZE];
 
 	public static SomeIdentityClass[] idArrayDstCheckForException = new SomeIdentityClass[ARRAY_SIZE];
 	public static SomeValueClass[] nullRestrictedVtArrayDstCheckForException =
-		(SomeValueClass[])ValueClass.newNullRestrictedArray(SomeValueClass.class, ARRAY_SIZE);
+		(SomeValueClass[])ValueClass.newNullRestrictedAtomicArray(SomeValueClass.class, ARRAY_SIZE, new SomeValueClass(0));
 
 	static private void initArrays() {
 		for (int i=0; i < ARRAY_SIZE; i++) {

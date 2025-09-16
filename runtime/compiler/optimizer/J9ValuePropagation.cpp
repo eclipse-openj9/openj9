@@ -4316,44 +4316,6 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
                addGlobalConstraint(node, TR::VPNonNullObject::create(this));
                }
             }
-         else if ((method->getRecognizedMethod() == TR::jdk_internal_value_ValueClass_newArrayInstance) &&
-                  (node->getFirstChild()->getOpCodeValue() == TR::acall))
-            {
-            /*
-             *   n12n   acall  jdk/internal/value/ValueClass.newArrayInstance(Ljdk/internal/value/CheckedType;I)[Ljava/lang/Object;
-             *   n9n      acall  jdk/internal/value/NullRestrictedCheckedType.of(Ljava/lang/Class;)Ljdk/internal/value/NullRestrictedCheckedType;
-             *   n8n        aloadi  <javaLangClassFromClass>
-             *   n7n          loadaddr  SomeValueClass
-             *   n11n     iload  Test.ARRAY_SIZE
-             */
-            bool isGlobal;
-            TR::Node *firstChildAcallNode = node->getFirstChild();
-            constraint = getConstraint(firstChildAcallNode, isGlobal);
-
-            if (constraint &&
-                constraint->isFixedClass() &&
-                firstChildAcallNode->getSymbol()->isResolvedMethod() &&
-                (firstChildAcallNode->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod() == TR::jdk_internal_value_NullRestrictedCheckedType_of))
-               {
-               if (trace())
-                  traceMsg(comp(), "%s: node n%dn its first child fixed class %p is an instance of NullRestrictedCheckedType\n", __FUNCTION__, node->getGlobalIndex(), constraint->getClass());
-
-               constraint = firstChildAcallNode->getFirstChild() ? getConstraint(firstChildAcallNode->getFirstChild(), isGlobal) : NULL;
-               TR_OpaqueClassBlock *arrayComponentClass = (constraint && constraint->isFixedClass()) ? constraint->getClass() : NULL;
-               TR_OpaqueClassBlock *nullRestrictedArrayClass = arrayComponentClass ? fe()->getNullRestrictedArrayClassFromComponentClass(arrayComponentClass) : NULL;
-
-               if (trace())
-                  traceMsg(comp(), "%s: node n%dn arrayComponentClass %p nullRestrictedArrayClass %p\n", __FUNCTION__, node->getGlobalIndex(), arrayComponentClass, nullRestrictedArrayClass);
-
-               if (nullRestrictedArrayClass)
-                  {
-                  TR::VPConstraint *newConstraint = TR::VPFixedClass::create(this, nullRestrictedArrayClass);
-                  addBlockOrGlobalConstraint(node, newConstraint, isGlobal);
-                  addGlobalConstraint(node, TR::VPNonNullObject::create(this));
-                  return node;
-                  }
-               }
-            }
          }
       else // if (!node->getOpCode().isIndirect())
          {
