@@ -20,33 +20,39 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#include <assert.h>
 #include <jni.h>
 #include "j9.h"
 #include "VMHelpers.hpp"
 
 extern "C" {
+
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-JNIEXPORT jboolean JNICALL
-JVM_IsValhallaEnabled()
+
+JNIEXPORT jarray JNICALL
+JVM_CopyOfSpecialArray(JNIEnv *env, jarray orig, jint from, jint to)
 {
-	return JNI_TRUE;
+	assert(!"JVM_CopyOfSpecialArray unimplemented");
 }
 
 JNIEXPORT jboolean JNICALL
-JVM_IsImplicitlyConstructibleClass(JNIEnv *env, jclass cls)
+JVM_IsAtomicArray(JNIEnv *env, jobject obj)
+{
+	assert(!"JVM_IsAtomicArray unimplemented");
+}
+
+JNIEXPORT jboolean JNICALL
+JVM_IsFlatArray(JNIEnv *env, jobject obj)
 {
 	jboolean result = JNI_FALSE;
 	J9VMThread *currentThread = (J9VMThread *)env;
-	J9InternalVMFunctions const * const vmFuncs = currentThread->javaVM->internalVMFunctions;
+	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-	if (NULL == cls) {
+	if (NULL == obj) {
 		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
 	} else {
-		J9Class *clazz = J9VM_J9CLASS_FROM_JCLASS(currentThread, cls);
-		J9ROMClass *romClass = clazz->romClass;
-		if (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)
-			&& J9_ARE_ALL_BITS_SET(getImplicitCreationFlags(romClass), J9AccImplicitCreateHasDefaultValue)
-		) {
+		J9Class *j9clazz = J9OBJECT_CLAZZ(currentThread, J9_JNI_UNWRAP_REFERENCE(obj));
+		if (J9CLASS_IS_ARRAY(j9clazz) && J9_IS_J9CLASS_FLATTENED(j9clazz)) {
 			result = JNI_TRUE;
 		}
 	}
@@ -74,22 +80,9 @@ JVM_IsNullRestrictedArray(JNIEnv *env, jobject obj)
 }
 
 JNIEXPORT jboolean JNICALL
-JVM_IsFlatArray(JNIEnv *env, jobject obj)
+JVM_IsValhallaEnabled()
 {
-	jboolean result = JNI_FALSE;
-	J9VMThread *currentThread = (J9VMThread *)env;
-	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
-	vmFuncs->internalEnterVMFromJNI(currentThread);
-	if (NULL == obj) {
-		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
-	} else {
-		J9Class *j9clazz = J9OBJECT_CLAZZ(currentThread, J9_JNI_UNWRAP_REFERENCE(obj));
-		if (J9CLASS_IS_ARRAY(j9clazz) && J9_IS_J9CLASS_FLATTENED(j9clazz)) {
-			result = JNI_TRUE;
-		}
-	}
-	vmFuncs->internalExitVMToJNI(currentThread);
-	return result;
+	return JNI_TRUE;
 }
 
 static jarray
@@ -151,21 +144,26 @@ done:
 }
 
 JNIEXPORT jarray JNICALL
-JVM_NewNullRestrictedArray(JNIEnv *env, jclass componentType, jint length)
-{
-	return newArrayHelper(env, componentType, length, TRUE);
-}
-
-JNIEXPORT jarray JNICALL
-JVM_NewNullRestrictedAtomicArray(JNIEnv *env, jclass componentType, jint length)
-{
-	return newArrayHelper(env, componentType, length, TRUE);
-}
-
-JNIEXPORT jarray JNICALL
 JVM_NewNullableAtomicArray(JNIEnv *env, jclass componentType, jint length)
 {
-	return newArrayHelper(env, componentType, length, FALSE);
+	return newArrayHelper(env, componentType, length, false);
 }
+
+JNIEXPORT jarray JNICALL
+JVM_NewNullRestrictedAtomicArray(JNIEnv *env, jclass componentType, jint length, jobject initialValue)
+{
+	/* TODO: An additional parameter initialValue is required for newArrayHelper().
+	 * https://github.com/eclipse-openj9/openj9/issues/22642
+	 */
+	return newArrayHelper(env, componentType, length, true);
+}
+
+JNIEXPORT jarray JNICALL
+JVM_NewNullRestrictedNonAtomicArray(JNIEnv *env, jclass elmClass, jint len, jobject initVal)
+{
+	assert(!"JVM_NewNullRestrictedNonAtomicArray unimplemented");
+}
+
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 } /* extern "C" */

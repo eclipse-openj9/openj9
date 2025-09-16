@@ -464,9 +464,11 @@ _IF([JAVA_SPEC_VERSION >= 21],
 _IF([JAVA_SPEC_VERSION >= 21],
 	[_X(JVM_VirtualThreadUnmount, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean hide)])
 _IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
-	[_X(JVM_IsFlatArray, JNICALL, false, jboolean, JNIEnv *env, jclass cls)])
+	[_X(JVM_CopyOfSpecialArray, JNICALL, false, jarray, JNIEnv *env, jarray orig, jint from, jint to)])
 _IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
-	[_X(JVM_IsImplicitlyConstructibleClass, JNICALL, false, jboolean, JNIEnv *env, jclass cls)])
+	[_X(JVM_IsAtomicArray, JNICALL, false, jboolean, JNIEnv *env, jobject obj)])
+_IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
+	[_X(JVM_IsFlatArray, JNICALL, false, jboolean, JNIEnv *env, jclass cls)])
 _IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
 	[_X(JVM_IsNullRestrictedArray, JNICALL, false, jboolean, JNIEnv *env, jobject obj)])
 _IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
@@ -474,9 +476,9 @@ _IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
 _IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
 	[_X(JVM_NewNullableAtomicArray, JNICALL, false, jarray, JNIEnv *env, jclass cls, jint length)])
 _IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
-	[_X(JVM_NewNullRestrictedArray, JNICALL, false, jarray, JNIEnv *env, jclass cls, jint length)])
-_IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
 	[_X(JVM_NewNullRestrictedAtomicArray, JNICALL, false, jarray, JNIEnv *env, jclass cls, jint length)])
+_IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
+	[_X(JVM_NewNullRestrictedNonAtomicArray, JNICALL, false, jarray, JNIEnv *env, jclass elmClass, jint len, jobject initVal)])
 _IF([JAVA_SPEC_VERSION >= 22],
 	[_X(JVM_ExpandStackFrameInfo, JNICALL, false, void, JNIEnv *env, jobject object)])
 _IF([JAVA_SPEC_VERSION == 22],
