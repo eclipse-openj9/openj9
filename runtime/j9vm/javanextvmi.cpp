@@ -729,8 +729,6 @@ JVM_CreateThreadSnapshot(JNIEnv *env, jobject thread)
 		threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
 		J9VMJDKINTERNALVMTHREADSNAPSHOT_SET_NAME(currentThread, resultObject, J9VMJAVALANGTHREAD_NAME(currentThread, threadObject));
 		if (isVirtual) {
-			j9object_t continuationObject = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObject);
-
 			J9VMJDKINTERNALVMTHREADSNAPSHOT_SET_CARRIERTHREAD(
 					currentThread, resultObject, J9VMJAVALANGVIRTUALTHREAD_CARRIERTHREAD(currentThread, threadObject));
 
