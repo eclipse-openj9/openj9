@@ -25,11 +25,7 @@ import org.testng.Assert;
 import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
-import jdk.internal.value.CheckedType;
-import jdk.internal.value.NormalCheckedType;
-import jdk.internal.value.NullRestrictedCheckedType;
 import jdk.internal.value.ValueClass;
-import jdk.internal.vm.annotation.ImplicitlyConstructible;
 import jdk.internal.vm.annotation.NullRestricted;
 
 /**
@@ -62,7 +58,6 @@ public class ValueTypeArrayTests {
 	/**
 	 * A simple primitive value type class
 	 */
-	@ImplicitlyConstructible
 	static value class PointPV implements SomeIface {
 		double x;
 		double y;
@@ -321,52 +316,6 @@ public class ValueTypeArrayTests {
 		assertTrue(caughtAIOOBE, "Expected ArrayIndexOutOfBoundsException");
 	}
 
-	/**
-	 * Test various types of arrays and source values along with various statically declared types
-	 * for the arrays and source values to ensure required <code>ArrayStoreExceptions</code>,
-	 * <code>ArrayIndexOutOfBoundsExceptions</code> and <code>NullPointerExceptions</code> are
-	 * detected.
-	 * @throws java.lang.Throwable if the attempted array element assignment throws an exception
-	 */
-	@Test(priority=1,invocationCount=2)
-	static public void testValueTypeArrayAssignments() throws Throwable {
-		Object[][] testArrays = new Object[][] {new Object[2], new SomeIface[2], new PointV[2],
-			ValueClass.newArrayInstance(NullRestrictedCheckedType.of(PointPV.class), 2)};
-		int[] kinds = {OBJ_TYPE, IFACE_TYPE, VAL_TYPE, PRIM_TYPE};
-		Object[] vals = new Object[] {null, bogusIfaceObj, new PointV(1.0, 2.0), new PointPV(3.0, 4.0)};
-
-		for (int i = 0; i < testArrays.length; i++) {
-			Object[] testArray = testArrays[i];
-
-			for (int j = 0; j < kinds.length; j++) {
-				int staticArrayKind = kinds[j];
-
-				for (int k = 0; k < kinds.length; k++) {
-					int staticValueKind = kinds[k];
-					// runTest's parameters are of type Object[] and Object.  It ultimately dispatches to an assign
-					// method whose parameters have more specific static types.  This condition filters out the
-					// combinations of static types that aren't permitted from the point of view of the Java language.
-					//
-					// Cases:
-					//  - the two types are the same  (staticArrayKind == staticValueKind)
-					//  OR
-					//    - the type of the array is Object[] or SomeIface[]  (staticArrayKind < VAL_TYPE)
-					//      AND
-					//    - the type of the array is less specific than that of the source (staticArrayKind < staticValueKind)
-					//
-					if (staticArrayKind == staticValueKind
-						|| (staticArrayKind < staticValueKind && staticArrayKind < VAL_TYPE)) {
-						runTest(testArrays[i], nullObj, staticArrayKind, staticValueKind);
-						runTest(testArrays[i], bogusIfaceObj, staticArrayKind, staticValueKind);
-						runTest(testArrays[i], pointVal, staticArrayKind, staticValueKind);
-						runTest(testArrays[i], pointPrimVal, staticArrayKind, staticValueKind);
-					}
-				}
-			}
-		}
-	}
-
-	@ImplicitlyConstructible
 	static value class SomePrimitiveClassWithDoubleField {
 		public double d;
 
@@ -375,7 +324,6 @@ public class ValueTypeArrayTests {
 		}
 	}
 
-	@ImplicitlyConstructible
 	static value class SomePrimitiveClassWithFloatField {
 		public float f;
 
@@ -384,7 +332,6 @@ public class ValueTypeArrayTests {
 		}
 	}
 
-	@ImplicitlyConstructible
 	static value class SomePrimitiveClassWithLongField {
 		public long l;
 
@@ -421,7 +368,6 @@ public class ValueTypeArrayTests {
 
 	interface SomeInterface2WithSingleImplementer {}
 
-	@ImplicitlyConstructible
 	static value class SomePrimitiveClassImplIf implements SomeInterface1WithSingleImplementer {
 		public double d;
 		public long l;
@@ -598,101 +544,6 @@ public class ValueTypeArrayTests {
 		}
 	}
 
-	@Test(priority=1,invocationCount=2)
-	static public void testValueTypeAaload() throws Throwable {
-		int ARRAY_LENGTH = 10;
-
-		SomePrimitiveClassWithDoubleField[] data1 = (SomePrimitiveClassWithDoubleField[])ValueClass.newArrayInstance(
-			NullRestrictedCheckedType.of(SomePrimitiveClassWithDoubleField.class), ARRAY_LENGTH);
-		SomePrimitiveClassWithFloatField[] data2 = (SomePrimitiveClassWithFloatField[])ValueClass.newArrayInstance(
-			NullRestrictedCheckedType.of(SomePrimitiveClassWithFloatField.class), ARRAY_LENGTH);
-		SomePrimitiveClassWithLongField[] data3 = (SomePrimitiveClassWithLongField[])ValueClass.newArrayInstance(
-			NullRestrictedCheckedType.of(SomePrimitiveClassWithLongField.class), ARRAY_LENGTH);
-
-		SomeIdentityClassWithDoubleField[] data4  = new SomeIdentityClassWithDoubleField[ARRAY_LENGTH];
-		SomeIdentityClassWithFloatField[]  data5  = new SomeIdentityClassWithFloatField[ARRAY_LENGTH];
-		SomeIdentityClassWithLongField[]   data6  = new SomeIdentityClassWithLongField[ARRAY_LENGTH];
-
-		SomeClassHolder holder = new SomeClassHolder();
-
-		for (int i=0; i<ARRAY_LENGTH; ++i) {
-			data1[i] = new SomePrimitiveClassWithDoubleField((double)i);
-			data2[i] = new SomePrimitiveClassWithFloatField((float)i);
-			data3[i] = new SomePrimitiveClassWithLongField((long)i);
-
-			data4[i] = new SomeIdentityClassWithDoubleField((double)i);
-			data5[i] = new SomeIdentityClassWithFloatField((float)i);
-			data6[i] = new SomeIdentityClassWithLongField((long)i);
-		}
-
-		readArrayElementWithDoubleField(data1);
-		readArrayElementWithFloatField(data2);
-		readArrayElementWithLongField(data3);
-
-		readArrayElementWithDoubleField(data4);
-		readArrayElementWithFloatField(data5);
-		readArrayElementWithLongField(data6);
-
-		readArrayElementWithSomePrimitiveClassImplIf(holder);
-		readArrayElementWithSomeIdentityClassImplIf(holder);
-	}
-
-	@Test(priority=1,invocationCount=2)
-	static public void testValueTypeAastore() throws Throwable {
-		int ARRAY_LENGTH = 10;
-		SomePrimitiveClassWithDoubleField[] srcData1 = (SomePrimitiveClassWithDoubleField[])ValueClass.newArrayInstance(
-			NullRestrictedCheckedType.of(SomePrimitiveClassWithDoubleField.class), ARRAY_LENGTH);
-		SomePrimitiveClassWithDoubleField[] dstData1 = (SomePrimitiveClassWithDoubleField[])ValueClass.newArrayInstance(
-			NullRestrictedCheckedType.of(SomePrimitiveClassWithDoubleField.class), ARRAY_LENGTH);
-		SomePrimitiveClassWithFloatField[]  srcData2 = (SomePrimitiveClassWithFloatField[])ValueClass.newArrayInstance(
-			NullRestrictedCheckedType.of(SomePrimitiveClassWithFloatField.class), ARRAY_LENGTH);
-		SomePrimitiveClassWithFloatField[]  dstData2 = (SomePrimitiveClassWithFloatField[])ValueClass.newArrayInstance(
-			NullRestrictedCheckedType.of(SomePrimitiveClassWithFloatField.class), ARRAY_LENGTH);
-		SomePrimitiveClassWithLongField[]   srcData3 = (SomePrimitiveClassWithLongField[])ValueClass.newArrayInstance(
-			NullRestrictedCheckedType.of(SomePrimitiveClassWithLongField.class), ARRAY_LENGTH);
-		SomePrimitiveClassWithLongField[]   dstData3 = (SomePrimitiveClassWithLongField[])ValueClass.newArrayInstance(
-			NullRestrictedCheckedType.of(SomePrimitiveClassWithLongField.class), ARRAY_LENGTH);
-
-		SomeIdentityClassWithDoubleField[] srcData4  = new SomeIdentityClassWithDoubleField[ARRAY_LENGTH];
-		SomeIdentityClassWithDoubleField[] dstData4  = new SomeIdentityClassWithDoubleField[ARRAY_LENGTH];
-		SomeIdentityClassWithFloatField[]  srcData5  = new SomeIdentityClassWithFloatField[ARRAY_LENGTH];
-		SomeIdentityClassWithFloatField[]  dstData5  = new SomeIdentityClassWithFloatField[ARRAY_LENGTH];
-		SomeIdentityClassWithLongField[]   srcData6  = new SomeIdentityClassWithLongField[ARRAY_LENGTH];
-		SomeIdentityClassWithLongField[]   dstData6  = new SomeIdentityClassWithLongField[ARRAY_LENGTH];
-
-		SomeClassHolder holder   = new SomeClassHolder();
-
-		for (int i=0; i<ARRAY_LENGTH; ++i) {
-			srcData1[i] = new SomePrimitiveClassWithDoubleField((double)(i+1));
-			srcData2[i] = new SomePrimitiveClassWithFloatField((float)(i+1));
-			srcData3[i] = new SomePrimitiveClassWithLongField((long)(i+1));
-
-			dstData1[i] = new SomePrimitiveClassWithDoubleField((double)i);
-			dstData2[i] = new SomePrimitiveClassWithFloatField((float)i);
-			dstData3[i] = new SomePrimitiveClassWithLongField((long)i);
-
-			srcData4[i] = new SomeIdentityClassWithDoubleField((double)(i+1));
-			srcData5[i] = new SomeIdentityClassWithFloatField((float)(i+1));
-			srcData6[i] = new SomeIdentityClassWithLongField((long)(i+1));
-
-			dstData4[i] = new SomeIdentityClassWithDoubleField((double)i);
-			dstData5[i] = new SomeIdentityClassWithFloatField((float)i);
-			dstData6[i] = new SomeIdentityClassWithLongField((long)i);
-		}
-
-		writeArrayElementWithDoubleField(srcData1, dstData1);
-		writeArrayElementWithFloatField(srcData2, dstData2);
-		writeArrayElementWithLongField(srcData3, dstData3);
-
-		writeArrayElementWithDoubleField(srcData4, dstData4);
-		writeArrayElementWithFloatField(srcData5, dstData5);
-		writeArrayElementWithLongField(srcData6, dstData6);
-
-		writeArrayElementWithSomePrimitiveClassImplIf(holder);
-		writeArrayElementWithSomeIdentityClassImplIf(holder);
-	}
-
-	@ImplicitlyConstructible
 	public static value class EmptyPrim {
 	}
 
@@ -723,23 +574,6 @@ public class ValueTypeArrayTests {
 		}
 	}
 
-	@Test(priority=1,invocationCount=2)
-	static public void testEmptyValueArrayElement() {
-		EmptyPrim[] primArr1 = (EmptyPrim[])ValueClass.newArrayInstance(
-			NullRestrictedCheckedType.of(EmptyPrim.class), 4);
-		EmptyPrim[] primArr2 = (EmptyPrim[])ValueClass.newArrayInstance(
-			NullRestrictedCheckedType.of(EmptyPrim.class), 4);
-
-		copyBetweenEmptyPrimArrays(primArr1, primArr2);
-		compareEmptyPrimArrays(primArr1, primArr2);
-
-		EmptyVal[] valArr1 = new EmptyVal[4];
-		EmptyVal[] valArr2 = new EmptyVal[4];
-
-		copyBetweenEmptyValArrays(valArr1, valArr2);
-		compareEmptyValArrays(valArr1, valArr2);
-	}
-
 	static void arrayElementStoreNull(Object[] arr, int index) {
 		arr[index] = null;
 	}
@@ -748,53 +582,6 @@ public class ValueTypeArrayTests {
 		arr[index] = obj;
 	}
 
-	@Test(priority=1,invocationCount=2)
-	static public void testStoreNullToNullRestrictedArrayElement1() throws Throwable {
-		int ARRAY_LENGTH = 10;
-		SomePrimitiveClassWithDoubleField[] dstData = (SomePrimitiveClassWithDoubleField[])ValueClass.newArrayInstance(
-			NullRestrictedCheckedType.of(SomePrimitiveClassWithDoubleField.class), ARRAY_LENGTH);
-
-		try {
-			arrayElementStoreNull(dstData, ARRAY_LENGTH/2);
-		} catch (ArrayStoreException ase) {
-			return; /* pass */
-		}
-
-		Assert.fail("Expect an ArrayStoreException. No exception or wrong kind of exception thrown");
-	}
-
-	@Test(priority=1,invocationCount=2)
-	static public void testStoreNullToNullRestrictedArrayElement2() throws Throwable {
-		int ARRAY_LENGTH = 10;
-		SomePrimitiveClassWithDoubleField[] dstData = (SomePrimitiveClassWithDoubleField[])ValueClass.newArrayInstance(
-			NullRestrictedCheckedType.of(SomePrimitiveClassWithDoubleField.class), ARRAY_LENGTH);
-		Object obj = null;
-
-		try {
-			arrayElementStore(dstData, ARRAY_LENGTH/2, obj);
-		} catch (ArrayStoreException ase) {
-			return; /* pass */
-		}
-
-		Assert.fail("Expect an ArrayStoreException. No exception or wrong kind of exception thrown");
-	}
-
-	@ImplicitlyConstructible
 	public static value class EmptyNullRestricted {
-	}
-
-	/* This test passes with Xint, disable until all cases are passing. */
-	/* Test JVM_IsNullRestrictedArray which is called by ValueClass.componentCheckedType */
-	@Test
-	public static void testJVMIsNullRestrictedArray() {
-		EmptyNullRestricted[] nrArray = (EmptyNullRestricted[])ValueClass.newArrayInstance(
-			NullRestrictedCheckedType.of(EmptyNullRestricted.class), 4);
-		CheckedType nrType = ValueClass.componentCheckedType(nrArray);
-		assertTrue(nrType instanceof NullRestrictedCheckedType);
-
-		EmptyNullRestricted[] normalArray = (EmptyNullRestricted[])ValueClass.newArrayInstance(
-			NormalCheckedType.of(EmptyNullRestricted.class), 4);
-		CheckedType normalType = ValueClass.componentCheckedType(normalArray);
-		assertTrue(normalType instanceof NormalCheckedType);
 	}
 }

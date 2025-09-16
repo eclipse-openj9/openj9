@@ -4430,6 +4430,33 @@ public final class Unsafe {
 		}
 	}
 
+	/*[IF INLINE-TYPES]*/
+	// To be implemented.
+	public final Object getAndSetReference(Object obj, long offset, Class<?> valueType, Object value) {
+		for (;;) {
+			Object objectAtOffset = getReferenceVolatile(obj, offset);
+			if (compareAndSetReference(obj, offset, objectAtOffset, value)) {
+				return objectAtOffset;
+			}
+		}
+	}
+
+	// To be implemented.
+	public final Object getAndSetReferenceAcquire(Object obj, long offset, Class<?> valueType, Object value) {
+		return getAndSetReference(obj, offset, valueType, value);
+	}
+
+	// To be implemented.
+	public final Object getAndSetReferenceRelease(Object obj, long offset, Class<?> valueType, Object value) {
+		return getAndSetReference(obj, offset, valueType, value);
+	}
+
+	// To be implemented.
+	public void notifyStrictStaticAccess(Class<?> clz, long staticFieldOffset, boolean writing) {
+		Objects.requireNonNull(clz);
+	}
+	/*[ENDIF] INLINE-TYPES */
+
 	/**
 	 * Atomically sets value at offset in obj
 	 * and returns the value of the field prior to the update.

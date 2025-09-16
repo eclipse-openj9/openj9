@@ -20,16 +20,42 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#include <assert.h>
 #include <jni.h>
 #include "j9.h"
 #include "VMHelpers.hpp"
 
 extern "C" {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-JNIEXPORT jboolean JNICALL
-JVM_IsValhallaEnabled()
+JNIEXPORT jarray JNICALL
+JVM_CopyOfSpecialArray(JNIEnv *env, jarray orig, jint from, jint to)
 {
-	return JNI_TRUE;
+	assert(!"JVM_CopyOfSpecialArray unimplemented");
+}
+
+JNIEXPORT jboolean JNICALL
+JVM_IsAtomicArray(JNIEnv *env, jobject obj)
+{
+	assert(!"JVM_IsAtomicArray unimplemented");
+}
+
+JNIEXPORT jboolean JNICALL
+JVM_IsFlatArray(JNIEnv *env, jobject obj)
+{
+	jboolean result = JNI_FALSE;
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	if (NULL == obj) {
+		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+	} else {
+		J9Class *j9clazz = J9OBJECT_CLAZZ(currentThread, J9_JNI_UNWRAP_REFERENCE(obj));
+		if (J9CLASS_IS_ARRAY(j9clazz) && J9_IS_J9CLASS_FLATTENED(j9clazz)) {
+			result = JNI_TRUE;
+		}
+	}
+	vmFuncs->internalExitVMToJNI(currentThread);
+	return result;
 }
 
 JNIEXPORT jboolean JNICALL
@@ -74,22 +100,9 @@ JVM_IsNullRestrictedArray(JNIEnv *env, jobject obj)
 }
 
 JNIEXPORT jboolean JNICALL
-JVM_IsFlatArray(JNIEnv *env, jobject obj)
+JVM_IsValhallaEnabled()
 {
-	jboolean result = JNI_FALSE;
-	J9VMThread *currentThread = (J9VMThread *)env;
-	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
-	vmFuncs->internalEnterVMFromJNI(currentThread);
-	if (NULL == obj) {
-		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
-	} else {
-		J9Class *j9clazz = J9OBJECT_CLAZZ(currentThread, J9_JNI_UNWRAP_REFERENCE(obj));
-		if (J9CLASS_IS_ARRAY(j9clazz) && J9_IS_J9CLASS_FLATTENED(j9clazz)) {
-			result = JNI_TRUE;
-		}
-	}
-	vmFuncs->internalExitVMToJNI(currentThread);
-	return result;
+	return JNI_TRUE;
 }
 
 static jarray
@@ -151,6 +164,12 @@ done:
 }
 
 JNIEXPORT jarray JNICALL
+JVM_NewNullableAtomicArray(JNIEnv *env, jclass componentType, jint length)
+{
+	return newArrayHelper(env, componentType, length, FALSE);
+}
+
+JNIEXPORT jarray JNICALL
 JVM_NewNullRestrictedArray(JNIEnv *env, jclass componentType, jint length)
 {
 	return newArrayHelper(env, componentType, length, TRUE);
@@ -163,9 +182,9 @@ JVM_NewNullRestrictedAtomicArray(JNIEnv *env, jclass componentType, jint length)
 }
 
 JNIEXPORT jarray JNICALL
-JVM_NewNullableAtomicArray(JNIEnv *env, jclass componentType, jint length)
+JVM_NewNullRestrictedNonAtomicArray(JNIEnv *env, jclass elmClass, jint len, jobject initVal)
 {
-	return newArrayHelper(env, componentType, length, FALSE);
+	assert(!"JVM_NewNullRestrictedNonAtomicArray unimplemented");
 }
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 } /* extern "C" */

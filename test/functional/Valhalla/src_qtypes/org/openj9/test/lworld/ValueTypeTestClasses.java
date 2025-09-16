@@ -21,12 +21,10 @@
  */
 package org.openj9.test.lworld;
 
-import jdk.internal.vm.annotation.ImplicitlyConstructible;
 import jdk.internal.vm.annotation.NullRestricted;
 
 public class ValueTypeTestClasses {
 
-	@ImplicitlyConstructible
 	static value class ValueTypeInt {
 		ValueTypeInt(int i) { this.i = i; }
 		final int i;
@@ -37,7 +35,6 @@ public class ValueTypeTestClasses {
 		final int i;
 	}
 
-	@ImplicitlyConstructible
 	static value class ValueTypeLong {
 		final long l;
 		ValueTypeLong(long l) {this.l = l;}
@@ -46,7 +43,6 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	@ImplicitlyConstructible
 	static value class ValueTypePoint2D {
 		@NullRestricted
 		final ValueTypeInt x, y;
@@ -81,7 +77,6 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	@ImplicitlyConstructible
 	static value class ValueTypeWithLongField {
 		@NullRestricted
 		final ValueTypeLong l;
@@ -91,7 +86,6 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	@ImplicitlyConstructible
 	static value class ValueTypeLongPoint2D {
 		@NullRestricted
 		final ValueTypeLong x, y;
@@ -102,12 +96,10 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	@ImplicitlyConstructible
 	static value class ZeroSizeValueType {
 		ZeroSizeValueType() {}
 	}
 
-	@ImplicitlyConstructible
 	static value class ZeroSizeValueTypeWrapper {
 		@NullRestricted
 		final ZeroSizeValueType z;
@@ -117,13 +109,11 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	@ImplicitlyConstructible
 	static value class ValueTypeInt2 {
 		ValueTypeInt2(int i) { this.i = i; }
 		final int i;
 	}
 
-	@ImplicitlyConstructible
 	static value class ValueTypeFastSubVT {
 		final int x,y,z;
 		final Object[] arr;
@@ -135,7 +125,6 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	@ImplicitlyConstructible
 	static value class ValueTypeDoubleLong {
 		@NullRestricted
 		final ValueTypeLong l;
@@ -152,7 +141,6 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	@ImplicitlyConstructible
 	static value class ValueTypeQuadLong {
 		@NullRestricted
 		final ValueTypeDoubleLong l;
@@ -175,7 +163,6 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	@ImplicitlyConstructible
 	static value class ValueTypeDoubleQuadLong {
 		@NullRestricted
 		final ValueTypeQuadLong l;
