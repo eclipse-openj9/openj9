@@ -589,6 +589,15 @@ oom:
 				currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
 				currentThread->returnValue2 = (UDATA)J9VMJAVALANGTHREAD_INIT_METHOD(vm);
 				c_cInterpreter(currentThread);
+#if JAVA_SPEC_VERSION >= 19
+				j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(currentThread, initializee->threadObject);
+				if (NULL != threadHolder) {
+					J9VMJAVALANGTHREADFIELDHOLDER_SET_THREADSTATUS(currentThread, threadHolder, J9VMTHREAD_STATE_RUNNING);
+				}
+#else /* JAVA_SPEC_VERSION >= 19 */
+				J9VMJAVALANGTHREAD_SET_THREADSTATUS(currentThread, initializee->threadObject, J9VMTHREAD_STATE_RUNNING);
+#endif /* JAVA_SPEC_VERSION >= 19 */
+				/* Thread.started must be set after Thread.threadStatus to avoid timing issue in Thread.getState(). */
 				J9VMJAVALANGTHREAD_SET_STARTED(currentThread, initializee->threadObject, JNI_TRUE);
 			}
 		}

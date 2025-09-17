@@ -121,10 +121,17 @@ monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos
 #if JAVA_SPEC_VERSION >= 24
 		J9VM_SEND_VIRTUAL_UNBLOCKER_THREAD_SIGNAL(javaVM);
 #endif /* JAVA_SPEC_VERSION >= 24 */
+		/* Set java.lang.Thread status to UNKNOWN since the wait can be notified/interrupted
+		 * but blocked on re-acquiring the monitor.
+		 * In this case, the thread state will have to be determined by looking at
+		 * the vmThread->publicFlags field.
+		 */
+		U_32 oldState = VM_VMHelpers::setThreadState(vmThread, J9VMTHREAD_STATE_UNKNOWN);
 		internalReleaseVMAccessSetStatus(vmThread, thrstate);
 		rc = timeCompensationHelper(vmThread,
 			interruptable ? HELPER_TYPE_MONITOR_WAIT_INTERRUPTABLE : HELPER_TYPE_MONITOR_WAIT_TIMED, monitor, millis, nanos);
 		internalAcquireVMAccessClearStatus(vmThread, thrstate);
+		VM_VMHelpers::setThreadState(vmThread, oldState);
 		J9VMTHREAD_SET_BLOCKINGENTEROBJECT(vmThread, vmThread, NULL);
 		omrthread_monitor_unpin(monitor, vmThread->osThread);
 #if JAVA_SPEC_VERSION >= 24
@@ -197,9 +204,11 @@ threadSleepImpl(J9VMThread *vmThread, I_64 millis, I_32 nanos)
 #endif
 		if (0 == rc) {
 			TRIGGER_J9HOOK_VM_SLEEP(javaVM->hookInterface, vmThread, millis, nanos);
+			U_32 oldState = VM_VMHelpers::setThreadState(vmThread, J9VMTHREAD_STATE_SLEEPING);
 			internalReleaseVMAccessSetStatus(vmThread, J9_PUBLIC_FLAGS_THREAD_SLEEPING);
 			rc = timeCompensationHelper(vmThread, HELPER_TYPE_THREAD_SLEEP, NULL, millis, nanos);
 			internalAcquireVMAccessClearStatus(vmThread, J9_PUBLIC_FLAGS_THREAD_SLEEPING);
+			VM_VMHelpers::setThreadState(vmThread, oldState);
 			TRIGGER_J9HOOK_VM_SLEPT(javaVM->hookInterface, vmThread, millis, nanos, startTicks);
 		}
 
