@@ -4869,7 +4869,7 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
    // Can be greater than 100% if multiple cores
    static int32_t oldJvmCpuUtil = 10;
    int32_t avgJvmCpuUtil;
-   if (compInfo->getCpuUtil()->isFunctional())
+   if (compInfo->getCpuUtil()->hasValidData())
       {
       int32_t jvmCpuUtil = compInfo->getCpuUtil()->getVmCpuUsage();
       avgJvmCpuUtil = (oldJvmCpuUtil + jvmCpuUtil) >> 1;
@@ -5452,13 +5452,13 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
       if (newState == STARTUP_STATE) // I have moved from some state into STARTUP
          {
          persistentInfo->setJitSampleCountWhenStartupStateEntered(persistentInfo->getJitTotalSampleCount());
-         if (compInfo->getCpuUtil()->isFunctional())
+         if (compInfo->getCpuUtil()->hasValidData())
             persistentInfo->setVmTotalCpuTimeWhenStartupStateEntered(compInfo->getCpuUtil()->getVmTotalCpuTime());
          }
       else
          {
          persistentInfo->setJitSampleCountWhenStartupStateExited(persistentInfo->getJitTotalSampleCount());
-         if (compInfo->getCpuUtil()->isFunctional())
+         if (compInfo->getCpuUtil()->hasValidData())
             persistentInfo->setVmTotalCpuTimeWhenStartupStateExited(compInfo->getCpuUtil()->getVmTotalCpuTime());
          }
 
@@ -6265,7 +6265,7 @@ void inlinerAggressivenessLogic(TR::CompilationInfo *compInfo)
     // If we want the latter then we have to change getVmTotalCpuTimeWhenStartupStateEntered() to  getVmTotalCpuTimeWhenStartupStateExited()
     if (TR::Options::getCmdLineOptions()->getOption(TR_UseVmTotalCpuTimeAsAbstractTime))
        {
-       if (compInfo->getCpuUtil()->isFunctional())
+       if (compInfo->getCpuUtil()->hasValidData())
           {
           crtAbstractTime = compInfo->getCpuUtil()->getVmTotalCpuTime()/1000000; // convert from ns to ms
           abstractTimeStartPoint = persistentInfo->getVmTotalCpuTimeWhenStartupStateEntered()/1000000;
@@ -6337,7 +6337,7 @@ public:
 
    bool update(TR::CompilationInfo *compInfo)
       {
-      if (compInfo->getCpuUtil()->isFunctional())
+      if (compInfo->getCpuUtil()->hasValidData())
          {
          uint32_t crtCpu = static_cast<uint32_t>(compInfo->getCpuUtil()->getVmTotalCpuTime()/1000000); // convert from ns to ms
          if (crtCpu >= _lastCpuValue + CPU_INCREMENT)
@@ -6510,7 +6510,7 @@ static uint32_t computeCpuLoadFactor(uint32_t numActiveThreads, TR::CompilationI
       // JVM entitlement is recomputed every 5 minutes.
       // JVM CPU utilization and idle information is recomputed every 0.5 sec (no more frequent that every 100 ms)
       auto cpuUtil = compInfo->getCpuUtil();
-      if (cpuUtil->isFunctional())
+      if (cpuUtil->hasValidData())
          {
          int32_t cpuIdle = cpuUtil->getCpuIdle();
          int32_t vmCpuUsage = cpuUtil->getVmCpuUsage();
@@ -6798,6 +6798,12 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
             persistentInfo->setElapsedTime(crtTime);
             oldSyncTime = crtTime;
 
+            // If the CpuUtilization is functional, but does not yet have valid data
+            // because the second data point was not collected, do it now.
+            CpuUtilization *cpuUtil = compInfo->getCpuUtil();
+            if (cpuUtil->isFunctional() && !cpuUtil->hasValidData())
+               cpuUtil->updateCpuUtil(jitConfig);
+
             TR_DebuggingCounters::transferSmallCountsToTotalCounts();
 
             if (TR::Options::_compilationExpirationTime > 0 &&
@@ -6981,8 +6987,7 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
             lastTimeClassLoadPhaseAnalyzed = crtTime;
 
             // update the JVM cpu utilization if needed
-            if (compInfo->getCpuUtil()->isFunctional())
-               compInfo->getCpuUtil()->updateCpuUtil(jitConfig);
+            compInfo->getCpuUtil()->updateCpuUtil(jitConfig);
 
             if (CPUThrottleEnabled(compInfo, crtTime))
                {
@@ -7156,8 +7161,8 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
          if (TR::Options::getVerboseOption(TR_VerboseSampling) && TR::Options::getVerboseOption(TR_VerbosePerformance))
             {
             auto cpuUtil = compInfo->getCpuUtil();
-            int32_t vmCpuUsage = cpuUtil->isFunctional() ? cpuUtil->getVmCpuUsage() : -1;
-            int32_t cpuIdle = cpuUtil->isFunctional() ? cpuUtil->getCpuIdle() : -1;
+            int32_t vmCpuUsage = cpuUtil->hasValidData() ? cpuUtil->getVmCpuUsage() : -1;
+            int32_t cpuIdle = cpuUtil->hasValidData() ? cpuUtil->getCpuIdle() : -1;
             TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%" OMR_PRIu64 " loadFactor=%" OMR_PRIu32 " numActiveThreads=%" OMR_PRIu32 " entitlement=%.2f%% VmCpuUsage=%d%% idle=%d%% samplingPeriod=%d ms",
                crtTime, cpuLoadFactor, numActiveThreads, compInfo->getJvmCpuEntitlement(), (int)vmCpuUsage, (int)cpuIdle, (int)samplingPeriod);
             }

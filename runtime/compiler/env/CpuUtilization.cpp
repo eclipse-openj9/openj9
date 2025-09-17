@@ -58,6 +58,48 @@
  * } j9thread_process_time_t;
  */
 
+/**
+ * @brief Resets the CpuUtilization data after a CRIU restore operation
+ *
+ * @param jitConfig J9JITCoonfig for this JVM
+ */
+void CpuUtilization::reset(J9JITConfig *jitConfig)
+   {
+   _cpuUsage = 0;
+   _vmCpuUsage = 0;
+   _avgCpuUsage= 0;
+   _cpuIdle = 0;
+   _avgCpuIdle = 0;
+
+   _prevIntervalLength = 0;
+   _prevMachineUptime = 0;
+   _prevMachineCpuTime = 0;
+   _prevMachineUserTime = 0;
+   _prevMachineSystemTime = 0;
+   _prevMachineIdleTime = 0;
+   _prevVmSysTime = 0;
+   _prevVmUserTime = 0;
+
+   _isFunctional = true;
+   _validData = false;
+
+   if (_cpuUsageCircularBufferSize && _cpuUsageCircularBuffer)
+      {
+      _cpuUsageCircularBufferIndex = 0;
+      for (int32_t i = 0; i < _cpuUsageCircularBufferSize; i++)
+         {
+         _cpuUsageCircularBuffer[i]._timeStamp = 0;
+         }
+      _isCpuUsageCircularBufferFunctional = true;
+      }
+   else
+      {
+      _isCpuUsageCircularBufferFunctional= false;
+      }
+   // Get our first data point
+   updateCpuUtil(jitConfig);
+   }
+
 int32_t CpuUtilization::getCpuUtil(J9JITConfig *jitConfig, J9SysinfoCPUTime *machineCpuStats, j9thread_process_time_t *vmCpuStats)
    {
    IDATA portLibraryStatusSys; // port lib call return value for system cpu usage
@@ -71,7 +113,7 @@ int32_t CpuUtilization::getCpuUtil(J9JITConfig *jitConfig, J9SysinfoCPUTime *mac
    portLibraryStatusVm  = j9thread_get_process_times(vmCpuStats);
 
    // if either call failed, disable self
-   if (portLibraryStatusSys < 0 || portLibraryStatusVm < 0)
+   if (portLibraryStatusSys < 0 || portLibraryStatusVm < 0 || machineCpuStats->numberOfCpus <= 0)
       {
       disable();
       return (-1);
@@ -107,44 +149,42 @@ int CpuUtilization::updateCpuUtil(J9JITConfig *jitConfig)
    _prevIntervalLength = elapsedTime;
 
    // calculate usage and idle percentages
-   if (elapsedTime > 0)
+   int64_t prevTotalTimeUsedByVm = _prevVmSysTime + _prevVmUserTime;
+   int64_t newTotalTimeUsedByVm = vmCpuStats._systemTime + vmCpuStats._userTime;
+   double cpuLoad = 0.0;
+   double cpuIdle = 0.0;
+
+   if ((-1 != _prevMachineUserTime) && (-1 != _prevMachineSystemTime) && (-1 != _prevMachineIdleTime) &&
+         (-1 != machineCpuStats.userTime) && (-1 != machineCpuStats.systemTime) && (-1 != machineCpuStats.idleTime))
       {
-      int64_t prevTotalTimeUsedByVm = _prevVmSysTime + _prevVmUserTime;
-      int64_t newTotalTimeUsedByVm = vmCpuStats._systemTime + vmCpuStats._userTime;
-      double cpuLoad = 0.0;
-      double cpuIdle = 0.0;
+      int64_t userDelta = machineCpuStats.userTime - _prevMachineUserTime;
+      int64_t systemDelta = machineCpuStats.systemTime - _prevMachineSystemTime;
+      int64_t idleDelta = machineCpuStats.idleTime - _prevMachineIdleTime;
+      int64_t totalDelta = userDelta + systemDelta + idleDelta;
 
-      if ((-1 != _prevMachineUserTime) && (-1 != _prevMachineSystemTime) && (-1 != _prevMachineIdleTime) &&
-            (-1 != machineCpuStats.userTime) && (-1 != machineCpuStats.systemTime) && (-1 != machineCpuStats.idleTime))
+      if (totalDelta > 0)
          {
-         int64_t userDelta = machineCpuStats.userTime - _prevMachineUserTime;
-         int64_t systemDelta = machineCpuStats.systemTime - _prevMachineSystemTime;
-         int64_t idleDelta = machineCpuStats.idleTime - _prevMachineIdleTime;
-         int64_t totalDelta = userDelta + systemDelta + idleDelta;
-
-         if (totalDelta > 0)
-            {
-            cpuLoad = (userDelta + systemDelta) / (double)totalDelta;
-            cpuIdle = idleDelta / (double)totalDelta;
-            }
+         cpuLoad = (userDelta + systemDelta) / (double)totalDelta;
+         cpuIdle = idleDelta / (double)totalDelta;
          }
-      else
-         {
-         int64_t cpuTimeDelta = machineCpuStats.cpuTime - _prevMachineCpuTime;
-         cpuLoad = cpuTimeDelta / ((double)machineCpuStats.numberOfCpus * elapsedTime);
-         cpuIdle = 1 - cpuLoad;
-         }
-
-      _avgCpuUsage = 100.0 * cpuLoad;
-      _avgCpuIdle = 100.0 * cpuIdle;
-
-      if (machineCpuStats.numberOfCpus > 0)
-         {
-         _cpuUsage = 100.0 * machineCpuStats.numberOfCpus * cpuLoad;
-         _cpuIdle = 100.0 * machineCpuStats.numberOfCpus * cpuIdle;
-         }
-      _vmCpuUsage = (100 * (newTotalTimeUsedByVm - prevTotalTimeUsedByVm)) / elapsedTime;
       }
+   else
+      {
+      int64_t cpuTimeDelta = machineCpuStats.cpuTime - _prevMachineCpuTime;
+      cpuLoad = cpuTimeDelta / ((double)machineCpuStats.numberOfCpus * elapsedTime);
+      cpuIdle = 1 - cpuLoad;
+      }
+
+   _avgCpuUsage = 100.0 * cpuLoad;
+   _avgCpuIdle = 100.0 * cpuIdle;
+   _cpuUsage = 100.0 * machineCpuStats.numberOfCpus * cpuLoad;
+   _cpuIdle = 100.0 * machineCpuStats.numberOfCpus * cpuIdle;
+   _vmCpuUsage = (100 * (newTotalTimeUsedByVm - prevTotalTimeUsedByVm)) / elapsedTime;
+
+   // If _prevMachineUptime is different than 0 (initial value) it means that we already
+   // had a readout and we can effectively compute CPU values of a given time interval.
+   if (_prevMachineUptime > 0)
+      _validData = true;
 
    // remember values for next time
    _prevMachineUptime  = machineCpuStats.timestamp;
@@ -208,6 +248,7 @@ CpuUtilization::CpuUtilization(J9JITConfig *jitConfig):
    _prevVmUserTime (0),
 
    _isFunctional (true),
+   _validData(false),
 
    _cpuUsageCircularBufferIndex(0)
 
@@ -243,7 +284,7 @@ CpuUtilization::CpuUtilization(J9JITConfig *jitConfig):
    // fields since we can just check if _timeStamp equals 0
    for (int32_t i = 0; i < _cpuUsageCircularBufferSize; i++)
       {
-      _cpuUsageCircularBuffer[_cpuUsageCircularBufferIndex]._timeStamp = 0;
+      _cpuUsageCircularBuffer[i]._timeStamp = 0;
       }
    } // CpuUtilization
 

@@ -840,6 +840,9 @@ TR::CRRuntime::prepareForRestore()
    // Reset the start time.
    resetStartTime();
 
+   // Reset the CPU utilization values
+   getCompInfo()->getCpuUtil()->reset(getJITConfig());
+
    // Resume JIT threads.
    resumeJITThreadsForRestore(vmThread);
    }
