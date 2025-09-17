@@ -9257,6 +9257,31 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                &target);
 
 #if defined(J9VM_OPT_JITSERVER)
+if (that->_methodBeingCompiled->isOutOfProcessCompReq())
+   {
+   // use the default code cache
+   compiler->getOptions()->setCodeCacheKind(TR::CodeCacheKind::DEFAULT_CC);
+   }
+else
+#endif
+   {
+   TR::SimpleRegex *regex = compiler->getOptions()->getTransientClassRegex();
+   if (regex)
+      {
+      J9Method *method = details.getMethod();
+      J9UTF8 *className = J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(method)->romClass);
+      // TR::SimpleRegex::match needs a NULL-terminated string
+      size_t classNameLength = J9UTF8_LENGTH(className);
+      char *name = (char*)compiler->trMemory()->allocateMemory(classNameLength+1, stackAlloc);
+      strncpy(name, (char*)J9UTF8_DATA(className), classNameLength);
+      name[classNameLength] = '\0';
+      if (TR::SimpleRegex::match(regex, name))
+         {
+         compiler->getOptions()->setCodeCacheKind(TR::CodeCacheKind::TRANSIENT_CODE_CC);
+         }
+      }
+   }
+#if defined(J9VM_OPT_JITSERVER)
          // JITServer TODO: put info in optPlan so that compilation constructor can do this
          if (that->_methodBeingCompiled->isRemoteCompReq())
             {
@@ -9275,8 +9300,6 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             auto compInfoPTRemote = static_cast<TR::CompilationInfoPerThreadRemote *>(that);
             compiler->setAOTCacheStore(compInfoPTRemote->isAOTCacheStore());
 
-            // Only use the default code cache on the server
-            compiler->getOptions()->setCodeCacheKind(TR::CodeCacheKind::DEFAULT_CC);
             }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
