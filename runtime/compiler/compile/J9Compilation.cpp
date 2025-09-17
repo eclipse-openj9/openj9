@@ -1240,10 +1240,12 @@ J9::Compilation::getReloTypeForMethodToBeInlined(TR_VirtualGuardSelection *guard
             caller = self()->getMethodBeingCompiled()->getNonPersistentIdentifier();
             }
 
-         TR_ASSERT_FATAL(false, "Can't find relo kind for Caller %p Callee %p TR_ByteCodeInfo %p\n",
-                         caller,
-                         callNode->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->getNonPersistentIdentifier(),
-                         callNode->getByteCodeInfo());
+         TR_ASSERT_FATAL_WITH_NODE(
+            callNode,
+            false,
+            "Can't find relo kind for Caller %p Callee %p",
+            caller,
+            callNode->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->getNonPersistentIdentifier());
          }
       }
 
