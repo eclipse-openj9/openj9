@@ -195,7 +195,7 @@ TraceExit=Trc_PRT_shared_createDirectory_Exit1 Group=j9shared Overhead=1 Level=1
 TraceExit=Trc_PRT_shared_createDirectory_Exit2 Group=j9shared Overhead=1 Level=1 NoEnv Template="j9sharedhelper createDirectory successfully created including parent dirs"
 TraceExit=Trc_PRT_shared_createDirectory_Exit3 Group=j9shared Overhead=1 Level=1 NoEnv Template="j9sharedhelper createDirectory unable to create %s"
 TraceEvent=Trc_PRT_shared_createDirectory_Event1 Group=j9shared Overhead=1 Level=1 NoEnv Template="j9sharedhelper createDirectory dir %s created"
-TraceEvent=Trc_PRT_shared_createDirectory_Event2 Group=j9shared Overhead=1 Level=1 NoEnv Template="j9sharedhelper createDirectory dir %s already exists"
+TraceEvent=Trc_PRT_shared_createDirectory_Event2 Obsolete Group=j9shared Overhead=1 Level=1 NoEnv Template="j9sharedhelper createDirectory dir %s already exists"
 
 TraceEntry=Trc_PRT_shsem_checkMarker_Entry Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem checkMarker entering with handle=%p and semsetsize=%d"
 TraceExit=Trc_PRT_shsem_checkMarker_ExitNullHandle Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem checkMarker exiting because handle is NULL"
@@ -2143,3 +2143,5 @@ TraceException=Trc_PRT_shared_cleanSharedMemorySegments_getEnvUserNameTooLong Gr
 TraceException=Trc_PRT_shared_cleanSharedMemorySegments_getEnvUserName_Failed Group=j9shmem Overhead=1 Level=1 NoEnv Template="cleanSharedMemorySegments: omrsysinfo_get_env failed"
 
 TraceException=Trc_PRT_j9shmem_getDir_tryHomeDirFailed_notFinalRestore Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_getDir: not CRIU final restore, skip getpwuid(), and homeDir is NULL."
+
+TraceExit=Trc_PRT_shared_createDirectory_Exit4 Group=j9shared Overhead=1 Level=1 NoEnv Template="j9sharedhelper createDirectory unable to change permission of %s"

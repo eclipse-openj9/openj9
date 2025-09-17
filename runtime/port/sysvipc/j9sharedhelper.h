@@ -30,7 +30,7 @@ intptr_t ControlFileOpenWithWriteLock(struct J9PortLibrary* portLibrary, intptr_
 intptr_t ControlFileCloseAndUnLock(struct J9PortLibrary* portLibrary, intptr_t fd);
 intptr_t changeDirectoryPermission(struct J9PortLibrary *portLibrary, const char* pathname, uintptr_t permission);
 void cleanSharedMemorySegments(struct J9PortLibrary* portLibrary);
-intptr_t createDirectory(struct J9PortLibrary *portLibrary, char *pathname, uintptr_t permission);
+intptr_t createDirectory(struct J9PortLibrary *portLibrary, const char *pathname, uintptr_t permission);
 BOOLEAN unlinkControlFile(struct J9PortLibrary* portLibrary, const char *controlFile, J9ControlFileStatus *status);
 
 #define J9SH_SUCCESS 0

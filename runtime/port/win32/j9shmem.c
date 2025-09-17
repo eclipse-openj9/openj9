@@ -59,7 +59,7 @@ char* getModifiedSharedMemoryPathandFileName(struct J9PortLibrary* portLibrary, 
 static void convertSlash (char *pathname);
 static int64_t convertFileTimeToUnixEpoch(const FILETIME* time);
 static int32_t convertPerm (int32_t perm);
-static intptr_t createDirectory(struct J9PortLibrary *portLibrary, char *pathname);
+static intptr_t createDirectory(struct J9PortLibrary *portLibrary, const char *pathname);
 
 /* In j9shchelp.c */
 extern uintptr_t isCacheFileName(J9PortLibrary *, const char *, uintptr_t, const char *);
@@ -537,9 +537,9 @@ convertSlash (char *pathname)
 		}
 	}
 }
-/* Note that the "pathname" parameter may be changed by this function */
+
 static intptr_t
-createDirectory(struct J9PortLibrary *portLibrary, char *pathname)
+createDirectory(struct J9PortLibrary *portLibrary, const char *pathname)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	char tempPath[J9SH_MAXPATH];
@@ -859,16 +859,16 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 }
 
 intptr_t
-j9shmem_createDir(struct J9PortLibrary* portLibrary, char* cacheDirName, uintptr_t cacheDirPerm, BOOLEAN cleanMemorySegments)
+j9shmem_createDir(struct J9PortLibrary *portLibrary, char *cacheDirName, uintptr_t cacheDirPerm, BOOLEAN cleanMemorySegments)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
-	intptr_t rc = 5;
+	intptr_t rc = 0;
 	char pathCopy[J9SH_MAXPATH];
 
 	Trc_PRT_j9shmem_createDir_Entry();
 
 	rc = omrfile_attr(cacheDirName);
-	switch(rc) {
+	switch (rc) {
 	case EsIsFile:
 		Trc_PRT_j9shmem_createDir_ExitFailedFile();
 		break;
@@ -877,7 +877,6 @@ j9shmem_createDir(struct J9PortLibrary* portLibrary, char* cacheDirName, uintptr
 		return 0;
 	default:
 		strncpy(pathCopy, cacheDirName, J9SH_MAXPATH);
-		/* pathCopy may be changed by createDirectory */
 		if (0 == createDirectory(portLibrary, pathCopy)) {
 			Trc_PRT_j9shmem_createDir_Exit();
 			return 0;
@@ -886,26 +885,25 @@ j9shmem_createDir(struct J9PortLibrary* portLibrary, char* cacheDirName, uintptr
 	Trc_PRT_j9shmem_createDir_ExitFailed();
 	return -1;
 }
- 
+
 intptr_t
-j9shmem_getFilepath(struct J9PortLibrary* portLibrary, char* cacheDirName, char* buffer, uintptr_t length, const char* cachename)
+j9shmem_getFilepath(struct J9PortLibrary *portLibrary, char *cacheDirName, char *buffer, uintptr_t length, const char *cacheName)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
- 	
- 	char *filePath;
-	
-	if (cacheDirName == NULL) {
+	char *filePath = NULL;
+
+	if (NULL == cacheDirName) {
 		Trc_PRT_shmem_j9shmem_getFilepath_ExitNullCacheDirName();
 		return -1;
 	}
 
- 	filePath = getSharedMemoryPathandFileName(portLibrary, cacheDirName, cachename);
- 	if (!filePath) {
- 		return -1;
- 	}
- 	
- 	omrstr_printf(buffer, length, "%s", filePath);
- 	omrmem_free_memory(filePath);
+	filePath = getSharedMemoryPathandFileName(portLibrary, cacheDirName, cacheName);
+	if (NULL == filePath) {
+		return -1;
+	}
+
+	omrstr_printf(buffer, length, "%s", filePath);
+	omrmem_free_memory(filePath);
 	return 0;
 }
 
