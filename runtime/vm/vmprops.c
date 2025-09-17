@@ -734,7 +734,27 @@ initializeSystemProperties(J9JavaVM *vm)
 		goto fail;
 	}
 
+#if defined(OPENJDK_VERSION_STRING)
+	{
+		static const char basicVersion[] = OPENJDK_VERSION_STRING "-" J9JVM_VERSION_STRING;
+		static const char ltsSuffix[] = "-LTS";
+		intptr_t prefixLength = sizeof(OPENJDK_VERSION_STRING) - sizeof(ltsSuffix);
+		const char *vmVersion = basicVersion;
+		char versionBuffer[sizeof(basicVersion)];
+
+		/* Remove "-LTS" from the end of OPENJDK_VERSION_STRING if present. */
+		if ((prefixLength > 0)
+			&& (0 == strncmp(&vmVersion[prefixLength], ltsSuffix, sizeof(ltsSuffix) - 1))
+		) {
+			memcpy(versionBuffer, OPENJDK_VERSION_STRING, prefixLength);
+			strcpy(&versionBuffer[prefixLength], "-" J9JVM_VERSION_STRING);
+			vmVersion = versionBuffer;
+		}
+		rc = addAllocatedSystemProperty(vm, "java.vm.version", vmVersion, 0);
+	}
+#else /* defined(OPENJDK_VERSION_STRING) */
 	rc = addAllocatedSystemProperty(vm, "java.vm.version", J9JVM_VERSION_STRING, 0);
+#endif /* defined(OPENJDK_VERSION_STRING) */
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto fail;
 	}
