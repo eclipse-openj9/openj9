@@ -50,10 +50,6 @@ package com.ibm.lang.management;
  * </tr>
 /*[IF JAVA_SPEC_VERSION >= 14]
  * <tr>
- * <td>{@link #getCpuLoad()}</td>
- * <td>{@code -3.0} ({@link com.ibm.lang.management.CpuLoadCalculationConstants#UNSUPPORTED_VALUE CpuLoadCalculationConstants.UNSUPPORTED_VALUE})</td>
- * </tr>
- * <tr>
  * <td>{@link #getFreeMemorySize()}</td>
  * <td>{@code -1}</td>
  * </tr>
@@ -69,10 +65,6 @@ package com.ibm.lang.management;
  * <tr>
  * <td>{@link #getProcessPrivateMemorySize()}</td>
  * <td>{@code -1}</td>
- * </tr>
- * <tr>
- * <td>{@link #getSystemCpuLoad()}</td>
- * <td>{@code -3.0} ({@link com.ibm.lang.management.CpuLoadCalculationConstants#UNSUPPORTED_VALUE CpuLoadCalculationConstants.UNSUPPORTED_VALUE})</td>
  * </tr>
  * </table>
  *
