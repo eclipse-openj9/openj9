@@ -8530,6 +8530,7 @@ static TR::Register *VMinlineCompareAndSetOrExchangeReference(TR::Node *node, TR
 
       TR::addDependency(conditions, temp1Reg, TR::RealRegister::gr11, TR_GPR, cg);
       TR::addDependency(conditions, temp2Reg, TR::RealRegister::NoReg, TR_GPR, cg);
+      conditions->getPostConditions()->getRegisterDependency(conditions->getAddCursorForPost() - 1)->setExcludeGPR0();
       TR::addDependency(conditions, offsetReg, TR::RealRegister::NoReg, TR_GPR, cg);
       TR::addDependency(conditions, temp4Reg, TR::RealRegister::NoReg, TR_GPR, cg);
 
