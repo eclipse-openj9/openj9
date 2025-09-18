@@ -44,6 +44,7 @@
 #include "ut_j9vm.h"
 #include "vm_internal.h"
 #include "vmaccess.h"
+#include "VMHelpers.hpp"
 #include "vmhook_internal.h"
 
 #include "HeapIteratorAPI.h"
@@ -459,6 +460,7 @@ void threadCleanup(J9VMThread * vmThread, UDATA forkedByVM)
 		/* Safe to call this whether handleUncaughtException clears the exception or not */
 		internalExceptionDescribe(vmThread);
 	}
+	VM_VMHelpers::setThreadState(vmThread, J9VMTHREAD_STATE_DEAD);
 	releaseVMAccess(vmThread);
 
 	/* Mark this thread as dead */
@@ -1921,8 +1923,19 @@ startJavaThread(J9VMThread * currentThread, j9object_t threadObject, UDATA priva
 	privateFlags &= ~J9_PRIVATE_FLAGS_NO_EXCEPTION_IN_START_JAVA_THREAD;
 
 #ifndef J9VM_IVE_RAW_BUILD /* J9VM_IVE_RAW_BUILD is not enabled by default */
+#if JAVA_SPEC_VERSION >= 19
+	j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(currentThread, threadObject);
+	if (NULL != threadHolder) {
+		J9VMJAVALANGTHREADFIELDHOLDER_SET_THREADSTATUS(currentThread, threadHolder, J9VMTHREAD_STATE_RUNNING);
+	}
+#else /* JAVA_SPEC_VERSION >= 19 */
+	J9VMJAVALANGTHREAD_SET_THREADSTATUS(currentThread, threadObject, J9VMTHREAD_STATE_RUNNING);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	/* Any attempt to start a Thread makes it illegal to attempt to start it again.
-	 * Oracle class libraries don't have the 'started' field */
+	 * Oracle class libraries don't have the 'started' field.
+	 *
+	 * Thread.started must be set after Thread.threadStatus to avoid timing issue in Thread.getState().
+	 */
 	J9VMJAVALANGTHREAD_SET_STARTED(currentThread, threadObject, TRUE);
 #endif /* !J9VM_IVE_RAW_BUILD */
 

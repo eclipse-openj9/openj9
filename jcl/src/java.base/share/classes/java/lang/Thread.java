@@ -62,26 +62,26 @@ public class Thread implements Runnable {
 	/**
 	 * The maximum priority value for a Thread.
 	 */
-	public final static int MAX_PRIORITY = 10;		// Maximum allowed priority for a thread
+	public final static int MAX_PRIORITY = 10;  // Maximum allowed priority for a thread
 	/**
 	 * The minimum priority value for a Thread.
 	 */
-	public final static int MIN_PRIORITY = 1;			// Minimum allowed priority for a thread
+	public final static int MIN_PRIORITY = 1;   // Minimum allowed priority for a thread
 	/**
 	 * The default priority value for a Thread.
 	 */
-	public final static int NORM_PRIORITY = 5;		// Normal priority for a thread
+	public final static int NORM_PRIORITY = 5;  // Normal priority for a thread
 	/*[PR 97331] Initial thread name should be Thread-0 */
-	private static int createCount;					// Used internally to compute Thread names that comply with the Java specification
+	private static int createCount;             // Used internally to compute Thread names that comply with the Java specification
 	/*[PR 122459] LIR646 - Remove use of generic object for synchronization */
 	private static final class TidLock {
 		TidLock() {}
 	}
 	private static Object tidLock = new TidLock();
 	private static long tidCount = 1;
-	private static final int NANOS_MAX = 999999;		// Max value for nanoseconds parameter to sleep and join
-	private static final int INITIAL_LOCAL_STORAGE_CAPACITY = 5;	// Initial number of local storages when the Thread is created
-	static final long NO_REF = 0;				// Symbolic constant, no threadRef assigned or already cleaned up
+	private static final int NANOS_MAX = 999999;                 // Max value for nanoseconds parameter to sleep and join
+	private static final int INITIAL_LOCAL_STORAGE_CAPACITY = 5; // Initial number of local storages when the Thread is created
+	static final long NO_REF = 0;                                // Symbolic constant, no threadRef assigned or already cleaned up
 
 	// Instance variables
 	private volatile long threadRef; // Used by the VM
@@ -94,14 +94,15 @@ public class Thread implements Runnable {
 	 */
 	private volatile boolean deadInterrupt;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
-	private volatile boolean started;				// If !isAlive(), tells if Thread died already or hasn't even started
-	private String name;						// The Thread's name
-	private int priority = NORM_PRIORITY;			// The Thread's current priority
-	private boolean isDaemon;				// Tells if the Thread is a daemon thread or not.
+	private volatile boolean started;       // If !isAlive(), tells if Thread died already or hasn't even started
+	private String name;                    // The Thread's name
+	private int priority = NORM_PRIORITY;   // The Thread's current priority
+	private boolean isDaemon;               // Tells if the Thread is a daemon thread or not.
+	private volatile int threadStatus;      // The Thread's state.
 
-	ThreadGroup group;			// A Thread belongs to exactly one ThreadGroup
-	private Runnable runnable;				// Target (optional) runnable object
-	private boolean stopCalled = false;			// Used by the VM
+	ThreadGroup group;                      // A Thread belongs to exactly one ThreadGroup
+	private Runnable runnable;              // Target (optional) runnable object
+	private boolean stopCalled = false;     // Used by the VM
 /*[PR 1FENTZW]*/
 	private ClassLoader contextClassLoader;	// Used to find classes and resources in this Thread
 	ThreadLocal.ThreadLocalMap threadLocals;
@@ -124,8 +125,8 @@ public class Thread implements Runnable {
 
 	volatile Object parkBlocker;
 
-	private static ThreadGroup systemThreadGroup;		// Assigned by the vm
-	private static ThreadGroup mainGroup;				// ThreadGroup where the "main" Thread starts
+	private static ThreadGroup systemThreadGroup; // Assigned by the vm
+	private static ThreadGroup mainGroup;         // ThreadGroup where the "main" Thread starts
 
 	/*[PR 113602] Thread fields should be volatile */
 	private volatile static UncaughtExceptionHandler defaultExceptionHandler;
@@ -1489,6 +1490,39 @@ public static enum State {
 	TERMINATED }
 
 /**
+ * Returns the translation from a J9VMThread state to a Thread::State.
+ *
+ * @param status thread status value set by VM.
+ * @return this thread's state.
+ *
+ * @see State
+ */
+private State translateJ9VMThreadStateToThreadState(int status) {
+	switch (status) {
+	case 0x1:   // J9VMTHREAD_STATE_RUNNING
+		return State.RUNNABLE;
+	case 0x2:   // J9VMTHREAD_STATE_BLOCKED
+		return State.BLOCKED;
+	case 0x4:   // J9VMTHREAD_STATE_WAITING
+	case 0x80:  // J9VMTHREAD_STATE_PARKED
+		return State.WAITING;
+	case 0x8:   // J9VMTHREAD_STATE_SLEEPING
+	case 0x40:  // J9VMTHREAD_STATE_WAITING_TIMED
+	case 0x100: // J9VMTHREAD_STATE_PARKED_TIMED
+		return State.TIMED_WAITING;
+	case 0x20:  // J9VMTHREAD_STATE_DEAD
+		return State.TERMINATED;
+	default:
+		synchronized (lock) {
+			if (threadRef == NO_REF) {
+				return State.TERMINATED;
+			}
+			return State.values()[getStateImpl(threadRef)];
+		}
+	}
+}
+
+/**
  * Returns the current Thread state.
  *
  * @return the current Thread state constant.
@@ -1496,15 +1530,13 @@ public static enum State {
  * @see State
  */
 public State getState() {
-	synchronized(lock) {
+	if (started) {
 		if (threadRef == NO_REF) {
-			if (isDead()) {
-				return State.TERMINATED;
-			}
-			return State.NEW;
+			return State.TERMINATED;
 		}
-		return State.values()[getStateImpl(threadRef)];
+		return translateJ9VMThreadStateToThreadState(threadStatus);
 	}
+	return State.NEW;
 }
 
 private native int getStateImpl(long threadRef);
