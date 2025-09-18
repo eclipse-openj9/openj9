@@ -4375,8 +4375,7 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 			classAllocationIncrement = 0;
 		} else {
 			if (SK_SUB4G == segmentKind) {
-				const UDATA headersPerSegment = 32;
-				classAllocationIncrement = sizeof(J9Class) * headersPerSegment;
+				classAllocationIncrement = javaVM->ramClassSub4GAllocationIncrement;
 			}
 		}
 

@@ -126,7 +126,8 @@
 #define XMOS_XMNS ((UDATA) XMOS | XMNS)
 #define XMDX_XMS ((UDATA) XMDX | XMS)
 
-#define ROUND_TO(granularity, number) (((UDATA)(number) + (granularity) - 1) & ~((UDATA)(granularity) - 1))
+#define ROUND_TO_POW2(granularity, number) (((UDATA)(number) + (granularity) - 1) & ~((UDATA)(granularity) - 1))
+#define ROUND_TO_ANY(granularity, number) ((((number) % (granularity)) ? ((number) + (granularity) - ((number) % (granularity))) : (number)))
 
 extern "C" {
 extern J9MemoryManagerFunctions MemoryManagerFunctions;
@@ -925,6 +926,10 @@ gcInitializeCalculatedValues(J9JavaVM *javaVM, IDATA* memoryParameters)
 	if (-1 == memoryParameters[opt_Xmca]) {
 		javaVM->ramClassAllocationIncrement = normalizeParameter(extensions->maxSizeDefaultMemorySpace, J9_RAM_CLASS_ALLOCATION_INCREMENT_NUMERATOR, J9_RAM_CLASS_ALLOCATION_INCREMENT_DENOMINATOR, J9_RAM_CLASS_ALLOCATION_INCREMENT_MAX, J9_RAM_CLASS_ALLOCATION_INCREMENT_MIN, J9_RAM_CLASS_ALLOCATION_INCREMENT_ROUND_TO);
 	}
+
+	/* Round to the nearest multiple of sizeof(J9Class). */
+	javaVM->ramClassSub4GAllocationIncrement = ROUND_TO_ANY(sizeof(J9Class), javaVM->ramClassAllocationIncrement);
+
 	if (-1 == memoryParameters[opt_Xmco]) {
 		javaVM->romClassAllocationIncrement = normalizeParameter(extensions->maxSizeDefaultMemorySpace, J9_ROM_CLASS_ALLOCATION_INCREMENT_NUMERATOR, J9_ROM_CLASS_ALLOCATION_INCREMENT_DENOMINATOR, J9_ROM_CLASS_ALLOCATION_INCREMENT_MAX, J9_ROM_CLASS_ALLOCATION_INCREMENT_MIN, J9_ROM_CLASS_ALLOCATION_INCREMENT_ROUND_TO);
 	}
@@ -2926,7 +2931,7 @@ gcInitializeDefaults(J9JavaVM* vm)
 {
 	J9VMDllLoadInfo *loadInfo = getGCDllLoadInfo(vm);
 	UDATA tableSize = (opt_none + 1) * sizeof(IDATA);
-	UDATA realtimeSizeClassesAllocationSize = ROUND_TO(sizeof(UDATA), sizeof(J9VMGCSizeClasses));
+	UDATA realtimeSizeClassesAllocationSize = ROUND_TO_POW2(sizeof(UDATA), sizeof(J9VMGCSizeClasses));
 	IDATA *memoryParameterTable;
 	UDATA minimumVMSize;
 	bool flatConfiguration = true;
