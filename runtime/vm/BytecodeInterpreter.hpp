@@ -1730,8 +1730,8 @@ obj:
 						_currentThread,
 						J9OBJECT_CLAZZ(_currentThread, *(j9object_t*)_arg0EA),
 						&romMethod->nameAndSignature,
-						NULL,
-						J9_LOOK_VIRTUAL | J9_LOOK_NO_THROW);
+						methodClass,
+						J9_LOOK_VIRTUAL | J9_LOOK_NO_THROW | J9_INVOKEINTERFACE);
 				if (NULL != method) {
 					U_32 modifiers = J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers;
 					/* Finding a public method means it is necessarily abstract (this function only handles exceptional cases) */
@@ -1744,6 +1744,11 @@ obj:
 							exception = J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR;
 							_sendMethod = method;
 						}
+					}
+				}
+				else {
+					if (NULL != _currentThread->currentException) {
+						return GOTO_THROW_CURRENT_EXCEPTION;
 					}
 				}
 			}
