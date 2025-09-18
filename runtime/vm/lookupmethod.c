@@ -157,6 +157,17 @@ processMethod(J9VMThread * currentThread, UDATA lookupOptions, J9Method * method
 	U_32 modifiers = romMethod->modifiers;
 	J9JavaVM * vm = currentThread->javaVM;
 
+	/* Check if the method is neither public nor private
+	 * during the invokeinterface resolution.
+	 * To ensure the correct error is thrown
+	 * in throwUnsatisfiedLinkOrAbstractMethodError.
+	 */
+	 if (J2SE_VERSION(currentThread->javaVM) >= J2SE_V11) {
+		if (J9_ARE_ALL_BITS_SET(lookupOptions, J9_LOOK_INVOKE_INTERFACE) && J9_ARE_NO_BITS_SET(modifiers, J9AccPrivate | J9AccPublic)) {
+			return method;
+		}
+	 }
+
 	/* Check that the found method is visible from the sender */
 
 	if (J9_ARE_NO_BITS_SET(lookupOptions, J9_LOOK_NO_VISIBILITY_CHECK) && (NULL != senderClass) && !J9CLASS_IS_EXEMPT_FROM_VALIDATION(senderClass)) {
@@ -699,6 +710,13 @@ retry:
 			J9Method * foundMethod = searchClassForMethodCommon(lookupClass, name, nameLength, sig, sigLength, J9_ARE_ANY_BITS_SET(lookupOptions, J9_LOOK_PARTIAL_SIGNATURE));
 
 			if (foundMethod != NULL) {
+				/* Skip private methods during invokeinterface resolution for Java 11+. */
+				if (J2SE_VERSION(currentThread->javaVM) >= J2SE_V11) {
+					UDATA modifiers = J9_ROM_METHOD_FROM_RAM_METHOD(foundMethod)->modifiers;
+					if (J9_ARE_ANY_BITS_SET(lookupOptions, J9_LOOK_INVOKE_INTERFACE) && J9_ARE_ANY_BITS_SET(modifiers, J9AccPrivate)) {
+						goto nextClass;
+					}
+				}
 				resultMethod = processMethod(currentThread, lookupOptions, foundMethod, lookupClass, &exception, &exceptionClass, &errorType, nameAndSig, senderClass, targetClass);
 				if (NULL != currentThread->currentException) {
 					goto end;
