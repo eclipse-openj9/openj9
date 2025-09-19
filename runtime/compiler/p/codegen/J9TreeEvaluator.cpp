@@ -12587,13 +12587,9 @@ static TR::Register *inlineIntrinsicIndexOfString(TR::Node *node, TR::CodeGenera
    generateLabelInstruction(cg, TR::InstOpCode::label, node, startLabel);
 
       {
-      /* If offset + number of bytes in the substring is greater than the number of bytes in the main string it can't be found. In this case jump to notFoundLabel to return -1. */
+      /* If offset + number of characters in the substring is greater than the number of characters in the main string it can't be found. In this case jump to notFoundLabel to return -1. */
       TR::Register *minStrByteCountReg = srm->findOrCreateScratchRegister();
       generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, minStrByteCountReg, fromIndexReg, strCountReg);
-      if (!isLatin1)
-         {
-         generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, minStrByteCountReg, minStrByteCountReg, minStrByteCountReg); /* Double the number of bytes for UTF16. */
-         }
       generateTrg1Src2Instruction(cg, TR::InstOpCode::cmpl4, node, cr0Reg, minStrByteCountReg, arrayLenReg);
       generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, notFoundLabel, cr0Reg);
       srm->reclaimScratchRegister(minStrByteCountReg);
