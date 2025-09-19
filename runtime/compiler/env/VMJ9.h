@@ -1170,6 +1170,7 @@ public:
    virtual void restoreCompilationPhase(int32_t phase);
 
    virtual void reportPrexInvalidation(void * startPC);
+   virtual void reportUnloadInvalidation(void * startPC);
 
    virtual bool compilationShouldBeInterrupted( TR::Compilation *, TR_CallingContext);
    bool checkForExclusiveAcquireAccessRequest( TR::Compilation *);

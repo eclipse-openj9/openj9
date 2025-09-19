@@ -134,3 +134,5 @@ TraceEvent=Trc_JITServerClientSessionData1   Overhead=1 Level=1 Test Template="J
 TraceEvent=Trc_JITServerOutOfSequenceMsg1    Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d clientSessionData=%p clientUID=%llu (entry=%p) (seqNo=%u, expectedSeqNo=%u, numActiveThreads=%d) out-of-sequence msg detected (lastProcessedCriticalSeqNo=%u). Parking this thread"
 TraceEvent=Trc_JITServerCompThreadCrashed    Overhead=1 Level=1 Test Template="JITClient: compThreadID=%d server compilation thread crashed while compiling %s @ %s. Requesting JitDump recompilation and switching to local compilations."
 TraceEvent=Trc_JITServerClearCaches    Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d clientSessionData=%p clientUID=%llu clearing all the caches due to class redefinition."
+
+TraceEvent=Trc_JIT_MethodUnloadInvalidated Group=perfmon Overhead=1 Level=1 Test Template="JIT: Compiled body _startPC=%p invalidated by unloading of inlined code"

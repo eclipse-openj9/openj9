@@ -25,6 +25,7 @@
 
 #include "compile/VirtualGuard.hpp"            // for TR_VirtualGuard
 #include "il/SymbolReference.hpp"              // for SymbolReference
+#include "env/RepeatRetainedMethodsAnalysis.hpp"
 #include <vector>
 
 struct VirtualGuardInfoForCHTable
@@ -77,6 +78,9 @@ using CHTableCommitData = std::tuple<
       FlatClassExtendCheck, // comp->getClassesThatShouldNotBeNewlyExtended
       std::vector<TR_OpaqueClassBlock*>, // classesForOSRRedefinition
       std::vector<TR_OpaqueClassBlock*>, // classesForStaticFinalFieldModification
+      std::vector<J9::RepeatRetainedMethodsAnalysis::InlinedSiteInfo>,
+      std::vector<TR_ResolvedMethod*>, // keepalive methods
+      std::vector<TR_ResolvedMethod*>, // bond methods
       uint8_t*>; // startPC
 
 /** 

@@ -8919,6 +8919,15 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                         methodInfo->incrementNumberOfInlinedMethodRedefinition();
                      if (methodInfo->getNumberOfInlinedMethodRedefinition() >= 2)
                         options->setOption(TR_DisableNextGenHCR);
+
+                     // If this method has been invalidated due to unloading of
+                     // inlined code, then from now on we should only inline
+                     // methods that will not be unloaded before this one.
+                     auto invReasons = methodInfo->invalidationReasons();
+                     if (invReasons.contains(TR_JitBodyInvalidations::Unloading))
+                        {
+                        options->setOption(TR_DontInlineUnloadableMethods);
+                        }
                      }
                   }
 

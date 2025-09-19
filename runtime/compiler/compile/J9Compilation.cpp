@@ -43,6 +43,7 @@
 #include "control/RecompilationInfo.hpp"
 #include "env/ClassLoaderTable.hpp"
 #include "env/j9method.h"
+#include "env/J9RetainedMethodSet.hpp"
 #include "env/TRMemory.hpp"
 #include "env/VMJ9.h"
 #include "env/VMAccessCriticalSection.hpp"
@@ -186,6 +187,7 @@ J9::Compilation::Compilation(int32_t id,
    _j9VMThread(j9vmThread),
    _monitorAutos(m),
    _monitorAutoSymRefsInCompiledMethod(getTypedAllocator<TR::SymbolReference*>(self()->allocator())),
+   _keepaliveClasses(heapMemoryRegion),
    _classForOSRRedefinition(m),
    _classForStaticFinalFieldModification(m),
    _profileInfo(NULL),
@@ -232,6 +234,10 @@ J9::Compilation::Compilation(int32_t id,
    for (int i = 0; i < CACHED_CLASS_POINTER_COUNT; i++)
       _cachedClassPointers[i] = NULL;
 
+   if (!self()->ilGenRequest().details().supportsInvalidation())
+      {
+      self()->getOptions()->setOption(TR_DontInlineUnloadableMethods);
+      }
 
    // Add known object index to parm 0 so that other optmizations can be unlocked.
    // It is safe to do so because method and method symbols of a archetype specimen
@@ -1706,6 +1712,75 @@ J9::Compilation::populateAOTMethodDependencies(TR_OpaqueClassBlock *definingClas
    return totalDependencies;
    }
 #endif /* !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED) */
+
+OMR::RetainedMethodSet *
+J9::Compilation::createRetainedMethods(TR_ResolvedMethod *method)
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   if (self()->isRemoteCompilation())
+      {
+      TR_ASSERT_FATAL(false, "client must not use Compilation::retainedMethods()");
+      }
+#endif
+
+   if (self()->mustTrackRetainedMethods())
+      {
+      return J9::RetainedMethodSet::create(self(), method);
+      }
+   else
+      {
+      return OMR::Compilation::createRetainedMethods(method);
+      }
+   }
+
+bool
+J9::Compilation::mustTrackRetainedMethods()
+   {
+   if (self()->compileRelocatableCode())
+      {
+      // AOT: Relationships between class loaders seen at compile time won't
+      // necessarily still hold at load time, so there's no point in tracking
+      // retained method sets. At load, the inlining table will be available,
+      // and bonds will be created as needed.
+      return false;
+      }
+
+   if (self()->getOption(TR_NoClassGC))
+      {
+      return false;
+      }
+
+   return !self()->getOption(TR_AllowJitBodyToOutliveInlinedCode)
+      || self()->getOption(TR_DontInlineUnloadableMethods);
+   }
+
+const char *
+J9::Compilation::bondMethodsTraceNote()
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   TR_ResolvedMethod *m = NULL;
+   if (self()->isOutOfProcessCompilation()
+       && self()->mustTrackRetainedMethods()
+       && self()->retainedMethods()->bondMethods().next(&m))
+      {
+      return "approximate; client may find a more precise (smaller) set";
+      }
+#endif
+
+   return NULL;
+   }
+
+void
+J9::Compilation::addKeepaliveClass(TR_OpaqueClassBlock *c)
+   {
+   _keepaliveClasses.insert(c);
+   if (self()->getOption(TR_TraceRetainedMethods))
+      {
+      int32_t len;
+      const char *name = TR::Compiler->cls.classNameChars(self(), c, len);
+      traceMsg(self(), "Added global keepalive class %p %.*s\n", c, len, name);
+      }
+   }
 
 #if defined(J9VM_OPT_JITSERVER)
 void
