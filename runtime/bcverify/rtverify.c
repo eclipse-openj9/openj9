@@ -69,7 +69,7 @@ j9rtv_verifierGetRAMClass( J9BytecodeVerificationData *verifyData, J9ClassLoader
 
 	/* Sniff the class table to see if already loaded */
 	Trc_RTV_j9rtv_verifierGetRAMClass_Entry(verifyData->vmStruct, classLoader, nameLength, className);
-	found = vm->internalVMFunctions->hashClassTableAt (classLoader, className, nameLength);
+	found = vm->internalVMFunctions->hashClassTableAt (classLoader, className, nameLength, J9_HASH_TABLE_LOOKUP_FLAG_JCL_DEFINE_CLASS);
 
 #ifdef J9VM_THR_PREEMPTIVE
 	threadEnv->monitor_exit(vm->classTableMutex);
