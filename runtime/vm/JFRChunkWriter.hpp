@@ -85,6 +85,7 @@ enum MetadataTypeID {
 	ThreadContextSwitchRateID = 97,
 	ThreadStatisticsID = 99,
 	ClassLoadingStatisticsID = 100,
+	ClassLoaderStatisticsID = 101,
 	PhysicalMemoryID = 108,
 	ExecutionSampleID = 109,
 	ThreadDumpID = 111,
@@ -188,6 +189,7 @@ private:
 	static constexpr int THREAD_CPU_LOAD_EVENT_SIZE = (2 * sizeof(float)) + (4 * sizeof(I_64));
 	static constexpr int INITIAL_ENVIRONMENT_VARIABLE_EVENT_SIZE = 6000;
 	static constexpr int CLASS_LOADING_STATISTICS_EVENT_SIZE = 5 * sizeof(I_64);
+	static constexpr int CLASS_LOADER_STATISTICS_EVENT_SIZE = (3 * LEB128_32_SIZE) + (9 * LEB128_64_SIZE);
 	static constexpr int THREAD_CONTEXT_SWITCH_RATE_SIZE = sizeof(float) + (3 * sizeof(I_64));
 	static constexpr int THREAD_STATISTICS_EVENT_SIZE = (6 * sizeof(U_64)) + sizeof(U_32);
 	static constexpr int THREAD_DUMP_EVENT_SIZE_PER_THREAD = 1000;
@@ -403,6 +405,8 @@ done:
 			pool_do(_constantPoolTypes.getThreadCPULoadTable(), &writeThreadCPULoadEvent, _bufferWriter);
 
 			pool_do(_constantPoolTypes.getClassLoadingStatisticsTable(), &writeClassLoadingStatisticsEvent, _bufferWriter);
+
+			pool_do(_constantPoolTypes.getClassLoaderStatisticsTable(), &writeClassLoaderStatisticsEvent, _bufferWriter);
 
 			pool_do(_constantPoolTypes.getThreadContextSwitchRateTable(), &writeThreadContextSwitchRateEvent, _bufferWriter);
 
@@ -846,6 +850,8 @@ done:
 
 	static void writeClassLoadingStatisticsEvent(void *anElement, void *userData);
 
+	static void writeClassLoaderStatisticsEvent(void *anElement, void *userData);
+
 	static void writeThreadContextSwitchRateEvent(void *anElement, void *userData);
 
 	static void writeThreadStatisticsEvent(void *anElement, void *userData);
@@ -925,6 +931,8 @@ done:
 		requiredBufferSize += _constantPoolTypes.getThreadCPULoadCount() * THREAD_CPU_LOAD_EVENT_SIZE;
 
 		requiredBufferSize += _constantPoolTypes.getClassLoadingStatisticsCount() * CLASS_LOADING_STATISTICS_EVENT_SIZE;
+
+		requiredBufferSize += _constantPoolTypes.getClassLoaderStatisticsCount() * CLASS_LOADER_STATISTICS_EVENT_SIZE;
 
 		requiredBufferSize += _constantPoolTypes.getThreadContextSwitchRateCount() * THREAD_CONTEXT_SWITCH_RATE_SIZE;
 
