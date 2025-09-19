@@ -765,6 +765,15 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 #endif /* defined(J9VM_OPT_JITSERVER) */
    };
 
+// J9::Options constructors delegate to OMR::Options constuctors. Some of these
+// use memcpy to copy the contents from the global Options object. However,
+// because this happens in OMR, it doesn't know whether the object being
+// constructed is a derived type or not. The consequence of all this is that
+// unless explicitly initialized, the instance fields in J9::Options end up
+// uninitialized. This static_assert guards against this issue until a real
+// solution is implemented.
+static_assert(sizeof(Options) == sizeof(OMR::OptionsConnector), "J9::Options should not have any instance fields");
+
 }
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
