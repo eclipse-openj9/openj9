@@ -361,6 +361,7 @@ public:
    void setSharedMemory(bool v);
 
    bool isArrayCopyCall();
+   // TODO: take out - moved to OMR
    bool isJitDispatchJ9MethodCall(TR::Compilation *comp);
 
    /**
