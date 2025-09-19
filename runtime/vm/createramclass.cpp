@@ -93,6 +93,9 @@ enum IllegalAccessErrorTypes {
 #define RAM_CLASS_FRAGMENT_LIMIT J9_REQUIRED_CLASS_ALIGNMENT
 #define RAM_CLASS_SMALL_FRAGMENT_LIMIT ((sizeof(UDATA) + 4) * sizeof(UDATA))
 
+/* Number of J9Class headers that fit in a 64KB segment. */
+#define RAM_CLASS_HEADERS_PER_SEGMENT ((64 * 1024) / sizeof(J9Class))
+
 /* align method table start such that CP is correctly aligned */
 #if defined(J9VM_INTERP_NATIVE_SUPPORT)
 /* 3 bits of tag needed in J9Method->constantPool */
@@ -4358,8 +4361,7 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 			classAllocationIncrement = 0;
 		} else {
 			if (SK_SUB4G == segmentKind) {
-				const UDATA headersPerSegment = 32;
-				classAllocationIncrement = sizeof(J9Class) * headersPerSegment;
+				classAllocationIncrement = RAM_CLASS_HEADERS_PER_SEGMENT;
 			}
 		}
 
