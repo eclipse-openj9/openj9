@@ -7715,6 +7715,21 @@ retry:
 		/* Swap flags and class subfield order. */
 		classAndFlags = J9CLASSANDFLAGS_FROM_FLAGSANDCLASS(flagsAndClass);
 		valueAddress = J9STATICADDRESS(flagsAndClass, valueOffset);
+
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+		if (J9ClassInitNotInitialized == (ramConstantPool->ramClass->initializeStatus & J9ClassInitStatusMask)) {
+			if (J9_STATIC_FIELD_STRICT_INIT_IS_UNSET(classAndFlags)) {
+				/* If a strict field has never been set, fail. */
+				rc = THROW_RUNTIME_EXCEPTION;
+				goto done;
+			} else if (J9_STATIC_FIELD_STRICT_INIT_WAS_WRITTEN(classAndFlags)) {
+				classAndFlags &= ~J9StaticFieldRefStrictInitUnset;
+				classAndFlags |= J9StaticFieldRefStrictInitRead;
+				ramStaticFieldRef->flagsAndClass = J9FLAGSANDCLASS_FROM_CLASSANDFLAGS(classAndFlags);
+			}
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+
 #if defined(DO_HOOKS)
 		if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_GET_STATIC_FIELD)) {
 			J9Class *fieldClass = (J9Class*)(classAndFlags & ~(UDATA)J9StaticFieldRefFlagBits);
@@ -7794,6 +7809,27 @@ done:
 		/* Swap flags and class subfield order. */
 		classAndFlags = J9CLASSANDFLAGS_FROM_FLAGSANDCLASS(flagsAndClass);
 		valueAddress = J9STATICADDRESS(flagsAndClass, valueOffset);
+
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+		if (J9ClassInitNotInitialized ==
+			(ramConstantPool->ramClass->initializeStatus & J9ClassInitStatusMask)
+		) {
+			if (J9_STATIC_FIELD_STRICT_INIT_IS_UNSET(classAndFlags)) {
+				Assert_VM_true(ramConstantPool->ramClass->strictStaticFieldCounter > 0);
+				ramConstantPool->ramClass->strictStaticFieldCounter -= 1;
+				classAndFlags &= ~J9StaticFieldRefStrictInitUnset;
+				classAndFlags |= J9StaticFieldRefStrictInitWritten;
+				ramStaticFieldRef->flagsAndClass = J9FLAGSANDCLASS_FROM_CLASSANDFLAGS(classAndFlags);
+			} else if (J9_STATIC_FIELD_STRICT_INIT_WAS_WRITTEN_AND_READ(classAndFlags)
+				&& J9_ARE_ANY_BITS_SET(classAndFlags, J9StaticFieldRefFinal)
+			) {
+				/* If the strict final field was read, fail. */
+				rc = THROW_RUNTIME_EXCEPTION;
+				goto done;
+			}
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+
 #if defined(DO_HOOKS)
 		if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_PUT_STATIC_FIELD)) {
 			J9Class *fieldClass = (J9Class*)(classAndFlags & ~(UDATA)J9StaticFieldRefFlagBits);
@@ -10829,6 +10865,8 @@ public:
 			goto i2j; \
 		PERFORM_ACTION_VALUE_TYPE_IMSE \
 		PERFORM_ACTION_CRIU_STM_THROW \
+		case THROW_RUNTIME_EXCEPTION: \
+			goto runtimeException; \
 		DEBUG_ACTIONS \
 		default: \
 			Assert_VM_unreachable(); \
@@ -11533,6 +11571,13 @@ incompatibleClassChange:
 	updateVMStruct(REGISTER_ARGS);
 	prepareForExceptionThrow(_currentThread);
 	setCurrentExceptionUTF(_currentThread, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, NULL);
+	VMStructHasBeenUpdated(REGISTER_ARGS);
+	goto throwCurrentException;
+
+runtimeException:
+	updateVMStruct(REGISTER_ARGS);
+	prepareForExceptionThrow(_currentThread);
+	setCurrentExceptionUTF(_currentThread, J9VMCONSTANTPOOL_JAVALANGRUNTIMEEXCEPTION, NULL);
 	VMStructHasBeenUpdated(REGISTER_ARGS);
 	goto throwCurrentException;
 
