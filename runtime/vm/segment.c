@@ -269,7 +269,7 @@ U_32 memorySegmentListSize (J9MemorySegmentList *segmentList)
  *	2.	Everything else.  Regardless of the type, it will be allocated
  */
 static void *
-allocateMemoryForSegment(J9JavaVM *javaVM,J9MemorySegment *segment, J9PortVmemParams *vmemParams, U_32 memoryCategory)
+allocateMemoryForSegment(J9JavaVM *javaVM, J9MemorySegment *segment, J9PortVmemParams *vmemParams, U_32 memoryCategory)
 {
 	void *tmpAddr = NULL;
 	PORT_ACCESS_FROM_GINFO(javaVM);
@@ -864,7 +864,8 @@ printSegments(J9MemorySegment *s, void* data)
 	if ((type & MEMORY_TYPE_FIXED_RAM_CLASS) == MEMORY_TYPE_FIXED_RAM_CLASS) printf("MEMORY_TYPE_FIXED_RAM_CLASS ");
 	if ((type & MEMORY_TYPE_RAM_CLASS) == MEMORY_TYPE_RAM_CLASS) printf("MEMORY_TYPE_RAM_CLASS ");
 	if ((type & MEMORY_TYPE_RAM_CLASS_SUB4G) == MEMORY_TYPE_RAM_CLASS_SUB4G) printf("MEMORY_TYPE_RAM_CLASS_SUB4G ");
-	if ((type & MEMORY_TYPE_IGC_SCAN_QUEUE) == MEMORY_TYPE_IGC_SCAN_QUEUE) printf("MEMORY_TYPE_IGC_SCAN_QUEUE ");
+	if ((type & MEMORY_TYPE_RAM_CLASS_ABOVE4G_FREQUENTLY_ACCESSED) == MEMORY_TYPE_RAM_CLASS_ABOVE4G_FREQUENTLY_ACCESSED) printf("MEMORY_TYPE_RAM_CLASS_ABOVE4G_FREQUENTLY_ACCESSED ");
+	if ((type & MEMORY_TYPE_RAM_CLASS_ABOVE4G_INFREQUENTLY_ACCESSED) == MEMORY_TYPE_RAM_CLASS_ABOVE4G_INFREQUENTLY_ACCESSED) printf("MEMORY_TYPE_RAM_CLASS_ABOVE4G_INFREQUENTLY_ACCESSED ");
 	if ((type & MEMORY_TYPE_RAM) == MEMORY_TYPE_RAM) printf("MEMORY_TYPE_RAM ");
 	if ((type & MEMORY_TYPE_FIXED) == MEMORY_TYPE_FIXED) printf("MEMORY_TYPE_FIXED ");
 	if ((type & MEMORY_TYPE_JIT_SCRATCH_SPACE) == MEMORY_TYPE_JIT_SCRATCH_SPACE) printf("MEMORY_TYPE_JIT_SCRATCH_SPACE ");
