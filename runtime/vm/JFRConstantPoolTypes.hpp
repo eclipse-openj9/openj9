@@ -261,6 +261,21 @@ struct ClassLoadingStatisticsEntry {
 	I_64 unloadedClassCount;
 };
 
+struct ClassLoaderStatisticsEntry {
+	I_64 ticks;
+	U_32 classLoaderIndex;
+	U_32 parentClassLoaderIndex;
+	U_64 classLoaderData;
+	I_64 classCount;
+	U_64 chunkSize;
+	U_64 blockSize;
+#if JAVA_SPEC_VERSION >= 15
+	I_64 hiddenClassCount;
+	U_64 hiddenChunkSize;
+	U_64 hiddenBlockSize;
+#endif /* JAVA_SPEC_VERSION >= 15 */
+};
+
 struct ThreadContextSwitchRateEntry {
 	I_64 ticks;
 	float switchRate;
@@ -410,6 +425,8 @@ private:
 	UDATA _threadCPULoadCount;
 	J9Pool *_classLoadingStatisticsTable;
 	UDATA _classLoadingStatisticsCount;
+	J9Pool *_classLoaderStatisticsTable;
+	UDATA _classLoaderStatisticsCount;
 	J9Pool *_threadContextSwitchRateTable;
 	UDATA _threadContextSwitchRateCount;
 	J9Pool *_threadStatisticsTable;
@@ -757,6 +774,11 @@ public:
 		return _classLoadingStatisticsTable;
 	}
 
+	J9Pool *getClassLoaderStatisticsTable()
+	{
+		return _classLoaderStatisticsTable;
+	}
+
 	J9Pool *getThreadContextSwitchRateTable()
 	{
 		return _threadContextSwitchRateTable;
@@ -845,6 +867,11 @@ public:
 	UDATA getClassLoadingStatisticsCount()
 	{
 		return _classLoadingStatisticsCount;
+	}
+
+	UDATA getClassLoaderStatisticsCount()
+	{
+		return _classLoaderStatisticsCount;
 	}
 
 	UDATA getThreadContextSwitchRateCount()
@@ -1071,6 +1098,7 @@ public:
 			loadSystemProcesses(_currentThread);
 			loadNativeLibraries(_currentThread);
 			loadModuleRequireAndModuleExportEvents();
+			loadClassLoaderStatisticsEvents(_currentThread);
 		}
 
 		shallowEntries = pool_new(sizeof(ClassEntry **), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
@@ -1560,6 +1588,123 @@ done:
 		vmFuncs->allClassLoadersEndDo(&walkState);
 	}
 
+	/**
+	* @brief Subtracts sizes of all free list blocks from the accumulator.
+	* Code logic is copied from mgmtmemory.c.
+	*
+	* Iterates through tiny, small, and large block lists in
+	* j9RAMClassFreeListsPtr and subtracts each block's size from used.
+	*
+	* @param j9RAMClassFreeListsPtr Pointer to RAM class free-lists (may be NULL).
+	* @param used Pointer to a U_64 accumulator decremented by block sizes.
+	*/
+	void
+	subtractFreeListBlocks(J9RAMClassFreeLists* j9RAMClassFreeListsPtr, U_64 *used)
+	{
+		if (NULL != j9RAMClassFreeListsPtr) {
+			J9RAMClassFreeListBlock *ramClassTinyBlockFreeListPtr = j9RAMClassFreeListsPtr->ramClassTinyBlockFreeList;
+			J9RAMClassFreeListBlock *ramClassSmallBlockFreeListPtr = j9RAMClassFreeListsPtr->ramClassSmallBlockFreeList;
+			J9RAMClassFreeListBlock *ramClassLargeBlockFreeListPtr = j9RAMClassFreeListsPtr->ramClassLargeBlockFreeList;
+			while (NULL != ramClassTinyBlockFreeListPtr) {
+				*used -= ramClassTinyBlockFreeListPtr->size;
+				ramClassTinyBlockFreeListPtr = ramClassTinyBlockFreeListPtr->nextFreeListBlock;
+			}
+			while (NULL != ramClassSmallBlockFreeListPtr) {
+				*used -= ramClassSmallBlockFreeListPtr->size;
+				ramClassSmallBlockFreeListPtr = ramClassSmallBlockFreeListPtr->nextFreeListBlock;
+			}
+			while (NULL != ramClassLargeBlockFreeListPtr) {
+				*used -= ramClassLargeBlockFreeListPtr->size;
+				ramClassLargeBlockFreeListPtr = ramClassLargeBlockFreeListPtr->nextFreeListBlock;
+			}
+		}
+	}
+
+	/**
+	* @brief Subtracts the size of each UDATA block in a chain from the accumulator.
+	* Code logic is copied from mgmtmemory.c.
+	*
+	* Walks a chain of UDATA blocks starting at ramClassUDATABlockFreeListPtr
+	* and subtracts sizeof(UDATA) for each from used.
+	*
+	* @param ramClassUDATABlockFreeListPtr Head of UDATA block chain (may be NULL).
+	* @param used Pointer to a U_64 accumulator decremented by block count * sizeof(UDATA).
+	*/
+	void
+	subtractUDATABlockChain(UDATA *ramClassUDATABlockFreeListPtr, U_64 *used)
+	{
+		while (NULL != ramClassUDATABlockFreeListPtr) {
+			*used -= sizeof(UDATA);
+			ramClassUDATABlockFreeListPtr = *(UDATA **)ramClassUDATABlockFreeListPtr;
+		}
+	}
+
+	void loadClassLoaderStatisticsEvents(J9VMThread *currentThread)
+	{
+		J9InternalVMFunctions *vmFuncs = _vm->internalVMFunctions;
+		J9ClassLoaderWalkState walkState;
+		J9ClassLoader *classLoader = vmFuncs->allClassLoadersStartDo(&walkState, _vm, 0);
+		int64_t time = j9time_nano_time();
+
+#ifdef J9VM_THR_PREEMPTIVE
+		omrthread_monitor_enter(_vm->classLoaderModuleAndLocationMutex);
+#endif
+
+		while (NULL != classLoader) {
+			ClassLoaderStatisticsEntry *entry = (ClassLoaderStatisticsEntry *)pool_newElement(_classLoaderStatisticsTable);
+			entry->ticks = time;
+			entry->classLoaderIndex = addClassLoaderEntry(classLoader);
+			if (isResultNotOKay()) goto done;
+			j9object_t parentLoaderObject = J9VMJAVALANGCLASSLOADER_PARENT(currentThread, classLoader->classLoaderObject);
+			if (NULL != parentLoaderObject) {
+				J9ClassLoader *parentClassLoader = J9VMJAVALANGCLASSLOADER_VMREF(currentThread, parentLoaderObject);
+				entry->classLoaderIndex = addClassLoaderEntry(parentClassLoader);
+			} else {
+				entry->classLoaderIndex = 0;
+			}
+			entry->classLoaderData = (U_64)classLoader;
+			entry->classCount = hashTableGetCount(classLoader->classHashTable);
+
+			J9MemorySegment *segment = classLoader->classSegments;
+			while (NULL != segment) {
+				entry->chunkSize += segment->heapAlloc - segment->heapBase;
+				segment = segment->nextSegment;
+			}
+
+			entry->blockSize = entry->chunkSize;
+
+			J9RAMClassFreeLists *sub4gBlockPtr = &classLoader->sub4gBlock;
+			J9RAMClassFreeLists *frequentlyAccessedBlockPtr = &classLoader->frequentlyAccessedBlock;
+			J9RAMClassFreeLists *inFrequentlyAccessedBlockPtr = &classLoader->inFrequentlyAccessedBlock;
+			UDATA *ramClassSub4gUDATABlockFreeListPtr = sub4gBlockPtr->ramClassUDATABlockFreeList;
+			UDATA *ramClassFreqUDATABlockFreeListPtr = frequentlyAccessedBlockPtr->ramClassUDATABlockFreeList;
+			UDATA *ramClassInFreqUDATABlockFreeListPtr = inFrequentlyAccessedBlockPtr->ramClassUDATABlockFreeList;
+
+			subtractUDATABlockChain(ramClassSub4gUDATABlockFreeListPtr, &entry->blockSize);
+			subtractUDATABlockChain(ramClassFreqUDATABlockFreeListPtr, &entry->blockSize);
+			subtractUDATABlockChain(ramClassInFreqUDATABlockFreeListPtr, &entry->blockSize);
+
+			subtractFreeListBlocks(sub4gBlockPtr, &entry->blockSize);
+			subtractFreeListBlocks(frequentlyAccessedBlockPtr, &entry->blockSize);
+			subtractFreeListBlocks(inFrequentlyAccessedBlockPtr, &entry->blockSize);
+
+#if JAVA_SPEC_VERSION >= 15
+			entry->hiddenClassCount = 0;
+			entry->hiddenChunkSize = 0;
+			entry->hiddenBlockSize = 0;
+#endif /* JAVA_SPEC_VERSION >= 15 */
+
+			classLoader = vmFuncs->allClassLoadersNextDo(&walkState);
+		}
+
+#ifdef J9VM_THR_PREEMPTIVE
+		omrthread_monitor_exit(_vm->classLoaderModuleAndLocationMutex);
+#endif
+
+done:
+		vmFuncs->allClassLoadersEndDo(&walkState);
+	}
+
 	VM_JFRConstantPoolTypes(J9VMThread *currentThread)
 		: _currentThread(currentThread)
 		, _vm(currentThread->javaVM)
@@ -1605,6 +1750,8 @@ done:
 		, _threadCPULoadCount(0)
 		, _classLoadingStatisticsTable(NULL)
 		, _classLoadingStatisticsCount(0)
+		, _classLoaderStatisticsTable(NULL)
+		, _classLoaderStatisticsCount(0)
 		, _threadContextSwitchRateTable(NULL)
 		, _threadContextSwitchRateCount(0)
 		, _threadStatisticsTable(NULL)
@@ -1755,6 +1902,12 @@ done:
 			goto done;
 		}
 
+		_classLoaderStatisticsTable = pool_new(sizeof(ClassLoaderStatisticsEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		if (NULL == _classLoaderStatisticsTable) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+
 		_threadContextSwitchRateTable = pool_new(sizeof(ThreadContextSwitchRateEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
 		if (NULL == _threadContextSwitchRateTable) {
 			_buildResult = OutOfMemory;
@@ -1888,6 +2041,7 @@ done:
 		pool_kill(_cpuLoadTable);
 		pool_kill(_threadCPULoadTable);
 		pool_kill(_classLoadingStatisticsTable);
+		pool_kill(_classLoaderStatisticsTable);
 		pool_kill(_threadContextSwitchRateTable);
 		pool_kill(_threadStatisticsTable);
 		pool_kill(_systemProcessTable);
