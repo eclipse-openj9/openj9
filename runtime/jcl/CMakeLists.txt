@@ -144,7 +144,7 @@ target_sources(jclse
 		${CMAKE_CURRENT_SOURCE_DIR}/common/mgmthypervisor.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/mgmtinit.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/mgmtmemmgr.c
-		${CMAKE_CURRENT_SOURCE_DIR}/common/mgmtmemory.c
+		${CMAKE_CURRENT_SOURCE_DIR}/common/mgmtmemory.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/common/mgmtmempool.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/mgmtos.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/mgmtosext.c

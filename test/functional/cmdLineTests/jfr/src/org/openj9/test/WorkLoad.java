@@ -21,6 +21,9 @@
  */
 package org.openj9.test;
 
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -35,8 +38,10 @@ public class WorkLoad {
 	public static double average;
 	public static double stdDev;
 
+	static ArrayList<Class<?>> classes = new ArrayList<>();
+
 	private static long globalCounter = 0;
-	static interface GlobalLoack {};
+	static interface GlobalLoack {}
 	private static Object globalLock = new GlobalLoack(){};
 
 	public WorkLoad(int numberOfThreads, int sizeOfNumberList, int repeats) {
@@ -100,6 +105,7 @@ public class WorkLoad {
 			throwThrowables();
 			contendOnLock();
 			burnCPU();
+			generateClassLoader();
 		}
 	}
 
@@ -180,6 +186,23 @@ public class WorkLoad {
 		/* Write to public statics to avoid optimizing this code. */
 		average += average(numberList);
 		stdDev += standardDeviation(numberList);
+	}
+
+	public static class ClassLoaderTestClass {}
+
+	private void generateClassLoader() {
+		try {
+			ClassLoader classLoader = new URLClassLoader(
+					new URL[] {
+						WorkLoad.class.getProtectionDomain().getCodeSource().getLocation()
+					},
+					new URLClassLoader(new URL[] {}));
+
+			classes.add(
+					classLoader.loadClass("org.openj9.test.WorkLoad$ClassLoaderTestClass"));
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private double average(List<Double> numbers) {

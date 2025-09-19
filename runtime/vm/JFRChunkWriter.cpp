@@ -1004,6 +1004,56 @@ VM_JFRChunkWriter::writeClassLoadingStatisticsEvent(void *anElement, void *userD
 }
 
 void
+VM_JFRChunkWriter::writeClassLoaderStatisticsEvent(void *anElement, void *userData)
+{
+	ClassLoaderStatisticsEntry *entry = (ClassLoaderStatisticsEntry *)anElement;
+	VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
+
+	/* reserve size field */
+	U_8 *dataStart = reserveEventSize(_bufferWriter);
+
+	/* write event type */
+	_bufferWriter->writeLEB128(ClassLoaderStatisticsID);
+
+	/* write start time */
+	_bufferWriter->writeLEB128(entry->ticks);
+
+	/* write classLoader */
+	_bufferWriter->writeLEB128(entry->classLoaderIndex);
+
+	/* write parent classLoader */
+	_bufferWriter->writeLEB128(entry->parentClassLoaderIndex);
+
+	/* write pointer to J9ClassLoader */
+	_bufferWriter->writeLEB128(entry->classLoaderData);
+
+	/* write loaded class count */
+	_bufferWriter->writeLEB128(entry->classCount);
+
+	/* write size of all memory segments */
+	_bufferWriter->writeLEB128(entry->chunkSize);
+
+	/* write used size of all memory segments */
+	if (entry->blockSize >= 0) {
+		_bufferWriter->writeLEB128((U_64)entry->blockSize);
+	} else {
+		_bufferWriter->writeLEB128(0);
+	}
+
+	/* write hidden/anon class count */
+	_bufferWriter->writeLEB128(entry->hiddenClassCount);
+
+	/* write size of all hidden/anon memory segments */
+	_bufferWriter->writeLEB128(entry->hiddenChunkSize);
+
+	/* write used size of all hidden/anon memory segments */
+	_bufferWriter->writeLEB128(entry->hiddenBlockSize);
+
+	/* write size */
+	writeEventSize(_bufferWriter, dataStart);
+}
+
+void
 VM_JFRChunkWriter::writeThreadContextSwitchRateEvent(void *anElement, void *userData)
 {
 	ThreadContextSwitchRateEntry *entry = (ThreadContextSwitchRateEntry *)anElement;
