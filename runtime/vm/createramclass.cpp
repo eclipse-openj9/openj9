@@ -4358,8 +4358,12 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 			classAllocationIncrement = 0;
 		} else {
 			if (SK_SUB4G == segmentKind) {
-				const UDATA headersPerSegment = 32;
-				classAllocationIncrement = sizeof(J9Class) * headersPerSegment;
+				if (J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_DISCLAIM_RAM_CLASS_MEMORY)) {
+					classAllocationIncrement /= 2;
+				} else {
+					const UDATA headersPerSegment = 32;
+					classAllocationIncrement = sizeof(J9Class) * headersPerSegment;
+				}
 			}
 		}
 
@@ -4368,7 +4372,12 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 		UDATA memoryType = MEMORY_TYPE_RAM_CLASS;
 		if (SK_SUB4G == segmentKind) {
 			memoryType |= MEMORY_TYPE_RAM_CLASS_SUB4G;
+			/* For now only sub4g memory will be disclaimed, this will be expanded in the future. */
+			if (J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_DISCLAIM_RAM_CLASS_MEMORY)) {
+				memoryType |= MEMORY_TYPE_DISCLAIMABLE_TO_FILE;
+			}
 		}
+
 		Trc_VM_internalAllocateRAMClass_AllocateClassMemorySegment(fragmentsLeftToAllocate, newSegmentSize, classAllocationIncrement);
 		newSegment = allocateClassMemorySegment(javaVM, newSegmentSize, memoryType, classLoader, classAllocationIncrement);
 
