@@ -1428,10 +1428,16 @@ private:
 			if (NULL != dataAddr) {
 				const uintptr_t regionSize = _extensions->heapRegionManager->getRegionSize();
 				uintptr_t dataSize = _extensions->indexableObjectModel.getDataSizeInBytes((J9IndexableObject *)objectPtr);
-				uintptr_t reservedRegionCount = MM_Math::roundToCeiling(regionSize, dataSize) / regionSize;
+
+				uintptr_t reservedRegionCount = dataSize / regionSize;
+				uintptr_t fraction = dataSize % regionSize;
+				MM_AllocationContextBalanced *commonContext = (MM_AllocationContextBalanced *)env->getCommonAllocationContext();
+
+				if ((0 != fraction) && commonContext->recycleToSharedArrayReservedRegion(env, fraction)) {
+					reservedRegionCount += 1;
+				}
 
 				_extensions->largeObjectVirtualMemory->freeSparseRegionAndUnmapFromHeapObject(_env, dataAddr, objectPtr, dataSize, sparseDataEntryIterator);
-				MM_AllocationContextBalanced *commonContext = (MM_AllocationContextBalanced *)env->getCommonAllocationContext();
 				commonContext->recycleReservedRegionsForVirtualLargeObjectHeap(env, reservedRegionCount);
 			}
 		}

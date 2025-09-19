@@ -93,7 +93,7 @@ MM_AllocationContextBalanced::initialize(MM_EnvironmentBase *env)
 
 	_cachedReplenishPoint = this;
 	_heapRegionManager = MM_GCExtensions::getExtensions(env)->heapRegionManager;
-	
+
 	return true;
 }
 
@@ -1103,6 +1103,59 @@ MM_AllocationContextBalanced::setNumaAffinityForThread(MM_EnvironmentBase *env)
 }
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+bool
+MM_AllocationContextBalanced::allocateFromSharedArrayReservedRegion(MM_EnvironmentBase *env, uintptr_t fraction)
+{
+	const uintptr_t regionSize = _heapRegionManager->getRegionSize();
+	Assert_MM_true((regionSize > fraction) && (0 != fraction));
+
+	bool shouldAllocateNewSharedRegion = false;
+
+	lockCommon();
+	if (0 == _sharedArrayReservedRegionsBytesUsed) {
+		shouldAllocateNewSharedRegion = true;
+	}
+	uintptr_t wholeRegionsBefore = _sharedArrayReservedRegionsBytesUsed / regionSize;
+	_sharedArrayReservedRegionsBytesUsed += fraction;
+	uintptr_t wholeRegionsAfter = _sharedArrayReservedRegionsBytesUsed / regionSize;
+
+	if (!shouldAllocateNewSharedRegion && (wholeRegionsBefore < wholeRegionsAfter)) {
+		shouldAllocateNewSharedRegion = true;
+	}
+	unlockCommon();
+
+	return shouldAllocateNewSharedRegion;
+}
+
+bool
+MM_AllocationContextBalanced::recycleToSharedArrayReservedRegion(MM_EnvironmentBase *env, uintptr_t fraction)
+{
+	const uintptr_t regionSize = _heapRegionManager->getRegionSize();
+	Assert_MM_true((regionSize > fraction) && (0 != fraction));
+	Assert_MM_true(_sharedArrayReservedRegionsBytesUsed >= fraction);
+
+	bool shouldReleaseCurrentSharedRegion = false;
+
+	lockCommon();
+	uintptr_t wholeRegionsBefore = _sharedArrayReservedRegionsBytesUsed / regionSize;
+	_sharedArrayReservedRegionsBytesUsed -= fraction;
+	uintptr_t wholeRegionsAfter = _sharedArrayReservedRegionsBytesUsed / regionSize;
+
+	if ((0 == _sharedArrayReservedRegionsBytesUsed) || (wholeRegionsBefore > wholeRegionsAfter)) {
+		shouldReleaseCurrentSharedRegion = true;
+	}
+	unlockCommon();
+
+	return shouldReleaseCurrentSharedRegion;
+}
+
+uintptr_t
+MM_AllocationContextBalanced::getSharedArrayReservedRegionsCount()
+{
+	const uintptr_t regionSize = _heapRegionManager->getRegionSize();
+	return (0 != _sharedArrayReservedRegionsBytesUsed) ? (MM_Math::roundToCeiling(regionSize, _sharedArrayReservedRegionsBytesUsed) / regionSize) : 0;
+}
+
 void
 MM_AllocationContextBalanced::recycleReservedRegionsForVirtualLargeObjectHeap(MM_EnvironmentVLHGC *env, uintptr_t reservedRegionCount, bool needLock)
 {

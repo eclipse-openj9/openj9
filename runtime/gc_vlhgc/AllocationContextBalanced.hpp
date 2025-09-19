@@ -72,8 +72,9 @@ private:
 	UDATA _freeProcessorNodeCount;	/**< The length, in elements, of the _freeProcessorNodes array (always at least 1 after startup) */
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
-	MM_HeapRegionDescriptorVLHGC *_arrayReservedRegionList; /** for Off-heap case only, adding and removing via region->_allocateData.pushRegionToArrayReservedRegionList/popRegionFromArrayReservedRegionList */
-	uintptr_t _arrayReservedRegionCount;
+	uintptr_t _sharedArrayReservedRegionsBytesUsed; /**< total bytes in shared reserved regions */
+	MM_HeapRegionDescriptorVLHGC *_arrayReservedRegionList; /**< the list of all whole regions reserved in main heap to offset the allocation in the off-heap */
+	uintptr_t _arrayReservedRegionCount;	/**< the current size of _arrayReservedRegionList */
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 /* Methods */
 public:
@@ -275,6 +276,33 @@ public:
 	virtual bool setNumaAffinityForThread(MM_EnvironmentBase *env);
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+	/**
+	 * Add the remainder bytes(need to share the reserved region) of large array in the shared bytes
+	 * and check if need to allocate new shared reserved region.
+	 *
+	 * @param env[in] The current thread.
+	 * @param fraction[in] the remainder of array size from region size.
+	 * @return True if need to allocate new reserved region for sharing.
+	 */
+	bool allocateFromSharedArrayReservedRegion(MM_EnvironmentBase *env, uintptr_t fraction);
+
+	/**
+	 * Remove the remainder bytes(need to share the reserved region) of large array from the sheard bytes
+	 * and check if need to recycle a shared reserved region.
+	 *
+	 * @param env[in] The current thread.
+	 * @param fraction[in] the remainder of array size from region size.
+	 * @return True if need to recycle a shared reserved region.
+	 */
+	bool recycleToSharedArrayReservedRegion(MM_EnvironmentBase *env, uintptr_t fraction);
+
+	/**
+	 * Get total shared reserved region count.
+	 *
+	 * @return the count of shared reserved regions.
+	 */
+	uintptr_t getSharedArrayReservedRegionsCount();
+
 	MM_HeapRegionDescriptorVLHGC **getArrayReservedRegionListAddress()
 	{
 		return &_arrayReservedRegionList;
@@ -301,6 +329,7 @@ public:
 	}
 
 	void recycleReservedRegionsForVirtualLargeObjectHeap(MM_EnvironmentVLHGC *env, uintptr_t reservedRegionCount, bool needLock = false);
+
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 	
 protected:
@@ -326,6 +355,7 @@ protected:
 		, _freeProcessorNodes(NULL)
 		, _freeProcessorNodeCount(0)
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+		, _sharedArrayReservedRegionsBytesUsed(0)
 		, _arrayReservedRegionList(NULL)
 		, _arrayReservedRegionCount(0)
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
