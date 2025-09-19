@@ -48,12 +48,12 @@ class TR_JProfilingValue : public TR::Optimization
     * Identify place holder calls to jProfileValueSymbol and jProfileValueWithNullCHKSymbol, lowering them
     * into the fast, slow and helper paths.
     */
-   void lowerCalls();
+   void lowerCalls(TR::list<TR::TreeTop *> &valueProfilingPlaceHolderCalls);
    /**
     * Clean up duplicate profiling candidates and add profiling placeholder calls
     * for profiling target of virtual call dispatch and instanceOf/checkCast.
     */
-   void cleanUpAndAddProfilingCandidates();
+   void cleanUpAndAddProfilingCandidates(TR::list<TR::TreeTop *> &valueProfilingPlaceHolderCalls);
    /**
     * Examines node to identify profiling candidate and add place holder calls for profiling it.
     * This routine checks node and it's children for mainly two type of nodes.
@@ -66,13 +66,14 @@ class TR_JProfilingValue : public TR::Optimization
     * @param alreadyProfiledValues A BitVector containing information about already profiled nodes in Extended Basic Blocks
     * @param checklist A Node checklist to make sure while recursively examining node, we do not examine node multiple times.
     */
-   void performOnNode(TR::Node *node, TR::TreeTop *cursor, TR_BitVector *alreadyProfiledValues, TR::NodeChecklist *checklist);
+   void performOnNode(TR::Node *node, TR::TreeTop *cursor, TR_BitVector *alreadyProfiledValues, TR::NodeChecklist *checklist, TR::list<TR::TreeTop *> &valueProfilingPlaceHolderCalls);
 
-   static bool addProfilingTrees(
+   static TR::TreeTop* addProfilingTrees(
       TR::Compilation *comp,
       TR::TreeTop *insertionPoint,
       TR::Node *value,
       TR_AbstractHashTableProfilerInfo *table,
+      TR::TreeTop *lastTreeTop = NULL,
       bool addNullCheck = false,
       bool extendBlocks = true,
       bool trace = false);
