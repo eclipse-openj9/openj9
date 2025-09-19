@@ -134,14 +134,12 @@ void freeMemorySegment(J9JavaVM *javaVM, J9MemorySegment *segment, BOOLEAN freeD
 		 */
 		if (J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_CODE | MEMORY_TYPE_FIXED_RAM_CLASS | MEMORY_TYPE_VIRTUAL)) {
 			j9vmem_free_memory(segment->baseAddress, segment->size, &segment->vmemIdentifier);
-		} else if (useAdvise && J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_JIT_SCRATCH_SPACE)) {
+		} else if ((useAdvise) && (MEMORY_TYPE_JIT_SCRATCH_SPACE & segment->type)) {
 			j9mem_advise_and_free_memory(segment->baseAddress);
-		} else if (J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_RAM_CLASS | MEMORY_TYPE_UNDEAD_CLASS)) {
+		} else if (segment->type & (MEMORY_TYPE_RAM_CLASS | MEMORY_TYPE_UNDEAD_CLASS)) {
 #if defined(J9VM_OPT_SNAPSHOTS)
 			if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
-				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)
-					&& J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_RAM_CLASS_SUB4G)
-				) {
+				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
 					vmsnapshot_free_memory32(segment->baseAddress);
 				} else {
 					vmsnapshot_free_memory(segment->baseAddress);
@@ -149,9 +147,7 @@ void freeMemorySegment(J9JavaVM *javaVM, J9MemorySegment *segment, BOOLEAN freeD
 			} else
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 			{
-				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)
-					&& J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_RAM_CLASS_SUB4G)
-				) {
+				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
 					j9mem_free_memory32(segment->baseAddress);
 				} else {
 					j9mem_free_memory(segment->baseAddress);
@@ -304,9 +300,7 @@ allocateMemoryForSegment(J9JavaVM *javaVM,J9MemorySegment *segment, J9PortVmemPa
 	} else if (J9_ARE_ALL_BITS_SET(segment->type, MEMORY_TYPE_RAM_CLASS)) {
 #if defined(J9VM_OPT_SNAPSHOTS)
 		if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
-			if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)
-				&& J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_RAM_CLASS_SUB4G)
-			) {
+			if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
 				tmpAddr = vmsnapshot_allocate_memory32(segment->size, memoryCategory);
 			} else {
 				tmpAddr = vmsnapshot_allocate_memory(segment->size, memoryCategory);
@@ -314,9 +308,7 @@ allocateMemoryForSegment(J9JavaVM *javaVM,J9MemorySegment *segment, J9PortVmemPa
 		} else
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 		{
-			if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)
-				&& J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_RAM_CLASS_SUB4G)
-			) {
+			if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
 				tmpAddr = j9mem_allocate_memory32(segment->size, memoryCategory);
 			} else {
 				tmpAddr = j9mem_allocate_memory(segment->size, memoryCategory);
@@ -863,7 +855,6 @@ printSegments(J9MemorySegment *s, void* data)
 	if ((type & MEMORY_TYPE_VIRTUAL) == MEMORY_TYPE_VIRTUAL) printf("MEMORY_TYPE_VIRTUAL ");
 	if ((type & MEMORY_TYPE_FIXED_RAM_CLASS) == MEMORY_TYPE_FIXED_RAM_CLASS) printf("MEMORY_TYPE_FIXED_RAM_CLASS ");
 	if ((type & MEMORY_TYPE_RAM_CLASS) == MEMORY_TYPE_RAM_CLASS) printf("MEMORY_TYPE_RAM_CLASS ");
-	if ((type & MEMORY_TYPE_RAM_CLASS_SUB4G) == MEMORY_TYPE_RAM_CLASS_SUB4G) printf("MEMORY_TYPE_RAM_CLASS_SUB4G ");
 	if ((type & MEMORY_TYPE_IGC_SCAN_QUEUE) == MEMORY_TYPE_IGC_SCAN_QUEUE) printf("MEMORY_TYPE_IGC_SCAN_QUEUE ");
 	if ((type & MEMORY_TYPE_RAM) == MEMORY_TYPE_RAM) printf("MEMORY_TYPE_RAM ");
 	if ((type & MEMORY_TYPE_FIXED) == MEMORY_TYPE_FIXED) printf("MEMORY_TYPE_FIXED ");

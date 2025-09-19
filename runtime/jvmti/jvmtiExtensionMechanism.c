@@ -2834,16 +2834,15 @@ done:
 static jvmtiError 
 jvmtiGetMethodAndClassNames_verifyRamMethod(J9JavaVM * vm, J9Method * ramMethod)
 {
-	J9Class *clazz = NULL;
-	J9MemorySegment *segment = NULL;
+	J9Class * clazz;
+	J9MemorySegment *segment;
 	J9ClassWalkState walkState;
+
 
 	omrthread_monitor_enter(vm->classTableMutex);
 
-	segment = (J9MemorySegment *)avl_search(&vm->classMemorySegments->avlTreeData, (UDATA)ramMethod);
-	if ((NULL == segment) || (NULL == segment->classLoader)
-		|| J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_UNDEAD_CLASS)
-	) {
+	segment = (J9MemorySegment *) avl_search(&vm->classMemorySegments->avlTreeData, (UDATA) ramMethod);
+	if ((segment == NULL) || (segment->type == MEMORY_TYPE_UNDEAD_CLASS) || (segment->classLoader == NULL)) {
 		/* Bail out if we happen to hit a segment with undead classes, those segments do not have a valid classloader
 		 * and would contain invalid methods in the first place. */
 		omrthread_monitor_exit(vm->classTableMutex);
