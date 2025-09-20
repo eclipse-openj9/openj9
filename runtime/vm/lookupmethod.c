@@ -199,6 +199,12 @@ processMethod(J9VMThread * currentThread, UDATA lookupOptions, J9Method * method
 			}
 		}
 
+		if (J9_ARE_ANY_BITS_SET(lookupOptions, J9_INVOKEINTERFACE) && !J9_ARE_ANY_BITS_SET(modifiers, J9AccPrivate | J9AccPublic)) {
+			*exception = J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR;
+			*exceptionClass = targetClass;
+			return method;
+		}
+
 		if (doVisibilityCheck) {
 			IDATA checkResult = checkVisibility(currentThread, senderClass, methodClass, newModifiers, lookupOptions | J9_LOOK_NO_MODULE_CHECKS);
 			if (checkResult < J9_VISIBILITY_ALLOWED) {
@@ -699,12 +705,26 @@ retry:
 			J9Method * foundMethod = searchClassForMethodCommon(lookupClass, name, nameLength, sig, sigLength, J9_ARE_ANY_BITS_SET(lookupOptions, J9_LOOK_PARTIAL_SIGNATURE));
 
 			if (foundMethod != NULL) {
+				UDATA modifiers = J9_ROM_METHOD_FROM_RAM_METHOD(foundMethod)->modifiers;
+				/* Skip private methods during invokeinterface resolution for Java 11+ */
+				if (J2SE_VERSION(currentThread->javaVM) >= J2SE_V11) {
+					if (J9_ARE_ANY_BITS_SET(lookupOptions, J9_INVOKEINTERFACE) && J9_ARE_ANY_BITS_SET(modifiers, J9AccPrivate)) {
+						goto nextClass;
+					}
+				}
 				resultMethod = processMethod(currentThread, lookupOptions, foundMethod, lookupClass, &exception, &exceptionClass, &errorType, nameAndSig, senderClass, targetClass);
 				if (NULL != currentThread->currentException) {
 					goto end;
 				}
 
 				if (resultMethod == NULL) {
+					//if (exception == J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR && J9_ARE_ANY_BITS_SET(lookupOptions, J9_INVOKEINTERFACE)) {
+						/* Disable J9_LOOK_NO_THROW option so IllegalAccessError
+						 * is set from here during invokeinterface resolution.
+						 */
+						/*lookupOptions &= ~J9_LOOK_NO_THROW;
+						goto done;
+					}*/
 					if (J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR == exception) {
 						/* Incompatible method found - caller may request to ignore this case */
 						if (J9_ARE_ANY_BITS_SET(lookupOptions, J9_LOOK_IGNORE_INCOMPATIBLE_METHODS)) {
