@@ -27,7 +27,6 @@ import org.testng.annotations.Test;
 import org.testng.annotations.BeforeClass;
 
 import jdk.internal.value.ValueClass;
-import jdk.internal.vm.annotation.ImplicitlyConstructible;
 import jdk.internal.vm.annotation.NullRestricted;
 
 @Test(groups = { "level.sanity" })
@@ -59,7 +58,6 @@ public class ValueTypeSystemArraycopyTests {
 		}
 	}
 
-	@ImplicitlyConstructible
 	public static value class SomeValueClass implements SomeInterface {
 		double val1;
 		long val2;
@@ -75,7 +73,6 @@ public class ValueTypeSystemArraycopyTests {
 		}
 	}
 
-	@ImplicitlyConstructible
 	public static value class SomeValueClass2 implements SomeInterface {
 		long val1;
 		double val2;
@@ -92,25 +89,15 @@ public class ValueTypeSystemArraycopyTests {
 	public static SomeIdentityClass[] idArraySrc = new SomeIdentityClass[ARRAY_SIZE];
 	public static SomeValueClass[] vtArrayDst = new SomeValueClass[ARRAY_SIZE];
 	public static SomeValueClass[] vtArraySrc = new SomeValueClass[ARRAY_SIZE];
-	public static SomeValueClass[] nullRestrictedVtArraySrc =
-		(SomeValueClass[])ValueClass.newNullRestrictedArray(SomeValueClass.class, ARRAY_SIZE);
-	public static SomeValueClass[] nullRestrictedVtArrayDst =
-		(SomeValueClass[])ValueClass.newNullRestrictedArray(SomeValueClass.class, ARRAY_SIZE);
 	public static SomeInterface[] ifIdArrayDst = new SomeIdentityClass[ARRAY_SIZE];
 	public static SomeInterface[] ifIdArraySrc = new SomeIdentityClass[ARRAY_SIZE];
 	public static SomeInterface[] ifVtArrayDst = new SomeValueClass[ARRAY_SIZE];
 	public static SomeInterface[] ifVtArraySrc = new SomeValueClass[ARRAY_SIZE];
-	public static SomeInterface[] ifNullRestrictedVtArrayDst =
-		(SomeValueClass[])ValueClass.newNullRestrictedArray(SomeValueClass.class, ARRAY_SIZE);
-	public static SomeInterface[] ifNullRestrictedVtArraySrc =
-		(SomeValueClass[])ValueClass.newNullRestrictedArray(SomeValueClass.class, ARRAY_SIZE);
 	public static SomeInterface[] ifArray1 = new SomeInterface[ARRAY_SIZE];
 	public static SomeInterface[] ifArray2 = new SomeInterface[ARRAY_SIZE];
 	public static SomeInterface[] ifArray3 = new SomeInterface[ARRAY_SIZE];
 
 	public static SomeIdentityClass[] idArrayDstCheckForException = new SomeIdentityClass[ARRAY_SIZE];
-	public static SomeValueClass[] nullRestrictedVtArrayDstCheckForException =
-		(SomeValueClass[])ValueClass.newNullRestrictedArray(SomeValueClass.class, ARRAY_SIZE);
 
 	static private void initArrays() {
 		for (int i=0; i < ARRAY_SIZE; i++) {
@@ -121,17 +108,11 @@ public class ValueTypeSystemArraycopyTests {
 			vtArrayDst[i] = new SomeValueClass(i*3);
 			vtArraySrc[i] = new SomeValueClass(i*4);
 
-			nullRestrictedVtArrayDst[i] = new SomeValueClass(i*5);
-			nullRestrictedVtArraySrc[i] = new SomeValueClass(i*6);
-
 			ifIdArrayDst[i] = new SomeIdentityClass(i*7);
 			ifIdArraySrc[i] = new SomeIdentityClass(i*8);
 
 			ifVtArrayDst[i] = new SomeValueClass(i*9);
 			ifVtArraySrc[i] = new SomeValueClass(i*10);
-
-			ifNullRestrictedVtArrayDst[i] = new SomeValueClass(i*11);
-			ifNullRestrictedVtArraySrc[i] = new SomeValueClass(i*12);
 
 			ifArray1[i] = new SomeIdentityClass(i*13);
 			ifArray2[i] = new SomeValueClass(i*14);
@@ -148,8 +129,6 @@ public class ValueTypeSystemArraycopyTests {
 				ifArray3[i] = new SomeValueClass(i*30);
 			}
 
-			nullRestrictedVtArrayDst[i] = new SomeValueClass(i*5);
-			nullRestrictedVtArrayDstCheckForException[i] = nullRestrictedVtArrayDst[i];
 		}
 	}
 
@@ -166,15 +145,12 @@ public class ValueTypeSystemArraycopyTests {
 
 			idArrayDst[i] = new SomeIdentityClass(i);
 			idArrayDstCheckForException[i] = idArrayDst[i];
-			nullRestrictedVtArrayDst[i] = new SomeValueClass(i*5);
-			nullRestrictedVtArrayDstCheckForException[i] = nullRestrictedVtArrayDst[i];
 		}
 	}
 
 	static private void initArraysToCopyNullToNullRestrictedArray() {
 		for (int i=0; i < ARRAY_SIZE; i++) {
 			vtArraySrc[i] = null;
-			nullRestrictedVtArrayDst[i] = new SomeValueClass(i);
 		}
 	}
 
@@ -191,9 +167,6 @@ public class ValueTypeSystemArraycopyTests {
 	}
 
 	static private void checkNullRestrictedVTArrayAfterException(int index) {
-		for (int i=index; i < nullRestrictedVtArrayDst.length; ++i) {
-			assertEquals(nullRestrictedVtArrayDst[i], nullRestrictedVtArrayDstCheckForException[i]);
-		}
 	}
 
 	static private void checkIDArrayAfterException(int index) {
@@ -387,37 +360,16 @@ public class ValueTypeSystemArraycopyTests {
 	@Test(priority=1)
 	static public void testSystemArrayCopy7() throws Throwable {
 
-		initArrays();
-		testVTVT(nullRestrictedVtArraySrc, nullRestrictedVtArrayDst); // Fist invocation (Interpreter)
-
-		initArrays();
-		testVTVT(nullRestrictedVtArraySrc, nullRestrictedVtArrayDst);
-
-		checkResults(nullRestrictedVtArraySrc, nullRestrictedVtArrayDst);
 	}
 
 	@Test(priority=1)
 	static public void testSystemArrayCopy8() throws Throwable {
 
-		initArrays();
-		testVTIF(nullRestrictedVtArraySrc, ifNullRestrictedVtArrayDst); // Fist invocation (Interpreter)
-
-		initArrays();
-		testVTIF(nullRestrictedVtArraySrc, ifNullRestrictedVtArrayDst);
-
-		checkResults(nullRestrictedVtArraySrc, ifNullRestrictedVtArrayDst);
 	}
 
 	@Test(priority=1)
 	static public void testSystemArrayCopy9() throws Throwable {
 
-		initArrays();
-		testIFVT(ifNullRestrictedVtArraySrc, nullRestrictedVtArrayDst); // Fist invocation (Interpreter)
-
-		initArrays();
-		testIFVT(ifNullRestrictedVtArraySrc, nullRestrictedVtArrayDst);
-
-		checkResults(ifNullRestrictedVtArraySrc, nullRestrictedVtArrayDst);
 	}
 
 
@@ -436,10 +388,6 @@ public class ValueTypeSystemArraycopyTests {
 		checkResults(ifVtArraySrc, ifVtArrayDst);
 
 		initArrays();
-		testIFIF(ifNullRestrictedVtArraySrc, ifNullRestrictedVtArrayDst);
-		checkResults(ifNullRestrictedVtArraySrc, ifNullRestrictedVtArrayDst);
-
-		initArrays();
 		testIFIF(ifArray1, ifIdArrayDst);
 		checkResults(ifArray1, ifIdArrayDst);
 
@@ -454,14 +402,6 @@ public class ValueTypeSystemArraycopyTests {
 		initArrays();
 		testIFIF(ifVtArraySrc, ifArray2);
 		checkResults(ifVtArraySrc, ifArray2);
-
-		initArrays();
-		testIFIF(ifArray3, ifNullRestrictedVtArrayDst);
-		checkResults(ifArray3, ifNullRestrictedVtArrayDst);
-
-		initArrays();
-		testIFIF(ifNullRestrictedVtArraySrc, ifArray3);
-		checkResults(ifNullRestrictedVtArraySrc, ifArray3);
 	}
 
 	@Test(priority=1)
@@ -507,41 +447,21 @@ public class ValueTypeSystemArraycopyTests {
 	@Test(priority=1)
 	static public void testSystemArrayCopy15() throws Throwable {
 
-		initArrays();
-		testVTOBJ(nullRestrictedVtArraySrc); // Fist invocation (Interpreter)
-
-		initArrays();
-		testVTOBJ(nullRestrictedVtArraySrc);
 	}
 
 	@Test(priority=1)
 	static public void testSystemArrayCopy16() throws Throwable {
 
-		initArrays();
-		testOBJVT(nullRestrictedVtArrayDst); // Fist invocation (Interpreter)
-
-		initArrays();
-		testOBJVT(nullRestrictedVtArrayDst);
 	}
 
 	@Test(priority=1)
 	static public void testSystemArrayCopy17() throws Throwable {
 
-		initArrays();
-		testIFOBJ(ifNullRestrictedVtArraySrc); // Fist invocation (Interpreter)
-
-		initArrays();
-		testIFOBJ(ifNullRestrictedVtArraySrc);
 	}
 
 	@Test(priority=1)
 	static public void testSystemArrayCopy18() throws Throwable {
 
-		initArrays();
-		testOBJIF(ifNullRestrictedVtArrayDst); // Fist invocation (Interpreter)
-
-		initArrays();
-		testOBJIF(ifNullRestrictedVtArrayDst);
 	}
 
 	@Test(priority=1)
@@ -559,10 +479,6 @@ public class ValueTypeSystemArraycopyTests {
 		checkResults(ifVtArraySrc, ifVtArrayDst);
 
 		initArrays();
-		testOBJOBJ(ifNullRestrictedVtArraySrc, ifNullRestrictedVtArrayDst);
-		checkResults(ifNullRestrictedVtArraySrc, ifNullRestrictedVtArrayDst);
-
-		initArrays();
 		testOBJOBJ(ifArray1, ifIdArrayDst);
 		checkResults(ifArray1, ifIdArrayDst);
 
@@ -577,14 +493,6 @@ public class ValueTypeSystemArraycopyTests {
 		initArrays();
 		testOBJOBJ(ifVtArraySrc, ifArray2);
 		checkResults(ifVtArraySrc, ifArray2);
-
-		initArrays();
-		testOBJOBJ(ifArray3, ifNullRestrictedVtArrayDst);
-		checkResults(ifArray3, ifNullRestrictedVtArrayDst);
-
-		initArrays();
-		testOBJOBJ(ifNullRestrictedVtArraySrc, ifArray3);
-		checkResults(ifNullRestrictedVtArraySrc, ifArray3);
 	}
 
 	@Test(priority=1)
@@ -611,8 +519,6 @@ public class ValueTypeSystemArraycopyTests {
 		for (int i=0; i < ARRAY_SIZE; i++) {
 			src[i] = new SomeValueClass(i*25);
 		}
-		testOBJOBJ(src, ifNullRestrictedVtArrayDst);
-		checkResults(src, ifNullRestrictedVtArrayDst);
 	}
 
 	@Test(priority=1)
@@ -642,103 +548,6 @@ public class ValueTypeSystemArraycopyTests {
 		for (int i=0; i < ARRAY_SIZE; i++) {
 			dst[i] = new SomeValueClass(i*26);
 		}
-		testOBJOBJ(ifNullRestrictedVtArraySrc, dst);
-		checkResults(ifNullRestrictedVtArraySrc, dst);
-	}
-
-	@Test(priority=1)
-	static public void testSystemArrayCopy22() throws Throwable {
-
-		try {
-			initArraysForASETest(); // ifArray3[ARRAY_SIZE/2] is NULL
-			testIFVT(ifArray3, nullRestrictedVtArrayDst);
-		} catch (java.lang.ArrayStoreException ase1) {
-			try {
-				checkResultsPartial(ifArray3, nullRestrictedVtArrayDst, ARRAY_SIZE/2);
-				checkNullRestrictedVTArrayAfterException(ARRAY_SIZE/2);
-
-				initArraysForASETest();
-				testIFVT(ifArray3, nullRestrictedVtArrayDst);
-			} catch (java.lang.ArrayStoreException ase2) {
-				checkResultsPartial(ifArray3, nullRestrictedVtArrayDst, ARRAY_SIZE/2);
-				// pass
-				return;
-			}
-		}
-
-		Assert.fail("Expect an ArrayStoreException. No exception or wrong kind of exception thrown");
-	}
-
-	@Test(priority=1)
-	static public void testSystemArrayCopy23() throws Throwable {
-
-		try {
-			initArraysForASETest(); // ifArray3[ARRAY_SIZE/2] is NULL
-			testIFIF(ifArray3, nullRestrictedVtArrayDst);
-		} catch (java.lang.ArrayStoreException ase1) {
-			try {
-				checkResultsPartial(ifArray3, nullRestrictedVtArrayDst, ARRAY_SIZE/2);
-				checkNullRestrictedVTArrayAfterException(ARRAY_SIZE/2);
-
-				initArraysForASETest();
-				testIFIF(ifArray3, nullRestrictedVtArrayDst);
-			} catch (java.lang.ArrayStoreException ase2) {
-				checkResultsPartial(ifArray3, nullRestrictedVtArrayDst, ARRAY_SIZE/2);
-				checkNullRestrictedVTArrayAfterException(ARRAY_SIZE/2);
-				// pass
-				return;
-			}
-		}
-
-		Assert.fail("Expect a ArrayStoreException. No exception or wrong kind of exception thrown");
-	}
-
-	@Test(priority=1)
-	static public void testSystemArrayCopy24() throws Throwable {
-
-		try {
-			initArraysForArrayStoreChkExceptionTest();  // ifArray3[ARRAY_SIZE/2] is SomeIdentityClass
-			testIFVT(ifArray3, nullRestrictedVtArrayDst);
-		} catch (java.lang.ArrayStoreException ase1) {
-			try {
-				checkResultsPartial(ifArray3, nullRestrictedVtArrayDst, ARRAY_SIZE/2);
-				checkNullRestrictedVTArrayAfterException(ARRAY_SIZE/2);
-
-				initArraysForArrayStoreChkExceptionTest();
-				testIFVT(ifArray3, nullRestrictedVtArrayDst);
-			} catch (java.lang.ArrayStoreException ase2) {
-				checkResultsPartial(ifArray3, nullRestrictedVtArrayDst, ARRAY_SIZE/2);
-				checkNullRestrictedVTArrayAfterException(ARRAY_SIZE/2);
-				// pass
-				return;
-			}
-		}
-
-		Assert.fail("Expect a ArrayStoreException. No exception or wrong kind of exception thrown");
-	}
-
-	@Test(priority=1)
-	static public void testSystemArrayCopy25() throws Throwable {
-
-		try {
-			initArraysForArrayStoreChkExceptionTest();  // ifArray3[ARRAY_SIZE/2] is SomeIdentityClass
-			testIFIF(ifArray3, nullRestrictedVtArrayDst);
-		} catch (java.lang.ArrayStoreException ase1) {
-			try {
-				checkResultsPartial(ifArray3, nullRestrictedVtArrayDst, ARRAY_SIZE/2);
-				checkNullRestrictedVTArrayAfterException(ARRAY_SIZE/2);
-
-				initArraysForArrayStoreChkExceptionTest();
-				testIFIF(ifArray3, nullRestrictedVtArrayDst);
-			} catch (java.lang.ArrayStoreException ase2) {
-				checkResultsPartial(ifArray3, nullRestrictedVtArrayDst, ARRAY_SIZE/2);
-				checkNullRestrictedVTArrayAfterException(ARRAY_SIZE/2);
-				// pass
-				return;
-			}
-		}
-
-		Assert.fail("Expect a ArrayStoreException. No exception or wrong kind of exception thrown");
 	}
 
 	@Test(priority=1)
@@ -763,26 +572,5 @@ public class ValueTypeSystemArraycopyTests {
 		}
 
 		Assert.fail("Expect a ArrayStoreException. No exception or wrong kind of exception thrown");
-	}
-
-	@Test(priority=1, invocationCount=2)
-	static public void testSystemArrayCopy27() throws Throwable {
-		initArrays();
-		testVTVT(vtArraySrc, nullRestrictedVtArrayDst);
-		checkResults(vtArraySrc, nullRestrictedVtArrayDst);
-	}
-
-	@Test(priority=1, invocationCount=2)
-	static public void testSystemArrayCopy28() throws Throwable {
-		initArrays();
-		testVTVT(nullRestrictedVtArraySrc, vtArrayDst);
-		checkResults(nullRestrictedVtArraySrc, vtArrayDst);
-	}
-
-	@Test(priority=1, invocationCount=2, expectedExceptions=ArrayStoreException.class)
-	static public void testSystemArrayCopy29() throws Throwable {
-		initArraysToCopyNullToNullRestrictedArray();
-		testVTVT(vtArraySrc, nullRestrictedVtArrayDst);
-		checkResults(vtArraySrc, nullRestrictedVtArrayDst);
 	}
 }

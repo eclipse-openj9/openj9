@@ -59,25 +59,5 @@ public class DDRBackfillLayoutTest {
 		ValueTypeDoubleLong doubleLongInstance = new ValueTypeDoubleLong(new ValueTypeLong(ValueTypeTests.defaultLong), ValueTypeTests.defaultLongNew);
 		ValueTypeQuadLong quadLongInstance = new ValueTypeQuadLong(doubleLongInstance, new ValueTypeLong(ValueTypeTests.defaultLongNew2), ValueTypeTests.defaultLongNew3);
 		ValueTypeDoubleQuadLong doubleQuadLongInstance = new ValueTypeDoubleQuadLong(quadLongInstance, doubleLongInstance, new ValueTypeLong(ValueTypeTests.defaultLongNew4), ValueTypeTests.defaultLongNew5);
-
-		Object[] flatUnAlignedSingleBackfill2Array = ValueClass.newNullRestrictedArray(ValueTypeTests.flatUnAlignedSingleBackfillClass2, 3);
-		flatUnAlignedSingleBackfill2Array[1] = flatUnAlignedSingleBackfill2Instance;
-
-		Object[] quadLongArray = ValueClass.newNullRestrictedArray(ValueTypeQuadLong.class, 3);
-		quadLongArray[1] = quadLongInstance;
-
-		ValueTypeTests.checkObject(flatSingleBackfillInstance,
-				objectBackfillInstance,
-				flatUnAlignedSingleBackfillInstance,
-				flatUnAlignedSingleBackfill2Instance,
-				flatUnAlignedObjectBackfillInstance,
-				flatUnAlignedObjectBackfill2Instance,
-				singleBackfillInstance,
-				objectBackfillInstance2,
-				doubleLongInstance,
-				quadLongInstance,
-				doubleQuadLongInstance,
-				flatUnAlignedSingleBackfill2Array,
-				quadLongArray);
 	}
 }

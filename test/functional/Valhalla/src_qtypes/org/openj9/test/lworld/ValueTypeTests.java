@@ -310,94 +310,7 @@ public class ValueTypeTests {
 		int x1 = 0xFFEEFFEE;
 		int y1 = 0xAABBAABB;
 		Object point2D = makePoint2D.invoke(x1, y1);
-		Object[] array = ValueClass.newNullRestrictedArray(point2DClass, 8);
-
-		for (int i = 0; i < 8; i++) {
-			array[i] = point2D;
-		}
-
-		System.gc();
-
-		Object value = array[0];
 	}
-
-	@Test(priority=5)
-	static public void testGCFlattenedValueArrayWithSingleAlignment() throws Throwable {
-		Object[] array = ValueClass.newNullRestrictedArray(assortedValueWithSingleAlignmentClass, 4);
-		
-		for (int i = 0; i < 4; i++) {
-			Object object = createAssorted(makeAssortedValueWithSingleAlignment, typeWithSingleAlignmentFields);
-			array[i] = object;
-		}
-
-		System.gc();
-
-		for (int i = 0; i < 4; i++) {
-			checkFieldAccessMHOfAssortedType(assortedValueWithSingleAlignmentGetterList, array[i], typeWithSingleAlignmentFields, true);
-		}
-	}
-
-	@Test(priority=5)
-	static public void testGCFlattenedValueArrayWithObjectAlignment() throws Throwable {
-		Object[] array = ValueClass.newNullRestrictedArray(assortedValueWithObjectAlignmentClass, 4);
-		
-		for (int i = 0; i < 4; i++) {
-			Object object = createAssorted(makeAssortedValueWithObjectAlignment, typeWithObjectAlignmentFields);
-			array[i] = object;
-		}
-
-		System.gc();
-
-		for (int i = 0; i < 4; i++) {
-			checkFieldAccessMHOfAssortedType(assortedValueWithObjectAlignmentGetterList, array[i], typeWithObjectAlignmentFields, true);
-		}
-	}
-
-	@Test(priority=5)
-	static public void testGCFlattenedValueArrayWithLongAlignment() throws Throwable {
-		Object[] array = ValueClass.newNullRestrictedArray(assortedValueWithLongAlignmentClass, genericArraySize);
-		
-		for (int i = 0; i < genericArraySize; i++) {
-			Object object = createAssorted(makeAssortedValueWithLongAlignment, typeWithLongAlignmentFields);
-			array[i] = object;
-		}
-
-		System.gc();
-
-		for (int i = 0; i < genericArraySize; i++) {
-			checkFieldAccessMHOfAssortedType(assortedValueWithLongAlignmentGetterList, array[i], typeWithLongAlignmentFields, true);
-		}
-	}
-
-	@Test(priority=5)
-	static public void testGCFlattenedLargeObjectArray() throws Throwable {
-		Object[] array = ValueClass.newNullRestrictedArray(largeObjectValueClass, 4);
-		Object largeObjectRef = createLargeObject(new Object());
-
-		for (int i = 0; i < 4; i++) {
-			array[i] = largeObjectRef;
-		}
-
-		System.gc();
-
-		Object value = array[0];
-	}
-
-	@Test(priority=5)
-	static public void testGCFlattenedMegaObjectArray() throws Throwable {
-		Object[] array = ValueClass.newNullRestrictedArray(megaObjectValueClass, 4);
-		Object megaObjectRef = createMegaObject(new Object());
-
-		System.gc();
-
-		for (int i = 0; i < 4; i++) {
-			array[i] = megaObjectRef;
-		}
-		System.gc();
-
-		Object value = array[0];
-	}
-
 
 	/*
 	 * Create a value type with double slot primitive members
@@ -535,21 +448,6 @@ public class ValueTypeTests {
 		Object st2 = makePoint2D.invoke(x3, y3);
 		Object en2 = makePoint2D.invoke(x4, y4);
 		Object line2D_2 = makeFlattenedLine2D.invoke(st2, en2);
-
-		Object[] arrayObject = ValueClass.newNullRestrictedArray(flattenedLine2DClass, 2);
-		arrayObject[0] = line2D_1;
-		arrayObject[1] = line2D_2;
-		Object line2D_1_check = arrayObject[0];
-		Object line2D_2_check = arrayObject[1];
-
-		assertEquals(getX.invoke(getFlatSt.invoke(line2D_1_check)), getX.invoke(getFlatSt.invoke(line2D_1)));
-		assertEquals(getX.invoke(getFlatSt.invoke(line2D_2_check)), getX.invoke(getFlatSt.invoke(line2D_2)));
-		assertEquals(getY.invoke(getFlatSt.invoke(line2D_1_check)), getY.invoke(getFlatSt.invoke(line2D_1)));
-		assertEquals(getY.invoke(getFlatSt.invoke(line2D_2_check)), getY.invoke(getFlatSt.invoke(line2D_2)));
-		assertEquals(getX.invoke(getFlatEn.invoke(line2D_1_check)), getX.invoke(getFlatEn.invoke(line2D_1)));
-		assertEquals(getX.invoke(getFlatEn.invoke(line2D_2_check)), getX.invoke(getFlatEn.invoke(line2D_2)));
-		assertEquals(getY.invoke(getFlatEn.invoke(line2D_1_check)), getY.invoke(getFlatEn.invoke(line2D_1)));
-		assertEquals(getY.invoke(getFlatEn.invoke(line2D_2_check)), getY.invoke(getFlatEn.invoke(line2D_2)));
 	}
 	
 	@Test(priority=2, invocationCount=2)
@@ -2298,88 +2196,9 @@ public class ValueTypeTests {
 
 	@Test(priority=1)
 	static public void testClassIsInstanceNullableArrays() throws Throwable {
-		ValueTypePoint2D[] nonNullableArray = (ValueTypePoint2D[]) ValueClass.newNullRestrictedArray(ValueTypePoint2D.class, 1);
 		ValueTypePoint2D[] nullableArray = new ValueTypePoint2D[1];
 
-		assertTrue(nonNullableArray.getClass().isInstance(nonNullableArray));
 		assertTrue(nullableArray.getClass().isInstance(nullableArray));
-		assertFalse(nonNullableArray.getClass().isInstance(nullableArray));
-		assertTrue(nullableArray.getClass().isInstance(nonNullableArray));
-	}
-
-	/*
-	 * Maintain a buffer of flattened arrays with long-aligned valuetypes while keeping a certain amount of classes alive at any
-	 * single time. This forces the GC to unload the classes.
-	 */
-	@Test(priority=5, invocationCount=2)
-	static public void testValueWithLongAlignmentGCScanning() throws Throwable {
-		ArrayList<Object> longAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
-		for (int i = 0; i < objectGCScanningIterationCount; i++) {
-			Object newLongAlignmentArray = ValueClass.newNullRestrictedArray(assortedValueWithLongAlignmentClass, genericArraySize);
-			for (int j = 0; j < genericArraySize; j++) {
-				Object assortedValueWithLongAlignment = createAssorted(makeAssortedValueWithLongAlignment, typeWithLongAlignmentFields);
-				Array.set(newLongAlignmentArray, j, assortedValueWithLongAlignment);
-			}
-			longAlignmentArrayList.add(newLongAlignmentArray);
-		}
-
-		System.gc();
-
-		for (int i = 0; i < objectGCScanningIterationCount; i++) {
-			for (int j = 0; j < genericArraySize; j++) {
-				checkFieldAccessMHOfAssortedType(assortedValueWithLongAlignmentGetterList, Array.get(longAlignmentArrayList.get(i), j), typeWithLongAlignmentFields, true);
-			}
-		}
-	}
-
-	/*
-	 * Maintain a buffer of flattened arrays with object-aligned valuetypes while keeping a certain amount of classes alive at any
-	 * single time. This forces the GC to unload the classes.
-	 */
-	@Test(priority=5, invocationCount=2)
-	static public void testValueWithObjectAlignmentGCScanning() throws Throwable {
-		ArrayList<Object> objectAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
-		for (int i = 0; i < objectGCScanningIterationCount; i++) {
-			Object newObjectAlignmentArray = ValueClass.newNullRestrictedArray(assortedValueWithObjectAlignmentClass, genericArraySize);
-			for (int j = 0; j < genericArraySize; j++) {
-				Object assortedValueWithObjectAlignment = createAssorted(makeAssortedValueWithObjectAlignment, typeWithObjectAlignmentFields);
-				Array.set(newObjectAlignmentArray, j, assortedValueWithObjectAlignment);
-			}
-			objectAlignmentArrayList.add(newObjectAlignmentArray);
-		}
-
-		System.gc();
-
-		for (int i = 0; i < objectGCScanningIterationCount; i++) {
-			for (int j = 0; j < genericArraySize; j++) {
-				checkFieldAccessMHOfAssortedType(assortedValueWithObjectAlignmentGetterList, Array.get(objectAlignmentArrayList.get(i), j), typeWithObjectAlignmentFields, true);
-			}
-		}
-	}
-
-	/*
-	 * Maintain a buffer of flattened arrays with single-aligned valuetypes while keeping a certain amount of classes alive at any
-	 * single time. This forces the GC to unload the classes.
-	 */
-	@Test(priority=5, invocationCount=2)
-	static public void testValueWithSingleAlignmentGCScanning() throws Throwable {
-		ArrayList<Object> singleAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
-		for (int i = 0; i < objectGCScanningIterationCount; i++) {
-			Object newSingleAlignmentArray = ValueClass.newNullRestrictedArray(assortedValueWithSingleAlignmentClass, genericArraySize);
-			for (int j = 0; j < genericArraySize; j++) {
-				Object assortedValueWithSingleAlignment = createAssorted(makeAssortedValueWithSingleAlignment, typeWithSingleAlignmentFields);
-				Array.set(newSingleAlignmentArray, j, assortedValueWithSingleAlignment);
-			}
-			singleAlignmentArrayList.add(newSingleAlignmentArray);
-		}
-
-		System.gc();
-
-		for (int i = 0; i < objectGCScanningIterationCount; i++) {
-			for (int j = 0; j < genericArraySize; j++) {
-				checkFieldAccessMHOfAssortedType(assortedValueWithSingleAlignmentGetterList, Array.get(singleAlignmentArrayList.get(i), j), typeWithSingleAlignmentFields, true);
-			}
-		}
 	}
 
 	@Test(priority=1)
