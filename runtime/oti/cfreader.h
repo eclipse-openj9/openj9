@@ -21,7 +21,7 @@
  *******************************************************************************/
 
 #ifndef cfreader_h
-#define cfreader_h 
+#define cfreader_h
 
 #include "cfr.h"
 #include "cfrerrnls.h"
@@ -92,6 +92,7 @@
 	{ \
 		errorCode = (U_32)J9NLS_CFR_ERR_UNEXPECTED_EOF__ID; \
 		offset = (U_32)(dataEnd - data); \
+		__asm__("int3"); \
 		goto _errorFound; \
 	}
 
@@ -215,7 +216,7 @@
 #define SWAPPING_ENDIAN(flags) ((flags) & BCT_BigEndianOutput)
 #else /* BIG_ENDIAN */
 #define SWAPPING_ENDIAN(flags) ((flags) & BCT_LittleEndianOutput)
-#endif	
+#endif
 
 #endif     /* cfreader_h */
 

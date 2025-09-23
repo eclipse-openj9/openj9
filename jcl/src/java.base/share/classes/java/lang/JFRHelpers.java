@@ -32,6 +32,7 @@ import jdk.internal.misc.Unsafe;
 
 final class JFRHelpers {
 	private static Class<?> jfrjvmClass;
+	private static Class<?> jfrUpCallClass;
 	private static Class<?> logTagClass;
 	private static Class<?> logLeveLClass;
 	private static Class<?> loggerClass;
@@ -231,6 +232,7 @@ final class JFRHelpers {
 		if (!jfrClassesInitialized) {
 			try {
 				jfrjvmClass = Class.forName("jdk.jfr.internal.JVM");
+				jfrUpCallClass = Class.forName("jdk.jfr.internal.JVMUpcalls");
 				logTagClass = Class.forName("jdk.jfr.internal.LogTag");
 				logLeveLClass = Class.forName("jdk.jfr.internal.LogLevel");
 				loggerClass = Class.forName("jdk.jfr.internal.Logger");
@@ -247,6 +249,7 @@ final class JFRHelpers {
 				/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 				Unsafe.getUnsafe().ensureClassInitialized(jfrjvmClass);
+				Unsafe.getUnsafe().ensureClassInitialized(jfrUpCallClass);
 				jfrClassesInitialized = true;
 			} catch (ReflectiveOperationException e) {
 				throw new RuntimeException(e);
