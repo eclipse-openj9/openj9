@@ -5963,7 +5963,6 @@ typedef struct JFRState {
 	BOOLEAN isConstantEventsInitialized;
 	BOOLEAN isStarted;
 	omrthread_monitor_t isConstantEventsInitializedMutex;
-	J9SysinfoCPUTime prevSysCPUTime;
 	omrthread_process_time_t prevProcCPUTimes;
 	int64_t prevProcTimestamp;
 	int64_t prevContextSwitchTimestamp;

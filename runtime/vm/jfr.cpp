@@ -832,7 +832,6 @@ initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 		goto fail;
 	}
 
-	vm->jfrState.prevSysCPUTime.timestamp = -1;
 	vm->jfrState.prevProcTimestamp = -1;
 
 	if (0 == omrsysinfo_get_number_context_switches(&vm->jfrState.prevContextSwitches)) {
@@ -1019,10 +1018,10 @@ jfrCPULoad(J9VMThread *currentThread)
 	omrthread_process_time_t currentProcCPUTimes = {0};
 	intptr_t processTimeRC = omrthread_get_process_times(&currentProcCPUTimes);
 
-	J9SysinfoCPUTime currentSysCPUTime = {0};
-	intptr_t sysTimeRC = omrsysinfo_get_CPU_utilization(&currentSysCPUTime);
+	double systemCPULoad = 0;
+	intptr_t systemCPULoadRC = omrsysinfo_get_CPU_load(&systemCPULoad);
 
-	if ((0 == processTimeRC) && (0 == sysTimeRC)) {
+	if ((0 == processTimeRC) && (0 == systemCPULoadRC)) {
 		J9JFRCPULoad *jfrEvent = (J9JFRCPULoad *)reserveBuffer(currentThread, sizeof(J9JFRCPULoad));
 		if (NULL != jfrEvent) {
 			initializeEventFields(currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_CPU_LOAD);
@@ -1046,16 +1045,7 @@ jfrCPULoad(J9VMThread *currentThread)
 			jfrState->prevProcCPUTimes = currentProcCPUTimes;
 			jfrState->prevProcTimestamp = currentTime;
 
-			if (-1 == jfrState->prevSysCPUTime.timestamp) {
-				jfrEvent->machineTotal = 0;
-			} else {
-				float machineTotal =
-						(currentSysCPUTime.cpuTime - jfrState->prevSysCPUTime.cpuTime)
-						/ ((float)numberOfCpus
-						* (currentSysCPUTime.timestamp - jfrState->prevSysCPUTime.timestamp));
-				jfrEvent->machineTotal = OMR_MIN(machineTotal, 1.0f);
-			}
-			jfrState->prevSysCPUTime = currentSysCPUTime;
+			jfrEvent->machineTotal = (float)systemCPULoad;
 		}
 	}
 }
