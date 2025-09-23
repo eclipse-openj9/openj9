@@ -2527,7 +2527,7 @@ fixNestMembers(J9VMThread * currentThread, J9HashTable * classPairs)
 
 			for (i = 0; i < nestMemberCount; i++) {
 				J9UTF8 *nestMemberName = NNSRP_GET(nestMembers[i], J9UTF8*);
-				J9Class *nestMember = vmFuncs->hashClassTableAt(classLoader, J9UTF8_DATA(nestMemberName), J9UTF8_LENGTH(nestMemberName));
+				J9Class *nestMember = vmFuncs->hashClassTableAt(classLoader, J9UTF8_DATA(nestMemberName), J9UTF8_LENGTH(nestMemberName), 0);
 				if (NULL != nestMember) {
 					if (nestMember->nestHost == originalRAMClass) {
 						nestMember->nestHost = replacementRAMClass;

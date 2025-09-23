@@ -192,7 +192,7 @@ j9bcv_validateClassRelationships(J9VMThread *vmThread, J9ClassLoader *classLoade
 
 	while (NULL != parentNode) {
 		/* Find the parent class in the loaded classes table */
-		parentClass = J9_VM_FUNCTION(vmThread, hashClassTableAt)(classLoader, parentNode->className, parentNode->classNameLength);
+		parentClass = J9_VM_FUNCTION(vmThread, hashClassTableAt)(classLoader, parentNode->className, parentNode->classNameLength, 0);
 
 		/* If the parent class has not been loaded, then it has to be an interface since the child is already loaded */
 		if (NULL == parentClass) {
