@@ -184,7 +184,7 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
 
                                     // Cleanup zOS datasets
                                     if (nodeLabels.contains('sw.os.zos')) {
-                                        def listcat = sh(script: "tso listcat | grep '${env.USER}' | grep 'JVM' | cut -d. -f 2-", returnStdout: true).trim()
+                                        def listcat = sh(script: "tso listcat | grep '${env.USER}' | grep -E 'JVM|D' | cut -d. -f 2-", returnStdout: true).trim()
                                         if (!listcat.isEmpty()) {
                                             listcat.split('\n').each {
                                                 sh "tso delete ${it}"
