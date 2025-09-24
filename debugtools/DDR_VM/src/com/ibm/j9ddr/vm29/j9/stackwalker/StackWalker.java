@@ -339,7 +339,7 @@ public class StackWalker
 
 			swPrintf(walkState, 1,
 					"*** BEGIN STACK WALK, flags = {0} walkThread = {1} ***",
-					String.format("%08X", walkState.flags), walkState.threadAddress);
+					String.format("%08X", walkState.flags), "0x", Long.toHexString(walkState.threadAddress));
 
 			if ((walkState.flags & J9_STACKWALK_START_AT_JIT_FRAME) != 0)
 				swPrintf(walkState, 2, "\tSTART_AT_JIT_FRAME");
