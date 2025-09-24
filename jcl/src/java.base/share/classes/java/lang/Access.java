@@ -469,6 +469,7 @@ final class Access implements JavaLangAccess {
 		return StringConcatHelper.lookupStatic(arg0, type);
 	}
 
+	/*[IF (JAVA_SPEC_VERSION < 26) | INLINE-TYPES]*/
 	public long stringConcatInitialCoder() {
 		return StringConcatHelper.initialCoder();
 	}
@@ -476,6 +477,7 @@ final class Access implements JavaLangAccess {
 	public long stringConcatMix(long arg0, String string) {
 		return StringConcatHelper.mix(arg0, string);
 	}
+	/*[ENDIF] (JAVA_SPEC_VERSION < 26) | INLINE-TYPES */
 	/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 	/*[IF JAVA_SPEC_VERSION >= 16]*/
@@ -591,10 +593,12 @@ final class Access implements JavaLangAccess {
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
+	/*[IF (JAVA_SPEC_VERSION < 26) | INLINE-TYPES]*/
 	@Override
 	public long stringConcatMix(long lengthCoder, char value) {
 		return StringConcatHelper.mix(lengthCoder, value);
 	}
+	/*[ENDIF] (JAVA_SPEC_VERSION < 26) | INLINE-TYPES */
 
 	@Override
 	public PrintStream initialSystemErr() {
