@@ -36,17 +36,17 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
-
 class GCMixedObjectIterator_V1 extends GCObjectIterator
 {
-	protected final static HashMap<J9ClassPointer, boolean[]> descriptionCache = new HashMap<J9ClassPointer, boolean[]>();
+	protected final static HashMap<J9ClassPointer, boolean[]> descriptionCache = new HashMap<>();
+
 	protected ObjectReferencePointer data;
 	protected boolean[] descriptionArray;
 	protected int scanIndex;
 	protected int scanLimit;
 	protected int bytesInObjectSlot;
 	protected int objectsInDescriptionSlot;
-	
+
 	protected static void setCache(J9ClassPointer clazz, boolean[] description)
 	{
 		descriptionCache.put(clazz, description);
@@ -56,15 +56,15 @@ class GCMixedObjectIterator_V1 extends GCObjectIterator
 	{
 		return descriptionCache.get(clazz);
 	}
-	
+
 	protected GCMixedObjectIterator_V1(J9ObjectPointer object, boolean includeClassSlot) throws CorruptDataException
 	{
 		super(object, includeClassSlot);
-		
-		J9ClassPointer clazz = J9ObjectHelper.clazz(object);		
-		bytesInObjectSlot = (int)ObjectReferencePointer.SIZEOF;
-		objectsInDescriptionSlot = UDATA.SIZEOF * 8;	// 8 bits per byte
-		
+
+		J9ClassPointer clazz = J9ObjectHelper.clazz(object);
+		bytesInObjectSlot = (int) ObjectReferencePointer.SIZEOF;
+		objectsInDescriptionSlot = UDATA.SIZEOF * Byte.SIZE;
+
 		VoidPointer data = VoidPointer.cast(object.addOffset(ObjectModel.getHeaderSize(object)));
 		initialize(clazz, data);
 	}
@@ -72,64 +72,66 @@ class GCMixedObjectIterator_V1 extends GCObjectIterator
 	protected GCMixedObjectIterator_V1(J9ClassPointer clazz, VoidPointer addr) throws CorruptDataException
 	{
 		super(null, false); // includeClassSlot = false
-		bytesInObjectSlot = (int)ObjectReferencePointer.SIZEOF;
-		objectsInDescriptionSlot = UDATA.SIZEOF * 8;	// 8 bits per byte
-		
+		bytesInObjectSlot = (int) ObjectReferencePointer.SIZEOF;
+		objectsInDescriptionSlot = UDATA.SIZEOF * Byte.SIZE;
+
 		initialize(clazz, addr);
 	}
 
-	private void initialize(J9ClassPointer clazz, VoidPointer addr)	throws CorruptDataException 
+	private void initialize(J9ClassPointer clazz, VoidPointer addr) throws CorruptDataException
 	{
-		data = ObjectReferencePointer.cast(addr); 
-		scanIndex = 0;
+		int totalInstanceSize = clazz.totalInstanceSize().intValue();
 
-		scanLimit = clazz.totalInstanceSize().intValue() / bytesInObjectSlot;
+		data = ObjectReferencePointer.cast(addr);
+		scanIndex = 0;
+		scanLimit = totalInstanceSize / bytesInObjectSlot;
 		descriptionArray = checkCache(clazz);
 		if (null == descriptionArray) {
-			descriptionArray = new boolean[(clazz.totalInstanceSize().intValue() + bytesInObjectSlot - 1) / bytesInObjectSlot];
+			descriptionArray = new boolean[(totalInstanceSize + bytesInObjectSlot - 1) / bytesInObjectSlot];
 			if ((scanLimit > 0) && clazz.instanceDescription().notNull()) {
 				initializeDescriptionArray(clazz);
 				setCache(clazz, descriptionArray);
 			}
 		}
 	}
-	
+
 	protected void initializeDescriptionArray(J9ClassPointer clazz) throws CorruptDataException
 	{
 		UDATAPointer descriptionPtr = clazz.instanceDescription();
-		long tempDescription;
-		
+		UDATA tempDescription;
+
 		if (descriptionPtr.anyBitsIn(1)) {
 			// Immediate
-			tempDescription = descriptionPtr.getAddress() >>> 1;
+			tempDescription = UDATA.cast(descriptionPtr).rightShift(1);
 			initializeDescriptionArray(tempDescription, 0);
 		} else {
 			int descriptionSlot = 0;
 			int descriptionIndex = 0;
 			while (descriptionIndex < scanLimit) {
-				tempDescription = descriptionPtr.at(descriptionSlot++).longValue();
+				tempDescription = descriptionPtr.at(descriptionSlot++);
 				initializeDescriptionArray(tempDescription, descriptionIndex);
 				descriptionIndex += objectsInDescriptionSlot;
 			}
 		}
 	}
 
-	private void initializeDescriptionArray(long tempDescription, int offset)
+	private void initializeDescriptionArray(UDATA tempDescription, int offset)
 	{
-		for(int i = 0; i < objectsInDescriptionSlot; i++) {
-			if (1 == (tempDescription & 1)) {
+		for (int i = 0; i < objectsInDescriptionSlot; i++) {
+			if (tempDescription.anyBitsIn(1)) {
 				descriptionArray[offset + i] = true;
 			}
-			tempDescription >>>= 1;
+			tempDescription = tempDescription.rightShift(1);
 		}
 	}
-	
+
+	@Override
 	public boolean hasNext()
 	{
 		if (object != null && includeClassSlot) {
 			return true;
 		}
-		
+
 		while (scanIndex < scanLimit) {
 			if (descriptionArray[scanIndex]) {
 				return true;
@@ -148,18 +150,19 @@ class GCMixedObjectIterator_V1 extends GCObjectIterator
 					includeClassSlot = false;
 					return J9ObjectHelper.clazz(object).classObject();
 				}
-				J9ObjectPointer next = J9ObjectPointer.cast(data.at(scanIndex));	
+				J9ObjectPointer next = J9ObjectPointer.cast(data.at(scanIndex));
 				scanIndex++;
 				return next;
 			} else {
 				throw new NoSuchElementException("There are no more items available through this iterator");
 			}
 		} catch (CorruptDataException e) {
-			raiseCorruptDataEvent("Error getting next item", e, false);		//can try to recover from this
+			raiseCorruptDataEvent("Error getting next item", e, false); // can try to recover from this
 			return null;
-		} 		
+		}
 	}
 
+	@Override
 	public VoidPointer nextAddress()
 	{
 		try {
@@ -168,15 +171,15 @@ class GCMixedObjectIterator_V1 extends GCObjectIterator
 					includeClassSlot = false;
 					return VoidPointer.cast(J9ObjectHelper.clazz(object).classObjectEA());
 				}
-				VoidPointer next = VoidPointer.cast(data.add(scanIndex));	
+				VoidPointer next = VoidPointer.cast(data.add(scanIndex));
 				scanIndex++;
 				return next;
 			} else {
 				throw new NoSuchElementException("There are no more items available through this iterator");
 			}
 		} catch (CorruptDataException e) {
-			raiseCorruptDataEvent("Error getting next item", e, false);		//can try to recover from this
+			raiseCorruptDataEvent("Error getting next item", e, false); // can try to recover from this
 			return null;
-		} 		
+		}
 	}
 }
