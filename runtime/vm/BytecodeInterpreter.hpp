@@ -8310,6 +8310,14 @@ foundITableCache:
 						rc = GOTO_THROW_CURRENT_EXCEPTION;
 						goto done;
 					}
+					if (J9_ARE_ALL_BITS_SET(romMethod->modifiers, J9AccAbstract)) {
+						/* If resulting method is abstract an error will be
+						 * thrown in throwUnsatisfiedLinkOrAbstractMethodError.
+						 * Return the interface class's method so the correct
+						 * exception handling is used.
+						 */
+						_sendMethod = interfaceClass->ramMethods + methodIndex;
+					}
 					profileInvokeReceiver(REGISTER_ARGS, receiverClass, _literals, _sendMethod);
 					_pc += offset;
 					goto done;
