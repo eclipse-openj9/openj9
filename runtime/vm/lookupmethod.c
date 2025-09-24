@@ -162,11 +162,11 @@ processMethod(J9VMThread * currentThread, UDATA lookupOptions, J9Method * method
 	 * To ensure the correct error is thrown
 	 * in throwUnsatisfiedLinkOrAbstractMethodError.
 	 */
-	 if (J2SE_VERSION(currentThread->javaVM) >= J2SE_V11) {
+	if (J2SE_VERSION(currentThread->javaVM) >= J2SE_V11) {
 		if (J9_ARE_ALL_BITS_SET(lookupOptions, J9_LOOK_INVOKE_INTERFACE) && J9_ARE_NO_BITS_SET(modifiers, J9AccPrivate | J9AccPublic)) {
 			return method;
 		}
-	 }
+	}
 
 	/* Check that the found method is visible from the sender */
 
