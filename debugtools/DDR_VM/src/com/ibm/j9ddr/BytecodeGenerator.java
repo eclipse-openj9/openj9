@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.ibm.j9ddr.StructureReader.ConstantDescriptor;
@@ -2727,6 +2728,34 @@ enum PrimitiveAccessor {
 
 final class StructureHelper extends HelperBase {
 
+	private static final Pattern BaseTypePattern = Pattern.compile(".+?(\\d+)");
+
+	private static int getCellSize(String type) {
+		int size = 0;
+		Matcher macher = BaseTypePattern.matcher(type);
+		if (macher.matches()) {
+			try {
+				size = Integer.parseInt(macher.group(1));
+			} catch (NumberFormatException e) {
+				// ignore
+			}
+		}
+
+		switch (size) {
+		default:
+			// Assume 32 for backwards compatibility.
+			size = 32;
+			break;
+		case 8:
+		case 16:
+		case 32:
+		case 64:
+			break;
+		}
+
+		return size;
+	}
+
 	static byte[] getClassBytes(StructureDescriptor structure, String className) {
 		StructureHelper helper = new StructureHelper(structure, className);
 
@@ -2893,8 +2922,9 @@ final class StructureHelper extends HelperBase {
 				 */
 				bitFieldBitCount = Math.max(bitFieldBitCount, fieldOffset * Byte.SIZE);
 
-				if (bitSize > (StructureReader.BIT_FIELD_CELL_SIZE
-						- (bitFieldBitCount % StructureReader.BIT_FIELD_CELL_SIZE))) {
+				int cellSize = getCellSize(type.substring(0, colonIndex));
+
+				if (bitSize > (cellSize - (bitFieldBitCount % cellSize))) {
 					throw new InternalError(
 							String.format("Bitfield %s->%s must not span cells", structure.getName(), fieldName));
 				}
