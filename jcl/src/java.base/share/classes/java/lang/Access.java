@@ -99,6 +99,7 @@ final class Access implements JavaLangAccess {
 
 	/*[IF JAVA_SPEC_VERSION == 8]*/
 	/** Set thread's blocker field. */
+	@Override
 	public void blockedOn(java.lang.Thread thread, Interruptible interruptable) {
 		thread.blockedOn(interruptable);
 	}
@@ -108,11 +109,13 @@ final class Access implements JavaLangAccess {
 	 * Get the AnnotationType instance corresponding to this class.
 	 * (This method only applies to annotation types.)
 	 */
+	@Override
 	public AnnotationType getAnnotationType(java.lang.Class<?> arg0) {
 		return arg0.getAnnotationType();
 	}
 
 	/** Return the constant pool for a class. */
+	@Override
 	public native ConstantPool getConstantPool(java.lang.Class<?> arg0);
 
 	/**
@@ -128,27 +131,22 @@ final class Access implements JavaLangAccess {
 	 * Class object does not represent an enum type;
 	 * the result is uncloned, cached, and shared by all callers.
 	 */
+	@Override
 	public <E extends Enum<E>> E[] getEnumConstantsShared(java.lang.Class<E> arg0) {
 		/*[PR CMVC 189091] Perf: EnumSet.allOf() is slow */
 		return arg0.getEnumConstantsShared();
 	}
 
+	@Override
 	public void registerShutdownHook(int arg0, boolean arg1, Runnable arg2) {
 		Shutdown.add(arg0, arg1, arg2);
-	}
-
-	/**
-	 * Set the AnnotationType instance corresponding to this class.
-	 * (This method only applies to annotation types.)
-	 */
-	public void setAnnotationType(java.lang.Class<?> arg0, AnnotationType arg1) {
-		arg0.setAnnotationType(arg1);
 	}
 
 	/**
 	 * Compare-And-Swap the AnnotationType instance corresponding to this class.
 	 * (This method only applies to annotation types.)
 	 */
+	@Override
 	public boolean casAnnotationType(final Class<?> clazz, AnnotationType oldType, AnnotationType newType) {
 		return clazz.casAnnotationType(oldType, newType);
 	}
@@ -157,37 +155,31 @@ final class Access implements JavaLangAccess {
 	 * @param clazz Class object
 	 * @return the array of bytes for the Annotations for clazz, or null if clazz is null
 	 */
+	@Override
 	public byte[] getRawClassAnnotations(Class<?> clazz) {
 		return AnnotationParser.getAnnotationsData(clazz);
 	}
 
+	/*[IF JAVA_SPEC_VERSION == 8]*/
+	@Override
 	public int getStackTraceDepth(java.lang.Throwable arg0) {
 		return arg0.getInternalStackTrace().length;
 	}
 
+	@Override
 	public java.lang.StackTraceElement getStackTraceElement(java.lang.Throwable arg0, int arg1) {
 		return arg0.getInternalStackTrace()[arg1];
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 
 	/*[IF JAVA_SPEC_VERSION < 24]*/
 	/*[PR CMVC 199693] Prevent trusted method chain attack. */
 	@SuppressWarnings("removal")
+	@Override
 	public Thread newThreadWithAcc(Runnable runnable, java.security.AccessControlContext acc) {
 		return new Thread(runnable, acc);
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
-
-	/**
-	 * Returns a directly present annotation instance of annotationClass type from clazz.
-	 *
-	 * @param clazz Class that will be searched for given annotationClass
-	 * @param annotationClass annotation class that is being searched on the clazz declaration
-	 *
-	 * @return declared annotation of annotationClass type for clazz, otherwise return null
-	 */
-	public <A extends Annotation> A getDirectDeclaredAnnotation(Class<?> clazz, Class<A> annotationClass) {
-		return clazz.getDeclaredAnnotation(annotationClass);
-	}
 
 	@Override
 	public Map<java.lang.Class<? extends Annotation>, Annotation> getDeclaredAnnotationMap(
@@ -241,24 +233,21 @@ final class Access implements JavaLangAccess {
 	}
 
 	/*[IF JAVA_SPEC_VERSION >= 9]*/
+	/*[IF JAVA_SPEC_VERSION == 11]*/
+	@Override
 	public Class<?> findBootstrapClassOrNull(ClassLoader classLoader, String name) {
 		return VMAccess.findClassOrNull(name, ClassLoader.bootstrapClassLoader);
 	}
-
-	public ModuleLayer getBootLayer() {
-		return System.bootLayer;
-	}
-
-	public ServicesCatalog createOrGetServicesCatalog(ClassLoader classLoader) {
-		return classLoader.createOrGetServicesCatalog();
-	}
+	/*[ENDIF] JAVA_SPEC_VERSION == 11 */
 
 	/*[IF JAVA_SPEC_VERSION < 22]*/
+	@Override
 	public String fastUUID(long param1, long param2) {
 		return Long.fastUUID(param1, param2);
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION < 22 */
 
+	@Override
 	public Package definePackage(ClassLoader classLoader, String name, Module module) {
 		if (null == classLoader) {
 			classLoader = ClassLoader.bootstrapClassLoader;
@@ -266,20 +255,7 @@ final class Access implements JavaLangAccess {
 		return classLoader.definePackage(name, module);
 	}
 
-	public URL findResource(ClassLoader classLoader, String moduleName, String name) throws IOException {
-		if (null == classLoader) {
-			classLoader = ClassLoader.bootstrapClassLoader;
-		}
-		return classLoader.findResource(moduleName, name);
-	}
-
-	public Stream<Package> packages(ClassLoader classLoader) {
-		if (null == classLoader) {
-			classLoader = ClassLoader.bootstrapClassLoader;
-		}
-		return classLoader.packages();
-	}
-
+	@Override
 	public ConcurrentHashMap<?, ?> createOrGetClassLoaderValueMap(
 			java.lang.ClassLoader classLoader) {
 		return classLoader.createOrGetClassLoaderValueMap();
@@ -287,93 +263,115 @@ final class Access implements JavaLangAccess {
 
 	/*[IF (11 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24)]*/
 	@SuppressWarnings("removal")
+	@Override
 	public void invalidatePackageAccessCache() {
 		SecurityManager.invalidatePackageAccessCache();
 	}
 	/*[ENDIF] (11 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24) */
 
+	@Override
 	public Class<?> defineClass(ClassLoader classLoader, String className, byte[] classRep, ProtectionDomain protectionDomain, String str) {
 		ClassLoader targetClassLoader = (null == classLoader) ? ClassLoader.bootstrapClassLoader : classLoader;
 		return targetClassLoader.defineClassInternal(className, classRep, 0, classRep.length, protectionDomain, true /* allowNullProtectionDomain */);
 	}
 
+	@Override
 	public Stream<ModuleLayer> layers(ModuleLayer ml) {
 		return ml.layers();
 	}
 
+	@Override
 	public Stream<ModuleLayer> layers(ClassLoader cl) {
 		return ModuleLayer.layers(cl);
 	}
 
+	@Override
 	public Module defineModule(ClassLoader cl, ModuleDescriptor md, URI uri) {
 		return new Module(System.bootLayer, cl, md, uri);
 	}
 
+	@Override
 	public Module defineUnnamedModule(ClassLoader cl) {
 		return new Module(cl);
 	}
 
+	@Override
 	public void addReads(Module fromModule, Module toModule) {
 		fromModule.implAddReads(toModule);
 	}
 
+	@Override
 	public void addReadsAllUnnamed(Module module) {
 		module.implAddReadsAllUnnamed();
 	}
 
+	@Override
 	public void addExports(Module fromModule, String pkg, Module toModule) {
 		fromModule.implAddExports(pkg, toModule);
 	}
 
+	@Override
 	public void addExportsToAllUnnamed(Module fromModule, String pkg) {
 		fromModule.implAddExportsToAllUnnamed(pkg);
 	}
 
+	@Override
 	public void addOpens(Module fromModule, String pkg, Module toModule) {
 		fromModule.implAddOpens(pkg, toModule);
 	}
 
+	@Override
 	public void addOpensToAllUnnamed(Module fromModule, String pkg) {
 		fromModule.implAddOpensToAllUnnamed(pkg);
 	}
 
+	@Override
 	public void addUses(Module fromModule, Class<?> service) {
 		fromModule.implAddUses(service);
 	}
+
+	@Override
 	public ServicesCatalog getServicesCatalog(ModuleLayer ml) {
 		return ml.getServicesCatalog();
 	}
 
 	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
+	@Override
 	public void addNonExportedPackages(ModuleLayer ml) {
 		SecurityManager.addNonExportedPackages(ml);
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
+	@Override
 	public List<Method> getDeclaredPublicMethods(Class<?> clz, String name, Class<?>... types) {
 		return clz.getDeclaredPublicMethods(name, types);
 	}
 
 	/*[IF JAVA_SPEC_VERSION < 15]*/
+	@Override
 	public void addOpensToAllUnnamed(Module fromModule, Iterator<String> packages) {
 		fromModule.implAddOpensToAllUnnamed(packages);
 	}
 	/*[ELSEIF (JAVA_SPEC_VERSION < 25) | INLINE-TYPES]*/
+	@Override
 	public void addOpensToAllUnnamed(Module fromModule, Set<String> concealedPackages, Set<String> exportedPackages) {
 		fromModule.implAddOpensToAllUnnamed(concealedPackages, exportedPackages);
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION < 15 */
 
+	@Override
 	public boolean isReflectivelyOpened(Module fromModule, String pkg, Module toModule) {
 		return fromModule.isReflectivelyOpened(pkg, toModule);
 	}
 
+	@Override
 	public boolean isReflectivelyExported(Module fromModule, String pkg, Module toModule) {
 		return fromModule.isReflectivelyExported(pkg, toModule);
 	}
 
 	/*[IF ((10 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 26)) | INLINE-TYPES]*/
+	@Override
 	public String newStringUTF8NoRepl(byte[] bytes, int offset, int length) {
 		/*[IF JAVA_SPEC_VERSION < 17]*/
 		return StringCoding.newStringUTF8NoRepl(bytes, offset, length);
@@ -384,6 +382,7 @@ final class Access implements JavaLangAccess {
 		/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 	}
 
+	@Override
 	public byte[] getBytesUTF8NoRepl(String str) {
 		/*[IF JAVA_SPEC_VERSION < 17]*/
 		return StringCoding.getBytesUTF8NoRepl(str);
@@ -394,6 +393,7 @@ final class Access implements JavaLangAccess {
 	/*[ENDIF] ((10 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 26)) | INLINE-TYPES */
 
 	/*[IF JAVA_SPEC_VERSION >= 11]*/
+	@Override
 	public void blockedOn(Interruptible interruptible) {
 		/*[IF JAVA_SPEC_VERSION >= 23]*/
 		Thread.currentThread().blockedOn(interruptible);
@@ -403,6 +403,7 @@ final class Access implements JavaLangAccess {
 	}
 
 	/*[IF (JAVA_SPEC_VERSION < 25) | INLINE-TYPES]*/
+	@Override
 	public byte[] getBytesNoRepl(String str, Charset charset) throws CharacterCodingException {
 		/*[IF JAVA_SPEC_VERSION < 17]*/
 		return StringCoding.getBytesNoRepl(str, charset);
@@ -411,6 +412,7 @@ final class Access implements JavaLangAccess {
 		/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 	}
 
+	@Override
 	public String newStringNoRepl(byte[] bytes, Charset charset) throws CharacterCodingException {
 		/*[IF JAVA_SPEC_VERSION < 17]*/
 		return StringCoding.newStringNoRepl(bytes, charset);
@@ -419,10 +421,12 @@ final class Access implements JavaLangAccess {
 		/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 	}
 	/*[ELSEIF JAVA_SPEC_VERSION == 25]*/
+	@Override
 	public byte[] uncheckedGetBytesNoRepl(String str, Charset charset) throws CharacterCodingException {
 		return String.getBytesNoRepl(str, charset);
 	}
 
+	@Override
 	public String uncheckedNewStringNoRepl(byte[] bytes, Charset charset) throws CharacterCodingException {
 		return String.newStringNoRepl(bytes, charset);
 	}
@@ -430,21 +434,14 @@ final class Access implements JavaLangAccess {
 	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 	/*[IF JAVA_SPEC_VERSION >= 12]*/
+	@Override
 	public void setCause(Throwable throwable, Throwable cause) {
 		throwable.setCause(cause);
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
-	/*[IF JAVA_SPEC_VERSION >= 14]*/
-	/*[IF JAVA_SPEC_VERSION >= 24]*/
-	@SuppressWarnings("restricted")
-	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
-	public void loadLibrary(Class<?> caller, String library) {
-		System.loadLibrary(library);
-	}
-	/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
-
 	/*[IF JAVA_SPEC_VERSION >= 15]*/
+	@Override
 	public Class<?> defineClass(ClassLoader classLoader, Class<?> clazz, String className, byte[] classRep, ProtectionDomain protectionDomain, boolean init, int flags, Object classData) {
 		ClassLoader targetClassLoader = (null == classLoader) ? ClassLoader.bootstrapClassLoader : classLoader;
 		return targetClassLoader.defineClassInternal(clazz, className, classRep, protectionDomain, init, flags, classData);
@@ -457,23 +454,28 @@ final class Access implements JavaLangAccess {
 	 *
 	 * @return the classData (Object).
 	 */
+	@Override
 	public Object classData(Class<?> clazz) {
 		return clazz.getClassData();
 	}
 
+	@Override
 	public ProtectionDomain protectionDomain(Class<?> clazz) {
 		return clazz.getProtectionDomainInternal();
 	}
 
+	@Override
 	public MethodHandle stringConcatHelper(String arg0, MethodType type) {
 		return StringConcatHelper.lookupStatic(arg0, type);
 	}
 
 	/*[IF (JAVA_SPEC_VERSION < 26) | INLINE-TYPES]*/
+	@Override
 	public long stringConcatInitialCoder() {
 		return StringConcatHelper.initialCoder();
 	}
 
+	@Override
 	public long stringConcatMix(long arg0, String string) {
 		return StringConcatHelper.mix(arg0, string);
 	}
@@ -481,16 +483,19 @@ final class Access implements JavaLangAccess {
 	/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 	/*[IF JAVA_SPEC_VERSION >= 16]*/
+	@Override
 	public void bindToLoader(ModuleLayer ml, ClassLoader cl) {
 		ml.bindToLoader(cl);
 	}
 
+	@Override
 	public void addExports(Module fromModule, String pkg) {
 		fromModule.implAddExports(pkg);
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 
 	/*[IF JAVA_SPEC_VERSION >= 17]*/
+	@Override
 	/*[IF (JAVA_SPEC_VERSION == 25) & !INLINE-TYPES]*/
 	public int uncheckedDecodeASCII(byte[] srcBytes, int srcPos, char[] dstChars, int dstPos, int length) {
 	/*[ELSE] (JAVA_SPEC_VERSION == 25) & !INLINE-TYPES */
@@ -499,6 +504,7 @@ final class Access implements JavaLangAccess {
 		return String.decodeASCII(srcBytes, srcPos, dstChars, dstPos, length);
 	}
 
+	@Override
 	/*[IF (JAVA_SPEC_VERSION == 25) & !INLINE-TYPES]*/
 	public void uncheckedInflateBytesToChars(byte[] srcBytes, int srcOffset, char[] dstChars, int dstOffset, int length) {
 	/*[ELSE] (JAVA_SPEC_VERSION == 25) & !INLINE-TYPES */
@@ -507,12 +513,12 @@ final class Access implements JavaLangAccess {
 		StringLatin1.inflate(srcBytes, srcOffset, dstChars, dstOffset, length);
 	}
 
-	// The method findBootstrapClassOrNull(ClassLoader classLoader, String name) can be removed
-	// after following API change is promoted into extension repo openj9 branch.
+	@Override
 	public Class<?> findBootstrapClassOrNull(String name) {
 		return VMAccess.findClassOrNull(name, ClassLoader.bootstrapClassLoader);
 	}
 
+	@Override
 	public String join(String prefix, String suffix, String delimiter, String[] elements, int size) {
 		return String.join(prefix, suffix, delimiter, elements, size);
 	}
@@ -530,19 +536,23 @@ final class Access implements JavaLangAccess {
 	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 
 	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	@Override
 	public void addEnableNativeAccessToAllUnnamed() {
 		Module.implAddEnableNativeAccessToAllUnnamed();
 	}
 	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+	@Override
 	public boolean isEnableNativeAccess(Module mod) {
 		return mod.implIsEnableNativeAccess();
 	}
 
+	@Override
 	public void addEnableNativeAccessAllUnnamed() {
 		Module.implAddEnableNativeAccessAllUnnamed();
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
+	@Override
 	public Module addEnableNativeAccess(Module mod) {
 		return mod.implAddEnableNativeAccess();
 	}
@@ -606,9 +616,12 @@ final class Access implements JavaLangAccess {
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 23 */
 
+	/*[IF JAVA_SPEC_VERSION < 25]*/
+	@Override
 	public long findNative(ClassLoader loader, String entryName) {
 		return ClassLoader.findNative0(loader, entryName);
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 25 */
 
 	/*[IF (JAVA_SPEC_VERSION < 25) | INLINE-TYPES]*/
 	@Override
@@ -617,6 +630,7 @@ final class Access implements JavaLangAccess {
 	}
 	/*[ENDIF] (JAVA_SPEC_VERSION < 25) | INLINE-TYPES */
 
+	@Override
 	/*[IF (JAVA_SPEC_VERSION == 25) & !INLINE-TYPES]*/
 	public int uncheckedEncodeASCII(char[] sa, int sp, byte[] da, int dp, int len) {
 	/*[ELSE] (JAVA_SPEC_VERSION == 25) & !INLINE-TYPES */
@@ -631,11 +645,13 @@ final class Access implements JavaLangAccess {
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 	/*[IF JAVA_SPEC_VERSION >= 19]*/
+	@Override
 	public Thread currentCarrierThread() {
 		return Thread.currentCarrierThread();
 	}
 
 	/*[IF JAVA_SPEC_VERSION < 24]*/
+	@Override
 	public <V> V executeOnCarrierThread(Callable<V> task) throws Exception {
 		V result;
 		Thread currentThread = Thread.currentThread();
@@ -654,44 +670,39 @@ final class Access implements JavaLangAccess {
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
+	@Override
 	public Continuation getContinuation(Thread thread) {
 		return thread.getContinuation();
 	}
 
+	@Override
 	public void setContinuation(Thread thread, Continuation c) {
 		thread.setContinuation(c);
 	}
 
 	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	@Override
 	public Object[] scopedValueCache() {
 		return Thread.scopedValueCache();
 	}
 
+	@Override
 	public void setScopedValueCache(Object[] cache) {
 		Thread.setScopedValueCache(cache);
 	}
 
+	@Override
 	public Object scopedValueBindings() {
 		return Thread.scopedValueBindings();
 	}
 
-	public Object findScopedValueBindings() {
-		return Thread.findScopedValueBindings();
-	}
-
-	public void setScopedValueBindings(Object scopeValueBindings) {
-		Thread.setScopedValueBindings(scopeValueBindings);
-	}
-
-	public void ensureMaterializedForStackWalk(Object obj) {
-		Thread.ensureMaterializedForStackWalk(obj);
-	}
-
+	@Override
 	public InputStream initialSystemIn() {
 		return System.initialIn;
 	}
 
 	/*[IF JAVA_SPEC_VERSION >= 21]*/
+	@Override
 	/*[IF (JAVA_SPEC_VERSION >= 25) & !INLINE-TYPES]*/
 	public char uncheckedGetUTF16Char(byte[] val, int index) {
 	/*[ELSE] (JAVA_SPEC_VERSION >= 25) & !INLINE-TYPES */
@@ -700,6 +711,7 @@ final class Access implements JavaLangAccess {
 		return StringUTF16.getChar(val, index);
 	}
 
+	@Override
 	/*[IF (JAVA_SPEC_VERSION == 25) & !INLINE-TYPES]*/
 	public int uncheckedCountPositives(byte[] ba, int off, int len) {
 	/*[ELSE] (JAVA_SPEC_VERSION == 25) & !INLINE-TYPES */
@@ -709,61 +721,75 @@ final class Access implements JavaLangAccess {
 	}
 
 	/*[IF JAVA_SPEC_VERSION < 23]*/
+	@Override
 	public long stringConcatCoder(char value) {
 		return StringConcatHelper.coder(value);
 	}
 
+	@Override
 	public long stringBuilderConcatMix(long lengthCoder, StringBuilder sb) {
 		return sb.mix(lengthCoder);
 	}
 
+	@Override
 	public long stringBuilderConcatPrepend(long lengthCoder, byte[] buf, StringBuilder sb) {
 		return sb.prepend(lengthCoder, buf);
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION < 23 */
 	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
+	@Override
 	public Object[] extentLocalCache() {
 		return Thread.extentLocalCache();
 	}
 
+	@Override
 	public void setExtentLocalCache(Object[] cache) {
 		Thread.setExtentLocalCache(cache);
 	}
 
+	@Override
 	public Object extentLocalBindings() {
 		return Thread.extentLocalBindings();
 	}
 
+	@Override
 	public void setExtentLocalBindings(Object bindings) {
 		Thread.setExtentLocalBindings(bindings);
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
+	@Override
 	public StackableScope headStackableScope(Thread thread) {
 		return thread.headStackableScopes();
 	}
 
+	@Override
 	public void setHeadStackableScope(StackableScope scope) {
 		Thread.setHeadStackableScope(scope);
 	}
 
+	@Override
 	public ThreadContainer threadContainer(Thread thread) {
 		return thread.threadContainer();
 	}
 
+	@Override
 	public void start(Thread thread, ThreadContainer container) {
 		thread.start(container);
 	}
 
+	@Override
 	public Thread[] getAllThreads() {
 		return Thread.getAllThreads();
 	}
 
+	@Override
 	public ContinuationScope virtualThreadContinuationScope() {
 		return VirtualThread.continuationScope();
 	}
 
+	@Override
 	public void parkVirtualThread() {
 		if (Thread.currentThread() instanceof BaseVirtualThread bvt) {
 			bvt.park();
@@ -772,6 +798,7 @@ final class Access implements JavaLangAccess {
 		}
 	}
 
+	@Override
 	public void parkVirtualThread(long nanos) {
 		if (Thread.currentThread() instanceof BaseVirtualThread bvt) {
 			bvt.parkNanos(nanos);
@@ -780,6 +807,7 @@ final class Access implements JavaLangAccess {
 		}
 	}
 
+	@Override
 	public void unparkVirtualThread(Thread thread) {
 		if (thread instanceof BaseVirtualThread bvt) {
 			bvt.unpark();
@@ -788,6 +816,7 @@ final class Access implements JavaLangAccess {
 		}
 	}
 
+	@Override
 	public StackWalker newStackWalkerInstance(Set<StackWalker.Option> options, ContinuationScope contScope, Continuation continuation) {
 		return StackWalker.newInstance(options, null, contScope, continuation);
 	}
@@ -801,19 +830,23 @@ final class Access implements JavaLangAccess {
 	}
 
 	/*[IF (JAVA_SPEC_VERSION < 25) | INLINE-TYPES]*/
+	@Override
 	public boolean isCarrierThreadLocalPresent(CarrierThreadLocal<?> carrierThreadlocal) {
 		return asThreadLocal(carrierThreadlocal).isCarrierThreadLocalPresent();
 	}
 	/*[ENDIF] (JAVA_SPEC_VERSION < 25) | INLINE-TYPES */
 
+	@Override
 	public <T> T getCarrierThreadLocal(CarrierThreadLocal<T> carrierThreadlocal) {
 		return asThreadLocal(carrierThreadlocal).getCarrierThreadLocal();
 	}
 
+	@Override
 	public void removeCarrierThreadLocal(CarrierThreadLocal<?> carrierThreadlocal) {
 		asThreadLocal(carrierThreadlocal).removeCarrierThreadLocal();
 	}
 
+	@Override
 	public <T> void setCarrierThreadLocal(CarrierThreadLocal<T> carrierThreadlocal, T carrierThreadLocalvalue) {
 		asThreadLocal(carrierThreadlocal).setCarrierThreadLocal(carrierThreadLocalvalue);
 	}
@@ -853,7 +886,7 @@ final class Access implements JavaLangAccess {
 		string.copyToSegmentRaw(segment, offset);
 	}
 
-	// No @Override to avoid breaking valhalla builds which is behind latest OpenJDK head stream update.
+	@Override
 	public Method findMethod(Class<?> clazz, boolean publicOnly, String methodName, Class<?>... parameterTypes) {
 		return clazz.findMethod(publicOnly, methodName, parameterTypes);
 	}
