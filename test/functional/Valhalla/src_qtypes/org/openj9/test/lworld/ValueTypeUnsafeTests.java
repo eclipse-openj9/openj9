@@ -24,7 +24,6 @@ package org.openj9.test.lworld;
 
 import jdk.internal.misc.Unsafe;
 import jdk.internal.value.ValueClass;
-import jdk.internal.vm.annotation.ImplicitlyConstructible;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
@@ -95,11 +94,6 @@ public class ValueTypeUnsafeTests {
 	static public void setUp() {
 		vtPoint = new ValueTypePoint2D(new ValueTypeInt(7), new ValueTypeInt(8));
 
-		vtPointAry = (ValueTypePoint2D[])ValueClass.newNullRestrictedArray(ValueTypePoint2D.class, 2);
-		vtPointAry[0] = new ValueTypePoint2D(new ValueTypeInt(5), new ValueTypeInt(10));
-		vtPointAry[1] = new ValueTypePoint2D(new ValueTypeInt(10), new ValueTypeInt(20));
-
-		vtPointAryOffset1 = vtPointAryOffset0 + arrayElementSize(vtPointAry);
 		vtIntAry = new ValueTypeInt[] { new ValueTypeInt(1), new ValueTypeInt(2) };
 		vtIntAryOffset1 = vtIntAryOffset0 + arrayElementSize(vtIntAry);
 	}
@@ -284,7 +278,6 @@ public class ValueTypeUnsafeTests {
 
 	@Test
 	static public void testuninitializedVTClassHasNullDefaultValue() {
-		@ImplicitlyConstructible
 		value class NeverInitialized {
 			final ValueTypeInt i;
 			NeverInitialized(ValueTypeInt i) { this.i = i; }
