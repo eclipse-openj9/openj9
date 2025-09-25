@@ -1,5 +1,5 @@
 <!--
-Copyright IBM Corp. and others 2017
+Copyright IBM Corp. and others 2025
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,12 +20,12 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
-Building OpenJDK Version 8 with OpenJ9
-======================================
+Building OpenJDK Version 25 with OpenJ9
+=======================================
 
-Building OpenJDK 8 with OpenJ9 will be familiar to anyone who has already built OpenJDK. The easiest method
+Building OpenJDK 25 with OpenJ9 will be familiar to anyone who has already built OpenJDK. The easiest method
 involves the use of Docker and Dockerfiles to create a build environment that contains everything
-you need to produce a Linux binary of OpenJDK V8 with the Eclipse OpenJ9 virtual machine. If this method
+you need to produce a Linux binary of OpenJDK V25 with the Eclipse OpenJ9 virtual machine. If this method
 sounds ideal for you, go straight to the [Linux :penguin:](#linux) section.
 
 Build instructions are available for the following platforms:
@@ -36,6 +36,7 @@ Build instructions are available for the following platforms:
 - [macOS :apple:](#macOS)
 - [AArch64](#aarch64)
 
+
 User documentation for the latest release of Eclipse OpenJ9 is available at the [Eclipse Foundation](https://www.eclipse.org/openj9/docs).
 If you build a binary from the current OpenJ9 source, new features and changes might be in place for the next release of OpenJ9. Draft user
 documentation for the next release of OpenJ9 can be found [here](https://eclipse-openj9.github.io/openj9-docs/).
@@ -44,13 +45,11 @@ documentation for the next release of OpenJ9 can be found [here](https://eclipse
 
 ## Linux
 :penguin:
-This build process provides detailed instructions for building a Linux x86-64 binary of OpenJDK V8 with OpenJ9 on Ubuntu 22. The binary can be built directly on your system, in a virtual
-machine, or in a Docker container :whale:.
+This build process provides detailed instructions for building a Linux x86-64 binary of **OpenJDK V25** with OpenJ9 on Ubuntu 22. The binary can be built directly on your system, in a virtual machine, or in a Docker container :whale:.
 
 If you are using a different Linux distribution, you might have to review the list of libraries that are bundled with your distribution and/or modify the instructions to use equivalent commands to the Advanced Packaging Tool (APT). For example, for Centos, substitute the `apt-get` command with `yum`.
 
 If you want to build a binary for Linux on a different architecture, such as Power Systems&trade; or z Systems&trade;, the process is very similar and any additional information for those architectures are included as Notes :pencil: as we go along.
-See also [AArch64 section](#aarch64) for building for AArch64 Linux.
 
 ### 1. Prepare your system
 :penguin:
@@ -73,7 +72,7 @@ If you want to build a binary by using a Docker container, follow these steps to
 
 2. Next, run the following command to build a Docker image, called **openj9**:
 ```
-bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=22 --gitcache=no --jdk=8 --build
+bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=22 --gitcache=no --jdk=25 --build
 ```
 
 3. Start a Docker container from the **openj9** image with the following command, where `-v` maps any directory, `<host_directory>`,
@@ -91,15 +90,14 @@ Now that you have the Docker image running, you are ready to move to the next st
 If you don't want to user Docker, you can still build directly on your Ubuntu system or in a Ubuntu virtual machine. Use the output of the following command like a recipe card to determine the software dependencies that must be installed on the system, plus a few configuration steps.
 
 ```
-bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=22 --gitcache=no --jdk=8 --print
+bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=22 --gitcache=no --jdk=25 --print
 ```
 
 1. Install the list of dependencies that can be obtained with the `apt-get` command from the following section of the Dockerfile:
-
 ```
 apt-get update \
- && apt-get install -qq -y --no-install-recommends \
-   ...
+  && apt-get install -qq -y --no-install-recommends \
+    ...
 ```
 
 2. The previous step installed g++-11 and gcc-11 packages, which might be different
@@ -109,43 +107,43 @@ version used in the build.
 export CC=gcc-11 CXX=g++-11
 ```
 
-3. Download and setup the boot JDK using the latest AdoptOpenJDK v8 build.
+3. Download and setup the boot JDK using the latest AdoptOpenJDK v25 build.
 ```
 cd <my_home_dir>
-wget -O bootjdk8.tar.gz "https://api.adoptopenjdk.net/v3/binary/latest/8/ga/linux/x64/jdk/openj9/normal/adoptopenjdk"
-tar -xzf bootjdk8.tar.gz
-rm -f bootjdk8.tar.gz
-mv $(ls | grep -i jdk8) bootjdk8
+wget -O bootjdk25.tar.gz "https://api.adoptopenjdk.net/v3/binary/latest/25/ga/linux/x64/jdk/openj9/normal/adoptopenjdk"
+tar -xzf bootjdk25.tar.gz
+rm -f bootjdk25.tar.gz
+mv $(ls | grep -i jdk-25) bootjdk25
 ```
 
 ### 2. Get the source
 :penguin:
 First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repository is a git mirror of OpenJDK without the HotSpot JVM, but with an **openj9** branch that contains a few necessary patches. Run the following command:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk8.git
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk25.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
-cd openj9-openjdk-jdk8
+cd openj9-openjdk-jdk25
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 ```
 bash get_source.sh
 ```
 
-:pencil: **OpenSSL support:** If you want to build an OpenJDK with OpenJ9 binary with OpenSSL support and you do not have a built version of OpenSSL v3.x available locally, you must specify `-openssl-branch=<branch>` where `<branch>` is an OpenSSL branch (or tag) like `openssl-3.5.2`. If the specified version of OpenSSL is already available in the standard location (SRC_DIR/openssl), `get_source.sh` uses it. Otherwise, the script deletes the content and downloads the specified version of OpenSSL source to the standard location and builds it. If you already have the version of OpenSSL in the standard location but you want a fresh copy, you must delete your current copy.
+:pencil: **OpenSSL support:** If you want to build an OpenJDK with OpenJ9 binary with OpenSSL support and you do not have a built version of OpenSSL v3.x available locally, you must specify `-openssl-branch=<branch>` where `<branch>` is an OpenSSL branch (or tag) like `openssl-3.5.2`. If the specified version of OpenSSL is already available in the standard location (`SRC_DIR/openssl`), `get_source.sh` uses it. Otherwise, the script deletes the content and downloads the specified version of OpenSSL source to the standard location and builds it. If you already have the version of OpenSSL in the standard location but you want a fresh copy, you must delete your current copy.
 
 ### 3. Configure
 :penguin:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
-bash configure --with-boot-jdk=/home/jenkins/bootjdks/jdk8
+bash configure --with-boot-jdk=/home/jenkins/bootjdks/jdk25
 ```
-:warning: The path in the example --with-boot-jdk= option is appropriate for the Docker installation. If not using the Docker environment, set the path appropriate for your setup, such as "<my_home_dir>/bootjdk8" as setup in the previous instructions.
+:warning: The path in the example `--with-boot-jdk=` option is appropriate for the Docker installation. If you're not using the Docker environment, set the path that's appropriate for your setup, such as `<my_home_dir>/bootjdk25`.
 
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
-Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=debug`).
-For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ibmruntimes/openj9-openjdk-jdk8/blob/openj9/doc/building.html#troubleshooting).
+Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
+For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ibmruntimes/openj9-openjdk-jdk25/blob/openj9/doc/building.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
@@ -168,32 +166,34 @@ Mixed references is the default to build when no options are specified. `configu
 
 ### 4. Build
 :penguin:
-Now you're ready to build OpenJDK V8 with OpenJ9:
+Now you're ready to build **OpenJDK V25** with OpenJ9:
 ```
 make all
 ```
 :warning: If you just type `make`, rather than `make all` your build will be incomplete, because the default `make` target is `exploded-image`.
 If you want to specify `make` instead of `make all`, you must add `--default-make-target=images` when you run the configure script.
 
-Two Java builds are produced: a full developer kit (jdk) and a runtime environment (jre)
-- **build/linux-x86_64-normal-server-release/images/j2sdk-image**
-- **build/linux-x86_64-normal-server-release/images/j2re-image**
+A binary for the full developer kit (jdk) is built and stored in the following directory:
+
+- **build/linux-x86_64-server-release/images/jdk**
 
     :whale: If you built your binaries in a Docker container, copy the binaries to the containers **/root/hostdir** directory so that you can access them on your local system. You'll find them in the directory you set for `<host_directory>` when you started your Docker container. See [Setting up your build environment with Docker](#setting-up-your-build-environment-with-docker-whale).
 
-    :pencil: On other architectures the **/j2sdk-image** and **/j2re-image** directories are in **build/linux-ppc64le-normal-server-release/images** (Linux on 64-bit Power systems) and **build/linux-s390x-normal-server-release/images** (Linux on 64-bit z Systems)
+    :pencil: On other architectures the **jdk** directory is in **build/linux-ppc64le-server-release/images** (Linux on 64-bit Power systems) or **build/linux-s390x-server-release/images** (Linux on 64-bit z Systems).
+
+:pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/linux-x86_64-server-release/images/jre** directory.
 
 :pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
-To use it, copy the contents of `debug-image` over the jdk `jre` directory before using the jdk with a native debugger.
+To use it, copy the contents of `debug-image` over the jdk before using the jdk with a native debugger.
 Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
 For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
 
 ### 5. Test
 :penguin:
 For a simple test, try running the `java -version` command.
-Change to the **/j2re-image** directory:
+Change to the jdk directory:
 ```
-cd build/linux-x86_64-normal-server-release/images/j2re-image
+cd build/linux-x86_64-server-release/images/jdk
 ```
 Run:
 ```
@@ -203,12 +203,12 @@ Run:
 Here is some sample output:
 
 ```
-openjdk version "1.8.0-internal"
-OpenJDK Runtime Environment (build 1.8.0-internal-admin_2017_10_31_10_46-b00)
-Eclipse OpenJ9 VM (build 2.9, JRE 1.8.0 Linux amd64-64 Compressed References 20171031_000000 (JIT enabled, AOT enabled)
-OpenJ9   - 68d6fdb
-OMR      - 7c3d3d7
-OpenJDK  - 27f5b8f based on jdk8u152-b03)
+openjdk version "25-internal" 2025-09-16
+OpenJDK Runtime Environment (build 25-internal-adhoc.jenkins.openj9-openjdk-jdk25)
+Eclipse OpenJ9 VM (build 25-internal-adhoc.jenkins.openj9-openjdk-jdk25-vmver-d194d319955, JRE 25 Linux amd64-64-Bit Compressed References 20250916_000000 (JIT enabled, AOT enabled)
+OpenJ9   - dd80dae73b2
+OMR      - 0fe78e11e
+JCL      - b0d7e01e7c6 based on jdk-25+36)
 ```
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.x support, the following acknowledgments apply in accordance with the license terms:
@@ -223,55 +223,59 @@ OpenJDK  - 27f5b8f based on jdk8u152-b03)
 ## AIX
 :blue_book:
 
-The following instructions guide you through the process of building an OpenJDK V8 binary that contains Eclipse OpenJ9 on AIX 7.2.
+The following instructions guide you through the process of building an **OpenJDK V25** binary that contains Eclipse OpenJ9 on AIX 7.2.
 
 ### 1. Prepare your system
 :blue_book:
 You must install the following AIX Licensed Program Products (LPPs):
-
-- [Java7_64](https://developer.ibm.com/javasdk/support/aix-download-service/)
 - [xlc/C++ 16](https://www.ibm.com/developerworks/downloads/r/xlcplusaix/)
 - x11.adt.ext
 
+You must also install the boot JDK: [Java25_AIX_PPC64](https://api.adoptopenjdk.net/v3/binary/latest/25/ga/aix/ppc64/jdk/openj9/normal/adoptopenjdk).
+
 A number of RPM packages are also required. The easiest method for installing these packages is to use `yum`, because `yum` takes care of any additional dependent packages for you.
 
-Download the following file: [yum_install_aix-ppc64.txt](../../buildenv/aix/jdk8/yum_install_aix-ppc64.txt)
+Download the following file: [yum_install_aix-ppc64.txt](../../buildenv/aix/jdk25/yum_install_aix-ppc64.txt)
 
 This file contains a list of required RPM packages that you can install by specifying the following command:
 ```
 yum shell yum_install_aix-ppc64.txt
 ```
 
-It is important to take the list of package dependencies from this file because it is kept right up to date by our developers.
+It is important to take the list of package dependencies from this file because it is kept up to date by our developers.
 
 ### 2. Get the source
 :blue_book:
 First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repository is a git mirror of OpenJDK without the HotSpot JVM, but with an **openj9** branch that contains a few necessary patches. Run the following command:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk8.git
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk25.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
-cd openj9-openjdk-jdk8
+cd openj9-openjdk-jdk25
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 
 ```
 bash get_source.sh
 ```
-:pencil: **OpenSSL support:** If you want to build an OpenJDK with OpenJ9 binary with OpenSSL support and you do not have a built version of OpenSSL v3.x available locally, you must specify `-openssl-branch=<branch>` where `<branch>` is an OpenSSL branch (or tag) like `openssl-3.5.2`. If the specified version of OpenSSL is already available in the standard location (SRC_DIR/openssl), `get_source.sh` uses it. Otherwise, the script deletes the content and downloads the specified version of OpenSSL source to the standard location and builds it. If you already have the version of OpenSSL in the standard location but you want a fresh copy, you must delete your current copy.
+
+:pencil: **OpenSSL support:** If you want to build an OpenJDK with OpenJ9 binary with OpenSSL support and you do not have a built version of OpenSSL v3.x available locally, you must specify `-openssl-branch=<branch>` where `<branch>` is an OpenSSL branch (or tag) like `openssl-3.5.2`. If the specified version of OpenSSL is already available in the standard location (`SRC_DIR/openssl`), `get_source.sh` uses it. Otherwise, the script deletes the content and downloads the specified version of OpenSSL source to the standard location and builds it. If you already have the version of OpenSSL in the standard location but you want a fresh copy, you must delete your current copy.
 
 ### 3. Configure
 :blue_book:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
-bash configure --with-cups-include=<cups_include_path>
+bash configure \
+    --with-boot-jdk=<path_to_boot_JDK> \
+    --with-cups-include=<cups_include_path> \
+    --disable-warnings-as-errors
 ```
 where `<cups_include_path>` is the absolute path to CUPS. For example, `/opt/freeware/include`.
 
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
 Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
-For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ibmruntimes/openj9-openjdk-jdk8/blob/openj9/doc/building.html#troubleshooting).
+For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ibmruntimes/openj9-openjdk-jdk25/blob/openj9/doc/building.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
@@ -284,13 +288,13 @@ Mixed references is the default to build when no options are specified. `configu
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl={fetched|system|path_to_library}`
 
-  where:
+where:
 
-  - `fetched` uses the OpenSSL source downloaded by `get-source.sh` in step **2. Get the source**.
-  - `system` uses the package installed OpenSSL library in the system.
-  - `path_to_library` uses a custom OpenSSL library that's already built.
+- `fetched` uses the OpenSSL source downloaded by `get-source.sh` in step **2. Get the source**.
+- `system` uses the package installed OpenSSL library in the system.
+- `path_to_library` uses a custom OpenSSL library that's already built.
 
-    If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
+  If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
 
 ### 4. build
 :blue_book:
@@ -301,21 +305,23 @@ make all
 :warning: If you just type `make`, rather than `make all` your build will be incomplete, because the default `make` target is `exploded-image`.
 If you want to specify `make` instead of `make all`, you must add `--default-make-target=images` when you run the configure script.
 
-Two Java builds are produced: a full developer kit (jdk) and a runtime environment (jre)
-- **build/aix-ppc64-normal-server-release/images/j2sdk-image**
-- **build/aix-ppc64-normal-server-release/images/j2re-image**
+A binary for the full developer kit (jdk) is built and stored in the following directory:
+
+- **build/aix-ppc64-server-release/images/jdk**
+
+:pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/aix-ppc64-server-release/images/jre** directory.
 
 :pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
-To use it, copy the contents of `debug-image` over the jdk `jre` directory before using the jdk with a native debugger.
+To use it, copy the contents of `debug-image` over the jdk before using the jdk with a native debugger.
 Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
 For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
 
 ### 5. Test
 :blue_book:
 For a simple test, try running the `java -version` command.
-Change to the **/j2sdk-image** directory:
+Change to the /jdk directory:
 ```
-cd build/aix-ppc64-normal-server-release/images/j2sdk-image
+cd build/aix-ppc64-server-release/images/jdk
 ```
 Run:
 ```
@@ -325,12 +331,12 @@ Run:
 Here is some sample output:
 
 ```
-openjdk version "1.8.0-internal"
-OpenJDK Runtime Environment (build 1.8.0-internal-admin_2017_10_31_10_46-b00)
-Eclipse OpenJ9 VM (build 2.9, JRE 8 AIX ppc-64 Compressed References 20171031_000000 (JIT enabled, AOT enabled)
-OpenJ9   - 68d6fdb
-OMR      - 7c3d3d7
-OpenJDK  - 27f5b8f based on jdk8u152-b03)
+openjdk version "25-internal" 2025-09-16
+OpenJDK Runtime Environment (build 25-internal-adhoc.jenkins.openj9-openjdk-jdk25)
+Eclipse OpenJ9 VM (build 25-internal-adhoc.jenkins.openj9-openjdk-jdk25-vmver-d194d319955, JRE 25 AIX ppc64-64-Bit Compressed References 20250916_000000 (JIT enabled, AOT enabled)
+OpenJ9   - dd80dae73b2
+OMR      - 0fe78e11e
+JCL      - b0d7e01e7c6 based on jdk-25+36)
 ```
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.x support, the following acknowledgments apply in accordance with the license terms:
@@ -344,34 +350,27 @@ OpenJDK  - 27f5b8f based on jdk8u152-b03)
 
 ## Windows
 :ledger:
-The following instructions guide you through the process of building a Windows 64-bit OpenJDK V8 binary that contains Eclipse OpenJ9. This process can be used to build binaries for Windows.
+
+The following instructions guide you through the process of building a Windows **OpenJDK V25** binary that contains Eclipse OpenJ9. This process can be used to build binaries for Windows.
 
 ### 1. Prepare your system
 :ledger:
 You must install a number of software dependencies to create a suitable build environment on your system:
 
-- [Cygwin for 64-bit versions of Windows](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
-- [Windows JDK 8](https://api.adoptopenjdk.net/v3/binary/latest/8/ga/windows/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
-- [Microsoft Visual Studio 2022](https://aka.ms/vs/17/release/vs_community.exe), which is the version currently used by OpenJ9 builds.
-- [LLVM/Clang 64bit](https://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe) or [LLVM/Clang 32bit](https://releases.llvm.org/7.0.0/LLVM-7.0.0-win32.exe)
+- [Cygwin](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
+- [Windows JDK 25](https://api.adoptopenjdk.net/v3/binary/latest/25/ga/windows/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
+- [Microsoft Visual Studio 2022](https://aka.ms/vs/17/release/vs_community.exe), which is the default compiler level used by OpenJDK25.
+- [LLVM/Clang](https://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe)
 - [NASM Assembler v2.15.05 or newer](https://www.nasm.us/pub/nasm/releasebuilds/?C=M;O=D)
 
 Add the binary path of Clang to the `PATH` environment variable to override the older version of clang integrated in Cygwin. e.g.
 ```
-export PATH="/cygdrive/c/Program Files/LLVM/bin:$PATH" (in Cygwin for 64bit)
-or
-export PATH="/cygdrive/c/Program Files/LLVM_32/bin:$PATH" (in Cygwin for 32bit)
+export PATH="/cygdrive/c/Program Files/LLVM/bin:$PATH" (in Cygwin)
 ```
 
 Add the path to `nasm.exe` to the `PATH` environment variable to override the older version of NASM installed in Cygwin. e.g.
 ```
 export PATH="/cygdrive/c/Program Files/NASM:$PATH" (in Cygwin)
-```
-
-Update your `INCLUDE` environment variable to provide a path to the Windows debugging tools with the following command:
-
-```
-export INCLUDE='C:\Program Files\Microsoft Visual Studio\2022\Community\DIA SDK\include'
 ```
 
    You can download Visual Studio manually or obtain it using the [wget](https://www.gnu.org/software/wget/faq.html#download) utility. If you choose to use `wget`, follow these steps:
@@ -385,6 +384,7 @@ cd /cygdrive/c/temp
 ```
 wget https://aka.ms/vs/17/release/vs_community.exe -O vs2022.exe
 ```
+
 - Before installing Visual Studio, change the permissions on the installation file by running `chmod u+x vs2022.exe`.
 - Install Visual Studio by running the file `vs2022.exe` (There is no special step required for installing. Please follow the guide of the installer to install all desired components, the C++ compiler is required).
 
@@ -402,11 +402,11 @@ First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repo
 
 Run the following command in the Cygwin terminal:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk8.git
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk25.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
-cd openj9-openjdk-jdk8
+cd openj9-openjdk-jdk25
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 
@@ -422,23 +422,14 @@ bash get_source.sh
 ### 3. Configure
 :ledger:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
-1) Win 64-bit
 ```
-bash configure --disable-ccache \
-               --with-boot-jdk=/cygdrive/c/<path to_jdk8>
+bash configure --with-boot-jdk=<path_to_boot_JDK>
 ```
-
-2) Win 32-bit
-```
-bash configure --disable-ccache \
-               --with-boot-jdk=/cygdrive/c/<path_to_jdk8> \
-               --with-target-bits=32
-```
-Note: If you have multiple versions of Visual Studio installed, you can enforce a specific version to be used by setting `--with-toolchain-version`, i.e., by including `--with-toolchain-version=2013` option in the configure command.
+Note: If you have multiple versions of Visual Studio installed, you can enforce a specific version to be used by setting `--with-toolchain-version`, i.e., by including `--with-toolchain-version=2022` option in the configure command.
 
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
 Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
-For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ibmruntimes/openj9-openjdk-jdk8/blob/openj9/doc/building.html#troubleshooting).
+For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ibmruntimes/openj9-openjdk-jdk25/blob/openj9/doc/building.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
@@ -467,59 +458,38 @@ make all
 :warning: If you just type `make`, rather than `make all` your build will be incomplete, because the default `make` target is `exploded-image`.
 If you want to specify `make` instead of `make all`, you must add `--default-make-target=images` when you run the configure script.
 
-Two Java builds are produced: a full developer kit (jdk) and a runtime environment (jre)
-1) Win 64-bit
-- **build/windows-x86_64-normal-server-release/images/j2sdk-image**
-- **build/windows-x86_64-normal-server-release/images/j2re-image**
+A binary for the full developer kit (jdk) is built and stored in the following directory:
 
-2) Win 32-bit
-- **build/windows-x86-normal-server-release/images/j2sdk-image**
-- **build/windows-x86-normal-server-release/images/j2re-image**
+- **build/windows-x86_64-server-release/images/jdk**
+
+:pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/windows-x86_64-server-release/images/jre** directory.
 
 :pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
-To use it, copy the contents of `debug-image` over the jdk `jre` directory before using the jdk with a native debugger.
+To use it, copy the contents of `debug-image` over the jdk before using the jdk with a native debugger.
 Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
 For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
 
 ### 5. Test
 :ledger:
 For a simple test, try running the `java -version` command.
-Change to the **/j2sdk-image** directory:
-
-1) Win 64-bit
+Change to the jdk directory:
 ```
-cd build/windows-x86_64-normal-server-release/images/j2sdk-image
+cd build/windows-x86_64-server-release/images/jdk
 ```
 Run:
 ```
 ./bin/java -version
 ```
-Here is some sample output:
-```
-openjdk version "1.8.0_172-internal"
-OpenJDK Runtime Environment (build 1.8.0_172-internal-administrator_2018_05_07_15_35-b00)
-Eclipse OpenJ9 VM (build master-9329b7b9, JRE 1.8.0 Windows 7 amd64-64-Bit Compressed References 20180507_000000 (JIT enabled, AOT enabled)
-OpenJ9   - 9329b7b9
-OMR      - 884959f4
-JCL      - 7f27c537a8 based on jdk8u172-b11)
-```
 
-2) Win 32-bit
-```
-cd build/windows-x86-normal-server-release/images/j2sdk-image
-```
-Run:
-```
-./jre/bin/java -version
-```
 Here is some sample output:
+
 ```
-openjdk version "1.8.0_172-internal"
-OpenJDK Runtime Environment (build 1.8.0_172-internal-administrator_2018_05_11_07_22-b00)
-Eclipse OpenJ9 VM (build master-9f924a1a, JRE 1.8.0 Windows 7 x86-32-Bit 20180511_000000 (JIT enabled, AOT enabled)
-OpenJ9   - 9f924a1a
-OMR      - e5db96ba
-JCL      - 7f27c537a8 based on jdk8u172-b11)
+openjdk version "25-internal" 2025-09-16
+OpenJDK Runtime Environment (build 25-internal-adhoc.jenkins.openj9-openjdk-jdk25)
+Eclipse OpenJ9 VM (build 25-internal-adhoc.jenkins.openj9-openjdk-jdk25-vmver-d194d319955, JRE 25 Windows Server 2019 amd64-64-Bit Compressed References 20250916_000000 (JIT enabled, AOT enabled)
+OpenJ9   - dd80dae73b2
+OMR      - 0fe78e11e
+JCL      - b0d7e01e7c6 based on jdk-25+36)
 ```
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.x support, the following acknowledgments apply in accordance with the license terms:
@@ -533,30 +503,29 @@ JCL      - 7f27c537a8 based on jdk8u172-b11)
 
 ## macOS
 :apple:
-The following instructions guide you through the process of building a macOS **OpenJDK V8** binary that contains Eclipse OpenJ9. This process can be used to build binaries to run on macOS 10.9.0 or later.
-
-:pencil: OpenJ9 for AArch64 macOS does not support OpenJDK V8.
+The following instructions guide you through the process of building a macOS **OpenJDK V25** binary that contains Eclipse OpenJ9. This process can be used to build binaries for macOS 10.
 
 ### 1. Prepare your system
 :apple:
 You must install a number of software dependencies to create a suitable build environment on your system (the specified versions are minimums):
 
-- [Xcode 12.4](https://developer.apple.com/download/more/) (requires an Apple account to log in).
-- [macOS OpenJDK 8](https://api.adoptopenjdk.net/v3/binary/latest/8/ga/mac/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
+- [Xcode 12.4 x86, 13.0 aarch64](https://developer.apple.com/download/more/) (requires an Apple account to log in).
+- [macOS JDK 25](https://api.adoptopenjdk.net/v3/binary/latest/25/ga/mac/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 
-The following dependencies can be installed by using [Homebrew](https://brew.sh/):
+The following dependencies can be installed by using [Homebrew](https://brew.sh/) (the specified versions are minimums):
 
 - [autoconf 2.6.9](https://formulae.brew.sh/formula/autoconf)
 - [bash 4.4.23](https://formulae.brew.sh/formula/bash)
 - [binutils 2.32](https://formulae.brew.sh/formula/binutils)
 - [cmake 3.5](https://formulae.brew.sh/formula/cmake)
+- [freetype 2.9.1](https://formulae.brew.sh/formula/freetype)
 - [git 2.19.2](https://formulae.brew.sh/formula/git)
 - [gnu-tar 1.3](https://formulae.brew.sh/formula/gnu-tar)
 - [nasm 2.15.05](https://formulae.brew.sh/formula/nasm)
 - [pkg-config 0.29.2](https://formulae.brew.sh/formula/pkg-config)
 - [wget 1.19.5](https://formulae.brew.sh/formula/wget)
 
-Bash version 4 is required by the `./get_source.sh` script that you will use in step 2, which is installed to `/usr/local/bin/bash`. To prevent problems during the build process, make Bash v4 your default shell by typing the following commands:
+Bash version 4 is required by the `get_source.sh` script that you will use in step 2, which is installed to `/usr/local/bin/bash`. To prevent problems during the build process, make Bash v4 your default shell by typing the following commands:
 
 ```
 # Find the <CURRENT_SHELL> for <USERNAME>
@@ -575,11 +544,11 @@ First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repo
 
 Run the following command:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk8.git
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk25.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
-cd openj9-openjdk-jdk8
+cd openj9-openjdk-jdk25
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 
@@ -594,15 +563,12 @@ bash get_source.sh
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 
 ```
-bash configure \
-    TAR=gtar \
-    --with-boot-jdk=<path_to_boot_JDK8> \
-    --with-toolchain-type=clang
+bash configure --with-boot-jdk=<path_to_boot_JDK>
 ```
 
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
 Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
-For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ibmruntimes/openj9-openjdk-jdk8/blob/openj9/doc/building.html#troubleshooting).
+For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ibmruntimes/openj9-openjdk-jdk25/blob/openj9/doc/building.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
@@ -612,6 +578,9 @@ For more information see [OpenJDK build troubleshooting](https://htmlpreview.git
 Mixed references is the default to build when no options are specified. `configure` options include:
 - `--with-noncompressedrefs=no` create a build supporting compressed references only
 - `--with-noncompressedrefs` create a build supporting non-compressed references only
+
+:pencil: **AArch64 macOS only:**
+  - Please specify `--with-noncompressedrefs` because compressed references are not supported on AArch64 macOS yet.
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl={fetched|path_to_library}`
 
@@ -624,7 +593,7 @@ Mixed references is the default to build when no options are specified. `configu
 
 ### 4. build
 :apple:
-Now you're ready to build OpenJDK with OpenJ9.
+Now you're ready to build OpenJDK with OpenJ9:
 
 ```
 make all
@@ -632,27 +601,25 @@ make all
 :warning: If you just type `make`, rather than `make all` your build will be incomplete, because the default `make` target is `exploded-image`.
 If you want to specify `make` instead of `make all`, you must add `--default-make-target=images` when you run the configure script.
 
-:pencil: Because `make all` does not provide sufficient details for debugging, a more verbose build can be produced by running the command `make LOG=trace all 2>&1 | tee make_all.log`.
+Two builds of OpenJDK with Eclipse OpenJ9 are built and stored in the following directories:
 
-Four Java builds are produced, which include two full developer kits (jdk) and two runtime environments (jre):
+- **build/macosx-x86_64-server-release/images/jdk**
+- **build/macosx-x86_64-server-release/images/jdk-bundle**
 
-- **build/macosx-x86_64-normal-server-release/images/j2sdk-image**
-- **build/macosx-x86_64-normal-server-release/images/j2re-image**
-- **build/macosx-x86_64-normal-server-release/images/j2sdk-bundle**
-- **build/macosx-x86_64-normal-server-release/images/j2re-bundle**
+    :pencil: For running applications such as Eclipse, use the **-bundle** version.
 
-:pencil:For running applications such as Eclipse, use the **-bundle** versions.
+:pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/macosx-x86_64-server-release/images/jre** directory.
 
 :pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
-To use it, copy the contents of `debug-image` over the jdk `jre` directory before using the jdk with a native debugger.
+To use it, copy the contents of `debug-image` over the jdk before using the jdk with a native debugger.
 Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
 For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
 
 ### 5. Test
 :apple:
-For a simple test, try running the `java -version` command. Change to the j2re-image directory:
+For a simple test, try running the `java -version` command. Change to the jdk directory:
 ```
-cd build/macosx-x86_64-normal-server-release/images/j2re-image
+cd build/macosx-x86_64-server-release/images/jdk
 ```
 Run:
 ```
@@ -660,13 +627,14 @@ Run:
 ```
 
 Here is some sample output:
+
 ```
-openjdk version "1.8.0_192-internal"
-OpenJDK Runtime Environment (build 1.8.0_192-internal-jenkins_2018_10_17_11_24-b00)
-Eclipse OpenJ9 VM (build master-2c817c52c, JRE 1.8.0 Mac OS X amd64-64-Bit Compressed References 20181017_000000 (JIT enabled, AOT enabled)
-OpenJ9   - 2c817c52c
-OMR      - 4d96857a
-JCL      - fcd436bf56 based on jdk8u192-b03)
+openjdk version "25-internal" 2025-09-16
+OpenJDK Runtime Environment (build 25-internal-adhoc.jenkins.openj9-openjdk-jdk25)
+Eclipse OpenJ9 VM (build 25-internal-adhoc.jenkins.openj9-openjdk-jdk25-vmver-d194d319955, JRE 25 Mac OS X amd64-64-Bit Compressed References 20250916_000000 (JIT enabled, AOT enabled)
+OpenJ9   - dd80dae73b2
+OMR      - 0fe78e11e
+JCL      - b0d7e01e7c6 based on jdk-25+36)
 ```
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.x support, the following acknowledgments apply in accordance with the license terms:
@@ -681,45 +649,82 @@ JCL      - fcd436bf56 based on jdk8u192-b03)
 ## AArch64
 
 :penguin:
-The following instructions guide you through the process of building an OpenJDK V8 binary that contains Eclipse OpenJ9 for AArch64 (ARMv8 64-bit) Linux.
+The following instructions guide you through the process of building an **OpenJDK V25** binary that contains Eclipse OpenJ9 for AArch64 (ARMv8 64-bit) Linux.
 
-The binary can be built on your AArch64 Linux system.  Cross-building on x86-64 Linux is not supported yet.
+### 1. Prepare your system
 
-### 1. Get the source
+The binary can be built on your AArch64 Linux system, or in a Docker container :whale: on x86-64 Linux.
+
+### 2. Get the source
 :penguin:
 First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repository is a git mirror of OpenJDK without the HotSpot JVM, but with an **openj9** branch that contains a few necessary patches. Run the following command:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk8.git
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk25.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
-cd openj9-openjdk-jdk8
+cd openj9-openjdk-jdk25
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
+
 ```
 bash get_source.sh
 ```
 
 :pencil: **OpenSSL support:** On an AArch64 Linux system if you want to build an OpenJDK with OpenJ9 binary with OpenSSL support and you do not have a built version of OpenSSL v3.x available locally, you must specify `-openssl-branch=<branch>` where `<branch>` is an OpenSSL branch (or tag) like `openssl-3.5.2`. If the specified version of OpenSSL is already available in the standard location (SRC_DIR/openssl), `get_source.sh` uses it. Otherwise, the script deletes the content and downloads the specified version of OpenSSL source to the standard location and builds it. If you already have the version of OpenSSL in the standard location but you want a fresh copy, you must delete your current copy.
 
-### 2. Prepare your system
+### 3. Prepare for build on AArch64 Linux
 
 You must install a number of software dependencies to create a suitable build environment on your AArch64 Linux system:
 
 - GNU C/C++ compiler 10.3 (The Docker image uses GCC 7.5)
-- [AArch64 Linux JDK](https://api.adoptopenjdk.net/v3/binary/latest/8/ga/linux/aarch64/jdk/hotspot/normal/adoptopenjdk), which is used as the boot JDK.
+- [AArch64 Linux JDK](https://api.adoptopenjdk.net/v3/binary/latest/25/ga/linux/aarch64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 
 See [Setting up your build environment without Docker](#setting-up-your-build-environment-without-docker) in [Linux section](#linux) for other dependencies to be installed.
 
-### 3. Configure
+### 4. Create the Docker image
+
+If you build the binary on x86-64 Linux, run the following commands to build a Docker image for AArch64 cross-compilation, called **openj9aarch64**:
+```
+cd openj9/buildenv/docker/aarch64-linux_CC
+docker build -t openj9aarch64 -f Dockerfile .
+```
+
+Start a Docker container from the **openj9aarch64** image with the following command, where `<host_directory>` is the directory that contains `openj9-openjdk-jdk25` in your local system:
+```
+docker run -v <host_directory>/openj9-openjdk-jdk25:/root/openj9-openjdk-jdk25 -it openj9aarch64
+```
+
+Then go to the `openj9-openjdk-jdk25` directory:
+```
+cd /root/openj9-openjdk-jdk25
+```
+
+### 5. Configure
 :penguin:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
+
+For building on AArch64 Linux:
 ```
-bash configure --with-boot-jdk=<path_to_boot_JDK>
+bash configure --with-boot-jdk=<path_to_boot_JDK> \
+               --disable-warnings-as-errors
 ```
+
+For building in the Docker container:
+```
+bash configure --openjdk-target=${OPENJ9_CC_PREFIX} \
+               --with-x=${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/ \
+               --with-freetype-include=${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/libc/usr/include/freetype2 \
+               --with-freetype-lib=${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/libc/usr/lib \
+               --with-boot-jdk=/root/bootjdk25 \
+               --with-build-jdk=/root/bootjdk25 \
+               --disable-warnings-as-errors \
+               --disable-ddr
+```
+
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
 Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
-For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ibmruntimes/openj9-openjdk-jdk8/blob/openj9/doc/building.html#troubleshooting).
+For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ibmruntimes/openj9-openjdk-jdk25/blob/openj9/doc/building.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
@@ -735,53 +740,59 @@ Mixed references is the default to build when no options are specified. `configu
   where:
 
   - `fetched` uses the OpenSSL source downloaded by `get-source.sh` in step **2. Get the source**. Using `--with-openssl=fetched` will fail during the build in the Docker environment.
-  - `system` uses the package installed OpenSSL library in the system.
-  - `path_to_library` uses a custom OpenSSL library that's already built.
+  - `system` uses the package installed OpenSSL library in the system.  Use this option when you build on your AArch64 Linux system.
+  - `path_to_library` uses an OpenSSL v3.x library that's already built.  You can use `${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/libc/usr` as `path_to_library` when you are configuring in the Docker container.
 
-  If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
+:pencil: **DDR support:** You can build DDR support only on AArch64 Linux.  If you are building in a cross-compilation environment, you need the `--disable-ddr` option.
+
+:pencil: **CUDA support:** You can enable CUDA support if you are building on NVIDIA Jetson Developer Kit series.  Add `--enable-cuda --with-cuda=/usr/local/cuda` when you run `configure`.  The path `/usr/local/cuda` may be different depending on the version of JetPack.
+
+:pencil: You may need to add `--disable-warnings-as-errors-openj9` depending on the toolchain version.
 
 ### 6. Build
 :penguin:
-Now you're ready to build OpenJDK V8 with OpenJ9:
+Now you're ready to build OpenJDK with OpenJ9:
 ```
 make all
 ```
 :warning: If you just type `make`, rather than `make all` your build will be incomplete, because the default `make` target is `exploded-image`.
 If you want to specify `make` instead of `make all`, you must add `--default-make-target=images` when you run the configure script.
 
-Two Java builds are produced: a full developer kit (jdk) and a runtime environment (jre):
-- **build/linux-aarch64-normal-server-release/images/j2sdk-image**
-- **build/linux-aarch64-normal-server-release/images/j2re-image**
+A binary for the full developer kit (jdk) is built and stored in the following directory:
+
+- **build/linux-aarch64-normal-server-release/images/jdk**
+
+Copy its contents to your AArch64 Linux device.
+
+:pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/linux-aarch64-normal-server-release/images/jre** directory.
 
 :pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
-To use it, copy the contents of `debug-image` over the jdk `jre` directory before using the jdk with a native debugger.
+To use it, copy the contents of `debug-image` over the jdk before using the jdk with a native debugger.
 Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
 For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
 
 ### 6. Test
 :penguin:
 For a simple test, try running the `java -version` command.
-Change to your **j2re-image** directory:
+Change to your jdk directory on AArch64 Linux:
 ```
-cd build/linux-aarch64-normal-server-release/images/j2re-image
+cd build/linux-aarch64-normal-server-release/images/jdk
 ```
 Run:
 ```
-bin/java -version
+./bin/java -version
 ```
 
 Here is some sample output:
 
 ```
-openjdk version "1.8.0_265-internal"
-OpenJDK Runtime Environment (build 1.8.0_265-internal-ubuntu_2020_07_28_13_28-b00)
-Eclipse OpenJ9 VM (build master-e724f249c, JRE 1.8.0 Linux aarch64-64-Bit Compressed References 20200728_000000 (JIT enabled, AOT enabled)
-OpenJ9   - e724f249c
-OMR      - 8124c1385
-JCL      - 28815f64 based on jdk8u265-b01)
+openjdk version "25-internal" 2025-09-16
+OpenJDK Runtime Environment (build 25-internal-adhoc.jenkins.openj9-openjdk-jdk25)
+Eclipse OpenJ9 VM (build 25-internal-adhoc.jenkins.openj9-openjdk-jdk25-vmver-d194d319955, JRE 25 Linux aarch64-64-Bit Compressed References 20250916_000000 (JIT enabled, AOT enabled)
+OpenJ9   - dd80dae73b2
+OMR      - 0fe78e11e
+JCL      - b0d7e01e7c6 based on jdk-25+36)
 ```
-
-:construction: AArch64 JIT compiler is not fully optimized at the time of writing this, compared with other platforms.
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.x support, the following acknowledgments apply in accordance with the license terms:
 
