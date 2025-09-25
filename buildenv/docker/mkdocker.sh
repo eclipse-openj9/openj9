@@ -260,7 +260,7 @@ validate_options() {
     esac
   fi
 
-  all_versions="8 11 17 21 23 next"
+  all_versions="8 11 17 21 25 next"
   local -A known_version
   local version
   for version in $all_versions ; do
@@ -692,24 +692,17 @@ bootjdk_dirs() {
 bootjdk_url() {
   local jdk_arch=${arch/x86_64/x64}
   local jdk_version=$1
-  if [ $jdk_version -le 23 ] ; then
-    echo https://api.adoptopenjdk.net/v3/binary/latest/$jdk_version/ga/linux/$jdk_arch/jdk/openj9/normal/adoptopenjdk
-  else
-    echo https://api.adoptium.net/v3/binary/latest/$jdk_version/ga/linux/$jdk_arch/jdk/hotspot/normal/eclipse
-  fi
+  echo https://api.adoptopenjdk.net/v3/binary/latest/$jdk_version/ga/linux/$jdk_arch/jdk/openj9/normal/adoptopenjdk
 }
 
 bootjdk_version() {
   local jdk_version=$1
   case $jdk_version in
-    8 | 11 | 17)
+    8 | 11 | 17 | 21 | 25)
       echo $jdk_version
       ;;
-    21)
-      echo 21
-      ;;
-    23 | next)
-      echo 23
+    next)
+      echo 25
       ;;
     *)
       echo "Unsupported JDK version: '$jdk_version'" >&2
