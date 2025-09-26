@@ -646,7 +646,7 @@ TR::ResolvedMethodSymbol *TR_NewInitialization::findInlinableMethod(TR::TreeTop 
       traceMsg(comp(), "\nGenerating trees for call at [%p] to %s\n", callTree->getNode()->getFirstChild(), calleeSymbol->getResolvedMethod()->signature(trMemory()));
       }
 
-   dumpOptDetails(comp(), "O^O NEW INITIALIZATION: Peeking into the IL to check for inlineable calls \n");
+   dumpOptDetails(comp(), "%sPeeking into the IL to check for inlineable calls \n", OPT_DETAILS);
 
    //comp()->setVisitCount(1);
 
