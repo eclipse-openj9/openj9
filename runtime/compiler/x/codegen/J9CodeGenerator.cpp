@@ -492,6 +492,13 @@ J9::X86::CodeGenerator::supportsInliningOfIsAssignableFrom()
    }
 
 bool
+J9::X86::CodeGenerator::supportsNonHelperIsAssignableFrom()
+   {
+   static const bool disableNonHelprIsAssignableFrom = feGetEnv("TR_disableNonHelprIsAssignableFrom") != NULL;
+   return !disableNonHelprIsAssignableFrom;
+   }
+
+bool
 J9::X86::CodeGenerator::canEmitBreakOnDFSet()
    {
    static const bool enableBreakOnDFSet = feGetEnv("TR_enableBreakOnDFSet") != NULL;
