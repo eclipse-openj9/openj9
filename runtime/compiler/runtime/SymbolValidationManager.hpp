@@ -57,8 +57,15 @@ class AOTCacheWellKnownClassesRecord;
          if (!(nonfatal) && ::TR::SymbolValidationManager::assertionsAreFatal())                \
             ::TR::fatal_assertion(__FILE__, __LINE__, condStr, "" format "", ##__VA_ARGS__);    \
          else                                                                                   \
-            if (::TR::comp()->log()->isEnabled_DEPRECATED())                                              \
-               ::TR::comp()->log()->printf("" format "\n", ##__VA_ARGS__);                      \
+            {                                                                                   \
+            /*                                                                                  \
+             * It is possible that this assert will fire before even the default Logger is      \
+             * initialized. Check if it is available before logging.                            \
+             */                                                                                 \
+            OMR::Logger *log = ::TR::comp()->log();                                              \
+            if (log && log->isEnabled_DEPRECATED())                                             \
+               log->printf("" format "\n", ##__VA_ARGS__);                                      \
+            }                                                                                   \
                                                                                                 \
          ::TR::comp()->failCompilation< ::J9::AOTSymbolValidationManagerFailure>(               \
             SVM_ASSERT_LOCATION(__LINE__) ": " assertName " failed: " condStr);                 \
