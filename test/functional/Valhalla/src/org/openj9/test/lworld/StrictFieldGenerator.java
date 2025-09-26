@@ -62,7 +62,7 @@ public class StrictFieldGenerator extends ClassLoader {
             mv.visitFieldInsn(PUTFIELD, className, fieldName, fieldDesc);
         }
         mv.visitInsn(RETURN);
-        mv.visitMaxs(1, 1);
+        mv.visitMaxs(lateLarval ? 2 : 1, 1);
         mv.visitEnd();
 
         if (unrestricted) {
