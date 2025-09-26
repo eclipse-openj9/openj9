@@ -3721,7 +3721,6 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperPrePrologue(TR::Instr
    // branch (BRC) to some location. Before patching in the branch we must save the 4 bytes at the JIT entry point
    // to this location so that we can later reverse the patching at JIT entry point if needed.
    cursor = generateDataConstantInstruction(self(), TR::InstOpCode::dd, node, 0xdeafbeef, cursor);
-
    // Generated a pad for the body info address to keep offsets in PreprologueConst.hpp constant for simplicity
    if (comp->target().is64Bit())
       {
@@ -4317,3 +4316,13 @@ J9::Z::CodeGenerator::supportsInliningOfIsAssignableFrom()
    static const bool disableInliningOfIsAssignableFrom = feGetEnv("TR_disableInlineIsAssignableFrom") != NULL;
    return !disableInliningOfIsAssignableFrom;
    }
+
+bool J9::Z::CodeGenerator::supportsNonHelper(TR::SymbolReferenceTable::CommonNonhelperSymbol symbol)
+   {
+   if (symbol == TR::SymbolReferenceTable::jitDispatchJ9MethodSymbol)
+      {
+      return true;
+      }
+
+   return J9::CodeGenerator::supportsNonHelper(symbol);
+}
