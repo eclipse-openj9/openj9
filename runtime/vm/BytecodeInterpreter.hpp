@@ -8335,13 +8335,20 @@ foundITableCache:
 						rc = GOTO_THROW_CURRENT_EXCEPTION;
 						goto done;
 					}
-					if (J9_ARE_ALL_BITS_SET(romMethod->modifiers, J9AccAbstract)) {
+					if (J9_ARE_ALL_BITS_SET(romMethod->modifiers, J9AccAbstract)
+						&& !J9ROMCLASS_IS_INTERFACE(J9_CLASS_FROM_METHOD(_sendMethod)->romClass)
+					) {
 						/* If resulting method is abstract an error will be
 						 * thrown in throwUnsatisfiedLinkOrAbstractMethodError.
 						 * Return the interface class's method so the correct
 						 * exception handling is used.
 						 */
-						_sendMethod = interfaceClass->ramMethods + methodIndex;
+						_sendMethod = (J9Method*)javaLookupMethod(
+							_currentThread,
+							interfaceClass,
+							&romMethod->nameAndSignature,
+							NULL,
+							J9_LOOK_INTERFACE | J9_LOOK_NO_THROW | J9_LOOK_INVOKE_INTERFACE);
 					}
 					profileInvokeReceiver(REGISTER_ARGS, receiverClass, _literals, _sendMethod);
 					_pc += offset;
