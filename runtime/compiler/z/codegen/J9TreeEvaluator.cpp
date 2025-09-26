@@ -4883,7 +4883,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    iComment("Load 2st dim length.");
    // The size of zero length array is already loaded in size register. Jump over the array size calculation instructions if length is 0.
    TR::LabelSymbol *zeroSecondDimLabel = generateLabelSymbol(cg);
-   
+
    if (componentSize == 1)
       {
       // Load int32 second dim length to a 64 bit register and set condition mask.
@@ -5019,8 +5019,8 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
       generateS390MemoryReference(resultReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cursor);
    // Start setting second dim:
    TR::LabelSymbol *secondDimLabel = generateLabelSymbol(cg);
-   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, secondDimLabel);
-   // Store the class field. In case of com Refs, store the class and length fields.
+   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, secondDimLabel, cursor);
+   // Store the class field. In case of comp refs, store the class and length fields.
    cursor = generateRXInstruction(cg, TR::InstOpCode::STG, node, classReg, generateS390MemoryReference(dim1SizeReg,
       (int32_t)TR::Compiler->om.offsetOfObjectVftField(), cg), cursor);
    iComment("Start second dim alloc");
