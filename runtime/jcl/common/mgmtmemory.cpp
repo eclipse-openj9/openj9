@@ -26,6 +26,9 @@
 #include "jvminit.h"
 #include "verbose_api.h"
 
+#include "VMHelpers.hpp"
+
+extern "C" {
 static UDATA getIndexFromMemoryPoolID(J9JavaLangManagementData *mgmt, UDATA id);
 static UDATA getIndexFromGCID(J9JavaLangManagementData *mgmt, UDATA id);
 
@@ -40,61 +43,12 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getHeapMemoryUsageIm
 	committed = javaVM->memoryManagerFunctions->j9gc_heap_total_memory(javaVM);
 	used = committed - javaVM->memoryManagerFunctions->j9gc_heap_free_memory(javaVM);
 
-	ctor = (*env)->FromReflectedMethod(env, memUsageConstructor);
+	ctor = env->FromReflectedMethod(memUsageConstructor);
 	if(NULL == ctor) {
 		return NULL;
 	}
 
-	return (*env)->NewObject(env, memoryUsage, ctor, (jlong)javaVM->managementData->initialHeapSize, used, committed, (jlong)javaVM->managementData->maximumHeapSize);
-}
-
-/**
- * @brief Subtracts sizes of all free list blocks from the accumulator.
- *
- * Iterates through tiny, small, and large block lists in
- * j9RAMClassFreeListsPtr and subtracts each block's size from used.
- *
- * @param j9RAMClassFreeListsPtr Pointer to RAM class free-lists (may be NULL).
- * @param used Pointer to a jlong accumulator decremented by block sizes.
- */
-void
-subtractFreeListBlocks(J9RAMClassFreeLists* j9RAMClassFreeListsPtr, jlong *used)
-{
-	if (NULL != j9RAMClassFreeListsPtr) {
-		J9RAMClassFreeListBlock *ramClassTinyBlockFreeListPtr = j9RAMClassFreeListsPtr->ramClassTinyBlockFreeList;
-		J9RAMClassFreeListBlock *ramClassSmallBlockFreeListPtr = j9RAMClassFreeListsPtr->ramClassSmallBlockFreeList;
-		J9RAMClassFreeListBlock *ramClassLargeBlockFreeListPtr = j9RAMClassFreeListsPtr->ramClassLargeBlockFreeList;
-		while (NULL != ramClassTinyBlockFreeListPtr) {
-			*used -= ramClassTinyBlockFreeListPtr->size;
-			ramClassTinyBlockFreeListPtr = ramClassTinyBlockFreeListPtr->nextFreeListBlock;
-		}
-		while (NULL != ramClassSmallBlockFreeListPtr) {
-			*used -= ramClassSmallBlockFreeListPtr->size;
-			ramClassSmallBlockFreeListPtr = ramClassSmallBlockFreeListPtr->nextFreeListBlock;
-		}
-		while (NULL != ramClassLargeBlockFreeListPtr) {
-			*used -= ramClassLargeBlockFreeListPtr->size;
-			ramClassLargeBlockFreeListPtr = ramClassLargeBlockFreeListPtr->nextFreeListBlock;
-		}
-	}
-}
-
-/**
- * @brief Subtracts the size of each UDATA block in a chain from the accumulator.
- *
- * Walks a chain of UDATA blocks starting at ramClassUDATABlockFreeListPtr
- * and subtracts sizeof(UDATA) for each from used.
- *
- * @param ramClassUDATABlockFreeListPtr Head of UDATA block chain (may be NULL).
- * @param used Pointer to a jlong accumulator decremented by block count * sizeof(UDATA).
- */
-void
-subtractUDATABlockChain(UDATA *ramClassUDATABlockFreeListPtr, jlong *used)
-{
-	while (NULL != ramClassUDATABlockFreeListPtr) {
-		*used -= sizeof(UDATA);
-		ramClassUDATABlockFreeListPtr = *(UDATA **)ramClassUDATABlockFreeListPtr;
-	}
+	return env->NewObject(memoryUsage, ctor, (jlong)javaVM->managementData->initialHeapSize, used, committed, (jlong)javaVM->managementData->maximumHeapSize);
 }
 
 jobject JNICALL
@@ -132,13 +86,13 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getNonHeapMemoryUsag
 		UDATA *ramClassFreqUDATABlockFreeListPtr = frequentlyAccessedBlockPtr->ramClassUDATABlockFreeList;
 		UDATA *ramClassInFreqUDATABlockFreeListPtr = inFrequentlyAccessedBlockPtr->ramClassUDATABlockFreeList;
 
-		subtractUDATABlockChain(ramClassSub4gUDATABlockFreeListPtr, &used);
-		subtractUDATABlockChain(ramClassFreqUDATABlockFreeListPtr, &used);
-		subtractUDATABlockChain(ramClassInFreqUDATABlockFreeListPtr, &used);
+		VM_VMHelpers::subtractUDATABlockChain(ramClassSub4gUDATABlockFreeListPtr, (I_64 *)&used);
+		VM_VMHelpers::subtractUDATABlockChain(ramClassFreqUDATABlockFreeListPtr, (I_64 *)&used);
+		VM_VMHelpers::subtractUDATABlockChain(ramClassInFreqUDATABlockFreeListPtr, (I_64 *)&used);
 
-		subtractFreeListBlocks(sub4gBlockPtr, &used);
-		subtractFreeListBlocks(frequentlyAccessedBlockPtr, &used);
-		subtractFreeListBlocks(inFrequentlyAccessedBlockPtr, &used);
+		VM_VMHelpers::subtractFreeListBlocks(sub4gBlockPtr, (I_64 *)&used);
+		VM_VMHelpers::subtractFreeListBlocks(frequentlyAccessedBlockPtr, (I_64 *)&used);
+		VM_VMHelpers::subtractFreeListBlocks(inFrequentlyAccessedBlockPtr, (I_64 *)&used);
 
 		classLoader = javaVM->internalVMFunctions->allClassLoadersNextDo(&walkState);
 	}
@@ -198,12 +152,12 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getNonHeapMemoryUsag
 	for (idx = 0; idx < mgmt->supportedNonHeapMemoryPools; ++idx) {
 		initial += mgmt->nonHeapMemoryPools[idx].initialSize;
 	}
-	ctor = (*env)->FromReflectedMethod(env, memUsageConstructor);
+	ctor = env->FromReflectedMethod(memUsageConstructor);
 	if(NULL == ctor) {
 		return NULL;
 	}
 
-	return (*env)->NewObject(env, memoryUsage, ctor, initial, used, committed, (jlong)-1);
+	return env->NewObject(memoryUsage, ctor, initial, used, committed, (jlong)-1);
 }
 
 jint JNICALL
@@ -257,34 +211,34 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_createMemoryManagers
  	 *
 	 */
 
-	memBean = (*env)->GetObjectClass(env, beanInstance);
+	memBean = env->GetObjectClass(beanInstance);
 	if(NULL == memBean) {
 		return;
 	}
 
-	helperID = (*env)->GetMethodID(env, memBean, "createMemoryManagerHelper", "(Ljava/lang/String;IZ)V");
+	helperID = env->GetMethodID(memBean, "createMemoryManagerHelper", "(Ljava/lang/String;IZ)V");
 	if (NULL == helperID) {
 		return;
 	}
 
-	childName = (*env)->NewStringUTF(env, "J9 non-heap manager");
+	childName = env->NewStringUTF("J9 non-heap manager");
 	if (NULL == childName) { 
 		return;
 	}
 
-	(*env)->CallVoidMethod(env, beanInstance, helperID, childName, J9VM_MANAGEMENT_POOL_NONHEAP, JNI_FALSE);
-	if ((*env)->ExceptionCheck(env)) {
+	env->CallVoidMethod(beanInstance, helperID, childName, J9VM_MANAGEMENT_POOL_NONHEAP, JNI_FALSE);
+	if (env->ExceptionCheck()) {
 		return;
 	}
 
 	for (idx = 0; idx < mgmt->supportedCollectors; ++idx) {
 		id = (jint)mgmt->garbageCollectors[idx].id;
-		childName = (*env)->NewStringUTF(env, mgmt->garbageCollectors[idx].name);
+		childName = env->NewStringUTF(mgmt->garbageCollectors[idx].name);
 		if (NULL == childName) {
 			return;
 		}
 
-		(*env)->CallVoidMethod(env, beanInstance, helperID, childName, id, JNI_TRUE);
+		env->CallVoidMethod(beanInstance, helperID, childName, id, JNI_TRUE);
 	}
 }
 
@@ -299,12 +253,12 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_createMemoryPools(JN
 	jint id = 0;
 	UDATA idx = 0;
 
-	memBean = (*env)->GetObjectClass(env, beanInstance);
+	memBean = env->GetObjectClass(beanInstance);
 	if (NULL == memBean) {
 		return;
 	}
 
-	helperID = (*env)->GetMethodID(env, memBean, "createMemoryPoolHelper", "(Ljava/lang/String;IZ)V");
+	helperID = env->GetMethodID(memBean, "createMemoryPoolHelper", "(Ljava/lang/String;IZ)V");
 	if (NULL == helperID) {
 		return;
 	}
@@ -312,13 +266,13 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_createMemoryPools(JN
 	/* Heap Memory Pools */
 	for (idx = 0; idx < mgmt->supportedMemoryPools; ++idx) {
 		id = (jint)mgmt->memoryPools[idx].id;
-		childName = (*env)->NewStringUTF(env, mgmt->memoryPools[idx].name);
+		childName = env->NewStringUTF(mgmt->memoryPools[idx].name);
 		if (NULL == childName) {
 			return;
 		}
 
-		(*env)->CallVoidMethod(env, beanInstance, helperID, childName, id, JNI_TRUE);
-		if ((*env)->ExceptionCheck(env)) {
+		env->CallVoidMethod(beanInstance, helperID, childName, id, JNI_TRUE);
+		if (env->ExceptionCheck()) {
 			return;
 		}
 	}
@@ -326,13 +280,13 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_createMemoryPools(JN
 	/* NonHeap Memory Pools */
 	for (idx = 0; idx < mgmt->supportedNonHeapMemoryPools; ++idx) {
 		id = (jint)mgmt->nonHeapMemoryPools[idx].id;
-		childName = (*env)->NewStringUTF(env, mgmt->nonHeapMemoryPools[idx].name);
+		childName = env->NewStringUTF(mgmt->nonHeapMemoryPools[idx].name);
 		if (NULL == childName) {
 			return;
 		}
 
-		(*env)->CallVoidMethod(env, beanInstance, helperID, childName, id, JNI_FALSE);
-		if ((*env)->ExceptionCheck(env)) {
+		env->CallVoidMethod(beanInstance, helperID, childName, id, JNI_FALSE);
+		if (env->ExceptionCheck()) {
 			return;
 		}
 	}
@@ -518,7 +472,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getGCModeImpl(JNIEnv
 	const char *gcMode = javaVM->memoryManagerFunctions->j9gc_get_gcmodestring(javaVM);
 
 	if (NULL != gcMode) {
-		return (*env)->NewStringUTF(env, gcMode);
+		return env->NewStringUTF(gcMode);
 	} else {
 		return NULL;
 	}
@@ -603,36 +557,36 @@ Java_com_ibm_lang_management_internal_MemoryNotificationThread_processNotificati
 
 	/* cache poolNames and gcNames */
 	for (idx = 0; idx < mgmt->supportedMemoryPools; ++idx) {
-		poolNames[idx] = (*env)->NewStringUTF(env, mgmt->memoryPools[idx].name);
+		poolNames[idx] = env->NewStringUTF(mgmt->memoryPools[idx].name);
 		if (NULL == poolNames[idx]) {
 			return;
 		}
 	}
 
 	for (idx = 0; idx < mgmt->supportedCollectors; ++idx) {
-		gcNames[idx] = (*env)->NewStringUTF(env, mgmt->garbageCollectors[idx].name);
+		gcNames[idx] = env->NewStringUTF(mgmt->garbageCollectors[idx].name);
 		if (NULL == gcNames[idx]) {
 			return;
 		}
 	}
 
 	/* locate the helper that constructs and dispatches the Java notification objects */
-	threadClass = (*env)->FindClass(env, "com/ibm/lang/management/internal/MemoryNotificationThread");
+	threadClass = env->FindClass("com/ibm/lang/management/internal/MemoryNotificationThread");
 	if (NULL == threadClass) {
 		return;
 	}
 
-	stringClass = (*env)->FindClass(env, "java/lang/String");
+	stringClass = env->FindClass("java/lang/String");
 	if (NULL == stringClass) {
 		return;
 	}
 
-	helperMemID = (*env)->GetMethodID(env, threadClass, "dispatchMemoryNotificationHelper", "(Ljava/lang/String;JJJJJJZ)V");
+	helperMemID = env->GetMethodID(threadClass, "dispatchMemoryNotificationHelper", "(Ljava/lang/String;JJJJJJZ)V");
 	if (NULL == helperMemID) {
 		return;
 	}
 
-	helperGCID = (*env)->GetMethodID(env, threadClass, "dispatchGCNotificationHelper", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJJ[J[J[J[J[J[J[JJ)V");
+	helperGCID = env->GetMethodID(threadClass, "dispatchGCNotificationHelper", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJJ[J[J[J[J[J[J[JJ)V");
 	if (NULL == helperGCID) {
 		return;
 	}
@@ -642,7 +596,7 @@ Java_com_ibm_lang_management_internal_MemoryNotificationThread_processNotificati
 	omrthread_rwmutex_exit_write(mgmt->managementDataLock);
 
 	while(1) {
-		if ((*env)->PushLocalFrame(env, 16) < 0) {
+		if (env->PushLocalFrame(16) < 0) {
 			/* out of memory */
 			return;
 		}
@@ -653,7 +607,7 @@ Java_com_ibm_lang_management_internal_MemoryNotificationThread_processNotificati
 			j9thread_monitor_wait(mgmt->notificationMonitor);
 		}
 		mgmt->notificationsPending -= 1;
-		notification = mgmt->notificationQueue;
+		notification = (J9MemoryNotification *)mgmt->notificationQueue;
 		mgmt->notificationQueue = notification->next;
 		j9thread_monitor_exit(mgmt->notificationMonitor);
 
@@ -675,31 +629,31 @@ Java_com_ibm_lang_management_internal_MemoryNotificationThread_processNotificati
 			jlongArray postCommittedArray = NULL;
 			jlongArray postMaxArray = NULL;
 
-			initialArray = (*env)->NewLongArray(env, gcInfo->arraySize);
+			initialArray = env->NewLongArray(gcInfo->arraySize);
 			if (NULL == initialArray) {
 				return;
 			}
-			preUsedArray = (*env)->NewLongArray(env, gcInfo->arraySize);
+			preUsedArray = env->NewLongArray(gcInfo->arraySize);
 			if (NULL == preUsedArray) {
 				return;
 			}
-			preCommittedArray = (*env)->NewLongArray(env, gcInfo->arraySize);
+			preCommittedArray = env->NewLongArray(gcInfo->arraySize);
 			if (NULL == preCommittedArray) {
 				return;
 			}
-			preMaxArray = (*env)->NewLongArray(env, gcInfo->arraySize);
+			preMaxArray = env->NewLongArray(gcInfo->arraySize);
 			if (NULL == preMaxArray) {
 				return;
 			}
-			postUsedArray = (*env)->NewLongArray(env, gcInfo->arraySize);
+			postUsedArray = env->NewLongArray(gcInfo->arraySize);
 			if (NULL == postUsedArray) {
 				return;
 			}
-			postCommittedArray = (*env)->NewLongArray(env, gcInfo->arraySize);
+			postCommittedArray = env->NewLongArray(gcInfo->arraySize);
 			if (NULL == postCommittedArray) {
 				return;
 			}
-			postMaxArray = (*env)->NewLongArray(env, gcInfo->arraySize);
+			postMaxArray = env->NewLongArray(gcInfo->arraySize);
 			if (NULL == postMaxArray) {
 				return;
 			}
@@ -708,46 +662,45 @@ Java_com_ibm_lang_management_internal_MemoryNotificationThread_processNotificati
 			if (NULL == gcName) {
 				return;
 			}
-			gcAction = (*env)->NewStringUTF(env, gcInfo->gcAction);
+			gcAction = env->NewStringUTF(gcInfo->gcAction);
 			if (NULL == gcAction) {
 				return;
 			}
-			gcCause	= (*env)->NewStringUTF(env, gcInfo->gcCause);
+			gcCause	= env->NewStringUTF(gcInfo->gcCause);
 			if (NULL == gcCause) {
 				return;
 			}
 
-			(*env)->SetLongArrayRegion(env, initialArray, 0, gcInfo->arraySize, (jlong *)&gcInfo->initialSize[0]);
-			if ((*env)->ExceptionCheck(env)) {
+			env->SetLongArrayRegion(initialArray, 0, gcInfo->arraySize, (jlong *)&gcInfo->initialSize[0]);
+			if (env->ExceptionCheck()) {
 				return;
 			}
-			(*env)->SetLongArrayRegion(env, preUsedArray, 0, gcInfo->arraySize, (jlong *)&gcInfo->preUsed[0]);
-			if ((*env)->ExceptionCheck(env)) {
+			env->SetLongArrayRegion(preUsedArray, 0, gcInfo->arraySize, (jlong *)&gcInfo->preUsed[0]);
+			if (env->ExceptionCheck()) {
 				return;
 			}
-			(*env)->SetLongArrayRegion(env, preCommittedArray, 0, gcInfo->arraySize, (jlong *)&gcInfo->preCommitted[0]);
-			if ((*env)->ExceptionCheck(env)) {
+			env->SetLongArrayRegion(preCommittedArray, 0, gcInfo->arraySize, (jlong *)&gcInfo->preCommitted[0]);
+			if (env->ExceptionCheck()) {
 				return;
 			}
-			(*env)->SetLongArrayRegion(env, preMaxArray, 0, gcInfo->arraySize, (jlong *)&gcInfo->preMax[0]);
-			if ((*env)->ExceptionCheck(env)) {
+			env->SetLongArrayRegion(preMaxArray, 0, gcInfo->arraySize, (jlong *)&gcInfo->preMax[0]);
+			if (env->ExceptionCheck()) {
 				return;
 			}
-			(*env)->SetLongArrayRegion(env, postUsedArray, 0, gcInfo->arraySize, (jlong *)&gcInfo->postUsed[0]);
-			if ((*env)->ExceptionCheck(env)) {
+			env->SetLongArrayRegion(postUsedArray, 0, gcInfo->arraySize, (jlong *)&gcInfo->postUsed[0]);
+			if (env->ExceptionCheck()) {
 				return;
 			}
-			(*env)->SetLongArrayRegion(env, postCommittedArray, 0, gcInfo->arraySize, (jlong *)&gcInfo->postCommitted[0]);
-			if ((*env)->ExceptionCheck(env)) {
+			env->SetLongArrayRegion(postCommittedArray, 0, gcInfo->arraySize, (jlong *)&gcInfo->postCommitted[0]);
+			if (env->ExceptionCheck()) {
 				return;
 			}
-			(*env)->SetLongArrayRegion(env, postMaxArray, 0, gcInfo->arraySize, (jlong *)&gcInfo->postMax[0]);
-			if ((*env)->ExceptionCheck(env)) {
+			env->SetLongArrayRegion(postMaxArray, 0, gcInfo->arraySize, (jlong *)&gcInfo->postMax[0]);
+			if (env->ExceptionCheck()) {
 				return;
 			}
 
-			(*env)->CallVoidMethod(
-					env,
+			env->CallVoidMethod(
 					threadInstance,
 					helperGCID,
 					gcName,
@@ -764,7 +717,7 @@ Java_com_ibm_lang_management_internal_MemoryNotificationThread_processNotificati
 					postCommittedArray,
 					postMaxArray,
 					(jlong)notification->sequenceNumber);
-			if ((*env)->ExceptionCheck(env)) {
+			if (env->ExceptionCheck()) {
 				return;
 			}
 		} else {
@@ -775,8 +728,7 @@ Java_com_ibm_lang_management_internal_MemoryNotificationThread_processNotificati
 			poolName = poolNames[idx];
 			if (THRESHOLD_EXCEEDED == notification->type) {
 				/* heap usage threshold exceeded */
-				(*env)->CallVoidMethod(
-						env,
+				env->CallVoidMethod(
 						threadInstance,
 						helperMemID,
 						poolName,
@@ -787,13 +739,12 @@ Java_com_ibm_lang_management_internal_MemoryNotificationThread_processNotificati
 						(jlong)usageThreshold->thresholdCrossingCount,
 						(jlong)notification->sequenceNumber,
 						JNI_FALSE);
-				if ((*env)->ExceptionCheck(env)) {
+				if (env->ExceptionCheck()) {
 					return;
 				}
 			} else { /* COLLECTION_THRESHOLD_EXCEEDED == notification->type) */
 				/* heap collection usage threshold exceeded */
-				(*env)->CallVoidMethod(
-						env,
+				env->CallVoidMethod(
 						threadInstance,
 						helperMemID,
 						poolName,
@@ -804,7 +755,7 @@ Java_com_ibm_lang_management_internal_MemoryNotificationThread_processNotificati
 						(jlong)usageThreshold->thresholdCrossingCount,
 						(jlong)notification->sequenceNumber,
 						JNI_TRUE);
-				if ((*env)->ExceptionCheck(env)) {
+				if (env->ExceptionCheck()) {
 					return;
 				}
 			}
@@ -818,12 +769,12 @@ Java_com_ibm_lang_management_internal_MemoryNotificationThread_processNotificati
 		}
 		j9mem_free_memory(notification);
 
-		if ((*env)->ExceptionCheck(env)) {
+		if (env->ExceptionCheck()) {
 			/* if the dispatcher throws, just kill the thread for now */
 			break;
 		}
 
-		(*env)->PopLocalFrame(env, NULL);
+		env->PopLocalFrame(NULL);
 	}
 }
 
@@ -839,7 +790,7 @@ Java_com_ibm_lang_management_internal_MemoryNotificationThreadShutdown_sendShutd
 	PORT_ACCESS_FROM_ENV(env);
 
 	/* allocate a notification */
-	notification = j9mem_allocate_memory(sizeof(*notification), J9MEM_CATEGORY_VM_JCL);
+	notification = (J9MemoryNotification *)j9mem_allocate_memory(sizeof(*notification), J9MEM_CATEGORY_VM_JCL);
 	if (NULL != notification) {
 		/* set up a shutdown notification */
 		notification->type = NOTIFIER_SHUTDOWN_REQUEST;
@@ -853,7 +804,7 @@ Java_com_ibm_lang_management_internal_MemoryNotificationThreadShutdown_sendShutd
 
 		/* replace the queue with just this notification - the notifier thread does not care that the pending count might be >1, it will not process anything after the shutdown request */
 		j9thread_monitor_enter(mgmt->notificationMonitor);
-		next = mgmt->notificationQueue;
+		next = (J9MemoryNotification *)mgmt->notificationQueue;
 		mgmt->notificationQueue = notification;
 
 		/* free the old queue entries if any */
@@ -898,3 +849,4 @@ static UDATA getIndexFromGCID(J9JavaLangManagementData *mgmt, UDATA id)
 	}
 	return idx;
 }
+} /* extern "C" */
