@@ -1595,7 +1595,7 @@ done:
 	{
 		J9InternalVMFunctions *vmFuncs = _vm->internalVMFunctions;
 		J9ClassLoaderWalkState walkState;
-		J9ClassLoader *classLoader = vmFuncs->allClassLoadersStartDo(&walkState, _vm, 0);
+		J9ClassLoader *classLoader = vmFuncs->allClassLoadersStartDo(&walkState, _vm, J9CLASSLOADERWALK_INCLUDE_DEAD);
 		int64_t time = j9time_nano_time();
 
 #if defined(J9VM_THR_PREEMPTIVE)
