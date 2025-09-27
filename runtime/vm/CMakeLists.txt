@@ -222,6 +222,12 @@ if(NOT JAVA_SPEC_VERSION LESS 19)
 	)
 endif()
 
+if(J9VM_OPT_SNAPSHOTS)
+	list(APPEND main_sources
+		OutOfLineINL_com_ibm_oti_vm_VM.cpp
+	)
+endif()
+
 set(interpreter_sources
 	BytecodeInterpreterCompressed.cpp
 	BytecodeInterpreterFull.cpp

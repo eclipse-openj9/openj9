@@ -4937,45 +4937,22 @@ internalError:
 			goto done;
 		}
 		if (J9_CLASSLOADER_TYPE_BOOT == loaderType) {
-			/* if called with bootLoader, assign the system one to this instance */
-			J9ClassLoader *classLoaderStruct = _vm->systemClassLoader;
-			j9object_t loaderObject = J9CLASSLOADER_CLASSLOADEROBJECT(_currentThread, classLoaderStruct);
-			if (NULL != loaderObject) {
+			if (!VM_VMHelpers::initializeBootClassLoader(_currentThread, classLoaderObject, 0 != parallelCapable)) {
 				goto internalError;
 			}
-			J9CLASSLOADER_SET_CLASSLOADEROBJECT(_currentThread, classLoaderStruct, classLoaderObject);
-			if (parallelCapable) {
-				classLoaderStruct->flags |= J9CLASSLOADER_PARALLEL_CAPABLE;
-			}
-			VM_AtomicSupport::writeBarrier();
-			J9VMJAVALANGCLASSLOADER_SET_VMREF(_currentThread, classLoaderObject, classLoaderStruct);
-			TRIGGER_J9HOOK_VM_CLASS_LOADER_INITIALIZED(_vm->hookInterface, _currentThread, classLoaderStruct);
-
-			J9ClassWalkState classWalkState;
-			J9Class* clazz = allClassesStartDo(&classWalkState, _vm, classLoaderStruct);
-			while (NULL != clazz) {
-				J9VMJAVALANGCLASS_SET_CLASSLOADER(_currentThread, clazz->classObject, classLoaderObject);
-				clazz = allClassesNextDo(&classWalkState);
-			}
-			allClassesEndDo(&classWalkState);
 		} else {
 			updateVMStruct(REGISTER_ARGS);
-#if defined(J9VM_OPT_SNAPSHOTS)
-			if (IS_RESTORE_RUN(_vm) && (J9_CLASSLOADER_TYPE_PLATFORM == loaderType)) {
-				_vm->internalVMFunctions->initializeSnapshotClassLoaderObject(_vm, _vm->extensionClassLoader, classLoaderObject);
-			} else
-#endif /* defined(J9VM_OPT_SNAPSHOTS) */
-			{
-				J9ClassLoader *result = internalAllocateClassLoader(_vm, classLoaderObject);
-				VMStructHasBeenUpdated(REGISTER_ARGS); // likely unnecessary - no code runs in internalAllocateClassLoader
-				if (NULL == result) {
-					rc = GOTO_THROW_CURRENT_EXCEPTION;
-					goto done;
-				}
-				if (J9_CLASSLOADER_TYPE_PLATFORM == loaderType) {
-					/* extensionClassLoader holds the platform class loader in Java 11+ */
-					_vm->extensionClassLoader = result;
-				}
+			J9ClassLoader *result = internalAllocateClassLoader(_vm, classLoaderObject);
+			VMStructHasBeenUpdated(REGISTER_ARGS);
+			if (NULL == result) {
+				rc = GOTO_THROW_CURRENT_EXCEPTION;
+				goto done;
+			}
+			if (J9_CLASSLOADER_TYPE_PLATFORM == loaderType) {
+				/* extensionClassLoader holds the platform class loader in Java 11+. */
+				_vm->extensionClassLoader = result;
+			} else if (J9_CLASSLOADER_TYPE_APP == loaderType) {
+				_vm->applicationClassLoader = result;
 			}
 		}
 		restoreInternalNativeStackFrame(REGISTER_ARGS);
