@@ -1033,3 +1033,6 @@ TraceEvent=Trc_VM_criu_getNotCheckpointSafeClassMethodArray_propValue Overhead=1
 TraceException=Trc_VM_criu_getNotCheckpointSafeClassMethodArray_noSysProp Overhead=1 Level=5 Template="getNotCheckpointSafeClassMethodArray() no system property openj9.internal.criu.notcheckpointsafe"
 TraceException=Trc_VM_criu_getNotCheckpointSafeClassMethodArray_oom Overhead=1 Level=1 Template="getNotCheckpointSafeClassMethodArray() OOM"
 TraceException=Trc_VM_criu_notCheckpointSafeOrClinitFrameWalkFunction_foundTargetItem Overhead=1 Level=1 Template="notCheckpointSafeOrClinitFrameWalkFunction() found a NotCheckpointSafe package/class.method %s"
+
+TraceEvent=Trc_Segment_disclaimClassMemory_result NoEnv Overhead=1 Level=3 Template="Disclaim class memory segment=%p, heapBase=%p, size=%zu, type=%zX, baseAddress=%p, result=%zi"
+TraceEvent=Trc_Segment_disclaimClassMemory_error NoEnv Overhead=1 Level=3 Template="Disclaim class memory failed result=%zi errno=%zi"

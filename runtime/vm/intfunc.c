@@ -495,4 +495,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 	freeMapCaches,
 	getTargetVMThreadHelper,
 	releaseTargetVMThreadHelper,
+	disclaimClassMemory,
+	totalNumberOfDisclaimableClassMemorySegments,
 };
