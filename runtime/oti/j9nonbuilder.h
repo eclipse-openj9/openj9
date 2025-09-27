@@ -99,6 +99,7 @@
 #define J9ClassArrayIsNullRestricted 0x2000000
 #define J9ClassIsLoadedFromSnapshot 0x4000000
 #define J9ClassIsFrozen 0x8000000
+#define J9ClassIsJCLDefineClass 0x10000000
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 

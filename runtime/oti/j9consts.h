@@ -447,6 +447,8 @@ extern "C" {
 #define J9_FINDCLASS_FLAG_NO_ISOLATION 0x2000
 #define J9_FINDCLASS_FLAG_ANON 0x4000
 #define J9_FINDCLASS_FLAG_FIND_MODULE_ON_FAIL 0x8000
+#define J9_FINDCLASS_FLAG_JCL_DEFINE_CLASS 0x10000
+
 /*
  * The class name supplied by the caller is invalid. If the class is not exempt
  * (see J9ClassIsExemptFromValidation), a NoClassDefFoundError will be thrown.
