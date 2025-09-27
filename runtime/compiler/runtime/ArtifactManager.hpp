@@ -27,10 +27,8 @@
 // If so, may be more appropriate to include j9.h instead.
 
 #include "env/TRMemory.hpp"
-#include "infra/CriticalSection.hpp"
 
 namespace TR { class CodeCache; }
-namespace TR { class Monitor; }
 struct J9JavaVM;
 struct J9VMThread;
 struct J9JITExceptionTable;
@@ -79,7 +77,7 @@ private:
    @brief Manages JIT access to VM JIT artifacts.
 
    This class is intended to be use as the centralized manager of the JIT artifact AVL tree and individual hash tables for each code cache.
-   This class has uses a TR::Monitor to synchronise access to the individual artifacts and uses exclusive VM access to add a hash table for each code cache.
+   This class has uses a omrthread_rwmutex_t to synchronise access to the individual artifacts and uses exclusive VM access to add a hash table for each code cache.
 */
 
 class TR_TranslationArtifactManager
@@ -87,13 +85,13 @@ class TR_TranslationArtifactManager
 public:
    TR_PERSISTENT_ALLOC(TR_Memory::ArtifactManager);
 
-   class CriticalSection : public OMR::CriticalSection
+   class ArtifactMutexSection
       {
    public:
-      CriticalSection() : OMR::CriticalSection(getGlobalArtifactManager()->_monitor)
-         { }
-      CriticalSection(TR_TranslationArtifactManager *mgr) : OMR::CriticalSection(mgr->_monitor)
-         { }
+      ArtifactMutexSection(bool isWriter);
+      ~ArtifactMutexSection();
+   private:
+      bool _isWriter;
       };
 
    /**
@@ -166,18 +164,25 @@ public:
    */
    static TR_TranslationArtifactManager *getGlobalArtifactManager() { return globalManager; }
 
+   /**
+   @brief Returns the mutex used to synchronize access to the JIT artifacts.
+
+   @return Returns the mutex used to synchronize access to the JIT artifacts.
+   */
+   omrthread_rwmutex_t getMutex() { return _mutex; }
+
 protected:
    /**
    @brief Initializes the artifact manager's members.
 
    The non-cache members are pointers to types instantiated externally, the constructor simply copies the pointers into the objects private members.
    */
-   TR_TranslationArtifactManager(J9AVLTree *translationArtifacts, J9JavaVM *vm, TR::Monitor *monitor);
+   TR_TranslationArtifactManager(J9AVLTree *translationArtifacts, J9JavaVM *vm, omrthread_rwmutex_t mutex);
 
    /**
    @brief Inserts an artifact into the JIT artifacts causing it to represent a given memory range.
 
-   Note this method expects to be called via another method in the artifact manager and thus does not acquire the artifact manager's monitor.
+   Note this method expects to be called via another method in the artifact manager and thus does not acquire the artifact manager's mutex.
 
    @param artifact The J9JITExceptionTable which will represent the given memory range.
    @param startPC The beginning of the memory range to represent.
@@ -189,7 +194,7 @@ protected:
    /**
    @brief Removes an artifact from the JIT artifacts causing it to no longer represent a given memory range.
 
-   Note this method expects to be called via another method in the artifact manager and thus does not acquire the artifact manager's monitor.
+   Note this method expects to be called via another method in the artifact manager and thus does not acquire the artifact manager's mutex.
 
    @param artifact The J9JITExceptionTable to remove from representing the given memory range.
    @param startPC The beginning of the memory range the artifact represents.
@@ -202,7 +207,7 @@ private:
    /**
    @brief Determines if the current artifactManager query is using the same artifact as the previous query, and if not, searches for and retrieves the new artifact's code cache's hash table.
 
-   Note this method expects to be called via another method in the artifact manager and thus does not acquire the artifact manager's monitor.
+   Note this method expects to be called via another method in the artifact manager and thus does not acquire the artifact manager's mutex.
 
    @param artifact The artifact we are currently inquiring about.
    */
@@ -212,7 +217,7 @@ private:
    J9AVLTree *_translationArtifacts;
    J9JavaVM *_vm;
    J9PortLibrary *_portLibrary;
-   TR::Monitor *_monitor;
+   omrthread_rwmutex_t _mutex;
    mutable uintptr_t _cachedPC;
    mutable J9JITHashTable *_cachedHashTable;
    mutable J9JITExceptionTable *_retrievedArtifactCache;
