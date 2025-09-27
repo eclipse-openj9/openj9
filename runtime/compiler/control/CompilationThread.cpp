@@ -11667,6 +11667,17 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
                                  _methodBeingCompiled->getMethodDetails().getMethod(),
                                  translationTime,
                                  compilationErrorNames[_methodBeingCompiled->_compErrCode]);
+            uintptr_t vmState = vmThread->omrVMThread->vmState;
+            TR_VerboseLog::write(" VmState=0x%08.8x", (unsigned int)vmState);
+            int jitPhase = (vmState >> 8) & 0xFF;
+            if (_methodBeingCompiled->_compErrCode == compilationHeapLimitExceeded
+                && (vmState & J9VMSTATE_MAJOR) == J9VMSTATE_JIT // Jit compilation
+                && jitPhase != 0x00 && jitPhase != 0xFF) // not ILGen or CodeGen => Optimization phase
+               {
+               OMR::Optimizations jitPhaseOMROpt = static_cast<OMR::Optimizations>(jitPhase);
+               TR_VerboseLog::write(" OptIdx=%d", compiler->getOptIndex());
+               TR_VerboseLog::write(" OptName=%s", OMR::Optimizer::getOptimizationName(jitPhaseOMROpt));
+               }
             if (entry->isAotLoad())
                {
                TR_RelocationRuntime *reloRuntime = compiler->reloRuntime();
