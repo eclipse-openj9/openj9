@@ -27,6 +27,8 @@
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
+			<variation>Mode501</variation>
+			<variation>Mode551</variation>
 		</variations>
 		<command>cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
 	true URLHelperTests.jar ;\
@@ -59,6 +61,8 @@
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
+			<variation>Mode501</variation>
+			<variation>Mode551</variation>
 		</variations>
 		<command>cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
 	true URLHelperTests.jar ;\
@@ -91,6 +95,8 @@
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
+			<variation>Mode501</variation>
+			<variation>Mode551</variation>
 		</variations>
 		<command>cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
 	true URLHelperTests.jar ;\
@@ -123,6 +129,8 @@
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
+			<variation>Mode501</variation>
+			<variation>Mode551</variation>
 		</variations>
 		<command>cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
 	true URLHelperTests.jar ;\
@@ -170,6 +178,8 @@
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
+			<variation>Mode501</variation>
+			<variation>Mode551</variation>
 		</variations>
 		<command>cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
 	true URLHelperTests.jar ;\
@@ -203,6 +213,8 @@
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
+			<variation>Mode501</variation>
+			<variation>Mode551</variation>
 		</variations>
 		<command>cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
 	true URLHelperTests.jar ;\
@@ -266,6 +278,8 @@
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
+			<variation>Mode501</variation>
+			<variation>Mode551</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
@@ -302,6 +316,8 @@
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
+			<variation>Mode501</variation>
+			<variation>Mode551</variation>
 		</variations>
 		<command>cp $(Q)$(TEST_RESROOT)$(D)..$(D)..$(D)..$(D)cmdline_options_testresources$(D)cmdlinetestresources.jar$(Q) .; \
 	true URLHelperTests.jar ;\
