@@ -1690,18 +1690,27 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
 
    bool callTargetIsForceInline = false;
 
-   if (callerAnalyzedSizeThreshold > analyzedSizeThreshold)
+   // At veryHot and scorching compilations, use a higher analyzed size threshold for methods that are
+   // always worth inlining along with their sub call graphs. This ensures that we do not prematurely
+   // terminate ECS along call graphs that should be inlined. At lower opt-levels, due to the the smaller
+   // inlining budget available, benefitting from analyzing such call graphs with a larger size threshold
+   // is rare. Therefore, contributing signficiantly to the overall compilation overhead with enabling
+   // this at warm and hot opt-levels is not justifiable based on current observations in various workloads.
+   if (comp()->getMethodHotness() == veryHot || comp()->getMethodHotness() == scorching)
       {
-      analyzedSizeThreshold = callerAnalyzedSizeThreshold;
-      }
-   else if (_inliner->alwaysWorthInlining(calltarget->_calleeMethod, NULL))
-      {
-      static int32_t forceInlineMultiplier = DEFAULT_FORCEINLINE_MULTIPLIER;
-      static const char *forceInlineMultiplierStr = feGetEnv("TR_ForceInlineMultiplier");
-      if (forceInlineMultiplierStr) forceInlineMultiplier = atoi(forceInlineMultiplierStr);
+      if (callerAnalyzedSizeThreshold > analyzedSizeThreshold)
+         {
+         analyzedSizeThreshold = callerAnalyzedSizeThreshold;
+         }
+      else if (_inliner->alwaysWorthInlining(calltarget->_calleeMethod, NULL))
+         {
+         static int32_t forceInlineMultiplier = DEFAULT_FORCEINLINE_MULTIPLIER;
+         static const char *forceInlineMultiplierStr = feGetEnv("TR_ForceInlineMultiplier");
+         if (forceInlineMultiplierStr) forceInlineMultiplier = atoi(forceInlineMultiplierStr);
 
-      analyzedSizeThreshold *= forceInlineMultiplier;
-      callTargetIsForceInline = true;
+         analyzedSizeThreshold *= forceInlineMultiplier;
+         callTargetIsForceInline = true;
+         }
       }
 
    if (_analyzedSize > analyzedSizeThreshold) // even optimistically we've blown our budget
