@@ -652,7 +652,7 @@ TR::CRRuntime::resumeJITThreadsForRestore(J9VMThread *vmThread)
 
 /* Post-restore, reset the start time. While the Checkpoint phase is
  * conceptually part of building the application, in order to ensure
- * consistency with parts of the compiler that memoize elapsd time,
+ * consistency with parts of the compiler that memoize elapsed time,
  * the start time is reset to pretend like the JVM started
  * persistentInfo->getElapsedTime() milliseconds ago. This will impact
  * options such as -XsamplingExpirationTime. However, such an option
