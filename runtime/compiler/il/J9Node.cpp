@@ -2488,6 +2488,7 @@ J9::Node::canGCandReturn(TR::Compilation *comp)
    return OMR::NodeConnector::canGCandReturn();
    }
 
+// TODO: take out - moved to OMR
 bool
 J9::Node::isJitDispatchJ9MethodCall(TR::Compilation *comp)
    {
