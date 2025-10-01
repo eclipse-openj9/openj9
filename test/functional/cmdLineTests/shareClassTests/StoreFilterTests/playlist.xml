@@ -27,6 +27,7 @@
 		<testCaseName>cmdLineTester_StoreFilterTests_win</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
+			<variation>Mode501</variation>
 		</variations>
 		<command>cp $(Q)$(TEST_RESROOT)$(D)StoreFilterTests.jar$(Q) .; \
 	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar.exe$(Q) xf StoreFilterTests.jar; \
