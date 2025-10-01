@@ -337,6 +337,11 @@ if [ $version = 6 ] ; then
   echo "           -e 's|#baseurl=http://mirror.centos.org/centos/\$releasever|baseurl=https://vault.centos.org/6.10|' \\"
   echo "           /etc/yum.repos.d/CentOS-Base.repo"
   echo ""
+elif [ $version = 7 ] ; then
+  echo "RUN sed -i -e 's|mirrorlist|#mirrorlist|' \\"
+  echo "           -e 's|#baseurl=http://mirror.centos.org/centos/\$releasever|baseurl=https://vault.centos.org/7.9.2009|' \\"
+  echo "           /etc/yum.repos.d/CentOS-Base.repo"
+  echo ""
 fi
   echo "RUN yum -y update \\"
   echo " && yum install -y epel-release \\"
