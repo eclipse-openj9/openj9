@@ -1444,6 +1444,15 @@ getSignatureForComputedCall(
 
 void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_invokeBasic(TR::TreeTop * treetop, TR::Node* node)
    {
+   TR::DebugCounter::prependDebugCounter(
+      comp(),
+      TR::DebugCounter::debugCounterName(
+         comp(),
+         "mh.unrefined/invokeBasic/(%s)/%s",
+         comp()->signature(),
+         comp()->getHotnessName()),
+      treetop);
+
    TR_J9VMBase* fej9 = static_cast<TR_J9VMBase*>(comp()->fe());
    TR::TransformUtil::separateNullCheck(comp(), treetop, trace());
 
@@ -1530,6 +1539,21 @@ void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_invoke
 
 void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_linkToStaticSpecial(TR::TreeTop* treetop, TR::Node* node)
    {
+   TR::RecognizedMethod rm =
+      node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod();
+
+   bool isLinkToSpecial = rm == TR::java_lang_invoke_MethodHandle_linkToSpecial;
+
+   TR::DebugCounter::prependDebugCounter(
+      comp(),
+      TR::DebugCounter::debugCounterName(
+         comp(),
+         "mh.unrefined/linkTo%s/(%s)/%s",
+         isLinkToSpecial ? "Special" : "Static",
+         comp()->signature(),
+         comp()->getHotnessName()),
+      treetop);
+
    TR_J9VMBase* fej9 = static_cast<TR_J9VMBase*>(comp()->fe());
 
    TR::SymbolReference *vmTargetSymRef =
@@ -1537,10 +1561,7 @@ void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_linkTo
 
    if (comp()->cg()->enableJitDispatchJ9Method())
       {
-      TR::RecognizedMethod rm =
-         node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod();
-
-      if (rm == TR::java_lang_invoke_MethodHandle_linkToSpecial)
+      if (isLinkToSpecial)
          {
          // Null check the receiver
          TR::SymbolReference *nullCheckSymRef =
@@ -1674,6 +1695,15 @@ void J9::RecognizedCallTransformer::processVMInternalNativeFunction(TR::TreeTop*
 
 void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_linkToVirtual(TR::TreeTop * treetop, TR::Node * node)
    {
+   TR::DebugCounter::prependDebugCounter(
+      comp(),
+      TR::DebugCounter::debugCounterName(
+         comp(),
+         "mh.unrefined/linkToVirtual/(%s)/%s",
+         comp()->signature(),
+         comp()->getHotnessName()),
+      treetop);
+
    TR::Node *receiver = node->getChild(0);
    TR::Node *memberNameNode = node->getChild(node->getNumChildren() - 1);
 
@@ -1793,6 +1823,18 @@ void J9::RecognizedCallTransformer::makeIntoDispatchVirtualCall(
 
 void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_linkToInterface(TR::TreeTop *treetop, TR::Node *node)
    {
+   // This counter isn't very informative yet. Every linkToInterface() call
+   // should come through here until/unless we come up with a representation for
+   // resolved interface calls without constant pool entries.
+   TR::DebugCounter::prependDebugCounter(
+      comp(),
+      TR::DebugCounter::debugCounterName(
+         comp(),
+         "mh.unrefined/linkToInterface/(%s)/%s",
+         comp()->signature(),
+         comp()->getHotnessName()),
+      treetop);
+
    TR::Node *receiverNode = node->getChild(0);
    TR::Node *memberNameNode = node->getChild(node->getNumChildren() - 1);
 
