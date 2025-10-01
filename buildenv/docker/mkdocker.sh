@@ -35,7 +35,6 @@ usage() {
   echo "  --criu                include CRIU"
   echo "  --cuda                include CUDA header files"
   echo "  --dist=...            specify the Linux distribution (e.g. centos, ubuntu)"
-  echo "  --freemarker          include freemarker.jar"
   echo "  --gitcache={yes|no}   generate the git cache (default: yes)"
   echo "  --jdk=...             specify which JDKs can be built (default: all)"
   echo "  --print               write the Dockerfile to stdout (default; overrides '--build')"
@@ -68,7 +67,6 @@ cuda_tag=
 dist=unspecified
 engine=docker
 engine_specified=0
-freemarker=no
 gen_git_cache=yes
 jdk_versions=all
 registry=
@@ -107,9 +105,6 @@ parse_options() {
         ;;
       --dist=*)
         dist="${arg#*=}"
-        ;;
-      --freemarker)
-        freemarker=yes
         ;;
       --gitcache=*)
         gen_git_cache="${arg#*=}"
@@ -680,16 +675,6 @@ set_user() {
   echo "USER $user"
 }
 
-install_freemarker() {
-  echo ""
-  local freemarker_version=2.3.8
-  echo "# Download and extract freemarker.jar to /home/$user/freemarker.jar."
-  echo "RUN cd /home/$user \\"
-  echo " && $wget_O freemarker.tar.gz https://sourceforge.net/projects/freemarker/files/freemarker/$freemarker_version/freemarker-$freemarker_version.tar.gz/download \\"
-  echo " && tar -xzf freemarker.tar.gz freemarker-$freemarker_version/lib/freemarker.jar --strip-components=2 \\"
-  echo " && rm -f freemarker.tar.gz"
-}
-
 bootjdk_dirs() {
   local version
   for version in $@ ; do
@@ -893,9 +878,6 @@ fi
   create_user
 if [ "x$cuda_tag" != x ] ; then
   install_cuda
-fi
-if [ $freemarker = yes ] ; then
-  install_freemarker
 fi
   install_cmake
   install_python
