@@ -182,7 +182,6 @@ jvmtiGetPotentialCapabilities(jvmtiEnv* env, jvmtiCapabilities* capabilities_ptr
 #if JAVA_SPEC_VERSION >= 11
 	if (isEventHookable(j9env, JVMTI_EVENT_SAMPLED_OBJECT_ALLOC)
 		&& (J9_GC_POLICY_METRONOME != vm->gcPolicy)
-		&& (J9_GC_POLICY_BALANCED != vm->gcPolicy)
 	) {
 		rv_capabilities.can_generate_sampled_object_alloc_events = 1;
 	}
