@@ -71,6 +71,7 @@ engine_specified=0
 freemarker=no
 gen_git_cache=yes
 jdk_versions=all
+registry=
 tags=()
 user=jenkins
 userid=1000
@@ -162,6 +163,7 @@ validate_options() {
   # Validate the distribution and version.
   case "$dist" in
     centos)
+      registry="quay.io/centos/"
       if [ $arch = s390x ] ; then
         echo "CentOS is not supported on $arch" >&2
         exit 1
@@ -190,6 +192,7 @@ validate_options() {
       esac
       ;;
     ubuntu)
+      registry="public.ecr.aws/lts/"
       case $version in
         18 | 20 | 22 | 24)
           version=$version.04
@@ -322,16 +325,21 @@ done
 fi
   echo ""
 if [ "x$cuda_tag" != x ] ; then
-  echo "FROM nvidia/cuda:$cuda_tag AS cuda-dev"
+  echo "FROM nvcr.io/nvidia/cuda:$cuda_tag AS cuda-dev"
   echo ""
 fi
-  echo "FROM $dist:$version AS base"
+  echo "FROM $registry$dist:$version AS base"
 }
 
 install_centos_packages() {
 if [ $version = 6 ] ; then
   echo "RUN sed -i -e 's|mirrorlist|#mirrorlist|' \\"
   echo "           -e 's|#baseurl=http://mirror.centos.org/centos/\$releasever|baseurl=https://vault.centos.org/6.10|' \\"
+  echo "           /etc/yum.repos.d/CentOS-Base.repo"
+  echo ""
+elif [ $version = 7 ] ; then
+  echo "RUN sed -i -e 's|mirrorlist|#mirrorlist|' \\"
+  echo "           -e 's|#baseurl=http://mirror.centos.org/centos/\$releasever|baseurl=https://vault.centos.org/7.9.2009|' \\"
   echo "           /etc/yum.repos.d/CentOS-Base.repo"
   echo ""
 fi
