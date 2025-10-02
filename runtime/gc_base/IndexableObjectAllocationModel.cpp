@@ -388,6 +388,8 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 			reservedAddressLow = envBase->_objectAllocationInterface->allocateArrayletLeaf(
 					envBase, &_allocateDescription, _allocateDescription.getMemorySpace(), true);
 
+			_allocateDescription.setSharedReserved(false);
+
 			/* If reservedRegion allocation failed set the result to NULL and return. */
 			if (NULL == reservedAddressLow) {
 				Trc_MM_allocateAndConnectNonContiguousArraylet_leafFailure(envBase->getLanguageVMThread());
