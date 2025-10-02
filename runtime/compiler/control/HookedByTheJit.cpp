@@ -2401,6 +2401,15 @@ static void jitHookClassLoaderUnload(J9HookInterface * * hookInterface, UDATA ev
 
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
 
+#if !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED)
+   // Lock acquistion is not required, since compilation threads are stopped
+   // while class unloading happens.
+   if (compInfo->getTransientClassLoadersSet())
+      {
+      compInfo->getTransientClassLoadersSet()->erase(classLoader);
+      }
+#endif /* !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED) */
+
    bool p = TR::Options::getVerboseOption(TR_VerboseHookDetailsClassUnloading);
    if (p)
       {
