@@ -245,9 +245,21 @@
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests6</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/22710</comment>
+				<variation>Mode501</variation>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/22710</comment>
+				<variation>Mode551</variation>
+			</disable>
+		</disables>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
+			<variation>Mode501</variation>
+			<variation>Mode551</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
