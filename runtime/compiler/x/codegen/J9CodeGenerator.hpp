@@ -100,6 +100,11 @@ public:
     */
    bool supportsInliningOfIsAssignableFrom();
 
+   /** \brief 
+    *     Determines if the code generator should generate inlined tests or if not, call to a VM helper.
+    */
+   bool supportsNonHelperIsAssignableFrom();
+
    /*
     * \brief Reserve space in the code cache for a specified number of trampolines.
     *        This is useful for inline caches where the methods are not yet known at
