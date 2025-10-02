@@ -60,6 +60,9 @@ typedef enum {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	THROW_CRIU_SINGLE_THREAD_MODE,
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+	THROW_ILLEGAL_STATE_EXCEPTION,
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 	/* All values after this line are for the debug interpreter only - add general values above this line */
 	GOTO_EXECUTE_BREAKPOINTED_BYTECODE,
 	HANDLE_POP_FRAMES,

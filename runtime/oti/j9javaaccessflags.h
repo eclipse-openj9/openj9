@@ -153,7 +153,7 @@
 /* Inform DDR that the static field ref constants support proper narrowing  */
 #define J9PutfieldNarrowing 1
 
-/* static field flags (low 8 bits of flagsAndClass) - low 3 bits are the field type for primitibve types */
+/* static field flags (low 8 bits of flagsAndClass) - low 3 bits are the field type for primitive types */
 #define J9StaticFieldRefFlagBits 0xFF
 #define J9StaticFieldRefTypeMask 0x7
 #define J9StaticFieldRefTypeObject 0x0
@@ -163,14 +163,35 @@
 #define J9StaticFieldRefTypeShort 0x4
 #define J9StaticFieldRefTypeIntFloat 0x5
 #define J9StaticFieldRefTypeLongDouble 0x6
-#define J9StaticFieldRefTypeUnused_0x7 0x7
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+#define J9StaticFieldIsNullRestricted 0x7
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #define J9StaticFieldRefVolatile 0x8
 #define J9StaticFieldRefPutResolved 0x10
 #define J9StaticFieldRefFinal 0x20
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-#define J9StaticFieldIsNullRestricted 0x40
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-#define J9StaticFieldRefUnused_0x80 0x80
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+/**
+ * Since only two flags are available they are
+ * used as follows to represent four states
+ * for strict static fields:
+ * 00XXXXXX - field is not strict
+ * 01XXXXXX - strict field has been read. This implies it was
+ * written at least once as well otherwise an exception would have
+ * been thrown.
+ * 10XXXXXX - strict field has been written at least once.
+ * 11XXXXXX - strict field has not been read or written.
+ */
+#define J9StaticFieldRefStrictInitRead 0x40
+#define J9StaticFieldRefStrictInitWritten 0x80
+#define J9StaticFieldRefStrictInitUnset 0xC0
+#define J9StaticFieldRefStrictInitMask 0xC0
+#define J9_STATIC_FIELD_STRICT_INIT_IS_UNSET(classAndFlags) \
+		(J9StaticFieldRefStrictInitUnset == ((classAndFlags) & J9StaticFieldRefStrictInitMask))
+#define J9_STATIC_FIELD_STRICT_INIT_WAS_WRITTEN_AND_READ(classAndFlags) \
+		(J9StaticFieldRefStrictInitRead == ((classAndFlags) & J9StaticFieldRefStrictInitMask))
+#define J9_STATIC_FIELD_STRICT_INIT_WAS_WRITTEN(classAndFlags) \
+		(J9StaticFieldRefStrictInitWritten == ((classAndFlags) & J9StaticFieldRefStrictInitMask))
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 /* ImplicitCreation attribute flags */
 #define J9AccImplicitCreateHasDefaultValue 0x1
