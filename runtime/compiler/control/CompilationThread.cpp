@@ -2585,6 +2585,12 @@ void TR::CompilationInfo::purgeMethodQueue(TR_CompilationErrorCode errorCode)
       cur->_newStartPC = startPC;
       cur->_compErrCode = errorCode;
 
+      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompFailure, TR_VerboseCompileRequest))
+         {
+         J9Method *j9m = cur->getMethodDetails().getMethod();
+         TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "purge queue entry %p j9method=%p", cur, j9m);
+         }
+
       // notify the sleeping threads
       //
       debugPrint(vmThread, "\tnotify sleeping threads that the compilation is done\n");
