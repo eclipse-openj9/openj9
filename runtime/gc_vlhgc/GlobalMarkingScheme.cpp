@@ -1437,6 +1437,7 @@ private:
 				MM_AllocationContextBalanced *context = NULL;
 				for (uintptr_t index = 0; index < reservedRegionCount; index++) {
 					context = (MM_AllocationContextBalanced *) largeObjectVirtualMemory->getAllocationContextForAddress(dataAddr, index);
+					Assert_MM_true(NULL != context);
 					context->recycleReservedRegionsForVirtualLargeObjectHeap(env, 1);
 				}
 
