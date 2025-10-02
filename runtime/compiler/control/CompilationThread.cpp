@@ -1195,8 +1195,12 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    _firstDiagnosticThreadID(0),
    _lastCompThreadID(0),
    _lastDiagnosticTheadID(0),
-   _lastAllocatedCompThreadID(0),
-   _arrayOfCompilationInfoPerThread(NULL)
+   _arrayOfCompilationInfoPerThread(NULL),
+#if !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED)
+   _transientClassLoaderMonitor(NULL),
+   _transientClassLoaders(NULL),
+#endif /* !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED) */
+   _lastAllocatedCompThreadID(0)
    {
    // The object is zero-initialized before this method is called
    //
@@ -1593,6 +1597,20 @@ void TR::CompilationInfo::releaseLogMonitor()
       _logMonitor->exit();
       }
    }
+
+#if !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED)
+bool TR::CompilationInfo::isClassLoaderMarkedTransient(J9ClassLoader *classLoader)
+   {
+   OMR::CriticalSection getTransientClassLoaders(_transientClassLoaderMonitor);
+   return _transientClassLoaders->find(classLoader) != _transientClassLoaders->end();
+   }
+
+void TR::CompilationInfo::markClassLoaderTransient(J9ClassLoader *classLoader)
+   {
+   OMR::CriticalSection getTransientClassLoaders(_transientClassLoaderMonitor);
+   _transientClassLoaders->insert(classLoader);
+   }
+#endif /* !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED) */
 
 uint32_t
 TR::CompilationInfo::getMethodBytecodeSize(const J9ROMMethod * romMethod)
@@ -9263,30 +9281,42 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                &target);
 
 #if defined(J9VM_OPT_JITSERVER)
-if (that->_methodBeingCompiled->isOutOfProcessCompReq())
-   {
-   // use the default code cache
-   compiler->getOptions()->setCodeCacheKind(TR::CodeCacheKind::DEFAULT_CC);
-   }
-else
-#endif
-   {
-   TR::SimpleRegex *regex = compiler->getOptions()->getTransientClassRegex();
-   if (regex)
-      {
-      J9Method *method = details.getMethod();
-      J9UTF8 *className = J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(method)->romClass);
-      // TR::SimpleRegex::match needs a NULL-terminated string
-      size_t classNameLength = J9UTF8_LENGTH(className);
-      char *name = (char*)compiler->trMemory()->allocateMemory(classNameLength+1, stackAlloc);
-      strncpy(name, (char*)J9UTF8_DATA(className), classNameLength);
-      name[classNameLength] = '\0';
-      if (TR::SimpleRegex::match(regex, name))
-         {
-         compiler->getOptions()->setCodeCacheKind(TR::CodeCacheKind::TRANSIENT_CODE_CC);
-         }
-      }
-   }
+         if (that->_methodBeingCompiled->isOutOfProcessCompReq())
+            {
+            // use the default code cache
+            compiler->getOptions()->setCodeCacheKind(TR::CodeCacheKind::DEFAULT_CC);
+            }
+         else
+#endif /* defined(J9VM_OPT_JITSERVER) */
+            {
+            TR::SimpleRegex *regex = compiler->getOptions()->getTransientClassRegex();
+            if (regex)
+               {
+               J9Method *method = details.getMethod();
+               J9Class *clazz = J9_CLASS_FROM_METHOD(method);
+               J9UTF8 *className = J9ROMCLASS_CLASSNAME(clazz->romClass);
+               // TR::SimpleRegex::match needs a NULL-terminated string
+               size_t classNameLength = J9UTF8_LENGTH(className);
+               char *name = (char*)compiler->trMemory()->allocateMemory(classNameLength+1, stackAlloc);
+               strncpy(name, (char*)J9UTF8_DATA(className), classNameLength);
+               name[classNameLength] = '\0';
+               J9ClassLoader *clazzLoader = clazz->classLoader;
+               TR::CompilationInfo *compInfo = that->getCompilationInfo();
+               if (TR::SimpleRegex::match(regex, name))
+                  {
+                  compiler->getOptions()->setCodeCacheKind(TR::CodeCacheKind::TRANSIENT_CODE_CC);
+#if !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED)
+                  compInfo->markClassLoaderTransient(clazzLoader);
+#endif /* !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED) */
+                  }
+#if !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED)
+               else if (compInfo->isClassLoaderMarkedTransient(clazzLoader))
+                  {
+                  compiler->getOptions()->setCodeCacheKind(TR::CodeCacheKind::TRANSIENT_CODE_CC);
+                  }
+#endif /* !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED) */
+               }
+            }
 #if defined(J9VM_OPT_JITSERVER)
          // JITServer TODO: put info in optPlan so that compilation constructor can do this
          if (that->_methodBeingCompiled->isRemoteCompReq())
