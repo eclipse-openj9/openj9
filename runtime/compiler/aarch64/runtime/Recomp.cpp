@@ -217,10 +217,8 @@ void J9::Recompilation::methodCannotBeRecompiled(void *oldStartPC, TR_FrontEnd *
    TR_PersistentJittedBodyInfo *bodyInfo = getJittedBodyInfoFromPC(oldStartPC);
    TR_PersistentMethodInfo *methodInfo = bodyInfo->getMethodInfo();
 
-   if (bodyInfo->getUsesPreexistence()
-       || methodInfo->hasBeenReplaced()
-       || (linkageInfo->isSamplingMethodBody() && !fej9->isAsyncCompilation()) // go interpreted for failed recomps in sync mode
-       || methodInfo->isExcludedPostRestore()) // go interpreted if method is excluded post restore
+   if ((linkageInfo->isSamplingMethodBody() && !fej9->isAsyncCompilation()) // failed recomps in sync mode
+       || bodyInfo->getIsInvalidated())
       {
       // Patch the first instruction regardless of counting or sampling
       patchAddr = (int32_t *)((uint8_t *)oldStartPC + getJitEntryOffset(linkageInfo));

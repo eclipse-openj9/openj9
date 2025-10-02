@@ -259,10 +259,8 @@ void J9::Recompilation::methodCannotBeRecompiled(void *oldStartPC, TR_FrontEnd *
    TR_PersistentJittedBodyInfo *bodyInfo = getJittedBodyInfoFromPC(oldStartPC);
    TR_PersistentMethodInfo   *methodInfo = bodyInfo->getMethodInfo();
 
-   if (bodyInfo->getUsesPreexistence()  // TODO: reconsider whether this is a race cond for info
-       || methodInfo->hasBeenReplaced()
-       || (linkageInfo->isSamplingMethodBody() && ! fej9->isAsyncCompilation()) // go interpreted for failed recomps in sync mode
-       || methodInfo->isExcludedPostRestore()) // go interpreted if method is excluded post restore
+   if ((linkageInfo->isSamplingMethodBody() && !fej9->isAsyncCompilation()) // failed recomps in sync mode
+       || bodyInfo->getIsInvalidated()) // TODO: reconsider whether this is a race cond for info
       {
       // Patch the first instruction regardless of counting or sampling
       // TODO: We may need to cross-check with Invalidation to avoid racing cond
