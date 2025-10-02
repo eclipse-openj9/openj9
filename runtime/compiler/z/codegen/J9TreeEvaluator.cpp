@@ -4778,13 +4778,13 @@ J9::Z::TreeEvaluator::newArrayEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
 
 static TR::Instruction*
-genMemoryZeroingLoop(TR::CodeGenerator* cg, TR::Node* node, TR::Instruction*& iCursor, TR::Register * addressReg, TR::Register * loopIterRegsiter, int32_t displacement = 0)
+genMemoryZeroingLoop(TR::CodeGenerator* cg, TR::Node* node, TR::Instruction*& iCursor, TR::Register * addressReg, TR::Register * loopIterRegsiter, bool use64bitLoop = false)
    {
    TR::LabelSymbol * loopStartLabel = generateLabelSymbol(cg);
    iCursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, loopStartLabel, iCursor);
-   iCursor = generateSS1Instruction(cg, TR::InstOpCode::XC, node, 255, generateS390MemoryReference(addressReg, displacement, cg), generateS390MemoryReference(addressReg, displacement, cg), iCursor);
+   iCursor = generateSS1Instruction(cg, TR::InstOpCode::XC, node, 255, generateS390MemoryReference(addressReg, 0, cg), generateS390MemoryReference(addressReg, 0, cg), iCursor);
    iCursor = generateRXInstruction(cg, TR::InstOpCode::LA, node, addressReg, generateS390MemoryReference(addressReg, 256, cg), iCursor);
-   iCursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRCT, node, loopIterRegsiter, loopStartLabel, iCursor);
+   iCursor = generateS390BranchInstruction(cg, use64bitLoop ? TR::InstOpCode::BRCTG : TR::InstOpCode::BRCT, node, loopIterRegsiter, loopStartLabel, iCursor);
    return iCursor;
    }
 
@@ -4848,12 +4848,8 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    /********************************************* Register setup *********************************************/
    TR::Register *dimsPtrReg = cg->evaluate(node->getFirstChild());
    TR::Register *sizeReg = cg->allocateRegister();
-   TR::Register *dim1SizeReg = cg->allocateRegister();
-   TR::Register *dim2SizeReg = cg->allocateRegister();
    TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions(0,7,cg);
    dependencies->addPostCondition(sizeReg, TR::RealRegister::AssignAny);
-   dependencies->addPostCondition(dim1SizeReg, TR::RealRegister::AssignAny);
-   dependencies->addPostCondition(dim2SizeReg, TR::RealRegister::AssignAny);
    dependencies->addPostCondition(dimsPtrReg, TR::RealRegister::AssignAny);
 
    /********************************************* Calculate size *********************************************/
@@ -4869,6 +4865,8 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    TR::Register *classReg = cg->gprClobberEvaluate(node->getThirdChild());
    dependencies->addPostCondition(classReg, TR::RealRegister::AssignAny);
 
+   TR::Register *dim1SizeReg = cg->allocateRegister();
+   dependencies->addPostCondition(dim1SizeReg, TR::RealRegister::AssignAny);
    cursor = generateRXInstruction(cg, TR::InstOpCode::LTGF, node, dim1SizeReg, generateS390MemoryReference(dimsPtrReg, 4, cg));
    iComment("Load 1st dim length.");
 
@@ -4890,6 +4888,8 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    TR::LabelSymbol *inlineAllocFailLabel = generateLabelSymbol(cg);
    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, node, inlineAllocFailLabel, cursor);
 
+   TR::Register *dim2SizeReg = cg->allocateRegister();
+   dependencies->addPostCondition(dim2SizeReg, TR::RealRegister::AssignAny);
    cursor = generateRXInstruction(cg, TR::InstOpCode::LTGF, node, dim2SizeReg, generateS390MemoryReference(dimsPtrReg, 0, cg), cursor);
    iComment("Load 2st dim length.");
    // The size of zero length array is already loaded in size register. Jump over the array size calculation instructions if length is 0.
@@ -4922,7 +4922,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    bool alignSecondDim = !(OMR::aligned(headerSize, alignmentConstant) && OMR::aligned(componentSize, alignmentConstant));
    cursor = generateRIInstruction(cg, TR::InstOpCode::AGHI, node, dim2SizeReg, alignSecondDim ? (headerSize + alignmentConstant - 1) : headerSize, cursor);
    if (alignSecondDim)
-      cursor = generateRILInstruction(cg, TR::InstOpCode::NILF, node, dim2SizeReg, -alignmentConstant, cursor);
+      cursor = generateRIInstruction(cg, TR::InstOpCode::NILL, node, dim2SizeReg, -alignmentConstant, cursor);
    cursor = generateRRInstruction(cg, TR::InstOpCode::LGR, node, sizeReg, dim2SizeReg, cursor);
 
    cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, zeroSecondDimLabel, cursor);
@@ -4937,7 +4937,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    bool alignFirstDim = !(OMR::aligned(headerSize, alignmentConstant) && OMR::aligned(elementSize, alignmentConstant));
    cursor = generateRIInstruction(cg, TR::InstOpCode::AGHI, node, dim1SizeReg, alignFirstDim ? (headerSize + alignmentConstant - 1) : headerSize, cursor);
    if (alignFirstDim)
-      cursor = generateRILInstruction(cg, TR::InstOpCode::NILF, node, dim1SizeReg, -alignmentConstant, cursor);
+      cursor = generateRIInstruction(cg, TR::InstOpCode::NILL, node, dim1SizeReg, -alignmentConstant, cursor);
 
    // Add first dimension array size to sizeReg. Can not overflow.
    cursor = generateRREInstruction(cg, TR::InstOpCode::ALGR, node, sizeReg, dim1SizeReg, cursor);
@@ -4970,24 +4970,30 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    /********************************************* Zero initialize memory *********************************************/
    static bool disableBatchClear = feGetEnv("TR_DisableBatchClear") != NULL;
    bool needInitialization = disableBatchClear && !node->canSkipZeroInitialization();
-   TR::LabelSymbol *memoryInitializationExrlTargetLabel = NULL;
    if (needInitialization)
       {
-      TR::LabelSymbol *memoryInitializationEndLabel = generateLabelSymbol(cg);
-      TR::LabelSymbol * memoryInitializationLoopLabel = generateLabelSymbol(cg);
-      memoryInitializationExrlTargetLabel = generateLabelSymbol(cg);
       cursor = generateRREInstruction(cg, TR::InstOpCode::SLGR, node, sizeReg, resultReg, cursor);
       iComment("start memory initialization.");
       // Subtract 1 to make up for XC instruction length field.
       cursor = generateRIInstruction(cg, TR::InstOpCode::AGHI, node, sizeReg, -1, cursor);
+      // Calculate the number of iterations.
+      cursor = generateRSInstruction(cg, TR::InstOpCode::SRAG, node, scratchReg, sizeReg, 8, cursor);
+      TR::LabelSymbol *initResedualBytesLabel = generateLabelSymbol(cg);
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, initResedualBytesLabel, cursor);
+      // Initialize 256 blocks.
+      cursor = genMemoryZeroingLoop(cg, node, cursor, resultReg, scratchReg, true /* use64bitLoop */);
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_B, node, initResedualBytesLabel, cursor);
+
+      TR::LabelSymbol *memoryInitializationExrlTargetLabel = generateLabelSymbol(cg);
+      cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, memoryInitializationExrlTargetLabel, cursor);
+      cursor = generateSS1Instruction(cg, TR::InstOpCode::XC, node, 0, generateS390MemoryReference(resultReg, 0, cg),
+         generateS390MemoryReference(resultReg, 0, cg), cursor);
+      // Initialize the leftover bytes.
+      cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, initResedualBytesLabel, cursor);
       cursor = generateRILInstruction(cg, TR::InstOpCode::EXRL, node, sizeReg, memoryInitializationExrlTargetLabel, cursor);
-      cursor = generateRSInstruction(cg, TR::InstOpCode::SRLG, node, scratchReg, sizeReg, 8, cursor);
-      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, memoryInitializationEndLabel, cursor);
-      cursor = generateRILInstruction(cg, TR::InstOpCode::NILF, node, sizeReg, 0xff, cursor);
-      cursor = generateRXInstruction(cg, TR::InstOpCode::LA, node, sizeReg, generateS390MemoryReference(sizeReg, resultReg, 0, cg), cursor);
-      //sizeReg has the address of the last initialized byte.
-      cursor = genMemoryZeroingLoop(cg, node, cursor, sizeReg, scratchReg, 1);
-      cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, memoryInitializationEndLabel, cursor);
+      // Recover resultReg.
+      cursor = generateRIInstruction(cg, TR::InstOpCode::NILL, node, sizeReg, 0xff00, cursor);
+      cursor = generateRREInstruction(cg, TR::InstOpCode::SLGR, node, resultReg, sizeReg, cursor);
       }
 
    /********************************************* First dimesion class and length *********************************************/
@@ -5046,15 +5052,6 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRCT, node, scratchReg, secondDimLabel, cursor);
    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_B, node, controlFlowEndLabel, cursor);
    iComment("Allocation done!");
-
-   if (needInitialization)
-      {
-      // Keep memory EXRL target here to avoid extra branching.
-      cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, memoryInitializationExrlTargetLabel, cursor);
-      cursor = generateSS1Instruction(cg, TR::InstOpCode::XC, node, 0, generateS390MemoryReference(resultReg, 0, cg),
-         generateS390MemoryReference(resultReg, 0, cg), cursor);
-      iComment("Memory init EXRL target");
-      }
 
    TR::LabelSymbol *slowPathLabel = generateLabelSymbol(cg);
    cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, inlineAllocFailLabel, cursor);
