@@ -5086,7 +5086,7 @@ private ReflectCache acquireReflectCache() {
 			// Some thread will insert this new cache making it available to all.
 			/*[IF JAVA_SPEC_VERSION >= 23]*/
 			if (theUnsafe.compareAndSetReference(this, cacheOffset, null, newCache)) {
-				/*[ELSEIF JAVA_SPEC_VERSION >= 9]*/
+			/*[ELSEIF JAVA_SPEC_VERSION >= 9]
 			if (theUnsafe.compareAndSetObject(this, cacheOffset, null, newCache)) {
 			/*[ELSE] JAVA_SPEC_VERSION >= 9
 			if (theUnsafe.compareAndSwapObject(this, cacheOffset, null, newCache)) {
