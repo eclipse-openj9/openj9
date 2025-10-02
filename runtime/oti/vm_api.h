@@ -3563,6 +3563,26 @@ allocateMemorySegmentListWithFlags(J9JavaVM * javaVM, U_32 numberOfMemorySegment
 J9MemorySegment *
 allocateMemorySegmentListEntry(J9MemorySegmentList *segmentList);
 
+/**
+ * @brief Disclaim class memory of all class loaders. Currently, only
+ * supported on Linux, no-op on other platforms.
+ *
+ * @param vm J9JavaVM token.
+ * @param flags Flags that control disclaim.
+ * @return TRUE on successful disclaim, FALSE otherwise.
+ */
+BOOLEAN
+disclaimClassMemory(J9JavaVM *vm, UDATA flags);
+
+/**
+ * @brief Returns the total number of disclaimable segments.
+ *
+ * @param vm J9JavaVM token.
+ * @return number of disclaimable segments.
+ */
+UDATA
+totalNumberOfDisclaimableClassMemorySegments(J9JavaVM *vm);
+
 /* ---------------- statistics.c ---------------- */
 /**
 * @brief
