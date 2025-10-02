@@ -434,8 +434,7 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 		byteAmount = _dataSize;
 		void *virtualLargeObjectHeapAddress = extensions->largeObjectVirtualMemory->allocateSparseFreeEntryAndMapToHeapObject(spine, byteAmount);
 
-		/* testing B.O.B */
-		for (uintptr_t idx = 0; idx <= arrayReservedRegionCount; idx++) {
+		for (uintptr_t idx = 0; idx < arrayReservedRegionCount; idx++) {
 			extensions->largeObjectVirtualMemory->setAllocationContextForAddress(virtualLargeObjectHeapAddress, reservedRegionAllocationContexts[idx], idx);
 		}
 
