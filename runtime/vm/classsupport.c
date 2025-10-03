@@ -324,7 +324,7 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 	if (!fastMode) {
 		omrthread_monitor_enter(vm->classTableMutex);
 	}
-	result = hashClassTableAtString(classLoader, (j9object_t) className, 0);
+	result = hashClassTableAtString(classLoader, (j9object_t) className, options);
 #if defined(J9VM_OPT_SNAPSHOTS)
 	if ((NULL != result) && IS_RESTORE_RUN(vm)) {
 		if (!loadWarmClassFromSnapshot(currentThread, classLoader, result)) {
@@ -1181,7 +1181,7 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 		omrthread_monitor_enter(vm->classTableMutex);
 	}
 
-	foundClass = hashClassTableAt(classLoader, className, classNameLength, 0);
+	foundClass = hashClassTableAt(classLoader, className, classNameLength, options);
 	if (NULL != foundClass) {
 #if defined(J9VM_OPT_SNAPSHOTS)
 		if (IS_RESTORE_RUN(vm)) {
@@ -1212,7 +1212,7 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 				omrthread_monitor_enter(vm->classTableMutex);
 
 				/* check again if somebody else already loaded the class */
-				foundClass = hashClassTableAt(classLoader, className, classNameLength, 0);
+				foundClass = hashClassTableAt(classLoader, className, classNameLength, options);
 				if (NULL != foundClass) {
 #if defined(J9VM_OPT_SNAPSHOTS)
 					if (IS_RESTORE_RUN(vm)
