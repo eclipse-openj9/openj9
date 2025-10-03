@@ -292,6 +292,13 @@
 	</test>
 	<test>
 		<testCaseName>testSCCMLSoftmx</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/12114</comment>
+				<variation>Mode110</variation>
+				<platform>.*zos.*</platform>
+			</disable>
+		</disables>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
