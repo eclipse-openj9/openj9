@@ -261,6 +261,19 @@ struct ClassLoadingStatisticsEntry {
 	I_64 unloadedClassCount;
 };
 
+struct ClassLoaderStatisticsEntry {
+	I_64 ticks;
+	U_32 classLoaderIndex;
+	U_32 parentClassLoaderIndex;
+	U_64 classLoaderData;
+	I_64 classCount;
+	U_64 chunkSize;
+	I_64 blockSize;
+	I_64 hiddenClassCount;
+	U_64 hiddenChunkSize;
+	U_64 hiddenBlockSize;
+};
+
 struct ThreadContextSwitchRateEntry {
 	I_64 ticks;
 	float switchRate;
@@ -410,6 +423,8 @@ private:
 	UDATA _threadCPULoadCount;
 	J9Pool *_classLoadingStatisticsTable;
 	UDATA _classLoadingStatisticsCount;
+	J9Pool *_classLoaderStatisticsTable;
+	UDATA _classLoaderStatisticsCount;
 	J9Pool *_threadContextSwitchRateTable;
 	UDATA _threadContextSwitchRateCount;
 	J9Pool *_threadStatisticsTable;
@@ -757,6 +772,11 @@ public:
 		return _classLoadingStatisticsTable;
 	}
 
+	J9Pool *getClassLoaderStatisticsTable()
+	{
+		return _classLoaderStatisticsTable;
+	}
+
 	J9Pool *getThreadContextSwitchRateTable()
 	{
 		return _threadContextSwitchRateTable;
@@ -845,6 +865,11 @@ public:
 	UDATA getClassLoadingStatisticsCount()
 	{
 		return _classLoadingStatisticsCount;
+	}
+
+	UDATA getClassLoaderStatisticsCount()
+	{
+		return _classLoaderStatisticsCount;
 	}
 
 	UDATA getThreadContextSwitchRateCount()
@@ -1071,6 +1096,7 @@ public:
 			loadSystemProcesses(_currentThread);
 			loadNativeLibraries(_currentThread);
 			loadModuleRequireAndModuleExportEvents();
+			loadClassLoaderStatisticsEvents(_currentThread);
 		}
 
 		shallowEntries = pool_new(sizeof(ClassEntry **), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
@@ -1484,9 +1510,9 @@ done:
 		J9ClassLoaderWalkState walkState;
 		J9ClassLoader *classLoader = vmFuncs->allClassLoadersStartDo(&walkState, _vm, 0);
 		int64_t time = j9time_nano_time();
-#ifdef J9VM_THR_PREEMPTIVE
+#if defined(J9VM_THR_PREEMPTIVE)
 		omrthread_monitor_enter(_vm->classLoaderModuleAndLocationMutex);
-#endif
+#endif /* defined(J9VM_THR_PREEMPTIVE) */
 
 		while (NULL != classLoader) {
 			J9HashTableState moduleWalkState;
@@ -1554,9 +1580,89 @@ done:
 			classLoader = vmFuncs->allClassLoadersNextDo(&walkState);
 		}
 done:
-#ifdef J9VM_THR_PREEMPTIVE
+#if defined(J9VM_THR_PREEMPTIVE)
 		omrthread_monitor_exit(_vm->classLoaderModuleAndLocationMutex);
-#endif
+#endif /* defined(J9VM_THR_PREEMPTIVE) */
+		vmFuncs->allClassLoadersEndDo(&walkState);
+	}
+
+	/**
+	 * @brief Generate and add ClassLoaderStatistics events to _classLoaderStatisticsTable.
+	 *
+	 * @param currentThread[in] The pointer to the current J9VMThread
+	 */
+	void loadClassLoaderStatisticsEvents(J9VMThread *currentThread)
+	{
+		J9InternalVMFunctions *vmFuncs = _vm->internalVMFunctions;
+		J9ClassLoaderWalkState walkState;
+		J9ClassLoader *classLoader = vmFuncs->allClassLoadersStartDo(&walkState, _vm, 0);
+		int64_t time = j9time_nano_time();
+
+#if defined(J9VM_THR_PREEMPTIVE)
+		omrthread_monitor_enter(_vm->classTableMutex);
+#endif /* defined(J9VM_THR_PREEMPTIVE) */
+
+		while (NULL != classLoader) {
+			ClassLoaderStatisticsEntry *entry = (ClassLoaderStatisticsEntry *)pool_newElement(_classLoaderStatisticsTable);
+			if (NULL == entry) {
+				_buildResult = OutOfMemory;
+				goto done;
+			}
+			memset(entry, 0, sizeof(*entry));
+
+			entry->ticks = time;
+			entry->classLoaderIndex = addClassLoaderEntry(classLoader);
+			if (isResultNotOKay()) {
+				goto done;
+			}
+			j9object_t parentLoaderObject = J9VMJAVALANGCLASSLOADER_PARENT(currentThread, classLoader->classLoaderObject);
+			if (NULL != parentLoaderObject) {
+				J9ClassLoader *parentClassLoader = J9VMJAVALANGCLASSLOADER_VMREF(currentThread, parentLoaderObject);
+				if (NULL != parentClassLoader) {
+					entry->parentClassLoaderIndex = addClassLoaderEntry(parentClassLoader);
+					if (isResultNotOKay()) {
+						goto done;
+					}
+				}
+			}
+			entry->classLoaderData = (U_64)classLoader;
+			entry->classCount = hashTableGetCount(classLoader->classHashTable);
+
+			J9MemorySegment *segment = classLoader->classSegments;
+			while (NULL != segment) {
+				entry->chunkSize += segment->heapAlloc - segment->baseAddress;
+				segment = segment->nextSegment;
+			}
+
+			entry->blockSize = (I_64)entry->chunkSize;
+
+			J9RAMClassFreeLists *sub4gBlockPtr = &classLoader->sub4gBlock;
+			J9RAMClassFreeLists *frequentlyAccessedBlockPtr = &classLoader->frequentlyAccessedBlock;
+			J9RAMClassFreeLists *inFrequentlyAccessedBlockPtr = &classLoader->inFrequentlyAccessedBlock;
+			UDATA *ramClassSub4gUDATABlockFreeListPtr = sub4gBlockPtr->ramClassUDATABlockFreeList;
+			UDATA *ramClassFreqUDATABlockFreeListPtr = frequentlyAccessedBlockPtr->ramClassUDATABlockFreeList;
+			UDATA *ramClassInFreqUDATABlockFreeListPtr = inFrequentlyAccessedBlockPtr->ramClassUDATABlockFreeList;
+
+			VM_VMHelpers::subtractUDATABlockChain(ramClassSub4gUDATABlockFreeListPtr, &entry->blockSize);
+			VM_VMHelpers::subtractUDATABlockChain(ramClassFreqUDATABlockFreeListPtr, &entry->blockSize);
+			VM_VMHelpers::subtractUDATABlockChain(ramClassInFreqUDATABlockFreeListPtr, &entry->blockSize);
+
+			VM_VMHelpers::subtractFreeListBlocks(sub4gBlockPtr, &entry->blockSize);
+			VM_VMHelpers::subtractFreeListBlocks(frequentlyAccessedBlockPtr, &entry->blockSize);
+			VM_VMHelpers::subtractFreeListBlocks(inFrequentlyAccessedBlockPtr, &entry->blockSize);
+
+			entry->hiddenClassCount = 0;
+			entry->hiddenChunkSize = 0;
+			entry->hiddenBlockSize = 0;
+
+			classLoader = vmFuncs->allClassLoadersNextDo(&walkState);
+		}
+
+done:
+#if defined(J9VM_THR_PREEMPTIVE)
+		omrthread_monitor_exit(_vm->classTableMutex);
+#endif /* defined(J9VM_THR_PREEMPTIVE) */
+
 		vmFuncs->allClassLoadersEndDo(&walkState);
 	}
 
@@ -1605,6 +1711,8 @@ done:
 		, _threadCPULoadCount(0)
 		, _classLoadingStatisticsTable(NULL)
 		, _classLoadingStatisticsCount(0)
+		, _classLoaderStatisticsTable(NULL)
+		, _classLoaderStatisticsCount(0)
 		, _threadContextSwitchRateTable(NULL)
 		, _threadContextSwitchRateCount(0)
 		, _threadStatisticsTable(NULL)
@@ -1755,6 +1863,12 @@ done:
 			goto done;
 		}
 
+		_classLoaderStatisticsTable = pool_new(sizeof(ClassLoaderStatisticsEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		if (NULL == _classLoaderStatisticsTable) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+
 		_threadContextSwitchRateTable = pool_new(sizeof(ThreadContextSwitchRateEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
 		if (NULL == _threadContextSwitchRateTable) {
 			_buildResult = OutOfMemory;
@@ -1888,6 +2002,7 @@ done:
 		pool_kill(_cpuLoadTable);
 		pool_kill(_threadCPULoadTable);
 		pool_kill(_classLoadingStatisticsTable);
+		pool_kill(_classLoaderStatisticsTable);
 		pool_kill(_threadContextSwitchRateTable);
 		pool_kill(_threadStatisticsTable);
 		pool_kill(_systemProcessTable);

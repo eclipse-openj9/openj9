@@ -2339,6 +2339,54 @@ exit:
 		return true;
 	}
 
+	/**
+	 * @brief Subtracts sizes of all free list blocks from the accumulator.
+	 *
+	 * Iterates through tiny, small, and large block lists in
+	 * j9RAMClassFreeListsPtr and subtracts each block's size from used.
+	 *
+	 * @param j9RAMClassFreeListsPtr Pointer to RAM class free-lists (may be NULL).
+	 * @param used Pointer to a U_64 accumulator decremented by block sizes.
+	 */
+	static VMINLINE void
+	subtractFreeListBlocks(J9RAMClassFreeLists *j9RAMClassFreeListsPtr, I_64 *used)
+	{
+		if (NULL != j9RAMClassFreeListsPtr) {
+			J9RAMClassFreeListBlock *ramClassTinyBlockFreeListPtr = j9RAMClassFreeListsPtr->ramClassTinyBlockFreeList;
+			J9RAMClassFreeListBlock *ramClassSmallBlockFreeListPtr = j9RAMClassFreeListsPtr->ramClassSmallBlockFreeList;
+			J9RAMClassFreeListBlock *ramClassLargeBlockFreeListPtr = j9RAMClassFreeListsPtr->ramClassLargeBlockFreeList;
+			while (NULL != ramClassTinyBlockFreeListPtr) {
+				*used -= ramClassTinyBlockFreeListPtr->size;
+				ramClassTinyBlockFreeListPtr = ramClassTinyBlockFreeListPtr->nextFreeListBlock;
+			}
+			while (NULL != ramClassSmallBlockFreeListPtr) {
+				*used -= ramClassSmallBlockFreeListPtr->size;
+				ramClassSmallBlockFreeListPtr = ramClassSmallBlockFreeListPtr->nextFreeListBlock;
+			}
+			while (NULL != ramClassLargeBlockFreeListPtr) {
+				*used -= ramClassLargeBlockFreeListPtr->size;
+				ramClassLargeBlockFreeListPtr = ramClassLargeBlockFreeListPtr->nextFreeListBlock;
+			}
+		}
+	}
+
+	/**
+	 * @brief Subtracts the size of each UDATA block in a chain from the accumulator.
+	 *
+	 * Walks a chain of UDATA blocks starting at ramClassUDATABlockFreeListPtr
+	 * and subtracts sizeof(UDATA) for each from used.
+	 *
+	 * @param ramClassUDATABlockFreeListPtr Head of UDATA block chain (may be NULL).
+	 * @param used Pointer to a U_64 accumulator decremented by block count * sizeof(UDATA).
+	 */
+	static VMINLINE void
+	subtractUDATABlockChain(UDATA *ramClassUDATABlockFreeListPtr, I_64 *used)
+	{
+		while (NULL != ramClassUDATABlockFreeListPtr) {
+			*used -= sizeof(UDATA);
+			ramClassUDATABlockFreeListPtr = *(UDATA **)ramClassUDATABlockFreeListPtr;
+		}
+	}
 };
 
-#endif /* VMHELPERS_HPP_ */
+#endif /* !defined(VMHELPERS_HPP_) */
