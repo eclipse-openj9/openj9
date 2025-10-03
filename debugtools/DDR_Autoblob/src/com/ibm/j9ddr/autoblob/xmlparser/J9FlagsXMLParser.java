@@ -27,92 +27,71 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
-import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
-import org.xml.sax.helpers.XMLReaderFactory;
-
 
 /**
- * Used to create mapping between flags ids and their equivalent cNames in the j9.flags file
- * 
- * @author lpnguyen
+ * Used to create mapping between flags ids and their equivalent cNames in the j9.flags file.
  *
+ * @author lpnguyen
  */
-public class J9FlagsXMLParser
-{	
-	public static final String[] knownNames = {"JIT", "JNI", "INL", "AOT", "Arg0EA"};
-	
-	private final XMLHandler handler;
-	
-	public J9FlagsXMLParser(File xmlFile) throws SAXException, IOException
-	{
-		this.handler = new XMLHandler();
-		
-		XMLReader reader = XMLReaderFactory.createXMLReader();
-		
-		reader.setContentHandler(handler);
-		reader.setErrorHandler(handler);
-		
-		reader.parse(new InputSource(new FileReader(xmlFile)));
+public final class J9FlagsXMLParser {
 
-	}
-	
-	public Map<String, String> getCNameToFlagIdMap() {
-		return handler.getCNameToIdMap();
-	}
-	
-	private static class XMLHandler extends DefaultHandler implements ContentHandler
-	{
-		final Map<String, String> cNameToFlagId = new HashMap<String, String>();
-		
-		public Map<String, String> getCNameToIdMap() {
-			return cNameToFlagId;
-		}
-	
-		private String cName(String id)
-		{
+	private static final String[] knownNames = { "JIT", "JNI", "INL", "AOT", "Arg0EA" };
+
+	private static final class XMLHandler extends DefaultHandler implements ContentHandler {
+
+		private static String cName(String id) {
 			boolean addUnderscore = false;
-			boolean knownNameFound = false;
-			
-			StringBuffer cName = new StringBuffer(id.length());
-			
-			for (int index = 0; index < id.length(); index++) {
+			int idLength = id.length();
+			StringBuilder cName = new StringBuilder(idLength);
+
+			outer: for (int index = 0; index < idLength; index++) {
 				if (addUnderscore) {
 					cName.append("_");
 					addUnderscore = false;
 				}
-				
-				knownNameFound = false;
-				for (int j = 0; j < knownNames.length; j++) {
-					String known = knownNames[j];
+
+				for (String known : knownNames) {
 					if (id.startsWith(known, index)) {
 						cName.append(known);
-						index = index + known.length();
+						index += known.length();
 						addUnderscore = true;
-						knownNameFound = true;
-						break;
+						continue outer;
 					}
 				}
-				
-				if (!knownNameFound) {
-					if ((!Character.isUpperCase(id.charAt(index))) && (index < id.length()-1) && Character.isUpperCase(id.charAt(index+1))) {
-						addUnderscore = true;
-					}
-					cName.append(Character.toUpperCase(id.charAt(index)));
+
+				char nextChar = id.charAt(index);
+				if ((index < idLength - 1) && !Character.isUpperCase(nextChar)) {
+					addUnderscore = Character.isUpperCase(id.charAt(index + 1));
 				}
+				cName.append(Character.toUpperCase(nextChar));
 			}
-			
+
 			return cName.toString();
 		}
 
+		private final Map<String, String> cNameToFlagId;
+
+		XMLHandler() {
+			super();
+			this.cNameToFlagId = new HashMap<>();
+		}
+
+		Map<String, String> getCNameToIdMap() {
+			return cNameToFlagId;
+		}
+
 		@Override
-		public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException
-		{
+		public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
 			if (qName.equals("flag")) {
 				String id = atts.getValue("id");
 				if (null != cNameToFlagId.put(cName(id), id)) {
@@ -122,22 +101,40 @@ public class J9FlagsXMLParser
 		}
 
 		@Override
-		public void endElement(String uri, String localName, String qName) throws SAXException
-		{
-			
+		public void endElement(String uri, String localName, String qName) throws SAXException {
+			// do nothing
 		}
-		
+
 		@Override
-		public void error(SAXParseException arg0) throws SAXException
-		{
-			throw arg0;
+		public void error(SAXParseException exception) throws SAXException {
+			throw exception;
 		}
-		
+
 		@Override
-		public void warning(SAXParseException arg0) throws SAXException
-		{
+		public void warning(SAXParseException exception) throws SAXException {
 			System.err.println("Warning parsing XML");
-			arg0.printStackTrace();
+			exception.printStackTrace();
 		}
 	}
+
+	private final XMLHandler handler;
+
+	public J9FlagsXMLParser(File xmlFile) throws SAXException, IOException {
+		SAXParser parser;
+
+		try {
+			parser = SAXParserFactory.newInstance().newSAXParser();
+		} catch (ParserConfigurationException e) {
+			throw new SAXException(e);
+		}
+
+		this.handler = new XMLHandler();
+
+		parser.parse(new InputSource(new FileReader(xmlFile)), handler);
+	}
+
+	public Map<String, String> getCNameToFlagIdMap() {
+		return handler.getCNameToIdMap();
+	}
+
 }
