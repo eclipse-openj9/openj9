@@ -164,13 +164,26 @@ createDirectory(struct J9PortLibrary *portLibrary, char *pathname, uintptr_t per
 			/* Change permission on new dir, note that for last dir in path this will be changed in ensureDirectory */
 			rc = changeDirectoryPermission(portLibrary, tempPath, permission);
 		} else {
-			/* check to see whether the directory has already been created, if it is, it should
-			return file exist error. If not we should return */
-			if (J9PORT_ERROR_FILE_EXIST != omrerror_last_error_number()) {
+			int32_t lastErrorNumber = omrerror_last_error_number();
+			if (J9PORT_ERROR_FILE_EXIST == lastErrorNumber) {
+				/* If mkdir fails because the directory already exists,
+				 * continue and attempt to create the next one.
+				 */
+				Trc_PRT_shared_createDirectory_Event2(tempPath);
+#if defined(J9ZOS390)
+			} else if ((J9PORT_ERROR_FILE_NOPERMISSION == lastErrorNumber)
+				&& (EsIsDir == omrfile_attr(tempPath))
+			) {
+				/* Broadcom ACF2 will return permission denied
+				 * even if the directory already exists. Keep trying
+				 * to create the next sub-directory.
+				 */
+				Trc_PRT_shared_createDirectory_Event3(tempPath);
+#endif /* J9ZOS390 */
+			} else {
 				Trc_PRT_shared_createDirectory_Exit3(tempPath);
 				return J9SH_FAILED;
 			}
-			Trc_PRT_shared_createDirectory_Event2(tempPath);
   		}
 
 		previous = current;
