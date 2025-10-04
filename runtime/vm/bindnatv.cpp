@@ -113,6 +113,7 @@ static inlMapping mappings[] = {
 	{ "Java_java_lang_J9VMInternals_newInstanceImpl__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_INTERNALS_NEWINSTANCEIMPL },
 	{ "Java_java_lang_J9VMInternals_primitiveClone__Ljava_lang_Object_2", J9_BCLOOP_SEND_TARGET_INL_INTERNALS_PRIMITIVE_CLONE },
 	{ "Java_java_lang_ref_Reference_getImpl__", J9_BCLOOP_SEND_TARGET_INL_REFERENCE_GETIMPL },
+#if JAVA_SPEC_VERSION < 11
 	{ "Java_sun_misc_Unsafe_getByte__J", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETBYTE_NATIVE },
 	{ "Java_sun_misc_Unsafe_getByte__Ljava_lang_Object_2J", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETBYTE },
 	{ "Java_sun_misc_Unsafe_getByteVolatile__Ljava_lang_Object_2J", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETBYTE_VOLATILE },
@@ -179,6 +180,7 @@ static inlMapping mappings[] = {
 	{ "Java_sun_misc_Unsafe_compareAndSwapObject__Ljava_lang_Object_2JLjava_lang_Object_2Ljava_lang_Object_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPOBJECT },
 	{ "Java_sun_misc_Unsafe_compareAndSwapLong__Ljava_lang_Object_2JJJ", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPLONG },
 	{ "Java_sun_misc_Unsafe_compareAndSwapInt__Ljava_lang_Object_2JII", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPINT },
+#endif /* JAVA_SPEC_VERSION < 11 */
 	{ "Java_java_lang_J9VMInternals_prepareClassImpl__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_INTERNALS_PREPARE_CLASS_IMPL },
 	{ "Java_java_lang_J9VMInternals_getInterfaces__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_INTERNALS_GET_INTERFACES },
 	{ "Java_java_lang_reflect_Array_newArrayImpl__Ljava_lang_Class_2I", J9_BCLOOP_SEND_TARGET_INL_ARRAY_NEW_ARRAY_IMPL },
@@ -198,7 +200,9 @@ static inlMapping mappings[] = {
 	{ "Java_com_ibm_oti_vm_VM_initializeClassLoader__Ljava_lang_ClassLoader_2IZ", J9_BCLOOP_SEND_TARGET_INL_VM_INITIALIZE_CLASS_LOADER },
 	{ "Java_com_ibm_oti_vm_VM_getClassPathEntryType__Ljava_lang_Object_2I", J9_BCLOOP_SEND_TARGET_INL_VM_GET_CLASS_PATH_ENTRY_TYPE },
 	{ "Java_com_ibm_oti_vm_VM_isBootstrapClassLoader__Ljava_lang_ClassLoader_2", J9_BCLOOP_SEND_TARGET_INL_VM_IS_BOOTSTRAP_CLASS_LOADER },
+#if JAVA_SPEC_VERSION < 11
 	{ "Java_sun_misc_Unsafe_allocateInstance__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ALLOCATE_INSTANCE },
+#endif /* JAVA_SPEC_VERSION < 11 */
 	{ "Java_openj9_internal_tools_attach_target_Attachment_loadAgentLibraryImpl__ZLjava_lang_ClassLoader_2Ljava_lang_String_2Ljava_lang_String_2Z", J9_BCLOOP_SEND_TARGET_INL_ATTACHMENT_LOADAGENTLIBRARYIMPL },
 	{ "Java_com_ibm_oti_vm_VM_getStackClass__I", J9_BCLOOP_SEND_TARGET_INL_VM_GETSTACKCLASS },
 	/* Forward duplicated getStackClass natives to the same target */
@@ -257,10 +261,12 @@ static inlMapping mappings[] = {
 	{ "Java_jdk_internal_misc_Unsafe_putDouble__JD", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTDOUBLE_NATIVE },
 	{ "Java_jdk_internal_misc_Unsafe_putDouble__Ljava_lang_Object_2JD", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTDOUBLE },
 	{ "Java_jdk_internal_misc_Unsafe_putDoubleVolatile__Ljava_lang_Object_2JD", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTDOUBLE_VOLATILE },
+#if JAVA_SPEC_VERSION < 23
 	{ "Java_jdk_internal_misc_Unsafe_getObject__Ljava_lang_Object_2J", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECT },
 	{ "Java_jdk_internal_misc_Unsafe_getObjectVolatile__Ljava_lang_Object_2J", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECT_VOLATILE },
 	{ "Java_jdk_internal_misc_Unsafe_putObject__Ljava_lang_Object_2JLjava_lang_Object_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTOBJECT },
 	{ "Java_jdk_internal_misc_Unsafe_putObjectVolatile__Ljava_lang_Object_2JLjava_lang_Object_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTOBJECT_VOLATILE },
+#endif /* JAVA_SPEC_VERSION < 23 */
 	{ "Java_jdk_internal_misc_Unsafe_getReference__Ljava_lang_Object_2J", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECT },
 	{ "Java_jdk_internal_misc_Unsafe_getReferenceVolatile__Ljava_lang_Object_2J", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECT_VOLATILE },
 	{ "Java_jdk_internal_misc_Unsafe_putReference__Ljava_lang_Object_2JLjava_lang_Object_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTOBJECT },
@@ -279,7 +285,9 @@ static inlMapping mappings[] = {
 	{ "Java_jdk_internal_misc_Unsafe_compareAndSwapObject__Ljava_lang_Object_2JLjava_lang_Object_2Ljava_lang_Object_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPOBJECT },
 	{ "Java_jdk_internal_misc_Unsafe_compareAndSwapLong__Ljava_lang_Object_2JJJ", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPLONG },
 	{ "Java_jdk_internal_misc_Unsafe_compareAndSwapInt__Ljava_lang_Object_2JII", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPINT },
+#if JAVA_SPEC_VERSION < 23
 	{ "Java_jdk_internal_misc_Unsafe_compareAndSetObject__Ljava_lang_Object_2JLjava_lang_Object_2Ljava_lang_Object_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPOBJECT },
+#endif /* JAVA_SPEC_VERSION < 23 */
 	{ "Java_jdk_internal_misc_Unsafe_compareAndSetReference__Ljava_lang_Object_2JLjava_lang_Object_2Ljava_lang_Object_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPOBJECT },
 	{ "Java_jdk_internal_misc_Unsafe_compareAndSetLong__Ljava_lang_Object_2JJJ", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPLONG },
 	{ "Java_jdk_internal_misc_Unsafe_compareAndSetInt__Ljava_lang_Object_2JII", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPINT },
@@ -327,8 +335,12 @@ typedef struct J9OutOfLineINLMapping {
 
 static J9OutOfLineINLMapping outOfLineINLmappings[] = {
 	{ "Java_jdk_internal_misc_Unsafe_fullFence__", OutOfLineINL_jdk_internal_misc_Unsafe_fullFence },
+#if JAVA_SPEC_VERSION < 11
 	{ "Java_sun_misc_Unsafe_fullFence__", OutOfLineINL_jdk_internal_misc_Unsafe_fullFence },
+#endif /* JAVA_SPEC_VERSION < 11 */
+#if JAVA_SPEC_VERSION < 23
 	{ "Java_jdk_internal_misc_Unsafe_compareAndExchangeObject__Ljava_lang_Object_2JLjava_lang_Object_2Ljava_lang_Object_2", OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeObject },
+#endif /* JAVA_SPEC_VERSION < 23 */
 	{ "Java_jdk_internal_misc_Unsafe_compareAndExchangeReference__Ljava_lang_Object_2JLjava_lang_Object_2Ljava_lang_Object_2", OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeObject },
 	{ "Java_jdk_internal_misc_Unsafe_compareAndExchangeInt__Ljava_lang_Object_2JII", OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeInt },
 	{ "Java_jdk_internal_misc_Unsafe_compareAndExchangeLong__Ljava_lang_Object_2JJJ", OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeLong },

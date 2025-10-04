@@ -436,6 +436,7 @@ public final class Unsafe {
 	 */
 	public native void putBoolean(Object obj, long offset, boolean value);
 
+/*[IF JAVA_SPEC_VERSION < 23]*/
 	/**
 	 * Gets the value of the Object in the obj parameter referenced by offset.
 	 * This is a non-volatile operation.
@@ -455,6 +456,7 @@ public final class Unsafe {
 	 * @param value Object to store in obj
 	 */
 	public native void putObject(Object obj, long offset, Object value);
+/*[ENDIF] JAVA_SPEC_VERSION < 23 */
 
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
@@ -619,6 +621,7 @@ public final class Unsafe {
 	 */
 	public final native long compareAndExchangeLong(Object obj, long offset, long compareValue, long exchangeVale);
 
+/*[IF JAVA_SPEC_VERSION < 23]*/
 	/**
 	 * Atomically sets the parameter value at offset in obj if the compare value
 	 * matches the existing value in the object.
@@ -647,6 +650,7 @@ public final class Unsafe {
 	 */
 	public final native Object compareAndExchangeObject(Object obj, long offset, Object compareValue,
 			Object exchangeValue);
+/*[ENDIF] JAVA_SPEC_VERSION < 23 */
 
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
@@ -823,6 +827,7 @@ public final class Unsafe {
 	 */
 	public native void putBooleanVolatile(Object obj, long offset, boolean value);
 
+/*[IF JAVA_SPEC_VERSION < 23]*/
 	/**
 	 * Atomically gets the value of the Object in the obj parameter referenced by offset.
 	 *
@@ -840,6 +845,7 @@ public final class Unsafe {
 	 * @param value Object to store in obj
 	 */
 	public native void putObjectVolatile(Object obj, long offset, Object value);
+/*[ENDIF] JAVA_SPEC_VERSION < 23 */
 
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
@@ -2767,6 +2773,7 @@ public final class Unsafe {
 		return weakCompareAndSetBytePlain(obj, offset, bool2byte(compareValue), bool2byte(setValue));
 	}
 
+/*[IF JAVA_SPEC_VERSION < 23]*/
 	/**
 	 * Atomically sets the parameter value at offset in obj if the compare value
 	 * matches the existing value in the object.
@@ -2864,6 +2871,7 @@ public final class Unsafe {
 	public final boolean weakCompareAndSetObject(Object obj, long offset, Object compareValue, Object setValue) {
 		return compareAndSetObject(obj, offset, compareValue, setValue);
 	}
+/*[ENDIF] JAVA_SPEC_VERSION < 23 */
 
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
@@ -3061,6 +3069,7 @@ public final class Unsafe {
 		return getBooleanVolatile(obj, offset);
 	}
 
+/*[IF JAVA_SPEC_VERSION < 23]*/
 	/**
 	 * Gets the value of the Object in the obj parameter referenced by offset using acquire semantics.
 	 * Preceding loads will not be reordered with subsequent loads/stores.
@@ -3072,6 +3081,7 @@ public final class Unsafe {
 	public final Object getObjectAcquire(Object obj, long offset) {
 		return getObjectVolatile(obj, offset);
 	}
+/*[ENDIF] JAVA_SPEC_VERSION < 23 */
 
 	/*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
@@ -3183,6 +3193,7 @@ public final class Unsafe {
 		putBooleanVolatile(obj, offset, value);
 	}
 
+/*[IF JAVA_SPEC_VERSION < 23]*/
 	/**
 	 * Sets the value of the Object in the obj parameter at memory offset using acquire semantics.
 	 * Preceding stores will not be reordered with subsequent loads/stores.
@@ -3194,6 +3205,7 @@ public final class Unsafe {
 	public final void putObjectRelease(Object obj, long offset, Object value) {
 		putObjectVolatile(obj, offset, value);
 	}
+/*[ENDIF] JAVA_SPEC_VERSION < 23 */
 
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
@@ -3305,6 +3317,7 @@ public final class Unsafe {
 		return getBooleanVolatile(obj, offset);
 	}
 
+/*[IF JAVA_SPEC_VERSION < 23]*/
 	/**
 	 * Gets the value of the Object in the obj parameter referenced by offset.
 	 * The operation is in program order, but does enforce ordering with respect to other threads.
@@ -3316,6 +3329,7 @@ public final class Unsafe {
 	public final Object getObjectOpaque(Object obj, long offset) {
 		return getObjectVolatile(obj, offset);
 	}
+/*[ENDIF] JAVA_SPEC_VERSION < 23 */
 
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
@@ -3427,6 +3441,7 @@ public final class Unsafe {
 		putBooleanVolatile(obj, offset, value);
 	}
 
+/*[IF JAVA_SPEC_VERSION < 23]*/
 	/**
 	 * Sets the value of the Object in the obj parameter at memory offset.
 	 * The operation is in program order, but does enforce ordering with respect to other threads.
@@ -3438,6 +3453,7 @@ public final class Unsafe {
 	public final void putObjectOpaque(Object obj, long offset, Object value) {
 		putObjectVolatile(obj, offset, value);
 	}
+/*[ENDIF] JAVA_SPEC_VERSION < 23 */
 
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
@@ -4349,6 +4365,7 @@ public final class Unsafe {
 		return byte2bool(result);
 	}
 
+/*[IF JAVA_SPEC_VERSION < 23]*/
 	/**
 	 * Atomically sets value at offset in obj
 	 * and returns the value of the field prior to the update.
@@ -4408,6 +4425,7 @@ public final class Unsafe {
 			}
 		}
 	}
+/*[ENDIF] JAVA_SPEC_VERSION < 23 */
 
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**

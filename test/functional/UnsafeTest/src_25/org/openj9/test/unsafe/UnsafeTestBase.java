@@ -84,27 +84,27 @@ public class UnsafeTestBase implements ITest {
 	private static final long BYTE_MASKL = (long) BYTE_MASK;
 
 	protected long mem = 0;
-	
+
 	/* variables required to change test name based on run scenario (compiled first or not) */
 	protected String scenario;
 	protected String mTestName = "";
-	
+
 	/* use scenario string to change TestNG output showing if the run is regular or with compiled classes */
 	public UnsafeTestBase (String runScenario) {
 		scenario = runScenario;
 	}
-	
+
 	@BeforeMethod(alwaysRun = true)
 	public void setTestName(Method method, Object[] parameters) {
 		mTestName = method.getName();
 		logger.debug("Test started: " + mTestName);
 	}
-	
+
 	@Override
 	public String getTestName() {
 		return mTestName  + " (" + scenario + ")";
 	}
-	
+
 	/* get logger to use, for child classes to report with their class name instead of UnsafeTestBase*/
 	protected Logger getLogger() {
 		return logger;
@@ -562,7 +562,7 @@ public class UnsafeTestBase implements ITest {
 		myUnsafe = getUnsafeInstance();
 	}
 
-	
+
 	@AfterMethod(groups = { "level.sanity" })
 	protected void tearDown() throws Exception {
 		logger.debug("Test finished: " + mTestName);
@@ -1111,59 +1111,59 @@ public class UnsafeTestBase implements ITest {
 		}
 	}
 
-	protected void testObject(Object target, String method) throws Exception {
+	protected void testReference(Object target, String method) throws Exception {
 		for (int i = 0; i < models.length; i++) {
 			long offset = offset(target, i);
-			getLogger().debug("testObject Mathod: " + method + "- Object: " + target.getClass().getName() + ", Offset: "
+			getLogger().debug("testReference Method: " + method + "- Object: " + target.getClass().getName() + ", Offset: "
 					+ offset + ", Data: " + models[i] + ", Index " + i);
 			if (method.equals(VOLATILE)) {
-				myUnsafe.putObjectVolatile(base(target, i), offset, models[i]);
+				myUnsafe.putReferenceVolatile(base(target, i), offset, models[i]);
 			} else if (method.equals(OPAQUE)) {
-				myUnsafe.putObjectOpaque(base(target, i), offset, models[i]);
+				myUnsafe.putReferenceOpaque(base(target, i), offset, models[i]);
 
 			} else if (method.equals(ORDERED)) {
-				myUnsafe.putObjectRelease(base(target, i), offset, models[i]);
+				myUnsafe.putReferenceRelease(base(target, i), offset, models[i]);
 
 			} else if (method.equals(COMPAREANDSET)) {
-				myUnsafe.putObject(base(target, i), offset, compareValueObject);
-				checkTrueAt(myUnsafe.compareAndSetObject(base(target, i), offset, compareValueObject, models[i]));
+				myUnsafe.putReference(base(target, i), offset, compareValueObject);
+				checkTrueAt(myUnsafe.compareAndSetReference(base(target, i), offset, compareValueObject, models[i]));
 
 			} else if (method.equals(WCOMPAREANDSET)) {
-				myUnsafe.putObject(base(target, i), offset, compareValueObject);
-				checkTrueAt(myUnsafe.weakCompareAndSetObject(base(target, i), offset, compareValueObject, models[i]));
+				myUnsafe.putReference(base(target, i), offset, compareValueObject);
+				checkTrueAt(myUnsafe.weakCompareAndSetReference(base(target, i), offset, compareValueObject, models[i]));
 
 			} else if (method.equals(WCOMPAREANDSETA)) {
-				myUnsafe.putObject(base(target, i), offset, compareValueObject);
-				checkTrueAt(myUnsafe.weakCompareAndSetObjectAcquire(base(target, i), offset, compareValueObject,
+				myUnsafe.putReference(base(target, i), offset, compareValueObject);
+				checkTrueAt(myUnsafe.weakCompareAndSetReferenceAcquire(base(target, i), offset, compareValueObject,
 						models[i]));
 
 			} else if (method.equals(WCOMPAREANDSETR)) {
-				myUnsafe.putObject(base(target, i), offset, compareValueObject);
-				checkTrueAt(myUnsafe.weakCompareAndSetObjectRelease(base(target, i), offset, compareValueObject,
+				myUnsafe.putReference(base(target, i), offset, compareValueObject);
+				checkTrueAt(myUnsafe.weakCompareAndSetReferenceRelease(base(target, i), offset, compareValueObject,
 						models[i]));
 
 			} else if (method.equals(WCOMPAREANDSETP)) {
-				myUnsafe.putObject(base(target, i), offset, compareValueObject);
+				myUnsafe.putReference(base(target, i), offset, compareValueObject);
 				checkTrueAt(
-						myUnsafe.weakCompareAndSetObjectPlain(base(target, i), offset, compareValueObject, models[i]));
+						myUnsafe.weakCompareAndSetReferencePlain(base(target, i), offset, compareValueObject, models[i]));
 
 			} else if (method.equals(COMPAREANDEXCH)) {
-				myUnsafe.putObject(base(target, i), offset, compareValueObject);
+				myUnsafe.putReference(base(target, i), offset, compareValueObject);
 				checkSameAt(compareValueObject,
-						myUnsafe.compareAndExchangeObject(base(target, i), offset, compareValueObject, models[i]));
+						myUnsafe.compareAndExchangeReference(base(target, i), offset, compareValueObject, models[i]));
 
 			} else if (method.equals(COMPAREANDEXCHA)) {
-				myUnsafe.putObject(base(target, i), offset, compareValueObject);
-				checkSameAt(compareValueObject, myUnsafe.compareAndExchangeObjectAcquire(base(target, i), offset,
+				myUnsafe.putReference(base(target, i), offset, compareValueObject);
+				checkSameAt(compareValueObject, myUnsafe.compareAndExchangeReferenceAcquire(base(target, i), offset,
 						compareValueObject, models[i]));
 
 			} else if (method.equals(COMPAREANDEXCHR)) {
-				myUnsafe.putObject(base(target, i), offset, compareValueObject);
-				checkSameAt(compareValueObject, myUnsafe.compareAndExchangeObjectRelease(base(target, i), offset,
+				myUnsafe.putReference(base(target, i), offset, compareValueObject);
+				checkSameAt(compareValueObject, myUnsafe.compareAndExchangeReferenceRelease(base(target, i), offset,
 						compareValueObject, models[i]));
 
 			} else {
-				myUnsafe.putObject(base(target, i), offset, models[i]);
+				myUnsafe.putReference(base(target, i), offset, models[i]);
 			}
 			modelCheck(models, target, i);
 
@@ -1957,43 +1957,43 @@ public class UnsafeTestBase implements ITest {
 		}
 	}
 
-	protected void testGetObject(Object target, String method) throws Exception {
+	protected void testGetReference(Object target, String method) throws Exception {
 		Object getValue = new Object();
 		init(target);
 		for (int i = 0; i < models.length; i++) {
 			long offset = offset(target, i);
-			getLogger().debug("testGetObject Method: " + method + "- Object: " + target.getClass() + ", Offset: "
+			getLogger().debug("testGetReference Method: " + method + "- Object: " + target.getClass() + ", Offset: "
 					+ offset + ", Index: " + i);
 			if (method.equals(VOLATILE)) {
-				checkSameAt(i, target, myUnsafe.getObjectVolatile(base(target, i), offset));
+				checkSameAt(i, target, myUnsafe.getReferenceVolatile(base(target, i), offset));
 
 			} else if (method.equals(OPAQUE)) {
-				checkSameAt(i, target, myUnsafe.getObjectOpaque(base(target, i), offset));
+				checkSameAt(i, target, myUnsafe.getReferenceOpaque(base(target, i), offset));
 
 			} else if (method.equals(ORDERED)) {
-				checkSameAt(i, target, myUnsafe.getObjectAcquire(base(target, i), offset));
+				checkSameAt(i, target, myUnsafe.getReferenceAcquire(base(target, i), offset));
 
 			} else if (method.equals(GETANDSET)) {
-				myUnsafe.putObject(base(target, i), offset, getValue);
+				myUnsafe.putReference(base(target, i), offset, getValue);
 
-				checkSameAt(getValue, myUnsafe.getAndSetObject(base(target, i), offset, models[i]));
+				checkSameAt(getValue, myUnsafe.getAndSetReference(base(target, i), offset, models[i]));
 				checkSameAt(i, target, models[i]);
 
 			} else if (method.equals(GETANDSETA)) {
-				myUnsafe.putObject(base(target, i), offset, getValue);
+				myUnsafe.putReference(base(target, i), offset, getValue);
 
-				checkSameAt(getValue, myUnsafe.getAndSetObjectAcquire(base(target, i), offset, models[i]));
+				checkSameAt(getValue, myUnsafe.getAndSetReferenceAcquire(base(target, i), offset, models[i]));
 				checkSameAt(i, target, models[i]);
 
 			} else if (method.equals(GETANDSETR)) {
-				myUnsafe.putObject(base(target, i), offset, getValue);
+				myUnsafe.putReference(base(target, i), offset, getValue);
 
-				checkSameAt(getValue, myUnsafe.getAndSetObjectRelease(base(target, i), offset, models[i]));
+				checkSameAt(getValue, myUnsafe.getAndSetReferenceRelease(base(target, i), offset, models[i]));
 				checkSameAt(i, target, models[i]);
 
 			} else {
 
-				checkSameAt(i, target, myUnsafe.getObject(base(target, i), offset));
+				checkSameAt(i, target, myUnsafe.getReference(base(target, i), offset));
 			}
 
 		}
@@ -2077,7 +2077,7 @@ public class UnsafeTestBase implements ITest {
 			} else if (method.equals(UNALIGNED)) {
 				/* do not run this test at end of array to avoid corrupting memory we don't own */
 				if (i == (modelChar.length - 1)) continue;
-				
+
 				int sizeOfChar = 2; // bytes
 
 				for (long uOffset = (pointers[i] + sizeOfChar); uOffset >= pointers[i]; --uOffset) {
@@ -2149,7 +2149,7 @@ public class UnsafeTestBase implements ITest {
 			} else if (method.equals(UNALIGNED)) {
 				/* do not run this test at end of array to avoid corrupting memory we don't own */
 				if (i == (modelShort.length - 1)) continue;
-				
+
 				int sizeOfShort = 2; // bytes
 
 				for (long uOffset = (pointers[i] + sizeOfShort); uOffset >= pointers[i]; --uOffset) {
@@ -2224,7 +2224,7 @@ public class UnsafeTestBase implements ITest {
 			} else if (method.equals(UNALIGNED)) {
 				/* do not run this test at end of array to avoid corrupting memory we don't own */
 				if (i == (modelInt.length - 1)) continue;
-				
+
 				int sizeOfInt = 4; // bytes
 
 				for (long uOffset = (pointers[i] + sizeOfInt); uOffset >= pointers[i]; --uOffset) {
@@ -2300,7 +2300,7 @@ public class UnsafeTestBase implements ITest {
 			} else if (method.equals(UNALIGNED)) {
 				/* do not run this test at end of array to avoid corrupting memory we don't own */
 				if (i == (modelLong.length - 1)) continue;
-				
+
 				int sizeOfLong = 8; // bytes
 
 				for (long uOffset = (pointers[i] + sizeOfLong); uOffset >= pointers[i]; --uOffset) {
@@ -2520,55 +2520,55 @@ public class UnsafeTestBase implements ITest {
 		}
 	}
 
-	protected void testObjectNative(String method) throws Exception {
+	protected void testReferenceNative(String method) throws Exception {
 		mem = memAllocate(100);
 		long pointers[] = new long[models.length];
 		for (int i = 0; i < models.length; i++) {
 			pointers[i] = mem + (i * ObjectData.getSize(i));
 			getLogger()
-					.debug("testObjectNative Method: " + method + "- Pointer: " + pointers[i] + ", Data: " + models[i]);
+					.debug("testReferenceNative Method: " + method + "- Pointer: " + pointers[i] + ", Data: " + models[i]);
 			if (method.equals(VOLATILE)) {
-				myUnsafe.putObjectVolatile(null, pointers[i], models[i]);
+				myUnsafe.putReferenceVolatile(null, pointers[i], models[i]);
 
 			} else if (method.equals(OPAQUE)) {
-				myUnsafe.putObjectOpaque(null, pointers[i], models[i]);
+				myUnsafe.putReferenceOpaque(null, pointers[i], models[i]);
 
 			} else if (method.equals(ORDERED)) {
-				myUnsafe.putObjectRelease(null, pointers[i], models[i]);
+				myUnsafe.putReferenceRelease(null, pointers[i], models[i]);
 
 			} else if (method.equals(COMPAREANDSET)) {
-				myUnsafe.putObject(null, pointers[i], compareValueObject);
-				checkTrueAt(myUnsafe.compareAndSetObject(null, pointers[i], compareValueObject, models[i]));
+				myUnsafe.putReference(null, pointers[i], compareValueObject);
+				checkTrueAt(myUnsafe.compareAndSetReference(null, pointers[i], compareValueObject, models[i]));
 			} else if (method.equals(WCOMPAREANDSET)) {
-				myUnsafe.putObject(null, pointers[i], compareValueObject);
+				myUnsafe.putReference(null, pointers[i], compareValueObject);
 				AssertJUnit
-						.assertTrue(myUnsafe.weakCompareAndSetObject(null, pointers[i], compareValueObject, models[i]));
+						.assertTrue(myUnsafe.weakCompareAndSetReference(null, pointers[i], compareValueObject, models[i]));
 			} else if (method.equals(WCOMPAREANDSETA)) {
-				myUnsafe.putObject(null, pointers[i], compareValueObject);
-				checkTrueAt(myUnsafe.weakCompareAndSetObjectAcquire(null, pointers[i], compareValueObject, models[i]));
+				myUnsafe.putReference(null, pointers[i], compareValueObject);
+				checkTrueAt(myUnsafe.weakCompareAndSetReferenceAcquire(null, pointers[i], compareValueObject, models[i]));
 			} else if (method.equals(WCOMPAREANDSETR)) {
-				myUnsafe.putObject(null, pointers[i], compareValueObject);
-				checkTrueAt(myUnsafe.weakCompareAndSetObjectRelease(null, pointers[i], compareValueObject, models[i]));
+				myUnsafe.putReference(null, pointers[i], compareValueObject);
+				checkTrueAt(myUnsafe.weakCompareAndSetReferenceRelease(null, pointers[i], compareValueObject, models[i]));
 			} else if (method.equals(WCOMPAREANDSETP)) {
-				myUnsafe.putObject(null, pointers[i], compareValueObject);
-				checkTrueAt(myUnsafe.weakCompareAndSetObjectPlain(null, pointers[i], compareValueObject, models[i]));
+				myUnsafe.putReference(null, pointers[i], compareValueObject);
+				checkTrueAt(myUnsafe.weakCompareAndSetReferencePlain(null, pointers[i], compareValueObject, models[i]));
 			} else if (method.equals(COMPAREANDEXCH)) {
-				myUnsafe.putObject(null, pointers[i], compareValueObject);
+				myUnsafe.putReference(null, pointers[i], compareValueObject);
 				checkSameAt(compareValueObject,
-						myUnsafe.compareAndExchangeObject(null, pointers[i], compareValueObject, models[i]));
+						myUnsafe.compareAndExchangeReference(null, pointers[i], compareValueObject, models[i]));
 			} else if (method.equals(COMPAREANDEXCHA)) {
-				myUnsafe.putObject(null, pointers[i], compareValueObject);
+				myUnsafe.putReference(null, pointers[i], compareValueObject);
 				checkSameAt(compareValueObject,
-						myUnsafe.compareAndExchangeObjectAcquire(null, pointers[i], compareValueObject, models[i]));
+						myUnsafe.compareAndExchangeReferenceAcquire(null, pointers[i], compareValueObject, models[i]));
 			} else if (method.equals(COMPAREANDEXCHR)) {
-				myUnsafe.putObject(null, pointers[i], compareValueObject);
+				myUnsafe.putReference(null, pointers[i], compareValueObject);
 				checkSameAt(compareValueObject,
-						myUnsafe.compareAndExchangeObjectRelease(null, pointers[i], compareValueObject, models[i]));
+						myUnsafe.compareAndExchangeReferenceRelease(null, pointers[i], compareValueObject, models[i]));
 
 			} else {
-				myUnsafe.putObject(null, pointers[i], models[i]);
+				myUnsafe.putReference(null, pointers[i], models[i]);
 			}
-			objectCheck(models, i, pointers, method);
+			referenceCheck(models, i, pointers, method);
 		}
 	}
 
@@ -2834,29 +2834,29 @@ public class UnsafeTestBase implements ITest {
 		}
 	}
 
-	private void objectCheck(Object model, int limit, long[] pointers, String method) throws Exception {
+	private void referenceCheck(Object model, int limit, long[] pointers, String method) throws Exception {
 		for (int i = 0; i <= limit; i++) {
 			getLogger().debug(" pointers[" + i + "]: " + pointers[i]);
 			Object expected = (Object) Array.get(model, i);
 
 			if (method.equals(VOLATILE)) {
-				Object value = myUnsafe.getObjectVolatile(null, pointers[i]);
-				getLogger().debug("getObjectVolatile - Expected: " + expected + ", Actual: " + value);
+				Object value = myUnsafe.getReferenceVolatile(null, pointers[i]);
+				getLogger().debug("getReferenceVolatile - Expected: " + expected + ", Actual: " + value);
 				checkSameAt(expected, value);
 
 			} else if (method.equals(OPAQUE)) {
-				Object value = myUnsafe.getObjectOpaque(null, pointers[i]);
-				getLogger().debug("getObjectOpaque - Expected: " + expected + ", Actual: " + value);
+				Object value = myUnsafe.getReferenceOpaque(null, pointers[i]);
+				getLogger().debug("getReferenceOpaque - Expected: " + expected + ", Actual: " + value);
 				checkSameAt(expected, value);
 
 			} else if (model.equals(ORDERED)) {
-				Object value = myUnsafe.getObjectAcquire(null, pointers[i]);
-				getLogger().debug("getObjectAcquire - Expected: " + expected + ", Actual: " + value);
+				Object value = myUnsafe.getReferenceAcquire(null, pointers[i]);
+				getLogger().debug("getReferenceAcquire - Expected: " + expected + ", Actual: " + value);
 				checkSameAt(expected, value);
 
 			} else {
-				Object value = myUnsafe.getObject(null, pointers[i]);
-				getLogger().debug("getObject - Expected: " + expected + ", Actual: " + value);
+				Object value = myUnsafe.getReference(null, pointers[i]);
+				getLogger().debug("getReference - Expected: " + expected + ", Actual: " + value);
 				checkSameAt(expected, value);
 			}
 		}
@@ -2867,8 +2867,8 @@ public class UnsafeTestBase implements ITest {
 		getLogger().debug("allocateMemory: " + mem);
 		return address;
 	}
-	
-	protected void freeMemory() {		
+
+	protected void freeMemory() {
 		myUnsafe.freeMemory(mem);
 		getLogger().debug("freeMemory: " + mem);
 	}
@@ -2889,22 +2889,22 @@ public class UnsafeTestBase implements ITest {
 			getLogger().debug("Change pointer to: " + mem);
 		}
 	}
-	
+
 	/* Create a class with the specified package name.
-	 * This method is used to verify the correctness of 
+	 * This method is used to verify the correctness of
 	 * jdk.internal.misc.Unsafe.defineAnonymousClass.
 	 */
 	protected static byte[] createDummyClass(String packageName) {
 		ClassWriter cw = new ClassWriter(0);
 		MethodVisitor mv = null;
 		String className = "DummyClass";
-		
+
 		if (packageName != null) {
 			className = packageName + "/" + className;
 		}
-		
+
 		cw.visit(52, ACC_PUBLIC, className, null, "java/lang/Object", null);
-		
+
 		{
 			mv = cw.visitMethod(ACC_PUBLIC, "bar", "()V", null, null);
 			mv.visitCode();
@@ -2914,7 +2914,7 @@ public class UnsafeTestBase implements ITest {
 		}
 
 		cw.visitEnd();
-		
+
 		return cw.toByteArray();
 	}
 
