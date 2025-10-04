@@ -49,9 +49,11 @@ target_include_directories(j9codert_vm
 
 if(OMR_ARCH_X86)
 	j9vm_gen_asm(xnathelp.m4)
+	j9vm_gen_asm(xvector.m4)
 
 	target_sources(j9codert_vm PRIVATE
 		xnathelp.s
+		xvector.s
 	)
 elseif(OMR_ARCH_POWER)
 	j9vm_gen_asm(pnathelp.m4)
