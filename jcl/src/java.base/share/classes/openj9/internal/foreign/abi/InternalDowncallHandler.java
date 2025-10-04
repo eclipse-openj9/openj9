@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.Deque;
 /*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 /*[IF JAVA_SPEC_VERSION >= 21]*/
 import java.util.Objects;
@@ -137,6 +138,7 @@ public class InternalDowncallHandler {
 		public long[] getOffsets() {
 			return offsets;
 		}
+
 	}
 
 	/* heapArgInfo holds a per-thread stack of HeapArgInfo structures.
@@ -152,9 +154,9 @@ public class InternalDowncallHandler {
 	 * different threads in downcall.
 	 */
 	/*[IF JAVA_SPEC_VERSION >= 21]*/
-	private Set<Scope> memArgScopeSet;
+	private final ThreadLocal<Set<Scope>> memArgScopeSet = ThreadLocal.withInitial(HashSet::new);
 	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
-	private Set<ResourceScope> memArgScopeSet;
+	private final ThreadLocal<Set<ResourceScope>> memArgScopeSet = ThreadLocal.withInitial(HashSet::new);
 	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
 	/*[IF JAVA_SPEC_VERSION == 17]*/
@@ -312,7 +314,7 @@ public class InternalDowncallHandler {
 	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	{
 		validateMemScope(memArgScope);
-		memArgScopeSet.add(memArgScope);
+		memArgScopeSet.get().add(memArgScope);
 	}
 
 	/* Validate the memory related scope to ensure that it is kept alive during the downcall. */
@@ -351,19 +353,22 @@ public class InternalDowncallHandler {
 			throw e;
 		}
 
-		long address = argValue.address();
 		/*[IF JAVA_SPEC_VERSION >= 22]*/
-
+		AbstractMemorySegmentImpl segment = (AbstractMemorySegmentImpl)argValue;
+		MemorySessionImpl session = segment.sessionImpl();
+		if (session != null) {
+			/* Validate the segment before accessing it. */
+			session.checkValidState();
+		}
 		if (!argValue.isNative() && options.allowsHeapAccess()) {
 			/* Store the heap argument's base object and offset. */
-			AbstractMemorySegmentImpl segment = (AbstractMemorySegmentImpl)argValue;
 			info.append(segment.unsafeGetBase(), segment.unsafeGetOffset());
 		} else {
 			/* Set null to the heap base object to denote a native array. */
 			info.append(null, 0L);
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
-		return address;
+		return argValue.address();
 	}
 	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
 	/* Intended for memAddrToLongArgFilter that converts the memory address to long. */
@@ -523,7 +528,6 @@ public class InternalDowncallHandler {
 		cifNativeThunkAddr = 0;
 		argTypesAddr = 0;
 
-		memArgScopeSet = ConcurrentHashMap.newKeySet();
 		/*[IF JAVA_SPEC_VERSION == 17]*/
 		scopeHandleMap = new ConcurrentHashMap<>();
 		/*[ENDIF] JAVA_SPEC_VERSION == 17 */
@@ -784,9 +788,9 @@ public class InternalDowncallHandler {
 	/* Set up the dependency from the sessions of memory related arguments to the specified session
 	 * so as to keep these arguments' session alive till the specified session is closed.
 	 */
-	private void SetDependency(Scope session) {
+	private void setDependency(Scope session) {
 		Objects.requireNonNull(session);
-		for (Scope memArgSession : memArgScopeSet) {
+		for (Scope memArgSession : memArgScopeSet.get()) {
 			if (memArgSession.isAlive()) {
 				MemorySessionImpl memArgSessionImpl = (MemorySessionImpl)memArgSession;
 				Thread owner = memArgSessionImpl.ownerThread();
@@ -805,7 +809,7 @@ public class InternalDowncallHandler {
 	 * arguments' scope alive till the specified session is closed.
 	 */
 	private void acquireScope() {
-		for (ResourceScope memArgScope : memArgScopeSet) {
+		for (ResourceScope memArgScope : memArgScopeSet.get()) {
 			if (memArgScope.isAlive()) {
 				Thread owner = memArgScope.ownerThread();
 				/* The check is intended for the confined scope or
@@ -821,7 +825,7 @@ public class InternalDowncallHandler {
 
 	/* Release the scope with the scope's handle in downcall. */
 	private void releaseScope() {
-		for (ResourceScope memArgScope : memArgScopeSet) {
+		for (ResourceScope memArgScope : memArgScopeSet.get()) {
 			if (memArgScope.isAlive()) {
 				Thread owner = memArgScope.ownerThread();
 				/* The check is intended for the confined scope or
@@ -930,7 +934,7 @@ public class InternalDowncallHandler {
 		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 
 		try (Arena arena = Arena.ofConfined()) {
-			SetDependency(arena.scope());
+			setDependency(arena.scope());
 			returnVal = invokeNative(
 					/*[IF JAVA_SPEC_VERSION >= 24]*/
 					returnStateMemBase,
