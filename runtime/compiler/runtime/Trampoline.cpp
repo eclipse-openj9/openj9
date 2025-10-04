@@ -379,6 +379,19 @@ bool ppcCodePatching(void *method, void *callSite, void *currentPC, void *curren
       patchAddr = (uint8_t *)callSite;
       distance = entryAddress - (uint8_t *)callSite;
       currentDistance = ((oldBits << 6) >> 6) & 0xfffffffc;
+      uint8_t *target = patchAddr + currentDistance;
+      TR::CodeCache *targetCC = TR::CodeCacheManager::instance()->findCodeCacheFromPC(target);
+      if (!targetCC || (target >= targetCC->getHelperBase() && target < targetCC->getHelperTop()))
+         {
+         // If the target is not in a code cache or the target is in the helper section of a code cache then we can
+         // assume the 'bl' is calling a helper. Starting with JDK11 (JEP 181, nestmates) "invokevirtual" can be used
+         // for private method call sites. This results in _virtualUnresolvedHelper() snippets being used indefinitely
+         // which exposes us to the possibility that the helper will call a method that was just recompiled and patched
+         // to call _samplingPatchCallSite(). Since the helper is reached using a "bl" instruction the patching logic
+         // will think that the call site can be patched to call the new recompiled body, but that's not the case.
+         return false;
+         }
+
       oldBits &= 0xfc000003;
       if (TR::Options::getCmdLineOptions()->getOption(TR_StressTrampolines) ||
           !TR::Compiler->target.cpu.isTargetWithinIFormBranchRange((intptr_t)entryAddress, (intptr_t)callSite))
