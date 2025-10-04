@@ -370,8 +370,13 @@ public final class System {
 
 			Unsafe unsafe = Unsafe.getUnsafe();
 
+			/*[IF JAVA_SPEC_VERSION >= 23]*/
+			unsafe.putReference(unsafe.staticFieldBase(f1), unsafe.staticFieldOffset(f1), com.ibm.jit.JITHelpers.getHelpers());
+			unsafe.putReference(unsafe.staticFieldBase(f2), unsafe.staticFieldOffset(f2), com.ibm.jit.JITHelpers.getHelpers());
+			/*[ELSE] JAVA_SPEC_VERSION >= 23 */
 			unsafe.putObject(unsafe.staticFieldBase(f1), unsafe.staticFieldOffset(f1), com.ibm.jit.JITHelpers.getHelpers());
 			unsafe.putObject(unsafe.staticFieldBase(f2), unsafe.staticFieldOffset(f2), com.ibm.jit.JITHelpers.getHelpers());
+			/*[ENDIF] JAVA_SPEC_VERSION >= 23 */
 		} catch (NoSuchFieldException e) { }
 
 		/*[IF JAVA_SPEC_VERSION < 17]*/

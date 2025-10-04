@@ -281,11 +281,19 @@ public final class JITHelpers {
 	}
 
 	public Object getObjectFromObject(Object obj, long offset) {
+		/*[IF JAVA_SPEC_VERSION >= 23]*/
+		return unsafe.getReference(obj, offset);
+		/*[ELSE] JAVA_SPEC_VERSION >= 23 */
 		return unsafe.getObject(obj, offset);
+		/*[ENDIF] JAVA_SPEC_VERSION >= 23 */
 	}
 
 	public Object getObjectFromObjectVolatile(Object obj, long offset) {
+		/*[IF JAVA_SPEC_VERSION >= 23]*/
+		return unsafe.getReferenceVolatile(obj, offset);
+		/*[ELSE] JAVA_SPEC_VERSION >= 23 */
 		return unsafe.getObjectVolatile(obj, offset);
+		/*[ENDIF] JAVA_SPEC_VERSION >= 23 */
 	}
 
 	public void putIntInObject(Object obj, long offset, int value) {
@@ -305,35 +313,45 @@ public final class JITHelpers {
 	}
 
 	public void putObjectInObject(Object obj, long offset, Object value) {
+		/*[IF JAVA_SPEC_VERSION >= 23]*/
+		unsafe.putReference(obj, offset, value);
+		/*[ELSE] JAVA_SPEC_VERSION >= 23 */
 		unsafe.putObject(obj, offset, value);
+		/*[ENDIF] JAVA_SPEC_VERSION >= 23 */
 	}
 
 	public void putObjectInObjectVolatile(Object obj, long offset, Object value) {
+		/*[IF JAVA_SPEC_VERSION >= 23]*/
+		unsafe.putReferenceVolatile(obj, offset, value);
+		/*[ELSE] JAVA_SPEC_VERSION >= 23 */
 		unsafe.putObjectVolatile(obj, offset, value);
+		/*[ENDIF] JAVA_SPEC_VERSION >= 23 */
 	}
 
 	public boolean compareAndSwapIntInObject(Object obj, long offset, int expected, int value) {
-/*[IF JAVA_SPEC_VERSION >= 9]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return unsafe.compareAndSetInt(obj, offset, expected, value);
-/*[ELSE] JAVA_SPEC_VERSION >= 9 */
+		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return unsafe.compareAndSwapInt(obj, offset, expected, value);
-/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	public boolean compareAndSwapLongInObject(Object obj, long offset, long expected, long value) {
-/*[IF JAVA_SPEC_VERSION >= 9]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return unsafe.compareAndSetLong(obj, offset, expected, value);
-/*[ELSE] JAVA_SPEC_VERSION >= 9 */
+		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return unsafe.compareAndSwapLong(obj, offset, expected, value);
-/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	public boolean compareAndSwapObjectInObject(Object obj, long offset, Object expected, Object value) {
-/*[IF JAVA_SPEC_VERSION >= 9]*/
+		/*[IF JAVA_SPEC_VERSION >= 23]*/
+		return unsafe.compareAndSetReference(obj, offset, expected, value);
+		/*[ELSEIF JAVA_SPEC_VERSION >= 9]*/
 		return unsafe.compareAndSetObject(obj, offset, expected, value);
-/*[ELSE] JAVA_SPEC_VERSION >= 9 */
+		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return unsafe.compareAndSwapObject(obj, offset, expected, value);
-/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 23 */
 	}
 
 	public byte getByteFromArray(Object obj, long offset) {
@@ -369,11 +387,19 @@ public final class JITHelpers {
 	}
 
 	public Object getObjectFromArray(Object obj, long offset) {
+		/*[IF JAVA_SPEC_VERSION >= 23]*/
+		return unsafe.getReference(obj, offset);
+		/*[ELSE] JAVA_SPEC_VERSION >= 23 */
 		return unsafe.getObject(obj, offset);
+		/*[ENDIF] JAVA_SPEC_VERSION >= 23 */
 	}
 
 	public Object getObjectFromArrayVolatile(Object obj, long offset) {
+		/*[IF JAVA_SPEC_VERSION >= 23]*/
+		return unsafe.getReferenceVolatile(obj, offset);
+		/*[ELSE] JAVA_SPEC_VERSION >= 23 */
 		return unsafe.getObjectVolatile(obj, offset);
+		/*[ENDIF] JAVA_SPEC_VERSION >= 23 */
 	}
 
 	public void putByteInArray(Object obj, long offset, byte value) {
@@ -409,35 +435,45 @@ public final class JITHelpers {
 	}
 
 	public void putObjectInArray(Object obj, long offset, Object value) {
+		/*[IF JAVA_SPEC_VERSION >= 23]*/
+		unsafe.putReference(obj, offset, value);
+		/*[ELSE] JAVA_SPEC_VERSION >= 23 */
 		unsafe.putObject(obj, offset, value);
+		/*[ENDIF] JAVA_SPEC_VERSION >= 23 */
 	}
 
 	public void putObjectInArrayVolatile(Object obj, long offset, Object value) {
+		/*[IF JAVA_SPEC_VERSION >= 23]*/
+		unsafe.putReferenceVolatile(obj, offset, value);
+		/*[ELSE] JAVA_SPEC_VERSION >= 23 */
 		unsafe.putObjectVolatile(obj, offset, value);
+		/*[ENDIF] JAVA_SPEC_VERSION >= 23 */
 	}
 
 	public boolean compareAndSwapIntInArray(Object obj, long offset, int expected, int value) {
-/*[IF JAVA_SPEC_VERSION >= 9]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return unsafe.compareAndSetInt(obj, offset, expected, value);
-/*[ELSE] JAVA_SPEC_VERSION >= 9 */
+		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return unsafe.compareAndSwapInt(obj, offset, expected, value);
-/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	public boolean compareAndSwapLongInArray(Object obj, long offset, long expected, long value) {
-/*[IF JAVA_SPEC_VERSION >= 9]*/
+		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		return unsafe.compareAndSetLong(obj, offset, expected, value);
-/*[ELSE] JAVA_SPEC_VERSION >= 9 */
+		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return unsafe.compareAndSwapLong(obj, offset, expected, value);
-/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	}
 
 	public boolean compareAndSwapObjectInArray(Object obj, long offset, Object expected, Object value) {
-/*[IF JAVA_SPEC_VERSION >= 9]*/
+		/*[IF JAVA_SPEC_VERSION >= 23]*/
+		return unsafe.compareAndSetReference(obj, offset, expected, value);
+		/*[ELSEIF JAVA_SPEC_VERSION >= 9]*/
 		return unsafe.compareAndSetObject(obj, offset, expected, value);
-/*[ELSE] JAVA_SPEC_VERSION >= 9 */
+		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return unsafe.compareAndSwapObject(obj, offset, expected, value);
-/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 23 */
 	}
 
 	public char byteToCharUnsigned(byte b) {
@@ -905,8 +941,13 @@ public final class JITHelpers {
 			int countSlots = 0;
 			for (int index = 0; numSlotsInObject != 0; index++) {
 				if (isDescriptorPointerTagged(descriptorWord)) {
+					/*[IF JAVA_SPEC_VERSION >= 23]*/
+					Object fieldValue = unsafe.getReference(srcObj, VM.OBJECT_HEADER_SIZE + (countSlots * SLOT_SIZE));
+					unsafe.putReference(clnObj, VM.OBJECT_HEADER_SIZE + (index * SLOT_SIZE), fieldValue);
+					/*[ELSE] JAVA_SPEC_VERSION >= 23 */
 					Object fieldValue = unsafe.getObject(srcObj, VM.OBJECT_HEADER_SIZE + (countSlots * SLOT_SIZE));
 					unsafe.putObject(clnObj, VM.OBJECT_HEADER_SIZE + (index * SLOT_SIZE), fieldValue);
+					/*[ENDIF] JAVA_SPEC_VERSION >= 23 */
 				} else {
 					int fieldValue = unsafe.getInt(srcObj, VM.OBJECT_HEADER_SIZE + (countSlots * SLOT_SIZE));
 					unsafe.putInt(clnObj, VM.OBJECT_HEADER_SIZE + (index * SLOT_SIZE), fieldValue);
@@ -947,8 +988,13 @@ public final class JITHelpers {
 			int countSlots = 0;
 			for (int index = 0; numSlotsInObject != 0; index++) {
 				if (isDescriptorPointerTagged(descriptorWord)) {
+					/*[IF JAVA_SPEC_VERSION >= 23]*/
+					Object fieldValue = unsafe.getReference(srcObj, VM.OBJECT_HEADER_SIZE + (countSlots * SLOT_SIZE));
+					unsafe.putReference(clnObj, VM.OBJECT_HEADER_SIZE + (index * SLOT_SIZE), fieldValue);
+					/*[ELSE] JAVA_SPEC_VERSION >= 23 */
 					Object fieldValue = unsafe.getObject(srcObj, VM.OBJECT_HEADER_SIZE + (countSlots * SLOT_SIZE));
 					unsafe.putObject(clnObj, VM.OBJECT_HEADER_SIZE + (index * SLOT_SIZE), fieldValue);
+					/*[ENDIF] JAVA_SPEC_VERSION >= 23 */
 				} else {
 					long fieldValue = unsafe.getLong(srcObj, VM.OBJECT_HEADER_SIZE + (countSlots * SLOT_SIZE));
 					unsafe.putLong(clnObj, VM.OBJECT_HEADER_SIZE + (index * SLOT_SIZE), fieldValue);

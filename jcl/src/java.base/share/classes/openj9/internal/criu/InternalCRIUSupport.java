@@ -975,8 +975,13 @@ public final class InternalCRIUSupport {
 						@SuppressWarnings("unchecked")
 						Map<String, String> newTheUnmodifiableEnvironment = (Map<String, String>) newStringEnvironment.newInstance(theEnvironment);
 
+						/*[IF JAVA_SPEC_VERSION >= 23]*/
+						unsafe.putReference(processEnvironmentClass, unsafe.staticFieldOffset(theUnmodifiableEnvironmentHandle),
+								Collections.unmodifiableMap(newTheUnmodifiableEnvironment));
+						/*[ELSE] JAVA_SPEC_VERSION >= 23 */
 						unsafe.putObject(processEnvironmentClass, unsafe.staticFieldOffset(theUnmodifiableEnvironmentHandle),
 								Collections.unmodifiableMap(newTheUnmodifiableEnvironment));
+						/*[ENDIF] JAVA_SPEC_VERSION >= 23 */
 
 					} catch (Throwable t) {
 						throw throwSetEnvException(t);

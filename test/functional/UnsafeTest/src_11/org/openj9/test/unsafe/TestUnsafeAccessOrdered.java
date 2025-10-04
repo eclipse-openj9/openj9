@@ -28,17 +28,17 @@ import org.testng.log4testng.Logger;
 @Test(groups = { "level.sanity" })
 public class TestUnsafeAccessOrdered extends UnsafeTestBase {
 	private static Logger logger = Logger.getLogger(TestUnsafeAccessOrdered.class);
-	
+
 	public TestUnsafeAccessOrdered(String scenario) {
 		super(scenario);
 	}
-	
+
 	/* get logger to use, for child classes to report with their class name instead of UnsafeTestBase*/
 	@Override
 	protected Logger getLogger() {
 		return logger;
 	}
-	
+
 	@Override
 	@BeforeMethod
 	protected void setUp() throws Exception {
@@ -61,7 +61,7 @@ public class TestUnsafeAccessOrdered extends UnsafeTestBase {
 	public void testInstancePutOrderedInt() throws Exception {
 		testInt(new IntData(), ORDERED);
 	}
-	
+
 	public void testInstancePutOrderedLong() throws Exception {
 		testLong(new LongData(), ORDERED);
 	}
@@ -98,7 +98,7 @@ public class TestUnsafeAccessOrdered extends UnsafeTestBase {
 	public void testArrayPutOrderedInt() throws Exception {
 		testInt(new int[modelInt.length], ORDERED);
 	}
-	
+
 	public void testArrayPutOrderedLong() throws Exception {	;
 		testLong(new long[modelLong.length], ORDERED);
 	}
@@ -135,7 +135,7 @@ public class TestUnsafeAccessOrdered extends UnsafeTestBase {
 	public void testStaticPutOrderedInt() throws Exception {
 		testInt(IntData.class, ORDERED);
 	}
-	
+
 	public void testStaticPutOrderedLong() throws Exception {
 		testLong(LongData.class, ORDERED);
 	}
@@ -172,7 +172,7 @@ public class TestUnsafeAccessOrdered extends UnsafeTestBase {
 	public void testObjectNullPutOrderedInt() throws Exception {
 		testIntNative(ORDERED);
 	}
-	
+
 	public void testObjectNullPutOrderedLong() throws Exception {
 		testLongNative(ORDERED);
 	}

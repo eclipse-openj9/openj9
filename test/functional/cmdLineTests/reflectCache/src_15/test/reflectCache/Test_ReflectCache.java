@@ -49,10 +49,10 @@ public class Test_ReflectCache {
 		try {
 			Field testField1 = testClass.getField("testField");
 			long fieldRootOffset = unsafe.objectFieldOffset(Field.class, "root");
-			Object rootObject1 = unsafe.getObject(testField1, fieldRootOffset);
+			Object rootObject1 = unsafe.getReference(testField1, fieldRootOffset);
 
 			Field testField2 = testClass.getField("testField");
-			Object rootObject2 = unsafe.getObject(testField2, fieldRootOffset);
+			Object rootObject2 = unsafe.getReference(testField2, fieldRootOffset);
 			
 			if (rootObject1 != rootObject2) {
 				System.out.println("TEST FAILED");
@@ -67,10 +67,10 @@ public class Test_ReflectCache {
 	
 			Method testMethod1 = testClass.getMethod("testMethod", String.class);
 			long methodRootOffset = unsafe.objectFieldOffset(Method.class, "root");
-			rootObject1 = unsafe.getObject(testMethod1, methodRootOffset);
+			rootObject1 = unsafe.getReference(testMethod1, methodRootOffset);
 			
 			Method testMethod2 = testClass.getMethod("testMethod", String.class);
-			rootObject2 = unsafe.getObject(testMethod2, methodRootOffset);
+			rootObject2 = unsafe.getReference(testMethod2, methodRootOffset);
 			
 			if (rootObject1 != rootObject2) {
 				System.out.println("TEST FAILED");
@@ -85,10 +85,10 @@ public class Test_ReflectCache {
 			
 			Constructor<?> testConstructor1 = testClass.getConstructor();
 			long constructorRootOffset = unsafe.objectFieldOffset(Constructor.class, "root");
-			rootObject1 = unsafe.getObject(testConstructor1, constructorRootOffset);
+			rootObject1 = unsafe.getReference(testConstructor1, constructorRootOffset);
 			
 			Constructor<?> testConstructor2 = testClass.getConstructor();
-			rootObject2 = unsafe.getObject(testConstructor2, constructorRootOffset);
+			rootObject2 = unsafe.getReference(testConstructor2, constructorRootOffset);
 			
 			if (rootObject1 != rootObject2) {
 				System.out.println("TEST FAILED");
@@ -102,9 +102,9 @@ public class Test_ReflectCache {
 			}
 			
 			Constructor<?> testConstructorA = testClass.getConstructor(String.class);
-			rootObject1 = unsafe.getObject(testConstructorA, constructorRootOffset);
+			rootObject1 = unsafe.getReference(testConstructorA, constructorRootOffset);
 			Constructor<?> testConstructorB = testClass.getConstructor(String.class);
-			rootObject2 = unsafe.getObject(testConstructorB, constructorRootOffset);
+			rootObject2 = unsafe.getReference(testConstructorB, constructorRootOffset);
 			if (rootObject1 != rootObject2) {
 				System.out.println("TEST FAILED");
 				return;
