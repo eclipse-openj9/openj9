@@ -6136,7 +6136,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
       if (compErrCode)
          *compErrCode = compilationNotNeeded;
       if (TR::Options::getJITCmdLineOptions()->getVerboseOption(TR_VerboseCompileRequest))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_CR,"%p     Already compiled at %p", startPC);
+         TR_VerboseLog::writeLineLocked(TR_Vlog_CR,"%p     Already compiled at %p", vmThread, startPC);
       return startPC;
       }
 
