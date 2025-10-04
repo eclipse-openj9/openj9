@@ -12548,7 +12548,6 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    TR::Register *fromIndexReg    = cg->evaluate(node->getChild(4));
 
    TR::Register *subStringLenReg = cg->allocateRegister();
-   TR::Register *arrayAddressReg = cg->allocateRegister();
    TR::Register *resultReg       = cg->allocateRegister();
 
    TR::Register *vec1Reg            = cg->allocateRegister(TR_VRF);
@@ -12620,6 +12619,7 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
     * Determine the address of the first byte to read either by loading from dataAddr or adding the header size.
     * This is followed by adding in the offset.
     */
+   TR::Register *arrayAddressReg = srm->findOrCreateScratchRegister();
    TR::Register *subStringAddressReg = srm->findOrCreateScratchRegister();
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
    if (TR::Compiler->om.isOffHeapAllocationEnabled())
@@ -12711,6 +12711,11 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, endAddressReg, endAddressReg, isLatin1 ? 1 : 2);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, currentAddressReg, currentAddressReg, isLatin1 ? 1 : 2);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, endAddressReg, arrayAddressReg, endAddressReg);
+
+   if (node->getChild(0)->getReferenceCount() != 1)
+      {
+      srm->reclaimScratchRegister(arrayAddressReg);
+      }
 
    /*
     * This section sets up values in registers that will be needed multiple times.
@@ -13004,6 +13009,27 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
 
    /* A full match of the substring inside the main string has been found. The index is calculated and returned in resultReg. */
    generateLabelInstruction(cg, TR::InstOpCode::label, node, foundLabel);
+   if (node->getChild(0)->getReferenceCount() != 1)
+      {
+      arrayAddressReg = srm->findOrCreateScratchRegister();
+
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+      if (TR::Compiler->om.isOffHeapAllocationEnabled())
+         {
+         generateTrg1MemInstruction(
+            cg, TR::InstOpCode::ld, node, arrayAddressReg,
+            TR::MemoryReference::createWithDisplacement(
+               cg, arrayObjReg, TR::Compiler->om.offsetOfContiguousDataAddrField(), 8)
+            );
+         }
+      else
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
+         {
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, arrayAddressReg, arrayObjReg,
+                                        TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+         }
+      }
+
    generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, resultReg, arrayAddressReg, currentAddressReg);
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, foundExactLabel);
@@ -13012,6 +13038,7 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    if (!isLatin1)
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::srawi, node, resultReg, resultReg, 1);
 
+   srm->reclaimScratchRegister(arrayAddressReg);
    srm->reclaimScratchRegister(subStringAddressReg);
    srm->reclaimScratchRegister(currentAddressReg);
    srm->reclaimScratchRegister(endAddressReg);
@@ -13047,7 +13074,6 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
       }
 
    deps->addPostCondition(subStringLenReg, TR::RealRegister::NoReg);
-   deps->addPostCondition(arrayAddressReg, TR::RealRegister::NoReg);
    deps->addPostCondition(resultReg, TR::RealRegister::NoReg);
    deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
    deps->addPostCondition(vec1Reg, TR::RealRegister::NoReg);
