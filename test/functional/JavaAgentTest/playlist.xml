@@ -439,6 +439,7 @@
 		<testCaseName>TestGCClassWithStaticRetransformInGencon_SE80</testCaseName>
 		<variations>
 			<variation>Mode109</variation>
+			<variation>Mode500</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xgc:scvTenureAge=14,scvNoAdaptiveTenure \
 	-XX:+EnableExtendedHCR \

@@ -229,6 +229,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode110</variation>
 			<variation>Mode609</variation>
 			<variation>Mode610</variation>
+			<variation>Mode500</variation>
+			<variation>Mode501</variation>
+			<variation>Mode551</variation>
+			<variation>Mode550</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) -Dplatform=$(PLATFORM) -cp $(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(Q) \
 	j9vm.runner.Menu -test=$(Q)j9vm.test.xlpcodecache$(Q) -exe=$(Q)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(Q) \

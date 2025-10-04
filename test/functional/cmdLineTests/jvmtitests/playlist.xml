@@ -753,6 +753,8 @@
 			<variation>Mode148</variation>
 			<variation>Mode149</variation>
 			<variation>Mode610</variation>
+			<variation>Mode501</variation>
+			<variation>Mode551</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
