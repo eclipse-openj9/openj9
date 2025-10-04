@@ -796,6 +796,19 @@ initFailed:
 					clazz = VM_VMHelpers::currentClass(clazz);
 					goto done;
 				}
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+				/* All strict static fields must be set by the end of <clinit>. */
+				if (clazz->strictStaticFieldCounter > 0) {
+					J9UTF8 *className = J9ROMCLASS_CLASSNAME(clazz->romClass);
+					setCurrentExceptionNLSWithArgs(
+							currentThread,
+							J9NLS_VM_CLASS_LOADING_ERROR_STRICT_STATIC_FIELDS_UNSET,
+							J9VMCONSTANTPOOL_JAVALANGILLEGALSTATEEXCEPTION,
+							J9UTF8_LENGTH(className),
+							J9UTF8_DATA(className));
+					goto initFailed;
+				}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 				initializationLock = setInitStatus(currentThread, clazz, J9ClassInitSucceeded, initializationLock);
 				clazz = VM_VMHelpers::currentClass(clazz);
 				classObject = J9VM_J9CLASS_TO_HEAPCLASS(clazz);

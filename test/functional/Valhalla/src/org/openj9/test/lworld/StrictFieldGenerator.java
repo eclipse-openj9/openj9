@@ -80,4 +80,70 @@ public class StrictFieldGenerator extends ClassLoader {
         byte[] bytes = cw.toByteArray();
         return generator.defineClass(className, cw.toByteArray(), 0, bytes.length);
     }
+
+    public static Class<?> generateTestGetStaticInLarvalForUnsetStrictField() {
+        String className = "TestGetStaticInLarvalForUnsetStrictField";
+        return generateTestPutGetStrictStaticField(className, false, false, true, false);
+    }
+
+    public static Class<?> generateTestPutStaticInLarvalForReadStrictFinalField() {
+        String className = "TestPutStaticInLarvalForReadStrictFinalField";
+        return generateTestPutGetStrictStaticField(className, false, true, true, true);
+    }
+
+    public static Class<?> generateTestStrictStaticFieldNotSetInLarval() {
+        String className = "TestStrictStaticFieldNotSetInLarval";
+        return generateTestPutGetStrictStaticField(className, false, false, false, false);
+    }
+
+    public static Class<?> generateTestStrictStaticFieldNotSetInLarvalMulti() {
+        String className = "TestStrictStaticFieldNotSetInLarvalMulti";
+        return generateTestPutGetStrictStaticField(className, true, true, false, false);
+    }
+
+    private static Class<?> generateTestPutGetStrictStaticField(String className, boolean secondField, boolean put1, boolean get, boolean put2) {
+        String fieldName = "i";
+        String fieldDesc = "I";
+        String fieldName2 = "i2";
+
+        ClassWriter cw = new ClassWriter(0);
+        cw.visit(ValhallaUtils.VALUE_TYPE_CLASS_FILE_VERSION,
+            ACC_PUBLIC + ValhallaUtils.ACC_IDENTITY,
+            className, null, "java/lang/Object", null);
+
+        cw.visitField(ACC_STATIC | ACC_STRICT_INIT | ACC_FINAL, fieldName, fieldDesc, null, null);
+        if (secondField) {
+            cw.visitField(ACC_STATIC | ACC_STRICT_INIT | ACC_FINAL, fieldName2, fieldDesc, null, null);
+        }
+
+        MethodVisitor mv = cw.visitMethod(ACC_STATIC, "<clinit>", "()V", null, null);
+        mv.visitCode();
+        if (put1) {
+            mv.visitInsn(ICONST_1);
+            mv.visitFieldInsn(PUTSTATIC, className, fieldName, fieldDesc);
+        }
+        if (get) {
+            mv.visitFieldInsn(GETSTATIC, className, fieldName, fieldDesc);
+        }
+        if (put2) {
+            mv.visitInsn(ICONST_2);
+            mv.visitFieldInsn(PUTSTATIC, className, fieldName, fieldDesc);
+        }
+        mv.visitInsn(RETURN);
+        mv.visitMaxs(2, 0);
+        mv.visitEnd();
+
+        mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
+        mv.visitCode();
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+        mv.visitInsn(RETURN);
+        mv.visitMaxs(1, 1);
+        mv.visitEnd();
+
+        cw.visitEnd();
+        byte[] bytes = cw.toByteArray();
+
+        return generator.defineClass(className, cw.toByteArray(), 0, bytes.length);
+    }
 }
