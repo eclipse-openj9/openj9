@@ -60,11 +60,10 @@ public class DDRBackfillLayoutTest {
 		ValueTypeQuadLong quadLongInstance = new ValueTypeQuadLong(doubleLongInstance, new ValueTypeLong(ValueTypeTests.defaultLongNew2), ValueTypeTests.defaultLongNew3);
 		ValueTypeDoubleQuadLong doubleQuadLongInstance = new ValueTypeDoubleQuadLong(quadLongInstance, doubleLongInstance, new ValueTypeLong(ValueTypeTests.defaultLongNew4), ValueTypeTests.defaultLongNew5);
 
-		Object[] flatUnAlignedSingleBackfill2Array = ValueClass.newNullRestrictedArray(ValueTypeTests.flatUnAlignedSingleBackfillClass2, 3);
-		flatUnAlignedSingleBackfill2Array[1] = flatUnAlignedSingleBackfill2Instance;
-
-		Object[] quadLongArray = ValueClass.newNullRestrictedArray(ValueTypeQuadLong.class, 3);
-		quadLongArray[1] = quadLongInstance;
+		Object[] flatUnAlignedSingleBackfill2Array = ValueClass.newNullRestrictedAtomicArray(ValueTypeTests.flatUnAlignedSingleBackfillClass2, 3, flatUnAlignedSingleBackfill2Instance);
+		// TODO: Disabled as per https://github.com/eclipse-openj9/openj9/issues/22642.
+		// Object[] quadLongArray = ValueClass.newNullRestrictedAtomicArray(ValueTypeQuadLong.class, 3, quadLongInstance);
+		Object[] quadLongArray = null;
 
 		ValueTypeTests.checkObject(flatSingleBackfillInstance,
 				objectBackfillInstance,

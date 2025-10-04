@@ -541,9 +541,6 @@
    LastVectorMethod = LastVectorIntrinsicMethod,
 
    java_lang_reflect_Array_getLength,
-   jdk_internal_value_ValueClass_newArrayInstance,
-   jdk_internal_value_ValueClass_newNullRestrictedArray,
-   jdk_internal_value_NullRestrictedCheckedType_of,
    java_lang_reflect_Method_invoke,
    java_util_Arrays_fill,
    java_util_Arrays_equals,
@@ -1247,7 +1244,6 @@
    java_lang_J9VMInternals_isClassModifierPublic,
    java_lang_J9VMInternals_getArrayLengthAsObject,
    java_lang_J9VMInternals_rawNewInstance,
-   java_lang_J9VMInternals_rawNewArrayInstance,
    java_lang_J9VMInternals_defaultClone,
    java_lang_J9VMInternals_getNumBitsInReferenceField,
    java_lang_J9VMInternals_getNumBytesInReferenceField,

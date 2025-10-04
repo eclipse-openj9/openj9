@@ -310,12 +310,12 @@ public class ValueTypeTests {
 		int x1 = 0xFFEEFFEE;
 		int y1 = 0xAABBAABB;
 		Object point2D = makePoint2D.invoke(x1, y1);
-		Object[] array = ValueClass.newNullRestrictedArray(point2DClass, 8);
+		Object[] array = ValueClass.newNullRestrictedAtomicArray(point2DClass, 8, point2D);
 
+		// TODO: Remove following initialization as per https://github.com/eclipse-openj9/openj9/issues/22642.
 		for (int i = 0; i < 8; i++) {
 			array[i] = point2D;
 		}
-
 		System.gc();
 
 		Object value = array[0];
@@ -323,13 +323,14 @@ public class ValueTypeTests {
 
 	@Test(priority=5)
 	static public void testGCFlattenedValueArrayWithSingleAlignment() throws Throwable {
-		Object[] array = ValueClass.newNullRestrictedArray(assortedValueWithSingleAlignmentClass, 4);
-		
+		Object[] array = ValueClass.newNullRestrictedAtomicArray(assortedValueWithSingleAlignmentClass, 4,
+				createAssorted(makeAssortedValueWithSingleAlignment, typeWithSingleAlignmentFields));
+
+		// TODO: Remove following initialization as per https://github.com/eclipse-openj9/openj9/issues/22642.
 		for (int i = 0; i < 4; i++) {
 			Object object = createAssorted(makeAssortedValueWithSingleAlignment, typeWithSingleAlignmentFields);
 			array[i] = object;
 		}
-
 		System.gc();
 
 		for (int i = 0; i < 4; i++) {
@@ -339,13 +340,14 @@ public class ValueTypeTests {
 
 	@Test(priority=5)
 	static public void testGCFlattenedValueArrayWithObjectAlignment() throws Throwable {
-		Object[] array = ValueClass.newNullRestrictedArray(assortedValueWithObjectAlignmentClass, 4);
-		
+		Object[] array = ValueClass.newNullRestrictedAtomicArray(assortedValueWithObjectAlignmentClass, 4,
+				createAssorted(makeAssortedValueWithObjectAlignment, typeWithObjectAlignmentFields));
+
+		// TODO: Remove following initialization as per https://github.com/eclipse-openj9/openj9/issues/22642.
 		for (int i = 0; i < 4; i++) {
 			Object object = createAssorted(makeAssortedValueWithObjectAlignment, typeWithObjectAlignmentFields);
 			array[i] = object;
 		}
-
 		System.gc();
 
 		for (int i = 0; i < 4; i++) {
@@ -355,13 +357,14 @@ public class ValueTypeTests {
 
 	@Test(priority=5)
 	static public void testGCFlattenedValueArrayWithLongAlignment() throws Throwable {
-		Object[] array = ValueClass.newNullRestrictedArray(assortedValueWithLongAlignmentClass, genericArraySize);
-		
+		Object[] array = ValueClass.newNullRestrictedAtomicArray(assortedValueWithLongAlignmentClass, genericArraySize,
+				createAssorted(makeAssortedValueWithLongAlignment, typeWithLongAlignmentFields));
+
+		// TODO: Remove following initialization as per https://github.com/eclipse-openj9/openj9/issues/22642.
 		for (int i = 0; i < genericArraySize; i++) {
 			Object object = createAssorted(makeAssortedValueWithLongAlignment, typeWithLongAlignmentFields);
 			array[i] = object;
 		}
-
 		System.gc();
 
 		for (int i = 0; i < genericArraySize; i++) {
@@ -371,9 +374,10 @@ public class ValueTypeTests {
 
 	@Test(priority=5)
 	static public void testGCFlattenedLargeObjectArray() throws Throwable {
-		Object[] array = ValueClass.newNullRestrictedArray(largeObjectValueClass, 4);
+		Object[] array = ValueClass.newNullRestrictedAtomicArray(largeObjectValueClass, 4, createLargeObject(new Object()));
 		Object largeObjectRef = createLargeObject(new Object());
 
+		// TODO: Remove following initialization as per https://github.com/eclipse-openj9/openj9/issues/22642.
 		for (int i = 0; i < 4; i++) {
 			array[i] = largeObjectRef;
 		}
@@ -385,11 +389,12 @@ public class ValueTypeTests {
 
 	@Test(priority=5)
 	static public void testGCFlattenedMegaObjectArray() throws Throwable {
-		Object[] array = ValueClass.newNullRestrictedArray(megaObjectValueClass, 4);
+		Object[] array = ValueClass.newNullRestrictedAtomicArray(megaObjectValueClass, 4, createMegaObject(new Object()));
 		Object megaObjectRef = createMegaObject(new Object());
 
 		System.gc();
 
+		// TODO: Remove following initialization as per https://github.com/eclipse-openj9/openj9/issues/22642.
 		for (int i = 0; i < 4; i++) {
 			array[i] = megaObjectRef;
 		}
@@ -536,7 +541,8 @@ public class ValueTypeTests {
 		Object en2 = makePoint2D.invoke(x4, y4);
 		Object line2D_2 = makeFlattenedLine2D.invoke(st2, en2);
 
-		Object[] arrayObject = ValueClass.newNullRestrictedArray(flattenedLine2DClass, 2);
+		Object[] arrayObject = ValueClass.newNullRestrictedAtomicArray(flattenedLine2DClass, 2, line2D_1);
+		// TODO: Remove following initialization as per https://github.com/eclipse-openj9/openj9/issues/22642.
 		arrayObject[0] = line2D_1;
 		arrayObject[1] = line2D_2;
 		Object line2D_1_check = arrayObject[0];
@@ -2296,9 +2302,11 @@ public class ValueTypeTests {
 		checkCastRefClassOnNull.invoke();
 	}
 
-	@Test(priority=1)
+	// TODO: Disabled as per https://github.com/eclipse-openj9/openj9/issues/22642.
+	@Test(priority=1, enabled=false)
 	static public void testClassIsInstanceNullableArrays() throws Throwable {
-		ValueTypePoint2D[] nonNullableArray = (ValueTypePoint2D[]) ValueClass.newNullRestrictedArray(ValueTypePoint2D.class, 1);
+		ValueTypePoint2D[] nonNullableArray = (ValueTypePoint2D[]) ValueClass.newNullRestrictedAtomicArray(
+				ValueTypePoint2D.class, 1, new ValueTypePoint2D(new ValueTypeInt(0), new ValueTypeInt(0)));
 		ValueTypePoint2D[] nullableArray = new ValueTypePoint2D[1];
 
 		assertTrue(nonNullableArray.getClass().isInstance(nonNullableArray));
@@ -2315,7 +2323,9 @@ public class ValueTypeTests {
 	static public void testValueWithLongAlignmentGCScanning() throws Throwable {
 		ArrayList<Object> longAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
-			Object newLongAlignmentArray = ValueClass.newNullRestrictedArray(assortedValueWithLongAlignmentClass, genericArraySize);
+			Object newLongAlignmentArray = ValueClass.newNullRestrictedAtomicArray(assortedValueWithLongAlignmentClass,
+					genericArraySize, createAssorted(makeAssortedValueWithLongAlignment, typeWithLongAlignmentFields));
+			// TODO: Remove following initialization as per https://github.com/eclipse-openj9/openj9/issues/22642.
 			for (int j = 0; j < genericArraySize; j++) {
 				Object assortedValueWithLongAlignment = createAssorted(makeAssortedValueWithLongAlignment, typeWithLongAlignmentFields);
 				Array.set(newLongAlignmentArray, j, assortedValueWithLongAlignment);
@@ -2340,7 +2350,10 @@ public class ValueTypeTests {
 	static public void testValueWithObjectAlignmentGCScanning() throws Throwable {
 		ArrayList<Object> objectAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
-			Object newObjectAlignmentArray = ValueClass.newNullRestrictedArray(assortedValueWithObjectAlignmentClass, genericArraySize);
+			Object newObjectAlignmentArray = ValueClass.newNullRestrictedAtomicArray(
+					assortedValueWithObjectAlignmentClass, genericArraySize,
+					createAssorted(makeAssortedValueWithObjectAlignment, typeWithObjectAlignmentFields));
+			// TODO: Remove following initialization as per https://github.com/eclipse-openj9/openj9/issues/22642.
 			for (int j = 0; j < genericArraySize; j++) {
 				Object assortedValueWithObjectAlignment = createAssorted(makeAssortedValueWithObjectAlignment, typeWithObjectAlignmentFields);
 				Array.set(newObjectAlignmentArray, j, assortedValueWithObjectAlignment);
@@ -2365,7 +2378,10 @@ public class ValueTypeTests {
 	static public void testValueWithSingleAlignmentGCScanning() throws Throwable {
 		ArrayList<Object> singleAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
-			Object newSingleAlignmentArray = ValueClass.newNullRestrictedArray(assortedValueWithSingleAlignmentClass, genericArraySize);
+			Object newSingleAlignmentArray = ValueClass.newNullRestrictedAtomicArray(
+					assortedValueWithSingleAlignmentClass, genericArraySize,
+					createAssorted(makeAssortedValueWithSingleAlignment, typeWithSingleAlignmentFields));
+			// TODO: Remove following initialization as per https://github.com/eclipse-openj9/openj9/issues/22642.
 			for (int j = 0; j < genericArraySize; j++) {
 				Object assortedValueWithSingleAlignment = createAssorted(makeAssortedValueWithSingleAlignment, typeWithSingleAlignmentFields);
 				Array.set(newSingleAlignmentArray, j, assortedValueWithSingleAlignment);
