@@ -27,6 +27,8 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 			<variation>Mode604</variation>
+            <variation>Mode501</variation>
+            <variation>Mode551</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-agentlib:jvmtitest=test:rc001 \

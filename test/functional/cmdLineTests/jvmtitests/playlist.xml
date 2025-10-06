@@ -264,6 +264,8 @@
 			<variation>Mode608</variation>
 			<variation>Mode107-OSR</variation>
 			<variation>Mode607-OSR</variation>
+			<variation>Mode500 -Xdebug</variation>
+			<variation>Mode550 -Xdebug</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
@@ -553,6 +555,8 @@
 			<variation>Mode607-OSRG</variation>
 			<variation>Mode610-OSRG</variation>
 			<variation>Mode612-OSRG</variation>
+			<variation>Mode501 -Xjit:enableOSR,enableOSROnGuardFailure,count=1,disableAsyncCompilation</variation>
+			<variation>Mode551 -Xjit:enableOSR,enableOSROnGuardFailure,count=1,disableAsyncCompilation</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
@@ -589,6 +593,8 @@
 			<variation>Mode607-OSRG</variation>
 			<variation>Mode610-OSRG</variation>
 			<variation>Mode612-OSRG</variation>
+			<variation>Mode501 -Xjit:enableOSR,enableOSROnGuardFailure,count=1,disableAsyncCompilation</variation>
+			<variation>Mode551 -Xjit:enableOSR,enableOSROnGuardFailure,count=1,disableAsyncCompilation</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
@@ -694,6 +700,8 @@
 			<variation>Mode301</variation>
 			<variation>Mode351</variation>
 			<variation>Mode610</variation>
+			<variation>Mode501</variation>
+			<variation>Mode551</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
