@@ -33,6 +33,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<property name="src" location="src" />
 	<property name="src_80" location="src_80" />
 	<property name="src_90" location="src_90" />
+	<property name="src_11" location="src_11" />
+	<property name="src_25" location="src_25" />
 	<property name="build" location="bin" />
 	<property name="transformerListener" location="${TEST_ROOT}/Utils/src" />
 	<property name="LIB" value="testng" />
@@ -76,8 +78,20 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 						<property name="src_access" location="${TEST_ROOT}/functional/UnsafeAccess/src_170" />
 					</else>
 				</if>
+				<if>
+					<matches string="${JDK_VERSION}" pattern="^(1[0-9]|2[0-1])$$" />
+					<then>
+						<!-- Java 11-21 -->
+						<property name="test_src" location="${src_11}" />
+					</then>
+					<else>
+						<!-- Java 25+ -->
+						<property name="test_src" location="${src_25}" />
+					</else>
+				</if>
 				<property name="src_util" location="../TestUtilities/src" />
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+					<src path="${test_src}" />
 					<src path="${src_90}" />
 					<src path="${src_access}" />
 					<src path="${transformerListener}" />

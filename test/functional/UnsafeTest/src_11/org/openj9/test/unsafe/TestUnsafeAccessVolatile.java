@@ -28,17 +28,17 @@ import org.testng.log4testng.Logger;
 @Test(groups = { "level.sanity" })
 public class TestUnsafeAccessVolatile extends UnsafeTestBase {
 	private static Logger logger = Logger.getLogger(TestUnsafeAccessVolatile.class);
-	
+
 	public TestUnsafeAccessVolatile(String scenario) {
 		super(scenario);
 	}
-	
+
 	/* get logger to use, for child classes to report with their class name instead of UnsafeTestBase*/
 	@Override
 	protected Logger getLogger() {
 		return logger;
 	}
-	
+
 	@Override
 	@BeforeMethod
 	protected void setUp() throws Exception {
@@ -49,31 +49,31 @@ public class TestUnsafeAccessVolatile extends UnsafeTestBase {
 	public void testInstancePutByteVolatile() throws Exception {
 		testByte(new ByteData(), VOLATILE);
 	}
-	
+
 	public void testInstancePutCharVolatile() throws Exception {
 		testChar(new CharData(), VOLATILE);
 	}
-	
+
 	public void testInstancePutShortVolatile() throws Exception {
 		testShort(new ShortData(), VOLATILE);
 	}
-	
+
 	public void testInstancePutIntVolatile() throws Exception {
 		testInt(new IntData(), VOLATILE);
 	}
-	
+
 	public void testInstancePutLongVolatile() throws Exception {
 		testLong(new LongData(), VOLATILE);
 	}
-	
+
 	public void testInstancePutFloatVolatile() throws Exception {
 		testFloat(new FloatData(), VOLATILE);
 	}
-	
+
 	public void testInstancePutDoubleVolatile() throws Exception {
 		testDouble(new DoubleData(), VOLATILE);
 	}
-	
+
 	public void testInstancePutBooleanVolatile() throws Exception {
 		testBoolean(new BooleanData(), VOLATILE);
 	}
@@ -86,31 +86,31 @@ public class TestUnsafeAccessVolatile extends UnsafeTestBase {
 	public void testArrayPutByteVolatile() throws Exception {
 		testByte(new byte[modelByte.length], VOLATILE);
 	}
-	
+
 	public void testArrayPutCharVolatile() throws Exception {
 		testChar(new char[modelChar.length], VOLATILE);
 	}
-	
+
 	public void testArrayPutShortVolatile() throws Exception {
 		testShort(new short[modelShort.length], VOLATILE);
 	}
-	
+
 	public void testArrayPutIntVolatile() throws Exception {
 		testInt(new int[modelInt.length], VOLATILE);
 	}
-	
+
 	public void testArrayPutLongVolatile() throws Exception {
 		testLong(new long[modelLong.length], VOLATILE);
 	}
-	
+
 	public void testArrayPutFloatVolatile() throws Exception {
 		testFloat(new float[modelFloat.length], VOLATILE);
 	}
-	
+
 	public void testArrayPutDoubleVolatile() throws Exception {
 		testDouble(new double[modelDouble.length], VOLATILE);
 	}
-	
+
 	public void testArrayPutBooleanVolatile() throws Exception {
 		testBoolean(new boolean[modelBoolean.length], VOLATILE);
 	}
@@ -123,31 +123,31 @@ public class TestUnsafeAccessVolatile extends UnsafeTestBase {
 	public void testStaticPutByteVolatile() throws Exception {
 		testByte(ByteData.class, VOLATILE);
 	}
-	
+
 	public void testStaticPutCharVolatile() throws Exception {
 		testChar(CharData.class, VOLATILE);
 	}
-	
+
 	public void testStaticPutShortVolatile() throws Exception {
 		testShort(ShortData.class, VOLATILE);
 	}
-	
+
 	public void testStaticPutIntVolatile() throws Exception {
 		testInt(IntData.class, VOLATILE);
 	}
-	
+
 	public void testStaticPutLongVolatile() throws Exception {
 		testLong(LongData.class, VOLATILE);
 	}
-	
+
 	public void testStaticPutFloatVolatile() throws Exception {
 		testFloat(FloatData.class, VOLATILE);
 	}
-	
+
 	public void testStaticPutDoubleVolatile() throws Exception {
 		testDouble(DoubleData.class, VOLATILE);
 	}
-	
+
 	public void testStaticPutBooleanVolatile() throws Exception {
 		testBoolean(BooleanData.class, VOLATILE);
 	}
@@ -160,40 +160,40 @@ public class TestUnsafeAccessVolatile extends UnsafeTestBase {
 	public void testObjectNullPutByteVolatile() throws Exception {
 		testByteNative(VOLATILE);
 	}
-	
+
 	public void testObjectNullPutCharVolatile() throws Exception {
 		testCharNative(VOLATILE);
 	}
-	
+
 	public void testObjectNullPutShortVolatile() throws Exception {
 		testShortNative(VOLATILE);
 	}
-	
+
 	public void testObjectNullPutIntVolatile() throws Exception {
 		testIntNative(VOLATILE);
 	}
-	
+
 	public void testObjectNullPutLongVolatile() throws Exception {
 		testLongNative(VOLATILE);
 	}
-	
+
 	public void testObjectNullPutFloatVolatile() throws Exception {
 		testFloatNative(VOLATILE);
 	}
-	
+
 	public void testObjectNullPutDoubleVolatile() throws Exception {
 		testDoubleNative(VOLATILE);
 	}
-	
+
 	public void testObjectNullPutBooleanVolatile() throws Exception {
 		testBooleanNative(VOLATILE);
 	}
-	
+
 	// tests for testInstanceGetXXXXVolatile
 	public void testInstanceGetByteVolatile() throws Exception {
 		testGetByte(new ByteData(), VOLATILE);
 	}
-	
+
 	public void testInstanceGetCharVolatile() throws Exception {
 		testGetChar(new CharData(), VOLATILE);
 	}
@@ -205,19 +205,19 @@ public class TestUnsafeAccessVolatile extends UnsafeTestBase {
 	public void testInstanceGetIntVolatile() throws Exception {
 		testGetInt(new IntData(), VOLATILE);
 	}
-	
+
 	public void testInstanceGetLongVolatile() throws Exception {
 		testGetLong(new LongData(), VOLATILE);
 	}
-	
+
 	public void testInstanceGetFloatVolatile() throws Exception {
-		testGetFloat(new FloatData(), VOLATILE);		
+		testGetFloat(new FloatData(), VOLATILE);
 	}
-	
+
 	public void testInstanceGetDoubleVolatile() throws Exception {
 		testGetDouble(new DoubleData(), VOLATILE);
 	}
-	
+
 	public void testInstanceGetBooleanVolatile() throws Exception {
 		testGetBoolean(new BooleanData(), VOLATILE);
 	}
@@ -230,31 +230,31 @@ public class TestUnsafeAccessVolatile extends UnsafeTestBase {
 	public void testArrayGetByteVolatile() throws Exception {
 		testGetByte(new byte[modelByte.length], VOLATILE);
 	}
-	
+
 	public void testArrayGetCharVolatile() throws Exception {
 		testGetChar(new char[modelChar.length], VOLATILE);
 	}
-	
+
 	public void testArrayGetShortVolatile() throws Exception {
 		testGetShort(new short[modelShort.length], VOLATILE);
 	}
-	
+
 	public void testArrayGetIntVolatile() throws Exception {
 		testGetInt(new int[modelInt.length], VOLATILE);
 	}
-	
+
 	public void testArrayGetLongVolatile() throws Exception {
 		testGetLong(new long[modelLong.length], VOLATILE);
 	}
-	
+
 	public void testArrayGetFloatVolatile() throws Exception {
 		testGetFloat(new float[modelFloat.length], VOLATILE);
 	}
-	
+
 	public void testArrayGetDoubleVolatile() throws Exception {
 		testGetDouble(new double[modelDouble.length], VOLATILE);
 	}
-	
+
 	public void testArrayGetBooleanVolatile() throws Exception {
 		testGetBoolean(new boolean[modelBoolean.length], VOLATILE);
 	}
@@ -267,31 +267,31 @@ public class TestUnsafeAccessVolatile extends UnsafeTestBase {
 	public void testStaticGetByteVolatile() throws Exception {
 		testGetByte(ByteData.class, VOLATILE);
 	}
-	
+
 	public void testStaticGetCharVolatile() throws Exception {
 		testGetChar(CharData.class, VOLATILE);
 	}
-	
+
 	public void testStaticGetShortVolatile() throws Exception {
 		testGetShort(ShortData.class, VOLATILE);
 	}
-	
+
 	public void testStaticGetIntVolatile() throws Exception {
 		testGetInt(IntData.class, VOLATILE);
 	}
-	
+
 	public void testStaticGetLongVolatile() throws Exception {
 		testGetLong(LongData.class, VOLATILE);
 	}
-	
+
 	public void testStaticGetFloatVolatile() throws Exception {
 		testGetFloat(FloatData.class, VOLATILE);
 	}
-	
+
 	public void testStaticGetDoubleVolatile() throws Exception {
 		testGetDouble(DoubleData.class, VOLATILE);
 	}
-	
+
 	public void testStaticGetBooleanVolatile() throws Exception {
 		testGetBoolean(BooleanData.class, VOLATILE);
 	}
