@@ -60,6 +60,10 @@
 			<variation>Mode608</variation>
 			<variation>Mode609</variation>
 			<variation>Mode616</variation>
+			<variation>Mode500</variation>
+			<variation>Mode501</variation>
+			<variation>Mode551</variation>
+			<variation>Mode550</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
 	-DJARPATH=$(Q)$(LIB_DIR)$(D)jython-standalone.jar$(P)$(TEST_RESROOT)$(D)cmdLineTester_jython.jar$(Q) \
