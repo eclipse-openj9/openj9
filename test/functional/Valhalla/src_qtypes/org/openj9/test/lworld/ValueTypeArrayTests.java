@@ -230,7 +230,7 @@ public class ValueTypeArrayTests {
 						new Class<?>[] {null, null, null, null, null}, // All values can be assigned to Object[]
 						new Class<?>[] {null, ASE,  null, null, null}, // ASE for SomeIface[] = Object
 						new Class<?>[] {null, ASE,  ASE,  null, ASE},  // ASE for PointV[] = PointPV, SomeIface
-						new Class<?>[] {ASE,  ASE,  ASE,  ASE,  null}, // ASE for PointPV[] = null; ASE for PointPV[] = PointV
+						new Class<?>[] {NPE,  ASE,  ASE,  ASE,  null}, // NPE for PointPV[] = null; ASE for PointPV[] = PointV
 					};
 
 	/**
@@ -756,11 +756,11 @@ public class ValueTypeArrayTests {
 
 		try {
 			arrayElementStoreNull(dstData, ARRAY_LENGTH/2);
-		} catch (ArrayStoreException ase) {
+		} catch (NullPointerException npe) {
 			return; /* pass */
 		}
 
-		Assert.fail("Expect an ArrayStoreException. No exception or wrong kind of exception thrown");
+		Assert.fail("Expect an NullPointerException. No exception or wrong kind of exception thrown");
 	}
 
 	@Test(priority=1,invocationCount=2)
@@ -772,11 +772,11 @@ public class ValueTypeArrayTests {
 
 		try {
 			arrayElementStore(dstData, ARRAY_LENGTH/2, obj);
-		} catch (ArrayStoreException ase) {
+		} catch (NullPointerException npe) {
 			return; /* pass */
 		}
 
-		Assert.fail("Expect an ArrayStoreException. No exception or wrong kind of exception thrown");
+		Assert.fail("Expect an NullPointerException. No exception or wrong kind of exception thrown");
 	}
 
 	@ImplicitlyConstructible
