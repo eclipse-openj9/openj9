@@ -67,10 +67,6 @@
 		<reason>These tests run separately and are not as part of j9vm test suite</reason>
 	</exclude>
 
-	<exclude id="j9vm.test.thread.InterruptNotifyWaitTest" platform="all">
-		<reason>CMVC 158969: test runs too slow after switching to the SDK launcher</reason>
-	</exclude>
-
 	<include id="j9vm.test.thread.SchedulingTest" platform="linux_x86-64_srt.*">
 		<reason>Only applies to Linux SRT</reason>
 	</include>
