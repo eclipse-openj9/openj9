@@ -264,8 +264,8 @@
 			<variation>Mode608</variation>
 			<variation>Mode107-OSR</variation>
 			<variation>Mode607-OSR</variation>
-			<variation>Mode500 -Xdebug Xrunjdwp:transport=dt_socket,address=8888,server=y,onthrow=no.pkg.foo,launch=echo</variation>
-			<variation>Mode550 -Xdebug Xrunjdwp:transport=dt_socket,address=8888,server=y,onthrow=no.pkg.foo,launch=echo</variation>
+			<variation>Mode500 -Xdebug</variation>
+			<variation>Mode550 -Xdebug</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
