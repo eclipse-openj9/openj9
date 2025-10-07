@@ -834,11 +834,12 @@ createField(struct J9VMThread *vmThread, jfieldID fieldID)
 	J9VMJAVALANGREFLECTFIELD_SET_CLAZZ(vmThread, fieldObject, J9VM_J9CLASS_TO_HEAPCLASS(j9FieldID->declaringClass));
 	J9VMJAVALANGREFLECTFIELD_SET_MODIFIERS(vmThread, fieldObject, j9FieldID->field->modifiers & CFR_FIELD_ACCESS_MASK);
 #if JAVA_SPEC_VERSION >= 15
-	/* Trust that static final fields and final record or hidden class fields will not be modified. */
+	/* Trust that static final fields, and final fields of hidden, record or value classes will not be modified. */
 	if (J9_ARE_ALL_BITS_SET(j9FieldID->field->modifiers, J9AccFinal)) {
 		if (J9_ARE_ALL_BITS_SET(j9FieldID->field->modifiers, J9AccStatic)
-			|| J9ROMCLASS_IS_RECORD(j9FieldID->declaringClass->romClass)
-			|| J9ROMCLASS_IS_HIDDEN(j9FieldID->declaringClass->romClass)
+				|| J9ROMCLASS_IS_HIDDEN(j9FieldID->declaringClass->romClass)
+				|| J9ROMCLASS_IS_RECORD(j9FieldID->declaringClass->romClass)
+				|| J9ROMCLASS_IS_VALUE(j9FieldID->declaringClass->romClass)
 		) {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 			fieldFlags |= TRUST_FINAL;

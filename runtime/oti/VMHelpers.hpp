@@ -1960,8 +1960,8 @@ exit:
 	/**
 	 * Determine if the field is a trusted final field.
 	 *
-	 * A trusted final field must have be a static final field or
-	 * a final field defined in either a hidden class or Record class
+	 * A trusted final field must be a static final field or,
+	 * a final field defined in a hidden, record or value class.
 	 *
 	 * @param field the field to be checked
 	 * @param romClass the declaring class of the field
@@ -1972,7 +1972,11 @@ exit:
 	{
 		bool result = false;
 		if (J9_ARE_ALL_BITS_SET(field->modifiers, J9AccFinal)) {
-			if (J9_ARE_ALL_BITS_SET(field->modifiers, J9AccStatic) || J9ROMCLASS_IS_HIDDEN(romClass) || J9ROMCLASS_IS_RECORD(romClass)) {
+			if (J9_ARE_ALL_BITS_SET(field->modifiers, J9AccStatic)
+					|| J9ROMCLASS_IS_HIDDEN(romClass)
+					|| J9ROMCLASS_IS_RECORD(romClass)
+					|| J9ROMCLASS_IS_VALUE(romClass)
+			) {
 				result = true;
 			}
 		}
