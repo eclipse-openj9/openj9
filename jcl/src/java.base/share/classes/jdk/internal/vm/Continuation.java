@@ -67,21 +67,22 @@ public class Continuation {
 	private static long isAccessibleOffset = unsafe.objectFieldOffset(Continuation.class, "isAccessible");
 
 	/**
-	 * Continuation's Pinned reasons
+	 * Continuation's Pinned reasons.
 	 */
 	public enum Pinned {
-		/** In native code */
+		/** In native code. */
 		NATIVE(1),
-		/** Holding monitor(s) */
+		/*[IF JAVA_SPEC_VERSION < 26]*/
+		/** Holding one or more monitors. */
 		MONITOR(2),
-		/** In critical section */
-/*[IF JAVA_SPEC_VERSION >= 24]*/
+		/*[ENDIF] JAVA_SPEC_VERSION < 26 */
+		/** In a critical section. */
 		CRITICAL_SECTION(3),
-		/** Exception */
-		EXCEPTION(4);
-/*[ELSE] JAVA_SPEC_VERSION >= 24 */
-		CRITICAL_SECTION(3);
-/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		/** Exception. */
+		EXCEPTION(4),
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+		;
 
 		private final int errorCode;
 
@@ -96,28 +97,35 @@ public class Continuation {
 
 	public enum PreemptStatus {
 		/** Success */
-		SUCCESS(null),
+		SUCCESS,
 		/** Permanent fail */
-		PERM_FAIL_UNSUPPORTED(null),
+		PERM_FAIL_UNSUPPORTED,
 		/** Permanent fail due to yielding */
-		PERM_FAIL_YIELDING(null),
+		PERM_FAIL_YIELDING,
 		/** Permanent fail due to continuation unmounted */
-		PERM_FAIL_NOT_MOUNTED(null),
+		PERM_FAIL_NOT_MOUNTED,
 		/** Transient fail due to continuation pinned {@link Pinned#CRITICAL_SECTION} */
 		TRANSIENT_FAIL_PINNED_CRITICAL_SECTION(Pinned.CRITICAL_SECTION),
 		/** Transient fail due to continuation pinned {@link Pinned#NATIVE} */
 		TRANSIENT_FAIL_PINNED_NATIVE(Pinned.NATIVE),
+		/*[IF JAVA_SPEC_VERSION < 26]*/
 		/** Transient fail due to continuation pinned {@link Pinned#MONITOR} */
-		TRANSIENT_FAIL_PINNED_MONITOR(Pinned.MONITOR);
+		TRANSIENT_FAIL_PINNED_MONITOR(Pinned.MONITOR),
+		/*[ENDIF] JAVA_SPEC_VERSION < 26 */
+		;
 
 		final Pinned pinned;
 
-		public Pinned pinned() {
-			return pinned;
+		private PreemptStatus() {
+			this(null);
 		}
 
 		private PreemptStatus(Pinned reason) {
 			this.pinned = reason;
+		}
+
+		public Pinned pinned() {
+			return pinned;
 		}
 	}
 
@@ -252,27 +260,31 @@ public class Continuation {
 	@JvmtiMountTransition
 	private boolean yield0() {
 		int rcPinned = isPinnedImpl();
-		if (rcPinned != 0) {
-			Pinned reason = null;
-			if (rcPinned == Pinned.CRITICAL_SECTION.errorCode()) {
-				reason = Pinned.CRITICAL_SECTION;
-			} else if (rcPinned == Pinned.MONITOR.errorCode()) {
-				reason = Pinned.MONITOR;
-			} else if (rcPinned == Pinned.NATIVE.errorCode()) {
-				reason = Pinned.NATIVE;
-/*[IF JAVA_SPEC_VERSION >= 24]*/
-			} else if (rcPinned == Pinned.EXCEPTION.errorCode()) {
-				reason = Pinned.EXCEPTION;
-/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
-			} else {
-				throw new AssertionError("Unknown pinned error code: " + rcPinned);
-			}
-			onPinned(reason);
-		} else {
+		if (rcPinned == 0) {
 			yieldImpl(false);
 			onContinue();
+			return true;
 		}
-		return (rcPinned == 0);
+
+		Pinned reason;
+		if (rcPinned == Pinned.CRITICAL_SECTION.errorCode()) {
+			reason = Pinned.CRITICAL_SECTION;
+/*[IF JAVA_SPEC_VERSION < 26]*/
+		} else if (rcPinned == Pinned.MONITOR.errorCode()) {
+			reason = Pinned.MONITOR;
+/*[ENDIF] JAVA_SPEC_VERSION < 26 */
+		} else if (rcPinned == Pinned.NATIVE.errorCode()) {
+			reason = Pinned.NATIVE;
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+		} else if (rcPinned == Pinned.EXCEPTION.errorCode()) {
+			reason = Pinned.EXCEPTION;
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+		} else {
+			throw new AssertionError("Unknown pinned error code: " + rcPinned);
+		}
+		onPinned(reason);
+
+		return false;
 	}
 
 	protected void onPinned(Pinned reason) {
