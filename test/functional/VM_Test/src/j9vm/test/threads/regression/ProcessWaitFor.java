@@ -79,27 +79,6 @@ public class ProcessWaitFor extends TestCase {
 			}
 			threadToInterrupt.interrupt();
 		}
-	}	
-	
-	class Stopper implements Runnable {
-		Thread threadToStop;
-		Object synchronizer;
-		
-		public Stopper(Thread threadToStop,Object synchronizer){
-			this.threadToStop = threadToStop;
-			this.synchronizer = synchronizer;
-		}
-
-
-		public void run(){
-			if (synchronizer != null){
-				synchronized(synchronizer){
-					threadToStop.stop();
-					return;
-				}
-			}
-			threadToStop.stop();
-		}
 	}
 	
 	/**
@@ -264,31 +243,7 @@ public class ProcessWaitFor extends TestCase {
 		
 		doWaitFor();
 	}
-	
-	public void testWaitForAfterInterruptInSleepByStop(){
-		Thread interruptor = new TimerThread(new Stopper(Thread.currentThread(),null),1000);
-		interruptor.start();
-		
-		try{
-			Thread.sleep(5000);
-			/* in this case the test is invalid because of the timing just assume pass */
-			System.out.println("WaitForAfterInterruptInSleep - invalid, assuming pass");
-			return;
-		} catch (InterruptedException e){
-			System.out.println("WaitForAfterInterruptInSleep - invalid received InterruptedException, assuming pass");
-		} catch (ThreadDeath e){
-			/* this is expected */
-		}
-		
-		try {
-			interruptor.join();
-		} catch (InterruptedException e){
-			fail("Main thread interrupted during join");
-		}
-		
-		doWaitFor();
-	}
-	
+
 //	
 //  Due to timing this test is not reliable to be in the builds but is useful to validate that 	
 //	we did not break the ability to break out of waitFor.
@@ -347,7 +302,7 @@ public class ProcessWaitFor extends TestCase {
 	
 	public Process startSleeper() {
 		try {
-			return Runtime.getRuntime().exec(System.getProperty("java.home") + File.separator + "bin/java -cp " + RegressionTests.getVMdir() + " j9vm.test.threads.regression.Sleeper");
+			return Runtime.getRuntime().exec(System.getProperty("java.home") + File.separator + "bin/java -cp " + TestUtils.getVMdir() + " j9vm.test.threads.regression.Sleeper");
 		} catch(IOException e){
 			fail("Unexpected IO Exception when starting Sleeper");
 		}

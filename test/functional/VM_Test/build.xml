@@ -40,6 +40,7 @@
 
 	<!--Properties for this particular build-->
 	<property name="src" location="./src" />
+	<property name="src_26" location="./src_26" />
 	<property name="build" location="./bin" />
 	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
 	<property name="TestUtilities" location="../TestUtilities/src"/>
@@ -134,7 +135,10 @@
 					</javac>
 				</then>
 			</elseif>
-			<else>
+			<elseif>
+				<matches string="${JDK_VERSION}" pattern="^(1[1-9]|2[0-5])$" />
+				<!-- JDK_VERSION JDK11 - 25 -->
+				<then>
 				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
 					<src path="${src}" />
 					<src path="${excludeFiles}"/>
@@ -143,6 +147,33 @@
 					<!-- 133609: ClassPathSettingClassLoaderTest failed in jdk9 -->
 					<exclude name="**/ClassPathSettingClassLoader.java" />
 					<exclude name="**/ClassPathSettingClassLoaderTest.java" />
+					<compilerarg line='${addExports}' />
+					<classpath>
+						<pathelement location="${LIB_DIR}/testng.jar"/>
+					</classpath>
+				</javac>
+				</then>
+			</elseif>
+			<else>
+				<!-- JDK_VERSION JDK26+ -->
+				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
+					<src path="${src}"/>
+					<src path="${excludeFiles}"/>
+					<src path="${TestUtilities}" />
+					<exclude name="**/attachAPI/**" />
+					<!-- 133609: ClassPathSettingClassLoaderTest failed in jdk9 -->
+					<exclude name="**/ClassPathSettingClassLoader.java" />
+					<exclude name="**/ClassPathSettingClassLoaderTest.java" />
+					<!-- Thread.stop() is no longer available starting from JDK 26 -->
+					<exclude name="j9vm/test/threads/regression/RegressionTests.java" />
+					<exclude name="j9vm/test/threads/regression/ProcessWaitForStop.java" />
+					<compilerarg line='${addExports}' />
+					<classpath>
+						<pathelement location="${LIB_DIR}/testng.jar"/>
+					</classpath>
+				</javac>
+				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
+					<src path="${src_26}"/>
 					<compilerarg line='${addExports}' />
 					<classpath>
 						<pathelement location="${LIB_DIR}/testng.jar"/>
