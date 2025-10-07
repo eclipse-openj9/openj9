@@ -102,11 +102,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<class name="j9vm.test.softmx.SoftmxLocalTest" />
 		</classes>
 	</test>
-	<test name="testSoftMxRemote">
-		<classes>
-			<class name="j9vm.test.softmx.SoftmxRemoteTest" />
-		</classes>
-	</test>
 	<test name="testSoftMxDisclaimMemory">
 		<parameter name="SoftmxAdvanceTest_iteration" value="5" />
 		<classes>

@@ -476,41 +476,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		</impls>
 	</test>
 	<test>
-		<testCaseName>testSoftMxRemote</testCaseName>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/480</comment>
-			</disable>
-		</disables>
-		<variations>
-			<variation>Mode110</variation>
-			<variation>Mode119</variation>
-			<variation>Mode601</variation>
-			<variation>Mode501</variation>
-		</variations>
-		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Dremote.server.option=$(Q)$(JVM_OPTIONS) -Xmx1024m -Xsoftmx512m -Xmn1m -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false$(Q) \
-	-verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
-	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
-	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
-	-testnames testSoftMxRemote \
-	-groups $(TEST_GROUP) \
-	-excludegroups $(DEFAULT_EXCLUDE); \
-	$(TEST_STATUS)</command>
-		<platformRequirements>^spec.linux_390</platformRequirements>
-		<levels>
-			<level>extended</level>
-		</levels>
-		<groups>
-			<group>functional</group>
-		</groups>
-		<impls>
-			<impl>openj9</impl>
-			<impl>ibm</impl>
-		</impls>
-	</test>
-	<test>
 		<testCaseName>testSoftMxRemote_zlinux_64</testCaseName>
 		<disables>
 			<disable>

@@ -22,5 +22,4 @@
 
 # Exclude tests temporarily
 
-j9vm.test.softmx.SoftmxRemoteTest 480 generic-all
 org.openj9.test.vmArguments.VmArgumentTests:testCrNocr 244 generic-all
