@@ -183,6 +183,7 @@
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
 		<classpathentry kind="src" path="src/java.management/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
+		<classpathentry kind="src" path="src/jdk.incubator.foreign/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.jcmd/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.criu/share/classes"/>
