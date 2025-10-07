@@ -12523,6 +12523,166 @@ static void performArrayCmp(TR::Node *node, TR::CodeGenerator *cg, TR_PPCScratch
    srm->reclaimScratchRegister(temp2Reg);
    }
 
+static void performArrayCmpV2(TR::Node *node, TR::CodeGenerator *cg, TR::Register *currentAddressReg, TR::Register *subStringAddressReg, TR::Register *subStringLenReg, TR::Register *tempReg, TR::Register *temp2Reg, TR::Register *subSearchOffsetReg, TR::Register *vec1Reg, TR::Register *vec2Reg, TR::Register *cr0Reg, TR::Register *cr6Reg, TR::LabelSymbol *subStringMatchLabel, TR::LabelSymbol *subStringMismatchLabel)
+   {
+   /*
+    * This is used by inlineIntrinsicIndexOfString to check if the remainder for a substring matches the next characters in the main string.
+    * This process is very similar to an arraycmp but this version has special optimizations for the inlineIntrinsicIndexOfString case.
+    * The most notable one is this arraycmp may read one fewer byte of data to avoid smaller loads and to avoid byte by byte processsing.
+    * This works since this assembly is only run after it is confirmed that the first character of the substring matches a character in the main string.
+    * This occurs whenever the substring has an odd number of bytes.
+    *
+    * | Substring Length | 2 byte load | 4 byte load | 8 byte load | 16 byte load |
+    * | ---------------- | ----------- | ----------- | ----------- | ------------ |
+    * |                1 |           0 |           0 |           0 |            0 | The one character in the substring is a known match so no further loads are needed.
+    * |                2 |           1 |             |             |              |
+    * |                3 |           1 |             |             |              | Recomparing the first byte isn't needed so a single 2 byte load handles the rest of the substring.
+    * |                4 |             |           1 |             |              |
+    * |                5 |             |           1 |             |              |
+    * |                6 |           1 |           1 |             |              |
+    * |                7 |           1 |           1 |             |              |
+    * |                8 |             |             |           1 |              |
+    * |                9 |             |             |           1 |              |
+    * |               10 |           1 |             |           1 |              |
+    * |               11 |           1 |             |           1 |              |
+    * |               12 |             |           1 |           1 |              |
+    * |               13 |             |           1 |           1 |              |
+    * |               14 |           1 |           1 |           1 |              |
+    * |               15 |           1 |           1 |           1 |              |
+    * |               16 |             |             |             |            1 |
+    * |               17 |             |             |             |            1 |
+    */
+   TR::LabelSymbol *load16LoopLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *skipLoad16Label = generateLabelSymbol(cg);
+   TR::LabelSymbol *skipLoad8Label = generateLabelSymbol(cg);
+   TR::LabelSymbol *skipLoad4Label = generateLabelSymbol(cg);
+
+   /*
+    * subStringMismatchLabel is the location to jump to if the substring does not match the next characters in the main string.
+    * This label can be provided by the caller of performArrayCmp if there is a specific location to jump to.
+    * If it isn't, createSubStringMismatchLabel is generated at the end of the assembly made by performArrayCmp.
+    */
+   bool createSubStringMismatchLabel = false;
+   if (nullptr == subStringMismatchLabel)
+      {
+      subStringMismatchLabel = generateLabelSymbol(cg);
+      createSubStringMismatchLabel = true;
+      }
+
+   /*
+    * If subStringLenReg is even, tempReg is equal to the length of the substring.
+    * If subStringLenReg is odd,  tempReg is now 1 less than the length of the substring.
+    * This is done so one fewer byte is compared in odd cases.
+    * tempReg holds the actual number of bytes that need to be compared and is always an even number.
+    * If tempReg is less than 2, it must be 0 so a full substring match has been found.
+    */
+   generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, tempReg, subStringLenReg, 0, CONSTANT64(0xfffffffffffffffe));
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli8, node, cr6Reg, tempReg, 2);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, subStringMatchLabel, cr6Reg);
+
+   /* If substring length is odd, the offset is adjusted by 1 to account for not needing to recompare the first byte. */
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, subSearchOffsetReg, subStringLenReg, cr0Reg, 1);
+
+   /* tempReg is at least 2. If it is less than 4, jump to the section that loads 2 bytes from the array. */
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli8, node, cr6Reg, tempReg, 4);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, skipLoad4Label, cr6Reg);
+
+   /* tempReg is at least 4. If it is less than 8, jump to the section that loads 4 bytes from the array. */
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli8, node, cr6Reg, tempReg, 8);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, skipLoad8Label, cr6Reg);
+
+   /* tempReg is at least 8. If it is less than 16, jump to the section that loads 8 bytes from the array. */
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli8, node, cr6Reg, tempReg, 16);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, skipLoad16Label, cr6Reg);
+
+   /*
+    * tempReg is at least 16 so we can use vector operations to compare the arrays.
+    * The maximum number of iterations is put into the count register.
+    */
+   generateShiftRightLogicalImmediateLong(cg, node, tempReg, subStringLenReg, 4);
+   generateSrc1Instruction(cg, TR::InstOpCode::mtctr, node, tempReg);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, load16LoopLabel);
+
+   /*
+    * This arraycmp only needs to know if there is a match or not. It doesn't need to know where the mismatch is.
+    * So it doesn't matter if the byte order gets scrambled as long as it is scrambled the same way for both loaded values.
+    */
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::lxvw4x, node, vec1Reg, subSearchOffsetReg, currentAddressReg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::lxvw4x, node, vec2Reg, subSearchOffsetReg, subStringAddressReg);
+
+   /* If a difference is found in the 16 loaded bytes, jump to subStringMismatchLabel to indicate that the substring was not found. */
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vcmpequb_r, node, vec1Reg, vec1Reg, vec2Reg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, subStringMismatchLabel, cr6Reg);
+
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi2, node, subSearchOffsetReg, subSearchOffsetReg, 16);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bdnz, node, load16LoopLabel, cr6Reg);
+
+   /* If there are no more bytes, the arrays match each other. Jump to subStringMatchLabel to handle the substring match. */
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::subf_r, node, tempReg, subSearchOffsetReg, subStringLenReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, subStringMatchLabel, cr0Reg);
+
+   /* There are at least 2 bytes left. If there are less than 4 bytes left jump to the 2 byte load section. */
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli4, node, cr6Reg, tempReg, 4);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, skipLoad4Label, cr6Reg);
+
+   /* There are at least 4 bytes left. If there are less than 8 bytes left jump to the 4 byte load section. */
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli4, node, cr6Reg, tempReg, 8);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, skipLoad8Label, cr6Reg);
+
+   /* There are 8 to 15 bytes left at this point. */
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, skipLoad16Label);
+
+   /* Use 8 byte loads to search for a mismatch between the two arrays. No loop is needed since there are less than 16 bytes left. */
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::ldx, node, tempReg, subSearchOffsetReg, currentAddressReg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::ldx, node, temp2Reg, subSearchOffsetReg, subStringAddressReg);
+   /* If a mismatch is found, jump to subStringMismatchLabel to indicate that the substring was not found. */
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, cr6Reg, tempReg, temp2Reg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, subStringMismatchLabel, cr6Reg);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi2, node, subSearchOffsetReg, subSearchOffsetReg, 8);
+
+   /* If there are no more bytes, the arrays match each other. Jump to subStringMatchLabel to handle the substring match. */
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::subf_r, node, tempReg, subSearchOffsetReg, subStringLenReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, subStringMatchLabel, cr0Reg);
+
+   /* There are at least 2 bytes left. If there are less than 4 bytes left jump to the 2 byte load section. */
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli4, node, cr6Reg, tempReg, 4);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, skipLoad4Label, cr6Reg);
+
+   /* There are 4 to 7 bytes left at this point. */
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, skipLoad8Label);
+
+   /*
+    * Use 4 byte loads to search for a mismatch between the two arrays.
+    * There are 4 to 7 bytes left so this only needs to be done once.
+    */
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::lwzx, node, tempReg, subSearchOffsetReg, currentAddressReg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::lwzx, node, temp2Reg, subSearchOffsetReg, subStringAddressReg);
+   /* If a mismatch is found, jump to subStringMismatchLabel to indicate that the substring was not found. */
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr6Reg, tempReg, temp2Reg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, subStringMismatchLabel, cr6Reg);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi2, node, subSearchOffsetReg, subSearchOffsetReg, 4);
+
+   /* If there are no more bytes, the arrays match each other. Jump to subStringMatchLabel to handle the substring match. */
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::subf_r, node, tempReg, subSearchOffsetReg, subStringLenReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, subStringMatchLabel, cr0Reg);
+
+   /* There are exactly 2 bytes left at this point. */
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, skipLoad4Label);
+
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::lhzx, node, tempReg, subSearchOffsetReg, currentAddressReg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::lhzx, node, temp2Reg, subSearchOffsetReg, subStringAddressReg);
+   /* If a match is found, jump to subStringMatchLabel to handle the substring match. */
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr6Reg, tempReg, temp2Reg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, subStringMatchLabel, cr6Reg);
+   /* A fallthrough means the loaded values did not match. Continue on to handle the case where the substring was not found. */
+
+   if (createSubStringMismatchLabel)
+      {
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, subStringMismatchLabel);
+      }
+   }
+
 static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGenerator *cg, bool isLatin1)
    {
    static bool disableStringIndexOfStringIntrinsic = feGetEnv("TR_DisableStringIndexOfStringIntrinsic") != NULL;
@@ -12547,8 +12707,67 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    TR::Register *strCountReg     = cg->evaluate(node->getChild(3));
    TR::Register *fromIndexReg    = cg->evaluate(node->getChild(4));
 
-   TR::Register *subStringLenReg = cg->allocateRegister();
-   TR::Register *resultReg       = cg->allocateRegister();
+   TR::Register *arrayAddressReg = nullptr;
+   TR::Register *endAddressReg = nullptr;
+   TR::Register *subStringAddressReg = nullptr;
+   TR::Register *subStringLenReg = nullptr;
+   TR::Register *resultReg = nullptr;
+
+   int32_t numDependencies = 17;
+
+   if (cg->canClobberNodesRegister(node->getChild(0)))
+      {
+      arrayAddressReg = arrayObjReg;
+      }
+   else
+      {
+      arrayAddressReg = cg->allocateRegister();
+      numDependencies++;
+      }
+
+   if (cg->canClobberNodesRegister(node->getChild(1)))
+      {
+      endAddressReg = arrayLenReg;
+      }
+   else
+      {
+      endAddressReg = cg->allocateRegister();
+      numDependencies++;
+      }
+
+   if (cg->canClobberNodesRegister(node->getChild(2)))
+      {
+      subStringAddressReg = subStringObjReg;
+      }
+   else
+      {
+      subStringAddressReg = cg->allocateRegister();
+      numDependencies++;
+      }
+
+   if (cg->canClobberNodesRegister(node->getChild(3)))
+      {
+      subStringLenReg = strCountReg;
+      }
+   else
+      {
+      subStringLenReg = cg->allocateRegister();
+      numDependencies++;
+      }
+
+   if (cg->canClobberNodesRegister(node->getChild(4)))
+      {
+      resultReg = fromIndexReg;
+      }
+   else
+      {
+      resultReg = cg->allocateRegister();
+      numDependencies++;
+      }
+
+   TR::Register *currentAddressReg  = cg->allocateRegister();
+   TR::Register *firstCharSubStrReg = cg->allocateRegister();
+   TR::Register *tempReg            = cg->allocateRegister();
 
    TR::Register *vec1Reg            = cg->allocateRegister(TR_VRF);
    TR::Register *vec2Reg            = cg->allocateRegister(TR_VRF);
@@ -12560,8 +12779,6 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
 
    TR::Register *cr0Reg = cg->allocateRegister(TR_CCR);
    TR::Register *cr6Reg = cg->allocateRegister(TR_CCR);
-
-   TR_PPCScratchRegisterManager *srm = cg->generateScratchRegisterManager();
 
    TR::LabelSymbol *startLabel            = generateLabelSymbol(cg);
    TR::LabelSymbol *foundEarlyLabel       = generateLabelSymbol(cg);
@@ -12582,14 +12799,10 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, startLabel);
 
-      {
-      /* If offset + number of characters in the substring is greater than the number of characters in the main string it can't be found. In this case jump to notFoundLabel to return -1. */
-      TR::Register *minStrByteCountReg = srm->findOrCreateScratchRegister();
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, minStrByteCountReg, fromIndexReg, strCountReg);
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::cmpl4, node, cr0Reg, minStrByteCountReg, arrayLenReg);
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, notFoundLabel, cr0Reg);
-      srm->reclaimScratchRegister(minStrByteCountReg);
-      }
+   /* If offset + number of characters in the substring is greater than the number of characters in the main string it can't be found. In this case jump to notFoundLabel to return -1. */
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, tempReg, fromIndexReg, strCountReg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmpl4, node, cr0Reg, tempReg, arrayLenReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, notFoundLabel, cr0Reg);
 
    /*
     * IMPORTANT: The upper 32 bits of a 64-bit register containing an int are undefined. Since the
@@ -12597,16 +12810,6 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
     */
    generateTrg1Src1Instruction(cg, TR::InstOpCode::extsw, node, resultReg, fromIndexReg);
    generateTrg1Src1Instruction(cg, TR::InstOpCode::extsw, node, subStringLenReg, strCountReg);
-
-   if (node->getChild(3)->getReferenceCount() == 1)
-      {
-      srm->donateScratchRegister(strCountReg);
-      }
-
-   if (node->getChild(4)->getReferenceCount() == 1)
-      {
-      srm->donateScratchRegister(fromIndexReg);
-      }
 
    /* Under UTF16, the indices are doubled since offset and size in bytes are needed later. */
    if (!isLatin1)
@@ -12619,8 +12822,6 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
     * Determine the address of the first byte to read either by loading from dataAddr or adding the header size.
     * This is followed by adding in the offset.
     */
-   TR::Register *arrayAddressReg = srm->findOrCreateScratchRegister();
-   TR::Register *subStringAddressReg = srm->findOrCreateScratchRegister();
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
    if (TR::Compiler->om.isOffHeapAllocationEnabled())
       {
@@ -12644,35 +12845,19 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
                                      TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
       }
 
-   if (node->getChild(0)->getReferenceCount() == 1)
-      {
-      srm->donateScratchRegister(arrayObjReg);
-      }
-
-   if (node->getChild(2)->getReferenceCount() == 1)
-      {
-      srm->donateScratchRegister(subStringObjReg);
-      }
-
-   TR::Register *currentAddressReg = srm->findOrCreateScratchRegister();
-
    /* resultReg currently holds the starting offset. currentAddressReg will hold the address of the first byte of the main string to look at. */
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, currentAddressReg, arrayAddressReg, resultReg);
-
-   TR::Register *firstCharReg = srm->findOrCreateScratchRegister();
-   TR::Register *firstCharSubStrReg = srm->findOrCreateScratchRegister();
 
    /*
     * This is a early check to see if there is an immediate match for the substring in the main string.
     * The first character of the substring is compared against the first (after adjusted for offset) character of the main string.
     * If it matches, jump to foundEarlyLabel to try and match the rest of the substring. If it doesn't match, jump back to notFoundEarlyLabel.
     */
-   generateTrg1MemInstruction(cg, isLatin1 ? TR::InstOpCode::lbz : TR::InstOpCode::lhz, node, firstCharReg, TR::MemoryReference::createWithDisplacement(cg, currentAddressReg, 0, isLatin1 ? 1 : 2));
+   generateTrg1MemInstruction(cg, isLatin1 ? TR::InstOpCode::lbz : TR::InstOpCode::lhz, node, tempReg, TR::MemoryReference::createWithDisplacement(cg, currentAddressReg, 0, isLatin1 ? 1 : 2));
    generateTrg1MemInstruction(cg, isLatin1 ? TR::InstOpCode::lbz : TR::InstOpCode::lhz, node, firstCharSubStrReg, TR::MemoryReference::createWithDisplacement(cg, subStringAddressReg, 0, isLatin1 ? 1 : 2));
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr0Reg, firstCharReg, firstCharSubStrReg);
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::mtvsrwz, node, targetVectorReg, firstCharSubStrReg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr0Reg, tempReg, firstCharSubStrReg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, foundEarlyLabel, cr0Reg);
-
-   srm->reclaimScratchRegister(firstCharReg);
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, notFoundEarlyLabel);
 
@@ -12680,13 +12865,7 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
     * IMPORTANT: The upper 32 bits of a 64-bit register containing an int are undefined. Since the
     * indices are being passed in as ints, we must ensure that their upper 32 bits are not garbage.
     */
-   TR::Register *endAddressReg = srm->findOrCreateScratchRegister();
    generateTrg1Src1Instruction(cg, TR::InstOpCode::extsw, node, endAddressReg, arrayLenReg);
-
-   if (node->getChild(1)->getReferenceCount() == 1)
-      {
-      srm->donateScratchRegister(arrayLenReg);
-      }
 
    /* Under UTF16, the indices are doubled since offset and size in bytes are needed later. */
    if (!isLatin1)
@@ -12712,18 +12891,11 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, currentAddressReg, currentAddressReg, isLatin1 ? 1 : 2);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, endAddressReg, arrayAddressReg, endAddressReg);
 
-   if (node->getChild(0)->getReferenceCount() != 1)
-      {
-      srm->reclaimScratchRegister(arrayAddressReg);
-      }
-
    /*
     * This section sets up values in registers that will be needed multiple times.
     * zeroReg is set to 0.
     * targetVectorReg is a vector register with the first character of the substring splat across it. This is used to quickly search for first character matches later.
     */
-   generateTrg1Src1Instruction(cg, TR::InstOpCode::mtvsrwz, node, targetVectorReg, firstCharSubStrReg);
-   srm->reclaimScratchRegister(firstCharSubStrReg);
 
 
    if (isLatin1)
@@ -12735,23 +12907,19 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
     * targetVectorNotReg is a vector register set to all 0s.
     * maskVectorReg is set to 0xFF for Latin1 and 0xFFFF for UTF16. This is later used to mask values in a vector register to prevent matching a second time.
     */
-      {
-      TR::Register *maskRotateReg = srm->findOrCreateScratchRegister();
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, maskRotateReg, isLatin1 ? 1 : 2);
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::vxor, node, targetVectorNotReg, targetVectorReg, targetVectorReg);
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::vnor, node, vec1Reg, targetVectorNotReg, targetVectorNotReg);
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, isLatin1 ? 1 : 2);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vxor, node, targetVectorNotReg, targetVectorReg, targetVectorReg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vnor, node, vec1Reg, targetVectorNotReg, targetVectorNotReg);
 
-      if (comp->target().cpu.isLittleEndian())
-         {
-         generateTrg1MemInstruction(cg, TR::InstOpCode::lvsl, node, permuteVectorReg, TR::MemoryReference::createWithIndexReg(cg, nullptr, maskRotateReg, 1));
-         generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, maskVectorReg, vec1Reg, targetVectorNotReg, permuteVectorReg);
-         }
-      else
-         {
-         generateTrg1MemInstruction(cg, TR::InstOpCode::lvsr, node, permuteVectorReg, TR::MemoryReference::createWithIndexReg(cg, nullptr, maskRotateReg, 1));
-         generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, maskVectorReg, targetVectorNotReg, vec1Reg, permuteVectorReg);
-         }
-      srm->reclaimScratchRegister(maskRotateReg);
+   if (comp->target().cpu.isLittleEndian())
+      {
+      generateTrg1MemInstruction(cg, TR::InstOpCode::lvsl, node, permuteVectorReg, TR::MemoryReference::createWithIndexReg(cg, nullptr, tempReg, 1));
+      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, maskVectorReg, vec1Reg, targetVectorNotReg, permuteVectorReg);
+      }
+   else
+      {
+      generateTrg1MemInstruction(cg, TR::InstOpCode::lvsr, node, permuteVectorReg, TR::MemoryReference::createWithIndexReg(cg, nullptr, tempReg, 1));
+      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, maskVectorReg, targetVectorNotReg, vec1Reg, permuteVectorReg);
       }
 
    /* targetVectorNotReg is set to the bitwise complement of targetVectorReg. These are values that will never match the first character of the substring. */
@@ -12763,8 +12931,6 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
     * A vector load from endVectorAddressReg will contain 0-15 bytes that need to be compared against the first character of the substring.
     * A vector load from tempReg will contain 1-16 bytes that need to be compared against the first character of the substring.
     */
-   TR::Register *tempReg = srm->findOrCreateScratchRegister();
-
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, tempReg, currentAddressReg, cr0Reg, 0xF);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, vectorLoopLabel, cr0Reg);
 
@@ -12837,7 +13003,7 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
     * The end of the assembly generated by performArrayCmp is a fall through so a branch to notFoundEarlyLabel is also needed here.
     */
    generateLabelInstruction(cg, TR::InstOpCode::label, node, foundEarlyLabel);
-   performArrayCmp(node, cg, srm, foundExactLabel, notFoundEarlyLabel, currentAddressReg, subStringAddressReg, subStringLenReg, vec1Reg, vec2Reg, tempReg, cr0Reg, cr6Reg);
+   performArrayCmpV2(node, cg, currentAddressReg, subStringAddressReg, subStringLenReg, endAddressReg, firstCharSubStrReg, tempReg, vec1Reg, vec2Reg, cr0Reg, cr6Reg, foundExactLabel, notFoundEarlyLabel);
    generateLabelInstruction(cg, TR::InstOpCode::b, node, notFoundEarlyLabel);
 
    /*
@@ -12847,10 +13013,8 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    generateLabelInstruction(cg, TR::InstOpCode::label, node, foundFirstVectorLabel);
 
    /* Set permuteVector = 0x000102030405060708090a0b0c0d0e0f */
-   TR::Register *zeroReg = srm->findOrCreateScratchRegister();
-   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, zeroReg, 0);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::lvsl, node, permuteVectorReg, zeroReg, zeroReg);
-   srm->reclaimScratchRegister(zeroReg);
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 0);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::lvsl, node, permuteVectorReg, tempReg, tempReg);
 
    /*
     * For little-endian, reverse permuteVector so that we can find the first set bit using a count
@@ -12897,7 +13061,7 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
     * On a full match, it jumps to foundLabel to calculate the final result to return.
     * If it isn't a full match, the code path continues on here.
     */
-   performArrayCmp(node, cg, srm, foundLabel, nullptr, currentAddressReg, subStringAddressReg, subStringLenReg, vec1Reg, vec2Reg, tempReg, cr0Reg, cr6Reg);
+   performArrayCmpV2(node, cg, currentAddressReg, subStringAddressReg, subStringLenReg, resultReg, firstCharSubStrReg, tempReg, vec1Reg, vec2Reg, cr0Reg, cr6Reg, foundLabel, nullptr);
 
    /* A match at currentAddressReg was not found so we undo adding in the index of the match that was found. */
 
@@ -12930,10 +13094,8 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    generateLabelInstruction(cg, TR::InstOpCode::label, node, foundVectorLabel);
 
    /* Set permuteVector = 0x000102030405060708090a0b0c0d0e0f */
-   zeroReg = srm->findOrCreateScratchRegister();
-   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, zeroReg, 0);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::lvsl, node, permuteVectorReg, zeroReg, zeroReg);
-   srm->reclaimScratchRegister(zeroReg);
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 0);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::lvsl, node, permuteVectorReg, tempReg, tempReg);
 
    /*
     * For little-endian, reverse permuteVector so that we can find the first set bit using a count
@@ -12980,7 +13142,7 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
     * On a full match, it jumps to foundLabel to calculate the final result to return.
     * If it isn't a full match, the code path continues on here.
     */
-   performArrayCmp(node, cg, srm, foundLabel, nullptr, currentAddressReg, subStringAddressReg, subStringLenReg, vec1Reg, vec2Reg, tempReg, cr0Reg, cr6Reg);
+   performArrayCmpV2(node, cg, currentAddressReg, subStringAddressReg, subStringLenReg, resultReg, firstCharSubStrReg, tempReg, vec1Reg, vec2Reg, cr0Reg, cr6Reg, foundLabel, nullptr);
 
    /* A match at currentAddressReg was not found so we undo adding in the index of the match that was found. */
 
@@ -13009,26 +13171,6 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
 
    /* A full match of the substring inside the main string has been found. The index is calculated and returned in resultReg. */
    generateLabelInstruction(cg, TR::InstOpCode::label, node, foundLabel);
-   if (node->getChild(0)->getReferenceCount() != 1)
-      {
-      arrayAddressReg = srm->findOrCreateScratchRegister();
-
-#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
-      if (TR::Compiler->om.isOffHeapAllocationEnabled())
-         {
-         generateTrg1MemInstruction(
-            cg, TR::InstOpCode::ld, node, arrayAddressReg,
-            TR::MemoryReference::createWithDisplacement(
-               cg, arrayObjReg, TR::Compiler->om.offsetOfContiguousDataAddrField(), 8)
-            );
-         }
-      else
-#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
-         {
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, arrayAddressReg, arrayObjReg,
-                                        TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
-         }
-      }
 
    generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, resultReg, arrayAddressReg, currentAddressReg);
 
@@ -13038,44 +13180,56 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    if (!isLatin1)
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::srawi, node, resultReg, resultReg, 1);
 
-   srm->reclaimScratchRegister(arrayAddressReg);
-   srm->reclaimScratchRegister(subStringAddressReg);
-   srm->reclaimScratchRegister(currentAddressReg);
-   srm->reclaimScratchRegister(endAddressReg);
-   srm->reclaimScratchRegister(tempReg);
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, numDependencies, cg->trMemory());
 
-   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 17 + srm->numAvailableRegisters(), cg->trMemory());
-
-   if (node->getChild(0)->getReferenceCount() != 1)
+   if (!cg->canClobberNodesRegister(node->getChild(0)))
       {
-      deps->addPostCondition(arrayObjReg, TR::RealRegister::NoReg);
+      deps->addPostCondition(arrayAddressReg, TR::RealRegister::NoReg);
+      }
+
+   if (!cg->canClobberNodesRegister(node->getChild(1)))
+      {
+      deps->addPostCondition(endAddressReg, TR::RealRegister::NoReg);
       deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
       }
 
-   if (node->getChild(1)->getReferenceCount() != 1)
+   if (!cg->canClobberNodesRegister(node->getChild(2)))
       {
-      deps->addPostCondition(arrayLenReg, TR::RealRegister::NoReg);
-      }
-
-   if (node->getChild(2)->getReferenceCount() != 1)
-      {
-      deps->addPostCondition(subStringObjReg, TR::RealRegister::NoReg);
+      deps->addPostCondition(subStringAddressReg, TR::RealRegister::NoReg);
       deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
       }
 
-   if (node->getChild(3)->getReferenceCount() != 1)
+   if (!cg->canClobberNodesRegister(node->getChild(3)))
       {
-      deps->addPostCondition(strCountReg, TR::RealRegister::NoReg);
+      deps->addPostCondition(subStringLenReg, TR::RealRegister::NoReg);
       }
 
-   if (node->getChild(4)->getReferenceCount() != 1)
+   if (!cg->canClobberNodesRegister(node->getChild(4)))
       {
-      deps->addPostCondition(fromIndexReg, TR::RealRegister::NoReg);
+      deps->addPostCondition(resultReg, TR::RealRegister::NoReg);
       }
 
-   deps->addPostCondition(subStringLenReg, TR::RealRegister::NoReg);
-   deps->addPostCondition(resultReg, TR::RealRegister::NoReg);
+   deps->addPostCondition(arrayObjReg, TR::RealRegister::NoReg);
    deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
+
+   deps->addPostCondition(arrayLenReg, TR::RealRegister::NoReg);
+   deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
+
+   deps->addPostCondition(subStringObjReg, TR::RealRegister::NoReg);
+   deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
+
+   deps->addPostCondition(strCountReg, TR::RealRegister::NoReg);
+
+   deps->addPostCondition(fromIndexReg, TR::RealRegister::NoReg);
+
+   deps->addPostCondition(currentAddressReg, TR::RealRegister::NoReg);
+   deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
+
+   deps->addPostCondition(firstCharSubStrReg, TR::RealRegister::NoReg);
+
+   deps->addPostCondition(tempReg, TR::RealRegister::NoReg);
+   deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
+
    deps->addPostCondition(vec1Reg, TR::RealRegister::NoReg);
    deps->addPostCondition(vec2Reg, TR::RealRegister::NoReg);
    deps->addPostCondition(targetVectorReg, TR::RealRegister::NoReg);
@@ -13085,7 +13239,6 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    deps->addPostCondition(maskVectorReg, TR::RealRegister::NoReg);
    deps->addPostCondition(cr0Reg, TR::RealRegister::cr0);
    deps->addPostCondition(cr6Reg, TR::RealRegister::cr6);
-   srm->addScratchRegistersToDependencyList(deps, true);
 
    generateDepLabelInstruction(cg, TR::InstOpCode::label, node, endLabel, deps);
 
