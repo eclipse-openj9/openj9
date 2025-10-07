@@ -138,7 +138,7 @@ jitserver:
 # OpenSSL
 #========================================#
 openssl:
-  extra_getsource_options: '-openssl-branch=openssl-3.5.2'
+  extra_getsource_options: '-openssl-branch=openssl-3.5.4'
   extra_configure_options: '--with-openssl=fetched'
 #========================================#
 # OpenSSL Bundling
@@ -336,7 +336,7 @@ aarch64_linux:
     11: 'linux-aarch64-normal-server-release'
   node_labels:
     build: 'ci.role.build && hw.arch.aarch64 && sw.tool.docker'
-    docker_image: 'adoptopenjdk/centos7_build_image@sha256:14254361f71a38b80d7f405c9de762fda780060589c070411b2c205b6ee26974'
+    docker_image: 'adoptopenjdk/centos7_build_image'
   build_env:
     vars:
       all: 'CC=/usr/local/gcc10/bin/gcc-10.3 CXX=/usr/local/gcc10/bin/g++-10.3'
