@@ -312,10 +312,8 @@ J9::Recompilation::methodCannotBeRecompiled(void * oldStartPC, TR_FrontEnd * fe)
 
    patchAddr = (int32_t *) ((uint8_t *) oldStartPC + getJitEntryOffset(linkageInfo));
 
-   if (bodyInfo->getUsesPreexistence()
-       || methodInfo->hasBeenReplaced()
-       || (linkageInfo->isSamplingMethodBody() && ! fej9->isAsyncCompilation()) // go interpreted for failed recomps in sync mode
-       || methodInfo->isExcludedPostRestore()) // go interpreted if method is excluded post restore
+   if ((linkageInfo->isSamplingMethodBody() && !fej9->isAsyncCompilation()) // failed recomps in sync mode
+       || bodyInfo->getIsInvalidated())
       {
       bool usesSampling = linkageInfo->isSamplingMethodBody();
       // We need to switch the method to interpreted.  Change the first instruction of the

@@ -293,10 +293,8 @@ void J9::Recompilation::methodCannotBeRecompiled(void *oldStartPC, TR_FrontEnd *
    TR_PersistentJittedBodyInfo *bodyInfo = getJittedBodyInfoFromPC(oldStartPC);
    TR_PersistentMethodInfo   *methodInfo = bodyInfo->getMethodInfo();
 
-   if (bodyInfo->getUsesPreexistence()
-       || methodInfo->hasBeenReplaced()
-       || (usesSampling && ! fej9->isAsyncCompilation()) // go interpreted for failed recomps in sync mode
-       || methodInfo->isExcludedPostRestore()) // go interpreted if method is excluded post restore
+   if ((usesSampling && !fej9->isAsyncCompilation()) // failed recomps in sync mode
+       || bodyInfo->getIsInvalidated())
       {
       // We need to switch the method to interpreted.  Change the first instruction of the
       // method to jump back to the call to the interpreter dispatch
