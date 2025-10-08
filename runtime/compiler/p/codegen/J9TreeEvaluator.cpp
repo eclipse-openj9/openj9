@@ -12770,18 +12770,20 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    TR::Register *cr0Reg = cg->allocateRegister(TR_CCR);
    TR::Register *cr6Reg = cg->allocateRegister(TR_CCR);
 
-   TR::LabelSymbol *startLabel            = generateLabelSymbol(cg);
-   TR::LabelSymbol *foundEarlyLabel       = generateLabelSymbol(cg);
-   TR::LabelSymbol *notFoundEarlyLabel    = generateLabelSymbol(cg);
-   TR::LabelSymbol *firstContinueLabel    = generateLabelSymbol(cg);
-   TR::LabelSymbol *vectorLoopLabel       = generateLabelSymbol(cg);
-   TR::LabelSymbol *vectorContinueLabel   = generateLabelSymbol(cg);
-   TR::LabelSymbol *notFoundLabel         = generateLabelSymbol(cg);
-   TR::LabelSymbol *foundFirstVectorLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol *foundVectorLabel      = generateLabelSymbol(cg);
-   TR::LabelSymbol *foundLabel            = generateLabelSymbol(cg);
-   TR::LabelSymbol *foundExactLabel       = generateLabelSymbol(cg);
-   TR::LabelSymbol *endLabel              = generateLabelSymbol(cg);
+   TR::LabelSymbol *startLabel                 = generateLabelSymbol(cg);
+   TR::LabelSymbol *foundEarlyLabel            = generateLabelSymbol(cg);
+   TR::LabelSymbol *notFoundEarlyLabel         = generateLabelSymbol(cg);
+   TR::LabelSymbol *firstContinueLabel         = generateLabelSymbol(cg);
+   TR::LabelSymbol *vectorLoopLabel            = generateLabelSymbol(cg);
+   TR::LabelSymbol *vectorContinueLabel        = generateLabelSymbol(cg);
+   TR::LabelSymbol *notFoundLabel              = generateLabelSymbol(cg);
+   TR::LabelSymbol *foundFirstVectorLabel      = generateLabelSymbol(cg);
+   TR::LabelSymbol *foundFirstVectorRetryLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *foundVectorLabel           = generateLabelSymbol(cg);
+   TR::LabelSymbol *foundVectorRetryLabel      = generateLabelSymbol(cg);
+   TR::LabelSymbol *foundLabel                 = generateLabelSymbol(cg);
+   TR::LabelSymbol *foundExactLabel            = generateLabelSymbol(cg);
+   TR::LabelSymbol *endLabel                   = generateLabelSymbol(cg);
 
    startLabel->setStartInternalControlFlow();
    endLabel->setEndInternalControlFlow();
@@ -13021,12 +13023,12 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisb, node, vec1Reg, 3);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::vslb, node, permuteVectorReg, permuteVectorReg, vec1Reg);
 
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, foundFirstVectorRetryLabel);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::vbpermq, node, vec1Reg, vec2Reg, permuteVectorReg);
    generateTrg1Src1Instruction(cg, TR::InstOpCode::mfvsrwz, node, resultReg, vec1Reg);
    generateShiftLeftImmediate(cg, node, resultReg, resultReg, 16);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, tempReg, currentAddressReg, cr0Reg, 0xF);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::slw, node, resultReg, resultReg, tempReg); //TODO: replace with slw_r
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr0Reg, resultReg, 0);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::slw_r, node, resultReg, resultReg, tempReg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, firstContinueLabel, cr0Reg);
 
    /*
@@ -13059,13 +13061,13 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    generateTrg1Src2Instruction(cg, TR::InstOpCode::vxor, node, vec1Reg, vec1Reg, vec1Reg);
    if (comp->target().cpu.isLittleEndian())
       {
-      generateTrg1MemInstruction(cg, TR::InstOpCode::lvsl, node, permuteVectorReg, TR::MemoryReference::createWithIndexReg(cg, nullptr, currentAddressReg, 1));
-      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, vec1Reg, maskVectorReg, vec1Reg, permuteVectorReg);
+      generateTrg1MemInstruction(cg, TR::InstOpCode::lvsl, node, vec2Reg, TR::MemoryReference::createWithIndexReg(cg, nullptr, currentAddressReg, 1));
+      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, vec1Reg, maskVectorReg, vec1Reg, vec2Reg);
       }
    else
       {
-      generateTrg1MemInstruction(cg, TR::InstOpCode::lvsr, node, permuteVectorReg, TR::MemoryReference::createWithIndexReg(cg, nullptr, currentAddressReg, 1));
-      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, vec1Reg, vec1Reg, maskVectorReg, permuteVectorReg);
+      generateTrg1MemInstruction(cg, TR::InstOpCode::lvsr, node, vec2Reg, TR::MemoryReference::createWithIndexReg(cg, nullptr, currentAddressReg, 1));
+      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, vec1Reg, vec1Reg, maskVectorReg, vec2Reg);
       }
    generateTrg1Src3Instruction(cg, TR::InstOpCode::vsel, node, searchVectorReg, targetVectorNotReg, searchVectorReg, vec1Reg);
 
@@ -13075,7 +13077,7 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
     */
    generateTrg1Src2Instruction(cg, vectorCompareOp, node, vec2Reg, searchVectorReg, targetVectorReg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, firstContinueLabel, cr6Reg);
-   generateLabelInstruction(cg, TR::InstOpCode::b, node, foundFirstVectorLabel);
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, foundFirstVectorRetryLabel);
 
    /*
     * This section handles the case where the characters to search for in the main string do not fit in a single vector load (not small case).
@@ -13102,12 +13104,12 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisb, node, vec1Reg, 3);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::vslb, node, permuteVectorReg, permuteVectorReg, vec1Reg);
 
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, foundVectorRetryLabel);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::vbpermq, node, vec1Reg, vec2Reg, permuteVectorReg);
    generateTrg1Src1Instruction(cg, TR::InstOpCode::mfvsrwz, node, resultReg, vec1Reg);
    generateShiftLeftImmediate(cg, node, resultReg, resultReg, 16);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, tempReg, currentAddressReg, cr0Reg, 0xF);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::slw, node, resultReg, resultReg, tempReg); //TODO: replace with slw_r
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr0Reg, resultReg, 0);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::slw_r, node, resultReg, resultReg, tempReg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, vectorContinueLabel, cr0Reg);
 
    /*
@@ -13140,13 +13142,13 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    generateTrg1Src2Instruction(cg, TR::InstOpCode::vxor, node, vec1Reg, vec1Reg, vec1Reg);
    if (comp->target().cpu.isLittleEndian())
       {
-      generateTrg1MemInstruction(cg, TR::InstOpCode::lvsl, node, permuteVectorReg, TR::MemoryReference::createWithIndexReg(cg, nullptr, currentAddressReg, 1));
-      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, vec1Reg, maskVectorReg, vec1Reg, permuteVectorReg);
+      generateTrg1MemInstruction(cg, TR::InstOpCode::lvsl, node, vec2Reg, TR::MemoryReference::createWithIndexReg(cg, nullptr, currentAddressReg, 1));
+      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, vec1Reg, maskVectorReg, vec1Reg, vec2Reg);
       }
    else
       {
-      generateTrg1MemInstruction(cg, TR::InstOpCode::lvsr, node, permuteVectorReg, TR::MemoryReference::createWithIndexReg(cg, nullptr, currentAddressReg, 1));
-      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, vec1Reg, vec1Reg, maskVectorReg, permuteVectorReg);
+      generateTrg1MemInstruction(cg, TR::InstOpCode::lvsr, node, vec2Reg, TR::MemoryReference::createWithIndexReg(cg, nullptr, currentAddressReg, 1));
+      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, vec1Reg, vec1Reg, maskVectorReg, vec2Reg);
       }
    generateTrg1Src3Instruction(cg, TR::InstOpCode::vsel, node, searchVectorReg, targetVectorNotReg, searchVectorReg, vec1Reg);
 
@@ -13155,7 +13157,7 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
     * If a second match is found, jump back to foundVectorLabel to try the process again.
     */
    generateTrg1Src2Instruction(cg, vectorCompareOp, node, vec2Reg, searchVectorReg, targetVectorReg);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, foundVectorLabel, cr6Reg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, foundVectorRetryLabel, cr6Reg);
    generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, currentAddressReg, currentAddressReg, 0, CONSTANT64(0xfffffffffffffff0));
    generateLabelInstruction(cg, TR::InstOpCode::b, node, vectorContinueLabel);
 
