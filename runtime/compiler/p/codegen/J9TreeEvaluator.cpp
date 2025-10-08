@@ -12708,12 +12708,11 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    TR::Register *fromIndexReg    = cg->evaluate(node->getChild(4));
 
    TR::Register *arrayAddressReg = nullptr;
-   TR::Register *endAddressReg = nullptr;
    TR::Register *subStringAddressReg = nullptr;
    TR::Register *subStringLenReg = nullptr;
    TR::Register *resultReg = nullptr;
 
-   int32_t numDependencies = 17;
+   int32_t numDependencies = 18;
 
    if (cg->canClobberNodesRegister(node->getChild(0)))
       {
@@ -12722,16 +12721,6 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    else
       {
       arrayAddressReg = cg->allocateRegister();
-      numDependencies++;
-      }
-
-   if (cg->canClobberNodesRegister(node->getChild(1)))
-      {
-      endAddressReg = arrayLenReg;
-      }
-   else
-      {
-      endAddressReg = cg->allocateRegister();
       numDependencies++;
       }
 
@@ -12766,6 +12755,7 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
       }
 
    TR::Register *currentAddressReg  = cg->allocateRegister();
+   TR::Register *endAddressReg      = cg->allocateRegister();
    TR::Register *firstCharSubStrReg = cg->allocateRegister();
    TR::Register *tempReg            = cg->allocateRegister();
 
@@ -13187,12 +13177,6 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
       deps->addPostCondition(arrayAddressReg, TR::RealRegister::NoReg);
       }
 
-   if (!cg->canClobberNodesRegister(node->getChild(1)))
-      {
-      deps->addPostCondition(endAddressReg, TR::RealRegister::NoReg);
-      deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
-      }
-
    if (!cg->canClobberNodesRegister(node->getChild(2)))
       {
       deps->addPostCondition(subStringAddressReg, TR::RealRegister::NoReg);
@@ -13213,7 +13197,6 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
 
    deps->addPostCondition(arrayLenReg, TR::RealRegister::NoReg);
-   deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
 
    deps->addPostCondition(subStringObjReg, TR::RealRegister::NoReg);
    deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
@@ -13223,6 +13206,9 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    deps->addPostCondition(fromIndexReg, TR::RealRegister::NoReg);
 
    deps->addPostCondition(currentAddressReg, TR::RealRegister::NoReg);
+   deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
+
+   deps->addPostCondition(endAddressReg, TR::RealRegister::NoReg);
    deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
 
    deps->addPostCondition(firstCharSubStrReg, TR::RealRegister::NoReg);
