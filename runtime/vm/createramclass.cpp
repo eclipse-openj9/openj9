@@ -4358,8 +4358,9 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 			classAllocationIncrement = 0;
 		} else {
 			if (SK_SUB4G == segmentKind) {
-				const UDATA headersPerSegment = 32;
-				classAllocationIncrement = sizeof(J9Class) * headersPerSegment;
+				UDATA align = sizeof(J9Class);
+				/* Round to the nearest multiple of sizeof(J9Class). */
+				classAllocationIncrement = ((classAllocationIncrement + align - 1) / align) * align;
 			}
 		}
 
