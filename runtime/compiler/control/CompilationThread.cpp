@@ -11157,6 +11157,10 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
                 compiler->getRecompilationInfo()->getJittedBodyInfo()->getHasEdoSnippet())
                TR_VerboseLog::write(" EDO");
 
+            if (compiler->getRecompilationInfo() &&
+                compiler->getRecompilationInfo()->getJittedBodyInfo()->getUsesPreexistence())
+               TR_VerboseLog::write(" PREX");
+
 #if defined(J9VM_OPT_JITSERVER)
             if (_methodBeingCompiled->isRemoteCompReq())
                {
