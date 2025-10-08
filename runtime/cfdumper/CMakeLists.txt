@@ -25,7 +25,6 @@ set(OMR_ENHANCED_WARNINGS OFF)
 set_source_files_properties(${j9vm_BINARY_DIR}/vm/ut_j9vm.c PROPERTIES GENERATED TRUE)
 j9vm_add_executable(cfdump
 	main.c
-	pvdump.c
 	romdump.c
 	stubs.c
 
