@@ -1,7 +1,7 @@
 package j9vm.test.threads.regression;
 
 /*
- * Copyright IBM Corp. and others 2008
+ * Copyright IBM Corp. and others 2025
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,21 +27,20 @@ import junit.framework.TestSuite;
 import junit.framework.TestCase;
 
 public class RegressionTests extends TestCase {
-	
+
 	/**
 	 * method that can be used to run the test by itself
-	 * 
-	 * @param args args[0] must be the path to where VM_Test.jar is available 
+	 *
+	 * @param args args[0] must be the path to where VM_Test.jar is available
 	 */
 	public static void main (String[] args) {
 		TestUtils.args = args;
 		junit.textui.TestRunner.run(suite());
 	}
-	
+
 	public static Test suite(){
 		TestSuite suite = new TestSuite();
 		suite.addTestSuite(ProcessWaitFor.class);
-		suite.addTestSuite(ProcessWaitForStop.class);
 		return suite;
 	}
 }
