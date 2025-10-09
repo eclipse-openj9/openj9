@@ -373,10 +373,7 @@ static const struct { \
 #define IS_CLASS_SIGNATURE(firstChar) ('L' == (firstChar))
 
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
-/* TODO Update the class version check if strict fields is released before value types. */
-#define J9ROMFIELD_IS_STRICT_FINAL(romClassOrClassfile, fieldModifiers) \
-	(J9_IS_CLASSFILE_OR_ROMCLASS_VALUETYPE_VERSION(romClassOrClassfile) \
-		&& J9_ARE_ALL_BITS_SET(fieldModifiers, J9AccStrictInit | J9AccFinal))
+#define J9ROMFIELD_IS_STRICT(fieldModifiers) J9_ARE_ALL_BITS_SET(fieldModifiers, J9AccStrictInit)
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
