@@ -1001,21 +1001,8 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
             resolvedMethod = calltarget->_calleeMethod->getResolvedHandleMethod(comp(), methodTypeTableEntryIndex, &isUnresolvedInCP);
             if (resolvedMethod && !isUnresolvedInCP)
                {
-               char topLevelMethodNameBuffer[1024];
-               const char *topLevelMethodName = NULL;
-                  topLevelMethodName = comp()->fej9()->sampleSignature(
-               comp()->getCurrentMethod()->getPersistentIdentifier(), topLevelMethodNameBuffer,
-               1024, comp()->trMemory());
-               // javax/imageio/stream/ImageInputStreamImpl.readlong()J is implemented with two back-to-back readInt() invocations,
-               // and deeper down those call graphs, there are VarHandle operation methods that we are able to inline if peeking
-               // ILGen is done for the method containing the invokehandle bytecode. However, in warm opt level, the inlining budget
-               // only allows one of the two readInt() methods to get inlined. This results in a functional issue that requires some
-               // additional work to address. This is a temporary workaround in place until the underlying problem exposed is fixed.
-               if (strncmp(topLevelMethodName, "javax/imageio/stream/ImageInputStreamImpl.readLong", 50))
-                     {
-                     nph.setNeedsPeekingToTrue();
-                     heuristicTrace(tracer(), "Depth %d: Resolved invokehandle call at bc index %d has Signature %s, enabled peeking for caller to propagate prex arg info from caller.", _recursionDepth, i, tracer()->traceSignature(resolvedMethod));
-                     }
+               nph.setNeedsPeekingToTrue();
+               heuristicTrace(tracer(), "Depth %d: Resolved invokehandle call at bc index %d has Signature %s, enabled peeking for caller to propagate prex arg info from caller.", _recursionDepth, i, tracer()->traceSignature(resolvedMethod));
                }
             }
             flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable);
