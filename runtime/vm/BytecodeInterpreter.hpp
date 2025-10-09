@@ -7702,6 +7702,21 @@ retry:
 		/* Swap flags and class subfield order. */
 		classAndFlags = J9CLASSANDFLAGS_FROM_FLAGSANDCLASS(flagsAndClass);
 		valueAddress = J9STATICADDRESS(flagsAndClass, valueOffset);
+
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+		if (J9ClassInitNotInitialized == (ramConstantPool->ramClass->initializeStatus & J9ClassInitStatusMask)) {
+			if (J9_STATIC_FIELD_STRICT_INIT_IS_UNSET(classAndFlags)) {
+				/* If a strict field has never been set, fail. */
+				rc = THROW_ILLEGAL_STATE_EXCEPTION;
+				goto done;
+			} else if (J9_STATIC_FIELD_STRICT_INIT_WAS_WRITTEN(classAndFlags)) {
+				classAndFlags &= ~J9StaticFieldRefStrictInitMask;
+				classAndFlags |= J9StaticFieldRefStrictInitRead;
+				ramStaticFieldRef->flagsAndClass = J9FLAGSANDCLASS_FROM_CLASSANDFLAGS(classAndFlags);
+			}
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+
 #if defined(DO_HOOKS)
 		if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_GET_STATIC_FIELD)) {
 			J9Class *fieldClass = (J9Class*)(classAndFlags & ~(UDATA)J9StaticFieldRefFlagBits);
@@ -7753,6 +7768,9 @@ done:
 		UDATA volatile classAndFlags = 0;
 		void* volatile valueAddress = NULL;
 		void *resolveResult = NULL;
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+		J9Class *ramClass = NULL;
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 		if (J9_UNEXPECTED(!(
 			VM_VMHelpers::staticFieldRefIsResolved(flagsAndClass, valueOffset) &&
@@ -7781,6 +7799,26 @@ done:
 		/* Swap flags and class subfield order. */
 		classAndFlags = J9CLASSANDFLAGS_FROM_FLAGSANDCLASS(flagsAndClass);
 		valueAddress = J9STATICADDRESS(flagsAndClass, valueOffset);
+
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+		ramClass = ramConstantPool->ramClass;
+		if (J9ClassInitNotInitialized == (ramClass->initializeStatus & J9ClassInitStatusMask)) {
+			if (J9_STATIC_FIELD_STRICT_INIT_IS_UNSET(classAndFlags)) {
+				Assert_VM_true(ramClass->strictStaticFieldCounter > 0);
+				ramClass->strictStaticFieldCounter -= 1;
+				classAndFlags &= ~J9StaticFieldRefStrictInitMask;
+				classAndFlags |= J9StaticFieldRefStrictInitWritten;
+				ramStaticFieldRef->flagsAndClass = J9FLAGSANDCLASS_FROM_CLASSANDFLAGS(classAndFlags);
+			} else if (J9_STATIC_FIELD_STRICT_INIT_WAS_WRITTEN_AND_READ(classAndFlags)
+				&& J9_ARE_ANY_BITS_SET(classAndFlags, J9StaticFieldRefFinal)
+			) {
+				/* If the strict final field was read, fail. */
+				rc = THROW_ILLEGAL_STATE_EXCEPTION;
+				goto done;
+			}
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+
 #if defined(DO_HOOKS)
 		if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_PUT_STATIC_FIELD)) {
 			J9Class *fieldClass = (J9Class*)(classAndFlags & ~(UDATA)J9StaticFieldRefFlagBits);
@@ -10769,6 +10807,14 @@ public:
 #define PERFORM_ACTION_CRIU_STM_THROW
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#define PERFORM_ACTION_ILLEGAL_STATE_EXCEPTION \
+		case THROW_ILLEGAL_STATE_EXCEPTION: \
+			goto illegalStateException;
+#else /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#define PERFORM_ACTION_ILLEGAL_STATE_EXCEPTION
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+
 #define PERFORM_ACTION(functionCall) \
 	do { \
 		DEBUG_UPDATE_VMSTRUCT(); \
@@ -10827,6 +10873,7 @@ public:
 			goto i2j; \
 		PERFORM_ACTION_VALUE_TYPE_IMSE \
 		PERFORM_ACTION_CRIU_STM_THROW \
+		PERFORM_ACTION_ILLEGAL_STATE_EXCEPTION \
 		DEBUG_ACTIONS \
 		default: \
 			Assert_VM_unreachable(); \
@@ -11533,6 +11580,15 @@ incompatibleClassChange:
 	setCurrentExceptionUTF(_currentThread, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, NULL);
 	VMStructHasBeenUpdated(REGISTER_ARGS);
 	goto throwCurrentException;
+
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+illegalStateException:
+	updateVMStruct(REGISTER_ARGS);
+	prepareForExceptionThrow(_currentThread);
+	setCurrentExceptionUTF(_currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALSTATEEXCEPTION, NULL);
+	VMStructHasBeenUpdated(REGISTER_ARGS);
+	goto throwCurrentException;
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 negativeArraySize:
 	updateVMStruct(REGISTER_ARGS);

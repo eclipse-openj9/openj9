@@ -865,6 +865,12 @@ illegalAccess:
 				if ((modifiers & J9AccFinal) == J9AccFinal) {
 					localClassAndFlagsData |= J9StaticFieldRefFinal;
 				}
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+				if (J9_ARE_ANY_BITS_SET(modifiers, J9AccStrictInit)) {
+					localClassAndFlagsData &= ~J9StaticFieldRefStrictInitMask;
+					localClassAndFlagsData |= J9StaticFieldRefStrictInitUnset;
+				}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 				if (0 != (resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER)) {
 					localClassAndFlagsData |= J9StaticFieldRefPutResolved;
 				}

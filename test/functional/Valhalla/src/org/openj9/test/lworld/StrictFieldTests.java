@@ -46,4 +46,58 @@ public class StrictFieldTests {
 		Class<?> c = StrictFieldGenerator.generateTestPutStrictFinalFieldUnrestricted();
 		c.newInstance();
 	}
+
+	/* If a strict static field in larval state is unset, getstatic throws an exception. */
+	@Test(expectedExceptions = IllegalStateException.class)
+	static public void testGetStaticInLarvalForUnsetStrictField() throws Throwable {
+		Class<?> c = StrictFieldGenerator.generateTestGetStaticInLarvalForUnsetStrictField();
+		try {
+			c.newInstance();
+		} catch (ExceptionInInitializerError e) {
+			throw e.getException();
+		}
+	}
+
+	/* If a strict static final field in larval state is set after it has been
+	 * read, an exception is thrown.
+	 */
+	@Test(expectedExceptions = IllegalStateException.class)
+	static public void testPutStaticInLarvalForReadStrictFinalField() throws Throwable {
+		Class<?> c = StrictFieldGenerator.generateTestPutStaticInLarvalForReadStrictFinalField();
+		try {
+			c.newInstance();
+		} catch (ExceptionInInitializerError e) {
+			throw e.getException();
+		}
+	}
+
+	/* If at the end of the larval state a strict static field is not set,
+	 * class initialization fails and an exception should be thrown.
+	 * Test with one unset field.
+	 */
+	@Test(expectedExceptions = IllegalStateException.class,
+		expectedExceptionsMessageRegExp = ".*Strict static fields are unset after initialization of.*")
+	static public void testStrictStaticFieldNotSetInLarval() throws Throwable {
+		Class<?> c = StrictFieldGenerator.generateTestStrictStaticFieldNotSetInLarval();
+		try {
+			c.newInstance();
+		} catch (ExceptionInInitializerError e) {
+			throw e.getException();
+		}
+	}
+
+	/* If at the end of the larval state a strict static field is not set,
+	 * class initialization fails and an exception should be thrown.
+	 * Test with one set field and one unset field.
+	 */
+	@Test(expectedExceptions = IllegalStateException.class,
+		expectedExceptionsMessageRegExp = ".*Strict static fields are unset after initialization of.*")
+	static public void testStrictStaticFieldNotSetInLarvalMulti() throws Throwable {
+		Class<?> c = StrictFieldGenerator.generateTestStrictStaticFieldNotSetInLarvalMulti();
+		try {
+			c.newInstance();
+		} catch (ExceptionInInitializerError e) {
+			throw e.getException();
+		}
+	}
 }

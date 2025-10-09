@@ -1834,6 +1834,10 @@ Only available on zOS</description>
 		<description>Enables support for Project Valhalla L-World Flattenable Value Types</description>
 		<ifRemoved>No support for Project Valhalla L-World Flattenable Value Types</ifRemoved>
 	</flag>
+	<flag id="opt_valhallaStrictFields">
+		<description>Enables support for Project Valhalla Strict Fields</description>
+		<ifRemoved>No support for Project Valhalla Strict Fields</ifRemoved>
+	</flag>
 	<flag id="opt_phpSupport">
 		<description>Support for PHP interpreter.</description>
 		<ifRemoved>No support for PHP.</ifRemoved>
