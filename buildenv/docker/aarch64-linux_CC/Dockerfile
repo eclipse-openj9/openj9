@@ -65,12 +65,6 @@ RUN ln -s g++ /usr/bin/c++ \
   && ln -s gcc /usr/bin/cc \
   && ln -s gcc-7 /usr/bin/gcc
 
-# Download and setup freemarker.jar
-RUN cd /home/$user \
-  && wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz \
-  && tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2 \
-  && rm -f freemarker.tgz
-
 # Download and install boot JDK from AdoptOpenJDK
 RUN cd /home/$user \
   && wget -O bootjdk11.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk11?openjdk_impl=openj9&os=linux&arch=x64&release=latest&heap_size=normal&type=jdk" \

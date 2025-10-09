@@ -1588,14 +1588,6 @@ def set_build_variables_per_node() {
         download_boot_jdk(bootJDKVersion, BOOT_JDK)
     }
 
-    FREEMARKER = buildspec.getScalarField('freemarker', SDK_VERSION)
-    if (FREEMARKER) {
-        println("FREEMARKER: ${FREEMARKER}")
-        if (!check_path(FREEMARKER)) {
-            error("FREEMARKER: ${FREEMARKER} does not exist!")
-        }
-    }
-
     OPENJDK_REFERENCE_REPO = buildspec.getScalarField("openjdk_reference_repo", SDK_VERSION)
     println("OPENJDK_REFERENCE_REPO: ${OPENJDK_REFERENCE_REPO}")
     if (!check_path(OPENJDK_REFERENCE_REPO)) {

@@ -31,30 +31,16 @@
     accept_hostkey: yes
   tags:
     - build
-- name: Set get_source.sh as executable
-  delegate_to: "openj9-{{ version }}-build"
-  file:
-    path: "/root/openj9-openjdk-{{ version }}/get_source.sh"
-    mode: 0755
-  tags:
-    - build
 - name: Get the sources
   delegate_to: "openj9-{{ version }}-build"
-  shell: "/root/openj9-openjdk-{{ version }}/get_source.sh"
+  shell: "bash get_source.sh"
   args:
     chdir: "/root/openj9-openjdk-{{ version }}"
   tags:
     - build
-- name: Set configure as executable
-  delegate_to: "openj9-{{ version }}-build"
-  file:
-    path: "/root/openj9-openjdk-{{ version }}/configure"
-    mode: 0755
-  tags:
-    - build
 - name: Configure
   delegate_to: "openj9-{{ version }}-build"
-  shell: "/root/openj9-openjdk-{{ version }}/configure --with-freemarker-jar=/root/freemarker.jar"
+  shell: "bash configure"
   args:
     chdir: "/root/openj9-openjdk-{{ version }}"
   tags:
