@@ -469,16 +469,15 @@ isPinnedContinuation(J9VMThread *currentThread)
 	if (currentThread->continuationPinCount > 0) {
 		result = J9VM_CONTINUATION_PINNED_REASON_CRITICAL_SECTION;
 	} else if (currentThread->callOutCount > 0) {
-		/* TODO: This check should be changed from > 1 to > 0 once the call-ins are no
-		 * longer used and the new design for single cInterpreter is implemented.
-		 */
 		result = J9VM_CONTINUATION_PINNED_REASON_NATIVE;
+#if JAVA_SPEC_VERSION < 26
 	} else if ((currentThread->ownedMonitorCount > 0)
 #if JAVA_SPEC_VERSION >= 24
 	&& J9_ARE_NO_BITS_SET(currentThread->javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
 #endif /* JAVA_SPEC_VERSION >= 24 */
 	) {
 		result = J9VM_CONTINUATION_PINNED_REASON_MONITOR;
+#endif /* JAVA_SPEC_VERSION < 26 */
 	} else {
 		/* Do nothing. */
 	}

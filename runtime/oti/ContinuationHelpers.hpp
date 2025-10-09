@@ -37,9 +37,11 @@
 #endif /* JAVA_SPEC_VERSION >= 24 */
 #include "VMHelpers.hpp"
 
-/* These should match the error code values in enum Pinned within class Continuation. */
+/* These should match the error code values in enum Continuation.Pinned. */
 #define J9VM_CONTINUATION_PINNED_REASON_NATIVE 1
+#if JAVA_SPEC_VERSION < 26
 #define J9VM_CONTINUATION_PINNED_REASON_MONITOR 2
+#endif /* JAVA_SPEC_VERSION < 26 */
 #define J9VM_CONTINUATION_PINNED_REASON_CRITICAL_SECTION 3
 #if JAVA_SPEC_VERSION >= 24
 #define J9VM_CONTINUATION_PINNED_REASON_EXCEPTION 4
