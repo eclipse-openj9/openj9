@@ -562,6 +562,7 @@ int32_t TR_UnsafeFastPath::perform()
          TR::Symbol::MemoryOrdering ordering = TR::Symbol::MemoryOrdering::Transparent;
          bool isArrayOperation = false;
          bool isByIndex = false;
+         bool isObjectPresumedNonNull = false;  // Object argument of JITHelpers_get/put methods must be non-null
          int32_t objectChild = 1;
          int32_t offsetChild = 2;
 
@@ -577,7 +578,7 @@ int32_t TR_UnsafeFastPath::perform()
                break;
             }
 
-         // Check for array operation
+         // Check for array operation and for non-null Object argument
          switch (symbol->getRecognizedMethod())
             {
             case TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V:
@@ -593,6 +594,20 @@ int32_t TR_UnsafeFastPath::perform()
                   default:
                      break;
                   }
+               break;
+            case TR::com_ibm_jit_JITHelpers_getIntFromObject:
+            case TR::com_ibm_jit_JITHelpers_getIntFromObjectVolatile:
+            case TR::com_ibm_jit_JITHelpers_getLongFromObject:
+            case TR::com_ibm_jit_JITHelpers_getLongFromObjectVolatile:
+            case TR::com_ibm_jit_JITHelpers_getObjectFromObject:
+            case TR::com_ibm_jit_JITHelpers_getObjectFromObjectVolatile:
+            case TR::com_ibm_jit_JITHelpers_putIntInObject:
+            case TR::com_ibm_jit_JITHelpers_putIntInObjectVolatile:
+            case TR::com_ibm_jit_JITHelpers_putLongInObject:
+            case TR::com_ibm_jit_JITHelpers_putLongInObjectVolatile:
+            case TR::com_ibm_jit_JITHelpers_putObjectInObject:
+            case TR::com_ibm_jit_JITHelpers_putObjectInObjectVolatile:
+               isObjectPresumedNonNull = true;
                break;
             case TR::com_ibm_jit_JITHelpers_getByteFromArrayVolatile:
             case TR::com_ibm_jit_JITHelpers_getByteFromArrayByIndex:
@@ -618,6 +633,9 @@ int32_t TR_UnsafeFastPath::perform()
             case TR::com_ibm_jit_JITHelpers_putLongInArray:
             case TR::com_ibm_jit_JITHelpers_putObjectInArrayVolatile:
             case TR::com_ibm_jit_JITHelpers_putObjectInArray:
+               isArrayOperation = true;
+               isObjectPresumedNonNull = true;
+               break;
             case TR::java_lang_StringUTF16_getChar:
             case TR::java_lang_StringUTF16_putChar:
                isArrayOperation = true;
@@ -841,7 +859,11 @@ int32_t TR_UnsafeFastPath::perform()
                }
 
             object = node->getChild(objectChild);
-            object->setIsNonNull(true);
+            if (isObjectPresumedNonNull)
+               {
+               object->setIsNonNull(true);
+               }
+
             if (isStatic)
                {
                TR::Node *jlClass = object;
