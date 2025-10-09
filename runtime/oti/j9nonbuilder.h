@@ -2189,6 +2189,10 @@ typedef struct J9BytecodeVerificationData {
 	struct J9PortLibrary * portLib;
 	struct J9JavaVM* javaVM;
 	BOOLEAN createdStackMap;
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+	J9HashTable *strictFields;
+	UDATA strictFieldsUnsetCount;
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 } J9BytecodeVerificationData;
 
 typedef struct J9BytecodeOffset {

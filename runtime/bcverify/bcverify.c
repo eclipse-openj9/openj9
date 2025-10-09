@@ -86,6 +86,10 @@ static IDATA simulateStack (J9BytecodeVerificationData * verifyData);
 static IDATA parseOptions (J9JavaVM *vm, char *optionValues, const char **errorString);
 static IDATA setVerifyState ( J9JavaVM *vm, char *option, const char **errorString );
 
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+static UDATA strictFieldHashFn(void *key, void *userData);
+static UDATA strictFieldHashEqualFn(void *leftKey, void *rightKey, void *userData);
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 /**
  * Walk the J9-format stack maps and set the uninitialized_this flag appropriately
@@ -2302,9 +2306,12 @@ j9bcv_freeVerificationData (J9PortLibrary * portLib, J9BytecodeVerificationData 
 {
 	PORT_ACCESS_FROM_PORT(portLib);
 	if (verifyData) {
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+		hashTableFree(verifyData->strictFields);
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 #ifdef J9VM_THR_PREEMPTIVE
 		JavaVM* jniVM = (JavaVM*)verifyData->javaVM;
-	    J9ThreadEnv* threadEnv;
+		J9ThreadEnv* threadEnv;
 		(*jniVM)->GetEnv(jniVM, (void**)&threadEnv, J9THREAD_VERSION_1_1);
 
 		threadEnv->monitor_destroy( verifyData->verifierMutex );
@@ -2344,6 +2351,22 @@ j9bcv_initializeVerificationData(J9JavaVM* javaVM)
 		goto error_no_memory;
 	}
 #endif
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+	verifyData->strictFieldsUnsetCount = 0;
+	verifyData->strictFields = hashTableNew(
+		OMRPORT_FROM_J9PORT(PORTLIB),
+		J9_GET_CALLSITE(),
+		0,
+		sizeof(J9StrictFieldEntry),
+		0, 0,
+		J9MEM_CATEGORY_CLASSES,
+		strictFieldHashFn,
+		strictFieldHashEqualFn,
+		NULL, javaVM);
+	if (NULL == verifyData->strictFields) {
+		goto error_no_memory;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 	verifyData->verifyBytecodesFunction = j9bcv_verifyBytecodes;
 	verifyData->checkClassLoadingConstraintForNameFunction = j9bcv_checkClassLoadingConstraintForName;
@@ -2417,6 +2440,9 @@ j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * clazz, J9ROMClass * ro
 	BOOLEAN classVersionRequiresStackmaps = romClass->majorVersion >= CFR_MAJOR_VERSION_REQUIRING_STACKMAPS;
 	BOOLEAN newFormat = (classVersionRequiresStackmaps || hasStackMaps);
 	BOOLEAN verboseVerification = (J9_VERIFY_VERBOSE_VERIFICATION == (verifyData->verificationFlags & J9_VERIFY_VERBOSE_VERIFICATION));
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+	BOOLEAN addToStrictFieldTable = TRUE;
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 	PORT_ACCESS_FROM_PORT(portLib);
 
@@ -2575,6 +2601,11 @@ _fallBack:
 				if (isInitMethod) {
 					/* CMVC 199785: Jazz103 45899: Only run this when the stack has been built correctly */
 					setInitializedThisStatus(verifyData);
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+					if (J9_CLASSFILE_OR_ROMCLASS_SUPPORTS_STRICT_FIELDS(romClass)) {
+						createOrResetStrictFieldsList(verifyData, &addToStrictFieldTable);
+					}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 				}
 
 				if (newFormat && verboseVerification) {
@@ -2868,5 +2899,20 @@ bcvHookClassesUnload(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
 	}
 }
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
+
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+static UDATA strictFieldHashFn(void *key, void *userData)
+{
+	J9StrictFieldEntry *entry = key;
+	J9JavaVM *vm = userData;
+	return J9_VM_FUNCTION_VIA_JAVAVM(vm, computeHashForUTF8)(J9UTF8_DATA(entry->nameutf8), J9UTF8_LENGTH(entry->nameutf8));
+}
+
+static UDATA strictFieldHashEqualFn(void *leftKey, void *rightKey, void *userData) {
+	J9StrictFieldEntry *leftEntry = leftKey;
+	J9StrictFieldEntry *rightEntry = rightKey;
+	return J9UTF8_EQUALS(leftEntry->nameutf8, rightEntry->nameutf8);
+}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 

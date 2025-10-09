@@ -471,6 +471,9 @@ verifyBytecodes (J9BytecodeVerificationData * verifyData)
 	UDATA errorStackIndex = (UDATA)-1;
 	UDATA errorTempData = (UDATA)-1;
 	BOOLEAN isNextStack = FALSE;
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+	BOOLEAN anotherInstanceInitCalled = FALSE;
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 	Trc_RTV_verifyBytecodes_Entry(verifyData->vmStruct, 
 			(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_NAME(romMethod)),
@@ -1457,7 +1460,11 @@ _illegalPrimitiveReturn:
 				stackTop = pushFieldType(verifyData, utf8string, stackTop);
 			}
 
-			rc = isFieldAccessCompatible (verifyData, (J9ROMFieldRef *) info, bc, receiver, &reasonCode);
+			rc = isFieldAccessCompatible (verifyData, (J9ROMFieldRef *) info, bc, receiver, &reasonCode
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+					, isInitMethod, anotherInstanceInitCalled
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+				);
 			if (BCV_ERR_INSUFFICIENT_MEMORY == reasonCode) {
 				goto _outOfMemoryError;
 			}
@@ -1676,8 +1683,8 @@ _illegalPrimitiveReturn:
 								}
 							}
 
-							/* Ensure the <init> method is either for this class or its direct super class */
 							if (type & BCV_SPECIAL_INIT) {
+								/* Ensure the <init> method is either for this class or its direct super class. */
 								UDATA superClassIndex = 0;
 
 								utf8string = J9ROMSTRINGREF_UTF8DATA(classRef);
@@ -1695,6 +1702,23 @@ _illegalPrimitiveReturn:
 									errorStackIndex = stackTop - liveStack->stackElements;
 									goto _inconsistentStack2;
 								}
+
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+								if (J9_CLASSFILE_OR_ROMCLASS_SUPPORTS_STRICT_FIELDS(verifyData->romClass)) {
+									if (classIndex == superClassIndex) {
+										/* All strict instance fields must be assigned before
+										 * invoking the <init> method of a superclass.
+										 */
+										if (verifyData->strictFieldsUnsetCount > 0) {
+											errorType = J9NLS_BCV_ERR_BAD_INVOKESPECIAL__ID;
+											verboseErrorCode = BCV_ERR_STRICT_FIELDS_UNASSIGNED;
+											goto _miscError;
+										}
+									} else {
+										anotherInstanceInitCalled = TRUE;
+									}
+								}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 							}
 
 							/* This invoke special will make all copies of this "type" on the stack a real

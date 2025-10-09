@@ -414,10 +414,26 @@ isClassCompatibleByName(J9BytecodeVerificationData *verifyData, UDATA sourceClas
 * @param receiver
 * @param reasonCode
 * 	output parameter denoting error conditions
+* @param isInitMethod
+* 	true if the current method is <init>
+* @param anotherInstanceInitCalled
+* 	true if the current method is <init> and another
+* 	instance <init> has been called in this method
 * @return IDATA
 */
 IDATA
-isFieldAccessCompatible(J9BytecodeVerificationData * verifyData, J9ROMFieldRef * fieldRef, UDATA bytecode, UDATA receiver, IDATA *reasonCode);
+isFieldAccessCompatible(
+	J9BytecodeVerificationData *verifyData,
+	J9ROMFieldRef *fieldRef,
+	UDATA bytecode,
+	UDATA receiver,
+	IDATA *reasonCode
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+	,
+	BOOLEAN isInitMethod,
+	BOOLEAN anotherInstanceInitCalled
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+);
 
 /**
 * @brief
@@ -493,6 +509,20 @@ pushLdcType(J9BytecodeVerificationData *verifyData, J9ROMClass * romClass, UDATA
 */
 UDATA*
 pushReturnType(J9BytecodeVerificationData *verifyData, J9UTF8 * utf8string, UDATA * stackTop);
+
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+/**
+ * Create or reset the list of strict instance fields for the class being
+ * verified. This list is used to track which strict fields have been
+ * set during the early larval state.
+ *
+ * @param verifyData information about the class being verified.
+ * @param addToStrictFieldTable true if this is the first <init> found in the class, false otherwise.
+ * @return void
+ */
+void
+createOrResetStrictFieldsList(J9BytecodeVerificationData *verifyData, BOOLEAN *addToStrictFieldTable);
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 /**
  * Classification of Unicode characters for use in Java identifiers.
