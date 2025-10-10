@@ -940,7 +940,7 @@ VM_JFRChunkWriter::writeInitialEnvironmentVariableEvents()
 
 	if (result >= 0) {
 		int32_t bufferSize = result;
-		void *buffer = j9mem_allocate_memory(bufferSize, OMRMEM_CATEGORY_VM);
+		void *buffer = j9mem_allocate_memory(bufferSize, J9MEM_CATEGORY_JFR);
 
 		if (NULL != buffer) {
 			J9SysinfoEnvElement envElement = {NULL};
@@ -1350,7 +1350,7 @@ VM_JFRChunkWriter::writeThreadDumpEvent()
 	_bufferWriter->writeLEB128(j9time_nano_time());
 
 	const U_64 bufferSize = THREAD_DUMP_EVENT_SIZE_PER_THREAD * _vm->peakThreadCount;
-	U_8 *resultBuffer = (U_8 *)j9mem_allocate_memory(sizeof(U_8) * bufferSize, OMRMEM_CATEGORY_VM);
+	U_8 *resultBuffer = (U_8 *)j9mem_allocate_memory(sizeof(U_8) * bufferSize, J9MEM_CATEGORY_JFR);
 
 	if (NULL != resultBuffer) {
 		VM_BufferWriter resultWriter(privatePortLibrary, resultBuffer, bufferSize);

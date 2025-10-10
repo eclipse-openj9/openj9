@@ -639,7 +639,7 @@ skipFrame:
 	void mergeStringTables() {
 		_buildResult = OK;
 
-		_globalStringTable = (void **)j9mem_allocate_memory(sizeof(void *) * (_stringUTF8Count + _packageCount), J9MEM_CATEGORY_CLASSES);
+		_globalStringTable = (void **)j9mem_allocate_memory(sizeof(void *) * (_stringUTF8Count + _packageCount), J9MEM_CATEGORY_JFR);
 		if (NULL == _globalStringTable) {
 			_buildResult = OutOfMemory;
 			goto done;
@@ -1127,7 +1127,7 @@ done:
 
 		expandedStackTraceCount = iterateStackTraceImpl(_currentThread, (j9object_t *)walkStateCache, NULL, NULL, FALSE, FALSE, numberOfFrames, FALSE);
 
-		_currentStackFrameBuffer = (StackFrame *)j9mem_allocate_memory(sizeof(StackFrame) * expandedStackTraceCount, J9MEM_CATEGORY_CLASSES);
+		_currentStackFrameBuffer = (StackFrame *)j9mem_allocate_memory(sizeof(StackFrame) * expandedStackTraceCount, J9MEM_CATEGORY_JFR);
 		_currentFrameCount = 0;
 		if (NULL == _currentStackFrameBuffer) {
 			_buildResult = OutOfMemory;
@@ -1202,7 +1202,7 @@ done:
 			vmArgsLen += strlen(vmArgs->options[i].optionString);
 		}
 
-		jvmInformation->jvmArguments = (char *)j9mem_allocate_memory(vmArgsLen, OMRMEM_CATEGORY_VM);
+		jvmInformation->jvmArguments = (char *)j9mem_allocate_memory(vmArgsLen, J9MEM_CATEGORY_JFR);
 		char *cursor = jvmInformation->jvmArguments;
 
 		if (NULL != cursor) {
@@ -1263,7 +1263,7 @@ done:
 		char buffer[1024];
 		omrsysinfo_get_processor_feature_string(&desc, buffer, sizeof(buffer));
 		UDATA len = strlen(buffer) + 1;
-		cpuInformation->description = (char *)j9mem_allocate_memory(len, OMRMEM_CATEGORY_VM);
+		cpuInformation->description = (char *)j9mem_allocate_memory(len, J9MEM_CATEGORY_JFR);
 		if (NULL != cpuInformation->description) {
 			memcpy(cpuInformation->description, buffer, len);
 		} else {
@@ -1340,7 +1340,7 @@ done:
 
 		UDATA len = 3 + strlen(osName) + strlen(osVersion) + strlen(osArch);
 
-		getJFRConstantEvents(vm)->OSInfoEntry.osVersion = (char *)j9mem_allocate_memory(len, OMRMEM_CATEGORY_VM);
+		getJFRConstantEvents(vm)->OSInfoEntry.osVersion = (char *)j9mem_allocate_memory(len, J9MEM_CATEGORY_JFR);
 		char *buffer = getJFRConstantEvents(vm)->OSInfoEntry.osVersion;
 		if (NULL == buffer) {
 			*result = OutOfMemory;
@@ -1422,7 +1422,7 @@ done:
 		PORT_ACCESS_FROM_JAVAVM(constantPoolTypes->_vm);
 		J9Pool *systemProcessTable = constantPoolTypes->getSystemProcessTable();
 		UDATA cmdLength = strlen(commandLine);
-		char *commandLineCopy = reinterpret_cast<char *>(j9mem_allocate_memory(cmdLength + 1, OMRMEM_CATEGORY_VM));
+		char *commandLineCopy = reinterpret_cast<char *>(j9mem_allocate_memory(cmdLength + 1, J9MEM_CATEGORY_JFR));
 		if (NULL == commandLineCopy) {
 			constantPoolTypes->_buildResult = OutOfMemory;
 			return ~(uintptr_t)0;
@@ -1468,7 +1468,7 @@ done:
 			}
 		}
 		size_t libraryNameLength = strlen(libraryName);
-		char *libraryNameCopy = (char *)j9mem_allocate_memory(libraryNameLength + 1, OMRMEM_CATEGORY_VM);
+		char *libraryNameCopy = (char *)j9mem_allocate_memory(libraryNameLength + 1, J9MEM_CATEGORY_JFR);
 		if (NULL == libraryNameCopy) {
 			/* Allocation for library name failed. */
 			constantPoolTypes->_buildResult = OutOfMemory;
