@@ -4848,7 +4848,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    /********************************************* Register setup *********************************************/
    TR::Register *dimsPtrReg = cg->evaluate(node->getFirstChild());
    TR::Register *sizeReg = cg->allocateRegister();
-   TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions(0,7,cg);
+   TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions(0,8,cg);
    dependencies->addPostCondition(sizeReg, TR::RealRegister::AssignAny);
    dependencies->addPostCondition(dimsPtrReg, TR::RealRegister::AssignAny);
 
@@ -4858,10 +4858,8 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
       OMR::align(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), alignmentConstant), cursor);
    iComment("Load discontinuous array size.");
 
-   if (node->getSecondChild()->getReferenceCount() > 1)
-      {
-      TR::Register *dimReg = cg->evaluate(node->getSecondChild());
-      }
+   TR::Register *dimReg = cg->evaluate(node->getSecondChild());
+   dependencies->addPostCondition(dimReg, TR::RealRegister::AssignAny);
    TR::Register *classReg = cg->gprClobberEvaluate(node->getThirdChild());
    dependencies->addPostCondition(classReg, TR::RealRegister::AssignAny);
 
