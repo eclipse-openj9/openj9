@@ -1831,24 +1831,72 @@ ClientSessionData::writeReleaseClassUnloadRWMutex()
    }
 
 void
-ClientSessionData::addPermanentLoaders(const std::vector<J9ClassLoader*> &loaders)
+ClientSessionData::getPermanentLoaders(
+   TR::vector<J9ClassLoader*, TR::Region&> &dest,
+   size_t n,
+   JITServer::ServerStream *stream)
    {
-   if (loaders.empty())
+   dest.clear();
+   dest.reserve(n);
+
+   size_t serverCount = SIZE_MAX;
+
+   // critical section scope
       {
-      return;
+      OMR::CriticalSection lock(_permanentLoadersMonitor);
+
+      // Check if we already have enough permanent loaders from the client for
+      // this compilation. We almost always should.
+      serverCount = _permanentLoaders.size();
+      if (serverCount >= n)
+         {
+         auto it = _permanentLoaders.begin();
+         dest.insert(dest.end(), it, it + n);
+         return;
+         }
       }
 
-   OMR::CriticalSection lock(_permanentLoadersMonitor);
-   _permanentLoaders.insert(loaders.begin(), loaders.end());
-   }
+   // Request the missing loaders from the client.
+   stream->write(
+      JITServer::MessageType::ClientSessionData_getPermanentLoaders,
+      serverCount);
 
-void
-ClientSessionData::getPermanentLoaders(TR::vector<J9ClassLoader*, TR::Region&> &dest) const
-   {
+   auto recv = stream->read<std::vector<J9ClassLoader*>>();
+   auto &newPermanentLoaders = std::get<0>(recv);
+
    OMR::CriticalSection lock(_permanentLoadersMonitor);
-   dest.clear();
-   dest.reserve(_permanentLoaders.size());
-   dest.insert(dest.end(), _permanentLoaders.begin(), _permanentLoaders.end());
+
+   // Don't just append to _permanentLoaders. Another thread may have requested
+   // some of the same loaders.
+   for (size_t i = 0; i < newPermanentLoaders.size(); i++)
+      {
+      if (serverCount + i < _permanentLoaders.size())
+         {
+         TR_ASSERT_FATAL(
+            newPermanentLoaders[i] == _permanentLoaders[serverCount + i],
+            "client permanent loader mismatch at index %zu: %p vs. %p",
+            serverCount + i,
+            newPermanentLoaders[i],
+            _permanentLoaders[serverCount + i]);
+         }
+      else
+         {
+         TR_ASSERT_FATAL(
+            serverCount + i == _permanentLoaders.size(),
+            "skipped past the end of _permanentLoaders");
+
+         _permanentLoaders.push_back(newPermanentLoaders[i]);
+         }
+      }
+
+   TR_ASSERT_FATAL(
+      _permanentLoaders.size() >= n,
+      "too few permanent loaders: have %zu but need %zu",
+      _permanentLoaders.size(),
+      n);
+
+   auto it = _permanentLoaders.begin();
+   dest.insert(dest.end(), it, it + n);
    }
 
 const void *

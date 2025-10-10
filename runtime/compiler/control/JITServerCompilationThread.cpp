@@ -591,7 +591,7 @@ TR::CompilationInfoPerThreadRemote::processCompilationRequest(CompilationRequest
    auto &uncachedRAMClasses      = std::get<22>(req);
    auto &uncachedClassInfos      = std::get<23>(req);
    auto &newKnownIds             = std::get<24>(req);
-   auto &newPermanentLoaders     = std::get<25>(req);
+   size_t numPermanentLoaders    = std::get<25>(req);
 
    TR_ASSERT_FATAL(TR::Compiler->persistentMemory() == compInfo->persistentMemory(),
                      "per-client persistent memory must not be set at this point");
@@ -668,8 +668,6 @@ TR::CompilationInfoPerThreadRemote::processCompilationRequest(CompilationRequest
       OMR::CriticalSection cs(clientSession->getAOTCacheKnownIdsMonitor());
       clientSession->getAOTCacheKnownIds().insert(newKnownIds.begin(), newKnownIds.end());
       }
-
-   clientSession->addPermanentLoaders(newPermanentLoaders);
 
    // We must process unloaded classes lists in the same order they were generated at the client
    // Use a sequencing scheme to re-order compilation requests
@@ -909,6 +907,7 @@ TR::CompilationInfoPerThreadRemote::processCompilationRequest(CompilationRequest
    // If we want something then we need to increaseQueueWeightBy(weight) while holding compilation monitor
    entry._weight = 0;
    entry._jitStateWhenQueued = compInfo->getPersistentInfo()->getJitState();
+   entry._numPermanentLoaders = numPermanentLoaders;
    entry._stream = stream; // Add the stream to the entry
 
    auto aotCache = clientSession->getOrCreateAOTCache(stream);

@@ -64,8 +64,7 @@ class RetainedMethodSet : public OMR::RetainedMethodSet
    static J9::RetainedMethodSet *create(
       TR::Compilation *comp,
       TR_ResolvedMethod *method,
-      const TR::vector<J9::ResolvedInlinedCallSite, TR::Region&> &inliningTable,
-      const TR::vector<J9ClassLoader*, TR::Region&> *permanentLoaders = NULL);
+      const TR::vector<J9::ResolvedInlinedCallSite, TR::Region&> &inliningTable);
 
    static const TR::vector<J9::ResolvedInlinedCallSite, TR::Region&> &
       copyInliningTable(TR::Compilation *comp, J9JITExceptionTable *metadata);
@@ -116,7 +115,7 @@ class RetainedMethodSet : public OMR::RetainedMethodSet
 
    private:
 
-   void init(const TR::vector<J9ClassLoader*, TR::Region&> *permanentLoaders = NULL);
+   void init();
    void attestWillRemainLoaded(TR_ResolvedMethod *method);
    void scan(J9Class *clazz);
    void scan(J9ClassLoader *loader);

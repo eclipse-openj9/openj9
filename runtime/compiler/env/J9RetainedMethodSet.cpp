@@ -152,13 +152,12 @@ J9::RetainedMethodSet *
 J9::RetainedMethodSet::create(
    TR::Compilation *comp,
    TR_ResolvedMethod *method,
-   const TR::vector<J9::ResolvedInlinedCallSite, TR::Region&> &inliningTable,
-   const TR::vector<J9ClassLoader*, TR::Region&> *permanentLoaders)
+   const TR::vector<J9::ResolvedInlinedCallSite, TR::Region&> &inliningTable)
    {
    TR::Region &region = comp->trMemory()->heapMemoryRegion();
    auto *inlTab = new (region) VectorInliningTable(comp, inliningTable);
    auto *result = new (region) J9::RetainedMethodSet(comp, method, NULL, inlTab);
-   result->init(permanentLoaders);
+   result->init();
    return result;
    }
 
@@ -205,20 +204,15 @@ traceNamedLoader(
    }
 
 void
-J9::RetainedMethodSet::init(
-   const TR::vector<J9ClassLoader*, TR::Region&> *permanentLoaders)
+J9::RetainedMethodSet::init()
    {
    if (parent() == NULL)
       {
       bool trace = comp()->getOption(TR_TraceRetainedMethods);
 
-      if (permanentLoaders == NULL)
-         {
-         permanentLoaders = &comp()->permanentLoaders();
-         }
-
-      auto end = permanentLoaders->end();
-      for (auto it = permanentLoaders->begin(); it != end; it++)
+      auto permanentLoaders = comp()->permanentLoaders();
+      auto end = permanentLoaders.end();
+      for (auto it = permanentLoaders.begin(); it != end; it++)
          {
          J9ClassLoader *loader = *it;
          _loaders.insert(loader);
@@ -792,47 +786,8 @@ J9::RepeatRetainedMethodsAnalysis::analyzeOnClient(
       return result;
       }
 
-   // Ensure that the set of permanent loaders used for analysis is up to date.
-   // Otherwise, we'd use the set belonging to the compilation object, and the
-   // following sequence of events would be possible:
-   //
-   // 1. Permanent loaders are determined for this compilation on the client
-   //    before sending the compilation request.
-   // 2. The client JIT is informed of a newly discovered permanent loader.
-   // 3. A different compilation thread sends another compilation request that
-   //    informs the server of the new permanent loader.
-   // 4. The server takes note of the new permanent loader.
-   // 5. Permanent loaders are determined for this compilation on the server.
-   //
-   // In this case, this compilation's permanent loaders on the client would be
-   // a strict subset of those on the server, but (if the sets aren't identical)
-   // the opposite containment relationship is required.
-   //
-   // By freshly collecting the permanent loaders here, we guarantee that the
-   // server's set will be a (possibly non-strict) subset of the client's. To
-   // see why, consider any permanent loader L known to the server in the
-   // current compilation. We know that the following events must happen in the
-   // order in which they are listed, since each causally precedes the next:
-   //
-   // - L is found to be permanent on the client and reported to the JIT.
-   // - L is sent to the server.
-   // - L is considered permanent for the current compilation on the server.
-   // - The current compilation does getDataForClient() on the server.
-   // - The current compilation starts analyzeOnClient() on the client (in progress).
-   // - The client freshly determines the permanent loaders (just below).
-   //
-   // Therefore, L is included in the freshly determined permanent loaders.
-   //
-   TR::PersistentInfo *persistentInfo = comp->getPersistentInfo();
-   TR_PersistentClassLoaderTable *loaderTable =
-      persistentInfo->getPersistentClassLoaderTable();
-
-   TR::Region &stackRegion = comp->trMemory()->currentStackRegion();
-   TR::vector<J9ClassLoader*, TR::Region&> permanentLoaders(stackRegion);
-   loaderTable->getPermanentLoaders(comp->fej9()->vmThread(), permanentLoaders);
-
    J9::RetainedMethodSet *root = J9::RetainedMethodSet::create(
-      comp, comp->getMethodBeingCompiled(), inliningTable, &permanentLoaders);
+      comp, comp->getMethodBeingCompiled(), inliningTable);
 
    uint32_t n = (uint32_t)inliningTable.size();
    TR::vector<J9::RetainedMethodSet*, TR::Region&> retainedMethods(comp->region());

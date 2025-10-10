@@ -282,10 +282,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             // Do not forbid AOT cache stores or loads (this server might be able to fulfill them)
             compInfo->getPersistentInfo()->setDoNotRequestJITServerAOTCacheLoad(false);
             compInfo->getPersistentInfo()->setDoNotRequestJITServerAOTCacheStore(false);
-
-            auto loaderTable = compInfo->getPersistentInfo()->getPersistentClassLoaderTable();
-            OMR::CriticalSection lock(compInfo->getSequencingMonitor());
-            loaderTable->resetPermanentLoadersSentToServer(compInfo);
             }
 
          client->write(response, ranges, unloadedClasses->getMaxRanges(), serializedCHTable, dltedMethods);
@@ -296,6 +292,21 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                                            (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(),
                                            (unsigned long long)serverUID);
             }
+         }
+         break;
+      case MessageType::ClientSessionData_getPermanentLoaders:
+         {
+         auto recv = client->getRecvData<size_t>();
+         size_t serverCount = std::get<0>(recv);
+         auto permanentLoaders = comp->permanentLoaders();
+         std::vector<J9ClassLoader*> newPermanentLoaders;
+         newPermanentLoaders.reserve(permanentLoaders.size() - serverCount);
+         newPermanentLoaders.insert(
+            newPermanentLoaders.end(),
+            permanentLoaders.begin() + serverCount,
+            permanentLoaders.end());
+
+         client->write(response, newPermanentLoaders);
          }
          break;
       case MessageType::VM_isClassLibraryMethod:
@@ -3454,11 +3465,9 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
    std::vector<uintptr_t> newKnownIds = deserializer ? deserializer->getNewKnownIds(context) : std::vector<uintptr_t>();
 
    auto chTable = (JITClientPersistentCHTable *)persistentInfo->getPersistentCHTable();
-   auto permanentLoaders = compiler->permanentLoaders();
    std::vector<TR_OpaqueClassBlock *> unloadedClasses;
    std::vector<TR_OpaqueClassBlock *> illegalModificationList;
    std::pair<std::string, std::string> chtableUpdates("", "");
-   std::vector<J9ClassLoader *> newPermanentLoaders; // doesn't affect critical seq. no.
    uint32_t seqNo = 0;
    uint32_t lastCriticalSeqNo = 0;
 
@@ -3495,28 +3504,29 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          {
          compInfo->setLastCriticalSeqNo(seqNo);
          }
-
-      // Determine which permanent loaders (if any) to send to the server.
-      auto loaderTable = persistentInfo->getPersistentClassLoaderTable();
-      size_t numPermanentLoadersSent =
-         loaderTable->numPermanentLoadersSentToServer(compInfo);
-
-      // It's possible to have numPermanentLoadersSent > permanentLoaders.size()
-      // in some interleavings. Only send loaders if our permanentLoaders contains
-      // entries that haven't been sent yet. This also prevents the subtraction
-      // from overflowing.
-      if (numPermanentLoadersSent < permanentLoaders.size())
-         {
-         size_t n = permanentLoaders.size() - numPermanentLoadersSent;
-         newPermanentLoaders.reserve(n);
-         newPermanentLoaders.insert(
-            newPermanentLoaders.end(),
-            permanentLoaders.begin() + numPermanentLoadersSent,
-            permanentLoaders.end());
-
-         loaderTable->addPermanentLoadersSentToServer(n, compInfo);
-         }
       }
+
+   // Determine the loaders to consider permanent for this compilation. From
+   // this point on, they are fixed.
+   //
+   // There will be at least two data structures that are sensitive to the
+   // set of permanent loaders. These could potentially allow the precise set
+   // of permanent loaders to vary between the client and server, but the
+   // reasoning needed to determine whether certain kinds of variation are
+   // allowed gets hairy very quickly. It's much simpler if there is only one
+   // set of permanent loaders that will be used for all purposes on both the
+   // client and the server.
+   //
+   // To ensure that for this compilation the server will use exactly the
+   // permanent loaders determined here, it suffices to tell the server how
+   // many there are, let's call it n. The server will know that this
+   // compilation is using the first n permanent loaders for this client. If it
+   // doesn't yet have all of the first n, then it will send a message to
+   // request the ones it's missing, and the response will preserve the
+   // ordering so that the first n on the server are the same as the first n on
+   // the client.
+   //
+   size_t numPermanentLoaders = compiler->permanentLoaders().size();
 
    uint32_t statusCode = compilationFailure;
    std::string codeCacheStr;
@@ -3549,7 +3559,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          detailsStr, details.getType(), unloadedClasses, illegalModificationList, classInfoTuple, optionsStr,
          recompMethodInfoStr, chtableUpdates.first, chtableUpdates.second, useAotCompilation,
          TR::Compiler->vm.isVMInStartupPhase(compInfoPT->getJitConfig()), aotCacheStore, aotCacheLoad, methodIndex,
-         classChainOffset, ramClassChain, uncachedRAMClasses, uncachedClassInfos, newKnownIds, newPermanentLoaders
+         classChainOffset, ramClassChain, uncachedRAMClasses, uncachedClassInfos, newKnownIds, numPermanentLoaders
       );
 
       JITServer::MessageType response;

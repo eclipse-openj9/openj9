@@ -101,7 +101,11 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
          TR_Memory *,
          TR_OptimizationPlan *optimizationPlan,
          TR_RelocationRuntime *reloRuntime,
-         TR::Environment *target = NULL);
+         TR::Environment *target
+#if defined(J9VM_OPT_JITSERVER)
+         , size_t numPermanentLoaders
+#endif
+         );
 
    ~Compilation();
 
@@ -629,6 +633,9 @@ private:
    Vector<std::pair<const AOTCacheRecord *, uintptr_t>> _serializationRecords;
    // Set of AOT cache thunk records that this compilation depends on; always empty at the client
    UnorderedSet<const AOTCacheThunkRecord *> _thunkRecords;
+   // For the server, the number of permanent loaders the client has specified
+   // we must use for this compilation.
+   size_t _numPermanentLoaders;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 #if !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED)

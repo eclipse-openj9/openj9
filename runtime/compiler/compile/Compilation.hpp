@@ -50,7 +50,11 @@ class OMR_EXTENSIBLE Compilation : public J9::CompilationConnector
          TR_Memory *memory,
          TR_OptimizationPlan *optimizationPlan,
          TR_RelocationRuntime *reloRuntime,
-         TR::Environment *target = NULL) :
+         TR::Environment *target
+#if defined(J9VM_OPT_JITSERVER)
+         , size_t numPermanentLoaders
+#endif
+         ) :
       J9::CompilationConnector(
          compThreadId,
          j9vmThread,
@@ -62,7 +66,11 @@ class OMR_EXTENSIBLE Compilation : public J9::CompilationConnector
          memory,
          optimizationPlan,
          reloRuntime,
-         target)
+         target
+#if defined(J9VM_OPT_JITSERVER)
+         , numPermanentLoaders
+#endif
+         )
       {}
 
    ~Compilation() {}

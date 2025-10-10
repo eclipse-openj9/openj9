@@ -171,6 +171,8 @@ struct TR_MethodToBeCompiled
    bool _useAOTCacheCompilation;
    // Cache original optLevel when transforming a remote sync compilation to a local cheap one
    TR_Hotness _origOptLevel;
+   // On the server, the number of permanent loaders specified by the client for this compilation.
+   size_t _numPermanentLoaders;
    // A non-NULL field denotes an out-of-process compilation request
    JITServer::ServerStream *_stream;
 #endif /* defined(J9VM_OPT_JITSERVER) */

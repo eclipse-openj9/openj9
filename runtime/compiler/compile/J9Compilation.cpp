@@ -150,7 +150,11 @@ J9::Compilation::Compilation(int32_t id,
       TR_Memory *m,
       TR_OptimizationPlan *optimizationPlan,
       TR_RelocationRuntime *reloRuntime,
-      TR::Environment *target)
+      TR::Environment *target
+#if defined(J9VM_OPT_JITSERVER)
+      , size_t numPermanentLoaders
+#endif
+      )
    : OMR::CompilationConnector(
       id,
       j9vmThread->omrVMThread,
@@ -208,6 +212,7 @@ J9::Compilation::Compilation(int32_t id,
    _ignoringLocalSCC(false),
    _serializationRecords(decltype(_serializationRecords)::allocator_type(heapMemoryRegion)),
    _thunkRecords(decltype(_thunkRecords)::allocator_type(heapMemoryRegion)),
+   _numPermanentLoaders(numPermanentLoaders),
 #endif /* defined(J9VM_OPT_JITSERVER) */
 #if !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED)
    _aotMethodDependencies(decltype(_aotMethodDependencies)::allocator_type(heapMemoryRegion)),
@@ -1612,8 +1617,12 @@ J9::Compilation::permanentLoaders()
 #if defined(J9VM_OPT_JITSERVER)
       if (self()->isOutOfProcessCompilation())
          {
+         TR_ASSERT_FATAL(
+            _numPermanentLoaders != SIZE_MAX, "missing _numPermanentLoaders");
+
          ClientSessionData *clientData = self()->getClientData();
-         clientData->getPermanentLoaders(_permanentLoaders);
+         clientData->getPermanentLoaders(
+            _permanentLoaders, _numPermanentLoaders, getStream());
          }
       else
 #endif
