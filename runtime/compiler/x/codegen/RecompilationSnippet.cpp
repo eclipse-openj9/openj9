@@ -39,11 +39,13 @@
 #include "il/ResolvedMethodSymbol.hpp"
 #include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
-TR::X86RecompilationSnippet::X86RecompilationSnippet(TR::LabelSymbol    *lab,
-                                                         TR::Node          *node,
-                                                         TR::CodeGenerator *cg)
+TR::X86RecompilationSnippet::X86RecompilationSnippet(
+      TR::LabelSymbol *lab,
+      TR::Node *node,
+      TR::CodeGenerator *cg)
    : TR::Snippet(cg, node, lab, true)
    {
    setDestination(cg->symRefTab()->findOrCreateRuntimeHelper(cg->comp()->target().is64Bit()? TR_AMD64countingRecompileMethod : TR_IA32countingRecompileMethod));
@@ -51,30 +53,27 @@ TR::X86RecompilationSnippet::X86RecompilationSnippet(TR::LabelSymbol    *lab,
 
 uint32_t TR::X86RecompilationSnippet::getLength(int32_t estimatedSnippetStart)
    {
-
    return 9;
    }
+
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::X86RecompilationSnippet * snippet)
+TR_Debug::print(TR::Logger *log, TR::X86RecompilationSnippet *snippet)
    {
-   if (pOutFile == NULL)
-      return;
+   TR::MethodSymbol *recompileSym = snippet->getDestination()->getSymbol()->castToMethodSymbol();
 
-   TR::MethodSymbol *recompileSym  = snippet->getDestination()->getSymbol()->castToMethodSymbol();
+   uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
 
-   uint8_t         *bufferPos        = snippet->getSnippetLabel()->getCodeLocation();
+   printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(snippet->getDestination()));
 
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(snippet->getDestination()));
-
-   printPrefix(pOutFile, NULL, bufferPos, 5);
-   trfprintf(pOutFile, "call\t%s \t\t%s Helper Address = " POINTER_PRINTF_FORMAT,
+   printPrefix(log, NULL, bufferPos, 5);
+   log->printf("call\t%s \t\t%s Helper Address = " POINTER_PRINTF_FORMAT,
                  getName(snippet->getDestination()),
                  commentString(),
                  recompileSym->getMethodAddress());
    bufferPos += 5;
 
-   printPrefix(pOutFile, NULL, bufferPos, 4);
-   trfprintf(pOutFile, "%s  \t%s%08x%s\t\t%s Offset to startPC",
+   printPrefix(log, NULL, bufferPos, 4);
+   log->printf("%s  \t%s%08x%s\t\t%s Offset to startPC",
                  ddString(),
                  hexPrefixString(),
                  _cg->getCodeStart() - bufferPos,
@@ -120,4 +119,3 @@ uint8_t *TR::X86RecompilationSnippet::emitSnippetBody()
 
    return buffer;
    }
-

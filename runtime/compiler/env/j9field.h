@@ -30,13 +30,15 @@
 #include "env/FrontEnd.hpp"
 #include "env/IO.hpp"
 
+namespace TR { class Logger; }
+
 class TR_VMField
    {
 public:
    TR_ALLOC(TR_Memory::VMField)
    TR_VMField( TR::Compilation * comp, J9Class *aClazz, J9ROMFieldShape *fieldShape, TR_AllocationKind allocKind);
    int isReference();
-   void              print(TR_FrontEnd *fe, TR::FILE *outFile);
+   void              print(TR::Logger *log, TR_FrontEnd *fe);
 
    char *            name;
    char *            signature;

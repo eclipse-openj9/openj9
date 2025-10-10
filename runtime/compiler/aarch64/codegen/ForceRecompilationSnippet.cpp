@@ -24,6 +24,7 @@
 #include "codegen/ARM64Instruction.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/ForceRecompilationSnippet.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
 uint8_t *
@@ -99,7 +100,7 @@ TR::ARM64ForceRecompilationSnippet::emitSnippetBody()
    }
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::ARM64ForceRecompilationSnippet *snippet)
+TR_Debug::print(TR::Logger *log, TR::ARM64ForceRecompilationSnippet *snippet)
    {
    uint8_t *cursor = snippet->getSnippetLabel()->getCodeLocation();
 
@@ -107,45 +108,45 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARM64ForceRecompilationSnippet *snippet)
    TR::RegisterDependencyConditions *deps = restartLabel->getInstruction()->getDependencyConditions();
    TR::RealRegister *startPCReg = _cg->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(0)->getRealRegister());
 
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "Force Recompilation Snippet");
+   printSnippetLabel(log, snippet->getSnippetLabel(), cursor, "Force Recompilation Snippet");
 
    int32_t value;
 
-   printPrefix(pOutFile, NULL, cursor, 4);
+   printPrefix(log, NULL, cursor, 4);
    value = (*((int32_t *)cursor) >> 5) & 0xffff;
-   trfprintf(pOutFile, "movzx \t%s, 0x%04x\t; Load jit entry point address", getName(startPCReg), value);
+   log->printf("movzx \t%s, 0x%04x\t; Load jit entry point address", getName(startPCReg), value);
    cursor += ARM64_INSTRUCTION_LENGTH;
 
-   printPrefix(pOutFile, NULL, cursor, 4);
+   printPrefix(log, NULL, cursor, 4);
    value = (*((int32_t *)cursor) >> 5) & 0xffff;
-   trfprintf(pOutFile, "movkx \t%s, 0x%04x, LSL #16", getName(startPCReg), value);
+   log->printf("movkx \t%s, 0x%04x, LSL #16", getName(startPCReg), value);
    cursor += ARM64_INSTRUCTION_LENGTH;
 
-   printPrefix(pOutFile, NULL, cursor, 4);
+   printPrefix(log, NULL, cursor, 4);
    value = (*((int32_t *)cursor) >> 5) & 0xffff;
-   trfprintf(pOutFile, "movkx \t%s, 0x%04x, LSL #32", getName(startPCReg), value);
+   log->printf("movkx \t%s, 0x%04x, LSL #32", getName(startPCReg), value);
    cursor += ARM64_INSTRUCTION_LENGTH;
 
-   printPrefix(pOutFile, NULL, cursor, 4);
+   printPrefix(log, NULL, cursor, 4);
    value = (*((int32_t *)cursor) >> 5) & 0xffff;
-   trfprintf(pOutFile, "movkx \t%s, 0x%04x, LSL #48", getName(startPCReg), value);
+   log->printf("movkx \t%s, 0x%04x, LSL #48", getName(startPCReg), value);
    cursor += ARM64_INSTRUCTION_LENGTH;
 
    char *info = "";
    if (isBranchToTrampoline(_cg->getSymRef(TR_ARM64induceRecompilation), cursor, value))
       info = " Through trampoline";
 
-   printPrefix(pOutFile, NULL, cursor, 4);
+   printPrefix(log, NULL, cursor, 4);
    value = (*((int32_t *)cursor) & 0x3ffffff) << 2;
    value = (value << 4) >> 4; // sign extend
-   trfprintf(pOutFile, "bl \t0x%p\t; %s%s", (intptr_t)cursor + value, getName(_cg->getSymRef(TR_ARM64induceRecompilation)), info);
+   log->printf("bl \t0x%p\t; %s%s", (intptr_t)cursor + value, getName(_cg->getSymRef(TR_ARM64induceRecompilation)), info);
    cursor += ARM64_INSTRUCTION_LENGTH;
 
-   printPrefix(pOutFile, NULL, cursor, 4);
+   printPrefix(log, NULL, cursor, 4);
    value = (*((int32_t *)cursor) & 0x3ffffff) << 2;
    value = (value << 4) >> 4; // sign extend
-   trfprintf(pOutFile, "b \t0x%p\t; Back to ", (intptr_t)cursor + value);
-   print(pOutFile, restartLabel);
+   log->printf("b \t0x%p\t; Back to ", (intptr_t)cursor + value);
+   print(log, restartLabel);
    }
 
 uint32_t

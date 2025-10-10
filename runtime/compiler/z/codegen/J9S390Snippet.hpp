@@ -45,6 +45,8 @@
 
 namespace TR {
 
+class Logger;
+
 class S390HeapAllocSnippet : public TR::Snippet
    {
    TR::LabelSymbol      *_restartLabel;
@@ -68,7 +70,7 @@ class S390HeapAllocSnippet : public TR::Snippet
 
    virtual uint32_t getLength(int32_t estimatedSnippetStart);
 
-   virtual void print(TR::FILE *, TR_Debug *debug);
+   virtual void print(TR::Logger *log, TR_Debug *debug);
 
    TR::LabelSymbol      *getRestartLabel() { return _restartLabel; }
    TR::SymbolReference *getDestination() {return _destination;}

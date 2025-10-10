@@ -34,6 +34,7 @@
 
 namespace TR { class Block; }
 namespace TR { class BlockChecklist; }
+namespace TR { class Logger; }
 class TR_BlockFrequencyInfo;
 
 class BlockParents;
@@ -65,7 +66,7 @@ class TR_JProfilingBlock : public TR::Optimization
    void computeMinimumSpanningTree(BlockParents &parents, BlockPriorityQueue &Q, TR::StackMemoryRegion &stackMemoryRegion);
    int32_t processCFGForCounting(BlockParents &parent, TR::BlockChecklist &countedBlocks, TR::CFGEdge &loopBack);
    TR_BlockFrequencyInfo *initRecompDataStructures();
-   void dumpCounterDependencies(TR_BitVector **componentCounters);
+   void dumpCounterDependencies(TR::Logger *log, TR_BitVector **componentCounters);
    void addRecompilationTests(TR_BlockFrequencyInfo *blockFrequencyInfo);
    };
 

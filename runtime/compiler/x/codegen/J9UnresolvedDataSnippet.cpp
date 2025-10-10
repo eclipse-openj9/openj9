@@ -37,6 +37,7 @@
 #include "il/StaticSymbol.hpp"
 #include "il/StaticSymbol_inlines.hpp"
 #include "il/Symbol.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/J9Runtime.hpp"
 #include "x/codegen/X86Instruction.hpp"
@@ -616,50 +617,46 @@ J9::X86::UnresolvedDataSnippet::getLength(int32_t estimatedSnippetStart)
 
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
+TR_Debug::print(TR::Logger *log, TR::UnresolvedDataSnippet *snippet)
    {
-   if (pOutFile == NULL)
-      return;
-
    uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet));
-   trfprintf(pOutFile, " for instr [%s]", getName(snippet->getDataReferenceInstruction()));
+   printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet));
+   log->printf(" for instr [%s]", getName(snippet->getDataReferenceInstruction()));
 
    if (_comp->target().is64Bit())
       {
-      printPrefix(pOutFile, NULL, bufferPos, 5);
+      printPrefix(log, NULL, bufferPos, 5);
 
       TR_RuntimeHelper helperIndex = snippet->getHelper();
       TR::SymbolReference *glueSymRef = _cg->getSymRef(helperIndex);
-      trfprintf(pOutFile, "call\t%s", getName(glueSymRef));
+      log->printf("call\t%s", getName(glueSymRef));
       bufferPos += 5;
 
-      printPrefix(pOutFile, NULL, bufferPos, 8);
-      trfprintf(pOutFile,
-                    "%s\t" POINTER_PRINTF_FORMAT "\t%s address of constant pool for this method",
-                    dqString(),
-                    getOwningMethod(snippet->getDataSymbolReference())->constantPool(),
-                    commentString());
+      printPrefix(log, NULL, bufferPos, 8);
+      log->printf(
+         "%s\t" POINTER_PRINTF_FORMAT "\t%s address of constant pool for this method",
+         dqString(),
+         getOwningMethod(snippet->getDataSymbolReference())->constantPool(),
+         commentString());
       bufferPos += 8;
 
-      printPrefix(pOutFile, NULL, bufferPos, 4);
-      trfprintf(pOutFile,
-                   "%s\t0x%08x\t\t\t\t%s constant pool index",
-                    ddString(),
-                    snippet->getDataSymbolReference()->getCPIndex(),
-                    commentString());
+      printPrefix(log, NULL, bufferPos, 4);
+      log->printf(
+         "%s\t0x%08x\t\t\t\t%s constant pool index",
+         ddString(),
+         snippet->getDataSymbolReference()->getCPIndex(),
+         commentString());
       bufferPos += 4;
 
       if (snippet->getDataSymbol()->isShadow())
          {
-         printPrefix(pOutFile, NULL, bufferPos, 1);
+         printPrefix(log, NULL, bufferPos, 1);
 
          uint8_t descriptor = *bufferPos;
          uint8_t length = (descriptor >> 4) & 0xf;
          uint8_t offset = (descriptor & 0xf);
 
-         trfprintf(
-            pOutFile,
+         log->printf(
             "%s\t%02x\t\t\t\t\t\t\t%s instruction descriptor: length=%d, disp32 offset=%d",
             dbString(),
             descriptor,
@@ -670,15 +667,14 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
 
          bufferPos++;
          }
-
       }
    else
       {
       if (!snippet->getDataReferenceInstruction())
          {
          // when do not patch mainline flag on, there is no data reference instruction copy in snippet
-         printPrefix(pOutFile, NULL, bufferPos, 1);
-         trfprintf(pOutFile, "int \t3\t\t\t%s (No data reference instruction; NEVER CALLED)",
+         printPrefix(log, NULL, bufferPos, 1);
+         log->printf("int \t3\t\t\t%s (No data reference instruction; NEVER CALLED)",
                        commentString());
          return;
          }
@@ -686,25 +682,23 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
       // 0x68 == PUSHImm32
       //
       int32_t size = (*bufferPos == 0x68) ? 5 : 2;
-      printPrefix(pOutFile, NULL, bufferPos, size);
-      trfprintf(
-         pOutFile,
+      printPrefix(log, NULL, bufferPos, size);
+      log->printf(
          "push\t" POINTER_PRINTF_FORMAT "\t\t%s constant pool index",
          snippet->getDataSymbolReference()->getCPIndex(),
          commentString());
       bufferPos += size;
 
-      printPrefix(pOutFile, NULL, bufferPos, 5);
-      trfprintf(
-         pOutFile,
+      printPrefix(log, NULL, bufferPos, 5);
+      log->printf(
          "push\t" POINTER_PRINTF_FORMAT "\t\t%s address of constant pool for this method",
          getOwningMethod(snippet->getDataSymbolReference())->constantPool(),
          commentString());
       bufferPos += 5;
 
-      printPrefix(pOutFile, NULL, bufferPos, 5);
+      printPrefix(log, NULL, bufferPos, 5);
       TR::SymbolReference *glueSymRef = _cg->getSymRef(snippet->getHelper());
-      trfprintf(pOutFile, "call\t%s", getName(glueSymRef));
+      log->printf("call\t%s", getName(glueSymRef));
       bufferPos += 5;
       }
 
@@ -718,23 +712,23 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
 
       if (length < 8)
          {
-         printPrefix(pOutFile, NULL, bufferPos, bytesToCopy);
+         printPrefix(log, NULL, bufferPos, bytesToCopy);
          bufferPos += bytesToCopy;
-         trfprintf(pOutFile, "%s\t(%d)\t\t\t%s patch instruction bytes + TR::InstOpCode::RET + residue",
+         log->printf("%s\t(%d)\t\t\t%s patch instruction bytes + TR::InstOpCode::RET + residue",
                        dbString(),
                        bytesToCopy,
                        commentString());
-         printPrefix(pOutFile, NULL, bufferPos, 1);
-         trfprintf(pOutFile, "%s\t\t\t\t\t\t%s byte that TR::InstOpCode::RET overwrote",
+         printPrefix(log, NULL, bufferPos, 1);
+         log->printf("%s\t\t\t\t\t\t%s byte that TR::InstOpCode::RET overwrote",
                        dbString(),
                        commentString());
          bufferPos ++;
          }
       else
          {
-         printPrefix(pOutFile, NULL, bufferPos, bytesToCopy+1);
+         printPrefix(log, NULL, bufferPos, bytesToCopy+1);
          bufferPos += (bytesToCopy + 1);
-         trfprintf(pOutFile, "%s\t(%d)\t\t\t\t%s patch instruction bytes + TR::InstOpCode::RET",
+         log->printf("%s\t(%d)\t\t\t\t%s patch instruction bytes + TR::InstOpCode::RET",
                        dbString(),
                        (bytesToCopy+1),
                        commentString());
@@ -749,9 +743,9 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
          if (snippet->getDataSymbol()->isShadow())
             {
             bytesToCopy = 8;
-            printPrefix(pOutFile, NULL, bufferPos, bytesToCopy);
+            printPrefix(log, NULL, bufferPos, bytesToCopy);
             bufferPos += bytesToCopy;
-            trfprintf(pOutFile, "%s\t(%d)\t\t\t\t\t\t%s patch instruction bytes",
+            log->printf("%s\t(%d)\t\t\t\t\t\t%s patch instruction bytes",
                           dbString(),
                           bytesToCopy,
                           commentString());
@@ -759,9 +753,9 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
          else
             {
             bytesToCopy = 2;
-            printPrefix(pOutFile, NULL, bufferPos, bytesToCopy);
+            printPrefix(log, NULL, bufferPos, bytesToCopy);
             bufferPos += bytesToCopy;
-            trfprintf(pOutFile, "%s\t\t\t\t\t\t\t\t%s REX + op of TR::InstOpCode::MOV8RegImm64",
+            log->printf("%s\t\t\t\t\t\t\t\t%s REX + op of TR::InstOpCode::MOV8RegImm64",
                           dwString(),
                           commentString());
             }
@@ -773,9 +767,9 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
             // TODO:JSR292: isConstMethodType
             // TODO:JSR292: isConstMethodHandle
             bytesToCopy = std::max<int32_t>(8, snippet->getDataReferenceInstruction()->getBinaryLength());
-            printPrefix(pOutFile, NULL, bufferPos, bytesToCopy);
+            printPrefix(log, NULL, bufferPos, bytesToCopy);
             bufferPos += bytesToCopy;
-            trfprintf(pOutFile, "%s\t(%d)\t\t\t\t\t\t%s patched string instruction bytes",
+            log->printf("%s\t(%d)\t\t\t\t\t\t%s patched string instruction bytes",
                           dbString(),
                           bytesToCopy,
                           commentString());
@@ -783,9 +777,9 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
          else
             {
             bytesToCopy = 8;
-            printPrefix(pOutFile, NULL, bufferPos, bytesToCopy);
+            printPrefix(log, NULL, bufferPos, bytesToCopy);
             bufferPos += bytesToCopy;
-            trfprintf(pOutFile, "%s\t(%d)\t\t\t\t\t\t%s patch instruction bytes",
+            log->printf("%s\t(%d)\t\t\t\t\t\t%s patch instruction bytes",
                           dbString(),
                           bytesToCopy,
                           commentString());

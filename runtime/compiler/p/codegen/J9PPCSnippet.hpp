@@ -34,6 +34,8 @@
 
 namespace TR {
 
+class Logger;
+
 class PPCReadMonitorSnippet : public TR::PPCHelperCallSnippet
    {
    TR::SymbolReference *_monitorEnterHelper;
@@ -59,7 +61,7 @@ class PPCReadMonitorSnippet : public TR::PPCHelperCallSnippet
    virtual uint8_t *emitSnippetBody();
 
    virtual uint32_t getLength(int32_t estimatedSnippetStart);
-   virtual void print(TR::FILE *, TR_Debug*);
+   virtual void print(TR::Logger *log, TR_Debug*);
 
    virtual int32_t setEstimatedCodeLocation(int32_t p);
 
@@ -84,7 +86,7 @@ class PPCAllocPrefetchSnippet : public TR::Snippet
    virtual Kind getKind() { return IsAllocPrefetch; }
 
    virtual uint8_t *emitSnippetBody();
-   virtual void print(TR::FILE *, TR_Debug*);
+   virtual void print(TR::Logger *log, TR_Debug*);
 
    virtual uint32_t getLength(int32_t estimatedSnippetStart);
    };
@@ -101,7 +103,7 @@ class PPCNonZeroAllocPrefetchSnippet : public TR::Snippet
    virtual Kind getKind() { return IsNonZeroAllocPrefetch; }
 
    virtual uint8_t *emitSnippetBody();
-   virtual void print(TR::FILE *, TR_Debug*);
+   virtual void print(TR::Logger *log, TR_Debug*);
 
    virtual uint32_t getLength(int32_t estimatedSnippetStart);
    };
