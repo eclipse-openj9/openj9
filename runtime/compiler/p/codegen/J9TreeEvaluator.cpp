@@ -12918,6 +12918,25 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    /* targetVectorNotReg is set to the bitwise complement of targetVectorReg. These are values that will never match the first character of the substring. */
    generateTrg1Src2Instruction(cg, TR::InstOpCode::vnor, node, targetVectorNotReg, targetVectorReg, targetVectorReg);
 
+   /* Set permuteVector = 0x000102030405060708090a0b0c0d0e0f */
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 0);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::lvsl, node, permuteVectorReg, tempReg, tempReg);
+
+   /*
+    * For little-endian, reverse permuteVector so that we can find the first set bit using a count
+    * leading zeroes test instead of a count trailing zeroes test. This is necessary since cnttzw
+    * wasn't introduced until Power 9.
+    */
+   if (comp->target().cpu.isLittleEndian())
+      {
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisb, node, vec1Reg, 15);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::vsububm, node, permuteVectorReg, vec1Reg, permuteVectorReg);
+      }
+
+   /* Set permuteVector = 0x00081018202830384048505860687078 (reversed for LE) */
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisb, node, vec1Reg, 3);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vslb, node, permuteVectorReg, permuteVectorReg, vec1Reg);
+
    /*
     * Calculate the end address for what can be compared using full vector compares.
     * After reaching this address, the remaining comparisons (if required) will need special handling.
@@ -13004,26 +13023,6 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
     * More specifically, this is during the search before the vector loop.
     */
    generateLabelInstruction(cg, TR::InstOpCode::label, node, foundFirstVectorLabel);
-
-   /* Set permuteVector = 0x000102030405060708090a0b0c0d0e0f */
-   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 0);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::lvsl, node, permuteVectorReg, tempReg, tempReg);
-
-   /*
-    * For little-endian, reverse permuteVector so that we can find the first set bit using a count
-    * leading zeroes test instead of a count trailing zeroes test. This is necessary since cnttzw
-    * wasn't introduced until Power 9.
-    */
-   if (comp->target().cpu.isLittleEndian())
-      {
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisb, node, vec1Reg, 15);
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::vsububm, node, permuteVectorReg, vec1Reg, permuteVectorReg);
-      }
-
-   /* Set permuteVector = 0x00081018202830384048505860687078 (reversed for LE) */
-   generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisb, node, vec1Reg, 3);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::vslb, node, permuteVectorReg, permuteVectorReg, vec1Reg);
-
    generateLabelInstruction(cg, TR::InstOpCode::label, node, foundFirstVectorRetryLabel);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::vbpermq, node, vec1Reg, vec2Reg, permuteVectorReg);
    generateTrg1Src1Instruction(cg, TR::InstOpCode::mfvsrwz, node, resultReg, vec1Reg);
@@ -13084,26 +13083,6 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
     * More specifically, this is during the vector loop.
     */
    generateLabelInstruction(cg, TR::InstOpCode::label, node, foundVectorLabel);
-
-   /* Set permuteVector = 0x000102030405060708090a0b0c0d0e0f */
-   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 0);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::lvsl, node, permuteVectorReg, tempReg, tempReg);
-
-   /*
-    * For little-endian, reverse permuteVector so that we can find the first set bit using a count
-    * leading zeroes test instead of a count trailing zeroes test. This is necessary since cnttzw
-    * wasn't introduced until Power 9.
-    */
-   if (comp->target().cpu.isLittleEndian())
-      {
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisb, node, vec1Reg, 15);
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::vsububm, node, permuteVectorReg, vec1Reg, permuteVectorReg);
-      }
-
-   /* Set permuteVector = 0x00081018202830384048505860687078 (reversed for LE) */
-   generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisb, node, vec1Reg, 3);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::vslb, node, permuteVectorReg, permuteVectorReg, vec1Reg);
-
    generateLabelInstruction(cg, TR::InstOpCode::label, node, foundVectorRetryLabel);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::vbpermq, node, vec1Reg, vec2Reg, permuteVectorReg);
    generateTrg1Src1Instruction(cg, TR::InstOpCode::mfvsrwz, node, resultReg, vec1Reg);
