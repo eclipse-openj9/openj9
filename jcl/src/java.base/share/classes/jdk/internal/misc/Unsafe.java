@@ -4448,6 +4448,25 @@ public final class Unsafe {
 		}
 	}
 
+	/*[IF INLINE-TYPES]*/
+	public final Object getAndSetReference(Object obj, long offset, Class<?> valueType, Object value) {
+		throw new Error("getAndSetReference() unimplemented"); //$NON-NLS-1$
+	}
+
+	public final Object getAndSetReferenceAcquire(Object obj, long offset, Class<?> valueType, Object value) {
+		return getAndSetReference(obj, offset, valueType, value);
+	}
+
+	public final Object getAndSetReferenceRelease(Object obj, long offset, Class<?> valueType, Object value) {
+		return getAndSetReference(obj, offset, valueType, value);
+	}
+
+	public void notifyStrictStaticAccess(Class<?> clz, long staticFieldOffset, boolean writing) {
+		Objects.requireNonNull(clz);
+		throw new Error("notifyStrictStaticAccess() unimplemented"); //$NON-NLS-1$
+	}
+	/*[ENDIF] INLINE-TYPES */
+
 	/**
 	 * Atomically sets value at offset in obj
 	 * and returns the value of the field prior to the update.
@@ -6646,14 +6665,6 @@ public final class Unsafe {
 	 * @param value value type to store in obj
 	 */
 	public native <V> void putValue(Object obj, long offset, Class<?> clz, V value);
-
-	/**
-	 * Returns the uninitialized default instance of the specified value class
-	 *
-	 * @param clz the specificed value class
-	 * @return the uninitialized default instance of clz
-	 */
-	public native <V> V uninitializedDefaultValue(Class<?> clz);
 
 	/**
 	 * Determines the size of the header for a specified value class

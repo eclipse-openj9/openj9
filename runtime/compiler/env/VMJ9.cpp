@@ -8014,19 +8014,6 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
             }
          return callNode;
          }
-      case TR::java_lang_J9VMInternals_rawNewArrayInstance:
-         {
-         TR::Node::recreate(callNode, TR::variableNewArray);
-         callNode->setSymbolReference(comp->getSymRefTab()->findOrCreateANewArraySymbolRef(callNode->getSymbol()->castToResolvedMethodSymbol()));
-         TR::Node *newNode = TR::Node::createWithSymRef(callNode, TR::aloadi, 1, comp->getSymRefTab()->findOrCreateArrayComponentTypeSymbolRef());
-         TR::Node *newNodeChild = TR::Node::createWithSymRef(callNode, TR::aloadi, 1, comp->getSymRefTab()->findOrCreateClassFromJavaLangClassAsPrimitiveSymbolRef());
-         newNode->setAndIncChild(0, newNodeChild);
-         newNode->setNumChildren(1);
-         newNodeChild->setChild(0, callNode->getChild(1));
-         newNodeChild->setNumChildren(1);
-         callNode->setAndIncChild(1,newNode);
-         return callNode;
-         }
       case TR::java_lang_J9VMInternals_getArrayLengthAsObject:
          {
          TR::Node::recreate(callNode, TR::iloadi);
