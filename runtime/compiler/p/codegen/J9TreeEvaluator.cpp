@@ -12712,7 +12712,7 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    TR::Register *subStringLenReg = nullptr;
    TR::Register *resultReg = nullptr;
 
-   int32_t numDependencies = 18;
+   int32_t numDependencies = 19;
 
    if (cg->canClobberNodesRegister(node->getChild(0)))
       {
@@ -12766,6 +12766,7 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    TR::Register *searchVectorReg    = cg->allocateRegister(TR_VRF);
    TR::Register *permuteVectorReg   = cg->allocateRegister(TR_VRF);
    TR::Register *maskVectorReg      = cg->allocateRegister(TR_VRF);
+   TR::Register *zeroVectorReg      = cg->allocateRegister(TR_VRF);
 
    TR::Register *cr0Reg = cg->allocateRegister(TR_CCR);
    TR::Register *cr6Reg = cg->allocateRegister(TR_CCR);
@@ -12900,18 +12901,18 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
     * maskVectorReg is set to 0xFF for Latin1 and 0xFFFF for UTF16. This is later used to mask values in a vector register to prevent matching a second time.
     */
    generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, isLatin1 ? 1 : 2);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::vxor, node, targetVectorNotReg, targetVectorReg, targetVectorReg);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::vnor, node, vec1Reg, targetVectorNotReg, targetVectorNotReg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vxor, node, zeroVectorReg, targetVectorReg, targetVectorReg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vnor, node, vec1Reg, zeroVectorReg, zeroVectorReg);
 
    if (comp->target().cpu.isLittleEndian())
       {
       generateTrg1MemInstruction(cg, TR::InstOpCode::lvsl, node, permuteVectorReg, TR::MemoryReference::createWithIndexReg(cg, nullptr, tempReg, 1));
-      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, maskVectorReg, vec1Reg, targetVectorNotReg, permuteVectorReg);
+      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, maskVectorReg, vec1Reg, zeroVectorReg, permuteVectorReg);
       }
    else
       {
       generateTrg1MemInstruction(cg, TR::InstOpCode::lvsr, node, permuteVectorReg, TR::MemoryReference::createWithIndexReg(cg, nullptr, tempReg, 1));
-      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, maskVectorReg, targetVectorNotReg, vec1Reg, permuteVectorReg);
+      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, maskVectorReg, zeroVectorReg, vec1Reg, permuteVectorReg);
       }
 
    /* targetVectorNotReg is set to the bitwise complement of targetVectorReg. These are values that will never match the first character of the substring. */
@@ -13058,16 +13059,15 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    /* A match at currentAddressReg was not found so we undo adding in the index of the match that was found. */
 
    /* The first character match that was found is masked out in searchVectorReg so we can check for a second match. */
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::vxor, node, vec1Reg, vec1Reg, vec1Reg);
    if (comp->target().cpu.isLittleEndian())
       {
       generateTrg1MemInstruction(cg, TR::InstOpCode::lvsl, node, vec2Reg, TR::MemoryReference::createWithIndexReg(cg, nullptr, currentAddressReg, 1));
-      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, vec1Reg, maskVectorReg, vec1Reg, vec2Reg);
+      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, vec1Reg, maskVectorReg, zeroVectorReg, vec2Reg);
       }
    else
       {
       generateTrg1MemInstruction(cg, TR::InstOpCode::lvsr, node, vec2Reg, TR::MemoryReference::createWithIndexReg(cg, nullptr, currentAddressReg, 1));
-      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, vec1Reg, vec1Reg, maskVectorReg, vec2Reg);
+      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, vec1Reg, zeroVectorReg, maskVectorReg, vec2Reg);
       }
    generateTrg1Src3Instruction(cg, TR::InstOpCode::vsel, node, searchVectorReg, targetVectorNotReg, searchVectorReg, vec1Reg);
 
@@ -13139,16 +13139,15 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    /* A match at currentAddressReg was not found so we undo adding in the index of the match that was found. */
 
    /* The first character match that was found is masked out in searchVectorReg so we can check for a second match. */
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::vxor, node, vec1Reg, vec1Reg, vec1Reg);
    if (comp->target().cpu.isLittleEndian())
       {
       generateTrg1MemInstruction(cg, TR::InstOpCode::lvsl, node, vec2Reg, TR::MemoryReference::createWithIndexReg(cg, nullptr, currentAddressReg, 1));
-      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, vec1Reg, maskVectorReg, vec1Reg, vec2Reg);
+      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, vec1Reg, maskVectorReg, zeroVectorReg, vec2Reg);
       }
    else
       {
       generateTrg1MemInstruction(cg, TR::InstOpCode::lvsr, node, vec2Reg, TR::MemoryReference::createWithIndexReg(cg, nullptr, currentAddressReg, 1));
-      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, vec1Reg, vec1Reg, maskVectorReg, vec2Reg);
+      generateTrg1Src3Instruction(cg, TR::InstOpCode::vperm, node, vec1Reg, zeroVectorReg, maskVectorReg, vec2Reg);
       }
    generateTrg1Src3Instruction(cg, TR::InstOpCode::vsel, node, searchVectorReg, targetVectorNotReg, searchVectorReg, vec1Reg);
 
@@ -13225,6 +13224,7 @@ static TR::Register *inlineIntrinsicIndexOfStringV2(TR::Node *node, TR::CodeGene
    deps->addPostCondition(searchVectorReg, TR::RealRegister::NoReg);
    deps->addPostCondition(permuteVectorReg, TR::RealRegister::NoReg);
    deps->addPostCondition(maskVectorReg, TR::RealRegister::NoReg);
+   deps->addPostCondition(zeroVectorReg, TR::RealRegister::NoReg);
    deps->addPostCondition(cr0Reg, TR::RealRegister::cr0);
    deps->addPostCondition(cr6Reg, TR::RealRegister::cr6);
 
