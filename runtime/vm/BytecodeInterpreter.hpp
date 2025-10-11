@@ -7275,9 +7275,17 @@ done:
 				rc = THROW_AIOB;
 			} else {
 				j9object_t value = *(j9object_t*)_sp;
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+				J9ArrayClass *arrayClass = (J9ArrayClass *)J9OBJECT_CLAZZ(_currentThread, arrayref);
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 				/* Runtime check class compatibility */
 				if (false == VM_VMHelpers::objectArrayStoreAllowed(_currentThread, arrayref, value)) {
 					rc = THROW_ARRAY_STORE;
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+				} else if ((NULL == value) && J9_IS_J9ARRAYCLASS_NULL_RESTRICTED(arrayClass)) {
+					/* Throw NullPointerException if null value is stored in null-restricted arrays. */
+					rc = THROW_NPE;
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 				} else {
 					VM_ValueTypeHelpers::storeFlattenableArrayElement(_currentThread, _objectAccessBarrier, arrayref, index, value);
 					_pc += 1;

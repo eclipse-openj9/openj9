@@ -1808,10 +1808,6 @@ exit:
 					rc = inlineCheckCast(valueClass, componentType);
 				}
 			}
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		} else if (J9_IS_J9ARRAYCLASS_NULL_RESTRICTED(arrayClass)) {
-			rc = FALSE;
-#endif /* if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		}
 		return rc;
 	}
