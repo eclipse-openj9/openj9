@@ -21,14 +21,14 @@
  */
 package org.openj9.test.lworld;
 
-import jdk.internal.vm.annotation.ImplicitlyConstructible;
 import jdk.internal.vm.annotation.NullRestricted;
+import jdk.internal.vm.annotation.Strict;
 
 public class ValueTypeTestClasses {
 
-	@ImplicitlyConstructible
 	static value class ValueTypeInt {
 		ValueTypeInt(int i) { this.i = i; }
+		@Strict
 		final int i;
 	}
 
@@ -37,8 +37,8 @@ public class ValueTypeTestClasses {
 		final int i;
 	}
 
-	@ImplicitlyConstructible
 	static value class ValueTypeLong {
+		@Strict
 		final long l;
 		ValueTypeLong(long l) {this.l = l;}
 		public long getL() {
@@ -46,8 +46,8 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	@ImplicitlyConstructible
 	static value class ValueTypePoint2D {
+		@Strict
 		@NullRestricted
 		final ValueTypeInt x, y;
 
@@ -81,8 +81,8 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	@ImplicitlyConstructible
 	static value class ValueTypeWithLongField {
+		@Strict
 		@NullRestricted
 		final ValueTypeLong l;
 
@@ -91,8 +91,8 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	@ImplicitlyConstructible
 	static value class ValueTypeLongPoint2D {
+		@Strict
 		@NullRestricted
 		final ValueTypeLong x, y;
 
@@ -102,13 +102,12 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	@ImplicitlyConstructible
 	static value class ZeroSizeValueType {
 		ZeroSizeValueType() {}
 	}
 
-	@ImplicitlyConstructible
 	static value class ZeroSizeValueTypeWrapper {
+		@Strict
 		@NullRestricted
 		final ZeroSizeValueType z;
 
@@ -117,15 +116,16 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	@ImplicitlyConstructible
 	static value class ValueTypeInt2 {
 		ValueTypeInt2(int i) { this.i = i; }
+		@Strict
 		final int i;
 	}
 
-	@ImplicitlyConstructible
 	static value class ValueTypeFastSubVT {
+		@Strict
 		final int x,y,z;
+		@Strict
 		final Object[] arr;
 		ValueTypeFastSubVT(int x, int y, int z, Object[] arr) {
 			this.x = x;
@@ -135,10 +135,11 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	@ImplicitlyConstructible
 	static value class ValueTypeDoubleLong {
+		@Strict
 		@NullRestricted
 		final ValueTypeLong l;
+		@Strict
 		final long l2;
 		ValueTypeDoubleLong(ValueTypeLong l, long l2) {
 			this.l = l;
@@ -152,12 +153,14 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	@ImplicitlyConstructible
 	static value class ValueTypeQuadLong {
+		@Strict
 		@NullRestricted
 		final ValueTypeDoubleLong l;
+		@Strict
 		@NullRestricted
 		final ValueTypeLong l2;
+		@Strict
 		final long l3;
 		ValueTypeQuadLong(ValueTypeDoubleLong l, ValueTypeLong l2, long l3) {
 			this.l = l;
@@ -175,14 +178,17 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	@ImplicitlyConstructible
 	static value class ValueTypeDoubleQuadLong {
+		@Strict
 		@NullRestricted
 		final ValueTypeQuadLong l;
+		@Strict
 		@NullRestricted
 		final ValueTypeDoubleLong l2;
+		@Strict
 		@NullRestricted
 		final ValueTypeLong l3;
+		@Strict
 		final long l4;
 		ValueTypeDoubleQuadLong(ValueTypeQuadLong l, ValueTypeDoubleLong l2, ValueTypeLong l3, long l4) {
 			this.l = l;

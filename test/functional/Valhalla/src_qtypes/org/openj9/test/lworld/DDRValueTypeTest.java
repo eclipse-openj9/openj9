@@ -61,8 +61,9 @@ public class DDRValueTypeTest {
 		Object assortedValueWithSingleAlignment = ValueTypeTests.createAssorted(makeAssortedValueWithSingleAlignment, ValueTypeTests.typeWithSingleAlignmentFields);
 		Object assortedValueWithSingleAlignmentAlt = ValueTypeTests.createAssorted(makeAssortedValueWithSingleAlignment, ValueTypeTests.typeWithSingleAlignmentFields, altFields);
 		Object valueTypeWithVolatileFields = ValueTypeTests.createValueTypeWithVolatileFields();
-		
-		Object[] valArray = ValueClass.newNullRestrictedArray(assortedValueWithSingleAlignmentClass, 2);
+
+		Object[] valArray = ValueClass.newNullRestrictedAtomicArray(assortedValueWithSingleAlignmentClass, 2, assortedValueWithSingleAlignment);
+		// TODO: Remove following initialization as per https://github.com/eclipse-openj9/openj9/issues/22642.
 		valArray[0] = assortedValueWithSingleAlignment;
 		valArray[1] = assortedValueWithSingleAlignmentAlt;
 

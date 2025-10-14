@@ -517,13 +517,14 @@ endif()
 
 if(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	jvm_add_exports(jvm
+		JVM_CopyOfSpecialArray
+		JVM_IsAtomicArray
 		JVM_IsFlatArray
-		JVM_IsImplicitlyConstructibleClass
 		JVM_IsNullRestrictedArray
 		JVM_IsValhallaEnabled
 		JVM_NewNullableAtomicArray
-		JVM_NewNullRestrictedArray
 		JVM_NewNullRestrictedAtomicArray
+		JVM_NewNullRestrictedNonAtomicArray
 		JVM_VirtualThreadHideFrames
 	)
 endif()

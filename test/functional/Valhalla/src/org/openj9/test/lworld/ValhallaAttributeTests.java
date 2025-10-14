@@ -21,7 +21,6 @@
  */
 package org.openj9.test.lworld;
 
-import jdk.internal.vm.annotation.ImplicitlyConstructible;
 import org.testng.annotations.Test;
 import org.testng.Assert;
 
@@ -222,32 +221,5 @@ public class ValhallaAttributeTests {
 			throw e;
 		}
 		Assert.fail("Test expected a NullPointerException wrapped in ExceptionInInitializerError.");
-	}
-
-	@ImplicitlyConstructible
-	static value class ImplicitClass {
-		Object o;
-		ImplicitClass(Object o) {
-			this.o = o;
-		}
-	}
-
-	/* Test to verify JVM_IsImplicitlyConstructibleClass. */
-	@Test
-	public static void testValueClassIsImplicitlyConstructible() {
-		Assert.assertTrue(jdk.internal.value.ValueClass.isImplicitlyConstructible(ImplicitClass.class));
-	}
-
-	static value class NonImplicitClass {
-		Object o;
-		NonImplicitClass(Object o) {
-			this.o = o;
-		}
-	}
-
-	/* Test to verify JVM_IsImplicitlyConstructibleClass. */
-	@Test
-	public static void testValueClassIsImplicitlyConstructible2() {
-		Assert.assertFalse(jdk.internal.value.ValueClass.isImplicitlyConstructible(NonImplicitClass.class));
 	}
 }

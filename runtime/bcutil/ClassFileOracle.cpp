@@ -90,9 +90,6 @@ ClassFileOracle::KnownAnnotation ClassFileOracle::_knownAnnotations[] = {
 #define NULLRESTRICTED_SIGNATURE "Ljdk/internal/vm/annotation/NullRestricted;"
 		{NULLRESTRICTED_SIGNATURE , sizeof(NULLRESTRICTED_SIGNATURE)},
 #undef NULLRESTRICTED_SIGNATURE
-#define IMPLICITLYCONSTRUCTIBLE_SIGNATURE "Ljdk/internal/vm/annotation/ImplicitlyConstructible;"
-		{IMPLICITLYCONSTRUCTIBLE_SIGNATURE , sizeof(IMPLICITLYCONSTRUCTIBLE_SIGNATURE)},
-#undef IMPLICITLYCONSTRUCTIBLE_SIGNATURE
 #define LOOSELYCONSISTENTVALUE_SIGNATURE "Ljdk/internal/vm/annotation/LooselyConsistentValue;"
 		{LOOSELYCONSISTENTVALUE_SIGNATURE , sizeof(LOOSELYCONSISTENTVALUE_SIGNATURE)},
 #undef LOOSELYCONSISTENTVALUE_SIGNATURE
@@ -564,7 +561,6 @@ ClassFileOracle::walkAttributes()
 			knownAnnotations = addAnnotationBit(knownAnnotations, UNMODIFIABLE_ANNOTATION);
 			knownAnnotations = addAnnotationBit(knownAnnotations, VALUEBASED_ANNOTATION);
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-			knownAnnotations = addAnnotationBit(knownAnnotations, IMPLICITLYCONSTRUCTIBLE_ANNOTATION);
 			knownAnnotations = addAnnotationBit(knownAnnotations, LOOSELYCONSISTENTVALUE_ANNOTATION);
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			_annotationsAttribute = (J9CfrAttributeRuntimeVisibleAnnotations *)attrib;
@@ -580,10 +576,6 @@ ClassFileOracle::walkAttributes()
 					_isClassValueBased = true;
 				}
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-				if (containsKnownAnnotation(foundAnnotations, IMPLICITLYCONSTRUCTIBLE_ANNOTATION)) {
-					_hasImplicitCreationAttribute = true;
-					_implicitCreationFlags |= J9AccImplicitCreateHasDefaultValue;
-				}
 				if (containsKnownAnnotation(foundAnnotations, LOOSELYCONSISTENTVALUE_ANNOTATION)) {
 					_hasImplicitCreationAttribute = true;
 					_implicitCreationFlags |= J9AccImplicitCreateNonAtomic;
