@@ -555,7 +555,7 @@ VM_JFRConstantPoolTypes::addPackageEntry(J9Module *fromModule, J9Package *packag
 	/* Account for the length field. */
 	if (pkgNameLen > (NAME_BUFFER_SIZE - sizeof(J9UTF8))) {
 		UDATA allocationSize = sizeof(J9ROMClass) + sizeof(J9UTF8) + pkgNameLen;
-		queryROMClass = (J9ROMClass *)j9mem_allocate_memory(allocationSize, J9MEM_CATEGORY_VM);
+		queryROMClass = (J9ROMClass *)j9mem_allocate_memory(allocationSize, J9MEM_CATEGORY_JFR);
 		if (NULL == queryROMClass) {
 			_buildResult = OutOfMemory;
 			goto done;

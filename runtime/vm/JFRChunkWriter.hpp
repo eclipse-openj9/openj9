@@ -346,7 +346,7 @@ done:
 			goto done;
 		}
 
-		buffer = (U_8 *)j9mem_allocate_memory(requiredBufferSize, J9MEM_CATEGORY_CLASSES);
+		buffer = (U_8 *)j9mem_allocate_memory(requiredBufferSize, J9MEM_CATEGORY_JFR);
 		if (NULL == buffer) {
 			_buildResult = OutOfMemory;
 		} else {

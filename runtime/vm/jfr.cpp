@@ -406,7 +406,7 @@ jfrThreadCreated(J9HookInterface **hook, UDATA eventNum, void *eventData, void *
 #endif /* defined(DEBUG) */
 
 	/* TODO: allow different buffer sizes on different threads. */
-	U_8 *buffer = (U_8*)j9mem_allocate_memory(J9JFR_THREAD_BUFFER_SIZE, OMRMEM_CATEGORY_VM);
+	U_8 *buffer = (U_8 *)j9mem_allocate_memory(J9JFR_THREAD_BUFFER_SIZE, J9MEM_CATEGORY_JFR);
 	if (NULL == buffer) {
 		event->continueInitialization = FALSE;
 	} else {
@@ -802,14 +802,14 @@ initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 	}
 
 	/* Allocate constantEvents. */
-	vm->jfrState.constantEvents = j9mem_allocate_memory(sizeof(JFRConstantEvents), J9MEM_CATEGORY_VM);
+	vm->jfrState.constantEvents = j9mem_allocate_memory(sizeof(JFRConstantEvents), J9MEM_CATEGORY_JFR);
 	if (NULL == vm->jfrState.constantEvents) {
 		goto fail;
 	}
 	memset(vm->jfrState.constantEvents, 0, sizeof(JFRConstantEvents));
 
 	/* Allocate global data. */
-	buffer = (U_8*)j9mem_allocate_memory(J9JFR_GLOBAL_BUFFER_SIZE, OMRMEM_CATEGORY_VM);
+	buffer = (U_8 *)j9mem_allocate_memory(J9JFR_GLOBAL_BUFFER_SIZE, J9MEM_CATEGORY_JFR);
 	if (NULL == buffer) {
 		goto fail;
 	}
@@ -861,7 +861,7 @@ initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 		while (NULL != walkThread) {
 			/* only initialize a thread once */
 			if (NULL == walkThread->jfrBuffer.bufferStart) {
-				U_8 *buffer = (U_8*)j9mem_allocate_memory(J9JFR_THREAD_BUFFER_SIZE, OMRMEM_CATEGORY_VM);
+				U_8 *buffer = (U_8 *)j9mem_allocate_memory(J9JFR_THREAD_BUFFER_SIZE, J9MEM_CATEGORY_JFR);
 				if (NULL == buffer) {
 					goto fail;
 				} else {
