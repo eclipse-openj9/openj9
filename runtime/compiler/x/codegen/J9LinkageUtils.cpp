@@ -133,10 +133,6 @@ void J9LinkageUtils::switchToJavaStack(TR::Node *callNode, TR::CodeGenerator *cg
       espReal,
       generateX86MemoryReference(vmThreadReg, cg->fej9()->thisThreadGetJavaSPOffset(), cg),
       cg);
-
-   // Add DF check on return of JNI/System call
-   if (cg->canEmitBreakOnDFSet())
-      generateBreakOnDFSet(cg);
    }
 
 }
