@@ -7448,6 +7448,10 @@ void TR_EscapeAnalysis::heapifyForColdBlocks(Candidate *candidate)
       //printf("Found candidate allocated with cold block compensation in %s numBlocks compensated = %d\n", comp()->signature(), candidate->getColdBlockEscapeInfo()->getSize());
       }
 
+   // Create a temporary that will hold a reference to the stack allocated object
+   // at the point of stack allocation.  That reference is then used at
+   // heapification points to test whether the object has already been heapified.
+   //
    TR::SymbolReference *heapSymRef = getSymRefTab()->createTemporary(comp()->getMethodSymbol(), TR::Address);
 
    TR::TreeTop *allocationTree = candidate->_treeTop;
@@ -7456,6 +7460,15 @@ void TR_EscapeAnalysis::heapifyForColdBlocks(Candidate *candidate)
    TR::TreeTop *heapSymRefStoreTree = TR::TreeTop::create(comp(), heapSymRefStore, NULL, NULL);
    allocationTree->join(heapSymRefStoreTree);
    heapSymRefStoreTree->join(nextTree);
+
+   // Ensure the temporary that will hold a reference to the stack allocated object
+   // is initialized to a null reference on method entry, as the stack allocation
+   // might not have occurred on every path leading to some heapification point.
+   //
+   TR::Node *initStoreNode = TR::Node::createWithSymRef(TR::astore, 1, 1, TR::Node::aconst(candidate->_node, 0), heapSymRef);
+   TR::TreeTop *initStoreTree = TR::TreeTop::create(comp(), initStoreNode, NULL, NULL);
+   comp()->getStartTree()->insertAfter(initStoreTree);
+   _initializedHeapifiedTemps->set(heapSymRef->getReferenceNumber());
 
    if (candidate->isContiguousAllocation())
       {
