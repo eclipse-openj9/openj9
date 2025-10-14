@@ -575,6 +575,7 @@ doneItableSearch:
  * 
  * 		J9_LOOK_VIRTUAL							Search for a virtual (instance) method
  * 		J9_LOOK_STATIC							Search for a static method
+ * 		J9_LOOK_INVOKE_INTERFACE				Special handling for invokeinterface resolution.
  * 		J9_LOOK_INTERFACE						Search for an interface method - assumes given class is interface class and searches only it and its superinterfaces (i.e. does not search Object)
  * 		J9_LOOK_JNI								Use JNI behaviour (allow virtual lookup to succeed when it finds a method in an interface class, throw only NoSuchMethodError on failure, VERIFIED C strings for name and sig)
  * 		J9_LOOK_NO_CLIMB						Search only the given class, no superclasses or superinterfaces
