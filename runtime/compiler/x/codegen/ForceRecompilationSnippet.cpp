@@ -36,6 +36,7 @@
 #include "il/ResolvedMethodSymbol.hpp"
 #include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "x/codegen/X86Recompilation.hpp"
 
@@ -84,18 +85,16 @@ uint8_t *TR::X86ForceRecompilationSnippet::emitSnippetBody()
 
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::X86ForceRecompilationSnippet  * snippet)
+TR_Debug::print(TR::Logger *log, TR::X86ForceRecompilationSnippet *snippet)
    {
-   if (pOutFile == NULL)
-      return;
-
    uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet));
+   printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet));
 
-   TR::SymbolReference *helper        = _cg->getSymRef(_comp->target().is64Bit()? TR_AMD64induceRecompilation : TR_IA32induceRecompilation);
-   intptr_t           helperAddress = (intptr_t)helper->getMethodAddress();
-   printPrefix(pOutFile, NULL, bufferPos, 5);
-   trfprintf(pOutFile, "call\t%s \t%s Helper Address = " POINTER_PRINTF_FORMAT,
+   TR::SymbolReference *helper = _cg->getSymRef(_comp->target().is64Bit()? TR_AMD64induceRecompilation : TR_IA32induceRecompilation);
+   intptr_t helperAddress = (intptr_t)helper->getMethodAddress();
+
+   printPrefix(log, NULL, bufferPos, 5);
+   log->printf("call\t%s \t%s Helper Address = " POINTER_PRINTF_FORMAT,
                  getName(helper),
                  commentString(),
                  helperAddress);
@@ -103,12 +102,12 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86ForceRecompilationSnippet  * snippet)
 
    uint8_t *offsetBase = bufferPos;
 
-   printPrefix(pOutFile, NULL, bufferPos, 5);
-   printLabelInstruction(pOutFile, "jmp", snippet->getRestartLabel());
+   printPrefix(log, NULL, bufferPos, 5);
+   printLabelInstruction(log, "jmp", snippet->getRestartLabel());
    bufferPos += 5;
 
-   printPrefix(pOutFile, NULL, bufferPos, 4);
-   trfprintf(pOutFile, "%s  \t%s%08x%s\t\t%s Offset to startPC",
+   printPrefix(log, NULL, bufferPos, 4);
+   log->printf("%s  \t%s%08x%s\t\t%s Offset to startPC",
                  ddString(),
                  hexPrefixString(),
                  _cg->getCodeStart() - offsetBase,

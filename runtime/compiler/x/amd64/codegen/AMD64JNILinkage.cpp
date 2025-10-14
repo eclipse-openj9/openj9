@@ -1234,12 +1234,6 @@ J9::X86::AMD64::JNILinkage::populateJNIDispatchInfo()
 
 TR::Register *J9::X86::AMD64::JNILinkage::buildDirectJNIDispatch(TR::Node *callNode)
    {
-#ifdef DEBUG
-   if (debug("reportJNI"))
-      {
-      printf("AMD64 JNI Dispatch: %s calling %s\n", comp()->signature(), comp()->getDebug()->getName(callNode->getSymbolReference()));
-      }
-#endif
    TR::SymbolReference      *callSymRef = callNode->getSymbolReference();
    TR::MethodSymbol         *callSymbol = callSymRef->getSymbol()->castToMethodSymbol();
 

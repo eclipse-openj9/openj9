@@ -3697,8 +3697,9 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          if (response == JITServer::MessageType::compilationThreadCrashed)
             {
             // IL of the crashing method generated successfully, proceed with diagnostic recompilation
-            auto recv = client->getRecvData<TR::FILE *>();
+            auto recv = client->getRecvData<TR::FILE *,TR::Logger *>();
             TR::FILE *jitdumpFile = std::get<0>(recv);
+            TR::Logger *jitdumpLogger = std::get<1>(recv);
             client->write(response, JITServer::Void());
 
             // Create method details for the JitDump recompilation
@@ -3708,6 +3709,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
             // so options haven't changed.
             J9::JitDumpMethodDetails jitDumpDetails(method, NULL, useAotCompilation);
             entry->_optimizationPlan->setLogCompilation(jitdumpFile);
+            entry->_optimizationPlan->setLogger(jitdumpLogger);
 
             if (writeVerboseLog)
                 TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
@@ -3985,10 +3987,20 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          if (compiler->getOption(TR_JITServerFollowRemoteCompileWithLocalCompile) && compilationSequenceNumber)
             {
             compiler->getOptions()->setLogFileForClientOptions(compilationSequenceNumber);
-            auto logFile = compiler->getOptions()->getLogFile();
+            TR::FILE *logFile = compiler->getOutFile();
             auto debug = compiler->getDebug();
-            if (logFile && debug)
-               debug->setFile(logFile);
+            if (debug)
+               {
+               if (logFile)
+                  {
+                  debug->setOutFile(logFile);
+
+                  TR::Logger *log = compiler->log();
+                  TR_ASSERT_FATAL(log, "Expecting a TR::Logger with a log file");
+                  debug->setLogger(log);
+                  }
+               }
+
             bool compileWithoutVMAccess = !compiler->getOption(TR_DisableNoVMAccess);
             if (compileWithoutVMAccess)
                {

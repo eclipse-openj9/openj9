@@ -40,6 +40,7 @@
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "ras/Debug.hpp"
+#include "ras/Logger.hpp"
 #include "x/codegen/RestartSnippet.hpp"
 
 namespace TR { class Block; }
@@ -140,39 +141,38 @@ uint8_t *TR::X86GuardedDevirtualSnippet::emitSnippetBody()
 
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::X86GuardedDevirtualSnippet  * snippet)
+TR_Debug::print(TR::Logger *log, TR::X86GuardedDevirtualSnippet *snippet)
    {
-   if (pOutFile == NULL)
-      return;
-
    uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet), "out of line full virtual call sequence");
-
-   char regLetter = (_comp->target().is64Bit())? 'r' : 'e';
+   printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet), "out of line full virtual call sequence");
 
 #if defined(TR_TARGET_64BIT)
-   TR::Node            *callNode     = snippet->getNode();
+   TR::Node *callNode = snippet->getNode();
    TR::SymbolReference *methodSymRef = snippet->getRealMethodSymbolReference();
+
    if (!methodSymRef)
       methodSymRef = callNode->getSymbolReference();
-   TR::MethodSymbol    *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
+
+   TR::MethodSymbol *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
+
    // Show effect of loadArgumentsIfNecessary on devirtualized VMInternalNatives.
    if (snippet->isLoadArgumentsNecessary(methodSymbol))
-      bufferPos = printArgumentFlush(pOutFile, callNode, false, bufferPos);
+      bufferPos = printArgumentFlush(log, callNode, false, bufferPos);
 #endif
 
    if (!snippet->getClassObjectRegister())
       {
       int movSize = (_comp->target().is64Bit())? 3 : 2;
+      char regLetter = (_comp->target().is64Bit())? 'r' : 'e';
 
-      printPrefix(pOutFile, NULL, bufferPos, movSize);
-      trfprintf(pOutFile, "mov \t%cdi, [%cax]\t\t%s Load Class Object",
+      printPrefix(log, NULL, bufferPos, movSize);
+      log->printf("mov \t%cdi, [%cax]\t\t%s Load Class Object",
                     regLetter, regLetter,
                     commentString());
       bufferPos += movSize;
 
-      printPrefix(pOutFile, NULL, bufferPos, 6);
-      trfprintf(pOutFile, "call\t[%cdi %d]\t\t%s call through vtable slot %d", regLetter, snippet->getVTableOffset(),
+      printPrefix(log, NULL, bufferPos, 6);
+      log->printf("call\t[%cdi %d]\t\t%s call through vtable slot %d", regLetter, snippet->getVTableOffset(),
                                commentString(), -snippet->getVTableOffset() >> 2);
       bufferPos += 6;
       }
@@ -191,8 +191,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86GuardedDevirtualSnippet  * snippet)
       TR_RegisterSizes regSize = TR_WordReg;
 #endif
 
-      printPrefix(pOutFile, NULL, bufferPos, callSize);
-      trfprintf(pOutFile,
+      printPrefix(log, NULL, bufferPos, callSize);
+      log->printf(
               "call\t[%s %d]\t\t%s call through vtable slot %d",
               getName(classObjectRegister, regSize),
               snippet->getVTableOffset(),
@@ -201,7 +201,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86GuardedDevirtualSnippet  * snippet)
       bufferPos += callSize;
       }
 
-   printRestartJump(pOutFile, snippet, bufferPos);
+   printRestartJump(log, snippet, bufferPos);
    }
 
 
@@ -229,12 +229,6 @@ uint32_t TR::X86GuardedDevirtualSnippet::getLength(int32_t estimatedSnippetStart
 
       fixedLength = 8 + delta + (comp->target().is64Bit()? 1 /* Rex */ : 0);
       }
+
    return fixedLength + estimateRestartJumpLength(estimatedSnippetStart + fixedLength);
    }
-
-
-
-
-
-
-

@@ -25,6 +25,7 @@
 
 #include "optimizer/VPConstraint.hpp"
 
+namespace TR { class Logger; }
 
 // NOTE: when adding new TR_BCDSignConstraint types
 //       - update TR_BCDSignConstraintNames in VPConstraint.cpp when adding
@@ -139,7 +140,7 @@ class VP_BCDSign : public TR::VPConstraint
    virtual TR::VPConstraint *intersect1(TR::VPConstraint *other, OMR::ValuePropagation *vp);
    virtual TR::VPConstraint *merge1(TR::VPConstraint *other, OMR::ValuePropagation *vp);
 
-   virtual void print(TR::Compilation *, TR::FILE *);
+   virtual void print(TR::Logger *log, TR::Compilation *comp);
    virtual const char *name();
 
    protected:

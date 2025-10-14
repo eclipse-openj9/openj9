@@ -28,6 +28,7 @@
 #include "compile/Compilation.hpp"
 #include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
+#include "ras/Logger.hpp"
 
 J9::ARM64::UnresolvedDataSnippet::UnresolvedDataSnippet(TR::CodeGenerator *cg, TR::Node *node, TR::SymbolReference *symRef, bool isStore, bool isGCSafePoint)
    : J9::UnresolvedDataSnippet(cg, node, symRef, isStore, isGCSafePoint),
@@ -154,13 +155,13 @@ J9::ARM64::UnresolvedDataSnippet::emitSnippetBody()
    }
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
+TR_Debug::print(TR::Logger *log, TR::UnresolvedDataSnippet * snippet)
    {
    uint8_t *cursor = snippet->getSnippetLabel()->getCodeLocation();
    TR_RuntimeHelper helper = snippet->getHelper();
    TR::SymbolReference *glueRef = _cg->getSymRef(helper);
 
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "Unresolved Data Snippet");
+   printSnippetLabel(log, snippet->getSnippetLabel(), cursor, "Unresolved Data Snippet");
 
    char *info = "";
    int32_t distance;
@@ -169,32 +170,32 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
       info = " Through Trampoline";
       }
 
-   printPrefix(pOutFile, NULL, cursor, 4);
+   printPrefix(log, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03ffffff; // imm26
    distance = (distance << 6) >> 4; // sign extend and add two 0 bits
-   trfprintf(pOutFile, "bl \t" POINTER_PRINTF_FORMAT "\t\t;%s%s",
+   log->printf("bl \t" POINTER_PRINTF_FORMAT "\t\t;%s%s",
              (intptr_t)cursor + distance, getRuntimeHelperName(helper), info);
    cursor += 4;
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".dword \t" POINTER_PRINTF_FORMAT "\t\t; Code cache return address", *(intptr_t *)cursor);
+   printPrefix(log, NULL, cursor, sizeof(intptr_t));
+   log->printf(".dword \t" POINTER_PRINTF_FORMAT "\t\t; Code cache return address", *(intptr_t *)cursor);
    cursor += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".dword \t0x%08x\t\t; cpIndex of the data reference", *(intptr_t *)cursor);
+   printPrefix(log, NULL, cursor, sizeof(intptr_t));
+   log->printf(".dword \t0x%08x\t\t; cpIndex of the data reference", *(intptr_t *)cursor);
    cursor += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".dword \t" POINTER_PRINTF_FORMAT "\t\t; Constant pool address", *(intptr_t *)cursor);
+   printPrefix(log, NULL, cursor, sizeof(intptr_t));
+   log->printf(".dword \t" POINTER_PRINTF_FORMAT "\t\t; Constant pool address", *(intptr_t *)cursor);
    cursor += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, cursor, 4);
-   trfprintf(pOutFile, ".word \t0x%08x\t\t; Offset to be merged", *(int32_t *)cursor);
+   printPrefix(log, NULL, cursor, 4);
+   log->printf(".word \t0x%08x\t\t; Offset to be merged", *(int32_t *)cursor);
    cursor += 4;
 
-   printPrefix(pOutFile, NULL, cursor, 4);
+   printPrefix(log, NULL, cursor, 4);
    int32_t instr = *(int32_t *)cursor;
-   trfprintf(pOutFile, ".word \t0x%08x\t\t; Instruction template (extraReg=x%d)", instr, (instr & 0x1F));
+   log->printf(".word \t0x%08x\t\t; Instruction template (extraReg=x%d)", instr, (instr & 0x1F));
    }
 
 uint32_t

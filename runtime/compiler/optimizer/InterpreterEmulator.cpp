@@ -35,6 +35,7 @@
 #include "control/CompilationRuntime.hpp"
 #include "env/j9methodServer.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
+#include "ras/Logger.hpp"
 
 const char* Operand::KnowledgeStrings[] = {"NONE", "OBJECT", "MUTABLE_CALLSITE_TARGET", "PREEXISTENT", "FIXED_CLASS", "KNOWN_OBJECT", "ICONST" };
 
@@ -213,10 +214,10 @@ InterpreterEmulator::printOperandArray(OperandArray* operands)
       {
       _operandBuf->clear();
       (*operands)[i]->printToString(_operandBuf);
-      traceMsg(comp(), "[%d]=%s, ", i, _operandBuf->text());
+      comp()->log()->printf("[%d]=%s, ", i, _operandBuf->text());
       }
    if (size > 0)
-      traceMsg(comp(), "\n");
+      comp()->log()->println();
    }
 
 // Merge second OperandArray into the first one
@@ -224,10 +225,11 @@ InterpreterEmulator::printOperandArray(OperandArray* operands)
 //
 void InterpreterEmulator::mergeOperandArray(OperandArray *first, OperandArray *second)
    {
+   TR::Logger *log = comp()->log();
    bool enableTrace = tracer()->debugLevel();
    if (enableTrace)
       {
-      traceMsg(comp(), "Operands before merging:\n");
+      log->prints("Operands before merging:\n");
       printOperandArray(first);
       }
 
@@ -249,11 +251,11 @@ void InterpreterEmulator::mergeOperandArray(OperandArray *first, OperandArray *s
       {
       if (changed)
          {
-         traceMsg(comp(), "Operands after merging:\n");
+         log->prints("Operands after merging:\n");
          printOperandArray(first);
          }
       else
-         traceMsg(comp(), "Operands is not changed after merging\n");
+         log->prints("Operands is not changed after merging\n");
       }
    }
 
@@ -1599,7 +1601,7 @@ InterpreterEmulator::visitInvokevirtual()
          case TR::java_lang_invoke_MethodHandle_undoCustomizationLogic:
             if (_callerIsThunkArchetype)
                return;
-         
+
          default:
             break;
          }

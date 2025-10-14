@@ -31,6 +31,7 @@
 #include "infra/Annotations.hpp"
 
 class TR_InlineBlocks;
+namespace TR { class Logger; }
 
 namespace TR
 {
@@ -71,7 +72,7 @@ public:
       _optionsFromOriginalCompile = optionsFromOriginalCompile;
       _data._aotCompile = aotCompile;
       }
-      
+
    JitDumpMethodDetails(const JitDumpMethodDetails& other)
       : TR::IlGeneratorMethodDetails(other.getMethod())
       {
@@ -96,7 +97,7 @@ public:
    /**
     * \brief
     * Gets the options used in the original compilation which we are trying to reproduce.
-    * 
+    *
     * \returns
     * The options from the original compile if it exists; \c NULL otherwise.
     */
@@ -142,7 +143,7 @@ public:
              isSimilarEnough(static_cast<MethodInProgressDetails &>(other), fe);
       }
 
-   virtual void printDetails(TR_FrontEnd *fe, TR::FILE *file);
+   virtual void printDetails(TR::Logger *log, TR_FrontEnd *fe);
 
 private:
    bool isSimilarEnough(MethodInProgressDetails & other, TR_FrontEnd *fe)
@@ -199,7 +200,7 @@ public:
              static_cast<NewInstanceThunkDetails &>(other).classNeedingThunk() == classNeedingThunk();
       }
 
-   virtual void printDetails(TR_FrontEnd *fe, TR::FILE *file);
+   virtual void printDetails(TR::Logger *log, TR_FrontEnd *fe);
    };
 
 
@@ -278,7 +279,7 @@ public:
 
    virtual bool isCustom()             const { return false; }
 
-   virtual void printDetails(TR_FrontEnd *fe, TR::FILE *file);
+   virtual void printDetails(TR::Logger *log, TR_FrontEnd *fe);
 
 private:
    virtual bool isSameThunk(MethodHandleThunkDetails & otherThunk, TR_J9VMBase *fe);

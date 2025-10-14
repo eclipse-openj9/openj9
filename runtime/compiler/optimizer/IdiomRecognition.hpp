@@ -50,6 +50,7 @@ namespace TR { class Block; }
 namespace TR { class CFG; }
 namespace TR { class CFGEdge; }
 namespace TR { class CFGNode; }
+namespace TR { class Logger; }
 namespace TR { class Node; }
 namespace TR { class Optimization; }
 namespace TR { class Optimizer; }
@@ -303,7 +304,7 @@ public:
    void reverseBranchOpCodes();
 
    static const char *getName(TR_CISCOps, TR::Compilation *);
-   void dump(TR::FILE *pOutFile, TR::Compilation *);
+   void dump(TR::Logger *log, TR::Compilation *comp);
    void printStdout();
 
    void addChain(TR_CISCNode *tgt, bool alsoAddChainsTgt = false)
@@ -899,7 +900,7 @@ public:
 
    bool isDagIdCycle(uint16_t dagId) { TR_ASSERT(dagId < _numDagIds, "error"); return getDagId2Nodes()[dagId].isMultipleEntry(); }
    bool isDagIdDag(uint16_t dagId) { TR_ASSERT(dagId < _numDagIds, "error"); return getDagId2Nodes()[dagId].isSingleton(); }
-   void dump(TR::FILE *pOutFile, TR::Compilation *);
+   void dump(TR::Logger *log, TR::Compilation *comp);
 
    void importUDchains(TR::Compilation *comp, TR_UseDefInfo *useDefInfo, bool reinitialize = false);
 

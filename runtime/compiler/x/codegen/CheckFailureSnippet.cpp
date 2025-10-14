@@ -38,6 +38,7 @@
 #include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "infra/SimpleRegex.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
 uint32_t TR::X86CheckFailureSnippet::getLength(int32_t estimatedSnippetStart)
@@ -79,33 +80,31 @@ uint8_t *TR::X86CheckFailureSnippet::emitSnippetBody()
 
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::X86CheckFailureSnippet * snippet)
+TR_Debug::print(TR::Logger *log, TR::X86CheckFailureSnippet *snippet)
    {
-   if (pOutFile == NULL)
-      return;
+   TR::SymbolReference *symRef = snippet->getDestination();
+   TR::MethodSymbol *sym = symRef->getSymbol()->castToMethodSymbol();
 
-   TR::SymbolReference *symRef    = snippet->getDestination();
-   TR::MethodSymbol    *sym       = symRef->getSymbol()->castToMethodSymbol();
-   uint8_t            *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(symRef));
+   uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
+   printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(symRef));
 
    if (snippet->getRequiredFPstackPop())
       {
-      printPrefix(pOutFile, NULL, bufferPos, 2);
-      trfprintf(pOutFile, "fstp\tst(0)\t\t%s Discard top of FP stack",
+      printPrefix(log, NULL, bufferPos, 2);
+      log->printf("fstp\tst(0)\t\t%s Discard top of FP stack",
                     commentString());
       bufferPos += 2;
       }
 
-   printPrefix(pOutFile, NULL, bufferPos, 5);
-   trfprintf(pOutFile, "call\t%s \t\t%s Helper Address = " POINTER_PRINTF_FORMAT,
+   printPrefix(log, NULL, bufferPos, 5);
+   log->printf("call\t%s \t\t%s Helper Address = " POINTER_PRINTF_FORMAT,
                  getName(symRef),
                  commentString(),
                  sym->getMethodAddress());
    bufferPos += 5;
 
-   printPrefix(pOutFile, NULL, bufferPos, 4);
-   trfprintf(pOutFile,
+   printPrefix(log, NULL, bufferPos, 4);
+   log->printf(
                  "%s \t%s%08x%s",
                  ddString(),
                  hexPrefixString(),
@@ -223,18 +222,15 @@ uint8_t *TR::X86BoundCheckWithSpineCheckSnippet::emitSnippetBody()
    }
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::X86BoundCheckWithSpineCheckSnippet *snippet)
+TR_Debug::print(TR::Logger *log, TR::X86BoundCheckWithSpineCheckSnippet *snippet)
    {
-   if (pOutFile == NULL)
-      return;
+   TR::SymbolReference *symRef = snippet->getDestination();
+   TR::MethodSymbol *sym = symRef->getSymbol()->castToMethodSymbol();
 
-   TR::SymbolReference *symRef    = snippet->getDestination();
-   TR::MethodSymbol    *sym       = symRef->getSymbol()->castToMethodSymbol();
-   uint8_t            *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(symRef));
+   uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
+   printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(symRef));
 
-   trfprintf(pOutFile, "\t\t\t\t\t\t\t\t\t%s bound check with spine check snippet", commentString());
-
+   log->printf("\t\t\t\t\t\t\t\t\t%s bound check with spine check snippet", commentString());
    }
 
 uint32_t TR::X86SpineCheckSnippet::getLength(int32_t estimatedSnippetStart)
@@ -250,18 +246,15 @@ uint8_t *TR::X86SpineCheckSnippet::emitSnippetBody()
    }
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::X86SpineCheckSnippet *snippet)
+TR_Debug::print(TR::Logger *log, TR::X86SpineCheckSnippet *snippet)
    {
-   if (pOutFile == NULL)
-      return;
+   TR::SymbolReference *symRef = snippet->getDestination();
+   TR::MethodSymbol *sym = symRef->getSymbol()->castToMethodSymbol();
 
-   TR::SymbolReference *symRef    = snippet->getDestination();
-   TR::MethodSymbol    *sym       = symRef->getSymbol()->castToMethodSymbol();
-   uint8_t            *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(symRef));
+   uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
+   printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(symRef));
 
-   trfprintf(pOutFile, "\t\t\t\t\t\t\t\t\t%s spine check snippet", commentString());
-
+   log->printf("\t\t\t\t\t\t\t\t\t%s spine check snippet", commentString());
    }
 
 
@@ -295,7 +288,7 @@ uint8_t *TR::X86CheckFailureSnippetWithResolve::emitSnippetBody()
    // Tag the value so that we can recognise the long case
    //
    if (getHasLiveXMMRs())
-         cpIndexValue |= resolveHasLiveXMMRs;
+      cpIndexValue |= resolveHasLiveXMMRs;
 
    *(int32_t *)buffer = (getNumLiveX87Registers() << 24) | dontPatchTag | longPushTag | cpIndexValue;
    buffer += 4;
@@ -393,7 +386,7 @@ uint8_t *TR::X86CheckFailureSnippetWithResolve::emitSnippetBody()
 
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::X86CheckFailureSnippetWithResolve * snippet)
+TR_Debug::print(TR::Logger *log, TR::X86CheckFailureSnippetWithResolve *snippet)
    {
 
    enum
@@ -402,59 +395,58 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86CheckFailureSnippetWithResolve * snip
       dontPatchTag = 0x00400000
       };
 
-   if (pOutFile == NULL)
-      return;
-   TR::SymbolReference *symRef    = snippet->getDestination();
-   TR::MethodSymbol    *sym       = symRef->getSymbol()->castToMethodSymbol();
-   uint8_t            *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(symRef));
+   TR::SymbolReference *symRef = snippet->getDestination();
+   TR::MethodSymbol *sym = symRef->getSymbol()->castToMethodSymbol();
+
+   uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
+   printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(symRef));
 
    TR::SymbolReference *methodSymRef = snippet->getNode()->getSymbolReference();
    TR::MethodSymbol    *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
    int32_t cpIndexValue = ((TR::X86CheckFailureSnippetWithResolve *)snippet)->getDataSymbolReference()->getCPIndex();
    int32_t size = 5;
 
-   printPrefix(pOutFile, NULL, bufferPos, size);
-   trfprintf(pOutFile, "push\t" POINTER_PRINTF_FORMAT "\t\t%s push return address which is the throw bellow", bufferPos+24,
+   printPrefix(log, NULL, bufferPos, size);
+   log->printf("push\t" POINTER_PRINTF_FORMAT "\t\t%s push return address which is the throw bellow", bufferPos+24,
                  commentString());
    bufferPos += 5;
 
    cpIndexValue |= dontPatchTag;
    cpIndexValue |= longPushTag;
-   printPrefix(pOutFile, NULL, bufferPos, size);
-   trfprintf(pOutFile, "push\t" POINTER_PRINTF_FORMAT "\t\t%s push cpIndex", cpIndexValue,
+   printPrefix(log, NULL, bufferPos, size);
+   log->printf("push\t" POINTER_PRINTF_FORMAT "\t\t%s push cpIndex", cpIndexValue,
                  commentString());
    bufferPos += size;
 
-   printPrefix(pOutFile, NULL, bufferPos, 5);
-   trfprintf(pOutFile,
+   printPrefix(log, NULL, bufferPos, 5);
+   log->printf(
            "push\t" POINTER_PRINTF_FORMAT "\t\t%s push address of constant pool",
                  getOwningMethod(methodSymRef)->constantPool(),
                  commentString());
    bufferPos += 5;
 
-   printPrefix(pOutFile, NULL, bufferPos, 5);
+   printPrefix(log, NULL, bufferPos, 5);
 
-   trfprintf(pOutFile, "call\tResolve Function For the Child to the NULLChk");
+   log->prints("call\tResolve Function For the Child to the NULLChk");
    bufferPos += 5;
 
    if (snippet->getRequiredFPstackPop())
       {
-      printPrefix(pOutFile, NULL, bufferPos, 2);
-      trfprintf(pOutFile, "fstp\tst(0)\t\t%s Discard top of FP stack",
+      printPrefix(log, NULL, bufferPos, 2);
+      log->printf("fstp\tst(0)\t\t%s Discard top of FP stack",
                     commentString());
       bufferPos += 2;
       }
 
-   printPrefix(pOutFile, NULL, bufferPos, 5);
-   trfprintf(pOutFile, "call\t%s \t\t%s Helper Address = " POINTER_PRINTF_FORMAT,
+   printPrefix(log, NULL, bufferPos, 5);
+   log->printf("call\t%s \t\t%s Helper Address = " POINTER_PRINTF_FORMAT,
                  getName(symRef),
                  commentString(),
                  sym->getMethodAddress());
    bufferPos += 5;
 
-   printPrefix(pOutFile, NULL, bufferPos, 4);
-   trfprintf(pOutFile,
+   printPrefix(log, NULL, bufferPos, 4);
+   log->printf(
                  "%s \t%s%08x%s",
                  ddString(),
                  hexPrefixString(),

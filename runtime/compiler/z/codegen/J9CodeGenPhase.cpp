@@ -34,6 +34,7 @@
 #include "codegen/InMemoryLoadStoreMarking.hpp"
 #include "codegen/ReduceSynchronizedFieldLoad.hpp"
 #include "codegen/UncommonBCDCHKAddressNode.hpp"
+#include "ras/Logger.hpp"
 
 // to decide if asyncchecks should be inserted at method exits
 #define BYTECODESIZE_THRESHOLD_FOR_ASYNCCHECKS  300
@@ -54,7 +55,7 @@ J9::Z::CodeGenPhase::performReduceSynchronizedFieldLoadPhase(TR::CodeGenerator *
       {
       if (cg->comp()->getOption(TR_TraceCG))
          {
-         cg->comp()->dumpMethodTrees("Post Reduce Synchronized Field Load Trees");
+         cg->comp()->dumpMethodTrees(cg->comp()->log(), "Post Reduce Synchronized Field Load Trees");
          }
       }
    }

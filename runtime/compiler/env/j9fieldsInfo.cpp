@@ -31,6 +31,7 @@
 #include "env/j9fieldsInfo.h"
 #include "env/IO.hpp"
 #include "env/CompilerEnv.hpp"
+#include "ras/Logger.hpp"
 
 #include "compile/Compilation.hpp"
 
@@ -75,10 +76,10 @@ TR_VMField::TR_VMField(TR::Compilation * comp, J9Class *aClazz, J9ROMFieldShape 
 }
 
 
-void TR_VMField::print(TR_FrontEnd *fe, TR::FILE *outFile)
-{
-   trfprintf(outFile, "name=%s signature=%s modifiers=0x%p offset=%d\n", name, signature, modifiers, offset);
-}
+void TR_VMField::print(TR::Logger *log, TR_FrontEnd *fe)
+   {
+   log->printf("name=%s signature=%s modifiers=0x%p offset=%d\n", name, signature, modifiers, offset);
+   }
 
 
 TR_VMFieldsInfo::TR_VMFieldsInfo(TR::Compilation * comp, J9Class *aClazz, int buildFields, TR_AllocationKind allocKind)
