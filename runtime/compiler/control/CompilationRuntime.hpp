@@ -817,6 +817,16 @@ public:
    void acquireLogMonitor();
    void releaseLogMonitor();
 
+#if !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED)
+   // Synchronize transient class caching
+   bool isClassLoaderMarkedTransient(J9ClassLoader *classLoader);
+   void markClassLoaderTransient(J9ClassLoader *classLoader);
+   void setTransientClassLoadersSet(PersistentUnorderedSet<J9ClassLoader*> *transientClassLoaders) { _transientClassLoaders = transientClassLoaders; }
+   PersistentUnorderedSet<J9ClassLoader*> *getTransientClassLoadersSet() { return _transientClassLoaders; }
+   TR::Monitor *getTransientClassLoaderMonitor() { return _transientClassLoaderMonitor; }
+   void setTransientClassLoadersMonitor(TR::Monitor *monitor) { _transientClassLoaderMonitor = monitor; }
+#endif /* !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED) */
+
    int32_t getQueueWeight() const { return _queueWeight; }
    void increaseQueueWeightBy(uint8_t w) { _queueWeight += (int32_t)w; }
    int32_t decreaseQueueWeightBy(uint8_t w) { TR_ASSERT((int32_t)w <= _queueWeight, "assertion failure"); return _queueWeight -= (int32_t)w; }
@@ -1321,6 +1331,10 @@ private:
       S390SupportsVectorFacility       = 0x00040000,
       DummyLastFlag
       };
+#if !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED)
+   TR::Monitor            *_transientClassLoaderMonitor;
+   PersistentUnorderedSet<J9ClassLoader*> *_transientClassLoaders;
+#endif /* !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED) */
 
 #ifdef DEBUG
    bool                   _traceCompiling;

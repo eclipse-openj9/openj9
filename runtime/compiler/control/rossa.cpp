@@ -1923,6 +1923,28 @@ onLoadInternal(
 
    jitConfig->jitAddNewLowToHighRSSRegion = jitAddNewLowToHighRSSRegion;
 
+#if !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED)
+   if (TR::Options::getCmdLineOptions()->getTransientClassRegex()
+#if defined(J9VM_OPT_JITSERVER)
+       && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
+#endif /* defined(J9VM_OPT_JITSERVER) */
+   )
+      {
+      compInfo->setTransientClassLoadersSet(new (PERSISTENT_NEW) PersistentUnorderedSet<J9ClassLoader*>(PersistentUnorderedSet<J9ClassLoader*>::allocator_type(TR::Compiler->persistentAllocator())));
+      if (!compInfo->getTransientClassLoadersSet())
+         {
+         fprintf(stderr, "Cannot create transient class loaders unordered set\n");
+         return -1;
+         }
+      compInfo->setTransientClassLoadersMonitor(TR::Monitor::create("JIT-TransientClassLoadersMonitor"));
+      if (!compInfo->getTransientClassLoaderMonitor())
+         {
+         fprintf(stderr, "Cannot create transient class loaders monitor\n");
+         return -1;
+         }
+      }
+#endif /* !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED) */
+
    return 0;
    }
 
