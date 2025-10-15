@@ -383,7 +383,7 @@ final class Access implements JavaLangAccess {
 	}
 	/*[ENDIF] (10 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 26) */
 
-	/*[IF ((10 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 26)) | INLINE-TYPES]*/
+	/*[IF (10 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 26)]*/
 	@Override
 	public byte[] getBytesUTF8NoRepl(String str) {
 		/*[IF JAVA_SPEC_VERSION < 17]*/
@@ -392,7 +392,7 @@ final class Access implements JavaLangAccess {
 		return String.getBytesUTF8NoRepl(str);
 		/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 	}
-	/*[ENDIF] ((10 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 26)) | INLINE-TYPES */
+	/*[ENDIF] (10 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 26) */
 
 	/*[IF JAVA_SPEC_VERSION >= 11]*/
 	@Override
@@ -424,7 +424,7 @@ final class Access implements JavaLangAccess {
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION < 25 */
 
-	/*[IF (JAVA_SPEC_VERSION == 25) | INLINE-TYPES]*/
+	/*[IF JAVA_SPEC_VERSION == 25]*/
 	@Override
 	public byte[] uncheckedGetBytesNoRepl(String str, Charset charset) throws CharacterCodingException {
 		return String.getBytesNoRepl(str, charset);
@@ -434,7 +434,7 @@ final class Access implements JavaLangAccess {
 	public String uncheckedNewStringNoRepl(byte[] bytes, Charset charset) throws CharacterCodingException {
 		return String.newStringNoRepl(bytes, charset);
 	}
-	/*[ENDIF] (JAVA_SPEC_VERSION == 25) | INLINE-TYPES */
+	/*[ENDIF] JAVA_SPEC_VERSION == 25 */
 	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 	/*[IF JAVA_SPEC_VERSION >= 12]*/
@@ -473,7 +473,7 @@ final class Access implements JavaLangAccess {
 		return StringConcatHelper.lookupStatic(arg0, type);
 	}
 
-	/*[IF (JAVA_SPEC_VERSION < 26) | INLINE-TYPES]*/
+	/*[IF JAVA_SPEC_VERSION < 26]*/
 	@Override
 	public long stringConcatInitialCoder() {
 		return StringConcatHelper.initialCoder();
@@ -483,7 +483,7 @@ final class Access implements JavaLangAccess {
 	public long stringConcatMix(long arg0, String string) {
 		return StringConcatHelper.mix(arg0, string);
 	}
-	/*[ENDIF] (JAVA_SPEC_VERSION < 26) | INLINE-TYPES */
+	/*[ENDIF] JAVA_SPEC_VERSION < 26 */
 	/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 	/*[IF JAVA_SPEC_VERSION >= 16]*/
@@ -607,12 +607,12 @@ final class Access implements JavaLangAccess {
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
-	/*[IF (JAVA_SPEC_VERSION < 26) | INLINE-TYPES]*/
+	/*[IF JAVA_SPEC_VERSION < 26]*/
 	@Override
 	public long stringConcatMix(long lengthCoder, char value) {
 		return StringConcatHelper.mix(lengthCoder, value);
 	}
-	/*[ENDIF] (JAVA_SPEC_VERSION < 26) | INLINE-TYPES */
+	/*[ENDIF] JAVA_SPEC_VERSION < 26 */
 
 	@Override
 	public PrintStream initialSystemErr() {
@@ -965,7 +965,6 @@ final class Access implements JavaLangAccess {
 		return clazz.getClassFileAccessFlags();
 	}
 
-	/*[IF !INLINE-TYPES]*/
 	@Override
 	public byte[] getBytesUTF8OrThrow(String s) throws CharacterCodingException {
 		return String.getBytesUTF8OrThrow(s);
@@ -980,7 +979,6 @@ final class Access implements JavaLangAccess {
 	public String uncheckedNewStringOrThrow(byte[] bytes, Charset cs) throws CharacterCodingException {
 		return String.newStringOrThrow(bytes, cs);
 	}
-	/*[ENDIF] !INLINE-TYPES */
 
 	@Override
 	public String uncheckedNewStringWithLatin1Bytes(byte[] src) {
