@@ -21,8 +21,6 @@
 ################################################################################
 
 set(OMR_GC_POINTER_MODE "mixed" CACHE STRING "")
-
-# OMR_MIXED_REFERENCES_MODE is set to 'static' or 'dynamic' in the extensions CMAKE_ARGS, but a default value is provided here just in case
 set(OMR_MIXED_REFERENCES_MODE "static" CACHE STRING "")
 
 include("${CMAKE_CURRENT_LIST_DIR}/cmprssptrs.cmake")
