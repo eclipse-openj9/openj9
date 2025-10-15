@@ -4848,7 +4848,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    /********************************************* Register setup *********************************************/
    TR::Register *dimsPtrReg = cg->evaluate(node->getFirstChild());
    TR::Register *sizeReg = cg->allocateRegister();
-   TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions(0,7,cg);
+   TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions(0,8,cg);
    dependencies->addPostCondition(sizeReg, TR::RealRegister::AssignAny);
    dependencies->addPostCondition(dimsPtrReg, TR::RealRegister::AssignAny);
 
@@ -4858,10 +4858,16 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
       OMR::align(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), alignmentConstant), cursor);
    iComment("Load discontinuous array size.");
 
-   if (node->getSecondChild()->getReferenceCount() > 1)
-      {
-      TR::Register *dimReg = cg->evaluate(node->getSecondChild());
-      }
+   /*
+    *  Although the number of dimensions remains constant and is not utilized through a register in the mainline ICF,
+    * it is referenced in the out-of-line (OOL) code section to set up call parameters. If the node has multiple
+    * reference counts, and it is not explicitly attached to the mainline dependency conditions, there is a risk
+    * that it may be spilled in the OOL path and reverse-spilled in another path. This can lead to unexpected behavior.
+    * To mitigate this, ensure that the dimension node is evaluated and explicitly attached to the mainline dependency.
+   */
+   TR::Register *dimReg = cg->evaluate(node->getSecondChild());
+   dependencies->addPostCondition(dimReg, TR::RealRegister::AssignAny);
+
    TR::Register *classReg = cg->gprClobberEvaluate(node->getThirdChild());
    dependencies->addPostCondition(classReg, TR::RealRegister::AssignAny);
 
