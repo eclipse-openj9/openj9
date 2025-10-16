@@ -1343,7 +1343,7 @@ getTypeId(J9VMThread *currentThread, J9Class *clazz)
 								sizeof(J9JFRTypeID),
 								sizeof(J9JFRTypeID *),
 								0,
-								J9MEM_CATEGORY_CLASSES,
+								J9MEM_CATEGORY_JFR,
 								jfrTypeIDHashFn,
 								jfrTypeIDHashEqualFn,
 								NULL,

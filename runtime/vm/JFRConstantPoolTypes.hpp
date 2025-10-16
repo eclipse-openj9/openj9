@@ -1749,55 +1749,55 @@ done:
 		, _previousNativeLibraryEntry(NULL)
 		, _requiredBufferSize(0)
 	{
-		_classTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(ClassEntry), sizeof(ClassEntry *), 0, J9MEM_CATEGORY_CLASSES, jfrClassHashFn, jfrClassHashEqualFn, NULL, _vm);
+		_classTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(ClassEntry), sizeof(ClassEntry *), 0, J9MEM_CATEGORY_JFR, jfrClassHashFn, jfrClassHashEqualFn, NULL, _vm);
 		if (NULL == _classTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_packageTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(PackageEntry), sizeof(PackageEntry *), 0, J9MEM_CATEGORY_CLASSES, jfrPackageHashFn, jfrPackageHashEqualFn, NULL, _vm);
+		_packageTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(PackageEntry), sizeof(PackageEntry *), 0, J9MEM_CATEGORY_JFR, jfrPackageHashFn, jfrPackageHashEqualFn, NULL, _vm);
 		if (NULL == _packageTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_classLoaderTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(ClassloaderEntry), sizeof(J9ClassLoader *), 0, J9MEM_CATEGORY_CLASSES, classloaderNameHashFn, classloaderNameHashEqualFn, NULL, _vm);
+		_classLoaderTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(ClassloaderEntry), sizeof(J9ClassLoader *), 0, J9MEM_CATEGORY_JFR, classloaderNameHashFn, classloaderNameHashEqualFn, NULL, _vm);
 		if (NULL == _classLoaderTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_methodTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(MethodEntry), sizeof(J9ROMMethod *), 0, J9MEM_CATEGORY_CLASSES, methodNameHashFn, methodNameHashEqualFn, NULL, _vm);
+		_methodTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(MethodEntry), sizeof(J9ROMMethod *), 0, J9MEM_CATEGORY_JFR, methodNameHashFn, methodNameHashEqualFn, NULL, _vm);
 		if (NULL == _methodTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_stringUTF8Table = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(StringUTF8Entry), sizeof(StringUTF8Entry *), 0, J9MEM_CATEGORY_CLASSES, jfrStringUTF8HashFn, jfrStringUTF8HashEqualFn, NULL, _vm);
+		_stringUTF8Table = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(StringUTF8Entry), sizeof(StringUTF8Entry *), 0, J9MEM_CATEGORY_JFR, jfrStringUTF8HashFn, jfrStringUTF8HashEqualFn, NULL, _vm);
 		if (NULL == _stringUTF8Table) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_moduleTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(ModuleEntry), sizeof(ModuleEntry *), 0, J9MEM_CATEGORY_CLASSES, jfrModuleHashFn, jfrModuleHashEqualFn, NULL, _vm);
+		_moduleTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(ModuleEntry), sizeof(ModuleEntry *), 0, J9MEM_CATEGORY_JFR, jfrModuleHashFn, jfrModuleHashEqualFn, NULL, _vm);
 		if (NULL == _moduleTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_threadTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(ThreadEntry), sizeof(U_64), 0, J9MEM_CATEGORY_CLASSES, threadHashFn, threadHashEqualFn, NULL, _currentThread);
+		_threadTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(ThreadEntry), sizeof(U_64), 0, J9MEM_CATEGORY_JFR, threadHashFn, threadHashEqualFn, NULL, _currentThread);
 		if (NULL == _threadTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_stackTraceTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(StackTraceEntry), sizeof(U_64), 0, J9MEM_CATEGORY_CLASSES, stackTraceHashFn, stackTraceHashEqualFn, NULL, _vm);
+		_stackTraceTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(StackTraceEntry), sizeof(U_64), 0, J9MEM_CATEGORY_JFR, stackTraceHashFn, stackTraceHashEqualFn, NULL, _vm);
 		if (NULL == _stackTraceTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_threadGroupTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(ThreadGroupEntry), sizeof(U_64), 0, J9MEM_CATEGORY_CLASSES, threadGroupHashFn, threadGroupHashEqualFn, NULL, _vm);
+		_threadGroupTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(ThreadGroupEntry), sizeof(U_64), 0, J9MEM_CATEGORY_JFR, threadGroupHashFn, threadGroupHashEqualFn, NULL, _vm);
 		if (NULL == _threadGroupTable) {
 			_buildResult = OutOfMemory;
 			goto done;
