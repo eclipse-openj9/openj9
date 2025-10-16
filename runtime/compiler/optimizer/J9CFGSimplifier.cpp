@@ -35,8 +35,8 @@
 
 bool J9::CFGSimplifier::simplifyIfPatterns(bool needToDuplicateTree)
    {
-   static char *enableCFGSimplification = feGetEnv("TR_enableCFGSimplificaiton");
-   if (enableCFGSimplification == NULL)
+   static const char *disableCFGSimplification = feGetEnv("TR_disableCFGSimplification");
+   if (disableCFGSimplification != NULL)
       return false;
 
    return OMR::CFGSimplifier::simplifyIfPatterns(needToDuplicateTree)
