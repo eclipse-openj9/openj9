@@ -6083,6 +6083,7 @@ typedef struct J9JavaVM {
 	struct J9MemorySegmentList* classMemorySegments;
 	UDATA stackSize;
 	UDATA ramClassAllocationIncrement;
+	UDATA ramClassSub4GAllocationIncrement;
 	UDATA romClassAllocationIncrement;
 	UDATA memoryMax;
 	UDATA directByteBufferMemoryMax;
