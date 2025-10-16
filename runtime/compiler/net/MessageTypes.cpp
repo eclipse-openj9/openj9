@@ -195,6 +195,7 @@ const char *messageNames[] =
    "VM_getMethodHandleTableEntryIndex",
    "VM_getLayoutVarHandle",
    "VM_mutableCallSiteEpoch",
+   "VM_numInterfacesImplemented",
    "CompInfo_isCompiled",
    "CompInfo_getPCIfCompiled",
    "CompInfo_getInvocationCount",
