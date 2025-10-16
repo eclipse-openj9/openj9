@@ -2310,7 +2310,8 @@ static void jitHookClassUnload(J9HookInterface * * hookInterface, UDATA eventNum
    bool p = TR::Options::getVerboseOption(TR_VerboseHookDetailsClassUnloading);
    if (p)
       {
-      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "Class unloading for class=0x%p", j9clazz);
+      J9UTF8 *className = J9ROMCLASS_CLASSNAME(j9clazz->romClass);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "Class unloading for class=0x%p name=%.*s", j9clazz, J9UTF8_LENGTH(className), (char*)J9UTF8_DATA(className));
       }
 
    PORT_ACCESS_FROM_JAVAVM(vmThread->javaVM);
