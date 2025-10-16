@@ -27,6 +27,8 @@
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
+			<variation>Mode501</variation>
+			<variation>Mode551</variation>
 		</variations>
 		<command>cp -r $(Q)$(TEST_RESROOT)$(D)URLHelperTests.jar$(Q) .; \
 	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) -xf URLHelperTests.jar; \
@@ -59,6 +61,8 @@
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
+			<variation>Mode501</variation>
+			<variation>Mode551</variation>
 		</variations>
 		<command>cp -r $(Q)$(TEST_RESROOT)$(D)URLHelperTests.jar$(Q) .; \
 	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) -xf URLHelperTests.jar; \
