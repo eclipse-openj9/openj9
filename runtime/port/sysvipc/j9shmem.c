@@ -1376,7 +1376,7 @@ j9shmem_createDir(struct J9PortLibrary* portLibrary, char* cacheDirName, uintptr
 
 	Trc_PRT_j9shmem_createDir_Entry();
 	if (0 == j9shmem_getDir(portLibrary, NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, pathBuffer, J9SH_MAXPATH)) {
-		if (0 == strcmp(cacheDirName, (const char*)pathBuffer)) {
+		if (0 == strcmp(cacheDirName, pathBuffer)) {
 			usingDefaultTmp = TRUE;
 		}
 	}
@@ -1415,8 +1415,7 @@ j9shmem_createDir(struct J9PortLibrary* portLibrary, char* cacheDirName, uintptr
 		if (cleanMemorySegments) {
 			cleanSharedMemorySegments(portLibrary);
 		}
-		/* Note that the createDirectory call may change pathBuffer */
-		rc = createDirectory(portLibrary, (char*)pathBuffer, cacheDirPerm);
+		rc = createDirectory(portLibrary, pathBuffer, cacheDirPerm);
 		if (J9SH_FAILED != rc) {
 			if (J9SH_DIRPERM_ABSENT == cacheDirPerm) {
 				if (usingDefaultTmp) {

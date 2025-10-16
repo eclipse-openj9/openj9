@@ -121,16 +121,15 @@ changeDirectoryPermission(struct J9PortLibrary *portLibrary, const char* pathnam
 		return J9SH_SUCCESS;
 	}
 }
-/* Note that the "pathname" parameter may be changed by this function */
+
 intptr_t
-createDirectory(struct J9PortLibrary *portLibrary, char *pathname, uintptr_t permission)
+createDirectory(struct J9PortLibrary *portLibrary, const char *pathname, uintptr_t permission)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	char tempPath[J9SH_MAXPATH];
-	char *current;
-	intptr_t rc;
+	char *current = NULL;
 
-	Trc_PRT_shared_createDirectory_Entry( pathname );
+	Trc_PRT_shared_createDirectory_Entry(pathname);
 
 	if (0 == omrfile_mkdir(pathname)) {
 		Trc_PRT_shared_createDirectory_Exit();
@@ -142,7 +141,7 @@ createDirectory(struct J9PortLibrary *portLibrary, char *pathname, uintptr_t per
 
 	omrstr_printf(tempPath, J9SH_MAXPATH, "%s", pathname);
 
-	current = strchr(tempPath+1, DIR_SEPARATOR); /* skip the first '/' */
+	current = strchr(tempPath + 1, DIR_SEPARATOR); /* Skip the first '/'. */
 
 	if ((J9SH_DIRPERM_ABSENT == permission)
 		|| (J9SH_DIRPERM_ABSENT_GROUPACCESS == permission)
@@ -150,38 +149,37 @@ createDirectory(struct J9PortLibrary *portLibrary, char *pathname, uintptr_t per
 		permission = J9SH_PARENTDIRPERM;
 	}
 
-	while ((NULL != current) && (omrfile_attr(pathname) != EsIsDir)) {
-		char *previous;
+	while ((NULL != current) && (EsIsDir != omrfile_attr(pathname))) {
+		char *previous = NULL;
 
-		*current='\0';
+		*current = '\0';
 
 #if defined(J9SHSEM_DEBUG)
-		portLibrary->tty_printf(portLibrary, "mkdir %s\n",tempPath);
+		portLibrary->tty_printf(portLibrary, "mkdir %s\n", tempPath);
 #endif
 
 		if (0 == omrfile_mkdir(tempPath)) {
 			Trc_PRT_shared_createDirectory_Event1(tempPath);
-			/* Change permission on new dir, note that for last dir in path this will be changed in ensureDirectory */
-			rc = changeDirectoryPermission(portLibrary, tempPath, permission);
-		} else {
-			/* check to see whether the directory has already been created, if it is, it should
-			return file exist error. If not we should return */
-			if (J9PORT_ERROR_FILE_EXIST != omrerror_last_error_number()) {
-				Trc_PRT_shared_createDirectory_Exit3(tempPath);
+			/* Change permission on new dir, note that for last dir in path
+			 * this will be changed in ensureDirectory().
+			 */
+			if (J9SH_SUCCESS != changeDirectoryPermission(portLibrary, tempPath, permission)) {
+				Trc_PRT_shared_createDirectory_Exit4(tempPath);
 				return J9SH_FAILED;
 			}
-			Trc_PRT_shared_createDirectory_Event2(tempPath);
-  		}
+		} else if (EsIsDir != omrfile_attr(tempPath)) {
+			Trc_PRT_shared_createDirectory_Exit3(tempPath);
+			return J9SH_FAILED;
+		}
 
 		previous = current;
-		current = strchr(current+1, DIR_SEPARATOR);
-		*previous=DIR_SEPARATOR;
+		current = strchr(current + 1, DIR_SEPARATOR);
+		*previous = DIR_SEPARATOR;
 	}
 
 	Trc_PRT_shared_createDirectory_Exit2();
 	return J9SH_SUCCESS;
 }
-
 
 /*
  * Note that this auto-clean function walks all shared memory segments on the system looking
