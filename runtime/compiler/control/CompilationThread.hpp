@@ -103,6 +103,9 @@ struct CompileParameters
          TR_Memory &trMemory,
          const TR::CompileIlGenRequest &ilGenRequest,
          bool checkpointInProgress
+#if defined(J9VM_OPT_JITSERVER)
+         , size_t numPermanentLoaders
+#endif
       ) :
       _compilationInfo(compilationInfo),
       _vm(vm),
@@ -114,6 +117,9 @@ struct CompileParameters
       _trMemory(trMemory),
       _ilGenRequest(ilGenRequest),
       _checkpointInProgress(checkpointInProgress)
+#if defined(J9VM_OPT_JITSERVER)
+      , _numPermanentLoaders(numPermanentLoaders)
+#endif
       {}
 
    TR_Memory *trMemory() { return &_trMemory; }
@@ -128,6 +134,10 @@ struct CompileParameters
    TR_Memory            &_trMemory;
    TR::CompileIlGenRequest  _ilGenRequest;
    bool _checkpointInProgress;
+
+#if defined(J9VM_OPT_JITSERVER)
+   size_t _numPermanentLoaders;
+#endif
    };
 
 #if defined(TR_HOST_S390)

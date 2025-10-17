@@ -78,50 +78,7 @@ public:
    void getPermanentLoaders(
       J9VMThread *vmThread, TR::vector<J9ClassLoader*, TR::Region&> &dest) const;
 
-#if defined(J9VM_OPT_JITSERVER)
-   /**
-    * \brief Get the number of permanent loaders that have been sent to the server.
-    *
-    * Loaders are expected to be sent in the order in which they were added.
-    *
-    * The caller must hold the sequencing monitor.
-    *
-    * \param compInfo the compilation info object
-    * \return the number of loaders
-    */
-   size_t numPermanentLoadersSentToServer(TR::CompilationInfo *compInfo) const;
-
-   /**
-    * \brief Add \p n to the number of permanent loaders sent to the server.
-    *
-    * The caller commits to send the next \p n loaders beyond those that were
-    * previously sent.
-    *
-    * The caller must hold the sequencing monitor.
-    *
-    * \param n the number of newly sent permanent loaders
-    * \param compInfo the compilation info object
-    */
-   void addPermanentLoadersSentToServer(size_t n, TR::CompilationInfo *compInfo);
-
-   /**
-    * \brief Reset the number of permanent loaders sent to the server to zero.
-    *
-    * This will cause a future compilation to send the loaders again, which is
-    * useful after connecting to a new server.
-    *
-    * The caller must hold the sequencing monitor.
-    *
-    * \param compInfo the compilation info object
-    */
-   void resetPermanentLoadersSentToServer(TR::CompilationInfo *compInfo);
-#endif
-
 private:
-
-#if defined(J9VM_OPT_JITSERVER)
-   void assertSequencingMonitorHeld(TR::CompilationInfo *compInfo) const;
-#endif
 
    friend class TR_Debug;
 
@@ -131,10 +88,6 @@ private:
    typedef TR::typed_allocator<J9ClassLoader*, TR::PersistentAllocator&> ClassLoaderPtrAlloc;
    typedef std::vector<J9ClassLoader*, ClassLoaderPtrAlloc> ClassLoaderPtrVec;
    ClassLoaderPtrVec _permanentLoaders; // protected by the class table mutex
-
-#if defined(J9VM_OPT_JITSERVER)
-   size_t _numPermanentLoadersSentToServer; // protected by the sequencing monitor
-#endif
 
    TR_ClassLoaderInfo *_loaderTable[CLASSLOADERTABLE_SIZE];
    TR_ClassLoaderInfo *_chainTable[CLASSLOADERTABLE_SIZE];
