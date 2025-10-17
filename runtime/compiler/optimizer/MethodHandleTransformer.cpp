@@ -78,15 +78,21 @@ static bool isKnownObject(TR::KnownObjectTable::Index objectInfo)
 
 int32_t TR_MethodHandleTransformer::perform()
    {
-   // Only do the opt for MethodHandle methods
+   // Only do the opt for LambdaForm generated methods, and for for peeking ILGen, since currently
+   // peeking ILGen is only triggered for MethodHandle/VarHandle-related cases to propagate object info
    TR_ResolvedMethod* currentMethod = comp()->getCurrentMethod();
-   if (!comp()->fej9()->isLambdaFormGeneratedMethod(currentMethod))
+   if (!comp()->fej9()->isLambdaFormGeneratedMethod(currentMethod) && !comp()->isPeekingMethod())
       return 0;
 
    TR::StackMemoryRegion stackMemoryRegion(*trMemory());
 
    if (trace())
-      traceMsg(comp(), "Start transforming LambdaForm generated method %s\n", currentMethod->signature(trMemory()));
+      {
+      if (comp()->isPeekingMethod())
+         traceMsg(comp(), "Start transforming peeking method %s\n", currentMethod->signature(trMemory()));
+      else
+         traceMsg(comp(), "Start transforming LambdaForm generated method %s\n", currentMethod->signature(trMemory()));
+      }
 
    // Assign local index to parms, autos and temps (including pending push temps)
    assignLocalIndices();
