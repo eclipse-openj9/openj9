@@ -402,7 +402,7 @@ public:
 
    // Get the length needed to contain the class chain associated with this class
    uintptr_t necessaryClassChainLength(J9Class *clazz) { return 2 + numInterfacesImplemented(clazz) + numSuperclasses(clazz); }
-   uint32_t numInterfacesImplemented(J9Class *clazz);
+   virtual uint32_t numInterfacesImplemented(J9Class *clazz);
    uintptr_t numSuperclasses(J9Class *clazz) { return TR::Compiler->cls.classDepthOf(convertClassPtrToClassOffset(clazz)); }
 
 protected:

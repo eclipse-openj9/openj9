@@ -2813,8 +2813,15 @@ TR_J9ServerVM::getArrayClassFromDataType(TR::DataType type, bool booleanClass)
          }
       }
 
-
    return convertClassPtrToClassOffset(j9class);
+   }
+
+uint32_t
+TR_J9ServerVM::numInterfacesImplemented(J9Class *clazz)
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITServer::MessageType::VM_numInterfacesImplemented, clazz);
+   return std::get<0>(stream->read<uint32_t>());
    }
 
 bool

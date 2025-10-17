@@ -206,6 +206,7 @@ enum MessageType : uint16_t
    VM_getMethodHandleTableEntryIndex,
    VM_getLayoutVarHandle,
    VM_mutableCallSiteEpoch,
+   VM_numInterfacesImplemented,
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled,
