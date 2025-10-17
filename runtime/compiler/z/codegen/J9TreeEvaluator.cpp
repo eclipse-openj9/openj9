@@ -4896,10 +4896,6 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
 
    TR::Register *dim2SizeReg = cg->allocateRegister();
    dependencies->addPostCondition(dim2SizeReg, TR::RealRegister::AssignAny);
-   cursor = generateRXInstruction(cg, TR::InstOpCode::LTGF, node, dim2SizeReg, generateS390MemoryReference(dimsPtrReg, 0, cg), cursor);
-   iComment("Load 2st dim length.");
-   // The size of zero length array is already loaded in size register. Jump over the array size calculation instructions if length is 0.
-   TR::LabelSymbol *zeroSecondDimLabel = generateLabelSymbol(cg);
 
    if (componentSize == 1)
       {
@@ -4918,10 +4914,23 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
       //  allocate inline is not frequent.
       cursor = generateRSInstruction(cg, TR::InstOpCode::SLA, node, dim2SizeReg, trailingZeroes(componentSize), cursor);
       }
-   // Bypass dim2 size calculation if the size is zero.
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, zeroSecondDimLabel, cursor);
-   // Call helper if the length is negative or length * componentSize is larger that INT32_MAX (overflow).
-   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK5, node, inlineAllocFailLabel, cursor);
+
+   TR::LabelSymbol *zeroSecondDimLabel = generateLabelSymbol(cg);
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+   bool isOffHeapAllocationEnabled = TR::Compiler->om.isOffHeapAllocationEnabled();
+   if (isOffHeapAllocationEnabled)
+      {
+      // Call helper if dim2 length is negative, zero, or larger that INT32_MAX (overflow).
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRNP, node, inlineAllocFailLabel, cursor);
+      }
+   else
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
+      {
+      // Bypass dim2 size calculation if the size is zero.
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, zeroSecondDimLabel, cursor);
+      // Call helper if the length is negative or length * componentSize is larger that INT32_MAX (overflow).
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK5, node, inlineAllocFailLabel, cursor);
+      }
 
    int32_t headerSize= TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
    // size = (size + alignmentConstant - 1) & -alignmentConstant equation round up the size to a factor of alignmentConstant.
@@ -5027,6 +5036,17 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    // Load the address of the first element of the first dimension array in sizeReg.
    cursor = generateRXInstruction(cg, TR::InstOpCode::LA, node, sizeReg,
       generateS390MemoryReference(resultReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cursor);
+
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+   if (isOffHeapAllocationEnabled)
+      {
+      // Store first element's address in data address field.
+      cursor = generateRXInstruction(cg, TR::InstOpCode::STG, node, sizeReg, generateS390MemoryReference(resultReg, fej9->getOffsetOfContiguousDataAddrField(), cg), cursor);
+      // Subtract the header size from the dim2 size, so we can move to the next leaf by adding this value to the address of the leaf's first element.
+      cursor = generateRILInstruction(cg, TR::InstOpCode::SLFI, node, dim2SizeReg, (int32_t)TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cursor);
+      }
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
+
    // Start setting second dim:
    TR::LabelSymbol *secondDimLabel = generateLabelSymbol(cg);
    cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, secondDimLabel, cursor);
@@ -5050,6 +5070,18 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
       cursor = generateRXInstruction(cg, (TR::Compiler->om.compressObjectReferences() ? TR::InstOpCode::ST : TR::InstOpCode::STG), node, dim1SizeReg,
          generateS390MemoryReference(sizeReg, 0, cg), cursor);
       }
+
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+   if (isOffHeapAllocationEnabled)
+      {
+      // Load the first element address.
+      cursor = generateRXInstruction(cg, TR::InstOpCode::LA, node, dim1SizeReg,
+         generateS390MemoryReference(dim1SizeReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cursor);
+      // Store the first element address in data address field.
+      cursor = generateRXInstruction(cg, TR::InstOpCode::STG, node, dim1SizeReg, generateS390MemoryReference(dim1SizeReg,
+         (fej9->getOffsetOfContiguousDataAddrField() - TR::Compiler->om.contiguousArrayHeaderSizeInBytes()), cg), cursor);
+      }
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
    // Load the next leaf address in dim1SizeReg.
    cursor = generateRREInstruction(cg, TR::InstOpCode::ALGFR, node, dim1SizeReg, dim2SizeReg, cursor);
@@ -5118,9 +5150,7 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
 
    if ((nDims == 2) && (componentSize > 0)
          && comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z196)
-         && !comp->suppressAllocationInlining()
-         // Temporarily disable inline allocation for offHeap.
-         && !TR::Compiler->om.isOffHeapAllocationEnabled())
+         && !comp->suppressAllocationInlining())
       {
       return generateMultianewArrayWithInlineAllocators(node, cg, componentSize);
       }
