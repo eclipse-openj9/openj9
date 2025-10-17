@@ -57,6 +57,7 @@
 #include "FinalizerSupport.hpp"
 #include "GlobalAllocationManager.hpp"
 #include "HeapRegionIteratorVLHGC.hpp"
+#include "HeapMemorySnapshot.hpp"
 #include "HeapStats.hpp"
 #include "IncrementalGenerationalGC.hpp"
 #include "InterRegionRememberedSet.hpp"
@@ -1324,7 +1325,12 @@ MM_IncrementalGenerationalGC::preProcessPGCUsingCopyForward(MM_EnvironmentVLHGC 
 	 *
 	 * NOTE: A second estimate for free tenure is later made - The lowest estimate for free tenure is used in heap sizing calculations
 	 */
-	_extensions->globalVLHGCStats._heapSizingData.freeTenure = freeMemoryForSurvivor;
+//	_extensions->globalVLHGCStats._heapSizingData.freeTenure = freeMemoryForSurvivor;
+
+	MM_HeapMemorySnapshot snapShot;
+	_regionManager->getHeapMemorySnapshot(_extensions, &snapShot, FALSE);
+	/* in some case free eden size is significant, should not be counted as freeTenure */
+	_extensions->globalVLHGCStats._heapSizingData.freeTenure = freeMemoryForSurvivor - snapShot._freeRegionEdenSize;
 
 	cycleState->_vlhgcIncrementStats._copyForwardStats._freeMemoryBefore = freeMemoryForSurvivor;
 	cycleState->_vlhgcIncrementStats._copyForwardStats._totalMemoryBefore = _extensions->getHeap()->getMemorySize();
