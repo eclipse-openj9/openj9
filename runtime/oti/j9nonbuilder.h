@@ -6553,6 +6553,7 @@ typedef struct J9JavaVM {
 	BOOLEAN pendingBlockedVirtualThreadsNotify;
 	I_64 unblockerWaitTime;
 #endif /* JAVA_SPEC_VERSION >= 24 */
+	omrthread_rwmutex_t jitArtifactMutex;
 } J9JavaVM;
 
 #define J9JFR_SAMPLER_STATE_UNINITIALIZED 0
