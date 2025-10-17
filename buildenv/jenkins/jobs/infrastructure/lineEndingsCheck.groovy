@@ -34,23 +34,31 @@ timeout(time: 6, unit: 'HOURS') {
         node (NODE_LABEL) {
             timestamps {
                 try {
-                    def remoteConfigParameters = [refspec: "+refs/pull/${ghprbPullId}/*:refs/remotes/origin/pr/${ghprbPullId}/* +refs/heads/${ghprbTargetBranch}:refs/remotes/origin/${ghprbTargetBranch}",
-                                                      url: SRC_REPO]
+                    def remoteConfigParameters = [
+                        refspec: "+refs/pull/${ghprbPullId}/*:refs/remotes/origin/pr/${ghprbPullId}/* +refs/heads/${ghprbTargetBranch}:refs/remotes/origin/${ghprbTargetBranch}",
+                        url: SRC_REPO
+                    ]
                     if (GIT_CREDENTIALS_ID) {
                         remoteConfigParameters.put("credentialsId", "${GIT_CREDENTIALS_ID}")
                     }
                     String REPO_CACHE_DIR = params.REPO_CACHE_DIR ?: "${env.HOME}/openjdk_cache"
 
-                    checkout changelog: false, poll: false,
-                            scm: [$class: 'GitSCM',
-                                branches: [[name: sha1]],
-                                doGenerateSubmoduleConfigurations: false,
-                                extensions: [[$class: 'CloneOption',
-                                                depth: 0,
-                                                noTags: false,
-                                                reference: "${REPO_CACHE_DIR}",
-                                                shallow: false]],
-                                userRemoteConfigs: [remoteConfigParameters]]
+                    checkout
+                        changelog: false,
+                        poll: false,
+                        scm: [
+                            $class: 'GitSCM',
+                            branches: [[name: sha1]],
+                            doGenerateSubmoduleConfigurations: false,
+                            extensions: [[
+                                $class: 'CloneOption',
+                                depth: 0,
+                                noTags: false,
+                                reference: "${REPO_CACHE_DIR}",
+                                shallow: false
+                            ]],
+                            userRemoteConfigs: [remoteConfigParameters]
+                        ]
 
                     if (GIT_CREDENTIALS_ID) {
                         sshagent(credentials:["${GIT_CREDENTIALS_ID}"]) {
@@ -65,7 +73,7 @@ timeout(time: 6, unit: 'HOURS') {
                     } else {
                         def FILES_LIST = FILES.split("\\r?\\n")
                         FILES_LIST.each() {
-                            println "Checking file: '${it}'"
+                            echo "Checking file: '${it}'"
                             TYPE = sh (
                                 script: "file -b '${it}'",
                                 returnStdout: true
@@ -80,7 +88,18 @@ timeout(time: 6, unit: 'HOURS') {
                                         case ~/.*\.bat/:
                                             switch (TYPE) {
                                                 case ~/.*CRLF line terminators.*/:
-                                                    echo "Good windows script: '${it}' type: '${TYPE}'"
+                                                    # check for CRLF at EOF
+                                                    NEWLINES = sh (
+                                                        script: "tail -c2 '${it}' | wc -l",
+                                                        returnStdout: true
+                                                    ).trim()
+                                                    if (NEWLINES == "1") {
+                                                        echo "Good Windows script: '${it}' type: '${TYPE}'"
+                                                    } else {
+                                                        echo "ERROR - should have final line terminator: '${it}' type: '${TYPE}'"
+                                                        FAIL = true
+                                                        BAD_FILES << "${it}"
+                                                    }
                                                     break
                                                 default:
                                                     echo "ERROR - should have CRLF line terminators: '${it}' type: '${TYPE}'"
@@ -95,7 +114,18 @@ timeout(time: 6, unit: 'HOURS') {
                                                     BAD_FILES << "${it}"
                                                     break
                                                 default:
-                                                    echo "Good text file: '${it}' type: '${TYPE}'"
+                                                    # check for LF at EOF
+                                                    NEWLINES = sh (
+                                                        script: "tail -c1 '${it}' | wc -l",
+                                                        returnStdout: true
+                                                    ).trim()
+                                                    if (NEWLINES == "1") {
+                                                        echo "Good text file: '${it}' type: '${TYPE}'"
+                                                    } else {
+                                                        echo "ERROR - should have final line terminator: '${it}' type: '${TYPE}'"
+                                                        FAIL = true
+                                                        BAD_FILES << "${it}"
+                                                    }
                                                     break
                                             }
                                     }
@@ -112,7 +142,7 @@ timeout(time: 6, unit: 'HOURS') {
                             echo "${HASHES}"
                             sh 'exit 1'
                         } else {
-                            println "Checking for added trailing whitespace..."
+                            echo "Checking for added trailing whitespace..."
                             if (GIT_CREDENTIALS_ID) {
                                 sshagent(credentials:["${GIT_CREDENTIALS_ID}"]) {
                                     WHITESPACE_ERRORS = get_whitespaces()
