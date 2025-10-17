@@ -249,29 +249,35 @@ void TR::S390EncodingRelocation::addRelocation(TR::CodeGenerator *cg, uint8_t *c
       }
    else if (_reloType==TR_CallsiteTableEntryAddress)
       {
-      cg->addExternalRelocation(
-         TR::ExternalRelocation::create(
-            cursor,
-            (uint8_t *)_symbolReference,
-            NULL,
-            TR_CallsiteTableEntryAddress,
-            cg),
-         file,
-         line,
-         node);
+      if (comp->compileRelocatableCode())
+         {
+         cg->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               cursor,
+               (uint8_t *)_symbolReference,
+               NULL,
+               TR_CallsiteTableEntryAddress,
+               cg),
+            file,
+            line,
+            node);
+         }
       }
    else if (_reloType==TR_MethodTypeTableEntryAddress)
       {
-      cg->addExternalRelocation(
-         TR::ExternalRelocation::create(
-            cursor,
-            (uint8_t *)_symbolReference,
-            NULL,
-            TR_MethodTypeTableEntryAddress,
-            cg),
-         file,
-         line,
-         node);
+      if (comp->compileRelocatableCode())
+         {
+         cg->addExternalRelocation(
+            TR::ExternalRelocation::create(
+               cursor,
+               (uint8_t *)_symbolReference,
+               NULL,
+               TR_MethodTypeTableEntryAddress,
+               cg),
+            file,
+            line,
+            node);
+         }
       }
    else
       {
