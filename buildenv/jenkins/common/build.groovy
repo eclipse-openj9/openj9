@@ -19,8 +19,8 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
-import groovy.json.JsonSlurper;
 import groovy.json.JsonOutput;
+import groovy.json.JsonSlurper;
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -313,13 +313,12 @@ def checkoutRef (REF) {
 
 def build() {
     stage('Compile') {
-        def freemarker_option = FREEMARKER ? "--with-freemarker-jar=${FREEMARKER}" : ""
         OPENJDK_CLONE_DIR = "${env.WORKSPACE}/${OPENJDK_CLONE_DIR}"
 
         withEnv(BUILD_ENV_VARS_LIST) {
             dir(OPENJDK_CLONE_DIR) {
                 try {
-                    sh "${BUILD_ENV_CMD} bash configure ${freemarker_option} --with-boot-jdk=${BOOT_JDK} ${EXTRA_CONFIGURE_OPTIONS} && ${get_compile_command()}"
+                    sh "${BUILD_ENV_CMD} bash configure --with-boot-jdk=${BOOT_JDK} ${EXTRA_CONFIGURE_OPTIONS} && ${get_compile_command()}"
                 } catch (Exception e) {
                     // last 5000 console output lines
                     LOG_MAX_LINES = params.LOG_MAX_LINES ? params.LOG_MAX_LINES.toInteger() : 5000
@@ -810,7 +809,7 @@ def _build_all() {
     try {
         cleanWorkspace(false)
         add_node_to_description()
-        // initialize BOOT_JDK, FREEMARKER, OPENJDK_REFERENCE_REPO here
+        // initialize BOOT_JDK and OPENJDK_REFERENCE_REPO here
         // to correctly expand $HOME variable
         variableFile.set_build_variables_per_node()
         get_source()
