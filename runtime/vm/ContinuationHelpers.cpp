@@ -380,6 +380,9 @@ freeContinuation(J9VMThread *currentThread, j9object_t continuationObject, BOOLE
 		/* Remove reverse link to vthread object. */
 		continuation->vthread = NULL;
 
+		pool_kill(continuation->monitorEnterRecordPool);
+		continuation->monitorEnterRecordPool = NULL;
+
 		if (NULL != continuation->objectWaitMonitor) {
 			bool errorNone = VM_ContinuationHelpers::removeBlockingContinuationFromLists(currentThread, continuation);
 			Assert_VM_true(errorNone);
@@ -451,11 +454,6 @@ T2:
 			vm->cacheFree += 1;
 			/* Caching failed, free the J9VMContinuation struct. */
 			freeJavaStack(vm, continuation->stackObject);
-#if JAVA_SPEC_VERSION >= 24
-			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
-				pool_kill(continuation->monitorEnterRecordPool);
-			}
-#endif /* JAVA_SPEC_VERSION >= 24 */
 			j9mem_free_memory(continuation);
 		}
 	}
