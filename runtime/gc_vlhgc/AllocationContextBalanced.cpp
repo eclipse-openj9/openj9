@@ -391,18 +391,27 @@ MM_AllocationContextBalanced::lockedAllocateArrayletLeaf(MM_EnvironmentBase *env
 		 * In future, allocations should remember (somewhere in Off-heap meta structures) how many regions came from each AC
 		 * \and release exact same number back to each AC.
 		 */
-		MM_AllocationContextTarok *commonContext = (MM_AllocationContextTarok *)env->getCommonAllocationContext();
-		if (this != commonContext) {
-			/* The common allocation context is always an instance of AllocationContextBalanced */
-			((MM_AllocationContextBalanced *)commonContext)->lockCommon();
+		MM_AllocationContextTarok *context = leafAllocateData->_owningContext;
+		if (NULL != leafAllocateData->_originalOwningContext) {
+			context = leafAllocateData->_originalOwningContext;
+		}
+		if (allocateDescription->getSharedReserved()) {
+			context = (MM_AllocationContextTarok *)env->getCommonAllocationContext();
 		}
 
-		leafAllocateData->pushRegionToArrayReservedRegionList(env, ((MM_AllocationContextBalanced *)commonContext)->getArrayReservedRegionListAddress());
-		((MM_AllocationContextBalanced *)commonContext)->incrementArrayReservedRegionCount();
+		Assert_MM_true(NULL != context);
 
-		if (this != commonContext) {
+		if (this != context) {
 			/* The common allocation context is always an instance of AllocationContextBalanced */
-			((MM_AllocationContextBalanced *)commonContext)->unlockCommon();
+			((MM_AllocationContextBalanced *)context)->lockCommon();
+		}
+
+		leafAllocateData->pushRegionToArrayReservedRegionList(env, ((MM_AllocationContextBalanced *)context)->getArrayReservedRegionListAddress());
+		((MM_AllocationContextBalanced *)context)->incrementArrayReservedRegionCount();
+
+		if (this != context) {
+			/* The common allocation context is always an instance of AllocationContextBalanced */
+			((MM_AllocationContextBalanced *)context)->unlockCommon();
 		}
 	}
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
@@ -719,6 +728,10 @@ MM_AllocationContextBalanced::acquireFreeRegionFromHeap(MM_EnvironmentBase *env)
 		} while ((NULL == region) && (firstTheftAttempt != _nextToSteal));
 	}
 
+	if (NULL != region) {
+		region->_allocateData._owningContext = this;
+	}
+
 	return region;
 }
 
@@ -967,7 +980,7 @@ MM_AllocationContextBalanced::lockedReplenishAndAllocate(MM_EnvironmentBase *env
 			MM_HeapRegionDescriptorVLHGC *leafRegion = acquireFreeRegionFromHeap(env);
 			if (NULL != leafRegion) {
 				result = lockedAllocateArrayletLeaf(env, allocateDescription, leafRegion);
-				leafRegion->_allocateData._owningContext = this;
+//				leafRegion->_allocateData._owningContext = this;
 				Assert_MM_true(leafRegion->getLowAddress() == result);
 				Trc_MM_AllocationContextBalanced_lockedReplenishAndAllocate_acquiredFreeRegion(env->getLanguageVMThread(), regionSize);
 			}
