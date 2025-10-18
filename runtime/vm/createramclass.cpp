@@ -2207,6 +2207,7 @@ internalCreateRAMClassDone(J9VMThread *vmThread, J9ClassLoader *classLoader, J9C
 		}
 
 #if defined(J9VM_OPT_JFR)
+		classLoader->loadedClassCount += 1;
 		javaVM->loadedClassCount += 1;
 #endif /* defined(J9VM_OPT_JFR) */
 
