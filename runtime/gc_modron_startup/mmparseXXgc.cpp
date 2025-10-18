@@ -1139,6 +1139,16 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
+		if (try_scan(&scan_start, "enableSizeToIndexInt")) {
+			extensions->shouldUseIntegerSizeToIndex = true;
+			continue;
+		}
+
+		if (try_scan(&scan_start, "disableSizeToIndexInt")) {
+			extensions->shouldUseIntegerSizeToIndex = false;
+			continue;
+		}
+
 		if (try_scan(&scan_start, "enableEstimateFragmentationGlobalGCOnly")) {
 			extensions->estimateFragmentation = GLOBALGC_ESTIMATE_FRAGMENTATION;
 			extensions->processLargeAllocateStats = true;
