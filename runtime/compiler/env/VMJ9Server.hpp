@@ -269,9 +269,10 @@ public:
    virtual bool isIndexableDataAddrPresent() override;
    virtual bool isOffHeapAllocationEnabled() override;
 
-   virtual TR_arrayTypeCode       getPrimitiveArrayTypeCode(TR_OpaqueClassBlock* clazz) override;
-   virtual TR::DataType           getClassPrimitiveDataType(TR_OpaqueClassBlock* clazz) override;
+   virtual TR_arrayTypeCode     getPrimitiveArrayTypeCode(TR_OpaqueClassBlock* clazz) override;
+   virtual TR::DataType         getClassPrimitiveDataType(TR_OpaqueClassBlock* clazz) override;
    virtual TR_OpaqueClassBlock *getArrayClassFromDataType(TR::DataType type, bool booleanClass) override;
+   virtual uint32_t numInterfacesImplemented(J9Class *clazz) override;
 
 private:
    bool instanceOfOrCheckCastHelper(J9Class *instanceClass, J9Class* castClass, bool cacheUpdate);
@@ -282,7 +283,7 @@ private:
 protected:
    void getResolvedMethodsAndMethods(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer, List<TR_ResolvedMethod> *resolvedMethodsInClass, J9Method **methods, uint32_t *numMethods);
    bool jitFieldsOrStaticsAreIdentical(TR_ResolvedMethod * method1, I_32 cpIndex1, TR_ResolvedMethod * method2, I_32 cpIndex2, int32_t isStatic);
-   };
+   }; // class TR_J9ServerVM
 
 /**
  * @class TR_J9SharedCacheServerVM

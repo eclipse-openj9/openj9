@@ -1323,6 +1323,12 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, result, resultRefLocation);
          }
          break;
+      case MessageType::VM_numInterfacesImplemented:
+         {
+         auto clazz = std::get<0>(client->getRecvData<J9Class *>());
+         client->write(response, fe->numInterfacesImplemented(clazz));
+         }
+         break;
       case MessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only
