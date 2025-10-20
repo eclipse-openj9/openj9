@@ -4384,6 +4384,10 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 		UDATA memoryType = MEMORY_TYPE_RAM_CLASS;
 		if (SK_SUB4G == segmentKind) {
 			memoryType |= MEMORY_TYPE_RAM_CLASS_SUB4G;
+		} else if (SK_ABOVE4G_FREQUENTLY_ACCESSED == segmentKind) {
+			memoryType |= MEMORY_TYPE_RAM_CLASS_ABOVE4G_FREQUENTLY_ACCESSED;
+		} else if (SK_ABOVE4G_INFREQUENTLY_ACCESSED == segmentKind) {
+			memoryType |= MEMORY_TYPE_RAM_CLASS_ABOVE4G_INFREQUENTLY_ACCESSED;
 		}
 		Trc_VM_internalAllocateRAMClass_AllocateClassMemorySegment(fragmentsLeftToAllocate, newSegmentSize, classAllocationIncrement);
 		newSegment = allocateClassMemorySegment(javaVM, newSegmentSize, memoryType, classLoader, classAllocationIncrement);

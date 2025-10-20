@@ -330,7 +330,7 @@ private :
 	void        writeGPCategory              (void *gpInfo, const char* prefix, U_32 category);
 	void        writeGPValue                 (const char* prefix, const char* name, U_32 kind, void* value);
 	void        writeJitMethod               (J9VMThread* vmThread);
-	void        writeSegments                (J9MemorySegmentList* list, BOOLEAN isCodeCacheSegment);
+	void        writeSegments                (J9MemorySegmentList* list, BOOLEAN isCodeCacheSegment, UDATA segmentSubType);
 	void        writeTraceHistory            (U_32 type);
 	void        writeGCHistoryLines          (UtThreadData** thr, UtTracePointIterator* iterator, const char* typePrefix);
 	void        writeDeadLocks               (void);
@@ -1610,15 +1610,29 @@ JavaCoreDumpWriter::writeMemorySection(void)
 		"1STSEGTYPE     Internal Memory\n"
 		SEGMENT_HEADER
 	);
-	writeSegments(_VirtualMachine->memorySegments, false);
+	writeSegments(_VirtualMachine->memorySegments, false, 0);
 
 	/* Write the class memory segments sub-section */
 	_OutputStream.writeCharacters(
 		"NULL\n"
-		"1STSEGTYPE     Class Memory\n"
+		"1STSEGTYPE     Class Memory Sub-4G\n"
 		SEGMENT_HEADER
 	);
-	writeSegments(_VirtualMachine->classMemorySegments, false);
+	writeSegments(_VirtualMachine->classMemorySegments, false, MEMORY_TYPE_RAM_CLASS_SUB4G);
+
+	_OutputStream.writeCharacters(
+		"NULL\n"
+		"1STSEGTYPE     Class Memory Above-4G Frequently Accessed\n"
+		SEGMENT_HEADER
+	);
+	writeSegments(_VirtualMachine->classMemorySegments, false, MEMORY_TYPE_RAM_CLASS_ABOVE4G_FREQUENTLY_ACCESSED);
+
+	_OutputStream.writeCharacters(
+		"NULL\n"
+		"1STSEGTYPE     Class Memory Above-4G Infrequently Accessed\n"
+		SEGMENT_HEADER
+	);
+	writeSegments(_VirtualMachine->classMemorySegments, false, MEMORY_TYPE_RAM_CLASS_ABOVE4G_INFREQUENTLY_ACCESSED);
 
 	/* Write the jit memory segments sub-section */
 #if defined(J9VM_INTERP_NATIVE_SUPPORT)
@@ -1628,7 +1642,7 @@ JavaCoreDumpWriter::writeMemorySection(void)
 			"1STSEGTYPE     JIT Code Cache\n"
 			SEGMENT_HEADER
 		);
-		writeSegments(_VirtualMachine->jitConfig->codeCacheList, true);
+		writeSegments(_VirtualMachine->jitConfig->codeCacheList, true, 0);
 
 		/* Write the limit specified for the code cache size as well. */
 		int decimalLength = (sizeof(void *) == 4) ? 10 : 20;
@@ -1643,7 +1657,7 @@ JavaCoreDumpWriter::writeMemorySection(void)
 			"1STSEGTYPE     JIT Data Cache\n"
 			SEGMENT_HEADER
 		);
-		writeSegments(_VirtualMachine->jitConfig->dataCacheList, false);
+		writeSegments(_VirtualMachine->jitConfig->dataCacheList, false, 0);
 		/* Write the limit specified for the data cache size as well. */
 		_OutputStream.writeCharacters("1STSEGLIMIT    ");
 		_OutputStream.writeCharacters("Allocation limit:    ");
@@ -3926,7 +3940,7 @@ JavaCoreDumpWriter::writeJitMethod(J9VMThread* vmThread)
 /*                                                                                                */
 /**************************************************************************************************/
 void
-JavaCoreDumpWriter::writeSegments(J9MemorySegmentList* list, BOOLEAN isCodeCacheSegment)
+JavaCoreDumpWriter::writeSegments(J9MemorySegmentList* list, BOOLEAN isCodeCacheSegment, UDATA segmentSubType)
 {
 	/* Loop through the segments writing their data */
 	J9MemorySegment* segment = list ? list->nextSegment : NULL;
@@ -3938,8 +3952,13 @@ JavaCoreDumpWriter::writeSegments(J9MemorySegmentList* list, BOOLEAN isCodeCache
 		UDATA warmAlloc = 0;
 		UDATA coldAlloc = 0;
 
-		if (MEMORY_TYPE_SHARED_META == segment->type) {
-			/* Discard the class cache metadata segment (it overlaps the last shared ROM class segment in the cache) */
+		if ((MEMORY_TYPE_SHARED_META == segment->type)
+		|| ((0 != segmentSubType) && J9_ARE_NO_BITS_SET(segment->type, segmentSubType))
+		) {
+			/* Skip:
+			 * - The class cache metadata segment (it overlaps the last shared ROM class segment in the cache).
+			 * - Any segment when a subType mask is provided and segment->type has no bits in common with that mask.
+			 */
 			segment = segment->nextSegment;
 			continue;
 		}
