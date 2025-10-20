@@ -853,6 +853,14 @@ Java_java_lang_Class_getEnclosingObject(JNIEnv *env, jobject recv)
 						} else if (isConstructor(romMethod)) {
 							resultObject = vm->reflectFunctions.createDeclaredConstructorObject(method, resolvedClass, NULL, currentThread);
 						}
+#if JAVA_SPEC_VERSION >= 25
+					} else {
+						/* There is an enclosing constructor or method from getEnclosingMethodForROMClass(),
+						 * but it can't be found, return its descriptor string for error handling.
+						 */
+						resultObject = vm->memoryManagerFunctions->j9gc_createJavaLangString(
+								currentThread, J9UTF8_DATA(enclosingMethodSigUTF), J9UTF8_LENGTH(enclosingMethodSigUTF), 0);
+#endif /* JAVA_SPEC_VERSION >= 25 */
 					}
 				}
 			}
