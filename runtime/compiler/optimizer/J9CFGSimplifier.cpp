@@ -71,9 +71,9 @@ bool J9::CFGSimplifier::simplifyIfPatterns(bool needToDuplicateTree)
 
 bool J9::CFGSimplifier::simplifyUnresolvedRequireNonNull(bool needToDuplicateTree)
    {
-   static char *disableSimplifyExplicitNULLTest = feGetEnv("TR_disableSimplifyExplicitNULLTest");
-   static char *disableSimplifyUnresolvedRequireNonNull = feGetEnv("TR_disableSimplifyUnresolvedRequireNonNull");
-   if (disableSimplifyExplicitNULLTest != NULL || disableSimplifyUnresolvedRequireNonNull != NULL)
+   static const char *enableSimplifyExplicitNULLTest = feGetEnv("TR_enableSimplifyExplicitNULLTest");
+   static const char *enableSimplifyUnresolvedRequireNonNull = feGetEnv("TR_enableSimplifyUnresolvedRequireNonNull");
+   if (enableSimplifyExplicitNULLTest == NULL || enableSimplifyUnresolvedRequireNonNull == NULL)
       return false;
 
    if (comp()->getOSRMode() == TR::involuntaryOSR)
@@ -242,9 +242,9 @@ bool J9::CFGSimplifier::simplifyUnresolvedRequireNonNull(bool needToDuplicateTre
 //
 bool J9::CFGSimplifier::simplifyResolvedRequireNonNull(bool needToDuplicateTree)
    {
-   static char *disableSimplifyExplicitNULLTest = feGetEnv("TR_disableSimplifyExplicitNULLTest");
-   static char *disableSimplifyResolvedRequireNonNull = feGetEnv("TR_disableSimplifyResolvedRequireNonNull");
-   if (disableSimplifyExplicitNULLTest != NULL || disableSimplifyResolvedRequireNonNull != NULL)
+   static const char *enableSimplifyExplicitNULLTest = feGetEnv("TR_enableSimplifyExplicitNULLTest");
+   static const char *enableSimplifyResolvedRequireNonNull = feGetEnv("TR_enableSimplifyResolvedRequireNonNull");
+   if (enableSimplifyExplicitNULLTest == NULL || enableSimplifyResolvedRequireNonNull == NULL)
       return false;
 
    if (comp()->getOSRMode() == TR::involuntaryOSR)
