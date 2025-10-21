@@ -324,7 +324,7 @@ J9::CodeCache::onClassRedefinition(TR_OpaqueMethodBlock *oldMethod, TR_OpaqueMet
 
    // scope for artifact manager critical section
       {
-      TR_TranslationArtifactManager::CriticalSection artifactManager;
+      TR_TranslationArtifactManager::ArtifactMutexSection artifactManager(true);
       // Test for anonymous class
       J9Class *j9clazz = J9_CLASS_FROM_METHOD((J9Method *)newMethod);
       if (_manager->fej9()->isAnonymousClass((TR_OpaqueClassBlock*)j9clazz))
@@ -357,7 +357,7 @@ J9::CodeCache::addUnresolvedMethod(void *constPool, int32_t constPoolIndex)
 
    // scope for artifact manager critical section
       {
-      TR_TranslationArtifactManager::CriticalSection artifactMgr;
+      TR_TranslationArtifactManager::ArtifactMutexSection artifactManager(true);
       // Test for anonymous class
       J9Class *j9clazz = J9_CLASS_FROM_CP(constPool);
       if (_manager->fej9()->isAnonymousClass((TR_OpaqueClassBlock*)j9clazz))
@@ -378,7 +378,7 @@ J9::CodeCache::addResolvedMethod(TR_OpaqueMethodBlock *method)
 
    // scope for artifact manager critical section
       {
-      TR_TranslationArtifactManager::CriticalSection artifactMgr;
+      TR_TranslationArtifactManager::ArtifactMutexSection artifactManager(true);
       // Test for anonymous class
       J9Class *j9clazz = J9_CLASS_FROM_METHOD(reinterpret_cast<J9Method *>(method));
       if (_manager->fej9()->isAnonymousClass((TR_OpaqueClassBlock*)j9clazz))
@@ -413,7 +413,7 @@ J9::CodeCache::resolveHashEntry(OMR::CodeCacheHashEntry *entry, TR_OpaqueMethodB
 
    // scope for artifact manager critical section
       {
-      TR_TranslationArtifactManager::CriticalSection artifactMgr;
+      TR_TranslationArtifactManager::ArtifactMutexSection artifactManager(true);
       // Test for anonymous class
       J9Class *j9clazz = J9_CLASS_FROM_METHOD(reinterpret_cast<J9Method *>(method));
      if (_manager->fej9()->isAnonymousClass((TR_OpaqueClassBlock*)j9clazz))

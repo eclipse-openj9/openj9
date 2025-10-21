@@ -1518,10 +1518,14 @@ J9JITExceptionTable * jitGetExceptionTableFromPC(J9VMThread * vmThread, UDATA ji
 			|| !(((maskedPC >= exceptionTable->startPC) && (maskedPC < exceptionTable->endWarmPC))
 				|| ((0 != exceptionTable->startColdPC) && (maskedPC >= exceptionTable->startColdPC) && (maskedPC < exceptionTable->endPC)))
 			) {
+				omrthread_rwmutex_enter_read(vmThread->javaVM->jitArtifactMutex);
 				exceptionTable = jit_artifact_search(vmThread->javaVM->jitConfig->translationArtifacts, maskedPC);
+				omrthread_rwmutex_exit_read(vmThread->javaVM->jitArtifactMutex);
 			}
 	 	} else {
+			omrthread_rwmutex_enter_read(vmThread->javaVM->jitArtifactMutex);
 			exceptionTable = jit_artifact_search(vmThread->javaVM->jitConfig->translationArtifacts, maskedPC);
+			omrthread_rwmutex_exit_read(vmThread->javaVM->jitArtifactMutex);
 			if (NULL != exceptionTable) {
 				cacheEntry->searchValue = maskedPC;
 				cacheEntry->exceptionTable = exceptionTable;
@@ -1531,7 +1535,10 @@ J9JITExceptionTable * jitGetExceptionTableFromPC(J9VMThread * vmThread, UDATA ji
 	}
 noCache:
 #endif /* J9JIT_ARTIFACT_SEARCH_CACHE_ENABLE */
-	return jit_artifact_search(vmThread->javaVM->jitConfig->translationArtifacts, maskedPC);
+	omrthread_rwmutex_enter_read(vmThread->javaVM->jitArtifactMutex);
+	J9JITExceptionTable * artifact = jit_artifact_search(vmThread->javaVM->jitConfig->translationArtifacts, maskedPC);
+	omrthread_rwmutex_exit_read(vmThread->javaVM->jitArtifactMutex);
+	return artifact;
 }
 
 
