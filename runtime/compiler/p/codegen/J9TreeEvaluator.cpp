@@ -12458,11 +12458,11 @@ static void performArrayCmp(TR::Node *node, TR::CodeGenerator *cg, TR::Register 
    generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, subStringMatchLabel, cr0Reg);
 
    /* There are at least 2 bytes left. If there are less than 4 bytes left jump to the 2 byte load section. */
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli4, node, cr6Reg, tempReg, 4);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli8, node, cr6Reg, tempReg, 4);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, skipLoad4Label, cr6Reg);
 
    /* There are at least 4 bytes left. If there are less than 8 bytes left jump to the 4 byte load section. */
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli4, node, cr6Reg, tempReg, 8);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli8, node, cr6Reg, tempReg, 8);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, skipLoad8Label, cr6Reg);
 
    /* There are 8 to 15 bytes left at this point. */
@@ -12481,7 +12481,7 @@ static void performArrayCmp(TR::Node *node, TR::CodeGenerator *cg, TR::Register 
    generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, subStringMatchLabel, cr0Reg);
 
    /* There are at least 2 bytes left. If there are less than 4 bytes left jump to the 2 byte load section. */
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli4, node, cr6Reg, tempReg, 4);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli8, node, cr6Reg, tempReg, 4);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, skipLoad4Label, cr6Reg);
 
    /* There are 4 to 7 bytes left at this point. */
@@ -12730,10 +12730,18 @@ static TR::Register *inlineIntrinsicIndexOfString(TR::Node *node, TR::CodeGenera
     * Calculate the actual addresses of the start and end points.
     * currentAddressReg is the address of the next character to load in the main string to compare against the substring.
     * endAddressReg is the address of the first character in the main string that does NOT need to be compared against the first character of the substring.
+    * The reason for this is it is known there can not be a match at that point because there aren't enough characters left in the main string.
+    *
+    * eg. Searching for the string "abcd" inside the string "0123456789".
+    *
+    *   0123456789
+    *          abcd
+    *
+    * endAddressReg will contain the address of the character "7". This is the point where a match for "abcd" is impossible since there are 3 characters left
+    * and the substring is 4 characters long. When endAddressReg is reached, the search ends and -1 is returned.
     */
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, resultReg, resultReg, isLatin1 ? 1 : 2);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, endAddressReg, endAddressReg, isLatin1 ? 1 : 2);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, currentAddressReg, arrayAddressReg, resultReg);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, currentAddressReg, currentAddressReg, isLatin1 ? 1 : 2);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, endAddressReg, arrayAddressReg, endAddressReg);
 
    /*
@@ -12751,7 +12759,7 @@ static TR::Register *inlineIntrinsicIndexOfString(TR::Node *node, TR::CodeGenera
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::vsplth, node, targetVectorReg, targetVectorReg, 3);
 
    /*
-    * targetVectorNotReg is a vector register set to all 0s.
+    * targetVectorNotReg is a vector register temporarily set to all 0s.
     * maskVectorReg is set to 0xFF for Latin1 and 0xFFFF for UTF16. This is later used to mask values in a vector register to prevent matching a second time.
     */
       {
@@ -12968,7 +12976,9 @@ static TR::Register *inlineIntrinsicIndexOfString(TR::Node *node, TR::CodeGenera
    /*
     * Now our vector is ready for comparison: no garbage can match the target value and the start of
     * the vector is now aligned to the start of the string.
-    * This jumps to foundFirstVectorLabel to check the rest of the substring. If it doesn't match, it jumps back to firstContinueLabel.
+    * The value loaded into searchVectorReg is compared with targetVectorReg to see if any of the characters matches the first character of the substring.
+    * If so, this jumps to foundFirstVectorLabel to check the rest of the substring. If it doesn't match, it falls through to firstContinueLabel.
+    * If this branch is taken but the rest of the substring does not match, it will jump back to firstContinueLabel.
     */
    generateTrg1Src2Instruction(cg, vectorCompareOp, node, vec2Reg, searchVectorReg, targetVectorReg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, foundFirstVectorLabel, cr6Reg);
@@ -12981,7 +12991,7 @@ static TR::Register *inlineIntrinsicIndexOfString(TR::Node *node, TR::CodeGenera
 
    /* This checks to see if there are any characters left to look at. */
    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, cr0Reg, currentAddressReg, endAddressReg);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, notFoundLabel, cr0Reg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, notFoundLabel, cr0Reg);
 
    /* This checks to see if there are less than 16 bytes of data left to look at. */
    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, cr0Reg, currentAddressReg, temp2Reg);
@@ -12990,9 +13000,13 @@ static TR::Register *inlineIntrinsicIndexOfString(TR::Node *node, TR::CodeGenera
    /* This is the heart of the vectorized loop, working just like any standard vectorized loop. */
    generateLabelInstruction(cg, TR::InstOpCode::label, node, vectorLoopLabel);
    generateTrg1MemInstruction(cg, TR::InstOpCode::lvx, node, searchVectorReg, TR::MemoryReference::createWithIndexReg(cg, zeroReg, currentAddressReg, 16));
-   generateTrg1Src2Instruction(cg, vectorCompareOp, node, vec2Reg, searchVectorReg, targetVectorReg);
 
-   /* This jumps to foundVectorLabel to check the rest of the substring. If it doesn't match, it jumps back to vectorContinueLabel. */
+   /*
+    * The value loaded into searchVectorReg is again compared with targetVectorReg to see if any of the characters matches the first character of the substring.
+    * If so, this jumps to foundVectorLabel to check the rest of the substring. If it doesn't match, it falls through to vectorContinueLabel.
+    * If this branch is taken but the rest of the substring does not match, it will jump back to vectorContinueLabel.
+    */
+   generateTrg1Src2Instruction(cg, vectorCompareOp, node, vec2Reg, searchVectorReg, targetVectorReg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, foundVectorLabel, cr6Reg);
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, vectorContinueLabel);
@@ -13004,7 +13018,7 @@ static TR::Register *inlineIntrinsicIndexOfString(TR::Node *node, TR::CodeGenera
 
    /* This checks to see if there are any characters left to look at. */
    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, cr0Reg, currentAddressReg, endAddressReg);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, notFoundLabel, cr0Reg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, notFoundLabel, cr0Reg);
 
    /* Now we're done with the part of the loop which can be handled as a normal vectorized loop. From here we handle the residue. */
    generateLabelInstruction(cg, TR::InstOpCode::label, node, residueLabel);
@@ -13043,7 +13057,8 @@ static TR::Register *inlineIntrinsicIndexOfString(TR::Node *node, TR::CodeGenera
 
    /*
     * If a first character match is found, jump to foundEndVectorLabel to check the rest of the substring.
-    * If it doesn't match, that section of code will jump to notFoundLabel to return -1.
+    * If there isn't a match, it falls through to notFoundLabel to return -1.
+    * If this branch is taken but the rest of the substring does not match, it will jump back to notFoundLabel to return -1.
     */
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, foundEndVectorLabel, cr6Reg);
 

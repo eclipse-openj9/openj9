@@ -98,7 +98,7 @@ J9::Power::CodeGenerator::initialize()
       !TR::Compiler->om.canGenerateArraylets())
       cg->setSupportsInlineStringIndexOf();
 
-   static bool disableIndexOfInlining = feGetEnv("TR_DisableIndexOfInlining") != NULL;
+   static bool disableIndexOfInlining = feGetEnv("TR_DisableStringIndexOfStringInlining") != NULL;
    if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && comp->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX) &&
       comp->target().is64Bit() && !comp->getOption(TR_DisableFastStringIndexOf) &&
       !TR::Compiler->om.canGenerateArraylets() &&
