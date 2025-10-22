@@ -4683,9 +4683,11 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
    static uint64_t lastDataCacheDisclaimTime = 0;
    static int32_t  lastNumAllocatedDataCaches = 0;
    static uint64_t lastCodeCacheDisclaimTime = 0;
+   static uint64_t lastClassMemoryDisclaimTime = 0;
    static int32_t  lastNumAllocatedCodeCaches = 0;
    static uint64_t lastIProfilerDisclaimTime = 0;
    static uint64_t lastSCCDisclaimTime = 0;
+   static uint64_t lastNumAllocatedClassMemorySegments = 0;
    static uint32_t lastNumCompilationsDuringIProfilerDisclaim = 0;
 
    J9JITConfig *jitConfig = compInfo->getJITConfig();
@@ -4756,6 +4758,27 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
 
             lastCodeCacheDisclaimTime = crtElapsedTime; // Update the time when disclaim was last performed
             lastNumAllocatedCodeCaches = TR::CodeCacheManager::instance()->getCurrentNumberOfCodeCaches();
+            }
+         }
+      }
+
+   // Use logic similar to Code caches above
+   if (J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_DISCLAIM_ROM_CLASS_MEMORY | J9_EXTENDED_RUNTIME3_DISCLAIM_RAM_CLASS_MEMORY))
+      {
+      // Ensure we don't do it too often
+      if (crtElapsedTime > lastClassMemoryDisclaimTime + 10 * TR::Options::_minTimeBetweenMemoryDisclaims)
+         {
+         J9InternalVMFunctions *vmFuncs = javaVM->internalVMFunctions;
+
+         // Disclaim if at least one class memory segment has been allocated since the last disclaim
+         // or if there was a large time interval since the last disclaim
+         if (vmFuncs->totalNumberOfDisclaimableClassMemorySegments(javaVM) > lastNumAllocatedClassMemorySegments ||
+             crtElapsedTime > lastClassMemoryDisclaimTime + 120 * TR::Options::_minTimeBetweenMemoryDisclaims)
+            {
+            vmFuncs->disclaimClassMemory(javaVM, 0);
+
+            lastClassMemoryDisclaimTime = crtElapsedTime; // Update the time when disclaim was last performed
+            lastNumAllocatedClassMemorySegments = vmFuncs->totalNumberOfDisclaimableClassMemorySegments(javaVM);
             }
          }
       }

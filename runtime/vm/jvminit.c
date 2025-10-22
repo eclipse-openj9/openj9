@@ -4074,6 +4074,44 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		}
 	}
 
+	{
+		IDATA disclaimIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XXCLASSMEMORYDISCLAIM, NULL);
+		if (0 <= disclaimIndex) {
+			PORT_ACCESS_FROM_JAVAVM(vm);
+#if defined(LINUX)
+			char *disclaimOption = NULL;
+			if (optionValueOperations(PORTLIB, vm->vmArgsArray, disclaimIndex, GET_OPTION, &disclaimOption, 0, '=', 0, NULL) == OPTION_OK) {
+				if (0 == strncmp(disclaimOption, VMOPT_XXCLASSMEMORYDISCLAIM_NONE, strlen(VMOPT_XXCLASSMEMORYDISCLAIM_NONE))) {
+					vm->extendedRuntimeFlags3 &= ~(UDATA) (J9_EXTENDED_RUNTIME3_DISCLAIM_ROM_CLASS_MEMORY | J9_EXTENDED_RUNTIME3_DISCLAIM_RAM_CLASS_MEMORY);
+				} else {
+					if (4096 != j9vmem_supported_page_sizes()[0]) {
+						j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNSUPPORTED_OPTION, VMOPT_XXCLASSMEMORYDISCLAIM);
+						return JNI_ERR;
+					}
+					if (0 == strncmp(disclaimOption, VMOPT_XXCLASSMEMORYDISCLAIM_ALL, strlen(VMOPT_XXCLASSMEMORYDISCLAIM_ALL))) {
+						/* TODO: Support others; only RAM Class is supported for the time being. */
+						vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_DISCLAIM_RAM_CLASS_MEMORY;
+						j9port_control(J9PORT_CTLDATA_MEM_32BIT, J9PORT_MEM_32BIT_FLAGS_TMP_FILE_BACKED_VMEM);
+					} else if (0 == strncmp(disclaimOption, VMOPT_XXCLASSMEMORYDISCLAIM_RAM, strlen(VMOPT_XXCLASSMEMORYDISCLAIM_RAM))) {
+						vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_DISCLAIM_RAM_CLASS_MEMORY;
+						j9port_control(J9PORT_CTLDATA_MEM_32BIT, J9PORT_MEM_32BIT_FLAGS_TMP_FILE_BACKED_VMEM);
+					}  else if (0 == strncmp(disclaimOption, VMOPT_XXCLASSMEMORYDISCLAIM_ROM, strlen(VMOPT_XXCLASSMEMORYDISCLAIM_ROM))) {
+						/* vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_DISCLAIM_ROM_CLASS_MEMORY; */
+						j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNSUPPORTED_OPTION, VMOPT_XXCLASSMEMORYDISCLAIM VMOPT_XXCLASSMEMORYDISCLAIM_ROM);
+						return JNI_ERR;
+					} else {
+						j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT, disclaimOption);
+						return JNI_ERR;
+					}
+				}
+			}
+#else /* defined(LINUX) */
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNSUPPORTED_OPTION, VMOPT_XXCLASSMEMORYDISCLAIM);
+			return JNI_ERR;
+#endif /* defined(LINUX) */
+		}
+	}
+
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	{
 		IDATA enableCRIU = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLECRIU, NULL);
