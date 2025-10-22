@@ -28,9 +28,6 @@ import static org.objectweb.asm.Opcodes.*;
 public class StrictFieldGenerator extends ClassLoader {
     private static StrictFieldGenerator generator = new StrictFieldGenerator();
 
-    // ACC_STRICT_INIT is not yet supported by ASM
-    private static final int ACC_STRICT_INIT = ACC_STRICT;
-
     public static Class<?> generateTestPutStrictFinalFieldLateLarval() {
         String className = "TestPutStrictFinalFieldLateLarval";
         return generateTestPutStrictFinalField(className, true, false);
@@ -50,7 +47,7 @@ public class StrictFieldGenerator extends ClassLoader {
             ACC_PUBLIC + ValhallaUtils.ACC_IDENTITY,
             className, null, "java/lang/Object", null);
 
-        cw.visitField(ACC_STRICT_INIT | ACC_FINAL, fieldName, fieldDesc, null, null);
+        cw.visitField(ValhallaUtils.ACC_STRICT_INIT | ACC_FINAL, fieldName, fieldDesc, null, null);
 
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
         mv.visitCode();
@@ -114,9 +111,9 @@ public class StrictFieldGenerator extends ClassLoader {
             ACC_PUBLIC + ValhallaUtils.ACC_IDENTITY,
             className, null, "java/lang/Object", null);
 
-        cw.visitField(ACC_STATIC | ACC_STRICT_INIT | ACC_FINAL, fieldName, fieldDesc, null, null);
+        cw.visitField(ACC_STATIC | ValhallaUtils.ACC_STRICT_INIT | ACC_FINAL, fieldName, fieldDesc, null, null);
         if (secondField) {
-            cw.visitField(ACC_STATIC | ACC_STRICT_INIT | ACC_FINAL, fieldName2, fieldDesc, null, null);
+            cw.visitField(ACC_STATIC | ValhallaUtils.ACC_STRICT_INIT | ACC_FINAL, fieldName2, fieldDesc, null, null);
         }
 
         MethodVisitor mv = cw.visitMethod(ACC_STATIC, "<clinit>", "()V", null, null);
@@ -176,10 +173,10 @@ public class StrictFieldGenerator extends ClassLoader {
             ACC_PUBLIC + ValhallaUtils.ACC_IDENTITY,
             className, null, "java/lang/Object", null);
 
-        cw.visitField(ACC_STRICT_INIT, fieldName, fieldDesc, null, null);
+        cw.visitField(ValhallaUtils.ACC_STRICT_INIT, fieldName, fieldDesc, null, null);
         if (multipleFields) {
-            cw.visitField(ACC_STRICT_INIT, fieldName2, fieldDesc, null, null);
-            cw.visitField(ACC_STRICT_INIT, fieldName3, fieldDesc, null, null);
+            cw.visitField(ValhallaUtils.ACC_STRICT_INIT, fieldName2, fieldDesc, null, null);
+            cw.visitField(ValhallaUtils.ACC_STRICT_INIT, fieldName3, fieldDesc, null, null);
         }
 
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
@@ -217,7 +214,7 @@ public class StrictFieldGenerator extends ClassLoader {
     private static Class<?> generateTestInstanceStrictFieldThisInit(String className, boolean finalField) {
         String fieldName = "i";
         String fieldDesc = "I";
-        int fieldFlags = ACC_STRICT_INIT | (finalField ? ACC_FINAL : 0);
+        int fieldFlags = ValhallaUtils.ACC_STRICT_INIT | (finalField ? ACC_FINAL : 0);
 
         ClassWriter cw = new ClassWriter(0);
         cw.visit(ValhallaUtils.VALUE_TYPE_CLASS_FILE_VERSION,
@@ -253,5 +250,66 @@ public class StrictFieldGenerator extends ClassLoader {
         cw.visitEnd();
         byte[] bytes = cw.toByteArray();
         return generator.defineClass(className, cw.toByteArray(), 0, bytes.length);
+    }
+
+    public static Class<?> generateTestIfNonNullUninitializedThis() {
+	    String className = "TestIfNonNullUninitializedThis";
+	    return generateUninitializedValueField(className, false, true, false, false);
+    }
+
+    public static Class<?> generateTestIfNullUninitializedThis() {
+	    String className = "TestIfNullUninitializedThis";
+	    return generateUninitializedValueField(className, true, false, false, false);
+    }
+
+    public static Class<?> generateTestIfAcmpeqUninitializedValue() {
+	    String className = "TestIfAcmpeqUninitializedValue";
+	    return generateUninitializedValueField(className, false, false, true, false);
+    }
+
+    public static Class<?> generateTestIfAcmpneUninitializedValue() {
+	    String className = "TestIfAcmpneUninitializedValue";
+	    return generateUninitializedValueField(className, false, false, false, true);
+    }
+
+    private static Class<?> generateUninitializedValueField(String className, boolean ifNull, boolean ifNonNull, boolean ifAcmpeq, boolean ifAcmpne) {
+	    ClassWriter cw = new ClassWriter(0);
+	    cw.visit(ValhallaUtils.VALUE_TYPE_CLASS_FILE_VERSION,
+			    ACC_PUBLIC + ValhallaUtils.ACC_IDENTITY,
+			    className, null, "java/lang/Object", null);
+	    MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
+	    mv.visitCode();
+	    Label label = new Label();
+
+	    if (ifNull || ifNonNull) {
+		    mv.visitVarInsn(ALOAD, 0);
+		    if (ifNull) {
+			    mv.visitJumpInsn(IFNULL, label);
+		    } else {
+			    mv.visitJumpInsn(IFNONNULL, label);
+		    }
+		    mv.visitInsn(NOP);
+	    }
+
+	     if (ifAcmpeq || ifAcmpne) {
+		     mv.visitTypeInsn(NEW, "java/lang/Object");
+		     mv.visitInsn(DUP);
+		     mv.visitVarInsn(ALOAD, 0);
+		     if (ifAcmpeq) {
+			     mv.visitJumpInsn(IF_ACMPEQ, label);
+		     } else {
+			     mv.visitJumpInsn(IF_ACMPNE, label);
+		     }
+		     mv.visitInsn(NOP);
+	     }
+	     mv.visitLabel(label);
+	     mv.visitVarInsn(ALOAD, 0);
+	     mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+	     mv.visitInsn(RETURN);
+	     mv.visitMaxs(3, 1);
+	     mv.visitEnd();
+	     cw.visitEnd();
+	     byte[] bytes = cw.toByteArray();
+	     return generator.defineClass(className, bytes, 0, bytes.length);
     }
 }

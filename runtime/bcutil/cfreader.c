@@ -1687,6 +1687,9 @@ checkFields(J9PortLibrary* portLib, J9CfrClassFile * classfile, U_8 * segment, U
 	U_32 value, maskedValue, errorCode, offset = 0;
 	U_32 i;
 	U_8 sigChar, sigTag, constantTag;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	BOOLEAN valueTypeClass = J9_IS_CLASSFILE_VALUETYPE(classfile);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 	for (i = 0; i < classfile->fieldsCount; i++) {
 		field = &(classfile->fields[i]);
@@ -1717,6 +1720,17 @@ checkFields(J9PortLibrary* portLib, J9CfrClassFile * classfile, U_8 * segment, U
 			errorCode = J9NLS_CFR_ERR_FINAL_VOLATILE_FIELD__ID;
 			goto _errorFound;
 		}
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (valueTypeClass) {
+			if (J9_ARE_NO_BITS_SET(field->accessFlags, CFR_ACC_STATIC)) {
+				if (!J9_ARE_ALL_BITS_SET(field->accessFlags, CFR_ACC_FINAL | CFR_ACC_STRICT_INIT)) {
+					errorCode = J9NLS_CFR_ERR_NON_STATIC_FIELD_MUST_BE_FINAL_STRICT_INIT__ID;
+					goto _errorFound;
+				}
+			}
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 		offset = 2;
 		value = field->nameIndex;

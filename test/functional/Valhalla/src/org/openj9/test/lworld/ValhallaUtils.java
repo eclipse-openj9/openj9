@@ -23,6 +23,8 @@ package org.openj9.test.lworld;
 
 import org.objectweb.asm.*;
 
+import static org.objectweb.asm.Opcodes.*;
+
 public class ValhallaUtils {
 	/**
 	 * Currently value type is built on JDK26, so use java file major version (44 + 26) for now.
@@ -34,6 +36,7 @@ public class ValhallaUtils {
 
 	/* workaround till the new ASM is released */
 	static final int ACC_IDENTITY = 0x20;
+	static final int ACC_STRICT_INIT = ACC_STRICT;
 
 	/* ImplicitCreation flags */
 	static final int ACC_DEFAULT = 0x1;
