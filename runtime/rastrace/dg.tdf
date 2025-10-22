@@ -27,330 +27,330 @@
 Executable=dg
 DATFileName=J9TraceFormat.dat
 
-TraceDebug=Trc_TimerWrap       Overhead=1
-TraceDebug=Trc_RecordOverX0100 Overhead=1
-TraceDebug=Trc_RecordOverX0200 Overhead=1
-TraceDebug=Trc_RecordOverX0300 Overhead=1
-TraceDebug=Trc_RecordOverX0400 Overhead=1
-TraceDebug=Trc_RecordOverX0500 Overhead=1
-TraceDebug=Trc_RecordOverX0600 Overhead=1
-TraceDebug=Trc_RecordOverX0700 Overhead=1
-TraceDebug=Trc_RecordOverX0800 Overhead=1
-TraceDebug=Trc_RecordOverX0900 Overhead=1
-TraceDebug=Trc_RecordOverX0A00 Overhead=1
-TraceDebug=Trc_RecordOverX0B00 Overhead=1
-TraceDebug=Trc_RecordOverX0C00 Overhead=1
-TraceDebug=Trc_RecordOverX0D00 Overhead=1
-TraceDebug=Trc_RecordOverX0E00 Overhead=1
-TraceDebug=Trc_RecordOverX0F00 Overhead=1
-TraceDebug=Trc_RecordOverX1000 Overhead=1
-TraceDebug=Trc_RecordOverX1100 Overhead=1
-TraceDebug=Trc_RecordOverX1200 Overhead=1
-TraceDebug=Trc_RecordOverX1300 Overhead=1
-TraceDebug=Trc_RecordOverX1400 Overhead=1
-TraceDebug=Trc_RecordOverX1500 Overhead=1
-TraceDebug=Trc_RecordOverX1600 Overhead=1
-TraceDebug=Trc_RecordOverX1700 Overhead=1
-TraceDebug=Trc_RecordOverX1800 Overhead=1
-TraceDebug=Trc_RecordOverX1900 Overhead=1
-TraceDebug=Trc_RecordOverX1A00 Overhead=1
-TraceDebug=Trc_RecordOverX1B00 Overhead=1
-TraceDebug=Trc_RecordOverX1C00 Overhead=1
-TraceDebug=Trc_RecordOverX1D00 Overhead=1
-TraceDebug=Trc_RecordOverX1E00 Overhead=1
-TraceDebug=Trc_RecordOverX1F00 Overhead=1
-TraceDebug=Trc_RecordOverX2000 Overhead=1
-TraceDebug=Trc_RecordOverX2100 Overhead=1
-TraceDebug=Trc_RecordOverX2200 Overhead=1
-TraceDebug=Trc_RecordOverX2300 Overhead=1
-TraceDebug=Trc_RecordOverX2400 Overhead=1
-TraceDebug=Trc_RecordOverX2500 Overhead=1
-TraceDebug=Trc_RecordOverX2600 Overhead=1
-TraceDebug=Trc_RecordOverX2700 Overhead=1
-TraceDebug=Trc_RecordOverX2800 Overhead=1
-TraceDebug=Trc_RecordOverX2900 Overhead=1
-TraceDebug=Trc_RecordOverX2A00 Overhead=1
-TraceDebug=Trc_RecordOverX2B00 Overhead=1
-TraceDebug=Trc_RecordOverX2C00 Overhead=1
-TraceDebug=Trc_RecordOverX2D00 Overhead=1
-TraceDebug=Trc_RecordOverX2E00 Overhead=1
-TraceDebug=Trc_RecordOverX2F00 Overhead=1
-TraceDebug=Trc_RecordOverX3000 Overhead=1
-TraceDebug=Trc_RecordOverX3100 Overhead=1
-TraceDebug=Trc_RecordOverX3200 Overhead=1
-TraceDebug=Trc_RecordOverX3300 Overhead=1
-TraceDebug=Trc_RecordOverX3400 Overhead=1
-TraceDebug=Trc_RecordOverX3500 Overhead=1
-TraceDebug=Trc_RecordOverX3600 Overhead=1
-TraceDebug=Trc_RecordOverX3700 Overhead=1
-TraceDebug=Trc_RecordOverX3800 Overhead=1
-TraceDebug=Trc_RecordOverX3900 Overhead=1
-TraceDebug=Trc_RecordOverX3A00 Overhead=1
-TraceDebug=Trc_RecordOverX3B00 Overhead=1
-TraceDebug=Trc_RecordOverX3C00 Overhead=1
-TraceDebug=Trc_RecordOverX3D00 Overhead=1
-TraceDebug=Trc_RecordOverX3E00 Overhead=1
-TraceDebug=Trc_RecordOverX3F00 Overhead=1
-TraceDebug=Trc_RecordOverX4000 Overhead=1
-TraceDebug=Trc_RecordOverX4100 Overhead=1
-TraceDebug=Trc_RecordOverX4200 Overhead=1
-TraceDebug=Trc_RecordOverX4300 Overhead=1
-TraceDebug=Trc_RecordOverX4400 Overhead=1
-TraceDebug=Trc_RecordOverX4500 Overhead=1
-TraceDebug=Trc_RecordOverX4600 Overhead=1
-TraceDebug=Trc_RecordOverX4700 Overhead=1
-TraceDebug=Trc_RecordOverX4800 Overhead=1
-TraceDebug=Trc_RecordOverX4900 Overhead=1
-TraceDebug=Trc_RecordOverX4A00 Overhead=1
-TraceDebug=Trc_RecordOverX4B00 Overhead=1
-TraceDebug=Trc_RecordOverX4C00 Overhead=1
-TraceDebug=Trc_RecordOverX4D00 Overhead=1
-TraceDebug=Trc_RecordOverX4E00 Overhead=1
-TraceDebug=Trc_RecordOverX4F00 Overhead=1
-TraceDebug=Trc_RecordOverX5000 Overhead=1
-TraceDebug=Trc_RecordOverX5100 Overhead=1
-TraceDebug=Trc_RecordOverX5200 Overhead=1
-TraceDebug=Trc_RecordOverX5300 Overhead=1
-TraceDebug=Trc_RecordOverX5400 Overhead=1
-TraceDebug=Trc_RecordOverX5500 Overhead=1
-TraceDebug=Trc_RecordOverX5600 Overhead=1
-TraceDebug=Trc_RecordOverX5700 Overhead=1
-TraceDebug=Trc_RecordOverX5800 Overhead=1
-TraceDebug=Trc_RecordOverX5900 Overhead=1
-TraceDebug=Trc_RecordOverX5A00 Overhead=1
-TraceDebug=Trc_RecordOverX5B00 Overhead=1
-TraceDebug=Trc_RecordOverX5C00 Overhead=1
-TraceDebug=Trc_RecordOverX5D00 Overhead=1
-TraceDebug=Trc_RecordOverX5E00 Overhead=1
-TraceDebug=Trc_RecordOverX5F00 Overhead=1
-TraceDebug=Trc_RecordOverX6000 Overhead=1
-TraceDebug=Trc_RecordOverX6100 Overhead=1
-TraceDebug=Trc_RecordOverX6200 Overhead=1
-TraceDebug=Trc_RecordOverX6300 Overhead=1
-TraceDebug=Trc_RecordOverX6400 Overhead=1
-TraceDebug=Trc_RecordOverX6500 Overhead=1
-TraceDebug=Trc_RecordOverX6600 Overhead=1
-TraceDebug=Trc_RecordOverX6700 Overhead=1
-TraceDebug=Trc_RecordOverX6800 Overhead=1
-TraceDebug=Trc_RecordOverX6900 Overhead=1
-TraceDebug=Trc_RecordOverX6A00 Overhead=1
-TraceDebug=Trc_RecordOverX6B00 Overhead=1
-TraceDebug=Trc_RecordOverX6C00 Overhead=1
-TraceDebug=Trc_RecordOverX6D00 Overhead=1
-TraceDebug=Trc_RecordOverX6E00 Overhead=1
-TraceDebug=Trc_RecordOverX6F00 Overhead=1
-TraceDebug=Trc_RecordOverX7000 Overhead=1
-TraceDebug=Trc_RecordOverX7100 Overhead=1
-TraceDebug=Trc_RecordOverX7200 Overhead=1
-TraceDebug=Trc_RecordOverX7300 Overhead=1
-TraceDebug=Trc_RecordOverX7400 Overhead=1
-TraceDebug=Trc_RecordOverX7500 Overhead=1
-TraceDebug=Trc_RecordOverX7600 Overhead=1
-TraceDebug=Trc_RecordOverX7700 Overhead=1
-TraceDebug=Trc_RecordOverX7800 Overhead=1
-TraceDebug=Trc_RecordOverX7900 Overhead=1
-TraceDebug=Trc_RecordOverX7A00 Overhead=1
-TraceDebug=Trc_RecordOverX7B00 Overhead=1
-TraceDebug=Trc_RecordOverX7C00 Overhead=1
-TraceDebug=Trc_RecordOverX7D00 Overhead=1
-TraceDebug=Trc_RecordOverX7E00 Overhead=1
-TraceDebug=Trc_RecordOverX7F00 Overhead=1
-TraceDebug=Trc_RecordOverX8000 Overhead=1
-TraceDebug=Trc_RecordOverX8100 Overhead=1
-TraceDebug=Trc_RecordOverX8200 Overhead=1
-TraceDebug=Trc_RecordOverX8300 Overhead=1
-TraceDebug=Trc_RecordOverX8400 Overhead=1
-TraceDebug=Trc_RecordOverX8500 Overhead=1
-TraceDebug=Trc_RecordOverX8600 Overhead=1
-TraceDebug=Trc_RecordOverX8700 Overhead=1
-TraceDebug=Trc_RecordOverX8800 Overhead=1
-TraceDebug=Trc_RecordOverX8900 Overhead=1
-TraceDebug=Trc_RecordOverX8A00 Overhead=1
-TraceDebug=Trc_RecordOverX8B00 Overhead=1
-TraceDebug=Trc_RecordOverX8C00 Overhead=1
-TraceDebug=Trc_RecordOverX8D00 Overhead=1
-TraceDebug=Trc_RecordOverX8E00 Overhead=1
-TraceDebug=Trc_RecordOverX8F00 Overhead=1
-TraceDebug=Trc_RecordOverX9000 Overhead=1
-TraceDebug=Trc_RecordOverX9100 Overhead=1
-TraceDebug=Trc_RecordOverX9200 Overhead=1
-TraceDebug=Trc_RecordOverX9300 Overhead=1
-TraceDebug=Trc_RecordOverX9400 Overhead=1
-TraceDebug=Trc_RecordOverX9500 Overhead=1
-TraceDebug=Trc_RecordOverX9600 Overhead=1
-TraceDebug=Trc_RecordOverX9700 Overhead=1
-TraceDebug=Trc_RecordOverX9800 Overhead=1
-TraceDebug=Trc_RecordOverX9900 Overhead=1
-TraceDebug=Trc_RecordOverX9A00 Overhead=1
-TraceDebug=Trc_RecordOverX9B00 Overhead=1
-TraceDebug=Trc_RecordOverX9C00 Overhead=1
-TraceDebug=Trc_RecordOverX9D00 Overhead=1
-TraceDebug=Trc_RecordOverX9E00 Overhead=1
-TraceDebug=Trc_RecordOverX9F00 Overhead=1
-TraceDebug=Trc_RecordOverXA000 Overhead=1
-TraceDebug=Trc_RecordOverXA100 Overhead=1
-TraceDebug=Trc_RecordOverXA200 Overhead=1
-TraceDebug=Trc_RecordOverXA300 Overhead=1
-TraceDebug=Trc_RecordOverXA400 Overhead=1
-TraceDebug=Trc_RecordOverXA500 Overhead=1
-TraceDebug=Trc_RecordOverXA600 Overhead=1
-TraceDebug=Trc_RecordOverXA700 Overhead=1
-TraceDebug=Trc_RecordOverXA800 Overhead=1
-TraceDebug=Trc_RecordOverXA900 Overhead=1
-TraceDebug=Trc_RecordOverXAA00 Overhead=1
-TraceDebug=Trc_RecordOverXAB00 Overhead=1
-TraceDebug=Trc_RecordOverXAC00 Overhead=1
-TraceDebug=Trc_RecordOverXAD00 Overhead=1
-TraceDebug=Trc_RecordOverXAE00 Overhead=1
-TraceDebug=Trc_RecordOverXAF00 Overhead=1
-TraceDebug=Trc_RecordOverXB000 Overhead=1
-TraceDebug=Trc_RecordOverXB100 Overhead=1
-TraceDebug=Trc_RecordOverXB200 Overhead=1
-TraceDebug=Trc_RecordOverXB300 Overhead=1
-TraceDebug=Trc_RecordOverXB400 Overhead=1
-TraceDebug=Trc_RecordOverXB500 Overhead=1
-TraceDebug=Trc_RecordOverXB600 Overhead=1
-TraceDebug=Trc_RecordOverXB700 Overhead=1
-TraceDebug=Trc_RecordOverXB800 Overhead=1
-TraceDebug=Trc_RecordOverXB900 Overhead=1
-TraceDebug=Trc_RecordOverXBA00 Overhead=1
-TraceDebug=Trc_RecordOverXBB00 Overhead=1
-TraceDebug=Trc_RecordOverXBC00 Overhead=1
-TraceDebug=Trc_RecordOverXBD00 Overhead=1
-TraceDebug=Trc_RecordOverXBE00 Overhead=1
-TraceDebug=Trc_RecordOverXBF00 Overhead=1
-TraceDebug=Trc_RecordOverXC000 Overhead=1
-TraceDebug=Trc_RecordOverXC100 Overhead=1
-TraceDebug=Trc_RecordOverXC200 Overhead=1
-TraceDebug=Trc_RecordOverXC300 Overhead=1
-TraceDebug=Trc_RecordOverXC400 Overhead=1
-TraceDebug=Trc_RecordOverXC500 Overhead=1
-TraceDebug=Trc_RecordOverXC600 Overhead=1
-TraceDebug=Trc_RecordOverXC700 Overhead=1
-TraceDebug=Trc_RecordOverXC800 Overhead=1
-TraceDebug=Trc_RecordOverXC900 Overhead=1
-TraceDebug=Trc_RecordOverXCA00 Overhead=1
-TraceDebug=Trc_RecordOverXCB00 Overhead=1
-TraceDebug=Trc_RecordOverXCC00 Overhead=1
-TraceDebug=Trc_RecordOverXCD00 Overhead=1
-TraceDebug=Trc_RecordOverXCE00 Overhead=1
-TraceDebug=Trc_RecordOverXCF00 Overhead=1
-TraceDebug=Trc_RecordOverXD000 Overhead=1
-TraceDebug=Trc_RecordOverXD100 Overhead=1
-TraceDebug=Trc_RecordOverXD200 Overhead=1
-TraceDebug=Trc_RecordOverXD300 Overhead=1
-TraceDebug=Trc_RecordOverXD400 Overhead=1
-TraceDebug=Trc_RecordOverXD500 Overhead=1
-TraceDebug=Trc_RecordOverXD600 Overhead=1
-TraceDebug=Trc_RecordOverXD700 Overhead=1
-TraceDebug=Trc_RecordOverXD800 Overhead=1
-TraceDebug=Trc_RecordOverXD900 Overhead=1
-TraceDebug=Trc_RecordOverXDA00 Overhead=1
-TraceDebug=Trc_RecordOverXDB00 Overhead=1
-TraceDebug=Trc_RecordOverXDC00 Overhead=1
-TraceDebug=Trc_RecordOverXDD00 Overhead=1
-TraceDebug=Trc_RecordOverXDE00 Overhead=1
-TraceDebug=Trc_RecordOverXDF00 Overhead=1
-TraceDebug=Trc_RecordOverXE000 Overhead=1
-TraceDebug=Trc_RecordOverXE100 Overhead=1
-TraceDebug=Trc_RecordOverXE200 Overhead=1
-TraceDebug=Trc_RecordOverXE300 Overhead=1
-TraceDebug=Trc_RecordOverXE400 Overhead=1
-TraceDebug=Trc_RecordOverXE500 Overhead=1
-TraceDebug=Trc_RecordOverXE600 Overhead=1
-TraceDebug=Trc_RecordOverXE700 Overhead=1
-TraceDebug=Trc_RecordOverXE800 Overhead=1
-TraceDebug=Trc_RecordOverXE900 Overhead=1
-TraceDebug=Trc_RecordOverXEA00 Overhead=1
-TraceDebug=Trc_RecordOverXEB00 Overhead=1
-TraceDebug=Trc_RecordOverXEC00 Overhead=1
-TraceDebug=Trc_RecordOverXED00 Overhead=1
-TraceDebug=Trc_RecordOverXEE00 Overhead=1
-TraceDebug=Trc_RecordOverXEF00 Overhead=1
-TraceDebug=Trc_RecordOverXF000 Overhead=1
-TraceDebug=Trc_RecordOverXF100 Overhead=1
-TraceDebug=Trc_RecordOverXF200 Overhead=1
-TraceDebug=Trc_RecordOverXF300 Overhead=1
-TraceDebug=Trc_RecordOverXF400 Overhead=1
-TraceDebug=Trc_RecordOverXF500 Overhead=1
-TraceDebug=Trc_RecordOverXF600 Overhead=1
-TraceDebug=Trc_RecordOverXF700 Overhead=1
-TraceDebug=Trc_RecordOverXF800 Overhead=1
-TraceDebug=Trc_RecordOverXF900 Overhead=1
-TraceDebug=Trc_RecordOverXFA00 Overhead=1
-TraceDebug=Trc_RecordOverXFB00 Overhead=1
-TraceDebug=Trc_RecordOverXFC00 Overhead=1
-TraceDebug=Trc_RecordOverXFD00 Overhead=1
-TraceDebug=Trc_RecordOverXFE00 Overhead=1
-TraceDebug=Trc_RecordOverXFF00 Overhead=1
-TraceDebug=Trc_RecordsLost     Overhead=0 Template="***** %d records lost *****"
-TraceEvent=Trc_TraceLock_Event1   Overhead=0 Template="utTraceLock() Trace suspended and locked "
-TraceEvent=Trc_TraceUnlock_Event1 Overhead=0 Template="utTraceUnlock() Trace resumed and unlocked"
-TraceDebug=Trc_TraceContext_Event1 Overhead=0 Template="***** Context change to ee 0x%p *****"
-TraceDebug=Trc_Reset           Overhead=0 Template="***** Trace reset to state at initialization *****"
-TraceDebug=Trc_Term            Overhead=0 Template="***** Trace thread about to terminate *****"
-TraceDebug=Trc_Purge           Overhead=0 Template="***** Thread termination - trace purged *****"
-TraceDebug=Trc_PlaceHolder01   Overhead=1
-TraceDebug=Trc_PlaceHolder02   Overhead=1
-TraceDebug=Trc_PlaceHolder03   Overhead=1
-TraceDebug=Trc_PlaceHolder04   Overhead=1
-TraceDebug=Trc_PlaceHolder05   Overhead=1
-TraceDebug=Trc_PlaceHolder06   Overhead=1
-TraceDebug=Trc_PlaceHolder07   Overhead=1
-TraceDebug=Trc_PlaceHolder08   Overhead=1
-TraceDebug=Trc_PlaceHolder09   Overhead=1
-TraceDebug=Trc_PlaceHolder10   Overhead=1
-TraceDebug=Trc_PlaceHolder11   Overhead=1
-TraceDebug=Trc_PlaceHolder12   Overhead=1
-TraceDebug=Trc_PlaceHolder13   Overhead=1
-TraceDebug=Trc_PlaceHolder14   Overhead=1
-TraceDebug=Trc_PlaceHolder15   Overhead=1
-TraceDebug=Trc_PlaceHolder16   Overhead=1
-TraceDebug=Trc_PlaceHolder17   Overhead=1
-TraceDebug=Trc_PlaceHolder18   Overhead=1
-TraceDebug=Trc_PlaceHolder19   Overhead=1
-TraceDebug=Trc_PlaceHolder20   Overhead=1
-TraceDebug=Trc_PlaceHolder21   Overhead=1
-TraceDebug=Trc_PlaceHolder22   Overhead=1
-TraceDebug=Trc_PlaceHolder23   Overhead=1
-TraceDebug=Trc_PlaceHolder24   Overhead=1
-TraceDebug=Trc_PlaceHolder25   Overhead=1
-TraceDebug=Trc_PlaceHolder26   Overhead=1
-TraceDebug=Trc_PlaceHolder27   Overhead=1
-TraceDebug=Trc_PlaceHolder28   Overhead=1
-TraceDebug=Trc_PlaceHolder29   Overhead=1
-TraceDebug=Trc_PlaceHolder30   Overhead=1
-TraceDebug=Trc_PlaceHolder31   Overhead=1
-TraceDebug=Trc_PlaceHolder32   Overhead=1
-TraceDebug=Trc_PlaceHolder33   Overhead=1
-TraceDebug=Trc_PlaceHolder34   Overhead=1
-TraceDebug=Trc_PlaceHolder35   Overhead=1
-TraceDebug=Trc_PlaceHolder36   Overhead=1
-TraceDebug=Trc_PlaceHolder37   Overhead=1
-TraceDebug=Trc_PlaceHolder38   Overhead=1
-TraceDebug=Trc_PlaceHolder39   Overhead=1
-TraceDebug=Trc_PlaceHolder40   Overhead=1
-TraceDebug=Trc_PlaceHolder41   Overhead=1
-TraceDebug=Trc_PlaceHolder42   Overhead=1
-TraceDebug=Trc_PlaceHolder43   Overhead=1
-TraceDebug=Trc_PlaceHolder44   Overhead=1
-TraceDebug=Trc_PlaceHolder45   Overhead=1
-TraceDebug=Trc_PlaceHolder46   Overhead=1
-TraceDebug=Trc_PlaceHolder47   Overhead=1
-TraceDebug=Trc_PlaceHolder48   Overhead=1
-TraceDebug=Trc_PlaceHolder49   Overhead=1
-TraceDebug=Trc_PlaceHolder50   Overhead=1
-TraceDebug=Trc_PlaceHolder51   Overhead=1
-TraceDebug=Trc_PlaceHolder52   Overhead=1
-TraceDebug=Trc_PlaceHolder53   Overhead=1
-TraceDebug=Trc_PlaceHolder54   Overhead=1
-TraceDebug=Trc_PlaceHolder55   Overhead=1
-TraceDebug=Trc_PlaceHolder56   Overhead=1
-TraceDebug=Trc_PlaceHolder57   Overhead=1
-TraceDebug=Trc_PlaceHolder58   Overhead=1
-TraceDebug=Trc_PlaceHolder59   Overhead=1
-TraceDebug=Trc_PlaceHolder60   Overhead=1
-TraceDebug=Trc_PlaceHolder61   Overhead=1
-TraceDebug=Trc_PlaceHolder62   Overhead=1
-TraceDebug=Trc_PlaceHolder63   Overhead=1
-TraceDebug=Trc_PlaceHolder64   Overhead=1
+TraceDebug=Trc_TimerWrap       Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX0100 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX0200 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX0300 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX0400 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX0500 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX0600 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX0700 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX0800 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX0900 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX0A00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX0B00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX0C00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX0D00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX0E00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX0F00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX1000 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX1100 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX1200 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX1300 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX1400 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX1500 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX1600 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX1700 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX1800 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX1900 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX1A00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX1B00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX1C00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX1D00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX1E00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX1F00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX2000 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX2100 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX2200 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX2300 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX2400 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX2500 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX2600 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX2700 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX2800 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX2900 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX2A00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX2B00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX2C00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX2D00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX2E00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX2F00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX3000 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX3100 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX3200 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX3300 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX3400 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX3500 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX3600 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX3700 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX3800 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX3900 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX3A00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX3B00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX3C00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX3D00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX3E00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX3F00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX4000 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX4100 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX4200 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX4300 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX4400 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX4500 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX4600 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX4700 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX4800 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX4900 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX4A00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX4B00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX4C00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX4D00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX4E00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX4F00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX5000 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX5100 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX5200 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX5300 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX5400 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX5500 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX5600 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX5700 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX5800 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX5900 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX5A00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX5B00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX5C00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX5D00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX5E00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX5F00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX6000 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX6100 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX6200 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX6300 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX6400 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX6500 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX6600 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX6700 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX6800 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX6900 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX6A00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX6B00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX6C00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX6D00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX6E00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX6F00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX7000 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX7100 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX7200 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX7300 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX7400 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX7500 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX7600 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX7700 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX7800 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX7900 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX7A00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX7B00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX7C00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX7D00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX7E00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX7F00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX8000 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX8100 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX8200 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX8300 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX8400 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX8500 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX8600 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX8700 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX8800 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX8900 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX8A00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX8B00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX8C00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX8D00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX8E00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX8F00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX9000 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX9100 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX9200 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX9300 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX9400 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX9500 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX9600 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX9700 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX9800 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX9900 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX9A00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX9B00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX9C00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX9D00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX9E00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverX9F00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXA000 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXA100 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXA200 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXA300 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXA400 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXA500 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXA600 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXA700 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXA800 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXA900 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXAA00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXAB00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXAC00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXAD00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXAE00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXAF00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXB000 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXB100 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXB200 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXB300 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXB400 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXB500 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXB600 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXB700 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXB800 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXB900 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXBA00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXBB00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXBC00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXBD00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXBE00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXBF00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXC000 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXC100 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXC200 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXC300 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXC400 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXC500 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXC600 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXC700 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXC800 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXC900 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXCA00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXCB00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXCC00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXCD00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXCE00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXCF00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXD000 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXD100 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXD200 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXD300 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXD400 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXD500 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXD600 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXD700 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXD800 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXD900 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXDA00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXDB00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXDC00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXDD00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXDE00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXDF00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXE000 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXE100 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXE200 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXE300 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXE400 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXE500 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXE600 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXE700 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXE800 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXE900 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXEA00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXEB00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXEC00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXED00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXEE00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXEF00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXF000 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXF100 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXF200 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXF300 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXF400 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXF500 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXF600 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXF700 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXF800 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXF900 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXFA00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXFB00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXFC00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXFD00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXFE00 Obsolete Overhead=1
+TraceDebug=Trc_RecordOverXFF00 Obsolete Overhead=1
+TraceDebug=Trc_RecordsLost     Obsolete Overhead=0 Template="***** %d records lost *****"
+TraceEvent=Trc_TraceLock_Event1   Obsolete Overhead=0 Template="utTraceLock() Trace suspended and locked "
+TraceEvent=Trc_TraceUnlock_Event1 Obsolete Overhead=0 Template="utTraceUnlock() Trace resumed and unlocked"
+TraceDebug=Trc_TraceContext_Event1 Obsolete Overhead=0 Template="***** Context change to ee 0x%p *****"
+TraceDebug=Trc_Reset           Obsolete Overhead=0 Template="***** Trace reset to state at initialization *****"
+TraceDebug=Trc_Term            Obsolete Overhead=0 Template="***** Trace thread about to terminate *****"
+TraceDebug=Trc_Purge           Obsolete Overhead=0 Template="***** Thread termination - trace purged *****"
+TraceDebug=Trc_PlaceHolder01   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder02   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder03   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder04   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder05   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder06   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder07   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder08   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder09   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder10   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder11   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder12   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder13   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder14   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder15   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder16   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder17   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder18   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder19   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder20   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder21   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder22   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder23   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder24   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder25   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder26   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder27   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder28   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder29   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder30   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder31   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder32   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder33   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder34   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder35   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder36   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder37   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder38   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder39   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder40   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder41   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder42   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder43   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder44   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder45   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder46   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder47   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder48   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder49   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder50   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder51   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder52   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder53   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder54   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder55   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder56   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder57   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder58   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder59   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder60   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder61   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder62   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder63   Obsolete Overhead=1
+TraceDebug=Trc_PlaceHolder64   Obsolete Overhead=1

@@ -22,7 +22,7 @@ Executable=srphashtable
 DATFileName=J9TraceFormat.dat
 
 TraceAssert=Assert_srphashtable_true NoEnv Overhead=1 Level=1 Assert="(P1)"
-TraceAssert=Assert_srphashtable_ShouldNeverHappen NoEnv Overhead=1 Level=3 Assert="(0 /* Fatal srphashtable error */)"
+TraceAssert=Assert_srphashtable_ShouldNeverHappen NoEnv Obsolete Overhead=1 Level=3 Assert="(0 /* Fatal srphashtable error */)"
 
 TraceEntry=Trc_srpHashTableVerify_Entry Overhead=1 Level=3 Noenv Template="srpHashTableVerify(srphashtable=%p, memorySize=%u, entrySize=%u)" 
 TraceException=Trc_srpHashTableVerify_entrySizeIncorrect Overhead=1 Level=1 NoEnv Template="entrySize is not correct, srphashtable=%p, entrySize=%u, expected entrySize=%u"

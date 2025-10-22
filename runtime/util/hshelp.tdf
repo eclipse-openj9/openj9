@@ -21,8 +21,8 @@
 Executable=j9hshelp
 DATFileName=J9TraceFormat.dat
 
-TraceEntry=Trc_hshelp_fixVTables_forExtendedRedefine_Entry Overhead=1 Level=3 Template="fixVTables_forExtendedRedefine"
-TraceExit=Trc_hshelp_fixVTables_forExtendedRedefine_Exit Overhead=1 Level=3 Template="fixVTables_forExtendedRedefine"
+TraceEntry=Trc_hshelp_fixVTables_forExtendedRedefine_Entry Obsolete Overhead=1 Level=3 Template="fixVTables_forExtendedRedefine"
+TraceExit=Trc_hshelp_fixVTables_forExtendedRedefine_Exit Obsolete Overhead=1 Level=3 Template="fixVTables_forExtendedRedefine"
 
 TraceEntry=Trc_hshelp_fixVTables_forNormalRedefine_Entry Overhead=1 Level=3 Template="fixVTables_forNormalRedefine"
 TraceExit=Trc_hshelp_fixVTables_forNormalRedefine_Exit Overhead=1 Level=3 Template="fixVTables_forNormalRedefine"

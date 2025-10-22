@@ -40,7 +40,7 @@ TraceEvent=Trc_MODULE_add_module_package Obsolete Overhead=1 Level=5 Test Templa
 
 TraceEvent=Trc_MODULE_setting_package Obsolete Overhead=1 Level=5 Test Template="internally set package/class: %.*s, loader: %s, module: %s"
 
-TraceException=Trc_VM_checkVisibility_failed_with_errortype Overhead=1 Level=1 Template="checkVisibility from %p (%.*s) to %p (%.*s) failed, error type: %s"
+TraceException=Trc_VM_checkVisibility_failed_with_errortype Obsolete Overhead=1 Level=1 Template="checkVisibility from %p (%.*s) to %p (%.*s) failed, error type: %s"
 TraceException=Trc_VM_checkVisibility_failed_with_errortype_romclass Overhead=1 Level=1 Template="checkVisibility from romClass=%p (%.*s) j9mod=%p to romClass=%p (%.*s) j9mod=%p failed, packagedef'n errcode=%zu, error type: %s"
 
 TraceEntry=Trc_MODULE_freeJ9ModuleV2_entry Overhead=1 Level=5 Test Template="free module %s (0x%p)"
