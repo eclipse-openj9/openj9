@@ -33,14 +33,14 @@ TraceExit=Trc_VMUtil_getObjectMonitorOwner_Exit Obsolete Overhead=1 Level=1 Noen
 TraceEntry=Trc_VMUtil_getOriginalROMMethod_Entry Overhead=1 Level=3 Noenv Template="getOriginalROMMethod (method=%p)"
 TraceExit=Trc_VMUtil_getOriginalROMMethod_Exit Overhead=1 Level=3 Noenv Template="getOriginalROMMethod (result=%p)"
 
-TraceEntry=Trc_VMUtil_getVMThreadStatus_Entry Overhead=1 Level=1 Noenv Template="getVMThreadStatus(thread=%p, pmonitor=%p, powner=%p, pcount=%p)"
-TraceExit=Trc_VMUtil_getVMThreadStatus_Exit Overhead=1 Level=1 Noenv Template="getVMThreadStatus(status=%zu, monitor=%p, owner=%p, count=%zu)"
+TraceEntry=Trc_VMUtil_getVMThreadStatus_Entry Obsolete Overhead=1 Level=1 Noenv Template="getVMThreadStatus(thread=%p, pmonitor=%p, powner=%p, pcount=%p)"
+TraceExit=Trc_VMUtil_getVMThreadStatus_Exit Obsolete Overhead=1 Level=1 Noenv Template="getVMThreadStatus(status=%zu, monitor=%p, owner=%p, count=%zu)"
 
-TraceEntry=Trc_VMUtil_getVMThreadName_Entry Overhead=1 Level=1 Noenv Template="getVMThreadName(mustFree=%p)"
-TraceExit-Exception=Trc_VMUtil_getVMThreadName_AccessError Overhead=1 Level=1 Noenv Template="getVMThreadName -- access exception"
-TraceExit-Exception=Trc_VMUtil_getVMThreadName_OOM Overhead=1 Level=1 Noenv Template="getVMThreadName -- out of memory (%zu bytes)"
-TraceExit=Trc_VMUtil_getVMThreadName_Unnamed Overhead=1 Level=1 Noenv Template="getVMThreadName -- no name"
-TraceExit=Trc_VMUtil_getVMThreadName_Exit Overhead=1 Level=1 Noenv Template="getVMThreadName: %s"
+TraceEntry=Trc_VMUtil_getVMThreadName_Entry Obsolete Overhead=1 Level=1 Noenv Template="getVMThreadName(mustFree=%p)"
+TraceExit-Exception=Trc_VMUtil_getVMThreadName_AccessError Obsolete Overhead=1 Level=1 Noenv Template="getVMThreadName -- access exception"
+TraceExit-Exception=Trc_VMUtil_getVMThreadName_OOM Obsolete Overhead=1 Level=1 Noenv Template="getVMThreadName -- out of memory (%zu bytes)"
+TraceExit=Trc_VMUtil_getVMThreadName_Unnamed Obsolete Overhead=1 Level=1 Noenv Template="getVMThreadName -- no name"
+TraceExit=Trc_VMUtil_getVMThreadName_Exit Obsolete Overhead=1 Level=1 Noenv Template="getVMThreadName: %s"
 
 TraceAssert=Assert_VMUtil_true noEnv Overhead=1 Level=1 Assert="(P1)"
 TraceAssert=Assert_VMUtil_false noEnv Overhead=1 Level=1 Assert="!(P1)"
@@ -49,8 +49,8 @@ TraceAssert=Assert_VMUtil_ShouldNeverHappen NoEnv Overhead=1 Level=3 Assert="(0)
 
 TraceExit=Trc_VMUtil_getObjectMonitorOwner_Exit2 Overhead=1 Level=1 Noenv Template="getObjectMonitorOwner (object=%p, owner=%p, count=%zu)"
 
-TraceEntry=Trc_VMUtil_getImportPackedAnnotationFromROM_Entry Overhead=1 Level=1 Noenv Template="Fetching @ImportPacked from %.*s"
-TraceExit=Trc_VMUtil_getImportPackedAnnotationFromROM_Exit Overhead=1 Level=1 Noenv Template="Completed parsing of @ImportPacked from %.*s"
+TraceEntry=Trc_VMUtil_getImportPackedAnnotationFromROM_Entry Obsolete Overhead=1 Level=1 Noenv Template="Fetching @ImportPacked from %.*s"
+TraceExit=Trc_VMUtil_getImportPackedAnnotationFromROM_Exit Obsolete Overhead=1 Level=1 Noenv Template="Completed parsing of @ImportPacked from %.*s"
 
 TraceEntry=Trc_VMUtil_getOriginalROMMethodUnchecked_Entry Overhead=1 Level=3 Noenv Template="getOriginalROMMethodUnchecked (method=%p)"
 TraceExit=Trc_VMUtil_getOriginalROMMethodUnchecked_Exit Overhead=1 Level=3 Noenv Template="getOriginalROMMethodUnchecked (result=%p)"

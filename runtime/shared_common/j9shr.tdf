@@ -49,30 +49,30 @@ TraceExit=Trc_SHR_CM_startup_Exit5 Overhead=1 Level=1 Template="CM startup: Cann
 TraceExit=Trc_SHR_CM_startup_Exit6 Overhead=1 Level=1 Template="CM startup: Failed to read cache"
 TraceExit=Trc_SHR_CM_startup_Exit7 Overhead=1 Level=1 Template="CM startup: Failed to get cache mutex"
 
-TraceEntry=Trc_SHR_CM_createAsROMImageSegment_Entry Noenv Overhead=1 Level=1 Template="CM createAsROMImageSegment: Creating ROM image segment"
-TraceExit=Trc_SHR_CM_createAsROMImageSegment_Exit Noenv Overhead=1 Level=1 Template="CM createAsROMImageSegment: Done creating ROM image segment"
+TraceEntry=Trc_SHR_CM_createAsROMImageSegment_Entry Noenv Obsolete Overhead=1 Level=1 Template="CM createAsROMImageSegment: Creating ROM image segment"
+TraceExit=Trc_SHR_CM_createAsROMImageSegment_Exit Noenv Obsolete Overhead=1 Level=1 Template="CM createAsROMImageSegment: Done creating ROM image segment"
 
 TraceEntry=Trc_SHR_CM_writeOrphanToCache_Entry Obsolete Overhead=1 Level=3 Template="CM writeOrphanToCache: trying write orphaned romclass %.*s, originally at address 0x%p"
 TraceExit=Trc_SHR_CM_writeOrphanToCache_ExitNull Obsolete Overhead=1 Level=3 Template="CM writeOrphanToCache: cache is full - failing add - returning NULL"
 TraceExit=Trc_SHR_CM_writeOrphanToCache_Exit Obsolete Overhead=1 Level=3 Template="CM writeOrphanToCache: romclass %.*s added successfully at address 0x%p"
 
-TraceEntry=Trc_SHR_CM_writeROMClassToCache_Entry Overhead=1 Level=3 Template="CM writeROMClassToCache: trying write romclass %.*s - romclass exists? = %d"
-TraceEvent=Trc_SHR_CM_writeROMClassToCache_ActuallyAdding Overhead=1 Level=4 Template="CM writeROMClassToCache: actually adding %.*s with classpath entry %.*s (index %d in cpw 0x%p)"
-TraceEvent=Trc_SHR_CM_writeROMClassToCache_SettingTimestamp Overhead=1 Level=4 Template="CM writeROMClassToCache: setting initial timestamp of %.*s to %lld"
-TraceEvent=Trc_SHR_CM_writeROMClassToCache_CopyingIntoCache Overhead=1 Level=4 Template="CM writeROMClassToCache: copying ROMClass into cache at address 0x%p"
-TraceEvent=Trc_SHR_CM_writeROMClassToCache_UpdatingSegment Overhead=1 Level=4 Template="CM writeROMClassToCache: updating ROMClassSegment allocation pointer to 0x%p"
-TraceExit=Trc_SHR_CM_writeROMClassToCache_ExitNull Overhead=1 Level=3 Template="CM writeROMClassToCache: cache is full - failing add - returning NULL"
-TraceExit=Trc_SHR_CM_writeROMClassToCache_Exit Overhead=1 Level=3 Template="CM writeROMClassToCache: class %.*s added successfully at address 0x%p"
+TraceEntry=Trc_SHR_CM_writeROMClassToCache_Entry Obsolete Overhead=1 Level=3 Template="CM writeROMClassToCache: trying write romclass %.*s - romclass exists? = %d"
+TraceEvent=Trc_SHR_CM_writeROMClassToCache_ActuallyAdding Obsolete Overhead=1 Level=4 Template="CM writeROMClassToCache: actually adding %.*s with classpath entry %.*s (index %d in cpw 0x%p)"
+TraceEvent=Trc_SHR_CM_writeROMClassToCache_SettingTimestamp Obsolete Overhead=1 Level=4 Template="CM writeROMClassToCache: setting initial timestamp of %.*s to %lld"
+TraceEvent=Trc_SHR_CM_writeROMClassToCache_CopyingIntoCache Obsolete Overhead=1 Level=4 Template="CM writeROMClassToCache: copying ROMClass into cache at address 0x%p"
+TraceEvent=Trc_SHR_CM_writeROMClassToCache_UpdatingSegment Obsolete Overhead=1 Level=4 Template="CM writeROMClassToCache: updating ROMClassSegment allocation pointer to 0x%p"
+TraceExit=Trc_SHR_CM_writeROMClassToCache_ExitNull Obsolete Overhead=1 Level=3 Template="CM writeROMClassToCache: cache is full - failing add - returning NULL"
+TraceExit=Trc_SHR_CM_writeROMClassToCache_Exit Obsolete Overhead=1 Level=3 Template="CM writeROMClassToCache: class %.*s added successfully at address 0x%p"
 
-TraceEntry=Trc_SHR_CM_addROMClassToCache_Entry Overhead=1 Level=1 Template="CM addROMClassToCache: trying add class %.*s at classpath entry %.*s"
-TraceExit=Trc_SHR_CM_addROMClassToCache_ExitSuccess Overhead=1 Level=1 Template="CM addROMClassToCache: class %.*s added successfully at address 0x%p"
-TraceExit=Trc_SHR_CM_addROMClassToCache_ExitNoClasspath Overhead=1 Level=1 Template="CM addROMClassToCache: exiting with NULL classpath - returning 0x%p"
-TraceEvent=Trc_SHR_CM_addROMClassToCache_FoundDuplicate Overhead=1 Level=4 Template="CM addROMClassToCache: found duplicate class %.*s in cache"
-TraceEvent=Trc_SHR_CM_addROMClassToCache_FoundOrphanROMClass Overhead=1 Level=4 Template="CM addROMClassToCache: found orphan ROMClass %.*s in cache at address 0x%p"
-TraceEvent=Trc_SHR_CM_addROMClassToCache_IsROMClassInCache Overhead=1 Level=4 Template="CM addROMClassToCache: is romclass being added already in cache? = %d"
-TraceExit=Trc_SHR_CM_addROMClassToCache_ExitNull1 Overhead=1 Level=1 Template="CM addROMClassToCache: entry point checks failed - returning NULL"
-TraceException=Trc_SHR_CM_addROMClassToCache_Exception1 Overhead=1 Level=1 Template="CM addROMClassToCache exception: orphan found but local ROMClass passed to addROMClassToCache"
-TraceExit=Trc_SHR_CM_addROMClassToCache_ExitNull2 Overhead=1 Level=1 Template="CM addROMClassToCache: cpw 0x%p has unexpectedly become stale - failing add - returning NULL"
+TraceEntry=Trc_SHR_CM_addROMClassToCache_Entry Obsolete Overhead=1 Level=1 Template="CM addROMClassToCache: trying add class %.*s at classpath entry %.*s"
+TraceExit=Trc_SHR_CM_addROMClassToCache_ExitSuccess Obsolete Overhead=1 Level=1 Template="CM addROMClassToCache: class %.*s added successfully at address 0x%p"
+TraceExit=Trc_SHR_CM_addROMClassToCache_ExitNoClasspath Obsolete Overhead=1 Level=1 Template="CM addROMClassToCache: exiting with NULL classpath - returning 0x%p"
+TraceEvent=Trc_SHR_CM_addROMClassToCache_FoundDuplicate Obsolete Overhead=1 Level=4 Template="CM addROMClassToCache: found duplicate class %.*s in cache"
+TraceEvent=Trc_SHR_CM_addROMClassToCache_FoundOrphanROMClass Obsolete Overhead=1 Level=4 Template="CM addROMClassToCache: found orphan ROMClass %.*s in cache at address 0x%p"
+TraceEvent=Trc_SHR_CM_addROMClassToCache_IsROMClassInCache Obsolete Overhead=1 Level=4 Template="CM addROMClassToCache: is romclass being added already in cache? = %d"
+TraceExit=Trc_SHR_CM_addROMClassToCache_ExitNull1 Obsolete Overhead=1 Level=1 Template="CM addROMClassToCache: entry point checks failed - returning NULL"
+TraceException=Trc_SHR_CM_addROMClassToCache_Exception1 Obsolete Overhead=1 Level=1 Template="CM addROMClassToCache exception: orphan found but local ROMClass passed to addROMClassToCache"
+TraceExit=Trc_SHR_CM_addROMClassToCache_ExitNull2 Obsolete Overhead=1 Level=1 Template="CM addROMClassToCache: cpw 0x%p has unexpectedly become stale - failing add - returning NULL"
 
 TraceEntry=Trc_SHR_CM_updateClasspathInfo_Entry Overhead=1 Level=2 Template="CM updateClasspathInfo: called for classpath id %d at index %d"
 TraceExit=Trc_SHR_CM_updateClasspathInfo_Exit Overhead=1 Level=2 Template="CM updateClasspathInfo: returning ClasspathWrapper in cache at address 0x%p"
@@ -150,28 +150,28 @@ TraceExit=Trc_SHR_RMI_RcLinkedListImpl_createLink_Exit2 Obsolete Noenv Overhead=
 TraceEntry=Trc_SHR_RMI_localHashTableCreate_Entry Overhead=1 Level=1 Template="RMI localHashTableCreate: Creating new hashtable with %d initial entries"
 TraceExit=Trc_SHR_RMI_localHashTableCreate_Exit Overhead=1 Level=1 Template="RMI localHashTableCreate: Created hashtable at address 0x%p"
 
-TraceEntry=Trc_SHR_RMI_rcHashFn_Entry Noenv Overhead=1 Level=6 Template="RMI rcHashFn: Creating hashcode for item 0x%p"
-TraceExit=Trc_SHR_RMI_rcHashFn_Exit Noenv Overhead=1 Level=6 Template="RMI rcHashFn: Returning hashcode %d"
+TraceEntry=Trc_SHR_RMI_rcHashFn_Entry Noenv Obsolete Overhead=1 Level=6 Template="RMI rcHashFn: Creating hashcode for item 0x%p"
+TraceExit=Trc_SHR_RMI_rcHashFn_Exit Noenv Obsolete Overhead=1 Level=6 Template="RMI rcHashFn: Returning hashcode %d"
 
-TraceEntry=Trc_SHR_RMI_rcHashEqualFn_Entry Noenv Overhead=1 Level=6 Template="RMI rcHashEqualFn: Comparing 0x%p with 0x%p"
-TraceExit=Trc_SHR_RMI_rcHashEqualFn_Exit1 Noenv Overhead=1 Level=6 Template="RMI rcHashEqualFn: One key is null. Exiting with false."
-TraceExit=Trc_SHR_RMI_rcHashEqualFn_Exit2 Noenv Overhead=1 Level=6 Template="RMI rcHashEqualFn: Key lengths don't match. Exiting with false."
-TraceExit=Trc_SHR_RMI_rcHashEqualFn_Exit3 Noenv Overhead=1 Level=6 Template="RMI rcHashEqualFn: Called compareUTF8. Result=%d"
+TraceEntry=Trc_SHR_RMI_rcHashEqualFn_Entry Noenv Obsolete Overhead=1 Level=6 Template="RMI rcHashEqualFn: Comparing 0x%p with 0x%p"
+TraceExit=Trc_SHR_RMI_rcHashEqualFn_Exit1 Noenv Obsolete Overhead=1 Level=6 Template="RMI rcHashEqualFn: One key is null. Exiting with false."
+TraceExit=Trc_SHR_RMI_rcHashEqualFn_Exit2 Noenv Obsolete Overhead=1 Level=6 Template="RMI rcHashEqualFn: Key lengths don't match. Exiting with false."
+TraceExit=Trc_SHR_RMI_rcHashEqualFn_Exit3 Noenv Obsolete Overhead=1 Level=6 Template="RMI rcHashEqualFn: Called compareUTF8. Result=%d"
 
-TraceEntry=Trc_SHR_RMI_rcTableAdd_Entry Overhead=1 Level=6 Template="RMI rcTableAdd: Entering add with key %.*s for item 0x%p"
-TraceException=Trc_SHR_RMI_rcTableAdd_Exception1 Overhead=1 Level=6 Template="RMI rcTableAdd: hashTableAdd failed"
-TraceExit=Trc_SHR_RMI_rcTableAdd_Exit1 Overhead=1 Level=6 Template="RMI rcTableAdd: createLink failed. Returning NULL."
-TraceExit=Trc_SHR_RMI_rcTableAdd_Exit3 Overhead=1 Level=6 Template="RMI rcTableAdd: failed to get local mutex. Tried %d times. Returning NULL."
-TraceExit=Trc_SHR_RMI_rcTableAdd_Exit4 Overhead=1 Level=6 Template="RMI rcTableAdd: Succeeded in adding item. Returning 0x%p."
+TraceEntry=Trc_SHR_RMI_rcTableAdd_Entry Obsolete Overhead=1 Level=6 Template="RMI rcTableAdd: Entering add with key %.*s for item 0x%p"
+TraceException=Trc_SHR_RMI_rcTableAdd_Exception1 Obsolete Overhead=1 Level=6 Template="RMI rcTableAdd: hashTableAdd failed"
+TraceExit=Trc_SHR_RMI_rcTableAdd_Exit1 Obsolete Overhead=1 Level=6 Template="RMI rcTableAdd: createLink failed. Returning NULL."
+TraceExit=Trc_SHR_RMI_rcTableAdd_Exit3 Obsolete Overhead=1 Level=6 Template="RMI rcTableAdd: failed to get local mutex. Tried %d times. Returning NULL."
+TraceExit=Trc_SHR_RMI_rcTableAdd_Exit4 Obsolete Overhead=1 Level=6 Template="RMI rcTableAdd: Succeeded in adding item. Returning 0x%p."
 
-TraceEntry=Trc_SHR_RMI_rcTableLookup_Entry Overhead=1 Level=4 Template="RMI rcTableLookup: Entering lookup with name %.*s"
-TraceEvent=Trc_SHR_RMI_rcTableLookup_HashtableFind Overhead=1 Level=4 Template="RMI rcTableLookup: Done hashTableFind. Result=0x%p"
-TraceExit=Trc_SHR_RMI_rcTableLookup_Exit1 Overhead=1 Level=4 Template="RMI rcTableLookup: failed to get local mutex. Tried %d times. Returning NULL."
-TraceExit=Trc_SHR_RMI_rcTableLookup_Exit2 Overhead=1 Level=4 Template="RMI rcTableLookup: Exiting lookup with result 0x%p"
+TraceEntry=Trc_SHR_RMI_rcTableLookup_Entry Obsolete Overhead=1 Level=4 Template="RMI rcTableLookup: Entering lookup with name %.*s"
+TraceEvent=Trc_SHR_RMI_rcTableLookup_HashtableFind Obsolete Overhead=1 Level=4 Template="RMI rcTableLookup: Done hashTableFind. Result=0x%p"
+TraceExit=Trc_SHR_RMI_rcTableLookup_Exit1 Obsolete Overhead=1 Level=4 Template="RMI rcTableLookup: failed to get local mutex. Tried %d times. Returning NULL."
+TraceExit=Trc_SHR_RMI_rcTableLookup_Exit2 Obsolete Overhead=1 Level=4 Template="RMI rcTableLookup: Exiting lookup with result 0x%p"
 
-TraceEntry=Trc_SHR_RMI_rcTableUpdate_Entry Overhead=1 Level=4 Template="RMI rcTableUpdate: Entering update with key %.*s for item 0x%p"
-TraceExit=Trc_SHR_RMI_rcTableUpdate_Exit1 Overhead=1 Level=4 Template="RMI rcTableUpdate: rcTableAdd failed. Returning NULL."
-TraceExit=Trc_SHR_RMI_rcTableUpdate_Exit2 Overhead=1 Level=4 Template="RMI rcTableUpdate: Exiting update with result 0x%p"
+TraceEntry=Trc_SHR_RMI_rcTableUpdate_Entry Obsolete Overhead=1 Level=4 Template="RMI rcTableUpdate: Entering update with key %.*s for item 0x%p"
+TraceExit=Trc_SHR_RMI_rcTableUpdate_Exit1 Obsolete Overhead=1 Level=4 Template="RMI rcTableUpdate: rcTableAdd failed. Returning NULL."
+TraceExit=Trc_SHR_RMI_rcTableUpdate_Exit2 Obsolete Overhead=1 Level=4 Template="RMI rcTableUpdate: Exiting update with result 0x%p"
 
 TraceEntry=Trc_SHR_RMI_newInstance_EntryObsolete Noenv Obsolete Overhead=1 level=1 Template="RMI newInstance: Creating new ROMClassManager. vm=0x%p. cache=0x%p. cpm=0x%p. tsm=0x%p."
 TraceExit=Trc_SHR_RMI_newInstance_Exit Noenv Overhead=1 Level=1 Template="RMI newInstance: Created ROMClassManager at address 0x%p"
@@ -180,13 +180,13 @@ TraceEntry=Trc_SHR_RMI_initialize_Entry Noenv Overhead=1 Level=1 Template="RMI i
 TraceExit=Trc_SHR_RMI_initialize_Exit Noenv Overhead=1 Level=1 Template="RMI initialize: Done initializing ROMClassManager"
 
 // These tracepoints are not used, but are added to keep the following tpnids consistent with 2.3
-TraceEntry=Trc_SHR_RMI_startup_Entry Overhead=1 Level=1 Template="RMI startup: Starting up ROMClassManager"
-TraceExit=Trc_SHR_RMI_startup_Exit1 Overhead=1 Level=1 Template="RMI startup: Failed to create linkedListImplPool. Returning -1."
-TraceExit=Trc_SHR_RMI_startup_Exit2 Overhead=1 Level=1 Template="RMI startup: Failed to create hashtable. Returning -1."
-TraceExit=Trc_SHR_RMI_startup_Exit3 Overhead=1 Level=1 Template="RMI startup: Failed to create hashtable mutex. Returning -1."
-TraceExit=Trc_SHR_RMI_startup_Exit4 Overhead=1 Level=1 Template="RMI startup: ROMClassManager started successfully"
-TraceEntry=Trc_SHR_RMI_cleanup_Entry Overhead=1 Level=1 Template="RMI cleanup: Cleaning up ROMClassManager"
-TraceExit=Trc_SHR_RMI_cleanup_Exit Overhead=1 Level=1 Template="RMI cleanup: Done cleaning up ROMClassManager"
+TraceEntry=Trc_SHR_RMI_startup_Entry Obsolete Overhead=1 Level=1 Template="RMI startup: Starting up ROMClassManager"
+TraceExit=Trc_SHR_RMI_startup_Exit1 Obsolete Overhead=1 Level=1 Template="RMI startup: Failed to create linkedListImplPool. Returning -1."
+TraceExit=Trc_SHR_RMI_startup_Exit2 Obsolete Overhead=1 Level=1 Template="RMI startup: Failed to create hashtable. Returning -1."
+TraceExit=Trc_SHR_RMI_startup_Exit3 Obsolete Overhead=1 Level=1 Template="RMI startup: Failed to create hashtable mutex. Returning -1."
+TraceExit=Trc_SHR_RMI_startup_Exit4 Obsolete Overhead=1 Level=1 Template="RMI startup: ROMClassManager started successfully"
+TraceEntry=Trc_SHR_RMI_cleanup_Entry Obsolete Overhead=1 Level=1 Template="RMI cleanup: Cleaning up ROMClassManager"
+TraceExit=Trc_SHR_RMI_cleanup_Exit Obsolete Overhead=1 Level=1 Template="RMI cleanup: Done cleaning up ROMClassManager"
 
 TraceEntry=Trc_SHR_RMI_locateROMClass_Entry Overhead=1 Level=3 Template="RMI locateROMClass: Locate request for ROMClass %.*s from helper ID %d with cpeIndex %d"
 TraceExit=Trc_SHR_RMI_locateROMClass_ExitNotFound1 Overhead=1 Level=3 Template="RMI locateROMClass: ROMClass not found in hashtable. Exiting with NULL."
@@ -210,43 +210,43 @@ TraceExit=Trc_SHR_RMI_checkTimestamp_ExitTrue Overhead=1 Level=6 Template="RMI c
 TraceExit=Trc_SHR_RMI_checkTimestamp_ExitFalse Overhead=1 Level=6 Template="RMI checkTimestamp: Returning false"
 
 // These tracepoints are not used, but are added to keep the following tpnids consistent with 2.3
-TraceEntry=Trc_SHR_RMI_reset_Entry Overhead=1 Level=1 Template="RMI reset: Resetting ROMClassManager"
-TraceExit=Trc_SHR_RMI_reset_Exit Overhead=1 Level=1 Template="RMI reset: Done resetting ROMClassManager"
+TraceEntry=Trc_SHR_RMI_reset_Entry Obsolete Overhead=1 Level=1 Template="RMI reset: Resetting ROMClassManager"
+TraceExit=Trc_SHR_RMI_reset_Exit Obsolete Overhead=1 Level=1 Template="RMI reset: Done resetting ROMClassManager"
 
 TraceEntry=Trc_SHR_RMI_storeNew_Entry Overhead=1 Level=6 Template="RMI storeNew: storeNew called for item at address 0x%p"
 TraceEvent=Trc_SHR_RMI_storeNew_Event1 Overhead=1 Level=6 Template="RMI storeNew: storing orphan %.*s in local hashtable (address 0x%p)"
 TraceEvent=Trc_SHR_RMI_storeNew_Event2 Overhead=1 Level=6 Template="RMI storeNew: storing romclass %.*s in local hashtable (address 0x%p)"
 TraceExit=Trc_SHR_RMI_storeNew_ExitTrue Overhead=1 Level=6 Template="RMI storeNew: storeNew returning true"
 TraceExit=Trc_SHR_RMI_storeNew_ExitFalse Overhead=1 Level=6 Template="RMI storeNew: storeNew returning false"
-TraceException=Trc_SHR_RMI_storeNew_Exception1 Overhead=1 Level=6 Template="RMI storeNew exception: cannot allocate memory for string buffer"
+TraceException=Trc_SHR_RMI_storeNew_Exception1 Obsolete Overhead=1 Level=6 Template="RMI storeNew exception: cannot allocate memory for string buffer"
 
-TraceEntry=Trc_SHR_RMI_compareROMClasses_Entry Overhead=1 Level=3 Template="RMI compareROMClasses: comparing ROMClasses at addresses 0x%p and 0x%p"
-TraceExit=Trc_SHR_RMI_compareROMClasses_ExitNotSame1 Overhead=1 Level=3 Template="RMI compareROMClasses: ROMClasses are the same size, but have different bytes"
-TraceExit=Trc_SHR_RMI_compareROMClasses_ExitNotSame2 Overhead=1 Level=3 Template="RMI compareROMClasses: ROMClass comparison failed"
-TraceExit=Trc_SHR_RMI_compareROMClasses_ExitSame Overhead=1 Level=3 Template="RMI compareROMClasses: ROMClass comparison succeeded"
+TraceEntry=Trc_SHR_RMI_compareROMClasses_Entry Obsolete Overhead=1 Level=3 Template="RMI compareROMClasses: comparing ROMClasses at addresses 0x%p and 0x%p"
+TraceExit=Trc_SHR_RMI_compareROMClasses_ExitNotSame1 Obsolete Overhead=1 Level=3 Template="RMI compareROMClasses: ROMClasses are the same size, but have different bytes"
+TraceExit=Trc_SHR_RMI_compareROMClasses_ExitNotSame2 Obsolete Overhead=1 Level=3 Template="RMI compareROMClasses: ROMClass comparison failed"
+TraceExit=Trc_SHR_RMI_compareROMClasses_ExitSame Obsolete Overhead=1 Level=3 Template="RMI compareROMClasses: ROMClass comparison succeeded"
 
-TraceEntry=Trc_SHR_RMI_prepareForCompare_Entry Overhead=1 Level=3 Template="RMI prepareForCompare: Copying and fixing up ROMClass at address 0x%p"
-TraceExit=Trc_SHR_RMI_prepareForCompare_ExitNull Overhead=1 Level=3 Template="RMI prepareForCompare: ERROR: could not allocate memory for buffer"
-TraceExit=Trc_SHR_RMI_prepareForCompare_Exit Overhead=1 Level=3 Template="RMI findExisting: created temporary ROMClass at address 0x%p with fixed return bytecodes for comparison"
+TraceEntry=Trc_SHR_RMI_prepareForCompare_Entry Obsolete Overhead=1 Level=3 Template="RMI prepareForCompare: Copying and fixing up ROMClass at address 0x%p"
+TraceExit=Trc_SHR_RMI_prepareForCompare_ExitNull Obsolete Overhead=1 Level=3 Template="RMI prepareForCompare: ERROR: could not allocate memory for buffer"
+TraceExit=Trc_SHR_RMI_prepareForCompare_Exit Obsolete Overhead=1 Level=3 Template="RMI findExisting: created temporary ROMClass at address 0x%p with fixed return bytecodes for comparison"
 
-TraceEntry=Trc_SHR_RMI_compareForSafeMode_Entry Overhead=1 Level=3 Template="RMI compareForSafeMode: Comparing local ROMClass 0x%p with cache ROMClass 0x%p"
-TraceExit=Trc_SHR_RMI_compareForSafeMode_ExitAlloc Overhead=1 Level=3 Template="RMI compareForSafeMode: Temporary buffer allocation failed"
-TraceExit=Trc_SHR_RMI_compareForSafeMode_Exit Overhead=1 Level=3 Template="RMI compareForSafeMode: Done comparing ROMClasses. Returning %d."
+TraceEntry=Trc_SHR_RMI_compareForSafeMode_Entry Obsolete Overhead=1 Level=3 Template="RMI compareForSafeMode: Comparing local ROMClass 0x%p with cache ROMClass 0x%p"
+TraceExit=Trc_SHR_RMI_compareForSafeMode_ExitAlloc Obsolete Overhead=1 Level=3 Template="RMI compareForSafeMode: Temporary buffer allocation failed"
+TraceExit=Trc_SHR_RMI_compareForSafeMode_Exit Obsolete Overhead=1 Level=3 Template="RMI compareForSafeMode: Done comparing ROMClasses. Returning %d."
 
 TraceEntry=Trc_SHR_RMI_findExisting_EntryObsolete Obsolete Overhead=1 Level=3 Template="RMI findExisting: looking for existing ROMClass with name: %.*s. Compare with RC at 0x%p. Is in cache? %d"
-TraceExit=Trc_SHR_RMI_findExisting_ExitNotFound Overhead=1 Level=3 Template="RMI findExisting: did not find any ROMClass with name: %.*s"
-TraceEvent=Trc_SHR_RMI_findExisting_FoundOrphan Overhead=1 Level=4 Template="RMI findExisting: found an orphan at address 0x%p"
-TraceEvent=Trc_SHR_RMI_findExisting_FoundROMClass Overhead=1 Level=4 Template="RMI findExisting: found a non-orphan ROMClass at address 0x%p"
-TraceExit=Trc_SHR_RMI_findExisting_ExitOK Overhead=1 Level=3 Template="RMI findExisting: exiting with returnVal = 0x%p"
+TraceExit=Trc_SHR_RMI_findExisting_ExitNotFound Obsolete Overhead=1 Level=3 Template="RMI findExisting: did not find any ROMClass with name: %.*s"
+TraceEvent=Trc_SHR_RMI_findExisting_FoundOrphan Obsolete Overhead=1 Level=4 Template="RMI findExisting: found an orphan at address 0x%p"
+TraceEvent=Trc_SHR_RMI_findExisting_FoundROMClass Obsolete Overhead=1 Level=4 Template="RMI findExisting: found a non-orphan ROMClass at address 0x%p"
+TraceExit=Trc_SHR_RMI_findExisting_ExitOK Obsolete Overhead=1 Level=3 Template="RMI findExisting: exiting with returnVal = 0x%p"
 
 TraceEntry=Trc_SHR_RMI_reuniteOrphan_Entry Overhead=1 Level=3 Template="RMI reuniteOrphan: trying reuniteOrphan for romclass %.*s"
 TraceEvent=Trc_SHR_RMI_reuniteOrphan_Event1 Overhead=1 Level=4 Template="RMI reuniteOrphan: reuniting orphaned romclass %.*s (at address 0x%p) with item 0x%p"
 TraceExit=Trc_SHR_RMI_reuniteOrphan_ExitTrue Overhead=1 Level=3 Template="RMI reuniteOrphan: reuniteOrphan returning true"
 TraceExit=Trc_SHR_RMI_reuniteOrphan_ExitFalse Overhead=1 Level=3 Template="RMI reuniteOrphan: reuniteOrphan returning false"
 
-TraceEntry=Trc_SHR_RMI_redeemStale_Entry Overhead=1 Level=3 Template="RMI redeemStale: trying redeemStale for %.*s from ClasspathWrapper 0x%p and cpeIndex %d"
-TraceExit=Trc_SHR_RMI_redeemStale_ExitFound Overhead=1 Level=3 Template="RMI redeemStale: found stale ROMClass to redeem. Returning ROMClassWrapper 0x%p"
-TraceExit=Trc_SHR_RMI_redeemStale_ExitNull Overhead=1 Level=3 Template="RMI redeemStale: No redeemable ROMClasses found. Returning NULL."
+TraceEntry=Trc_SHR_RMI_redeemStale_Entry Obsolete Overhead=1 Level=3 Template="RMI redeemStale: trying redeemStale for %.*s from ClasspathWrapper 0x%p and cpeIndex %d"
+TraceExit=Trc_SHR_RMI_redeemStale_ExitFound Obsolete Overhead=1 Level=3 Template="RMI redeemStale: found stale ROMClass to redeem. Returning ROMClassWrapper 0x%p"
+TraceExit=Trc_SHR_RMI_redeemStale_ExitNull Obsolete Overhead=1 Level=3 Template="RMI redeemStale: No redeemable ROMClasses found. Returning NULL."
 
 // Not used - added to keep tpnids consistent with 2.3
 TraceEntry=Trc_SHR_CMI_CpLinkedListImpl_newInstance_Entry Noenv Overhead=1 Level=6 Template="CMI CpLinkedListImpl::newInstance: Creating new CpLinkedListImpl for cpeIndex %d and item 0x%p"
@@ -267,11 +267,11 @@ TraceEvent=Trc_SHR_CMI_CpLinkedListImpl_tag Noenv Overhead=1 Level=6 Template="C
 
 TraceEvent=Trc_SHR_CMI_CpLinkedListImpl_getCPEIndex Noenv Overhead=1 Level=6 Template="CMI CpLinkedListImpl::getCPEIndex: Returning cpeIndex %d for link 0x%p"
 
-TraceEntry=Trc_SHR_CMI_CpLinkedListHdr_newInstance_Entry Noenv Overhead=1 Level=6 Template="CMI CpLinkedListHdr::newInstance: Creating new CpLinkedListHdr for %.*s. isToken=%d. List=0x%p."
-TraceExit=Trc_SHR_CMI_CpLinkedListHdr_newInstance_Exit Noenv Overhead=1 Level=6 Template="CMI CpLinkedListHdr::newInstance: Done creating new CpLinkedListHdr at address 0x%p"
+TraceEntry=Trc_SHR_CMI_CpLinkedListHdr_newInstance_Entry Noenv Obsolete Overhead=1 Level=6 Template="CMI CpLinkedListHdr::newInstance: Creating new CpLinkedListHdr for %.*s. isToken=%d. List=0x%p."
+TraceExit=Trc_SHR_CMI_CpLinkedListHdr_newInstance_Exit Noenv Obsolete Overhead=1 Level=6 Template="CMI CpLinkedListHdr::newInstance: Done creating new CpLinkedListHdr at address 0x%p"
 
-TraceEntry=Trc_SHR_CMI_CpLinkedListHdr_initialize_Entry Noenv Overhead=1 Level=6 Template="CMI CpLinkedListHdr::initialize: Initializing CpLinkedListHdr"
-TraceExit=Trc_SHR_CMI_CpLinkedListHdr_initialize_Exit Noenv Overhead=1 Level=6 Template="CMI CpLinkedListHdr::initialize: Done initializing CpLinkedListHdr"
+TraceEntry=Trc_SHR_CMI_CpLinkedListHdr_initialize_Entry Noenv Obsolete Overhead=1 Level=6 Template="CMI CpLinkedListHdr::initialize: Initializing CpLinkedListHdr"
+TraceExit=Trc_SHR_CMI_CpLinkedListHdr_initialize_Exit Noenv Obsolete Overhead=1 Level=6 Template="CMI CpLinkedListHdr::initialize: Done initializing CpLinkedListHdr"
 
 TraceEntry=Trc_SHR_CMI_newInstance_Entry Noenv Overhead=1 Level=1 Template="CMI newInstance: Creating new ClasspathManager. vm=0x%p. cache=0x%p. tsm=0x%p."
 TraceExit=Trc_SHR_CMI_newInstance_Exit Noenv Overhead=1 Level=1 Template="CMI newInstance: Done creating new ClasspathManager at address 0x%p"
@@ -280,20 +280,20 @@ TraceEntry=Trc_SHR_CMI_initialize_Entry Noenv Overhead=1 Level=1 Template="CMI i
 TraceExit=Trc_SHR_CMI_initialize_Exit Noenv Overhead=1 Level=1 Template="CMI initialize: Done initializing ClasspathManager"
 
 // Not used, but kept for tpnid consistency with 2.3
-TraceEntry=Trc_SHR_CMI_startup_Entry Overhead=1 Level=1 Template="CMI startup: Starting ClasspathManager"
-TraceExit=Trc_SHR_CMI_startup_Exit1 Overhead=1 Level=1 Template="CMI startup: Failed to create linkedListImpl pool. Returning -1."
-TraceExit=Trc_SHR_CMI_startup_Exit2 Overhead=1 Level=1 Template="CMI startup: Failed to create linkedListHdr pool. Returning -1."
-TraceExit=Trc_SHR_CMI_startup_Exit3 Overhead=1 Level=1 Template="CMI startup: Failed to create hashtable. Returning -1."
-TraceExit=Trc_SHR_CMI_startup_Exit4 Overhead=1 Level=1 Template="CMI startup: Failed to create cpeTableMutex. Returning -1."
-TraceExit=Trc_SHR_CMI_startup_Exit5 Overhead=1 Level=1 Template="CMI startup: Failed to create identifiedMutex. Returning -1."
-TraceExit=Trc_SHR_CMI_startup_Exit6 Overhead=1 Level=1 Template="CMI startup: Failed to create identified classpath array. Returning -1."
-TraceExit=Trc_SHR_CMI_startup_Exit7 Overhead=1 Level=1 Template="CMI startup: Done starting ClasspathManager."
-TraceEntry=Trc_SHR_CMI_cleanup_Entry Overhead=1 Level=1 Template="CMI cleanup: Cleaning up ClasspathManager"
-TraceExit=Trc_SHR_CMI_cleanup_Exit Overhead=1 Level=1 Template="CMI cleanup: Done cleaning up ClasspathManager"
+TraceEntry=Trc_SHR_CMI_startup_Entry Obsolete Overhead=1 Level=1 Template="CMI startup: Starting ClasspathManager"
+TraceExit=Trc_SHR_CMI_startup_Exit1 Obsolete Overhead=1 Level=1 Template="CMI startup: Failed to create linkedListImpl pool. Returning -1."
+TraceExit=Trc_SHR_CMI_startup_Exit2 Obsolete Overhead=1 Level=1 Template="CMI startup: Failed to create linkedListHdr pool. Returning -1."
+TraceExit=Trc_SHR_CMI_startup_Exit3 Obsolete Overhead=1 Level=1 Template="CMI startup: Failed to create hashtable. Returning -1."
+TraceExit=Trc_SHR_CMI_startup_Exit4 Obsolete Overhead=1 Level=1 Template="CMI startup: Failed to create cpeTableMutex. Returning -1."
+TraceExit=Trc_SHR_CMI_startup_Exit5 Obsolete Overhead=1 Level=1 Template="CMI startup: Failed to create identifiedMutex. Returning -1."
+TraceExit=Trc_SHR_CMI_startup_Exit6 Obsolete Overhead=1 Level=1 Template="CMI startup: Failed to create identified classpath array. Returning -1."
+TraceExit=Trc_SHR_CMI_startup_Exit7 Obsolete Overhead=1 Level=1 Template="CMI startup: Done starting ClasspathManager."
+TraceEntry=Trc_SHR_CMI_cleanup_Entry Obsolete Overhead=1 Level=1 Template="CMI cleanup: Cleaning up ClasspathManager"
+TraceExit=Trc_SHR_CMI_cleanup_Exit Obsolete Overhead=1 Level=1 Template="CMI cleanup: Done cleaning up ClasspathManager"
 
 TraceEntry=Trc_SHR_CMI_hasTimestampChanged_Entry Overhead=1 Level=6 Template="CMI hasTimestampChanged: Checking timestamp change for item 0x%p. DoTryLockJar=%d."
 TraceExit=Trc_SHR_CMI_hasTimestampChanged_ExitLocked Overhead=1 Level=6 Template="CMI hasTimestampChanged: JAR is locked in header 0x%p. Not checking timestamp: Returning false."
-TraceEvent=Trc_SHR_CMI_hasTimestampChanged_LockJar Overhead=1 Level=6 Template="CMI hasTimestampChanged: Locking JAR in header 0x%p."
+TraceEvent=Trc_SHR_CMI_hasTimestampChanged_LockJar Obsolete Overhead=1 Level=6 Template="CMI hasTimestampChanged: Locking JAR in header 0x%p."
 TraceExit=Trc_SHR_CMI_hasTimestampChanged_Exit Overhead=1 Level=6 Template="CMI hasTimestampChanged: Done check - timestamp is %lld. Returning %d."
 TraceExit=Trc_SHR_CMI_hasTimestampChanged_ExitDoesNotExist Overhead=1 Level=6 Template="CMI hasTimestampChanged: Info - JAR does not exist. Returning %d."
 TraceExit=Trc_SHR_CMI_hasTimestampChanged_ExitFalse Overhead=1 Level=6 Template="CMI hasTimestampChanged: Returning false."
@@ -313,9 +313,9 @@ TraceExit=Trc_SHR_CMI_cpeHashEqualFn_Exit4 Noenv Overhead=1 Level=6 Template="CM
 
 TraceEntry=Trc_SHR_CMI_cpeTableAdd_Entry Overhead=1 Level=6 Template="CMI cpeTableAdd: Adding entry %.*s to hashtable at CPEIndex %d. Item=0x%p. isToken=%x. doTag=%d."
 TraceExit=Trc_SHR_CMI_cpeTableAdd_Exit1 Overhead=1 Level=6 Template="CMI cpeTableAdd: Cannot allocate memory for linked list item. Returning NULL."
-TraceExit=Trc_SHR_CMI_cpeTableAdd_Exit2 Overhead=1 Level=6 Template="CMI cpeTableAdd: Cannot allocate memory for linked list header. Returning NULL."
+TraceExit=Trc_SHR_CMI_cpeTableAdd_Exit2 Obsolete Overhead=1 Level=6 Template="CMI cpeTableAdd: Cannot allocate memory for linked list header. Returning NULL."
 TraceExit=Trc_SHR_CMI_cpeTableAdd_Exit3 Overhead=1 Level=6 Template="CMI cpeTableAdd: Cannot allocate memory for hash table entry. Returning NULL."
-TraceExit=Trc_SHR_CMI_cpeTableAdd_Exit4 Overhead=1 Level=6 Template="CMI cpeTableAdd: Failed to get cpeTableMutex. Tried %d times."
+TraceExit=Trc_SHR_CMI_cpeTableAdd_Exit4 Obsolete Overhead=1 Level=6 Template="CMI cpeTableAdd: Failed to get cpeTableMutex. Tried %d times."
 TraceExit=Trc_SHR_CMI_cpeTableAdd_Exit5 Overhead=1 Level=6 Template="CMI cpeTableAdd: Succeeded. Returning new item 0x%p."
 
 TraceEntry=Trc_SHR_CMI_cpeTableLookup_Entry Overhead=1 Level=3 Template="CMI cpeTableLookup: Entering lookup with name %.*s. IsToken=%d."
@@ -362,7 +362,7 @@ TraceEvent=Trc_SHR_CMI_localValidate_CheckAndTimestampManually_RegisterFailed Ov
 TraceEntry=Trc_SHR_CMI_validate_EntryObsolete Obsolete Overhead=1 Level=3 Template="CMI validate: Validating found ROMClass wrapper 0x%p against classpath 0x%p with confirmed entries=%d"
 TraceExit=Trc_SHR_CMI_validate_ExitSameInCache Overhead=1 Level=3 Template="CMI validate: Classpath in ROMClass and compareTo are same pointer. SHOULD NOT HAPPEN. Returning 1."
 TraceExit=Trc_SHR_CMI_validate_ExitNotSameInCache Overhead=1 Level=3 Template="CMI validate: CompareTo is not local. SHOULD NEVER HAPPEN. Returning -1."
-TraceExit=Trc_SHR_CMI_validate_ExitNotSamePartition Overhead=1 Level=3 Template="CMI validate: Not valid. Partitions do not match. Returning 0."
+TraceExit=Trc_SHR_CMI_validate_ExitNotSamePartition Obsolete Overhead=1 Level=3 Template="CMI validate: Not valid. Partitions do not match. Returning 0."
 TraceExit=Trc_SHR_CMI_validate_ExitStaleItem Overhead=1 Level=3 Template="CMI validate: Detected stale item. Failing FIND. Returning 0."
 TraceExit=Trc_SHR_CMI_validate_ExitError Overhead=1 Level=3 Template="CMI validate: StoreIdentified error. Returning -1."
 TraceExit=Trc_SHR_CMI_validate_ExitDone Overhead=1 Level=3 Template="CMI validate: Done validation. Returning %d - foundAtIndex=%d."
@@ -383,8 +383,8 @@ TraceExit=Trc_SHR_CMI_markClasspathsStale_Exit Overhead=1 Level=1 Template="CMI 
 TraceEvent=Trc_SHR_CMI_isStale Noenv Overhead=1 Level=6 Template="CMI isStale: Testing ClasspathWrapper 0x%p. Returning %d."
 
 // Not used - kept for tpnid consistency with 2.3
-TraceEntry=Trc_SHR_CMI_reset_Entry Overhead=1 Level=1 Template="CMI reset: Resetting ClasspathManager"
-TraceExit=Trc_SHR_CMI_reset_Exit Overhead=1 Level=1 Template="CMI reset: Done resetting ClasspathManager"
+TraceEntry=Trc_SHR_CMI_reset_Entry Obsolete Overhead=1 Level=1 Template="CMI reset: Resetting ClasspathManager"
+TraceExit=Trc_SHR_CMI_reset_Exit Obsolete Overhead=1 Level=1 Template="CMI reset: Done resetting ClasspathManager"
 
 TraceEntry=Trc_SHR_CMI_touchForClassFiles_Entry Overhead=1 Level=3 Template="CMI touchForClassFiles: Looking for class %.*s in classpath 0x%p. Searching up to index %d."
 TraceExit=Trc_SHR_CMI_touchForClassFiles_ExitFalse1 Overhead=1 Level=3 Template="CMI touchForClassFiles: Not going to check (multiple reasons). Returning false."
@@ -457,17 +457,17 @@ TraceExit=Trc_SHR_CC_CRASH6_commitUpdate_ExitObsolete Obsolete Overhead=1 Level=
 
 TraceEvent=Trc_SHR_CM_createPathString_AllocateBuffer Overhead=1 Level=4 Template="CM createPathString: allocating string buffer of size %d at address 0x%p"
 TraceEvent=Trc_SHR_RMI_RcLinkedListImpl_createLink_PoolNew Obsolete Noenv Overhead=1 Level=6 Template="RMI RcLinkedListImpl::createLink: creating new pool element from pool 0x%p"
-TraceEvent=Trc_SHR_RMI_rcTableAdd_HashtableAdd Overhead=1 Level=6 Template="RMI rcTableAdd: hashTableAdd succeeded with rc=0x%p"
-TraceEvent=Trc_SHR_RMI_prepareForCompare_AllocateTempBuf Overhead=1 Level=4 Template="RMI prepareForCompare: allocating temporary buffer for ROMClass comparison of size %d"
-TraceEvent=Trc_SHR_RMI_findExisting_FreeBuffer Overhead=1 Level=4 Template="RMI findExisting: freeing temporary buffer at address 0x%p"
+TraceEvent=Trc_SHR_RMI_rcTableAdd_HashtableAdd Obsolete Overhead=1 Level=6 Template="RMI rcTableAdd: hashTableAdd succeeded with rc=0x%p"
+TraceEvent=Trc_SHR_RMI_prepareForCompare_AllocateTempBuf Obsolete Overhead=1 Level=4 Template="RMI prepareForCompare: allocating temporary buffer for ROMClass comparison of size %d"
+TraceEvent=Trc_SHR_RMI_findExisting_FreeBuffer Obsolete Overhead=1 Level=4 Template="RMI findExisting: freeing temporary buffer at address 0x%p"
 TraceEvent=Trc_SHR_CMI_touchForClassFiles_FreeBuffer Overhead=1 Level=6 Template="CMI touchForClassFiles: freeing string buffer at address 0x%p"
 TraceEvent=Trc_SHR_CMI_CpLinkedListImpl_link_PoolNew NoEnv Overhead=1 Level=6 Template="CMI CpLinkedListImpl::link: creating new pool element from pool 0x%p"
-TraceEvent=Trc_SHR_CMI_cpeTableAdd_PoolNewHdr Overhead=1 Level=6 Template="CMI cpeTableAdd: new pool header element for %.*s, CPEIndex %d, item 0x%p, doTag=%d created element at address 0x%p"
+TraceEvent=Trc_SHR_CMI_cpeTableAdd_PoolNewHdr Obsolete Overhead=1 Level=6 Template="CMI cpeTableAdd: new pool header element for %.*s, CPEIndex %d, item 0x%p, doTag=%d created element at address 0x%p"
 TraceEvent=Trc_SHR_CMI_cpeTableAdd_HashtableAdd Overhead=1 Level=6 Template="CMI cpeTableAdd: adding new hashtable item"
-TraceEvent=Trc_SHR_INIT_hookStoreSharedClass_allocateClasspathItem Overhead=1 Level=3 Template="INIT hookStoreSharedClass: allocating ClasspathItem of size %d at address 0x%p"
-TraceEvent=Trc_SHR_INIT_hookStoreSharedClass_allocateBuf Overhead=1 Level=3 Template="INIT hookStoreSharedClass: allocating string buffer at address 0x%p"
-TraceEvent=Trc_SHR_INIT_hookStoreSharedClass_freeBuf Overhead=1 Level=3 Template="INIT hookStoreSharedClass: freeing string buffer at address 0x%p"
-TraceEvent=Trc_SHR_INIT_hookFindSharedClass_allocateClasspathItem Overhead=1 Level=3 Template="INIT hookFindSharedClass: allocating ClasspathItem of size %d at address 0x%p"
+TraceEvent=Trc_SHR_INIT_hookStoreSharedClass_allocateClasspathItem Obsolete Overhead=1 Level=3 Template="INIT hookStoreSharedClass: allocating ClasspathItem of size %d at address 0x%p"
+TraceEvent=Trc_SHR_INIT_hookStoreSharedClass_allocateBuf Obsolete Overhead=1 Level=3 Template="INIT hookStoreSharedClass: allocating string buffer at address 0x%p"
+TraceEvent=Trc_SHR_INIT_hookStoreSharedClass_freeBuf Obsolete Overhead=1 Level=3 Template="INIT hookStoreSharedClass: freeing string buffer at address 0x%p"
+TraceEvent=Trc_SHR_INIT_hookFindSharedClass_allocateClasspathItem Obsolete Overhead=1 Level=3 Template="INIT hookFindSharedClass: allocating ClasspathItem of size %d at address 0x%p"
 TraceEvent=Trc_SHR_INIT_hookFindSharedClass_allocateBuf Overhead=1 Level=3 Template="INIT hookFindSharedClass: allocating string buffer at address 0x%p"
 TraceEvent=Trc_SHR_INIT_hookFindSharedClass_freeBuf Overhead=1 Level=3 Template="INIT hookFindSharedClass: freeing string buffer at address 0x%p"
 
@@ -529,28 +529,28 @@ TraceExit=Trc_SHR_OSC_createNewCache_Exit_recreated Obsolete NoEnv Overhead=1 Le
 TraceExit=Trc_SHR_OSC_createNewCache_Exit_created Obsolete NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache createNewCache return created"
 TraceExit=Trc_SHR_OSC_openCache_ExitAttachFailed NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache openCache failed to open shmem"
 TraceExit=Trc_SHR_OSC_createNewCache_Exit2 Obsolete NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache createNewCache failed to recreate semaphore"
-TraceExit=Trc_SHR_OSC_openCache_ExitOpExist NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache openCache - cache does not exist and we only want to open existing ones!"
+TraceExit=Trc_SHR_OSC_openCache_ExitOpExist NoEnv Obsolete Overhead=1 Level=1 Group=OSCache Template="OSCache openCache - cache does not exist and we only want to open existing ones!"
 TraceExit=Trc_SHR_OSC_createNewCache_Exit4 Obsolete NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache createNewCache - unknown error return by j9shmem_open!"
 
 TraceEntry=Trc_SHR_OSC_openCache_Entry NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache openCaahe Entered rootName=%s"
 TraceEvent=Trc_SHR_OSC_openCache_shmem_open NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache openCache calling shmem_open: name = %s, size = %d"
-TraceEvent=Trc_SHR_OSC_openCache_release_cache_activity NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache openCache increment cache activity"
-TraceExit=Trc_SHR_OSC_openCache_Exit_Restart1 NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache openCache return Restart - semaphore current generation number incorrect"
-TraceExit=Trc_SHR_OSC_openCache_Exit_Restart2 NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache openCache return Restart - shm id is different"
+TraceEvent=Trc_SHR_OSC_openCache_release_cache_activity NoEnv Obsolete Overhead=1 Level=6 Group=OSCache Template="OSCache openCache increment cache activity"
+TraceExit=Trc_SHR_OSC_openCache_Exit_Restart1 NoEnv Obsolete Overhead=1 Level=6 Group=OSCache Template="OSCache openCache return Restart - semaphore current generation number incorrect"
+TraceExit=Trc_SHR_OSC_openCache_Exit_Restart2 NoEnv Obsolete Overhead=1 Level=6 Group=OSCache Template="OSCache openCache return Restart - shm id is different"
 TraceExit=Trc_SHR_OSC_openCache_Exit_Opened NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache openCache return Created rootName=%s"
-TraceExit=Trc_SHR_OSC_openCache_Exit1 NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache openCache exit - cache generation state incorrect"
-TraceExit=Trc_SHR_OSC_openCache_Exit2 NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache openCache exit - failed to allocate memory"
+TraceExit=Trc_SHR_OSC_openCache_Exit1 NoEnv Obsolete Overhead=1 Level=1 Group=OSCache Template="OSCache openCache exit - cache generation state incorrect"
+TraceExit=Trc_SHR_OSC_openCache_Exit2 NoEnv Obsolete Overhead=1 Level=1 Group=OSCache Template="OSCache openCache exit - failed to allocate memory"
 TraceExit=Trc_SHR_OSC_openCache_Exit3 NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache openCache exit - failed to open shared memory region"
 
-TraceEntry=Trc_SHR_OSC_newInstanceEntry NoEnv Overhead=1 Level=5 Group=OSCache Template="OSCache newInstance Entered"
-TraceExit=Trc_SHR_OSC_newInstanceExit NoEnv Overhead=1 Level=5 Group=OSCache Template="OSCache newInstance Exit"
+TraceEntry=Trc_SHR_OSC_newInstanceEntry NoEnv Obsolete Overhead=1 Level=5 Group=OSCache Template="OSCache newInstance Entered"
+TraceExit=Trc_SHR_OSC_newInstanceExit NoEnv Obsolete Overhead=1 Level=5 Group=OSCache Template="OSCache newInstance Exit"
 
-TraceEntry=Trc_SHR_OSC_recreateSemaphore_Entry NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache recreateSemaphore Entered"
-TraceDebug=Trc_SHR_OSC_recreateSemaphore_Debug1 NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache recreateSemaphore: eyecatcher: %s header->size = %d\n"
+TraceEntry=Trc_SHR_OSC_recreateSemaphore_Entry NoEnv Obsolete Overhead=1 Level=6 Group=OSCache Template="OSCache recreateSemaphore Entered"
+TraceDebug=Trc_SHR_OSC_recreateSemaphore_Debug1 NoEnv Obsolete Overhead=1 Level=6 Group=OSCache Template="OSCache recreateSemaphore: eyecatcher: %s header->size = %d\n"
 TraceExit=Trc_SHR_OSC_recreateSemaphore_Exit1 NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache recreateSemaphore Exit, failure = eyecatcher is different"
-TraceExit=Trc_SHR_OSC_recreateSemaphore_Exit2 NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache recreateSemaphore Exit, failure = version is incompatible, version of cache=%d, expected %d"
-TraceExit=Trc_SHR_OSC_recreateSemaphore_Exit3 NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache recreateSemaphore Exit, failure = modlevel is incompatible, modlevel of cache=%lld, expected %lld"
-TraceExit=Trc_SHR_OSC_recreateSemaphore_Exit NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache recreateSemaphore Exit normally"
+TraceExit=Trc_SHR_OSC_recreateSemaphore_Exit2 NoEnv Obsolete Overhead=1 Level=1 Group=OSCache Template="OSCache recreateSemaphore Exit, failure = version is incompatible, version of cache=%d, expected %d"
+TraceExit=Trc_SHR_OSC_recreateSemaphore_Exit3 NoEnv Obsolete Overhead=1 Level=1 Group=OSCache Template="OSCache recreateSemaphore Exit, failure = modlevel is incompatible, modlevel of cache=%lld, expected %lld"
+TraceExit=Trc_SHR_OSC_recreateSemaphore_Exit NoEnv Obsolete Overhead=1 Level=6 Group=OSCache Template="OSCache recreateSemaphore Exit normally"
 
 TraceEntry=Trc_SHR_OSC_detachRegion_Entry NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache detachRegion Entered"
 TraceDebug=Trc_SHR_OSC_detachRegion_Debug NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache detachRegion: theBlock = %p, region beings at %p"
@@ -564,13 +564,13 @@ TraceDebug=Trc_SHR_OSC_detach_Debug NoEnv Overhead=1 Level=6 Group=OSCache Templ
 TraceExit=Trc_SHR_OSC_detach_Exit NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache detach Exit - success"
 TraceExit=Trc_SHR_OSC_detach_Exit1 NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache detach Exit - already detached"
 
-TraceEvent=Trc_SHR_OSC_attach_count_inc NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache increment generation JVM attach count"
-TraceEvent=Trc_SHR_OSC_attach_count_dec NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache decrement generation JVM attach count"
-TraceEvent=Trc_SHR_OSC_Header_Debug NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache add: cache_header = %p, version = %d, modlevel=%lld, specLengh=%d, path=%s"
+TraceEvent=Trc_SHR_OSC_attach_count_inc NoEnv Obsolete Overhead=1 Level=1 Group=OSCache Template="OSCache increment generation JVM attach count"
+TraceEvent=Trc_SHR_OSC_attach_count_dec NoEnv Obsolete Overhead=1 Level=1 Group=OSCache Template="OSCache decrement generation JVM attach count"
+TraceEvent=Trc_SHR_OSC_Header_Debug NoEnv Obsolete Overhead=1 Level=1 Group=OSCache Template="OSCache add: cache_header = %p, version = %d, modlevel=%lld, specLengh=%d, path=%s"
 
-TraceEntry=Trc_SHR_OSC_add_Entry NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache add Entered"
+TraceEntry=Trc_SHR_OSC_add_Entry NoEnv Obsolete Overhead=1 Level=6 Group=OSCache Template="OSCache add Entered"
 TraceExit=Trc_SHR_OSC_add_Exit1 NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache add Exit, attach failed"
-TraceExit=Trc_SHR_OSC_add_Exit NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache add Exit - success"
+TraceExit=Trc_SHR_OSC_add_Exit NoEnv Obsolete Overhead=1 Level=6 Group=OSCache Template="OSCache add Exit - success"
 
 TraceEntry=Trc_SHR_OSC_attach_Entry NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache attach Entered"
 TraceExit=Trc_SHR_OSC_attach_Exit1 NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache attach attempt to attach after failed initialization"
@@ -581,7 +581,7 @@ TraceDebug=Trc_SHR_OSC_attach_Debug2 NoEnv Overhead=1 Level=6 Group=OSCache Temp
 TraceEvent=Trc_SHR_OSC_attach_Try_Attach Obsolete NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache attach Now trying to attach the region"
 
 TraceEntry=Trc_SHR_OSC_destroy_Entry NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache destroy Entered"
-TraceExit=Trc_SHR_OSC_destroy_Exit NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache destroy Exit"
+TraceExit=Trc_SHR_OSC_destroy_Exit NoEnv Obsolete Overhead=1 Level=6 Group=OSCache Template="OSCache destroy Exit"
 
 TraceEntry=Trc_SHR_OSC_enterMutex_Entry NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache enterMutex Entered cachename = %s"
 TraceExit=Trc_SHR_OSC_enterMutex_Exit NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache enterMutex Exit cachename = %s"
@@ -591,27 +591,27 @@ TraceExit=Trc_SHR_OSC_exitMutex_Exit NoEnv Overhead=1 Level=6 Group=OSCache Temp
 
 TraceEntry=Trc_SHR_OSC_getAllCacheStatistics_Entry NoEnv Overhead=1 Level=6 Group=OSCache Template="OSCache getAllCacheStatistics Entered"
 TraceExit=Trc_SHR_OSC_getAllCacheStatistics_Exit1 NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache getAllCacheStatistics Exit, No cache exists"
-TraceExit=Trc_SHR_OSC_getAllCacheStatistics_Exit NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache getAllCacheStatistics Exit"
+TraceExit=Trc_SHR_OSC_getAllCacheStatistics_Exit NoEnv Obsolete Overhead=1 Level=1 Group=OSCache Template="OSCache getAllCacheStatistics Exit"
 
 TraceExit=Trc_SHR_OSC_exitMutex_Exit1 NoEnv Overhead=1 Level=3 Group=OSCache Template="OSCache exitMutex failed"
 TraceExit=Trc_SHR_OSC_enterMutex_Exit1 NoEnv Overhead=1 Level=3 Group=OSCache Template="OSCache enterMutex failed"
 
 // POST-DCUT ADDITIONS
 
-TraceEntry=Trc_SHR_INIT_hookStoreSharedClass_entry Overhead=1 Level=1 Template="INIT HOOK STORE CLASS: Entering hookStoreSharedClass"
-TraceExit=Trc_SHR_INIT_hookStoreSharedClass_exit_Noop Overhead=1 Level=1 Template="INIT HOOK STORE CLASS: Exiting hookStoreSharedClass because store should not happen"
-TraceExit=Trc_SHR_INIT_hookStoreSharedClass_exit Overhead=1 Level=1 Template="INIT HOOK STORE CLASS: Exiting hookStoreSharedClass"
+TraceEntry=Trc_SHR_INIT_hookStoreSharedClass_entry Obsolete Overhead=1 Level=1 Template="INIT HOOK STORE CLASS: Entering hookStoreSharedClass"
+TraceExit=Trc_SHR_INIT_hookStoreSharedClass_exit_Noop Obsolete Overhead=1 Level=1 Template="INIT HOOK STORE CLASS: Exiting hookStoreSharedClass because store should not happen"
+TraceExit=Trc_SHR_INIT_hookStoreSharedClass_exit Obsolete Overhead=1 Level=1 Template="INIT HOOK STORE CLASS: Exiting hookStoreSharedClass"
 
 TraceEntry=Trc_SHR_INIT_hookFindSharedClass_entry Overhead=1 Level=3 Template="INIT HOOK FIND CLASS: Entering hookFindSharedClass"
 TraceExit=Trc_SHR_INIT_hookFindSharedClass_exit_Noop Overhead=1 Level=3 Template="INIT HOOK FIND CLASS: Exiting hookFindSharedClass because find should not happen"
 TraceExit=Trc_SHR_INIT_hookFindSharedClass_exit Overhead=1 Level=3 Template="INIT HOOK FIND CLASS: Exiting hookFindSharedClass"
 
 // All the compareWriteHash tracepoints are now redundant as this function has been replaced
-TraceEntry=Trc_SHR_CC_compareWriteHash_Enter NoEnv Overhead=1 Level=4 Template="CC compareWriteHash: Entering with hashValue=%d and cacheValue=%d"
-TraceEvent=Trc_SHR_CC_compareWriteHash_Updating NoEnv Overhead=1 Level=4 Template="CC compareWriteHash: Updated writeHash field in cache with value %d"
-TraceExit=Trc_SHR_CC_compareWriteHash_Exit1 NoEnv Overhead=1 Level=4 Template="CC compareWriteHash: Detected same hashcode for different VM. Returning 1."
-TraceExit=Trc_SHR_CC_compareWriteHash_Exit2 NoEnv Overhead=1 Level=4 Template="CC compareWriteHash: Detected same hashcode for same VM. Returning 0."
-TraceExit=Trc_SHR_CC_compareWriteHash_Exit3 NoEnv Overhead=1 Level=4 Template="CC compareWriteHash: Done updating writeHash value in cache. Returning 0."
+TraceEntry=Trc_SHR_CC_compareWriteHash_Enter NoEnv Obsolete Overhead=1 Level=4 Template="CC compareWriteHash: Entering with hashValue=%d and cacheValue=%d"
+TraceEvent=Trc_SHR_CC_compareWriteHash_Updating NoEnv Obsolete Overhead=1 Level=4 Template="CC compareWriteHash: Updated writeHash field in cache with value %d"
+TraceExit=Trc_SHR_CC_compareWriteHash_Exit1 NoEnv Obsolete Overhead=1 Level=4 Template="CC compareWriteHash: Detected same hashcode for different VM. Returning 1."
+TraceExit=Trc_SHR_CC_compareWriteHash_Exit2 NoEnv Obsolete Overhead=1 Level=4 Template="CC compareWriteHash: Detected same hashcode for same VM. Returning 0."
+TraceExit=Trc_SHR_CC_compareWriteHash_Exit3 NoEnv Obsolete Overhead=1 Level=4 Template="CC compareWriteHash: Done updating writeHash value in cache. Returning 0."
 
 TraceEvent=Trc_SHR_CM_access_Event_IncreasingWriteHashObsolete Obsolete Overhead=1 Level=4 Template="CM access: increasing writeHash value to %d millis"
 
@@ -636,14 +636,14 @@ TraceExit=Trc_SHR_CPI_addItem_ExitError Noenv Overhead=1 Level=2 Template="CPI a
 TraceExit=Trc_SHR_CPI_addItem_Exit Noenv Overhead=1 Level=2 Template="CPI addItem: Returning with itemsAdded=%d"
 
 // Not used - kept for tpnid consistency with 2.3
-TraceEntry=Trc_SHR_CPI_isSamePartitionContext_Entry Noenv Overhead=1 Level=6 Template="CPI isSamePartitionContext: Entering to compare ClasspathItems %p and %p"
-TraceExit=Trc_SHR_CPI_isSamePartitionContext_ExitNullError Noenv Overhead=1 Level=6 Template="CPI isSamePartitionContext: ERROR - one of the ClasspathItems is NULL"
-TraceExit=Trc_SHR_CPI_isSamePartitionContext_ExitTrue1 Noenv Overhead=1 Level=6 Template="CPI isSamePartitionContext: Returning true as there are no partitions or contexts"
-TraceExit=Trc_SHR_CPI_isSamePartitionContext_ExitTrue2 Noenv Overhead=1 Level=6 Template="CPI isSamePartitionContext: Returning true as the comparison succeeded"
-TraceExit=Trc_SHR_CPI_isSamePartitionContext_ExitFalse1 Noenv Overhead=1 Level=6 Template="CPI isSamePartitionContext: Returning false as the partition comparison failed"
-TraceExit=Trc_SHR_CPI_isSamePartitionContext_ExitFalse2 Noenv Overhead=1 Level=6 Template="CPI isSamePartitionContext: Returning false as one of the partitions is NULL"
-TraceExit=Trc_SHR_CPI_isSamePartitionContext_ExitFalse3 Noenv Overhead=1 Level=6 Template="CPI isSamePartitionContext: Returning false as the context comparison failed"
-TraceExit=Trc_SHR_CPI_isSamePartitionContext_ExitFalse4 Noenv Overhead=1 Level=6 Template="CPI isSamePartitionContext: Returning false as one of the contexts is NULL"
+TraceEntry=Trc_SHR_CPI_isSamePartitionContext_Entry Noenv Obsolete Overhead=1 Level=6 Template="CPI isSamePartitionContext: Entering to compare ClasspathItems %p and %p"
+TraceExit=Trc_SHR_CPI_isSamePartitionContext_ExitNullError Noenv Obsolete Overhead=1 Level=6 Template="CPI isSamePartitionContext: ERROR - one of the ClasspathItems is NULL"
+TraceExit=Trc_SHR_CPI_isSamePartitionContext_ExitTrue1 Noenv Obsolete Overhead=1 Level=6 Template="CPI isSamePartitionContext: Returning true as there are no partitions or contexts"
+TraceExit=Trc_SHR_CPI_isSamePartitionContext_ExitTrue2 Noenv Obsolete Overhead=1 Level=6 Template="CPI isSamePartitionContext: Returning true as the comparison succeeded"
+TraceExit=Trc_SHR_CPI_isSamePartitionContext_ExitFalse1 Noenv Obsolete Overhead=1 Level=6 Template="CPI isSamePartitionContext: Returning false as the partition comparison failed"
+TraceExit=Trc_SHR_CPI_isSamePartitionContext_ExitFalse2 Noenv Obsolete Overhead=1 Level=6 Template="CPI isSamePartitionContext: Returning false as one of the partitions is NULL"
+TraceExit=Trc_SHR_CPI_isSamePartitionContext_ExitFalse3 Noenv Obsolete Overhead=1 Level=6 Template="CPI isSamePartitionContext: Returning false as the context comparison failed"
+TraceExit=Trc_SHR_CPI_isSamePartitionContext_ExitFalse4 Noenv Obsolete Overhead=1 Level=6 Template="CPI isSamePartitionContext: Returning false as one of the contexts is NULL"
 
 TraceEntry=Trc_SHR_CPI_compare_Entry Noenv Overhead=1 Level=2 Template="CPI compare: Entering to compare ClasspathItems %p and %p"
 TraceExit=Trc_SHR_CPI_compare_ExitNullError Noenv Overhead=1 Level=2 Template="CPI compare: ERROR - one of the ClasspathItems is NULL"
@@ -653,7 +653,7 @@ TraceExit=Trc_SHR_CPI_compare_ExitFalse1 Noenv Overhead=1 Level=2 Template="CPI 
 TraceExit=Trc_SHR_CPI_compare_ExitFalse2 Noenv Overhead=1 Level=2 Template="CPI compare: Returning false as hashcodes don't match"
 
 // Not used - kept for tpnid consistency with 2.3
-TraceExit=Trc_SHR_CPI_compare_ExitFalse3 Noenv Overhead=1 Level=2 Template="CPI compare: Returning false as different partitions/contexts"
+TraceExit=Trc_SHR_CPI_compare_ExitFalse3 Noenv Obsolete Overhead=1 Level=2 Template="CPI compare: Returning false as different partitions/contexts"
 
 TraceExit=Trc_SHR_CPI_compare_ExitFalse4 Noenv Overhead=1 Level=2 Template="CPI compare: Returning false as ClasspathEntryItems at index %d do not match"
 
@@ -671,14 +671,14 @@ TraceExit=Trc_SHR_CPI_itemAt_ExitLocal Noenv Overhead=1 Level=6 Template="CPI it
 TraceExit=Trc_SHR_CPI_itemAt_ExitInCache Noenv Overhead=1 Level=6 Template="CPI itemAt: Returning entry in cache"
 
 // Not used - kept for tpnid consistency with 2.3
-TraceEntry=Trc_SHR_CPI_getPartition_Entry Noenv Overhead=1 Level=6 Template="CPI getPartition: Requesting partition"
-TraceExit=Trc_SHR_CPI_getPartition_ExitNull Noenv Overhead=1 Level=6 Template="CPI getPartition: No partitionLen so returning NULL"
-TraceExit=Trc_SHR_CPI_getPartition_ExitLocal Noenv Overhead=1 Level=6 Template="CPI getPartition: Returning local partition string"
-TraceExit=Trc_SHR_CPI_getPartition_ExitInCache Noenv Overhead=1 Level=6 Template="CPI getPartition: Returning partition string in cache"
-TraceEntry=Trc_SHR_CPI_getModContext_Entry Noenv Overhead=1 Level=6 Template="CPI getPartition: Requesting context"
-TraceExit=Trc_SHR_CPI_getModContext_ExitNull Noenv Overhead=1 Level=6 Template="CPI getPartition: No contextLen so returning NULL"
-TraceExit=Trc_SHR_CPI_getModContext_ExitLocal Noenv Overhead=1 Level=6 Template="CPI getPartition: Returning local context string"
-TraceExit=Trc_SHR_CPI_getModContext_ExitInCache Noenv Overhead=1 Level=6 Template="CPI getPartition: Returning context string in cache"
+TraceEntry=Trc_SHR_CPI_getPartition_Entry Noenv Obsolete Overhead=1 Level=6 Template="CPI getPartition: Requesting partition"
+TraceExit=Trc_SHR_CPI_getPartition_ExitNull Noenv Obsolete Overhead=1 Level=6 Template="CPI getPartition: No partitionLen so returning NULL"
+TraceExit=Trc_SHR_CPI_getPartition_ExitLocal Noenv Obsolete Overhead=1 Level=6 Template="CPI getPartition: Returning local partition string"
+TraceExit=Trc_SHR_CPI_getPartition_ExitInCache Noenv Obsolete Overhead=1 Level=6 Template="CPI getPartition: Returning partition string in cache"
+TraceEntry=Trc_SHR_CPI_getModContext_Entry Noenv Obsolete Overhead=1 Level=6 Template="CPI getPartition: Requesting context"
+TraceExit=Trc_SHR_CPI_getModContext_ExitNull Noenv Obsolete Overhead=1 Level=6 Template="CPI getPartition: No contextLen so returning NULL"
+TraceExit=Trc_SHR_CPI_getModContext_ExitLocal Noenv Obsolete Overhead=1 Level=6 Template="CPI getPartition: Returning local context string"
+TraceExit=Trc_SHR_CPI_getModContext_ExitInCache Noenv Obsolete Overhead=1 Level=6 Template="CPI getPartition: Returning context string in cache"
 
 TraceEntry=Trc_SHR_CPI_initialize_EntryObsolete Noenv Obsolete Overhead=1 Level=1 Template="CPI initialize: Initializing ClasspathItem id %d with %d entries, type %d, partition %s, modContext %s"
 TraceExit=Trc_SHR_CPI_initialize_Exit Noenv Overhead=1 Level=1 Template="CPI initialize: Done initializing ClasspathItem"
@@ -691,12 +691,12 @@ TraceExit=Trc_SHR_RMI_prepareForCompare_ExitFixFailed Obsolete Overhead=1 Level=
 
 // POST SR1 ADDITIONS
 
-TraceExit=Trc_SHR_CM_addROMClassToCache_ExitNull3 Overhead=1 Level=1 Template="CM addROMClassToCache: Did not succeed writing ROMClass. Returning NULL"
+TraceExit=Trc_SHR_CM_addROMClassToCache_ExitNull3 Obsolete Overhead=1 Level=1 Template="CM addROMClassToCache: Did not succeed writing ROMClass. Returning NULL"
 TraceExit=Trc_SHR_CM_add_ExitFull Obsolete Overhead=1 Level=1 Template="CM add: Exiting due to full cache"
 TraceEntry=Trc_SHR_OSC_shmemOpenWrapper_Entry  Overhead=1 Level=1 NoEnv Template="shmemOpenWrapper entered, cache name = %s"
 TraceExit=Trc_SHR_OSC_shmemOpenWrapper_Exit  Overhead=1 Level=1 NoEnv Template="shmemOpenWrapper exiting, return code = %d, specLeng = %d"
-TraceEvent=Trc_SHR_OSC_shmemOpenWrapper_Sizes  Overhead=1 Level=1 NoEnv Template="shmemOpenWrapper original specLeng = %d, maxSize = %lld, get_limit rc = %d"
-TraceEvent=Trc_SHR_OSC_shmemOpenWrapper_Retry  Overhead=1 Level=1 NoEnv Template="shmemOpenWrapper original cache size invalid, retrying with maxSize"
+TraceEvent=Trc_SHR_OSC_shmemOpenWrapper_Sizes  Obsolete Overhead=1 Level=1 NoEnv Template="shmemOpenWrapper original specLeng = %d, maxSize = %lld, get_limit rc = %d"
+TraceEvent=Trc_SHR_OSC_shmemOpenWrapper_Retry  Obsolete Overhead=1 Level=1 NoEnv Template="shmemOpenWrapper original cache size invalid, retrying with maxSize"
 
 TraceExit=Trc_SHR_OSC_createNewCache_Exit5 Obsolete NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache createNewCache - wait for creation semaphore in j9shmem_open timed out"
 TraceExit=Trc_SHR_OSC_openCache_Exit4 NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache openCache exit - wait for creation semaphore in j9shmem_open timed out"
@@ -766,19 +766,19 @@ TraceExit=Trc_SHR_CM_findROMClassResource_Exit2 Overhead=1 Level=3 Template="CM 
 TraceEntry=Trc_SHR_RRM_localHashTableCreate_Entry Overhead=1 Level=1 Template="RRM localHashTableCreate: Creating new hashtable with %d initial entries"
 TraceExit=Trc_SHR_RRM_localHashTableCreate_Exit Overhead=1 Level=1 Template="RRM localHashTableCreate: Created hashtable at address 0x%p"
 
-TraceEntry=Trc_SHR_RRM_rrmHashFn_Entry Noenv Overhead=1 Level=6 Template="RRM rrmHashFn: Creating hashcode for item 0x%p"
-TraceExit=Trc_SHR_RRM_rrmHashFn_Exit Noenv Overhead=1 Level=6 Template="RRM rrmHashFn: Returning hashcode %d"
+TraceEntry=Trc_SHR_RRM_rrmHashFn_Entry Noenv Obsolete Overhead=1 Level=6 Template="RRM rrmHashFn: Creating hashcode for item 0x%p"
+TraceExit=Trc_SHR_RRM_rrmHashFn_Exit Noenv Obsolete Overhead=1 Level=6 Template="RRM rrmHashFn: Returning hashcode %d"
 
-TraceEntry=Trc_SHR_RRM_rrmHashEqualFn_Entry Noenv Overhead=1 Level=6 Template="RRM rrmHashEqualFn: Comparing 0x%p with 0x%p"
-TraceExit=Trc_SHR_RRM_rrmHashEqualFn_Exit1 Noenv Overhead=1 Level=6 Template="RRM rrmHashEqualFn: One key is null. Exiting with false."
-TraceExit=Trc_SHR_RRM_rrmHashEqualFn_Exit2 Noenv Overhead=1 Level=6 Template="RRM rrmHashEqualFn: Key lengths don't match. Exiting with false."
-TraceExit=Trc_SHR_RRM_rrmHashEqualFn_Exit3 Noenv Overhead=1 Level=6 Template="RRM rrmHashEqualFn: Called compareUTF8. Result=%d"
+TraceEntry=Trc_SHR_RRM_rrmHashEqualFn_Entry Noenv Obsolete Overhead=1 Level=6 Template="RRM rrmHashEqualFn: Comparing 0x%p with 0x%p"
+TraceExit=Trc_SHR_RRM_rrmHashEqualFn_Exit1 Noenv Obsolete Overhead=1 Level=6 Template="RRM rrmHashEqualFn: One key is null. Exiting with false."
+TraceExit=Trc_SHR_RRM_rrmHashEqualFn_Exit2 Noenv Obsolete Overhead=1 Level=6 Template="RRM rrmHashEqualFn: Key lengths don't match. Exiting with false."
+TraceExit=Trc_SHR_RRM_rrmHashEqualFn_Exit3 Noenv Obsolete Overhead=1 Level=6 Template="RRM rrmHashEqualFn: Called compareUTF8. Result=%d"
 
 TraceEntry=Trc_SHR_RRM_rrmTableAdd_Entry Overhead=1 Level=6 Template="RRM rrmTableAdd: Entering add with key %d for item 0x%p"
 TraceException=Trc_SHR_RRM_rrmTableAdd_Exception1 Overhead=1 Level=6 Template="RRM rrmTableAdd: hashTableAdd failed"
 TraceExit=Trc_SHR_RRM_rrmTableAdd_Exit1 Overhead=1 Level=6 Template="RRM rrmTableAdd: failed to get local mutex. Tried %d times. Returning NULL."
 TraceExit=Trc_SHR_RRM_rrmTableAdd_Exit2 Overhead=1 Level=6 Template="RRM rrmTableAdd: Succeeded in adding item. Returning 0x%p."
-TraceExit=Trc_SHR_RRM_rrmTableAdd_Exit3 Overhead=1 Level=6 Template="RRM rrmTableAdd: Failed to create new HashTableEntry. Returning NULL."
+TraceExit=Trc_SHR_RRM_rrmTableAdd_Exit3 Obsolete Overhead=1 Level=6 Template="RRM rrmTableAdd: Failed to create new HashTableEntry. Returning NULL."
 TraceEvent=Trc_SHR_RRM_rrmTableAdd_HashtableAdd Overhead=1 Level=6 Template="RRM rrmTableAdd: hashTableAdd succeeded with returnVal=0x%p"
 
 TraceEntry=Trc_SHR_RRM_rrmTableLookup_Entry Overhead=1 Level=4 Template="RRM rrmTableLookup: Entering lookup with key %d"
@@ -926,24 +926,24 @@ TraceExit=Trc_SHR_CM_findSharedData_Exit2 Overhead=1 Level=2 Template="CM findSh
 TraceEntry=Trc_SHR_BDMI_localHashTableCreate_Entry Overhead=1 Level=1 Template="BDMI localHashTableCreate: Creating new hashtable with %d initial entries"
 TraceExit=Trc_SHR_BDMI_localHashTableCreate_Exit Overhead=1 Level=1 Template="BDMI localHashTableCreate: Created hashtable at address 0x%p"
 
-TraceEntry=Trc_SHR_BDMI_bdHashFn_Entry Noenv Overhead=1 Level=6 Template="BDMI bdHashFn: Creating hashcode for item 0x%p"
-TraceExit=Trc_SHR_BDMI_bdHashFn_Exit Noenv Overhead=1 Level=6 Template="BDMI bdHashFn: Returning hashcode %d"
+TraceEntry=Trc_SHR_BDMI_bdHashFn_Entry Noenv Obsolete Overhead=1 Level=6 Template="BDMI bdHashFn: Creating hashcode for item 0x%p"
+TraceExit=Trc_SHR_BDMI_bdHashFn_Exit Noenv Obsolete Overhead=1 Level=6 Template="BDMI bdHashFn: Returning hashcode %d"
 
-TraceEntry=Trc_SHR_BDMI_bdHashEqualFn_Entry Noenv Overhead=1 Level=6 Template="BDMI scHashEqualFn: Comparing 0x%p with 0x%p"
-TraceExit=Trc_SHR_BDMI_bdHashEqualFn_Exit1 Noenv Overhead=1 Level=6 Template="BDMI scHashEqualFn: One key is null. Exiting with false."
-TraceExit=Trc_SHR_BDMI_bdHashEqualFn_Exit2 Noenv Overhead=1 Level=6 Template="BDMI scHashEqualFn: Key lengths don't match. Exiting with false."
-TraceExit=Trc_SHR_BDMI_bdHashEqualFn_Exit3 Noenv Overhead=1 Level=6 Template="BDMI scHashEqualFn: Called compareUTF8. Result=%d"
+TraceEntry=Trc_SHR_BDMI_bdHashEqualFn_Entry Noenv Obsolete Overhead=1 Level=6 Template="BDMI scHashEqualFn: Comparing 0x%p with 0x%p"
+TraceExit=Trc_SHR_BDMI_bdHashEqualFn_Exit1 Noenv Obsolete Overhead=1 Level=6 Template="BDMI scHashEqualFn: One key is null. Exiting with false."
+TraceExit=Trc_SHR_BDMI_bdHashEqualFn_Exit2 Noenv Obsolete Overhead=1 Level=6 Template="BDMI scHashEqualFn: Key lengths don't match. Exiting with false."
+TraceExit=Trc_SHR_BDMI_bdHashEqualFn_Exit3 Noenv Obsolete Overhead=1 Level=6 Template="BDMI scHashEqualFn: Called compareUTF8. Result=%d"
 
-TraceEntry=Trc_SHR_BDMI_bdTableAdd_Entry Overhead=1 Level=6 Template="BDMI bdTableAdd: Entering add with key %.*s for item 0x%p"
-TraceException=Trc_SHR_BDMI_bdTableAdd_Exception1 Overhead=1 Level=6 Template="BDMI bdTableAdd: hashTableAdd failed"
-TraceExit=Trc_SHR_BDMI_bdTableAdd_Exit1 Overhead=1 Level=6 Template="BDMI bdTableAdd: failed to get local mutex. Tried %d times. Returning NULL."
-TraceExit=Trc_SHR_BDMI_bdTableAdd_Exit2 Overhead=1 Level=6 Template="BDMI bdTableAdd: Succeeded in adding item. Returning 0x%p."
-TraceEvent=Trc_SHR_BDMI_bdTableAdd_HashtableAdd Overhead=1 Level=6 Template="BDMI bdTableAdd: hashTableAdd succeeded with returnVal=0x%p"
+TraceEntry=Trc_SHR_BDMI_bdTableAdd_Entry Obsolete Overhead=1 Level=6 Template="BDMI bdTableAdd: Entering add with key %.*s for item 0x%p"
+TraceException=Trc_SHR_BDMI_bdTableAdd_Exception1 Obsolete Overhead=1 Level=6 Template="BDMI bdTableAdd: hashTableAdd failed"
+TraceExit=Trc_SHR_BDMI_bdTableAdd_Exit1 Obsolete Overhead=1 Level=6 Template="BDMI bdTableAdd: failed to get local mutex. Tried %d times. Returning NULL."
+TraceExit=Trc_SHR_BDMI_bdTableAdd_Exit2 Obsolete Overhead=1 Level=6 Template="BDMI bdTableAdd: Succeeded in adding item. Returning 0x%p."
+TraceEvent=Trc_SHR_BDMI_bdTableAdd_HashtableAdd Obsolete Overhead=1 Level=6 Template="BDMI bdTableAdd: hashTableAdd succeeded with returnVal=0x%p"
 
-TraceEntry=Trc_SHR_BDMI_bdTableLookup_Entry Overhead=1 Level=4 Template="BDMI bdTableLookup: Entering lookup with name %.*s"
-TraceEvent=Trc_SHR_BDMI_bdTableLookup_HashtableFind Overhead=1 Level=4 Template="BDMI bdTableLookup: Done hashTableFind. Result=0x%p"
-TraceExit=Trc_SHR_BDMI_bdTableLookup_Exit1 Overhead=1 Level=4 Template="BDMI bdTableLookup: failed to get local mutex. Tried %d times. Returning NULL."
-TraceExit=Trc_SHR_BDMI_bdTableLookup_Exit2 Overhead=1 Level=4 Template="BDMI bdTableLookup: Exiting lookup with result 0x%p"
+TraceEntry=Trc_SHR_BDMI_bdTableLookup_Entry Obsolete Overhead=1 Level=4 Template="BDMI bdTableLookup: Entering lookup with name %.*s"
+TraceEvent=Trc_SHR_BDMI_bdTableLookup_HashtableFind Obsolete Overhead=1 Level=4 Template="BDMI bdTableLookup: Done hashTableFind. Result=0x%p"
+TraceExit=Trc_SHR_BDMI_bdTableLookup_Exit1 Obsolete Overhead=1 Level=4 Template="BDMI bdTableLookup: failed to get local mutex. Tried %d times. Returning NULL."
+TraceExit=Trc_SHR_BDMI_bdTableLookup_Exit2 Obsolete Overhead=1 Level=4 Template="BDMI bdTableLookup: Exiting lookup with result 0x%p"
 
 TraceEntry=Trc_SHR_BDMI_newInstance_Entry Noenv Overhead=1 Level=1 Template="BDMI newInstance: Creating new ByteDataManager. vm=0x%p. cache=0x%p"
 TraceExit=Trc_SHR_BDMI_newInstance_Exit Noenv Overhead=1 Level=1 Template="BDMI newInstance: Created ByteDataManager at address 0x%p"
@@ -977,7 +977,7 @@ TraceExit=Trc_SHR_OSC_Mmap_finalise_Exit NoEnv Overhead=1 Level=1 Template="SH_O
 
 TraceEntry=Trc_SHR_OSC_Mmap_startup_Entry NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Entering cache name = %s, control dir = %s, cache size = %zu, numSems = %zd, create flags = 0x%zx, verbose flags = 0x%zx, openFlags = 0x%x"
 TraceExit=Trc_SHR_OSC_Mmap_startup_nommap NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Exiting, mmap write or msync not supported, mmap capabilities = 0x%x"
-TraceExit=Trc_SHR_OSC_Mmap_startup_nofilelocking NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Exiting, file locking not support, J9PORT_CAPABILITY_MASK = 0x%x"
+TraceExit=Trc_SHR_OSC_Mmap_startup_nofilelocking NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Exiting, file locking not support, J9PORT_CAPABILITY_MASK = 0x%x"
 TraceEvent=Trc_SHR_OSC_Mmap_startup_failed_mutex_init NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Failed to initialize mutex %zu"
 TraceEvent=Trc_SHR_OSC_Mmap_startup_initialized_mutexes NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Succeeded initializing mutexes"
 TraceExit=Trc_SHR_OSC_Mmap_startup_badfileopen NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: j9file_open failed for cache path name = %s"
@@ -985,7 +985,7 @@ TraceEvent=Trc_SHR_OSC_Mmap_startup_goodfileopen NoEnv Overhead=1 Level=1 Templa
 TraceExit=Trc_SHR_OSC_Mmap_startup_badAcquireHeaderWriteLock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Acquire header write lock failed"
 TraceEvent=Trc_SHR_OSC_Mmap_startup_goodAcquireHeaderWriteLock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Successfully acquired header write lock"
 TraceEvent=Trc_SHR_OSC_Mmap_startup_fileOpened NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: File length > 0, file opened"
-TraceEvent=Trc_SHR_OSC_Mmap_startup_deleteFlagSet NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Cache delete flag set, will close"
+TraceEvent=Trc_SHR_OSC_Mmap_startup_deleteFlagSet NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Cache delete flag set, will close"
 TraceEvent=Trc_SHR_OSC_Mmap_startup_fileCreated NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: File is wrong length - file created"
 TraceEvent=Trc_SHR_OSC_Mmap_startup_goodCreateCacheHeader NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Successfully created cache header"
 TraceEvent=Trc_SHR_OSC_Mmap_startup_goodSetCacheLength NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Successfully set cache length to %zu"
@@ -996,7 +996,7 @@ TraceExit=Trc_SHR_OSC_Mmap_startup_badInitializeDataHeader NoEnv Overhead=1 Leve
 TraceEvent=Trc_SHR_OSC_Mmap_startup_badCreateCacheHeader NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Failed to create cache header"
 TraceEvent=Trc_SHR_OSC_Mmap_startup_badReleaseHeaderWriteLock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Failed to release header write lock"
 TraceEvent=Trc_SHR_OSC_Mmap_startup_goodReleaseHeaderWriteLock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Successfully released header write lock"
-TraceEvent=Trc_SHR_OSC_Mmap_startup_closingFileHandle NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Closing file handle %d due to cache creation or errors"
+TraceEvent=Trc_SHR_OSC_Mmap_startup_closingFileHandle NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Closing file handle %d due to cache creation or errors"
 TraceExit=Trc_SHR_OSC_Mmap_startup_Exit NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: Successful exit"
 
 TraceEntry=Trc_SHR_OSC_Mmap_acquireWriteLock_Entry NoEnv Overhead=1 Level=3 Template="SH_OSCachemmap::acquireWriteLock: Entering, lockID = %zu"
@@ -1031,23 +1031,23 @@ TraceEvent=Trc_SHR_OSC_Mmap_releaseHeaderWriteLock_badLock NoEnv Overhead=1 Leve
 TraceEvent=Trc_SHR_OSC_Mmap_releaseHeaderWriteLock_goodLock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::releaseHeaderWriteLock: Unlock successful"
 TraceExit=Trc_SHR_OSC_Mmap_releaseHeaderWriteLock_Exit NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::releaseHeaderWriteLock: Exiting, rc = %d"
 
-TraceEntry=Trc_SHR_OSC_Mmap_acquireHeaderReadLock_Entry NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::acquireHeaderReadLock: Entering"
-TraceEvent=Trc_SHR_OSC_Mmap_acquireHeaderReadLock_gettingLock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::acquireHeaderReadLock: Attempting to get lock for file handle = %zi, lock flags = 0x%x, offset = %llu, length = %llu"
-TraceEvent=Trc_SHR_OSC_Mmap_acquireHeaderReadLock_badLock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::acquireHeaderReadLock: Lock failed"
-TraceEvent=Trc_SHR_OSC_Mmap_acquireHeaderReadLock_goodLock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::acquireHeaderReadLock: Lock successful"
-TraceExit=Trc_SHR_OSC_Mmap_acquireHeaderReadLock_Exit NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::acquireHeaderReadLock: Exiting, rc = %d"
+TraceEntry=Trc_SHR_OSC_Mmap_acquireHeaderReadLock_Entry NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::acquireHeaderReadLock: Entering"
+TraceEvent=Trc_SHR_OSC_Mmap_acquireHeaderReadLock_gettingLock NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::acquireHeaderReadLock: Attempting to get lock for file handle = %zi, lock flags = 0x%x, offset = %llu, length = %llu"
+TraceEvent=Trc_SHR_OSC_Mmap_acquireHeaderReadLock_badLock NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::acquireHeaderReadLock: Lock failed"
+TraceEvent=Trc_SHR_OSC_Mmap_acquireHeaderReadLock_goodLock NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::acquireHeaderReadLock: Lock successful"
+TraceExit=Trc_SHR_OSC_Mmap_acquireHeaderReadLock_Exit NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::acquireHeaderReadLock: Exiting, rc = %d"
 
-TraceEntry=Trc_SHR_OSC_Mmap_releaseHeaderReadLock_Entry NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::releaseHeaderReadLock: Entering"
-TraceEvent=Trc_SHR_OSC_Mmap_releaseHeaderReadLock_gettingLock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::releaseHeaderReadLock: Attempting to release lock for file handle = %zi, offset = %llu, length = %llu"
-TraceEvent=Trc_SHR_OSC_Mmap_releaseHeaderReadLock_badLock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::releaseHeaderReadLock: Unlock failed"
-TraceEvent=Trc_SHR_OSC_Mmap_releaseHeaderReadLock_goodLock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::releaseHeaderReadLock: Unlock successful"
-TraceExit=Trc_SHR_OSC_Mmap_releaseHeaderReadLock_Exit NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::releaseHeaderReadLock: Exiting, rc = %d"
+TraceEntry=Trc_SHR_OSC_Mmap_releaseHeaderReadLock_Entry NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::releaseHeaderReadLock: Entering"
+TraceEvent=Trc_SHR_OSC_Mmap_releaseHeaderReadLock_gettingLock NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::releaseHeaderReadLock: Attempting to release lock for file handle = %zi, offset = %llu, length = %llu"
+TraceEvent=Trc_SHR_OSC_Mmap_releaseHeaderReadLock_badLock NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::releaseHeaderReadLock: Unlock failed"
+TraceEvent=Trc_SHR_OSC_Mmap_releaseHeaderReadLock_goodLock NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::releaseHeaderReadLock: Unlock successful"
+TraceExit=Trc_SHR_OSC_Mmap_releaseHeaderReadLock_Exit NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::releaseHeaderReadLock: Exiting, rc = %d"
 
-TraceEntry=Trc_SHR_OSC_Mmap_acquireAttachWriteLock_Entry NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::acquireAttachWriteLock: Entering"
-TraceEvent=Trc_SHR_OSC_Mmap_acquireAttachWriteLock_gettingLock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::acquireAttachWriteLock: Attempting to get lock for file handle = %zi, lock flags = 0x%x, offset = %llu, length = %llu"
-TraceEvent=Trc_SHR_OSC_Mmap_acquireAttachWriteLock_badLock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::acquireAttachWriteLock: Lock failed"
-TraceEvent=Trc_SHR_OSC_Mmap_acquireAttachWriteLock_goodLock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::acquireAttachWriteLock: Lock successful"
-TraceExit=Trc_SHR_OSC_Mmap_acquireAttachWriteLock_Exit NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::acquireAttachWriteLock: Exiting, rc = %d"
+TraceEntry=Trc_SHR_OSC_Mmap_acquireAttachWriteLock_Entry NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::acquireAttachWriteLock: Entering"
+TraceEvent=Trc_SHR_OSC_Mmap_acquireAttachWriteLock_gettingLock NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::acquireAttachWriteLock: Attempting to get lock for file handle = %zi, lock flags = 0x%x, offset = %llu, length = %llu"
+TraceEvent=Trc_SHR_OSC_Mmap_acquireAttachWriteLock_badLock NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::acquireAttachWriteLock: Lock failed"
+TraceEvent=Trc_SHR_OSC_Mmap_acquireAttachWriteLock_goodLock NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::acquireAttachWriteLock: Lock successful"
+TraceExit=Trc_SHR_OSC_Mmap_acquireAttachWriteLock_Exit NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::acquireAttachWriteLock: Exiting, rc = %d"
 
 TraceEntry=Trc_SHR_OSC_Mmap_tryAcquireAttachWriteLock_Entry NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::tryAcquireAttachWriteLock: Entering"
 TraceEvent=Trc_SHR_OSC_Mmap_tryAcquireAttachWriteLock_gettingLock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::tryAcquireAttachWriteLock: Attempting to get lock for file handle = %zi, lock flags = 0x%x, offset = %llu, length = %llu"
@@ -1073,24 +1073,24 @@ TraceEvent=Trc_SHR_OSC_Mmap_releaseAttachReadLock_badLock NoEnv Overhead=1 Level
 TraceEvent=Trc_SHR_OSC_Mmap_releaseAttachReadLock_goodLock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::releaseAttachReadLock: Unlock successful"
 TraceExit=Trc_SHR_OSC_Mmap_releaseAttachReadLock_Exit NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::releaseAttachReadLock: Exiting, rc = %d"
 
-TraceEntry=Trc_SHR_OSC_Mmap_getCachePathName_Entry NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::getCachePathName: Entry"
-TraceExit=Trc_SHR_OSC_Mmap_getCachePathName_badgetdir NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::getCachePathName: Call of j9shmem_getDir failed"
-TraceEvent=Trc_SHR_OSC_Mmap_getCachePathName_goodgetdir NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::getCachePathName: Call of j9shmem_getDir successful, dir = %s"
-TraceExit=Trc_SHR_OSC_Mmap_getCachePathName_nomem_cacheGenName NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::getCachePathName: Memory allocate for _cacheGenName failed"
-TraceEvent=Trc_SHR_OSC_Mmap_getCachePathName_generated_cacheGenName NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::getCachePathName: Cache Gen name generated %s"
-TraceExit=Trc_SHR_OSC_Mmap_getCachePathName_nomem NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::getCachePathName: Memory allocate for returnPathName (length %d) failed"
-TraceExit=Trc_SHR_OSC_Mmap_getCachePathName_generated_cachePathName NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::getCachePathName: cache path generated = %s"
+TraceEntry=Trc_SHR_OSC_Mmap_getCachePathName_Entry NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::getCachePathName: Entry"
+TraceExit=Trc_SHR_OSC_Mmap_getCachePathName_badgetdir NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::getCachePathName: Call of j9shmem_getDir failed"
+TraceEvent=Trc_SHR_OSC_Mmap_getCachePathName_goodgetdir NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::getCachePathName: Call of j9shmem_getDir successful, dir = %s"
+TraceExit=Trc_SHR_OSC_Mmap_getCachePathName_nomem_cacheGenName NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::getCachePathName: Memory allocate for _cacheGenName failed"
+TraceEvent=Trc_SHR_OSC_Mmap_getCachePathName_generated_cacheGenName NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::getCachePathName: Cache Gen name generated %s"
+TraceExit=Trc_SHR_OSC_Mmap_getCachePathName_nomem NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::getCachePathName: Memory allocate for returnPathName (length %d) failed"
+TraceExit=Trc_SHR_OSC_Mmap_getCachePathName_generated_cachePathName NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::getCachePathName: cache path generated = %s"
 
 TraceEntry=Trc_SHR_OSC_Mmap_isCacheHeaderValid_Entry NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::isCacheHeaderValid: Entering cache header addr = %p"
 TraceExit=Trc_SHR_OSC_Mmap_isCacheHeaderValid_eyecatcherFailed NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::isCacheHeaderValid: Eyecatcher check failed, found %s, expected %s"
 TraceExit=Trc_SHR_OSC_Mmap_isCacheHeaderValid_wrongSize NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::isCacheHeaderValid: Exit - wrong size - header->size = %u _cacheSize = %zu"
 TraceExit=Trc_SHR_OSC_Mmap_isCacheHeaderValid_Exit NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::isCacheHeaderValid: Header is valid"
 
-TraceEntry=Trc_SHR_OSC_Mmap_isCachePathName_Entry NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::isCachePathName: Entering, path name = %s"
-TraceEvent=Trc_SHR_OSC_Mmap_isCachePathName_searching NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::isCachePathName: Searching %s for %s"
-TraceEvent=Trc_SHR_OSC_Mmap_isCachePathName_no NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::isCachePathName: Required string not found"
-TraceEvent=Trc_SHR_OSC_Mmap_isCachePathName_yes NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::isCachePathName: Required string found"
-TraceExit=Trc_SHR_OSC_Mmap_isCachePathName_Exit NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::isCachePathName: Exiting, rc = %d"
+TraceEntry=Trc_SHR_OSC_Mmap_isCachePathName_Entry NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::isCachePathName: Entering, path name = %s"
+TraceEvent=Trc_SHR_OSC_Mmap_isCachePathName_searching NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::isCachePathName: Searching %s for %s"
+TraceEvent=Trc_SHR_OSC_Mmap_isCachePathName_no NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::isCachePathName: Required string not found"
+TraceEvent=Trc_SHR_OSC_Mmap_isCachePathName_yes NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::isCachePathName: Required string found"
+TraceExit=Trc_SHR_OSC_Mmap_isCachePathName_Exit NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::isCachePathName: Exiting, rc = %d"
 
 TraceEntry=Trc_SHR_OSC_Mmap_createCacheHeader_Entry NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::createCacheHeader: Entered - cacheHeader=%p, headerLen=%d, versionData=%p"
 TraceEvent=Trc_SHR_OSC_Mmap_createCacheHeader_header NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::createCacheHeader: Created header eyecatcher=%s, size=%u, dataStart=%d, dataLength=%d, createTime=%llu, lastAttachedTime=%llu"
@@ -1133,11 +1133,11 @@ TraceEvent=Trc_SHR_OSC_Mmap_updateLastAttachedTime_time NoEnv Overhead=1 Level=1
 TraceExit=Trc_SHR_OSC_Mmap_updateLastAttachedTime_Exit NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::updateLastAttachedTime: Successful exit"
 
 TraceEntry=Trc_SHR_OSC_Mmap_updateLastDetachedTime_Entry NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::updateLastDetachedTime: Entered"
-TraceExit=Trc_SHR_OSC_Mmap_updateLastDetachedTime_badacquirelock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::updateLastDetachedTime: acquireHeaderWriteLock failed"
-TraceEvent=Trc_SHR_OSC_Mmap_updateLastDetachedTime_goodacquirelock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::updateLastDetachedTime: acquireHeaderWriteLock successful"
+TraceExit=Trc_SHR_OSC_Mmap_updateLastDetachedTime_badacquirelock NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::updateLastDetachedTime: acquireHeaderWriteLock failed"
+TraceEvent=Trc_SHR_OSC_Mmap_updateLastDetachedTime_goodacquirelock NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::updateLastDetachedTime: acquireHeaderWriteLock successful"
 TraceEvent=Trc_SHR_OSC_Mmap_updateLastDetachedTime_time NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::updateLastDetachedTime: time being updated to %lld, from %lld"
-TraceExit=Trc_SHR_OSC_Mmap_updateLastDetachedTime_badreleaselock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::updateLastDetachedTime: releaseHeaderWriteLock failed"
-TraceEvent=Trc_SHR_OSC_Mmap_updateLastDetachedTime_goodreleaselock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::updateLastDetachedTime: releaseHeaderWriteLock successful"
+TraceExit=Trc_SHR_OSC_Mmap_updateLastDetachedTime_badreleaselock NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::updateLastDetachedTime: releaseHeaderWriteLock failed"
+TraceEvent=Trc_SHR_OSC_Mmap_updateLastDetachedTime_goodreleaselock NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::updateLastDetachedTime: releaseHeaderWriteLock successful"
 TraceExit=Trc_SHR_OSC_Mmap_updateLastDetachedTime_Exit NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::updateLastDetachedTime: Successful exit"
 
 TraceEntry=Trc_SHR_OSC_Mmap_initializeDataHeader_Entry NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::initializeDataHeader: Entered"
@@ -1158,14 +1158,14 @@ TraceEvent=Trc_SHR_OSC_Mmap_cleanup_badUpdateLastDetachedTime NoEnv Overhead=1 L
 TraceExit=Trc_SHR_OSC_Mmap_cleanup_Exit NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::cleanup: Exiting"
 
 TraceEntry=Trc_SHR_OSC_newInstance_Entry Obsolete NoEnv Overhead=1 Level=1 Template="SH_OSCache::newInstance: Entered, memForConstructor=%p, cacheName=%s, newPersistentCacheReqd=%d"
-TraceEvent=Trc_SHR_OSC_newInstance_mmapFilepath NoEnv Overhead=1 Level=1 Template="SH_OSCache::newInstance: mmap file path=%s"
-TraceEvent=Trc_SHR_OSC_newInstance_sysvFilepath NoEnv Overhead=1 Level=1 Template="SH_OSCache::newInstance: sysv file path=%s"
-TraceEvent=Trc_SHR_OSC_newInstance_mmapFileExists NoEnv Overhead=1 Level=1 Template="SH_OSCache::newInstance: mmap file exists"
-TraceEvent=Trc_SHR_OSC_newInstance_mmapFileDoesNotExist NoEnv Overhead=1 Level=1 Template="SH_OSCache::newInstance: mmap file does not exist"
-TraceEvent=Trc_SHR_OSC_newInstance_sysvFileExists NoEnv Overhead=1 Level=1 Template="SH_OSCache::newInstance: sysv file exists"
-TraceEvent=Trc_SHR_OSC_newInstance_sysvFileDoesNotExist NoEnv Overhead=1 Level=1 Template="SH_OSCache::newInstance: sysv file does not exist"
-TraceEvent=Trc_SHR_OSC_newInstance_persistentReqd NoEnv Overhead=1 Level=1 Template="SH_OSCache::newInstance: new persistent cache required"
-TraceEvent=Trc_SHR_OSC_newInstance_nonpersistentReqd NoEnv Overhead=1 Level=1 Template="SH_OSCache::newInstance: new non-persistent cache required"
+TraceEvent=Trc_SHR_OSC_newInstance_mmapFilepath NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCache::newInstance: mmap file path=%s"
+TraceEvent=Trc_SHR_OSC_newInstance_sysvFilepath NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCache::newInstance: sysv file path=%s"
+TraceEvent=Trc_SHR_OSC_newInstance_mmapFileExists NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCache::newInstance: mmap file exists"
+TraceEvent=Trc_SHR_OSC_newInstance_mmapFileDoesNotExist NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCache::newInstance: mmap file does not exist"
+TraceEvent=Trc_SHR_OSC_newInstance_sysvFileExists NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCache::newInstance: sysv file exists"
+TraceEvent=Trc_SHR_OSC_newInstance_sysvFileDoesNotExist NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCache::newInstance: sysv file does not exist"
+TraceEvent=Trc_SHR_OSC_newInstance_persistentReqd NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCache::newInstance: new persistent cache required"
+TraceEvent=Trc_SHR_OSC_newInstance_nonpersistentReqd NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCache::newInstance: new non-persistent cache required"
 TraceEvent=Trc_SHR_OSC_newInstance_creatingMmap NoEnv Overhead=1 Level=1 Template="SH_OSCache::newInstance: creating mmap object at %p"
 TraceEvent=Trc_SHR_OSC_newInstance_creatingSysv NoEnv Overhead=1 Level=1 Template="SH_OSCache::newInstance: creating sysv object at %p"
 TraceEvent=Trc_SHR_OSC_newInstance_initializingNewObject NoEnv Overhead=1 Level=1 Template="SH_OSCache::newInstance: initializing new object"
@@ -1185,7 +1185,7 @@ TraceEvent=Trc_SHR_OSC_Mmap_runExitCode_badUpdateLastDetachedTime NoEnv Overhead
 TraceExit=Trc_SHR_OSC_Mmap_runExitCode_Exit NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::runExitCode: Successful exit"
 
 TraceEntry=Trc_SHR_OSC_Mmap_syncUpdates_Entry NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::syncUpdates: Entered, start = %p, length = %zu, flags = 0x%x"
-TraceExit=Trc_SHR_OSC_Mmap_syncUpdates_badmsync NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::syncUpdates: j9mmap_msync failed"
+TraceExit=Trc_SHR_OSC_Mmap_syncUpdates_badmsync NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::syncUpdates: j9mmap_msync failed"
 TraceEvent=Trc_SHR_OSC_Mmap_syncUpdates_goodmsync NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::syncUpdates: j9mmap_msync succeeded"
 TraceExit=Trc_SHR_OSC_Mmap_syncUpdates_Exit NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::syncUpdates: Exiting successfully"
 
@@ -1196,13 +1196,13 @@ TraceEvent=Trc_SHR_OSC_Mmap_errorHandler_notPrintingMessage NoEnv Overhead=1 Lev
 TraceExit=Trc_SHR_OSC_Mmap_errorHandler_Exit NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::errorHandler: Exiting, successful"
 
 TraceEntry=Trc_SHR_OSC_Mmap_getCacheStats_Entry NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::getCacheStats: Entered, file path = %s, returnVal addr = %p"
-TraceExit=Trc_SHR_OSC_Mmap_getCacheStats_badFileOpen NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::getCacheStats: File open failed"
-TraceEvent=Trc_SHR_OSC_Mmap_getCacheStats_goodFileOpen NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::getCacheStats: File open successful"
-TraceExit=Trc_SHR_OSC_Mmap_getCacheStats_badFileRead NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::getCacheStats: File read failed"
-TraceEvent=Trc_SHR_OSC_Mmap_getCacheStats_goodFileRead NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::getCacheStats: File read successful"
+TraceExit=Trc_SHR_OSC_Mmap_getCacheStats_badFileOpen NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::getCacheStats: File open failed"
+TraceEvent=Trc_SHR_OSC_Mmap_getCacheStats_goodFileOpen NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::getCacheStats: File open successful"
+TraceExit=Trc_SHR_OSC_Mmap_getCacheStats_badFileRead NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::getCacheStats: File read failed"
+TraceEvent=Trc_SHR_OSC_Mmap_getCacheStats_goodFileRead NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::getCacheStats: File read successful"
 TraceEvent=Trc_SHR_OSC_Mmap_getCacheStats_cacheNotInUse NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::getCacheStats: Attach write lock acquired, cache is not in use"
 TraceEvent=Trc_SHR_OSC_Mmap_getCacheStats_cacheInUse NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::getCacheStats: Attach write lock not acquired, cache is in use"
-TraceEvent=Trc_SHR_OSC_Mmap_getCacheStats_closedFile NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::getCacheStats: File closed"
+TraceEvent=Trc_SHR_OSC_Mmap_getCacheStats_closedFile NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::getCacheStats: File closed"
 TraceExit=Trc_SHR_OSC_Mmap_getCacheStats_Exit NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::getCacheStats: Exiting, shmid=%d, semid=%d, lastattached=%lld, lastdetached=%lld, created=%lld, attached=%zd, persistent=%zd"
 
 TraceEntry=Trc_SHR_OSC_Mmap_openCacheFile_entry NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::openCacheFile: Entered"
@@ -1255,7 +1255,7 @@ TraceExit=Trc_SHR_M_hllTableAdd_Exit3 Overhead=1 Level=6 Template="M hllTableAdd
 TraceExit=Trc_SHR_M_hllTableAdd_Exit4 Overhead=1 Level=6 Template="M hllTableAdd: Succeeded in adding item. Returning 0x%p."
 
 TraceEntry=Trc_SHR_M_hllTableLookup_Entry Overhead=1 Level=4 Template="M hllTableLookup: Entering lookup with name %.*s"
-TraceEvent=Trc_SHR_M_hllTableLookup_HashtableFind Overhead=1 Level=4 Template="M hllTableLookup: Done hashTableFind. Result=0x%p"
+TraceEvent=Trc_SHR_M_hllTableLookup_HashtableFind Obsolete Overhead=1 Level=4 Template="M hllTableLookup: Done hashTableFind. Result=0x%p"
 TraceExit=Trc_SHR_M_hllTableLookup_Exit1 Overhead=1 Level=4 Template="M hllTableLookup: failed to get local mutex. Tried %d times. Returning NULL."
 TraceExit=Trc_SHR_M_hllTableLookup_Exit2 Overhead=1 Level=4 Template="M hllTableLookup: Exiting lookup with result 0x%p"
 
@@ -1264,25 +1264,25 @@ TraceExit=Trc_SHR_M_hllTableUpdate_Exit1 Overhead=1 Level=4 Template="M hllTable
 TraceExit=Trc_SHR_M_hllTableUpdate_Exit2 Overhead=1 Level=4 Template="M hllTableUpdate: Exiting update with result 0x%p"
 
 TraceEntry=Trc_SHR_BDMI_localInitializePools_Entry Overhead=1 Level=1 Template="BDMI localInitializePools: Initializing ByteDataManager pools"
-TraceExit=Trc_SHR_BDMI_localInitializePools_ExitFailed Overhead=1 Level=1 Template="BDMI localInitializePools: Failed to initialize pool. Returning -1"
+TraceExit=Trc_SHR_BDMI_localInitializePools_ExitFailed Obsolete Overhead=1 Level=1 Template="BDMI localInitializePools: Failed to initialize pool. Returning -1"
 TraceExit=Trc_SHR_BDMI_localInitializePools_ExitOK Overhead=1 Level=1 Template="BDMI localInitializePools: Done initializing pools"
 
 TraceEntry=Trc_SHR_BDMI_localTearDownPools_Entry Overhead=1 Level=1 Template="BDMI localTearDownPools: Cleaning up ByteDataManager pools"
 TraceExit=Trc_SHR_BDMI_localTearDownPools_Exit Overhead=1 Level=1 Template="BDMI localTearDownPools: Done cleaning up ByteDataManager pools" 
 
-TraceEntry=Trc_SHR_RMI_relocateSRP_Entry Overhead=1 Level=3 Template="RMI relocateSRP: Entering with srpPtr=0x%p, srpOffset=%d, rcOffset=%d, twizzleBy=%d";
-TraceExit=Trc_SHR_RMI_relocateSRP_ExitSuccess Overhead=1 Level=3 Template="RMI relocateSRP: Exiting having successfully relocated SRP";
-TraceExit=Trc_SHR_RMI_relocateSRP_ExitOutOfRange Overhead=1 Level=3 Template="RMI relocateSRP: Failed - SRP out of range. Current SRP=%d. TwizzleResult=%lld";
-TraceExit=Trc_SHR_RMI_relocateSRP_ExitBad Overhead=1 Level=3 Template="RMI relocateSRP: ERROR: Resolved SRP points outside of cache";
+TraceEntry=Trc_SHR_RMI_relocateSRP_Entry Obsolete Overhead=1 Level=3 Template="RMI relocateSRP: Entering with srpPtr=0x%p, srpOffset=%d, rcOffset=%d, twizzleBy=%d";
+TraceExit=Trc_SHR_RMI_relocateSRP_ExitSuccess Obsolete Overhead=1 Level=3 Template="RMI relocateSRP: Exiting having successfully relocated SRP";
+TraceExit=Trc_SHR_RMI_relocateSRP_ExitOutOfRange Obsolete Overhead=1 Level=3 Template="RMI relocateSRP: Failed - SRP out of range. Current SRP=%d. TwizzleResult=%lld";
+TraceExit=Trc_SHR_RMI_relocateSRP_ExitBad Obsolete Overhead=1 Level=3 Template="RMI relocateSRP: ERROR: Resolved SRP points outside of cache";
 
-TraceEntry=Trc_SHR_RMI_relocateInvariants_Entry Overhead=1 Level=3 Template="RMI relocateInvariants: Entering for ROMClass 0x%p, relocData 0x%p, newUTF8Block 0x%p"
-TraceExit=Trc_SHR_RMI_relocateInvariants_ExitRelocFail Overhead=1 Level=3 Template="RMI relocateInvariants: Exiting with 0 as relocateSRP failed"
-TraceExit=Trc_SHR_RMI_relocateInvariants_ExitSuccess Overhead=1 Level=3 Template="RMI relocateInvariants: Succeeded. Exiting with 1"
+TraceEntry=Trc_SHR_RMI_relocateInvariants_Entry Obsolete Overhead=1 Level=3 Template="RMI relocateInvariants: Entering for ROMClass 0x%p, relocData 0x%p, newUTF8Block 0x%p"
+TraceExit=Trc_SHR_RMI_relocateInvariants_ExitRelocFail Obsolete Overhead=1 Level=3 Template="RMI relocateInvariants: Exiting with 0 as relocateSRP failed"
+TraceExit=Trc_SHR_RMI_relocateInvariants_ExitSuccess Obsolete Overhead=1 Level=3 Template="RMI relocateInvariants: Succeeded. Exiting with 1"
 
 TraceExit=Trc_SHR_CM_writeOrphanToCache_ExitBad Obsolete Overhead=1 Level=1 Template="CM writeOrphanToCache: ERROR: Expected relocation data not provided"
 TraceExit=Trc_SHR_CM_writeROMClassToCache_ExitBad Obsolete Overhead=1 Level=1 Template="CM writeROMClassToCache: ERROR: Expected relocation data not provided"
 
-TraceExit=Trc_SHR_RMI_prepareForCompare_ExitBad Overhead=1 Level=1 Template="RMI prepareForCompare: ERROR: Expected relocation data not provided"
+TraceExit=Trc_SHR_RMI_prepareForCompare_ExitBad Obsolete Overhead=1 Level=1 Template="RMI prepareForCompare: ERROR: Expected relocation data not provided"
 TraceExit=Trc_SHR_RMI_prepareForCompare_ExitRelocFailedJava6 Obsolete Overhead=1 Level=1 Template="RMI prepareForCompare: Relocation of SRPs failed. Failing compare and returning NULL"
 
 TraceEvent=Trc_SHR_OSC_GlobalLock_getMutex_Failed NoEnv Obsolete Overhead=1 Level=1 Group=OSCache Template="OSCache Global Lock: Failed to obtain lock for cache rootName=%s"
@@ -1297,9 +1297,9 @@ TraceExit=Trc_SHR_CM_enterStringTableMutex_exit Overhead=1 Level=6 Template="CM 
 TraceEntry=Trc_SHR_CM_exitStringTableMutex_entry Overhead=1 Level=6 Template="CM exitStringTableMutex: PRE: Exiting string table mutex"
 TraceExit=Trc_SHR_CM_exitStringTableMutex_exit Overhead=1 Level=6 Template="CM exitStringTableMutex: POST: Exiting string table mutex. Result=%d"
 
-TraceExit=Trc_SHR_RMI_compareROMClasses_ExitNotSame3 Overhead=1 Level=3 Template="RMI compareROMClasses: ROMClass SRP does not match. Comparison failed"
+TraceExit=Trc_SHR_RMI_compareROMClasses_ExitNotSame3 Obsolete Overhead=1 Level=3 Template="RMI compareROMClasses: ROMClass SRP does not match. Comparison failed"
 
-TraceExit=Trc_SHR_RMI_findExisting_ExitPrepareFailed Overhead=1 Level=3 Template="RMI findExisting: Failed to prepare ROMClass for comparison"
+TraceExit=Trc_SHR_RMI_findExisting_ExitPrepareFailed Obsolete Overhead=1 Level=3 Template="RMI findExisting: Failed to prepare ROMClass for comparison"
 
 TraceEntry=Trc_SHR_BDMI_findSingleEntry_Entry Overhead=1 Level=2 Template="BDMI findSingleEntry: Entering with key=%.*s, dataType=%d, jvmID=%d"
 TraceExit=Trc_SHR_BDMI_findSingleEntry_ExitFound Overhead=1 Level=2 Template="BDMI findSingleEntry: Found entry. Returning 0x%p"
@@ -1326,8 +1326,8 @@ TraceExit=Trc_SHR_BDMI_acquirePrivateEntry_ExitFailed Overhead=1 Level=1 Templat
 TraceExit=Trc_SHR_CM_writeOrphanToCache_ExitNoBDM Obsolete Overhead=1 Level=1 Template="BDMI writeOrphanToCache: Exiting as ByteDataManager cannot be initialized"
 TraceExit=Trc_SHR_CM_writeOrphanToCache_ExitFailedToRelocateUTFBlock Obsolete Overhead=1 Level=1 Template="BDMI writeOrphanToCache: Exiting as failed to relocate UTF block"
 
-TraceExit=Trc_SHR_CM_writeROMClassToCache_ExitNoBDM Overhead=1 Level=1 Template="BDMI writeROMClassToCache: Exiting as ByteDataManager cannot be initialized"
-TraceExit=Trc_SHR_CM_writeROMClassToCache_ExitFailedToRelocateUTFBlock Overhead=1 Level=1 Template="BDMI writeROMClassToCache: Exiting as failed to relocate UTF block"
+TraceExit=Trc_SHR_CM_writeROMClassToCache_ExitNoBDM Obsolete Overhead=1 Level=1 Template="BDMI writeROMClassToCache: Exiting as ByteDataManager cannot be initialized"
+TraceExit=Trc_SHR_CM_writeROMClassToCache_ExitFailedToRelocateUTFBlock Obsolete Overhead=1 Level=1 Template="BDMI writeROMClassToCache: Exiting as failed to relocate UTF block"
 
 TraceEvent=Trc_SHR_OSC_enterMutex_Exit2 Obsolete NoEnv Overhead=1 Level=3 Group=OSCache Template="OSCache enterMutex failed - mutex out of range"
 TraceEvent=Trc_SHR_OSC_exitMutex_Exit2 Obsolete NoEnv Overhead=1 Level=3 Group=OSCache Template="OSCache exitMutex failed - mutex out of range"
@@ -1339,7 +1339,7 @@ TraceAssert=Trc_SHR_Assert_True NoEnv Overhead=1 Level=1 Assert="(P1)"
 TraceAssert=Trc_SHR_Assert_False NoEnv Overhead=1 Level=1 Assert="!(P1)"
 TraceAssert=Trc_SHR_Assert_Equals NoEnv Overhead=1 Level=1 Assert="(P1 == P2)"
 TraceAssert=Trc_SHR_Assert_NotEquals NoEnv Overhead=1 Level=1 Assert="(P1 != P2)"
-TraceAssert=Trc_SHR_Assert_ValueEqualsAorB NoEnv Overhead=1 Level=1 Assert="((P1 == P2) || (P1 == P3))"
+TraceAssert=Trc_SHR_Assert_ValueEqualsAorB NoEnv Obsolete Overhead=1 Level=1 Assert="((P1 == P2) || (P1 == P3))"
 
 TraceEntry=Trc_SHR_CC_initialize_Entry Obsolete NoEnv Overhead=1 Level=1 Template="CC initialize: memForConstructor=%p, ctrlDirName=%s, cacheName=%s, newPersistentCacheReqd=%d, doUT=%d"
 TraceExit=Trc_SHR_CC_initialize_Exit NoEnv Overhead=1 Level=1 Template="CC initialize: Exiting"
@@ -1370,7 +1370,7 @@ TraceEntry=Trc_SHR_CC_startup_Entry Obsolete Overhead=1 Level=1 Template="CC sta
 TraceExit=Trc_SHR_CC_startup_Exit1 Obsolete Overhead=1 Level=1 Template="CC startup: Exiting due to failed to create _headerProtectMutex"
 TraceExit=Trc_SHR_CC_startup_Exit2 Overhead=1 Level=1 Template="CC startup: Exiting as OSCache failed to start"
 TraceExit=Trc_SHR_CC_startup_Exit3 Overhead=1 Level=1 Template="CC startup: Exiting due to failed to create _writeMutexID"
-TraceExit=Trc_SHR_CC_startup_Exit4 Overhead=1 Level=1 Template="CC startup: Exiting due to failed to create _readWriteAreaMutexID"
+TraceExit=Trc_SHR_CC_startup_Exit4 Obsolete Overhead=1 Level=1 Template="CC startup: Exiting due to failed to create _readWriteAreaMutexID"
 TraceExit=Trc_SHR_CC_startup_Exit5 Overhead=1 Level=1 Template="CC startup: Exiting with rc=%d"
 
 TraceEntry=Trc_SHR_CC_next_Entry Overhead=1 Level=4 Template="CC next: Entering with _scan=%p" 
@@ -1400,10 +1400,10 @@ TraceEntry=Trc_SHR_CC_decReaderCount_Entry Noenv Overhead=1 Level=6 Template="CC
 TraceExit=Trc_SHR_CC_decReaderCount_Exit Noenv Overhead=1 Level=6 Template="CC decReaderCount: POST readerCount=%d"
 
 TraceEntry=Trc_SHR_CC_deleteCache_Entry Noenv Overhead=1 Level=1 Template="CC deleteCache: Entering" 
-TraceExit=Trc_SHR_CC_deleteCache_Exit Noenv Overhead=1 Level=1 Template="CC deleteCache: Exiting"
+TraceExit=Trc_SHR_CC_deleteCache_Exit Noenv Obsolete Overhead=1 Level=1 Template="CC deleteCache: Exiting"
 
 TraceEntry=Trc_SHR_CC_allocate_Entry Overhead=1 Level=3 Template="CC allocate: Entering with type=%d, len=%d, len2=%d, separateBufferSize=%d"
-TraceEvent=Trc_SHR_CC_allocate_EventNewItem Overhead=1 Level=3 Template="CC allocate: Allocated new item at %p"
+TraceEvent=Trc_SHR_CC_allocate_EventNewItem Obsolete Overhead=1 Level=3 Template="CC allocate: Allocated new item at %p"
 TraceEvent=Trc_SHR_CC_allocate_EventSegmentBufSet Overhead=1 Level=3 Template="CC allocate: Set segmentBuffer to %p"
 TraceEvent=Trc_SHR_CC_allocate_EventReadWriteBufSet Overhead=1 Level=3 Template="CC allocate: Set readWriteBuffer to %p"
 TraceExit=Trc_SHR_CC_allocate_Exit Overhead=1 Obsolete Level=3 Template="CC allocate: Exiting with result=%p, _scan=%p, _storedMetaUsedBytes=%d, _storedSegmentUsedBytes=%d, _storedReadWriteUsedBytes=%d, _storedAOTUsedBytes=%d"
@@ -1417,7 +1417,7 @@ TraceEvent=Trc_SHR_CC_markStale_Event Overhead=1 Level=4 Template="CC markStale:
 TraceEvent=Trc_SHR_CC_findStart_Event Overhead=1 Level=1 Template="CC findStart: Setting _scan to %p"
 
 TraceEntry=Trc_SHR_CC_setInternCacheHeaderFields_Entry Noenv Overhead=1 Level=1 Template="CC setInternCacheHeaderFields: Entering"
-TraceExit=Trc_SHR_CC_setInternCacheHeaderFields_Exit Noenv Overhead=1 Level=1 Template="CC setInternCacheHeaderFields: Exiting with sharedTail=%p, sharedHead=%p, sharedRoot=%p, totalSharedNodes=%d, totalSharedWeight=%d, puddleAllocCntr=%d"
+TraceExit=Trc_SHR_CC_setInternCacheHeaderFields_Exit Noenv Obsolete Overhead=1 Level=1 Template="CC setInternCacheHeaderFields: Exiting with sharedTail=%p, sharedHead=%p, sharedRoot=%p, totalSharedNodes=%d, totalSharedWeight=%d, puddleAllocCntr=%d"
 
 TraceEntry=Trc_SHR_CC_enterReadWriteAreaMutex_Entry Overhead=1 Level=4 Template="CC enterReadWriteAreaMutex: PRE enter readWrite mutex"
 TraceException=Trc_SHR_CC_enterReadWriteAreaMutex_EventRebuildCacheData Obsolete Overhead=1 Level=4 Template="CC enterReadWriteAreaMutex: Detected termination - must rebuild cached string table"
@@ -1489,14 +1489,14 @@ TraceExit=Trc_SHR_OSC_removeCacheVersionAndGen_Exit NoEnv Overhead=1 Level=1 Tem
 TraceEntry=Trc_SHR_OSC_getCacheDir_Entry NoEnv Overhead=1 Level=1 Template="OSCache::getCacheDir: Entry"
 TraceExit=Trc_SHR_OSC_getCacheDir_j9shmem_getDir_failed Obsolete NoEnv Overhead=1 Level=1 Template="OSCache::getCacheDir: getDir failed"
 TraceEvent=Trc_SHR_OSC_getCacheDir_removedBaseDir NoEnv Obsolete Overhead=1 Level=1 Template="OSCache::getCacheDir: successfully removed baseDir"
-TraceExit=Trc_SHR_OSC_getCacheDir_noBaseDir NoEnv Overhead=1 Level=1 Template="OSCache::getCacheDir: no base dir"
+TraceExit=Trc_SHR_OSC_getCacheDir_noBaseDir NoEnv Obsolete Overhead=1 Level=1 Template="OSCache::getCacheDir: no base dir"
 TraceExit=Trc_SHR_OSC_getCacheDir_Exit NoEnv Overhead=1 Level=1 Template="OSCache::getCacheDir: Exit"
 TraceEntry=Trc_SHR_OSC_getCachePathName_Entry NoEnv Overhead=1 Level=1 Template="OSCache::getCachePathName: Entry - cacheNameWithVGen=%s"
-TraceExit=Trc_SHR_OSC_getCachePathName_getValuesFromShcFilePrefixFailed NoEnv Overhead=1 Level=1 Template="OSCache::getCachePathName: Exit - getValuesFromShcFilePrefix failed"
-TraceExit=Trc_SHR_OSC_getCachePathName_getCacheDirFailed NoEnv Overhead=1 Level=1 Template="OSCache::getCachePathName: Exit - getCacheDir failed"
+TraceExit=Trc_SHR_OSC_getCachePathName_getValuesFromShcFilePrefixFailed NoEnv Obsolete Overhead=1 Level=1 Template="OSCache::getCachePathName: Exit - getValuesFromShcFilePrefix failed"
+TraceExit=Trc_SHR_OSC_getCachePathName_getCacheDirFailed NoEnv Obsolete Overhead=1 Level=1 Template="OSCache::getCachePathName: Exit - getCacheDir failed"
 TraceExit=Trc_SHR_OSC_getCachePathName_Exit NoEnv Overhead=1 Level=1 Template="OSCache::getCachePathName: Exit"
 TraceEntry=Trc_SHR_OSC_statCache_Entry NoEnv Overhead=1 Level=1 Template="OSCache::statCache: Entry - cacheNameWithVGen=%s"
-TraceExit=Trc_SHR_OSC_statCache_getCachePathNameFailed NoEnv Overhead=1 Level=1 Template="OSCache::statCache: Exit - getCachePathName failed"
+TraceExit=Trc_SHR_OSC_statCache_getCachePathNameFailed NoEnv Obsolete Overhead=1 Level=1 Template="OSCache::statCache: Exit - getCachePathName failed"
 TraceExit=Trc_SHR_OSC_statCache_cacheFound NoEnv Overhead=1 Level=1 Template="OSCache::statCache: Exit - cache found"
 TraceExit=Trc_SHR_OSC_statCache_cacheNotFound NoEnv Overhead=1 Level=1 Template="OSCache::statCache: Exit - cache not found"
 TraceEntry=Trc_SHR_OSC_commonCleanup_Entry NoEnv Overhead=1 Level=1 Template="OSCache::commonCleanup: Entry"
@@ -1515,7 +1515,7 @@ TraceExit=Trc_SHR_OSC_checkOSCacheHeader_differentGeneration NoEnv Overhead=1 Le
 TraceExit=Trc_SHR_OSC_checkOSCacheHeader_wrongVersion NoEnv Overhead=1 Level=1 Template="OSCache::checkOSCacheHeader: Exit - wrong version"
 TraceExit=Trc_SHR_OSC_checkOSCacheHeader_wrongDataLength NoEnv Overhead=1 Level=1 Template="OSCache::checkOSCacheHeader: Exit - wrong data length"
 TraceExit=Trc_SHR_OSC_checkOSCacheHeader_wrongDataStartValue NoEnv Overhead=1 Level=1 Template="OSCache::checkOSCacheHeader: Exit - wrong data start value"
-TraceExit=Trc_SHR_OSC_checkOSCacheHeader_wrongBuildID NoEnv Overhead=1 Level=1 Template="OSCache::checkOSCacheHeader: Exit - wrong build ID"
+TraceExit=Trc_SHR_OSC_checkOSCacheHeader_wrongBuildID NoEnv Obsolete Overhead=1 Level=1 Template="OSCache::checkOSCacheHeader: Exit - wrong build ID"
 TraceExit=Trc_SHR_OSC_checkOSCacheHeader_Exit NoEnv Overhead=1 Level=1 Template="OSCache::checkOSCacheHeader: Exit - OSCache header verified"
 
 TraceEntry=Trc_SHR_OSC_Mmap_findfirst_Entry NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::findfirst: Entered - cacheDir=%s"
@@ -1560,11 +1560,11 @@ TraceExit=Trc_SHR_CC_enterWriteMutex_ExitReadOnly Overhead=1 Level=1 Template="C
 TraceExit=Trc_SHR_CC_exitWriteMutex_ExitReadOnly Overhead=1 Level=1 Template="CC exitWriteMutex: Exiting as no-op due to read-only enabled"
 TraceExit=Trc_SHR_CC_enterReadMutex_ExitReadOnly Overhead=1 Level=1 Template="CC enterReadMutex: Exiting as no-op due to read-only enabled"
 TraceExit=Trc_SHR_CC_exitReadMutex_ExitReadOnly Overhead=1 Level=1 Template="CC exitReadMutex: Exiting as no-op due to read-only enabled"
-TraceExit=Trc_SHR_CC_enterReadWriteAreaMutex_ExitReadOnly Overhead=1 Level=1 Template="CC enterReadWriteAreaMutex: Exiting as no-op due to read-only enabled"
+TraceExit=Trc_SHR_CC_enterReadWriteAreaMutex_ExitReadOnly Obsolete Overhead=1 Level=1 Template="CC enterReadWriteAreaMutex: Exiting as no-op due to read-only enabled"
 TraceExit=Trc_SHR_CC_exitReadWriteAreaMutex_ExitReadOnly Overhead=1 Level=1 Template="CC exitReadWriteAreaMutex: Exiting as no-op due to read-only enabled"
 
 TraceExit=Trc_SHR_CM_findROMClass_ExitStaleClasspath Overhead=1 Level=3 Template="CM findROMClass: Exiting with NULL due to read-only with stale classpath - path=%s" 
-TraceExit=Trc_SHR_CM_storeROMClass_ExitStaleClasspath Overhead=1 Level=1 Template="CC storeROMClass: Exiting with NULL due to read-only with stale classpath"
+TraceExit=Trc_SHR_CM_storeROMClass_ExitStaleClasspath Obsolete Overhead=1 Level=1 Template="CC storeROMClass: Exiting with NULL due to read-only with stale classpath"
 
 TraceEntry=Trc_SHR_CMI_notifyClasspathEntryStateChange_Entry Overhead=1 Level=2 Template="CPM notifyClasspathEntryStateChange: Entering with path=%.*s, newState=0x%u"
 TraceExit=Trc_SHR_CMI_notifyClasspathEntryStateChange_ExitNoop Overhead=1 Level=2 Template="CPM notifyClasspathEntryStateChange: Exiting as no-op due to newState==0"
@@ -1592,17 +1592,17 @@ TraceEntry=Trc_SHR_CM_getCachedUTFString_entry Overhead=1 Level=3 Template="CM g
 TraceExit=Trc_SHR_CM_getCachedUTFString_exit1 Overhead=1 Level=3 Template="CM getCachedUTFString: Exiting due to failed entry point checks"
 TraceExit=Trc_SHR_CM_getCachedUTFString_exit2 Overhead=1 Level=3 Template="CM getCachedUTFString: Exiting with success - cached UTF string at %p"
 
-TraceExit=Trc_SHR_OSC_checkOSCacheHeader_badPadding Noenv Overhead=1 Level=1 Template="OSCache::checkOSCacheHeader: OSCache header padding is bad"
+TraceExit=Trc_SHR_OSC_checkOSCacheHeader_badPadding Noenv Obsolete Overhead=1 Level=1 Template="OSCache::checkOSCacheHeader: OSCache header padding is bad"
 TraceExit=Trc_SHR_OSC_Mmap_isCacheHeaderValid_OSCacheHeaderBad Noenv Overhead=1 Level=1 Template="OSCachemmap::isCacheHeaderValid: OSCache header is bad - returning %d"
 
-TraceEntry=Trc_SHR_CM_existsCachedClassForName_Entry Overhead=1 Level=3 Template="CM existsCachedClassForName: Entering with classname=%.*s"
-TraceExit=Trc_SHR_CM_existsCachedClassForName_Exit Overhead=1 Level=3 Template="CM existsCachedClassForName: Exiting with rc=%d"
+TraceEntry=Trc_SHR_CM_existsCachedClassForName_Entry Obsolete Overhead=1 Level=3 Template="CM existsCachedClassForName: Entering with classname=%.*s"
+TraceExit=Trc_SHR_CM_existsCachedClassForName_Exit Obsolete Overhead=1 Level=3 Template="CM existsCachedClassForName: Exiting with rc=%d"
 
-TraceEntry=Trc_SHR_RMI_quickRelocateInvariants_Entry Overhead=1 Level=3 Template="RMI quickRelocateInvariants: Entering with copiedROMClass=%p, relocData=%p"
-TraceExit=Trc_SHR_RMI_quickRelocateInvariants_Exit Overhead=1 Level=3 Template="RMI quickRelocateInvariants: Exiting"
+TraceEntry=Trc_SHR_RMI_quickRelocateInvariants_Entry Obsolete Overhead=1 Level=3 Template="RMI quickRelocateInvariants: Entering with copiedROMClass=%p, relocData=%p"
+TraceExit=Trc_SHR_RMI_quickRelocateInvariants_Exit Obsolete Overhead=1 Level=3 Template="RMI quickRelocateInvariants: Exiting"
 
-TraceExit=Trc_SHR_CM_addROMClassToCache_ExitNull4 Overhead=1 Level=1 Template="CM addROMClassToCache: Exiting with existsButCouldNotCompare=true, so not storing ROMClass"
-TraceExit=Trc_SHR_CM_addROMClassToCache_ExitNoRelocData Overhead=1 Level=1 Template="CM addROMClassToCache: Cannot store ROMClass as with no relocation data"
+TraceExit=Trc_SHR_CM_addROMClassToCache_ExitNull4 Obsolete Overhead=1 Level=1 Template="CM addROMClassToCache: Exiting with existsButCouldNotCompare=true, so not storing ROMClass"
+TraceExit=Trc_SHR_CM_addROMClassToCache_ExitNoRelocData Obsolete Overhead=1 Level=1 Template="CM addROMClassToCache: Cannot store ROMClass as with no relocation data"
 
 TraceEntry=Trc_SHR_CC_getCacheAreaCRC_Entry Noenv Overhead=1 Level=1 Template="CC getCacheAreaCRC: Entering with areaStart=%p, areaSize=%d"
 TraceExit=Trc_SHR_CC_getCacheAreaCRC_Exit Noenv Overhead=1 Level=1 Template="CC getCacheAreaCRC: Exiting with CRC value=%u, stepsize=%d"
@@ -1617,13 +1617,13 @@ TraceEvent=Trc_SHR_CC_protectHeaderReadWriteArea_Debug_Post1 Noenv Overhead=1 Le
 TraceEvent=Trc_SHR_CC_protectHeaderReadWriteArea_Debug_Pre2 Noenv Overhead=1 Level=6 Template="CC protectHeaderReadWriteArea_Debug_Pre2: areaStart=%p, areaLength=%d, _headerProtectCntr=%d, _readWriteProtectCntr=%d"
 TraceEvent=Trc_SHR_CC_protectHeaderReadWriteArea_Debug_Post2 Noenv Overhead=1 Level=6 Template="CC protectHeaderReadWriteArea_Debug_Post2: _headerProtectCntr=%d, _readWriteProtectCntr=%d"
 
-TraceEntry=Trc_SHR_OSC_Mmap_tryAcquireHeaderWriteLock_Entry NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::tryAcquireHeaderWriteLock: Entering"
-TraceEvent=Trc_SHR_OSC_Mmap_tryAcquireHeaderWriteLock_gettingLock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::tryAcquireHeaderWriteLock: Attempting to get lock for file handle = %zi, lock flags = 0x%x, offset = %llu, length = %llu"
-TraceEvent=Trc_SHR_OSC_Mmap_tryAcquireHeaderWriteLock_badLock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::tryAcquireHeaderWriteLock: Lock failed"
-TraceEvent=Trc_SHR_OSC_Mmap_tryAcquireHeaderWriteLock_goodLock NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::tryAcquireHeaderWriteLock: Lock successful"
-TraceExit=Trc_SHR_OSC_Mmap_tryAcquireHeaderWriteLock_Exit NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::tryAcquireHeaderWriteLock: Exiting, rc = %d"
+TraceEntry=Trc_SHR_OSC_Mmap_tryAcquireHeaderWriteLock_Entry NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::tryAcquireHeaderWriteLock: Entering"
+TraceEvent=Trc_SHR_OSC_Mmap_tryAcquireHeaderWriteLock_gettingLock NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::tryAcquireHeaderWriteLock: Attempting to get lock for file handle = %zi, lock flags = 0x%x, offset = %llu, length = %llu"
+TraceEvent=Trc_SHR_OSC_Mmap_tryAcquireHeaderWriteLock_badLock NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::tryAcquireHeaderWriteLock: Lock failed"
+TraceEvent=Trc_SHR_OSC_Mmap_tryAcquireHeaderWriteLock_goodLock NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::tryAcquireHeaderWriteLock: Lock successful"
+TraceExit=Trc_SHR_OSC_Mmap_tryAcquireHeaderWriteLock_Exit NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::tryAcquireHeaderWriteLock: Exiting, rc = %d"
 
-TraceExit=Trc_SHR_OSC_commonStartup_ExitErrorCreatingPath Noenv Overhead=1 Level=1 Template="SH_OSCache::commonStartup: Error creating cache path, returning -1"
+TraceExit=Trc_SHR_OSC_commonStartup_ExitErrorCreatingPath Noenv Obsolete Overhead=1 Level=1 Template="SH_OSCache::commonStartup: Error creating cache path, returning -1"
 
 TraceEvent=Trc_SHR_CM_readCache_EventFailedStore Overhead=1 Level=6 Template="CM readCache: call to storeNew failed for item %p. Returning -1."
 
@@ -1650,7 +1650,7 @@ TraceExit=Trc_SHR_CM_storeROMClassResource_Exit5 Overhead=1 Level=2 Template="CM
 TraceExit=Trc_SHR_CM_findROMClassResource_Exit3 Overhead=1 Level=3 Template="CM findROMClassResource: Exiting due to permitAccess failed"
 
 TraceEntry=Trc_SHR_M_shutDown_Entry Overhead=1 Level=1 Template="M shutDown: Shutting down Manager of %s"
-TraceExit=Trc_SHR_M_shutDown_Exit Overhead=1 Level=1 Template="M shutDown: Done shutting down Manager"
+TraceExit=Trc_SHR_M_shutDown_Exit Obsolete Overhead=1 Level=1 Template="M shutDown: Done shutting down Manager"
 
 TraceEntry=Trc_SHR_CM_getExistingCharArrayClassObjectAddressOffset_entry Obsolete Overhead=1 Level=1 Template="CM getExistingCharArrayClassObjectAddressOffset: Entering"
 TraceExit=Trc_SHR_CM_getExistingCharArrayClassObjectAddressOffset_exitNoop Obsolete Overhead=1 Level=1 Template="CM getExistingCharArrayClassObjectAddressOffset: Exiting as no-op"
@@ -1687,12 +1687,12 @@ TraceEvent=Trc_SHR_OSC_Mmap_acquireWriteLock_retryLock NoEnv Obsolete Overhead=1
 TraceEvent=Trc_SHR_OSC_Mmap_acquireWriteLock_errorTakingReadWriteMonitor NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::acquireWriteLock: Deadlock was detected, and we failed to take the READWRITELOCK monitor."
 TraceEvent=Trc_SHR_OSC_Mmap_acquireWriteLock_errorTakingWriteMonitor NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::acquireWriteLock: Deadlock was detected, and we failed to take the WRITELOCK monitor."
 
-TraceException=Trc_SHR_INIT_failedPoolIntegrity NoEnv Overhead=1 Level=1 Template="INIT j9shr_init failed string pool integrity expected nodes %d puddles %d, found nodes %d puddles %d"
+TraceException=Trc_SHR_INIT_failedPoolIntegrity NoEnv Obsolete Overhead=1 Level=1 Template="INIT j9shr_init failed string pool integrity expected nodes %d puddles %d, found nodes %d puddles %d"
 
 TraceAssert=Trc_SHR_Assert_TrueTreeVerify NoEnv Overhead=1 Level=1 Assert="(P1)"
 
 TraceException=Trc_SHR_INIT_hookFindSharedClass_ConfigNull Overhead=1 Level=1 Template="INIT HOOK FIND CLASS: Exiting hookFindSharedClass because of no shared class configuration."
-TraceEvent=Trc_SHR_INIT_hookFindSharedClass_BadRunTimeFlags_EventObsolete Overhead=1 Level=1 Template="INIT HOOK FIND CLASS: Exiting hookFindSharedClass because runtime flags have invalid value %x and find should not happen."
+TraceEvent=Trc_SHR_INIT_hookFindSharedClass_BadRunTimeFlags_EventObsolete Obsolete Overhead=1 Level=1 Template="INIT HOOK FIND CLASS: Exiting hookFindSharedClass because runtime flags have invalid value %x and find should not happen."
 
 TraceException=Trc_SHR_RMI_locateROMClass_ManagerNotInStartedState_Exception Overhead=1 Level=1 Template="RMI locateROMClass: Manager is not in started state. Locate request for ROMClass %.*s from helper ID %d with cpeIndex %d. Exiting with NULL."
 TraceExit=Trc_SHR_RMI_locateROMClass_ManagerNotInStartedState Overhead=1 Level=3 Template="RMI locateROMClass: Manager is not in started state.Returning NULL."
@@ -1786,7 +1786,7 @@ TraceException=Trc_SHR_RRM_primeHashtables_failedToPrimeHint Obsolete Overhead=1
 TraceEvent=Trc_SHR_SMI_primeHashtables_addingHint Obsolete Overhead=9 Level=9 Template="SMI primeHashtables: Adding hint, cachelet=0x%p hashValue=%u"
 TraceException=Trc_SHR_SMI_primeHashtables_failedToPrimeHint Obsolete Overhead=1 Level=1 Template="SMI primeHashtables: Failed to prime hint, manager=0x%p cachelet=0x%p hashValue=%u"
 
-TraceExit=Trc_SHR_CC_startup_Exit8 Overhead=1 Level=1 Template="CC startup: Exiting due to running nested on existing cache not containing cachelets"
+TraceExit=Trc_SHR_CC_startup_Exit8 Obsolete Overhead=1 Level=1 Template="CC startup: Exiting due to running nested on existing cache not containing cachelets"
 
 TraceEntry=Trc_SHR_CM_createNewCachelet_Entry Obsolete Overhead=1 Level=1 Template="CM createNewCachelet: Entering"
 TraceExit=Trc_SHR_CM_createNewCachelet_Exit Obsolete Overhead=1 Level=1 Template="CM createNewCachelet: Exiting with returnVal=0x%p"
@@ -1892,7 +1892,7 @@ TraceException=Trc_SHR_API_j9shr_classStoreTransaction_start_CPIndex_Event Overh
 TraceEvent=Trc_SHR_API_j9shr_classStoreTransaction_start_Loadtype_Event Overhead=1 Level=3 Template="API j9shr_classStoreTransaction_start : Info: isModifiedClassfile==TRUE. loadType=%u classname=%.*s"
 TraceException=Trc_SHR_API_j9shr_classStoreTransaction_start_NotInit_Event Overhead=1 Level=1 Template="API j9shr_classStoreTransaction_start : Error : !(localRuntimeFlags & J9SHR_RUNTIMEFLAG_CACHE_INITIALIZATION_COMPLETE). localRuntimeFlags=%llx classname=%.*s"
 TraceEvent=Trc_SHR_API_j9shr_classStoreTransaction_start_DenyUpdates_Event Obsolete Overhead=1 Level=3 Template="API j9shr_classStoreTransaction_start : Exiting: localRuntimeFlags & J9SHR_RUNTIMEFLAG_DENY_CACHE_UPDATES. localRuntimeFlags=%llx classname=%.*s"
-TraceEvent=Trc_SHR_API_j9shr_classStoreTransaction_start_DisallowNull_Event Overhead=1 Level=1 Template="API j9shr_classStoreTransaction_start : Exiting: ((classloader != NULL) && classloader->classPathEntries == NULL) && disallowNullClasspath. classname=%.*s"
+TraceEvent=Trc_SHR_API_j9shr_classStoreTransaction_start_DisallowNull_Event Obsolete Overhead=1 Level=1 Template="API j9shr_classStoreTransaction_start : Exiting: ((classloader != NULL) && classloader->classPathEntries == NULL) && disallowNullClasspath. classname=%.*s"
 TraceEvent=Trc_SHR_API_j9shr_classStoreTransaction_start_StoreFilt_Event Overhead=1 Level=1 Template="API j9shr_classStoreTransaction_start : Info: exiting b/c checkForStoreFilter() != NULL. classname=%.*s"
 TraceException=Trc_SHR_API_j9shr_classStoreTransaction_start_SegMutex_Event Overhead=1 Level=1 Template="API j9shr_classStoreTransaction_start : Error: omrthread_monitor_enter(segmentMutex) failed. classname=%.*s"
 TraceException=Trc_SHR_API_j9shr_classStoreTransaction_start_WriteLock_Event Overhead=1 Level=1 Template="API j9shr_classStoreTransaction_start : Error: enterWriteMutex() failed. classname=%.*s"
@@ -1960,9 +1960,9 @@ TraceExit=Trc_SHR_CM_findSharedData_ExitFailedMutex Overhead=1 Level=1 Template=
 
 TraceEvent=Trc_SHR_createClasspath Overhead=1 Level=3 Template="createClasspath: allocating ClasspathItem of size %d at address 0x%p"
 
-TraceExit=Trc_SHR_INIT_hookStoreSharedClass_failed_Event1 Overhead=1 Level=4 Template="INIT HOOK STORE CLASS: Exiting hookStoreSharedClass config=%p index=%u"
-TraceExit=Trc_SHR_INIT_hookStoreSharedClass_failed_Event2 Overhead=1 Level=4 Template="INIT HOOK STORE CLASS: Exiting hookStoreSharedClass unsafeROMClass=%d runtimeFlags=%llx classpathEntries=%p disallowNullClasspath=%d classloaderFlags=%x"
-TraceExit=Trc_SHR_INIT_hookStoreSharedClass_failed_Event3 Overhead=1 Level=4 Template="INIT HOOK STORE CLASS: Exiting hookStoreSharedClass classname=%.*s"
+TraceExit=Trc_SHR_INIT_hookStoreSharedClass_failed_Event1 Obsolete Overhead=1 Level=4 Template="INIT HOOK STORE CLASS: Exiting hookStoreSharedClass config=%p index=%u"
+TraceExit=Trc_SHR_INIT_hookStoreSharedClass_failed_Event2 Obsolete Overhead=1 Level=4 Template="INIT HOOK STORE CLASS: Exiting hookStoreSharedClass unsafeROMClass=%d runtimeFlags=%llx classpathEntries=%p disallowNullClasspath=%d classloaderFlags=%x"
+TraceExit=Trc_SHR_INIT_hookStoreSharedClass_failed_Event3 Obsolete Overhead=1 Level=4 Template="INIT HOOK STORE CLASS: Exiting hookStoreSharedClass classname=%.*s"
 
 TraceEntry=Trc_SHR_CM_commitROMClass_Entry Overhead=1 Level=3 Template="CM commitROMClass : enter (itemInCache=0x%x cacheArea=0x%x cpw=0x%x cpeIndex=%u, partition=0x%x modContext=0x%x classname=%.*s)"
 TraceEvent=Trc_SHR_CM_commitROMClass_Event_SetMaxTime Overhead=1 Level=3 Template="CM commitROMClass: %s, max wait time %d, average %d, actual %d"
@@ -1998,7 +1998,7 @@ TraceExit=Trc_SHR_CM_getCachedUTFString_exit3 Overhead=1 Level=3 Template="CM ge
 TraceEntry=Trc_SHR_API_j9shr_stringTransaction_start_Entry Overhead=1 Level=2 Template="API j9shr_stringTransaction_start : enter"
 TraceException=Trc_SHR_API_j9shr_stringTransaction_start_tobj_Event Overhead=1 Level=1 Template="API j9shr_stringTransaction_start : Error : tobj == NULL"
 TraceException=Trc_SHR_API_j9shr_stringTransaction_start_NotInit_Event Overhead=1 Level=3 Template="API j9shr_stringTransaction_start : Error : !(localRuntimeFlags & J9SHR_RUNTIMEFLAG_CACHE_INITIALIZATION_COMPLETE). localRuntimeFlags=%llx"
-TraceEvent=Trc_SHR_API_j9shr_stringTransaction_start_DenyUpdates_Event Overhead=1 Level=3 Template="API j9shr_stringTransaction_start : Exiting: localRuntimeFlags & J9SHR_RUNTIMEFLAG_DENY_CACHE_UPDATES. localRuntimeFlags=%llx"
+TraceEvent=Trc_SHR_API_j9shr_stringTransaction_start_DenyUpdates_Event Obsolete Overhead=1 Level=3 Template="API j9shr_stringTransaction_start : Exiting: localRuntimeFlags & J9SHR_RUNTIMEFLAG_DENY_CACHE_UPDATES. localRuntimeFlags=%llx"
 TraceEvent=Trc_SHR_API_j9shr_stringTransaction_start_STLock_Event Overhead=1 Level=3 Template="API j9shr_stringTransaction_start : Error: enterStringTableMutex() failed. localRuntimeFlags=%llx stringTableBytes=%u readOnly=%d localRebuild=%d cacheRebuild=%d"
 TraceEvent=Trc_SHR_API_j9shr_stringTransaction_start_NoStringTable Overhead=1 Level=3 Template="API j9shr_stringTransaction_start : Not calling enterStringTableMutex(), because there is no string table."
 TraceExit=Trc_SHR_API_j9shr_stringTransaction_start_Exit Overhead=1 Level=2 Template="API j9shr_stringTransaction_start : exit"
@@ -2037,7 +2037,7 @@ TraceException=Trc_SHR_API_j9shr_createSharedClass_ZeroRomClassSize_Event Overhe
 TraceException=Trc_SHR_API_j9shr_createSharedClass_ZeroRomClassSizeFullSize_Event Obsolete Overhead=1 Level=1 Template="API j9shr_classStoreTransaction_createSharedClass : romClassSizeFullSize must be non zero if no debug data (romClassSizeFullSize=%d lineNumberTableSize=%d localVariableTableSize=%d)"
 TraceException=Trc_SHR_API_j9shr_createSharedClass_ZeroRomClassSizeWithoutDebug_Event Obsolete Overhead=1 Level=1 Template="API j9shr_classStoreTransaction_createSharedClass : romClassSizeWithoutDebug must be non zero if there is debug data to be created (romClassSizeWithoutDebug=%d lineNumberTableSize=%d localVariableTableSize=%d)"
 TraceException=Trc_SHR_API_j9shr_createSharedClass_DblAlign_Event Overhead=1 Level=1 Template="API j9shr_classStoreTransaction_createSharedClass : The size of the rom class requested is not a multiple of a double"
-TraceException=Trc_SHR_API_j9shr_createSharedClass_NoCacheMap_Event Overhead=1 Level=1 Template="API j9shr_classStoreTransaction_createSharedClass : cacheMap == NULL"
+TraceException=Trc_SHR_API_j9shr_createSharedClass_NoCacheMap_Event Obsolete Overhead=1 Level=1 Template="API j9shr_classStoreTransaction_createSharedClass : cacheMap == NULL"
 TraceException=Trc_SHR_API_j9shr_createSharedClass_CalledTwice1_Event Overhead=1 Level=1 Template="API j9shr_classStoreTransaction_createSharedClass : Error : tobj->newItemInCache != NULL"
 TraceException=Trc_SHR_API_j9shr_createSharedClass_CalledTwice2_Event Overhead=1 Level=1 Template="API j9shr_classStoreTransaction_createSharedClass : Error : tobj->cacheAreaForAllocate != NULL"
 TraceException=Trc_SHR_API_j9shr_createSharedClass_FailedToAllocRomclass_Event Overhead=1 Level=1 Template="API j9shr_classStoreTransaction_createSharedClass : Error : No ROMClass was allocated"
@@ -2074,19 +2074,19 @@ TraceException=Trc_SHR_ClassDebugData_isEnoughFreeSpace_TrueExit NoEnv Overhead=
 TraceExit=Trc_SHR_ClassDebugData_isEnoughFreeSpace_FalseExit NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::isEnoughFreeSpace : exit with false (size=%u, getFreeSpaceBytes=%u)"
 
 TraceEntry=Trc_SHR_ClassDebugData_getNextLineNumberTable_Entry NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::getNextLineNumberTable : enter (size=%u)"
-TraceException=Trc_SHR_ClassDebugData_getNextLineNumberTable_NotOk_Event NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::getNextLineNumberTable : isOK != 0"
+TraceException=Trc_SHR_ClassDebugData_getNextLineNumberTable_NotOk_Event NoEnv Obsolete Overhead=1 Level=4 Template="ClassDebugDataProvider::getNextLineNumberTable : isOK != 0"
 TraceExit=Trc_SHR_ClassDebugData_getNextLineNumberTable_Exit NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::: enter (retval=%d)"
 
 TraceEntry=Trc_SHR_ClassDebugData_getNextLocalVariableTable_Entry NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::getNextLocalVariableTable : enter (size=%u)"
-TraceException=Trc_SHR_ClassDebugData_getNextLocalVariableTable_NotOk_Event NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::getNextLocalVariableTable : isOK != 0"
+TraceException=Trc_SHR_ClassDebugData_getNextLocalVariableTable_NotOk_Event NoEnv Obsolete Overhead=1 Level=4 Template="ClassDebugDataProvider::getNextLocalVariableTable : isOK != 0"
 TraceExit=Trc_SHR_ClassDebugData_getNextLocalVariableTable_Exit NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::getNextLocalVariableTable : exit (retval=%p)"
 
 TraceEntry=Trc_SHR_ClassDebugData_commitLineNumberTable_Entry NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::commitLineNumberTable : enter (size=%u)"
-TraceException=Trc_SHR_ClassDebugData_commitLineNumberTable_NotOk_Event NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::commitLineNumberTable : isOK != 0"
+TraceException=Trc_SHR_ClassDebugData_commitLineNumberTable_NotOk_Event NoEnv Obsolete Overhead=1 Level=4 Template="ClassDebugDataProvider::commitLineNumberTable : isOK != 0"
 TraceExit=Trc_SHR_ClassDebugData_commitLineNumberTable_Exit NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::commitLineNumberTable : exit (data start=%p)"
 
 TraceEntry=Trc_SHR_ClassDebugData_commitLocalVariableTable_Entry NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::commitLocalVariableTable : enter (size=%u)"
-TraceException=Trc_SHR_ClassDebugData_commitLocalVariableTable_NotOk_Event NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::commitLocalVariableTable : isOK != 0"
+TraceException=Trc_SHR_ClassDebugData_commitLocalVariableTable_NotOk_Event NoEnv Obsolete Overhead=1 Level=4 Template="ClassDebugDataProvider::commitLocalVariableTable : isOK != 0"
 TraceExit=Trc_SHR_ClassDebugData_commitLocalVariableTable_Exit NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::commitLocalVariableTable : exit (data start=%p)"
 
 TraceEntry=Trc_SHR_ClassDebugData_commitClassDebugData_Enter Overhead=1 Level=4 Template="ClassDebugDataProvider::commitClassDebugData : enter (Class=%.*s LineNumberTable=%d Bytes, LocalVariableTable=%d Bytes)"
@@ -2096,38 +2096,38 @@ TraceEvent=Trc_SHR_ClassDebugData_NothingToCommit_Event Overhead=1 Level=4 Templ
 TraceExit=Trc_SHR_ClassDebugData_commitClassDebugData_Exit Overhead=1 Level=4 Template="ClassDebugDataProvider::commitClassDebugData : exit (Class=%.*s LineNumberTable=%d Bytes, LocalVariableTable=%d Bytes)"
 
 TraceEntry=Trc_SHR_ClassDebugData_getDebugDataSize_Entry NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::getDebugDataSize : enter"
-TraceExit=Trc_SHR_ClassDebugData_getDebugDataSize_NotOk_Exit NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::getDebugDataSize : isOK!=0 exit (retval=0)"
+TraceExit=Trc_SHR_ClassDebugData_getDebugDataSize_NotOk_Exit NoEnv Obsolete Overhead=1 Level=4 Template="ClassDebugDataProvider::getDebugDataSize : isOK!=0 exit (retval=0)"
 TraceExit=Trc_SHR_ClassDebugData_getDebugDataSize_Exit NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::getDebugDataSize : exit (retval=%u)"
 
 TraceEntry=Trc_SHR_ClassDebugData_getFreeDebugSpaceBytes_Entry NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::getFreeDebugSpaceBytes : enter"
-TraceExit=Trc_SHR_ClassDebugData_getFreeDebugSpaceBytes_NotOk_Exit NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::getFreeDebugSpaceBytes : isOK!=0 exit (retval=0)"
+TraceExit=Trc_SHR_ClassDebugData_getFreeDebugSpaceBytes_NotOk_Exit NoEnv Obsolete Overhead=1 Level=4 Template="ClassDebugDataProvider::getFreeDebugSpaceBytes : isOK!=0 exit (retval=0)"
 TraceExit=Trc_SHR_ClassDebugData_getFreeDebugSpaceBytes_Exit NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::getFreeDebugSpaceBytes : exit (retval=%u)"
 
 TraceEntry=Trc_SHR_ClassDebugData_getLineNumberTableBytes_Entry NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::getLineNumberTableBytes : enter"
-TraceExit=Trc_SHR_ClassDebugData_getLineNumberTableBytes_NotOk_Exit NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::getLineNumberTableBytes : isOK!=0 exit (retval=0)"
+TraceExit=Trc_SHR_ClassDebugData_getLineNumberTableBytes_NotOk_Exit NoEnv Obsolete Overhead=1 Level=4 Template="ClassDebugDataProvider::getLineNumberTableBytes : isOK!=0 exit (retval=0)"
 TraceExit=Trc_SHR_ClassDebugData_getLineNumberTableBytes_Exit NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::getLineNumberTableBytes : exit (retval=%u)"
 
 TraceEntry=Trc_SHR_ClassDebugData_getLocalVariableTableBytes_Entry NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::getLocalVariableTableBytes : enter"
-TraceException=Trc_SHR_ClassDebugData_getLocalVariableTableBytes_NotOk_Event NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::getLocalVariableTableBytes: isOK!=0 exit (retval=0)"
+TraceException=Trc_SHR_ClassDebugData_getLocalVariableTableBytes_NotOk_Event NoEnv Obsolete Overhead=1 Level=4 Template="ClassDebugDataProvider::getLocalVariableTableBytes: isOK!=0 exit (retval=0)"
 TraceExit=Trc_SHR_ClassDebugData_getLocalVariableTableBytes_Exit NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::getLocalVariableTableBytes : exit (retval=%u)"
 
 TraceEvent=Trc_SHR_ClassDebugData_getDebugAreaStartAddress_Event NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::getDebugAreaStartAddress : retval=%p"
 TraceEvent=Trc_SHR_ClassDebugData_getDebugAreaEndAddress_Event NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::getDebugAreaEndAddress : retval=%p"
 
 TraceEntry=Trc_SHR_ClassDebugData_HeaderInitForDebug_Entry NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::HeaderInitForDebug : enter (ca=%p, size=%u)"
-TraceException=Trc_SHR_ClassDebugData_HeaderInitForDebug_NullCacheHdr_Event NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::HeaderInitForDebug : null cache header"
-TraceException=Trc_SHR_ClassDebugData_HeaderInitForDebug_AlreadyInit_Event NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::HeaderInitForDebug : cache already has an initialized debug area (flags=%x)"
+TraceException=Trc_SHR_ClassDebugData_HeaderInitForDebug_NullCacheHdr_Event NoEnv Obsolete Overhead=1 Level=4 Template="ClassDebugDataProvider::HeaderInitForDebug : null cache header"
+TraceException=Trc_SHR_ClassDebugData_HeaderInitForDebug_AlreadyInit_Event NoEnv Obsolete Overhead=1 Level=4 Template="ClassDebugDataProvider::HeaderInitForDebug : cache already has an initialized debug area (flags=%x)"
 TraceExit=Trc_SHR_ClassDebugData_HeaderInitForDebug_Exit NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::HeaderInitForDebug : exit (retval=%u)"
 
 TraceEvent=Trc_SHR_ClassDebugData_getRecommendedPercentage_Event NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::getRecommendedPercentage : retval=%u"
 TraceEvent=Trc_SHR_ClassDebugData_recommendedDebugAreaSize_Event NoEnv Overhead=1 Level=4 Template="ClassDebugDataProvider::recommendedDebugAreaSize : retval=%u"
 
-TraceException=Trc_SHR_CC_startup_Exception_DebugAreNotOk Overhead=1 Level=1 Template="CC startup: _debugData->isOk() == false"
+TraceException=Trc_SHR_CC_startup_Exception_DebugAreNotOk Obsolete Overhead=1 Level=1 Template="CC startup: _debugData->isOk() == false"
 
 TraceException=Trc_SHR_INIT_failedSimplePoolConsistency NoEnv Overhead=1 Level=1 Template="INIT j9shr_init failed string simple pool consistency"
 
 TraceException=Trc_SHR_INIT_verifyStringTableElement_utf8Corrupt NoEnv Overhead=1 Level=1 Template="INIT verifyStringTableElement utf8 corrupt %p in node %p in pool %p"
-TraceException=Trc_SHR_INIT_verifyStringTableElement_childCorrupt NoEnv Overhead=1 Level=1 Template="INIT verifyStringTableElement child corrupt %p in node %p in pool %p"
+TraceException=Trc_SHR_INIT_verifyStringTableElement_childCorrupt NoEnv Obsolete Overhead=1 Level=1 Template="INIT verifyStringTableElement child corrupt %p in node %p in pool %p"
 TraceException=Trc_SHR_INIT_verifyStringTableElement_lruCorrupt NoEnv Overhead=1 Level=1 Template="INIT verifyStringTableElement lru corrupt %p in node %p in pool %p"
 TraceException=Trc_SHR_INIT_verifyStringTableElement_flagsCorrupt NoEnv Overhead=1 Level=1 Template="INIT verifyStringTableElement flags corrupt %x in node %p in pool %p"
 
@@ -2162,7 +2162,7 @@ TraceExit=Trc_SHR_OSC_Sysv_getCacheStatsHelper_removeCacheVersionAndGenFailed No
 TraceExit=Trc_SHR_OSC_Sysv_getCacheStatsHelper_cacheStatFailed NoEnv Overhead=1 Level=1 Template="SH_OSCachesysv::getCacheStatsHelper: Exit - failed j9shmem_stat"
 TraceExit=Trc_SHR_OSC_Sysv_getCacheStatsHelper_Exit NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachesysv::getCacheStatsHelper: Exit"
 
-TraceExit=Trc_SHR_OSC_getCacheDir_j9shmem_createDir_failed NoEnv Overhead=1 Level=1 Template="OSCache::getCacheDir: createDir failed"
+TraceExit=Trc_SHR_OSC_getCacheDir_j9shmem_createDir_failed NoEnv Obsolete Overhead=1 Level=1 Template="OSCache::getCacheDir: createDir failed"
 
 TraceEvent=Trc_SHR_INIT_NoCoreMmapDisablePersistence NoEnv Overhead=1 Level=1 Template="Disable persistence when CORE_MMAP is not set to yes"
 TraceExit=Trc_SHR_OSC_checkOSCacheHeader_testBadBuildID NoEnv Overhead=1 Level=1 Template="OSCache::checkOSCacheHeader: Exit - In testing mode: returning different build ID"
@@ -2283,7 +2283,7 @@ TraceExit=Trc_SHR_CM_findAttachedDataAPI_Exit Overhead=1 Level=4 Template="CM fi
 TraceExit=Trc_SHR_CM_storeAttachedData_Exit3 Overhead=1 Level=4 Template="CM storeAttachedData: Exit with result=%zu"
 TraceExit=Trc_SHR_INIT_storeAttachedData_exit1 Overhead=1 Level=2 Template="INIT HOOK STORE DATA: Exiting j9shr_storeAttachedData with returnVal=0x%zx"
 
-TraceEntry=Trc_SHR_CC_initializeWithCommonInfo_Entry1 NoEnv Overhead=1 Level=3 Template="CC initializeWithCommonInfo: memForConstructor=%p, ctrlDirName=%s, cacheName=%s, newPersistentCacheReqd=%d"
+TraceEntry=Trc_SHR_CC_initializeWithCommonInfo_Entry1 NoEnv Obsolete Overhead=1 Level=3 Template="CC initializeWithCommonInfo: memForConstructor=%p, ctrlDirName=%s, cacheName=%s, newPersistentCacheReqd=%d"
 TraceEntry=Trc_SHR_CC_startup_Entry1 Overhead=1 Level=1 Template="CC startup: Entering with cacheMemory=%p, rootName=%s, ctrlDirName=%s, unitTest=%zd"
 
 TraceEntry=Trc_SHR_OSC_Mmap_attach_Entry1 NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::attach: Enter with unitTest=%zd"
@@ -2321,7 +2321,7 @@ TraceEvent=Trc_SHR_CC_Startup_No_Cachelets Obsolete Overhead=1 Level=1 Template=
 TraceEvent=Trc_SHR_CC_OSPAGE_SIZE_MISMATCH Obsolete Overhead=1 Level=1 Template="Mismatch in composite cache osPageSize value. CompositeCache = %p, _theca->osPageSize = %zu, _osPageSize = %zu"
 
 TraceExit=Trc_SHR_CC_allocate_Exit_CacheCorrupt Overhead=1 Level=3 Template="CC allocate: Failed because cache is marked as corrupt"
-TraceExit=Trc_SHR_CC_allocate_Exit_CacheFull Overhead=1 Level=3 Template="CC allocate: Failed because cache is full"
+TraceExit=Trc_SHR_CC_allocate_Exit_CacheFull Obsolete Overhead=1 Level=3 Template="CC allocate: Failed because cache is full"
 
 TraceEvent=Trc_SHR_OSC_Mmap_startup_openCacheForDestroy NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: cache %s opened for destroy operation"
 
@@ -2335,7 +2335,7 @@ TraceException=Trc_SHR_API_j9shr_stringTransaction_start_WriteLock_Event Overhea
 
 TraceExit=Trc_SHR_OSC_checkOSCacheHeader_wrongBuildID_2 NoEnv Obsolete Overhead=1 Level=1 Template="OSCache::checkOSCacheHeader: Exit - wrong build ID. VM build ID: %llu . Shared Cache build ID: %llu"
 
-TraceException=Trc_SHR_CM_readCacheletHints_noManager Overhead=1 Level=1 Template="CM readCacheletHints no manager for type %zu"
+TraceException=Trc_SHR_CM_readCacheletHints_noManager Obsolete Overhead=1 Level=1 Template="CM readCacheletHints no manager for type %zu"
 
 TraceEvent=Trc_SHR_CC_realtime_cache_not_compatible Overhead=1 Level=1 Template="CC startup: Detected a cache created with a Realtime JVM"
 
@@ -2663,20 +2663,20 @@ TraceException=Trc_SHR_CM_findROMClassResource_FailedMutex Overhead=1 Level=1 Te
 TraceException=Trc_SHR_CC_Startup_Cache_StoreIntermediateClassfile_NotEnabled Obsolete Overhead=1 Level=1 Template="This cache was not created with \"-XX:+StoreIntermediateClassfile\" option but \"-XX:+StoreIntermediateClassfile\" option is specified"
 TraceException=Trc_SHR_CC_Startup_Cache_StoreIntermediateClassfile_Enabled Obsolete Overhead=1 Level=1 Template="This cache was created with \"-XX:+StoreIntermediateClassfile\" option but \"-XX:+StoreIntermediateClassfile\" option is not specified"
 
-TraceEntry=Trc_SHR_CC_unprotectUnusedMetadataRegion_Entry Noenv Overhead=1 Level=4 Template="CC unprotectUnusedMetadataRegion: Entering with regionSize=0x%x"
-TraceEvent=Trc_SHR_CC_unprotectUnusedMetadataRegion_Event Noenv Overhead=1 Level=1 Template="CC unprotectUnusedMetadataRegion: Unprotecting pages from %p to %p"
-TraceException=Trc_SHR_CC_unprotectUnusedMetadataRegion_setRegionPermissions_Failed NoEnv Overhead=1 Level=1 Template="CC unprotectUnusedMetadataRegion: setRegionPermissions failed with error = %d"
-TraceExit=Trc_SHR_CC_unprotectUnusedMetadataRegion_Exit Noenv Overhead=1 Level=4 Template="CC unprotectUnusedMetadataRegion: Exiting with rc=%zd"
+TraceEntry=Trc_SHR_CC_unprotectUnusedMetadataRegion_Entry Noenv Obsolete Overhead=1 Level=4 Template="CC unprotectUnusedMetadataRegion: Entering with regionSize=0x%x"
+TraceEvent=Trc_SHR_CC_unprotectUnusedMetadataRegion_Event Noenv Obsolete Overhead=1 Level=1 Template="CC unprotectUnusedMetadataRegion: Unprotecting pages from %p to %p"
+TraceException=Trc_SHR_CC_unprotectUnusedMetadataRegion_setRegionPermissions_Failed NoEnv Obsolete Overhead=1 Level=1 Template="CC unprotectUnusedMetadataRegion: setRegionPermissions failed with error = %d"
+TraceExit=Trc_SHR_CC_unprotectUnusedMetadataRegion_Exit Noenv Obsolete Overhead=1 Level=4 Template="CC unprotectUnusedMetadataRegion: Exiting with rc=%zd"
 
-TraceEntry=Trc_SHR_CC_unprotectUnusedSegmentRegion_Entry Noenv Overhead=1 Level=4 Template="CC unprotectUnusedSegmentRegion: Entering with regionSize=0x%x"
-TraceEvent=Trc_SHR_CC_unprotectUnusedSegmentRegion_Event Noenv Overhead=1 Level=1 Template="CC unprotectUnusedSegmentRegion: Unprotecting pages from %p to %p"
-TraceException=Trc_SHR_CC_unprotectUnusedSegmentRegion_setRegionPermissions_Failed NoEnv Overhead=1 Level=1 Template="CC unprotectUnusedSegmentRegion: setRegionPermissions failed with error = %d"
-TraceExit=Trc_SHR_CC_unprotectUnusedSegmentRegion_Exit Noenv Overhead=1 Level=4 Template="CC unprotectUnusedSegmentRegion: Exiting with rc=%zd"
+TraceEntry=Trc_SHR_CC_unprotectUnusedSegmentRegion_Entry Noenv Obsolete Overhead=1 Level=4 Template="CC unprotectUnusedSegmentRegion: Entering with regionSize=0x%x"
+TraceEvent=Trc_SHR_CC_unprotectUnusedSegmentRegion_Event Noenv Obsolete Overhead=1 Level=1 Template="CC unprotectUnusedSegmentRegion: Unprotecting pages from %p to %p"
+TraceException=Trc_SHR_CC_unprotectUnusedSegmentRegion_setRegionPermissions_Failed NoEnv Obsolete Overhead=1 Level=1 Template="CC unprotectUnusedSegmentRegion: setRegionPermissions failed with error = %d"
+TraceExit=Trc_SHR_CC_unprotectUnusedSegmentRegion_Exit Noenv Obsolete Overhead=1 Level=4 Template="CC unprotectUnusedSegmentRegion: Exiting with rc=%zd"
 
-TraceEntry=Trc_SHR_CC_protectPageContainingAddress_Entry Noenv Overhead=1 Level=4 Template="CC protectPageContainingAddress: Entering with addr=%p"
-TraceEvent=Trc_SHR_CC_protectUnusedSegmentRegion_Event Noenv Overhead=1 Level=1 Template="CC protectPageContainingAddress: Protecting pages from %p to %p"
-TraceException=Trc_SHR_CC_protectPageContainingAddress_setRegionPermissions_Failed NoEnv Overhead=1 Level=1 Template="CC protectPageContainingAddress: setRegionPermissions failed with error = %d"
-TraceExit=Trc_SHR_CC_protectPageContainingAddress_Exit Noenv Overhead=1 Level=4 Template="CC protectPageContainingAddress: Exiting with rc=%zd"
+TraceEntry=Trc_SHR_CC_protectPageContainingAddress_Entry Noenv Obsolete Overhead=1 Level=4 Template="CC protectPageContainingAddress: Entering with addr=%p"
+TraceEvent=Trc_SHR_CC_protectUnusedSegmentRegion_Event Noenv Obsolete Overhead=1 Level=1 Template="CC protectPageContainingAddress: Protecting pages from %p to %p"
+TraceException=Trc_SHR_CC_protectPageContainingAddress_setRegionPermissions_Failed NoEnv Obsolete Overhead=1 Level=1 Template="CC protectPageContainingAddress: setRegionPermissions failed with error = %d"
+TraceExit=Trc_SHR_CC_protectPageContainingAddress_Exit Noenv Obsolete Overhead=1 Level=4 Template="CC protectPageContainingAddress: Exiting with rc=%zd"
 
 TraceExit=Trc_SHR_OSC_openCache_ExitAccessNotAllowed NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache openCache access to shared memory is not allowed, reason code = %d"
 

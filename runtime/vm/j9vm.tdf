@@ -27,7 +27,7 @@ TraceEntry=Trc_VM_CreateRAMClassFromROMClass_Entry Overhead=1 Level=2 Template="
 TraceExit=Trc_VM_CreateRAMClassFromROMClass_Exit Group=verboseclass Overhead=1 Level=2 Template="Created RAM class %p from ROM class %p"
 TraceEntry=Trc_VM_cleanUpAttachedThread_Entry Overhead=1 Level=2 Template="cleanUpAttachedThread"
 TraceExit=Trc_VM_cleanUpAttachedThread_Exit Overhead=1 Level=2 Template="cleanUpAttachedThread"
-TraceExit=Trc_VM_exitInterpreter_Exit Overhead=1 Level=2 Template="exitInterpreter"
+TraceExit=Trc_VM_exitInterpreter_Exit Obsolete Overhead=1 Level=2 Template="exitInterpreter"
 TraceEntry=Trc_VM_handleUncaughtException_Entry Overhead=1 Level=2 Template="handleUncaughtException"
 TraceExit=Trc_VM_handleUncaughtException_Exit Overhead=1 Level=2 Template="handleUncaughtException"
 TraceEntry=Trc_VM_initializeAttachedThread_Entry Overhead=1 Level=2 Template="initializeAttachedThread"
@@ -48,15 +48,15 @@ TraceEntry=Trc_VM_sendInit_Entry Overhead=1 Level=3 Template="sendInit"
 TraceExit=Trc_VM_sendInit_Exit Overhead=1 Level=3 Template="sendInit"
 TraceEntry=Trc_VM_sendCheckPackageAccess_Entry Overhead=1 Level=3 Template="sendCheckPackageAccess"
 TraceExit=Trc_VM_sendCheckPackageAccess_Exit Overhead=1 Level=3 Template="sendCheckPackageAccess"
-TraceEntry=Trc_VM_sendInitialize_Entry Overhead=1 Level=3 Template="sendInitialize"
-TraceExit=Trc_VM_sendInitialize_Exit Overhead=1 Level=3 Template="sendInitialize"
+TraceEntry=Trc_VM_sendInitialize_Entry Obsolete Overhead=1 Level=3 Template="sendInitialize"
+TraceExit=Trc_VM_sendInitialize_Exit Obsolete Overhead=1 Level=3 Template="sendInitialize"
 TraceEntry=Trc_VM_sendLoadClass_Entry Overhead=1 Level=3 Template="sendLoadClass"
 TraceExit=Trc_VM_sendLoadClass_Exit Overhead=1 Level=3 Template="sendLoadClass"
 TraceEntry=Trc_VM_sidecarInvokeReflectConstructor_Entry Overhead=1 Level=3 Template="sidecarInvokeReflectConstructor"
 TraceExit=Trc_VM_sidecarInvokeReflectConstructor_Exit Overhead=1 Level=3 Template="sidecarInvokeReflectConstructor"
 TraceEntry=Trc_VM_sidecarInvokeReflectMethod_Entry Overhead=1 Level=3 Template="sidecarInvokeReflectMethod"
 TraceExit=Trc_VM_sidecarInvokeReflectMethod_Exit Overhead=1 Level=3 Template="sidecarInvokeReflectMethod"
-TraceExit=Trc_VM_sidecarExitInterpreter_Exit Overhead=1 Level=2 Template="sidecarExitInterpreter: %c"
+TraceExit=Trc_VM_sidecarExitInterpreter_Exit Obsolete Overhead=1 Level=2 Template="sidecarExitInterpreter: %c"
 TraceEntry=Trc_VM_invokeReflectMethod_Entry Obsolete Overhead=1 Level=2 Template="invokeReflectMethod"
 TraceExit=Trc_VM_invokeReflectMethod_Exit Obsolete Overhead=1 Level=2 Template="invokeReflectMethod"
 
@@ -65,12 +65,12 @@ TraceEvent=Trc_VM_terminateRemainingThreads_SystemThread Overhead=1 Level=1 Temp
 TraceEvent=Trc_VM_terminateRemainingThreads_Daemon Overhead=1 Level=1 Template="Daemon thread still running: %p"
 TraceExit=Trc_VM_terminateRemainingThreads_Exit Overhead=1 Level=1 Template="terminateRemainingThreads (%d)"
 
-TraceEvent=Trc_VM_unused1 Overhead=10 Level=10 Template=""
+TraceEvent=Trc_VM_unused1 Obsolete Overhead=10 Level=10 Template=""
 
 TraceEvent=Trc_VM_freeMemorySegment Overhead=1 Level=2 Template="freeMemorySegment %p (%p-%p loader=%p type=%x)"
 
-TraceEntry=Trc_VM_allocateClassLoader_Entry Overhead=1 Level=1 Template="allocateClassLoader"
-TraceExit=Trc_VM_allocateClassLoader_Exit Overhead=1 Level=1 Template="allocateClassLoader -> %p"
+TraceEntry=Trc_VM_allocateClassLoader_Entry Obsolete Overhead=1 Level=1 Template="allocateClassLoader"
+TraceExit=Trc_VM_allocateClassLoader_Exit Obsolete Overhead=1 Level=1 Template="allocateClassLoader -> %p"
 TraceEntry=Trc_VM_freeClassLoader_Entry NoEnv Overhead=1 Level=1 Template="freeClassLoader(%p)"
 TraceExit=Trc_VM_freeClassLoader_Exit NoEnv Overhead=1 Level=1 Template="freeClassLoader"
 
@@ -85,10 +85,10 @@ TraceException=Trc_VM_growJavaStack_AllocFailed Overhead=1 Level=1 Template="Una
 TraceEvent=Trc_VM_growJavaStack_Delta Overhead=1 Level=1 Template="Old stack = %p, new stack = %p, delta = %p slots"
 TraceEvent=Trc_VM_growJavaStack_Copying Overhead=1 Level=1 Template="Copying from %p to %p for %p bytes"
 TraceException=Trc_VM_growJavaStack_PoolAllocFailed Overhead=1 Level=1 Template="Pool alloc failed"
-TraceException=Trc_VM_growJavaStack_StackWalkFailed Overhead=1 Level=1 Template="Stack walk failed"
+TraceException=Trc_VM_growJavaStack_StackWalkFailed Obsolete Overhead=1 Level=1 Template="Stack walk failed"
 TraceEvent=Trc_VM_growJavaStack_UpdateSPAndArg0EA Overhead=1 Level=1 Template="Update vmc SP to %p, arg0EA to %p"
 TraceEvent=Trc_VM_growJavaStack_WalkNewStack Overhead=1 Level=1 Template="Walk new stack to fix pointers to stack-allocated objects"
-TraceException=Trc_VM_growJavaStack_NewStackWalkFailed Overhead=1 Level=1 Template="Stack walk failed"
+TraceException=Trc_VM_growJavaStack_NewStackWalkFailed Obsolete Overhead=1 Level=1 Template="Stack walk failed"
 TraceEvent=Trc_VM_growJavaStack_KeepingOldStack Overhead=1 Level=1 Template="Old stack first has references in frame %p"
 TraceEvent=Trc_VM_growJavaStack_FreeingOldStack Overhead=1 Level=1 Template="Old stack has no references in any frame - freeing %p"
 TraceEvent=Trc_VM_growJavaStack_Success Overhead=1 Level=1 Template="Stack copied successfully"
@@ -116,7 +116,7 @@ TraceEvent=Trc_VM_jniArrayCache_hit Overhead=1 Level=3 Template="jniArrayAllocat
 
 TraceEvent=Trc_VM_CreateRAMClassFromROMClass_className Overhead=1 Level=2 Template="ROM class %p is named %.*s"
 TraceException=Trc_VM_CreateRAMClassFromROMClass_classLoadingStackOOM Overhead=1 Level=1 Template="Out of memory pushing element onto class loading stack. Throw OutOfMemoryError"
-TraceException=Trc_VM_CreateRAMClassFromROMClass_circularity Overhead=1 Level=1 Template="Class loading circularity detected"
+TraceException=Trc_VM_CreateRAMClassFromROMClass_circularity Obsolete Overhead=1 Level=1 Template="Class loading circularity detected"
 TraceException=Trc_VM_CreateRAMClassFromROMClass_overflow Overhead=1 Level=1 Template="Too many simultaneous class loads (%d). Throw StackOverFlowError"
 TraceEvent=Trc_VM_CreateRAMClassFromROMClass_loadedSuperclass Overhead=1 Level=3 Template="Loaded superclass %.*s (RAM class=%p)"
 TraceException=Trc_VM_CreateRAMClassFromROMClass_superclassIsFinal Overhead=1 Level=1 Template="Superclass (RAM class=%p) is final. Throw VerifyError"
@@ -246,9 +246,9 @@ TraceEntry=Trc_VM_javaLookupMethod_Entry Overhead=1 Level=3 Template="javaLookup
 TraceEvent=Trc_VM_javaLookupMethod_Name Overhead=1 Level=3 Template="javaLookupMethod - methodName %.*s"
 TraceExit=Trc_VM_javaLookupMethod_Exit Overhead=1 Level=3 Template="exit javaLookupMethod resultMethod %p"
 
-TraceEntry=Trc_VM_callJNILoad_Entry Overhead=1 Level=1 Template="callJNILoad(vmStruct %p, slHandle %d, fnName %s, defaultResult %d)"
-TraceEvent=Trc_VM_callJNILoad_Event1 Overhead=1 Level=3 Template="callJNILoad found %s in %d"
-TraceExit=Trc_VM_callJNILoad_Exit Overhead=1 Level=1 Template="exit callJNILoad result %d"
+TraceEntry=Trc_VM_callJNILoad_Entry Obsolete Overhead=1 Level=1 Template="callJNILoad(vmStruct %p, slHandle %d, fnName %s, defaultResult %d)"
+TraceEvent=Trc_VM_callJNILoad_Event1 Obsolete Overhead=1 Level=3 Template="callJNILoad found %s in %d"
+TraceExit=Trc_VM_callJNILoad_Exit Obsolete Overhead=1 Level=1 Template="exit callJNILoad result %d"
 
 TraceEvent=Trc_VM_Created Overhead=1 Level=1 Template="J9JavaVM located at %p, internalVMFunctions at %p, portLibrary at %p, j9ras at %p"
 
@@ -259,12 +259,12 @@ TraceEvent=Trc_VM_tryAcquireExclusiveVMAccess_waiting Obsolete Overhead=1 Level=
 TraceEvent=Trc_VM_tryAcquireExclusiveVMAccess_success Obsolete Overhead=1 Level=3 Template="tryEnterExclusiveVMAccess successfully acquired"
 
 // a second exit interpreter tracepoint for level2 exits
-TraceExit=Trc_VM_exitInterpreter_Exit2 Overhead=1 Level=3 Template="exitInterpreter"
+TraceExit=Trc_VM_exitInterpreter_Exit2 Obsolete Overhead=1 Level=3 Template="exitInterpreter"
 
-TraceEntry=Trc_VM_sendSubstring_Entry Overhead=1 Level=1 Template="sendSubstring"
-TraceExit=Trc_VM_sendSubstring_Exit Overhead=1 Level=1 Template="sendSubstring"
+TraceEntry=Trc_VM_sendSubstring_Entry Obsolete Overhead=1 Level=1 Template="sendSubstring"
+TraceExit=Trc_VM_sendSubstring_Exit Obsolete Overhead=1 Level=1 Template="sendSubstring"
 
-TraceEvent=Trc_VM_profilingBytecodeBufferFullHookRegistered_breakpointsEnabled group=profilingbc noEnv Overhead=1 Level=5 Template="Disallowing profiling because J9HOOK_VM_BREAKPOINT is enabled"
+TraceEvent=Trc_VM_profilingBytecodeBufferFullHookRegistered_breakpointsEnabled group=profilingbc noEnv Obsolete Overhead=1 Level=5 Template="Disallowing profiling because J9HOOK_VM_BREAKPOINT is enabled"
 TraceEntry=Trc_VM_sendCompleteInitialization_Entry Overhead=1 Level=2 Template="sendCompleteInitialization"
 TraceExit=Trc_VM_sendCompleteInitialization_Exit Overhead=1 Level=2 Template="sendCompleteInitialization"
 
@@ -282,20 +282,20 @@ TraceException=Trc_VM_startJavaThread_failedLockAlloc Overhead=1 Level=1 Templat
 TraceEntry=Trc_VM_sendVerify_Entry Obsolete Overhead=1 Level=2 Template="sendVerify"
 TraceEvent=Trc_VM_checkRomClassForError_ErrorFound Overhead=1 Level=1 Template="checkRomClassForError found error at %x"
 TraceEntry=Trc_VM_j9RegisterJXE_EntryOld Obsolete Overhead=1 Level=1 Template="j9RegisterJXE vm=%p imageHeader=%p jxePointer=%p jxeAlloc=%p classLoader=%p filename=%s flags=%x beforeBootstrap=%d"
-TraceEvent=Trc_VM_j9RegisterJXE_NewJXEDescriptor NoEnv Overhead=1 Level=1 Template="j9RegisterJXE new descriptior=%p created"
-TraceExit=Trc_VM_j9RegisterJXE_Exit NoEnv Overhead=1 Level=1 Template="j9RegisterJXE descriptior=%p"
+TraceEvent=Trc_VM_j9RegisterJXE_NewJXEDescriptor NoEnv Obsolete Overhead=1 Level=1 Template="j9RegisterJXE new descriptior=%p created"
+TraceExit=Trc_VM_j9RegisterJXE_Exit NoEnv Obsolete Overhead=1 Level=1 Template="j9RegisterJXE descriptior=%p"
 TraceEntry=Trc_VM_romClassLoadFromCookie_Entry Obsolete Overhead=1 Level=1 Template="romClassLoadFromCookie vmStruct=%p clsName=%p clsNameLength=%d romClassBytes=%p romClassLength=%d classLoader=%p protectionDomain=%p"
-TraceEvent=Trc_VM_romClassLoadFromCookie_NormalJXE Overhead=1 Level=1 Template="romClassLoadFromCookie NormalJXE class name = %.*s"
-TraceEvent=Trc_VM_romClassLoadFromCookie_JARJXE_JXE Overhead=1 Level=1 Template="romClassLoadFromCookie JXEinAJAR JXE %.*s"
-TraceEvent=Trc_VM_romClassLoadFromCookie_JARJXE_JXE_ExistingJXE Overhead=1 Level=1 Template="romClassLoadFromCookie JXEinAJAR Existing JXE jxeDesc=%p"
-TraceEvent=Trc_VM_romClassLoadFromCookie_JARJXE_JXE_LoadedNewJXE Overhead=1 Level=1 Template="romClassLoadFromCookie JXEinAJAR Loaded new JXE romImageHeader=%p"
-TraceEvent=Trc_VM_romClassLoadFromCookie_JARJXE_Class Overhead=1 Level=1 Template="romClassLoadFromCookie JXEinAJAR Class %.*s"
-TraceEvent=Trc_VM_romClassLoadFromCookie_JARJXE_Class_RequestJXELoad Overhead=1 Level=1 Template="romClassLoadFromCookie JXEinAJAR Class Request to load %s"
-TraceException=Trc_VM_romClassLoadFromCookie_JARJXE_Class_LoadJXERequestFailed Overhead=1 Level=1 Template="romClassLoadFromCookie JXEinAJAR Class Load JXE Request Failed %s"
-TraceEvent=Trc_VM_romClassLoadFromCookie_JARJXE_Class_ClassLoaded Overhead=1 Level=1 Template="romClassLoadFromCookie JXEinAJAR Class loaded loadedClass=%p romClass=%p"
+TraceEvent=Trc_VM_romClassLoadFromCookie_NormalJXE Obsolete Overhead=1 Level=1 Template="romClassLoadFromCookie NormalJXE class name = %.*s"
+TraceEvent=Trc_VM_romClassLoadFromCookie_JARJXE_JXE Obsolete Overhead=1 Level=1 Template="romClassLoadFromCookie JXEinAJAR JXE %.*s"
+TraceEvent=Trc_VM_romClassLoadFromCookie_JARJXE_JXE_ExistingJXE Obsolete Overhead=1 Level=1 Template="romClassLoadFromCookie JXEinAJAR Existing JXE jxeDesc=%p"
+TraceEvent=Trc_VM_romClassLoadFromCookie_JARJXE_JXE_LoadedNewJXE Obsolete Overhead=1 Level=1 Template="romClassLoadFromCookie JXEinAJAR Loaded new JXE romImageHeader=%p"
+TraceEvent=Trc_VM_romClassLoadFromCookie_JARJXE_Class Obsolete Overhead=1 Level=1 Template="romClassLoadFromCookie JXEinAJAR Class %.*s"
+TraceEvent=Trc_VM_romClassLoadFromCookie_JARJXE_Class_RequestJXELoad Obsolete Overhead=1 Level=1 Template="romClassLoadFromCookie JXEinAJAR Class Request to load %s"
+TraceException=Trc_VM_romClassLoadFromCookie_JARJXE_Class_LoadJXERequestFailed Obsolete Overhead=1 Level=1 Template="romClassLoadFromCookie JXEinAJAR Class Load JXE Request Failed %s"
+TraceEvent=Trc_VM_romClassLoadFromCookie_JARJXE_Class_ClassLoaded Obsolete Overhead=1 Level=1 Template="romClassLoadFromCookie JXEinAJAR Class loaded loadedClass=%p romClass=%p"
 TraceExit=Trc_VM_romClassLoadFromCookie_Exit Overhead=1 Level=3 Template="romClassLoadFromCookie loadedClass=%p"
 
-TraceEvent=Trc_VM_sendInitialize_forClass Overhead=1 Level=2 Template="sendInitialize - class %.*s"
+TraceEvent=Trc_VM_sendInitialize_forClass Obsolete Overhead=1 Level=2 Template="sendInitialize - class %.*s"
 TraceEvent=Trc_VM_sendClinit_forClass Overhead=1 Level=2 Template="sendClinit - class %.*s"
 
 TraceException=Trc_VM_CreateRAMClassFromROMClass_classObjOOM Overhead=1 Level=1 Template="Unable to allocate class object. Throw OutOfMemoryError."
@@ -311,11 +311,11 @@ TraceExit=Trc_VM_classLoaderRegisterLibrary_Noop Overhead=1 Level=1 Template="cl
 TraceExit-Exception=Trc_VM_classLoaderRegisterLibrary_OtherLoader Overhead=1 Level=1 Template="classLoaderRegisterLibrary -- %s already loaded in another ClassLoader. Return 1"
 TraceExit=Trc_VM_classLoaderRegisterLibrary_Exit Overhead=1 Level=1 Template="classLoaderRegisterLibrary -- %s returning %zu"
 
-TraceEntry=Trc_VM_lookupJNIID_Entry Overhead=1 Level=1 Template="lookupJNIID -- isField=%zu"
-TraceEvent=Trc_VM_lookupJNIID_FoundExisting Overhead=1 Level=1 Template="found existing ID: %p"
-TraceEvent=Trc_VM_lookupJNIID_CreatedFieldID Overhead=1 Level=1 Template="created J9JNIFieldID %p for %.*s.%.*s, offset=%zu"
-TraceEvent=Trc_VM_lookupJNIID_CreatedMethodID Overhead=1 Level=1 Template="created J9JNIMethodID %p for %.*s.%.*s%.*s, vTableIndex=%zu"
-TraceExit=Trc_VM_lookupJNIID_Exit Overhead=1 Level=1 Template="lookupJNIID -- result=%p"
+TraceEntry=Trc_VM_lookupJNIID_Entry Obsolete Overhead=1 Level=1 Template="lookupJNIID -- isField=%zu"
+TraceEvent=Trc_VM_lookupJNIID_FoundExisting Obsolete Overhead=1 Level=1 Template="found existing ID: %p"
+TraceEvent=Trc_VM_lookupJNIID_CreatedFieldID Obsolete Overhead=1 Level=1 Template="created J9JNIFieldID %p for %.*s.%.*s, offset=%zu"
+TraceEvent=Trc_VM_lookupJNIID_CreatedMethodID Obsolete Overhead=1 Level=1 Template="created J9JNIMethodID %p for %.*s.%.*s%.*s, vTableIndex=%zu"
+TraceExit=Trc_VM_lookupJNIID_Exit Obsolete Overhead=1 Level=1 Template="lookupJNIID -- result=%p"
 
 TraceEntry=Trc_VM_J9RegisterAsyncEvent_Entry Overhead=1 Level=1 NoEnv Template="J9RegisterAsyncEvent eventHandler=%p userData=%p"
 TraceExit=Trc_VM_J9RegisterAsyncEvent_Exit Overhead=1 Level=1 NoEnv Template="J9RegisterAsyncEvent returning %zd"
@@ -345,7 +345,7 @@ TraceExit=Trc_VM_JNI_monitorExit_Exit Overhead=1 Level=4 Template="JNI MonitorEx
 
 TraceEntry=Trc_VM_objectMonitorEnterBlocking_Entry Overhead=1 Level=4 Template="objectMonitorEnterBlocking"
 TraceEvent=Trc_VM_objectMonitorEnterBlocking_reservedOnEntry Overhead=1 Level=4 Template="Monitor was reserved on entry to function. Cancelling reservation."
-TraceException=Trc_VM_objectMonitorEnterBlocking_monitorTableAtFailed Overhead=1 Level=1 Template="Failed to allocate monitor in objectMonitorEnterBlocking."
+TraceException=Trc_VM_objectMonitorEnterBlocking_monitorTableAtFailed Obsolete Overhead=1 Level=1 Template="Failed to allocate monitor in objectMonitorEnterBlocking."
 TraceEvent=Trc_VM_objectMonitorEnterBlocking_alreadyInflated Overhead=1 Level=4 Template="Monitor was already inflated. Current thread now owns inflated monitor."
 TraceEvent=Trc_VM_objectMonitorEnterBlocking_tryAcquireVMAccessFailed Overhead=1 Level=4 Template="tryAcquireVMAccess failed. Restarting."
 TraceEvent=Trc_VM_objectMonitorEnterBlocking_reservedInLoop Overhead=1 Level=4 Template="Monitor was reserved while running function. Cancelling reservation."
@@ -374,17 +374,17 @@ TraceEntry=Trc_VM_cleanUpClassLoaders_Entry Overhead=1 Level=4 Template="cleanUp
 TraceExit=Trc_VM_cleanUpClassLoaders_Exit Overhead=1 Level=4 Template="cleanUpClassLoaders"
 TraceExit=Trc_VM_callLoadClass_foundClass_Null Overhead=1 Level=1 Template="foundClass returned null"
 //Redefine Trc_VM_j9RegisterJXE_Entry to add new parameter
-TraceEntry=Trc_VM_j9RegisterJXE_Entry NoEnv Overhead=1 Level=1 Template="j9RegisterJXE vm=%p imageHeader=%p jxePointer=%p jxeAlloc=%p sharedLibraryDescriptor=%x classLoader=%p filename=%s flags=%x beforeBootstrap=%d"
+TraceEntry=Trc_VM_j9RegisterJXE_Entry NoEnv Obsolete Overhead=1 Level=1 Template="j9RegisterJXE vm=%p imageHeader=%p jxePointer=%p jxeAlloc=%p sharedLibraryDescriptor=%x classLoader=%p filename=%s flags=%x beforeBootstrap=%d"
 TraceException=Trc_VM_classsupport_contendThreadsRecordMissing Overhead=1 Level=1 Template="contendingThreads missing entry for class %.*s loader %p"
 TraceException=Trc_VM_classsupport_contendThreadsAddFail Overhead=1 Level=1 Template="contendingThreads: could not add class %.*s loader %p"
 
-TraceException=Trc_VM_j9RegisterJXE_OOM1 NoEnv Overhead=1 Level=1 Template="j9RegisterJXE Out of Memory trying to register jxe pointer %p"
-TraceException=Trc_VM_j9RegisterJXE_OOM2 NoEnv Overhead=1 Level=1 Template="j9RegisterJXE Out of Memory trying to register jxe pointer %p"
-TraceException=Trc_VM_j9RegisterJXE_OOM3 NoEnv Overhead=1 Level=1 Template="j9RegisterJXE Out of Memory trying to register jxe pointer %p"
-TraceException=Trc_VM_j9RegisterJXE_AOT_Failed NoEnv Overhead=1 Level=1 Template="j9RegisterJXE AOT Registration failed trying to register jxe pointer %p"
+TraceException=Trc_VM_j9RegisterJXE_OOM1 NoEnv Obsolete Overhead=1 Level=1 Template="j9RegisterJXE Out of Memory trying to register jxe pointer %p"
+TraceException=Trc_VM_j9RegisterJXE_OOM2 NoEnv Obsolete Overhead=1 Level=1 Template="j9RegisterJXE Out of Memory trying to register jxe pointer %p"
+TraceException=Trc_VM_j9RegisterJXE_OOM3 NoEnv Obsolete Overhead=1 Level=1 Template="j9RegisterJXE Out of Memory trying to register jxe pointer %p"
+TraceException=Trc_VM_j9RegisterJXE_AOT_Failed NoEnv Obsolete Overhead=1 Level=1 Template="j9RegisterJXE AOT Registration failed trying to register jxe pointer %p"
 
-TraceEntry=Trc_VM_j9RegisterAOT_Entry NoEnv Overhead=1 Level=1 Template="j9RegisterAOT vm=%p imageHeader=%p description=%p beforeBootstrap=%d"
-TraceExit=Trc_VM_j9RegisterAOT_Exit NoEnv Overhead=1 Level=1 Template="j9RegisterAOT result=%d"
+TraceEntry=Trc_VM_j9RegisterAOT_Entry NoEnv Obsolete Overhead=1 Level=1 Template="j9RegisterAOT vm=%p imageHeader=%p description=%p beforeBootstrap=%d"
+TraceExit=Trc_VM_j9RegisterAOT_Exit NoEnv Obsolete Overhead=1 Level=1 Template="j9RegisterAOT result=%d"
 
 TraceEntry=Trc_VM_setCurrentException_Entry Overhead=1 Level=2 Template="setCurrentException index=%d constructorIndex=%d detailMessage=%p"
 TraceException=Trc_VM_setCurrentException_ClassNotLoaded Overhead=1 Level=1 Template="setCurrentException: java.lang.Class not loaded, abort"
@@ -427,7 +427,7 @@ TraceEntry=Trc_VM_hookFieldTablePurge_Entry NoEnv Overhead=1 Level=1 Template="f
 TraceEvent=Trc_VM_fieldIndexTableNew NoEnv Overhead=1 Level=1 Template="fieldIndexTableNew table %p"
 TraceEvent=Trc_VM_fieldIndexTableAdd NoEnv Overhead=1 Level=1 Template="fieldIndexTableAdd vm->fieldIndexTable %p ramClass %p J9FieldTable %p"
 
-TraceEvent=Trc_VM_tryAcquireExclusiveVMAccess_checkForContention Overhead=1 Level=3 Template="tryEnterExclusiveVMAccess exclusiveAccessState=%zu"
+TraceEvent=Trc_VM_tryAcquireExclusiveVMAccess_checkForContention Obsolete Overhead=1 Level=3 Template="tryEnterExclusiveVMAccess exclusiveAccessState=%zu"
 
 TraceEvent=Trc_VM_internalCreateRAMClassFromROMClass_createRAMMethod Group=perfmon Overhead=1 Level=5 Template="%.*s.%.*s%.*s %p"
 
@@ -440,23 +440,23 @@ TraceEvent=Trc_VM_createdSharedZipCache Overhead=1 Level=1 Template="VMI created
 TraceEvent=Trc_VM_useSharedZipCache Overhead=1 Level=1 Template="VMI useSharedZipCache: %s (%s)"
 
 TraceEvent=Trc_VM_virtualRAMClassAlloc NoEnv Overhead=1 Level=1 Template="virtual RAM class baseAddress 0x%x"
-TraceException=Trc_VM_charArrayVTableOffset Overhead=1 Level=1 Template="SC[] vTable offset mismatch 0x%x"
-TraceEvent=Trc_VM_charArrayRAMClass Overhead=1 Level=1 Template="SC[] char[] class 0x%x"
+TraceException=Trc_VM_charArrayVTableOffset Obsolete Overhead=1 Level=1 Template="SC[] vTable offset mismatch 0x%x"
+TraceEvent=Trc_VM_charArrayRAMClass Obsolete Overhead=1 Level=1 Template="SC[] char[] class 0x%x"
 
 TraceEntry=Trc_VM_sendInitCause_Entry Overhead=1 Level=3 Template="sendInitCause"
 TraceExit=Trc_VM_sendInitCause_Exit Overhead=1 Level=3 Template="sendInitCause"
 
 TraceEvent=Trc_VM_fieldIndexTableRemove NoEnv Overhead=1 Level=1 Template="fieldIndexTableRemove ramClass %p result %d"
 
-TraceEvent=Trc_VM_virtualRAMClassSearch Overhead=1 Level=1 Template="virtual RAM class search from 0x%x with page size 0x%x"
-TraceEvent=Trc_VM_virtualRAMClassSearchSuccess Overhead=1 Level=1 Template="virtual RAM class search success 0x%x"
+TraceEvent=Trc_VM_virtualRAMClassSearch Obsolete Overhead=1 Level=1 Template="virtual RAM class search from 0x%x with page size 0x%x"
+TraceEvent=Trc_VM_virtualRAMClassSearchSuccess Obsolete Overhead=1 Level=1 Template="virtual RAM class search success 0x%x"
 
 TraceEvent=Trc_VM_startJavaThread_gcAndRetry Overhead=1 Level=1 Template="startJavaThread: failed to create native thread - performing aggressive GC and retrying"
 
 TraceEvent=Trc_VM_internalFindClass_gcAndRetry Overhead=1 Level=1 Template="native memory exhausted attempting to load class - performing aggressive GC and retrying"
 
 TraceEntry=Trc_VM_internalFindClass_attemptDynamicClassLoad_entry Overhead=1 Level=2 Template="loader %p class %.*s attemptDynamicClassLoad entry"
-TraceEvent=Trc_VM_internalFindClass_attemptDynamicClassLoadCheckMemory Overhead=1 Level=4 Template="attemptDynamicClassLoad check memory"
+TraceEvent=Trc_VM_internalFindClass_attemptDynamicClassLoadCheckMemory Obsolete Overhead=1 Level=4 Template="attemptDynamicClassLoad check memory"
 TraceExit=Trc_VM_internalFindClass_attemptDynamicClassLoad_exit Overhead=1 Level=2 Template="loader %p class 0X%p attemptDynamicClassLoad exit"
 
 TraceEntry=Trc_VM_createJavaLangString_Entry Obsolete Overhead=1 Level=4 Template="createJavaLangString entry data %.*s stringFlags 0x%0x"
@@ -487,7 +487,7 @@ TraceEvent=Trc_VM_releaseExclusiveVMAccess_QueueNonEmpty2 Group=exvmaccess Overh
 TraceEvent=Trc_VM_releaseExclusiveVMAccess_QueueEmpty Group=exvmaccess Overhead=1 Level=1 Template="Exclusive VM Access queue is empty, resetting exclusive access state and notifying all halted threads. Changing exclusiveAccessState to J9_XACCESS_NONE."
 TraceExit=Trc_VM_releaseExclusiveVMAccess_Exit Group=exvmaccess Overhead=1 Level=1 Template="Released exclusive VM Access"
 
-TraceEntry=Trc_VM_internalReleaseVMAccessNoMutex_Entry Overhead=1 Level=9 Template="Releasing (non-exclusive) VM Access"
+TraceEntry=Trc_VM_internalReleaseVMAccessNoMutex_Entry Obsolete Overhead=1 Level=9 Template="Releasing (non-exclusive) VM Access"
 TraceEvent=Trc_VM_internalReleaseVMAccessNoMutex_ThreadIsHalted Overhead=1 Level=9 Template="Thread is halted for exclusive"
 TraceExit=Trc_VM_internalReleaseVMAccessNoMutex_Exit Overhead=1 Level=9 Template="Released (non-exclusive) VM Access"
 
@@ -569,16 +569,16 @@ TraceEvent=Trc_VM_objectMonitorDeflated Overhead=1 Level=3 NoEnv Template="Threa
 
 TraceEvent=Trc_VM_illegalUtf8String Obsolete Overhead=1 Level=1 Template="Illegal UTF8 string in JNI call: %s"
 
-TraceEntry=Trc_VM_sendTclinit_Entry Overhead=1 Level=3 Template="sendTclinit"
-TraceExit=Trc_VM_sendTclinit_Exit Overhead=1 Level=3 Template="sendTclinit"
-TraceEvent=Trc_VM_sendTclinit_forClass Overhead=1 Level=3 Template="sendTclinit - class %.*s"
+TraceEntry=Trc_VM_sendTclinit_Entry Obsolete Overhead=1 Level=3 Template="sendTclinit"
+TraceExit=Trc_VM_sendTclinit_Exit Obsolete Overhead=1 Level=3 Template="sendTclinit"
+TraceEvent=Trc_VM_sendTclinit_forClass Obsolete Overhead=1 Level=3 Template="sendTclinit - class %.*s"
 
-TraceAssert=Assert_VM_true_Level9 noEnv Overhead=1 Level=9 Assert="(P1)"
+TraceAssert=Assert_VM_true_Level9 noEnv Obsolete Overhead=1 Level=9 Assert="(P1)"
 
 TraceEntry=Trc_VM_romClassLoadFromCookie_Entry1 Obsolete Overhead=1 Level=3 Template="romClassLoadFromCookie vmStruct=%p clsName=%p clsNameLength=%d romClassBytes=%p romClassLength=%d"
 
-TraceEvent=Trc_VM_resolveKnownClass_SkipResolveOfStringBytesFieldRef Overhead=1 Level=1 Template="Skipping resolve of char[] java.lang.String#value. String compression is enabled. Instance field ref %u for known class %zu (%p)"
-TraceEvent=Trc_VM_resolveKnownClass_SkipResolveOfStringBytesCompressedFieldRef Overhead=1 Level=1 Template="Skipping resolve of Object java.lang.String#value. String compression is disabled. Instance field ref %u for known class %zu (%p)"
+TraceEvent=Trc_VM_resolveKnownClass_SkipResolveOfStringBytesFieldRef Obsolete Overhead=1 Level=1 Template="Skipping resolve of char[] java.lang.String#value. String compression is enabled. Instance field ref %u for known class %zu (%p)"
+TraceEvent=Trc_VM_resolveKnownClass_SkipResolveOfStringBytesCompressedFieldRef Obsolete Overhead=1 Level=1 Template="Skipping resolve of Object java.lang.String#value. String compression is disabled. Instance field ref %u for known class %zu (%p)"
 
 TraceEvent=Trc_VM_yieldAlgorithmSelected Overhead=1 Level=3 Template="Thread yield algorithm information: sched_compat_yield=%c, yieldAlgorithm=%zu, yieldUsleepMultiplier=%zu."
 
@@ -594,7 +594,7 @@ TraceEvent=Trc_VM_mhStackValidator_sp_slot Overhead=1 Level=1 Template="Slot = 0
 TraceEvent=Trc_VM_mhStackValidator_sp_slot_value Overhead=1 Level=1 Template="Slot value = 0x%p"
 TraceEvent=Trc_VM_mhStackValidator_sp_class Overhead=1 Level=1 Template="Class = %.*s"
 
-TraceEvent=Trc_VM_loadSuperClassAndInterfaces_setPackedObjectSuperclass Overhead=1 Level=1 Template="PackedObject superclass is set to NULL"
+TraceEvent=Trc_VM_loadSuperClassAndInterfaces_setPackedObjectSuperclass Obsolete Overhead=1 Level=1 Template="PackedObject superclass is set to NULL"
 
 TraceExit=Trc_VM_loadNonArrayClass_exit_object_monitor Overhead=1 Level=2 Template="loader %p class %.*s loadNonArrayClass exit_object_monitor"
 TraceEntry=Trc_VM_loadNonArrayClass_enter_object_monitor Overhead=1 Level=2 Template="loader %p class %.*s loadNonArrayClass enter_object_monitor"
@@ -618,11 +618,11 @@ TraceEvent=Trc_VM_verification_End Overhead=1 Level=4 Template="Verifying Class 
 
 TraceEvent=Trc_VM_VMInitStages_AllowGetCallerClass Obsolete NoEnv Overhead=1 Level=3 Template="AllowGetCallerClass is %s"
 
-TraceEntry=Trc_VM_tenantKillRequested Overhead=1 Level=1 Template="tenantKillAsync(vmThread=%p, jmp_buf=%p)"
-TraceEntry=Trc_VM_sendRunThread_Entry Overhead=1 Level=2 Template="sendRunThread"
-TraceExit=Trc_VM_sendRunThread_Exit Overhead=1 Level=2 Template="sendRunThread"
+TraceEntry=Trc_VM_tenantKillRequested Obsolete Overhead=1 Level=1 Template="tenantKillAsync(vmThread=%p, jmp_buf=%p)"
+TraceEntry=Trc_VM_sendRunThread_Entry Obsolete Overhead=1 Level=2 Template="sendRunThread"
+TraceExit=Trc_VM_sendRunThread_Exit Obsolete Overhead=1 Level=2 Template="sendRunThread"
 
-TraceExit-Exception=Trc_VM_objectMonitorExit_Exit_IllegalPackedObject Overhead=1 Level=4 Template="objectMonitorExit (IllegalMonitorState in objectMonitorExit. obj=%p is packed.)"
+TraceExit-Exception=Trc_VM_objectMonitorExit_Exit_IllegalPackedObject Obsolete Overhead=1 Level=4 Template="objectMonitorExit (IllegalMonitorState in objectMonitorExit. obj=%p is packed.)"
 TraceExit-Exception=Trc_VM_objectMonitorExit_Exit_IllegalNullMonitor Overhead=1 Level=4 Template="objectMonitorExit (IllegalMonitorState in objectMonitorExit. NULL monitor table entry for obj=%p.)"
 
 TraceExit-Exception=Trc_JNIinv_DestroyJavaVM_DetachCurrentThread_Exit NoEnv Overhead=1 Level=3 Template="JNIinv DestroyJavaVM failed to detach current thread. result=%d"
@@ -631,14 +631,14 @@ TraceEvent=Trc_VM_VMPhases_JVMPhaseChange NoEnv Overhead=1 Level=4 Template="jvm
 TraceEvent=Trc_VM_VMPhases_FastClassHashTable_Enabled NoEnv Overhead=1 Level=4 Template="Enabled FastClassHashTable"
 TraceEvent=Trc_VM_VMAccess_FreeingPreviousHashtable Overhead=1 Level=6 Template="Freeing previous hashtable %p for FastClasshashTable"
 
-TraceEntry=Trc_VM_sendPrepareTenant_Entry Overhead=1 Level=3 Template="sendPrepareTenant"
-TraceExit=Trc_VM_sendPrepareTenant_Exit Overhead=1 Level=3 Template="sendPrepareTenant"
-TraceEntry=Trc_VM_sendEnsureTenantData_Entry Overhead=1 Level=3 Template="sendEnsureTenantData"
-TraceExit=Trc_VM_sendEnsureTenantData_Exit Overhead=1 Level=3 Template="sendEnsureTenantData"
-TraceEntry=Trc_VM_sendEnsureError_Entry Overhead=1 Level=3 Template="sendEnsureError"
-TraceExit=Trc_VM_sendEnsureError_Exit Overhead=1 Level=3 Template="sendEnsureError"
-TraceEntry=Trc_VM_sendTenantInitializationAlreadyFailed_Entry Overhead=1 Level=3 Template="sendTenantInitializationAlreadyFailed"
-TraceExit=Trc_VM_sendTenantInitializationAlreadyFailed_Exit Overhead=1 Level=3 Template="sendTenantInitializationAlreadyFailed"
+TraceEntry=Trc_VM_sendPrepareTenant_Entry Obsolete Overhead=1 Level=3 Template="sendPrepareTenant"
+TraceExit=Trc_VM_sendPrepareTenant_Exit Obsolete Overhead=1 Level=3 Template="sendPrepareTenant"
+TraceEntry=Trc_VM_sendEnsureTenantData_Entry Obsolete Overhead=1 Level=3 Template="sendEnsureTenantData"
+TraceExit=Trc_VM_sendEnsureTenantData_Exit Obsolete Overhead=1 Level=3 Template="sendEnsureTenantData"
+TraceEntry=Trc_VM_sendEnsureError_Entry Obsolete Overhead=1 Level=3 Template="sendEnsureError"
+TraceExit=Trc_VM_sendEnsureError_Exit Obsolete Overhead=1 Level=3 Template="sendEnsureError"
+TraceEntry=Trc_VM_sendTenantInitializationAlreadyFailed_Entry Obsolete Overhead=1 Level=3 Template="sendTenantInitializationAlreadyFailed"
+TraceExit=Trc_VM_sendTenantInitializationAlreadyFailed_Exit Obsolete Overhead=1 Level=3 Template="sendTenantInitializationAlreadyFailed"
 
 TraceEntry=Trc_VM_classInitStateMachine_Entry Group=classinit Overhead=1 Level=3 Template="classInitStateMachine for %.*s (%p) loader=%p up to %s"
 TraceEvent=Trc_VM_classInitStateMachine_noLock Group=classinit Overhead=1 Level=3 Template="initializationLock is NULL - class is fully initialized"
@@ -649,17 +649,17 @@ TraceEvent=Trc_VM_classInitStateMachine_markInitializationInProgress Group=class
 TraceEvent=Trc_VM_classInitStateMachine_verificationInProgress Group=classinit Overhead=1 Level=3 Template="verification in progress"
 TraceEvent=Trc_VM_classInitStateMachine_initializationInProgress Group=classinit Overhead=1 Level=3 Template="initialization in progress"
 TraceEvent=Trc_VM_classInitStateMachine_initializingOnCurrentThread Group=classinit Overhead=1 Level=3 Template="initializing on current thread - exit"
-TraceEvent=Trc_VM_classInitStateMachine_verifyingOnCurrentThread Group=classinit Overhead=1 Level=3 Template="verifying on current thread - reverify now"
-TraceEvent=Trc_VM_classInitStateMachine_initializingOnCurrentThreadTenant Group=classinit Overhead=1 Level=3 Template="initializing on current thread - mark class for tenant init"
+TraceEvent=Trc_VM_classInitStateMachine_verifyingOnCurrentThread Group=classinit Obsolete Overhead=1 Level=3 Template="verifying on current thread - reverify now"
+TraceEvent=Trc_VM_classInitStateMachine_initializingOnCurrentThreadTenant Group=classinit Obsolete Overhead=1 Level=3 Template="initializing on current thread - mark class for tenant init"
 TraceEvent=Trc_VM_classInitStateMachine_desiredStateReached Group=classinit Overhead=1 Level=3 Template="desired state reached"
 TraceEvent=Trc_VM_classInitStateMachine_waitForOtherThread Group=classinit Overhead=1 Level=3 Template="operation in progress on another thread - wait for it to complete"
 TraceEvent=Trc_VM_classInitStateMachine_waitComplete Group=classinit Overhead=1 Level=3 Template="wait complete - loop and check state again"
 TraceEvent=Trc_VM_classInitStateMachine_waitFailed Group=classinit Overhead=1 Level=3 Template="wait complete - exception or async pending - exit"
 TraceEvent=Trc_VM_classInitStateMachine_clinitFailed Group=classinit Overhead=1 Level=3 Template="<clinit> failed - record the exception"
-TraceEvent=Trc_VM_classInitStateMachine_mtClinit Group=classinit Overhead=1 Level=3 Template="MT enabled - call initializeNonIsolatedClass"
-TraceEvent=Trc_VM_classInitStateMachine_prepareTenant Group=classinit Overhead=1 Level=3 Template="islolated class - prepare tenant slots"
-TraceEvent=Trc_VM_classInitStateMachine_packedArray Group=classinit Overhead=1 Level=3 Template="packed array class - initialize component type"
-TraceEvent=Trc_VM_classInitStateMachine_nestedPacked Group=classinit Overhead=1 Level=3 Template="initialize nested packed type"
+TraceEvent=Trc_VM_classInitStateMachine_mtClinit Group=classinit Obsolete Overhead=1 Level=3 Template="MT enabled - call initializeNonIsolatedClass"
+TraceEvent=Trc_VM_classInitStateMachine_prepareTenant Group=classinit Obsolete Overhead=1 Level=3 Template="islolated class - prepare tenant slots"
+TraceEvent=Trc_VM_classInitStateMachine_packedArray Group=classinit Obsolete Overhead=1 Level=3 Template="packed array class - initialize component type"
+TraceEvent=Trc_VM_classInitStateMachine_nestedPacked Group=classinit Obsolete Overhead=1 Level=3 Template="initialize nested packed type"
 TraceEvent=Trc_VM_classInitStateMachine_initSuperclass Group=classinit Overhead=1 Level=3 Template="initialize superclass"
 TraceEvent=Trc_VM_classInitStateMachine_verifySuperclass Group=classinit Overhead=1 Level=3 Template="verify superclass"
 TraceEvent=Trc_VM_classInitStateMachine_prepareSuperclass Group=classinit Overhead=1 Level=3 Template="prepare superclass"
@@ -672,8 +672,8 @@ TraceEntry=Trc_VM_initializeImpl_Entry Group=classinit Overhead=1 Level=3 Templa
 TraceEvent=Trc_VM_initializeImpl_preInit Group=classinit Overhead=1 Level=3 Template="call preinit hook"
 TraceEvent=Trc_VM_initializeImpl_preInitFailedRetry Group=classinit Overhead=1 Level=3 Template="preinit failed - GC and try again"
 TraceEvent=Trc_VM_initializeImpl_preInitFailed Group=classinit Overhead=1 Level=3 Template="preinit failed second time"
-TraceEvent=Trc_VM_initializeImpl_noTenant Group=classinit Overhead=1 Level=3 Template="class needs tenant init but has NULL tenant - throw NPE"
-TraceEvent=Trc_VM_initializeImpl_notFilterClass Group=classinit Overhead=1 Level=3 Template="not filter class - do not run <clinit>"
+TraceEvent=Trc_VM_initializeImpl_noTenant Group=classinit Obsolete Overhead=1 Level=3 Template="class needs tenant init but has NULL tenant - throw NPE"
+TraceEvent=Trc_VM_initializeImpl_notFilterClass Group=classinit Obsolete Overhead=1 Level=3 Template="not filter class - do not run <clinit>"
 TraceEvent=Trc_VM_initializeImpl_noClinit Group=classinit Overhead=1 Level=3 Template="class has no <clinit>"
 TraceExit=Trc_VM_initializeImpl_Exit Group=classinit Overhead=1 Level=3 Template="initializeImpl"
 TraceEntry=Trc_VM_performVerification_Entry Group=classinit Overhead=1 Level=3 Template="performVerification for %.*s (%p)"
@@ -710,7 +710,7 @@ TraceAssert=Assert_VM_internalError noEnv Overhead=1 Level=1 Assert="(0 /* JVM i
 TraceAssert=Assert_VM_stackMapFailed noEnv Overhead=1 Level=1 Assert="(0 /* stack map error */)"
 
 TraceEvent=Trc_VM_contendedClass noEnv Test Overhead=1 Level=10 Template="Resolving contended class %.*s"
-TraceEvent=Trc_VM_contendedField noEnv Overhead=1 Level=10 Template="Resolving contended field"
+TraceEvent=Trc_VM_contendedField noEnv Obsolete Overhead=1 Level=10 Template="Resolving contended field"
 
 TraceAssert=Assert_VM_equal noEnv Overhead=1 Level=1 Assert="(P1) == (P2)"
 TraceAssert=Assert_VM_unequal noEnv Overhead=1 Level=1 Assert="(P1) != (P2)"
@@ -734,15 +734,15 @@ TraceEvent=Trc_VM_CreateRAMClassFromROMClass_CustomSpinOption2 NoEnv Overhead=1 
 TraceEvent=Trc_VM_CreateRAMClassFromROMClass_CustomSpinOption3 NoEnv Overhead=1 Level=3 Template="(CreateRAMClassFromROMClass) Using custom spin counts: %s, adaptSpin: %zu"
 TraceEvent=Trc_VM_MonitorTableAt_CustomSpinOption2 NoEnv Overhead=1 Level=3 Template="(MonitorTableAt) Using custom spin counts: %s, object: %p, adaptSpin: %zu"
 
-TraceEvent=Trc_VM_acquireExclusiveVMAccess_TakingAccess Group=exvmaccess Overhead=1 Level=1 Template="Taking access from vmThread=%p"
+TraceEvent=Trc_VM_acquireExclusiveVMAccess_TakingAccess Group=exvmaccess Obsolete Overhead=1 Level=1 Template="Taking access from vmThread=%p"
 
 TraceEntry=Trc_VM_internalRunStaticMethod_Entry Overhead=1 Level=3 Template="internalRunStaticMethod"
 TraceExit=Trc_VM_internalRunStaticMethod_Exit Overhead=1 Level=3 Template="internalRunStaticMethod"
 
-TraceEntry=Trc_VM_sendForGenericInvokeVarHandle_Entry Overhead=1 Level=2 Template="sendForGenericInvokeVarHandle"
-TraceExit=Trc_VM_sendForGenericInvokeVarHandle_Exit Overhead=1 Level=2 Template="sendForGenericInvokeVarHandle"
+TraceEntry=Trc_VM_sendForGenericInvokeVarHandle_Entry Obsolete Overhead=1 Level=2 Template="sendForGenericInvokeVarHandle"
+TraceExit=Trc_VM_sendForGenericInvokeVarHandle_Exit Obsolete Overhead=1 Level=2 Template="sendForGenericInvokeVarHandle"
 
-TraceEvent=Trc_VM_initializeClassPathEntry_loadJImageFailed NoEnv Overhead=1 Level=1 Template="initializeClassPathEntry - attempt to load %.*s as jimage file failed with error=%d"
+TraceEvent=Trc_VM_initializeClassPathEntry_loadJImageFailed NoEnv Obsolete Overhead=1 Level=1 Template="initializeClassPathEntry - attempt to load %.*s as jimage file failed with error=%d"
 TraceEvent=Trc_VM_initializeClassPathEntry_loadZipFailed NoEnv Overhead=1 Level=1 Template="initializeClassPathEntry - attempt to load %.*s as zip file failed with error=%d"
 
 TraceEvent=Trc_VM_INLIntercepted Overhead=1 Level=3 Template="INL intercepted %s"
@@ -755,10 +755,10 @@ TraceAssert=Assert_VM_Null noEnv Overhead=1 Level=1 Assert="(P1) == NULL"
 TraceEntry=Trc_VM_resolveStaticFieldRef_Entry Overhead=1 Level=3 Template="resolveStaticFieldRef(method=%p, ramCP=%p, cpIndex=%zu, flags=%zx, returnAddress=%p)"
 TraceEntry=Trc_VM_resolveInstanceFieldRef_Entry Overhead=1 Level=3 Template="resolveInstanceFieldRef(method=%p, ramCP=%p, cpIndex=%zu, flags=%zx, returnAddress=%p)"
 
-TraceEvent=Trc_VM_CreateRAMClassFromROMClass_nestHostLoaded Overhead=1 Level=3 Template="Loaded the nest host %.*s (RAM class=%p)"
-TraceException=Trc_VM_CreateRAMClassFromROMClass_nestHostNotSamePackage Overhead=1 Level=1 Template="The nest host class (RAM class=%p, class loader=%p, this class loader=%p) is not in the same package."
-TraceException=Trc_VM_CreateRAMClassFromROMClass_nestHostNotSameClassLoader Overhead=1 Level=1 Template="The nest host class (RAM class=%p, class loader=%p, this class loader=%p) has not been loaded by the same class loader."
-TraceException=Trc_VM_CreateRAMClassFromROMClass_nestHostNotVerified Overhead=1 Level=1 Template="The nest host (nest host class=%p, class loader=%p, this class loader=%p) does not claim the nest member (nest member=%p)."
+TraceEvent=Trc_VM_CreateRAMClassFromROMClass_nestHostLoaded Obsolete Overhead=1 Level=3 Template="Loaded the nest host %.*s (RAM class=%p)"
+TraceException=Trc_VM_CreateRAMClassFromROMClass_nestHostNotSamePackage Obsolete Overhead=1 Level=1 Template="The nest host class (RAM class=%p, class loader=%p, this class loader=%p) is not in the same package."
+TraceException=Trc_VM_CreateRAMClassFromROMClass_nestHostNotSameClassLoader Obsolete Overhead=1 Level=1 Template="The nest host class (RAM class=%p, class loader=%p, this class loader=%p) has not been loaded by the same class loader."
+TraceException=Trc_VM_CreateRAMClassFromROMClass_nestHostNotVerified Obsolete Overhead=1 Level=1 Template="The nest host (nest host class=%p, class loader=%p, this class loader=%p) does not claim the nest member (nest member=%p)."
 
 TraceEntry=Trc_VM_sendResolveMethodTypeRefInto_Entry Overhead=1 Level=5 Template="sendResolveMethodTypeRefInto ramCP=%p cpIndex=%zu resolveFlags=%zu"
 TraceException=Trc_VM_sendResolveMethodTypeRefInto_Exception Overhead=1 Level=1 Template="Sender class=%p cannot access receiver class=%p, errorCode=%zi."
@@ -827,8 +827,8 @@ TraceEvent=Trc_VM_initializeModulesPathEntry_loadJImageFailed NoEnv Overhead=1 L
 
 TraceEvent=Trc_VM_GetCompleteNPEMessage_Not_Required Overhead=1 Level=3 Template="GetCompleteNPEMessage - No message generated for new NullPointerException().getMessage()"
 TraceEntry=Trc_VM_ComputeNPEMsgAtPC_Entry Obsolete Overhead=1 Level=3 Template="ComputeNPEMsgAtPC : romClass (%p) romMethod (%p) temps (%p) bytecodeOffset (%p) bcCurrent (0x%x) npePC (%u) npeFlag (%d) isMethodFlag (%d) npeMsg (%s)"
-TraceEvent=Trc_VM_ComputeNPEMsgAtPC_Constants Overhead=1 Level=4 Template="ComputeNPEMsgAtPC - constants : bcCurrent (0x%x) constNum (%d) numLen (%u) npeMsgTemp (%s)"
-TraceEvent=Trc_VM_ComputeNPEMsgAtPC_Operators Overhead=1 Level=4 Template="ComputeNPEMsgAtPC - operators : bcCurrent (0x%x) npeMsgTemp (%s) msgLen (%u)"
+TraceEvent=Trc_VM_ComputeNPEMsgAtPC_Constants Obsolete Overhead=1 Level=4 Template="ComputeNPEMsgAtPC - constants : bcCurrent (0x%x) constNum (%d) numLen (%u) npeMsgTemp (%s)"
+TraceEvent=Trc_VM_ComputeNPEMsgAtPC_Operators Obsolete Overhead=1 Level=4 Template="ComputeNPEMsgAtPC - operators : bcCurrent (0x%x) npeMsgTemp (%s) msgLen (%u)"
 TraceEvent=Trc_VM_ComputeNPEMsgAtPC_NotScalarType Overhead=1 Level=1 Template="ComputeNPEMsgAtPC - NOT scalar type : romClass (%p) romMethod (%p) constantPool (%p) aaloadIndex (%zu) info (%p) cpType (0x%x)"
 TraceEvent=Trc_VM_ComputeNPEMsgAtPC_Constants_UnexpectedBC Overhead=1 Level=1 Template="ComputeNPEMsgAtPC - constants unexpected bytecode : bcCurrent (0x%x)"
 TraceEvent=Trc_VM_ComputeNPEMsgAtPC_SkippedBC Overhead=1 Level=1 Template="ComputeNPEMsgAtPC - skipped bytecode : bcCurrent (0x%x) npeFinalFlag (%d)"

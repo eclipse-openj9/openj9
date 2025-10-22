@@ -89,7 +89,7 @@ TraceExit=Trc_PRT_shmem_j9shmem_findnext_Exit Group=j9shmem Overhead=1 Level=1 N
 TraceEntry=Trc_PRT_shmem_j9shmem_open_Entry Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_open entered, rootName = %s, size = %d, permission = %d"
 TraceEvent=Trc_PRT_shmem_j9shmem_open_Event1 Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_open shared memory file %s not exist, creating"
 TraceEvent=Trc_PRT_shmem_j9shmem_open_Event2 Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_open shared memory file %s exist, opening"
-TraceEvent=Trc_PRT_shmem_j9shmem_open_Event3 Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_open retrying, count=%d"
+TraceEvent=Trc_PRT_shmem_j9shmem_open_Event3 Group=j9shmem Obsolete Overhead=1 Level=1 NoEnv Template="j9shmem_open retrying, count=%d"
 TraceExit=Trc_PRT_shmem_j9shmem_open_Exit1 Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_open failure"
 TraceExit=Trc_PRT_shmem_j9shmem_open_Exit2 Obsolete Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_open failure, as we have retried too many times"
 TraceExit=Trc_PRT_shmem_j9shmem_open_Exit Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_open returns success, rc=%d, handle=%p"
@@ -97,7 +97,7 @@ TraceExit=Trc_PRT_shmem_j9shmem_open_Exit Group=j9shmem Overhead=1 Level=1 NoEnv
 TraceEntry=Trc_PRT_shmem_j9shmem_stat_Entry Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_stat entered, name = %s"
 TraceExit=Trc_PRT_shmem_j9shmem_stat_Exit1 Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_stat exit - controlFile %s is a directory not a file"
 TraceExit=Trc_PRT_shmem_j9shmem_stat_Exit2 Obsolete Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_stat exit - contents of controlFile %s is corrupted"
-TraceExit=Trc_PRT_shmem_j9shmem_stat_Exit3 Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_stat exit shmctl fails, portable error=%d"
+TraceExit=Trc_PRT_shmem_j9shmem_stat_Exit3 Group=j9shmem Obsolete Overhead=1 Level=1 NoEnv Template="j9shmem_stat exit shmctl fails, portable error=%d"
 TraceExit=Trc_PRT_shmem_j9shmem_stat_Exit Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_stat exit - return success"
 
 // j9shsem Trace points
@@ -106,9 +106,9 @@ TraceDebug=Trc_PRT_shsem_j9shsem_open_Debug1 Group=j9shsem Overhead=1 Level=1 No
 
 TraceEvent=Trc_PRT_shsem_j9shsem_open_Event1 Group=j9shsem Overhead=1 Level=1 NoEnv Template="j9shsem_open sempahore file %s exists, opening"
 TraceEvent=Trc_PRT_shsem_j9shsem_open_Event2 Group=j9shsem Overhead=1 Level=1 NoEnv Template="j9shsem_open semaphore file %s does not exist, creating"
-TraceEvent=Trc_PRT_shsem_j9shsem_open_Event3 Group=j9shsem Overhead=1 Level=1 NoEnv Template="j9shsem_open retrying, count=%d"
+TraceEvent=Trc_PRT_shsem_j9shsem_open_Event3 Group=j9shsem Obsolete Overhead=1 Level=1 NoEnv Template="j9shsem_open retrying, count=%d"
 TraceExit=Trc_PRT_shsem_j9shsem_open_Exit1 Group=j9shsem Overhead=1 Level=1 NoEnv Template="j9shsem_open failure"
-TraceExit=Trc_PRT_shsem_j9shsem_open_Exit2 Group=j9shsem Overhead=1 Level=1 NoEnv Template="j9shsem_open failure, as we have retried too many times"
+TraceExit=Trc_PRT_shsem_j9shsem_open_Exit2 Group=j9shsem Obsolete Overhead=1 Level=1 NoEnv Template="j9shsem_open failure, as we have retried too many times"
 TraceExit=Trc_PRT_shsem_j9shsem_open_Exit Group=j9shsem Overhead=1 Level=1 NoEnv Template="j9shsem_open returns success, rc=%d, handle=%p"
 
 TraceEntry=Trc_PRT_shsem_j9shsem_close_Entry Group=j9shsem Overhead=1 Level=1 NoEnv Template="j9shsem_close entered handle=%p"
@@ -143,7 +143,7 @@ TraceExit=Trc_PRT_shsem_j9shsem_wait_Exit2 Group=j9shsem Overhead=1 Level=1 NoEn
 TraceExit=Trc_PRT_shsem_j9shsem_wait_Exit3 Group=j9shsem Overhead=1 Level=1 NoEnv Template="j9shsem_wait failure: semop failed, rc = %d, portable error = %d"
 TraceExit=Trc_PRT_shsem_j9shsem_wait_Exit Group=j9shsem Overhead=1 Level=1 NoEnv Template="j9shsem_wait returns %d"
 
-TraceEvent=Trc_PRT_shmem_j9shmem_ensureDirectory_path Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem: directory to store memory mapped file = %s"
+TraceEvent=Trc_PRT_shmem_j9shmem_ensureDirectory_path Group=j9shmem Obsolete Overhead=1 Level=1 NoEnv Template="j9shmem: directory to store memory mapped file = %s"
 
 TraceEntry=Trc_PRT_mem_j9mem_allocate_memory_Entry_obsolete Obsolete Group=j9mem Overhead=1 Level=10 NoEnv Template="j9mem_allocate_memory byteAmount=%u"
 TraceExit=Trc_PRT_mem_j9mem_allocate_memory_Exit Obsolete Group=j9mem Overhead=1 Level=10 NoEnv Template="j9mem_allocate_memory returns %p"
@@ -179,10 +179,10 @@ TraceEvent=Trc_PRT_shared_changeDirectoryPermission_Event1 Group=j9shared Obsole
 TraceEvent=Trc_PRT_shared_ensureDirectory_Event1 Group=j9shared Obsolete Overhead=1 Level=1 NoEnv Template="j9sharedhelper create shared directory failed, name exists but it is not a directory"
 TraceExit=Trc_PRT_shared_ensureDirectory_Exit2 Group=j9shared Obsolete Overhead=1 Level=1 NoEnv Template="j9sharedhelper create shared directory failed, failed to create Directory, errno=%d"
 
-TraceExit=Trc_PRT_shmem_j9shmem_open_Exit3 Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_open failure as we cannot create temp directory"
-TraceExit=Trc_PRT_shsem_j9shsem_open_Exit3 Group=j9shsem Overhead=1 Level=1 NoEnv Template="j9shsem_open failure as we cannot create temp directory"
+TraceExit=Trc_PRT_shmem_j9shmem_open_Exit3 Group=j9shmem Obsolete Overhead=1 Level=1 NoEnv Template="j9shmem_open failure as we cannot create temp directory"
+TraceExit=Trc_PRT_shsem_j9shsem_open_Exit3 Group=j9shsem Obsolete Overhead=1 Level=1 NoEnv Template="j9shsem_open failure as we cannot create temp directory"
 
-TraceEvent=Trc_PRT_shmem_createSharedMemory_shmget_zos Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem createSharedMemory: shmget with ftok key = %d, size = %d, flags = 0x%x"
+TraceEvent=Trc_PRT_shmem_createSharedMemory_shmget_zos Group=j9shmem Obsolete Overhead=1 Level=1 NoEnv Template="j9shmem createSharedMemory: shmget with ftok key = %d, size = %d, flags = 0x%x"
 TraceEvent=Trc_PRT_shmem_createSharedMemory_round_size Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem createSharedMemory: original size = %d, rounded size = %d"
 
 TraceEntry=Trc_PRT_shared_changeDirectoryPermission_Entry Group=j9shared Overhead=1 Level=1 NoEnv Template="j9sharedhelper change shared directory permission entered dir = %s, perms = %x"
@@ -197,27 +197,27 @@ TraceExit=Trc_PRT_shared_createDirectory_Exit3 Group=j9shared Overhead=1 Level=1
 TraceEvent=Trc_PRT_shared_createDirectory_Event1 Group=j9shared Overhead=1 Level=1 NoEnv Template="j9sharedhelper createDirectory dir %s created"
 TraceEvent=Trc_PRT_shared_createDirectory_Event2 Obsolete Group=j9shared Overhead=1 Level=1 NoEnv Template="j9sharedhelper createDirectory dir %s already exists"
 
-TraceEntry=Trc_PRT_shsem_checkMarker_Entry Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem checkMarker entering with handle=%p and semsetsize=%d"
-TraceExit=Trc_PRT_shsem_checkMarker_ExitNullHandle Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem checkMarker exiting because handle is NULL"
-TraceExit=Trc_PRT_shsem_checkMarker_ExitSemctlFail Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem checkMarker exiting because call to semctl failed, errno = %d"
-TraceExit=Trc_PRT_shsem_checkMarker_Exit Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem checkMarker exiting... rc from semctl=%d so returning %d"
+TraceEntry=Trc_PRT_shsem_checkMarker_Entry Group=j9shared Obsolete Overhead=1 Level=1 NoEnv Template="j9shsem checkMarker entering with handle=%p and semsetsize=%d"
+TraceExit=Trc_PRT_shsem_checkMarker_ExitNullHandle Group=j9shared Obsolete Overhead=1 Level=1 NoEnv Template="j9shsem checkMarker exiting because handle is NULL"
+TraceExit=Trc_PRT_shsem_checkMarker_ExitSemctlFail Group=j9shared Obsolete Overhead=1 Level=1 NoEnv Template="j9shsem checkMarker exiting because call to semctl failed, errno = %d"
+TraceExit=Trc_PRT_shsem_checkMarker_Exit Group=j9shared Obsolete Overhead=1 Level=1 NoEnv Template="j9shsem checkMarker exiting... rc from semctl=%d so returning %d"
 
 TraceEntry=Trc_PRT_shsem_createbaseFile_Entry Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem createbaseFile entering with filename %s"
 TraceExit=Trc_PRT_shsem_createbaseFile_ExitExists Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem createbaseFile exiting because file exists"
 TraceExit=Trc_PRT_shsem_createbaseFile_ExitError Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem createbaseFile exiting because of an error in file_open (errorno=%d)"
 TraceExit=Trc_PRT_shsem_createbaseFile_Exit Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem createbaseFile exiting - created file successfully"
 
-TraceEntry=Trc_PRT_shsem_createSemaphore_Entry Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem createSemaphore entering with basefile=%s, setsize=%d, semflags=%d"
-TraceExit=Trc_PRT_shsem_createSemaphore_ExitFileExists Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem createSemaphore exiting as basefile exists"
-TraceExit=Trc_PRT_shsem_createSemaphore_ExitBasefileError Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem createSemaphore exiting due to error creating basefile"
-TraceExit=Trc_PRT_shsem_createSemaphore_ExitFtokErrorRetry Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem createSemaphore ftok returned errno %d so returning RETRY"
-TraceExit=Trc_PRT_shsem_createSemaphore_ExitFtokErrorFail Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem createSemaphore ftok returning errno %d so returning FAILED"
-TraceEvent=Trc_PRT_shsem_createSemaphore_SemgetExists Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem createSemaphore semget returned EEXIST so projid is now %d"
-TraceExit=Trc_PRT_shsem_createSemaphore_ExitSemgetFail Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem createSemaphore semget failed with errno %d so returning FAILED"
-TraceExit=Trc_PRT_shsem_createSemaphore_ExitBadSemid Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem createSemaphore failed to get a unique semid so returning FAILED"
-TraceExit=Trc_PRT_shsem_createSemaphore_ExitNullSemHandle Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem createSemaphore createSemhandle returned NULL so returning FAILED"
-TraceExit=Trc_PRT_shsem_createSemaphore_ExitFailWriteBF Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem createSemaphore writeBaseFile failed so returning FAILED"
-TraceExit=Trc_PRT_shsem_createSemaphore_Exit Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem createSemaphore returning SEMAPHORE_CREATED"
+TraceEntry=Trc_PRT_shsem_createSemaphore_Entry Group=j9shared Obsolete Overhead=1 Level=1 NoEnv Template="j9shsem createSemaphore entering with basefile=%s, setsize=%d, semflags=%d"
+TraceExit=Trc_PRT_shsem_createSemaphore_ExitFileExists Group=j9shared Obsolete Overhead=1 Level=1 NoEnv Template="j9shsem createSemaphore exiting as basefile exists"
+TraceExit=Trc_PRT_shsem_createSemaphore_ExitBasefileError Group=j9shared Obsolete Overhead=1 Level=1 NoEnv Template="j9shsem createSemaphore exiting due to error creating basefile"
+TraceExit=Trc_PRT_shsem_createSemaphore_ExitFtokErrorRetry Group=j9shared Obsolete Overhead=1 Level=1 NoEnv Template="j9shsem createSemaphore ftok returned errno %d so returning RETRY"
+TraceExit=Trc_PRT_shsem_createSemaphore_ExitFtokErrorFail Group=j9shared Obsolete Overhead=1 Level=1 NoEnv Template="j9shsem createSemaphore ftok returning errno %d so returning FAILED"
+TraceEvent=Trc_PRT_shsem_createSemaphore_SemgetExists Group=j9shared Obsolete Overhead=1 Level=1 NoEnv Template="j9shsem createSemaphore semget returned EEXIST so projid is now %d"
+TraceExit=Trc_PRT_shsem_createSemaphore_ExitSemgetFail Group=j9shared Obsolete Overhead=1 Level=1 NoEnv Template="j9shsem createSemaphore semget failed with errno %d so returning FAILED"
+TraceExit=Trc_PRT_shsem_createSemaphore_ExitBadSemid Group=j9shared Obsolete Overhead=1 Level=1 NoEnv Template="j9shsem createSemaphore failed to get a unique semid so returning FAILED"
+TraceExit=Trc_PRT_shsem_createSemaphore_ExitNullSemHandle Group=j9shared Obsolete Overhead=1 Level=1 NoEnv Template="j9shsem createSemaphore createSemhandle returned NULL so returning FAILED"
+TraceExit=Trc_PRT_shsem_createSemaphore_ExitFailWriteBF Group=j9shared Obsolete Overhead=1 Level=1 NoEnv Template="j9shsem createSemaphore writeBaseFile failed so returning FAILED"
+TraceExit=Trc_PRT_shsem_createSemaphore_Exit Group=j9shared Obsolete Overhead=1 Level=1 NoEnv Template="j9shsem createSemaphore returning SEMAPHORE_CREATED"
 
 TraceEntry=Trc_PRT_shsem_createsemHandle_Entry Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem createsemHandle entering with basefile=%s, semid=%d, nsems=%d"
 TraceExit=Trc_PRT_shsem_createsemHandle_ExitMallocError Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem createsemHandle exiting due to malloc failure"
@@ -404,8 +404,8 @@ TraceEvent=Trc_PRT_shmem_createMappedFile_createFileMappingSucceeded Group=j9sha
 TraceEvent=Trc_PRT_shmem_j9shmem_open_Event4 Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_open failure"
 
 // added to mirror GA 2.3
-TraceEntry=Trc_PRT_shmem_j9shmem_setctrl_Entry Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shmem_set_controlfile_dir: Entering with controlFileDir=%s, PPG_shmem_controlDir=%p"
-TraceExit=Trc_PRT_shmem_j9shmem_setctrl_Exit Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shmem_set_controlfile_dir: Exiting"
+TraceEntry=Trc_PRT_shmem_j9shmem_setctrl_Entry Group=j9shared Obsolete Overhead=1 Level=1 NoEnv Template="j9shmem_set_controlfile_dir: Entering with controlFileDir=%s, PPG_shmem_controlDir=%p"
+TraceExit=Trc_PRT_shmem_j9shmem_setctrl_Exit Group=j9shared Obsolete Overhead=1 Level=1 NoEnv Template="j9shmem_set_controlfile_dir: Exiting"
 TraceExit=Trc_PRT_shsem_j9shsem_open_Exit4 Group=j9shsem Overhead=1 Level=1 NoEnv Template="j9shsem_open failure as we failed to get controlDir"
 TraceExit=Trc_PRT_shmem_j9shmem_findfirst_Exit3 Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_findfirst exit as we failed to get controlDir"
 TraceExit=Trc_PRT_shared_ensureDirectory_Exit1 Group=j9shared Obsolete Overhead=1 Level=1 NoEnv Template="j9sharedhelper ensureDirectory returning FAILED due to NULL controlDir"
@@ -599,7 +599,7 @@ TraceException=Trc_PRT_mem_allocate_memory32_failed_alloc Obsolete Group=j9mem O
 TraceException=Trc_PRT_mem_allocate_memory32_failed_table Obsolete Group=j9mem Overhead=1 Level=1 NoEnv Template="allocate_memory32 failed to add to table callSite=%s"
 
 TraceException=Trc_PRT_mmap_map_file_cannotallocatehandle Obsolete Group=j9mmap Overhead=1 Level=1 NoEnv Template="j9mmap_map_file: Could not allocate memory for handle"
-TraceEvent=Trc_PRT_shmem_call_shmget Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shmem call_shmget: shmget with ftok key = %d, size = %d, flags = 0x%x"
+TraceEvent=Trc_PRT_shmem_call_shmget Group=j9shared Obsolete Overhead=1 Level=1 NoEnv Template="j9shmem call_shmget: shmget with ftok key = %d, size = %d, flags = 0x%x"
 
 TraceException=Trc_PRT_vmem_user_does_not_have_Lock_Pages_in_Memory_permission_in_local_security_policy_settings Obsolete Group=j9vmem Overhead=1 Level=10 NoEnv Template="j9vmem_startup User does not have Lock_pages_in_memory permission in Local security policy settings"
 
@@ -672,12 +672,12 @@ TraceEntry=Trc_PRT_vmem_j9vmem_reserve_memory_Entry_replacement Obsolete Group=j
 // CMVC 128656  j9vmem tracepoints are confusing
 // The following commented tracepoints (copied from further up in this file) are being replaced with those immediately following, up to the next blank line.
 
-// TraceException=Trc_PRT_vmem_j9vmem_reserve_memory_Exit1 Group=j9mem Overhead=1 Level=3 NoEnv Template="j9vmem_reserve_memory (invalid input)" */
+// TraceException=Trc_PRT_vmem_j9vmem_reserve_memory_Exit1 Group=j9mem Obsolete Overhead=1 Level=3 NoEnv Template="j9vmem_reserve_memory (invalid input)" */
 TraceException=Trc_PRT_vmem_j9vmem_reserve_memory_invalid_input Obsolete Group=j9mem Overhead=1 Level=1 NoEnv Template="j9vmem_reserve_memory (invalid input)"
 
-// TraceEvent=Trc_PRT_vmem_j9vmem_reserve_memory_Exit2 Group=j9mem Overhead=1 Level=3 NoEnv Template="j9vmem_reserve_memory (using default page allocator) returns %p" */
+// TraceEvent=Trc_PRT_vmem_j9vmem_reserve_memory_Exit2 Group=j9mem Obsolete Overhead=1 Level=3 NoEnv Template="j9vmem_reserve_memory (using default page allocator) returns %p" */
 
-// TraceException=Trc_PRT_vmem_j9vmem_reserve_memory_Exit3 Group=j9mem Overhead=1 Level=3 NoEnv Template="j9vmem_reserve_memory (unsupported page size: %u)" */
+// TraceException=Trc_PRT_vmem_j9vmem_reserve_memory_Exit3 Group=j9mem Obsolete Overhead=1 Level=3 NoEnv Template="j9vmem_reserve_memory (unsupported page size: %u)" */
 TraceException=Trc_PRT_vmem_j9vmem_reserve_memory_unsupported_page_size Obsolete Group=j9mem Overhead=1 Level=1 NoEnv Template="j9vmem_reserve_memory (unsupported page size: %u)"
 
 // TraceException=Trc_PRT_vmem_j9vmem_reserve_memory_Exit4 Obsolete Group=j9mem Overhead=1 Level=3 NoEnv Template="j9vmem_reserve_memory (failure)" */
@@ -685,7 +685,7 @@ TraceException=Trc_PRT_vmem_j9vmem_reserve_memory_failure Obsolete Group=j9mem O
 TraceException=Trc_PRT_vmem_j9vmem_reserve_memory_shmget_failed Obsolete Group=j9mem Overhead=1 Level=1 NoEnv Template="j9vmem_reserve_memory (shmget_failed) byteAmount=%u shmgetFlags=%i"
 TraceException=Trc_PRT_vmem_j9vmem_reserve_memory_shmat_failed Obsolete Group=j9mem Overhead=1 Level=1 NoEnv Template="j9vmem_reserve_memory (shmat failed) byteAmout=%u address=%p"
 
-// TraceExit=Trc_PRT_vmem_j9vmem_reserve_memory_Exit Group=j9mem Overhead=1 Level=5 NoEnv Template="j9vmem_reserve_memory returns %p"
+// TraceExit=Trc_PRT_vmem_j9vmem_reserve_memory_Exit Group=j9mem Obsolete Overhead=1 Level=5 NoEnv Template="j9vmem_reserve_memory returns %p"
 TraceExit=Trc_PRT_vmem_j9vmem_reserve_memory_Exit_replacement Obsolete Group=j9mem Overhead=1 Level=5 NoEnv Template="j9vmem_reserve_memory returns %p requestedAddress=%p"
 
 // CMVC 128656 end of changes
@@ -726,65 +726,65 @@ TraceException=Trc_PRT_vmem_j9vmem_startup_pagessize_exceeds_physical_memory Obs
 
 //*** j9sock tracepoints ***
 
-TraceEntry=Trc_PRT_sock_j9sock_connect_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_connect entry sock=%p addr=%p"
-TraceExit=Trc_PRT_sock_j9sock_connect_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_connect exit returnValue=%d"
-TraceException=Trc_PRT_sock_j9sock_connect_failure Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_connect connect failed with platform specific error code=%d"
-TraceException=Trc_PRT_sock_j9sock_connect_failure_cause Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_connect connect failed because %s"
+TraceEntry=Trc_PRT_sock_j9sock_connect_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_connect entry sock=%p addr=%p"
+TraceExit=Trc_PRT_sock_j9sock_connect_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_connect exit returnValue=%d"
+TraceException=Trc_PRT_sock_j9sock_connect_failure Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_connect connect failed with platform specific error code=%d"
+TraceException=Trc_PRT_sock_j9sock_connect_failure_cause Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_connect connect failed because %s"
 
-TraceEntry=Trc_PRT_sock_j9sock_socket_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_socket entry handle=%p family=0x%x socktype=0x%x protocol=0x%x"
-TraceExit=Trc_PRT_sock_j9sock_socket_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_socket exit returnValue=%d"
-TraceException=Trc_PRT_sock_j9sock_socket_creation_failure Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_socket failed while attempting to create socket with platform specific error code=%d"
+TraceEntry=Trc_PRT_sock_j9sock_socket_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_socket entry handle=%p family=0x%x socktype=0x%x protocol=0x%x"
+TraceExit=Trc_PRT_sock_j9sock_socket_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_socket exit returnValue=%d"
+TraceException=Trc_PRT_sock_j9sock_socket_creation_failure Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_socket failed while attempting to create socket with platform specific error code=%d"
 TraceException=Trc_PRT_sock_j9sock_socket_failure_fdsetsize Obsolete Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_socket failed because handle(=%d) is greater than or equal to FD_SETSIZE(=%d)"
-TraceException=Trc_PRT_sock_j9sock_socket_failure_cause Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_socket failed because %s"
+TraceException=Trc_PRT_sock_j9sock_socket_failure_cause Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_socket failed because %s"
 
-TraceEntry=Trc_PRT_sock_j9sock_write_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_write entry sock=%p buf=\"%s\" nbyte=%d flags=0x%x"
-TraceExit=Trc_PRT_sock_j9sock_write_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_write exit returnValue=%d"
-TraceException=Trc_PRT_sock_j9sock_write_failure Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_write failed with platform specific error code=%d"
+TraceEntry=Trc_PRT_sock_j9sock_write_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_write entry sock=%p buf=\"%s\" nbyte=%d flags=0x%x"
+TraceExit=Trc_PRT_sock_j9sock_write_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_write exit returnValue=%d"
+TraceException=Trc_PRT_sock_j9sock_write_failure Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_write failed with platform specific error code=%d"
 
-TraceEntry=Trc_PRT_sock_j9sock_writeto_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_writeto entry sock=%p buf=\"%s\" nbyte=%d flags=0x%x addrHandle=%p"
-TraceExit=Trc_PRT_sock_j9sock_writeto_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_writeto exit returnValue=%d"
-TraceException=Trc_PRT_sock_j9sock_writeto_failure Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_writeto failed with platform specific error code=%d"
+TraceEntry=Trc_PRT_sock_j9sock_writeto_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_writeto entry sock=%p buf=\"%s\" nbyte=%d flags=0x%x addrHandle=%p"
+TraceExit=Trc_PRT_sock_j9sock_writeto_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_writeto exit returnValue=%d"
+TraceException=Trc_PRT_sock_j9sock_writeto_failure Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_writeto failed with platform specific error code=%d"
 
-TraceEntry=Trc_PRT_sock_j9sock_read_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_read entry sock=%p nbyte=%d flags=0x%x"
-TraceExit=Trc_PRT_sock_j9sock_read_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_read exit returnValue=%d"
-TraceException=Trc_PRT_sock_j9sock_read_failure Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_read failed with platform specific error code=%d"
+TraceEntry=Trc_PRT_sock_j9sock_read_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_read entry sock=%p nbyte=%d flags=0x%x"
+TraceExit=Trc_PRT_sock_j9sock_read_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_read exit returnValue=%d"
+TraceException=Trc_PRT_sock_j9sock_read_failure Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_read failed with platform specific error code=%d"
 
-TraceEntry=Trc_PRT_sock_j9sock_readfrom_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_readfrom entry sock=%p nbyte=%d flags=0x%x addrHandle=%p"
-TraceExit=Trc_PRT_sock_j9sock_readfrom_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_readfrom exit returnValue=%d"
-TraceException=Trc_PRT_sock_j9sock_readfrom_failure Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_readfrom failed with platform specific error code=%d"
+TraceEntry=Trc_PRT_sock_j9sock_readfrom_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_readfrom entry sock=%p nbyte=%d flags=0x%x addrHandle=%p"
+TraceExit=Trc_PRT_sock_j9sock_readfrom_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_readfrom exit returnValue=%d"
+TraceException=Trc_PRT_sock_j9sock_readfrom_failure Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_readfrom failed with platform specific error code=%d"
 
-TraceEntry=Trc_PRT_sock_j9sock_select_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_select entry nfds=%d readfds=%p writefds=%p exceptfds=%p timeout.sec=%zd timeout.usec=%zd"
-TraceExit=Trc_PRT_sock_j9sock_select_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_select exit returnValue=%d"
-TraceException=Trc_PRT_sock_j9sock_select_failure Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_select failed with platform specific error code=%d"
-TraceEvent=Trc_PRT_sock_j9sock_select_timeout Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_select timed out"
+TraceEntry=Trc_PRT_sock_j9sock_select_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_select entry nfds=%d readfds=%p writefds=%p exceptfds=%p timeout.sec=%zd timeout.usec=%zd"
+TraceExit=Trc_PRT_sock_j9sock_select_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_select exit returnValue=%d"
+TraceException=Trc_PRT_sock_j9sock_select_failure Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_select failed with platform specific error code=%d"
+TraceEvent=Trc_PRT_sock_j9sock_select_timeout Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_select timed out"
 
-TraceEntry=Trc_PRT_sock_j9sock_select_read_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_select_read entry j9socketP=%p secTime=%d uSecTime=%d isNonBlocking=%u"
-TraceExit=Trc_PRT_sock_j9sock_select_read_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_select_read exit returnValue=%d"
-TraceException=Trc_PRT_sock_j9sock_select_read_failure Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_select_read failed because %s"
+TraceEntry=Trc_PRT_sock_j9sock_select_read_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_select_read entry j9socketP=%p secTime=%d uSecTime=%d isNonBlocking=%u"
+TraceExit=Trc_PRT_sock_j9sock_select_read_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_select_read exit returnValue=%d"
+TraceException=Trc_PRT_sock_j9sock_select_read_failure Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_select_read failed because %s"
 
-TraceException=Trc_PRT_sock_j9sock_setopt_failure_cause Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_%s failed because %s"
-TraceException=Trc_PRT_sock_j9sock_setopt_failure_code Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_%s failed with platform specific error code %d"
+TraceException=Trc_PRT_sock_j9sock_setopt_failure_cause Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_%s failed because %s"
+TraceException=Trc_PRT_sock_j9sock_setopt_failure_code Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_%s failed with platform specific error code %d"
 
-TraceEntry=Trc_PRT_sock_j9sock_setopt_bool_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_bool entry socketP=%p optlevel=%d optname=%d optval=%u"
-TraceExit=Trc_PRT_sock_j9sock_setopt_bool_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_bool exit returnValue=%d"
+TraceEntry=Trc_PRT_sock_j9sock_setopt_bool_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_bool entry socketP=%p optlevel=%d optname=%d optval=%u"
+TraceExit=Trc_PRT_sock_j9sock_setopt_bool_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_bool exit returnValue=%d"
 
-TraceEntry=Trc_PRT_sock_j9sock_setopt_byte_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_byte entry socketP=%p optlevel=%d optname=%d optval=%u"
-TraceExit=Trc_PRT_sock_j9sock_setopt_byte_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_byte exit returnValue=%d"
+TraceEntry=Trc_PRT_sock_j9sock_setopt_byte_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_byte entry socketP=%p optlevel=%d optname=%d optval=%u"
+TraceExit=Trc_PRT_sock_j9sock_setopt_byte_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_byte exit returnValue=%d"
 
-TraceEntry=Trc_PRT_sock_j9sock_setopt_int_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_int entry socketP=%p optlevel=%d optname=%d optval=%d"
-TraceExit=Trc_PRT_sock_j9sock_setopt_int_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_int exit returnValue=%d"
+TraceEntry=Trc_PRT_sock_j9sock_setopt_int_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_int entry socketP=%p optlevel=%d optname=%d optval=%d"
+TraceExit=Trc_PRT_sock_j9sock_setopt_int_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_int exit returnValue=%d"
 
-TraceEntry=Trc_PRT_sock_j9sock_setopt_ipmreq_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipmreq entry socketP=%p optlevel=%d optname=%d"
-TraceExit=Trc_PRT_sock_j9sock_setopt_ipmreq_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipmreq exit returnValue=%d"
+TraceEntry=Trc_PRT_sock_j9sock_setopt_ipmreq_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipmreq entry socketP=%p optlevel=%d optname=%d"
+TraceExit=Trc_PRT_sock_j9sock_setopt_ipmreq_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipmreq exit returnValue=%d"
 
-TraceEntry=Trc_PRT_sock_j9sock_setopt_ipv6_mreq_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipv6_mreq entry socketP=%p optlevel=%d optname=%d"
-TraceExit=Trc_PRT_sock_j9sock_setopt_ipv6_mreq_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipv6_mreq exit returnValue=%d"
+TraceEntry=Trc_PRT_sock_j9sock_setopt_ipv6_mreq_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipv6_mreq entry socketP=%p optlevel=%d optname=%d"
+TraceExit=Trc_PRT_sock_j9sock_setopt_ipv6_mreq_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipv6_mreq exit returnValue=%d"
 
-TraceEntry=Trc_PRT_sock_j9sock_setopt_linger_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_linger entry socketP=%p optlevel=%d optname=%d"
-TraceExit=Trc_PRT_sock_j9sock_setopt_linger_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_linger exit returnValue=%d"
+TraceEntry=Trc_PRT_sock_j9sock_setopt_linger_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_linger entry socketP=%p optlevel=%d optname=%d"
+TraceExit=Trc_PRT_sock_j9sock_setopt_linger_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_linger exit returnValue=%d"
 
-TraceEntry=Trc_PRT_sock_j9sock_setopt_sockaddr_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_sockaddr entry socketP=%p optlevel=%d optname=%d"
-TraceExit=Trc_PRT_sock_j9sock_setopt_sockaddr_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_sockaddr exit returnValue=%d"
+TraceEntry=Trc_PRT_sock_j9sock_setopt_sockaddr_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_sockaddr entry socketP=%p optlevel=%d optname=%d"
+TraceExit=Trc_PRT_sock_j9sock_setopt_sockaddr_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_sockaddr exit returnValue=%d"
 
 TraceEvent=Trc_PRT_shsem_j9shsem_openmutex_failedToBuildUnicodeString Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem:openMutex failed to convert mutex name to unicode(original string: %s, errno %d)."
 
@@ -828,8 +828,8 @@ TraceException=Trc_PRT_vmem_j9vmem_commit_memory_invalidRange Obsolete Group=j9m
 TraceException=Trc_PRT_vmem_j9vmem_decommit_memory_invalidRange Obsolete Group=j9mem Overhead=1 Level=1 NoEnv Template="j9vmem_decommit_memory requested an invalid range identifier->address=0x%zx, identifier->size=0x%zx, address=0x%zx, byteAmount=0x%zx"
 TraceException=Trc_PRT_vmem_j9vmem_commit_memory_mprotect_failure Obsolete Group=j9mem Overhead=1 Level=1 NoEnv Template="j9vmem_commit_memory mprotect failed, errno=%d"
 
-TraceEntry=Trc_PRT_sock_j9sock_close_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_close entry sock=%p"
-TraceExit=Trc_PRT_sock_j9sock_close_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_close exit returnValue=%d"
+TraceEntry=Trc_PRT_sock_j9sock_close_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_close entry sock=%p"
+TraceExit=Trc_PRT_sock_j9sock_close_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_close exit returnValue=%d"
 
 TraceEvent=Trc_PRT_shmem_checkControlFileDate_statfailed Obsolete Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shmem checkControlFileDate: could not stat control file: %s"
 TraceEvent=Trc_PRT_shmem_checkControlFileDate_shmctlfailed Obsolete Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shmem checkControlFileDate: could not shmctl System V shared memory id: %d"
@@ -858,20 +858,20 @@ TraceExit=Trc_PRT_file_chmod_Exit Obsolete Group=j9file Overhead=1 Level=5 NoEnv
 TraceException=Trc_PRT_file_chmod_getAttributesFailed Obsolete Group=j9file Overhead=1 Level=5 NoEnv Template="j9file_chmod error getting attributes, error = %d"
 TraceException=Trc_PRT_file_chmod_setAttributesFailed Obsolete Group=j9file Overhead=1 Level=5 NoEnv Template="j9file_chmod error setting attributes, error = %d"
 
-TraceEntry=Trc_PRT_sock_j9sock_setnonblocking_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setnonblocking entry sock=%p nonBlocking=%u"
-TraceException=Trc_PRT_sock_j9sock_setnonblocking_failure Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setnonblocking failed with platform specific error code=%d"
-TraceExit=Trc_PRT_sock_j9sock_setnonblocking_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setnonblocking exit returnValue=%d"
+TraceEntry=Trc_PRT_sock_j9sock_setnonblocking_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setnonblocking entry sock=%p nonBlocking=%u"
+TraceException=Trc_PRT_sock_j9sock_setnonblocking_failure Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setnonblocking failed with platform specific error code=%d"
+TraceExit=Trc_PRT_sock_j9sock_setnonblocking_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setnonblocking exit returnValue=%d"
 
-TraceEvent=Trc_PRT_sock_j9sock_socket_created Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_socket created socket %p"
-TraceException=Trc_PRT_sock_j9sock_socket_failure_oom Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_socket failed due to memory allocation failure"
+TraceEvent=Trc_PRT_sock_j9sock_socket_created Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_socket created socket %p"
+TraceException=Trc_PRT_sock_j9sock_socket_failure_oom Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_socket failed due to memory allocation failure"
 
-TraceException=Trc_PRT_sock_j9sock_close_failed Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_close failed with platform specific error code=%d"
+TraceException=Trc_PRT_sock_j9sock_close_failed Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_close failed with platform specific error code=%d"
 
-TraceEntry=Trc_PRT_sock_j9sock_accept_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_accept entry serverSock=%p"
-TraceEvent=Trc_PRT_sock_j9sock_accept_socket_created Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_accept created socket %p for connection"
-TraceException=Trc_PRT_sock_j9sock_accept_failure Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_accept failed with platform specific error code=%d"
-TraceException=Trc_PRT_sock_j9sock_accept_failure_oom Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_accept failed due to memory allocation failure"
-TraceExit=Trc_PRT_sock_j9sock_accept_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_accept exit returnValue=%d"
+TraceEntry=Trc_PRT_sock_j9sock_accept_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_accept entry serverSock=%p"
+TraceEvent=Trc_PRT_sock_j9sock_accept_socket_created Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_accept created socket %p for connection"
+TraceException=Trc_PRT_sock_j9sock_accept_failure Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_accept failed with platform specific error code=%d"
+TraceException=Trc_PRT_sock_j9sock_accept_failure_oom Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_accept failed due to memory allocation failure"
+TraceExit=Trc_PRT_sock_j9sock_accept_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_accept exit returnValue=%d"
 TraceEntry=Trc_PRT_shsem_j9shsem_createsemaphore_entered Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem:createSemaphore Entered, rootname = %s"
 TraceEvent=Trc_PRT_shsem_j9shsem_createsemaphore_createdmain Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem:createSemaphore created main semaphore, will now create set semaphores"
 TraceEvent=Trc_PRT_shsem_j9shsem_createsemaphore_creatingset Group=j9shared Overhead=1 Level=1 NoEnv Template="j9shsem:createSemaphore creating set semaphore %d, name = %s"
@@ -973,24 +973,24 @@ TraceAssert=Trc_Assert_PRT_memory_corruption_detected Obsolete noEnv Overhead=1 
 
 TraceException=Trc_PRT_sock_j9sock_accept_failure_fdsetsize Obsolete Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_accept failed because handle(=%d) is greater than or equal to FD_SETSIZE(=%d)"
 
-TraceEntry=Trc_PRT_sock_j9sock_sockaddr_port_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_sockaddr_port entry handle=%p"
-TraceExit=Trc_PRT_sock_j9sock_sockaddr_port_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_sockaddr_port exit rc=%04X"
+TraceEntry=Trc_PRT_sock_j9sock_sockaddr_port_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_sockaddr_port entry handle=%p"
+TraceExit=Trc_PRT_sock_j9sock_sockaddr_port_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_sockaddr_port exit rc=%04X"
 
-TraceEntry=Trc_PRT_sock_j9sock_ntohs_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_ntohs entry val=%04X"
-TraceExit=Trc_PRT_sock_j9sock_ntohs_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_ntohs exit rc=%04X"
+TraceEntry=Trc_PRT_sock_j9sock_ntohs_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_ntohs entry val=%04X"
+TraceExit=Trc_PRT_sock_j9sock_ntohs_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_ntohs exit rc=%04X"
 
-TraceEntry=Trc_PRT_sock_j9sock_getsockname_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getsockname entry handle=%p"
-TraceException=Trc_PRT_sock_j9sock_getsockname_failure Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getsockname failed. errno=%d"
-TraceExit=Trc_PRT_sock_j9sock_getsockname_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getsockname exit addrHandle=%p, rc=%d"
+TraceEntry=Trc_PRT_sock_j9sock_getsockname_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getsockname entry handle=%p"
+TraceException=Trc_PRT_sock_j9sock_getsockname_failure Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getsockname failed. errno=%d"
+TraceExit=Trc_PRT_sock_j9sock_getsockname_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getsockname exit addrHandle=%p, rc=%d"
 
-TraceEntry=Trc_PRT_sock_j9sock_shutdown_input_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_shutdown_input entry sock=%p"
-TraceEvent=Trc_PRT_sock_j9sock_shutdown_input_enotconn Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_shutdown_input shutdown() returned failure with errno set to ENOTCONN"
-TraceException=Trc_PRT_sock_j9sock_shutdown_input_failed Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_shutdown_input failed with errno: %d, strerror(errno): %s"
-TraceExit=Trc_PRT_sock_j9sock_shutdown_input_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_shutdown_input exit returnValue=%d"
+TraceEntry=Trc_PRT_sock_j9sock_shutdown_input_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_shutdown_input entry sock=%p"
+TraceEvent=Trc_PRT_sock_j9sock_shutdown_input_enotconn Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_shutdown_input shutdown() returned failure with errno set to ENOTCONN"
+TraceException=Trc_PRT_sock_j9sock_shutdown_input_failed Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_shutdown_input failed with errno: %d, strerror(errno): %s"
+TraceExit=Trc_PRT_sock_j9sock_shutdown_input_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_shutdown_input exit returnValue=%d"
 
-TraceEntry=Trc_PRT_sock_j9sock_shutdown_output_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_shutdown_output entry sock=%p"
-TraceException=Trc_PRT_j9sock_j9sock_shutdown_output_failed Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_shutdown_output failed with errno: %d, strerror(errno): %s"
-TraceExit=Trc_PRT_sock_j9sock_shutdown_output_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_shutdown_output exit returnValue=%d"
+TraceEntry=Trc_PRT_sock_j9sock_shutdown_output_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_shutdown_output entry sock=%p"
+TraceException=Trc_PRT_j9sock_j9sock_shutdown_output_failed Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_shutdown_output failed with errno: %d, strerror(errno): %s"
+TraceExit=Trc_PRT_sock_j9sock_shutdown_output_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_shutdown_output exit returnValue=%d"
 
 TraceEvent=Trc_PRT_shsem_j9shsem_openDeprecated_Message Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shsem_openDeprecated : <%s>"
 TraceEntry=Trc_PRT_shmem_j9shmem_openDeprecated_Message Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_openDeprecated : <%s>"
@@ -1045,7 +1045,7 @@ TraceException=Trc_PRT_vmem_numa_get_node_details_cpuSetTooSmall Obsolete Group=
 TraceEvent=Trc_PRT_shsem_j9shsem_openDeprecated_semgetFailed Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shsem_openDeprecated : Error : semget failed for key %p, with portable errno %d, and error message %s"
 TraceEvent=Trc_PRT_shsem_j9shsem_openDeprecated_semctlFailed Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shsem_openDeprecated : Error : semctl failed for semid %d, with portable errno %d, and error message %s"
 TraceEvent=Trc_PRT_shmem_j9shmem_openDeprecated_shmgetFailed Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_openDeprecated : Error : shmget failed for key %p, with portable errno %d, and error message %s"
-TraceEvent=Trc_PRT_shmem_j9shmem_openDeprecated_shmctlFailed Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_openDeprecated : Error : shmctl failed for semid %d, with portable errno %d, and error message %s"
+TraceEvent=Trc_PRT_shmem_j9shmem_openDeprecated_shmctlFailed Group=j9shmem Obsolete Overhead=1 Level=1 NoEnv Template="j9shmem_openDeprecated : Error : shmctl failed for semid %d, with portable errno %d, and error message %s"
 
 TraceEvent=Trc_PRT_shsem_j9shsem_openDeprecated_semgetEINVAL Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shsem_openDeprecated : Error : semget failed with EINVAL for key %p. The control file exists but SysV IPC object has been removed."
 TraceEvent=Trc_PRT_shsem_j9shsem_openDeprecated_semctlEINVAL Obsolete Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shsem_openDeprecated : Error : semctl failed with EINVAL for semid %d. The control file exists but SysV IPC object has been removed."
@@ -1064,15 +1064,15 @@ TraceAssert=Trc_Assert_PTR_mem_categories_decrement_counters_NULL_category Obsol
 TraceAssert=Trc_Assert_PTR_mem_categories_increment_bytes_NULL_category Obsolete noEnv Overhead=1 Level=3 Assert="(P1)"
 TraceAssert=Trc_Assert_PTR_mem_categories_decrement_bytes_NULL_category Obsolete noEnv Overhead=1 Level=3 Assert="(P1)"
 
-TraceEntry=Trc_PRT_sock_disconnectSocket_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="disconnectSocket entry sock=%p fromlen=%d"
-TraceExit=Trc_PRT_sock_disconnectSocket_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="disconnectSocket exit returnValue=%d"
-TraceException=Trc_PRT_sock_disconnectSocket_getsockname_failed Group=j9sock Overhead=1 Level=3 NoEnv Template="disconnectSocket getsockname failed with platform specific error code=%d"
-TraceExit-Exception=Trc_PRT_sock_disconnectSocket_Exit_bind_failed Group=j9sock Overhead=1 Level=3 NoEnv Template="disconnectSocket bind failed with platform specific error code=%d"
-TraceEvent=Trc_PRT_sock_disconnectSocket_Event_socket_already_bound Group=j9sock Overhead=1 Level=3 NoEnv Template="disconnectSocket bind failed with platform specific error code=%d because socket already bound"
+TraceEntry=Trc_PRT_sock_disconnectSocket_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="disconnectSocket entry sock=%p fromlen=%d"
+TraceExit=Trc_PRT_sock_disconnectSocket_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="disconnectSocket exit returnValue=%d"
+TraceException=Trc_PRT_sock_disconnectSocket_getsockname_failed Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="disconnectSocket getsockname failed with platform specific error code=%d"
+TraceExit-Exception=Trc_PRT_sock_disconnectSocket_Exit_bind_failed Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="disconnectSocket bind failed with platform specific error code=%d"
+TraceEvent=Trc_PRT_sock_disconnectSocket_Event_socket_already_bound Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="disconnectSocket bind failed with platform specific error code=%d because socket already bound"
 
-TraceEntry=Trc_PRT_sock_connectSocket_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="connectSocket entry sock=%p addr=%p fromlen=%d"
-TraceExit=Trc_PRT_sock_connectSocket_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="connectSocket exit returnValue=%d"
-TraceException=Trc_PRT_sock_connectSocket_failure Group=j9sock Overhead=1 Level=3 NoEnv Template="connectSocket connect failed with platform specific error code=%d"
+TraceEntry=Trc_PRT_sock_connectSocket_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="connectSocket entry sock=%p addr=%p fromlen=%d"
+TraceExit=Trc_PRT_sock_connectSocket_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="connectSocket exit returnValue=%d"
+TraceException=Trc_PRT_sock_connectSocket_failure Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="connectSocket connect failed with platform specific error code=%d"
 
 TraceEntry=Trc_PRT_sock_j9sock_connect_with_timeout_Entry Obsolete Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_connect_with_timeout entry sock=%p addr=%p timeout=%d step=%d"
 TraceExit=Trc_PRT_sock_j9sock_connect_with_timeout_Exit Obsolete Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_connect_with_timeout exit returnValue=%d"
@@ -1096,73 +1096,73 @@ TraceExit=Trc_PRT_sock_helperConnectWithTimeoutCheck_socket_exceeds_fdsetsize_Ex
 TraceEntry=Trc_PRT_sock_helperConnectWithTimeoutDone_Entry Obsolete Group=j9sock Overhead=1 Level=3 NoEnv Template="helperConnectWithTimeoutDone entry sock=%p" 
 TraceExit=Trc_PRT_sock_helperConnectWithTimeoutDone_Exit Obsolete Group=j9sock Overhead=1 Level=3 NoEnv Template="helperConnectWithTimeoutDone exit returnValue=%d"
 
-TraceEntry=Trc_PRT_sock_j9sock_bind_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_bind entry sock=%p (fd=%d) addr=%p"
-TraceException=Trc_PRT_sock_j9sock_bind_failed Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_bind bind failed with platform specific error code=%d"
-TraceExit=Trc_PRT_sock_j9sock_bind_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_bind exit returnValue=%d"
+TraceEntry=Trc_PRT_sock_j9sock_bind_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_bind entry sock=%p (fd=%d) addr=%p"
+TraceException=Trc_PRT_sock_j9sock_bind_failed Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_bind bind failed with platform specific error code=%d"
+TraceExit=Trc_PRT_sock_j9sock_bind_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_bind exit returnValue=%d"
 
-TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_ipmreq_invalid_level_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipmreq exit, invalid level"
-TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_ipmreq_invalid_option_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipmreq exit, invalid option"
-TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_ipmreq_invalid_family_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipmreq exit, invalid socket family"
-TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_ipmreq_invalid_socket_family_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipmreq exit, IPPROTO_IPV6 level is not supported with an AF_INET socket family"
-TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_ipmreq_unsupported_option_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipmreq exit, option is unsupported for a multicast request"
-TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_ipmreq_unable_to_convert_request_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipmreq exit, unable to convert IPv4 multicast request to IPv6 multicast request, returnValue=%d"
-TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_ipmreq_unspecified_socket_family_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipmreq exit, the socket family is AF_UNSPEC - unable to issue multicast requests"
-TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_ipmreq_unknown_socket_family_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipmreq exit, the socket family=%d is unknown - unable to issue multicast requests"
-TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_ipmreq_setsockopt_failed_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipmreq exit, setsockopt failed with platform specific error code=%d"
+TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_ipmreq_invalid_level_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipmreq exit, invalid level"
+TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_ipmreq_invalid_option_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipmreq exit, invalid option"
+TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_ipmreq_invalid_family_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipmreq exit, invalid socket family"
+TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_ipmreq_invalid_socket_family_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipmreq exit, IPPROTO_IPV6 level is not supported with an AF_INET socket family"
+TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_ipmreq_unsupported_option_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipmreq exit, option is unsupported for a multicast request"
+TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_ipmreq_unable_to_convert_request_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipmreq exit, unable to convert IPv4 multicast request to IPv6 multicast request, returnValue=%d"
+TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_ipmreq_unspecified_socket_family_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipmreq exit, the socket family is AF_UNSPEC - unable to issue multicast requests"
+TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_ipmreq_unknown_socket_family_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipmreq exit, the socket family=%d is unknown - unable to issue multicast requests"
+TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_ipmreq_setsockopt_failed_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_ipmreq exit, setsockopt failed with platform specific error code=%d"
 
-TraceEntry=Trc_PRT_sock_j9sock_getopt_bool_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_bool entry sock=%p level=%d option=%d"
-TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_bool_invalid_level_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_bool exit, invalid level"
-TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_bool_invalid_option_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_bool exit, invalid option"
-TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_bool_invalid_family_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_bool exit, invalid socket family"
-TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_bool_invalid_socket_family_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_bool exit, the socket family=%d is invalid - unable to determine multicast loopback configuration"
-TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_bool_getsockopt_failed_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_bool exit, getsockopt failed with platform specific error code=%d"
-TraceExit=Trc_PRT_sock_j9sock_getopt_bool_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_bool exit returnValue=%d"
+TraceEntry=Trc_PRT_sock_j9sock_getopt_bool_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_bool entry sock=%p level=%d option=%d"
+TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_bool_invalid_level_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_bool exit, invalid level"
+TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_bool_invalid_option_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_bool exit, invalid option"
+TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_bool_invalid_family_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_bool exit, invalid socket family"
+TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_bool_invalid_socket_family_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_bool exit, the socket family=%d is invalid - unable to determine multicast loopback configuration"
+TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_bool_getsockopt_failed_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_bool exit, getsockopt failed with platform specific error code=%d"
+TraceExit=Trc_PRT_sock_j9sock_getopt_bool_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_bool exit returnValue=%d"
 
-TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_bool_invalid_level_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_bool exit, invalid level"
-TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_bool_invalid_option_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_bool exit, invalid option"
-TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_bool_invalid_family_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_bool exit, invalid socket family"
-TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_bool_invalid_socket_family_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_bool exit, the socket family=%d is invalid - unable to configure multicast loopback"
-TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_bool_setsockopt_failed_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_bool exit, setsockopt failed with platform specific error code=%d"
+TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_bool_invalid_level_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_bool exit, invalid level"
+TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_bool_invalid_option_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_bool exit, invalid option"
+TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_bool_invalid_family_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_bool exit, invalid socket family"
+TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_bool_invalid_socket_family_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_bool exit, the socket family=%d is invalid - unable to configure multicast loopback"
+TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_bool_setsockopt_failed_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_bool exit, setsockopt failed with platform specific error code=%d"
 
 TraceException=Trc_PRT_mem_advise_and_free_memory_basic_madvise_failed Obsolete Overhead=1 Level=1 NoEnv Template="j9mem_advise_and_free_memory_basic : madvise(%p,%zu, MADV_DONTNEED) failed, with errno %d"
 
 TraceExit=Trc_PRT_shmem_j9shmem_stat_GetFileInformationByHandleFailed_Exit Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem_stat exit - GetFileInformationByHandle(%s) has failed with %u"
 
-TraceEntry=Trc_PRT_sock_j9sock_getopt_sockaddr_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_sockaddr entry sock=%p (fd=%d) optlevel=%d optname=%d addr=%p"
-TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_sockaddr_getsockopt_failed_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_sockaddr getsockopt failed with platform specific error code=%d"
-TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_sockaddr_invalid_level_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_sockaddr exit invalid level"
-TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_sockaddr_invalid_option_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_sockaddr exit invalid option"
-TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_sockaddr_invalid_family_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_sockaddr exit, invalid socket family"
-TraceExit=Trc_PRT_sock_j9sock_getopt_sockaddr_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_sockaddr exit"
-TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_sockaddr_address_length_invalid_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_sockaddr exit, getsockopt returns invalid optlen, socket family=%d"
+TraceEntry=Trc_PRT_sock_j9sock_getopt_sockaddr_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_sockaddr entry sock=%p (fd=%d) optlevel=%d optname=%d addr=%p"
+TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_sockaddr_getsockopt_failed_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_sockaddr getsockopt failed with platform specific error code=%d"
+TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_sockaddr_invalid_level_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_sockaddr exit invalid level"
+TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_sockaddr_invalid_option_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_sockaddr exit invalid option"
+TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_sockaddr_invalid_family_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_sockaddr exit, invalid socket family"
+TraceExit=Trc_PRT_sock_j9sock_getopt_sockaddr_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_sockaddr exit"
+TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_sockaddr_address_length_invalid_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_sockaddr exit, getsockopt returns invalid optlen, socket family=%d"
 TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_sockaddr_family_unspecified_Exit Obsolete Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_sockaddr exit, socket family unspecified"
-TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_sockaddr_socket_family_invalid_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_sockaddr exit, invalid socket family=%d"
+TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_sockaddr_socket_family_invalid_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_sockaddr exit, invalid socket family=%d"
 
-TraceEntry=Trc_PRT_sock_j9sock_getopt_byte_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_byte entry sock=%p (fd=%d) optlevel=%d optname=%d"
-TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_byte_getsockopt_failed_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_byte getsockopt failed with platform specific error code=%d"
-TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_byte_invalid_level_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_byte exit invalid level"
-TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_byte_invalid_option_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_byte exit invalid option"
-TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_byte_invalid_family_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_byte exit, invalid socket family"
-TraceExit=Trc_PRT_sock_j9sock_getopt_byte_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_byte exit"
+TraceEntry=Trc_PRT_sock_j9sock_getopt_byte_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_byte entry sock=%p (fd=%d) optlevel=%d optname=%d"
+TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_byte_getsockopt_failed_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_byte getsockopt failed with platform specific error code=%d"
+TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_byte_invalid_level_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_byte exit invalid level"
+TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_byte_invalid_option_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_byte exit invalid option"
+TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_byte_invalid_family_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_byte exit, invalid socket family"
+TraceExit=Trc_PRT_sock_j9sock_getopt_byte_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_byte exit"
 
-TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_int_invalid_level_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_int exit invalid level"
-TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_int_invalid_option_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_int exit invalid option"
-TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_int_invalid_family_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_int exit, invalid socket family"
+TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_int_invalid_level_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_int exit invalid level"
+TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_int_invalid_option_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_int exit invalid option"
+TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_int_invalid_family_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_int exit, invalid socket family"
 
-TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_byte_invalid_level_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_byte exit invalid level"
-TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_byte_invalid_option_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_byte exit invalid option"
-TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_byte_invalid_family_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_byte exit, invalid socket family"
+TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_byte_invalid_level_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_byte exit invalid level"
+TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_byte_invalid_option_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_byte exit invalid option"
+TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_byte_invalid_family_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_byte exit, invalid socket family"
 
-TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_sockaddr_invalid_level_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_sockaddr exit invalid level"
-TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_sockaddr_invalid_option_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_sockaddr exit invalid option"
-TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_sockaddr_invalid_family_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_setopt_sockaddr exit, invalid socket family"
+TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_sockaddr_invalid_level_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_sockaddr exit invalid level"
+TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_sockaddr_invalid_option_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_sockaddr exit invalid option"
+TraceExit-Exception=Trc_PRT_sock_j9sock_setopt_sockaddr_invalid_family_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_setopt_sockaddr exit, invalid socket family"
 
-TraceEntry=Trc_PRT_sock_j9sock_getopt_int_Entry Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_int entry sock=%p (fd=%d) optlevel=%d optname=%d"
-TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_int_invalid_level_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_int exit invalid level"
-TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_int_invalid_option_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_int exit invalid option"
-TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_int_invalid_family_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_int exit, invalid socket family"
-TraceExit=Trc_PRT_sock_j9sock_getopt_int_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_int exit"
-TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_int_getsockopt_failed_Exit Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_getopt_int exit, getsockopt failed with platform specific error code=%d"
+TraceEntry=Trc_PRT_sock_j9sock_getopt_int_Entry Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_int entry sock=%p (fd=%d) optlevel=%d optname=%d"
+TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_int_invalid_level_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_int exit invalid level"
+TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_int_invalid_option_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_int exit invalid option"
+TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_int_invalid_family_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_int exit, invalid socket family"
+TraceExit=Trc_PRT_sock_j9sock_getopt_int_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_int exit"
+TraceExit-Exception=Trc_PRT_sock_j9sock_getopt_int_getsockopt_failed_Exit Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_getopt_int exit, getsockopt failed with platform specific error code=%d"
 
 TraceException=Trc_PRT_vmem_touchOnNumaNode_failedToBindToComputeResource Obsolete Overhead=1 Level=1 NoEnv Template="touchOnNumaNode failed trying to bind to computational resource %zu on j9NumaNode %zu with system error code:  %zu"
 TraceException=Trc_PRT_vmem_touchOnNumaNode_failedToReturnToComputeResource Obsolete Overhead=1 Level=1 NoEnv Template="touchOnNumaNode failed trying to return its computational resource binding to the original (original: %zu, was temporarily: %zu) with system error code:  %zu"
@@ -1760,7 +1760,7 @@ TraceExit=Trc_PRT_file_blockingasync_shutdown_Exit Obsolete Group=j9file Overhea
 TraceExit=Trc_PRT_file_unlock_bytes_win32_exiting_with_error Obsolete Group=j9file Overhead=1 Level=5 NoEnv Template="j9file_unlock_bytes: Failed, exiting. ErrorCode = %d"
 TraceExit=Trc_PRT_file_lock_bytes_win32_exiting_with_error Obsolete Group=j9file Overhead=1 Level=5 NoEnv Template="j9file_lock_bytes: Failed, exiting. ErrorCode = %d"
 
-TraceException=Trc_PRT_sock_j9sock_bind_failed2 Group=j9sock Overhead=1 Level=3 NoEnv Template="j9sock_bind bind failed with platform specific error code=%d. (IP = %s, port = %d)"
+TraceException=Trc_PRT_sock_j9sock_bind_failed2 Group=j9sock Obsolete Overhead=1 Level=3 NoEnv Template="j9sock_bind bind failed with platform specific error code=%d. (IP = %s, port = %d)"
 
 // j9cuda trace points
 

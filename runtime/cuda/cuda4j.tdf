@@ -110,9 +110,9 @@ TraceEntry=Trc_cuda_throwCudaException_entry                    Level=3       Ov
 TraceException=Trc_cuda_throwCudaException_suppressed           Level=1       Overhead=1 Template="throwCudaException: suppressed"
 TraceExit=Trc_cuda_throwCudaException_exit                      Level=3       Overhead=1 Template="throwCudaException"
 
-TraceEntry=Trc_cuda_throwRuntimeException_entry                 Level=3       Overhead=1 Template="throwRuntimeException(message=%s)"
-TraceException=Trc_cuda_throwRuntimeException_suppressed        Level=1       Overhead=1 Template="throwRuntimeException: suppressed"
-TraceExit=Trc_cuda_throwRuntimeException_exit                   Level=3       Overhead=1 Template="throwRuntimeException"
+TraceEntry=Trc_cuda_throwRuntimeException_entry                 Level=3       Obsolete Overhead=1 Template="throwRuntimeException(message=%s)"
+TraceException=Trc_cuda_throwRuntimeException_suppressed        Level=1       Obsolete Overhead=1 Template="throwRuntimeException: suppressed"
+TraceExit=Trc_cuda_throwRuntimeException_exit                   Level=3       Obsolete Overhead=1 Template="throwRuntimeException"
 
 TraceEntry=Trc_cuda_allocatePinnedBuffer_entry                  Level=3       Overhead=1 Template="allocatePinnedBuffer(size=%llu)"
 TraceExit=Trc_cuda_allocatePinnedBuffer_exit                    Level=3       Overhead=1 Template="allocatePinnedBuffer: %p"
@@ -133,8 +133,8 @@ TraceEntry=Trc_cuda_initialize_entry                            Level=3       Ov
 TraceException=Trc_cuda_initialize_fail                         Level=1       Overhead=1 Template="initialize: failed to %s"
 TraceExit=Trc_cuda_initialize_exit                              Level=3       Overhead=1 Template="initialize: %d"
 
-TraceEntry=Trc_cuda_initializeThreadContext_entry               Level=3       Overhead=1 Template="initializeThreadContext"
-TraceExit=Trc_cuda_initializeThreadContext_exit                 Level=3       Overhead=1 Template="initializeThreadContext"
+TraceEntry=Trc_cuda_initializeThreadContext_entry               Level=3       Obsolete Overhead=1 Template="initializeThreadContext"
+TraceExit=Trc_cuda_initializeThreadContext_exit                 Level=3       Obsolete Overhead=1 Template="initializeThreadContext"
 
 TraceEntry=Trc_cuda_wrapDirectBuffer_entry                      Level=3       Overhead=1 Template="wrapDirectBuffer(buffer=%p, capacity=%llu)"
 TraceExit=Trc_cuda_wrapDirectBuffer_exit                        Level=3       Overhead=1 Template="wrapDirectBuffer: %p"
@@ -251,8 +251,8 @@ TraceExit=Trc_cuda_functionSetSharedMemConfig_exit              Level=3       Ov
 TraceEntry=Trc_cuda_jitOptionsCreate_entry                      Level=3       Overhead=1 Template="jitOptionsCreate(pairs=%p)"
 TraceException=Trc_cuda_jitOptionsCreate_allocFail              Level=1       Overhead=1 Template="jitOptionsCreate: allocation failed"
 TraceException=Trc_cuda_jitOptionsCreate_badOption              Level=1       Overhead=1 Template="jitOptionsCreate: invalid option (%d)"
-TraceException=Trc_cuda_jitOptionsCreate_badTarget              Level=1       Overhead=1 Template="jitOptionsCreate: invalid target (%d)"
-TraceException=Trc_cuda_jitOptionsCreate_excessOptions          Level=1       Overhead=1 Template="jitOptionsCreate: too many options"
+TraceException=Trc_cuda_jitOptionsCreate_badTarget              Level=1       Obsolete Overhead=1 Template="jitOptionsCreate: invalid target (%d)"
+TraceException=Trc_cuda_jitOptionsCreate_excessOptions          Level=1       Obsolete Overhead=1 Template="jitOptionsCreate: too many options"
 TraceException=Trc_cuda_jitOptionsCreate_getFail                Level=1       Overhead=1 Template="jitOptionsCreate: failed to get native pointer"
 TraceExit=Trc_cuda_jitOptionsCreate_exit                        Level=3       Overhead=1 Template="jitOptionsCreate: %p"
 

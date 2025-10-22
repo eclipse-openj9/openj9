@@ -23,7 +23,7 @@
 Executable=simplepool
 DATFileName=J9TraceFormat.dat
 
-TraceAssert=Assert_simplepool_true NoEnv Overhead=1 Level=1 Assert="(P1)"
+TraceAssert=Assert_simplepool_true NoEnv Obsolete Overhead=1 Level=1 Assert="(P1)"
 TraceAssert=Assert_simplepool_ShouldNeverHappen NoEnv Overhead=1 Level=3 Assert="(0 /* Fatal simplepool error */)"
 
 TraceEntry=Trc_simplepool_new_Entry Overhead=1 Level=3 Noenv Template="simplepool_new(poolAddress=%p, memorySize=%u, elementSize=%u, flags=%u)" 
@@ -36,9 +36,9 @@ TraceExit=Trc_simplepool_new_Exit Overhead=1 Level=3 Noenv Template="simplepool_
 
 TraceEntry=Trc_simplepool_newElement_Entry Overhead=1 Level=3 Noenv Template="simplepool_newElement(simplePool=%p)"
 TraceEvent=Trc_simplepool_newElement_simplePoolFull Overhead=1 Level=3 NoEnv Template="simple pool is full simplePool=%p"
-TraceException=Trc_simplepool_newElement_freeListInvalidBackPointer Overhead=1 Level=1 NoEnv Template="simple pool free list back pointer is invalid, simplePool=%p, simplePool->freeList=%p, freeList->simplePool=%p"
-TraceException=Trc_simplepool_newElement_freeListoutOfRange Overhead=1 Level=1 NoEnv Template="free list next element out of range, simplePool=%p, nextFree=%p, firstPossibleElementSlot=%p, firstFreeSlot=%p"
-TraceException=Trc_simplepool_newElement_freeListUnaligned Overhead=1 Level=1 NoEnv Template="simple pool free list next element is unaligned, simplePool=%p, nextFree=%p, simplePool->elementSize=%u"
+TraceException=Trc_simplepool_newElement_freeListInvalidBackPointer Obsolete Overhead=1 Level=1 NoEnv Template="simple pool free list back pointer is invalid, simplePool=%p, simplePool->freeList=%p, freeList->simplePool=%p"
+TraceException=Trc_simplepool_newElement_freeListoutOfRange Obsolete Overhead=1 Level=1 NoEnv Template="free list next element out of range, simplePool=%p, nextFree=%p, firstPossibleElementSlot=%p, firstFreeSlot=%p"
+TraceException=Trc_simplepool_newElement_freeListUnaligned Obsolete Overhead=1 Level=1 NoEnv Template="simple pool free list next element is unaligned, simplePool=%p, nextFree=%p, simplePool->elementSize=%u"
 TraceException=Trc_simplepool_newElement_NullSimplePool Overhead=1 Level=1 Noenv Template="simplepool_newElement simplePool is NULL"
 TraceExit=Trc_simplepool_newElement_Exit Overhead=1 Level=3 Noenv Template="simplepool_newElement(simplePool=%p, newElement=%p)"
 
@@ -75,9 +75,9 @@ TraceEntry=Trc_simplepool_checkConsistency_Entry Overhead=1 Level=3 Noenv Templa
 TraceException=Trc_simplepool_checkConsistency_NullParameters Overhead=1 Level=1 Noenv Template="simplepool_checkConsistency one or more required parameters is NULL"
 TraceExit=Trc_simplepool_checkConsistency_Exit Overhead=1 Level=3 Noenv Template="simplepool_checkConsistency(rc=%d)"
 
-TraceException=Trc_iterateOverSimplePoolElements_freeListElementNextOutOfRange Overhead=1 Level=1 Noenv Template="iterateOverSimplePoolElements freeListElement->next is out of range, simplePool=%p, freeListElement=%p, next=%p, firstPossibleElementSlot=%p, firstFreeSlot=%p"
-TraceException=Trc_iterateOverSimplePoolElements_freeListElementNextUnaligned Overhead=1 Level=1 Noenv Template="iterateOverSimplePoolElements freeListElement->next is unaligned, simplePool=%p, freeListElement=%p, next=%p, simplePool->elementSize=%u"
-TraceException=Trc_iterateOverSimplePoolElements_freeListElementInvalidBackPointer Overhead=1 Level=1 Noenv Template="iterateOverSimplePoolElements freeListElement->simplePool pointer invalid, simplePool=%p, freeListElement=%p, simplePoolPtr=%p"
+TraceException=Trc_iterateOverSimplePoolElements_freeListElementNextOutOfRange Obsolete Overhead=1 Level=1 Noenv Template="iterateOverSimplePoolElements freeListElement->next is out of range, simplePool=%p, freeListElement=%p, next=%p, firstPossibleElementSlot=%p, firstFreeSlot=%p"
+TraceException=Trc_iterateOverSimplePoolElements_freeListElementNextUnaligned Obsolete Overhead=1 Level=1 Noenv Template="iterateOverSimplePoolElements freeListElement->next is unaligned, simplePool=%p, freeListElement=%p, next=%p, simplePool->elementSize=%u"
+TraceException=Trc_iterateOverSimplePoolElements_freeListElementInvalidBackPointer Obsolete Overhead=1 Level=1 Noenv Template="iterateOverSimplePoolElements freeListElement->simplePool pointer invalid, simplePool=%p, freeListElement=%p, simplePoolPtr=%p"
 TraceException=Trc_iterateOverSimplePoolElements_unableToAllocateAllocMap Overhead=1 Level=1 Noenv Template="iterateOverSimplePoolElements allocating allocMap failed, allocMapSize = %u"
 
 TraceEntry=Trc_simplepool_maxNumElements_Entry Overhead=1 Level=3 Noenv Template="simplepool_maxNumElements(simplePool=%p)"
