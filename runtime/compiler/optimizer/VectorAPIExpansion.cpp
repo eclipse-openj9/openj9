@@ -52,7 +52,7 @@ TR_VectorAPIExpansion::perform()
    {
    bool disableVectorAPIExpansion = comp()->getOption(TR_DisableVectorAPIExpansion);
    bool traceVectorAPIExpansion = comp()->getOption(TR_TraceVectorAPIExpansion);
-   _boxingAllowed = !comp()->getOption(TR_DisableVectorAPIBoxing);
+   _boxingAllowed = comp()->getOption(TR_EnableVectorAPIBoxing);
 
    _trace = traceVectorAPIExpansion;
 
@@ -2138,8 +2138,7 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
                {
                // TO DO: check Mask type through the method table
                if ((i >= getFirstOperandIndex(methodSymbol) &&
-                    i < (getFirstOperandIndex(methodSymbol) + getNumOperands(methodSymbol)) &&
-                    (getArgumentType(methodSymbol, i) == Vector || getArgumentType(methodSymbol, i) == Mask)) ||
+                   i < (getFirstOperandIndex(methodSymbol) + getNumOperands(methodSymbol))) ||
                    (i == getMaskIndex(methodSymbol) && node->getChild(i)->getOpCodeValue() != TR::aconst))
                   {
                   TR::Node *operand = node->getChild(i);
