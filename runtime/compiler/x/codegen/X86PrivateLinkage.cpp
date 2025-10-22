@@ -819,9 +819,6 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
             }
          }
 
-      if (cg()->canEmitBreakOnDFSet())
-         cursor = generateBreakOnDFSet(cg(), cursor);
-
       if (atlas)
          {
          uint32_t  numberOfParmSlots = atlas->getNumberOfParmSlotsMapped();
@@ -1060,9 +1057,6 @@ TR::Instruction *J9::X86::PrivateLinkage::deallocateFrameIfNeeded(TR::Instructio
 
 void J9::X86::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
    {
-   if (cg()->canEmitBreakOnDFSet())
-      cursor = generateBreakOnDFSet(cg(), cursor);
-
    TR::RealRegister* espReal = machine()->getRealRegister(TR::RealRegister::esp);
 
    cursor = cg()->generateDebugCounter(cursor, "cg.epilogues", 1, TR::DebugCounter::Expensive);
