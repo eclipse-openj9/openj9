@@ -122,12 +122,12 @@ typedef struct J9RASdumpEventData {
 	UDATA detailLength;
 	char* detailData;
 	j9object_t* exceptionRef;
-	U_64 siPid;
+	UDATA siPid;
 } J9RASdumpEventData;
 
 typedef struct J9RASAsyncPidInfo {
 	struct J9JavaVM *vm;
-	U_64 siPid;
+	UDATA siPid;
 	char *siPidName;
 } J9RASAsyncPidInfo;
 
