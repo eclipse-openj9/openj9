@@ -747,7 +747,9 @@ final class PointerHelper extends HelperBase {
 		case StructureTypeManager.TYPE_J9WSRP: // not implemented
 			break;
 		}
-
+		System.out.println("Structure: " + structure.getName());
+		System.out.println("Field: " + field.getName());
+		System.out.println("Component: " + componentType);
 		throw new IllegalArgumentException("Unrecognized array: " + fieldType);
 	}
 
@@ -2758,7 +2760,7 @@ final class StructureHelper extends HelperBase {
 
 	static byte[] getClassBytes(StructureDescriptor structure, String className) {
 		StructureHelper helper = new StructureHelper(structure, className);
-
+		System.out.println("getClassBytes::className: " + className);
 		return helper.generate();
 	}
 

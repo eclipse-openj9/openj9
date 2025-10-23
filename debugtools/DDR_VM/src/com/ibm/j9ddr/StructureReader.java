@@ -1148,7 +1148,7 @@ public final class StructureReader {
 		}
 
 		String fullClassName = getPackageName(PackageNameType.POINTER_PACKAGE_SLASH_NAME) + clazzName;
-
+		System.out.println("StructureReader::fullClassName: " + fullClassName);
 		return BytecodeGenerator.getPointerClassBytes(this, typeManager, structure, fullClassName);
 	}
 
