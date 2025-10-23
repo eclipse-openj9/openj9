@@ -205,6 +205,7 @@ public final class ClassGenerator {
 		for (StructureDescriptor structure : reader.getStructures()) {
 			String name = structure.getName();
 			byte[] bytes;
+			System.out.println("ClassGenerator::structure: " + name);
 
 			try {
 				if (FlagStructureList.isFlagsStructure(name)) {
