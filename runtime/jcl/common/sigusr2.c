@@ -81,7 +81,9 @@ J9SigUsr2Shutdown(J9JavaVM *vm)
 static UDATA
 sigUsr2Handler(struct J9PortLibrary *portLibrary, void *userData)
 {
-	J9JavaVM *vm = (J9JavaVM *)userData;
+	J9RASAsyncPidInfo *rasAsyncPidInfo = (J9RASAsyncPidInfo *)userData;
+	J9JavaVM *vm = rasAsyncPidInfo->vm;
+	J9RASdumpEventData eventData = { 0 };
 	omrthread_t currentThread = NULL;
 	static U_64 lastDumpTime = 0;
 	UDATA currentPriority = 0;
@@ -105,7 +107,10 @@ sigUsr2Handler(struct J9PortLibrary *portLibrary, void *userData)
 
 	/**** WARNING: do not try and attach a VM thread here, as we may be debugging a deadlock. ****/
 
-	J9DMP_TRIGGER(vm, NULL, J9RAS_DUMP_ON_USER2_SIGNAL);
+	eventData.siPid = rasAsyncPidInfo->siPid;
+	eventData.detailData = rasAsyncPidInfo->siPidName;
+
+	J9DMP_TRIGGER(vm, NULL, J9RAS_DUMP_ON_USER2_SIGNAL, &eventData);
 
 	/* Update cycle time only after finished dumps. */
 	lastDumpTime = j9time_hires_clock();
@@ -121,10 +126,26 @@ sigUsr2Wrapper(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, voi
 {
 	J9JavaVM *vm = (J9JavaVM *)userData;
 	UDATA result = 0;
-
+	J9RASAsyncPidInfo rasAsyncPidInfo = { 0 };
+	const char *infoName = NULL;
+	void *infoValue = NULL;
+	U_32 infoType = 0;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
-	j9sig_protect(sigUsr2Handler, vm,
+	rasAsyncPidInfo.vm = vm;
+	infoType = omrsig_info(gpInfo, OMRPORT_SIG_SIGNAL, OMRPORT_SIG_SENDER_PID, &infoName, &infoValue);
+	if (OMRPORT_SIG_VALUE_32 == infoType) {
+		rasAsyncPidInfo.siPid = *(U_32 *)infoValue;
+	} else if (OMRPORT_SIG_VALUE_64 == infoType) {
+		rasAsyncPidInfo.siPid = *(U_64 *)infoValue;
+	}
+	if (0 != rasAsyncPidInfo.siPid) {
+		/* siPidName needs to be freed after use. */
+		rasAsyncPidInfo.siPidName = omrsysinfo_get_process_name(rasAsyncPidInfo.siPid);
+	}
+
+	j9sig_protect(sigUsr2Handler, &rasAsyncPidInfo,
 		vm->internalVMFunctions->structuredSignalHandlerVM, vm,
 		J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_CONTINUE_EXECUTION,
 		&result);

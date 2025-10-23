@@ -854,7 +854,7 @@ JavaCoreDumpWriter::writeEventDrivenTitle(void)
 
 	/* Write the event data */
 	J9RASdumpEventData* eventData = _Context->eventData;
-	if (NULL != eventData) {
+	if ((NULL != eventData) && ((eventData->detailLength > 0) || (NULL != eventData->exceptionRef))) {
 		_OutputStream.writeCharacters(" Detail \"");
 		_OutputStream.writeCharacters(eventData->detailData, eventData->detailLength);
 		_OutputStream.writeCharacters("\"");
@@ -862,6 +862,17 @@ JavaCoreDumpWriter::writeEventDrivenTitle(void)
 	}
 
 	_OutputStream.writeCharacters(" received\n");
+
+	if (0 != eventData->siPid) {
+		_OutputStream.writeCharacters("1TISIGPID      Signalling process id ");
+		_OutputStream.writeInteger64(eventData->siPid, "%llu");
+		if (NULL != eventData->detailData) {
+			_OutputStream.writeCharacters(" name \"");
+			_OutputStream.writeCharacters(eventData->detailData);
+			_OutputStream.writeCharacters("\"");
+		}
+		_OutputStream.writeCharacters("\n");
+	}
 }
 
 /**************************************************************************************************/

@@ -1159,7 +1159,7 @@ generateDiagnosticFiles(struct J9PortLibrary* portLibrary, void* userData)
 
 	/* Trigger dump only if RASdump is activated */
 	if (gpHaveRASdump) {
-		J9DMP_TRIGGER( vm, vmThread, J9RAS_DUMP_ON_GP_FAULT );
+		J9DMP_TRIGGER(vm, vmThread, J9RAS_DUMP_ON_GP_FAULT, NULL);
 	}
 
 	return 0;

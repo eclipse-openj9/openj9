@@ -871,7 +871,7 @@ triggerOneOffDump(struct J9JavaVM *vm, char *optionString, char *caller, char *f
 
 	if ( kind >= 0 ) {
 		J9RASdumpContext context;
-		J9RASdumpEventData eventData;
+		J9RASdumpEventData eventData = { 0 };
 
 		/* we lock the dump configuration here so that the agent and setting queues can't be
 		 * changed underneath us while we're producing the dumps
@@ -890,10 +890,7 @@ triggerOneOffDump(struct J9JavaVM *vm, char *optionString, char *caller, char *f
 		eventData.detailData = caller;
 		if (caller != NULL) {
 			eventData.detailLength = strlen(caller);
-		} else {
-			eventData.detailLength = 0;
 		}
-		eventData.exceptionRef = NULL;
 
 		retVal = createAndRunOneOffDumpAgent(vm,&context,kind,optionString);
 
@@ -1258,7 +1255,7 @@ rasDumpHookVmInit(J9HookInterface** hookInterface, UDATA eventNum, void* eventDa
 static void
 rasDumpHookVmShutdown(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
 {
-	J9RASdumpEventData dumpData;
+	J9RASdumpEventData dumpData = { 0 };
 	J9VMShutdownEvent *data = eventData;
 	J9VMThread* vmThread = data->vmThread;
 	UDATA length;
@@ -1269,7 +1266,6 @@ rasDumpHookVmShutdown(J9HookInterface** hookInterface, UDATA eventNum, void* eve
 
 	dumpData.detailLength = length;
 	dumpData.detailData = details;
-	dumpData.exceptionRef = NULL;
 
 	vmThread->javaVM->j9rasDumpFunctions->triggerDumpAgents(
 		vmThread->javaVM,
@@ -1282,7 +1278,7 @@ rasDumpHookVmShutdown(J9HookInterface** hookInterface, UDATA eventNum, void* eve
 static void
 rasDumpHookClassLoad(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
 {
-	J9RASdumpEventData dumpData;
+	J9RASdumpEventData dumpData = { 0 };
 	J9VMClassLoadEvent *data = eventData;
 	J9VMThread* vmThread = data->currentThread;
 	J9Class* clazz = data->clazz;
@@ -1290,7 +1286,6 @@ rasDumpHookClassLoad(J9HookInterface** hookInterface, UDATA eventNum, void* even
 
 	dumpData.detailLength = J9UTF8_LENGTH(className);
 	dumpData.detailData = (char *)J9UTF8_DATA(className);
-	dumpData.exceptionRef = NULL;
 
 	vmThread->javaVM->j9rasDumpFunctions->triggerDumpAgents(
 		vmThread->javaVM,
@@ -1304,16 +1299,15 @@ rasDumpHookClassLoad(J9HookInterface** hookInterface, UDATA eventNum, void* even
 static void
 rasDumpHookExceptionThrow(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
 {
-	J9RASdumpEventData dumpData;
 	J9VMExceptionThrowEvent *data = eventData;
 	J9VMThread* vmThread = data->currentThread;
 	J9JavaVM * vm = vmThread->javaVM;
 	j9object_t exception = data->exception;
-	jobject globalRef;
+	jobject globalRef = vm->internalVMFunctions->j9jni_createGlobalRef((JNIEnv *) vmThread, exception, JNI_FALSE);
 
-	globalRef = vm->internalVMFunctions->j9jni_createGlobalRef((JNIEnv *) vmThread, exception, JNI_FALSE);
-	if (globalRef != NULL) {
+	if (NULL != globalRef) {
 		J9UTF8* className = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(vmThread, exception)->romClass);
+		J9RASdumpEventData dumpData = { 0 };
 
 		dumpData.detailLength = J9UTF8_LENGTH(className);
 		dumpData.detailData = (char *)J9UTF8_DATA(className);
@@ -1334,16 +1328,15 @@ rasDumpHookExceptionThrow(J9HookInterface** hookInterface, UDATA eventNum, void*
 static void
 rasDumpHookExceptionCatch(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
 {
-	J9RASdumpEventData dumpData;
 	J9VMExceptionCatchEvent *data = eventData;
 	J9VMThread* vmThread = data->currentThread;
 	J9JavaVM * vm = vmThread->javaVM;
 	j9object_t exception = data->exception;
-	jobject globalRef;
+	jobject globalRef = vm->internalVMFunctions->j9jni_createGlobalRef((JNIEnv *) vmThread, exception, JNI_FALSE);
 
-	globalRef = vm->internalVMFunctions->j9jni_createGlobalRef((JNIEnv *) vmThread, exception, JNI_FALSE);
-	if (globalRef != NULL) {
+	if (NULL != globalRef) {
 		J9UTF8* className = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(vmThread, exception)->romClass);
+		J9RASdumpEventData dumpData = { 0 };
 
 		dumpData.detailLength = J9UTF8_LENGTH(className);
 		dumpData.detailData = (char *)J9UTF8_DATA(className);
@@ -1406,16 +1399,15 @@ rasDumpHookMonitorContendedEnter(J9HookInterface** hookInterface, UDATA eventNum
 static void
 rasDumpHookExceptionDescribe(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
 {
-	J9RASdumpEventData dumpData;
 	J9VMExceptionDescribeEvent *data = eventData;
 	J9VMThread* vmThread = data->currentThread;
 	J9JavaVM * vm = vmThread->javaVM;
 	j9object_t exception = data->exception;
-	jobject globalRef;
+	jobject globalRef = vm->internalVMFunctions->j9jni_createGlobalRef((JNIEnv *) vmThread, exception, JNI_FALSE);
 
-	globalRef = vm->internalVMFunctions->j9jni_createGlobalRef((JNIEnv *) vmThread, exception, JNI_FALSE);
-	if (globalRef != NULL) {
+	if (NULL != globalRef) {
 		J9UTF8* className = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(vmThread, exception)->romClass);
+		J9RASdumpEventData dumpData = { 0 };
 
 		dumpData.detailLength = J9UTF8_LENGTH(className);
 		dumpData.detailData = (char *)J9UTF8_DATA(className);
@@ -1448,7 +1440,7 @@ rasDumpHookGCInitialized(J9HookInterface** hookInterface, UDATA eventNum, void* 
 static void
 rasDumpHookAllocationThreshold(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
 {
-	J9RASdumpEventData dumpData;
+	J9RASdumpEventData dumpData = { 0 };
 	J9VMAllocationThresholdEvent *data = eventData;
 	J9VMThread* vmThread = data->currentThread;
 	UDATA length;
@@ -1495,7 +1487,6 @@ rasDumpHookAllocationThreshold(J9HookInterface** hookInterface, UDATA eventNum, 
 
 	dumpData.detailLength = length;
 	dumpData.detailData = details;
-	dumpData.exceptionRef = NULL;
 
 	vmThread->javaVM->j9rasDumpFunctions->triggerDumpAgents(
 		vmThread->javaVM,
@@ -1511,7 +1502,7 @@ rasDumpHookAllocationThreshold(J9HookInterface** hookInterface, UDATA eventNum, 
 static void
 rasDumpHookSlowExclusive(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
 {
-	J9RASdumpEventData dumpData;
+	J9RASdumpEventData dumpData = { 0 };
 	J9VMSlowExclusiveEvent *data = eventData;
 	J9VMThread* vmThread = data->currentThread;
 	UDATA length;
@@ -1522,7 +1513,6 @@ rasDumpHookSlowExclusive(J9HookInterface** hookInterface, UDATA eventNum, void* 
 
 	dumpData.detailLength = length;
 	dumpData.detailData = details;
-	dumpData.exceptionRef = NULL;
 
 	vmThread->javaVM->j9rasDumpFunctions->triggerDumpAgents(
 		vmThread->javaVM,
@@ -1565,16 +1555,15 @@ rasDumpHookClassesUnload(J9HookInterface** hookInterface, UDATA eventNum, void* 
 static void
 rasDumpHookExceptionSysthrow(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
 {
-	J9RASdumpEventData dumpData;
 	J9VMExceptionThrowEvent *data = eventData;
 	J9VMThread* vmThread = data->currentThread;
 	J9JavaVM * vm = vmThread->javaVM;
 	J9Object* exception = data->exception;
-	jobject globalRef;
+	jobject globalRef = vm->internalVMFunctions->j9jni_createGlobalRef((JNIEnv *) vmThread, exception, JNI_FALSE);
 
-	globalRef = vm->internalVMFunctions->j9jni_createGlobalRef((JNIEnv *) vmThread, exception, JNI_FALSE);
-	if (globalRef != NULL) {
+	if (NULL != globalRef) {
 		J9UTF8* className = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(vmThread, exception)->romClass);
+		J9RASdumpEventData dumpData = { 0 };
 
 		dumpData.detailLength = J9UTF8_LENGTH(className);
 		dumpData.detailData = (char *)J9UTF8_DATA(className);
