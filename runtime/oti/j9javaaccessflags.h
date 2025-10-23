@@ -153,7 +153,13 @@
 /* Inform DDR that the static field ref constants support proper narrowing  */
 #define J9PutfieldNarrowing 1
 
-/* static field flags (low 8 bits of flagsAndClass) - low 3 bits are the field type for primitive types */
+/* static field flags (low 7 bits of flagsAndClass) - low 3 bits are the field type for primitive types */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+#define J9_STATIC_FIELD_REF_TYPE(classAndFlags) \
+	(J9StaticFieldIsNullRestricted ==  (classAndFlags & J9StaticFieldRefTypeMask)) ? 0x0 : (classAndFlags & J9StaticFieldRefTypeMask)
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+#define J9_STATIC_FIELD_REF_TYPE(classAndFlags) (classAndFlags & J9StaticFieldRefTypeMask)
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #define J9StaticFieldRefFlagBits 0xFF
 #define J9StaticFieldRefTypeMask 0x7
 #define J9StaticFieldRefTypeObject 0x0
@@ -185,6 +191,8 @@
 #define J9StaticFieldRefStrictInitWritten 0x80
 #define J9StaticFieldRefStrictInitUnset 0xC0
 #define J9StaticFieldRefStrictInitMask 0xC0
+#define J9StaticFieldRefStrictInitFlagsAndClassMask \
+	((UDATA)J9StaticFieldRefStrictInitMask << (sizeof(UDATA) * 8 - J9_REQUIRED_CLASS_SHIFT))
 #define J9_STATIC_FIELD_STRICT_INIT_IS_UNSET(classAndFlags) \
 		(J9StaticFieldRefStrictInitUnset == ((classAndFlags) & J9StaticFieldRefStrictInitMask))
 #define J9_STATIC_FIELD_STRICT_INIT_WAS_WRITTEN_AND_READ(classAndFlags) \

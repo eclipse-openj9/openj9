@@ -868,7 +868,12 @@ illegalAccess:
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 				if (J9_ARE_ANY_BITS_SET(modifiers, J9AccStrictInit)) {
 					localClassAndFlagsData &= ~J9StaticFieldRefStrictInitMask;
-					localClassAndFlagsData |= J9StaticFieldRefStrictInitUnset;
+					/* Field was set through ConstantValue attribute. */
+					if (J9_ARE_ANY_BITS_SET(modifiers, J9FieldFlagConstant)) {
+						localClassAndFlagsData |= J9StaticFieldRefStrictInitWritten;
+					} else {
+						localClassAndFlagsData |= J9StaticFieldRefStrictInitUnset;
+					}
 				}
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 				if (0 != (resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER)) {
@@ -894,7 +899,11 @@ done:
 
 
 void *
-resolveStaticFieldRef(J9VMThread *vmStruct, J9Method *method, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags, J9ROMFieldShape **resolvedField)
+resolveStaticFieldRef(J9VMThread *vmStruct, J9Method *method, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags, J9ROMFieldShape **resolvedField
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+	, UDATA strictInitFlags
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+)
 {
 	/* Bit of magic here, the resulting field must be in vmStruct->floatTemp1 in the CLINIT case
 	 * as resolveHelper expects to find it there.
@@ -905,11 +914,19 @@ resolveStaticFieldRef(J9VMThread *vmStruct, J9Method *method, J9ConstantPool *ra
 	staticAddress = resolveStaticFieldRefInto(vmStruct, method, ramCP, cpIndex, resolveFlags, resolvedField, ramStaticFieldRef);
 
 	if (staticAddress != NULL) {
-		/* Check for <clinit> case. */
-		if ((resolveFlags & J9_RESOLVE_FLAG_CHECK_CLINIT) == J9_RESOLVE_FLAG_CHECK_CLINIT) {
-			J9Class *clazz = J9RAMSTATICFIELDREF_CLASS(ramStaticFieldRef);
-			if (clazz->initializeStatus == (UDATA)vmStruct) {
-				return (void *) -1;
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+		if ((ramStaticFieldRef->flagsAndClass & J9StaticFieldRefStrictInitFlagsAndClassMask) && strictInitFlags) {
+			ramStaticFieldRef->flagsAndClass &= ~J9StaticFieldRefStrictInitFlagsAndClassMask;
+			ramStaticFieldRef->flagsAndClass |= strictInitFlags;
+		} else
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+		{
+			/* Check for <clinit> case. */
+			if ((resolveFlags & J9_RESOLVE_FLAG_CHECK_CLINIT) == J9_RESOLVE_FLAG_CHECK_CLINIT) {
+				J9Class *clazz = J9RAMSTATICFIELDREF_CLASS(ramStaticFieldRef);
+				if (clazz->initializeStatus == (UDATA)vmStruct) {
+					return (void *) -1;
+				}
 			}
 		}
 		if (J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_NO_CP_UPDATE)) {

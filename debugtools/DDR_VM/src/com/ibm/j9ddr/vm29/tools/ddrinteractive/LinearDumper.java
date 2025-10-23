@@ -599,19 +599,23 @@ public class LinearDumper implements IClassWalkCallbacks {
 									flags += "J9StaticFieldRefDouble, ";
 								}
 							} else {
-								if (J9JavaAccessFlags.J9StaticFieldRefTypeObject == (J9JavaAccessFlags.J9StaticFieldRefTypeMask & slotAddressOriginal)) {
+								long refType = (J9JavaAccessFlags.J9StaticFieldRefTypeMask & slotAddressOriginal);
+								if (refType == J9JavaAccessFlags.J9StaticFieldIsNullRestricted) {
+									refType = J9JavaAccessFlags.J9StaticFieldRefTypeObject;
+								}
+								if (J9JavaAccessFlags.J9StaticFieldRefTypeObject == refType) {
 									flags += "J9StaticFieldRefTypeObject, ";
-								} else if (J9JavaAccessFlags.J9StaticFieldRefTypeBoolean == (J9JavaAccessFlags.J9StaticFieldRefTypeMask & slotAddressOriginal)) {
+								} else if (J9JavaAccessFlags.J9StaticFieldRefTypeBoolean == refType) {
 									flags += "J9StaticFieldRefTypeBoolean, ";
-								} else if (J9JavaAccessFlags.J9StaticFieldRefTypeByte == (J9JavaAccessFlags.J9StaticFieldRefTypeMask & slotAddressOriginal)) {
+								} else if (J9JavaAccessFlags.J9StaticFieldRefTypeByte == refType) {
 									flags += "J9StaticFieldRefTypeByte, ";
-								} else if (J9JavaAccessFlags.J9StaticFieldRefTypeChar == (J9JavaAccessFlags.J9StaticFieldRefTypeMask & slotAddressOriginal)) {
+								} else if (J9JavaAccessFlags.J9StaticFieldRefTypeChar == refType) {
 									flags += "J9StaticFieldRefTypeChar, ";
-								} else if (J9JavaAccessFlags.J9StaticFieldRefTypeShort == (J9JavaAccessFlags.J9StaticFieldRefTypeMask & slotAddressOriginal)) {
+								} else if (J9JavaAccessFlags.J9StaticFieldRefTypeShort == refType) {
 									flags += "J9StaticFieldRefTypeShort, ";
-								} else if (J9JavaAccessFlags.J9StaticFieldRefTypeIntFloat == (J9JavaAccessFlags.J9StaticFieldRefTypeMask & slotAddressOriginal)) {
+								} else if (J9JavaAccessFlags.J9StaticFieldRefTypeIntFloat == refType) {
 									flags += "J9StaticFieldRefTypeIntFloat, ";
-								} else if (J9JavaAccessFlags.J9StaticFieldRefTypeLongDouble == (J9JavaAccessFlags.J9StaticFieldRefTypeMask & slotAddressOriginal)) {
+								} else if (J9JavaAccessFlags.J9StaticFieldRefTypeLongDouble == refType) {
 									flags += "J9StaticFieldRefTypeLongDouble, ";
 								}
 							}

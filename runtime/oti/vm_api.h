@@ -3187,11 +3187,15 @@ resolveStaticFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPool
  * @param cpIndex
  * @param resolveFlags
  * @param **resolvedField
+ * @param strictInitFlags strict field initialization state
  * @return void *
  */
 void *
-resolveStaticFieldRef(J9VMThread *vmStruct, J9Method *method, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags, J9ROMFieldShape **resolvedField);
-
+resolveStaticFieldRef(J9VMThread *vmStruct, J9Method *method, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags, J9ROMFieldShape **resolvedField
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+	, UDATA strictInitFlags
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+);
 
 /**
  * @brief

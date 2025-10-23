@@ -101,6 +101,11 @@ public class StrictFieldGenerator extends ClassLoader {
         return generateTestPutGetStrictStaticField(className, true, true, false, false);
     }
 
+    public static Class<?> generateTestStrictStaticFieldPutTwice() {
+        String className = "TestStrictStaticFieldPutTwice";
+        return generateTestPutGetStrictStaticField(className, false, true, false, true);
+    }
+
     private static Class<?> generateTestPutGetStrictStaticField(String className, boolean secondField, boolean put1, boolean get, boolean put2) {
         String fieldName = "i";
         String fieldDesc = "I";

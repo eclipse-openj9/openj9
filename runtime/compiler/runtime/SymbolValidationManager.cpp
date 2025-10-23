@@ -1316,7 +1316,11 @@ TR::SymbolValidationManager::validateStaticClassFromCPRecord(uint16_t classID, u
          // This relocation may be early enough that the referenced class is
          // loaded but not yet resolved at this index. Try to resolve the field
          // and get the class again.
-         _vmThread->javaVM->internalVMFunctions->resolveStaticFieldRef(_fej9->vmThread(), NULL, beholderCP, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME, NULL);
+         _vmThread->javaVM->internalVMFunctions->resolveStaticFieldRef(_fej9->vmThread(), NULL, beholderCP, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME, NULL
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+            , 0
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+         );
          clazz = TR_ResolvedJ9Method::getClassOfStaticFromCP(_fej9, beholderCP, cpIndex);
          }
       }

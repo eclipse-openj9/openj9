@@ -3680,7 +3680,9 @@ fail:
 		J9ROMFieldWalkState fieldWalkState = {0};
 		J9ROMFieldShape *field = romFieldsStartDo(romClass, &fieldWalkState);
 		while (NULL != field) {
-			if (J9_ARE_ALL_BITS_SET(field->modifiers, J9AccStatic | J9AccStrictInit)) {
+			if (J9_ARE_ALL_BITS_SET(field->modifiers, J9AccStatic | J9AccStrictInit)
+				&& J9_ARE_NO_BITS_SET(field->modifiers, J9FieldFlagConstant)
+			) {
 				ramClass->strictStaticFieldCounter += 1;
 			}
 			field = romFieldsNextDo(&fieldWalkState);

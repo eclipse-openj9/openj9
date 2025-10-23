@@ -1278,7 +1278,12 @@ done:
 		 * that we do not use a stale flagsAndClass with non-zero value, as doing so may cause the
 		 * the StaticFieldRefDouble bit check to succeed when it shouldn't.
 		 */
-		return ((UDATA)-1 != valueOffset) && (flagsAndClass > 0);
+		return ((UDATA)-1 != valueOffset) &&
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+			((flagsAndClass & ~J9StaticFieldRefStrictInitFlagsAndClassMask) > 0);
+#else /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+			(flagsAndClass > 0);
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 	}
 
 	/**

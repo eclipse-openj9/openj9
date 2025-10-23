@@ -2530,3 +2530,17 @@ J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_VALUE_CLASS.explanation=Please consult
 J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_VALUE_CLASS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
 J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_VALUE_CLASS.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
+
+J9NLS_VM_GET_STRICT_STATIC_NOT_SET=Strict static field is unset before first read.
+# START NON-TRANSLATABLE
+J9NLS_VM_GET_STRICT_STATIC_NOT_SET.explanation=Strict static fields must be set to an initial value before being read.
+J9NLS_VM_GET_STRICT_STATIC_NOT_SET.system_action=The JVM will throw an IllegalStateException.
+J9NLS_VM_GET_STRICT_STATIC_NOT_SET.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_PUT_FINAL_STRICT_STATIC_AFTER_READ=Final strict static field is set after read.
+# START NON-TRANSLATABLE
+J9NLS_VM_PUT_FINAL_STRICT_STATIC_AFTER_READ.explanation=The value of a final strict static field cannot change once it has been read.
+J9NLS_VM_PUT_FINAL_STRICT_STATIC_AFTER_READ.system_action=The JVM will throw an IllegalStateException.
+J9NLS_VM_PUT_FINAL_STRICT_STATIC_AFTER_READ.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
