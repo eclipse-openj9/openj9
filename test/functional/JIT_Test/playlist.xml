@@ -640,6 +640,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<testCaseName>jit_hwWarm</testCaseName>
 		<variations>
 			<variation>Mode110 -Xdump:java -Xjit:optlevel=warm,count=0</variation>
+			<variation>Mode501 -Xdump:java -Xjit:optlevel=warm,count=0</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
@@ -775,6 +776,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode610</variation>
 			<variation>Mode610 -Xshareclasses:none -Xjit:optLevel=hot</variation>
 			<variation>Mode610 -Xshareclasses:name=test_jitscc -XX:+JITServerUseAOTCache</variation>
+			<variation>Mode551</variation>
+			<variation>Mode551 -Xshareclasses:none -Xjit:optLevel=hot</variation>
+			<variation>Mode551 -Xshareclasses:name=test_jitscc -XX:+JITServerUseAOTCache</variation>
 		</variations>
 		<disables>
 			<disable>

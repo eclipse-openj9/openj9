@@ -26,6 +26,7 @@
 		<testCaseName>cmdLineTester_gcsuballoctests</testCaseName>
 		<variations>
 			<variation>Mode610</variation>
+			<variation>Mode551</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) \
