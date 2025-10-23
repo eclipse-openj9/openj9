@@ -7257,6 +7257,13 @@ done:
 				j9object_t value = *(j9object_t*)_sp;
 				/* Runtime check class compatibility */
 				if (false == VM_VMHelpers::objectArrayStoreAllowed(_currentThread, arrayref, value)) {
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+					J9ArrayClass *arrayClass = (J9ArrayClass *)J9OBJECT_CLAZZ(_currentThread, arrayref);
+					if ((NULL == value) && J9_IS_J9ARRAYCLASS_NULL_RESTRICTED(arrayClass)) {
+						rc = THROW_NPE;
+						return rc;
+					}
+#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 					rc = THROW_ARRAY_STORE;
 				} else {
 					VM_ValueTypeHelpers::storeFlattenableArrayElement(_currentThread, _objectAccessBarrier, arrayref, index, value);
