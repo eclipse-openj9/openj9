@@ -52,7 +52,7 @@ TraceException=Trc_Map_j9localmap_DebugLocalBitsForPC_GlobalBufferFailure Noenv 
 TraceException=Trc_Map_debugMapLocalSet_WalkOffEndOfBytecodeArray Noenv Overhead=1 Level=1 Template="debugMapLocalSet - Walked off end of bytecode array"
 
 TraceEvent=Trc_Map_fixReturnBytecodes_Class Noenv Overhead=1 Level=3 Template="fixReturnBytecodes - %.*s"
-TraceException=Trc_Map_fixReturnBytecodes_MissingMaps Noenv Overhead=1 Level=1 Template="fixReturnBytecodes - Missing stack maps - %.*s.%.*s%.*s"
+TraceException=Trc_Map_fixReturnBytecodes_MissingMaps Noenv Obsolete Overhead=1 Level=1 Template="fixReturnBytecodes - Missing stack maps - %.*s.%.*s%.*s"
 
 TraceException=Trc_Map_fixReturnBytecodesInMethod_AllocationFailure Noenv Overhead=1 Level=1 Template="fixReturnBytecodesInMethod - Fix returns buffer allocation failure, wanted %d bytes"
 

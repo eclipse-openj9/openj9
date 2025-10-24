@@ -27,32 +27,32 @@ TraceEvent=Trc_BCV_VMInitStages_Event1 Obsolete Overhead=1 Level=1 Template="Tra
 
 TraceEntry=Trc_BCV_simulateStack_Entry Overhead=1 Level=3 Template="simulateStack"
 TraceException=Trc_BCV_simulateStack_verifyError Overhead=1 Level=1 Template="simulateStack - verifyError pc = %x, error = %x"
-TraceEvent=Trc_BCV_simulateStack_returnRewrite Overhead=1 Level=3 Template="simulateStack - return rewrite pc = %x, bc = %x"
+TraceEvent=Trc_BCV_simulateStack_returnRewrite Obsolete Overhead=1 Level=3 Template="simulateStack - return rewrite pc = %x, bc = %x"
 TraceExit=Trc_BCV_simulateStack_Exit Overhead=1 Level=3 Template="simulateStack"
 
-TraceEvent=Trc_BCV_growPreverifyBuffer_grow Overhead=1 Level=1 Template="growPreverifyBuffer - from %x to %x"
-TraceException=Trc_BCV_growPreverifyBuffer_allocFailure Overhead=1 Level=1 Template="growPreverifyBuffer - alloc failure"
+TraceEvent=Trc_BCV_growPreverifyBuffer_grow Obsolete Overhead=1 Level=1 Template="growPreverifyBuffer - from %x to %x"
+TraceException=Trc_BCV_growPreverifyBuffer_allocFailure Obsolete Overhead=1 Level=1 Template="growPreverifyBuffer - alloc failure"
 
 TraceEvent=Trc_BCV_allocateVerifyBuffers_Event1 Overhead=1 Level=2 Template="allocateVerifyBuffers"
 TraceException=Trc_BCV_allocateVerifyBuffers_allocFailure Overhead=1 Level=1 Template="allocateVerifyBuffers - alloc failure"
 
 TraceEvent=Trc_BCV_freeVerifyBuffers_Event1 Overhead=1 Level=2 Template="freeVerifyBuffers"
 
-TraceEntry=Trc_BCV_j9bcv_verifyCreateStackAttributes_Entry Overhead=1 Level=1 Template="j9bcv_verifyCreateStackAttributes - class: %.*s"
-TraceExit=Trc_BCV_j9bcv_verifyCreateStackAttributes_Exit Overhead=1 Level=1 Template="j9bcv_verifyCreateStackAttributes"
+TraceEntry=Trc_BCV_j9bcv_verifyCreateStackAttributes_Entry Obsolete Overhead=1 Level=1 Template="j9bcv_verifyCreateStackAttributes - class: %.*s"
+TraceExit=Trc_BCV_j9bcv_verifyCreateStackAttributes_Exit Obsolete Overhead=1 Level=1 Template="j9bcv_verifyCreateStackAttributes"
 
-TraceEntry=Trc_BCV_checkStack_Entry Overhead=1 Level=3 Template="checkStack - method: %.*s%.*s"
-TraceExit=Trc_BCV_checkStack_Exit Overhead=1 Level=3 Template="checkStack"
+TraceEntry=Trc_BCV_checkStack_Entry Obsolete Overhead=1 Level=3 Template="checkStack - method: %.*s%.*s"
+TraceExit=Trc_BCV_checkStack_Exit Obsolete Overhead=1 Level=3 Template="checkStack"
 
 TraceEntry=Trc_STV_j9bcv_verifyClassStructure_Entry NoEnv Overhead=1 Level=2 Template="j9bcv_verifyClassStructure - class: %.*s"
 TraceException=Trc_STV_j9bcv_verifyClassStructure_MethodError NoEnv Overhead=1 Level=1 Template="j9bcv_verifyClassStructure - formatError %x, method = %x"
-TraceException=Trc_STV_j9bcv_verifyClassStructure_VerifyError NoEnv Overhead=1 Level=1 Template="j9bcv_verifyClassStructure - verifyError %x, romAddress offset = %x"
+TraceException=Trc_STV_j9bcv_verifyClassStructure_VerifyError NoEnv Obsolete Overhead=1 Level=1 Template="j9bcv_verifyClassStructure - verifyError %x, romAddress offset = %x"
 TraceException=Trc_STV_j9bcv_verifyClassStructure_ClassError NoEnv Overhead=1 Level=1 Template="j9bcv_verifyClassStructure - formatError %x, romAddress offset = %x"
 TraceExit=Trc_STV_j9bcv_verifyClassStructure_Exit NoEnv Overhead=1 Level=2 Template="j9bcv_verifyClassStructure"
 
 TraceException=Trc_STV_buildInstructionMap_VerifyError NoEnv Overhead=1 Level=1 Template="buildInstructionMap - formatError %x, method %x, pc = %x"
 
-TraceException=Trc_STV_checkBytecodeStructure_FormatError NoEnv Overhead=1 Level=1 Template="checkBytecodeStructure - formatError %x, method %x, pc = %x"
+TraceException=Trc_STV_checkBytecodeStructure_FormatError NoEnv Obsolete Overhead=1 Level=1 Template="checkBytecodeStructure - formatError %x, method %x, pc = %x"
 TraceException=Trc_STV_checkBytecodeStructure_VerifyError NoEnv Overhead=1 Level=1 Template="checkBytecodeStructure - verifyError %x, method %x, pc = %x"
 
 TraceException=Trc_STV_checkMethodStructure_FormatError NoEnv Overhead=1 Level=1 Template="checkMethodStructure - formatError %x, method %x"
@@ -114,7 +114,7 @@ TraceExit=Trc_RTV_findAndMatchStack_Exit Overhead=1 Level=3 Template="findAndMat
 TraceEntry=Trc_RTV_matchStack_Entry Overhead=1 Level=3 Template="matchStack - inlineMatch is %i"
 TraceException=Trc_RTV_matchStack_DepthMismatchException Overhead=1 Level=1 Template="matchStack - %.*s %.*s%.*s mismatched stack depths, live = %i, target = %i"
 TraceException=Trc_RTV_matchStack_IncompatibleClassException Overhead=1 Level=1 Template="matchStack - %.*s %.*s%.*s incompatible objects at offset %i, live = 0x%X, target = 0x%X"
-TraceException=Trc_RTV_matchStack_PrimitiveMismatchException Overhead=1 Level=1 Template="matchStack - %.*s %.*s%.*s incompatible primitives at offset %i, live = 0x%X, target = 0x%X"
+TraceException=Trc_RTV_matchStack_PrimitiveMismatchException Obsolete Overhead=1 Level=1 Template="matchStack - %.*s %.*s%.*s incompatible primitives at offset %i, live = 0x%X, target = 0x%X"
 TraceEvent=Trc_RTV_matchStack_InlineMatchEvent Overhead=1 Level=3 Template="matchStack - inlineMatch, overwrite live stack with target stack"
 TraceExit=Trc_RTV_matchStack_Exit Overhead=1 Level=3 Template="matchStack - returning %i"
 
@@ -166,7 +166,7 @@ TraceEvent=Trc_BCV_simulateStack_NewWalkFrom Overhead=1 Level=3 Template="simula
 TraceEvent=Trc_BCV_simulateStack_RewalkFrom Overhead=1 Level=3 Template="simulateStack - %.*s %.*s%.*s stopped at offset %i(0x%X), rewalk from offset %i(0x%X)"
 
 TraceEvent=Trc_BCV_bcvalloc_ExternalAlloc Overhead=1 Level=3 Template="bcvalloc - %.*s external alloc of %i bytes at 0x%X"
-TraceEvent=Trc_BCV_bcvalloc_ExternalFree Overhead=1 Level=3 Template="bcvalloc - %.*s external free at 0x%X"
+TraceEvent=Trc_BCV_bcvalloc_ExternalFree Obsolete Overhead=1 Level=3 Template="bcvalloc - %.*s external free at 0x%X"
 
 TraceEntry=Trc_BCV_j9bcv_verifyBytecodes_Entry Overhead=1 Level=2 Template="j9bcv_verifyBytecodes - %.*s "
 TraceEvent=Trc_BCV_j9bcv_verifyBytecodes_VerifyMethod Overhead=1 Level=3 Template="j9bcv_verifyBytecodes - %.*s %.*s%.*s method modifiers 0x%X"
