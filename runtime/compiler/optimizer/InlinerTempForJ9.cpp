@@ -5637,11 +5637,16 @@ TR_J9InlinerPolicy::suppressInliningRecognizedInitialCallee(TR_CallSite* callsit
             }
          break;
       case TR::java_lang_StringLatin1_indexOf:
+         if (cg->getSupportsInlineStringIndexOfString())
+            {
+            return true;
+            }
+         break;
       case TR::java_lang_StringUTF16_indexOf:
       case TR::java_lang_StringUTF16_indexOfUnsafe:
       case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringLatin1:
       case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringUTF16:
-         if (cg->getSupportsInlineStringIndexOfString())
+         if (cg->getSupportsInlineStringIndexOfString() && !comp->target().cpu.isPower())
             {
             return true;
             }
