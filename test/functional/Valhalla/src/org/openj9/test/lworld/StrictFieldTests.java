@@ -100,4 +100,43 @@ public class StrictFieldTests {
 			throw e.getException();
 		}
 	}
+
+	/* A strict instance field must be assigned by putfield before invoking an
+	 * instance initialization method of the direct superclass.
+	 */
+	@Test
+	static public void testInstanceStrictFieldSetBeforeSuperclassInit() throws Throwable {
+		Class<?> c = StrictFieldGenerator.generateTestInstanceStrictFieldSetBeforeSuperclassInit();
+		c.newInstance();
+	}
+
+	@Test(expectedExceptions = VerifyError.class, expectedExceptionsMessageRegExp = ".*<init>.*JBinvokespecial.*")
+	static public void testInstanceStrictFieldNotSetBeforeSuperclassInit() throws Throwable {
+		Class<?> c = StrictFieldGenerator.generateTestInstanceStrictFieldNotSetBeforeSuperclassInit();
+		c.newInstance();
+	}
+
+	@Test(expectedExceptions = VerifyError.class, expectedExceptionsMessageRegExp = ".*<init>.*JBinvokespecial.*")
+	static public void testInstanceStrictFieldNotSetBeforeSuperclassInitMulti() throws Throwable {
+		Class<?> c = StrictFieldGenerator.generateTestInstanceStrictFieldNotSetBeforeSuperclassInitMulti();
+		c.newInstance();
+	}
+
+	/* A strict final instance field may not be assigned after invoking
+	 * another instance initialization method of this.
+	 */
+	@Test(expectedExceptions = VerifyError.class, expectedExceptionsMessageRegExp = ".*<init>.*JBputfield.*")
+	static public void testInstanceStrictFinalFieldSetAfterThisInit() throws Throwable {
+		Class<?> c = StrictFieldGenerator.testInstanceStrictFinalFieldSetAfterThisInit();
+		c.newInstance();
+	}
+
+	/* A non-final strict instance field may be assigned after invoking
+	 * another instance initialization method of this.
+	 */
+	@Test
+	static public void testInstanceStrictNonFinalFieldSetAfterThisInit() throws Throwable {
+		Class<?> c = StrictFieldGenerator.generateTestInstanceStrictNonFinalFieldSetAfterThisInit();
+		c.newInstance();
+	}
 }

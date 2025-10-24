@@ -55,6 +55,9 @@ public class StrictFieldGenerator extends ClassLoader {
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
         mv.visitCode();
         mv.visitVarInsn(ALOAD, 0);
+        mv.visitInsn(ICONST_0);
+        mv.visitFieldInsn(PUTFIELD, className, fieldName, fieldDesc);
+        mv.visitVarInsn(ALOAD, 0);
         mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
         if (lateLarval) {
             mv.visitVarInsn(ALOAD, 0);
@@ -62,7 +65,7 @@ public class StrictFieldGenerator extends ClassLoader {
             mv.visitFieldInsn(PUTFIELD, className, fieldName, fieldDesc);
         }
         mv.visitInsn(RETURN);
-        mv.visitMaxs(lateLarval ? 2 : 1, 1);
+        mv.visitMaxs(2, 1);
         mv.visitEnd();
 
         if (unrestricted) {
@@ -144,6 +147,111 @@ public class StrictFieldGenerator extends ClassLoader {
         cw.visitEnd();
         byte[] bytes = cw.toByteArray();
 
+        return generator.defineClass(className, cw.toByteArray(), 0, bytes.length);
+    }
+
+    static Class<?> generateTestInstanceStrictFieldSetBeforeSuperclassInit() {
+        String className = "TestInstanceStrictFieldSetBeforeSuperclassInit";
+        return generateTestInstanceStrictField(className, true, false);
+    }
+
+    static Class<?> generateTestInstanceStrictFieldNotSetBeforeSuperclassInit() {
+        String className = "TestInstanceStrictFieldNotSetBeforeSuperclassInit";
+        return generateTestInstanceStrictField(className, false, false);
+    }
+
+    static Class<?> generateTestInstanceStrictFieldNotSetBeforeSuperclassInitMulti() {
+        String className = "TestInstanceStrictFieldNotSetBeforeSuperclassInitMulti";
+        return generateTestInstanceStrictField(className, true, true);
+    }
+
+    private static Class<?> generateTestInstanceStrictField(String className, boolean setField, boolean multipleFields) {
+        String fieldName = "i";
+        String fieldDesc = "I";
+        String fieldName2 = "i2";
+        String fieldName3 = "i3";
+
+        ClassWriter cw = new ClassWriter(0);
+        cw.visit(ValhallaUtils.VALUE_TYPE_CLASS_FILE_VERSION,
+            ACC_PUBLIC + ValhallaUtils.ACC_IDENTITY,
+            className, null, "java/lang/Object", null);
+
+        cw.visitField(ACC_STRICT_INIT, fieldName, fieldDesc, null, null);
+        if (multipleFields) {
+            cw.visitField(ACC_STRICT_INIT, fieldName2, fieldDesc, null, null);
+            cw.visitField(ACC_STRICT_INIT, fieldName3, fieldDesc, null, null);
+        }
+
+        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
+        mv.visitCode();
+        if (setField) {
+            mv.visitVarInsn(ALOAD, 0);
+            mv.visitInsn(ICONST_0);
+            mv.visitFieldInsn(PUTFIELD, className, fieldName, fieldDesc);
+        }
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+        mv.visitInsn(RETURN);
+        int maxStack = 1;
+        if (setField) {
+            maxStack = 2;
+        }
+        mv.visitMaxs(maxStack, 1);
+        mv.visitEnd();
+
+        cw.visitEnd();
+        byte[] bytes = cw.toByteArray();
+        return generator.defineClass(className, cw.toByteArray(), 0, bytes.length);
+    }
+
+    static Class<?> testInstanceStrictFinalFieldSetAfterThisInit() {
+        String className = "TestInstanceStrictFinalFieldSetAfterThisInit";
+        return generateTestInstanceStrictFieldThisInit(className, true);
+    }
+
+    static Class<?> generateTestInstanceStrictNonFinalFieldSetAfterThisInit() {
+        String className = "TestInstanceStrictNonFinalFieldSetAfterThisInit";
+        return generateTestInstanceStrictFieldThisInit(className, false);
+    }
+
+    private static Class<?> generateTestInstanceStrictFieldThisInit(String className, boolean finalField) {
+        String fieldName = "i";
+        String fieldDesc = "I";
+        int fieldFlags = ACC_STRICT_INIT | (finalField ? ACC_FINAL : 0);
+
+        ClassWriter cw = new ClassWriter(0);
+        cw.visit(ValhallaUtils.VALUE_TYPE_CLASS_FILE_VERSION,
+            ACC_PUBLIC + ValhallaUtils.ACC_IDENTITY,
+            className, null, "java/lang/Object", null);
+
+        cw.visitField(fieldFlags, fieldName, fieldDesc, null, null);
+
+        /* <init> calls <init>(I) to do the field initialization. */
+        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
+        mv.visitCode();
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitIntInsn(BIPUSH, 0);
+        mv.visitMethodInsn(INVOKESPECIAL, className, "<init>", "(I)V", false);
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitVarInsn(BIPUSH, 1);
+        mv.visitFieldInsn(PUTFIELD, className, fieldName, fieldDesc);
+        mv.visitInsn(RETURN);
+        mv.visitMaxs(2, 1);
+        mv.visitEnd();
+
+        /* <init>(I) does the field initialization and then calls superclass's <init>. */
+        mv = cw.visitMethod(ACC_PUBLIC, "<init>", "(I)V", null, null);
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitVarInsn(ILOAD, 1);
+        mv.visitFieldInsn(PUTFIELD, className, fieldName, fieldDesc);
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+        mv.visitInsn(RETURN);
+        mv.visitMaxs(2, 2);
+        mv.visitEnd();
+
+        cw.visitEnd();
+        byte[] bytes = cw.toByteArray();
         return generator.defineClass(className, cw.toByteArray(), 0, bytes.length);
     }
 }
