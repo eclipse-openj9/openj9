@@ -94,6 +94,8 @@
 #define LOCK_NON_PRIMITIVE_ENTER_IGNORE_MASK              ((OBJECT_HEADER_LOCK_RECURSION_MASK & ~OBJECT_HEADER_LOCK_LAST_RECURSION_BIT) | OBJECT_HEADER_LOCK_RESERVED | OBJECT_HEADER_LOCK_FLC)
 #define LOCK_NON_PRIMITIVE_EXIT_IGNORE_MASK               (OBJECT_HEADER_LOCK_RECURSION_MASK | OBJECT_HEADER_LOCK_RESERVED | OBJECT_HEADER_LOCK_FLC)
 
+#define OPT_DETAILS "O^O PPC Evaluator: "
+
 extern TR::Register *addConstantToLong(TR::Node * node, TR::Register *srcReg, int64_t value, TR::Register *trgReg, TR::CodeGenerator *cg);
 extern TR::Register *addConstantToInteger(TR::Node * node, TR::Register *trgReg, TR::Register *srcReg, int32_t value, TR::CodeGenerator *cg);
 
@@ -6840,7 +6842,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
       }
 
    static int count = 0;
-   doInline = doInline && performTransformation(comp, "O^O <%3d> Inlining Allocation of %s [0x%p].\n", count++, node->getOpCode().getName(), node);
+   doInline = doInline && performTransformation(comp, "%s<%3d> Inlining Allocation of %s [0x%p].\n", OPT_DETAILS, count++, node->getOpCode().getName(), node);
 
    if (doInline)
       {
@@ -14841,7 +14843,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
 
          static bool disable = feGetEnv("TR_disableInlineIsAssignableFrom") != NULL;
          if (!disable &&
-             performTransformation(comp, "O^O PPC Evaluator: Specialize call to java/lang/Class.isAssignableFrom [%p].\n", node))
+             performTransformation(comp, "%sSpecialize call to java/lang/Class.isAssignableFrom [%p].\n", OPT_DETAILS, node))
             {
             resultReg = inlineIsAssignableFrom(node, cg);
             return true;
