@@ -138,7 +138,7 @@ sigUsr2Wrapper(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, voi
 	if (OMRPORT_SIG_VALUE_32 == infoType) {
 		rasAsyncPidInfo.siPid = *(U_32 *)infoValue;
 	} else if (OMRPORT_SIG_VALUE_64 == infoType) {
-		rasAsyncPidInfo.siPid = *(U_64 *)infoValue;
+		rasAsyncPidInfo.siPid = (UDATA)*(U_64 *)infoValue;
 	}
 	if (0 != rasAsyncPidInfo.siPid) {
 		/* siPidName needs to be freed after use. */
