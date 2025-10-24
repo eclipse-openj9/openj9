@@ -43,8 +43,7 @@ timeout(time: 6, unit: 'HOURS') {
                     }
                     String REPO_CACHE_DIR = params.REPO_CACHE_DIR ?: "${env.HOME}/openjdk_cache"
 
-                    checkout
-                        changelog: false,
+                    checkout changelog: false,
                         poll: false,
                         scm: [
                             $class: 'GitSCM',
@@ -88,7 +87,7 @@ timeout(time: 6, unit: 'HOURS') {
                                         case ~/.*\.bat/:
                                             switch (TYPE) {
                                                 case ~/.*CRLF line terminators.*/:
-                                                    # check for CRLF at EOF
+                                                    // check for CRLF at EOF
                                                     NEWLINES = sh (
                                                         script: "tail -c2 '${it}' | wc -l",
                                                         returnStdout: true
@@ -114,7 +113,7 @@ timeout(time: 6, unit: 'HOURS') {
                                                     BAD_FILES << "${it}"
                                                     break
                                                 default:
-                                                    # check for LF at EOF
+                                                    // check for LF at EOF
                                                     NEWLINES = sh (
                                                         script: "tail -c1 '${it}' | wc -l",
                                                         returnStdout: true
