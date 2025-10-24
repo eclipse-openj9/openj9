@@ -1341,6 +1341,11 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 					if (VM_VMHelpers::isTrustedFinalField(fieldID->field, fieldID->declaringClass->romClass)) {
 						new_flags |= MN_TRUSTED_FINAL;
 					}
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+					if (J9ROMFIELD_IS_NULL_RESTRICTED(romField)) {
+						new_flags |= MN_NULL_RESTRICTED;
+					}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 					romField = fieldID->field;
 
