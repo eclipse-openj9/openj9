@@ -863,7 +863,7 @@ JavaCoreDumpWriter::writeEventDrivenTitle(void)
 
 	_OutputStream.writeCharacters(" received\n");
 
-	if (0 != eventData->siPid) {
+	if ((NULL != eventData) && (0 != eventData->siPid)) {
 		_OutputStream.writeCharacters("1TISIGPID      Signalling process id ");
 		_OutputStream.writeInteger64(eventData->siPid, "%llu");
 		if (NULL != eventData->detailData) {
