@@ -11737,6 +11737,12 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
                                  _methodBeingCompiled->getMethodDetails().getMethod(),
                                  translationTime,
                                  compilationErrorNames[_methodBeingCompiled->_compErrCode]);
+            if (entry->isAotLoad())
+               {
+               TR_RelocationRuntime *reloRuntime = compiler->reloRuntime();
+               if (reloRuntime)
+                  TR_VerboseLog::write(" (%s)", reloRuntime->getReloErrorCodeName(reloRuntime->getReloErrorCode()));
+               }
             uintptr_t vmState = vmThread->omrVMThread->vmState;
             TR_VerboseLog::write(" VmState=0x%08.8x", (unsigned int)vmState);
             int jitPhase = (vmState >> 8) & 0xFF;
@@ -11747,12 +11753,6 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
                OMR::Optimizations jitPhaseOMROpt = static_cast<OMR::Optimizations>(jitPhase);
                TR_VerboseLog::write(" OptIdx=%d", compiler->getOptIndex());
                TR_VerboseLog::write(" OptName=%s", OMR::Optimizer::getOptimizationName(jitPhaseOMROpt));
-               }
-            if (entry->isAotLoad())
-               {
-               TR_RelocationRuntime *reloRuntime = compiler->reloRuntime();
-               if (reloRuntime)
-                  TR_VerboseLog::write(" (%s)", reloRuntime->getReloErrorCodeName(reloRuntime->getReloErrorCode()));
                }
             TR_VerboseLog::write(" memLimit=%zu KB", scratchSegmentProvider.allocationLimit() >> 10);
 
