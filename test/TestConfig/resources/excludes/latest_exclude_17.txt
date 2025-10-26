@@ -30,3 +30,9 @@ org.openj9.test.nestmates.NestAttributeTest:testGetNestMembersAPIInValidHostWron
 org.openj9.test.nestmates.NestAttributeTest:testGetNestMembersAPINestMemberWrongPackage NA generic-all
 org.openj9.test.nestmates.NestAttributeTest:testGetNestMembersAPINestMemberWrongNestHost NA generic-all
 org.openj9.test.nestmates.NestAttributeTest:testGetNestMembersAPINestMemberWrongNestHost2 NA generic-all
+
+# Excluded due to OpenJCEPlus FIPS 140-3 Strongly Enforced profile restriction
+jdk/dynalink/BeanLinkerTest.java
+jdk/dynalink/TrustedDynamicLinkerFactoryTest.java
+jdk/dynalink/UntrustedDynamicLinkerFactoryTest.java
+sun/security/mscapi/AccessKeyStore.java
