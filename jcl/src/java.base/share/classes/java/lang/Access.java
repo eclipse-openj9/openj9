@@ -542,11 +542,11 @@ final class Access implements JavaLangAccess {
 	/*[IF JAVA_SPEC_VERSION >= 20]*/
 	@Override
 	public void addEnableNativeAccessToAllUnnamed() {
-		/*[IF (JAVA_SPEC_VERSION >= 26) & !INLINE-TYPES]*/
+		/*[IF JAVA_SPEC_VERSION >= 26]*/
 		Module.addEnableNativeAccessToAllUnnamed();
-		/*[ELSE] (JAVA_SPEC_VERSION >= 26) & !INLINE-TYPES */
+		/*[ELSE] JAVA_SPEC_VERSION >= 26 */
 		Module.implAddEnableNativeAccessToAllUnnamed();
-		/*[ENDIF] (JAVA_SPEC_VERSION >= 26) & !INLINE-TYPES */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 26 */
 	}
 	/*[ELSE] JAVA_SPEC_VERSION >= 20 */
 	@Override
@@ -561,15 +561,15 @@ final class Access implements JavaLangAccess {
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
 	@Override
-	/*[IF (JAVA_SPEC_VERSION >= 26) & !INLINE-TYPES]*/
+	/*[IF JAVA_SPEC_VERSION >= 26]*/
 	public void addEnableNativeAccess(Module mod) {
 		mod.implAddEnableNativeAccess();
 	}
-	/*[ELSE] (JAVA_SPEC_VERSION >= 26) & !INLINE-TYPES */
+	/*[ELSE] JAVA_SPEC_VERSION >= 26 */
 	public Module addEnableNativeAccess(Module mod) {
 		return mod.implAddEnableNativeAccess();
 	}
-	/*[ENDIF] (JAVA_SPEC_VERSION >= 26) & !INLINE-TYPES */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 26 */
 
 	/*[IF (21 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24)]*/
 	@Override
@@ -995,7 +995,6 @@ final class Access implements JavaLangAccess {
 		return String.newStringWithLatin1Bytes(src);
 	}
 
-	/*[IF !INLINE-TYPES]*/
 	@Override
 	public void addEnableFinalMutationToAllUnnamed() {
 		Module.addEnableFinalMutationToAllUnnamed();
@@ -1020,6 +1019,5 @@ final class Access implements JavaLangAccess {
 	public boolean tryEnableFinalMutation(Module module) {
 		return module.tryEnableFinalMutation();
 	}
-	/*[ENDIF] !INLINE-TYPES */
 	/*[ENDIF] JAVA_SPEC_VERSION >= 26 */
 }

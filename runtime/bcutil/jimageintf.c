@@ -91,7 +91,11 @@ lookupSymbolsInJImageLib(J9PortLibrary *portLibrary, UDATA libJImageHandle)
 		j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_JIMAGE_INTF_LIBJIMAGE_SYMBOL_LOOKUP_FAILED, "JIMAGE_Close");
 		goto _end;
 	}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	rc = j9sl_lookup_name(libJImageHandle, "JIMAGE_FindResource", (UDATA *)&libJImageFindResource, "JPPPZP");
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	rc = j9sl_lookup_name(libJImageHandle, "JIMAGE_FindResource", (UDATA *)&libJImageFindResource, "JPPPPP");
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	if (0 != rc) {
 		j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_JIMAGE_INTF_LIBJIMAGE_SYMBOL_LOOKUP_FAILED, "JIMAGE_FindResource");
 		goto _end;
@@ -321,7 +325,15 @@ jimageFindResource(J9JImageIntf *jimageIntf, UDATA handle, const char *moduleNam
 		JImageLocationRef *locationRef = (JImageLocationRef *)j9mem_allocate_memory(sizeof(*locationRef), J9MEM_CATEGORY_CLASSES);
 
 		if (NULL != locationRef) {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			/* Valhalla enables --enable-preview by default at jvminit.c;
+			 * The parameter is_preview_mode is set to TRUE which might require change
+			 * if the Valhalla project is merged into openjdk head stream.
+			 */
+			*locationRef = libJImageFindResource(jimage, moduleName, name, TRUE, (jlong *)size);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			*locationRef = libJImageFindResource(jimage, moduleName, JIMAGE_VERSION_NUMBER, name, (jlong *)size);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			if (JIMAGE_NOT_FOUND != *(I_64 *)locationRef) {
 				*resourceLocation = (UDATA)locationRef;
 			} else {

@@ -32,8 +32,13 @@ typedef jlong JImageLocationRef;
 
 typedef JImageFile * (*libJImageOpenType)(const char *name, jint *error);
 typedef void (*libJImageCloseType)(JImageFile *jimage);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+typedef JImageLocationRef (*libJImageFindResourceType)(JImageFile *jimage,
+		const char *module_name, const char *name, BOOLEAN is_preview_mode, jlong *size);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 typedef JImageLocationRef (*libJImageFindResourceType)(JImageFile *jimage,
 		const char *module_name, const char *version, const char *name, jlong *size);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 typedef jlong (*libJImageGetResourceType)(JImageFile *jimage, JImageLocationRef location,
 		char *buffer, jlong size);
 #if JAVA_SPEC_VERSION < 26
