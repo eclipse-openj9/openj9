@@ -25,9 +25,9 @@ Submodules=j9vmutil,j9util,map
 DATFileName=J9TraceFormat.dat
 
 TraceEvent=Trc_trcengine_J9VMDllMain_Event1 Overhead=1 Level=1 NoEnv Template="Trace engine initialized for VM = %p"
-TraceEvent=Trc_trcengine_J9VMDllMain_Event2 Overhead=1 Level=1 Template="Trace engine terminating for VM = %p"
-TraceEvent=Trc_trcengine_reportTraceEvent_Event1 Overhead=1 Level=1 Template="Thread started VMthread = %p, name = %s"
-TraceEvent=Trc_trcengine_reportTraceEvent_Event2 Overhead=1 Level=1 Template="Thread stopped VMthread = %p, name = %s"
+TraceEvent=Trc_trcengine_J9VMDllMain_Event2 Obsolete Overhead=1 Level=1 Template="Trace engine terminating for VM = %p"
+TraceEvent=Trc_trcengine_reportTraceEvent_Event1 Obsolete Overhead=1 Level=1 Template="Thread started VMthread = %p, name = %s"
+TraceEvent=Trc_trcengine_reportTraceEvent_Event2 Obsolete Overhead=1 Level=1 Template="Thread stopped VMthread = %p, name = %s"
 TraceEvent=Trc_trcengine_checkMethod Overhead=1 Level=1 Template="Check for method match"
 TraceEvent=Trc_trcengine_reportThreadStart Overhead=1 Level=1 Template="Thread started VMthread = %p, name = %s, nativeID = %p"
 TraceEvent=Trc_trcengine_reportThreadEnd Overhead=1 Level=1 Template="Thread ended VMthread = %p, name = %s, nativeID = %p"
