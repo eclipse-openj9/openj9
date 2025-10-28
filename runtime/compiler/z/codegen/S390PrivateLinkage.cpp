@@ -1538,9 +1538,8 @@ getITableIterationsNumber(TR::Compilation * comp, TR::SymbolReference * methodSy
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    bool trace = comp->getOption(TR_TraceCG);
-   static bool disableITableIterationsAfterLastITableCacheCheck = feGetEnv("TR_DisableITableIterationsAfterLastITableCacheCheck") != NULL;
 
-   if (disableITableIterationsAfterLastITableCacheCheck)
+   if (comp->getOption(TR_DisableITableIterationsAfterLastITableCacheCheck))
       {
       if (trace)
          traceMsg(comp, "ITable iteration after lastITable check is disabled.\n");

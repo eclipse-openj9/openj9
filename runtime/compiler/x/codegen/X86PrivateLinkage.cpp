@@ -2920,7 +2920,8 @@ void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86Call
                                 interfaceClassReg, cg());
       }
 
-   if (comp()->getOption(TR_DisableITableIterationsAfterLastITableCacheCheck))
+   if (comp()->getOption(TR_DisableITableIterationsAfterLastITableCacheCheck) ||
+       (comp()->getOptLevel() <= warm && !comp()->getOption(TR_EnableITableIterationsAfterLastITableCacheCheckAtWarm)))
       {
       generateLongLabelInstruction(TR::InstOpCode::JNE4, callNode, lookupDispatchSnippetLabel, cg()); // PICBuilder needs this to have a 4-byte offset
       if (comp()->target().is32Bit())
