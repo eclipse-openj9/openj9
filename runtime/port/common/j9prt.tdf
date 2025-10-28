@@ -1629,11 +1629,11 @@ TraceException=Trc_PRT_sysinfo_get_CPU_utilization_statRetrievalFailed Obsolete 
 
 TraceEvent=Trc_PRT_j9nls_vprintf Obsolete Group=nlsmessage Overhead=1 Level=5 NoEnv Test Template="J9 VM NLS message: %s"
 
-TraceEntry=Trc_PRT_sysinfo_get_processor_description_Entered Group=j9sysinfo Overhead=1 Level=5 NoEnv Template="sysinfo_get_processor_description: desc = %p"
-TraceExit=Trc_PRT_sysinfo_get_processor_description_Exit Group=j9sysinfo Overhead=1 Level=5 NoEnv Template="sysinfo_get_processor_description: returning with %zd"
+TraceEntry=Trc_PRT_sysinfo_get_processor_description_Entered Obsolete Group=j9sysinfo Overhead=1 Level=5 NoEnv Template="sysinfo_get_processor_description: desc = %p"
+TraceExit=Trc_PRT_sysinfo_get_processor_description_Exit Obsolete Group=j9sysinfo Overhead=1 Level=5 NoEnv Template="sysinfo_get_processor_description: returning with %zd"
 
-TraceEntry=Trc_PRT_sysinfo_processor_has_feature_Entered Group=j9sysinfo Overhead=1 Level=5 NoEnv Template="sysinfo_processor_has_feature: desc = %p, feature = %d"
-TraceExit=Trc_PRT_sysinfo_processor_has_feature_Exit Group=j9sysinfo Overhead=1 Level=5 NoEnv Template="sysinfo_processor_has_feature: returning with %zu."
+TraceEntry=Trc_PRT_sysinfo_processor_has_feature_Entered Obsolete Group=j9sysinfo Overhead=1 Level=5 NoEnv Template="sysinfo_processor_has_feature: desc = %p, feature = %d"
+TraceExit=Trc_PRT_sysinfo_processor_has_feature_Exit Obsolete Group=j9sysinfo Overhead=1 Level=5 NoEnv Template="sysinfo_processor_has_feature: returning with %zu."
 
 TraceEntry=Trc_PRT_initializeHypervisorState_Entered Group=j9hypervisor Overhead=1 Level=4 NoEnv Template="initializeHypervisorState: Function entered."
 TraceException=Trc_PRT_initializeHypervisorState_initFailed Group=j9hypervisor Overhead=1 Level=1 NoEnv Template="initializeHypervisorState: Vendor specific initialization failed with error code = %i"
@@ -1644,7 +1644,7 @@ TraceException=Trc_PRT_sysinfo_get_cwd_oome Obsolete Group=j9sysinfo Overhead=1 
 TraceException=Trc_PRT_sysinfo_get_cwd_failed_unicode_to_utf8 Obsolete Group=j9sysinfo Overhead=1 Level=1 NoEnv Template="j9sysinfo_get_cwd: failed to convert unicode to utf8."
 
 TraceException=Trc_PRT_sysinfo_get_tmp_failed_gettemppathw Obsolete Group=j9sysinfo Overhead=1 Level=1 NoEnv Template="j9sysinfo_get_tmp: Get temporary directory failed. Error code = %d."
-TraceException=Trc_PRT_sysinfo_get_tmp_oome Group=j9sysinfo Overhead=1 Level=1 NoEnv Template="j9sysinfo_get_tmp: failed to allocate memory."
+TraceException=Trc_PRT_sysinfo_get_tmp_oome Obsolete Group=j9sysinfo Overhead=1 Level=1 NoEnv Template="j9sysinfo_get_tmp: failed to allocate memory."
 TraceException=Trc_PRT_sysinfo_get_tmp_failed_unicode_to_utf8 Obsolete Group=j9sysinfo Overhead=1 Level=1 NoEnv Template="j9sysinfo_get_tmp: failed to convert unicode to utf8."
 
 TraceEvent=Trc_PRT_signal_j9sig_asynchSignalReporter_woken_up_for_SIGXFSZ Obsolete Group=j9signal Overhead=1 Level=1 NoEnv Template="asynchSignalReporter: woken up for SIGXFSZ"
@@ -2092,16 +2092,16 @@ TraceEntry=Trc_PRT_vmem_get_process_memory_enter Obsolete Group=j9vmem Level=10 
 TraceException=Trc_PRT_vmem_get_process_memory_failed Obsolete Group=j9vmem Level=1 NoEnv Overhead=1 Template="j9vmem_get_process_memory_size %s failed errno=%zd"
 TraceExit=Trc_PRT_vmem_get_process_memory_exit Obsolete Group=j9vmem Level=10 NoEnv Overhead=1 Template="j9vmem_get_process_memory_size status = %d result = %llu"
 
-TraceEvent=Trc_PRT_sysinfo_get_processor_info_allocatedCPUs Group=j9sysinfo Overhead=1 Level=5 NoEnv Template="j9sysinfo_get_processor_info: allocated space for %i CPUs (including a global record)."
-TraceEvent=Trc_PRT_sysinfo_get_processor_info_retryCount Group=j9sysinfo Overhead=1 Level=5 NoEnv Template="j9sysinfo_get_processor_info: attempted obtaining CPU stats; retry count=%i."
-TraceException=Trc_PRT_sysinfo_get_processor_info_cpuCountUnstable Group=j9sysinfo Overhead=1 Level=1 NoEnv Template="j9sysinfo_get_processor_info: the CPU count is unstable."
+TraceEvent=Trc_PRT_sysinfo_get_processor_info_allocatedCPUs Obsolete Group=j9sysinfo Overhead=1 Level=5 NoEnv Template="j9sysinfo_get_processor_info: allocated space for %i CPUs (including a global record)."
+TraceEvent=Trc_PRT_sysinfo_get_processor_info_retryCount Obsolete Group=j9sysinfo Overhead=1 Level=5 NoEnv Template="j9sysinfo_get_processor_info: attempted obtaining CPU stats; retry count=%i."
+TraceException=Trc_PRT_sysinfo_get_processor_info_cpuCountUnstable Obsolete Group=j9sysinfo Overhead=1 Level=1 NoEnv Template="j9sysinfo_get_processor_info: the CPU count is unstable."
 
-TraceEntry=Trc_PRT_sysinfo_get_open_file_count_Entry Group=j9sysinfo Overhead=1 Level=5 NoEnv Template="j9sysinfo_get_open_file_count: Entry."
-TraceException=Trc_PRT_sysinfo_get_open_file_count_invalidArgRecvd Group=j9sysinfo Level=1 NoEnv Overhead=1 Template="j9sysinfo_get_open_file_count received invalid argument: %s."
-TraceException=Trc_PRT_sysinfo_get_open_file_count_failedOpeningProcFS Group=j9sysinfo Level=1 NoEnv Overhead=1 Template="j9sysinfo_get_open_file_count failed opening /proc = %d."
-TraceException=Trc_PRT_sysinfo_get_open_file_count_failedReadingProcFS Group=j9sysinfo Level=1 NoEnv Overhead=1 Template="j9sysinfo_get_open_file_count failed reading /proc = %d."
-TraceEvent=Trc_PRT_sysinfo_get_open_file_count_fileCount Group=j9sysinfo Overhead=1 Level=5 NoEnv Template="j9sysinfo_get_open_file_count files opened by this process=%llu."
-TraceExit=Trc_PRT_sysinfo_get_open_file_count_Exit Group=j9sysinfo Overhead=1 Level=5 NoEnv Template="j9sysinfo_get_open_file_count: Return = %d."
+TraceEntry=Trc_PRT_sysinfo_get_open_file_count_Entry Obsolete Group=j9sysinfo Overhead=1 Level=5 NoEnv Template="j9sysinfo_get_open_file_count: Entry."
+TraceException=Trc_PRT_sysinfo_get_open_file_count_invalidArgRecvd Obsolete Group=j9sysinfo Level=1 NoEnv Overhead=1 Template="j9sysinfo_get_open_file_count received invalid argument: %s."
+TraceException=Trc_PRT_sysinfo_get_open_file_count_failedOpeningProcFS Obsolete Group=j9sysinfo Level=1 NoEnv Overhead=1 Template="j9sysinfo_get_open_file_count failed opening /proc = %d."
+TraceException=Trc_PRT_sysinfo_get_open_file_count_failedReadingProcFS Obsolete Group=j9sysinfo Level=1 NoEnv Overhead=1 Template="j9sysinfo_get_open_file_count failed reading /proc = %d."
+TraceEvent=Trc_PRT_sysinfo_get_open_file_count_fileCount Obsolete Group=j9sysinfo Overhead=1 Level=5 NoEnv Template="j9sysinfo_get_open_file_count files opened by this process=%llu."
+TraceExit=Trc_PRT_sysinfo_get_open_file_count_Exit Obsolete Group=j9sysinfo Overhead=1 Level=5 NoEnv Template="j9sysinfo_get_open_file_count: Return = %d."
 
 TraceEntry=Trc_PRT_gs_params_init_Entry Group=j9ri Overhead=1 Level=1 NoEnv Template="j9gs_params_init: Entry with gsParams %p, gsControlBlock %p"
 TraceExit=Trc_PRT_gs_params_init_Exit Group=j9ri Overhead=1 Level=1 NoEnv Template="j9gs_params_init: Exit"
