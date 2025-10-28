@@ -37,6 +37,7 @@ j9jit_files(
 	env/J9ArithEnv.cpp
 	env/J9ClassEnv.cpp
 	env/J9CompilerEnv.cpp
+	env/J9ConstProvenanceGraph.cpp
 	env/J9CPU.cpp
 	env/J9DebugEnv.cpp
 	env/j9fieldsInfo.cpp

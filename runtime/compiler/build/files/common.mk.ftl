@@ -300,6 +300,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/env/J9ArithEnv.cpp \
     compiler/env/J9ClassEnv.cpp \
     compiler/env/J9CompilerEnv.cpp \
+    compiler/env/J9ConstProvenanceGraph.cpp \
     compiler/env/J9CPU.cpp \
     compiler/env/J9DebugEnv.cpp \
     compiler/env/J9IO.cpp \
