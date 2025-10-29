@@ -54,7 +54,7 @@ jobs:
     - name: Parse parameters
       env:
         args: ${{ github.event.comment.body }}
-      run: python3 TKG/scripts/testBot/runAqaArgParse.py $args 2> log.txt
+      run: python3 TKG/scripts/testBot/runAqaArgParse.py "$args" 2> log.txt
       id: argparse
     - name: Output log
       if: failure()
@@ -64,7 +64,7 @@ jobs:
         log="${log//'%'/'%25'}"
         log="${log//$'\n'/'%0A'}"
         log="${log//$'\r'/'%0D'}"
-        log="${log/$'`'/'\`'}"
+        log="${log//'`'/'\`'}"
         echo ::set-output name=log::$log
       id: output_log
     - name: Create error comment
@@ -73,13 +73,14 @@ jobs:
       with:
         github-token: ${{secrets.GITHUB_TOKEN}}
         script: |
-          comment_body = `
-          @${{ github.actor }}
-          \`\`\`
-          ${{ steps.output_log.outputs.log }}
-          \`\`\`
-          No builds were started.
-          `;
+          const log_content = `${{ steps.output_log.outputs.log }}`;
+          const comment_body = [
+            `@${{ github.actor }}`,
+            '```',
+            log_content,
+            '```',
+            'No builds were started.'
+          ].join('\n');
           github.issues.createComment({
             issue_number: context.issue.number,
             owner: context.repo.owner,
