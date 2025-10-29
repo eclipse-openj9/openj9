@@ -2971,7 +2971,8 @@ TR_J9InlinerPolicy::adjustFanInSizeInWeighCallSite(int32_t& weight,
 
       INLINE_fanInCallGraphFactor is an integer number divided by 100. This allows us to avoid using float numbers for specifying the factor.
       */
-      if (comp()->getMethodHotness() > warm)
+      static bool disableFanInAtHighOpt = feGetEnv("TR_disableFanInAtHighOpt") != NULL;
+      if (disableFanInAtHighOpt && comp()->getMethodHotness() > warm)
          return;
 
       uint32_t thresholdSize = (!comp()->getOption(TR_InlinerFanInUseCalculatedSize)) ? getJ9InitialBytecodeSize(callee, 0, comp()) : size;

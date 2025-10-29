@@ -196,7 +196,7 @@ int32_t J9::Options::_maxIprofilingCount = TR_DEFAULT_INITIAL_COUNT; // 3000
 int32_t J9::Options::_maxIprofilingCountInStartupMode = TR_QUICKSTART_INITIAL_COUNT; // 1000
 int32_t J9::Options::_iprofilerFailRateThreshold = 70; // percent 1-100
 int32_t J9::Options::_iprofilerFailHistorySize = 10; // percent 1-100
-int32_t J9::Options::_iprofilerFaninMethodMinSize = 50; // bytecodes
+int32_t J9::Options::_iprofilerFaninMethodMinSize = 30; // bytecodes
 
 int32_t J9::Options::_compYieldStatsThreshold = 1000; // usec
 int32_t J9::Options::_compYieldStatsHeartbeatPeriod = 0; // ms
