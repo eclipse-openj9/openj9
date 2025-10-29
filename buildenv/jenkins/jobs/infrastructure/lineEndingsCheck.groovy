@@ -112,6 +112,21 @@ timeout(time: 6, unit: 'HOURS') {
                                                     FAIL = true
                                                     BAD_FILES << "${it}"
                                                     break
+                                                case ~/.*EBCDIC text.*/:
+                                                    // Check for line end at EOF, which in EBCDIC may be (octal) 0025 or 0205:
+                                                    // Map them to LF so wc will recognize them.
+                                                    NEWLINES = sh (
+                                                        script: "tail -c1 '${it}' | tr '\025\205' '\n' | wc -l",
+                                                        returnStdout: true
+                                                    ).trim()
+                                                    if (NEWLINES == "1") {
+                                                        echo "Good text file: '${it}' type: '${TYPE}'"
+                                                    } else {
+                                                        echo "ERROR - should have final line terminator: '${it}' type: '${TYPE}'"
+                                                        FAIL = true
+                                                        BAD_FILES << "${it}"
+                                                    }
+                                                    break
                                                 default:
                                                     // check for LF at EOF
                                                     NEWLINES = sh (
