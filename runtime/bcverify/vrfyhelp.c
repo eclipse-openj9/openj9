@@ -489,9 +489,12 @@ isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDA
 		return (IDATA) TRUE;
 	}
 
-	/* only NULL is compatible with NULL */
-	if ( targetClass == BCV_BASE_TYPE_NULL ) {
-		return (IDATA) FALSE;
+	/* If the target class is a null type there is no need to continue
+	 * checking for arity compatibility. A null target class can be assigned
+	 * any arity class.
+	 */
+	if (BCV_BASE_TYPE_NULL == targetClass) {
+		return (IDATA) TRUE;
 	}
 
 	sourceArity = J9CLASS_ARITY_FROM_CLASS_ENTRY(sourceClass);
