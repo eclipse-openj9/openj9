@@ -325,6 +325,11 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 		omrthread_monitor_enter(vm->classTableMutex);
 	}
 	result = hashClassTableAtString(classLoader, (j9object_t) className, options);
+
+	if (!fastMode) {
+		omrthread_monitor_exit(vm->classTableMutex);
+	}
+
 #if defined(J9VM_OPT_SNAPSHOTS)
 	if ((NULL != result) && IS_RESTORE_RUN(vm)) {
 		if (!loadWarmClassFromSnapshot(currentThread, classLoader, result)) {
@@ -332,10 +337,6 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 		}
 	}
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
-	if (!fastMode) {
-		omrthread_monitor_exit(vm->classTableMutex);
-	}
-
 	if (NULL == result) {
 		J9Module **findResult = NULL;
 		J9Module *j9module = NULL;
@@ -923,6 +924,7 @@ waitForContendedLoadClass(J9VMThread* vmThread, J9ContendedLoadTableEntry *table
 	/* still have classTableMutex here */
 	Trc_VM_waitForContendedLoadClass_waited(vmThread, vmThread, tableEntry->classLoader, classNameLength, className, status);
 	foundClass = hashClassTableAt(tableEntry->classLoader, className, classNameLength, 0);
+	omrthread_monitor_exit(vm->classTableMutex);
 #if defined(J9VM_OPT_SNAPSHOTS)
 	if ((NULL != foundClass) && IS_RESTORE_RUN(vm)) {
 		if (!loadWarmClassFromSnapshot(vmThread, tableEntry->classLoader, foundClass)) {
@@ -930,7 +932,6 @@ waitForContendedLoadClass(J9VMThread* vmThread, J9ContendedLoadTableEntry *table
 		}
 	}
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
-	omrthread_monitor_exit(vm->classTableMutex);
 	internalAcquireVMAccess(vmThread);
 	Trc_VM_waitForContendedLoadClass_acquired_vm_access(vmThread, vmThread, tableEntry->classLoader, classNameLength, className);
 	for (i = 0; i < recursionCount; ++i) {
@@ -1185,6 +1186,9 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 
 	foundClass = hashClassTableAt(classLoader, className, classNameLength, options);
 	if (NULL != foundClass) {
+		if (!fastMode) {
+			omrthread_monitor_exit(vm->classTableMutex);
+		}
 #if defined(J9VM_OPT_SNAPSHOTS)
 		if (IS_RESTORE_RUN(vm)) {
 			if (!loadWarmClassFromSnapshot(vmThread, classLoader, foundClass)) {
@@ -1192,9 +1196,6 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 			}
 		}
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
-		if (!fastMode) {
-			omrthread_monitor_exit(vm->classTableMutex);
-		}
 	} else {
 		if (options & J9_FINDCLASS_FLAG_EXISTING_ONLY) {
 			if (!fastMode) {
