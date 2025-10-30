@@ -66,6 +66,7 @@ J9::Z::CHelperLinkage::CHelperLinkage(TR::CodeGenerator * codeGen,TR_LinkageConv
    setRegisterFlag(TR::RealRegister::GPR10, Preserved);
    setRegisterFlag(TR::RealRegister::GPR11, Preserved);
    setRegisterFlag(TR::RealRegister::GPR13, Preserved);
+   setRegisterFlag(TR::RealRegister::GPR15, Preserved);
 
 #if defined(ENABLE_PRESERVED_FPRS)
    // In case of 32bit Linux on Z, System Linkage only preserves FPR4 and FPR6. For all other targets, FPR8-FPR15 is
@@ -94,7 +95,6 @@ J9::Z::CHelperLinkage::CHelperLinkage(TR::CodeGenerator * codeGen,TR_LinkageConv
       setRegisterFlag(TR::RealRegister::GPR6, Preserved);
       setRegisterFlag(TR::RealRegister::GPR7, Preserved);
       setRegisterFlag(TR::RealRegister::GPR12, Preserved);
-      setRegisterFlag(TR::RealRegister::GPR15, Preserved);
 
       setReturnAddressRegister(TR::RealRegister::GPR14);
       setIntegerReturnRegister(TR::RealRegister::GPR2);
