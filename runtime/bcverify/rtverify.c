@@ -187,7 +187,7 @@ j9rtv_verifyBytecodes (J9BytecodeVerificationData *verifyData)
 
 			verifyData->errorModule = J9NLS_BCV_ERR_VERIFY_OUT_OF_MEMORY__MODULE;
 			verifyData->errorCode = J9NLS_BCV_ERR_VERIFY_OUT_OF_MEMORY__ID;
-		} else {
+		} else if (BCV_ERR_NOT_THROWABLE == result) {
 			verifyData->errorModule = J9NLS_BCV_ERR_NOT_THROWABLE__MODULE;
 			verifyData->errorCode = J9NLS_BCV_ERR_NOT_THROWABLE__ID;
 		}
@@ -2498,7 +2498,7 @@ _outOfMemoryError:
 
 /*
  * returns BCV_SUCCESS on success
- * returns BCV_FAIL on error
+ * returns BCV_ERR_NOT_THROWABLE on error
  * returns BCV_ERR_INSUFFICIENT_MEMORY on OOM
  */
 static IDATA
@@ -2552,7 +2552,7 @@ verifyExceptions (J9BytecodeVerificationData *verifyData)
 						(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(romMethod)),
 						J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(romMethod)),
 						i, J9UTF8_LENGTH(catchName), J9UTF8_DATA(catchName));
-					rc = BCV_FAIL;
+					rc = BCV_ERR_NOT_THROWABLE;
 					break;
 				}
 			}

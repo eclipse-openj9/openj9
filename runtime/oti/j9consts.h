@@ -603,6 +603,7 @@ extern "C" {
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 #define BCV_ERR_STRICT_FIELDS_UNASSIGNED                -37
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#define BCV_ERR_NOT_THROWABLE                           -38
 
 #define J9_GC_OBJ_HEAP_HOLE 0x1
 #define J9_GC_MULTI_SLOT_HOLE 0x1
