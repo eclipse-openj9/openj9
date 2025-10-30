@@ -23,6 +23,7 @@
 #include "optimizer/J9EstimateCodeSize.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/JSR292Methods.h"
+#include "env/J9ConstProvenanceGraph.hpp"
 #include "optimizer/PreExistence.hpp"
 #include "optimizer/J9CallGraph.hpp"
 #include "ilgen/IlGenRequest.hpp"
@@ -436,6 +437,14 @@ InterpreterEmulator::maintainStackForGetField()
                {
                auto value = TR::AnyConst::makeKnownObject(resultIndex);
                addRequiredConst(value);
+
+               if (!knot->isNull(resultIndex))
+                  {
+                  J9::ConstProvenanceGraph *cpg = comp()->constProvenanceGraph();
+                  cpg->addEdge(
+                     cpg->knownObject(baseObjectIndex),
+                     cpg->knownObject(resultIndex));
+                  }
                }
             }
          }
@@ -840,6 +849,10 @@ InterpreterEmulator::maintainStackForldc(int32_t cpIndex)
                TR::KnownObjectTable::Index koi = knot->getOrCreateIndexAt(location);
                push(new (trStackMemory()) KnownObjOperand(koi));
                debugTrace(tracer(), "aload known obj%d from ldc %d", koi, cpIndex);
+
+               J9::ConstProvenanceGraph *cpg = comp()->constProvenanceGraph();
+               cpg->addEdge(method(), cpg->knownObject(koi));
+
                return;
                }
             }
@@ -1061,6 +1074,13 @@ InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
                uintptr_t fieldAddress = comp()->fej9()->getReferenceFieldAt(receiverAddress, targetFieldOffset);
                resultIndex = knot->getOrCreateIndex(fieldAddress);
                result = new (trStackMemory()) MutableCallsiteTargetOperand(resultIndex, callSiteIndex);
+               }
+
+            if (resultIndex != TR::KnownObjectTable::UNKNOWN)
+               {
+               J9::ConstProvenanceGraph *cpg = comp()->constProvenanceGraph();
+               cpg->addEdge(
+                  cpg->knownObject(callSiteIndex), cpg->knownObject(resultIndex));
                }
             }
          }
@@ -1456,6 +1476,12 @@ InterpreterEmulator::updateKnotAndCreateCallSiteUsingInvokeCacheArray(TR_Resolve
       }
 
    TR_ResolvedMethod * targetMethod = fej9->targetMethodFromInvokeCacheArrayMemberNameObj(comp(), owningMethod, invokeCacheArray);
+
+   // The caller got invokeCacheArray from owningMethod.
+   J9::ConstProvenanceGraph *cpg = comp()->constProvenanceGraph();
+   cpg->addEdge(owningMethod, cpg->knownObject(idx));
+   cpg->addEdge(owningMethod, targetMethod);
+
    bool isInterface = false;
    bool isIndirectCall = false;
    TR::Method *interfaceMethod = 0;
