@@ -4450,7 +4450,12 @@ public final class Unsafe {
 
 	/*[IF INLINE-TYPES]*/
 	public final Object getAndSetReference(Object obj, long offset, Class<?> valueType, Object value) {
-		throw new Error("getAndSetReference() unimplemented"); //$NON-NLS-1$
+		for (;;) {
+			Object objectAtOffset = getReferenceVolatile(obj, offset);
+			if(compareAndSetReference(obj, offset, valueType, objectAtOffset, value)) {
+				return objectAtOffset;
+			}
+		}
 	}
 
 	public final Object getAndSetReferenceAcquire(Object obj, long offset, Class<?> valueType, Object value) {
