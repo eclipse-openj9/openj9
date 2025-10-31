@@ -637,11 +637,27 @@ bool TR::CompilationInfo::importantMethodForStartup(J9Method *method)
    }
 
 bool
-TR::CompilationInfo::isMethodIneligibleForAot(J9Method *method)
+TR::CompilationInfo::isMethodIneligibleForAot(J9Method *method, TR_Memory *trMemory)
    {
    const J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
    const J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
    J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
+   size_t classNameLength = J9UTF8_LENGTH(className);
+
+   TR::SimpleRegex *regex = TR::Options::getAOTCmdLineOptions()->getDontCompile();
+
+   if (regex)
+      {
+      char *name = (char*)trMemory->allocateMemory(classNameLength+1, stackAlloc); // TODO: find correct way to allocate
+      strncpy(name, (char*)J9UTF8_DATA(className), classNameLength);
+      name[classNameLength] = '\0';
+      if (TR::SimpleRegex::match(regex, name))
+         {
+         trMemory->freeMemory(name, stackAlloc);
+         return true;
+         }
+      trMemory->freeMemory(name, stackAlloc);
+      }
 
    bool disableJLI = true;
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
@@ -7667,7 +7683,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
                 || !entry->_oldStartPC)
 
             // Eligibility checks
-            && !_compInfo.isMethodIneligibleForAot(method)
+            && !_compInfo.isMethodIneligibleForAot(method, &trMemory)
             && (!TR::Options::getAOTCmdLineOptions()->getOption(TR_AOTCompileOnlyFromBootstrap)
                 || fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true)
             // Including this here has the effect of forbidding JITServer AOT cache compilations
