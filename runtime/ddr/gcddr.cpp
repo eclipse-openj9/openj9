@@ -71,6 +71,7 @@ GC_DdrDebugLink(MM_MemoryPoolSplitAddressOrderedList)
 GC_DdrDebugLink(MM_RealtimeMarkingScheme)
 GC_DdrDebugLink(MM_ScavengerForwardedHeader)
 GC_DdrDebugLink(MM_StringTable)
+GC_DdrDebugLink(MM_SublistPuddle)
 
 #if defined(J9VM_GC_FINALIZATION)
 GC_DdrDebugLink(GC_FinalizeListManager)
