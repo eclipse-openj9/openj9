@@ -2417,7 +2417,7 @@ J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND.system_action=The JVM will not gener
 J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND.user_response=Set the required environment variables.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH=N\u00e1zev t\u0159\u00eddy p\u0159esahuje maxim\u00e1ln\u00ed d\u00e9lku
+J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH=D\u00e9lka n\u00e1zvu t\u0159\u00eddy p\u0159ekra\u010duje limit 65535.
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.explanation=Class name cannot be longer than 65535 characters.
 J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.system_action=The JVM will throw a ClassNotFoundException.
@@ -2499,4 +2499,18 @@ J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.sampl
 J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.explanation=The specified class or interface is not visible
 J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.system_action=The JVM will throw an IllegalAccessError.
 J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CLASS_LOADING_ERROR_STRICT_STATIC_FIELDS_UNSET=P\u0159\u00edsn\u00e1 statick\u00e1 pole se po inicializaci %2$.*1$s nenastav\u00ed.
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_STRICT_STATIC_FIELDS_UNSET.explanation=All strict static fields must be set before the class is initialized.
+J9NLS_VM_CLASS_LOADING_ERROR_STRICT_STATIC_FIELDS_UNSET.system_action=The JVM will throw an IllegalStateException.
+J9NLS_VM_CLASS_LOADING_ERROR_STRICT_STATIC_FIELDS_UNSET.user_response=Set all strict static fields prior to initialization.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_UNSUPPORTED_OPTION=N\u00e1sleduj\u00edc\u00ed mo\u017enost: %1$s nen\u00ed v tomto JVM podporov\u00e1na.
+# START NON-TRANSLATABLE
+J9NLS_VM_UNSUPPORTED_OPTION.explanation=Option provided is not supported.
+J9NLS_VM_UNSUPPORTED_OPTION.system_action=The JVM will not start.
+J9NLS_VM_UNSUPPORTED_OPTION.user_response=Remove the unsupported option.
 # END NON-TRANSLATABLE

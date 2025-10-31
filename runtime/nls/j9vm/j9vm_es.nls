@@ -2417,7 +2417,7 @@ J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND.system_action=The JVM will not gener
 J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND.user_response=Set the required environment variables.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH=El nombre de la clase excede la longitud m\u00e1xima
+J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH=La longitud del nombre de clase excede el l\u00edmite de 65535.
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.explanation=Class name cannot be longer than 65535 characters.
 J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.system_action=The JVM will throw a ClassNotFoundException.
@@ -2499,4 +2499,18 @@ J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.sampl
 J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.explanation=The specified class or interface is not visible
 J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.system_action=The JVM will throw an IllegalAccessError.
 J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_SUPERCLASS_OR_INTERFACE_JAVA11_PLUS.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CLASS_LOADING_ERROR_STRICT_STATIC_FIELDS_UNSET=Los campos est\u00e1ticos estrictos se desactivan tras la inicializaci\u00f3n de %2$.*1$s.
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_STRICT_STATIC_FIELDS_UNSET.explanation=All strict static fields must be set before the class is initialized.
+J9NLS_VM_CLASS_LOADING_ERROR_STRICT_STATIC_FIELDS_UNSET.system_action=The JVM will throw an IllegalStateException.
+J9NLS_VM_CLASS_LOADING_ERROR_STRICT_STATIC_FIELDS_UNSET.user_response=Set all strict static fields prior to initialization.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_UNSUPPORTED_OPTION=La siguiente opci\u00f3n: %1$s no est\u00e1 soportada en esta JVM.
+# START NON-TRANSLATABLE
+J9NLS_VM_UNSUPPORTED_OPTION.explanation=Option provided is not supported.
+J9NLS_VM_UNSUPPORTED_OPTION.system_action=The JVM will not start.
+J9NLS_VM_UNSUPPORTED_OPTION.user_response=Remove the unsupported option.
 # END NON-TRANSLATABLE
