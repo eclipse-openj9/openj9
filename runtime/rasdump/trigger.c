@@ -1297,59 +1297,59 @@ rasDumpHookClassLoad(J9HookInterface** hookInterface, UDATA eventNum, void* even
 
 
 static void
-rasDumpHookExceptionThrow(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
+rasDumpHookExceptionThrow(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
 {
 	J9VMExceptionThrowEvent *data = eventData;
-	J9VMThread* vmThread = data->currentThread;
-	J9JavaVM * vm = vmThread->javaVM;
+	J9VMThread *vmThread = data->currentThread;
+	J9JavaVM *vm = vmThread->javaVM;
 	j9object_t exception = data->exception;
-	jobject globalRef = vm->internalVMFunctions->j9jni_createGlobalRef((JNIEnv *) vmThread, exception, JNI_FALSE);
+	jobject globalRef = vm->internalVMFunctions->j9jni_createGlobalRef((JNIEnv *)vmThread, exception, JNI_FALSE);
 
 	if (NULL != globalRef) {
-		J9UTF8* className = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(vmThread, exception)->romClass);
+		J9UTF8 *className = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(vmThread, exception)->romClass);
 		J9RASdumpEventData dumpData = { 0 };
 
 		dumpData.detailLength = J9UTF8_LENGTH(className);
 		dumpData.detailData = (char *)J9UTF8_DATA(className);
-		dumpData.exceptionRef = (j9object_t*) globalRef;
+		dumpData.exceptionRef = (j9object_t *)globalRef;
 
 		vm->j9rasDumpFunctions->triggerDumpAgents(
-			vm,
-			vmThread,
-			J9RAS_DUMP_ON_EXCEPTION_THROW,
-			&dumpData);
+				vm,
+				vmThread,
+				J9RAS_DUMP_ON_EXCEPTION_THROW,
+				&dumpData);
 
-		data->exception = *((j9object_t*) globalRef);
-		vm->internalVMFunctions->j9jni_deleteGlobalRef((JNIEnv *) vmThread, globalRef, JNI_FALSE);
+		data->exception = *(j9object_t *)globalRef;
+		vm->internalVMFunctions->j9jni_deleteGlobalRef((JNIEnv *)vmThread, globalRef, JNI_FALSE);
 	}
 }
 
 
 static void
-rasDumpHookExceptionCatch(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
+rasDumpHookExceptionCatch(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
 {
 	J9VMExceptionCatchEvent *data = eventData;
-	J9VMThread* vmThread = data->currentThread;
-	J9JavaVM * vm = vmThread->javaVM;
+	J9VMThread *vmThread = data->currentThread;
+	J9JavaVM *vm = vmThread->javaVM;
 	j9object_t exception = data->exception;
-	jobject globalRef = vm->internalVMFunctions->j9jni_createGlobalRef((JNIEnv *) vmThread, exception, JNI_FALSE);
+	jobject globalRef = vm->internalVMFunctions->j9jni_createGlobalRef((JNIEnv *)vmThread, exception, JNI_FALSE);
 
 	if (NULL != globalRef) {
-		J9UTF8* className = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(vmThread, exception)->romClass);
+		J9UTF8 *className = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(vmThread, exception)->romClass);
 		J9RASdumpEventData dumpData = { 0 };
 
 		dumpData.detailLength = J9UTF8_LENGTH(className);
 		dumpData.detailData = (char *)J9UTF8_DATA(className);
-		dumpData.exceptionRef = (j9object_t*) globalRef;
+		dumpData.exceptionRef = (j9object_t *)globalRef;
 
 		vm->j9rasDumpFunctions->triggerDumpAgents(
-			vm,
-			vmThread,
-			J9RAS_DUMP_ON_EXCEPTION_CATCH,
-			&dumpData);
+				vm,
+				vmThread,
+				J9RAS_DUMP_ON_EXCEPTION_CATCH,
+				&dumpData);
 
-		data->exception = *((j9object_t*) globalRef);
-		vm->internalVMFunctions->j9jni_deleteGlobalRef((JNIEnv *) vmThread, globalRef, JNI_FALSE);
+		data->exception = *(j9object_t *)globalRef;
+		vm->internalVMFunctions->j9jni_deleteGlobalRef((JNIEnv *)vmThread, globalRef, JNI_FALSE);
 	}
 }
 
@@ -1397,30 +1397,30 @@ rasDumpHookMonitorContendedEnter(J9HookInterface** hookInterface, UDATA eventNum
 
 
 static void
-rasDumpHookExceptionDescribe(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
+rasDumpHookExceptionDescribe(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
 {
 	J9VMExceptionDescribeEvent *data = eventData;
-	J9VMThread* vmThread = data->currentThread;
-	J9JavaVM * vm = vmThread->javaVM;
+	J9VMThread *vmThread = data->currentThread;
+	J9JavaVM *vm = vmThread->javaVM;
 	j9object_t exception = data->exception;
-	jobject globalRef = vm->internalVMFunctions->j9jni_createGlobalRef((JNIEnv *) vmThread, exception, JNI_FALSE);
+	jobject globalRef = vm->internalVMFunctions->j9jni_createGlobalRef((JNIEnv *)vmThread, exception, JNI_FALSE);
 
 	if (NULL != globalRef) {
-		J9UTF8* className = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(vmThread, exception)->romClass);
+		J9UTF8 *className = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(vmThread, exception)->romClass);
 		J9RASdumpEventData dumpData = { 0 };
 
 		dumpData.detailLength = J9UTF8_LENGTH(className);
 		dumpData.detailData = (char *)J9UTF8_DATA(className);
-		dumpData.exceptionRef = (j9object_t*) globalRef;
+		dumpData.exceptionRef = (j9object_t *)globalRef;
 
 		vm->j9rasDumpFunctions->triggerDumpAgents(
-			vm,
-			vmThread,
-			J9RAS_DUMP_ON_EXCEPTION_DESCRIBE,
-			&dumpData);
+				vm,
+				vmThread,
+				J9RAS_DUMP_ON_EXCEPTION_DESCRIBE,
+				&dumpData);
 
-		data->exception = *((j9object_t*) globalRef);
-		vm->internalVMFunctions->j9jni_deleteGlobalRef((JNIEnv *) vmThread, globalRef, JNI_FALSE);
+		data->exception = *(j9object_t *)globalRef;
+		vm->internalVMFunctions->j9jni_deleteGlobalRef((JNIEnv *)vmThread, globalRef, JNI_FALSE);
 	}
 }
 
@@ -1551,23 +1551,22 @@ rasDumpHookClassesUnload(J9HookInterface** hookInterface, UDATA eventNum, void* 
 }
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
-#define CDEV_CURRENT_FUNCTION rasDumpHookExceptionSysthrow
 static void
-rasDumpHookExceptionSysthrow(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
+rasDumpHookExceptionSysthrow(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
 {
-	J9VMExceptionThrowEvent *data = eventData;
-	J9VMThread* vmThread = data->currentThread;
-	J9JavaVM * vm = vmThread->javaVM;
-	J9Object* exception = data->exception;
-	jobject globalRef = vm->internalVMFunctions->j9jni_createGlobalRef((JNIEnv *) vmThread, exception, JNI_FALSE);
+	J9VMExceptionSysThrowEvent *data = eventData;
+	J9VMThread *vmThread = data->currentThread;
+	J9JavaVM *vm = vmThread->javaVM;
+	j9object_t exception = data->exception;
+	jobject globalRef = vm->internalVMFunctions->j9jni_createGlobalRef((JNIEnv *)vmThread, exception, JNI_FALSE);
 
 	if (NULL != globalRef) {
-		J9UTF8* className = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(vmThread, exception)->romClass);
+		J9UTF8 *className = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(vmThread, exception)->romClass);
 		J9RASdumpEventData dumpData = { 0 };
 
 		dumpData.detailLength = J9UTF8_LENGTH(className);
 		dumpData.detailData = (char *)J9UTF8_DATA(className);
-		dumpData.exceptionRef = (J9Object **) globalRef;
+		dumpData.exceptionRef = (j9object_t *)globalRef;
 
 		vm->j9rasDumpFunctions->triggerDumpAgents(
 				vm,
@@ -1575,12 +1574,10 @@ rasDumpHookExceptionSysthrow(J9HookInterface** hookInterface, UDATA eventNum, vo
 				J9RAS_DUMP_ON_EXCEPTION_SYSTHROW,
 				&dumpData);
 
-		data->exception = *((J9Object **) globalRef);
-		vm->internalVMFunctions->j9jni_deleteGlobalRef((JNIEnv *) vmThread, globalRef, JNI_FALSE);
+		data->exception = *(j9object_t *)globalRef;
+		vm->internalVMFunctions->j9jni_deleteGlobalRef((JNIEnv *)vmThread, globalRef, JNI_FALSE);
 	}
 }
-
-#undef CDEV_CURRENT_FUNCTION
 
 static void
 rasDumpHookCorruptCache(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
