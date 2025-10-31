@@ -249,6 +249,26 @@ TR::S390J9CallSnippet::generateInvokeExactJ2IThunk(TR::Node * callNode, int32_t 
    return thunk;
    }
 
+uint8_t *
+TR::S390J9CallSnippet::S390flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg)
+   {
+
+   TR::Linkage *linkage = cg->getLinkage(callNode->getSymbol()->castToMethodSymbol()->getLinkageConvention());
+
+   bool isJitDispatchJ9Method = callNode->isJitDispatchJ9MethodCall(cg->comp());
+   int32_t argStart = callNode->getFirstArgumentIndex();
+   int32_t intArgNum = 0;
+   bool rightToLeft = linkage->getRightToLeft() &&
+        // we want the arguments for induceOSR to be passed from left to right as in any other non-helper call
+        !callNode->getSymbolReference()->isOSRInductionHelper() && !isJitDispatchJ9Method;
+
+   if (isJitDispatchJ9Method) {
+      argStart++;
+   }
+
+   return S390flushArgumentsToStackHelper(buffer, callNode, argSize, cg, argStart, intArgNum, rightToLeft, linkage);
+   }
+
 
 uint8_t *
 TR::S390J9CallSnippet::emitSnippetBody()
