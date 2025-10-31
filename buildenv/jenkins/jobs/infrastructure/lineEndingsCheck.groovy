@@ -113,10 +113,10 @@ timeout(time: 6, unit: 'HOURS') {
                                                     BAD_FILES << "${it}"
                                                     break
                                                 case ~/.*EBCDIC text.*/:
-                                                    // Check for line end at EOF, which in EBCDIC may be (octal) 0025 or 0205:
+                                                    // Check for line end at EOF, which, in EBCDIC, may be (octal) 0045 or 0205:
                                                     // Map them to LF so wc will recognize them.
                                                     NEWLINES = sh (
-                                                        script: "tail -c1 '${it}' | tr '\025\205' '\n' | wc -l",
+                                                        script: "tail -c1 '${it}' | tr '\045\205' '\n' | wc -l",
                                                         returnStdout: true
                                                     ).trim()
                                                     if (NEWLINES == "1") {
