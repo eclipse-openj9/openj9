@@ -497,7 +497,7 @@ define({RESTORE_HIWORD_REGS},{lmh r0,r15,JIT_GPR_SAVE_SLOT(16)})
 })
 
 ifdef({J9ZOS390},{
-define({JUMP_REG},r15)
+define({JUMP_REG},r4)
 define({FIRST_REG},r8)
 define({LAST_REG},r15)
 define({RELOAD_SSP},{
