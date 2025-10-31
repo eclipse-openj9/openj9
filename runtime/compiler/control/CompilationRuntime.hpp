@@ -956,7 +956,7 @@ public:
    bool importantMethodForStartup(J9Method *method);
    bool shouldDowngradeCompReq(TR_MethodToBeCompiled *entry);
 
-   bool isMethodIneligibleForAot(J9Method *method);
+   bool isMethodIneligibleForAot(J9Method *method, TR_Memory *trMemory);
 
    int32_t computeDynamicDumbInlinerBytecodeSizeCutoff(TR::Options *options);
    TR_YesNoMaybe shouldActivateNewCompThread();
