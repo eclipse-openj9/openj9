@@ -83,6 +83,8 @@
 #include "z/codegen/SystemLinkage.hpp"
 #include "runtime/J9Profiler.hpp"
 
+#define OPT_DETAILS "O^O J9 TREE EVALUATOR: "
+
 /*
  * List of functions that is needed by J9 Specific Evaluators that were moved from codegen.
  * Since other evaluators in codegen still calls these, extern here in order to call them.
@@ -2693,7 +2695,7 @@ J9::Z::TreeEvaluator::inlineUTF16BEEncodeSIMD(TR::Node *node, TR::CodeGenerator 
    TR::Node* inputLenNode = node->getChild(2);
 
    // Optimize the constant length case
-   bool isLenConstant = inputLenNode->getOpCode().isLoadConst() && performTransformation(comp, "O^O [%p] Reduce input length to constant.\n", inputLenNode);
+   bool isLenConstant = inputLenNode->getOpCode().isLoadConst() && performTransformation(comp, "%s[%p] Reduce input length to constant.\n", OPT_DETAILS, inputLenNode);
 
    if (isLenConstant)
       {
@@ -10872,7 +10874,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    // We must be conservative and only do inline allocation if the first call (in LocalOpts.cpp) has succeeded and we have the litPoolBaseChild added.
    // Refer to defects 161084 and 87089
    if (cg->doInlineAllocate(node)
-            && performTransformation(comp, "O^O Inlining Allocation of %s [0x%p].\n", node->getOpCode().getName(), node))
+            && performTransformation(comp, "%sInlining Allocation of %s [0x%p].\n", OPT_DETAILS, node->getOpCode().getName(), node))
       {
       objectSize = comp->canAllocateInline(node, classAddress);
       isVariableLen = (objectSize == 0);
