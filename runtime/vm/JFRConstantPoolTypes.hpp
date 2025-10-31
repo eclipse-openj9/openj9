@@ -1626,12 +1626,16 @@ done:
 				}
 			}
 			entry->classLoaderData = (U_64)classLoader;
-			entry->classCount = hashTableGetCount(classLoader->classHashTable);
+			if (classLoader == _vm->anonClassLoader) {
+				entry->classCount = _vm->anonClassCount;
+			} else {
+				entry->classCount = classLoader->loadedClassCount;
+			}
 
 			J9MemorySegment *segment = classLoader->classSegments;
 			while (NULL != segment) {
 				entry->chunkSize += segment->heapAlloc - segment->baseAddress;
-				segment = segment->nextSegment;
+				segment = segment->nextSegmentInClassLoader;
 			}
 
 			entry->blockSize = (I_64)entry->chunkSize;
