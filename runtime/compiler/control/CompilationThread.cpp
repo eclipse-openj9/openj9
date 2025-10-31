@@ -637,11 +637,21 @@ bool TR::CompilationInfo::importantMethodForStartup(J9Method *method)
    }
 
 bool
-TR::CompilationInfo::isMethodIneligibleForAot(J9Method *method)
+TR::CompilationInfo::isMethodIneligibleForAot(J9Method *method, TR_Memory *trMemory, TR_J9VMBase *fe)
    {
    const J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
    const J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
    J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
+
+   if (TR::Options::getAOTCmdLineOptions() && TR::Options::getAOTCmdLineOptions()->getDontCompile())
+      {
+      TR::SimpleRegex *regex = TR::Options::getAOTCmdLineOptions()->getDontCompile();
+      const char *name = ((TR_J9VM*)fe)->sampleSignature((TR_OpaqueMethodBlock*) method, NULL, 0, trMemory);
+      if (name && TR::SimpleRegex::match(regex, name))
+         {
+         return true;
+         }
+      }
 
    bool disableJLI = true;
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
@@ -658,9 +668,9 @@ TR::CompilationInfo::isMethodIneligibleForAot(J9Method *method)
    if (J9UTF8_LENGTH(className) == 36 &&
       0 == memcmp(utf8Data(className), "com/ibm/rmi/io/FastPathForCollocated", 36))
       {
-      J9UTF8 *utf8 = J9ROMMETHOD_NAME(romMethod);
-      if (J9UTF8_LENGTH(utf8) == 21 &&
-         0 == memcmp(J9UTF8_DATA(utf8), "isVMDeepCopySupported", 21))
+      J9UTF8 *methodName = J9ROMMETHOD_NAME(romMethod);
+      if (J9UTF8_LENGTH(methodName) == 21 &&
+         0 == memcmp(J9UTF8_DATA(methodName), "isVMDeepCopySupported", 21))
          return true;
       }
    return false;
@@ -7667,7 +7677,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
                 || !entry->_oldStartPC)
 
             // Eligibility checks
-            && !_compInfo.isMethodIneligibleForAot(method)
+            && !_compInfo.isMethodIneligibleForAot(method, &trMemory, fe)
             && (!TR::Options::getAOTCmdLineOptions()->getOption(TR_AOTCompileOnlyFromBootstrap)
                 || fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true)
             // Including this here has the effect of forbidding JITServer AOT cache compilations
