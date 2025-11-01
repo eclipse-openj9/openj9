@@ -63,6 +63,7 @@
 #include "optimizer/TransformUtil.hpp"
 #include "ras/Delimiter.hpp"
 #include "ras/DebugCounter.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheExceptions.hpp"
 #include "runtime/CodeCacheManager.hpp"
@@ -498,15 +499,12 @@ J9::CodeGenerator::supportVMInternalNatives()
    return !self()->comp()->compileRelocatableCode();
    }
 
-// J9
-//
 static bool scanForNativeMethodsUntilMonitorNode(TR::TreeTop *firstTree, TR::Compilation *comp)
    {
    TR::TreeTop *currTree = firstTree;
    while (currTree)
       {
       TR::Node *currNode = currTree->getNode();
-      //traceMsg(comp(), "-> Looking at node %p\n", currNode);
 
       if ((currNode->getOpCodeValue() == TR::monexit) ||
           (currNode->getOpCodeValue() == TR::monent))
@@ -793,7 +791,8 @@ J9::CodeGenerator::lowerTreeIfNeeded(
       TR::Node *parent,
       TR::TreeTop *tt)
    {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->comp()->fe());
+   TR::Compilation *comp = self()->comp();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    OMR::CodeGeneratorConnector::lowerTreeIfNeeded(node, childNumberOfNode, parent, tt);
 
    if (node->getOpCode().isCall() &&
@@ -828,7 +827,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
          TR::Node * numArgSlotsNode = NULL;
          TR::Node * tempSlotStoreNode = NULL;
          TR::Node * floatTemp1StoreNode = NULL;
-         bool is64Bit = self()->comp()->target().is64Bit();
+         bool is64Bit = comp->target().is64Bit();
          TR::ILOpCodes storeOpCode;
          int32_t numParameterStackSlots = node->getSymbol()->castToResolvedMethodSymbol()->getNumParameterSlots();
          if (is64Bit)
@@ -841,11 +840,11 @@ J9::CodeGenerator::lowerTreeIfNeeded(
             storeOpCode = TR::istore;
             numArgSlotsNode = TR::Node::iconst(node, numParameterStackSlots);
             }
-         tempSlotStoreNode = TR::Node::createStore(self()->comp()->getSymRefTab()->findOrCreateVMThreadTempSlotFieldSymbolRef(),
+         tempSlotStoreNode = TR::Node::createStore(comp->getSymRefTab()->findOrCreateVMThreadTempSlotFieldSymbolRef(),
                                                    numArgSlotsNode,
                                                    storeOpCode);
          tempSlotStoreNode->setByteCodeIndex(node->getByteCodeIndex());
-         TR::TreeTop::create(self()->comp(), tt->getPrevTreeTop(), tempSlotStoreNode);
+         TR::TreeTop::create(comp, tt->getPrevTreeTop(), tempSlotStoreNode);
 
          if (rm == TR::java_lang_invoke_MethodHandle_linkToStatic || rm ==  TR::java_lang_invoke_MethodHandle_linkToSpecial)
             {
@@ -858,11 +857,11 @@ J9::CodeGenerator::lowerTreeIfNeeded(
             numArgsNode = is64Bit ? TR::Node::lconst(node, numArgs) :
                                     TR::Node::iconst(node, numArgs);
 
-            floatTemp1StoreNode = TR::Node::createStore(self()->comp()->getSymRefTab()->findOrCreateVMThreadFloatTemp1SymbolRef(),
+            floatTemp1StoreNode = TR::Node::createStore(comp->getSymRefTab()->findOrCreateVMThreadFloatTemp1SymbolRef(),
                                                       numArgsNode,
                                                       storeOpCode);
             floatTemp1StoreNode->setByteCodeIndex(node->getByteCodeIndex());
-            TR::TreeTop::create(self()->comp(), tt->getPrevTreeTop(), floatTemp1StoreNode);
+            TR::TreeTop::create(comp, tt->getPrevTreeTop(), floatTemp1StoreNode);
             }
          }
       else if (rm == TR::java_lang_invoke_MethodHandle_linkToNative)
@@ -889,17 +888,17 @@ J9::CodeGenerator::lowerTreeIfNeeded(
 
    if (node->getOpCode().isCall() &&
          node->getSymbol()->getMethodSymbol()->isNative() &&
-         self()->comp()->canTransformUnsafeCopyToArrayCopy())
+         comp->canTransformUnsafeCopyToArrayCopy())
       {
       TR::RecognizedMethod rm = node->getSymbol()->castToMethodSymbol()->getRecognizedMethod();
 
       if ((rm == TR::sun_misc_Unsafe_copyMemory || rm == TR::jdk_internal_misc_Unsafe_copyMemory0) &&
-            performTransformation(self()->comp(), "O^O Call arraycopy instead of Unsafe.copyMemory: %s\n", self()->getDebug()->getName(node)))
+            performTransformation(comp, "O^O Call arraycopy instead of Unsafe.copyMemory: %s\n", self()->getDebug()->getName(node)))
          {
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
          if (TR::Compiler->om.isOffHeapAllocationEnabled())
-            TR::TransformUtil::transformUnsafeCopyMemorytoArrayCopyForOffHeap(self()->comp(), tt, node);
+            TR::TransformUtil::transformUnsafeCopyMemorytoArrayCopyForOffHeap(comp, tt, node);
          else
 #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
          {
@@ -909,7 +908,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
             TR::Node *destOffset = node->getChild(4);
             TR::Node *len = node->getChild(5);
 
-            if (self()->comp()->target().is32Bit())
+            if (comp->target().is32Bit())
                {
                srcOffset = TR::Node::create(TR::l2i, 1, srcOffset);
                destOffset = TR::Node::create(TR::l2i, 1, destOffset);
@@ -924,7 +923,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
                }
 
             TR::Node *arraycopyNode = TR::Node::createArraycopy(src, dest, len);
-            TR::TreeTop *arrayCopyTT = TR::TreeTop::create(self()->comp(), arraycopyNode, tt->getNextTreeTop(), tt->getPrevTreeTop());
+            TR::TreeTop *arrayCopyTT = TR::TreeTop::create(comp, arraycopyNode, tt->getNextTreeTop(), tt->getPrevTreeTop());
 
             tt->getPrevTreeTop()->setNextTreeTop(arrayCopyTT);
             tt->getNextTreeTop()->setPrevTreeTop(arrayCopyTT);
@@ -941,14 +940,14 @@ J9::CodeGenerator::lowerTreeIfNeeded(
       }
 
    // J9
-   if (!self()->comp()->getOption(TR_DisableUnsafe) &&
+   if (!comp->getOption(TR_DisableUnsafe) &&
        node->getOpCode().isCall() &&
        node->getOpCodeValue() == TR::call &&
        !TR::Compiler->om.canGenerateArraylets() &&
        ((node->getSymbol()->castToMethodSymbol()->getRecognizedMethod() == TR::java_nio_Bits_copyToByteArray) ||
         (node->getSymbol()->castToMethodSymbol()->getRecognizedMethod() == TR::java_nio_Bits_copyFromByteArray)) &&
        !fej9->isAnyMethodTracingEnabled(node->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->getPersistentIdentifier()) &&
-       performTransformation(self()->comp(), "%s Change recognized nio call to arraycopy [%p] \n", OPT_DETAILS, node))
+       performTransformation(comp, "%s Change recognized nio call to arraycopy [%p] \n", OPT_DETAILS, node))
       {
       bool from = false;
       if (node->getSymbol()->castToMethodSymbol()->getRecognizedMethod() == TR::java_nio_Bits_copyFromByteArray)
@@ -972,7 +971,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
          }
 
       TR::Node *javaOffset;
-      if (self()->comp()->target().is64Bit())
+      if (comp->target().is64Bit())
          javaOffset = TR::Node::lconst(node, (int64_t) TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
       else
          javaOffset = TR::Node::iconst(node, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
@@ -983,7 +982,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
       TR::Node *oldNativeOffset = nativeOffset;
       TR::Node *oldLen = len;
 
-      if (self()->comp()->target().is32Bit())
+      if (comp->target().is32Bit())
          {
          nativeSrc = TR::Node::create(TR::l2i, 1, nativeSrc);
          nativeOffset = TR::Node::create(TR::l2i, 1, nativeOffset);
@@ -995,7 +994,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
       TR::Node *nativeAddr;
       TR::Node *javaAddr;
 
-      if (self()->comp()->target().is32Bit())
+      if (comp->target().is32Bit())
          {
          nativeAddr = nativeSrc;
          javaOffset = TR::Node::create(TR::iadd, 2, javaOffset, nativeOffset);
@@ -1033,9 +1032,9 @@ J9::CodeGenerator::lowerTreeIfNeeded(
       }
 
    // J9
-   if (self()->comp()->compileRelocatableCode() && (node->getOpCodeValue() == TR::loadaddr) && parent && ((parent->getOpCodeValue() == TR::instanceof) || (parent->getOpCodeValue() == TR::checkcast)))
+   if (comp->compileRelocatableCode() && (node->getOpCodeValue() == TR::loadaddr) && parent && ((parent->getOpCodeValue() == TR::instanceof) || (parent->getOpCodeValue() == TR::checkcast)))
       {
-      TR::TreeTop::create(self()->comp(), tt->getPrevTreeTop(), TR::Node::create(TR::treetop, 1, node));
+      TR::TreeTop::create(comp, tt->getPrevTreeTop(), TR::Node::create(TR::treetop, 1, node));
       }
 
    // J9
@@ -1046,18 +1045,18 @@ J9::CodeGenerator::lowerTreeIfNeeded(
       TR::SymbolReference *symRef = node->getSymbolReference();
       TR::Symbol *symbol = symRef->getSymbol();
       // bitwise atomicity is required for opaque or stronger memory semantics
-      if (symbol->isAtLeastOrStrongerThanOpaque() && node->getDataType() == TR::Int64 && !symRef->isUnresolved() && self()->comp()->target().is32Bit() &&
+      if (symbol->isAtLeastOrStrongerThanOpaque() && node->getDataType() == TR::Int64 && !symRef->isUnresolved() && comp->target().is32Bit() &&
           !self()->getSupportsInlinedAtomicLongVolatiles())
          {
          bool isLoad = false;
          TR::SymbolReference * volatileLongSymRef = NULL;
          if (node->getOpCode().isLoadVar())
             {
-            volatileLongSymRef = self()->comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_volatileReadLong, false, false, true);
+            volatileLongSymRef = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_volatileReadLong, false, false, true);
             isLoad = true;
             }
          else
-            volatileLongSymRef = self()->comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_volatileWriteLong, false, false, true);
+            volatileLongSymRef = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_volatileWriteLong, false, false, true);
 
          node->setSymbolReference(volatileLongSymRef);
 
@@ -1086,7 +1085,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
                   {
                   TR::Node * nullchkNode =
                       TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, TR::Node::create(TR::PassThrough, 1, address), tt->getNode()->getSymbolReference());
-                  tt->getPrevTreeTop()->insertAfter(TR::TreeTop::create(self()->comp(), nullchkNode));
+                  tt->getPrevTreeTop()->insertAfter(TR::TreeTop::create(comp, nullchkNode));
                   TR::Node::recreate(tt->getNode(), TR::treetop);
                   }
                node->setNumChildren(1);
@@ -1103,7 +1102,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
                 (tt->getNode()->getFirstChild() != node))
                {
                TR::Node * ttNode = TR::Node::create(TR::treetop, 1, node);
-               tt->getPrevTreeTop()->insertAfter(TR::TreeTop::create(self()->comp(), ttNode));
+               tt->getPrevTreeTop()->insertAfter(TR::TreeTop::create(comp, ttNode));
                }
             }
          else
@@ -1114,7 +1113,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
                   {
                   TR::Node * nullchkNode =
                       TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, TR::Node::create(TR::PassThrough, 1, address), tt->getNode()->getSymbolReference());
-                  tt->getPrevTreeTop()->insertAfter(TR::TreeTop::create(self()->comp(), nullchkNode));
+                  tt->getPrevTreeTop()->insertAfter(TR::TreeTop::create(comp, nullchkNode));
                   TR::Node::recreate(tt->getNode(), TR::treetop);
                   }
 
@@ -1174,7 +1173,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
             node->getOpCodeValue() == TR::monexit ||
             node->getOpCodeValue() == TR::tstart )
       {
-      TR_OpaqueClassBlock * monClass = node->getMonitorClass(self()->comp()->getCurrentMethod());
+      TR_OpaqueClassBlock * monClass = node->getMonitorClass(comp->getCurrentMethod());
       if (monClass)
          self()->addMonClass(node, monClass);
       //Clear the hidden second child that may be used by code generation
@@ -1183,24 +1182,24 @@ J9::CodeGenerator::lowerTreeIfNeeded(
 
 
    // J9
-   if (self()->comp()->getOption(TR_ReservingLocks) &&
+   if (comp->getOption(TR_ReservingLocks) &&
        node->getOpCodeValue() == TR::monent)
       {
       TR_OpaqueMethodBlock *owningMethod = node->getOwningMethod();
       TR_OpaqueClassBlock  *classPointer = fej9->getClassOfMethod(owningMethod);
       TR_PersistentClassInfo * persistentClassInfo =
-         self()->comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(classPointer, self()->comp());
+         comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(classPointer, comp);
 
       if (persistentClassInfo && persistentClassInfo->isReservable())
          {
-         bool allowedToReserve = !scanForNativeMethodsUntilMonitorNode(tt->getNextTreeTop(), self()->comp());
+         bool allowedToReserve = !scanForNativeMethodsUntilMonitorNode(tt->getNextTreeTop(), comp);
          if (!allowedToReserve)
             {
             persistentClassInfo->setReservable(false);
 #if defined(J9VM_OPT_JITSERVER)
             // This is currently the only place where this flag gets cleared. For JITServer, we should propagate it to the client,
             // to avoid having to call scanForNativeMethodsUntilMonitorNode again.
-            if (auto stream = self()->comp()->getStream())
+            if (auto stream = comp->getStream())
                {
                stream->write(JITServer::MessageType::CHTable_clearReservable, classPointer);
                stream->read<JITServer::Void>();
@@ -1211,7 +1210,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
       }
 
    // J9
-   if (  self()->comp()->getOptions()->enableDebugCounters()
+   if (  comp->getOptions()->enableDebugCounters()
       && node->getOpCode().isCall()
       && node->getSymbol()->getMethodSymbol() // compjazz 45988: zEmulator arrayset currently isCall and uses a generic int shadow.  Can't assume it's a method.
       && !node->getSymbol()->castToMethodSymbol()->isHelper())
@@ -1220,26 +1219,26 @@ J9::CodeGenerator::lowerTreeIfNeeded(
       bool insertJittedBody = TR::Options::_debugCounterInsertJittedBody;
       bool insertMethod = TR::Options::_debugCounterInsertMethod;
 
-      const char *caller = self()->comp()->signature();
+      const char *caller = comp->signature();
       const char *callee = node->getSymbol()->castToMethodSymbol()->getMethod()->signature(self()->trMemory(), stackAlloc);
       TR_ByteCodeInfo &bcInfo = node->getByteCodeInfo();
       if (insertByteCode)
          {
-         TR::DebugCounter::prependDebugCounter(self()->comp(), TR::DebugCounter::debugCounterName(self()->comp(),
+         TR::DebugCounter::prependDebugCounter(comp, TR::DebugCounter::debugCounterName(comp,
                "compilationReport.instructions:byByteCode.numInvocations.(%s)=%d", caller, node->getByteCodeInfo().getByteCodeIndex()), tt);
          }
       if (insertJittedBody)
          {
-         TR::DebugCounter::prependDebugCounter(self()->comp(), TR::DebugCounter::debugCounterName(self()->comp(),
-               "compilationReport.instructions:byJittedBody.numInvocations.(%s).%s", caller, self()->comp()->getHotnessName()), tt);
+         TR::DebugCounter::prependDebugCounter(comp, TR::DebugCounter::debugCounterName(comp,
+               "compilationReport.instructions:byJittedBody.numInvocations.(%s).%s", caller, comp->getHotnessName()), tt);
          }
       if (insertMethod)
          {
-         TR::DebugCounter::prependDebugCounter(self()->comp(), TR::DebugCounter::debugCounterName(self()->comp(),
+         TR::DebugCounter::prependDebugCounter(comp, TR::DebugCounter::debugCounterName(comp,
                "compilationReport.instructions:byMethod.numInvocations.(%s)", caller), tt);
          }
-      TR::DebugCounter::prependDebugCounter(self()->comp(), TR::DebugCounter::debugCounterName(self()->comp(), "callers/(%s)/%d=%d", caller, bcInfo.getCallerIndex(), bcInfo.getByteCodeIndex()), tt);
-      TR::DebugCounter::prependDebugCounter(self()->comp(), TR::DebugCounter::debugCounterName(self()->comp(), "callees/(%s)/(%s)/%d=%d", callee, caller, bcInfo.getCallerIndex(), bcInfo.getByteCodeIndex()), tt);
+      TR::DebugCounter::prependDebugCounter(comp, TR::DebugCounter::debugCounterName(comp, "callers/(%s)/%d=%d", caller, bcInfo.getCallerIndex(), bcInfo.getByteCodeIndex()), tt);
+      TR::DebugCounter::prependDebugCounter(comp, TR::DebugCounter::debugCounterName(comp, "callees/(%s)/(%s)/%d=%d", callee, caller, bcInfo.getCallerIndex(), bcInfo.getByteCodeIndex()), tt);
       }
 
    // J9
@@ -1265,7 +1264,6 @@ J9::CodeGenerator::lowerTreeIfNeeded(
                 (n->getReferenceCount() > 1) &&
                 n->getSymbol()->isAutoOrParm())
                {
-               //printf("Uncommoned address child of JNI call in %s\n", comp()->signature());
                TR::Node *dupChild = n->duplicateTree();
                node->setAndIncChild(i, dupChild);
                n->recursivelyDecReferenceCount();
@@ -1276,12 +1274,12 @@ J9::CodeGenerator::lowerTreeIfNeeded(
 
    // J9
    // code to push recompilation of methods whose caller is scorching
-   if (self()->comp()->getOption(TR_EnableRecompilationPushing)                 &&
+   if (comp->getOption(TR_EnableRecompilationPushing)                 &&
        !self()->getCurrentBlock()->isCold()                                   &&
-       self()->comp()->allowRecompilation()                                     &&
-       self()->comp()->getMethodHotness()>=veryHot                              &&
+       comp->allowRecompilation()                                     &&
+       comp->getMethodHotness()>=veryHot                              &&
        node->getOpCode().isCall()                                       &&
-       self()->comp()->getPersistentInfo()->getNumLoadedClasses() < TR::Options::_bigAppThreshold &&
+       comp->getPersistentInfo()->getNumLoadedClasses() < TR::Options::_bigAppThreshold &&
        node->getSymbol()->getMethodSymbol()                             &&
       !node->isPreparedForDirectJNI())
       {
@@ -1299,7 +1297,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
          if (!resolvedMethod || node->isTheVirtualCallNodeForAGuardedInlinedCall() ||
              resolvedMethod->virtualMethodIsOverridden()        ||
              resolvedMethod->isAbstract() ||
-             (resolvedMethod == self()->comp()->getCurrentMethod()))
+             (resolvedMethod == comp->getCurrentMethod()))
             {
             pushCall = false;
             }
@@ -1319,8 +1317,6 @@ J9::CodeGenerator::lowerTreeIfNeeded(
                methodSymbol->getResolvedMethodSymbol()->getResolvedMethod())
             {
             TR_PersistentJittedBodyInfo * bodyInfo = ((TR_ResolvedJ9Method*) methodSymbol->getResolvedMethodSymbol()->getResolvedMethod())->getExistingJittedBodyInfo();
-            //printf("Pushing node %p\n", node);
-            //fflush(stdout);
             if (bodyInfo &&
                 bodyInfo->getHotness() <= warm && !bodyInfo->getIsProfilingBody())
                {
@@ -1345,7 +1341,6 @@ J9::CodeGenerator::lowerTreeIfNeeded(
                      }
                   }
 
-               //printf ("Scorching method %s is calling warm (or called method) %s, in block_%d with frequency %d, is in loop %d\n", comp()->getMethodSymbol()->signature(), fej9->sampleSignature(method->getPersistentIdentifier(), 0, 0, trMemory()), getCurrentBlock()->getNumber(), getCurrentBlock()->getFrequency(), isInLoop);
                if ((self()->getCurrentBlock()->getFrequency() > MAX_COLD_BLOCK_COUNT) || (isInLoop && self()->getCurrentBlock()->getFrequency()==0))
                   {
                   bodyInfo->setCounter(1);
@@ -1369,7 +1364,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
            topNode->isPreparedForDirectJNI()))
          {
          TR::Node * ttNode = TR::Node::create(TR::treetop, 1, node);
-         tt->getPrevTreeTop()->insertAfter(TR::TreeTop::create(self()->comp(), ttNode));
+         tt->getPrevTreeTop()->insertAfter(TR::TreeTop::create(comp, ttNode));
          }
       }
 
@@ -1419,9 +1414,8 @@ J9::CodeGenerator::lowerTreeIfNeeded(
             break;
 
          TR::Node *ttNode = TR::Node::create(TR::treetop, 1, node);
-         tt->getPrevTreeTop()->insertAfter(TR::TreeTop::create(self()->comp(), ttNode));
-         if (self()->comp()->getOption(TR_TraceCG))
-            traceMsg(self()->comp(), "Anchoring %s node %s [%p] under treetop [%p]\n", anchoringReason, node->getOpCode().getName(), node, ttNode);
+         tt->getPrevTreeTop()->insertAfter(TR::TreeTop::create(comp, ttNode));
+         logprintf(comp->getOption(TR_TraceCG), comp->log(), "Anchoring %s node %s [%p] under treetop [%p]\n", anchoringReason, node->getOpCode().getName(), node, ttNode);
          break;
          }
       default:
@@ -1483,6 +1477,9 @@ J9::CodeGenerator::zeroOutAutoOnEdge(
       TR::list<TR::Block*> *newBlocks,
       TR_ScratchList<TR::Node> *fsdStores)
    {
+   TR::Compilation *comp = self()->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = comp->getOption(TR_TraceCG);
    TR::Block *storeBlock = NULL;
    if ((succBlock->getPredecessors().size() == 1))
       storeBlock = succBlock;
@@ -1506,7 +1503,7 @@ J9::CodeGenerator::zeroOutAutoOnEdge(
       if (startNode->getNumChildren() > 0)
          glRegDeps = startNode->getFirstChild();
 
-      TR::Block * newBlock = block->splitEdge(block, succBlock, self()->comp(), NULL, false);
+      TR::Block * newBlock = block->splitEdge(block, succBlock, comp, NULL, false);
 
       if (debug("traceFSDSplit"))
          diagnostic("\nSplitting edge, create new intermediate block_%d", newBlock->getNumber());
@@ -1521,11 +1518,11 @@ J9::CodeGenerator::zeroOutAutoOnEdge(
          for (int32_t i = origDuplicateGlRegDeps->getNumChildren() - 1; i >= 0; --i)
             {
             TR::Node * dep = origDuplicateGlRegDeps->getChild(i);
-            if(self()->comp()->getOption(TR_MimicInterpreterFrameShape) || self()->comp()->getOption(TR_PoisonDeadSlots))
+            if(comp->getOption(TR_MimicInterpreterFrameShape) || comp->getOption(TR_PoisonDeadSlots))
                dep->setRegister(NULL); // basically need to do prepareNodeForInstructionSelection
             duplicateGlRegDeps->setAndIncChild(i, dep);
             }
-         if(self()->comp()->getOption(TR_MimicInterpreterFrameShape) || self()->comp()->getOption(TR_PoisonDeadSlots))
+         if(comp->getOption(TR_MimicInterpreterFrameShape) || comp->getOption(TR_PoisonDeadSlots))
             {
             TR::Node *glRegDepsParent;
             if (  (newBlock->getSuccessors().size() == 1)
@@ -1539,8 +1536,7 @@ J9::CodeGenerator::zeroOutAutoOnEdge(
                TR_ASSERT(glRegDepsParent->getOpCodeValue() == TR::Goto, "Expected block to fall through or end in goto; it ends with %s %s\n",
                   self()->getDebug()->getName(glRegDepsParent->getOpCodeValue()), self()->getDebug()->getName(glRegDepsParent));
                }
-            if (self()->comp()->getOption(TR_TraceCG))
-               traceMsg(self()->comp(), "zeroOutAutoOnEdge: glRegDepsParent is %s\n", self()->getDebug()->getName(glRegDepsParent));
+            logprintf(trace, log, "zeroOutAutoOnEdge: glRegDepsParent is %s\n", self()->getDebug()->getName(glRegDepsParent));
             glRegDepsParent->setNumChildren(1);
             glRegDepsParent->setAndIncChild(0, duplicateGlRegDeps);
             }
@@ -1555,10 +1551,9 @@ J9::CodeGenerator::zeroOutAutoOnEdge(
       newBlock->getEntry()->getNode()->setLabel(generateLabelSymbol(self()));
 
 
-      if (self()->comp()->getOption(TR_PoisonDeadSlots))
+      if (comp->getOption(TR_PoisonDeadSlots))
          {
-         if (self()->comp()->getOption(TR_TraceCG))
-            traceMsg(self()->comp(), "POISON DEAD SLOTS --- New Block Created %d\n", newBlock->getNumber());
+         logprintf(trace, log, "POISON DEAD SLOTS --- New Block Created %d\n", newBlock->getNumber());
          newBlock->setIsCreatedAtCodeGen();
          }
 
@@ -1567,14 +1562,14 @@ J9::CodeGenerator::zeroOutAutoOnEdge(
       }
    TR::Node *storeNode;
 
-   if (self()->comp()->getOption(TR_PoisonDeadSlots))
+   if (comp->getOption(TR_PoisonDeadSlots))
       storeNode = self()->generatePoisonNode(block, liveAutoSymRef);
    else
       storeNode = TR::Node::createStore(liveAutoSymRef, TR::Node::aconst(block->getEntry()->getNode(), 0));
 
    if (storeNode)
       {
-      TR::TreeTop *storeTree = TR::TreeTop::create(self()->comp(), storeNode);
+      TR::TreeTop *storeTree = TR::TreeTop::create(comp, storeNode);
       storeBlock->prepend(storeTree);
       fsdStores->add(storeNode);
       }
@@ -1584,22 +1579,24 @@ J9::CodeGenerator::zeroOutAutoOnEdge(
 void
 J9::CodeGenerator::doInstructionSelection()
    {
+   TR::Compilation *comp = self()->comp();
+   OMR::Logger *log = comp->log();
+   bool traceCG = comp->getOption(TR_TraceCG);
+
    J9::SetMonitorStateOnBlockEntry::LiveMonitorStacks liveMonitorStacks(
       (J9::SetMonitorStateOnBlockEntry::LiveMonitorStacksComparator()),
-      J9::SetMonitorStateOnBlockEntry::LiveMonitorStacksAllocator(self()->comp()->trMemory()->heapMemoryRegion()));
-
-
+      J9::SetMonitorStateOnBlockEntry::LiveMonitorStacksAllocator(comp->trMemory()->heapMemoryRegion()));
 
    // Set default value for pre-prologue size
    //
-   TR::ResolvedMethodSymbol * methodSymbol = self()->comp()->getJittedMethodSymbol();
+   TR::ResolvedMethodSymbol * methodSymbol = comp->getJittedMethodSymbol();
    self()->setPrePrologueSize(4 + (methodSymbol->isJNI() ? 4 : 0));
 
-   if (self()->comp()->getOption(TR_TraceCG))
+   if (comp->getOption(TR_TraceCG))
       diagnostic("\n<selection>");
 
-   if (self()->comp()->getOption(TR_TraceCG) || debug("traceGRA"))
-      self()->comp()->getDebug()->setupToDumpTreesAndInstructions("Performing Instruction Selection");
+   if (comp->getOption(TR_TraceCG))
+      comp->getDebug()->setupToDumpTreesAndInstructions(log, "Performing Instruction Selection");
 
    self()->beginInstructionSelection();
 
@@ -1607,7 +1604,7 @@ J9::CodeGenerator::doInstructionSelection()
    TR::StackMemoryRegion stackMemoryRegion(*self()->trMemory());
 
    TR_BitVector * liveLocals = self()->getLiveLocals();
-   TR_BitVector nodeChecklistBeforeDump(self()->comp()->getNodeCount(), self()->trMemory(), stackAlloc, growable);
+   TR_BitVector nodeChecklistBeforeDump(comp->getNodeCount(), self()->trMemory(), stackAlloc, growable);
 
    /*
      To enable instruction scheduling (both in the compiler and in out-of-order hardware),
@@ -1624,67 +1621,61 @@ J9::CodeGenerator::doInstructionSelection()
    TR_Stack<TR::SymbolReference *> * liveMonitorStack = 0;
    int32_t numMonitorLocals = 0;
    static bool traceLiveMonEnv = feGetEnv("TR_traceLiveMonitors") ? true : false;
-   bool traceLiveMon = self()->comp()->getOption(TR_TraceLiveMonitorMetadata) || traceLiveMonEnv;
+   bool traceLiveMon = comp->getOption(TR_TraceLiveMonitorMetadata) || traceLiveMonEnv;
 
    _lmmdFailed = false;
-   if (self()->comp()->getMethodSymbol()->mayContainMonitors())
+   if (comp->getMethodSymbol()->mayContainMonitors())
       {
-      if(traceLiveMon)
-         traceMsg(self()->comp(),"In doInstructionSelection: Method may contain monitors\n");
+      logprints(traceLiveMon, log, "In doInstructionSelection: Method may contain monitors\n");
 
       if (!liveLocals)
-         self()->comp()->getMethodSymbol()->resetLiveLocalIndices();
+         comp->getMethodSymbol()->resetLiveLocalIndices();
 
-      ListIterator<TR::AutomaticSymbol> locals(&self()->comp()->getMethodSymbol()->getAutomaticList());
+      ListIterator<TR::AutomaticSymbol> locals(&comp->getMethodSymbol()->getAutomaticList());
       for (TR::AutomaticSymbol * a = locals.getFirst(); a; a = locals.getNext())
          if (a->holdsMonitoredObject())
             {
-            if(traceLiveMon)
-               traceMsg(self()->comp(),"\tSymbol %p contains monitored object\n",a);
+            logprintf(traceLiveMon, log, "\tSymbol %p contains monitored object\n", a);
             if (!liveLocals)
                {
-               if(traceLiveMon)
-                  traceMsg(self()->comp(),"\tsetting LiveLocalIndex to %d on symbol %p\n",numMonitorLocals+1,a);
+               logprintf(traceLiveMon, log, "\tsetting LiveLocalIndex to %d on symbol %p\n", numMonitorLocals+1, a);
                a->setLiveLocalIndex(numMonitorLocals++, self()->fe());
                }
             else if (a->getLiveLocalIndex() + 1 > numMonitorLocals)
                {
-               if(traceLiveMon)
-                  traceMsg(self()->comp(),"\tsetting numMonitorLocals to %d while considering symbol %p\n",a->getLiveLocalIndex()+1,a);
+               logprintf(traceLiveMon, log, "\tsetting numMonitorLocals to %d while considering symbol %p\n", a->getLiveLocalIndex()+1, a);
                numMonitorLocals = a->getLiveLocalIndex() + 1;
                }
             }
 
       if (numMonitorLocals)
          {
-         J9::SetMonitorStateOnBlockEntry monitorState(self()->comp(), &liveMonitorStacks);
+         J9::SetMonitorStateOnBlockEntry monitorState(comp, &liveMonitorStacks);
 
-         if(traceLiveMon)
-            traceMsg(self()->comp(),"\tCreated monitorState %p\n",&monitorState);
+         logprintf(traceLiveMon, log, "\tCreated monitorState %p\n", &monitorState);
 
          monitorState.set(_lmmdFailed, traceLiveMon);
-         if (traceLiveMon)
-            traceMsg(self()->comp(), "found numMonitorLocals %d\n", numMonitorLocals);
+         logprintf(traceLiveMon, log, "found numMonitorLocals %d\n", numMonitorLocals);
          }
-      else if(traceLiveMon)
-         traceMsg(self()->comp(),"\tnumMonitorLocals = %d\n",numMonitorLocals);
+      else
+         logprintf(traceLiveMon, log, "\tnumMonitorLocals = %d\n",numMonitorLocals);
       }
 
    TR::SymbolReference **liveLocalSyms = NULL;
    TR_BitVector *unsharedSymsBitVector = NULL;
    int32_t maxLiveLocalIndex = -1;
-   TR::list<TR::Block*> newBlocks(getTypedAllocator<TR::Block*>(self()->comp()->allocator()));
+   TR::list<TR::Block*> newBlocks(getTypedAllocator<TR::Block*>(comp->allocator()));
    TR_ScratchList<TR::Node> fsdStores(self()->trMemory());
-   if (self()->comp()->getOption(TR_MimicInterpreterFrameShape) || self()->comp()->getOption(TR_PoisonDeadSlots))
+   if (comp->getOption(TR_MimicInterpreterFrameShape) || comp->getOption(TR_PoisonDeadSlots))
       {
-      if (self()->comp()->areSlotsSharedByRefAndNonRef() || self()->comp()->getOption(TR_PoisonDeadSlots))
+      if (comp->areSlotsSharedByRefAndNonRef() || comp->getOption(TR_PoisonDeadSlots))
          {
          TR_ScratchList<TR::SymbolReference> participatingLocals(self()->trMemory());
 
          TR::SymbolReference *autoSymRef = NULL;
          int32_t symRefNumber;
-         int32_t symRefCount = self()->comp()->getSymRefCount();
-         TR::SymbolReferenceTable *symRefTab = self()->comp()->getSymRefTab();
+         int32_t symRefCount = comp->getSymRefCount();
+         TR::SymbolReferenceTable *symRefTab = comp->getSymRefTab();
          for (symRefNumber = symRefTab->getIndexOfFirstSymRef(); symRefNumber < symRefCount; symRefNumber++)
             {
             autoSymRef = symRefTab->getSymRef(symRefNumber);
@@ -1726,16 +1717,15 @@ J9::CodeGenerator::doInstructionSelection()
 
    bool fixedUpBlock = false;
 
-   if (self()->comp()->getOption(TR_SplitWarmAndColdBlocks) &&
-       !self()->comp()->compileRelocatableCode())
+   if (comp->getOption(TR_SplitWarmAndColdBlocks) &&
+       !comp->compileRelocatableCode())
       {
       setInstructionSelectionInWarmCodeCache();
       }
 
-   for (TR::TreeTop *tt = self()->comp()->getStartTree(); tt; tt = self()->getCurrentEvaluationTreeTop()->getNextTreeTop())
+   for (TR::TreeTop *tt = comp->getStartTree(); tt; tt = self()->getCurrentEvaluationTreeTop()->getNextTreeTop())
       {
-      if(traceLiveMon)
-         traceMsg(self()->comp(),"\tWalking TreeTops at tt %p with node %p\n",tt,tt->getNode());
+      logprintf(traceLiveMon, log, "\tWalking TreeTops at tt %p with node %p\n", tt, tt->getNode());
 
       TR::Instruction *prevInstr = self()->getAppendInstruction();
       TR::Node * node = tt->getNode();
@@ -1769,7 +1759,7 @@ J9::CodeGenerator::doInstructionSelection()
                   liveLocals->empty();
                   }
 
-               if (self()->comp()->areSlotsSharedByRefAndNonRef() && unsharedSymsBitVector)
+               if (comp->areSlotsSharedByRefAndNonRef() && unsharedSymsBitVector)
                   {
                   *liveLocals |= *unsharedSymsBitVector;
                   }
@@ -1779,26 +1769,20 @@ J9::CodeGenerator::doInstructionSelection()
             if (liveMonitorStack)
                {
                liveMonitors = new (self()->trHeapMemory()) TR_BitVector(numMonitorLocals, self()->trMemory());
-               if (traceLiveMon)
-                  traceMsg(self()->comp(), "created liveMonitors bitvector at block_%d for stack  %p size %d\n",
-                                                            block->getNumber(), liveMonitorStack,
-                                                            liveMonitorStack->size());
+               logprintf(traceLiveMon, log, "created liveMonitors bitvector at block_%d for stack  %p size %d\n",
+                     block->getNumber(), liveMonitorStack, liveMonitorStack->size());
                for (int32_t i = liveMonitorStack->size() - 1; i >= 0; --i)
                   {
-                  if (traceLiveMon)
-                     traceMsg(self()->comp(), "about to set liveMonitors for symbol %p\n",(*liveMonitorStack)[i]->getSymbol());
+                  logprintf(traceLiveMon, log, "about to set liveMonitors for symbol %p\n", (*liveMonitorStack)[i]->getSymbol());
                   liveMonitors->set((*liveMonitorStack)[i]->getSymbol()->castToRegisterMappedSymbol()->getLiveLocalIndex());
-                  if (traceLiveMon)
-                     traceMsg(self()->comp(), "setting livemonitor %d at block_%d\n",
-                                                            (*liveMonitorStack)[i]->getSymbol()->castToRegisterMappedSymbol()->getLiveLocalIndex(),
-                                                            block->getNumber());
+                  logprintf(traceLiveMon, log, "setting livemonitor %d at block_%d\n",
+                        (*liveMonitorStack)[i]->getSymbol()->castToRegisterMappedSymbol()->getLiveLocalIndex(), block->getNumber());
                   }
                }
            else
                {
                liveMonitors = 0;
-               if (traceLiveMon)
-                  traceMsg(self()->comp(), "no liveMonitorStack for block_%d\n", block->getNumber());
+               logprintf(traceLiveMon, log, "no liveMonitorStack for block_%d\n", block->getNumber());
                }
             numEBBsSinceFreeingVariableSizeSymRefs++;
             }
@@ -1827,7 +1811,7 @@ J9::CodeGenerator::doInstructionSelection()
          // checks for consistent monitorStack
          //
          for (auto e = b->getSuccessors().begin(); e != b->getSuccessors().end(); ++e)
-            if ((*e)->getTo() == self()->comp()->getFlowGraph()->getEnd())
+            if ((*e)->getTo() == comp->getFlowGraph()->getEnd())
                {
                // block could end in a throw,
                //
@@ -1861,17 +1845,16 @@ J9::CodeGenerator::doInstructionSelection()
                if (liveMonitorStack &&
                      liveMonitorStack->size() != 0 &&
                      !endsInThrow)
-                  dumpOptDetails(self()->comp(), "liveMonitorStack must be empty, unbalanced monitors found! %d\n",
+                  dumpOptDetails(comp, "liveMonitorStack must be empty, unbalanced monitors found! %d\n",
                                                                            liveMonitorStack->size());
 
                if (traceLiveMon)
                   {
-                  traceMsg(self()->comp(), "liveMonitorStack %p at CFG end (syncMethod %d)", liveMonitorStack,
-                                                         self()->comp()->getMethodSymbol()->isSynchronised());
+                  log->printf("liveMonitorStack %p at CFG end (syncMethod %d)", liveMonitorStack, comp->getMethodSymbol()->isSynchronised());
                   if (liveMonitorStack)
-                     traceMsg(self()->comp(), "   size %d\n", liveMonitorStack->size());
+                     log->printf("   size %d\n", liveMonitorStack->size());
                   else
-                     traceMsg(self()->comp(), "   size empty\n");
+                     log->prints("   size empty\n");
                   }
                break;
                }
@@ -1882,7 +1865,7 @@ J9::CodeGenerator::doInstructionSelection()
               numEBBsSinceFreeingVariableSizeSymRefs > MAX_EBBS_BEFORE_FREEING_VARIABLE_SIZED_SYMREFS))
             {
             if (self()->traceBCDCodeGen())
-               traceMsg(self()->comp(),"\tblock_%d branches backwards, so free all symbols in the _variableSizeSymRefPendingFreeList\n",b->getNumber());
+               log->printf("\tblock_%d branches backwards, so free all symbols in the _variableSizeSymRefPendingFreeList\n",b->getNumber());
             self()->freeAllVariableSizeSymRefs();
             numEBBsSinceFreeingVariableSizeSymRefs = 0;
             }
@@ -1894,19 +1877,19 @@ J9::CodeGenerator::doInstructionSelection()
          {
          fixedUpBlock = true;
          //GCMAP
-         if ( (self()->comp()->getOption(TR_MimicInterpreterFrameShape) && self()->comp()->areSlotsSharedByRefAndNonRef() ) || self()->comp()->getOption(TR_PoisonDeadSlots))
+         if ( (comp->getOption(TR_MimicInterpreterFrameShape) && comp->areSlotsSharedByRefAndNonRef() ) || comp->getOption(TR_PoisonDeadSlots))
             {
             // TODO : look at last warm block code above
             //
-            if ((!self()->comp()->getOption(TR_PoisonDeadSlots)&& liveLocals) || (self()->comp()->getOption(TR_PoisonDeadSlots) &&  self()->getCurrentEvaluationBlock()->getLiveLocals()))
+            if ((!comp->getOption(TR_PoisonDeadSlots)&& liveLocals) || (comp->getOption(TR_PoisonDeadSlots) &&  self()->getCurrentEvaluationBlock()->getLiveLocals()))
                {
                newBlocks.clear();
                TR::Block *block = self()->getCurrentEvaluationBlock();
 
-               TR_BitVectorIterator bvi(self()->comp()->getOption(TR_PoisonDeadSlots) ? *block->getLiveLocals(): *liveLocals);
+               TR_BitVectorIterator bvi(comp->getOption(TR_PoisonDeadSlots) ? *block->getLiveLocals(): *liveLocals);
 
-               if (self()->comp()->getOption(TR_TraceCG) && self()->comp()->getOption(TR_PoisonDeadSlots))
-                  traceMsg(self()->comp(), "POISON DEAD SLOTS --- Parent Block Number: %d\n", block->getNumber());
+               if (comp->getOption(TR_TraceCG) && comp->getOption(TR_PoisonDeadSlots))
+                  log->printf("POISON DEAD SLOTS --- Parent Block Number: %d\n", block->getNumber());
 
 
                while (bvi.hasMoreElements())
@@ -1915,10 +1898,10 @@ J9::CodeGenerator::doInstructionSelection()
                   TR_ASSERT((liveLocalIndex <= maxLiveLocalIndex), "Symbol has live local index higher than computed max\n");
                   TR::SymbolReference * liveAutoSymRef = liveLocalSyms[liveLocalIndex];
 
-                  if (self()->comp()->getOption(TR_TraceCG) && self()->comp()->getOption(TR_PoisonDeadSlots))
-                     traceMsg(self()->comp(), "POISON DEAD SLOTS --- Parent Block: %d, Maintained Live Local: %d\n", block->getNumber(), liveAutoSymRef->getReferenceNumber());
+                  if (comp->getOption(TR_TraceCG) && comp->getOption(TR_PoisonDeadSlots))
+                     log->printf("POISON DEAD SLOTS --- Parent Block: %d, Maintained Live Local: %d\n", block->getNumber(), liveAutoSymRef->getReferenceNumber());
 
-                  if(self()->comp()->getOption(TR_PoisonDeadSlots) && (!liveAutoSymRef || block->isCreatedAtCodeGen()))
+                  if(comp->getOption(TR_PoisonDeadSlots) && (!liveAutoSymRef || block->isCreatedAtCodeGen()))
                   {
                      //Don't process a block we created to poison a dead slot.
                      continue;
@@ -1932,29 +1915,29 @@ J9::CodeGenerator::doInstructionSelection()
 
                   //For slot poisoning, a monitored object is still in the GCMaps even if its liveness has ended.
                   //
-                  if ((liveAutoSym->getType().isAddress() && liveAutoSym->isSlotSharedByRefAndNonRef()) || (self()->comp()->getOption(TR_PoisonDeadSlots) && !liveAutoSymRef->getSymbol()->holdsMonitoredObject()))
+                  if ((liveAutoSym->getType().isAddress() && liveAutoSym->isSlotSharedByRefAndNonRef()) || (comp->getOption(TR_PoisonDeadSlots) && !liveAutoSymRef->getSymbol()->holdsMonitoredObject()))
                      {
                      for (auto succ = block->getSuccessors().begin(); succ != block->getSuccessors().end();)
                         {
                         auto next = succ;
                         ++next;
-                        if ((*succ)->getTo() == self()->comp()->getFlowGraph()->getEnd())
+                        if ((*succ)->getTo() == comp->getFlowGraph()->getEnd())
                            {
                            succ = next;
                            continue;
                            }
                         TR::Block *succBlock = (*succ)->getTo()->asBlock();
 
-                        if (self()->comp()->getOption(TR_PoisonDeadSlots) && succBlock->isExtensionOfPreviousBlock())
+                        if (comp->getOption(TR_PoisonDeadSlots) && succBlock->isExtensionOfPreviousBlock())
                            {
-                           if (self()->comp()->getOption(TR_TraceCG) && self()->comp()->getOption(TR_PoisonDeadSlots))
-                              traceMsg(self()->comp(), "POISON DEAD SLOTS --- Successor Block Number %d is extension of Parent Block %d ... skipping \n", succBlock->getNumber(), block->getNumber());
+                           if (comp->getOption(TR_TraceCG) && comp->getOption(TR_PoisonDeadSlots))
+                              log->printf("POISON DEAD SLOTS --- Successor Block Number %d is extension of Parent Block %d ... skipping \n", succBlock->getNumber(), block->getNumber());
                            succ = next;
                            continue;  //We cannot poison in an extended block as gcmaps are still live for maintained live locals  !!!! if target of jump, ignore, could be extension
                            }
 
-                        if (self()->comp()->getOption(TR_TraceCG) && self()->comp()->getOption(TR_PoisonDeadSlots))
-                           traceMsg(self()->comp(), "POISON DEAD SLOTS --- Successor Block Number %d, of Parent Block %d \n", succBlock->getNumber(), block->getNumber());
+                        if (comp->getOption(TR_TraceCG) && comp->getOption(TR_PoisonDeadSlots))
+                           log->printf("POISON DEAD SLOTS --- Successor Block Number %d, of Parent Block %d \n", succBlock->getNumber(), block->getNumber());
 
                         TR_BitVector *succLiveLocals = succBlock->getLiveLocals();
                         if (succLiveLocals && !succLiveLocals->get(liveLocalIndex)) //added
@@ -1966,11 +1949,11 @@ J9::CodeGenerator::doInstructionSelection()
                               int32_t succLiveLocalIndex = sbvi.getNextElement();
                               TR_ASSERT((succLiveLocalIndex <= maxLiveLocalIndex), "Symbol has live local index higher than computed max\n");
                               TR::SymbolReference * succLiveAutoSymRef = liveLocalSyms[succLiveLocalIndex];
-                              if (self()->comp()->getOption(TR_TraceCG) && self()->comp()->getOption(TR_PoisonDeadSlots))
-                                 traceMsg(self()->comp(), "POISON DEAD SLOTS --- Successor Block %d contains live local %d\n", succBlock->getNumber(), succLiveAutoSymRef->getReferenceNumber());
+                              if (comp->getOption(TR_TraceCG) && comp->getOption(TR_PoisonDeadSlots))
+                                 log->printf("POISON DEAD SLOTS --- Successor Block %d contains live local %d\n", succBlock->getNumber(), succLiveAutoSymRef->getReferenceNumber());
 
                               TR::AutomaticSymbol * succLiveAutoSym = succLiveAutoSymRef->getSymbol()->castToAutoSymbol();
-                              if ( (succLiveAutoSym->getType().isAddress() && succLiveAutoSym->isSlotSharedByRefAndNonRef()) || self()->comp()->getOption(TR_PoisonDeadSlots))
+                              if ( (succLiveAutoSym->getType().isAddress() && succLiveAutoSym->isSlotSharedByRefAndNonRef()) || comp->getOption(TR_PoisonDeadSlots))
                                  {
                                  if ((succLiveAutoSym->getGCMapIndex() == liveAutoSym->getGCMapIndex()) ||
                                      ((TR::Symbol::convertTypeToNumberOfSlots(succLiveAutoSym->getDataType()) == 2) &&
@@ -1984,7 +1967,7 @@ J9::CodeGenerator::doInstructionSelection()
 
                            if (zeroOut)
                               {
-                              self()->comp()->getFlowGraph()->setStructure(0);
+                              comp->getFlowGraph()->setStructure(0);
                               self()->zeroOutAutoOnEdge(liveAutoSymRef, block, succBlock, &newBlocks, &fsdStores);
                               }
                            }
@@ -2013,7 +1996,7 @@ J9::CodeGenerator::doInstructionSelection()
                               TR_ASSERT((succLiveLocalIndex <= maxLiveLocalIndex), "Symbol has live local index higher than computed max\n");
                               TR::SymbolReference * succLiveAutoSymRef = liveLocalSyms[succLiveLocalIndex];
                               TR::AutomaticSymbol * succLiveAutoSym = succLiveAutoSymRef->getSymbol()->castToAutoSymbol();
-                              if ( succLiveAutoSym->getType().isAddress() && ( succLiveAutoSym->isSlotSharedByRefAndNonRef() || self()->comp()->getOption(TR_PoisonDeadSlots)))
+                              if ( succLiveAutoSym->getType().isAddress() && ( succLiveAutoSym->isSlotSharedByRefAndNonRef() || comp->getOption(TR_PoisonDeadSlots)))
                                  {
                                  if ((succLiveAutoSym->getGCMapIndex() == liveAutoSym->getGCMapIndex()) ||
                                      ((TR::Symbol::convertTypeToNumberOfSlots(succLiveAutoSym->getDataType()) == 2) &&
@@ -2052,13 +2035,13 @@ J9::CodeGenerator::doInstructionSelection()
                               if (!storeExists)
                                  {
                                  TR::Node *storeNode;
-                                 if (self()->comp()->getOption(TR_PoisonDeadSlots))
+                                 if (comp->getOption(TR_PoisonDeadSlots))
                                     storeNode = self()->generatePoisonNode(block, liveAutoSymRef);
                                  else
                                     storeNode = TR::Node::createStore(liveAutoSymRef, TR::Node::aconst(block->getEntry()->getNode(), 0));
                                  if (storeNode)
                                     {
-                                    TR::TreeTop *storeTree = TR::TreeTop::create(self()->comp(), storeNode);
+                                    TR::TreeTop *storeTree = TR::TreeTop::create(comp, storeNode);
                                     esuccBlock->prepend(storeTree);
                                     fsdStores.add(storeNode);
                                    }
@@ -2075,14 +2058,14 @@ J9::CodeGenerator::doInstructionSelection()
       self()->setLiveLocals(liveLocals);
       self()->setLiveMonitors(liveMonitors);
 
-      if (self()->comp()->getOption(TR_TraceCG) || debug("traceGRA"))
+      if (comp->getOption(TR_TraceCG))
          {
          // any evaluator that handles multiple trees will need to dump
          // the others
-         self()->comp()->getDebug()->saveNodeChecklist(nodeChecklistBeforeDump);
-         self()->comp()->getDebug()->dumpSingleTreeWithInstrs(tt, NULL, true, false, true, true);
-         trfprintf(self()->comp()->getOutFile(),"\n------------------------------\n");
-         trfflush(self()->comp()->getOutFile());
+         comp->getDebug()->saveNodeChecklist(nodeChecklistBeforeDump);
+         comp->getDebug()->dumpSingleTreeWithInstrs(log, tt, NULL, true, false, true, true);
+         log->prints("\n------------------------------\n");
+         log->flush();
          }
 
       self()->setLastInstructionBeforeCurrentEvaluationTreeTop(self()->getAppendInstruction());
@@ -2096,12 +2079,12 @@ J9::CodeGenerator::doInstructionSelection()
          {
          if (traceLiveMon)
             {
-            traceMsg(self()->comp(), "liveMonitorStack %p ", liveMonitorStack);
+            log->printf("liveMonitorStack %p ", liveMonitorStack);
             if (liveMonitorStack)
-               traceMsg(self()->comp(), "   size %d\n", liveMonitorStack->size());
+               log->printf("   size %d\n", liveMonitorStack->size());
             else
-               traceMsg(self()->comp(), "   size empty\n");
-            traceMsg(self()->comp(), "Looking at Node %p with symbol %p",node,node->getSymbol());
+               log->prints("   size empty\n");
+            log->printf("Looking at Node %p with symbol %p",node,node->getSymbol());
             }
          bool isMonent = node->getOpCode().getOpCodeValue() != TR::monexitfence;
          if (isMonent)
@@ -2117,14 +2100,12 @@ J9::CodeGenerator::doInstructionSelection()
             if (liveMonitorStack)
                {
                liveMonitorStack->push(node->getSymbolReference());
-               if (traceLiveMon)
-                  traceMsg(self()->comp(), "pushing symref %p (#%u) onto monitor stack\n", node->getSymbolReference(), node->getSymbolReference()->getReferenceNumber());
+               logprintf(traceLiveMon, log, "pushing symref %p (#%u) onto monitor stack\n", node->getSymbolReference(), node->getSymbolReference()->getReferenceNumber());
                }
 
             liveMonitors->set(node->getSymbol()->castToRegisterMappedSymbol()->getLiveLocalIndex());
 
-            if (traceLiveMon)
-               traceMsg(self()->comp(), "monitor %p went live at node %p\n", node->getSymbol(), node);
+            logprintf(traceLiveMon, log, "monitor %p went live at node %p\n", node->getSymbol(), node);
             }
          else if (!isMonent)
             {
@@ -2139,19 +2120,19 @@ J9::CodeGenerator::doInstructionSelection()
                   {
                   liveMonitors = new (self()->trHeapMemory()) TR_BitVector(*liveMonitors);
 
-                  if (self()->comp()->getOption(TR_PoisonDeadSlots))
+                  if (comp->getOption(TR_PoisonDeadSlots))
                      {
                      TR::SymbolReference *symRef = liveMonitorStack->pop();
                      liveMonitors->reset(symRef->getSymbol()->castToRegisterMappedSymbol()->getLiveLocalIndex());
                      TR::Node *storeNode = NULL;
 
-                     if (self()->comp()->getOption(TR_TraceCG) && self()->comp()->getOption(TR_PoisonDeadSlots))
-                        traceMsg(self()->comp(), "POISON DEAD SLOTS --- MonExit Block Number: %d\n", self()->getCurrentEvaluationBlock()->getNumber());
+                     if (comp->getOption(TR_TraceCG) && comp->getOption(TR_PoisonDeadSlots))
+                        log->printf("POISON DEAD SLOTS --- MonExit Block Number: %d\n", self()->getCurrentEvaluationBlock()->getNumber());
 
                      storeNode = self()->generatePoisonNode(self()->getCurrentEvaluationBlock(), symRef);
                      if (storeNode)
                         {
-                        TR::TreeTop *storeTree = TR::TreeTop::create(self()->comp(), storeNode);
+                        TR::TreeTop *storeTree = TR::TreeTop::create(comp, storeNode);
                         self()->getCurrentEvaluationBlock()->prepend(storeTree);
                         fsdStores.add(storeNode);
                         }
@@ -2160,23 +2141,21 @@ J9::CodeGenerator::doInstructionSelection()
                      {
                      TR::SymbolReference *symref = liveMonitorStack->pop();
 
-                     if (traceLiveMon)
-                        traceMsg(self()->comp(), "popping symref %p (#%u) off monitor stack\n", symref, symref->getReferenceNumber());
+                     logprintf(traceLiveMon, log, "popping symref %p (#%u) off monitor stack\n", symref, symref->getReferenceNumber());
                      liveMonitors->reset(symref->getSymbol()->castToRegisterMappedSymbol()->getLiveLocalIndex());
                      }
 
                   }
                else
                   {
-                  dumpOptDetails(self()->comp(), "liveMonitorStack %p is inconsistently empty at node %p!\n", liveMonitorStack, node);
+                  dumpOptDetails(comp, "liveMonitorStack %p is inconsistently empty at node %p!\n", liveMonitorStack, node);
                   if (liveMonitors)
                      liveMonitors->empty();
                   }
 
-               if (traceLiveMon)
-                  traceMsg(self()->comp(), "monitor %p went dead at node %p\n", node->getSymbol(), node);
+               logprintf(traceLiveMon, log, "monitor %p went dead at node %p\n", node->getSymbol(), node);
                }
-           // no need to generate code for this store
+            // no need to generate code for this store
             //
             doEvaluation = false;
             }
@@ -2191,7 +2170,7 @@ J9::CodeGenerator::doInstructionSelection()
       if (doEvaluation)
          self()->evaluate(node);
 
-      if (self()->comp()->getOption(TR_SplitWarmAndColdBlocks) &&
+      if (comp->getOption(TR_SplitWarmAndColdBlocks) &&
           opCode == TR::BBEnd)
          {
          TR::Block *b = self()->getCurrentEvaluationBlock();
@@ -2204,15 +2183,14 @@ J9::CodeGenerator::doInstructionSelection()
             //
             TR::Instruction *lastInstr = b->getLastInstruction();
 
-            if (self()->comp()->getOption(TR_TraceCG))
-               traceMsg(self()->comp(), "%s Last warm instruction is %p\n", SPLIT_WARM_COLD_STRING, lastInstr);
+            logprintf(traceCG, log, "%s Last warm instruction is %p\n", SPLIT_WARM_COLD_STRING, lastInstr);
 
             lastInstr->setLastWarmInstruction(true);
             self()->setLastWarmInstruction(lastInstr);
             }
          }
 
-      if (self()->comp()->getOption(TR_TraceCG) || debug("traceGRA"))
+      if (comp->getOption(TR_TraceCG) || debug("traceGRA"))
          {
          TR::Instruction *lastInstr = self()->getAppendInstruction();
          tt->setLastInstruction(lastInstr == prevInstr ? 0 : lastInstr);
@@ -2248,8 +2226,8 @@ J9::CodeGenerator::doInstructionSelection()
             // If so, this local becomes live at this point.
             //
             if ((opCode == TR::astore) &&
-                ((!self()->comp()->getOption(TR_MimicInterpreterFrameShape)) ||
-                 (!self()->comp()->areSlotsSharedByRefAndNonRef()) ||
+                ((!comp->getOption(TR_MimicInterpreterFrameShape)) ||
+                 (!comp->areSlotsSharedByRefAndNonRef()) ||
                  (!fsdStores.find(node))))
                {
                liveSym = node->getSymbol()->getAutoSymbol();
@@ -2279,7 +2257,7 @@ J9::CodeGenerator::doInstructionSelection()
          // In interpreter-frame mode a reference can share a slot with a nonreference so when we see a store to a nonreference
          // we need to make sure that any reference that it shares a slot with is marked as dead
          //
-         if (self()->comp()->getOption(TR_MimicInterpreterFrameShape) && node->getOpCode().isStore() && opCode != TR::astore)
+         if (comp->getOption(TR_MimicInterpreterFrameShape) && node->getOpCode().isStore() && opCode != TR::astore)
             {
             TR::AutomaticSymbol * nonRefStoreSym = node->getSymbol()->getAutoSymbol();
             if (nonRefStoreSym && (nonRefStoreSym->getGCMapIndex() != -1))  //defect 147894: don't check this for GCMapIndex = -1
@@ -2304,11 +2282,11 @@ J9::CodeGenerator::doInstructionSelection()
          }
 
       bool compactVSSStack = false;
-      if (!self()->comp()->getOption(TR_DisableVSSStackCompaction))
+      if (!comp->getOption(TR_DisableVSSStackCompaction))
          {
-         if (self()->comp()->getMethodHotness() < hot)
+         if (comp->getMethodHotness() < hot)
             compactVSSStack = true;
-         else if (self()->comp()->getOption(TR_ForceVSSStackCompaction))
+         else if (comp->getOption(TR_ForceVSSStackCompaction))
             compactVSSStack = true;
          }
 
@@ -2319,8 +2297,8 @@ J9::CodeGenerator::doInstructionSelection()
          TR::SymbolReference *symRef;
          while (it != _variableSizeSymRefPendingFreeList.end())
             {
-        	//Element is removed within freeVariableSizeSymRef. Need a reference to next element
-        	auto next = it;
+            //Element is removed within freeVariableSizeSymRef. Need a reference to next element
+            auto next = it;
             ++next;
             TR_ASSERT((*it)->getSymbol()->isVariableSizeSymbol(),"symRef #%d must contain a variable size symbol\n",(*it)->getReferenceNumber());
             auto *sym = (*it)->getSymbol()->getVariableSizeSymbol();
@@ -2328,12 +2306,12 @@ J9::CodeGenerator::doInstructionSelection()
             if (self()->traceBCDCodeGen())
                {
                if (sym->getNodeToFreeAfter())
-                  traceMsg(self()->comp(),"pending free temps : looking at symRef #%d (%s) refCount %d sym->getNodeToFreeAfter() %p ttNode %p (find sym in list %d)\n",
-                		  (*it)->getReferenceNumber(),self()->getDebug()->getName(sym),sym->getReferenceCount(),
+                  log->printf("pending free temps : looking at symRef #%d (%s) refCount %d sym->getNodeToFreeAfter() %p ttNode %p (find sym in list %d)\n",
+                     (*it)->getReferenceNumber(),self()->getDebug()->getName(sym),sym->getReferenceCount(),
                      sym->getNodeToFreeAfter(),ttNode,found);
                else
-                  traceMsg(self()->comp(),"pending free temps : looking at symRef #%d (%s) refCount %d (find sym in list %d)\n",
-                		  (*it)->getReferenceNumber(),self()->getDebug()->getName(sym),sym->getReferenceCount(),found);
+                  log->printf("pending free temps : looking at symRef #%d (%s) refCount %d (find sym in list %d)\n",
+                     (*it)->getReferenceNumber(),self()->getDebug()->getName(sym),sym->getReferenceCount(),found);
                }
             if (!sym->isAddressTaken() && !found)
                {
@@ -2346,8 +2324,7 @@ J9::CodeGenerator::doInstructionSelection()
                   }
                else if (sym->getReferenceCount() > 0 && nodeToFreeAfterIsCurrentNode)
                   {
-                  if (self()->traceBCDCodeGen())
-                     traceMsg(self()->comp(),"\treset nodeToFreeAfter %p->NULL for sym %p with refCount %d > 0\n",nodeToFreeAfter,sym,sym->getReferenceCount());
+                  logprintf(self()->traceBCDCodeGen(), log, "\treset nodeToFreeAfter %p->NULL for sym %p with refCount %d > 0\n", nodeToFreeAfter, sym, sym->getReferenceCount());
                   sym->setNodeToFreeAfter(NULL);
                   }
                else
@@ -2360,32 +2337,34 @@ J9::CodeGenerator::doInstructionSelection()
             }
          }
 
-      if (self()->comp()->getOption(TR_TraceCG) || debug("traceGRA"))
+      if (traceCG)
          {
-         self()->comp()->getDebug()->restoreNodeChecklist(nodeChecklistBeforeDump);
+         comp->getDebug()->restoreNodeChecklist(nodeChecklistBeforeDump);
+
          if (tt == self()->getCurrentEvaluationTreeTop())
             {
-            trfprintf(self()->comp()->getOutFile(),"------------------------------\n");
-            self()->comp()->getDebug()->dumpSingleTreeWithInstrs(tt, prevInstr->getNext(), true, true, true, false);
+            log->prints("------------------------------\n");
+            comp->getDebug()->dumpSingleTreeWithInstrs(log, tt, prevInstr->getNext(), true, true, true, false);
             }
          else
             {
             // dump all the trees that the evaluator handled
-            trfprintf(self()->comp()->getOutFile(),"------------------------------");
+            log->prints("------------------------------");
             for (TR::TreeTop *dumptt = tt; dumptt != self()->getCurrentEvaluationTreeTop()->getNextTreeTop(); dumptt = dumptt->getNextTreeTop())
                {
-               trfprintf(self()->comp()->getOutFile(),"\n");
-               self()->comp()->getDebug()->dumpSingleTreeWithInstrs(dumptt, NULL, true, false, true, false);
+               log->println();
+               comp->getDebug()->dumpSingleTreeWithInstrs(log, dumptt, NULL, true, false, true, false);
                }
+
             // all instructions are on the tt tree
-            self()->comp()->getDebug()->dumpSingleTreeWithInstrs(tt, prevInstr->getNext(), false, true, false, false);
+            comp->getDebug()->dumpSingleTreeWithInstrs(log, tt, prevInstr->getNext(), false, true, false, false);
             }
-         trfflush(self()->comp()->getOutFile());
+
+         log->flush();
          }
       }
 
-   if (self()->traceBCDCodeGen())
-      traceMsg(self()->comp(),"\tinstruction selection is complete so free all symbols in the _variableSizeSymRefPendingFreeList\n");
+   logprints(self()->traceBCDCodeGen(), log, "\tinstruction selection is complete so free all symbols in the _variableSizeSymRefPendingFreeList\n");
 
    self()->freeAllVariableSizeSymRefs();
 
@@ -2397,15 +2376,15 @@ J9::CodeGenerator::doInstructionSelection()
 #endif
    } // Stack memory region ends
 
-   if (self()->comp()->getOption(TR_TraceCG) || debug("traceGRA"))
-      self()->comp()->incVisitCount();
+   if (comp->getOption(TR_TraceCG) || debug("traceGRA"))
+      comp->incVisitCount();
 
    if (self()->getDebug())
       self()->getDebug()->roundAddressEnumerationCounters();
 
    self()->endInstructionSelection();
 
-   if (self()->comp()->getOption(TR_TraceCG))
+   if (comp->getOption(TR_TraceCG))
       diagnostic("</selection>\n");
    }
 
@@ -2418,8 +2397,10 @@ J9::CodeGenerator::allowGuardMerging()
 void
 J9::CodeGenerator::populateOSRBuffer()
    {
+   TR::Compilation *comp = self()->comp();
+   OMR::Logger *log = comp->log();
 
-   if (!self()->comp()->getOption(TR_EnableOSR))
+   if (!comp->getOption(TR_EnableOSR))
       return;
 
 //The following struct definitions are coming from VM include files and are intended as
@@ -2437,9 +2418,9 @@ J9::CodeGenerator::populateOSRBuffer()
     //   // stack slots here - reachable by "(UDATA*)(frame + 1)"
     // } J9OSRFrame;
 
-   self()->comp()->getOSRCompilationData()->buildSymRefOrderMap();
-   const TR_Array<TR_OSRMethodData *>& methodDataArray = self()->comp()->getOSRCompilationData()->getOSRMethodDataArray();
-   bool traceOSR = self()->comp()->getOption(TR_TraceOSR);
+   comp->getOSRCompilationData()->buildSymRefOrderMap();
+   const TR_Array<TR_OSRMethodData *>& methodDataArray = comp->getOSRCompilationData()->getOSRMethodDataArray();
+   bool traceOSR = comp->getOption(TR_TraceOSR);
    uint32_t maxScratchBufferSize = 0;
    const int firstSymChildIndex = 2;
 
@@ -2451,7 +2432,7 @@ J9::CodeGenerator::populateOSRBuffer()
 */
 
    TR::Block * block = NULL;
-   for(TR::TreeTop * tt = self()->comp()->getStartTree(); tt; tt = tt->getNextTreeTop())
+   for(TR::TreeTop * tt = comp->getStartTree(); tt; tt = tt->getNextTreeTop())
       {
       // Write pending pushes, parms, and locals to vmthread's OSR buffer
 
@@ -2474,8 +2455,7 @@ J9::CodeGenerator::populateOSRBuffer()
       TR_ASSERT(osrMethodData != NULL && osrMethodData->getOSRCodeBlock() != NULL,
              "osr method data or its block is NULL\n");
 
-      if (traceOSR)
-         traceMsg(self()->comp(), "Lowering trees in OSR block_%d...\n", block->getNumber());
+      logprintf(traceOSR, log, "Lowering trees in OSR block_%d...\n", block->getNumber());
 
       //osrFrameIndex is a field in the vmThread that is initialized by the VM to the offset
       //of the start of the first (deepest) frame in the OSR buffer
@@ -2490,9 +2470,8 @@ J9::CodeGenerator::populateOSRBuffer()
       TR::TreeTop* insertionPoint = tt->getPrevRealTreeTop();
       bool inlinesAnyMethod = osrMethodData->inlinesAnyMethod();
 
-      if (traceOSR)
-         traceMsg(self()->comp(), "callerIndex %d: max pending push slots=%d, # of auto slots=%d, # of arg slots=%d\n",
-                 osrMethodData->getInlinedSiteIndex(), methSym->getNumPPSlots(),
+      logprintf(traceOSR, log, "callerIndex %d: max pending push slots=%d, # of auto slots=%d, # of arg slots=%d\n",
+            osrMethodData->getInlinedSiteIndex(), methSym->getNumPPSlots(),
             methSym->getResolvedMethod()->numberOfTemps(), methSym->getNumParameterSlots());
 
       uint32_t numOfSymsThatShareSlot = 0;
@@ -2554,20 +2533,18 @@ J9::CodeGenerator::populateOSRBuffer()
       osrMethodData->setNumOfSymsThatShareSlot(numOfSymsThatShareSlot);
       maxScratchBufferSize = (maxScratchBufferSize > scratchBufferOffset) ? maxScratchBufferSize : scratchBufferOffset;
 
-      if (traceOSR)
-         {
-         traceMsg(self()->comp(), "%s %s %s: written out bytes in OSR buffer\n",
-                 osrMethodData->getInlinedSiteIndex() == -1 ? "Method," : "Inlined method,",
-                 inlinesAnyMethod? "inlines another method,": "doesn't inline any method,",
-                 methSym->signature(self()->trMemory()));
-         }
+      logprintf(traceOSR, log, "%s %s %s: written out bytes in OSR buffer\n",
+            osrMethodData->getInlinedSiteIndex() == -1 ? "Method," : "Inlined method,",
+            inlinesAnyMethod? "inlines another method,": "doesn't inline any method,",
+            methSym->signature(self()->trMemory()));
+
       int32_t totalNumOfSlots = osrMethodData->getTotalNumOfSlots();
       //The OSR helper call will print the contents of the OSR buffer (if trace option is on)
       //and populate the OSR buffer with the correct values of the shared slots (if there is any)
       bool emitCall = false;
 
       if ((numOfSymsThatShareSlot > 0) ||
-          self()->comp()->getOption(TR_EnablePrepareForOSREvenIfThatDoesNothing))
+          comp->getOption(TR_EnablePrepareForOSREvenIfThatDoesNothing))
          emitCall = true;
 
       int32_t startIndex = 0;
@@ -2597,7 +2574,7 @@ J9::CodeGenerator::populateOSRBuffer()
       //at the end of each OSR code block, we need to advance osrFrameIndex such that
       //it points to the beginning of the next osr frame
       //osrFrameIndex += osrMethodData->getTotalDataSize();
-      TR::TreeTop* osrFrameIndexAdvanceTreeTop = TR::TreeTop::create(self()->comp(),
+      TR::TreeTop* osrFrameIndexAdvanceTreeTop = TR::TreeTop::create(comp,
          TR::Node::createStore(self()->symRefTab()->findOrCreateOSRFrameIndexSymbolRef(),
             TR::Node::create(TR::iadd, 2, osrFrameIndex,
                             TR::Node::create(callNode, TR::iconst, 0, osrMethodData->getTotalDataSize())
@@ -2621,57 +2598,63 @@ J9::CodeGenerator::populateOSRBuffer()
          }
       }
 
-   self()->comp()->getOSRCompilationData()->setMaxScratchBufferSize(maxScratchBufferSize);
+   comp->getOSRCompilationData()->setMaxScratchBufferSize(maxScratchBufferSize);
    }
 
 static void addValidationRecords(TR::CodeGenerator *cg)
    {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->comp()->fe());
+   TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
+   bool trace = comp->getOption(TR_TraceCG);
 
-   TR::list<TR::AOTClassInfo*>* classInfo = cg->comp()->_aotClassInfo;
+   TR::list<TR::AOTClassInfo*>* classInfo = comp->_aotClassInfo;
    if (!classInfo->empty())
       {
       for (auto info = classInfo->begin(); info != classInfo->end(); ++info)
          {
-         traceMsg(cg->comp(), "processing AOT class info: %p in %s\n", *info, cg->comp()->signature());
-         traceMsg(cg->comp(), "ramMethod: %p cp: %p cpIndex: %x relo %d\n", (*info)->_method, (*info)->_constantPool, (*info)->_cpIndex, (*info)->_reloKind);
-         traceMsg(cg->comp(), "clazz: %p classChainOffset: %" OMR_PRIuPTR "\n", (*info)->_clazz, (*info)->_classChainOffset);
+         if (trace)
+            {
+            log->printf("processing AOT class info: %p in %s\n", *info, comp->signature());
+            log->printf("ramMethod: %p cp: %p cpIndex: %x relo %d\n", (*info)->_method, (*info)->_constantPool, (*info)->_cpIndex, (*info)->_reloKind);
+            log->printf("clazz: %p classChainOffset: %" OMR_PRIuPTR "\n", (*info)->_clazz, (*info)->_classChainOffset);
+            }
 
          TR_OpaqueMethodBlock *ramMethod = (*info)->_method;
 
          int32_t siteIndex = -1;
 
-         if (ramMethod != cg->comp()->getCurrentMethod()->getPersistentIdentifier()) // && info->_reloKind != TR_ValidateArbitraryClass)
+         if (ramMethod != comp->getCurrentMethod()->getPersistentIdentifier()) // && info->_reloKind != TR_ValidateArbitraryClass)
             {
             int32_t i;
-            for (i = 0; i < cg->comp()->getNumInlinedCallSites(); i++)
+            for (i = 0; i < comp->getNumInlinedCallSites(); i++)
                {
-               TR_InlinedCallSite &ics = cg->comp()->getInlinedCallSite(i);
+               TR_InlinedCallSite &ics = comp->getInlinedCallSite(i);
                TR_OpaqueMethodBlock *inlinedMethod = fej9->getInlinedCallSiteMethod(&ics);
 
-               traceMsg(cg->comp(), "\tinline site %d inlined method %p\n", i, inlinedMethod);
+               logprintf(trace, log, "\tinline site %d inlined method %p\n", i, inlinedMethod);
                if (ramMethod == inlinedMethod)
                   {
-                  traceMsg(cg->comp(), "\t\tmatch!\n");
+                  logprints(trace, log, "\t\tmatch!\n");
                   siteIndex = i;
                   break;
                   }
                }
 
-            if (i >= (int32_t) cg->comp()->getNumInlinedCallSites())
+            if (i >= (int32_t) comp->getNumInlinedCallSites())
                {
                // this assumption isn't associated with a method directly in the compilation
                // so we can't use a constant pool approach to validate: transform into TR_ValidateArbitraryClass
                // kind of overkill for TR_ValidateStaticField, but still correct
                (*info)->_reloKind = TR_ValidateArbitraryClass;
                siteIndex = -1;   // invalidate main compiled method
-               traceMsg(cg->comp(), "\ttransformed into TR_ValidateArbitraryClass\n");
+               logprints(trace, log, "\ttransformed into TR_ValidateArbitraryClass\n");
                }
             }
 
-         traceMsg(cg->comp(), "Found inlined site %d\n", siteIndex);
+         logprintf(trace, log, "Found inlined site %d\n", siteIndex);
 
-         TR_ASSERT(siteIndex < (int32_t) cg->comp()->getNumInlinedCallSites(), "did not find AOTClassInfo %p method in inlined site table", *info);
+         TR_ASSERT(siteIndex < (int32_t) comp->getNumInlinedCallSites(), "did not find AOTClassInfo %p method in inlined site table", *info);
 
          cg->addExternalRelocation(
             TR::ExternalRelocation::create(
@@ -2713,6 +2696,9 @@ static void addSVMValidationRecords(TR::CodeGenerator *cg)
 
 static TR_ExternalRelocationTargetKind getReloKindFromGuardSite(TR::CodeGenerator *cg, TR_AOTGuardSite *site)
    {
+   TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = comp->getOption(TR_TraceCG);
    TR_ExternalRelocationTargetKind type;
 
    switch (site->getType())
@@ -2750,7 +2736,7 @@ static TR_ExternalRelocationTargetKind getReloKindFromGuardSite(TR::CodeGenerato
          // (TR_RedefinedClassUPicSite), which would (hopefully) never
          // get patched. If it were patched, it seems like it would
          // replace code with a J9Method pointer.
-         if (!cg->comp()->getOption(TR_UseOldHCRGuardAOTRelocations))
+         if (!comp->getOption(TR_UseOldHCRGuardAOTRelocations))
             type = TR_NoRelocation;
          else
             type = TR_HCR;
@@ -2770,25 +2756,25 @@ static TR_ExternalRelocationTargetKind getReloKindFromGuardSite(TR::CodeGenerato
          if (site->getGuard()->getTestType() == TR_MethodTest)
             {
             type = TR_ProfiledMethodGuardRelocation;
-            traceMsg(cg->comp(), "TR_ProfiledMethodGuardRelocation\n");
+            logprints(trace, log, "TR_ProfiledMethodGuardRelocation\n");
             }
          else if (site->getGuard()->getTestType() == TR_VftTest)
             {
             type = TR_ProfiledClassGuardRelocation;
-            traceMsg(cg->comp(), "TR_ProfiledClassGuardRelocation\n");
+            logprints(trace, log, "TR_ProfiledClassGuardRelocation\n");
             }
          else
             TR_ASSERT(false, "unexpected profiled guard test type");
          break;
 
       case TR_BreakpointGuard:
-         traceMsg(cg->comp(), "TR_Breakpoint\n");
+         logprints(trace, log, "TR_Breakpoint\n");
          type = TR_Breakpoint;
          break;
 
       default:
          TR_ASSERT(false, "got a unknown/non-AOT guard at AOT site");
-         cg->comp()->failCompilation<J9::AOTRelocationRecordGenerationFailure>("Unknown/non-AOT guard at AOT site");
+         comp->failCompilation<J9::AOTRelocationRecordGenerationFailure>("Unknown/non-AOT guard at AOT site");
          break;
       }
 
@@ -3127,7 +3113,10 @@ J9::CodeGenerator::compressedReferenceRematerialization()
    {
    TR::TreeTop * tt;
    TR::Node *node;
+   TR::Compilation *comp = self()->comp();
+   OMR::Logger *log = comp->log();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->fe());
+   bool trace = comp->getOption(TR_TraceCG);
 
    static bool disableRematforCP = feGetEnv("TR_DisableWrtBarOpt") != NULL;
 
@@ -3138,27 +3127,27 @@ J9::CodeGenerator::compressedReferenceRematerialization()
    // 1. In Guarded Storage, we can't not do a guarded load because the object that is loaded may
    // not be in the root set, and as a consequence, may get moved.
    // 2. For read barriers in field watch, the vmhelpers are GC points and therefore the object might be moved
-   if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none || self()->comp()->getOption(TR_EnableFieldWatch))
+   if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none || comp->getOption(TR_EnableFieldWatch))
       {
-      if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
-         traceMsg(self()->comp(), "The compressedrefs remat opt is disabled because Concurrent Scavenger is enabled\n");
-      if (self()->comp()->getOption(TR_EnableFieldWatch))
-         traceMsg(self()->comp(), "The compressedrefs remat opt is disabled because field watch is enabled\n");
+      if ((TR::Compiler->om.readBarrierType() != gc_modron_readbar_none) && trace)
+         log->prints("The compressedrefs remat opt is disabled because Concurrent Scavenger is enabled\n");
+      if (comp->getOption(TR_EnableFieldWatch) && trace)
+         log->prints("The compressedrefs remat opt is disabled because field watch is enabled\n");
       disableRematforCP = true;
       }
 
    // no need to rematerialize for lowMemHeap
-   if (self()->comp()->useCompressedPointers() &&
+   if (comp->useCompressedPointers() &&
          (TR::Compiler->om.compressedReferenceShift() != 0) &&
          !disableRematforCP)
       {
-      if (self()->comp()->getOption(TR_TraceCG))
-         self()->comp()->dumpMethodTrees("Trees before this remat phase", self()->comp()->getMethodSymbol());
+      if (comp->getOption(TR_TraceCG))
+         comp->dumpMethodTrees(log, "Trees before this remat phase", comp->getMethodSymbol());
 
       List<TR::Node> rematerializedNodes(self()->trMemory());
-      vcount_t visitCount = self()->comp()->incVisitCount();
+      vcount_t visitCount = comp->incVisitCount();
       TR::SymbolReference *autoSymRef = NULL;
-      for (tt = self()->comp()->getStartTree(); tt; tt = tt->getNextTreeTop())
+      for (tt = comp->getStartTree(); tt; tt = tt->getNextTreeTop())
          {
          node = tt->getNode();
          if (node->getOpCodeValue() == TR::BBStart && !node->getBlock()->isExtensionOfPreviousBlock())
@@ -3195,7 +3184,6 @@ J9::CodeGenerator::compressedReferenceRematerialization()
                   {
                   if (!rematerializedNodes.find(node->getFirstChild()))
                      {
-                     ////traceMsg(comp(), "Adding %p\n", node->getFirstChild());
                      rematerializedNodes.add(node->getFirstChild());
                      }
                   node->getFirstChild()->setVisitCount(visitCount-1);
@@ -3211,8 +3199,7 @@ J9::CodeGenerator::compressedReferenceRematerialization()
 
                   TR::Node *ttNode = TR::Node::create(TR::treetop, 1, cursorNode);
 
-                  ///traceMsg(comp(), "5 ttNode %p\n", ttNode);
-                  TR::TreeTop *treeTop = TR::TreeTop::create(self()->comp(), ttNode);
+                  TR::TreeTop *treeTop = TR::TreeTop::create(comp, ttNode);
                   TR::TreeTop *prevTreeTop = tt->getPrevTreeTop();
                   prevTreeTop->join(treeTop);
                   treeTop->join(tt);
@@ -3225,7 +3212,7 @@ J9::CodeGenerator::compressedReferenceRematerialization()
             prevTree->join(nextTree);
             }
 
-         if (node->canGCandReturn(self()->comp()))
+         if (node->canGCandReturn(comp))
             {
             ListIterator<TR::Node> nodesIt(&rematerializedNodes);
             for (TR::Node * rematNode = nodesIt.getFirst(); rematNode != NULL; rematNode = nodesIt.getNext())
@@ -3235,8 +3222,7 @@ J9::CodeGenerator::compressedReferenceRematerialization()
                   rematNode->setVisitCount(visitCount);
                   TR::Node *ttNode = TR::Node::create(TR::treetop, 1, rematNode);
 
-                  ///traceMsg(comp(), "5 ttNode %p\n", ttNode);
-                  TR::TreeTop *treeTop = TR::TreeTop::create(self()->comp(), ttNode);
+                  TR::TreeTop *treeTop = TR::TreeTop::create(comp, ttNode);
                   TR::TreeTop *prevTree = tt->getPrevTreeTop();
                   prevTree->join(treeTop);
                   treeTop->join(tt);
@@ -3245,30 +3231,30 @@ J9::CodeGenerator::compressedReferenceRematerialization()
             rematerializedNodes.deleteAll();
             }
          }
-      if (self()->comp()->getOption(TR_TraceCG))
-         self()->comp()->dumpMethodTrees("Trees after this remat phase", self()->comp()->getMethodSymbol());
+      if (comp->getOption(TR_TraceCG))
+         comp->dumpMethodTrees(log, "Trees after this remat phase", comp->getMethodSymbol());
 
       if (self()->shouldYankCompressedRefs())
          {
-         visitCount = self()->comp()->incVisitCount();
-         vcount_t secondVisitCount = self()->comp()->incVisitCount();
+         visitCount = comp->incVisitCount();
+         vcount_t secondVisitCount = comp->incVisitCount();
          TR::TreeTop *nextTree = NULL;
-         for (tt = self()->comp()->getStartTree(); tt; tt = nextTree)
+         for (tt = comp->getStartTree(); tt; tt = nextTree)
             {
             node = tt->getNode();
             nextTree = tt->getNextTreeTop();
             self()->yankCompressedRefs(tt, NULL, -1, node, visitCount, secondVisitCount);
             }
 
-         if (self()->comp()->getOption(TR_TraceCG))
-            self()->comp()->dumpMethodTrees("Trees after this yank phase", self()->comp()->getMethodSymbol());
+         if (comp->getOption(TR_TraceCG))
+            comp->dumpMethodTrees(log, "Trees after this yank phase", comp->getMethodSymbol());
          }
       }
 
-   if (self()->comp()->useCompressedPointers() &&
+   if (comp->useCompressedPointers() &&
          !disableRematforCP)
       {
-      for (tt = self()->comp()->getStartTree(); tt; tt = tt->getNextTreeTop())
+      for (tt = comp->getStartTree(); tt; tt = tt->getNextTreeTop())
          {
          node = tt->getNode();
 
@@ -3284,7 +3270,7 @@ J9::CodeGenerator::compressedReferenceRematerialization()
                TR::Node *reference = NULL;
                if (firstChild->getOpCodeValue() == TR::l2a)
                   {
-                  TR::ILOpCodes loadOp = self()->comp()->il.opCodeForIndirectLoad(TR::Int32);
+                  TR::ILOpCodes loadOp = comp->il.opCodeForIndirectLoad(TR::Int32);
                   while (firstChild->getOpCodeValue() != loadOp)
                      firstChild = firstChild->getFirstChild();
                   reference = firstChild->getFirstChild();
@@ -3320,6 +3306,8 @@ J9::CodeGenerator::rematerializeCompressedRefs(
    if (node->getVisitCount() == visitCount)
       return;
 
+   TR::Compilation *comp = self()->comp();
+
    node->setVisitCount(visitCount);
 
    bool alreadyVisitedNullCheckReference = false;
@@ -3344,7 +3332,7 @@ J9::CodeGenerator::rematerializeCompressedRefs(
           node->getFirstChild()->getFirstChild()->containsCompressionSequence()) ||
            (node->getFirstChild()->getFirstChild()->getOpCodeValue() == TR::lshl)))
          {
-         TR::ILOpCodes loadOp = self()->comp()->il.opCodeForIndirectLoad(TR::Int32);
+         TR::ILOpCodes loadOp = comp->il.opCodeForIndirectLoad(TR::Int32);
          TR::Node *n = node->getFirstChild();
          while (n->getOpCodeValue() != loadOp)
             n = n->getFirstChild();
@@ -3420,7 +3408,7 @@ J9::CodeGenerator::rematerializeCompressedRefs(
            parent->getOpCode().isLoadVar() ||
            (self()->getSupportsConstantOffsetInAddressing() && parent->getOpCode().isArrayRef() &&
             (self()->canFoldLargeOffsetInAddressing() || parent->getSecondChild()->getOpCode().isLoadConst()))) &&
-          performTransformation(self()->comp(), "%sRematerializing node %p(%s) in decompression sequence\n", OPT_DETAILS, node, node->getOpCode().getName()))
+          performTransformation(comp, "%sRematerializing node %p(%s) in decompression sequence\n", OPT_DETAILS, node, node->getOpCode().getName()))
          {
          if ((node->getReferenceCount() > 1) &&
              !rematerializedNodes->find(node))
@@ -3481,7 +3469,7 @@ J9::CodeGenerator::rematerializeCompressedRefs(
                !self()->canFoldLargeOffsetInAddressing() &&
                !parent->getSecondChild()->getOpCode().isLoadConst()) ||
                !self()->getSupportsConstantOffsetInAddressing()) &&
-              performTransformation(self()->comp(), "%sYanking %p(%s) in decompression sequence\n", OPT_DETAILS, node, node->getOpCode().getName()))
+              performTransformation(comp, "%sYanking %p(%s) in decompression sequence\n", OPT_DETAILS, node, node->getOpCode().getName()))
             {
             if ((node->getOpCodeValue() == TR::l2a) &&
                 (node->getFirstChild()->getOpCodeValue() == TR::ladd))
@@ -3511,10 +3499,9 @@ J9::CodeGenerator::rematerializeCompressedRefs(
                      {
                      TR::Node *ttNode = TR::Node::create(TR::treetop, 1, node);
 
-                     if (self()->comp()->getOption(TR_TraceCG))
-                        traceMsg(self()->comp(), "Placing treetop %p (to hide delay) after tree %p for l2a %p\n", ttNode, cursorNode, node);
+                     logprintf(comp->getOption(TR_TraceCG), comp->log(), "Placing treetop %p (to hide delay) after tree %p for l2a %p\n", ttNode, cursorNode, node);
 
-                     TR::TreeTop *treeTop = TR::TreeTop::create(self()->comp(), ttNode);
+                     TR::TreeTop *treeTop = TR::TreeTop::create(comp, ttNode);
                      TR::TreeTop *nextTT = cursorTree->getNextTreeTop();
                      cursorTree->join(treeTop);
                      treeTop->join(nextTT);
@@ -3545,7 +3532,7 @@ J9::CodeGenerator::rematerializeCompressedRefs(
           (self()->performsChecksExplicitly() || (disableBranchlessPassThroughNULLCHK && node->getFirstChild()->getOpCodeValue() == TR::PassThrough)) &&
           ((node->getFirstChild()->getOpCodeValue() == TR::l2a) ||
            (reference->getOpCodeValue() == TR::l2a)) &&
-         performTransformation(self()->comp(), "%sTransforming null check reference %p in null check node %p to be checked explicitly\n", OPT_DETAILS, reference, node))
+         performTransformation(comp, "%sTransforming null check reference %p in null check node %p to be checked explicitly\n", OPT_DETAILS, reference, node))
       {
       if (node->getFirstChild()->getOpCodeValue() != TR::PassThrough)
          {
@@ -3570,7 +3557,7 @@ J9::CodeGenerator::rematerializeCompressedRefs(
 
                immChild->setVisitCount(visitCount-1);
                TR::Node *anchorNode = TR::Node::create(TR::treetop, 1, immChild->getFirstChild()->getFirstChild());
-               TR::TreeTop *anchorTree = TR::TreeTop::create(self()->comp(), anchorNode);
+               TR::TreeTop *anchorTree = TR::TreeTop::create(comp, anchorNode);
                immChild->getFirstChild()->getFirstChild()->setVisitCount(visitCount-1);
                TR::TreeTop *nextTT = tt->getNextTreeTop();
                tt->join(anchorTree);
@@ -3592,7 +3579,7 @@ J9::CodeGenerator::rematerializeCompressedRefs(
 
          if (ttNode)
             {
-            TR::TreeTop *treeTop = TR::TreeTop::create(self()->comp(), ttNode);
+            TR::TreeTop *treeTop = TR::TreeTop::create(comp, ttNode);
             immChild->setVisitCount(visitCount-1);
             TR::TreeTop *nextTT = tt->getNextTreeTop();
             tt->join(treeTop);
@@ -3613,7 +3600,7 @@ J9::CodeGenerator::rematerializeCompressedRefs(
           (((reference->getFirstChild()->getOpCodeValue() == TR::ladd) &&
           reference->getFirstChild()->containsCompressionSequence()) ||
            reference->getFirstChild()->getOpCodeValue() == TR::lshl) &&
-          performTransformation(self()->comp(), "%sStrength reducing null check reference %p in null check node %p \n", OPT_DETAILS, reference, node))
+          performTransformation(comp, "%sStrength reducing null check reference %p in null check node %p \n", OPT_DETAILS, reference, node))
           {
           bool addedToList = false;
           if (node->getFirstChild()->getOpCodeValue() == TR::PassThrough)
@@ -3656,7 +3643,7 @@ J9::CodeGenerator::rematerializeCompressedRefs(
           {
           if ((secondChild->getOpCodeValue() == TR::aconst) &&
               (secondChild->getAddress() == 0) &&
-              performTransformation(self()->comp(), "%sTransforming reference %p in null comparison node %p \n", OPT_DETAILS, reference, node))
+              performTransformation(comp, "%sTransforming reference %p in null comparison node %p \n", OPT_DETAILS, reference, node))
              {
              bool addedToList = false;
              if ((reference->getReferenceCount() > 1) &&
@@ -3696,7 +3683,7 @@ J9::CodeGenerator::rematerializeCompressedRefs(
             // This check is overly conservative to ensure functional correctness.
             bool isPossiblyUnderArrayStoreCheck = tt->getNode()->getOpCodeValue() == TR::ArrayStoreCHK || (node->getReferenceCount() > 1 && !tt->getNode()->getOpCode().isResolveCheck());
 
-            if (!isPossiblyUnderArrayStoreCheck && performTransformation(self()->comp(), "%sStoring compressed pointer [%p] directly into %p in tree %p\n", OPT_DETAILS, address, node, tt->getNode()))
+            if (!isPossiblyUnderArrayStoreCheck && performTransformation(comp, "%sStoring compressed pointer [%p] directly into %p in tree %p\n", OPT_DETAILS, address, node, tt->getNode()))
                {
                bool addedToList = false;
                if ((address->getReferenceCount() > 1) && !rematerializedNodes->find(address))
@@ -3706,7 +3693,7 @@ J9::CodeGenerator::rematerializeCompressedRefs(
                   }
 
                TR::Node *l2iNode = NULL;
-               TR::ILOpCodes loadOp = self()->comp()->il.opCodeForIndirectLoad(TR::Int32);
+               TR::ILOpCodes loadOp = comp->il.opCodeForIndirectLoad(TR::Int32);
                TR::Node *n = address;
                while (n->getOpCodeValue() != loadOp)
                   n = n->getFirstChild();
@@ -3719,7 +3706,7 @@ J9::CodeGenerator::rematerializeCompressedRefs(
                   node->setNumChildren(lastChildNum);
                   }
 
-               TR::Node::recreate(node, self()->comp()->il.opCodeForIndirectStore(TR::Int32));
+               TR::Node::recreate(node, comp->il.opCodeForIndirectStore(TR::Int32));
 
                TR::Node *immChild = node->getSecondChild();
                node->setAndIncChild(1, l2iNode);
@@ -3766,8 +3753,6 @@ J9::CodeGenerator::yankCompressedRefs(
        (node->getFirstChild()->getOpCodeValue() == TR::ladd &&
         node->getFirstChild()->containsCompressionSequence()))
       {
-
-      //printf("Looking at node %p in %s\n", node, comp()->signature()); fflush(stdout);
       TR::TreeTop *firstTree = tt;
       TR::TreeTop *lastTree = tt;
       bool nullCheckTree = false;
@@ -3816,8 +3801,6 @@ J9::CodeGenerator::yankCompressedRefs(
 
          TR_BitVector intersection(self()->comp()->getSymRefCount(), self()->comp()->trMemory(), stackAlloc);
 
-         //printf("canYank %d node %d in %s\n", canYank, node, comp()->signature()); fflush(stdout);
-
          if (canYank)
             {
             TR::TreeTop *cursorTree = firstTree->getPrevTreeTop();
@@ -3826,7 +3809,6 @@ J9::CodeGenerator::yankCompressedRefs(
               {
               numTrees++;
               TR::Node *cursorNode = cursorTree->getNode();
-              //printf("canYank %d node %p cursor %p in %s\n", canYank, node, cursorNode, comp()->signature()); fflush(stdout);
               TR::Node *childNode = NULL;
               if (cursorNode->getNumChildren() > 0)
                  childNode = cursorNode->getFirstChild();
@@ -3897,7 +3879,6 @@ J9::CodeGenerator::yankCompressedRefs(
 
             if (cursorTree != firstTree->getPrevTreeTop())
                {
-               /////printf("Yanking l2a node %p past %d trees in %s\n", node, numTrees, comp()->signature()); fflush(stdout);
                TR::TreeTop *nextTree = cursorTree->getNextTreeTop();
                TR::TreeTop *prevTreeAtSrc = firstTree->getPrevTreeTop();
                TR::TreeTop *nextTreeAtSrc = lastTree->getNextTreeTop();
@@ -3917,8 +3898,12 @@ J9::CodeGenerator::anchorRematNodesIfNeeded(
       TR::TreeTop *tt,
       List<TR::Node> *rematerializedNodes)
    {
+   TR::Compilation *comp = self()->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = comp->getOption(TR_TraceCG);
+
    TR::SymbolReference *symRef = node->getSymbolReference();
-   TR::SparseBitVector aliases(self()->comp()->allocator());
+   TR::SparseBitVector aliases(comp->allocator());
    if (symRef->sharesSymbol())
       symRef->getUseDefAliases().getAliases(aliases);
 
@@ -3936,16 +3921,16 @@ J9::CodeGenerator::anchorRematNodesIfNeeded(
                   (aliases.ValueAt(load->getSymbolReference()->getReferenceNumber()))))
             {
             rematerializedNodes->remove(rematNode);
-            rematNode->setVisitCount(self()->comp()->getVisitCount());
-            if (self()->comp()->getOption(TR_TraceCG))
+            rematNode->setVisitCount(comp->getVisitCount());
+            if (comp->getOption(TR_TraceCG))
                {
-               if (node->getOpCode().isStoreIndirect())
-                  traceMsg(self()->comp(), "Found previous load %p same as store %p, anchoring load\n", load, node);
+               if (node->getOpCode().isStoreIndirect() && trace)
+                  log->printf("Found previous load %p same as store %p, anchoring load\n", load, node);
                else
-                  traceMsg(self()->comp(), "Found previous load %p aliases with node %p, anchoring load\n", load, node);
+                  log->printf("Found previous load %p aliases with node %p, anchoring load\n", load, node);
                }
             TR::Node *ttNode = TR::Node::create(TR::treetop, 1, rematNode);
-            TR::TreeTop *treeTop = TR::TreeTop::create(self()->comp(), ttNode);
+            TR::TreeTop *treeTop = TR::TreeTop::create(comp, ttNode);
             TR::TreeTop *prevTree = tt->getPrevTreeTop();
             prevTree->join(treeTop);
             treeTop->join(tt);
@@ -4247,24 +4232,27 @@ J9::CodeGenerator::fixUpProfiledInterfaceGuardTest()
 void
 J9::CodeGenerator::allocateLinkageRegisters()
    {
-   if (self()->comp()->isGPUCompilation())
+   TR::Compilation *comp = self()->comp();
+   OMR::Logger *log = comp->log();
+
+   if (comp->isGPUCompilation())
       return;
 
-   TR::Delimiter d(self()->comp(), self()->comp()->getOptions()->getAnyOption(TR_TraceOptDetails|TR_CountOptTransformations), "AllocateLinkageRegisters");
+   TR::Delimiter d(comp, comp->getOptions()->getAnyOption(TR_TraceOptDetails|TR_CountOptTransformations), "AllocateLinkageRegisters");
 
    if (!self()->prepareForGRA())
       {
-      dumpOptDetails(self()->comp(), "  prepareForGRA failed -- giving up\n");
+      dumpOptDetails(comp, "  prepareForGRA failed -- giving up\n");
       return;
       }
 
-   TR::Block     *firstBlock         = self()->comp()->getStartBlock();
-   const int32_t numParms           = self()->comp()->getMethodSymbol()->getParameterList().getSize();
+   TR::Block *firstBlock = comp->getStartBlock();
+   const int32_t numParms = comp->getMethodSymbol()->getParameterList().getSize();
 
    if (numParms == 0) return ;
 
-   TR_BitVector  globalRegsWithRegLoad(self()->getNumberOfGlobalRegisters(), self()->comp()->trMemory(), stackAlloc); // indexed by global register number
-   TR_BitVector  killedParms(numParms, self()->comp()->trMemory(), stackAlloc); // indexed by parm->getOrdinal()
+   TR_BitVector  globalRegsWithRegLoad(self()->getNumberOfGlobalRegisters(), comp->trMemory(), stackAlloc); // indexed by global register number
+   TR_BitVector  killedParms(numParms, comp->trMemory(), stackAlloc); // indexed by parm->getOrdinal()
    TR::Node     **regLoads = (TR::Node**)self()->trMemory()->allocateStackMemory(numParms*sizeof(regLoads[0])); // indexed by parm->getOrdinal() to give the RegLoad for a given parm
    memset(regLoads, 0, numParms*sizeof(regLoads[0]));
 
@@ -4275,13 +4263,13 @@ J9::CodeGenerator::allocateLinkageRegisters()
       {
       // Rather than put regStores in all predecessors, we give up.
       //
-      dumpOptDetails(self()->comp(), "  First basic block is in a loop -- giving up\n");
+      dumpOptDetails(comp, "  First basic block is in a loop -- giving up\n");
       return;
       }
 
    // Initialize regLoads and usedGlobalRegs from the RegLoads already present on the BBStart node
    //
-   TR::Node *bbStart    = self()->comp()->getStartTree()->getNode();
+   TR::Node *bbStart    = comp->getStartTree()->getNode();
    TR_ASSERT(bbStart->getOpCodeValue() == TR::BBStart, "assertion failure");
    TR::Node *oldRegDeps = (bbStart->getNumChildren() > 0)? bbStart->getFirstChild() : NULL;
    if (oldRegDeps)
@@ -4291,9 +4279,9 @@ J9::CodeGenerator::allocateLinkageRegisters()
          {
          TR::Node *regLoad = oldRegDeps->getChild(i);
          TR_ASSERT(regLoad->getSymbol() && regLoad->getSymbol()->isParm(), "First basic block can have only parms live on entry");
-         dumpOptDetails(self()->comp(), "  Parm %d has RegLoad %s\n", regLoad->getSymbol()->getParmSymbol()->getOrdinal(), self()->comp()->getDebug()->getName(regLoad));
+         dumpOptDetails(comp, "  Parm %d has RegLoad %s\n", regLoad->getSymbol()->getParmSymbol()->getOrdinal(), comp->getDebug()->getName(regLoad));
          regLoads[regLoad->getSymbol()->getParmSymbol()->getOrdinal()] = regLoad;
-         if (regLoad->getType().isInt64() && self()->comp()->target().is32Bit() && !self()->use64BitRegsOn32Bit())
+         if (regLoad->getType().isInt64() && comp->target().is32Bit() && !self()->use64BitRegsOn32Bit())
             {
             globalRegsWithRegLoad.set(regLoad->getLowGlobalRegisterNumber());
             globalRegsWithRegLoad.set(regLoad->getHighGlobalRegisterNumber());
@@ -4304,17 +4292,18 @@ J9::CodeGenerator::allocateLinkageRegisters()
             }
          }
       }
-   if (self()->comp()->getOption(TR_TraceOptDetails))
+
+   if (comp->getOption(TR_TraceOptDetails))
       {
-      dumpOptDetails(self()->comp(), "  Initial globalRegsWithRegLoad: ");
-      self()->getDebug()->print(self()->comp()->getOptions()->getLogFile(), &globalRegsWithRegLoad);
-      dumpOptDetails(self()->comp(), "\n");
+      dumpOptDetails(comp, "  Initial globalRegsWithRegLoad: ");
+      self()->getDebug()->print(log, &globalRegsWithRegLoad);
+      dumpOptDetails(comp, "\n");
       }
 
 
    // Recursively replace parm loads with regLoads; create new RegLoads as necessary
    //
-   vcount_t visitCount = self()->comp()->incVisitCount();
+   vcount_t visitCount = comp->incVisitCount();
    int32_t  numRegLoadsAdded = 0;
    for(TR::TreeTop *tt = firstBlock->getFirstRealTreeTop(); tt; tt = tt->getNextTreeTop())
       {
@@ -4325,11 +4314,11 @@ J9::CodeGenerator::allocateLinkageRegisters()
       if (node->getOpCode().isStoreDirect() && node->getSymbol()->isParm())
          {
          killedParms.set(node->getSymbol()->getParmSymbol()->getOrdinal());
-         if (self()->comp()->getOption(TR_TraceOptDetails))
+         if (comp->getOption(TR_TraceOptDetails))
             {
-            dumpOptDetails(self()->comp(), "  Found store %s\n  killedParms is now ", self()->comp()->getDebug()->getName(node));
-            self()->getDebug()->print(self()->comp()->getOptions()->getLogFile(), &killedParms);
-            dumpOptDetails(self()->comp(), "\n");
+            dumpOptDetails(comp, "  Found store %s\n  killedParms is now ", comp->getDebug()->getName(node));
+            self()->getDebug()->print(log, &killedParms);
+            dumpOptDetails(comp, "\n");
             }
          }
       }
@@ -4360,9 +4349,9 @@ J9::CodeGenerator::allocateLinkageRegisters()
       bbStart->setAndIncChild(0, newRegDeps);
       bbStart->setNumChildren(1);
 
-      dumpOptDetails(self()->comp(), "  Created new GlRegDeps %s on BBStart %s\n",
-         self()->comp()->getDebug()->getName(newRegDeps),
-         self()->comp()->getDebug()->getName(bbStart));
+      dumpOptDetails(comp, "  Created new GlRegDeps %s on BBStart %s\n",
+         comp->getDebug()->getName(newRegDeps),
+         comp->getDebug()->getName(bbStart));
       }
    }
 
@@ -4415,6 +4404,8 @@ J9::CodeGenerator::swapChildrenIfNeeded(TR::Node *store, char *optDetails)
 uint16_t
 J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads, TR_BitVector *globalRegsWithRegLoad, TR_BitVector &killedParms, vcount_t visitCount)
    {
+   TR::Compilation *comp = self()->comp();
+
    if (node->getVisitCount() == visitCount)
       {
       return 0;
@@ -4427,11 +4418,11 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
    if (node->getOpCode().isLoadAddr() && node->getOpCode().hasSymbolReference() && node->getSymbol()->isParm())
       {
       killedParms.set(node->getSymbol()->getParmSymbol()->getOrdinal());
-      if (self()->comp()->getOption(TR_TraceOptDetails))
+      if (comp->getOption(TR_TraceOptDetails))
          {
-         dumpOptDetails(self()->comp(), "  Found loadaddr %s\n  killedParms is now ", self()->comp()->getDebug()->getName(node));
-         self()->getDebug()->print(self()->comp()->getOptions()->getLogFile(), &killedParms);
-         dumpOptDetails(self()->comp(), "\n");
+         dumpOptDetails(comp, "  Found loadaddr %s\n  killedParms is now ", comp->getDebug()->getName(node));
+         self()->getDebug()->print(comp->log(), &killedParms);
+         dumpOptDetails(comp, "\n");
          }
       }
 
@@ -4439,24 +4430,24 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
       {
       TR::ParameterSymbol *parm      = node->getSymbol()->getParmSymbol();
       int8_t              lri       = parm->getLinkageRegisterIndex();
-      TR::ILOpCodes        regLoadOp = self()->comp()->il.opCodeForRegisterLoad(parm->getDataType());
+      TR::ILOpCodes        regLoadOp = comp->il.opCodeForRegisterLoad(parm->getDataType());
 
       if (regLoads[parm->getOrdinal()] == NULL && lri != -1 && !killedParms.isSet(parm->getOrdinal()))
          {
          // Transmute this node into a regLoad
 
-         if ((node->getType().isInt64() && self()->comp()->target().is32Bit() && !self()->use64BitRegsOn32Bit()))
+         if ((node->getType().isInt64() && comp->target().is32Bit() && !self()->use64BitRegsOn32Bit()))
             {
             if (self()->getDisableLongGRA())
                {
-               dumpOptDetails(self()->comp(), "  GRA not supported for longs; leaving %s unchanged\n", self()->comp()->getDebug()->getName(node));
+               dumpOptDetails(comp, "  GRA not supported for longs; leaving %s unchanged\n", comp->getDebug()->getName(node));
                }
             else
                {
                // Endianness affects how longs are passed
                //
                int8_t lowLRI, highLRI;
-               if (self()->comp()->target().cpu.isBigEndian())
+               if (comp->target().cpu.isBigEndian())
                   {
                   highLRI = lri;
                   lowLRI  = lri+1;
@@ -4470,18 +4461,18 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
                TR_GlobalRegisterNumber highReg = self()->getLinkageGlobalRegisterNumber(highLRI, node->getDataType());
 
                if (lowReg != -1 && highReg != -1 && !globalRegsWithRegLoad->isSet(lowReg) && !globalRegsWithRegLoad->isSet(highReg)
-                  && performTransformation(self()->comp(), "O^O LINKAGE REGISTER ALLOCATION: transforming %s into %s\n", self()->comp()->getDebug()->getName(node), self()->comp()->getDebug()->getName(regLoadOp)))
+                  && performTransformation(comp, "O^O LINKAGE REGISTER ALLOCATION: transforming %s into %s\n", comp->getDebug()->getName(node), comp->getDebug()->getName(regLoadOp)))
                   {
                   // Both halves are in regs, and both regs are available.
                   // Transmute load into regload
                   //
                   if(parm->getDataType() == TR::Aggregate)
                      {
-                     dumpOptDetails(self()->comp(), "\tNot doing transformation for parm %p because it is an aggregate.\n",node);
+                     dumpOptDetails(comp, "\tNot doing transformation for parm %p because it is an aggregate.\n",node);
                      }
                   else
                      {
-                     TR::Node::recreate(node, self()->comp()->il.opCodeForRegisterLoad(parm->getDataType()));
+                     TR::Node::recreate(node, comp->il.opCodeForRegisterLoad(parm->getDataType()));
                      node->setLowGlobalRegisterNumber(lowReg);
                      node->setHighGlobalRegisterNumber(highReg);
 
@@ -4495,7 +4486,7 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
                   }
                }
             }
-         else if (self()->comp()->target().cpu.isZ() && self()->comp()->target().isLinux() && parm->getDataType() == TR::Aggregate &&
+         else if (comp->target().cpu.isZ() && comp->target().isLinux() && parm->getDataType() == TR::Aggregate &&
                   (parm->getSize() <= 2 ||  parm->getSize() == 4 ||  parm->getSize() == 8))
             {
             // On zLinux aggregates with a size of 1, 2, 4 or 8 bytes are passed by value in registers.
@@ -4512,15 +4503,15 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
                dt = TR::Int8;
 
             // if not 64 bit and data type is 64 bit, need to place it into two registers
-            if ((self()->comp()->target().is32Bit() && !self()->use64BitRegsOn32Bit()) && dt == TR::Int64)
+            if ((comp->target().is32Bit() && !self()->use64BitRegsOn32Bit()) && dt == TR::Int64)
                {
                TR_GlobalRegisterNumber lowReg  = self()->getLinkageGlobalRegisterNumber(lri+1, dt);
                TR_GlobalRegisterNumber highReg = self()->getLinkageGlobalRegisterNumber(lri, dt);
 
                if (lowReg != -1 && highReg != -1 && !globalRegsWithRegLoad->isSet(lowReg) && !globalRegsWithRegLoad->isSet(highReg) &&
-                   performTransformation(self()->comp(), "O^O LINKAGE REGISTER ALLOCATION: transforming aggregate parm %s into xRegLoad\n", self()->comp()->getDebug()->getName(node)))
+                   performTransformation(comp, "O^O LINKAGE REGISTER ALLOCATION: transforming aggregate parm %s into xRegLoad\n", comp->getDebug()->getName(node)))
                   {
-                  TR::Node::recreate(node, self()->comp()->il.opCodeForRegisterLoad(dt));
+                  TR::Node::recreate(node, comp->il.opCodeForRegisterLoad(dt));
 
                   node->setLowGlobalRegisterNumber(lowReg);
                   node->setHighGlobalRegisterNumber(highReg);
@@ -4537,9 +4528,9 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
                TR_GlobalRegisterNumber reg = self()->getLinkageGlobalRegisterNumber(lri, dt);
 
                if (reg != -1 && !globalRegsWithRegLoad->isSet(reg) &&
-                   performTransformation(self()->comp(), "O^O LINKAGE REGISTER ALLOCATION: transforming aggregate parm %s into xRegLoad\n", self()->comp()->getDebug()->getName(node)))
+                   performTransformation(comp, "O^O LINKAGE REGISTER ALLOCATION: transforming aggregate parm %s into xRegLoad\n", comp->getDebug()->getName(node)))
                   {
-                  TR::Node::recreate(node, self()->comp()->il.opCodeForRegisterLoad(dt));
+                  TR::Node::recreate(node, comp->il.opCodeForRegisterLoad(dt));
 
                   node->setGlobalRegisterNumber(reg);
                   globalRegsWithRegLoad->set(reg);
@@ -4553,17 +4544,17 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
             {
             TR_GlobalRegisterNumber reg = self()->getLinkageGlobalRegisterNumber(parm->getLinkageRegisterIndex(), node->getDataType());
             if (reg != -1 && !globalRegsWithRegLoad->isSet(reg)
-               && performTransformation(self()->comp(), "O^O LINKAGE REGISTER ALLOCATION: transforming %s into %s\n", self()->comp()->getDebug()->getName(node), self()->comp()->getDebug()->getName(regLoadOp)))
+               && performTransformation(comp, "O^O LINKAGE REGISTER ALLOCATION: transforming %s into %s\n", comp->getDebug()->getName(node), comp->getDebug()->getName(regLoadOp)))
                {
                // Transmute load into regload
                //
                if(parm->getDataType() == TR::Aggregate) // for aggregates, must look at node type to determine register type as parm type is still 'aggregate'
                   {
-                  dumpOptDetails(self()->comp(), "\tNot doing transformation for parm %p because it is an aggregate.\n",node);
+                  dumpOptDetails(comp, "\tNot doing transformation for parm %p because it is an aggregate.\n",node);
                   }
                else
                   {
-                  TR::Node::recreate(node, self()->comp()->il.opCodeForRegisterLoad(parm->getDataType()));
+                  TR::Node::recreate(node, comp->il.opCodeForRegisterLoad(parm->getDataType()));
                   node->setGlobalRegisterNumber(reg);
 
                   // Update state to include the new regLoad
@@ -5160,11 +5151,11 @@ J9::CodeGenerator::generatePoisonNode(TR::Block *currentBlock, TR::SymbolReferen
       {
       if (poisoned)
          {
-         traceMsg(comp, "POISON DEAD SLOTS --- Live local %d  from parent block %d going dead .... poisoning slot with node 0x%x .\n", liveAutoSymRef->getReferenceNumber() , currentBlock->getNumber(), storeNode);
+         comp->log()->printf("POISON DEAD SLOTS --- Live local %d  from parent block %d going dead .... poisoning slot with node 0x%x .\n", liveAutoSymRef->getReferenceNumber() , currentBlock->getNumber(), storeNode);
          }
       else
          {
-         traceMsg(comp, "POISON DEAD SLOTS --- Live local %d of unsupported type from parent block %d going dead .... poisoning skipped.\n", liveAutoSymRef->getReferenceNumber() , currentBlock->getNumber());
+         comp->log()->printf("POISON DEAD SLOTS --- Live local %d of unsupported type from parent block %d going dead .... poisoning skipped.\n", liveAutoSymRef->getReferenceNumber() , currentBlock->getNumber());
          }
       }
 
@@ -5296,23 +5287,23 @@ J9::CodeGenerator::addInvokeBasicCallSiteImpl(
       (instr != NULL) != (retAddr != NULL),
       "expected exactly one of TR::Instruction or return address");
 
+   OMR::Logger *log = comp()->log();
+
    if (comp()->getOption(TR_TraceCG))
       {
-      traceMsg(comp(), "Call instruction ");
+      log->prints("Call instruction ");
       if (instr != NULL)
          {
-         traceMsg(comp(), "%p", instr);
+         log->printf("%p", instr);
          }
       else
          {
-         traceMsg(comp(), "with return address %p", retAddr);
+         log->printf("with return address %p", retAddr);
          }
 
-      traceMsg(
-         comp(),
-         " for n%un [%p] may target VM MethodHandle.invokeBasic\n",
-         callNode->getGlobalIndex(),
-         callNode);
+      log->printf(" for n%un [%p] may target VM MethodHandle.invokeBasic\n",
+            callNode->getGlobalIndex(),
+            callNode);
       }
 
    TR_J9VMBase *fej9 = comp()->fej9();
@@ -5355,10 +5346,7 @@ J9::CodeGenerator::addInvokeBasicCallSiteImpl(
       numArgSlots32 += 1 + (uint32_t)(dt == TR::Int64 || dt == TR::Double);
       }
 
-   if (comp()->getOption(TR_TraceCG))
-      {
-      traceMsg(comp(), "  arg slots: %u\n", numArgSlots32);
-      }
+   logprintf(comp()->getOption(TR_TraceCG), log, "  arg slots: %u\n", numArgSlots32);
 
    TR_ASSERT_FATAL_WITH_NODE(
       callNode,
@@ -5380,10 +5368,7 @@ J9::CodeGenerator::addInvokeBasicCallSiteImpl(
       j2iThunk = fej9->getJ2IThunk(sig, sigLen, comp());
       TR_ASSERT_FATAL_WITH_NODE(callNode, j2iThunk != NULL, "missing J2I thunk");
 
-      if (comp()->getOption(TR_TraceCG))
-         {
-         traceMsg(comp(), "  J2I thunk: %p\n", j2iThunk);
-         }
+      logprintf(comp()->getOption(TR_TraceCG), log, "  J2I thunk: %p\n", j2iThunk);
       }
 
    InvokeBasicCallSite site = {};

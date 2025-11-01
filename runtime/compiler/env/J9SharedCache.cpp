@@ -1140,8 +1140,6 @@ TR_J9SharedCache::rememberDebugCounterName(const char *name)
                                         &dataDescriptor);
 
    offset = data ? offsetInSharedCacheFromPointer((void *)data) : (UDATA)-1;
-
-   //printf("\nrememberDebugCounterName: Tried to store %s (%p), data=%p, offset=%p\n", name, name, data, offset);
 #endif
    return offset;
    }
@@ -1150,9 +1148,6 @@ const char *
 TR_J9SharedCache::getDebugCounterName(UDATA offset)
    {
    const char *name = (offset != (UDATA)-1) ? (const char *)pointerFromOffsetInSharedCache(offset) : NULL;
-
-   //printf("\ngetDebugCounterName: Tried to find %p, name=%s (%p)\n", offset, (name ? name : ""), name);
-
    return name;
    }
 
@@ -1260,7 +1255,6 @@ TR_J9SharedCache::findChainForClass(J9Class *clazz, const char *key, uint32_t ke
                                        &dataDescriptor,
                                        NULL);
 
-   //fprintf(stderr,"findChainForClass: key %.*s chain %p\n", keyLength, key, dataDescriptor.address);
    chainForClass = (UDATA *) dataDescriptor.address;
 #endif
    return chainForClass;

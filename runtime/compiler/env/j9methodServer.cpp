@@ -31,6 +31,7 @@
 #include "exceptions/DataCacheError.hpp"
 #include "ilgen/J9ByteCodeIterator.hpp"
 #include "net/ServerStream.hpp"
+#include "ras/Logger.hpp"
 
 
 static J9ROMMethod *
@@ -2102,39 +2103,42 @@ TR_ResolvedRelocatableJ9JITServerMethod::validateArbitraryClass(TR::Compilation 
 bool
 TR_ResolvedRelocatableJ9JITServerMethod::storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass)
    {
+   OMR::Logger *log = comp->log();
    TR_J9VMBase *fej9 = (TR_J9VMBase *) comp->fe();
+
+   bool trace = comp->getOption(TR_TraceOptDetails);
 
    bool storeClassInfo = true;
    bool fieldInfoCanBeUsed = false;
    TR_AOTStats *aotStats = ((TR_JitPrivateConfig *)fej9->_jitConfig->privateConfig)->aotStats;
    bool isStatic = (reloKind == TR_ValidateStaticField);
 
-   if (comp->getDebug())
+   if (comp->getDebug() && trace)
       {
       // guard this code with debug check, to avoid
       // sending extra messages when not tracing
-      traceMsg(comp, "storeValidationRecordIfNecessary:\n");
-      traceMsg(comp, "\tconstantPool %p cpIndex %d\n", constantPool, cpIndex);
-      traceMsg(comp, "\treloKind %d isStatic %d\n", reloKind, isStatic);
+      log->prints("storeValidationRecordIfNecessary:\n");
+      log->printf("\tconstantPool %p cpIndex %d\n", constantPool, cpIndex);
+      log->printf("\treloKind %d isStatic %d\n", reloKind, isStatic);
       TR_J9ServerVM *serverVM = static_cast<TR_J9ServerVM *>(fej9);
 
       J9UTF8 *methodClassName =
          J9ROMCLASS_CLASSNAME(
             TR::Compiler->cls.romClassOf(
                serverVM->TR_J9ServerVM::getClassOfMethod(reinterpret_cast<TR_OpaqueMethodBlock *>(ramMethod))));
-      traceMsg(comp,
+      log->printf(
                "\tmethod %p from class %p %.*s\n",
                ramMethod,
                serverVM->TR_J9ServerVM::getClassOfMethod(reinterpret_cast<TR_OpaqueMethodBlock *>(ramMethod)),
                J9UTF8_LENGTH(methodClassName),
                J9UTF8_DATA(methodClassName));
-      traceMsg(comp, "\tdefiningClass %p\n", definingClass);
+      log->printf("\tdefiningClass %p\n", definingClass);
       }
 
    if (!definingClass)
       {
       definingClass = (J9Class *) TR_ResolvedJ9JITServerMethod::definingClassFromCPFieldRef(comp, cpIndex, isStatic);
-      traceMsg(comp, "\tdefiningClass recomputed from cp as %p\n", definingClass);
+      logprintf(trace, log, "\tdefiningClass recomputed from cp as %p\n", definingClass);
       }
 
    if (!definingClass)
@@ -2147,7 +2151,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::storeValidationRecordIfNecessary(TR::Co
    if (comp->getDebug())
       {
       J9UTF8 *className = J9ROMCLASS_CLASSNAME(TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock *) definingClass));
-      traceMsg(comp, "\tdefiningClass name %.*s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+      logprintf(trace, log, "\tdefiningClass name %.*s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className));
       }
 
    // all kinds of validations may need to rely on the entire class chain, so make sure we can build one first
@@ -2186,7 +2190,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::storeValidationRecordIfNecessary(TR::Co
 
    if (inLocalList)
       {
-      traceMsg(comp, "\tFound in local list, nothing to do\n");
+      logprints(trace, log, "\tFound in local list, nothing to do\n");
       if (aotStats)
          {
          if (isStatic)
@@ -2203,7 +2207,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::storeValidationRecordIfNecessary(TR::Co
    );
    if (classInfo)
       {
-      traceMsg(comp, "\tCreated new AOT class info %p\n", classInfo);
+      logprintf(trace, log, "\tCreated new AOT class info %p\n", classInfo);
       comp->_aotClassInfo->push_front(classInfo);
       if (aotStats)
          {

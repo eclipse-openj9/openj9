@@ -51,6 +51,7 @@
 #include "infra/BitVector.hpp"
 #include "infra/List.hpp"
 #include "infra/String.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "optimizer/TransformUtil.hpp"
@@ -652,6 +653,9 @@ J9::SymbolReferenceTable::findOrCreateVarHandleMethodTypeTableEntrySymbol(TR::Re
 TR::SymbolReference *
 J9::SymbolReferenceTable::methodSymRefWithSignature(TR::SymbolReference *originalSymRef, char *effectiveSignature, int32_t effectiveSignatureLength)
    {
+   OMR::Logger *log = comp()->log();
+   bool trace = comp()->getOption(TR_TraceMethodIndex);
+
    TR::ResolvedMethodSymbol *originalSymbol = originalSymRef->getSymbol()->castToResolvedMethodSymbol();
    TR_ASSERT(originalSymbol, "methodSymRefWithSignature requires a resolved method symref");
    TR_ASSERT(!originalSymbol->isVirtual(), "methodSymRefFromName doesn't support virtual methods"); // Until we're able to look up vtable index
@@ -673,8 +677,7 @@ J9::SymbolReferenceTable::methodSymRefWithSignature(TR::SymbolReference *origina
    if (_methodsBySignature.Locate(key, hashIndex) && !ignoreMBSCache)
       {
       TR::SymbolReference *result = _methodsBySignature[hashIndex];
-      if (comp()->getOption(TR_TraceMethodIndex))
-         traceMsg(comp(), "-- MBS cache hit (2): M%p\n", result->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod());
+      logprintf(trace, log, "-- MBS cache hit (2): M%p\n", result->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod());
       return result;
       }
    else
@@ -682,8 +685,7 @@ J9::SymbolReferenceTable::methodSymRefWithSignature(TR::SymbolReference *origina
       // fullSignature will be kept as a key by _methodsBySignature, so it needs heapAlloc
       //
       key = OwningMethodAndString(originalSymRef->getOwningMethodIndex(), self()->strdup(fullSignature));
-      if (comp()->getOption(TR_TraceMethodIndex))
-         traceMsg(comp(), "-- MBS cache miss (2) owning method #%d, signature %s\n", originalSymRef->getOwningMethodIndex().value(), fullSignature);
+      logprintf(trace, log, "-- MBS cache miss (2) owning method #%d, signature %s\n", originalSymRef->getOwningMethodIndex().value(), fullSignature);
       }
 
    //
@@ -2059,7 +2061,6 @@ J9::SymbolReferenceTable::checkUserField(TR::SymbolReference *symRef)
       if (!strncmp(pnames[i].name, name, strlen(pnames[i].name)))
          {
          isNonUserField = true;
-         //printf ("User field symref %d name=%s  length=%d cpindex=%d\n", symRef->getReferenceNumber(), name, length, symRef->getCPIndex());
          break;
          }
       }

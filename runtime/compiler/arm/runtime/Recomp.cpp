@@ -175,11 +175,6 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
       printf("\nmethodHasBeenRecompiled: oldStartPC (0x%x) -> newStartPC (0x%x)\n", oldStartPC, newStartPC);fflush(stdout);
       }
 
-   if (debug("traceRecompilation"))
-      {
-      ;//diagnostic("RC>>Method successfully recompiled: %p -> %p\n", oldStartPC, newStartPC);
-      }
-
    if (linkageInfo->isCountingMethodBody())
       {
       // Turn the instruction before the counting branch in the

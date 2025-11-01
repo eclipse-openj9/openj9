@@ -55,6 +55,7 @@
 #include "env/j9methodServer.hpp"
 #include "control/JITServerCompilationThread.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
+#include "ras/Logger.hpp"
 
 void
 TR_PreXRecompile::dumpInfo()
@@ -531,6 +532,9 @@ void
 TR_CHTable::commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> &sites,
                                TR_PersistentCHTable *table, TR::Compilation *comp)
    {
+   OMR::Logger *log = comp->log();
+   bool trace = comp->getOption(TR_TraceCG);
+
    // If this is an OSR guard or another kind that has been marked as necessary to patch
    // in OSR, add a runtime assumption for every class that generated fear
    //
@@ -647,8 +651,8 @@ TR_CHTable::commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> 
                   ::make(comp->fe(), comp->trPersistentMemory(), cookie, site->getLocation(), site->getDestination(), comp->getMetadataAssumptionList());
                }
             }
-         else if (comp->getOption(TR_TraceCG))
-            traceMsg(comp, "MutableCallSiteTargetGuard is already invalid.  Expected epoch: obj%d  Found: obj%d\n", info->mutableCallSiteEpoch(), currentIndex);
+         else
+            logprintf(trace, log, "MutableCallSiteTargetGuard is already invalid.  Expected epoch: obj%d  Found: obj%d\n", info->mutableCallSiteEpoch(), currentIndex);
          }
       }
    else if ((info->getKind() == TR_MethodEnterExitGuard) || (info->getKind() == TR_DirectMethodGuard))
@@ -769,8 +773,7 @@ TR_CHTable::commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> 
       ListIterator<TR_VirtualGuardSite> it(&sites);
       for (TR_VirtualGuardSite *site = it.getFirst(); site; site = it.getNext())
          {
-         if (comp->getOption(TR_TraceCG))
-            traceMsg(comp, "   Patching %p to %p\n", site->getLocation(), site->getDestination());
+         logprintf(trace, log, "   Patching %p to %p\n", site->getLocation(), site->getDestination());
          TR::PatchNOPedGuardSite::compensate(0, site->getLocation(), site->getDestination());
          }
       }

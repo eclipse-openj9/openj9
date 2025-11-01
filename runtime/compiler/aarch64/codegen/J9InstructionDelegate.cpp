@@ -25,6 +25,7 @@
 #include "codegen/InstructionDelegate.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "ras/Logger.hpp"
 
 void
 J9::ARM64::InstructionDelegate::encodeBranchToLabel(TR::CodeGenerator *cg, TR::ARM64ImmSymInstruction *ins, uint8_t *cursor)
@@ -87,10 +88,7 @@ setupImplicitNullPointerExceptionImpl(TR::CodeGenerator *cg, TR::Instruction *in
                node->getSymbolReference() == comp->getSymRefTab()->findVftSymbolRef()) ||
              (node->hasChild(nullCheckReference) && (nullCheckReg != NULL) && mr->refsRegister(nullCheckReg)))
             {
-            if (comp->getOption(TR_TraceCG))
-               {
-               traceMsg(comp,"Instruction %p throws an implicit NPE, node: %p NPE node: %p\n", instr, node, nullCheckReference);
-               }
+            logprintf(comp->getOption(TR_TraceCG), comp->log(), "Instruction %p throws an implicit NPE, node: %p NPE node: %p\n", instr, node, nullCheckReference);
             cg->setImplicitExceptionPoint(instr);
             }
          }

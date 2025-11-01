@@ -63,6 +63,7 @@
 #include "optimizer/Optimizer.hpp"
 #include "optimizer/Structure.hpp"
 #include "ras/Debug.hpp"
+#include "ras/Logger.hpp"
 
 
 #define OPT_DETAILS "O^O SEQUENTIAL STORE TRANSFORMATION: "
@@ -315,7 +316,6 @@ TR::Node *TR_arraysetSequentialStores::checkArrayStore(TR::Node* storeNode, bool
                 }
              else
                 {
-                //traceMsg(_comp, "1 Returning null at store %p \n", storeNode);
                 return NULL;
                 }
 
@@ -323,7 +323,6 @@ TR::Node *TR_arraysetSequentialStores::checkArrayStore(TR::Node* storeNode, bool
                 {
                 if (_indexBase != first)
                    {
-                   //traceMsg(_comp, "2 Returning null at store %p \n", storeNode);
                    return NULL;
                    }
                 }
@@ -332,12 +331,10 @@ TR::Node *TR_arraysetSequentialStores::checkArrayStore(TR::Node* storeNode, bool
              }
           else
              {
-             //traceMsg(_comp, "3 Returning null at store %p \n", storeNode);
              if (getProcessedRefs())
                 {
                 if (_indexBase != offset)
                    {
-                   //traceMsg(_comp, "2 Returning null at store %p \n", storeNode);
                    return NULL;
                    }
                 }
@@ -356,7 +353,6 @@ TR::Node *TR_arraysetSequentialStores::checkArrayStore(TR::Node* storeNode, bool
          }
       if (offsetValue != _activeOffset)
          {
-         //traceMsg(_comp, "4 Returning null at store %p offset %d active %d \n", storeNode, offsetValue, _activeOffset);
          return NULL;
          }
 
@@ -364,7 +360,6 @@ TR::Node *TR_arraysetSequentialStores::checkArrayStore(TR::Node* storeNode, bool
          {
          if (((_activeOffset + storeNode->getSize()) - _baseOffset) > 8)
             {
-            //traceMsg(_comp, "5 Returning null at store %p \n", storeNode);
             return NULL;
             }
          }
@@ -1571,8 +1566,6 @@ bool TR_ShiftedValueTree::process(TR::Node* loadNode)
       default: return false;
       }
 
-//   dumpOptDetails(comp(), "arraycopy sequential store - check load node %p\n", loadNode);
-
    if (shift)
       {
       if (loadNode->getFirstChild()->getOpCodeValue() != shiftCode && loadNode->getFirstChild()->getOpCodeValue() != altShiftCode)
@@ -1620,7 +1613,6 @@ bool TR_ShiftedValueTree::process(TR::Node* loadNode)
 
 bool TR_arraycopySequentialStores::checkAiadd(TR::TreeTop * currentTree, TR::Node* aiaddNode)
    {
-//   dumpOptDetails(comp(), "arraycopy sequential store - check aiadd node %p\n", aiaddNode);
    _activeAddrTree = new (trStackMemory()) TR_AddressTree(stackAlloc, comp());
    _activeTreeTop = currentTree;
    if (_activeAddrTree->process(aiaddNode, _comp->cg()->getSupportsAlignedAccessOnly()))
@@ -1632,7 +1624,6 @@ bool TR_arraycopySequentialStores::checkAiadd(TR::TreeTop * currentTree, TR::Nod
 
 void TR_arraycopySequentialStores::insertTree(int entry)
    {
-//   dumpOptDetails(comp(), " insert nodes %p,%p into entry %d\n",
 //      _activeAddrTree->getRootNode(), _activeValueTree->getRootNode(), entry);
    if ((_addrTree[entry] != NULL) && (entry < _maxAddressTrees))
       {
@@ -1664,7 +1655,6 @@ bool TR_arraycopySequentialStores::insertConsistentTree()
 
    if (_addrTree[0] == NULL)
       {
-//      dumpOptDetails(comp(), " insertTree: first tree inserted successfully with offset: %d\n", _activeAddrTree->getOffset());
       insertTree(0);
       return true;
       }
@@ -1714,7 +1704,6 @@ bool TR_arraycopySequentialStores::insertConsistentTree()
       return false;
       }
 
-//   dumpOptDetails(comp(), " insertTree: tree inserted successfully. offset:%d\n", _activeAddrTree->getOffset());
    int entry;
    for (entry=0; entry < _maxAddressTrees && _addrTree[entry] != NULL; ++entry)
       {
@@ -1746,7 +1735,6 @@ int TR_arraycopySequentialStores::numValidTrees(int maxEntries)
    int dir = (_bigEndian) ? -1 : 1;
    int entry;
 
-//   dumpOptDetails(comp(), "...check if valid entries\n");
    for (entry=1; (_addrTree[entry] != NULL) && (entry < maxEntries); ++entry)
       {
       if (_addrTree[entry]->getOffset() != _addrTree[0]->getOffset() + entry)
@@ -1760,7 +1748,6 @@ int TR_arraycopySequentialStores::numValidTrees(int maxEntries)
       }
    if ((entry == 1) && !hasConstValue() && _comp->cg()->supportsByteswap())
       {
-//      dumpOptDetails(comp(), "...no valid entries forward\n...see if reverse store finds any entries\n");
       _alternateDir = true;
       // repeat process for reversed store
       dir = (_bigEndian) ? 1 : -1;
@@ -2183,6 +2170,8 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
       return currentTreeTop;
       }
 
+   OMR::Logger *log = comp->log();
+
    /*
     * This is an example transformation. 4 consective byte loads from a byte array are used to construct an int.
     * After the transformation a Little Endian int load is used to directly create the int.
@@ -2269,7 +2258,7 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
    TR::Node* disconnectedNode1 = NULL;
    TR::Node* disconnectedNode2 = NULL;
 
-   if (trace) traceMsg(comp, "Sequential Load Simplification Candidate - rootNode: %p\n", rootNode);
+   logprintf(trace, log, "Sequential Load Simplification Candidate - rootNode: %p\n", rootNode);
 
    for (int i = 0; i < 8; i++)
       {
@@ -2298,17 +2287,17 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
          }
       }
 
-   if (trace) traceMsg(comp, "Sequential Load Simplification Candidate - rootNode: %p, byteCount: %d\n", rootNode, byteCount);
+   logprintf(trace, log, "Sequential Load Simplification Candidate - rootNode: %p, byteCount: %d\n", rootNode, byteCount);
 
    if (!is64bitResult && (byteCount > 4))
       {
-      if (trace) traceMsg(comp, "byteCount is too high for constructing an int value. rootNode: %p, byteCount: %d\n", rootNode, byteCount);
+      logprintf(trace, log, "byteCount is too high for constructing an int value. rootNode: %p, byteCount: %d\n", rootNode, byteCount);
       return currentTreeTop;
       }
 
    if ((byteCount < 2) || (byteCount > 8))
       {
-      if (trace) traceMsg(comp, "Sequential Load of size other than 2 to 8 is not supported. rootNode: %p, byteCount: %d\n", rootNode, byteCount);
+      logprintf(trace, log, "Sequential Load of size other than 2 to 8 is not supported. rootNode: %p, byteCount: %d\n", rootNode, byteCount);
       return currentTreeTop;
       }
 
@@ -2318,42 +2307,42 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
       TR::Node* byteConversionNode = NULL;
       int32_t shiftValue = 0;
 
-      if (trace) traceMsg(comp, "Sequential Load Simplification Candidate - rootNode: %p, processedByteNodes[%d]: %p\n", rootNode, i, processedByteNodes[i]);
+      logprintf(trace, log, "Sequential Load Simplification Candidate - rootNode: %p, processedByteNodes[%d]: %p\n", rootNode, i, processedByteNodes[i]);
 
       if (0 == i)
          {
          aloadNode = getALoadReferenceForSeqLoad(processedByteNodes[i]);
-         if (trace) traceMsg(comp, "Sequential Load Simplification Candidate - rootNode: %p, aloadNode: %p\n", rootNode, aloadNode);
+         logprintf(trace, log, "Sequential Load Simplification Candidate - rootNode: %p, aloadNode: %p\n", rootNode, aloadNode);
          baseOffsetNode = getBaseOffsetForSeqLoad(processedByteNodes[i]);
-         if (trace) traceMsg(comp, "Sequential Load Simplification Candidate - rootNode: %p, baseOffsetNode: %p\n", rootNode, baseOffsetNode);
+         logprintf(trace, log, "Sequential Load Simplification Candidate - rootNode: %p, baseOffsetNode: %p\n", rootNode, baseOffsetNode);
          }
       else
          {
          /* aloadNode for all loaded bytes must be the exact same node. */
          if (aloadNode != getALoadReferenceForSeqLoad(processedByteNodes[i]))
             {
-            if (trace) traceMsg(comp, "Sequential Load Simplification aload mismatch. rootNode: %p, aloadNode(0): %p, aloadNode(%d): %p\n",
-                                rootNode, aloadNode, i, getALoadReferenceForSeqLoad(processedByteNodes[i]));
+            logprintf(trace, log, "Sequential Load Simplification aload mismatch. rootNode: %p, aloadNode(0): %p, aloadNode(%d): %p\n",
+               rootNode, aloadNode, i, getALoadReferenceForSeqLoad(processedByteNodes[i]));
             return currentTreeTop;
             }
 
          /* baseOffsetNode for all loaded bytes must be the exact same node (or all NULL). */
          if (baseOffsetNode != getBaseOffsetForSeqLoad(processedByteNodes[i]))
             {
-            if (trace) traceMsg(comp, "Sequential Load Simplification baseOffsetNode mismatch. rootNode: %p, baseOffsetNode(0): %p, baseOffsetNode(%d): %p\n",
-                                rootNode, baseOffsetNode, i, getBaseOffsetForSeqLoad(processedByteNodes[i]));
+            logprintf(trace, log, "Sequential Load Simplification baseOffsetNode mismatch. rootNode: %p, baseOffsetNode(0): %p, baseOffsetNode(%d): %p\n",
+               rootNode, baseOffsetNode, i, getBaseOffsetForSeqLoad(processedByteNodes[i]));
             return currentTreeTop;
             }
          }
 
       byteConversionNode = getByteConversionNodeForSeqLoad(processedByteNodes[i]);
-      if (trace) traceMsg(comp, "Sequential Load Simplification Candidate - rootNode: %p, byteConversionNode: %p\n", rootNode, byteConversionNode);
+      logprintf(trace, log, "Sequential Load Simplification Candidate - rootNode: %p, byteConversionNode: %p\n", rootNode, byteConversionNode);
       shiftValue = getShiftValueForSeqLoad(processedByteNodes[i]);
-      if (trace) traceMsg(comp, "Sequential Load Simplification Candidate - rootNode: %p, shiftValue: %d\n", rootNode, shiftValue);
+      logprintf(trace, log, "Sequential Load Simplification Candidate - rootNode: %p, shiftValue: %d\n", rootNode, shiftValue);
 
       if ((shiftValue > ((byteCount - 1) * 8)) || (shiftValue < 0))
          {
-         if (trace) traceMsg(comp, "shiftValue is out of range for the given byteCount. rootNode: %p, byteCount: %d, shiftValue: %d\n", rootNode, byteCount, shiftValue);
+         logprintf(trace, log, "shiftValue is out of range for the given byteCount. rootNode: %p, byteCount: %d, shiftValue: %d\n", rootNode, byteCount, shiftValue);
          return currentTreeTop;
          }
 
@@ -2361,14 +2350,14 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
          {
          /* Check if most significant byte is signed extended or not. */
          signExtendResult = checkForSeqLoadSignExtendedByte(processedByteNodes[i]);
-         if (trace) traceMsg(comp, "Sequential Load Simplification Candidate - rootNode: %p, signExtendResult: %d\n", rootNode, signExtendResult);
+         logprintf(trace, log, "Sequential Load Simplification Candidate - rootNode: %p, signExtendResult: %d\n", rootNode, signExtendResult);
          }
       else
          {
          /* Other bytes can not be sign extended. */
          if (checkForSeqLoadSignExtendedByte(processedByteNodes[i]))
             {
-            if (trace) traceMsg(comp, "Bytes other than the most significant byte should not be sign extended. rootNode: %p, processedByteNodes[%d]: %p\n", rootNode, i, processedByteNodes[i]);
+            logprintf(trace, log, "Bytes other than the most significant byte should not be sign extended. rootNode: %p, processedByteNodes[%d]: %p\n", rootNode, i, processedByteNodes[i]);
             return currentTreeTop;
             }
          }
@@ -2383,8 +2372,8 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
 
       if (byteConversionNodes[byteNumber] != NULL)
          {
-         if (trace) traceMsg(comp, "Duplicate shiftValue. rootNode: %p, shiftValue: %d, byteConversionNodes[%d]: %p, byteConversionNode(%d): %p\n",
-                             rootNode, shiftValue, byteNumber, byteConversionNodes[byteNumber], i, byteConversionNode);
+         logprintf(trace, log, "Duplicate shiftValue. rootNode: %p, shiftValue: %d, byteConversionNodes[%d]: %p, byteConversionNode(%d): %p\n",
+            rootNode, shiftValue, byteNumber, byteConversionNodes[byteNumber], i, byteConversionNode);
          return currentTreeTop;
          }
 
@@ -2394,12 +2383,12 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
 
    if (trace)
       {
-      traceMsg(comp, "Sequential Load Simplification Candidate - rootNode: %p, byteOffsets: %ld", rootNode, byteOffsets[0]);
+      log->printf("Sequential Load Simplification Candidate - rootNode: %p, byteOffsets: %ld", rootNode, byteOffsets[0]);
       for (int i = 1; i < byteCount; i++)
          {
-         traceMsg(comp, ", %ld", byteOffsets[i]);
+         log->printf(", %ld", byteOffsets[i]);
          }
-      traceMsg(comp, "\n");
+      log->println();
       }
 
    /*
@@ -2440,12 +2429,12 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
       }
    else
       {
-      if (trace) traceMsg(comp, "byteOffsets array does not match a big or little endian pattern. rootNode: %p\n", rootNode);
+      logprintf(trace, log, "byteOffsets array does not match a big or little endian pattern. rootNode: %p\n", rootNode);
       return currentTreeTop;
       }
 
-   if (trace) traceMsg(comp, "Sequential Load Simplification Candidate - rootNode: %p, %s\n", rootNode, littleEndianLoad ? "Little Endian Load" : "Big Endian Load");
-   if (trace) traceMsg(comp, "Sequential Load Simplification Candidate - rootNode: %p, newConvertChildNode: %p, newLoadChildNode: %p\n", rootNode, newConvertChildNode, newLoadChildNode);
+   logprintf(trace, log, "Sequential Load Simplification Candidate - rootNode: %p, %s\n", rootNode, littleEndianLoad ? "Little Endian Load" : "Big Endian Load");
+   logprintf(trace, log, "Sequential Load Simplification Candidate - rootNode: %p, newConvertChildNode: %p, newLoadChildNode: %p\n", rootNode, newConvertChildNode, newLoadChildNode);
 
    /*
     * Check the endianness of the platform and the endianness of the byte array.
@@ -2455,7 +2444,7 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
       {
       if (!comp->cg()->supportsByteswap())
          {
-         if (trace) traceMsg(comp, "Little endian load on big endian target without byteswap is not supported. rootNode: %p\n", rootNode);
+         logprintf(trace, log, "Little endian load on big endian target without byteswap is not supported. rootNode: %p\n", rootNode);
          return currentTreeTop;
          }
       swapBytes = true;
@@ -2464,7 +2453,7 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
       {
       if (!comp->cg()->supportsByteswap())
          {
-         if (trace) traceMsg(comp, "Big endian load on little endian target without byteswap is not supported. rootNode: %p\n", rootNode);
+         logprintf(trace, log, "Big endian load on little endian target without byteswap is not supported. rootNode: %p\n", rootNode);
          return currentTreeTop;
          }
       swapBytes = true;
@@ -2476,7 +2465,7 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
       }
 
    /* All checks have passed so perform the transformation. */
-   traceMsg(comp, "Sequential Load reduced at rootNode: %p\n", rootNode);
+   logprintf(trace, log, "Sequential Load reduced at rootNode: %p\n", rootNode);
 
    disconnectedNode1 = rootNode->getFirstChild();
    disconnectedNode2 = rootNode->getSecondChild();
@@ -2490,33 +2479,33 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
       if (4 == byteCount)
          {
          /* byteCount is 4, final result is an int, no byteswaps */
-         if (trace) traceMsg(comp, "Recreating rootNode (%p) as iloadi.\n", rootNode);
+         logprintf(trace, log, "Recreating rootNode (%p) as iloadi.\n", rootNode);
          TR::Node::recreateWithSymRef(rootNode, TR::iloadi, symRef);
          }
       else /* Handles the (8 == byteCount) case. */
          {
          /* byteCount is 8, final result is a long, no byteswaps */
-         if (trace) traceMsg(comp, "Recreating rootNode (%p) as lloadi.\n", rootNode);
+         logprintf(trace, log, "Recreating rootNode (%p) as lloadi.\n", rootNode);
          TR::Node::recreateWithSymRef(rootNode, TR::lloadi, symRef);
          }
 
       rootNode->setNumChildren(1);
 
-      if (trace) traceMsg(comp, "Setting rootNode (%p) child to %p.\n", rootNode, newLoadChildNode->getFirstChild());
+      logprintf(trace, log, "Setting rootNode (%p) child to %p.\n", rootNode, newLoadChildNode->getFirstChild());
       rootNode->setAndIncChild(0, newLoadChildNode->getFirstChild());
       }
    else if (8 == byteCount) /* swapBytes must be true here. */
       {
       /* This case handles adding a byteswap. */
-      if (trace) traceMsg(comp, "Recreating rootNode (%p) as lbyteswap.\n", rootNode);
+      logprintf(trace, log, "Recreating rootNode (%p) as lbyteswap.\n", rootNode);
       TR::Node::recreate(rootNode, TR::lbyteswap);
 
       rootNode->setNumChildren(1);
 
-      if (trace) traceMsg(comp, "Setting rootNode (%p) child to %p.\n", rootNode, newLoadChildNode);
+      logprintf(trace, log, "Setting rootNode (%p) child to %p.\n", rootNode, newLoadChildNode);
       rootNode->setAndIncChild(0, newLoadChildNode);
 
-      if (trace) traceMsg(comp, "Recreating newLoadChildNode (%p) as lloadi.\n", newLoadChildNode);
+      logprintf(trace, log, "Recreating newLoadChildNode (%p) as lloadi.\n", newLoadChildNode);
       TR::Node::recreateWithSymRef(newLoadChildNode, TR::lloadi, symRef);
       }
    else if (4 == byteCount)
@@ -2527,12 +2516,12 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
          /* The conversion used is based on whether the final result is sign extended or not. */
          if (signExtendResult)
             {
-            if (trace) traceMsg(comp, "Recreating rootNode (%p) as i2l.\n", rootNode);
+            logprintf(trace, log, "Recreating rootNode (%p) as i2l.\n", rootNode);
             TR::Node::recreate(rootNode, TR::i2l);
             }
          else
             {
-            if (trace) traceMsg(comp, "Recreating rootNode (%p) as iu2l.\n", rootNode);
+            logprintf(trace, log, "Recreating rootNode (%p) as iu2l.\n", rootNode);
             TR::Node::recreate(rootNode, TR::iu2l);
             }
 
@@ -2540,32 +2529,31 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
 
          if (!swapBytes)
             {
-            if (trace) traceMsg(comp, "Setting rootNode (%p) child to %p.\n", rootNode, newLoadChildNode);
+            logprintf(trace, log, "Setting rootNode (%p) child to %p.\n", rootNode, newLoadChildNode);
             rootNode->setAndIncChild(0, newLoadChildNode);
             }
          else
             {
             /* Inserts byteswap above the load. */
             TR::Node * ibyteswapNode = TR::Node::create(TR::ibyteswap, 1, newLoadChildNode);
-            if (trace) traceMsg(comp, "Creating ibyteswapNode (%p) with child %p.\n", ibyteswapNode, ibyteswapNode->getFirstChild());
-
-            if (trace) traceMsg(comp, "Setting rootNode (%p) child to %p.\n", rootNode, ibyteswapNode);
+            logprintf(trace, log, "Creating ibyteswapNode (%p) with child %p.\n", ibyteswapNode, ibyteswapNode->getFirstChild());
+            logprintf(trace, log, "Setting rootNode (%p) child to %p.\n", rootNode, ibyteswapNode);
             rootNode->setAndIncChild(0, ibyteswapNode);
             }
          }
       else /* Handles the (swapBytes && !is64bitResult) case. */
          {
          /* Inserts byteswap above the load. */
-         if (trace) traceMsg(comp, "Recreating rootNode (%p) as ibyteswap.\n", rootNode);
+         logprintf(trace, log, "Recreating rootNode (%p) as ibyteswap.\n", rootNode);
          TR::Node::recreate(rootNode, TR::ibyteswap);
 
          rootNode->setNumChildren(1);
 
-         if (trace) traceMsg(comp, "Setting rootNode (%p) child to %p.\n", rootNode, newLoadChildNode);
+         logprintf(trace, log, "Setting rootNode (%p) child to %p.\n", rootNode, newLoadChildNode);
          rootNode->setAndIncChild(0, newLoadChildNode);
          }
 
-      if (trace) traceMsg(comp, "Recreating newLoadChildNode (%p) as iloadi.\n", newLoadChildNode);
+      logprintf(trace, log, "Recreating newLoadChildNode (%p) as iloadi.\n", newLoadChildNode);
       TR::Node::recreateWithSymRef(newLoadChildNode, TR::iloadi, symRef);
       }
    else if (2 == byteCount)
@@ -2575,12 +2563,12 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
          {
          if (is64bitResult)
             {
-            if (trace) traceMsg(comp, "Recreating rootNode (%p) as s2l.\n", rootNode);
+            logprintf(trace, log, "Recreating rootNode (%p) as s2l.\n", rootNode);
             TR::Node::recreate(rootNode, TR::s2l);
             }
          else
             {
-            if (trace) traceMsg(comp, "Recreating rootNode (%p) as s2i.\n", rootNode);
+            logprintf(trace, log, "Recreating rootNode (%p) as s2i.\n", rootNode);
             TR::Node::recreate(rootNode, TR::s2i);
             }
          }
@@ -2588,12 +2576,12 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
          {
          if (is64bitResult)
             {
-            if (trace) traceMsg(comp, "Recreating rootNode (%p) as su2l.\n", rootNode);
+            logprintf(trace, log, "Recreating rootNode (%p) as su2l.\n", rootNode);
             TR::Node::recreate(rootNode, TR::su2l);
             }
          else
             {
-            if (trace) traceMsg(comp, "Recreating rootNode (%p) as su2i.\n", rootNode);
+            logprintf(trace, log, "Recreating rootNode (%p) as su2i.\n", rootNode);
             TR::Node::recreate(rootNode, TR::su2i);
             }
          }
@@ -2602,20 +2590,20 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
 
       if (!swapBytes)
          {
-         if (trace) traceMsg(comp, "Setting rootNode (%p) child to %p.\n", rootNode, newLoadChildNode);
+         logprintf(trace, log, "Setting rootNode (%p) child to %p.\n", rootNode, newLoadChildNode);
          rootNode->setAndIncChild(0, newLoadChildNode);
          }
       else
          {
          /* Inserts byteswap above the load. */
          TR::Node * sbyteswapNode = TR::Node::create(TR::sbyteswap, 1, newLoadChildNode);
-         if (trace) traceMsg(comp, "Creating sbyteswapNode (%p) with child %p.\n", sbyteswapNode, sbyteswapNode->getFirstChild());
+         logprintf(trace, log, "Creating sbyteswapNode (%p) with child %p.\n", sbyteswapNode, sbyteswapNode->getFirstChild());
 
-         if (trace) traceMsg(comp, "Setting rootNode (%p) child to %p.\n", rootNode, sbyteswapNode);
+         logprintf(trace, log, "Setting rootNode (%p) child to %p.\n", rootNode, sbyteswapNode);
          rootNode->setAndIncChild(0, sbyteswapNode);
          }
 
-      if (trace) traceMsg(comp, "Recreating newLoadChildNode (%p) as sloadi.\n", newLoadChildNode);
+      logprintf(trace, log, "Recreating newLoadChildNode (%p) as sloadi.\n", newLoadChildNode);
       TR::Node::recreateWithSymRef(newLoadChildNode, TR::sloadi, symRef);
       }
    else if (3 == byteCount)
@@ -2640,25 +2628,25 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
          {
          mulNode = TR::Node::create(TR::imul, 2, newConvertChildNode, TR::Node::create(TR::iconst, 0, 256));
          }
-      if (trace) traceMsg(comp, "Creating mulNode (%p) with children %p and %p.\n", mulNode, mulNode->getFirstChild(), mulNode->getSecondChild());
+      logprintf(trace, log, "Creating mulNode (%p) with children %p and %p.\n", mulNode, mulNode->getFirstChild(), mulNode->getSecondChild());
 
-      if (trace) traceMsg(comp, "Setting rootNode (%p) children to %p and %p.\n", rootNode, mulNode, byteConversionNodes[0]);
+      logprintf(trace, log, "Setting rootNode (%p) children to %p and %p.\n", rootNode, mulNode, byteConversionNodes[0]);
       rootNode->setAndIncChild(0, mulNode);
       rootNode->setAndIncChild(1, byteConversionNodes[0]);
 
       /* The conversion used is based on whether the final result is an int or a long. The byte is never sign extended.*/
       if (is64bitResult)
          {
-         if (trace) traceMsg(comp, "Recreating byteConversionNodes[0] (%p) as bu2l.\n", byteConversionNodes[0]);
+         logprintf(trace, log, "Recreating byteConversionNodes[0] (%p) as bu2l.\n", byteConversionNodes[0]);
          TR::Node::recreate(byteConversionNodes[0], TR::bu2l);
          }
       else
          {
-         if (trace) traceMsg(comp, "Recreating byteConversionNodes[0] (%p) as bu2i.\n", byteConversionNodes[0]);
+         logprintf(trace, log, "Recreating byteConversionNodes[0] (%p) as bu2i.\n", byteConversionNodes[0]);
          TR::Node::recreate(byteConversionNodes[0], TR::bu2i);
          }
 
-      if (trace) traceMsg(comp, "Recreating newLoadChildNode (%p) as sloadi.\n", newLoadChildNode);
+      logprintf(trace, log, "Recreating newLoadChildNode (%p) as sloadi.\n", newLoadChildNode);
       TR::Node::recreateWithSymRef(newLoadChildNode, TR::sloadi, symRef);
 
       /* The conversion used is based on whether the final result is an int or a long and if there is a sign extend or not. */
@@ -2666,12 +2654,12 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
          {
          if (is64bitResult)
             {
-            if (trace) traceMsg(comp, "Recreating newConvertChildNode (%p) as s2l.\n", newConvertChildNode);
+            logprintf(trace, log, "Recreating newConvertChildNode (%p) as s2l.\n", newConvertChildNode);
             TR::Node::recreate(newConvertChildNode, TR::s2l);
             }
          else
             {
-            if (trace) traceMsg(comp, "Recreating newConvertChildNode (%p) as s2i.\n", newConvertChildNode);
+            logprintf(trace, log, "Recreating newConvertChildNode (%p) as s2i.\n", newConvertChildNode);
             TR::Node::recreate(newConvertChildNode, TR::s2i);
             }
          }
@@ -2679,12 +2667,12 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
          {
          if (is64bitResult)
             {
-            if (trace) traceMsg(comp, "Recreating newConvertChildNode (%p) as su2l.\n", newConvertChildNode);
+            logprintf(trace, log, "Recreating newConvertChildNode (%p) as su2l.\n", newConvertChildNode);
             TR::Node::recreate(newConvertChildNode, TR::su2l);
             }
          else
             {
-            if (trace) traceMsg(comp, "Recreating newConvertChildNode (%p) as su2i.\n", newConvertChildNode);
+            logprintf(trace, log, "Recreating newConvertChildNode (%p) as su2i.\n", newConvertChildNode);
             TR::Node::recreate(newConvertChildNode, TR::su2i);
             }
          }
@@ -2693,9 +2681,9 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
          {
          /* Inserts byteswap above the load. */
          TR::Node * sbyteswapNode = TR::Node::create(TR::sbyteswap, 1, newLoadChildNode);
-         if (trace) traceMsg(comp, "Creating sbyteswapNode (%p) with child %p.\n", sbyteswapNode, sbyteswapNode->getFirstChild());
+         logprintf(trace, log, "Creating sbyteswapNode (%p) with child %p.\n", sbyteswapNode, sbyteswapNode->getFirstChild());
 
-         if (trace) traceMsg(comp, "Setting newConvertChildNode (%p) child to %p.\n", newConvertChildNode, sbyteswapNode);
+         logprintf(trace, log, "Setting newConvertChildNode (%p) child to %p.\n", newConvertChildNode, sbyteswapNode);
          newConvertChildNode->setAndIncChild(0, sbyteswapNode);
          newLoadChildNode->recursivelyDecReferenceCount();
          }
@@ -2715,28 +2703,28 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
        */
       TR::Node * mulNode = TR::Node::create(TR::lmul, 2, newConvertChildNode, TR::Node::create(TR::lconst, 0, 256));
 
-      if (trace) traceMsg(comp, "Creating mulNode (%p) with children %p and %p.\n", mulNode, mulNode->getFirstChild(), mulNode->getSecondChild());
+      logprintf(trace, log, "Creating mulNode (%p) with children %p and %p.\n", mulNode, mulNode->getFirstChild(), mulNode->getSecondChild());
 
-      if (trace) traceMsg(comp, "Setting rootNode (%p) children to %p and %p.\n", rootNode, mulNode, byteConversionNodes[0]);
+      logprintf(trace, log, "Setting rootNode (%p) children to %p and %p.\n", rootNode, mulNode, byteConversionNodes[0]);
       rootNode->setAndIncChild(0, mulNode);
       rootNode->setAndIncChild(1, byteConversionNodes[0]);
 
       /* The byte is never sign extended. */
-      if (trace) traceMsg(comp, "Recreating byteConversionNodes[0] (%p) as bu2l.\n", byteConversionNodes[0]);
+      logprintf(trace, log, "Recreating byteConversionNodes[0] (%p) as bu2l.\n", byteConversionNodes[0]);
       TR::Node::recreate(byteConversionNodes[0], TR::bu2l);
 
-      if (trace) traceMsg(comp, "Recreating newLoadChildNode (%p) as iloadi.\n", newLoadChildNode);
+      logprintf(trace, log, "Recreating newLoadChildNode (%p) as iloadi.\n", newLoadChildNode);
       TR::Node::recreateWithSymRef(newLoadChildNode, TR::iloadi, symRef);
 
       /* The conversion used is based on whether the final result is sign extended or not. */
       if (signExtendResult)
          {
-         if (trace) traceMsg(comp, "Recreating newConvertChildNode (%p) as i2l.\n", newConvertChildNode);
+         logprintf(trace, log, "Recreating newConvertChildNode (%p) as i2l.\n", newConvertChildNode);
          TR::Node::recreate(newConvertChildNode, TR::i2l);
          }
       else
          {
-         if (trace) traceMsg(comp, "Recreating newConvertChildNode (%p) as iu2l.\n", newConvertChildNode);
+         logprintf(trace, log, "Recreating newConvertChildNode (%p) as iu2l.\n", newConvertChildNode);
          TR::Node::recreate(newConvertChildNode, TR::iu2l);
          }
 
@@ -2744,9 +2732,9 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
          {
          /* Inserts byteswap above the load. */
          TR::Node * ibyteswapNode = TR::Node::create(TR::ibyteswap, 1, newLoadChildNode);
-         if (trace) traceMsg(comp, "Creating ibyteswapNode (%p) with child %p.\n", ibyteswapNode, ibyteswapNode->getFirstChild());
+         logprintf(trace, log, "Creating ibyteswapNode (%p) with child %p.\n", ibyteswapNode, ibyteswapNode->getFirstChild());
 
-         if (trace) traceMsg(comp, "Setting newConvertChildNode (%p) child to %p.\n", newConvertChildNode, ibyteswapNode);
+         logprintf(trace, log, "Setting newConvertChildNode (%p) child to %p.\n", newConvertChildNode, ibyteswapNode);
          newConvertChildNode->setAndIncChild(0, ibyteswapNode);
          newLoadChildNode->recursivelyDecReferenceCount();
          }
@@ -2765,7 +2753,7 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
        *  i3  i2  i1  i0  s1  s0  final 6 byte value
        */
       TR::Node * mulNode = TR::Node::create(TR::lmul, 2, newConvertChildNode, TR::Node::create(TR::lconst, 0, 256*256));
-      if (trace) traceMsg(comp, "Creating mulNode (%p) with children %p and %p.\n", mulNode, mulNode->getFirstChild(), mulNode->getSecondChild());
+      logprintf(trace, log, "Creating mulNode (%p) with children %p and %p.\n", mulNode, mulNode->getFirstChild(), mulNode->getSecondChild());
 
       TR::Node * shortConversionNode = NULL;
       /* The location to start the sload from depends on endianness of the byte array. */
@@ -2779,32 +2767,32 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
          }
       TR::Node * shortLoadNode = shortConversionNode->getFirstChild();
 
-      if (trace) traceMsg(comp, "Setting rootNode (%p) children to %p and %p.\n", rootNode, mulNode, shortConversionNode);
+      logprintf(trace, log, "Setting rootNode (%p) children to %p and %p.\n", rootNode, mulNode, shortConversionNode);
       rootNode->setAndIncChild(0, mulNode);
       rootNode->setAndIncChild(1, shortConversionNode);
 
       TR::SymbolReference *shortSymRef = comp->getSymRefTab()->findOrCreateGenericIntArrayShadowSymbolReference(0);
       shortSymRef->setOffset(shortLoadNode->getSymbolReference()->getOffset());
 
-      if (trace) traceMsg(comp, "Recreating shortLoadNode (%p) as sloadi.\n", shortLoadNode);
+      logprintf(trace, log, "Recreating shortLoadNode (%p) as sloadi.\n", shortLoadNode);
       TR::Node::recreateWithSymRef(shortLoadNode, TR::sloadi, shortSymRef);
 
       /* The short is never sign extended. */
-      if (trace) traceMsg(comp, "Recreating shortConversionNode (%p) as su2l.\n", shortConversionNode);
+      logprintf(trace, log, "Recreating shortConversionNode (%p) as su2l.\n", shortConversionNode);
       TR::Node::recreate(shortConversionNode, TR::su2l);
 
-      if (trace) traceMsg(comp, "Recreating newLoadChildNode (%p) as iloadi.\n", newLoadChildNode);
+      logprintf(trace, log, "Recreating newLoadChildNode (%p) as iloadi.\n", newLoadChildNode);
       TR::Node::recreateWithSymRef(newLoadChildNode, TR::iloadi, symRef);
 
       /* The conversion used is based on whether the final result is sign extended or not. */
       if (signExtendResult)
          {
-         if (trace) traceMsg(comp, "Recreating newConvertChildNode (%p) as i2l.\n", newConvertChildNode);
+         logprintf(trace, log, "Recreating newConvertChildNode (%p) as i2l.\n", newConvertChildNode);
          TR::Node::recreate(newConvertChildNode, TR::i2l);
          }
       else
          {
-         if (trace) traceMsg(comp, "Recreating newConvertChildNode (%p) as iu2l.\n", newConvertChildNode);
+         logprintf(trace, log, "Recreating newConvertChildNode (%p) as iu2l.\n", newConvertChildNode);
          TR::Node::recreate(newConvertChildNode, TR::iu2l);
          }
 
@@ -2812,16 +2800,16 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
          {
          /* Inserts byteswap above both loads. */
          TR::Node * sbyteswapNode = TR::Node::create(TR::sbyteswap, 1, shortLoadNode);
-         if (trace) traceMsg(comp, "Creating sbyteswapNode (%p) with child %p.\n", sbyteswapNode, sbyteswapNode->getFirstChild());
+         logprintf(trace, log, "Creating sbyteswapNode (%p) with child %p.\n", sbyteswapNode, sbyteswapNode->getFirstChild());
 
-         if (trace) traceMsg(comp, "Setting shortConversionNode (%p) child to %p.\n", shortConversionNode, sbyteswapNode);
+         logprintf(trace, log, "Setting shortConversionNode (%p) child to %p.\n", shortConversionNode, sbyteswapNode);
          shortConversionNode->setAndIncChild(0, sbyteswapNode);
          shortLoadNode->recursivelyDecReferenceCount();
 
          TR::Node * ibyteswapNode = TR::Node::create(TR::ibyteswap, 1, newLoadChildNode);
-         if (trace) traceMsg(comp, "Creating ibyteswapNode (%p) with child %p.\n", ibyteswapNode, ibyteswapNode->getFirstChild());
+         logprintf(trace, log, "Creating ibyteswapNode (%p) with child %p.\n", ibyteswapNode, ibyteswapNode->getFirstChild());
 
-         if (trace) traceMsg(comp, "Setting newConvertChildNode (%p) child to %p.\n", newConvertChildNode, ibyteswapNode);
+         logprintf(trace, log, "Setting newConvertChildNode (%p) child to %p.\n", newConvertChildNode, ibyteswapNode);
          newConvertChildNode->setAndIncChild(0, ibyteswapNode);
          newLoadChildNode->recursivelyDecReferenceCount();
          }
@@ -2840,7 +2828,7 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
        *  b3  b2  b1  b0  a2  a1  a0  final 7 byte value
        */
       TR::Node * mulNode = TR::Node::create(TR::lmul, 2, newConvertChildNode, TR::Node::create(TR::lconst, 0, 256*256*256));
-      if (trace) traceMsg(comp, "Creating mulNode (%p) with children %p and %p.\n", mulNode, mulNode->getFirstChild(), mulNode->getSecondChild());
+      logprintf(trace, log, "Creating mulNode (%p) with children %p and %p.\n", mulNode, mulNode->getFirstChild(), mulNode->getSecondChild());
 
       TR::Node * lowerIntConversionNode = NULL;
       /* The location to start the lower iload from depends on endianness of the byte array. */
@@ -2856,34 +2844,34 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
 
       /* The lower in load needs to have its highest byte masked out. */
       TR::Node * andNode = TR::Node::create(TR::land, 2, lowerIntConversionNode, TR::Node::create(TR::lconst, 0, 0xFFFFFF));
-      if (trace) traceMsg(comp, "Creating andNode (%p) with children %p and %p.\n", andNode, andNode->getFirstChild(), andNode->getSecondChild());
+      logprintf(trace, log, "Creating andNode (%p) with children %p and %p.\n", andNode, andNode->getFirstChild(), andNode->getSecondChild());
 
-      if (trace) traceMsg(comp, "Setting rootNode (%p) children to %p and %p.\n", rootNode, mulNode, lowerIntConversionNode);
+      logprintf(trace, log, "Setting rootNode (%p) children to %p and %p.\n", rootNode, mulNode, lowerIntConversionNode);
       rootNode->setAndIncChild(0, mulNode);
       rootNode->setAndIncChild(1, andNode);
 
       TR::SymbolReference *lowerSymRef = comp->getSymRefTab()->findOrCreateGenericIntArrayShadowSymbolReference(0);
       lowerSymRef->setOffset(lowerIntLoadNode->getSymbolReference()->getOffset());
 
-      if (trace) traceMsg(comp, "Recreating lowerIntLoadNode (%p) as iloadi.\n", lowerIntLoadNode);
+      logprintf(trace, log, "Recreating lowerIntLoadNode (%p) as iloadi.\n", lowerIntLoadNode);
       TR::Node::recreateWithSymRef(lowerIntLoadNode, TR::iloadi, lowerSymRef);
 
       /* Both a signed or unsigned conversion could work here since the result gets masked later anyways. */
-      if (trace) traceMsg(comp, "Recreating lowerIntConversionNode (%p) as i2l.\n", lowerIntConversionNode);
+      logprintf(trace, log, "Recreating lowerIntConversionNode (%p) as i2l.\n", lowerIntConversionNode);
       TR::Node::recreate(lowerIntConversionNode, TR::i2l);
 
-      if (trace) traceMsg(comp, "Recreating newLoadChildNode (%p) as iloadi.\n", newLoadChildNode);
+      logprintf(trace, log, "Recreating newLoadChildNode (%p) as iloadi.\n", newLoadChildNode);
       TR::Node::recreateWithSymRef(newLoadChildNode, TR::iloadi, symRef);
 
       /* The conversion used is based on whether the final result is sign extended or not. */
       if (signExtendResult)
          {
-         if (trace) traceMsg(comp, "Recreating newConvertChildNode (%p) as i2l.\n", newConvertChildNode);
+         logprintf(trace, log, "Recreating newConvertChildNode (%p) as i2l.\n", newConvertChildNode);
          TR::Node::recreate(newConvertChildNode, TR::i2l);
          }
       else
          {
-         if (trace) traceMsg(comp, "Recreating newConvertChildNode (%p) as iu2l.\n", newConvertChildNode);
+         logprintf(trace, log, "Recreating newConvertChildNode (%p) as iu2l.\n", newConvertChildNode);
          TR::Node::recreate(newConvertChildNode, TR::iu2l);
          }
 
@@ -2891,16 +2879,16 @@ TR::TreeTop* generateArraycopyFromSequentialLoads(TR::Compilation* comp, bool tr
          {
          /* Inserts byteswap above both loads. */
          TR::Node * ibyteswapNode1 = TR::Node::create(TR::ibyteswap, 1, lowerIntLoadNode);
-         if (trace) traceMsg(comp, "Creating ibyteswapNode (%p) with child %p.\n", ibyteswapNode1, ibyteswapNode1->getFirstChild());
+         logprintf(trace, log, "Creating ibyteswapNode (%p) with child %p.\n", ibyteswapNode1, ibyteswapNode1->getFirstChild());
 
-         if (trace) traceMsg(comp, "Setting lowerIntConversionNode (%p) child to %p.\n", lowerIntConversionNode, ibyteswapNode1);
+         logprintf(trace, log, "Setting lowerIntConversionNode (%p) child to %p.\n", lowerIntConversionNode, ibyteswapNode1);
          lowerIntConversionNode->setAndIncChild(0, ibyteswapNode1);
          lowerIntLoadNode->recursivelyDecReferenceCount();
 
          TR::Node * ibyteswapNode2 = TR::Node::create(TR::ibyteswap, 1, newLoadChildNode);
-         if (trace) traceMsg(comp, "Creating ibyteswapNode (%p) with child %p.\n", ibyteswapNode2, ibyteswapNode2->getFirstChild());
+         logprintf(trace, log, "Creating ibyteswapNode (%p) with child %p.\n", ibyteswapNode2, ibyteswapNode2->getFirstChild());
 
-         if (trace) traceMsg(comp, "Setting newConvertChildNode (%p) child to %p.\n", newConvertChildNode, ibyteswapNode2);
+         logprintf(trace, log, "Setting newConvertChildNode (%p) child to %p.\n", newConvertChildNode, ibyteswapNode2);
          newConvertChildNode->setAndIncChild(0, ibyteswapNode2);
          newLoadChildNode->recursivelyDecReferenceCount();
          }
@@ -2988,7 +2976,6 @@ bool TR_arraysetSequentialStores::checkConstant(TR::Node* constExpr)
          break;
       }
 
-   //traceMsg(comp, "arrayset check const %d %d %d %d\n", isValidConst, getProcessedRefs(), _initValue, bv);
    if (isValidConst)
       {
       if (getProcessedRefs())
@@ -3070,7 +3057,6 @@ bool TR_arraysetSequentialStores::checkArrayStoreConstant(TR::Node* constExpr)
          break;
       }
 
-   //traceMsg(comp, "arrayset check const %d %d %d %d\n", isValidConst, getProcessedRefs(), _initValue, bv);
    if (isValidConst)
       {
       if (getProcessedRefs())
@@ -3094,7 +3080,6 @@ static bool useArraySet(int32_t numBytes, TR::CodeGenerator *codeGen)
    {
    if (!codeGen->getSupportsArraySet())
       {
-      //traceMsg(comp, "arrayset not enabled for this platform\n");
       return false;
       }
    if (numBytes < codeGen->arrayInitMinimumNumberOfBytes())
@@ -3139,7 +3124,6 @@ static TR::TreeTop* generateArraysetFromSequentialStores(TR::Compilation* comp, 
       }
 
    int32_t numBytes = arrayset.getNumBytes();
-   //traceMsg("orig numBytes = %d for node %p\n", numBytes, istoreNode);
 
    //TR_ScratchList<TR::TreeTop> seqStores(comp->trMemory());
    TR::Node *baseNode = NULL;
@@ -3195,12 +3179,10 @@ static TR::TreeTop* generateArraysetFromSequentialStores(TR::Compilation* comp, 
          }
       else if (comp->target().cpu.isPower() && numBytes < 32) // tm - The threshold needs to be adjusted for PPC
          {
-         //traceMsg(comp, "arrayset istore did not encounter large enough storage range. Range is: %d\n", numBytes);
          return istoreTreeTop;
          }
       else if ((numBytes < 8)  || ((numBytes < 12) && comp->target().is64Bit())) // msf - change to codeGen->arrayInitMinimumNumberOfBytes())
          {
-         //traceMsg(comp, "arrayset istore did not encounter large enough storage range. Range is: %d\n", numBytes);
          return istoreTreeTop;
          }
 
@@ -3217,17 +3199,12 @@ static TR::TreeTop* generateArraysetFromSequentialStores(TR::Compilation* comp, 
       {
       if (!useArraySet(numBytes, codeGen))
          {
-         //traceMsg(comp, "arrayset not enabled for this platform\n");
          return istoreTreeTop;
          }
       }
 
    if (!performTransformation(comp, "%sReducing arrayset sequential stores starting from n%un\n", OPT_DETAILS, istoreNode->getGlobalIndex()))
       return istoreTreeTop;
-
-   //printf("Reduced arrayset in %s\n", comp->signature()); fflush(stdout);
-
-   //traceMsg(comp, " First store in sequence %p Load Ref:%p Number of bytes: %d. Offset range:%d to %d. Byte Value:%d\n", istoreNode, arrayset.getALoadRef(), numBytes, arrayset.getBaseOffset(), arrayset.getBaseOffset() + numBytes - 1, arrayset.getConstant());
 
    //
    // break the istorei trees into tree_tops of the aload and const
@@ -3335,7 +3312,6 @@ static TR::TreeTop* generateArraysetFromSequentialStores(TR::Compilation* comp, 
       //
       // delete the bstorei trees and replace them with a new, improved iXstore tree
       //
-      //dumpOptDetails(comp, " Remove trees %p to %p\n", istoreTreeTop->getNode(), curTreeTop->getNode());
       //TR::TreeTop::removeDeadTrees(comp, istoreTreeTop, curTreeTop);
 
       TR::Node* aiaddNode = istoreNode->getFirstChild();
@@ -3366,9 +3342,7 @@ static TR::TreeTop* generateArraysetFromSequentialStores(TR::Compilation* comp, 
             numBytesLeft = 0;
             }
 
-         //traceMsg("num bytes left %d num bytes to be stored %d num of stores %d\n", numBytesLeft, numBytesToBeStored, totalNumOfStores);
-
-        TR::Node* constValueNode;
+         TR::Node* constValueNode;
          TR::ILOpCodes opcode;
          switch(numBytesToBeStored)
             {
@@ -3446,7 +3420,6 @@ static TR::TreeTop* generateArraysetFromSequentialStores(TR::Compilation* comp, 
             default: TR_ASSERT(0, " number of bytes unexpected\n"); break;
             }
 
-         //printf("Did seq store in %s\n", comp->signature()); fflush(stdout);
          TR::SymbolReference * symRef = comp->getSymRefTab()->findOrCreateGenericIntShadowSymbolReference(curOffset);
 
          bool canHoistConstant = false;
@@ -3728,7 +3701,6 @@ bool TR_ArrayShiftTreeCollection::insertTree(TR::TreeTop * currTree)
             }
          }
 
-      //dumpOptDetails(comp(), "Store tree[%p] added to collection\n", _storeTrees[_numTrees]->getRootNode());
       _numTrees++;
       return true;
       }
@@ -4188,6 +4160,8 @@ bool mayKillInterferenceBetweenNodes(TR::Compilation * comp,
                                      vcount_t newVisitCount,
                                      bool trace)
    {
+   OMR::Logger *log = comp->log();
+
    LexicalTimer lt("mayKillInterferenceBetweenNodes", comp->phaseTimer());
    TR::Node * n1 = 0;
    TR::Node * n2 = 0;
@@ -4203,19 +4177,17 @@ bool mayKillInterferenceBetweenNodes(TR::Compilation * comp,
 
    if (trace)
       {
-      comp->getDebug()->trace(" --- resetVisitCounts on %p done\n", n1);
-      comp->getDebug()->trace(" --- does node %p get killed somewhere in the subtree of node %p?\n", n2, n1);
+      log->printf(" --- resetVisitCounts on %p done\n", n1);
+      log->printf(" --- does node %p get killed somewhere in the subtree of node %p?\n", n2, n1);
       }
 
    if (n1->referencesMayKillAliasInSubTree(n2, newVisitCount, comp))
       {
-      if (trace)
-         comp->getDebug()->trace(" ---- node %p is killed somewhere in the subtree of node %p\n", n2, n1);
+      logprintf(trace, log, " ---- node %p is killed somewhere in the subtree of node %p\n", n2, n1);
 
       if (!fineGrainedOverlap(comp, n1, n2))
          {
-         if (trace)
-            comp->getDebug()->trace(" ----- n1 %p and n2 %p return false for fineGrainedOverlap\n", n1, n2);
+         logprintf(trace, log, " ----- n1 %p and n2 %p return false for fineGrainedOverlap\n", n1, n2);
          }
       else
          {
@@ -4236,19 +4208,17 @@ bool mayKillInterferenceBetweenNodes(TR::Compilation * comp,
 
    if (trace)
       {
-      comp->getDebug()->trace(" --- resetVisitCounts on %p done\n", n1);
-      comp->getDebug()->trace(" --- does node %p get killed somewhere in the subtree of node %p?\n", n2, n1);
+      log->printf(" --- resetVisitCounts on %p done\n", n1);
+      log->printf(" --- does node %p get killed somewhere in the subtree of node %p?\n", n2, n1);
       }
 
    if (n1->referencesMayKillAliasInSubTree(n2, newVisitCount, comp))
       {
-      if (trace)
-         comp->getDebug()->trace(" ---- node %p is killed somewhere in the subtree of node %p\n", n2, n1);
+      logprintf(trace, log, " ---- node %p is killed somewhere in the subtree of node %p\n", n2, n1);
 
       if (!fineGrainedOverlap(comp, n1, n2))
          {
-         if (trace)
-            comp->getDebug()->trace(" ----- n1 %p and n2 %p return false for fineGrainedOverlap\n", n1, n2);
+         logprintf(trace, log, " ----- n1 %p and n2 %p return false for fineGrainedOverlap\n", n1, n2);
          }
       else
          {

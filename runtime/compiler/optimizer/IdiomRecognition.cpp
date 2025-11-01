@@ -68,6 +68,7 @@
 #include "optimizer/TransformUtil.hpp"
 #include "optimizer/UseDefInfo.hpp"
 #include "ras/Debug.hpp"
+#include "ras/Logger.hpp"
 #include "omrformatconsts.h"
 #if defined(J9VM_OPT_JITSERVER)
 #include "env/JITServerAllocationRegion.hpp"
@@ -232,7 +233,7 @@ TR_CISCNode::getName(TR_CISCOps op, TR::Compilation * comp)
 // Debug print to file
 //*****************************************************************************************
 void
-TR_CISCNode::dump(TR::FILE *pOutFile, TR::Compilation * comp)
+TR_CISCNode::dump(OMR::Logger *log, TR::Compilation *comp)
    {
    int32_t i;
    char buf[256];
@@ -245,51 +246,51 @@ TR_CISCNode::dump(TR::FILE *pOutFile, TR::Compilation * comp)
       {
       snprintf(buf, sizeof(buf), "%s", name);
       }
-   traceMsg(comp, "[%p] %3d %2d%c %-11s", this, _id, _dagId, isOutsideOfLoop() ? ' ' : 'L', buf);
-   traceMsg(comp, " [");
+   log->printf("[%p] %3d %2d%c %-11s", this, _id, _dagId, isOutsideOfLoop() ? ' ' : 'L', buf);
+   log->prints(" [");
    for (i = 0; i < _numSuccs; i++)
       {
-      traceMsg(comp, "%d",_succs[i]->_id);
-      if (i < _numSuccs-1) traceMsg(comp, " ");
+      log->printf("%d",_succs[i]->_id);
+      if (i < _numSuccs-1) log->printc(' ');
       }
-   traceMsg(comp, "]");
-   traceMsg(comp, " [");
+   log->printc(']');
+   log->prints(" [");
    for (i = 0; i < _numChildren; i++)
       {
-      traceMsg(comp, "%d",_children[i]->_id);
-      if (i < _numChildren-1) traceMsg(comp, " ");
+      log->printf("%d",_children[i]->_id);
+      if (i < _numChildren-1) log->printc(' ');
       }
-   traceMsg(comp, "]");
+   log->printc(']');
 
    ListIterator<TR_CISCNode> ci(&_chains);
    TR_CISCNode *n;
    if (!_chains.isEmpty())
       {
-      traceMsg(comp, " chains[");
+      log->prints(" chains[");
       for (n = ci.getFirst(); n; n = ci.getNext())
          {
-         traceMsg(comp, "%d ",n->_id);
+         log->printf("%d ",n->_id);
          }
-      traceMsg(comp, "]");
+      log->printc(']');
       }
 
    if (!_dest.isEmpty())
       {
-      traceMsg(comp, " dest=");
+      log->prints(" dest=");
       ci.set(&_dest);
       for (n = ci.getFirst(); n; n = ci.getNext())
          {
-         traceMsg(comp, "%d ",n->_id);
+         log->printf("%d ",n->_id);
          }
       }
 
    if (!_hintChildren.isEmpty())
       {
-      traceMsg(comp, " hint=");
+      log->prints(" hint=");
       ci.set(&_hintChildren);
       for (n = ci.getFirst(); n; n = ci.getNext())
          {
-         traceMsg(comp, "%d ",n->_id);
+         log->printf("%d ",n->_id);
          }
       }
 
@@ -297,23 +298,23 @@ TR_CISCNode::dump(TR::FILE *pOutFile, TR::Compilation * comp)
    if (!_preds.isEmpty())
       {
       ci.set(&_preds);
-      traceMsg(comp, " preds[");
+      log->prints(" preds[");
       for (n = ci.getFirst(); n; n = ci.getNext())
          {
-         traceMsg(comp, "%d ",n->_id);
+         log->printf("%d ",n->_id);
          }
-      traceMsg(comp, "]");
+      log->prints(']');
       }
 #endif
 
    if (isCISCNodeModified())
       {
-      traceMsg(comp, "\t(Modified)");
+      log->prints("\t(Modified)");
       }
 
    if (isOptionalNode())
       {
-      traceMsg(comp, "\t(Optional)");
+      log->prints("\t(Optional)");
       }
 
    // Print out the TR_Nodes that correspond with the given CISCNode.
@@ -321,16 +322,16 @@ TR_CISCNode::dump(TR::FILE *pOutFile, TR::Compilation * comp)
       {
       if (!getTrNodeInfo()->isEmpty())
          {
-         traceMsg(comp, "\tTR::Node:[");
+         log->prints("\tTR::Node:[");
          ListIterator<TrNodeInfo> ni(getTrNodeInfo());
          for (TrNodeInfo *n = ni.getFirst(); n != NULL; n = ni.getNext())
             {
-            traceMsg(comp, "%s,",comp->getDebug()->getName((TR::Node*)n->_node));
+            log->printf("%s,",comp->getDebug()->getName((TR::Node*)n->_node));
             }
-         traceMsg(comp, "]");
+         log->printc(']');
          }
       }
-   traceMsg(comp, "\n");
+   log->println();
    }
 
 
@@ -459,9 +460,10 @@ bool
 TR_CISCNode::checkParents(TR_CISCNode *const o, const int8_t level)
    {
 #if DEBUG_CHECKPARENTS
+   OMR::Logger *log = comp()->log();
    int i;
-   for (i = DEPTH_CHECKPARENTS-level; --i >= 0; ) traceMsg(comp(), "  ");
-   traceMsg(comp(), "checkParents %d:%d...\n", _id, o->_id);
+   for (i = DEPTH_CHECKPARENTS-level; --i >= 0; ) log->prints("  ");
+   log->printf("checkParents %d:%d...\n", _id, o->_id);
 #endif
    if (level > 0)
       {
@@ -519,8 +521,8 @@ TR_CISCNode::checkParents(TR_CISCNode *const o, const int8_t level)
                 pn->checkParents(o, level-1)) goto find;
             }
 #if DEBUG_CHECKPARENTS
-         for (i = DEPTH_CHECKPARENTS-level; --i >= 0; ) traceMsg(comp(), "  ");
-         traceMsg(comp(), "checkParents %d:%d failed due to pid %d\n", _id, o->_id, pn->_id);
+         for (i = DEPTH_CHECKPARENTS-level; --i >= 0; ) log->prints("  ");
+         log->printf("checkParents %d:%d failed due to pid %d\n", _id, o->_id, pn->_id);
 #endif
          return false;
 
@@ -528,8 +530,8 @@ TR_CISCNode::checkParents(TR_CISCNode *const o, const int8_t level)
          }
       }
 #if DEBUG_CHECKPARENTS
-   for (i = DEPTH_CHECKPARENTS-level; --i >= 0; ) traceMsg(comp(), "  ");
-   traceMsg(comp(), "checkParents %d:%d succeed\n", _id, o->_id);
+   for (i = DEPTH_CHECKPARENTS-level; --i >= 0; ) log->prints("  ");
+   log->printf("checkParents %d:%d succeed\n", _id, o->_id);
 #endif
    return true;
    }
@@ -625,9 +627,10 @@ TR_CISCNode::checkParentsNonRec(TR_CISCNode *p, TR_CISCNode *t, int8_t level, TR
       TR_CISCNode *parm1 = 0;
       ret = true;
 #if DEBUG_CHECKPARENTS
+      OMR::Logger *log = comp->log();
       int32_t i;
-      for (i = initial_level-level; --i >= 0; ) traceMsg(comp, "  ");
-      traceMsg(comp, "checkParents %d:%d...\n", p->_id, t->_id);
+      for (i = initial_level-level; --i >= 0; ) log->prints("  ");
+      log->printf("checkParents %d:%d...\n", p->_id, t->_id);
 #endif
       if (level > 0)
          {
@@ -715,8 +718,8 @@ TR_CISCNode::checkParentsNonRec(TR_CISCNode *p, TR_CISCNode *t, int8_t level, TR
                   goto find;
                }
 #if DEBUG_CHECKPARENTS
-            for (i = initial_level-level; --i >= 0; ) traceMsg(comp, "  ");
-            traceMsg(comp, "checkParents %d:%d failed due to pid %d\n", p->_id, t->_id, pn->_id);
+            for (i = initial_level-level; --i >= 0; ) log->prints("  ");
+            log->printf("checkParents %d:%d failed due to pid %d\n", p->_id, t->_id, pn->_id);
 #endif
             ret = false;
             goto final;
@@ -726,8 +729,8 @@ TR_CISCNode::checkParentsNonRec(TR_CISCNode *p, TR_CISCNode *t, int8_t level, TR
          }
       ret = true;
 #if DEBUG_CHECKPARENTS
-      for (i = initial_level-level; --i >= 0; ) traceMsg(comp, "  ");
-      traceMsg(comp, "checkParents %d:%d succeed\n", p->_id, t->_id);
+      for (i = initial_level-level; --i >= 0; ) log->prints("  ");
+      log->printf("checkParents %d:%d succeed\n", p->_id, t->_id);
 #endif
       final:
       if (level == initial_level) break;   /* exit loop */
@@ -903,14 +906,14 @@ TR_CISCGraphAspects::modifyAspects()
 void
 TR_CISCGraphAspects::print(TR::Compilation *comp, bool noaspects)
    {
-   traceMsg(comp, "CISCGraph%sAspects is %08x\n",noaspects ? "No" : "", getValue());
+   comp->log()->printf("CISCGraph%sAspects is %08x\n",noaspects ? "No" : "", getValue());
    }
 
 void
 TR_CISCGraphAspectsWithCounts::print(TR::Compilation *comp, bool noaspects)
    {
-   traceMsg(comp, "CISCGraph%sAspects is %08x\n",noaspects ? "No" : "", getValue());
-   traceMsg(comp, "min counts: if=%d, indirectLoad=%d, indirectStore=%d\n",
+   comp->log()->printf("CISCGraph%sAspects is %08x\n",noaspects ? "No" : "", getValue());
+   comp->log()->printf("min counts: if=%d, indirectLoad=%d, indirectStore=%d\n",
            _ifCount, _indirectLoadCount, _indirectStoreCount);
    }
 
@@ -1231,16 +1234,16 @@ TR_CISCGraph::initializeGraphs(TR::Compilation *c)
    }
 
 void
-TR_CISCGraph::dump(TR::FILE *pOutFile, TR::Compilation * comp)
+TR_CISCGraph::dump(OMR::Logger *log, TR::Compilation *comp)
    {
-   traceMsg(comp, "CISCGraph of %s\n",_titleOfCISC);
+   log->printf("CISCGraph of %s\n",_titleOfCISC);
    _aspects.print(comp, false);
    _noaspects.print(comp, true);
    ListIterator<TR_CISCNode> ni(getNodes());
    TR_CISCNode *n;
 
 #if 1
-   traceMsg(comp, "!! Note !! Showing reverse order for convenience\n");
+   log->prints("!! Note !! Showing reverse order for convenience\n");
    TR_ScratchList<TR_CISCNode> reorder(comp->trMemory());
    for (n = ni.getFirst(); n; n = ni.getNext())
       {
@@ -1248,17 +1251,17 @@ TR_CISCGraph::dump(TR::FILE *pOutFile, TR::Compilation * comp)
       }
    ni.set(&reorder);
 #endif
-   traceMsg(comp, " ptr id dagId(L=Loop) succ children (chains) (dest) (hintChildren) (flags) (TRNodeInfo)\n");
+   log->prints(" ptr id dagId(L=Loop) succ children (chains) (dest) (hintChildren) (flags) (TRNodeInfo)\n");
    for (n = ni.getFirst(); n; n = ni.getNext())
       {
-      n->dump(pOutFile, comp);
+      n->dump(log, comp);
       }
 
-   traceMsg(comp, "\nOrder by Data\n");
+   log->prints("\nOrder by Data\n");
    ni.set(&_orderByData);
    for (n = ni.getFirst(); n; n = ni.getNext())
       {
-      n->dump(pOutFile, comp);
+      n->dump(log, comp);
       }
    }
 
@@ -1732,12 +1735,13 @@ TR_CFGReversePostOrder::createReversePostOrder(TR::CFG *cfg, TR::CFGNode *n)
 void
 TR_CFGReversePostOrder::dump(TR::Compilation * comp)
    {
+   OMR::Logger *log = comp->log();
    ListIterator<TR::CFGNode> ni(&_revPost);
    TR::CFGNode *n;
-   traceMsg(comp, "Generated Reverse post order of CFG: ");
+   log->prints("Generated Reverse post order of CFG: ");
    for (n = ni.getFirst(); n; n = ni.getNext())
-      traceMsg(comp, "%d->", n->getNumber());
-   traceMsg(comp, "\n");
+      log->printf("%d->", n->getNumber());
+   log->println();
    }
 
 #if 0
@@ -2000,7 +2004,7 @@ bool
 TR_CISCTransformer::createLoopCandidates(List<TR_RegionStructure> *loopCandidates)
    {
    bool enableTracing = trace();
-
+   OMR::Logger *log = comp()->log();
 
    loopCandidates->init();
    TR_ScratchList<TR_Structure> whileLoops(trMemory());
@@ -2025,8 +2029,7 @@ TR_CISCTransformer::createLoopCandidates(List<TR_RegionStructure> *loopCandidate
    int32_t loopCount = 0;
    if (!candidate->isEmpty())
       {
-      if (enableTracing)
-         traceMsg(comp(), "createLoopCandidates: Evaluating list of loop candidates.\n");
+      logprints(enableTracing, log, "createLoopCandidates: Evaluating list of loop candidates.\n");
 
       ListIterator<TR_Structure> whileLoopsIt(candidate);
       TR_Structure *nextWhileLoop;
@@ -2038,34 +2041,30 @@ TR_CISCTransformer::createLoopCandidates(List<TR_RegionStructure> *loopCandidate
          if (!naturalLoop || !naturalLoop->isNaturalLoop())
             {
             if (trace() && naturalLoop)
-               traceMsg(comp(), "\tRejected loop %d - not a natural loop?\n", naturalLoop->getNumber());
+               log->printf("\tRejected loop %d - not a natural loop?\n", naturalLoop->getNumber());
             continue;
             }
          TR_StructureSubGraphNode *entryGraphNode = naturalLoop->getEntry();
          TR_BlockStructure *loopBlockStructure = entryGraphNode->getStructure()->asBlock();
          if (!loopBlockStructure)
             {
-            if (enableTracing)
-               traceMsg(comp(), "\tRejected loop %d - no block structure.\n", naturalLoop->getNumber());
+            logprintf(enableTracing, log, "\tRejected loop %d - no block structure.\n", naturalLoop->getNumber());
             continue;
             }
          if (!naturalLoop->containsOnlyAcyclicRegions())
             {
-            if (enableTracing)
-               traceMsg(comp(), "\tRejected loop %d - not inner most loop.\n", naturalLoop->getNumber());
+            logprintf(enableTracing, log, "\tRejected loop %d - not inner most loop.\n", naturalLoop->getNumber());
             continue; // inner most loop
             }
          if (loopBlockStructure->getBlock()->isCold())
             {
-            if (enableTracing)
-               traceMsg(comp(), "\tRejected loop %d - cold loop.\n", naturalLoop->getNumber());
+            logprintf(enableTracing, log, "\tRejected loop %d - cold loop.\n", naturalLoop->getNumber());
             continue;     // cold loop
             }
          loopCount++;
          loopCandidates->add(naturalLoop);
 
-         if (enableTracing)
-            traceMsg(comp(), "\tAccepted loop %d as candidate.\n", naturalLoop->getNumber());
+         logprintf(enableTracing, log, "\tAccepted loop %d as candidate.\n", naturalLoop->getNumber());
          }
 #if SHOW_STATISTICS
       if (showMesssagesStdout() && loopCount)
@@ -2073,8 +2072,7 @@ TR_CISCTransformer::createLoopCandidates(List<TR_RegionStructure> *loopCandidate
 #endif
       }
 
-   if (enableTracing)
-      traceMsg(comp(), "createLoopCandidates: %d loop candidates found.\n", loopCount);
+   logprintf(enableTracing, log, "createLoopCandidates: %d loop candidates found.\n", loopCount);
 
    return !loopCandidates->isEmpty();
    }
@@ -2084,6 +2082,7 @@ TR_CISCTransformer::createLoopCandidates(List<TR_RegionStructure> *loopCandidate
 TR::Block *
 TR_CISCTransformer::addPreHeaderIfNeeded(TR_RegionStructure *region)
    {
+   OMR::Logger *log = comp()->log();
    TR::Block *loopEntry = region->getEntry()->getStructure()->asBlock()->getBlock();
    TR::Block *preHeader = NULL;
    for (auto e = loopEntry->getPredecessors().begin(); e != loopEntry->getPredecessors().end(); ++e)
@@ -2123,7 +2122,8 @@ TR_CISCTransformer::addPreHeaderIfNeeded(TR_RegionStructure *region)
          if (region->contains(predBlock->getStructureOf(), region->getParent()))
             continue;
 
-         traceMsg(comp(), "fixing predecessor %d\n", predBlock->getNumber());
+         logprintf(trace(), log, "fixing predecessor %d\n", predBlock->getNumber());
+
          removedEdges.add(*e);
          _cfg->addEdge(predBlock, preHeader);
          TR::Node *branchNode = predBlock->getExit()->getPrevRealTreeTop()->getNode();
@@ -2148,7 +2148,8 @@ TR_CISCTransformer::addPreHeaderIfNeeded(TR_RegionStructure *region)
          {
          _cfg->removeEdge(e);
          }
-      traceMsg(comp(), "added preheader block_%d\n", preHeader->getNumber());
+
+      logprintf(trace(), log, "added preheader block_%d\n", preHeader->getNumber());
       }
 
    return preHeader;
@@ -2182,8 +2183,8 @@ void
 TR_CISCTransformer::analyzeHighFrequencyLoop(TR_CISCGraph *graph,
                                              TR_RegionStructure *naturalLoop)
    {
-   if (trace())
-      traceMsg(comp(), "\tAnalyzing if loop is frequently iterated\n");
+   OMR::Logger *log = comp()->log();
+   logprints(trace(), log, "\tAnalyzing if loop is frequently iterated\n");
    bool isInsideOfFastVersioned = isInsideOfFastVersionedLoop(naturalLoop);
    bool highFrequency = true;
 #if !STRESS_TEST // If STRESS_TEST is true, BB frequency checks are ignored.
@@ -2195,7 +2196,7 @@ TR_CISCTransformer::analyzeHighFrequencyLoop(TR_CISCGraph *graph,
       if (loopEntryFrequency < loopEntry->getFrequency())
          loopEntryFrequency = loopEntry->getFrequency();
       }
-   if (trace()) traceMsg(comp(), "\t\tLoop Frequency=%d\n",loopEntryFrequency); // the freq of the loop entry
+   logprintf(trace(), log, "\t\tLoop Frequency=%d\n", loopEntryFrequency); // the freq of the loop entry
    if (loopEntryFrequency <= 0)
       {
 #if ALLOW_FAST_VERSIONED_LOOP
@@ -2226,12 +2227,12 @@ TR_CISCTransformer::analyzeHighFrequencyLoop(TR_CISCGraph *graph,
          {
          int32_t outerFrequency = outer->getFrequency();
          if (outerFrequency < 1) outerFrequency = 1;
-         if (trace()) traceMsg(comp(), "\t\tOuter block %d: Frequency=%d Inner/Outer Ratio:(%f)\n",outer->getNumber(),outerFrequency, (double)loopEntryFrequency/(double)outerFrequency);
+         logprintf(trace(), log, "\t\tOuter block %d: Frequency=%d Inner/Outer Ratio:(%f)\n", outer->getNumber(),outerFrequency, (double)loopEntryFrequency/(double)outerFrequency);
          if (loopEntryFrequency < outerFrequency * cg()->arrayTranslateAndTestMinimumNumberOfIterations()) highFrequency = false;
          }
       }
 #endif
-   if (trace()) traceMsg(comp(), "\t\thighFrequency=%d\n",highFrequency);
+   logprintf(trace(), log, "\t\thighFrequency=%d\n", highFrequency);
    graph->setHotness(comp()->getMethodHotness(), highFrequency);
    graph->setInsideOfFastVersioned(isInsideOfFastVersioned);
    }
@@ -2294,7 +2295,7 @@ TR_CISCTransformer::easyTreeSimplification(TR::Node *const node)
       if (node->getOpCodeValue() == TR::ificmplt &&
           iconstC->getInt() == 1)
          {
-         traceMsg(comp(), "\t\teasyTreeSimplification: Node: %p converted from ificmplt with 1 to ifcmple with 0", node);
+         logprintf(trace(), comp()->log(), "\t\teasyTreeSimplification: Node: %p converted from ificmplt with 1 to ifcmple with 0", node);
          TR::Node::recreate(node, TR::ificmple);
          iconstC->setInt(0);
          }
@@ -2340,8 +2341,8 @@ TR_CISCTransformer::easyTreeSimplification(TR::Node *const node)
             }
          }
       }
-   if (modified && trace())
-      traceMsg(comp(), "\t\teasyTreeSimplification: The tree %p is simplified.\n", node);
+   if (modified)
+      logprintf(trace(), comp()->log(), "\t\teasyTreeSimplification: The tree %p is simplified.\n", node);
    }
 
 
@@ -2666,8 +2667,9 @@ TR_CISCTransformer::addAllSubNodes(TR_CISCGraph *const graph, TR::Block *const b
 bool
 TR_CISCTransformer::makeCISCGraphForBlock(TR_CISCGraph *graph, TR::Block *const block, int32_t dagId)
    {
-   if (trace())
-      traceMsg(comp(), "\t\tmakeCISCGraphForBlock: Building CISCGraph for block %d.\n", block->getNumber());
+   OMR::Logger *log = comp()->log();
+
+   logprintf(trace(), log, "\t\tmakeCISCGraphForBlock: Building CISCGraph for block %d.\n", block->getNumber());
 
    TR::TreeTop *top = block->getEntry();
    TR::TreeTop *end = block->getExit();
@@ -2677,8 +2679,7 @@ TR_CISCTransformer::makeCISCGraphForBlock(TR_CISCGraph *graph, TR::Block *const 
       {
       if (!addAllSubNodes(graph, block, top, NULL, top->getNode(), dagId))
          {
-         if (trace())
-            traceMsg(comp(), "\t\tFailed to create CISCNode for Node %p in block %d : %p\n", top->getNode(), block->getNumber(), block);
+         logprintf(trace(), log, "\t\tFailed to create CISCNode for Node %p in block %d : %p\n", top->getNode(), block->getNumber(), block);
          return false;
          }
 
@@ -2941,8 +2942,7 @@ TR_CISCTransformer::makeCISCGraph(List<TR::Block> *pred,
    static const bool includePreds = feGetEnv("TR_idiomIncludePreds") != NULL;
    if (includePreds)
       {
-      if (trace())
-         traceMsg(comp(), "\tmakeCISCGraph: Building CISCGraph for Predecessor Blocks.\n");
+      logprints(trace(), comp()->log(), "\tmakeCISCGraph: Building CISCGraph for Predecessor Blocks.\n");
       for (block = bi.getFirst(); block != 0; block = bi.getNext())
          {
          if (!makeCISCGraphForBlock(graph, block, dagId)) return 0;
@@ -2952,8 +2952,7 @@ TR_CISCTransformer::makeCISCGraph(List<TR::Block> *pred,
    dagId++;
    bodyDagId = dagId;
    bi.set(body);
-   if (trace())
-      traceMsg(comp(), "\tmakeCISCGraph: Building CISCGraph for Loop Body Blocks.\n");
+   logprints(trace(), comp()->log(), "\tmakeCISCGraph: Building CISCGraph for Loop Body Blocks.\n");
    graph->setRecordingAspectsByOpcode(true);    // Start recording aspects inside of the loop
    for (block = bi.getFirst(); block != 0; block = bi.getNext())
       {
@@ -3007,6 +3006,7 @@ TR_CISCTransformer::makeCISCGraph(List<TR::Block> *pred,
 //***************************************************************************************
 int32_t TR_CISCTransformer::perform()
    {
+   OMR::Logger *log = comp()->log();
 
    //TO_BE_ENABLED
    ///return 0;
@@ -3075,8 +3075,8 @@ int32_t TR_CISCTransformer::perform()
                                         comp()->signature());
       if (trace())
          {
-         traceMsg(comp(), "Starting CISCTransformer\n");
-         comp()->dumpMethodTrees("Trees before transforming CISC instructions");
+         log->prints("Starting CISCTransformer\n");
+         comp()->dumpMethodTrees(log, "Trees before transforming CISC instructions");
          }
 
       ListIterator<TR_RegionStructure> loopIt(&loopCandidates);
@@ -3120,8 +3120,7 @@ int32_t TR_CISCTransformer::perform()
                   {
                   if (predBlock->getNumberOfRealTreeTops() > 300)
                      {
-                     if (trace())
-                        traceMsg(comp(), "Skip the predecessor %d, because it has too many TreeTops (%d).\n", predBlock->getNumber(), predBlock->getNumberOfRealTreeTops());
+                     logprintf(trace(), log, "Skip the predecessor %d, because it has too many TreeTops (%d).\n", predBlock->getNumber(), predBlock->getNumberOfRealTreeTops());
                      break; // To reduce unnecessary compilation time
                      }
 
@@ -3145,8 +3144,7 @@ int32_t TR_CISCTransformer::perform()
                   // Check to see if predBlock is the same.
                   if (region != predBlockRegion)
                      {
-                     if (trace())
-                         traceMsg(comp(), "Skip the predecessor block_%d, because it is within another region/loop.\n",predBlock->getNumber());
+                     logprintf(trace(), log, "Skip the predecessor block_%d, because it is within another region/loop.\n", predBlock->getNumber());
                      break;
                      }
                   }
@@ -3240,24 +3238,24 @@ int32_t TR_CISCTransformer::perform()
 
          if (trace())
             {
-            traceMsg(comp(), "Loop %d.\n\tAnalyzed predecessor, body and successor blocks.\n", nextLoop->getNumber());
-            traceMsg(comp(), "\t\tPredecessors blocks:");
+            log->printf("Loop %d.\n\tAnalyzed predecessor, body and successor blocks.\n", nextLoop->getNumber());
+            log->prints("\t\tPredecessors blocks:");
             ListIterator<TR::Block> bi(&bblistPred);
             for (block = bi.getFirst(); block != 0; block = bi.getNext())
-               traceMsg(comp(), " %d:[%p]",block->getNumber(),block);
-            traceMsg(comp(), "\n");
+               log->printf(" %d:[%p]",block->getNumber(),block);
+            log->println();
 
-            traceMsg(comp(), "\t\tBody blocks:");
+            log->prints("\t\tBody blocks:");
             bi.set(&bblistBody);
             for (block = bi.getFirst(); block != 0; block = bi.getNext())
-               traceMsg(comp(), " %d:[%p]",block->getNumber(),block);
-            traceMsg(comp(), "\n");
+               log->printf(" %d:[%p]",block->getNumber(),block);
+            log->println();
 
-            traceMsg(comp(), "\t\tSuccessors blocks:");
+            log->prints("\t\tSuccessors blocks:");
             bi.set(&bblistSucc);
             for (block = bi.getFirst(); block != 0; block = bi.getNext())
-               traceMsg(comp(), " %d:[%p]",block->getNumber(),block);
-            traceMsg(comp(), "\n");
+               log->printf(" %d:[%p]",block->getNumber(),block);
+            log->println();
             }
 
          // Iterate through the loop body blocks to remove Bits.keepAlive() or Reference.reachabilityFence() calls.
@@ -3271,7 +3269,7 @@ int32_t TR_CISCTransformer::perform()
          graph = makeCISCGraph(&bblistPred, &bblistBody, &bblistSucc);
          if (!graph)
             {
-            if (trace()) traceMsg(comp(), "Loop %d.  Failed to make CISC Graph.\n", nextLoop->getNumber());
+            logprintf(trace(), log, "Loop %d.  Failed to make CISC Graph.\n", nextLoop->getNumber());
             restoreBitsKeepAliveCalls();
             continue;
             }
@@ -3286,7 +3284,7 @@ int32_t TR_CISCTransformer::perform()
          setCurrentLoop(nextLoop);
 
          if (trace())
-            graph->dump(comp()->getOutFile(), comp());
+            graph->dump(comp()->log(), comp());
 
          bool modifiedThisLoop = false;
          _candidatesForShowing.init();
@@ -3301,8 +3299,8 @@ int32_t TR_CISCTransformer::perform()
                   modifiedThisLoop = true;
                   if (trace())
                      {
-                     traceMsg(comp(), "Transformed %s\n", prepared->getTitle());
-                     comp()->dumpMethodTrees("Trees after transforming CISC instruction");
+                     log->printf("Transformed %s\n", prepared->getTitle());
+                     comp()->dumpMethodTrees(log, "Trees after transforming CISC instruction");
                      }
                   break;
                   }
@@ -3325,9 +3323,9 @@ int32_t TR_CISCTransformer::perform()
 
          if (trace())
             {
-            traceMsg(comp(), "Ending CISCTransformer\n");
-            comp()->dumpFlowGraph();
-            comp()->dumpMethodTrees("Trees after transforming CISC instructions");
+            log->prints("Ending CISCTransformer\n");
+            comp()->dumpFlowGraph(log);
+            comp()->dumpMethodTrees(log, "Trees after transforming CISC instructions");
             }
          }
 
@@ -3364,30 +3362,31 @@ TR_CISCTransformer::isBlockInLoopBody(TR::Block *block)
 void
 TR_CISCTransformer::showEmbeddedData(const char *title, uint8_t *data)
    {
+   OMR::Logger *log = comp()->log();
    int32_t i, j;
-   traceMsg(comp(), "%s\n    ", title);
+   log->printf("%s\n    ", title);
    for (j = 0; j < _numPNodes; j++)
       {
-      traceMsg(comp(), "%3d", j);
+      log->printf("%3d", j);
       }
-   traceMsg(comp(), "\n  --");
+   log->prints("\n  --");
    for (j = 0; j < _numPNodes; j++)
       {
-      traceMsg(comp(), "---");
+      log->prints("---");
       }
-   traceMsg(comp(), "\n");
+   log->println();
    for (i = 0; i < _numTNodes; i++)
       {
-      traceMsg(comp(), "%3d:",i);
+      log->printf("%3d:",i);
       for (j = 0; j < _numPNodes; j++)
          {
          uint8_t this_result = data[idx(j, i)];
          if (this_result == _Unknown || this_result == _NotEmbed)
-            traceMsg(comp(), "|  ");
+            log->prints("|  ");
          else
-            traceMsg(comp(), "| %X", data[idx(j, i)]);
+            log->printf("| %X", data[idx(j, i)]);
          }
-      traceMsg(comp(), "\n");
+      log->println();
       }
    }
 
@@ -3494,6 +3493,7 @@ TR_CISCTransformer::checkParents(TR_CISCNode *p, TR_CISCNode *t, uint8_t *result
 bool
 TR_CISCTransformer::computeEmbeddedForData()
    {
+   OMR::Logger *log = comp()->log();
    uint8_t *const result = _embeddedForData;
    bool ret = false;
    bool skipScreening = false;
@@ -3577,7 +3577,7 @@ TR_CISCTransformer::computeEmbeddedForData()
                               if (!parent->isOutsideOfLoop() &&
                                   parent->getIlOpCode().isStoreDirect())
                                  {
-                                 if (trace()) traceMsg(comp(), "pID%d: tID%d isn't loop invariant because of %d\n", p->getID(), t->getID(), parent->getID());
+                                 logprintf(trace(), log, "pID%d: tID%d isn't loop invariant because of %d\n", p->getID(), t->getID(), parent->getID());
                                  isEmbed = false;
                                  break;
                                  }
@@ -3749,7 +3749,7 @@ TR_CISCTransformer::computeEmbeddedForData()
             {
             if (trace())
                {
-               traceMsg(comp(), "data dag embedding failed for node %d.\n", p->getID());
+               log->printf("data dag embedding failed for node %d.\n", p->getID());
                showEmbeddedData("Result of _embeddedForData", result);
                }
             return false;
@@ -3791,7 +3791,7 @@ TR_CISCTransformer::computeEmbeddedForData()
                }
             }
          bool checkOptionalParents = (count == 0);
-         if (trace() && count == 0) traceMsg(comp(), "screening1: count=%d for p:%d\n",count,p->getID());
+         if (trace() && count == 0) log->printf("screening1: count=%d for p:%d\n", count, p->getID());
          count = 0;
          for (tle = tlistHead; tle; tle = tle->getNextElement())
             {
@@ -3805,7 +3805,7 @@ TR_CISCTransformer::computeEmbeddedForData()
                   {
                   modifyEmbeddedResult = true;
                   result[tmpIdx + t->getID()] = _NotEmbed;
-                  if (trace()) traceMsg(comp(), "screening1: set _NotEmbed to (%d, %d)\n",p->getID(),t->getID());
+                  logprintf(trace(), log, "screening1: set _NotEmbed to (%d, %d)\n", p->getID(), t->getID());
                   }
                else
                   {
@@ -3819,7 +3819,7 @@ TR_CISCTransformer::computeEmbeddedForData()
                {
                if (trace())
                   {
-                  traceMsg(comp(), "fail!! pID=%d.\n", p->getID());
+                  log->printf("fail!! pID=%d.\n", p->getID());
                   showEmbeddedData("Result of _embeddedForData", result);
                   }
                return false;
@@ -3866,7 +3866,7 @@ TR_CISCTransformer::computeEmbeddedForData()
                      modifyEmbeddedResult = true;
                      thisScreening = true;
                      result[tmpMIdx + tID] = _NotEmbed;
-                     if (trace()) traceMsg(comp(), "screening2, sameOpcode: set _NotEmbed to (%d, %d)\n",m->getID(),tID);
+                     logprintf(trace(), log, "screening2, sameOpcode: set _NotEmbed to (%d, %d)\n", m->getID(), tID);
                      }
                   }
                }
@@ -3899,7 +3899,7 @@ TR_CISCTransformer::computeEmbeddedForData()
                         modifyEmbeddedResult = true;
                         thisScreening = true;
                         result[tmpMIdx + tID] = _NotEmbed;
-                        if (trace()) traceMsg(comp(), "screening2, others: set _NotEmbed to (%d, %d)\n",m->getID(),tID);
+                        logprintf(trace(), log, "screening2, others: set _NotEmbed to (%d, %d)\n", m->getID(), tID);
                         }
                      }
                   }
@@ -3925,7 +3925,7 @@ TR_CISCTransformer::computeEmbeddedForData()
             if (!checkParents(p, t, result, &inLoop, &allOptionalParents) || !(inLoop || lightScreening))
                {
                result[tmpIdx + t->getID()] = _NotEmbed;
-               if (trace()) traceMsg(comp(), "screening3: set _NotEmbed to (%d, %d)\n",p->getID(),t->getID());
+               logprintf(trace(), log, "screening3: set _NotEmbed to (%d, %d)\n", p->getID(), t->getID());
                }
             }
          }
@@ -4240,7 +4240,7 @@ TR_CISCTransformer::computeEmbeddedForCFG()
          {
          if (trace())
             {
-            traceMsg(comp(), "computeEmbeddedForCFG: Cannot find embedded nodes for dagP:%d\n",dagP);
+            comp()->log()->printf("computeEmbeddedForCFG: Cannot find embedded nodes for dagP:%d\n", dagP);
             showEmbeddedData("Result of _embeddedForCFG", result);
             }
          return false;
@@ -4260,6 +4260,7 @@ TR_CISCTransformer::computeEmbeddedForCFG()
 bool
 TR_CISCTransformer::makeLists()
    {
+   OMR::Logger *log = comp()->log();
    TR_CISCNode *p, *t;
    ListIterator<TR_CISCNode> pi(_P->getNodes());
    ListIterator<TR_CISCNode> ti(_T->getOrderByData());
@@ -4304,7 +4305,7 @@ TR_CISCTransformer::makeLists()
                if (trace() &&
                    !_T2P[tID].isEmpty())
                   {
-                  traceMsg(comp(), "makeLists: tID:%d corresponds to multiple nodes\n",tID);
+                  log->printf("makeLists: tID:%d corresponds to multiple nodes\n",tID);
                   }
                if (isEssential) t->setIsEssentialNode();
                pList->add(t);
@@ -4324,7 +4325,7 @@ TR_CISCTransformer::makeLists()
          {
          if (!p->isOptionalNode())
             {
-            if (trace()) traceMsg(comp(), "makeLists: pid:%d a variable corresponds to multiple nodes\n",p->getID());
+            logprintf(trace(), log, "makeLists: pid:%d a variable corresponds to multiple nodes\n", p->getID());
             return false;       /* a variable corresponds to multiple nodes */
             }
          }
@@ -4679,6 +4680,7 @@ TR_CISCTransformer::analyzeConnectionOnePair(TR_CISCNode *const p, TR_CISCNode *
 void
 TR_CISCTransformer::showT2P()
    {
+   OMR::Logger *log = comp()->log();
    if (trace())
       {
       TR_CISCNode *p, *t;
@@ -4690,7 +4692,7 @@ TR_CISCTransformer::showT2P()
          for (t = ti.getFirst(); t; t = ti.getNext())
             {
             uint32_t tID = t->getID();
-            traceMsg(comp(), "%3d:",tID);
+            log->printf("%3d:",tID);
             if (!_T2P[tID].isEmpty())
                {
                //TR_ASSERT(_T2P[tID].isSingleton(), "it may be error (not sure).");
@@ -4698,25 +4700,25 @@ TR_CISCTransformer::showT2P()
                for (p = pi.getFirst(); p; p = pi.getNext())
                   {
                   uint32_t pID = p->getID();
-                  traceMsg(comp(), " %2d",pID);
+                  log->printf(" %2d",pID);
                   }
-               traceMsg(comp(), " %c%c%c%c", t->isSuccSimplyConnected() ? 'S' : 'x',
+               log->printf(" %c%c%c%c", t->isSuccSimplyConnected() ? 'S' : 'x',
                                    t->isPredSimplyConnected() ? 'P' : 'x',
                                    t->isParentSimplyConnected() ? 'B' : 'x',
                                    t->isChildSimplyConnected() ? 'C' : 'x'
                       );
-               if (t->isNegligible()) traceMsg(comp(), "\t(negligible)");
-               traceMsg(comp(), "\n");
+               if (t->isNegligible()) log->prints("\t(negligible)");
+               log->println();
                }
             else
                {
                if (t->isNegligible())
                   {
-                  traceMsg(comp(), " negligible\n"); // negligible
+                  log->prints(" negligible\n"); // negligible
                   }
                else
                   {
-                  t->dump(comp()->getOutFile(), comp());
+                  t->dump(log, comp());
                   }
                }
             }
@@ -4767,6 +4769,7 @@ TR_CISCTransformer::analyzeConnection()
 void
 TR_CISCTransformer::analyzeArrayHeaderConst()
    {
+   OMR::Logger *log = comp()->log();
    int32_t i = 0;
    while(true) // check all TR_ahconst
       {
@@ -4896,18 +4899,15 @@ TR_CISCTransformer::analyzeArrayHeaderConst()
             {
             const int32_t tid = t->getID();
             const int32_t index = tmpIdx + tid;
-            if (trace())
-               {
-               traceMsg(comp(), "tid:%d (pid:%d) is invalidated because of failure of analyzeArrayHeaderConst\n",
-                      tid,pid);
-               }
+            logprintf(trace(), log, "tid:%d (pid:%d) is invalidated because of failure of analyzeArrayHeaderConst\n", tid,pid);
+
             embeddedForCFG[index] = _NotEmbed;
             embeddedForData[index] = _NotEmbed;
             }
          }
       if (modify && trace())
          {
-         _T->dump(comp()->getOutFile(), comp());
+         _T->dump(log, comp());
          }
       i++;
       }
@@ -4917,16 +4917,17 @@ TR_CISCTransformer::analyzeArrayHeaderConst()
 void
 TR_CISCTransformer::showCISCNodeRegion(TR_CISCNodeRegion *r, TR::Compilation * comp)
    {
+   OMR::Logger *log = comp->log();
    ListIterator<TR_CISCNode> ni;
    TR_CISCNode *n;
 
-   if (r->isIncludeEssentialNode()) traceMsg(comp, "(E) ");
+   if (r->isIncludeEssentialNode()) log->prints("(E) ");
    ni.set((ListHeadAndTail<TR_CISCNode>*)r);
    for (n = ni.getFirst(); n; n = ni.getNext())
       {
-      traceMsg(comp, "%d->",n->getID());
+      log->printf("%d->", n->getID());
       }
-   traceMsg(comp, "\n");
+   log->println();
    }
 
 
@@ -4950,6 +4951,7 @@ TR_CISCTransformer::showCISCNodeRegions(List<TR_CISCNodeRegion> *regions, TR::Co
 bool
 TR_CISCTransformer::alignTopOfRegion(TR_CISCNodeRegion *r)
    {
+   OMR::Logger *log = comp()->log();
    ListElement<TR_CISCNode> *le;
    ListElement<TR_CISCNode> *firstNegligible = 0;
    TR_CISCNode *pTop = _P->getEntryNode()->getSucc(0);
@@ -4963,7 +4965,8 @@ TR_CISCTransformer::alignTopOfRegion(TR_CISCNodeRegion *r)
          {
          if (!pTop->isOptionalNode())
             {
-            if (trace()) traceMsg(comp(), "alignTopOfRegion failed. There is no target node corresponding to %d.  Check for nodes in broken region listings above and x in SPBC listing.\n",pTop->getID());
+            logprintf(trace(), log,
+               "alignTopOfRegion failed. There is no target node corresponding to %d.  Check for nodes in broken region listings above and x in SPBC listing.\n", pTop->getID());
             return false;
             }
          }
@@ -4980,7 +4983,7 @@ TR_CISCTransformer::alignTopOfRegion(TR_CISCNodeRegion *r)
       pTop = pTop->getSucc(0);
       }
 
-   if (trace()) traceMsg(comp(), "alignTopOfRegion: (pTop, t) is (%d, %d)\n", pTop->getID(), t->getID());
+   logprintf(trace(), log, "alignTopOfRegion: (pTop, t) is (%d, %d)\n", pTop->getID(), t->getID());
 
    // remove nodes (from start to pTop) from the region r
    for (le = r->getListHead(); le; le = le->getNextElement())
@@ -5008,7 +5011,7 @@ TR_CISCTransformer::alignTopOfRegion(TR_CISCNodeRegion *r)
          firstNegligible = 0;
          }
       }
-   if (trace()) traceMsg(comp(), "alignTopOfRegion failed. Cannot find pTop:%d in the region.\n",pTop->getID());
+   logprintf(trace(), log, "alignTopOfRegion failed. Cannot find pTop:%d in the region.\n", pTop->getID());
    return false;
    }
 
@@ -5056,9 +5059,10 @@ TR_CISCTransformer::areAllNodesIncluded(TR_CISCNodeRegion *r)
       {
       if (!bv.isEmpty())
          {
-         traceMsg(comp(), "Cannot find pNodes: ");
-         bv.print(comp(), comp()->getOutFile());
-         traceMsg(comp(), "\n");
+         OMR::Logger *log = comp()->log();
+         log->prints("Cannot find pNodes: ");
+         bv.print(log, comp());
+         log->println();
          }
       }
    return bv.isEmpty();
@@ -5072,16 +5076,7 @@ TR_CISCTransformer::areAllNodesIncluded(TR_CISCNodeRegion *r)
 void
 TR_CISCTransformer::moveCISCNodesInList(List<TR_CISCNode> *l, TR_CISCNode *from, TR_CISCNode *to, TR_CISCNode *moveTo)
    {
-#if 0
-   if (showMesssagesStdout())
-      {
-      printf("moveCISCNodesInList: %s\n",_T->getTitle());
-      }
-#endif
-   if (trace())
-      {
-      traceMsg(comp(), "moveCISCNodesInList: r_from:%p(%d) r_to:%p(%d) moveTo:%p(%d)\n",from,from->getID(),to,to->getID(),moveTo,moveTo->getID());
-      }
+   logprintf(trace(), comp()->log(), "moveCISCNodesInList: r_from:%p(%d) r_to:%p(%d) moveTo:%p(%d)\n", from, from->getID(), to, to->getID(), moveTo, moveTo->getID());
 
    ListElement<TR_CISCNode> *before = 0, *beforeFrom = 0, *beforeMoveTo = 0, *fromLe = 0, *toLe = 0, *moveToLe = 0, *le;
    for (le = l->getListHead(); le; le = le->getNextElement())
@@ -5224,6 +5219,7 @@ TR_CISCTransformer::moveCISCNodes(TR_CISCNode *from, TR_CISCNode *to, TR_CISCNod
 TR_CISCNodeRegion *
 TR_CISCTransformer::extractMatchingRegion()
    {
+   OMR::Logger *log = comp()->log();
    TR_CISCNodeRegion *lists = new (trHeapMemory()) TR_CISCNodeRegion(_numTNodes, comp()->trMemory()->heapMemoryRegion());
    TR_ScratchList<TR_CISCNodeRegion> regions(comp()->trMemory());
    TR_CISCNode *t;
@@ -5257,10 +5253,7 @@ TR_CISCTransformer::extractMatchingRegion()
                      {
                      printf("!!!!!!!!!!!!!! Predecessor of tID %" OMR_PRIu32 " is different from that of idiom.\n", tID);
                      }
-                  if (trace())
-                     {
-                     traceMsg(comp(), "Predecessor of tID %" OMR_PRIu32 " is different from that of idiom.\n", tID);
-                     }
+                  logprintf(trace(), log, "Predecessor of tID %" OMR_PRIu32 " is different from that of idiom.\n", tID);
                   }
             }
          if (isEmbed)
@@ -5324,7 +5317,7 @@ TR_CISCTransformer::extractMatchingRegion()
       }
    if (trace())
       {
-      traceMsg(comp(), "Before alignTopOfRegion\n");
+      log->prints("Before alignTopOfRegion\n");
       showCISCNodeRegions(&regions, comp());
       }
 
@@ -5349,9 +5342,9 @@ TR_CISCTransformer::extractMatchingRegion()
       }
    if (trace())
       {
-      traceMsg(comp(), "After alignTopOfRegion\n");
+      log->prints("After alignTopOfRegion\n");
       showCISCNodeRegions(&regions, comp());
-      traceMsg(comp(), "extractMatchingRegion ret=0x%x\n",ret);
+      log->printf("extractMatchingRegion ret=0x%x\n", ret);
       }
 
    return ret;
@@ -5391,7 +5384,7 @@ TR_CISCTransformer::verifyCandidate()
          {
          if (!le)
             {
-            if (trace()) traceMsg(comp(), "Cannot find TR::BBStart of block_%d in the region\n",b->getNumber());
+            logprintf(trace(), comp()->log(), "Cannot find TR::BBStart of block_%d in the region\n", b->getNumber());
             return false;         // Cannot find b in listBB
             }
          cn = le->getData();
@@ -5552,6 +5545,7 @@ TR_CISCTransformer::getP2TInLoopAllowOptionalIfSingle(TR_CISCNode *p)
 bool
 TR_CISCTransformer::findFirstNode(TR::TreeTop **retTree, TR::Node **retNode, TR::Block **retBlock)
    {
+   OMR::Logger *log = comp()->log();
    ListIterator<TR_CISCNode> ci(_candidateRegion);
    TR_CISCNode *cn        = NULL;
    TR::Node    *trNode    = NULL;
@@ -5563,7 +5557,7 @@ TR_CISCTransformer::findFirstNode(TR::TreeTop **retTree, TR::Node **retNode, TR:
       if (cn->getOpcode() == TR_entrynode) continue;
       if (cn->isNewCISCNode()) continue;
       if (trace() && !cn->getTrNodeInfo()->isSingleton())
-         traceMsg(comp(), "!cn->getTrNodeInfo()->isSingleton(): %d\n",cn->getID());
+         log->printf("!cn->getTrNodeInfo()->isSingleton(): %d\n", cn->getID());
       TR_ASSERT(cn->getTrNodeInfo()->isSingleton(), "it must correspond to a single TR node");
       struct TrNodeInfo *info = cn->getHeadOfTrNodeInfo();
       trNode = info->_node;
@@ -5600,7 +5594,7 @@ TR_CISCTransformer::findFirstNode(TR::TreeTop **retTree, TR::Node **retNode, TR:
    *retTree = trTreeTop;
    *retNode = trNode;
    *retBlock = block;
-   if (trace()) traceMsg(comp(), "First node in candidate region - node: %p block_%d: %p\n",trNode, block->getNumber(), block);
+   logprintf(trace(), log, "First node in candidate region - node: %p block_%d: %p\n", trNode, block->getNumber(), block);
    return true;
    }
 
@@ -5827,7 +5821,7 @@ TR_CISCTransformer::analyzeSuccessorBlock(TR::Node *ignoreTree)
    if (trace())
       {
       if (target == 0)
-         traceMsg(comp(), "!! TR_CISCTransformer::analyzeSuccessorBlock returns 0!\n");
+         comp()->log()->prints("!! TR_CISCTransformer::analyzeSuccessorBlock returns 0!\n");
       }
 
    return target;
@@ -5912,10 +5906,7 @@ TR_CISCTransformer::setSuccessorEdges(TR::Block *block, TR::Block *target0, TR::
          target1 = searchOtherBlockInSuccBlocks(target0);
       TR_ASSERT(target0 && target1, "error");
       }
-   if (trace())
-      {
-      traceMsg(comp(), "setSuccessorEdges for block_%d [%p]: tgt0=%d tgt1=%d\n", block->getNumber(), block, target0->getNumber(),target1->getNumber());
-      }
+   logprintf(trace(), comp()->log(), "setSuccessorEdges for block_%d [%p]: tgt0=%d tgt1=%d\n", block->getNumber(), block, target0->getNumber(), target1->getNumber());
 
    if (!oldNext ||
          oldNext->getNode()->getBlock() != target0)
@@ -6085,8 +6076,8 @@ TR_CISCTransformer::modifyBlockByVersioningCheck(TR::Block *block, TR::TreeTop *
       cfg->addEdge(orgPrevBlock, firstBlock);
       cfg->removeEdge(orgPrevBlock, slowpad);
 
-      if (trace()) traceMsg(comp(), "modifyBlockByVersioningCheck: orgPrevBlock=%d firstBlock=%d lastBlock=%d fastpath=%d slowpad=%d orgNextTreeTop=%x\n",
-                          orgPrevBlock->getNumber(), firstBlock->getNumber(), lastBlock->getNumber(), fastpath->getNumber(), slowpad->getNumber(), orgNextTreeTop);
+      logprintf(trace(), comp()->log(), "modifyBlockByVersioningCheck: orgPrevBlock=%d firstBlock=%d lastBlock=%d fastpath=%d slowpad=%d orgNextTreeTop=%x\n",
+         orgPrevBlock->getNumber(), firstBlock->getNumber(), lastBlock->getNumber(), fastpath->getNumber(), slowpad->getNumber(), orgNextTreeTop);
 
       if (lastOrgPrevRealNode->getOpCode().getOpCodeValue() == TR::Goto)
          {
@@ -6348,6 +6339,7 @@ TR_CISCTransformer::compareBlockTrNodeTree(TR::Block *a, TR::Block *b)
 TR::Block *
 TR_CISCTransformer::insertBeforeNodes(TR::Block *block)
    {
+   OMR::Logger *log = comp()->log();
    ListIterator<TR::Node> ni(&_beforeInsertions);
    TR::Node *n, *last = 0;
    int32_t count = 0;
@@ -6360,7 +6352,7 @@ TR_CISCTransformer::insertBeforeNodes(TR::Block *block)
       last = n;
       count++;
       }
-   if (trace()) traceMsg(comp(), "insertBeforeNodes added %d node(s) to block_%d [%p]\n", count, block->getNumber(), block);
+   logprintf(trace(), log, "insertBeforeNodes added %d node(s) to block_%d [%p]\n", count, block->getNumber(), block);
    if (last && last->getOpCode().isBranch())
       {
       TR::CFG *cfg = comp()->getFlowGraph();
@@ -6385,7 +6377,7 @@ TR_CISCTransformer::insertBeforeNodes(TR::Block *block)
          if (to != branchDestinationBlock &&
              to != orgNextBlock)
             {
-            if (trace()) traceMsg(comp(), "insertBeforeNodes added the edge (%d, %d).\n",newBlock->getNumber(),to->getNumber());
+            logprintf(trace(), log, "insertBeforeNodes added the edge (%d, %d).\n", newBlock->getNumber(), to->getNumber());
             addEdge(&newBlock->getSuccessors(), newBlock, to);
             }
          }
@@ -6403,7 +6395,7 @@ TR_CISCTransformer::insertBeforeNodes(TR::Block *block)
 
       if (isRemove)
          cfg->removeEdge(block, orgNext->getNode()->getBlock());
-      if (trace()) traceMsg(comp(), "insertBeforeNodes created block_%d [%p]\n", newBlock->getNumber(), newBlock);
+      logprintf(trace(), log, "insertBeforeNodes created block_%d [%p]\n", newBlock->getNumber(), newBlock);
       block = newBlock;
       }
    return block;
@@ -6462,7 +6454,7 @@ TR_CISCTransformer::insertAfterNodes(TR::Block *block, List<TR::Node> *l, bool p
          count++;
          }
       }
-   if (trace()) traceMsg(comp(), "insertAfterNodes adds %d node(s)\n", count);
+   logprintf(trace(), comp()->log(), "insertAfterNodes adds %d node(s)\n", count);
    return block;
    }
 
@@ -6513,6 +6505,7 @@ TR_CISCTransformer::removeAllNodes(TR::TreeTop *start, TR::TreeTop *end)
 bool
 TR_CISCTransformer::analyzeBoolTable(TR_BitVector **bv, TR::TreeTop **retSameExit, TR_CISCNode *boolTable, TR_BitVector *defBV, TR_CISCNode *defNode, TR_CISCNode *ignoreNode, int32_t bvoffset, int32_t allocBVSize)
    {
+   OMR::Logger *log = comp()->log();
    List<TR_CISCNode> *P2T = _P2T;
    List<TR_CISCNode> *T2P = _T2P;
    TR_CISCGraph *P = _P;
@@ -6588,7 +6581,7 @@ TR_CISCTransformer::analyzeBoolTable(TR_BitVector **bv, TR::TreeTop **retSameExi
                         {
                         if (trace() && exitTreeTop)
                            {
-                           traceMsg(comp(), "Succ(0) is not exit node. ID:%d (TR::Case)\n", n->getID());
+                           log->printf("Succ(0) is not exit node. ID:%d (TR::Case)\n", n->getID());
                            }
                         exitTreeTop = 0;
                         }
@@ -6618,12 +6611,12 @@ TR_CISCTransformer::analyzeBoolTable(TR_BitVector **bv, TR::TreeTop **retSameExi
                   child1 = child1->getNodeIfSingleChain();
                   if (!child1)
                      {
-                     if (trace()) traceMsg(comp(), "analyzeBoolTable failed for %p. (no single chain)\n", n->getChild(1));
+                     logprintf(trace(), log, "analyzeBoolTable failed for %p. (no single chain)\n", n->getChild(1));
                      return false;
                      }
                   if (!child1->isStoreDirect())
                      {
-                     if (trace()) traceMsg(comp(), "analyzeBoolTable failed for %p. (%p is not store)\n", n->getChild(1), child1);
+                     logprintf(trace(), log, "analyzeBoolTable failed for %p. (%p is not store)\n", n->getChild(1), child1);
                      return false;
                      }
                   child1 = child1->getChild(0);
@@ -6724,17 +6717,16 @@ TR_CISCTransformer::analyzeBoolTable(TR_BitVector **bv, TR::TreeTop **retSameExi
                   TR::TreeTop *thisDestination = n->getDestination();
                   if (!initExitTreeTop)
                      {
-                     if (trace())
-                        traceMsg(comp(), "analyzeBoolTable - Delimiter checking node %d targets treetop: %p block_%d: %p\n",
-                                n->getID(), thisDestination, thisDestination->getEnclosingBlock()->getNumber(), thisDestination->getEnclosingBlock());
+                     logprintf(trace(), log, "analyzeBoolTable - Delimiter checking node %d targets treetop: %p block_%d: %p\n",
+                        n->getID(), thisDestination, thisDestination->getEnclosingBlock()->getNumber(), thisDestination->getEnclosingBlock());
                      initExitTreeTop = true;
                      exitTreeTop = thisDestination;
                      }
                   if (exitTreeTop != thisDestination)
                      {
                      if (trace() && exitTreeTop)
-                        traceMsg(comp(), "analyzeBoolTable - found conflicting successors.  Delimiter checking node %d targets treetop: %p (!= %p) block_%d: %p\n",
-                                n->getID(), thisDestination, exitTreeTop, thisDestination->getEnclosingBlock()->getNumber(), thisDestination->getEnclosingBlock());
+                        log->printf("analyzeBoolTable - found conflicting successors.  Delimiter checking node %d targets treetop: %p (!= %p) block_%d: %p\n",
+                           n->getID(), thisDestination, exitTreeTop, thisDestination->getEnclosingBlock()->getNumber(), thisDestination->getEnclosingBlock());
 
                      exitTreeTop = NULL;
                      }
@@ -6795,6 +6787,7 @@ TR_CISCTransformer::analyzeBoolTable(TR_BitVector **bv, TR::TreeTop **retSameExi
 int32_t
 TR_CISCTransformer::analyzeByteBoolTable(TR_CISCNode *boolTable, uint8_t *table256, TR_CISCNode *ignoreNode, TR::TreeTop **retSameExit)
    {
+   OMR::Logger *log = comp()->log();
    TR::StackMemoryRegion stackMemoryRegion(*trMemory());
 
    List<TR_CISCNode> *P2T = _P2T;
@@ -6860,18 +6853,18 @@ TR_CISCTransformer::analyzeByteBoolTable(TR_CISCNode *boolTable, uint8_t *table2
          }
       if (1 > count || count > 255 || traceByteBoolTable)
          {
-         traceMsg(comp(), "analyzeByteBoolTable: count is %d\n",count);
+         log->printf("analyzeByteBoolTable: count is %d\n",count);
          ListIterator<TR_CISCNode> pi(_candidateRegion);
          TR_CISCNode *pn;
-         traceMsg(comp(), "Predecessors of the exit node:\n ID:count\n");
+         log->prints("Predecessors of the exit node:\n ID:count\n");
          for (pn = pi.getFirst(); pn; pn = pi.getNext())
             {
             int32_t id = pn->getID();
             if (getT2PheadRep(id) == boolTable)
                {
-               traceMsg(comp(), "%3d:%3d:",id,bv[id]->elementCount());
-               bv[id]->print(comp());
-               traceMsg(comp(), "\n");
+               log->printf("%3d:%3d:",id,bv[id]->elementCount());
+               bv[id]->print(log, comp());
+               log->println();
                }
             }
          }
@@ -6886,6 +6879,7 @@ TR_CISCTransformer::analyzeByteBoolTable(TR_CISCNode *boolTable, uint8_t *table2
 int32_t
 TR_CISCTransformer::analyzeCharBoolTable(TR_CISCNode *boolTable, uint8_t *table65536, TR_CISCNode *ignoreNode, TR::TreeTop **retSameExit)
    {
+   OMR::Logger *log = comp()->log();
    TR::StackMemoryRegion stackMemoryRegion(*trMemory());
 
    List<TR_CISCNode> *P2T = _P2T;
@@ -6942,18 +6936,18 @@ TR_CISCTransformer::analyzeCharBoolTable(TR_CISCNode *boolTable, uint8_t *table6
 
       if (count < 1 || count > 65535 || traceCharBoolTable)
          {
-         traceMsg(comp(), "analyzeByteBoolTable: count is %d\n",count);
+         log->printf("analyzeByteBoolTable: count is %d\n",count);
          ListIterator<TR_CISCNode> pi(_candidateRegion);
          TR_CISCNode *pn;
-         traceMsg(comp(), "Predecessors of the exit node:\n ID:count\n");
+         log->prints("Predecessors of the exit node:\n ID:count\n");
          for (pn = pi.getFirst(); pn; pn = pi.getNext())
             {
             int32_t id = pn->getID();
             if (getT2PheadRep(id) == boolTable)
                {
-               traceMsg(comp(), "%3d:%3d:", id, bv[id]->elementCount());
-               bv[id]->print(comp());
-               traceMsg(comp(), "\n");
+               log->printf("%3d:%3d:", id, bv[id]->elementCount());
+               bv[id]->print(log, comp());
+               log->println();
                }
             }
          }
@@ -7348,6 +7342,7 @@ TR_CISCTransformer::getHashValue(TR_CISCNodeRegion *r)
 bool
 TR_CISCTransformer::canConvertArrayCmpSign(TR::Node *storeNode, List<TR::TreeTop> *compareIfs, bool *canConvertToArrayCmp)
    {
+   OMR::Logger *log = comp()->log();
    static int disable = -1;
    if (disable < 0)
       {
@@ -7380,7 +7375,7 @@ TR_CISCTransformer::canConvertArrayCmpSign(TR::Node *storeNode, List<TR::TreeTop
          TR::Node *useNode = useDefInfo->getNode(useIndex);
          if (useNode->getReferenceCount() > 1)
             {
-            if (trace()) traceMsg(comp(), "canConvertArrayCmpSign failed because ReferenceCount > 1. %p\n",useNode);
+            logprintf(trace(), log, "canConvertArrayCmpSign failed because ReferenceCount > 1. %p\n", useNode);
             return false;
             }
          TR::Node *parentNode = NULL;
@@ -7411,13 +7406,13 @@ TR_CISCTransformer::canConvertArrayCmpSign(TR::Node *storeNode, List<TR::TreeTop
             foundTT = _useTreeTopMap.findParentTreeTop(useNode);
             if (NULL == foundTT || !searchNodeInTrees(foundTT->getNode(), useNode, &parentNode, &retChildNum))
                {
-               if (trace()) traceMsg(comp(), "canConvertArrayCmpSign failed because searchNodeInTrees failed. UseNode: %p with corresponding TreeTop: %p\n",useNode, foundTT);
+               logprintf(trace(), log, "canConvertArrayCmpSign failed because searchNodeInTrees failed. UseNode: %p with corresponding TreeTop: %p\n", useNode, foundTT);
                return false;
                }
             }
          if (!parentNode)
             {
-            if (trace()) traceMsg(comp(), "canConvertArrayCmpSign failed because parentNode is NULL. %p\n",useNode);
+            logprintf(trace(), log, "canConvertArrayCmpSign failed because parentNode is NULL. %p\n", useNode);
             return false;
             }
          TR_ASSERT(foundTT, "error!");
@@ -7425,7 +7420,7 @@ TR_CISCTransformer::canConvertArrayCmpSign(TR::Node *storeNode, List<TR::TreeTop
             {
             if (!canConvertArrayCmpSign(parentNode, compareIfs, &convertToArrayCmp))
                {
-               if (trace()) traceMsg(comp(), "canConvertArrayCmpSign failed because canConvertArrayCmpSign(p) failed. %p\n",useNode);
+               logprintf(trace(), log, "canConvertArrayCmpSign failed because canConvertArrayCmpSign(p) failed. %p\n", useNode);
                return false;
                }
             }
@@ -7436,7 +7431,7 @@ TR_CISCTransformer::canConvertArrayCmpSign(TR::Node *storeNode, List<TR::TreeTop
             if (theOtherChild->getInt() != 0 ||
                 theOtherChild->getOpCodeValue() != TR::iconst)
                {
-               if (trace()) traceMsg(comp(), "canConvertArrayCmpSign failed because theOtherChild is not iconst 0. %p\n",useNode);
+               logprintf(trace(), log, "canConvertArrayCmpSign failed because theOtherChild is not iconst 0. %p\n", useNode);
                return false;
                }
             if (compareIfs) compareIfs->add(foundTT);
@@ -7448,23 +7443,18 @@ TR_CISCTransformer::canConvertArrayCmpSign(TR::Node *storeNode, List<TR::TreeTop
                case TR::ificmpne:
                   break; // OK!
                default:
-                  if (trace())
-                     {
-                     traceMsg(comp(), "convertArrayCmp failed because parentNode is %s. %x\n",
-                             parentNode->getOpCode().getName(),
-                             useNode,parentNode);
-                     }
+                  logprintf(trace(), log, "convertArrayCmp failed because parentNode is %s. %x\n",
+                     parentNode->getOpCode().getName(),
+                     useNode, parentNode);
+
                   convertToArrayCmp = false;
                   break;
                }
             }
          else
             {
-            if (trace())
-               {
-               traceMsg(comp(), "canConvertArrayCmpSign failed because unhandled opcode %s. %x %x\n",
-                       parentNode->getOpCode().getName(),useNode,parentNode);
-               }
+            logprintf(trace(), log, "canConvertArrayCmpSign failed because unhandled opcode %s. %x %x\n",
+               parentNode->getOpCode().getName(),useNode,parentNode);
             return false;
             }
          }
@@ -7485,40 +7475,36 @@ TR_CISCTransformer::canConvertArrayCmpSign(TR::Node *storeNode, List<TR::TreeTop
 bool
 TR_CISCTransformer::computeTopologicalEmbedding(TR_CISCGraph *P, TR_CISCGraph *T)
    {
+   OMR::Logger *log = comp()->log();
    TR::SimpleRegex *disabledPatterns = comp()->getOptions()->getDisabledIdiomPatterns();
    if (disabledPatterns && TR::SimpleRegex::match(disabledPatterns, P->getTitle()))
       {
-      if (trace())
-         traceMsg(comp(), "%s is disabled by disabledIdiomPatterns={}\n", P->getTitle());
+      logprintf(trace(), log, "%s is disabled by disabledIdiomPatterns={}\n", P->getTitle());
       return false;
       }
 
    //FIXME: improve this
    if (!T->testAllAspects(P))
       {
-      if (trace())
-         traceMsg(comp(), "%s is skipped since graph properties do not match (%08x)\n", P->getTitle(),P->getAspectsValue());
+      logprintf(trace(), log, "%s is skipped since graph properties do not match (%08x)\n", P->getTitle(), P->getAspectsValue());
       return false;                     // No need to analyze
       }
    if (T->testAnyNoAspects(P))
       {
-      if (trace())
-         traceMsg(comp(), "%s is skipped due to existence of testAnyNoAspects (%08x)\n",P->getTitle(),P->getNoAspectsValue());
+      logprintf(trace(), log, "%s is skipped due to existence of testAnyNoAspects (%08x)\n", P->getTitle(), P->getNoAspectsValue());
       return false;                     // No need to analyze
       }
    if (!T->meetMinCounts(P))
       {
-      if (trace())
-         traceMsg(comp(), "%s is skipped due to failure of meetMinCounts (%d %d %d)\n",P->getTitle(),
-                P->getAspects()->getIfCount(), P->getAspects()->getIndirectLoadCount(), P->getAspects()->getIndirectStoreCount());
+      logprintf(trace(), log, "%s is skipped due to failure of meetMinCounts (%d %d %d)\n",
+         P->getTitle(), P->getAspects()->getIfCount(), P->getAspects()->getIndirectLoadCount(), P->getAspects()->getIndirectStoreCount());
       return false;                     // No need to analyze
       }
 
    // avoid analyzing very large graphs
    if (T->getNumNodes() >= IDIOM_SIZE_FACTOR*P->getNumNodes())
       {
-      if (trace())
-         traceMsg(comp(), "%s is skipped due to loop being very large\n", P->getTitle());
+      logprintf(trace(), log, "%s is skipped due to loop being very large\n", P->getTitle());
       return false;  // No need to analyze
       }
 
@@ -7528,8 +7514,7 @@ TR_CISCTransformer::computeTopologicalEmbedding(TR_CISCGraph *P, TR_CISCGraph *T
       {
       if (T->getHotness() < P->getHotness())
          {
-         if (trace())
-            traceMsg(comp(), "%s is skipped due to hotness\n",P->getTitle());
+         logprintf(trace(), log, "%s is skipped due to hotness\n", P->getTitle());
          return false;                     // No need to analyze
          }
       }
@@ -7538,8 +7523,7 @@ TR_CISCTransformer::computeTopologicalEmbedding(TR_CISCGraph *P, TR_CISCGraph *T
       {
       if (P->isHighFrequency() && !T->isHighFrequency())
          {
-         if (trace())
-            traceMsg(comp(), "%s is skipped due to the rarely iterated loop (!isHighFrequency)\n",P->getTitle());
+         logprintf(trace(), log, "%s is skipped due to the rarely iterated loop (!isHighFrequency)\n", P->getTitle());
          return false;     // No need to analyze
          }
       }
@@ -7548,8 +7532,7 @@ TR_CISCTransformer::computeTopologicalEmbedding(TR_CISCGraph *P, TR_CISCGraph *T
       if (isAfterVersioning() ? P->isInhibitAfterVersioning() :
                                 P->isInhibitBeforeVersioning())
          {
-         if (trace())
-            traceMsg(comp(), "%s is skipped due to loop versioning check\n",P->getTitle());
+         logprintf(trace(), log, "%s is skipped due to loop versioning check\n", P->getTitle());
          return false;     // No need to analyze
          }
       }
@@ -7559,8 +7542,8 @@ TR_CISCTransformer::computeTopologicalEmbedding(TR_CISCGraph *P, TR_CISCGraph *T
 
    if (trace())
       {
-      traceMsg(comp(), "loopid %d: ", _bblistBody.getListHead()->getData()->getNumber());
-      P->dump(comp()->getOutFile(), comp());
+      log->printf("loopid %d: ", _bblistBody.getListHead()->getData()->getNumber());
+      P->dump(log, comp());
       }
    _P = P;
    _T = T;
@@ -7570,16 +7553,14 @@ TR_CISCTransformer::computeTopologicalEmbedding(TR_CISCGraph *P, TR_CISCGraph *T
 
    // Step 1 computes embedding information for an input data dependence graph.
    //
-   if (trace())
-      traceMsg(comp(), "Computing embedding info for idiom %s in loop %d\n", P->getTitle(), _bblistBody.getListHead()->getData()->getNumber());
+   logprintf(trace(), log, "Computing embedding info for idiom %s in loop %d\n", P->getTitle(), _bblistBody.getListHead()->getData()->getNumber());
    if (showMesssagesStdout()) printf("Idiom: loop %d, %s\n",_bblistBody.getListHead()->getData()->getNumber(),
                                      P->getTitle());
    _sizeResult = _numPNodes * _numTNodes * sizeof(*_embeddedForData);
    _embeddedForData = (uint8_t*)trMemory()->allocateMemory(_sizeResult, stackAlloc);
    if (!computeEmbeddedForData()) return false; // It cannot find all of the idiom nodes.
    if (showMesssagesStdout()) printf("find1 %s\n", P->getTitle());
-   if (trace())
-      traceMsg(comp(), "Detected IL nodes in loop for idiom %s\n", P->getTitle());
+   logprintf(trace(), log, "Detected IL nodes in loop for idiom %s\n", P->getTitle());
 
    // Step 2 computes embedding information for an input control flow graph.
    //
@@ -7589,8 +7570,7 @@ TR_CISCTransformer::computeTopologicalEmbedding(TR_CISCGraph *P, TR_CISCGraph *T
    _DE = (uint8_t*)trMemory()->allocateMemory(_sizeDE, stackAlloc);
    if (!computeEmbeddedForCFG()) return false; // It cannot find all of the idiom nodes.
    if (showMesssagesStdout()) printf("find2 %s\n", P->getTitle());
-   if (trace())
-      traceMsg(comp(), "finished topological embedding for idiom %s\n", P->getTitle());
+   logprintf(trace(), log, "finished topological embedding for idiom %s\n", P->getTitle());
 
    // Step 3 creates P2T and T2P tables from embedding information.
    // P and T denote Pattern and Target, respectively.
@@ -7618,7 +7598,7 @@ TR_CISCTransformer::computeTopologicalEmbedding(TR_CISCGraph *P, TR_CISCGraph *T
    simpleOptimization();
    if (trace())
       {
-      T->dump(comp()->getOutFile(), comp());
+      T->dump(comp()->log(), comp());
       }
 
    // Analyze whether each candidate of array header constant is appropriate compared to the idiom.
@@ -7641,7 +7621,7 @@ TR_CISCTransformer::computeTopologicalEmbedding(TR_CISCGraph *P, TR_CISCGraph *T
        !verifyCandidate() || // all blocks of the loop body are not included in the _candidateRegion
        embeddingHasConflictingBranches())
       {
-      if (trace()) traceMsg(comp(), "computeTopologicalEmbedding: Graph transformations failed. (step 3)\n\n");
+      logprints(trace(), log, "computeTopologicalEmbedding: Graph transformations failed. (step 3)\n\n");
       registerCandidates();
       _T->restoreListsDuplicator();
       return false;
@@ -7685,11 +7665,11 @@ TR_CISCTransformer::computeTopologicalEmbedding(TR_CISCGraph *P, TR_CISCGraph *T
          printf("!! Hash=0x%" OMR_PRIx64 " %s %s\n", getHashValue(_candidateRegion), P->getTitle(), T->getTitle());
 #endif
 
-      if (trace()) traceMsg(comp(), "***** Transformed *****, %s, %s, %s, loop:%d%s\n",
-                          comp()->getHotnessName(comp()->getMethodHotness()),
-                          P->getTitle(), T->getTitle(),
-                          _bblistBody.getListHead()->getData()->getNumber(),
-                           bcinfo);
+      logprintf(trace(), log, "***** Transformed *****, %s, %s, %s, loop:%d%s\n",
+         comp()->getHotnessName(comp()->getMethodHotness()),
+         P->getTitle(), T->getTitle(),
+         _bblistBody.getListHead()->getData()->getNumber(),
+         bcinfo);
       if (showMesssagesStdout()) printf("== Transformed == %s, %s, %s, loop:%d%s\n",
                                         comp()->getHotnessName(comp()->getMethodHotness()),
                                         P->getTitle(), T->getTitle(),
@@ -7718,7 +7698,8 @@ traceConflictingBranches(
       return;
 
    TR::Compilation *comp = opt->comp();
-   traceMsg(comp, "Pattern node %d (%s) has conflicting branches:",
+   OMR::Logger *log = comp->log();
+   log->printf("Pattern node %d (%s) has conflicting branches:",
       pn->getID(),
       TR_CISCNode::getName((TR_CISCOps)pn->getOpcode(), comp));
 
@@ -7726,14 +7707,14 @@ traceConflictingBranches(
    ListIterator<TR_CISCNode> ti(matches);
    for (TR_CISCNode *tn = ti.getFirst(); tn != NULL; tn = ti.getNext())
       {
-      traceMsg(comp, "%s %d (%s)",
+      log->printf("%s %d (%s)",
          first ? "" : ",",
          tn->getID(),
          TR_CISCNode::getName((TR_CISCOps)tn->getOpcode(), comp));
       first = false;
       }
 
-   traceMsg(comp, "\n");
+   log->println();
    }
 
 /**
@@ -7820,8 +7801,8 @@ TR_CISCTransformer::embeddingHasConflictingBranches()
 bool
 TR_CISCTransformer::removeBitsKeepAliveCalls(List<TR::Block> *body)
    {
-   if (trace())
-      traceMsg(comp(), "\tScanning for java/nio/Bits.keepAlive(Ljava/lang/Object;)V calls.\n");
+   OMR::Logger *log = comp()->log();
+   logprints(trace(), log, "\tScanning for java/nio/Bits.keepAlive(Ljava/lang/Object;)V calls.\n");
    ListIterator<TR::Block> bi(body);
    TR::Block *block = NULL;
    bool foundCall = false;
@@ -7852,8 +7833,7 @@ TR_CISCTransformer::removeBitsKeepAliveCalls(List<TR::Block> *body)
                   || ((methodSym->getRecognizedMethod() == TR::java_lang_ref_Reference_reachabilityFence)
                      && (!strncmp(comp()->fe()->sampleSignature(node->getOwningMethod(), 0, 0, comp()->trMemory()), "java/nio/", 9))))
                   {
-                  if (trace())
-                     traceMsg(comp(), "\t\tRemoving KeepAlive call found in block %d [%p] @ Node: %p\n",block->getNumber(), block, node);
+                  logprintf(trace(), log, "\t\tRemoving KeepAlive call found in block %d [%p] @ Node: %p\n", block->getNumber(), block, node);
                   foundCall = true;
 
                   TR_BitsKeepAliveInfo *info = new (comp()->trStackMemory()) TR_CISCTransformer::TR_BitsKeepAliveInfo(block, tt, tt->getPrevTreeTop());
@@ -7874,8 +7854,8 @@ TR_CISCTransformer::removeBitsKeepAliveCalls(List<TR::Block> *body)
 void
 TR_CISCTransformer::insertBitsKeepAliveCalls(TR::Block * block)
    {
-   if (trace())
-      traceMsg(comp(), "\tInserting java/nio/Bits.keepAlive(Ljava/lang/Object;)V calls into reduced loop.\n");
+   OMR::Logger *log = comp()->log();
+   logprints(trace(), log, "\tInserting java/nio/Bits.keepAlive(Ljava/lang/Object;)V calls into reduced loop.\n");
 
    ListIterator<TR_BitsKeepAliveInfo> bi(&_BitsKeepAliveList);
 
@@ -7897,7 +7877,7 @@ TR_CISCTransformer::insertBitsKeepAliveCalls(TR::Block * block)
          {
          TR::TreeTop * prev = info->_prevTreeTop;
          TR::Block * keepAliveBlock = info->_block;
-         traceMsg(comp(), "\t\tInserting KeepAlive call clone node: %p from block %d [%p] node: %p into block: %d %p\n", callNode, keepAliveBlock->getNumber(), keepAliveBlock, tt->getNode(), block->getNumber(), block);
+         log->printf("\t\tInserting KeepAlive call clone node: %p from block %d [%p] node: %p into block: %d %p\n", callNode, keepAliveBlock->getNumber(), keepAliveBlock, tt->getNode(), block->getNumber(), block);
          }
       }
    }
@@ -7906,8 +7886,8 @@ TR_CISCTransformer::insertBitsKeepAliveCalls(TR::Block * block)
 void
 TR_CISCTransformer::restoreBitsKeepAliveCalls()
    {
-   if (trace())
-      traceMsg(comp(), "\tRestoring for java/nio/Bits.keepAlive(Ljava/lang/Object;)V calls.\n");
+   OMR::Logger *log = comp()->log();
+   logprints(trace(), log, "\tRestoring for java/nio/Bits.keepAlive(Ljava/lang/Object;)V calls.\n");
    ListIterator<TR_BitsKeepAliveInfo> bi(&_BitsKeepAliveList);
 
    for (TR_BitsKeepAliveInfo *info = bi.getFirst(); info != NULL; info = bi.getNext())
@@ -7916,8 +7896,7 @@ TR_CISCTransformer::restoreBitsKeepAliveCalls()
       TR::TreeTop * prev = info->_prevTreeTop;
       TR::Block * block = info->_block;
 
-      if (trace())
-         traceMsg(comp(), "\t\tInserting KeepAlive call found in block %d [%p] @ Node: %p\n",block->getNumber(), block, tt->getNode());
+      logprintf(trace(), log, "\t\tInserting KeepAlive call found in block %d [%p] @ Node: %p\n", block->getNumber(), block, tt->getNode());
       prev->insertAfter(tt);
       }
    }
@@ -7935,8 +7914,7 @@ TR_CISCTransformer::countFail(const char *fmt, ...)
    // This isn't the best trace message, but it signals that something happened
    // in the log even when the debug counters aren't enabled, and it avoids
    // making call sites too cumbersome.
-   if (trace())
-      traceMsg(comp(), "failed: %s\n", _countFailBuf.text());
+   logprintf(trace(), comp()->log(), "failed: %s\n", _countFailBuf.text());
 
    TR::DebugCounter::incStaticDebugCounter(
       comp(),

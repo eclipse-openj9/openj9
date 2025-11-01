@@ -32,6 +32,7 @@
 #include "optimizer/RematTools.hpp"
 #include "optimizer/TransformUtil.hpp"
 #include "ras/DebugCounter.hpp"
+#include "ras/Logger.hpp"
 #include "infra/Checklist.hpp"
 
 TR_Structure* fakeRegion(TR::Compilation *comp);
@@ -78,8 +79,7 @@ static bool hasUnsupportedPotentialOSRPoint(TR::Compilation *comp, bool trace)
       if (comp->isPotentialOSRPoint(ttNode) &&
           !comp->isPotentialOSRPointWithSupport(treeTop))
          {
-         if (trace)
-            traceMsg(comp, "Found an unsupported potential OSR point at n%dn\n", ttNode->getGlobalIndex());
+         logprintf(trace, comp->log(), "Found an unsupported potential OSR point at n%dn\n", ttNode->getGlobalIndex());
          return true;
          }
       }
@@ -122,6 +122,7 @@ void TR_OSRGuardInsertion::cleanUpPotentialOSRPointHelperCalls()
  */
 void TR_OSRGuardInsertion::removeRedundantPotentialOSRPointHelperCalls(TR_HCRGuardAnalysis* guardAnalysis)
    {
+   OMR::Logger *log = comp()->log();
    bool protectedByOSRPoints = false;
    TR::NodeChecklist visited(comp());
 
@@ -156,14 +157,14 @@ void TR_OSRGuardInsertion::removeRedundantPotentialOSRPointHelperCalls(TR_HCRGua
          else if (comp()->isPotentialOSRPointWithSupport(treeTop))
             {
             if (!protectedByOSRPoints && trace())
-               traceMsg(comp(), "treetop n%dn is an OSR point with support\n", ttNode->getGlobalIndex());
+               log->printf("treetop n%dn is an OSR point with support\n", ttNode->getGlobalIndex());
 
             protectedByOSRPoints = true;
             }
          else
             {
             if (protectedByOSRPoints && trace())
-               traceMsg(comp(), "treetop n%dn is an OSR point without support\n", ttNode->getGlobalIndex());
+               log->printf("treetop n%dn is an OSR point without support\n", ttNode->getGlobalIndex());
 
             protectedByOSRPoints = false;
             }
@@ -175,7 +176,7 @@ void TR_OSRGuardInsertion::removeRedundantPotentialOSRPointHelperCalls(TR_HCRGua
 
    if (trace())
       {
-      comp()->dumpMethodTrees("Trees after redundant potentialOSRPointHelper call removal", comp()->getMethodSymbol());
+      comp()->dumpMethodTrees(log, "Trees after redundant potentialOSRPointHelper call removal", comp()->getMethodSymbol());
       }
    }
 
@@ -206,8 +207,7 @@ int32_t TR_OSRGuardInsertion::perform()
    if (!comp()->supportsInduceOSR() ||
        comp()->getOSRMode() != TR::voluntaryOSR)
       {
-      if (trace())
-         traceMsg(comp(), "Not in voluntary OSR mode, quiting\n");
+      logprints(trace(), comp()->log(), "Not in voluntary OSR mode, quiting\n");
       return 0;
       }
 
@@ -266,8 +266,7 @@ int32_t TR_OSRGuardInsertion::perform()
          }
       else
          {
-         if (trace())
-            traceMsg(comp(), "No fear generating nodes - skipping\n");
+         logprints(trace(), comp()->log(), "No fear generating nodes - skipping\n");
          comp()->getFlowGraph()->invalidateStructure();
          }
       }
@@ -435,6 +434,7 @@ void TR_OSRGuardInsertion::removeHCRGuards(TR_BitVector &fearGeneratingNodes, TR
 int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
    {
    static char *forceOSRInsertion = feGetEnv("TR_ForceOSRGuardInsertion");
+   OMR::Logger *log = comp()->log();
 
    if (!comp()->getFlowGraph()->getStructure())
       comp()->getFlowGraph()->setStructure(fakeRegion(comp()));
@@ -513,9 +513,9 @@ int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
          if (trace())
             {
             if (induceOSR)
-               traceMsg(comp(), "  OSR induction at start of method added successfully\n");
+               log->prints("  OSR induction at start of method added successfully\n");
             else
-               traceMsg(comp(), "  OSR induction at start of method FAILED!\n");
+               log->prints("  OSR induction at start of method FAILED!\n");
             }
 
          TR_ASSERT(induceOSR, "OSR guard insertion must succeed for correctness!");
@@ -533,8 +533,7 @@ int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
             label = "call";
          if (!fear.isEmpty() || forceOSRInsertion)
             {
-            if (trace())
-               traceMsg(comp(), "Found potential OSR point a n%dn\n", cursor->getNode()->getGlobalIndex());
+            logprintf(trace(), log, "Found potential OSR point a n%dn\n", cursor->getNode()->getGlobalIndex());
 
             // induce OSR in the new block
             TR_ByteCodeInfo nodeBCI = comp()->getMethodSymbol()->getOSRByteCodeInfo(cursor->getNode());
@@ -613,9 +612,9 @@ int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
                                                                targetMethod->induceOSRAfter(inductionPoint, nodeBCI, guard, false, comp()->getOSRInductionOffset(cursor->getNode()), &cfgEnd);
 
                if (trace() && induceOSR)
-                  traceMsg(comp(), "  OSR induction added successfully\n");
-               else if (trace())
-                  traceMsg(comp(), "  OSR induction FAILED!\n");
+                  log->prints("  OSR induction added successfully\n");
+               else
+                  logprints(trace(), log, "  OSR induction FAILED!\n");
 
                TR_ASSERT(induceOSR, "OSR guard insertion must succeed for correctness!");
 
@@ -625,8 +624,7 @@ int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
             else
                {
                TR::DebugCounter::prependDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "osrGuardSummary/exclude/%s/%s/=%d", label, comp()->getHotnessName(comp()->getMethodHotness()), block->getFrequency()), inductionPoint);
-               if (trace())
-                  traceMsg(comp(), "  OSR induction skipped to env var");
+               logprints(trace(), log, "  OSR induction skipped to env var");
                }
             fear.empty();
             }
@@ -684,6 +682,8 @@ void TR_OSRGuardInsertion::performRemat(TR::TreeTop *osrPoint, TR::TreeTop *osrG
    static const char *p = feGetEnv("TR_OSRRematBlockLimit");
    static uint32_t rematBlockLimit = p ? atoi(p) : defaultRematBlockLimit;
 
+   OMR::Logger *log = comp()->log();
+
    // The block containing the OSR point and the guard
    TR::Block *osrBlock = osrPoint->getEnclosingBlock()->startOfExtendedBlock();
    TR::TreeTop *osrStart = osrGuard->getPrevTreeTop();
@@ -720,14 +720,12 @@ void TR_OSRGuardInsertion::performRemat(TR::TreeTop *osrPoint, TR::TreeTop *osrG
          TR::Block *block = cursor->getNode()->getBlock();
          if (block->getPredecessors().size() + block->getExceptionPredecessors().size() != 1)
             {
-            if (trace())
-               traceMsg(comp(), "   block_%d has multiple predecessors, starting remat\n", block->getNumber());
+            logprintf(trace(), log, "   block_%d has multiple predecessors, starting remat\n", block->getNumber());
             break;
             }
          else if (rematBlocks > rematBlockLimit)
             {
-            if (trace())
-               traceMsg(comp(), "   remat block limit %d reached at block_%d, starting remat\n", rematBlockLimit, block->getNumber());
+            logprintf(trace(), log, "   remat block limit %d reached at block_%d, starting remat\n", rematBlockLimit, block->getNumber());
             break;
             }
 
@@ -739,24 +737,20 @@ void TR_OSRGuardInsertion::performRemat(TR::TreeTop *osrPoint, TR::TreeTop *osrG
 
          if (next == comp()->getFlowGraph()->getStart())
             {
-            if (trace())
-               traceMsg(comp(), "   predecessor to block_%d is start, starting remat\n", block->getNumber());
+            logprintf(trace(), log, "   predecessor to block_%d is start, starting remat\n", block->getNumber());
             break;
             }
 
-         if (trace())
-            traceMsg(comp(), "   considering block_%d before block_%d for OSR remat\n",
-               next->getNumber(), block->getNumber());
+         logprintf(trace(), log, "   considering block_%d before block_%d for OSR remat\n", next->getNumber(), block->getNumber());
 
          // Count non-empty blocks
          if (next->getFirstRealTreeTop() != next->getExit())
             {
             rematBlocks++;
-            if (trace())
-               traceMsg(comp(), "   block_%d added as block #%d\n", next->getNumber(), rematBlocks);
+            logprintf(trace(), log, "   block_%d added as block #%d\n", next->getNumber(), rematBlocks);
             }
-         else if (trace())
-            traceMsg(comp(), "   block_%d is empty\n", next->getNumber());
+         else
+            logprintf(trace(), log, "   block_%d is empty\n", next->getNumber());
 
          // Shift the cursor to the end of the next block
          cursor = next->getExit();
@@ -765,8 +759,7 @@ void TR_OSRGuardInsertion::performRemat(TR::TreeTop *osrPoint, TR::TreeTop *osrG
 
       if (node->getOpCode().isStoreDirect() && !seen[node->getSymbolReference()->getReferenceNumber()])
          {
-         if (trace())
-            traceMsg(comp(), "  considering store node [%p] - %d - for remat\n", node, node->getGlobalIndex());
+         logprintf(trace(), log, "  considering store node [%p] - %d - for remat\n", node, node->getGlobalIndex());
          TR::SparseBitVector argSymRefsToCheck(comp()->allocator());
          TR_YesNoMaybe result = RematTools::gatherNodesToCheck(comp(), node, node->getFirstChild(),
             scanTargets, argSymRefsToCheck, trace());
@@ -774,21 +767,18 @@ void TR_OSRGuardInsertion::performRemat(TR::TreeTop *osrPoint, TR::TreeTop *osrG
 
          if (result == TR_yes)
             {
-            if (trace())
-               traceMsg(comp(),"    remat may be possible for node [%p] - %d\n", node, node->getGlobalIndex());
+            logprintf(trace(), log, "    remat may be possible for node [%p] - %d\n", node, node->getGlobalIndex());
             safetyInfo.add(cursor, argSymRefsToCheck);
             }
          else if (result == TR_no)
             {
-            if (trace())
-               traceMsg(comp(),"    remat unsafe for node [%p] - %d\n", node, node->getGlobalIndex());
+            logprintf(trace(), log, "    remat unsafe for node [%p] - %d\n", node, node->getGlobalIndex());
             failedArgs.push_back(cursor);
             }
          else if (result == TR_maybe)
             {
             // constants will be ignored and dealt with by constant propagation
-            if (trace())
-               traceMsg(comp(),"    ignoring constant node [%p] - %d\n", node, node->getGlobalIndex());
+            logprintf(trace(), log, "    ignoring constant node [%p] - %d\n", node, node->getGlobalIndex());
             }
          }
       }
@@ -810,8 +800,7 @@ void TR_OSRGuardInsertion::performRemat(TR::TreeTop *osrPoint, TR::TreeTop *osrG
 
          TR::TreeTop *storeTree = *iter;
          TR::Node *store = storeTree->getNode();
-         if (trace())
-            traceMsg(comp(), "Failed to find failure alternative node [%p]\n", store);
+         logprintf(trace(), log, "Failed to find failure alternative node [%p]\n", store);
 
          TR::DebugCounter::prependDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "osrGuardRemat/Failed/%s",
             store->getFirstChild()->getOpCode().getName()), storeTree, 1, TR::DebugCounter::Expensive);
@@ -837,8 +826,7 @@ void TR_OSRGuardInsertion::performRemat(TR::TreeTop *osrPoint, TR::TreeTop *osrG
       TR::Node *store = storeTree->getNode();
       if (!unsafeSymRefs.Intersects(safetyInfo.symRefDependencies(i)))
          {
-         if (trace())
-            traceMsg(comp(), "Found safe remat candidate. store: [%p] remat: [%p]\n", store, rematTree->getNode());
+         logprintf(trace(), log, "Found safe remat candidate. store: [%p] remat: [%p]\n", store, rematTree->getNode());
 
          TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "osrGuardRemat.byMethod/(%s)/Succeeded",
             comp()->signature()));
@@ -868,8 +856,7 @@ void TR_OSRGuardInsertion::performRemat(TR::TreeTop *osrPoint, TR::TreeTop *osrG
          }
       else
          {
-         if (trace())
-            traceMsg(comp(), "Unsafe to remat [%p]\n", store);
+         logprintf(trace(), log, "Unsafe to remat [%p]\n", store);
 
          TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "osrGuardRemat.byMethod/unsafeSymRef/Failed/(%s)/%s",
             comp()->signature(), store->getFirstChild()->getOpCode().getName()));
@@ -908,13 +895,13 @@ void TR_OSRGuardInsertion::collectFearFromOSRFearPointHelperCalls(TR_BitVector &
          if (comp()->isPotentialOSRPointWithSupport(treeTop))
             {
             if (!protectedByOSRPoints && trace())
-               traceMsg(comp(), "treetop n%dn is an OSR point with support\n", ttNode->getGlobalIndex());
+               comp()->log()->printf("treetop n%dn is an OSR point with support\n", ttNode->getGlobalIndex());
             protectedByOSRPoints = true;
             }
          else
             {
             if (protectedByOSRPoints && trace())
-               traceMsg(comp(), "treetop n%dn is an OSR point without support\n", ttNode->getGlobalIndex());
+               comp()->log()->printf("treetop n%dn is an OSR point without support\n", ttNode->getGlobalIndex());
             protectedByOSRPoints = false;
             }
          visited.add(osrNode);

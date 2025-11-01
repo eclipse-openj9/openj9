@@ -73,6 +73,7 @@
 #include "optimizer/Optimizer.hpp"
 #include "optimizer/TransformUtil.hpp"
 #include "ras/Debug.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
 
@@ -297,6 +298,7 @@ int32_t TR_StringPeepholes::process(TR::TreeTop *startTree, TR::TreeTop *endTree
 
 void TR_StringPeepholes::processBlock(TR::Block *block)
    {
+   OMR::Logger *log = comp()->log();
    TR::TreeTop *exit = block->getExit();
 
    for (TR::TreeTop *tt = block->getEntry();
@@ -315,8 +317,7 @@ void TR_StringPeepholes::processBlock(TR::Block *block)
          char *className = TR::Compiler->cls.classNameChars(comp(), classNode->getSymbolReference(), len);
          if (len == 22 && !strncmp(className, "java/lang/StringBuffer",  22))
             {
-            if (trace())
-               traceMsg(comp(), "--stringbuffer-- in %s\n", comp()->signature());
+            logprintf(trace(), log, "--stringbuffer-- in %s\n", comp()->signature());
 
             TR::TreeTop *prevTree = tt->getPrevTreeTop();
             TR::TreeTop *newTree = detectPattern(block, tt, true);
@@ -328,8 +329,7 @@ void TR_StringPeepholes::processBlock(TR::Block *block)
             }
          else if (len == 23 && !strncmp(className, "java/lang/StringBuilder", 23))
             {
-            if (trace())
-               traceMsg(comp(), "--stringbuilder-- in %s\n", comp()->signature());
+            logprintf(trace(), log, "--stringbuilder-- in %s\n", comp()->signature());
 
             TR::TreeTop *prevTree = tt->getPrevTreeTop();
             TR::TreeTop *newTree = detectPattern(block, tt, false);
@@ -421,8 +421,7 @@ void TR_StringPeepholes::processBlock(TR::Block *block)
                  {
                  if (comp()->getMethodHotness() == hot)
                     {
-                    if (trace())
-                       printf("switching method %s to profiling\n", comp()->signature()); fflush(stdout);
+                    logprintf(trace(), log, "switching method %s to profiling\n", comp()->signature());
                     optimizer()->switchToProfiling();
                     }
                   }
@@ -596,15 +595,16 @@ static TR_BDChain *matchBDPattern(TR_BDChain *chain, TR::RecognizedMethod *patte
    TR_BDChain *firstInChain = NULL;
    TR_BDChain *lastInChain = NULL;
 
+   OMR::Logger *log = comp->log();
+
    bool foundScaleInfo = false;
    bool failedWithoutProfilingInfo = false;
    int32_t curLen = 0;
    while(cursorChain)
       {
       bool matched = false;
-      if (trace)
-         traceMsg(comp, "BigDecimal (binary op) node %p method %d pattern %d in a chain\n", cursorChain->_node, cursorChain->_recognizedMethod, pattern[curLen]);
-     //printf("Found a BigDecimal (binary op) method %d pattern %d in a chain in method %s\n", cursorChain->_recognizedMethod, pattern[curLen], comp->signature()); fflush(stdout);
+      logprintf(trace, log, "BigDecimal (binary op) node %p method %d pattern %d in a chain\n", cursorChain->_node, cursorChain->_recognizedMethod, pattern[curLen]);
+
       if (cursorChain->_recognizedMethod == pattern[curLen])
          {
          matched = true;
@@ -624,7 +624,6 @@ static TR_BDChain *matchBDPattern(TR_BDChain *chain, TR::RecognizedMethod *patte
 
                TR_BigDecimalValueInfo * resultValueInfo = static_cast<TR_BigDecimalValueInfo*>(profileManager ? profileManager->getValueInfo(callNode, comp, BigDecimalInfo) : 0);
 
-               //traceMsg(comp, "Matched a BigDecimal (binary op) method in a chain in method %s with valueInfo %p\n", comp->signature(), valueInfo);
                if (valueInfo1 && (valueInfo1->getTopProbability() == 1.0f) &&
                    valueInfo2 && (valueInfo2->getTopProbability() == 1.0f) &&
                    resultValueInfo && (resultValueInfo->getTopProbability() == 1.0f))
@@ -649,15 +648,18 @@ static TR_BDChain *matchBDPattern(TR_BDChain *chain, TR::RecognizedMethod *patte
                      matched = true;
                      if (trace)
                         {
-                        traceMsg(comp, "Matched a BigDecimal (binary op) method with profile info in a chain with scale1 = %d scale2 = %d result scale = %d\n", curScale1, curScale2, resultScale);
-                        printf("Matched a BigDecimal (binary op) method with profile info in a chain in method %s with scales = %d and %d result scale = %d\n", comp->signature(), curScale1, curScale2, resultScale); fflush(stdout);
+                        log->printf("Matched a BigDecimal (binary op) method with profile info in a chain with scale1 = %d scale2 = %d result scale = %d\n",
+                           curScale1, curScale2, resultScale);
+                        log->printf("Matched a BigDecimal (binary op) method with profile info in a chain in method %s with scales = %d and %d result scale = %d\n",
+                           comp->signature(), curScale1, curScale2, resultScale); fflush(stdout);
                         }
                      }
-                  else if (trace)
-                     traceMsg(comp, "0Failed on profile info from %p for a BigDecimal (binary op) method with profile info in a chain with scale1 = %d scale2 = %d\n", TR_PersistentProfileInfo::get(comp), curScale1, curScale2);
+                  else
+                     logprintf(trace, log, "0Failed on profile info from %p for a BigDecimal (binary op) method with profile info in a chain with scale1 = %d scale2 = %d\n",
+                        TR_PersistentProfileInfo::get(comp), curScale1, curScale2);
                   }
-               else if (trace)
-                  traceMsg(comp, "1Failed on profile info from %p for a BigDecimal (binary op) method with profile info in a chain \n", TR_PersistentProfileInfo::get(comp));
+               else
+                  logprintf(trace, log, "1Failed on profile info from %p for a BigDecimal (binary op) method with profile info in a chain \n", TR_PersistentProfileInfo::get(comp));
                }
             else
                {
@@ -666,15 +668,13 @@ static TR_BDChain *matchBDPattern(TR_BDChain *chain, TR::RecognizedMethod *patte
             }
          }
 
-      if (trace)
-         traceMsg(comp, "1 len %d cur %d next %p\n", len, curLen, cursorChain->_next);
+      logprintf(trace, log, "1 len %d cur %d next %p\n", len, curLen, cursorChain->_next);
       if (matched)
          {
          if (curLen == 0)
             firstInChain = cursorChain;
 
-         if (trace)
-            traceMsg(comp, "2 len %d cur %d\n", len, curLen);
+         logprintf(trace, log, "2 len %d cur %d\n", len, curLen);
 
          if (curLen == (len-1))
             {
@@ -686,16 +686,14 @@ static TR_BDChain *matchBDPattern(TR_BDChain *chain, TR::RecognizedMethod *patte
          }
       else
          {
-         if (trace)
-            traceMsg(comp, "Failed to match on a big decimal method in a chain at node %p\n", cursorChain->_node);
+         logprintf(trace, log, "Failed to match on a big decimal method in a chain at node %p\n", cursorChain->_node);
          curLen = 0;
          }
 
       cursorChain = cursorChain->_next;
       }
 
-   if (trace)
-      traceMsg(comp, "first in chain %p last in chain %p\n", firstInChain, lastInChain);
+   logprintf(trace, log, "first in chain %p last in chain %p\n", firstInChain, lastInChain);
 
    if (firstInChain && lastInChain)
       {
@@ -714,7 +712,6 @@ static TR_BDChain *matchBDPatterns(TR_BDChain *chain, TR_ValueProfileInfoManager
    int32_t i = 0;
    while (i < TR_StringPeepholes::numBDPatterns)
       {
-      //traceMsg(comp, "Trying to match pattern %d\n", i);
       TR_BDChain *matchedChain = matchBDPattern(chain, bdPatterns[i], bdPatternLengths[i], profileManager, comp, trace, obtainProfilingInfo);
       if (matchedChain)
          {
@@ -767,6 +764,7 @@ static bool isRecognizedMethod(TR::Node* node, TR::RecognizedMethod rm) {
 
 TR::TreeTop *TR_StringPeepholes::detectSubMulSetScalePattern(TR::TreeTop *tt, TR::TreeTop *exit, TR::Node *node)
    {
+   OMR::Logger *log = comp()->log();
    TR::TreeTop *methodTT = NULL;
 
    TR::TreeTop *firstTree = tt;
@@ -779,8 +777,8 @@ TR::TreeTop *TR_StringPeepholes::detectSubMulSetScalePattern(TR::TreeTop *tt, TR
    int32_t mulScale = -1;
    bool foundPattern = false;
 
-   if (trace())
-      traceMsg(comp(), "Looking for subtract multiply setscale pattern in block %d, starting at tt: %p, node: %p\n", firstTree->getEnclosingBlock()->getNumber(), firstTree, firstTree->getNode());
+   logprintf(trace(), log, "Looking for subtract multiply setscale pattern in block %d, starting at tt: %p, node: %p\n",
+      firstTree->getEnclosingBlock()->getNumber(), firstTree, firstTree->getNode());
 
    for (; !foundPattern && tt != exit; tt = tt->getNextRealTreeTop())
       {
@@ -795,8 +793,7 @@ TR::TreeTop *TR_StringPeepholes::detectSubMulSetScalePattern(TR::TreeTop *tt, TR
          if (!isRecognizedMethod(cursorNode, TR::java_math_BigDecimal_subtract)
              || cursorNode->getReferenceCount() != 2)
             {
-            if (trace())
-               traceMsg(comp(), "callNode %p is not subtract or its refcount is not 2\n", cursorNode);
+            logprintf(trace(), log, "callNode %p is not subtract or its refcount is not 2\n", cursorNode);
             continue;
             }
 
@@ -815,16 +812,14 @@ TR::TreeTop *TR_StringPeepholes::detectSubMulSetScalePattern(TR::TreeTop *tt, TR
             if (!isRecognizedMethod(cursorNode, TR::java_math_BigDecimal_multiply)
                 || cursorNode->getReferenceCount() != 3)
                {
-               if (trace())
-                  traceMsg(comp(), "callNode %p is not multiply or its refcount is not 3\n", cursorNode);
+               logprintf(trace(), log, "callNode %p is not multiply or its refcount is not 3\n", cursorNode);
                continue;
                }
 
             // check if subtract node is multiply node's second argument
             if (subNode != cursorNode->getChild(cursorNode->getFirstArgumentIndex()+1))
                {
-               if (trace())
-                  traceMsg(comp(), "multiplyNode %p does not have subtractNode %p as the second child\n", cursorNode, subNode);
+               logprintf(trace(), log, "multiplyNode %p does not have subtractNode %p as the second child\n", cursorNode, subNode);
                continue;
                }
 
@@ -842,32 +837,28 @@ TR::TreeTop *TR_StringPeepholes::detectSubMulSetScalePattern(TR::TreeTop *tt, TR
                if (!isRecognizedMethod(cursorNode, TR::java_math_BigDecimal_setScale)
                      || cursorNode->getReferenceCount() != 2)
                   {
-                  if (trace())
-                     traceMsg(comp(), "callNode %p is not setScale or its refcount is not 2\n", cursorNode);
+                  logprintf(trace(), log, "callNode %p is not setScale or its refcount is not 2\n", cursorNode);
                   continue;
                   }
 
                // check if setScale nodes's receiver is multiply node
                if (mulNode != cursorNode->getChild(cursorNode->getFirstArgumentIndex()))
                   {
-                  if (trace())
-                     traceMsg(comp(), "setScaleNode's %p receiver is not multiplyNode %p\n", cursorNode, mulNode);
+                  logprintf(trace(), log, "setScaleNode's %p receiver is not multiplyNode %p\n", cursorNode, mulNode);
                   continue;
                   }
 
                // check if scale is 2
                if (cursorNode->getChild(cursorNode->getNumChildren()-2)->getInt() != 2)
                   {
-                  if (trace())
-                     traceMsg(comp(), "setScaleNode's %p scale is not 2: %d\n", cursorNode, cursorNode->getChild(cursorNode->getNumChildren()-2)->getInt());
+                  logprintf(trace(), log, "setScaleNode's %p scale is not 2: %d\n", cursorNode, cursorNode->getChild(cursorNode->getNumChildren()-2)->getInt());
                   continue;
                   }
 
                // check if round is ROUND_DOWN=1
                if (cursorNode->getChild(cursorNode->getNumChildren()-1)->getInt() != 1)
                   {
-                  if (trace())
-                     traceMsg(comp(), "setScaleNode's %p rounding is not 1: %d\n", cursorNode, cursorNode->getChild(cursorNode->getNumChildren()-1)->getInt());
+                  logprintf(trace(), log, "setScaleNode's %p rounding is not 1: %d\n", cursorNode, cursorNode->getChild(cursorNode->getNumChildren()-1)->getInt());
                   continue;
                   }
 
@@ -875,16 +866,13 @@ TR::TreeTop *TR_StringPeepholes::detectSubMulSetScalePattern(TR::TreeTop *tt, TR
                foundPattern = true;
                }
                else
-                  if (trace())
-                     traceMsg(comp(), "callNode %p should be setScale, but is not an iacall\n", cursorNode);
+                  logprintf(trace(), log, "callNode %p should be setScale, but is not an iacall\n", cursorNode);
             }
             else
-               if (trace())
-                  traceMsg(comp(), "callNode %p should be multiply, but is not an iacall\n", cursorNode);
+               logprintf(trace(), log, "callNode %p should be multiply, but is not an iacall\n", cursorNode);
          }
          else
-            if (trace())
-               traceMsg(comp(), "callNode %p should be subtract, but is not an iacall\n", cursorNode);
+            logprintf(trace(), log, "callNode %p should be subtract, but is not an iacall\n", cursorNode);
       }
 
    if (foundPattern)
@@ -895,8 +883,7 @@ TR::TreeTop *TR_StringPeepholes::detectSubMulSetScalePattern(TR::TreeTop *tt, TR
       if (comp()->getMethodHotness() > warm &&
           comp()->getMethodHotness() != hot)
          {
-         if (trace())
-            traceMsg(comp(), "Method hotness: %d\n", comp()->getMethodHotness());
+         logprintf(trace(), log, "Method hotness: %d\n", comp()->getMethodHotness());
 
          // get mulscale
          TR_ByteCodeInfo nodeInfo = mulNode->getByteCodeInfo();
@@ -922,14 +909,14 @@ TR::TreeTop *TR_StringPeepholes::detectSubMulSetScalePattern(TR::TreeTop *tt, TR
             if ((mulScale != 2) || (flag2 != 1) ||
                 (subScale < 0) || (subScale > 6) || (flag2 != 1))
                {
-               if (trace())
-                  traceMsg(comp(), "Failed on profile info from %p for subtract multiply and setscale pattern with sub scale %d, and mul scale %d\n", TR_PersistentProfileInfo::get(comp()), subScale, mulScale);
+               logprintf(trace(), log, "Failed on profile info from %p for subtract multiply and setscale pattern with sub scale %d, and mul scale %d\n",
+                  TR_PersistentProfileInfo::get(comp()), subScale, mulScale);
                return NULL;
                }
             }
          else if (trace())
             {
-            traceMsg(comp(), "Failed on profile info from %p for subtract multiply and setscale pattern\n", TR_PersistentProfileInfo::get(comp()));
+            log->printf("Failed on profile info from %p for subtract multiply and setscale pattern\n", TR_PersistentProfileInfo::get(comp()));
             return NULL;
             }
          }
@@ -937,17 +924,14 @@ TR::TreeTop *TR_StringPeepholes::detectSubMulSetScalePattern(TR::TreeTop *tt, TR
          {
          if (comp()->getMethodHotness() == hot && comp()->getRecompilationInfo() &&  performTransformation(comp(), "%smight have simplified big decimal subtract multiply setscale pattern from node [%p] to [%p] if profiling info was available. Switching to profiling.\n", optDetailString(), firstTree->getNode(), lastTree->getNode()))
             {
-            if (trace())
-               traceMsg(comp(), "Switching method %s to profiling...\n", comp()->signature());
+            logprintf(trace(), log, "Switching method %s to profiling...\n", comp()->signature());
             optimizer()->switchToProfiling();
             }
          return NULL;
          }
 
-      if (trace())
-         {
-         traceMsg(comp(), "Successfully obtained profile info from %p for subtract multiply and setscale pattern with sub scale %d, and mul scale %d\n", TR_PersistentProfileInfo::get(comp()), subScale, mulScale);
-         }
+      logprintf(trace(), log, "Successfully obtained profile info from %p for subtract multiply and setscale pattern with sub scale %d, and mul scale %d\n",
+         TR_PersistentProfileInfo::get(comp()), subScale, mulScale);
 
       TR::SymbolReference *callSymRef = comp()->fej9()->findOrCreateMethodSymRef(comp(), comp()->getMethodSymbol(), "java/math/BigDecimal", "java/math/BigDecimal.SMSetScale(Ljava/math/BigDecimal;Ljava/math/BigDecimal;II)Ljava/math/BigDecimal;");
       if (callSymRef &&
@@ -961,8 +945,7 @@ TR::TreeTop *TR_StringPeepholes::detectSubMulSetScalePattern(TR::TreeTop *tt, TR
                TR::Node::create(node, TR::iconst, 0, mulScale),  //2
                callSymRef);
 
-         if (trace())
-            traceMsg(comp(), "method call sym ref: %p, method call: %p\n", callSymRef, methodCall);
+         logprintf(trace(), log, "method call sym ref: %p, method call: %p\n", callSymRef, methodCall);
 
          TR::TreeTop *treeAfterLast = lastTree->getNextTreeTop();
          TR::Node *lastCall = lastTree->getNode()->getFirstChild();
@@ -981,14 +964,11 @@ TR::TreeTop *TR_StringPeepholes::detectSubMulSetScalePattern(TR::TreeTop *tt, TR
             cursorTree = nextTree;
             }
 
-         if (trace())
-            traceMsg(comp(), "Replaced big decimal sub mul setscale in method %s with call %p\n", comp()->signature(), methodCall);
+         logprintf(trace(), log, "Replaced big decimal sub mul setscale in method %s with call %p\n", comp()->signature(), methodCall);
          }
       }
-   else if (trace())
-      {
-      traceMsg(comp(), "Failed to find subtract multiply setscale pattern in block %d\n", firstTree->getEnclosingBlock()->getNumber());
-      }
+   else
+      logprintf(trace(), log, "Failed to find subtract multiply setscale pattern in block %d\n", firstTree->getEnclosingBlock()->getNumber());
 
    return methodTT;
    }
@@ -996,6 +976,7 @@ TR::TreeTop *TR_StringPeepholes::detectSubMulSetScalePattern(TR::TreeTop *tt, TR
 
 TR::TreeTop *TR_StringPeepholes::detectBDPattern(TR::TreeTop *tt, TR::TreeTop *exit, TR::Node *node)
    {
+   OMR::Logger *log = comp()->log();
    TR::TreeTop *privateBDMethodCall = NULL;
 
    TR_BDChain *prevInChain = NULL;
@@ -1047,8 +1028,7 @@ TR::TreeTop *TR_StringPeepholes::detectBDPattern(TR::TreeTop *tt, TR::TreeTop *e
    bool obtainProfilingInfo = false;
    TR_BDChain *matchedChain = matchBDPatterns(firstInChain, profileManager, comp(), matchedPattern, trace(), obtainProfilingInfo);
 
-   if (trace())
-      traceMsg(comp(), "For sequence starting at %p matched chain = %p\n", node, matchedChain);
+   logprintf(trace(), log, "For sequence starting at %p matched chain = %p\n", node, matchedChain);
 
    if (matchedChain)
       {
@@ -1103,21 +1083,18 @@ TR::TreeTop *TR_StringPeepholes::detectBDPattern(TR::TreeTop *tt, TR::TreeTop *e
                   {
                   if (valueOfNode->getFirstChild()->getLongInt() != 1)
                      {
-                     if (trace())
-                        traceMsg(comp(), "Failed at 0\n");
+                     logprints(trace(), log, "Failed at 0\n");
                      treesAsExpected = false;
                      }
                   if (valueOfNode->getSecondChild()->getInt() != 0)
                      {
-                     if (trace())
-                        traceMsg(comp(), "Failed at 1\n");
+                     logprints(trace(), log, "Failed at 1\n");
                      treesAsExpected = false;
                      }
                   }
                else
                   {
-                  if (trace())
-                     traceMsg(comp(), "Failed at 2\n");
+                  logprints(trace(), log, "Failed at 2\n");
                   treesAsExpected = false;
                   }
                }
@@ -1148,8 +1125,7 @@ TR::TreeTop *TR_StringPeepholes::detectBDPattern(TR::TreeTop *tt, TR::TreeTop *e
                       ((add1Node->getOpCode().isCallIndirect() && (valueOfNode->getReferenceCount() != 3)) ||
                       (!add1Node->getOpCode().isCallIndirect() && (valueOfNode->getReferenceCount() != 2))) )
                      {
-                     if (trace())
-                        traceMsg(comp(), "Failed at 3 at add node %p valueOfNode %p\n", add1Node, valueOfNode);
+                     logprintf(trace(), log, "Failed at 3 at add node %p valueOfNode %p\n", add1Node, valueOfNode);
                      treesAsExpected = false;
                      }
                   else
@@ -1169,8 +1145,7 @@ TR::TreeTop *TR_StringPeepholes::detectBDPattern(TR::TreeTop *tt, TR::TreeTop *e
                       ((add2Node->getOpCode().isCallIndirect() && (add1Node->getReferenceCount() != 3)) ||
                       (!add2Node->getOpCode().isCallIndirect() && (add1Node->getReferenceCount() != 2))) )
                      {
-                     if (trace())
-                        traceMsg(comp(), "Failed at 4\n");
+                     logprints(trace(), log, "Failed at 4\n");
                      treesAsExpected = false;
                      }
                   else
@@ -1192,8 +1167,7 @@ TR::TreeTop *TR_StringPeepholes::detectBDPattern(TR::TreeTop *tt, TR::TreeTop *e
                    ((subtractNode->getOpCode().isCallIndirect() && (valueOf1Node->getReferenceCount() != 3)) ||
                    (!subtractNode->getOpCode().isCallIndirect() && (valueOf1Node->getReferenceCount() != 2))) )
                   {
-                  if (trace())
-                     traceMsg(comp(), "Failed at 5 sub = %p valueOf = %p\n", subtractNode, valueOf1Node);
+                  logprintf(trace(), log, "Failed at 5 sub = %p valueOf = %p\n", subtractNode, valueOf1Node);
                   treesAsExpected = false;
                   }
                else
@@ -1217,8 +1191,7 @@ TR::TreeTop *TR_StringPeepholes::detectBDPattern(TR::TreeTop *tt, TR::TreeTop *e
                    ((mulNode->getOpCode().isCallIndirect() && (subtractNode->getReferenceCount() > 3)) ||
                    (!mulNode->getOpCode().isCallIndirect() && (subtractNode->getReferenceCount() > 2)))  )
                   {
-                  if (trace())
-                     traceMsg(comp(), "Failed at 6\n");
+                  logprints(trace(), log, "Failed at 6\n");
                   treesAsExpected = false;
                   }
                else
@@ -1234,8 +1207,7 @@ TR::TreeTop *TR_StringPeepholes::detectBDPattern(TR::TreeTop *tt, TR::TreeTop *e
                    ((mulNode->getOpCode().isCallIndirect() && (add2Node->getReferenceCount() > 3)) ||
                    (!mulNode->getOpCode().isCallIndirect() && (add2Node->getReferenceCount() > 2))) )
                   {
-                  if (trace())
-                     traceMsg(comp(), "Failed at 7\n");
+                  logprints(trace(), log, "Failed at 7\n");
                   treesAsExpected = false;
                   }
                else
@@ -1247,8 +1219,7 @@ TR::TreeTop *TR_StringPeepholes::detectBDPattern(TR::TreeTop *tt, TR::TreeTop *e
 
             if ((matchedPattern == 0) && (chainPos == 8) && astoreSym && (astoreSym != mulNode->getChild(mulNode->getNumChildren()-2)->getSymbolReference()->getSymbol()))
                {
-               if (trace())
-                  traceMsg(comp(), "Failed at 8\n");
+               logprints(trace(), log, "Failed at 8\n");
                treesAsExpected = false;
                }
 
@@ -1258,8 +1229,7 @@ TR::TreeTop *TR_StringPeepholes::detectBDPattern(TR::TreeTop *tt, TR::TreeTop *e
                    ((mulNode->getOpCode().isCallIndirect() && (valueOf1Node->getReferenceCount() > 3)) ||
                    (!mulNode->getOpCode().isCallIndirect() && (valueOf1Node->getReferenceCount() > 2))) )
                   {
-                  if (trace())
-                     traceMsg(comp(), "Failed at 9\n");
+                  logprints(trace(), log, "Failed at 9\n");
                   treesAsExpected = false;
                   }
                else
@@ -1285,24 +1255,21 @@ TR::TreeTop *TR_StringPeepholes::detectBDPattern(TR::TreeTop *tt, TR::TreeTop *e
                    ((setScaleNode->getOpCode().isCallIndirect() && (mulNode->getReferenceCount() != 3)) ||
                    (!setScaleNode->getOpCode().isCallIndirect() && (mulNode->getReferenceCount() != 2))) )
                   {
-                  if (trace())
-                     traceMsg(comp(), "Failed at 10\n");
+                  logprints(trace(), log, "Failed at 10\n");
                   treesAsExpected = false;
                   }
 
                TR::Node *child = setScaleNode->getChild(setScaleNode->getNumChildren()-2);
                if ((child->getOpCodeValue() != TR::iconst) || (child->getInt() != 2))
                   {
-                  if (trace())
-                     traceMsg(comp(), "Failed at 11\n");
+                  logprints(trace(), log, "Failed at 11\n");
                   treesAsExpected = false;
                   }
 
                child = setScaleNode->getChild(setScaleNode->getNumChildren()-1);
                if ((child->getOpCodeValue() != TR::iconst) || (child->getInt() != 4))
                   {
-                  if (trace())
-                     traceMsg(comp(), "Failed at 12\n");
+                  logprints(trace(), log, "Failed at 12\n");
                   treesAsExpected = false;
                   }
                }
@@ -1315,8 +1282,7 @@ TR::TreeTop *TR_StringPeepholes::detectBDPattern(TR::TreeTop *tt, TR::TreeTop *e
             if (!astoreSym || !astoreSym->isAuto() || !astoreSym->getAutoSymbol() ||
                 !astoreNode || (astoreNode->getNumChildren() != 1) || (astoreNode->getOpCodeValue() != TR::astore))
                {
-               if (trace())
-                  traceMsg(comp(), "Failed at 13\n");
+               logprints(trace(), log, "Failed at 13\n");
                treesAsExpected = false;
                }
             }
@@ -1327,8 +1293,7 @@ TR::TreeTop *TR_StringPeepholes::detectBDPattern(TR::TreeTop *tt, TR::TreeTop *e
 
       if ((minScale < 0) || (maxScale > 6))
          {
-         if (trace())
-            traceMsg(comp(), "Failed at 14 with minScale %d and maxScale %d\n", minScale, maxScale);
+         logprintf(trace(), log, "Failed at 14 with minScale %d and maxScale %d\n", minScale, maxScale);
          if (comp()->getMethodHotness() != hot)
             treesAsExpected = false;
          else
@@ -1337,32 +1302,28 @@ TR::TreeTop *TR_StringPeepholes::detectBDPattern(TR::TreeTop *tt, TR::TreeTop *e
 
       if (!obtainProfilingInfo && !findSymRefForOptMethod((StringpeepholesMethods)matchedPattern))
          {
-         if (trace())
-            traceMsg(comp(), "Failed at 15 with no private method found\n");
+         logprints(trace(), log, "Failed at 15 with no private method found\n");
          treesAsExpected = false;
          }
 
       //Private methods MSS, SMSS, AAMSS, SMAAMSS are only correct if mul1Scale == 2
       if (!obtainProfilingInfo && (mul1Scale != 2))
          {
-         if (trace())
-            traceMsg(comp(), "Failed at 16 with mul1Scale != 2\n");
+         logprints(trace(), log, "Failed at 16 with mul1Scale != 2\n");
          treesAsExpected = false;
          }
 
       //Private methods AAMSS, SMAAMSS are only correct if add1Scale == add2Scale
       if (!obtainProfilingInfo && (add1Scale != add2Scale))
          {
-         if (trace())
-            traceMsg(comp(), "Failed at 17 with add1Scale != add2Scale\n");
+         logprints(trace(), log, "Failed at 17 with add1Scale != add2Scale\n");
          treesAsExpected = false;
          }
 
       //Private method SMAAMSS has the extra requirement that add1Scale == add2Scale == subScale
       if (!obtainProfilingInfo && (add1Scale != subScale) && (matchedPattern == 3))
          {
-         if (trace())
-            traceMsg(comp(), "Failed at 18 with (add1Scale != subScale) && (matchedPattern == 3)\n");
+         logprints(trace(), log, "Failed at 18 with (add1Scale != subScale) && (matchedPattern == 3)\n");
          treesAsExpected = false;
          }
 
@@ -1467,7 +1428,6 @@ TR::TreeTop *TR_StringPeepholes::detectBDPattern(TR::TreeTop *tt, TR::TreeTop *e
                               scaleOffset += comp()->fej9()->getObjectHeaderSizeInBytes();
                               TR_Pair<TR::Node, uint32_t> *prefetchInfo = new (comp()->trHeapMemory()) TR_Pair<TR::Node, uint32_t> (targetNode, (uint32_t *)(intptr_t)scaleOffset);
                               comp()->getNodesThatShouldPrefetchOffset().push_front(prefetchInfo);
-                              //printf("Ready to prefetch for the field: %*s, offset %d, in node %p\n", len, fieldName, scaleOffset, targetNode);
                               }
                            }
                         break;
@@ -1511,10 +1471,12 @@ TR::TreeTop *TR_StringPeepholes::detectBDPattern(TR::TreeTop *tt, TR::TreeTop *e
             cursorTree = nextTree;
             }
 
-         traceMsg(comp(), " replaced the matched pattern with call %p\n", methodCall);
 
          if (trace())
-            printf("Doing BigDecimal transformation in method %s\n", comp()->signature()); fflush(stdout);
+            {
+            log->printf(" replaced the matched pattern with call %p\n", methodCall);
+            log->printf("Doing BigDecimal transformation in method %s\n", comp()->signature()); fflush(stdout);
+            }
          }
       }
 
@@ -1584,7 +1546,6 @@ TR::TreeTop *TR_StringPeepholes::detectPattern(TR::Block *block, TR::TreeTop *tt
          }
       else
          {
-         //fprintf(stderr, "Unknown type of <init>\n");
          return 0;
          }
       }
@@ -1705,8 +1666,6 @@ TR::TreeTop *TR_StringPeepholes::detectPattern(TR::Block *block, TR::TreeTop *tt
       child = tt->getNode()->getFirstChild(); // the first node is a NULLCHK and its child is the call
       } // end while
 
-   //traceMsg(comp(), "Reached here for %p count %d init1 %p init2 %p\n", tt->getNode(), stringCount, _initSymRef1, _initSymRef2);
-
    if (stringCount < 2)
       return 0; // cannot apply StringPeepholes
    if (stringCount > MAX_STRINGS)
@@ -1774,7 +1733,6 @@ TR::TreeTop *TR_StringPeepholes::detectPattern(TR::Block *block, TR::TreeTop *tt
    //
    if (!performTransformation(comp(), "%ssimplified string concatenation starting at node [%p] pattern=%s\n", optDetailString(), newTree->getNode(), pattern))
       return 0;
-   //fprintf(stderr, "Applying pattern %s to method %s\n", pattern, comp()->signature());
 
    // eliminate the appends and leave only loads to the objects
    // referred by the appends
@@ -1902,7 +1860,6 @@ TR::TreeTop *TR_StringPeepholes::detectPattern(TR::Block *block, TR::TreeTop *tt
                                  initSymRef7);
       }
 
-   //printf("Before call to create.  initCall = %p",initCall); fflush(stdout);
    TR::Node *treeTop = TR::Node::create(stringNode, TR::treetop, 1, initCall);
    TR::TreeTop *initCallTree = TR::TreeTop::create(comp(), toStringTree, treeTop);
    genFlush(initCallTree, initCall->getFirstChild());
@@ -1986,8 +1943,8 @@ bool TR_StringPeepholes::skipNodeUnderOSR(TR::Node *node)
       result = true;
       }
 
-   if (result && trace())
-      traceMsg(comp(), "Skipping OSR node [%p] n%dn\n", node, node->getGlobalIndex());
+   if (result)
+      logprintf(trace(), comp()->log(), "Skipping OSR node [%p] n%dn\n", node, node->getGlobalIndex());
 
    return result;
    }
@@ -2066,14 +2023,15 @@ bool TR_StringPeepholes::classRedefined(TR_OpaqueClassBlock *clazz)
 TR::TreeTop *TR_StringPeepholes::searchForStringAppend(const char *sig, TR::TreeTop *tt, TR::TreeTop *exitTree,
                                                       TR::ILOpCodes opCode, TR::Node *newBuffer, vcount_t visitCount, TR::Node **string, TR::TreeTop **prim)
    {
+   OMR::Logger *log = comp()->log();
+
    for (;tt != exitTree; tt = tt->getNextRealTreeTop())
       {
       TR::Node *node = tt->getNode();
 
       if (skipNodeUnderOSR(node))
          {
-         if (trace())
-            traceMsg(comp(), "Skipping OSR node [%p] when searching for append\n", node);
+         logprintf(trace(), log, "Skipping OSR node [%p] when searching for append\n", node);
          continue;
          }
 
@@ -2110,8 +2068,7 @@ TR::TreeTop *TR_StringPeepholes::searchForStringAppend(const char *sig, TR::Tree
                TR::Node *prevCall = node->getFirstChild();
                while (skipNodeUnderOSR(cursor->getNode()))
                   {
-                  if (trace())
-                     traceMsg(comp(), "Skipping OSR node [%p] when searching for append with integer\n", node);
+                  logprintf(trace(), log, "Skipping OSR node [%p] when searching for append with integer\n", node);
 
                   // Check the additional reference to Integer.toString is seen
                   if (cursor->getNode()->getOpCode().isStoreDirect() && cursor->getNode()->getFirstChild() == prevCall)
@@ -2158,8 +2115,7 @@ TR::TreeTop *TR_StringPeepholes::searchForInitCall(const char *sig, TR::TreeTop 
 
       if (skipNodeUnderOSR(node))
          {
-         if (trace())
-            traceMsg(comp(), "Skipping OSR node [%p] when searching for init\n", node);
+         logprintf(trace(), comp()->log(), "Skipping OSR node [%p] when searching for init\n", node);
          continue;
          }
 
@@ -2192,8 +2148,7 @@ TR::TreeTop *TR_StringPeepholes::searchForToStringCall(TR::TreeTop *tt, TR::Tree
 
       if (skipNodeUnderOSR(node))
          {
-         if (trace())
-            traceMsg(comp(), "Skipping OSR node [%p] when searching for toString\n", node);
+         logprintf(trace(), comp()->log(), "Skipping OSR node [%p] when searching for toString\n", node);
          continue;
          }
 
@@ -2228,7 +2183,7 @@ void TR_StringPeepholes::postProcessTreesForOSR(TR::TreeTop *startTree, TR::Tree
          {
          TR::Node* startNode = startTree->getNode();
          TR::Node* endNode = endTree->getNode();
-         traceMsg(comp(), "Post process Trees from %p n%dn to %p n%dn for OSR\n", startNode, startNode->getGlobalIndex(), endNode, endNode->getGlobalIndex());
+         comp()->log()->printf("Post process Trees from %p n%dn to %p n%dn for OSR\n", startNode, startNode->getGlobalIndex(), endNode, endNode->getGlobalIndex());
          }
 
       TR::TransformUtil::removePotentialOSRPointHelperCalls(comp(), startTree, endTree);

@@ -57,6 +57,7 @@
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/Optimizations.hpp"
 #include "optimizer/TransformUtil.hpp"
+#include "ras/Logger.hpp"
 
 #define OPT_DETAILS "O^O PROFILE GENERATOR: "
 #define MAX_NUMBER_OF_ALLOWED_NODES 90000
@@ -77,13 +78,14 @@ TR_ProfileGenerator::TR_ProfileGenerator(TR::OptimizationManager *manager)
 
 int32_t TR_ProfileGenerator::perform()
    {
+   OMR::Logger *log = comp()->log();
+
    /**
     * Duplication is not necessary under JProfiling
     */
    if (comp()->getProfilingMode() != JitProfiling)
       {
-      if (trace())
-         traceMsg(comp(), "Profile Generator is only required by JitProfiling instrumentation\n");
+      logprints(trace(), log, "Profile Generator is only required by JitProfiling instrumentation\n");
       return 0;
       }
 
@@ -214,8 +216,8 @@ int32_t TR_ProfileGenerator::perform()
 
    if (trace())
       {
-      traceMsg(comp(), "Starting Profile Generation for %s\n", comp()->signature());
-      comp()->dumpMethodTrees("Trees before Profile Generation");
+      log->printf("Starting Profile Generation for %s\n", comp()->signature());
+      comp()->dumpMethodTrees(log, "Trees before Profile Generation");
       }
 
    {
@@ -244,8 +246,8 @@ int32_t TR_ProfileGenerator::perform()
 
    if (trace())
       {
-      comp()->dumpMethodTrees("Trees after Profile Generation");
-      traceMsg(comp(), "Ending Profile Generation");
+      comp()->dumpMethodTrees(log, "Trees after Profile Generation");
+      log->prints("Ending Profile Generation");
       }
 
    return 2;

@@ -32,6 +32,7 @@
 #include "compile/J9Compilation.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/RelocationRuntime.hpp"
 #include "runtime/SymbolValidationManager.hpp"
 
@@ -168,9 +169,8 @@ TR::SymbolValidationManager::isClassWorthRemembering(TR_OpaqueClassBlock *clazz)
          if (systemClassNotWorthRemembering->_clazz &&
              _fej9->isSameOrSuperClass((J9Class *)systemClassNotWorthRemembering->_clazz, (J9Class *)clazz))
             {
-            if (_comp->getOption(TR_TraceRelocatableDataCG))
-               traceMsg(_comp, "isClassWorthRemembering: clazz %p is or inherits from %s (%p)\n",
-                        clazz, systemClassNotWorthRemembering->_className, systemClassNotWorthRemembering->_clazz);
+            logprintf(_comp->getOption(TR_TraceRelocatableDataCG), _comp->log(), "isClassWorthRemembering: clazz %p is or inherits from %s (%p)\n",
+                  clazz, systemClassNotWorthRemembering->_className, systemClassNotWorthRemembering->_clazz);
 
             worthRemembering = false;
             }
@@ -223,6 +223,8 @@ TR::SymbolValidationManager::populateWellKnownClasses()
       "com/ibm/jit/JITHelpers",
       };
 
+   OMR::Logger *log = _comp->log();
+
    unsigned int includedClasses = 0;
 
    static_assert(
@@ -232,6 +234,8 @@ TR::SymbolValidationManager::populateWellKnownClasses()
    static_assert(
       CHAR_BIT * sizeof (includedClasses) >= WELL_KNOWN_CLASS_COUNT,
       "includedClasses needs >= WELL_KNOWN_CLASS_COUNT bits");
+
+   bool trace = _comp->getOption(TR_TraceRelocatableDataCG);
 
    uintptr_t classChainOffsets[1 + WELL_KNOWN_CLASS_COUNT] = {0};
    uintptr_t *classCount = &classChainOffsets[0];
@@ -253,11 +257,11 @@ TR::SymbolValidationManager::populateWellKnownClasses()
       uintptr_t chainOffset = TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET;
       if (wkClass == NULL)
          {
-         traceMsg(_comp, "well-known class %s not found\n", name);
+         logprintf(trace, log, "well-known class %s not found\n", name);
          }
       else if (!_fej9->isPublicClass(wkClass))
          {
-         traceMsg(_comp, "well-known class %s is not public\n", name);
+         logprintf(trace, log, "well-known class %s is not public\n", name);
          }
       else
          {
@@ -273,7 +277,7 @@ TR::SymbolValidationManager::populateWellKnownClasses()
 
       if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == chainOffset)
          {
-         traceMsg(_comp, "no class chain for well-known class %s\n", name);
+         logprintf(trace, log, "no class chain for well-known class %s\n", name);
          SVM_ASSERT_NONFATAL(
             i >= REQUIRED_WELL_KNOWN_CLASS_COUNT,
             "failed to remember required class %s\n",
@@ -571,10 +575,15 @@ TR::SymbolValidationManager::appendNewRecord(void *value, TR::SymbolValidationRe
    _symbolValidationRecords.push_front(record);
    _alreadyGeneratedRecords.insert(record);
 
-   record->printFields();
-   traceMsg(_comp, "\tkind=%d\n", record->_kind);
-   traceMsg(_comp, "\tid=%d\n", (uint32_t)getSymbolIDFromValue(value));
-   traceMsg(_comp, "\n");
+   if (_comp->getOption(TR_TraceRelocatableDataCG))
+      {
+      record->printFields();
+
+      OMR::Logger *log = _comp->log();
+      log->printf("\tkind=%d\n", record->_kind);
+      log->printf("\tid=%d\n", (uint32_t)getSymbolIDFromValue(value));
+      log->println();
+      }
    }
 
 void
@@ -1783,7 +1792,7 @@ static void printClass(TR_OpaqueClassBlock *clazz)
    if (clazz != NULL)
       {
       J9UTF8 *className = J9ROMCLASS_CLASSNAME(TR::Compiler->cls.romClassOf(clazz));
-      traceMsg(TR::comp(), "\tclassName=%.*s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+      TR::comp()->log()->printf("\tclassName=%.*s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className));
       }
    }
 
@@ -1828,9 +1837,10 @@ namespace // file-local
 
 void TR::ClassValidationRecordWithChain::printFields()
    {
-   traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
+   OMR::Logger *log = TR::comp()->log();
+   log->printf("\t_class=0x%p\n", _class);
    printClass(_class);
-   traceMsg(TR::comp(), "\t_classChainOffset=%" OMR_PRIuPTR "\n", _classChainOffset);
+   log->printf("\t_classChainOffset=%" OMR_PRIuPTR "\n", _classChainOffset);
    }
 
 bool TR::ClassByNameRecord::isLessThanWithinKind(SymbolValidationRecord *other)
@@ -1843,9 +1853,10 @@ bool TR::ClassByNameRecord::isLessThanWithinKind(SymbolValidationRecord *other)
 
 void TR::ClassByNameRecord::printFields()
    {
-   traceMsg(TR::comp(), "ClassByNameRecord\n");
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("ClassByNameRecord\n");
    TR::ClassValidationRecordWithChain::printFields();
-   traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
+   log->printf("\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
    }
 
@@ -1858,10 +1869,11 @@ bool TR::ProfiledClassRecord::isLessThanWithinKind(SymbolValidationRecord *other
 
 void TR::ProfiledClassRecord::printFields()
    {
-   traceMsg(TR::comp(), "ProfiledClassRecord\n");
-   traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("ProfiledClassRecord\n");
+   log->printf("\t_class=0x%p\n", _class);
    printClass(_class);
-   traceMsg(TR::comp(), "\t_classChainOffset=%" OMR_PRIuPTR "\n", _classChainOffset);
+   log->printf("\t_classChainOffset=%" OMR_PRIuPTR "\n", _classChainOffset);
    }
 
 bool TR::ClassFromCPRecord::isLessThanWithinKind(SymbolValidationRecord *other)
@@ -1874,12 +1886,13 @@ bool TR::ClassFromCPRecord::isLessThanWithinKind(SymbolValidationRecord *other)
 
 void TR::ClassFromCPRecord::printFields()
    {
-   traceMsg(TR::comp(), "ClassFromCPRecord\n");
-   traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("ClassFromCPRecord\n");
+   log->printf("\t_class=0x%p\n", _class);
    printClass(_class);
-   traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
+   log->printf("\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
-   traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
+   log->printf("\t_cpIndex=%d\n", _cpIndex);
    }
 
 bool TR::DefiningClassFromCPRecord::isLessThanWithinKind(
@@ -1894,13 +1907,14 @@ bool TR::DefiningClassFromCPRecord::isLessThanWithinKind(
 
 void TR::DefiningClassFromCPRecord::printFields()
    {
-   traceMsg(TR::comp(), "DefiningClassFromCPRecord\n");
-   traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("DefiningClassFromCPRecord\n");
+   log->printf("\t_class=0x%p\n", _class);
    printClass(_class);
-   traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
+   log->printf("\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
-   traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
-   traceMsg(TR::comp(), "\t_isStatic=%s\n", (_isStatic ? "true" : "false"));
+   log->printf("\t_cpIndex=%d\n", _cpIndex);
+   log->printf("\t_isStatic=%s\n", (_isStatic ? "true" : "false"));
    }
 
 bool TR::StaticClassFromCPRecord::isLessThanWithinKind(
@@ -1914,12 +1928,13 @@ bool TR::StaticClassFromCPRecord::isLessThanWithinKind(
 
 void TR::StaticClassFromCPRecord::printFields()
    {
-   traceMsg(TR::comp(), "StaticClassFromCPRecord\n");
-   traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("StaticClassFromCPRecord\n");
+   log->printf("\t_class=0x%p\n", _class);
    printClass(_class);
-   traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
+   log->printf("\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
-   traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
+   log->printf("\t_cpIndex=%d\n", _cpIndex);
    }
 
 bool TR::ArrayClassFromComponentClassRecord::isLessThanWithinKind(
@@ -1932,10 +1947,11 @@ bool TR::ArrayClassFromComponentClassRecord::isLessThanWithinKind(
 
 void TR::ArrayClassFromComponentClassRecord::printFields()
    {
-   traceMsg(TR::comp(), "ArrayClassFromComponentClassRecord\n");
-   traceMsg(TR::comp(), "\t_arrayClass=0x%p\n", _arrayClass);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("ArrayClassFromComponentClassRecord\n");
+   log->printf("\t_arrayClass=0x%p\n", _arrayClass);
    printClass(_arrayClass);
-   traceMsg(TR::comp(), "\t_componentClass=0x%p\n", _componentClass);
+   log->printf("\t_componentClass=0x%p\n", _componentClass);
    printClass(_componentClass);
    }
 
@@ -1949,10 +1965,11 @@ bool TR::SuperClassFromClassRecord::isLessThanWithinKind(
 
 void TR::SuperClassFromClassRecord::printFields()
    {
-   traceMsg(TR::comp(), "SuperClassFromClassRecord\n");
-   traceMsg(TR::comp(), "\t_superClass=0x%p\n", _superClass);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("SuperClassFromClassRecord\n");
+   log->printf("\t_superClass=0x%p\n", _superClass);
    printClass(_superClass);
-   traceMsg(TR::comp(), "\t_childClass=0x%p\n", _childClass);
+   log->printf("\t_childClass=0x%p\n", _childClass);
    printClass(_childClass);
    }
 
@@ -1969,14 +1986,15 @@ bool TR::ClassInstanceOfClassRecord::isLessThanWithinKind(
 
 void TR::ClassInstanceOfClassRecord::printFields()
    {
-   traceMsg(TR::comp(), "ClassInstanceOfClassRecord\n");
-   traceMsg(TR::comp(), "\t_classOne=0x%p\n", _classOne);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("ClassInstanceOfClassRecord\n");
+   log->printf("\t_classOne=0x%p\n", _classOne);
    printClass(_classOne);
-   traceMsg(TR::comp(), "\t_classTwo=0x%p\n", _classTwo);
+   log->printf("\t_classTwo=0x%p\n", _classTwo);
    printClass(_classTwo);
-   traceMsg(TR::comp(), "\t_objectTypeIsFixed=%s\n", _objectTypeIsFixed ? "true" : "false");
-   traceMsg(TR::comp(), "\t_castTypeIsFixed=%s\n", _castTypeIsFixed ? "true" : "false");
-   traceMsg(TR::comp(), "\t_isInstanceOf=%s\n", _isInstanceOf ? "true" : "false");
+   log->printf("\t_objectTypeIsFixed=%s\n", _objectTypeIsFixed ? "true" : "false");
+   log->printf("\t_castTypeIsFixed=%s\n", _castTypeIsFixed ? "true" : "false");
+   log->printf("\t_isInstanceOf=%s\n", _isInstanceOf ? "true" : "false");
    }
 
 bool TR::SystemClassByNameRecord::isLessThanWithinKind(SymbolValidationRecord *other)
@@ -1988,7 +2006,7 @@ bool TR::SystemClassByNameRecord::isLessThanWithinKind(SymbolValidationRecord *o
 
 void TR::SystemClassByNameRecord::printFields()
    {
-   traceMsg(TR::comp(), "SystemClassByNameRecord\n");
+   TR::comp()->log()->prints("SystemClassByNameRecord\n");
    TR::ClassValidationRecordWithChain::printFields();
    }
 
@@ -2003,12 +2021,13 @@ bool TR::ClassFromITableIndexCPRecord::isLessThanWithinKind(
 
 void TR::ClassFromITableIndexCPRecord::printFields()
    {
-   traceMsg(TR::comp(), "ClassFromITableIndexCPRecord\n");
-   traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("ClassFromITableIndexCPRecord\n");
+   log->printf("\t_class=0x%p\n", _class);
    printClass(_class);
-   traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
+   log->printf("\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
-   traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
+   log->printf("\t_cpIndex=%d\n", _cpIndex);
    }
 
 bool TR::DeclaringClassFromFieldOrStaticRecord::isLessThanWithinKind(
@@ -2022,12 +2041,13 @@ bool TR::DeclaringClassFromFieldOrStaticRecord::isLessThanWithinKind(
 
 void TR::DeclaringClassFromFieldOrStaticRecord::printFields()
    {
-   traceMsg(TR::comp(), "DeclaringClassFromFieldOrStaticRecord\n");
-   traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("DeclaringClassFromFieldOrStaticRecord\n");
+   log->printf("\t_class=0x%p\n", _class);
    printClass(_class);
-   traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
+   log->printf("\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
-   traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
+   log->printf("\t_cpIndex=%d\n", _cpIndex);
    }
 
 bool TR::ConcreteSubClassFromClassRecord::isLessThanWithinKind(
@@ -2040,9 +2060,10 @@ bool TR::ConcreteSubClassFromClassRecord::isLessThanWithinKind(
 
 void TR::ConcreteSubClassFromClassRecord::printFields()
    {
-   traceMsg(TR::comp(), "ConcreteSubClassFromClassRecord\n");
-   traceMsg(TR::comp(), "\t_childClass=0x%p\n", _childClass);
-   traceMsg(TR::comp(), "\t_superClass=0x%p\n", _superClass);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("ConcreteSubClassFromClassRecord\n");
+   log->printf("\t_childClass=0x%p\n", _childClass);
+   log->printf("\t_superClass=0x%p\n", _superClass);
    }
 
 bool TR::ClassChainRecord::isLessThanWithinKind(SymbolValidationRecord *other)
@@ -2054,10 +2075,11 @@ bool TR::ClassChainRecord::isLessThanWithinKind(SymbolValidationRecord *other)
 
 void TR::ClassChainRecord::printFields()
    {
-   traceMsg(TR::comp(), "ClassChainRecord\n");
-   traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("ClassChainRecord\n");
+   log->printf("\t_class=0x%p\n", _class);
    printClass(_class);
-   traceMsg(TR::comp(), "\t_classChainOffset=%" OMR_PRIuPTR "\n", _classChainOffset);
+   log->printf("\t_classChainOffset=%" OMR_PRIuPTR "\n", _classChainOffset);
    }
 
 bool TR::MethodFromClassRecord::isLessThanWithinKind(
@@ -2071,11 +2093,12 @@ bool TR::MethodFromClassRecord::isLessThanWithinKind(
 
 void TR::MethodFromClassRecord::printFields()
    {
-   traceMsg(TR::comp(), "MethodFromClassRecord\n");
-   traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
-   traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("MethodFromClassRecord\n");
+   log->printf("\t_method=0x%p\n", _method);
+   log->printf("\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
-   traceMsg(TR::comp(), "\t_index=%u\n", _index);
+   log->printf("\t_index=%u\n", _index);
    }
 
 bool TR::StaticMethodFromCPRecord::isLessThanWithinKind(
@@ -2089,11 +2112,12 @@ bool TR::StaticMethodFromCPRecord::isLessThanWithinKind(
 
 void TR::StaticMethodFromCPRecord::printFields()
    {
-   traceMsg(TR::comp(), "StaticMethodFromCPRecord\n");
-   traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
-   traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("StaticMethodFromCPRecord\n");
+   log->printf("\t_method=0x%p\n", _method);
+   log->printf("\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
-   traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
+   log->printf("\t_cpIndex=%d\n", _cpIndex);
    }
 
 bool TR::SpecialMethodFromCPRecord::isLessThanWithinKind(
@@ -2107,11 +2131,12 @@ bool TR::SpecialMethodFromCPRecord::isLessThanWithinKind(
 
 void TR::SpecialMethodFromCPRecord::printFields()
    {
-   traceMsg(TR::comp(), "SpecialMethodFromCPRecord\n");
-   traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
-   traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("SpecialMethodFromCPRecord\n");
+   log->printf("\t_method=0x%p\n", _method);
+   log->printf("\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
-   traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
+   log->printf("\t_cpIndex=%d\n", _cpIndex);
    }
 
 bool TR::VirtualMethodFromCPRecord::isLessThanWithinKind(
@@ -2125,11 +2150,12 @@ bool TR::VirtualMethodFromCPRecord::isLessThanWithinKind(
 
 void TR::VirtualMethodFromCPRecord::printFields()
    {
-   traceMsg(TR::comp(), "VirtualMethodFromCPRecord\n");
-   traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
-   traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("VirtualMethodFromCPRecord\n");
+   log->printf("\t_method=0x%p\n", _method);
+   log->printf("\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
-   traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
+   log->printf("\t_cpIndex=%d\n", _cpIndex);
    }
 
 bool TR::VirtualMethodFromOffsetRecord::isLessThanWithinKind(
@@ -2144,12 +2170,13 @@ bool TR::VirtualMethodFromOffsetRecord::isLessThanWithinKind(
 
 void TR::VirtualMethodFromOffsetRecord::printFields()
    {
-   traceMsg(TR::comp(), "VirtualMethodFromOffsetRecord\n");
-   traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
-   traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("VirtualMethodFromOffsetRecord\n");
+   log->printf("\t_method=0x%p\n", _method);
+   log->printf("\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
-   traceMsg(TR::comp(), "\t_virtualCallOffset=%d\n", _virtualCallOffset);
-   traceMsg(TR::comp(), "\t_ignoreRtResolve=%s\n", _ignoreRtResolve ? "true" : "false");
+   log->printf("\t_virtualCallOffset=%d\n", _virtualCallOffset);
+   log->printf("\t_ignoreRtResolve=%s\n", _ignoreRtResolve ? "true" : "false");
    }
 
 bool TR::InterfaceMethodFromCPRecord::isLessThanWithinKind(
@@ -2164,13 +2191,14 @@ bool TR::InterfaceMethodFromCPRecord::isLessThanWithinKind(
 
 void TR::InterfaceMethodFromCPRecord::printFields()
    {
-   traceMsg(TR::comp(), "InterfaceMethodFromCPRecord\n");
-   traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
-   traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("InterfaceMethodFromCPRecord\n");
+   log->printf("\t_method=0x%p\n", _method);
+   log->printf("\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
-   traceMsg(TR::comp(), "\t_lookup=0x%p\n", _lookup);
+   log->printf("\t_lookup=0x%p\n", _lookup);
    printClass(_lookup);
-   traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
+   log->printf("\t_cpIndex=%d\n", _cpIndex);
    }
 
 bool TR::MethodFromClassAndSigRecord::isLessThanWithinKind(
@@ -2184,11 +2212,12 @@ bool TR::MethodFromClassAndSigRecord::isLessThanWithinKind(
 
 void TR::MethodFromClassAndSigRecord::printFields()
    {
-   traceMsg(TR::comp(), "MethodFromClassAndSigRecord\n");
-   traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
-   traceMsg(TR::comp(), "\t_methodClass=0x%p\n", _lookupClass);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("MethodFromClassAndSigRecord\n");
+   log->printf("\t_method=0x%p\n", _method);
+   log->printf("\t_methodClass=0x%p\n", _lookupClass);
    printClass(_lookupClass);
-   traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
+   log->printf("\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
    }
 
@@ -2203,11 +2232,12 @@ bool TR::StackWalkerMaySkipFramesRecord::isLessThanWithinKind(
 
 void TR::StackWalkerMaySkipFramesRecord::printFields()
    {
-   traceMsg(TR::comp(), "StackWalkerMaySkipFramesRecord\n");
-   traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
-   traceMsg(TR::comp(), "\t_methodClass=0x%p\n", _methodClass);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("StackWalkerMaySkipFramesRecord\n");
+   log->printf("\t_method=0x%p\n", _method);
+   log->printf("\t_methodClass=0x%p\n", _methodClass);
    printClass(_methodClass);
-   traceMsg(TR::comp(), "\t_skipFrames=%sp\n", _skipFrames ? "true" : "false");
+   log->printf("\t_skipFrames=%sp\n", _skipFrames ? "true" : "false");
    }
 
 bool TR::ClassInfoIsInitialized::isLessThanWithinKind(
@@ -2220,10 +2250,11 @@ bool TR::ClassInfoIsInitialized::isLessThanWithinKind(
 
 void TR::ClassInfoIsInitialized::printFields()
    {
-   traceMsg(TR::comp(), "ClassInfoIsInitialized\n");
-   traceMsg(TR::comp(), "\t_class=0x%p\n", _class);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("ClassInfoIsInitialized\n");
+   log->printf("\t_class=0x%p\n", _class);
    printClass(_class);
-   traceMsg(TR::comp(), "\t_isInitialized=%sp\n", _isInitialized ? "true" : "false");
+   log->printf("\t_isInitialized=%sp\n", _isInitialized ? "true" : "false");
    }
 
 bool TR::MethodFromSingleImplementer::isLessThanWithinKind(
@@ -2240,13 +2271,14 @@ bool TR::MethodFromSingleImplementer::isLessThanWithinKind(
 
 void TR::MethodFromSingleImplementer::printFields()
    {
-   traceMsg(TR::comp(), "MethodFromSingleImplementer\n");
-   traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
-   traceMsg(TR::comp(), "\t_thisClass=0x%p\n", _thisClass);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("MethodFromSingleImplementer\n");
+   log->printf("\t_method=0x%p\n", _method);
+   log->printf("\t_thisClass=0x%p\n", _thisClass);
    printClass(_thisClass);
-   traceMsg(TR::comp(), "\t_cpIndexOrVftSlot=%d\n", _cpIndexOrVftSlot);
-   traceMsg(TR::comp(), "\t_callerMethod=0x%p\n", _callerMethod);
-   traceMsg(TR::comp(), "\t_useGetResolvedInterfaceMethod=%d\n", _useGetResolvedInterfaceMethod);
+   log->printf("\t_cpIndexOrVftSlot=%d\n", _cpIndexOrVftSlot);
+   log->printf("\t_callerMethod=0x%p\n", _callerMethod);
+   log->printf("\t_useGetResolvedInterfaceMethod=%d\n", _useGetResolvedInterfaceMethod);
    }
 
 bool TR::MethodFromSingleInterfaceImplementer::isLessThanWithinKind(
@@ -2261,12 +2293,13 @@ bool TR::MethodFromSingleInterfaceImplementer::isLessThanWithinKind(
 
 void TR::MethodFromSingleInterfaceImplementer::printFields()
    {
-   traceMsg(TR::comp(), "MethodFromSingleInterfaceImplementer\n");
-   traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
-   traceMsg(TR::comp(), "\t_thisClass=0x%p\n", _thisClass);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("MethodFromSingleInterfaceImplementer\n");
+   log->printf("\t_method=0x%p\n", _method);
+   log->printf("\t_thisClass=0x%p\n", _thisClass);
    printClass(_thisClass);
-   traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
-   traceMsg(TR::comp(), "\t_callerMethod=0x%p\n", _callerMethod);
+   log->printf("\t_cpIndex=%d\n", _cpIndex);
+   log->printf("\t_callerMethod=0x%p\n", _callerMethod);
    }
 
 bool TR::MethodFromSingleAbstractImplementer::isLessThanWithinKind(
@@ -2281,12 +2314,13 @@ bool TR::MethodFromSingleAbstractImplementer::isLessThanWithinKind(
 
 void TR::MethodFromSingleAbstractImplementer::printFields()
    {
-   traceMsg(TR::comp(), "MethodFromSingleAbstractImplementer\n");
-   traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
-   traceMsg(TR::comp(), "\t_thisClass=0x%p\n", _thisClass);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("MethodFromSingleAbstractImplementer\n");
+   log->printf("\t_method=0x%p\n", _method);
+   log->printf("\t_thisClass=0x%p\n", _thisClass);
    printClass(_thisClass);
-   traceMsg(TR::comp(), "\t_vftSlot=%d\n", _vftSlot);
-   traceMsg(TR::comp(), "\t_callerMethod=0x%p\n", _callerMethod);
+   log->printf("\t_vftSlot=%d\n", _vftSlot);
+   log->printf("\t_callerMethod=0x%p\n", _callerMethod);
    }
 
 bool TR::ImproperInterfaceMethodFromCPRecord::isLessThanWithinKind(
@@ -2300,11 +2334,12 @@ bool TR::ImproperInterfaceMethodFromCPRecord::isLessThanWithinKind(
 
 void TR::ImproperInterfaceMethodFromCPRecord::printFields()
    {
-   traceMsg(TR::comp(), "ImproperInterfaceMethodFromCPRecord\n");
-   traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
-   traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("ImproperInterfaceMethodFromCPRecord\n");
+   log->printf("\t_method=0x%p\n", _method);
+   log->printf("\t_beholder=0x%p\n", _beholder);
    printClass(_beholder);
-   traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
+   log->printf("\t_cpIndex=%d\n", _cpIndex);
    }
 
 bool TR::J2IThunkFromMethodRecord::isLessThanWithinKind(
@@ -2317,9 +2352,10 @@ bool TR::J2IThunkFromMethodRecord::isLessThanWithinKind(
 
 void TR::J2IThunkFromMethodRecord::printFields()
    {
-   traceMsg(TR::comp(), "J2IThunkFromMethodRecord\n");
-   traceMsg(TR::comp(), "\t_thunk=0x%p\n", _thunk);
-   traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("J2IThunkFromMethodRecord\n");
+   log->printf("\t_thunk=0x%p\n", _thunk);
+   log->printf("\t_method=0x%p\n", _method);
    }
 
 bool TR::IsClassVisibleRecord::isLessThanWithinKind(
@@ -2333,12 +2369,13 @@ bool TR::IsClassVisibleRecord::isLessThanWithinKind(
 
 void TR::IsClassVisibleRecord::printFields()
    {
-   traceMsg(TR::comp(), "IsClassVisibleRecord\n");
-   traceMsg(TR::comp(), "\t_sourceClass=0x%p\n", _sourceClass);
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("IsClassVisibleRecord\n");
+   log->printf("\t_sourceClass=0x%p\n", _sourceClass);
    printClass(_sourceClass);
-   traceMsg(TR::comp(), "\t_destClass=0x%p\n", _destClass);
+   log->printf("\t_destClass=0x%p\n", _destClass);
    printClass(_destClass);
-   traceMsg(TR::comp(), "\t_isVisible=%s\n", _isVisible ? "true" : "false");
+   log->printf("\t_isVisible=%s\n", _isVisible ? "true" : "false");
    }
 
 bool TR::DynamicMethodFromCallsiteIndexRecord::isLessThanWithinKind(
@@ -2353,11 +2390,12 @@ bool TR::DynamicMethodFromCallsiteIndexRecord::isLessThanWithinKind(
 
 void TR::DynamicMethodFromCallsiteIndexRecord::printFields()
    {
-   traceMsg(TR::comp(), "DynamicMethodFromCallsiteIndexRecord\n");
-   traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
-   traceMsg(TR::comp(), "\t_caller=0x%p\n", _caller);
-   traceMsg(TR::comp(), "\t_callsiteIndex=%d\n", _callsiteIndex);
-   traceMsg(TR::comp(), "\t_appendixObjectNull=%s\n", _appendixObjectNull ? "true" : "false");
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("DynamicMethodFromCallsiteIndexRecord\n");
+   log->printf("\t_method=0x%p\n", _method);
+   log->printf("\t_caller=0x%p\n", _caller);
+   log->printf("\t_callsiteIndex=%d\n", _callsiteIndex);
+   log->printf("\t_appendixObjectNull=%s\n", _appendixObjectNull ? "true" : "false");
    }
 
 bool TR::HandleMethodFromCPIndex::isLessThanWithinKind(
@@ -2372,9 +2410,10 @@ bool TR::HandleMethodFromCPIndex::isLessThanWithinKind(
 
 void TR::HandleMethodFromCPIndex::printFields()
    {
-   traceMsg(TR::comp(), "HandleMethodFromCPIndex\n");
-   traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
-   traceMsg(TR::comp(), "\t_caller=0x%p\n", _caller);
-   traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
-   traceMsg(TR::comp(), "\t_appendixObjectNull=%s\n", _appendixObjectNull ? "true" : "false");
+   OMR::Logger *log = TR::comp()->log();
+   log->prints("HandleMethodFromCPIndex\n");
+   log->printf("\t_method=0x%p\n", _method);
+   log->printf("\t_caller=0x%p\n", _caller);
+   log->printf("\t_cpIndex=%d\n", _cpIndex);
+   log->printf("\t_appendixObjectNull=%s\n", _appendixObjectNull ? "true" : "false");
    }

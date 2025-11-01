@@ -35,6 +35,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "optimizer/TransformUtil.hpp"
 #include "optimizer/JProfilingBlock.hpp"
+#include "ras/Logger.hpp"
 
 int32_t TR_JProfilingRecompLoopTest::maxLoopRecompilationThreshold = 10000;
 /**
@@ -58,8 +59,7 @@ TR_JProfilingRecompLoopTest::perform()
    {
    if (comp()->getProfilingMode() != JProfiling)
       {
-      if (trace())
-         traceMsg(comp(), "JProfiling for profiling compilations has not been enabled, skip JProfilingRecompLoopTest\n");
+      logprints(trace(), comp()->log(), "JProfiling for profiling compilations has not been enabled, skip JProfilingRecompLoopTest\n");
       return 0;
       }
 
@@ -67,8 +67,7 @@ TR_JProfilingRecompLoopTest::perform()
    TR_BlockFrequencyInfo *bfi = TR_BlockFrequencyInfo::get(profileInfo);
    if (!bfi)
       {
-      if (trace())
-         traceMsg(comp(), "Block frequency info does not exist, skip JProfilingRecompLoopTest\n");
+      logprints(trace(), comp()->log(), "Block frequency info does not exist, skip JProfilingRecompLoopTest\n");
       return 0;
       }
 
@@ -166,6 +165,7 @@ TR_JProfilingRecompLoopTest::perform()
 void
 TR_JProfilingRecompLoopTest::addRecompilationTests(TR::Compilation *comp, RecompilationTestLocationsInfo &testLocations, TR_BlockFrequencyInfo *bfi)
    {
+   OMR::Logger *log = comp->log();
    TR::CFG *cfg = comp->getFlowGraph();
    // TODO: We should do experiment with fixing the structure instead of invalidating and do compile time
    // Experiment to see which is better.
@@ -175,8 +175,7 @@ TR_JProfilingRecompLoopTest::addRecompilationTests(TR::Compilation *comp, Recomp
    // This base recompile threshold in conjunction with the depth in loop is compared with the raw count of the
    // loop to decide if we have run this loop enough time to trip method recompilation.
    static int32_t recompileThreshold = comp->getOptions()->getJProfilingLoopRecompThreshold();
-   if (trace())
-      traceMsg(comp, "Loop Recompilation Base Threshold = %d\n",recompileThreshold);
+   logprintf(trace(), log, "Loop Recompilation Base Threshold = %d\n", recompileThreshold);
    // Iterating backwards to avoid losing original block associated with the test location tree tops in case we have found multiple
    // recompilation test location in same block.
    for (auto testLocationIter = testLocations.rbegin(), testLocationEnd = testLocations.rend(); testLocationIter != testLocationEnd; ++testLocationIter)
@@ -185,8 +184,7 @@ TR_JProfilingRecompLoopTest::addRecompilationTests(TR::Compilation *comp, Recomp
       TR::Block *originalBlock = testLocationIter->first.second;
       TR::Node *node = asyncCheckTreeTop->getNode();
       int32_t depth = testLocationIter->second;
-      if (trace())
-         traceMsg(comp, "block_%d, n%dn, depth = %d\n",originalBlock->getNumber(), asyncCheckTreeTop->getNode()->getGlobalIndex(), depth);
+      logprintf(trace(), log, "block_%d, n%dn, depth = %d\n", originalBlock->getNumber(), asyncCheckTreeTop->getNode()->getGlobalIndex(), depth);
       TR_ByteCodeInfo bci = asyncCheckTreeTop->getNode()->getByteCodeInfo();
 
       TR::Node *root = bfi->generateBlockRawCountCalculationSubTree(comp, node, trace());
@@ -247,9 +245,8 @@ TR_JProfilingRecompLoopTest::addRecompilationTests(TR::Compilation *comp, Recomp
          cfg->addEdge(TR::CFGEdge::createEdge(originalBlock, callRecompileBlock, comp->trMemory()));
          }
       cfg->addEdge(TR::CFGEdge::createEdge(callRecompileBlock, remainingCodeBlock, comp->trMemory()));
-      if (trace())
-         traceMsg(comp,"\t\t Newly created recompilation Test : Threshold comparison Node n%dn\n\t\tRecompilation Call in block_%d\n",
-            cmpNode->getGlobalIndex(), callRecompileBlock->getNumber());
+      logprintf(trace(), log, "\t\t Newly created recompilation Test : Threshold comparison Node n%dn\n\t\tRecompilation Call in block_%d\n",
+         cmpNode->getGlobalIndex(), callRecompileBlock->getNumber());
       }
    }
 

@@ -36,6 +36,7 @@
 #include "il/SymbolReference.hpp"
 #include "optimizer/VectorAPIExpansion.hpp"
 #include "optimizer/TransformUtil.hpp"
+#include "ras/Logger.hpp"
 
 
 const char *
@@ -220,8 +221,7 @@ TR_VectorAPIExpansion::alias(TR::Node *node1, TR::Node *node2, bool aliasTemps)
    if (_aliasTable[id2]._aliases == NULL)
       _aliasTable[id2]._aliases = new (comp()->trStackMemory()) TR_BitVector(symRefCount, comp()->trMemory(), stackAlloc);
 
-   if (_trace)
-      traceMsg(comp(), "%s aliasing symref #%d to symref #%d (nodes %p %p) for the whole class\n", OPT_DETAILS_VECTOR, id1, id2, node1, node2);
+   logprintf(_trace, comp()->log(), "%s aliasing symref #%d to symref #%d (nodes %p %p) for the whole class\n", OPT_DETAILS_VECTOR, id1, id2, node1, node2);
 
    _aliasTable[id1]._aliases->set(id2);
    _aliasTable[id2]._aliases->set(id1);
@@ -234,8 +234,7 @@ TR_VectorAPIExpansion::alias(TR::Node *node1, TR::Node *node2, bool aliasTemps)
       if (_aliasTable[id2]._tempAliases == NULL)
          _aliasTable[id2]._tempAliases = new (comp()->trStackMemory()) TR_BitVector(symRefCount, comp()->trMemory(), stackAlloc);
 
-      if (_trace)
-         traceMsg(comp(), "%s aliasing symref #%d to symref #%d (nodes %p %p) as temps\n", OPT_DETAILS_VECTOR, id1, id2, node1, node2);
+      logprintf(_trace, comp()->log(), "%s aliasing symref #%d to symref #%d (nodes %p %p) as temps\n", OPT_DETAILS_VECTOR, id1, id2, node1, node2);
 
       _aliasTable[id1]._tempAliases->set(id2);
       _aliasTable[id2]._tempAliases->set(id1);
@@ -253,8 +252,7 @@ TR_VectorAPIExpansion::treeTopAllowedWithBoxing(TR::ILOpCodes opCodeValue)
 void
 TR_VectorAPIExpansion::buildVectorAliases(bool verifyMode)
    {
-   if (_trace)
-      traceMsg(comp(), "%s Aliasing symrefs verifyMode=%d\n", OPT_DETAILS_VECTOR, verifyMode);
+   logprintf(_trace, comp()->log(), "%s Aliasing symrefs verifyMode=%d\n", OPT_DETAILS_VECTOR, verifyMode);
 
    _visitedNodes.empty();
 
@@ -279,6 +277,8 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
    {
    if (_visitedNodes.isSet(node->getGlobalIndex()))
       return;
+
+   OMR::Logger *log = comp()->log();
    _visitedNodes.set(node->getGlobalIndex());
 
    TR::ILOpCode opCode = node->getOpCode();
@@ -328,8 +328,7 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
                   }
                else
                   {
-                  if (_trace)
-                     traceMsg(comp(), "Invalidating1 #%d due to rhs %p in node %p\n", id1, rhs, node);
+                  logprintf(_trace, log, "Invalidating1 #%d due to rhs %p in node %p\n", id1, rhs, node);
                   invalidateSymRef(node->getSymbolReference());
                   }
 
@@ -352,8 +351,7 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
             _aliasTable[id1]._elementType = TR::Address;
             dontVectorizeNode(node);
 
-            if (_trace)
-               traceMsg(comp(), "Making #%d a box of unknown type due to node %p\n", id1, node);
+            logprintf(_trace, log, "Making #%d a box of unknown type due to node %p\n", id1, node);
             }
 
          if (opCodeValue == TR::astore && rhs->getOpCodeValue() == TR::aload)
@@ -389,8 +387,7 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
             }
          else
             {
-            if (_trace)
-               traceMsg(comp(), "Invalidating2 #%d due to rhs %p in node %p\n", id1, rhs, node);
+            logprintf(_trace, log, "Invalidating2 #%d due to rhs %p in node %p\n", id1, rhs, node);
             invalidateSymRef(node->getSymbolReference());
             }
          }
@@ -483,9 +480,8 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
                   }
                else
                   {
-                  if (_trace)
-                     traceMsg(comp(), "Invalidating3 #%d due to child %d (%p) in node %p\n",
-                              node->getSymbolReference()->getReferenceNumber(), i, child, node);
+                  logprintf(_trace, log, "Invalidating3 #%d due to child %d (%p) in node %p\n",
+                     node->getSymbolReference()->getReferenceNumber(), i, child, node);
                   invalidateSymRef(node->getSymbolReference());
                   }
                }
@@ -499,9 +495,8 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
                continue;
                }
 
-            if (_trace)
-               traceMsg(comp(), "Invalidating4 #%d since it's not a vector API method in node %p\n",
-                     node->getSymbolReference()->getReferenceNumber(), node);
+            logprintf(_trace, log, "Invalidating4 #%d since it's not a vector API method in node %p\n",
+               node->getSymbolReference()->getReferenceNumber(), node);
             invalidateSymRef(node->getSymbolReference());
             continue;
             }
@@ -548,9 +543,8 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
             }
          else
             {
-            if (_trace)
-               traceMsg(comp(), "Invalidating5 #%d (isVectorAPICall=%d) due to unknown elementType=%d or numLanes=%d in node %p\n",
-                        node->getSymbolReference()->getReferenceNumber(), isVectorAPICall, (int)methodElementType, methodNumLanes, node);
+            logprintf(_trace, log, "Invalidating5 #%d (isVectorAPICall=%d) due to unknown elementType=%d or numLanes=%d in node %p\n",
+               node->getSymbolReference()->getReferenceNumber(), isVectorAPICall, (int)methodElementType, methodNumLanes, node);
 
             invalidateSymRef(node->getSymbolReference());
             }
@@ -581,9 +575,8 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
 
          if (!canVectorize)
             {
-            if (_trace)
-               traceMsg(comp(), "Can't vectorize #%d due to unsupported opcode in node %p\n",
-                                 node->getSymbolReference()->getReferenceNumber(), node);
+            logprintf(_trace, log, "Can't vectorize #%d due to unsupported opcode in node %p\n",
+               node->getSymbolReference()->getReferenceNumber(), node);
             _aliasTable[methodRefNum]._cantVectorize = true;
 
             if (!canScalarize)
@@ -596,29 +589,27 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
                   }
                else
                   {
-                  if (_trace)
-                     traceMsg(comp(), "Invalidating6 #%d due to unsupported opcode in node %p\n",
-                              node->getSymbolReference()->getReferenceNumber(), node);
+                  logprintf(_trace, log, "Invalidating6 #%d due to unsupported opcode in node %p\n",
+                     node->getSymbolReference()->getReferenceNumber(), node);
                   invalidateSymRef(node->getSymbolReference());
                   }
                }
             }
          else if (!canScalarize)
             {
-            if (_trace)
-               traceMsg(comp(), "Can't scalarize #%d due to unsupported opcode in node %p\n",
-                                 node->getSymbolReference()->getReferenceNumber(), node);
+            logprintf(_trace, log, "Can't scalarize #%d due to unsupported opcode in node %p\n",
+               node->getSymbolReference()->getReferenceNumber(), node);
             _aliasTable[methodRefNum]._cantScalarize = true;
             }
          }
 
-         if (isVectorAPICall && _trace)
+         if (isVectorAPICall)
             {
-            traceMsg(comp(), "Parsed intrinsic call node %p: elementType=%s vecLen=%d objectType=%s\n",
-                             node,
-                             TR::DataType::getName(_nodeTable[nodeIndex]._elementType),
-                             _nodeTable[nodeIndex]._vecLen,
-                             vapiObjTypeNames[_nodeTable[nodeIndex]._objectType]);
+            logprintf(_trace, log, "Parsed intrinsic call node %p: elementType=%s vecLen=%d objectType=%s\n",
+                  node,
+                  TR::DataType::getName(_nodeTable[nodeIndex]._elementType),
+                  _nodeTable[nodeIndex]._vecLen,
+                  vapiObjTypeNames[_nodeTable[nodeIndex]._objectType]);
             }
 
       }
@@ -630,8 +621,7 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
          }
       else
          {
-         if (_trace)
-            traceMsg(comp(), "Invalidating7 #%d due to its adress used by loadaddr node %p\n", node->getSymbolReference()->getReferenceNumber(), node);
+         logprintf(_trace, log, "Invalidating7 #%d due to its adress used by loadaddr node %p\n", node->getSymbolReference()->getReferenceNumber(), node);
          invalidateSymRef(node->getSymbolReference());
          }
       }
@@ -649,9 +639,8 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
             }
          else
             {
-            if (_trace)
-               traceMsg(comp(), "Invalidating8 #%d due to its address used by %p\n",
-                                 child->getSymbolReference()->getReferenceNumber(), node);
+            logprintf(_trace, log, "Invalidating8 #%d due to its address used by %p\n",
+               child->getSymbolReference()->getReferenceNumber(), node);
                invalidateSymRef(child->getSymbolReference());
             }
          }
@@ -665,9 +654,8 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
          {
          if (!boxingAllowed())
             {
-            if (_trace)
-               traceMsg(comp(), "Invalidating9 #%d due to its address used by %p\n",
-                                 child->getSymbolReference()->getReferenceNumber(), node);
+            logprintf(_trace, log, "Invalidating9 #%d due to its address used by %p\n",
+               child->getSymbolReference()->getReferenceNumber(), node);
             invalidateSymRef(child->getSymbolReference());
             }
          }
@@ -696,10 +684,9 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
 
             if (boxingAllowed())
                {
-               if (_trace)
-                  traceMsg(comp(), "Making #%d boxed since it's used by unsupported node %p (%s)\n",
-                                    child->getSymbolReference()->getReferenceNumber(), node,
-                                    node->getOpCode().getName());
+               logprintf(_trace, log, "Making #%d boxed since it's used by unsupported node %p (%s)\n",
+                  child->getSymbolReference()->getReferenceNumber(), node,
+                  node->getOpCode().getName());
 
 #if 0
                if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
@@ -712,10 +699,9 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
                }
             else
                {
-               if (_trace)
-                  traceMsg(comp(), "Invalidating10 #%d since it's used by unsupported node %p (%s)\n",
-                                    child->getSymbolReference()->getReferenceNumber(), node,
-                                    node->getOpCode().getName());
+               logprintf(_trace, log, "Invalidating10 #%d since it's used by unsupported node %p (%s)\n",
+                  child->getSymbolReference()->getReferenceNumber(), node,
+                  node->getOpCode().getName());
                invalidateSymRef(child->getSymbolReference());
                }
             }
@@ -740,6 +726,7 @@ TR_VectorAPIExpansion::findAllAliases(int32_t classId, int32_t id,
                                       TR_BitVector *vectorAliasTableElement::* aliasesField,
                                       int32_t vectorAliasTableElement::* classField)
    {
+   OMR::Logger *log = comp()->log();
    bool tempAliases = &vectorAliasTableElement::_tempAliases == aliasesField;
 
    if (_aliasTable[id].*aliasesField == NULL)
@@ -754,9 +741,9 @@ TR_VectorAPIExpansion::findAllAliases(int32_t classId, int32_t id,
 
    if (_trace)
       {
-      traceMsg(comp(), "Iterating through %s aliases for #%d:\n", tempAliases ? "temp" : "whole", id);
-      (_aliasTable[id].*aliasesField)->print(comp());
-      traceMsg(comp(), "\n");
+      log->printf("Iterating through %s aliases for #%d:\n", tempAliases ? "temp" : "whole", id);
+      (_aliasTable[id].*aliasesField)->print(log, comp());
+      log->println();
       }
 
    // we need to create a new bit vector so that we don't iterate and modify at the same time
@@ -785,8 +772,7 @@ TR_VectorAPIExpansion::findAllAliases(int32_t classId, int32_t id,
             }
          else
             {
-            if (_trace)
-               traceMsg(comp(), "Invalidating11 %s class #%d since #%d is already invalid\n", tempAliases ? "temp" : "whole", classId, i);
+            logprintf(_trace, log, "Invalidating11 %s class #%d since #%d is already invalid\n", tempAliases ? "temp" : "whole", classId, i);
             _aliasTable[classId].*classField = -1; // invalidate the whole class
             }
 
@@ -794,8 +780,7 @@ TR_VectorAPIExpansion::findAllAliases(int32_t classId, int32_t id,
 
       if (_aliasTable[i].*classField != -1 || i != classId)
          {
-         if (_trace)
-            traceMsg(comp(), "Set %s class #%d for symref #%d\n", tempAliases ? "temp" : "whole", classId, i);
+         logprintf(_trace, log, "Set %s class #%d for symref #%d\n", tempAliases ? "temp" : "whole", classId, i);
          _aliasTable[i].*classField = classId;
          }
 
@@ -808,8 +793,7 @@ TR_VectorAPIExpansion::findAllAliases(int32_t classId, int32_t id,
 void
 TR_VectorAPIExpansion::buildAliasClasses()
    {
-   if (_trace)
-      traceMsg(comp(), "%s Building alias classes\n", OPT_DETAILS_VECTOR);
+   logprintf(_trace, comp()->log(), "%s Building alias classes\n", OPT_DETAILS_VECTOR);
 
    int32_t symRefCount = comp()->getSymRefTab()->getNumSymRefs();
 
@@ -822,8 +806,7 @@ TR_VectorAPIExpansion::buildAliasClasses()
          findAllAliases(i, i, aliasesField, classField);
       }
 
-   if (_trace)
-      traceMsg(comp(), "%s Building temp alias classes\n", OPT_DETAILS_VECTOR);
+   logprintf(_trace, comp()->log(), "%s Building temp alias classes\n", OPT_DETAILS_VECTOR);
 
    aliasesField = &vectorAliasTableElement::_tempAliases;
    classField = &vectorAliasTableElement::_tempClassId;
@@ -946,7 +929,7 @@ TR_VectorAPIExpansion::getObjectTypeFromClassNode(TR::Compilation *comp, TR::Nod
 
    if (!clazz)
       {
-      traceMsg(comp, "Could not get OpaqueClassBlock from node %p\n", classNode);
+      logprintf(_trace, comp->log(), "Could not get OpaqueClassBlock from node %p\n", classNode);
       return Unknown;
       }
 
@@ -1055,7 +1038,7 @@ TR_VectorAPIExpansion::getObjectTypeFromClassNode(TR::Compilation *comp, TR::Nod
 
     if ((*(*_boxingClasses[objectType - 1])[vectorLength - 1])[elementType - 1] == NULL)
        {
-       traceMsg(comp, "Caching class for boxing: %d %d %d\n", objectType, vectorLength, elementType);
+       logprintf(_trace, comp->log(), "Caching class for boxing: %d %d %d", objectType, vectorLength, elementType);
 
        (*(*_boxingClasses[objectType - 1])[vectorLength - 1])[elementType - 1] = clazz;
        }
@@ -1068,9 +1051,9 @@ bool
 TR_VectorAPIExpansion::findVectorMethods(TR::Compilation *comp, bool reportFoundMethods)
    {
    bool trace = comp->getOption(TR_TraceVectorAPIExpansion);
+   OMR::Logger *log = comp->log();
 
-   if (trace)
-      traceMsg(comp, "%s in findVectorMethods\n", OPT_DETAILS_VECTOR);
+   logprintf(trace, log, "%s in findVectorMethods\n", OPT_DETAILS_VECTOR);
 
    for (TR::TreeTop *tt = comp->getMethodSymbol()->getFirstTreeTop(); tt ; tt = tt->getNextTreeTop())
       {
@@ -1109,8 +1092,7 @@ TR_VectorAPIExpansion::findVectorMethods(TR::Compilation *comp, bool reportFound
                }
             else
                {
-               if (trace)
-                  traceMsg(comp, "%s found Vector API method\n", OPT_DETAILS_VECTOR);
+               logprintf(trace, log, "%s found Vector API method\n", OPT_DETAILS_VECTOR);
                return true;
                }
             }
@@ -1123,6 +1105,7 @@ bool
 TR_VectorAPIExpansion::validateSymRef(int32_t id, int32_t i, vec_sz_t &classLength, TR::DataType &classType,
                                       int32_t vectorAliasTableElement::* classField)
    {
+   OMR::Logger *log = comp()->log();
    bool tempClasses = &vectorAliasTableElement::_tempClassId == classField;
 
    TR::SymbolReference *symRef = comp()->getSymRefTab()->getSymRef(i);
@@ -1132,8 +1115,7 @@ TR_VectorAPIExpansion::validateSymRef(int32_t id, int32_t i, vec_sz_t &classLeng
 
    if (_aliasTable[i].*classField == -1)
       {
-      if (_trace)
-         traceMsg(comp(), "%s invalidating12 class #%d due to symref #%d\n", OPT_DETAILS_VECTOR, id, i);
+      logprintf(_trace, log, "%s invalidating12 class #%d due to symref #%d\n", OPT_DETAILS_VECTOR, id, i);
       return false;
       }
    else if (symRef->getSymbol()->isShadow() ||
@@ -1147,8 +1129,7 @@ TR_VectorAPIExpansion::validateSymRef(int32_t id, int32_t i, vec_sz_t &classLeng
          return true;
          }
 
-      if (_trace)
-         traceMsg(comp(), "%s invalidating13 class #%d due to symref #%d\n", OPT_DETAILS_VECTOR, id, i);
+      logprintf(_trace, log, "%s invalidating13 class #%d due to symref #%d\n", OPT_DETAILS_VECTOR, id, i);
       return false;
       }
    else if (symRef->getSymbol()->isMethod())
@@ -1161,8 +1142,7 @@ TR_VectorAPIExpansion::validateSymRef(int32_t id, int32_t i, vec_sz_t &classLeng
             }
          else
             {
-            if (_trace)
-               traceMsg(comp(), "%s Invalidating14 class #%d due to non-API method #%d\n", OPT_DETAILS_VECTOR, id, i);
+            logprintf(_trace, log, "%s Invalidating14 class #%d due to non-API method #%d\n", OPT_DETAILS_VECTOR, id, i);
             return false;
             }
          }
@@ -1181,24 +1161,20 @@ TR_VectorAPIExpansion::validateSymRef(int32_t id, int32_t i, vec_sz_t &classLeng
          // Treat the whole class as a box of unknown length
          classLength = vec_len_boxed_unknown;
 
-         if (_trace)
-            traceMsg(comp(), "%s making temp class #%d boxed due to symref #%d\n",
-                              OPT_DETAILS_VECTOR, id, i);
+         logprintf(_trace, log, "%s making temp class #%d boxed due to symref #%d\n", OPT_DETAILS_VECTOR, id, i);
          }
       else if (classLength == vec_len_default)
          {
-         if (_trace)
-            traceMsg(comp(), "%s assigning length to temp class #%d from symref #%d of length %d\n",
-                              OPT_DETAILS_VECTOR, id, i, tempLength);
+         logprintf(_trace, log, "%s assigning length to temp class #%d from symref #%d of length %d\n",
+            OPT_DETAILS_VECTOR, id, i, tempLength);
 
          classLength = tempLength;
          }
       else if (tempLength != vec_len_default &&
                tempLength != classLength)
          {
-         if (_trace)
-            traceMsg(comp(), "%s invalidating15 class #%d due to symref #%d temp length %d, class length %d\n",
-                               OPT_DETAILS_VECTOR, id, i, tempLength, classLength);
+         logprintf(_trace, log, "%s invalidating15 class #%d due to symref #%d temp length %d, class length %d\n",
+            OPT_DETAILS_VECTOR, id, i, tempLength, classLength);
          return false;
          }
 
@@ -1210,18 +1186,16 @@ TR_VectorAPIExpansion::validateSymRef(int32_t id, int32_t i, vec_sz_t &classLeng
          }
       else if (classType == TR::NoType)
          {
-         if (_trace)
-            traceMsg(comp(), "%s assigning element type to temp class #%d from symref #%d of type %s\n",
-                     OPT_DETAILS_VECTOR, id, i, TR::DataType::getName(tempType));
+         logprintf(_trace, log, "%s assigning element type to temp class #%d from symref #%d of type %s\n",
+            OPT_DETAILS_VECTOR, id, i, TR::DataType::getName(tempType));
 
          classType = tempType;
          }
       else if (tempType != TR::NoType &&
                tempType != classType)
          {
-         if (_trace)
-            traceMsg(comp(), "%s invalidating16 class #%d due to symref #%d temp type %s, class type %s\n",
-                     OPT_DETAILS_VECTOR, id, i, TR::DataType::getName(tempType), TR::DataType::getName(classType));
+         logprintf(_trace, log, "%s invalidating16 class #%d due to symref #%d temp type %s, class type %s\n",
+            OPT_DETAILS_VECTOR, id, i, TR::DataType::getName(tempType), TR::DataType::getName(classType));
          return false;
          }
       }
@@ -1234,10 +1208,10 @@ void
 TR_VectorAPIExpansion::validateVectorAliasClasses(TR_BitVector *vectorAliasTableElement::* aliasesField,
                                                   int32_t vectorAliasTableElement::* classField)
    {
+   OMR::Logger *log = comp()->log();
    bool tempClasses = &vectorAliasTableElement::_tempAliases == aliasesField;
 
-   if (_trace)
-      traceMsg(comp(), "\n%s ***Verifying all %s alias classes***\n", OPT_DETAILS_VECTOR, tempClasses ? "temp" : "whole");
+   logprintf(_trace, log, "\n%s ***Verifying all %s alias classes***\n", OPT_DETAILS_VECTOR, tempClasses ? "temp" : "whole");
 
    int32_t symRefCount = comp()->getSymRefTab()->getNumSymRefs();
 
@@ -1253,8 +1227,7 @@ TR_VectorAPIExpansion::validateVectorAliasClasses(TR_BitVector *vectorAliasTable
 
       if ((_aliasTable[id].*classField) == -1)
          {
-         if (_trace)
-            traceMsg(comp(), "%s class #%d is already invalid\n", tempClasses ? "temp" : "whole", id);
+         logprintf(_trace, log, "%s class #%d is already invalid\n", tempClasses ? "temp" : "whole", id);
          continue;
          }
 
@@ -1263,12 +1236,12 @@ TR_VectorAPIExpansion::validateVectorAliasClasses(TR_BitVector *vectorAliasTable
 
       if (_trace)
          {
-         traceMsg(comp(), "**Verifying %s class: #%d**\n", tempClasses ? "temp" : "whole", id);
+         log->printf("**Verifying %s class: #%d**\n", tempClasses ? "temp" : "whole", id);
 
          if (_aliasTable[id].*aliasesField)
             {
-            (_aliasTable[id].*aliasesField)->print(comp());
-            traceMsg(comp(), "\n");
+            (_aliasTable[id].*aliasesField)->print(log, comp());
+            log->println();
             }
          }
 
@@ -1281,8 +1254,7 @@ TR_VectorAPIExpansion::validateVectorAliasClasses(TR_BitVector *vectorAliasTable
          // class might consist of just the symref itself
          vectorClass = validateSymRef(id, id, classLength, classType, classField);
 
-         if (_trace)
-            traceMsg(comp(), "   Validating #%d: %s\n", id, vectorClass ? "OK" : "X");
+         logprintf(_trace, log, "   Validating #%d: %s\n", id, vectorClass ? "OK" : "X");
          }
       else
          {
@@ -1293,21 +1265,18 @@ TR_VectorAPIExpansion::validateVectorAliasClasses(TR_BitVector *vectorAliasTable
 
             vectorClass = validateSymRef(id, i, classLength, classType, classField);
 
-            if (_trace)
-               traceMsg(comp(), "   Validating #%d: %s\n", i, vectorClass ? "OK" : "X");
+            logprintf(_trace, log, "   Validating #%d: %s\n", i, vectorClass ? "OK" : "X");
 
             if (!vectorClass)
                {
-               if (_trace)
-                  traceMsg(comp(), "Class #%d can't be vectorized or scalarized due to invalid symRef #%d\n", id, i);
+               logprintf(_trace, log, "Class #%d can't be vectorized or scalarized due to invalid symRef #%d\n", id, i);
                break;
                }
 
             if (_aliasTable[i]._objectType == Invalid &&
                 (!boxingAllowed() || tempClasses))
                {
-               if (_trace)
-                  traceMsg(comp(), "Class #%d can't be vectorized or scalarized due to invalid object type of #%d\n", id, i);
+               logprintf(_trace, log, "Class #%d can't be vectorized or scalarized due to invalid object type of #%d\n", id, i);
 
                _aliasTable[id]._cantVectorize = true;
                _aliasTable[id]._cantScalarize = true;
@@ -1317,8 +1286,7 @@ TR_VectorAPIExpansion::validateVectorAliasClasses(TR_BitVector *vectorAliasTable
 
             if (_aliasTable[i]._cantVectorize)
                {
-               if (_trace)
-                  traceMsg(comp(), "Class #%d can't be vectorized due to #%d\n", id, i);
+               logprintf(_trace, log, "Class #%d can't be vectorized due to #%d\n", id, i);
 
                if (!boxingAllowed())
                   {
@@ -1334,8 +1302,7 @@ TR_VectorAPIExpansion::validateVectorAliasClasses(TR_BitVector *vectorAliasTable
 
             if (_aliasTable[i]._cantScalarize)
                {
-               if (_trace)
-                  traceMsg(comp(), "Class #%d can't be scalarized due to #%d\n", id, i);
+               logprintf(_trace, log, "Class #%d can't be scalarized due to #%d\n", id, i);
                _aliasTable[id]._cantScalarize = true;
 
                if (_aliasTable[id]._cantVectorize)
@@ -1354,9 +1321,8 @@ TR_VectorAPIExpansion::validateVectorAliasClasses(TR_BitVector *vectorAliasTable
          continue;
 
       // update class vector length and element type
-      if (_trace)
-         traceMsg(comp(), "Setting length and type for %s class #%d to %d and %s\n", tempClasses ? "temp" : "whole",
-                  id, classLength, TR::DataType::getName(classType));
+      logprintf(_trace, log, "Setting length and type for %s class #%d to %d and %s\n", tempClasses ? "temp" : "whole",
+         id, classLength, TR::DataType::getName(classType));
 
       _aliasTable[id]._vecLen = classLength;
       _aliasTable[id]._elementType = classType;
@@ -1369,7 +1335,7 @@ TR_VectorAPIExpansion::validateVectorAliasClasses(TR_BitVector *vectorAliasTable
 
       // invalidate the whole class
       if (_trace && _aliasTable[id].*aliasesField)  // to reduce number of messages
-         traceMsg(comp(), "Invalidating17 %s class #%d\n", tempClasses ? "temp" : "whole", id);
+         log->printf("Invalidating17 %s class #%d\n", tempClasses ? "temp" : "whole", id);
 
       _aliasTable[id].*classField = -1;
 
@@ -1380,8 +1346,7 @@ TR_VectorAPIExpansion::validateVectorAliasClasses(TR_BitVector *vectorAliasTable
          if (!boxingAllowed())
             {
             // invalidate the whole class that temp class belongs to
-            if (_trace)
-               traceMsg(comp(), "Invalidating18 whole class #%d due to temp class #%d\n", wholeClass, id);
+            logprintf(_trace, log, "Invalidating18 whole class #%d due to temp class #%d\n", wholeClass, id);
 
             _aliasTable[wholeClass]._classId = -1;
             wholeClass = -1;
@@ -1568,8 +1533,7 @@ TR_VectorAPIExpansion::isVectorizedOrScalarizedNode(TR::Node *node, TR::DataType
    bitsLength = _aliasTable[refId]._vecLen;
    objectType = _aliasTable[refId]._objectType;
 
-   if (_trace)
-      traceMsg(comp(), "#%d bitsLength=%d\n", refId, bitsLength);
+   logprintf(_trace, comp()->log(), "#%d bitsLength=%d\n", refId, bitsLength);
 
    if (bitsLength != vec_len_unknown &&
        bitsLength != vec_len_default &&
@@ -1587,8 +1551,7 @@ TR_VectorAPIExpansion::getClassForBoxing(TR::Node *node, TR::DataType elementTyp
    {
    TR::VectorLength vectorLength = OMR::DataType::bitsToVectorLength(bitsLength);
 
-   if (_trace)
-   traceMsg(comp(), "Getting class for boxing: %d %d %d\n", objectType, vectorLength, elementType);
+   logprintf(_trace, comp()->log(), "Getting class for boxing: %d %d %d\n", objectType, vectorLength, elementType);
 
    if (_boxingClasses[objectType - 1] == NULL ||
        (*_boxingClasses[objectType - 1])[vectorLength - 1] == NULL)
@@ -1640,8 +1603,7 @@ TR_VectorAPIExpansion::boxChild(TR::TreeTop *treeTop, TR::Node *node, uint32_t i
       vecClass = getClassForBoxing(child, elementType, bitsLength, objectType);
       if (!vecClass)
          {
-         if (_trace)
-            traceMsg(comp(), "Missing class for boxing of %d child of node %p\n", i, node);
+         logprintf(_trace, comp()->log(), "Missing class for boxing of %d child of node %p\n", i, node);
 
          boxingSupported = false;
          }
@@ -1656,8 +1618,8 @@ TR_VectorAPIExpansion::boxChild(TR::TreeTop *treeTop, TR::Node *node, uint32_t i
 
       _aliasTable[classId]._classId = -1;
 
-      if (_trace)
-         traceMsg(comp(), "Invalidated class #%d due to unsupported boxing of %d child of node %p\n", classId, i, node);
+      logprintf(_trace, comp()->log(), "Invalidated class #%d due to unsupported boxing of %d child of node %p\n", classId, i, node);
+
       return false;
       }
 
@@ -1729,8 +1691,7 @@ TR_VectorAPIExpansion::boxChild(TR::TreeTop *treeTop, TR::Node *node, uint32_t i
    //fence->setAllocation(NULL);
    treeTop->insertBefore(TR::TreeTop::create(comp(), fence));
 
-   if (_trace)
-      traceMsg(comp(), "Boxed %s%d%s child %d of node %p into %p\n",
+   logprintf(_trace, comp()->log(), "Boxed %s%d%s child %d of node %p into %p\n",
                         objectType == Vector ? "Vector" : "Mask", bitsLength, TR::DataType::getName(elementType),
                         i, node, newObject);
 
@@ -1784,8 +1745,7 @@ TR_VectorAPIExpansion::unboxNode(TR::Node *parentNode, TR::Node *operand, vapiOb
       vecClass = getClassForBoxing(operand, elementType, bitsLength, operandObjectType);
       if (!vecClass)
          {
-         if (_trace)
-            traceMsg(comp(), "Missing class for unboxing of operand %p of node %p\n", operand, parentNode);
+         logprintf(_trace, comp()->log(), "Missing class for unboxing of operand %p of node %p\n", operand, parentNode);
 
          unboxingSupported = false;
          }
@@ -1800,8 +1760,7 @@ TR_VectorAPIExpansion::unboxNode(TR::Node *parentNode, TR::Node *operand, vapiOb
       if (classId > 0)
          _aliasTable[classId]._classId = -1;
 
-      if (_trace)
-         traceMsg(comp(), "Invalidated class #%d due to unsupported unboxing of operand %p of node %p\n",
+      logprintf(_trace, comp()->log(), "Invalidated class #%d due to unsupported unboxing of operand %p of node %p\n",
                            classId, operand, parentNode);
 
       return NULL;
@@ -1843,8 +1802,7 @@ TR_VectorAPIExpansion::unboxNode(TR::Node *parentNode, TR::Node *operand, vapiOb
       newOperand = TR::Node::create(operand, maskConv, 1, newOperand);
       }
 
-   if (_trace)
-      traceMsg(comp(), "Unboxed %s%d%s node %p into new node %p for parent %p\n",
+   logprintf(_trace, comp()->log(), "Unboxed %s%d%s node %p into new node %p for parent %p\n",
                         operandObjectType == Vector ? "Vector" : "Mask", bitsLength, TR::DataType::getName(elementType),
                         operand, newOperand, parentNode);
 
@@ -1864,8 +1822,7 @@ TR_VectorAPIExpansion::expandVectorAPI()
    {
    TR::StackMemoryRegion stackMemoryRegion(*trMemory());
 
-   if (_trace)
-      traceMsg(comp(), "%s In expandVectorAPI\n", OPT_DETAILS_VECTOR);
+   logprintf(_trace, comp()->log(), "%s In expandVectorAPI\n", OPT_DETAILS_VECTOR);
 
    buildVectorAliases(false);
    buildAliasClasses();
@@ -1881,7 +1838,7 @@ TR_VectorAPIExpansion::expandVectorAPI()
       buildVectorAliases(true);
 
    if (_trace)
-      comp()->dumpMethodTrees("After Vectorization");
+      comp()->dumpMethodTrees(comp()->log(), "After Vectorization");
 
    return 1;
    }
@@ -1889,8 +1846,8 @@ TR_VectorAPIExpansion::expandVectorAPI()
 void
 TR_VectorAPIExpansion::transformIL(bool checkBoxing)
    {
-   if (_trace)
-      traceMsg(comp(), "%s Starting Expansion checkBoxing=%d\n", OPT_DETAILS_VECTOR, checkBoxing);
+   OMR::Logger *log = comp()->log();
+   logprintf(_trace, log, "%s Starting Expansion checkBoxing=%d\n", OPT_DETAILS_VECTOR, checkBoxing);
 
    _seenClasses.empty();
 
@@ -1923,9 +1880,8 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
       vapiObjType objectType;
       bool vectorizedOrScalarizedNode = isVectorizedOrScalarizedNode(node, elementType, bitsLength, objectType, scalarized);
 
-      if (_trace)
-        traceMsg(comp(), "Node %p (%s) vectorizedOrScalarized=%d elementType=%d bitsLength=%d objectType=%d scalarized=%d\n",
-                 node, opCode.getName(), vectorizedOrScalarizedNode, elementType.getDataType(), bitsLength, objectType, scalarized);
+      logprintf(_trace, comp()->log(), "Node %p (%s) vectorizedOrScalarized=%d elementType=%d bitsLength=%d objectType=%d scalarized=%d\n",
+            node, opCode.getName(), vectorizedOrScalarizedNode, elementType.getDataType(), bitsLength, objectType, scalarized);
 
       // Vectorize intrinsic if its operands are known
       if (boxingAllowed() &&
@@ -1980,8 +1936,7 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
                          bitsLength = operandBitsLength;
                          objectType = operandObjectType;
 
-                         if (_trace)
-                            traceMsg(comp(), "Vectorized node %p based on operand %d\n", node, i);
+                         logprintf(_trace, log, "Vectorized node %p based on operand %d\n", node, i);
 
                          break;
                          }
@@ -2003,8 +1958,7 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
            opCodeValue == TR::athrow ||
            opCodeValue == TR::awrtbar))
          {
-         if (_trace)
-            traceMsg(comp(), "Checking if children of non-vector node %p need to be boxed\n", node);
+         logprintf(_trace, log, "Checking if children of non-vector node %p need to be boxed\n", node);
 
          for (int32_t i = 0; i < node->getNumChildren(); i++)
             {
@@ -2031,14 +1985,12 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
       int32_t classId = _aliasTable[symRefId]._classId;
       int32_t tempClassId = _aliasTable[symRefId]._tempClassId;
 
-      if (_trace)
-         traceMsg(comp(), "#%d classId = %d\n", symRefId, classId);
+      logprintf(_trace, log, "#%d classId = %d\n", symRefId, classId);
 
       if (classId <= 0)
          continue;
 
-      if (_trace)
-         traceMsg(comp(), "#%d classId._classId = %d\n", symRefId, _aliasTable[classId]._classId);
+      logprintf(_trace, log, "#%d classId._classId = %d\n", symRefId, _aliasTable[classId]._classId);
 
       if (_aliasTable[classId]._classId == -1)  // class was invalidated
          continue;
@@ -2073,9 +2025,7 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
             }
          }
 
-      if (_trace)
-         traceMsg(comp(), "%s node %p of class #%d\n", checkBoxing ? "Checking for boxing" : "Transforming",
-                          node, classId);
+      logprintf(_trace, log, "%s node %p of class #%d\n", checkBoxing ? "Checking for boxing" : "Transforming", node, classId);
 
 
       TR::VectorLength vectorLength = OMR::DataType::bitsToVectorLength(bitsLength);
@@ -2084,12 +2034,9 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
 
       if (opCodeValue == TR::astore)
          {
-         if (_trace)
-            {
-            traceMsg(comp(), "%s astore %p (temp class #%d) elementType=%d vectorLength=%d objectType=%s\n",
-                              checkBoxing ? "Checking for boxing" : "Transforming",
-                              node, tempClassId, elementType, vectorLength, vapiObjTypeNames[objectType]);
-            }
+         logprintf(_trace, log, "%s astore %p (temp class #%d) elementType=%d vectorLength=%d objectType=%s\n",
+               checkBoxing ? "Checking for boxing" : "Transforming",
+               node, tempClassId, elementType, vectorLength, vapiObjTypeNames[objectType]);
 
          if (boxingAllowed())
             {
@@ -2131,8 +2078,7 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
             // Unbox operands if needed, before calling handler
             int32_t numChildren = node->getNumChildren();
 
-            if (_trace)
-               traceMsg(comp(), "Checking if children of vectorized node %p need to be unboxed\n", node);
+            logprintf(_trace, log, "Checking if children of vectorized node %p need to be unboxed\n", node);
 
             for (int32_t i = 0; i < numChildren; i++)
                {
@@ -2236,8 +2182,7 @@ TR_VectorAPIExpansion::vectorizeLoadOrStore(TR_VectorAPIExpansion *opt, TR::Node
       {
       vecSymRef = comp->cg()->allocateLocalTemp(opCodeType);
       (opt->_aliasTable)[symRef->getReferenceNumber()]._vecSymRef = vecSymRef;
-      if (opt->_trace)
-         traceMsg(comp, "   created new vector symRef #%d for #%d\n", vecSymRef->getReferenceNumber(), symRef->getReferenceNumber());
+      logprintf(opt->_trace, comp->log(), "   created new vector symRef #%d for #%d\n", vecSymRef->getReferenceNumber(), symRef->getReferenceNumber());
 
       }
 
@@ -2285,8 +2230,7 @@ TR_VectorAPIExpansion::scalarizeLoadOrStore(TR_VectorAPIExpansion *opt, TR::Node
       for (int32_t i = 0; i < numLanes; i++)
          {
          (*scalarSymRefs)[i] = comp->cg()->allocateLocalTemp(elementType);
-         if (opt->_trace)
-            traceMsg(comp, "   created new scalar symRef #%d for #%d\n", (*scalarSymRefs)[i]->getReferenceNumber(), nodeSymRef->getReferenceNumber());
+         logprintf(opt->_trace, comp->log(), "   created new scalar symRef #%d for #%d\n", (*scalarSymRefs)[i]->getReferenceNumber(), nodeSymRef->getReferenceNumber());
          }
 
       (opt->_aliasTable)[nodeSymRef->getReferenceNumber()]._scalarSymRefs = scalarSymRefs;
@@ -2307,8 +2251,7 @@ TR_VectorAPIExpansion::addScalarNode(TR_VectorAPIExpansion *opt, TR::Node *node,
    {
    TR::Compilation *comp = opt->comp();
 
-   if (opt->_trace)
-      traceMsg(comp, "Adding new scalar node %p (lane %d) for node %p\n", scalarNode, i, node);
+   logprintf(opt->_trace, comp->log(), "Adding new scalar node %p (lane %d) for node %p\n", scalarNode, i, node);
 
    TR_Array<TR::Node *> *scalarNodes = (opt->_nodeTable)[node->getGlobalIndex()]._scalarNodes;
 
@@ -2557,6 +2500,7 @@ TR::Node *TR_VectorAPIExpansion::loadIntrinsicHandler(TR_VectorAPIExpansion *opt
                                                       handlerMode mode)
    {
    TR::Compilation *comp = opt->comp();
+   OMR::Logger *log = comp->log();
 
    if (mode == checkScalarization)
       {
@@ -2566,8 +2510,8 @@ TR::Node *TR_VectorAPIExpansion::loadIntrinsicHandler(TR_VectorAPIExpansion *opt
       {
       if (objectType == Vector)
          {
-         if (opt->_trace)
-            traceMsg(comp, "Vector load with numLanes %d in node %p\n", numLanes, node);
+
+         logprintf(opt->_trace, log, "Vector load with numLanes %d in node %p\n", numLanes, node);
 
          TR::DataType vectorType = TR::DataType::createVectorType(elementType, vectorLength);
          TR::ILOpCodes vectorOpCode = TR::ILOpCode::createVectorOpCode(TR::vloadi, vectorType);
@@ -2579,8 +2523,7 @@ TR::Node *TR_VectorAPIExpansion::loadIntrinsicHandler(TR_VectorAPIExpansion *opt
          }
       else if (objectType == Mask)
          {
-         if (opt->_trace)
-            traceMsg(comp, "Mask load with numLanes %d in node %p\n", numLanes, node);
+         logprintf(opt->_trace, log, "Mask load with numLanes %d in node %p\n", numLanes, node);
 
          TR::DataType resultType = TR::DataType::createMaskType(elementType, vectorLength);
          TR::ILOpCodes maskConversionOpCode;
@@ -2600,8 +2543,7 @@ TR::Node *TR_VectorAPIExpansion::loadIntrinsicHandler(TR_VectorAPIExpansion *opt
       return NULL; // TODO: support other types of loads
       }
 
-   if (opt->_trace)
-      traceMsg(comp, "loadIntrinsicHandler for node %p\n", node);
+   logprintf(opt->_trace, log, "loadIntrinsicHandler for node %p\n", node);
 
    TR::Node *base = node->getChild(3);
    TR::Node *offset = node->getChild(4);
@@ -2727,8 +2669,7 @@ TR::Node *TR_VectorAPIExpansion::storeIntrinsicHandler(TR_VectorAPIExpansion *op
          }
       else if (objectType == Mask)
          {
-         if (opt->_trace)
-            traceMsg(comp, "Mask store with numLanes %d in node %p\n", numLanes, node);
+         logprintf(opt->_trace, comp->log(), "Mask store with numLanes %d in node %p\n", numLanes, node);
 
          TR::DataType sourceType = TR::DataType::createMaskType(elementType, vectorLength);
          TR::ILOpCodes unused;
@@ -2745,8 +2686,7 @@ TR::Node *TR_VectorAPIExpansion::storeIntrinsicHandler(TR_VectorAPIExpansion *op
          }
       }
 
-   if (opt->_trace)
-      traceMsg(comp, "storeIntrinsicHandler for node %p\n", node);
+   logprintf(opt->_trace, comp->log(), "storeIntrinsicHandler for node %p\n", node);
 
    TR::Node *base = node->getChild(3);
    TR::Node *offset = node->getChild(4);
@@ -2960,15 +2900,14 @@ TR_VectorAPIExpansion::getConvertSourceType(TR_VectorAPIExpansion *opt, TR::Node
 
       if (supportedOnPlatform(comp, bitsLength) == TR::NoVectorLength)
          {
-         traceMsg(comp, "Platform does not support conversion source length %d in node %p\n",
-                  bitsLength, node);
+         logprintf(opt->_trace, comp->log(), "Platform does not support conversion source length %d in node %p\n", bitsLength, node);
          return false;
          }
       }
 
    if (sourceElementType == TR::NoType || bitsLength == vec_len_default)
       {
-      traceMsg(comp, "Unknown conversion source type in node %p\n", node);
+      logprintf(opt->_trace, comp->log(), "Unknown conversion source type in node %p\n", node);
       return false;
       }
 
@@ -2982,6 +2921,7 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
                                                       int32_t numChildren, vapiOpCodeType opCodeType)
    {
    TR::Compilation *comp = opt->comp();
+   OMR::Logger *log = comp->log();
    TR::Node *opcodeNode = node->getFirstChild();
 
    // TODO: use getFirstOperandIndex()
@@ -3013,7 +2953,7 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
       {
       if (!opcodeNode->getOpCode().isLoadConst())
          {
-         if (opt->_trace) traceMsg(comp, "Unknown opcode in node %p\n", node);
+         logprintf(opt->_trace, log, "Unknown opcode in node %p\n", node);
          return NULL;
          }
 
@@ -3030,15 +2970,15 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
       // Byte and Short are promoted after being loaded from array
       // and all operations should be done in Int in the case of scalarization
       if (elementType == TR::Int8 || elementType == TR::Int16)
-           resultElementType = TR::Int32;
+         resultElementType = TR::Int32;
       scalarOpCode = ILOpcodeFromVectorAPIOpcode(comp, vectorAPIOpcode, resultElementType, TR::NoVectorLength,
-                                                 objectType, opCodeType, withMask);
+                                                 objectType, opCodeType, withMask, opt->_trace);
 
       if (mode == checkScalarization)
          {
          if (scalarOpCode == TR::BadILOp)
             {
-            if (opt->_trace) traceMsg(comp, "Unsupported scalar opcode in node %p\n", node);
+            logprintf(opt->_trace, log, "Unsupported scalar opcode in node %p\n", node);
             return NULL;
             }
          else
@@ -3094,13 +3034,13 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
       if (mode == checkVectorization)
          {
          vectorOpCode = ILOpcodeFromVectorAPIOpcode(comp, vectorAPIOpcode, resultElementType, resultVectorLength,
-                                                    objectType, opCodeType, withMask,
+                                                    objectType, opCodeType, withMask, opt->_trace,
                                                     sourceElementType, sourceVectorLength);
 
          if (vectorOpCode == TR::BadILOp || !isOpCodeImplemented(comp, vectorOpCode))
             {
-            if (opt->_trace) traceMsg(comp, "Unsupported vector opcode in node %p %s\n", node,
-                                      vectorOpCode == TR::BadILOp ? "(no IL)" : "(no codegen)");
+            logprintf(opt->_trace, log, "Unsupported vector opcode in node %p %s\n", node,
+                  vectorOpCode == TR::BadILOp ? "(no IL)" : "(no codegen)");
             return NULL;
             }
 
@@ -3111,8 +3051,7 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
 
             if (!isOpCodeImplemented(comp, splatsOpCode))
                {
-               if (opt->_trace) traceMsg(comp, "Unsupported vsplats opcode in node %p (no codegen)\n", node);
-
+               logprintf(opt->_trace, log, "Unsupported vsplats opcode in node %p (no codegen)\n", node);
                return NULL;
                }
             }
@@ -3126,8 +3065,7 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
             if (!isOpCodeImplemented(comp, splatsOpCode) ||
                 !isOpCodeImplemented(comp, subOpCode))
                {
-               if (opt->_trace) traceMsg(comp, "Unsupported vsplats or vsub opcode in node %p (no codegen)\n", node);
-
+               logprintf(opt->_trace, log, "Unsupported vsplats or vsub opcode in node %p (no codegen)\n", node);
                return NULL;
                }
             }
@@ -3137,7 +3075,7 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
       else
          {
          vectorOpCode = ILOpcodeFromVectorAPIOpcode(comp, vectorAPIOpcode, resultElementType, resultVectorLength,
-                                                    objectType, opCodeType, withMask,
+                                                    objectType, opCodeType, withMask, opt->_trace,
                                                     sourceElementType, sourceVectorLength);
 
          TR_ASSERT_FATAL(vectorOpCode != TR::BadILOp, "Vector opcode should exist for node %p\n", node);
@@ -3180,7 +3118,7 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
 
    if (!broadcastTypeNode->getOpCode().isLoadConst())
       {
-      if (opt->_trace) traceMsg(comp, "Unknown broadcast type in node %p\n", node);
+      logprintf(opt->_trace, comp->log(), "Unknown broadcast type in node %p\n", node);
       return NULL;
       }
 
@@ -3212,8 +3150,7 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
       return isOpCodeImplemented(comp, opCode) ? node : NULL;
       }
 
-   if (opt->_trace)
-      traceMsg(comp, "fromBitsCoercedIntrinsicHandler for node %p\n", node);
+   logprintf(opt->_trace, comp->log(), "fromBitsCoercedIntrinsicHandler for node %p\n", node);
 
    int32_t elementSize = OMR::DataType::getSize(elementType);
    TR::Node *valueToBroadcast = node->getChild(3);
@@ -3320,7 +3257,8 @@ TR::Node *TR_VectorAPIExpansion::convertIntrinsicHandler(TR_VectorAPIExpansion *
 
 TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation *comp, int32_t vectorAPIOpCode,
                                                                  TR::DataType elementType, TR::VectorLength vectorLength,
-                                                                 vapiObjType objectType, vapiOpCodeType opCodeType, bool withMask,
+                                                                 vapiObjType objectType, vapiOpCodeType opCodeType,
+                                                                 bool withMask, bool trace,
                                                                  TR::DataType sourceElementType, TR::VectorLength sourceVectorLength)
    {
    // TODO: support more scalarization
@@ -3352,7 +3290,7 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
             if (OMR::DataType::getSize(sourceElementType) != OMR::DataType::getSize(elementType) ||
                 sourceVectorLength != vectorLength)
                {
-               traceMsg(comp, "\nCalling VECTOR_OP_REINTERPRET on %s to %s in %s\n", TR::DataType::getName(vectorType),
+               logprintf(trace, comp->log(), "\nCalling VECTOR_OP_REINTERPRET on %s to %s in %s\n", TR::DataType::getName(vectorType),
                                                                             TR::DataType::getName(sourceVectorType),
                                                                             comp->signature());
                // produce verbose message

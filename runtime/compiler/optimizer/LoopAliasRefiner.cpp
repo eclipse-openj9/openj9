@@ -43,13 +43,14 @@
 #include "optimizer/Optimizations.hpp"
 #include "optimizer/SPMDPreCheck.hpp"
 #include "optimizer/Structure.hpp"
+#include "ras/Logger.hpp"
 
 namespace TR { class TreeTop; }
 
 TR_LoopAliasRefiner::TR_LoopAliasRefiner(TR::OptimizationManager *manager)
    : TR_LoopVersioner(manager, true, true)
    {}
-  
+
 const char *
 TR_LoopAliasRefiner::optDetailString() const throw()
    {
@@ -67,15 +68,16 @@ void TR_LoopAliasRefiner::collectArrayAliasCandidates(TR::Node *node,  vcount_t 
 
 void TR_LoopAliasRefiner::collectArrayAliasCandidates(TR::Node *parentArrayNode, TR::Node *node,  vcount_t visitCount, bool isStore)
    {
+   OMR::Logger *log = comp()->log();
+
    if (node->getOpCodeValue() == TR::aiadd || node->getOpCodeValue() == TR::aladd)
       {
-      if (trace())
-         traceMsg(comp(), "LAR: Inspecting aiadd %p\n", node);
+      logprintf(trace(), log, "LAR: Inspecting aiadd %p\n", node);
 
       if (!parentArrayNode->getOpCode().isLoadIndirect() && !parentArrayNode->getOpCode().isStoreIndirect())
          {
          _addressingTooComplicated = true;
-         if (trace()) 
+         if (trace())
             dumpOptDetails(comp(), "FAIL: Unexpected parentArrayNode to aiadd/aladd [%p]\n", parentArrayNode);
          return;
          }
@@ -83,31 +85,28 @@ void TR_LoopAliasRefiner::collectArrayAliasCandidates(TR::Node *parentArrayNode,
       // trivialarrayindependence may have already refined this shadow--if so ignore it
       if (comp()->getSymRefTab()->isRefinedArrayShadow(parentArrayNode->getSymbolReference()))
          {
-         if (trace()) 
-            traceMsg(comp(), "FAIL: Shadow #%d in [%p] already refined\n", 
-                            parentArrayNode->getSymbolReference()->getReferenceNumber(),
-                            parentArrayNode);
+         logprintf(trace(), log, "FAIL: Shadow #%d in [%p] already refined\n",
+            parentArrayNode->getSymbolReference()->getReferenceNumber(),
+            parentArrayNode);
          return;
          }
 
       //we only handle array shadows
       if (!parentArrayNode->getSymbol()->isArrayShadowSymbol())
          {
-         if (trace())
-            traceMsg(comp(), "FAIL: Shadow #%d in [%p] is not an array shadow\n",parentArrayNode->getSymbolReference()->getReferenceNumber(),parentArrayNode);
+         logprintf(trace(), log, "FAIL: Shadow #%d in [%p] is not an array shadow\n", parentArrayNode->getSymbolReference()->getReferenceNumber(), parentArrayNode);
          return;
          }
 
       // make sure we don't try to refine unsafe shadows...
       if (parentArrayNode->getSymbol()->isUnsafeShadowSymbol())
          {
-         if (trace())
-            traceMsg(comp(), "FAIL: Shadow #%d in [%p] is an unsafe shadow\n",
-                            parentArrayNode->getSymbolReference()->getReferenceNumber(),
-                            parentArrayNode);
+         logprintf(trace(), log, "FAIL: Shadow #%d in [%p] is an unsafe shadow\n",
+            parentArrayNode->getSymbolReference()->getReferenceNumber(),
+            parentArrayNode);
          return;
          }
-      
+
       TR::Node *arrayAddress = node->getFirstChild();
 
       if (!_containsCall &&
@@ -118,9 +117,7 @@ void TR_LoopAliasRefiner::collectArrayAliasCandidates(TR::Node *parentArrayNode,
            arrayAddress->getSymbol()->isCollectedReference() &&
           !arrayAddress->getSymbol()->isInternalPointerAuto())
          {
-         if (trace())
-            traceMsg(comp(), "\tA) Adding candidate node %p parent %p for block_%d\n", node, parentArrayNode, _currentBlock->getNumber());
-
+         logprintf(trace(), log, "\tA) Adding candidate node %p parent %p for block_%d\n", node, parentArrayNode, _currentBlock->getNumber());
          _arrayMemberLoadCandidates->add(new (trStackMemory()) TR_NodeParentBlockTuple(node, parentArrayNode, _currentBlock));
          }
       }
@@ -146,7 +143,7 @@ bool TR_LoopAliasRefiner::hasMulShadowTypes(TR_ScratchList<TR_NodeParentBlockTup
    for (; npbt; npbt = candIterator.getNext())
       {
           TR::SymbolReference *targetSymRef = npbt->_parent->getSymbolReference();
-      
+
       if(targetSymRef!=sourceSymRef && !sourceSymRef->getUseDefAliases().contains(targetSymRef, comp()))
          return true;
       }
@@ -156,6 +153,7 @@ bool TR_LoopAliasRefiner::hasMulShadowTypes(TR_ScratchList<TR_NodeParentBlockTup
 
 bool TR_LoopAliasRefiner::processArrayAliasCandidates()
    {
+   OMR::Logger *log = comp()->log();
    _arrayRanges = NULL;
    bool haveGoodMemberCandidates = false;
    bool foundSecondArray = false; // no point improving aliasing if there is only one array
@@ -170,20 +168,17 @@ bool TR_LoopAliasRefiner::processArrayAliasCandidates()
 
    if (isAlreadyProcessed(_currentNaturalLoop->getNumber()))
       {
-      if (trace())
-         traceMsg(comp(), "Already processed loop %d\n", _currentNaturalLoop->getNumber());
+      logprintf(trace(), log, "Already processed loop %d\n", _currentNaturalLoop->getNumber());
       return false;
       }
 
-   if (trace())
-      traceMsg(comp(), "LAR: Processing loop %d\n", _currentNaturalLoop->getNumber());
-  
+   logprintf(trace(), log, "LAR: Processing loop %d\n", _currentNaturalLoop->getNumber());
+
    markAsProcessed(_currentNaturalLoop->getNumber());
 
    if (!SPMDPreCheck::isSPMDCandidate(comp(), _currentNaturalLoop))
       {
-      if (trace())
-         traceMsg(comp(), "LAR: SPMDPreCheck failed - skipping consideration of loop %d\n", _currentNaturalLoop->getNumber());
+      logprintf(trace(), log, "LAR: SPMDPreCheck failed - skipping consideration of loop %d\n", _currentNaturalLoop->getNumber());
       return false;
       }
 
@@ -191,20 +186,19 @@ bool TR_LoopAliasRefiner::processArrayAliasCandidates()
 
    ListIterator<TR_NodeParentBlockTuple> useCand(_arrayLoadCandidates);
    TR_NodeParentBlockTuple *curTuple;
- 
+
    _arrayRanges = new(trStackMemory()) TR_ScratchList<ArrayRangeLimits>(trMemory());
- 
+
    numUses = 0;
 
    bool goodCandidateDetected = false;
-   
-   if (trace())
-      traceMsg(comp(), "LAR: Finished loop processing\n\t%s\n", 
-                     (haveGoodMemberCandidates) &&
-                     foundSecondArray?"Candidates exist":"No Candidates");
+
+   logprintf(trace(), log, "LAR: Finished loop processing\n\t%s\n",
+      (haveGoodMemberCandidates) &&
+      foundSecondArray?"Candidates exist":"No Candidates");
 
    if (!foundSecondArray || !haveGoodMemberCandidates) return false;
-   
+
    ListIterator<TR_NodeParentBlockTuple> memberCand(_arrayMemberLoadCandidates);
 
    numUses = 0;
@@ -212,7 +206,7 @@ bool TR_LoopAliasRefiner::processArrayAliasCandidates()
    bool atLeastOneStore = false;
 
    while ((curTuple = _arrayMemberLoadCandidates->popHead()))
-      { 
+      {
       memberCand.reset();
       int32_t refCount = 0;
 
@@ -240,15 +234,7 @@ bool TR_LoopAliasRefiner::processArrayAliasCandidates()
 
       for (; curTuple; curTuple = memberCand.getNext())
          {
-         if (false)
-            traceMsg(comp(), "    this:#%d member:%d offset %d indshadow:#%d\n",  
-                            curTuple->_node->getFirstChild()->getFirstChild()->getSymbolReference()->getReferenceNumber(), 
-                            curTuple->_node->getFirstChild()->getSymbolReference()->getReferenceNumber(),  
-                            curTuple->_node->getFirstChild()->getSymbolReference()->getOffset(), 
-                            curTuple->_parent->getSymbolReference()->getReferenceNumber());
-         
-         //if (numUses >= 2)
-            goodCandidateDetected = true;// expect at least two uses between stores for commoning
+         goodCandidateDetected = true;// expect at least two uses between stores for commoning
 
          atLeastOneStore |= curTuple->_parent->getOpCode().isStoreIndirect();
 
@@ -287,12 +273,11 @@ bool TR_LoopAliasRefiner::processArrayAliasCandidates()
 
       if (goodCandidateDetected)
          {
-         if (trace()) 
-            traceMsg(comp(), "\tAdding entry for base #%d member #%d offset %d with %d refs\n",
-                             currentBaseSymRef->getReferenceNumber(),
-                             currentMemberSymRef ? currentMemberSymRef->getReferenceNumber() : 0, 
-                             currentMemberSymRef ? currentMemberSymRef->getOffset() : 0,
-                             refCount);
+         logprintf(trace(), log, "\tAdding entry for base #%d member #%d offset %d with %d refs\n",
+            currentBaseSymRef->getReferenceNumber(),
+            currentMemberSymRef ? currentMemberSymRef->getReferenceNumber() : 0,
+            currentMemberSymRef ? currentMemberSymRef->getOffset() : 0,
+            refCount);
 
          ArrayRangeLimits *arl = new(comp()->trStackMemory())
                                  ArrayRangeLimits(copyOfCandidateRefs, currentBaseSymRef, currentMemberSymRef, arrayAccessSymRef);
@@ -315,11 +300,10 @@ void TR_LoopAliasRefiner::initAdditionalDataStructures()
    }
 
 void TR_LoopAliasRefiner::buildAliasRefinementComparisonTrees(List<TR::TreeTop> *nullCheckTrees, List<TR::TreeTop> *divCheckTrees, List<TR::TreeTop> *checkCastTrees, List<TR::TreeTop> *arrayStoreCheckTrees, TR_ScratchList<TR::Node> *comparisonTrees,  TR::Block *exitGotoBlock)
-   { 
+   {
    if (!_arrayRanges)
       {
-      if (trace())
-         traceMsg(comp(),  "array ranges is null for %s\n", comp()->signature());
+      logprintf(trace(), comp()->log(), "array ranges is null for %s\n", comp()->signature());
       return;
       }
 
@@ -342,13 +326,13 @@ void TR_LoopAliasRefiner::buildAliasRefinementComparisonTrees(List<TR::TreeTop> 
    while( ArrayRangeLimits *arlAPtr = _arrayRanges->popHead())
       {
       listCopy->add(arlAPtr);
-    
+
       ListIterator<ArrayRangeLimits> arIterator(_arrayRanges);
       ArrayRangeLimits *arlBPtr;
       for (arlBPtr = arIterator.getFirst(); arlBPtr; arlBPtr = arIterator.getNext())
          {
          TR::Node *testExpr  =  arlAPtr->createRangeTestExpr(comp(), arlBPtr, exitGotoBlock, trace());
-         if (testExpr && performTransformation(comp(), "%sAdding test [%p] to refine aliases for loop %d\n", 
+         if (testExpr && performTransformation(comp(), "%sAdding test [%p] to refine aliases for loop %d\n",
                                            optDetailString(),
                                            testExpr, _currentNaturalLoop->getNumber()))
             {
@@ -375,7 +359,7 @@ TR_LoopAliasRefiner::refineArrayAliases(TR_RegionStructure *whileLoop)
       TR_ScratchList<TR_NodeParentBlockTuple> *list = arlPtr->getCandidateList();
       ListIterator<TR_NodeParentBlockTuple> candIterator(list);
       TR_NodeParentBlockTuple* npbt;
-    
+
       if (!performTransformation(comp(), "%sReplacing shadows for array reference #%d\n",
                                          optDetailString(),
                                          arlPtr->getBaseSymRef()->getReferenceNumber()))
@@ -383,7 +367,7 @@ TR_LoopAliasRefiner::refineArrayAliases(TR_RegionStructure *whileLoop)
 
       TR::SymbolReference * oldShadow = NULL;
       TR::SymbolReference * newShadow = NULL;
-   
+
       for (npbt = candIterator.getFirst(); npbt; npbt = candIterator.getNext())
          {
          TR::Node *targetNode = npbt->_parent;
@@ -398,8 +382,8 @@ TR_LoopAliasRefiner::refineArrayAliases(TR_RegionStructure *whileLoop)
             {
             newShadow = comp()->getSymRefTab()->createRefinedArrayShadowSymbolRef(oldShadow->getSymbol()->getDataType());
 
-            dumpOptDetails(comp(), "Replacing1 shadow #%d with #%d in [%p] %d %d\n", oldShadow->getReferenceNumber(), 
-                          newShadow->getReferenceNumber(), targetNode, oldShadow->getSymbol()->getDataType().getDataType(), 
+            dumpOptDetails(comp(), "Replacing1 shadow #%d with #%d in [%p] %d %d\n", oldShadow->getReferenceNumber(),
+                          newShadow->getReferenceNumber(), targetNode, oldShadow->getSymbol()->getDataType().getDataType(),
                                                                        newShadow->getSymbol()->getDataType().getDataType());
 
             ListIterator<TR::SymbolReference> symRefIterator(&newShadowList);
@@ -412,7 +396,7 @@ TR_LoopAliasRefiner::refineArrayAliases(TR_RegionStructure *whileLoop)
             newShadowList.add(newShadow);
             }
 
-         dumpOptDetails(comp(), "Replacing2 shadow #%d with #%d in [%p] %d %d\n", oldShadow->getReferenceNumber(), 
+         dumpOptDetails(comp(), "Replacing2 shadow #%d with #%d in [%p] %d %d\n", oldShadow->getReferenceNumber(),
                           newShadow->getReferenceNumber(), targetNode, oldShadow->getSymbol()->getDataType().getDataType(),
                           newShadow->getSymbol()->getDataType().getDataType());
 
@@ -426,7 +410,7 @@ TR_LoopAliasRefiner::refineArrayAliases(TR_RegionStructure *whileLoop)
 
 
 
-/* 
+/*
  * Create a conditional branch based on the limits of current range vs other range.  The test should look like
  * if (a == b && (other.low <= this.high && this.low <= other.high)) goto unrefined loop
  *
@@ -440,11 +424,11 @@ TR_LoopAliasRefiner::ArrayRangeLimits::createRangeTestExpr(TR::Compilation *comp
 
    dumpOptDetails(comp, "#%d(%d) (member #%d(%d) vs. #%d(%d) (member #%d(%d))\n",
                           getBaseSymRef()->getReferenceNumber(),
-                          getBaseSymRef()->getOffset(), 
+                          getBaseSymRef()->getOffset(),
                           getMemberSymRef() ? getMemberSymRef()->getReferenceNumber() : 0,
                           getMemberSymRef() ? getMemberSymRef()->getOffset() : 0,
                           other->getBaseSymRef()->getReferenceNumber(),
-                          other->getBaseSymRef()->getOffset(), 
+                          other->getBaseSymRef()->getOffset(),
                           other->getMemberSymRef() ? other->getMemberSymRef()->getReferenceNumber() : 0,
                           other->getMemberSymRef() ? other->getMemberSymRef()->getOffset() : 0);
 
@@ -475,8 +459,7 @@ TR_LoopAliasRefiner::ArrayRangeLimits::createRangeTestExpr(TR::Compilation *comp
        getArrayAccessSymRef()->getUseDefAliases().contains(other->getArrayAccessSymRef(), comp))
       isAliased = true;
 
-   if (trace)
-      traceMsg(comp, "access sym ref1 %d access sym ref2 %d isAliased %d\n", getArrayAccessSymRef(), other->getArrayAccessSymRef(), isAliased);
+   logprintf(trace, comp->log(), "access sym ref1 %d access sym ref2 %d isAliased %d\n", getArrayAccessSymRef(), other->getArrayAccessSymRef(), isAliased);
 
    TR::Node *addressTest = NULL;
    TR::Node *ifNode = NULL;
