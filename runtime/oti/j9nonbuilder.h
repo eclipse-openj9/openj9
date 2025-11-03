@@ -3775,6 +3775,9 @@ typedef struct J9ClassLoader {
 	 * Protected by J9JavaVM.classTableMutex.
 	 */
 	void *outlivingLoaders;
+#if defined(J9VM_OPT_JFR)
+	UDATA loadedClassCount;
+#endif /* defined(J9VM_OPT_JFR) */
 } J9ClassLoader;
 
 #define J9CLASSLOADER_CONTAINS_JXES 0x1
