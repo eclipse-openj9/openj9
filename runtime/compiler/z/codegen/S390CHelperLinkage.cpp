@@ -66,7 +66,6 @@ J9::Z::CHelperLinkage::CHelperLinkage(TR::CodeGenerator * codeGen,TR_LinkageConv
    setRegisterFlag(TR::RealRegister::GPR10, Preserved);
    setRegisterFlag(TR::RealRegister::GPR11, Preserved);
    setRegisterFlag(TR::RealRegister::GPR13, Preserved);
-   setRegisterFlag(TR::RealRegister::GPR15, Preserved);
 
 #if defined(ENABLE_PRESERVED_FPRS)
    // In case of 32bit Linux on Z, System Linkage only preserves FPR4 and FPR6. For all other targets, FPR8-FPR15 is
@@ -95,6 +94,7 @@ J9::Z::CHelperLinkage::CHelperLinkage(TR::CodeGenerator * codeGen,TR_LinkageConv
       setRegisterFlag(TR::RealRegister::GPR6, Preserved);
       setRegisterFlag(TR::RealRegister::GPR7, Preserved);
       setRegisterFlag(TR::RealRegister::GPR12, Preserved);
+      setRegisterFlag(TR::RealRegister::GPR15, Preserved);
 
       setReturnAddressRegister(TR::RealRegister::GPR14);
       setIntegerReturnRegister(TR::RealRegister::GPR2);
@@ -123,10 +123,11 @@ J9::Z::CHelperLinkage::CHelperLinkage(TR::CodeGenerator * codeGen,TR_LinkageConv
          {
          setRegisterFlag(TR::RealRegister::GPR12, Preserved);
 
-         setPreservedRegisterMapForGC(0x0000FF00);
+         setPreservedRegisterMapForGC(0x00007F00);
          }
       else
          {
+         setRegisterFlag(TR::RealRegister::GPR15, Preserved);
          // 31-Bit zOS will need GPR12 for CAA register so it won't be preserved. For all other variant it is preserved
          setPreservedRegisterMapForGC(0x0000EF00);
          }
