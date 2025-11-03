@@ -2998,7 +2998,7 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
 
    bool withMask = false;
 
-   if (opCodeType != MaskReduction && opCodeType != Convert && opCodeType != Compress)
+   if (opCodeType != MaskReduction && opCodeType != Convert && opCodeType != Compress && opCodeType != Blend)
       {
       TR::Node *maskNode = node->getChild(firstOperand + numChildren);  // each intrinsic has a mask argument
       withMask = !maskNode->isConstZeroValue();
