@@ -2466,6 +2466,12 @@ protected final Class<?> defineClass(String name, java.nio.ByteBuffer buffer, Pr
 
 	byte[] bytes = new byte[size];
 	buffer.get(bytes);
+	/*[IF JAVA_SPEC_VERSION >= 26] */
+	// Match OpenJDK behavior, see https://bugs.openjdk.org/browse/JDK-8352583.
+	if (buffer.isDirect()) {
+		buffer.position(position);
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 26 */
 	return defineClass(name, bytes, 0, size, domain);
 }
 
