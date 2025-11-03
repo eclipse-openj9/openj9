@@ -21,21 +21,19 @@
  *******************************************************************************/
 
 /*
- * Note: remove this when portlib can supply the current user name
+ * Note: Remove this when portlib can supply the current user name.
  */
-#ifdef WIN32
+#if defined(J9ZOS390)
+#include "atoe.h"
+#elif defined(WIN32) /* defined(J9ZOS390) */
 #include <windows.h>
 #include <lmcons.h>
-#else
-#ifdef J9ZOS390
-#include "atoe.h"
-#endif
-#endif
+#endif /* defined(J9ZOS390) */
 
 /* _GNU_SOURCE forces GLIBC_2.0 sscanf/vsscanf/fscanf for RHEL5 compatibility */
 #if defined(LINUX) && !defined(J9ZTPF)
 #define _GNU_SOURCE
-#endif /* defined(__GNUC__) */
+#endif /* defined(LINUX) && !defined(J9ZTPF) */
 
 #include "dmpsup.h"
 #include "j9dmpnls.h"
@@ -52,60 +50,64 @@
 #include "rommeth.h"
 #include "objhelp.h"
 #include "jvminit.h"
+#include "ut_j9dmp.h"
 
 #include "ute.h"
 
 typedef enum J9RASdumpMatchResult
 {
-	J9RAS_DUMP_NO_MATCH 				= 0,
-	J9RAS_DUMP_MATCH                    = 1,
-	J9RAS_DUMP_FILTER_MISMATCH          = 2
+	J9RAS_DUMP_NO_MATCH,
+	J9RAS_DUMP_MATCH,
+	J9RAS_DUMP_FILTER_MISMATCH
 } J9RASdumpMatchResult;
 
 #define J9_MAX_JOBNAME  16
 #define J9_MAX_DUMP_DETAIL_LENGTH  512
 
-/* Lock words, used to suspend other dumps */
+/* Lock words, used to suspend other dumps. */
 static UDATA rasDumpSuspendKey = 0;
 static UDATA rasDumpFirstThread = 0;
 
-/* Postpone GC and thread event hooks until later phases of VM initialization. */
-UDATA rasDumpPostponeHooks = \
-	J9RAS_DUMP_ON_CLASS_UNLOAD | \
-	J9RAS_DUMP_ON_GLOBAL_GC | \
-	J9RAS_DUMP_ON_SLOW_EXCLUSIVE_ENTER | \
-	J9RAS_DUMP_ON_OBJECT_ALLOCATION | \
-	J9RAS_DUMP_ON_EXCESSIVE_GC | \
-	J9RAS_DUMP_ON_THREAD_START | \
-	J9RAS_DUMP_ON_THREAD_BLOCKED | \
-	J9RAS_DUMP_ON_THREAD_END;
+/* Postpone GC and thread event hooks
+ * until later phases of VM initialization.
+ */
+static UDATA rasDumpPostponeHooks = 0
+		| J9RAS_DUMP_ON_CLASS_UNLOAD
+		| J9RAS_DUMP_ON_EXCESSIVE_GC
+		| J9RAS_DUMP_ON_GLOBAL_GC
+		| J9RAS_DUMP_ON_OBJECT_ALLOCATION
+		| J9RAS_DUMP_ON_SLOW_EXCLUSIVE_ENTER
+		| J9RAS_DUMP_ON_THREAD_BLOCKED
+		| J9RAS_DUMP_ON_THREAD_END
+		| J9RAS_DUMP_ON_THREAD_START
+		;
 
-/* Outstanding hook requests - flushed after VM init */
-UDATA rasDumpPendingHooks = 0;
+/* Outstanding hook requests - flushed after VM initialization. */
+static UDATA rasDumpPendingHooks = 0;
 
-/* Cached VM event handlers for use by J9VMRASdumpHooks */
-UDATA rasDumpUnhookedEvents = J9RAS_DUMP_ON_ANY;
+/* Cached VM event handlers for use by J9VMRASdumpHooks. */
+static UDATA rasDumpUnhookedEvents = J9RAS_DUMP_ON_ANY;
 
-static void rasDumpHookVmInit (J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
-static void rasDumpHookGCInitialized(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
-static void rasDumpHookAllocationThreshold(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
-static void rasDumpHookSlowExclusive (J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
-static void rasDumpHookThreadStart (J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
-static void rasDumpHookExceptionDescribe (J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
-#if (defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING))
-static void rasDumpHookClassesUnload (J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
-#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
-static void rasDumpHookVmShutdown (J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
-static void rasDumpHookExceptionThrow (J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
-static void rasDumpHookGlobalGcStart (J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
-static void rasDumpHookThreadEnd (J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
-static J9RASdumpMatchResult matchesFilter (J9VMThread *vmThread, J9RASdumpEventData *eventData, UDATA eventFlags, char *filter, char *subFilter);
-static void rasDumpHookExceptionSysthrow PROTOTYPE((J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData));
-static void rasDumpHookClassLoad (J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
-static void rasDumpHookExceptionCatch (J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
-static void rasDumpHookMonitorContendedEnter (J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
-static void rasDumpHookCorruptCache(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
-static void rasDumpHookExcessiveGC(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
+static void rasDumpHookVmInit(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
+static void rasDumpHookGCInitialized(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
+static void rasDumpHookAllocationThreshold(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
+static void rasDumpHookSlowExclusive(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
+static void rasDumpHookThreadStart(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
+static void rasDumpHookExceptionDescribe(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
+#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
+static void rasDumpHookClassesUnload(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
+#endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
+static void rasDumpHookVmShutdown(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
+static void rasDumpHookExceptionThrow(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
+static void rasDumpHookGlobalGcStart(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
+static void rasDumpHookThreadEnd(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
+static J9RASdumpMatchResult matchesFilter(J9VMThread *vmThread, J9RASdumpEventData *eventData, UDATA eventFlags, char *filter, char *subFilter);
+static void rasDumpHookExceptionSysthrow PROTOTYPE((J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData));
+static void rasDumpHookClassLoad(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
+static void rasDumpHookExceptionCatch(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
+static void rasDumpHookMonitorContendedEnter(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
+static void rasDumpHookCorruptCache(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
+static void rasDumpHookExcessiveGC(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 static void rasDumpHookCRIUCheckpoint(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
 static void rasDumpHookCRIURestore(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
@@ -119,16 +121,19 @@ extern void setAllocationThreshold(J9VMThread *vmThread, UDATA min, UDATA max);
 
 struct ExceptionStackFrame
 {
-	J9ROMClass  *romClass;
+	J9ROMClass *romClass;
 	J9ROMMethod *romMethod;
 	int callStackOffset;
 	int desiredOffset;
 };
 
 static UDATA
-countExceptionStackFrame(J9VMThread *vmThread, void *userData, UDATA bytecodeOffset, J9ROMClass *romClass, J9ROMMethod *romMethod, J9UTF8 *fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass, UDATA frameType)
+countExceptionStackFrame(
+	J9VMThread *vmThread, void *userData, UDATA bytecodeOffset,
+	J9ROMClass *romClass, J9ROMMethod *romMethod, J9UTF8 *fileName, UDATA lineNumber,
+	J9ClassLoader *classLoader, J9Class *ramClass, UDATA frameType)
 {
-	struct ExceptionStackFrame *frame = (struct ExceptionStackFrame *) userData;
+	struct ExceptionStackFrame *frame = (struct ExceptionStackFrame *)userData;
 
 	/* Stop and fill in the struct when we have reached the required frame. */
 	if (frame->callStackOffset++ == frame->desiredOffset) {
@@ -148,20 +153,21 @@ countExceptionStackFrame(J9VMThread *vmThread, void *userData, UDATA bytecodeOff
  *
  * @return one on success, zero on failure
  */
-static UDATA multiplyBySuffix(UDATA *val, char suffix)
+static BOOLEAN
+multiplyBySuffix(UDATA *val, char suffix)
 {
 	switch (suffix) {
 	case 'k':
 	case 'K':
 		*val *= 1024;
-		return 1;
+		return TRUE;
 	case 'm':
 	case 'M':
 		*val *= 1024 * 1024;
-		return 1;
+		return TRUE;
 	}
 
-	return 0;
+	return FALSE;
 }
 
 /**
@@ -176,22 +182,22 @@ static UDATA multiplyBySuffix(UDATA *val, char suffix)
 UDATA
 parseAllocationRange(char *range, UDATA *min, UDATA *max)
 {
-	if (*range != '#') {
+	if ('#' != *range) {
 		return 0;
 	}
-	range++;
+	range += 1;
 
-	if (scan_udata(&range, min) != 0) {
-		/* No matching numeric value */
+	if (0 != scan_udata(&range, min)) {
+		/* No matching numeric value. */
 		return 0;
 	}
 	if (multiplyBySuffix(min, *range)) {
-		range++;
+		range += 1;
 	}
 
 	if (try_scan(&range, "..")) {
-		if (scan_udata(&range, max) != 0) {
-			/* No matching numeric value */
+		if (0 != scan_udata(&range, max)) {
+			/* No matching numeric value. */
 			return 0;
 		}
 		multiplyBySuffix(max, *range);
@@ -218,7 +224,7 @@ matchesObjectAllocationFilter(J9RASdumpEventData *eventData, char *filter)
 	UDATA fltValueMax = 0;
 	char fltText[20];
 
-	if (!filter) {
+	if (NULL == filter) {
 		/* Must have a filter for matching object allocation */
 		return J9RAS_DUMP_NO_MATCH;
 	}
@@ -228,21 +234,21 @@ matchesObjectAllocationFilter(J9RASdumpEventData *eventData, char *filter)
 	strncpy(fltText, filter, sizeof(fltText) - 1);
 	fltText[sizeof(fltText) - 1] = '\0';
 
-	/* Convert the message to a number */
+	/* Convert the message to a number. */
 	msgPtr = msgText;
-	if (scan_udata(&msgPtr, &msgValue) != 0) {
-		/* No matching numeric value */
+	if (0 != scan_udata(&msgPtr, &msgValue)) {
+		/* No matching numeric value. */
 		return J9RAS_DUMP_NO_MATCH;
 	}
 
 	/* Convert the filter range to two numbers */
 	fltPtr = fltText;
-	if (!parseAllocationRange(fltPtr, &fltValueMin, &fltValueMax)) {
+	if (0 == parseAllocationRange(fltPtr, &fltValueMin, &fltValueMax)) {
 		return J9RAS_DUMP_NO_MATCH;
 	}
 
 	/* Do the range check */
-	if (msgValue >= fltValueMin && msgValue <= fltValueMax) {
+	if ((fltValueMin <= msgValue) && (msgValue <= fltValueMax)) {
 		return J9RAS_DUMP_MATCH;
 	}
 
@@ -267,25 +273,25 @@ matchesSlowExclusiveEnterFilter(J9RASdumpEventData *eventData, char *filter)
 
 	/* convert the message value to a number */
 	msgPtr = msgText;
-	if (scan_idata(&msgPtr, &msgValue) != 0) {
+	if (0 != scan_idata(&msgPtr, &msgValue)) {
 		/* No matching numeric value */
 		return J9RAS_DUMP_NO_MATCH;
 	}
 
 	/* convert the filter value to a number */
 	fltPtr = fltText;
-	if (*fltPtr == '#') {
+	if ('#' == *fltPtr) {
 		/* Skip over the leading #, if any. See defect 196215, as well as allowing a leading # (as documented) we are
 		 * deliberately preserving the previous behaviour, which allowed the user to specify filter=<nn>ms, without the #
 		 */
-		fltPtr++;
+		fltPtr += 1;
 	}
-	if (scan_idata(&fltPtr, &fltValue) != 0) {
+	if (0 != scan_idata(&fltPtr, &fltValue)) {
 		/* No matching numeric value */
 		return J9RAS_DUMP_NO_MATCH;
 	}
 
-	if (strcmp(fltPtr, "ms") != 0) {
+	if (0 != strcmp(fltPtr, "ms")) {
 		/* No matching range */
 		return J9RAS_DUMP_NO_MATCH;
 	}
@@ -302,26 +308,27 @@ static J9RASdumpMatchResult
 matchesVMShutdownFilter(J9RASdumpEventData *eventData, char *filter)
 {
 	char *message = eventData->detailData;
-	IDATA value;
+	IDATA value = 0;
 
 	/* Numeric range comparison? */
-	if (*message != '#') {
+	if ('#' != *message) {
 		return J9RAS_DUMP_NO_MATCH;
 	}
 
-	if (filter && *filter != '#') {
-		/* Special case: text filter has been applied to a numeric message (ie. vmstop event) */
+	if ((NULL != filter) && ('#' != *filter)) {
+		/* Special case: text filter has been applied to a numeric message (i.e. vmstop event). */
 		return J9RAS_DUMP_FILTER_MISMATCH;
 	}
 
-	message++;
+	message += 1;
 
-	/* Number detail encoded as null-terminated hex */
+	/* Number detail encoded as null-terminated hex. */
 	scan_hex(&message, (UDATA *)&value);
 
-	/* Match to number ranges encoded in filter string */
+	/* Match to number ranges encoded in filter string. */
 	while (try_scan(&filter, "#")) {
-		IDATA lhs, rhs;
+		IDATA lhs = 0;
+		IDATA rhs = 0;
 
 		scan_idata(&filter, &lhs);
 
@@ -331,12 +338,12 @@ matchesVMShutdownFilter(J9RASdumpEventData *eventData, char *filter)
 			rhs = lhs;
 		}
 
-		if (lhs <= value && value <= rhs) {
+		if ((lhs <= value) && (value <= rhs)) {
 			return J9RAS_DUMP_MATCH;
 		}
 	}
 
-	/* No matching range */
+	/* No matching range. */
 	return J9RAS_DUMP_NO_MATCH;
 }
 
@@ -354,7 +361,7 @@ matchesExceptionFilter(J9VMThread *vmThread, J9RASdumpEventData *eventData, UDAT
 	UDATA retCode = J9RAS_DUMP_NO_MATCH;
 
 	if ((NULL != eventData->exceptionRef) && (NULL != filter)) {
-		j9object_t exception = *((j9object_t *) eventData->exceptionRef);
+		j9object_t exception = *(j9object_t *)eventData->exceptionRef;
 		char *hashSignInFilter = NULL;
 		char *stackOffsetFilter = NULL;
 		struct ExceptionStackFrame throwSite;
@@ -367,14 +374,14 @@ matchesExceptionFilter(J9VMThread *vmThread, J9RASdumpEventData *eventData, UDAT
 		/* Filter an exception event on throw/catch site if the new filter syntax is used */
 		hashSignInFilter = strrchr(filter, '#');
 		if (NULL != hashSignInFilter) {
-			hashSignInFilter++;
-			if (*hashSignInFilter >= '0' && *hashSignInFilter <= '9') {
+			hashSignInFilter += 1;
+			if (('0' <= *hashSignInFilter) && (*hashSignInFilter <= '9')) {
 				stackOffsetFilter = hashSignInFilter;
 				sscanf(hashSignInFilter, "%d", &throwSite.desiredOffset);
 			}
 
-			if (eventFlags & J9RAS_DUMP_ON_EXCEPTION_CATCH) {
-				J9StackWalkState * walkState = vmThread->stackWalkState;
+			if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_EXCEPTION_CATCH)) {
+				J9StackWalkState *walkState = vmThread->stackWalkState;
 				if (NULL != walkState) {
 					walkState->walkThread = vmThread;
 					walkState->flags = J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_COUNT_SPECIFIED;
@@ -388,32 +395,32 @@ matchesExceptionFilter(J9VMThread *vmThread, J9RASdumpEventData *eventData, UDAT
 				}
 			} else {
 				/* For other events, walk the stack to find the desired frame */
-				vmThread->javaVM->internalVMFunctions->iterateStackTrace(vmThread, (j9object_t*) eventData->exceptionRef, countExceptionStackFrame, &throwSite, TRUE, FALSE);
+				vmThread->javaVM->internalVMFunctions->iterateStackTrace(vmThread, (j9object_t *) eventData->exceptionRef, countExceptionStackFrame, &throwSite, TRUE, FALSE);
 			}
 		}
 
-		if (throwSite.romClass && throwSite.romMethod) {
+		if ((NULL != throwSite.romClass) && (NULL != throwSite.romMethod)) {
 			J9UTF8 *exceptionClassName = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(vmThread, exception)->romClass);
 			J9UTF8 *throwClassName  = J9ROMCLASS_CLASSNAME(throwSite.romClass);
 			J9UTF8 *throwMethodName = J9ROMMETHOD_NAME(throwSite.romMethod);
 
-			if (throwClassName && throwMethodName) {
-				if (stackOffsetFilter) {
+			if ((NULL != throwClassName) && (NULL != throwMethodName)) {
+				if (NULL != stackOffsetFilter) {
 					buflen = J9UTF8_LENGTH(exceptionClassName) + J9UTF8_LENGTH(throwClassName) + J9UTF8_LENGTH(throwMethodName) + strlen(stackOffsetFilter) + 3;
 				} else {
 					buflen = J9UTF8_LENGTH(exceptionClassName) + J9UTF8_LENGTH(throwClassName) + J9UTF8_LENGTH(throwMethodName) + 2;
 				}
 				buf = j9mem_allocate_memory(buflen + 1, OMRMEM_CATEGORY_VM);
 
-				if (buf != NULL) {
-					int end = J9UTF8_LENGTH(exceptionClassName);
+				if (NULL != buf) {
+					UDATA end = J9UTF8_LENGTH(exceptionClassName);
 					memcpy(buf, J9UTF8_DATA(exceptionClassName), J9UTF8_LENGTH(exceptionClassName));
 					buf[end] = '#';
 					memcpy(buf + end + 1, J9UTF8_DATA(throwClassName), J9UTF8_LENGTH(throwClassName));
 					end += J9UTF8_LENGTH(throwClassName) + 1;
 					buf[end] = '.';
 					memcpy(buf + end + 1, J9UTF8_DATA(throwMethodName), J9UTF8_LENGTH(throwMethodName));
-					if (stackOffsetFilter) {
+					if (NULL != stackOffsetFilter) {
 						end += J9UTF8_LENGTH(throwMethodName) + 1;
 						buf[end] = '#';
 						j9str_printf(buf + end + 1, buflen - end, "%d", throwSite.desiredOffset);
@@ -424,24 +431,24 @@ matchesExceptionFilter(J9VMThread *vmThread, J9RASdumpEventData *eventData, UDAT
 		}
 	}
 
-	if (buf && buflen) {
+	if ((NULL != buf) && (0 != buflen)) {
 		message = buf;
 		nbytes  = buflen;
 	}
 
 	/* Apply standard text filter */
-	if (filter && parseWildcard(filter, strlen(filter), &needleString, &needleLength, &matchFlag) == 0) {
+	if ((NULL != filter) && (0 == parseWildcard(filter, strlen(filter), &needleString, &needleLength, &matchFlag))) {
 		if (wildcardMatch(matchFlag, needleString, needleLength, message, nbytes)) {
 			retCode = J9RAS_DUMP_MATCH;
 		} else {
-			if (buf != NULL) {
+			if (NULL != buf) {
 				j9mem_free_memory(buf);
 			}
 			return retCode;
 		}
 	}
 
-	if (buf != NULL) {
+	if (NULL != buf) {
 		j9mem_free_memory(buf);
 		buf = NULL;
 		buflen = 0;
@@ -487,7 +494,7 @@ matchesExceptionFilter(J9VMThread *vmThread, J9RASdumpEventData *eventData, UDAT
 static J9RASdumpMatchResult
 matchesFilter(J9VMThread *vmThread, J9RASdumpEventData *eventData, UDATA eventFlags, char *filter, char *subFilter)
 {
-	if (eventFlags & J9RAS_DUMP_ON_OBJECT_ALLOCATION) {
+	if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_OBJECT_ALLOCATION)) {
 		/* This comes before the default filter because object allocation MUST have a filter */
 		return matchesObjectAllocationFilter(eventData, filter);
 	}
@@ -495,17 +502,21 @@ matchesFilter(J9VMThread *vmThread, J9RASdumpEventData *eventData, UDATA eventFl
 	/* For exception specific events the filter and subfilter default(null) matches to all
 	 * For non exception specific events the filter default(null) matches to all
 	 */
-	if (((0 != (eventFlags & J9RAS_DUMP_EXCEPTION_EVENT_GROUP)) && NULL == filter && NULL == subFilter) ||
-		((0 == (eventFlags & J9RAS_DUMP_EXCEPTION_EVENT_GROUP)) && NULL == filter))
-	{
-		return J9RAS_DUMP_MATCH;
+	if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_EXCEPTION_EVENT_GROUP)) {
+		if ((NULL == filter) && (NULL == subFilter)) {
+			return J9RAS_DUMP_MATCH;
+		}
+	} else {
+		if (NULL == filter) {
+			return J9RAS_DUMP_MATCH;
+		}
 	}
 
-	if (eventFlags & J9RAS_DUMP_ON_SLOW_EXCLUSIVE_ENTER) {
+	if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_SLOW_EXCLUSIVE_ENTER)) {
 		return matchesSlowExclusiveEnterFilter(eventData, filter);
-	} else if (eventFlags & J9RAS_DUMP_ON_VM_SHUTDOWN) {
+	} else if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_VM_SHUTDOWN)) {
 		return matchesVMShutdownFilter(eventData, filter);
-	} else if (0 != (eventFlags & (J9RAS_DUMP_EXCEPTION_EVENT_GROUP | J9RAS_DUMP_ON_CLASS_LOAD))) {
+	} else if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_EXCEPTION_EVENT_GROUP | J9RAS_DUMP_ON_CLASS_LOAD)) {
 		return matchesExceptionFilter(vmThread, eventData, eventFlags, filter, subFilter);
 	}
 
@@ -551,19 +562,21 @@ prepareForDump(struct J9JavaVM *vm, struct J9RASdumpAgent *agent, struct J9RASdu
 	UDATA dumpKey = 1 + (UDATA)omrthread_self();
 	J9VMThread *vmThread = context->onThread;
 	UDATA newState = state;
-	RasGlobalStorage * j9ras = (RasGlobalStorage *)vm->j9rasGlobalStorage;
-	UtInterface * uteInterface = (UtInterface *)(j9ras ? j9ras->utIntf : NULL);
+	RasGlobalStorage *j9ras = (RasGlobalStorage *)vm->j9rasGlobalStorage;
+	UtInterface *uteInterface = (UtInterface *)(j9ras ? j9ras->utIntf : NULL);
 	BOOLEAN exclusiveHeld = J9_XACCESS_NONE != vm->exclusiveAccessState;
 	BOOLEAN acquireVMAccessAfterWait = FALSE;
 
 	/* Is trace running? */
-	if( uteInterface && uteInterface->server ) {
+	if ((NULL != uteInterface) && (NULL != uteInterface->server)) {
 		/* Disable trace while taking a dump. */
 		uteInterface->server->DisableTrace(UT_DISABLE_GLOBAL);
 		newState |= J9RAS_DUMP_TRACE_DISABLED;
 	}
 
-	/* Release vm access until this thread has the dumpKey and is ready to run. This will allow other threads to obtain exclusiveVMAccess in the meantime. */
+	/* Release VM access until this thread has the dumpKey and is ready to run.
+	 * This will allow other threads to obtain exclusiveVMAccess in the meantime.
+	 */
 	if ((NULL != vmThread) && !vmThread->inNative) {
 		if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_VM_ACCESS)) {
 			vm->internalVMFunctions->internalReleaseVMAccess(vmThread);
@@ -616,23 +629,21 @@ prepareForDump(struct J9JavaVM *vm, struct J9RASdumpAgent *agent, struct J9RASdu
 		 */
 
 		/* Share exclusive access when it's a "slow entry" or "user" event, as there may be a deadlock */
-		UDATA shareVMAccess = exclusiveHeld
+		BOOLEAN shareVMAccess = exclusiveHeld
 				&& OMR_ARE_ANY_BITS_SET(context->eventFlags, J9RAS_DUMP_ON_USER_SIGNAL | J9RAS_DUMP_ON_SLOW_EXCLUSIVE_ENTER);
 
-		if ( shareVMAccess == 0 ) {
-
+		if (!shareVMAccess) {
 			/* Deferred attach of SigQuit thread, needed if we're preparing to walk the heap (GC pre-req) */
 			if (OMR_ARE_ANY_BITS_SET(agent->requestMask, J9RAS_DUMP_DO_PREPARE_HEAP_FOR_WALK | J9RAS_DUMP_DO_COMPACT_HEAP | J9RAS_DUMP_DO_ATTACH_THREAD)
-					&& OMR_ARE_ANY_BITS_SET(context->eventFlags, J9RAS_DUMP_ON_USER_SIGNAL | J9RAS_DUMP_ON_USER2_SIGNAL)
+				&& OMR_ARE_ANY_BITS_SET(context->eventFlags, J9RAS_DUMP_ON_USER_SIGNAL | J9RAS_DUMP_ON_USER2_SIGNAL)
 			) {
-
 				JavaVMAttachArgs attachArgs;
 
 				attachArgs.version = JNI_VERSION_1_2;
 				attachArgs.name = "SIGQUIT Thread";
 				attachArgs.group = NULL;
 
-				if (!vmThread) {
+				if (NULL == vmThread) {
 					vm->internalVMFunctions->AttachCurrentThreadAsDaemon((JavaVM *)vm, (void **)&vmThread, &attachArgs);
 					context->onThread = vmThread;
 					newState |= J9RAS_DUMP_ATTACHED_THREAD;
@@ -641,17 +652,17 @@ prepareForDump(struct J9JavaVM *vm, struct J9RASdumpAgent *agent, struct J9RASdu
 				}
 			}
 
-			if ( (agent->requestMask & J9RAS_DUMP_DO_EXCLUSIVE_VM_ACCESS) &&
-			(state & J9RAS_DUMP_GOT_EXCLUSIVE_VM_ACCESS) == 0 ) {
-
-				if (vmThread) {
+			if (J9_ARE_ANY_BITS_SET(agent->requestMask, J9RAS_DUMP_DO_EXCLUSIVE_VM_ACCESS)
+				&& J9_ARE_NO_BITS_SET(state, J9RAS_DUMP_GOT_EXCLUSIVE_VM_ACCESS)
+			) {
+				if (NULL != vmThread) {
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 					if (vmThread->inNative) {
 						vm->internalVMFunctions->internalEnterVMFromJNI(vmThread);
 						newState |= J9RAS_DUMP_GOT_JNI_VM_ACCESS;
 					} else
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
-					if ((vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) == 0) {
+					if (J9_ARE_NO_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_VM_ACCESS)) {
 						vm->internalVMFunctions->internalAcquireVMAccess(vmThread);
 						newState |= J9RAS_DUMP_GOT_VM_ACCESS;
 					}
@@ -665,36 +676,42 @@ prepareForDump(struct J9JavaVM *vm, struct J9RASdumpAgent *agent, struct J9RASdu
 		}
 	}
 
-	if ( (agent->requestMask & J9RAS_DUMP_DO_COMPACT_HEAP) &&
-	((state & J9RAS_DUMP_HEAP_COMPACTED) == 0 ) ) {
+	if (J9_ARE_ANY_BITS_SET(agent->requestMask, J9RAS_DUMP_DO_COMPACT_HEAP)
+		&& J9_ARE_NO_BITS_SET(state, J9RAS_DUMP_HEAP_COMPACTED)
+	) {
 		/* If exclusive access has been obtained, do the requested compaction */
-		if ((newState & J9RAS_DUMP_GOT_EXCLUSIVE_VM_ACCESS) && (vmThread != 0)) {
+		if (J9_ARE_ANY_BITS_SET(newState, J9RAS_DUMP_GOT_EXCLUSIVE_VM_ACCESS) && (NULL != vmThread)) {
 			J9RASdumpEventData *eventData = context->eventData;
 
 			/* Don't try and compact the heap if it may cause recursion in GC */
-			UDATA gcEvent =
-			(context->eventFlags & J9RAS_DUMP_ON_GLOBAL_GC) ||
-			(context->eventFlags & J9RAS_DUMP_ON_CLASS_UNLOAD) ||
-			(context->eventFlags & J9RAS_DUMP_ON_EXCESSIVE_GC) ||
-			(eventData && matchesFilter(vmThread, eventData, context->eventFlags, "*OutOfMemoryError", NULL) == J9RAS_DUMP_MATCH) ||
-			/* Tracepoint trigger when exclusive is held also indicates we may be in GC */
-			(eventData && eventData->detailData && strcmp(eventData->detailData,"-Xtrace:trigger") == 0 && exclusiveHeld);
+			BOOLEAN gcEvent =
+					J9_ARE_ANY_BITS_SET(
+							context->eventFlags,
+							J9RAS_DUMP_ON_GLOBAL_GC | J9RAS_DUMP_ON_CLASS_UNLOAD | J9RAS_DUMP_ON_EXCESSIVE_GC)
+					|| ((NULL != eventData) &&
+							(J9RAS_DUMP_MATCH == matchesFilter(vmThread, eventData, context->eventFlags, "*OutOfMemoryError", NULL)))
+					/* Tracepoint trigger when exclusive is held also indicates we may be in GC. */
+					|| (exclusiveHeld
+							&& (NULL != eventData)
+							&& (NULL != eventData->detailData)
+							&& (0 == strcmp(eventData->detailData,"-Xtrace:trigger")));
 
 			/*
 			 * The extra check of this runtime flag is to defer invoking GC till class objects are assigned during startup;
 			 * otherwise NULL class objects would be captured by GC assertion.
 			 */
-			if ( J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_CLASS_OBJECT_ASSIGNED) && !gcEvent ) {
+			if (J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_CLASS_OBJECT_ASSIGNED) && !gcEvent) {
 				vm->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(vmThread, J9MMCONSTANT_EXPLICIT_GC_RASDUMP_COMPACT);
 				newState |= J9RAS_DUMP_HEAP_COMPACTED;
 			}
 		}
 	}
 
-	if ( (agent->requestMask & J9RAS_DUMP_DO_PREPARE_HEAP_FOR_WALK) &&
-	((state & J9RAS_DUMP_HEAP_PREPARED) == 0 ) ) {
+	if (J9_ARE_ANY_BITS_SET(agent->requestMask, J9RAS_DUMP_DO_PREPARE_HEAP_FOR_WALK)
+		&& J9_ARE_NO_BITS_SET(state, J9RAS_DUMP_HEAP_PREPARED)
+	) {
 		/* If exclusive access has been obtained, do the requested preparation */
-		if (newState & J9RAS_DUMP_GOT_EXCLUSIVE_VM_ACCESS) {
+		if (J9_ARE_ANY_BITS_SET(newState, J9RAS_DUMP_GOT_EXCLUSIVE_VM_ACCESS)) {
 			vm->memoryManagerFunctions->j9gc_flush_caches_for_walk(vm);
 			vm->memoryManagerFunctions->j9gc_flush_nonAllocationCaches_for_walk(vm);
 			newState |= J9RAS_DUMP_HEAP_PREPARED;
@@ -713,20 +730,19 @@ unwindAfterDump(struct J9JavaVM *vm, struct J9RASdumpContext *context, UDATA sta
 	UDATA newState = state;
 
 	/*
-	 * Must be in reverse order to the requested actions
+	 * Must be in reverse order to the requested actions.
 	 */
 
-	if (state & J9RAS_DUMP_GOT_EXCLUSIVE_VM_ACCESS) {
-
-		if (vmThread) {
+	if (J9_ARE_ANY_BITS_SET(state, J9RAS_DUMP_GOT_EXCLUSIVE_VM_ACCESS)) {
+		if (NULL != vmThread) {
 			vm->internalVMFunctions->releaseExclusiveVMAccess(vmThread);
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-			if (state & J9RAS_DUMP_GOT_JNI_VM_ACCESS) {
+			if (J9_ARE_ANY_BITS_SET(state, J9RAS_DUMP_GOT_JNI_VM_ACCESS)) {
 				vm->internalVMFunctions->internalExitVMToJNI(vmThread);
 				newState &= ~J9RAS_DUMP_GOT_JNI_VM_ACCESS;
 			} else
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
-			if (state & J9RAS_DUMP_GOT_VM_ACCESS) {
+			if (J9_ARE_ANY_BITS_SET(state, J9RAS_DUMP_GOT_VM_ACCESS)) {
 				vm->internalVMFunctions->internalReleaseVMAccess(vmThread);
 				newState &= ~J9RAS_DUMP_GOT_VM_ACCESS;
 			}
@@ -735,28 +751,27 @@ unwindAfterDump(struct J9JavaVM *vm, struct J9RASdumpContext *context, UDATA sta
 		}
 
 		/* Releasing exclusive access potentially invalidates the state of the heap... */
-		newState &= ~( J9RAS_DUMP_GOT_EXCLUSIVE_VM_ACCESS | J9RAS_DUMP_HEAP_COMPACTED | J9RAS_DUMP_HEAP_PREPARED );
+		newState &= ~(J9RAS_DUMP_GOT_EXCLUSIVE_VM_ACCESS | J9RAS_DUMP_HEAP_COMPACTED | J9RAS_DUMP_HEAP_PREPARED);
 	}
 
-	if (state & J9RAS_DUMP_ATTACHED_THREAD) {
-
-		(*((JavaVM *)vm))->DetachCurrentThread((JavaVM *)vm);
+	if (J9_ARE_ANY_BITS_SET(state, J9RAS_DUMP_ATTACHED_THREAD)) {
+		(*(JavaVM *)vm)->DetachCurrentThread((JavaVM *)vm);
 		context->onThread = NULL;
 		newState &= ~J9RAS_DUMP_ATTACHED_THREAD;
 	}
 
-	if (state & J9RAS_DUMP_GOT_LOCK) {
+	if (J9_ARE_ANY_BITS_SET(state, J9RAS_DUMP_GOT_LOCK)) {
 		/* Should work unless omrthread_self returns a different value than before, which is unlikely */
 		compareAndSwapUDATA(&rasDumpSuspendKey, dumpKey, 0);
 		newState &= ~J9RAS_DUMP_GOT_LOCK;
 	}
 
-	if( state & J9RAS_DUMP_TRACE_DISABLED) {
-		RasGlobalStorage * j9ras = (RasGlobalStorage *)vm->j9rasGlobalStorage;
-		UtInterface * uteInterface = (UtInterface *)(j9ras ? j9ras->utIntf : NULL);
+	if (J9_ARE_ANY_BITS_SET(state, J9RAS_DUMP_TRACE_DISABLED)) {
+		RasGlobalStorage *j9ras = (RasGlobalStorage *)vm->j9rasGlobalStorage;
+		UtInterface *uteInterface = (UtInterface *)((NULL != j9ras) ? j9ras->utIntf : NULL);
 		/* Is trace running? */
-		if( uteInterface && uteInterface->server ) {
-			/* Re-enable trace now we are out of the dump code.*/
+		if ((NULL != uteInterface) && (NULL != uteInterface->server)) {
+			/* Re-enable trace now we are out of the dump code. */
 			uteInterface->server->EnableTrace(UT_ENABLE_GLOBAL);
 			newState &= ~J9RAS_DUMP_TRACE_DISABLED;
 		}
@@ -783,9 +798,9 @@ unwindAfterDump(struct J9JavaVM *vm, struct J9RASdumpContext *context, UDATA sta
 omr_error_t
 dumpLabel(struct J9JavaVM *vm, J9RASdumpAgent *agent, J9RASdumpContext *context, char *buf, size_t len, UDATA *reqLen, I_64 now)
 {
-	/* Monotonic counter */
+	/* monotonic counter */
 	static UDATA seqNum = 0;
-	struct J9StringTokens *stringTokens;
+	struct J9StringTokens *stringTokens = NULL;
 	RasDumpGlobalStorage *dump_storage = (RasDumpGlobalStorage *)vm->j9rasdumpGlobalStorage;
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
@@ -802,7 +817,7 @@ dumpLabel(struct J9JavaVM *vm, J9RASdumpAgent *agent, J9RASdumpContext *context,
 
 	j9str_set_time_tokens(stringTokens, now);
 
-	seqNum += 1; /* Atomicity guaranteed as we are inside the dumpLabelTokensMutex */
+	seqNum += 1; /* Atomicity guaranteed as we are inside the dumpLabelTokensMutex. */
 
 	if (0 != j9str_set_token(stringTokens, "seq", "%04u", seqNum)) {
 		omrthread_monitor_exit(dump_storage->dumpLabelTokensMutex);
@@ -831,7 +846,7 @@ dumpLabel(struct J9JavaVM *vm, J9RASdumpAgent *agent, J9RASdumpContext *context,
 	}
 
 	/* Default label is "-", ie. stderr */
-	if (agent->labelTemplate == NULL) {
+	if (NULL == agent->labelTemplate) {
 		agent->labelTemplate = "-";
 	}
 
@@ -859,17 +874,17 @@ dumpLabel(struct J9JavaVM *vm, J9RASdumpAgent *agent, J9RASdumpContext *context,
 omr_error_t
 triggerOneOffDump(struct J9JavaVM *vm, char *optionString, char *caller, char *fileName, size_t fileNameLength)
 {
-	IDATA kind;
+	IDATA kind = 0;
 	omr_error_t retVal = OMR_ERROR_INTERNAL;
-	size_t len;
+	size_t len = 0;
 
-	if( optionString == NULL ) {
+	if (NULL == optionString) {
 		return OMR_ERROR_INTERNAL;
 	}
 
 	kind = scanDumpType(&optionString);
 
-	if ( kind >= 0 ) {
+	if (kind >= 0) {
 		J9RASdumpContext context;
 		J9RASdumpEventData eventData = { 0 };
 
@@ -888,23 +903,23 @@ triggerOneOffDump(struct J9JavaVM *vm, char *optionString, char *caller, char *f
 		context.dumpListIndex = 0;
 
 		eventData.detailData = caller;
-		if (caller != NULL) {
+		if (NULL != caller) {
 			eventData.detailLength = strlen(caller);
 		}
 
-		retVal = createAndRunOneOffDumpAgent(vm,&context,kind,optionString);
+		retVal = createAndRunOneOffDumpAgent(vm, &context, kind, optionString);
 
 		/* Remove the trailing tab added to the filename as a separator, it's only
 		 * used for multiple dumps and will confuse the caller.
 		 */
-		if( fileName ) {
+		if (NULL != fileName) {
 			len = strlen(fileName);
 		} else {
 			len = 0;
 		}
-		if( len > 0 && len <= fileNameLength) {
-			if( fileName[len-1] == '\t') {
-				fileName[len-1] = '\0';
+		if ((0 < len) && (len <= fileNameLength)) {
+			if ('\t' == fileName[len - 1]) {
+				fileName[len - 1] = '\0';
 			}
 		}
 
@@ -918,7 +933,7 @@ triggerOneOffDump(struct J9JavaVM *vm, char *optionString, char *caller, char *f
 omr_error_t
 triggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData)
 {
-	J9RASdumpQueue *queue;
+	J9RASdumpQueue *queue = NULL;
 
 	/* we lock the dump configuration here so that the agent and setting queues can't be
 	 * changed underneath us while we're producing the dumps
@@ -928,19 +943,19 @@ triggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags
 	/*
 	 * Sanity check
 	 */
-	if ( FIND_DUMP_QUEUE(vm, queue) ) {
-		J9RASdumpAgent *node;
+	if (FIND_DUMP_QUEUE(vm, queue)) {
+		J9RASdumpAgent *node = NULL;
 		PORT_ACCESS_FROM_JAVAVM(vm);
-		U_32 dumpTaken = 0;
-		U_32 printed = 0;
+		BOOLEAN dumpTaken = FALSE;
+		BOOLEAN printed = FALSE;
 		BOOLEAN toolDumpFound = FALSE;
 		IDATA dumpAgentCount = 0;
 		UDATA state = 0;
 
 		U_64 now = j9time_current_time_millis();
 
-		UDATA detailLength = eventData ? eventData->detailLength : 0;
-		char *detailData = detailLength ? eventData->detailData : "";
+		UDATA detailLength = (NULL != eventData) ? eventData->detailLength : 0;
+		char *detailData = (0 != detailLength) ? eventData->detailData : "";
 		char detailBuf[J9_MAX_DUMP_DETAIL_LENGTH + 1];
 
 		J9RASdumpContext context;
@@ -961,36 +976,38 @@ triggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags
 		detailBuf[detailLength] = '\0';
 
 		/* Scan the dump agents first to see if we need to provide a dump list for tool agents */
-		for ( node = queue->agents; node != NULL; node = node->nextPtr ) {
-			if ( eventFlags & node->eventMask ) {
-				if ( node->dumpFn == doToolDump ) {
+		for (node = queue->agents; NULL != node; node = node->nextPtr) {
+			if (J9_ARE_ANY_BITS_SET(eventFlags, node->eventMask)) {
+				if (node->dumpFn == doToolDump) {
 					toolDumpFound = TRUE;
 				} else {
 					/* count number of agents for this event, not including tool dumps themselves */
-					dumpAgentCount++;
+					dumpAgentCount += 1;
 
 					if (node->dumpFn == doHeapDump && strstr(node->dumpOptions, "CLASSIC") && strstr(node->dumpOptions, "PHD")) {
 						/* fake up a slot for the dual dump */
-						dumpAgentCount++;
+						dumpAgentCount += 1;
 					}
 				}
 			}
 		}
 		if (toolDumpFound && (dumpAgentCount > 0)) {
 			/* there is a tool dump, so allocate a buffer for the list of dump labels. Need to account for the \t separators and \0 */
-			context.dumpListSize = ((J9_MAX_DUMP_PATH +1) * dumpAgentCount) + 1;
+			context.dumpListSize = ((J9_MAX_DUMP_PATH + 1) * dumpAgentCount) + 1;
 			context.dumpList = j9mem_allocate_memory(context.dumpListSize, OMRMEM_CATEGORY_VM);
-			if (context.dumpList) {
+			if (NULL != context.dumpList) {
 				memset(context.dumpList, 0, context.dumpListSize);
 			}
 		}
 
 		/* Trigger agents for this event, in priority order */
-		for ( node = queue->agents; node != NULL; node = node->nextPtr ) {
-			if ( eventFlags & node->eventMask ) {
+		for (node = queue->agents; NULL != node; node = node->nextPtr) {
+			if (J9_ARE_ANY_BITS_SET(eventFlags, node->eventMask)) {
 
 				/* NOTE: we allow trigger on filter mismatch (ie. exception text filter applied to vmstop exit code) */
-				if (NULL == eventData || matchesFilter(self, eventData, eventFlags, node->detailFilter, node->subFilter) != J9RAS_DUMP_NO_MATCH) {
+				if ((NULL == eventData)
+					|| (J9RAS_DUMP_NO_MATCH != matchesFilter(self, eventData, eventFlags, node->detailFilter, node->subFilter))
+				) {
 					/* increment count, but don't go past stopOnCount for a finite range */
 					UDATA oldCount = node->count;
 					UDATA newCount = oldCount + 1;
@@ -1008,9 +1025,10 @@ triggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags
 					}
 
 					/* Now check if the updated count is within the trigger range. */
-					if ((newCount >= node->startOnCount) &&
-							((node->stopOnCount < node->startOnCount) || (newCount <= node->stopOnCount))) {
-						if (printed == 0) {
+					if ((newCount >= node->startOnCount)
+						&& ((node->stopOnCount < node->startOnCount) || (newCount <= node->stopOnCount))
+					) {
+						if (!printed) {
 							if (node->dumpFn != doSilentDump) {
 								OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 								char dateStamp[64];
@@ -1034,30 +1052,30 @@ triggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags
 											if (stackBuffer != extraDetail) {
 												j9mem_free_memory(extraDetail);
 											}
-											printed = 1;
+											printed = TRUE;
 										}
 									}
 								}
-								if (0 == printed) {
+								if (!printed) {
 									j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR | J9NLS_VITAL, J9NLS_DMP_PROCESSING_EVENT_TIME,
 											mapDumpEvent(eventFlags), detailLength, detailData, dateStamp);
-									printed = 1;
+									printed = TRUE;
 								}
 							}
 						}
 
-						runDumpAgent(vm,node,&context,&state,detailBuf,now);
-						dumpTaken = 1;
+						runDumpAgent(vm, node, &context, &state, detailBuf, now);
+						dumpTaken = TRUE;
 					}
 				}
 			}
 		}
 
-		if (dumpTaken == 1) {
+		if (dumpTaken) {
 			/* Release accumulated locks */
 			state = unwindAfterDump(vm, &context, state);
 
-			if (printed == 1) {
+			if (printed) {
 				OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 				int64_t end = j9time_current_time_millis();
 				int64_t duration = end - now;
@@ -1082,17 +1100,17 @@ triggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags
 			}
 		}
 
-		if (context.dumpList) {
+		if (NULL != context.dumpList) {
 			j9mem_free_memory(context.dumpList);
 		}
 
-		/* Allow configuration updates again */
+		/* Allow configuration updates again. */
 		unlockConfig();
 
 		return OMR_ERROR_NONE;
 	}
 
-	/* Allow configuration updates again */
+	/* Allow configuration updates again. */
 	unlockConfig();
 
 	return OMR_ERROR_INTERNAL;
@@ -1104,92 +1122,92 @@ rasDumpEnableHooks(J9JavaVM *vm, UDATA eventFlags)
 	omr_error_t retVal = OMR_ERROR_NONE;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	const UDATA hookFlags = J9RAS_DUMP_ON_ANY & ~J9RAS_DUMP_ON_GP_FAULT & ~J9RAS_DUMP_ON_USER_SIGNAL & ~J9RAS_DUMP_ON_USER2_SIGNAL;
+	const UDATA hookFlags = J9RAS_DUMP_ON_ANY
+			& ~(J9RAS_DUMP_ON_GP_FAULT | J9RAS_DUMP_ON_USER_SIGNAL | J9RAS_DUMP_ON_USER2_SIGNAL);
 
-	if (eventFlags & hookFlags) {
-		J9HookInterface** vmHooks = vm->internalVMFunctions->getVMHookInterface(vm);
-		J9HookInterface** gcOmrHooks = vm->memoryManagerFunctions ? vm->memoryManagerFunctions->j9gc_get_omr_hook_interface(vm->omrVM) : NULL;
+	if (J9_ARE_ANY_BITS_SET(eventFlags, hookFlags)) {
+		J9HookInterface **vmHooks = vm->internalVMFunctions->getVMHookInterface(vm);
+		J9HookInterface **gcOmrHooks = vm->memoryManagerFunctions ? vm->memoryManagerFunctions->j9gc_get_omr_hook_interface(vm->omrVM) : NULL;
 
-		UDATA* postponeHooks = GLOBAL_DATA(rasDumpPostponeHooks);
-		UDATA* pendingHooks = GLOBAL_DATA(rasDumpPendingHooks);
-		UDATA* unhooked = GLOBAL_DATA(rasDumpUnhookedEvents);
-		UDATA skip;
+		UDATA *postponeHooks = GLOBAL_DATA(rasDumpPostponeHooks);
+		UDATA *pendingHooks = GLOBAL_DATA(rasDumpPendingHooks);
+		UDATA *unhooked = GLOBAL_DATA(rasDumpUnhookedEvents);
 
 		IDATA rc = 0;
 
-		/* Exclude and record any hooks that should be postponed */
-		skip = eventFlags & *postponeHooks;
-		eventFlags -= skip;
+		/* Exclude and record any hooks that should be postponed. */
+		UDATA skip = eventFlags & *postponeHooks;
+		eventFlags &= ~skip;
 		*pendingHooks |= skip;
 
-		/* Exclude already hooked events */
+		/* Exclude already hooked events. */
 		eventFlags &= *unhooked;
 
-		if (eventFlags & J9RAS_DUMP_ON_VM_STARTUP) {
+		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_VM_STARTUP)) {
 			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZED, rasDumpHookVmInit, OMR_GET_CALLSITE(), NULL);
 		}
-		if (eventFlags & J9RAS_DUMP_ON_VM_SHUTDOWN) {
+		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_VM_SHUTDOWN)) {
 			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_SHUTTING_DOWN, rasDumpHookVmShutdown, OMR_GET_CALLSITE(), NULL);
 		}
-		if (eventFlags & J9RAS_DUMP_ON_CLASS_LOAD) {
+		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_CLASS_LOAD)) {
 			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CLASS_LOAD, rasDumpHookClassLoad, OMR_GET_CALLSITE(), NULL);
 		}
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-		if (eventFlags & J9RAS_DUMP_ON_CLASS_UNLOAD) {
+		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_CLASS_UNLOAD)) {
 			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CLASSES_UNLOAD, rasDumpHookClassesUnload, OMR_GET_CALLSITE(), NULL);
 		}
 #endif
-		if (eventFlags & J9RAS_DUMP_ON_EXCEPTION_SYSTHROW) {
+		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_EXCEPTION_SYSTHROW)) {
 			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_EXCEPTION_SYSTHROW, rasDumpHookExceptionSysthrow, OMR_GET_CALLSITE(), NULL);
 		}
-		if (eventFlags & J9RAS_DUMP_ON_EXCEPTION_THROW) {
+		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_EXCEPTION_THROW)) {
 			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_EXCEPTION_THROW, rasDumpHookExceptionThrow, OMR_GET_CALLSITE(), NULL);
 		}
-		if (eventFlags & J9RAS_DUMP_ON_EXCEPTION_CATCH) {
+		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_EXCEPTION_CATCH)) {
 			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_EXCEPTION_CATCH, rasDumpHookExceptionCatch, OMR_GET_CALLSITE(), NULL);
 		}
-		if (eventFlags & J9RAS_DUMP_ON_THREAD_START) {
+		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_THREAD_START)) {
 			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_THREAD_STARTED, rasDumpHookThreadStart, OMR_GET_CALLSITE(), NULL);
 		}
-		if (eventFlags & J9RAS_DUMP_ON_THREAD_BLOCKED) {
+		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_THREAD_BLOCKED)) {
 			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_MONITOR_CONTENDED_ENTER, rasDumpHookMonitorContendedEnter, OMR_GET_CALLSITE(), NULL);
 		}
-		if (eventFlags & J9RAS_DUMP_ON_THREAD_END) {
+		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_THREAD_END)) {
 			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_THREAD_END, rasDumpHookThreadEnd, OMR_GET_CALLSITE(), NULL);
 		}
-		if (eventFlags & J9RAS_DUMP_ON_GLOBAL_GC) {
+		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_GLOBAL_GC)) {
 			rc = (*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_GLOBAL_GC_START, rasDumpHookGlobalGcStart, OMR_GET_CALLSITE(), NULL);
 		}
-		if (eventFlags & J9RAS_DUMP_ON_EXCEPTION_DESCRIBE) {
+		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_EXCEPTION_DESCRIBE)) {
 			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_EXCEPTION_DESCRIBE, rasDumpHookExceptionDescribe, OMR_GET_CALLSITE(), NULL);
 		}
-		if (eventFlags & J9RAS_DUMP_ON_SLOW_EXCLUSIVE_ENTER) {
+		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_SLOW_EXCLUSIVE_ENTER)) {
 			/* wouldn't this event be better handled by a tracepoint? */
 			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_SLOW_EXCLUSIVE, rasDumpHookSlowExclusive, OMR_GET_CALLSITE(), NULL);
 		}
-		if (eventFlags & J9RAS_DUMP_ON_OBJECT_ALLOCATION) {
+		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_OBJECT_ALLOCATION)) {
 			rc = (*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_INITIALIZED, rasDumpHookGCInitialized, OMR_GET_CALLSITE(), NULL);
 			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_OBJECT_ALLOCATE_WITHIN_THRESHOLD, rasDumpHookAllocationThreshold, OMR_GET_CALLSITE(), NULL);
 		}
-		if (eventFlags & J9RAS_DUMP_ON_CORRUPT_CACHE) {
+		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_CORRUPT_CACHE)) {
 			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CORRUPT_CACHE, rasDumpHookCorruptCache, OMR_GET_CALLSITE(), NULL);
 		}
-		if (eventFlags & J9RAS_DUMP_ON_EXCESSIVE_GC) {
+		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_EXCESSIVE_GC)) {
 			rc = (*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_EXCESSIVEGC_RAISED, rasDumpHookExcessiveGC, OMR_GET_CALLSITE(), NULL);
 		}
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-		if (eventFlags & J9RAS_DUMP_ON_VM_CRIU_CHECKPOINT) {
+		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_VM_CRIU_CHECKPOINT)) {
 			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CRIU_CHECKPOINT, rasDumpHookCRIUCheckpoint, OMR_GET_CALLSITE(), NULL);
 		}
-		if (eventFlags & J9RAS_DUMP_ON_VM_CRIU_RESTORE) {
+		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_VM_CRIU_RESTORE)) {
 			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CRIU_RESTORE, rasDumpHookCRIURestore, OMR_GET_CALLSITE(), NULL);
 		}
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
-		if ( rc == -1 ) {
+		if (-1 == rc) {
 			j9nls_printf(PORTLIB, J9NLS_WARNING | J9NLS_STDERR, J9NLS_DMP_HOOK_IS_DISABLED_STR);
 		}
 
-		/* Map hook error code to OMR error code */
+		/* Map hook error code to OMR error code. */
 		switch (rc) {
 		case 0:
 			retVal = OMR_ERROR_NONE;
@@ -1205,7 +1223,6 @@ rasDumpEnableHooks(J9JavaVM *vm, UDATA eventFlags)
 	return retVal;
 }
 
-
 /**
  * rasDumpFlushHooks() - enable hooks for events that were postponed from the initial dump agent
  * initialization. There are now two phases: GC event hooks are enabled at TRACE_ENGINE_INITIALIZED,
@@ -1213,88 +1230,94 @@ rasDumpEnableHooks(J9JavaVM *vm, UDATA eventFlags)
  *
  * @param[in] vm - pointer to J9JavaVM structure
  * @param[in] stage - VM initialization stage
- * @return void
  */
 void
 rasDumpFlushHooks(J9JavaVM *vm, IDATA stage)
 {
-	UDATA* postponeHooks = GLOBAL_DATA(rasDumpPostponeHooks);
-	UDATA* pendingHooks = GLOBAL_DATA(rasDumpPendingHooks);
-	UDATA eventFlags;
+	UDATA *postponeHooks = GLOBAL_DATA(rasDumpPostponeHooks);
+	UDATA *pendingHooks = GLOBAL_DATA(rasDumpPendingHooks);
+	UDATA eventFlags = *pendingHooks;
 
-	if (stage == TRACE_ENGINE_INITIALIZED) {
-		/* Intermediate stage, enable all remaining hooks except the thread event ones */
-		*postponeHooks = J9RAS_DUMP_ON_THREAD_START | J9RAS_DUMP_ON_THREAD_BLOCKED | J9RAS_DUMP_ON_THREAD_END;
-	} else {
-		/* Final stage, enable all remaining hooks */
+	switch (stage) {
+	case TRACE_ENGINE_INITIALIZED:
+		/* Intermediate stage, enable all remaining hooks
+		 * except the thread event ones.
+		 */
+		*postponeHooks = 0
+				| J9RAS_DUMP_ON_THREAD_BLOCKED
+				| J9RAS_DUMP_ON_THREAD_START
+				| J9RAS_DUMP_ON_THREAD_END
+				;
+		break;
+
+	case VM_INITIALIZATION_COMPLETE:
+		/* Final stage, enable all remaining hooks. */
 		*postponeHooks = 0;
+		break;
+
+	default:
+		Assert_dump_true(!"rasDumpFlushHooks: unexpected stage");
+		break;
 	}
 
-	if (*pendingHooks) {
-		/* There are pending hook registrations, enable them now */
-		eventFlags = *pendingHooks;
+	if (0 != eventFlags) {
+		/* There are pending hook registrations, try to enable them now. */
 		*pendingHooks = 0;
 		rasDumpEnableHooks(vm, eventFlags);
 	}
 }
 
 static void
-rasDumpHookVmInit(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
+rasDumpHookVmInit(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
 {
 	J9VMInitEvent *data = eventData;
-	J9VMThread* vmThread = data->vmThread;
+	J9VMThread *vmThread = data->vmThread;
 
 	vmThread->javaVM->j9rasDumpFunctions->triggerDumpAgents(
-		vmThread->javaVM,
-		vmThread,
-		J9RAS_DUMP_ON_VM_STARTUP,
-		NULL);
+			vmThread->javaVM,
+			vmThread,
+			J9RAS_DUMP_ON_VM_STARTUP,
+			NULL);
 }
 
-
 static void
-rasDumpHookVmShutdown(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
+rasDumpHookVmShutdown(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
 {
 	J9RASdumpEventData dumpData = { 0 };
 	J9VMShutdownEvent *data = eventData;
-	J9VMThread* vmThread = data->vmThread;
-	UDATA length;
+	J9VMThread *vmThread = data->vmThread;
 	char details[32];
 	PORT_ACCESS_FROM_VMC(vmThread);
-
-	length = j9str_printf(details, sizeof(details), "#%0*zx", sizeof(UDATA) * 2, data->exitCode);
+	UDATA length = j9str_printf(details, sizeof(details), "#%0*zx", sizeof(UDATA) * 2, data->exitCode);
 
 	dumpData.detailLength = length;
 	dumpData.detailData = details;
 
 	vmThread->javaVM->j9rasDumpFunctions->triggerDumpAgents(
-		vmThread->javaVM,
-		vmThread,
-		J9RAS_DUMP_ON_VM_SHUTDOWN,
-		&dumpData);
+			vmThread->javaVM,
+			vmThread,
+			J9RAS_DUMP_ON_VM_SHUTDOWN,
+			&dumpData);
 }
 
-
 static void
-rasDumpHookClassLoad(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
+rasDumpHookClassLoad(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
 {
 	J9RASdumpEventData dumpData = { 0 };
 	J9VMClassLoadEvent *data = eventData;
-	J9VMThread* vmThread = data->currentThread;
-	J9Class* clazz = data->clazz;
-	J9UTF8* className = J9ROMCLASS_CLASSNAME(clazz->romClass);
+	J9VMThread *vmThread = data->currentThread;
+	J9Class *clazz = data->clazz;
+	J9UTF8 *className = J9ROMCLASS_CLASSNAME(clazz->romClass);
 
 	dumpData.detailLength = J9UTF8_LENGTH(className);
 	dumpData.detailData = (char *)J9UTF8_DATA(className);
 
 	vmThread->javaVM->j9rasDumpFunctions->triggerDumpAgents(
-		vmThread->javaVM,
-		vmThread,
-		J9RAS_DUMP_ON_CLASS_LOAD,
-		&dumpData);
+			vmThread->javaVM,
+			vmThread,
+			J9RAS_DUMP_ON_CLASS_LOAD,
+			&dumpData);
 }
-
-
 
 static void
 rasDumpHookExceptionThrow(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
@@ -1324,7 +1347,6 @@ rasDumpHookExceptionThrow(J9HookInterface **hookInterface, UDATA eventNum, void 
 	}
 }
 
-
 static void
 rasDumpHookExceptionCatch(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
 {
@@ -1353,48 +1375,44 @@ rasDumpHookExceptionCatch(J9HookInterface **hookInterface, UDATA eventNum, void 
 	}
 }
 
-
 static void
-rasDumpHookThreadStart(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
+rasDumpHookThreadStart(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
 {
 	J9VMThreadStartedEvent *data = eventData;
-	J9VMThread* vmThread = data->currentThread;
+	J9VMThread *vmThread = data->currentThread;
 
 	vmThread->javaVM->j9rasDumpFunctions->triggerDumpAgents(
-		vmThread->javaVM,
-		vmThread,
-		J9RAS_DUMP_ON_THREAD_START,
-		NULL);
+			vmThread->javaVM,
+			vmThread,
+			J9RAS_DUMP_ON_THREAD_START,
+			NULL);
 }
 
-
 static void
-rasDumpHookThreadEnd(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
+rasDumpHookThreadEnd(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
 {
 	J9VMThreadEndEvent *data = eventData;
-	J9VMThread* vmThread = data->currentThread;
+	J9VMThread *vmThread = data->currentThread;
 
 	vmThread->javaVM->j9rasDumpFunctions->triggerDumpAgents(
-		vmThread->javaVM,
-		vmThread,
-		J9RAS_DUMP_ON_THREAD_END,
-		NULL);
+			vmThread->javaVM,
+			vmThread,
+			J9RAS_DUMP_ON_THREAD_END,
+			NULL);
 }
-
 
 static void
-rasDumpHookMonitorContendedEnter(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
+rasDumpHookMonitorContendedEnter(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
 {
 	J9VMMonitorContendedEnterEvent *data = eventData;
-	J9VMThread* vmThread = data->currentThread;
+	J9VMThread *vmThread = data->currentThread;
 
 	vmThread->javaVM->j9rasDumpFunctions->triggerDumpAgents(
-		vmThread->javaVM,
-		vmThread,
-		J9RAS_DUMP_ON_THREAD_BLOCKED,
-		NULL);
+			vmThread->javaVM,
+			vmThread,
+			J9RAS_DUMP_ON_THREAD_BLOCKED,
+			NULL);
 }
-
 
 static void
 rasDumpHookExceptionDescribe(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
@@ -1424,47 +1442,44 @@ rasDumpHookExceptionDescribe(J9HookInterface **hookInterface, UDATA eventNum, vo
 	}
 }
 
-
 static void
-rasDumpHookGCInitialized(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
+rasDumpHookGCInitialized(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
 {
 	MM_InitializedEvent *data = eventData;
-	J9VMThread* vmThread = (J9VMThread*) data->currentThread->_language_vmthread;
+	J9VMThread *vmThread = (J9VMThread *)data->currentThread->_language_vmthread;
 	J9JavaVM *vm = vmThread->javaVM;
 	RasDumpGlobalStorage *dumpGlobal = vm->j9rasdumpGlobalStorage;
 
 	setAllocationThreshold(vmThread, dumpGlobal->allocationRangeMin, dumpGlobal->allocationRangeMax);
 }
 
-
 static void
-rasDumpHookAllocationThreshold(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
+rasDumpHookAllocationThreshold(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
 {
 	J9RASdumpEventData dumpData = { 0 };
 	J9VMAllocationThresholdEvent *data = eventData;
-	J9VMThread* vmThread = data->currentThread;
-	UDATA length;
+	J9VMThread *vmThread = data->currentThread;
+	UDATA length = 0;
 	char details[1024];
 	PORT_ACCESS_FROM_VMC(vmThread);
-	J9Class* clazz = J9OBJECT_CLAZZ(vmThread, data->object);
-	J9ROMClass* romClass = clazz->romClass;
-	char * p;
-	UDATA hadVMAccess;
+	J9Class *clazz = J9OBJECT_CLAZZ(vmThread, data->object);
+	J9ROMClass *romClass = clazz->romClass;
+	char *p = NULL;
+	UDATA hadVMAccess = pushEventFrame(vmThread, TRUE, 0);
 
-	hadVMAccess = pushEventFrame(vmThread, TRUE, 0);
 	PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, data->object);
 
 	if (J9ROMCLASS_IS_ARRAY(romClass)) {
-		J9ArrayClass* arrayClass = (J9ArrayClass*)clazz;
-		J9Class* leafClass = arrayClass->leafComponentType;
-		J9UTF8* leafClassName = J9ROMCLASS_CLASSNAME(leafClass->romClass);
-		UDATA i;
+		J9ArrayClass *arrayClass = (J9ArrayClass *)clazz;
+		J9Class *leafClass = arrayClass->leafComponentType;
+		J9UTF8 *leafClassName = J9ROMCLASS_CLASSNAME(leafClass->romClass);
+		UDATA i = 0;
 
 		/* For arrays we print the name of the leaf class then add enough '[]' to describe the arity */
 
 		length = j9str_printf(details, sizeof(details), "%zu bytes, type %.*s", data->size, J9UTF8_LENGTH(leafClassName), J9UTF8_DATA(leafClassName));
 
-		for (i=0;i<arrayClass->arity;i++) {
+		for (i = 0; i < arrayClass->arity; i++) {
 			length += j9str_printf(details + length, sizeof(details) - length, "[]");
 		}
 	} else {
@@ -1475,81 +1490,76 @@ rasDumpHookAllocationThreshold(J9HookInterface** hookInterface, UDATA eventNum, 
 		length = j9str_printf(details, sizeof(details), "%zu bytes, type %.*s", data->size, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
 	}
 
-	/* Change any /s to .s so class names are in customer-friendly format */
+	/* Change any /s to .s so class names are in customer-friendly format. */
 	p = details;
 
-	while(*p && p < (details + sizeof(details))) {
-		if (*p == '/') {
+	while (('\0' != *p) && (p < (details + sizeof(details)))) {
+		if ('/' == *p) {
 			*p = '.';
 		}
-		p++;
+		p += 1;
 	}
 
 	dumpData.detailLength = length;
 	dumpData.detailData = details;
 
 	vmThread->javaVM->j9rasDumpFunctions->triggerDumpAgents(
-		vmThread->javaVM,
-		vmThread,
-		J9RAS_DUMP_ON_OBJECT_ALLOCATION,
-		&dumpData);
+			vmThread->javaVM,
+			vmThread,
+			J9RAS_DUMP_ON_OBJECT_ALLOCATION,
+			&dumpData);
 
 	data->object = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
 	popEventFrame(vmThread, hadVMAccess);
 }
 
-
 static void
-rasDumpHookSlowExclusive(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
+rasDumpHookSlowExclusive(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
 {
 	J9RASdumpEventData dumpData = { 0 };
 	J9VMSlowExclusiveEvent *data = eventData;
 	J9VMThread* vmThread = data->currentThread;
-	UDATA length;
 	char details[32];
 	PORT_ACCESS_FROM_VMC(vmThread);
-
-	length = j9str_printf(details, sizeof(details), "%zums", data->timeTaken);
+	UDATA length = j9str_printf(details, sizeof(details), "%zums", data->timeTaken);
 
 	dumpData.detailLength = length;
 	dumpData.detailData = details;
 
 	vmThread->javaVM->j9rasDumpFunctions->triggerDumpAgents(
-		vmThread->javaVM,
-		vmThread,
-		J9RAS_DUMP_ON_SLOW_EXCLUSIVE_ENTER,
-		&dumpData);
+			vmThread->javaVM,
+			vmThread,
+			J9RAS_DUMP_ON_SLOW_EXCLUSIVE_ENTER,
+			&dumpData);
 }
 
-
 static void
-rasDumpHookGlobalGcStart(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
+rasDumpHookGlobalGcStart(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
 {
 	MM_GlobalGCStartEvent *data = eventData;
-	J9VMThread* vmThread = (J9VMThread *)data->currentThread->_language_vmthread;
+	J9VMThread *vmThread = (J9VMThread *)data->currentThread->_language_vmthread;
 
 	vmThread->javaVM->j9rasDumpFunctions->triggerDumpAgents(
-		vmThread->javaVM,
-		vmThread,
-		J9RAS_DUMP_ON_GLOBAL_GC,
-		NULL);
+			vmThread->javaVM,
+			vmThread,
+			J9RAS_DUMP_ON_GLOBAL_GC,
+			NULL);
 }
 
-
-#if (defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING))
+#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 static void
-rasDumpHookClassesUnload(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
+rasDumpHookClassesUnload(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
 {
 	J9VMClassesUnloadEvent *data = eventData;
-	J9VMThread* vmThread = data->currentThread;
+	J9VMThread *vmThread = data->currentThread;
 
 	vmThread->javaVM->j9rasDumpFunctions->triggerDumpAgents(
-		vmThread->javaVM,
-		vmThread,
-		J9RAS_DUMP_ON_CLASS_UNLOAD,
-		NULL);
+			vmThread->javaVM,
+			vmThread,
+			J9RAS_DUMP_ON_CLASS_UNLOAD,
+			NULL);
 }
-#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
+#endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
 
 static void
 rasDumpHookExceptionSysthrow(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
@@ -1580,16 +1590,16 @@ rasDumpHookExceptionSysthrow(J9HookInterface **hookInterface, UDATA eventNum, vo
 }
 
 static void
-rasDumpHookCorruptCache(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
+rasDumpHookCorruptCache(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
 {
 	J9VMCorruptCache *data = eventData;
-	J9VMThread* vmThread = data->vmThread;
+	J9VMThread *vmThread = data->vmThread;
 
 	vmThread->javaVM->j9rasDumpFunctions->triggerDumpAgents(
-		vmThread->javaVM,
-		vmThread,
-		J9RAS_DUMP_ON_CORRUPT_CACHE,
-		NULL);
+			vmThread->javaVM,
+			vmThread,
+			J9RAS_DUMP_ON_CORRUPT_CACHE,
+			NULL);
 }
 
 /**
@@ -1602,16 +1612,16 @@ rasDumpHookCorruptCache(J9HookInterface** hookInterface, UDATA eventNum, void* e
  * @param userData[in] pointer to additional callee data (not used)
  */
 static void
-rasDumpHookExcessiveGC(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData)
+rasDumpHookExcessiveGC(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
 {
 	MM_ExcessiveGCRaisedEvent *data = eventData;
-	J9VMThread* vmThread = (J9VMThread*) data->currentThread->_language_vmthread;
+	J9VMThread *vmThread = (J9VMThread *) data->currentThread->_language_vmthread;
 
 	vmThread->javaVM->j9rasDumpFunctions->triggerDumpAgents(
-		vmThread->javaVM,
-		vmThread,
-		J9RAS_DUMP_ON_EXCESSIVE_GC,
-		NULL);
+			vmThread->javaVM,
+			vmThread,
+			J9RAS_DUMP_ON_EXCESSIVE_GC,
+			NULL);
 }
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
@@ -1627,11 +1637,11 @@ rasDumpHookExcessiveGC(J9HookInterface** hookInterface, UDATA eventNum, void* ev
 static void
 rasDumpHookCRIUCheckpoint(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
 {
-	J9VMThread *vmThread = ((J9VMInitEvent*)eventData)->vmThread;
+	J9VMThread *vmThread = ((J9VMInitEvent *)eventData)->vmThread;
 	J9JavaVM *vm = vmThread->javaVM;
 
 	vm->j9rasDumpFunctions->triggerDumpAgents(
-		vm, vmThread, J9RAS_DUMP_ON_VM_CRIU_CHECKPOINT, NULL);
+			vm, vmThread, J9RAS_DUMP_ON_VM_CRIU_CHECKPOINT, NULL);
 }
 
 /**
@@ -1646,10 +1656,10 @@ rasDumpHookCRIUCheckpoint(J9HookInterface **hookInterface, UDATA eventNum, void 
 static void
 rasDumpHookCRIURestore(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
 {
-	J9VMThread *vmThread = ((J9VMInitEvent*)eventData)->vmThread;
+	J9VMThread *vmThread = ((J9VMInitEvent *)eventData)->vmThread;
 	J9JavaVM *vm = vmThread->javaVM;
 
 	vm->j9rasDumpFunctions->triggerDumpAgents(
-		vm, vmThread, J9RAS_DUMP_ON_VM_CRIU_RESTORE, NULL);
+			vm, vmThread, J9RAS_DUMP_ON_VM_CRIU_RESTORE, NULL);
 }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
