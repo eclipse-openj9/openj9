@@ -6585,8 +6585,8 @@ bool TR_EscapeAnalysis::fixupFieldAccessForNonContiguousAllocation(TR::Node *nod
             TR::Node *newValue = TR::Node::create(node, TR::ILOpCode::createVectorOpCode(TR::vsetelem, autoSymRefDataType), 3);
             newValue->setAndIncChild(0, TR::Node::create(node, TR::ILOpCode::createVectorOpCode(TR::vload, autoSymRefDataType), 0));
             newValue->getFirstChild()->setSymbolReference(autoSymRef);
-            newValue->setChild(1, value);
-            newValue->setAndIncChild(2, TR::Node::create(node, TR::iconst, 0, elem-1));
+            newValue->setAndIncChild(1, TR::Node::create(node, TR::iconst, 0, elem-1));
+            newValue->setChild(2, value);
             node->setAndIncChild(0, newValue);
             }
          }
