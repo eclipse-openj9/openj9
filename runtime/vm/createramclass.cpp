@@ -3678,7 +3678,11 @@ fail:
 						J9ARRAYCLASS_SET_STRIDE(ramClass, J9_VALUETYPE_FLATTENED_SIZE(elementClass));
 					}
 				} else {
-					if (J9_IS_J9CLASS_ALLOW_DEFAULT_VALUE(elementClass)) {
+					if (J9_IS_J9CLASS_ALLOW_DEFAULT_VALUE(elementClass)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+							&& J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_CLASS_OPTION_NULL_RESTRICTED_ARRAY)
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+					   ) {
 						ramArrayClass->classFlags |= J9ClassContainsUnflattenedFlattenables;
 					}
 					J9ARRAYCLASS_SET_STRIDE(ramClass, (((UDATA) 1) << (((J9ROMArrayClass*)romClass)->arrayShape & 0x0000FFFF)));
