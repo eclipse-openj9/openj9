@@ -780,13 +780,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode551 -Xshareclasses:none -Xjit:optLevel=hot</variation>
 			<variation>Mode551 -Xshareclasses:name=test_jitscc -XX:+JITServerUseAOTCache</variation>
 		</variations>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/22584</comment>
-				<platform>x86-64_linux</platform>
-				<variation>Mode610 -Xshareclasses:name=test_jitscc -XX:+JITServerUseAOTCache</variation>
-			</disable>
-		</disables>
 		<!-- Check if the JITServer launcher exists and if so start the test and
 			 - specify the executables for the client and server via the CLIENT_EXE and SERVER_EXE properties respectively,
 			 - specify what the client will run via the CLIENT_PROGRAM property.
