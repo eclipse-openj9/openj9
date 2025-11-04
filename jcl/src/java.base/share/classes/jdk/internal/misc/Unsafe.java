@@ -4452,7 +4452,7 @@ public final class Unsafe {
 	public final Object getAndSetReference(Object obj, long offset, Class<?> valueType, Object value) {
 		for (;;) {
 			Object objectAtOffset = getReferenceVolatile(obj, offset);
-			if(compareAndSetReference(obj, offset, valueType, objectAtOffset, value)) {
+			if (compareAndSetReference(obj, offset, valueType, objectAtOffset, value)) {
 				return objectAtOffset;
 			}
 		}
