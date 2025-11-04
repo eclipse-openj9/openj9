@@ -37,7 +37,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<property name="src_25" location="src_25" />
 	<property name="build" location="bin" />
 	<property name="transformerListener" location="${TEST_ROOT}/Utils/src" />
-	<property name="LIB" value="asm,testng" />
+	<property name="LIB" value="asm,testng,jcommander" />
 	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml" />
 
 	<target name="init">
