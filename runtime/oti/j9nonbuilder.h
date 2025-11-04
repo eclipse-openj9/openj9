@@ -6577,6 +6577,13 @@ typedef struct J9JavaVM {
 #endif /* JAVA_SPEC_VERSION >= 24 */
 	UDATA disclaimableRAMSegmentCount;
 	UDATA disclaimableROMSegmentCount;
+#if defined(OMR_THR_YIELD_ALG)
+	omrthread_t cpuUtilCalcThread;
+	UDATA cpuUtilCacheInterval;
+	int64_t prevProcCPUTime;
+	int64_t prevProcTimestamp;
+	omrthread_monitor_t cpuUtilCacheMutex;
+#endif /* defined(OMR_THR_YIELD_ALG) */
 } J9JavaVM;
 
 #define J9JFR_SAMPLER_STATE_UNINITIALIZED 0
