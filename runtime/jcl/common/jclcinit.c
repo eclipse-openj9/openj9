@@ -752,16 +752,19 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_LOAD_AGENT_MODULE)
 		&& (NULL != vm->modulesPathEntry->extraInfo))
 	{
+		const char *moduleName = "jdk.management.agent";
+#if JAVA_SPEC_VERSION < 26
 		const char *packageName = "jdk/internal/agent";
-		const char *expectedModuleName = "jdk.management.agent";
-		const char *moduleName = vm->jimageIntf->jimagePackageToModule(
+		const char *actualModuleName = vm->jimageIntf->jimagePackageToModule(
 				vm->jimageIntf, (UDATA) vm->modulesPathEntry->extraInfo,
 				packageName);
-		if (NULL == moduleName) {
+		if (NULL == actualModuleName) {
 			Trc_JCL_initializeRequiredClasses_moduleForPackageNotFound(vmThread, packageName);
-		} else if (0 != strcmp(expectedModuleName, moduleName)) {
-			Trc_JCL_initializeRequiredClasses_unexpectedModuleForPackage(vmThread, packageName, moduleName, expectedModuleName);
-		} else {
+		} else if (0 != strcmp(moduleName, actualModuleName)) {
+			Trc_JCL_initializeRequiredClasses_unexpectedModuleForPackage(vmThread, packageName, actualModuleName, moduleName);
+		} else
+#endif /* JAVA_SPEC_VERSION < 26 */
+		{
 			J9VMSystemProperty *systemProperty = NULL;
 			Trc_JCL_initializeRequiredClasses_addAgentModuleEntry(vmThread, moduleName);
 			/* Handle the case where there are no user-specified modules. In this case, there
@@ -790,17 +793,20 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_LOAD_HEALTHCENTER_MODULE)
 		&& (NULL != vm->modulesPathEntry->extraInfo))
 	{
+		const char *moduleName = "ibm.healthcenter";
+#if JAVA_SPEC_VERSION < 26
 		const char *packageName = "com/ibm/java/diagnostics/healthcenter/agent";
-		const char *expectedModuleName = "ibm.healthcenter";
-		const char *moduleName = vm->jimageIntf->jimagePackageToModule(
+		const char *actualModuleName = vm->jimageIntf->jimagePackageToModule(
 				vm->jimageIntf, (UDATA) vm->modulesPathEntry->extraInfo,
 				packageName);
 		if (NULL == moduleName) {
 			Trc_JCL_initializeRequiredClasses_moduleForPackageNotFound(vmThread, packageName);
-		} else if (0 != strcmp(expectedModuleName, moduleName)) {
+		} else if (0 != strcmp(moduleName, actualModuleName)) {
 			// package %s found in module %s (expected %s) - not loading"
-			Trc_JCL_initializeRequiredClasses_unexpectedModuleForPackage(vmThread, packageName, moduleName, expectedModuleName);
-		} else {
+			Trc_JCL_initializeRequiredClasses_unexpectedModuleForPackage(vmThread, packageName, actualModuleName, moduleName);
+		} else
+#endif /* JAVA_SPEC_VERSION < 26 */
+		{
 			J9VMSystemProperty *systemProperty = NULL;
 			Trc_JCL_initializeRequiredClasses_addAgentModuleEntry(vmThread, moduleName);
 			/* Handle the case where there are no user-specified modules. In this case, there

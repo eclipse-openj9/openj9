@@ -381,6 +381,7 @@ jimageFreeResourceLocation(J9JImageIntf *jimageIntf, UDATA handle, UDATA resourc
 I_32
 jimageGetResource(J9JImageIntf *jimageIntf, UDATA handle, UDATA resourceLocation, char *buffer, I_64 bufferSize, I_64 *resourceSize);
 
+#if JAVA_SPEC_VERSION < 26
 /**
  * Finds the module for the given package.
  *
@@ -392,6 +393,7 @@ jimageGetResource(J9JImageIntf *jimageIntf, UDATA handle, UDATA resourceLocation
  */
 const char *
 jimagePackageToModule(J9JImageIntf *jimageIntf, UDATA handle, const char *packageName);
+#endif /* JAVA_SPEC_VERSION < 26 */
 
 /* ---------------- jimagereader.c ----------------*/
 

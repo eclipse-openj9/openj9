@@ -2096,7 +2096,9 @@ typedef struct J9JImageIntf {
 	I_32 (* jimageFindResource)(struct J9JImageIntf *jimageIntf, UDATA handle, const char *moduleName, const char* name, UDATA *resourceLocation, I_64 *size);
 	void (* jimageFreeResourceLocation)(struct J9JImageIntf *jimageIntf, UDATA handle, UDATA resourceLocation);
 	I_32 (* jimageGetResource)(struct J9JImageIntf *jimageIntf, UDATA handle, UDATA resourceLocation, char *buffer, I_64 bufferSize, I_64 *resourceSize);
+#if JAVA_SPEC_VERSION < 26
 	const char * (* jimagePackageToModule)(struct J9JImageIntf *jimageIntf, UDATA handle, const char *packageName);
+#endif /* JAVA_SPEC_VERSION < 26 */
 } J9JImageIntf;
 
 /* @ddr_namespace: map_to_type=J9TranslationBufferSet */

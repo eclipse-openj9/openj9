@@ -408,18 +408,17 @@ jimageGetResource(J9JImageIntf *jimageIntf, UDATA handle, UDATA resourceLocation
 	return rc;
 }
 
+#if JAVA_SPEC_VERSION < 26
 const char *
 jimagePackageToModule(J9JImageIntf *jimageIntf, UDATA handle, const char *packageName)
 {
-#if JAVA_SPEC_VERSION < 26
 	if (0 != jimageIntf->libJImageHandle) {
 		JImageFile *jimage = (JImageFile *)handle;
 		return libJImagePackageToModule(jimage, packageName);
-	} else
-#endif /* JAVA_SPEC_VERSION < 26 */
-	{
+	} else {
 		PORT_ACCESS_FROM_PORT(jimageIntf->portLib);
 		J9JImage *jimage = (J9JImage *)handle;
 		return j9bcutil_findModuleForPackage(PORTLIB, jimage, packageName);
 	}
 }
+#endif /* JAVA_SPEC_VERSION < 26 */
