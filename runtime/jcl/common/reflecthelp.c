@@ -1275,6 +1275,79 @@ exit:
 	return result;
 }
 
+#if JAVA_SPEC_VERSION >= 10
+/* The caller must have VM access. */
+J9ROMFieldShape *
+getROMFieldHelper(J9VMThread *vmThread, jclass declaringClass, jstring fieldName, UDATA *offsetResult)
+{
+	J9InternalVMFunctions *vmFuncs = vmThread->javaVM->internalVMFunctions;
+	J9Class *clazz = NULL;
+	J9ROMClass *romClass = NULL;
+	J9ROMFieldShape *romField = NULL;
+	j9object_t fieldNameObj = NULL;
+	J9ROMFieldWalkState state;
+
+	Assert_JCL_mustHaveVMAccess(vmThread);
+
+	if ((NULL == fieldName) || (NULL == declaringClass)) {
+		goto nullpointer;
+	}
+	fieldNameObj = J9_JNI_UNWRAP_REFERENCE(fieldName);
+	if (NULL == fieldNameObj) {
+		goto nullpointer;
+	}
+	clazz = J9VM_J9CLASS_FROM_JCLASS(vmThread, declaringClass);
+	Assert_JCL_notNull(clazz);
+	romClass = clazz->romClass;
+
+	/* primitives/arrays don't have fields */
+	if (J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(romClass)) {
+		return NULL;
+	}
+
+	/* loop over the fields */
+	memset(&state, 0, sizeof(state));
+	for (romField = romFieldsStartDo(romClass, &state);
+		NULL != romField;
+		romField = romFieldsNextDo(&state)
+	) {
+		J9UTF8 *romFieldName = J9ROMFIELDSHAPE_NAME(romField);
+
+		/* compare name with this field */
+		if (0 != vmFuncs->compareStringToUTF8(
+				vmThread, fieldNameObj, 0, J9UTF8_DATA(romFieldName),
+				J9UTF8_LENGTH(romFieldName))
+		) {
+			J9UTF8 *nameUTF = J9ROMFIELDSHAPE_NAME(romField);
+			J9UTF8 *sigUTF = J9ROMFIELDSHAPE_SIGNATURE(romField);
+
+			if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccStatic)) {
+				void *offset = vmFuncs->staticFieldAddress(
+						vmThread, clazz, J9UTF8_DATA(nameUTF),
+						J9UTF8_LENGTH(nameUTF), J9UTF8_DATA(sigUTF),
+						J9UTF8_LENGTH(sigUTF), NULL, NULL, 0, NULL);
+				if (NULL == offset) {
+					return NULL;
+				} else {
+					*offsetResult = (UDATA)offset - (UDATA)clazz->ramStatics;
+				}
+			} else {
+				*offsetResult = (UDATA)vmFuncs->instanceFieldOffset(
+						vmThread, clazz, J9UTF8_DATA(nameUTF),
+						J9UTF8_LENGTH(nameUTF), J9UTF8_DATA(sigUTF),
+						J9UTF8_LENGTH(sigUTF), NULL, NULL, 0);
+			}
+			break;
+		}
+	}
+	return romField;
+
+nullpointer:
+	vmFuncs->setCurrentException(vmThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+	return NULL;
+}
+#endif /* JAVA_SPEC_VERSION >= 10 */
+
 /* The caller must have VM access. */
 j9object_t
 getFieldObjHelper(J9VMThread *vmThread, jclass declaringClass, jstring fieldName)

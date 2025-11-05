@@ -801,38 +801,87 @@ Java_sun_misc_Unsafe_shouldBeInitialized(JNIEnv *env, jobject receiver, jclass c
 	return result;
 }
 
-#if JAVA_SPEC_VERSION > 8
+#if JAVA_SPEC_VERSION >= 10
+/* The return value needs to be freed. */
+static char *
+createErrorMsgHelper(JNIEnv *env, jclass clazz, jstring name, const char *message)
+{
+	J9VMThread *currentThread = (J9VMThread *)env;
+	PORT_ACCESS_FROM_ENV(env);
+	J9UTF8 *className = J9ROMCLASS_CLASSNAME(J9VM_J9CLASS_FROM_JCLASS(currentThread, clazz)->romClass);
+	const char *nameUTF = env->GetStringUTFChars(name, NULL);
+	size_t namelen = strlen(nameUTF);
+	size_t msglen = strlen(message) + 1; /* include the NULL */
+	size_t totallen = namelen + J9UTF8_LENGTH(className) + msglen + 1; /* include the '.' */
+	char *msgbuf = (char *)j9mem_allocate_memory(totallen, J9MEM_CATEGORY_VM);
+	if (NULL != msgbuf) {
+		memcpy(msgbuf, J9UTF8_DATA(className), J9UTF8_LENGTH(className));
+		msgbuf[J9UTF8_LENGTH(className)] = '.';
+		memcpy(&msgbuf[J9UTF8_LENGTH(className) + 1], nameUTF, namelen);
+		memcpy(&msgbuf[namelen + J9UTF8_LENGTH(className) + 1], message, msglen);
+	}
+	env->ReleaseStringUTFChars(name, nameUTF);
+	return msgbuf;
+}
+
 jlong JNICALL
 Java_jdk_internal_misc_Unsafe_objectFieldOffset1(JNIEnv *env, jobject receiver, jclass clazz, jstring name)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	j9object_t fieldObj = NULL;
+	J9ROMFieldShape *romField = NULL;
+	UDATA fieldOffset = 0;
 	jlong offset = 0;
+	PORT_ACCESS_FROM_ENV(env);
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-	fieldObj = getFieldObjHelper(currentThread, clazz, name);
-	if (NULL != fieldObj) {
-		J9JNIFieldID *fieldID = vm->reflectFunctions.idFromFieldObject(currentThread, J9_JNI_UNWRAP_REFERENCE(clazz), fieldObj);
-		J9ROMFieldShape *romField = fieldID->field;
-		if (NULL == romField) {
-			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
-		} else if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccStatic)) {
-			offset = fieldID->offset | J9_SUN_STATIC_FIELD_OFFSET_TAG;
-
-			if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccFinal)) {
-				offset |= J9_SUN_FINAL_FIELD_OFFSET_TAG;
-			}
-		} else {
-			offset = (jlong)fieldID->offset + J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
-		}
+	romField = getROMFieldHelper(currentThread, clazz, name, &fieldOffset);
+	if (NULL != currentThread->currentException) {
+		return 0;
 	}
+
+	if (NULL == romField) {
+		char *errormsg = createErrorMsgHelper(env, clazz, name, " is not found");
+		if (NULL == errormsg) {
+			vmFuncs->setCurrentException(
+					currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR,
+					(UDATA *)J9_JNI_UNWRAP_REFERENCE(name));
+		} else {
+			vmFuncs->setCurrentExceptionUTF(
+					currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR,
+					errormsg);
+			j9mem_free_memory(errormsg);
+		}
+	} else if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccStatic)) {
+#if JAVA_SPEC_VERSION >= 26
+		char *errormsg = createErrorMsgHelper(env, clazz, name, " is a static field");
+		if (NULL == errormsg) {
+			vmFuncs->setCurrentException(
+					currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR,
+					(UDATA *)J9_JNI_UNWRAP_REFERENCE(name));
+		} else {
+			vmFuncs->setCurrentExceptionUTF(
+					currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR,
+					errormsg);
+			j9mem_free_memory(errormsg);
+		}
+#else /* JAVA_SPEC_VERSION >= 26 */
+		offset = fieldOffset | J9_SUN_STATIC_FIELD_OFFSET_TAG;
+
+		if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccFinal)) {
+			offset |= J9_SUN_FINAL_FIELD_OFFSET_TAG;
+		}
+#endif /* JAVA_SPEC_VERSION >= 26 */
+	} else {
+		offset = (jlong)fieldOffset + J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
+	}
+
 	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return offset;
 }
-#endif /* JAVA_SPEC_VERSION > 8 */
+#endif /* JAVA_SPEC_VERSION >= 10 */
 
 #if JAVA_SPEC_VERSION >= 14
 
