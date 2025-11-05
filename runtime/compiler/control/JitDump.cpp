@@ -465,7 +465,7 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
       return OMR_ERROR_INTERNAL;
       }
 
-   OMR::Logger *jitdumpLogger = OMR::CStdIOStreamLogger::create(jitdumpFile->_stream);
+   OMR::Logger *jitdumpLogger = options->createLoggerForLogFile(jitdumpFile);
    if (!jitdumpLogger)
       {
       j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_DMP_ERROR_IN_DUMP_STR, "JIT", "Could not create a Logger object");

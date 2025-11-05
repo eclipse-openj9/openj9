@@ -3568,7 +3568,20 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
 OMR::Logger *
 J9::Options::createLoggerForLogFile(TR::FILE *file)
    {
-   return OMR::CStdIOStreamLogger::create(file->_stream);
+   OMR::Logger *logger = NULL;
+
+   if (self()->getOption(TR_ForceCStdIOForLoggers))
+      {
+      logger = OMR::CStdIOStreamLogger::create(file->_stream);
+      }
+   else
+      {
+      // An OMR::TRIOStreamLogger is the default logger
+      //
+      logger = OMR::TRIOStreamLogger::create(file);
+      }
+
+   return logger;
    }
 
 void
