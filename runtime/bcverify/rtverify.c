@@ -470,7 +470,6 @@ verifyBytecodes (J9BytecodeVerificationData * verifyData)
 	UDATA errorTargetType = (UDATA)-1;
 	UDATA errorStackIndex = (UDATA)-1;
 	UDATA errorTempData = (UDATA)-1;
-	BOOLEAN isNextStack = FALSE;
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 	BOOLEAN anotherInstanceInitCalled = FALSE;
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
@@ -646,8 +645,6 @@ _inconsistentStack2:
 					((U_32)(stackBase - liveStack->stackElements) - 1) : 0;
 			goto _miscError;
 		}
-		/* Reset as the flag is only used for the current bytecode */
-		isNextStack = FALSE;
 
 		/* Format: 8bits action, 4bits type Y, 4bits type X */
 		type1 = (UDATA) J9JavaBytecodeVerificationTable[bc];
@@ -2389,7 +2386,6 @@ _newStack:
 				/* Load the next stack into the live stack */
 				SAVE_STACKTOP(liveStack, stackTop);
 				memcpy((UDATA *) liveStack, (UDATA *) currentMapData, verifyData->stackSize);
-				isNextStack = TRUE;
 				RELOAD_LIVESTACK;
 
 				/* Start with uninitialized_this flag for the current map data */
