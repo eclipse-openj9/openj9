@@ -9968,7 +9968,9 @@ void TR_VerboseLog::vwrite(const char *format, va_list args)
 
 void TR_VerboseLog::writeTimeStamp()
    {
-   if (TR::Options::getCmdLineOptions()->getOption(TR_PrintAbsoluteTimestampInVerboseLog))
+   if (TR::Options::getCmdLineOptions()
+       && TR::Options::getCmdLineOptions()->isFullyInitialized()
+       && TR::Options::getCmdLineOptions()->getOption(TR_PrintAbsoluteTimestampInVerboseLog))
       {
       char timestamp[32];
       TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
