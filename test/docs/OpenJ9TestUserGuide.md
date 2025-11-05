@@ -506,6 +506,37 @@ Or remove ```<impl>``` element to exclude test against all implementations:
   </disables>
   ...
 ```
+
+##### Exclude test based on mode
+Tests can also be excluded based on test modes — pre-defined configurations that specify JVM command-line options, GC policies, and other runtime settings.
+Each mode is represented by a mode number defined in the test configuration (for example, ```Mode500```):
+To exclude a test for specific mode numbers, define <variation> elements with the mode IDs you want to disable.
+For example, to disable ```jdk_nio``` on Linux for ```Mode150``` and ```Mode551```:
+
+```
+<test>
+    <testCaseName>jdk_nio</testCaseName>
+    <disables>
+        <disable>
+            <comment>https://github.ibm.com/runtimes/backlog/issues/597</comment>
+            <variation>Mode150</variation>
+            <platform>.*linux.*</platform>
+        </disable>
+        <disable>
+            <comment>https://github.ibm.com/runtimes/backlog/issues/597</comment>
+            <variation>Mode551</variation>
+            <platform>.*linux.*</platform>
+        </disable>
+    </disables>
+     ...
+```
+
+```<variation>``` — refers to the mode number (e.g., ```Mode150```, ```Mode551```) to be disabled.
+
+```<platform>``` — optionally limits exclusion to certain operating systems or architectures (supports regex).
+
+```<comment>``` — links to a defect or tracking issue explaining the reason for exclusion.
+
 #### Execute excluded test target
 
 If a test is disabled using `<disable>` tag in playlist.xml, it can be executed by specifying the test target or adding `disabled` in front of its top-level test target.
