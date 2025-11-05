@@ -56,8 +56,6 @@
 #include "SweepPoolManagerVLHGC.hpp"
 #include  "SparseVirtualMemory.hpp"
 
-#define TAROK_MINIMUM_REGION_SIZE_BYTES (512 * 1024)
-
 MM_Configuration *
 MM_ConfigurationIncrementalGenerational::newInstance(MM_EnvironmentBase *env)
 {
@@ -457,7 +455,7 @@ bool
 MM_ConfigurationIncrementalGenerational::verifyRegionSize(MM_EnvironmentBase *env, UDATA regionSize)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-	return extensions->isRegionSizeWithOverrideSpecified || (regionSize >= TAROK_MINIMUM_REGION_SIZE_BYTES);
+	return extensions->isRegionSizeWithOverrideSpecified || (regionSize >= _minimumRegionSizeInBytes);
 }
 
 bool

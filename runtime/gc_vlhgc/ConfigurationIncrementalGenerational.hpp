@@ -46,7 +46,13 @@ class MM_ConfigurationIncrementalGenerational : public MM_Configuration
 public:
 protected:
 private:
-	static const uintptr_t _tarokMinimumRegionSizeInBytes = (512 * 1024);
+
+#if defined(J9ZOS39064)
+	/* Set minimum region size to 1m for ZOS to match 1m pageable page */
+	static const uintptr_t _minimumRegionSizeInBytes = (1024 * 1024);
+#else /* defined(J9ZOS39064) */
+	static const uintptr_t _minimumRegionSizeInBytes = (512 * 1024);
+#endif /* defined(J9ZOS39064) */
 
 /* Methods */
 public:
@@ -112,12 +118,12 @@ private:
 		UDATA regionSize = 0;
 
 		MM_GCExtensionsBase *extensions = env->getExtensions();
-		UDATA regionCount = extensions->memoryMax / _tarokMinimumRegionSizeInBytes;
+		UDATA regionCount = extensions->memoryMax / _minimumRegionSizeInBytes;
 		/* try to select region size such that the resulting region count is in the range of [1024, 2048] */
 		if (regionCount < 1024 || regionCount > 2048) {
-			regionSize = OMR_MAX(extensions->memoryMax / 1024, _tarokMinimumRegionSizeInBytes);
+			regionSize = OMR_MAX(extensions->memoryMax / 1024, _minimumRegionSizeInBytes);
 		} else {
-			regionSize = _tarokMinimumRegionSizeInBytes;
+			regionSize = _minimumRegionSizeInBytes;
 		}
 
 		return regionSize;
