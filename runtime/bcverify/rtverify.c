@@ -45,7 +45,7 @@ static IDATA matchStack (J9BytecodeVerificationData * verifyData, J9BranchTarget
 static IDATA findAndMatchStack (J9BytecodeVerificationData *verifyData, IDATA targetPC, IDATA currentPC);
 static IDATA verifyExceptions (J9BytecodeVerificationData *verifyData);
 static J9BranchTargetStack * nextStack (J9BytecodeVerificationData *verifyData, UDATA *nextMapIndex, IDATA *nextStackPC);
-static IDATA nextExceptionStart (J9BytecodeVerificationData *verifyData, J9ROMMethod *romMethod, IDATA lastPC);
+static void nextExceptionPC (J9BytecodeVerificationData *verifyData, J9ROMMethod *romMethod, IDATA *exceptionStartPC, IDATA *exceptionEndPC);
 static void storeArgumentErrorData (J9BytecodeVerificationData * verifyData, U_32 errorCurrentFramePosition, U_16 errorArgumentIndex);
 static void storeMethodInfo (J9BytecodeVerificationData * verifyData, J9UTF8* errorClassString, J9UTF8* errorMethodString, J9UTF8* errorSignatureString, IDATA currentPC);
 
@@ -447,7 +447,8 @@ verifyBytecodes (J9BytecodeVerificationData * verifyData)
 	UDATA classIndex, maxStack;
 	UDATA wideIndex = FALSE;
 	IDATA nextStackPC;
-	IDATA nextExceptionStartPC;
+	IDATA exceptionStartPC = -1;
+	IDATA exceptionEndPC = -1;
 	IDATA rc = 0;
 	U_8 returnBytecode;
 	UDATA errorModule = J9NLS_BCV_ERR_BYTECODES_INVALID__MODULE; /* defaults to BCV NLS catalog */
@@ -455,8 +456,7 @@ verifyBytecodes (J9BytecodeVerificationData * verifyData)
 	I_16 offset16;
 	I_32 offset32;
 	UDATA argCount;
-	UDATA checkIfInsideException = romMethod->modifiers & J9AccMethodHasExceptionInfo;
-	UDATA tempStoreChange;
+	BOOLEAN tempStoreChange = FALSE;
 	J9ExceptionInfo *exceptionInfo = J9_EXCEPTION_DATA_FROM_ROM_METHOD(romMethod);
 	J9ExceptionHandler *handler;
 	J9UTF8 *catchName;
@@ -523,7 +523,7 @@ verifyBytecodes (J9BytecodeVerificationData * verifyData)
 	currentMapData = nextStack (verifyData, &nextMapIndex, &nextStackPC);
 
 	/* Determine where the first region of bytecodes covered by an exception handler is */
-	nextExceptionStartPC = nextExceptionStart (verifyData, romMethod, -1);
+	nextExceptionPC (verifyData, romMethod, &exceptionStartPC, &exceptionEndPC);
 
 	/* walk the bytecodes linearly */
 	while (pc < length) {
@@ -570,8 +570,19 @@ _inconsistentStack2:
 			currentMapData = nextStack (verifyData, &nextMapIndex, &nextStackPC);
 		}
 
-		/* Check the stack against the exception handler stack */
-		if (pc == (UDATA) nextExceptionStartPC) {
+		/* Check the current state against the exception handlers if:
+		 * - This is the first bytecode of the try/catch block
+		 * - The temps (locals) type state has changed due to a store
+		 * instruction. If it is within the same exception range ensure
+		 * that the types are still compatible.
+		 */
+		if ((pc == (UDATA)exceptionStartPC)
+			|| (tempStoreChange && ((exceptionStartPC < pc) && (pc < exceptionEndPC)))
+		) {
+			/* If this is the first pc of an exception tempStoreChange does not apply. */
+			if ((pc == (UDATA)exceptionStartPC) && tempStoreChange) {
+				tempStoreChange = FALSE;
+			}
 			handler = J9EXCEPTIONINFO_HANDLERS(exceptionInfo);
 			SAVE_STACKTOP(liveStack, stackTop);
 
@@ -582,7 +593,9 @@ _inconsistentStack2:
 
 			/* Find all exception handlers from here */
 			for (i = exceptionInfo->catchCount; i; i--, handler++) {
-				if (handler->startPC == pc) {
+				if ((handler->startPC == pc)
+					|| (tempStoreChange && ((UDATA)pc >= handler->startPC) && ((UDATA)pc < handler->endPC))
+				) {
 					/* Check the maps at the handler PC */
 					/* Modify the liveStack temporarily to contain the handler exception */
 					if (handler->exceptionClassIndex) {
@@ -612,8 +625,13 @@ _inconsistentStack2:
 			liveStack->stackElements[liveStack->stackBaseIndex] = originalStackZeroEntry;
 			stackTop = originalStackTop;
 
-			/* Get next exception start PC of interest */
-			nextExceptionStartPC = nextExceptionStart (verifyData, romMethod, nextExceptionStartPC);
+			if (!tempStoreChange) {
+				/* Get next exception start PC of interest */
+				nextExceptionPC (verifyData, romMethod, &exceptionStartPC, &exceptionEndPC);
+			}
+		}
+		if (tempStoreChange) {
+			tempStoreChange = FALSE;
 		}
 
 		bcIndex = code + pc;
@@ -809,8 +827,6 @@ _inconsistentStack2:
 				goto _inconsistentStack;
 			}
 
-			tempStoreChange = FALSE;
-
 			if (type != type1) {
 				if ((type1 != BCV_GENERIC_OBJECT) || (type & BCV_TAG_BASE_TYPE_OR_TOP)) {
 					inconsistentStack = TRUE;
@@ -830,56 +846,6 @@ _inconsistentStack2:
 			}
 			tempStoreChange |= (type != temps[index]);
 			STORE_TEMP(index, type);
-
-			if (checkIfInsideException && tempStoreChange) {
-				/* If we've stored a value into an arg/local, and it's of a different type than was
-				 * originally there, we need to ensure that we are still compatible with all our
-				 * exception handlers.
-				 * 
-				 * For all exception handlers covering this instruction
-				 */
-				handler = J9EXCEPTIONINFO_HANDLERS(exceptionInfo);
-				SAVE_STACKTOP(liveStack, stackTop);
-
-				/* Save the current liveStack element zero */
-				/* Reset the stack pointer to push the exception on the empty stack */
-				originalStackTop = stackTop;
-				originalStackZeroEntry = liveStack->stackElements[liveStack->stackBaseIndex];
-
-				/* Find all exception handlers from here */
-				for (i = exceptionInfo->catchCount; i; i--, handler++) {
-					if (((UDATA) start >= handler->startPC) && ((UDATA) start < handler->endPC)) {
-#ifdef DEBUG_BCV
-						printf("exception map change check at startPC: %d\n", handler->startPC);
-#endif
-						/* Check the maps at the handler PC */
-						/* Modify the liveStack temporarily to contain the handler exception */
-						if (handler->exceptionClassIndex) {
-							catchName = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *)(&constantPool [handler->exceptionClassIndex]));
-							catchClass = convertClassNameToStackMapType(verifyData, J9UTF8_DATA(catchName), J9UTF8_LENGTH(catchName), 0, 0);
-						} else {
-							catchClass = BCV_JAVA_LANG_THROWABLE_INDEX;
-							catchClass <<= BCV_CLASS_INDEX_SHIFT;
-						}
-	
-						stackTop = &(liveStack->stackElements[liveStack->stackBaseIndex]);
-						PUSH(catchClass);
-						SAVE_STACKTOP(liveStack, stackTop);
-	
-						rc = findAndMatchStack (verifyData, handler->handlerPC, start);
-						if (BCV_SUCCESS != rc) {
-							if (BCV_ERR_INSUFFICIENT_MEMORY == rc) {
-								goto _outOfMemoryError;
-							}
-							goto _mapError;
-						}
-					}
-				}
-	
-				/* Restore liveStack */
-				liveStack->stackElements[liveStack->stackBaseIndex] = originalStackZeroEntry;
-				stackTop = originalStackTop;
-			}
 			break;
 
 		case RTV_ARRAY_STORE:
@@ -2862,13 +2828,22 @@ nextStack (J9BytecodeVerificationData *verifyData, UDATA *nextMapIndex, IDATA *n
 	return returnStack;
 }
 
-/* Return the next pc in the method that is an exception handler start address */
-
-static IDATA
-nextExceptionStart (J9BytecodeVerificationData *verifyData, J9ROMMethod *romMethod, IDATA lastPC)
+/**
+ * Return the pc range for the next exception handler in romMethod.
+ * @param verifyData pointer to J9BytecodeVerificationData
+ * @param romMethod the method whose exception handling information is searched
+ * @param exceptionStartPC contains the starting pc of the last exception. It will
+ * be set to the next exception start pc if one exists otherwise will be set to
+ * the last possible pc for the method.
+ * @param exceptionEndPC will be set to the next exception end pc if one exists
+ * otherwise will be set to the last possible pc for the method.
+ */
+static void
+nextExceptionPC(J9BytecodeVerificationData *verifyData, J9ROMMethod *romMethod, IDATA *exceptionStartPC, IDATA *exceptionEndPC)
 {
 	/* Method size */
-	IDATA nextPC = J9_BYTECODE_SIZE_FROM_ROM_METHOD(romMethod);
+	IDATA nextStartPC = J9_BYTECODE_SIZE_FROM_ROM_METHOD(romMethod);
+	IDATA nextEndPC = nextStartPC;
 
 	if (romMethod->modifiers & CFR_ACC_HAS_EXCEPTION_INFO) {
 		J9ExceptionInfo *exceptionInfo = J9_EXCEPTION_DATA_FROM_ROM_METHOD(romMethod);
@@ -2876,9 +2851,11 @@ nextExceptionStart (J9BytecodeVerificationData *verifyData, J9ROMMethod *romMeth
 		UDATA i;
 
 		for (i = exceptionInfo->catchCount; i; i--, handler++) {
-			if (((IDATA) handler->startPC) > lastPC) {
-				if (handler->startPC < (UDATA) nextPC) {
-					nextPC = handler->startPC;
+			/* exceptionStartPC has the last exception start. */
+			if (((IDATA)handler->startPC) > *exceptionStartPC) {
+				if (handler->startPC < (UDATA) nextStartPC) {
+					nextStartPC = handler->startPC;
+					nextEndPC = handler->endPC;
 				}
 			}
 		}
@@ -2889,10 +2866,12 @@ nextExceptionStart (J9BytecodeVerificationData *verifyData, J9ROMMethod *romMeth
 				J9UTF8_DATA(J9ROMMETHOD_NAME(verifyData->romMethod)),
 				(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(verifyData->romMethod)),
 				J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(verifyData->romMethod)),
-				exceptionInfo->catchCount, lastPC, nextPC, 
+				exceptionInfo->catchCount, *exceptionStartPC, nextStartPC,
 				J9_BYTECODE_SIZE_FROM_ROM_METHOD(romMethod));
 	}
-	return nextPC;
+
+	*exceptionStartPC = nextStartPC;
+	*exceptionEndPC = nextEndPC;
 }
 
 
