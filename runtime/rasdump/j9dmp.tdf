@@ -42,3 +42,5 @@ TraceAssert=Assert_dump_true noEnv Overhead=1 Level=1 Assert="(P1)"
 
 TraceExit=Trc_trcengine_criu_criuReloadXDumpAgents_Exit Overhead=1 Level=5 Template="criuReloadXDumpAgents() returns %zd"
 TraceEntry=Trc_trcengine_criu_criuReloadXDumpAgents_Entry Overhead=1 Level=5 Template="criuReloadXDumpAgents()"
+
+TraceEvent=Trc_dump_signal_pid Overhead=1 Level=1 Template="%s received from process id %zu name '%s'"

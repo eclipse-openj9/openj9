@@ -713,3 +713,5 @@ TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitFail2 Noenv Overh
 TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitFail3 Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Attempt to determine path type resulted in error code %d"
 
 TraceEntry=Trc_JCL_com_ibm_oti_shared_getCachedURL_Entry_1 Overhead=1 Level=2 Template="JCL: com.ibm.oti.shared getCachedURL: Entering for helperID=%d"
+
+TraceEvent=Trc_JCL_signal_pid noEnv Overhead=1 Level=1 Template="%s received from process id %zu name '%s'"

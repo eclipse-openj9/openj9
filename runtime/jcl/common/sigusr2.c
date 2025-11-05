@@ -109,6 +109,7 @@ sigUsr2Handler(struct J9PortLibrary *portLibrary, void *userData)
 
 	eventData.siPid = rasAsyncPidInfo->siPid;
 	eventData.detailData = rasAsyncPidInfo->siPidName;
+	Trc_JCL_signal_pid("SIGUSR2", eventData.siPid, eventData.detailData);
 
 	J9DMP_TRIGGER(vm, NULL, J9RAS_DUMP_ON_USER2_SIGNAL, &eventData);
 
