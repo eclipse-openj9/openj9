@@ -27,7 +27,7 @@ Thank you for your interest in Eclipse OpenJ9!
 We welcome and encourage all kinds of contributions to the project, not only
 code. This includes bug reports, user experience feedback, assistance in
 reproducing issues and more. Contributions to the website
-(https://github.com/eclipse-openj9/openj9-website), to the user documentation
+(https://github.com/eclipse-openj9/openj9-website-publish), to the user documentation
 (https://github.com/eclipse-openj9/openj9-docs), to the system verification tests
 (https://github.com/eclipse-openj9/openj9-systemtest), or to Eclipse OMR
 (https://github.com/eclipse-omr/omr), which is an integral part of OpenJ9 are all
