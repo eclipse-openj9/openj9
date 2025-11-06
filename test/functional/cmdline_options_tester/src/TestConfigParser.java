@@ -31,33 +31,33 @@ class TestConfigParser {
 	private TestSuite _suite;
 	private boolean _verbose;
 	private int _outputLimit;
-	private boolean _debugCmdOnTimeout = false;
+	private boolean _debugCmdOnTimeout;
 	private String _modeHints;
-	
-	static String archName = System.getProperty("os.arch");
-	static boolean isRiscv = archName.toLowerCase().contains("riscv");
-	
+
+	private static final boolean isRiscv = System.getProperty("os.arch").toLowerCase().contains("riscv");
+
 	/**
 	 * If true, the test suite will print out the full output for each test case, regardless of whether
-	 * it passed or failed
+	 * it passed or failed.
 	 */
-	void setVerbose( boolean verbose ) {
+	void setVerbose(boolean verbose) {
 		_verbose = verbose;
 		if (_suite != null) {
-			_suite.setVerbose( _verbose );
+			_suite.setVerbose(_verbose);
 		}
 	}
-	
-	void setOutputLimit ( int limit ) {
+
+	void setOutputLimit(int limit) {
 		_outputLimit = limit;
 		if (_suite != null) {
-			_suite.setOutputLimit( _outputLimit );
+			_suite.setOutputLimit(_outputLimit);
 		}
 	}
+
 	/**
 	 * Takes the given configuration file, exclude list, and optional platforms, and generates a test suite
 	 * complete with test cases and expected outputs.
-	 * 
+	 *
 	 * @param configFile - The file from which to read the test case information. It should be formatted in
 	 *                     accordance with the cmdlinetester.dtd file (see j:\j9\testing\cmdlinetester\)
 	 * @param excludes - The exclude list, which specifies test cases to exclude on certain platforms. See
@@ -65,40 +65,39 @@ class TestConfigParser {
 	 *                   no tests are excluded
 	 * @param platforms - A comma-delimited set of strings identifying which platform-dependent output strings
 	 *                    in the configuration file should be used.
-	 * @param modeHints - List of hints specified for the mode being used to run this test suite. 
+	 * @param modeHints - List of hints specified for the mode being used to run this test suite.
 	 * @return The test suite object from which the tests can be run, and which will output the pass/fail stats
 	 *         of the test cases.
 	 */
-	TestSuite runTests( String configFile, ExcludeList excludes, String platforms, boolean debugCmdOnTimeout, String modeHints ) {
+	TestSuite runTests(String configFile, ExcludeList excludes, String platforms, boolean debugCmdOnTimeout, String modeHints) {
 		_excludes = excludes;
-		_platforms = doSplit( platforms, "," );
+		_platforms = doSplit(platforms, ",");
 		_debugCmdOnTimeout = debugCmdOnTimeout;
 		_modeHints = modeHints;
 		XMLParser xmlp = new XMLParser();
-		xmlp.parse( configFile, new TestConfigDocumentHandler() );
-		return _suite;
+		return xmlp.parse(configFile, new TestConfigDocumentHandler()) ? _suite : null;
 	}
 
 	/**
 	 * Basic string-splitting function, roughly equivalent to perl's split( /delim/, s ).
-	 * 
+	 *
 	 * @param s The string to be split
 	 * @param delim The delimiter between the different pieces in the string. This must be non-null
 	 * @return The array of pieces in the string. This will always be non-null, although may be of size zero
 	 *         if <code>s</code> is null or of length zero.
 	 */
-	private static String[] doSplit( String s, String delim ) {
-		if (s == null || s.length() == 0) {
+	private static String[] doSplit(String s, String delim) {
+		if ((s == null) || (s.length() == 0)) {
 			return new String[0];
 		}
-		StringTokenizer st = new StringTokenizer( s, delim );
-		String[] pieces = new String[ st.countTokens() ];
+		StringTokenizer st = new StringTokenizer(s, delim);
+		String[] pieces = new String[st.countTokens()];
 		for (int i = 0; i < pieces.length; i++) {
 			pieces[i] = st.nextToken();
 		}
 		return pieces;
 	}
-	
+
 	/**
 	 * The class that is used as the document handler when SAX-ing the configuration file. This
 	 * class is responsible for reading information from the configuration file, converting it to
@@ -110,7 +109,7 @@ class TestConfigParser {
 		/* Output case currently being processed */
 		private Output _currentOutput;
 		/* exec case currently being processed */
-		private CommandExecuter _currentExec; 
+		private CommandExecuter _currentExec;
 		/* The relevant non-element character data being spit out by the SAX parser */
 		private StringBuffer _data = new StringBuffer();
 		/* This is a single-iteration TestIterator which will run all the things given to it exactly once */
@@ -120,152 +119,153 @@ class TestConfigParser {
 		// this flag allows us to continue to use this parser implementation for the more complicated use of the command element without having to re-write it as a sort of delegating PDA
 		private boolean _isInNewCommandStanza;
 		// used to collect the contents of the in-order "arg" tags under the new-style command stanza (which are then passed as arguments to the underlying process)
-		private Vector _commandArgs;
+		private Vector<String> _commandArgs;
 		// used to collect the contents of the in-order "input" tags under the new-style command stanza (which are then fed into the stdin of the underlying process as new-line terminated strings)
-		private Vector _commandInputLines;
-		
+		private Vector<String> _commandInputLines;
+
 		/**
 		 * Empty implementation
 		 */
+		@Override
 		public void xmlStartDocument() {
 		}
 
 		/**
 		 * Empty implementation
 		 */
+		@Override
 		public void xmlEndDocument() {
 		}
 
 		/**
 		 * @see com.oti.j9.exclude.IXMLDocumentHandler#xmlStartElement(String,Hashtable)
 		 */
-		public void xmlStartElement(String elementName, Hashtable attributes) {
+		@Override
+		public void xmlStartElement(String elementName, Hashtable<String, String> attributes) {
 			if (elementName.equalsIgnoreCase("suite")) {
 				System.out.println("*** Starting test suite: " + attributes.get("id") + " ***");
-				long timeout = getTimeout( attributes.get("timeout"), 10000 );
-				_suite = new TestSuite( _excludes, timeout, _verbose, _outputLimit );
-				_iterator = new TestIterator( _suite );
+				long timeout = getTimeout(attributes.get("timeout"), 10000);
+				_suite = new TestSuite(_excludes, timeout, _verbose, _outputLimit);
+				_iterator = new TestIterator(_suite);
 
 			} else if (elementName.equalsIgnoreCase("loop")) {
-				String index = (String)attributes.get("index");
-				String from = (String)attributes.get("from");
-				String until = (String)attributes.get("until");
-				String inc = (String)attributes.get("inc");
-				_iterator.addSubIterator( new TestIterator( _suite, index, from, until, inc ) );
+				String index = attributes.get("index");
+				String from = attributes.get("from");
+				String until = attributes.get("until");
+				String inc = attributes.get("inc");
+				_iterator.addSubIterator(new TestIterator(_suite, index, from, until, inc));
 
 			} else if (elementName.equalsIgnoreCase("test")) {
-				if (hasAllowedPlatform((String)attributes.get("platforms"))) {
-					String id = (String)attributes.get("id");
-					String modeHints = (String)attributes.get("modeHints");
+				if (hasAllowedPlatform(attributes.get("platforms"))) {
+					String id = attributes.get("id");
+					String modeHints = attributes.get("modeHints");
 					if (hasAllowedHints(modeHints)) {
-						String timeout = (String)attributes.get("timeout");
-						
-						/* Set 16 hours (57600 secs) for timeout on RISC-V due to the lack of JIT */
-						timeout = (isRiscv) ? "57600" : timeout;
-						
-						_currentTest = new Test( id, timeout, _debugCmdOnTimeout );
+						String timeout = attributes.get("timeout");
+
+						/* Set 16 hours (57600 secs) for timeout on RISC-V due to the lack of JIT. */
+						timeout = isRiscv ? "57600" : timeout;
+
+						_currentTest = new Test(id, timeout, _debugCmdOnTimeout);
 					} else {
 						if ((_modeHints == null) || (_modeHints.matches("\\s*"))) {
 							_modeHints = "empty";
 						}
-						System.out
-								.println("Test Skipped: "
-										+ id
-										+ " : Hints specified for this test { "
-										+ modeHints
-										+ " } do not match with the hints for current mode { "
-										+ _modeHints + " }\n");
+						System.out.println("Test Skipped: "
+								+ id
+								+ " : Hints specified for this test { "
+								+ modeHints
+								+ " } do not match with the hints for current mode { "
+								+ _modeHints + " }\n");
 						_currentTest = null;
 					}
 				} else {
 					_currentTest = null;
 				}
 			} else if (elementName.equalsIgnoreCase("output")) {
-				if (hasAllowedPlatform((String)attributes.get("platforms"))) {
-					String regex = (String)attributes.get("regex");
+				if (hasAllowedPlatform(attributes.get("platforms"))) {
+					String regex = attributes.get("regex");
 					String javaUtilPattern = "no";
 					if (null != attributes.get("javaUtilPattern")) {
-						javaUtilPattern = (String)attributes.get("javaUtilPattern");
+						javaUtilPattern = attributes.get("javaUtilPattern");
 					}
 					String showRegexMatch = "no";
 					if (null != attributes.get("showMatch")) {
-						showRegexMatch = (String)attributes.get("showMatch");
+						showRegexMatch = attributes.get("showMatch");
 					}
-					String caseSensitive = (String)attributes.get("caseSensitive");
-					String type = (String)attributes.get("type");
-					_currentOutput = new Output( regex, javaUtilPattern, showRegexMatch, caseSensitive, type );
+					String caseSensitive = attributes.get("caseSensitive");
+					String type = attributes.get("type");
+					_currentOutput = new Output(regex, javaUtilPattern, showRegexMatch, caseSensitive, type);
 				} else {
 					_currentOutput = null;
 				}
 
 			} else if (elementName.equalsIgnoreCase("saveoutput")) {
-				if (hasAllowedPlatform((String)attributes.get("platforms"))) {
-					String regex = (String)attributes.get("regex");
+				if (hasAllowedPlatform(attributes.get("platforms"))) {
+					String regex = attributes.get("regex");
 					String javaUtilPattern = "no";
 					String showRegexMatch = "no";
 					if (null != attributes.get("showMatch")) {
-						showRegexMatch = (String)attributes.get("showMatch");
+						showRegexMatch = attributes.get("showMatch");
 					}
-					String caseSensitive = (String)attributes.get("caseSensitive");
-					String saveName = (String)attributes.get("saveName");
-					String splitIndex = (String)attributes.get("splitIndex");
-					String splitBy = (String)attributes.get("splitBy");
-					String type = (String)attributes.get("type");
-					_currentOutput = new SaveOutput( regex, javaUtilPattern, showRegexMatch, caseSensitive, type, saveName, splitIndex, splitBy);
+					String caseSensitive = attributes.get("caseSensitive");
+					String saveName = attributes.get("saveName");
+					String splitIndex = attributes.get("splitIndex");
+					String splitBy = attributes.get("splitBy");
+					String type = attributes.get("type");
+					_currentOutput = new SaveOutput(regex, javaUtilPattern, showRegexMatch, caseSensitive, type, saveName, splitIndex, splitBy);
 				} else {
 					_currentOutput = null;
 				}
 
 			} else if (elementName.equalsIgnoreCase("return")) {
-				if ((_currentTest != null) && (hasAllowedPlatform((String)attributes.get("platforms")))) {
-					String value = (String)attributes.get("value");
-					String type = (String)attributes.get("type");
-					_currentTest.addTestCondition( new ReturnValue( value, type ) );
+				if ((_currentTest != null) && (hasAllowedPlatform(attributes.get("platforms")))) {
+					String value = attributes.get("value");
+					String type = attributes.get("type");
+					_currentTest.addTestCondition(new ReturnValue(value, type));
 				}
 
 			} else if (elementName.equalsIgnoreCase("variable")) {
-				if (hasAllowedPlatform((String)attributes.get("platforms"))) {
-					String name = (String)attributes.get("name");
-					String value = (String)attributes.get("value");
-					_iterator.addCommand( new VariableAdder( name, value ) );
+				if (hasAllowedPlatform(attributes.get("platforms"))) {
+					String name = attributes.get("name");
+					String value = attributes.get("value");
+					_iterator.addCommand(new VariableAdder(name, value));
 				}
 
 			} else if (elementName.equalsIgnoreCase("exec")) {
-				if (hasAllowedPlatform((String)attributes.get("platforms"))) {
-					String command = (String)attributes.get("command");
-					String background = (String)attributes.get("background");
-					String captureVarStdout = (String)attributes.get("capture");
-					String captureVarStderr = (String)attributes.get("captureStderr");
-					String returnVar = (String)attributes.get("return");
+				if (hasAllowedPlatform(attributes.get("platforms"))) {
+					String command = attributes.get("command");
+					String background = attributes.get("background");
+					String captureVarStdout = attributes.get("capture");
+					String captureVarStderr = attributes.get("captureStderr");
+					String returnVar = attributes.get("return");
 					_currentExec = new CommandExecuter(command, background, captureVarStdout, captureVarStderr, returnVar);
 				}
 			} else if (elementName.equalsIgnoreCase("delay")) {
-				_iterator.addCommand( new Delay( (String)attributes.get("length") ) );
+				_iterator.addCommand(new Delay(attributes.get("length")));
 
 			} else if (elementName.equalsIgnoreCase("echo")) {
-				_iterator.addCommand( new Echo( (String)attributes.get("value") ) );
+				_iterator.addCommand(new Echo(attributes.get("value")));
 			} else if (elementName.equalsIgnoreCase("envvar")) {
 				// to get envvars to work properly in loops, changed EnvVar class to Command type
-				_iterator.addCommand( new EnvVar( (String)attributes.get("name"), (String)attributes.get("value") ) );
+				_iterator.addCommand(new EnvVar(attributes.get("name"), attributes.get("value")));
 			} else if (elementName.equalsIgnoreCase("command")) {
-				//the command tag can be structured multiple ways.  It can just be simple like <command>echo This is what I am echoing</command> or
+				// the command tag can be structured multiple ways.  It can just be simple like <command>echo This is what I am echoing</command> or
 				// it can be more complicated like:
 				// <command command="someCommand"><arg>one argument</arg><arg>arg two</arg><input>one line of stdin</input><input>second line of stdin</input></command>
 				// (note that the use of this "command" attribute looks odd but is to be consistent with "exec")
 				// so we will determine which one is which in this start tag since we would need a "command" attribute to be using the new style
-				String commandExecutable = (String)attributes.get("command");
-				if (null != commandExecutable)
-				{
+				String commandExecutable = attributes.get("command");
+				if (null != commandExecutable) {
 					//this is the "new-style" command tag so get the executable name
 					_commandExecutable = commandExecutable;
 					//also set the flag to know that we are in a command context and create the arrays for the arguments and inputs which may appear in that stanza
 					_isInNewCommandStanza = true;
-					_commandArgs = new Vector();
-					_commandInputLines = new Vector();
+					_commandArgs = new Vector<>();
+					_commandInputLines = new Vector<>();
 				}
 			} else if (elementName.equalsIgnoreCase("if")) {
-				_iterator.addCommand( new IfTest( (String)attributes.get("testVariable"), (String)attributes.get("testValue"),
-					(String)attributes.get("resultVariable"), (String)attributes.get("resultValue") ) );
+				_iterator.addCommand(new IfTest(attributes.get("testVariable"), attributes.get("testValue"),
+						attributes.get("resultVariable"), attributes.get("resultValue")));
 			}
 
 			// clear buffer to read in stuff within this tag
@@ -275,9 +275,10 @@ class TestConfigParser {
 		/**
 		 * @see com.oti.j9.exclude.IXMLDocumentHandler#xmlEndElement(String)
 		 */
+		@Override
 		public void xmlEndElement(String elementName) {
 			String readData = _data.toString();
-			
+
 			if (elementName.equalsIgnoreCase("loop")) {
 				// </loop> - close off the most-nested loop. if _iterator doesn't have any
 				// nested loops, it will return false, so we close off _iterator by setting it
@@ -300,17 +301,17 @@ class TestConfigParser {
 				// due to platform-dependency-incompatibilities
 				if ((_currentTest != null) && (_currentOutput != null)) {
 					_currentOutput.setOutput(readData);
-					_currentTest.addTestCondition( _currentOutput );
+					_currentTest.addTestCondition(_currentOutput);
 				}
 
 			} else if (elementName.equalsIgnoreCase("test")) {
 				// </test> - pass it off to the iterator to run
 				if (_currentTest != null) {
-					_iterator.addTest( _currentTest );
+					_iterator.addTest(_currentTest);
 				}
 			} else if (elementName.equalsIgnoreCase("exec")) {
 				if (_currentExec != null) {
-					_iterator.addCommand( _currentExec );
+					_iterator.addCommand(_currentExec);
 				}
 				_currentExec = null;
 			} else if (elementName.equalsIgnoreCase("arg")) {
@@ -326,22 +327,23 @@ class TestConfigParser {
 					_commandInputLines.add(readData);
 				}
 			}
-			_data.setLength( 0 );	// any data in here has outlived it's usefulness
+			_data.setLength(0); // any data in here has outlived it's usefulness
 		}
 
 		/**
 		 * @see com.oti.j9.exclude.IXMLDocumentHandler#xmlCharacters(String)
 		 */
+		@Override
 		public void xmlCharacters(String chars) {
-			_data.append( chars );
+			_data.append(chars);
 		}
 
-		private boolean hasAllowedPlatform( String platforms ) {
+		private boolean hasAllowedPlatform(String platforms) {
 			// check the platform-dependencies. if there are no
 			// listed platforms or if any one of the listed platforms matches any one of
 			// the platforms specified on the runtime commandline, then we return true
 			String evaluatePlatforms = TestSuite.evaluateVariables(platforms);
-			String[] requiredPlatforms = doSplit( evaluatePlatforms, "," );
+			String[] requiredPlatforms = doSplit(evaluatePlatforms, ",");
 			boolean allow = (requiredPlatforms.length == 0);
 			for (int i = 0; i < _platforms.length; i++) {
 				for (int j = 0; j < requiredPlatforms.length; j++) {
@@ -355,7 +357,7 @@ class TestConfigParser {
 			}
 			return allow;
 		}
-		
+
 		private boolean hasAllowedHints(String modeHints) {
 			String[] hintsSet = doSplit(modeHints, ",");
 			if (hintsSet.length == 0) {
@@ -366,25 +368,29 @@ class TestConfigParser {
 				for (int i = 0; i < hintsSet.length; i++) {
 					boolean allHintsFound = true;
 					String[] hints = doSplit(hintsSet[i], " ");
-					for (int j = 0; j < hints.length; j++) {
-						if (_modeHints.indexOf(hints[i]) == -1) {
+					for (String hint : hints) {
+						if (_modeHints.indexOf(hint) == -1) {
 							allHintsFound = false;
 							break;
 						}
 					}
-					if (allHintsFound == true) {
+					if (allHintsFound) {
 						return true;
 					}
 				}
 			}
 			return false;
 		}
-		
-		private long getTimeout( Object attribute, long defaultValue ) {
+
+		private long getTimeout(String attribute, long defaultValue) {
 			long timeout = defaultValue;
-			try {
-				timeout = 1000 * Integer.parseInt( ((String)attribute).trim() );
-			} catch (Exception e) { }
+			if (attribute != null) {
+				try {
+					timeout = 1000 * Integer.parseInt(attribute.trim());
+				} catch (NumberFormatException e) {
+					// ignore
+				}
+			}
 			return timeout;
 		}
 	}
