@@ -25,7 +25,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 ## How to build with CMake
 
 The CMake build system is designed to provide as seamless a transition as is possible.
-As such, the normal OpenJ9 [build instructions](https://www.eclipse.org/openj9/oj9_build.html)
+As such, the normal OpenJ9 [build instructions](https://github.com/eclipse-openj9/openj9/blob/master/doc/build-instructions)
 can be followed with the following modifications:
 
 - Ensure that CMake version 3.5 or greater is installed
