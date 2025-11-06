@@ -123,6 +123,7 @@ sigQuitHandler(struct J9PortLibrary* portLibrary, void* userData)
 
 	eventData.siPid = rasAsyncPidInfo->siPid;
 	eventData.detailData = rasAsyncPidInfo->siPidName;
+	Trc_JCL_signal_pid("SIGQUIT", eventData.siPid, eventData.detailData);
 
 	J9DMP_TRIGGER(vm, NULL, J9RAS_DUMP_ON_USER_SIGNAL, &eventData);
 

@@ -260,6 +260,7 @@ abortHandler(int sig, siginfo_t *siginfo, void *context)
 			if (0 != eventData.siPid) {
 				eventData.detailData = omrsysinfo_get_process_name(eventData.siPid);
 			}
+			Trc_dump_signal_pid(vmThread, "SIGABRT", eventData.siPid, eventData.detailData);
 #endif /* !defined(WIN32) */
 			rc = J9DMP_TRIGGER(cachedVM, vmThread, J9RAS_DUMP_ON_ABORT_SIGNAL, &eventData);
 			j9mem_free_memory(eventData.detailData);
