@@ -55,9 +55,13 @@ typedef struct J9BranchTargetStack {
 
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 typedef struct J9StrictFieldEntry {
-	J9UTF8 *nameutf8;
-	/* isSet is not used when comparing structs for equality. */
+	 /* nameutf8 is the only field used to determine equality. */
+	J9UTF8* nameutf8;
 	BOOLEAN isSet;
+	/* This field is used during stack map frame matching to track
+	 * which fields were in the target unset list.
+	 */
+	BOOLEAN isReferenced;
 } J9StrictFieldEntry;
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 

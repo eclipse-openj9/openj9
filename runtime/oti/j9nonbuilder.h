@@ -2137,6 +2137,14 @@ typedef struct J9TranslationBufferSet {
 #define BCU_ENABLE_INVARIANT_INTERNING  8
 #define BCU_ENABLE_ROMCLASS_RESIZING  0x100
 
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+typedef struct J9EarlyLarvalFrame {
+	IDATA baseFramePC; /* The only field used to determine equality. */
+	U_16 numberOfUnsetFields;
+	U_16 *unsetFieldCpList;
+} J9EarlyLarvalFrame;
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+
 typedef struct J9BytecodeVerificationData {
 	IDATA  ( *verifyBytecodesFunction)(struct J9PortLibrary *portLib, struct J9Class *ramClass, struct J9ROMClass *romClass, struct J9BytecodeVerificationData *verifyData) ;
 	UDATA  ( *checkClassLoadingConstraintForNameFunction)(struct J9VMThread *vmThread, struct J9ClassLoader *loader1, struct J9ClassLoader *loader2, U_8 *name1, U_8 *name2, UDATA length, BOOLEAN copyName1, BOOLEAN copyName2) ;
@@ -2192,6 +2200,8 @@ typedef struct J9BytecodeVerificationData {
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 	J9HashTable *strictFields;
 	UDATA strictFieldsUnsetCount;
+	J9HashTable *earlyLarvalFrames;
+	J9EarlyLarvalFrame *earlyLarvalFramePrevious;
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 } J9BytecodeVerificationData;
 

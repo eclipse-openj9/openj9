@@ -521,6 +521,14 @@ pushReturnType(J9BytecodeVerificationData *verifyData, J9UTF8 * utf8string, UDAT
  */
 void
 createOrResetStrictFieldsList(J9BytecodeVerificationData *verifyData, BOOLEAN *addToStrictFieldTable);
+
+/**
+ * Remove and free all entries in the early larval frame
+ * hash map.
+ * @param verifyData information about the class being verified.
+ */
+void
+resetEarlyLarvalFrames(J9BytecodeVerificationData *verifyData);
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 /**

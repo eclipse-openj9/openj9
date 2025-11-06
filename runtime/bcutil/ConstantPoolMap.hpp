@@ -276,6 +276,10 @@ public:
 
 	void markConstantAsUsedByAnnotationUTF8(U_16 cfrCPIndex)  { mark(cfrCPIndex, ANNOTATION); }
 
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+	void markConstantAsUsedByEarlyLarvalFrame(U_16 cfrCPIndex)  { mark(cfrCPIndex, EARLYLARVALFRAME); }
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+
 	void markClassAsUsedByInstanceOf(U_16 classCfrCPIndex)     { mark(classCfrCPIndex, INSTANCE_OF); }
 	void markClassAsUsedByCheckCast(U_16 classCfrCPIndex)      { mark(classCfrCPIndex, CHECK_CAST); }
 	void markClassAsUsedByMultiANewArray(U_16 classCfrCPIndex) { mark(classCfrCPIndex, MULTI_ANEW_ARRAY); }
@@ -401,6 +405,10 @@ public:
 		INVOKE_DYNAMIC = SPLIT_FLAG_COUNT,
 		/* LDC does not use a constant pool entry. It is used only for ClassFileOracle::BytecodeFixupEntry.type. */
 		LDC = SPLIT_FLAG_COUNT + 1
+		#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+		,
+		EARLYLARVALFRAME = SPLIT1
+		#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 	};
 
 };

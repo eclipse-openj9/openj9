@@ -1317,6 +1317,7 @@ createOrResetStrictFieldsList(J9BytecodeVerificationData *verifyData, BOOLEAN *a
 				J9StrictFieldEntry newEntry = {0};
 				newEntry.nameutf8 = fieldName;
 				newEntry.isSet = FALSE;
+				newEntry.isReferenced = FALSE;
 				hashTableAdd(verifyData->strictFields, &newEntry);
 			}
 			field = romFieldsNextDo(&fieldWalkState);
@@ -1333,5 +1334,21 @@ createOrResetStrictFieldsList(J9BytecodeVerificationData *verifyData, BOOLEAN *a
 		}
 	}
 	verifyData->strictFieldsUnsetCount = hashTableGetCount(verifyData->strictFields);
+}
+
+void
+resetEarlyLarvalFrames(J9BytecodeVerificationData *verifyData)
+{
+	PORT_ACCESS_FROM_PORT(verifyData->portLib);
+	J9HashTableState hashTableState = {0};
+	J9EarlyLarvalFrame *entry = (J9EarlyLarvalFrame *)hashTableStartDo(verifyData->earlyLarvalFrames, &hashTableState);
+	while (NULL != entry) {
+		if (entry->numberOfUnsetFields > 0) {
+			j9mem_free_memory(entry->unsetFieldCpList);
+		}
+		hashTableDoRemove(&hashTableState);
+		entry = hashTableNextDo(&hashTableState);
+	}
+	verifyData->earlyLarvalFramePrevious = NULL;
 }
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */

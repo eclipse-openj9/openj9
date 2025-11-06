@@ -87,6 +87,10 @@ enum ROMClassCreationPhase {
 	ConstantPoolMapping,
 	SRPOffsetTableCreation,
 	ROMClassCreationPhaseCount
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+	,
+	WalkUnsetFields
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 };
 
 #endif /* romphase_h */
