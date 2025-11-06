@@ -67,6 +67,21 @@ j9object_t getMethodDefaultAnnotationData(struct J9VMThread *vmThread, struct J9
 
 jobjectArray getMethodParametersAsArray(JNIEnv *env, jobject jlrMethod);
 
+#if JAVA_SPEC_VERSION >= 10
+/**
+ * The caller must have VM access.
+ * Return a J9ROMFieldShape * for a field specified with a name and a declaring class.
+ * Throw NullPointerException if declaringClass or fieldName is null.
+ * @param[in] vmThread The current vmThread.
+ * @param[in] declaringClass The declaring class. Must be non-null.
+ * @param[in] fieldName The name of the field. Must be non-null.
+ * @param[out] offsetResult The field offset.
+ * @return J9ROMFieldShape *
+ */
+J9ROMFieldShape *
+getROMFieldHelper(J9VMThread *vmThread, jclass declaringClass, jstring fieldName, UDATA *offsetResult);
+#endif /* JAVA_SPEC_VERSION >= 10 */
+
 /**
  * The caller must have VM access. 
  * Build a java.lang.reflect.Field object for a field specified with a name and a declaring class.
