@@ -1145,7 +1145,7 @@ TR_ResolvedRelocatableJ9Method::isCompilable(TR_Memory * trMemory)
    {
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(fej9()->_jitConfig);
 
-   if (compInfo->isMethodIneligibleForAot(ramMethod()))
+   if (compInfo->isMethodIneligibleForAot(ramMethod(), trMemory, fej9()))
       return false;
 
    return TR_ResolvedJ9Method::isCompilable(trMemory);
