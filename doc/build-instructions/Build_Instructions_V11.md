@@ -37,7 +37,7 @@ Build instructions are available for the following platforms:
 - [AArch64](#aarch64)
 - [Riscv64 :rocket:](#riscv64)
 
-User documentation for the latest release of Eclipse OpenJ9 is available at the [Eclipse Foundation](https://www.eclipse.org/openj9/docs).
+User documentation for the latest release of Eclipse OpenJ9 is available at the [Eclipse Foundation](https://eclipse.dev/openj9/docs).
 If you build a binary from the current OpenJ9 source, new features and changes might be in place for the next release of OpenJ9. Draft user
 documentation for the next release of OpenJ9 can be found [here](https://eclipse-openj9.github.io/openj9-docs/).
 
@@ -147,7 +147,7 @@ Many other configuration options are available, including options to increase th
 For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ibmruntimes/openj9-openjdk-jdk11/blob/openj9/doc/building.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
-- [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
+- [compressed references](https://eclipse.dev/openj9/docs/gc_overview/#compressed-references) (only)
 - non-compressed references (only)
 - mixed references, either compressed or non-compressed references is selected when starting Java
 
@@ -277,7 +277,7 @@ Many other configuration options are available, including options to increase th
 For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ibmruntimes/openj9-openjdk-jdk11/blob/openj9/doc/building.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
-- [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
+- [compressed references](https://eclipse.dev/openj9/docs/gc_overview/#compressed-references) (only)
 - non-compressed references (only)
 - mixed references, either compressed or non-compressed references is selected when starting Java
 
@@ -431,7 +431,7 @@ Many other configuration options are available, including options to increase th
 For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ibmruntimes/openj9-openjdk-jdk11/blob/openj9/doc/building.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
-- [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
+- [compressed references](https://eclipse.dev/openj9/docs/gc_overview/#compressed-references) (only)
 - non-compressed references (only)
 - mixed references, either compressed or non-compressed references is selected when starting Java
 
@@ -570,7 +570,7 @@ Many other configuration options are available, including options to increase th
 For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ibmruntimes/openj9-openjdk-jdk11/blob/openj9/doc/building.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
-- [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
+- [compressed references](https://eclipse.dev/openj9/docs/gc_overview/#compressed-references) (only)
 - non-compressed references (only)
 - mixed references, either compressed or non-compressed references is selected when starting Java
 
@@ -727,7 +727,7 @@ Many other configuration options are available, including options to increase th
 For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ibmruntimes/openj9-openjdk-jdk11/blob/openj9/doc/building.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
-- [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
+- [compressed references](https://eclipse.dev/openj9/docs/gc_overview/#compressed-references) (only)
 - non-compressed references (only)
 - mixed references, either compressed or non-compressed references is selected when starting Java
 

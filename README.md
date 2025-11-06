@@ -32,7 +32,7 @@ Welcome to the Eclipse OpenJ9 repository
 
 We're not sure which route you might have taken on your way here, but we're really pleased to see you! If you came directly from our website, you've probably already learned a lot about Eclipse OpenJ9 and how it fits in to the OpenJDK ecosystem. If you came via some other route, here are a few key links to get you started:
 
-- [Eclipse OpenJ9 website](https://www.eclipse.org/openj9) - Learn about this high performance, enterprise-grade Java Virtual Machine (JVM) and why we think you want to get involved in its development.
+- [Eclipse OpenJ9 website](https://eclipse.dev/openj9) - Learn about this high performance, enterprise-grade Java Virtual Machine (JVM) and why we think you want to get involved in its development.
 - Build instructions for [JDK8](https://github.com/eclipse-openj9/openj9/blob/master/doc/build-instructions/Build_Instructions_V8.md), [JDK11](https://github.com/eclipse-openj9/openj9/blob/master/doc/build-instructions/Build_Instructions_V11.md), and [More](https://github.com/eclipse-openj9/openj9/blob/master/doc/build-instructions) - Here's how you can build an OpenJDK with OpenJ9 yourself.
 
 If you're looking for ways to help out at the project (thanks!), we have:
@@ -101,7 +101,7 @@ Where can I learn more?
 =======================
 
 - [Moving to OpenJ9](https://blog.openj9.org/2019/02/26/moving-to-openjdk-with-eclipse-openj9/)
-- [User documentation](https://www.eclipse.org/openj9/docs/)
+- [User documentation](https://eclipse.dev/openj9/docs/)
 - Many more resources are available on the [OpenJ9 blog](https://blog.openj9.org/)
 
 Videos and Presentations

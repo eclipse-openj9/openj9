@@ -52,7 +52,7 @@ Following these guidelines will help us merge your pull requests smoothly:
    until after you've removed the WIP prefix to merge your changes.
 
 4. If your contribution introduces an external change that requires an update
-   to the [user documentation](https://www.eclipse.org/openj9/docs/), add the
+   to the [user documentation](https://eclipse.dev/openj9/docs/), add the
    label `doc:externals` to the OpenJ9 issue, or request a committer to do it,
    and open an [issue](https://github.com/eclipse-openj9/openj9-docs/issues/new?template=new-documentation-change.md)
    at the user documentation repository. The OpenJ9 pull request should be labeled with `depends:doc` as well. Committers

@@ -403,7 +403,7 @@ public final class CRIUSupport {
 
 	/**
 	 * Add new JVM options upon restore. The options will be specified in an options
-	 * file with the form specified in https://www.eclipse.org/openj9/docs/xoptionsfile/
+	 * file with the form specified in https://eclipse.dev/openj9/docs/xoptionsfile/
 	 *
 	 * Only a subset of JVM options are available on restore. Consult the CRIU Support section of Eclipse OpenJ9 documentation to determine
 	 * which options are supported.
