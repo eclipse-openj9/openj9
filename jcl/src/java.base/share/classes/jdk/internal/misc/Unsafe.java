@@ -233,6 +233,10 @@ public final class Unsafe {
 	/*[IF INLINE-TYPES]*/
 	private static final class InlineTypesLock { InlineTypesLock() {} }
 	private static final InlineTypesLock inlineTypesLock = new InlineTypesLock();
+
+	/* Field layout constants */
+	private static final int FIELD_LAYOUT_FLATTENED = 1;
+	private static final int FIELD_LAYOUT_REFERENCE = 0;
 	/*[ENDIF] INLINE-TYPES */
 
 	static {
@@ -7173,7 +7177,10 @@ public final class Unsafe {
 	}
 
 	public int fieldLayout(Field f) {
-		throw new Error("jdk.internal.misc.Unsafe.fieldLayout unimplemented"); //$NON-NLS-1$
+		if (null == f) {
+			throw new NullPointerException();
+		}
+		return isFlatField(f) ? FIELD_LAYOUT_FLATTENED : FIELD_LAYOUT_REFERENCE;
 	}
 
 	public <V> V getFlatValue(Object obj, long offset, int layoutKind, Class<?> valueType) {
