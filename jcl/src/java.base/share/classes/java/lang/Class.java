@@ -181,6 +181,8 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	private transient long vmRef;
 	private transient ClassLoader classLoader;
 
+	transient ConstantPool constantPoolObject;
+
 	/*[IF JAVA_SPEC_VERSION >= 9]*/
 	private transient Module module;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
