@@ -942,7 +942,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-</test>
 
 	<test id="Test 53: Make sure classes are being stored to the shared cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,verboseIO $CP_HANOI$ $PROGRAM_HANOI$</command>
@@ -1471,7 +1470,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Java dump</output>
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
-	</test>d
+	</test>
 
 	<test id="Test 68-a: Run ShareOrphanTest with -Xshareclasses" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ $CP_UTILS$ $PROGRAM_ORPHANTEST$</command>
@@ -1595,7 +1594,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Java dump</output>
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
-	</test>
 	</test>
 
 	<test id="Test 70-a: Do not specify -Xshareclasses and run ShareOrphanTest with -XX:+ShareOrphans" timeout="600" runPath=".">

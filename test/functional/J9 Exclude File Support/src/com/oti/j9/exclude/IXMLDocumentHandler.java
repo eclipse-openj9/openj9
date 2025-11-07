@@ -23,13 +23,13 @@ package com.oti.j9.exclude;
 
 import java.util.Hashtable;
 
-// Mirrors SAX pre-namespaces support 
+// Mirrors SAX pre-namespaces support.
 
 public interface IXMLDocumentHandler {
 
 	public abstract void xmlStartDocument();
 	public abstract void xmlEndDocument();
-	public abstract void xmlStartElement(String elementName, Hashtable attributes);
+	public abstract void xmlStartElement(String elementName, Hashtable<String, String> attributes);
 	public abstract void xmlEndElement(String elementName);
 	public abstract void xmlCharacters(String chars);
 }
