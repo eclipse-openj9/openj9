@@ -1116,6 +1116,139 @@ triggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags
 	return OMR_ERROR_INTERNAL;
 }
 
+typedef struct J9RASDumpHookEntry {
+	UDATA flag;
+	BOOLEAN isOMR;
+	UDATA event;
+	J9HookFunction handler;
+} J9RASDumpHookEntry;
+
+#define J9HOOK_IS_OMR TRUE
+#define J9HOOK_IS_VM FALSE
+
+static const J9RASDumpHookEntry hookEntries[] =
+{
+	{
+		J9RAS_DUMP_ON_VM_STARTUP,
+		J9HOOK_IS_VM,
+		J9HOOK_VM_INITIALIZED,
+		rasDumpHookVmInit
+	},
+	{
+		J9RAS_DUMP_ON_VM_SHUTDOWN,
+		J9HOOK_IS_VM,
+		J9HOOK_VM_SHUTTING_DOWN,
+		rasDumpHookVmShutdown
+	},
+	{
+		J9RAS_DUMP_ON_CLASS_LOAD,
+		J9HOOK_IS_VM,
+		J9HOOK_VM_CLASS_LOAD,
+		rasDumpHookClassLoad
+	},
+	{
+#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
+		J9RAS_DUMP_ON_CLASS_UNLOAD,
+		J9HOOK_IS_VM,
+		J9HOOK_VM_CLASSES_UNLOAD,
+		rasDumpHookClassesUnload
+	},
+#endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
+	{
+		J9RAS_DUMP_ON_EXCEPTION_SYSTHROW,
+		J9HOOK_IS_VM,
+		J9HOOK_VM_EXCEPTION_SYSTHROW,
+		rasDumpHookExceptionSysthrow
+	},
+	{
+		J9RAS_DUMP_ON_EXCEPTION_THROW,
+		J9HOOK_IS_VM,
+		J9HOOK_VM_EXCEPTION_THROW,
+		rasDumpHookExceptionThrow
+	},
+	{
+		J9RAS_DUMP_ON_EXCEPTION_CATCH,
+		J9HOOK_IS_VM,
+		J9HOOK_VM_EXCEPTION_CATCH,
+		rasDumpHookExceptionCatch
+	},
+	{
+		J9RAS_DUMP_ON_THREAD_START,
+		J9HOOK_IS_VM,
+		J9HOOK_VM_THREAD_STARTED,
+		rasDumpHookThreadStart
+	},
+	{
+		J9RAS_DUMP_ON_THREAD_BLOCKED,
+		J9HOOK_IS_VM,
+		J9HOOK_VM_MONITOR_CONTENDED_ENTER,
+		rasDumpHookMonitorContendedEnter
+	},
+	{
+		J9RAS_DUMP_ON_THREAD_END,
+		J9HOOK_IS_VM,
+		J9HOOK_VM_THREAD_END,
+		rasDumpHookThreadEnd
+	},
+	{
+		J9RAS_DUMP_ON_GLOBAL_GC,
+		J9HOOK_IS_OMR,
+		J9HOOK_MM_OMR_GLOBAL_GC_START,
+		rasDumpHookGlobalGcStart
+	},
+	{
+		J9RAS_DUMP_ON_EXCEPTION_DESCRIBE,
+		J9HOOK_IS_VM,
+		J9HOOK_VM_EXCEPTION_DESCRIBE,
+		rasDumpHookExceptionDescribe
+	},
+	{
+		/* Wouldn't this event be better handled by a tracepoint? */
+		J9RAS_DUMP_ON_SLOW_EXCLUSIVE_ENTER,
+		J9HOOK_IS_VM,
+		J9HOOK_VM_SLOW_EXCLUSIVE,
+		rasDumpHookSlowExclusive
+	},
+	{
+		J9RAS_DUMP_ON_OBJECT_ALLOCATION,
+		J9HOOK_IS_OMR,
+		J9HOOK_MM_OMR_INITIALIZED,
+		rasDumpHookGCInitialized
+	},
+	{
+		J9RAS_DUMP_ON_OBJECT_ALLOCATION,
+		J9HOOK_IS_VM,
+		J9HOOK_VM_OBJECT_ALLOCATE_WITHIN_THRESHOLD,
+		rasDumpHookAllocationThreshold
+	},
+	{
+		J9RAS_DUMP_ON_CORRUPT_CACHE,
+		J9HOOK_IS_VM,
+		J9HOOK_VM_CORRUPT_CACHE,
+		rasDumpHookCorruptCache
+	},
+	{
+		J9RAS_DUMP_ON_EXCESSIVE_GC,
+		J9HOOK_IS_OMR,
+		J9HOOK_MM_OMR_EXCESSIVEGC_RAISED,
+		rasDumpHookExcessiveGC
+	},
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	{
+		J9RAS_DUMP_ON_VM_CRIU_CHECKPOINT,
+		J9HOOK_IS_VM,
+		J9HOOK_VM_CRIU_CHECKPOINT,
+		rasDumpHookCRIUCheckpoint
+	},
+	{
+		J9RAS_DUMP_ON_VM_CRIU_RESTORE,
+		J9HOOK_IS_VM,
+		J9HOOK_VM_CRIU_RESTORE,
+		rasDumpHookCRIURestore
+	},
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+};
+
 omr_error_t
 rasDumpEnableHooks(J9JavaVM *vm, UDATA eventFlags)
 {
@@ -1127,13 +1260,25 @@ rasDumpEnableHooks(J9JavaVM *vm, UDATA eventFlags)
 
 	if (J9_ARE_ANY_BITS_SET(eventFlags, hookFlags)) {
 		J9HookInterface **vmHooks = vm->internalVMFunctions->getVMHookInterface(vm);
-		J9HookInterface **gcOmrHooks = vm->memoryManagerFunctions ? vm->memoryManagerFunctions->j9gc_get_omr_hook_interface(vm->omrVM) : NULL;
+		J9HookInterface **gcOmrHooks = (NULL != vm->memoryManagerFunctions)
+				? vm->memoryManagerFunctions->j9gc_get_omr_hook_interface(vm->omrVM)
+				: NULL;
 
 		UDATA *postponeHooks = GLOBAL_DATA(rasDumpPostponeHooks);
 		UDATA *pendingHooks = GLOBAL_DATA(rasDumpPendingHooks);
 		UDATA *unhooked = GLOBAL_DATA(rasDumpUnhookedEvents);
+		UDATA failed = 0;
 
-		IDATA rc = 0;
+		UDATA i = 0;
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+		/*
+		 * This function is called during a restore, but possibly before
+		 * checkpointRestoreTimeDelta is set, so we must also make allowances
+		 * during the time the VM is in single-thread mode.
+		 */
+		BOOLEAN criuRestoreInProgress = J9_IS_SINGLE_THREAD_MODE(vm) || J9_IS_CRIU_RESTORED(vm);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 		/* Exclude and record any hooks that should be postponed. */
 		UDATA skip = eventFlags & *postponeHooks;
@@ -1143,83 +1288,52 @@ rasDumpEnableHooks(J9JavaVM *vm, UDATA eventFlags)
 		/* Exclude already hooked events. */
 		eventFlags &= *unhooked;
 
-		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_VM_STARTUP)) {
-			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZED, rasDumpHookVmInit, OMR_GET_CALLSITE(), NULL);
-		}
-		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_VM_SHUTDOWN)) {
-			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_SHUTTING_DOWN, rasDumpHookVmShutdown, OMR_GET_CALLSITE(), NULL);
-		}
-		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_CLASS_LOAD)) {
-			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CLASS_LOAD, rasDumpHookClassLoad, OMR_GET_CALLSITE(), NULL);
-		}
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_CLASS_UNLOAD)) {
-			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CLASSES_UNLOAD, rasDumpHookClassesUnload, OMR_GET_CALLSITE(), NULL);
-		}
-#endif
-		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_EXCEPTION_SYSTHROW)) {
-			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_EXCEPTION_SYSTHROW, rasDumpHookExceptionSysthrow, OMR_GET_CALLSITE(), NULL);
-		}
-		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_EXCEPTION_THROW)) {
-			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_EXCEPTION_THROW, rasDumpHookExceptionThrow, OMR_GET_CALLSITE(), NULL);
-		}
-		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_EXCEPTION_CATCH)) {
-			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_EXCEPTION_CATCH, rasDumpHookExceptionCatch, OMR_GET_CALLSITE(), NULL);
-		}
-		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_THREAD_START)) {
-			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_THREAD_STARTED, rasDumpHookThreadStart, OMR_GET_CALLSITE(), NULL);
-		}
-		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_THREAD_BLOCKED)) {
-			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_MONITOR_CONTENDED_ENTER, rasDumpHookMonitorContendedEnter, OMR_GET_CALLSITE(), NULL);
-		}
-		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_THREAD_END)) {
-			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_THREAD_END, rasDumpHookThreadEnd, OMR_GET_CALLSITE(), NULL);
-		}
-		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_GLOBAL_GC)) {
-			rc = (*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_GLOBAL_GC_START, rasDumpHookGlobalGcStart, OMR_GET_CALLSITE(), NULL);
-		}
-		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_EXCEPTION_DESCRIBE)) {
-			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_EXCEPTION_DESCRIBE, rasDumpHookExceptionDescribe, OMR_GET_CALLSITE(), NULL);
-		}
-		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_SLOW_EXCLUSIVE_ENTER)) {
-			/* wouldn't this event be better handled by a tracepoint? */
-			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_SLOW_EXCLUSIVE, rasDumpHookSlowExclusive, OMR_GET_CALLSITE(), NULL);
-		}
-		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_OBJECT_ALLOCATION)) {
-			rc = (*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_INITIALIZED, rasDumpHookGCInitialized, OMR_GET_CALLSITE(), NULL);
-			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_OBJECT_ALLOCATE_WITHIN_THRESHOLD, rasDumpHookAllocationThreshold, OMR_GET_CALLSITE(), NULL);
-		}
-		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_CORRUPT_CACHE)) {
-			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CORRUPT_CACHE, rasDumpHookCorruptCache, OMR_GET_CALLSITE(), NULL);
-		}
-		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_EXCESSIVE_GC)) {
-			rc = (*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_EXCESSIVEGC_RAISED, rasDumpHookExcessiveGC, OMR_GET_CALLSITE(), NULL);
-		}
+		for (i = 0; i < (sizeof(hookEntries) / sizeof(hookEntries[0])); ++i) {
+			const J9RASDumpHookEntry *hookEntry = &hookEntries[i];
+			J9HookInterface **hooks = hookEntry->isOMR ? gcOmrHooks : vmHooks;
+			IDATA rc = 0;
+
+			if (J9_ARE_ANY_BITS_SET(eventFlags, hookEntry->flag)) {
+				rc = (*hooks)->J9HookRegisterWithCallSite(
+						hooks, hookEntry->event, hookEntry->handler,
+						OMR_GET_CALLSITE(), NULL);
+			} else if (J9_ARE_ANY_BITS_SET(skip, hookEntry->flag)) {
+				/* Some hooks are postponed because the hook interface is not yet
+				 * available. We can't do anything about those, but others can be
+				 * reserved so they can be registered later.
+				 */
+				if (NULL != hooks) {
+					rc = (*hooks)->J9HookReserve(hooks, hookEntry->event);
+				}
+			}
+
+			if (0 == rc) {
+				/* Good, proceed. */
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_VM_CRIU_CHECKPOINT)) {
-			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CRIU_CHECKPOINT, rasDumpHookCRIUCheckpoint, OMR_GET_CALLSITE(), NULL);
-		}
-		if (J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_VM_CRIU_RESTORE)) {
-			rc = (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CRIU_RESTORE, rasDumpHookCRIURestore, OMR_GET_CALLSITE(), NULL);
-		}
+			} else if (criuRestoreInProgress
+				&& (0 == (*hooks)->J9HookIsEnabled(hooks, hookEntry->event))
+			) {
+				/*
+				 * Some events are defined with the <once/> attribute in j9vm.hdf.
+				 * On restore ignore a failure for an event that is disabled,
+				 * presumably because it has already occurred, e.g. J9HOOK_VM_STARTED.
+				 */
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
-		if (-1 == rc) {
-			j9nls_printf(PORTLIB, J9NLS_WARNING | J9NLS_STDERR, J9NLS_DMP_HOOK_IS_DISABLED_STR);
+			} else {
+				failed |= hookEntry->flag;
+				if (OMR_ERROR_NONE == retVal) {
+					/* Map first hook error code to OMR error code. */
+					retVal = (J9HOOK_ERR_NOMEM == rc) ? OMR_ERROR_OUT_OF_NATIVE_MEMORY : OMR_ERROR_INTERNAL;
+				}
+			}
 		}
 
-		/* Map hook error code to OMR error code. */
-		switch (rc) {
-		case 0:
-			retVal = OMR_ERROR_NONE;
-			break;
-		case J9HOOK_ERR_NOMEM:
-			retVal = OMR_ERROR_OUT_OF_NATIVE_MEMORY;
-			break;
-		default:
-			retVal = OMR_ERROR_INTERNAL;
-			break;
+		if (0 != failed) {
+			j9nls_printf(PORTLIB, J9NLS_WARNING | J9NLS_STDERR, J9NLS_DMP_HOOK_IS_DISABLED_STR);
+			Trc_dump_failed_hooks(eventFlags, skip, failed);
 		}
 	}
+
 	return retVal;
 }
 

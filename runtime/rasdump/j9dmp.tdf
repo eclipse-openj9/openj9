@@ -44,3 +44,4 @@ TraceExit=Trc_trcengine_criu_criuReloadXDumpAgents_Exit Overhead=1 Level=5 Templ
 TraceEntry=Trc_trcengine_criu_criuReloadXDumpAgents_Entry Overhead=1 Level=5 Template="criuReloadXDumpAgents()"
 
 TraceEvent=Trc_dump_signal_pid Overhead=1 Level=1 Template="%s received from process id %zu name '%s'"
+TraceEvent=Trc_dump_failed_hooks NoEnv Overhead=1 Level=1 Template="rasDumpEnableHooks: events=0x%zx skip=0x%zx failed=0x%zx"
