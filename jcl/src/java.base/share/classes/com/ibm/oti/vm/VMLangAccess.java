@@ -131,9 +131,10 @@ public interface VMLangAccess {
 	 * Returns an InternalConstantPool object.
 	 *
 	 * @param addr - the native addr of the J9ConstantPool
+	 * @param clazz - the clazz object of the J9Class associated with the constantPool
 	 * @return An InternalConstantPool object
 	 */
-	public Object createInternalConstantPool(long addr);
+	public Object createInternalConstantPool(long addr, Class<?> clazz);
 
 	/**
 	 * Returns a ConstantPool object
@@ -148,9 +149,10 @@ public interface VMLangAccess {
 	 * natives expect an InternalConstantPool as the constantPoolOop parameter.
 	 *
 	 * @param j9class the native address of the J9Class
+	 * @param clazz the class object
 	 * @return InternalConstantPool a wrapper for a j9constantpool
 	 */
-	public Object getInternalConstantPoolFromJ9Class(long j9class);
+	public Object getInternalConstantPoolFromJ9Class(long j9class, Class<?> clazz);
 
 	/**
 	 * Returns an InternalConstantPool object from a Class. The ConstantPool
@@ -210,4 +212,14 @@ public interface VMLangAccess {
 	 */
 	public boolean getIncludeModuleVersion(StackTraceElement element);
 	/*[ENDIF] JAVA_SPEC_VERSION >= 11*/
+
+	/**
+	 * Returns a cached constantPool Object from a given java.lang.Class
+	 *
+	 * @param clazz
+	 *
+	 * @return cpObject
+	 */
+	public ConstantPool getConstantPoolCache(Class<?> clazz);
+
 }
