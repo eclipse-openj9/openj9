@@ -372,7 +372,7 @@ J9::Power::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
       }
    _properties._computedCallTargetRegister  = TR::RealRegister::gr0; // gr11 = interface, gr12 = virtual, so we need something else for computed
    _properties._vtableIndexArgumentRegister = TR::RealRegister::gr12;
-   _properties._j9methodArgumentRegister    = TR::RealRegister::gr3; // TODO:JSR292: Confirm
+   _properties._j9methodArgumentRegister    = TR::RealRegister::gr11; // TODO:JSR292: Confirm
    }
 
 const TR::PPCLinkageProperties& J9::Power::PrivateLinkage::getProperties()
@@ -1466,10 +1466,15 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
    TR_Array<TR::Register *>&        tempLongRegisters = cg()->getTransientLongRegisters();
    TR::MethodSymbol                *callSymbol = callNode->getSymbol()->castToMethodSymbol();
 
+   bool isJitDispatchJ9Method = callNode->isJitDispatchJ9MethodCall(comp());
    bool isHelperCall = linkage == TR_Helper || linkage == TR_CHelper;
    bool rightToLeft = isHelperCall &&
                       //we want the arguments for induceOSR to be passed from left to right as in any other non-helper call
-                      !callNode->getSymbolReference()->isOSRInductionHelper();
+                      !callNode->getSymbolReference()->isOSRInductionHelper() && !isJitDispatchJ9Method;
+
+   if (isJitDispatchJ9Method) {
+      firstArgumentChild += 1;
+   }
 
    if (rightToLeft)
       {
@@ -2868,6 +2873,7 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
    TR::ResolvedMethodSymbol *sym   = callSymbol->getResolvedMethodSymbol();
    TR_ResolvedMethod *vmm       = (sym==NULL)?NULL:sym->getResolvedMethod();
    bool myself = comp()->isRecursiveMethodTarget(vmm);
+   bool isJitDispatchJ9Method = callNode->isJitDispatchJ9MethodCall(comp());
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
 
@@ -2875,12 +2881,28 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       fej9->reserveTrampolineIfNecessary(comp(), callSymRef, false);
 
    bool forceUnresolvedDispatch = !fej9->isResolvedDirectDispatchGuaranteed(comp());
-   if ((callSymbol->isJITInternalNative() ||
+   if (!isJitDispatchJ9Method && (callSymbol->isJITInternalNative() ||
         (!callSymRef->isUnresolved() && !callSymbol->isInterpreted() && ((forceUnresolvedDispatch && callSymbol->isHelper()) || !forceUnresolvedDispatch))))
       {
       gcPoint = generateDepImmSymInstruction(cg(), TR::InstOpCode::bl, callNode,
                                                                   myself?0:(uintptr_t)callSymbol->getMethodAddress(),
                                                                   dependencies, callSymRef?callSymRef:callNode->getSymbolReference());
+      }
+   else if (isJitDispatchJ9Method)
+      {
+      TR::Register *scratchReg = cg()->allocateRegister();
+      TR::Register *j9MethodReg = callNode->getChild(0)->getRegister();
+
+      TR::LabelSymbol *startICFLabel = generateLabelSymbol(cg());
+      TR::LabelSymbol *doneLabel = generateLabelSymbol(cg());
+      TR::LabelSymbol *oolLabel = generateLabelSymbol(cg());
+      startICFLabel->setStartInternalControlFlow();
+      doneLabel->setEndInternalControlFlow();
+
+      generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, scratchReg,
+                                 TR::MemoryReference::createWithDisplacement(cg(), j9MethodReg, offsetof(J9Method, extra), TR::Compiler->om.sizeofReferenceAddress()));
+
+      
       }
    else
       {
