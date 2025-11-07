@@ -36,4 +36,4 @@ This directory contains the following types of documentation:
 
 :pencil: Developer documentation about OpenJ9 technology or components is best considered in tandem with the [documentation from Eclipse OMR](https://github.com/eclipse-omr/omr/tree/master/doc), as OpenJ9 is built upon the foundational technologies provided by OMR.
 
-:pencil: User documentation for OpenJ9 is published at the [OpenJ9 website](https://www.eclipse.org/openj9/docs/)
+:pencil: User documentation for OpenJ9 is published at the [OpenJ9 website](https://eclipse.dev/openj9/docs/)

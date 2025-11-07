@@ -47,7 +47,7 @@ method already exists in the SCC and loads that instead.
 
 # Topics
 
-1. [Feature Documentation](https://www.eclipse.org/openj9/docs/aot/)
+1. [Feature Documentation](https://eclipse.dev/openj9/docs/aot/)
 2. [Introduction to AOT](https://blog.openj9.org/2018/10/10/intro-to-ahead-of-time-compilation/)
 3. [AOT: Relocation](https://blog.openj9.org/2018/10/26/ahead-of-time-compilation-relocation/)
 4. [AOT: Validation](https://blog.openj9.org/2018/11/08/ahead-of-time-compilation-validation/)

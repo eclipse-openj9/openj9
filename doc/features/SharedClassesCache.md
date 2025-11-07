@@ -54,4 +54,4 @@ only via the `TR_J9SharedCache` class.
 
 <hr/>
 
-[1] https://www.eclipse.org/openj9/docs/shrc/ 
+[1] https://eclipse.dev/openj9/docs/shrc/

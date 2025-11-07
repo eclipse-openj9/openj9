@@ -42,9 +42,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 
    b) Scenario 2: I want to build the OpenJ9 and also test it.
 
-   Follow both README in these two links
+   Follow the instructions in the following two links
 
-   > https://www.eclipse.org/openj9/oj9_build.html
+   > https://github.com/eclipse-openj9/openj9/blob/master/doc/build-instructions
 
    > https://github.com/eclipse-openj9/openj9/blob/master/test/README.md
 

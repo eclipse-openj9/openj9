@@ -141,7 +141,7 @@ Compilations are performed on dedicated threads known as Compilation
 Threads. These threads are created at JVM startup, and are
 suspended until there is work to be done. The exact number of
 threads created depends on the CPU resources available to the JVM as
-well as the [`-Xcompilationthreads`](https://www.eclipse.org/openj9/docs/xcompilationthreads/)
+well as the [`-Xcompilationthreads`](https://eclipse.dev/openj9/docs/xcompilationthreads/)
 option. The number of active threads depends on the size of the
 Compilation Queue.
 
@@ -342,7 +342,7 @@ these modes.
 
 ### -Xtune:virtualized
 
-[-Xtune:virtualized](https://www.eclipse.org/openj9/docs/xtunevirtualized/)
+[-Xtune:virtualized](https://eclipse.dev/openj9/docs/xtunevirtualized/)
 emphasizes fast Startup and Rampup, and low CPU utilization,
 at the cost of a small throughput degradation. It is designed for
 use in virtualized environments.
@@ -355,6 +355,6 @@ consumption.
 
 ### -Xquickstart
 
-[-Xquickstart](https://www.eclipse.org/openj9/docs/xquickstart/)
+[-Xquickstart](https://eclipse.dev/openj9/docs/xquickstart/)
 emphasizes quick start-up of applications. It is designed
 for Java developers.

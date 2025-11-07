@@ -254,13 +254,6 @@ Infrastructure pipelines are available [**here**](https://openj9-jenkins.osuosl.
     - Trigger:
         - Last step of `Pipeline-OMR-Acceptance`
 
-- Deploy-OpenJ9-Website-to-Eclipse
-    - [![Build Status](https://openj9-jenkins.osuosl.org/buildStatus/icon?job=Deploy-OpenJ9-Website-to-Eclipse)](https://openj9-jenkins.osuosl.org/job/Deploy-OpenJ9-Website-to-Eclipse)
-    - Description:
-        - Mirrors [github.com/eclipse-openj9/openj9-website](https://github.com/eclipse-openj9/openj9-website/tree/master) to the Eclipse.org repo
-    - Trigger:
-        - Poll Github repo for changes
-
 ### Adding Builds
 - Always add pipeline style jobs so the code can be committed to the repo once it is ready
 - Update this readme when your build is in production use

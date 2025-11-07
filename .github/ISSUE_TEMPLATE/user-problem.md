@@ -45,4 +45,4 @@ OutOfMemoryError: Java Heap Space
 
 For a repeatable OutOfMemory condition showing `Java heap space`, enable verbose GC collection and provide the log.
 -`-verbose:gc` writes the logging to stderr
-- [-Xverbosegclog](https://www.eclipse.org/openj9/docs/xverbosegclog/) writes the logging to a single or multiple files
+- [-Xverbosegclog](https://eclipse.dev/openj9/docs/xverbosegclog/) writes the logging to a single or multiple files

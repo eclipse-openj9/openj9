@@ -200,7 +200,7 @@ In the end code generators perform binary encoding to write the appropriate bits
   * [Introduction on Reading JIT Compilation Logs (OMR)](https://github.com/eclipse-omr/omr/blob/master/doc/compiler/optimizer/IntroReadLogFile.md)
   * [Part 1: Diagnosing Compilation Problems Using the JIT Verbose Log (YouTube)](https://youtu.be/xG9d4VVRltc)
   * [Part 2: Diagnosing Compilation Problems Using the JIT Verbose Log (YouTube)](https://youtu.be/S4DSOuIcUo4)
-  * [Command-line Options](https://www.eclipse.org/openj9/docs/cmdline_specifying/)
+  * [Command-line Options](https://eclipse.dev/openj9/docs/cmdline_specifying/)
     * [Compiler Options (OMR)](https://github.com/eclipse-omr/omr/blob/master/doc/compiler/CompilerOptions.md)
   * [Lightning Talks - Verbose JIT Logs (YouTube)](https://youtu.be/-bQzHMisg_Y)
   * [Lightning Talks - JIT Compiler Logs (YouTube)](https://youtu.be/cwCaXQD9PgQ)

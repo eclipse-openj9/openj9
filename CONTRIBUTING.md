@@ -27,7 +27,7 @@ Thank you for your interest in Eclipse OpenJ9!
 We welcome and encourage all kinds of contributions to the project, not only
 code. This includes bug reports, user experience feedback, assistance in
 reproducing issues and more. Contributions to the website
-(https://github.com/eclipse-openj9/openj9-website), to the user documentation
+(https://github.com/eclipse-openj9/openj9-website-publish), to the user documentation
 (https://github.com/eclipse-openj9/openj9-docs), to the system verification tests
 (https://github.com/eclipse-openj9/openj9-systemtest), or to Eclipse OMR
 (https://github.com/eclipse-omr/omr), which is an integral part of OpenJ9 are all
@@ -52,7 +52,7 @@ Following these guidelines will help us merge your pull requests smoothly:
    until after you've removed the WIP prefix to merge your changes.
 
 4. If your contribution introduces an external change that requires an update
-   to the [user documentation](https://www.eclipse.org/openj9/docs/), add the
+   to the [user documentation](https://eclipse.dev/openj9/docs/), add the
    label `doc:externals` to the OpenJ9 issue, or request a committer to do it,
    and open an [issue](https://github.com/eclipse-openj9/openj9-docs/issues/new?template=new-documentation-change.md)
    at the user documentation repository. The OpenJ9 pull request should be labeled with `depends:doc` as well. Committers
