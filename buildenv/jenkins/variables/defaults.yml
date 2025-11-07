@@ -278,6 +278,9 @@ ppc64_aix:
       all: 'unset LIBPATH'
     vars:
       all: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
+  extra_test_labels:
+    25: 'sw.tool.c++runtime.17_1'
+    next: 'sw.tool.c++runtime.17_1'
 #========================================#
 # Linux x86 64bits
 #========================================#
