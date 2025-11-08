@@ -266,7 +266,7 @@ ppc64_aix:
   node_labels:
     build: 'ci.role.build && hw.arch.ppc64 && sw.os.aix.7_2 && sw.tool.c++runtime.16_1'
   extra_configure_options:
-    all: '--with-cups-include=/opt/freeware/include'
+    all: '--with-cups-include=/opt/freeware/include --with-fontconfig-include=/opt/freeware/include'
     8: ' --disable-ccache'
     11: '--disable-warnings-as-errors'
     17: '--disable-warnings-as-errors'
@@ -274,6 +274,8 @@ ppc64_aix:
     25: '--disable-warnings-as-errors'
     next: '--disable-warnings-as-errors'
   build_env:
+    cmd:
+      all: 'unset LIBPATH'
     vars:
       all: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
   extra_test_labels:
