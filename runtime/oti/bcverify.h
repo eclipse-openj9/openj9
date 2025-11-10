@@ -53,6 +53,13 @@ typedef struct J9BranchTargetStack {
 	UDATA stackElements[1];
 } J9BranchTargetStack;
 
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+typedef struct J9StrictFieldEntry {
+	J9UTF8* nameutf8;
+	BOOLEAN isSet; /* isSet is not used for a query. */
+} J9StrictFieldEntry;
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+
 #define	BCV_TARGET_STACK_HEADER_UDATA_SIZE			4
 #define	BCV_STACK_OVERFLOW_BUFFER_UDATA_SIZE		2
 

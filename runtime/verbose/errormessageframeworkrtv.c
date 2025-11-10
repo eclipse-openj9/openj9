@@ -947,6 +947,11 @@ generateJ9RtvExceptionDetails(J9BytecodeVerificationData* verifyData, U_8* initM
 	case BCV_ERR_NEW_OJBECT_MISMATCH:
 		printMessage(&msgBuf, "The arity (0x%x) of the new object is greater than zero", verifyData->errorTempData);
 		break;
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+	case BCV_ERR_STRICT_FIELDS_UNASSIGNED:
+		printMessage(&msgBuf, "All strict final fields must be initialized before super().");
+		break;
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 	default:
 		Assert_VRB_ShouldNeverHappen();
 		break;

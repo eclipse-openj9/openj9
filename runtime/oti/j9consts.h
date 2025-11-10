@@ -600,6 +600,9 @@ extern "C" {
 #define BCV_ERR_BYTECODE_ERROR							-34
 #define BCV_ERR_NEW_OJBECT_MISMATCH						-35
 #define BCV_ERR_INIT_FLAGS_MISMATCH						-36
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#define BCV_ERR_STRICT_FIELDS_UNASSIGNED                -37
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 #define J9_GC_OBJ_HEAP_HOLE 0x1
 #define J9_GC_MULTI_SLOT_HOLE 0x1
@@ -984,6 +987,7 @@ extern "C" {
 #define VALUE_TYPES_MAJOR_VERSION (44 + 26)
 #define PREVIEW_MINOR_VERSION 65535
 #define J9_IS_CLASSFILE_OR_ROMCLASS_VALUETYPE_VERSION(classfileOrRomClass) (((classfileOrRomClass)->majorVersion >= VALUE_TYPES_MAJOR_VERSION) && (PREVIEW_MINOR_VERSION == (classfileOrRomClass)->minorVersion))
+#define J9_CLASSFILE_OR_ROMCLASS_SUPPORTS_STRICT_FIELDS(classfileOrRomClass) J9_IS_CLASSFILE_OR_ROMCLASS_VALUETYPE_VERSION(classfileOrRomClass)
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 /* Constants for java.lang.reflect.Field flags */

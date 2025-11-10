@@ -3697,8 +3697,7 @@ fail:
 	}
 
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
-	/* TODO Update the class version check if strict fields is released before value types. */
-	if (J9_IS_CLASSFILE_OR_ROMCLASS_VALUETYPE_VERSION(romClass)) {
+	if (J9_CLASSFILE_OR_ROMCLASS_SUPPORTS_STRICT_FIELDS(romClass)) {
 		J9ROMFieldWalkState fieldWalkState = {0};
 		J9ROMFieldShape *field = romFieldsStartDo(romClass, &fieldWalkState);
 		while (NULL != field) {
