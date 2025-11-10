@@ -2916,7 +2916,7 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       doneLabel->setEndInternalControlFlow();
 
       TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg());
-      TR::SymbolReference *helperRef = findOrCreateRuntimeHelper(TR_j2iTransition);
+      TR::SymbolReference *helperRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition);
       TR::Snippet *interpCallSnippet = new (cg->trHeapMemory()) TR::PPCHelperCallSnippet(cg(), callNode, snippetLabel, helperRef);
       cg->addSnippet(interpCallSnippet);
 
