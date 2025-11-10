@@ -9,6 +9,8 @@
 
 namespace TR { class CodeGenerator; }
 
+namespace TR {
+
 class PPCJ9HelperCallSnippet : public TR::PPCHelperCallSnippet {
     int32_t _argSize;
 
@@ -21,5 +23,6 @@ public:
 
     int32_t getSizeOfArguments() { return _argSize; }
 };
+}
 
 #endif
