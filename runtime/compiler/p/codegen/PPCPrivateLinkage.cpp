@@ -2939,7 +2939,7 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, scratchReg,
                                  TR::MemoryReference::createWithDisplacement(cg(), j9MethodReg, offsetof(J9Method, extra), TR::Compiler->om.sizeofReferenceAddress()));
       generateTrg1Src1Imm2Instruction(cg(), TR::InstOpCode::rlwinm, callNode, scratchReg2, scratchReg, 0, 1);
-      generateTrg1Src1Imm1Instruction(cg(), TR::InstOpCode::cmpwi, callNode, cndReg, scratchReg, 0);
+      generateTrg1Src1Imm1Instruction(cg(), TR::InstOpCode::cmpi4, callNode, cndReg, scratchReg, 0);
       generateConditionalBranchInstruction(cg(), TR::InstOpCode::bne, callNode, oolLabel, cndReg);
 
       generateDepLabelInstruction(cg(), TR::InstOpCode::label, callNode, doneLabel, postDeps);
