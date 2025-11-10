@@ -2933,7 +2933,7 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
 
       TR::RegisterDependencyConditions *newPostDeps = new (trMemory()) TR::RegisterDependencyConditions(0, 2, cg());
       newPostDeps->addPostCondition(j9MethodReg, TR::RealRegister::NoReg);
-      newPostDeps->addPostCondition(scratchReg, getVTableIndexArgumentRegister());
+      newPostDeps->addPostCondition(scratchReg, getProperties().getJ9MethodArgumentRegister());
 
       TR::RegisterDependencyConditions *postDeps = dependencies->clone(cg(), newPostDeps);
 
