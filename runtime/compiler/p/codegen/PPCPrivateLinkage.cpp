@@ -48,6 +48,7 @@
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "p/codegen/CallSnippet.hpp"
+#include "p/codegen/PPCJ9HelperCallSnippet.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
 #include "p/codegen/PPCEvaluator.hpp"
 #include "p/codegen/PPCHelperCallSnippet.hpp"
@@ -2917,7 +2918,7 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
 
       TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg());
       TR::SymbolReference *helperRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition);
-      TR::Snippet *interpCallSnippet = new (cg->trHeapMemory()) TR::PPCHelperCallSnippet(cg(), callNode, snippetLabel, helperRef);
+      TR::Snippet *interpCallSnippet = new (cg->trHeapMemory()) TR::PPCJ9HelperCallSnippet(cg(), callNode, snippetLabel, helperRef, argSize);
       cg->addSnippet(interpCallSnippet);
 
       TR_PPCOutOfLineCodeSection *snippetCall = new (trHeapMemory()) TR_PPCOutOfLineCodeSection(oolLabel, doneLabel, cg());
@@ -2926,12 +2927,15 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       TR::Instruction *OOLLabelInstr = generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, oolLabel);
       snippetCall->swapInstructionListsWithCompilation();
 
-      TR::RegisterDependencyConditions *preDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(dependencies, 0, 0, cg());
+      TR::RegisterDependencyConditions *preDeps = dependencies->clone(cg());
       preDeps->setNumPostConditions(0, trMemory());
-      preDeps->setAddCursorForPost(0);
+      preDeps->setAddCursorForPre(0);
 
-      TR::RegisterDependencyConditions *postDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(dependencies, 0, 2, cg());
-      postDeps->addPostCondition(j9MethodReg, TR::RealRegister::NoReg);
+      TR::RegisterDependencyConditions *newPostDeps = new (trMemory()) TR::RegisterDependencyConditions(0, 2, cg());
+      newPostDeps->addPostCondition(j9MethodReg, TR::RealRegister::NoReg);
+      newPostDeps->addPostCondition(scratchReg, getVTableIndexArgumentRegister());
+
+      TR::RegisterDependencyConditions *postDeps = dependencies->clone(cg(), newPostDeps);
 
 
       generateDepLabelInstruction(cg(), TR::InstOpCode::label, callNode, startICFLabel, preDeps);
