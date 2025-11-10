@@ -14,7 +14,7 @@ class PPCJ9HelperCallSnippet : public TR::PPCHelperCallSnippet {
 
 public:
     PPCJ9HelperCallSnippet(TR::CodeGenerator *cg, TR::Node *node, TR::LabelSymbol *snippetlab,
-        TR::SymbolReference *helper, TR::LabelSymbol *restartLabel = NULL, int32_t argSize)
+        TR::SymbolReference *helper, TR::LabelSymbol *restartLabel = NULL, int32_t argSize = -1)
         : TR::PPCHelperCallSnippet(cg, node, snippetlab, helper, restartLabel)
         , _argSize(argSize)
     {}
