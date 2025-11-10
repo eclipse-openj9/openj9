@@ -2,6 +2,7 @@
 #define PPCJ9HELPERCALLSNIPPET_INCL
 
 #include "codegen/Snippet.hpp"
+#include "codegen/PPCHelperCallSnippet.hpp"
 #include "env/VMJ9.h"
 #include "infra/Annotations.hpp"
 #include "p/codegen/PPCInstruction.hpp"
