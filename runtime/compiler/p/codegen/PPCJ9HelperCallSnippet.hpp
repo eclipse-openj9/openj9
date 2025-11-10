@@ -22,6 +22,7 @@ public:
     {}
 
     int32_t getSizeOfArguments() { return _argSize; }
+    virtual uint8_t *emitSnippetBody();
 };
 }
 

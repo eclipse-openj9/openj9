@@ -2931,7 +2931,7 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       preDeps->setNumPostConditions(0, trMemory());
       preDeps->setAddCursorForPre(0);
 
-      TR::RegisterDependencyConditions *newPostDeps = new (cg()->trMemory()) TR::RegisterDependencyConditions(0, 2, cg()->trMemory());
+      TR::RegisterDependencyConditions *newPostDeps = new (trMemory()) TR::RegisterDependencyConditions(0, 2, trMemory());
       newPostDeps->addPostCondition(j9MethodReg, TR::RealRegister::NoReg);
       newPostDeps->addPostCondition(scratchReg, getProperties().getJ9MethodArgumentRegister());
 
