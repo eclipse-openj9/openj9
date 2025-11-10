@@ -2905,6 +2905,8 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
    else if (isJitDispatchJ9Method)
       {
       TR::Register *scratchReg = cg()->allocateRegister();
+      TR::Register *scratchReg2 = cg()->allocateRegister();
+      TR::Register *cndReg = cg->allocateRegister(TR_CCR);
       TR::Register *j9MethodReg = callNode->getChild(0)->getRegister();
 
       TR::LabelSymbol *startICFLabel = generateLabelSymbol(cg());
@@ -2913,10 +2915,33 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       startICFLabel->setStartInternalControlFlow();
       doneLabel->setEndInternalControlFlow();
 
+      TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg());
+      TR::Snippet *interpCallSnippet = new (cg->trHeapMemory()) TR::PPCHelperCallSnippet(cg, callNode, snippetLabel, vpmsumSymRef);
+      cg->addSnippet(interpCallSnippet);
+
+      TR_PPCOutOfLineCodeSection *snippetCall = new (trHeapMemory()) TR_PPCOutOfLineCodeSection(oolLabel, doneLabel, cg());
+      cg()->getPPCOutOfLineCodeSectionList().push_front(snippetCall);
+      snippetCall->swapInstructionListsWithCompilation();
+      TR::Instruction *OOLLabelInstr = generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, oolLabel);
+      snippetCall->swapInstructionListsWithCompilation();
+
+      TR::RegisterDependencyConditions *preDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(dependencies, 0, 0, cg());
+      preDeps->setNumPostConditions(0, trMemory());
+      preDeps->setAddCursorForPost(0);
+
+      TR::RegisterDependencyConditions *postDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(dependencies, 0, 2, cg());
+      postDeps->addPostCondition(j9MethodReg, TR::RealRegister::NoReg);
+
+
+      generateDepLabelInstruction(cg(), TR::InstOpCode::label, callNode, startICFLabel, preDeps);
+
       generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, scratchReg,
                                  TR::MemoryReference::createWithDisplacement(cg(), j9MethodReg, offsetof(J9Method, extra), TR::Compiler->om.sizeofReferenceAddress()));
+      generateTrg1Src1Imm2Instruction(cg(), TR::InstOpCode::rlwinm, callNode, scratchReg2, scratchReg, 0, 1);
+      generateTrg1Src1Imm1Instruction(cg(), TR::InstOpCode::cmpwi, callNode, cndReg, scratchReg, 0);
+      generateConditionalBranchInstruction(cg(), TR::InstOpCode::bne, callNode, oolLabel, cndReg);
 
-      
+      generateDepLabelInstruction(cg(), TR::InstOpCode::label, callNode, doneLabel, postDeps);
       }
    else
       {
