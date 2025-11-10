@@ -2913,7 +2913,7 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       startICFLabel->setStartInternalControlFlow();
       doneLabel->setEndInternalControlFlow();
 
-      generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, callNode, scratchReg,
+      generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, scratchReg,
                                  TR::MemoryReference::createWithDisplacement(cg(), j9MethodReg, offsetof(J9Method, extra), TR::Compiler->om.sizeofReferenceAddress()));
 
       
