@@ -332,7 +332,7 @@ TR_RuntimeHelper TR::PPCCallSnippet::getInterpretedDispatchHelper(
       }
    }
 
-uint8_t *TR::PPCJ2IHelperCallSnippet::emitSnippetBody() {
+uint8_t *TR::PPCJ9HelperCallSnippet::emitSnippetBody() {
     uint8_t *buffer = cg()->getBinaryBufferCursor();
     uint8_t *gtrmpln, *trmpln;
 
