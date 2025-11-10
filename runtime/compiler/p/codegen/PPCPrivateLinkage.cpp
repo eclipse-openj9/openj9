@@ -1472,10 +1472,6 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
                       //we want the arguments for induceOSR to be passed from left to right as in any other non-helper call
                       !callNode->getSymbolReference()->isOSRInductionHelper() && !isJitDispatchJ9Method;
 
-   if (isJitDispatchJ9Method) {
-      firstArgumentChild += 1;
-   }
-
    if (rightToLeft)
       {
       from = callNode->getNumChildren() - 1;
@@ -1516,6 +1512,11 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
          break;
       }
 
+   if (isJitDispatchJ9Method)
+      {
+      specialArgReg = getProperties().getJ9MethodArgumentRegister();
+      }
+
    if (specialArgReg != TR::RealRegister::NoReg)
       {
       if (comp()->getOption(TR_TraceCG))
@@ -1536,6 +1537,7 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
       totalSize += TR::Compiler->om.sizeofReferenceAddress();
       }
 
+   // will not process special args
    for (int32_t i = from; (rightToLeft && i >= to) || (!rightToLeft && i <= to); i += step)
       {
       child = callNode->getChild(i);
@@ -1590,8 +1592,20 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
       pushToMemory = new (trStackMemory()) TR::PPCMemoryArgument[memArgs];
       }
 
-   if (specialArgReg)
+   if (specialArgReg && !isJitDispatchJ9Method)
+      {
       from -= step;  // we do want to process special args in the following loop
+      }
+   else if (specialArgReg && isJitDispatchJ9Method)
+      {
+      TR::Register *targetReg = cg()->evaluate(callNode->getChild(0));
+      dependencies->addPreCondition(targetReg, specialArgReg);
+      }
+
+   if (isJitDispatchJ9Method)
+      {
+      TR_ASSERT_FATAL(from == step, "should skip first child for jitDispatchJ9Method\n");
+      }
 
    numIntegerArgs = 0;
    numFloatArgs = 0;

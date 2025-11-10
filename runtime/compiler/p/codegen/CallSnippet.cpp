@@ -47,7 +47,7 @@ uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argS
    TR::Linkage* linkage = cg->getLinkage(callNode->getSymbol()->castToMethodSymbol()->getLinkageConvention());
    const TR::PPCLinkageProperties &linkageProperties = linkage->getProperties();
    int32_t argStart = callNode->getFirstArgumentIndex();
-   if (callNode->isJitDispatchJ9MethodCall(comp())) {
+   if (callNode->isJitDispatchJ9MethodCall(comp)) {
       argStart += 1;
    }
 
