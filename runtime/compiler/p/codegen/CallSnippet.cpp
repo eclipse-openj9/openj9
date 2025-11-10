@@ -337,8 +337,8 @@ uint8_t *TR::PPCJ2IHelperCallSnippet::emitSnippetBody() {
     uint8_t *gtrmpln, *trmpln;
 
     getSnippetLabel()->setCodeLocation(buffer);
-    buffer = flushArgumentsToStack(buffer, getNode(), getSizeOfArguments(), cg());
-    flushArgumentsToStack(buffer, getNode(), this->getSizeOfArguments(), cg());
+    buffer = flushArgumentsToStack(buffer, this->getNode(), this->getSizeOfArguments(), cg());
+    flushArgumentsToStack(buffer, this->getNode(), this->getSizeOfArguments(), cg());
 
     if (getNode()->isJitDispatchJ9MethodCall(cg()->comp()))
         {
