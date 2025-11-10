@@ -2907,7 +2907,7 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       {
       TR::Register *scratchReg = cg()->allocateRegister();
       TR::Register *scratchReg2 = cg()->allocateRegister();
-      TR::Register *cndReg = cg->allocateRegister(TR_CCR);
+      TR::Register *cndReg = cg()->allocateRegister(TR_CCR);
       TR::Register *j9MethodReg = callNode->getChild(0)->getRegister();
 
       TR::LabelSymbol *startICFLabel = generateLabelSymbol(cg());
@@ -2918,8 +2918,8 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
 
       TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg());
       TR::SymbolReference *helperRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition);
-      TR::Snippet *interpCallSnippet = new (cg()->trHeapMemory()) TR::PPCJ9HelperCallSnippet(cg(), callNode, snippetLabel, helperRef, argSize);
-      cg->addSnippet(interpCallSnippet);
+      TR::Snippet *interpCallSnippet = new (cg()->trHeapMemory()) TR::PPCJ9HelperCallSnippet(cg(), callNode, snippetLabel, helperRef, doneLabel, argSize);
+      cg()->addSnippet(interpCallSnippet);
 
       TR_PPCOutOfLineCodeSection *snippetCall = new (cg()->trHeapMemory()) TR_PPCOutOfLineCodeSection(oolLabel, doneLabel, cg());
       cg()->getPPCOutOfLineCodeSectionList().push_front(snippetCall);
@@ -2931,7 +2931,7 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       preDeps->setNumPostConditions(0, trMemory());
       preDeps->setAddCursorForPre(0);
 
-      TR::RegisterDependencyConditions *newPostDeps = new (trMemory()) TR::RegisterDependencyConditions(0, 2, cg());
+      TR::RegisterDependencyConditions *newPostDeps = new (trMemory()) TR::RegisterDependencyConditions(0, 2, trMemory());
       newPostDeps->addPostCondition(j9MethodReg, TR::RealRegister::NoReg);
       newPostDeps->addPostCondition(scratchReg, getProperties().getJ9MethodArgumentRegister());
 
