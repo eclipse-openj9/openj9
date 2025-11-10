@@ -338,13 +338,13 @@ uint8_t *TR::PPCJ2IHelperCallSnippet::emitSnippetBody() {
 
     getSnippetLabel()->setCodeLocation(buffer);
     buffer = flushArgumentsToStack(buffer, getNode(), getSizeOfArguments(), cg());
-    flushArgumentsToStack(buffer, getNode(), getSizeOfArguments(), cg());
+    flushArgumentsToStack(buffer, getNode(), this->getSizeOfArguments(), cg());
 
     if (getNode()->isJitDispatchJ9MethodCall(cg()->comp()))
         {
         }
 
-    return self->genHelperCall(buffer);
+    return this->genHelperCall(buffer);
 }
 
 uint8_t *TR::PPCCallSnippet::emitSnippetBody()
