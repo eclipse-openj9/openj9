@@ -340,7 +340,7 @@ uint8_t *TR::PPCJ2IHelperCallSnippet::emitSnippetBody() {
     buffer = flushArgumentsToStack(buffer, this->getNode(), this->getSizeOfArguments(), cg());
     flushArgumentsToStack(buffer, this->getNode(), this->getSizeOfArguments(), cg());
 
-    if (getNode()->isJitDispatchJ9MethodCall(cg()->comp()))
+    if (this->getNode()->isJitDispatchJ9MethodCall(cg()->comp()))
         {
         }
 
