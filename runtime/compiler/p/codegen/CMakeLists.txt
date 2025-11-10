@@ -22,7 +22,6 @@
 
 j9jit_files(
 	p/codegen/CallSnippet.cpp
-	p/codegen/PPCJ9HelperCallSnippet.cpp
 	p/codegen/ForceRecompilationSnippet.cpp
 	p/codegen/GenerateInstructions.cpp
 	p/codegen/InterfaceCastSnippet.cpp

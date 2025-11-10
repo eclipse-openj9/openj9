@@ -36,6 +36,7 @@
 #include "il/Node_inlines.hpp"
 #include "p/codegen/PPCAOTRelocation.hpp"
 #include "p/codegen/PPCTableOfConstants.hpp"
+#include "p/codegen/PPCJ9HelperCallSnippet.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
 uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg)
@@ -330,6 +331,21 @@ TR_RuntimeHelper TR::PPCCallSnippet::getInterpretedDispatchHelper(
          }
       }
    }
+
+uint8_t *TR::PPCJ2IHelperCallSnippet::emitSnippetBody() {
+    uint8_t *buffer = cg()->getBinaryBufferCursor();
+    uint8_t *gtrmpln, *trmpln;
+
+    getSnippetLabel()->setCodeLocation(buffer);
+    buffer = flushArgumentsToStack(buffer, getNode(), getSizeOfArguments(), cg());
+    TR::PPCCallSnippet::flushArgumentsToStack();
+
+    if (getNode()->isJitDispatchJ9MethodCall(cg()->comp()))
+        {
+        }
+
+    return self->genHelperCall(buffer);
+}
 
 uint8_t *TR::PPCCallSnippet::emitSnippetBody()
    {
