@@ -41,6 +41,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/p/codegen/PPCBinaryEncoding.cpp \
     omr/compiler/p/codegen/PPCDebug.cpp \
     omr/compiler/p/codegen/PPCHelperCallSnippet.cpp \
+    omr/compiler/p/codegen/PPCJ9HelperCallSnippet.cpp \
     omr/compiler/p/codegen/PPCInstruction.cpp \
     omr/compiler/p/codegen/PPCOutOfLineCodeSection.cpp \
     omr/compiler/p/codegen/PPCSystemLinkage.cpp \
