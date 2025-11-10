@@ -12,5 +12,5 @@ uint8_t *TR::PPCJ2IHelperCallSnippet::emitSnippetBody() {
         {
         }
 
-    return TR::PPCHelperCallSnippet::genHelperCall(buffer);
+    return self->genHelperCall(buffer);
 }
