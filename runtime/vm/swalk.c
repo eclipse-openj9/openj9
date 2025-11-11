@@ -760,7 +760,8 @@ walkMethodFrame(J9StackWalkState * walkState)
 		J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method);
 		J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
 
-		initializeBasicROMMethodInfo(walkState, romMethod);
+		//initializeBasicROMMethodInfo(walkState, romMethod);
+		getROMMethodInfoForROMMethod(walkState, romMethod);
 
 		walkState->constantPool = UNTAGGED_METHOD_CP(walkState->method);
 		walkState->argCount = romMethodInfo->argCount;
@@ -1025,8 +1026,9 @@ walkBytecodeFrame(J9StackWalkState * walkState)
 		J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method);
 		J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
 
-		initializeBasicROMMethodInfo(walkState, romMethod);
-
+		//initializeBasicROMMethodInfo(walkState, romMethod);
+		UDATA pcOffset = walkState->pc - J9_BYTECODE_START_FROM_RAM_METHOD(walkState->method);
+		getROMMethodInfoForBytecodePC(walkState, romMethod, pcOffset);
 		walkState->constantPool = UNTAGGED_METHOD_CP(walkState->method);
 
 #if defined(J9VM_OPT_METHOD_HANDLE)
