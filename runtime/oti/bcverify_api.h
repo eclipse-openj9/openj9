@@ -417,7 +417,7 @@ isClassCompatibleByName(J9BytecodeVerificationData *verifyData, UDATA sourceClas
 * @param isInitMethod
 * 	true if the current method is <init>
 * @param anotherInstanceInitCalled
-* 	true if the current method is <init> and another
+* 	TRUE if the current method is <init> and another
 * 	instance <init> has been called in this method
 * @return IDATA
 */
@@ -518,7 +518,6 @@ pushReturnType(J9BytecodeVerificationData *verifyData, J9UTF8 * utf8string, UDAT
  *
  * @param verifyData information about the class being verified.
  * @param addToStrictFieldTable true if this is the first <init> found in the class, false otherwise.
- * @return void
  */
 void
 createOrResetStrictFieldsList(J9BytecodeVerificationData *verifyData, BOOLEAN *addToStrictFieldTable);
