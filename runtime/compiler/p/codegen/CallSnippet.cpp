@@ -48,11 +48,13 @@ uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argS
    TR::Linkage* linkage = cg->getLinkage(callNode->getSymbol()->castToMethodSymbol()->getLinkageConvention());
    const TR::PPCLinkageProperties &linkageProperties = linkage->getProperties();
    int32_t argStart = callNode->getFirstArgumentIndex();
-   if (callNode->isJitDispatchJ9MethodCall(comp)) {
+   bool isJitDispatchJ9Method = callNode->isJitDispatchJ9MethodCall(comp);
+   if (isJitDispatchJ9Method) {
       argStart += 1;
    }
 
-   if (linkageProperties.getRightToLeft())
+   bool rightToLeft = linkageProperties.getRightToLeft() && !isJitDispatchJ9Method
+   if (rightToLeft)
       offset = linkage->getOffsetToFirstParm();
    else
       offset = argSize+linkage->getOffsetToFirstParm();
@@ -65,29 +67,29 @@ uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argS
          case TR::Int8:
          case TR::Int16:
          case TR::Int32:
-            if (!linkageProperties.getRightToLeft())
+            if (!rightToLeft)
                offset -= TR::Compiler->om.sizeofReferenceAddress();
             if (intArgNum < linkageProperties.getNumIntArgRegs())
                {
                buffer = storeArgumentItem(TR::InstOpCode::stw, buffer, machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum)), offset, cg);
                }
             intArgNum++;
-            if (linkageProperties.getRightToLeft())
+            if (rightToLeft)
                offset += TR::Compiler->om.sizeofReferenceAddress();
             break;
          case TR::Address:
-            if (!linkageProperties.getRightToLeft())
+            if (!rightToLeft)
                offset -= TR::Compiler->om.sizeofReferenceAddress();
             if (intArgNum < linkageProperties.getNumIntArgRegs())
                {
                buffer = storeArgumentItem(storeGPROp, buffer, machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum)), offset, cg);
                }
             intArgNum++;
-            if (linkageProperties.getRightToLeft())
+            if (rightToLeft)
                offset += TR::Compiler->om.sizeofReferenceAddress();
             break;
          case TR::Int64:
-            if (!linkageProperties.getRightToLeft())
+            if (!rightToLeft)
                offset -= 2*TR::Compiler->om.sizeofReferenceAddress();
             if (intArgNum < linkageProperties.getNumIntArgRegs())
                {
@@ -101,29 +103,29 @@ uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argS
                   }
                }
             intArgNum += comp->target().is64Bit() ? 1 : 2;
-            if (linkageProperties.getRightToLeft())
+            if (rightToLeft)
                offset += 2*TR::Compiler->om.sizeofReferenceAddress();
             break;
          case TR::Float:
-            if (!linkageProperties.getRightToLeft())
+            if (!rightToLeft)
                offset -= TR::Compiler->om.sizeofReferenceAddress();
             if (floatArgNum < linkageProperties.getNumFloatArgRegs())
                {
                buffer = storeArgumentItem(TR::InstOpCode::stfs, buffer, machine->getRealRegister(linkageProperties.getFloatArgumentRegister(floatArgNum)), offset, cg);
                }
             floatArgNum++;
-            if (linkageProperties.getRightToLeft())
+            if (rightToLeft)
                offset += TR::Compiler->om.sizeofReferenceAddress();
             break;
          case TR::Double:
-            if (!linkageProperties.getRightToLeft())
+            if (!rightToLeft)
                offset -= 2*TR::Compiler->om.sizeofReferenceAddress();
             if (floatArgNum < linkageProperties.getNumFloatArgRegs())
                {
                buffer = storeArgumentItem(TR::InstOpCode::stfd, buffer, machine->getRealRegister(linkageProperties.getFloatArgumentRegister(floatArgNum)), offset, cg);
                }
             floatArgNum++;
-            if (linkageProperties.getRightToLeft())
+            if (rightToLeft)
                offset += 2*TR::Compiler->om.sizeofReferenceAddress();
             break;
          }
