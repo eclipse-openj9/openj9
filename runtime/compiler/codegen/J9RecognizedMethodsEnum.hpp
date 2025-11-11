@@ -232,6 +232,8 @@
    java_lang_String_isLatin1,
    java_lang_String_startsWith,
 
+   java_lang_String_valueOf_C,
+
    java_lang_StringLatin1_indexOf,
    java_lang_StringLatin1_indexOfChar,
    java_lang_StringLatin1_inflate_BICII,
