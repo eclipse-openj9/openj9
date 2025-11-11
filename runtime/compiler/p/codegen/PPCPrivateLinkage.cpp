@@ -2892,7 +2892,7 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
 
-   if (callSymRef->getReferenceNumber() >= TR_PPCnumRuntimeHelpers && !isJitDispatchJ9Method)
+   if ((callSymRef->getReferenceNumber() >= TR_PPCnumRuntimeHelpers) && !isJitDispatchJ9Method)
       fej9->reserveTrampolineIfNecessary(comp(), callSymRef, false);
 
    bool forceUnresolvedDispatch = !fej9->isResolvedDirectDispatchGuaranteed(comp());
