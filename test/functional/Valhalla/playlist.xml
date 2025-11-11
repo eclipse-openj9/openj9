@@ -99,11 +99,6 @@
 	</test>
 	<test>
 		<testCaseName>ValueTypeArrayTests</testCaseName>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/22642</comment>
-			</disable>
-		</disables>
 		<variations>
 			<variation>-Xgcpolicy:optthruput</variation>
 			<variation>-Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:-EnableArrayFlattening</variation>
@@ -348,11 +343,6 @@
 	</test>
 	<test>
 		<testCaseName>ValueTypeSystemArraycopyTests</testCaseName>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/22642</comment>
-			</disable>
-		</disables>
 		<variations>
 			<variation>-Xint</variation>
 			<variation>-Xint -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999</variation>
