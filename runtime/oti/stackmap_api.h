@@ -206,6 +206,23 @@ j9stackmap_StackBitsForPC(J9PortLibrary * portLib, UDATA pc, J9ROMClass * romCla
 void
 initializeBasicROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod);
 
+/**
+ * @brief
+ * @param walkState
+ * @param romMethod
+ */
+void
+getROMMethodInfoForROMMethod(J9StackWalkState *walkState, J9ROMMethod *romMethod);
+
+/**
+ * @brief
+ * @param walkState
+ * @param romMethod
+ * @param pc
+ */
+void
+getROMMethodInfoForBytecodePC(J9StackWalkState *walkState, J9ROMMethod *romMethod, UDATA pc);
+
 #ifdef __cplusplus
 }
 #endif
