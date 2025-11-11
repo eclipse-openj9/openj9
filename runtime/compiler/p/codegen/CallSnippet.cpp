@@ -53,7 +53,7 @@ uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argS
       argStart += 1;
    }
 
-   bool rightToLeft = linkageProperties.getRightToLeft() && !isJitDispatchJ9Method
+   bool rightToLeft = linkageProperties.getRightToLeft() && !isJitDispatchJ9Method;
    if (rightToLeft)
       offset = linkage->getOffsetToFirstParm();
    else
