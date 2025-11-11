@@ -338,11 +338,12 @@ uint8_t *TR::PPCJ9HelperCallSnippet::emitSnippetBody() {
 
     getSnippetLabel()->setCodeLocation(buffer);
     buffer = flushArgumentsToStack(buffer, this->getNode(), this->getSizeOfArguments(), cg());
-    flushArgumentsToStack(buffer, this->getNode(), this->getSizeOfArguments(), cg());
 
     if (this->getNode()->isJitDispatchJ9MethodCall(cg()->comp()))
-        {
-        }
+      {
+      buffer = 2;
+      buffer += sizeof(int32_t);   
+      }
 
     return this->genHelperCall(buffer);
 }
