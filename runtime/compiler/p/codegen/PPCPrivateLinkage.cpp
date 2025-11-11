@@ -2925,7 +2925,8 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       cg()->getPPCOutOfLineCodeSectionList().push_front(snippetCall);
       snippetCall->swapInstructionListsWithCompilation();
       TR::Instruction *OOLLabelInstr = generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, oolLabel);
-      generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, snippetLabel);
+      gcPoint = generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, snippetLabel);
+      gcPoint->PPCNeedsGCMap(callSymbol->getLinkageConvention() == TR_Helper ? 0xffffffff : pp.getPreservedRegisterMapForGC());
       // helper snippet sets up jump back to doneLabel
       snippetCall->swapInstructionListsWithCompilation();
 
@@ -2943,19 +2944,21 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
 
       generateDepLabelInstruction(cg(), TR::InstOpCode::label, callNode, startICFLabel, preDeps);
 
+      // test if compiled
       generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, scratchReg,
                                  TR::MemoryReference::createWithDisplacement(cg(), j9MethodReg, offsetof(J9Method, extra), TR::Compiler->om.sizeofReferenceAddress()));
       generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::andi_r, callNode, scratchReg2, scratchReg, 1);
       generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::cmpi4, callNode, cndReg, scratchReg2, 0);
       generateConditionalBranchInstruction(cg(), TR::InstOpCode::bne, callNode, oolLabel, cndReg);
 
+      // compiled - jump to jit entry point
       generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, j9MethodReg,
                                  TR::MemoryReference::createWithDisplacement(cg(), scratchReg, -4, TR::Compiler->om.sizeofReferenceAddress()));
       generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::srawi, callNode, j9MethodReg, j9MethodReg, 16);
       generateTrg1Src1Instruction(cg(), TR::InstOpCode::extsw, callNode, j9MethodReg, j9MethodReg);
       generateTrg1Src2Instruction(cg(), TR::InstOpCode::add, callNode, scratchReg, j9MethodReg, scratchReg);
       generateSrc1Instruction(cg(), TR::InstOpCode::mtctr, callNode, scratchReg);
-      generateInstruction(cg(), TR::InstOpCode::bctrl, callNode);
+      gcPoint = generateInstruction(cg(), TR::InstOpCode::bctrl, callNode);
 
       generateDepLabelInstruction(cg(), TR::InstOpCode::label, callNode, doneLabel, postDeps);
       }
