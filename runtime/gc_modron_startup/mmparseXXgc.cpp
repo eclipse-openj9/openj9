@@ -1025,6 +1025,30 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
+		if (try_scan(&scan_start, "concurrentScavengeTaxationHeadroomLow=")) {
+			UDATA value = 0;
+			if (!scan_udata_helper(vm, &scan_start, &value, "concurrentScavengeTaxationHeadroomLow=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+
+			extensions->concurrentScavengeTaxationHeadroomLow = ((float)value - 100.0f) / 100.0f;
+			continue;
+		}
+
+		if (try_scan(&scan_start, "concurrentScavengeTaxationHeadroomHigh=")) {
+			UDATA value = 0;
+			if (!scan_udata_helper(vm, &scan_start, &value, "concurrentScavengeTaxationHeadroomHigh=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+
+			extensions->concurrentScavengeTaxationHeadroomHigh = ((float)value - 100.0f) / 100.0f;
+			continue;
+		}
+
+
+
 #endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
 
 #endif /* defined(J9VM_GC_MODRON_SCAVENGER) */
