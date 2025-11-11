@@ -924,23 +924,21 @@ isFieldAccessCompatible(
 			&& (NULL != field) && J9ROMFIELD_IS_STRICT(field->modifiers)
 		) {
 			/* A strict final field cannot be set in the following cases:
-			* - the initialization state is not early larval
 			* - another instance initialization method has been called
+			* - the initialization state is not early larval
 			*/
 			if (J9_ARE_ALL_BITS_SET(field->modifiers, J9AccFinal)) {
-				if ((FALSE == liveStack->uninitializedThis)
-					|| (TRUE == anotherInstanceInitCalled)
-				) {
+				if (anotherInstanceInitCalled || !liveStack->uninitializedThis) {
 					return (IDATA)FALSE;
 				}
 			}
 
-			if (isInitMethod && (TRUE == liveStack->uninitializedThis)) {
+			if (isInitMethod && liveStack->uninitializedThis) {
 				J9UTF8 *fieldName = J9ROMNAMEANDSIGNATURE_NAME(J9ROMFIELDREF_NAMEANDSIGNATURE(fieldRef));
 				J9StrictFieldEntry query = {0};
 				query.nameutf8 = fieldName;
 				J9StrictFieldEntry *entry = hashTableFind(verifyData->strictFields, &query);
-				if ((NULL != entry) && (FALSE == entry->isSet)) {
+				if ((NULL != entry) && !entry->isSet) {
 					Assert_RTV_true(verifyData->strictFieldsUnsetCount > 0);
 					entry->isSet = TRUE;
 					verifyData->strictFieldsUnsetCount--;
@@ -1290,26 +1288,29 @@ findFieldFromCurrentRomClass(J9ROMClass *romClass, J9ROMFieldRef *field)
 
 	return currentField;
 }
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 void
 createOrResetStrictFieldsList(J9BytecodeVerificationData *verifyData, BOOLEAN *addToStrictFieldTable)
 {
 	if (*addToStrictFieldTable) {
+		J9HashTableState hashTableState = {0};
+		J9StrictFieldEntry *entry = NULL;
+		J9ROMFieldWalkState fieldWalkState = {0};
+		J9ROMFieldShape *field = NULL;
+
 		/* Fields only need to be added to the hash table once per class. */
 		*addToStrictFieldTable = FALSE;
 
 		/* Clear map entries from the last class. */
-		J9HashTableState hashTableState = {0};
-		J9StrictFieldEntry *entry = (J9StrictFieldEntry *)hashTableStartDo(verifyData->strictFields, &hashTableState);
+		entry = (J9StrictFieldEntry *)hashTableStartDo(verifyData->strictFields, &hashTableState);
 		while (NULL != entry) {
 			hashTableDoRemove(&hashTableState);
-			entry = hashTableNextDo(&hashTableState);
+			entry = (J9StrictFieldEntry *)hashTableNextDo(&hashTableState);
 		}
 
 		/* Create strictFields map of all strict instance fields. */
-		J9ROMFieldWalkState fieldWalkState = {0};
-		J9ROMFieldShape *field = romFieldsStartDo(verifyData->romClass, &fieldWalkState);
+		field = romFieldsStartDo(verifyData->romClass, &fieldWalkState);
 		while (NULL != field) {
 			if (J9ROMFIELD_IS_STRICT(field->modifiers) && J9_ARE_NO_BITS_SET(field->modifiers, J9AccStatic)) {
 				J9UTF8 *fieldName = J9ROMFIELDSHAPE_NAME(field);
@@ -1328,7 +1329,7 @@ createOrResetStrictFieldsList(J9BytecodeVerificationData *verifyData, BOOLEAN *a
 		J9StrictFieldEntry *entry = (J9StrictFieldEntry *)hashTableStartDo(verifyData->strictFields, &hashTableState);
 		while (NULL != entry) {
 			entry->isSet = FALSE;
-			entry = hashTableNextDo(&hashTableState);
+			entry = (J9StrictFieldEntry *)hashTableNextDo(&hashTableState);
 		}
 	}
 	verifyData->strictFieldsUnsetCount = hashTableGetCount(verifyData->strictFields);

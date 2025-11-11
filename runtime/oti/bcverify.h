@@ -55,8 +55,9 @@ typedef struct J9BranchTargetStack {
 
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 typedef struct J9StrictFieldEntry {
-	J9UTF8* nameutf8;
-	BOOLEAN isSet; /* isSet is not used for a query. */
+	J9UTF8 *nameutf8;
+	/* isSet is not used when comparing structs for equality. */
+	BOOLEAN isSet;
 } J9StrictFieldEntry;
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
