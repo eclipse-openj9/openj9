@@ -341,8 +341,8 @@ uint8_t *TR::PPCJ9HelperCallSnippet::emitSnippetBody() {
 
     if (this->getNode()->isJitDispatchJ9MethodCall(cg()->comp()))
       {
-      buffer = 2;
-      buffer += sizeof(int32_t);   
+         *(int32_t *)buffer = 0x7D836378;
+         buffer += sizeof(int32_t);  
       }
 
     return this->genHelperCall(buffer);
