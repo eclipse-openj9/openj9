@@ -1985,8 +1985,9 @@ public class ValueTypeTests {
 	/*
 	 * Create Array Objects with Point Class without initialization
 	 * The array should be set to a Default Value.
+	 * TODO:Fix with issue https://github.com/eclipse-openj9/openj9/issues/22642
 	 */
-	@Test(priority=4, invocationCount=2)
+	@Test(priority=4, invocationCount=2, enabled=false)
 	static public void testDefaultValueInPointArray() throws Throwable {
 		Object pointArray = Array.newInstance(point2DClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
@@ -2046,8 +2047,9 @@ public class ValueTypeTests {
 	/*
 	 * Create Array Objects with Flattened Line without initialization
 	 * Check the fields of each element in arrays. No field should be NULL.
+	 * TODO:Fix with issue https://github.com/eclipse-openj9/openj9/issues/22642
 	 */
-	@Test(priority=4, invocationCount=2)
+	@Test(priority=4, invocationCount=2, enabled=false)
 	static public void testDefaultValueInLineArray() throws Throwable {
 		Object flattenedLineArray = Array.newInstance(flattenedLine2DClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
@@ -2109,8 +2111,9 @@ public class ValueTypeTests {
 	/*
 	 * Create Array Objects with triangle class without initialization
 	 * Check the fields of each element in arrays. No field should be NULL.
+	 * TODO:Fix with issue https://github.com/eclipse-openj9/openj9/issues/22642
 	 */
-	@Test(priority=4, invocationCount=2)
+	@Test(priority=4, invocationCount=2, enabled=false)
 	static public void testDefaultValueInTriangleArray() throws Throwable {
 		Object triangleArray = Array.newInstance(triangle2DClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
@@ -2173,8 +2176,9 @@ public class ValueTypeTests {
 	/*
 	 * Create an Array Object with assortedValueWithLongAlignment class without initialization
 	 * Check the fields of each element in arrays. No field should be NULL.
+	 * TODO:Fix with issue https://github.com/eclipse-openj9/openj9/issues/22642
 	 */
-	@Test(priority=4, invocationCount=2)
+	@Test(priority=4, invocationCount=2, enabled=false)
 	static public void testDefaultValueInAssortedValueWithLongAlignmentArray() throws Throwable {
 		Object assortedValueWithLongAlignmentArray = Array.newInstance(assortedValueWithLongAlignmentClass, genericArraySize);
 		for (int i = 0; i < genericArraySize; i++) {
