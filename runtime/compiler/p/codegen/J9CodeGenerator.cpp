@@ -836,8 +836,10 @@ J9::Power::CodeGenerator::deriveCallingLinkage(TR::Node *node, bool isIndirect)
 bool
 J9::Power::CodeGenerator::supportsNonHelper(TR::SymbolReferenceTable::CommonNonhelperSymbol symbol)
    {
+   traceMsg(comp(), "finding non helper\n");
    if (symbol == TR::SymbolReferenceTable::jitDispatchJ9MethodSymbol)
       {
+      traceMsg(comp(), "found non helper\n");
       return true;
       }
 
