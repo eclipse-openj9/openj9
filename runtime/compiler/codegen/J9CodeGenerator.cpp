@@ -5271,6 +5271,7 @@ J9::CodeGenerator::isProfiledClassAndCallSiteCompatible(TR_OpaqueClassBlock *pro
 bool
 J9::CodeGenerator::enableJitDispatchJ9Method()
    {
+      //java -Xjit:"count=0,disableAsyncCompilation,{*invokeStatic*}(traceFull,log=static.log),{*invoke*MT*}(traceFull,log=mt.log)" Test
    static const bool disable = feGetEnv("TR_disableJitDispatchJ9Method") != NULL;
    return !disable
       && self()->supportsNonHelper(TR::SymbolReferenceTable::jitDispatchJ9MethodSymbol);

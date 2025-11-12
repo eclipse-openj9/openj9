@@ -2939,8 +2939,9 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       cg()->getPPCOutOfLineCodeSectionList().push_front(snippetCall);
       snippetCall->swapInstructionListsWithCompilation();
       TR::Instruction *OOLLabelInstr = generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, oolLabel);
-      gcPoint = generateDepLabelInstruction(cg(), TR::InstOpCode::b, callNode, snippetLabel, dependencies);
-      gcPoint->PPCNeedsGCMap(callSymbol->getLinkageConvention() == TR_Helper ? 0xffffffff : pp.getPreservedRegisterMapForGC());
+      gcPoint = generateDepLabelInstruction(cg(), TR::InstOpCode::bl, callNode, snippetLabel, dependencies);
+      gcPoint->PPCNeedsGCMap(pp.getPreservedRegisterMapForGC());
+      generateDepLabelInstruction(cg(), TR::InstOpCode::b, callNode, snippetLabel);
       // helper snippet sets up jump back to doneLabel
       snippetCall->swapInstructionListsWithCompilation();
 
@@ -2962,11 +2963,13 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       generateTrg1Src2Instruction(cg(), TR::InstOpCode::add, callNode, scratchReg, j9MethodReg, scratchReg);
       generateSrc1Instruction(cg(), TR::InstOpCode::mtctr, callNode, scratchReg);
       gcPoint = generateInstruction(cg(), TR::InstOpCode::bctrl, callNode);
+      gcPoint->PPCNeedsGCMap(pp.getPreservedRegisterMapForGC());
 
       cg()->stopUsingRegister(scratchReg);
       cg()->stopUsingRegister(scratchReg2);
       cg()->stopUsingRegister(cndReg);
       generateDepLabelInstruction(cg(), TR::InstOpCode::label, callNode, doneLabel, postDeps);
+      return;
       }
    else
       {
