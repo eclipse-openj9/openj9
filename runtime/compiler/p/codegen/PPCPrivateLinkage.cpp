@@ -2916,6 +2916,20 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       startICFLabel->setStartInternalControlFlow();
       doneLabel->setEndInternalControlFlow();
 
+      TR::RegisterDependencyConditions *preDeps = dependencies->clone(cg());
+      TR_ASSERT_FATAL(dependencies->getNumPreConditions() > 0, "dep must have at least 1 pre condition\n");
+      preDeps->setNumPostConditions(0, trMemory());
+      preDeps->setAddCursorForPost(0);
+      TR_ASSERT_FATAL(preDeps->getNumPreConditions() > 0, "dep must have at least 1 pre condition\n");
+
+      TR::RegisterDependencyConditions *newPostDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(0, 2, trMemory());
+      newPostDeps->addPostCondition(j9MethodReg, TR::RealRegister::NoReg);
+      newPostDeps->addPostCondition(scratchReg, getProperties().getJ9MethodArgumentRegister());
+
+      TR::RegisterDependencyConditions *postDeps = dependencies->clone(cg(), newPostDeps);
+      postDeps->setNumPreConditions(0, trMemory());
+      postDeps->setAddCursorForPre(0);
+
       TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg());
       TR::SymbolReference *helperRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition);
       TR::Snippet *interpCallSnippet = new (cg()->trHeapMemory()) TR::PPCJ9HelperCallSnippet(cg(), callNode, snippetLabel, helperRef, doneLabel, argSize);
@@ -2930,20 +2944,6 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       // helper snippet sets up jump back to doneLabel
       snippetCall->swapInstructionListsWithCompilation();
 
-      TR::RegisterDependencyConditions *preDeps = dependencies->clone(cg());
-      TR_ASSERT_FATAL(dependencies->getNumPreConditions() > 0, "dep must have at least 1 pre condition\n");
-      preDeps->setNumPostConditions(0, trMemory());
-      preDeps->setAddCursorForPost(0);
-      TR_ASSERT_FATAL(preDeps->getNumPreConditions() > 0, "dep must have at least 1 pre condition\n");
-
-
-      TR::RegisterDependencyConditions *newPostDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(0, 2, trMemory());
-      newPostDeps->addPostCondition(j9MethodReg, TR::RealRegister::NoReg);
-      newPostDeps->addPostCondition(scratchReg, getProperties().getJ9MethodArgumentRegister());
-
-      TR::RegisterDependencyConditions *postDeps = dependencies->clone(cg(), newPostDeps);
-      postDeps->setNumPreConditions(0, trMemory());
-      postDeps->setAddCursorForPre(0);
 
       generateDepLabelInstruction(cg(), TR::InstOpCode::label, callNode, startICFLabel, preDeps);
 
@@ -2963,6 +2963,9 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       generateSrc1Instruction(cg(), TR::InstOpCode::mtctr, callNode, scratchReg);
       gcPoint = generateInstruction(cg(), TR::InstOpCode::bctrl, callNode);
 
+      cg()->stopUsingRegister(scratchReg);
+      cg()->stopUsingRegister(scratchReg2);
+      cg()->stopUsingRegister(cndReg);
       generateDepLabelInstruction(cg(), TR::InstOpCode::label, callNode, doneLabel, postDeps);
       }
    else
