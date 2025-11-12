@@ -2931,8 +2931,11 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       snippetCall->swapInstructionListsWithCompilation();
 
       TR::RegisterDependencyConditions *preDeps = dependencies->clone(cg());
+      TR_ASSERT_FATAL(dependencies->getNumPreConditions() > 0, "dep must have at least 1 pre condition\n");
       preDeps->setNumPostConditions(0, trMemory());
       preDeps->setAddCursorForPre(0);
+      TR_ASSERT_FATAL(preDeps->getNumPreConditions() > 0, "dep must have at least 1 pre condition\n");
+
 
       TR::RegisterDependencyConditions *newPostDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(0, 2, trMemory());
       newPostDeps->addPostCondition(j9MethodReg, TR::RealRegister::NoReg);
