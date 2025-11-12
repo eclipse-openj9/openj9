@@ -2917,7 +2917,27 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
          traceMsg(comp(), "did no find vtable reg in conditions\n");
       }
       TR::Register *scratchReg2 = cg()->allocateRegister();
-      TR::Register *cndReg = cg()->allocateRegister(TR_CCR);
+      TR::Register *cndReg = NULL:
+      TR::Register *condRegPost = NULL;
+      bool isCndInPreDeps = false;
+      if ((cndReg = dependencies->searchPreConditionRegister(TR::RealRegister::cr0)) == NULL) {
+         printf("did not find cond reg in pre\n");
+         cg()->allocateRegister(TR_CCR);
+      } else {
+         isCndInPreDeps= true;
+         printf("found con reg in pre\n");
+      }
+
+      bool isCndInPostDeps = false;
+      if ((condRegPost = dependencies->searchPreConditionRegister(TR::RealRegister::cr0)) == NULL) {
+         printf("did not find cond reg in post\n");
+         cg()->allocateRegister(TR_CCR);
+      } else {
+         isCndInPostDeps= true;
+         printf("found cond reg in post\n");
+      }
+
+
       TR::Register *j9MethodReg = callNode->getChild(0)->getRegister();
 
       TR::LabelSymbol *startICFLabel = generateLabelSymbol(cg());
@@ -2926,6 +2946,7 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       startICFLabel->setStartInternalControlFlow();
       doneLabel->setEndInternalControlFlow();
 
+      if (!isCndInPreDeps)
       TR::addDependency(dependencies, cndReg, TR::RealRegister::cr0, TR_CCR, cg());
 
       TR::RegisterDependencyConditions *preDeps = dependencies->clone(cg());
