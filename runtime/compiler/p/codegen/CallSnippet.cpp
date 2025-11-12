@@ -343,6 +343,7 @@ uint8_t *TR::PPCJ9HelperCallSnippet::emitSnippetBody() {
 
     if (this->getNode()->isJitDispatchJ9MethodCall(cg()->comp()))
       {
+         // move value in r0 to r3 for the interpreter
          *(int32_t *)buffer = 0x7C030378;
          buffer += sizeof(int32_t);  
       }
