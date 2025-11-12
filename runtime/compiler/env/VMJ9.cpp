@@ -165,6 +165,9 @@
 #define notImplemented(A) TR_ASSERT(0, "TR_FrontEnd::%s is undefined", (A) )
 
 #define FIELD_OFFSET_NOT_FOUND -1
+
+#define OPT_DETAILS_INLINE_NATIVE_CALL "O^O inlineNativeCall: "
+
 struct TR_MethodToBeCompiled;
 
 enum { IS_VOLATILE=1 };
@@ -7744,7 +7747,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
          return callNode;
       case TR::java_lang_Class_isInstance:
          if (  comp->cg()->supportsInliningOfIsInstance()
-            && performTransformation(comp, "O^O inlineNativeCall: generate instanceof [%p] for Class.isInstance at bytecode %d\n", callNode, callNode->getByteCodeInfo().getByteCodeIndex()) )
+            && performTransformation(comp, "%sgenerate instanceof [%p] for Class.isInstance at bytecode %d\n", OPT_DETAILS_INLINE_NATIVE_CALL, callNode, callNode->getByteCodeInfo().getByteCodeIndex()) )
             {
             if (comp->getOption(TR_TraceILGen) && comp->getDebug())
                {
@@ -7964,7 +7967,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
             {
             int32_t classNameLength;
             char *className = getClassNameChars(reinterpret_cast<TR_OpaqueClassBlock *>(callerClass), classNameLength);
-            if (performTransformation(comp, "O^O inlineNativeCall: inline class load [%p] of %.*s for '%s' at bytecode %d\n", callNode,
+            if (performTransformation(comp, "%sinline class load [%p] of %.*s for '%s' at bytecode %d\n", OPT_DETAILS_INLINE_NATIVE_CALL, callNode,
                   classNameLength, className,
                   callNode->getSymbolReference()->getName(comp->getDebug()), callNode->getByteCodeInfo().getByteCodeIndex()))
                {

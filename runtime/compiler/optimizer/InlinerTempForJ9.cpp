@@ -69,6 +69,7 @@
 namespace TR { class SimpleRegex; }
 
 #define OPT_DETAILS "O^O INLINER: "
+#define OPT_DETAILS_VIRTUAL_GUARD_IMPROVE "O^O VIRTUAL GUARD IMPROVE: "
 
 // == Hack markers ==
 
@@ -557,7 +558,7 @@ TR_J9InlinerPolicy::genCompressedRefs(TR::Node * address, bool genTT, int32_t is
    {
    static char *pEnv = feGetEnv("TR_UseTranslateInTrees");
 
-   if (performTransformation(comp(), "O^O Inliner: Generating compressedRefs anchor for node [%p]\n", address))
+   if (performTransformation(comp(), "%sGenerating compressedRefs anchor for node [%p]\n", OPT_DETAILS, address))
       {
       TR::Node *value = address;
       if (pEnv && (isLoad < 0)) // store
@@ -6393,7 +6394,7 @@ TR_J9InlinerUtil::computePrexInfo(TR_CallTarget *target, TR_PrexArgInfo *callerA
        thisClassInfo->isInitialized() &&
        ((target->_guard->_kind == TR_NonoverriddenGuard && target->_guard->_type == TR_NonoverriddenTest) ||
         (target->_guard->_kind == TR_InterfaceGuard)) &&
-       performTransformation(comp(), "O^O VIRTUAL GUARD IMPROVE: Changed guard kind %s type %s to use VFT test\n", tracer()->getGuardKindString(target->_guard), tracer()->getGuardTypeString(target->_guard)))
+       performTransformation(comp(), "%sChanged guard kind %s type %s to use VFT test\n", OPT_DETAILS_VIRTUAL_GUARD_IMPROVE, tracer()->getGuardKindString(target->_guard), tracer()->getGuardTypeString(target->_guard)))
       {
       target->_guard->_type = TR_VftTest;
       target->_guard->_thisClass = target->_receiverClass;

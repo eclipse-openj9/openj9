@@ -48,6 +48,8 @@
 #include "x/codegen/IA32LinkageUtils.hpp"
 #include "x/codegen/X86Instruction.hpp"
 
+#define OPT_DETAILS "O^O IA32 PRIVATE LINKAGE: "
+
 J9::X86::I386::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
    : J9::X86::PrivateLinkage(cg)
    {
@@ -640,7 +642,8 @@ void J9::X86::I386::PrivateLinkage::buildIPIC(
    uintptr_t itableIndex;
    if (  useLastITableCache
       && (declaringClass = site.getSymbolReference()->getOwningMethod(comp())->getResolvedInterfaceMethod(site.getSymbolReference()->getCPIndex(), &itableIndex))
-      && performTransformation(comp(), "O^O useLastITableCache for n%dn itableIndex=%d: %.*s.%.*s%.*s\n",
+      && performTransformation(comp(), "%suseLastITableCache for n%dn itableIndex=%d: %.*s.%.*s%.*s\n",
+            OPT_DETAILS,
             site.getCallNode()->getGlobalIndex(), (int)itableIndex,
             method->classNameLength(), method->classNameChars(),
             method->nameLength(),      method->nameChars(),
