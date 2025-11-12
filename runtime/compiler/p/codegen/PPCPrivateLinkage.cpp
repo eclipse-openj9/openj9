@@ -2917,7 +2917,7 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
          traceMsg(comp(), "did no find vtable reg in conditions\n");
       }
       TR::Register *scratchReg2 = cg()->allocateRegister();
-      TR::Register *cndReg = NULL:
+      TR::Register *cndReg = NULL;
       TR::Register *condRegPost = NULL;
       bool isCndInPreDeps = false;
       if ((cndReg = dependencies->searchPreConditionRegister(TR::RealRegister::cr0)) == NULL) {
