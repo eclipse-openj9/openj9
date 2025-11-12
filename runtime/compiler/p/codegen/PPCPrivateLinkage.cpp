@@ -2926,7 +2926,7 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       startICFLabel->setStartInternalControlFlow();
       doneLabel->setEndInternalControlFlow();
 
-      TR::addDependency(dependencies, cndReg, TR::RealRegister::cr0, TR_CCR, cg);
+      TR::addDependency(dependencies, cndReg, TR::RealRegister::cr0, TR_CCR, cg());
 
       TR::RegisterDependencyConditions *preDeps = dependencies->clone(cg());
       TR_ASSERT_FATAL(dependencies->getNumPreConditions() > 0, "dep must have at least 1 pre condition\n");
