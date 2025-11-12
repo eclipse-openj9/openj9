@@ -2925,7 +2925,7 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       cg()->getPPCOutOfLineCodeSectionList().push_front(snippetCall);
       snippetCall->swapInstructionListsWithCompilation();
       TR::Instruction *OOLLabelInstr = generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, oolLabel);
-      gcPoint = generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, snippetLabel);
+      gcPoint = generateDepLabelInstruction(cg(), TR::InstOpCode::b, callNode, snippetLabel, dependencies);
       gcPoint->PPCNeedsGCMap(callSymbol->getLinkageConvention() == TR_Helper ? 0xffffffff : pp.getPreservedRegisterMapForGC());
       // helper snippet sets up jump back to doneLabel
       snippetCall->swapInstructionListsWithCompilation();
@@ -2933,7 +2933,7 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       TR::RegisterDependencyConditions *preDeps = dependencies->clone(cg());
       TR_ASSERT_FATAL(dependencies->getNumPreConditions() > 0, "dep must have at least 1 pre condition\n");
       preDeps->setNumPostConditions(0, trMemory());
-      preDeps->setAddCursorForPre(0);
+      preDeps->setAddCursorForPost(0);
       TR_ASSERT_FATAL(preDeps->getNumPreConditions() > 0, "dep must have at least 1 pre condition\n");
 
 
