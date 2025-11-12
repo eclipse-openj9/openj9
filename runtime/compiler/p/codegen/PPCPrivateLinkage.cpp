@@ -2941,7 +2941,7 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       TR::Instruction *OOLLabelInstr = generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, oolLabel);
       gcPoint = generateDepLabelInstruction(cg(), TR::InstOpCode::bl, callNode, snippetLabel, dependencies);
       gcPoint->PPCNeedsGCMap(pp.getPreservedRegisterMapForGC());
-      generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, snippetLabel);
+      generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, doneLabel);
       // helper snippet sets up jump back to doneLabel
       snippetCall->swapInstructionListsWithCompilation();
 
