@@ -2926,6 +2926,8 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       startICFLabel->setStartInternalControlFlow();
       doneLabel->setEndInternalControlFlow();
 
+      TR::addDependency(dependencies, cndReg, TR::RealRegister::cr0, TR_CCR, cg);
+
       TR::RegisterDependencyConditions *preDeps = dependencies->clone(cg());
       TR_ASSERT_FATAL(dependencies->getNumPreConditions() > 0, "dep must have at least 1 pre condition\n");
       preDeps->setNumPostConditions(0, trMemory());
@@ -2963,8 +2965,9 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, scratchReg,
                                  TR::MemoryReference::createWithDisplacement(cg(), j9MethodReg, offsetof(J9Method, extra), TR::Compiler->om.sizeofReferenceAddress()));
       generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::andi_r, callNode, scratchReg2, scratchReg, 1);
-      generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::cmpi4, callNode, cndReg, scratchReg2, 0);
-      generateConditionalBranchInstruction(cg(), TR::InstOpCode::bne, callNode, oolLabel, cndReg);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, callNode, oolLabel, cndReg);
+     // generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::cmpi4, callNode, cndReg, scratchReg2, 0);
+     // generateConditionalBranchInstruction(cg(), TR::InstOpCode::bne, callNode, oolLabel, cndReg);
 
       // compiled - jump to jit entry point
       generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, j9MethodReg,
