@@ -2905,7 +2905,17 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       }
    else if (isJitDispatchJ9Method)
       {
-      TR::Register *scratchReg = cg()->allocateRegister();
+      bool foundVtableReg = false;
+      TR::Register *scratchReg = NULL;
+      if ((scratchReg = dependencies->searchPostConditionRegister(pp.getVTableIndexArgumentRegister())) != NULL) {
+         foundVtableReg = true;
+         printf("found vtable reg in conditions\n");
+         traceMsg(comp(), "found vtable reg in conditions\n");
+      } else {
+         scratchReg = cg()->allocateRegister();
+         printf("did not find vtable reg in conditions\n");
+         traceMsg(comp(), "did no find vtable reg in conditions\n");
+      }
       TR::Register *scratchReg2 = cg()->allocateRegister();
       TR::Register *cndReg = cg()->allocateRegister(TR_CCR);
       TR::Register *j9MethodReg = callNode->getChild(0)->getRegister();
@@ -2924,7 +2934,8 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
 
       TR::RegisterDependencyConditions *newPostDeps = new (trHeapMemory()) TR::RegisterDependencyConditions(0, 2, trMemory());
       newPostDeps->addPostCondition(j9MethodReg, TR::RealRegister::NoReg);
-      newPostDeps->addPostCondition(scratchReg, getProperties().getJ9MethodArgumentRegister());
+      if (!foundVtableReg)
+      newPostDeps->addPostCondition(scratchReg, pp.getVTableIndexArgumentRegister());
 
       TR::RegisterDependencyConditions *postDeps = dependencies->clone(cg(), newPostDeps);
       postDeps->setNumPreConditions(0, trMemory());
