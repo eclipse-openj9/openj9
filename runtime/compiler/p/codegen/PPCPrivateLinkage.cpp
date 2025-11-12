@@ -1631,7 +1631,7 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
       TR::MemoryReference *mref = NULL;
       TR::Register        *argRegister;
       child = callNode->getChild(i);
-      bool isSpecialArg = (i == from && specialArgReg != TR::RealRegister::NoReg);
+      bool isSpecialArg = (i == from && specialArgReg != TR::RealRegister::NoReg) && !isJitDispatchJ9Method;
       switch (child->getDataType())
          {
          case TR::Int8:
