@@ -1908,12 +1908,12 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
 
    for (int32_t i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastGPR; ++i)
       {
-      if (i == TR::RealRegister::gr11) {
-         if (isJitDispatchJ9Method) {
-            printf("checking if reg is preserved for jit dispatch: %d\n", i);
-            TR_ASSERT_FATAL(!properties.getPreserved((TR::RealRegister::RegNum)i), "should not preserve\n");
-         }
-      }
+      // if (i == TR::RealRegister::gr11) {
+      //    if (isJitDispatchJ9Method) {
+      //       printf("checking if reg is preserved for jit dispatch: %d\n", i);
+      //       TR_ASSERT_FATAL(!properties.getPreserved((TR::RealRegister::RegNum)i), "should not preserve\n");
+      //    }
+      // }
       TR::RealRegister::RegNum realReg = (TR::RealRegister::RegNum)i;
       if (properties.getPreserved(realReg))
          continue;
