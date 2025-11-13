@@ -7340,10 +7340,12 @@ TR::CompilationInfoPerThreadBase::cannotPerformRemoteComp(
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 )
    {
+   static char *suppressAllRemoteCompilations = feGetEnv("TR_SuppressAllRemoteCompilations");
    return
 #if defined(J9VM_OPT_CRIU_SUPPORT)
           (_jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(_jitConfig->javaVM) && !_compInfo.getCRRuntime()->canPerformRemoteCompilationInCRIUMode()) ||
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+          suppressAllRemoteCompilations ||
           !JITServer::ClientStream::isServerCompatible(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary)) ||
           (!JITServerHelpers::isServerAvailable() && !JITServerHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary))) ||
 	  (!JITServer::CommunicationStream::shouldReadRetry() && !JITServerHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary))) ||
