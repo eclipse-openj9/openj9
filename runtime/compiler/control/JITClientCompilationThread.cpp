@@ -4057,10 +4057,13 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
             intptr_t rtn = 0;
             try
                {
+               compiler->setRemoteCompilation(false);
                rtn = compiler->compile();
+               compiler->setRemoteCompilation();
                }
             catch(...)
                {
+               compiler->setRemoteCompilation();
                // This compilation wasn't started from TR::CompilationInfoPerThreadBase::compile,
                // so we need to make sure that we release the class unload monitor on exception.
                if (compileWithoutVMAccess)
