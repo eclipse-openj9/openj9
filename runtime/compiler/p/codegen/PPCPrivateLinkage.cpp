@@ -1908,6 +1908,11 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
 
    for (int32_t i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastGPR; ++i)
       {
+      if (i == TR::RealRegister::gr11) {
+         if (isJitDispatchJ9Method) {
+            TR_ASSERT_FATAL(!properties.getPreserved((TR::RealRegister::RegNum)i), "should not preserve\n");
+         }
+      }
       TR::RealRegister::RegNum realReg = (TR::RealRegister::RegNum)i;
       if (properties.getPreserved(realReg))
          continue;
@@ -2976,6 +2981,7 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       TR::Instruction *OOLLabelInstr = generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, oolLabel);
       gcPoint = generateDepLabelInstruction(cg(), TR::InstOpCode::bl, callNode, snippetLabel, dependencies);
       gcPoint->PPCNeedsGCMap(pp.getPreservedRegisterMapForGC());
+      gcPoint->setNeedsGCMap()
       generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, doneLabel);
       // helper snippet sets up jump back to doneLabel
       snippetCall->swapInstructionListsWithCompilation();
