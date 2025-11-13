@@ -42,6 +42,7 @@
 #include "p/codegen/PPCEvaluator.hpp"
 #include "p/codegen/PPCInstruction.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
+#include "p/codegen/CallSnippet.hpp"
 #include "ras/Logger.hpp"
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheManager.hpp"
@@ -292,6 +293,25 @@ int32_t TR::PPCReadMonitorSnippet::setEstimatedCodeLocation(int32_t estimatedSni
    getSnippetLabel()->setEstimatedCodeLocation(estimatedSnippetStart+28);
    return(estimatedSnippetStart);
    }
+
+uint8_t *TR::PPCJ9HelperCallSnippet::emitSnippetBody() {
+    uint8_t *buffer = cg()->getBinaryBufferCursor();
+    uint8_t *gtrmpln, *trmpln;
+
+    getSnippetLabel()->setCodeLocation(buffer);
+    buffer = TR::PPCCallSnippet::flushArgumentsToStack(buffer, this->getNode(), this->getSizeOfArguments(), cg());
+
+    if (this->getNode()->isJitDispatchJ9MethodCall(cg()->comp()))
+      {
+         // move value in r11 to r3 for the interpreter
+         // or     r11   r3    r11    444        0
+         // 011111 01011 00011 01011  0110111100 0
+         *(int32_t *)buffer = 0x7D635B78;
+         buffer += 4;
+      }
+
+    return this->genHelperCall(buffer);
+}
 
 TR::PPCAllocPrefetchSnippet::PPCAllocPrefetchSnippet(
    TR::CodeGenerator   *codeGen,
@@ -1270,4 +1290,3 @@ uint32_t TR::PPCNonZeroAllocPrefetchSnippet::getLength(int32_t estimatedCodeStar
 
    return PPC_INSTRUCTION_LENGTH;
    }
-

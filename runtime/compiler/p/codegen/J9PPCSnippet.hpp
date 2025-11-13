@@ -74,6 +74,20 @@ class PPCReadMonitorSnippet : public TR::PPCHelperCallSnippet
    int32_t getLoadOffset() { return _loadOffset; }
    };
 
+class PPCJ9HelperCallSnippet : public TR::PPCHelperCallSnippet {
+    int32_t _argSize;
+
+public:
+    PPCJ9HelperCallSnippet(TR::CodeGenerator *cg, TR::Node *node, TR::LabelSymbol *snippetlab,
+        TR::SymbolReference *helper, TR::LabelSymbol *restartLabel = NULL, int32_t argSize = -1)
+        : TR::PPCHelperCallSnippet(cg, node, snippetlab, helper, restartLabel)
+        , _argSize(argSize)
+    {}
+
+    int32_t getSizeOfArguments() { return _argSize; }
+    virtual uint8_t *emitSnippetBody();
+};
+
 class PPCAllocPrefetchSnippet : public TR::Snippet
    {
 
