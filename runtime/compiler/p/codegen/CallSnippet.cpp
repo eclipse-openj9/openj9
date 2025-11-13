@@ -344,9 +344,9 @@ uint8_t *TR::PPCJ9HelperCallSnippet::emitSnippetBody() {
     if (this->getNode()->isJitDispatchJ9MethodCall(cg()->comp()))
       {
          // move value in r0 to r3 for the interpreter
-         // or     r0     r3    r0     444        0
-         // 011111  00000 00011 00000  0110111100 0
-         *(int32_t *)buffer = 0x7C030378;
+         // or     r11     r3    r11     444        0
+         // 011111  01011 00011 01011  0110111100 0
+         *(int32_t *)buffer = 0x7D635B78;
          buffer += 4;  
       }
 

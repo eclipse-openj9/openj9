@@ -373,7 +373,7 @@ J9::Power::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
       }
    _properties._computedCallTargetRegister  = TR::RealRegister::gr0; // gr11 = interface, gr12 = virtual, so we need something else for computed
    _properties._vtableIndexArgumentRegister = TR::RealRegister::gr12;
-   _properties._j9methodArgumentRegister    = TR::RealRegister::gr0; // TODO:JSR292: Confirm
+   _properties._j9methodArgumentRegister    = TR::RealRegister::gr11; // TODO:JSR292: Confirm
    }
 
 const TR::PPCLinkageProperties& J9::Power::PrivateLinkage::getProperties()
@@ -2929,7 +2929,7 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
       }
 
       bool isCndInPostDeps = false;
-      if ((condRegPost = dependencies->searchPreConditionRegister(TR::RealRegister::cr0)) == NULL) {
+      if ((condRegPost = dependencies->searchPostConditionRegister(TR::RealRegister::cr0)) == NULL) {
          printf("did not find cond reg in post\n");
          cg()->allocateRegister(TR_CCR);
       } else {
