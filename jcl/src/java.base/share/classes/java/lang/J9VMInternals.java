@@ -113,7 +113,6 @@ final class J9VMInternals {
 		if (Boolean.getBoolean("ibm.java9.forceCommonCleanerShutdown")) { //$NON-NLS-1$
 			Runnable runnable = () -> {
 				Thread[] threads;
-				/*[IF JAVA_SPEC_VERSION < 19]*/
 				ThreadGroup threadGroup;
 				try {
 					Field innocuousThreadGroupField = InnocuousThread.class.getDeclaredField("INNOCUOUSTHREADGROUP"); //$NON-NLS-1$
@@ -123,16 +122,18 @@ final class J9VMInternals {
 					throw new InternalError(e);
 				}
 
-				threads = new Thread[threadGroup.numThreads];
+				threads = new Thread[threadGroup.activeCount()];
 				threadGroup.enumerate(threads, false);
-				/*[ELSE] JAVA_SPEC_VERSION < 19 */
-				threads = Thread.getAllThreads();
-				/*[ENDIF] JAVA_SPEC_VERSION < 19 */
 
 				CleanerShutdown.shutdownCleaner();
 
 				for (Thread t : threads) {
-					if (t.getName().equals("Common-Cleaner")) { //$NON-NLS-1$
+					String threadName = t.getName();
+					if (threadName.equals("Common-Cleaner") //$NON-NLS-1$
+					/*[IF JAVA_SPEC_VERSION >= 26]*/
+							|| threadName.equals("BufferCleaner") //$NON-NLS-1$
+					/*[ENDIF] JAVA_SPEC_VERSION >= 26 */
+					) {
 						t.interrupt();
 						try {
 							/* Need to wait for the Common-Cleaner thread to die before
@@ -150,7 +151,6 @@ final class J9VMInternals {
 						} catch (Throwable e) {
 							/* empty block */
 						}
-						break;
 					}
 				}
 			};
