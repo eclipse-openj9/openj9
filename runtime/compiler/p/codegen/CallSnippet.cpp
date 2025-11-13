@@ -142,7 +142,7 @@ uint8_t *TR::PPCCallSnippet::setUpArgumentsInRegister(uint8_t *buffer, TR::Node 
    TR::Linkage* linkage = cg->getLinkage(callNode->getSymbol()->castToMethodSymbol()->getLinkageConvention());
    const TR::PPCLinkageProperties &linkageProperties = linkage->getProperties();
    int32_t argStart = callNode->getFirstArgumentIndex();
-   if (callNode->isJitDispatchJ9MethodCall(comp())) {
+   if (callNode->isJitDispatchJ9MethodCall(cg()->comp())) {
       printf("found setup args in regs for jitDispatch\n");
    }
 
