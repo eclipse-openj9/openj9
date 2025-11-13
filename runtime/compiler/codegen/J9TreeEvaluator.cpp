@@ -2041,7 +2041,7 @@ J9::TreeEvaluator::isPrimitiveMonitor(TR::Node *monNode, TR::CodeGenerator *cg)
             currNode->setPrimitiveLockedRegion();
 
             if (guardExit != NULL)
-                {
+               {
                guardExit->setPrimitiveLockedRegion();
                }
             return true;
@@ -2059,7 +2059,7 @@ J9::TreeEvaluator::isPrimitiveMonitor(TR::Node *monNode, TR::CodeGenerator *cg)
             currNode->getFirstChild()->setPrimitiveLockedRegion();
 
             if (guardExit != NULL)
-                {
+               {
                guardExit->setPrimitiveLockedRegion();
                }
             return true;
@@ -2077,7 +2077,7 @@ J9::TreeEvaluator::isPrimitiveMonitor(TR::Node *monNode, TR::CodeGenerator *cg)
          {
          if ((currNode->getOpCode().isIf() && currNode->isNonoverriddenGuard()))
               {
-              guardExit = scanForMonitorExitNode( currNode->getBranchDestination());
+              guardExit = scanForMonitorExitNode(currNode->getBranchDestination());
 
               if (!guardExit && monNode->isSyncMethodMonitor())
                   return false;
