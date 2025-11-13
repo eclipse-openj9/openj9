@@ -832,3 +832,13 @@ J9::Power::CodeGenerator::deriveCallingLinkage(TR::Node *node, bool isIndirect)
 
    return self()->getLinkage(callee->getLinkageConvention());
    }
+
+bool
+J9::Power::CodeGenerator::supportsNonHelper(TR::SymbolReferenceTable::CommonNonhelperSymbol symbol)
+   {
+   if (symbol == TR::SymbolReferenceTable::jitDispatchJ9MethodSymbol)
+      {
+      return true;
+      }
+   return J9::CodeGenerator::supportsNonHelper(symbol);
+   }
