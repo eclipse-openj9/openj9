@@ -2801,6 +2801,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_String_decodeUTF8_UTF16,    "decodeUTF8_UTF16",    "([BII[BIZ)I")},
       {x(TR::java_lang_String_isLatin1,            "isLatin1",            "()Z")},
       {x(TR::java_lang_String_startsWith,          "startsWith",          "(Ljava/lang/String;I)Z")},
+      {x(TR::java_lang_String_valueOf_C,           "valueOf",             "(C)Ljava/lang/String;")},
       {  TR::unknownMethod}
       };
 

@@ -234,6 +234,9 @@ static TR::RecognizedMethod stringCanSkipNullChecks[] =
    TR::java_lang_StringLatin1_toUpperCase,
    TR::java_lang_StringUTF16_toLowerCase,
    TR::java_lang_StringUTF16_toUpperCase,
+   TR::java_lang_String_equals,
+   TR::java_lang_String_regionMatchesInternal,
+   TR::java_lang_String_valueOf_C,
    TR::unknownMethod
    };
 
@@ -362,6 +365,7 @@ static TR::RecognizedMethod stringCanSkipBoundChecks[] =
    TR::java_lang_StringUTF16_replace_CharSequence,
    TR::java_lang_StringLatin1_toLowerCase,
    TR::java_lang_StringLatin1_toUpperCase,
+   TR::java_lang_String_valueOf_C,
    TR::unknownMethod
    };
 
