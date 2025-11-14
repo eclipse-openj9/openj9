@@ -644,7 +644,7 @@ _inconsistentStack2:
 		 * that the types are still compatible.
 		 */
 		if ((pc == (UDATA)exceptionStartPC)
-			|| (tempStoreChange && ((exceptionStartPC < pc) && (pc < exceptionEndPC)))
+			|| (tempStoreChange && (((UDATA)exceptionStartPC < pc) && (pc < (UDATA)exceptionEndPC)))
 		) {
 			/* If this is the first pc of an exception tempStoreChange does not apply. */
 			if ((pc == (UDATA)exceptionStartPC) && tempStoreChange) {
