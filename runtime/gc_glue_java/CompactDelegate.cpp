@@ -64,7 +64,7 @@ MM_CompactDelegate::verifyHeap(MM_EnvironmentBase *env, MM_MarkMap *markMap)
 	 * each pages maps to 2 mark bit slots so heap alignment needs to be a multiple
 	 * of the compaction page size
 	 */
-	assume0(extensions->heapAlignment % (2 * J9BITS_BITS_IN_SLOT * sizeof(uintptr_t)) == 0);
+	assume0(extensions->heapAlignment % (2 * OMRBITS_BITS_IN_SLOT * sizeof(uintptr_t)) == 0);
 
 	MM_HeapRegionManager *regionManager = env->getExtensions()->getHeap()->getHeapRegionManager();
 	GC_HeapRegionIteratorStandard regionIterator(regionManager);
