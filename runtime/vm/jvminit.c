@@ -3267,8 +3267,8 @@ static BOOLEAN
 isEmpty(const char * str)
 {
 	BOOLEAN isEmpty = TRUE;
-	while('\0' != *str) {
-		if (0 == isspace((unsigned char) *str)) {
+	while ('\0' != *str) {
+		if (0 == OMR_ISSPACE(*str)) {
 			isEmpty = FALSE;
 			break;
 		}

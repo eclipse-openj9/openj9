@@ -326,10 +326,10 @@ hasEnvOption(const char *envOptions, const char *option)
 	UDATA optionLength = strlen(option);
 
 	while (NULL != start) {
-		if ((start == envOptions) || isspace(start[-1])) {
+		if ((start == envOptions) || OMR_ISSPACE(start[-1])) {
 			const char *end = start + optionLength;
 
-			if ((*end == '\0') || isspace(*end)) {
+			if ((*end == '\0') || OMR_ISSPACE(*end)) {
 				success = TRUE;
 				break;
 			}
@@ -355,11 +355,11 @@ findStartOfMostRightOption(const char *envOptions, const char *option)
 	char *result = strstr(envOptions, option);
 	UDATA optionSize = strlen(option);
 	if (NULL != result) {
-		if ((result == envOptions) || isspace(result[-1])) {
+		if ((result == envOptions) || OMR_ISSPACE(result[-1])) {
 			char *cursor = result;
 			char *next = NULL;
 			while (NULL != (next = strstr(cursor + optionSize, option))) {
-				if (isspace(next[-1])) {
+				if (OMR_ISSPACE(next[-1])) {
 					result = next;
 				}
 				cursor = next;

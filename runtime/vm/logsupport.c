@@ -202,7 +202,7 @@ parseLogOptions(char *options, UDATA *optionsFlags, UDATA *parseSucceeded)
 
 	/* remove any whitespace from the options string */
 	for (i = 0, j = 0; i < optlen; i++) {
-		if (!isspace(options[i])) {
+		if (!OMR_ISSPACE(options[i])) {
 			options[j] = options[i];
 			j++;
 		}
