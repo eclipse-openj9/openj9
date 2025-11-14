@@ -78,6 +78,11 @@ public:
 		U_16 stackItemsCount;
 		U_8 *localsTypeInfo;
 		U_8 *stackItemsTypeInfo;
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+		U_16 numberOfUnsetFields;
+		U_8 *unsetFields;
+		U_8 baseFrameType;
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 	};
 
 	struct LocalVariableInfo
@@ -154,11 +159,24 @@ public:
 		virtual void visitStackMapObject(U_8 slotType, U_16 classCPIndex, U_16 classNameCPIndex) = 0;
 		virtual void visitStackMapNewObject(U_8 slotType, U_16 offset) = 0;
 		virtual void visitStackMapItem(U_8 slotType) = 0;
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+		virtual void visitUnsetField(U_16 cpIndex, U_16 nameIndex) = 0;
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 	};
 
 	struct StackMapFrameVisitor
 	{
-		virtual void visitStackMapFrame(U_16 localsCount, U_16 stackItemsCount, U_16 offsetDelta, U_8 frameType, VerificationTypeInfo *typeInfo) = 0;
+		virtual void visitStackMapFrame(
+			U_16 localsCount,
+			U_16 stackItemsCount,
+			U_16 offsetDelta,
+			U_8 frameType,
+			VerificationTypeInfo *typeInfo
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+			, U_8 baseFrameType,
+			U_16 numberOfUnsetFields
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+		) = 0;
 	};
 
 	struct AnnotationElementVisitor
@@ -207,6 +225,15 @@ class VerificationTypeInfo
 
 		void localsDo(VerificationTypeInfoVisitor *visitor) { slotsDo(_stackMapFrameInfo->localsCount, _stackMapFrameInfo->localsTypeInfo, visitor); }
 		void stackItemsDo(VerificationTypeInfoVisitor *visitor) { slotsDo(_stackMapFrameInfo->stackItemsCount, _stackMapFrameInfo->stackItemsTypeInfo, visitor); }
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+		void unsetFieldsDo(VerificationTypeInfoVisitor *visitor) {
+			for (U_16 i = 0; i < _stackMapFrameInfo->numberOfUnsetFields; i++) {
+				U_16 cpIndex = getUnsetFieldIndex(_stackMapFrameInfo->unsetFields + (i * sizeof(U_16)));
+				U_16 nameIndex = (U_16) _classFile->constantPool[cpIndex].slot1;
+				visitor->visitUnsetField(cpIndex, nameIndex);
+			}
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 	private:
 		U_16 getParameter(U_8 *bytes) const { return (U_16(bytes[1]) << 8) | U_16(bytes[2]); }
@@ -233,6 +260,9 @@ class VerificationTypeInfo
 				}
 			}
 		}
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+		U_16 getUnsetFieldIndex(U_8 *bytes) const { return (U_16(bytes[0]) << 8) | U_16(bytes[1]); }
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 		StackMapFrameInfo *_stackMapFrameInfo;
 		J9CfrClassFile *_classFile;
@@ -534,7 +564,17 @@ class MethodIterator
 			StackMapFrameInfo *end = _methodsInfo[_methodIndex].stackMapFramesInfo + _methodsInfo[_methodIndex].stackMapFramesCount;
 			for (StackMapFrameInfo *info = _methodsInfo[_methodIndex].stackMapFramesInfo; info != end; ++info) {
 				VerificationTypeInfo typeInfo(info, _classFile);
-				visitor->visitStackMapFrame(info->localsCount, info->stackItemsCount, info->offsetDelta, info->frameType, &typeInfo);
+				visitor->visitStackMapFrame(
+					info->localsCount,
+					info->stackItemsCount,
+					info->offsetDelta,
+					info->frameType,
+					&typeInfo
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+					, info->baseFrameType,
+					info->numberOfUnsetFields
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+				);
 			}
 		}
 
@@ -1194,6 +1234,9 @@ private:
 	void walkMethodCodeAttributeCode(U_16 methodIndex);
 	void walkMethodMethodParametersAttribute(U_16 methodIndex);
 
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+	U_8 * walkUnsetFields(U_8 *framePointer, U_16 unsetFieldCount);
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 	U_8 * walkStackMapSlots(U_8 *framePointer, U_16 typeInfoCount);
 
 	bool methodIsFinalize(U_16 methodIndex);
@@ -1219,6 +1262,9 @@ private:
 	VMINLINE void markClassNameAsReferenced(U_16 classCPIndex);
 	VMINLINE void markStringAsReferenced(U_16 cpIndex);
 	VMINLINE void markNameAndDescriptorAsReferenced(U_16 nasCPIndex);
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+	VMINLINE void markNameAndDescriptorAsReferencedByEarlyLarvalFrame(U_16 nasCPIndex);
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 	VMINLINE void markFieldRefAsReferenced(U_16 cpIndex);
 	VMINLINE void markMethodRefAsReferenced(U_16 cpIndex);
 	VMINLINE void markMethodTypeAsReferenced(U_16 cpIndex);

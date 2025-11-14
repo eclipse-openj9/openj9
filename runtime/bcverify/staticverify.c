@@ -41,6 +41,7 @@
 typedef struct StackmapExceptionDetails {
 	I_32 stackmapFrameIndex;
 	U_32 stackmapFrameBCI;
+	U_16 errorType;
 } StackmapExceptionDetails;
 
 static IDATA checkMethodStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile, UDATA methodIndex, U_8 * instructionMap, J9CfrError * error, U_32 flags, I_32 *hasRET);
@@ -48,6 +49,9 @@ static IDATA buildInstructionMap (J9CfrClassFile * classfile, J9CfrAttributeCode
 static IDATA checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA length, U_8 * map, J9CfrError * error, U_32 flags, I_32 *hasRET);
 static IDATA checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCode * code, U_8 * map, UDATA flags, StackmapExceptionDetails* exceptionDetails);
 static I_32 checkStackMapEntries (J9CfrClassFile* classfile, J9CfrAttributeCode * code, U_8 * map, U_8 ** entries, UDATA slotCount, U_8 * end, UDATA checkAppendArraySize);
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+static I_32 checkUnsetFields(J9CfrClassFile *classfile, U_16 numberOfUnsetFields, U_8 *unsetFields, StackmapExceptionDetails *exceptionDetails);
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 static IDATA 
 buildInstructionMap (J9CfrClassFile * classfile, J9CfrAttributeCode * code, U_8 * map, UDATA methodIndex, J9CfrError * error)
@@ -1260,12 +1264,54 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 				UDATA delta;
 				IDATA slotCount;
 				UDATA checkAppendArraySize = FALSE;
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+				U_16 numberOfUnsetFields = 0;
+				U_8 *unsetFields = NULL;
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 				if ((entries + 1) > end) {
 					errorCode = FATAL_CLASS_FORMAT_ERROR;
 					goto _failedCheck;
 				}
 				frameType = *entries++;
+
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+				/* The offset for an early_larval frame comes from
+				 * its base frame. Verify the unset fields list
+				 * once this has been calculated.
+				 */
+				if (CFR_STACKMAP_EARLY_LARVAL == frameType) {
+					U_16 unsetFieldIndex = 0;
+					U_16 temp;
+					if ((entries + 2) > end) {
+						errorCode = FATAL_CLASS_FORMAT_ERROR;
+						goto _failedCheck;
+					}
+					NEXT_U16(numberOfUnsetFields, entries);
+					unsetFields = entries;
+					if ((entries + (2 * numberOfUnsetFields)) > end) {
+						errorCode = FATAL_CLASS_FORMAT_ERROR;
+						goto _failedCheck;
+					}
+					for (; unsetFieldIndex < numberOfUnsetFields; unsetFieldIndex++) {
+						NEXT_U16(temp, entries);
+					}
+					if ((entries + 1) > end) {
+						errorCode = FALLBACK_VERIFY_ERROR;
+						exceptionDetails->errorType = J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_BASE_FRAME_TYPE__ID;
+						goto _failedCheck;
+					}
+					frameType = *entries++;
+					/* The base frame of an early larval entry can't be
+					 * another early larval entry.
+					 */
+					if (CFR_STACKMAP_EARLY_LARVAL == frameType) {
+						errorCode = FALLBACK_VERIFY_ERROR;
+						exceptionDetails->errorType = J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_BASE_FRAME_TYPE__ID;
+						goto _failedCheck;
+					}
+				}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 				if (frameType < CFR_STACKMAP_SAME_LOCALS_1_STACK) {
 					offset += (UDATA) frameType;
@@ -1296,6 +1342,15 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 					errorCode = FATAL_CLASS_FORMAT_ERROR;
 					goto _failedCheck;
 				}
+
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+				if (numberOfUnsetFields > 0) {
+					errorCode = checkUnsetFields(classfile, numberOfUnsetFields, unsetFields, exceptionDetails);
+					if (0 != errorCode) {
+						goto _failedCheck;
+					}
+				}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 				if (frameType != CFR_STACKMAP_FULL) {
 					/* Only executed with StackMapTable */
@@ -1358,7 +1413,29 @@ _failedCheck:
 	return errorCode;
 }
 
-
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+static I_32
+checkUnsetFields(J9CfrClassFile *classfile, U_16 numberOfUnsetFields, U_8 *unsetFields, StackmapExceptionDetails* exceptionDetails)
+{
+	J9CfrConstantPoolInfo *cpBase = classfile->constantPool;
+	U_32 cpCount = (U_32)classfile->constantPoolCount;
+	for (; numberOfUnsetFields > 0; numberOfUnsetFields--) {
+		U_16 cpIndex;
+		NEXT_U16(cpIndex, unsetFields);
+		/* Check for valid constant pool index. */
+		if ((0 == cpIndex) || (cpIndex > cpCount)) {
+			exceptionDetails->errorType = J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_CP_INDEX__ID;
+			return FALLBACK_VERIFY_ERROR;
+		}
+		/* Each unset_fields entry must be a CONSTANT_NameAndType_info type. */
+		if(CFR_CONSTANT_NameAndType != cpBase[cpIndex].tag) {
+			exceptionDetails->errorType = J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_CP_INDEX__ID;
+			return FALLBACK_VERIFY_ERROR;
+		}
+	}
+	return 0;
+}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 static I_32
 checkStackMapEntries (J9CfrClassFile* classfile, J9CfrAttributeCode * code, U_8 * map, U_8 ** entries, UDATA slotCount, U_8 * end, UDATA checkAppendArraySize)
@@ -1554,14 +1631,14 @@ checkMethodStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile, UDATA
 	if ((flags & J9_VERIFY_IGNORE_STACK_MAPS) == 0) {
 		StackmapExceptionDetails exceptionDetails;
 		memset(&exceptionDetails, 0, sizeof(exceptionDetails));
+		exceptionDetails.errorType = J9NLS_CFR_ERR_INVALID_STACK_MAP_ATTRIBUTE__ID;
 		result = checkStackMap(classfile, method, code, map, flags, &exceptionDetails);
 		if (result) {
 			if (result == FALLBACK_VERIFY_ERROR) {
-				errorType = J9NLS_CFR_ERR_INVALID_STACK_MAP_ATTRIBUTE__ID;
-				Trc_STV_checkMethodStructure_VerifyError(errorType, methodIndex, pc);
+				Trc_STV_checkMethodStructure_VerifyError(exceptionDetails.errorType, methodIndex, pc);
 				/* Jazz 82615: Store error data for stackmap frame when verification error occurs */
 				buildMethodErrorWithExceptionDetails(error,
-					errorType,
+					exceptionDetails.errorType,
 					0,
 					CFR_ThrowVerifyError,
 					(I_32)methodIndex,

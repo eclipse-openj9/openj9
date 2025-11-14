@@ -1316,6 +1316,7 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 			 *	SAME_EXTENDED
 			 *	APPEND
 			 *	FULL
+			 *	EARLY_LARVAL
 			 *
 			 * Each of these types is described in more detail below.
 			 *
@@ -1344,12 +1345,28 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 			StackMapFrameInfo *stackMapFramesInfo = _methodsInfo[methodIndex].stackMapFramesInfo;
 			U_8 *framePointer = stackMap->entries;
 			U_16 entryCount = U_16(stackMap->numberOfEntries);
-			for(U_16 entryIndex = 0; entryIndex < entryCount; ++entryIndex) {
-				NEXT_U8(stackMapFramesInfo[entryIndex].frameType, framePointer);
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+			bool walkBaseFrame = false;
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+			U_16 entryIndex = 0;
+			while (entryIndex < entryCount) {
+				U_8 frameType = 0;
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+				if (walkBaseFrame) {
+					/* Save the base frame type and walk the base frame. */
+					NEXT_U8(stackMapFramesInfo[entryIndex].baseFrameType, framePointer);
+					frameType = stackMapFramesInfo[entryIndex].baseFrameType;
+					walkBaseFrame = false;
+				} else
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+				{
+					NEXT_U8(stackMapFramesInfo[entryIndex].frameType, framePointer);
+					frameType = stackMapFramesInfo[entryIndex].frameType;
+				}
 
-				if (CFR_STACKMAP_SAME_LOCALS_1_STACK > stackMapFramesInfo[entryIndex].frameType) { /* 0..63 */
+				if (CFR_STACKMAP_SAME_LOCALS_1_STACK > frameType) { /* 0..63 */
 					/* SAME frame - no extra data */
-				} else if (CFR_STACKMAP_SAME_LOCALS_1_STACK_END > stackMapFramesInfo[entryIndex].frameType) { /* 64..127 */
+				} else if (CFR_STACKMAP_SAME_LOCALS_1_STACK_END > frameType) { /* 64..127 */
 					/*
 					 * SAME_LOCALS_1_STACK {
 					 * 		TypeInfo stackItems[1]
@@ -1358,10 +1375,30 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 					stackMapFramesInfo[entryIndex].stackItemsCount = 1;
 					stackMapFramesInfo[entryIndex].stackItemsTypeInfo = framePointer;
 					framePointer = walkStackMapSlots(framePointer, stackMapFramesInfo[entryIndex].stackItemsCount);
-				} else if (CFR_STACKMAP_SAME_LOCALS_1_STACK_EXTENDED > stackMapFramesInfo[entryIndex].frameType) { /* 128..246 */
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+				} else if (CFR_STACKMAP_EARLY_LARVAL > frameType) { /* 128..245 */
+#else /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+				} else if (CFR_STACKMAP_SAME_LOCALS_1_STACK_EXTENDED > frameType) { /* 128..246 */
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 					/* Reserved frame types - no extra data */
 					Trc_BCU_Assert_ShouldNeverHappen();
-				} else if (CFR_STACKMAP_SAME_LOCALS_1_STACK_EXTENDED == stackMapFramesInfo[entryIndex].frameType) { /* 247 */
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+				} else if (CFR_STACKMAP_EARLY_LARVAL == frameType) { /* 246 */
+					/*
+					 * EARLY_LARVAL {
+					 *		U_16 numberOfUnsetFields
+					 *		U_16 unsetFields[numberOfUnsetFields]
+					 *		base frame
+					 * };
+					 */
+					NEXT_U16(stackMapFramesInfo[entryIndex].numberOfUnsetFields, framePointer);
+					stackMapFramesInfo[entryIndex].unsetFields = framePointer;
+					framePointer = walkUnsetFields(framePointer, stackMapFramesInfo[entryIndex].numberOfUnsetFields);
+					/* Walk the base frame during the next iteration. */
+					walkBaseFrame = true;
+					continue;
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+				} else if (CFR_STACKMAP_SAME_LOCALS_1_STACK_EXTENDED == frameType) { /* 247 */
 					/*
 					 * SAME_LOCALS_1_STACK_EXTENDED {
 					 *		U_16 offsetDelta
@@ -1372,21 +1409,21 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 					stackMapFramesInfo[entryIndex].stackItemsCount = 1;
 					stackMapFramesInfo[entryIndex].stackItemsTypeInfo = framePointer;
 					framePointer = walkStackMapSlots(framePointer, stackMapFramesInfo[entryIndex].stackItemsCount);
-				} else if (CFR_STACKMAP_SAME_EXTENDED > stackMapFramesInfo[entryIndex].frameType) { /* 248..250 */
+				} else if (CFR_STACKMAP_SAME_EXTENDED > frameType) { /* 248..250 */
 					/*
 					 * CHOP {
 					 *		U_16 offsetDelta
 					 * };
 					 */
 					NEXT_U16(stackMapFramesInfo[entryIndex].offsetDelta, framePointer); /* Extract offsetDelta */
-				} else if (CFR_STACKMAP_SAME_EXTENDED == stackMapFramesInfo[entryIndex].frameType) { /* 251 */
+				} else if (CFR_STACKMAP_SAME_EXTENDED == frameType) { /* 251 */
 					/*
 					 * SAME_EXTENDED {
 					 *		U_16 offsetDelta
 					 * };
 					 */
 					NEXT_U16(stackMapFramesInfo[entryIndex].offsetDelta, framePointer); /* Extract offsetDelta */
-				} else if (CFR_STACKMAP_FULL > stackMapFramesInfo[entryIndex].frameType) { /* 252..254 */
+				} else if (CFR_STACKMAP_FULL > frameType) { /* 252..254 */
 					/*
 					 * APPEND {
 					 *		U_16 offsetDelta
@@ -1394,10 +1431,10 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 					 * };
 					 */
 					NEXT_U16(stackMapFramesInfo[entryIndex].offsetDelta, framePointer); /* Extract offsetDelta */
-					stackMapFramesInfo[entryIndex].localsCount = stackMapFramesInfo[entryIndex].frameType - CFR_STACKMAP_APPEND_BASE;
+					stackMapFramesInfo[entryIndex].localsCount = frameType - CFR_STACKMAP_APPEND_BASE;
 					stackMapFramesInfo[entryIndex].localsTypeInfo = framePointer;
 					framePointer = walkStackMapSlots(framePointer, stackMapFramesInfo[entryIndex].localsCount);
-				} else if (CFR_STACKMAP_FULL == stackMapFramesInfo[entryIndex].frameType) { /* 255 */
+				} else if (CFR_STACKMAP_FULL == frameType) { /* 255 */
 					/*
 					 * FULL {
 					 *		U_16 offsetDelta
@@ -1415,6 +1452,7 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 					stackMapFramesInfo[entryIndex].stackItemsTypeInfo = framePointer;
 					framePointer = walkStackMapSlots(framePointer, stackMapFramesInfo[entryIndex].stackItemsCount);
 				}
+				entryIndex++;
 			}
 			break;
 		}
@@ -2190,6 +2228,20 @@ ClassFileOracle::walkMethodCodeAttributeCode(U_16 methodIndex)
 #undef PARAM_U16
 #undef PARAM_U8
 
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+U_8 *
+ClassFileOracle::walkUnsetFields(U_8 *framePointer, U_16 numberOfUnsetFields)
+{
+	ROMCLASS_VERBOSE_PHASE_HOT(_context, WalkUnsetFields);
+	U_16 cpIndex = 0;
+	for (U_16 i = 0; i < numberOfUnsetFields; i++) {
+		NEXT_U16(cpIndex, framePointer);
+		markNameAndDescriptorAsReferencedByEarlyLarvalFrame(cpIndex);
+	}
+	return framePointer;
+}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+
 U_8 *
 ClassFileOracle::walkStackMapSlots(U_8 *framePointer, U_16 typeInfoCount)
 {
@@ -2563,6 +2615,24 @@ ClassFileOracle::markNameAndDescriptorAsReferenced(U_16 nasCPIndex)
 	markConstantUTF8AsReferenced(_classFile->constantPool[nasCPIndex].slot1); /* Mark name UTF8 */
 	markConstantUTF8AsReferenced(_classFile->constantPool[nasCPIndex].slot2); /* Mark descriptor UTF8 */
 }
+
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+/**
+ * Mark name and descriptor as referenced as well
+ * used so the strings are saved in the rom class
+ * constant pool. They will be used in the verifier.
+ */
+void
+ClassFileOracle::markNameAndDescriptorAsReferencedByEarlyLarvalFrame(U_16 nasCPIndex)
+{
+	Trc_BCU_Assert_Equals(CFR_CONSTANT_NameAndType, _classFile->constantPool[nasCPIndex].tag);
+	markConstantNameAndTypeAsReferenced(nasCPIndex);
+	markConstantUTF8AsReferenced(_classFile->constantPool[nasCPIndex].slot1);
+	_constantPoolMap->markConstantAsUsedByEarlyLarvalFrame(_classFile->constantPool[nasCPIndex].slot1);
+	markConstantUTF8AsReferenced(_classFile->constantPool[nasCPIndex].slot2);
+	_constantPoolMap->markConstantAsUsedByEarlyLarvalFrame(_classFile->constantPool[nasCPIndex].slot2);
+}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 void
 ClassFileOracle::markFieldRefAsReferenced(U_16 cpIndex)

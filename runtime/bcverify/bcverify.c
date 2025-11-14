@@ -72,6 +72,9 @@
 
 static IDATA buildBranchMap (J9BytecodeVerificationData * verifyData);
 static IDATA decompressStackMaps (J9BytecodeVerificationData * verifyData, IDATA localsCount, U_8 * stackMapData);
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+static J9EarlyLarvalFrame *parseUnsetFields(J9BytecodeVerificationData *verifyData, U_8 **stackMapData);
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 static VMINLINE IDATA parseLocals (J9BytecodeVerificationData * verifyData, U_8** stackMapData, J9BranchTargetStack * liveStack, IDATA localDelta, IDATA localsCount, IDATA maxLocals);
 static VMINLINE IDATA parseStack (J9BytecodeVerificationData * verifyData, U_8** stackMapData, J9BranchTargetStack * liveStack, UDATA stackCount, UDATA maxStack);
 static UDATA parseElement (J9BytecodeVerificationData * verifyData, U_8 ** stackMapData);
@@ -89,6 +92,8 @@ static IDATA setVerifyState ( J9JavaVM *vm, char *option, const char **errorStri
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 static UDATA strictFieldHashFn(void *key, void *userData);
 static UDATA strictFieldHashEqualFn(void *leftKey, void *rightKey, void *userData);
+static UDATA earlyLarvalFrameHashFn(void *key, void *userData);
+static UDATA earlyLarvalFrameEqualFn(void *leftKey, void *rightKey, void *userData);
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 /**
@@ -346,6 +351,7 @@ buildBranchMap (J9BytecodeVerificationData * verifyData)
 	Returns
 		BCV_SUCCESS on success,
 		BCV_FAIL on verification error
+		BCV_ERR_INSUFFICIENT_MEMORY
 */
 static IDATA
 decompressStackMaps (J9BytecodeVerificationData * verifyData, IDATA localsCount, U_8 * stackMapData)
@@ -366,13 +372,35 @@ decompressStackMaps (J9BytecodeVerificationData * verifyData, IDATA localsCount,
 	UDATA errorModule = J9NLS_BCV_ERR_NO_ERROR__MODULE; /* default to BCV NLS catalog */
 
 	Trc_BCV_decompressStackMaps_Entry(verifyData->vmStruct, localsCount);
+
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+	resetEarlyLarvalFrames(verifyData);
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+
 	/* localsCount records the current locals depth as all stack maps (except full frame) are relative to the previous frame */
 	for (i = 0; i < (UDATA) verifyData->stackMapsCount; i++) {
 		IDATA localDelta = 0;
 		UDATA stackCount = 0;
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+		J9EarlyLarvalFrame *earlyLarvalFrame = NULL;
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 		NEXT_U8(mapType, stackMapData);
 		mapPC++;
+
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+		if (J9_CLASSFILE_OR_ROMCLASS_SUPPORTS_STRICT_FIELDS(verifyData->romClass)) {
+			if (mapType == CFR_STACKMAP_EARLY_LARVAL) {
+				earlyLarvalFrame = parseUnsetFields(verifyData, &stackMapData);
+				if (NULL == earlyLarvalFrame) {
+					rc = BCV_ERR_INSUFFICIENT_MEMORY;
+					break;
+				}
+				/* Decompress base frame. */
+				NEXT_U8(mapType, stackMapData);
+			}
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 		if (mapType < CFR_STACKMAP_SAME_LOCALS_1_STACK) {
 			/* Same frame 0-63 */
@@ -403,6 +431,17 @@ decompressStackMaps (J9BytecodeVerificationData * verifyData, IDATA localsCount,
 				localsCount = 0;
 			}
 		}
+
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+		/* Set base frame pc once it has been calculated.
+		 * Wait to add it to the table until this point
+		 * because the hash function is dependent on the pc.
+		 */
+		if (NULL != earlyLarvalFrame) {
+			earlyLarvalFrame->baseFramePC = mapPC;
+			hashTableAdd(verifyData->earlyLarvalFrames, earlyLarvalFrame);
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 		localsCount = parseLocals (verifyData, &stackMapData, liveStack, localDelta, localsCount, maxLocals);
 		if (localsCount < 0) {
@@ -473,7 +512,34 @@ decompressStackMaps (J9BytecodeVerificationData * verifyData, IDATA localsCount,
 	return rc;
 }
 
-
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+static J9EarlyLarvalFrame *
+parseUnsetFields(J9BytecodeVerificationData *verifyData, U_8 **stackMapData)
+{
+	PORT_ACCESS_FROM_PORT(verifyData->portLib);
+	U_8 *mapData = *stackMapData;
+	J9EarlyLarvalFrame *newEntry = j9mem_allocate_memory(sizeof(J9EarlyLarvalFrame), J9MEM_CATEGORY_CLASSES);
+	if (NULL == newEntry) {
+		goto done;
+	}
+	NEXT_U16(newEntry->numberOfUnsetFields, mapData);
+	if (newEntry->numberOfUnsetFields > 0) {
+		int i = 0;
+		newEntry->unsetFieldCpList = j9mem_allocate_memory(sizeof(U_16) * newEntry->numberOfUnsetFields, J9MEM_CATEGORY_CLASSES);
+		if (NULL == newEntry->unsetFieldCpList) {
+			j9mem_free_memory(newEntry);
+			newEntry = NULL;
+			goto done;
+		}
+		for (; i < newEntry->numberOfUnsetFields; i++) {
+			NEXT_U16(newEntry->unsetFieldCpList[i], mapData);
+		}
+	}
+done:
+	*stackMapData = mapData;
+	return newEntry;
+}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 /* Specifically returns BCV_ERR_INTERNAL_ERROR for failure */
 
@@ -2308,6 +2374,8 @@ j9bcv_freeVerificationData (J9PortLibrary * portLib, J9BytecodeVerificationData 
 	if (verifyData) {
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 		hashTableFree(verifyData->strictFields);
+		resetEarlyLarvalFrames(verifyData);
+		hashTableFree(verifyData->earlyLarvalFrames);
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 #ifdef J9VM_THR_PREEMPTIVE
 		JavaVM* jniVM = (JavaVM*)verifyData->javaVM;
@@ -2352,7 +2420,6 @@ j9bcv_initializeVerificationData(J9JavaVM* javaVM)
 	}
 #endif
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
-	verifyData->strictFieldsUnsetCount = 0;
 	verifyData->strictFields = hashTableNew(
 		OMRPORT_FROM_J9PORT(PORTLIB),
 		J9_GET_CALLSITE(),
@@ -2366,6 +2433,21 @@ j9bcv_initializeVerificationData(J9JavaVM* javaVM)
 	if (NULL == verifyData->strictFields) {
 		goto error_no_memory;
 	}
+	verifyData->strictFieldsUnsetCount = 0;
+	verifyData->earlyLarvalFrames = hashTableNew(
+		OMRPORT_FROM_J9PORT(PORTLIB),
+		J9_GET_CALLSITE(),
+		0,
+		sizeof(J9EarlyLarvalFrame),
+		0, 0,
+		J9MEM_CATEGORY_CLASSES,
+		earlyLarvalFrameHashFn,
+		earlyLarvalFrameEqualFn,
+		NULL, javaVM);
+	if (NULL == verifyData->strictFields) {
+		goto error_no_memory;
+	}
+	verifyData->earlyLarvalFramePrevious = NULL;
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 	verifyData->verifyBytecodesFunction = j9bcv_verifyBytecodes;
@@ -2912,6 +2994,19 @@ static UDATA strictFieldHashEqualFn(void *leftKey, void *rightKey, void *userDat
 	J9StrictFieldEntry *leftEntry = leftKey;
 	J9StrictFieldEntry *rightEntry = rightKey;
 	return J9UTF8_EQUALS(leftEntry->nameutf8, rightEntry->nameutf8);
+}
+
+static UDATA earlyLarvalFrameHashFn(void *key, void *userData)
+{
+	J9EarlyLarvalFrame *entry = key;
+	return entry->baseFramePC;
+}
+
+static UDATA earlyLarvalFrameEqualFn(void *leftKey, void *rightKey, void *userData)
+{
+	J9EarlyLarvalFrame *leftEntry = leftKey;
+	J9EarlyLarvalFrame *rightEntry = rightKey;
+	return (leftEntry->baseFramePC == rightEntry->baseFramePC);
 }
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 

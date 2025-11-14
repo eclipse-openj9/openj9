@@ -65,6 +65,7 @@
 			<compilerarg line='--add-exports java.base/jdk.internal.value=ALL-UNNAMED' />
 			<compilerarg line='--add-exports java.base/jdk.internal.vm.annotation=ALL-UNNAMED' />
 			<compilerarg line='--enable-preview -source 26'/>
+			<compilerarg line='-XDgenerateEarlyLarvalFrame'/>
 			<!-- uncomment when running with lw5 -->
 			<!--<compilerarg line='-XDenableNullRestrictedTypes' />-->
 			<classpath>

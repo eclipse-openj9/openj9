@@ -951,6 +951,12 @@ generateJ9RtvExceptionDetails(J9BytecodeVerificationData* verifyData, U_8* initM
 	case BCV_ERR_STRICT_FIELDS_UNASSIGNED:
 		printMessage(&msgBuf, "All strict final fields must be initialized before super().");
 		break;
+	case BCV_ERR_STRICT_FIELD_NOT_VALID:
+		printMessage(&msgBuf, "Strict fields not a subset of initial strict instance fields.");
+		break;
+	case BCV_ERR_STRICT_FIELD_STACK_MAP_INCONSISTENT:
+		printMessage(&msgBuf, "Inconsistent stackmap frames at branch target.");
+		break;
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 	default:
 		Assert_VRB_ShouldNeverHappen();

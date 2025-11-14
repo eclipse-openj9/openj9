@@ -956,6 +956,14 @@ private:
 		_cursor->writeU32(_constantPoolMap->getROMClassCPIndexForReference(exceptionClassCPIndex), Cursor::GENERIC);
 	}
 
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+	void visitUnsetField(U_16 cpIndex, U_16 nameIndex)
+	{
+		U_8 *nameData = _classFileOracle->getUTF8Data(nameIndex);
+		_cursor->writeBigEndianU16(_constantPoolMap->getROMClassCPIndex(nameIndex), Cursor::GENERIC);
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+
 	void visitStackMapObject(U_8 slotType, U_16 classCPIndex, U_16 classNameCPIndex)
 	{
 		U_8 *nameData = _classFileOracle->getUTF8Data(classNameCPIndex);
@@ -1029,7 +1037,17 @@ private:
 		_cursor->writeU8(slotType, Cursor::GENERIC);
 	}
 
-	void visitStackMapFrame(U_16 localsCount, U_16 stackItemsCount, U_16 offsetDelta, U_8 frameType, ClassFileOracle::VerificationTypeInfo *typeInfo)
+	void visitStackMapFrame(
+		U_16 localsCount,
+		U_16 stackItemsCount,
+		U_16 offsetDelta,
+		U_8 stackMapFrameType,
+		ClassFileOracle::VerificationTypeInfo *typeInfo
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+		, U_8 baseFrameType,
+		U_16 numberOfUnsetFields
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+	)
 	{
 		/*
 		 * Stack Map Frame:
@@ -1045,10 +1063,33 @@ private:
 		 *	APPEND
 		 *	FULL
 		 * }
+		 *
+		 * In Project Valhalla the stack_map_frame union is renamed
+		 * to base_frame and stack_map_frame is defined as:
+		 * union stack_map_frame {
+		 * 	base_frame
+		 * 	early_larval_frame
+		 * }
 		 */
-
+		U_8 frameType = stackMapFrameType;
 		/* output the frame tag */
 		_cursor->writeU8(frameType, Cursor::GENERIC);
+
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+		if (CFR_STACKMAP_EARLY_LARVAL == frameType) { /* 246 */
+			/*
+			 * EARLY_LARVAL {
+			 *		U_16 numberOfUnsetFields
+			 *		U_16 unsetFields[numberOfUnsetFields]
+			 *		base frame
+			 * };
+			 */
+			_cursor->writeBigEndianU16(numberOfUnsetFields, Cursor::GENERIC);
+			typeInfo->unsetFieldsDo(this);
+			frameType = baseFrameType;
+			_cursor->writeU8(frameType, Cursor::GENERIC);
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 		if (CFR_STACKMAP_SAME_LOCALS_1_STACK > frameType) { /* 0..63 */
 			/* SAME frame - no extra data */

@@ -27,6 +27,8 @@ import static org.objectweb.asm.Opcodes.*;
 
 import org.testng.annotations.Test;
 
+import jdk.internal.vm.annotation.Strict;
+
 @Test(groups = { "level.sanity" })
 public class StrictFieldTests {
 	/* A strict final field cannot be set outside earlyLarvel.
@@ -178,5 +180,75 @@ public class StrictFieldTests {
 	static void testIfAcmpneUninitializedValue() throws Throwable {
 		Class<?> c = StrictFieldGenerator.generateTestIfAcmpneUninitializedValue();
 		c.newInstance();
+	}
+
+	/**
+	 * ASM does not support stack map customizations so its not yet possible
+	 * to generate incorrect stack maps to test the early larval frame.
+	 * I'm waiting on https://github.com/adoptium/TKG/issues/770 to write
+	 * some tests using jasm.
+	 * In the meantime we can generate a class with the
+	 * -XDgenerateEarlyLarvalFrame option to do some basic validation on early
+	 * larval frame support.
+	 *
+	 * Future tests:
+	 * - check that a base frame exists
+	 * - check that the base frame is not an early larval frame
+	 * - check that cp index is not out of range
+	 * - check that cp index is CONSTANT_NameAndType_info
+	 * - fail if cp doesn't refer to a strict instance field
+	 * - fail if not in the list and not set
+	 */
+
+	static class EarlyLarvalStackMapNoUnsetFields {
+		// StackMapTable: number_of_entries = 2
+		// frame_type = 12 /* same */
+		// frame_type = 246 /* early_larval */
+		// 	number of unset_fields = 0
+		// 		offset_delta = 4
+		// 		locals = [ this, int ]
+		// 		stack = []
+		@Strict int i;
+		EarlyLarvalStackMapNoUnsetFields(boolean b) {
+			if (b) {
+				i = 1;
+			} else {
+				i = 2;
+			}
+			super();
+		}
+	}
+
+	@Test
+	static public void testEarlyLarvalStackMapNoUnsetFields() throws Throwable {
+		EarlyLarvalStackMapNoUnsetFields earlyLarvalStackMapNoUnsetFields = new EarlyLarvalStackMapNoUnsetFields(true);
+	}
+
+	static class EarlyLarvalStackMap {
+		// StackMapTable: number_of_entries = 2
+		// frame_type = 12 /* same */
+		// frame_type = 246 /* early_larval */
+		//   number of unset_fields = 1
+		//     unset_field = #NameAndType j:I
+		//       offset_delta = 4
+		//       locals = [ this, int ]
+		//       stack = []
+		@Strict int i;
+		/* j will not have been set at the first early larval frame. */
+		@Strict int j;
+		EarlyLarvalStackMap(boolean b) {
+			if (b) {
+				i = 1;
+			} else {
+				i = 2;
+			}
+			j = 0;
+			super();
+		}
+	}
+
+	@Test
+	static public void testEarlyLarvalStackMap() throws Throwable {
+		EarlyLarvalStackMap earlyLarvalStackMap = new EarlyLarvalStackMap(true);
 	}
 }
