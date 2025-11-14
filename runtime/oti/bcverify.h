@@ -281,27 +281,6 @@ typedef struct J9BCVAlloc {
 		temps[ ( tempIndex - 1 ) ] = BCV_BASE_TYPE_TOP; \
 	}
 
-#define STORE_TEMP_OBJECT( tempIndex, tempType )	\
-	STORE_TEMP( tempIndex, tempType );
-
-#define STORE_TEMP_INTEGER( tempIndex ) \
-	STORE_TEMP( tempIndex, (UDATA) (BCV_BASE_TYPE_INT) );
-
-#define STORE_TEMP_FLOAT( tempIndex ) \
-	STORE_TEMP( tempIndex, (UDATA) (BCV_BASE_TYPE_FLOAT) );
-
-/* direct write of the TOP avoids the pre-index check */
-
-#define STORE_TEMP_PAIR( tempIndex, tempType )  \
-	STORE_TEMP( tempIndex, tempType ); \
-	temps[ ( tempIndex + 1 ) ] = (BCV_BASE_TYPE_TOP);
-
-#define STORE_TEMP_LONG( tempIndex )  \
-	STORE_TEMP_PAIR( tempIndex, (UDATA) (BCV_BASE_TYPE_LONG) );
-
-#define STORE_TEMP_DOUBLE( tempIndex ) \
-	STORE_TEMP_PAIR( tempIndex, (UDATA) (BCV_BASE_TYPE_DOUBLE) );
-
 #define RELOAD_LIVESTACK \
 	stackBase =  &(liveStack->stackElements[liveStack->stackBaseIndex]); \
 	stackTop = &(liveStack->stackElements[liveStack->stackTopIndex]); \
