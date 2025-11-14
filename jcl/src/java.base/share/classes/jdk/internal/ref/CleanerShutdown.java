@@ -34,7 +34,14 @@ import java.security.PrivilegedAction;
 @SuppressWarnings("javadoc")
 public class CleanerShutdown {
 
+	private static volatile boolean shuttingDown;
+
+	public static boolean shuttingDown() {
+		return shuttingDown;
+	}
+
 	public static void shutdownCleaner() {
+		shuttingDown = true;
 		Cleaner commonCleaner = CleanerFactory.cleaner();
 		CleanerImpl commonCleanerImpl = CleanerImpl.getCleanerImpl(commonCleaner);
 		Cleanable ref = null;
