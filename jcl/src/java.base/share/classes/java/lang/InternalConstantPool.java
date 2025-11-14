@@ -29,8 +29,10 @@ package java.lang;
 final class InternalConstantPool {
 	@SuppressWarnings("unused")
 	private final long vmRef;
+	private final Class<?> clazz;
 
-	public InternalConstantPool(long addr) {
-		vmRef = addr;
+	public InternalConstantPool(long addr, Class<?> clazz) {
+		this.vmRef = addr;
+		this.clazz = clazz;
 	}
 }
