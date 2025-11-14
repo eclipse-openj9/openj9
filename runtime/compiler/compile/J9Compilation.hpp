@@ -353,7 +353,7 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    static void setOutOfProcessCompilation() { _outOfProcessCompilation = true; }
 
    bool isRemoteCompilation() const { return _remoteCompilation; } // client side
-   void setRemoteCompilation() { _remoteCompilation = true; }
+   void setRemoteCompilation(bool remoteCompilation = true) { _remoteCompilation = remoteCompilation; }
 
    TR::list<SerializedRuntimeAssumption *> &getSerializedRuntimeAssumptions() { return _serializedRuntimeAssumptions; }
 
