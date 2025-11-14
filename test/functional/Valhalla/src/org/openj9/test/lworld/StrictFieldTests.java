@@ -139,4 +139,44 @@ public class StrictFieldTests {
 		Class<?> c = StrictFieldGenerator.generateTestInstanceStrictNonFinalFieldSetAfterThisInit();
 		c.newInstance();
 	}
+
+	/* If an uninitialized 'this' reference is used with IFNONNULL,
+	 * verification must fail with a VerifyError.
+	 */
+	@Test(expectedExceptions = VerifyError.class,
+		expectedExceptionsMessageRegExp = ".*<init>.*JBifnonnull.*")
+	static public void testIfNonNullUninitializedThis() throws Throwable {
+		Class<?> c = StrictFieldGenerator.generateTestIfNonNullUninitializedThis();
+		c.newInstance();
+	}
+
+	/* If an uninitialized 'this' reference is used with IFNULL,
+	 * verification must fail with a VerifyError.
+	 */
+	@Test(expectedExceptions = VerifyError.class,
+		expectedExceptionsMessageRegExp = ".*<init>.*JBifnull.*")
+	static public void testIfNullUninitializedThis() throws Throwable {
+		Class<?> c = StrictFieldGenerator.generateTestIfNullUninitializedThis();
+		c.newInstance();
+	}
+
+	/* If a newly created value object of  uninitialized type is used with IF_ACMPEQ
+	 * verification must fail with a VerifyError.
+	 */
+	@Test(expectedExceptions = VerifyError.class,
+		expectedExceptionsMessageRegExp = ".*<init>.*JBifacmpeq.*")
+	static public void testIfAcmpeqUninitializedValue() throws Throwable {
+		Class<?> c = StrictFieldGenerator.generateTestIfAcmpeqUninitializedValue();
+		c.newInstance();
+	}
+
+	/* If a newly created value object of uninitialized type is used with IF_ACMPNE
+	 * verification must fail with a VerifyError.
+	 */
+	@Test(expectedExceptions = VerifyError.class,
+		expectedExceptionsMessageRegExp = ".*<init>.*JBifacmpne.*")
+	static void testIfAcmpneUninitializedValue() throws Throwable {
+		Class<?> c = StrictFieldGenerator.generateTestIfAcmpneUninitializedValue();
+		c.newInstance();
+	}
 }

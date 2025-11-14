@@ -25,6 +25,8 @@ import org.objectweb.asm.*;
 
 import static org.objectweb.asm.Opcodes.*;
 
+import static org.openj9.test.lworld.ValhallaUtils.ACC_STRICT_INIT;
+
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -228,7 +230,9 @@ public class ValueTypeGenerator extends ClassLoader {
 		int makeMaxLocal = 0;
 		String makeValueSig = "";
 		String makeValueGenericSig = "";
-		for (String s : fields) {
+		boolean[] isStrictInitField = new boolean[fields.length];
+		for (int i = 0; i < fields.length; i++) {
+			String s = fields[i];
 			String[] nameAndSigValue = s.split(":");
 			final int fieldModifiers;
 			if (isRef) {
@@ -237,9 +241,9 @@ public class ValueTypeGenerator extends ClassLoader {
 				if ((nameAndSigValue.length > 2) && nameAndSigValue[2].equals("static")) {
 					fieldModifiers = ACC_PUBLIC + ACC_STATIC;
 				} else if ((nameAndSigValue.length > 3) && nameAndSigValue[3].equals("volatile")) {
-					fieldModifiers = ACC_PUBLIC + ACC_FINAL + ACC_VOLATILE;
+					fieldModifiers = ACC_PUBLIC + ACC_FINAL + ACC_VOLATILE + ACC_STRICT_INIT;
 				} else {
-					fieldModifiers = ACC_PUBLIC + ACC_FINAL;
+					fieldModifiers = ACC_PUBLIC + ACC_FINAL + ACC_STRICT_INIT;
 				}
 			}
 			fv = cw.visitField(fieldModifiers, nameAndSigValue[0], nameAndSigValue[1], null, null);
@@ -247,6 +251,7 @@ public class ValueTypeGenerator extends ClassLoader {
 				fv.visitAttribute(new ValhallaUtils.NullRestrictedAttribute());
 			}
 			fv.visitEnd();
+			isStrictInitField[i] = (fieldModifiers & ACC_STRICT_INIT) != 0;
 			if ((nameAndSigValue.length <= 2) || !nameAndSigValue[2].equals("static")) {
 				makeValueSig += nameAndSigValue[1];
 				makeValueGenericSig += "Ljava/lang/Object;";
@@ -260,7 +265,7 @@ public class ValueTypeGenerator extends ClassLoader {
 			generateFieldMethods(cw, nameAndSigValue, className, isVerifiable, isRef);
 		}
 		
-		addInit(cw);
+		addInit(cw, className, fields, isStrictInitField);
 		if ("" != makeValueSig) {
 			addInitWithArgs(cw, className, makeValueSig, fields, makeMaxLocal);
 		}
@@ -339,13 +344,54 @@ public class ValueTypeGenerator extends ClassLoader {
 		}
 	}
 
-	private static void addInit(ClassWriter cw) {
+	private static void addInit(ClassWriter cw, String className, String[] fields, boolean[] isStrictInitField) {
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
 		mv.visitCode();
+		boolean needsWideStack = false;
+		for (int i = 0; i < fields.length; i++) {
+			if (!isStrictInitField[i]) continue;
+			String[] nameAndSigValue = fields[i].split(":");
+			String sig = nameAndSigValue[1];
+			mv.visitVarInsn(ALOAD, 0);
+			switch (sig.charAt(0)) {
+				case 'J':
+					mv.visitInsn(LCONST_0);
+					needsWideStack = true;
+					break;
+				case 'D':
+					mv.visitInsn(DCONST_0);
+					needsWideStack = true;
+					break;
+				case 'F':
+					mv.visitInsn(FCONST_0);
+					break;
+				case 'I':
+				case 'S':
+				case 'B':
+				case 'C':
+				case 'Z':
+					mv.visitInsn(ICONST_0);
+					break;
+				default:
+					boolean isNullRestricted = (nameAndSigValue.length > 2) && "NR".equals(nameAndSigValue[2]);
+					if (isNullRestricted) {
+						String fieldTypeName = sig.substring(1, sig.length() - 1);
+						mv.visitTypeInsn(NEW, fieldTypeName);
+						mv.visitInsn(DUP);
+						mv.visitMethodInsn(INVOKESPECIAL, fieldTypeName, "<init>", "()V", false);
+						needsWideStack = true;
+					} else {
+						mv.visitInsn(ACONST_NULL);
+					}
+					break;
+			}
+			mv.visitFieldInsn(PUTFIELD, className, nameAndSigValue[0], sig);
+		}
 		mv.visitVarInsn(ALOAD, 0);
 		mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
 		mv.visitInsn(RETURN);
-		mv.visitMaxs(1, 1);
+		int maxStack = needsWideStack ? 3 : 2;
+		mv.visitMaxs(maxStack, 1);
 		mv.visitEnd();
 	}
 	
@@ -621,10 +667,7 @@ public class ValueTypeGenerator extends ClassLoader {
 					break;
 				default:
 					String signature = nameAndSigValue[1];
-					
-					if ('L' == signature.charAt(0)) {
-						signature = signature.substring(1, signature.length() - 1);
-					}
+					signature = signature.substring(1, signature.length() - 1);
 					mv.visitTypeInsn(CHECKCAST, signature);
 					break;
 				}
@@ -793,9 +836,7 @@ public class ValueTypeGenerator extends ClassLoader {
 			doubleDetected = true;
 			break;
 		default:
-			if ((nameAndSigValue[1].length() >= 1) && (nameAndSigValue[1].charAt(0) == 'L')) {
-				mv.visitTypeInsn(CHECKCAST, nameAndSigValue[1].substring(1, nameAndSigValue[1].length() - 1));
-			}
+			mv.visitTypeInsn(CHECKCAST, nameAndSigValue[1].substring(1, nameAndSigValue[1].length() - 1));
 			break;
 		}
 		mv.visitMethodInsn(INVOKESTATIC, className, "setStatic" + nameAndSigValue[0], "(" + nameAndSigValue[1] + ")V", false);
@@ -847,9 +888,7 @@ public class ValueTypeGenerator extends ClassLoader {
 			doubleDetected = true;
 			break;
 		default:
-			if ((nameAndSigValue[1].length() >= 1) && (nameAndSigValue[1].charAt(0) == 'L')) {
-				mv.visitTypeInsn(CHECKCAST, nameAndSigValue[1].substring(1, nameAndSigValue[1].length() - 1));
-			}
+			mv.visitTypeInsn(CHECKCAST, nameAndSigValue[1].substring(1, nameAndSigValue[1].length() - 1));
 			break;
 		}
 		mv.visitMethodInsn(INVOKEVIRTUAL, className, "set" + nameAndSigValue[0], "(" + nameAndSigValue[1] + ")V", false);
