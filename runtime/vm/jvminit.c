@@ -8630,6 +8630,30 @@ predefinedHandlerWrapper(struct J9PortLibrary *portLibrary, U_32 gpType, void *g
 		return 1;
 	}
 
+#if !defined(WIN32)
+	{
+		const char *infoName = NULL;
+		void *infoValue = NULL;
+		U_32 infoType = 0;
+		UDATA pid = 0;
+		char *pidName = NULL;
+		OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+
+		infoType = omrsig_info(gpInfo, OMRPORT_SIG_SIGNAL, OMRPORT_SIG_SENDER_PID, &infoName, &infoValue);
+		if (OMRPORT_SIG_VALUE_32 == infoType) {
+			pid = *(U_32 *)infoValue;
+		} else if (OMRPORT_SIG_VALUE_64 == infoType) {
+			pid = *(U_64 *)infoValue;
+		}
+		if (0 != pid) {
+			/* pidName needs to be freed after use. */
+			pidName = omrsysinfo_get_process_name(pid);
+		}
+		Trc_VM_signal_pid(vmThread, signalValueToName(signal), pid, pidName);
+		j9mem_free_memory((void *)pidName);
+	}
+#endif /* !defined(WIN32) */
+
 	/* Run handler (Java code). */
 	signalDispatch(vmThread, signal);
 

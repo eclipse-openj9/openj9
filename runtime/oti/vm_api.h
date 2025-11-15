@@ -3583,6 +3583,25 @@ disclaimClassMemory(J9JavaVM *vm, UDATA flags);
 UDATA
 totalNumberOfDisclaimableClassMemorySegments(J9JavaVM *vm);
 
+/* ---------------- sighelp.c ---------------- */
+/**
+ * @brief Return the signal number from the name, or J9_SIG_ERR (-1)
+ * if not found.
+ * @param signame
+ * @return jint
+ */
+jint
+signalNameToValue(const char *signame);
+
+/**
+ * @brief Return the signal name from the number, or NULL
+ * if not found.
+ * @param signal
+ * @return const char *
+ */
+const char *
+signalValueToName(jint signal);
+
 /* ---------------- statistics.c ---------------- */
 /**
 * @brief

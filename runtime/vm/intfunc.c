@@ -497,4 +497,5 @@ J9InternalVMFunctions J9InternalFunctions = {
 	releaseTargetVMThreadHelper,
 	disclaimClassMemory,
 	totalNumberOfDisclaimableClassMemorySegments,
+	signalNameToValue,
 };
