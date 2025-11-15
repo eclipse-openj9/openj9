@@ -3972,3 +3972,9 @@ J9::Options::resetFSD(J9JavaVM *vm, J9VMThread *vmThread, bool &doAOT)
    return fsdStatusJIT;
    }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
+void
+J9::Options::initialize()
+   {
+   self()->OMR::OptionsConnector::initialize();
+   }
