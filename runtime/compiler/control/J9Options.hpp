@@ -193,6 +193,11 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 
    Options(TR::Options &other) : OMR::OptionsConnector(other) {}
 
+   /**
+    * @brief Initialize the J9 components of the \c TR::Options object.
+    */
+   void initialize();
+
    enum FSDInitStatus
       {
       FSDInit_Error,
