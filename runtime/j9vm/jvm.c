@@ -389,13 +389,8 @@ static BOOLEAN librariesLoaded(void);
 #define LD_ENV_PATH "LIBPATH"
 #endif /* defined(J9ZTPF) */
 
-#define J9_SIG_ERR (-1)
-#define J9_SIG_IGNORED 1
-
 #define J9_PRE_DEFINED_HANDLER_CHECK 2
 #define J9_USE_OLD_JAVA_SIGNAL_HANDLER 2
-
-#define J9_SIG_PREFIX "SIG"
 
 /* Chosen based upon signal names listed in signalMap below. */
 #define J9_SIGNAME_BUFFER_LENGTH 16
@@ -403,123 +398,6 @@ static BOOLEAN librariesLoaded(void);
 static void dummySignalHandler(jint sigNum);
 static BOOLEAN isSignalUsedForShutdown(jint sigNum);
 static BOOLEAN isSignalReservedByJVM(jint sigNum);
-
-typedef struct {
-	const char *signalName;
-	jint signalValue;
-} J9SignalMapping;
-
-#if defined(WIN32)
-#define J9_SIGNAL_MAP_ENTRY(name, value) { name, value }
-#else /* defined(WIN32) */
-#define J9_SIGNAL_MAP_ENTRY(name, value) { "SIG" name, value }
-#endif /* defined(WIN32) */
-
-static const J9SignalMapping signalMap[] = {
-#if defined(SIGABRT)
-	J9_SIGNAL_MAP_ENTRY("ABRT", SIGABRT),
-#endif /* defined(SIGABRT) */
-#if defined(SIGALRM)
-	J9_SIGNAL_MAP_ENTRY("ALRM", SIGALRM),
-#endif /* defined(SIGALRM) */
-#if defined(SIGBREAK)
-	J9_SIGNAL_MAP_ENTRY("BREAK", SIGBREAK),
-#endif /* defined(SIGBREAK) */
-#if defined(SIGBUS)
-	J9_SIGNAL_MAP_ENTRY("BUS", SIGBUS),
-#endif /* defined(SIGBUS) */
-#if defined(SIGCHLD)
-	J9_SIGNAL_MAP_ENTRY("CHLD", SIGCHLD),
-#endif /* defined(SIGCHLD) */
-#if defined(SIGCONT)
-	J9_SIGNAL_MAP_ENTRY("CONT", SIGCONT),
-#endif /* defined(SIGCONT) */
-#if defined(SIGFPE)
-	J9_SIGNAL_MAP_ENTRY("FPE", SIGFPE),
-#endif /* defined(SIGFPE) */
-#if defined(SIGHUP)
-	J9_SIGNAL_MAP_ENTRY("HUP", SIGHUP),
-#endif /* defined(SIGHUP) */
-#if defined(SIGILL)
-	J9_SIGNAL_MAP_ENTRY("ILL", SIGILL),
-#endif /* defined(SIGILL) */
-#if defined(SIGINT)
-	J9_SIGNAL_MAP_ENTRY("INT", SIGINT),
-#endif /* defined(SIGINT) */
-#if defined(SIGIO)
-	J9_SIGNAL_MAP_ENTRY("IO", SIGIO),
-#endif /* defined(SIGIO) */
-#if defined(SIGPIPE)
-	J9_SIGNAL_MAP_ENTRY("PIPE", SIGPIPE),
-#endif /* defined(SIGPIPE) */
-#if defined(SIGPROF)
-	J9_SIGNAL_MAP_ENTRY("PROF", SIGPROF),
-#endif /* defined(SIGPROF) */
-#if defined(SIGQUIT)
-	J9_SIGNAL_MAP_ENTRY("QUIT", SIGQUIT),
-#endif /* defined(SIGQUIT) */
-#if defined(SIGSEGV)
-	J9_SIGNAL_MAP_ENTRY("SEGV", SIGSEGV),
-#endif /* defined(SIGSEGV) */
-#if defined(SIGSYS)
-	J9_SIGNAL_MAP_ENTRY("SYS", SIGSYS),
-#endif /* defined(SIGSYS) */
-#if defined(SIGTERM)
-	J9_SIGNAL_MAP_ENTRY("TERM", SIGTERM),
-#endif /* defined(SIGTERM) */
-#if defined(SIGTRAP)
-	J9_SIGNAL_MAP_ENTRY("TRAP", SIGTRAP),
-#endif /* defined(SIGTRAP) */
-#if defined(SIGTSTP)
-	J9_SIGNAL_MAP_ENTRY("TSTP", SIGTSTP),
-#endif /* defined(SIGTSTP) */
-#if defined(SIGTTIN)
-	J9_SIGNAL_MAP_ENTRY("TTIN", SIGTTIN),
-#endif /* defined(SIGTTIN) */
-#if defined(SIGTTOU)
-	J9_SIGNAL_MAP_ENTRY("TTOU", SIGTTOU),
-#endif /* defined(SIGTTOU) */
-#if defined(SIGURG)
-	J9_SIGNAL_MAP_ENTRY("URG", SIGURG),
-#endif /* defined(SIGURG) */
-#if defined(SIGUSR1)
-	J9_SIGNAL_MAP_ENTRY("USR1", SIGUSR1),
-#endif /* defined(SIGUSR1) */
-#if defined(SIGUSR2)
-	J9_SIGNAL_MAP_ENTRY("USR2", SIGUSR2),
-#endif /* defined(SIGUSR2) */
-#if defined(SIGVTALRM)
-	J9_SIGNAL_MAP_ENTRY("VTALRM", SIGVTALRM),
-#endif /* defined(SIGVTALRM) */
-#if defined(SIGWINCH)
-	J9_SIGNAL_MAP_ENTRY("WINCH", SIGWINCH),
-#endif /* defined(SIGWINCH) */
-#if defined(SIGXCPU)
-	J9_SIGNAL_MAP_ENTRY("XCPU", SIGXCPU),
-#endif /* defined(SIGXCPU) */
-#if defined(SIGXFSZ)
-	J9_SIGNAL_MAP_ENTRY("XFSZ", SIGXFSZ),
-#endif /* defined(SIGXFSZ) */
-#if defined(SIGRECONFIG)
-	J9_SIGNAL_MAP_ENTRY("RECONFIG", SIGRECONFIG),
-#endif /* defined(SIGRECONFIG) */
-#if defined(SIGKILL)
-	J9_SIGNAL_MAP_ENTRY("KILL", SIGKILL),
-#endif /* defined(SIGKILL) */
-#if defined(SIGSTOP)
-	J9_SIGNAL_MAP_ENTRY("STOP", SIGSTOP),
-#endif /* defined(SIGSTOP) */
-#if defined(SIGINFO)
-	J9_SIGNAL_MAP_ENTRY("INFO", SIGINFO),
-#endif /* defined(SIGINFO) */
-#if defined(SIGIOT)
-	J9_SIGNAL_MAP_ENTRY("IOT", SIGIOT),
-#endif /* defined(SIGIOT) */
-#if defined(SIGPOLL)
-	J9_SIGNAL_MAP_ENTRY("POLL", SIGPOLL),
-#endif /* defined(SIGPOLL) */
-	{NULL, J9_SIG_ERR}
-};
 
 /*
  * Attempt to update or remove the value of OPENJ9_JAVA_COMMAND_LINE in the
@@ -5052,7 +4930,6 @@ exit:
 jint JNICALL
 JVM_FindSignal(const char *sigName)
 {
-	const J9SignalMapping *mapping = NULL;
 	jint signalValue = J9_SIG_ERR;
 	BOOLEAN nameHasSigPrefix = FALSE;
 	const char *fullSigName = sigName;
@@ -5086,12 +4963,7 @@ JVM_FindSignal(const char *sigName)
 		}
 #endif /* !defined(WIN32) */
 
-		for (mapping = signalMap; NULL != mapping->signalName; mapping++) {
-			if (0 == strcmp(fullSigName, mapping->signalName)) {
-				signalValue = mapping->signalValue;
-				break;
-			}
-		}
+		signalValue = BFUjavaVM->internalVMFunctions->signalNameToValue(fullSigName);
 	}
 
 #if !defined(WIN32)

@@ -174,6 +174,7 @@ set(main_sources
 	romclasses.c
 	romutil.c
 	segment.c
+	sighelp.c
 	StackDumper.c
 	statistics.c
 	stringhelpers.cpp
