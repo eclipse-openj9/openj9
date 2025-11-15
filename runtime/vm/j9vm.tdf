@@ -1036,3 +1036,5 @@ TraceException=Trc_VM_criu_notCheckpointSafeOrClinitFrameWalkFunction_foundTarge
 
 TraceEvent=Trc_Segment_disclaimClassMemory_result NoEnv Overhead=1 Level=3 Template="Disclaim class memory segment=%p, heapBase=%p, size=%zu, type=%zX, baseAddress=%p, result=%zi"
 TraceEvent=Trc_Segment_disclaimClassMemory_error NoEnv Overhead=1 Level=3 Template="Disclaim class memory failed result=%zi errno=%zi"
+
+TraceEvent=Trc_VM_signal_pid Overhead=1 Level=1 Template="%s received from process id %zu name '%s'"
