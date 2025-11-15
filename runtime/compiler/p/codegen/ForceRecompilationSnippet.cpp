@@ -40,6 +40,7 @@
 #include "il/Symbol.hpp"
 #include "p/codegen/PPCInstruction.hpp"
 #include "p/codegen/PPCRecompilation.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
 uint8_t *TR::PPCForceRecompilationSnippet::emitSnippetBody()
@@ -186,53 +187,53 @@ uint8_t *TR::PPCForceRecompilationSnippet::emitSnippetBody()
    }
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::PPCForceRecompilationSnippet * snippet)
+TR_Debug::print(OMR::Logger *log, TR::PPCForceRecompilationSnippet * snippet)
    {
    uint8_t   *cursor = snippet->getSnippetLabel()->getCodeLocation();
 
    TR::RegisterDependencyConditions *deps = snippet->getDoneLabel()->getInstruction()->getDependencyConditions();
    TR::RealRegister *startPCReg  = _cg->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(0)->getRealRegister());
 
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "EDO Recompilation Snippet");
+   printSnippetLabel(log, snippet->getSnippetLabel(), cursor, "EDO Recompilation Snippet");
 
    int32_t value;
 
    if (_comp->target().is64Bit())
       {
-      printPrefix(pOutFile, NULL, cursor, 4);
+      printPrefix(log, NULL, cursor, 4);
       value = *((int32_t *) cursor) & 0x0ffff;
-      trfprintf(pOutFile, "lis \t%s, 0x%p\t; Load jit entry point address", getName(startPCReg),value );
+      log->printf("lis \t%s, 0x%p\t; Load jit entry point address", getName(startPCReg), value);
       cursor += 4;
 
-      printPrefix(pOutFile, NULL, cursor, 4);
+      printPrefix(log, NULL, cursor, 4);
       value = *((int32_t *) cursor) & 0x0ffff;
-      trfprintf(pOutFile, "ori \t%s, %s, 0x%p\t;", getName(startPCReg), getName(startPCReg), value);
+      log->printf("ori \t%s, %s, 0x%p\t;", getName(startPCReg), getName(startPCReg), value);
       cursor += 4;
 
-      printPrefix(pOutFile, NULL, cursor, 4);
-      trfprintf(pOutFile, "rldicr \t%s, %s, 32, 31\t;", getName(startPCReg), getName(startPCReg));
+      printPrefix(log, NULL, cursor, 4);
+      log->printf("rldicr \t%s, %s, 32, 31\t;", getName(startPCReg), getName(startPCReg));
       cursor += 4;
 
-      printPrefix(pOutFile, NULL, cursor, 4);
+      printPrefix(log, NULL, cursor, 4);
       value = *((int32_t *) cursor) & 0x0ffff;
-      trfprintf(pOutFile, "oris \t%s, %s, 0x%p\t;", getName(startPCReg),getName(startPCReg), value );
+      log->printf("oris \t%s, %s, 0x%p\t;", getName(startPCReg), getName(startPCReg), value);
       cursor += 4;
 
-      printPrefix(pOutFile, NULL, cursor, 4);
+      printPrefix(log, NULL, cursor, 4);
       value = *((int32_t *) cursor) & 0x0ffff;
-      trfprintf(pOutFile, "ori \t%s, %s, 0x%p\t;", getName(startPCReg), getName(startPCReg), value);
+      log->printf("ori \t%s, %s, 0x%p\t;", getName(startPCReg), getName(startPCReg), value);
       cursor += 4;
       }
    else
       {
-      printPrefix(pOutFile, NULL, cursor, 4);
+      printPrefix(log, NULL, cursor, 4);
       value = *((int32_t *) cursor) & 0x0ffff;
-      trfprintf(pOutFile, "lis \t%s, 0x%p\t; Load jit entry point address", getName(startPCReg),value );
+      log->printf("lis \t%s, 0x%p\t; Load jit entry point address", getName(startPCReg), value);
       cursor += 4;
 
-      printPrefix(pOutFile, NULL, cursor, 4);
+      printPrefix(log, NULL, cursor, 4);
       value = *((int32_t *) cursor) & 0x0ffff;
-      trfprintf(pOutFile, "ori \t%s, %s, 0x%p\t;", getName(startPCReg), getName(startPCReg), value);
+      log->printf("ori \t%s, %s, 0x%p\t;", getName(startPCReg), getName(startPCReg), value);
       cursor += 4;
       }
 
@@ -240,10 +241,10 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCForceRecompilationSnippet * snippet)
    if (isBranchToTrampoline(_cg->getSymRef(TR_PPCinduceRecompilation), cursor, value))
       info = " Through trampoline";
 
-   printPrefix(pOutFile, NULL, cursor, 4);
+   printPrefix(log, NULL, cursor, 4);
    value = *((int32_t *) cursor) & 0x03fffffc;
    value = (value << 6) >> 6;   // sign extend
-   trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t; %s%s", (intptr_t)cursor + value, getName(_cg->getSymRef(TR_PPCinduceRecompilation)), info);
+   log->printf("b \t" POINTER_PRINTF_FORMAT "\t; %s%s", (intptr_t)cursor + value, getName(_cg->getSymRef(TR_PPCinduceRecompilation)), info);
    cursor += 4;
    }
 

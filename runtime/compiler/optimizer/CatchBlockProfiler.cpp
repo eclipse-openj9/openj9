@@ -31,6 +31,7 @@
 #include "optimizer/Optimizations.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/Optimizer.hpp"
+#include "ras/Logger.hpp"
 
 TR::CatchBlockProfiler::CatchBlockProfiler(TR::OptimizationManager *manager)
    : TR::Optimization(manager), _catchBlockCounterSymRef(NULL)
@@ -38,22 +39,24 @@ TR::CatchBlockProfiler::CatchBlockProfiler(TR::OptimizationManager *manager)
 
 int32_t TR::CatchBlockProfiler::perform()
    {
+   OMR::Logger *log = comp()->log();
+
    if (comp()->getOption(TR_DisableEDO))
       {
       if (trace())
-         traceMsg(comp(), "Catch Block Profiler is disabled because EDO is disabled\n");
+         log->prints("Catch Block Profiler is disabled because EDO is disabled\n");
       return 0;
       }
    TR::Recompilation *recompilation = comp()->getRecompilationInfo();
    if (!recompilation || !recompilation->couldBeCompiledAgain())
       {
       if (trace())
-         traceMsg(comp(), "Catch Block Profiler is disabled because method cannot be recompiled\n");
+         log->prints("Catch Block Profiler is disabled because method cannot be recompiled\n");
       return 0;
       }
 
    if (trace())
-      traceMsg(comp(), "Starting Catch Block Profiler\n");
+      log->prints("Starting Catch Block Profiler\n");
 
    for (TR::Block * b = comp()->getStartBlock(); b; b = b->getNextBlock())
       if (!b->getExceptionPredecessors().empty() &&
@@ -75,7 +78,7 @@ int32_t TR::CatchBlockProfiler::perform()
          }
 
    if (trace())
-      traceMsg(comp(), "\nEnding Catch Block Profiler\n");
+      log->prints("\nEnding Catch Block Profiler\n");
    return 1; // actual cost
    }
 

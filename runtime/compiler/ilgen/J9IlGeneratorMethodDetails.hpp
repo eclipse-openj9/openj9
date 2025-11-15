@@ -49,6 +49,7 @@ class TR_IlGenerator;
 class TR_InlineBlocks;
 class TR_J9VMBase;
 class TR_ResolvedMethod;
+namespace OMR { class Logger; }
 namespace TR { class Compilation; }
 namespace TR { class IlGeneratorMethodDetails; }
 namespace TR { class ResolvedMethodSymbol; }
@@ -133,9 +134,9 @@ public:
 
    bool sameMethod(TR::IlGeneratorMethodDetails & other);
 
-   void print(TR_FrontEnd *fe, TR::FILE *file);
+   void print(OMR::Logger *log, TR_FrontEnd *fe);
 
-   virtual void printDetails(TR_FrontEnd *fe, TR::FILE *file);
+   virtual void printDetails(OMR::Logger *log, TR_FrontEnd *fe);
 
 protected:
 

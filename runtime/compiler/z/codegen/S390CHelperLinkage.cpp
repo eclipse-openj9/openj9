@@ -49,6 +49,7 @@
 #include "z/codegen/S390J9CallSnippet.hpp"
 #include "z/codegen/S390StackCheckFailureSnippet.hpp"
 #include "z/codegen/SystemLinkage.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
 
@@ -274,11 +275,14 @@ bool J9::Z::CHelperLinkage::getIsFastPathOnly(TR::Node * callNode)
  */
 TR::Register * J9::Z::CHelperLinkage::buildDirectDispatch(TR::Node * callNode, TR::RegisterDependencyConditions **deps, TR::Register *returnReg)
    {
+   OMR::Logger *log = comp()->log();
+   bool trace = comp()->getOption(TR_TraceCG);
    RealRegisterManager RealRegisters(cg());
    bool isHelperCallWithinICF = deps != NULL;
    // TODO: Currently only jitInstanceOf is fast path helper. Need to modify following condition if we add support for other fast path only helpers
    bool isFastPathOnly = getIsFastPathOnly(callNode);
-   traceMsg(comp(),"%s: Internal Control Flow in OOL : %s\n",callNode->getOpCode().getName(),isHelperCallWithinICF  ? "true" : "false" );
+
+   logprintf(trace, log, "%s: Internal Control Flow in OOL : %s\n", callNode->getOpCode().getName(), isHelperCallWithinICF  ? "true" : "false" );
    for (int i = TR::RealRegister::FirstGPR; i < TR::RealRegister::NumRegisters; i++)
       {
       if (!self()->getPreserved(REGNUM(i)) && cg()->machine()->getRealRegister(i)->getState() != TR::RealRegister::Locked)
@@ -417,10 +421,10 @@ TR::Register * J9::Z::CHelperLinkage::buildDirectDispatch(TR::Node * callNode, T
       switch(returnType)
          {
          case TR::NoType:
-            traceMsg(comp(), "ReturnType = %s\n",returnType.toString());
+            logprintf(trace, log, "ReturnType = %s\n", returnType.toString());
             break;
          case TR::Address:
-            traceMsg(comp(), "ReturnType = %s\n",returnType.toString());
+            logprintf(trace, log, "ReturnType = %s\n", returnType.toString());
             returnReg = cg()->allocateCollectedReferenceRegister();
             break;
          case TR::Int8:
@@ -429,7 +433,7 @@ TR::Register * J9::Z::CHelperLinkage::buildDirectDispatch(TR::Node * callNode, T
 #ifdef TR_TARGET_64BIT
          case TR::Int64:
 #endif
-            traceMsg(comp(), "ReturnType = %s\n",returnType.toString());
+            logprintf(trace, log, "ReturnType = %s\n", returnType.toString());
             returnReg = cg()->allocateRegister();
             break;
          default:

@@ -32,6 +32,7 @@
 #include "codegen/CodeGenerator.hpp" /* @@@@ */
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "ras/Logger.hpp"
 
 #define TR_ARM_ARG_SLOT_SIZE 4
 
@@ -391,13 +392,14 @@ uint8_t *TR::ARMUnresolvedCallSnippet::emitSnippetBody()
 
    if (comp->compileRelocatableCode() && comp->getOption(TR_TraceRelocatableDataDetailsCG))
       {
-      traceMsg(comp, "<relocatableDataTrampolinesCG>\n");
-      traceMsg(comp, "%s\n", comp->signature());
-      traceMsg(comp, "%-8s", "cpIndex");
-      traceMsg(comp, "cp\n");
-      traceMsg(comp, "%-8x", methodSymRef->getCPIndexForVM());
-      traceMsg(comp, "%x\n", methodSymRef->getOwningMethod(comp)->constantPool());
-      traceMsg(comp, "</relocatableDataTrampolinesCG>\n");
+      OMR::Logger *log = comp->log();
+      log->prints("<relocatableDataTrampolinesCG>\n");
+      log->printf("%s\n", comp->signature());
+      log->printf("%-8s", "cpIndex");
+      log->prints("cp\n");
+      log->printf("%-8x", methodSymRef->getCPIndexForVM());
+      log->printf("%x\n", methodSymRef->getOwningMethod(comp)->constantPool());
+      log->prints("</relocatableDataTrampolinesCG>\n");
       }
 
    cg()->addExternalRelocation(

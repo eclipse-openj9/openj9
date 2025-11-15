@@ -34,6 +34,7 @@
 #include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/Runtime.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
@@ -546,7 +547,7 @@ TR::S390J9CallSnippet::getLength(int32_t  estimatedSnippetStart)
    }
 
 void
-TR::S390J9CallSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
+TR::S390J9CallSnippet::print(OMR::Logger *log, TR_Debug *debug)
    {
    uint8_t * bufferPos = getSnippetLabel()->getCodeLocation();
    TR::Node * callNode = getNode();
@@ -558,10 +559,10 @@ TR::S390J9CallSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
    TR::SymbolReference * glueRef;
    int8_t padbytes = getPadBytes();
 
-   debug->printSnippetLabel(pOutFile, getSnippetLabel(), bufferPos,
+   debug->printSnippetLabel(log, getSnippetLabel(), bufferPos,
       methodSymRef->isUnresolved() ? "Unresolved Call Snippet" : "Call Snippet");
 
-   bufferPos = debug->printS390ArgumentsFlush(pOutFile, callNode, bufferPos, getSizeOfArguments());
+   bufferPos = debug->printS390ArgumentsFlush(log, callNode, bufferPos, getSizeOfArguments());
 
    if (methodSymRef->isUnresolved() || (cg()->comp()->compileRelocatableCode() && !cg()->comp()->getOption(TR_UseSymbolValidationManager)))
       {
@@ -579,27 +580,27 @@ TR::S390J9CallSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
       glueRef = cg()->getSymRef(TR_S390interpreterStaticSpecialCallGlue);
       }
 
-   bufferPos = debug->printRuntimeInstrumentationOnOffInstruction(pOutFile, bufferPos, false); // RIOFF
+   bufferPos = debug->printRuntimeInstrumentationOnOffInstruction(log, bufferPos, false); // RIOFF
 
    if (getKind() == TR::Snippet::IsUnresolvedCall)
       {
-      debug->printPrefix(pOutFile, NULL, bufferPos, 6);
-      trfprintf(pOutFile, "LARL \tGPR14, *+%d <%p>\t# Start of Data Const.",
+      debug->printPrefix(log, NULL, bufferPos, 6);
+      log->printf("LARL \tGPR14, *+%d <%p>\t# Start of Data Const.",
                         8 + 6 + padbytes,
                         bufferPos + 8 + 6 + padbytes);
       bufferPos += 6;
-      debug->printPrefix(pOutFile, NULL, bufferPos, 6);
-      trfprintf(pOutFile, cg()->comp()->target().is64Bit() ? "LG   \tGPR_EP, 0(,GPR14)" : "LGF   \tGPR_EP, 0(,GPR14");
+      debug->printPrefix(log, NULL, bufferPos, 6);
+      log->prints(cg()->comp()->target().is64Bit() ? "LG   \tGPR_EP, 0(,GPR14)" : "LGF   \tGPR_EP, 0(,GPR14");
       bufferPos += 6;
 
-      debug->printPrefix(pOutFile, NULL, bufferPos, 2);
-      trfprintf(pOutFile, "BCR    \tGPR_EP");
+      debug->printPrefix(log, NULL, bufferPos, 2);
+      log->prints("BCR    \tGPR_EP");
       bufferPos += 2;
       }
    else
       {
-      debug->printPrefix(pOutFile, NULL, bufferPos, 6);
-      trfprintf(pOutFile, "BRASL \tGPR14, <%p>\t# Branch to Helper Method %s",
+      debug->printPrefix(log, NULL, bufferPos, 6);
+      log->printf("BRASL \tGPR14, <%p>\t# Branch to Helper Method %s",
                     getSnippetDestAddr(),
                     usedTrampoline() ? "- Trampoline Used.":"");
       bufferPos += 6;
@@ -607,41 +608,41 @@ TR::S390J9CallSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
 
    if (padbytes == 2)
       {
-      debug->printPrefix(pOutFile, NULL, bufferPos, 2);
-      trfprintf(pOutFile, "DC   \t0x0000 \t\t\t# 2-bytes padding for alignment");
+      debug->printPrefix(log, NULL, bufferPos, 2);
+      log->prints("DC   \t0x0000 \t\t\t# 2-bytes padding for alignment");
       bufferPos += 2;
       }
    else if (padbytes == 4)
       {
-      debug->printPrefix(pOutFile, NULL, bufferPos, 4) ;
-      trfprintf(pOutFile, "DC   \t0x00000000 \t\t# 4-bytes padding for alignment");
+      debug->printPrefix(log, NULL, bufferPos, 4) ;
+      log->prints("DC   \t0x00000000 \t\t# 4-bytes padding for alignment");
       bufferPos += 4;
       }
    else if (padbytes == 6)
       {
-      debug->printPrefix(pOutFile, NULL, bufferPos, 6) ;
-      trfprintf(pOutFile, "DC   \t0x000000000000 \t\t# 6-bytes padding for alignment");
+      debug->printPrefix(log, NULL, bufferPos, 6) ;
+      log->prints("DC   \t0x000000000000 \t\t# 6-bytes padding for alignment");
       bufferPos += 6;
       }
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t%p \t\t# Method Address", glueRef->getMethodAddress());
+   debug->printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t%p \t\t# Method Address", glueRef->getMethodAddress());
    bufferPos += sizeof(intptr_t);
 
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t%p \t\t# Call Site RA", getCallRA());
+   debug->printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t%p \t\t# Call Site RA", getCallRA());
    bufferPos += sizeof(intptr_t);
 
    if (methodSymRef->isUnresolved())
       {
-      debug->printPrefix(pOutFile, NULL, bufferPos, 0);
+      debug->printPrefix(log, NULL, bufferPos, 0);
       }
    else
       {
-      debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+      debug->printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
       }
-   trfprintf(pOutFile, "DC   \t%p \t\t# Method Pointer", methodSymRef->isUnresolved() ? 0 : methodSymbol->getMethodAddress());
+   log->printf("DC   \t%p \t\t# Method Pointer", methodSymRef->isUnresolved() ? 0 : methodSymbol->getMethodAddress());
    }
 
 uint8_t *
@@ -745,13 +746,14 @@ TR::S390UnresolvedCallSnippet::emitSnippetBody()
       {
       if ((comp->compileRelocatableCode() || comp->isOutOfProcessCompilation()) && comp->getOption(TR_TraceRelocatableDataDetailsCG))
          {
-         traceMsg(comp, "<relocatableDataTrampolinesCG>\n");
-         traceMsg(comp, "%s\n", comp->signature());
-         traceMsg(comp, "%-8s", "cpIndex");
-         traceMsg(comp, "cp\n");
-         traceMsg(comp, "%-8x", methodSymRef->getCPIndexForVM());
-         traceMsg(comp, "%x\n", methodSymRef->getOwningMethod(comp)->constantPool());
-         traceMsg(comp, "</relocatableDataTrampolinesCG>\n");
+         OMR::Logger *log = comp->log();
+         log->prints("<relocatableDataTrampolinesCG>\n");
+         log->printf("%s\n", comp->signature());
+         log->printf("%-8s", "cpIndex");
+         log->prints("cp\n");
+         log->printf("%-8x", methodSymRef->getCPIndexForVM());
+         log->printf("%x\n", methodSymRef->getOwningMethod(comp)->constantPool());
+         log->prints("</relocatableDataTrampolinesCG>\n");
          }
       }
 #endif
@@ -1009,7 +1011,7 @@ TR::S390InterfaceCallSnippet::getLength(int32_t  estimatedSnippetStart)
 
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::S390UnresolvedCallSnippet * snippet)
+TR_Debug::print(OMR::Logger *log, TR::S390UnresolvedCallSnippet * snippet)
    {
    uint8_t * bufferPos = snippet->getSnippetLabel()->getCodeLocation() + snippet->getLength(0)
                          - sizeof(intptr_t) - sizeof(int32_t)            // 2 DC's at end of this snippet.
@@ -1039,135 +1041,135 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390UnresolvedCallSnippet * snippet)
       }
    helperLookupOffset <<= 24;
 
-   snippet->print(pOutFile, this);
+   snippet->print(log, this);
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptr_t));
-   trfprintf(pOutFile, "DC   \t%p \t\t# Address Of Constant Pool", getOwningMethod(methodSymRef)->constantPool());
+   printPrefix(log, NULL, bufferPos, sizeof(uintptr_t));
+   log->printf("DC   \t%p \t\t# Address Of Constant Pool", getOwningMethod(methodSymRef)->constantPool());
    bufferPos += sizeof(uintptr_t);
 
-   printPrefix(pOutFile, NULL, bufferPos, 4);
-   trfprintf(pOutFile, "DC   \t0x%08x \t\t# Offset | Flag | CP Index", helperLookupOffset | methodSymRef->getCPIndexForVM());
+   printPrefix(log, NULL, bufferPos, 4);
+   log->printf("DC   \t0x%08x \t\t# Offset | Flag | CP Index", helperLookupOffset | methodSymRef->getCPIndexForVM());
    }
 
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::S390VirtualSnippet * snippet)
+TR_Debug::print(OMR::Logger *log, TR::S390VirtualSnippet * snippet)
    {
    uint8_t * bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, "Virtual Call Snippet");
+   printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, "Virtual Call Snippet");
    }
 
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::S390VirtualUnresolvedSnippet * snippet)
+TR_Debug::print(OMR::Logger *log, TR::S390VirtualUnresolvedSnippet * snippet)
    {
    uint8_t * bufferPos = snippet->getSnippetLabel()->getCodeLocation();
    TR::SymbolReference * methodSymRef = snippet->getNode()->getSymbolReference();
    TR::SymbolReference * glueRef = _cg->getSymRef(TR_S390virtualUnresolvedHelper);
 
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, "Virtual Unresolved Call Snippet");
+   printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, "Virtual Unresolved Call Snippet");
 
-   bufferPos = printRuntimeInstrumentationOnOffInstruction(pOutFile, bufferPos, false); // RIOFF
+   bufferPos = printRuntimeInstrumentationOnOffInstruction(log, bufferPos, false); // RIOFF
 
-   printPrefix(pOutFile, NULL, bufferPos, 6);
-   trfprintf(pOutFile, "BRASL \tGPR14, <%p>\t# Branch to Helper Method %s",
+   printPrefix(log, NULL, bufferPos, 6);
+   log->printf("BRASL \tGPR14, <%p>\t# Branch to Helper Method %s",
                     snippet->getSnippetDestAddr(),
                     snippet->usedTrampoline()?"- Trampoline Used.":"");
    bufferPos += 6;
 
-   printPrefix(pOutFile, NULL, bufferPos, 4);
-   trfprintf(pOutFile, "DC   \t%p\t\t# Method Address", *((uintptr_t *)bufferPos));
+   printPrefix(log, NULL, bufferPos, 4);
+   log->printf("DC   \t%p\t\t# Method Address", *((uintptr_t *)bufferPos));
    bufferPos += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t%p \t\t# Call Site RA", snippet->getCallRA());
+   printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t%p \t\t# Call Site RA", snippet->getCallRA());
    bufferPos += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t%p \t\t# Address Of Constant Pool", (intptr_t) getOwningMethod(methodSymRef)->constantPool());
+   printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t%p \t\t# Address Of Constant Pool", (intptr_t) getOwningMethod(methodSymRef)->constantPool());
    bufferPos += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t0x%08x \t\t# CP Index", methodSymRef->getCPIndexForVM());
+   printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t0x%08x \t\t# CP Index", methodSymRef->getCPIndexForVM());
    bufferPos += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t%p \t\t# Instruction to be patched with vft offset", snippet->getPatchVftInstruction()->getBinaryEncoding());
+   printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t%p \t\t# Instruction to be patched with vft offset", snippet->getPatchVftInstruction()->getBinaryEncoding());
    bufferPos += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t%p \t\t# Private J9Method pointer", 0);
+   printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t%p \t\t# Private J9Method pointer", 0);
    bufferPos += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t%p \t\t# J2I thunk address for private", snippet->getJ2IThunkAddress());
+   printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t%p \t\t# J2I thunk address for private", snippet->getJ2IThunkAddress());
    bufferPos += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t%p \t\t# RA for private", snippet->getBranchInstruction()->getBinaryEncoding() + snippet->getIndirectCallInstruction()->getBinaryLength());
+   printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t%p \t\t# RA for private", snippet->getBranchInstruction()->getBinaryEncoding() + snippet->getIndirectCallInstruction()->getBinaryLength());
    }
 
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::S390InterfaceCallSnippet * snippet)
+TR_Debug::print(OMR::Logger *log, TR::S390InterfaceCallSnippet * snippet)
    {
    uint8_t * bufferPos = snippet->getSnippetLabel()->getCodeLocation();
    TR::SymbolReference * methodSymRef = snippet->getNode()->getSymbolReference();
    TR::SymbolReference * glueRef = _cg->getSymRef(TR_S390interfaceCallHelperMultiSlots);
    int i;
 
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, "Interface Call Snippet");
+   printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, "Interface Call Snippet");
 
-   printPrefix(pOutFile, NULL, bufferPos, 6);
-   trfprintf(pOutFile, "LARL \tGPR14, <%p>\t# Addr of DataConst",
+   printPrefix(log, NULL, bufferPos, 6);
+   log->printf("LARL \tGPR14, <%p>\t# Addr of DataConst",
                                 (intptr_t) snippet->getDataConstantSnippet()->getSnippetLabel()->getCodeLocation());
    bufferPos += 6;
 
-   printPrefix(pOutFile, NULL, bufferPos, 6);
-   trfprintf(pOutFile, "BRCL \t<%p>\t\t# Branch to Helper %s",
+   printPrefix(log, NULL, bufferPos, 6);
+   log->printf("BRCL \t<%p>\t\t# Branch to Helper %s",
                    snippet->getSnippetDestAddr(),
                    snippet->usedTrampoline()?"- Trampoline Used.":"");
    bufferPos += 6;
    }
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::J9S390InterfaceCallDataSnippet * snippet)
+TR_Debug::print(OMR::Logger *log, TR::J9S390InterfaceCallDataSnippet * snippet)
    {
    uint8_t * bufferPos = snippet->getSnippetLabel()->getCodeLocation();
 
    // This follows the snippet format in TR::J9S390InterfaceCallDataSnippet::emitSnippetBody
    uint8_t refSize = TR::Compiler->om.sizeofReferenceAddress();
 
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, "Interface call cache data snippet");
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t0x%016lx  # Call site RA", *(intptr_t*)bufferPos);
+   printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, "Interface call cache data snippet");
+   printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t0x%016lx  # Call site RA", *(intptr_t*)bufferPos);
    bufferPos += refSize;
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t0x%016lx  # Address of constant pool", *(intptr_t*)bufferPos);
+   printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t0x%016lx  # Address of constant pool", *(intptr_t*)bufferPos);
    bufferPos += refSize;
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t0x%016lx  # CP index", *(intptr_t*)bufferPos);
+   printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t0x%016lx  # CP index", *(intptr_t*)bufferPos);
    bufferPos += refSize;
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t0x%016lx  # Interface class", *(intptr_t*)bufferPos);
+   printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t0x%016lx  # Interface class", *(intptr_t*)bufferPos);
    bufferPos += refSize;
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t0x%016lx  # Method index", *(intptr_t*)bufferPos);
+   printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t0x%016lx  # Method index", *(intptr_t*)bufferPos);
    bufferPos += refSize;
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t0x%016lx  # J2I thunk address ", *(intptr_t*)bufferPos);
+   printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t0x%016lx  # J2I thunk address ", *(intptr_t*)bufferPos);
    bufferPos += refSize;
 
    // zero cache slot
    if (snippet->getNumInterfaceCallCacheSlots() == 0)
       {
-      printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-      trfprintf(pOutFile, "DC   \t0x%016lx  # flags", *(intptr_t*)bufferPos);
+      printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+      log->printf("DC   \t0x%016lx  # flags", *(intptr_t*)bufferPos);
       bufferPos += refSize;
       }
 
@@ -1176,23 +1178,23 @@ TR_Debug::print(TR::FILE *pOutFile, TR::J9S390InterfaceCallDataSnippet * snippet
    if (!isSingleDynamicSlot)
       {
       // flags
-      printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-      trfprintf(pOutFile, "DC   \t0x%016lx  # flags", *(intptr_t*)bufferPos);
+      printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+      log->printf("DC   \t0x%016lx  # flags", *(intptr_t*)bufferPos);
       bufferPos += refSize;
 
       // lastCachedSlot
-      printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-      trfprintf(pOutFile, "DC   \t0x%016lx  # last cached slot", *(intptr_t*)bufferPos);
+      printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+      log->printf("DC   \t0x%016lx  # last cached slot", *(intptr_t*)bufferPos);
       bufferPos += refSize;
 
       // firstSlot
-      printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-      trfprintf(pOutFile, "DC   \t0x%016lx  # first slot", *(intptr_t*)bufferPos);
+      printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+      log->printf("DC   \t0x%016lx  # first slot", *(intptr_t*)bufferPos);
       bufferPos += refSize;
 
       // lastSlot
-      printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-      trfprintf(pOutFile, "DC   \t0x%016lx  # last slot", *(intptr_t*)bufferPos);
+      printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+      log->printf("DC   \t0x%016lx  # last slot", *(intptr_t*)bufferPos);
       bufferPos += refSize;
       }
 
@@ -1206,12 +1208,12 @@ TR_Debug::print(TR::FILE *pOutFile, TR::J9S390InterfaceCallDataSnippet * snippet
       for (auto iter = profiledClassesList->begin(); iter != profiledClassesList->end(); ++iter)
          {
          numInterfaceCallCacheSlots--;
-         printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-         trfprintf(pOutFile, "DC   \t0x%016lx  # profiled class", *(intptr_t*)bufferPos);
+         printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+         log->printf("DC   \t0x%016lx  # profiled class", *(intptr_t*)bufferPos);
          bufferPos += refSize;
 
-         printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-         trfprintf(pOutFile, "DC   \t0x%016lx  # profiled method", *(intptr_t*)bufferPos);
+         printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+         log->printf("DC   \t0x%016lx  # profiled method", *(intptr_t*)bufferPos);
          bufferPos += refSize;
          }
       }
@@ -1222,20 +1224,20 @@ TR_Debug::print(TR::FILE *pOutFile, TR::J9S390InterfaceCallDataSnippet * snippet
       if (isUseCLFIandBRCL)
          {
          // address of CLFI's immediate field
-         printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-         trfprintf(pOutFile, "DC   \t0x%016lx  # address of CLFI's immediate field", *(intptr_t*)bufferPos);
+         printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+         log->printf("DC   \t0x%016lx  # address of CLFI's immediate field", *(intptr_t*)bufferPos);
          bufferPos += refSize;
          }
       else
          {
          // class pointer
-         printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-         trfprintf(pOutFile, "DC   \t0x%016lx  # class pointer %d", *(intptr_t*)bufferPos, i);
+         printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+         log->printf("DC   \t0x%016lx  # class pointer %d", *(intptr_t*)bufferPos, i);
          bufferPos += refSize;
 
          // method pointer
-         printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-         trfprintf(pOutFile, "DC   \t0x%016lx  # method pointer %d", *(intptr_t*)bufferPos, i);
+         printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+         log->printf("DC   \t0x%016lx  # method pointer %d", *(intptr_t*)bufferPos, i);
          bufferPos += refSize;
          }
       }
@@ -1243,8 +1245,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::J9S390InterfaceCallDataSnippet * snippet
    if (isSingleDynamicSlot)
       {
       // flags
-      printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-      trfprintf(pOutFile, "DC   \t0x%016lx # method pointer", *(intptr_t*)bufferPos);
+      printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+      log->printf("DC   \t0x%016lx # method pointer", *(intptr_t*)bufferPos);
       bufferPos += refSize;
       }
    return;
@@ -1864,7 +1866,7 @@ TR::S390JNICallDataSnippet::emitSnippetBody()
    }
 
 void
-TR::S390JNICallDataSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
+TR::S390JNICallDataSnippet::print(OMR::Logger *log, TR_Debug *debug)
    {
 /*
        ramMethod
@@ -1885,49 +1887,49 @@ TR::S390JNICallDataSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
 
    int i = 0;
 
-   debug->printSnippetLabel(pOutFile, getSnippetLabel(), bufferPos, "JNI Call Data Snippet");
+   debug->printSnippetLabel(log, getSnippetLabel(), bufferPos, "JNI Call Data Snippet");
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t%p \t\t# ramMethod",*((intptr_t*)bufferPos));
+   debug->printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t%p \t\t# ramMethod",*((intptr_t*)bufferPos));
    bufferPos += sizeof(intptr_t);
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t%p \t\t# JNICallOutFrameFlags",*((intptr_t*)bufferPos));
+   debug->printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t%p \t\t# JNICallOutFrameFlags",*((intptr_t*)bufferPos));
    bufferPos += sizeof(intptr_t);
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t%p \t\t# returnFromJNICall", *((intptr_t*)bufferPos));
+   debug->printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t%p \t\t# returnFromJNICall", *((intptr_t*)bufferPos));
    bufferPos += sizeof(intptr_t);
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t%p \t\t# savedPC", *((intptr_t*)bufferPos));
+   debug->printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t%p \t\t# savedPC", *((intptr_t*)bufferPos));
    bufferPos += sizeof(intptr_t);
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t%p \t\t# tagBits", *((intptr_t*)bufferPos));
+   debug->printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t%p \t\t# tagBits", *((intptr_t*)bufferPos));
    bufferPos += sizeof(intptr_t);
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t%p \t\t# pc", *((intptr_t*)bufferPos));
+   debug->printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t%p \t\t# pc", *((intptr_t*)bufferPos));
    bufferPos += sizeof(intptr_t);
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t%p \t\t# literals", *((intptr_t*)bufferPos));
+   debug->printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t%p \t\t# literals", *((intptr_t*)bufferPos));
    bufferPos += sizeof(intptr_t);
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t%p \t\t# jitStackFrameFlags", *((intptr_t*)bufferPos));
+   debug->printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t%p \t\t# jitStackFrameFlags", *((intptr_t*)bufferPos));
    bufferPos += sizeof(intptr_t);
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t%p \t\t# constReleaseVMAccessMask",*((intptr_t*)bufferPos));
+   debug->printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t%p \t\t# constReleaseVMAccessMask",*((intptr_t*)bufferPos));
    bufferPos += sizeof(intptr_t);
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t%p \t\t# constReleaseVMAccessOutOfLineMask",*((intptr_t*)bufferPos));
+   debug->printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t%p \t\t# constReleaseVMAccessOutOfLineMask",*((intptr_t*)bufferPos));
    bufferPos += sizeof(intptr_t);
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t%p \t\t# targetAddress",*((intptr_t*)bufferPos));
+   debug->printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t%p \t\t# targetAddress",*((intptr_t*)bufferPos));
    bufferPos += sizeof(intptr_t);
 }

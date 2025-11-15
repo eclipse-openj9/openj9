@@ -31,6 +31,7 @@
 #include "il/Node_inlines.hpp"
 #include "infra/Checklist.hpp"
 #include "ras/DebugCounter.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
@@ -55,12 +56,12 @@ class AdjacentBlockIterator
    TR::Block *_block;
    TR::Block *_current;
    int32_t _frequency;
-  
-   TR::CFGEdgeList::iterator _iterators[8]; 
+
+   TR::CFGEdgeList::iterator _iterators[8];
    TR::BlockChecklist _visitedBlocks;
-  
+
    /**
-    * Advance the iterator to the next node, if any 
+    * Advance the iterator to the next node, if any
     */
    void advance()
       {
@@ -100,7 +101,7 @@ class AdjacentBlockIterator
       _current = NULL;
       _frequency = -1;
       }
- 
+
    public:
       AdjacentBlockIterator(TR::Compilation *comp, TR::Block *block) :
          _comp(comp),
@@ -225,7 +226,7 @@ class CFGPredecessorIterator
    TR::Block *_block;
    public:
    CFGPredecessorIterator(TR::CFG *cfg, TR::CFGEdge *loopBack, TR::Block *block)
-      : _cfg(cfg), _loopBack(loopBack), _itr(block), 
+      : _cfg(cfg), _loopBack(loopBack), _itr(block),
         _done(block != cfg->getStart()->asBlock()), _block(block)
       {
       }
@@ -294,7 +295,7 @@ class BlockParents
       for (int32_t i = 0; i < _length; ++i)
          {
          if (_parents[i] != NULL)
-            traceMsg(comp, "MST edge block_%d to block_%d\n", _parents[i]->getNumber(), i);
+            comp->log()->printf("MST edge block_%d to block_%d\n", _parents[i]->getNumber(), i);
          }
       }
    };
@@ -312,34 +313,34 @@ class EdgeFrequencyInfo
    TR_BitVector **edgeMap;
    TR::CFGEdge *loopBack;
    bool trace;
-   void printEdge(TR_BitVector *toAdd, TR_BitVector *toSub)
+   void printEdge(OMR::Logger *log, TR_BitVector *toAdd, TR_BitVector *toSub)
       {
       if (!toAdd->isEmpty())
          {
          TR_BitVectorIterator bvi(*toAdd);
          while (bvi.hasMoreElements())
             {
-            traceMsg(comp, "%d ", bvi.getNextElement());
+            log->printf("%d ", bvi.getNextElement());
             }
          }
       else
          {
-         traceMsg(comp, "none");
+         log->prints("none");
          }
-      traceMsg(comp,"\n sub:");
+      log->prints("\n sub:");
       if (!toSub->isEmpty())
          {
          TR_BitVectorIterator bvi(*toSub);
          while (bvi.hasMoreElements())
             {
-            traceMsg(comp, "%d ", bvi.getNextElement());
+            log->printf("%d ", bvi.getNextElement());
             }
          }
       else
          {
-         traceMsg(comp, "none");
+         log->prints("none");
          }
-      traceMsg(comp, "\n");
+      log->println();
       }
    public:
    EdgeFrequencyInfo(TR::Compilation *comp, TR::CFGEdge *loopBack, int32_t numEdges, TR::Region &region, bool trace = false) : comp(comp), loopBack(loopBack), region(region), trace(trace)
@@ -363,8 +364,8 @@ class EdgeFrequencyInfo
 
       if (trace)
          {
-         traceMsg(comp, "abs edge %d-->%d:\n", edge->getFrom()->asBlock()->getNumber(), edge->getTo()->asBlock()->getNumber());
-         printEdge(toAdd, toSub);
+         comp->log()->printf("abs edge %d-->%d:\n", edge->getFrom()->asBlock()->getNumber(), edge->getTo()->asBlock()->getNumber());
+         printEdge(comp->log(), toAdd, toSub);
          }
       }
 
@@ -381,13 +382,13 @@ class EdgeFrequencyInfo
 
       bool forward = edge->getFrom()->asBlock() == block;
       CFGPredecessorIterator pit(comp->getFlowGraph(), loopBack, block);
-      for (TR::CFGEdge *itr = pit.getFirst(); itr; itr = pit.getNext())  
+      for (TR::CFGEdge *itr = pit.getFirst(); itr; itr = pit.getNext())
          {
          if (itr != edge)
             forward ? addEdgeToEdge(edge, itr) : subEdgeFromEdge(edge, itr);
          }
       CFGSuccessorIterator sit(comp->getFlowGraph(), loopBack, block);
-      for (TR::CFGEdge *itr = sit.getFirst(); itr; itr = sit.getNext())  
+      for (TR::CFGEdge *itr = sit.getFirst(); itr; itr = sit.getNext())
          {
          if (itr != edge)
             forward ? subEdgeFromEdge(edge, itr) : addEdgeToEdge(edge, itr);
@@ -395,8 +396,8 @@ class EdgeFrequencyInfo
 
       if (trace)
          {
-         traceMsg(comp, "edge %d-->%d:\n", edge->getFrom()->asBlock()->getNumber(), edge->getTo()->asBlock()->getNumber());
-         printEdge(toAdd, toSub);
+         comp->log()->printf("edge %d-->%d:\n", edge->getFrom()->asBlock()->getNumber(), edge->getTo()->asBlock()->getNumber());
+         printEdge(comp->log(), toAdd, toSub);
          }
       }
 
@@ -494,7 +495,7 @@ class EdgeFrequencyInfo
          }
       /*else
          {
-         traceMsg(comp, "Could not compute frequency for block_%d - unknown edge from block_%d\n", block->getNumber(), predItr.getCurrent()->getFrom()->asBlock()->getNumber());
+         comp->log()->printf("Could not compute frequency for block_%d - unknown edge from block_%d\n", block->getNumber(), predItr.getCurrent()->getFrom()->asBlock()->getNumber());
          }*/
       return false;
       }
@@ -545,7 +546,7 @@ class EdgeFrequencyInfo
          }
       /*else
          {
-         traceMsg(comp, "Could not compute frequency for block_%d - unknown edge to block_%d\n", block->getNumber(), succItr.getCurrent()->getTo()->asBlock()->getNumber());
+         comp->log()->printf("Could not compute frequency for block_%d - unknown edge to block_%d\n", block->getNumber(), succItr.getCurrent()->getTo()->asBlock()->getNumber());
          }*/
 
       return false;
@@ -608,15 +609,13 @@ void TR_JProfilingBlock::computeMinimumSpanningTree(BlockParents &parent, BlockP
       Q.pop();
 
       inMST.add(block);
-      if (trace())
-         traceMsg(comp(), "Add block_%d to the MST\n", block->getNumber());
+      logprintf(trace(), comp()->log(), "Add block_%d to the MST\n", block->getNumber());
 
       AdjacentBlockIterator adj(comp(), block);
       while (adj.current())
          {
          TR::Block *candidate = adj.current();
-         if (trace())
-            traceMsg(comp(), "  adj block_%d weight %d\n", candidate->getNumber(), adj.frequency());
+         logprintf(trace(), comp()->log(), "  adj block_%d weight %d\n", candidate->getNumber(), adj.frequency());
          if (!inMST.contains(candidate) && weights[candidate] > -adj.frequency())
             {
             weights[candidate] = -adj.frequency();
@@ -625,12 +624,12 @@ void TR_JProfilingBlock::computeMinimumSpanningTree(BlockParents &parent, BlockP
             }
          ++adj;
          }
-      }   
+      }
    }
 
 /**
  *
- * \param parent The child-parent key-value map holding the Minimum Spanning 
+ * \param parent The child-parent key-value map holding the Minimum Spanning
  *               Tree across the CFG which need not be counted
  * \param countedBlocks A list of the blocks which need to be counted to produce
  *               the method execution profile
@@ -639,38 +638,37 @@ void TR_JProfilingBlock::computeMinimumSpanningTree(BlockParents &parent, BlockP
  */
 int32_t TR_JProfilingBlock::processCFGForCounting(BlockParents &parent, TR::BlockChecklist &countedBlocks, TR::CFGEdge &loopBack)
    {
+   OMR::Logger *log = comp()->log();
    TR::CFG *cfg = comp()->getFlowGraph();
    int32_t firstNewBlockNumber = comp()->getFlowGraph()->getNextNodeNumber();
    int32_t edgeId = 0;
-   
+
    for (CFGNodeIterator iter(cfg, this); iter.currentBlock() != NULL; ++iter)
       {
       TR::Block *block = iter.currentBlock();
-      
+
       if (block->getNumber() >= firstNewBlockNumber)
          continue;
-     
+
       CFGSuccessorIterator sit(cfg, &loopBack, block);
       for (TR::CFGEdge *edge = sit.getFirst(); edge; edge = sit.getNext())
          {
          edge->setId(edgeId++);
          TR::Block *to = edge->getTo()->asBlock();
-     
+
          // check if the spanning tree says we can omit this edge
          if (block != to)
             {
             if (parent[block] == to)
                {
-               if (trace())
-                  traceMsg(comp(), "skipping edge block_%d to block_%d\n", block->getNumber(), to->getNumber());
+               logprintf(trace(), log, "skipping edge block_%d to block_%d\n", block->getNumber(), to->getNumber());
                continue;
                }
-     
+
             if (parent[to] == block
                 && !(to->hasSuccessor(block) && block->hasSuccessor(to)))
                {
-               if (trace())
-                  traceMsg(comp(), "skipping edge block_%d to block_%d\n", block->getNumber(), to->getNumber());
+               logprintf(trace(), log, "skipping edge block_%d to block_%d\n", block->getNumber(), to->getNumber());
                continue;
                }
             }
@@ -689,8 +687,7 @@ int32_t TR_JProfilingBlock::processCFGForCounting(BlockParents &parent, TR::Bloc
                {
                countedBlocks.add(codeBlock);
                insertionBlock = codeBlock;
-               if (trace())
-                  traceMsg(comp(), "count osr block_%d (predecessor of block_%d)\n", codeBlock->getNumber(), to->getNumber());
+               logprintf(trace(), log, "count osr block_%d (predecessor of block_%d)\n", codeBlock->getNumber(), to->getNumber());
                }
             }
          // if the source of the edge has a single source we can count the source
@@ -703,8 +700,7 @@ int32_t TR_JProfilingBlock::processCFGForCounting(BlockParents &parent, TR::Bloc
                {
                countedBlocks.add(block);
                insertionBlock = block;
-               if (trace())
-                  traceMsg(comp(), "count block_%d (single predecessor of block_%d)\n", block->getNumber(), to->getNumber());
+               logprintf(trace(), log, "count block_%d (single predecessor of block_%d)\n", block->getNumber(), to->getNumber());
                }
             }
          // if the destination of the edge has a single destination we can count the destination
@@ -718,8 +714,7 @@ int32_t TR_JProfilingBlock::processCFGForCounting(BlockParents &parent, TR::Bloc
                {
                countedBlocks.add(to);
                insertionBlock = to;
-               if (trace())
-                  traceMsg(comp(), "count block_%d (single successor of block_%d)\n", to->getNumber(), block->getNumber());
+               logprintf(trace(), log, "count block_%d (single successor of block_%d)\n", to->getNumber(), block->getNumber());
                }
             }
          // we have a critical edge and so need to split it to insert the counter
@@ -728,8 +723,7 @@ int32_t TR_JProfilingBlock::processCFGForCounting(BlockParents &parent, TR::Bloc
             {
             insertionBlock = block->splitEdge(block, to, comp(), NULL, true);
             countedBlocks.add(insertionBlock);
-            if (trace())
-               traceMsg(comp(), "split edge %d to %d -- new block_%d\n", block->getNumber(), to->getNumber(), insertionBlock->getNumber());
+            logprintf(trace(), log, "split edge %d to %d -- new block_%d\n", block->getNumber(), to->getNumber(), insertionBlock->getNumber());
             // the edge we originally numbered has gone so we need to decrement the counter
             edgeId -= 1;
             // now we number all of the predecessors and successors of the new block
@@ -767,7 +761,7 @@ TR_BlockFrequencyInfo *TR_JProfilingBlock::initRecompDataStructures()
    TR_BlockFrequencyProfiler *bfp = comp()->getRecompilationInfo()->getBlockFrequencyProfiler();
    if (bfp)
       comp()->getRecompilationInfo()->removeProfiler(bfp);
- 
+
    TR_PersistentProfileInfo *profileInfo = comp()->getRecompilationInfo()->findOrCreateProfileInfo();
    return profileInfo->findOrCreateBlockFrequencyInfo(comp());
    }
@@ -777,51 +771,51 @@ TR_BlockFrequencyInfo *TR_JProfilingBlock::initRecompDataStructures()
  * the counters which have been inserted into the compiled method body
  * \param componentCounters The counter data structure to print
  */
-void TR_JProfilingBlock::dumpCounterDependencies(TR_BitVector **componentCounters)
+void TR_JProfilingBlock::dumpCounterDependencies(OMR::Logger *log, TR_BitVector **componentCounters)
    {
    TR::CFG *cfg = comp()->getFlowGraph();
    for (CFGNodeIterator iter(cfg, this); iter.currentBlock() != NULL; ++iter)
       {
       TR::Block *block = iter.currentBlock();
       if (cfg->getStart() == block || cfg->getEnd() == block)
-         traceMsg(comp(), "block_%d:\n", block->getNumber());
+         log->printf("block_%d:\n", block->getNumber());
       else
-         traceMsg(comp(), "block_%d [%d,%d]:\n", block->getNumber(), block->getEntry()->getNode()->getInlinedSiteIndex(), block->getEntry()->getNode()->getByteCodeIndex());
+         log->printf("block_%d [%d,%d]:\n", block->getNumber(), block->getEntry()->getNode()->getInlinedSiteIndex(), block->getEntry()->getNode()->getByteCodeIndex());
 
       TR_BitVector *additive = componentCounters[block->getNumber()*2];
-      traceMsg(comp(), "   add: ");
+      log->prints("   add: ");
       if (((uintptr_t)additive & 0x1) == 1)
          {
-         traceMsg(comp(), "%d ", ((uintptr_t)additive >> 1));
+         log->printf("%d ", ((uintptr_t)additive >> 1));
          }
       else if (!additive || additive->isEmpty())
          {
-         traceMsg(comp(), "none");
+         log->prints("none");
          }
       else
          {
          TR_BitVectorIterator bvi(*additive);
          while (bvi.hasMoreElements())
-            traceMsg(comp(), "%d ", bvi.getNextElement());
+            log->printf("%d ", bvi.getNextElement());
          }
-      traceMsg(comp(), "\n");
+      log->println();
       TR_BitVector *subtractive = componentCounters[iter.currentBlock()->getNumber()*2 + 1];
-      traceMsg(comp(), "   sub: ");
+      log->prints("   sub: ");
       if (((uintptr_t)subtractive & 0x1) == 1)
          {
-         traceMsg(comp(), "%d ", ((uintptr_t)subtractive >> 1));
+         log->printf("%d ", ((uintptr_t)subtractive >> 1));
          }
       else if (!subtractive || subtractive->isEmpty())
          {
-         traceMsg(comp(), "none");
+         log->prints("none");
          }
       else
          {
          TR_BitVectorIterator bvi(*subtractive);
          while (bvi.hasMoreElements())
-            traceMsg(comp(), "%d ", bvi.getNextElement());
+            log->printf("%d ", bvi.getNextElement());
          }
-      traceMsg(comp(), "\n");
+      log->println();
       }
    }
 
@@ -829,9 +823,10 @@ void TR_JProfilingBlock::dumpCounterDependencies(TR_BitVector **componentCounter
  * Add runtime tests to the start of the method to trigger method recompilation once the
  * appropriate number of method entries has occurred as determined by the raw block
  * count of the first block of the method.
- */   
+ */
 void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequencyInfo)
    {
+   OMR::Logger *log = comp()->log();
   // add invocation check to the top of the method
    int32_t *thresholdLocation = NULL;
    if (comp()->getMethodSymbol()->mayHaveNestedLoops())
@@ -866,8 +861,8 @@ void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequ
          }
 
       static int32_t jProfilingCompileThreshold = comp()->getOptions()->getJProfilingMethodRecompThreshold();
-      if (trace())
-         traceMsg(comp(),"Profiling Compile Threshold for method = %d\n",isProfilingCompilation ? jProfilingCompileThreshold : *thresholdLocation);
+      logprintf(trace(), log, "Profiling Compile Threshold for method = %d\n",
+         isProfilingCompilation ? jProfilingCompileThreshold : *thresholdLocation);
       TR::Block *guardBlock2 = TR::Block::createEmptyBlock(node, comp(), originalFirstBlock->getFrequency());
       TR::Node *recompThreshold = isProfilingCompilation ? TR::Node::iconst(node, jProfilingCompileThreshold) : TR::Node::createWithSymRef(node, TR::iload, 0, comp()->getSymRefTab()->createKnownStaticDataSymbolRef(thresholdLocation, TR::Int32));
       TR::Node *cmpFlagNode = TR::Node::createif(TR::ificmplt, root, recompThreshold, originalFirstBlock->getEntry());
@@ -884,23 +879,23 @@ void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequ
       callTree->getNode()->setIsProfilingCode();
       callRecompileBlock->append(callTree);
       TR::DebugCounter::prependDebugCounter(comp(), dc1, callTree);
-      
+
       comp()->getRecompilationInfo()->getJittedBodyInfo()->setUsesJProfiling();
       TR::CFG *cfg = comp()->getFlowGraph();
-      if (trace()) traceMsg(comp(), "adding edge start to guard\n");
-         cfg->addEdge(cfg->getStart(), guardBlock1);
-      if (trace()) traceMsg(comp(), "insert before guard to bump\n");
-         cfg->insertBefore(guardBlock1, guardBlock2);
-         cfg->insertBefore(guardBlock2, callRecompileBlock);
-      if (trace()) traceMsg(comp(), "insertbefore call to original\n");
-         cfg->insertBefore(callRecompileBlock, originalFirstBlock);
-      
-      if (trace()) traceMsg(comp(), "remove start to original\n");
-         cfg->removeEdge(cfg->getStart(), originalFirstBlock);
-      if (trace()) traceMsg(comp(), "set first\n");
-         comp()->getJittedMethodSymbol()->setFirstTreeTop(guardBlock1->getEntry());
+      logprints(trace(), log, "adding edge start to guard\n");
+      cfg->addEdge(cfg->getStart(), guardBlock1);
+      logprints(trace(), log, "insert before guard to bump\n");
+      cfg->insertBefore(guardBlock1, guardBlock2);
+      cfg->insertBefore(guardBlock2, callRecompileBlock);
+      logprints(trace(), log, "insertbefore call to original\n");
+      cfg->insertBefore(callRecompileBlock, originalFirstBlock);
+
+      logprints(trace(), log, "remove start to original\n");
+      cfg->removeEdge(cfg->getStart(), originalFirstBlock);
+      logprints(trace(), log, "set first\n");
+      comp()->getJittedMethodSymbol()->setFirstTreeTop(guardBlock1->getEntry());
       if (trace())
-         comp()->dumpMethodTrees("Trees after JProfiling");
+         comp()->dumpMethodTrees(log, "Trees after JProfiling");
       }
    else
       {
@@ -921,22 +916,21 @@ void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequ
  * switch to profiling part way though, potentially after JProfilingBlock should have run. In such a scenario, the compilation
  * will be restarted. See switchToProfiling() for the restart logic.
  */
-int32_t TR_JProfilingBlock::perform() 
+int32_t TR_JProfilingBlock::perform()
    {
+   OMR::Logger *log = comp()->log();
+
    if (comp()->getOption(TR_EnableJProfiling))
       {
-      if (trace())
-         traceMsg(comp(), "JProfiling has been enabled, run JProfiling\n");
+      logprints(trace(), log, "JProfiling has been enabled, run JProfiling\n");
       }
    else if (comp()->getProfilingMode() == JProfiling)
       {
-      if (trace())
-         traceMsg(comp(), "JProfiling has been enabled for profiling compilations, run JProfilingBlock\n");
+      logprints(trace(), log, "JProfiling has been enabled for profiling compilations, run JProfilingBlock\n");
       }
    else
       {
-      if (trace())
-         traceMsg(comp(), "JProfiling has not been enabled, skip JProfilingBlock\n");
+      logprints(trace(), log, "JProfiling has not been enabled, skip JProfilingBlock\n");
       comp()->setSkippedJProfilingBlock();
       return 0;
       }
@@ -967,7 +961,7 @@ int32_t TR_JProfilingBlock::perform()
    int32_t numEdges = processCFGForCounting(parent, countedBlocks, loopBack);
 
    if (trace())
-      comp()->dumpMethodTrees("Trees after JProfiling counter insertion");
+      comp()->dumpMethodTrees(log, "Trees after JProfiling counter insertion");
 
    TR_BlockFrequencyInfo *blockFrequencyInfo = initRecompDataStructures();
 
@@ -1055,14 +1049,12 @@ int32_t TR_JProfilingBlock::perform()
       TR::Block *block = Q.top().second;
       int32_t depth = Q.top().first;
       Q.pop();
-   
-      if (trace())
-         traceMsg(comp(), "Processing depth %d - block_%d\n", depth, block->getNumber());
-   
+
+      logprintf(trace(), log, "Processing depth %d - block_%d\n", depth, block->getNumber());
+
       if (edgeInfo.computeBlockFrequencyFromPredecessors(componentCounters, blockFrequencyInfo, block))
          {
-         if (trace())
-            traceMsg(comp(), "Can compute block_%d from predecessors\n", block->getNumber());
+         logprintf(trace(), log, "Can compute block_%d from predecessors\n", block->getNumber());
          bool canComputeParent = true;
          TR::CFGEdge *parentEdge = NULL;
          CFGSuccessorIterator sit(cfg, &loopBack, block);
@@ -1084,8 +1076,7 @@ int32_t TR_JProfilingBlock::perform()
          }
       else if (edgeInfo.computeBlockFrequencyFromSuccessors(componentCounters, blockFrequencyInfo, block))
          {
-         if (trace())
-            traceMsg(comp(), "Can compute block_%d from successors\n", block->getNumber());
+         logprintf(trace(), log, "Can compute block_%d from successors\n", block->getNumber());
          bool canComputeParent = true;
          TR::CFGEdge *parentEdge = NULL;
          CFGPredecessorIterator pit(cfg, &loopBack, block);
@@ -1106,10 +1097,10 @@ int32_t TR_JProfilingBlock::perform()
             }
          }
       }
-      
+
    // dump counter dependency information
    if (trace())
-      dumpCounterDependencies(componentCounters); 
+      dumpCounterDependencies(log, componentCounters);
    // modify the method to add tests to trigger recompilation at runtime
    addRecompilationTests(blockFrequencyInfo);
    return 1;

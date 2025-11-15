@@ -887,7 +887,10 @@ TR::CompilationInfoPerThreadRemote::processCompilationRequest(CompilationRequest
          throw std::bad_alloc();
       optPlan->clone(&clientOptPlan);
       if (optPlan->isLogCompilation())
+         {
          optPlan->setLogCompilation(clientOptPlan.getLogCompilation());
+         optPlan->setLogger(clientOptPlan.getLogger());
+         }
       }
 
    // Remember the timestamp of when the request was queued before re-initializing the entry

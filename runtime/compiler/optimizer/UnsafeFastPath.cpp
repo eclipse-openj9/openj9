@@ -49,6 +49,7 @@
 #include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/TransformUtil.hpp"
+#include "ras/Logger.hpp"
 #include "infra/Checklist.hpp"
 
 // Wrap TR_J9MethodBase::isVarHandleOperationMethod() to exclude byte buffer
@@ -255,6 +256,7 @@ static bool isVarHandleOperationMethodOnNonStaticField(TR::RecognizedMethod rm)
  */
 bool TR_UnsafeFastPath::tryTransformUnsafeAtomicCallInVarHandleAccessMethod(TR::TreeTop* callTree, TR::RecognizedMethod callerMethod, TR::RecognizedMethod calleeMethod)
    {
+   OMR::Logger *log = comp()->log();
    TR::Node* node = callTree->getNode()->getFirstChild();
    TR::Node* unsafeAddress = NULL;
 
@@ -263,10 +265,7 @@ bool TR_UnsafeFastPath::tryTransformUnsafeAtomicCallInVarHandleAccessMethod(TR::
    if (isVarHandleOperationMethodOnArray(callerMethod)
        && TR::Compiler->om.canGenerateArraylets())
       {
-      if (trace())
-         {
-         traceMsg(comp(), "Call %p n%dn is accessing an element from an array that might be arraylet, quit\n", node, node->getGlobalIndex());
-         }
+      logprintf(trace(), log, "Call %p n%dn is accessing an element from an array that might be arraylet, quit\n", node, node->getGlobalIndex());
       return false;
       }
 
@@ -300,11 +299,7 @@ bool TR_UnsafeFastPath::tryTransformUnsafeAtomicCallInVarHandleAccessMethod(TR::
             node->setUnsafeGetPutCASCallOnNonArray(comp());
             }
 
-         if (trace())
-            {
-            traceMsg(comp(), "Found Unsafe CAS node %p n%dn on non-static field, set the flag\n", node, node->getGlobalIndex());
-            }
-
+         logprintf(trace(), log, "Found Unsafe CAS node %p n%dn on non-static field, set the flag\n", node, node->getGlobalIndex());
          return true;
          }
 
@@ -315,10 +310,7 @@ bool TR_UnsafeFastPath::tryTransformUnsafeAtomicCallInVarHandleAccessMethod(TR::
    TR::SymbolReferenceTable::CommonNonhelperSymbol helper = equivalentAtomicIntrinsic(comp(), calleeMethod);
    if (!comp()->cg()->supportsNonHelper(helper))
       {
-      if (trace())
-         {
-         traceMsg(comp(), "Equivalent atomic intrinsic is not supported on current platform, quit\n");
-         }
+      logprints(trace(), log, "Equivalent atomic intrinsic is not supported on current platform, quit\n");
       return false;
       }
 
@@ -366,10 +358,8 @@ bool TR_UnsafeFastPath::tryTransformUnsafeAtomicCallInVarHandleAccessMethod(TR::
       callTree->insertBefore(TR::TreeTop::create(comp(), checkNode));
       TR::Node::recreate(nullChkNode, TR::treetop);
 
-      if (trace())
-         {
-         traceMsg(comp(), "Created node %p n%dn to preserve null check on call %p n%dn\n", checkNode, checkNode->getGlobalIndex(), node, node->getGlobalIndex());
-         }
+      logprintf(trace(), log, "Created node %p n%dn to preserve null check on call %p n%dn\n",
+         checkNode, checkNode->getGlobalIndex(), node, node->getGlobalIndex());
       }
 
    // Transform the symbol on the call to equivalent atomic method symbols
@@ -380,10 +370,7 @@ bool TR_UnsafeFastPath::tryTransformUnsafeAtomicCallInVarHandleAccessMethod(TR::
    node->removeChild(1); // Remove object child
    node->setSymbolReference(comp()->getSymRefTab()->findOrCreateCodeGenInlinedHelper(helper));
 
-   if (trace())
-      {
-      traceMsg(comp(), "Transformed the call %p n%dn to codegen inlineable intrinsic\n", node, node->getGlobalIndex());
-      }
+   logprintf(trace(), log, "Transformed the call %p n%dn to codegen inlineable intrinsic\n", node, node->getGlobalIndex());
 
    return true;
    }
@@ -414,6 +401,8 @@ int32_t TR_UnsafeFastPath::perform()
    {
    if (comp()->getOption(TR_DisableUnsafe))
       return 0;
+
+   OMR::Logger *log = comp()->log();
 
    TR::NodeChecklist transformed(comp());
 
@@ -472,8 +461,8 @@ int32_t TR_UnsafeFastPath::perform()
             TR::TransformUtil::removeTree(comp(), tt);
             tt = newTree;
 
-            if (trace())
-               traceMsg(comp(), "Created node [" POINTER_PRINTF_FORMAT "] to store the value [" POINTER_PRINTF_FORMAT "] to target location [" POINTER_PRINTF_FORMAT "]\n", node, value, addrCalc);
+            logprintf(trace(), log, "Created node [" POINTER_PRINTF_FORMAT "] to store the value [" POINTER_PRINTF_FORMAT "] to target location [" POINTER_PRINTF_FORMAT "]\n",
+               node, value, addrCalc);
             continue;
             }
 
@@ -505,8 +494,7 @@ int32_t TR_UnsafeFastPath::perform()
                TR::TransformUtil::removeTree(comp(), tt);
                tt = newTree;
 
-               if (trace())
-                  traceMsg(comp(), "Created node [" POINTER_PRINTF_FORMAT "] to unsigned widen value [" POINTER_PRINTF_FORMAT "] \n", node, value);
+               logprintf(trace(), log, "Created node [" POINTER_PRINTF_FORMAT "] to unsigned widen value [" POINTER_PRINTF_FORMAT "] \n", node, value);
 
                continue;
                }
@@ -539,16 +527,11 @@ int32_t TR_UnsafeFastPath::perform()
             TR::TransformUtil::removeTree(comp(), tt);
             tt = newTree;
 
-            if (trace())
-               {
-               traceMsg(comp(),
-                  "Created node [" POINTER_PRINTF_FORMAT "] to compare "
-                  "values [" POINTER_PRINTF_FORMAT "] "
-                  "and [" POINTER_PRINTF_FORMAT "]\n",
-                  node,
-                  obj0,
-                  obj1);
-               }
+            logprintf(trace(), log,
+               "Created node [" POINTER_PRINTF_FORMAT "] to compare "
+               "values [" POINTER_PRINTF_FORMAT "] "
+               "and [" POINTER_PRINTF_FORMAT "]\n",
+               node, obj0, obj1);
 
             continue;
             }
@@ -802,8 +785,8 @@ int32_t TR_UnsafeFastPath::perform()
             else if (TR_J9MethodBase::isOpaqueUnsafe(calleeMethod))
                ordering = TR::Symbol::MemoryOrdering::Opaque;
 
-            if (trace())
-               traceMsg(comp(), "VarHandle operation: isArrayOperation %d type %s value %p access mode %s on node %p\n", isArrayOperation, J9::DataType::getName(type), value, TR::Symbol::getMemoryOrderingName(ordering), node);
+            logprintf(trace(), log, "VarHandle operation: isArrayOperation %d type %s value %p access mode %s on node %p\n",
+			      isArrayOperation, J9::DataType::getName(type), value, TR::Symbol::getMemoryOrderingName(ordering), node);
             }
 
          bool mightBeArraylets = isArrayOperation && TR::Compiler->om.canGenerateArraylets();
@@ -813,8 +796,7 @@ int32_t TR_UnsafeFastPath::perform()
 
          if (mightBeArraylets && disableUnsafeForArraylets)
             {
-            if (trace())
-               traceMsg(comp(), "unsafeForArraylets is disabled, skip unsafeFastPath for node [" POINTER_PRINTF_FORMAT "]\n", node);
+            logprintf(trace(), log, "unsafeForArraylets is disabled, skip unsafeFastPath for node [" POINTER_PRINTF_FORMAT "]\n", node);
             continue;
             }
 
@@ -889,8 +871,8 @@ int32_t TR_UnsafeFastPath::perform()
 
             if (mightBeArraylets)
                {
-               if (trace())
-                  traceMsg(comp(), "This is an array operation in arraylets mode with array [" POINTER_PRINTF_FORMAT "] and offset [ " POINTER_PRINTF_FORMAT "], creating a load/store and a spineCHK\n", object, offset);
+               logprintf(trace(), log, "This is an array operation in arraylets mode with array [" POINTER_PRINTF_FORMAT "] and offset [ " POINTER_PRINTF_FORMAT "], creating a load/store and a spineCHK\n",
+                  object, offset);
 
                TR::Node *addrCalc = NULL;
 
@@ -937,8 +919,8 @@ int32_t TR_UnsafeFastPath::perform()
                      spineCHK->setSpineCheckWithArrayElementChild(true, comp());
                      }
 
-                  if (trace())
-                     traceMsg(comp(), "Created node [" POINTER_PRINTF_FORMAT "] to store the value [" POINTER_PRINTF_FORMAT "] to target location [" POINTER_PRINTF_FORMAT "] with spineCHK [" POINTER_PRINTF_FORMAT "]\n", node, value, addrCalc, spineCHK);
+                  logprintf(trace(), log, "Created node [" POINTER_PRINTF_FORMAT "] to store the value [" POINTER_PRINTF_FORMAT "] to target location [" POINTER_PRINTF_FORMAT "] with spineCHK [" POINTER_PRINTF_FORMAT "]\n",
+                     node, value, addrCalc, spineCHK);
                   }
                else
                   {
@@ -967,8 +949,8 @@ int32_t TR_UnsafeFastPath::perform()
 
                   spineCHK->setSpineCheckWithArrayElementChild(true, comp());
 
-                  if (trace())
-                     traceMsg(comp(), "Created node [" POINTER_PRINTF_FORMAT "] to load from location [" POINTER_PRINTF_FORMAT "] with spineCHK [" POINTER_PRINTF_FORMAT "]\n", node, addrCalc, spineCHK);
+                  logprintf(trace(), log, "Created node [" POINTER_PRINTF_FORMAT "] to load from location [" POINTER_PRINTF_FORMAT "] with spineCHK [" POINTER_PRINTF_FORMAT "]\n",
+                     node, addrCalc, spineCHK);
                   }
 
                // Create a tree for spine check
@@ -1039,7 +1021,7 @@ int32_t TR_UnsafeFastPath::perform()
                      }
 
                   if (trace())
-                     traceMsg(comp(), "Created node [" POINTER_PRINTF_FORMAT "] to store the value [" POINTER_PRINTF_FORMAT "] to target location [" POINTER_PRINTF_FORMAT "]\n", node, value, addrCalc);
+                     log->printf("Created node [" POINTER_PRINTF_FORMAT "] to store the value [" POINTER_PRINTF_FORMAT "] to target location [" POINTER_PRINTF_FORMAT "]\n", node, value, addrCalc);
 
                   if (comp()->useCompressedPointers() && TR::TransformUtil::fieldShouldBeCompressed(node, comp()))
                      node = TR::Node::createCompressedRefsAnchor(node);
@@ -1067,8 +1049,7 @@ int32_t TR_UnsafeFastPath::perform()
                      node = TR::Node::recreateWithoutProperties(node, opCodeForIndirectLoad, 1, addrCalc, unsafeSymRef);
                      }
 
-                  if (trace())
-                     traceMsg(comp(), "Created node [" POINTER_PRINTF_FORMAT "] to load from location [" POINTER_PRINTF_FORMAT "]\n", node, addrCalc);
+                  logprintf(trace(), log, "Created node [" POINTER_PRINTF_FORMAT "] to load from location [" POINTER_PRINTF_FORMAT "]\n", node, addrCalc);
 
                   if (comp()->useCompressedPointers() && TR::TransformUtil::fieldShouldBeCompressed(node, comp()))
                      node = TR::Node::createCompressedRefsAnchor(node);

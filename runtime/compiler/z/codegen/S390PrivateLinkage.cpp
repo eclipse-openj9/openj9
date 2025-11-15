@@ -50,6 +50,7 @@
 #include "z/codegen/S390StackCheckFailureSnippet.hpp"
 #include "z/codegen/SystemLinkage.hpp"
 #include "z/codegen/SystemLinkagezOS.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
 
@@ -230,10 +231,7 @@ void J9::Z::PrivateLinkage::alignLocalsOffset(uint32_t &stackIndex, uint32_t loc
 
       atlas->setNumberOfSlotsMapped(atlas->getNumberOfSlotsMapped() + ((stackIndexBeforeAlignment - stackIndex) / TR::Compiler->om.sizeofReferenceAddress()));
 
-      if (comp()->getOption(TR_TraceRA))
-         {
-         traceMsg(comp(),"\nAlign stack offset before alignment = %d and after alignment = %d\n", stackIndexBeforeAlignment, stackIndex);
-         }
+      logprintf(comp()->getOption(TR_TraceRA), comp()->log(), "\nAlign stack offset before alignment = %d and after alignment = %d\n", stackIndexBeforeAlignment, stackIndex);
       }
    }
 
@@ -245,6 +243,9 @@ void J9::Z::PrivateLinkage::alignLocalsOffset(uint32_t &stackIndex, uint32_t loc
 void
 J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
    {
+   OMR::Logger *log = comp()->log();
+   bool trace = comp()->getOption(TR_TraceCG);
+   bool traceBCD =  cg()->traceBCDCodeGen();
    ListIterator<TR::AutomaticSymbol>  automaticIterator(&method->getAutomaticList());
    TR::AutomaticSymbol               *localCursor       = automaticIterator.getFirst();
    int32_t                           firstLocalOffset  = getOffsetToFirstLocal();
@@ -328,12 +329,13 @@ J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
    // Here we align the stackIndex
    // *************************************how we align local objects********************************
    //
-   traceMsg(comp(), "stackIndex after compaction = %d\n", stackIndex);
+
+   logprintf(trace, log, "stackIndex after compaction = %d\n", stackIndex);
 
    // stackIndex in mapCompactedStack is calculated using only local reference sizes and does not include the padding
    stackIndex -= pointerSize * atlas->getNumberOfPaddingSlots();
 
-   traceMsg(comp(), "stackIndex after padding slots = %d\n", stackIndex);
+   logprintf(trace, log, "stackIndex after padding slots = %d\n", stackIndex);
 
    uint32_t localObjectAlignment = 1 << TR::Compiler->om.compressedReferenceShift();
 
@@ -397,8 +399,8 @@ J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
                }
             else
                {
-                  traceMsg(comp(), "O^O COMPACT LOCALS: Sharing slot for local %p (colour = %d)\n",localCursor, colour);
-                  localCursor->setOffset(colourToOffsetMap[colour]);
+               logprintf(trace, log, "O^O COMPACT LOCALS: Sharing slot for local %p (colour = %d)\n", localCursor, colour);
+               localCursor->setOffset(colourToOffsetMap[colour]);
                }
             }
          else
@@ -426,8 +428,7 @@ J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
          {
          int32_t newOffset = stackIndex + pointerSize*(localCursor->getGCMapIndex()-firstLocalGCIndex);
 
-         if (comp()->getOption(TR_TraceRA))
-            traceMsg(comp(), "\nmapCompactedStack: changing %s (GC index %d) offset from %d to %d",
+         logprintf(comp()->getOption(TR_TraceRA), log, "\nmapCompactedStack: changing %s (GC index %d) offset from %d to %d",
                comp()->getDebug()->getName(localCursor), localCursor->getGCMapIndex(), localCursor->getOffset(), newOffset);
 
          localCursor->setOffset(newOffset);
@@ -470,8 +471,8 @@ J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
                   }
                else // share local with already mapped stack slot
                   {
-                     traceMsg(comp(), "O^O COMPACT LOCALS: Sharing slot for local %p (colour = %d)\n",localCursor, colour);
-                     localCursor->setOffset(colourToOffsetMap[colour]);
+                  logprintf(trace, log, "O^O COMPACT LOCALS: Sharing slot for local %p (colour = %d)\n", localCursor, colour);
+                  localCursor->setOffset(colourToOffsetMap[colour]);
                   }
 #ifdef DEBUG
                origSize += localCursor->getRoundedSize();
@@ -496,16 +497,12 @@ J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
          {
          if (variableSizeSymCursor->isReferenced())
             {
-              if (cg()->traceBCDCodeGen())
-                 traceMsg(comp(),"map variableSize sym %p (size %d) because isReferenced=true ",variableSizeSymCursor,variableSizeSymCursor->getSize());
-              mapSingleAutomatic(variableSizeSymCursor, stackIndex);  //Ivan
-             if (cg()->traceBCDCodeGen())
-                 traceMsg(comp(),"to auto offset %d\n",variableSizeSymCursor->getOffset());
+            logprintf(traceBCD, log, "map variableSize sym %p (size %d) because isReferenced=true ", variableSizeSymCursor, variableSizeSymCursor->getSize());
+            mapSingleAutomatic(variableSizeSymCursor, stackIndex);
+            logprintf(traceBCD, log, "to auto offset %d\n", variableSizeSymCursor->getOffset());
             }
-         else if (cg()->traceBCDCodeGen())
-            {
-            traceMsg(comp(),"do not map variableSize sym %p (size %d) because isReferenced=false\n",variableSizeSymCursor,variableSizeSymCursor->getSize());
-            }
+         else
+            logprintf(traceBCD, log, "do not map variableSize sym %p (size %d) because isReferenced=false\n", variableSizeSymCursor, variableSizeSymCursor->getSize());
          variableSizeSymCursor = variableSizeSymIterator.getNext();
          }
 
@@ -544,8 +541,8 @@ J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
                   }
                else // share local with already mapped stack slot
                   {
-                     traceMsg(comp(), "O^O COMPACT LOCALS: Sharing slot for local %p (colour = %d)\n",localCursor, colour);
-                     localCursor->setOffset(colourToOffsetMap[colour]);
+                  logprintf(trace, log, "O^O COMPACT LOCALS: Sharing slot for local %p (colour = %d)\n", localCursor, colour);
+                  localCursor->setOffset(colourToOffsetMap[colour]);
                   }
 #ifdef DEBUG
                origSize += localCursor->getRoundedSize();
@@ -637,6 +634,8 @@ J9::Z::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol * method)
       return;
       }
 
+   OMR::Logger *log = comp()->log();
+   bool trace = cg()->traceBCDCodeGen();
 
    ListIterator<TR::AutomaticSymbol> automaticIterator(&method->getAutomaticList());
    TR::AutomaticSymbol * localCursor = automaticIterator.getFirst();
@@ -692,16 +691,13 @@ J9::Z::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol * method)
       TR_ASSERT(variableSizeSymCursor->isVariableSizeSymbol(), "should be variable sized");
       if (variableSizeSymCursor->isReferenced())
          {
-         if (cg()->traceBCDCodeGen())
-            traceMsg(comp(),"map variableSize sym %p (size %d) because isReferenced=true ",variableSizeSymCursor,variableSizeSymCursor->getSize());
+         logprintf(trace, log, "map variableSize sym %p (size %d) because isReferenced=true ", variableSizeSymCursor, variableSizeSymCursor->getSize());
          mapSingleAutomatic(variableSizeSymCursor, stackIndex);  //Ivan
-         if (cg()->traceBCDCodeGen())
-            traceMsg(comp(),"to auto offset %d\n",variableSizeSymCursor->getOffset());
+         logprintf(trace, log, "to auto offset %d\n", variableSizeSymCursor->getOffset());
          }
-      else if (cg()->traceBCDCodeGen())
-         {
-         traceMsg(comp(),"do not map variableSize sym %p (size %d) because isReferenced=false\n",variableSizeSymCursor,variableSizeSymCursor->getSize());
-         }
+      else
+         logprintf(trace, log, "do not map variableSize sym %p (size %d) because isReferenced=false\n", variableSizeSymCursor, variableSizeSymCursor->getSize());
+
       variableSizeSymCursor = variableSizeSymIterator.getNext();
       }
 
@@ -1075,6 +1071,8 @@ J9::Z::PrivateLinkage::setupLiteralPoolRegister(TR::Snippet *firstSnippet)
 void
 J9::Z::PrivateLinkage::createPrologue(TR::Instruction * cursor)
    {
+   OMR::Logger *log = comp()->log();
+   bool trace = comp()->getOption(TR_TraceCG);
    TR::RealRegister * spReg = getStackPointerRealRegister();
    TR::RealRegister * lpReg = getLitPoolRealRegister();
    TR::RealRegister * epReg = getEntryPointRealRegister();
@@ -1113,7 +1111,7 @@ J9::Z::PrivateLinkage::createPrologue(TR::Instruction * cursor)
    // TODO: Rename this option to "disableStackAlignment" as we can align to more than doubleword now
    if (!comp()->getOption(TR_DisableDoubleWordStackAlignment))
       {
-      traceMsg(comp(), "Before stack alignment Framesize = %d, localSize = %d\n", size, localSize);
+      logprintf(trace, log, "Before stack alignment Framesize = %d, localSize = %d\n", size, localSize);
 
       uint32_t stackFrameAlignment = std::max(1 << TR::Compiler->om.compressedReferenceShift(), 8);
 
@@ -1125,16 +1123,16 @@ J9::Z::PrivateLinkage::createPrologue(TR::Instruction * cursor)
       // Recompute the size with the new (potentially) updated localSize
       size = regSaveSize + localSize + argSize;
 
-      traceMsg(comp(), "After stack alignment Framesize = %d, localSize = %d\n", size, localSize);
+      logprintf(trace, log, "After stack alignment Framesize = %d, localSize = %d\n", size, localSize);
       }
 
    // Check for large stack
    bool largeStack = (size<MIN_IMMEDIATE_VAL || size>MAX_IMMEDIATE_VAL);
 
-   if (comp()->getOption(TR_TraceCG))
+   if (trace)
       {
-      traceMsg(comp(), "\n regSaveSize = %d localSize = %d argSize = %d firstLocalOffset = %d \n",regSaveSize,localSize,argSize,firstLocalOffset);
-      traceMsg(comp(), " Framesize = %d \n",size);
+      log->printf("\n regSaveSize = %d localSize = %d argSize = %d firstLocalOffset = %d \n",regSaveSize,localSize,argSize,firstLocalOffset);
+      log->printf(" Framesize = %d \n",size);
       }
 
    TR_ASSERT( ((int32_t) size % 4 == 0), "misaligned stack detected");
@@ -1150,10 +1148,7 @@ J9::Z::PrivateLinkage::createPrologue(TR::Instruction * cursor)
 
    int32_t offsetToLongDisp = size - getOffsetToLongDispSlot();
    setOffsetToLongDispSlot(offsetToLongDisp);
-   if (comp()->getOption(TR_TraceCG))
-      {
-      traceMsg(comp(), "\n\nOffsetToLongDispSlot = %d\n", offsetToLongDisp);
-      }
+   logprintf(trace, log, "\n\nOffsetToLongDispSlot = %d\n", offsetToLongDisp);
 
    // Is GPR14 ever used?  If not, we can avoid
    //
@@ -1327,8 +1322,6 @@ J9::Z::PrivateLinkage::createPrologue(TR::Instruction * cursor)
 
          int32_t initbytes = cg()->machine()->getGPRSize() * numLocalsToBeInitialized;
 
-         //printf("\ncollected reference: init %d bytes at offset %d\n", initbytes, size+offsetLcls);
-
          cursor = initStg(cg(), firstNode, tmpReg, spReg, itersReg, size + offsetLcls, initbytes, cursor);
          if (atlas->getInternalPointerMap())
             {
@@ -1339,8 +1332,6 @@ J9::Z::PrivateLinkage::createPrologue(TR::Instruction * cursor)
             //
             int32_t initbytes = (atlas->getNumberOfDistinctPinningArrays() +
                atlas->getInternalPointerMap()->getNumInternalPointers()) * cg()->machine()->getGPRSize();
-
-            //printf("\ninternal pointer: init %d bytes at offset %d\n", initbytes, size+offsetIntPtr);
 
             cursor = initStg(cg(), firstNode, tmpReg, spReg, itersReg, size + offsetIntPtr, initbytes, cursor);
             }
@@ -1448,8 +1439,7 @@ J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
       }
    else
       {
-      if (comp()->getOption(TR_TraceCG))
-         traceMsg(comp(), "No RAREG context restore needed in Epilog\n");
+      logprints(comp()->getOption(TR_TraceCG), comp()->log(), "No RAREG context restore needed in Epilog\n");
       }
 
    if (enableBranchPreload && (cursor->getNext() == cg()->_hottestReturn._returnInstr))
@@ -1537,12 +1527,12 @@ getITableIterationsNumber(TR::Compilation * comp, TR::SymbolReference * methodSy
    int32_t iterations = MAX_ITABLE_ITERATIONS;
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
+   OMR::Logger *log = comp->log();
    bool trace = comp->getOption(TR_TraceCG);
 
    if (comp->getOption(TR_DisableITableIterationsAfterLastITableCacheCheck))
       {
-      if (trace)
-         traceMsg(comp, "ITable iteration after lastITable check is disabled.\n");
+      logprints(trace, log, "ITable iteration after lastITable check is disabled.\n");
       return 0;
       }
    // Set a fix number between 1 and 32767 (int16_MAX) of iterations. Check all iTableEntries if a number larger than 32767 is provided.
@@ -1550,8 +1540,7 @@ getITableIterationsNumber(TR::Compilation * comp, TR::SymbolReference * methodSy
    if (numITableIterationsAfterLastITableCacheCheck)
       {
       iterations = atoi(numITableIterationsAfterLastITableCacheCheck);
-      if (trace)
-         traceMsg(comp, "ITable iteration is %d because TR_NumITableIterationsAfterLastITableCacheCheck was set.\n", iterations);
+      logprintf(trace, log, "ITable iteration is %d because TR_NumITableIterationsAfterLastITableCacheCheck was set.\n", iterations);
       return iterations;
       }
 
@@ -1576,12 +1565,11 @@ getITableIterationsNumber(TR::Compilation * comp, TR::SymbolReference * methodSy
 
          iterations = (maxInterfaces > MAX_ITABLE_ITERATIONS) ? MAX_ITABLE_ITERATIONS : maxInterfaces;
 
-         if (trace)
-            traceMsg(comp, "ITable declaringClass %p numImplementers %d maxInterfaces %d iterations %d\n", declaringClass, numImplementers, maxInterfaces, iterations);
+         logprintf(trace, log, "ITable declaringClass %p numImplementers %d maxInterfaces %d iterations %d\n", declaringClass, numImplementers, maxInterfaces, iterations);
          }
       }
-   else if (trace)
-      traceMsg(comp, "ITable iteration is the default value of %d.\n", iterations);
+   else
+      logprintf(trace, log, "ITable iteration is the default value of %d.\n", iterations);
    return iterations;
    }
 
@@ -1779,6 +1767,8 @@ void
 J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDependencyConditions * dependencies,
    TR::Register * vftReg, uint32_t sizeOfArguments)
    {
+   OMR::Logger *log = comp()->log();
+   bool trace = comp()->getOption(TR_TraceCG);
    TR::RegisterDependencyGroup * Dgroup = dependencies->getPreConditions();
    TR::SymbolReference * methodSymRef = callNode->getSymbolReference();
    TR::MethodSymbol * methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
@@ -1791,8 +1781,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
    TR_OpaqueClassBlock *profiledClass     = NULL;
    bool                 useProfiledValues = false;
 
-   if (comp()->getOption(TR_TraceCG))
-      traceMsg(comp(), "Build Virtual Dispatch\n");
+   logprints(trace, log, "Build Virtual Dispatch\n");
 
    if ((methodSymbol && !methodSymbol->isComputed()) &&
        (comp()->getPersistentInfo()->isRuntimeInstrumentationEnabled()) &&
@@ -1865,8 +1854,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
       TR::LabelSymbol * doneVirtualLabel = generateLabelSymbol(cg());
       int32_t offset = comp()->compileRelocatableCode() ? 0: methodSymRef->getOffset();
 
-      if (comp()->getOption(TR_TraceCG))
-         traceMsg(comp(), "Virtual call with offset %d\n", offset);
+      logprintf(trace, log, "Virtual call with offset %d\n", offset);
 
       // We split dependencies to make sure the RA doesn't insert any register motion code in the fixed
       // block sequence.
@@ -1899,8 +1887,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
 
       if (methodSymRef->isUnresolved() || comp()->compileRelocatableCode())
          {
-         if (comp()->getOption(TR_TraceCG))
-            traceMsg(comp(), "... virtual call is unresolved\n");
+         logprints(trace, log, "... virtual call is unresolved\n");
 
          // TODO: Task 124512. Fix picbuilder register preservation before
          // moving this vft register dependency to BASR pre-deps.
@@ -1918,8 +1905,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          }
       else
          {
-         if (comp()->getOption(TR_TraceCG))
-            traceMsg(comp(), "...call resolved\n");
+         logprints(trace, log, "...call resolved\n");
 
          TR::ResolvedMethodSymbol * resolvedSymbol = methodSymRef->getSymbol()->getResolvedMethodSymbol();
          TR_ResolvedMethod * resolvedMethod = resolvedSymbol ? resolvedSymbol->getResolvedMethod() : 0;
@@ -1941,11 +1927,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
                   //
                   virtualGuard = TR_VirtualGuard::createGuardedDevirtualizationGuard(TR_NonoverriddenGuard,
                                                       comp(), callNode);
-                  if (comp()->getOption(TR_TraceCG))
-                     {
-                     traceMsg(comp(), "Emit new Non-Overridden guard for call %s (%x) in %s\n", resolvedMethod->signature(trMemory()), callNode,
-                           comp()->signature());
-                     }
+                  logprintf(trace, log, "Emit new Non-Overridden guard for call %s (%x) in %s\n", resolvedMethod->signature(trMemory()), callNode, comp()->signature());
                   }
                else
                   {
@@ -1956,11 +1938,8 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
                   if (devirtualizedCallInfo)
                      {
                      refinedThisClass = devirtualizedCallInfo->_thisType;
-                     if (comp()->getOption(TR_TraceCG))
-                        {
-                        traceMsg(comp(), "Found refined this class info %x for call %x in %s\n", refinedThisClass, callNode,
-                              comp()->signature());
-                        }
+                     logprintf(trace, log, "Found refined this class info %x for call %x in %s\n", refinedThisClass, callNode, comp()->signature());
+
                      if (refinedThisClass)
                         {
                         thisClass = refinedThisClass;
@@ -1980,11 +1959,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
                         resolvedMethod = method;
                         virtualGuard = TR_VirtualGuard::createGuardedDevirtualizationGuard(TR_AbstractGuard,
                                                             comp(), callNode);
-                        if (comp()->getOption(TR_TraceCG))
-                           {
-                           traceMsg(comp(), "Emit new ABSTRACT guard for call %s (%x) in %s\n", resolvedMethod->signature(trMemory()), callNode,
-                                 comp()->signature());
-                           }
+                        logprintf(trace, log, "Emit new ABSTRACT guard for call %s (%x) in %s\n", resolvedMethod->signature(trMemory()), callNode, comp()->signature());
                         }
                      }
                   else if (refinedThisClass && !chTable->isOverriddenInThisHierarchy(resolvedMethod, refinedThisClass,
@@ -2004,11 +1979,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
                            virtualGuard = TR_VirtualGuard::createGuardedDevirtualizationGuard(TR_HierarchyGuard,
                                                                comp(), callNode);
 
-                           if (comp()->getOption(TR_TraceCG))
-                              {
-                              traceMsg(comp(), "Emit new HierarchyGuardguard for call %s (%x) in %s\n", resolvedMethod->signature(trMemory()), callNode,
-                                 comp()->signature());
-                              }
+                           logprintf(trace, log, "Emit new HierarchyGuardguard for call %s (%x) in %s\n", resolvedMethod->signature(trMemory()), callNode, comp()->signature());
                            }
                         }
                      }
@@ -2069,12 +2040,10 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
                           (TR_OpaqueClassBlock *)topValue, methodSymRef->getOffset());
                if (profiledVirtualMethod && !profiledVirtualMethod->isInterpreted())
                   {
-                  if (comp()->getOption(TR_TraceCG))
-                     {
-                     traceMsg(comp(),
-                           "Profiled method {%s}\n",
-                           fej9->sampleSignature((TR_OpaqueMethodBlock *)(profiledVirtualMethod->getPersistentIdentifier()), 0, 0, comp()->trMemory()));
-                     }
+                  logprintf(trace, log, "Profiled method {%s}\n",
+                        fej9->sampleSignature((TR_OpaqueMethodBlock *)(profiledVirtualMethod->getPersistentIdentifier()),
+                        0, 0, comp()->trMemory()));
+
                   profiledMethod    = profiledVirtualMethod;
                   profiledClass     = (TR_OpaqueClassBlock *)topValue;
                   useProfiledValues = true;
@@ -2085,8 +2054,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
 
          if (performGuardedDevirtualization || useProfiledValues)
             {
-            if (comp()->getOption(TR_TraceCG))
-               traceMsg(comp(), "Make direct call under devirtualization\n");
+            logprints(trace, log, "Make direct call under devirtualization\n");
 
             TR::SymbolReference * realMethodSymRef = methodSymRef;
             if (useProfiledValues || resolvedMethod != resolvedSymbol->getResolvedMethod())
@@ -2112,7 +2080,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
 
       if ( virtualLabel )
          {
-         traceMsg (comp(), "OOL vcall: generating Vcall dispatch sequence\n");
+         logprints(trace, log, "OOL vcall: generating Vcall dispatch sequence\n");
          //Using OOL but generating code manually
          outlinedSlowPath = new (cg()->trHeapMemory()) TR_S390OutOfLineCodeSection(vcallLabel,doneVirtualLabel,cg());
          cg()->getS390OutOfLineCodeSectionList().push_front(outlinedSlowPath);
@@ -2250,12 +2218,12 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
               }
         }
 
-        if (comp()->getOption(TR_TraceCG))
+        if (trace)
            {
            if (numStaticPICs != 0)
-              traceMsg(comp(), "Interface dispatch with %d cache slots, added extra %d slot(s) for profiled classes.\n", numInterfaceCallCacheSlots, numStaticPICs);
+              log->printf("Interface dispatch with %d cache slots, added extra %d slot(s) for profiled classes.\n", numInterfaceCallCacheSlots, numStaticPICs);
            else
-              traceMsg(comp(), "Interface dispatch with %d cache slots\n", numInterfaceCallCacheSlots);
+              log->printf("Interface dispatch with %d cache slots\n", numInterfaceCallCacheSlots);
            }
 
       TR::LabelSymbol * snippetLabel = generateLabelSymbol(cg());
@@ -2530,6 +2498,8 @@ TR::Instruction *
 J9::Z::PrivateLinkage::buildDirectCall(TR::Node * callNode, TR::SymbolReference * callSymRef,
    TR::RegisterDependencyConditions * dependencies, int32_t argSize)
    {
+   OMR::Logger *log = comp()->log();
+   bool trace = comp()->getOption(TR_TraceCG);
    TR::Instruction * gcPoint = NULL;
    TR::MethodSymbol * callSymbol = callSymRef->getSymbol()->castToMethodSymbol();
    TR::ResolvedMethodSymbol * sym = callSymbol->getResolvedMethodSymbol();
@@ -2554,8 +2524,7 @@ J9::Z::PrivateLinkage::buildDirectCall(TR::Node * callNode, TR::SymbolReference 
       }
 #endif
 
-   if (comp()->getOption(TR_TraceCG))
-      traceMsg(comp(), "Build Direct Call\n");
+   logprints(trace, log, "Build Direct Call\n");
 
    // generate call
    if (isJitInduceOSR)
@@ -2628,8 +2597,7 @@ J9::Z::PrivateLinkage::buildDirectCall(TR::Node * callNode, TR::SymbolReference 
          TR::TreeEvaluator::generateRuntimeInstrumentationOnOffSequence(cg(), TR::InstOpCode::RION, callNode);
       }
 
-   if (comp()->getOption(TR_TraceCG))
-      traceMsg(comp(), "\nGC Point at %p has preserved register map %x\n", gcPoint, getPreservedRegisterMapForGC());
+   logprintf(trace, log, "\nGC Point at %p has preserved register map %x\n", gcPoint, getPreservedRegisterMapForGC());
 
    gcPoint->setNeedsGCMap(getPreservedRegisterMapForGC());
    return gcPoint;
@@ -3100,8 +3068,10 @@ J9::Z::JNILinkage::processJNIReturnValue(TR::Node * callNode,
 
 TR::Register * J9::Z::JNILinkage::buildDirectDispatch(TR::Node * callNode)
    {
-   if (comp()->getOption(TR_TraceCG))
-      traceMsg(comp(), "\nbuildDirectDispatch\n");
+   OMR::Logger *log = comp()->log();
+   bool trace = comp()->getOption(TR_TraceCG);
+
+   logprints(trace, log, "\nbuildDirectDispatch\n");
 
    TR::CodeGenerator * codeGen = cg();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
@@ -3191,8 +3161,9 @@ TR::Register * J9::Z::JNILinkage::buildDirectDispatch(TR::Node * callNode)
       isJavaOffLoadCheck = true;
 
 
-   if (comp()->getOption(TR_TraceCG))
-      traceMsg(comp(), "isPassReceiver: %d, isPassJNIThread: %d, isJNIGCPoint: %d, isJNICallOutFrame:%d, isReleaseVMAccess: %d, isCollapseJNIReferenceFrame: %d, isJNIGCPoint: %d\n", isPassReceiver, isPassJNIThread, isJNIGCPoint, isJNICallOutFrame, isReleaseVMAccess, isCollapseJNIReferenceFrame, isJNIGCPoint);
+   logprintf(trace, log, "isPassReceiver: %d, isPassJNIThread: %d, isJNIGCPoint: %d, isJNICallOutFrame:%d, isReleaseVMAccess: %d, isCollapseJNIReferenceFrame: %d, isJNIGCPoint: %d\n",
+         isPassReceiver, isPassJNIThread, isJNIGCPoint, isJNICallOutFrame,
+         isReleaseVMAccess, isCollapseJNIReferenceFrame, isJNIGCPoint);
 
    if (isPassJNIThread)
       {
@@ -3412,14 +3383,11 @@ J9::Z::PrivateLinkage::addSpecialRegDepsForBuildArgs(TR::Node * callNode, TR::Re
       dependencies->addPreCondition(specialArg, specialArgReg );
       cg()->decReferenceCount(child);
 
-      if (comp()->getOption(TR_TraceCG))
-         {
-         traceMsg(comp(), "Special arg %s %s reg %s in %s\n",
+      logprintf(comp()->getOption(TR_TraceCG), comp()->log(), "Special arg %s %s reg %s in %s\n",
             callNode->getOpCode().getName(),
             comp()->getDebug()->getName(callNode->getChild(from)),
             comp()->getDebug()->getName(callNode->getRegister()),
             comp()->getDebug()->getName(cg()->machine()->getRealRegister(specialArgReg)));
-         }
 
       from += step;
       }
@@ -3486,8 +3454,7 @@ J9::Z::PrivateLinkage::buildDirectDispatch(TR::Node * callNode)
    TR::Register * returnRegister;
    TR::Register *vftReg = NULL;
 
-   if (comp()->getOption(TR_TraceCG))
-      traceMsg(comp(), "\nbuildDirectDispatch\n");
+   logprints(comp()->getOption(TR_TraceCG), comp()->log(), "\nbuildDirectDispatch\n");
 
    // create register dependency conditions
    TR::RegisterDependencyConditions * dependencies = generateRegisterDependencyConditions(getNumberOfDependencyGPRegisters(),
@@ -3572,8 +3539,7 @@ J9::Z::PrivateLinkage::buildIndirectDispatch(TR::Node * callNode)
    //TR::S390SystemLinkage * systemLinkage = (TR::S390SystemLinkage *) cg()->getLinkage(TR_System);
 
 
-   if (comp()->getOption(TR_TraceCG))
-      traceMsg(comp(), "\nbuildIndirectDispatch\n");
+   logprints(comp()->getOption(TR_TraceCG), comp()->log(), "\nbuildIndirectDispatch\n");
 
    // create register dependency conditions
    dependencies = generateRegisterDependencyConditions(getNumberOfDependencyGPRegisters(),

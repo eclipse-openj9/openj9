@@ -81,6 +81,7 @@
 #include "infra/Monitor.hpp"
 #include "infra/String.hpp"
 #include "ras/InternalFunctions.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/asmprotos.h"
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheManager.hpp"
@@ -8649,10 +8650,13 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                }
             else
                {
-               // For JitDump compilations, set the log file to the jitdump file,
-               // which has already been created by a thread running JitDump
+               // For JitDump compilations, set the log file and OMR::Logger to
+               // the jitdump file, which has already been created by a thread
+               // running JitDump
+               //
                TR::Options::findOrCreateDebug();
                options->setLogFile(p->_optimizationPlan->getLogCompilation());
+               options->setLogger(p->_optimizationPlan->getLogger());
                }
             // The following is a hack to prevent the JITServer from allocating
             // a sentinel entry for the list of runtime assumptions kept in the compiler object
@@ -9472,8 +9476,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
          if (debug("traceInfo") && optionSetIndex > 0)
             {
-            if (compiler->getOutFile() != NULL)
-               diagnostic("Forced Option Set %d\n", optionSetIndex);
+            diagnostic("Forced Option Set %d\n", optionSetIndex);
             }
          }
       }
@@ -9830,26 +9833,27 @@ TR::CompilationInfoPerThreadBase::compile(
             CompilationTrace(TR::Compilation &compiler) : _compiler(compiler)
                {
                TR_ASSERT(_compiler.getHotnessName(_compiler.getMethodHotness()), "expected to have a hotness string");
-               if (_compiler.getOutFile() != NULL && _compiler.getOption(TR_TraceAll))
+               if (_compiler.getOption(TR_TraceAll))
                   {
-                  traceMsg(&_compiler, "<compile\n");
-                  traceMsg(&_compiler, "\tmethod=\"%s\"\n", _compiler.signature());
-                  traceMsg(&_compiler, "\thotness=\"%s\"\n", _compiler.getHotnessName(_compiler.getMethodHotness()));
-                  traceMsg(&_compiler, "\tisProfilingCompile=%d", _compiler.isProfilingCompilation());
+                  OMR::Logger *log = (&_compiler)->log();
+                  log->prints("<compile\n");
+                  log->printf("\tmethod=\"%s\"\n", _compiler.signature());
+                  log->printf("\thotness=\"%s\"\n", _compiler.getHotnessName(_compiler.getMethodHotness()));
+                  log->printf("\tisProfilingCompile=%d", _compiler.isProfilingCompilation());
 #if defined(J9VM_OPT_JITSERVER)
                   if (_compiler.isOutOfProcessCompilation() && TR::compInfoPT->getClientData()) // using jitserver && client JVM
                      {
-                     traceMsg(&_compiler, "\n");
-                     traceMsg(&_compiler, "\tclientID=%" OMR_PRIu64, TR::compInfoPT->getClientData()->getClientUID());
+                     log->println();
+                     log->printf("\tclientID=%" OMR_PRIu64, TR::compInfoPT->getClientData()->getClientUID());
                      }
 #endif /* defined(J9VM_OPT_JITSERVER) */
-                  traceMsg(&_compiler, ">\n");
+                  log->prints(">\n");
                   }
                }
             ~CompilationTrace() throw()
                {
-               if (_compiler.getOutFile() != NULL && _compiler.getOption(TR_TraceAll))
-                  traceMsg(&_compiler, "</compile>\n\n");
+               if (_compiler.getOption(TR_TraceAll))
+                  (&_compiler)->log()->prints("</compile>\n\n");
                }
          private:
             TR::Compilation &_compiler;
@@ -10138,15 +10142,15 @@ TR::CompilationInfoPerThreadBase::compile(
          public:
             TraceMethodMetadata(TR::Compilation &compiler) :
                _compiler(compiler),
-               _trace(compiler.getOutFile() != NULL && compiler.getOption(TR_TraceAll))
+               _trace(compiler.getOption(TR_TraceAll))
                {
                if (_trace)
-                  traceMsg(&_compiler, "<metadata>\n");
+                  (&_compiler)->log()->prints("<metadata>\n");
                }
             ~TraceMethodMetadata()
                {
                if (_trace)
-                  traceMsg(&_compiler, "</metadata>\n");
+                  (&_compiler)->log()->prints("</metadata>\n");
                }
          private:
             TR::Compilation &_compiler;
@@ -10985,8 +10989,8 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
       J9JavaVM * javaVM = _jitConfig->javaVM;
       // Dump mixed mode disassembly listing.
       //
-      if (compiler->getOutFile() != NULL && compiler->getOption(TR_TraceAll))
-         compiler->getDebug()->dumpMixedModeDisassembly();
+      if (compiler->getOption(TR_TraceAll))
+         compiler->getDebug()->dumpMixedModeDisassembly(compiler->log());
 
       if (!vm.isAOT_DEPRECATED_DO_NOT_USE())
          {
@@ -11018,9 +11022,10 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
       uintptr_t translationTime = currentTime - getTimeWhenCompStarted();
       if (TR::Options::_largeTranslationTime > 0 && translationTime > (uintptr_t)TR::Options::_largeTranslationTime)
          {
-         if (compiler->getOutFile() != NULL)
-            trfprintf(compiler->getOutFile(), "Compilation took %d usec\n", (int32_t)translationTime);
-         compiler->dumpMethodTrees("Post optimization trees for large computing method");
+         OMR::Logger *log = compiler->log();
+         if (log->isEnabled_DEPRECATED())
+            log->printf("Compilation took %d usec\n", (int32_t)translationTime);
+         compiler->dumpMethodTrees(log, "Post optimization trees for large computing method");
          }
       if (_onSeparateThread)
          {
@@ -11373,7 +11378,7 @@ static void
 printCompFailureInfo(TR::Compilation * comp, const char * reason)
    {
    if (comp && comp->getOptions()->getAnyOption(TR_TraceAll))
-      traceMsg(comp, "\n=== EXCEPTION THROWN (%s) ===\n", reason);
+      comp->log()->printf("\n=== EXCEPTION THROWN (%s) ===\n", reason);
    }
 
 void
