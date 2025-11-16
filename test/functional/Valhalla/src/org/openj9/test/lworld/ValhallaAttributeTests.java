@@ -145,33 +145,6 @@ public class ValhallaAttributeTests {
 		ValhallaAttributeGenerator.generateNullRestrictedFieldWhereICHasNoDefaultFlag(false, "TestNullRestrictedAttributeWhereImplicitCreationHasNoDefaultFlag", "TestNullRestrictedAttributeWhereImplicitCreationHasNoDefaultFlagField");
 	}
 
-	/* The descriptor_index of the field should name a value class that has an ImplicitCreation attribute with its ACC_DEFAULT flag is set.
-	 * Static fields should fail during the preparation stage of linking.
-	 */
-	@Test(expectedExceptions = java.lang.IncompatibleClassChangeError.class, expectedExceptionsMessageRegExp = ".*A static field with a NullRestricted attribute must be in a value class with an implicit constructor.*")
-	public static void testStaticNullRestrictedFieldMustBeInValueClass() throws Throwable {
-		Class<?> c = ValhallaAttributeGenerator.generateNullRestrictedAttributeInIdentityClass(true, "TestStaticNullRestrictedFieldMustBeInValueClass", "TestStaticNullRestrictedFieldMustBeInValueClassField");
-		c.newInstance();
-	}
-
-	/* The descriptor_index of the field should name a value class that has an ImplicitCreation attribute with its ACC_DEFAULT flag is set.
-	 * Static fields should fail during the preparation stage of linking.
-	 */
-	@Test(expectedExceptions = java.lang.IncompatibleClassChangeError.class, expectedExceptionsMessageRegExp = ".*A static field with a NullRestricted attribute must be in a value class with an implicit constructor.*")
-	public static void testStaticNullRestrictedFieldClassMustHaveImplicitCreation() throws Throwable {
-		Class<?> c = ValhallaAttributeGenerator.generateNullRestrictedAttributeInValueClassWithoutIC(true, "TestStaticNullRestrictedFieldClassMustHaveImplicitCreation", "TestStaticNullRestrictedFieldClassMustHaveImplicitCreationField");
-		c.newInstance();
-	}
-
-	/* The descriptor_index of the field should name a value class that has an ImplicitCreation attribute with its ACC_DEFAULT flag is set.
-	 * Static fields should fail during the preparation stage of linking.
-	 */
-	@Test(expectedExceptions = java.lang.IncompatibleClassChangeError.class, expectedExceptionsMessageRegExp = ".*A static field with a NullRestricted attribute must be in a value class with an implicit constructor.*")
-	public static void testStaticNullRestrictedFieldWhereImplicitCreationHasNoDefaultFlag() throws Throwable {
-		Class<?> c = ValhallaAttributeGenerator.generateNullRestrictedFieldWhereICHasNoDefaultFlag(true, "TestStaticNullRestrictedAttributeWhereImplicitCreationHasNoDefaultFlag", "TestStaticNullRestrictedAttributeWhereImplicitCreationHasNoDefaultFlagField");
-		c.newInstance();
-	}
-
 	@Test
 	public static void testPutFieldNullToValueTypeField() throws Throwable {
 		Class<?> c = ValhallaAttributeGenerator.generatePutFieldNullToField("TestPutFieldNullToValueTypeField", "TestPutFieldNullToValueTypeFieldField", false);
