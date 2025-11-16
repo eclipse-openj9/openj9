@@ -284,11 +284,11 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
    TR::ILOpCode opCode = node->getOpCode();
    TR::ILOpCodes opCodeValue = node->getOpCodeValue();
 
-   if ((opCodeValue == TR::astore || opCodeValue == TR::astorei) &&
+   if (opCodeValue == TR::astore &&
        !node->chkStoredValueIsIrrelevant())
       {
       int32_t id1 = node->getSymbolReference()->getReferenceNumber();
-      TR::Node *rhs = (opCodeValue == TR::astore) ? node->getFirstChild() : node->getSecondChild();
+      TR::Node *rhs = node->getFirstChild();
 
       TR_ASSERT_FATAL(rhs->getDataType() == TR::Address, "Child %p of node %p should have address type", rhs, node);
       if (verifyMode) return;
@@ -299,8 +299,7 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
 
          bool aliasTemps = false;
 
-         if (opCodeValue == TR::astore &&
-             rhs->getOpCode().isFunctionCall() &&
+         if (rhs->getOpCode().isFunctionCall() &&
              isVectorAPIMethod(rhs->getSymbolReference()->getSymbol()->castToMethodSymbol()))
             {
             // propagate vector info from VectorAPI call to temp
@@ -346,7 +345,6 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
                }
             }
          else if (boxingAllowed() &&
-                  opCodeValue == TR::astore &&
                   rhs->getOpCodeValue() != TR::aload)
             {
             _aliasTable[id1]._elementType = TR::Address;
@@ -356,7 +354,7 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
                traceMsg(comp(), "Making #%d a box of unknown type due to node %p\n", id1, node);
             }
 
-         if (opCodeValue == TR::astore && rhs->getOpCodeValue() == TR::aload)
+         if (rhs->getOpCodeValue() == TR::aload)
             aliasTemps = true;
 
          alias(node, rhs, aliasTemps);
@@ -656,8 +654,7 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
             }
          }
       }
-   else if (opCode.isStoreIndirect() ||
-            node->getOpCodeValue() == TR::areturn ||
+   else if (node->getOpCodeValue() == TR::areturn ||
             node->getOpCodeValue() == TR::aRegStore)
       {
       TR::Node *child = node->getFirstChild();
