@@ -8322,7 +8322,7 @@ foundITableCache:
 						rc = GOTO_THROW_CURRENT_EXCEPTION;
 						goto done;
 					}
-#if JAVA_SPEC_VERSION < 11
+#if JAVA_SPEC_VERSION == 8
 					if (J9_ARE_ALL_BITS_SET(romMethod->modifiers, J9AccAbstract)
 						&& !J9ROMCLASS_IS_INTERFACE(J9_CLASS_FROM_METHOD(_sendMethod)->romClass)
 					) {
@@ -8338,7 +8338,7 @@ foundITableCache:
 							NULL,
 							J9_LOOK_INTERFACE | J9_LOOK_NO_THROW | J9_LOOK_INVOKE_INTERFACE);
 					}
-#endif /* JAVA_SPEC_VERSION < 11 */
+#endif /* JAVA_SPEC_VERSION == 8 */
 					profileInvokeReceiver(REGISTER_ARGS, receiverClass, _literals, _sendMethod);
 					_pc += offset;
 					goto done;
