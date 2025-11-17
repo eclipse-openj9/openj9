@@ -2021,16 +2021,13 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 					} else {
 						J9ROMClass *valueROMClass = valueClass->romClass;
 
-						/* A NullRestricted field must be in a value class with an
-						 * ImplicitCreation attribute. The attribute must have the ACC_DEFAULT flag set.
+						/* A NullRestricted field must be in a value class
 						 * Static fields will be checked during class preparation.
 						 */
 						if (!J9ROMCLASS_IS_VALUE(valueROMClass)
-							|| J9_ARE_NO_BITS_SET(valueROMClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)
-							|| J9_ARE_NO_BITS_SET(getImplicitCreationFlags(valueROMClass), J9AccImplicitCreateHasDefaultValue)
 						) {
 							setCurrentExceptionForBadClass(currentThread, J9ROMCLASS_CLASSNAME(romClass), J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR,
-								J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS);
+								J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_VALUE_CLASS);
 						}
 
 						if (!J9_IS_FIELD_FLATTENED(valueClass, field)) {
@@ -2358,18 +2355,6 @@ nativeOOM:
 			}
 		}
 
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		if (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)) {
-			U_16 implicitCreationFlags = getImplicitCreationFlags(romClass);
-			if (J9_ARE_ALL_BITS_SET(implicitCreationFlags, J9AccImplicitCreateNonAtomic)) {
-				classFlags |= J9ClassAllowsNonAtomicCreation;
-			}
-			if (J9_ARE_ALL_BITS_SET(implicitCreationFlags, J9AccImplicitCreateHasDefaultValue)) {
-				classFlags |= J9ClassAllowsInitialDefaultValue;
-			}
-		}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-
 		if (J9ROMCLASS_IS_VALUE(romClass)) {
 			classFlags |= J9ClassIsValueType;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
@@ -2383,28 +2368,6 @@ nativeOOM:
 							J9UTF8_DATA(className), J9UTF8_LENGTH(superclassName), J9UTF8_DATA(superclassName));
 				}
 			}
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-			if (J9_ARE_ALL_BITS_SET(classFlags, J9ClassAllowsInitialDefaultValue)) {
-				UDATA instanceSize = state->ramClass->totalInstanceSize;
-				if ((instanceSize <= javaVM->valueFlatteningThreshold)
-					&& !J9ROMCLASS_IS_CONTENDED(romClass)
-				) {
-					Trc_VM_CreateRAMClassFromROMClass_valueTypeIsFlattened(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), state->ramClass);
-					classFlags |= J9ClassIsFlattened;
-				}
-				if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassCanSupportFastSubstitutability)) {
-					classFlags |= J9ClassCanSupportFastSubstitutability;
-				}
-				if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassLargestAlignmentConstraintDouble)) {
-					classFlags |= J9ClassLargestAlignmentConstraintDouble;
-				} else if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassLargestAlignmentConstraintReference)) {
-					classFlags |= J9ClassLargestAlignmentConstraintReference;
-				}
-				if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassRequiresPrePadding)) {
-					classFlags |= J9ClassRequiresPrePadding;
-				}
-			}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		} else if (!(J9_IS_CLASSFILE_OR_ROMCLASS_VALUETYPE_VERSION(romClass) && J9ROMCLASS_IS_INTERFACE(romClass))) {
 			/* All classes before value type version are identity. */
@@ -3678,13 +3641,11 @@ fail:
 						J9ARRAYCLASS_SET_STRIDE(ramClass, J9_VALUETYPE_FLATTENED_SIZE(elementClass));
 					}
 				} else {
-					if (J9_IS_J9CLASS_ALLOW_DEFAULT_VALUE(elementClass)
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-							&& J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_CLASS_OPTION_NULL_RESTRICTED_ARRAY)
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-					) {
+					if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_CLASS_OPTION_NULL_RESTRICTED_ARRAY)) {
 						ramArrayClass->classFlags |= J9ClassContainsUnflattenedFlattenables;
 					}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 					J9ARRAYCLASS_SET_STRIDE(ramClass, (((UDATA) 1) << (((J9ROMArrayClass*)romClass)->arrayShape & 0x0000FFFF)));
 				}
 				Assert_VM_true(J9ARRAYCLASS_GET_STRIDE(ramClass) <= I_32_MAX);

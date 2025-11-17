@@ -201,16 +201,16 @@ internalCreateArrayClassHelper(J9VMThread *vmThread, J9ROMArrayClass *romClass, 
 	BOOLEAN elementInitSuccess = TRUE;
 
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	/* When creating an array of implicitly constructible valuetype elements,
-	 * the array elements are initialized to the defaultValue of the element
-	 * type. As a result, the element type must be fully initialized before
+	/* When creating an array of valuetype elements,the array elements
+	 * are initialized to the defaultValue of the elements type.
+	 * As a result, the element type must be fully initialized before
 	 * creating an instance of the array. Element class init must be done
 	 * before the arrayClass is created so that in the case of an init failure
 	 * the arrayClass is not temporarily exposed.
 	 * Don't try to initialize class for null-restricted array creation since
 	 * the regular arrayClass will always be created first.
 	 */
-	if (J9_IS_J9CLASS_ALLOW_DEFAULT_VALUE(elementClass)
+	if (J9ROMCLASS_IS_VALUE(elementClass->romClass)
 		&& J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_CLASS_OPTION_NULL_RESTRICTED_ARRAY)
 	) {
 		UDATA initStatus = elementClass->initializeStatus;

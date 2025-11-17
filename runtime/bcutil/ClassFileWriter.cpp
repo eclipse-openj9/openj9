@@ -68,7 +68,6 @@ DECLARE_UTF8_ATTRIBUTE_NAME(PERMITTED_SUBCLASSES, "PermittedSubclasses");
 DECLARE_UTF8_ATTRIBUTE_NAME(LOADABLEDESCRIPTORS, "LoadableDescriptors");
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-DECLARE_UTF8_ATTRIBUTE_NAME(IMPLICITCREATION, "ImplicitCreation");
 DECLARE_UTF8_ATTRIBUTE_NAME(NULLRESTRICTED, "NullRestricted");
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #if JAVA_SPEC_VERSION >= 11
@@ -129,13 +128,6 @@ ClassFileWriter::analyzeROMClass()
 		}
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	if (J9_ARE_ALL_BITS_SET(_romClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)) {
-		U_32 implicitCreationFlags = (U_32)getImplicitCreationFlags(_romClass);
-		addEntry((void*) &IMPLICITCREATION, 0, CFR_CONSTANT_Utf8);
-		addEntry(&implicitCreationFlags, 0, CFR_CONSTANT_Integer);
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	J9EnclosingObject * enclosingObject = getEnclosingMethodForROMClass(_javaVM, NULL, _romClass);
 	J9UTF8 * genericSignature = getGenericSignatureForROMClass(_javaVM, NULL, _romClass);
 	J9UTF8 * sourceFileName = getSourceFileNameForROMClass(_javaVM, NULL, _romClass);
@@ -1048,11 +1040,6 @@ ClassFileWriter::writeAttributes()
 		attributesCount += 1;
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	if (J9_ARE_ALL_BITS_SET(_romClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)) {
-		attributesCount += 1;
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	writeU16(attributesCount);
 
 	if ((0 != _romClass->innerClassCount)
@@ -1237,13 +1224,6 @@ ClassFileWriter::writeAttributes()
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	/* write ImplicitCreation attribute */
-	if (J9_ARE_ALL_BITS_SET(_romClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)) {
-		writeAttributeHeader((J9UTF8 *) &IMPLICITCREATION, sizeof(U_16));
-		writeU16(getImplicitCreationFlags(_romClass));
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 }
 
 void ClassFileWriter::writeRecordAttribute()

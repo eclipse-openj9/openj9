@@ -1726,22 +1726,6 @@ J9NLS_CFR_ERR_PRELOAD_CLASS_ENTRY_NOT_CLASS_TYPE.system_action=The JVM will thro
 J9NLS_CFR_ERR_PRELOAD_CLASS_ENTRY_NOT_CLASS_TYPE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-# ImplicitCreation is not translatable
-J9NLS_CFR_ERR_MULTIPLE_IMPLICITCREATION_ATTRIBUTES=Multiple ImplicitCreation attributes
-# START NON-TRANSLATABLE
-J9NLS_CFR_ERR_MULTIPLE_IMPLICITCREATION_ATTRIBUTES.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
-J9NLS_CFR_ERR_MULTIPLE_IMPLICITCREATION_ATTRIBUTES.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
-J9NLS_CFR_ERR_MULTIPLE_IMPLICITCREATION_ATTRIBUTES.user_response=Contact the provider of the classfile for a corrected version.
-# END NON-TRANSLATABLE
-
-# ImplicitCreation is not translatable
-J9NLS_CFR_ERR_IMPLICITCREATION_NAME_NOT_UTF8=ImplicitCreation name must be a string
-# START NON-TRANSLATABLE
-J9NLS_CFR_ERR_IMPLICITCREATION_NAME_NOT_UTF8.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
-J9NLS_CFR_ERR_IMPLICITCREATION_NAME_NOT_UTF8.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
-J9NLS_CFR_ERR_IMPLICITCREATION_NAME_NOT_UTF8.user_response=Contact the provider of the classfile for a corrected version.
-# END NON-TRANSLATABLE
-
 # NullRestricted is not translatable
 J9NLS_CFR_ERR_MULTIPLE_NULLRESTRICTED_ATTRIBUTES=Multiple NullRestricted attributes present
 # START NON-TRANSLATABLE
@@ -1756,14 +1740,6 @@ J9NLS_CFR_ERR_NULLRESTRICTED_ATTRIBUTES_LENGTH_IS_ZERO=NullRestricted attribute_
 J9NLS_CFR_ERR_NULLRESTRICTED_ATTRIBUTES_LENGTH_IS_ZERO.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_NULLRESTRICTED_ATTRIBUTES_LENGTH_IS_ZERO.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_NULLRESTRICTED_ATTRIBUTES_LENGTH_IS_ZERO.user_response=Contact the provider of the classfile for a corrected version.
-# END NON-TRANSLATABLE
-
-# ImplicitCreation is not translatable
-J9NLS_CFR_ERR_IMPLICITCREATION_ILLEGAL_CLASS_MODIFIERS=The ImplicitCreation attribute is only allowed in a non-abstract value class
-# START NON-TRANSLATABLE
-J9NLS_CFR_ERR_IMPLICITCREATION_ILLEGAL_CLASS_MODIFIERS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
-J9NLS_CFR_ERR_IMPLICITCREATION_ILLEGAL_CLASS_MODIFIERS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
-J9NLS_CFR_ERR_IMPLICITCREATION_ILLEGAL_CLASS_MODIFIERS.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
 # NullRestricted is not translatable
@@ -1839,18 +1815,4 @@ J9NLS_CFR_ERR_NON_STATIC_FIELD_MUST_BE_FINAL_STRICT_INIT=Non-static field declar
 J9NLS_CFR_ERR_NON_STATIC_FIELD_MUST_BE_FINAL_STRICT_INIT.explanation=In a valid value class, a field without its ACC_STATIC flag set must have ACC_FINAL and ACC_STRICT_INIT flags set.
 J9NLS_CFR_ERR_NON_STATIC_FIELD_MUST_BE_FINAL_STRICT_INIT.system_action=The JVM will throw a verification or classloading exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_NON_STATIC_FIELD_MUST_BE_FINAL_STRICT_INIT.user_response=Contact the provider of the classfile for a corrected version.
-# END NON-TRANSLATABLE
-
-J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_BASE_FRAME_TYPE=Early larval frame must be followed by a base frame.
-# START NON-TRANSLATABLE
-J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_BASE_FRAME_TYPE.explanation=The StackMap/StackMapTable attribute is malformed.
-J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_BASE_FRAME_TYPE.system_action=The JVM will throw a java.lang.VerifyError.
-J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_BASE_FRAME_TYPE.user_response=Contact the provider of the classfile for a corrected version.
-# END NON-TRANSLATABLE
-
-J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_CP_INDEX=Invalid constant pool index in early larval frame.
-# START NON-TRANSLATABLE
-J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_CP_INDEX.explanation=The StackMap/StackMapTable attribute is malformed.
-J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_CP_INDEX.system_action=The JVM will throw a java.lang.VerifyError.
-J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_CP_INDEX.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE

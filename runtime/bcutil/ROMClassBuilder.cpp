@@ -1439,11 +1439,6 @@ ROMClassBuilder::computeOptionalFlags(ClassFileOracle *classFileOracle, ROMClass
 		optionalFlags |= J9_ROMCLASS_OPTINFO_LOADABLEDESCRIPTORS_ATTRIBUTE;
 	}
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	if (classFileOracle->hasImplicitCreation()) {
-		optionalFlags |= J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE;
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	return optionalFlags;
 }
 

@@ -82,9 +82,6 @@ static I_32 dumpNest (J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 static I_32 dumpLoadableDescriptors(J9PortLibrary *portLib, J9ROMClass *romClass);
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-static I_32 dumpImplicitCreationFlags (J9PortLibrary *portLib, J9ROMClass *romClass);
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 static I_32 dumpSimpleName (J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
 static I_32 dumpUTF ( J9UTF8 *utfString, J9PortLibrary *portLib, U_32 flags);
 static I_32 dumpSourceDebugExtension (J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
@@ -201,12 +198,6 @@ IDATA j9bcutil_dumpRomClass( J9ROMClass *romClass, J9PortLibrary *portLib, J9Tra
 		dumpLoadableDescriptors(portLib, romClass);
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	if (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)) {
-		dumpImplicitCreationFlags(portLib, romClass);
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 	j9tty_printf( PORTLIB, "Fields (%i):\n", romClass->romFieldCount);
 	currentField = romFieldsStartDo(romClass, &state);
@@ -907,17 +898,6 @@ dumpLoadableDescriptors(J9PortLibrary *portLib, J9ROMClass *romClass)
 }
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-static I_32
-dumpImplicitCreationFlags(J9PortLibrary *portLib, J9ROMClass *romClass)
-{
-	PORT_ACCESS_FROM_PORT(portLib);
-	U_16 implicitCreationFlags = getImplicitCreationFlags(romClass);
-	j9tty_printf(PORTLIB, "ImplicitCreation flags: 0x%X\n", implicitCreationFlags);
-	return BCT_ERR_NO_ERROR;
-}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-
 static I_32
 dumpSimpleName(J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags)
 {
@@ -955,13 +935,6 @@ I_32 j9bcutil_dumpRomMethod( J9ROMMethod *romMethod, J9ROMClass *romClass, J9Por
 
 	j9tty_printf( PORTLIB, "  Access Flags (%X): ", romMethod->modifiers);
 	printModifiers(PORTLIB, (U_32)romMethod->modifiers, INCLUDE_INTERNAL_MODIFIERS, MODIFIERSOURCE_METHOD, FALSE);
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	if (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)) {
-		if (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod)), J9UTF8_LENGTH(J9ROMMETHOD_NAME(romMethod)), "<init>")) {
-			j9tty_printf(PORTLIB, " implicit");
-		}
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	j9tty_printf( PORTLIB,  "\n");
 
 	j9tty_printf( PORTLIB, "  Extended modifiers (%X): ", getExtendedModifiersDataFromROMMethod(romMethod));
