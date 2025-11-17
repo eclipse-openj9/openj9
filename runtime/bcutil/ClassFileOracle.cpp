@@ -230,10 +230,6 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_hasNonStaticSynchronizedMethod(false),
 	_loadableDescriptorsAttribute(NULL),
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	_hasImplicitCreationAttribute(false),
-	_implicitCreationFlags(0),
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	_recordComponentCount(0),
 	_permittedSubclassesAttribute(NULL),
 	_isSealed(false),
@@ -560,9 +556,6 @@ ClassFileOracle::walkAttributes()
 			}
 			knownAnnotations = addAnnotationBit(knownAnnotations, UNMODIFIABLE_ANNOTATION);
 			knownAnnotations = addAnnotationBit(knownAnnotations, VALUEBASED_ANNOTATION);
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-			knownAnnotations = addAnnotationBit(knownAnnotations, LOOSELYCONSISTENTVALUE_ANNOTATION);
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			_annotationsAttribute = (J9CfrAttributeRuntimeVisibleAnnotations *)attrib;
 			if (0 == _annotationsAttribute->rawDataLength) {
 				UDATA foundAnnotations = walkAnnotations(_annotationsAttribute->numberOfAnnotations, _annotationsAttribute->annotations, knownAnnotations);
@@ -575,12 +568,6 @@ ClassFileOracle::walkAttributes()
 				if (containsKnownAnnotation(foundAnnotations, VALUEBASED_ANNOTATION)) {
 					_isClassValueBased = true;
 				}
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-				if (containsKnownAnnotation(foundAnnotations, LOOSELYCONSISTENTVALUE_ANNOTATION)) {
-					_hasImplicitCreationAttribute = true;
-					_implicitCreationFlags |= J9AccImplicitCreateNonAtomic;
-				}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			}
 			break;
 		}
@@ -633,13 +620,6 @@ ClassFileOracle::walkAttributes()
 			break;
 		}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		case CFR_ATTRIBUTE_ImplicitCreation: {
-			_hasImplicitCreationAttribute = true;
-			_implicitCreationFlags = ((J9CfrAttributeImplicitCreation *)attrib)->implicitCreationFlags;
-			break;
-		}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #if JAVA_SPEC_VERSION >= 11
 		case CFR_ATTRIBUTE_NestMembers:
 			/* ignore CFR_ATTRIBUTE_NestMembers for hidden classes, as the nest members never know the name of hidden classes */
