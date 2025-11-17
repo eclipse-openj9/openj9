@@ -712,12 +712,12 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
             }
          }
 
-      if (_exceptionTable->inlinedCalls)
+      if (comp()->getOptions()->getVerboseOption(TR_VerboseInlining))
          {
-         if (comp()->getOptions()->getVerboseOption(TR_VerboseInlining))
+         int32_t jittedBodyHash = strHash(comp()->signature());
+         if (_exceptionTable->inlinedCalls)
             {
             U_32 numInlinedCallSites = getNumInlinedCallSites(_exceptionTable);
-            int32_t jittedBodyHash = strHash(comp()->signature());
             char callerBuf[501], calleeBuf[501];
             TR_VerboseLog::CriticalSection vlogLock;
             TR_VerboseLog::writeLine(TR_Vlog_INL, "%d methods inlined into %x %s @ %p", numInlinedCallSites, jittedBodyHash, comp()->signature(), _exceptionTable->startPC);
@@ -740,6 +740,10 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
                   strHash(callerSig), site->_byteCodeInfo.getByteCodeIndex(),
                   strHash(calleeBuf), TR::Compiler->mtd.bytecodeSize(site->_methodInfo), calleeBuf);
                }
+            }
+         else
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INL, "0 methods inlined into %x %s @ %p", jittedBodyHash, comp()->signature(), _exceptionTable->startPC);
             }
          }
 
