@@ -1942,7 +1942,7 @@ MM_WriteOnceCompactor::verifyHeap(MM_EnvironmentVLHGC *env, bool beforeCompactio
 	 * each pages maps to 2 mark bit slots so heap alignment needs to be a multiple
 	 * of the compaction page size
 	 */
-	assume0(_extensions->heapAlignment % (2 * J9BITS_BITS_IN_SLOT * sizeof(UDATA)) == 0);
+	assume0(_extensions->heapAlignment % (2 * OMRBITS_BITS_IN_SLOT * sizeof(UDATA)) == 0);
 
 	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
 	MM_HeapRegionDescriptorVLHGC *region = NULL;

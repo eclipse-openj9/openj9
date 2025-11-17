@@ -87,7 +87,7 @@ public:
 				} else {
 					_description = *_descriptionPtr;
 					_descriptionPtr += 1;
-					_descriptionIndex = J9BITS_BITS_IN_SLOT;
+					_descriptionIndex = OMRBITS_BITS_IN_SLOT;
 					_leafDescription = *_leafDescriptionPtr;
 					_leafDescriptionPtr += 1;
 				}
@@ -102,7 +102,7 @@ public:
 				} else {
 					_description = *_descriptionPtr;
 					_descriptionPtr += 1;
-					_descriptionIndex = J9BITS_BITS_IN_SLOT;
+					_descriptionIndex = OMRBITS_BITS_IN_SLOT;
 					_leafDescription = *_leafDescriptionPtr;
 					_leafDescriptionPtr += 1;
 				}
@@ -132,7 +132,7 @@ public:
 				} else {
 					_description = *_descriptionPtr;
 					_descriptionPtr += 1;
-					_descriptionIndex = J9BITS_BITS_IN_SLOT;
+					_descriptionIndex = OMRBITS_BITS_IN_SLOT;
 					_leafDescription = *_leafDescriptionPtr;
 					_leafDescriptionPtr += 1;
 				}
@@ -147,7 +147,7 @@ public:
 				} else {
 					_description = *_descriptionPtr;
 					_descriptionPtr += 1;
-					_descriptionIndex = J9BITS_BITS_IN_SLOT;
+					_descriptionIndex = OMRBITS_BITS_IN_SLOT;
 					_leafDescription = *_leafDescriptionPtr;
 					_leafDescriptionPtr += 1;
 				}
@@ -167,20 +167,20 @@ public:
 		Assert_MM_true(slotPtr >= _scanPtr);
 		UDATA bitsToTravel = GC_SlotObject::subtractSlotAddresses(slotPtr, _scanPtr, compressObjectReferences());
 		if (NULL != _descriptionPtr) {
-			Assert_MM_true(J9BITS_BITS_IN_SLOT >= _descriptionIndex);
+			Assert_MM_true(OMRBITS_BITS_IN_SLOT >= _descriptionIndex);
 			/* _descriptionIndex uses backward math so put it in forward-facing bit counts */
-			UDATA currentBitIndexInCurrentSlot = J9BITS_BITS_IN_SLOT - _descriptionIndex;
+			UDATA currentBitIndexInCurrentSlot = OMRBITS_BITS_IN_SLOT - _descriptionIndex;
 			UDATA newBitIndexRelativeToCurrentSlot = currentBitIndexInCurrentSlot + bitsToTravel;
-			UDATA slotsToMove = newBitIndexRelativeToCurrentSlot / J9BITS_BITS_IN_SLOT;
-			UDATA newBitIndexAfterSlotMove = newBitIndexRelativeToCurrentSlot % J9BITS_BITS_IN_SLOT;
+			UDATA slotsToMove = newBitIndexRelativeToCurrentSlot / OMRBITS_BITS_IN_SLOT;
+			UDATA newBitIndexAfterSlotMove = newBitIndexRelativeToCurrentSlot % OMRBITS_BITS_IN_SLOT;
 			/* bump the _descriptionPtr by the appropriate number of slots */
 			_descriptionPtr += slotsToMove;
 			_leafDescriptionPtr += slotsToMove;
 			/* _descriptionPtr ALWAYS points at the NEXT slot of index bits so read the CURRENT by subtracting 1 */
 			UDATA *currentDescriptionPointer = _descriptionPtr - 1;
 			_description = *currentDescriptionPointer;
-			/* use J9BITS_BITS_IN_SLOT as the "0" for _descriptionIndex since it uses backward math */
-			_descriptionIndex = J9BITS_BITS_IN_SLOT;
+			/* use OMRBITS_BITS_IN_SLOT as the "0" for _descriptionIndex since it uses backward math */
+			_descriptionIndex = OMRBITS_BITS_IN_SLOT;
 			/* now, advance the number of bits required into this slot */
 			_descriptionIndex -= newBitIndexAfterSlotMove;
 			_description >>= newBitIndexAfterSlotMove;
@@ -228,7 +228,7 @@ public:
 			_leafDescription = *_leafDescriptionPtr;
 			_leafDescriptionPtr += 1;
 		}
-		_descriptionIndex = J9BITS_BITS_IN_SLOT;
+		_descriptionIndex = OMRBITS_BITS_IN_SLOT;
 
 		/* Set current and end scan pointers */
 		_scanPtr = (fj9object_t *)((U_8*)objectPtr + J9JAVAVM_OBJECT_HEADER_SIZE(vm));
