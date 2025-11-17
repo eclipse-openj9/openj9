@@ -1095,12 +1095,11 @@ void aotExceptionEntryFixEndian(J9JITExceptionTable * methodMetaData)
 U_32 getNumInlinedCallSites(J9JITExceptionTable * methodMetaData)
    {
    U_32 sizeOfInlinedCallSites, numInlinedCallSites = 0;
-   U_32 numExceptionRanges = methodMetaData->numExcptionRanges & 0x3FFF;
-   U_32 fourByteExceptionRanges = methodMetaData->numExcptionRanges & 0x8000;
-
    if (methodMetaData->inlinedCalls)
       {
 #if 0
+      U_32 numExceptionRanges = methodMetaData->numExcptionRanges & 0x3FFF;
+      U_32 fourByteExceptionRanges = methodMetaData->numExcptionRanges & 0x8000;
       if (fourByteExceptionRanges)
          {
          sizeOfInlinedCallSites = methodMetaData->size - ( sizeof(J9JITExceptionTable) + numExceptionRanges * 20);
