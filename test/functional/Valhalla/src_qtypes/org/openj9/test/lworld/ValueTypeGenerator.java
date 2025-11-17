@@ -215,10 +215,6 @@ public class ValueTypeGenerator extends ClassLoader {
 
 		cw.visitSource(className + ".java", null);
 
-		if (!isRef) {
-			cw.visitAttribute(new ValhallaUtils.ImplicitCreationAttribute());
-		}
-
 		if (nestHost != null) {
 			cw.visitNestHost(nestHost);
 		}

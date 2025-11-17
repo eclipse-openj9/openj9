@@ -22,7 +22,6 @@
 package com.ibm.j9ddr.vm29.pointer.helper;
 
 import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.*;
-import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_LOADABLEDESCRIPTORS_ATTRIBUTE;
 
 import com.ibm.j9ddr.CorruptDataException;
@@ -139,7 +138,4 @@ public class J9ROMClassHelper {
 		return romclass.optionalFlags().allBitsIn(J9_ROMCLASS_OPTINFO_LOADABLEDESCRIPTORS_ATTRIBUTE);
 	}
 
-	public static boolean hasImplicitCreationAttribute(J9ROMClassPointer romclass) throws CorruptDataException {
-		return romclass.optionalFlags().allBitsIn(J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE);
-	}
 }

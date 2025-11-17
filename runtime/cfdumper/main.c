@@ -516,19 +516,6 @@ static void dumpMethod(J9CfrClassFile* classfile, J9CfrMethod* method)
 	j9tty_printf( PORTLIB, "  Signature: %i -> %s\n", method->descriptorIndex, classfile->constantPool[method->descriptorIndex].bytes);
 	j9tty_printf( PORTLIB, "  Access Flags: 0x%X ( ", method->accessFlags);
 	printModifiers(PORTLIB, method->accessFlags, INCLUDE_INTERNAL_MODIFIERS, MODIFIERSOURCE_METHOD, FALSE);
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	if (J9_IS_CLASSFILE_VALUETYPE(classfile)) {
-		J9CfrConstantPoolInfo name = classfile->constantPool[method->nameIndex];
-		if (J9UTF8_LITERAL_EQUALS(name.bytes, name.slot1, "<init>")) {
-			for (i = 0; i < classfile->attributesCount; i++) {
-				J9CfrAttribute* attr = classfile->attributes[i];
-				if (attr->tag == CFR_ATTRIBUTE_ImplicitCreation) {
-					j9tty_printf( PORTLIB, " implicit");
-				}
-			}
-		}
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	j9tty_printf( PORTLIB, ")\n");
 	j9tty_printf( PORTLIB, "  Attributes (%i):\n", method->attributesCount);
 	for(i = 0; i < method->attributesCount; i++)
@@ -941,15 +928,6 @@ static void dumpAttribute(J9CfrClassFile* classfile, J9CfrAttribute* attrib, U_3
 			}
 			break;
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		case CFR_ATTRIBUTE_ImplicitCreation:
-			for (i = 0; i < tabLevel + 1; i++) {
-				j9tty_printf( PORTLIB, "  ");
-			}
-			j9tty_printf(PORTLIB, "ImplicitCreation flags: 0x%X\n",
-				((J9CfrAttributeImplicitCreation*)attrib)->implicitCreationFlags);
-			break;
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		case CFR_ATTRIBUTE_StrippedLineNumberTable:
 		case CFR_ATTRIBUTE_StrippedLocalVariableTable:
 		case CFR_ATTRIBUTE_StrippedLocalVariableTypeTable:
@@ -1109,20 +1087,6 @@ static void printMethod(J9CfrClassFile* classfile, J9CfrMethod* method)
 	if(method->accessFlags & CFR_ACC_NATIVE) j9tty_printf( PORTLIB, "native ");
 	if(method->accessFlags & CFR_ACC_ABSTRACT) j9tty_printf( PORTLIB, "abstract ");
 	if(method->accessFlags & CFR_ACC_STRICT) j9tty_printf( PORTLIB, "strict ");
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	/* ImplicitCreation is triggered by an implicit constructor in a value class */
-	if (J9_IS_CLASSFILE_VALUETYPE(classfile)) {
-		J9CfrConstantPoolInfo name = classfile->constantPool[method->nameIndex];
-		if (J9UTF8_LITERAL_EQUALS(name.bytes, name.slot1, "<init>")) {
-			for (i = 0; i < classfile->attributesCount; i++) {
-				J9CfrAttribute* attr = classfile->attributes[i];
-				if (attr->tag == CFR_ATTRIBUTE_ImplicitCreation) {
-					j9tty_printf( PORTLIB, "implicit ");
-				}
-			}
-		}
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 	/* Return type. */
 	string = classfile->constantPool[method->descriptorIndex].bytes;
