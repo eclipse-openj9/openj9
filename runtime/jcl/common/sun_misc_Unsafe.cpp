@@ -193,15 +193,6 @@ Java_sun_misc_Unsafe_registerNatives(JNIEnv *env, jclass clazz)
 {
 	Trc_JCL_sun_misc_Unsafe_registerNatives_Entry(env);
 
-	/* If Unsafe has a static int field called INVALID_FIELD_OFFSET, set it to -1 */
-	jfieldID fid = env->GetStaticFieldID(clazz, "INVALID_FIELD_OFFSET", "I");
-
-	if (NULL == fid) {
-		env->ExceptionClear();
-	} else {
-		env->SetStaticIntField(clazz, fid, -1);
-	}
-
 	Trc_JCL_sun_misc_Unsafe_registerNatives_Exit(env);
 }
 
@@ -1115,7 +1106,6 @@ Java_jdk_internal_misc_Unsafe_registerNatives(JNIEnv *env, jclass clazz)
 	jint numNatives = sizeof(nativeMethods) / sizeof(nativeMethods[0]);
 
 	/* clazz can't be null */
-	Java_sun_misc_Unsafe_registerNatives(env, clazz);
 	env->RegisterNatives(clazz, nativeMethods, numNatives);
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 	clearNonZAAPEligibleBit(env, clazz, nativeMethods, numNatives);
