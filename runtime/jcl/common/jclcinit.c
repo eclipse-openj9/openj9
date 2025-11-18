@@ -554,6 +554,7 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 			J9VMCONSTANTPOOL_JAVALANGTHREADFIELDHOLDER,
 			J9VMCONSTANTPOOL_JAVALANGBASEVIRTUALTHREAD,
 #endif /* JAVA_SPEC_VERSION >= 19 */
+			J9VMCONSTANTPOOL_JAVALANGINTERNALCONSTANTPOOL,
 	};
 
 	/* Determine java/lang/String.value signature before any required class is initialized */

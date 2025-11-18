@@ -346,6 +346,10 @@ public:
 			allocateSize = J9_GC_MINIMUM_OBJECT_SIZE;
 		}
 
+		if (J9VMJAVALANGINTERNALCONSTANTPOOL_OR_NULL(currentThread->javaVM) == clazz) {
+			return NULL;
+		}
+
 		/* Allocate the object */
 		switch(_gcAllocationType) {
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
@@ -441,6 +445,7 @@ public:
 			VM_AtomicSupport::writeBarrier();
 		}
 #endif /* J9VM_GC_THREAD_LOCAL_HEAP || J9VM_GC_SEGREGATED_HEAP */
+
 		return instance;
 	}
 

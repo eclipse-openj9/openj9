@@ -1,5 +1,5 @@
 // Copyright IBM Corp. and others 2006
-//	
+//
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
 // distribution and is available at https://www.eclipse.org/legal/epl-2.0/
@@ -506,7 +506,7 @@ TraceExit=Trc_JCL_com_ibm_tenant_TenantContext_bindToAllocationContext_Exit Obso
 
 TraceAssert=Assert_JCL_Natives_Not_Offloaded noEnv Overhead=1 Level=1 Assert="(0 /* unreachable */)"
 
-TraceEvent=Trc_JCL_com_ibm_oti_vm_VM_dumpString Group=verboseclass Overhead=1 Level=3 Template="com_ibm_oti_vm_VM_dumpString: %s"
+TraceEvent=Trc_JCL_com_ibm_oti_vm_VM_dumpString Group=verboseclass Overhead=1 Level=1 Template="com_ibm_oti_vm_VM_dumpString: %s"
 
 
 TraceEntry=Trc_JCL_com_ibm_tenant_TenantContext_freeze_Entry Obsolete Overhead=1 Level=1 Template="com_ibm_tenant_TenantContext_freeze(tenantRef=%p)"
@@ -715,3 +715,7 @@ TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitFail3 Noenv Overh
 TraceEntry=Trc_JCL_com_ibm_oti_shared_getCachedURL_Entry_1 Overhead=1 Level=2 Template="JCL: com.ibm.oti.shared getCachedURL: Entering for helperID=%d"
 
 TraceEvent=Trc_JCL_signal_pid noEnv Overhead=1 Level=1 Template="%s received from process id %zu name '%s'"
+TraceEvent=Trc_JCL_accessCPEntry Overhead=1 Level=1 Template="Java_java_lang_Access_getConstantPool cpObject=%p internalCPOject=%p clazz=%p cp=%p"
+TraceEvent=Trc_JCL_accessCPEntry2 Overhead=1 Level=1 Template="Java_com_ibm_oti_vm_VM_getJ9ConstantPoolFromJ9Class clazz=%p cp=%p"
+TraceEvent=Trc_JCL_accessCPEntry3 Overhead=1 Level=1 Template="Java_java_lang_Access_getConstantPool set cache cpObject=%p internalCPOject=%p clazz=%p cp=%p"
+TraceEvent=Trc_JCL_accessCPEntry4 Overhead=1 Level=1 Template="Java_java_lang_Access_getConstantPool set class cpObject=%p internalCPOject=%p clazz=%p cp=%p"

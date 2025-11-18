@@ -214,7 +214,7 @@ public interface VMLangAccess {
 	/*[ENDIF] JAVA_SPEC_VERSION >= 11*/
 
 	/**
-	 * Returns a cached constantPool Object from a given java.lang.Class
+	 * Returns a cached constantPool Object from a given java.lang.Class.
 	 *
 	 * @param clazz
 	 *
