@@ -109,7 +109,9 @@ sigUsr2Handler(struct J9PortLibrary *portLibrary, void *userData)
 
 	eventData.siPid = rasAsyncPidInfo->siPid;
 	eventData.detailData = rasAsyncPidInfo->siPidName;
-	Trc_JCL_signal_pid("SIGUSR2", eventData.siPid, eventData.detailData);
+	if (0 != eventData.siPid) {
+		Trc_JCL_signal_pid("SIGUSR2", eventData.siPid, eventData.detailData);
+	}
 
 	J9DMP_TRIGGER(vm, NULL, J9RAS_DUMP_ON_USER2_SIGNAL, &eventData);
 
@@ -128,22 +130,23 @@ sigUsr2Wrapper(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, voi
 	J9JavaVM *vm = (J9JavaVM *)userData;
 	UDATA result = 0;
 	J9RASAsyncPidInfo rasAsyncPidInfo = { 0 };
-	const char *infoName = NULL;
-	void *infoValue = NULL;
-	U_32 infoType = 0;
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
 	rasAsyncPidInfo.vm = vm;
-	infoType = omrsig_info(gpInfo, OMRPORT_SIG_SIGNAL, OMRPORT_SIG_SENDER_PID, &infoName, &infoValue);
-	if (OMRPORT_SIG_VALUE_32 == infoType) {
-		rasAsyncPidInfo.siPid = *(U_32 *)infoValue;
-	} else if (OMRPORT_SIG_VALUE_64 == infoType) {
-		rasAsyncPidInfo.siPid = (UDATA)*(U_64 *)infoValue;
-	}
-	if (0 != rasAsyncPidInfo.siPid) {
-		/* siPidName needs to be freed after use. */
-		rasAsyncPidInfo.siPidName = omrsysinfo_get_process_name(rasAsyncPidInfo.siPid);
+	if (NULL != gpInfo) {
+		OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+		const char *infoName = NULL;
+		void *infoValue = NULL;
+		U_32 infoType = omrsig_info(gpInfo, OMRPORT_SIG_SIGNAL, OMRPORT_SIG_SENDER_PID, &infoName, &infoValue);
+		if (OMRPORT_SIG_VALUE_32 == infoType) {
+			rasAsyncPidInfo.siPid = *(U_32 *)infoValue;
+		} else if (OMRPORT_SIG_VALUE_64 == infoType) {
+			rasAsyncPidInfo.siPid = (UDATA)*(U_64 *)infoValue;
+		}
+		if (0 != rasAsyncPidInfo.siPid) {
+			/* siPidName needs to be freed after use. */
+			rasAsyncPidInfo.siPidName = omrsysinfo_get_process_name(rasAsyncPidInfo.siPid);
+		}
 	}
 
 	j9sig_protect(sigUsr2Handler, &rasAsyncPidInfo,

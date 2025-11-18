@@ -5514,6 +5514,7 @@ typedef struct J9InternalVMFunctions {
 	void (*releaseTargetVMThreadHelper)(struct J9VMThread *currentThread, struct J9VMThread *targetThread, jthread thread);
 	BOOLEAN (*disclaimClassMemory)(struct J9JavaVM *vm, UDATA flags);
 	UDATA (*totalNumberOfDisclaimableClassMemorySegments)(struct J9JavaVM *vm);
+	jint (*signalNameToValue)(const char *signalName);
 } J9InternalVMFunctions;
 
 /* Jazz 99339: define a new structure to replace JavaVM so as to pass J9NativeLibrary to JVMTIEnv  */
