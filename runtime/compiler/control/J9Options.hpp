@@ -503,6 +503,8 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 
    static int32_t _jvmStarvationThreshold;
 
+   static char *_logFileNameSuffix;
+
    static ExternalOptionsMetadata _externalOptionsMetadata[ExternalOptions::TR_NumExternalOptions];
 
    /**
