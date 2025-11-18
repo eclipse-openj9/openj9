@@ -167,8 +167,8 @@ Java_com_ibm_oti_vm_VM_markCurrentThreadAsSystemImpl(JNIEnv *env)
 jlong JNICALL
 Java_com_ibm_oti_vm_VM_getJ9ConstantPoolFromJ9Class(JNIEnv *env, jclass unused, jlong j9clazz)
 {
-	J9Class *clazz = (J9Class *)JLONG_TO_POINTER(j9clazz);
-	return JLONG_FROM_POINTER(clazz->ramConstantPool);
+	J9Class *clazz = (J9Class *)(UDATA)j9clazz;
+	return (jlong)(UDATA)clazz->ramConstantPool;
 }
 
 /**
