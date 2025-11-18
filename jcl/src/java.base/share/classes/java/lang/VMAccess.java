@@ -189,8 +189,8 @@ final class VMAccess implements VMLangAccess {
 	 * @return An InternalConstantPool reference object
 	 */
 	@Override
-	public Object createInternalConstantPool(long addr, Class<?> clazz) {
-		return new InternalConstantPool(addr, clazz);
+	public Object createInternalConstantPool(long addr) {
+		return new InternalConstantPool(addr);
 	}
 
 	/**
@@ -208,12 +208,11 @@ final class VMAccess implements VMLangAccess {
 	 * natives expect an InternalConstantPool as the constantPoolOop parameter.
 	 *
 	 * @param j9class the native address of the J9Class
-	 * @param clazz the class object
 	 * @return InternalConstantPool a wrapper for a j9constantpool
 	 */
-	public Object getInternalConstantPoolFromJ9Class(long j9class, Class<?> clazz) {
+	public Object getInternalConstantPoolFromJ9Class(long j9class) {
 		long j9constantpool = VM.getJ9ConstantPoolFromJ9Class(j9class);
-		return createInternalConstantPool(j9constantpool, clazz);
+		return createInternalConstantPool(j9constantpool);
 	}
 
 	/**
@@ -231,7 +230,7 @@ final class VMAccess implements VMLangAccess {
 		} else {
 			j9class = helpers.getJ9ClassFromClass64(clazz);
 		}
-		return getInternalConstantPoolFromJ9Class(j9class, clazz);
+		return getInternalConstantPoolFromJ9Class(j9class);
 	}
 
 	/*[IF JAVA_SPEC_VERSION >= 9]*/
@@ -278,16 +277,4 @@ final class VMAccess implements VMLangAccess {
 		return element.getIncludeModuleVersion();
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
-
-	/**
-	 * Returns a cached constantPool Object from a given java.lang.Class
-	 *
-	 * @param clazz
-	 *
-	 * @return cpObject
-	 */
-	@Override
-	public ConstantPool getConstantPoolCache(Class<?> clazz) {
-		return clazz.constantPoolObject;
-	}
 }
