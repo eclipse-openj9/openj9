@@ -38,7 +38,8 @@ JVM_CopyOfSpecialArray(JNIEnv *env, jarray orig, jint from, jint to)
 JNIEXPORT jboolean JNICALL
 JVM_IsAtomicArray(JNIEnv *env, jobject obj)
 {
-	assert(!"JVM_IsAtomicArray unimplemented");
+	/* J9 doesn't currently support non-atomic arrays. */
+	return TRUE;
 }
 
 JNIEXPORT jboolean JNICALL
@@ -86,7 +87,7 @@ JVM_IsValhallaEnabled()
 }
 
 static jarray
-newArrayHelper(JNIEnv *env, jclass componentType, jint length, bool isNullRestricted)
+newArrayHelper(JNIEnv *env, jclass componentType, jint length, bool isNullRestricted, jobject initialValueJni)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
@@ -96,6 +97,7 @@ newArrayHelper(JNIEnv *env, jclass componentType, jint length, bool isNullRestri
 	UDATA options = 0;
 	j9object_t newArray = NULL;
 	jarray arrayRef = NULL;
+	j9object_t initialValue = NULL;
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	ramClass = J9VMJAVALANGCLASS_VMREF(currentThread, J9_JNI_UNWRAP_REFERENCE(componentType));
@@ -110,9 +112,22 @@ newArrayHelper(JNIEnv *env, jclass componentType, jint length, bool isNullRestri
 		goto done;
 	}
 
-	if (isNullRestricted && !J9_IS_J9CLASS_ALLOW_DEFAULT_VALUE(ramClass)) {
-		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
-		goto done;
+	if (isNullRestricted) {
+		J9Class *storeValueClass = NULL;
+		if (NULL == initialValueJni) {
+			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
+			goto done;
+		}
+		initialValue = J9_JNI_UNWRAP_REFERENCE(initialValueJni);
+		storeValueClass = J9OBJECT_CLAZZ(currentThread, initialValue);
+		/* The initial value class must be the same as the array type since
+		 * value classes can't be extended and the superclass
+		 * java/lang/Object can't be assigned.
+		 */
+		if (storeValueClass != ramClass) {
+			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
+			goto done;
+		}
 	}
 
 	arrayClass = ramClass->arrayClass;
@@ -137,6 +152,13 @@ newArrayHelper(JNIEnv *env, jclass componentType, jint length, bool isNullRestri
 		goto done;
 	}
 
+	/* Set initial values. */
+	if (isNullRestricted) {
+		for (int index = 0; index < length; index++) {
+			vmFuncs->storeFlattenableArrayElement(currentThread, newArray, index, initialValue);
+		}
+	}
+
 	arrayRef = (jarray)vmFuncs->j9jni_createLocalRef(env, newArray);
 done:
 	vmFuncs->internalExitVMToJNI(currentThread);
@@ -146,22 +168,23 @@ done:
 JNIEXPORT jarray JNICALL
 JVM_NewNullableAtomicArray(JNIEnv *env, jclass componentType, jint length)
 {
-	return newArrayHelper(env, componentType, length, false);
+	return newArrayHelper(env, componentType, length, false, NULL);
 }
 
 JNIEXPORT jarray JNICALL
 JVM_NewNullRestrictedAtomicArray(JNIEnv *env, jclass componentType, jint length, jobject initialValue)
 {
-	/* TODO: An additional parameter initialValue is required for newArrayHelper().
-	 * https://github.com/eclipse-openj9/openj9/issues/22642
-	 */
-	return newArrayHelper(env, componentType, length, true);
+	return newArrayHelper(env, componentType, length, true, initialValue);
 }
 
 JNIEXPORT jarray JNICALL
-JVM_NewNullRestrictedNonAtomicArray(JNIEnv *env, jclass elmClass, jint len, jobject initVal)
+JVM_NewNullRestrictedNonAtomicArray(JNIEnv *env, jclass componentType, jint length, jobject initialValue)
 {
-	assert(!"JVM_NewNullRestrictedNonAtomicArray unimplemented");
+	/* J9 doesn't currently support flattened arrays that accesss fields
+	 * non-atomically. For now use the same implementation as
+	 * JVM_NewNullRestrictedAtomicArray.
+	 */
+	return newArrayHelper(env, componentType, length, true, initialValue);
 }
 
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
