@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <iterator>
 
+#include"codegen/J9ARM64Snippet.hpp"
 #include "codegen/ARM64Instruction.hpp"
 #include "codegen/ARM64OutOfLineCodeSection.hpp"
 #include "codegen/ARM64PrivateLinkage.hpp"
@@ -222,7 +223,7 @@ J9::ARM64::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
    _properties._framePointerRegister        = TR::RealRegister::x29;
    _properties._computedCallTargetRegister  = TR::RealRegister::x8;
    _properties._vtableIndexArgumentRegister = TR::RealRegister::x9;
-   _properties._j9methodArgumentRegister    = TR::RealRegister::x0;
+   _properties._j9methodArgumentRegister    = TR::RealRegister::x10;
 
 #if defined(OSX)
    // Volatile GPR (0-15) + FPR (0-31) + VFT Reg
@@ -1060,10 +1061,11 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
 
    TR::MethodSymbol *callSymbol = callNode->getSymbol()->castToMethodSymbol();
 
+   bool isJitDispatchJ9Method = callNode->isJitDispatchJ9MethodCall(comp);
    bool isHelperCall = linkage == TR_Helper || linkage == TR_CHelper;
    bool rightToLeft = isHelperCall &&
                       //we want the arguments for induceOSR to be passed from left to right as in any other non-helper call
-                      !callNode->getSymbolReference()->isOSRInductionHelper();
+                      !callNode->getSymbolReference()->isOSRInductionHelper() && !isJitDispatchJ9Method;
 
    if (rightToLeft)
       {
@@ -1098,6 +1100,12 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
       default:
          break;
       }
+
+   if (isJitDispatchJ9Method)
+      {
+      specialArgReg = getProperties().getJ9MethodArgumentRegister();
+      }
+
    if (specialArgReg != TR::RealRegister::NoReg)
       {
       logprintf(comp->getOption(TR_TraceCG), comp->log(), "Special arg %s in %s\n",
@@ -1116,6 +1124,7 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
       totalSize += TR::Compiler->om.sizeofReferenceAddress();
       }
 
+   // will not process special args
    for (int32_t i = from; (rightToLeft && i >= to) || (!rightToLeft && i <= to); i += step)
       {
       child = callNode->getChild(i);
@@ -1386,17 +1395,18 @@ void J9::ARM64::PrivateLinkage::buildDirectCall(TR::Node *callNode,
    {
    TR::Instruction *gcPoint;
    TR::MethodSymbol *callSymbol = callSymRef->getSymbol()->castToMethodSymbol();
+   bool isJitDispatchJ9Method = callNode->isJitDispatchJ9MethodCall(comp());
 
    TR_J9VMBase *fej9 = comp()->fej9();
 
-   if (callSymRef->getReferenceNumber() >= TR_ARM64numRuntimeHelpers)
+   if ((callSymRef->getReferenceNumber() >= TR_ARM64numRuntimeHelpers) && !isJitDispatchJ9Method)
       fej9->reserveTrampolineIfNecessary(comp(), callSymRef, false);
 
    bool forceUnresolvedDispatch = !fej9->isResolvedDirectDispatchGuaranteed(comp());
 
-   if (callSymbol->isJITInternalNative() ||
+   if (!isJitDispatchJ9Method && (callSymbol->isJITInternalNative() ||
        (!callSymRef->isUnresolved() && !callSymbol->isInterpreted() &&
-        (callSymbol->isHelper() || !forceUnresolvedDispatch)))
+        (callSymbol->isHelper() || !forceUnresolvedDispatch))))
       {
       bool isMyself = comp()->isRecursiveMethodTarget(callSymbol);
 
@@ -1405,6 +1415,58 @@ void J9::ARM64::PrivateLinkage::buildDirectCall(TR::Node *callNode,
          dependencies,
          callSymRef ? callSymRef : callNode->getSymbolReference(),
          NULL);
+      }
+   else if (isJitDispatchJ9Method)
+      {
+      auto regMapMask = getProperties().getPreservedRegisterMapForGC();
+
+      TR::Register *scratchReg = dependencies->searchPostConditionRegister(getProperties().getVTableIndexArgumentRegister());
+      TR::Register *scratchReg2 = dependencies->searchPreConditionRegister(TR::RealRegister::x11);
+      TR::Register *j9MethodReg = callNode->getChild(0)->getRegister();
+
+      TR::LabelSymbol *startICFLabel = generateLabelSymbol(cg());
+      TR::LabelSymbol *doneLabel = generateLabelSymbol(cg());
+      startICFLabel->setStartInternalControlFlow();
+      doneLabel->setEndInternalControlFlow();
+
+      TR::RegisterDependencyConditions *preDeps = dependencies->clone(cg());
+      preDeps->setNumPostConditions(0, trMemory());
+      preDeps->setAddCursorForPost(0);
+
+      TR::RegisterDependencyConditions *postDeps = dependencies->clone(cg());
+      postDeps->setNumPreConditions(0, trMemory());
+      postDeps->setAddCursorForPre(0);
+
+      TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg());
+      TR::SymbolReference *helperRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition, true, true, false);
+      TR::Snippet *interpCallSnippet = new (cg()->trHeapMemory()) TR::ARM64J9HelperCallSnippet(cg(), callNode, snippetLabel, helperRef, doneLabel, argSize);
+      interpCallSnippet->gcMap().setGCRegisterMask(regMapMask);
+      cg()->addSnippet(interpCallSnippet);
+
+      generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, startICFLabel, preDeps);
+
+      // test if compiled
+      generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, callNode, scratchReg,
+                                 TR::MemoryReference::createWithDisplacement(cg(), j9MethodReg, offsetof(J9Method, extra)));
+      // immr:imms = 0 for immeditate value 1
+      // lsb of J9Method::extra is 1 if not compiled
+      generateLogicalImmInstruction(cg(), TR::InstOpCode::andimmw, callNode, scratchReg2, scratchReg, false, 0);
+      // jump to snippet if interpreted
+      gcPoint =  generateCompareBranchInstruction(cg(), TR::InstOpCode::cbnzw, callNode, scratchReg2, snippetLabel);
+      gcPoint->ARM64NeedsGCMap(cg(), regMapMask);
+
+      // compiled - jump to jit entry point
+      generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmw, callNode, j9MethodReg,
+                                 TR::MemoryReference::createWithDisplacement(cg(), scratchReg, -4));
+      generateArithmeticShiftRightImmInstruction(cg(), callNode, j9MethodReg, j9MethodReg, 16);
+      // sign extend
+      generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::sbfmx, callNode, j9MethodReg, j9MethodReg, 0x1F);
+      generateTrg1Src2Instruction(cg(), TR::InstOpCode::addx, callNode, scratchReg, j9MethodReg, scratchReg);
+      gcPoint = generateRegBranchInstruction(cg(), TR::InstOpCode::blr, callNode, scratchReg);
+      gcPoint->ARM64NeedsGCMap(cg(), regMapMask);
+
+      generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, doneLabel, postDeps);
+      return;
       }
    else
       {

@@ -61,6 +61,8 @@ class ARM64CallSnippet : public TR::Snippet
 
    static uint8_t *generateVIThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg);
    static TR_MHJ2IThunk *generateInvokeExactJ2IThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg, char *signature);
+   static uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg);
+   static int32_t instructionCountForArguments(TR::Node *callNode, TR::CodeGenerator *cg);
    };
 
 class ARM64UnresolvedCallSnippet : public TR::ARM64CallSnippet
