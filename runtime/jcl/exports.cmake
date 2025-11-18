@@ -876,6 +876,7 @@ endif()
 # java 26+
 if(NOT JAVA_SPEC_VERSION LESS 26)
 	omr_add_exports(jclse
+		Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getTotalGcCpuTimeImpl
 		Java_java_lang_Class_getClassFileAccessFlags
 	)
 endif()
