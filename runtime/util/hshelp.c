@@ -2489,7 +2489,6 @@ flushClassLoaderReflectCache(J9VMThread * currentThread, J9HashTable * classPair
 			j9object_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(replacementRAMClass);
 			J9VMJAVALANGCLASS_SET_ANNOTATIONCACHE(currentThread, classObject, NULL);
 			J9VMJAVALANGCLASS_SET_REFLECTCACHE(currentThread, classObject, NULL);
-			J9VMJAVALANGCLASS_SET_CONSTANTPOOLOBJECT(currentThread, classObject, NULL);
 		}
 		classPair = hashTableNextDo(&hashTableState);
 	}

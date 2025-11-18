@@ -631,11 +631,6 @@ public static native boolean isRCPRestoreRun();
  * constantpool associated with clazz
  */
 public static ConstantPool getConstantPoolFromAnnotationBytes(Class<?> clazz, byte[] array) {
-	/* Check the cp cache on the Class object first */
-	ConstantPool cp = VM.getVMLangAccess().getConstantPoolCache(clazz);
-	if (null != cp) {
-		return cp;
-	}
 	if (null == array) {
 		return getVMLangAccess().getConstantPool(clazz);
 	}
@@ -647,7 +642,7 @@ public static ConstantPool getConstantPoolFromAnnotationBytes(Class<?> clazz, by
 	} else {
 		ramCPAddr = Unsafe.getUnsafe().getLong(array, offset);
 	}
-	Object internalCP = getVMLangAccess().createInternalConstantPool(ramCPAddr, clazz);
+	Object internalCP = getVMLangAccess().createInternalConstantPool(ramCPAddr);
 	return getVMLangAccess().getConstantPool(internalCP);
 }
 
