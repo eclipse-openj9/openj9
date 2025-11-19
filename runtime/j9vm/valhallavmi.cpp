@@ -33,13 +33,14 @@ JNIEXPORT jarray JNICALL
 JVM_CopyOfSpecialArray(JNIEnv *env, jarray orig, jint from, jint to)
 {
 	assert(!"JVM_CopyOfSpecialArray unimplemented");
+	return NULL;
 }
 
 JNIEXPORT jboolean JNICALL
 JVM_IsAtomicArray(JNIEnv *env, jobject obj)
 {
 	/* J9 doesn't currently support non-atomic arrays. */
-	return TRUE;
+	return JNI_TRUE;
 }
 
 JNIEXPORT jboolean JNICALL
@@ -154,7 +155,7 @@ newArrayHelper(JNIEnv *env, jclass componentType, jint length, bool isNullRestri
 
 	/* Set initial values. */
 	if (isNullRestricted) {
-		for (int index = 0; index < length; index++) {
+		for (jint index = 0; index < length; index++) {
 			vmFuncs->storeFlattenableArrayElement(currentThread, newArray, index, initialValue);
 		}
 	}
