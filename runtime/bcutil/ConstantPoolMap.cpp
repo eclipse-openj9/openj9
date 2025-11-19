@@ -161,11 +161,7 @@ ConstantPoolMap::computeConstantPoolMapAndSizes()
 					}
 					break;
 				case CFR_CONSTANT_Utf8:
-					if (isMarked(cfrCPIndex, ANNOTATION)
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
-						|| isMarked(cfrCPIndex, EARLYLARVALFRAME)
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
-					) {
+					if (isMarked(cfrCPIndex, ANNOTATION)) {
 						singleSlotCount += 1;
 					}
 					break;
