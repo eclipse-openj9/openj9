@@ -160,7 +160,7 @@ public:
 		virtual void visitStackMapNewObject(U_8 slotType, U_16 offset) = 0;
 		virtual void visitStackMapItem(U_8 slotType) = 0;
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
-		virtual void visitUnsetField(U_16 cpIndex, U_16 nameIndex) = 0;
+		virtual void visitUnsetField(U_16 nasCpIndex) = 0;
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 	};
 
@@ -228,9 +228,8 @@ class VerificationTypeInfo
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 		void unsetFieldsDo(VerificationTypeInfoVisitor *visitor) {
 			for (U_16 i = 0; i < _stackMapFrameInfo->numberOfUnsetFields; i++) {
-				U_16 cpIndex = getUnsetFieldIndex(_stackMapFrameInfo->unsetFields + (i * sizeof(U_16)));
-				U_16 nameIndex = (U_16) _classFile->constantPool[cpIndex].slot1;
-				visitor->visitUnsetField(cpIndex, nameIndex);
+				U_16 nasCpIndex = getUnsetFieldIndex(_stackMapFrameInfo->unsetFields + (i * sizeof(U_16)));
+				visitor->visitUnsetField(nasCpIndex);
 			}
 		}
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
@@ -1262,9 +1261,6 @@ private:
 	VMINLINE void markClassNameAsReferenced(U_16 classCPIndex);
 	VMINLINE void markStringAsReferenced(U_16 cpIndex);
 	VMINLINE void markNameAndDescriptorAsReferenced(U_16 nasCPIndex);
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
-	VMINLINE void markNameAndDescriptorAsReferencedByEarlyLarvalFrame(U_16 nasCPIndex);
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 	VMINLINE void markFieldRefAsReferenced(U_16 cpIndex);
 	VMINLINE void markMethodRefAsReferenced(U_16 cpIndex);
 	VMINLINE void markMethodTypeAsReferenced(U_16 cpIndex);

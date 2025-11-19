@@ -988,9 +988,10 @@ extern "C" {
 /* Class version minimum for value type support. */
 
 #define VALUE_TYPES_MAJOR_VERSION (44 + 26)
+#define STRICT_FIELDS_MAJOR_VERSION VALUE_TYPES_MAJOR_VERSION
 #define PREVIEW_MINOR_VERSION 65535
 #define J9_IS_CLASSFILE_OR_ROMCLASS_VALUETYPE_VERSION(classfileOrRomClass) (((classfileOrRomClass)->majorVersion >= VALUE_TYPES_MAJOR_VERSION) && (PREVIEW_MINOR_VERSION == (classfileOrRomClass)->minorVersion))
-#define J9_CLASSFILE_OR_ROMCLASS_SUPPORTS_STRICT_FIELDS(classfileOrRomClass) J9_IS_CLASSFILE_OR_ROMCLASS_VALUETYPE_VERSION(classfileOrRomClass)
+#define J9_CLASSFILE_OR_ROMCLASS_SUPPORTS_STRICT_FIELDS(classfileOrRomClass) (((classfileOrRomClass)->majorVersion >= STRICT_FIELDS_MAJOR_VERSION) && (PREVIEW_MINOR_VERSION == (classfileOrRomClass)->minorVersion))
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 /* Constants for java.lang.reflect.Field flags */
