@@ -232,6 +232,16 @@ loadFlattenableArrayElement(J9VMThread *currentThread, j9object_t receiverObject
         return VM_ValueTypeHelpers::loadFlattenableArrayElement(currentThread, objectAccessBarrier, objectAllocate, receiverObject, index, fast != false);
 }
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+I_32
+copyFlattenableArray(J9VMThread *currentThread, j9object_t srcObject, j9object_t destObject, U_32 srcIndex, U_32 destIndex, U_32 lengthInSlots)
+{
+	MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
+	MM_ObjectAllocationAPI objectAllocate(currentThread);
+	return VM_ValueTypeHelpers::copyFlattenableArray(currentThread, objectAccessBarrier, objectAllocate, srcObject, destObject, srcIndex, destIndex, lengthInSlots);
+}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 BOOLEAN
 areValueBasedMonitorChecksEnabled(J9JavaVM *vm)
 {

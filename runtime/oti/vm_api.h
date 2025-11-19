@@ -2852,6 +2852,27 @@ loadFlattenableArrayElement(J9VMThread *currentThread, j9object_t receiverObject
 void
 storeFlattenableArrayElement(J9VMThread *currentThread, j9object_t receiverObject, U_32 index, j9object_t paramObject);
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+/**
+ * Copies an array of non-primitive objects
+ * Handles flattened and non-flattened cases.
+ *
+ * Assumes srcObject and destObject are not null
+ * Assumes array bounds (srcIndex to (srcIndex + lengthInSlots), and destIndex to (destIndex + lengthInSlots)) are valid
+ *
+ * @param[in] currentThread thread token
+ * @param[in] srcObject the source array to copy objects from
+ * @param[out] destObject the destination array in which objects should be stored
+ * @param[in] srcIndex the index in the source array to begin copying objects from
+ * @param[in] destIndex the index in the destination array to begin storing objects
+ * @param[in] lengthInSlots the number of elements to copy
+ *
+ * @return 0 if copy was successful, -1 if there was an array store error, -2 if there was a null pointer exception
+ */
+I_32
+copyFlattenableArray(J9VMThread *currentThread, j9object_t srcObject, j9object_t destObject, U_32 srcIndex, U_32 destIndex, U_32 lengthInSlots);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 /**
 * @brief Iterate over fields of the specified class in JVMTI order.
 * @param state[in/out]  the walk state that was initialized via fieldOffsetsStartDo()
