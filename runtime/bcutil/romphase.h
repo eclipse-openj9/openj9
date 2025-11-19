@@ -66,6 +66,7 @@ enum ROMClassCreationPhase {
 	ClassFileMethodCodeAttributeCodeAnalysis,
 	CheckForLoop,
 	ClassFileStackMapSlotsAnalysis,
+	MethodIsClinit,
 	MethodIsFinalize,
 	MethodIsEmpty,
 	MethodIsGetter,

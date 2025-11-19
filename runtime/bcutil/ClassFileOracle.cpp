@@ -2236,7 +2236,7 @@ ClassFileOracle::walkUnsetFields(U_8 *framePointer, U_16 numberOfUnsetFields)
 	U_16 cpIndex = 0;
 	for (U_16 i = 0; i < numberOfUnsetFields; i++) {
 		NEXT_U16(cpIndex, framePointer);
-		markNameAndDescriptorAsReferencedByEarlyLarvalFrame(cpIndex);
+		markNameAndDescriptorAsReferenced(cpIndex);
 	}
 	return framePointer;
 }
@@ -2425,7 +2425,7 @@ ClassFileOracle::methodIsVirtual(U_16 methodIndex)
 bool
 ClassFileOracle::methodIsNonStaticNonAbstract(U_16 methodIndex)
 {
-	ROMCLASS_VERBOSE_PHASE_HOT(_context, IsMethodNonStaticNonAbstract);
+	ROMCLASS_VERBOSE_PHASE_HOT(_context, MethodIsNonStaticNonAbstract);
 
 	return J9_ARE_NO_BITS_SET(_classFile->methods[methodIndex].accessFlags, (CFR_ACC_STATIC | CFR_ACC_ABSTRACT));
 }
@@ -2615,24 +2615,6 @@ ClassFileOracle::markNameAndDescriptorAsReferenced(U_16 nasCPIndex)
 	markConstantUTF8AsReferenced(_classFile->constantPool[nasCPIndex].slot1); /* Mark name UTF8 */
 	markConstantUTF8AsReferenced(_classFile->constantPool[nasCPIndex].slot2); /* Mark descriptor UTF8 */
 }
-
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
-/**
- * Mark name and descriptor as referenced as well
- * used so the strings are saved in the rom class
- * constant pool. They will be used in the verifier.
- */
-void
-ClassFileOracle::markNameAndDescriptorAsReferencedByEarlyLarvalFrame(U_16 nasCPIndex)
-{
-	Trc_BCU_Assert_Equals(CFR_CONSTANT_NameAndType, _classFile->constantPool[nasCPIndex].tag);
-	markConstantNameAndTypeAsReferenced(nasCPIndex);
-	markConstantUTF8AsReferenced(_classFile->constantPool[nasCPIndex].slot1);
-	_constantPoolMap->markConstantAsUsedByEarlyLarvalFrame(_classFile->constantPool[nasCPIndex].slot1);
-	markConstantUTF8AsReferenced(_classFile->constantPool[nasCPIndex].slot2);
-	_constantPoolMap->markConstantAsUsedByEarlyLarvalFrame(_classFile->constantPool[nasCPIndex].slot2);
-}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 void
 ClassFileOracle::markFieldRefAsReferenced(U_16 cpIndex)

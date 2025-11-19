@@ -129,6 +129,7 @@ public class RomClassWalker extends ClassWalker {
 	public static final int CFR_STACKMAP_SAME = 0;
 	public static final int CFR_STACKMAP_SAME_LOCALS_1_STACK = 64;
 	public static final int CFR_STACKMAP_SAME_LOCALS_1_STACK_END = 128;
+	public static final int CFR_STACKMAP_EARLY_LARVAL = 246;
 	public static final int CFR_STACKMAP_SAME_LOCALS_1_STACK_EXTENDED = 247;
 	public static final int CFR_STACKMAP_SAME_EXTENDED = 251;
 	public static final int CFR_STACKMAP_APPEND_BASE = 251;
@@ -803,8 +804,8 @@ public class RomClassWalker extends ClassWalker {
 	private long allSlotsInStackMapFramesDo(U8Pointer cursor, long frameCount) throws CorruptDataException {
 		U8Pointer cursorStart = U8Pointer.NULL;
 		long count;
-
-		for (; frameCount > 0; frameCount--) {
+		boolean walkBaseFrame = false;
+		while (frameCount > 0) {
 			long frameType;
 			int length;
 
@@ -812,7 +813,11 @@ public class RomClassWalker extends ClassWalker {
 				cursorStart = cursor;
 			}
 
-			classWalkerCallback.addSlot(clazz, SlotType.J9_U8, cursor, "stackMapFrameType");
+			if (walkBaseFrame) {
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U8, cursor, "baseFrameType");
+			} else {
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U8, cursor, "stackMapFrameType");
+			}
 			frameType = cursor.at(0).longValue();
 			cursor = cursor.add(1);
 
@@ -824,8 +829,19 @@ public class RomClassWalker extends ClassWalker {
 					return cursor.getAddress() - cursorStart.getAddress();
 				}
 				cursor = cursor.add(length);
-			} else if (CFR_STACKMAP_SAME_LOCALS_1_STACK_EXTENDED > frameType) { /* 128..246 */
-				/* Reserved frame types - no extra data */
+			} else if (CFR_STACKMAP_EARLY_LARVAL > frameType) { /* 128..245 */
+				/* Reserved frame types - no extra data. */
+			} else if (CFR_STACKMAP_EARLY_LARVAL == frameType) { /* 246 */
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U16, cursor, "numberOfUnsetFields");
+				count = U16Pointer.cast(cursor).at(0).longValue();
+				count = SWAP2BE((short) count);
+				cursor = cursor.add(2);
+				for (; count > 0; count--) {
+					classWalkerCallback.addSlot(clazz, SlotType.J9_SRPNAS, cursor, "cpUnsetFieldNAS");
+					cursor = cursor.add(4);
+				}
+				walkBaseFrame = true;
+				continue;
 			} else if (CFR_STACKMAP_SAME_LOCALS_1_STACK_EXTENDED == frameType) { /* 247 */
 				classWalkerCallback.addSlot(clazz, SlotType.J9_U16, cursor, "stackMapFrameOffset");
 				cursor = cursor.add(2);
@@ -879,6 +895,7 @@ public class RomClassWalker extends ClassWalker {
 					cursor = cursor.add(length);
 				}
 			}
+			frameCount -= 1;
 		}
 		return cursor.getAddress() - cursorStart.getAddress();
 	}

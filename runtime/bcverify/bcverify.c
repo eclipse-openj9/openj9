@@ -524,15 +524,17 @@ parseUnsetFields(J9BytecodeVerificationData *verifyData, U_8 **stackMapData)
 	}
 	NEXT_U16(newEntry->numberOfUnsetFields, mapData);
 	if (newEntry->numberOfUnsetFields > 0) {
-		int i = 0;
-		newEntry->unsetFieldCpList = j9mem_allocate_memory(sizeof(U_16) * newEntry->numberOfUnsetFields, J9MEM_CATEGORY_CLASSES);
-		if (NULL == newEntry->unsetFieldCpList) {
+		U_16 i = 0;
+		newEntry->unsetFieldNASList = j9mem_allocate_memory(sizeof(J9ROMNameAndSignature *) * newEntry->numberOfUnsetFields, J9MEM_CATEGORY_CLASSES);
+		if (NULL == newEntry->unsetFieldNASList) {
 			j9mem_free_memory(newEntry);
 			newEntry = NULL;
 			goto done;
 		}
-		for (; i < newEntry->numberOfUnsetFields; i++) {
-			NEXT_U16(newEntry->unsetFieldCpList[i], mapData);
+		for (i = 0; i < newEntry->numberOfUnsetFields; i++) {
+			J9ROMNameAndSignature *nas = SRP_PTR_GET(mapData, J9ROMNameAndSignature *);
+			mapData += sizeof(J9SRP);
+			newEntry->unsetFieldNASList[i] = nas;
 		}
 	}
 done:
@@ -2987,13 +2989,17 @@ static UDATA strictFieldHashFn(void *key, void *userData)
 {
 	J9StrictFieldEntry *entry = key;
 	J9JavaVM *vm = userData;
-	return J9_VM_FUNCTION_VIA_JAVAVM(vm, computeHashForUTF8)(J9UTF8_DATA(entry->nameutf8), J9UTF8_LENGTH(entry->nameutf8));
+	J9UTF8 *name = J9ROMNAMEANDSIGNATURE_NAME(entry->nas);
+	return J9_VM_FUNCTION_VIA_JAVAVM(vm, computeHashForUTF8)(J9UTF8_DATA(name), J9UTF8_LENGTH(name));
 }
 
 static UDATA strictFieldHashEqualFn(void *leftKey, void *rightKey, void *userData) {
 	J9StrictFieldEntry *leftEntry = leftKey;
 	J9StrictFieldEntry *rightEntry = rightKey;
-	return J9UTF8_EQUALS(leftEntry->nameutf8, rightEntry->nameutf8);
+	J9ROMNameAndSignature *leftNas = leftEntry->nas;
+	J9ROMNameAndSignature *rightNas = rightEntry->nas;
+	return J9UTF8_EQUALS(J9ROMNAMEANDSIGNATURE_NAME(leftNas), J9ROMNAMEANDSIGNATURE_NAME(rightNas))
+		&& J9UTF8_EQUALS(J9ROMNAMEANDSIGNATURE_SIGNATURE(leftNas), J9ROMNAMEANDSIGNATURE_SIGNATURE(rightNas));
 }
 
 static UDATA earlyLarvalFrameHashFn(void *key, void *userData)
