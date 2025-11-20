@@ -755,7 +755,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 #else /* defined(J9VM_ARCH_X86) */
 	**(UDATA **)omrthread_global((char *)"parkSleepCpuUtilThreshold") = 100;
 #endif /* defined(J9VM_ARCH_POWER) */
-	vm->cpuUtilCacheInterval = 5000000000;
+	vm->cpuUtilCacheInterval = 5;
 #endif /* defined(OMR_THR_YIELD_ALG) */
 
 	/* parse arguments */
@@ -1370,7 +1370,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 			if (scan_udata(&scan_start, &cacheInterval)) {
 				goto _error;
 			}
-			vm->cpuUtilCacheInterval = cacheInterval * 1000000000;
+			vm->cpuUtilCacheInterval = cacheInterval;
 			continue;
 		}
 

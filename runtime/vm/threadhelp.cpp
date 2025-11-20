@@ -485,11 +485,11 @@ continueTimeCompensation:
 				omrthread_monitor_exit(vm->cpuUtilCacheMutex);
 			}
 		} else {
-			const UDATA cacheIntervalNano = vm->cpuUtilCacheInterval;
-			UDATA timeDelta = currentTime - vm->prevProcTimestamp;
+			const U_64 cacheIntervalNano = (U_64)vm->cpuUtilCacheInterval * 1000000000;
+			U_64 timeDelta = currentTime - vm->prevProcTimestamp;
 			if (timeDelta >= cacheIntervalNano) {
 				if (0 == omrthread_monitor_try_enter(vm->cpuUtilCacheMutex)) {
-					/* Recalculate time delta to avoid getting wrong value if prevProcTimestamp was updated by another thread */
+					/* Recalculate time delta to avoid getting wrong value if prevProcTimestamp was updated by another thread. */
 					timeDelta = currentTime - vm->prevProcTimestamp;
 					if (timeDelta >= cacheIntervalNano) {
 						intptr_t processTimeRC = omrthread_get_process_times(&currentProcCPUTimes);
