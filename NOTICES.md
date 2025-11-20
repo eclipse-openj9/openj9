@@ -181,7 +181,7 @@ jcommander (1.48)
 
 * License: Apache-2.0
 
-junit (4.10)
+junit (4.12)
 
 * License: Common Public License 1.0
 
