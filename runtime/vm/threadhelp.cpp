@@ -467,6 +467,51 @@ timeCompensationHelper(J9VMThread *vmThread, U_8 threadHelperType, omrthread_mon
 	}
 continueTimeCompensation:
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+#if defined(OMR_THR_YIELD_ALG)
+	UDATA parkPolicy = **(UDATA **)omrthread_global((char *)"parkPolicy");
+	if (OMRTHREAD_PARK_POLICY_SLEEP == parkPolicy) {
+		J9JavaVM *vm = vmThread->javaVM;
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		int64_t currentTime = j9time_nano_time();
+		omrthread_process_time_t currentProcCPUTimes = {0};
+
+		if (-1 == vm->prevProcTimestamp) {
+			if (0 == omrthread_monitor_try_enter(vm->cpuUtilCacheMutex)) {
+				intptr_t processTimeRC = omrthread_get_process_times(&currentProcCPUTimes);
+				if (0 == processTimeRC) {
+					vm->prevProcCPUTime = currentProcCPUTimes._userTime + currentProcCPUTimes._systemTime;
+					vm->prevProcTimestamp = currentTime;
+				}
+				omrthread_monitor_exit(vm->cpuUtilCacheMutex);
+			}
+		} else {
+			const UDATA cacheIntervalNano = vm->cpuUtilCacheInterval;
+			UDATA timeDelta = currentTime - vm->prevProcTimestamp;
+			if (timeDelta >= cacheIntervalNano) {
+				if (0 == omrthread_monitor_try_enter(vm->cpuUtilCacheMutex)) {
+					/* Recalculate time delta to avoid getting wrong value if prevProcTimestamp was updated by another thread */
+					timeDelta = currentTime - vm->prevProcTimestamp;
+					if (timeDelta >= cacheIntervalNano) {
+						intptr_t processTimeRC = omrthread_get_process_times(&currentProcCPUTimes);
+						if (0 == processTimeRC) {
+							uintptr_t numberOfCpus = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_BOUND);
+							double timeElapsedAllCores = (double)numberOfCpus * timeDelta;
+							UDATA cpuTimeDelta = currentProcCPUTimes._systemTime + currentProcCPUTimes._userTime - vm->prevProcCPUTime;
+							double util = cpuTimeDelta / timeElapsedAllCores * 100;
+
+							**(UDATA **)omrthread_global((char *)"cpuUtilCache") = (UDATA)util;
+							Trc_VM_timeCompensationHelper_CPU_util(vmThread, numberOfCpus, timeDelta, cpuTimeDelta, util);
+
+							vm->prevProcCPUTime = currentProcCPUTimes._userTime + currentProcCPUTimes._systemTime;
+							vm->prevProcTimestamp = currentTime;
+						}
+					}
+					omrthread_monitor_exit(vm->cpuUtilCacheMutex);
+				}
+			}
+		}
+	}
+#endif /* defined(OMR_THR_YIELD_ALG) */
 
 	switch(threadHelperType) {
 	/* Following three APIs return J9THREAD_TIMED_OUT when the timeout expired.
