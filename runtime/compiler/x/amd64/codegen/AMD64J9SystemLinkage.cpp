@@ -87,13 +87,6 @@ TR::Register *TR::AMD64J9SystemLinkage::buildDirectDispatch(
       TR::Node *callNode,
       bool spillFPRegs)
    {
-#ifdef DEBUG
-   if (debug("reportSysDispatch"))
-      {
-      printf("J9 AMD64 System Dispatch: %s calling %s\n", comp()->signature(), comp()->getDebug()->getName(callNode->getSymbolReference()));
-      }
-#endif
-
    TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
    TR::MethodSymbol *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
 

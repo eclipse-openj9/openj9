@@ -151,8 +151,7 @@ TR_StorageReference::setTemporaryReferenceCount(rcount_t count)
    if (isTemporaryBased())
       {
       TR::AutomaticSymbol *sym = getTemporarySymbol();
-      if (comp()->cg()->traceBCDCodeGen())
-         traceMsg(comp(),"\tset temporary #%d (%s) reference count %d->%d\n",
+      logprintf(comp()->cg()->traceBCDCodeGen(), comp()->log(), "\tset temporary #%d (%s) reference count %d->%d\n",
             getTemporarySymbolReference()->getReferenceNumber(),comp()->getDebug()->getName(sym),sym->getReferenceCount(),count);
       sym->setReferenceCount(count);
       }
@@ -163,19 +162,20 @@ TR_StorageReference::decrementTemporaryReferenceCount(rcount_t decrement)
    {
    if (isTemporaryBased())
       {
+      OMR::Logger *log = comp()->log();
+      bool trace = comp()->cg()->traceBCDCodeGen();
       TR_ASSERT(getTemporarySymbol(),"expecting a non-null temporary symbol\n");
       TR_ASSERT(decrement >= 0,"expecting a non-negative decrement (%d)\n",decrement);
       TR::AutomaticSymbol *sym = getTemporarySymbol();
       TR_ASSERT(sym->getReferenceCount()-decrement >= 0,"decrement would cause the symbol reference count to become negative (%d)\n",sym->getReferenceCount()-decrement);
-      if (comp()->cg()->traceBCDCodeGen())
-         traceMsg(comp(),"\tdecrement temporary #%d (%s) reference count %d->%d\n",
-            getTemporarySymbolReference()->getReferenceNumber(),comp()->getDebug()->getName(sym),sym->getReferenceCount(),sym->getReferenceCount()-decrement);
+      logprintf(trace, log, "\tdecrement temporary #%d (%s) reference count %d->%d\n",
+            getTemporarySymbolReference()->getReferenceNumber(), comp()->getDebug()->getName(sym), sym->getReferenceCount(), sym->getReferenceCount()-decrement);
       sym->setReferenceCount(sym->getReferenceCount()-decrement);
       if (!sym->isAddressTaken() && sym->getReferenceCount() == 0)
          {
          // reset the readOnly flag so if this storageRef gets reused (possible if it is a hint too) then it won't inherit the stale readOnly property
-         if (comp()->cg()->traceBCDCodeGen() && isReadOnlyTemporary())
-            traceMsg(comp(),"\treset readOnlyTemp flag on storageRef #%d (%s) (temp refCount==0 case)\n",getReferenceNumber(),comp()->getDebug()->getName(getSymbol()));
+         if (trace  && isReadOnlyTemporary())
+            log->printf("\treset readOnlyTemp flag on storageRef #%d (%s) (temp refCount==0 case)\n", getReferenceNumber(), comp()->getDebug()->getName(getSymbol()));
          setIsReadOnlyTemporary(false, NULL);
          comp()->cg()->pendingFreeVariableSizeSymRef(getTemporarySymbolReference());
          TR_ASSERT(getOwningRegisterCount() <= 1,"owningRegisterCount %d should be <= 1 when freeing temp #%d\n",getOwningRegisterCount(),getReferenceNumber());
@@ -191,8 +191,7 @@ TR_StorageReference::incrementTemporaryReferenceCount(rcount_t increment)
       TR_ASSERT(getTemporarySymbol(),"expecting a non-null temporary symbol\n");
       TR_ASSERT(increment >= 0,"expecting a non-negative increment (%d)\n",increment);
       TR::AutomaticSymbol *sym = getTemporarySymbol();
-      if (comp()->cg()->traceBCDCodeGen())
-         traceMsg(comp(),"\tincrement temporary #%d (%s) reference count %d->%d\n",
+      logprintf(comp()->cg()->traceBCDCodeGen(), comp()->log(), "\tincrement temporary #%d (%s) reference count %d->%d\n",
             getTemporarySymbolReference()->getReferenceNumber(),comp()->getDebug()->getName(sym),sym->getReferenceCount(),sym->getReferenceCount()+increment);
       sym->setReferenceCount(sym->getReferenceCount()+increment);
       if (sym->getReferenceCount() > 0)
@@ -227,26 +226,24 @@ TR_StorageReference::increaseTemporarySymbolSize(int32_t sizeIncrement, TR_Opaqu
    {
    if (isTemporaryBased())
       {
+      OMR::Logger *log = comp()->log();
+      bool trace = comp()->cg()->traceBCDCodeGen();
       TR_ASSERT(sizeIncrement >= 0,"expecting the sizeIncrement (%d) to be >= 0\n",sizeIncrement);
       TR_ASSERT(getTemporarySymbol(),"expecting a non-null temporary symbol\n");
 
       if (sizeIncrement == 0) return;
 
       TR::AutomaticSymbol *sym = getTemporarySymbol();
-      if (comp()->cg()->traceBCDCodeGen())
-         traceMsg(comp(),"\tincreaseTemporarySymbolSize : activeSize %d->%d (on reg %s and %s)\n",
-            sym->getActiveSize(),sym->getActiveSize()+sizeIncrement,comp()->cg()->getDebug()->getName(reg),comp()->getDebug()->getName(sym));
+      logprintf(trace, log, "\tincreaseTemporarySymbolSize : activeSize %d->%d (on reg %s and %s)\n",
+            sym->getActiveSize(), sym->getActiveSize()+sizeIncrement, comp()->cg()->getDebug()->getName(reg), comp()->getDebug()->getName(sym));
       sym->setActiveSize(sym->getActiveSize()+sizeIncrement);
       if (sym->getActiveSize() > sym->getSize())
          {
-         if (comp()->cg()->traceBCDCodeGen())
-            traceMsg(comp(),"\t\tnew activeSize > symSize (%d > %d) so increment symSize %d->%d\n",sym->getActiveSize(),sym->getSize(),sym->getSize(),sym->getActiveSize());
+         logprintf(trace, log, "\t\tnew activeSize > symSize (%d > %d) so increment symSize %d->%d\n", sym->getActiveSize(), sym->getSize(), sym->getSize(), sym->getActiveSize());
          sym->setSize(sym->getActiveSize());
          }
-      else if (comp()->cg()->traceBCDCodeGen())
-         {
-         traceMsg(comp(),"\t\tnew activeSize <= symSize (%d <= %d) so leave symSize at %d\n",sym->getActiveSize(),sym->getSize(),sym->getSize());
-         }
+      else
+         logprintf(trace, log, "\t\tnew activeSize <= symSize (%d <= %d) so leave symSize at %d\n", sym->getActiveSize(), sym->getSize(), sym->getSize());
 
       reg->clearLeftAlignedState();
 
@@ -258,8 +255,7 @@ TR_StorageReference::increaseTemporarySymbolSize(int32_t sizeIncrement, TR_Opaqu
             TR_OpaquePseudoRegister *updateReg = update->getOpaquePseudoRegister();
             if (updateReg && updateReg != reg && updateReg->getStorageReference() == reg->getStorageReference())
                {
-               if (comp()->cg()->traceBCDCodeGen())
-                  traceMsg(comp(),"\ty^y : clear left-aligned state of reg %s with ref #%d (%s) on node %s (%p) refCount %d from _nodesToUpdateOnClobber\n",
+               logprintf(trace, log, "\ty^y : clear left-aligned state of reg %s with ref #%d (%s) on node %s (%p) refCount %d from _nodesToUpdateOnClobber\n",
                            comp()->getDebug()->getName(updateReg),
                            updateReg->getStorageReference()->getReferenceNumber(), comp()->getDebug()->getName(updateReg->getStorageReference()->getSymbol()),
                            update->getOpCode().getName(), update, update->getReferenceCount());
@@ -365,8 +361,7 @@ TR_StorageReference::addSharedNode(TR::Node *node)
       _sharedNodes =  new (comp()->trHeapMemory()) List<TR::Node>(comp()->trMemory());
 
    _sharedNodes->add(node);
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\tadding node %s (%p) to _sharedNodes on hint #%d\n",node->getOpCode().getName(),node,getReferenceNumber());
+   logprintf(comp()->cg()->traceBCDCodeGen(), comp()->log(), "\tadding node %s (%p) to _sharedNodes on hint #%d\n", node->getOpCode().getName(), node, getReferenceNumber());
    }
 
 
@@ -376,18 +371,17 @@ TR_StorageReference::removeSharedNode(TR::Node *node)
    TR_ASSERT(isTemporaryBased(),"sharedNodes should only be tracked on temporary based storageRefs\n");
    if (_sharedNodes)
       _sharedNodes->remove(node);
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\tremoving node %s (%p) from _sharedNodes on hint #%d\n",node->getOpCode().getName(),node,getReferenceNumber());
+   logprintf(comp()->cg()->traceBCDCodeGen(), comp()->log(), "\tremoving node %s (%p) from _sharedNodes on hint #%d\n", node->getOpCode().getName(), node, getReferenceNumber());
    }
 
 int32_t
 TR_StorageReference::getMaxSharedNodeSize()
    {
+   OMR::Logger *log = comp()->log();
+   bool trace = comp()->cg()->traceBCDCodeGen();
    TR_ASSERT(isTemporaryBased(),"sharedNodes should only be tracked on temporary based storageRefs\n");
    int32_t maxSize = getSymbolSize();
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\tgetMaxSharedNodeSize() for ref #%d : setting initial maxSize=symSize=%d, _sharedNodes=%p\n",
-         getReferenceNumber(),maxSize,_sharedNodes);
+   logprintf(trace, log, "\tgetMaxSharedNodeSize() for ref #%d : setting initial maxSize=symSize=%d, _sharedNodes=%p\n", getReferenceNumber(), maxSize, _sharedNodes);
    if (_sharedNodes)
       {
       ListIterator<TR::Node> listIt(_sharedNodes);
@@ -396,14 +390,12 @@ TR_StorageReference::getMaxSharedNodeSize()
          int32_t nodeSize = listNode->getStorageReferenceSize(comp());
          if (nodeSize > maxSize)
             {
-            if (comp()->cg()->traceBCDCodeGen())
-               traceMsg(comp(),"\tupdating maxSize %d->%d from listNode %s (%p)\n",maxSize,nodeSize,listNode->getOpCode().getName(),listNode);
+            logprintf(trace, log, "\tupdating maxSize %d->%d from listNode %s (%p)\n", maxSize, nodeSize, listNode->getOpCode().getName(), listNode);
             maxSize = nodeSize;
             }
          }
       }
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\treturning maxSize %d from _sharedNodes on hint #%d\n",maxSize,getReferenceNumber());
+   logprintf(trace, log, "\treturning maxSize %d from _sharedNodes on hint #%d\n", maxSize, getReferenceNumber());
    return maxSize;
    }
 
@@ -423,6 +415,8 @@ void TR_StorageReference::setIsReadOnlyTemporary(bool b, TR::Node *nodeToUpdateO
 void
 TR_StorageReference::addNodeToUpdateOnClobber(TR::Node *node)
    {
+   OMR::Logger *log = comp()->log();
+   bool trace = comp()->cg()->traceBCDCodeGen();
    if (node->getReferenceCount() > 1 || node->getRegister() != NULL)
       {
       if (_nodesToUpdateOnClobber == NULL)
@@ -430,16 +424,16 @@ TR_StorageReference::addNodeToUpdateOnClobber(TR::Node *node)
 
       if (_nodesToUpdateOnClobber->find(node))
          {
-         if (comp()->cg()->traceBCDCodeGen())
-            traceMsg(comp(),"\tNOT adding node %s (%p refCount %d) with reg %s to _nodesToUpdateOnClobber on ref #%d (%s) (already present in the list)\n",
-               node->getOpCode().getName(),node,node->getReferenceCount(),node->getRegister()?comp()->getDebug()->getName(node->getRegister()):"NULL",getReferenceNumber(),comp()->getDebug()->getName(getSymbol()));
+         logprintf(trace, log, "\tNOT adding node %s (%p refCount %d) with reg %s to _nodesToUpdateOnClobber on ref #%d (%s) (already present in the list)\n",
+               node->getOpCode().getName(), node, node->getReferenceCount(), node->getRegister()?comp()->getDebug()->getName(node->getRegister()):"NULL",
+               getReferenceNumber(), comp()->getDebug()->getName(getSymbol()));
          }
       else
          {
          _nodesToUpdateOnClobber->add(node);
-         if (comp()->cg()->traceBCDCodeGen())
-            traceMsg(comp(),"\tadding node %s (%p refCount %d) with reg %s to _nodesToUpdateOnClobber on ref #%d (%s)\n",
-               node->getOpCode().getName(),node,node->getReferenceCount(),node->getRegister()?comp()->getDebug()->getName(node->getRegister()):"NULL",getReferenceNumber(),comp()->getDebug()->getName(getSymbol()));
+         logprintf(trace, log, "\tadding node %s (%p refCount %d) with reg %s to _nodesToUpdateOnClobber on ref #%d (%s)\n",
+               node->getOpCode().getName(), node, node->getReferenceCount(), node->getRegister()?comp()->getDebug()->getName(node->getRegister()):"NULL",
+               getReferenceNumber(), comp()->getDebug()->getName(getSymbol()));
          }
       }
    }
@@ -449,9 +443,8 @@ TR_StorageReference::removeNodeToUpdateOnClobber(TR::Node *node)
    {
    if (_nodesToUpdateOnClobber)
       _nodesToUpdateOnClobber->remove(node);
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\tremoving node %s (%p) with reg %s from _nodesToUpdateOnClobber on ref #%d (%s)\n",
-         node->getOpCode().getName(),node,comp()->getDebug()->getName(node->getRegister()),getReferenceNumber(),comp()->getDebug()->getName(getSymbol()));
+   logprintf(comp()->cg()->traceBCDCodeGen(), comp()->log(), "\tremoving node %s (%p) with reg %s from _nodesToUpdateOnClobber on ref #%d (%s)\n",
+         node->getOpCode().getName(), node, comp()->getDebug()->getName(node->getRegister()), getReferenceNumber(), comp()->getDebug()->getName(getSymbol()));
    }
 
 void
@@ -459,12 +452,13 @@ TR_StorageReference::emptyNodesToUpdateOnClobber()
    {
    if (_nodesToUpdateOnClobber)
       _nodesToUpdateOnClobber->init();
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\temptying _nodesToUpdateOnClobber list on ref #%d (%s)\n",getReferenceNumber(),comp()->getDebug()->getName(getSymbol()));
+   logprintf(comp()->cg()->traceBCDCodeGen(), comp()->log(), "\temptying _nodesToUpdateOnClobber list on ref #%d (%s)\n", getReferenceNumber(), comp()->getDebug()->getName(getSymbol()));
    }
 
 bool TR_StorageReference::mayOverlapWith(TR_StorageReference *ref2)
    {
+   OMR::Logger *log = comp()->log();
+   bool trace = comp()->cg()->traceBCDCodeGen();
    TR_StorageReference *ref1 = this;
    if (ref1->isConstantNodeBased() || ref2->isConstantNodeBased())
       return false;
@@ -489,16 +483,14 @@ bool TR_StorageReference::mayOverlapWith(TR_StorageReference *ref2)
       {
       TR::Node *ref1Node = ref1->getNode();
       TR::Node *ref2Node = ref2->getNode();
-      if (comp()->cg()->traceBCDCodeGen())
-         traceMsg(comp(),"\tmayOverlapWith storageRef : check overlap between ref1Node %s (%p) and ref2Node %s (%p)\n",
-            ref1Node->getOpCode().getName(),ref1Node,ref2Node->getOpCode().getName(),ref2Node);
+      logprintf(trace, log, "\tmayOverlapWith storageRef : check overlap between ref1Node %s (%p) and ref2Node %s (%p)\n",
+            ref1Node->getOpCode().getName(), ref1Node, ref2Node->getOpCode().getName(), ref2Node);
 
       bool mayOverlap = comp()->cg()->loadAndStoreMayOverlap(ref1Node,
                                                              ref1Node->getSize(),
                                                              ref2Node,
                                                              ref2Node->getSize());
-      if (comp()->cg()->traceBCDCodeGen())
-         traceMsg(comp(),"\toverlap=true (from %s storageRef test)\n",mayOverlap?"true":"false","aliasing");
+      logprintf(trace, log, "\toverlap=true (from %s storageRef test)\n", mayOverlap?"true":"false", "aliasing");
 
       return mayOverlap;
       }
@@ -515,9 +507,12 @@ bool TR_StorageReference::mayOverlapWith(TR_StorageReference *ref2)
 //
 void TR_OpaquePseudoRegister::setStorageReference(TR_StorageReference *ref, TR::Node *node)
    {
-   if (comp()->cg()->traceBCDCodeGen())
+   OMR::Logger *log = comp()->log();
+   bool trace = comp()->cg()->traceBCDCodeGen();
+
+   if (trace)
       {
-      traceMsg(comp(),"\tsetStorageReference to ref #%d (%s isTemp %d isHint %d) for node %s (%p) and reg %s.\n",
+      log->printf("\tsetStorageReference to ref #%d (%s isTemp %d isHint %d) for node %s (%p) and reg %s.\n",
          ref->getReferenceNumber(),
          comp()->getDebug()->getName(ref->getSymbol()),
          ref->isTemporaryBased(),
@@ -526,7 +521,7 @@ void TR_OpaquePseudoRegister::setStorageReference(TR_StorageReference *ref, TR::
          node,
          comp()->cg()->getDebug()->getName(this));
 
-     traceMsg(comp(),"\t\texisting _storageReference is #%d (refNode=%p isTemp %d, isHint %d)\n",
+     log->printf("\t\texisting _storageReference is #%d (refNode=%p isTemp %d, isHint %d)\n",
          _storageReference?_storageReference->getReferenceNumber():0,
          _storageReference?_storageReference->getNode():0,
          _storageReference?_storageReference->isTemporaryBased():0,
@@ -543,8 +538,7 @@ void TR_OpaquePseudoRegister::setStorageReference(TR_StorageReference *ref, TR::
          {
          TR::Node *storageRefNode = _storageReference->getNode();
 
-         if (comp()->cg()->traceBCDCodeGen())
-            traceMsg(comp(),"\t\tdecrement storageRef #%d nodeRefCount by (node->refCount() - 1) = %d : %d->%d\n",
+         logprintf(trace, log, "\t\tdecrement storageRef #%d nodeRefCount by (node->refCount() - 1) = %d : %d->%d\n",
                _storageReference->getReferenceNumber(),
                node->getReferenceCount()-1,
                _storageReference->getNodeReferenceCount(),
@@ -557,17 +551,16 @@ void TR_OpaquePseudoRegister::setStorageReference(TR_StorageReference *ref, TR::
          _storageReference->decrementNodeReferenceCount(node->getReferenceCount()-1);
          if (storageRefNode->getOpCode().isLoadConst() || storageRefNode->getOpCode().isIndirect())
             {
-            if (comp()->cg()->traceBCDCodeGen())
-               traceMsg(comp(),"\t\t_storageReference is non-hint nodeBased with nodeRefCount %d and addrChild %p\n",
-                  _storageReference->getNodeReferenceCount(),storageRefNode->getFirstChild());
+            logprintf(trace, log, "\t\t_storageReference is non-hint nodeBased with nodeRefCount %d and addrChild %p\n",
+                  _storageReference->getNodeReferenceCount(), storageRefNode->getFirstChild());
+
             // Do a recursive decrement of the addrChild in two cases:
             // 1) If storageRefNode == node then we must always recDec as all future references to the node will use the new storageRef being set here
             // 2) If storageRefNode != node then this means we are removing a never initialized storageRef on a passThru node so in this case only recDec if
             //    this is the last use (nodeRefCount == 0) as other nodes below this passThru node may still require the addrChild
             bool doRecursiveDecrement = (storageRefNode == node) || (_storageReference->getNodeReferenceCount() == 0);
 
-            if (comp()->cg()->traceBCDCodeGen())
-               traceMsg(comp(),"\t\t\tdoRecursiveDecrement=%s on addrChild %p (refCount=%d), addrChild->firstChild %p (refCount %d) if storageRefNode %p == node %p (%s) or nodeRefCount %d == 0 (%s)\n",
+            logprintf(trace, log, "\t\t\tdoRecursiveDecrement=%s on addrChild %p (refCount=%d), addrChild->firstChild %p (refCount %d) if storageRefNode %p == node %p (%s) or nodeRefCount %d == 0 (%s)\n",
                   doRecursiveDecrement?"yes":"no",
                   storageRefNode->getFirstChild(),
                   storageRefNode->getFirstChild()->getReferenceCount(),
@@ -585,12 +578,10 @@ void TR_OpaquePseudoRegister::setStorageReference(TR_StorageReference *ref, TR::
          }
       // If the storage reference is being changed then any storage reference dependent state must be reset
       clearLeftAndRightAlignedState();
-      if (comp()->cg()->traceBCDCodeGen())
-         traceMsg(comp(),"\tsetting the new storageRef #%d (over existing storageRef #%d) on reg %s so reset leftAlignedZeroDigits and deadAndIgnoredBytes to 0\n",
-            ref->getReferenceNumber(),_storageReference->getReferenceNumber(),comp()->cg()->getDebug()->getName(this));
+      logprintf(trace, log, "\tsetting the new storageRef #%d (over existing storageRef #%d) on reg %s so reset leftAlignedZeroDigits and deadAndIgnoredBytes to 0\n",
+            ref->getReferenceNumber(), _storageReference->getReferenceNumber(), comp()->cg()->getDebug()->getName(this));
       _storageReference->decOwningRegisterCount();
-      if (comp()->cg()->traceBCDCodeGen())
-         traceMsg(comp(),"\tdecrement owningRegisterCount %d->%d on _storageReference #%d (%s) as new ref is being set\n",
+      logprintf(trace, log, "\tdecrement owningRegisterCount %d->%d on _storageReference #%d (%s) as new ref is being set\n",
             _storageReference->getOwningRegisterCount()+1,
             _storageReference->getOwningRegisterCount(),
             _storageReference->getReferenceNumber(),
@@ -616,8 +607,7 @@ void TR_OpaquePseudoRegister::setStorageReference(TR_StorageReference *ref, TR::
          }
       ref->addNodeToUpdateOnClobber(node);
       ref->incOwningRegisterCount();
-      if (comp()->cg()->traceBCDCodeGen())
-         traceMsg(comp(),"\t\tincrement owningRegisterCount %d->%d on ref #%d (%s) for reg %s and node %s (%p) refCount %d\n",
+      logprintf(trace, log, "\t\tincrement owningRegisterCount %d->%d on ref #%d (%s) for reg %s and node %s (%p) refCount %d\n",
             ref->getOwningRegisterCount()-1,
             ref->getOwningRegisterCount(),
             ref->getReferenceNumber(),
@@ -635,8 +625,7 @@ void TR_OpaquePseudoRegister::setStorageReference(TR_StorageReference *ref, TR::
        node->getStorageReferenceHint() == ref)
       {
       ref->setHintHasBeenUsed();
-      if (comp()->cg()->traceBCDCodeGen())
-         traceMsg(comp(),"\tsetting hintHasBeenUsed = true on new storageRef #%d\n",ref->getReferenceNumber());
+      logprintf(trace, log, "\tsetting hintHasBeenUsed = true on new storageRef #%d\n", ref->getReferenceNumber());
       }
 
    _storageReference = ref;
@@ -715,6 +704,8 @@ int32_t TR_PseudoRegister::getSymbolDigits()
 // NOTE: this range tracking is currently only valid for the TR::PackedDecimal and TR::ZonedDecimal types (see assumes in the _leftAlignedZeroDigits getter/setter)
 int32_t TR_PseudoRegister::getRangeStart(int32_t startDigit, int32_t endDigit)
    {
+   OMR::Logger *log = comp()->log();
+   bool trace = comp()->cg()->traceBCDCodeGen();
    TR_ASSERT(getKind() == TR_SSR, "only valid for initialized TR_SSR registers\n");
    TR_ASSERT(endDigit >= startDigit,"invalid range for getRangeStart\n");
    TR_ASSERT(startDigit>=-1,"invalid startDigit %d for getRangeStart\n",startDigit); // -1 is the sign code, 0 is the first digit, 1 is the second digit...
@@ -722,9 +713,8 @@ int32_t TR_PseudoRegister::getRangeStart(int32_t startDigit, int32_t endDigit)
    int32_t symDigits = getSymbolDigits();
 
    TR_ASSERT(endDigit<=symDigits,"endDigit > symDigits (%d > %d) for addRangeOfZeroDigits\n",endDigit,symDigits); // ...symDigits-1 is the last digit
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\tgetRangeStart %s: startDigit %d, endDigit %d, symSize %d, symDigits %d\n",
-         comp()->cg()->getDebug()->getName(this),startDigit,endDigit,getStorageReference()->getSymbolSize(),symDigits);
+   logprintf(trace, log, "\tgetRangeStart %s: startDigit %d, endDigit %d, symSize %d, symDigits %d\n",
+         comp()->cg()->getDebug()->getName(this), startDigit, endDigit, getStorageReference()->getSymbolSize(), symDigits);
    TR_StorageReference *storageReference = getStorageReference();
    TR_ASSERT(storageReference,"storageReference should be non-null at this point\n");
    int32_t deadAndIgnoredBytes = getRightAlignedDeadAndIgnoredBytes();
@@ -732,9 +722,8 @@ int32_t TR_PseudoRegister::getRangeStart(int32_t startDigit, int32_t endDigit)
       {
       TR_ASSERT(deadAndIgnoredBytes > 0, "deadAndIgnoredBytes should be > 0 and not %d\n",deadAndIgnoredBytes);
       int32_t digitOffset = TR::DataType::bytesToDigits(getDataType(), deadAndIgnoredBytes);
-      if (comp()->cg()->traceBCDCodeGen())
-         traceMsg(comp(),"\t\tdeadAndIgnoredBytes = %d (digitOffset = %d) so inc startDigit %d -> %d and endDigit %d -> %d\n",
-            deadAndIgnoredBytes,digitOffset,startDigit,startDigit+digitOffset,endDigit,endDigit+digitOffset);
+      logprintf(trace, log, "\t\tdeadAndIgnoredBytes = %d (digitOffset = %d) so inc startDigit %d -> %d and endDigit %d -> %d\n",
+            deadAndIgnoredBytes, digitOffset, startDigit, startDigit+digitOffset, endDigit, endDigit+digitOffset);
       startDigit+=digitOffset;
       endDigit+=digitOffset;
       }
@@ -744,8 +733,7 @@ int32_t TR_PseudoRegister::getRangeStart(int32_t startDigit, int32_t endDigit)
 
    int32_t rangeStart = symDigits - endDigit;
    TR_ASSERT(rangeStart >= 0,"symbol size is smaller than requested range\n");
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\t\treturning rangeStart %d\n",rangeStart);
+   logprintf(trace, log, "\t\treturning rangeStart %d\n", rangeStart);
 
    return rangeStart;
    }
@@ -757,25 +745,24 @@ int32_t TR_PseudoRegister::getRangeEnd(int32_t rangeStart, int32_t startDigit, i
    TR_ASSERT(startDigit>=-1,"invalid startDigit %d for addRangeOfZeroDigits\n",startDigit); // -1 is the sign code, 0 is the first digit, 1 is the second digit...
    int32_t rangeSize = endDigit-startDigit;
    int32_t rangeEnd = rangeStart+rangeSize;
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\t\tgetRangeEnd %s returning %d\n",comp()->cg()->getDebug()->getName(this),rangeEnd);
+   logprintf(comp()->cg()->traceBCDCodeGen(), comp()->log(), "\t\tgetRangeEnd %s returning %d\n", comp()->cg()->getDebug()->getName(this), rangeEnd);
    TR_ASSERT(rangeEnd<=getSymbolDigits()+1,"invalid rangeEnd %d\n",rangeEnd);   // +1 for the sign 'digit' because a rangeEnd can include the sign
    return rangeEnd;
    }
 
 int32_t TR_PseudoRegister::getDigitsToClear(int32_t startDigit, int32_t endDigit)
    {
+   OMR::Logger *log = comp()->log();
+   bool trace = comp()->cg()->traceBCDCodeGen();
    TR_ASSERT(getKind() == TR_SSR,"only valid for TR_SSR registers\n");
    if (!trackZeroDigits()) return endDigit-startDigit;
    if (startDigit == endDigit) return 0;
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\tgetDigitsToClear %s (%s): %d -> %d\n",
-         comp()->cg()->getDebug()->getName(this),TR::DataType::getName(getDataType()),startDigit,endDigit);
+   logprintf(trace, log, "\tgetDigitsToClear %s (%s): %d -> %d\n",
+         comp()->cg()->getDebug()->getName(this), TR::DataType::getName(getDataType()), startDigit, endDigit);
    if (getLiveSymbolSize() < TR::DataType::getSizeFromBCDPrecision(getDataType(), endDigit))
       {
-      if (comp()->cg()->traceBCDCodeGen())
-         traceMsg(comp(),"\tliveSymSize %d < endByte %d so return a conservative digitsToClear of %d\n",
-            getLiveSymbolSize(),TR::DataType::getSizeFromBCDPrecision(getDataType(), endDigit),endDigit-startDigit);
+      logprintf(trace, log, "\tliveSymSize %d < endByte %d so return a conservative digitsToClear of %d\n",
+            getLiveSymbolSize(), TR::DataType::getSizeFromBCDPrecision(getDataType(), endDigit), endDigit-startDigit);
       return endDigit-startDigit;
       }
    int32_t rangeStart = getRangeStart(startDigit, endDigit);
@@ -783,38 +770,34 @@ int32_t TR_PseudoRegister::getDigitsToClear(int32_t startDigit, int32_t endDigit
    int32_t leftAlignedZeroDigits = getLeftAlignedZeroDigits();
    int32_t rangeSize = endDigit-startDigit;
    int32_t digitsToClear = 0;
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\t\trangeStart %d, rangeEnd %d, leftAlignedZeroDigits = %d\n",rangeStart,rangeEnd,leftAlignedZeroDigits);
+   logprintf(trace, log, "\t\trangeStart %d, rangeEnd %d, leftAlignedZeroDigits = %d\n", rangeStart, rangeEnd, leftAlignedZeroDigits);
    if (rangeEnd > leftAlignedZeroDigits) // does the endDigit of range extend beyond the leftmost cleared digits (if so, then some digits will have to be cleared)
       {
-      if (comp()->cg()->traceBCDCodeGen())
-         traceMsg(comp(),"\t\tsetting digitsToClear to %d (rangeSize) because rangeEnd %d > leftAlignedZeroDigits %d\n",
-            rangeSize,rangeEnd,leftAlignedZeroDigits);
+      logprintf(trace, log, "\t\tsetting digitsToClear to %d (rangeSize) because rangeEnd %d > leftAlignedZeroDigits %d\n",
+            rangeSize, rangeEnd, leftAlignedZeroDigits);
       digitsToClear = rangeSize;              // the max digits to clear, may be adjusted on an overlap
       if (rangeStart < leftAlignedZeroDigits) // is the startDigit of range is within the cleared range (i.e. an overlap)
          {
-         if (comp()->cg()->traceBCDCodeGen())
-            traceMsg(comp(),"\t\tadjusting digitsToClear %d -> %d due to an overlap (rangeStart %d < leftAlignedZeroDigits %d)\n",
-               digitsToClear,digitsToClear-(leftAlignedZeroDigits-rangeStart),rangeStart,leftAlignedZeroDigits);
+         logprintf(trace, log, "\t\tadjusting digitsToClear %d -> %d due to an overlap (rangeStart %d < leftAlignedZeroDigits %d)\n",
+               digitsToClear, digitsToClear-(leftAlignedZeroDigits-rangeStart), rangeStart, leftAlignedZeroDigits);
          digitsToClear -= (leftAlignedZeroDigits-rangeStart);
          }
-      else if (comp()->cg()->traceBCDCodeGen())
-         {
-         traceMsg(comp(),"\t\tnot adjusting digitsToClear (remains at rangeSize = %d) as there is no overlap (rangeStart %d  >= leftAlignedZeroDigits %d)\n",
-            digitsToClear,rangeStart,leftAlignedZeroDigits);
-         }
+      else
+         logprintf(trace, log, "\t\tnot adjusting digitsToClear (remains at rangeSize = %d) as there is no overlap (rangeStart %d  >= leftAlignedZeroDigits %d)\n",
+            digitsToClear, rangeStart, leftAlignedZeroDigits);
       }
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\t\treturning digitsToClear %d\n",digitsToClear);
+   logprintf(trace, log, "\t\treturning digitsToClear %d\n", digitsToClear);
    return digitsToClear;
    }
 
 int32_t TR_PseudoRegister::getBytesToClear(int32_t startByte, int32_t endByte) // input range of bytes is right to left : startByte->endByte-1
    {
    if (startByte == endByte) return 0;
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\tgetBytesToClear %s (%s): (startByte=%d, endByte=%d): defer to getDigitsToClear\n",
-         comp()->cg()->getDebug()->getName(this),TR::DataType::getName(getDataType()),startByte,endByte);
+
+   OMR::Logger *log = comp()->log();
+   bool trace = comp()->cg()->traceBCDCodeGen();
+   logprintf(trace, log, "\tgetBytesToClear %s (%s): (startByte=%d, endByte=%d): defer to getDigitsToClear\n",
+         comp()->cg()->getDebug()->getName(this), TR::DataType::getName(getDataType()), startByte,endByte);
    int32_t startDigit = TR::DataType::getBCDPrecisionFromSize(getDataType(), startByte);
    int32_t endDigit = TR::DataType::getBCDPrecisionFromSize(getDataType(), endByte);
    int32_t digitsToClear = getDigitsToClear(startDigit, endDigit);
@@ -822,41 +805,38 @@ int32_t TR_PseudoRegister::getBytesToClear(int32_t startByte, int32_t endByte) /
    if ((digitsToClear&0x1) != 0 &&  // if odd
        TR::DataType::getDigitSize(getDataType()) == HalfByteDigit)
       {
-      if (comp()->cg()->traceBCDCodeGen())
-         traceMsg(comp(),"\tincrement digitsToClear %d->%d for halfByteType %s\n",digitsToClear,digitsToClear+1,TR::DataType::getName(getDataType()));
+      logprintf(trace, log, "\tincrement digitsToClear %d->%d for halfByteType %s\n", digitsToClear, digitsToClear+1, TR::DataType::getName(getDataType()));
       digitsToClear++;  // round up to the next byte to be conservative for half byte digit types
       }
    int32_t bytesToClear = TR::DataType::digitsToBytes(getDataType(), digitsToClear);
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\t\treturning bytesToClear %d\n",bytesToClear);
+   logprintf(trace, log, "\t\treturning bytesToClear %d\n", bytesToClear);
    return bytesToClear;
    }
 
 int32_t TR_PseudoRegister::getByteOffsetFromLeftForClear(int32_t startDigit, int32_t endDigit, int32_t &digitsToClear, int32_t resultSize)
    {
    TR_ASSERT(getKind() == TR_SSR,"only valid for TR_SSR registers\n");
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\tgetByteOffsetFromLeftForClear %s (%s): %d -> %d, digitsToClear %d, resultSize %d\n",
-         comp()->cg()->getDebug()->getName(this),TR::DataType::getName(getDataType()),startDigit,endDigit,digitsToClear,resultSize);
+   OMR::Logger *log = comp()->log();
+   bool trace = comp()->cg()->traceBCDCodeGen();
+   logprintf(trace, log, "\tgetByteOffsetFromLeftForClear %s (%s): %d -> %d, digitsToClear %d, resultSize %d\n",
+         comp()->cg()->getDebug()->getName(this), TR::DataType::getName(getDataType()), startDigit, endDigit, digitsToClear, resultSize);
    int32_t rangeStart = getRangeStart(startDigit, endDigit);
    int32_t rangeEnd = getRangeEnd(rangeStart, startDigit, endDigit);
    int32_t leftAlignedZeroDigits = getLeftAlignedZeroDigits();
    TR_ASSERT(leftAlignedZeroDigits < rangeEnd,"there are no digits to clear so calling getByteOffsetFromLeftForClear does not make sense\n");
    int32_t digitOffset = 0;
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\t\trangeStart %d, rangeEnd %d, leftAlignedZeroDigits = %d\n",rangeStart,rangeEnd,leftAlignedZeroDigits);
+   logprintf(trace, log, "\t\trangeStart %d, rangeEnd %d, leftAlignedZeroDigits = %d\n", rangeStart, rangeEnd, leftAlignedZeroDigits);
    if (leftAlignedZeroDigits > rangeStart)
       {
-      if (comp()->cg()->traceBCDCodeGen())
-         traceMsg(comp(),"\t\tsetting digitOffset to %d (== leftAlignedZeroDigits) as leftAlignedZeroDigits %d > rangeStart %d (an overlap)\n",leftAlignedZeroDigits,leftAlignedZeroDigits,rangeStart);
+      logprintf(trace, log, "\t\tsetting digitOffset to %d (== leftAlignedZeroDigits) as leftAlignedZeroDigits %d > rangeStart %d (an overlap)\n",
+            leftAlignedZeroDigits, leftAlignedZeroDigits, rangeStart);
       digitOffset = leftAlignedZeroDigits;   // cleared digits overlaps range so only clear from leftAlignedZeroDigits
       }
    else
       {
       // the offset returned by this routine is the offset *within* any left aligned zero digits. In this case the rangeStart->rangeEnd is disjoint from these
       // left aligned zero digits so offset=0 is returned
-      if (comp()->cg()->traceBCDCodeGen())
-         traceMsg(comp(),"\t\tsetting digitOffset to 0 as leftAlignedZeroDigits %d <= rangeStart %d (disjoint)\n",leftAlignedZeroDigits,rangeStart);
+      logprintf(trace, log, "\t\tsetting digitOffset to 0 as leftAlignedZeroDigits %d <= rangeStart %d (disjoint)\n", leftAlignedZeroDigits, rangeStart);
       digitOffset = 0;
       }
 
@@ -868,8 +848,7 @@ int32_t TR_PseudoRegister::getByteOffsetFromLeftForClear(int32_t startDigit, int
       // In addition, so all the original digits still get cleared the digitsToClear amount must be incremented by one to account for the offset decrement.
       // An example of the complicated (and suboptimal) case being avoided is a even digit (say 4) clearing at an odd offset (say 1) that would require a half byte clearing at both
       // ends, on s390 NI +0,XC +1(1),NI +2 instead of XC +0(2),NI +2 which is accomplished if the offset-- (1->0) and digitsToClear++ (4->5).
-      if (comp()->cg()->traceBCDCodeGen())
-         traceMsg(comp(),"\t\tdigitOffset is odd so decrement digitOffset %d -> %d and increment digitsToClear %d -> %d\n",digitOffset,digitOffset-1,digitsToClear,digitsToClear+1);
+      logprintf(trace, log, "\t\tdigitOffset is odd so decrement digitOffset %d -> %d and increment digitsToClear %d -> %d\n", digitOffset, digitOffset-1, digitsToClear, digitsToClear+1);
       digitOffset--;
       digitsToClear++;
       }
@@ -880,15 +859,14 @@ int32_t TR_PseudoRegister::getByteOffsetFromLeftForClear(int32_t startDigit, int
       {
       // if the current resultSize does not fill the entire symbol size then part of the offset will be done when right aligning the memory reference during later code generation
       // so in this case reduce the offset returned by this function so the final offset isn't too great (see pdshr.c misc7a)
-      if (comp()->cg()->traceBCDCodeGen())
-         traceMsg(comp(),"\t\tdecrease digitOffset %d -> %d because liveSymbolSize > resultSize (%d > %d), liveSymbolSize is getSymbolSize() %d - deadAndIgnoredBytes %d\n",
-                     digitOffset,digitOffset-TR::DataType::bytesToDigits(getDataType(),liveSymbolSize-resultSize),liveSymbolSize,resultSize,getStorageReference()->getSymbolSize(),getRightAlignedDeadAndIgnoredBytes());
+      logprintf(trace, log, "\t\tdecrease digitOffset %d -> %d because liveSymbolSize > resultSize (%d > %d), liveSymbolSize is getSymbolSize() %d - deadAndIgnoredBytes %d\n",
+            digitOffset, digitOffset-TR::DataType::bytesToDigits(getDataType(), liveSymbolSize-resultSize), liveSymbolSize, resultSize,
+            getStorageReference()->getSymbolSize(), getRightAlignedDeadAndIgnoredBytes());
       digitOffset-=TR::DataType::bytesToDigits(getDataType(),liveSymbolSize-resultSize);
       }
    TR_ASSERT(digitOffset >= 0,"digitOffset %d should not be negative\n",digitOffset);
    int32_t byteOffset = TR::DataType::digitsToBytes(getDataType(), digitOffset);
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\t\treturning byte offset %d (from digitOffset %d and type %s)\n",byteOffset,digitOffset,TR::DataType::getName(getDataType()));
+   logprintf(trace, log, "\t\treturning byte offset %d (from digitOffset %d and type %s)\n", byteOffset, digitOffset, TR::DataType::getName(getDataType()));
    return byteOffset;
    }
 
@@ -897,35 +875,32 @@ void TR_PseudoRegister::addRangeOfZeroDigits(int32_t startDigit, int32_t endDigi
    TR_ASSERT(getKind() == TR_SSR,"only valid for TR_SSR registers\n");
    if (startDigit == endDigit) return;
    if (!trackZeroDigits()) return;
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\taddRangeOfZeroDigits %s (%s): %d -> %d\n",comp()->cg()->getDebug()->getName(this),TR::DataType::getName(getDataType()),startDigit,endDigit);
+
+   OMR::Logger *log = comp()->log();
+   bool trace = comp()->cg()->traceBCDCodeGen();
+   logprintf(trace, log, "\taddRangeOfZeroDigits %s (%s): %d -> %d\n", comp()->cg()->getDebug()->getName(this), TR::DataType::getName(getDataType()), startDigit, endDigit);
    int32_t rangeStart = getRangeStart(startDigit, endDigit);
    int32_t rangeEnd = getRangeEnd(rangeStart, startDigit, endDigit);
    int32_t leftAlignedZeroDigits = getLeftAlignedZeroDigits();
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\t\trangeStart %d, rangeEnd %d, leftAlignedZeroDigits = %d\n",rangeStart,rangeEnd,leftAlignedZeroDigits);
+   logprintf(trace, log, "\t\trangeStart %d, rangeEnd %d, leftAlignedZeroDigits = %d\n", rangeStart, rangeEnd, leftAlignedZeroDigits);
    // if range to be added is adjacent to (==) or overlaps (<) then the leftAlignedZeroDigits can be incremented
    if (rangeStart <= leftAlignedZeroDigits && rangeEnd > leftAlignedZeroDigits)
       {
-      if (comp()->cg()->traceBCDCodeGen())
-         traceMsg(comp(),"\t\tsetting leftAlignedZeroDigits to %d (leftAlignedZeroDigits %d + (rangeEnd %d - leftAlignedZeroDigits %d) because new range overlaps or is adjacent to current zero range\n",
-            leftAlignedZeroDigits+(rangeEnd-leftAlignedZeroDigits),leftAlignedZeroDigits,rangeEnd,leftAlignedZeroDigits);
+      logprintf(trace, log, "\t\tsetting leftAlignedZeroDigits to %d (leftAlignedZeroDigits %d + (rangeEnd %d - leftAlignedZeroDigits %d) because new range overlaps or is adjacent to current zero range\n",
+            leftAlignedZeroDigits+(rangeEnd-leftAlignedZeroDigits), leftAlignedZeroDigits, rangeEnd, leftAlignedZeroDigits);
       setLeftAlignedZeroDigits(leftAlignedZeroDigits+(rangeEnd-leftAlignedZeroDigits));
       }
-   else if (comp()->cg()->traceBCDCodeGen())
-      {
-      traceMsg(comp(),"\t\tnot setting leftAlignedZeroDigits because new range is not adjacent to or overlapping with the current zero range (rangeStart %d > leftAlignedZeroDigits %d)\n",
-                        rangeStart,leftAlignedZeroDigits);
-      }
+   else
+      logprintf(trace, log, "\t\tnot setting leftAlignedZeroDigits because new range is not adjacent to or overlapping with the current zero range (rangeStart %d > leftAlignedZeroDigits %d)\n",
+            rangeStart, leftAlignedZeroDigits);
    }
 
 void TR_PseudoRegister::addRangeOfZeroBytes(int32_t startByte, int32_t endByte) // input range of bytes is right to left : startByte->endByte-1
    {
    if (startByte == endByte) return;
    if (!trackZeroDigits()) return;
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\taddRangeOfZeroBytes %s (%s): (startByte=%d, endByte=%d): defer to addRangeOfZeroDigits\n",
-         comp()->cg()->getDebug()->getName(this),TR::DataType::getName(getDataType()),startByte,endByte);
+   logprintf(comp()->cg()->traceBCDCodeGen(), comp()->log(), "\taddRangeOfZeroBytes %s (%s): (startByte=%d, endByte=%d): defer to addRangeOfZeroDigits\n",
+         comp()->cg()->getDebug()->getName(this), TR::DataType::getName(getDataType()), startByte, endByte);
    int32_t startDigit = TR::DataType::getBCDPrecisionFromSize(getDataType(), startByte);
    int32_t endDigit = TR::DataType::getBCDPrecisionFromSize(getDataType(), endByte);
    addRangeOfZeroDigits(startDigit, endDigit);
@@ -936,29 +911,25 @@ void TR_PseudoRegister::removeRangeOfZeroDigits(int32_t startDigit, int32_t endD
    if (startDigit == endDigit) return;
    if (!trackZeroDigits()) return;
    TR_ASSERT(getKind() == TR_SSR,"only valid for TR_SSR registers\n");
+   OMR::Logger *log = comp()->log();
+   bool trace = comp()->cg()->traceBCDCodeGen();
    int32_t leftAlignedZeroDigits = getLeftAlignedZeroDigits();
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\tremoveRangeOfZeroDigits %s (%s): %d -> %d%s\n",
-         comp()->cg()->getDebug()->getName(this),TR::DataType::getName(getDataType()),startDigit,endDigit,(leftAlignedZeroDigits==0)?" (zeroDigits==0 -- nothing to remove)":"");
+   logprintf(trace, log, "\tremoveRangeOfZeroDigits %s (%s): %d -> %d%s\n",
+         comp()->cg()->getDebug()->getName(this), TR::DataType::getName(getDataType()), startDigit, endDigit, (leftAlignedZeroDigits==0)?" (zeroDigits==0 -- nothing to remove)":"");
    if (leftAlignedZeroDigits == 0)
       return;
    int32_t rangeStart = getRangeStart(startDigit, endDigit);
    int32_t rangeEnd = getRangeEnd(rangeStart, startDigit, endDigit);
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\t\trangeStart %d, rangeEnd %d, leftAlignedZeroDigits = %d\n",rangeStart,rangeEnd,leftAlignedZeroDigits);
+   logprintf(trace, log, "\t\trangeStart %d, rangeEnd %d, leftAlignedZeroDigits = %d\n", rangeStart, rangeEnd, leftAlignedZeroDigits);
 
    if (rangeStart < leftAlignedZeroDigits)
       {
-      if (comp()->cg()->traceBCDCodeGen())
-         traceMsg(comp(),"\t\tsetting leftAlignedZeroDigits to %d (leftAlignedZeroDigits %d - rangeStart %d) because rangeStart < leftAlignedZeroDigits\n",
-            leftAlignedZeroDigits - (leftAlignedZeroDigits-rangeStart),leftAlignedZeroDigits,rangeStart);
+      logprintf(trace, log, "\t\tsetting leftAlignedZeroDigits to %d (leftAlignedZeroDigits %d - rangeStart %d) because rangeStart < leftAlignedZeroDigits\n",
+            leftAlignedZeroDigits - (leftAlignedZeroDigits-rangeStart), leftAlignedZeroDigits, rangeStart);
       setLeftAlignedZeroDigits(leftAlignedZeroDigits - (leftAlignedZeroDigits-rangeStart));
       }
-   else if (comp()->cg()->traceBCDCodeGen())
-      {
-      traceMsg(comp(),"\t\tnot setting leftAlignedZeroDigits because rangeStart %d >= leftAlignedZeroDigits %d\n",
-         rangeStart,leftAlignedZeroDigits);
-      }
+   else
+      logprintf(trace, log, "\t\tnot setting leftAlignedZeroDigits because rangeStart %d >= leftAlignedZeroDigits %d\n", rangeStart, leftAlignedZeroDigits);
 
    TR_ASSERT(getLeftAlignedZeroDigits() >= 0 && getLeftAlignedZeroDigits() <= getSymbolDigits(),"invalid getLeftAlignedZeroDigits value (%d)\n",getLeftAlignedZeroDigits());
    }
@@ -967,9 +938,9 @@ void TR_PseudoRegister::removeRangeOfZeroBytes(int32_t startByte, int32_t endByt
    {
    if (!trackZeroDigits()) return;
    int32_t leftAlignedZeroDigits = getLeftAlignedZeroDigits();
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\tremoveRangeOfZeroBytes %s (%s): (startByte=%d, endByte=%d)%s\n",
-         comp()->cg()->getDebug()->getName(this),TR::DataType::getName(getDataType()),startByte,endByte,(leftAlignedZeroDigits==0)?" (zeroDigits==0 -- nothing to remove)":": defer to removeRangeOfZeroDigits");
+   logprintf(comp()->cg()->traceBCDCodeGen(), comp()->log(), "\tremoveRangeOfZeroBytes %s (%s): (startByte=%d, endByte=%d)%s\n",
+         comp()->cg()->getDebug()->getName(this), TR::DataType::getName(getDataType()), startByte, endByte,
+         (leftAlignedZeroDigits==0)?" (zeroDigits==0 -- nothing to remove)":": defer to removeRangeOfZeroDigits");
    if (leftAlignedZeroDigits == 0)
       return;
    // an input byte of zero gives an invalid startDigit of -1 for packed types so catch this here
@@ -980,10 +951,11 @@ void TR_PseudoRegister::removeRangeOfZeroBytes(int32_t startByte, int32_t endByt
 
 void TR_PseudoRegister::removeByteRangeAfterLeftShift(int32_t operandByteSize, int32_t shiftDigitAmount)
    {
+   OMR::Logger *log = comp()->log();
+   bool trace = comp()->cg()->traceBCDCodeGen();
    if (!trackZeroDigits()) return;
-   if (comp()->cg()->traceBCDCodeGen())
-      traceMsg(comp(),"\tremoveByteRangeAfterLeftShift %s (%s): (operandByteSize=%d, shiftDigitAmount=%d)\n",
-         comp()->cg()->getDebug()->getName(this),TR::DataType::getName(getDataType()),operandByteSize,shiftDigitAmount);
+   logprintf(trace, log, "\tremoveByteRangeAfterLeftShift %s (%s): (operandByteSize=%d, shiftDigitAmount=%d)\n",
+         comp()->cg()->getDebug()->getName(this), TR::DataType::getName(getDataType()), operandByteSize, shiftDigitAmount);
    int32_t startDigit = 0;
    int32_t endDigit = TR::DataType::getBCDPrecisionFromSize(getDataType(), operandByteSize);
    int32_t rangeStart = getRangeStart(startDigit, endDigit);
@@ -993,16 +965,13 @@ void TR_PseudoRegister::removeByteRangeAfterLeftShift(int32_t operandByteSize, i
       {
       int32_t newLeftAlignedZeroDigits = std::max(leftAlignedZeroDigits - shiftDigitAmount,rangeStart); // a left shift can never remove zero digits before its range start
       int32_t oldLeftAlignedZeroDigits = leftAlignedZeroDigits - shiftDigitAmount;
-      if (comp()->cg()->traceBCDCodeGen())
-         traceMsg(comp(),"\t\tsetting leftAlignedZeroDigits to %d = std::max(leftAlignedZeroDigits %d - shiftDigitAmount %d, rangeStart %d) because rangeStart %d <= leftAlignedZeroDigits %d\n",
-            newLeftAlignedZeroDigits,leftAlignedZeroDigits,shiftDigitAmount,rangeStart,rangeStart,leftAlignedZeroDigits);
+      logprintf(trace, log, "\t\tsetting leftAlignedZeroDigits to %d = std::max(leftAlignedZeroDigits %d - shiftDigitAmount %d, rangeStart %d) because rangeStart %d <= leftAlignedZeroDigits %d\n",
+            newLeftAlignedZeroDigits, leftAlignedZeroDigits, shiftDigitAmount, rangeStart, rangeStart, leftAlignedZeroDigits);
       TR_ASSERT(newLeftAlignedZeroDigits >=0,"newLeftAlignedZeroDigits should always be >=0 and not %d\n",newLeftAlignedZeroDigits);
       setLeftAlignedZeroDigits(newLeftAlignedZeroDigits);
       }
-   else if (comp()->cg()->traceBCDCodeGen())
-      {
-      traceMsg(comp(),"\t\tnot setting leftAlignedZeroDigits because rangeStart %d > leftAlignedZeroDigits %d\n",rangeStart,leftAlignedZeroDigits);
-      }
+   else
+      logprintf(trace, log, "\t\tnot setting leftAlignedZeroDigits because rangeStart %d > leftAlignedZeroDigits %d\n", rangeStart, leftAlignedZeroDigits);
    }
 
 bool TR_PseudoRegister::isLeftMostNibbleClear()

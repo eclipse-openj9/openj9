@@ -31,6 +31,7 @@
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/StaticSymbol.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
@@ -1103,6 +1104,8 @@ static
 void traceInstanceOfOrCheckCastProfilingInfo(TR::CodeGenerator *cg, TR::Node *node, TR_OpaqueClassBlock *castClass)
    {
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = comp->getOption(TR_TraceCG);
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
    TR_ByteCodeInfo bcInfo = node->getByteCodeInfo();
    TR_ValueProfileInfoManager *valueProfileInfo = TR_ValueProfileInfoManager::get(comp);
@@ -1118,7 +1121,7 @@ void traceInstanceOfOrCheckCastProfilingInfo(TR::CodeGenerator *cg, TR::Node *no
       return;
       }
 
-   traceMsg(comp, "%s:\n", __func__);
+   logprintf(trace, log, "%s:\n", __func__);
 
    TR_ScratchList<TR_ExtraAddressInfo> valuesSortedByFrequency(comp->trMemory());
 
@@ -1129,22 +1132,22 @@ void traceInstanceOfOrCheckCastProfilingInfo(TR::CodeGenerator *cg, TR::Node *no
       {
       TR_OpaqueClassBlock *profiledClass = fej9->getProfiledClassFromProfiledInfo(profiledInfo);
 
-      traceMsg(comp, "%s:\tProfiled class [" POINTER_PRINTF_FORMAT "] (%u/%u)\n",
-               node->getOpCode().getName(), profiledClass, profiledInfo->_frequency, valueInfo->getTotalFrequency());
+      logprintf(trace, log, "%s:\tProfiled class [" POINTER_PRINTF_FORMAT "] (%u/%u)\n",
+            node->getOpCode().getName(), profiledClass, profiledInfo->_frequency, valueInfo->getTotalFrequency());
 
       if (!profiledClass)
          continue;
 
       if (comp->getPersistentInfo()->isObsoleteClass(profiledClass, fej9))
          {
-         traceMsg(comp, "%s:\tProfiled class [" POINTER_PRINTF_FORMAT "] is obsolete\n",
-                  node->getOpCode().getName(), profiledClass);
+         logprintf(trace, log, "%s:\tProfiled class [" POINTER_PRINTF_FORMAT "] is obsolete\n",
+               node->getOpCode().getName(), profiledClass);
          continue;
          }
 
       bool isInstanceOf = fej9->instanceOfOrCheckCastNoCacheUpdate((J9Class *)profiledClass, (J9Class *)castClass);
-      traceMsg(comp, "%s:\tProfiled class [" POINTER_PRINTF_FORMAT "] is %san instance of cast class\n",
-               node->getOpCode().getName(), profiledClass, isInstanceOf ? "" : "not ");
+      logprintf(trace, log, "%s:\tProfiled class [" POINTER_PRINTF_FORMAT "] is %san instance of cast class\n",
+            node->getOpCode().getName(), profiledClass, isInstanceOf ? "" : "not ");
       }
    }
 /**   \brief Generates an array of profiled classes with the boolean representing if the profiled class is instanceOf cast class or not
@@ -1159,8 +1162,10 @@ static
 uint32_t getInstanceOfOrCheckCastTopProfiledClass(TR::CodeGenerator *cg, TR::Node *node, TR_OpaqueClassBlock *castClass, J9::TreeEvaluator::InstanceOfOrCheckCastProfiledClasses *profiledClassList, bool *topClassWasCastClass, uint32_t maxProfiledClass, float *topClassProbability)
    {
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = comp->getOption(TR_TraceCG);
 
-   if (comp->getOption(TR_TraceCG))
+   if (trace)
       {
       static bool traceProfilingInfo = feGetEnv("TR_traceInstanceOfOrCheckCastProfilingInfo") != NULL;
       if (traceProfilingInfo)
@@ -1212,11 +1217,7 @@ uint32_t getInstanceOfOrCheckCastTopProfiledClass(TR::CodeGenerator *cg, TR::Nod
       //
       if (comp->getPersistentInfo()->isObsoleteClass(tempProfiledClass, fej9))
          {
-         if (comp->getOption(TR_TraceCG))
-            {
-            traceMsg(comp, "%s: Profiled class [" POINTER_PRINTF_FORMAT "] is obsolete, skipping\n",
-                     node->getOpCode().getName(), tempProfiledClass);
-            }
+         logprintf(trace, log, "%s: Profiled class [" POINTER_PRINTF_FORMAT "] is obsolete, skipping\n", node->getOpCode().getName(), tempProfiledClass);
          continue;
          }
 
@@ -1226,11 +1227,7 @@ uint32_t getInstanceOfOrCheckCastTopProfiledClass(TR::CodeGenerator *cg, TR::Nod
       bool isInstanceOf = fej9->instanceOfOrCheckCastNoCacheUpdate((J9Class *)tempProfiledClass, (J9Class *)castClass);
       if (node->getOpCode().isCheckCast() && !isInstanceOf)
          {
-         if (comp->getOption(TR_TraceCG))
-            {
-            traceMsg(comp, "%s: Profiled class [" POINTER_PRINTF_FORMAT "] is not an instance of cast class, skipping\n",
-                     node->getOpCode().getName(), tempProfiledClass);
-            }
+         logprintf(trace, log, "%s: Profiled class [" POINTER_PRINTF_FORMAT "] is not an instance of cast class, skipping\n", node->getOpCode().getName(), tempProfiledClass);
          continue;
          }
 
@@ -1238,11 +1235,7 @@ uint32_t getInstanceOfOrCheckCastTopProfiledClass(TR::CodeGenerator *cg, TR::Nod
       //
       if (tempProfiledClass == castClass && topClassWasCastClass && numProfiledClasses == 0)
          {
-         if (comp->getOption(TR_TraceCG))
-            {
-            traceMsg(comp, "%s: Profiled class [" POINTER_PRINTF_FORMAT "] is the cast class, informing caller and skipping\n",
-                     node->getOpCode().getName(), tempProfiledClass);
-            }
+         logprintf(trace, log, "%s: Profiled class [" POINTER_PRINTF_FORMAT "] is the cast class, informing caller and skipping\n", node->getOpCode().getName(), tempProfiledClass);
          *topClassWasCastClass = true;
          *topClassProbability = profiledInfo->_frequency / totalFrequency;
          continue;
@@ -1288,6 +1281,8 @@ uint32_t getInstanceOfOrCheckCastTopProfiledClass(TR::CodeGenerator *cg, TR::Nod
 uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *instanceOfOrCheckCastNode, InstanceOfOrCheckCastSequences *sequences, TR_OpaqueClassBlock **compileTimeGuessClass, TR::CodeGenerator *cg, InstanceOfOrCheckCastProfiledClasses *profiledClassList, uint32_t *numberOfProfiledClass, uint32_t maxProfiledClass, float * topClassProbability, bool *topClassWasCastClass)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+   OMR::Logger *log = cg->comp()->log();
+   bool trace = cg->comp()->getOption(TR_TraceCG);
    TR_ASSERT(instanceOfOrCheckCastNode->getOpCode().isCheckCast() || instanceOfOrCheckCastNode->getOpCodeValue() == TR::instanceof, "Unexpected node opcode");
 
    TR::Node *objectNode = instanceOfOrCheckCastNode->getFirstChild();
@@ -1329,8 +1324,7 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
    //
    else if (castClassSymRef->isUnresolved())
       {
-      if (cg->comp()->getOption(TR_TraceCG))
-         traceMsg(cg->comp(),"Cast Class unresolved\n");
+      logprints(trace, log, "Cast Class unresolved\n");
       if (mayBeNull)
          sequences[i++] = NullTest;
       sequences[i++] = ClassEqualityTest;
@@ -1345,7 +1339,7 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
    //
    else if (!OMR::TreeEvaluator::isStaticClassSymRef(castClassSymRef))
       {
-      traceMsg(cg->comp(),"Cast Class runtimeVariable\n");
+      logprints(trace, log, "Cast Class runtimeVariable\n");
       if (mayBeNull)
          sequences[i++] = NullTest;
       sequences[i++] = ClassEqualityTest;
@@ -1416,8 +1410,9 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
                for (int i=0; i<numProfiledClasses; i++)
                   {
                   J9UTF8 *profiledClassName = J9ROMCLASS_CLASSNAME(TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock *) profiledClassList[i].profiledClass));
-                  traceMsg(cg->comp(), "%s:Interpreter profiling instance class: [" POINTER_PRINTF_FORMAT "] %.*s, probability=%.1f\n",
-                     instanceOfOrCheckCastNode->getOpCode().getName(), profiledClassList[i].profiledClass, J9UTF8_LENGTH(profiledClassName), J9UTF8_DATA(profiledClassName), profiledClassList[i].frequency);
+                  logprintf(trace, log, "%s:Interpreter profiling instance class: [" POINTER_PRINTF_FORMAT "] %.*s, probability=%.1f\n",
+                        instanceOfOrCheckCastNode->getOpCode().getName(), profiledClassList[i].profiledClass, J9UTF8_LENGTH(profiledClassName),
+                        J9UTF8_DATA(profiledClassName), profiledClassList[i].frequency);
                   }
                }
             }
@@ -1442,8 +1437,8 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
                   if (singleImplementerClass)
                      {
                      J9UTF8 *singleImplementerClassName = J9ROMCLASS_CLASSNAME(TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock *) singleImplementerClass));
-                     traceMsg(cg->comp(), "%s: Single implementer for interface/abstract class: [" POINTER_PRINTF_FORMAT "] %.*s\n",
-                              instanceOfOrCheckCastNode->getOpCode().getName(), singleImplementerClass, J9UTF8_LENGTH(singleImplementerClassName), J9UTF8_DATA(singleImplementerClassName));
+                     logprintf(trace, log, "%s: Single implementer for interface/abstract class: [" POINTER_PRINTF_FORMAT "] %.*s\n",
+                           instanceOfOrCheckCastNode->getOpCode().getName(), singleImplementerClass, J9UTF8_LENGTH(singleImplementerClassName), J9UTF8_DATA(singleImplementerClassName));
                      }
                   }
                }
@@ -1656,6 +1651,7 @@ J9::TreeEvaluator::interpreterProfilingInstanceOfOrCheckCastInfo(
    {
    TR_ByteCodeInfo bcInfo = node->getByteCodeInfo();
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
    TR_ValueProfileInfoManager * valueProfileInfo = TR_ValueProfileInfoManager::get(comp);
    static const char *p = feGetEnv("TR_TracePIC");
    bool p1 = p && comp->getOption(TR_TraceCG); // allow per method tracing
@@ -1666,26 +1662,26 @@ J9::TreeEvaluator::interpreterProfilingInstanceOfOrCheckCastInfo(
    TR_AddressInfo * valueInfo = static_cast<TR_AddressInfo*>(valueProfileInfo->getValueInfo(bcInfo, comp, AddressInfo, TR_ValueProfileInfoManager::justInterpreterProfileInfo));
    if (!valueInfo || valueInfo->getNumProfiledValues()==0)
       {
-      if (p1) traceMsg(comp, "==TPIC==No IProfiler info on node %p in %s\n", node, comp->signature());
+      logprintf(p1, log, "==TPIC==No IProfiler info on node %p in %s\n", node, comp->signature());
       return 0;
       }
 
    TR_OpaqueClassBlock *topValue = (TR_OpaqueClassBlock *) valueInfo->getTopValue();
    if (!topValue)
       {
-      if (p1) traceMsg(comp, "==TPIC==No topvalue on node %p in %s\n", node, comp->signature());
+      logprintf(p1, log, "==TPIC==No topvalue on node %p in %s\n", node, comp->signature());
       return 0;
       }
 
    if ((recordAll == false) && valueInfo->getTopProbability() < TR::Options::getMinProfiledCheckcastFrequency())
       {
-      if (p1) traceMsg(comp, "==TPIC==low top probability on node %p in %s\n", node, comp->signature());
+      logprintf(p1, log, "==TPIC==low top probability on node %p in %s\n", node, comp->signature());
       return 0;
       }
 
    if (comp->getPersistentInfo()->isObsoleteClass(topValue, cg->fe()))
       {
-      if (p1) traceMsg(comp, "==TPIC==%p unloaded on node %p in %s\n", topValue, node, comp->signature());
+      logprintf(p1, log, "==TPIC==%p unloaded on node %p in %s\n", topValue, node, comp->signature());
       return 0;
       }
 
@@ -1715,7 +1711,7 @@ J9::TreeEvaluator::interpreterProfilingInstanceOfOrCheckCastInfo(
          char *name;
          int32_t len;
          name = comp->fej9()->getClassNameChars(thisType, len);
-         traceMsg(comp, "==TPIC==Freq %d (%.2f%%) %.*s @ %p\n", profiledInfo->_frequency, (float) profiledInfo->_frequency/totalFrequency, len, name, thisType); fflush(stdout);
+         log->printf("==TPIC==Freq %d (%.2f%%) %.*s @ %p\n", profiledInfo->_frequency, (float) profiledInfo->_frequency/totalFrequency, len, name, thisType);
          }
       if ((recordAll == false) && ((float) profiledInfo->_frequency/totalFrequency) < TR::Options::getMinProfiledCheckcastFrequency())
          continue;

@@ -95,7 +95,6 @@ protected:
 
    void patchPartialInliningCallBack(int32_t slot, TR::SymbolReference *symRef, TR::SymbolReference *tempRef, TR::TreeTop *tt2) //TR::Block *restartBlock)
       {
-      //printf("patchPartialInliningCallBack.  Searching for Children with symref = %p\n",symRef);
       TR::TreeTop *tt = tt2->getNextRealTreeTop();     //restartBlock->getEntry();
       TR::Node *ttnode = tt->getNode();
       TR::Node *callNode = ttnode->getFirstChild();
@@ -107,28 +106,21 @@ protected:
          if(child->getSymbolReference() == symRef)
             {
             child->setSymbolReference(tempRef);
-            //printf("patchPartialInliningCallBack:  setting Child %d %p symRef %p to tempRef %p\n",i,child,symRef,tempRef);
             }
 
          }
       }
    void addTempForPartialInliningCallBack(int32_t slot,TR::SymbolReference *tempRef, int32_t numParms)
       {
-      //printf("addTempForPartialINliningCallBack. (Haven't generated CallBack yet.)\n");
-
       if(_replacedSymRefs == 0)
          _replacedSymRefs = new (_compilation->trStackMemory()) TR_Array<TR::SymbolReference*>(_compilation->trMemory(), numParms , true, stackAlloc);
 
       (*_replacedSymRefs)[slot] = tempRef;
-
-      //printf("addTempForPartialInliningCallBack : _replacedSYmRefs = %p _replacedSymRefs->isEmpty() = %d\n",_replacedSymRefs,_replacedSymRefs->isEmpty());
       }
 
    TR::TreeTop *genPartialInliningCallBack(int32_t index, TR::TreeTop *callTreeTop)
       {
-//      printf("Walker:genPartialInliningCallBack for index %d methodSymbol = %p\n",index, _methodSymbol);
       genBBStart(index);
-      //printf("\tgenBBStart generated Block %p Block->getNumber %d\n",blocks(index),blocks(index)->getNumber());
 
       TR::Node *ttNode = TR::Node::create(TR::treetop, 1);
       TR::Node *callNode =TR::Node::copy(callTreeTop->getNode()->getFirstChild());
@@ -142,12 +134,10 @@ protected:
       int32_t i;
       for(si = li.getFirst(),  i=0 ; si != NULL ; si = li.getNext(), i++ )
          {
-//         printf("si = %p datatype = %d loadOpCode = %d, i = %d, symreftab = %p\n",si, si->getDataType(),_compilation->il.opCodeForDirectLoad(si->getDataType()),i,_compilation->getSymRefTab() );
          TR::SymbolReference *ref = _compilation->getSymRefTab()->findOrCreateAutoSymbol(_methodSymbol,si->getSlot(),si->getDataType());
          if(_replacedSymRefs && (*_replacedSymRefs)[si->getSlot()])
             {
             ref = (*_replacedSymRefs)[si->getSlot()];
-            //printf("genPartialInliningCallBack:  Found a replaced symRef for slot %d\n",si->getSlot());
             }
 
          if(callNode->getOpCode().isIndirect() && i==0)  // need to generate vft offset & call
@@ -176,7 +166,6 @@ protected:
 
    TR::TreeTop *genGotoPartialInliningCallBack(int32_t index, TR::TreeTop *gotoTreeTop)
       {
-      //printf("Walker:genGotoPartialInliningCallBack for index %d\n",index);
       genBBStart(index);
       if(!isGenerated(index)) // could also consider blocks(index)->isEmptyBlock()
          {

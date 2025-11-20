@@ -43,6 +43,7 @@ namespace TR { class CompilationInfoPerThreadBase; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 struct J9VMInitArgs;
+namespace OMR { class Logger; }
 
 namespace J9
 {
@@ -537,9 +538,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 
    static void  printPID();
 
-
-
-
+   OMR::Logger *createLoggerForLogFile(TR::FILE *file);
 
 
    static const char *kcaOffsets(const char *option, void *, TR::OptionTable *entry);

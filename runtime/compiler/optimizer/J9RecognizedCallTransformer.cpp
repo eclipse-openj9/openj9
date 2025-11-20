@@ -984,6 +984,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
    bool enableTrace = trace();
    bool isNotStaticField = !strncmp(comp()->getCurrentMethod()->classNameChars(), "java/util/concurrent/atomic/", strlen("java/util/concurrent/atomic/"));
    bool fixupCommoning = true;
+   OMR::Logger *log = comp()->log();
    TR::Node* unsafeCall = treetop->getNode()->getFirstChild();
    TR::Node* objectNode = unsafeCall->getChild(1);
    TR::Node* offsetNode = unsafeCall->getChild(2);
@@ -1006,8 +1007,8 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
       TR::Node * checkNode = TR::Node::createWithSymRef(treetop->getNode(), TR::NULLCHK, 1, passthrough, treetop->getNode()->getSymbolReference());
       treetop->insertBefore(TR::TreeTop::create(comp(), checkNode));
       TR::Node::recreate(treetop->getNode(), TR::treetop);
-      if (enableTrace)
-         traceMsg(comp(), "Created node %p to preserve NULLCHK on unsafe call %p\n", checkNode, unsafeCall);
+
+      logprintf(enableTrace, log, "Created node %p to preserve NULLCHK on unsafe call %p\n", checkNode, unsafeCall);
       }
 
    if (isNotStaticField)
@@ -1029,8 +1030,8 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
          treetop->insertBefore(isObjectNullTreeTop);
          treetop->getEnclosingBlock()->split(treetop, cfg, fixupCommoning);
 
-         if (enableTrace)
-            traceMsg(comp(), "Created isObjectNull test node n%dn, non-null object will fall through to Block_%d\n", isObjectNullNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber());
+         logprintf(enableTrace, comp()->log(), "Created isObjectNull test node n%dn, non-null object will fall through to Block_%d\n",
+               isObjectNullNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber());
 
          //generate array check treetop
          TR::Node *vftLoad = TR::Node::createWithSymRef(TR::aloadi, 1, 1,
@@ -1045,8 +1046,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
          treetop->insertBefore(isObjectArrayTreeTop);
          treetop->getEnclosingBlock()->split(treetop, cfg, fixupCommoning);
 
-         if (enableTrace)
-            traceMsg(comp(), "Created isObjectArray test node n%dn, array will branch to array access block\n", isObjectArrayNode->getGlobalIndex());
+         logprintf(enableTrace, log, "Created isObjectArray test node n%dn, array will branch to array access block\n", isObjectArrayNode->getGlobalIndex());
 
          address = comp()->target().is32Bit() ? TR::Node::create(TR::aiadd, 2, objectNode->duplicateTree(), TR::Node::create(TR::l2i, 1, offsetNode->duplicateTree())) :
                                               TR::Node::create(TR::aladd, 2, objectNode->duplicateTree(), offsetNode->duplicateTree());
@@ -1056,8 +1056,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
          {
          address = comp()->target().is32Bit() ? TR::Node::create(TR::aiadd, 2, objectNode, TR::Node::create(TR::l2i, 1, offsetNode)) :
                                                 TR::Node::create(TR::aladd, 2, objectNode, offsetNode);
-         if (enableTrace)
-            traceMsg(comp(), "Field is not static, use the object and offset directly\n");
+         logprints(enableTrace, log, "Field is not static, use the object and offset directly\n");
          }
       }
    else
@@ -1078,8 +1077,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
                                                        TR::Node::create(TR::PassThrough, 1, objectNode->duplicateTree()),
                                                        comp()->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp()->getMethodSymbol()));
          treetop->insertBefore(TR::TreeTop::create(comp(), NULLCHKNode));
-         if (enableTrace)
-            traceMsg(comp(), "Created NULLCHK tree %p on the first argument of Unsafe call\n", treetop->getPrevTreeTop());
+         logprintf(enableTrace, log, "Created NULLCHK tree %p on the first argument of Unsafe call\n", treetop->getPrevTreeTop());
          }
 
       // Test if object is null
@@ -1088,8 +1086,8 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
       treetop->insertBefore(isObjectNullTreeTop);
       treetop->getEnclosingBlock()->split(treetop, cfg, fixupCommoning);
 
-      if (enableTrace)
-         traceMsg(comp(), "Created isObjectNull test node n%dn, non-null object will fall through to Block_%d\n", isObjectNullNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber());
+      logprintf(enableTrace, log, "Created isObjectNull test node n%dn, non-null object will fall through to Block_%d\n",
+         isObjectNullNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber());
 
       // Test if object is array - offheap only
    #if defined (J9VM_GC_SPARSE_HEAP_ALLOCATION)
@@ -1108,8 +1106,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
          treetop->insertBefore(isObjectArrayTreeTop);
          treetop->getEnclosingBlock()->split(treetop, cfg, fixupCommoning);
 
-         if (enableTrace)
-            traceMsg(comp(), "Created isObjectArray test node n%dn, array will branch to array access block\n", isObjectArrayNode->getGlobalIndex());
+         logprintf(enableTrace, log, "Created isObjectArray test node n%dn, array will branch to array access block\n", isObjectArrayNode->getGlobalIndex());
          }
    #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
@@ -1122,8 +1119,8 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
       treetop->insertBefore(isNotLowTaggedTreeTop);
       treetop->getEnclosingBlock()->split(treetop, cfg, fixupCommoning);
 
-      if (enableTrace)
-         traceMsg(comp(), "Created isNotLowTagged test node n%dn, static field will fall through to Block_%d\n", isNotLowTaggedNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber());
+      logprintf(enableTrace, log, "Created isNotLowTagged test node n%dn, static field will fall through to Block_%d\n",
+         isNotLowTaggedNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber());
 
       static char *disableIllegalWriteReport = feGetEnv("TR_DisableIllegalWriteReport");
       // Test if the call is a write to a static final field
@@ -1140,11 +1137,9 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
          auto reportFinalFieldModification = TR::TransformUtil::generateReportFinalFieldModificationCallTree(comp(), objectNode->duplicateTree());
          auto elseBlock = treetop->getEnclosingBlock();
          TR::TransformUtil::createConditionalAlternatePath(comp(), isFinalTreeTop, reportFinalFieldModification, elseBlock, elseBlock, comp()->getMethodSymbol()->getFlowGraph(), true /*markCold*/);
-         if (enableTrace)
-            {
-            traceMsg(comp(), "Created isFinal test node n%dn, non-final-static field will fall through to Block_%d, final field goes to Block_%d\n",
-                     isFinalNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber(), reportFinalFieldModification->getEnclosingBlock()->getNumber());
-            }
+         logprintf(enableTrace, log, "Created isFinal test node n%dn, non-final-static field will fall through to Block_%d, final field goes to Block_%d\n",
+            isFinalNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber(), reportFinalFieldModification->getEnclosingBlock()->getNumber());
+
          TR::DebugCounter::prependDebugCounter(comp(),
                                                TR::DebugCounter::debugCounterName(comp(),
                                                                                   "illegalWriteReport/atomic/(%s %s)",
@@ -1172,10 +1167,9 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
                                                                               TR::Node::lconst(~J9_SUN_FIELD_OFFSET_MASK)),
                                                              offsetNode->getSymbolReference());
 
-      if (enableTrace)
-         traceMsg(comp(), "Created node objectAdjustmentNode n%dn #%d and offsetAdjustmentNode #%d n%dn to adjust object and offset for static field\n",
-               objectAdjustmentNode->getGlobalIndex(), objectAdjustmentNode->getOpCode().hasSymbolReference() ? objectAdjustmentNode->getSymbolReference()->getReferenceNumber() : -1,
-               offsetAdjustmentNode->getGlobalIndex(), offsetAdjustmentNode->getOpCode().hasSymbolReference() ? offsetAdjustmentNode->getSymbolReference()->getReferenceNumber() : -1);
+      logprintf(enableTrace, log, "Created node objectAdjustmentNode n%dn #%d and offsetAdjustmentNode #%d n%dn to adjust object and offset for static field\n",
+         objectAdjustmentNode->getGlobalIndex(), objectAdjustmentNode->getOpCode().hasSymbolReference() ? objectAdjustmentNode->getSymbolReference()->getReferenceNumber() : -1,
+         offsetAdjustmentNode->getGlobalIndex(), offsetAdjustmentNode->getOpCode().hasSymbolReference() ? offsetAdjustmentNode->getSymbolReference()->getReferenceNumber() : -1);
 
       treetop->insertBefore(TR::TreeTop::create(comp(), objectAdjustmentNode));
       treetop->insertBefore(TR::TreeTop::create(comp(), offsetAdjustmentNode));
@@ -1209,10 +1203,9 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
             {
             storeReturnNode = NULL;
             }
-         else if (enableTrace)
-            {
-            traceMsg(comp(), "storeNode n%dn #%d for the return value of atomic method helper\n", storeReturnNode->getGlobalIndex(), storeReturnNode->getSymbolReference()->getReferenceNumber());
-            }
+         else
+            logprintf(enableTrace, log, "storeNode n%dn #%d for the return value of atomic method helper\n",
+               storeReturnNode->getGlobalIndex(), storeReturnNode->getSymbolReference()->getReferenceNumber());
          }
 
       // If isNotStaticField and array-check is generated then
@@ -1259,8 +1252,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
          isObjectNullNode->setBranchDestination(treetop->getEnclosingBlock()->getEntry());
          cfg->addEdge(TR::CFGEdge::createEdge(isObjectNullTreeTop->getEnclosingBlock(), treetop->getEnclosingBlock(), comp()->trMemory()));
 
-         if (enableTrace)
-            traceMsg(comp(), "Created array access helper block_%d that loads dataAddr pointer from array object address\n", arrayAccessBlock->getNumber());
+         logprintf(enableTrace, log, "Created array access helper block_%d that loads dataAddr pointer from array object address\n", arrayAccessBlock->getNumber());
          }
       else
 #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
@@ -1297,8 +1289,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
          gotoNode->setBranchDestination(returnBlock->getEntry());
          treetop->insertBefore(TR::TreeTop::create(comp(), gotoNode));
 
-         if (enableTrace)
-            traceMsg(comp(), "Created atomic method helper block_%d that loads from ramStatics treetop n%dn. returnBlock block_%d\n",
+         logprintf(enableTrace, log, "Created atomic method helper block_%d that loads from ramStatics treetop n%dn. returnBlock block_%d\n",
                unsafeCallRamStaticsTT->getEnclosingBlock()->getNumber(), unsafeCallRamStaticsTT->getNode()->getGlobalIndex(), returnBlock->getNumber());
 
          // Split the block that contains the original helper call into a separate block
@@ -1343,16 +1334,14 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
                arrayAccessTreeTop->insertTreeTopsAfterMe(TR::TreeTop::create(comp(), storeNode));
                }
 
-            if (enableTrace)
-               traceMsg(comp(), "Created array access helper block_%d that loads dataAddr pointer from array object address\n", arrayAccessBlock->getNumber());
+            logprintf(enableTrace, log, "Created array access helper block_%d that loads dataAddr pointer from array object address\n", arrayAccessBlock->getNumber());
             }
       #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
          // Setup CFG edges
          cfg->addEdge(unsafeCallRamStaticsTT->getEnclosingBlock(), returnBlock);
 
-         if (enableTrace)
-            traceMsg(comp(), "Block_%d contains call to atomic method helper, and is the target of isObjectNull and isNotLowTagged tests\n", treetop->getEnclosingBlock()->getNumber());
+         logprintf(enableTrace, log, "Block_%d contains call to atomic method helper, and is the target of isObjectNull and isNotLowTagged tests\n", treetop->getEnclosingBlock()->getNumber());
 
          isObjectNullNode->setBranchDestination(treetop->getEnclosingBlock()->getEntry());
          cfg->addEdge(TR::CFGEdge::createEdge(isObjectNullTreeTop->getEnclosingBlock(), treetop->getEnclosingBlock(), comp()->trMemory()));

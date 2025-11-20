@@ -30,6 +30,7 @@
 #include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
 uint8_t *
@@ -117,21 +118,21 @@ TR::S390ForceRecompilationSnippet::getLength(int32_t  estimatedSnippetStart)
 
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::S390ForceRecompilationSnippet * snippet)
+TR_Debug::print(OMR::Logger *log, TR::S390ForceRecompilationSnippet * snippet)
    {
    uint8_t * bufferPos = snippet->getSnippetLabel()->getCodeLocation();
 
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, "Force Recompilation Call Snippet");
+   printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, "Force Recompilation Call Snippet");
 
-   printPrefix(pOutFile, NULL, bufferPos, 6);
-   trfprintf(pOutFile, "LARL \tGPR14, <%p>\t# Addr of DataConst",
+   printPrefix(log, NULL, bufferPos, 6);
+   log->printf("LARL \tGPR14, <%p>\t# Addr of DataConst",
                                 (intptr_t) snippet->getDataConstantSnippet()->getSnippetLabel()->getCodeLocation());
    bufferPos += 6;
 
-   bufferPos = printRuntimeInstrumentationOnOffInstruction(pOutFile, bufferPos, false); // RIOFF
+   bufferPos = printRuntimeInstrumentationOnOffInstruction(log, bufferPos, false); // RIOFF
 
-   printPrefix(pOutFile, NULL, bufferPos, 6);
-   trfprintf(pOutFile, "BRCL \t<%p>\t\t# Branch to %s %s",
+   printPrefix(log, NULL, bufferPos, 6);
+   log->printf("BRCL \t<%p>\t\t# Branch to %s %s",
                    snippet->getSnippetDestAddr(),
                    getName(_cg->getSymRef(TR_S390induceRecompilation)),
                    snippet->usedTrampoline()?"- Trampoline Used.":"");
@@ -197,17 +198,17 @@ TR::S390ForceRecompilationDataSnippet::getLength(int32_t estimatedSnippetStart)
    }
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::S390ForceRecompilationDataSnippet * snippet)
+TR_Debug::print(OMR::Logger *log, TR::S390ForceRecompilationDataSnippet * snippet)
    {
    uint8_t * bufferPos = snippet->getSnippetLabel()->getCodeLocation();
 
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, "Force Recompilation Data Snippet");
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t%p \t\t# Main Code Return Address", *((intptr_t*)bufferPos));
+   printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, "Force Recompilation Data Snippet");
+   printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t%p \t\t# Main Code Return Address", *((intptr_t*)bufferPos));
    bufferPos += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t%p \t\t# Method Start PC (to patch)", *((intptr_t*)bufferPos));
+   printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t%p \t\t# Method Start PC (to patch)", *((intptr_t*)bufferPos));
    bufferPos += sizeof(intptr_t);
    }
 

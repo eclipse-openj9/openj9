@@ -39,6 +39,7 @@
 #include "optimizer/J9CallGraph.hpp"
 #include "optimizer/J9EstimateCodeSize.hpp"
 #include "optimizer/InterpreterEmulator.hpp"
+#include "ras/Logger.hpp"
 #include "ras/LogTracer.hpp"
 #include "runtime/J9Profiler.hpp"
 
@@ -1019,7 +1020,7 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
             flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable);
             break;
          default:
-         	break;
+            break;
          }
 
       if (flags[i].testAny(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable))
@@ -1283,7 +1284,6 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
                break;
             }
          }
-      //      printf("Iterating through sizes array.  bcSizes[%d] = %d maxIndex = %d\n",i,bcSizes[i],maxIndex);
       }
 
    for (i = 0; i < (int32_t) tryCatchInfo.size(); ++i)
@@ -1444,7 +1444,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       }
    else if (inlineArchetypeSpecimen && !mhInlineWithPeeking && debugMHInlineWithOutPeeking)
       {
-      traceMsg(comp(), "printing out trees and bytecodes through peeking because DebugMHInlineWithOutPeeking is on\n");
+      debugTrace(tracer(), "printing out trees and bytecodes through peeking because DebugMHInlineWithOutPeeking is on\n");
       methodSymbol->getResolvedMethod()->genMethodILForPeekingEvenUnderMethodRedefinition(methodSymbol, comp(), false, NULL);
       }
 
@@ -1478,7 +1478,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       heuristicTrace(tracer(), "<cfg>");
       for (TR::CFGNode* node = cfg.getFirstNode(); node; node = node->getNext())
          {
-         comp()->findOrCreateDebug()->print(comp()->getOutFile(), node, 6);
+         comp()->findOrCreateDebug()->print(comp()->log(), node, 6);
          }
       heuristicTrace(tracer(), "</cfg>");
       }
@@ -1879,7 +1879,6 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                   int32_t bigCalleesSizeBelowMe = _bigCalleesSize - origBigCalleesSize;
                   if ((_analyzedSize - origAnalyzedSize - bigCalleesSizeBelowMe) > bigCalleeThreshold)
                      {
-                     ///printf("set warmcallgraphtoobig for method %s at index %d\n", calleeName, newBCInfo._byteCodeIndex);fflush(stdout);
                      calltarget->_calleeMethod->setWarmCallGraphTooBig( newBCInfo.getByteCodeIndex(), comp());
                      _bigCalleesSize = _bigCalleesSize + _analyzedSize - origAnalyzedSize - bigCalleesSizeBelowMe;
                      heuristicTrace(tracer(), "set warmcallgraphtoobig for method %s at index %d\n", calleeName, newBCInfo.getByteCodeIndex());
@@ -2024,8 +2023,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    /****************** PHASE 5: Figure out if We're really going to do a partial Inline and add whatever we do to the realSize. *******************/
    if (isPartialInliningCandidate(calltarget, &callBlocks))
       {
-      if (comp()->getOption(TR_TraceBFGeneration))
-         traceMsg(comp(), "Call Target %s is a partial inline Candidate with a partial size of %d",callerName,calltarget->_partialSize);
+      logprintf(comp()->getOption(TR_TraceBFGeneration), comp()->log(), "Call Target %s is a partial inline Candidate with a partial size of %d", callerName, calltarget->_partialSize);
 
       heuristicTrace(tracer(), "*** Depth %d: ECS end for target %p signature %s. It is a partial inline Candidate with a partial size of %d", _recursionDepth, calltarget, callerName, calltarget->_partialSize);
       _realSize += calltarget->_partialSize;
@@ -2258,8 +2256,7 @@ TR_J9EstimateCodeSize::labelGraph(TR::CFG *cfg,
          TR::Block *dest = (*e)->getFrom()->asBlock();
          nodesToBeEvaluated.enqueue(dest);
          }
-      for (auto e = currentBlock->getExceptionPredecessors().begin(); e != currentBlock->getExceptionPredecessors().end();
-    		  ++e)
+      for (auto e = currentBlock->getExceptionPredecessors().begin(); e != currentBlock->getExceptionPredecessors().end(); ++e)
          {
          TR::Block *dest = (*e)->getFrom()->asBlock();
          nodesToBeEvaluated.enqueue(dest);
@@ -2298,7 +2295,7 @@ TR_J9EstimateCodeSize::trimBlocksForPartialInlining(TR_CallTarget *calltarget, T
    if (tracer()->partialLevel())
       {
       partialTrace(tracer(),"Dumping CFG for calltarget %p", calltarget);
-      comp()->dumpFlowGraph(calltarget->_cfg);
+      comp()->dumpFlowGraph(comp()->log(), calltarget->_cfg);
       }
 
    int32_t minpartialsize = MIN_PARTIAL_SIZE;

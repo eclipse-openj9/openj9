@@ -32,6 +32,7 @@
 #include "env/jittypes.h"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/J9CodeCache.hpp"
 
 TR::ARMMonitorEnterSnippet::ARMMonitorEnterSnippet(
@@ -135,11 +136,11 @@ uint8_t *TR::ARMMonitorEnterSnippet::emitSnippetBody()
 
 
 void
-TR::ARMMonitorEnterSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
+TR::ARMMonitorEnterSnippet::print(OMR::Logger *log, TR_Debug *debug)
    {
    uint8_t *bufferPos = getIncLabel()->getCodeLocation();
-   // debug->printSnippetLabel(pOutFile, getIncLabel(), bufferPos, debug->getName(snippet));
-   debug->printSnippetLabel(pOutFile, getIncLabel(), bufferPos, "Inc Monitor Counter");
+   // debug->printSnippetLabel(log, getIncLabel(), bufferPos, debug->getName(snippet));
+   debug->printSnippetLabel(log, getIncLabel(), bufferPos, "Inc Monitor Counter");
 
    TR::Machine      *machine    = cg()->machine();
    TR::RegisterDependencyConditions *deps = getRestartLabel()->getInstruction()->getDependencyConditions();
@@ -149,35 +150,35 @@ TR::ARMMonitorEnterSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
    TR::RealRegister *addrReg  = machine->getRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
    TR::RealRegister *tempReg  = machine->getRealRegister(deps->getPostConditions()->getRegisterDependency(3)->getRealRegister());
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, 4);
+   debug->printPrefix(log, NULL, bufferPos, 4);
    //    mvn     tempReg, (OBJECT_HEADER_LOCK_BITS_MASK - OBJECT_HEADER_LOCK_LAST_RECURSION_BIT) -> 0x7f
-   trfprintf(pOutFile, "mvn \t%s, #0x%08x; (OBJECT_HEADER_LOCK_BITS_MASK - OBJECT_HEADER_LOCK_LAST_RECURSION_BIT)", debug->getName(tempReg), (OBJECT_HEADER_LOCK_BITS_MASK - OBJECT_HEADER_LOCK_LAST_RECURSION_BIT));
+   log->printf("mvn \t%s, #0x%08x; (OBJECT_HEADER_LOCK_BITS_MASK - OBJECT_HEADER_LOCK_LAST_RECURSION_BIT)", debug->getName(tempReg), (OBJECT_HEADER_LOCK_BITS_MASK - OBJECT_HEADER_LOCK_LAST_RECURSION_BIT));
    bufferPos += 4;
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, 4);
+   debug->printPrefix(log, NULL, bufferPos, 4);
    //    and     tempReg, dataReg, tempReg
-   trfprintf(pOutFile, "and \t%s, %s, %s;", debug->getName(tempReg), debug->getName(dataReg), debug->getName(tempReg));
+   log->printf("and \t%s, %s, %s;", debug->getName(tempReg), debug->getName(dataReg), debug->getName(tempReg));
    bufferPos += 4;
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, 4);
+   debug->printPrefix(log, NULL, bufferPos, 4);
    //    cmp     metaReg, tempReg
-   trfprintf(pOutFile, "cmp \t%s, %s; ", debug->getName(metaReg), debug->getName(tempReg));
+   log->printf("cmp \t%s, %s; ", debug->getName(metaReg), debug->getName(tempReg));
    bufferPos += 4;
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, 4);
+   debug->printPrefix(log, NULL, bufferPos, 4);
    //    addeq   dataReg, dataReg, LOCK_INC_DEC_VALUE
-   trfprintf(pOutFile, "addeq \t%s, %s, #0x%08x; Increment the count", debug->getName(dataReg), debug->getName(dataReg), LOCK_INC_DEC_VALUE);
+   log->printf("addeq \t%s, %s, #0x%08x; Increment the count", debug->getName(dataReg), debug->getName(dataReg), LOCK_INC_DEC_VALUE);
    bufferPos += 4;
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, 4);
+   debug->printPrefix(log, NULL, bufferPos, 4);
    //    streq   dataReg, [addrReg]
-   trfprintf(pOutFile, "streq \t%s, [%s]; Increment the count", debug->getName(dataReg), debug->getName(addrReg));
+   log->printf("streq \t%s, [%s]; Increment the count", debug->getName(dataReg), debug->getName(addrReg));
    bufferPos += 4;
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, 4);
+   debug->printPrefix(log, NULL, bufferPos, 4);
    //    beq     restartLabel
-   trfprintf(pOutFile, "beq\t" POINTER_PRINTF_FORMAT "\t\t; Return to %s", (intptr_t)(restartLabel->getCodeLocation()), debug->getName(restartLabel));
-   debug->print(pOutFile, (TR::ARMHelperCallSnippet *)this);
+   log->printf("beq\t" POINTER_PRINTF_FORMAT "\t\t; Return to %s", (intptr_t)(restartLabel->getCodeLocation()), debug->getName(restartLabel));
+   debug->print(log, (TR::ARMHelperCallSnippet *)this);
    }
 uint32_t TR::ARMMonitorEnterSnippet::getLength(int32_t estimatedSnippetStart)
    {
@@ -442,11 +443,11 @@ uint8_t *TR::ARMMonitorExitSnippet::emitSnippetBody()
 
 
 void
-TR::ARMMonitorExitSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
+TR::ARMMonitorExitSnippet::print(OMR::Logger *log, TR_Debug *debug)
    {
    uint8_t *bufferPos = getDecLabel()->getCodeLocation();
-   // debug->printSnippetLabel(pOutFile, getDecLabel(), bufferPos, debug->getName(snippet));
-   debug->printSnippetLabel(pOutFile, getDecLabel(), bufferPos, "Dec Monitor Counter");
+   // debug->printSnippetLabel(log, getDecLabel(), bufferPos, debug->getName(snippet));
+   debug->printSnippetLabel(log, getDecLabel(), bufferPos, "Dec Monitor Counter");
 
    TR::Machine      *machine    = cg()->machine();
    TR::RegisterDependencyConditions *deps = getRestartLabel()->getInstruction()->getDependencyConditions();
@@ -456,36 +457,36 @@ TR::ARMMonitorExitSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
    TR::RealRegister *monitorReg = machine->getRealRegister(deps->getPostConditions()->getRegisterDependency(1)->getRealRegister());
    TR::RealRegister *threadReg  = machine->getRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, 4);
+   debug->printPrefix(log, NULL, bufferPos, 4);
    //    mvn     threadReg, OBJECT_HEADER_LOCK_RECURSION_MASK  // mask out count field
-   trfprintf(pOutFile, "mvn\t%s, #0x%08x; OBJECT_HEADER_LOCK_RECURSION_MASK", debug->getName(threadReg), OBJECT_HEADER_LOCK_RECURSION_MASK);
+   log->printf("mvn\t%s, #0x%08x; OBJECT_HEADER_LOCK_RECURSION_MASK", debug->getName(threadReg), OBJECT_HEADER_LOCK_RECURSION_MASK);
    bufferPos += 4;
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, 4);
+   debug->printPrefix(log, NULL, bufferPos, 4);
    //    and     threadReg, monitorReg, threadReg
-   trfprintf(pOutFile, "and\t%s, %s, %s; ", debug->getName(threadReg), debug->getName(monitorReg), debug->getName(threadReg));
+   log->printf("and\t%s, %s, %s; ", debug->getName(threadReg), debug->getName(monitorReg), debug->getName(threadReg));
    bufferPos += 4;
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, 4);
+   debug->printPrefix(log, NULL, bufferPos, 4);
    //    cmp     metaReg, threadReg
-   trfprintf(pOutFile, "cmp\t%s, %s; ", debug->getName(metaReg), debug->getName(threadReg));
+   log->printf("cmp\t%s, %s; ", debug->getName(metaReg), debug->getName(threadReg));
    bufferPos += 4;
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, 4);
+   debug->printPrefix(log, NULL, bufferPos, 4);
    //    subeq   monitorReg, monitorReg, LOCK_INC_DEC_VALUE
-   trfprintf(pOutFile, "subeq\t%s, %s, #0x%08x; Decrement the count", debug->getName(monitorReg), debug->getName(monitorReg), LOCK_INC_DEC_VALUE);
+   log->printf("subeq\t%s, %s, #0x%08x; Decrement the count", debug->getName(monitorReg), debug->getName(monitorReg), LOCK_INC_DEC_VALUE);
    bufferPos += 4;
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, 4);
+   debug->printPrefix(log, NULL, bufferPos, 4);
    //    streq   monitorReg, [objReg, monitor offset]
-   trfprintf(pOutFile, "streq\t%s, [%s, %d]; ", debug->getName(monitorReg), debug->getName(objReg), getLockWordOffset());
+   log->printf("streq\t%s, [%s, %d]; ", debug->getName(monitorReg), debug->getName(objReg), getLockWordOffset());
    bufferPos += 4;
 
-   debug->printPrefix(pOutFile, NULL, bufferPos, 4);
+   debug->printPrefix(log, NULL, bufferPos, 4);
    //    beq     restartLabel
-   trfprintf(pOutFile, "beq\t" POINTER_PRINTF_FORMAT "\t\t; Return to %s", (intptr_t)(restartLabel->getCodeLocation()), debug->getName(restartLabel));
+   log->printf("beq\t" POINTER_PRINTF_FORMAT "\t\t; Return to %s", (intptr_t)(restartLabel->getCodeLocation()), debug->getName(restartLabel));
 
-   debug->print(pOutFile, (TR::ARMHelperCallSnippet *)this);
+   debug->print(log, (TR::ARMHelperCallSnippet *)this);
    }
 
 

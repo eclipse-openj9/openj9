@@ -35,6 +35,7 @@
 #include "control/RecompilationInfo.hpp"
 #include "env/TRMemory.hpp"
 #include "optimizer/EstimateCodeSize.hpp"
+#include "ras/Logger.hpp"
 
 class TR_ResolvedMethod;
 class NeedsPeekingHeuristic;
@@ -178,19 +179,18 @@ class TR_prevArgs
          {
          for (int32_t i = 0 ; i < NUM_PREV_BC ; i++)
             {
-            if(comp->getDebug())
-               traceMsg(comp,"_prevBC[%d] = %s\n" ,i,((TR_J9VM*)(comp->fej9()))->getByteCodeName(_prevBC[i]));
+            comp->log()->printf("_prevBC[%d] = %s\n" ,i,((TR_J9VM*)(comp->fej9()))->getByteCodeName(_prevBC[i]));
             }
          }
 
       void updateArg(TR_J9ByteCode bc )
-      {
-      for(int32_t i=NUM_PREV_BC-2 ; i>=0 ; i-- )
          {
-         _prevBC[i+1] = _prevBC[i];
+         for (int32_t i=NUM_PREV_BC-2 ; i>=0 ; i-- )
+            {
+            _prevBC[i+1] = _prevBC[i];
+            }
+         _prevBC[0] = bc;
          }
-      _prevBC[0] = bc;
-      }
 
       bool isArgAtIndexReceiverObject (int32_t index)
          {

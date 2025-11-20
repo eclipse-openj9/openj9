@@ -63,6 +63,7 @@
 #include "optimizer/Structure.hpp"
 #include "optimizer/TransformUtil.hpp"
 #include "optimizer/JProfilingValue.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/ExternalProfiler.hpp"
 #include "runtime/J9Runtime.hpp"
 #include "runtime/J9ValueProfiler.hpp"
@@ -125,7 +126,7 @@ void TR_LocalRecompilationCounters::modifyTrees()
    if (debug("traceCounters"))
       {
       diagnostic("Starting Local Recompilation Counters for %s\n", comp()->signature());
-      comp()->dumpMethodTrees("Trees before Local Recompilation Counters");
+      comp()->dumpMethodTrees(comp()->log(), "Trees before Local Recompilation Counters");
       }
 
    // Wherever there is an asynccheck tree, insert a counter decrement
@@ -147,7 +148,7 @@ void TR_LocalRecompilationCounters::modifyTrees()
 
    if (debug("traceCounters"))
       {
-      comp()->dumpMethodTrees("Trees after Local Recompilation Counters");
+      comp()->dumpMethodTrees(comp()->log(), "Trees after Local Recompilation Counters");
       }
    }
 
@@ -159,7 +160,7 @@ void TR_GlobalRecompilationCounters::modifyTrees()
    if (debug("traceCounters"))
       {
       diagnostic("Starting Global Recompilation Counters for %s\n", comp()->signature());
-      comp()->dumpMethodTrees("Trees before Global Recompilation Counters");
+      comp()->dumpMethodTrees(comp()->log(), "Trees before Global Recompilation Counters");
       }
 
    {
@@ -177,7 +178,7 @@ void TR_GlobalRecompilationCounters::modifyTrees()
 
    if (debug("traceCounters"))
       {
-      comp()->dumpMethodTrees("Trees after Global Recompilation Counters");
+      comp()->dumpMethodTrees(comp()->log(), "Trees after Global Recompilation Counters");
       }
    }
 
@@ -1029,10 +1030,12 @@ TR_BranchProfileInfoManager::getBranchCounters(TR::Node *node, TR::TreeTop *tree
       return;
       }
 
+   OMR::Logger *log = comp->log();
+   bool trace = comp->getOption(TR_TraceBFGeneration);
+
    TR_MethodBranchProfileInfo *mbpInfo = TR_MethodBranchProfileInfo::getMethodBranchProfileInfo(node->getInlinedSiteIndex(), comp);
 
-   if (comp->getOption(TR_TraceBFGeneration))
-      traceMsg(comp, "mbpInfo %p\n", mbpInfo);
+   logprintf(trace, log, "mbpInfo %p\n", mbpInfo);
 
    if (mbpInfo && node->getInlinedSiteIndex()>=0)
       {
@@ -1040,10 +1043,10 @@ TR_BranchProfileInfoManager::getBranchCounters(TR::Node *node, TR::TreeTop *tree
 
       float callFactor = getCallFactor(node->getInlinedSiteIndex(), comp);
 
-      if (comp->getOption(TR_TraceBFGeneration))
+      if (trace)
          {
-         traceMsg(comp, "Using call factor %f for callSiteIndex %d\n", callFactor, node->getInlinedSiteIndex());
-         traceMsg(comp, "Orig branch to count %d and fall through count %d\n", *branchToCount, *fallThroughCount);
+         log->printf("Using call factor %f for callSiteIndex %d\n", callFactor, node->getInlinedSiteIndex());
+         log->printf("Orig branch to count %d and fall through count %d\n", *branchToCount, *fallThroughCount);
          }
 
       if ((*branchToCount <=0) && (*fallThroughCount<=0))
@@ -1074,8 +1077,7 @@ TR_BranchProfileInfoManager::getBranchCounters(TR::Node *node, TR::TreeTop *tree
          if (*fallThroughCount<=0) *fallThroughCount=1;
          }
 
-      if (comp->getOption(TR_TraceBFGeneration))
-         traceMsg(comp, "Later branch to count %d and fall through count %d\n", *branchToCount, *fallThroughCount);
+      logprintf(trace, log, "Later branch to count %d and fall through count %d\n", *branchToCount, *fallThroughCount);
 
       int32_t breakEven = (*branchToCount > *fallThroughCount) ? 1 : -1;
       if (*branchToCount == *fallThroughCount) breakEven = 0;
@@ -1446,22 +1448,22 @@ TR_ValueProfileInfo::getOrCreateProfilerInfo(
  * Run through all hash tables and determine if their contents should be cleared out.
  * Only supports resetting on hash tables.
  *
- * \param profileLog Dump all the tables that have been inspected, as well as a log of any that were cleared. NULL will disable tracing.
+ * \param log Dump all the tables that have been inspected, as well as a log of any that were cleared. NULL will disable tracing.
  */
 void
-TR_ValueProfileInfo::resetLowFreqValues(TR::FILE *profileLog)
+TR_ValueProfileInfo::resetLowFreqValues(OMR::Logger *log)
    {
    for (TR_AbstractProfilerInfo *valueInfo = _values[HashTableProfiler]; valueInfo; valueInfo = valueInfo->getNext())
       {
       TR_AbstractHashTableProfilerInfo *hashTable = static_cast<TR_AbstractHashTableProfilerInfo*>(valueInfo);
-      if (profileLog)
-         hashTable->dumpInfo(profileLog);
+      if (log)
+         hashTable->dumpInfo(log);
       if (!hashTable->isFull())
          continue;
       if (hashTable->resetLowFreqKeys())
          {
-         if (profileLog)
-            J9::IO::fprintf(profileLog, "Resetting info 0x%p\n", hashTable);
+         if (log)
+            log->printf("Resetting info 0x%p\n", hashTable);
          if (TR::Options::isAnyVerboseOptionSet(TR_VerboseProfiling))
             TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING, "Resetting info 0x%p.", hashTable);
          }
@@ -1583,8 +1585,7 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
       normalizeForCallers = false;
       }
    int32_t frequency = getFrequencyInfo(bci, comp, normalizeForCallers, comp->getOption(TR_TraceBFGeneration));
-   if (comp->getOption(TR_TraceBFGeneration))
-      traceMsg(comp, "@@ block_%d [%d,%d] has raw count %d\n", block->getNumber(), bci.getCallerIndex(), bci.getByteCodeIndex(), frequency);
+   logprintf(comp->getOption(TR_TraceBFGeneration), comp->log(), "@@ block_%d [%d,%d] has raw count %d\n", block->getNumber(), bci.getCallerIndex(), bci.getByteCodeIndex(), frequency);
    return frequency;
    }
 
@@ -1595,6 +1596,7 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
       bool normalizeForCallers,
       bool trace)
    {
+   OMR::Logger *log = comp->log();
    int32_t callerIndex = bci.getCallerIndex();
    int32_t queriedCallerIndex = callerIndex;
    // Check if the callchain associated with bci matches the call chain from
@@ -1622,8 +1624,7 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
    int64_t maxCount = normalizeForCallers ? getMaxRawCount() : getMaxRawCount(queriedCallerIndex);
 
    int32_t frequency = isMatchingBCI ? getRawCount(callerIndex < 0 ? comp->getMethodSymbol() : comp->getInlinedResolvedMethodSymbol(callerIndex), bciCheck, _callSiteInfo, maxCount, comp) : -1;
-   if (trace)
-      traceMsg(comp,"raw frequency on outter level was %d for bci %d:%d\n", frequency, bci.getCallerIndex(), bci.getByteCodeIndex());
+   logprintf(trace, log, "raw frequency on outter level was %d for bci %d:%d\n", frequency, bci.getCallerIndex(), bci.getByteCodeIndex());
    if (frequency > -1 || _counterDerivationInfo == NULL)
       return frequency;
 
@@ -1632,8 +1633,7 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
    // hope that we have data there
    if (callerIndex > -1)
       {
-      if (trace)
-         traceMsg(comp, "Previous inlining was different - looking for a grafting point\n");
+      logprints(trace, log, "Previous inlining was different - looking for a grafting point\n");
 
       // step 1 - build the callstack in reverse order for searching
       TR_ByteCodeInfo bciToCheck = bci;
@@ -1665,8 +1665,7 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
          // we have found a frame where we don't have profiling info
          if (callerFrequency < 0)
             {
-            if (trace)
-               traceMsg(comp, "  found frame for %s with no outter profiling info\n", resolvedMethodSymbol->signature(comp->trMemory()));
+            logprintf(trace, log, "  found frame for %s with no outter profiling info\n", resolvedMethodSymbol->signature(comp->trMemory()));
             // has this method been compiled so we might have had a chance to profile it?
             if (!resolvedMethod->isInterpretedForHeuristics()
                 && !resolvedMethod->isNative()
@@ -1678,8 +1677,7 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
                    && info->getBlockFrequencyInfo()
                    && info->getBlockFrequencyInfo()->_counterDerivationInfo)
                   {
-                  if (trace)
-                     traceMsg(comp, "  method has profiling\n");
+                  logprints(trace, log, "  method has profiling\n");
                   int32_t effectiveCallerIndex = -1;
                   TR_BlockFrequencyInfo *bfi = info->getBlockFrequencyInfo();
                   bool computeFrequency = callStack.empty();
@@ -1695,7 +1693,7 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
                      TR_ByteCodeInfo callee(bci);
                      callee.setCallerIndex(effectiveCallerIndex);
                      if (trace && effectiveCallerIndex > -1)
-                        traceMsg(comp, "  checking bci %d:%d\n", callee.getCallerIndex(), callee.getByteCodeIndex());
+                        log->printf("  checking bci %d:%d\n", callee.getCallerIndex(), callee.getByteCodeIndex());
                      int32_t computedFrequency = bfi->getRawCount(resolvedMethodSymbol, callee, info->getCallSiteInfo(), normalizeForCallers ? bfi->getMaxRawCount() : bfi->getMaxRawCount(callee.getCallerIndex()), comp);
                      if (normalizeForCallers)
                         {
@@ -1714,7 +1712,7 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
 
                         if (computedFrequency > -1)
                            {
-                           traceMsg(comp, " effective caller %s gave frequency %d\n", resolvedMethodSymbol->signature(comp->trMemory()), computedFrequency);
+                           logprintf(trace, log, " effective caller %s gave frequency %d\n", resolvedMethodSymbol->signature(comp->trMemory()), computedFrequency);
                            frequency = (int32_t)((outterProfiledFrequency * computedFrequency) / innerFrequencyScale);
                            break;
                            }
@@ -1755,7 +1753,7 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
                int32_t entryFrequency = resolvedMethodSymbol->getProfilerFrequency(0);
                if (computedFrequency < 0 || entryFrequency < 0)
                   continue;
-               //printf("here %s\n", comp->signature());
+
                if (normalizeForCallers)
                   {
                   if (callStack.size() > 0)
@@ -1764,8 +1762,6 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
                      }
                   else
                      {
-                     //if (TR::Options::isAnyVerboseOptionSet())
-                     //   TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, " BFINFO: %s [%s:%d] - from IProfiler", comp->signature(), (bci.getCallerIndex() < 0 ? comp->getMethodSymbol() : comp->getInlinedResolvedMethodSymbol(bci.getCallerIndex()))->signature(comp->trMemory()), bci.getByteCodeIndex());
                      frequency = (int32_t)((outterProfiledFrequency * computedFrequency) / (innerFrequencyScale * entryFrequency));
                      break;
                      }
@@ -1828,8 +1824,7 @@ TR_BlockFrequencyInfo::getOriginalBlockNumberToGetRawCount(TR_ByteCodeInfo &bci,
       if ((currentCallSiteInfo && _callSiteInfo->hasSameBytecodeInfo(_blocks[i], searchBCI, comp)) ||
             (!currentCallSiteInfo && _blocks[i].getCallerIndex() == searchBCI.getCallerIndex() && _blocks[i].getByteCodeIndex() == searchBCI.getByteCodeIndex()))
          {
-         if (trace)
-            traceMsg(comp, "Get frequency from original block_%d\n", i);
+         logprintf(trace, comp->log(), "Get frequency from original block_%d\n", i);
          return i;
          }
       }
@@ -1924,6 +1919,8 @@ TR_BlockFrequencyInfo::getRawCount(TR_ByteCodeInfo &bci, TR_CallSiteInfo *callSi
    {
    // Try to find a block profiling slot that matches the requested block
    //
+   OMR::Logger *log = comp->log();
+   bool trace = comp->getOption(TR_TraceBFGeneration);
    int64_t frequency = 0;
    int32_t blocksMatched = 0;
    bool currentCallSiteInfo = TR_CallSiteInfo::getCurrent(comp) == callSiteInfo;
@@ -1973,8 +1970,7 @@ TR_BlockFrequencyInfo::getRawCount(TR_ByteCodeInfo &bci, TR_CallSiteInfo *callSi
                      rawCount -= _frequencies[subBVI.getNextElement()];
                   }
                }
-            if (comp->getOption(TR_TraceBFGeneration))
-               traceMsg(comp, "   Slot %d has raw frequency %d\n", i, rawCount);
+            logprintf(trace, log, "   Slot %d has raw frequency %d\n", i, rawCount);
 
             if (maxCount > 0 && rawCount > 0)
                rawCount = ((10000 * rawCount) / maxCount);
@@ -1982,8 +1978,7 @@ TR_BlockFrequencyInfo::getRawCount(TR_ByteCodeInfo &bci, TR_CallSiteInfo *callSi
                rawCount = 0;
             }
 
-         if (comp->getOption(TR_TraceBFGeneration))
-            traceMsg(comp, "   Slot %d has frequency %d\n", i, rawCount);
+         logprintf(trace, log, "   Slot %d has frequency %d\n", i, rawCount);
 
          frequency += rawCount;
          blocksMatched++;
@@ -2397,7 +2392,6 @@ TR_CallSiteInfo::hasSamePartialBytecodeInfo(
          break;
       callSite1 = callSiteInfo1._byteCodeInfo.getCallerIndex();
       callSite2 = callSiteInfo2._byteCodeInfo.getCallerIndex();
-      //traceMsg(comp, "\t\tMatched profiling info at level %d, method %p, bcIndex %d\n", matchLevelCount, method1, callSiteInfo1._byteCodeInfo._byteCodeIndex);
       matchLevelCount ++;
       }
 
@@ -2581,36 +2575,36 @@ TR_PersistentProfileInfo::findOrCreateValueProfileInfo(TR::Compilation *comp)
    return _valueProfileInfo;
    }
 
-void TR_ValueProfileInfo::dumpInfo(TR::FILE *logFile)
+void TR_ValueProfileInfo::dumpInfo(OMR::Logger *log)
    {
-   trfprintf(logFile, "\nDumping value profile info\n");
+   log->prints("\nDumping value profile info\n");
    for (size_t i = 0; i < LastProfiler; ++i)
       {
       for (TR_AbstractProfilerInfo * valueInfo = _values[i]; valueInfo; valueInfo = valueInfo->getNext())
-         valueInfo->dumpInfo(logFile);
+         valueInfo->dumpInfo(log);
       }
    }
 
-void TR_BlockFrequencyInfo::dumpInfo(TR::FILE *logFile)
+void TR_BlockFrequencyInfo::dumpInfo(OMR::Logger *log)
    {
-   trfprintf(logFile, "\nDumping block frequency info\n");
+   log->prints("\nDumping block frequency info\n");
    for (int32_t i = 0; i < _numBlocks; i++)
-      trfprintf(logFile, "   Block index = %d, caller = %d, frequency = %d\n", _blocks[i].getByteCodeIndex(), _blocks[i].getCallerIndex(), _frequencies[i]);
+      log->printf("   Block index = %d, caller = %d, frequency = %d\n", _blocks[i].getByteCodeIndex(), _blocks[i].getCallerIndex(), _frequencies[i]);
    }
 
 
-void TR_CatchBlockProfileInfo::dumpInfo(TR::FILE *logFile)
+void TR_CatchBlockProfileInfo::dumpInfo(OMR::Logger *log)
    {
    if (_catchCounter || _throwCounter)
-      trfprintf(logFile, "\nDumping catch block info\n   catch %7d throw %7d\n", _catchCounter, _throwCounter);
+      log->printf("\nDumping catch block info\n   catch %7d throw %7d\n", _catchCounter, _throwCounter);
    }
 
 
-void TR_CallSiteInfo::dumpInfo(TR::FILE *logFile)
+void TR_CallSiteInfo::dumpInfo(OMR::Logger *log)
    {
-   trfprintf(logFile, "\nDumping call site info\n");
+   log->prints("\nDumping call site info\n");
    for (int32_t i = 0; i < _numCallSites; i++)
-      trfprintf(logFile, "   Call site index = %d, method = %p, parent = %d\n", _callSites[i]._byteCodeInfo.getByteCodeIndex(), _callSites[i]._methodInfo, _callSites[i]._byteCodeInfo.getCallerIndex());
+      log->printf("   Call site index = %d, method = %p, parent = %d\n", _callSites[i]._byteCodeInfo.getByteCodeIndex(), _callSites[i]._methodInfo, _callSites[i]._byteCodeInfo.getCallerIndex());
    }
 
 uint32_t TR_CallSiteInfo::getSizeForSerialization() const
@@ -2659,19 +2653,19 @@ TR_CallSiteInfo * TR_CallSiteInfo::deserialize(uint8_t * &buffer)
    return new (PERSISTENT_NEW) TR_CallSiteInfo(serializedData, buffer);
    }
 
-void TR_PersistentProfileInfo::dumpInfo(TR::FILE *logFile)
+void TR_PersistentProfileInfo::dumpInfo(OMR::Logger *log)
    {
    if (_callSiteInfo)
-      _callSiteInfo->dumpInfo(logFile);
+      _callSiteInfo->dumpInfo(log);
 
    if (_blockFrequencyInfo)
-      _blockFrequencyInfo->dumpInfo(logFile);
+      _blockFrequencyInfo->dumpInfo(log);
 
    if (_catchBlockProfileInfo)
-      _catchBlockProfileInfo->dumpInfo(logFile);
+      _catchBlockProfileInfo->dumpInfo(log);
 
    if (_valueProfileInfo)
-      _valueProfileInfo->dumpInfo(logFile);
+      _valueProfileInfo->dumpInfo(log);
    }
 
 uint32_t TR_PersistentProfileInfo::getSizeForSerialization() const

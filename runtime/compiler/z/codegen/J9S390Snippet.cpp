@@ -38,6 +38,7 @@
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "env/VMJ9.h"
+#include "ras/Logger.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "z/codegen/S390Instruction.hpp"
 #include "z/codegen/S390Snippets.hpp"
@@ -211,13 +212,8 @@ TR::S390HeapAllocSnippet::getLength(int32_t  estimatedCodeStart)
    }
 
 void
-TR::S390HeapAllocSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
+TR::S390HeapAllocSnippet::print(OMR::Logger *log, TR_Debug *debug)
    {
-   if (pOutFile == NULL)
-      {
-      return;
-      }
-
    TR::Compilation *comp = cg()->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    uint8_t * buffer = getSnippetLabel()->getCodeLocation();
@@ -228,7 +224,7 @@ TR::S390HeapAllocSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
    TR::RegisterDependencyConditions *deps = getRestartLabel()->getInstruction()->getDependencyConditions();
    TR::RealRegister * resReg = machine->getRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
 
-   debug->printSnippetLabel(pOutFile, getSnippetLabel(), buffer, "HeapAlloc Snippet", debug->getName(getDestination()));
+   debug->printSnippetLabel(log, getSnippetLabel(), buffer, "HeapAlloc Snippet", debug->getName(getDestination()));
 
 
    // The code for the snippet looks like:
@@ -238,20 +234,20 @@ TR::S390HeapAllocSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
 
    distance = (intptr_t) getDestination()->getSymbol()->castToMethodSymbol()->getMethodAddress() - (intptr_t) buffer;
 
-   debug->printPrefix(pOutFile, NULL, buffer, 6);
-   trfprintf(pOutFile, "BRASL \tGPR14, 0x%8x", distance >> 1);
+   debug->printPrefix(log, NULL, buffer, 6);
+   log->printf("BRASL \tGPR14, 0x%8x", distance >> 1);
    buffer += 6;
 
    if (comp->target().is64Bit())
       {
-      debug->printPrefix(pOutFile, NULL, buffer, 4);
-      trfprintf(pOutFile, "LGR \t%s,GPR2", debug->getName(resReg));
+      debug->printPrefix(log, NULL, buffer, 4);
+      log->printf("LGR \t%s,GPR2", debug->getName(resReg));
       buffer += 4;
       }
    else
       {
-      debug->printPrefix(pOutFile, NULL, buffer, 2);
-      trfprintf(pOutFile, "LR \t%s, GPR2", debug->getName(resReg));
+      debug->printPrefix(log, NULL, buffer, 2);
+      log->printf("LR \t%s, GPR2", debug->getName(resReg));
       buffer += 2;
       }
 
@@ -259,16 +255,16 @@ TR::S390HeapAllocSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
    distance >>= 1;
    if (!isLongBranch())
       {
-      debug->printPrefix(pOutFile, NULL, buffer, 4);
-      trfprintf(pOutFile, "BRC \t");
-      debug->print(pOutFile, getRestartLabel());
+      debug->printPrefix(log, NULL, buffer, 4);
+      log->prints("BRC \t");
+      debug->print(log, getRestartLabel());
       buffer += 4;
       }
    else
       {
-      debug->printPrefix(pOutFile, NULL, buffer, 6);
-      trfprintf(pOutFile, "BRCL \t");
-      debug->print(pOutFile, getRestartLabel());
+      debug->printPrefix(log, NULL, buffer, 6);
+      log->prints("BRCL \t");
+      debug->print(log, getRestartLabel());
       buffer += 6;
       }
    }
@@ -382,23 +378,23 @@ TR::S390RestoreGPR7Snippet::emitSnippetBody()
    }
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::S390RestoreGPR7Snippet *snippet)
+TR_Debug::print(OMR::Logger *log, TR::S390RestoreGPR7Snippet *snippet)
    {
    uint8_t * buffer = snippet->getSnippetLabel()->getCodeLocation();
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), buffer, "Restore GPR 7 after signal handler");
+   printSnippetLabel(log, snippet->getSnippetLabel(), buffer, "Restore GPR 7 after signal handler");
 
 #ifdef J9VM_JIT_FREE_SYSTEM_STACK_POINTER
    //save GPR4 to
    if (_comp->target().is64Bit())
       {
-      printPrefix(pOutFile, NULL, buffer, 6);
-      trfprintf(pOutFile, "STG   GPR7, SSP(GPR13)", snippet->getTargetLabel()->getCodeLocation());
+      printPrefix(log, NULL, buffer, 6);
+      log->prints("STG   GPR7, SSP(GPR13)");
       buffer += 6;
       }
    else
       {
-      printPrefix(pOutFile, NULL, buffer, 4);
-      trfprintf(pOutFile, "ST    GPR7, SSP(GPR13)", snippet->getTargetLabel()->getCodeLocation());
+      printPrefix(log, NULL, buffer, 4);
+      log->prints("ST    GPR7, SSP(GPR13)");
       buffer += 4;
       }
 #endif
@@ -406,14 +402,14 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390RestoreGPR7Snippet *snippet)
    //0x4a2af68a (???)       e370d0980058 LY      R7,152(,R13)
    if (_comp->target().is64Bit())
       {
-      printPrefix(pOutFile, NULL, buffer, 6);
-      trfprintf(pOutFile, "LG    GPR7, 152(GPR13)", snippet->getTargetLabel()->getCodeLocation());
+      printPrefix(log, NULL, buffer, 6);
+      log->prints("LG    GPR7, 152(GPR13)");
       buffer += 6;
       }
    else
       {
-      printPrefix(pOutFile, NULL, buffer, 4);
-      trfprintf(pOutFile, "L     GPR7, 144(GPR13)", snippet->getTargetLabel()->getCodeLocation());
+      printPrefix(log, NULL, buffer, 4);
+      log->prints("L     GPR7, 144(GPR13)");
       buffer += 4;
       }
 
@@ -421,25 +417,25 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390RestoreGPR7Snippet *snippet)
    //                                    L      R4,136(,R13)
    if (_comp->target().is64Bit())
       {
-      printPrefix(pOutFile, NULL, buffer, 6);
-      trfprintf(pOutFile, "LG    GPR4, 136(GPR13)", snippet->getTargetLabel()->getCodeLocation());
+      printPrefix(log, NULL, buffer, 6);
+      log->prints("LG    GPR4, 136(GPR13)");
       buffer += 6;
       }
    else
       {
-      printPrefix(pOutFile, NULL, buffer, 4);
-      trfprintf(pOutFile, "L     GPR4, 136(GPR13)", snippet->getTargetLabel()->getCodeLocation());
+      printPrefix(log, NULL, buffer, 4);
+      log->prints("L     GPR4, 136(GPR13)");
       buffer += 4;
       }
 #endif
 
    //0x4a2af690 (???)       c0f4fff1bb80 BRCL    15,*-1870080
-   printPrefix(pOutFile, NULL, buffer, 6);
-   trfprintf(pOutFile, "BRCL  0xF, targetLabel(%p)", snippet->getTargetLabel()->getCodeLocation());
+   printPrefix(log, NULL, buffer, 6);
+   log->printf("BRCL  0xF, targetLabel(%p)", snippet->getTargetLabel()->getCodeLocation());
    buffer += 6;
 
-   printPrefix(pOutFile, NULL, buffer, 4);
-   trfprintf(pOutFile, "Eye Catcher = 0xDAA0CA11", snippet->getTargetLabel()->getCodeLocation());
+   printPrefix(log, NULL, buffer, 4);
+   log->prints("Eye Catcher = 0xDAA0CA11");
    buffer += 4;
    }
 

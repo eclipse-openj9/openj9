@@ -31,6 +31,7 @@
 #include "infra/CriticalSection.hpp"
 #include "compile/Compilation.hpp"
 #include "infra/vector.hpp"
+#include "ras/Logger.hpp"
 #include "omrformatconsts.h"
 
 // Global lock used by Array & List profilers
@@ -209,7 +210,7 @@ class TR_AbstractProfilerInfo : public TR_Link0<TR_AbstractProfilerInfo>
    virtual TR_ValueInfoSource getSource() = 0;
    virtual uint32_t getTotalFrequency() = 0;
    virtual uint32_t getNumProfiledValues() = 0;
-   virtual void     dumpInfo(TR::FILE *logFile) = 0;
+   virtual void     dumpInfo(OMR::Logger *log) = 0;
 
    /**
     * Basic methods for each type of value.
@@ -361,7 +362,7 @@ class TR_HashTableProfilerInfo : public TR_AbstractHashTableProfilerInfo
     */
    uint32_t getTotalFrequency();
    uint32_t getNumProfiledValues();
-   void     dumpInfo(TR::FILE *logFile);
+   void     dumpInfo(OMR::Logger *log);
    uint32_t getTopValue(T&);
    uint32_t getMaxValue(T&);
    void     getList(TR::vector<TR_ProfiledValue<T>, TR::Region&>&);
@@ -617,7 +618,7 @@ TR_HashTableProfilerInfo<T>::getList(TR::vector<TR_ProfiledValue<T>, TR::Region&
  * Trace properties and content.
  */
 template <typename T> void
-TR_HashTableProfilerInfo<T>::dumpInfo(TR::FILE *logFile)
+TR_HashTableProfilerInfo<T>::dumpInfo(OMR::Logger *log)
    {
    uint32_t *freqs = getFrequencies();
    T *values = getKeys();
@@ -625,9 +626,9 @@ TR_HashTableProfilerInfo<T>::dumpInfo(TR::FILE *logFile)
 
    lock();
 
-   trfprintf(logFile, "\n   Hash Map Profiling Info %p\n", this);
-   trfprintf(logFile, "   Bits: %d OtherIndex: %d\n", getBits(), getOtherIndex());
-   trfprintf(logFile, "   Kind: %d BCI: %d:%d\n   Values:\n", getKind(),
+   log->printf("\n   Hash Map Profiling Info %p\n", this);
+   log->printf("   Bits: %d OtherIndex: %d\n", getBits(), getOtherIndex());
+   log->printf("   Kind: %d BCI: %d:%d\n   Values:\n", getKind(),
       TR_AbstractProfilerInfo::getByteCodeInfo().getCallerIndex(),
       TR_AbstractProfilerInfo::getByteCodeInfo().getByteCodeIndex());
 
@@ -637,32 +638,32 @@ TR_HashTableProfilerInfo<T>::dumpInfo(TR::FILE *logFile)
       {
       if (i == getOtherIndex())
          {
-         trfprintf(logFile, "    %d: %d OTHER\n", count++, freqs[i]);
+         log->printf("    %d: %d OTHER\n", count++, freqs[i]);
          }
       else if (freqs[i] == 0)
          {
-         trfprintf(logFile, "    %d: -\n", count++);
+         log->printf("    %d: -\n", count++);
          }
       else
          {
-         trfprintf(logFile, "    %d: %d 0x%0*llX\n", count++, freqs[i], padding, values[i]);
+         log->printf("    %d: %d 0x%0*llX\n", count++, freqs[i], padding, values[i]);
          seen++;
          }
       }
 
-   trfprintf(logFile, "   Num: %d Total Frequency: %d\n", seen, totalFreq);
+   log->printf("   Num: %d Total Frequency: %d\n", seen, totalFreq);
 
-   trfprintf(logFile, "   HashFunction: ");
+   log->prints("   HashFunction: ");
    if (_metaData.hash == BitShiftHash || _metaData.hash == BitIndexHash)
       {
-      trfprintf(logFile, "%s\n", _metaData.hash == BitShiftHash ? "Shift" : "Index");
+      log->printf("%s\n", _metaData.hash == BitShiftHash ? "Shift" : "Index");
       for (uint8_t i = 0; i < getBits(); ++i)
-         trfprintf(logFile, "    %01d : %03d - 0x%0*llX\n", i, _hashConfig.shifts[i], padding, 1 << (_hashConfig.shifts[i] + (_metaData.hash == BitShiftHash ? i : 0)));
+         log->printf("    %01d : %03d - 0x%0*llX\n", i, _hashConfig.shifts[i], padding, 1 << (_hashConfig.shifts[i] + (_metaData.hash == BitShiftHash ? i : 0)));
       }
    else
-      trfprintf(logFile, "Mask\n    0x%0*llX\n", padding, _hashConfig.mask);
+      log->printf("Mask\n    0x%0*llX\n", padding, _hashConfig.mask);
 
-   trfprintf(logFile, "\n");
+   log->println();
    unlock();
    }
 
@@ -724,9 +725,10 @@ TR_EmbeddedHashTable<T, bits>::addKey(T value)
    if (dumpInfo)
       {
       OMR::CriticalSection lock(vpMonitor);
-      printf("Pre %" OMR_PRIX64, static_cast<uint64_t>(value));
-      this->dumpInfo(TR::IO::Stdout);
-      fflush(stdout);
+      OMR::Logger *log = OMR::CStdIOStreamLogger::Stdout;
+      log->printf("Pre %" OMR_PRIX64, static_cast<uint64_t>(value));
+      this->dumpInfo(log);
+      log->flush();
       }
 
    // Lock the table, disabling jitted code access
@@ -818,9 +820,10 @@ TR_EmbeddedHashTable<T, bits>::addKey(T value)
    if (dumpInfo)
       {
       OMR::CriticalSection lock(vpMonitor);
-      printf("Post %" OMR_PRIX64, static_cast<uint64_t>(value));
-      this->dumpInfo(TR::IO::Stdout);
-      fflush(stdout);
+      OMR::Logger *log = OMR::CStdIOStreamLogger::Stdout;
+      log->printf("Post %" OMR_PRIX64, static_cast<uint64_t>(value));
+      this->dumpInfo(log);
+      log->flush();
       }
    }
 
@@ -1206,7 +1209,7 @@ class TR_LinkedListProfilerInfo : public TR_AbstractProfilerInfo
    TR_ValueInfoSource getSource() { return _external ? LastProfiler : LinkedListProfiler; }
    uint32_t getTotalFrequency()   { return getTotalFrequency(NULL); }
    uint32_t getNumProfiledValues();
-   void     dumpInfo(TR::FILE*);
+   void     dumpInfo(OMR::Logger *log);
 
    uint32_t getTopValue(T&);
    uint32_t getMaxValue(T&);
@@ -1339,24 +1342,24 @@ TR_LinkedListProfilerInfo<T>::getList(TR::vector<TR_ProfiledValue<T>, TR::Region
  * Custom trace for TR_ByteInfo, with hex print for other types.
  */
 template <> void
-TR_LinkedListProfilerInfo<TR_ByteInfo>::dumpInfo(TR::FILE *logFile);
+TR_LinkedListProfilerInfo<TR_ByteInfo>::dumpInfo(OMR::Logger *log);
 
 template <typename T> void
-TR_LinkedListProfilerInfo<T>::dumpInfo(TR::FILE *logFile)
+TR_LinkedListProfilerInfo<T>::dumpInfo(OMR::Logger *log)
    {
    OMR::CriticalSection lock(vpMonitor);
 
-   trfprintf(logFile, "   Linked List Profiling Info %p\n", this);
-   trfprintf(logFile, "   Kind: %d BCI: %d:%d\n Values:\n", _kind,
+   log->printf("   Linked List Profiling Info %p\n", this);
+   log->printf("   Kind: %d BCI: %d:%d\n Values:\n", _kind,
       TR_AbstractProfilerInfo::getByteCodeInfo().getCallerIndex(),
       TR_AbstractProfilerInfo::getByteCodeInfo().getByteCodeIndex());
 
    size_t count = 0;
    size_t padding = 2 * sizeof(T) + 2;
    for (auto iter = getFirst(); iter; iter = iter->getNext())
-      trfprintf(logFile, "    %d: %d %0*x", count++, iter->_frequency, padding, iter->_value);
+      log->printf("    %d: %d %0*x", count++, iter->_frequency, padding, iter->_value);
 
-   trfprintf(logFile, "   Num: %d Total Frequency: %d\n", count, getTotalFrequency());
+   log->printf("   Num: %d Total Frequency: %d\n", count, getTotalFrequency());
    }
 
 /**
@@ -1474,7 +1477,7 @@ class TR_ArrayProfilerInfo : public TR_AbstractProfilerInfo
    TR_ValueInfoSource getSource() { return ArrayProfiler; }
    uint32_t getTotalFrequency()   { return _totalFrequency; }
    uint32_t getNumProfiledValues();
-   void     dumpInfo(TR::FILE*);
+   void     dumpInfo(OMR::Logger *log);
 
    uint32_t getTopValue(T&);
    uint32_t getMaxValue(T&);
@@ -1587,21 +1590,21 @@ TR_ArrayProfilerInfo<T>::getList(TR::vector<TR_ProfiledValue<T>, TR::Region&> &v
  * Trace properties and content.
  */
 template <typename T> void
-TR_ArrayProfilerInfo<T>::dumpInfo(TR::FILE *logFile)
+TR_ArrayProfilerInfo<T>::dumpInfo(OMR::Logger *log)
    {
    OMR::CriticalSection lock(vpMonitor);
 
-   trfprintf(logFile, "   Array Profiling Info %p\n", this);
-   trfprintf(logFile, "   Kind: %d BCI: %d:%d\n Values:\n", _kind,
+   log->printf("   Array Profiling Info %p\n", this);
+   log->printf("   Kind: %d BCI: %d:%d\n Values:\n", _kind,
       TR_AbstractProfilerInfo::getByteCodeInfo().getCallerIndex(),
       TR_AbstractProfilerInfo::getByteCodeInfo().getByteCodeIndex());
 
    size_t count = 0;
    size_t padding = 2 * sizeof(T) + 2;
    for (size_t i = 0; i < getSize(); ++i)
-      trfprintf(logFile, "    %d: %d %0*x", count++, _frequencies[i], padding, _values[i]);
+      log->printf("    %d: %d %0*x", count++, _frequencies[i], padding, _values[i]);
 
-   trfprintf(logFile, "   Num: %d Total Frequency: %d\n", count, getTotalFrequency());
+   log->printf("   Num: %d Total Frequency: %d\n", count, getTotalFrequency());
    }
 
 /**

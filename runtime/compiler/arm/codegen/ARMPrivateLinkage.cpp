@@ -595,11 +595,6 @@ void J9::ARM::PrivateLinkage::createPrologue(TR::Instruction *cursor)
 
          if (numLocalsToBeInitialized > 0)
             {
-#if 0
-            traceMsg("%d locals to be initialized in %s\n",
-                   numLocalsToBeInitialized,
-                   signature(TR::comp()->getCurrentMethod()));
-#endif
             // Inline zero initialization if the number of stores is small;
             // otherwise, set up a loop to perform the initialization.
             if (numLocalsToBeInitialized > 8)

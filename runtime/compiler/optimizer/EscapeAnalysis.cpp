@@ -91,6 +91,7 @@
 #include "optimizer/LocalOpts.hpp"
 #include "optimizer/MonitorElimination.hpp"
 #include "ras/Debug.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9Runtime.hpp"
 
@@ -241,9 +242,7 @@ int32_t TR_EscapeAnalysis::perform()
    if (comp()->incompleteOptimizerSupportForReadWriteBarriers())
       return 0;
 
-   static char *doESCNonQuiet = feGetEnv("TR_ESCAPENONQUIET");
-   if (doESCNonQuiet && comp()->getOutFile() == NULL)
-      return 0;
+   OMR::Logger *log = comp()->log();
 
    int32_t nodeCount = 0;
    vcount_t visitCount = comp()->incVisitCount(); //@TODO: needs a change to TR_Node's
@@ -306,13 +305,6 @@ int32_t TR_EscapeAnalysis::perform()
       if (peekableCalls != NULL)
          ((TR_EscapeAnalysis::PersistentData *)manager()->getOptData())->_peekableCalls = peekableCalls;
       }
-   else
-      {
-      if (trace())
-         {
-         /////printf("secs Performing pass %d of Escape Analysis for %s\n", _currentPass, comp()->signature());
-         }
-      }
 
    int32_t cost = 0;
 
@@ -326,8 +318,7 @@ int32_t TR_EscapeAnalysis::perform()
    if (inspector.checkMonitorStructure(comp()->getFlowGraph()))
       {
       _removeMonitors = false;
-      if (trace())
-         traceMsg(comp(), "Disallowing monitor-removal because of strange monitor structure\n");
+      logprints(trace(), log, "Disallowing monitor-removal because of strange monitor structure\n");
       }
 #endif
 
@@ -421,10 +412,8 @@ int32_t TR_EscapeAnalysis::perform()
          heapificationBlock->getExit()->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(node, TR::Goto, 0, callBlock->getEntry())));
          tools.insertFakeEscapeForLoads(heapificationBlock, node, *nodeLookup->second.second);
 
-         if (trace())
-            {
-            traceMsg(comp(), "Created heapification block_%d\n", heapificationBlock->getNumber());
-            }
+         logprintf(trace(), log, "Created heapification block_%d\n", heapificationBlock->getNumber());
+
 
          ((TR_EscapeAnalysis::PersistentData*)manager()->getOptData())->_peekableCalls->set(node->getGlobalIndex());
          _callsToProtect->erase(nodeLookup);
@@ -463,8 +452,8 @@ void TR_EscapeAnalysis::rememoize(Candidate *candidate, bool mayDememoizeNextTim
 
    TR_ASSERT(candidate->_treeTop->getEnclosingBlock() == candidate->_dememoizedConstructorCall->getEnclosingBlock(),
       "Dememoized constructor call %p must be in the same block as allocation %p", candidate->_treeTop->getNode(), candidate->_dememoizedConstructorCall->getNode());
-   if (trace())
-      traceMsg(comp(), "   Rememoizing%s [%p] using constructor call [%p]\n", mayDememoizeNextTime?"":" and inlining", candidate->_node, candidate->_dememoizedConstructorCall->getNode()->getFirstChild());
+   logprintf(trace(), comp()->log(), "   Rememoizing%s [%p] using constructor call [%p]\n",
+      mayDememoizeNextTime?"":" and inlining", candidate->_node, candidate->_dememoizedConstructorCall->getNode()->getFirstChild());
 
    // Change trees back
    //
@@ -609,9 +598,11 @@ static TR_YesNoMaybe candidateHasField(Candidate *candidate, TR::Node *fieldNode
                }
             }
          }
-      else if (ea->trace())
+      else
          {
-         traceMsg(comp, "   Unable to acquire vm access; conservatively assume field [%p] does not belong to candidate [%p]\n", fieldNode, candidate->_node);
+         logprintf(ea->trace(), comp->log(),
+            "   Unable to acquire vm access; conservatively assume field [%p] does not belong to candidate [%p]\n",
+            fieldNode, candidate->_node);
          }
       }
 
@@ -630,13 +621,13 @@ static TR_YesNoMaybe candidateHasField(Candidate *candidate, TR::Node *fieldNode
          }
       }
 
-   if (ea->trace())
-      traceMsg(comp, "   Candidate [%p] field access [%p] candidateHasField=%s (withinObjectBound=%s withinObjectHeader=%s belongsToAllocatedClass=%s)\n",
-         candidate->_node, fieldNode,
-         ynmString(result),
-         ynmString(withinObjectBound),
-         ynmString(withinObjectHeader),
-         ynmString(belongsToAllocatedClass));
+   logprintf(ea->trace(), comp->log(),
+      "   Candidate [%p] field access [%p] candidateHasField=%s (withinObjectBound=%s withinObjectHeader=%s belongsToAllocatedClass=%s)\n",
+      candidate->_node, fieldNode,
+      ynmString(result),
+      ynmString(withinObjectBound),
+      ynmString(withinObjectHeader),
+      ynmString(belongsToAllocatedClass));
 
    return result;
    }
@@ -655,11 +646,12 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
    {
    int32_t    cost = 0;
    Candidate *candidate, *next;
+   OMR::Logger *log = comp()->log();
 
    if (trace())
       {
-      traceMsg(comp(), "Starting Escape Analysis pass %d\n", manager()->numPassesCompleted());
-      comp()->dumpMethodTrees("Trees before Escape Analysis");
+      log->printf("Starting Escape Analysis pass %d\n", manager()->numPassesCompleted());
+      comp()->dumpMethodTrees(log, "Trees before Escape Analysis");
       }
 
    _useDefInfo                 = NULL; // Build these only if required
@@ -704,16 +696,14 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
 
       if (!_useDefInfo)
          {
-         if (trace())
-            traceMsg(comp(), "Can't do Escape Analysis, no use/def information\n");
+         logprints(trace(), log, "Can't do Escape Analysis, no use/def information\n");
          _candidates.setFirst(NULL);
          }
 
       _valueNumberInfo = optimizer()->getValueNumberInfo();
       if (!_valueNumberInfo)
          {
-         if (trace())
-            traceMsg(comp(), "Can't do Escape Analysis, no value number information\n");
+         logprints(trace(), log, "Can't do Escape Analysis, no value number information\n");
          _candidates.setFirst(NULL);
          }
       else
@@ -805,8 +795,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
          }
 
       candidate->setLocalAllocation(false);
-      if (trace())
-         traceMsg(comp(), "   Make [%p] non-local because we'll try it again in another pass\n", candidate->_node);
+      logprintf(trace(), log, "   Make [%p] non-local because we'll try it again in another pass\n", candidate->_node);
 
       }
 
@@ -828,8 +817,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
          bool found = findCallSiteFixed(callSite);
          if (found)
             {
-            if (trace())
-               traceMsg(comp(), "replacing callsite %p for candidate %p with it's direct call\n",callSite,candidate->_node);
+            logprintf(trace(), log, "replacing callsite %p for candidate %p with it's direct call\n", callSite,candidate->_node);
             candidate->getCallSites()->remove(callSite);
             candidate->setLocalAllocation(false);
             //candidate->getCallSites()->add(directCallTree);
@@ -872,8 +860,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
             // Inline the constructor and catch this candidate on the next pass
             candidate->setLocalAllocation(false);
 
-            if (trace())
-                 traceMsg(comp(), "2 setting local alloc %p to false\n", candidate->_node);
+            logprintf(trace(), log, "2 setting local alloc %p to false\n", candidate->_node);
 
             _inlineCallSites.add(candidate->_dememoizedConstructorCall);
             _repeatAnalysis = true;
@@ -902,17 +889,20 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
 
             if (trace())
                {
-               traceMsg(comp(), "   Fail [%p] because dememoization failed; will%s attempt again on next EA pass\n", candidate->_node, mayDememoizeNextTime? "":" NOT");
-               traceMsg(comp(), "   Fail [%p] because dememoization failed; will%s attempt dememoization again on next EA pass\n", candidate->_node, mayDememoizeNextTime? "":" NOT");
-               traceMsg(comp(), " 4 booleans are %d %d %d %d\n", candidate->isLocalAllocation(), candidate->mustBeContiguousAllocation(), candidate->getCallSites()->isSingleton(), candidate->getCallSites()->find(candidate->_dememoizedConstructorCall));
+               log->printf("   Fail [%p] because dememoization failed; will%s attempt again on next EA pass\n",
+                  candidate->_node, mayDememoizeNextTime? "":" NOT");
+               log->printf("   Fail [%p] because dememoization failed; will%s attempt dememoization again on next EA pass\n",
+                  candidate->_node, mayDememoizeNextTime? "":" NOT");
+               log->printf(" 4 booleans are %d %d %d %d\n",
+                  candidate->isLocalAllocation(), candidate->mustBeContiguousAllocation(), candidate->getCallSites()->isSingleton(),
+                  candidate->getCallSites()->find(candidate->_dememoizedConstructorCall));
                }
 
             // if mayDememoizeNextTime is false, then the following call to
             // rememoize will add valueOf to the list of calls to be inlined
             //
             rememoize(candidate, mayDememoizeNextTime);
-            if (trace())
-               traceMsg(comp(), "8 removing cand %p to false\n", candidate->_node);
+            logprintf(trace(), log, "8 removing cand %p to false\n", candidate->_node);
             }
          _candidates.remove(candidate);
          }
@@ -934,8 +924,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
          if (!candidate->isLocalAllocation())
             continue;
 
-         if (trace())
-             traceMsg(comp(), "   0 Look at [%p] must be %d\n", candidate->_node, candidate->mustBeContiguousAllocation());
+         logprintf(trace(), log, "   0 Look at [%p] must be %d\n", candidate->_node, candidate->mustBeContiguousAllocation());
 
          if (candidate->mustBeContiguousAllocation() || !candidate->hasCallSites() ||
              (candidate->_stringCopyNode && (candidate->_stringCopyNode != candidate->_node) &&
@@ -946,8 +935,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
             continue;
 
 
-         if (trace())
-            traceMsg(comp(), "   0.5 Look at [%p]\n", candidate->_node);
+         logprintf(trace(), log, "   0.5 Look at [%p]\n", candidate->_node);
 
          // If any of the call sites for this parm is a guarded virtual call - there would be nothing
          // gained by inlining any of them - we will still end up with a call and will have to make
@@ -966,8 +954,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
                }
             }
 
-         if (trace())
-             traceMsg(comp(), "   1 Look at [%p]\n", candidate->_node);
+         logprintf(trace(), log, "   1 Look at [%p]\n", candidate->_node);
 
          // If any of the calls is a guarded virtual call or
          // If the depth of inlining required is greater than the number of
@@ -980,8 +967,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
              candidate->_inlineBytecodeSize > (_maxInlinedBytecodeSize-getOptData()->_totalInlinedBytecodeSize))
             {
             candidate->setMustBeContiguousAllocation();
-            if (trace())
-               traceMsg(comp(), "   Make [%p] contiguous because we can't inline enough\n", candidate->_node);
+            logprintf(trace(), log, "   Make [%p] contiguous because we can't inline enough\n", candidate->_node);
             continue;
             }
 
@@ -994,8 +980,6 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
             if (node->getOpCode().isTreeTop())
                node = node->getFirstChild();
 
-            //traceMsg(comp(), "For alloc node %p call site %p\n", candidate->_node, node);
-            //if (node->isTheVirtualCallNodeForAGuardedInlinedCall())
             if (!_inlineCallSites.find(callSite))
                {
                if (comp()->getMethodHotness() <= warm)
@@ -1016,8 +1000,8 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
                         break;
                      default:
                         candidate->setMustBeContiguousAllocation();
-                        if (trace())
-                           traceMsg(comp(), "   Make [%p] contiguous because we can't inline it at %s\n", candidate->_node, comp()->getHotnessName());
+                        logprintf(trace(), log, "   Make [%p] contiguous because we can't inline it at %s\n",
+                           candidate->_node, comp()->getHotnessName());
                         continue;
                      }
                   }
@@ -1028,8 +1012,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
 
          _repeatAnalysis = true;
          candidate->setLocalAllocation(false);
-         if (trace())
-            traceMsg(comp(), "   Make [%p] non-local because we'll try it again in another pass\n", candidate->_node);
+         logprintf(trace(), log, "   Make [%p] non-local because we'll try it again in another pass\n", candidate->_node);
          }
       }
 
@@ -1048,8 +1031,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
             if (candidate->_seenSelfStore || candidate->_seenStoreToLocalObject)
                {
                candidate->setLocalAllocation(false);
-               if (trace())
-                  traceMsg(comp(), "   Make [%p] non-local because self store seen in compressed pointers mode\n", candidate->_node);
+               logprintf(trace(), log, "   Make [%p] non-local because self store seen in compressed pointers mode\n", candidate->_node);
                }
             }
 
@@ -1064,8 +1046,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
                if (field && field->getSymbol()->getDataType().isBCD())
                   {
                   candidate->setMustBeContiguousAllocation();
-                  if (trace())
-                     traceMsg(comp(), "   Make [%p] contiguous because we can't create temp for BCD field #%d\n", candidate->_node, field->getReferenceNumber());
+                  logprintf(trace(), log, "   Make [%p] contiguous because we can't create temp for BCD field #%d\n", candidate->_node, field->getReferenceNumber());
                   break;
                   }
                }
@@ -1076,8 +1057,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
             if (!_createLocalObjects)
                {
                candidate->setLocalAllocation(false);
-               if (trace())
-                  traceMsg(comp(), "   Make [%p] non-local because we can't create local objects\n", candidate->_node);
+               logprintf(trace(), log, "   Make [%p] non-local because we can't create local objects\n", candidate->_node);
                }
             }
 
@@ -1089,8 +1069,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
               candidate->_seenStoreToLocalObject))
             {
             candidate->setLocalAllocation(false);
-            if (trace())
-               traceMsg(comp(), "   Make [%p] non-local because we can't have locking when candidate escapes in cold blocks\n", candidate->_node);
+            logprintf(trace(), log, "   Make [%p] non-local because we can't have locking when candidate escapes in cold blocks\n", candidate->_node);
             }
 
          // Primitive value type fields of objects created with a NEW bytecode must be initialized
@@ -1103,8 +1082,9 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
 
             if (!TR::Compiler->cls.isZeroInitializable(clazz))
                {
-               if (trace())
-                  traceMsg(comp(), "   Fail [%p] because the candidate is not zero initializable (that is, it has a field of a primitive value type whose fields have not been inlined into this candidate's class)\n", candidate->_node);
+               logprintf(trace(), log,
+                  "   Fail [%p] because the candidate is not zero initializable (that is, it has a field of a primitive value type whose fields have not been inlined into this candidate's class)\n",
+                  candidate->_node);
                rememoize(candidate);
                _candidates.remove(candidate);
                continue;
@@ -1143,8 +1123,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
             //  (!candidate->isContiguousAllocation() && !candidate->usedInNonColdBlock())))
             {
             candidate->setLocalAllocation(false);
-             if (trace())
-               traceMsg(comp(), "   Make [%p] non-local because the uses are not in hot enough blocks\n", candidate->_node);
+            logprintf(trace(), log, "   Make [%p] non-local because the uses are not in hot enough blocks\n", candidate->_node);
             }
 
          // If the candidate has more than one value number, and a suspicious
@@ -1159,8 +1138,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
                {
                if (candidate->_fields->element(i).hasBadFieldSymRef())
                   {
-                  if (trace())
-                     traceMsg(comp(), "   Fail [%p] because candidate is dereferenced via a field that does not belong to allocated class\n", candidate->_node);
+                  logprintf(trace(), log, "   Fail [%p] because candidate is dereferenced via a field that does not belong to allocated class\n", candidate->_node);
                   rememoize(candidate);
                   _candidates.remove(candidate);
                   break;
@@ -1181,8 +1159,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
 
          if (candidate->_dememoizedMethodSymRef && candidate->isContiguousAllocation())
             {
-            if (trace())
-               traceMsg(comp(), "   Fail [%p] because dememoized allocations must be non-contiguous\n", candidate->_node);
+            logprintf(trace(), log, "   Fail [%p] because dememoized allocations must be non-contiguous\n", candidate->_node);
             rememoize(candidate);
             _candidates.remove(candidate);
             }
@@ -1205,8 +1182,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
             if (classNode->getOpCodeValue() != TR::loadaddr ||
                 classNode->getSymbolReference()->isUnresolved())
                {
-               if (trace())
-                  traceMsg(comp(), "   Fail [%p] because base class is unresolved\n", candidate->_node);
+               logprintf(trace(), log, "   Fail [%p] because base class is unresolved\n", candidate->_node);
                rememoize(candidate);
                _candidates.remove(candidate);
                }
@@ -1217,8 +1193,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
          {
          candidate->setLocalAllocation(false);
 
-         if (trace())
-            traceMsg(comp(), "3 setting local alloc %p to false\n", candidate->_node);
+         logprintf(trace(), log, "3 setting local alloc %p to false\n", candidate->_node);
 
          if (performTransformation(comp(), "%sInitiate value profiling for length of %s [%p]\n",OPT_DETAILS,
                                      candidate->_node->getOpCode().getName(),
@@ -1234,9 +1209,9 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
                valueProfiler->addProfilingTrees(numElementsNode, candidate->_treeTop, 5);
                numElementsNode->setByteCodeInfo(originalBcInfo);
                }
-            else if (trace())
+            else
                {
-               traceMsg(comp(), "  Unable to switch to profiling mode; no profiling trees added for [%p]\n", candidate->_node);
+               logprintf(trace(), log, "  Unable to switch to profiling mode; no profiling trees added for [%p]\n", candidate->_node);
                }
             }
          }
@@ -1245,8 +1220,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
       //
       if (!candidate->isLocalAllocation())
          {
-         if (trace())
-            traceMsg(comp(), "   Fail [%p] array candidate is not locally allocatable\n", candidate->_node);
+         logprintf(trace(), log, "   Fail [%p] array candidate is not locally allocatable\n", candidate->_node);
          rememoize(candidate);
          _candidates.remove(candidate);
          continue;
@@ -1271,11 +1245,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
          if (TR::SimpleRegex::match(suppressAtRegex, bcInfo))
             {
             candidate->setLocalAllocation(false);
-
-            if (trace())
-               {
-               traceMsg(comp(), "  Suppressing stack allocation of candidate node [%p] - matched suppressEA option\n", candidate->_node);
-               }
+            logprintf(trace(), log, "  Suppressing stack allocation of candidate node [%p] - matched suppressEA option\n", candidate->_node);
             }
          }
       }
@@ -1341,8 +1311,6 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
          {
          if (performTransformation(comp(), "%sStack allocating candidate [%p]\n",OPT_DETAILS, candidate->_node))
             {
-            //printf("stack allocation in %s %s\n",comp()->signature(),comp()->getHotnessName(comp()->getMethodHotness()));fflush(stdout);
-
             if (candidate->isContiguousAllocation())
                {
                if (candidate->_stringCopyNode && (candidate->_stringCopyNode != candidate->_node))
@@ -1422,7 +1390,6 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
                      if (((*candidate->_fields)[i]._symRef == NULL) &&
                          !(*candidate->_fields)[i].hasBadFieldSymRef())
                         {
-                        //printf("Conservative aliasing reqd in %s\n", comp()->signature()); fflush(stdout);
                         comp()->getSymRefTab()->aliasBuilder.setConservativeGenericIntShadowAliasing(true);
                         }
                      }
@@ -1495,8 +1462,8 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
 
    if (trace())
       {
-      comp()->dumpMethodTrees("Trees after Escape Analysis");
-      traceMsg(comp(), "Ending Escape Analysis\n");
+      comp()->dumpMethodTrees(log, "Trees after Escape Analysis");
+      log->prints("Ending Escape Analysis\n");
       }
 
    return cost; // actual cost
@@ -1534,8 +1501,7 @@ void TR_EscapeAnalysis::markUsesAsIgnorable(TR::Node *node, TR::NodeChecklist &v
    if (visited.contains(node))
       return;
    visited.add(node);
-   if (trace())
-      traceMsg(comp(), "Marking n%dn as an ignorable use\n", node->getGlobalIndex());
+   logprintf(trace(), comp()->log(), "Marking n%dn as an ignorable use\n", node->getGlobalIndex());
    _ignorableUses->set(node->getGlobalIndex());
 
    int32_t i;
@@ -1605,6 +1571,7 @@ void TR_EscapeAnalysis::findLocalObjectsValueNumbers(TR::Node *node, TR::NodeChe
 void TR_EscapeAnalysis::findCandidates()
    {
    TR::NodeChecklist visited (comp());
+   OMR::Logger *log = comp()->log();
    int32_t     i;
    bool foundUserAnnotation=false;
    const char *className = NULL;
@@ -1633,8 +1600,8 @@ void TR_EscapeAnalysis::findCandidates()
 
       if (node->getOpCode().isNew() && node->isHeapificationAlloc())
          {
-         if (trace())
-            traceMsg(comp(), "Reject candidate %s n%dn [%p] because it is for heapification\n", node->getOpCode().getName(), node->getGlobalIndex(), node);
+         logprintf(trace(), log, "Reject candidate %s n%dn [%p] because it is for heapification\n",
+            node->getOpCode().getName(), node->getGlobalIndex(), node);
          continue;
          }
 
@@ -1652,7 +1619,7 @@ void TR_EscapeAnalysis::findCandidates()
          //
          _dememoizationSymRef = node->getSymbolReference();
 
-         if (trace()) traceMsg(comp(), "Attempt dememoize on %p\n", node);
+         logprintf(trace(), log, "Attempt dememoize on %p\n", node);
          TR_OpaqueMethodBlock *constructor = comp()->getOption(TR_DisableDememoization)? NULL : comp()->fej9()->getMethodFromName("java/lang/Integer", "<init>", "(I)V");
          if (  constructor
             && performTransformation(comp(), "%sTry dememoizing %p\n", OPT_DETAILS, node))
@@ -1694,10 +1661,9 @@ void TR_EscapeAnalysis::findCandidates()
 
       if (_disableValueTypeStackAllocation && (node->getOpCodeValue() == TR::newvalue))
          {
-         if (trace())
-            {
-            traceMsg(comp(), "Reject candidate %s n%dn [%p] because value type stack allocation is disabled\n", node->getOpCode().getName(), node->getGlobalIndex(), node);
-            }
+         logprintf(trace(), log, "Reject candidate %s n%dn [%p] because value type stack allocation is disabled\n",
+            node->getOpCode().getName(), node->getGlobalIndex(), node);
+
          continue;
          }
 
@@ -1723,22 +1689,22 @@ void TR_EscapeAnalysis::findCandidates()
          if (node->getOpCodeValue() == TR::New)
             {
             const char *className = getClassName(node->getFirstChild());
-            traceMsg(comp(), "Found [%p] new %s\n", node,
+            log->printf("Found [%p] new %s\n", node,
                      className ? className : "<Missing class name>");
             }
          else if (node->getOpCodeValue() == TR::newvalue)
             {
             const char *className = getClassName(node->getFirstChild());
-            traceMsg(comp(), "Found [%p] newvalue of type %s\n", node, className ? className : "<Missing value type class name>");
+            log->printf("Found [%p] newvalue of type %s\n", node, className ? className : "<Missing value type class name>");
             }
          else if (node->getOpCodeValue() == TR::newarray)
             {
-            traceMsg(comp(), "Found [%p] newarray of type %d\n", node, node->getSecondChild()->getInt());
+            log->printf("Found [%p] newarray of type %d\n", node, node->getSecondChild()->getInt());
             }
          else
             {
             const char *className = getClassName(node->getSecondChild());
-            traceMsg(comp(), "Found [%p] anewarray %s\n", node,
+            log->printf("Found [%p] anewarray %s\n", node,
                      className ? className : "<Missing class name>");
             }
          }
@@ -1766,15 +1732,13 @@ void TR_EscapeAnalysis::findCandidates()
       //     allocation size otherwise.
       //
       candidate->setLocalAllocation(_createStackAllocations && (candidate->_size > 0));
-      if (trace())
-         traceMsg(comp(), "4 setting local alloc %p to %s\n", candidate->_node, candidate->isLocalAllocation()? "true":"false");
+      logprintf(trace(), log, "4 setting local alloc %p to %s\n", candidate->_node, candidate->isLocalAllocation()? "true":"false");
 
       if(foundUserAnnotation)
          {
          candidate->setForceLocalAllocation(true);
          candidate->setObjectIsReferenced();
-        if (trace())
-           traceMsg(comp(), "   Force [%p] to be locally allocated due to annotation of %s\n", node, className);
+         logprintf(trace(), log, "   Force [%p] to be locally allocated due to annotation of %s\n", node, className);
          }
 
       if (candidate->isLocalAllocation())
@@ -1800,13 +1764,15 @@ void TR_EscapeAnalysis::findCandidates()
 
    if (trace())
       {
-      comp()->dumpMethodTrees("Trees after finding candidates");
+      comp()->dumpMethodTrees(log, "Trees after finding candidates");
       }
    }
 
 
 Candidate *TR_EscapeAnalysis::createCandidateIfValid(TR::Node *node, TR_OpaqueClassBlock *&classInfo,bool foundUserAnnotation)
    {
+   OMR::Logger *log = comp()->log();
+
    // If user has annotated this objects class, force it to be on the stack
    if(!foundUserAnnotation)
       {
@@ -1820,15 +1786,13 @@ Candidate *TR_EscapeAnalysis::createCandidateIfValid(TR::Node *node, TR_OpaqueCl
          TR::Node *classNode = node->getFirstChild();
          if (classNode->getOpCodeValue() != TR::loadaddr)
             {
-            if (trace())
-               traceMsg(comp(), "   Node [%p] failed: child is not TR::loadaddr\n", node);
+            logprintf(trace(), log, "   Node [%p] failed: child is not TR::loadaddr\n", node);
             return NULL;
             }
 
          if (classNode->getSymbolReference()->isUnresolved())
             {
-            if (trace())
-               traceMsg(comp(), "   Node [%p] failed: class is unresolved\n", node);
+            logprintf(trace(), log, "   Node [%p] failed: class is unresolved\n", node);
             return NULL;
             }
 
@@ -1842,10 +1806,10 @@ Candidate *TR_EscapeAnalysis::createCandidateIfValid(TR::Node *node, TR_OpaqueCl
             if (trace())
                {
                const char *className = getClassName(classNode);
-               traceMsg(comp(), "secs Class %s implements Runnable in %s\n",
+               log->printf("secs Class %s implements Runnable in %s\n",
                   className ? className : "<Missing class name>",
                   comp()->signature());
-               traceMsg(comp(), "   Node [%p] failed: class implements the Runnable interface\n", node);
+               log->printf("   Node [%p] failed: class implements the Runnable interface\n", node);
                }
             return NULL;
             }
@@ -1858,8 +1822,7 @@ Candidate *TR_EscapeAnalysis::createCandidateIfValid(TR::Node *node, TR_OpaqueCl
          TR::Node *typeNode = node->getSecondChild();
          if (typeNode->getInt() == 7 || typeNode->getInt() == 11)
             {
-            if (trace())
-               traceMsg(comp(), "   Node [%p] failed: double-size array\n", node);
+            logprintf(trace(), log, "   Node [%p] failed: double-size array\n", node);
             return NULL;
             }
          }
@@ -1870,9 +1833,7 @@ Candidate *TR_EscapeAnalysis::createCandidateIfValid(TR::Node *node, TR_OpaqueCl
       {
       if (node->getOpCodeValue() != TR::New && node->getOpCodeValue() != TR::newvalue)
          {
-         if (trace())
-            traceMsg(comp(), "   Node [%p] failed: arraylet\n", node);
-
+         logprintf(trace(), log, "   Node [%p] failed: arraylet\n", node);
          return NULL;
          }
       }
@@ -1899,8 +1860,7 @@ Candidate *TR_EscapeAnalysis::createCandidateIfValid(TR::Node *node, TR_OpaqueCl
 
    if (size <= 0)
       {
-      if (trace())
-         traceMsg(comp(), "   Node [%p] failed: VM can't skip allocation (code %d, class %p)\n", node, size, classInfo);
+      logprintf(trace(), log, "   Node [%p] failed: VM can't skip allocation (code %d, class %p)\n", node, size, classInfo);
 
       if (  size == 0
          && classInfo
@@ -1963,9 +1923,7 @@ Candidate *TR_EscapeAnalysis::createCandidateIfValid(TR::Node *node, TR_OpaqueCl
          {
          if (currentClass == jlReference)
             {
-            if (trace())
-               traceMsg(comp(), "   Node [%p] failed: class %p is subclass of j/l/r/Reference\n", node, classInfo);
-
+            logprintf(trace(), log, "   Node [%p] failed: class %p is subclass of j/l/r/Reference\n", node, classInfo);
             return NULL;
             }
          else
@@ -2000,6 +1958,7 @@ bool TR_EscapeAnalysis::isEscapePointCold(Candidate *candidate, TR::Node *node)
 
 void TR_EscapeAnalysis::checkDefsAndUses()
    {
+   OMR::Logger *log = comp()->log();
    Candidate *candidate, *next;
 
    gatherUsesThroughAselect();
@@ -2034,15 +1993,13 @@ void TR_EscapeAnalysis::checkDefsAndUses()
          if (candidate->_valueNumbers->size() > 1)
             {
             candidate->setMustBeContiguousAllocation();
-            if (trace())
-               traceMsg(comp(), "   Make [%p] contiguous because its uses can be reached from other defs\n", candidate->_node);
+            logprintf(trace(), log, "   Make [%p] contiguous because its uses can be reached from other defs\n", candidate->_node);
             }
          }
       else
          {
          candidate->setLocalAllocation(false);
-         if (trace())
-            traceMsg(comp(), "5 setting local alloc %p to false\n", candidate->_node);
+         logprintf(trace(), log, "5 setting local alloc %p to false\n", candidate->_node);
          }
       }
 
@@ -2132,8 +2089,7 @@ void TR_EscapeAnalysis::checkDefsAndUses()
                   _notOptimizableLocalObjectsValueNumbers->set(baseChildVN);
                   _notOptimizableLocalStringObjectsValueNumbers->set(baseChildVN);
                   storeOfObjectIntoField = false;
-                  if (trace())
-                     traceMsg(comp(), "Reached 0 with baseChild %p VN %d\n", baseChild, baseChildVN);
+                  logprintf(trace(), log, "Reached 0 with baseChild %p VN %d\n", baseChild, baseChildVN);
                   }
                else
                   {
@@ -2141,8 +2097,7 @@ void TR_EscapeAnalysis::checkDefsAndUses()
                      {
                      storeOfObjectIntoField = true;
                      storeIntoOtherLocalObject = true;
-                     if (trace())
-                        traceMsg(comp(), "Reached 1 with baseChild %p VN %d\n", baseChild, baseChildVN);
+                     logprintf(trace(), log, "Reached 1 with baseChild %p VN %d\n", baseChild, baseChildVN);
                      }
                   else
                      {
@@ -2317,33 +2272,34 @@ void TR_EscapeAnalysis::printUsesThroughAselect(void)
    {
    if (trace())
       {
+      OMR::Logger *log = comp()->log();
       if (_nodeUsesThroughAselect)
          {
-         traceMsg(comp(), "\nNodes used through aselect operations\n");
+         log->prints("\nNodes used through aselect operations\n");
 
          for (auto mi = _nodeUsesThroughAselect->begin(); mi != _nodeUsesThroughAselect->end(); mi++)
             {
             TR::Node *key = mi->first;
             int32_t nodeIdx = key->getGlobalIndex();
 
-            traceMsg(comp(), "   node [%p] n%dn is used by {", key, nodeIdx);
+            log->printf("   node [%p] n%dn is used by {", key, nodeIdx);
 
             bool first = true;
 
             for (auto di = mi->second->begin(), end = mi->second->end(); di != end; di++)
                {
                TR::Node *aselectNode = *di;
-               traceMsg(comp(), "%s[%p] n%dn", (first ? "" : ", "), aselectNode,
+               log->printf("%s[%p] n%dn", (first ? "" : ", "), aselectNode,
                         aselectNode->getGlobalIndex());
                first = false;
                }
 
-            traceMsg(comp(), "}\n");
+            log->prints("}\n");
             }
          }
       else
          {
-         traceMsg(comp(), "\nNo nodes used through aselect operations\n");
+         log->prints("\nNo nodes used through aselect operations\n");
          }
       }
    }
@@ -2427,6 +2383,8 @@ void TR_EscapeAnalysis::associateAselectWithChild(TR::Node *aselectNode, int32_t
 
 bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *node, Candidate *candidate, TR::Node *indirectStore, TR::NodeChecklist& visited, int32_t baseChildVN)
    {
+   OMR::Logger *log = comp()->log();
+
    if (visited.contains(node))
       return false;
    visited.add(node);
@@ -2448,8 +2406,7 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
             sameSymbol = true;
          }
 
-      if (trace())
-         traceMsg(comp(), "store node %p load node %p candidate %p baseChildVN %d\n", indirectStore, node, candidate->_node, baseChildVN);
+      logprintf(trace(), log, "store node %p load node %p candidate %p baseChildVN %d\n", indirectStore, node, candidate->_node, baseChildVN);
 
       if (sameSymbol)
          {
@@ -2460,8 +2417,6 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
             base = base->getFirstChild();
 
          int32_t baseVN = _valueNumberInfo->getValueNumber(base);
-
-         //traceMsg(comp(), "store node %p load node %p candidate %p baseChildVN %d baseVN %d\n", indirectStore, node, candidate->_node, baseChildVN, baseVN);
 
          if (candidate->_valueNumbers)
             {
@@ -2525,7 +2480,7 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
                         _useDefInfo->getUseDef(baseDefs, baseIndex);
                         //TR_UseDefInfo::BitVector storeBaseDefs(comp()->allocator());
                         //_useDefInfo->getUseDef(storeBaseDefs, storeBaseIndex);
-                        //traceMsg(comp(), "store base index %d store base %p base index %p base %p\n", storeBaseIndex, storeBase, baseIndex, base);
+
 
                         // Add the value number of the base of the indirect store that's
                         // being considered to _vnTemp.  Iterate until _vnTemp no longer
@@ -2556,7 +2511,6 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
                               {
                               int32_t useDefIndex = i + _useDefInfo->getFirstDefIndex();
                               TR::Node *defNode = _useDefInfo->getNode(useDefIndex);
-                              //traceMsg(comp(), "def node %p\n", defNode);
 
                               if (defNode && defNode->getOpCode().isStore())
                                  {
@@ -2572,7 +2526,6 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
                                           int32_t useIndex = cursor;
                                           TR::Node *useNode = _useDefInfo->getNode(useIndex+_useDefInfo->getFirstUseIndex());
                                           int32_t useNodeVN = _valueNumberInfo->getValueNumber(useNode);
-                                          //traceMsg(comp(), "use node %p vn %d\n", useNode, useNodeVN);
 
                                           if (!_vnTemp->isSet(useNodeVN))
                                              {
@@ -2661,10 +2614,9 @@ bool TR_EscapeAnalysis::checkUsesThroughAselect(TR::Node *node, Candidate *candi
                {
                candidate->_valueNumbers->add(aselectVN);
 
-               if (trace())
-                  {
-                  traceMsg(comp(), "   Checking uses of node %p through aselect operation %p for candidate %p\n", node, aselectNode, candidate->_node);
-                  }
+               logprintf(trace(), comp()->log(),
+                  "   Checking uses of node %p through aselect operation %p for candidate %p\n",
+                  node, aselectNode, candidate->_node);
 
                if (!checkDefsAndUses(aselectNode, candidate))
                   {
@@ -2681,6 +2633,7 @@ bool TR_EscapeAnalysis::checkUsesThroughAselect(TR::Node *node, Candidate *candi
 
 bool TR_EscapeAnalysis::checkDefsAndUses(TR::Node *node, Candidate *candidate)
    {
+   OMR::Logger *log = comp()->log();
    TR::Node *next;
    _useDefInfo->buildDefUseInfo();
    bool returnValue = true;
@@ -2749,21 +2702,17 @@ bool TR_EscapeAnalysis::checkDefsAndUses(TR::Node *node, Candidate *candidate)
                            // co-exist.
                            // There are 2 ways this can happen - check them.
                            //
-                           if (trace())
-                              traceMsg(comp(), "   Look at other defs for use node %p of candidate %p\n", useNode, candidate->_node);
+                           logprintf(trace(), log, "   Look at other defs for use node %p of candidate %p\n", useNode, candidate->_node);
                            ////_otherDefsForLoopAllocation->set(udIndex);
 
                            if (!checkOverlappingLoopAllocation(useNode, candidate))
                               {
-                              if (trace())
-                                 traceMsg(comp(), "   Make [%p] non-local because it overlaps with use [%p]\n", candidate->_node, useNode);
-                              /////printf("secs Overlapping loop allocation in %s\n", comp()->signature());
+                              logprintf(trace(), log, "   Make [%p] non-local because it overlaps with use [%p]\n", candidate->_node, useNode);
                               returnValue = false;
                               }
                            if (!checkOtherDefsOfLoopAllocation(useNode, candidate, (next->getFirstChild() == candidate->_node)))
                               {
-                              if (trace())
-                                 traceMsg(comp(), "   Make [%p] non-local because multiple defs to node [%p]\n", candidate->_node, useNode);
+                              logprintf(trace(), log, "   Make [%p] non-local because multiple defs to node [%p]\n", candidate->_node, useNode);
                               returnValue = false;
                               }
                            }
@@ -2809,6 +2758,7 @@ bool TR_EscapeAnalysis::checkOtherDefsOfLoopAllocation(TR::Node *useNode, Candid
    // There may be other such examples that can be added in the future, e.g. if the value is an already stack allocated
    // object from a prior pass of escape analysis, it obviously cannot be a candidate for stack allocation in this pass.
    //
+   OMR::Logger *log = comp()->log();
    int32_t useIndex = useNode->getUseDefIndex();
    if (useIndex <= 0)
       return true;
@@ -2837,15 +2787,13 @@ bool TR_EscapeAnalysis::checkOtherDefsOfLoopAllocation(TR::Node *useNode, Candid
           _valueNumberInfo->getValueNumber(defNode) == _valueNumberInfo->getValueNumber(candidate->_node))
          ///_valueNumberInfo->getValueNumber(defNode) == _valueNumberInfo->getValueNumber(useNode))
          {
-         if (trace())
-            traceMsg(comp(), "      Ignoring def node [%p] for use node [%p]\n", defNode, useNode);
+         logprintf(trace(), log, "      Ignoring def node [%p] for use node [%p]\n", defNode, useNode);
          continue;
          }
 
       _otherDefsForLoopAllocation->set(defIndex);
 
-      if (trace())
-         traceMsg(comp(), "      Look at def node [%p] for use node [%p]\n", defNode, useNode);
+      logprintf(trace(), log, "      Look at def node [%p] for use node [%p]\n", defNode, useNode);
 
       bool allnewsonrhs = checkAllNewsOnRHSInLoopWithAliasing(defIndex, useNode, candidate);
 
@@ -2868,8 +2816,7 @@ bool TR_EscapeAnalysis::checkOtherDefsOfLoopAllocation(TR::Node *useNode, Candid
             if (checkIfUseIsInSameLoopAsDef(_useDefInfo->getTreeTop(defIndex), useNode) ||
                 checkIfUseIsInLoopAndOverlapping(candidate, _useDefInfo->getTreeTop(defIndex), useNode))
                {
-               if (trace())
-                  traceMsg(comp(), "         Def node [%p] same as candidate [%p]\n", defNode, candidate->_node);
+               logprintf(trace(), log, "         Def node [%p] same as candidate [%p]\n", defNode, candidate->_node);
                return false;
                }
             }
@@ -2881,8 +2828,7 @@ bool TR_EscapeAnalysis::checkOtherDefsOfLoopAllocation(TR::Node *useNode, Candid
             return false;
          }
 
-      if (trace())
-         traceMsg(comp(), "         Def node [%p] not the same as candidate [%p]\n", defNode, candidate->_node);
+      logprintf(trace(), log, "         Def node [%p] not the same as candidate [%p]\n", defNode, candidate->_node);
       }
    return true;
    }
@@ -2902,6 +2848,7 @@ bool TR_EscapeAnalysis::checkAllNewsOnRHSInLoopWithAliasing(int32_t defIndex, TR
    // any of those sym refs will be treated akin to how the fresh allocation would have been in the below logic
    //
 
+   OMR::Logger *log = comp()->log();
    TR::Node *defNode = _useDefInfo->getNode(defIndex);
    int32_t useIndex = useNode->getUseDefIndex();
    bool allnewsonrhs = false;
@@ -2909,20 +2856,18 @@ bool TR_EscapeAnalysis::checkAllNewsOnRHSInLoopWithAliasing(int32_t defIndex, TR
    if ((defNode->getFirstChild() == candidate->_node) &&
        (_valueNumberInfo->getValueNumber(defNode) == _valueNumberInfo->getValueNumber(useNode)))
       {
-      if (trace())
-         {
-         traceMsg(comp(), "      Value numbers match for def node [%p] with use node [%p]\n", defNode, useNode);
-         }
+      logprintf(trace(), log, "      Value numbers match for def node [%p] with use node [%p]\n", defNode, useNode);
+
       allnewsonrhs = true;
       }
    else if ((_valueNumberInfo->getValueNumber(defNode) == _valueNumberInfo->getValueNumber(candidate->_node)) &&
             (_useDefInfo->getTreeTop(defIndex)->getEnclosingBlock() == candidate->_block) &&
             _aliasesOfAllocNode->get(defNode->getSymbolReference()->getReferenceNumber()))
       {
-      if (trace())
-         {
-         traceMsg(comp(), "      Value numbers match for def node [%p] with candidate node [%p], and def node's symref is alias of candidate allocation\n", defNode, candidate->_node);
-         }
+      logprintf(trace(), log,
+         "      Value numbers match for def node [%p] with candidate node [%p], and def node's symref is alias of candidate allocation\n",
+         defNode, candidate->_node);
+
       allnewsonrhs = true;
       }
    else
@@ -2972,10 +2917,7 @@ bool TR_EscapeAnalysis::checkAllNewsOnRHSInLoopWithAliasing(int32_t defIndex, TR
                break;
                }
 
-            if (trace())
-               {
-               traceMsg(comp(), "         Look at defNode2 [%p] with otherAllocNode [%p]\n", defNode2, otherAllocNode->_node);
-               }
+            logprintf(trace(), log, "         Look at defNode2 [%p] with otherAllocNode [%p]\n", defNode2, otherAllocNode->_node);
 
             if (!rhsIsHarmless &&
                 (_valueNumberInfo->getValueNumber(defNode2) == _valueNumberInfo->getValueNumber(otherAllocNode->_node)))
@@ -3012,10 +2954,8 @@ bool TR_EscapeAnalysis::checkAllNewsOnRHSInLoopWithAliasing(int32_t defIndex, TR
                if ((_useDefInfo->getTreeTop(defIndex2)->getEnclosingBlock() == otherAllocNode->_block) &&
                    _aliasesOfOtherAllocNode->get(defNode2->getSymbolReference()->getReferenceNumber()))
                   {
-                  if (trace())
-                     {
-                     traceMsg(comp(), "      rhs is harmless for defNode2 [%p] with otherAllocNode [%p]\n", defNode2, otherAllocNode->_node);
-                     }
+                  logprintf(trace(), log, "      rhs is harmless for defNode2 [%p] with otherAllocNode [%p]\n", defNode2, otherAllocNode->_node);
+
                   rhsIsHarmless = true;
                   break;
                   }
@@ -3024,10 +2964,8 @@ bool TR_EscapeAnalysis::checkAllNewsOnRHSInLoopWithAliasing(int32_t defIndex, TR
 
          if (!rhsIsHarmless)
             {
-            if (trace())
-               {
-               traceMsg(comp(), "   defNode2 vn=%d is local %d\n", _valueNumberInfo->getValueNumber(defNode2), _allLocalObjectsValueNumbers->get(_valueNumberInfo->getValueNumber(defNode2)));
-               }
+            logprintf(trace(), log, "   defNode2 vn=%d is local %d\n",
+               _valueNumberInfo->getValueNumber(defNode2), _allLocalObjectsValueNumbers->get(_valueNumberInfo->getValueNumber(defNode2)));
 
             // References to objects that were previously made local are also harmless
             if (_allLocalObjectsValueNumbers->get(_valueNumberInfo->getValueNumber(defNode2)))
@@ -3067,10 +3005,7 @@ bool TR_EscapeAnalysis::checkAllNewsOnRHSInLoopWithAliasing(int32_t defIndex, TR
                            !strncmp("Character$CharacterCache.cache", &fieldName[10], 30)))
 
                      {
-                     if (trace())
-                        {
-                        traceMsg(comp(), "         rhs is harmless for defNode2 [%p] access of Integer cache\n", defNode2);
-                        }
+                     logprintf(trace(), log, "         rhs is harmless for defNode2 [%p] access of Integer cache\n", defNode2);
 
                      rhsIsHarmless = true;
                      }
@@ -3085,20 +3020,15 @@ bool TR_EscapeAnalysis::checkAllNewsOnRHSInLoopWithAliasing(int32_t defIndex, TR
                          || comp()->getSymRefTab()->isNonHelper(firstChild->getSymbolReference(),
                                                                 TR::SymbolReferenceTable::loadFlattenableArrayElementNonHelperSymbol)))
                {
-               if (trace())
-                  {
-                  traceMsg(comp(), "         rhs is harmless for defNode2 [%p] - call to jitLoadFlattenableArrayElement\n", defNode2);
-                  }
+               logprintf(trace(), log, "         rhs is harmless for defNode2 [%p] - call to jitLoadFlattenableArrayElement\n", defNode2);
+
                rhsIsHarmless = true;
                }
             }
 
          if (!rhsIsHarmless)
             {
-            if (trace())
-               {
-               traceMsg(comp(), "      rhs not harmless for defNode2 [%p]\n", defNode2);
-               }
+            logprintf(trace(), log, "      rhs not harmless for defNode2 [%p]\n", defNode2);
 
             allnewsonrhs = false;
             break;
@@ -3285,36 +3215,34 @@ bool TR_EscapeAnalysis::checkIfUseIsInSameLoopAsDef(TR::TreeTop *defTree, TR::No
 
 bool TR_EscapeAnalysis::checkIfUseIsInLoopAndOverlapping(Candidate *candidate, TR::TreeTop *defTree, TR::Node *useNode)
    {
+   OMR::Logger *log = comp()->log();
    TR::NodeChecklist visited (comp());
    TR::BlockChecklist vBlocks (comp());
    TR::TreeTop *allocTree = candidate->_treeTop;
-   if (trace())
-      traceMsg(comp(), "Started checking for candidate %p\n", candidate->_node);
+   logprintf(trace(), log, "Started checking for candidate %p\n", candidate->_node);
    bool decisionMade = false;
    bool b = checkIfUseIsInLoopAndOverlapping(allocTree->getNextTreeTop(), candidate->_block->getExit(), defTree, useNode, visited, vBlocks, decisionMade);
-   if (trace())
-      traceMsg(comp(), "Finished checking for candidate %p\n", candidate->_node);
+   logprintf(trace(), log, "Finished checking for candidate %p\n", candidate->_node);
    return b;
    }
 
 
 bool TR_EscapeAnalysis::checkIfUseIsInLoopAndOverlapping(TR::TreeTop *start, TR::TreeTop *end, TR::TreeTop *defTree, TR::Node *useNode, TR::NodeChecklist& visited, TR::BlockChecklist& vBlocks, bool & decisionMade)
    {
+   OMR::Logger *log = comp()->log();
    TR::TreeTop *currentTree = start;
    while (currentTree && (currentTree != end))
       {
       if (checkUse(currentTree->getNode(), useNode, visited))
          {
          decisionMade = true;
-         if (trace())
-            traceMsg(comp(), "Returning TRUE at %p\n", currentTree->getNode());
+         logprintf(trace(), log, "Returning TRUE at %p\n", currentTree->getNode());
          return true;
          }
 
       if (currentTree == defTree)
          {
-         if (trace())
-            traceMsg(comp(), "Returning FALSE at %p\n", currentTree->getNode());
+         logprintf(trace(), log, "Returning FALSE at %p\n", currentTree->getNode());
          decisionMade = true;
          return false;
          }
@@ -3322,8 +3250,7 @@ bool TR_EscapeAnalysis::checkIfUseIsInLoopAndOverlapping(TR::TreeTop *start, TR:
       if (currentTree->getNode()->getOpCode().isStore() &&
           (currentTree->getNode()->getSymbolReference() == useNode->getSymbolReference()))
          {
-         if (trace())
-            traceMsg(comp(), "Returning FALSE at %p\n", currentTree->getNode());
+         logprintf(trace(), log, "Returning FALSE at %p\n", currentTree->getNode());
          decisionMade = true;
          return false;
          }
@@ -3332,8 +3259,7 @@ bool TR_EscapeAnalysis::checkIfUseIsInLoopAndOverlapping(TR::TreeTop *start, TR:
           currentTree->getNode()->getFirstChild()->getOpCode().isStore() &&
           (currentTree->getNode()->getFirstChild()->getSymbolReference() == useNode->getSymbolReference()))
          {
-         if (trace())
-            traceMsg(comp(), "Returning FALSE at %p\n", currentTree->getNode());
+         logprintf(trace(), log, "Returning FALSE at %p\n", currentTree->getNode());
          decisionMade = true;
          return false;
          }
@@ -3351,8 +3277,7 @@ bool TR_EscapeAnalysis::checkIfUseIsInLoopAndOverlapping(TR::TreeTop *start, TR:
       decisionMade = false;
       if (!vBlocks.contains(next) && (next != cfg->getEnd()))
          {
-         if (trace())
-            traceMsg(comp(), "Looking at block_%d\n", next->getNumber());
+         logprintf(trace(), log, "Looking at block_%d\n", next->getNumber());
          bool b = checkIfUseIsInLoopAndOverlapping(next->getEntry(), next->getExit(), defTree, useNode, visited, vBlocks, decisionMade);
          if (decisionMade)
             {
@@ -3370,8 +3295,7 @@ bool TR_EscapeAnalysis::checkIfUseIsInLoopAndOverlapping(TR::TreeTop *start, TR:
       decisionMade = false;
       if (!vBlocks.contains(next) && (next != cfg->getEnd()))
          {
-         if (trace())
-            traceMsg(comp(), "Looking at block_%d\n", next->getNumber());
+         logprintf(trace(), log, "Looking at block_%d\n", next->getNumber());
          bool b = checkIfUseIsInLoopAndOverlapping(next->getEntry(), next->getExit(), defTree, useNode, visited, vBlocks, decisionMade);
          if (decisionMade)
             {
@@ -3383,8 +3307,7 @@ bool TR_EscapeAnalysis::checkIfUseIsInLoopAndOverlapping(TR::TreeTop *start, TR:
          decisionMade = true;
       }
 
-   if (trace())
-      traceMsg(comp(), "Returning FALSE at block_%d\n", block->getNumber());
+   logprintf(trace(), log, "Returning FALSE at block_%d\n", block->getNumber());
    return false;
    }
 
@@ -3437,6 +3360,8 @@ void TR_EscapeAnalysis::forceEscape(TR::Node *node, TR::Node *reason, bool force
    if (!resolvedNode)
       return;
 
+   OMR::Logger *log = comp()->log();
+
    int32_t valueNumber = _valueNumberInfo->getValueNumber(resolvedNode);
    Candidate *candidate, *next;
    for (candidate = _candidates.getFirst(); candidate; candidate = next)
@@ -3448,15 +3373,15 @@ void TR_EscapeAnalysis::forceEscape(TR::Node *node, TR::Node *reason, bool force
             {
             if (!isImmutableObject(candidate))
                {
-               if (trace())
-                  traceMsg(comp(), "   Make [%p] contiguous because of node [%p]\n", candidate->_node, reason);
+               logprintf(trace(), log, "   Make [%p] contiguous because of node [%p]\n", candidate->_node, reason);
                candidate->setMustBeContiguousAllocation();
                //candidate->setLocalAllocation(false);
                }
             else
                {
-               if (trace())
-                  traceMsg(comp(), "  Marking immutable candidate [%p] as referenced in forceEscape to allow for non-contiguous allocation, but compensating for escape at [%p]\n", candidate->_node, reason);
+               logprintf(trace(), log,
+                  "  Marking immutable candidate [%p] as referenced in forceEscape to allow for non-contiguous allocation, but compensating for escape at [%p]\n",
+                  candidate->_node, reason);
                candidate->setObjectIsReferenced();
                }
             }
@@ -3464,14 +3389,13 @@ void TR_EscapeAnalysis::forceEscape(TR::Node *node, TR::Node *reason, bool force
             {
             if(candidate->forceLocalAllocation())
                {
-               if(trace())
-                  traceMsg(comp(), "   Normally would fail [%p] because it escapes via node [%p] (cold %d), but user forces it to be local\n",
-                          candidate->_node, reason, _inColdBlock);
+               logprintf(trace(), log,
+                  "   Normally would fail [%p] because it escapes via node [%p] (cold %d), but user forces it to be local\n",
+                  candidate->_node, reason, _inColdBlock);
                continue;
                }
 
-            if (trace())
-               traceMsg(comp(), "   Fail [%p] because it escapes via node [%p] (cold %d)\n", candidate->_node, reason, _inColdBlock);
+            logprintf(trace(), log, "   Fail [%p] because it escapes via node [%p] (cold %d)\n", candidate->_node, reason, _inColdBlock);
 
             rememoize(candidate);
             _candidates.remove(candidate);
@@ -3495,8 +3419,7 @@ void TR_EscapeAnalysis::markCandidatesUsedInNonColdBlock(TR::Node *node)
       if (!candidate->usedInNonColdBlock() && usesValueNumber(candidate, valueNumber))
          {
          candidate->setUsedInNonColdBlock();
-         if (trace())
-            traceMsg(comp(), "   Mark [%p] used in non-cold block because of node [%p]\n", candidate->_node, node);
+         logprintf(trace(), comp()->log(), "   Mark [%p] used in non-cold block because of node [%p]\n", candidate->_node, node);
          }
       }
    }
@@ -3598,6 +3521,8 @@ bool TR_EscapeAnalysis::restrictCandidates(TR::Node *node, TR::Node *reason, res
    if (!resolvedNode)
       return false;
 
+   OMR::Logger *log = comp()->log();
+
    bool locked = false;
    if (reason &&
        ((reason->getOpCodeValue() == TR::monent) ||
@@ -3620,8 +3545,7 @@ bool TR_EscapeAnalysis::restrictCandidates(TR::Node *node, TR::Node *reason, res
                {
                candidate->setLockedInNonColdBlock(true);
                candidate->setUsedInNonColdBlock(true);
-               if (trace())
-                  traceMsg(comp(), "   Mark [%p] used and locked in non-cold block because of node [%p]\n", candidate->_node, node);
+               logprintf(trace(), log, "   Mark [%p] used and locked in non-cold block because of node [%p]\n", candidate->_node, node);
                }
 
             candidate->setLockedObject(true);
@@ -3629,8 +3553,7 @@ bool TR_EscapeAnalysis::restrictCandidates(TR::Node *node, TR::Node *reason, res
             Candidate *lockedCandidate = findCandidate(lockedObjectValueNumber);
             if (!lockedCandidate)
                {
-               if (trace())
-                  traceMsg(comp(), "   Make [%p] non-local because of node [%p]\n", candidate->_node, reason);
+               logprintf(trace(), log, "   Make [%p] non-local because of node [%p]\n", candidate->_node, reason);
                wasRestricted = true;
                //candidate->setLocalAllocation(false);
                forceEscape(reason->getFirstChild(), reason);
@@ -3655,8 +3578,7 @@ bool TR_EscapeAnalysis::restrictCandidates(TR::Node *node, TR::Node *reason, res
                   }
                if (!containsSyncMethod)
                   {
-                  if (trace())
-                     traceMsg(comp(), "   Make [%p] non-local because of node [%p]\n", candidate->_node, reason);
+                  logprintf(trace(), log, "   Make [%p] non-local because of node [%p]\n", candidate->_node, reason);
                   wasRestricted = true;
                   candidate->setLocalAllocation(false);
                   continue;
@@ -3669,13 +3591,11 @@ bool TR_EscapeAnalysis::restrictCandidates(TR::Node *node, TR::Node *reason, res
             if (checkIfEscapePointIsCold(candidate, reason))
                {
                  //candidate->setObjectIsReferenced();
-               if (trace())
-                  traceMsg(comp(), "   Do not make [%p] non-local because of cold node [%p]\n", candidate->_node, reason);
+               logprintf(trace(), log, "   Do not make [%p] non-local because of cold node [%p]\n", candidate->_node, reason);
                }
             else
                {
-               if (trace())
-                  traceMsg(comp(), "   Make [%p] non-local because of node [%p]\n", candidate->_node, reason);
+               logprintf(trace(), log, "   Make [%p] non-local because of node [%p]\n", candidate->_node, reason);
                candidate->setLocalAllocation(false);
                }
 
@@ -3691,13 +3611,11 @@ bool TR_EscapeAnalysis::restrictCandidates(TR::Node *node, TR::Node *reason, res
               if (checkIfEscapePointIsCold(candidate, reason))
                  {
                    //candidate->setObjectIsReferenced();
-                 if (trace())
-                     traceMsg(comp(), "   Do not make [%p] contiguous because of cold node [%p]\n", candidate->_node, reason);
+                 logprintf(trace(), log, "   Do not make [%p] contiguous because of cold node [%p]\n", candidate->_node, reason);
                  }
               else
                  {
-                 if (trace())
-                     traceMsg(comp(), "   Make [%p] contiguous because of node [%p]\n", candidate->_node, reason);
+                 logprintf(trace(), log, "   Make [%p] contiguous because of node [%p]\n", candidate->_node, reason);
                  candidate->setMustBeContiguousAllocation();
                  }
 
@@ -3707,8 +3625,7 @@ bool TR_EscapeAnalysis::restrictCandidates(TR::Node *node, TR::Node *reason, res
             else if (!candidate->objectIsReferenced() &&
                      !candidate->mustBeContiguousAllocation())
                {
-               if (trace())
-                  traceMsg(comp(), "   Make [%p] object-referenced because of node [%p]\n", candidate->_node, reason);
+               logprintf(trace(), log, "   Make [%p] object-referenced because of node [%p]\n", candidate->_node, reason);
                candidate->setObjectIsReferenced();
                wasRestricted = true;
                }
@@ -3726,6 +3643,8 @@ bool TR_EscapeAnalysis::checkIfEscapePointIsCold(Candidate *candidate, TR::Node 
    if (_curBlock->isOSRCodeBlock() ||
        _curBlock->isOSRCatchBlock())
       return false;
+
+   OMR::Logger *log = comp()->log();
 
    if (isEscapePointCold(candidate, node))
       {
@@ -3756,24 +3675,20 @@ bool TR_EscapeAnalysis::checkIfEscapePointIsCold(Candidate *candidate, TR::Node 
                   }
                if (recognizedCatch)
                   {
-                  if (trace())
-                     traceMsg(comp(), "Adding cold block info for child %p value number %d candidate %p\n", child, _valueNumberInfo->getValueNumber(resolvedChildAtTopLevel), candidate->_node);
+                  logprintf(trace(), log, "Adding cold block info for child %p value number %d candidate %p\n",
+                     child, _valueNumberInfo->getValueNumber(resolvedChildAtTopLevel), candidate->_node);
 
                   candidate->addColdBlockEscapeInfo(_curBlock, resolvedChildAtTopLevel, _curTree);
                   }
                else
                   {
-                  if (trace())
-                     traceMsg(comp(), "   For candidate [%p], seen an unexpected opcode in child [%p] of call [%p]\n", candidate->_node, child, node);
-
+                  logprintf(trace(), log, "   For candidate [%p], seen an unexpected opcode in child [%p] of call [%p]\n", candidate->_node, child, node);
                   canStoreToHeap = false;
                   }
                }
             else
                {
-               if (trace())
-                  traceMsg(comp(), "   For candidate [%p], seen an unexpected opcode in child [%p] of call [%p]\n", candidate->_node, child, node);
-
+               logprintf(trace(), log, "   For candidate [%p], seen an unexpected opcode in child [%p] of call [%p]\n", candidate->_node, child, node);
                canStoreToHeap = false;
                }
             }
@@ -3782,14 +3697,12 @@ bool TR_EscapeAnalysis::checkIfEscapePointIsCold(Candidate *candidate, TR::Node 
       if (canStoreToHeap)
          {
          candidate->setObjectIsReferenced();
-         if (trace())
-            traceMsg(comp(), "  Marking candidate [%p] as referenced in checkIfEscapePointIsCold - escape point [%p]\n", candidate->_node, node);
+         logprintf(trace(), log, "  Marking candidate [%p] as referenced in checkIfEscapePointIsCold - escape point [%p]\n", candidate->_node, node);
 
          if (!isImmutableObject(candidate) && (_parms || !node->getOpCode().isReturn()))
             {
             //candidate->setObjectIsReferenced();
-            if (trace())
-               traceMsg(comp(), "   Make candidate [%p] contiguous to allow heapification\n", candidate->_node);
+            logprintf(trace(), log, "   Make candidate [%p] contiguous to allow heapification\n", candidate->_node);
             candidate->setMustBeContiguousAllocation();
             }
 
@@ -3845,13 +3758,11 @@ static void checkForDifferentSymRefs(Candidate *candidate, int32_t i, TR::Symbol
             }
          if (!aliasingIsSafe)
             {
-            if (ea->trace())
-               {
-               traceMsg(comp, "candidate n%dn %p excluded coz of ambiguous field symrefs #%d [%s] and [%s]\n",
-                  candidate->_node->getGlobalIndex(), candidate->_node,
-                  memorizedSymRef->getReferenceNumber(), memorizedSymRef->getName(comp->getDebug()),
-                  symRef->getName(comp->getDebug()));
-               }
+            logprintf(ea->trace(), comp->log(), "candidate n%dn %p excluded because of ambiguous field symrefs #%d [%s] and [%s]\n",
+               candidate->_node->getGlobalIndex(), candidate->_node,
+               memorizedSymRef->getReferenceNumber(), memorizedSymRef->getName(comp->getDebug()),
+               symRef->getName(comp->getDebug()));
+
             candidate->setLocalAllocation(false);
             }
          }
@@ -3949,6 +3860,8 @@ void TR_EscapeAnalysis::referencedField(TR::Node *base, TR::Node *field, bool is
       return;
       }
 
+   OMR::Logger *log = comp()->log();
+
    bool usesStackTrace = false;
    if (!isStore)
       {
@@ -3976,8 +3889,7 @@ void TR_EscapeAnalysis::referencedField(TR::Node *base, TR::Node *field, bool is
             if (candidate->isInsideALoop())
                {
                candidate->setLocalAllocation(false);
-               if (trace())
-                  traceMsg(comp(), "7 setting local alloc %p to false\n", candidate->_node);
+               logprintf(trace(), log, "7 setting local alloc %p to false\n", candidate->_node);
                }
             else
                candidate->_seenStoreToLocalObject = true;
@@ -3990,8 +3902,7 @@ void TR_EscapeAnalysis::referencedField(TR::Node *base, TR::Node *field, bool is
             {
             candidate->setUsesStackTrace();
             candidate->setMustBeContiguousAllocation();
-            if (trace())
-               traceMsg(comp(), "   Make [%p] contiguous because of setUsesStackTrace\n", candidate->_node);
+            logprintf(trace(), log, "   Make [%p] contiguous because of setUsesStackTrace\n", candidate->_node);
             }
 
          // Only remember fields that are actually present in the allocated
@@ -4051,6 +3962,7 @@ TR::Node *TR_EscapeAnalysis::resolveSniffedNode(TR::Node *node)
 
 void TR_EscapeAnalysis::checkEscape(TR::TreeTop *firstTree, bool isCold, bool & ignoreRecursion)
    {
+   OMR::Logger *log = comp()->log();
    TR::Node    *node;
    TR::TreeTop *treeTop;
 
@@ -4068,9 +3980,8 @@ void TR_EscapeAnalysis::checkEscape(TR::TreeTop *firstTree, bool isCold, bool & 
          Candidate *candidate = NULL;
 
          TR_ASSERT(baseCandidate, "There must be a candidate corresponding to the base node VN");
-         if (trace())
-            traceMsg(comp(), "Base candidate: [%p], base node VN: %d, copy node VN: %d\n",
-                    baseCandidate->_node, baseNodeVN, copyNodeVN);
+         logprintf(trace(), log, "Base candidate: [%p], base node VN: %d, copy node VN: %d\n",
+            baseCandidate->_node, baseNodeVN, copyNodeVN);
 
          for (candidate = _candidates.getFirst(); candidate; candidate = candidate->getNext())
             {
@@ -4113,7 +4024,7 @@ void TR_EscapeAnalysis::checkEscape(TR::TreeTop *firstTree, bool isCold, bool & 
                      {
                      candidate->_stringCopyCallTree = treeTop;
                      candidate->_stringCopyNode = node->getSecondChild();
-                     //traceMsg(comp(), "11cand node %p string copy node %p and node %p\n", candidate->_node, candidate->_stringCopyNode, node);
+
                      TR::Node *baseNode = node->getFirstChild();
                      int32_t baseNodeVN = _valueNumberInfo->getValueNumber(baseNode);
                      TR::Node *copyNode = node->getSecondChild();
@@ -4122,9 +4033,8 @@ void TR_EscapeAnalysis::checkEscape(TR::TreeTop *firstTree, bool isCold, bool & 
                      Candidate *candidate = NULL;
 
                      TR_ASSERT(baseCandidate, "There must be a candidate corresponding to the base node VN");
-                     if (trace())
-                        traceMsg(comp(), "Base candidate: [%p], base node VN: %d, copy node VN: %d\n",
-                              baseCandidate->_node, baseNodeVN, copyNodeVN);
+                     logprintf(trace(), log, "Base candidate: [%p], base node VN: %d, copy node VN: %d\n",
+                        baseCandidate->_node, baseNodeVN, copyNodeVN);
 
                      for (candidate = _candidates.getFirst(); candidate; candidate = candidate->getNext())
                         {
@@ -4142,7 +4052,6 @@ void TR_EscapeAnalysis::checkEscape(TR::TreeTop *firstTree, bool isCold, bool & 
                   else if (candidate->_node == node->getFirstChild())
                      {
                      candidate->_stringCopyNode = node->getFirstChild();
-                     //traceMsg(comp(), "22cand node %p string copy node %p and node %p\n", candidate->_node, candidate->_stringCopyNode, node);
                      }
                   }
                }
@@ -4243,8 +4152,10 @@ static bool isConstantClass(TR::Node *classNode, TR_EscapeAnalysis *ea)
       result = true;
       }
 
-   if (ea->trace())
-      traceMsg(comp, "   isConstantClass(%p)=%s (supportsInliningOfIsInstance=%s)\n", classNode, result?"true":"false", comp->cg()->supportsInliningOfIsInstance()?"true":"false");
+   logprintf(ea->trace(), comp->log(),
+      "   isConstantClass(%p)=%s (supportsInliningOfIsInstance=%s)\n",
+      classNode, result?"true":"false", comp->cg()->supportsInliningOfIsInstance()?"true":"false");
+
    return result;
    }
 
@@ -4319,6 +4230,7 @@ void TR_EscapeAnalysis::checkEscapeViaNonCall(TR::Node *node, TR::NodeChecklist&
    {
    visited.add(node);
 
+   OMR::Logger *log = comp()->log();
    int32_t    i;
    int32_t    valueNumber;
    Candidate *candidate;
@@ -4364,8 +4276,7 @@ void TR_EscapeAnalysis::checkEscapeViaNonCall(TR::Node *node, TR::NodeChecklist&
             candidate = findCandidate(_valueNumberInfo->getValueNumber(child));
             if (candidate && candidate->_dememoizedConstructorCall)
                {
-               if (trace())
-                  traceMsg(comp(), "Rememoize [%p] due to [%p] under address compare [%p]\n", candidate->_node, child, node);
+               logprintf(trace(), log, "Rememoize [%p] due to [%p] under address compare [%p]\n", candidate->_node, child, node);
                rememoize(candidate);
                _candidates.remove(candidate);
                }
@@ -4417,8 +4328,7 @@ void TR_EscapeAnalysis::checkEscapeViaNonCall(TR::Node *node, TR::NodeChecklist&
               doit = false;
           else
              {
-             if (trace())
-                traceMsg(comp(), "seen bd possible clone at node %p\n", callNode);
+             logprintf(trace(), log, "seen bd possible clone at node %p\n", callNode);
              }
 
          if (  argument
@@ -4430,8 +4340,7 @@ void TR_EscapeAnalysis::checkEscapeViaNonCall(TR::Node *node, TR::NodeChecklist&
             // Bingo.  Add the call node's value number to the bag for every
             // candidate for which argument is already in the bag.
             //
-            if (trace())
-               traceMsg(comp(), "call node is %p (depth %d) for which return opt was done\n", callNode, _sniffDepth);
+            logprintf(trace(), log, "call node is %p (depth %d) for which return opt was done\n", callNode, _sniffDepth);
 #if 0
             //
             //Note : It's too late anyway for this here...see above comment...so it is disabled
@@ -4439,15 +4348,13 @@ void TR_EscapeAnalysis::checkEscapeViaNonCall(TR::Node *node, TR::NodeChecklist&
             int32_t argumentValueNumber = _valueNumberInfo->getValueNumber(argument);
             int32_t callValueNumber     = _valueNumberInfo->getValueNumber(callNode);
 
-            if (trace())
-               traceMsg(comp(), "   Adding call VN %d to all candidates that already have arg VN %d\n", callValueNumber, argumentValueNumber);
+            logprintf(trace(), log, "   Adding call VN %d to all candidates that already have arg VN %d\n", callValueNumber, argumentValueNumber);
 
             for (Candidate *candidate = _candidates.getFirst(); candidate; candidate = candidate->getNext())
                {
                if (candidate->_valueNumbers->contains(argumentValueNumber))
                   {
-                  if (trace())
-                     traceMsg(comp(), "     %s\n", comp()->getDebug()->getName(candidate->_node));
+                  logprintf(trace(), log, "     %s\n", comp()->getDebug()->getName(candidate->_node));
                   candidate->_valueNumbers->add(callValueNumber);
                   }
                }
@@ -4788,13 +4695,10 @@ void TR_EscapeAnalysis::checkEscapeViaNonCall(TR::Node *node, TR::NodeChecklist&
          wasRestricted |= restrictCandidates(child, node, MakeObjectReferenced);
          }
       }
+
    if (wasRestricted)
       {
-      if (trace())
-         {
-         /////printf("secs Object referenced via %s in %s\n", node->getOpCode().getName(), comp()->signature());
-         traceMsg(comp(), "Object referenced via %s\n", node->getOpCode().getName());
-         }
+      logprintf(trace(), log, "Object referenced via %s\n", node->getOpCode().getName());
       }
    }
 
@@ -4831,6 +4735,7 @@ SymRefCache::findSymRef(TR_LinkHead<SymRefCache> *symRefList, TR_ResolvedMethod 
 
 void TR_EscapeAnalysis::checkEscapeViaCall(TR::Node *node, TR::NodeChecklist& visited, bool & ignoreRecursion)
    {
+   OMR::Logger *log = comp()->log();
    int32_t  nodeVN;
    TR::Node *value;
 
@@ -4847,8 +4752,7 @@ void TR_EscapeAnalysis::checkEscapeViaCall(TR::Node *node, TR::NodeChecklist& vi
        (methodSymbol->getRecognizedMethod() == TR::sun_misc_Unsafe_putInt_jlObjectII_V) &&
        (methodSymbol->isNative()))
       {
-      if (trace())
-         traceMsg(comp(), "Ignoring escapes via call [%p] \n", node);
+      logprintf(trace(), log, "Ignoring escapes via call [%p] \n", node);
       return;
       }
 
@@ -4859,8 +4763,7 @@ void TR_EscapeAnalysis::checkEscapeViaCall(TR::Node *node, TR::NodeChecklist& vi
          && candidate->_dememoizedConstructorCall
          && candidate->_dememoizedConstructorCall->getNode()->getFirstChild() == node)
          {
-         if (trace())
-            traceMsg(comp(), "Ignoring escapes via call [%p] that will either be inlined or rememoized\n", node);
+         logprintf(trace(), log, "Ignoring escapes via call [%p] that will either be inlined or rememoized\n", node);
          return;
          }
       }
@@ -4925,8 +4828,7 @@ void TR_EscapeAnalysis::checkEscapeViaCall(TR::Node *node, TR::NodeChecklist& vi
                   //
                   candidate->setUsesStackTrace();
                   candidate->setMustBeContiguousAllocation();
-                  if (trace())
-                     traceMsg(comp(), "   Make [%p] contiguous because of setUsesStackTrace\n", candidate->_node);
+                  logprintf(trace(), log, "   Make [%p] contiguous because of setUsesStackTrace\n", candidate->_node);
                   }
                }
 
@@ -4937,8 +4839,7 @@ void TR_EscapeAnalysis::checkEscapeViaCall(TR::Node *node, TR::NodeChecklist& vi
                TR::SymbolReference *finalizeSymRef = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_jitCheckIfFinalizeObject, true, true, true);
                if (node->getSymbolReference() == finalizeSymRef)
                   {
-                  if (trace())
-                     traceMsg(comp(), "Candidate [%p] cannot escape because of node [%p]\n", candidate->_node, node);
+                  logprintf(trace(), log, "Candidate [%p] cannot escape because of node [%p]\n", candidate->_node, node);
                   continue;
                   }
                }
@@ -4956,8 +4857,7 @@ void TR_EscapeAnalysis::checkEscapeViaCall(TR::Node *node, TR::NodeChecklist& vi
                   // allocation, since it is passed to another method.
                   //
                   candidate->setMustBeContiguousAllocation();
-                  if (trace())
-                     traceMsg(comp(), "   Make [%p] contiguous because of node [%p]\n", candidate->_node, node);
+                  logprintf(trace(), log, "   Make [%p] contiguous because of node [%p]\n", candidate->_node, node);
                   continue;
                   }
                }
@@ -5094,7 +4994,6 @@ void TR_EscapeAnalysis::checkEscapeViaCall(TR::Node *node, TR::NodeChecklist& vi
                      sniffCacheList.add(sniffCallCache);
                      }
                   refinedSniff = true;
-                  //printf("bytecodeSize = %d original bytecodeSize = %d method %s\n", bytecodeSize, originalBytecodeSize, resolvedMethod->signature());
                   }
                }
 
@@ -5136,8 +5035,7 @@ void TR_EscapeAnalysis::checkEscapeViaCall(TR::Node *node, TR::NodeChecklist& vi
                else
                   candidate->setMustBeContiguousAllocation();
 
-               if (trace())
-                  traceMsg(comp(), "   Make [%p] contiguous because of call node [%p]\n", candidate->_node, node);
+               logprintf(trace(), log, "   Make [%p] contiguous because of call node [%p]\n", candidate->_node, node);
                }
             else
                {
@@ -5151,27 +5049,21 @@ void TR_EscapeAnalysis::checkEscapeViaCall(TR::Node *node, TR::NodeChecklist& vi
                // Force
                if(candidate->forceLocalAllocation())
                   {
-                  if (trace())
-                     traceMsg(comp(), "   Normally [%p] would fail because child of call [%p] to %s, but user wants it locally allocated\n",
-                          candidate->_node, node,
-                          node->getSymbol()->getMethodSymbol()->getMethod()
-                             ? node->getSymbol()->getMethodSymbol()->getMethod()->signature(trMemory())
-                             : "[Unknown method]");
+                  logprintf(trace(), log, "   Normally [%p] would fail because child of call [%p] to %s, but user wants it locally allocated\n",
+                     candidate->_node, node,
+                     node->getSymbol()->getMethodSymbol()->getMethod() ?
+                        node->getSymbol()->getMethodSymbol()->getMethod()->signature(trMemory()) : "[Unknown method]");
                   continue;
                   }
+
                // The sniff could not be done. Remove this candidate.
                //
-
-              if (trace())
-                  traceMsg(comp(), "   Fail [%p] because child of call [%p]\n",
-                          candidate->_node, node);
+               logprintf(trace(), log, "   Fail [%p] because child of call [%p]\n", candidate->_node, node);
 
                rememoize(candidate);
                _candidates.remove(candidate);
                }
             }
-         //else
-         //  traceMsg(comp(), "NOT is arg to call at node %p\n", node);
          }
       }
    }
@@ -5206,11 +5098,13 @@ int32_t TR_EscapeAnalysis::sniffCall(TR::Node *callNode, TR::ResolvedMethodSymbo
     if (getOptData()->_totalPeekedBytecodeSize > _maxPeekedBytecodeSize)
        return 0;
 
-   TR::ResolvedMethodSymbol *owningMethodSymbol = callNode->getSymbolReference()->getOwningMethodSymbol(comp());
-   TR_ResolvedMethod* owningMethod = owningMethodSymbol->getResolvedMethod();
-   TR_ResolvedMethod* calleeMethod = methodSymbol->getResolvedMethod();
+    OMR::Logger *log = comp()->log();
 
-   if (owningMethod->isSameMethod(calleeMethod) &&
+    TR::ResolvedMethodSymbol *owningMethodSymbol = callNode->getSymbolReference()->getOwningMethodSymbol(comp());
+    TR_ResolvedMethod* owningMethod = owningMethodSymbol->getResolvedMethod();
+    TR_ResolvedMethod* calleeMethod = methodSymbol->getResolvedMethod();
+
+    if (owningMethod->isSameMethod(calleeMethod) &&
        (comp()->getJittedMethodSymbol() != owningMethodSymbol))
       {
       if (ignoreRecursion)
@@ -5219,14 +5113,11 @@ int32_t TR_EscapeAnalysis::sniffCall(TR::Node *callNode, TR::ResolvedMethodSymbo
          ignoreRecursion = true;
       }
 
-   if (trace())
-      traceMsg(comp(), "\nDepth %d sniffing into call at [%p] to %s\n", _sniffDepth, callNode, method->signature(trMemory()));
+   logprintf(trace(), log, "\nDepth %d sniffing into call at [%p] to %s\n", _sniffDepth, callNode, method->signature(trMemory()));
 
    vcount_t visitCount = comp()->getVisitCount();
    if (!methodSymbol->getFirstTreeTop())
       {
-      //comp()->setVisitCount(1);
-
       dumpOptDetails(comp(), "O^O ESCAPE ANALYSIS: Peeking into the IL to check for escaping objects \n");
 
       bool ilgenFailed = false;
@@ -5235,7 +5126,6 @@ int32_t TR_EscapeAnalysis::sniffCall(TR::Node *callNode, TR::ResolvedMethodSymbo
          ilgenFailed = (NULL == methodSymbol->getResolvedMethod()->genMethodILForPeekingEvenUnderMethodRedefinition(methodSymbol, comp()));
       else
          ilgenFailed = (NULL == methodSymbol->getResolvedMethod()->genMethodILForPeeking(methodSymbol, comp()));
-      //comp()->setVisitCount(visitCount);
 
       /*
        * Under HCR we cannot generally peek methods because the method could be
@@ -5284,8 +5174,7 @@ int32_t TR_EscapeAnalysis::sniffCall(TR::Node *callNode, TR::ResolvedMethodSymbo
        */
       if (ilgenFailed)
          {
-         if (trace())
-            traceMsg(comp(), "   (IL generation failed)\n");
+         logprints(trace(), log, "   (IL generation failed)\n");
          static char *disableHCRCallPeeking = feGetEnv("TR_disableEAHCRCallPeeking");
          if (!isPeekableCall
              && disableHCRCallPeeking == NULL
@@ -5323,16 +5212,13 @@ int32_t TR_EscapeAnalysis::sniffCall(TR::Node *callNode, TR::ResolvedMethodSymbo
 
       if (trace())
          {
-    //comp()->setVisitCount(1);
          for (TR::TreeTop *tt = methodSymbol->getFirstTreeTop(); tt; tt = tt->getNextTreeTop())
-            getDebug()->print(comp()->getOutFile(), tt);
-         //comp()->setVisitCount(visitCount);
+            getDebug()->print(log, tt);
          }
       }
    else
       {
-      if (trace())
-         traceMsg(comp(), "   (trees already dumped)\n");
+      logprints(trace(), log, "   (trees already dumped)\n");
       }
 
    int32_t firstArgIndex = callNode->getFirstArgumentIndex();
@@ -5381,9 +5267,8 @@ int32_t TR_EscapeAnalysis::sniffCall(TR::Node *callNode, TR::ResolvedMethodSymbo
       if (inspector.checkMonitorStructure(methodSymbol->getFlowGraph()))
          {
          _removeMonitors = false;
-         if (trace())
-            traceMsg(comp(), "Disallowing monitor-removal because of strange monitor structure in sniffed method %s\n",
-                        methodSymbol->getMethod()->signature(trMemory()));
+         logprintf(trace(), log, "Disallowing monitor-removal because of strange monitor structure in sniffed method %s\n",
+            methodSymbol->getMethod()->signature(trMemory()));
          }
       }
 #endif
@@ -5397,6 +5282,7 @@ int32_t TR_EscapeAnalysis::sniffCall(TR::Node *callNode, TR::ResolvedMethodSymbo
 //
 void TR_EscapeAnalysis::checkObjectSizes()
    {
+   OMR::Logger *log = comp()->log();
    int32_t totalSize = 0;
    int32_t i;
    Candidate *candidate, *next;
@@ -5413,11 +5299,7 @@ void TR_EscapeAnalysis::checkObjectSizes()
          {
          if (candidate->_size > MAX_SIZE_FOR_ONE_CONTIGUOUS_OBJECT)
             {
-            if (trace())
-               /////printf("secs   Fail [%p] because object size is too big in %s\n", candidate->_node, comp()->signature());
-               ;
-            if (trace())
-               traceMsg(comp(), "   Fail [%p] because object size %d is too big\n", candidate->_node, candidate->_size);
+            logprintf(trace(), log, "   Fail [%p] because object size %d is too big\n", candidate->_node, candidate->_size);
 
             candidate->setLocalAllocation(false);
             }
@@ -5483,11 +5365,7 @@ void TR_EscapeAnalysis::checkObjectSizes()
          totalSize -= largestNonContiguousObjectSize;
          }
 
-      if (trace())
-         {
-         /////printf("secs   Fail [%p] because total object size is too big in %s\n", candidate->_node, comp()->signature());
-         traceMsg(comp(), "   Fail [%p] because total object size is too big\n", candidate->_node);
-         }
+      logprintf(trace(), log, "   Fail [%p] because total object size is too big\n", candidate->_node);
 
       // Mark the candidate as not available for local allocation
       //
@@ -5562,6 +5440,8 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
 
    visited.add(node);
 
+   OMR::Logger *log = comp()->log();
+
    bool                     removeThisNode = false;
    TR::ResolvedMethodSymbol *calledMethod = NULL;
 
@@ -5603,8 +5483,8 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
                }
             else
                {
-               if (trace())
-                  traceMsg(comp(), "Removing inline finalizable test [%p] for discontiguous candidate [%p]\n", _curTree->getNode(), candidate->_node);
+               logprintf(trace(), log, "Removing inline finalizable test [%p] for discontiguous candidate [%p]\n",
+                  _curTree->getNode(), candidate->_node);
                removeThisNode = true;
                }
 
@@ -5700,7 +5580,7 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
                      child = TR::Node::create(child, TR::iconst, 0, 0);
                      if (trace())
                         {
-                        traceMsg(comp(), "Change illegal deref %s [%p] to use dummy base %s [%p] in place of %s [%p]\n",
+                        logprintf(trace(), log, "Change illegal deref %s [%p] to use dummy base %s [%p] in place of %s [%p]\n",
                            node->getOpCode().getName(), node,
                            child->getOpCode().getName(), child,
                            node->getChild(0)->getOpCode().getName(), node->getChild(0));
@@ -5716,11 +5596,9 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
                      static char *disableWrtbarFixing = feGetEnv("TR_disableWrtbarFixing");
                      if (node->getOpCode().isWrtBar() && !disableWrtbarFixing)
                         {
-                        if (trace())
-                           {
-                           traceMsg(comp(), " -> Change %s [%p] into astorei, removing child %s [%p]\n",
-                              node->getOpCode().getName(), node, node->getChild(2)->getOpCode().getName(), node->getChild(2));
-                           }
+                        logprintf(trace(), log, " -> Change %s [%p] into astorei, removing child %s [%p]\n",
+                           node->getOpCode().getName(), node, node->getChild(2)->getOpCode().getName(), node->getChild(2));
+
                         node->getAndDecChild(2);
                         node->setNumChildren(2);
                         TR::Node::recreate(node, TR::astorei);
@@ -5728,8 +5606,7 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
 
                         if (parent->getOpCode().isCheck() || parent->getOpCodeValue() == TR::compressedRefs)
                            {
-                           if (trace())
-                              traceMsg(comp(), " -> Eliminate %s [%p]\n", parent->getOpCode().getName(), parent);
+                           logprintf(trace(), log, " -> Eliminate %s [%p]\n", parent->getOpCode().getName(), parent);
                            TR::Node::recreate(parent, TR::treetop);
                            parent->setFlags(0);
                            }
@@ -5863,8 +5740,6 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
             if (candidate && candidate->fillsInStackTrace() && !candidate->usesStackTrace() &&
                 candidate->isLocalAllocation() && !candidate->escapesInColdBlocks() && performTransformation(comp(), "%sRemoving call node [%p] to fillInStackTrace\n",OPT_DETAILS, node))
                {
-                 //printf("Removing fillInStackTrace call in %s\n", comp()->signature());
-
                // If the result of the call is not used, just remove the tree.
                // Otherwise replace the call with aconst 0
                //
@@ -6075,13 +5950,11 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
                loadOrStore->getFirstChild()->incReferenceCount();
                }
             loadOrStore->decReferenceCount();
-            if (trace())
-               traceMsg(comp(), "Changing orphaned compressed ref anchor [%p] to auto to a treetop and removing store [%p].\n", node, loadOrStore);
+            logprintf(trace(), log, "Changing orphaned compressed ref anchor [%p] to auto to a treetop and removing store [%p].\n", node, loadOrStore);
             }
          else
             {
-            if (trace())
-               traceMsg(comp(), "Changing orphaned compressed ref anchor [%p] to auto to a treetop.\n", node);
+            logprintf(trace(), log, "Changing orphaned compressed ref anchor [%p] to auto to a treetop.\n", node);
             }
          return false;
          }
@@ -6116,11 +5989,8 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
             {
             if (_desynchronizeCalls)
                {
-               if (trace())
-                  {
-                  /////printf("sec Opportunity to desynchronize call to %s (size %d) in %s\n", calledMethod->getResolvedMethod()->signature(trMemory()), maxBytecodeIndex(calledMethod->getResolvedMethod()), comp()->signature());
-                  traceMsg(comp(), "Mark call node [%p] as desynchronized\n", node);
-                  }
+               logprintf(trace(), log, "Mark call node [%p] as desynchronized\n", node);
+
                node->setDesynchronizeCall(true);
                if (!_inlineCallSites.find(_curTree))
                   _inlineCallSites.add(_curTree);
@@ -6129,16 +5999,16 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
          else
             {
 #if CHECK_MONITORS
-            if (trace())
-               traceMsg(comp(), "Remove redundant monitor node [%p]\n", node);
+            logprintf(trace(), log, "Remove redundant monitor node [%p]\n", node);
             removeThisNode = true;
 #else
             if (node->getOpCodeValue() == TR::allocationFence)
                {
                if (candidate->isLocalAllocation())
                   {
-                  if (trace())
-                     traceMsg(comp(), "Redundant flush node [%p] found for candidate [%p]! Set omitSync flag on redundant flush node.\n", node, candidate->_node);
+                  logprintf(trace(), log,
+                     "Redundant flush node [%p] found for candidate [%p]! Set omitSync flag on redundant flush node.\n",
+                     node, candidate->_node);
 
                   node->setOmitSync(true);
                   node->setAllocation(NULL);
@@ -6152,8 +6022,7 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
                //
                node->setLocalObjectMonitor(true);
                requestOpt(OMR::redundantMonitorElimination);
-               if (trace())
-                  traceMsg(comp(), "Mark monitor node [%p] for candidate [%p] as local object monitor\n", node, candidate->_node);
+               logprintf(trace(), log, "Mark monitor node [%p] for candidate [%p] as local object monitor\n", node, candidate->_node);
                }
 #endif
             }
@@ -6177,13 +6046,12 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
                TR::TreeTop *afterInsertionPoint = insertionPoint->getNextTreeTop();
                flushTT->join(afterInsertionPoint);
                insertionPoint->join(flushTT);
-               if (trace())
-                  traceMsg(comp(), "Adding flush node %p for candidate %p to cold block_%d\n", flush, candidate->_node, coldBlk->getNumber());
+               logprintf(trace(), log, "Adding flush node %p for candidate %p to cold block_%d\n", flush, candidate->_node, coldBlk->getNumber());
                setHasFlushOnEntry(coldBlk->getNumber());
                }
             }
-         if (trace())
-            traceMsg(comp(), "Remove redundant flush node [%p] for candidate [%p]\n", node, candidate->_node);
+
+         logprintf(trace(), log, "Remove redundant flush node [%p] for candidate [%p]\n", node, candidate->_node);
          removeThisNode = true;
 
          }
@@ -6232,16 +6100,14 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
             _curTree->getNode()->getFirstChild()->decReferenceCount();
             TR::Node *aconstNode = TR::Node::aconst(_curTree->getNode(), 0);
             _curTree->getNode()->setAndIncChild(0, aconstNode);
-            if (trace())
-               traceMsg(comp(), "%sFixed up liveMonitor store [%p] for candidate [%p]\n", OPT_DETAILS, _curTree->getNode(), candidate->_node);
+            logprintf(trace(), log, "%sFixed up liveMonitor store [%p] for candidate [%p]\n", OPT_DETAILS, _curTree->getNode(), candidate->_node);
             removeThisNode = false;
             }
          else
             {
             removeThisNode = true;
 
-            if (trace())
-               traceMsg(comp(), "Remove tree [%p] with direct reference to candidate [%p]\n", _curTree->getNode(), candidate->_node);
+            logprintf(trace(), log, "Remove tree [%p] with direct reference to candidate [%p]\n", _curTree->getNode(), candidate->_node);
             }
          }
 
@@ -6283,8 +6149,7 @@ bool TR_EscapeAnalysis::fixupFieldAccessForContiguousAllocation(TR::Node *node, 
          node->getChild(2)->recursivelyDecReferenceCount();
          node->setNumChildren(2);
          _repeatAnalysis = true;
-         if (trace())
-            traceMsg(comp(), "Change node [%p] from write barrier to regular store\n", node);
+         logprintf(trace(), comp()->log(), "Change node [%p] from write barrier to regular store\n", node);
          }
       else
          {
@@ -6392,6 +6257,7 @@ TR::Node *TR_EscapeAnalysis::createConst(TR::Compilation *comp, TR::Node *node, 
 
 bool TR_EscapeAnalysis::fixupFieldAccessForNonContiguousAllocation(TR::Node *node, Candidate *candidate, TR::Node *parent)
    {
+   OMR::Logger *log = comp()->log();
    int32_t i;
    int32_t fieldOffset = (candidate->_origKind == TR::New || candidate->_origKind == TR::newvalue)
                             ? comp()->fej9()->getObjectHeaderSizeInBytes()
@@ -6413,8 +6279,7 @@ bool TR_EscapeAnalysis::fixupFieldAccessForNonContiguousAllocation(TR::Node *nod
       for (i = 3; i >= 0; i--)
          candidate->_initializedWords->set(node->getSymbolReference()->getOffset()+i);
 
-      if (trace())
-         traceMsg(comp(), "Remove explicit new initialization node [%p]\n", node);
+      logprintf(trace(), log, "Remove explicit new initialization node [%p]\n", node);
       return true;
       }
 
@@ -6562,8 +6427,9 @@ bool TR_EscapeAnalysis::fixupFieldAccessForNonContiguousAllocation(TR::Node *nod
             prev->join(newTree);
             newTree->join(_curTree);
 
-            if (trace())
-               traceMsg(comp(), "Preserve old node [%p] for store to non-contiguous immutable candidate [%p] that escapes in cold block; create new tree for for direct store [%p]\n", node, candidate->_node, newStore);
+            logprintf(trace(), log,
+               "Preserve old node [%p] for store to non-contiguous immutable candidate [%p] that escapes in cold block; create new tree for for direct store [%p]\n",
+               node, candidate->_node, newStore);
             }
          else
             {
@@ -6590,8 +6456,10 @@ bool TR_EscapeAnalysis::fixupFieldAccessForNonContiguousAllocation(TR::Node *nod
             node->setAndIncChild(0, newValue);
             }
          }
-      if (trace())
-         traceMsg(comp(), "Change node [%p] into a direct load or store of #%d (%d bytes) field %d cand %p\n", node, autoSymRef->getReferenceNumber(), autoSymRef->getSymbol()->getSize(), i, candidate->_node);
+
+      logprintf(trace(), log,
+         "Change node [%p] into a direct load or store of #%d (%d bytes) field %d cand %p\n",
+		 node, autoSymRef->getReferenceNumber(), autoSymRef->getSymbol()->getSize(), i, candidate->_node);
 
       if (parent)
          {
@@ -6659,8 +6527,7 @@ bool TR_EscapeAnalysis::fixupFieldAccessForNonContiguousAllocation(TR::Node *nod
             node->getFirstChild()->recursivelyDecReferenceCount();
          node->setLongInt(0);
          node->setNumChildren(0);
-         if (trace())
-            traceMsg(comp(), "Change node [%p] into a constant\n", node);
+         logprintf(trace(), log, "Change node [%p] into a constant\n", node);
          }
       }
 
@@ -6724,12 +6591,13 @@ void TR_EscapeAnalysis::makeLocalObject(Candidate *candidate)
 
    if (trace() && referenceSlots)
       {
-      traceMsg(comp(), "  Reference slots for candidate [%p] : {",candidate->_node);
+      OMR::Logger *log = comp()->log();
+      log->printf("  Reference slots for candidate [%p] : {",candidate->_node);
       for (i = 0; referenceSlots[i]; i++)
          {
-         traceMsg(comp(), " %d", referenceSlots[i]);
+         log->printf(" %d", referenceSlots[i]);
          }
-      traceMsg(comp(), " }\n");
+      log->prints(" }\n");
       }
 
    // Initialize the header of the local object
@@ -6797,11 +6665,8 @@ void TR_EscapeAnalysis::avoidStringCopyAllocation(Candidate *candidate)
 
    dumpOptDetails(comp(), "%sReplacing new (String) node [%p] with the String that was used in the copy constructor\n",OPT_DETAILS, candidate->_node);
 
-   if (trace() || debug ("traceContiguousESC"))
-      {
-      traceMsg(comp(), "secs (%d) String (copy) allocation of size %d found in %s\n", manager()->numPassesCompleted(), candidate->_size, comp()->signature());
-      }
-
+   logprintf(trace(), comp()->log(), "secs (%d) String (copy) allocation of size %d found in %s\n",
+      manager()->numPassesCompleted(), candidate->_size, comp()->signature());
 
    TR::TreeTop *insertionPoint = candidate->_treeTop;
    TR::DataType dataType = candidate->_stringCopyNode->getDataType();
@@ -7031,10 +6896,8 @@ void TR_EscapeAnalysis::makeContiguousLocalAllocation(Candidate *candidate)
 
    dumpOptDetails(comp(), "%sMaking %s node [%p] into a local object of size %d\n",OPT_DETAILS, candidate->_node->getOpCode().getName(), candidate->_node, candidate->_size);
 
-   if (trace() || debug ("traceContiguousESC"))
-      {
-      traceMsg(comp(), "secs (%d) Contiguous allocation of size %d found in %s\n", manager()->numPassesCompleted(), candidate->_size, comp()->signature());
-      }
+   logprintf(trace(), comp()->log(), "secs (%d) Contiguous allocation of size %d found in %s\n",
+      manager()->numPassesCompleted(), candidate->_size, comp()->signature());
 
    if (candidate->escapesInColdBlocks())
       {
@@ -7297,11 +7160,7 @@ void TR_EscapeAnalysis::makeNonContiguousLocalAllocation(Candidate *candidate)
       dumpOptDetails(comp(), "%sMaking %s node [%p] into separate local fields\n",OPT_DETAILS, candidate->_node->getOpCode().getName(), candidate->_node);
       }
 
-   if (trace())
-      {
-      traceMsg(comp(),"Pass: (%d) Non-contiguous allocation found in %s\n", manager()->numPassesCompleted(), comp()->signature());
-      //printf("Pass: (%d) Non-contiguous allocation found in %s\n", manager()->numPassesCompleted(), comp()->signature());
-      }
+   logprintf(trace(), comp()->log(), "Pass: (%d) Non-contiguous allocation found in %s\n", manager()->numPassesCompleted(), comp()->signature());
 
    if (candidate->_node->getOpCodeValue() == TR::newvalue)
       {
@@ -7442,11 +7301,10 @@ void TR_EscapeAnalysis::heapifyForColdBlocks(Candidate *candidate)
    if (comp()->suppressAllocationInlining())
       return;
 
-   if (trace())
-      {
-      traceMsg(comp(),"Found candidate allocated with cold block compensation in %s numBlocks compensated = %d\n", comp()->signature(), candidate->getColdBlockEscapeInfo()->getSize());
-      //printf("Found candidate allocated with cold block compensation in %s numBlocks compensated = %d\n", comp()->signature(), candidate->getColdBlockEscapeInfo()->getSize());
-      }
+   OMR::Logger *log = comp()->log();
+
+   logprintf(trace(), log, "Found candidate allocated with cold block compensation in %s numBlocks compensated = %d\n",
+      comp()->signature(), candidate->getColdBlockEscapeInfo()->getSize());
 
    // Create a temporary that will hold a reference to the stack allocated object
    // at the point of stack allocation.  That reference is then used at
@@ -7499,8 +7357,8 @@ void TR_EscapeAnalysis::heapifyForColdBlocks(Candidate *candidate)
       TR::Node *heapAllocation = TR::Node::create(TR::treetop, 1, candidate->_originalAllocationNode->duplicateTree());
       heapAllocation->getFirstChild()->setHeapificationAlloc(true);
 
-      if (trace())
-         traceMsg(comp(), "heapifying %p:  isContiguousAllocation %d; _dememoizedMethodSymRef %d; new heapAllocation treetop %p\n", candidate->_node, candidate->isContiguousAllocation(), candidate->_dememoizedMethodSymRef, heapAllocation);
+      logprintf(trace(), log, "heapifying %p:  isContiguousAllocation %d; _dememoizedMethodSymRef %d; new heapAllocation treetop %p\n",
+         candidate->_node, candidate->isContiguousAllocation(), candidate->_dememoizedMethodSymRef, heapAllocation);
 
       if (!candidate->isContiguousAllocation() && _dememoizedAllocs.find(candidate->_node))
          {
@@ -7753,10 +7611,7 @@ void TR_EscapeAnalysis::heapifyForColdBlocks(Candidate *candidate)
          //   n180n         iload  <temp slot 8>[#441  Auto]
 
 
-         if (trace())
-            {
-            traceMsg(comp(), "Updating heap allocation node %p with fieldCount == %d\n", newValueHeapificationNode, fieldCount);
-            }
+         logprintf(trace(), log, "Updating heap allocation node %p with fieldCount == %d\n", newValueHeapificationNode, fieldCount);
 
          for (size_t idx = 0; idx < fieldCount; idx++)
             {
@@ -7789,10 +7644,7 @@ void TR_EscapeAnalysis::heapifyForColdBlocks(Candidate *candidate)
 
             TR_ASSERT_FATAL(stackFieldLoad != NULL, "newvalue candidate %p was missing an entry in candidate->_fields for its field number %d at offset %d", candidate->_node, idx, fieldEntry._offset);
             newValueHeapificationNode->setAndIncChild(idx+1, stackFieldLoad);
-            if (trace())
-               {
-               traceMsg(comp(), "Updating heap allocation node %p child %d with field load node %p\n", newValueHeapificationNode, idx+1, stackFieldLoad);
-               }
+            logprintf(trace(), log, "Updating heap allocation node %p child %d with field load node %p\n", newValueHeapificationNode, idx+1, stackFieldLoad);
             }
          }
 
@@ -7873,8 +7725,8 @@ void TR_EscapeAnalysis::heapifyForColdBlocks(Candidate *candidate)
                            }
                         TR::Node *stackStore = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(type), 1, 1, heapFieldLoad, field._symRef);
                         TR::TreeTop *stackStoreTree = TR::TreeTop::create(comp(), stackStore, NULL, NULL);
-                        if (trace())
-                           traceMsg(comp(), "Emitting stack store back %p cold %p next %p\n", stackStore, coldBlockTree->getNode(), nextTreeInColdBlock->getNode());
+                        logprintf(trace(), log, "Emitting stack store back %p cold %p next %p\n",
+                           stackStore, coldBlockTree->getNode(), nextTreeInColdBlock->getNode());
                         coldBlockTree->join(stackStoreTree);
                         stackStoreTree->join(nextTreeInColdBlock);
                         // comp()->useCompressedPointers()
@@ -8247,6 +8099,8 @@ bool TR_EscapeAnalysis::devirtualizeCallSites()
 
 bool TR_EscapeAnalysis::inlineCallSites()
    {
+   OMR::Logger *log = comp()->log();
+
    scanForExtraCallsToInline();
 
    bool inlinedSomething = false;
@@ -8269,8 +8123,7 @@ bool TR_EscapeAnalysis::inlineCallSites()
          }
       if (tt == exitTree)
          {
-         if (trace())
-            traceMsg(comp(), "attempt to inline call %p failed because the block was removed\n",treeTop->getNode()->getFirstChild());
+         logprintf(trace(), log, "attempt to inline call %p failed because the block was removed\n", treeTop->getNode()->getFirstChild());
          continue;
          }
 
@@ -8285,11 +8138,8 @@ bool TR_EscapeAnalysis::inlineCallSites()
             }
          }
 
-      if (trace())
-         {
-         /////printf("secs Inlining method %s in %s\n", method->signature(trMemory()), comp()->signature());
-         traceMsg(comp(), "\nInlining method %s into treetop at [%p], total inlined size = %d\n", method->signature(trMemory()), treeTop->getNode(), getOptData()->_totalInlinedBytecodeSize+size);
-         }
+      logprintf(trace(), log, "\nInlining method %s into treetop at [%p], total inlined size = %d\n",
+         method->signature(trMemory()), treeTop->getNode(), getOptData()->_totalInlinedBytecodeSize+size);
 
       // Now inline the call
       //
@@ -8305,8 +8155,7 @@ bool TR_EscapeAnalysis::inlineCallSites()
             {
             getOptData()->_totalInlinedBytecodeSize += size;
             inlinedSomething = true;
-            if (trace())
-               traceMsg(comp(), "inlined succeeded\n");
+            logprints(trace(), log, "inlined succeeded\n");
             }
          }
       }
@@ -8371,8 +8220,9 @@ void TR_EscapeAnalysis::scanForExtraCallsToInline()
          if (callTreeToInline && !alreadyGoingToInline(callNode, _inlineCallSites))
             {
             _inlineCallSites.add(callTreeToInline);
-            if (trace())
-               traceMsg(comp(), "Consider inlining %s n%dn [%p] of %s because %s\n", callNode->getOpCode().getName(), callNode->getGlobalIndex(), callNode, callNode->getSymbolReference()->getName(comp()->getDebug()), reason);
+            logprintf(trace(), comp()->log(), "Consider inlining %s n%dn [%p] of %s because %s\n",
+               callNode->getOpCode().getName(), callNode->getGlobalIndex(), callNode,
+               callNode->getSymbolReference()->getName(comp()->getDebug()), reason);
             }
          }
       }
@@ -8485,38 +8335,41 @@ FieldInfo& Candidate::findOrSetFieldInfo(TR::Node *fieldRefNode, TR::SymbolRefer
 
 void TR_EscapeAnalysis::printCandidates(const char *title)
    {
+   OMR::Logger *log = comp()->log();
    if (title)
-      traceMsg(comp(), "\n%s\n", title);
+      log->printf("\n%s\n", title);
 
    int32_t index = 0;
    for (Candidate *candidate = _candidates.getFirst(); candidate; candidate = candidate->getNext())
       {
-      traceMsg(comp(), "Candidate %d:\n", index++);
+      log->printf("Candidate %d:\n", index++);
       candidate->print();
       }
    }
 
 static void printSymRefList(TR_ScratchList<TR::SymbolReference> *list, TR::Compilation *comp)
    {
+   OMR::Logger *log = comp->log();
    ListIterator<TR::SymbolReference> iter(list);
    const char *sep = "";
    for (TR::SymbolReference *symRef = iter.getFirst(); symRef; symRef = iter.getNext())
       {
-      traceMsg(comp, "%s#%d", sep, symRef->getReferenceNumber());
+      log->printf("%s#%d", sep, symRef->getReferenceNumber());
       sep = ",";
       }
    }
 
 void Candidate::print()
    {
-   traceMsg(comp(), "   Node = %p, contiguous = %d, local = %d\n", _node, isContiguousAllocation(), isLocalAllocation());
+   OMR::Logger *log = comp()->log();
+   log->printf("   Node = %p, contiguous = %d, local = %d\n", _node, isContiguousAllocation(), isLocalAllocation());
    if (_flags.getValue() != 0)
       {
 
-#define PRINT_FLAG_IF(comp, cond, text) do { if (cond) traceMsg(comp, text " "); } while (false)
+#define PRINT_FLAG_IF(comp, cond, text) do { if (cond) log->prints(text " "); } while (false)
 #define PRINT_FLAG(comp, query, text) PRINT_FLAG_IF(comp, query(), text)
 
-      traceMsg(comp(), "   Flags = {");
+      log->prints("   Flags = {");
       PRINT_FLAG(comp(), isLocalAllocation, "LocalAllocation");
       PRINT_FLAG(comp(), mustBeContiguousAllocation, "MustBeContiguous");
       PRINT_FLAG(comp(), isExplicitlyInitialized, "ExplicitlyInitialized");
@@ -8528,43 +8381,43 @@ void Candidate::print()
       PRINT_FLAG(comp(), isProfileOnly, "ProfileOnly");
       PRINT_FLAG(comp(), callsStringCopyConstructor, "CallsStringCopy");
       PRINT_FLAG(comp(), forceLocalAllocation, "ForceLocalAllocation");
-      traceMsg(comp(), "}\n");
+      log->prints("}\n");
 
 #undef PRINT_FLAG_IF
 #undef PRINT_FLAG
       }
-   traceMsg(comp(), "   Value numbers = {");
+   log->prints("   Value numbers = {");
    for (uint32_t j = 0; j <_valueNumbers->size(); j++)
-      traceMsg(comp(), " %d", _valueNumbers->element(j));
-   traceMsg(comp(), " }\n");
+      log->printf(" %d", _valueNumbers->element(j));
+   log->prints(" }\n");
    if (isLocalAllocation() && hasCallSites())
       {
-      traceMsg(comp(), "   Max inline depth = %d, inline bytecode size = %d\n", _maxInlineDepth, _inlineBytecodeSize);
-      traceMsg(comp(), "   Call sites to be inlined:\n");
+      log->printf("   Max inline depth = %d, inline bytecode size = %d\n", _maxInlineDepth, _inlineBytecodeSize);
+      log->prints("   Call sites to be inlined:\n");
       ListIterator<TR::TreeTop> callSites(getCallSites());
       for (TR::TreeTop *callSite = callSites.getFirst(); callSite; callSite = callSites.getNext())
          {
          TR::Node *node = callSite->getNode()->getFirstChild();
-         traceMsg(comp(), "      [%p] %s\n", node, node->getSymbol()->getMethodSymbol()->getMethod()->signature(trMemory()));
+         log->printf("      [%p] %s\n", node, node->getSymbol()->getMethodSymbol()->getMethod()->signature(trMemory()));
          }
       }
    if (_fields)
       {
-      traceMsg(comp(), "   %d fields:\n", _fields->size());
+      log->printf("   %d fields:\n", _fields->size());
       for (int32_t i = 0; i < _fields->size(); i++)
          {
          FieldInfo &field = _fields->element(i);
-         traceMsg(comp(), "     %2d: offset=%-3d size=%-2d vectorElem=%-2d ",
+         log->printf("     %2d: offset=%-3d size=%-2d vectorElem=%-2d ",
             i, field._offset, field._size, field._vectorElem);
          if (field._symRef)
-            traceMsg(comp(), "symRef=#%-4d ", field._symRef->getReferenceNumber());
+            log->printf("symRef=#%-4d ", field._symRef->getReferenceNumber());
          else
-            traceMsg(comp(), "symRef=null ");
-         traceMsg(comp(), "good={");
+            log->prints("symRef=null ");
+         log->prints("good={");
          printSymRefList(field._goodFieldSymrefs, comp());
-         traceMsg(comp(), "} bad={");
+         log->prints("} bad={");
          printSymRefList(field._badFieldSymrefs, comp());
-         traceMsg(comp(), "}\n");
+         log->prints("}\n");
          }
       }
    }
@@ -8777,8 +8630,7 @@ bool TR_FlowSensitiveEscapeAnalysis::getCFGBackEdgesAndLoopEntryBlocks(TR_Struct
          {
          collectCFGBackEdges(region->getEntry());
          _loopEntryBlocks->set(region->getEntry()->getNumber());
-         if (trace())
-            traceMsg(comp(), "Block numbered %d is loop entry\n", region->getEntry()->getNumber());
+         logprintf(trace(), comp()->log(), "Block numbered %d is loop entry\n", region->getEntry()->getNumber());
          }
 
       TR_StructureSubGraphNode *subNode;
@@ -8818,8 +8670,8 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
      _flushEdges(comp->trMemory()),
      _splitBlocks(comp->trMemory())
    {
-   if (trace())
-      traceMsg(comp, "Starting FlowSensitiveEscapeAnalysis analysis\n");
+   OMR::Logger *log = comp->log();
+   logprints(trace(), log, "Starting FlowSensitiveEscapeAnalysis analysis\n");
 
    if (comp->getVisitCount() > 8000)
       comp->resetVisitCounts(1);
@@ -8841,13 +8693,11 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
    for (candidate = _candidates->getFirst(); candidate; candidate = next)
       {
       next = candidate->getNext();
-      if (trace())
-         traceMsg(comp, "Allocation node %p is represented by bit position %d\n", candidate->_node, _numAllocations);
+      logprintf(trace(), log, "Allocation node %p is represented by bit position %d\n", candidate->_node, _numAllocations);
       candidate->_index = _numAllocations++;
       }
 
-   if (trace())
-      traceMsg(comp, "_numAllocations = %d\n", _numAllocations);
+   logprintf(trace(), log, "_numAllocations = %d\n", _numAllocations);
 
    if (_numAllocations == 0)
       return; // Nothing to do if there are no allocations
@@ -8872,11 +8722,11 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
          {
          if (_blockAnalysisInfo[i])
             {
-            traceMsg(comp, "\nSolution for block_%d: ",i);
-            _blockAnalysisInfo[i]->print(comp);
+            log->printf("\nSolution for block_%d: ",i);
+            _blockAnalysisInfo[i]->print(log, comp);
             }
          }
-      traceMsg(comp, "\nEnding FlowSensitiveEscapeAnalysis analysis\n");
+      log->prints("\nEnding FlowSensitiveEscapeAnalysis analysis\n");
       }
 
    int32_t blockNum = -1;
@@ -8922,11 +8772,9 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
                      {
                      node->setLocalObjectMonitor(true);
                      optimizer->setRequestOptimization(OMR::redundantMonitorElimination);
-                     //printf("Eliminating monitor in %s\n", comp->signature());
                      }
                   //else
                   //   {
-                  //printf("Removing monitor from %s\n", comp->signature());
                   //   if (treeTop->getNode() == node)
                   //      TR::Node::recreate(node, TR::treetop);
                   //   else
@@ -8944,14 +8792,12 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
       return;
       }
 
-   if (trace())
-      traceMsg(comp, "\nStarting local flush elimination \n");
+   logprints(trace(), log, "\nStarting local flush elimination \n");
 
    TR_LocalFlushElimination localFlushElimination(_escapeAnalysis, _numAllocations);
    localFlushElimination.perform();
 
-   if (trace())
-      traceMsg(comp, "\nStarting global flush elimination \n");
+   logprints(trace(), log, "\nStarting global flush elimination \n");
 
    if (comp->getFlowGraph()->getStructure()->markStructuresWithImproperRegions())
       {
@@ -8973,7 +8819,7 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
    _loopEntryBlocks = new (trStackMemory()) TR_BitVector(numBlocks, trMemory(), stackAlloc, notGrowable);
    _catchBlocks = new (trStackMemory()) TR_BitVector(numBlocks, trMemory(), stackAlloc, notGrowable);
    getCFGBackEdgesAndLoopEntryBlocks(comp->getFlowGraph()->getStructure());
-   TR::MonitorElimination::collectPredsAndSuccs(comp->getFlowGraph()->getStart(), visitedNodes, _predecessorInfo, _successorInfo, &_cfgBackEdges, _loopEntryBlocks, comp);
+   TR::MonitorElimination::collectPredsAndSuccs(comp->getFlowGraph()->getStart(), visitedNodes, _predecessorInfo, _successorInfo, &_cfgBackEdges, _loopEntryBlocks, comp, trace());
 
    _scratch2 = new (trStackMemory()) TR_BitVector(numBlocks, trMemory(), stackAlloc, notGrowable);
 
@@ -9003,16 +8849,15 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
       //int32_t blockNum = block->getNumber();
       int32_t blockNum = flushCandidate->getBlockNum();
 
-      if (trace())
-         traceMsg(comp, "\nConsidering Flush for allocation %p (index %d) in block_%d\n", candidate->_node, candidate->_index, blockNum);
+      logprintf(trace(), log, "\nConsidering Flush for allocation %p (index %d) in block_%d\n", candidate->_node, candidate->_index, blockNum);
 
       TR_BitVector *successors = _successorInfo[blockNum];
 
        if (trace())
          {
-         traceMsg(comp, "Successors : \n");
-         successors->print(comp);
-         traceMsg(comp, "\n");
+         log->prints("Successors : \n");
+         successors->print(log, comp);
+         log->println();
          }
 
       TR_BitVectorIterator succIt(*successors);
@@ -9024,24 +8869,22 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
          *_scratch2 = *_loopEntryBlocks;
          *_scratch2 |= *_catchBlocks;
 
-          if (trace())
-             traceMsg(comp, "Successor %d being examined\n", nextSucc);
+         logprintf(trace(), log, "Successor %d being examined\n", nextSucc);
 
          if ((_blocksWithFlushes->get(nextSucc) ||
               _blocksWithSyncs->get(nextSucc)) &&
               succInfo &&
               succInfo->get(candidate->_index))
             {
-            if (trace())
-               traceMsg(comp, "Current allocation %d reaches successor %d\n", candidate->_index, nextSucc);
+            logprintf(trace(), log, "Current allocation %d reaches successor %d\n", candidate->_index, nextSucc);
 
             TR_BitVector *preds = _predecessorInfo[nextSucc];
 
             if (trace())
                {
-               traceMsg(comp, "Predecessors of next succ %d : \n", nextSucc);
-               preds->print(comp);
-               traceMsg(comp, "\n");
+               log->printf("Predecessors of next succ %d : \n", nextSucc);
+               preds->print(log, comp);
+               log->println();
                }
 
             *_scratch = *preds;
@@ -9065,16 +8908,14 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
                  {
                  for (auto succ = nextNode->getSuccessors().begin(); succ != nextNode->getSuccessors().end(); ++succ)
                     {
-                    if (trace())
-                       traceMsg(comp, "Checking succ edge from %d to %d\n", nextNode->getNumber(), (*succ)->getTo()->getNumber());
+                    logprintf(trace(), log, "Checking succ edge from %d to %d\n", nextNode->getNumber(), (*succ)->getTo()->getNumber());
 
                     if (!_scratch->get((*succ)->getTo()->getNumber()) &&
                         ((*succ)->getTo()->getNumber() != nextSucc))
                        {
                        postDominated = false;
                        _flushEdges.add(new (trStackMemory()) TR_CFGEdgeAllocationPair(*succ, candidate));
-                       if (trace())
-                          traceMsg(comp, "Adding flush edge from %d to %d\n", nextNode->getNumber(), (*succ)->getTo()->getNumber());
+                       logprintf(trace(), log, "Adding flush edge from %d to %d\n", nextNode->getNumber(), (*succ)->getTo()->getNumber());
                        }
                     }
                  }
@@ -9082,15 +8923,14 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
 
             if (trace())
                {
-               traceMsg(comp, "Scratch : \n");
-               _scratch->print(comp);
-               traceMsg(comp, "\n");
+               log->prints("Scratch : \n");
+               _scratch->print(log, comp);
+               log->println();
                }
 
             //if (postDominated)
                {
-               if (trace())
-                  traceMsg(comp, "Current allocation %d is post dominated by allocation in successor %d\n", candidate->_index, nextSucc);
+               logprintf(trace(), log, "Current allocation %d is post dominated by allocation in successor %d\n", candidate->_index, nextSucc);
 
                Candidate *succCandidate = NULL;
                FlushCandidate *succFlushCandidate = NULL;
@@ -9105,9 +8945,6 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
 
                      //TR::Block *succBlock = succCandidate->_block;
                      int32_t succBlockNum = succFlushCandidate->getBlockNum();
-
-                     //if (trace())
-                     //   traceMsg(comp, "succCandidate %p succCandidate num %d succCandidate Flush reqd %d succBlockNum %d\n", succCandidate->_node, succCandidate->_index, succCandidate->_flushRequired, succBlockNum);
 
                      if ((succBlockNum == nextSucc) &&
                          succCandidate->_flushRequired)
@@ -9124,9 +8961,6 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
                               }
                            }
 
-                        //if (trace())
-                        //    traceMsg(comp, "succ candidate %p nextAllocCanReach %d\n", succCandidate->_node, nextAllocCanReach);
-
                         if (nextAllocCanReach)
                            {
                            if (succCandidate != candidate)
@@ -9142,8 +8976,6 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
                      }
                   }
 
-               //if (trace())
-               //   traceMsg(comp, "succCandidate %p _blocksWithSyncs bit %d\n", succCandidate->_node, _blocksWithSyncs->get(nextSucc));
                TR::TreeTop *tt = _syncNodeTTForBlock[nextSucc];
                // If we have a sync node where the flush is not already optimally placed or we have a successor flush candidate
                if ((_blocksWithSyncs->get(nextSucc) && flushCandidate->getFlush()->getNode() != tt->getPrevTreeTop()->getNode()) ||
@@ -9161,8 +8993,7 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
                         {
                         TR_ASSERT_FATAL(flushTree->getNode()->getAllocation()!=NULL || flushTree->getNode()->canOmitSync()==true, "EA: Attempt to omit sync on a fence (%p) with allocation already set to ALL.\n", flushTree->getNode());
                         flushTree->getNode()->setOmitSync(true);
-                        if (trace())
-                           traceMsg(comp,"Setting AF node %p for allocation %p to omitsync\n", flushTree->getNode(), flushTree->getNode()->getAllocation() );
+                        logprintf(trace(), log, "Setting AF node %p for allocation %p to omitsync\n", flushTree->getNode(), flushTree->getNode()->getAllocation());
                         flushTree->getNode()->setAllocation(NULL);
                         }
                      //prevTree->join(nextTree);
@@ -9177,14 +9008,12 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
                            {
                            afNode->setAllocation(candidate->_node);
                            afNode->setOmitSync(false);
-                           if (trace())
-                              traceMsg(comp, "Restoring AF node %p for allocation %p above node %p.\n", afNode, candidate->_node, tt->getNode());
+                           logprintf(trace(), log, "Restoring AF node %p for allocation %p above node %p.\n", afNode, candidate->_node, tt->getNode());
                            }
                         else
                            {
                            afNode->setAllocation(NULL); // Existing AllocationFence is now needed by more then one allocation
-                           if (trace())
-                              traceMsg(comp, "Setting AF node %p allocation to ALL above %p.\n", afNode, tt->getNode() );
+                           logprintf(trace(), log, "Setting AF node %p allocation to ALL above %p.\n", afNode, tt->getNode());
                            }
                         }
                      else
@@ -9195,29 +9024,21 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
                         // moved/removed later in the compile, this AllocationFence will ensure a flush instruction is generated.
                         TR::Node *afNode = TR::Node::createAllocationFence(candidate->_node, candidate->_node);
                         tt->insertBefore(TR::TreeTop::create(comp, afNode, NULL, NULL));
-                        if (trace())
-                           traceMsg(comp,   "Inserted AF node %p for candidate %p above %p (%s).\n", afNode, candidate->_node, tt->getNode(), tt->getNode()->getOpCode().getName() );
-                        //fprintf( stderr, "Inserted AF node %p above %p (%s).\n", afNode, tt->getNode(), tt->getNode()->getOpCode().getName() );
+                        logprintf(trace(), log, "Inserted AF node %p for candidate %p above %p (%s).\n",
+                           afNode, candidate->_node, tt->getNode(), tt->getNode()->getOpCode().getName());
                         }
                      }
-                  //if (trace())
-                  //   {
-                  //   traceMsg(comp, "0reaching candidate %p index %d does not need Flush\n", candidate->_node, candidate->_index);
-                  //   }
 
                   if (trace())
                      {
                      if (succCandidate)
                         {
-                        traceMsg(comp, "Flush for current allocation %d is post dominated by (and moved to) Flush for allocation %d\n", candidate->_index, succCandidate->_index);
-                        //printf("Moved flush for allocation %p in block_%d to allocation %p in succ block_%d in method %s\n", candidate->_node, blockNum, succCandidate->_node, nextSucc, comp->signature());
+                        log->printf("Flush for current allocation %d is post dominated by (and moved to) Flush for allocation %d\n", candidate->_index, succCandidate->_index);
                         }
                      else
                         {
-                        traceMsg(comp, "Flush for current allocation %d is post dominated by (and moved to) real sync for in succ %d\n", candidate->_index, nextSucc);
-                        //printf("Moved flush for allocation %p in block_%d to real sync in succ %d in method %s\n", candidate->_node, blockNum, nextSucc, comp->signature());
+                        log->printf("Flush for current allocation %d is post dominated by (and moved to) real sync for in succ %d\n", candidate->_index, nextSucc);
                         }
-                     fflush(stdout);
                      }
                   //break;
                   }
@@ -9234,8 +9055,8 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
          TR_CFGEdgeAllocationPair *pair = listElem->getData();
          if (trace())
             {
-            traceMsg(comp, "Processing flush edge from %d to %d\n", pair->getEdge()->getFrom()->getNumber(), pair->getEdge()->getTo()->getNumber());
-            traceMsg(comp, "Processing flush alloc %p vs candidate %p\n", pair->getAllocation(), candidate->_node);
+            log->printf("Processing flush edge from %d to %d\n", pair->getEdge()->getFrom()->getNumber(), pair->getEdge()->getTo()->getNumber());
+            log->printf("Processing flush alloc %p vs candidate %p\n", pair->getAllocation(), candidate->_node);
             }
 
          if (pair->getAllocation() == candidate)
@@ -9274,20 +9095,16 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
       else if ((to->getPredecessors().size() == 1))
          {
          splitBlock = toBlock(to);
-         if (trace())
-            {
-            traceMsg(comp, "For edge %d->%d adding Flush in block_%d for candidate %p index %d\n", pair->getEdge()->getFrom()->getNumber(), pair->getEdge()->getTo()->getNumber(), splitBlock->getNumber(), pair->getAllocation(), pair->getAllocation()->_index);
-            //printf("For edge %d->%d adding Flush in block_%d for candidate %p index %d\n", pair->getEdge()->getFrom()->getNumber(), pair->getEdge()->getTo()->getNumber(), splitBlock->getNumber(), pair->getAllocation(), pair->getAllocation()->_index);
-            }
+         logprintf(trace(), log, "For edge %d->%d adding Flush in block_%d for candidate %p index %d\n",
+            pair->getEdge()->getFrom()->getNumber(), pair->getEdge()->getTo()->getNumber(),
+            splitBlock->getNumber(), pair->getAllocation(), pair->getAllocation()->_index);
          }
       else
          {
          splitBlock = findOrSplitEdge(toBlock(pair->getEdge()->getFrom()), toBlock(to));
-         if (trace())
-            {
-            traceMsg(comp, "Splitting edge %d->%d with block_%d for candidate %p index %d\n", pair->getEdge()->getFrom()->getNumber(), pair->getEdge()->getTo()->getNumber(), splitBlock->getNumber(), pair->getAllocation(), pair->getAllocation()->_index);
-            //printf("Splitting edge %d->%d with block_%d for candidate %p index %d\n", pair->getEdge()->getFrom()->getNumber(), pair->getEdge()->getTo()->getNumber(), splitBlock->getNumber(), pair->getAllocation(), pair->getAllocation()->_index);
-            }
+         logprintf(trace(), log, "Splitting edge %d->%d with block_%d for candidate %p index %d\n",
+            pair->getEdge()->getFrom()->getNumber(), pair->getEdge()->getTo()->getNumber(),
+            splitBlock->getNumber(), pair->getAllocation(), pair->getAllocation()->_index);
          }
 
       TR::Node *firstNode = splitBlock->getFirstRealTreeTop()->getNode();
@@ -9447,17 +9264,18 @@ void TR_FlowSensitiveEscapeAnalysis::analyzeTreeTopsInBlockStructure(TR_BlockStr
 #if DEBUG
       if (node->getOpCodeValue() == TR::BBEnd && trace())
          {
-         traceMsg(comp(), "\n  Block %d:\n", blockNum);
-         traceMsg(comp(), "     Normal set ");
+         OMR::Logger *log = comp()->log();
+         log->printf("\n  Block %d:\n", blockNum);
+         log->prints("     Normal set ");
          if (_regularInfo)
-            _regularInfo->print(comp());
+            _regularInfo->print(log, comp());
          else
-            traceMsg(comp(), "{}");
-         traceMsg(comp(), "\n     Exception set ");
+            log->prints("{}");
+         log->prints("\n     Exception set ");
          if (_exceptionInfo)
-            _exceptionInfo->print(comp());
+            _exceptionInfo->print(log, comp());
          else
-            traceMsg(comp(), "{}");
+            log->prints("{}");
          }
 #endif
 
@@ -9499,8 +9317,6 @@ void TR_FlowSensitiveEscapeAnalysis::analyzeNode(TR::Node *node, TR::TreeTop *tr
          _syncNodeTTForBlock[blockNum] = treeTop;
          }
       }
-
-   //traceMsg(comp(), "Node %p is being examined\n", node);
 
    TR_EscapeAnalysis *escapeAnalysis = _escapeAnalysis;
    if (!node->getOpCode().isCall())
@@ -9728,6 +9544,8 @@ bool TR_LocalFlushElimination::examineNode(TR::Node *node, TR::TreeTop *tt, TR::
       return true;
    visited.add(node);
 
+   OMR::Logger *log = comp()->log();
+
    TR::ILOpCode &opCode = node->getOpCode();
 
    if (!opCode.isCall())
@@ -9872,14 +9690,14 @@ bool TR_LocalFlushElimination::examineNode(TR::Node *node, TR::TreeTop *tt, TR::
             notAnalyzedSync = false;
             if (trace())
                {
-               traceMsg(comp(), "\nConsidering Flush %p for allocation %p (index %d)\n", flushCandidate->getFlush()->getNode(), candidate->_node, candidate->_index);
+               log->printf("\nConsidering Flush %p for allocation %p (index %d)\n", flushCandidate->getFlush()->getNode(), candidate->_node, candidate->_index);
                if (nodeHasSync)
                   {
-                  traceMsg(comp(), "Also analyzing for nodeHasSync node %p; nodeHasVolatile %d\n", node, nodeHasVolatile);
+                  log->printf("Also analyzing for nodeHasSync node %p; nodeHasVolatile %d\n", node, nodeHasVolatile);
                   }
-               traceMsg(comp(), "Allocation info at this stage : \n");
-               _allocationInfo->print(comp());
-               traceMsg(comp(), "\n");
+               log->prints("Allocation info at this stage : \n");
+               _allocationInfo->print(log, comp());
+               log->println();
                }
 
             _temp->empty();
@@ -9889,13 +9707,6 @@ bool TR_LocalFlushElimination::examineNode(TR::Node *node, TR::TreeTop *tt, TR::
                int32_t nextAlloc = allocIt.getNextElement();
                //if (nextAlloc == candidate->_index)
                //   continue;
-
-               //if (trace())
-               //          {
-               //          traceMsg(comp(), "nextAlloc %d\n", nextAlloc);
-               //          printf("nextAlloc %d\n", nextAlloc);
-               //          fflush(stdout);
-               //          }
 
                bool nextAllocCanReach = true;
                Candidate *reachingCandidate = NULL;
@@ -9933,8 +9744,7 @@ bool TR_LocalFlushElimination::examineNode(TR::Node *node, TR::TreeTop *tt, TR::
                if (nodeHasVolatile && reachingFlushCandidate && reachingFlushCandidate->getFlush()->getNode() == tt->getPrevTreeTop()->getNode())
                   {
                   reachingFlushCandidate->setOptimallyPlaced(true);
-                  traceMsg(comp(), "AF %p is now marked as Optimally Placed!\n", reachingFlushCandidate->getFlush()->getNode() );
-                  //fprintf( stderr, "AF %p is now marked as Optimally Placed!\n", reachingFlushCandidate->getFlush()->getNode() );
+                  logprintf(trace(), log, "AF %p is now marked as Optimally Placed!\n", reachingFlushCandidate->getFlush()->getNode() );
                   }
 
                // Skip to next allocation if we don't have a candidate, or the reachingFlushCandidate is right were we want it already
@@ -9955,17 +9765,12 @@ bool TR_LocalFlushElimination::examineNode(TR::Node *node, TR::TreeTop *tt, TR::
                         {
                         TR_ASSERT_FATAL(flushTree->getNode()->getAllocation()!=NULL, "localEA: Attempt to omit sync on a fence (%p) with allocation already set to ALL.\n", flushTree->getNode());
                         flushTree->getNode()->setOmitSync(true);
-                        if (trace())
-                           traceMsg(comp(),"(local) Setting AF node %p for allocation %p to omitsync\n", flushTree->getNode(), flushTree->getNode()->getAllocation() );
+                        logprintf(trace(), log, "(local) Setting AF node %p for allocation %p to omitsync\n",
+                           flushTree->getNode(), flushTree->getNode()->getAllocation());
                         flushTree->getNode()->setAllocation(NULL);
                         }
                      //prevTree->join(nextTree);
                      }
-
-                  //if (trace())
-                  //   {
-                  //   traceMsg(comp(), "1reaching candidate %p index %d does not need Flush\n", reachingCandidate->_node, reachingCandidate->_index);
-                  //   }
 
                   if (!nodeHasSync)
                      {
@@ -9999,18 +9804,12 @@ bool TR_LocalFlushElimination::examineNode(TR::Node *node, TR::TreeTop *tt, TR::
                            afNode->setAllocation(candidate->_node);
                            afNode->setOmitSync(false);
 
-                           if (trace())
-                              {
-                              traceMsg(comp(), "(local) Restoring AF node %p for allocation %p above node %p.\n", afNode, candidate->_node, tt->getNode());
-                              }
+                           logprintf(trace(), log, "(local) Restoring AF node %p for allocation %p above node %p.\n", afNode, candidate->_node, tt->getNode());
                            }
                         else
                            {
                            afNode->setAllocation(NULL); // Existing AllocationFence is now needed by more then one allocation
-                           if (trace())
-                              {
-                              traceMsg(comp(), "(local) Setting AF node %p allocation to ALL above %p.\n", afNode, tt->getNode() );
-                              }
+                           logprintf(trace(), log, "(local) Setting AF node %p allocation to ALL above %p.\n", afNode, tt->getNode() );
                            }
                         }
                      else
@@ -10021,9 +9820,7 @@ bool TR_LocalFlushElimination::examineNode(TR::Node *node, TR::TreeTop *tt, TR::
                         // moved/removed later in the compile, this AllocationFence will ensure a flush instruction is generated.
                         TR::Node *afNode = TR::Node::createAllocationFence(candidate->_node, candidate->_node);
                         tt->insertBefore(TR::TreeTop::create(comp(), afNode, NULL, NULL));
-                        if (trace())
-                           traceMsg(comp(), "(local) Inserted AF node %p for candidate %p above node %p (%s).\n", afNode, candidate->_node, node, node->getOpCode().getName() );
-                        //fprintf( stderr, "(local) Inserted AF node %p above node %p (%s).\n", afNode, node, node->getOpCode().getName() );
+                        logprintf(trace(), log, "(local) Inserted AF node %p for candidate %p above node %p (%s).\n", afNode, candidate->_node, node, node->getOpCode().getName());
                         }
                      }
 
@@ -10031,16 +9828,12 @@ bool TR_LocalFlushElimination::examineNode(TR::Node *node, TR::TreeTop *tt, TR::
                      {
                      if (!nodeHasSync)
                         {
-                        traceMsg(comp(), "Flush for current allocation %d is post dominated by (and moved to) Flush for allocation %d\n", reachingCandidate->_index, candidate->_index);
-                        //printf("Moved flush for allocation %p to allocation %p locally in method %s\n", reachingCandidate->_node, candidate->_node, comp()->signature());
+                        log->printf("Flush for current allocation %d is post dominated by (and moved to) Flush for allocation %d\n", reachingCandidate->_index, candidate->_index);
                         }
                      else
                         {
-                        traceMsg(comp(), "Flush for current allocation %d is post dominated by (and moved to) sync in the same block\n", reachingCandidate->_index);
-                        //printf("Moved flush for allocation %p to real sync node %p locally in method %s\n", reachingCandidate->_node, node, comp()->signature());
+                        log->printf("Flush for current allocation %d is post dominated by (and moved to) sync in the same block\n", reachingCandidate->_index);
                         }
-
-                     //fflush(stdout);
                      }
                   }
                }

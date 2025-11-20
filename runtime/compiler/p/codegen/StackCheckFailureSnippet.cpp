@@ -44,6 +44,7 @@
 #include "il/ResolvedMethodSymbol.hpp"
 #include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
 uint8_t *storeArgumentItem(TR::InstOpCode::Mnemonic op, uint8_t *buffer, TR::RealRegister *reg, int32_t offset, TR::CodeGenerator *cg)
@@ -272,11 +273,11 @@ uint8_t *TR::PPCStackCheckFailureSnippet::emitSnippetBody()
 
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::PPCStackCheckFailureSnippet * snippet)
+TR_Debug::print(OMR::Logger *log, TR::PPCStackCheckFailureSnippet * snippet)
    {
    uint8_t *cursor = snippet->getSnippetLabel()->getCodeLocation();
 
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "Stack Check Failure Snippet");
+   printSnippetLabel(log, snippet->getSnippetLabel(), cursor, "Stack Check Failure Snippet");
 
    TR::ResolvedMethodSymbol *bodySymbol=_comp->getJittedMethodSymbol();
    const TR::PPCLinkageProperties &linkage = _cg->getLinkage()->getProperties();
@@ -295,26 +296,26 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCStackCheckFailureSnippet * snippet)
       if (offsetAdjust > UPPER_IMMED)   // addi is not applicable
          {
          // prologue arranged for gr12 to contain offsetAdjust
-         printPrefix(pOutFile, NULL, cursor, 4);
-         trfprintf(pOutFile, "add \t");
-         print(pOutFile, stackPtr, TR_WordReg);
-         trfprintf(pOutFile, ", ");
-         print(pOutFile, stackPtr, TR_WordReg);
-         trfprintf(pOutFile, ", gr12");
+         printPrefix(log, NULL, cursor, 4);
+         log->prints("add \t");
+         print(log, stackPtr, TR_WordReg);
+         log->prints(", ");
+         print(log, stackPtr, TR_WordReg);
+         log->prints(", gr12");
          cursor += 4;
          }
       else
          {
-         printPrefix(pOutFile, NULL, cursor, 4);
-         trfprintf(pOutFile, "addi2 \t");
-         print(pOutFile, stackPtr, TR_WordReg);
-         trfprintf(pOutFile, ", ");
-         print(pOutFile, stackPtr, TR_WordReg);
-         trfprintf(pOutFile, ", 0x%x", offsetAdjust);
+         printPrefix(log, NULL, cursor, 4);
+         log->prints("addi2 \t");
+         print(log, stackPtr, TR_WordReg);
+         log->prints(", ");
+         print(log, stackPtr, TR_WordReg);
+         log->printf(", 0x%x", offsetAdjust);
          cursor += 4;
-         printPrefix(pOutFile, NULL, cursor, 4);
-         trfprintf(pOutFile, "li \tgr12");
-         trfprintf(pOutFile, ", 0x%x", offsetAdjust);
+         printPrefix(log, NULL, cursor, 4);
+         log->prints("li \tgr12");
+         log->printf(", 0x%x", offsetAdjust);
          cursor += 4;
          }
       }
@@ -322,34 +323,34 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCStackCheckFailureSnippet * snippet)
       {
       if (saveLR)
          {
-         printPrefix(pOutFile, NULL, cursor, 4);
-         trfprintf(pOutFile, "addi2 \t");
-         print(pOutFile, stackPtr, TR_WordReg);
-         trfprintf(pOutFile, ", ");
-         print(pOutFile, stackPtr, TR_WordReg);
-         trfprintf(pOutFile, ", 0x%x", -TR::Compiler->om.sizeofReferenceAddress());
+         printPrefix(log, NULL, cursor, 4);
+         log->prints("addi2 \t");
+         print(log, stackPtr, TR_WordReg);
+         log->prints(", ");
+         print(log, stackPtr, TR_WordReg);
+         log->printf(", 0x%x", -TR::Compiler->om.sizeofReferenceAddress());
          cursor += 4;
          }
-      printPrefix(pOutFile, NULL, cursor, 4);
-      trfprintf(pOutFile, "li \tgr12");
-      trfprintf(pOutFile, ", 0x%x", offsetAdjust);
+      printPrefix(log, NULL, cursor, 4);
+      log->prints("li \tgr12");
+      log->printf(", 0x%x", offsetAdjust);
       cursor += 4;
       }
 
    if (saveLR)
       {
-      printPrefix(pOutFile, NULL, cursor, 4);
-      trfprintf(pOutFile, "mflr \tgr0");
+      printPrefix(log, NULL, cursor, 4);
+      log->prints("mflr \tgr0");
       cursor += 4;
       }
 
    if (saveLR)
       {
-      printPrefix(pOutFile, NULL, cursor, 4);
+      printPrefix(log, NULL, cursor, 4);
       if (_comp->target().is64Bit())
-         trfprintf(pOutFile, "std \t[gr14, 0], gr0");
+         log->prints("std \t[gr14, 0], gr0");
       else
-         trfprintf(pOutFile, "stw \t[gr14, 0], gr0");
+         log->prints("stw \t[gr14, 0], gr0");
       cursor += 4;
       }
 
@@ -358,16 +359,16 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCStackCheckFailureSnippet * snippet)
    if (isBranchToTrampoline(_comp->getSymRefTab()->element(TR_stackOverflow), cursor, distance))
       info = " Through trampoline";
 
-   printPrefix(pOutFile, NULL, cursor, 4);
+   printPrefix(log, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03fffffc;
    distance = (distance << 6) >> 6;     // sign extend
-   trfprintf(pOutFile, "bl \t" POINTER_PRINTF_FORMAT "\t\t;%s", (intptr_t)cursor + distance, info);
+   log->printf("bl \t" POINTER_PRINTF_FORMAT "\t\t;%s", (intptr_t)cursor + distance, info);
    cursor += 4;
 
    if (saveLR)
       {
-      printPrefix(pOutFile, NULL, cursor, 4);
-      trfprintf(pOutFile, "mtlr \tgr0");
+      printPrefix(log, NULL, cursor, 4);
+      log->prints("mtlr \tgr0");
       cursor += 4;
       }
 
@@ -376,40 +377,40 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCStackCheckFailureSnippet * snippet)
       if (offsetAdjust > (-LOWER_IMMED))        // addi is not applicable
          {
          // prologue arranged for gr12 to contain offsetAdjust
-         printPrefix(pOutFile, NULL, cursor, 4);
-         trfprintf(pOutFile, "subf \t");
-         print(pOutFile, stackPtr, TR_WordReg);
-         trfprintf(pOutFile, ", gr12, ");
-         print(pOutFile, stackPtr, TR_WordReg);
+         printPrefix(log, NULL, cursor, 4);
+         log->prints("subf \t");
+         print(log, stackPtr, TR_WordReg);
+         log->prints(", gr12, ");
+         print(log, stackPtr, TR_WordReg);
          }
       else
          {
-         printPrefix(pOutFile, NULL, cursor, 4);
-         trfprintf(pOutFile, "addi2 \t");
-         print(pOutFile, stackPtr, TR_WordReg);
-         trfprintf(pOutFile, ", ");
-         print(pOutFile, stackPtr, TR_WordReg);
-         trfprintf(pOutFile, ", 0x%x", -offsetAdjust);
+         printPrefix(log, NULL, cursor, 4);
+         log->prints("addi2 \t");
+         print(log, stackPtr, TR_WordReg);
+         log->prints(", ");
+         print(log, stackPtr, TR_WordReg);
+         log->printf(", 0x%x", -offsetAdjust);
          }
       cursor += 4;
       }
    else if (saveLR)
       {
-      printPrefix(pOutFile, NULL, cursor, 4);
-      trfprintf(pOutFile, "addi2 \t");
-      print(pOutFile, stackPtr, TR_WordReg);
-      trfprintf(pOutFile, ", ");
-      print(pOutFile, stackPtr, TR_WordReg);
-      trfprintf(pOutFile, ", 0x%x", TR::Compiler->om.sizeofReferenceAddress());
+      printPrefix(log, NULL, cursor, 4);
+      log->prints("addi2 \t");
+      print(log, stackPtr, TR_WordReg);
+      log->prints(", ");
+      print(log, stackPtr, TR_WordReg);
+      log->printf(", 0x%x", TR::Compiler->om.sizeofReferenceAddress());
       cursor += 4;
       }
 
    // b restartLabel  -- assuming it is less than 64MB away.
-   printPrefix(pOutFile, NULL, cursor, 4);
+   printPrefix(log, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03fffffc;
    distance = (distance << 6) >> 6;     // sign extend
-   trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t; Back to ", (intptr_t)cursor + distance);
-   print(pOutFile, snippet->getReStartLabel());
+   log->printf("b \t" POINTER_PRINTF_FORMAT "\t\t; Back to ", (intptr_t)cursor + distance);
+   print(log, snippet->getReStartLabel());
    }
 
 uint32_t TR::PPCStackCheckFailureSnippet::getLength(int32_t estimatedSnippetStart)

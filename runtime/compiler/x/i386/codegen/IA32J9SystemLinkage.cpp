@@ -32,6 +32,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "ras/Logger.hpp"
 
 TR::IA32J9SystemLinkage::IA32J9SystemLinkage(TR::CodeGenerator *cg) : TR::IA32SystemLinkage(cg)
    {
@@ -72,13 +73,6 @@ TR::IA32J9SystemLinkage::buildVolatileAndReturnDependencies(TR::Node *callNode, 
 TR::Register*
 TR::IA32J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, bool spillFPRegs)
    {
-#ifdef DEBUG
-   if (debug("reportSysDispatch"))
-      {
-      printf("System Linkage Dispatch: %s calling %s\n", comp()->signature(), comp()->getDebug()->getName(callNode->getSymbolReference()));
-      }
-#endif
-
    TR::RealRegister    *espReal      = machine()->getRealRegister(TR::RealRegister::esp);
    TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
    TR::MethodSymbol    *methodSymbol = callNode->getSymbol()->castToMethodSymbol();
@@ -236,8 +230,7 @@ int32_t TR::IA32J9SystemLinkage::buildParametersOnCStack(TR::Node *callNode, int
       {
       adjustedArgSize = 16 - (argSize % 16);
       argSize = argSize + adjustedArgSize;
-      if (comp()->getOption(TR_TraceCG))
-         traceMsg(comp(), "adjust arguments size by %d to make arguments 16 byte aligned \n", adjustedArgSize);
+      logprintf(comp()->getOption(TR_TraceCG), comp()->log(), "adjust arguments size by %d to make arguments 16 byte aligned \n", adjustedArgSize);
       }
    for(int offset = adjustedArgSize; !paramsSlotsOnStack.isEmpty(); offset += TR::Compiler->om.sizeofReferenceAddress())
       {

@@ -56,6 +56,7 @@
 #include "env/TRMemory.hpp"
 #include "env/ut_j9jit.h"
 #include "env/VerboseLog.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/asmprotos.h"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/J9Runtime.hpp"
@@ -118,15 +119,16 @@ void setDllSlip(const char *CodeStart, const char *CodeEnd, const char *dllName,
    PORT_ACCESS_FROM_PORT(portLib);
 
    TR_ASSERT(comp, "Logging requires a compilation object");
-   traceMsg(comp, "code start 0x%016p , code end 0x%016p ,size = %d\n", CodeStart, CodeEnd, CodeStart - CodeEnd);
+
+   OMR::Logger *log = comp->log();
+   bool trace = log->isEnabled_DEPRECATED();
+
+   logprintf(trace, log, "code start 0x%016p , code end 0x%016p ,size = %d\n", CodeStart, CodeEnd, CodeStart - CodeEnd);
 
    if (sliphandle == 0)
       {
       rc = j9sl_open_shared_library(const_cast<char *>(dllName), &sliphandle, FALSE);
-      if (rc)
-         {
-         traceMsg(comp, "Failed to open SLIP DLL: %s (%s) %016p\n", dllName, j9error_last_error_message(), sliphandle);
-         }
+      logprintf((rc && trace), log, "Failed to open SLIP DLL: %s (%s) %016p\n", dllName, j9error_last_error_message(), sliphandle);
       }
 
    if (sliphandle != 0)
@@ -147,12 +149,12 @@ void setDllSlip(const char *CodeStart, const char *CodeEnd, const char *dllName,
          }
       else if (comp)
          {
-         traceMsg(comp, "\nCannot find do_slip function within SLIP DLL\n");
+         logprints(trace, log, "\nCannot find do_slip function within SLIP DLL\n");
          }
       }
    else if (comp)
       {
-      traceMsg(comp, "Cannot load slip/trap DLL\n");
+      logprints(trace, log, "Cannot load slip/trap DLL\n");
       }
 #endif
    return;
@@ -572,7 +574,7 @@ void J9FASTCALL _jitProfileBigDecimalValue(uintptr_t value, uintptr_t bigdecimal
    bool readValues = false;
    if (value)
       {
-	  uintptr_t objectClass = TR::Compiler->om.compressObjectReferences() ? ((J9ObjectCompressed*)value)->clazz : ((J9ObjectFull*)value)->clazz;
+      uintptr_t objectClass = TR::Compiler->om.compressObjectReferences() ? ((J9ObjectCompressed*)value)->clazz : ((J9ObjectFull*)value)->clazz;
       if ((objectClass & (UDATA)(-J9_REQUIRED_CLASS_ALIGNMENT)) == bigdecimalj9class)
          {
          readValues = true;
@@ -581,7 +583,6 @@ void J9FASTCALL _jitProfileBigDecimalValue(uintptr_t value, uintptr_t bigdecimal
          flag = *((int32_t *) (value + flagOffset));
          flag = flag & 1;
 
-         //printf("Called new profiling routine for BD %p with scale %d flags %d\n", bigdecimalj9class, scale, flag); fflush(stdout);
          }
       }
 
@@ -697,8 +698,6 @@ void J9FASTCALL _jitProfileStringValue(uintptr_t value, int32_t charsOffset, int
       length = *((int32_t *) (value + lengthOffset));
       if (length > 128)
          readValues = false;
-
-      //printf("Called new profiling routine for BD %p with scale %d flags %d\n", bigdecimalj9class, scale, flag); fflush(stdout);
       }
 
    if (!readValues)

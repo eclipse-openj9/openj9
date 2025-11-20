@@ -48,6 +48,7 @@
 #include "optimizer/Structure.hpp"
 #include "optimizer/TranslateTable.hpp"
 #include "optimizer/TransformUtil.hpp"
+#include "ras/Logger.hpp"
 
 /************************************/
 /************ Utilities *************/
@@ -56,17 +57,18 @@ void
 dump256Bytes(uint8_t *t, TR::Compilation * comp)
    {
    int i;
-   traceMsg(comp, "  | 0 1 2 3 4 5 6 7 8 9 A B C D E F\n");
-   traceMsg(comp, "--+--------------------------------");
+   OMR::Logger *log = comp->log();
+   log->prints("  | 0 1 2 3 4 5 6 7 8 9 A B C D E F\n");
+   log->prints("--+--------------------------------");
    for (i = 0; i < 256; i++)
       {
       if ((i % 16) == 0)
          {
-         traceMsg(comp, "\n%02X|",i);
+         log->printf("\n%02X|",i);
          }
-      traceMsg(comp, "%2x",t[i]);
+      log->printf("%2x",t[i]);
       }
-   traceMsg(comp, "\n");
+   log->println();
    }
 
 
@@ -1464,7 +1466,7 @@ sortList(List<TR_CISCNode>* input, List<TR_CISCNode>* output, List<TR_CISCNode>*
 //*****************************************************************************************
 // Checks if loop preheader block is last block in method.
 //*****************************************************************************************
-bool isLoopPreheaderLastBlockInMethod(TR::Compilation *comp, TR::Block *block, TR::Block **predBlock)
+bool isLoopPreheaderLastBlockInMethod(TR::Compilation *comp, TR::Block *block, bool trace, TR::Block **predBlock)
    {
 
    // If already a loop invariant block, we likely have the preheader.
@@ -1474,7 +1476,7 @@ bool isLoopPreheaderLastBlockInMethod(TR::Compilation *comp, TR::Block *block, T
          *predBlock = block;
       if (block->getExit()->getNextTreeTop() == NULL)
          {
-         traceMsg(comp, "Preheader block_%d [%p] is last block in method.\n", block->getNumber(), block);
+         logprintf(trace, comp->log(), "Preheader block_%d [%p] is last block in method.\n", block->getNumber(), block);
          return true;
          }
       }
@@ -1492,7 +1494,7 @@ bool isLoopPreheaderLastBlockInMethod(TR::Compilation *comp, TR::Block *block, T
                *predBlock = source;
             if (source->getExit()->getNextTreeTop() == NULL)
                {
-               traceMsg(comp, "Preheader block_%d [%p] to block_%d [%p] is last block in method.\n", source->getNumber(), source, block->getNumber(), block);
+               logprintf(trace, comp->log(), "Preheader block_%d [%p] to block_%d [%p] is last block in method.\n", source->getNumber(), source, block->getNumber(), block);
                return true;
                }
             }

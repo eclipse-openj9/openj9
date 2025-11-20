@@ -32,6 +32,7 @@
 #include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/OptimizationManager.hpp"
+#include "ras/Logger.hpp"
 
 #include <map>
 
@@ -71,15 +72,17 @@ static int32_t getReducedFrequencyAverage(int32_t currentValue, int32_t count, i
 
 static int32_t getReducedFrequencyMax(int32_t currentValue, int32_t count, int32_t newFrequency)
    {
-   return (currentValue < newFrequency) ? newFrequency : currentValue; 
+   return (currentValue < newFrequency) ? newFrequency : currentValue;
    }
 
 int32_t TR_HotFieldMarking::perform()
    {
+   OMR::Logger *log = comp()->log();
+   bool trace = comp()->getOption(TR_TraceMarkingOfHotFields);
+
    if (!TR::Compiler->om.isHotReferenceFieldRequired())
       {
-      if (trace())
-         traceMsg(comp(), "Skipping hot field marking since dynamic breadth first scan ordering is disabled\n");
+      logprints(trace, log, "Skipping hot field marking since dynamic breadth first scan ordering is disabled\n");
       return 0;
       }
 
@@ -95,7 +98,7 @@ int32_t TR_HotFieldMarking::perform()
       {
       getReducedFrequency = getReducedFrequencyMax;
       }
-   else 
+   else
       {
       getReducedFrequency = getReducedFrequencyAverage;
       }
@@ -149,25 +152,26 @@ int32_t TR_HotFieldMarking::perform()
       if (itr->second->_score >= TR::Options::_hotFieldThreshold)
          {
          uint32_t fieldOffset = (comp()->fej9()->getInstanceFieldOffset(itr->second->_clazz, itr->second->_fieldName, itr->second->_fieldNameLength, itr->second->_fieldSig, itr->second->_fieldSigLength) + TR::Compiler->om.objectHeaderSizeInBytes()) / TR::Compiler->om.sizeofReferenceField();
-            
+
          if (!comp()->fej9()->isAnonymousClass(itr->second->_clazz) && performTransformation(comp(), "%sUpdate hot field info for hot field. fieldSignature: %s; fieldName: %s; frequencyScore = %d\n", optDetailString(), itr->second->_fieldSig, itr->second->_fieldName, itr->second->_score) && (fieldOffset < U_8_MAX))
             {
             comp()->fej9()->reportHotField(getUtilization(), TR::Compiler->cls.convertClassOffsetToClassPtr(itr->second->_clazz), (uint8_t)fieldOffset, itr->second->_score);
-            if (comp()->getOption(TR_TraceMarkingOfHotFields))
+            if (trace)
                {
                int32_t classNameLength = 0;
                char *className = comp()->fej9()->getClassNameChars(itr->second->_clazz, classNameLength);
-               traceMsg(comp(), "<traceMarkingOfHotFields\n"
-                        "\tmethodSignature=\"%s\"\n"
-                        "\tmethodHotness=\"%s\"\n"
-                        "\tclassName=\"%s\"\n"
-                        "\tfieldName=\"%s\""
-                        "\tfieldSig=\"%s\""
-                        "\tfrequencyScore=%d"
-                        "\tfieldOffset=%d>\n",
-                        comp()->signature(), comp()->getHotnessName(comp()->getMethodHotness()), className, itr->second->_fieldName, itr->second->_fieldSig, itr->second->_score, fieldOffset);
+               log->printf(
+                  "<traceMarkingOfHotFields\n"
+                  "\tmethodSignature=\"%s\"\n"
+                  "\tmethodHotness=\"%s\"\n"
+                  "\tclassName=\"%s\"\n"
+                  "\tfieldName=\"%s\""
+                  "\tfieldSig=\"%s\""
+                  "\tfrequencyScore=%d"
+                  "\tfieldOffset=%d>\n",
+                  comp()->signature(), comp()->getHotnessName(comp()->getMethodHotness()), className, itr->second->_fieldName, itr->second->_fieldSig, itr->second->_score, fieldOffset);
                }
-            } 
+            }
          }
       }
    return 1;
@@ -183,7 +187,7 @@ int32_t TR_HotFieldMarking::getUtilization()
 
    static const char *hotFieldMarkingUtilizationScorching;
    static int32_t hotFieldMarkingUtilizationScorchingValue = (hotFieldMarkingUtilizationScorching = feGetEnv("TR_hotFieldMarkingUtilizationScorching")) ? atoi(hotFieldMarkingUtilizationScorching) : 100;
-   
+
    switch (comp()->getMethodHotness())
       {
       case noOpt:

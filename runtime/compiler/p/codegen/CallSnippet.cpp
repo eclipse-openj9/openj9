@@ -36,6 +36,7 @@
 #include "il/Node_inlines.hpp"
 #include "p/codegen/PPCAOTRelocation.hpp"
 #include "p/codegen/PPCTableOfConstants.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
 uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg)
@@ -523,13 +524,14 @@ uint8_t *TR::PPCUnresolvedCallSnippet::emitSnippetBody()
 
    if (comp->compileRelocatableCode() && comp->getOption(TR_TraceRelocatableDataDetailsCG))
       {
-      traceMsg(comp, "<relocatableDataTrampolinesCG>\n");
-      traceMsg(comp, "%s\n", comp->signature());
-      traceMsg(comp, "%-8s", "cpIndex");
-      traceMsg(comp, "cp\n");
-      traceMsg(comp, "%-8x", methodSymRef->getCPIndexForVM());
-      traceMsg(comp, "%x\n", methodSymRef->getOwningMethod(comp)->constantPool());
-      traceMsg(comp, "</relocatableDataTrampolinesCG>\n");
+      OMR::Logger *log = comp->log();
+      log->prints("<relocatableDataTrampolinesCG>\n");
+      log->printf("%s\n", comp->signature());
+      log->printf("%-8s", "cpIndex");
+      log->prints("cp\n");
+      log->printf("%-8x", methodSymRef->getCPIndexForVM());
+      log->printf("%x\n", methodSymRef->getOwningMethod(comp)->constantPool());
+      log->prints("</relocatableDataTrampolinesCG>\n");
       }
 
    cg()->addExternalRelocation(
@@ -1187,7 +1189,7 @@ TR_MHJ2IThunk *TR::PPCCallSnippet::generateInvokeExactJ2IThunk(TR::Node *callNod
 
 
 uint8_t *
-TR_Debug::printPPCArgumentsFlush(TR::FILE *pOutFile, TR::Node *node, uint8_t *cursor, int32_t argSize)
+TR_Debug::printPPCArgumentsFlush(OMR::Logger *log, TR::Node *node, uint8_t *cursor, int32_t argSize)
    {
    const char *storeGPROpName;
    int32_t offset = 0,
@@ -1227,11 +1229,11 @@ TR_Debug::printPPCArgumentsFlush(TR::FILE *pOutFile, TR::Node *node, uint8_t *cu
                offset -= sizeof(intptr_t);
             if (intArgNum < linkageProperties.getNumIntArgRegs())
                {
-               printPrefix(pOutFile, NULL, cursor, 4);
-               trfprintf(pOutFile, "stw [");
-               print(pOutFile, stackPtr, TR_WordReg);
-               trfprintf(pOutFile, ", %d], ", offset);
-               print(pOutFile, machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum)), TR_WordReg);
+               printPrefix(log, NULL, cursor, 4);
+               log->prints("stw [");
+               print(log, stackPtr, TR_WordReg);
+               log->printf(", %d], ", offset);
+               print(log, machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum)), TR_WordReg);
                cursor += 4;
                }
             intArgNum++;
@@ -1243,11 +1245,11 @@ TR_Debug::printPPCArgumentsFlush(TR::FILE *pOutFile, TR::Node *node, uint8_t *cu
                offset -= sizeof(intptr_t);
             if (intArgNum < linkageProperties.getNumIntArgRegs())
                {
-               printPrefix(pOutFile, NULL, cursor, 4);
-               trfprintf(pOutFile, "%s [", storeGPROpName);
-               print(pOutFile, stackPtr, TR_WordReg);
-               trfprintf(pOutFile, ", %d], ", offset);
-               print(pOutFile, machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum)), TR_WordReg);
+               printPrefix(log, NULL, cursor, 4);
+               log->printf("%s [", storeGPROpName);
+               print(log, stackPtr, TR_WordReg);
+               log->printf(", %d], ", offset);
+               print(log, machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum)), TR_WordReg);
                cursor += 4;
                }
             intArgNum++;
@@ -1259,19 +1261,19 @@ TR_Debug::printPPCArgumentsFlush(TR::FILE *pOutFile, TR::Node *node, uint8_t *cu
                offset -= 2*sizeof(intptr_t);
             if (intArgNum < linkageProperties.getNumIntArgRegs())
                {
-               printPrefix(pOutFile, NULL, cursor, 4);
-               trfprintf(pOutFile, "%s [", storeGPROpName);
-               print(pOutFile, stackPtr, TR_WordReg);
-               trfprintf(pOutFile, ", %d], ", offset);
-               print(pOutFile, machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum)), TR_WordReg);
+               printPrefix(log, NULL, cursor, 4);
+               log->printf("%s [", storeGPROpName);
+               print(log, stackPtr, TR_WordReg);
+               log->printf(", %d], ", offset);
+               print(log, machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum)), TR_WordReg);
                cursor += 4;
                if (_comp->target().is32Bit() && (intArgNum < linkageProperties.getNumIntArgRegs() - 1))
                   {
-                  printPrefix(pOutFile, NULL, cursor, 4);
-                  trfprintf(pOutFile, "stw [");
-                  print(pOutFile, stackPtr, TR_WordReg);
-                  trfprintf(pOutFile, ", %d], ", offset + 4);
-                  print(pOutFile, machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum + 1)), TR_WordReg);
+                  printPrefix(log, NULL, cursor, 4);
+                  log->prints("stw [");
+                  print(log, stackPtr, TR_WordReg);
+                  log->printf(", %d], ", offset + 4);
+                  print(log, machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum + 1)), TR_WordReg);
                   cursor += 4;
                   }
                }
@@ -1287,11 +1289,11 @@ TR_Debug::printPPCArgumentsFlush(TR::FILE *pOutFile, TR::Node *node, uint8_t *cu
                offset -= sizeof(intptr_t);
             if (floatArgNum < linkageProperties.getNumFloatArgRegs())
                {
-               printPrefix(pOutFile, NULL, cursor, 4);
-               trfprintf(pOutFile, "stfs [");
-               print(pOutFile, stackPtr, TR_WordReg);
-               trfprintf(pOutFile, ", %d], ", offset);
-               print(pOutFile, machine->getRealRegister(linkageProperties.getFloatArgumentRegister(floatArgNum)), TR_WordReg);
+               printPrefix(log, NULL, cursor, 4);
+               log->prints("stfs [");
+               print(log, stackPtr, TR_WordReg);
+               log->printf(", %d], ", offset);
+               print(log, machine->getRealRegister(linkageProperties.getFloatArgumentRegister(floatArgNum)), TR_WordReg);
                cursor += 4;
                }
             floatArgNum++;
@@ -1303,11 +1305,11 @@ TR_Debug::printPPCArgumentsFlush(TR::FILE *pOutFile, TR::Node *node, uint8_t *cu
                offset -= 2*sizeof(intptr_t);
             if (floatArgNum < linkageProperties.getNumFloatArgRegs())
                {
-               printPrefix(pOutFile, NULL, cursor, 4);
-               trfprintf(pOutFile, "stfd [");
-               print(pOutFile, stackPtr, TR_WordReg);
-               trfprintf(pOutFile, ", %d], ", offset);
-               print(pOutFile, machine->getRealRegister(linkageProperties.getFloatArgumentRegister(floatArgNum)), TR_WordReg);
+               printPrefix(log, NULL, cursor, 4);
+               log->prints("stfd [");
+               print(log, stackPtr, TR_WordReg);
+               log->printf(", %d], ", offset);
+               print(log, machine->getRealRegister(linkageProperties.getFloatArgumentRegister(floatArgNum)), TR_WordReg);
                cursor += 4;
                }
             floatArgNum++;
@@ -1320,7 +1322,7 @@ TR_Debug::printPPCArgumentsFlush(TR::FILE *pOutFile, TR::Node *node, uint8_t *cu
    }
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::PPCCallSnippet * snippet)
+TR_Debug::print(OMR::Logger *log, TR::PPCCallSnippet * snippet)
    {
    TR::Compilation     *comp = _cg->comp();
    TR_J9VMBase         *fej9 = (TR_J9VMBase *)(comp->fe());
@@ -1431,53 +1433,53 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCCallSnippet * snippet)
 
    TR_ASSERT(glueRef && labelString, "Expecting to have symref and label string at this point");
 
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, labelString);
+   printSnippetLabel(log, snippet->getSnippetLabel(), cursor, labelString);
 
-   cursor = printPPCArgumentsFlush(pOutFile, callNode, cursor, snippet->getSizeOfArguments());
+   cursor = printPPCArgumentsFlush(log, callNode, cursor, snippet->getSizeOfArguments());
 
    const char *info = "";
    int32_t     distance;
    if (isBranchToTrampoline(glueRef, cursor, distance))
       info = " Through trampoline";
 
-   printPrefix(pOutFile, NULL, cursor, 4);
+   printPrefix(log, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03fffffc;
    distance = (distance << 6) >> 6;     // sign extend
-   trfprintf(pOutFile, "bl \t" POINTER_PRINTF_FORMAT "\t\t;%s", (intptr_t)cursor + distance, info);
+   log->printf("bl \t" POINTER_PRINTF_FORMAT "\t\t;%s", (intptr_t)cursor + distance, info);
    cursor += 4;
 
    if (isNativeStatic)
       {
-      printPrefix(pOutFile, NULL, cursor, 4);
+      printPrefix(log, NULL, cursor, 4);
       distance = *((int32_t *) cursor) & 0x03fffffc;
       distance = (distance << 6) >> 6;     // sign extend
-      trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t;%s", (intptr_t)cursor + distance, " back to program code");
+      log->printf("b \t" POINTER_PRINTF_FORMAT "\t\t;%s", (intptr_t)cursor + distance, " back to program code");
       cursor += 4;
 
       if (_comp->target().is64Bit())
          {
-         printPrefix(pOutFile, NULL, cursor, 4);
-         trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Padding", *(int32_t *)cursor);
+         printPrefix(log, NULL, cursor, 4);
+         log->printf(".long \t" POINTER_PRINTF_FORMAT "\t\t; Padding", *(int32_t *)cursor);
          cursor += 4;
          }
       }
    else
       {
-      printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-      trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Call Site RA", snippet->getCallRA());
+      printPrefix(log, NULL, cursor, sizeof(intptr_t));
+      log->printf(".long \t" POINTER_PRINTF_FORMAT "\t\t; Call Site RA", snippet->getCallRA());
       cursor += sizeof(intptr_t);
       }
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Method Pointer", *(uintptr_t *)cursor);
+   printPrefix(log, NULL, cursor, sizeof(intptr_t));
+   log->printf(".long \t" POINTER_PRINTF_FORMAT "\t\t; Method Pointer", *(uintptr_t *)cursor);
    cursor += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, cursor, 4);
-   trfprintf(pOutFile, ".long \t0x%08x\t\t; Lock Word For Compilation", *(int32_t *)cursor);
+   printPrefix(log, NULL, cursor, 4);
+   log->printf(".long \t0x%08x\t\t; Lock Word For Compilation", *(int32_t *)cursor);
    }
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::PPCUnresolvedCallSnippet * snippet)
+TR_Debug::print(OMR::Logger *log, TR::PPCUnresolvedCallSnippet * snippet)
    {
    uint8_t *cursor = snippet->getSnippetLabel()->getCodeLocation() + snippet->getLength(0) - (8+sizeof(intptr_t));
 
@@ -1505,141 +1507,141 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCUnresolvedCallSnippet * snippet)
          break;
       }
 
-   print(pOutFile, (TR::PPCCallSnippet *) snippet);
+   print(log, (TR::PPCCallSnippet *) snippet);
 
-   printPrefix(pOutFile, NULL, cursor, 4);
-   trfprintf(pOutFile,
+   printPrefix(log, NULL, cursor, 4);
+   log->printf(
            ".long \t0x%08x\t\t; Offset | Flag | CP Index",
            (helperLookupOffset << 24) | methodSymRef->getCPIndexForVM());
    cursor += 4;
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Pointer To Constant Pool", *(intptr_t *)cursor);
+   printPrefix(log, NULL, cursor, sizeof(intptr_t));
+   log->printf(".long \t" POINTER_PRINTF_FORMAT "\t\t; Pointer To Constant Pool", *(intptr_t *)cursor);
    cursor += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, cursor, 4);
-   trfprintf(pOutFile, ".long \t0x%08x\t\t; Lock Word For Resolution", *(int32_t *)cursor);
+   printPrefix(log, NULL, cursor, 4);
+   log->printf(".long \t0x%08x\t\t; Lock Word For Resolution", *(int32_t *)cursor);
    }
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::PPCVirtualSnippet * snippet)
+TR_Debug::print(OMR::Logger *log, TR::PPCVirtualSnippet * snippet)
    {
    }
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::PPCVirtualUnresolvedSnippet * snippet)
+TR_Debug::print(OMR::Logger *log, TR::PPCVirtualUnresolvedSnippet * snippet)
    {
    uint8_t            *cursor   = snippet->getSnippetLabel()->getCodeLocation();
    TR::Node            *callNode = snippet->getNode();
 
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "Virtual Unresolved Call Snippet");
+   printSnippetLabel(log, snippet->getSnippetLabel(), cursor, "Virtual Unresolved Call Snippet");
 
    const char *info = "";
    int32_t     distance;
    if (isBranchToTrampoline(_cg->getSymRef(TR_PPCvirtualUnresolvedHelper), cursor, distance))
       info = " Through trampoline";
 
-   printPrefix(pOutFile, NULL, cursor, 4);
+   printPrefix(log, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03fffffc;
    distance = (distance << 6) >> 6;   // sign extend
-   trfprintf(pOutFile, "bl \t" POINTER_PRINTF_FORMAT "\t\t;%s", (intptr_t)cursor + distance, info);
+   log->printf("bl \t" POINTER_PRINTF_FORMAT "\t\t;%s", (intptr_t)cursor + distance, info);
    cursor += 4;
 
-   printPrefix(pOutFile, NULL, cursor, 4);
+   printPrefix(log, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03fffffc;
    distance = (distance << 6) >> 6;   // sign extend
-   trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t; Back to program code", (intptr_t)cursor + distance);
+   log->printf("b \t" POINTER_PRINTF_FORMAT "\t\t; Back to program code", (intptr_t)cursor + distance);
    cursor += 4;
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Call Site RA", (intptr_t)snippet->getReturnLabel()->getCodeLocation());
+   printPrefix(log, NULL, cursor, sizeof(intptr_t));
+   log->printf(".long \t" POINTER_PRINTF_FORMAT "\t\t; Call Site RA", (intptr_t)snippet->getReturnLabel()->getCodeLocation());
    cursor += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Constant Pool Pointer", (intptr_t)getOwningMethod(callNode->getSymbolReference())->constantPool());
+   printPrefix(log, NULL, cursor, sizeof(intptr_t));
+   log->printf(".long \t" POINTER_PRINTF_FORMAT "\t\t; Constant Pool Pointer", (intptr_t)getOwningMethod(callNode->getSymbolReference())->constantPool());
    cursor += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Constant Pool Index", callNode->getSymbolReference()->getCPIndexForVM());
+   printPrefix(log, NULL, cursor, sizeof(intptr_t));
+   log->printf(".long \t" POINTER_PRINTF_FORMAT "\t\t; Constant Pool Index", callNode->getSymbolReference()->getCPIndexForVM());
    cursor += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Private J9Method pointer", *(intptr_t *)cursor);
+   printPrefix(log, NULL, cursor, sizeof(intptr_t));
+   log->printf(".long \t" POINTER_PRINTF_FORMAT "\t\t; Private J9Method pointer", *(intptr_t *)cursor);
    cursor += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; J2I thunk address for private", *(intptr_t *)cursor);
+   printPrefix(log, NULL, cursor, sizeof(intptr_t));
+   log->printf(".long \t" POINTER_PRINTF_FORMAT "\t\t; J2I thunk address for private", *(intptr_t *)cursor);
    cursor += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, cursor, 4);
-   trfprintf(pOutFile, ".long \t0x%08x\t\t; Lock Word For Resolution", *(int32_t *)cursor);
+   printPrefix(log, NULL, cursor, 4);
+   log->printf(".long \t0x%08x\t\t; Lock Word For Resolution", *(int32_t *)cursor);
    }
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::PPCInterfaceCallSnippet * snippet)
+TR_Debug::print(OMR::Logger *log, TR::PPCInterfaceCallSnippet * snippet)
    {
    uint8_t            *cursor   = snippet->getSnippetLabel()->getCodeLocation();
    TR::Node            *callNode = snippet->getNode();
 
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "Interface Call Snippet");
+   printSnippetLabel(log, snippet->getSnippetLabel(), cursor, "Interface Call Snippet");
 
    const char *info = "";
    int32_t     distance;
    if (isBranchToTrampoline(_cg->getSymRef(TR_PPCinterfaceCallHelper), cursor, distance))
       info = " Through trampoline";
 
-   printPrefix(pOutFile, NULL, cursor, 4);
+   printPrefix(log, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03fffffc;
    distance = (distance << 6) >> 6;   // sign extend
-   trfprintf(pOutFile, "bl \t" POINTER_PRINTF_FORMAT "\t\t;%s", (intptr_t)cursor + distance, info);
+   log->printf("bl \t" POINTER_PRINTF_FORMAT "\t\t;%s", (intptr_t)cursor + distance, info);
    cursor += 4;
 
-   printPrefix(pOutFile, NULL, cursor, 4);
+   printPrefix(log, NULL, cursor, 4);
    distance = *((int32_t *) cursor) & 0x03fffffc;
    distance = (distance << 6) >> 6;   // sign extend
-   trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t; Back to program code", (intptr_t)cursor + distance);
+   log->printf("b \t" POINTER_PRINTF_FORMAT "\t\t; Back to program code", (intptr_t)cursor + distance);
    cursor += 4;
 
    if (_comp->target().is64Bit())
       {
-      printPrefix(pOutFile, NULL, cursor, 4);
-      trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Padding", *(int32_t *)cursor);
+      printPrefix(log, NULL, cursor, 4);
+      log->printf(".long \t" POINTER_PRINTF_FORMAT "\t\t; Padding", *(int32_t *)cursor);
       cursor += 4;
       }
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Constant Pool Pointer", *(uintptr_t*)cursor);
+   printPrefix(log, NULL, cursor, sizeof(intptr_t));
+   log->printf(".long \t" POINTER_PRINTF_FORMAT "\t\t; Constant Pool Pointer", *(uintptr_t*)cursor);
    cursor += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Constant Pool Index", *(uintptr_t*)cursor);
+   printPrefix(log, NULL, cursor, sizeof(intptr_t));
+   log->printf(".long \t" POINTER_PRINTF_FORMAT "\t\t; Constant Pool Index", *(uintptr_t*)cursor);
    cursor += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Interface Class Pointer", *(uintptr_t*)cursor);
+   printPrefix(log, NULL, cursor, sizeof(intptr_t));
+   log->printf(".long \t" POINTER_PRINTF_FORMAT "\t\t; Interface Class Pointer", *(uintptr_t*)cursor);
    cursor += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; ITable Index", *(uintptr_t*)cursor);
+   printPrefix(log, NULL, cursor, sizeof(intptr_t));
+   log->printf(".long \t" POINTER_PRINTF_FORMAT "\t\t; ITable Index", *(uintptr_t*)cursor);
    cursor += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; First Class Pointer", *(int32_t *)cursor);
+   printPrefix(log, NULL, cursor, sizeof(intptr_t));
+   log->printf(".long \t" POINTER_PRINTF_FORMAT "\t\t; First Class Pointer", *(int32_t *)cursor);
    cursor += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; First Class Target", *(int32_t *)cursor);
+   printPrefix(log, NULL, cursor, sizeof(intptr_t));
+   log->printf(".long \t" POINTER_PRINTF_FORMAT "\t\t; First Class Target", *(int32_t *)cursor);
    cursor += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Second Class Pointer", *(int32_t *)cursor);
+   printPrefix(log, NULL, cursor, sizeof(intptr_t));
+   log->printf(".long \t" POINTER_PRINTF_FORMAT "\t\t; Second Class Pointer", *(int32_t *)cursor);
    cursor += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Second Class Target", *(int32_t *)cursor);
+   printPrefix(log, NULL, cursor, sizeof(intptr_t));
+   log->printf(".long \t" POINTER_PRINTF_FORMAT "\t\t; Second Class Target", *(int32_t *)cursor);
    cursor += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
-   trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; J2I thunk address for private", *(intptr_t *)cursor);
+   printPrefix(log, NULL, cursor, sizeof(intptr_t));
+   log->printf(".long \t" POINTER_PRINTF_FORMAT "\t\t; J2I thunk address for private", *(intptr_t *)cursor);
    }
 

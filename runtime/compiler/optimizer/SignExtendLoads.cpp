@@ -41,6 +41,7 @@
 #include "infra/List.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "ras/Debug.hpp"
+#include "ras/Logger.hpp"
 
 #define OPT_DETAILS "O^O SIGN EXTENDING LOADS TRANSFORMATION: "
 
@@ -113,7 +114,6 @@ void TR_SignExtendLoads::addListToHash(TR::Node *node, TR_ScratchList<TR::Node> 
 // -------------------------------------------------------------------------------------------
 void TR_SignExtendLoads::emptyHashTable()
    {
-     if(false)traceMsg(comp(), "emptying the hash table\n");
    for(int i=0; i < _sharedNodesHash._numBuckets;++i)
     _sharedNodesHash._buckets[i] = NULL;
    }
@@ -177,7 +177,7 @@ bool TR_SignExtendLoads::gatheri2lNodes(TR::Node* parent,TR::Node *node, TR_Scra
          {
          // only need to enter once
 
-         if (trace()) traceMsg(comp(), "Found i2l %p, parent %p, is%s an aladd child\n",node,parent,isIndexSubtree?"":" not");
+         logprintf(trace(), comp()->log(), "Found i2l %p, parent %p, is%s an aladd child\n", node, parent, isIndexSubtree?"":" not");
          if (isIndexSubtree)
             i2lList.add(parent); // basically any i2l found under an aladd
          else
@@ -203,9 +203,9 @@ bool TR_SignExtendLoads::gatheri2lNodes(TR::Node* parent,TR::Node *node, TR_Scra
             case TR::iadd:
             case TR::isub:
               addNodeToHash(child,node);
-              if(trace()) traceMsg(comp(), "node %p has %d references\n",child,child->getReferenceCount());
+              logprintf(trace(), comp()->log(), "node %p has %d references\n", child, child->getReferenceCount());
             default:
-            	break;
+              break;
             }
           nodesGathered = gatheri2lNodes(node, child,i2lList,useri2lList,isIndexSubtree || (i==1 && isAlAdd))
             || nodesGathered;
@@ -266,7 +266,7 @@ void TR_SignExtendLoads::Insertl2iNode(TR::Node *targetNode)
                      {
                      if (i2lParent->getChild(j) == parentNode)
                         {
-                        if (trace()) traceMsg(comp(), "Remove i2l node %p from %p, ->%p\n",parentNode,i2lParent,targetNode);
+                        logprintf(trace(), comp()->log(), "Remove i2l node %p from %p, ->%p\n", parentNode, i2lParent, targetNode);
                         if (++refCnt > 1)
                            targetNode->incReferenceCount();
                         parentNode->decReferenceCount();
@@ -335,7 +335,7 @@ void TR_SignExtendLoads::Inserti2lNode(TR::Node *targetNode,TR::Node* newI2LNode
                parentNode->setChild(j,newI2LNode);
                }
               newI2LNode->incReferenceCount();
-              if(trace()) traceMsg(comp(), "Updated %p to point to %p\n",parentNode,newI2LNode);
+              logprintf(trace(), comp()->log(), "Updated %p to point to %p\n", parentNode, newI2LNode);
               break;// if this parent has multiple references to this node, it will be seen again
             }
          }
@@ -360,7 +360,7 @@ void TR_SignExtendLoads::Inserti2lNode(TR::Node *targetNode,TR::Node* newI2LNode
 // -------------------------------------------------------------------------------------------
 bool TR_SignExtendLoads::ConvertSubTreeToLong(TR::Node *parent, TR::Node *node, bool changeNode)
    {
-
+   OMR::Logger *log = comp()->log();
    TR::Node *secondChild = NULL;
    TR::ILOpCodes opCode;
    TR::ILOpCodes secondOpCode;
@@ -381,7 +381,7 @@ bool TR_SignExtendLoads::ConvertSubTreeToLong(TR::Node *parent, TR::Node *node, 
                   parent->setAndIncChild(j,node->getChild(0));
                   addNodeToHash(node->getChild(0), parent);
                   node->recursivelyDecReferenceCount();
-                  if(trace()) traceMsg(comp(), "Get rid of l2i %p of %p\n",node,parent);
+                  logprintf(trace(), log, "Get rid of l2i %p of %p\n", node, parent);
                   break;
                   }
                }
@@ -443,7 +443,7 @@ bool TR_SignExtendLoads::ConvertSubTreeToLong(TR::Node *parent, TR::Node *node, 
       case TR::iloadi: if(isNullCheck(parent)) return false;
       case TR::iload:
 
-         if (trace()) traceMsg(comp(), "inspecting load/i2l etc %p\n",node);
+         logprintf(trace(), log, "inspecting load/i2l etc %p\n", node);
          if (changeNode)
             {
             TR::Node *newI2LNode = TR::Node::create(node, TR::i2l, 1);
@@ -464,11 +464,11 @@ bool TR_SignExtendLoads::ConvertSubTreeToLong(TR::Node *parent, TR::Node *node, 
             else
                Inserti2lNode(node, newI2LNode);
             }
-         if (trace()) traceMsg(comp(), "...ok iload etc\n");
+         logprints(trace(), log, "...ok iload etc\n");
          return true;
 
       case TR::isub:
-         if (trace())traceMsg(comp(), "inspecting isub %p\n",node);
+         logprintf(trace(), log, "inspecting isub %p\n", node);
          if (!node->cannotOverflow()) return false;
 
          // need to change nodes top-down to avoid sticking in
@@ -476,7 +476,7 @@ bool TR_SignExtendLoads::ConvertSubTreeToLong(TR::Node *parent, TR::Node *node, 
          opCode = node->getOpCodeValue();
          if (changeNode)
             {
-            if(trace()) traceMsg(comp(), "Converting isub %p\n",node);
+            logprintf(trace(), log, "Converting isub %p\n", node);
             if (!performTransformation(comp(), "%sConvert %p isub->lsub\n", OPT_DETAILS, node))
                return false;
             TR::Node::recreate(node, TR::lsub);
@@ -513,13 +513,13 @@ bool TR_SignExtendLoads::ConvertSubTreeToLong(TR::Node *parent, TR::Node *node, 
             }
 
 
-         if (trace())traceMsg(comp(), "...ok isub->lsub %p\n",node);
+         logprintf(trace(), log, "...ok isub->lsub %p\n", node);
          return returnValue;
          break;
 
       // punt if wraparound from +ve to -ve, or vice versa
       case TR::iadd:
-         if (trace())traceMsg(comp(), "inspecting iadd %p\n",node);
+         logprintf(trace(), log, "inspecting iadd %p\n", node);
          if (!node->cannotOverflow()) return false;
 
          opCode = node->getOpCodeValue();
@@ -528,7 +528,7 @@ bool TR_SignExtendLoads::ConvertSubTreeToLong(TR::Node *parent, TR::Node *node, 
             if (!performTransformation(comp(), "%sConvert %p iadd->ladd\n", OPT_DETAILS, node))
                return false;
             TR::Node::recreate(node, TR::ladd);
-            if (trace()) traceMsg(comp(), "Converting isub %p\n",node);
+            logprintf(trace(), log, "Converting isub %p\n", node);
             }
 
          secondChild = node->getChild(1);
@@ -561,7 +561,7 @@ bool TR_SignExtendLoads::ConvertSubTreeToLong(TR::Node *parent, TR::Node *node, 
                TR::Node::recreate(node, opCode);
             }
 
-         if (trace())traceMsg(comp(), "...ok add->ladd\n");
+         logprints(trace(), log, "...ok add->ladd\n");
          return returnValue;
          break;
       default: return false;
@@ -585,6 +585,7 @@ void TR_SignExtendLoads::Propagatei2lNode(TR::Node *i2lNode,TR::Node *parent,int
    TR_ASSERT(i2lNode->getOpCodeValue() == TR::i2l,"Unexpected opcode %d\n",i2lNode->getOpCodeValue());
    TR_ASSERT(parent->getChild(childIndex) == i2lNode,"childIndex %d is wrong %p != %p\n",childIndex,
              parent->getChild(childIndex),i2lNode);
+   OMR::Logger *log = comp()->log();
 
    TR::Node *i2lChild = i2lNode->getChild(0);
    TR::Node *newI2LNode = TR::Node::create(i2lNode, TR::i2l, 1, i2lNode->getSymbolReference());
@@ -609,7 +610,7 @@ void TR_SignExtendLoads::Propagatei2lNode(TR::Node *i2lNode,TR::Node *parent,int
       int32_t newRefs=0;
       for (TR::Node *parentNode = listElement.getFirst(); parentNode!=NULL; parentNode = listElement.getNext())
          {
-         if(trace()) traceMsg(comp(), "Inspecting parent %p\n",parentNode);
+         logprintf(trace(), log, "Inspecting parent %p\n",parentNode);
          int32_t numKids = parentNode->getNumChildren();
          for (int32_t j=0; j < numKids;++j)
             {
@@ -617,7 +618,7 @@ void TR_SignExtendLoads::Propagatei2lNode(TR::Node *i2lNode,TR::Node *parent,int
                {
                parentNode->setChild(j,newI2LNode);
                newI2LNode->incReferenceCount();
-               if(trace()) traceMsg(comp(), "updated i2l parent %p point to %p\n",parentNode,newI2LNode);
+               logprintf(trace(), log, "updated i2l parent %p point to %p\n",parentNode,newI2LNode);
                ++newRefs;
                }
             }
@@ -635,7 +636,7 @@ void TR_SignExtendLoads::Propagatei2lNode(TR::Node *i2lNode,TR::Node *parent,int
 // -------------------------------------------------------------------------------------------
 void TR_SignExtendLoads::ReplaceI2LNode(TR::Node *i2lNode,TR::Node *newNode)
    {
-
+   OMR::Logger *log = comp()->log();
    rcount_t numi2lRefs = i2lNode->getReferenceCount();
    TR_ScratchList<TR::Node> * nodeList = getListFromHash(i2lNode);
    TR_ASSERT(nodeList,"No node list for i2l %p\n",i2lNode);
@@ -644,13 +645,13 @@ void TR_SignExtendLoads::ReplaceI2LNode(TR::Node *i2lNode,TR::Node *newNode)
    for (TR::Node *parentNode = listElement.getFirst(); parentNode!=NULL; parentNode = listElement.getNext())
       {
       int32_t numKids = parentNode->getNumChildren();
-      if(trace())traceMsg(comp(), "looking at parent %p of %p\n",parentNode,i2lNode);
+      logprintf(trace(), log, "looking at parent %p of %p\n", parentNode, i2lNode);
       for (int32_t j=0; j < numKids;++j)
          {
          if (parentNode->getChild(j) == i2lNode)
             {
             parentNode->setChild(j,newNode);
-            if(trace()) traceMsg(comp(), "updated i2l parent %p point to %p\n",parentNode,newNode);
+            logprintf(trace(), log, "updated i2l parent %p point to %p\n", parentNode, newNode);
             ++newRefs;
             if (newRefs > 1)
                newNode->incReferenceCount();
@@ -667,6 +668,7 @@ void TR_SignExtendLoads::ReplaceI2LNode(TR::Node *i2lNode,TR::Node *newNode)
 // -------------------------------------------------------------------------------------------
 void TR_SignExtendLoads::ProcessNodeList(TR_ScratchList<TR::Node> &list,bool isAddressCalc)
    {
+   OMR::Logger *log = comp()->log();
    ListIterator<TR::Node> listElement(&list);
    TR::Node * parentNode;
 
@@ -679,10 +681,10 @@ void TR_SignExtendLoads::ProcessNodeList(TR_ScratchList<TR::Node> &list,bool isA
             {
             if (child->getReferenceCount() > 1 && (NULL == getListFromHash(child)))
                {
-               if(trace()) traceMsg(comp(), "Already processed parent %p--skipping %p\n",parentNode,child);
+               logprintf(trace(), log, "Already processed parent %p--skipping %p\n", parentNode, child);
                continue;
                }
-            if(trace()) traceMsg(comp(), "Processing i2l node %p (parent:%p)\n",child,parentNode);
+            logprintf(trace(), log, "Processing i2l node %p (parent:%p)\n", child, parentNode);
             TR::Node *i2lchild = child->getChild(0);
             switch(i2lchild->getOpCodeValue())
                {
@@ -691,7 +693,7 @@ void TR_SignExtendLoads::ProcessNodeList(TR_ScratchList<TR::Node> &list,bool isA
                case TR::iload:
                if (i2lchild->getReferenceCount() < 2)
                   {
-                  if(trace()) traceMsg(comp(), "i2l(%p):iload not shared--skip\n",child);
+                  logprintf(trace(), log, "i2l(%p):iload not shared--skip\n", child);
                   continue; // not shared--do nothing
                   }
                if (!performTransformation(comp(), "%si2l inserted for %p\n", OPT_DETAILS, child))
@@ -705,7 +707,7 @@ void TR_SignExtendLoads::ProcessNodeList(TR_ScratchList<TR::Node> &list,bool isA
                case TR::isub:
                case TR::iadd:
                   if (!isAddressCalc) continue;
-                  if (trace())traceMsg(comp(), "child of %p is add/sub\n",i2lchild);
+                  logprintf(trace(), log, "child of %p is add/sub\n", i2lchild);
                   if (ConvertSubTreeToLong(child, i2lchild, false))
                      ConvertSubTreeToLong(child, i2lchild, true);
                   break;
@@ -740,11 +742,12 @@ int32_t TR_SignExtendLoads::perform()
    TR::StackMemoryRegion stackMemoryRegion(*trMemory());
 
    if (trace())
-     {
-       traceMsg(comp(), "Starting Sign Extention of Loads\n");
-       traceMsg(comp(), "\nCFG before loop simplification:\n");
-       getDebug()->print(comp()->getOutFile(), comp()->getFlowGraph());
-     }
+      {
+      OMR::Logger *log = comp()->log();
+      log->prints("Starting Sign Extention of Loads\n");
+      log->prints("\nCFG before loop simplification:\n");
+      getDebug()->print(log, comp()->getFlowGraph());
+      }
 
    TR::TreeTop* currentTree = comp()->getStartTree();
    TR::TreeTop* prevTree = NULL;

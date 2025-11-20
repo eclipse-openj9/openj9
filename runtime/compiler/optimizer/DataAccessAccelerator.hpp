@@ -38,6 +38,7 @@
 #include "infra/List.hpp"
 #include "optimizer/Optimization.hpp"
 #include "optimizer/OptimizationManager.hpp"
+#include "ras/Logger.hpp"
 
 namespace TR { class TreeTop; }
 
@@ -243,15 +244,16 @@ class TR_DataAccessAccelerator : public TR::Optimization
 
    bool printInliningStatus(bool status, TR::Node* node, const char* reason = "")
       {
-      if (trace()) 
+      if (trace())
          {
-            if (status)
-               traceMsg(comp(), "DataAccessAccelerator: Intrinsics on node %p : SUCCESS\n", node);
-            else
-               {
-               traceMsg(comp(), "DataAccessAccelerator: Intrinsics on node %p : FAILED\n", node);
-               traceMsg(comp(), "DataAccessAccelerator:     Reason : %s\n", reason);
-               }
+         OMR::Logger *log = comp()->log();
+         if (status)
+            log->printf("DataAccessAccelerator: Intrinsics on node %p : SUCCESS\n", node);
+         else
+            {
+            log->printf("DataAccessAccelerator: Intrinsics on node %p : FAILED\n", node);
+            log->printf("DataAccessAccelerator:     Reason : %s\n", reason);
+            }
          }
       return status;
       }

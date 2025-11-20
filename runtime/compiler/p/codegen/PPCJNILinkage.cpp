@@ -1140,7 +1140,7 @@ int32_t J9::Power::JNILinkage::buildJNIArgs(TR::Node *callNode,
             else // numIntegerArgs >= properties.getNumIntArgRegs()
                {
                mref = getOutgoingArgumentMemRef(argSize, argRegister,TR::InstOpCode::Op_st, pushToMemory[argIndex++], TR::Compiler->om.sizeofReferenceAddress(), properties);
-               //printf("integral or address memory arg, offset = %d\n", argSize);
+
                if (!aix_style_linkage)
                   argSize += TR::Compiler->om.sizeofReferenceAddress();
                }

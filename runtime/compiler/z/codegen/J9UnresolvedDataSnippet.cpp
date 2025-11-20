@@ -56,6 +56,7 @@
 #include "il/SymbolReference.hpp"
 #include "infra/Assert.hpp"
 #include "ras/Debug.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/J9Runtime.hpp"
 #include "env/CompilerEnv.hpp"
 
@@ -452,37 +453,37 @@ J9::Z::UnresolvedDataSnippet::getLength(int32_t  estimatedSnippetStart)
 
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
+TR_Debug::print(OMR::Logger *log, TR::UnresolvedDataSnippet * snippet)
    {
 
    uint8_t * bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, "Unresolved Data Snippet");
+   printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, "Unresolved Data Snippet");
 
-   bufferPos = printRuntimeInstrumentationOnOffInstruction(pOutFile, bufferPos, false); // RIOFF
+   bufferPos = printRuntimeInstrumentationOnOffInstruction(log, bufferPos, false); // RIOFF
 
    // TODO: We could use LRL / LGRL here but the JIT does not guarantee that the Data Constant be 4 / 8 byte aligned,
    // so we cannot make use of these instructions in general. We should explore the idea of aligning 4 / 8 byte data
    // constants in the literal pool to a(n) 4 / 8 byte boundary such that these instructions can be exploited.
 
-   printPrefix(pOutFile, NULL, bufferPos, 2);
-   trfprintf(pOutFile, "BASR \tGPR14, 0");
+   printPrefix(log, NULL, bufferPos, 2);
+   log->prints("BASR \tGPR14, 0");
    bufferPos += 2;
 
    if (_comp->target().is64Bit())
       {
-      printPrefix(pOutFile, NULL, bufferPos, 6);
-      trfprintf(pOutFile, "LG   \tGPR14, 6(,GPR14)");
+      printPrefix(log, NULL, bufferPos, 6);
+      log->prints("LG   \tGPR14, 6(,GPR14)");
       bufferPos += 6;
       }
    else
       {
-      printPrefix(pOutFile, NULL, bufferPos, 4);
-      trfprintf(pOutFile, "L   \tGPR14, 6(,GPR14)");
+      printPrefix(log, NULL, bufferPos, 4);
+      log->prints("L   \tGPR14, 6(,GPR14)");
       bufferPos += 4;
       }
 
-   printPrefix(pOutFile, NULL, bufferPos, 2);
-   trfprintf(pOutFile, "BASR \tGPR14, GPR14");
+   printPrefix(log, NULL, bufferPos, 2);
+   log->prints("BASR \tGPR14, GPR14");
    bufferPos += 2;
 
    TR::SymbolReference * glueRef;
@@ -545,25 +546,25 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
       }
 
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC    \t%s", getName(glueRef));
+   printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC    \t%s", getName(glueRef));
    bufferPos += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC    \t%p \t# Return Address",
+   printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC    \t%p \t# Return Address",
             (intptr_t) (snippet->getBranchInstruction()->getNext())->getBinaryEncoding());
    bufferPos += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, bufferPos, 4);
-   trfprintf(pOutFile, "DC    \t0x%08x \t# Constant Pool Index", snippet->getDataSymbolReference()->getCPIndex());
+   printPrefix(log, NULL, bufferPos, 4);
+   log->printf("DC    \t0x%08x \t# Constant Pool Index", snippet->getDataSymbolReference()->getCPIndex());
    bufferPos += 4;
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC    \t0x%p \t# Address Of Constant Pool",
+   printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC    \t0x%p \t# Address Of Constant Pool",
             (intptr_t) getOwningMethod(snippet->getDataSymbolReference())->constantPool());
    bufferPos += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+   printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
    uintptr_t addr;
 
    if (snippet->getDataReferenceInstruction() != NULL)
@@ -574,11 +575,11 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
       {
       addr = (uintptr_t) (snippet->getBranchInstruction()->getNext())->getBinaryEncoding();
       }
-   trfprintf(pOutFile, "DC    \t0x%p \t# Address Of Ref. Instruction", addr);
+   log->printf("DC    \t0x%p \t# Address Of Ref. Instruction", addr);
 
    bufferPos += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+   printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
    if (snippet->getFenceNOPInstruction() != NULL)
       {
       addr = (uintptr_t) (snippet->getFenceNOPInstruction()->getBinaryEncoding());
@@ -587,65 +588,65 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
       {
       addr = 0;
       }
-   trfprintf(pOutFile, "DC    \t0x%p \t# Address NOP fence", addr);
+   log->printf("DC    \t0x%p \t# Address NOP fence", addr);
 
    bufferPos += sizeof(intptr_t);
 
-   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-   trfprintf(pOutFile, "DC   \t0x%p \t# Address Of Literal Pool Slot",
+   printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+   log->printf("DC   \t0x%p \t# Address Of Literal Pool Slot",
            (intptr_t)(snippet->getLiteralPoolSlot()));
    bufferPos += sizeof(intptr_t);
 
    // Snippet has out-of-line sequence for large offsets for instance data
    if (snippet->isInstanceData())
       {
-      printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
-      trfprintf(pOutFile, "DC   \t0x%p \t# Address to large offset slot",
+      printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
+      log->printf("DC   \t0x%p \t# Address to large offset slot",
             (intptr_t)((intptr_t*)bufferPos));
       bufferPos += sizeof(intptr_t);
 
-      printPrefix(pOutFile, NULL, bufferPos, sizeof(int32_t));
-      trfprintf(pOutFile, "DC   \t0x%p \t# Displacement from helper branch to out-of-line sequence",
+      printPrefix(log, NULL, bufferPos, sizeof(int32_t));
+      log->printf("DC   \t0x%p \t# Displacement from helper branch to out-of-line sequence",
             (int32_t)((intptr_t)bufferPos + sizeof(int32_t) - (intptr_t)snippet->getBranchInstruction()->getBinaryEncoding() +6));
       bufferPos += sizeof(int32_t);
 
-      printPrefix(pOutFile, NULL, bufferPos, 2);
-      trfprintf(pOutFile, "BASR \tGPR14, 0");
+      printPrefix(log, NULL, bufferPos, 2);
+      log->prints("BASR \tGPR14, 0");
       bufferPos += 2;
 
       if (_comp->target().is64Bit())
          {
-         printPrefix(pOutFile, NULL, bufferPos, 6);
-         trfprintf(pOutFile, "LGF   \tGPR14, Offset(,GPR14)");
+         printPrefix(log, NULL, bufferPos, 6);
+         log->prints("LGF   \tGPR14, Offset(,GPR14)");
          bufferPos += 6;
-         printPrefix(pOutFile, NULL, bufferPos, 4);
-         trfprintf(pOutFile, "AGR   \tGPR14, GPRbase");
+         printPrefix(log, NULL, bufferPos, 4);
+         log->prints("AGR   \tGPR14, GPRbase");
          bufferPos += 4;
          }
       else
          {
-         printPrefix(pOutFile, NULL, bufferPos, 4);
-         trfprintf(pOutFile, "L   \tGPR14, Offset(,GPR14)");
+         printPrefix(log, NULL, bufferPos, 4);
+         log->prints("L   \tGPR14, Offset(,GPR14)");
          bufferPos += 4;
-         printPrefix(pOutFile, NULL, bufferPos, 2);
-         trfprintf(pOutFile, "AR  \tGPR14, GPRbase");
+         printPrefix(log, NULL, bufferPos, 2);
+         log->prints("AR  \tGPR14, GPRbase");
          bufferPos += 2;
          }
 
-      printPrefix(pOutFile, NULL, bufferPos, 6);
-      trfprintf(pOutFile, "BRCL \t<%p>\t# Return to Main Code",
+      printPrefix(log, NULL, bufferPos, 6);
+      log->printf("BRCL \t<%p>\t# Return to Main Code",
                              snippet->getBranchInstruction()->getNext()->getBinaryEncoding());
       bufferPos += 6;
 
       if ((uintptr_t)bufferPos % 4 != 0)
          {
-         printPrefix(pOutFile, NULL, bufferPos, 2);
-         trfprintf(pOutFile, "\t\t# 2 byte padding");
+         printPrefix(log, NULL, bufferPos, 2);
+         log->prints("\t\t# 2 byte padding");
          bufferPos += 2;
          }
 
-      printPrefix(pOutFile, NULL, bufferPos, sizeof(int32_t));
-      trfprintf(pOutFile, "DC   \t0x%p \t# Offset slot",
+      printPrefix(log, NULL, bufferPos, sizeof(int32_t));
+      log->printf("DC   \t0x%p \t# Offset slot",
             (int32_t)(*(int32_t*)bufferPos));
       bufferPos += sizeof(int32_t);
       }

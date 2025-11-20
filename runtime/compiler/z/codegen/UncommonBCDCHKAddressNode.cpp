@@ -34,6 +34,7 @@
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "infra/Assert.hpp"
+#include "ras/Logger.hpp"
 
 
 #define OPT_DETAILS "O^O UNCOMMON BCDCHK ADDRESS NODE: "
@@ -41,7 +42,9 @@
 void
 UncommonBCDCHKAddressNode::perform()
    {
-   traceMsg(comp(), "Performing UncommonBCDCHKAddressNode\n");
+   OMR::Logger *log = comp()->log();
+   bool trace = comp()->getOption(TR_TraceCG);
+   logprints(trace, log, "Performing UncommonBCDCHKAddressNode\n");
 
    for(TR::TreeTop* tt = comp()->getStartTree(); tt; tt = tt->getNextTreeTop())
       {
@@ -108,11 +111,11 @@ UncommonBCDCHKAddressNode::perform()
 
             node->setAndIncChild(1, newAddressNode);
             oldAddressNode->decReferenceCount();
-            traceMsg(comp(), "%sReplacing node %s [%p] with [%p]\n",
-                     OPT_DETAILS,
-                     oldAddressNode->getOpCode().getName(),
-                     oldAddressNode,
-                     newAddressNode);
+            logprintf(trace, log, "%sReplacing node %s [%p] with [%p]\n",
+                        OPT_DETAILS,
+                        oldAddressNode->getOpCode().getName(),
+                        oldAddressNode,
+                        newAddressNode);
             }
          }
       }

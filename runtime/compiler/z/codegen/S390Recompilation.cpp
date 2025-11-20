@@ -99,7 +99,6 @@ CalcCodeSize(TR::Instruction * start, TR::Instruction * end)
       start = start->getNext();
       }
    size += TR::InstOpCode::getInstructionLength(start->getOpCode().getOpCodeValue());
-   //printf("calc code size says %d\n",size);
    return size;
    }
 
@@ -546,11 +545,6 @@ void TR_S390Recompilation::postCompilation()
    uint32_t * jitEntryPoint = (uint32_t*)(startPC + jitEntryOffset);
    uint32_t * saveLocn = (uint32_t*)(startPC + OFFSET_INTEP_JITEP_SAVE_RESTORE_LOCATION);
 
-
-/*
-      printf("RC>>Saved entry point %p(%x) to saveLocn %p(%x)\n",jitEntryPoint,*jitEntryPoint,
-                  saveLocn,*saveLocn);
-*/
    saveJitEntryPoint(startPC, (uint8_t*)jitEntryPoint);
 
    TR_ASSERT((*saveLocn == 0xdeafbeef || *saveLocn == *jitEntryPoint),"Unexpect value %x(%p) != 0xdeafbeef or %x\n",
