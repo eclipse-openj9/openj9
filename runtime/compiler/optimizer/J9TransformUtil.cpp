@@ -133,9 +133,7 @@ static bool isFinalFieldPointingAtRepresentableNativeStruct(TR::SymbolReference 
       case TR::SymbolReferenceTable::componentClassSymbol:
       case TR::SymbolReferenceTable::classFromJavaLangClassSymbol:
       case TR::SymbolReferenceTable::classFromJavaLangClassAsPrimitiveSymbol:
-         // Note: We could also do vftSymbol, except replacing those with
-         // loadaddr mucks up indirect loads in ways the optimizer/codegen
-         // isn't expecting yet
+      case TR::SymbolReferenceTable::vftSymbol:
          TR_ASSERT(symRef->getSymbol()->isShadow(), "isFinalFieldPointingAtRepresentableNativeStruct expected shadow symbol");
          return true;
       default:
@@ -2274,7 +2272,20 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp,
                {
                if (changeIndirectLoadIntoConst(node, TR::loadaddr, removedNode, comp))
                   {
-                  TR_OpaqueClassBlock *clazz = *(TR_OpaqueClassBlock**)valuePtr;
+                  TR_OpaqueClassBlock *clazz = NULL;
+                  if (symRef == comp->getSymRefTab()->findVftSymbolRef())
+                     {
+                     // Can't just load it normally because it's not always pointer-sized.
+                     // Also, the low byte in the header is for flags and must be cleared.
+                     // Note that valuePtr is the address of the object whose vtable
+                     // pointer we're loading, because the vtable pointer is at offset 0.
+                     clazz = fej9->getObjectClass((uintptr_t)valuePtr);
+                     }
+                  else
+                     {
+                     clazz = *(TR_OpaqueClassBlock**)valuePtr;
+                     }
+
                   addConstProvenanceEdge(
                      comp,
                      node,
