@@ -1039,4 +1039,4 @@ TraceEvent=Trc_Segment_disclaimClassMemory_error NoEnv Overhead=1 Level=3 Templa
 
 TraceEvent=Trc_VM_signal_pid Overhead=1 Level=1 Template="%s received from process id %zu name '%s'"
 
-TraceEvent=Trc_VM_timeCompensationHelper_CPU_util Overhead=1 Level=5 Template="CPU Util: numCPUs=%zu, timeDelta=%lld, CPUTimeDelta=%lld, util=%f"
+TraceEvent=Trc_VM_timeCompensationHelper_CPU_util Overhead=1 Level=5 Template="CPU Util: numCPUs=%zu, timeDelta=%zu, CPUTimeDelta=%zu, util=%f"
