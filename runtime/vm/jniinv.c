@@ -33,7 +33,7 @@
 #include "jni.h"
 #include "j9protos.h"
 #include "vmaccess.h"
-#include "j9consts.h"	
+#include "j9consts.h"
 #include "omrthread.h"
 #include "j9dump.h"
 #include "jvminit.h"
@@ -64,7 +64,7 @@ static UDATA terminateRemainingThreads (J9VMThread* vmThread);
 static jint attachCurrentThread (JavaVM * vm, void ** p_env, void * thr_args, UDATA threadType);
 jint JNICALL JNI_GetDefaultJavaVMInitArgs (void * vm_args);
 static jint verifyCurrentThreadAttached (J9JavaVM * vm, J9VMThread ** pvmThread);
-#if (defined(J9VM_OPT_SIDECAR)) 
+#if (defined(J9VM_OPT_SIDECAR))
 void sidecarShutdown (J9VMThread* shutdownThread);
 void sidecarExit(J9VMThread* shutdownThread);
 #endif /* J9VM_OPT_SIDECAR */
@@ -280,7 +280,7 @@ jint JNICALL J9_GetCreatedJavaVMs(JavaVM ** vm_buf, jsize bufLen, jsize * nVMs)
 		count = 1;
 		*vm_buf = (JavaVM *) *pvmList;
 #endif
-	} 
+	}
 
 #if defined (LINUXPPC64) || (defined (AIXPPC) && defined (PPC64)) || defined (J9ZOS39064)
 	/* there was a bug in older VMs on these platforms where jsize was defined to
@@ -386,11 +386,11 @@ protectedDestroyJavaVM(J9PortLibrary* portLibrary, void * userData)
 		(*(vm->sidecarExitHook))(vm);
 #endif
 
-	/* 
-	 * shutdown the finalizer BEFORE we shutdown daemon threads, as 
+	/*
+	 * shutdown the finalizer BEFORE we shutdown daemon threads, as
 	 * finalize methods could spawn more threads
 	 */
-	vm->memoryManagerFunctions->gcShutdownHeapManagement(vm);
+	vm->memoryManagerFunctions->j9gc_finalizer_shutdown(vm);
 
 	Trc_JNIinv_protectedDestroyJavaVM_HeapManagementShutdown();
 
@@ -432,7 +432,7 @@ protectedDestroyJavaVM(J9PortLibrary* portLibrary, void * userData)
 		/* run z/TPF OS exit hook */
 		cjvm_jvm_shutdown_hook();
 #endif
-		
+
 		if (vm->exitHook) {
 #if defined(J9VM_ZOS_3164_INTEROPERABILITY)
 			if (J9_IS_31BIT_INTEROP_TARGET(vm->exitHook)) {
@@ -504,7 +504,7 @@ jint JNICALL DestroyJavaVM(JavaVM * javaVM)
 	/* There is a cyclic dependency when using HealthCenter which causes JVM to hang during shutdown.
 	 * To break this cycle, thread doing the shutdown needs to be detached to notify Healthcenter that
 	 * it has terminated, and then re-attached as "DestroyJavaVM helper thread".
-	 * As part of this fix, Healthcenter also needs to be modified to not do the join on "DestroyJavaVM helper thread". 
+	 * As part of this fix, Healthcenter also needs to be modified to not do the join on "DestroyJavaVM helper thread".
 	 * Therefore, if ever this thread name is modified, HealthCenter should be informed to adapt accordingly.
 	 */
 	result = DetachCurrentThread(javaVM);
@@ -527,7 +527,7 @@ jint JNICALL DestroyJavaVM(JavaVM * javaVM)
 	}
 
 	/* we only allow shutdown code to run once */
-	
+
 	if(vm->runtimeFlags & J9_RUNTIME_SHUTDOWN_STARTED) {
 		if(vm->runtimeFlagsMutex != NULL) {
 			omrthread_monitor_exit(vm->runtimeFlagsMutex);
@@ -547,9 +547,9 @@ jint JNICALL DestroyJavaVM(JavaVM * javaVM)
 	PORTLIB->self_handle = NULL;
 
 	if (j9sig_protect(
-		protectedDestroyJavaVM, vmThread, 
+		protectedDestroyJavaVM, vmThread,
 		structuredSignalHandler, vmThread,
-		J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_CONTINUE_EXECUTION, 
+		J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_CONTINUE_EXECUTION,
 		&result)
 	) {
 		result = JNI_ERR;
@@ -609,7 +609,7 @@ jint JNICALL DetachCurrentThread(JavaVM * javaVM)
 		 */
 		if (J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_EXIT_STARTED)) {
 			if (J9_ARE_NO_BITS_SET(vmThread->privateFlags, J9_PRIVATE_FLAGS_SYSTEM_THREAD)) {
-				goto done;	
+				goto done;
 			}
 		}
 
@@ -618,9 +618,9 @@ jint JNICALL DetachCurrentThread(JavaVM * javaVM)
 		/* Perform thread cleanup */
 
 		if (j9sig_protect(
-			protectedDetachCurrentThread, vmThread, 
+			protectedDetachCurrentThread, vmThread,
 			structuredSignalHandler, vmThread,
-			J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_CONTINUE_EXECUTION, 
+			J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_CONTINUE_EXECUTION,
 			&result)
 		) {
 			result = JNI_ERR;
@@ -726,10 +726,10 @@ protectedInternalAttachCurrentThread(J9PortLibrary* portLibrary, void * userData
 		internalReleaseVMAccess(env);
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 		initializeAttachedThread(
-			env, 
+			env,
 			threadName,
 			threadGroup,
-			(threadType & J9_PRIVATE_FLAGS_DAEMON_THREAD) != 0, 
+			(threadType & J9_PRIVATE_FLAGS_DAEMON_THREAD) != 0,
 			env);
 		j9mem_free_memory(modifiedThreadName);
 		if ((env->currentException != NULL) || (env->threadObject == NULL)) {
@@ -755,7 +755,7 @@ protectedInternalAttachCurrentThread(J9PortLibrary* portLibrary, void * userData
 }
 
 
-IDATA 
+IDATA
 internalAttachCurrentThread(J9JavaVM * vm, J9VMThread ** p_env, J9JavaVMAttachArgs * thr_args, UDATA threadType, void * osThread)
 {
 	PORT_ACCESS_FROM_PORT(vm->portLibrary);
@@ -769,9 +769,9 @@ internalAttachCurrentThread(J9JavaVM * vm, J9VMThread ** p_env, J9JavaVMAttachAr
 	args.osThread = osThread;
 
 	if (j9sig_protect(
-		protectedInternalAttachCurrentThread, &args, 
+		protectedInternalAttachCurrentThread, &args,
 		structuredSignalHandlerVM, vm,
-		J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_CONTINUE_EXECUTION, 
+		J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_CONTINUE_EXECUTION,
 		&result)
 	) {
 		result = JNI_ERR;
@@ -852,15 +852,15 @@ jint JNICALL GetEnv(JavaVM *jvm, void **penv, jint version)
 	}
 
 	if (version == UTE_VERSION_1_1) {
-		if (vm->j9rasGlobalStorage != NULL) {	
+		if (vm->j9rasGlobalStorage != NULL) {
 			*penv = ((RasGlobalStorage *)vm->j9rasGlobalStorage)->utIntf;
-		} 
+		}
 		return *penv == NULL ? JNI_EVERSION : JNI_OK;
 	}
 
 	if (version == JVMRAS_VERSION_1_1 || version == JVMRAS_VERSION_1_3 || version == JVMRAS_VERSION_1_5 ) {
 		PORT_ACCESS_FROM_JAVAVM(vm);
-		if (vm->j9rasGlobalStorage == NULL) {	
+		if (vm->j9rasGlobalStorage == NULL) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_JVMRI_REQUESTED_WITHOUT_TRACE);
 			return JNI_EINVAL;
 		}
@@ -900,7 +900,7 @@ jint JNICALL GetEnv(JavaVM *jvm, void **penv, jint version)
 }
 
 
-IDATA 
+IDATA
 attachSystemDaemonThread(J9JavaVM * vm, J9VMThread ** p_env, const char * threadName)
 {
 	J9JavaVMAttachArgs attachArgs;
@@ -915,8 +915,8 @@ attachSystemDaemonThread(J9JavaVM * vm, J9VMThread ** p_env, const char * thread
 	attachArgs.name = threadName;
 	attachArgs.group = vm->systemThreadGroupRef;
 	rc = internalAttachCurrentThread(
-		vm, p_env, &attachArgs, 
-		J9_PRIVATE_FLAGS_SYSTEM_THREAD | J9_PRIVATE_FLAGS_DAEMON_THREAD, 
+		vm, p_env, &attachArgs,
+		J9_PRIVATE_FLAGS_SYSTEM_THREAD | J9_PRIVATE_FLAGS_DAEMON_THREAD,
 		osThread);
 
 	if (rc != JNI_OK) {
@@ -929,7 +929,7 @@ attachSystemDaemonThread(J9JavaVM * vm, J9VMThread ** p_env, const char * thread
 
 
 
-#if (defined(J9VM_OPT_VM_LOCAL_STORAGE)) 
+#if (defined(J9VM_OPT_VM_LOCAL_STORAGE))
 void initializeVMLocalStorage(J9JavaVM * vm)
 {
 	extern J9VMLSFunctionTable J9VMLSFunctions;
@@ -964,7 +964,7 @@ void initializeVMLocalStorage(J9JavaVM * vm)
 #endif /* J9VM_OPT_VM_LOCAL_STORAGE */
 
 
-#if (defined(J9VM_OPT_VM_LOCAL_STORAGE)) 
+#if (defined(J9VM_OPT_VM_LOCAL_STORAGE))
 UDATA JNICALL J9VMLSAllocKeys(JNIEnv * env, UDATA * pInitCount, ...)
 {
 	va_list args;
@@ -1010,8 +1010,8 @@ UDATA JNICALL J9VMLSAllocKeys(JNIEnv * env, UDATA * pInitCount, ...)
 			*pKey = (void *) key;
 
 			/* Initialize the value of the key to NULL this VM and all other known VMs. VMs which are being created
-			   (i.e. not in the list yet) will have all VMLS values set to NULL already.  The current VM may or may not 
-			   be in the list, which means that the list may be empty.  The global monitor protects the VM list as well 
+			   (i.e. not in the list yet) will have all VMLS values set to NULL already.  The current VM may or may not
+			   be in the list, which means that the list may be empty.  The global monitor protects the VM list as well
 			   as the key list. */
 
 			VM_FROM_ENV(env)->vmLocalStorage[key - 1] = NULL;
@@ -1044,7 +1044,7 @@ UDATA JNICALL J9VMLSAllocKeys(JNIEnv * env, UDATA * pInitCount, ...)
 #endif /* J9VM_OPT_VM_LOCAL_STORAGE */
 
 
-#if (defined(J9VM_OPT_VM_LOCAL_STORAGE)) 
+#if (defined(J9VM_OPT_VM_LOCAL_STORAGE))
 void JNICALL J9VMLSFreeKeys(JNIEnv * env, UDATA * pInitCount, ...)
 {
 	va_list args;
@@ -1088,7 +1088,7 @@ void JNICALL J9VMLSFreeKeys(JNIEnv * env, UDATA * pInitCount, ...)
 #endif /* J9VM_OPT_VM_LOCAL_STORAGE */
 
 
-#if (defined(J9VM_OPT_VM_LOCAL_STORAGE)) 
+#if (defined(J9VM_OPT_VM_LOCAL_STORAGE))
 void * JNICALL J9VMLSGet(JNIEnv * env, void * key)
 {
 #ifdef J9VM_OPT_MULTI_VM
@@ -1100,7 +1100,7 @@ void * JNICALL J9VMLSGet(JNIEnv * env, void * key)
 #endif /* J9VM_OPT_VM_LOCAL_STORAGE */
 
 
-#if (defined(J9VM_OPT_VM_LOCAL_STORAGE)) 
+#if (defined(J9VM_OPT_VM_LOCAL_STORAGE))
 void * JNICALL J9VMLSSet(JNIEnv * env, void ** pKey, void * value)
 {
 #ifdef J9VM_OPT_MULTI_VM
@@ -1118,7 +1118,7 @@ jint JNICALL AttachCurrentThreadAsDaemon(JavaVM * vm, void ** p_env, void * thr_
 }
 
 
-#if (defined(J9VM_OPT_SIDECAR)) 
+#if (defined(J9VM_OPT_SIDECAR))
 /* run the shutdown method in java.lang.Shutdown */
 void sidecarShutdown(J9VMThread* shutdownThread) {
 	J9JavaVM * vm = shutdownThread->javaVM;
@@ -1140,7 +1140,7 @@ void sidecarShutdown(J9VMThread* shutdownThread) {
 
 
 
-static jint 
+static jint
 attachCurrentThread(JavaVM *vm, void **p_env, void *thr_args, UDATA threadType)
 {
 	omrthread_t osThread = NULL;
@@ -1178,7 +1178,7 @@ attachCurrentThread(JavaVM *vm, void **p_env, void *thr_args, UDATA threadType)
 }
 
 
-#if (defined(J9VM_OPT_SIDECAR)) 
+#if (defined(J9VM_OPT_SIDECAR))
 jint JNICALL QueryGCStatus(JavaVM *vm, jint *nHeaps, GCStatus *status, jint statusSize)
 {
 	return ((J9JavaVM *)vm)->memoryManagerFunctions->queryGCStatus(vm, nHeaps, status, statusSize);
@@ -1241,7 +1241,7 @@ static UDATA terminateRemainingThreads(J9VMThread* vmThread) {
 			}
 		}
 		currentThread = nextThread;
-	} 
+	}
 
 	/* If the disable shutdown flag is set, pretend to have a remaining thread */
 
@@ -1290,7 +1290,7 @@ static jint verifyCurrentThreadAttached(J9JavaVM * vm, J9VMThread ** pvmThread)
 
 
 
-#if (defined(J9VM_OPT_SIDECAR)) 
+#if (defined(J9VM_OPT_SIDECAR))
 jint JNICALL QueryJavaVM(JavaVM *vm,  jint nQueries, JavaVMQuery *queries)
 {
 	return JNI_ERR;
@@ -1302,7 +1302,7 @@ jint JNICALL ResetJavaVM(JavaVM *vm)
 }
 
 /* run the shutdown method in java.lang.Shutdown */
-void 
+void
 sidecarExit(J9VMThread* shutdownThread) {
 	/* static void java.lang.Shutdown.exit(int status)
 	 *
