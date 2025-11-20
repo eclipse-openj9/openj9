@@ -6579,7 +6579,7 @@ typedef struct J9JavaVM {
 	UDATA disclaimableROMSegmentCount;
 #if defined(OMR_THR_YIELD_ALG)
 	omrthread_t cpuUtilCalcThread;
-	UDATA cpuUtilCacheInterval;
+	UDATA cpuUtilCacheInterval; /* This is a number of seconds. */
 	int64_t prevProcCPUTime;
 	int64_t prevProcTimestamp;
 	omrthread_monitor_t cpuUtilCacheMutex;
