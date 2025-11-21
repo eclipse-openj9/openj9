@@ -362,7 +362,11 @@ J9::X86::CodeGenerator::preBinaryEncodingHook()
 
       while (lastInstruction != NULL)
          {
-         if (!lastInstruction->getOpCode().isPseudoOp())
+         TR::InstOpCode opcode = lastInstruction->getOpCode();
+         bool instructionTakesSpace = !opcode.isPseudoOp() || opcode.hasByteImmediate() || opcode.hasShortImmediate() ||
+                                      opcode.hasIntImmediate() || opcode.hasLongImmediate() || opcode.hasSignExtendImmediate();
+
+         if (instructionTakesSpace)
             {
             if (lastInstruction->getOpCode().isCallOp())
                {
