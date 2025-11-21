@@ -8651,16 +8651,9 @@ predefinedHandlerWrapper(struct J9PortLibrary *portLibrary, U_32 gpType, void *g
 			pid = *(U_64 *)infoValue;
 		}
 		if (0 != pid) {
-#if defined(AIXPPC)
-			/* Temporarily avoid calling omrsysinfo_get_process_name() due to
-			 * https://github.com/eclipse-openj9/openj9/issues/22986.
-			 */
-			Trc_VM_signal_pid(vmThread, signalValueToName(signal), pid, NULL);
-#else /* defined(AIXPPC) */
 			char *pidName = omrsysinfo_get_process_name(pid);
 			Trc_VM_signal_pid(vmThread, signalValueToName(signal), pid, pidName);
 			j9mem_free_memory((void *)pidName);
-#endif /* defined(AIXPPC) */
 		}
 	}
 #endif /* !defined(WIN32) */
