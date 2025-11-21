@@ -2135,7 +2135,8 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
                {
                // TO DO: check Mask type through the method table
                if ((i >= getFirstOperandIndex(methodSymbol) &&
-                   i < (getFirstOperandIndex(methodSymbol) + getNumOperands(methodSymbol))) ||
+                    i < (getFirstOperandIndex(methodSymbol) + getNumOperands(methodSymbol)) &&
+                    (getArgumentType(methodSymbol, i) == Vector || getArgumentType(methodSymbol, i) == Mask)) ||
                    (i == getMaskIndex(methodSymbol) && node->getChild(i)->getOpCodeValue() != TR::aconst))
                   {
                   TR::Node *operand = node->getChild(i);
