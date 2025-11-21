@@ -68,11 +68,15 @@ typedef enum J9RASdumpMatchResult
 static UDATA rasDumpSuspendKey = 0;
 static UDATA rasDumpFirstThread = 0;
 
-/* Postpone GC and thread event hooks
+/* Postpone exception, GC and thread event hooks
  * until later phases of VM initialization.
  */
 static UDATA rasDumpPostponeHooks = 0
 		| J9RAS_DUMP_ON_CLASS_UNLOAD
+		| J9RAS_DUMP_ON_EXCEPTION_CATCH
+		| J9RAS_DUMP_ON_EXCEPTION_DESCRIBE
+		| J9RAS_DUMP_ON_EXCEPTION_SYSTHROW
+		| J9RAS_DUMP_ON_EXCEPTION_THROW
 		| J9RAS_DUMP_ON_EXCESSIVE_GC
 		| J9RAS_DUMP_ON_GLOBAL_GC
 		| J9RAS_DUMP_ON_OBJECT_ALLOCATION
@@ -1355,9 +1359,13 @@ rasDumpFlushHooks(J9JavaVM *vm, IDATA stage)
 	switch (stage) {
 	case TRACE_ENGINE_INITIALIZED:
 		/* Intermediate stage, enable all remaining hooks
-		 * except the thread event ones.
+		 * except the exception and thread event ones.
 		 */
 		*postponeHooks = 0
+				| J9RAS_DUMP_ON_EXCEPTION_CATCH
+				| J9RAS_DUMP_ON_EXCEPTION_DESCRIBE
+				| J9RAS_DUMP_ON_EXCEPTION_SYSTHROW
+				| J9RAS_DUMP_ON_EXCEPTION_THROW
 				| J9RAS_DUMP_ON_THREAD_BLOCKED
 				| J9RAS_DUMP_ON_THREAD_START
 				| J9RAS_DUMP_ON_THREAD_END
