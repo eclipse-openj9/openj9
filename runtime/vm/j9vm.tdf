@@ -1038,3 +1038,5 @@ TraceEvent=Trc_Segment_disclaimClassMemory_result NoEnv Overhead=1 Level=3 Templ
 TraceEvent=Trc_Segment_disclaimClassMemory_error NoEnv Overhead=1 Level=3 Template="Disclaim class memory failed result=%zi errno=%zi"
 
 TraceEvent=Trc_VM_signal_pid Overhead=1 Level=1 Template="%s received from process id %zu name '%s'"
+
+TraceEvent=Trc_VM_timeCompensationHelper_CPU_util Overhead=1 Level=5 Template="CPU Util: numCPUs=%zu, timeDelta=%zu, CPUTimeDelta=%zu, util=%f"

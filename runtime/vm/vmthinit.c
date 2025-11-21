@@ -106,6 +106,9 @@ UDATA initializeVMThreading(J9JavaVM *vm)
 #if JAVA_SPEC_VERSION >= 24
 		omrthread_monitor_init_with_name(&vm->blockedVirtualThreadsMutex, 0, "Blocked VirtualThreads mutex") ||
 #endif /* JAVA_SPEC_VERSION >= 24 */
+#if defined(OMR_THR_YIELD_ALG)
+		omrthread_monitor_init_with_name(&vm->cpuUtilCacheMutex, 0, "CPU Utilization Cache Mutex") ||
+#endif /* defined(OMR_THR_YIELD_ALG) */
 
 		initializeMonitorTable(vm)
 	)
@@ -213,6 +216,12 @@ void terminateVMThreading(J9JavaVM *vm)
 		vm->tlsPoolMutex = NULL;
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
+
+#if defined(OMR_THR_YIELD_ALG)
+	if (NULL != vm->cpuUtilCacheMutex) {
+		omrthread_monitor_destroy(vm->cpuUtilCacheMutex);
+	}
+#endif /* defined(OMR_THR_YIELD_ALG) */
 
 	destroyMonitorTable(vm);
 }

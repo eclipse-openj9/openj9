@@ -718,6 +718,11 @@ freeJavaVM(J9JavaVM * vm)
 			omrthread_monitor_destroy(vm->globalHotFieldPoolMutex);
 		}
 	}
+#if defined(OMR_THR_YIELD_ALG)
+	if (NULL != vm->cpuUtilCacheMutex) {
+		omrthread_monitor_destroy(vm->cpuUtilCacheMutex);
+	}
+#endif /* defined(OMR_THR_YIELD_ALG) */
 
 	if (NULL != vm->classMemorySegments) {
 		J9ClassWalkState classWalkState;
@@ -7822,6 +7827,9 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		}
 	}
 #endif /* defined(J9VM_OPT_JFR) */
+#if defined(OMR_THR_YIELD_ALG)
+	omrthread_monitor_init_with_name(&vm->cpuUtilCacheMutex, 0, "CPU Utilization Cache Mutex");
+#endif /* defined(OMR_THR_YIELD_ALG) */
 
 	if (JNI_OK != (stageRC = runInitializationStage(vm, ALL_VM_ARGS_CONSUMED))) {
 		goto error;
