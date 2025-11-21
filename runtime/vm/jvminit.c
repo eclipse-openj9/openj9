@@ -4474,6 +4474,16 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		}
 	}
 
+	{
+		IDATA useDebugLocalMap = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXUSEDEBUGLOCALMAP, NULL);
+		IDATA noUseDebugLocalMap = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOUSEDEBUGLOCALMAP, NULL);
+		if (useDebugLocalMap > noUseDebugLocalMap) {
+			vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_USE_DEBUG_LOCAL_MAP;
+		} else if (useDebugLocalMap < noUseDebugLocalMap) {
+			vm->extendedRuntimeFlags3 &= ~J9_EXTENDED_RUNTIME3_USE_DEBUG_LOCAL_MAP;
+		}
+	}
+
 	if (FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXKEEPJNIIDS, NULL) != -1) {
 		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ALWAYS_KEEP_JNI_IDS;
 	}
@@ -7970,6 +7980,10 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		}
 	}
 #endif
+
+	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_USE_DEBUG_LOCAL_MAP)) {
+		installDebugLocalMapper(vm);
+	}
 
 	initializeInitialMethods(vm);
 
