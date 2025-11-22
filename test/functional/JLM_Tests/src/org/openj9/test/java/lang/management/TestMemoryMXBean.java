@@ -121,6 +121,9 @@ public class TestMemoryMXBean {
 		}
 		attribs.put("MaximumGCThreads", new AttributeData(Integer.TYPE.getName(), true, false, false));
 		attribs.put("CurrentGCThreads", new AttributeData(Integer.TYPE.getName(), true, false, false));
+		if (javaVersion >= 26) {
+			attribs.put("TotalGcCpuTime", new AttributeData(Long.TYPE.getName(), true, false, false));
+		}
 	}// end static initializer
 
 	private ExtendedMemoryMXBeanImpl mb;
@@ -739,7 +742,9 @@ public class TestMemoryMXBean {
 		// Eight attributes - some writable.
 		MBeanAttributeInfo[] attributes = mbi.getAttributes();
 		AssertJUnit.assertNotNull(attributes);
-		if (javaVersion >= 16) {
+		if (javaVersion >= 26) {
+			AssertJUnit.assertTrue(attributes.length == 25);
+		} else if (javaVersion >= 16) {
 			AssertJUnit.assertTrue(attributes.length == 24);
 		} else {
 			AssertJUnit.assertTrue(attributes.length == 26);
