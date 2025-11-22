@@ -1151,52 +1151,67 @@ public class J9BCUtil {
 
 			out.println("\n  StackMapTable\n    Stackmaps(" + stackMapCount.intValue() + "):");
 
-			for (int i = 0; i < stackMapCount.intValue(); i++) {
-				mapPC++;
+			boolean dumpBaseFrame = false;
+			int i = 0;
+			while (i < stackMapCount.intValue()) {
 				mapType = stackMapData.at(0).longValue();
 				stackMapData = stackMapData.add(1);
 
+				/* print indent */
+				if (dumpBaseFrame) {
+					dumpBaseFrame = false;
+					out.print("        base: ");
+				} else {
+					mapPC++;
+					out.print("      ");
+				}
+
 				if (mapType < 64) {
 					mapPC += mapType;
-					out.println("      pc: " + mapPC +" same");
+					out.println("pc: " + mapPC +" same");
 				} else if (mapType < 128) {
 					mapPC += (mapType - 64);
-					out.print("      pc: " + mapPC +" same_locals_1_stack_item: ");
+					out.print("pc: " + mapPC +" same_locals_1_stack_item: ");
 					stackMapData = dumpStackMapSlots(out, romclass, stackMapData, 1);
 					out.println();
-				} else if (mapType < 247) {
-					out.println("      UNKNOWN FRAME TAG: (" + mapType + ")\n");
+				} else if (mapType < 246) {
+					out.println("UNKNOWN FRAME TAG: (" + mapType + ")\n");
+				} else if (mapType == 246) {
+					out.println("early_larval:");
+					stackMapData = dumpUnsetFields(out, romclass, stackMapData);
+					dumpBaseFrame = true;
+					continue;
 				} else if (mapType == 247) {
 					long offset = new U16(stackMapData.at(0)).leftShift(8).add(stackMapData.at(1)).longValue();
 					stackMapData = stackMapData.add(2);
 					mapPC += offset;
-					out.print("      pc: "+ mapPC +" same_locals_1_stack_item_extended: ");
+					out.print("pc: "+ mapPC +" same_locals_1_stack_item_extended: ");
 					stackMapData = dumpStackMapSlots(out, romclass, stackMapData, 1);
 					out.println();
 				} else if (mapType < 251) {
 					long offset = new U16(stackMapData.at(0)).leftShift(8).add(stackMapData.at(1)).longValue();
 					stackMapData = stackMapData.add(2);
 					mapPC += offset;
-					out.println("      pc: "+ mapPC +" chop " + (251 - mapType));
+					out.println("pc: "+ mapPC +" chop " + (251 - mapType));
 
 				} else if (mapType == 251) {
 					long offset = new U16(stackMapData.at(0)).leftShift(8).add(stackMapData.at(1)).longValue();
 					stackMapData = stackMapData.add(2);
 					mapPC += offset;
-					out.println("      pc: "+ mapPC +" same_extended\n");
+					out.println("pc: "+ mapPC +" same_extended\n");
 
 				} else if (mapType < 255) {
 					long offset = new U16(stackMapData.at(0)).leftShift(8).add(stackMapData.at(1)).longValue();
 					stackMapData = stackMapData.add(2);
 					mapPC += offset;
-					out.print("      pc: "+ mapPC +" append: ");
+					out.print("pc: "+ mapPC +" append: ");
 					stackMapData = dumpStackMapSlots(out, romclass, stackMapData, (mapType - 251));
 					out.println();
 				} else if (mapType == 255) {
 					long offset = new U16(stackMapData.at(0)).leftShift(8).add(stackMapData.at(1)).longValue();
 					stackMapData = stackMapData.add(2);
 					mapPC += offset;
-					out.print("      pc: "+ mapPC +" full, local(s): ");
+					out.print("pc: "+ mapPC +" full, local(s): ");
 					offset = new U16(stackMapData.at(0)).leftShift(8).add(stackMapData.at(1)).longValue();
 					stackMapData = stackMapData.add(2);
 					stackMapData = dumpStackMapSlots(out, romclass, stackMapData, offset);
@@ -1206,6 +1221,7 @@ public class J9BCUtil {
 					stackMapData = dumpStackMapSlots(out, romclass, stackMapData, offset);
 					out.println();
 				}
+				i++;
 			}
 		}
 	}
@@ -1304,4 +1320,18 @@ public class J9BCUtil {
 		return slotData;
 	}
 
+	static U8Pointer dumpUnsetFields(PrintStream out, J9ROMClassPointer classfile, U8Pointer slotData) throws CorruptDataException
+	{
+		int unsetFieldCount = new U16(slotData.at(0)).leftShift(8).bitOr(slotData.at(1)).intValue();
+		slotData = slotData.add(2);
+		out.println("        unset_fields: " + unsetFieldCount);
+		SelfRelativePointer srp = SelfRelativePointer.cast(slotData);
+		for (int i = 0; i < unsetFieldCount; i++) {
+			J9ROMNameAndSignaturePointer nas = J9ROMNameAndSignaturePointer.cast(srp.add(i).get());
+			J9UTF8Pointer name = nas.name();
+			J9UTF8Pointer signature = nas.signature();
+			out.println("          " + J9UTF8Helper.stringValue(name) + ":" + J9UTF8Helper.stringValue(signature));
+		}
+		return slotData.add(unsetFieldCount * 4);
+	}
 }
