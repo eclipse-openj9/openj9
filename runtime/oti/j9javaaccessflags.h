@@ -193,8 +193,4 @@
 		(J9StaticFieldRefStrictInitWritten == ((classAndFlags) & J9StaticFieldRefStrictInitMask))
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
-/* ImplicitCreation attribute flags */
-#define J9AccImplicitCreateHasDefaultValue 0x1
-#define J9AccImplicitCreateNonAtomic 0x2
-
 #endif /*J9JAVAACCESSFLAGS_H */
