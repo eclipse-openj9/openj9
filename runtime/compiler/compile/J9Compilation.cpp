@@ -851,22 +851,9 @@ J9::Compilation::freeKnownObjectTable()
    {
    if (_knownObjectTable)
       {
-#if defined(J9VM_OPT_JITSERVER)
-      if (!isOutOfProcessCompilation())
-#endif /* defined(J9VM_OPT_JITSERVER) */
-         {
-         TR::VMAccessCriticalSection freeKnownObjectTable(self()->fej9());
-
-         J9VMThread *thread = self()->fej9()->vmThread();
-         TR_ASSERT(thread, "assertion failure");
-
-         TR_ArrayIterator<uintptr_t> i(&_knownObjectTable->_references);
-         for (uintptr_t *ref = i.getFirst(); !i.pastEnd(); ref = i.getNext())
-            thread->javaVM->internalVMFunctions->j9jni_deleteLocalRef((JNIEnv*)thread, (jobject)ref);
-         }
+      _knownObjectTable->freeKnownObjectTable();
+      _knownObjectTable = NULL;
       }
-
-   _knownObjectTable = NULL;
    }
 
 
