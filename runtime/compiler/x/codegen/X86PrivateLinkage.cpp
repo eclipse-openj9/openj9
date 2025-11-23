@@ -2019,14 +2019,6 @@ void J9::X86::PrivateLinkage::buildDirectCall(
       }
    else if (isJitDispatchJ9Method)
       {
-      // This should occur only on 64-bit because it's generated only for
-      // OpenJDK MethodHandles, which are not yet in use in Java 8, with Java 8
-      // being the last version to support 32-bit. This shouldn't necessarily
-      // be too hard to implement on 32-bit, but it is left unimplemented for
-      // now because we can't exercise it anyway until we start to get OpenJDK
-      // MethodHandles working on Java 8.
-      TR_ASSERT_FATAL(comp()->target().is64Bit(), "jitDispatchJ9Method on 32-bit");
-
       TR::LabelSymbol *interpreterCallLabel = generateLabelSymbol(cg());
 
       TR::Register *scratchReg = cg()->allocateRegister();
@@ -2061,19 +2053,23 @@ void J9::X86::PrivateLinkage::buildDirectCall(
 
       generateLabelInstruction(oolBranchOp, callNode, interpreterCallLabel, cg());
 
-      // The method is compiled - call through register to JIT entry point
-      generateRegMemInstruction(
-         TR::InstOpCode::L4RegMem,
-         callNode,
-         j9mReg, // can reuse because the actual J9Method isn't needed anymore
-         generateX86MemoryReference(scratchReg, -4, cg()),
-         cg());
+      // target entry point is already in the scratch register at this point on 32 bit
+      if (comp()->target().is64Bit())
+         {
+         // The method is compiled - call through register to JIT entry point
+         generateRegMemInstruction(
+            TR::InstOpCode::L4RegMem,
+            callNode,
+            j9mReg, // can reuse because the actual J9Method isn't needed anymore
+            generateX86MemoryReference(scratchReg, -4, cg()),
+            cg());
 
-      generateRegImmInstruction(
-         TR::InstOpCode::SHR4RegImm1, callNode, j9mReg, 16, cg());
+         generateRegImmInstruction(
+            TR::InstOpCode::SHR4RegImm1, callNode, j9mReg, 16, cg());
 
-      generateRegRegInstruction(
-         TR::InstOpCode::ADDRegReg(), callNode, scratchReg, j9mReg, cg());
+         generateRegRegInstruction(
+            TR::InstOpCode::ADDRegReg(), callNode, scratchReg, j9mReg, cg());
+         }
 
       callInstr = generateRegInstruction(
          TR::InstOpCode::CALLReg, callNode, scratchReg, cg());
