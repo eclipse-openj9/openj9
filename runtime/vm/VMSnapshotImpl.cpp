@@ -644,6 +644,11 @@ VMSnapshotImpl::fixupClasses()
 			if (NULL == currentClass->lastITable) {
 				currentClass->lastITable = VMSnapshotImpl::getInvalidITable();
 			}
+			/* Remove dynamic Proxy classes along with unsafe classes. */
+			if (J9ROMCLASS_IS_UNSAFE(romClass)) {
+				J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
+				hashClassTableDelete(classloader, J9UTF8_DATA(className), J9UTF8_LENGTH(className));
+			}
 
 			currentClass = allLiveClassesNextDo(&walkState);
 		}
