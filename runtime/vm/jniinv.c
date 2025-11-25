@@ -784,7 +784,7 @@ static J9ThreadEnv threadEnv = {
 		omrthread_get_priority,
 		omrthread_set_priority,
 		omrthread_self,
-		(uintptr_t * (*)(const char *))omrthread_global, /* the cast here is temporary */
+		omrthread_global,
 		omrthread_attach,
 		omrthread_sleep,
 		omrthread_create,

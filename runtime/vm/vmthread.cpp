@@ -623,7 +623,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 		UDATA *gtw;
 
 		/* Supply default thread weight, may be overridden below. */
-		gtw = omrthread_global((char*)"thread_weight");
+		gtw = omrthread_global("thread_weight");
 		*gtw = (UDATA)"medium";
 
 		/* different defaults for z/OS */
@@ -646,8 +646,8 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 #endif
 
 #if defined(OMR_THR_YIELD_ALG)
-	**(UDATA**)omrthread_global((char*)"yieldAlgorithm") = J9THREAD_LIB_YIELD_ALGORITHM_SCHED_YIELD;
-	**(UDATA**)omrthread_global((char*)"yieldUsleepMultiplier") = 1;
+	**(UDATA **)omrthread_global("yieldAlgorithm") = J9THREAD_LIB_YIELD_ALGORITHM_SCHED_YIELD;
+	**(UDATA **)omrthread_global("yieldUsleepMultiplier") = 1;
 #endif /* defined(OMR_THR_YIELD_ALG) */
 
 #if defined(LINUX)
@@ -664,9 +664,9 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 	 */
 	if ('0' == j9util_sched_compat_yield_value(vm)) {
 #if defined(OMR_THR_YIELD_ALG)
-		**(UDATA**)omrthread_global((char*)"yieldAlgorithm") = J9THREAD_LIB_YIELD_ALGORITHM_INCREASING_USLEEP;
+		**(UDATA **)omrthread_global("yieldAlgorithm") = J9THREAD_LIB_YIELD_ALGORITHM_INCREASING_USLEEP;
 #if defined(OMR_THR_THREE_TIER_LOCKING)
-		**(UDATA **)omrthread_global((char*)"defaultMonitorSpinCount3") = 270;
+		**(UDATA **)omrthread_global("defaultMonitorSpinCount3") = 270;
 #endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 		vm->thrMaxYieldsBeforeBlocking = 270;
 		vm->thrMaxTryEnterYieldsBeforeBlocking = 270;
@@ -695,18 +695,18 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 #endif
 
 #if defined(OMR_THR_ADAPTIVE_SPIN)
-	*(UDATA*)omrthread_global((char*)"adaptSpinHoldtimeEnable")=1;
-	*(UDATA*)omrthread_global((char*)"adaptSpinSlowPercentEnable")=1;
-	**(UDATA**)omrthread_global((char*)"adaptSpinHoldtime")=1000000;
-	**(UDATA**)omrthread_global((char*)"adaptSpinSlowPercent")=10;
-	**(UDATA**)omrthread_global((char*)"adaptSpinSampleThreshold")=1000;
-	**(UDATA**)omrthread_global((char*)"adaptSpinSampleStopCount")=10;
-	**(UDATA**)omrthread_global((char*)"adaptSpinSampleCountStopRatio")=150;
+	*(UDATA *)omrthread_global("adaptSpinHoldtimeEnable") = 1;
+	*(UDATA *)omrthread_global("adaptSpinSlowPercentEnable") = 1;
+	**(UDATA **)omrthread_global("adaptSpinHoldtime") = 1000000;
+	**(UDATA **)omrthread_global("adaptSpinSlowPercent") = 10;
+	**(UDATA **)omrthread_global("adaptSpinSampleThreshold") = 1000;
+	**(UDATA **)omrthread_global("adaptSpinSampleStopCount") = 10;
+	**(UDATA **)omrthread_global("adaptSpinSampleCountStopRatio") = 150;
 	omrthread_lib_set_flags(J9THREAD_LIB_FLAG_ADAPTIVE_SPIN_KEEP_SAMPLING);
 #if defined(J9VM_INTERP_CUSTOM_SPIN_OPTIONS)
 #if defined(OMR_THR_CUSTOM_SPIN_OPTIONS)
 	/* Handle allocation and initialization of JLM tracing data structures for class-specific spin parameters */
-	*(UDATA*)omrthread_global((char*)"customAdaptSpinEnabled") = customAdaptSpinEnabled;
+	*(UDATA *)omrthread_global("customAdaptSpinEnabled") = customAdaptSpinEnabled;
 #endif /* OMR_THR_CUSTOM_SPIN_OPTIONS */
 #endif /* J9VM_INTERP_CUSTOM_SPIN_OPTIONS */
 #endif /* OMR_THR_ADAPTIVE_SPIN */
@@ -714,7 +714,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 #if defined(OMR_THR_THREE_TIER_LOCKING)
 	/* There is no advantage from spinning when running on a single processor. */
 	if (cpus <= 1) {
-		**(UDATA**)omrthread_global((char*)"defaultMonitorSpinCount1") = 1;
+		**(UDATA **)omrthread_global("defaultMonitorSpinCount1") = 1;
 	}
 	omrthread_lib_clear_flags(J9THREAD_LIB_FLAG_SECONDARY_SPIN_OBJECT_MONITORS_ENABLED | J9THREAD_LIB_FLAG_FAST_NOTIFY);
 #if defined(OMR_THR_SPIN_WAKE_CONTROL)
@@ -731,29 +731,29 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 		} else {
 			maxSpinThreadsLocal = cpus/4;
 		}
-		**(UDATA**)omrthread_global((char*)"maxSpinThreads") = maxSpinThreadsLocal;
+		**(UDATA **)omrthread_global("maxSpinThreads") = maxSpinThreadsLocal;
 	}
-	**(UDATA**)omrthread_global((char*)"maxWakeThreads") = OMRTHREAD_MINIMUM_WAKE_THREADS;
+	**(UDATA **)omrthread_global("maxWakeThreads") = OMRTHREAD_MINIMUM_WAKE_THREADS;
 #endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
 #endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 
 
 #if defined(OMR_THR_YIELD_ALG)
 #if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_POWER)
-	**(UDATA **)omrthread_global((char *)"parkPolicy") = OMRTHREAD_PARK_POLICY_SLEEP;
+	**(UDATA **)omrthread_global("parkPolicy") = OMRTHREAD_PARK_POLICY_SLEEP;
 #else /* defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_POWER) */
-	**(UDATA **)omrthread_global((char *)"parkPolicy") = OMRTHREAD_PARK_POLICY_NONE;
+	**(UDATA **)omrthread_global("parkPolicy") = OMRTHREAD_PARK_POLICY_NONE;
 #endif /* defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_POWER) */
-	**(UDATA **)omrthread_global((char *)"parkSleepMultiplier") = 0;
-	**(UDATA **)omrthread_global((char *)"parkSleepTime") = 400;
-	**(UDATA **)omrthread_global((char *)"parkSpinCount") = 0;
-	**(UDATA **)omrthread_global((char *)"parkSleepCount") = 2;
+	**(UDATA **)omrthread_global("parkSleepMultiplier") = 0;
+	**(UDATA **)omrthread_global("parkSleepTime") = 400;
+	**(UDATA **)omrthread_global("parkSpinCount") = 0;
+	**(UDATA **)omrthread_global("parkSleepCount") = 2;
 #if defined(J9VM_ARCH_POWER)
-	**(UDATA **)omrthread_global((char *)"parkSleepCpuUtilThreshold") = 99;
+	**(UDATA **)omrthread_global("parkSleepCpuUtilThreshold") = 99;
 #elif defined(J9VM_ARCH_X86) /* defined(OMR_ARCH_POWER) */
-	**(UDATA **)omrthread_global((char *)"parkSleepCpuUtilThreshold") = 80;
+	**(UDATA **)omrthread_global("parkSleepCpuUtilThreshold") = 80;
 #else /* defined(J9VM_ARCH_X86) */
-	**(UDATA **)omrthread_global((char *)"parkSleepCpuUtilThreshold") = 100;
+	**(UDATA **)omrthread_global("parkSleepCpuUtilThreshold") = 100;
 #endif /* defined(J9VM_ARCH_POWER) */
 	vm->cpuUtilCacheInterval = 5;
 #endif /* defined(OMR_THR_YIELD_ALG) */
@@ -905,7 +905,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 			if (scan_udata(&scan_start, &maxSpinThreads)) {
 				goto _error;
 			}
-			**(UDATA**)omrthread_global((char*)"maxSpinThreads") = maxSpinThreads;
+			**(UDATA **)omrthread_global("maxSpinThreads") = maxSpinThreads;
 			continue;
 		}
 		if (try_scan(&scan_start, "maxWakeThreads=")) {
@@ -916,7 +916,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 			if (maxWakeThreads < OMRTHREAD_MINIMUM_WAKE_THREADS) {
 				goto _error;
 			}
-			**(UDATA**)omrthread_global((char*)"maxWakeThreads") = maxWakeThreads;
+			**(UDATA **)omrthread_global("maxWakeThreads") = maxWakeThreads;
 			continue;
 		}
 #endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
@@ -928,7 +928,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 				if (0 == spinCount) {
 					goto _error;
 				}
-				**(UDATA**)omrthread_global((char*)"defaultMonitorSpinCount1") = spinCount;
+				**(UDATA **)omrthread_global("defaultMonitorSpinCount1") = spinCount;
 				continue;
 		}
 		if (try_scan(&scan_start, "threeTierSpinCount2=")) {
@@ -939,7 +939,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 				if (0 == spinCount) {
 					goto _error;
 				}
-				**(UDATA**)omrthread_global((char*)"defaultMonitorSpinCount2") = spinCount;
+				**(UDATA **)omrthread_global("defaultMonitorSpinCount2") = spinCount;
 				continue;
 		}
 		if (try_scan(&scan_start, "threeTierSpinCount3=")) {
@@ -950,7 +950,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 				if (0 == spinCount) {
 					goto _error;
 				}
-				**(UDATA**)omrthread_global((char*)"defaultMonitorSpinCount3") = spinCount;
+				**(UDATA **)omrthread_global("defaultMonitorSpinCount3") = spinCount;
 				continue;
 		}
 #endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
@@ -958,12 +958,12 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 		if (try_scan(&scan_start, "minimizeUserCPU")) {
 			initMinCPUSpinCounts(vm);
 #ifdef OMR_THR_ADAPTIVE_SPIN
-			*(UDATA*)omrthread_global((char*)"adaptSpinHoldtimeEnable") = 0;
-			*(UDATA*)omrthread_global((char*)"adaptSpinSlowPercentEnable") = 0;
+			*(UDATA *)omrthread_global("adaptSpinHoldtimeEnable") = 0;
+			*(UDATA *)omrthread_global("adaptSpinSlowPercentEnable") = 0;
 #endif
 
 #if defined(OMR_THR_YIELD_ALG)
-			**(UDATA**)omrthread_global((char*)"yieldAlgorithm") = J9THREAD_LIB_YIELD_ALGORITHM_SCHED_YIELD;
+			**(UDATA **)omrthread_global("yieldAlgorithm") = J9THREAD_LIB_YIELD_ALGORITHM_SCHED_YIELD;
 #endif /* defined(OMR_THR_YIELD_ALG) */
 			continue;
 		}
@@ -975,7 +975,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 				if (scan_hex(&scan_start, &clockSkewHi)) {
 					goto _error;
 				}
-				*omrthread_global((char*)"clockSkewHi") = clockSkewHi;
+				*omrthread_global("clockSkewHi") = clockSkewHi;
 				continue;
 		}
 #endif
@@ -1140,7 +1140,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 
 #if defined(OMR_THR_CUSTOM_SPIN_OPTIONS)
 #if defined(OMR_THR_ADAPTIVE_SPIN)
-			*(UDATA*)omrthread_global((char*)"customAdaptSpinEnabled") = customAdaptSpinEnabled;
+			*(UDATA *)omrthread_global("customAdaptSpinEnabled") = customAdaptSpinEnabled;
 #endif /* OMR_THR_ADAPTIVE_SPIN */
 #endif /* OMR_THR_CUSTOM_SPIN_OPTIONS */
 			continue;
@@ -1153,8 +1153,8 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 			if (scan_udata(&scan_start, &adaptSpinHoldtime)) {
 				goto _error;
 			}
-			**(UDATA**)omrthread_global((char*)"adaptSpinHoldtime") = adaptSpinHoldtime;
-			*(UDATA*)omrthread_global((char*)"adaptSpinHoldtimeEnable") = (0 != adaptSpinHoldtime);
+			**(UDATA **)omrthread_global("adaptSpinHoldtime") = adaptSpinHoldtime;
+			*(UDATA *)omrthread_global("adaptSpinHoldtimeEnable") = (0 != adaptSpinHoldtime);
 			continue;
 		}
 
@@ -1163,8 +1163,8 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 			if (scan_udata(&scan_start, &adaptSpinSlowPercent)) {
 				goto _error;
 			}
-			**(UDATA**)omrthread_global((char*)"adaptSpinSlowPercent") = adaptSpinSlowPercent;
-			*(UDATA*)omrthread_global((char*)"adaptSpinSlowPercentEnable") = (0 != adaptSpinSlowPercent);
+			**(UDATA **)omrthread_global("adaptSpinSlowPercent") = adaptSpinSlowPercent;
+			*(UDATA *)omrthread_global("adaptSpinSlowPercentEnable") = (0 != adaptSpinSlowPercent);
 			continue;
 		}
 
@@ -1173,7 +1173,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 			if (scan_udata(&scan_start, &adaptSpinSampleThreshold)) {
 				goto _error;
 			}
-			**(UDATA**)omrthread_global((char*)"adaptSpinSampleThreshold") = adaptSpinSampleThreshold;
+			**(UDATA **)omrthread_global("adaptSpinSampleThreshold") = adaptSpinSampleThreshold;
 			continue;
 		}
 
@@ -1182,7 +1182,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 			if (scan_udata(&scan_start, &adaptSpinSampleStopCount)) {
 				goto _error;
 			}
-			**(UDATA**)omrthread_global((char*)"adaptSpinSampleStopCount") = adaptSpinSampleStopCount;
+			**(UDATA **)omrthread_global("adaptSpinSampleStopCount") = adaptSpinSampleStopCount;
 			continue;
 		}
 
@@ -1191,7 +1191,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 			if (scan_udata(&scan_start, &adaptSpinSampleCountStopRatio)) {
 				goto _error;
 			}
-			**(UDATA**)omrthread_global((char*)"adaptSpinSampleCountStopRatio") = adaptSpinSampleCountStopRatio;
+			**(UDATA **)omrthread_global("adaptSpinSampleCountStopRatio") = adaptSpinSampleCountStopRatio;
 			continue;
 		}
 
@@ -1206,14 +1206,14 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 		}
 
 		if (try_scan(&scan_start, "adaptSpin")) {
-			*(UDATA*)omrthread_global((char*)"adaptSpinHoldtimeEnable") = 1;
-			*(UDATA*)omrthread_global((char*)"adaptSpinSlowPercentEnable") = 1;
+			*(UDATA *)omrthread_global("adaptSpinHoldtimeEnable") = 1;
+			*(UDATA *)omrthread_global("adaptSpinSlowPercentEnable") = 1;
 			continue;
 		}
 
 		if (try_scan(&scan_start, "noAdaptSpin")) {
-			*(UDATA*)omrthread_global((char*)"adaptSpinHoldtimeEnable") = 0;
-			*(UDATA*)omrthread_global((char*)"adaptSpinSlowPercentEnable") = 0;
+			*(UDATA *)omrthread_global("adaptSpinHoldtimeEnable") = 0;
+			*(UDATA *)omrthread_global("adaptSpinSlowPercentEnable") = 0;
 			continue;
 		}
 #endif
@@ -1246,7 +1246,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 			if (scan_udata(&scan_start, &yieldAlgorithm)) {
 				goto _error;
 			}
-			**(UDATA**)omrthread_global((char*)"yieldAlgorithm") = yieldAlgorithm;
+			**(UDATA **)omrthread_global("yieldAlgorithm") = yieldAlgorithm;
 			continue;
 		}
 
@@ -1255,7 +1255,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 			if (scan_udata(&scan_start, &yieldUsleepMultiplier)) {
 				goto _error;
 			}
-			**(UDATA**)omrthread_global((char*)"yieldUsleepMultiplier") = yieldUsleepMultiplier;
+			**(UDATA **)omrthread_global("yieldUsleepMultiplier") = yieldUsleepMultiplier;
 			continue;
 		}
 
@@ -1264,13 +1264,13 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 			/* Use yield algorithm for CFS systems.
 			 * We set the algorithm again here so that the last argument wins.
 			 */
-			**(UDATA**)omrthread_global((char*)"yieldAlgorithm") = J9THREAD_LIB_YIELD_ALGORITHM_INCREASING_USLEEP;
+			**(UDATA **)omrthread_global("yieldAlgorithm") = J9THREAD_LIB_YIELD_ALGORITHM_INCREASING_USLEEP;
 			continue;
 		}
 
 		if (try_scan(&scan_start, "noCfsYield")) {
 			/* use pthread yield */
-			**(UDATA**)omrthread_global((char*)"yieldAlgorithm") = J9THREAD_LIB_YIELD_ALGORITHM_SCHED_YIELD;
+			**(UDATA **)omrthread_global("yieldAlgorithm") = J9THREAD_LIB_YIELD_ALGORITHM_SCHED_YIELD;
 			initMinCPUSpinCounts(vm);
 			continue;
 		}
@@ -1282,7 +1282,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 		if (try_scan(&scan_start, "tw=")) {
 			char *old_scan_start = scan_start; /* for error handling */
 			char *tw = scan_to_delim(PORTLIB, &scan_start, ',');
-			UDATA *gtw = omrthread_global((char*)"thread_weight");
+			UDATA *gtw = omrthread_global("thread_weight");
 			if (tw && !strcmp(tw, "HEAVY")) {
 				tw = "heavy";
 			} else if (tw && (!strcmp(tw, "MEDIUM") || !strcmp(tw, "NATIVE") || !strcmp(tw, "native") || !strcmp(tw, ""))) {
@@ -1325,7 +1325,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 			if (scan_udata(&scan_start, &parkPolicy)) {
 				goto _error;
 			}
-			**(UDATA **)omrthread_global((char *)"parkPolicy") = parkPolicy;
+			**(UDATA **)omrthread_global("parkPolicy") = parkPolicy;
 			continue;
 		}
 
@@ -1334,7 +1334,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 			if (scan_udata(&scan_start, &parkSleepMultiplier)) {
 				goto _error;
 			}
-			**(UDATA **)omrthread_global((char *)"parkSleepMultiplier") = parkSleepMultiplier;
+			**(UDATA **)omrthread_global("parkSleepMultiplier") = parkSleepMultiplier;
 			continue;
 		}
 
@@ -1343,7 +1343,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 			if (scan_udata(&scan_start, &parkSleepTime)) {
 				goto _error;
 			}
-			**(UDATA **)omrthread_global((char *)"parkSleepTime") = parkSleepTime;
+			**(UDATA **)omrthread_global("parkSleepTime") = parkSleepTime;
 			continue;
 		}
 
@@ -1352,7 +1352,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 			if (scan_udata(&scan_start, &parkSpinCount)) {
 				goto _error;
 			}
-			**(UDATA **)omrthread_global((char *)"parkSpinCount") = parkSpinCount;
+			**(UDATA **)omrthread_global("parkSpinCount") = parkSpinCount;
 			continue;
 		}
 
@@ -1361,7 +1361,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 			if (scan_udata(&scan_start, &parkSleepCount)) {
 				goto _error;
 			}
-			**(UDATA **)omrthread_global((char *)"parkSleepCount") = parkSleepCount;
+			**(UDATA **)omrthread_global("parkSleepCount") = parkSleepCount;
 			continue;
 		}
 
@@ -1379,7 +1379,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 			if (scan_udata(&scan_start, &threshold)) {
 				goto _error;
 			}
-			**(UDATA **)omrthread_global((char *)"parkSleepCpuUtilThreshold") = threshold;
+			**(UDATA **)omrthread_global("parkSleepCpuUtilThreshold") = threshold;
 			continue;
 		}
 #endif /* defined(OMR_THR_YIELD_ALG) */
@@ -1402,9 +1402,9 @@ static void
 initMinCPUSpinCounts(J9JavaVM *vm)
 {
 #if defined(OMR_THR_THREE_TIER_LOCKING)
-	**(UDATA **)omrthread_global((char*)"defaultMonitorSpinCount1") = 1;
-	**(UDATA **)omrthread_global((char*)"defaultMonitorSpinCount2") = 1;
-	**(UDATA **)omrthread_global((char*)"defaultMonitorSpinCount3") = 1;
+	**(UDATA **)omrthread_global("defaultMonitorSpinCount1") = 1;
+	**(UDATA **)omrthread_global("defaultMonitorSpinCount2") = 1;
+	**(UDATA **)omrthread_global("defaultMonitorSpinCount3") = 1;
 #endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 
 	/* In ObjectMonitor.cpp:objectMonitorEnterNonBlocking, we converted
@@ -1495,22 +1495,22 @@ dumpThreadingInfo(J9JavaVM* jvm)
 		(jvm->thrDeflationPolicy == J9VM_DEFLATION_POLICY_NEVER) ? "never" : "smart");
 #if defined(OMR_THR_THREE_TIER_LOCKING)
 	j9tty_printf(PORTLIB, ",\n");
-	j9tty_printf(PORTLIB, LEADING_SPACE "threeTierSpinCount1=%zu,\n", **(UDATA**)omrthread_global((char*)"defaultMonitorSpinCount1"));
-	j9tty_printf(PORTLIB, LEADING_SPACE "threeTierSpinCount2=%zu,\n", **(UDATA**)omrthread_global((char*)"defaultMonitorSpinCount2"));
-	j9tty_printf(PORTLIB, LEADING_SPACE "threeTierSpinCount3=%zu,\n", **(UDATA**)omrthread_global((char*)"defaultMonitorSpinCount3"));
+	j9tty_printf(PORTLIB, LEADING_SPACE "threeTierSpinCount1=%zu,\n", **(UDATA **)omrthread_global("defaultMonitorSpinCount1"));
+	j9tty_printf(PORTLIB, LEADING_SPACE "threeTierSpinCount2=%zu,\n", **(UDATA **)omrthread_global("defaultMonitorSpinCount2"));
+	j9tty_printf(PORTLIB, LEADING_SPACE "threeTierSpinCount3=%zu,\n", **(UDATA **)omrthread_global("defaultMonitorSpinCount3"));
 	j9tty_printf(PORTLIB, LEADING_SPACE "%sastNotify", J9_ARE_ALL_BITS_SET(omrthread_lib_get_flags(), J9THREAD_LIB_FLAG_FAST_NOTIFY) ? "f" : "noF");
 #if defined(OMR_THR_SPIN_WAKE_CONTROL)
-	j9tty_printf(PORTLIB, ",\n" LEADING_SPACE "maxSpinThreads=%zu,\n", **(UDATA**)omrthread_global((char*)"maxSpinThreads"));
-	j9tty_printf(PORTLIB, LEADING_SPACE "maxWakeThreads=%zu", **(UDATA**)omrthread_global((char*)"maxWakeThreads"));
+	j9tty_printf(PORTLIB, ",\n" LEADING_SPACE "maxSpinThreads=%zu,\n", **(UDATA **)omrthread_global("maxSpinThreads"));
+	j9tty_printf(PORTLIB, LEADING_SPACE "maxWakeThreads=%zu", **(UDATA **)omrthread_global("maxWakeThreads"));
 #endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
 #endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 #ifdef OMR_THR_JLM_HOLD_TIMES
 	j9tty_printf(PORTLIB, ",\n");
-	j9tty_printf(PORTLIB, LEADING_SPACE "clockSkewHi=0x%zx", *omrthread_global((char*)"clockSkewHi") );
+	j9tty_printf(PORTLIB, LEADING_SPACE "clockSkewHi=0x%zx", *omrthread_global("clockSkewHi") );
 #endif
 #ifdef J9ZOS390
 	{
-		char* pThreadWeight = *((char**)omrthread_global((char*)"thread_weight"));
+		const char *pThreadWeight = *((const char **)omrthread_global("thread_weight"));
 		if (NULL != pThreadWeight) {
 			j9tty_printf(PORTLIB, ",\n");
 			j9tty_printf(PORTLIB, LEADING_SPACE "tw=%s", pThreadWeight);
@@ -1529,13 +1529,13 @@ dumpThreadingInfo(J9JavaVM* jvm)
 #endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
 
 #ifdef OMR_THR_ADAPTIVE_SPIN
-	if ((0 != *(UDATA*)omrthread_global((char*)"adaptSpinHoldtimeEnable")) || (0 != *(UDATA*)omrthread_global((char*)"adaptSpinSlowPercentEnable"))) {
+	if ((0 != *(UDATA *)omrthread_global("adaptSpinHoldtimeEnable")) || (0 != *(UDATA *)omrthread_global("adaptSpinSlowPercentEnable"))) {
 		j9tty_printf(PORTLIB, ",\n" LEADING_SPACE "adaptSpin");
-		j9tty_printf(PORTLIB, ",\n" LEADING_SPACE "adaptSpinHoldtime=%zu", **(UDATA**)omrthread_global((char*)"adaptSpinHoldtime"));
-		j9tty_printf(PORTLIB, ",\n" LEADING_SPACE "adaptSpinSlowPercent=%zu", **(UDATA**)omrthread_global((char*)"adaptSpinSlowPercent"));
-		j9tty_printf(PORTLIB, ",\n" LEADING_SPACE "adaptSpinSampleThreshold=%zu",**(UDATA**)omrthread_global((char*)"adaptSpinSampleThreshold"));
-		j9tty_printf(PORTLIB, ",\n" LEADING_SPACE "adaptSpinSampleStopCount=%zu",**(UDATA**)omrthread_global((char*)"adaptSpinSampleStopCount"));
-		j9tty_printf(PORTLIB, ",\n" LEADING_SPACE "adaptSpinSampleCountStopRatio=%zu",**(UDATA**)omrthread_global((char*)"adaptSpinSampleCountStopRatio"));
+		j9tty_printf(PORTLIB, ",\n" LEADING_SPACE "adaptSpinHoldtime=%zu", **(UDATA **)omrthread_global("adaptSpinHoldtime"));
+		j9tty_printf(PORTLIB, ",\n" LEADING_SPACE "adaptSpinSlowPercent=%zu", **(UDATA **)omrthread_global("adaptSpinSlowPercent"));
+		j9tty_printf(PORTLIB, ",\n" LEADING_SPACE "adaptSpinSampleThreshold=%zu",**(UDATA **)omrthread_global("adaptSpinSampleThreshold"));
+		j9tty_printf(PORTLIB, ",\n" LEADING_SPACE "adaptSpinSampleStopCount=%zu",**(UDATA **)omrthread_global("adaptSpinSampleStopCount"));
+		j9tty_printf(PORTLIB, ",\n" LEADING_SPACE "adaptSpinSampleCountStopRatio=%zu",**(UDATA **)omrthread_global("adaptSpinSampleCountStopRatio"));
 		j9tty_printf(PORTLIB, ",\n" LEADING_SPACE "adaptSpin%sKeepSampling",
 			J9_ARE_ALL_BITS_SET(omrthread_lib_get_flags(), J9THREAD_LIB_FLAG_ADAPTIVE_SPIN_KEEP_SAMPLING) ? "" : "No");
 	} else {
