@@ -5577,6 +5577,8 @@ TR_ResolvedJ9Method::startAddressForJittedMethod()
 
 bool TR_ResolvedJ9Method::isWarmCallGraphTooBig(uint32_t bcIndex, TR::Compilation *comp)
    {
+   if (comp->getOption(TR_DisableWarmCallGraphTooBigHeuristic))
+      return false;
    /*void * startPC = startAddressForJittedMethod();
 
    return findIndexInInlineRange((void *) fej9()->getJITMetaData(startPC), bcIndex, comp);*/
@@ -5601,7 +5603,7 @@ bool TR_ResolvedJ9Method::isWarmCallGraphTooBig(uint32_t bcIndex, TR::Compilatio
 
 void TR_ResolvedJ9Method::setWarmCallGraphTooBig(uint32_t bcIndex, TR::Compilation *comp)
    {
-   if (fej9()->getIProfiler())
+   if (!comp->getOption(TR_DisableWarmCallGraphTooBigHeuristic) && fej9()->getIProfiler())
       fej9()->getIProfiler()->setWarmCallGraphTooBig((TR_OpaqueMethodBlock *)ramMethod(), bcIndex, comp, true);
    }
 
