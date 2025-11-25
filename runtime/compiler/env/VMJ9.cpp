@@ -8640,7 +8640,6 @@ TR_J9VM::getClassClassPointer(TR_OpaqueClassBlock *objectClassPointer)
    {
    TR::VMAccessCriticalSection getClassClassPointer(this);
    J9Class *j9class;
-   j9class = TR::Compiler->cls.convertClassOffsetToClassPtr(objectClassPointer);
 
    void *javaLangClass = J9VM_J9CLASS_TO_HEAPCLASS(TR::Compiler->cls.convertClassOffsetToClassPtr(objectClassPointer));
 
