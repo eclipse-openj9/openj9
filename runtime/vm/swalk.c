@@ -1025,12 +1025,13 @@ walkBytecodeFrame(J9StackWalkState * walkState)
 		J9JavaVM *vm = walkState->javaVM;
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 		UDATA argTempCount = 0;
-		J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method);
+		//J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method);
 		J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
 
 		//initializeBasicROMMethodInfo(walkState, romMethod);
-		UDATA pcOffset = walkState->pc - J9_BYTECODE_START_FROM_RAM_METHOD(walkState->method);
-		getROMMethodInfoForBytecodePC(walkState, romMethod, pcOffset);
+		//UDATA pcOffset = walkState->pc - J9_BYTECODE_START_FROM_RAM_METHOD(walkState->method);
+		//getROMMethodInfoForBytecodePC(walkState, romMethod, pcOffset);
+		getROMMethodInfoForBytecodeFrame(walkState);
 		walkState->constantPool = UNTAGGED_METHOD_CP(walkState->method);
 
 #if defined(J9VM_OPT_METHOD_HANDLE)
