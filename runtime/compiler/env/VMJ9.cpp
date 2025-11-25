@@ -4805,10 +4805,10 @@ TR::KnownObjectTable::Index TR_J9VMBase::mutableCallSiteEpoch(
    if (mh != 0)
       {
       result = knot->getOrCreateIndex(mh);
-      }
 
-   J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
-   cpg->addEdge(cpg->knownObject(mcs), cpg->knownObject(result));
+      J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
+      cpg->addEdge(cpg->knownObject(mcs), cpg->knownObject(result));
+      }
 
    return result;
    }
