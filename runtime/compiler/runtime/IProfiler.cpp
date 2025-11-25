@@ -3374,6 +3374,8 @@ TR_IProfiler::getCGProfilingData(TR_OpaqueMethodBlock *method, uint32_t byteCode
 void
 TR_IProfiler::setWarmCallGraphTooBig(TR_OpaqueMethodBlock *method, int32_t bcIndex, TR::Compilation *comp, bool set)
    {
+   if (comp->getOption(TR_DisableWarmCallGraphTooBigHeuristic))
+      return;
    TR_IPBytecodeHashTableEntry *entry = profilingSample(method, bcIndex, comp);
    if (entry)
       {
@@ -3398,6 +3400,8 @@ TR_IProfiler::setWarmCallGraphTooBig(TR_OpaqueMethodBlock *method, int32_t bcInd
 bool
 TR_IProfiler::isWarmCallGraphTooBig(TR_OpaqueMethodBlock *method, int32_t bcIndex, TR::Compilation *comp)
    {
+   if (comp->getOption(TR_DisableWarmCallGraphTooBigHeuristic))
+      return false;
    TR_IPBytecodeHashTableEntry *entry = profilingSample(method, bcIndex, comp);
 
    if (entry)
