@@ -5447,7 +5447,7 @@ typedef struct J9ThreadEnv {
 	intptr_t 		(* set_priority)(omrthread_t thread, uintptr_t priority);
 
 	omrthread_t 	(* self)(void);
-	uintptr_t 		*(* global)(char *name);
+	uintptr_t 		*(* global)(const char *name);
 	intptr_t 		(* attach)(omrthread_t *handle);
 	intptr_t 		(* sleep)(int64_t millis);
 	intptr_t 		(* create)(omrthread_t *handle, uintptr_t stacksize, uintptr_t priority, uintptr_t suspend, omrthread_entrypoint_t entrypoint, void *entryarg);
