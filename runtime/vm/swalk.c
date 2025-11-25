@@ -720,7 +720,9 @@ walkMethodFrame(J9StackWalkState * walkState)
 	MARK_SLOT_AS_OBJECT(walkState, (j9object_t*) &(methodFrame->specialFrameFlags));
 	walkState->method = methodFrame->method;
 	if (NULL != walkState->method) {
-		initializeBasicROMMethodInfo(walkState, J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method));
+		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method);
+		getROMMethodInfoForROMMethod(walkState, romMethod);
+		//initializeBasicROMMethodInfo(walkState, J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method));
 	}
 	walkState->unwindSP = (UDATA *) methodFrame;
 
@@ -1234,7 +1236,9 @@ static void walkJITJNICalloutFrame(J9StackWalkState * walkState)
 	MARK_SLOT_AS_OBJECT(walkState, (j9object_t*) &(methodFrame->specialFrameFlags));
 	walkState->method = methodFrame->method;
 	if (NULL != walkState->method) {
-		initializeBasicROMMethodInfo(walkState, J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method));
+		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method);
+		getROMMethodInfoForROMMethod(walkState, romMethod);
+		//initializeBasicROMMethodInfo(walkState, J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method));
 	}
 	walkState->constantPool = UNTAGGED_METHOD_CP(walkState->method);
 #ifdef J9VM_INTERP_STACKWALK_TRACING
