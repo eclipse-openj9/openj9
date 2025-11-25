@@ -223,6 +223,14 @@ getROMMethodInfoForROMMethod(J9StackWalkState *walkState, J9ROMMethod *romMethod
 void
 getROMMethodInfoForBytecodePC(J9StackWalkState *walkState, J9ROMMethod *romMethod, UDATA pc);
 
+/**
+ * @brief
+ * @param walkState
+ * @param osrFrame
+ */
+void
+getROMMethodInfoForOSRFrame(J9StackWalkState *walkState, J9OSRFrame *osrFrame);
+
 #ifdef __cplusplus
 }
 #endif

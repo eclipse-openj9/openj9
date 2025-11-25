@@ -112,14 +112,17 @@ updateROMMethodInfoCache(J9JavaVM *vm, J9ClassLoader *classLoader, J9ROMMethodIn
 	}
 
 	if (NULL != cache) {
-		hashTableAdd(cache, info);
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		J9ROMMethodInfo *copy = (J9ROMMethodInfo *) j9mem_allocate_memory(sizeof(J9ROMMethodInfo), J9MEM_CATEGORY_VM);
+		*copy = *info;
+		hashTableAdd(cache, copy);
 	}
 
 	omrthread_monitor_exit(mapCacheMutex);
 }
 
 static void
-populateROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod, void *key, UDATA pc, bool computeStackAndLocals)
+populateROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod, void *key, UDATA pc, bool computeStackAndLocals, UDATA pendingCount, UDATA numberOfLocals)
 {
 	J9Method *method = walkState->method;
 	J9ClassLoader *classLoader = J9_CLASS_FROM_METHOD(method)->classLoader;
@@ -131,7 +134,6 @@ populateROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod, void 
 
 	/* Always compute argument bits */
 	j9localmap_ArgBitsForPC0(romClass, romMethod, newInfo.argbits);
-
 	if (computeStackAndLocals) {
 		/* Compute stack map for this PC */
 		j9stackmap_StackBitsForPC(
@@ -146,6 +148,7 @@ populateROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod, void 
 				NULL);
 
 		/* Compute local variable map for this PC */
+
 		vm->localMapFunction(
 				vm->portLibrary,
 				romClass,
@@ -163,10 +166,39 @@ populateROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod, void 
 	newInfo.tempCount = J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod);
 
 	/* Insert into cache */
-	updateROMMethodInfoCache(vm, classLoader, &newInfo);
+	//updateROMMethodInfoCache(vm, classLoader, &newInfo);
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	J9ROMMethodInfo *stored = (J9ROMMethodInfo *) j9mem_allocate_memory(sizeof(J9ROMMethodInfo), J9MEM_CATEGORY_VM);
+	if (NULL == stored) {
+		walkState->romMethodInfo = newInfo;
+	} else {
+		 *stored = newInfo;
+		 updateROMMethodInfoCache(vm, classLoader, stored);
+		 walkState->romMethodInfo = *stored;
+	}
+}
 
-	/* Reflect into current walkState */
-	walkState->romMethodInfo = newInfo;
+static UDATA
+computePendingCountForBytecode(J9ROMMethod *romMethod)
+{
+	UDATA pendingCount = 0;
+
+	UDATA argCount  = romMethod->argCount;
+	UDATA tempCount = romMethod->tempCount;
+
+	pendingCount = argCount + tempCount;
+
+	UDATA modifiers = romMethod->modifiers;
+
+	if (modifiers & J9AccSynchronized) {
+		/* Add monitor slot for synchronized methods */
+		pendingCount += 1;
+	} else if ((modifiers & (J9AccMethodObjectConstructor | J9AccEmptyMethod)) == J9AccMethodObjectConstructor) {
+		/* Add extra receiver temp for non-empty Object.<init> */
+		pendingCount += 1;
+	}
+
+	return pendingCount;
 }
 
 void
@@ -174,7 +206,9 @@ getROMMethodInfoForROMMethod(J9StackWalkState *walkState, J9ROMMethod *romMethod
 {
 	J9Method *method = walkState->method;
 	J9ClassLoader *classLoader = J9_CLASS_FROM_METHOD(method)->classLoader;
-
+        if (NULL == walkState->method || walkState->pc == NULL) {
+		return; // avoid dereference
+	}
 	void *key = (void *)romMethod;
 	J9ROMMethodInfo tmp = {0};
 
@@ -182,7 +216,8 @@ getROMMethodInfoForROMMethod(J9StackWalkState *walkState, J9ROMMethod *romMethod
 	if (!checkROMMethodInfoCache(classLoader, key, &tmp)) {
 		/* Cache miss or not populated */
 		initializeBasicROMMethodInfo(walkState, romMethod);
-		populateROMMethodInfo(walkState, romMethod, key, 0, false);
+		populateROMMethodInfo(walkState, romMethod, key, 0, false, 0, 0);
+		//populateROMMethodInfo(walkState, romMethod, key, 0, false);
 	} else {
 		/* Cache hit */
 		walkState->romMethodInfo = tmp;
@@ -194,11 +229,15 @@ void
 getROMMethodInfoForBytecodePC(J9StackWalkState *walkState, J9ROMMethod *romMethod, UDATA pc)
 {
 	if (pc <= J9SF_MAX_SPECIAL_FRAME_TYPE || pc >= (UDATA)J9_BYTECODE_SIZE_FROM_ROM_METHOD(romMethod)) {
+		initializeBasicROMMethodInfo(walkState, romMethod);
 		return;
 	}
 
 	J9Method *method = walkState->method;
 	J9ClassLoader *classLoader = J9_CLASS_FROM_METHOD(method)->classLoader;
+	if (NULL == walkState->method || walkState->pc == NULL) {
+                return; // avoid dereference
+        }
 
 	void *key = (void *)( (uintptr_t)J9_BYTECODE_START_FROM_ROM_METHOD(romMethod) + (uintptr_t)pc );
 	J9ROMMethodInfo tmp = {0};
@@ -207,12 +246,37 @@ getROMMethodInfoForBytecodePC(J9StackWalkState *walkState, J9ROMMethod *romMetho
 	if (!checkROMMethodInfoCache(classLoader, key, &tmp)) {
 		/* Cache miss or not populated */
 		initializeBasicROMMethodInfo(walkState, romMethod);
-		populateROMMethodInfo(walkState, romMethod, key, pc, true);
+		UDATA pendingCount = computePendingCountForBytecode(romMethod);
+		UDATA numberOfLocals = romMethod->tempCount + romMethod->argCount;
+		populateROMMethodInfo(walkState, romMethod, key, pc, true, pendingCount, numberOfLocals);
+		//populateROMMethodInfo(walkState, romMethod, key, pc, true);
 	} else {
 		/* Cache hit */
 		walkState->romMethodInfo = tmp;
 	}
 }
 
+void
+getROMMethodInfoForOSRFrame(J9StackWalkState *walkState, J9OSRFrame *osrFrame)
+{
+	J9Method *method = osrFrame->method;
+	J9ClassLoader *classLoader = J9_CLASS_FROM_METHOD(method)->classLoader;
+	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+
+	/* Use the ROMMethod pointer plus bytecode offset as key */
+	void *key = (void *)((uintptr_t)J9_BYTECODE_START_FROM_ROM_METHOD(romMethod) + (uintptr_t)osrFrame->bytecodePCOffset);
+	J9ROMMethodInfo tmp = {0};
+
+	/* Check the cache first */
+	if (!checkROMMethodInfoCache(classLoader, key, &tmp)) {
+		/* Cache miss or not populated */
+		initializeBasicROMMethodInfo(walkState, romMethod);
+		populateROMMethodInfo(walkState, romMethod, key, osrFrame->bytecodePCOffset, true, osrFrame->pendingStackHeight, osrFrame->numberOfLocals);
+		//populateROMMethodInfo(walkState, romMethod, key, osrFrame->bytecodePCOffset,true);
+	} else {
+		/* Cache hit */
+		walkState->romMethodInfo = tmp;
+	}
+}
 
 } /* extern "C" */
