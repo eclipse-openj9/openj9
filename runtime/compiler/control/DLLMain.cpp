@@ -300,6 +300,10 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
 
          isQuickstart = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_TUNE_QUICKSTART);
 
+         // Determine if the JIT should ignore -Xtrace options
+         if (J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXjitIgnoreXtrace) >= 0)
+            TR::Options::setIgnoreXtrace();
+
 #ifdef TR_HOST_X86
          // By default, disallow reservation of objects' monitors for which a
          // previous reservation has been cancelled (issue #1124). But allow it

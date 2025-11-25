@@ -317,6 +317,8 @@ bool J9::Options::_aggressiveLockReservation = false;
 
 bool J9::Options::_xrsSync = false;
 
+bool J9::Options::_ignoreXtrace = false;
+
 int32_t J9::Options::_jvmStarvationThreshold = 40; // 40% CPU utilization. Use 10 (or lower) to disable the feature
 
 void
@@ -432,8 +434,9 @@ J9::ExternalOptionsMetadata J9::Options::_externalOptionsMetadata[J9::ExternalOp
    { "-XX:+TrackAOTDependencies",                   EXACT_MATCH,         -1, true  }, // = 77
    { "-XX:-TrackAOTDependencies",                   EXACT_MATCH,         -1, true  }, // = 78
    { "-XX:+JITServerUseProfileCache",               EXACT_MATCH,         -1, true  }, // = 79
-   { "-XX:-JITServerUseProfileCache",               EXACT_MATCH,         -1, true  }  // = 80
-   // TR_NumExternalOptions                                                              = 81
+   { "-XX:-JITServerUseProfileCache",               EXACT_MATCH,         -1, true  }, // = 80
+   { "-XX:JITIgnoreXtrace",                         EXACT_MATCH,         -1, true  }, // = 81
+   // TR_NumExternalOptions                                                              = 82
    };
 
 //************************************************************************

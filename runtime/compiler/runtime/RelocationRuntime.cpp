@@ -1052,6 +1052,9 @@ TR_RelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
       featureFlags |= TR_FeatureFlag_CHTableEnabled;
       }
 
+   if (TR::Options::ignoreXtrace())
+      featureFlags |= TR_FeatureFlag_IgnoreXtrace;
+
    return featureFlags;
    }
 
@@ -1294,6 +1297,8 @@ TR_SharedCacheRelocationRuntime::checkAOTHeaderFlags(const TR_AOTHeader *hdrInCa
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_ARRAY_HEADER_SHAPE_MISMATCH, "AOT header validation failed: Array header shape mismatch.");
    if ((featureFlags & TR_FeatureFlag_CHTableEnabled) != (hdrInCache->featureFlags & TR_FeatureFlag_CHTableEnabled))
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_CH_TABLE_MISMATCH, "AOT header validation failed: CH Table mismatch.");
+   if ((featureFlags & TR_FeatureFlag_IgnoreXtrace) != (hdrInCache->featureFlags & TR_FeatureFlag_IgnoreXtrace))
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_IGNORE_XTRACE_MISMATCH, "AOT header validation failed: Ignore Xtrace mismatch");
    if ((featureFlags & TR_FeatureFlag_SanityCheckEnd) != (hdrInCache->featureFlags & TR_FeatureFlag_SanityCheckEnd))
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_HEADER_END_SANITY_BIT_MANGLED, "AOT header validation failed: Trailing sanity bit mismatch.");
 

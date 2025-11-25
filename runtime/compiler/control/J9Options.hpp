@@ -135,7 +135,8 @@ enum ExternalOptions
    XXminusTrackAOTDependencies                   = 78,
    XXplusJITServerUseProfileCache                = 79,
    XXminusJITServerUseProfileCache               = 80,
-   TR_NumExternalOptions                         = 81
+   XXjitIgnoreXtrace                             = 81,
+   TR_NumExternalOptions                         = 82
    };
 
 /**
@@ -496,6 +497,8 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 
    static bool _xrsSync;
 
+   static bool _ignoreXtrace;
+
    static int32_t _jvmStarvationThreshold;
 
    static ExternalOptionsMetadata _externalOptionsMetadata[ExternalOptions::TR_NumExternalOptions];
@@ -538,7 +541,23 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 
    static void  printPID();
 
+   /**
+    * @brief Returns whether the JIT will generate code that ignores what is
+    *        specified in the -Xtrace option
+    *
+    * @return _ignoreXtrace
+    */
+   static bool ignoreXtrace() { return _ignoreXtrace; }
+
+   /**
+    * @brief Sets the flag that indicates whether the JIT will generate code
+    *        that ignores what is specified in the -Xtrace option
+    */
+   static void setIgnoreXtrace() { _ignoreXtrace = true; }
+
    OMR::Logger *createLoggerForLogFile(TR::FILE *file);
+
+
 
 
    static const char *kcaOffsets(const char *option, void *, TR::OptionTable *entry);

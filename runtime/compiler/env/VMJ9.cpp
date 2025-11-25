@@ -3143,7 +3143,7 @@ TR_J9VMBase::lowerAsyncCheck(TR::Compilation * comp, TR::Node * root, TR::TreeTo
 bool
 TR_J9VMBase::isMethodTracingEnabled(TR_OpaqueMethodBlock *method)
    {
-   return VM_VMHelpers::methodBeingTraced(_jitConfig->javaVM, (J9Method *)method);
+   return !TR::Options::ignoreXtrace() && VM_VMHelpers::methodBeingTraced(_jitConfig->javaVM, (J9Method *)method);
    }
 
 bool
