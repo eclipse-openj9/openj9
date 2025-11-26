@@ -903,7 +903,7 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 		return objectName;
 	}
 
-/*[IF JAVA_SPEC_VERSION >= 26]*/
+/*[IF (JAVA_SPEC_VERSION >= 26) & !INLINE-TYPES]*/
 	private native long getTotalGcCpuTimeImpl();
 
 	/**
@@ -913,7 +913,7 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 	public long getTotalGcCpuTime() {
 		return getTotalGcCpuTimeImpl();
 	}
-/*[ENDIF] JAVA_SPEC_VERSION >= 26 */
+/*[ENDIF] (JAVA_SPEC_VERSION >= 26) & !INLINE-TYPES */
 
 	/**
 	 * Ensure the notification thread (where appropriate) is running.
