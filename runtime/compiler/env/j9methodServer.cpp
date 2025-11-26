@@ -1182,8 +1182,17 @@ TR_ResolvedJ9JITServerMethod::getResolvedHandleMethod(TR::Compilation *comp, I_3
          }
       else
          {
+         const char * className = "java/lang/invoke/MethodHandle";
+         const char * methodName = "linkToStatic";
+         const char * methodSignature = "([Ljava/lang/Object;)Ljava/lang/Object;";
+
          // Call getMethodFromName to create an SVM record
-         auto dummyInvoke = _fe->getMethodFromName("java/lang/invoke/MethodHandle", "linkToStatic", "([Ljava/lang/Object;)Ljava/lang/Object;");
+         auto dummyInvoke = _fe->getMethodFromName(className, methodName, methodSignature);
+
+         // It is possible for getMethodFromName to return NULL in relocatable compilations
+         if (!dummyInvoke)
+            comp->failCompilation<J9::AOTHasInvokeHandle>("getResolvedHandleMethod: Failed to get method %s.%s%s from name", className, methodName, methodSignature);
+
          TR_ASSERT_FATAL(ramMethod == dummyInvoke, "%p != %p; Unresolved targetMethod not dummyInvoke\n", ramMethod, dummyInvoke);
          }
       }
@@ -1278,8 +1287,17 @@ TR_ResolvedJ9JITServerMethod::getResolvedDynamicMethod(TR::Compilation *comp, I_
          }
       else
          {
+         const char * className = "java/lang/invoke/MethodHandle";
+         const char * methodName = "linkToStatic";
+         const char * methodSignature = "([Ljava/lang/Object;)Ljava/lang/Object;";
+
          // Call getMethodFromName to create an SVM record
-         auto dummyInvoke = _fe->getMethodFromName("java/lang/invoke/MethodHandle", "linkToStatic", "([Ljava/lang/Object;)Ljava/lang/Object;");
+         auto dummyInvoke = _fe->getMethodFromName(className, methodName, methodSignature);
+
+         // It is possible for getMethodFromName to return NULL in relocatable compilations
+         if (!dummyInvoke)
+            comp->failCompilation<J9::AOTHasInvokeHandle>("getResolvedDynamicMethod: Failed to get method %s.%s%s from name", className, methodName, methodSignature);
+
          TR_ASSERT_FATAL(ramMethod == dummyInvoke, "%p != %p; Unresolved targetMethod not dummyInvoke\n", ramMethod, dummyInvoke);
          }
       }

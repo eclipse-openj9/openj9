@@ -206,11 +206,10 @@ static bool
 handleResponse(JITServer::MessageType response, JITServer::ClientStream *client, TR::CompilationInfoPerThread *compInfoPT, TR::Compilation *comp, TR_J9VM *fe, J9VMThread *vmThread)
    {
    using JITServer::MessageType;
+
    TR::CompilationInfo *compInfo = compInfoPT->getCompilationInfo();
-   TR_Memory *trMemory = compInfoPT->getCompilation()->trMemory();
-
+   TR_Memory *trMemory = comp->trMemory();
    TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
-
 
    bool done = false;
 
@@ -3108,6 +3107,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       }
    catch(std::exception &e)
       {
+      interruptReason = COMP_EXCEPTION_THROWN;
+      compInfoPT->setCompilationShouldBeInterrupted(interruptReason);
+
       client->writeError(MessageType::compilationInterrupted, 0 /* placeholder */);
 
       if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
