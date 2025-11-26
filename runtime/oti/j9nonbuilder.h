@@ -5499,7 +5499,7 @@ typedef struct J9InternalVMFunctions {
 #if defined(J9VM_OPT_SNAPSHOTS)
 	void (*initializeSnapshotClassLoaderObject)(struct J9JavaVM *javaVM, struct J9ClassLoader *classLoader, j9object_t classLoaderObject);
 	struct J9Class * (*initializeSnapshotClassObject)(struct J9JavaVM *javaVM, struct J9ClassLoader *classLoader, struct J9Class *clazz);
-	BOOLEAN (*loadWarmClassFromSnapshot)(struct J9VMThread *vmThread, struct J9ClassLoader *classLoader, struct J9Class *clazz);
+	BOOLEAN (*loadWarmClassFromSnapshot)(struct J9VMThread *vmThread, struct J9Class *clazz);
 	void (*initializeBaseClasses)(struct J9JavaVM *javaVM);
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 #if JAVA_SPEC_VERSION >= 24
