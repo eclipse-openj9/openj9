@@ -64,10 +64,10 @@ static UDATA terminateRemainingThreads (J9VMThread* vmThread);
 static jint attachCurrentThread (JavaVM * vm, void ** p_env, void * thr_args, UDATA threadType);
 jint JNICALL JNI_GetDefaultJavaVMInitArgs (void * vm_args);
 static jint verifyCurrentThreadAttached (J9JavaVM * vm, J9VMThread ** pvmThread);
-#if (defined(J9VM_OPT_SIDECAR)) 
+#if defined(J9VM_OPT_SIDECAR)
 void sidecarShutdown (J9VMThread* shutdownThread);
 void sidecarExit(J9VMThread* shutdownThread);
-#endif /* J9VM_OPT_SIDECAR */
+#endif /* defined(J9VM_OPT_SIDECAR) */
 
 static UDATA protectedDestroyJavaVM(J9PortLibrary* portLibrary, void * userData);
 static UDATA protectedDetachCurrentThread(J9PortLibrary* portLibrary, void * userData);
@@ -210,9 +210,9 @@ jint JNICALL J9_CreateJavaVM(JavaVM ** p_vm, void ** p_env, J9CreateJavaVMParams
 		goto error;
 	}
 
-    enterVMFromJNI(env);
+	enterVMFromJNI(env);
 	jniResetStackReferences((JNIEnv *) env);
-    releaseVMAccess(env);
+	releaseVMAccess(env);
 
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 	if (NULL != vm->javaOffloadSwitchOffWithReasonFunc) {
@@ -381,10 +381,10 @@ protectedDestroyJavaVM(J9PortLibrary* portLibrary, void * userData)
 
 	Trc_JNIinv_protectedDestroyJavaVM_vmShutdownHookFired();
 
-#ifdef J9VM_OPT_SIDECAR
+#if defined(J9VM_OPT_SIDECAR)
 	if (vm->sidecarExitHook)
 		(*(vm->sidecarExitHook))(vm);
-#endif
+#endif /* defined(J9VM_OPT_SIDECAR) */
 
 	/* 
 	 * shutdown the finalizer BEFORE we shutdown daemon threads, as 
@@ -509,7 +509,7 @@ jint JNICALL DestroyJavaVM(JavaVM * javaVM)
 	 */
 	result = DetachCurrentThread(javaVM);
 	if ((JNI_OK == result) || (JNI_EDETACHED == result)) {
-	 	J9JavaVMAttachArgs thr_args;
+		J9JavaVMAttachArgs thr_args;
 		thr_args.version = JNI_VERSION_1_2;
 		thr_args.name = "DestroyJavaVM helper thread";
 		thr_args.group = vm->systemThreadGroupRef;
@@ -784,7 +784,7 @@ static J9ThreadEnv threadEnv = {
 		omrthread_get_priority,
 		omrthread_set_priority,
 		omrthread_self,
-		omrthread_global,
+		(uintptr_t * (*)(const char *))omrthread_global, /* the cast here is temporary */
 		omrthread_attach,
 		omrthread_sleep,
 		omrthread_create,
@@ -873,7 +873,7 @@ jint JNICALL GetEnv(JavaVM *jvm, void **penv, jint version)
 		*penv = (void*)&vm->jvmExtensionInterface;
 		return JNI_OK;
 	}
-#endif /* J9VM_OPT_SIDECAR */
+#endif /* defined(J9VM_OPT_SIDECAR) */
 
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 	/* The IFA_ENABLED_JNI_VERSION flag can be set in the JNI version to determine
@@ -1118,7 +1118,7 @@ jint JNICALL AttachCurrentThreadAsDaemon(JavaVM * vm, void ** p_env, void * thr_
 }
 
 
-#if (defined(J9VM_OPT_SIDECAR)) 
+#if defined(J9VM_OPT_SIDECAR)
 /* run the shutdown method in java.lang.Shutdown */
 void sidecarShutdown(J9VMThread* shutdownThread) {
 	J9JavaVM * vm = shutdownThread->javaVM;
@@ -1136,7 +1136,7 @@ void sidecarShutdown(J9VMThread* shutdownThread) {
 		releaseVMAccess(shutdownThread);
 	}
 }
-#endif /* J9VM_OPT_SIDECAR */
+#endif /* defined(J9VM_OPT_SIDECAR) */
 
 
 
@@ -1178,12 +1178,12 @@ attachCurrentThread(JavaVM *vm, void **p_env, void *thr_args, UDATA threadType)
 }
 
 
-#if (defined(J9VM_OPT_SIDECAR)) 
+#if defined(J9VM_OPT_SIDECAR)
 jint JNICALL QueryGCStatus(JavaVM *vm, jint *nHeaps, GCStatus *status, jint statusSize)
 {
 	return ((J9JavaVM *)vm)->memoryManagerFunctions->queryGCStatus(vm, nHeaps, status, statusSize);
 }
-#endif /* J9VM_OPT_SIDECAR */
+#endif /* defined(J9VM_OPT_SIDECAR) */
 
 
 /* kill all remaining threads, except:
@@ -1290,7 +1290,7 @@ static jint verifyCurrentThreadAttached(J9JavaVM * vm, J9VMThread ** pvmThread)
 
 
 
-#if (defined(J9VM_OPT_SIDECAR)) 
+#if defined(J9VM_OPT_SIDECAR)
 jint JNICALL QueryJavaVM(JavaVM *vm,  jint nQueries, JavaVMQuery *queries)
 {
 	return JNI_ERR;
@@ -1378,5 +1378,4 @@ execute31BitExitHook(J9JavaVM * vm, jint rc)
 }
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 
-#endif /* J9VM_OPT_SIDECAR */
-
+#endif /* defined(J9VM_OPT_SIDECAR) */
