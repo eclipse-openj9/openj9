@@ -439,7 +439,10 @@ extern J9_CFUNC jint JNICALL
 Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getMaximumGCThreadsImpl(JNIEnv *env, jobject beanInstance);
 extern J9_CFUNC jint JNICALL
 Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getCurrentGCThreadsImpl(JNIEnv *env, jobject beanInstance);
-
+#if JAVA_SPEC_VERSION >= 26
+extern J9_CFUNC jlong JNICALL
+Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getTotalGcCpuTimeImpl(JNIEnv *env, jobject beanInstance);
+#endif /* JAVA_SPEC_VERSION >= 26 */
 
 /* J9SourceJclSidecarInit*/
 extern J9_CFUNC IDATA J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved);

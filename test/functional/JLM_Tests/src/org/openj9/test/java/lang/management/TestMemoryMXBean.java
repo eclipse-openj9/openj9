@@ -121,6 +121,9 @@ public class TestMemoryMXBean {
 		}
 		attribs.put("MaximumGCThreads", new AttributeData(Integer.TYPE.getName(), true, false, false));
 		attribs.put("CurrentGCThreads", new AttributeData(Integer.TYPE.getName(), true, false, false));
+		if (javaVersion >= 26) {
+			attribs.put("TotalGcCpuTime", new AttributeData(Long.TYPE.getName(), true, false, false));
+		}
 	}// end static initializer
 
 	private ExtendedMemoryMXBeanImpl mb;
@@ -384,9 +387,9 @@ public class TestMemoryMXBean {
 			// Just that an attempt to set Shared Class Cache parameter through
 			// operation invocation (rather than direct method call) works / does
 			// not throw an exception.
-			retVal = (Boolean)mbs.invoke(objName, "setSharedClassCacheSoftmxBytes", new Object[] { softMxBytes },
+			retVal = mbs.invoke(objName, "setSharedClassCacheSoftmxBytes", new Object[] { softMxBytes },
 					new String[] { long.class.getName() });
-			AssertJUnit.assertTrue(((Boolean)(retVal)).booleanValue() == true);
+			AssertJUnit.assertTrue(((Boolean)retVal).booleanValue());
 		} catch (MBeanException e) {
 			Assert.fail("Unexpected MBeanException occurred (setSharedClassCacheSoftmxBytes): "
 					+ e.getCause().getMessage());
@@ -412,9 +415,9 @@ public class TestMemoryMXBean {
 			// Just that an attempt to set Shared Class Cache parameter through
 			// operation invocation (rather than direct method call) works / does
 			// not throw an exception.
-			retVal = (Boolean)mbs.invoke(objName, "setSharedClassCacheMinAotBytes", new Object[] { minAotBytes },
+			retVal = mbs.invoke(objName, "setSharedClassCacheMinAotBytes", new Object[] { minAotBytes },
 					new String[] { long.class.getName() });
-			AssertJUnit.assertTrue(((Boolean)(retVal)).booleanValue() == true);
+			AssertJUnit.assertTrue(((Boolean)retVal).booleanValue());
 		} catch (MBeanException e) {
 			Assert.fail("Unexpected MBeanException occurred (setSharedClassCacheMinAotBytes): "
 					+ e.getCause().getMessage());
@@ -440,9 +443,9 @@ public class TestMemoryMXBean {
 			// Just that an attempt to set Shared Class Cache parameter through
 			// operation invocation (rather than direct method call) works / does
 			// not throw an exception.
-			retVal = (Boolean)mbs.invoke(objName, "setSharedClassCacheMaxAotBytes", new Object[] { maxAotBytes },
+			retVal = mbs.invoke(objName, "setSharedClassCacheMaxAotBytes", new Object[] { maxAotBytes },
 					new String[] { long.class.getName() });
-			AssertJUnit.assertTrue(((Boolean)(retVal)).booleanValue() == true);
+			AssertJUnit.assertTrue(((Boolean)retVal).booleanValue());
 		} catch (MBeanException e) {
 			Assert.fail("Unexpected MBeanException occurred (setSharedClassCacheMaxAotBytes): "
 					+ e.getCause().getMessage());
@@ -468,9 +471,9 @@ public class TestMemoryMXBean {
 			// Just that an attempt to set Shared Class Cache parameter through
 			// operation invocation (rather than direct method call) works / does
 			// not throw an exception.
-			retVal = (Boolean)mbs.invoke(objName, "setSharedClassCacheMinJitDataBytes", new Object[] { minJitBytes },
+			retVal = mbs.invoke(objName, "setSharedClassCacheMinJitDataBytes", new Object[] { minJitBytes },
 					new String[] { long.class.getName() });
-			AssertJUnit.assertTrue(((Boolean)(retVal)).booleanValue() == true);
+			AssertJUnit.assertTrue(((Boolean)retVal).booleanValue());
 		} catch (MBeanException e) {
 			Assert.fail("Unexpected MBeanException occurred (setSharedClassCacheMinJitDataBytes): "
 					+ e.getCause().getMessage());
@@ -496,9 +499,9 @@ public class TestMemoryMXBean {
 			// Just that an attempt to set Shared Class Cache parameter through
 			// operation invocation (rather than direct method call) works / does
 			// not throw an exception.
-			retVal = (Boolean)mbs.invoke(objName, "setSharedClassCacheMaxJitDataBytes", new Object[] { maxJitBytes },
+			retVal = mbs.invoke(objName, "setSharedClassCacheMaxJitDataBytes", new Object[] { maxJitBytes },
 					new String[] { long.class.getName() });
-			AssertJUnit.assertTrue(((Boolean)(retVal)).booleanValue() == true);
+			AssertJUnit.assertTrue(((Boolean)retVal).booleanValue());
 		} catch (MBeanException e) {
 			Assert.fail("Unexpected MBeanException occurred (setSharedClassCacheMaxJitDataBytes): "
 					+ e.getCause().getMessage());
@@ -527,7 +530,7 @@ public class TestMemoryMXBean {
 			Assert.fail("Unexpected ReflectionException occurred: " + e.getMessage());
 		}
 		AssertJUnit.assertNotNull(attributes);
-		AssertJUnit.assertTrue(attributes.size() == attribs.size());
+		AssertJUnit.assertEquals(attribs.size(), attributes.size());
 
 		// Check through the returned values
 		Iterator<?> it = attributes.iterator();
@@ -582,7 +585,7 @@ public class TestMemoryMXBean {
 		}
 		AssertJUnit.assertNotNull(attributes);
 		// No attributes will have been returned.
-		AssertJUnit.assertTrue(attributes.size() == 0);
+		AssertJUnit.assertEquals(0, attributes.size());
 	}
 
 	@Test
@@ -625,11 +628,11 @@ public class TestMemoryMXBean {
 		if (mb.isSetMaxHeapSizeSupported()) {
 			// Only one setter; there are a whole bunch of set*() APIs that IBM adds
 			// but unfortunately, they aren't attributes (have return values).
-			AssertJUnit.assertTrue(setAttrs.size() == 1);
-			AssertJUnit.assertTrue(((Attribute)(setAttrs.get(0))).getName().equals("MaxHeapSize"));
+			AssertJUnit.assertEquals(1, setAttrs.size());
+			AssertJUnit.assertEquals("MaxHeapSize", ((Attribute)(setAttrs.get(0))).getName());
 			AssertJUnit.assertEquals(newHeapSize, mb.getMaxHeapSize());
 		} else {
-			AssertJUnit.assertTrue(setAttrs.size() == 0);
+			AssertJUnit.assertEquals(0, setAttrs.size());
 		} // end else
 	}
 
@@ -649,8 +652,8 @@ public class TestMemoryMXBean {
 			Assert.fail("Unexpected ReflectionException occurred: " + e.getMessage());
 		}
 		AssertJUnit.assertNotNull(setAttrs);
-		AssertJUnit.assertTrue(setAttrs.size() == 1);
-		AssertJUnit.assertTrue(((Attribute)(setAttrs.get(0))).getName().equals("Verbose"));
+		AssertJUnit.assertEquals(1, setAttrs.size());
+		AssertJUnit.assertEquals("Verbose", ((Attribute)(setAttrs.get(0))).getName());
 
 		// A failure scenario - a non-existent attribute...
 		AttributeList badList = new AttributeList();
@@ -665,7 +668,7 @@ public class TestMemoryMXBean {
 			Assert.fail("Unexpected ReflectionException occurred: " + e.getMessage());
 		}
 		AssertJUnit.assertNotNull(setAttrs);
-		AssertJUnit.assertTrue(setAttrs.size() == 0);
+		AssertJUnit.assertEquals(0, setAttrs.size());
 
 		// Another failure scenario - a non-writable attribute...
 		badList = new AttributeList();
@@ -680,7 +683,7 @@ public class TestMemoryMXBean {
 			Assert.fail("Unexpected ReflectionException occurred: " + e.getMessage());
 		}
 		AssertJUnit.assertNotNull(setAttrs);
-		AssertJUnit.assertTrue(setAttrs.size() == 0);
+		AssertJUnit.assertEquals(0, setAttrs.size());
 
 		// Yet another failure scenario - a wrongly-typed attribute...
 		badList = new AttributeList();
@@ -695,7 +698,7 @@ public class TestMemoryMXBean {
 			Assert.fail("Unexpected ReflectionException occurred: " + e.getMessage());
 		}
 		AssertJUnit.assertNotNull(setAttrs);
-		AssertJUnit.assertTrue(setAttrs.size() == 0);
+		AssertJUnit.assertEquals(0, setAttrs.size());
 	}
 
 	@Test
@@ -716,36 +719,37 @@ public class TestMemoryMXBean {
 		// Now make sure that what we got back is what we expected.
 
 		// Class name
-		AssertJUnit.assertTrue(mbi.getClassName().equals(mb.getClass().getName()));
+		AssertJUnit.assertEquals(mb.getClass().getName(), mbi.getClassName());
 
 		// No public constructors
 		MBeanConstructorInfo[] constructors = mbi.getConstructors();
 		AssertJUnit.assertNotNull(constructors);
-		AssertJUnit.assertTrue(constructors.length == 0);
+		AssertJUnit.assertEquals(0, constructors.length);
 
 		// One public operation (JLM) + five from CILM.
 		MBeanOperationInfo[] operations = mbi.getOperations();
 		AssertJUnit.assertNotNull(operations);
-		AssertJUnit.assertTrue(operations.length == 6);
+		AssertJUnit.assertEquals(6, operations.length);
 
 		// One notification
 		MBeanNotificationInfo[] notifications = mbi.getNotifications();
 		AssertJUnit.assertNotNull(notifications);
-		AssertJUnit.assertTrue(notifications.length == 1);
+		AssertJUnit.assertEquals(1, notifications.length);
 
 		// Print description and the class name (not necessarily identical).
 		logger.debug("MBean description for " + mb.getClass().getName() + ": " + mbi.getDescription());
 
-		// Eight attributes - some writable.
+		// attributes - some writable
 		MBeanAttributeInfo[] attributes = mbi.getAttributes();
 		AssertJUnit.assertNotNull(attributes);
-		if (javaVersion >= 16) {
-			AssertJUnit.assertTrue(attributes.length == 24);
+		if (javaVersion >= 26) {
+			AssertJUnit.assertEquals(25, attributes.length);
+		} else if (javaVersion >= 16) {
+			AssertJUnit.assertEquals(24, attributes.length);
 		} else {
-			AssertJUnit.assertTrue(attributes.length == 26);
+			AssertJUnit.assertEquals(26, attributes.length);
 		}
-		for (int i = 0; i < attributes.length; i++) {
-			MBeanAttributeInfo info = attributes[i];
+		for (MBeanAttributeInfo info : attributes) {
 			AssertJUnit.assertNotNull(info);
 			AllManagementTests.validateAttributeInfo(info, TestMemoryMXBean.ignoredAttributes, attribs);
 		} // end for
@@ -926,7 +930,7 @@ public class TestMemoryMXBean {
 			AssertJUnit.assertNotNull(listener.getHandback());
 			AssertJUnit.assertSame(arr, listener.getHandback());
 			ArrayList arr2 = (ArrayList)listener.getHandback();
-			AssertJUnit.assertTrue(arr2.size() == 1);
+			AssertJUnit.assertEquals(1, arr2.size());
 			AssertJUnit.assertEquals("Hegemony or survival ?", arr2.get(0));
 		} catch (MalformedObjectNameException e) {
 			Assert.fail("Unexpected MalformedObjectNameException : " + e.getMessage());

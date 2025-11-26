@@ -523,6 +523,31 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getCurrentGCThreadsI
 	return result;
 }
 
+#if JAVA_SPEC_VERSION >= 26
+jlong JNICALL
+Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getTotalGcCpuTimeImpl(JNIEnv *env, jobject beanInstance)
+{
+	IDATA rc = 0;
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *javaVM = currentThread->javaVM;
+	J9ThreadsCpuUsage cpuUsage = {0};
+
+	/* Get the cpu usage for all threads while holding the vmThreadListMutex.
+	 * This ensures that a thread doesn't die on us while walking the threads in the thread library
+	 */
+	omrthread_monitor_enter(javaVM->vmThreadListMutex);
+	rc = omrthread_get_jvm_cpu_usage_info(&cpuUsage);
+	omrthread_monitor_exit(javaVM->vmThreadListMutex);
+
+	if (rc < 0) {
+		return -1;
+	}
+
+	/* Convert microseconds to nanoseconds. */
+	return (jlong)cpuUsage.gcCpuTime * 1000;
+}
+#endif /* JAVA_SPEC_VERSION >= 26 */
+
 /* Implementation of the main loop of a thread that processes and dispatches memory usage notifications to Java handlers. */
 void JNICALL
 Java_com_ibm_lang_management_internal_MemoryNotificationThread_processNotificationLoop(JNIEnv *env, jobject threadInstance)
