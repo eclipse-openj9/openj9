@@ -46,6 +46,7 @@
 #include "control/RecompilationInfo.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
+#include "env/TRMemory.hpp"
 #include "env/VMJ9.h"
 #include "env/VerboseLog.hpp"
 #include "env/jittypes.h"
@@ -3581,13 +3582,13 @@ J9::Options::createLoggerForLogFile(TR::FILE *file)
 
    if (self()->getOption(TR_ForceCStdIOForLoggers))
       {
-      logger = OMR::CStdIOStreamLogger::create(file->_stream);
+      logger = OMR::CStdIOStreamLogger::create(trPersistentMemory, file->_stream);
       }
    else
       {
       // An OMR::TRIOStreamLogger is the default logger
       //
-      logger = OMR::TRIOStreamLogger::create(file);
+      logger = OMR::TRIOStreamLogger::create(trPersistentMemory, file);
       }
 
    return logger;
