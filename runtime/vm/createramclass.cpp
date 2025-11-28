@@ -2406,8 +2406,8 @@ nativeOOM:
 			}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-		} else if (!(J9_IS_CLASSFILE_OR_ROMCLASS_VALUETYPE_VERSION(romClass) && J9ROMCLASS_IS_INTERFACE(romClass))) {
-			/* All classes before value type version are identity. */
+		} else if (!J9ROMCLASS_IS_VALUE(romClass) && !J9ROMCLASS_IS_INTERFACE(romClass)) {
+			/* All classes which are not value classes and are not interfaces are identity. */
 			classFlags |= J9ClassHasIdentity;
 		}
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
