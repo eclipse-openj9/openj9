@@ -32,8 +32,50 @@ extern "C" {
 JNIEXPORT jarray JNICALL
 JVM_CopyOfSpecialArray(JNIEnv *env, jarray orig, jint from, jint to)
 {
-	assert(!"JVM_CopyOfSpecialArray unimplemented");
-	return NULL;
+	j9object_t origObj;
+	J9Class *origClass;
+	J9Class *componentClass;
+	UDATA origLength;
+	jint len;
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+
+
+	if (orig == NULL) {
+		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+		vmFuncs->internalExitVMToJNI(currentThread);
+		return NULL;
+	}
+	origObj = J9_JNI_UNWRAP_REFERENCE(orig);
+	origClass = J9OBJECT_CLAZZ(currentThread, origObj);
+	componentClass = ((J9ArrayClass *)origClass)->leafComponentType;
+	origLength = J9INDEXABLEOBJECT_SIZE(currentThread, origObj);
+	if (from < 0 || to > (jint)origLength || from > to) {
+		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYINDEXOUTOFBOUNDSEXCEPTION, NULL);
+		vmFuncs->internalExitVMToJNI(currentThread);
+		return NULL;
+	}
+
+	len = to - from;
+	j9object_t newArrayObj = currentThread->javaVM->memoryManagerFunctions->J9AllocateIndexableObject(currentThread, origClass, len, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+	if (!newArrayObj) {
+		vmFuncs->setHeapOutOfMemoryError(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
+		return NULL;
+	}
+
+	for (jint i = 0; i < len; i++) {
+		j9object_t value = vmFuncs->loadFlattenableArrayElement(currentThread, origObj, from + i, false);
+		if (NULL == value) {
+			continue;
+		}
+		vmFuncs->storeFlattenableArrayElement(currentThread, newArrayObj, i, value);
+	}
+
+	jarray out = (jarray)vmFuncs->j9jni_createLocalRef(env, newArrayObj);
+	vmFuncs->internalExitVMToJNI(currentThread);
+	return out;
 }
 
 JNIEXPORT jboolean JNICALL
