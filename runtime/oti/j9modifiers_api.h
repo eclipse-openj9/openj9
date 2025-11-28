@@ -116,8 +116,9 @@
 /* Composite Flag checks */
 
 #define J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(romClass) _J9ROMCLASS_SUNMODIFIER_IS_ANY_SET((romClass), J9AccClassArray | J9AccClassInternalPrimitiveType)
-#define J9ROMMETHOD_IS_NON_EMPTY_OBJECT_CONSTRUCTOR(romMethod) \
-	((((romMethod)->modifiers) & (J9AccMethodObjectConstructor | J9AccEmptyMethod)) == J9AccMethodObjectConstructor)
+#define J9ROMMETHOD_MODIFIERS_IS_NON_EMPTY_OBJECT_CONSTRUCTOR(modifiers) \
+	(((modifiers) & (J9AccMethodObjectConstructor | J9AccEmptyMethod)) == J9AccMethodObjectConstructor)
+#define J9ROMMETHOD_IS_NON_EMPTY_OBJECT_CONSTRUCTOR(romMethod) J9ROMMETHOD_MODIFIERS_IS_NON_EMPTY_OBJECT_CONSTRUCTOR((romMethod)->modifiers)
 
 /* Class instances are allocated via the new bytecode */
 #define J9ROMCLASS_ALLOCATES_VIA_NEW(romClass) \
