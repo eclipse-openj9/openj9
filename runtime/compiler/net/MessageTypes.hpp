@@ -207,6 +207,7 @@ enum MessageType : uint16_t
    VM_getLayoutVarHandle,
    VM_mutableCallSiteEpoch,
    VM_numInterfacesImplemented,
+   VM_getObjectClassInfoFromKnotIndex,
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled,
@@ -275,9 +276,7 @@ enum MessageType : uint16_t
    Recompilation_getJittedBodyInfoFromPC,
 
    // for KnownObjectTable
-   KnownObjectTable_getOrCreateIndex,
    KnownObjectTable_getOrCreateIndexAt,
-   KnownObjectTable_getPointer,
    KnownObjectTable_getExistingIndexAt,
    // for KnownObjectTable outside J9::KnownObjectTable class
    KnownObjectTable_dereferenceKnownObjectField,

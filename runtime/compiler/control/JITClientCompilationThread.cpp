@@ -673,6 +673,14 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                        knot->getPointerLocation(ci.knownObjectIndex));
          }
          break;
+      case MessageType::VM_getObjectClassInfoFromKnotIndex:
+         {
+         auto recv = client->getRecvData<TR::KnownObjectTable::Index>();
+         TR::KnownObjectTable::Index knotIndex = std::get<0>(recv);
+         TR::KnownObjectTable::ObjectInfo objInfo = fe->getObjClassInfoFromKnotIndex(comp, knotIndex);
+         client->write(response, objInfo);
+         }
+         break;
       case MessageType::VM_stackWalkerMaySkipFrames:
          {
          client->getRecvData<JITServer::Void>();
@@ -2781,39 +2789,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                           std::string((char*) bodyInfo->getMethodInfo(), sizeof(TR_PersistentMethodInfo)));
          }
          break;
-      case MessageType::KnownObjectTable_getOrCreateIndex:
-         {
-         uintptr_t objectPointer = std::get<0>(client->getRecvData<uintptr_t>());
-         TR::KnownObjectTable::Index index = TR::KnownObjectTable::UNKNOWN;
-         uintptr_t *objectPointerReference = NULL;
-
-            {
-            TR::VMAccessCriticalSection knownObjectTableGetIndex(fe);
-            index = knot->getOrCreateIndex(objectPointer);
-            objectPointerReference = knot->getPointerLocation(index);
-            }
-
-         client->write(response, index, objectPointerReference);
-         }
-         break;
       case MessageType::KnownObjectTable_getOrCreateIndexAt:
          {
          uintptr_t *objectPointerReferenceServerQuery = std::get<0>(client->getRecvData<uintptr_t*>());
          TR::KnownObjectTable::Index index = knot->getOrCreateIndexAt(objectPointerReferenceServerQuery);
          client->write(response, index, knot->getPointerLocation(index));
-         }
-         break;
-      case MessageType::KnownObjectTable_getPointer:
-         {
-         TR::KnownObjectTable::Index knotIndex = std::get<0>(client->getRecvData<TR::KnownObjectTable::Index>());
-         uintptr_t objectPointer = 0;
-
-            {
-            TR::VMAccessCriticalSection knownObjectTableGetPointer(fe);
-            objectPointer = knot->getPointer(knotIndex);
-            }
-
-         client->write(response, objectPointer);
          }
          break;
       case MessageType::KnownObjectTable_getExistingIndexAt:

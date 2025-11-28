@@ -74,11 +74,24 @@ namespace J9
 
 class OMR_EXTENSIBLE KnownObjectTable : public OMR::KnownObjectTableConnector
    {
+public:
+   // Note: the _jniReference field is always populated for a valid known object index.
+   // The other fields will be populated on demand. If _clazz is populated (non NULL),
+   // we expect the other fields to be populated too.
+   struct ObjectInfo
+      {
+      uintptr_t *_jniReference;
+      TR_OpaqueClassBlock *_clazz;
+      TR_OpaqueClassBlock *_jlClass;
+      bool _isFixedJavaLangClass;
+      bool _isString;
+      ObjectInfo() : _jniReference(NULL), _clazz(NULL), _jlClass(NULL), _isFixedJavaLangClass(false), _isString(false) {}
+      };
    friend class ::TR_J9VMBase;
    friend class Compilation;
-   TR_Array<uintptr_t*> _references;
+private:
+   TR_Array<ObjectInfo> _objectInfos;
    TR_Array<int32_t> _stableArrayRanks;
-
 
 public:
    TR_ALLOC(TR_Memory::FrontEnd);
@@ -106,6 +119,11 @@ public:
    Index getExistingIndexAt(uintptr_t *objectReferenceLocation);
 
    uintptr_t getPointer(Index index);
+   struct ObjectInfo getObjectInfo(Index index) const { return _objectInfos[index]; }
+
+   void setObjectInfoFields(Index index, const ObjectInfo& objInfo);
+
+   void freeKnownObjectTable();
 
 #if defined(J9VM_OPT_JITSERVER)
    void updateKnownObjectTableAtServer(Index index, uintptr_t *objectReferenceLocationClient, bool isArrayWithConstantElements = false);
