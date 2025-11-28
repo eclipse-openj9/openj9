@@ -332,7 +332,7 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 
 #if defined(J9VM_OPT_SNAPSHOTS)
 	if ((NULL != result) && IS_RESTORE_RUN(vm)) {
-		if (!loadWarmClassFromSnapshot(currentThread, classLoader, result)) {
+		if (!loadWarmClassFromSnapshot(currentThread, result)) {
 			result = NULL;
 		}
 	}
@@ -927,7 +927,7 @@ waitForContendedLoadClass(J9VMThread* vmThread, J9ContendedLoadTableEntry *table
 	omrthread_monitor_exit(vm->classTableMutex);
 #if defined(J9VM_OPT_SNAPSHOTS)
 	if ((NULL != foundClass) && IS_RESTORE_RUN(vm)) {
-		if (!loadWarmClassFromSnapshot(vmThread, tableEntry->classLoader, foundClass)) {
+		if (!loadWarmClassFromSnapshot(vmThread, foundClass)) {
 			foundClass = NULL;
 		}
 	}
@@ -1029,7 +1029,7 @@ arbitratedLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength,
 
 #if defined(J9VM_OPT_SNAPSHOTS)
 BOOLEAN
-loadWarmClassFromSnapshotInternal(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Class *clazz)
+loadWarmClassFromSnapshotInternal(J9VMThread *vmThread, J9Class *clazz)
 {
 	BOOLEAN rc = FALSE;
 	BOOLEAN failed = FALSE;
@@ -1045,7 +1045,7 @@ loadWarmClassFromSnapshotInternal(J9VMThread *vmThread, J9ClassLoader *classLoad
 
 		/* Load superclasses and interfaces first. */
 		if (NULL != superClazz) {
-			if (!loadWarmClassFromSnapshot(vmThread, classLoader, superClazz)) {
+			if (!loadWarmClassFromSnapshot(vmThread, superClazz)) {
 				goto done;
 			}
 		}
@@ -1053,7 +1053,7 @@ loadWarmClassFromSnapshotInternal(J9VMThread *vmThread, J9ClassLoader *classLoad
 		while (NULL != itable) {
 			J9Class *interface = itable->interfaceClass;
 			if (NULL != interface) {
-				if (!loadWarmClassFromSnapshot(vmThread, classLoader, interface)) {
+				if (!loadWarmClassFromSnapshot(vmThread, interface)) {
 					goto done;
 				}
 			}
@@ -1075,13 +1075,13 @@ loadWarmClassFromSnapshotInternal(J9VMThread *vmThread, J9ClassLoader *classLoad
 		 * Pre-emptively load arrays to ensure that clazz->arrayClass returns a valid class.
 		 */
 		if (NULL != clazz->arrayClass) {
-			if (!loadWarmClassFromSnapshot(vmThread, classLoader, clazz->arrayClass)) {
+			if (!loadWarmClassFromSnapshot(vmThread, clazz->arrayClass)) {
 				goto done;
 			}
 		}
 		if (J9_ARE_ANY_BITS_SET(vmThread->javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_CLASS_OBJECT_ASSIGNED)) {
 			Assert_VM_Null(clazz->classObject);
-			clazz = initializeSnapshotClassObject(vm, classLoader, clazz);
+			clazz = initializeSnapshotClassObject(vm, clazz->classLoader, clazz);
 			if (NULL == clazz) {
 				goto done;
 			}
@@ -1114,7 +1114,7 @@ done:
 }
 
 BOOLEAN
-loadWarmClassFromSnapshot(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Class *clazz)
+loadWarmClassFromSnapshot(J9VMThread *currentThread, J9Class *clazz)
 {
 	BOOLEAN rc = TRUE;
 	J9JavaVM *vm = currentThread->javaVM;
@@ -1122,7 +1122,7 @@ loadWarmClassFromSnapshot(J9VMThread *currentThread, J9ClassLoader *classLoader,
 	if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
 		omrthread_monitor_enter(vm->rcpCacheMutex);
 		if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
-			rc = loadWarmClassFromSnapshotInternal(currentThread, classLoader, clazz);
+			rc = loadWarmClassFromSnapshotInternal(currentThread, clazz);
 		}
 		omrthread_monitor_exit(vm->rcpCacheMutex);
 	}
@@ -1191,7 +1191,7 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 		}
 #if defined(J9VM_OPT_SNAPSHOTS)
 		if (IS_RESTORE_RUN(vm)) {
-			if (!loadWarmClassFromSnapshot(vmThread, classLoader, foundClass)) {
+			if (!loadWarmClassFromSnapshot(vmThread, foundClass)) {
 				foundClass = NULL;
 			}
 		}
@@ -1219,7 +1219,7 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 				if (NULL != foundClass) {
 #if defined(J9VM_OPT_SNAPSHOTS)
 					if (IS_RESTORE_RUN(vm)
-						&& !loadWarmClassFromSnapshot(vmThread, classLoader, foundClass)
+						&& !loadWarmClassFromSnapshot(vmThread, foundClass)
 					) {
 						foundClass = NULL;
 					} else
