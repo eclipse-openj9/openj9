@@ -659,6 +659,18 @@ InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
       case J9BCiconst3:  push (new (trStackMemory()) IconstOperand(3)); break;
       case J9BCiconst4:  push (new (trStackMemory()) IconstOperand(4)); break;
       case J9BCiconst5:  push (new (trStackMemory()) IconstOperand(5)); break;
+      case J9BCaconstnull:
+         {
+         TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
+         if (knot)
+            {
+            TR::KnownObjectTable::Index koi = 0; // special index for null
+            push(new (trStackMemory()) KnownObjOperand(koi));
+            }
+         else
+            pushUnknownOperand();
+         break;
+         }
       case J9BCifne:
          push (new (trStackMemory()) IconstOperand(0));
          maintainStackForIf(J9BCificmpne);
@@ -1577,8 +1589,16 @@ InterpreterEmulator::refineResolvedCalleeForInvokevirtual(TR_ResolvedMethod *&ca
          auto targetMethod = fej9->targetMethodFromMethodHandle(comp(), receiverIndex);
          if (!targetMethod) return;
 
+         TR_ResolvedMethod * refinedMethod = fej9->createResolvedMethod(comp()->trMemory(), targetMethod, callee->owningMethod());
+         heuristicTrace(tracer(), "Pre-refinement invokebasic numargs: %d. Refined invokeBasic numArgs: %d\n",argNum, refinedMethod->numberOfExplicitParameters());
+         if (refinedMethod->numberOfExplicitParameters() !=  (argNum + 1))
+            {
+            heuristicTrace(tracer(), "Failed to refine invokeBasic call due unexpected number of args in the potential refined method.\n");
+            return;
+            }
+
          isIndirectCall = false;
-         callee = fej9->createResolvedMethod(comp()->trMemory(), targetMethod, callee->owningMethod());
+         callee = refinedMethod;
          heuristicTrace(tracer(), "Refine invokeBasic to %s\n", callee->signature(trMemory(), stackAlloc));
          return;
          }
