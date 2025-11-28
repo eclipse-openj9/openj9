@@ -59,7 +59,7 @@ struct AttribType
 	U_8 strippedAttribCode;
 };
 
-#define TOTAL_KEYWORDS 31
+#define TOTAL_KEYWORDS 30
 #define MIN_WORD_LENGTH 4
 #define MAX_WORD_LENGTH 36
 #define MIN_HASH_VALUE 4
@@ -88,7 +88,7 @@ attributeHash (register const char *str, register size_t len)
       51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
       51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
       51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
-      51, 31, 51, 51, 51, 15, 51, 51, 51,  5,
+      51, 31, 51, 51, 51, 15, 51, 51, 51, 51,
        0,  0, 51, 51, 51, 51, 15,  0, 51, 51,
       25,  0, 51, 51, 51, 51, 51, 51, 51, 51,
       51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
@@ -129,7 +129,7 @@ lookupKnownAttribute (register const char *str, register size_t len)
       {"InnerClasses", CFR_ATTRIBUTE_InnerClasses, CFR_ATTRIBUTE_InnerClasses},
 #line 55 "attrlookup.gperf"
       {"ConstantValue", CFR_ATTRIBUTE_ConstantValue, CFR_ATTRIBUTE_ConstantValue},
-#line 77 "attrlookup.gperf"
+#line 76 "attrlookup.gperf"
       {"NullRestricted", CFR_ATTRIBUTE_NullRestricted, CFR_ATTRIBUTE_NullRestricted},
 #line 57 "attrlookup.gperf"
       {"EnclosingMethod", CFR_ATTRIBUTE_EnclosingMethod, CFR_ATTRIBUTE_EnclosingMethod},
@@ -139,12 +139,10 @@ lookupKnownAttribute (register const char *str, register size_t len)
       {"AnnotationDefault", CFR_ATTRIBUTE_AnnotationDefault, CFR_ATTRIBUTE_AnnotationDefault},
 #line 61 "attrlookup.gperf"
       {"LocalVariableTable", CFR_ATTRIBUTE_LocalVariableTable, CFR_ATTRIBUTE_StrippedLocalVariableTable},
-#line 76 "attrlookup.gperf"
+#line 75 "attrlookup.gperf"
       {"LoadableDescriptors", CFR_ATTRIBUTE_LoadableDescriptors, CFR_ATTRIBUTE_LoadableDescriptors},
 #line 62 "attrlookup.gperf"
       {"SourceDebugExtension", CFR_ATTRIBUTE_SourceDebugExtension, CFR_ATTRIBUTE_StrippedSourceDebugExtension},
-#line 75 "attrlookup.gperf"
-      {"ImplicitCreation", CFR_ATTRIBUTE_ImplicitCreation, CFR_ATTRIBUTE_ImplicitCreation},
 #line 63 "attrlookup.gperf"
       {"LocalVariableTypeTable", CFR_ATTRIBUTE_LocalVariableTypeTable, CFR_ATTRIBUTE_StrippedLocalVariableTypeTable},
 #line 48 "attrlookup.gperf"
@@ -186,9 +184,9 @@ lookupKnownAttribute (register const char *str, register size_t len)
   static const signed char lookup[] =
     {
       -1, -1, -1, -1,  0, -1, -1, -1, -1,  1,  2, -1,  3,  4,
-       5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, -1, 17,
-      18, 19, 20, 21, -1, -1, 22, 23, 24, 25, -1, 26, -1, 27,
-      28, -1, -1, -1, -1, 29, -1, -1, 30
+       5,  6,  7,  8,  9, 10, 11, -1, 12, 13, 14, 15, -1, 16,
+      17, 18, 19, 20, -1, -1, 21, 22, 23, 24, -1, 25, -1, 26,
+      27, -1, -1, -1, -1, 28, -1, -1, 29
     };
 
   if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)

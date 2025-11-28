@@ -1233,7 +1233,7 @@ MM_ObjectAccessBarrier::copyObjectFieldsToFlattenedArrayElement(J9VMThread *vmTh
 	U_8 *elementAddress = (U_8*)indexableEffectiveAddress(vmThread, arrayRef, index, J9ARRAYCLASS_GET_STRIDE((J9Class *) arrayClazz));
 	IDATA elementOffset = (elementAddress - (U_8*)arrayRef);
 	J9Class *elementClazz = J9GC_J9OBJECT_CLAZZ_THREAD(srcObject, vmThread);
-	Assert_MM_true(J9_IS_J9CLASS_ALLOW_DEFAULT_VALUE(elementClazz));
+	Assert_MM_true(J9_IS_J9CLASS_VALUETYPE(elementClazz));
 	Assert_MM_true(elementClazz == arrayClazz->leafComponentType);
 
 	elementStartOffset += J9CLASS_PREPADDING_SIZE(elementClazz);
@@ -1257,7 +1257,7 @@ MM_ObjectAccessBarrier::copyObjectFieldsFromFlattenedArrayElement(J9VMThread *vm
 	U_8 *elementAddress = (U_8*)indexableEffectiveAddress(vmThread, arrayRef, index, J9ARRAYCLASS_GET_STRIDE((J9Class *) arrayClazz));
 	IDATA elementOffset = (elementAddress - (U_8*)arrayRef);
 	J9Class *elementClazz = J9GC_J9OBJECT_CLAZZ_THREAD(destObject, vmThread);
-	Assert_MM_true(J9_IS_J9CLASS_ALLOW_DEFAULT_VALUE(elementClazz));
+	Assert_MM_true(J9_IS_J9CLASS_VALUETYPE(elementClazz));
 	Assert_MM_true(elementClazz == arrayClazz->leafComponentType);
 
 	elementStartOffset += J9CLASS_PREPADDING_SIZE(elementClazz);
@@ -1508,7 +1508,7 @@ MM_ObjectAccessBarrier::structuralCompareFlattenedObjects(J9VMThread *vmThread, 
 	UDATA limit = J9CLASS_UNPADDED_INSTANCE_SIZE(valueClass);
 	UDATA offset = 0;
 
-	Assert_MM_true(J9_IS_J9CLASS_ALLOW_DEFAULT_VALUE(valueClass));
+	Assert_MM_true(J9_IS_J9CLASS_VALUETYPE(valueClass));
 
 	if (hasReferences) {
 		UDATA descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
