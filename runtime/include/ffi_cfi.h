@@ -7,6 +7,8 @@
 #ifndef FFI_CFI_H
 #define FFI_CFI_H
 
+#undef HAVE_AS_CFI_PSEUDO_OP
+
 #ifdef HAVE_AS_CFI_PSEUDO_OP
 
 # define cfi_startproc			.cfi_startproc

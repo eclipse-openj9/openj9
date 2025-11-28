@@ -22,6 +22,8 @@ package java.lang;
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  */
 
+import com.ibm.oti.vm.VM;
+
 /**
  * Represents the internal J9ConstantPool
  *
@@ -29,8 +31,11 @@ package java.lang;
 final class InternalConstantPool {
 	@SuppressWarnings("unused")
 	private final long vmRef;
+	private final Class<?> clazz;
 
-	public InternalConstantPool(long addr) {
-		vmRef = addr;
+	public InternalConstantPool(long addr, Class<?> clazz) {
+		this.vmRef = addr;
+		this.clazz = clazz;
+		VM.dumpString("addr: " + addr + " clazz: " + clazz.getName());
 	}
 }

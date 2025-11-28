@@ -45,7 +45,7 @@
 
 typedef struct AllInstancesData {
 	J9Class *clazz;             /* class being looked for */
-	J9VMThread *vmThread;       
+	J9VMThread *vmThread;
 	J9IndexableObject *target;  /* the array */
 	UDATA size;                 /* size of the array */
 	UDATA storeIndex;           /* current index being stored */
@@ -118,16 +118,16 @@ jint JNICALL Java_com_ibm_oti_vm_VM_getClassPathCount(JNIEnv * env, jclass clazz
  * Fill in all the instances of clazz into target.
  * return the count of the instances in the system
  * if the count is > than the array size, there are more strings than fit.
- * if count is <= the array size, the array may have null references. 
+ * if count is <= the array size, the array may have null references.
  * static void allInstances (Class, Object[])
  */
-jint JNICALL 
-Java_com_ibm_oti_vm_VM_allInstances(JNIEnv * env, jclass unused, jclass clazz, jobjectArray target ) 
+jint JNICALL
+Java_com_ibm_oti_vm_VM_allInstances(JNIEnv * env, jclass unused, jclass clazz, jobjectArray target )
 {
 	jint count = 0;
 	J9VMThread *vmThread = (J9VMThread *) env;
 	J9JavaVM *javaVM = vmThread->javaVM;
-	
+
 	if (OMR_GC_ALLOCATION_TYPE_SEGREGATED != javaVM->gcAllocationType) {
 		UDATA savedGCFlags = 0;
 
@@ -153,7 +153,7 @@ Java_com_ibm_oti_vm_VM_allInstances(JNIEnv * env, jclass unused, jclass clazz, j
 }
 
 /**
- * Return a String object containing a summary of the classes on the heap, 
+ * Return a String object containing a summary of the classes on the heap,
  * the number of instances, and their aggregate size.
  * This string inserts Unix-style line separators.  The caller is responsible for translating them if necessary.
  */
@@ -317,12 +317,12 @@ printHeapStatistics(JNIEnv *env,J9HeapStatisticsTableEntry **statsArray,
  * String2 has its bytes set to be string1-> bytes if the offsets already match and the bytes are not already set to the same value
  * The bytes being set already could happen frequently as this primitive will be used repeatedly to remerge strings in the runtime
 */
-jint JNICALL 
-Java_com_ibm_oti_vm_VM_setCommonData(JNIEnv * env, jclass unused, jobject string1, jobject string2 ) 
+jint JNICALL
+Java_com_ibm_oti_vm_VM_setCommonData(JNIEnv * env, jclass unused, jobject string1, jobject string2 )
 {
 	UDATA allowMerge = 0;
 	J9VMThread *vmThread = (J9VMThread *) env;
-	J9JavaVM *javaVM = vmThread->javaVM; 
+	J9JavaVM *javaVM = vmThread->javaVM;
 
 	if (OMR_GC_ALLOCATION_TYPE_SEGREGATED != javaVM->gcAllocationType) {
 		if (string1 == NULL || string2 == NULL) {
@@ -343,7 +343,7 @@ Java_com_ibm_oti_vm_VM_setCommonData(JNIEnv * env, jclass unused, jobject string
 			stringBytes2 = J9VMJAVALANGSTRING_VALUE(vmThread, unwrappedString2);
 
 			 /* skip merging of bytes if they are already the same. As this primitive is called repeatedly, then its likely the character data will be the same
-			 * on repeat calls. 
+			 * on repeat calls.
 			 */
 
 			if (stringBytes1 == stringBytes2) {
@@ -359,13 +359,13 @@ Java_com_ibm_oti_vm_VM_setCommonData(JNIEnv * env, jclass unused, jobject string
 		}
 	}
 
-	
+
 	return (jint)allowMerge;
 }
 
 
-static UDATA 
-allInstances (JNIEnv * env, jclass clazz, jobjectArray target) 
+static UDATA
+allInstances (JNIEnv * env, jclass clazz, jobjectArray target)
 {
 	J9VMThread *vmThread = (J9VMThread *) env;
 	AllInstancesData data;
@@ -408,9 +408,9 @@ collectInstances (J9JavaVM *vm, J9MM_IterateObjectDescriptor *objDesc, void *sta
 	if (J9OBJECT_CLAZZ_VM(vm, obj) == data->clazz) {
 		data->instanceCount++;
 		 /* fill in the array only if one was passed in */
-		if (data->target != NULL) { 
+		if (data->target != NULL) {
 			 /* if no room, you can ignore the object and not store it */
-			if (data->storeIndex < data->size) { 
+			if (data->storeIndex < data->size) {
  				J9JAVAARRAYOFOBJECT_STORE_VM(vm, data->target, (I_32)data->storeIndex, obj);
 				data->storeIndex++;
 			}
@@ -420,8 +420,8 @@ collectInstances (J9JavaVM *vm, J9MM_IterateObjectDescriptor *objDesc, void *sta
 }
 
 
-static int  
-hasActiveConstructor(J9VMThread *vmThread, J9Class *clazz) 
+static int
+hasActiveConstructor(J9VMThread *vmThread, J9Class *clazz)
 {
 	J9JavaVM *vm = vmThread->javaVM;
 	J9VMThread * walkThread;
@@ -446,7 +446,7 @@ hasActiveConstructor(J9VMThread *vmThread, J9Class *clazz)
 }
 
 
-static UDATA 
+static UDATA
 hasConstructor(J9VMThread *vmThread, J9StackWalkState *state)
 {
 	J9Method *method = state->method;
@@ -458,9 +458,9 @@ hasConstructor(J9VMThread *vmThread, J9StackWalkState *state)
 		J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
 		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 		J9UTF8 *methodName = J9ROMMETHOD_NAME(romMethod);
-	
+
 		/* if the method is a constructor in the class we're looking for then quit looking for more
-		 * a constructor is a non-static (to filter clinit) method which starts with '<'. 
+		 * a constructor is a non-static (to filter clinit) method which starts with '<'.
 		 */
 		if (methodClass == classToFind) {
 			if (!(romMethod->modifiers & J9AccStatic)) {
@@ -564,7 +564,7 @@ Java_com_ibm_oti_vm_VM_dumpString(JNIEnv * env, jclass clazz, jstring str)
 
 		if (utfChars != NULL) {
 			Trc_JCL_com_ibm_oti_vm_VM_dumpString(env, utfChars);
-			j9tty_printf(PORTLIB, "%s", utfChars);
+			//j9tty_printf(PORTLIB, "%s", utfChars);
 			(*env)->ReleaseStringUTFChars(env, str, utfChars);
 		}
 	}
