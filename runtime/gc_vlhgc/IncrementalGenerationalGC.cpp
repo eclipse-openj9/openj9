@@ -57,6 +57,7 @@
 #include "FinalizerSupport.hpp"
 #include "GlobalAllocationManager.hpp"
 #include "HeapRegionIteratorVLHGC.hpp"
+#include "HeapMemorySnapshot.hpp"
 #include "HeapStats.hpp"
 #include "IncrementalGenerationalGC.hpp"
 #include "InterRegionRememberedSet.hpp"
@@ -1010,6 +1011,7 @@ MM_IncrementalGenerationalGC::partialGarbageCollectPostWork(MM_EnvironmentVLHGC 
 
 	incrementRegionAges(env, _taxationThreshold, true);
 
+	verifyHeapSizing(env);
 	reportGCCycleFinalIncrementEnding(env);
 	reportGCIncrementEnd(env);
 	reportPGCEnd(env);
@@ -1239,6 +1241,8 @@ MM_IncrementalGenerationalGC::runGlobalGarbageCollection(MM_EnvironmentVLHGC *en
 	/* Global Collection - we max out ages on all live regions to remove them from the nursery collection set */
 	setRegionAgesToMax(env);
 	Assert_MM_true(0 == static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats.getStallTime());
+	verifyHeapSizing(env);
+
 	reportGCCycleFinalIncrementEnding(env);
 	/* TODO: TEMPORARY: This is a temporary call that should be deleted once the new verbose format is in place */
 	/* NOTE: May want to move any tracepoints up into this routine */
@@ -1321,7 +1325,12 @@ MM_IncrementalGenerationalGC::preProcessPGCUsingCopyForward(MM_EnvironmentVLHGC 
 	 *
 	 * NOTE: A second estimate for free tenure is later made - The lowest estimate for free tenure is used in heap sizing calculations
 	 */
-	_extensions->globalVLHGCStats._heapSizingData.freeTenure = freeMemoryForSurvivor;
+//	_extensions->globalVLHGCStats._heapSizingData.freeTenure = freeMemoryForSurvivor;
+
+	MM_HeapMemorySnapshot snapShot;
+	_regionManager->getHeapMemorySnapshot(_extensions, &snapShot, FALSE);
+	/* in some case free eden size is significant, should not be counted as freeTenure */
+	_extensions->globalVLHGCStats._heapSizingData.freeTenure = freeMemoryForSurvivor - snapShot._freeRegionEdenSize;
 
 	cycleState->_vlhgcIncrementStats._copyForwardStats._freeMemoryBefore = freeMemoryForSurvivor;
 	cycleState->_vlhgcIncrementStats._copyForwardStats._totalMemoryBefore = _extensions->getHeap()->getMemorySize();
@@ -2601,4 +2610,12 @@ MM_IncrementalGenerationalGC::getBytesScannedInGlobalMarkPhase()
 		bytesScanned = _persistentGlobalMarkPhaseState._vlhgcCycleStats._markStats._bytesScanned;
 	}
 	return bytesScanned;
+}
+
+void
+MM_IncrementalGenerationalGC::verifyHeapSizing(MM_EnvironmentVLHGC *env)
+{
+	Assert_GC_true_with_message2(env, (((MM_GlobalAllocationManagerTarok *)_extensions->globalAllocationManager)->getFreeRegionCount() >= _schedulingDelegate.getCurrentEdenSizeInRegions(env)),
+				"verifyHeapSizing freeRegionCount(%zu) is less than EdenRegionCount(%zu)\n",
+				((MM_GlobalAllocationManagerTarok *)_extensions->globalAllocationManager)->getFreeRegionCount(), _schedulingDelegate.getCurrentEdenSizeInRegions(env));
 }
