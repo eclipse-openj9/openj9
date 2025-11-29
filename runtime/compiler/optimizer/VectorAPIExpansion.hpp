@@ -533,6 +533,24 @@ class TR_VectorAPIExpansion : public TR::Optimization
    */
    void transformIL(bool checkBoxing);
 
+   /** \brief
+   *     Method called by transfomIL for each node recursively
+   *
+   *   \param treeTop
+   *     treeTop of the node being transformed
+   *
+   *   \param node
+   *     The node being transformed
+   *
+   *   \param parent
+   *     The parent node of the node being transformed
+   *
+   *   \param checkBoxing
+   *     true if in checkBoxing mode and false in transformation mode
+   *
+   */
+   void visitNodeToTransformIL(TR::TreeTop *treeTop, TR::Node *node, TR::Node *parent, bool checkBoxing);
+
 
   /** \brief
    *     The method performs analysis and transformation
