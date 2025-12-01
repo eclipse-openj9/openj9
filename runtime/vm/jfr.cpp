@@ -557,6 +557,33 @@ jfrThreadEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *user
 }
 
 /**
+ * Hook for system thread ending.
+ *
+ * @param hook[in] the VM hook interface
+ * @param eventNum[in] the event number
+ * @param eventData[in] the event data
+ * @param userData[in] the registered user data
+ */
+static void
+jfrThreadEndSystemThread(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
+{
+	J9VMThreadEndEvent *event = (J9VMThreadEndEvent *)eventData;
+	J9VMThread *currentThread = event->currentThread;
+
+#if defined(DEBUG)
+	PORT_ACCESS_FROM_VMC(currentThread);
+	j9tty_printf(PORTLIB, "\n!!! thread end %p\n", currentThread);
+#endif /* defined(DEBUG) */
+
+	internalAcquireVMAccess(currentThread);
+	J9JFREvent *jfrEvent = (J9JFREvent*)reserveBuffer(currentThread, sizeof(J9JFREvent));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, jfrEvent, J9JFR_EVENT_TYPE_THREAD_END);
+	}
+	internalReleaseVMAccess(currentThread);
+}
+
+/**
  * Hook for thread about to sleep.
  *
  * @param hook[in] the VM hook interface
@@ -780,6 +807,9 @@ initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_THREAD_END, jfrThreadEnd, OMR_GET_CALLSITE(), NULL)) {
 		goto fail;
 	}
+	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_THREAD_END_SYSTEM_THREAD, jfrThreadEndSystemThread, OMR_GET_CALLSITE(), NULL)) {
+		goto fail;
+	}
 	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_SLEPT, jfrVMSlept, OMR_GET_CALLSITE(), NULL)) {
 		goto fail;
 	}
@@ -926,6 +956,7 @@ tearDownJFR(J9JavaVM *vm)
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_SHUTTING_DOWN, jfrVMShutdown, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_STARTING, jfrThreadStarting, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_END, jfrThreadEnd, NULL);
+	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_END_SYSTEM_THREAD, jfrThreadEndSystemThread, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_SLEPT, jfrVMSlept, NULL);
 	/* Unregister it anyway even it wasn't registered for initializeJFR(vm, TRUE). */
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_INITIALIZED, jfrVMInitialized, NULL);
