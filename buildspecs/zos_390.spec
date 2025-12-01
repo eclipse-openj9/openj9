@@ -57,7 +57,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<property name="graph_req.aux0" value=""/>
 		<property name="graph_req.aux1" value=""/>
 		<property name="graph_req.build" value="{$common.req.build.java9$}"/>
-		<property name="graph_req.build2" value="{$common.req.build.java8$}"/>
+		<property name="graph_req.build2" value="{$common.req.build.java8.8.70+$}"/>
 		<property name="graph_req.machine" value="{$machine_mapping.zos$}"/>
 		<property name="graph_req.machine.test" value="{$spec.property.graph_req.machine$}"/>
 		<property name="graph_req.os" value="{$machine_mapping.zos$}"/>
