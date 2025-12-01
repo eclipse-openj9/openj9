@@ -210,9 +210,8 @@ struct TR_RelocationError
       directJNICallRelocationFailure                   = (60 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
       ramMethodConstRelocationFailure                  = (61 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
       catchBlockCounterRelocationFailure               = (62 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
-      staticDefaultValueInstanceRelocationFailure      = (63 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::RELOCATION,
 
-      maxRelocationError                               = (64 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::NO_RELO_ERROR
+      maxRelocationError                               = (63 << RELO_ERRORCODE_SHIFT) | TR_RelocationErrorCodeType::NO_RELO_ERROR
       };
 
    static uint32_t decode(TR_RelocationErrorCode errorCode) { return static_cast<uint32_t>(errorCode >> RELO_ERRORCODE_SHIFT); }
