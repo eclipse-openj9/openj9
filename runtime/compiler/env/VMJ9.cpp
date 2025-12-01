@@ -1294,6 +1294,73 @@ TR_J9VMBase::getObjectClassInfoFromObjectReferenceLocation(TR::Compilation *comp
    return ci;
    }
 
+TR::KnownObjectTable::ObjectInfo
+TR_J9VMBase::getObjClassInfoFromKnotIndexNoCaching(TR::Compilation *comp, TR::KnownObjectTable::Index knotIndex)
+   {
+   TR::KnownObjectTable::ObjectInfo retrievedObjInfo;
+   TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+   TR::KnownObjectTable::ObjectInfo existingObjInfo = knot->getObjectInfo(knotIndex);
+
+   // Retrieve the data from the VM
+   TR::VMAccessCriticalSection vmAccess(comp);
+
+   uintptr_t objectReference = knot->getPointer(knotIndex);
+   retrievedObjInfo._jniReference = existingObjInfo._jniReference;
+   retrievedObjInfo._clazz = getObjectClass(objectReference);
+   retrievedObjInfo._isString = isString(retrievedObjInfo._clazz);
+   retrievedObjInfo._jlClass = getClassClassPointer(retrievedObjInfo._clazz);
+   retrievedObjInfo._isFixedJavaLangClass = (retrievedObjInfo._jlClass == retrievedObjInfo._clazz);
+   if (retrievedObjInfo._isFixedJavaLangClass)
+      {
+      // A FixedClass constraint means something different
+      // when the class happens to be java/lang/Class.
+      // Must add constraints pertaining to the class that
+      // the java/lang/Class object represents.
+      retrievedObjInfo._clazz = getClassFromJavaLangClass(objectReference);
+      }
+   return retrievedObjInfo;
+   }
+
+TR::KnownObjectTable::ObjectInfo
+TR_J9VMBase::getObjClassInfoFromKnotIndex(TR::Compilation *comp, TR::KnownObjectTable::Index knotIndex)
+   {
+   TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+   // Check to see whether the known object entry already holds the desired info.
+   // If so, return the cached version. Otherwise, fetch the info and cache it.
+   TR::KnownObjectTable::ObjectInfo existingObjInfo = knot->getObjectInfo(knotIndex);
+   TR::KnownObjectTable::ObjectInfo answerObjInfo;
+   TR_ASSERT_FATAL(existingObjInfo._jniReference, "The jniReference is missing for knotIndex %d", knotIndex);
+   if (comp->getOption(TR_DisableKnownObjectTableCaching))
+      {
+      answerObjInfo = getObjClassInfoFromKnotIndexNoCaching(comp, knotIndex);
+      }
+   else // Caching is enabled
+      {
+      if (existingObjInfo._clazz == NULL) // Not yet cached
+         {
+         answerObjInfo = getObjClassInfoFromKnotIndexNoCaching(comp, knotIndex);
+         knot->setObjectInfoFields(knotIndex, answerObjInfo); // populate cache
+         }
+      else // Reply with information from the cache
+         {
+         if (comp->getOption(TR_EnableKnownObjectTableCachingVerification))
+            {
+            TR::KnownObjectTable::ObjectInfo retrievedObjInfo = getObjClassInfoFromKnotIndexNoCaching(comp, knotIndex);
+            TR_ASSERT_FATAL(existingObjInfo._clazz == retrievedObjInfo._clazz, "_clazz discrepancy");
+            TR_ASSERT_FATAL(existingObjInfo._jlClass == retrievedObjInfo._jlClass, "_jlClazz discrepancy");
+            TR_ASSERT_FATAL(existingObjInfo._isString == retrievedObjInfo._isString, "_isString discrepancy");
+            TR_ASSERT_FATAL(existingObjInfo._isFixedJavaLangClass == retrievedObjInfo._isFixedJavaLangClass, "_isFixedJavaLangClass discrepancy");
+            TR_ASSERT_FATAL(existingObjInfo._jniReference == retrievedObjInfo._jniReference, "_jniReference discrepancy");
+            }
+         answerObjInfo = existingObjInfo;
+         }
+      }
+
+   J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
+   cpg->addEdge(cpg->knownObject(knotIndex), answerObjInfo._clazz);
+   return answerObjInfo;
+   }
+
 uintptr_t
 TR_J9VMBase::getReferenceFieldAtAddress(uintptr_t fieldAddress)
    {

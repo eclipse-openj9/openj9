@@ -116,6 +116,7 @@ public:
 
    virtual ObjectClassInfo getObjectClassInfoFromObjectReferenceLocation
                               (TR::Compilation *comp, uintptr_t objectReferenceLocation) override;
+   virtual TR::KnownObjectTable::ObjectInfo getObjClassInfoFromKnotIndexNoCaching(TR::Compilation *comp, TR::KnownObjectTable::Index knotIndex) override;
 
    virtual bool stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *clazz) override;
    virtual bool hasFinalFieldsInClass(TR_OpaqueClassBlock *clazz) override;

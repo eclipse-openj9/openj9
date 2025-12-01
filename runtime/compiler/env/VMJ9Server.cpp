@@ -976,6 +976,19 @@ TR_J9ServerVM::getObjectClassInfoFromObjectReferenceLocation(TR::Compilation *co
    return result;
    }
 
+TR::KnownObjectTable::ObjectInfo
+TR_J9ServerVM::getObjClassInfoFromKnotIndexNoCaching(TR::Compilation *comp, TR::KnownObjectTable::Index knotIndex)
+   {
+   // Retrieve the data from the client
+   JITServer::ServerStream *stream = comp->getStream();
+   stream->write(JITServer::MessageType::VM_getObjectClassInfoFromKnotIndex, knotIndex);
+   auto recv = stream->read<TR::KnownObjectTable::ObjectInfo>();
+   TR::KnownObjectTable::ObjectInfo retrievedObjInfo = std::get<0>(recv);
+   TR_ASSERT_FATAL(retrievedObjInfo._clazz, "Must have retrieved the clazz for knotIndex=%d", knotIndex);
+   TR_ASSERT_FATAL(retrievedObjInfo._jniReference == comp->getKnownObjectTable()->getObjectInfo(knotIndex)._jniReference, "JNI ref mismatch");
+   return retrievedObjInfo;
+   }
+
 bool
 TR_J9ServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *clazz)
    {
