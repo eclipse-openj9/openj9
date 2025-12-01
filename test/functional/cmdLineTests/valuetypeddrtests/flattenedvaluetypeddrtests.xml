@@ -151,8 +151,6 @@
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
-	<!-- TODO: Disabled temporarily due to https://github.com/eclipse-openj9/openj9/issues/22642. -->
-	<!--
 	<test id="Run !j9object $valueAddr1$ to show the fields of the reference object. Make sure field vline is not flattened">
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core $DUMPFILE$</arg>
@@ -197,7 +195,6 @@
 		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">Point2D en (.)*[\n\r](.)*I x = 0xCCDDCCDD[\n\r](.)*I y = 0x33443344</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
-	-->
 
 	<test id="Create nocompressedrefs core file">
 		<command showMatch="yes">$EXE$ -Xmx24m $ARGS_NOCR$ $JARS$ $PROGRAM$</command>

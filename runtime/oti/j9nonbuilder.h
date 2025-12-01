@@ -83,7 +83,6 @@
 #define J9ClassLargestAlignmentConstraintReference 0x800
 #define J9ClassLargestAlignmentConstraintDouble 0x1000
 #define J9ClassIsExemptFromValidation 0x2000
-#define J9ClassContainsUnflattenedFlattenables 0x4000
 #define J9ClassCanSupportFastSubstitutability 0x8000
 #define J9ClassHasReferences 0x10000
 #define J9ClassRequiresPrePadding 0x20000
@@ -1994,7 +1993,7 @@ typedef struct J9ModuleExtraInfo {
 
 /*             Structure of Flattened Class Cache              */
 /*                                                             *
- *    Default Value   |   Number of Entries   |                *
+ *  Number of Entries |                                        *
  *____________________|_______________________|________________*
  *                    |                       |                *
  *      clazz 0       |   Name & Signature 0  |     offset 0   *
@@ -2024,7 +2023,6 @@ typedef struct J9FlattenedClassCacheEntry {
 } J9FlattenedClassCacheEntry;
 
 typedef struct J9FlattenedClassCache {
-	j9object_t defaultValue;
 	UDATA numberOfEntries;
 	U_16 strictStaticFieldCounter;
 } J9FlattenedClassCache;
@@ -5256,7 +5254,6 @@ typedef struct J9InternalVMFunctions {
 #else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	struct J9ROMFieldOffsetWalkResult*  ( *fieldOffsetsStartDo)(struct J9JavaVM *vm, struct J9ROMClass *romClass, struct J9Class *superClazz, struct J9ROMFieldOffsetWalkState *state, U_32 flags) ;
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-	void ( *defaultValueWithUnflattenedFlattenables)(struct J9VMThread *currentThread, struct J9Class *clazz, j9object_t instance) ;
 	struct J9ROMFieldOffsetWalkResult*  ( *fieldOffsetsNextDo)(struct J9ROMFieldOffsetWalkState *state) ;
 	struct J9ROMFieldShape*  ( *fullTraversalFieldOffsetsStartDo)(struct J9JavaVM *vm, struct J9Class *clazz, struct J9ROMFullTraversalFieldOffsetWalkState *state, U_32 flags) ;
 	struct J9ROMFieldShape*  ( *fullTraversalFieldOffsetsNextDo)(struct J9ROMFullTraversalFieldOffsetWalkState *state) ;
@@ -5458,7 +5455,6 @@ typedef struct J9InternalVMFunctions {
 			jstring environmentFile, jlong ghostFileLimit, jboolean tcpClose, jboolean tcpSkipInFlight);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	j9object_t (*getClassNameString)(struct J9VMThread *currentThread, j9object_t classObject, jboolean internAndAssign);
-	j9object_t* (*getDefaultValueSlotAddress)(struct J9Class *clazz);
 #if JAVA_SPEC_VERSION >= 16
 	void * ( *createUpcallThunk)(struct J9UpcallMetaData *data);
 	void * ( *getArgPointer)(struct J9UpcallNativeSignature *nativeSig, void *argListPtr, int argIdx);

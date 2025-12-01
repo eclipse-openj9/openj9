@@ -82,7 +82,6 @@ J9::SymbolReferenceTable::SymbolReferenceTable(size_t sizeHint, TR::Compilation 
      _currentThreadDebugEventDataSymbol(0),
      _currentThreadDebugEventDataSymbolRefs(c->trMemory()),
      _constantPoolAddressSymbolRefs(c->trMemory()),
-     _defaultValueAddressSlotSymbolRefs(c->trMemory()),
      _resolvedFieldShadows(
         std::less<ResolvedFieldShadowKey>(),
         getTypedAllocator<ResolvedFieldShadowsEntry>(c->allocator())),
@@ -979,38 +978,6 @@ J9::SymbolReferenceTable::findOrFabricateFlattenedArrayElementFieldShadowSymbol(
    initShadowSymbol(NULL, symRef, isResolved, type, fieldOffset, isUnresolvedInCP);
 
    _flattenedArrayElementFieldShadows.insert(std::make_pair(key, symRef));
-   return symRef;
-   }
-
-TR::SymbolReference *
-J9::SymbolReferenceTable::findOrCreateDefaultValueSymbolRef(void *defaultValueSlotAddress, int32_t cpIndex)
-   {
-   ListIterator<TR::SymbolReference> i(&_defaultValueAddressSlotSymbolRefs);
-   TR::SymbolReference *symRef;
-   for (symRef = i.getFirst(); symRef; symRef = i.getNext())
-      {
-      if (symRef->getSymbol()->getStaticSymbol()->getStaticAddress() == defaultValueSlotAddress)
-         {
-         return symRef;
-         }
-      }
-
-   TR::StaticSymbol *sym = TR::StaticSymbol::create(trHeapMemory(), TR::Address);
-
-   sym->setStaticAddress(defaultValueSlotAddress);
-
-   sym->setNotDataAddress();
-   sym->setStaticDefaultValueInstance();
-
-   symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym);
-
-   symRef->setCPIndex(cpIndex);
-   symRef->setOwningMethodIndex(comp()->getMethodSymbol()->getResolvedMethodIndex());
-
-   // TODO: Is this required?
-   aliasBuilder.addressStaticSymRefs().set(symRef->getReferenceNumber());
-
-   _defaultValueAddressSlotSymbolRefs.add(symRef);
    return symRef;
    }
 

@@ -241,7 +241,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 	addHiddenInstanceField,
 	reportHotField,
 	fieldOffsetsStartDo,
-	defaultValueWithUnflattenedFlattenables,
 	fieldOffsetsNextDo,
 	fullTraversalFieldOffsetsStartDo,
 	fullTraversalFieldOffsetsNextDo,
@@ -441,7 +440,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 	criuCheckpointJVMImpl,
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	getClassNameString,
-	getDefaultValueSlotAddress,
 #if JAVA_SPEC_VERSION >= 16
 	createUpcallThunk,
 	getArgPointer,

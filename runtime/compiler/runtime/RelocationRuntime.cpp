@@ -149,9 +149,8 @@ const char *TR_RelocationRuntime::_reloErrorCodeNames[] =
    "directJNICallRelocationFailure",                   // 60
    "ramMethodConstRelocationFailure",                  // 61
    "catchBlockCounterRelocationFailure",               // 62
-   "staticDefaultValueInstanceRelocationFailure",      // 63
 
-   "maxRelocationError"                                // 64
+   "maxRelocationError"                                // 63
    };
 
 TR_RelocationRuntime::TR_RelocationRuntime(J9JITConfig *jitCfg)
