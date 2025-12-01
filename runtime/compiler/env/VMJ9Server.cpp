@@ -1166,12 +1166,6 @@ TR_J9ServerVM::canAllocateInlineClass(TR_OpaqueClassBlock *clazz)
          {
          return false;
          }
-      else
-         {
-         uintptr_t classFlags = 0;
-         JITServerHelpers::getAndCacheRAMClassInfo((J9Class*)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_FLAGS, (void*)&classFlags);
-         return (classFlags & J9ClassContainsUnflattenedFlattenables) ? false : true;
-         }
       }
 
    return false;

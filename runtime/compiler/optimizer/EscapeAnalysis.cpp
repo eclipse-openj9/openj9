@@ -1079,16 +1079,6 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
          if (candidate->_kind == TR::New)
             {
             TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock *)candidate->_node->getFirstChild()->getSymbol()->getStaticSymbol()->getStaticAddress();
-
-            if (!TR::Compiler->cls.isZeroInitializable(clazz))
-               {
-               logprintf(trace(), log,
-                  "   Fail [%p] because the candidate is not zero initializable (that is, it has a field of a primitive value type whose fields have not been inlined into this candidate's class)\n",
-                  candidate->_node);
-               rememoize(candidate);
-               _candidates.remove(candidate);
-               continue;
-               }
             }
 
          // If a contiguous candidate has reference slots, then stack-allocating it means putting

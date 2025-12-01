@@ -232,7 +232,6 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    /** \brief
     *     Returns a symbol reference for default value instance of value class.
     */
-   TR::SymbolReference * findOrCreateDefaultValueSymbolRef(void *defaultValueSlotAddress, int32_t cpIndex);
 
    TR::SymbolReference * findOrCreateObjectNewInstanceImplSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateDLTBlockSymbolRef();

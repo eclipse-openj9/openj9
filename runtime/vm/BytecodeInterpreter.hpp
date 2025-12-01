@@ -1132,15 +1132,9 @@ obj:
 	 * @returns the new object, or NULL if allocation failed
 	 */
 	VMINLINE j9object_t
-	allocateObject(REGISTER_ARGS_LIST, J9Class *clazz, bool initializeSlots = true, bool memoryBarrier = true, bool skipUnflattenedFlattenableCheck = false)
+	allocateObject(REGISTER_ARGS_LIST, J9Class *clazz, bool initializeSlots = true, bool memoryBarrier = true)
 	{
 		j9object_t instance = NULL;
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		if (skipUnflattenedFlattenableCheck || J9_ARE_NO_BITS_SET(clazz->classFlags, J9ClassContainsUnflattenedFlattenables))
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
-		{
-			instance = _objectAllocate.inlineAllocateObject(_currentThread, clazz, initializeSlots, memoryBarrier);
-		}
 		if (NULL == instance) {
 			updateVMStruct(REGISTER_ARGS);
 			instance = _vm->memoryManagerFunctions->J9AllocateObject(_currentThread, clazz, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
@@ -1167,12 +1161,6 @@ obj:
 	allocateIndexableObject(REGISTER_ARGS_LIST, J9Class *arrayClass, U_32 size, bool initializeSlots = true, bool memoryBarrier = true, bool sizeCheck = true)
 	{
 		j9object_t instance = NULL;
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		if (J9_ARE_NO_BITS_SET(arrayClass->classFlags, J9ClassContainsUnflattenedFlattenables))
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-		{
-			instance = VM_VMHelpers::inlineAllocateIndexableObject(_currentThread, &_objectAllocate, arrayClass, size, initializeSlots, memoryBarrier, sizeCheck);
-		}
 
 		if (NULL == instance) {
 			updateVMStruct(REGISTER_ARGS);
@@ -4507,7 +4495,7 @@ done:
 		if (NULL != obj && NULL != clz) {
 			J9Class *clzJ9Class = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, clz);
 
-			if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(clzJ9Class)) {
+			if (J9_IS_J9CLASS_VALUETYPE(clzJ9Class)) {
 				result = VM_ValueTypeHelpers::getFlattenedFieldAtOffset(
 					_currentThread,
 					_objectAccessBarrier,
@@ -4555,7 +4543,7 @@ done:
 		if ((NULL != obj) && (NULL != clz) && (NULL != value)) {
 			J9Class *clzJ9Class = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, clz);
 
-			if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(clzJ9Class)) {
+			if (J9_IS_J9CLASS_VALUETYPE(clzJ9Class)) {
 				VM_ValueTypeHelpers::putFlattenedFieldAtOffset(_currentThread,
 					_objectAccessBarrier,
 					clzJ9Class,
@@ -8797,12 +8785,6 @@ retry:
 		if ((NULL != resolvedClass) && J9ROMCLASS_ALLOCATES_VIA_NEW(resolvedClass->romClass)) {
 			if (!VM_VMHelpers::classRequiresInitialization(_currentThread, resolvedClass)) {
 				j9object_t instance = NULL;
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-				if (J9_ARE_NO_BITS_SET(resolvedClass->classFlags, J9ClassContainsUnflattenedFlattenables))
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-				{
-					instance = _objectAllocate.inlineAllocateObject(_currentThread, resolvedClass);
-				}
 				if (NULL == instance) {
 					updateVMStruct(REGISTER_ARGS);
 					instance = _vm->memoryManagerFunctions->J9AllocateObject(_currentThread, resolvedClass, J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE);
@@ -8924,12 +8906,6 @@ retry:
 			J9Class *arrayClass = resolvedClass->arrayClass;
 			if (J9_EXPECTED(NULL != arrayClass)) {
 				j9object_t instance = NULL;
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-				if (J9_ARE_NO_BITS_SET(arrayClass->classFlags, J9ClassContainsUnflattenedFlattenables))
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-				{
-					instance = VM_VMHelpers::inlineAllocateIndexableObject(_currentThread, &_objectAllocate, arrayClass, (U_32) size);
-				}
 
 				if (NULL == instance) {
 					updateVMStruct(REGISTER_ARGS);

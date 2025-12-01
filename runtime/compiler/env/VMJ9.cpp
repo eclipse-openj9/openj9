@@ -6365,8 +6365,7 @@ TR_J9VMBase::canAllocateInlineClass(TR_OpaqueClassBlock *clazzOffset)
    // or if it is a class with identityless null-restricted fields that
    // aren't flattened, because they have to be made to refer to their type's
    // default values
-   if ((clazz->romClass->modifiers & (J9AccAbstract | J9AccInterface))
-       || (clazz->classFlags & J9ClassContainsUnflattenedFlattenables))
+   if ((clazz->romClass->modifiers & (J9AccAbstract | J9AccInterface)))
       return false;
    return true;
    }

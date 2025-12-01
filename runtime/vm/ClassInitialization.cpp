@@ -647,9 +647,6 @@ doVerify:
 							goto done;
 						}
 
-						if (isStatic) {
-							classPrepareWithWithUnflattenedFlattenables(currentThread, clazz, entry, entryClazz);
-						}
 					}
 				}
 

@@ -982,38 +982,6 @@ J9::SymbolReferenceTable::findOrFabricateFlattenedArrayElementFieldShadowSymbol(
    return symRef;
    }
 
-TR::SymbolReference *
-J9::SymbolReferenceTable::findOrCreateDefaultValueSymbolRef(void *defaultValueSlotAddress, int32_t cpIndex)
-   {
-   ListIterator<TR::SymbolReference> i(&_defaultValueAddressSlotSymbolRefs);
-   TR::SymbolReference *symRef;
-   for (symRef = i.getFirst(); symRef; symRef = i.getNext())
-      {
-      if (symRef->getSymbol()->getStaticSymbol()->getStaticAddress() == defaultValueSlotAddress)
-         {
-         return symRef;
-         }
-      }
-
-   TR::StaticSymbol *sym = TR::StaticSymbol::create(trHeapMemory(), TR::Address);
-
-   sym->setStaticAddress(defaultValueSlotAddress);
-
-   sym->setNotDataAddress();
-   sym->setStaticDefaultValueInstance();
-
-   symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym);
-
-   symRef->setCPIndex(cpIndex);
-   symRef->setOwningMethodIndex(comp()->getMethodSymbol()->getResolvedMethodIndex());
-
-   // TODO: Is this required?
-   aliasBuilder.addressStaticSymRefs().set(symRef->getReferenceNumber());
-
-   _defaultValueAddressSlotSymbolRefs.add(symRef);
-   return symRef;
-   }
-
 TR::Symbol *
 J9::SymbolReferenceTable::createShadowSymbol(
    TR::DataType type,
