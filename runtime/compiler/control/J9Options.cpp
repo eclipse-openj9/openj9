@@ -222,6 +222,7 @@ int32_t J9::Options::_TLHPrefetchStaggeredLineCount = 0;
 int32_t J9::Options::_TLHPrefetchBoundaryLineCount = 0;
 int32_t J9::Options::_TLHPrefetchTLHEndLineCount = 0;
 
+uint32_t J9::Options::_minDiskSpaceForDisclaimMB = 1024; // 1 GB
 int32_t J9::Options::_minTimeBetweenMemoryDisclaims = 500; // ms
 int32_t J9::Options::_mallocTrimPeriod = 0; // seconds; 0 means disabled
 
@@ -1158,6 +1159,8 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_maxCheckcastProfiledClassTests, 0, "F%d", NOT_IN_SUBSET},
    {"maxOnsiteCacheSlotForInstanceOf=", "R<nnn>\tnumber of onsite cache slots for instanceOf",
       TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_maxOnsiteCacheSlotForInstanceOf, 0, "F%d", NOT_IN_SUBSET},
+   {"minDiskSpaceForDisclaim=",  "M<nnn>\tMinimum available disk space (MB) needed to enable memory disclaim",
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_minDiskSpaceForDisclaimMB, 1024,"F%d", NOT_IN_SUBSET},
    {"minSamplingPeriod=", "R<nnn>\tminimum number of milliseconds between samples for hotness",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_minSamplingPeriod, 0, "P%d", NOT_IN_SUBSET},
    {"minSuperclassArraySize=", "I<nnn>\t set the size of the minimum superclass array size",
@@ -3005,6 +3008,9 @@ J9::Options::disableMemoryDisclaimIfNeeded(J9JITConfig *jitConfig)
    PORT_ACCESS_FROM_JAVAVM(javaVM); // for j9vmem_supported_page_sizes
    OMRPORT_ACCESS_FROM_J9PORT(javaVM->portLibrary); // for omrsysinfo_os_kernel_info
    bool shouldDisableMemoryDisclaim = false;
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
+   compInfo->setCanDisclaimOnSwap(false); // pessimistic
+   compInfo->setCanDisclaimOnFile(false); // pessimistic
 
    // For memory disclaim to work we need the kernel to be at least version 5.4
    struct OMROSKernelInfo kernelInfo = {0};
@@ -3034,59 +3040,62 @@ J9::Options::disableMemoryDisclaimIfNeeded(J9JITConfig *jitConfig)
       }
    if (!shouldDisableMemoryDisclaim)
       {
-      // The backing file for the disclaimed memory is on /tmp.
-      // Do not disclaim if the filesystem for /tmp is tmpfs or ramfs because they use RAM memory.
-      // Also, do not disclaim if /tmp is on nfs because the latency is unpredictable.
-      // In these cases, attempt to disclaim on swap if possible.
-       TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
-       if (TR::Options::getCmdLineOptions()->getOption(TR_DontDisclaimMemoryOnSwap) ||
-          !TR::Options::getCmdLineOptions()->getOption(TR_PreferSwapForMemoryDisclaim) ||
-          compInfo->isSwapMemoryDisabled())
+      // Check whether disclaiming on swap is possible
+      if (!TR::Options::getCmdLineOptions()->getOption(TR_DontDisclaimMemoryOnSwap) &&
+          !compInfo->isSwapMemoryDisabled())
          {
-         // Disclaim on backing file is preferred (or the only possibility)
-         // TODO: enhance the omr portlib (omrfile_stat/updateJ9FileStat/J9FileStat) to give us the desired information
-         struct statfs statfsbuf;
-         int retVal = statfs("/tmp", &statfsbuf);
-         if (retVal != 0 ||
-            statfsbuf.f_type == TMPFS_MAGIC ||
-            statfsbuf.f_type == RAMFS_MAGIC ||
-            statfsbuf.f_type == NFS_SUPER_MAGIC)
+         // Do we have enough free space?
+         J9MemoryInfo memInfo;
+         if ((omrsysinfo_get_memory_info(&memInfo) == 0) && (memInfo.availSwap >= ((uint64_t)J9::Options::_minDiskSpaceForDisclaimMB << 20)))
             {
-            // Check whether swap is available and whether the user allows the usage of swap.
-            if (TR::Options::getCmdLineOptions()->getOption(TR_DontDisclaimMemoryOnSwap) || compInfo->isSwapMemoryDisabled())
-               {
-               shouldDisableMemoryDisclaim = true;
-               if (TR::Options::getVerboseOption(TR_VerbosePerformance))
-                  {
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "WARNING: Disclaim feature disabled because /tmp is not suitable and swap is not available/allowed");
-                  }
-               TR::Options::getCmdLineOptions()->setOption(TR_PreferSwapForMemoryDisclaim, false);
-               }
-            else
-               {
-               // Force the usage of swap space for disclaiming.
-               TR::Options::getCmdLineOptions()->setOption(TR_PreferSwapForMemoryDisclaim);
-               if (TR::Options::getVerboseOption(TR_VerbosePerformance))
-                  {
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Memory disclaim will be done on swap because /tmp is not suitable");
-                  }
-               }
+            compInfo->setCanDisclaimOnSwap(true);
             }
          }
-      else // Disclaim on swap is preferred
+      // Check whether disclaiming on a file is possible.
+      // Do not disclaim if the filesystem for /tmp is tmpfs or ramfs because they use RAM memory.
+      // Also, do not disclaim if /tmp is on nfs because the latency is unpredictable.
+      // Also, do not disclaim if there is little available space.
+      // TODO: enhance the omr portlib (omrfile_stat/updateJ9FileStat/J9FileStat) to give us the desired information
+      struct statfs statfsbuf;
+      int retVal = statfs("/tmp", &statfsbuf);
+      if (retVal == 0 &&
+          statfsbuf.f_type != TMPFS_MAGIC &&
+          statfsbuf.f_type != RAMFS_MAGIC &&
+          statfsbuf.f_type != NFS_SUPER_MAGIC &&
+          ((uint64_t)statfsbuf.f_bavail * statfsbuf.f_bsize) >= ((uint64_t)J9::Options::_minDiskSpaceForDisclaimMB << 20)
+         )
          {
-
+         compInfo->setCanDisclaimOnFile(true);
+         if (!compInfo->canDisclaimOnSwap() && TR::Options::getVerboseOption(TR_VerbosePerformance))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Memory disclaim will be done on /tmp because swap is not suitable");
+            }
+         }
+      else
+         {
+         if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "WARNING: Disclaim feature disabled because swap and /tmp are not suitable");
+            }
          }
       }
-   if (shouldDisableMemoryDisclaim)
+   if (!compInfo->canDisclaimOnSwap() && !compInfo->canDisclaimOnFile())
       {
       TR::Options::getCmdLineOptions()->setOption(TR_DisableDataCacheDisclaiming);
       TR::Options::getCmdLineOptions()->setOption(TR_DisableIProfilerDataDisclaiming);
       TR::Options::getCmdLineOptions()->setOption(TR_EnableCodeCacheDisclaiming, false);
+      }
+   // SCC disclaiming does not need swap or additional files
+   if (shouldDisableMemoryDisclaim)
+      {
       TR::Options::getCmdLineOptions()->setOption(TR_EnableSharedCacheDisclaiming, false);
       }
    return shouldDisableMemoryDisclaim;
 #else /* if defined(LINUX) */
+   TR::Options::getCmdLineOptions()->setOption(TR_DisableDataCacheDisclaiming);
+   TR::Options::getCmdLineOptions()->setOption(TR_DisableIProfilerDataDisclaiming);
+   TR::Options::getCmdLineOptions()->setOption(TR_EnableCodeCacheDisclaiming, false);
+   TR::Options::getCmdLineOptions()->setOption(TR_EnableSharedCacheDisclaiming, false);
    return true;
 #endif
    }
