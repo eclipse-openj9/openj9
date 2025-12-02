@@ -352,11 +352,6 @@ public class InternalDowncallHandler {
 		}
 
 		AbstractMemorySegmentImpl segment = (AbstractMemorySegmentImpl)argValue;
-		MemorySessionImpl session = segment.sessionImpl();
-		if (session != null) {
-			/* Validate the segment before accessing it. */
-			session.checkValidState();
-		}
 
 		/*[IF JAVA_SPEC_VERSION >= 22]*/
 		if (!argValue.isNative() && options.allowsHeapAccess()) {
@@ -797,6 +792,7 @@ public class InternalDowncallHandler {
 				/* The check is intended for the confined session or
 				 * the shared session(e.g. implicit/global session).
 				 */
+				memArgSessionImpl.checkValidState();
 				if ((owner == Thread.currentThread()) || (owner == null)) {
 					memArgSessionImpl.acquire0();
 					((MemorySessionImpl)session).addCloseAction(memArgSessionImpl::release0);
