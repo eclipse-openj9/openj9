@@ -552,6 +552,24 @@ addModularitySystemProperties(J9JavaVM *vm)
 	}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
+#if JAVA_SPEC_VERSION >= 26
+	/* Find all --enable-final-field-mutation options. */
+	rc = addPropertiesForOptionWithAssignArg(
+			vm, VMOPT_ENABLE_FINAL_FIELD_MUTATION, LITERAL_STRLEN(VMOPT_ENABLE_FINAL_FIELD_MUTATION),
+			SYSPROP_JDK_MODULE_ENABLE_FINAL_FIELD_MUTATION, LITERAL_STRLEN(SYSPROP_JDK_MODULE_ENABLE_FINAL_FIELD_MUTATION), NULL);
+	if (J9SYSPROP_ERROR_NONE != rc) {
+		goto _end;
+	}
+
+	/* Find and consume the last --illegal-final-field-mutation options. */
+	rc = addPropertyForOptionWithEqualsArg(
+			vm, VMOPT_ILLEGAL_FINAL_FIELD_MUTATION, LITERAL_STRLEN(VMOPT_ILLEGAL_FINAL_FIELD_MUTATION),
+			SYSPROP_JDK_MODULE_ILLEGAL_FINAL_FIELD_MUTATION);
+	if (J9SYSPROP_ERROR_NONE != rc) {
+		goto _end;
+	}
+#endif /* JAVA_SPEC_VERSION >= 26 */
+
 	/* Find last --illegal-access */
 	rc = addPropertyForOptionWithEqualsArg(vm, VMOPT_ILLEGAL_ACCESS, LITERAL_STRLEN(VMOPT_ILLEGAL_ACCESS), SYSPROP_JDK_MODULE_ILLEGALACCESS);
 
@@ -935,21 +953,31 @@ initializeSystemProperties(J9JavaVM *vm)
 			J9VMSystemProperty *currentProp = NULL;
 			char *propNameCopy = NULL;
 			char *propValueCopy = NULL;
+			const char *propString = optionString + 2;
 			UDATA propNameLen = 0;
 
-			propValue = strchr(optionString + 2, '=');
+			propValue = strchr(propString, '=');
 			if (NULL == propValue) {
 				propNameLen = strlen(optionString) - 2;
-				propValue = optionString + 2 + propNameLen;
+				propValue = propString + propNameLen;
 			} else {
-				propNameLen = propValue - (optionString + 2);
+				propNameLen = propValue - propString;
 				++propValue;
 			}
+
+#if JAVA_SPEC_VERSION >= 26
+			if ((0 == strncmp(SYSPROP_JDK_MODULE_ENABLE_FINAL_FIELD_MUTATION, propString, LITERAL_STRLEN(SYSPROP_JDK_MODULE_ENABLE_FINAL_FIELD_MUTATION)))
+				|| (0 == strncmp(SYSPROP_JDK_MODULE_ILLEGAL_FINAL_FIELD_MUTATION, propString, LITERAL_STRLEN(SYSPROP_JDK_MODULE_ILLEGAL_FINAL_FIELD_MUTATION)))
+			) {
+				fprintf(stderr, "VM warning: Ignoring system property options whose names match the '-Djdk.module.*'. names that are reserved for internal use.\n");
+				continue;
+			}
+#endif /* JAVA_SPEC_VERSION >= 26 */
 
 			{
 				UDATA valueLength = strlen(propValue);
 
-				propNameCopy = (char *)getMUtf8String(vm, optionString + 2, propNameLen); /* get a copy of the property name */
+				propNameCopy = (char *)getMUtf8String(vm, propString, propNameLen); /* get a copy of the property name */
 				if (NULL == propNameCopy) {
 					rc = J9SYSPROP_ERROR_OUT_OF_MEMORY;
 					goto fail;
@@ -972,14 +1000,14 @@ initializeSystemProperties(J9JavaVM *vm)
 				} else if ('\0' != propValue[0]) {
 					/* Support for java.endorsed.dirs and java.ext.dirs is disabled in Java 9+. */
 					if (0 == strncmp(JAVA_ENDORSED_DIRS, propNameCopy, sizeof(JAVA_ENDORSED_DIRS))) {
-						j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_PROPERTY_JAVA_ENDORSED_DIR_UNSUPPORTED, optionString + 2);
+						j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_PROPERTY_JAVA_ENDORSED_DIR_UNSUPPORTED, propString);
 						j9mem_free_memory(propNameCopy);
 						j9mem_free_memory(propValueCopy);
 						rc = J9SYSPROP_ERROR_UNSUPPORTED_PROP;
 						goto fail;
 					}
 					if (0 == strncmp(JAVA_EXT_DIRS, propNameCopy, sizeof(JAVA_EXT_DIRS))) {
-						j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_PROPERTY_JAVA_EXT_DIR_UNSUPPORTED, optionString + 2);
+						j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_PROPERTY_JAVA_EXT_DIR_UNSUPPORTED, propString);
 						j9mem_free_memory(propNameCopy);
 						j9mem_free_memory(propValueCopy);
 						rc = J9SYSPROP_ERROR_UNSUPPORTED_PROP;
