@@ -435,6 +435,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _sleepMsBeforeCheckpoint;
 #endif
 
+   static uint32_t _minDiskSpaceForDisclaimMB; // MB
    static int32_t _minTimeBetweenMemoryDisclaims; // ms
    static int32_t _mallocTrimPeriod; // seconds
 

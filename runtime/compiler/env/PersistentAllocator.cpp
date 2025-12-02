@@ -705,13 +705,12 @@ PersistentAllocator::disclaimAllSegments()
 #ifdef LINUX
    bool verbose = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance);
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(_javaVM.jitConfig);
-   bool canDisclaimOnSwap = TR::Options::getCmdLineOptions()->getOption(TR_PreferSwapForMemoryDisclaim) && !compInfo->isSwapMemoryDisabled();
    j9thread_monitor_enter(_segmentMonitor);
    for (auto segmentIterator = _segments.begin(); segmentIterator != _segments.end(); ++segmentIterator)
       {
       J9MemorySegment &segment = *segmentIterator;
-      if (segment.vmemIdentifier.allocator == OMRPORT_VMEM_RESERVE_USED_MMAP_SHM || // Can disclaim to file
-        ((segment.vmemIdentifier.mode & J9PORT_VMEM_MEMORY_MODE_VIRTUAL) && canDisclaimOnSwap)) // Can disclaim to swap
+      if ((segment.vmemIdentifier.allocator == OMRPORT_VMEM_RESERVE_USED_MMAP_SHM && compInfo->canDisclaimOnFile()) ||
+          ((segment.vmemIdentifier.mode & J9PORT_VMEM_MEMORY_MODE_VIRTUAL) && compInfo->canDisclaimOnSwap()))
          {
          size_t segLength = segment.heapTop - segment.heapBase;
 #ifdef DEBUG_DISCLAIM

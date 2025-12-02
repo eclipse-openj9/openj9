@@ -889,6 +889,12 @@ public:
    bool              isSwapMemoryDisabled() {return _isSwapMemoryDisabled;}
    void              setIsSwapMemoryDisabled(bool b) {_isSwapMemoryDisabled = b;}
 
+   bool              canDisclaimOnSwap() {return _canDisclaimOnSwap;}
+   void              setCanDisclaimOnSwap(bool b) {_canDisclaimOnSwap = b;}
+
+   bool              canDisclaimOnFile() {return _canDisclaimOnFile;}
+   void              setCanDisclaimOnFile(bool b) {_canDisclaimOnFile = b;}
+
    TR_LinkHead0<TR_ClassHolder> *getListOfClassesToCompile() { return &_classesToCompileList; }
    int32_t getCompilationLag();
    int32_t getCompilationLagUnlocked() { return getCompilationLag(); } // will go away
@@ -1341,6 +1347,8 @@ private:
 #endif
    bool                   _isInShutdownMode;
    bool                   _isSwapMemoryDisabled;
+   bool                   _canDisclaimOnSwap; // true if swap is present, has free space and disclaim is not disabled
+   bool                   _canDisclaimOnFile; // true if /tmp has free space and is mounted on a suitable filesystem
    int32_t                _numCompThreads; // Number of usable compilation threads that does not include the diagnostic thread
    int32_t                _numDiagnosticThreads;
    int32_t                _numAllocatedCompThreads; // Number of allocated compilation threads that does not include the diagnostic thread

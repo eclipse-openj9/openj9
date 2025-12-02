@@ -343,7 +343,7 @@ private:
    TR_DataCache *allocateNewDataCache(uint32_t minimumSize);
    uint8_t *allocateDataCacheSpace(uint32_t size); // Made private for data cache reclamation.
    void freeDataCacheList(TR_DataCache *& head);
-   int disclaimSegment(J9MemorySegment *seg, bool canDisclaimOnSwap); // disclaim memory used for the indicated segment
+   int disclaimSegment(J9MemorySegment *seg, bool canDisclaimOnSwap, bool canDisclaimOnFile); // disclaim memory used for the indicated segment
 
    // Added as part of data cache reclamation
    void addToPool(Allocation *);
