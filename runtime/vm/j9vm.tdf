@@ -1045,3 +1045,7 @@ TraceEvent=Trc_VM_ThreadHelp_notifyUnblocker Overhead=1 Level=4 Template="Notify
 TraceEvent=Trc_VM_ThreadHelp_waitForSignal Overhead=1 Level=4 Template="WaitForSignal"
 TraceEvent=Trc_VM_ThreadHelp_startUnblocker Overhead=1 Level=4 Template="StartUnblocker"
 TraceEvent=Trc_VM_ThreadHelp_monitorWaitImpl Overhead=1 Level=4 Template="monitorWaitImpl obj=%p lock=%p"
+
+TraceEvent=Trc_VM_allocateJavaStack_stackBounds NoEnv Overhead=1 Level=1 Template="New Java stack stack=%p guardPage=%p pageSize=%zu end=%p size=%zu"
+TraceEvent=Trc_VM_freeJavaStack_stackBounds NoEnv Overhead=1 Level=1 Template="Free Java stack stack=%p guardPage=%p pageSize=%zu end=%p size=%zu"
+TraceEvent=Trc_VM_freeJavaStack_mprotectError NoEnv Overhead=1 Level=1 Template="Free Java stack error stack=%p errorcode=%u"
