@@ -2141,7 +2141,7 @@ typedef struct J9TranslationBufferSet {
 typedef struct J9EarlyLarvalFrame {
 	IDATA baseFramePC; /* The only field used to determine equality. */
 	U_16 numberOfUnsetFields;
-	U_16 *unsetFieldCpList;
+	J9ROMNameAndSignature **unsetFieldNASList;
 } J9EarlyLarvalFrame;
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 

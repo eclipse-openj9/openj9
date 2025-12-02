@@ -263,10 +263,9 @@ findAndMatchStack (J9BytecodeVerificationData *verifyData, IDATA targetPC, IDATA
 				J9StrictFieldEntry *entry = NULL;
 				/* Mark each strict field that is in the target frame unset field list as referenced. */
 				for (; unsetFieldIndex < earlyLarvalFrame->numberOfUnsetFields; unsetFieldIndex++) {
-					U_16 cpIndex = earlyLarvalFrame->unsetFieldCpList[unsetFieldIndex];
-					J9UTF8 *utf8string = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) (&constantPool[cpIndex]));
+					J9ROMNameAndSignature *nas = earlyLarvalFrame->unsetFieldNASList[unsetFieldIndex];
 					J9StrictFieldEntry query = {0};
-					query.nameutf8 = utf8string;
+					query.nas = nas;
 					entry = hashTableFind(verifyData->strictFields, &query);
 					if (NULL == entry) {
 						verifyData->errorDetailCode = BCV_ERR_STRICT_FIELD_NOT_VALID;

@@ -934,9 +934,8 @@ isFieldAccessCompatible(
 			}
 
 			if (isInitMethod && liveStack->uninitializedThis) {
-				J9UTF8 *fieldName = J9ROMNAMEANDSIGNATURE_NAME(J9ROMFIELDREF_NAMEANDSIGNATURE(fieldRef));
 				J9StrictFieldEntry query = {0};
-				query.nameutf8 = fieldName;
+				query.nas = J9ROMFIELDREF_NAMEANDSIGNATURE(fieldRef);
 				J9StrictFieldEntry *entry = hashTableFind(verifyData->strictFields, &query);
 				if ((NULL != entry) && !entry->isSet) {
 					Assert_RTV_true(verifyData->strictFieldsUnsetCount > 0);
@@ -1313,9 +1312,8 @@ createOrResetStrictFieldsList(J9BytecodeVerificationData *verifyData, BOOLEAN *a
 		field = romFieldsStartDo(verifyData->romClass, &fieldWalkState);
 		while (NULL != field) {
 			if (J9ROMFIELD_IS_STRICT(field->modifiers) && J9_ARE_NO_BITS_SET(field->modifiers, J9AccStatic)) {
-				J9UTF8 *fieldName = J9ROMFIELDSHAPE_NAME(field);
 				J9StrictFieldEntry newEntry = {0};
-				newEntry.nameutf8 = fieldName;
+				newEntry.nas = &field->nameAndSignature;
 				newEntry.isSet = FALSE;
 				newEntry.isReferenced = FALSE;
 				hashTableAdd(verifyData->strictFields, &newEntry);
@@ -1344,7 +1342,7 @@ resetEarlyLarvalFrames(J9BytecodeVerificationData *verifyData)
 	J9EarlyLarvalFrame *entry = (J9EarlyLarvalFrame *)hashTableStartDo(verifyData->earlyLarvalFrames, &hashTableState);
 	while (NULL != entry) {
 		if (entry->numberOfUnsetFields > 0) {
-			j9mem_free_memory(entry->unsetFieldCpList);
+			j9mem_free_memory(entry->unsetFieldNASList);
 		}
 		hashTableDoRemove(&hashTableState);
 		entry = hashTableNextDo(&hashTableState);
