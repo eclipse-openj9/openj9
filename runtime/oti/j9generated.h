@@ -30,7 +30,9 @@ extern "C" {
 #include "j9port.h" /* for definition of struct J9RIParameters */
 #include "jithook_internal.h" /* for definition of struct J9JITHookInterface */
 
-#define J9_LOWEST_STACK_SLOT(vmThread) ((UDATA *) ((vmThread)->stackObject + 1))
+#define J9_LOWEST_STACK_SLOT(vmThread) ((J9_ARE_ALL_BITS_SET((vmThread)->javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JAVA_STACK_GUARD_PAGES)) \
+				? (UDATA *)((UDATA)(vmThread)->stackObject->guardPage + (vmThread)->javaVM->defaultPageSize) \
+				: (UDATA *) ((vmThread)->stackObject + 1))
 
 #define J9_JNI_UNWRAP_REFERENCE(o)  (*(j9object_t*)(o))
 
