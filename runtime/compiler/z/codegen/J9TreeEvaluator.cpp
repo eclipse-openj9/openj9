@@ -4905,6 +4905,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
       }
 
    TR::LabelSymbol *zeroSecondDimLabel = generateLabelSymbol(cg);
+
    // Bypass dim2 size calculation if the size is zero.
    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, zeroSecondDimLabel, cursor);
    // Call helper if the length is negative or length * componentSize is larger that INT32_MAX (overflow).
@@ -5017,16 +5018,21 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
    bool isOffHeapAllocationEnabled = TR::Compiler->om.isOffHeapAllocationEnabled();
+   TR::LabelSymbol *zeroLengthSecondDimLabel = NULL;
    if (isOffHeapAllocationEnabled)
       {
       // Store first element's address in data address field.
       cursor = generateRXInstruction(cg, TR::InstOpCode::STG, node, sizeReg, generateS390MemoryReference(resultReg, fej9->getOffsetOfContiguousDataAddrField(), cg), cursor);
+      // If the second dimension length is zero, allocate the leaf array OOL.
+      zeroLengthSecondDimLabel = generateLabelSymbol(cg);
+      // During the initial allocation of the first dimension, the scratch register was set as follows:
+      //  Upper 32 bits: length of the second dimension.
+      //  Lower 32 bits: length of the first dimension.
+      // Comparing the full 64-bit scratch register with its lower 32 bits sets the condition code to COND_BE if the second dimension is zero.
+      cursor = generateRREInstruction(cg, TR::InstOpCode::CGFR, node, scratchReg, scratchReg, cursor);
+      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, zeroLengthSecondDimLabel, cursor);
       // Subtract the header size from the dim2 size, so we can move to the next leaf by adding this value to the address of the leaf's first element.
       cursor = generateRILInstruction(cg, TR::InstOpCode::SLFI, node, dim2SizeReg, (int32_t)TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cursor);
-      // The length of the second dimension is stored in the upper 32 bits of the scratch register.
-      // Comparing the full 64-bit scratch register with its lower 32 bits sets the condition code to COND_BNE if the second dimension is non-zero.
-      cursor = generateRREInstruction(cg, TR::InstOpCode::CGFR, node, scratchReg, scratchReg, cursor);
-      // The condition code has already been set and must remain unchanged during the second dimension allocation loop in this code path.
       }
 #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
@@ -5040,8 +5046,14 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    cursor = generateRXInstruction(cg, TR::InstOpCode::STFH, node, scratchReg, generateS390MemoryReference(dim1SizeReg,
       static_cast<int32_t>(TR::Compiler->om.offsetOfContiguousArraySizeField()), cg), cursor);
    int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
-
-   if (shiftAmount == 0)
+   if (shiftAmount > 0)
+      {
+      // Calculate the compressed reference of leaf array in the higher 32bits of dim2SizeReg.
+      cursor = generateRIEInstruction(cg, TR::InstOpCode::RISBG, node, dim2SizeReg, dim1SizeReg, 0, 31, 32-shiftAmount, cursor);
+      // Store the compressed 32 bit leaf address in the relevant element of the first dim array.
+      cursor = generateRXInstruction(cg, TR::InstOpCode::STFH, node, dim2SizeReg, generateS390MemoryReference(sizeReg, 0, cg), cursor);
+      }
+   else
       {
       // Store the leaf address in the relevant element of the first dim array.
       cursor = generateRXInstruction(cg, (TR::Compiler->om.compressObjectReferences() ? TR::InstOpCode::ST : TR::InstOpCode::STG), node, dim1SizeReg,
@@ -5051,48 +5063,55 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
    if (isOffHeapAllocationEnabled)
       {
-      if (shiftAmount > 0)
-         {
-         // Compress the leaf array reference and store it in the first element of the dimension array.
-         // Avoid using any instructions that could affect the branch condition in this code path.
-         cursor = generateRSInstruction(cg, TR::InstOpCode::SRLG, node, dim1SizeReg, dim1SizeReg, shiftAmount, cursor);
-         cursor = generateRXInstruction(cg, TR::InstOpCode::ST, node, dim1SizeReg, generateS390MemoryReference(sizeReg, 0, cg), cursor);
-         // Decompress the leaf array reference.
-         cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, dim1SizeReg, dim1SizeReg, shiftAmount, cursor);
-         }
       // Load the first element address.
       cursor = generateRXInstruction(cg, TR::InstOpCode::LA, node, dim1SizeReg,
          generateS390MemoryReference(dim1SizeReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cursor);
-      // Store the address of the first element in the data address field only if the second dimension length is non-zero.
-      cursor = generateRSInstruction(cg, TR::InstOpCode::STOCG, node, dim1SizeReg, getMaskForBranchCondition(TR::InstOpCode::COND_BNE),
-         generateS390MemoryReference(dim1SizeReg, (fej9->getOffsetOfContiguousDataAddrField() - TR::Compiler->om.contiguousArrayHeaderSizeInBytes()), cg), cursor);
-      // Load the next leaf address in dim1SizeReg.
-      cursor = generateRXInstruction(cg, TR::InstOpCode::LA, node, dim1SizeReg, generateS390MemoryReference(dim1SizeReg, dim2SizeReg, 0, cg), cursor);
+      // Store the first element address in data address field.
+      cursor = generateRXInstruction(cg, TR::InstOpCode::STG, node, dim1SizeReg, generateS390MemoryReference(dim1SizeReg,
+         (fej9->getOffsetOfContiguousDataAddrField() - TR::Compiler->om.contiguousArrayHeaderSizeInBytes()), cg), cursor);
       }
-   else
 #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
-      {
-      if (shiftAmount > 0)
-         {
-         // Calculate the compressed reference of leaf array in the higher 32bits of dim2SizeReg.
-         cursor = generateRIEInstruction(cg, TR::InstOpCode::RISBG, node, dim2SizeReg, dim1SizeReg, 0, 31, 32-shiftAmount, cursor);
-         // Store the compressed 32 bit leaf address in the relevant element of the first dim array.
-         cursor = generateRXInstruction(cg, TR::InstOpCode::STFH, node, dim2SizeReg, generateS390MemoryReference(sizeReg, 0, cg), cursor);
-         // Load the next leaf address in dim1SizeReg.
-         cursor = generateRREInstruction(cg, TR::InstOpCode::ALGFR, node, dim1SizeReg, dim2SizeReg, cursor);
-         }
-      else
-         {
-         // Load the next leaf address in dim1SizeReg.
-         cursor = generateRXInstruction(cg, TR::InstOpCode::LA, node, dim1SizeReg, generateS390MemoryReference(dim1SizeReg, dim2SizeReg, 0, cg), cursor);
-         }
-      }
 
+   // Load the next leaf address in dim1SizeReg.
+   cursor = generateRREInstruction(cg, TR::InstOpCode::ALGFR, node, dim1SizeReg, dim2SizeReg, cursor);
    // Load the next element address of the first dim array in sizeReg.
    cursor = generateRXInstruction(cg, TR::InstOpCode::LA, node, sizeReg, generateS390MemoryReference(sizeReg, elementSize, cg), cursor);
    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRCT, node, scratchReg, secondDimLabel, cursor);
    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_B, node, controlFlowEndLabel, cursor);
-   iComment("Allocation done!");
+
+   /********************************************* OOL zero length offheap leaf allocator *********************************************/
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+   if (isOffHeapAllocationEnabled)
+      {
+      TR_S390OutOfLineCodeSection *zeroLengthSecondDimAlloc = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(zeroLengthSecondDimLabel, controlFlowEndLabel, cg);
+      cg->getS390OutOfLineCodeSectionList().push_front(zeroLengthSecondDimAlloc);
+      zeroLengthSecondDimAlloc->swapInstructionListsWithCompilation();
+      generateS390LabelInstruction(cg, TR::InstOpCode::label, node, zeroLengthSecondDimLabel);
+
+      // Store the class field.
+      generateRXInstruction(cg, (compressedObjectHeaders ? TR::InstOpCode::ST : TR::InstOpCode::STG), node, classReg,
+         generateS390MemoryReference(dim1SizeReg, static_cast<int32_t>(TR::Compiler->om.offsetOfObjectVftField()), cg));
+      TR::Register *leafArrayRefReg = dim1SizeReg;
+      if (shiftAmount > 0)
+         {
+         leafArrayRefReg = dim2SizeReg;
+         // Calculate the compressed reference of leaf array in leafArrayRefReg.
+         generateRSInstruction(cg, TR::InstOpCode::SRLG, node, leafArrayRefReg, dim1SizeReg, shiftAmount);
+         }
+      // Store the leaf address in the relevant element of the first dim array.
+      generateRXInstruction(cg, (TR::Compiler->om.compressObjectReferences() ? TR::InstOpCode::ST : TR::InstOpCode::STG), node, leafArrayRefReg,
+            generateS390MemoryReference(sizeReg, 0, cg));
+      // Load the next leaf address in dim1SizeReg.
+      size_t leafArraySize = OMR::align(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), alignmentConstant);
+      generateRXInstruction(cg, TR::InstOpCode::LA, node, dim1SizeReg, generateS390MemoryReference(dim1SizeReg, leafArraySize, cg));
+      // Load the next element address of the first dim array in sizeReg.
+      generateRXInstruction(cg, TR::InstOpCode::LA, node, sizeReg, generateS390MemoryReference(sizeReg, elementSize, cg));
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRCT, node, scratchReg, zeroLengthSecondDimLabel);
+
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, controlFlowEndLabel);
+      zeroLengthSecondDimAlloc->swapInstructionListsWithCompilation();
+      }
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
    TR::LabelSymbol *slowPathLabel = generateLabelSymbol(cg);
    cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, inlineAllocFailLabel, cursor);
