@@ -203,47 +203,16 @@ handler_IProfiler_profilingSample(JITServer::ClientStream *client, TR_J9VM *fe, 
    }
 
 static bool
-handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::MessageType &response)
+handleResponse(JITServer::MessageType response, JITServer::ClientStream *client, TR::CompilationInfoPerThread *compInfoPT, TR::Compilation *comp, TR_J9VM *fe, J9VMThread *vmThread)
    {
    using JITServer::MessageType;
-   TR::CompilationInfoPerThread *compInfoPT = fe->_compInfoPT;
-   J9VMThread *vmThread = compInfoPT->getCompilationThread();
-   TR_Memory  *trMemory = compInfoPT->getCompilation()->trMemory();
-   TR::Compilation *comp = compInfoPT->getCompilation();
+
    TR::CompilationInfo *compInfo = compInfoPT->getCompilationInfo();
-
-   TR_ASSERT(TR::MonitorTable::get()->getClassUnloadMonitorHoldCount(compInfoPT->getCompThreadId()) == 0, "Must not hold classUnloadMonitor");
-   TR::MonitorTable *table = TR::MonitorTable::get();
-   TR_ASSERT(table && table->isThreadInSafeMonitorState(vmThread), "Must not hold any monitors when waiting for server");
-
-   response = client->read();
-
-   // Acquire VM access and check for possible class unloading
-   acquireVMAccessNoSuspend(vmThread);
-
-   // If JVM has unloaded classes inform the server to abort this compilation
-   uint8_t interruptReason = compInfoPT->compilationShouldBeInterrupted();
-   if (interruptReason && response != MessageType::jitDumpPrintIL)
-      {
-      // Inform the server if compilation is not yet complete
-      if ((response != MessageType::compilationCode) &&
-          (response != MessageType::compilationFailure) &&
-          (response != MessageType::AOTCache_serializedAOTMethod) &&
-          (response != MessageType::AOTCache_storedAOTMethod) &&
-          (response != MessageType::AOTCache_failure))
-         client->writeError(JITServer::MessageType::compilationInterrupted, 0 /* placeholder */);
-
-      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Interrupting remote compilation (interruptReason %u) in handleServerMessage(%s) for %s @ %s",
-                                                          interruptReason, JITServer::messageNames[response], comp->signature(), comp->getHotnessName());
-
-      Trc_JITServerInterruptRemoteCompile(vmThread, interruptReason, JITServer::messageNames[response], comp->signature(), comp->getHotnessName());
-      comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted in handleServerMessage");
-      }
-
+   TR_Memory *trMemory = comp->trMemory();
    TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
 
    bool done = false;
+
    switch (response)
       {
       case MessageType::compilationCode:
@@ -3089,6 +3058,69 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       default:
          // It is vital that this remains a hard error during dev!
          TR_ASSERT(false, "JITServer: handleServerMessage received an unknown message type: %d\n", response);
+      }
+
+   return done;
+   }
+
+static bool
+handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::MessageType &response)
+   {
+   using JITServer::MessageType;
+   TR::CompilationInfoPerThread *compInfoPT = fe->_compInfoPT;
+   J9VMThread *vmThread = compInfoPT->getCompilationThread();
+   TR::Compilation *comp = compInfoPT->getCompilation();
+
+   TR_ASSERT(TR::MonitorTable::get()->getClassUnloadMonitorHoldCount(compInfoPT->getCompThreadId()) == 0, "Must not hold classUnloadMonitor");
+   TR::MonitorTable *table = TR::MonitorTable::get();
+   TR_ASSERT(table && table->isThreadInSafeMonitorState(vmThread), "Must not hold any monitors when waiting for server");
+
+   response = client->read();
+
+   // Acquire VM access and check for possible class unloading
+   acquireVMAccessNoSuspend(vmThread);
+
+   // If JVM has unloaded classes inform the server to abort this compilation
+   uint8_t interruptReason = compInfoPT->compilationShouldBeInterrupted();
+   if (interruptReason && response != MessageType::jitDumpPrintIL)
+      {
+      // Inform the server if compilation is not yet complete
+      if ((response != MessageType::compilationCode) &&
+          (response != MessageType::compilationFailure) &&
+          (response != MessageType::AOTCache_serializedAOTMethod) &&
+          (response != MessageType::AOTCache_storedAOTMethod) &&
+          (response != MessageType::AOTCache_failure))
+         client->writeError(MessageType::compilationInterrupted, 0 /* placeholder */);
+
+      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Interrupting remote compilation (interruptReason %u) in handleServerMessage(%s) for %s @ %s",
+                                                          interruptReason, JITServer::messageNames[response], comp->signature(), comp->getHotnessName());
+
+      Trc_JITServerInterruptRemoteCompile(vmThread, interruptReason, JITServer::messageNames[response], comp->signature(), comp->getHotnessName());
+      comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted in handleServerMessage");
+      }
+
+   bool done = false;
+   try
+      {
+      done = handleResponse(response, client, compInfoPT, comp, fe, vmThread);
+      }
+   catch(std::exception &e)
+      {
+      interruptReason = COMP_EXCEPTION_THROWN;
+      compInfoPT->setCompilationShouldBeInterrupted(interruptReason);
+
+      client->writeError(MessageType::compilationInterrupted, 0 /* placeholder */);
+
+      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Interrupting remote compilation (%s) in handleServerMessage(%s) for %s @ %s",
+                                                          e.what(), JITServer::messageNames[response], comp->signature(), comp->getHotnessName());
+
+      Trc_JITServerInterruptRemoteCompile(vmThread, interruptReason, JITServer::messageNames[response], comp->signature(), comp->getHotnessName());
+
+      // rethrow, rather than calling failCompilation so that exception type is
+      // preserved
+      throw;
       }
 
    releaseVMAccess(vmThread);
