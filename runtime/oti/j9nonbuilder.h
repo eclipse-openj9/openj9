@@ -3177,6 +3177,8 @@ typedef struct J9JavaStack {
 #if JAVA_SPEC_VERSION >= 19
 	BOOLEAN isVirtual;
 #endif /* JAVA_SPEC_VERSION >= 19 */
+	void *guardPage;
+	UDATA defaultProtection;
 } J9JavaStack;
 
 /* @ddr_namespace: map_to_type=J9Object */
@@ -6584,6 +6586,7 @@ typedef struct J9JavaVM {
 	int64_t prevProcTimestamp;
 	omrthread_monitor_t cpuUtilCacheMutex;
 #endif /* defined(OMR_THR_YIELD_ALG) */
+	UDATA defaultPageSize;
 } J9JavaVM;
 
 #define J9JFR_SAMPLER_STATE_UNINITIALIZED 0
