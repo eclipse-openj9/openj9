@@ -2812,6 +2812,8 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_String_isLatin1,            "isLatin1",            "()Z")},
       {x(TR::java_lang_String_startsWith,          "startsWith",          "(Ljava/lang/String;I)Z")},
       {x(TR::java_lang_String_valueOf_C,           "valueOf",             "(C)Ljava/lang/String;")},
+      {x(TR::java_lang_String_subString,           "substring",           "(II)Ljava/lang/String;")},
+      {x(TR::java_lang_String_deduplicateStrings,  "deduplicateStrings",  "(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Object;)V")},
       {  TR::unknownMethod}
       };
 
@@ -2856,6 +2858,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_text_NumberFormat_format,             "format",   "(D)Ljava/lang/String;")},
       {  TR::unknownMethod}
       };
+
    static X StringBuilderMethods[] =
       {
       {x(TR::java_lang_StringBuilder_init,               "<init>",             "()V")},
@@ -2872,7 +2875,15 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_StringBuilder_ensureCapacityImpl, "ensureCapacityImpl", "(I)V")},
       {x(TR::java_lang_StringBuilder_lengthInternal,     "lengthInternal",     "()I")},
       {x(TR::java_lang_StringBuilder_toString,           "toString",           "()Ljava/lang/String;")},
+      {  TR::unknownMethod}
+      };
 
+    static X AbstractStringBuilderMethods[] =
+      {
+      {x(TR::java_lang_AbstractStringBuilder_append_String,          "append",                 "(Ljava/lang/String;)Ljava/lang/AbstractStringBuilder;")},
+      {x(TR::java_lang_AbstractStringBuilder_ensureCapacityInternal, "ensureCapacityInternal", "(I)V")},
+      {x(TR::java_lang_AbstractStringBuilder_inflateIfNeededFor,     "inflateIfNeededFor",     "(Ljava/lang/String;)V")},
+      {x(TR::java_lang_AbstractStringBuilder_putStringAt,            "putStringAt",            "(ILjava/lang/String;)V")},
       {  TR::unknownMethod}
       };
 
@@ -3306,6 +3317,7 @@ void TR_ResolvedJ9Method::construct()
       { x(TR::java_lang_StringLatin1_indexOfChar,                             "indexOfChar",   "([BIII)I")},
       { x(TR::java_lang_StringLatin1_inflate_BICII,                           "inflate",       "([BI[CII)V")},
       { x(TR::java_lang_StringLatin1_inflate_BIBII,                           "inflate",       "([BI[BII)V")},
+      { x(TR::java_lang_StringLatin1_newString,                               "newString",     "([BII)Ljava/lang/String;")},
       { x(TR::java_lang_StringLatin1_replace_char,                            "replace",       "([BCC)Ljava/lang/String;")},
       { x(TR::java_lang_StringLatin1_replace_CharSequence,                    "replace",       "([BI[BI[BI)Ljava/lang/String;")},
       { x(TR::java_lang_StringLatin1_toLowerCase,                             "toLowerCase",   "(Ljava/lang/String;[BLjava/util/Locale;)Ljava/lang/String;")},
@@ -4325,6 +4337,7 @@ void TR_ResolvedJ9Method::construct()
       { "jdk/internal/reflect/Reflection", ReflectionMethods },
       { "jdk/internal/util/Preconditions", PreconditionsMethods },
       { "jdk/internal/util/ArraysSupport", ArraysSupportMethods },
+      { "java/lang/AbstractStringBuilder", AbstractStringBuilderMethods },
       { 0 }
       };
    static Y class32[] =

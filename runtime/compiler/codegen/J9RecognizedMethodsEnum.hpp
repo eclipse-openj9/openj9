@@ -233,11 +233,14 @@
    java_lang_String_startsWith,
 
    java_lang_String_valueOf_C,
+   java_lang_String_subString,
+   java_lang_String_deduplicateStrings,
 
    java_lang_StringLatin1_indexOf,
    java_lang_StringLatin1_indexOfChar,
    java_lang_StringLatin1_inflate_BICII,
    java_lang_StringLatin1_inflate_BIBII,
+   java_lang_StringLatin1_newString,
    java_lang_StringLatin1_replace_char,
    java_lang_StringLatin1_replace_CharSequence,
    java_lang_StringLatin1_toLowerCase,
@@ -285,6 +288,11 @@
    java_lang_StringBuilder_ensureCapacityImpl,
    java_lang_StringBuilder_lengthInternal,
    java_lang_StringBuilder_toString,
+
+   java_lang_AbstractStringBuilder_append_String,
+   java_lang_AbstractStringBuilder_ensureCapacityInternal,
+   java_lang_AbstractStringBuilder_inflateIfNeededFor,
+   java_lang_AbstractStringBuilder_putStringAt,
 
    java_lang_Throwable_fillInStackTrace,
    java_lang_Throwable_printStackTrace,
