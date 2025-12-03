@@ -7440,7 +7440,17 @@ TR_ResolvedJ9Method::getResolvedDynamicMethod(TR::Compilation * comp, I_32 callS
       // the call site table entry to be resolved instead. The resolved method we construct is
       // linkToStatic, which is a VM internal native method that will prepare the call frame for
       // the actual method to be invoked using the last argument we push to stack (memberName object)
-      TR_OpaqueMethodBlock *dummyInvoke = _fe->getMethodFromName("java/lang/invoke/MethodHandle", "linkToStatic", "([Ljava/lang/Object;)Ljava/lang/Object;");
+      const char * className = "java/lang/invoke/MethodHandle";
+      const char * methodName = "linkToStatic";
+      const char * methodSignature = "([Ljava/lang/Object;)Ljava/lang/Object;";
+      TR_OpaqueMethodBlock *dummyInvoke = _fe->getMethodFromName(className, methodName, methodSignature);
+
+      // It is possible for getMethodFromName to return NULL in relocatable compilations
+      if (!dummyInvoke && comp->compileRelocatableCode())
+         comp->failCompilation<J9::AOTHasInvokeHandle>("getResolvedDynamicMethod: Failed to get method %s.%s%s from name", className, methodName, methodSignature);
+
+      TR_ASSERT_FATAL(dummyInvoke, "getResolvedDynamicMethod: dummyInvoke must exist %s.%s%s\n", className, methodName, methodSignature);
+
       int32_t signatureLength;
       char * linkToStaticSignature = _fe->getSignatureForLinkToStaticForInvokeDynamic(comp, signature, signatureLength);
       result = _fe->createResolvedMethodWithSignature(comp->trMemory(), dummyInvoke, NULL, linkToStaticSignature, signatureLength, this);
@@ -7515,7 +7525,17 @@ TR_ResolvedJ9Method::getResolvedHandleMethod(TR::Compilation * comp, I_32 cpInde
       // the method type table entry to be resolved instead. The resolved method we construct is
       // linkToStatic, which is a VM internal native method that will prepare the call frame for
       // the actual method to be invoked using the last argument we push to stack (memberName object)
-      TR_OpaqueMethodBlock *dummyInvoke = _fe->getMethodFromName("java/lang/invoke/MethodHandle", "linkToStatic", "([Ljava/lang/Object;)Ljava/lang/Object;");
+      const char * className = "java/lang/invoke/MethodHandle";
+      const char * methodName = "linkToStatic";
+      const char * methodSignature = "([Ljava/lang/Object;)Ljava/lang/Object;";
+      TR_OpaqueMethodBlock *dummyInvoke = _fe->getMethodFromName(className, methodName, methodSignature);
+
+      // It is possible for getMethodFromName to return NULL in relocatable compilations
+      if (!dummyInvoke && comp->compileRelocatableCode())
+         comp->failCompilation<J9::AOTHasInvokeHandle>("getResolvedHandleMethod: Failed to get method %s.%s%s from name", className, methodName, methodSignature);
+
+      TR_ASSERT_FATAL(dummyInvoke, "getResolvedHandleMethod: dummyInvoke must exist %s.%s%s\n", className, methodName, methodSignature);
+
       int32_t signatureLength;
       char * linkToStaticSignature = _fe->getSignatureForLinkToStaticForInvokeHandle(comp, signature, signatureLength);
       result = _fe->createResolvedMethodWithSignature(comp->trMemory(), dummyInvoke, NULL, linkToStaticSignature, signatureLength, this);

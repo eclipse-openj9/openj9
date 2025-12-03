@@ -55,6 +55,7 @@
 // Reasons for interrupting a compilation
 const uint8_t GC_COMP_INTERRUPT       = 1;
 const uint8_t SHUTDOWN_COMP_INTERRUPT = 2;
+const uint8_t COMP_EXCEPTION_THROWN   = 3;
 
 const  int32_t IDLE_THRESHOLD       = 50;  // % CPU
 
