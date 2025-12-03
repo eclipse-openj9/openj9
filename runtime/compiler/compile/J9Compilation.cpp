@@ -155,6 +155,8 @@ J9::Compilation::Compilation(int32_t id,
       TR::Environment *target
 #if defined(J9VM_OPT_JITSERVER)
       , size_t numPermanentLoaders
+      , bool isRemoteCompilation
+      , JITServer::ServerStream *stream
 #endif
       )
    : OMR::CompilationConnector(
@@ -200,10 +202,10 @@ J9::Compilation::Compilation(int32_t id,
    _skippedJProfilingBlock(false),
    _reloRuntime(reloRuntime),
 #if defined(J9VM_OPT_JITSERVER)
-   _remoteCompilation(false),
+   _remoteCompilation(isRemoteCompilation),
    _serializedRuntimeAssumptions(getTypedAllocator<SerializedRuntimeAssumption *>(self()->allocator())),
    _clientData(NULL),
-   _stream(NULL),
+   _stream(stream),
    _globalMemory(*::trPersistentMemory, heapMemoryRegion),
    _perClientMemory(_trMemory),
    _methodsRequiringTrampolines(getTypedAllocator<TR_OpaqueMethodBlock *>(self()->allocator())),

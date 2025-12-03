@@ -9300,6 +9300,8 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                &target
 #if defined(J9VM_OPT_JITSERVER)
                , p->_numPermanentLoaders
+               , that->_methodBeingCompiled->isRemoteCompReq()
+               , that->_methodBeingCompiled->_stream
 #endif
                );
 
@@ -9341,21 +9343,9 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                }
             }
 #if defined(J9VM_OPT_JITSERVER)
-         // JITServer TODO: put info in optPlan so that compilation constructor can do this
-         if (that->_methodBeingCompiled->isRemoteCompReq())
+         if (that->_methodBeingCompiled->isOutOfProcessCompReq())
             {
-            compiler->setRemoteCompilation();
-            // Create the KOT by default at the client if it's a remote compilation.
-            // getOrCreateKnownObjectTable() checks if TR_DisableKnownObjectTable is set or not.
-            compiler->getOrCreateKnownObjectTable();
-            }
-         else if (that->_methodBeingCompiled->isOutOfProcessCompReq())
-            {
-            compiler->setOutOfProcessCompilation();
-            // Create the KOT by default at the server as long as it is not disabled at the client.
-            compiler->getOrCreateKnownObjectTable();
             compiler->setClientData(that->getClientData());
-            compiler->setStream(that->_methodBeingCompiled->_stream);
             auto compInfoPTRemote = static_cast<TR::CompilationInfoPerThreadRemote *>(that);
             compiler->setAOTCacheStore(compInfoPTRemote->isAOTCacheStore());
 
