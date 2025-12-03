@@ -44,6 +44,10 @@ openjdk:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk25.git'
       branch: 'openj9'
+  26:
+    default:
+      repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk26.git'
+      branch: 'openj9'
   next:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk.git'
@@ -111,6 +115,7 @@ build_discarder:
     OpenJDK17: 3
     OpenJDK21: 3
     OpenJDK25: 3
+    OpenJDK26: 3
     OpenJDK: 3
     Personal: 30
     Pipeline: 100
@@ -158,6 +163,7 @@ boot_jdk_default:
       17: '17'
       21: '21'
       25: '24'
+      26: '24'
       next: '24'
     dir_strip:
       all: '1'
@@ -183,6 +189,7 @@ disable_javac_server:
     17: '--disable-javac-server'
     21: '--disable-javac-server'
     25: '--disable-javac-server'
+    26: '--disable-javac-server'
     next: '--disable-javac-server'
 #========================================#
 # Valhalla
@@ -272,6 +279,7 @@ ppc64_aix:
     17: '--disable-warnings-as-errors'
     21: '--disable-warnings-as-errors'
     25: '--disable-warnings-as-errors'
+    26: '--disable-warnings-as-errors'
     next: '--disable-warnings-as-errors'
   build_env:
     cmd:
@@ -305,6 +313,7 @@ x86-64_linux:
     17: '!sw.os.cent.6'
     21: '!sw.os.cent.6'
     25: '!sw.os.cent.6'
+    26: '!sw.os.cent.6'
     next: '!sw.os.cent.6'
 #========================================#
 # Linux x86 64bits /w JITSERVER
