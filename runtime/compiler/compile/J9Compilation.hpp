@@ -396,6 +396,9 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    // fails serialization by setting _aotCacheStore to false if we are not ignoring the client's SCC, and otherwise
    // fails the compilation entirely.
    void addThunkRecord(const AOTCacheThunkRecord *record);
+
+   void setVectorApiTransformationPerformed(bool vectorApiTransformationPerformed) { _vectorApiTransformationPerformed = vectorApiTransformationPerformed; }
+   bool getVectorApiTransformationPerformed() const { return _vectorApiTransformationPerformed; }
 #else
    bool isDeserializedAOTMethod() const { return false; }
    bool ignoringLocalSCC() const { return false; }
@@ -642,6 +645,9 @@ private:
    // For the server, the number of permanent loaders the client has specified
    // we must use for this compilation.
    size_t _numPermanentLoaders;
+   // Records whether any vectorization optimizations have taken place
+   // in the compilation.
+   bool _vectorApiTransformationPerformed;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 #if !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED)

@@ -399,6 +399,10 @@ class TR_VectorAPIExpansion : public TR::Optimization
             TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "VectorLength%d is not implemented in %s at %s %s\n",
                                      vectorLength, comp->signature(), comp->getHotnessName(comp->getMethodHotness()), comp->isDLT() ? "DLT" : "");
             }
+         if (length == TR::NoVectorLength)
+            {
+            comp->setVectorApiTransformationPerformed(true);
+            }
 
          return length;
          }
@@ -1772,6 +1776,10 @@ class TR_VectorAPIExpansion : public TR::Optimization
                                   TR::DataType::getName(opCode.getVectorResultDataType()),
                                   comp->signature(), comp->getHotnessName(comp->getMethodHotness()), comp->isDLT() ? "DLT" : "");
          }
+      if (!result)
+         {
+         comp->setVectorApiTransformationPerformed(true);
+         }
 
       return result;
       }
@@ -1809,6 +1817,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
                                   withMask ? "with Mask" : "",
                                   comp->signature(), comp->getHotnessName(comp->getMethodHotness()), comp->isDLT() ? "DLT" : "");
          }
+      comp->setVectorApiTransformationPerformed(true);
 
       return TR::BadILOp;
       }

@@ -691,6 +691,7 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
                   TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Not vectorizing node since it's used by %s",
                                         node->getOpCode().getName());
                   }
+               comp()->setVectorApiTransformationPerformed(true);
 #endif
                dontVectorizeNode(child);
                }
@@ -1092,6 +1093,7 @@ TR_VectorAPIExpansion::findVectorMethods(TR::Compilation *comp, bool reportFound
                logprintf(trace, log, "%s found Vector API method\n", OPT_DETAILS_VECTOR);
                return true;
                }
+            comp->setVectorApiTransformationPerformed(true);
             }
          }
       }
@@ -1698,6 +1700,7 @@ TR_VectorAPIExpansion::boxChild(TR::TreeTop *treeTop, TR::Node *node, uint32_t i
                                objectType == Vector ? "Vector" : "Mask", bitsLength, TR::DataType::getName(elementType),
                                comp()->signature(), comp()->getHotnessName(comp()->getMethodHotness()), comp()->isDLT() ? "DLT" : "");
       }
+   comp()->setVectorApiTransformationPerformed(true);
 
    return true;
    }
@@ -1809,6 +1812,7 @@ TR_VectorAPIExpansion::unboxNode(TR::Node *parentNode, TR::Node *operand, vapiOb
                                operandObjectType == Vector ? "Vector" : "Mask", bitsLength, TR::DataType::getName(elementType),
                                comp()->signature(), comp()->getHotnessName(comp()->getMethodHotness()), comp()->isDLT() ? "DLT" : "");
       }
+   comp()->setVectorApiTransformationPerformed(true);
 
    return newOperand;
    }
@@ -2637,6 +2641,8 @@ TR::Node *TR_VectorAPIExpansion::transformLoadFromArray(TR_VectorAPIExpansion *o
                                   opcode.getName(), TR::DataType::getName(opcode.getVectorResultDataType()),
                                   comp->signature(), comp->getHotnessName(comp->getMethodHotness()), comp->isDLT() ? "DLT" : "");
          }
+
+      comp->setVectorApiTransformationPerformed(true);
       }
 
    return node;
@@ -2792,6 +2798,7 @@ TR::Node *TR_VectorAPIExpansion::transformStoreToArray(TR_VectorAPIExpansion *op
                                   opcode.getName(), TR::DataType::getName(opcode.getVectorResultDataType()),
                                   comp->signature(), comp->getHotnessName(comp->getMethodHotness()), comp->isDLT() ? "DLT" : "");
          }
+      comp->setVectorApiTransformationPerformed(true);
       }
 
    return node;
@@ -2994,6 +3001,7 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
             TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Scalarized using %s in %s at %s",
                                      opcode.getName(), comp->signature(), comp->getHotnessName(comp->getMethodHotness()));
             }
+         comp->setVectorApiTransformationPerformed(true);
          }
       }
    else
@@ -3085,6 +3093,7 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
                                      opcode.getName(), TR::DataType::getName(opcode.getVectorResultDataType()),
                                      comp->signature(), comp->getHotnessName(comp->getMethodHotness()), comp->isDLT() ? "DLT" : "");
             }
+         comp->setVectorApiTransformationPerformed(true);
 
          }
       }
@@ -3211,6 +3220,7 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
          {
          TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Scalarized fromBitsCoerced for %s in %s at%s", TR::DataType::getName(elementType), comp->signature(), comp->getHotnessName(comp->getMethodHotness()));
          }
+      comp->setVectorApiTransformationPerformed(true);
       }
    else if (mode == doVectorization)
       {
@@ -3227,6 +3237,7 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
                                   TR::DataType::getName(ilOpCode.getVectorResultDataType()), comp->signature(),
                                   comp->getHotnessName(comp->getMethodHotness()), comp->isDLT() ? "DLT" : "");
          }
+      comp->setVectorApiTransformationPerformed(true);
       }
 
    return node;
