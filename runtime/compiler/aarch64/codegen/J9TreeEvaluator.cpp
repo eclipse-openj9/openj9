@@ -138,7 +138,7 @@ void VMgenerateCatchBlockBBStartPrologue(TR::Node *node, TR::Instruction *fenceI
       TR::addDependency(conditions, arg2Reg, TR::RealRegister::x1, TR_GPR, cg);
       TR::addDependency(conditions, arg3Reg, TR::RealRegister::x2, TR_GPR, cg);
 
-      TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_EQ, conditions);
+      TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, node, snippetLabel, TR::CC_EQ, conditions);
       gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
       snippet->gcMap().setGCRegisterMask(0xFFFFFFFF);
 
@@ -336,7 +336,7 @@ J9::ARM64::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::CodeGe
    generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmw, node, scratchReg, classFlagsMemRef);
    static_assert(J9ClassHasWatchedFields == 0x100, "We assume that J9ClassHasWatchedFields is 0x100");
    generateTestImmInstruction(cg, node, scratchReg, 0x600); // 0x600 is immr:imms for 0x100
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, fieldReportLabel, TR::CC_NE);
+   generateConditionalBranchInstruction(cg, node, fieldReportLabel, TR::CC_NE);
 
    generateReportOOL->swapInstructionListsWithCompilation();
 
@@ -394,7 +394,7 @@ J9::ARM64::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(TR::
    TR::MemoryReference *fieldMemRef = TR::MemoryReference::createWithDisplacement(cg, dataSnippetRegister, offsetInDataBlock);
    generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, scratchReg, fieldMemRef);
    generateCompareImmInstruction(cg, node, scratchReg, -1, true);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, unresolvedLabel, TR::CC_EQ);
+   generateConditionalBranchInstruction(cg, node, unresolvedLabel, TR::CC_EQ);
 
    generateReportOOL->swapInstructionListsWithCompilation();
 
@@ -585,12 +585,12 @@ generateSoftwareReadBarrier(TR::Node *node, TR::CodeGenerator *cg, bool isArdbar
    generateTrg1MemInstruction(cg, loadOp, node, evacuateReg,
          TR::MemoryReference::createWithDisplacement(cg, vmThreadReg, comp->fej9()->thisThreadGetEvacuateBaseAddressOffset()));
    generateCompareInstruction(cg, node, tempReg, evacuateReg, isArdbari); // 64-bit compare in ardbari
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, endLabel, TR::CC_LT);
+   generateConditionalBranchInstruction(cg, node, endLabel, TR::CC_LT);
 
    generateTrg1MemInstruction(cg, loadOp, node, evacuateReg,
          TR::MemoryReference::createWithDisplacement(cg, vmThreadReg, comp->fej9()->thisThreadGetEvacuateTopAddressOffset()));
    generateCompareInstruction(cg, node, tempReg, evacuateReg, isArdbari); // 64-bit compare in ardbari
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, endLabel, TR::CC_GT);
+   generateConditionalBranchInstruction(cg, node, endLabel, TR::CC_GT);
 
    // TR_softwareReadBarrier helper expects the vmThread in x0.
    generateMovInstruction(cg, node, x0Reg, vmThreadReg);
@@ -856,7 +856,7 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
          loadConstant64(cg, node, heapSize, temp2Reg);
          }
       generateCompareInstruction(cg, node, temp1Reg, temp2Reg, true);
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_CS);
+      generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_CS);
       cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:010VMnonNullSrcWrtBarCardCheckEvaluator:01oldCheckDone"), *srm);
 
       TR::LabelSymbol *noChkLabel = generateLabelSymbol(cg);
@@ -938,7 +938,7 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
          }
 
       generateCompareInstruction(cg, node, temp1Reg, temp2Reg, true);
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_CC);
+      generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_CC);
 
       cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:010VMnonNullSrcWrtBarCardCheckEvaluator:05sourceCheckDone"), *srm);
 
@@ -953,7 +953,7 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
       static_assert(J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST == 0xf0, "We assume that J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST is 0xf0");
       generateTrg1MemInstruction(cg, (TR::Compiler->om.compressObjectReferences() ? TR::InstOpCode::ldrimmw : TR::InstOpCode::ldrimmx), node, temp1Reg, TR::MemoryReference::createWithDisplacement(cg, dstReg, TR::Compiler->om.offsetOfHeaderFlags()));
       generateTestImmInstruction(cg, node, temp1Reg, 0x703, false); // 0x703 is immr:imms for 0xf0
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_NE);
+      generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_NE);
 
       cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:010VMnonNullSrcWrtBarCardCheckEvaluator:06rememberedBitCheckDone"), *srm);
 
@@ -1055,7 +1055,7 @@ VMCardCheckEvaluator(
          loadConstant64(cg, node, heapSize, temp2Reg);
          }
       generateCompareInstruction(cg, node, temp1Reg, temp2Reg, true);
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_CS);
+      generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_CS);
       cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:020VMCardCheckEvaluator:03heapCheckDone"), *srm);
       }
 
@@ -1184,7 +1184,7 @@ J9::ARM64::TreeEvaluator::conditionalHelperEvaluator(TR::Node *node, TR::CodeGen
    TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference());
    cg->addSnippet(snippet);
    TR::ARM64ConditionCode cc = (testNode->getOpCodeValue() == TR::icmpeq) ? TR::CC_EQ : TR::CC_NE;
-   TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, cc, conditions);
+   TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, node, snippetLabel, cc, conditions);
    gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
    snippet->gcMap().setGCRegisterMask(0xffffffff);
    // ARM64HelperCallSnippet generates "bl" instruction
@@ -1387,7 +1387,7 @@ J9::ARM64::TreeEvaluator::generateCheckForValueMonitorEnterOrExit(TR::Node *node
       helperCallLabel = generateLabelSymbol(cg);
 
    // If obj is value type or value based class instance, call VM helper and throw IllegalMonitorState exception, else continue as usual
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, helperCallLabel, TR::CC_NE);
+   generateConditionalBranchInstruction(cg, node, helperCallLabel, TR::CC_NE);
 
    // TODO: There is now the possibility of multiple distinct OOL sections with helper calls to be generated when
    // evaluating the TR::monent or TR::monexit nodes:
@@ -1475,7 +1475,7 @@ generateLockwordAddressLookup(TR::CodeGenerator *cg, TR::Node *node, TR::Registe
       TR::LabelSymbol *fallThruFromMonitorLookupCacheLabel = generateLabelSymbol(cg);
 
       // If the lockword offset in the class pointer <= 0, then lookup monitor from the cache
-      auto branchInstrToLookup = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, monitorLookupCacheLabel, TR::CC_LE);
+      auto branchInstrToLookup = generateConditionalBranchInstruction(cg, node, monitorLookupCacheLabel, TR::CC_LE);
       TR_Debug * debugObj = cg->getDebug();
       if (debugObj)
          {
@@ -1516,7 +1516,7 @@ generateLockwordAddressLookup(TR::CodeGenerator *cg, TR::Node *node, TR::Registe
       generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, tempReg, userDataMR);
 
       generateCompareInstruction(cg, node, tempReg, objReg, true);
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, callLabel, TR::CC_NE);
+      generateConditionalBranchInstruction(cg, node, callLabel, TR::CC_NE);
 
       int32_t offsetOfAlternateLockword = offsetof(J9ObjectMonitor, alternateLockword);
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, addrReg, monitorReg, offsetOfAlternateLockword);
@@ -1526,7 +1526,7 @@ generateLockwordAddressLookup(TR::CodeGenerator *cg, TR::Node *node, TR::Registe
       }
    else
       {
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, callLabel, TR::CC_LE);
+      generateConditionalBranchInstruction(cg, node, callLabel, TR::CC_LE);
       generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, addrReg, objReg, tempReg);
       }
 
@@ -1625,7 +1625,7 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
 
    generateCompareInstruction(cg, node, dataReg, metaReg, true);
 
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, OOLLabel, TR::CC_NE);
+   generateConditionalBranchInstruction(cg, node, OOLLabel, TR::CC_NE);
 
    static const bool useMemoryBarrierForMonitorExit = feGetEnv("TR_aarch64UseMemoryBarrierForMonitorExit") != NULL;
    if (useMemoryBarrierForMonitorExit)
@@ -1680,7 +1680,7 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
       generateCompareInstruction(cg, node, metaReg, tempReg, true);
       TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference(), OOLEndLabel);
       cg->addSnippet(snippet);
-      TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_NE);
+      TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, node, snippetLabel, TR::CC_NE);
       gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
       snippet->gcMap().setGCRegisterMask(0xffffffff);
 
@@ -1768,7 +1768,7 @@ J9::ARM64::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::CodeGenerator 
 
    generateCompareImmInstruction(cg, node, src1Reg, secondChild->getLongInt(), true); // 64-bit compare
 
-   TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_EQ);
+   TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, node, snippetLabel, TR::CC_EQ);
    gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
    snippet->gcMap().setGCRegisterMask(0xffffffff);
    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
@@ -1830,7 +1830,7 @@ void genSuperClassTest(TR::Node *node, TR::Node *classNode, TR::Register *instan
       static_assert(((J9AccInterface | J9AccClassArray) < UINT_MAX && (J9AccInterface | J9AccClassArray) > 0), "(J9AccInterface | J9AccClassArray) is not a 32-bit number");
       loadConstant32(cg, node, (J9AccClassArray | J9AccInterface), scratchRegister2);
       generateTestInstruction(cg, node, scratchRegister1, scratchRegister2);
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, falseLabel, TR::CC_NE);
+      generateConditionalBranchInstruction(cg, node, falseLabel, TR::CC_NE);
 
       srm->reclaimScratchRegister(scratchRegister1);
       srm->reclaimScratchRegister(scratchRegister2);
@@ -1872,7 +1872,7 @@ void genSuperClassTest(TR::Node *node, TR::Node *classNode, TR::Register *instan
    instanceClassDepthReg = NULL; // prevent re-using this register by error
 
    // if objectClassDepth is less than or equal to castClassDepth, then call Helper
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, falseLabel, TR::CC_LE);
+   generateConditionalBranchInstruction(cg, node, falseLabel, TR::CC_LE);
 
    // Load the superclasses array of the instance class and check if the superclass that appears at the depth of the cast class is in fact the cast class.
    // If not, the instance class and cast class are not in the same hierarchy.
@@ -1985,7 +1985,7 @@ void genInstanceOfOrCheckCastObjectArrayTest(TR::Node *node, TR::Register *insta
    else
       {
       generateTestImmInstruction(cg, node, scratchReg, 0x400); // 0x400 is immr:imms for 0x10000
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, falseLabel, TR::CC_EQ);
+      generateConditionalBranchInstruction(cg, node, falseLabel, TR::CC_EQ);
       }
 
    // If it's an array, load the component ROM class and test the modifiers to see if this is a primitive array.
@@ -2155,7 +2155,7 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
                profiledClassesIt++;
                if (profiledClassesIt != profiledClassesItEnd)
                   {
-                  generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+                  generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_EQ);
                   }
                }
             }
@@ -2239,22 +2239,22 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
              */
             if (isNextItemHelperCall(it, itEnd))
                {
-               generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, callHelperLabel, TR::CC_NE);
+               generateConditionalBranchInstruction(cg, node, callHelperLabel, TR::CC_NE);
                }
             else if (!isNextItemGoToFalse(it, itEnd))
                {
                // If other tests follow, branch to doneLabel
-               generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+               generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_EQ);
                }
             break;
          case CastClassCacheTest:
             if (isNextItemHelperCall(it, itEnd))
                {
-               generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, callHelperLabel, TR::CC_GT);
+               generateConditionalBranchInstruction(cg, node, callHelperLabel, TR::CC_GT);
                }
             else if (!isNextItemGoToFalse(it, itEnd))
                {
-               generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_LE);
+               generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_LE);
                }
             break;
          case NullTest:
@@ -2459,7 +2459,7 @@ J9::ARM64::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::CodeGenerator
                profiledClassesIt++;
                if (profiledClassesIt != profiledClassesItEnd)
                   {
-                  generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+                  generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_EQ);
                   }
                }
             }
@@ -2553,12 +2553,12 @@ J9::ARM64::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::CodeGenerator
              */
             if (isNextItemHelperCall(it, itEnd) || isNextItemGoToFalse(it, itEnd))
                {
-               generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, callHelperLabel, TR::CC_NE);
+               generateConditionalBranchInstruction(cg, node, callHelperLabel, TR::CC_NE);
                }
             else
                {
                // When other tests follow, branch to doneLabel if EQ flag is set
-               generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+               generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_EQ);
                }
             break;
          case NullTest:
@@ -2802,7 +2802,7 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
          }
       // Must be an unsigned comparison on sizes.
       //
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, callLabel, TR::CC_HI, conditions);
+      generateConditionalBranchInstruction(cg, node, callLabel, TR::CC_HI, conditions);
 
       // At this point, lengthReg must contain non-negative value.
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ubfmx, node, tempReg, lengthReg, 31); // uxtw
@@ -2920,7 +2920,7 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
          }
       if (!isWithinMaxSafeSize)
          {
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, callLabel, TR::CC_CC, conditions);
+         generateConditionalBranchInstruction(cg, node, callLabel, TR::CC_CC, conditions);
          }
 
       }
@@ -2933,7 +2933,7 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
    //Here we check if we overflow the TLH Heap Top
    //branch to heapAlloc Snippet if we overflow (ie callLabel).
    generateCompareInstruction(cg, node, tempReg, heapTopReg, true);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, callLabel, TR::CC_GT, conditions);
+   generateConditionalBranchInstruction(cg, node, callLabel, TR::CC_GT, conditions);
 
    if (comp->getOption(TR_TLHPrefetch) && (!isTooSmallToPrefetch))
       {
@@ -3035,7 +3035,7 @@ genZeroInitObject(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uin
          node, tempReg1, objectReg, std::abs(static_cast<int>(headerSize - 16)));
 
       generateCompareImmInstruction(cg, node, dataSizeReg, 64, true);
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, mediumLabel, TR::CC_LT);
+      generateConditionalBranchInstruction(cg, node, mediumLabel, TR::CC_LT);
       generateLogicalShiftRightImmInstruction(cg, node, tempReg2, dataSizeReg, 6, true);
       generateLogicalImmInstruction(cg, TR::InstOpCode::andimmx, node, dataSizeReg, dataSizeReg, true, 5); // N = true, immr:imms = 5
 
@@ -3045,16 +3045,16 @@ genZeroInitObject(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uin
       generateMemSrc2Instruction(cg, TR::InstOpCode::stpoffx, node, TR::MemoryReference::createWithDisplacement(cg, tempReg1, 48), zeroReg, zeroReg);
       generateMemSrc2Instruction(cg, TR::InstOpCode::stpprex, node, TR::MemoryReference::createWithDisplacement(cg, tempReg1, 64), zeroReg, zeroReg);
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmx, node, tempReg2, tempReg2, 1);
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, loopStartLabel, TR::CC_NE);
+      generateConditionalBranchInstruction(cg, node, loopStartLabel, TR::CC_NE);
 
       generateLabelInstruction(cg, TR::InstOpCode::label, node, mediumLabel);
       generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, tempReg2, tempReg1, dataSizeReg);
       generateCompareImmInstruction(cg, node, dataSizeReg, 16, true);
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, write16Label, TR::CC_LE);
+      generateConditionalBranchInstruction(cg, node, write16Label, TR::CC_LE);
       generateCompareImmInstruction(cg, node, dataSizeReg, 32, true);
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, write32Label, TR::CC_LE);
+      generateConditionalBranchInstruction(cg, node, write32Label, TR::CC_LE);
       generateCompareImmInstruction(cg, node, dataSizeReg, 48, true);
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, write48Label, TR::CC_LE);
+      generateConditionalBranchInstruction(cg, node, write48Label, TR::CC_LE);
 
       generateMemSrc2Instruction(cg, TR::InstOpCode::stpoffx, node, TR::MemoryReference::createWithDisplacement(cg, tempReg2, -48), zeroReg, zeroReg);
       generateLabelInstruction(cg, TR::InstOpCode::label, node, write48Label);
@@ -3119,7 +3119,7 @@ genZeroInitObject(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uin
          if (loopCount > 1)
             {
             generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmx, node, tempReg2, tempReg2, 1);
-            generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, loopStart, TR::CC_NE);
+            generateConditionalBranchInstruction(cg, node, loopStart, TR::CC_NE);
             }
          }
       for (int i = 0; i < residueCount; i++)
@@ -3843,7 +3843,7 @@ J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
       TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference(), OOLEndLabel);
       cg->addSnippet(snippet);
-      TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_NE);
+      TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, node, snippetLabel, TR::CC_NE);
       gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
       snippet->gcMap().setGCRegisterMask(0xffffffff);
 
@@ -4066,7 +4066,7 @@ J9::ARM64::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference());
    cg->addSnippet(snippet);
 
-   gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, (reversed ? TR::CC_CS : TR::CC_LS));
+   gcPoint = generateConditionalBranchInstruction(cg, node, snippetLabel, (reversed ? TR::CC_CS : TR::CC_LS));
 
    gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
    snippet->gcMap().setGCRegisterMask(0xffffffff);
@@ -4116,7 +4116,7 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *srcReg, TR::R
    destArrayClassReg = NULL; // prevent re-using this register by error
 
    generateCompareInstruction(cg, node, destComponentClassReg, sourceClassReg, true);
-   instr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+   instr = generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_EQ);
    if (debugObj)
       {
       debugObj->addInstructionComment(instr, "done if component type of the destination array equals to source object class");
@@ -4144,7 +4144,7 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *srcReg, TR::R
          loadAddressConstant(cg, false, node, reinterpret_cast<intptr_t>(objectClass), javaLangObjectClassReg);
          }
       generateCompareInstruction(cg, node, javaLangObjectClassReg, destComponentClassReg, true);
-      instr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+      instr = generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_EQ);
       if (debugObj)
          {
          debugObj->addInstructionComment(instr, "done if component type of the destination array equals to java/lang/Object");
@@ -4160,7 +4160,7 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *srcReg, TR::R
    generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, castClassCacheReg,
                               TR::MemoryReference::createWithDisplacement(cg, sourceClassReg, offsetof(J9Class, castClassCache)));
    generateCompareInstruction(cg, node, castClassCacheReg, destComponentClassReg, true);
-   instr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+   instr = generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_EQ);
    if (debugObj)
       {
       debugObj->addInstructionComment(instr, "done if component type of the destination array equals to castClassCache of source object class");
@@ -4199,7 +4199,7 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *srcReg, TR::R
             }
          }
       generateCompareInstruction(cg, node, arrayComponentClassReg, destComponentClassReg, true);
-      instr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+      instr = generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_EQ);
 
       if (debugObj)
          {
@@ -4217,7 +4217,7 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *srcReg, TR::R
    sourceClassReg = NULL;
    destComponentClassReg = NULL;
 
-   instr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, helperCallLabel, TR::CC_NE);
+   instr = generateConditionalBranchInstruction(cg, node, helperCallLabel, TR::CC_NE);
    if (debugObj)
       {
       debugObj->addInstructionComment(instr, "Call helper if super class test fails");
@@ -4354,7 +4354,7 @@ VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    // Same array, we are done.
    //
    generateCompareInstruction(cg, node, obj1Reg, obj2Reg, true);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+   generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_EQ);
 
    // If we know nothing about either object, test object1 first. It has to be an array.
    //
@@ -4388,17 +4388,17 @@ VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       if (snippetLabel == NULL)
          {
          snippetLabel = generateLabelSymbol(cg);
-         gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_NE);
+         gcPoint = generateConditionalBranchInstruction(cg, node, snippetLabel, TR::CC_NE);
          snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference(), doneLabel);
          cg->addSnippet(snippet);
          }
       else
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_NE);
+         generateConditionalBranchInstruction(cg, node, snippetLabel, TR::CC_NE);
       }
    else
       {
       // We have to take care of the un-equal class situation: both of them must be of reference array
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+      generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_EQ);
 
       // Object1 must be of reference component type, otherwise throw exception
       if (!node->isArrayChkReferenceArray1())
@@ -4420,12 +4420,12 @@ VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          if (snippetLabel == NULL)
             {
             snippetLabel = generateLabelSymbol(cg);
-            gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_NE);
+            gcPoint = generateConditionalBranchInstruction(cg, node, snippetLabel, TR::CC_NE);
             snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference(), doneLabel);
             cg->addSnippet(snippet);
             }
          else
-            generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_NE);
+            generateConditionalBranchInstruction(cg, node, snippetLabel, TR::CC_NE);
          }
 
       // Object2 must be of reference component type array, otherwise throw exception
@@ -4455,7 +4455,7 @@ VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          loadConstant32(cg, node, OBJECT_HEADER_SHAPE_MASK, tmp2Reg);
          generateTrg1Src2Instruction(cg, TR::InstOpCode::andx, node, tmp2Reg, tmp1Reg, tmp2Reg);
          generateCompareImmInstruction(cg, node, tmp2Reg, OBJECT_HEADER_SHAPE_POINTERS);
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_NE);
+         generateConditionalBranchInstruction(cg, node, snippetLabel, TR::CC_NE);
          }
       }
 
@@ -4537,7 +4537,7 @@ J9::ARM64::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Register *sr
          generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, tmp2Reg,
                                     TR::MemoryReference::createWithDisplacement(cg, metaReg, offsetof(J9VMThread, heapSizeForBarrierRange0)));
          generateCompareInstruction(cg, node, tmp1Reg, tmp2Reg, true);
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_CS); // greater or equal (unsigned)
+         generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_CS); // greater or equal (unsigned)
          }
 
       gcPoint = generateImmSymInstruction(cg, TR::InstOpCode::bl, node, reinterpret_cast<uintptr_t>(wbRef->getSymbol()->castToMethodSymbol()->getMethodAddress()),
@@ -4783,7 +4783,7 @@ J9::ARM64::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node *node, TR::Code
       snippet->gcMap().setGCRegisterMask(0xFFFFFFFF);
       }
 
-   gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, exceptionSnippetLabel, TR::CC_NE);
+   gcPoint = generateConditionalBranchInstruction(cg, node, exceptionSnippetLabel, TR::CC_NE);
    gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
 
    // ARM64HelperCallSnippet generates "bl" instruction
@@ -4872,7 +4872,7 @@ genCAS(TR::Node *node, TR::CodeGenerator *cg, TR_ARM64ScratchRegisterManager *sr
 
       if (!createDoneLabel)
          {
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_NE);
+         generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_NE);
          }
       }
    else
@@ -4928,7 +4928,7 @@ genCAS(TR::Node *node, TR::CodeGenerator *cg, TR_ARM64ScratchRegisterManager *sr
             genDecompressPointer(cg, node, resultReg);
             }
          }
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_NE);
+      generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_NE);
 
       if (casWithoutSync)
          {
@@ -5167,12 +5167,12 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
       generateTrg1MemInstruction(cg, loadOp, node, evacuateReg,
             TR::MemoryReference::createWithDisplacement(cg, vmThreadReg, comp->fej9()->thisThreadGetEvacuateBaseAddressOffset()));
       generateCompareInstruction(cg, node, tempReg, evacuateReg, true);
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, endLabel, TR::CC_LT);
+      generateConditionalBranchInstruction(cg, node, endLabel, TR::CC_LT);
 
       generateTrg1MemInstruction(cg, loadOp, node, evacuateReg,
             TR::MemoryReference::createWithDisplacement(cg, vmThreadReg, comp->fej9()->thisThreadGetEvacuateTopAddressOffset()));
       generateCompareInstruction(cg, node, tempReg, evacuateReg, true);
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, endLabel, TR::CC_GT);
+      generateConditionalBranchInstruction(cg, node, endLabel, TR::CC_GT);
 
       // TR_softwareReadBarrier helper expects the vmThread in x0.
       generateMovInstruction(cg, node, x0Reg, vmThreadReg);
@@ -5571,7 +5571,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
                generateTrg1Src2Instruction(cg, crc32DoubleWordOp, node, inputReg, inputReg, tmpReg);
                }
             generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmw, node, counterReg, counterReg, 1);
-            generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, loopLabel, TR::CC_GT);
+            generateConditionalBranchInstruction(cg, node, loopLabel, TR::CC_GT);
             sizeLeft &= 0x1f;
             if (sizeLeft > 0)
                {
@@ -5775,10 +5775,10 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
           * b.eq        loopHeaderLabel
           */
          generateCompareImmInstruction(cg, node, sizeLeftReg, 32, false);
-         auto branchToResidualInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, residualLabel, TR::CC_LT);
+         auto branchToResidualInstr = generateConditionalBranchInstruction(cg, node, residualLabel, TR::CC_LT);
          /* immr = 0, imms = 2 for 0x7 */
          generateTestImmInstruction(cg, node, baseReg, 2, true, true);
-         auto branchToLoopHeaderInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, loopHeaderLabel, TR::CC_EQ);
+         auto branchToLoopHeaderInstr = generateConditionalBranchInstruction(cg, node, loopHeaderLabel, TR::CC_EQ);
          if (debugObj)
             {
             debugObj->addInstructionComment(branchToResidualInstr, "Jump to residualLabel if length < 32");
@@ -5869,7 +5869,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
       TR::LabelSymbol *loopStartLabel = generateLabelSymbol(cg);
 
       generateCompareImmInstruction(cg, node, sizeLeftReg, 32, false);
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, residualLabel, TR::CC_LT);
+      generateConditionalBranchInstruction(cg, node, residualLabel, TR::CC_LT);
       auto loopHeaderLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, loopHeaderLabel);
       auto preBiasInstr = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmx, node, baseReg, baseReg, 8);
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmw, node, sizeLeftReg, sizeLeftReg, 32);
@@ -5882,10 +5882,10 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
          generateTrg1Src2Instruction(cg, crc32DoubleWordOp, node, inputReg, inputReg, tmpReg);
          }
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmw, node, sizeLeftReg, sizeLeftReg, 32);
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, loopStartLabel, TR::CC_GE);
+      generateConditionalBranchInstruction(cg, node, loopStartLabel, TR::CC_GE);
       /* sizeLeft &= 0x1f. immr = 0, imms = 4 for 0x1f */
       generateLogicalImmInstruction(cg, TR::InstOpCode::andsimmw, node, sizeLeftReg, sizeLeftReg, false, 4);
-      auto branchToDoneInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+      auto branchToDoneInstr = generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_EQ);
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, baseReg, baseReg, 8);
       auto residualLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, residualLabel);
       if (debugObj)
@@ -5921,7 +5921,7 @@ static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *
       TR::LabelSymbol *left8_15Label = generateLabelSymbol(cg);
 
       generateCompareImmInstruction(cg, node, sizeLeftReg, 8, false);
-      auto branchToResidual4Instr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, residual4Label, TR::CC_LT);
+      auto branchToResidual4Instr = generateConditionalBranchInstruction(cg, node, residual4Label, TR::CC_LT);
       auto tbzToLeft8_15Instr = generateTestBitBranchInstruction(cg, TR::InstOpCode::tbz, node, sizeLeftReg, 4, left8_15Label);
       auto tbzToLeft16_23Instr = generateTestBitBranchInstruction(cg, TR::InstOpCode::tbz, node, sizeLeftReg, 3, left16_23Label);
       generateTrg1MemInstruction(cg, TR::InstOpCode::ldrpostx, node, tmpReg, TR::MemoryReference::createWithDisplacement(cg, baseReg, 8));
@@ -6200,7 +6200,7 @@ static TR::Register *inlineStringHashCode(TR::Node *node, bool isCompressed, TR:
    loadConstant32(cg, node, 0, resultReg);
    generateCompareImmInstruction(cg, node, lengthReg, (isCompressed ? 16 : 8), false);
    TR::LabelSymbol *residualLabel = generateLabelSymbol(cg);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, residualLabel, TR::CC_LT);
+   generateConditionalBranchInstruction(cg, node, residualLabel, TR::CC_LT);
    if (comp->getOptions()->enableDebugCounters())
       {
       cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.StringHashCode/(%s)/%s:long",
@@ -6263,7 +6263,7 @@ static TR::Register *inlineStringHashCode(TR::Node *node, bool isCompressed, TR:
       generateTrg1Src2Instruction(cg, TR::InstOpCode::vmla4s, node, vtmp5Reg, vtmp2Reg, multiplier8Reg);
       generateTrg1Src2Instruction(cg, TR::InstOpCode::vorr16b, node, vtmp2Reg, vtmp5Reg, vtmp5Reg); /* mov vtmp2Reg.16b, vtmp5Reg.16b */
       }
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, loopLabel, TR::CC_GE);
+   generateConditionalBranchInstruction(cg, node, loopLabel, TR::CC_GE);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::vmla4s, node, vtmp2Reg, vtmp1Reg, multiplier4Reg);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::vmul4s, node, vtmp1Reg, vtmp2Reg, multiplierReg);
    generateTrg1Src1Instruction(cg, TR::InstOpCode::vaddv4s, node, vtmp1Reg, vtmp1Reg);
@@ -6271,7 +6271,7 @@ static TR::Register *inlineStringHashCode(TR::Node *node, bool isCompressed, TR:
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addsimmw, node, lengthReg, lengthReg, (isCompressed ? 16 : 8));
 
    TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+   generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_EQ);
 
    /* the remainder of the hash is calculated serially. */
    generateLabelInstruction(cg, TR::InstOpCode::label, node, residualLabel);
@@ -6281,7 +6281,7 @@ static TR::Register *inlineStringHashCode(TR::Node *node, bool isCompressed, TR:
                               TR::MemoryReference::createWithDisplacement(cg, dataAddrReg, (isCompressed ? 1 : 2)));
    generateTrg1Src2ShiftedInstruction(cg, TR::InstOpCode::addw, node, dataReg, dataReg, resultReg, TR::SH_LSL, 5);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::subw, node, resultReg, dataReg, resultReg);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, residualLabel, TR::CC_GT);
+   generateConditionalBranchInstruction(cg, node, residualLabel, TR::CC_GT);
 
    TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 3 + srm->numAvailableRegisters(), cg->trMemory());
    conditions->addPostCondition(arrayReg, TR::RealRegister::NoReg);
@@ -6408,7 +6408,7 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, TR::CodeGenerator* c
       {
       generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, dataAddrReg, TR::MemoryReference::createWithDisplacement(cg, arrayReg, cg->comp()->fej9()->getOffsetOfContiguousDataAddrField()));
       generateCompareImmInstruction(cg, node, dataAddrReg, 0, /* is64bit */ true);
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+      generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_EQ);
       }
    else
 #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
@@ -6436,7 +6436,7 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, TR::CodeGenerator* c
    if (!isOffsetConstZero)
       {
       generateTrg1Src2Instruction(cg, TR::InstOpCode::subsx, node, lengthReg, savedLengthReg, offsetReg);
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+      generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_EQ);
       }
    else
       {
@@ -6461,12 +6461,12 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, TR::CodeGenerator* c
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmx, node, lengthReg, lengthReg, isLatin1 ? 8 : 4);
 
    TR::LabelSymbol *lessThan8Label = generateLabelSymbol(cg);
-   auto branchToLessThan8LabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, lessThan8Label, TR::CC_LT);
+   auto branchToLessThan8LabelInstr = generateConditionalBranchInstruction(cg, node, lessThan8Label, TR::CC_LT);
 
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmx, node, lengthReg, lengthReg, isLatin1 ? 8 : 4);
 
    TR::LabelSymbol *residualLabel = generateLabelSymbol(cg);
-   auto branchToResidualLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, residualLabel, TR::CC_LT);
+   auto branchToResidualLabelInstr = generateConditionalBranchInstruction(cg, node, residualLabel, TR::CC_LT);
    if (comp->getOptions()->enableDebugCounters())
       {
       cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.StringIndexOf/(%s)/%s/%s:long",
@@ -6502,11 +6502,11 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, TR::CodeGenerator* c
 
    generateMovVectorElementToGPRInstruction(cg, TR::InstOpCode::umovxd, node, tmp1Reg, vtmp1Reg, 0);
    generateConditionalCompareImmInstruction(cg, node, tmp1Reg, 0, 0, TR::CC_CS, true);
-   auto branchBackToLoopLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, loopLabel, TR::CC_EQ);
+   auto branchBackToLoopLabelInstr = generateConditionalBranchInstruction(cg, node, loopLabel, TR::CC_EQ);
    TR::LabelSymbol *foundLabel = generateLabelSymbol(cg);
    auto branchToFoundLabelInstr = generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, tmp1Reg, foundLabel);
    generateCompareImmInstruction(cg, node, lengthReg, (isLatin1 ? (-16) : (-8)), true);
-   auto branchToDoneLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+   auto branchToDoneLabelInstr = generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_EQ);
    auto residualLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, residualLabel);
    generateTrg1MemInstruction(cg, TR::InstOpCode::vldurq, node, vtmp1Reg, TR::MemoryReference::createWithDisplacement(cg, endReg, -16));
    generateTrg1Src2Instruction(cg, (isLatin1 ? TR::InstOpCode::vcmeq16b : TR::InstOpCode::vcmeq8h), node, vtmp1Reg, vtmp0Reg, vtmp1Reg);
@@ -6541,7 +6541,7 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, TR::CodeGenerator* c
    generateMovVectorElementToGPRInstruction(cg, TR::InstOpCode::umovxd, node, tmp1Reg, vtmp1Reg, 0);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::lsrvx, node, tmp1Reg, tmp1Reg, lengthReg);
    generateCompareImmInstruction(cg, node, tmp1Reg, 0, true);
-   auto branchToDoneLabelInstr2 = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+   auto branchToDoneLabelInstr2 = generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_EQ);
    auto foundLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, foundLabel);
    generateTrg1Src1Instruction(cg, TR::InstOpCode::rbitx, node, tmp1Reg, tmp1Reg);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::subx, node, dataAddrReg, dataAddrReg, tmp0Reg);
@@ -6734,7 +6734,7 @@ static TR::Register *inlineIntrinsicStringIndexOfString(TR::Node *node, TR::Code
    // Outer loop
    generateLabelInstruction(cg, TR::InstOpCode::label, node, outerLoopLabel);
    generateCompareInstruction(cg, node, resultReg, maxReg, /* is64bit */ false);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, notFoundLabel, TR::CC_GT);
+   generateConditionalBranchInstruction(cg, node, notFoundLabel, TR::CC_GT);
 
    // Search for the first character
    if (isLatin1)
@@ -6773,7 +6773,7 @@ static TR::Register *inlineIntrinsicStringIndexOfString(TR::Node *node, TR::Code
    generateTrg1Src2Instruction(cg, TR::InstOpCode::subw, node, resultReg, resultReg, tmp2Reg);
 
    generateCompareInstruction(cg, node, resultReg, maxReg, /* is64bit */ false);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, notFoundLabel, TR::CC_GT);
+   generateConditionalBranchInstruction(cg, node, notFoundLabel, TR::CC_GT);
 
    // (s1addrReg + resultReg << shift) is 16-byte aligned here
    generateLabelInstruction(cg, TR::InstOpCode::label, node, firstCharLoopLabel);
@@ -6800,7 +6800,7 @@ static TR::Register *inlineIntrinsicStringIndexOfString(TR::Node *node, TR::Code
    generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, tmp1Reg, firstCharMatchedLabel);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmw, node, resultReg, resultReg, vecWidth >> shift);
    generateCompareInstruction(cg, node, resultReg, maxReg, /* is64bit */ false);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, firstCharLoopLabel, TR::CC_LE);
+   generateConditionalBranchInstruction(cg, node, firstCharLoopLabel, TR::CC_LE);
    generateLabelInstruction(cg, TR::InstOpCode::b, node, notFoundLabel);
 
    // First character matched in vector
@@ -6811,7 +6811,7 @@ static TR::Register *inlineIntrinsicStringIndexOfString(TR::Node *node, TR::Code
    generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, resultReg, resultReg, tmp1Reg);
 
    generateCompareInstruction(cg, node, resultReg, maxReg, /* is64bit */ false);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, notFoundLabel, TR::CC_GT);
+   generateConditionalBranchInstruction(cg, node, notFoundLabel, TR::CC_GT);
 
    // Compare the rest of s2
    if (isLatin1)
@@ -6846,15 +6846,15 @@ static TR::Register *inlineIntrinsicStringIndexOfString(TR::Node *node, TR::Code
    generateVectorShiftImmediateInstruction(cg, TR::InstOpCode::vshrn_8b, node, vtmp1Reg, vtmp1Reg, 4); // 8 bits x 16 -> 4 bits x 16
    generateMovVectorElementToGPRInstruction(cg, TR::InstOpCode::umovxd, node, tmp1Reg, vtmp1Reg, 0);
    generateCompareImmInstruction(cg, node, tmp1Reg, -1, /* is64bit */ true);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, unmatchedLabel, TR::CC_NE);
+   generateConditionalBranchInstruction(cg, node, unmatchedLabel, TR::CC_NE);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmw, node, s2idxReg, s2idxReg, vecWidth >> shift);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmw, node, tmp2Reg, tmp2Reg, 1);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, arrayCmpVectorLoopLabel, TR::CC_NE);
+   generateConditionalBranchInstruction(cg, node, arrayCmpVectorLoopLabel, TR::CC_NE);
 
    // Byte/char comparison
    generateLabelInstruction(cg, TR::InstOpCode::label, node, arrayCmpByteLoopLabel);
    generateCompareInstruction(cg, node, s2lenReg, s2idxReg);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_LE); // resultReg has the result
+   generateConditionalBranchInstruction(cg, node, doneLabel, TR::CC_LE); // resultReg has the result
 
    if (isLatin1)
       {
@@ -6868,7 +6868,7 @@ static TR::Register *inlineIntrinsicStringIndexOfString(TR::Node *node, TR::Code
       generateTrg1MemInstruction(cg, TR::InstOpCode::ldrhoff, node, tmp2Reg, TR::MemoryReference::createWithIndexReg(cg, s2addrReg, tmp2Reg));
       }
    generateCompareInstruction(cg, node, tmp1Reg, tmp2Reg, /* is64bit */ false);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, unmatchedLabel, TR::CC_NE);
+   generateConditionalBranchInstruction(cg, node, unmatchedLabel, TR::CC_NE);
 
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmw, node, s2idxReg, s2idxReg, 1);
    generateLabelInstruction(cg, TR::InstOpCode::b, node, arrayCmpByteLoopLabel);
@@ -7044,7 +7044,7 @@ static TR::Register *inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenerator
    TR::Register *dstEndReg = NULL;
 
    generateCompareImmInstruction(cg, node, lengthReg, 2);
-   auto branchToGEQ2BytesLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, GEQ2BytesLabel, TR::CC_CS);
+   auto branchToGEQ2BytesLabelInstr = generateConditionalBranchInstruction(cg, node, GEQ2BytesLabel, TR::CC_CS);
    if (debugObj)
       {
       debugObj->addInstructionComment(branchToGEQ2BytesLabelInstr, "Branch to GEQ2BytesLabel if the length >= 2");
@@ -7068,7 +7068,7 @@ static TR::Register *inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenerator
    generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, srcEndReg, srcAddrReg, lengthReg);
    generateTrg1Src2ShiftedInstruction(cg, TR::InstOpCode::addx, node, dstEndReg, dstAddrReg, lengthReg, TR::SH_LSL, 1);
    generateCompareImmInstruction(cg, node, lengthReg, 4);
-   auto branchToGEQ4BytesLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, GEQ4BytesLabel, TR::CC_HI);
+   auto branchToGEQ4BytesLabelInstr = generateConditionalBranchInstruction(cg, node, GEQ4BytesLabel, TR::CC_HI);
    if (debugObj)
       {
       debugObj->addInstructionComment(branchToDoneLabelInstr, "Branch to doneLabel");
@@ -7091,7 +7091,7 @@ static TR::Register *inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenerator
 
    auto GEQ4BytesLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, GEQ4BytesLabel);
    generateCompareImmInstruction(cg, node, lengthReg, 8);
-   auto branchToGEQ8BytesLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, GEQ8BytesLabel, TR::CC_HI);
+   auto branchToGEQ8BytesLabelInstr = generateConditionalBranchInstruction(cg, node, GEQ8BytesLabel, TR::CC_HI);
    if (debugObj)
       {
       debugObj->addInstructionComment(branchToDoneLabelInstr2, "Branch to doneLabel");
@@ -7116,7 +7116,7 @@ static TR::Register *inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenerator
    auto GEQ8BytesLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, GEQ8BytesLabel);
 
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmw, node, lengthReg, lengthReg, 16);
-   auto branchToLoopLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, loopLabel, TR::CC_HI);
+   auto branchToLoopLabelInstr = generateConditionalBranchInstruction(cg, node, loopLabel, TR::CC_HI);
    if (debugObj)
       {
       debugObj->addInstructionComment(branchToDoneLabelInstr3, "Branch to doneLabel");
@@ -7143,7 +7143,7 @@ static TR::Register *inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenerator
    generateVectorUXTLInstruction(cg, TR::Int8, node, vtmp0Reg, vtmp0Reg, false);
    generateVectorUXTLInstruction(cg, TR::Int8, node, vtmp1Reg, vtmp1Reg, false);
    generateMemSrc2Instruction(cg, TR::InstOpCode::vstppostq, node, TR::MemoryReference::createWithDisplacement(cg, dstAddrReg, 32), vtmp0Reg, vtmp1Reg);
-   auto branchBackwardToLoopLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, loopLabel, TR::CC_HI);
+   auto branchBackwardToLoopLabelInstr = generateConditionalBranchInstruction(cg, node, loopLabel, TR::CC_HI);
    generateTrg2MemInstruction(cg, TR::InstOpCode::vldpoffd, node, vtmp0Reg, vtmp1Reg, TR::MemoryReference::createWithDisplacement(cg, srcEndReg, -16));
    generateVectorUXTLInstruction(cg, TR::Int8, node, vtmp0Reg, vtmp0Reg, false);
    generateVectorUXTLInstruction(cg, TR::Int8, node, vtmp1Reg, vtmp1Reg, false);
@@ -7285,13 +7285,13 @@ static TR::Register *inlineHasNegativesOrCountPositives(TR::Node *node, bool isH
    generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, tmpReg, isHasNegatives ? foundLabel : foundVec16Label);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmw, node, indexReg, indexReg, 16);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmw, node, countReg, countReg, 1);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, loop16Label, TR::CC_NE);
+   generateConditionalBranchInstruction(cg, node, loop16Label, TR::CC_NE);
 
    // Less than 16 bytes remaining
    generateLabelInstruction(cg, TR::InstOpCode::label, node, lessThan16Label);
    generateLogicalImmInstruction(cg, TR::InstOpCode::andimmw, node, countReg, lengthReg, false, 3); // N = false, immr:imms = 3 for immediate value 0xf
    generateCompareImmInstruction(cg, node, countReg, 8, /* is64bit */ false);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, lessThan8Label, TR::CC_LT);
+   generateConditionalBranchInstruction(cg, node, lessThan8Label, TR::CC_LT);
 
    // 64-bit vector comparison
    generateTrg1MemInstruction(cg, TR::InstOpCode::vldroffd, node, vtmpReg, TR::MemoryReference::createWithIndexReg(cg, dataAddrReg, indexReg));
@@ -7308,10 +7308,10 @@ static TR::Register *inlineHasNegativesOrCountPositives(TR::Node *node, bool isH
    generateLabelInstruction(cg, TR::InstOpCode::label, node, loop1Label);
    generateTrg1MemInstruction(cg, TR::InstOpCode::ldrsboffw, node, tmpReg, TR::MemoryReference::createWithIndexReg(cg, dataAddrReg, indexReg));
    generateCompareImmInstruction(cg, node, tmpReg, 0, /* is64bit */ false);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, foundLabel, TR::CC_LT);
+   generateConditionalBranchInstruction(cg, node, foundLabel, TR::CC_LT);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmw, node, indexReg, indexReg, 1);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmw, node, countReg, countReg, 1);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, loop1Label, TR::CC_NE);
+   generateConditionalBranchInstruction(cg, node, loop1Label, TR::CC_NE);
 
    // Found no negative value
    generateLabelInstruction(cg, TR::InstOpCode::label, node, notFoundLabel);
@@ -8204,7 +8204,7 @@ genBoundCheck(TR::CodeGenerator *cg, TR::Node *node, TR::Register *indexReg, int
    else
       generateCompareImmInstruction(cg, node, arrayLengthReg, indexVal, false); // 32-bit compare
 
-   gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, boundCheckFailSnippetLabel, TR::CC_LS);
+   gcPoint = generateConditionalBranchInstruction(cg, node, boundCheckFailSnippetLabel, TR::CC_LS);
 
    // Exception edges don't have any live regs
    gcPoint->ARM64NeedsGCMap(cg, 0);

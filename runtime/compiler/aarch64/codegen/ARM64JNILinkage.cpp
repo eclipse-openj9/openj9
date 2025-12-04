@@ -110,7 +110,7 @@ void J9::ARM64::JNILinkage::releaseVMAccess(TR::Node *callNode, TR::Register *vm
 
    TR::Snippet *releaseVMAccessSnippet = new (trHeapMemory()) TR::ARM64HelperCallSnippet(cg(), callNode, releaseVMAccessSnippetLabel, relVMSymRef, releaseVMAccessRestartLabel);
    cg()->addSnippet(releaseVMAccessSnippet);
-   generateConditionalBranchInstruction(cg(), TR::InstOpCode::b_cond, callNode, releaseVMAccessSnippetLabel, TR::CC_NE);
+   generateConditionalBranchInstruction(cg(), callNode, releaseVMAccessSnippetLabel, TR::CC_NE);
    releaseVMAccessSnippet->gcMap().setGCRegisterMask(0);
 
    uint64_t mask = fej9->constReleaseVMAccessMask();
@@ -209,7 +209,7 @@ void J9::ARM64::JNILinkage::releaseVMAccessAtomicFree(TR::Node *callNode, TR::Re
 
    TR::Snippet *releaseVMAccessSnippet = new (trHeapMemory()) TR::ARM64HelperCallSnippet(cg(), callNode, releaseVMAccessSnippetLabel, relVMSymRef, releaseVMAccessRestartLabel);
    cg()->addSnippet(releaseVMAccessSnippet);
-   generateConditionalBranchInstruction(cg(), TR::InstOpCode::b_cond, callNode, releaseVMAccessSnippetLabel, TR::CC_NE);
+   generateConditionalBranchInstruction(cg(), callNode, releaseVMAccessSnippetLabel, TR::CC_NE);
    releaseVMAccessSnippet->gcMap().setGCRegisterMask(0);
 
    generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, releaseVMAccessRestartLabel);
@@ -246,7 +246,7 @@ void J9::ARM64::JNILinkage::acquireVMAccessAtomicFree(TR::Node *callNode, TR::Re
 
    TR::Snippet *reacquireVMAccessSnippet = new (trHeapMemory()) TR::ARM64HelperCallSnippet(cg(), callNode, reacquireVMAccessSnippetLabel, acqVMSymRef, reacquireVMAccessRestartLabel);
    cg()->addSnippet(reacquireVMAccessSnippet);
-   generateConditionalBranchInstruction(cg(), TR::InstOpCode::b_cond, callNode, reacquireVMAccessSnippetLabel, TR::CC_NE);
+   generateConditionalBranchInstruction(cg(), callNode, reacquireVMAccessSnippetLabel, TR::CC_NE);
    reacquireVMAccessSnippet->gcMap().setGCRegisterMask(0);
 
    generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, reacquireVMAccessRestartLabel);
@@ -382,7 +382,7 @@ void J9::ARM64::JNILinkage::restoreJNICallOutFrame(TR::Node *callNode, bool tear
 
       TR_ASSERT_FATAL(fej9->constJNIReferenceFrameAllocatedFlags() == 0x30000, "constJNIReferenceFrameAllocatedFlags must be 0x30000");
       generateTestImmInstruction(cg(), callNode, scratchReg, 0x401, false); // 0x401 is immr:imms for 0x30000
-      generateConditionalBranchInstruction(cg(), TR::InstOpCode::b_cond, callNode, refPoolSnippetLabel, TR::CC_NE);
+      generateConditionalBranchInstruction(cg(), callNode, refPoolSnippetLabel, TR::CC_NE);
       generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, refPoolRestartLabel);
       }
 

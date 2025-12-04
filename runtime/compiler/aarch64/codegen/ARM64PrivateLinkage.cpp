@@ -787,7 +787,7 @@ void J9::ARM64::PrivateLinkage::createPrologue(TR::Instruction *cursor)
       cursor = generateTrg1Src2Instruction(cg(), TR::InstOpCode::subsx, NULL, zeroReg, javaSP, somReg, cursor);
 
       TR::LabelSymbol *stackOverflowSnippetLabel = generateLabelSymbol(cg());
-      cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::b_cond, NULL, stackOverflowSnippetLabel, TR::CC_LS, cursor);
+      cursor = generateConditionalBranchInstruction(cg(), NULL, stackOverflowSnippetLabel, TR::CC_LS, cursor);
 
       TR::LabelSymbol *stackOverflowRestartLabel = generateLabelSymbol(cg());
       cursor = generateLabelInstruction(cg(), TR::InstOpCode::label, NULL, stackOverflowRestartLabel, cursor);
@@ -1629,7 +1629,7 @@ static TR::Instruction* buildStaticPICCall(TR::CodeGenerator *cg, TR::Node *call
       }
    generateCompareInstruction(cg, callNode, vftReg, tempReg, true);
 
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, missLabel, TR::CC_NE);
+   generateConditionalBranchInstruction(cg, callNode, missLabel, TR::CC_NE);
    if (comp->getOptions()->enableDebugCounters())
       {
       TR::MethodSymbol *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
@@ -1837,7 +1837,7 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
          isDebugCounterGenerated = true;
          /* Debug counter was generated. Generating instructions before debug counter instructions. */
          TR::LabelSymbol *slot1MissedLabel = generateLabelSymbol(cg);
-         TR::Instruction *branchToSlot1MissedLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, slot1MissedLabel, TR::CC_NE, prevCursor);
+         TR::Instruction *branchToSlot1MissedLabelInstr = generateConditionalBranchInstruction(cg, callNode, slot1MissedLabel, TR::CC_NE, prevCursor);
          generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, callNode, x10Reg, 0, firstBranchAddressCacheSlotLabel);
          TR::Instruction *branchToHitLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::b, callNode, hitLabel);
          TR::Instruction *slot1MissedLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, callNode, slot1MissedLabel);
@@ -1852,7 +1852,7 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
    if (!isDebugCounterGenerated)
       {
       generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, callNode, x10Reg, 0, firstBranchAddressCacheSlotLabel);
-      TR::Instruction *branchToHitLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, hitLabel, TR::CC_EQ);
+      TR::Instruction *branchToHitLabelInstr = generateConditionalBranchInstruction(cg, callNode, hitLabel, TR::CC_EQ);
       if (debugObj)
          {
          debugObj->addInstructionComment(branchToHitLabelInstr, "Jumps to hitLabel");
@@ -1888,7 +1888,7 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
             TR::LabelSymbol *slot2DoneLabel = generateLabelSymbol(cg);
             /* Debug counter was generated. Generating instructions before debug counter instructions recording hit for second cache slot. */
             TR::Instruction *cursor = generateCompareInstruction(cg, callNode, vftReg, x10Reg, true, prevCursor1);
-            TR::Instruction *branchToSlot2MissedLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, slot2MissedLabel, TR::CC_NE, cursor);
+            TR::Instruction *branchToSlot2MissedLabelInstr = generateConditionalBranchInstruction(cg, callNode, slot2MissedLabel, TR::CC_NE, cursor);
 
             /* Generating instructions before debug counter instructions recording cache miss. */
             cursor = generateLabelInstruction(cg, TR::InstOpCode::b, callNode, slot2DoneLabel, prevCursor2);
@@ -1912,7 +1912,7 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
             TR::LabelSymbol *slot2DoneLabel = generateLabelSymbol(cg);
             /* Debug counter was generated. Generating instructions before debug counter instructions recording hit for second cache slot. */
             TR::Instruction *cursor = generateCompareInstruction(cg, callNode, vftReg, x10Reg, true, prevCursor1);
-            TR::Instruction *branchToSlot2DoneLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, slot2DoneLabel, TR::CC_NE, cursor);
+            TR::Instruction *branchToSlot2DoneLabelInstr = generateConditionalBranchInstruction(cg, callNode, slot2DoneLabel, TR::CC_NE, cursor);
             /* Generating instructions after debug counter instructions. */
             TR::Instruction *slot2DoneLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, callNode, slot2DoneLabel);
             if (debugObj)
@@ -1938,7 +1938,7 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
 
       TR::LabelSymbol *secondBranchAddressCacheSlotLabel = ifcSnippet->getSecondBranchAddressCacheSlotLabel();
       generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, callNode, x10Reg, 0, secondBranchAddressCacheSlotLabel);
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, hitLabel, TR::CC_EQ);
+      generateConditionalBranchInstruction(cg, callNode, hitLabel, TR::CC_EQ);
 
       generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, callNode, x10Reg, TR::MemoryReference::createWithDisplacement(cg, vftReg, fej9->getOffsetOfLastITableFromClassField()));
       TR::LabelSymbol *interfacedClassSlotLabel = ifcSnippet->getInterfaceClassSlotLabel();
@@ -1967,7 +1967,7 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
             TR::LabelSymbol *lastITableMissedLabel = generateLabelSymbol(cg);
             TR::LabelSymbol *lastITableDoneLabel = generateLabelSymbol(cg);
             /* Debug counter was generated. Generating instructions before debug counter instructions recording hit for lastITable cache. */
-            TR::Instruction *branchToLastITableMissedLabelInstr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, lastITableMissedLabel, TR::CC_NE, prevCursor1);
+            TR::Instruction *branchToLastITableMissedLabelInstr = generateConditionalBranchInstruction(cg, callNode, lastITableMissedLabel, TR::CC_NE, prevCursor1);
 
             /* Generating instructions before debug counter instructions recording cache miss. */
             TR::Instruction *cmpInstr1 = generateCompareInstruction(cg, callNode, x9Reg, x9Reg, true, prevCursor2); /* to set Z flag */
@@ -1988,7 +1988,7 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
          }
 
       /* This conditional branch instruction with "always" condition code will be patched to b.ne instruction after second cache slot is filled. */
-      gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, ifcSnippetLabel, TR::CC_AL);
+      gcPoint = generateConditionalBranchInstruction(cg, callNode, ifcSnippetLabel, TR::CC_AL);
       loadConstant32(cg, callNode, fej9->getITableEntryJitVTableOffset(), x9Reg);
       generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, callNode, x11Reg, TR::MemoryReference::createWithDisplacement(cg, x10Reg, fej9->convertITableIndexToOffset(itableIndex)));
       /* PicBuilder.spp checks this instruction. It needs to be 'sub x9, x9, x11'. */
@@ -2001,7 +2001,7 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
       }
    else
       {
-      gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, ifcSnippetLabel, TR::CC_NE);
+      gcPoint = generateConditionalBranchInstruction(cg, callNode, ifcSnippetLabel, TR::CC_NE);
       TR::LabelSymbol *secondBranchAddressCacheSlotLabel = ifcSnippet->getSecondBranchAddressCacheSlotLabel();
 
       generateTrg1ImmSymInstruction(cg, TR::InstOpCode::ldrx, callNode, x10Reg, 0, secondBranchAddressCacheSlotLabel);
