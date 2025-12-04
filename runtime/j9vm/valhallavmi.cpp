@@ -204,6 +204,8 @@ newArrayHelper(JNIEnv *env, jclass componentType, jint length, bool isNullRestri
 
 	/* Set initial values. */
 	if (isNullRestricted) {
+		/* Set initial value again. The reference may be stale if J9AllocateIndexableObject triggered a gc. */
+		initialValue = J9_JNI_UNWRAP_REFERENCE(initialValueJni);
 		for (jint index = 0; index < length; index++) {
 			vmFuncs->storeFlattenableArrayElement(currentThread, newArray, index, initialValue);
 		}
