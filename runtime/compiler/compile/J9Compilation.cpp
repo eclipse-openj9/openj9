@@ -215,6 +215,7 @@ J9::Compilation::Compilation(int32_t id,
    _serializationRecords(decltype(_serializationRecords)::allocator_type(heapMemoryRegion)),
    _thunkRecords(decltype(_thunkRecords)::allocator_type(heapMemoryRegion)),
    _numPermanentLoaders(numPermanentLoaders),
+   _vectorApiTransformationPerformed(false),
 #endif /* defined(J9VM_OPT_JITSERVER) */
 #if !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED)
    _aotMethodDependencies(decltype(_aotMethodDependencies)::allocator_type(heapMemoryRegion)),
