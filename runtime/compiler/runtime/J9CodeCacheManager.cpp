@@ -436,7 +436,7 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
          // If swap is enabled, we can allocate memory with mmap(MAP_ANOYNMOUS|MAP_PRIVATE) and disclaim to swap
          // If swap is not enabled we can disclaim to a backing file
          TR::CompilationInfo * compInfo = TR::CompilationInfo::get(_jitConfig);
-         if (!TR::Options::getCmdLineOptions()->getOption(TR_PreferSwapForMemoryDisclaim) || compInfo->isSwapMemoryDisabled())
+         if (!compInfo->canDisclaimOnSwap())
             {
             segmentType |= MEMORY_TYPE_DISCLAIMABLE_TO_FILE;
             }
@@ -828,12 +828,11 @@ J9::CodeCacheManager::disclaimAllCodeCaches()
 
 #ifdef LINUX
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(_jitConfig);
-   bool canDisclaimOnSwap = TR::Options::getCmdLineOptions()->getOption(TR_PreferSwapForMemoryDisclaim) && !compInfo->isSwapMemoryDisabled();
 
    CacheListCriticalSection scanCacheList(self());
    for (TR::CodeCache *codeCache = self()->getFirstCodeCache(); codeCache; codeCache = codeCache->next())
       {
-      numDisclaimed += codeCache->disclaim(self(), canDisclaimOnSwap);
+      numDisclaimed += codeCache->disclaim(self(), compInfo->canDisclaimOnSwap(), compInfo->canDisclaimOnFile());
       }
 #endif // LINUX
 
