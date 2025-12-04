@@ -105,6 +105,8 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
          TR::Environment *target
 #if defined(J9VM_OPT_JITSERVER)
          , size_t numPermanentLoaders
+         , bool isRemoteCompilation
+         , JITServer::ServerStream *stream
 #endif
          );
 
