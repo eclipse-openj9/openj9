@@ -149,9 +149,6 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	J9CfrAttributeLoadableDescriptors *loadableDescriptors;
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	J9CfrAttributeImplicitCreation *implicitCreation;
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #if JAVA_SPEC_VERSION >= 11
 	J9CfrAttributeNestHost *nestHost;
 	J9CfrAttributeNestMembers *nestMembers;
@@ -178,7 +175,6 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 	BOOLEAN loadableDescriptorsAttributeRead = FALSE;
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	BOOLEAN implicitCreationAttributeRead = FALSE;
 	BOOLEAN nullRestrictedAttributeRead = FALSE;
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #if JAVA_SPEC_VERSION >= 11
@@ -962,24 +958,6 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 			break;
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		case CFR_ATTRIBUTE_ImplicitCreation:
-			/* JVMS: There may be at most one ImplicitCreation attribute in the attributes table of a ClassFile structure... */
-			if (implicitCreationAttributeRead) {
-				errorCode = J9NLS_CFR_ERR_MULTIPLE_IMPLICITCREATION_ATTRIBUTES__ID;
-				offset = address;
-				goto _errorFound;
-			}
-			implicitCreationAttributeRead = TRUE;
-
-			if (!ALLOC(implicitCreation, J9CfrAttributeImplicitCreation)) {
-				return -2;
-			}
-			attrib = (J9CfrAttribute*)implicitCreation;
-
-			CHECK_EOF(2);
-			NEXT_U16(implicitCreation->implicitCreationFlags, index);
-
-			break;
 	case CFR_ATTRIBUTE_NullRestricted:
 		/* JVMS: There must be no more than one NullRestricted attribute in the attributes table of a field_info structure */
 		if (nullRestrictedAttributeRead) {
@@ -2565,30 +2543,6 @@ checkAttributes(J9PortLibrary* portLib, J9CfrClassFile* classfile, J9CfrAttribut
 			break;
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		case CFR_ATTRIBUTE_ImplicitCreation:
-			/* JVMS: The ImplicitCreation attribute authorizes implicit instance creation of a non-abstract
-			 * value class... There must not be an ImplicitCreation attribute in the attributes table of any
-			 * other ClassFile structure representing a class, interface, or module.
-			 */
-			if (!J9_IS_CLASSFILE_VALUETYPE(classfile)
-			 || J9_ARE_ANY_BITS_SET(classfile->accessFlags, CFR_ACC_INTERFACE | CFR_ACC_ABSTRACT | CFR_ACC_MODULE)
-			) {
-				errorCode = J9NLS_CFR_ERR_IMPLICITCREATION_ILLEGAL_CLASS_MODIFIERS__ID;
-				goto _errorFound;
-				break;
-			}
-			value = ((J9CfrAttributeImplicitCreation*)attrib)->nameIndex;
-			if ((0 == value) || (value >= cpCount)) {
-				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
-				goto _errorFound;
-				break;
-			}
-			if ((0 != value) && (cpBase[value].tag != CFR_CONSTANT_Utf8)) {
-				errorCode = J9NLS_CFR_ERR_IMPLICITCREATION_NAME_NOT_UTF8__ID;
-				goto _errorFound;
-				break;
-			}
-			break;
 		case CFR_ATTRIBUTE_NullRestricted:
 			value = ((J9CfrAttributeNullRestricted*)attrib)->nameIndex;
 			if ((0 == value) || (value >= cpCount)) {

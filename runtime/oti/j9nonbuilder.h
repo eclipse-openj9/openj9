@@ -91,10 +91,7 @@
 #define J9ClassHasIdentity 0x80000
 #define J9ClassEnsureHashed 0x100000
 #define J9ClassHasOffloadAllowSubtasksNatives 0x200000
-/* TODO J9ClassAllowsInitialDefaultValue replaces J9ClassIsPrimitiveValueType for lw5 */
 #define J9ClassIsPrimitiveValueType 0x400000
-#define J9ClassAllowsInitialDefaultValue 0x400000
-#define J9ClassAllowsNonAtomicCreation 0x800000
 #define J9ClassNeedToPruneMemberNames 0x1000000
 #define J9ClassArrayIsNullRestricted 0x2000000
 #define J9ClassIsLoadedFromSnapshot 0x4000000
@@ -280,7 +277,7 @@
 #define J9_ROMCLASS_OPTINFO_LOADABLEDESCRIPTORS_ATTRIBUTE 0x20000
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-#define J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE 0x40000
+#define J9_ROMCLASS_OPTINFO_UNUSED_40000 0x40000
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #define J9_ROMCLASS_OPTINFO_UNUSED_80000 0x80000
 #define J9_ROMCLASS_OPTINFO_UNUSED_100000 0x100000
