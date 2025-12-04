@@ -1253,47 +1253,6 @@ TR_J9VMBase::getStaticReferenceFieldAtAddress(uintptr_t fieldAddress)
    return (uintptr_t)J9STATIC_OBJECT_LOAD(vmThread(), NULL, fieldAddress);
    }
 
-TR_J9VMBase::ObjectClassInfo
-TR_J9VMBase::getObjectClassInfoFromObjectReferenceLocation(TR::Compilation *comp,
-                                               uintptr_t objectReferenceLocation)
-   {
-   // The objectReferenceLocation is required to have come from
-   // KnownObjectTable::getPointerLocation().
-   TR::KnownObjectTable *knot = comp->getKnownObjectTable();
-   TR_ASSERT_FATAL(knot != NULL, "missing known object table");
-
-   TR::KnownObjectTable::Index knownObjectIndex =
-      knot->getExistingIndexAt((uintptr_t*)objectReferenceLocation);
-
-   TR_ASSERT_FATAL(
-      knownObjectIndex != TR::KnownObjectTable::UNKNOWN,
-      "objectReferenceLocation must originate from the known object table");
-
-   TR_J9VMBase::ObjectClassInfo ci = {};
-   TR::VMAccessCriticalSection vmAccess(comp);
-
-   uintptr_t objectReference = knot->getPointer(knownObjectIndex);
-   ci.clazz = getObjectClass(objectReference);
-   ci.isString = isString(ci.clazz);
-   ci.jlClass = getClassClassPointer(ci.clazz);
-   ci.isFixedJavaLangClass = (ci.jlClass == ci.clazz);
-   if (ci.isFixedJavaLangClass)
-      {
-      // A FixedClass constraint means something different
-      // when the class happens to be java/lang/Class.
-      // Must add constraints pertaining to the class that
-      // the java/lang/Class object represents.
-      ci.clazz = getClassFromJavaLangClass(objectReference);
-      }
-
-   ci.knownObjectIndex = knownObjectIndex;
-
-   J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
-   cpg->addEdge(cpg->knownObject(knownObjectIndex), ci.clazz);
-
-   return ci;
-   }
-
 TR::KnownObjectTable::ObjectInfo
 TR_J9VMBase::getObjClassInfoFromKnotIndexNoCaching(TR::Compilation *comp, TR::KnownObjectTable::Index knotIndex)
    {

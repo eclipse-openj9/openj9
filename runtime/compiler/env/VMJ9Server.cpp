@@ -963,19 +963,6 @@ TR_J9ServerVM::getStaticReferenceFieldAtAddress(uintptr_t fieldAddress)
    TR_ASSERT_FATAL(false, "getStaticReferenceFieldAtAddress() should not be called by JITServer");
    }
 
-TR_J9VMBase::ObjectClassInfo
-TR_J9ServerVM::getObjectClassInfoFromObjectReferenceLocation(TR::Compilation *comp, uintptr_t objectReferenceLocation)
-   {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_getObjectClassInfoFromObjectReferenceLocation,
-                 objectReferenceLocation);
-   auto recv = stream->read<TR_J9VMBase::ObjectClassInfo, uintptr_t *>();
-   TR_J9VMBase::ObjectClassInfo result = std::get<0>(recv);
-   uintptr_t *objectReferenceLocationClient = std::get<1>(recv);
-   comp->getKnownObjectTable()->updateKnownObjectTableAtServer(result.knownObjectIndex, objectReferenceLocationClient);
-   return result;
-   }
-
 TR::KnownObjectTable::ObjectInfo
 TR_J9ServerVM::getObjClassInfoFromKnotIndexNoCaching(TR::Compilation *comp, TR::KnownObjectTable::Index knotIndex)
    {
