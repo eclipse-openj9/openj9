@@ -113,11 +113,7 @@ public:
    virtual TR_OpaqueClassBlock *getObjectClassFromKnownObjectIndex(TR::Compilation *comp, TR::KnownObjectTable::Index idx) override;
    virtual TR_OpaqueClassBlock *getObjectClassFromKnownObjectIndex(TR::Compilation *comp, TR::KnownObjectTable::Index idx, bool *isJavaLangClass) override;
    virtual uintptr_t getStaticReferenceFieldAtAddress(uintptr_t fieldAddress) override;
-
-   virtual ObjectClassInfo getObjectClassInfoFromObjectReferenceLocation
-                              (TR::Compilation *comp, uintptr_t objectReferenceLocation) override;
    virtual TR::KnownObjectTable::ObjectInfo getObjClassInfoFromKnotIndexNoCaching(TR::Compilation *comp, TR::KnownObjectTable::Index knotIndex) override;
-
    virtual bool stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *clazz) override;
    virtual bool hasFinalFieldsInClass(TR_OpaqueClassBlock *clazz) override;
    virtual const char *sampleSignature(TR_OpaqueMethodBlock * aMethod, char *buf, int32_t bufLen, TR_Memory *memory) override;

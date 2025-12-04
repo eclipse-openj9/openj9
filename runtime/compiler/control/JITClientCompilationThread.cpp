@@ -632,16 +632,6 @@ handleResponse(JITServer::MessageType response, JITServer::ClientStream *client,
          client->write(response, result, isJL);
          }
          break;
-      case MessageType::VM_getObjectClassInfoFromObjectReferenceLocation:
-         {
-         auto recv = client->getRecvData<uintptr_t>();
-         uintptr_t objectReferenceLocation = std::get<0>(recv);
-         auto ci = fe->getObjectClassInfoFromObjectReferenceLocation(comp, objectReferenceLocation);
-         client->write(response,
-                       ci,
-                       knot->getPointerLocation(ci.knownObjectIndex));
-         }
-         break;
       case MessageType::VM_getObjectClassInfoFromKnotIndex:
          {
          auto recv = client->getRecvData<TR::KnownObjectTable::Index>();
