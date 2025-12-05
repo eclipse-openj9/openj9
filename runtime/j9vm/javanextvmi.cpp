@@ -509,7 +509,11 @@ JVM_PrintWarningAtDynamicAgentLoad()
 }
 
 JNIEXPORT void JNICALL
+#if JAVA_SPEC_VERSION >= 26
+JVM_VirtualThreadStartTransition(JNIEnv* env, jobject vthread, jboolean hide)
+#else /* JAVA_SPEC_VERSION >= 26 */
 JVM_VirtualThreadMount(JNIEnv *env, jobject vthread, jboolean hide)
+#endif /* JAVA_SPEC_VERSION >= 26 */
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
@@ -531,7 +535,11 @@ JVM_VirtualThreadMount(JNIEnv *env, jobject vthread, jboolean hide)
 }
 
 JNIEXPORT void JNICALL
+#if JAVA_SPEC_VERSION >= 26
+JVM_VirtualThreadEndTransition(JNIEnv* env, jobject vthread, jboolean hide)
+#else /* JAVA_SPEC_VERSION >= 26 */
 JVM_VirtualThreadUnmount(JNIEnv *env, jobject vthread, jboolean hide)
+#endif /* JAVA_SPEC_VERSION >= 26 */
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
@@ -559,7 +567,11 @@ JVM_IsForeignLinkerSupported()
 }
 
 JNIEXPORT void JNICALL
+#if JAVA_SPEC_VERSION >= 26
+JVM_VirtualThreadEndFirstTransition(JNIEnv* env, jobject vthread)
+#else /* JAVA_SPEC_VERSION >= 26 */
 JVM_VirtualThreadStart(JNIEnv *env, jobject vthread)
+#endif /* JAVA_SPEC_VERSION >= 26 */
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
@@ -578,7 +590,11 @@ JVM_VirtualThreadStart(JNIEnv *env, jobject vthread)
 }
 
 JNIEXPORT void JNICALL
+#if JAVA_SPEC_VERSION >= 26
+JVM_VirtualThreadStartFinalTransition(JNIEnv* env, jobject vthread)
+#else /* JAVA_SPEC_VERSION >= 26 */
 JVM_VirtualThreadEnd(JNIEnv *env, jobject vthread)
+#endif /* JAVA_SPEC_VERSION >= 26 */
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
