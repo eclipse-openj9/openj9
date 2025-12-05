@@ -895,9 +895,7 @@ VMSnapshotImpl::saveJ9JavaVMStructures()
 	saveMemorySegments();
 	savePrimitiveAndArrayClasses();
 	saveHiddenInstanceFields();
-#if JAVA_SPEC_VERSION > 8
 	saveModularityData();
-#endif /* JAVA_SPEC_VERSION > 8 */
 	_snapshotHeader->vm = _vm;
 }
 
@@ -914,9 +912,7 @@ VMSnapshotImpl::restoreJ9JavaVMStructures()
 	restoreMemorySegments();
 	restorePrimitiveAndArrayClasses();
 	restoreHiddenInstanceFields();
-#if JAVA_SPEC_VERSION > 8
 	restoreModularityData();
-#endif /* JAVA_SPEC_VERSION > 8 */
 
 	if (J9THREAD_RWMUTEX_OK != omrthread_rwmutex_init(&_vm->systemClassLoader->cpEntriesMutex, 0, "classPathEntries Mutex")) {
 		success = false;
