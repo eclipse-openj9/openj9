@@ -5114,7 +5114,11 @@ typedef struct J9InternalVMFunctions {
 	struct J9Method*  ( *resolveStaticSplitMethodRef)(struct J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA splitTableIndex, UDATA resolveFlags) ;
 	struct J9Method*  ( *resolveSpecialMethodRef)(struct J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA cpIndex, UDATA resolveFlags) ;
 	struct J9Method*  ( *resolveSpecialSplitMethodRef)(struct J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA splitTableIndex, UDATA resolveFlags) ;
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+	void*  ( *resolveStaticFieldRef)(struct J9VMThread *vmStruct, J9Method *method, J9ConstantPool *constantPool, UDATA fieldIndex, UDATA resolveFlags, struct J9ROMFieldShape **resolvedField, UDATA strictInitFlags) ;
+#else /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 	void*  ( *resolveStaticFieldRef)(struct J9VMThread *vmStruct, J9Method *method, J9ConstantPool *constantPool, UDATA fieldIndex, UDATA resolveFlags, struct J9ROMFieldShape **resolvedField) ;
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 	IDATA  ( *resolveInstanceFieldRef)(struct J9VMThread *vmStruct, J9Method *method, J9ConstantPool *constantPool, UDATA fieldIndex, UDATA resolveFlags, struct J9ROMFieldShape **resolvedField) ;
 	struct J9ClassLoader*  ( *allocateClassLoader)(struct J9JavaVM* javaVM) ;
 	void  (JNICALL *internalSendExceptionConstructor)(struct J9VMThread *vmContext, struct J9Class *exceptionClass, j9object_t exception, j9object_t detailMessage, UDATA constructorIndex) ;

@@ -50,7 +50,8 @@ public class StrictFieldTests {
 	}
 
 	/* If a strict static field in larval state is unset, getstatic throws an exception. */
-	@Test(expectedExceptions = IllegalStateException.class)
+	@Test(expectedExceptions = IllegalStateException.class,
+		expectedExceptionsMessageRegExp = ".*Strict static field is unset before first read.*")
 	static public void testGetStaticInLarvalForUnsetStrictField() throws Throwable {
 		Class<?> c = StrictFieldGenerator.generateTestGetStaticInLarvalForUnsetStrictField();
 		try {
@@ -63,7 +64,8 @@ public class StrictFieldTests {
 	/* If a strict static final field in larval state is set after it has been
 	 * read, an exception is thrown.
 	 */
-	@Test(expectedExceptions = IllegalStateException.class)
+	@Test(expectedExceptions = IllegalStateException.class,
+		expectedExceptionsMessageRegExp = ".*Final strict static field is set after read.*")
 	static public void testPutStaticInLarvalForReadStrictFinalField() throws Throwable {
 		Class<?> c = StrictFieldGenerator.generateTestPutStaticInLarvalForReadStrictFinalField();
 		try {
@@ -101,6 +103,13 @@ public class StrictFieldTests {
 		} catch (ExceptionInInitializerError e) {
 			throw e.getException();
 		}
+	}
+
+	/* Put field twice in a row to ensure field flags are retained. */
+	@Test
+	static public void testStrictStaticFieldPutTwice() throws Throwable {
+		Class<?> c = StrictFieldGenerator.generateTestStrictStaticFieldPutTwice();
+		c.newInstance();
 	}
 
 	/* A strict instance field must be assigned by putfield before invoking an

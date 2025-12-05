@@ -213,7 +213,11 @@ initializeStaticField(J9JavaVM* vm, UDATA offset, UDATA resolveFlags)
 	U_32 * cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(jclROMClass);
 
 	if (J9CPTYPE_FIELD == J9_CP_TYPE(cpShapeDescription, offset)) {
-		if (NULL == vm->internalVMFunctions->resolveStaticFieldRef(vm->mainThread, NULL, jclConstantPool, offset, resolveFlags, NULL)) {
+		if (NULL == vm->internalVMFunctions->resolveStaticFieldRef(vm->mainThread, NULL, jclConstantPool, offset, resolveFlags, NULL
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+			, 0
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+		)) {
 			if (NULL == J9VMCONSTANTPOOL_CLASSREF_AT(vm, romFieldConstantPool[offset].classRefCPIndex)->value) {
 				Trc_JCL_initializeKnownClasses_ClassRefNotResolvedForStaticFieldRef(vm->mainThread, romFieldConstantPool[offset].classRefCPIndex, offset);
 			} else {
@@ -256,7 +260,11 @@ jint initializeKnownClasses(J9JavaVM* vm, U_32 runtimeFlags)
 				Trc_JCL_initializeKnownClasses_SkippingResolve(vm->mainThread, i, romClassRef, romClassRef->runtimeFlags, runtimeFlags);
 			} else {
 				/* Try resolving as a static fieldref, then as an instance fieldref. */
-				if (NULL != vmFuncs->resolveStaticFieldRef(vm->mainThread, NULL, jclConstantPool, i, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL, NULL)) {
+				if (NULL != vmFuncs->resolveStaticFieldRef(vm->mainThread, NULL, jclConstantPool, i, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL, NULL
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+					, 0
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+				)) {
 					Trc_JCL_initializeKnownClasses_ResolvedStaticFieldRef(vm->mainThread, i, J9RAMSTATICFIELDREF_VALUEADDRESS(staticFieldConstantPool + i));
 				} else if (-1 != vmFuncs->resolveInstanceFieldRef(vm->mainThread, NULL, jclConstantPool, i, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL, NULL)) {
 					Trc_JCL_initializeKnownClasses_ResolvedInstanceFieldRef(vm->mainThread, i, instanceFieldConstantPool[i].valueOffset);
