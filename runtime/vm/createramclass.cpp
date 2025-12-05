@@ -4367,7 +4367,18 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 		coalesceAllFreeLists(j9RamClassFreeList);
 
 		UDATA memoryType = MEMORY_TYPE_RAM_CLASS;
-		if (SK_SUB4G == segmentKind) {
+		/* Temporary workaround for a pLinux-only memory regression related to
+		 * RAMClass segregation. Until the root cause is resolved, allocate all
+		 * RAMClass memory segments from the Sub4G allocator to mimic the pre-
+		 * segregation behaviour where all RAMClass segments resided below 4GB.
+		 *
+		 * TODO: Remove this workaround once the regression analysis is complete
+		 * and a proper fix is implemented.
+		 */
+#if !defined(LINUXPPC)
+		if (SK_SUB4G == segmentKind)
+#endif /* !defined(LINUXPPC) */
+		{
 			memoryType |= MEMORY_TYPE_RAM_CLASS_SUB4G;
 			/* For now, only sub4g memory will be disclaimed. This will be expanded in the future. */
 			if (J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_DISCLAIM_RAM_CLASS_MEMORY)) {
