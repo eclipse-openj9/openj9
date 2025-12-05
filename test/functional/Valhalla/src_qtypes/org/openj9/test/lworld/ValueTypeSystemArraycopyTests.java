@@ -316,6 +316,36 @@ public class ValueTypeSystemArraycopyTests {
 		System.arraycopy(src, 0, dst, 0, ARRAY_SIZE);
 	}
 
+	static private SomeValueClass[] testVTVTReturnVT(SomeValueClass[] src) {
+		SomeValueClass[] dst = (SomeValueClass[])ValueClass.newNullRestrictedArray(SomeValueClass.class, ARRAY_SIZE);
+		System.arraycopy(src, 0, dst, 0, ARRAY_SIZE);
+		return dst;
+	}
+
+	static private SomeInterface[] testVTIFReturnIF(SomeValueClass[] src) {
+		SomeInterface[] dst = (SomeValueClass[])ValueClass.newNullRestrictedArray(SomeValueClass.class, ARRAY_SIZE);
+		System.arraycopy(src, 0, dst, 0, ARRAY_SIZE);
+		return dst;
+	}
+
+	static private SomeValueClass[] testIFVTReturnVT(SomeInterface[] src) {
+		SomeValueClass[] dst = (SomeValueClass[])ValueClass.newNullRestrictedArray(SomeValueClass.class, ARRAY_SIZE);
+		System.arraycopy(src, 0, dst, 0, ARRAY_SIZE);
+		return dst;
+	}
+
+	static private Object[] testVTOBJReturnOBJ(SomeValueClass[] src) {
+		Object[] dst = (SomeValueClass[])ValueClass.newNullRestrictedArray(SomeValueClass.class, ARRAY_SIZE);
+		System.arraycopy(src, 0, dst, 0, ARRAY_SIZE);
+		return dst;
+	}
+
+	static private SomeValueClass[] testOBJVTReturnVT(Object[] src) {
+		SomeValueClass[] dst = (SomeValueClass[])ValueClass.newNullRestrictedArray(SomeValueClass.class, ARRAY_SIZE);
+		System.arraycopy(src, 0, dst, 0, ARRAY_SIZE);
+		return dst;
+	}
+
 	@Test(priority=1)
 	static public void testSystemArrayCopy1() throws Throwable {
 
@@ -788,5 +818,83 @@ public class ValueTypeSystemArraycopyTests {
 		initArraysToCopyNullToNullRestrictedArray();
 		testVTVT(vtArraySrc, nullRestrictedVtArrayDst);
 		checkResults(vtArraySrc, nullRestrictedVtArrayDst);
+	}
+
+	@Test(priority=1, invocationCount=2)
+	static public void testSystemArrayCopy30() throws Throwable {
+		initArrays();
+		SomeValueClass[] dst = testVTVTReturnVT(vtArraySrc);
+		checkResults(vtArraySrc, dst);
+	}
+
+	@Test(priority=1, invocationCount=2)
+	static public void testSystemArrayCopy31() throws Throwable {
+		initArrays();
+		SomeValueClass[] dst = testVTVTReturnVT(nullRestrictedVtArraySrc);
+		checkResults(nullRestrictedVtArraySrc, dst);
+	}
+
+	@Test(priority=1, invocationCount=2)
+	static public void testSystemArrayCopy32() throws Throwable {
+		initArrays();
+		SomeInterface[] dst = testVTIFReturnIF(vtArraySrc);
+		checkResults(vtArraySrc, dst);
+	}
+
+	@Test(priority=1, invocationCount=2)
+	static public void testSystemArrayCopy33() throws Throwable {
+		initArrays();
+		SomeInterface[] dst = testVTIFReturnIF(nullRestrictedVtArraySrc);
+		checkResults(nullRestrictedVtArraySrc, dst);
+	}
+
+	@Test(priority=1, invocationCount=2)
+	static public void testSystemArrayCopy34() throws Throwable {
+		initArrays();
+		SomeValueClass[] dst = testIFVTReturnVT(ifVtArraySrc);
+		checkResults(ifVtArraySrc, dst);
+	}
+
+	@Test(priority=1, invocationCount=2)
+	static public void testSystemArrayCopy35() throws Throwable {
+		initArrays();
+		SomeValueClass[] dst = testIFVTReturnVT(ifNullRestrictedVtArraySrc);
+		checkResults(ifNullRestrictedVtArraySrc, dst);
+	}
+
+	@Test(priority=1, invocationCount=2)
+	static public void testSystemArrayCopy36() throws Throwable {
+		initArrays();
+		Object[] dst = testVTOBJReturnOBJ(vtArraySrc);
+		checkResults(vtArraySrc, dst);
+	}
+
+	@Test(priority=1, invocationCount=2)
+	static public void testSystemArrayCopy37() throws Throwable {
+		initArrays();
+		Object[] dst = testVTOBJReturnOBJ(nullRestrictedVtArraySrc);
+		checkResults(nullRestrictedVtArraySrc, dst);
+	}
+
+	@Test(priority=1, invocationCount=2)
+	static public void testSystemArrayCopy38() throws Throwable {
+		Object[] src = new Object[ARRAY_SIZE];
+		for (int i=0; i < ARRAY_SIZE; i++) {
+			src[i] = new SomeValueClass(i*25);
+		}
+
+		SomeValueClass[] dst = testOBJVTReturnVT(src);
+		checkResults(src, dst);
+	}
+
+	@Test(priority=1, invocationCount=2)
+	static public void testSystemArrayCopy39() throws Throwable {
+		Object[] src = (SomeValueClass[])ValueClass.newNullRestrictedArray(SomeValueClass.class, ARRAY_SIZE);
+		for (int i=0; i < ARRAY_SIZE; i++) {
+			src[i] = new SomeValueClass(i*25);
+		}
+
+		SomeValueClass[] dst = testOBJVTReturnVT(src);
+		checkResults(src, dst);
 	}
 }
