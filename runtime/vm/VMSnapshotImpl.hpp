@@ -112,10 +112,8 @@ public:
 	void restoreClassLoaderBlocks();
 	void saveMemorySegments();
 	void restoreMemorySegments();
-#if JAVA_SPEC_VERSION > 8
 	void saveModularityData();
 	void restoreModularityData();
-#endif /* JAVA_SPEC_VERSION > 8 */
 
 	bool setupRestoreRun();
 	bool setupSnapshotRun();

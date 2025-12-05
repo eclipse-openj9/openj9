@@ -102,6 +102,9 @@ public abstract class ClassLoader {
 	private final static String DELEGATING_CL = "sun.reflect.DelegatingClassLoader"; //$NON-NLS-1$
 	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 	private boolean isDelegatingCL = false;
+	/*[IF JAVA_SPEC_VERSION > 8]*/
+	private static boolean applicationClassLoaderInited;
+	/*[ENDIF] JAVA_SPEC_VERSION > 8 */
 
 	/*
 	 * This is the application ClassLoader
@@ -155,10 +158,9 @@ public abstract class ClassLoader {
 /*[IF JAVA_SPEC_VERSION >= 9]*/
 	private static boolean lazyClassLoaderInit = true;
 /*[ELSE] JAVA_SPEC_VERSION >= 9 */
-	private static boolean lazyClassLoaderInit;
+	private static boolean lazyClassLoaderInit = false;
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
-	private static boolean applicationClassLoaderInited;
-	private static boolean extOrPlatformClassLoaderInited;
+	private static boolean specialLoaderInited = false;
 	private static InternalAnonymousClassLoader internalAnonClassLoader;
 /*[IF JAVA_SPEC_VERSION >= 15]*/
 	private NativeLibraries nativelibs = null;
@@ -256,7 +258,7 @@ public abstract class ClassLoader {
 		bootstrapClassLoader = sysTemp;
 		AbstractClassLoader.setBootstrapClassLoader(bootstrapClassLoader);
 		lazyClassLoaderInit = true;
-		applicationClassLoader = sun.misc.Launcher.getLauncher().getClassLoader();
+		applicationClassLoader = bootstrapClassLoader;
 		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 		/* [PR 78889] The creation of this classLoader requires lazy initialization. The internal classLoader struct
@@ -308,6 +310,7 @@ public abstract class ClassLoader {
 		if ("allow".equals(smvalue) || "disallow".equals(smvalue)) { //$NON-NLS-1$ //$NON-NLS-2$
 			System.internalGetProperties().remove("java.security.manager"); //$NON-NLS-1$
 		}
+		applicationClassLoader = sun.misc.Launcher.getLauncher().getClassLoader();
 		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 		/* Find the extension class loader */
@@ -423,29 +426,46 @@ private ClassLoader(Void staticMethodHolder, String classLoaderName, ClassLoader
 
 	// VM Critical: must set parent before calling initializeInternal()
 	parent = parentLoader;
-	if (bootstrapClassLoader == null) {
-		// BootstrapClassLoader is the first classloader to be initialized.
-		/*[IF JAVA_SPEC_VERSION > 8]*/
-		bootstrapClassLoader = this;
-		assignImmortalClassLoader(VM.J9_CLASSLOADER_TYPE_BOOT, false);
-		/*[ENDIF] JAVA_SPEC_VERSION > 8 */
-	} else if (!extOrPlatformClassLoaderInited) {
-		// Java 8 extension classloader or Java 11+ platform classloader
-		// is the second classloader to be initialized.
-		assignImmortalClassLoader(VM.J9_CLASSLOADER_TYPE_PLATFORM, false);
-		extOrPlatformClassLoaderInited = true;
-	} else if (!applicationClassLoaderInited) {
-		// ApplicationClassLoader is the third classloader to be initialized.
-		assignImmortalClassLoader(VM.J9_CLASSLOADER_TYPE_APP, isParallelCapable);
-		applicationClassLoaderInited = true;
-	} else if (!lazyClassLoaderInit) {
-		VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_OTHERS, isParallelCapable);
+/*[IF JAVA_SPEC_VERSION == 8]*/
+	specialLoaderInited = (bootstrapClassLoader != null);
+/*[ENDIF] JAVA_SPEC_VERSION == 8 */
+	if (specialLoaderInited) {
+/*[IF JAVA_SPEC_VERSION > 8]*/
+		/*
+		 * Assuming the 3rd classloader initialized is application class loader as the order
+		 * to initialize builtin class loaders is defined in the static block of
+		 * openjdk/src/java.base/share/classes/jdk/internal/loader/ClassLoaders.java.
+		 */
+		if (!applicationClassLoaderInited) {
+			assignImmortalClassLoader(VM.J9_CLASSLOADER_TYPE_APP, isParallelCapable);
+			applicationClassLoaderInited = true;
+		} else
+/*[ENDIF] JAVA_SPEC_VERSION > 8 */
+		{
+			if (!lazyClassLoaderInit) {
+				VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_OTHERS, isParallelCapable);
+			}
+		}
+/*[IF JAVA_SPEC_VERSION > 8]*/
+		unnamedModule = new Module(this);
+/*[ENDIF] JAVA_SPEC_VERSION > 8 */
 	}
-	/*[IF JAVA_SPEC_VERSION > 8]*/
+/*[IF JAVA_SPEC_VERSION > 8]*/
+	else {
+		if (bootstrapClassLoader == null) {
+			// BootstrapClassLoader.unnamedModule is set by JVM_SetBootLoaderUnnamedModule
+			unnamedModule = null;
+			bootstrapClassLoader = this;
+			assignImmortalClassLoader(VM.J9_CLASSLOADER_TYPE_BOOT, false);
+		} else {
+			// Assuming the second classloader initialized is platform classloader
+			assignImmortalClassLoader(VM.J9_CLASSLOADER_TYPE_PLATFORM, false);
+			specialLoaderInited = true;
+			unnamedModule = new Module(this);
+		}
+	}
 	this.classLoaderName = classLoaderName;
-	// BootstrapClassLoader.unnamedModule is set by JVM_SetBootLoaderUnnamedModule.
-	unnamedModule = (this == bootstrapClassLoader) ? null : new Module(this);
-	/*[ENDIF] JAVA_SPEC_VERSION > 8 */
+/*[ENDIF] JAVA_SPEC_VERSION > 8 */
 
 /*[IF JAVA_SPEC_VERSION >= 19]*/
 	this.nativelibs = NativeLibraries.newInstance((this == bootstrapClassLoader) ? null : this);
@@ -2651,6 +2671,7 @@ static NativeLibraries nativeLibrariesFor(ClassLoader loader) {
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 
+/*[IF JAVA_SPEC_VERSION > 8]*/
 /**
  * Assign immortal class loaders for restore run.
  *
@@ -2667,5 +2688,6 @@ private final void assignImmortalClassLoader(int id, boolean isParallelCapable) 
 		VM.initializeClassLoader(this, id, isParallelCapable);
 	}
 }
+/*[ENDIF] JAVA_SPEC_VERSION > 8 */
 
 }

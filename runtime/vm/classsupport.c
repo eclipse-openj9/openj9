@@ -1087,7 +1087,6 @@ loadWarmClassFromSnapshotInternal(J9VMThread *vmThread, J9ClassLoader *classLoad
 			}
 		}
 
-#if JAVA_SPEC_VERSION > 8
 		/* TODO: Handle/trace error/NULL paths. */
 		classObject = clazz->classObject;
 		if (NULL != classObject) {
@@ -1102,7 +1101,6 @@ loadWarmClassFromSnapshotInternal(J9VMThread *vmThread, J9ClassLoader *classLoad
 				J9VMJAVALANGCLASS_SET_MODULE(vmThread, classObject, J9VMJAVALANGCLASSLOADER_UNNAMEDMODULE(vmThread, clazz->classLoader->classLoaderObject));
 			}
 		}
-#endif /* JAVA_SPEC_VERSION > 8 */
 
 		Trc_VM_snapshot_loadWarmClassFromSnapshot_ClassInfo(vmThread, clazz, className);
 	}
