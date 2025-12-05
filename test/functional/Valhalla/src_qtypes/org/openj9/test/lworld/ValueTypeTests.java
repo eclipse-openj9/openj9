@@ -1950,16 +1950,19 @@ public class ValueTypeTests {
 	}
 
 	/*
-	 * Create Array Objects with Point Class without initialization
-	 * The array should be set to a Default Value.
-	 * TODO:Fix with issue https://github.com/eclipse-openj9/openj9/issues/22642
+	 * Create a null-restricted atomic array of Point2D.
+	 * The array must be initialized with an explicit initial value
+	 * and every element must contain that non-null initial value.
 	 */
-	@Test(priority=4, invocationCount=2, enabled=false)
-	static public void testDefaultValueInPointArray() throws Throwable {
-		Object pointArray = Array.newInstance(point2DClass, genericArraySize);
+	@Test(priority=4, invocationCount=2)
+	static public void testInitialValueInNullRestrictedPointArray() throws Throwable {
+		Object initialPoint = makePoint2D.invoke(5, 6);
+		Object[] pointArray = ValueClass.newNullRestrictedAtomicArray(point2DClass, genericArraySize, initialPoint);
 		for (int i = 0; i < genericArraySize; i++) {
-			Object pointObject = Array.get(pointArray, i);
+			Object pointObject = pointArray[i];
 			assertNotNull(pointObject);
+			assertEquals(getX.invoke(pointObject), 5);
+			assertEquals(getY.invoke(pointObject), 6);
 		}
 	}
 
@@ -2012,19 +2015,27 @@ public class ValueTypeTests {
 	}
 
 	/*
-	 * Create Array Objects with Flattened Line without initialization
-	 * Check the fields of each element in arrays. No field should be NULL.
-	 * TODO:Fix with issue https://github.com/eclipse-openj9/openj9/issues/22642
+	 * Create a null-restricted atomic array of FlattenedLine2D.
+	 * The array must be initialized with an explicit initial value
+	 * and every element must contain that non-null initial value.
 	 */
-	@Test(priority=4, invocationCount=2, enabled=false)
-	static public void testDefaultValueInLineArray() throws Throwable {
-		Object flattenedLineArray = Array.newInstance(flattenedLine2DClass, genericArraySize);
+	@Test(priority=4, invocationCount=2)
+	static public void testInitialValueInNullRestrictedLineArray() throws Throwable {
+		Object initialStart = makePoint2D.invoke(5, 6);
+		Object initialEnd   = makePoint2D.invoke(3, 4);
+		Object initialLine  = makeFlattenedLine2D.invoke(initialStart, initialEnd);
+		Object[] flattenedLineArray = ValueClass.newNullRestrictedAtomicArray(flattenedLine2DClass, genericArraySize, initialLine);
 		for (int i = 0; i < genericArraySize; i++) {
-			Object lineObject = Array.get(flattenedLineArray, i);
+			Object lineObject = flattenedLineArray[i];
 			assertNotNull(lineObject);
-			assertNotNull(getFlatSt.invoke(lineObject));
-			assertNotNull(getFlatEn.invoke(lineObject));
+			Object st = getFlatSt.invoke(lineObject);
+			Object en = getFlatEn.invoke(lineObject);
+			assertEquals(5, getX.invoke(st));
+			assertEquals(6, getY.invoke(st));
+			assertEquals(3, getX.invoke(en));
+			assertEquals(4, getY.invoke(en));
 		}
+
 	}
 
 	/**
@@ -2076,19 +2087,26 @@ public class ValueTypeTests {
 	}
 
 	/*
-	 * Create Array Objects with triangle class without initialization
-	 * Check the fields of each element in arrays. No field should be NULL.
-	 * TODO:Fix with issue https://github.com/eclipse-openj9/openj9/issues/22642
+	 * Create a null-restricted atomic array of triangle2D.
+	 * The array must be initialized with an explicit initial value
+	 * and every element must contain that non-null initial value.
 	 */
-	@Test(priority=4, invocationCount=2, enabled=false)
-	static public void testDefaultValueInTriangleArray() throws Throwable {
-		Object triangleArray = Array.newInstance(triangle2DClass, genericArraySize);
+	@Test(priority=4, invocationCount=2)
+	static public void testInitialValueInNullRestrictedTriangleArray() throws Throwable {
+		Object initialV1 = makePoint2D.invoke(5, 6);
+		Object initialV2 = makePoint2D.invoke(3, 4);
+		Object initialV3 = makePoint2D.invoke(1, 2);
+		Object initialLine1 = makeFlattenedLine2D.invoke(initialV1, initialV2);
+		Object initialLine2 = makeFlattenedLine2D.invoke(initialV1, initialV3);
+		Object initialLine3 = makeFlattenedLine2D.invoke(initialV2, initialV3);
+		Object initialTriangle = makeTriangle2D.invoke(initialLine1, initialLine2, initialLine3);
+		Object[] triangleArray = ValueClass.newNullRestrictedAtomicArray(triangle2DClass, genericArraySize, initialTriangle);
 		for (int i = 0; i < genericArraySize; i++) {
-			Object triangleObject = Array.get(triangleArray, i);
-			assertNotNull(triangleObject);
-			assertNotNull(getV1.invoke(triangleObject));
-			assertNotNull(getV2.invoke(triangleObject));
-			assertNotNull(getV3.invoke(triangleObject));
+			Object tri = triangleArray[i];
+			assertNotNull(tri);
+			assertEquals(getV1.invoke(tri), getV1.invoke(initialTriangle));
+			assertEquals(getV2.invoke(tri), getV2.invoke(initialTriangle));
+			assertEquals(getV3.invoke(tri), getV3.invoke(initialTriangle));
 		}
 	}
 
@@ -2141,20 +2159,24 @@ public class ValueTypeTests {
 	}
 
 	/*
-	 * Create an Array Object with assortedValueWithLongAlignment class without initialization
-	 * Check the fields of each element in arrays. No field should be NULL.
-	 * TODO:Fix with issue https://github.com/eclipse-openj9/openj9/issues/22642
+	 * Create a null-restricted atomic array of assortedValueWithLongAlignment.
+	 * The array must be initialized with an explicit initial value
+	 * and every element must contain that non-null initial value.
 	 */
-	@Test(priority=4, invocationCount=2, enabled=false)
-	static public void testDefaultValueInAssortedValueWithLongAlignmentArray() throws Throwable {
-		Object assortedValueWithLongAlignmentArray = Array.newInstance(assortedValueWithLongAlignmentClass, genericArraySize);
+	@Test(priority=4, invocationCount=2)
+	static public void testInitialValueInNullRestrictedAssortedValueWithLongAlignmentArray() throws Throwable {
+		Object initialValue = createAssorted(makeAssortedValueWithLongAlignment, typeWithLongAlignmentFields);
+		Object[] arr = ValueClass.newNullRestrictedAtomicArray(assortedValueWithLongAlignmentClass, genericArraySize, initialValue);
 		for (int i = 0; i < genericArraySize; i++) {
-			Object assortedValueWithLongAlignmentObject = Array.get(assortedValueWithLongAlignmentArray, i);
-			assertNotNull(assortedValueWithLongAlignmentObject);
+			Object obj = arr[i];
+			assertNotNull(obj);
 			for (int j = 0; j < 7; j++) {
-				assertNotNull(assortedValueWithLongAlignmentGetterList[j][0].invoke(assortedValueWithLongAlignmentObject));
+				Object expected = assortedValueWithLongAlignmentGetterList[j][0].invoke(initialValue);
+				Object actual   = assortedValueWithLongAlignmentGetterList[j][0].invoke(obj);
+				assertEquals(actual, expected);
 			}
 		}
+
 	}
 
 	/**
