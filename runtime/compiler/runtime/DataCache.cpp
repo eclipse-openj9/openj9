@@ -271,7 +271,7 @@ TR_DataCache* TR_DataCacheManager::allocateNewDataCache(uint32_t minimumSize)
                // If swap is enabled, we can allocate memory with mmap(MAP_ANOYNMOUS|MAP_PRIVATE) and disclaim to swap
                // If swap is not enabled we can disclaim to a backing file
                TR::CompilationInfo * compInfo = TR::CompilationInfo::get(_jitConfig);
-               if (!TR::Options::getCmdLineOptions()->getOption(TR_PreferSwapForMemoryDisclaim) || compInfo->isSwapMemoryDisabled())
+               if (!compInfo->canDisclaimOnSwap())
                   {
                   memoryType |= MEMORY_TYPE_DISCLAIMABLE_TO_FILE;
                   }
@@ -761,12 +761,12 @@ extern "C" {
 // Used with DataCacheManager mutex in hand
 // Side effect: may disable disclaiming if the kernel does not support it
 //---------------------------------------------------------------------------
-int TR_DataCacheManager::disclaimSegment(J9MemorySegment *segment, bool canDisclaimOnSwap)
+int TR_DataCacheManager::disclaimSegment(J9MemorySegment *segment, bool canDisclaimOnSwap, bool canDisclaimOnFile)
    {
    int disclaimDone = 0;
 #ifdef LINUX
-   if (segment->vmemIdentifier.allocator == OMRPORT_VMEM_RESERVE_USED_MMAP_SHM || // Can disclaim to file
-       ((segment->vmemIdentifier.mode & J9PORT_VMEM_MEMORY_MODE_VIRTUAL) && canDisclaimOnSwap)) // Can disclaim to swap
+   if ((segment->vmemIdentifier.allocator == OMRPORT_VMEM_RESERVE_USED_MMAP_SHM && canDisclaimOnFile) ||
+       ((segment->vmemIdentifier.mode & J9PORT_VMEM_MEMORY_MODE_VIRTUAL) && canDisclaimOnSwap))
       {
       size_t segLength = segment->heapTop - segment->heapBase;
 #ifdef DEBUG_DISCLAIM
@@ -820,12 +820,11 @@ int TR_DataCacheManager::disclaimAllDataCaches()
    int numDisclaimed = 0;
 #ifdef LINUX
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(_jitConfig);
-   bool canDisclaimOnSwap = TR::Options::getCmdLineOptions()->getOption(TR_PreferSwapForMemoryDisclaim) && !compInfo->isSwapMemoryDisabled();
    OMR::CriticalSection criticalSection(_mutex);
    // Traverses all dataCache segments
    for (J9MemorySegment *dataCacheSeg = _jitConfig->dataCacheList->nextSegment; dataCacheSeg; dataCacheSeg = dataCacheSeg->nextSegment)
       {
-      numDisclaimed += disclaimSegment(dataCacheSeg, canDisclaimOnSwap);
+      numDisclaimed += disclaimSegment(dataCacheSeg, compInfo->canDisclaimOnSwap(), compInfo->canDisclaimOnFile());
       }
 #endif // LINUX
    return numDisclaimed;

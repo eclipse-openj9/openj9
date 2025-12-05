@@ -882,7 +882,7 @@ extern "C"
 
 
 int32_t
-J9::CodeCache::disclaim(TR::CodeCacheManager *manager, bool canDisclaimOnSwap)
+J9::CodeCache::disclaim(TR::CodeCacheManager *manager, bool canDisclaimOnSwap, bool canDisclaimOnFile)
    {
    int32_t disclaimDone = 0;
 
