@@ -417,11 +417,22 @@ if(NOT JAVA_SPEC_VERSION LESS 21)
 		JVM_IsContainerized
 		JVM_IsForeignLinkerSupported
 		JVM_PrintWarningAtDynamicAgentLoad
-		JVM_VirtualThreadEnd
-		JVM_VirtualThreadMount
-		JVM_VirtualThreadStart
-		JVM_VirtualThreadUnmount
 	)
+	if(JAVA_SPEC_VERSION LESS 26)
+		jvm_add_exports(jvm
+			JVM_VirtualThreadEnd
+			JVM_VirtualThreadMount
+			JVM_VirtualThreadStart
+			JVM_VirtualThreadUnmount
+		)
+	else()
+		jvm_add_exports(jvm
+			JVM_VirtualThreadEndFirstTransition
+			JVM_VirtualThreadEndTransition
+			JVM_VirtualThreadStartFinalTransition
+			JVM_VirtualThreadStartTransition
+		)
+	endif()
 endif()
 
 if(JAVA_SPEC_VERSION LESS 22)
