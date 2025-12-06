@@ -1040,3 +1040,6 @@ TraceEvent=Trc_Segment_disclaimClassMemory_error NoEnv Overhead=1 Level=3 Templa
 TraceEvent=Trc_VM_signal_pid Overhead=1 Level=1 Template="%s received from process id %zu name '%s'"
 
 TraceEvent=Trc_VM_timeCompensationHelper_CPU_util Overhead=1 Level=5 Template="CPU Util: numCPUs=%zu, timeDelta=%zu, CPUTimeDelta=%zu, util=%f"
+
+TraceEvent=Trc_VM_allocateJavaStack_stackBounds NoEnv Overhead=1 Level=1 Template="New Java stack stack=%p guardPage=%p pageSize=%zu end=%p size=%zu"
+TraceEvent=Trc_VM_freeJavaStack_stackBounds NoEnv Overhead=1 Level=1 Template="Free Java stack stack=%p guardPage=%p pageSize=%zu end=%p size=%zu"
