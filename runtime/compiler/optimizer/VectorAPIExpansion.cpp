@@ -690,7 +690,9 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
                   {
                   TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Not vectorizing node since it's used by %s",
                                         node->getOpCode().getName());
+                  comp()->setVectorApiTransformationPerformed(true);
                   }
+               // todo
 #endif
                dontVectorizeNode(child);
                }
@@ -1086,6 +1088,7 @@ TR_VectorAPIExpansion::findVectorMethods(TR::Compilation *comp, bool reportFound
                                         name ? nameLen : 0, name ? name : "",
                                         comp->signature(), comp->getHotnessName(comp->getMethodHotness()),
                                         comp->isDLT() ? "DLT" : "");
+               comp->setVectorApiTransformationPerformed(true);
                }
             else
                {
@@ -1697,6 +1700,7 @@ TR_VectorAPIExpansion::boxChild(TR::TreeTop *treeTop, TR::Node *node, uint32_t i
       TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Boxed %s%d%s in %s at %s %s",
                                objectType == Vector ? "Vector" : "Mask", bitsLength, TR::DataType::getName(elementType),
                                comp()->signature(), comp()->getHotnessName(comp()->getMethodHotness()), comp()->isDLT() ? "DLT" : "");
+      comp()->setVectorApiTransformationPerformed(true);
       }
 
    return true;
@@ -1808,6 +1812,7 @@ TR_VectorAPIExpansion::unboxNode(TR::Node *parentNode, TR::Node *operand, vapiOb
       TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Unboxed %s%d%s in %s at %s %s",
                                operandObjectType == Vector ? "Vector" : "Mask", bitsLength, TR::DataType::getName(elementType),
                                comp()->signature(), comp()->getHotnessName(comp()->getMethodHotness()), comp()->isDLT() ? "DLT" : "");
+      comp()->setVectorApiTransformationPerformed(true);
       }
 
    return newOperand;
@@ -2636,6 +2641,7 @@ TR::Node *TR_VectorAPIExpansion::transformLoadFromArray(TR_VectorAPIExpansion *o
          TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Vectorized using %s%s in %s at %s %s",
                                   opcode.getName(), TR::DataType::getName(opcode.getVectorResultDataType()),
                                   comp->signature(), comp->getHotnessName(comp->getMethodHotness()), comp->isDLT() ? "DLT" : "");
+         comp->setVectorApiTransformationPerformed(true);
          }
       }
 
@@ -2791,6 +2797,7 @@ TR::Node *TR_VectorAPIExpansion::transformStoreToArray(TR_VectorAPIExpansion *op
          TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Vectorized using %s%s in %s at %s %s",
                                   opcode.getName(), TR::DataType::getName(opcode.getVectorResultDataType()),
                                   comp->signature(), comp->getHotnessName(comp->getMethodHotness()), comp->isDLT() ? "DLT" : "");
+         comp->setVectorApiTransformationPerformed(true);
          }
       }
 
@@ -2993,6 +3000,7 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
             TR::ILOpCode opcode(scalarOpCode);
             TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Scalarized using %s in %s at %s",
                                      opcode.getName(), comp->signature(), comp->getHotnessName(comp->getMethodHotness()));
+            comp->setVectorApiTransformationPerformed(true);
             }
          }
       }
@@ -3084,6 +3092,7 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
             TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Vectorized using %s%s in %s at %s %s",
                                      opcode.getName(), TR::DataType::getName(opcode.getVectorResultDataType()),
                                      comp->signature(), comp->getHotnessName(comp->getMethodHotness()), comp->isDLT() ? "DLT" : "");
+            comp->setVectorApiTransformationPerformed(true);
             }
 
          }
@@ -3210,6 +3219,7 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
       if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
          {
          TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Scalarized fromBitsCoerced for %s in %s at%s", TR::DataType::getName(elementType), comp->signature(), comp->getHotnessName(comp->getMethodHotness()));
+         comp->setVectorApiTransformationPerformed(true);
          }
       }
    else if (mode == doVectorization)
@@ -3226,6 +3236,7 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
          TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Vectorized using %s%s in %s at %s %s", ilOpCode.getName(),
                                   TR::DataType::getName(ilOpCode.getVectorResultDataType()), comp->signature(),
                                   comp->getHotnessName(comp->getMethodHotness()), comp->isDLT() ? "DLT" : "");
+         comp->setVectorApiTransformationPerformed(true);
          }
       }
 

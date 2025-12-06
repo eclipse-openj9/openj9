@@ -788,6 +788,9 @@ typedef struct J9JITExceptionTable {
 	 * won't depend on configure options.
 	 */
 	struct J9JITInvokeBasicCallInfo* invokeBasicCallInfo;
+#if defined(J9VM_OPT_JITSERVER)
+  // corresponds to J9::Compilation::_vectorApiTransformationPerformed
+#endif
 } J9JITExceptionTable;
 
 #define JIT_METADATA_FLAGS_USED_FOR_SIZE 0x1
@@ -798,6 +801,7 @@ typedef struct J9JITExceptionTable {
 #define JIT_METADATA_IS_DESERIALIZED_COMP 0x20
 #define JIT_METADATA_IS_PRECHECKPOINT_COMP 0x40
 #define JIT_METADATA_IS_FSD_COMP 0x80
+#define JIT_METADATA_HAS_BEEN_VECTORIZED 0x100
 
 typedef struct J9JIT16BitExceptionTableEntry {
 	U_16 startPC;
