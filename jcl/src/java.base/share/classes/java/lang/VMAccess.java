@@ -277,6 +277,7 @@ final class VMAccess implements VMLangAccess {
 	public boolean getIncludeModuleVersion(StackTraceElement element) {
 		return element.getIncludeModuleVersion();
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 	/**
 	 * Returns a cached constantPool Object from a given java.lang.Class
@@ -288,5 +289,4 @@ final class VMAccess implements VMLangAccess {
 	public ConstantPool getConstantPoolCache(Class<?> clazz) {
 		return clazz.constantPoolObject;
 	}
-	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 }
