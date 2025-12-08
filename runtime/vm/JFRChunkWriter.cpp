@@ -1438,11 +1438,138 @@ VM_JFRChunkWriter::writeSystemGCEvent(void *anElement, void *userData)
 	/* Write event thread index */
 	bufferWriter->writeLEB128(entry->eventThreadIndex);
 
-	/* Wtacktrace index */
+	/* Write stacktrace index */
 	bufferWriter->writeLEB128(entry->stackTraceIndex);
 
 	/* Write invokedConcurrent which is always false for OpenJ9 */
 	bufferWriter->writeBoolean(false);
+
+	/* Write size */
+	writeEventSize(bufferWriter, dataStart);
+}
+
+void
+VM_JFRChunkWriter::writeOldGarbageCollectionEvent(void *anElement, void *userData)
+{
+	OldGarbageCollectionEntry *entry = (OldGarbageCollectionEntry *)anElement;
+	VM_BufferWriter *bufferWriter = (VM_BufferWriter *)userData;
+
+	/* Reserve size field */
+	U_8 *dataStart = reserveEventSize(bufferWriter);
+
+	/* Write event type */
+	bufferWriter->writeLEB128(OldGarbageCollectionID);
+
+	/* Write start time */
+	bufferWriter->writeLEB128(entry->ticks);
+
+	/* Write duration time which is always in ticks, in our case nanos */
+	bufferWriter->writeLEB128(entry->duration);
+
+	/* Write garbage collection id for this collection */
+	bufferWriter->writeLEB128(entry->gcID);
+
+	/* Write size */
+	writeEventSize(bufferWriter, dataStart);
+}
+
+void
+VM_JFRChunkWriter::writeYoungGarbageCollectionEvent(void *anElement, void *userData)
+{
+	YoungGarbageCollectionEntry *entry = (YoungGarbageCollectionEntry *)anElement;
+	VM_BufferWriter *bufferWriter = (VM_BufferWriter *)userData;
+
+	/* Reserve size field */
+	U_8 *dataStart = reserveEventSize(bufferWriter);
+
+	/* Write event type */
+	bufferWriter->writeLEB128(YoungGarbageCollectionID);
+
+	/* Write start time */
+	bufferWriter->writeLEB128(entry->ticks);
+
+	/* Write duration time which is always in ticks, in our case nanos */
+	bufferWriter->writeLEB128(entry->duration);
+
+	/* Write garbage collection id for this collection */
+	bufferWriter->writeLEB128(entry->gcID);
+
+	/* Write stacktrace index */
+	bufferWriter->writeLEB128(entry->tenureThreshold);
+
+	/* Write size */
+	writeEventSize(bufferWriter, dataStart);
+}
+
+void
+VM_JFRChunkWriter::writeGarbageCollectionEvent(void *anElement, void *userData)
+{
+	GarbageCollectionEntry *entry = (GarbageCollectionEntry *)anElement;
+	VM_JFRChunkWriter *writer = (VM_JFRChunkWriter *)userData;
+	VM_BufferWriter *bufferWriter = writer->_bufferWriter;
+
+	/* Reserve size field */
+	U_8 *dataStart = reserveEventSize(bufferWriter);
+
+	/* Write event type */
+	bufferWriter->writeLEB128(GarbageCollectionID);
+
+	/* Write start time */
+	bufferWriter->writeLEB128(entry->ticks);
+
+	/* Write duration time which is always in ticks, in our case nanos */
+	bufferWriter->writeLEB128(entry->duration);
+
+	/* Write garbage collection id for this collection */
+	bufferWriter->writeLEB128(entry->gcID);
+
+	/* Write name of this collection */
+	writer->writeStringLiteral(gcNames[entry->gcNameID]);
+
+	/* Write cause of this collection */
+	writer->writeStringLiteral(gcCauses[entry->gcCauseID]);
+
+	/* Write sum of pauses during collection */
+	bufferWriter->writeLEB128(entry->sumOfPauses);
+
+	/* Write longest pause during collection */
+	bufferWriter->writeLEB128(entry->longestPause);
+
+	/* Write size */
+	writeEventSize(bufferWriter, dataStart);
+}
+
+void
+VM_JFRChunkWriter::writeGCHeapSummaryEvent(void *anElement, void *userData)
+{
+	GCHeapSummaryEntry *entry = (GCHeapSummaryEntry *)anElement;
+	VM_JFRChunkWriter *writer = (VM_JFRChunkWriter *)userData;
+	VM_BufferWriter *bufferWriter = writer->_bufferWriter;
+
+	/* Reserve size field */
+	U_8 *dataStart = reserveEventSize(bufferWriter);
+
+	/* Write event type */
+	bufferWriter->writeLEB128(GCHeapSummaryID);
+
+	/* Write start time */
+	bufferWriter->writeLEB128(entry->ticks);
+
+	/* Write garbage collection id for this collection */
+	bufferWriter->writeLEB128(entry->gcID);
+
+	/* Write when summary is generated */
+	writer->writeStringLiteral(gcWhens[entry->gcWhenID]);
+
+	/* Write heap space info */
+	bufferWriter->writeLEB128(entry->heapSpace.start);
+	bufferWriter->writeLEB128(entry->heapSpace.committedEnd);
+	bufferWriter->writeLEB128(entry->heapSpace.committedSize);
+	bufferWriter->writeLEB128(entry->heapSpace.reservedEnd);
+	bufferWriter->writeLEB128(entry->heapSpace.reservedSize);
+
+	/* Write invokedConcurrent which is always false for OpenJ9 */
+	bufferWriter->writeLEB128(entry->heapUsed);
 
 	/* Write size */
 	writeEventSize(bufferWriter, dataStart);
