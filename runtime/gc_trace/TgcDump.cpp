@@ -54,23 +54,7 @@ tgcHookGlobalGcSweepEnd(J9HookInterface** hook, UDATA eventNum, void* eventData,
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(event->currentThread);
 	MM_TgcExtensions *tgcExtensions = MM_TgcExtensions::getExtensions(extensions);
 
-	UDATA gcCount = 0;
-
-	if (extensions->isStandardGC() || extensions->isMetronomeGC()) {
-#if defined(J9VM_GC_MODRON_STANDARD) || defined(J9VM_GC_REALTIME)
-		gcCount = extensions->globalGCStats.gcCount;
-		if (extensions->isStandardGC()) {
-#if defined(J9VM_GC_MODRON_SCAVENGER)
-			gcCount += j9gc_get_unique_GC_count(javaVM);
-#endif /* J9VM_GC_MODRON_SCAVENGER */
-		}
-#endif /* J9VM_GC_MODRON_STANDARD || J9VM_GC_REALTIME */
-	}
-	if (extensions->isVLHGC()) {
-#if defined(J9VM_GC_VLHGC)
-		gcCount += extensions->globalVLHGCStats.gcCount;
-#endif /* J9VM_GC_VLHGC */
-	}
+	uintptr_t gcCount =  extensions->getUniqueGCCycleCount();
 
 	tgcExtensions->printf("<GC(%zu) Dumping Middleware Heap free blocks\n", gcCount);
 
