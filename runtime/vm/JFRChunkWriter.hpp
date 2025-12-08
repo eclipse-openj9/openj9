@@ -56,6 +56,21 @@ static constexpr const char * const oopModeTypeNames[] = {
 	"Zero based"
 };
 
+static constexpr const char * const gcNames[] = {
+	"default"
+};
+
+static constexpr const char * const gcCauses[] = {
+	"other",
+	"system gc",
+	"allocation failure"
+};
+
+static constexpr const char * const gcWhens[] = {
+	"before gc",
+	"after gc"
+};
+
 enum StringEnconding {
 	NullString = 0,
 	EmptyString,
@@ -72,7 +87,11 @@ enum MetadataTypeID {
 	ThreadParkID = 5,
 	MonitorEnterID = 6,
 	MonitorWaitID = 7,
+	GCHeapSummaryID = 27,
+	GarbageCollectionID = 35,
 	SystemGCID = 36,
+	YoungGarbageCollectionID = 38,
+	OldGarbageCollectionID = 39,
 	JVMInformationID = 87,
 	OSInformationID = 88,
 	VirtualizationInformationID = 89,
@@ -94,6 +113,7 @@ enum MetadataTypeID {
 	ModuleExportID = 114,
 	GCHeapConfigID = 133,
 	YoungGenerationConfigID = 134,
+	VirtualSpaceID = 149,
 	ThreadID = 164,
 	ThreadGroupID = 165,
 	ClassID = 166,
@@ -198,6 +218,10 @@ private:
 	static constexpr int SYSTEM_GC_EVENT_SIZE = (2 * LEB128_64_SIZE) + (3 * LEB128_32_SIZE) + sizeof(U_8);
 	static constexpr int MODULE_REQUIRE_EVENT_SIZE = LEB128_64_SIZE + (4 * LEB128_32_SIZE);
 	static constexpr int MODULE_EXPORT_EVENT_SIZE = LEB128_64_SIZE + (4 * LEB128_32_SIZE);
+	static constexpr int OLD_GARBAGE_COLLECTION_EVENT_SIZE = sizeof(U_8) + (2 * LEB128_64_SIZE) + (2 * LEB128_32_SIZE);
+	static constexpr int YOUNG_GARBAGE_COLLECTION_EVENT_SIZE = sizeof(U_8) + (2 * LEB128_64_SIZE) + (3 * LEB128_32_SIZE);
+	static constexpr int GARBAGE_COLLECTION_EVENT_SIZE = sizeof(U_8) + (4 * LEB128_64_SIZE) + (2 * LEB128_32_SIZE) + (2 * STRING_BUFFER_LENGTH);
+	static constexpr int GC_HEAP_SUMMARY_EVENT_SIZE = sizeof(U_8) + (7 * LEB128_64_SIZE) + (2 * LEB128_32_SIZE) + STRING_BUFFER_LENGTH;
 
 	static constexpr int METADATA_ID = 1;
 
@@ -417,6 +441,14 @@ done:
 			pool_do(_constantPoolTypes.getModuleRequireTable(), &writeModuleRequire, _bufferWriter);
 
 			pool_do(_constantPoolTypes.getModuleExportTable(), &writeModuleExport, _bufferWriter);
+
+			pool_do(_constantPoolTypes.getOldGarbageCollectionTable(), &writeOldGarbageCollectionEvent, _bufferWriter);
+
+			pool_do(_constantPoolTypes.getYoungGarbageCollectionTable(), &writeYoungGarbageCollectionEvent, _bufferWriter);
+
+			pool_do(_constantPoolTypes.getGarbageCollectionTable(), &writeGarbageCollectionEvent, _bufferWriter);
+
+			pool_do(_constantPoolTypes.getGCHeapSummaryTable(), &writeGCHeapSummaryEvent, _bufferWriter);
 
 			/* Only write constant events in first chunk */
 			if (0 == _vm->jfrState.jfrChunkCount) {
@@ -866,6 +898,14 @@ done:
 
 	static void writeModuleExport(void *anElement, void *userData);
 
+	static void writeOldGarbageCollectionEvent(void *anElement, void *userData);
+
+	static void writeYoungGarbageCollectionEvent(void *anElement, void *userData);
+
+	static void writeGarbageCollectionEvent(void *anElement, void *userData);
+
+	static void writeGCHeapSummaryEvent(void *anElement, void *userData);
+
 	UDATA
 	calculateRequiredBufferSize()
 	{
@@ -951,6 +991,14 @@ done:
 		requiredBufferSize += (_constantPoolTypes.getModuleRequireCount() * MODULE_REQUIRE_EVENT_SIZE);
 
 		requiredBufferSize += (_constantPoolTypes.getModuleExportCount() * MODULE_EXPORT_EVENT_SIZE);
+
+		requiredBufferSize += (_constantPoolTypes.getOldGarbageCollectionCount() * OLD_GARBAGE_COLLECTION_EVENT_SIZE);
+
+		requiredBufferSize += (_constantPoolTypes.getYoungGarbageCollectionCount() * YOUNG_GARBAGE_COLLECTION_EVENT_SIZE);
+
+		requiredBufferSize += (_constantPoolTypes.getGarbageCollectionCount() * GARBAGE_COLLECTION_EVENT_SIZE);
+
+		requiredBufferSize += (_constantPoolTypes.getGCHeapSummaryCount() * GC_HEAP_SUMMARY_EVENT_SIZE);
 
 		return requiredBufferSize;
 	}
