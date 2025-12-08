@@ -260,7 +260,7 @@ tgcHookLocalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, v
 	tgcExtensions->printf("                   (micros) (micros)  freelist  freelist  scanlist  scanlist      lock    arrays arraysize copycache   lists  deep objs    list\n");
 
 	scavengeTotalTime = event->incrementEndTime - event->incrementStartTime;
-	uintptr_t gcCount = j9gc_get_unique_GC_count(javaVM);
+	uintptr_t gcCount =  extensions->getUniqueGCCycleCount();
 
 	GC_VMThreadListIterator scavengeThreadListIterator(vmThread);
 	while ((walkThread = scavengeThreadListIterator.nextVMThread()) != NULL) {
