@@ -915,28 +915,19 @@ void J9::ARM64::JNILinkage::adjustReturnValue(TR::Node *callNode, bool wrapRefs,
             generateCompareImmInstruction(cg(), callNode, returnRegister, 0);
             generateCSetInstruction(cg(), callNode, returnRegister, TR::CC_NE);
             }
-         else if (resolvedMethod->returnTypeIsUnsigned())
-            {
-            // 7 in immr:imms means 0xff
-            generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::andimmw, callNode, returnRegister, returnRegister, 7);
-            }
          else
             {
-            // sxtb (sign extend byte)
-            generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::sbfmw, callNode, returnRegister, returnRegister, 7);
+            // uxtb (zero extend byte) or sxtb (sign extend byte)
+            TR::InstOpCode::Mnemonic op = resolvedMethod->returnTypeIsUnsigned() ? TR::InstOpCode::ubfmw : TR::InstOpCode::sbfmw;
+            generateTrg1Src1ImmInstruction(cg(), op, callNode, returnRegister, returnRegister, 7);
             }
          break;
       case TR::Int16:
-         if (resolvedMethod->returnTypeIsUnsigned())
-            {
-            // 0xf in immr:imms means 0xffff
-            generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::andimmw, callNode, returnRegister, returnRegister, 0xf);
-            }
-         else
-            {
-            // sxth (sign extend halfword)
-            generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::sbfmw, callNode, returnRegister, returnRegister, 0xf);
-            }
+         {
+         // uxth (zero extend halfword) or sxth (sign extend halfword)
+         TR::InstOpCode::Mnemonic op = resolvedMethod->returnTypeIsUnsigned() ? TR::InstOpCode::ubfmw : TR::InstOpCode::sbfmw;
+         generateTrg1Src1ImmInstruction(cg(), op, callNode, returnRegister, returnRegister, 0xf);
+         }
          break;
       }
    }
