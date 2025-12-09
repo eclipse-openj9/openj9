@@ -399,12 +399,12 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    // fails the compilation entirely.
    void addThunkRecord(const AOTCacheThunkRecord *record);
 
-   void setVectorApiTransformationPerformed(bool vectorApiTransformationPerformed) { _vectorApiTransformationPerformed = vectorApiTransformationPerformed; }
-   bool getVectorApiTransformationPerformed() const { return _vectorApiTransformationPerformed; }
 #else
    bool isDeserializedAOTMethod() const { return false; }
    bool ignoringLocalSCC() const { return false; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
+   void setVectorApiTransformationPerformed(bool vectorApiTransformationPerformed) { _vectorApiTransformationPerformed = vectorApiTransformationPerformed; }
+   bool getVectorApiTransformationPerformed() const { return _vectorApiTransformationPerformed; }
 
    TR::SymbolValidationManager *getSymbolValidationManager() { return _symbolValidationManager; }
 
@@ -649,8 +649,8 @@ private:
    size_t _numPermanentLoaders;
    // Records whether any vectorization optimizations have taken place
    // in the compilation.
-   bool _vectorApiTransformationPerformed;
 #endif /* defined(J9VM_OPT_JITSERVER) */
+   bool _vectorApiTransformationPerformed;
 
 #if !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED)
    // A map recording the dependencies of an AOT method. The keys are the class
