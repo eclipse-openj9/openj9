@@ -1557,6 +1557,10 @@ createMethodMetaData(
       {
       data->flags |= JIT_METADATA_IS_DESERIALIZED_COMP;
       }
+   if (comp->getVectorApiTransformationPerformed())
+      {
+      data->flags |= JIT_METADATA_VECTORIZED_CODE;
+      }
 #endif
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)

@@ -3955,6 +3955,10 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          metaData = remoteCompilationEnd(vmThread, compiler, compilee, method, compInfoPT, codeCacheStr, dataCacheStr);
          if (metaData)
             {
+            if (metaData->flags & JIT_METADATA_VECTORIZED_CODE)
+               {
+               TR_VerboseLog::writeLineLocked(TR_Vlog_VECTOR_API, "JITServer processed vector ops");
+               }
             // Must add the runtime assumptions received from the server to the RAT and
             // update the list in the comp object with persistent entries. A pointer to
             // this list will be copied into the metadata
