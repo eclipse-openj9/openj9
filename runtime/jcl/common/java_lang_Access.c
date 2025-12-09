@@ -20,6 +20,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#include "j9cp.h"
+#include "j9vmconstantpool.h"
 #include "jni.h"
 #include "jcl.h"
 #include "jclprots.h"
@@ -36,16 +38,16 @@
  *
  * @return a ConstantPool object reference or NULL on error.
  */
-jobject JNICALL 
+jobject JNICALL
 Java_java_lang_Access_getConstantPool(JNIEnv *env, jclass unusedClass, jobject classToIntrospect)
 {
 	jclass sun_reflect_ConstantPool = JCL_CACHE_GET(env,CLS_sun_reflect_ConstantPool);
-	jfieldID constantPoolOop;
 	jobject constantPool;
 	J9VMThread *vmThread = (J9VMThread *)env;
 	J9InternalVMFunctions *vmFunctions = vmThread->javaVM->internalVMFunctions;
 	J9MemoryManagerFunctions *gcFunctions = vmThread->javaVM->memoryManagerFunctions;
 	j9object_t classObject = NULL;
+	J9Class *clazz = NULL;
 
 	/* lazy-initialize the cached field IDs */
 	if (NULL == sun_reflect_ConstantPool) {
@@ -54,7 +56,7 @@ Java_java_lang_Access_getConstantPool(JNIEnv *env, jclass unusedClass, jobject c
 		}
 		sun_reflect_ConstantPool = JCL_CACHE_GET(env, CLS_sun_reflect_ConstantPool);
 	}
-	
+
 	/* allocate the new ConstantPool object */
 	constantPool = (*env)->AllocObject(env, sun_reflect_ConstantPool);
 	if (NULL == constantPool) {
@@ -65,8 +67,7 @@ Java_java_lang_Access_getConstantPool(JNIEnv *env, jclass unusedClass, jobject c
 	vmFunctions->internalEnterVMFromJNI(vmThread);
 	classObject = J9_JNI_UNWRAP_REFERENCE(classToIntrospect);
 	if (J9VMJAVALANGCLASS_OR_NULL(vmThread->javaVM) == J9OBJECT_CLAZZ(vmThread, classObject)) {
-		J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, classObject);
-		J9ConstantPool *constantPool = (J9ConstantPool *)clazz->ramConstantPool;
+		J9ConstantPool *j9CP = NULL;
 		J9Class *internalConstantPool = J9VMJAVALANGINTERNALCONSTANTPOOL_OR_NULL(vmThread->javaVM);
 		Assert_JCL_notNull(internalConstantPool);
 		j9object_t internalConstantPoolObject = gcFunctions->J9AllocateObject(vmThread, internalConstantPool, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
@@ -75,14 +76,29 @@ Java_java_lang_Access_getConstantPool(JNIEnv *env, jclass unusedClass, jobject c
 			vmFunctions->internalExitVMToJNI(vmThread);
 			return NULL;
 		}
-		J9VMJAVALANGINTERNALCONSTANTPOOL_SET_VMREF(vmThread, internalConstantPoolObject, constantPool);
+		classObject = J9_JNI_UNWRAP_REFERENCE(classToIntrospect);
+		clazz = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, classObject);
+		j9CP = (J9ConstantPool *)clazz->ramConstantPool;
+		J9VMJAVALANGINTERNALCONSTANTPOOL_SET_VMREF(vmThread, internalConstantPoolObject, j9CP);
+		J9VMJAVALANGINTERNALCONSTANTPOOL_SET_CLAZZ(vmThread, internalConstantPoolObject, classObject);
 		classToIntrospect = vmFunctions->j9jni_createLocalRef(env, internalConstantPoolObject);
+	}
+
+#if JAVA_SPEC_VERSION == 8
+	J9VMSUNREFLECTCONSTANTPOOL_SET_CONSTANTPOOLOOP(vmThread, J9_JNI_UNWRAP_REFERENCE(constantPool), J9_JNI_UNWRAP_REFERENCE(classToIntrospect));
+#else /* JAVA_SPEC_VERSION == 8 */
+	J9VMJDKINTERNALREFLECTCONSTANTPOOL_SET_CONSTANTPOOLOOP(vmThread, J9_JNI_UNWRAP_REFERENCE(constantPool), J9_JNI_UNWRAP_REFERENCE(classToIntrospect));
+#endif /* JAVA_SPEC_VERSION == 8 */
+
+	if (NULL == clazz) {
+		/* If we are here then classToIntrospect is an InternalConstantPool object, find the class object. */
+		classObject = J9VMJAVALANGINTERNALCONSTANTPOOL_CLAZZ(vmThread, J9_JNI_UNWRAP_REFERENCE(classToIntrospect));
+		clazz = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, classObject);
+	}
+	if (NULL == clazz->replacedClass) {
+		J9VMJAVALANGCLASS_SET_CONSTANTPOOLOBJECT(vmThread, classObject, J9_JNI_UNWRAP_REFERENCE(constantPool));
 	}
 	vmFunctions->internalExitVMToJNI(vmThread);
 
-	/* and set the private constantPoolOop member */
-	constantPoolOop = JCL_CACHE_GET(env, FID_sun_reflect_ConstantPool_constantPoolOop);
-	(*env)->SetObjectField(env, constantPool, constantPoolOop, classToIntrospect);
-	
 	return constantPool;
 }

@@ -115,8 +115,8 @@ final class MethodHandleResolver {
 		Object result = null;
 
 		VMLangAccess access = VM.getVMLangAccess();
-		Object internalConstantPool = access.getInternalConstantPoolFromJ9Class(j9class);
 		Class<?> classObject = getClassFromJ9Class(j9class);
+		Object internalConstantPool = access.getInternalConstantPoolFromJ9Class(j9class, classObject);
 
 		Class<?> typeClass = fromFieldDescriptorString(fieldDescriptor, access.getClassloader(classObject));
 
@@ -241,8 +241,8 @@ final class MethodHandleResolver {
 	private static final Object resolveInvokeDynamic(long j9class, String name, String methodDescriptor, long bsmData) throws Throwable {
 /*[IF OPENJDK_METHODHANDLES]*/
 		VMLangAccess access = VM.getVMLangAccess();
-		Object internalConstantPool = access.getInternalConstantPoolFromJ9Class(j9class);
 		Class<?> classObject = getClassFromJ9Class(j9class);
+		Object internalConstantPool = access.getInternalConstantPoolFromJ9Class(j9class, classObject);
 
 		MethodType type = null;
 		Object[] result = new Object[2];
@@ -340,8 +340,8 @@ final class MethodHandleResolver {
 		try {
 /*[ENDIF] JAVA_SPEC_VERSION < 11 */
 			VMLangAccess access = VM.getVMLangAccess();
-			Object internalConstantPool = access.getInternalConstantPoolFromJ9Class(j9class);
 			Class<?> classObject = getClassFromJ9Class(j9class);
+			Object internalConstantPool = access.getInternalConstantPoolFromJ9Class(j9class, classObject);
 
 			type = MethodTypeHelper.vmResolveFromMethodDescriptorString(methodDescriptor, access.getClassloader(classObject), null);
 			final MethodHandles.Lookup lookup = new MethodHandles.Lookup(classObject, false);
