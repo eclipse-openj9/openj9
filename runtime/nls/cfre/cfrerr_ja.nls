@@ -1833,3 +1833,24 @@ J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_ENTRY_NOT_UTF8_TYPE.explanation=Please consult
 J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_ENTRY_NOT_UTF8_TYPE.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_ENTRY_NOT_UTF8_TYPE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_NON_STATIC_FIELD_MUST_BE_FINAL_STRICT_INIT=\u5024\u30af\u30e9\u30b9\u5185\u3067\u5ba3\u8a00\u3055\u308c\u305f\u975e\u9759\u7684\u30d5\u30a3\u30fc\u30eb\u30c9\u306b\u306f\u3001ACC_FINAL \u304a\u3088\u3073 ACC_STRICT_INIT \u30d5\u30e9\u30b0\u304c\u8a2d\u5b9a\u3055\u308c\u306a\u3044\u3002
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_NON_STATIC_FIELD_MUST_BE_FINAL_STRICT_INIT.explanation=In a valid value class, a field without its ACC_STATIC flag set must have ACC_FINAL and ACC_STRICT_INIT flags set.
+J9NLS_CFR_ERR_NON_STATIC_FIELD_MUST_BE_FINAL_STRICT_INIT.system_action=The JVM will throw a verification or classloading exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_NON_STATIC_FIELD_MUST_BE_FINAL_STRICT_INIT.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_BASE_FRAME_TYPE=\u521d\u671f\u5e7c\u866b\u67a0\u306e\u5f8c\u306f\u5fc5\u305a\u57fa\u90e8\u67a0\u304c\u7d9a\u304b\u306a\u3051\u308c\u3070\u306a\u3089\u306a\u3044\u3002
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_BASE_FRAME_TYPE.explanation=The StackMap/StackMapTable attribute is malformed.
+J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_BASE_FRAME_TYPE.system_action=The JVM will throw a java.lang.VerifyError.
+J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_BASE_FRAME_TYPE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_CP_INDEX=\u5e7c\u866b\u521d\u671f\u6bb5\u968e\u306b\u304a\u3051\u308b\u7121\u52b9\u306a\u5b9a\u6570\u30d7\u30fc\u30eb\u30a4\u30f3\u30c7\u30c3\u30af\u30b9\u3002
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_CP_INDEX.explanation=The StackMap/StackMapTable attribute is malformed.
+J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_CP_INDEX.system_action=The JVM will throw a java.lang.VerifyError.
+J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_CP_INDEX.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
