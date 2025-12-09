@@ -3955,7 +3955,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          metaData = remoteCompilationEnd(vmThread, compiler, compilee, method, compInfoPT, codeCacheStr, dataCacheStr);
          if (metaData)
             {
-            if (metaData->flags & JIT_METADATA_VECTORIZED_CODE)
+            if (TR::Options::getVerboseOption(TR_VerboseVectorAPI) && (metaData->flags & JIT_METADATA_VECTORIZED_CODE))
                {
                TR_VerboseLog::writeLineLocked(TR_Vlog_VECTOR_API, "JITServer processed vector ops");
                }
