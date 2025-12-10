@@ -1044,6 +1044,18 @@ TR_VectorAPIExpansion::getObjectTypeFromClassNode(TR::Compilation *comp, TR::Nod
    return objectType;
    }
 
+const char *
+TR_VectorAPIExpansion::getMethodName(TR::MethodSymbol *methodSymbol, uint16_t &nameLen)
+   {
+   TR::ResolvedMethodSymbol *resolvedMethodSymbol = (TR::ResolvedMethodSymbol *)methodSymbol;
+
+   const char *name = resolvedMethodSymbol->getResolvedMethod() ? resolvedMethodSymbol->getResolvedMethod()->nameChars()
+                                                                            : "unresolved";
+
+   nameLen = resolvedMethodSymbol->getResolvedMethod() ? resolvedMethodSymbol->getResolvedMethod()->nameLength()
+                                                                            : 10; // length of "unresolved"
+   return name;
+   }
 
 bool
 TR_VectorAPIExpansion::findVectorMethods(TR::Compilation *comp, bool reportFoundMethods)
@@ -1075,13 +1087,8 @@ TR_VectorAPIExpansion::findVectorMethods(TR::Compilation *comp, bool reportFound
             if (reportFoundMethods &&
                 TR::Options::getVerboseOption(TR_VerboseVectorAPI))
                {
-               TR::ResolvedMethodSymbol *resolvedMethodSymbol = (TR::ResolvedMethodSymbol *)methodSymbol;
-
-               const char *name = resolvedMethodSymbol->getResolvedMethod() ? resolvedMethodSymbol->getResolvedMethod()->nameChars()
-                                                                            : "unresolved";
-
-               uint16_t nameLen = resolvedMethodSymbol->getResolvedMethod() ? resolvedMethodSymbol->getResolvedMethod()->nameLength()
-                                                                            : 10; // length of "unresolved"
+               uint16_t nameLen;
+               const char *name = getMethodName(methodSymbol, nameLen);
 
                TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Did not vectorize %.*s() intrinsic in %s at %s %s",
                                         name ? nameLen : 0, name ? name : "",
@@ -2102,8 +2109,12 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
 
                   if (!vectorizedOrScalarized)
                      {
+                     uint16_t nameLen;
+                     const char *name = getMethodName(methodSymbol, nameLen);
+
                      TR_ASSERT_FATAL(operand->getDataType() == TR::Address,
-                                     "Child %d of node %p should have address type", i, node);
+                                     "Child %d of node %p (%.*s) should have address type", i, node, nameLen, name);
+
                      vapiObjType operandObjectType = Vector;
 
                      if (getArgumentType(methodSymbol, i) == Mask)
