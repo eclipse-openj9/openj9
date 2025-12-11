@@ -420,6 +420,11 @@ public:
    bool supportsInliningOfIsAssignableFrom() { return false; } // no virt, default
 
    /** \brief
+    *     Determines if the code generator should generate inlined tests or if not, call to a VM helper.
+    */
+   bool supportsNonHelperIsAssignableFrom() { return false; }
+
+   /** \brief
     *     Determines whether the code generator must generate the switch to interpreter snippet in the preprologue.
     */
    bool mustGenerateSwitchToInterpreterPrePrologue();
