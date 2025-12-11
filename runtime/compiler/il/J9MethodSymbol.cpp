@@ -237,6 +237,14 @@ static TR::RecognizedMethod stringCanSkipNullChecks[] =
    TR::java_lang_String_equals,
    TR::java_lang_String_regionMatchesInternal,
    TR::java_lang_String_valueOf_C,
+   TR::java_lang_AbstractStringBuilder_append_String,
+   TR::java_lang_AbstractStringBuilder_putStringAt,
+   TR::java_lang_AbstractStringBuilder_ensureCapacityInternal,
+   TR::java_lang_AbstractStringBuilder_inflateIfNeededFor,
+   TR::java_lang_StringBuilder_append_String,
+   TR::java_lang_String_subString,
+   TR::java_lang_StringLatin1_newString,
+   TR::java_lang_String_deduplicateStrings,
    TR::unknownMethod
    };
 
