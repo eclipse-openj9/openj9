@@ -566,13 +566,15 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
 
             if (!TR::Options::canJITCompile()) // -Xnojit, then recompilation is not supported
                                               // Ensure JIT and AOT flags are set appropriately
-              {
-              TR::Options::getAOTCmdLineOptions()->setAllowRecompilation(false);
-              TR::Options::getAOTCmdLineOptions()->setOption(TR_DisableCHOpts);
-
-              TR::Options::getJITCmdLineOptions()->setAllowRecompilation(false);
-              TR::Options::getJITCmdLineOptions()->setOption(TR_DisableCHOpts);
-              }
+               {
+               TR::Options::getAOTCmdLineOptions()->setAllowRecompilation(false);
+               TR::Options::getJITCmdLineOptions()->setAllowRecompilation(false);
+               }
+            else if (!TR::Options::getCmdLineOptions()->allowRecompilation() || !TR::Options::getAOTCmdLineOptions()->allowRecompilation())
+               {
+               TR::Options::getAOTCmdLineOptions()->setOption(TR_DisableCHOpts);
+               TR::Options::getJITCmdLineOptions()->setOption(TR_DisableCHOpts);
+               }
 
             if (!isJIT)
                {
