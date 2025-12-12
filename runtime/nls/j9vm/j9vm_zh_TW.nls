@@ -2514,3 +2514,19 @@ J9NLS_VM_UNSUPPORTED_OPTION.explanation=Option provided is not supported.
 J9NLS_VM_UNSUPPORTED_OPTION.system_action=The JVM will not start.
 J9NLS_VM_UNSUPPORTED_OPTION.user_response=Remove the unsupported option.
 # END NON-TRANSLATABLE
+
+# NullRestricted is not translatable
+J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_VALUE_CLASS=\u5177\u6709 \u5c6c NullRestricted \u6027\u7684\u5be6\u4f8b\u6b04\u4f4d\u5fc5\u9808\u4f4d\u65bc\u503c\u985e\u5225\u4e2d\u3002
+# START NON-TRANSLATABLE
+J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_VALUE_CLASS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
+J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_VALUE_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# NullRestricted is not translatable
+J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_VALUE_CLASS=\u5177\u6709 `static` NullRestricted \u5c6c\u6027\u7684\u975c\u614b\u5b57\u6bb5\u5fc5\u9808\u4f4d\u65bc\u503c\u985e\u4e2d\u3002
+# START NON-TRANSLATABLE
+J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_VALUE_CLASS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
+J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_VALUE_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE

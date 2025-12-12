@@ -438,3 +438,11 @@ J9NLS_BCV_ERR_BC_NEW_ARRAY.system_action=The JVM will throw a verification or cl
 J9NLS_BCV_ERR_BC_NEW_ARRAY.user_response=Contact the provider of the classfile for a corrected version.
 
 # END NON-TRANSLATABLE
+
+J9NLS_BCV_ERR_UNINITIALIZED_VALUE_OBJECT=acmpeq, acmpne, ifnonnull \ub610\ub294 ifnull \ud568\uc218\uc640 \ud568\uaed8 \ucd08\uae30\ud654\ub418\uc9c0 \uc54a\uc740 \uac12 \uac1d\uccb4\uac00 \uc0ac\uc6a9\ub418\uc5c8\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_BCV_ERR_UNINITIALIZED_VALUE_OBJECT.explanation=Verification failed because a newly created but uninitialized value object was used with if_acmpeq, if_acmpne, ifnonnull or ifnull.
+J9NLS_BCV_ERR_UNINITIALIZED_VALUE_OBJECT.system_action=The JVM will throw a verification or classloading related exception such as java.lang.VerifyError.
+J9NLS_BCV_ERR_UNINITIALIZED_VALUE_OBJECT.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE

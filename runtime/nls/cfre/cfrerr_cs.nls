@@ -1833,3 +1833,24 @@ J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_ENTRY_NOT_UTF8_TYPE.explanation=Please consult
 J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_ENTRY_NOT_UTF8_TYPE.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_ENTRY_NOT_UTF8_TYPE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_NON_STATIC_FIELD_MUST_BE_FINAL_STRICT_INIT=Nestatick\u00e9 pole deklarovan\u00e9 ve t\u0159\u00edd\u011b hodnot nem\u00e1 nastaveny p\u0159\u00edznaky ACC_FINAL a ACC_STRICT_INIT.
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_NON_STATIC_FIELD_MUST_BE_FINAL_STRICT_INIT.explanation=In a valid value class, a field without its ACC_STATIC flag set must have ACC_FINAL and ACC_STRICT_INIT flags set.
+J9NLS_CFR_ERR_NON_STATIC_FIELD_MUST_BE_FINAL_STRICT_INIT.system_action=The JVM will throw a verification or classloading exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_NON_STATIC_FIELD_MUST_BE_FINAL_STRICT_INIT.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_BASE_FRAME_TYPE=Po ran\u00e9m larv\u00e1ln\u00edm r\u00e1mu mus\u00ed n\u00e1sledovat z\u00e1kladn\u00ed r\u00e1m.
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_BASE_FRAME_TYPE.explanation=The StackMap/StackMapTable attribute is malformed.
+J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_BASE_FRAME_TYPE.system_action=The JVM will throw a java.lang.VerifyError.
+J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_BASE_FRAME_TYPE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_CP_INDEX=Neplatn\u00fd index konstantn\u00edho poolu v ran\u00e9m larv\u00e1ln\u00edm stadiu.
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_CP_INDEX.explanation=The StackMap/StackMapTable attribute is malformed.
+J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_CP_INDEX.system_action=The JVM will throw a java.lang.VerifyError.
+J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_CP_INDEX.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
