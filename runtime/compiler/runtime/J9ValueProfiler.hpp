@@ -725,7 +725,7 @@ TR_EmbeddedHashTable<T, bits>::addKey(T value)
    if (dumpInfo)
       {
       OMR::CriticalSection lock(vpMonitor);
-      OMR::Logger *log = OMR::CStdIOStreamLogger::Stdout;
+      OMR::Logger *log = OMR::CStdIOStreamLogger::Stdout();
       log->printf("Pre %" OMR_PRIX64, static_cast<uint64_t>(value));
       this->dumpInfo(log);
       log->flush();
@@ -820,7 +820,7 @@ TR_EmbeddedHashTable<T, bits>::addKey(T value)
    if (dumpInfo)
       {
       OMR::CriticalSection lock(vpMonitor);
-      OMR::Logger *log = OMR::CStdIOStreamLogger::Stdout;
+      OMR::Logger *log = OMR::CStdIOStreamLogger::Stdout();
       log->printf("Post %" OMR_PRIX64, static_cast<uint64_t>(value));
       this->dumpInfo(log);
       log->flush();
