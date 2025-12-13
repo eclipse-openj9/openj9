@@ -151,8 +151,6 @@
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
-	<!-- TODO: Disabled temporarily due to https://github.com/eclipse-openj9/openj9/issues/22642. -->
-	<!--
 	<test id="Run !j9object $valueAddr1$ to show the fields of the reference object. Make sure field vline is not flattened">
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core $DUMPFILE$</arg>
