@@ -2629,8 +2629,15 @@ TR_J9ByteCodeIlGenerator::genIfImpl(TR::ILOpCodes nodeop)
    bool trace = comp()->getOption(TR_TraceILGen);
    OMR::Logger *log = comp()->log();
 
+   // Do not perform branch folding in ilgen if OSR is enabled. OSR def and liveness analyses
+   // rely on dataflow over the IL trees to make conclusions about the bytecode.
+   // To ensure correctness, the IL must accurately reflect the bytecode at the time of OSR
+   // analysis: It should preserve the same CFG and perform all local variable loads and stores
+   // at the same points as in the bytecode. Branch folding will likely be taken care of
+   // by later optimizations after OSR analyses such as tree simplification, etc..
    TR::DataType type = first->getDataType();
    if (!disableIfFolding &&
+       !comp()->getOption(TR_EnableOSR) &&
        branchBC > _bcIndex &&
        first->getOpCode().isLoadConst() &&
        second->getOpCode().isLoadConst() &&
