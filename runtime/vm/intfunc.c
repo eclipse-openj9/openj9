@@ -408,6 +408,9 @@ J9InternalVMFunctions J9InternalFunctions = {
 #endif /* JAVA_SPEC_VERSION >= 15 */
 	storeFlattenableArrayElement,
 	loadFlattenableArrayElement,
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	copyFlattenableArray,
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	jniIsInternalClassRef,
 	objectIsBeingWaitedOn,
 	areValueBasedMonitorChecksEnabled,
