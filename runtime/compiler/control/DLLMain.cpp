@@ -568,10 +568,18 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                                               // Ensure JIT and AOT flags are set appropriately
               {
               TR::Options::getAOTCmdLineOptions()->setAllowRecompilation(false);
-              TR::Options::getAOTCmdLineOptions()->setOption(TR_DisableCHOpts);
-
               TR::Options::getJITCmdLineOptions()->setAllowRecompilation(false);
-              TR::Options::getJITCmdLineOptions()->setOption(TR_DisableCHOpts);
+
+              bool aot_load_is_possible = (vm->sharedClassConfig != NULL)
+                 && isAOT
+                 && !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoLoadAOT);
+
+              if (!aot_load_is_possible)
+                 {
+                 TR::Options::getAOTCmdLineOptions()->setOption(TR_DisableCHOpts);
+                 TR::Options::getJITCmdLineOptions()->setOption(TR_DisableCHOpts);
+                 }
+
               }
 
             if (!isJIT)
