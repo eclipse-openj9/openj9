@@ -3472,11 +3472,11 @@ TR_J9VMBase::lowerMultiANewArray(TR::Compilation * comp, TR::Node * root, TR::Tr
    root->setNumChildren(3);
 
    static bool recreateRoot = feGetEnv("TR_LowerMultiANewArrayRecreateRoot") ? true : false;
-#if defined(TR_HOST_POWER)
+#if defined(TR_HOST_POWER) || defined(TR_HOST_S390)
    if (!comp->target().is64Bit() || recreateRoot || dims > 2)
 #else
    if (!comp->target().is64Bit() || recreateRoot || dims > 2 || secondDimConstNonZero)
-#endif /* defined(TR_HOST_POWER) */
+#endif /* defined(TR_HOST_POWER) || defined(TR_HOST_S390) */
       TR::Node::recreate(root, TR::acall);
 
    return treeTop;
