@@ -24,6 +24,12 @@
 
 #include <string.h>
 
+#if defined(LINUX)
+#include <sys/mman.h>
+#elif defined(WINDOWS)
+#include <windows.h>
+#endif
+
 #include "omrcfg.h"
 #include "j9.h"
 #include "j9cfg.h"
@@ -1565,8 +1571,11 @@ J9JavaStack *
 allocateJavaStack(J9JavaVM * vm, UDATA stackSize, J9JavaStack * previousStack)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	J9JavaStack * stack;
-	UDATA mallocSize;
+	J9JavaStack *stack = NULL;
+	UDATA mallocSize = 0;
+	UDATA pageSize = vm->defaultPageSize;
+	bool pageGuards = J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JAVA_STACK_GUARD_PAGES);
+	UDATA stackMemory = 0;
 
 	/* Allocate the stack, adding the header and overflow area size.
 	 * Add one slot for possible double-slot alignment.
@@ -1574,15 +1583,48 @@ allocateJavaStack(J9JavaVM * vm, UDATA stackSize, J9JavaStack * previousStack)
 	 */
 
 	mallocSize = J9_STACK_OVERFLOW_AND_HEADER_SIZE + (stackSize + sizeof(UDATA)) + vm->thrStaggerMax;
-	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
-		stack = (J9JavaStack*)j9mem_allocate_memory32(mallocSize, OMRMEM_CATEGORY_THREADS_RUNTIME_STACK);
-	} else {
-		stack = (J9JavaStack*)j9mem_allocate_memory(mallocSize, OMRMEM_CATEGORY_THREADS_RUNTIME_STACK);
+	if (pageGuards) {
+		mallocSize += (pageSize * 2);
 	}
+
+	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+		stack = (J9JavaStack *)j9mem_allocate_memory32(mallocSize, OMRMEM_CATEGORY_THREADS_RUNTIME_STACK);
+	} else {
+		stack = (J9JavaStack *)j9mem_allocate_memory(mallocSize, OMRMEM_CATEGORY_THREADS_RUNTIME_STACK);
+	}
+
+	if (pageGuards) {
+		if (NULL != stack) {
+			stackMemory = (UDATA)(stack + 1);
+			stackMemory = ROUND_UP_TO_POWEROF2(stackMemory, pageSize);
+#if defined(LINUX)
+			if (0 == mprotect((void *)stackMemory, pageSize, PROT_NONE)) {
+#elif defined(WINDOWS)
+			if (0 != VirtualProtect(stackMemory, pageSize, PAGE_NOACCESS, &stack->defaultProtection)) {
+#endif
+				stack->guardPage = (UDATA *)(stackMemory);
+				stackMemory += pageSize;
+			} else {
+				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+					j9mem_free_memory32(stack);
+				} else {
+					j9mem_free_memory(stack);
+				}
+				stack = NULL;
+			}
+		}
+	}
+
 	if (stack != NULL) {
 		/* for hyperthreading platforms, make sure that stacks are relatively misaligned */
-		UDATA end = ((UDATA) stack) + J9_STACK_OVERFLOW_AND_HEADER_SIZE + stackSize;
+		UDATA end = 0;
 		UDATA stagger = vm->thrStagger;
+
+		end = ((UDATA) stack) + J9_STACK_OVERFLOW_AND_HEADER_SIZE + stackSize;
+		if (pageGuards) {
+			end += (pageSize * 2);
+		}
+
 		stagger += vm->thrStaggerStep;
 		vm->thrStagger = stagger = stagger >= vm->thrStaggerMax ? 0 : stagger;
 		if (vm->thrStaggerMax != 0) {
@@ -1613,12 +1655,18 @@ allocateJavaStack(J9JavaVM * vm, UDATA stackSize, J9JavaStack * previousStack)
 
 #if defined (J9VM_INTERP_VERBOSE) || defined (J9VM_PROF_EVENT_REPORTING)
 		if (vm->runtimeFlags & J9_RUNTIME_PAINT_STACK) {
-			UDATA * currentSlot = (UDATA *) (stack + 1);
+			UDATA *currentSlot = NULL;
+			if (pageGuards) {
+				currentSlot = (UDATA *)stackMemory;
+			} else {
+				currentSlot = (UDATA *)(stack + 1);
+			}
 
 			while (currentSlot != stack->end)
 				*currentSlot++ = J9_RUNTIME_STACK_FILL;
 		}
 #endif
+		Trc_VM_allocateJavaStack_stackBounds(stack, stack->guardPage, pageSize, stack->end, stack->size);
 	}
 
 	return stack;
@@ -1626,10 +1674,20 @@ allocateJavaStack(J9JavaVM * vm, UDATA stackSize, J9JavaStack * previousStack)
 
 
 void
-freeJavaStack(J9JavaVM * vm, J9JavaStack * stack)
+freeJavaStack(J9JavaVM *vm, J9JavaStack *stack)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
-
+	if (J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JAVA_STACK_GUARD_PAGES)) {
+		UDATA pageSize = vm->defaultPageSize;
+		Trc_VM_allocateJavaStack_stackBounds(stack, stack->guardPage, pageSize, stack->end, stack->size);
+#if defined(LINUX)
+		if (0 != mprotect((void *)(stack->guardPage), pageSize, PROT_READ|PROT_WRITE)) {
+#elif defined(WINDOWS)
+		if (0 == VirtualProtect(stack->guardPage, pageSize, 0, NULL)) {
+#endif
+			Assert_VM_unreachable();
+		}
+	}
 	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
 		j9mem_free_memory32(stack);
 	} else {
