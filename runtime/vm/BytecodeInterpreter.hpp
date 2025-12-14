@@ -7669,7 +7669,11 @@ retry:
 			/* Unresolved */
 			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 			updateVMStruct(REGISTER_ARGS);
-			void *resolveResult = resolveStaticFieldRef(_currentThread, NULL, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_CHECK_CLINIT, NULL);
+			void *resolveResult = resolveStaticFieldRef(_currentThread, NULL, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_CHECK_CLINIT, NULL
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+				, 0
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+			);
 			VMStructHasBeenUpdated(REGISTER_ARGS);
 			restoreGenericSpecialStackFrame(REGISTER_ARGS);
 			if (immediateAsyncPending()) {
@@ -7694,7 +7698,7 @@ retry:
 		if (J9ClassInitNotInitialized == (ramConstantPool->ramClass->initializeStatus & J9ClassInitStatusMask)) {
 			if (J9_STATIC_FIELD_STRICT_INIT_IS_UNSET(classAndFlags)) {
 				/* If a strict field has never been set, fail. */
-				rc = THROW_ILLEGAL_STATE_EXCEPTION;
+				rc = THROW_GET_STRICT_STATIC_NOT_SET;
 				goto done;
 			} else if (J9_STATIC_FIELD_STRICT_INIT_WAS_WRITTEN(classAndFlags)) {
 				classAndFlags &= ~J9StaticFieldRefStrictInitMask;
@@ -7722,7 +7726,7 @@ retry:
 			J9Class *fieldClass = (J9Class*)(classAndFlags & ~(UDATA)J9StaticFieldRefFlagBits);
 			bool isVolatile = (0 != (classAndFlags & J9StaticFieldRefVolatile));
 
-			switch(classAndFlags & J9StaticFieldRefTypeMask) {
+			switch(J9_STATIC_FIELD_REF_TYPE(classAndFlags)) {
 			case J9StaticFieldRefTypeObject:
 				_sp -= 1;
 				*(j9object_t*)_sp = _objectAccessBarrier.inlineStaticReadObject(_currentThread, fieldClass, (j9object_t *)valueAddress, isVolatile);
@@ -7763,11 +7767,30 @@ done:
 			VM_VMHelpers::staticFieldRefIsResolved(flagsAndClass, valueOffset) &&
 			VM_VMHelpers::resolvedStaticFieldRefIsPutResolved(flagsAndClass, _literals, ramConstantPool)
 		))) {
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+			/* Save strict field initialization state before it is overwritten during resolution.
+			 * If no flags assume the field is strict and unset until it is resolved.
+			 */
+			UDATA strictInitFlags = flagsAndClass & J9StaticFieldRefStrictInitFlagsAndClassMask;
+			if (0 == strictInitFlags) {
+				strictInitFlags = J9StaticFieldRefStrictInitFlagsAndClassMask;
+			}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+
 			/* Unresolved */
 			J9Method *method = _literals; /* Record the running method before building the special frame */
 			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 			updateVMStruct(REGISTER_ARGS);
-			resolveResult = resolveStaticFieldRef(_currentThread, method, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_FIELD_SETTER | J9_RESOLVE_FLAG_CHECK_CLINIT, NULL);
+			resolveResult = resolveStaticFieldRef(_currentThread,
+				method,
+				ramConstantPool,
+				index,
+				J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_FIELD_SETTER | J9_RESOLVE_FLAG_CHECK_CLINIT,
+				NULL
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+				, strictInitFlags
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+			);
 			VMStructHasBeenUpdated(REGISTER_ARGS);
 			restoreGenericSpecialStackFrame(REGISTER_ARGS);
 			if (immediateAsyncPending()) {
@@ -7800,7 +7823,7 @@ done:
 				&& J9_ARE_ANY_BITS_SET(classAndFlags, J9StaticFieldRefFinal)
 			) {
 				/* If the strict final field was read, fail. */
-				rc = THROW_ILLEGAL_STATE_EXCEPTION;
+				rc = THROW_PUT_STRICT_STATIC_FINAL_AFTER_READ;
 				goto done;
 			}
 		}
@@ -7833,7 +7856,7 @@ done:
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			J9Class *fieldClass = (J9Class*)(classAndFlags & ~(UDATA)J9StaticFieldRefFlagBits);
 			bool isVolatile = (0 != (classAndFlags & J9StaticFieldRefVolatile));
-			switch(classAndFlags & J9StaticFieldRefTypeMask) {
+			switch(J9_STATIC_FIELD_REF_TYPE(classAndFlags)) {
 			case J9StaticFieldRefTypeObject:
 				_objectAccessBarrier.inlineStaticStoreObject(_currentThread, fieldClass, (j9object_t*)valueAddress, *(j9object_t*)_sp, isVolatile);
 				_sp += 1;
@@ -10803,11 +10826,15 @@ public:
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
-#define PERFORM_ACTION_ILLEGAL_STATE_EXCEPTION \
-		case THROW_ILLEGAL_STATE_EXCEPTION: \
-			goto illegalStateException;
+#define PERFORM_ACTION_THROW_GET_STRICT_STATIC_NOT_SET \
+	case THROW_GET_STRICT_STATIC_NOT_SET: \
+	goto illegalStateException_getStrictStaticNotSet;
+#define PERFORM_ACTION_THROW_PUT_STRICT_STATIC_FINAL_AFTER_READ \
+	case THROW_PUT_STRICT_STATIC_FINAL_AFTER_READ: \
+		goto illegalStateException_putStrictStaticFinalAfterRead;
 #else /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
-#define PERFORM_ACTION_ILLEGAL_STATE_EXCEPTION
+#define PERFORM_ACTION_THROW_GET_STRICT_STATIC_NOT_SET
+#define PERFORM_ACTION_THROW_PUT_STRICT_STATIC_FINAL_AFTER_READ
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 #define PERFORM_ACTION(functionCall) \
@@ -10868,7 +10895,8 @@ public:
 			goto i2j; \
 		PERFORM_ACTION_VALUE_TYPE_IMSE \
 		PERFORM_ACTION_CRIU_STM_THROW \
-		PERFORM_ACTION_ILLEGAL_STATE_EXCEPTION \
+		PERFORM_ACTION_THROW_GET_STRICT_STATIC_NOT_SET \
+		PERFORM_ACTION_THROW_PUT_STRICT_STATIC_FINAL_AFTER_READ \
 		DEBUG_ACTIONS \
 		default: \
 			Assert_VM_unreachable(); \
@@ -11575,10 +11603,16 @@ incompatibleClassChange:
 	goto throwCurrentException;
 
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
-illegalStateException:
+illegalStateException_getStrictStaticNotSet:
 	updateVMStruct(REGISTER_ARGS);
 	prepareForExceptionThrow(_currentThread);
-	setCurrentExceptionUTF(_currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALSTATEEXCEPTION, NULL);
+	setCurrentExceptionNLS(_currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALSTATEEXCEPTION, J9NLS_VM_GET_STRICT_STATIC_NOT_SET);
+	VMStructHasBeenUpdated(REGISTER_ARGS);
+	goto throwCurrentException;
+illegalStateException_putStrictStaticFinalAfterRead:
+	updateVMStruct(REGISTER_ARGS);
+	prepareForExceptionThrow(_currentThread);
+	setCurrentExceptionNLS(_currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALSTATEEXCEPTION, J9NLS_VM_PUT_FINAL_STRICT_STATIC_AFTER_READ);
 	VMStructHasBeenUpdated(REGISTER_ARGS);
 	goto throwCurrentException;
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */

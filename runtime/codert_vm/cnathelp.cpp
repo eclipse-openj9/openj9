@@ -2158,7 +2158,11 @@ old_slow_jitResolveStaticFieldImpl(J9VMThread *currentThread, UDATA parmCount, J
 		method = walkState->method;
 		resolveFlags |= J9_RESOLVE_FLAG_FIELD_SETTER;
 	}
-	UDATA field = (UDATA)vm->internalVMFunctions->resolveStaticFieldRef(currentThread, method, ramConstantPool, cpIndex, resolveFlags, NULL);
+	UDATA field = (UDATA)vm->internalVMFunctions->resolveStaticFieldRef(currentThread, method, ramConstantPool, cpIndex, resolveFlags, NULL
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+		, 0
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+	);
 	if ((UDATA)-1 == field) {
 		/* fetch result from floatTemp - stashed there in clinit case */
 		J9RAMStaticFieldRef *fakeRef = (J9RAMStaticFieldRef*)&currentThread->floatTemp1;
