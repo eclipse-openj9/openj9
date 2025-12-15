@@ -5421,6 +5421,9 @@ typedef struct J9InternalVMFunctions {
 #endif /* JAVA_SPEC_VERSION >= 15 */
 	void ( *storeFlattenableArrayElement)(struct J9VMThread *currentThread, j9object_t receiverObject, U_32 index, j9object_t paramObject);
 	j9object_t ( *loadFlattenableArrayElement)(struct J9VMThread *currentThread, j9object_t receiverObject, U_32 index, BOOLEAN fast);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	I_32 ( *copyFlattenableArray)(struct J9VMThread *currentThread, j9object_t srcObject, j9object_t destObject, U_32 srcIndex, U_32 destIndex, U_32 lengthInSlots);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	UDATA ( *jniIsInternalClassRef)(struct J9JavaVM *vm, jobject ref);
 	BOOLEAN (*objectIsBeingWaitedOn)(struct J9VMThread *currentThread, struct J9VMThread *targetThread, j9object_t obj);
 	BOOLEAN (*areValueBasedMonitorChecksEnabled)(struct J9JavaVM *vm);
