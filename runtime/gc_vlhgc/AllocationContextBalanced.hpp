@@ -294,7 +294,7 @@ public:
 	 * @param fraction[in] the remainder of array size from region size.
 	 * @return True if need to recycle a shared reserved region.
 	 */
-	bool recycleToSharedArrayReservedRegion(MM_EnvironmentBase *env, uintptr_t fraction);
+	bool recycleToSharedArrayReservedRegion(MM_EnvironmentBase *env, uintptr_t fraction, bool needLock = false);
 
 	/**
 	 * Get total shared reserved region count.
@@ -327,6 +327,8 @@ public:
 	{
 		_arrayReservedRegionCount -= 1;
 	}
+
+	virtual void recycleReservedRegionsForVirtualLargeObjectHeap(MM_EnvironmentBase *env, uintptr_t reservedRegionCount, bool needLock) {}
 
 	void recycleReservedRegionsForVirtualLargeObjectHeap(MM_EnvironmentVLHGC *env, uintptr_t reservedRegionCount, bool needLock = false);
 

@@ -1128,7 +1128,7 @@ MM_AllocationContextBalanced::allocateFromSharedArrayReservedRegion(MM_Environme
 }
 
 bool
-MM_AllocationContextBalanced::recycleToSharedArrayReservedRegion(MM_EnvironmentBase *env, uintptr_t fraction)
+MM_AllocationContextBalanced::recycleToSharedArrayReservedRegion(MM_EnvironmentBase *env, uintptr_t fraction, bool needLock)
 {
 	const uintptr_t regionSize = _heapRegionManager->getRegionSize();
 	Assert_MM_true((regionSize > fraction) && (0 != fraction));
