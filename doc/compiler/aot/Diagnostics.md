@@ -314,13 +314,15 @@ the relocation line:
 ```
         reloLocation: from 00007F5682801364 at 00007F56A8BB68FE (offset 7e)
 ```
-Again, the offset here is the `Offset (M)`. If a relocation record
-applies to multiple offsets, then there will be multiple lines printed.
-`00007F5682801364` is the instance of the `TR_RelocationRecord` type
-(or subtype); `00007F56A8BB68FE` is the address in the code the
-relocation is applied to. Not all relocations involve updating the
-code; some will use the relocated address to do other tasks such as
-registering Runtime Assumptions.
+Again, the offset here is the `Offset (M)`. If a relocation record applies to
+multiple offsets, then there will be multiple lines printed.
+`00007F5682801364` is the pointer to the current offset that the relocation
+should be applied to; `00007F56A8BB68FE` is the corresponding address in the
+code the relocation is applied to (based on the offset acquired by
+dereferencing the offset pointer (i.e. dereferencing `00007F5682801364` yields
+offset `0x7e`)). Not all relocations involve updating the code; some will use
+the relocated address to do other tasks such as registering Runtime
+Assumptions.
 
 # Common reasons for AOT bugs
 
@@ -388,7 +390,10 @@ Often it involves diving deep into the core dump and the trace logs to
 understand exactly where things go wrong. Once a likely culprit is
 found, the logs can then be cross-referenced to verify whether
 a validation existed or was incorrect. An example of such a bug can be
-found [here](https://github.com/eclipse-openj9/openj9/issues/9710).
+found [here](https://github.com/eclipse-openj9/openj9/issues/9710), which, it
+turns out, wasn't the complete solution; it required
+[this](https://github.com/eclipse-openj9/openj9/pull/15037) to fix the
+issue completely.
 
 # Other related information in the RTLog
 The RT Log also contains information printed by the `TR_J9SharedCache`
