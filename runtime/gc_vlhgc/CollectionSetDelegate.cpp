@@ -593,12 +593,6 @@ MM_CollectionSetDelegate::rateOfReturnCalculationBeforeSweep(MM_EnvironmentVLHGC
 
 				sparseDataEntry = (MM_SparseDataTableEntry *)hashTableNextDo(&walkState);
 			}
-
-			MM_AllocationContextBalanced *commonContext = (MM_AllocationContextBalanced *)env->getCommonAllocationContext();
-			uintptr_t sharedArrayReservedRegionCount = commonContext->getSharedArrayReservedRegionsCount();
-			SetSelectionData *stats = &_setSelectionDataTable[compactGroupCount-1];
-			stats->_reclaimStats._regionCountBefore += sharedArrayReservedRegionCount;
-			stats->_reclaimStats._regionCountArrayletLeafBefore += sharedArrayReservedRegionCount;
 		}
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 	}
@@ -670,13 +664,6 @@ MM_CollectionSetDelegate::rateOfReturnCalculationAfterSweep(MM_EnvironmentVLHGC 
 
 				sparseDataEntry = (MM_SparseDataTableEntry *)hashTableNextDo(&walkState);
 			}
-
-			MM_AllocationContextBalanced *commonContext = (MM_AllocationContextBalanced *)env->getCommonAllocationContext();
-			uintptr_t sharedArrayReservedRegionCount = commonContext->getSharedArrayReservedRegionsCount();
-			SetSelectionData *stats = &_setSelectionDataTable[compactGroupCount-1];
-
-			stats->_reclaimStats._regionCountAfter += sharedArrayReservedRegionCount;
-			stats->_reclaimStats._regionCountArrayletLeafAfter += sharedArrayReservedRegionCount;
 		}
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 

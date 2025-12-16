@@ -222,14 +222,3 @@ MM_HeapRegionManagerVLHGC::getHeapMemorySnapshot(MM_GCExtensionsBase *extensions
 
 	return snapshot;
 }
-
-#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
-void
-MM_HeapRegionManagerVLHGC::recycleReservedRegionsForVirtualLargeObjectHeap(MM_EnvironmentBase *envBase, uintptr_t reservedRegionCount)
-{
-	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	MM_AllocationContextBalanced *commonContext = (MM_AllocationContextBalanced *)env->getCommonAllocationContext();
-
-	commonContext->recycleReservedRegionsForVirtualLargeObjectHeap(env, reservedRegionCount, true);
-}
-#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */

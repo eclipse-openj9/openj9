@@ -66,6 +66,7 @@ public:
 	virtual bool acquireAllocationContext(MM_EnvironmentBase *env);
 	virtual void releaseAllocationContext(MM_EnvironmentBase *env);
 	virtual void printAllocationContextStats(MM_EnvironmentBase *env, UDATA eventNum, J9HookInterface** hookInterface);
+
 	/**
 	 * Called after the receiver and the subspace have been initialized to request that the receiver build the allocation contexts
 	 * it will manager over the course of the run.  The subspace is required because the allocation contexts need to know which
