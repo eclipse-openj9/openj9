@@ -136,3 +136,4 @@ TraceEvent=Trc_JITServerCompThreadCrashed    Overhead=1 Level=1 Test Template="J
 TraceEvent=Trc_JITServerClearCaches    Overhead=1 Level=1 Test Template="JITServer: compThreadID=%d clientSessionData=%p clientUID=%llu clearing all the caches due to class redefinition."
 
 TraceEvent=Trc_JIT_MethodUnloadInvalidated Group=perfmon Overhead=1 Level=1 Test Template="JIT: Compiled body _startPC=%p invalidated by unloading of inlined code"
+TraceEvent=Trc_JITServerHandleInstanceOfOrCastCheck     Overhead=1 Level=1 Test Template="JITClient: instanceOfOrCastCheck, instanceClass=%p castClass=%p"
