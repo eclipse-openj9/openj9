@@ -453,6 +453,7 @@ freeTLS(J9VMThread *currentThread, j9object_t threadObj)
 }
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
+#if JAVA_SPEC_VERSION >= 24
 void
 notifyUnblocker(void *userData)
 {
@@ -463,6 +464,7 @@ notifyUnblocker(void *userData)
 		Trc_VM_ThreadHelp_notifyUnblocker(currentThread);
 	}
 }
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
 IDATA
 timeCompensationHelper(J9VMThread *vmThread, U_8 threadHelperType, omrthread_monitor_t monitor, I_64 millis, I_32 nanos)
@@ -535,7 +537,11 @@ continueTimeCompensation:
 		rc = omrthread_monitor_wait_interruptable(monitor, millis, nanos);
 		break;
 	case HELPER_TYPE_MONITOR_WAIT_TIMED:
+#if JAVA_SPEC_VERSION >= 24
 		rc = omrthread_monitor_wait_timed_with_callback(monitor, millis, nanos, notifyUnblocker, vmThread);
+#else /* JAVA_SPEC_VERSION >= 24 */
+		rc = omrthread_monitor_wait_timed(monitor, millis, nanos);
+#endif /* JAVA_SPEC_VERSION >= 24 */
 		break;
 	case HELPER_TYPE_THREAD_PARK:
 		rc = omrthread_park(millis, nanos);
