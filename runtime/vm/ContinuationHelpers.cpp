@@ -1201,9 +1201,7 @@ takeVirtualThreadListToUnblock(J9VMThread *currentThread)
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
 
-	if (J9_ARE_NO_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
-	|| (NULL == vm->blockedContinuations)
-	) {
+	if (J9_ARE_NO_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
 		return NULL;
 	}
 
