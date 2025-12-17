@@ -558,7 +558,7 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
    UDATA startPC = 0;
 
    RELO_LOG(_reloLogger,
-            7,
+            2,
             "relocateAOTCodeAndData jitConfig=%p aotDataCache=%p aotMccCodeCache=%p method=%p tempDataStart=%p exceptionTable=%p oldDataStart=%p codeStart=%p oldCodeStart=%p classReloAmount=%p cacheEntry=%p\n",
             jitConfig(),
             dataCache(),
@@ -604,9 +604,9 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
          TR_RelocationRecordBinaryTemplate * binaryReloRecords = (TR_RelocationRecordBinaryTemplate * )((U_8 *)_aotMethodHeaderEntry - sizeof(J9JITDataCacheHeader) + _aotMethodHeaderEntry->offsetToRelocationDataItems);
          TR_RelocationRecordGroup reloGroup(binaryReloRecords);
 
-         RELO_LOG(reloLogger(), 6, "relocateAOTCodeAndData: jitConfig=%x aotDataCache=%x aotMccCodeCache=%x method=%x tempDataStart=%x exceptionTable=%x\n", jitConfig(), dataCache(), codeCache(), _method, tempDataStart, _exceptionTable);
-         RELO_LOG(reloLogger(), 6, "                        oldDataStart=%x codeStart=%x oldCodeStart=%x classReloAmount=%x cacheEntry=%x\n", oldDataStart, codeStart, oldCodeStart, classReloAmount(), cacheEntry);
-         RELO_LOG(reloLogger(), 6, "                        tempDataStart: %p, _aotMethodHeaderEntry: %p, header offset: %x, binaryReloRecords: %p\n", tempDataStart, _aotMethodHeaderEntry, (UDATA)_aotMethodHeaderEntry-(UDATA)tempDataStart, binaryReloRecords);
+         RELO_LOG(reloLogger(), 2, "relocateAOTCodeAndData: jitConfig=%x aotDataCache=%x aotMccCodeCache=%x method=%x tempDataStart=%x exceptionTable=%x\n", jitConfig(), dataCache(), codeCache(), _method, tempDataStart, _exceptionTable);
+         RELO_LOG(reloLogger(), 2, "                        oldDataStart=%x codeStart=%x oldCodeStart=%x classReloAmount=%x cacheEntry=%x\n", oldDataStart, codeStart, oldCodeStart, classReloAmount(), cacheEntry);
+         RELO_LOG(reloLogger(), 2, "                        tempDataStart: %p, _aotMethodHeaderEntry: %p, header offset: %x, binaryReloRecords: %p\n", tempDataStart, _aotMethodHeaderEntry, (UDATA)_aotMethodHeaderEntry-(UDATA)tempDataStart, binaryReloRecords);
 
          try
             {
@@ -646,7 +646,7 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
             setReturnCode(compilationRelocationFailure);
             }
 
-         RELO_LOG(reloLogger(), 6, "relocateAOTCodeAndData: return code %d\n", returnCode());
+         RELO_LOG(reloLogger(), 1, "relocateAOTCodeAndData: return code %d\n", returnCode());
 
 #if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
          // Detect some potential incorrectness that could otherwise be missed
