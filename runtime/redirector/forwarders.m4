@@ -455,13 +455,13 @@ _IF([JAVA_SPEC_VERSION >= 21],
 	[_X(JVM_IsForeignLinkerSupported, JNICALL, false, jboolean, void)])
 _IF([JAVA_SPEC_VERSION >= 21],
 	[_X(JVM_PrintWarningAtDynamicAgentLoad, JNICALL, false, jboolean, void)])
-_IF([JAVA_SPEC_VERSION >= 21],
+_IF([(21 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 26)],
 	[_X(JVM_VirtualThreadEnd, JNICALL, false, void, JNIEnv *env, jobject vthread)])
-_IF([JAVA_SPEC_VERSION >= 21],
+_IF([(21 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 26)],
 	[_X(JVM_VirtualThreadMount, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean hide)])
-_IF([JAVA_SPEC_VERSION >= 21],
+_IF([(21 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 26)],
 	[_X(JVM_VirtualThreadStart, JNICALL, false, void, JNIEnv *env, jobject vthread)])
-_IF([JAVA_SPEC_VERSION >= 21],
+_IF([(21 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 26)],
 	[_X(JVM_VirtualThreadUnmount, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean hide)])
 _IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
 	[_X(JVM_CopyOfSpecialArray, JNICALL, false, jarray, JNIEnv *env, jarray orig, jint from, jint to)])
@@ -499,3 +499,11 @@ _IF([JAVA_SPEC_VERSION >= 25],
 	[_X(JVM_CreateThreadSnapshot, JNICALL, false, jobject, JNIEnv *env, jobject thread)])
 _IF([JAVA_SPEC_VERSION >= 25],
 	[_X(JVM_NeedsClassInitBarrierForCDS, JNICALL, false, jboolean, JNIEnv *env, jclass clazz)])
+_IF([JAVA_SPEC_VERSION >= 26],
+	[_X(JVM_VirtualThreadEndFirstTransition, JNICALL, false, void, JNIEnv *env, jobject vthread)])
+_IF([JAVA_SPEC_VERSION >= 26],
+	[_X(JVM_VirtualThreadStartFinalTransition, JNICALL, false, void, JNIEnv *env, jobject vthread)])
+_IF([JAVA_SPEC_VERSION >= 26],
+	[_X(JVM_VirtualThreadStartTransition, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean hide)])
+_IF([JAVA_SPEC_VERSION >= 26],
+	[_X(JVM_VirtualThreadEndTransition, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean hide)])
