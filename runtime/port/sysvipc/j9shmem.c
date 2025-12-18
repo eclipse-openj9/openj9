@@ -288,7 +288,7 @@ j9shmem_openDeprecated (struct J9PortLibrary *portLibrary, const char* cacheDirN
 	} else {
 		Trc_PRT_shmem_j9shmem_openDeprecated_BadCacheType(cacheFileType);
 	}
-	
+
 error:
 	if (fileIsLocked == TRUE) {
 		if (ControlFileCloseAndUnLock(portLibrary, fd) != J9SH_SUCCESS) {
@@ -330,7 +330,7 @@ j9shmem_open (J9PortLibrary *portLibrary, const char* cacheDirName, uintptr_t gr
 	Trc_PRT_shmem_j9shmem_open_Entry(rootname, size, perm);
 
 	clearPortableError(portLibrary);
-	
+
 	if (NULL != controlFileStatus) {
 		memset(controlFileStatus, 0, sizeof(J9ControlFileStatus));
 	}
@@ -357,13 +357,13 @@ j9shmem_open (J9PortLibrary *portLibrary, const char* cacheDirName, uintptr_t gr
 	tmphandle->controlStorageProtectKey = 0;
 	tmphandle->currentStorageProtectKey = 0;
 	tmphandle->flags = flags;
-	
+
 #if defined(J9ZOS390)
 	if ((flags & J9SHMEM_STORAGE_KEY_TESTING) != 0) {
-		tmphandle->currentStorageProtectKey = (flags >> J9SHMEM_STORAGE_KEY_TESTING_SHIFT) & J9SHMEM_STORAGE_KEY_TESTING_MASK;			
+		tmphandle->currentStorageProtectKey = (flags >> J9SHMEM_STORAGE_KEY_TESTING_SHIFT) & J9SHMEM_STORAGE_KEY_TESTING_MASK;
 	} else {
 		tmphandle->currentStorageProtectKey = getStorageKey();
-	}	
+	}
 #endif
 
 	for (retryIfReadOnlyCount = 10; retryIfReadOnlyCount > 0; retryIfReadOnlyCount -= 1) {
@@ -403,7 +403,7 @@ j9shmem_open (J9PortLibrary *portLibrary, const char* cacheDirName, uintptr_t gr
 			}
 		} else if (rc == J9SH_SUCCESS) {
 			BOOLEAN canUnlink = FALSE;
-			
+
 			/*The control file contains data, and we have successfully read in our structure*/
 			rc = openSharedMemory(portLibrary, fd, baseFile, perm, &controlinfo, groupPerm, tmphandle, &canUnlink, J9SH_SYSV_REGULAR_CONTROL_FILE);
 			if (J9PORT_INFO_SHMEM_OPENED != rc) {
@@ -561,14 +561,14 @@ j9shmem_open (J9PortLibrary *portLibrary, const char* cacheDirName, uintptr_t gr
 	return rc;
 }
 
-void 
+void
 j9shmem_close(struct J9PortLibrary *portLibrary, struct j9shmem_handle **handle)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	Trc_PRT_shmem_j9shmem_close_Entry1(*handle, (*handle)->shmid);
 	portLibrary->shmem_detach(portLibrary, handle);
 	omrmem_free_memory(*handle);
-	
+
 	*handle=NULL;
 	Trc_PRT_shmem_j9shmem_close_Exit();
 }
@@ -640,10 +640,10 @@ j9shmem_attach(struct J9PortLibrary *portLibrary, struct j9shmem_handle *handle,
 		omrmem_categories_increment_counters(category, handle->size);
 		Trc_PRT_shmem_j9shmem_attach_Exit(region);
 		return region;
-	} 
+	}
 }
 
-intptr_t 
+intptr_t
 j9shmem_destroy (struct J9PortLibrary *portLibrary, const char* cacheDirName, uintptr_t groupPerm, struct j9shmem_handle **handle)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
@@ -719,7 +719,7 @@ j9shmem_destroy (struct J9PortLibrary *portLibrary, const char* cacheDirName, ui
 		rc = omrfile_unlink((*handle)->baseFileName);
 		Trc_PRT_shmem_j9shmem_destroy_Debug1((*handle)->baseFileName, rc, omrerror_last_error_number());
 	}
-	
+
 	portLibrary->shmem_close(portLibrary, handle);
 
 	if (ControlFileCloseAndUnLock(portLibrary, fd) != J9SH_SUCCESS) {
@@ -741,7 +741,7 @@ j9shmem_destroy_exitWithError:
 
 }
 
-intptr_t 
+intptr_t
 j9shmem_destroyDeprecated (struct J9PortLibrary *portLibrary, const char* cacheDirName, uintptr_t groupPerm, struct j9shmem_handle **handle, uintptr_t cacheFileType)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
@@ -750,9 +750,9 @@ j9shmem_destroyDeprecated (struct J9PortLibrary *portLibrary, const char* cacheD
 	intptr_t fd;
 	BOOLEAN isReadOnlyFD = FALSE;
 	BOOLEAN fileIsLocked = FALSE;
-	
+
 	Trc_PRT_shmem_destroyDeprecated_Entry(*handle, (*handle)->shmid);
-	
+
 	if (cacheFileType == J9SH_SYSV_OLDER_EMPTY_CONTROL_FILE) {
 		Trc_PRT_shmem_destroyDeprecated_Message("Info: cacheFileType == J9SH_SYSV_OLDER_EMPTY_CONTROL_FILE.");
 
@@ -801,7 +801,7 @@ j9shmem_destroyDeprecated (struct J9PortLibrary *portLibrary, const char* cacheD
 }
 
 intptr_t
-j9shmem_detach(struct J9PortLibrary* portLibrary, struct j9shmem_handle **handle) 
+j9shmem_detach(struct J9PortLibrary* portLibrary, struct j9shmem_handle **handle)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	Trc_PRT_shmem_j9shmem_detach_Entry1(*handle, (*handle)->shmid);
@@ -837,29 +837,29 @@ j9shmem_findfirst(struct J9PortLibrary *portLibrary, char *cacheDirName, char *r
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	uintptr_t findHandle;
 	char file[EsMaxPath];
-	
+
 	Trc_PRT_shmem_j9shmem_findfirst_Entry();
-	
+
 	if (cacheDirName == NULL) {
 		Trc_PRT_shmem_j9shmem_findfirst_Exit3();
 		return -1;
 	}
-	
+
 	findHandle = omrfile_findfirst(cacheDirName, file);
-	
+
 	if(findHandle == -1) {
 		Trc_PRT_shmem_j9shmem_findfirst_Exit1();
 		return -1;
 	}
-	
+
 	while (!isControlFileName(portLibrary, file)) {
 		if (-1 == omrfile_findnext(findHandle, file)) {
 			omrfile_findclose(findHandle);
 			Trc_PRT_shmem_j9shmem_findfirst_Exit2();
 			return -1;
-		}		
+		}
 	}
-	
+
 	strcpy(resultbuf, file);
 	Trc_PRT_shmem_j9shmem_findfirst_file(resultbuf);
 	Trc_PRT_shmem_j9shmem_findfirst_Exit();
@@ -878,12 +878,12 @@ j9shmem_findnext(struct J9PortLibrary *portLibrary, uintptr_t findHandle, char *
 		Trc_PRT_shmem_j9shmem_findnext_Exit1();
 		return -1;
 	}
-	
+
 	while (!isControlFileName(portLibrary, file)) {
 		if (-1 == omrfile_findnext(findHandle, file)) {
 			Trc_PRT_shmem_j9shmem_findnext_Exit2();
 			return -1;
-		}		
+		}
 	}
 
 	strcpy(resultbuf, file);
@@ -1075,10 +1075,10 @@ j9shmem_statDeprecated (struct J9PortLibrary *portLibrary, const char* cacheDirN
 			goto error;
 		}
 		statbuf->shmid = shmid;
-		
+
 	} else if (cacheFileType == J9SH_SYSV_OLDER_CONTROL_FILE) {
 		j9shmem_controlBaseFileFormat info;
-		
+
 		Trc_PRT_shmem_j9shmem_statDeprecated_Message("Info: cacheFileType == J9SH_SYSV_OLDER_CONTROL_FILE.");
 
 		if (readOlderNonZeroByteControlFile(portLibrary, fd, &info) != J9SH_SUCCESS) {
@@ -1087,11 +1087,11 @@ j9shmem_statDeprecated (struct J9PortLibrary *portLibrary, const char* cacheDirN
 			goto error;
 		}
 		statbuf->shmid = info.shmid;
-		
+
 	} else {
 		Trc_PRT_shmem_j9shmem_statDeprecated_BadCacheType(cacheFileType);
 		retval = J9SH_FAILED;
-		goto error;			
+		goto error;
 	}
 
 	rc = getShmStats(portLibrary, statbuf->shmid, statbuf);
@@ -1210,7 +1210,7 @@ createshmHandle(J9PortLibrary *portLibrary, int32_t shmid, const char *controlFi
 	intptr_t cfstrLength = strlen(controlFile);
 
 	Trc_PRT_shmem_createshmHandle_Entry(controlFile, shmid);
-	    
+
 	handle->shmid = shmid;
 	omrstr_printf(handle->baseFileName, cfstrLength+1, "%s", controlFile);
 	handle->regionStart = NULL;
@@ -1224,7 +1224,7 @@ createshmHandle(J9PortLibrary *portLibrary, int32_t shmid, const char *controlFi
 /* Note that, although it's the responsibility of the caller to generate the
  * version prefix and generation postfix, the function this calls strictly checks
  * the format used by shared classes. It would be much better to have a more flexible
- * API that takes a call-back function, but we decided not to change the API this release */ 
+ * API that takes a call-back function, but we decided not to change the API this release */
 static uintptr_t
 isControlFileName(struct J9PortLibrary* portLibrary, char* nameToTest)
 {
@@ -1242,7 +1242,7 @@ isControlFileName(struct J9PortLibrary* portLibrary, char* nameToTest)
  * @param[in] name of the shared memory area
  *
  */
-static void 
+static void
 getControlFilePath(struct J9PortLibrary* portLibrary, const char* cacheDirName, char* buffer, uintptr_t size, const char* name)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
@@ -1272,7 +1272,6 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 	} else {
 		if (J9_ARE_ALL_BITS_SET(flags, J9SHMEM_GETDIR_USE_USERHOME)) {
 			/* If J9SHMEM_GETDIR_USE_USERHOME is set, try setting cache directory to $HOME/.cache/javasharedresources/ */
-			Assert_PRT_true(TRUE == appendBaseDir);
 			uintptr_t baseDirLen = sizeof(J9SH_HIDDENDIR) - 1 + sizeof(J9SH_BASEDIR) - 1;
 			uintptr_t minBufLen = bufLength < J9SH_MAXPATH ? bufLength : J9SH_MAXPATH;
 			/*
@@ -1325,9 +1324,23 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 				struct J9FileStat statBuf = {0};
 				if (0 == omrfile_stat(homeDir, 0, &statBuf)) {
 					if (!statBuf.isRemote) {
-						uintptr_t charWritten = omrstr_printf(homeDirBuf, J9SH_MAXPATH, SHM_STRING_ENDS_WITH_CHAR(homeDir, '/') ? "%s%s" : "%s/%s", homeDir, J9SH_HIDDENDIR);
-						Assert_PRT_true(charWritten < J9SH_MAXPATH);
-						rootDir = homeDirBuf;
+						/* If the flag J9SHMEM_GETDIR_DO_NOT_APPEND_HIDDENDIR is set,
+						 * skip appending the hidden directory and set rootDir to homeDir.
+						 */
+						if (J9_ARE_ANY_BITS_SET(flags, J9SHMEM_GETDIR_DO_NOT_APPEND_HIDDENDIR)) {
+							rootDir = homeDir;
+						} else {
+							uintptr_t charWritten = omrstr_printf(
+									homeDirBuf,
+									J9SH_MAXPATH,
+									SHM_STRING_ENDS_WITH_CHAR(homeDir, DIR_SEPARATOR)
+										? "%s%s"
+										: "%s" DIR_SEPARATOR_STR "%s",
+									homeDir,
+									J9SH_HIDDENDIR);
+							Assert_PRT_true(charWritten < J9SH_MAXPATH);
+							rootDir = homeDirBuf;
+						}
 					} else {
 						rc = J9PORT_ERROR_SHMEM_GET_DIR_HOME_ON_NFS;
 						Trc_PRT_j9shmem_getDir_tryHomeDirFailed_homeOnNFS(homeDir);
@@ -1346,16 +1359,28 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 		Assert_PRT_true(rc < 0);
 	} else {
 		if (appendBaseDir) {
-			if (omrstr_printf(buffer, bufLength, SHM_STRING_ENDS_WITH_CHAR(rootDir, '/') ? "%s%s" : "%s/%s", rootDir, J9SH_BASEDIR) >= bufLength) {
+			if (omrstr_printf(
+					buffer,
+					bufLength,
+					SHM_STRING_ENDS_WITH_CHAR(rootDir, DIR_SEPARATOR)
+						? "%s%s" DIR_SEPARATOR_STR
+						: "%s" DIR_SEPARATOR_STR "%s" DIR_SEPARATOR_STR,
+					rootDir,
+					J9SH_BASEDIR) >= bufLength
+			) {
 				Trc_PRT_j9shmem_getDir_ExitFailedOverflow();
 				rc = J9PORT_ERROR_SHMEM_GET_DIR_BUF_OVERFLOW;
 			}
 		} else {
 			/* Avoid appending two slashes; this leads to problems in matching full file names. */
-			if (omrstr_printf(buffer,
-								bufLength,
-								SHM_STRING_ENDS_WITH_CHAR(rootDir, '/') ? "%s" : "%s/",
-								rootDir) >= bufLength) {
+			if (omrstr_printf(
+					buffer,
+					bufLength,
+					SHM_STRING_ENDS_WITH_CHAR(rootDir, DIR_SEPARATOR)
+						? "%s"
+						: "%s" DIR_SEPARATOR_STR,
+					rootDir) >= bufLength
+			) {
 				Trc_PRT_j9shmem_getDir_ExitFailedOverflow();
 				rc = J9PORT_ERROR_SHMEM_GET_DIR_BUF_OVERFLOW;
 			}
@@ -1370,7 +1395,8 @@ intptr_t
 j9shmem_createDir(struct J9PortLibrary* portLibrary, char* cacheDirName, uintptr_t cacheDirPerm, BOOLEAN cleanMemorySegments)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
-	intptr_t rc, rc2;
+	intptr_t rc = 0;
+	intptr_t rc2 = 0;
 	char pathBuffer[J9SH_MAXPATH];
 	BOOLEAN usingDefaultTmp = FALSE;
 
@@ -1497,28 +1523,28 @@ j9shmem_protect(struct J9PortLibrary *portLibrary, const char* cacheDirName, uin
 
 	return rc;
 }
- 
-uintptr_t 
+
+uintptr_t
 j9shmem_get_region_granularity(struct J9PortLibrary *portLibrary, const char* cacheDirName, uintptr_t groupPerm, void *address)
 {
 	uintptr_t rc = 0;
-	
+
 #if defined(J9ZOS390) && !defined(J9ZOS39064)
 	rc = protect_region_granularity(portLibrary, address);
-	
+
 #elif defined(AIXPPC) /* defined(J9ZOS390) && !defined(J9ZOS39064) */
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
-	
+
 	if (PAGE_PROTECTION_NOTCHECKED == PPG_pageProtectionPossible) {
 		intptr_t envrc = 0;
 		char buffer[J9SH_MAXPATH];
 		envrc = omrsysinfo_get_env("MPROTECT_SHM", buffer, J9SH_MAXPATH);
-	
+
 	  	if ((0 != envrc) || (0 != strcmp(buffer,"ON"))) {
 			Trc_PRT_shmem_get_region_granularity_MPROTECT_SHM_Not_Set();
 			PPG_pageProtectionPossible = PAGE_PROTECTION_NOTAVAILABLE;
 		}
-    }
+	}
 
 	if (PAGE_PROTECTION_NOTAVAILABLE == PPG_pageProtectionPossible) {
 		return rc;
@@ -1527,7 +1553,7 @@ j9shmem_get_region_granularity(struct J9PortLibrary *portLibrary, const char* ca
 
 #elif defined(LINUX) /* defined(AIXPPC) */
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
-	
+
 	rc = omrmmap_get_region_granularity(address);
 #endif /* defined(J9ZOS390) && !defined(J9ZOS39064) */
 
@@ -1582,7 +1608,7 @@ readControlFile(J9PortLibrary *portLibrary, intptr_t fd, j9shmem_controlFileForm
 	return J9SH_FAILED;
 }
 
-static intptr_t 
+static intptr_t
 readOlderNonZeroByteControlFile(J9PortLibrary *portLibrary, intptr_t fd, j9shmem_controlBaseFileFormat * info)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
@@ -1616,7 +1642,7 @@ readOlderNonZeroByteControlFile(J9PortLibrary *portLibrary, intptr_t fd, j9shmem
  *
  * @return J9PORT_INFO_SHMEM_OPENED on success
  */
-static intptr_t 
+static intptr_t
 openSharedMemory (J9PortLibrary *portLibrary, intptr_t fd, const char *baseFile, int32_t perm, struct j9shmem_controlFileFormat * controlinfo, uintptr_t groupPerm, struct j9shmem_handle *handle, BOOLEAN *canUnlink, uintptr_t cacheFileType)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
@@ -1850,7 +1876,7 @@ failDontUnlink:
 
 /**
  * @internal
- * Create a SysV shared memory 
+ * Create a SysV shared memory
  *
  * @param[in] portLibrary
  * @param[in] fd of file to write info to ...
@@ -1864,7 +1890,7 @@ failDontUnlink:
  *
  * @return	J9PORT_INFO_SHMEM_CREATED on success
  */
-static int32_t 
+static int32_t
 createSharedMemory(J9PortLibrary *portLibrary, intptr_t fd, BOOLEAN isReadOnlyFD, const char *baseFile, int32_t size, int32_t perm, struct j9shmem_controlFileFormat * controlinfo, uintptr_t groupPerm, struct j9shmem_handle *handle)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
@@ -2000,7 +2026,7 @@ createSharedMemory(J9PortLibrary *portLibrary, intptr_t fd, BOOLEAN isReadOnlyFD
  *
  * @return	-1 if we can't get info from shmid, 1 if it match is found, 0 if it does not match, -2 if shmctl() returned size as 0
  */
-static intptr_t 
+static intptr_t
 checkSize(J9PortLibrary *portLibrary, int shmid, int64_t size)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
@@ -2018,7 +2044,7 @@ checkSize(J9PortLibrary *portLibrary, int shmid, int64_t size)
 		return -1;
 	}
 
-	/* Jazz103 88930 : On 64-bit z/OS the size of a 31-bit shared memory segment 
+	/* Jazz103 88930 : On 64-bit z/OS the size of a 31-bit shared memory segment
 	 * is returned in shmid_ds.shm_segsz_31 when queried by a 64-bit process.
 	 */
 	if (((int64_t) buf.shm_segsz == size)
@@ -2030,7 +2056,7 @@ checkSize(J9PortLibrary *portLibrary, int shmid, int64_t size)
 	} else {
 #if defined(J9ZOS390)
 		if (0 == buf.shm_segsz) {
-			/* JAZZ103 PR 79909 + PR 88903 : shmctl(IPC_STAT) can return segment size as 0 on z/OS 
+			/* JAZZ103 PR 79909 + PR 88903 : shmctl(IPC_STAT) can return segment size as 0 on z/OS
 			 * if the shared memory segment was created by a 64-bit JVM and the caller is a 31-bit JVM.
 			 */
 			return -2;
@@ -2050,7 +2076,7 @@ checkSize(J9PortLibrary *portLibrary, int shmid, int64_t size)
  *
  * @return	-1 if we can't get info from shmid, 1 if it match is found, 0 if it does not match
  */
-static intptr_t 
+static intptr_t
 checkUid(J9PortLibrary *portLibrary, int shmid, int32_t uid)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
@@ -2085,7 +2111,7 @@ checkUid(J9PortLibrary *portLibrary, int shmid, int32_t uid)
  *
  * @return	-1 if we can't get info from shmid, 1 if it match is found, 0 if it does not match
  */
-static intptr_t 
+static intptr_t
 checkGid(J9PortLibrary *portLibrary, int shmid, int32_t gid)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
@@ -2164,8 +2190,8 @@ getShmStats(J9PortLibrary *portLibrary, int shmid, struct J9PortShmemStatistic* 
 	statbuf->lastDetachTime = shminfo.shm_dtime;
 	statbuf->lastChangeTime = shminfo.shm_ctime;
 	statbuf->nattach = shminfo.shm_nattch;
-	/* Jazz103 88930 : On z/OS a 64-bit process needs to access shminfo.shm_segsz_31 
-	 * to get size of a 31-bit shared memory segment. 
+	/* Jazz103 88930 : On z/OS a 64-bit process needs to access shminfo.shm_segsz_31
+	 * to get size of a 31-bit shared memory segment.
 	 */
 #if defined(J9ZOS39064)
 	if (0 != shminfo.shm_segsz) {

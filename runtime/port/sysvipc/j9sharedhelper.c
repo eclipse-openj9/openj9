@@ -128,6 +128,8 @@ createDirectory(struct J9PortLibrary *portLibrary, const char *pathname, uintptr
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	char tempPath[J9SH_MAXPATH];
 	char *current = NULL;
+	intptr_t rc = 0;
+	BOOLEAN usingUserHome = FALSE;
 
 	Trc_PRT_shared_createDirectory_Entry(pathname);
 
@@ -141,13 +143,34 @@ createDirectory(struct J9PortLibrary *portLibrary, const char *pathname, uintptr
 
 	omrstr_printf(tempPath, J9SH_MAXPATH, "%s", pathname);
 
-	current = strchr(tempPath + 1, DIR_SEPARATOR); /* Skip the first '/'. */
+	/* If pathname begins with the home directory, mark usingUserHome as true. */
+	if ((NULL != pathname) && (J9SH_DIRPERM_ABSENT == permission)) {
+		char homeDir[J9SH_MAXPATH];
+		homeDir[0] = '\0';
+		if (0 == j9shmem_getDir(
+			portLibrary,
+			NULL,
+			J9SHMEM_GETDIR_USE_USERHOME | J9SHMEM_GETDIR_DO_NOT_APPEND_HIDDENDIR,
+			homeDir,
+			J9SH_MAXPATH)
+		) {
+			if (0 == strncmp(pathname, homeDir, strlen(homeDir))) {
+				usingUserHome = TRUE;
+			}
+		}
+	}
 
 	if ((J9SH_DIRPERM_ABSENT == permission)
 		|| (J9SH_DIRPERM_ABSENT_GROUPACCESS == permission)
 	) {
-		permission = J9SH_PARENTDIRPERM;
+		if ((J9SH_DIRPERM_ABSENT == permission) && usingUserHome) {
+			permission = J9SH_DIRPERM_HOME;
+		} else {
+			permission = J9SH_PARENTDIRPERM;
+		}
 	}
+
+	current = strchr(tempPath + 1, DIR_SEPARATOR); /* skip the first '/' */
 
 	while ((NULL != current) && (EsIsDir != omrfile_attr(pathname))) {
 		char *previous = NULL;
@@ -171,7 +194,6 @@ createDirectory(struct J9PortLibrary *portLibrary, const char *pathname, uintptr
 			Trc_PRT_shared_createDirectory_Exit3(tempPath);
 			return J9SH_FAILED;
 		}
-
 		previous = current;
 		current = strchr(current + 1, DIR_SEPARATOR);
 		*previous = DIR_SEPARATOR;
