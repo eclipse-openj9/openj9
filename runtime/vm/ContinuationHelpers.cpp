@@ -1185,7 +1185,9 @@ waitForSignal(J9VMThread *currentThread)
 	 */
 	omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
 	if (!vm->pendingBlockedVirtualThreadsNotify) {
+		Trc_VM_ThreadHelp_waitForSignal(currentThread);
 		omrthread_monitor_wait_interruptable(vm->blockedVirtualThreadsMutex, vm->unblockerWaitTime, 0);
+		Trc_VM_ThreadHelp_startUnblocker(currentThread);
 	}
 	vm->pendingBlockedVirtualThreadsNotify = FALSE;
 	omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
@@ -1201,9 +1203,7 @@ takeVirtualThreadListToUnblock(J9VMThread *currentThread)
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
 
-	if (J9_ARE_NO_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
-	|| (NULL == vm->blockedContinuations)
-	) {
+	if (J9_ARE_NO_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
 		return NULL;
 	}
 
@@ -1216,24 +1216,11 @@ restart:
 			J9VMContinuation *previous = NULL;
 			J9VMContinuation *current = vm->blockedContinuations;
 			J9VMContinuation *next = NULL;
-			bool hasPlatformThreadWaiting = false;
 			while (NULL != current) {
 				bool unblocked = false;
 				J9ObjectMonitor *syncObjectMonitor = current->objectWaitMonitor;
 				U_32 state = J9VMJAVALANGVIRTUALTHREAD_STATE(currentThread, current->vthread);
 				next = current->nextWaitingContinuation;
-
-				/* Check if the blocking monitor has platform thread waiting,
-				 * which doesn't notify the unblocker when exiting monitor.
-				 */
-				if (((JAVA_LANG_VIRTUALTHREAD_BLOCKING == state)
-					|| (JAVA_LANG_VIRTUALTHREAD_BLOCKED == state)
-					|| (JAVA_LANG_VIRTUALTHREAD_WAIT == state)
-					|| (JAVA_LANG_VIRTUALTHREAD_TIMED_WAIT == state))
-				&& (syncObjectMonitor->platformThreadWaitCount > 0)
-				) {
-					hasPlatformThreadWaiting = true;
-				}
 
 				/* Skip vthreads that are still in transition. */
 				switch (state) {
@@ -1341,7 +1328,7 @@ restart:
 
 				current = next;
 			}
-			if ((NULL == unblockedList) && !hasPlatformThreadWaiting) {
+			if (NULL == unblockedList) {
 				waitForSignal(currentThread);
 				goto restart;
 			} else {

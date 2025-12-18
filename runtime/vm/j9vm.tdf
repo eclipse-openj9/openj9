@@ -1040,3 +1040,8 @@ TraceEvent=Trc_Segment_disclaimClassMemory_error NoEnv Overhead=1 Level=3 Templa
 TraceEvent=Trc_VM_signal_pid Overhead=1 Level=1 Template="%s received from process id %zu name '%s'"
 
 TraceEvent=Trc_VM_timeCompensationHelper_CPU_util Overhead=1 Level=5 Template="CPU Util: numCPUs=%zu, timeDelta=%zu, CPUTimeDelta=%zu, util=%f"
+
+TraceEvent=Trc_VM_ThreadHelp_notifyUnblocker Overhead=1 Level=4 Template="NotifyUnblocker"
+TraceEvent=Trc_VM_ThreadHelp_waitForSignal Overhead=1 Level=4 Template="WaitForSignal"
+TraceEvent=Trc_VM_ThreadHelp_startUnblocker Overhead=1 Level=4 Template="StartUnblocker"
+TraceEvent=Trc_VM_ThreadHelp_monitorWaitImpl Overhead=1 Level=4 Template="monitorWaitImpl obj=%p lock=%p"
