@@ -3503,8 +3503,11 @@ verifyClassesAreCompatible(J9VMThread * currentThread, jint class_count, J9JVMTI
 		}
 
 		/* Verify that the modifiers match */
-
-		if ((originalROMClass->modifiers & J9AccClassCompatibilityMask) != (replacementROMClass->modifiers & J9AccClassCompatibilityMask)) {
+		if (((originalROMClass->modifiers & J9AccClassCompatibilityMask) != (replacementROMClass->modifiers & J9AccClassCompatibilityMask))
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			|| (J9_ROMCLASS_HAS_IDENTITY(originalROMClass) != J9_ROMCLASS_HAS_IDENTITY(replacementROMClass))
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		) {
 			return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_MODIFIERS_CHANGED;
 		}
 
