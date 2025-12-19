@@ -2656,9 +2656,14 @@ J9::Options::fePreProcess(void * base)
    * receive the 0C7 signal causing the product process to get killed
    *
    * Therefore, the recommendation is to disable traps on z/OS by default.
+   *
+   * On Windows the OS signal handlers may require a large amount of stack space, which causes
+   * stack overflow and corruption on the Java stack. As a temporary workaround until a better
+   * solution is found, traps are disabled by default on Windows as well.
+   *
    * Users can choose to enable traps using the "enableTraps" option.
    */
-   #if defined(J9ZOS390)
+   #if defined(J9ZOS390) || (defined(OMR_OS_WINDOWS) && defined(TR_TARGET_64BIT))
       self()->setOption(TR_DisableTraps);
    #endif
 
