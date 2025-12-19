@@ -1342,36 +1342,33 @@ LABEL(_interfaceCallHelper_BODY)
     ST_GPR  r1,(2*PTR_SIZE)(J9SP)
     LR_GPR  r0,r14
 
+ZZ  Check if the method is resolved
+    TM      eq_flag_inInterfaceSnippet(r14),1
+    JNZ     LcheckDirectOffsetFlag
 
-ZZ  Check if it's a previously resolved private target
-    L_GPR   r1,eq_intfMethodIndex_inInterfaceSnippet(r14)
-    NILL    r1,J9TR_J9_ITABLE_OFFSET_DIRECT
-    JZ      ifCH0callResolve
-    L_GPR   r1,eq_intfAddr_inInterfaceSnippet(r14)
-    CHI_GPR r1,0
-    JNZ     ifCHMLTypeCheckIFCPrivate
-
-LABEL(ifCH0callResolve)
-    TM      eq_flag_inInterfaceSnippet(r14),1 # method is resolved?
-    JNZ     LcontinueLookup
-
+LABEL(LresolveMethod)
 ZZ    # Load address of [idx:CP] pair
     LA      r1,eq_cp_inInterfaceSnippet(,r14)
     L_GPR   r2,eq_codeRA_inInterfaceSnippet(,r14) # Load code cache RA
 
+ZZ  Call resolve helper; it fills the iTable offset and method offset
 LOAD_ADDR_FROM_TOC(r14,TR_S390jitResolveInterfaceMethod)
 
     BASR    r14,r14               # Call to resolution and return
-
     LR_GPR  r14,r0
 ZZ                                # interface class and index in TLS
-    MVI     eq_flag_inInterfaceSnippet(r14),1
+    MVI     eq_flag_inInterfaceSnippet(r14),1 # Set isResolved field
 
-ZZ  resolve helper fills the class slot and method slot
-ZZ  Check PIC slot to see if the target is private interface method
+ZZ  Method has been resolved; check if the direct offset flag is set
+LABEL(LcheckDirectOffsetFlag)
     L_GPR   r1,eq_intfMethodIndex_inInterfaceSnippet(r14)
     NILL    r1,J9TR_J9_ITABLE_OFFSET_DIRECT
+    JZ      LcontinueLookup
+    L_GPR   r2,eq_intfAddr_inInterfaceSnippet(r14)
+    CHI_GPR r2,0
     JNZ     ifCHMLTypeCheckIFCPrivate
+ZZ # Interface class address is null, need to resolve method
+    J       LresolveMethod
 
 LABEL(LcontinueLookup)
 
@@ -1446,37 +1443,34 @@ LABEL(_interfaceCallHelperSingleDynamicSlot_BODY)
     ST_GPR  r3,0(J9SP)
     LR_GPR  r0,r14
 
-
-ZZ  Check if it's a previously resolved private target
-    L_GPR   r1,eq_intfMethodIndex_inInterfaceSnippet(r14)
-    NILL    r1,J9TR_J9_ITABLE_OFFSET_DIRECT
-    JZ      ifCH1LcallResolve
-    L_GPR   r1,eq_intfAddr_inInterfaceSnippet(r14)
-    CHI_GPR r1,0
-    JNZ     ifCHMLTypeCheckIFCPrivate
-
-LABEL(ifCH1LcallResolve)
-ZZ  check if the method is resolved?
+ZZ  Check if the method is resolved
     TM      eq_flag_inInterfaceSnippetSingleDynamicSlot(r14),1
-    JNZ     ifCH1LcontinueLookup
+    JNZ     ifCH1LcheckDirectOffsetFlag
 
+LABEL(ifCH1LresolveMethod)
 ZZ    # Load address of [idx:CP] pair
     LA      r1,eq_cp_inInterfaceSnippet(,r14)
     L_GPR   r2,eq_codeRA_inInterfaceSnippet(,r14) # Load code cache RA
 
+ZZ  Call resolve helper; it fills the iTable offset and method offset
 LOAD_ADDR_FROM_TOC(r14,TR_S390jitResolveInterfaceMethod)
 
     BASR    r14,r14             # Call to resolution and return
-
     LR_GPR  r14,r0
 ZZ                              # interface class and index in TLS
+ZZ    # Set isResolved field
     MVI     eq_flag_inInterfaceSnippetSingleDynamicSlot(r14),1
 
-ZZ  resolve helper fills the class slot and method slot
-ZZ  Check PIC slot to see if the target is private interface method
+ZZ  Method has been resolved; check if the direct offset flag is set
+LABEL(ifCH1LcheckDirectOffsetFlag)
     L_GPR   r1,eq_intfMethodIndex_inInterfaceSnippet(r14)
     NILL    r1,J9TR_J9_ITABLE_OFFSET_DIRECT
+    JZ      ifCH1LcontinueLookup
+    L_GPR   r2,eq_intfAddr_inInterfaceSnippet(r14)
+    CHI_GPR r2,0
     JNZ     ifCHMLTypeCheckIFCPrivate
+ZZ # Interface class address is null, need to resolve method
+    J       ifCH1LresolveMethod
 
 LABEL(ifCH1LcontinueLookup)
 
@@ -1705,35 +1699,33 @@ LABEL(_interfaceCallHelperMultiSlots_BODY)
     ST_GPR  r3,0(J9SP)
     LR_GPR  r0,r14
 
-ZZ  Check if it's a previously resolved private target
-    L_GPR   r1,eq_intfMethodIndex_inInterfaceSnippet(r14)
-    NILL    r1,J9TR_J9_ITABLE_OFFSET_DIRECT
-    JZ      ifCMHLcallResolve
-    L_GPR   r1,eq_intfAddr_inInterfaceSnippet(r14)
-    CHI_GPR r1,0
-    JNZ     ifCHMLTypeCheckIFCPrivate
+ZZ  Check if the method is resolved
+    TM      eq_flag_inInterfaceSnippet(r14),1
+    JNZ     ifCHMLcheckDirectOffsetFlag
 
-LABEL(ifCMHLcallResolve)
-    TM      eq_flag_inInterfaceSnippet(r14),1 # method is resolved?
-    JNZ     ifCHMLcontinueLookup
-
+LABEL(ifCHMLresolveMethod)
 ZZ    # Load address of [idx:CP] pair
     LA      r1,eq_cp_inInterfaceSnippet(,r14)
     L_GPR   r2,eq_codeRA_inInterfaceSnippet(,r14) # Load code cache RA
 
+ZZ  Call resolve helper; it fills the iTable offset and method offset
 LOAD_ADDR_FROM_TOC(r14,TR_S390jitResolveInterfaceMethod)
 
     BASR    r14,r14          # Call to resolution and return
-
     LR_GPR  r14,r0
 ZZ                           # interface class and index in TLS
-    MVI     eq_flag_inInterfaceSnippet(r14),1
+    MVI     eq_flag_inInterfaceSnippet(r14),1 # Set isResolved field
 
-ZZ  resolve helper fills the class slot and method slot
-ZZ  Check PIC slot to see if the target is private interface method
+ZZ  Method has been resolved; check if the direct offset flag is set
+LABEL(ifCHMLcheckDirectOffsetFlag)
     L_GPR   r1,eq_intfMethodIndex_inInterfaceSnippet(r14)
     NILL    r1,J9TR_J9_ITABLE_OFFSET_DIRECT
+    JZ      ifCHMLcontinueLookup
+    L_GPR   r2,eq_intfAddr_inInterfaceSnippet(r14)
+    CHI_GPR r2,0
     JNZ     ifCHMLTypeCheckIFCPrivate
+ZZ # Interface class address is null, need to resolve method
+    J       ifCHMLresolveMethod
 
 LABEL(ifCHMLcontinueLookup)
 
