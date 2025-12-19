@@ -71,9 +71,9 @@ enum J9ClassFragments {
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	RAM_STATIC_SPLIT_TABLE_FRAGMENT,
 	RAM_SPECIAL_SPLIT_TABLE_FRAGMENT,
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 	RAM_CLASS_FLATTENED_CLASS_CACHE,
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 	RAM_CLASS_FRAGMENT_COUNT
 };
 
@@ -140,7 +140,7 @@ typedef struct J9CreateRAMClassState {
 	I_32 locationType;
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	UDATA valueTypeFlags;
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 } J9CreateRAMClassState;
 
 typedef struct J9EquivalentEntry {
@@ -182,16 +182,26 @@ static J9Class* internalCreateRAMClassDone(J9VMThread *vmThread, J9ClassLoader *
 	J9UTF8 *className, J9CreateRAMClassState *state, J9Class *superclass, J9MemorySegment *segment);
 
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-static BOOLEAN loadFlattenableFieldValueClasses(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA classPreloadFlags, J9Module *module, UDATA *valueTypeFlags, J9FlattenedClassCache *flattenedClassCache, J9Class *superClazz);
 static BOOLEAN checkFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA packageID, J9Module *module, J9ROMClass **badClassOut);
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+static BOOLEAN loadFlattenableFieldClasses(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA classPreloadFlags, J9Module *module, J9FlattenedClassCache *flattenedClassCache, J9Class *superClazz
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	, UDATA *valueTypeFlags
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+);
 static J9Class* internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA options, J9Class *elementClass,
 	J9ROMMethod **methodRemapArray, IDATA entryIndex, I_32 locationType, J9Class *classBeingRedefined, J9Class *superclass, J9CreateRAMClassState *state,
-	J9ClassLoader* hostClassLoader, J9Class *hostClass, J9Module *module, J9FlattenedClassCache *flattenedClassCache, UDATA *valueTypeFlags);
-#else /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
+	J9ClassLoader* hostClassLoader, J9Class *hostClass, J9Module *module, J9FlattenedClassCache *flattenedClassCache
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	, UDATA *valueTypeFlags
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+);
+#else /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 static J9Class* internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA options, J9Class *elementClass,
 	J9ROMMethod **methodRemapArray, IDATA entryIndex, I_32 locationType, J9Class *classBeingRedefined, J9Class *superclass, J9CreateRAMClassState *state,
 	J9ClassLoader* hostClassLoader, J9Class *hostClass, J9Module *module);
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 static I_32 interfaceDepthCompare(const void *a, const void *b);
 #if defined(J9VM_INTERP_CUSTOM_SPIN_OPTIONS)
@@ -1961,13 +1971,14 @@ checkSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J
 	return TRUE;
 }
 
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 /**
  * This method has four main functions:
- * 1. Attempts to load NullRestricted value classes.
+ * 1. Attempts to load null-restricted value classes.
  *
- * 2. Records total number of flattenable instance fields
- * to flattenedClassCache->numberOfEntries.
+ * 2. Records null-restricted instance fields,
+ * null-restricted static fields, and strict
+ * static fields in the flattenedClassCache.
  *
  * 3. Sets the J9ClassLargestAlignmentConstraintDouble flag if any
  * of the fields are double-aligned. Similarily, it sets the
@@ -1990,21 +2001,29 @@ checkSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J
  * appropriate Java error on the VM.
  */
 static BOOLEAN
-loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA classPreloadFlags, J9Module *module, UDATA *valueTypeFlags, J9FlattenedClassCache *flattenedClassCache, J9Class *superClazz)
+loadFlattenableFieldClasses(J9VMThread *currentThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA classPreloadFlags, J9Module *module, J9FlattenedClassCache *flattenedClassCache, J9Class *superClazz
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	, UDATA *valueTypeFlags
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+)
 {
 	J9ROMFieldWalkState fieldWalkState = {0};
 	J9ROMFieldShape *field = romFieldsStartDo(romClass, &fieldWalkState);
 	BOOLEAN result = TRUE;
-	UDATA flattenableFieldCount = 0;
+	UDATA numberOfCacheEntries = 0;
+	U_16 strictStaticFieldCounter = 0;
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	bool eligibleForFastSubstitutability = true;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 	/* iterate over fields and load classes of fields marked as NullRestricted */
 	while (NULL != field) {
 		const U_32 modifiers = field->modifiers;
 		J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(field);
 		U_8 *signatureChars = J9UTF8_DATA(signature);
-		UDATA signatureLength = J9UTF8_LENGTH(signature);
 		if (J9_ARE_NO_BITS_SET(modifiers, J9AccStatic)) {
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+			UDATA signatureLength = J9UTF8_LENGTH(signature);
 			switch (signatureChars[0]) {
 			case 'D':
 				/* Fall through */
@@ -2036,11 +2055,11 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 							eligibleForFastSubstitutability = false;
 						}
 
-						J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, flattenableFieldCount);
+						J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, numberOfCacheEntries);
 						entry->clazz = valueClass;
 						entry->field = field;
 						entry->offset = UDATA_MAX;
-						flattenableFieldCount += 1;
+						numberOfCacheEntries += 1;
 					}
 					*valueTypeFlags |= (valueClass->classFlags & (J9ClassLargestAlignmentConstraintDouble | J9ClassLargestAlignmentConstraintReference | J9ClassHasReferences));
 				} else {
@@ -2058,26 +2077,47 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 				 */
 				break;
 			}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		} else {
-			if (J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagIsNullRestricted)) {
-				J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, flattenableFieldCount);
-				entry->clazz = (J9Class *)J9_VM_FCC_CLASS_FLAGS_STATIC_FIELD;
+			/* All static null-restricted fields should also be strict. This will be verified
+			 * during the preparation stage of linking. */
+			if (J9_ARE_ANY_BITS_SET(modifiers, J9AccStrictInit | J9FieldFlagIsNullRestricted)) {
+				J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, numberOfCacheEntries);
+				UDATA flags = J9_VM_FCC_CLASS_FLAGS_STATIC_FIELD;
+				if (J9_ARE_ALL_BITS_SET(modifiers, J9AccStrictInit)) {
+					/* If field is initialized through the ConstantValue attribute set as written. */
+					if (J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagConstant)) {
+						flags |= J9_VM_FCC_CLASS_FLAGS_STRICT_STATIC_FIELD_WRITTEN;
+					} else {
+						strictStaticFieldCounter += 1;
+					}
+
+					if ('L' != signatureChars[0]) {
+						flags |= J9_VM_FCC_CLASS_FLAGS_STRICT_STATIC_FIELD_PRIMITIVE;
+					}
+				}
+				numberOfCacheEntries += 1;
+
+				entry->clazz = (J9Class *)flags;
 				entry->field = field;
 				entry->offset = UDATA_MAX;
-				flattenableFieldCount += 1;
 			}
 		}
 
 		field = romFieldsNextDo(&fieldWalkState);
 	}
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	if (eligibleForFastSubstitutability) {
 		*valueTypeFlags |= J9ClassCanSupportFastSubstitutability;
 	}
-	flattenedClassCache->numberOfEntries = flattenableFieldCount;
 	if (NULL != superClazz) {
 		*valueTypeFlags |= (J9ClassHasReferences & superClazz->classFlags);
 	}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+	flattenedClassCache->numberOfEntries = numberOfCacheEntries;
+	flattenedClassCache->strictStaticFieldCounter = strictStaticFieldCounter;
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	/* Speculatively load classes listed in the LoadableDescriptors attribute.
 	 * By this point classes of fields that may be eligible for
 	 * flattening have already been loaded.
@@ -2104,10 +2144,14 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 			currentThread->currentException = NULL;
 		}
 	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 done:
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	return result;
 }
-
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 /**
  * Perform visibility checks on flattened field classes.
  *
@@ -2679,17 +2723,21 @@ setIllegalAccessErrorForSuperClassOrInterface(J9VMThread *currentThread, J9Class
 	j9mem_free_memory(errorMsg);
 }
 
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 static J9Class*
 internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass,
 	UDATA options, J9Class *elementClass, J9ROMMethod **methodRemapArray, IDATA entryIndex, I_32 locationType, J9Class *classBeingRedefined,
-	J9Class *superclass, J9CreateRAMClassState *state, J9ClassLoader* hostClassLoader, J9Class *hostClass, J9Module *module, J9FlattenedClassCache *flattenedClassCache, UDATA *valueTypeFlags)
-#else /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
+	J9Class *superclass, J9CreateRAMClassState *state, J9ClassLoader* hostClassLoader, J9Class *hostClass, J9Module *module, J9FlattenedClassCache *flattenedClassCache
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	, UDATA *valueTypeFlags
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+)
+#else /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 static J9Class*
 internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass,
 	UDATA options, J9Class *elementClass, J9ROMMethod **methodRemapArray, IDATA entryIndex, I_32 locationType, J9Class *classBeingRedefined,
 	J9Class *superclass, J9CreateRAMClassState *state, J9ClassLoader* hostClassLoader, J9Class *hostClass, J9Module *module)
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 {
 	UDATA const referenceSize = J9VMTHREAD_REFERENCE_SIZE(vmThread);
 	J9JavaVM *javaVM = vmThread->javaVM;
@@ -2865,12 +2913,12 @@ fail:
 		if (romWalkState.classRequiresPrePadding) {
 			*valueTypeFlags |= J9ClassRequiresPrePadding;
 		}
-#else /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		romWalkResult = fieldOffsetsStartDo(
 				javaVM, romClass, superclass, &romWalkState,
 				(J9VM_FIELD_OFFSET_WALK_CALCULATE_INSTANCE_SIZE | J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE |
 				J9VM_FIELD_OFFSET_WALK_ONLY_OBJECT_SLOTS | J9VM_FIELD_OFFSET_WALK_INCLUDE_HIDDEN));
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 		/* inherited from superclass: superclasses array, instance shape and interface slots */
 		if (superclass == NULL) {
@@ -2884,7 +2932,7 @@ fail:
 			if ((temp > highestBitInSlot)
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 				&& (J9_ARE_ALL_BITS_SET(*valueTypeFlags, J9ClassHasReferences))
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			) {
 				/* reserve additional space for the instance description bits */
 				temp += highestBitInSlot;
@@ -3183,8 +3231,8 @@ fail:
 			allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
 #endif /* defined(LINUXPPC) */
 
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 			/* flattened classes cache */
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 			UDATA flattenedClassCacheAllocSize = 0;
 			if (J9ROMCLASS_IS_VALUE(romClass) || (flattenedClassCache->numberOfEntries > 0)) {
 				flattenedClassCacheAllocSize = sizeof(J9FlattenedClassCache) + (sizeof(J9FlattenedClassCacheEntry) * flattenedClassCache->numberOfEntries);
@@ -3198,7 +3246,7 @@ fail:
 #else /* defined(LINUXPPC) */
 			allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
 #endif /* defined(LINUXPPC) */
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 			if (fastHCR) {
 				/* For shared fragments, set alignedSize and prefixSize to 0 to make internalAllocateRAMClass() ignore them. */
@@ -3254,12 +3302,12 @@ fail:
 				for (U_16 i = 0; i < romClass->specialSplitMethodRefCount; ++i) {
 					ramClass->specialSplitMethodTable[i] = (J9Method*)javaVM->initialMethods.initialSpecialMethod;
 				}
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 				ramClass->flattenedClassCache = (J9FlattenedClassCache *)allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].address;
 				if (0 != flattenedClassCacheAllocSize) {
 					memcpy(ramClass->flattenedClassCache, flattenedClassCache, flattenedClassCacheAllocSize);
 				}
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 			}
 		}
 
@@ -3300,9 +3348,6 @@ fail:
 			ramClass->module = NULL;
 			ramClass->reservedCounter = 0;
 			ramClass->cancelCounter = 0;
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
-			ramClass->strictStaticFieldCounter = 0;
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 			/* hostClass is exclusively defined only in Unsafe.defineAnonymousClass.
 			 * For all other cases, clazz->hostClass points to itself (clazz).
@@ -3723,22 +3768,9 @@ fail:
 		}
 	}
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
-	if (J9_CLASSFILE_OR_ROMCLASS_SUPPORTS_STRICT_FIELDS(romClass)) {
-		J9ROMFieldWalkState fieldWalkState = {0};
-		J9ROMFieldShape *field = romFieldsStartDo(romClass, &fieldWalkState);
-		while (NULL != field) {
-			if (J9_ARE_ALL_BITS_SET(field->modifiers, J9AccStatic | J9AccStrictInit)) {
-				ramClass->strictStaticFieldCounter += 1;
-			}
-			field = romFieldsNextDo(&fieldWalkState);
-		}
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
-
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	state->valueTypeFlags = *valueTypeFlags;
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	return internalCreateRAMClassDone(vmThread, classLoader, hostClassLoader, romClass, options, elementClass, className, state, superclass, segment);
 }
 
@@ -3764,14 +3796,15 @@ internalCreateRAMClassFromROMClass(J9VMThread *vmThread, J9ClassLoader *classLoa
 	J9Module* module = NULL;
 	J9StackElement *loadingStack = vmThread->classLoadingStack;
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	UDATA romFieldCount = romClass->romFieldCount;
 	UDATA valueTypeFlags = 0;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+	UDATA romFieldCount = romClass->romFieldCount;
 	UDATA flattenedClassCacheAllocSize = sizeof(J9FlattenedClassCache) + (sizeof(J9FlattenedClassCacheEntry) * romFieldCount);
 	U_8 flattenedClassCacheBuffer[sizeof(J9FlattenedClassCache) + (sizeof(J9FlattenedClassCacheEntry) * DEFAULT_NUMBER_OF_ENTRIES_IN_FLATTENED_CLASS_CACHE)] = {0};
 	J9FlattenedClassCache *flattenedClassCache = (J9FlattenedClassCache *)flattenedClassCacheBuffer;
 	PORT_ACCESS_FROM_VMC(vmThread);
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 	if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
 		classLoader = javaVM->anonClassLoader;
@@ -3896,7 +3929,7 @@ retry:
 			}
 		}
 	}
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 	if (romFieldCount > DEFAULT_NUMBER_OF_ENTRIES_IN_FLATTENED_CLASS_CACHE) {
 		flattenedClassCache = (J9FlattenedClassCache *)j9mem_allocate_memory(flattenedClassCacheAllocSize, J9MEM_CATEGORY_CLASSES);
 		if (NULL == flattenedClassCache) {
@@ -3908,25 +3941,33 @@ retry:
 		memset(flattenedClassCache, 0, flattenedClassCacheAllocSize);
 	}
 
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 	if (!loadSuperClassAndInterfaces(vmThread, hostClassLoader, romClass, options, elementClass, hotswapping, classPreloadFlags, &superclass, module)
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+		|| !loadFlattenableFieldClasses(vmThread, hostClassLoader, romClass, classPreloadFlags, module, flattenedClassCache, superclass
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		|| !loadFlattenableFieldValueClasses(vmThread, hostClassLoader, romClass, classPreloadFlags, module, &valueTypeFlags, flattenedClassCache, superclass)
+	, &valueTypeFlags
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+		)
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 	) {
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 		if (flattenedClassCache != (J9FlattenedClassCache *)flattenedClassCacheBuffer) {
 			j9mem_free_memory(flattenedClassCache);
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 		omrthread_monitor_enter(javaVM->classTableMutex);
 		result = internalCreateRAMClassDone(vmThread, classLoader, hostClassLoader, romClass, options, elementClass, className, &state, superclass, NULL);
 		goto done;
 	}
 
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 	result = internalCreateRAMClassFromROMClassImpl(vmThread, classLoader, romClass, options, elementClass,
-		methodRemapArray, entryIndex, locationType, classBeingRedefined, superclass, &state, hostClassLoader, hostClass, module, flattenedClassCache, &valueTypeFlags);
+		methodRemapArray, entryIndex, locationType, classBeingRedefined, superclass, &state, hostClassLoader, hostClass, module, flattenedClassCache
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+		, &valueTypeFlags
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+	);
 
 		if (flattenedClassCache != (J9FlattenedClassCache *)flattenedClassCacheBuffer) {
 			j9mem_free_memory(flattenedClassCache);
@@ -3934,7 +3975,7 @@ retry:
 #else
 	result = internalCreateRAMClassFromROMClassImpl(vmThread, classLoader, romClass, options, elementClass,
 		methodRemapArray, entryIndex, locationType, classBeingRedefined, superclass, &state, hostClassLoader, hostClass, module);
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 	if (state.retry) {
 		goto retry;
 	}

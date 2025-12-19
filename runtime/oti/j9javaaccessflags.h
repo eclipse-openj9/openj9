@@ -82,7 +82,15 @@
 #define J9AccMethodHasParameterAnnotations 0x40000000 /* method */
 #define J9AccMethodHasDefaultAnnotation    0x80000000 /* method */
 /* Masks and helpers */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+/* J9AccClassHasIdentity needs to be compared specially. The flag
+ * is only meaningful if the class file version supports
+ * value types.
+ */
+#define J9AccClassCompatibilityMask 0x7FDF
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #define J9AccClassCompatibilityMask 0x7FFF
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #define J9AccMethodReturnMask 0x1C0000
 #define J9AccMethodReturnShift 0x12
 /* Used in HookedByTheJit.cpp */
@@ -163,34 +171,15 @@
 #define J9StaticFieldRefTypeShort 0x4
 #define J9StaticFieldRefTypeIntFloat 0x5
 #define J9StaticFieldRefTypeLongDouble 0x6
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-#define J9StaticFieldIsNullRestricted 0x7
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+#define J9StaticFieldRefTypeUnused_0x7 0x7
 #define J9StaticFieldRefVolatile 0x8
 #define J9StaticFieldRefPutResolved 0x10
 #define J9StaticFieldRefFinal 0x20
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+#define J9StaticFieldRefNullRestricted 0x40
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
-/**
- * Since only two flags are available they are
- * used as follows to represent four states
- * for strict static fields:
- * 00XXXXXX - field is not strict
- * 01XXXXXX - strict field has been read. This implies it was
- * written at least once as well otherwise an exception would have
- * been thrown.
- * 10XXXXXX - strict field has been written at least once.
- * 11XXXXXX - strict field has not been read or written.
- */
-#define J9StaticFieldRefStrictInitRead 0x40
-#define J9StaticFieldRefStrictInitWritten 0x80
-#define J9StaticFieldRefStrictInitUnset 0xC0
-#define J9StaticFieldRefStrictInitMask 0xC0
-#define J9_STATIC_FIELD_STRICT_INIT_IS_UNSET(classAndFlags) \
-		(J9StaticFieldRefStrictInitUnset == ((classAndFlags) & J9StaticFieldRefStrictInitMask))
-#define J9_STATIC_FIELD_STRICT_INIT_WAS_WRITTEN_AND_READ(classAndFlags) \
-		(J9StaticFieldRefStrictInitRead == ((classAndFlags) & J9StaticFieldRefStrictInitMask))
-#define J9_STATIC_FIELD_STRICT_INIT_WAS_WRITTEN(classAndFlags) \
-		(J9StaticFieldRefStrictInitWritten == ((classAndFlags) & J9StaticFieldRefStrictInitMask))
+#define J9StaticFieldRefStrict 0x80
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 #endif /*J9JAVAACCESSFLAGS_H */

@@ -101,6 +101,11 @@ public class StrictFieldGenerator extends ClassLoader {
         return generateTestPutGetStrictStaticField(className, true, true, false, false);
     }
 
+    public static Class<?> generateTestStrictStaticFieldPutTwice() {
+        String className = "TestStrictStaticFieldPutTwice";
+        return generateTestPutGetStrictStaticField(className, false, true, false, true);
+    }
+
     private static Class<?> generateTestPutGetStrictStaticField(String className, boolean secondField, boolean put1, boolean get, boolean put2) {
         String fieldName = "i";
         String fieldDesc = "I";
@@ -131,6 +136,44 @@ public class StrictFieldGenerator extends ClassLoader {
         }
         mv.visitInsn(RETURN);
         mv.visitMaxs(2, 0);
+        mv.visitEnd();
+
+        mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
+        mv.visitCode();
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+        mv.visitInsn(RETURN);
+        mv.visitMaxs(1, 1);
+        mv.visitEnd();
+
+        cw.visitEnd();
+        byte[] bytes = cw.toByteArray();
+
+        return generator.defineClass(className, cw.toByteArray(), 0, bytes.length);
+    }
+
+    static Class<?> generateTestStrictStaticFieldObject() {
+        String className = "TestGenerateTestStrictStaticFieldObject";
+        String fieldName = "o";
+        String fieldType = "java/lang/Object";
+        String fieldDesc = "L" + fieldType + ";";
+
+        ClassWriter cw = new ClassWriter(0);
+        cw.visit(ValhallaUtils.VALUE_TYPE_CLASS_FILE_VERSION,
+            ACC_PUBLIC + ValhallaUtils.ACC_IDENTITY,
+            className, null, "java/lang/Object", null);
+        cw.visitField(ACC_STATIC | ValhallaUtils.ACC_STRICT_INIT, fieldName, fieldDesc, null, null);
+        MethodVisitor mv = cw.visitMethod(ACC_STATIC, "<clinit>", "()V", null, null);
+        mv.visitCode();
+        /* putstatic */
+        mv.visitTypeInsn(NEW, fieldType);
+        mv.visitInsn(DUP);
+        mv.visitMethodInsn(INVOKESPECIAL, fieldType, "<init>", "()V", false);
+        mv.visitFieldInsn(PUTSTATIC, className, fieldName, fieldDesc);
+        /* getstatic */
+        mv.visitFieldInsn(GETSTATIC, className, fieldName, fieldDesc);
+        mv.visitInsn(RETURN);
+        mv.visitMaxs(2, 1);
         mv.visitEnd();
 
         mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);

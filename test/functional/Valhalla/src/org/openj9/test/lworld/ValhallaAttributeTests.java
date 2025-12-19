@@ -98,6 +98,13 @@ public class ValhallaAttributeTests {
 		c.newInstance();
 	}
 
+	/* A static null-restricted field must also be strict. */
+	@Test(expectedExceptions = java.lang.IncompatibleClassChangeError.class, expectedExceptionsMessageRegExp = ".*A static field with a NullRestricted attribute must be strict.*")
+	public static void testStaticNullRestrictedFieldMustBeStrict() throws Throwable {
+		Class<?> c = ValhallaAttributeGenerator.generateNullRestrictedAttributeForNonStrictStaticField("TestStaticNullRestrictedFieldMustBeStrict", "TestStaticNullRestrictedFieldMustBeStrictField");
+		c.newInstance();
+	}
+
 	/* There must be no more than one NullRestricted attribute in the attributes table of a field_info structure. */
 	@Test(expectedExceptions = java.lang.ClassFormatError.class, expectedExceptionsMessageRegExp = ".*Multiple NullRestricted attributes present.*")
 	public static void testMultipleNullRestrictedAttributes() throws Throwable {
