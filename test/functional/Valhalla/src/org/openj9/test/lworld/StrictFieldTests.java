@@ -50,7 +50,8 @@ public class StrictFieldTests {
 	}
 
 	/* If a strict static field in larval state is unset, getstatic throws an exception. */
-	@Test(expectedExceptions = IllegalStateException.class)
+	@Test(expectedExceptions = IllegalStateException.class,
+		expectedExceptionsMessageRegExp = ".*Strict static field is unset before first read.*")
 	static public void testGetStaticInLarvalForUnsetStrictField() throws Throwable {
 		Class<?> c = StrictFieldGenerator.generateTestGetStaticInLarvalForUnsetStrictField();
 		try {
@@ -63,7 +64,8 @@ public class StrictFieldTests {
 	/* If a strict static final field in larval state is set after it has been
 	 * read, an exception is thrown.
 	 */
-	@Test(expectedExceptions = IllegalStateException.class)
+	@Test(expectedExceptions = IllegalStateException.class,
+		expectedExceptionsMessageRegExp = ".*Final strict static field is set after read.*")
 	static public void testPutStaticInLarvalForReadStrictFinalField() throws Throwable {
 		Class<?> c = StrictFieldGenerator.generateTestPutStaticInLarvalForReadStrictFinalField();
 		try {
@@ -101,6 +103,22 @@ public class StrictFieldTests {
 		} catch (ExceptionInInitializerError e) {
 			throw e.getException();
 		}
+	}
+
+	/* Put field twice in a row to ensure field flags are retained. */
+	@Test
+	static public void testStrictStaticFieldPutTwice() throws Throwable {
+		Class<?> c = StrictFieldGenerator.generateTestStrictStaticFieldPutTwice();
+		c.newInstance();
+	}
+
+	/* putstatic and getstatic with strict static object field type. The handling for these
+	 * is slightly different so make sure these bytecodes are working.
+	 */
+	@Test
+	static public void testStrictStaticFieldObject() throws Throwable {
+		Class<?> c = StrictFieldGenerator.generateTestStrictStaticFieldObject();
+		c.newInstance();
 	}
 
 	/* A strict instance field must be assigned by putfield before invoking an
@@ -183,21 +201,8 @@ public class StrictFieldTests {
 	}
 
 	/**
-	 * ASM does not support stack map customizations so its not yet possible
-	 * to generate incorrect stack maps to test the early larval frame.
-	 * I'm waiting on https://github.com/adoptium/TKG/issues/770 to write
-	 * some tests using jasm.
-	 * In the meantime we can generate a class with the
-	 * -XDgenerateEarlyLarvalFrame option to do some basic validation on early
+	 *  Use -XDgenerateEarlyLarvalFrame option to do some basic validation on early
 	 * larval frame support.
-	 *
-	 * Future tests:
-	 * - check that a base frame exists
-	 * - check that the base frame is not an early larval frame
-	 * - check that cp index is not out of range
-	 * - check that cp index is CONSTANT_NameAndType_info
-	 * - fail if cp doesn't refer to a strict instance field
-	 * - fail if not in the list and not set
 	 */
 
 	static class EarlyLarvalStackMapNoUnsetFields {

@@ -80,7 +80,8 @@ public class ValhallaAttributeGenerator extends ClassLoader {
 		classWriter.visit(ValhallaUtils.VALUE_TYPE_CLASS_FILE_VERSION, ACC_PUBLIC + ValhallaUtils.ACC_IDENTITY, className, null, "java/lang/Object", null);
 
 		/* static field of previously generated field class with NullRestrictd attribute */
-		FieldVisitor fieldVisitor = classWriter.visitField(ACC_PUBLIC + ACC_STATIC, fieldName, fieldClass.descriptorString(), null, null);
+		FieldVisitor fieldVisitor = classWriter.visitField(ACC_PUBLIC + ACC_STATIC + ValhallaUtils.ACC_STRICT_INIT,
+			fieldName, fieldClass.descriptorString(), null, null);
 		fieldVisitor.visitAttribute(new ValhallaUtils.NullRestrictedAttribute());
 
 		/* assign field to null in <clinit> */
@@ -146,6 +147,17 @@ public class ValhallaAttributeGenerator extends ClassLoader {
 
 		/* Generate class with field that is an identity class with a NullRestricted attribute */
 		byte[] classBytes = generateIdentityClassWithField(className, isStatic ? ACC_STATIC : 0,
+			"field", fieldClass.descriptorString(), new Attribute[]{new ValhallaUtils.NullRestrictedAttribute()});
+		return generator.defineClass(className, classBytes, 0, classBytes.length);
+	}
+
+	public static Class<?> generateNullRestrictedAttributeForNonStrictStaticField(String className, String fieldClassName) throws Throwable {
+		/* Generate field class - value class */
+		 byte[] fieldClassBytes = generateClass(fieldClassName, ACC_FINAL, null);
+		 Class<?> fieldClass = generator.defineClass(fieldClassName, fieldClassBytes, 0, fieldClassBytes.length);
+
+		 /* Generate class with non-strict static field with a NullRestricted attribute. */
+		byte[] classBytes = generateIdentityClassWithField(className, ACC_STATIC,
 			"field", fieldClass.descriptorString(), new Attribute[]{new ValhallaUtils.NullRestrictedAttribute()});
 		return generator.defineClass(className, classBytes, 0, classBytes.length);
 	}

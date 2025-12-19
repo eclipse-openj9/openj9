@@ -279,7 +279,7 @@ public class ValueTypeUnsafeTests {
 		}
 	}
 
-	// TODO this should be fixed by strict field support
+	// TODO https://github.com/eclipse-openj9/openj9/issues/23134
 	@Test(enabled = false)
 	static public void testGetValueOfZeroSizeVTArrayDoesNotCauseError() throws Throwable {
 		ZeroSizeValueType[] zsvtAry = new ZeroSizeValueType[] {
@@ -290,7 +290,7 @@ public class ValueTypeUnsafeTests {
 		assertNotNull(myUnsafe.getValue(zsvtAry, zsvtAryOffset0, ZeroSizeValueType.class));
 	}
 
-	// TODO this should be fixed by strict field support
+	// TODO https://github.com/eclipse-openj9/openj9/issues/23134
 	@Test(enabled = false)
 	static public void testGetValueOfZeroSizeVTObjectDoesNotCauseError() throws Throwable {
 		ZeroSizeValueTypeWrapper zsvtw = new ZeroSizeValueTypeWrapper();
