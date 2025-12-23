@@ -419,14 +419,15 @@ AOTCacheThunkRecord::create(uintptr_t id, const uint8_t *signature, uint32_t sig
 
 SerializedAOTMethod::SerializedAOTMethod(uintptr_t definingClassChainId, uint32_t index,
                                          TR_Hotness optLevel, uintptr_t aotHeaderId,
-                                         size_t numRecords,
+                                         size_t numRecords, size_t numDependencies,
                                          const void *code, size_t codeSize,
                                          const void *data, size_t dataSize,
                                          const char *signature, size_t signatureSize) :
-   _size(size(numRecords, codeSize, dataSize, signatureSize)),
+   _size(size(numRecords, numDependencies, codeSize, dataSize, signatureSize)),
    _definingClassChainId(definingClassChainId), _index(index),
    _optLevel(optLevel), _aotHeaderId(aotHeaderId),
-   _numRecords(numRecords), _codeSize(codeSize), _dataSize(dataSize), _signatureSize(signatureSize)
+   _numRecords(numRecords), _numDependencies(numDependencies),
+   _codeSize(codeSize), _dataSize(dataSize), _signatureSize(signatureSize)
    {
    memcpy((void *)this->code(), code, codeSize);
    memcpy((void *)this->data(), data, dataSize);
@@ -437,7 +438,8 @@ SerializedAOTMethod::SerializedAOTMethod() :
    _size(0),
    _definingClassChainId(0), _index(0),
    _optLevel(TR_Hotness::numHotnessLevels), _aotHeaderId(0),
-   _numRecords(0), _codeSize(0), _dataSize(0), _signatureSize(0)
+   _numRecords(0), _numDependencies(0),
+   _codeSize(0), _dataSize(0), _signatureSize(0)
    {
    }
 
@@ -456,12 +458,15 @@ CachedAOTMethod::CachedAOTMethod(const AOTCacheClassChainRecord *definingClassCh
                                  TR_Hotness optLevel,
                                  const AOTCacheAOTHeaderRecord *aotHeaderRecord,
                                  const Vector<std::pair<const AOTCacheRecord *, uintptr_t>> &records,
+                                 const UnorderedMap<uintptr_t, bool> &dependencies,
                                  const void *code, size_t codeSize,
                                  const void *data, size_t dataSize,
                                  const char *signature, size_t signatureSize) :
    _nextRecord(NULL),
    _data(definingClassChainRecord->data().id(), index, optLevel,
-         aotHeaderRecord->data().id(), records.size(), code, codeSize, data, dataSize,
+         aotHeaderRecord->data().id(),
+         records.size(), dependencies.size(),
+         code, codeSize, data, dataSize,
          signature, signatureSize),
    _definingClassChainRecord(definingClassChainRecord)
    {
@@ -470,6 +475,16 @@ CachedAOTMethod::CachedAOTMethod(const AOTCacheClassChainRecord *definingClassCh
       const AOTSerializationRecord *record = records[i].first->dataAddr();
       new (&_data.offsets()[i]) SerializedSCCOffset(record->id(), record->type(), records[i].second);
       ((const AOTCacheRecord **)this->records())[i] = records[i].first;
+      }
+
+   size_t i = 0;
+   for (auto it = dependencies.begin(); it != dependencies.end(); it++, i++)
+      {
+      AOTCacheRecord *r = (AOTCacheRecord *)it->first;
+      bool ensureClassInitialized = it->second;
+      const AOTSerializationRecord *record = r->dataAddr();
+      new (&_data.deps()[i]) SerializedAOTDependency(record->id(), record->type(), ensureClassInitialized);
+      ((const AOTCacheRecord **)this->deps())[i] = r;
       }
    }
 
@@ -483,14 +498,15 @@ CachedAOTMethod *
 CachedAOTMethod::create(const AOTCacheClassChainRecord *definingClassChainRecord, uint32_t index,
                         TR_Hotness optLevel, const AOTCacheAOTHeaderRecord *aotHeaderRecord,
                         const Vector<std::pair<const AOTCacheRecord *, uintptr_t>> &records,
+                        const UnorderedMap<uintptr_t, bool> &dependencies,
                         const void *code, size_t codeSize,
                         const void *data, size_t dataSize,
                         const char * signature)
    {
    size_t signatureSize = strlen(signature);
-   void *ptr = AOTCacheRecord::allocate(size(records.size(), codeSize, dataSize, signatureSize));
+   void *ptr = AOTCacheRecord::allocate(size(records.size(), dependencies.size(), codeSize, dataSize, signatureSize));
    return new (ptr) CachedAOTMethod(definingClassChainRecord, index, optLevel, aotHeaderRecord,
-                                    records, code, codeSize, data, dataSize,
+                                    records, dependencies, code, codeSize, data, dataSize,
                                     signature, signatureSize);
    }
 
@@ -1103,8 +1119,8 @@ JITServerAOTCache::createAndStoreThunk(const uint8_t *signature, uint32_t signat
 bool
 JITServerAOTCache::storeMethod(const AOTCacheClassChainRecord *definingClassChainRecord, uint32_t index,
                                TR_Hotness optLevel, const AOTCacheAOTHeaderRecord *aotHeaderRecord,
-                               const Vector<std::pair<const AOTCacheRecord *,
-                               uintptr_t/*reloDataOffset*/>> &records,
+                               const Vector<std::pair<const AOTCacheRecord *, uintptr_t/*reloDataOffset*/>> &records,
+                               const UnorderedMap<uintptr_t, bool> &dependencies,
                                const void *code, size_t codeSize, const void *data, size_t dataSize,
                                const char *signature, uint64_t clientUID,
                                const CachedAOTMethod *&methodRecord)
@@ -1140,7 +1156,7 @@ JITServerAOTCache::storeMethod(const AOTCacheClassChainRecord *definingClassChai
       }
 
    auto method = CachedAOTMethod::create(definingClassChainRecord, index, optLevel, aotHeaderRecord,
-                                         records, code, codeSize, data, dataSize,
+                                         records, dependencies, code, codeSize, data, dataSize,
                                          signature);
    methodRecord = method;
    addToMap(_cachedMethodMap, _cachedMethodHead, _cachedMethodTail, it, key, method);
