@@ -994,6 +994,10 @@ extern "C" {
 #define J9_CLASSFILE_OR_ROMCLASS_SUPPORTS_STRICT_FIELDS(classfileOrRomClass) (((classfileOrRomClass)->majorVersion >= STRICT_FIELDS_MAJOR_VERSION) && (PREVIEW_MINOR_VERSION == (classfileOrRomClass)->minorVersion))
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#define J9_ROMCLASS_HAS_IDENTITY(romClass) \
+    (J9_IS_CLASSFILE_OR_ROMCLASS_VALUETYPE_VERSION(romClass) ? \
+    (J9AccClassHasIdentity == (romClass->modifiers & J9AccClassHasIdentity)) : TRUE)
+
 /* Constants for java.lang.reflect.Field flags */
 #define TRUST_FINAL 0x10
 #define NULL_RESTRICTED 0x20
