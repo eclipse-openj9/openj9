@@ -188,7 +188,7 @@
 			<variation>-XX:+DebugOnRestore -Xjit:count=0</variation>
 		</variations>
 		<command>
-			TR_Options=$(Q)disableSuffixLogs$(Q) \
+			TR_Options=$(Q)dontApplyLogFileNameSuffix$(Q) \
 			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)criuScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
 			-DCATSCRIPPATH=$(TEST_RESROOT)$(D)criuCatVlog.sh \
@@ -224,7 +224,7 @@
 		<command>
 			if [ -x $(Q)$(TEST_JDK_BIN)$(D)jitserver$(Q) ]; \
 			then \
-				TR_Options=$(Q)disableSuffixLogs$(Q) \
+				TR_Options=$(Q)dontApplyLogFileNameSuffix$(Q) \
 				$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 				-DSCRIPPATH=$(TEST_RESROOT)$(D)criuJitServerScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
 				-DCATSCRIPPATH=$(TEST_RESROOT)$(D)criuCatVlog.sh \
@@ -270,7 +270,7 @@
 		<command>
 			if [ -x $(Q)$(TEST_JDK_BIN)$(D)jitserver$(Q) ]; \
 			then \
-				TR_Options=$(Q)disableSuffixLogs$(Q) \
+				TR_Options=$(Q)dontApplyLogFileNameSuffix$(Q) \
 				$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 				-DSCRIPPATH=$(TEST_RESROOT)$(D)criuJitServerScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
 				-DCATSCRIPPATH=$(TEST_RESROOT)$(D)criuCatVlog.sh \
