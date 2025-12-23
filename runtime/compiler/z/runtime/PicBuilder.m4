@@ -1342,18 +1342,8 @@ LABEL(_interfaceCallHelper_BODY)
     ST_GPR  r1,(2*PTR_SIZE)(J9SP)
     LR_GPR  r0,r14
 
-
-ZZ  Check if it's a previously resolved private target
-    L_GPR   r1,eq_intfMethodIndex_inInterfaceSnippet(r14)
-    NILL    r1,J9TR_J9_ITABLE_OFFSET_DIRECT
-    JZ      ifCH0callResolve
-    L_GPR   r1,eq_intfAddr_inInterfaceSnippet(r14)
-    CHI_GPR r1,0
-    JNZ     ifCHMLTypeCheckIFCPrivate
-
-LABEL(ifCH0callResolve)
-    TM      eq_flag_inInterfaceSnippet(r14),1 # method is resolved?
-    JNZ     LcontinueLookup
+    TM      eq_flag_inInterfaceSnippet(r14),1 ZZ # method is resolved?
+    JNZ     LloadOffset
 
 ZZ    # Load address of [idx:CP] pair
     LA      r1,eq_cp_inInterfaceSnippet(,r14)
@@ -1362,13 +1352,12 @@ ZZ    # Load address of [idx:CP] pair
 LOAD_ADDR_FROM_TOC(r14,TR_S390jitResolveInterfaceMethod)
 
     BASR    r14,r14               # Call to resolution and return
-
+    BCR     r15,0
     LR_GPR  r14,r0
 ZZ                                # interface class and index in TLS
     MVI     eq_flag_inInterfaceSnippet(r14),1
 
-ZZ  resolve helper fills the class slot and method slot
-ZZ  Check PIC slot to see if the target is private interface method
+LABEL(LloadOffset)
     L_GPR   r1,eq_intfMethodIndex_inInterfaceSnippet(r14)
     NILL    r1,J9TR_J9_ITABLE_OFFSET_DIRECT
     JNZ     ifCHMLTypeCheckIFCPrivate
@@ -1446,19 +1435,9 @@ LABEL(_interfaceCallHelperSingleDynamicSlot_BODY)
     ST_GPR  r3,0(J9SP)
     LR_GPR  r0,r14
 
-
-ZZ  Check if it's a previously resolved private target
-    L_GPR   r1,eq_intfMethodIndex_inInterfaceSnippet(r14)
-    NILL    r1,J9TR_J9_ITABLE_OFFSET_DIRECT
-    JZ      ifCH1LcallResolve
-    L_GPR   r1,eq_intfAddr_inInterfaceSnippet(r14)
-    CHI_GPR r1,0
-    JNZ     ifCHMLTypeCheckIFCPrivate
-
-LABEL(ifCH1LcallResolve)
 ZZ  check if the method is resolved?
     TM      eq_flag_inInterfaceSnippetSingleDynamicSlot(r14),1
-    JNZ     ifCH1LcontinueLookup
+    JNZ     ifCH1LloadOffset
 
 ZZ    # Load address of [idx:CP] pair
     LA      r1,eq_cp_inInterfaceSnippet(,r14)
@@ -1467,13 +1446,12 @@ ZZ    # Load address of [idx:CP] pair
 LOAD_ADDR_FROM_TOC(r14,TR_S390jitResolveInterfaceMethod)
 
     BASR    r14,r14             # Call to resolution and return
-
+    BCR     r15,0
     LR_GPR  r14,r0
 ZZ                              # interface class and index in TLS
     MVI     eq_flag_inInterfaceSnippetSingleDynamicSlot(r14),1
 
-ZZ  resolve helper fills the class slot and method slot
-ZZ  Check PIC slot to see if the target is private interface method
+LABEL(ifCH1LloadOffset)
     L_GPR   r1,eq_intfMethodIndex_inInterfaceSnippet(r14)
     NILL    r1,J9TR_J9_ITABLE_OFFSET_DIRECT
     JNZ     ifCHMLTypeCheckIFCPrivate
@@ -1705,17 +1683,8 @@ LABEL(_interfaceCallHelperMultiSlots_BODY)
     ST_GPR  r3,0(J9SP)
     LR_GPR  r0,r14
 
-ZZ  Check if it's a previously resolved private target
-    L_GPR   r1,eq_intfMethodIndex_inInterfaceSnippet(r14)
-    NILL    r1,J9TR_J9_ITABLE_OFFSET_DIRECT
-    JZ      ifCMHLcallResolve
-    L_GPR   r1,eq_intfAddr_inInterfaceSnippet(r14)
-    CHI_GPR r1,0
-    JNZ     ifCHMLTypeCheckIFCPrivate
-
-LABEL(ifCMHLcallResolve)
     TM      eq_flag_inInterfaceSnippet(r14),1 # method is resolved?
-    JNZ     ifCHMLcontinueLookup
+    JNZ     ifCHMLloadOffset                          ZZ # function has been resolved, we can simply load ITable offset
 
 ZZ    # Load address of [idx:CP] pair
     LA      r1,eq_cp_inInterfaceSnippet(,r14)
@@ -1724,13 +1693,12 @@ ZZ    # Load address of [idx:CP] pair
 LOAD_ADDR_FROM_TOC(r14,TR_S390jitResolveInterfaceMethod)
 
     BASR    r14,r14          # Call to resolution and return
-
+    BCR     r15,0
     LR_GPR  r14,r0
 ZZ                           # interface class and index in TLS
-    MVI     eq_flag_inInterfaceSnippet(r14),1
+    MVI     eq_flag_inInterfaceSnippet(r14),1             ZZ # Set isResolved field
 
-ZZ  resolve helper fills the class slot and method slot
-ZZ  Check PIC slot to see if the target is private interface method
+LABEL(ifCHMLloadOffset)
     L_GPR   r1,eq_intfMethodIndex_inInterfaceSnippet(r14)
     NILL    r1,J9TR_J9_ITABLE_OFFSET_DIRECT
     JNZ     ifCHMLTypeCheckIFCPrivate
