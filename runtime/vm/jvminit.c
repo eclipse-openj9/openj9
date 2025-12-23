@@ -1193,7 +1193,7 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 	vm->loadedClassCount = 0;
 	vm->jfrState.blobFileDescriptor = -1;
 #endif /* defined(J9VM_OPT_JFR) */
-
+	vm->defaultPageSize = j9vmem_supported_page_sizes()[0];
 #if JAVA_SPEC_VERSION >= 19
 	/* tid 1 will be use by main thread, first usable tid starts at 2 */
 	vm->nextTID = 2;
@@ -4248,6 +4248,15 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_LEGACY_MANGLING;
 		} else if (enableLegacyMangling < disableLegacyMangling) {
 			vm->extendedRuntimeFlags2 &= ~(UDATA)J9_EXTENDED_RUNTIME2_LEGACY_MANGLING;
+		}
+	}
+	{
+		IDATA enableGuardPages = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXGUARDPAGEONJAVASTACK, NULL);
+		IDATA disableGuardPages = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOGUARDPAGEONJAVASTACK, NULL);
+		if (enableGuardPages > disableGuardPages) {
+			vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_JAVA_STACK_GUARD_PAGES;
+		} else if (enableGuardPages <= disableGuardPages) {
+			vm->extendedRuntimeFlags3 &= ~(UDATA)J9_EXTENDED_RUNTIME3_JAVA_STACK_GUARD_PAGES;
 		}
 	}
 
