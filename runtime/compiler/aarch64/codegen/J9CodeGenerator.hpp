@@ -119,6 +119,7 @@ public:
    bool suppressInliningOfRecognizedMethod(TR::RecognizedMethod method);
 
    bool callUsesHelperImplementation(TR::Symbol *sym);
+   bool supportsNonHelper(TR::SymbolReferenceTable::CommonNonhelperSymbol symbol);
    };
 
 }
