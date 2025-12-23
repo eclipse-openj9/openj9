@@ -2437,11 +2437,14 @@ TR::ILOpCodes
 TR_VectorAPIExpansion::getLoadToMaskConversion(TR::Compilation *comp, int32_t numLanes, TR::DataType maskType, TR::ILOpCodes &loadOpCode)
    {
    TR::ILOpCodes op = TR::ILOpCode::createVectorOpCode(TR::mloadiFromArray, maskType);
+
+#if 0  // TODO: investigate PR 23128 and re-enable
    if (isOpCodeImplemented(comp, op))
       {
       loadOpCode = op;
       return op;
       }
+#endif
 
    switch (numLanes)
       {
@@ -2484,11 +2487,14 @@ TR::ILOpCodes
 TR_VectorAPIExpansion::getMaskToStoreConversion(TR::Compilation *comp, int32_t numLanes, TR::DataType maskType, TR::ILOpCodes &storeOpCode)
    {
    TR::ILOpCodes op = TR::ILOpCode::createVectorOpCode(TR::mstoreiToArray, maskType);
+
+#if 0  // TODO: investigate PR 23128 and re-enable
    if (isOpCodeImplemented(comp, op))
       {
       storeOpCode = op;
       return op;
       }
+#endif
 
    switch (numLanes)
       {
