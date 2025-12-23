@@ -1080,6 +1080,7 @@ handleResponse(JITServer::MessageType response, JITServer::ClientStream *client,
          auto recv = client->getRecvData<J9Class*, J9Class*>();
          auto clazz1 = std::get<0>(recv);
          auto clazz2 = std::get<1>(recv);
+         Trc_JITServerHandleInstanceOfOrCastCheck(vmThread, clazz1, clazz2);
          client->write(response, fe->instanceOfOrCheckCastNoCacheUpdate(clazz1, clazz2));
          }
          break;
