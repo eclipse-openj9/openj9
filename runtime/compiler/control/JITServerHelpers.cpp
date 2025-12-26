@@ -977,8 +977,7 @@ JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Cl
    auto &origROMMethods = std::get<21>(classInfoTuple); // vector of ROMMethod pointers valid at the client
    classInfoStruct._classNameIdentifyingLoader = std::get<22>(classInfoTuple);
    classInfoStruct._arrayElementSize = std::get<23>(classInfoTuple);
-   classInfoStruct._defaultValueSlotAddress = std::get<24>(classInfoTuple);
-   classInfoStruct._nullRestrictedArrayClass = std::get<26>(classInfoTuple);
+   classInfoStruct._nullRestrictedArrayClass = std::get<25>(classInfoTuple);
 
    auto result = clientSessionData->getROMClassMap().insert({ clazz, classInfoStruct });
 
@@ -1078,22 +1077,13 @@ JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, T
 
    int32_t arrayElementSize = vmThread->javaVM->internalVMFunctions->arrayElementSize((J9ArrayClass*)clazz);
 
-   // getDefaultValueSlotAddress can only be called if the value type class is initialized
-   j9object_t* defaultValueSlotAddress = NULL;
-   if (TR::Compiler->om.areValueTypesEnabled() &&
-       classInitialized &&
-       TR::Compiler->cls.isValueTypeClass(TR::Compiler->cls.convertClassPtrToClassOffset(clazz)))
-      {
-      defaultValueSlotAddress = vmThread->javaVM->internalVMFunctions->getDefaultValueSlotAddress(clazz);
-      }
-
    return std::make_tuple(
       packedROMClassStr, methodsOfClass, baseClass, numDims, parentClass,
       TR::Compiler->cls.getITable((TR_OpaqueClassBlock *)clazz), methodTracingInfo,
       classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass,
       classLoader, hostClass, componentClass, arrayClass, totalInstanceSize, clazz->romClass,
       cp, classFlags, classChainOffsetIdentifyingLoader, origROMMethods, classNameIdentifyingLoader, arrayElementSize,
-      defaultValueSlotAddress, romClassHash, nullRestrictedArrayClass
+      romClassHash, nullRestrictedArrayClass
    );
    }
 
@@ -1120,7 +1110,7 @@ JITServerHelpers::getRemoteROMClass(J9Class *clazz, JITServer::ServerStream *str
    stream->write(JITServer::MessageType::ResolvedMethod_getRemoteROMClassAndMethods, clazz);
    auto recv = stream->read<ClassInfoTuple>();
    classInfoTuple = std::get<0>(recv);
-   return romClassFromString(std::get<0>(classInfoTuple), std::get<25>(classInfoTuple), persistentMemory);
+   return romClassFromString(std::get<0>(classInfoTuple), std::get<24>(classInfoTuple), persistentMemory);
    }
 
 // Return true if able to get data from cache, return false otherwise.
@@ -1149,7 +1139,7 @@ JITServerHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *cli
    auto it = clientSessionData->getROMClassMap().find(clazz);
    if (it == clientSessionData->getROMClassMap().end())
       {
-      auto romClass = romClassFromString(std::get<0>(classInfoTuple), std::get<25>(classInfoTuple), clientSessionData->persistentMemory());
+      auto romClass = romClassFromString(std::get<0>(classInfoTuple), std::get<24>(classInfoTuple), clientSessionData->persistentMemory());
       auto &classInfoStruct = JITServerHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, classInfoTuple);
       JITServerHelpers::getROMClassData(classInfoStruct, dataType, data);
       }
@@ -1188,7 +1178,7 @@ JITServerHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *cli
    auto it = clientSessionData->getROMClassMap().find(clazz);
    if (it == clientSessionData->getROMClassMap().end())
       {
-      auto romClass = romClassFromString(std::get<0>(classInfoTuple), std::get<25>(classInfoTuple), clientSessionData->persistentMemory());
+      auto romClass = romClassFromString(std::get<0>(classInfoTuple), std::get<24>(classInfoTuple), clientSessionData->persistentMemory());
       auto &classInfoStruct = JITServerHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, classInfoTuple);
       JITServerHelpers::getROMClassData(classInfoStruct, dataType1, data1);
       JITServerHelpers::getROMClassData(classInfoStruct, dataType2, data2);
@@ -1268,9 +1258,6 @@ JITServerHelpers::getROMClassData(const ClientSessionData::ClassInfo &classInfo,
          break;
       case CLASSINFO_ARRAY_ELEMENT_SIZE:
          *(int32_t *)data = classInfo._arrayElementSize;
-         break;
-      case CLASSINFO_DEFAULT_VALUE_SLOT_ADDRESS:
-         *(j9object_t **)data = classInfo._defaultValueSlotAddress;
          break;
       case CLASSINFO_NULLRESTRICTED_ARRAY_CLASS :
          *(TR_OpaqueClassBlock **)data = classInfo._nullRestrictedArrayClass;
@@ -1443,7 +1430,7 @@ JITServerHelpers::getRemoteClassDepthAndFlagsWhenROMClassNotCached(J9Class *claz
    auto it = clientSessionData->getROMClassMap().find(clazz);
    if (it == clientSessionData->getROMClassMap().end())
       {
-      auto romClass = JITServerHelpers::romClassFromString(std::get<0>(classInfoTuple), std::get<25>(classInfoTuple), clientSessionData->persistentMemory());
+      auto romClass = JITServerHelpers::romClassFromString(std::get<0>(classInfoTuple), std::get<24>(classInfoTuple), clientSessionData->persistentMemory());
       auto &classInfoStruct = JITServerHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, classInfoTuple);
       return classInfoStruct._classDepthAndFlags;
       }
@@ -1502,7 +1489,7 @@ JITServerHelpers::cacheRemoteROMClassBatch(ClientSessionData *clientData, const 
 
    for (size_t i = 0; i < ramClasses.size(); ++i)
       {
-      auto romClass = romClassFromString(std::get<0>(classInfoTuples[i]), std::get<25>(classInfoTuples[i]), clientData->persistentMemory());
+      auto romClass = romClassFromString(std::get<0>(classInfoTuples[i]), std::get<24>(classInfoTuples[i]), clientData->persistentMemory());
       cacheRemoteROMClassOrFreeIt(clientData, ramClasses[i], romClass, classInfoTuples[i]);
       }
    }

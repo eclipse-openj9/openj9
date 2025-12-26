@@ -45,7 +45,6 @@ private:
 	 * @anchor ValueTypeIteratorState
 	 */
 	typedef enum {
-		valuetypesiterator_state_default_value = 0,
 		valuetypesiterator_state_end
 	} ValueTypesState;
 	
@@ -54,34 +53,9 @@ private:
 	
 public:
 	GC_ValueTypesIterator(J9Class *clazz)
-		: _state(valuetypesiterator_state_default_value)
-		, _clazzPtr(clazz)
+		: _clazzPtr(clazz)
 	{};
 
-	/**
-	 * Fetch the next slot in the class.
-	 * Note that the pointer is volatile. In concurrent applications the mutator may 
-	 * change the value in the slot while iteration is in progress.
-	 * @return the address of the default value if the class is valuetype and is not array
-	 * @return NULL if not valuetype or is an array
-	 * or if the class has already been scanned
-	 */
-	j9object_t * nextSlot()
-	{	
-		switch(_state) {
-		case valuetypesiterator_state_default_value:
-			_state = valuetypesiterator_state_end;
-			if (J9_IS_J9CLASS_VALUETYPE(_clazzPtr) && (!J9CLASS_IS_ARRAY(_clazzPtr))) {
-				return &(_clazzPtr->flattenedClassCache->defaultValue);
-			}
-			break;
-
-		default:
-			break;
-		}
-
-		return NULL;
-	}
 };
 
 #endif /* VALUETYPESITERATOR_HPP_ */

@@ -229,11 +229,6 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
     */
    TR::SymbolReference * findOrFabricateFlattenedArrayElementFieldShadowSymbol(TR_OpaqueClassBlock *arrayComponentClass, TR::DataType type, int32_t fieldOffset, bool isPrivate, const char *fieldName, const char *fieldSignature);
 
-   /** \brief
-    *     Returns a symbol reference for default value instance of value class.
-    */
-   TR::SymbolReference * findOrCreateDefaultValueSymbolRef(void *defaultValueSlotAddress, int32_t cpIndex);
-
    TR::SymbolReference * findOrCreateObjectNewInstanceImplSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateDLTBlockSymbolRef();
    TR::SymbolReference * findDLTBlockSymbolRef();
@@ -514,7 +509,6 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    TR::Symbol                           *_currentThreadDebugEventDataSymbol;
    List<TR::SymbolReference>            _currentThreadDebugEventDataSymbolRefs;
    List<TR::SymbolReference>            _constantPoolAddressSymbolRefs;
-   List<TR::SymbolReference>            _defaultValueAddressSlotSymbolRefs;
 
    private:
 
