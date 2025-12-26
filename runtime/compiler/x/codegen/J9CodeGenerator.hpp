@@ -100,6 +100,12 @@ public:
     */
    bool supportsInliningOfIsAssignableFrom();
 
+   /** \brief
+    *     Determines whether the code generator supports the newer inlining of java/lang/Class.isAssignableFrom which
+    *    almost never calls a helper.
+    */
+   bool supportsNonHelperIsAssignableFrom();
+
    /*
     * \brief Reserve space in the code cache for a specified number of trampolines.
     *        This is useful for inline caches where the methods are not yet known at
