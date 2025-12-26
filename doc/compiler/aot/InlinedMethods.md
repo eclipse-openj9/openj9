@@ -24,13 +24,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 
 AOT compilations support inlining of methods.
 However, ensuring validation and relocation is a non-trivial process with
-many subtleties. The relocation records related to the inlined methods are 
-different from the other records in that they do many things - they perform 
+many subtleties. The relocation records related to the inlined methods are
+different from the other records in that they do many things - they perform
 validation, relocation of the inlined table entry in the J9JITExceptionTable
-metadata structure, as well as relocation of guards. 
+metadata structure, as well as relocation of guards.
 
-This document will explain how an inlined site is validated, as well what 
-what all is necessary as part of the relocation. Note, inlined method 
+This document will explain how an inlined site is validated, as well what
+what all is necessary as part of the relocation. Note, inlined method
 relocations still follow the high level process described by the
 [Intro to Ahead Of Time Compilation](https://blog.openj9.org/2018/10/10/intro-to-ahead-of-time-compilation/)
 blog series, which this doc assumes the reader has already read.
@@ -46,9 +46,9 @@ There are four general kinds of inlined method relocations:
 
 All relocations are used to validate the inlined method. However, the
 relocations for methods with guards are used to relocate the associated
-inlined table entry in the metadata as well as the guards for the 
+inlined table entry in the metadata as well as the guards for the
 inlined sites, whereas the rest are only used to relocate the associated
-inlined table entry. Profiled Inlined Methods are methods that were 
+inlined table entry. Profiled Inlined Methods are methods that were
 inlined that were not named by the caller. For example,
 consider the following scenario:
 
@@ -73,14 +73,14 @@ Because `b` is of type `base`, the `foo` that gets executed could either
 be the implementation in `base` or `child_one` or `child_two`. If the
 inliner decided to pick `base.foo()` because that is what was named in
 `some_method`, then the relocation would be the Inlined Method variant.
-However, if the inliner decided to inline `child_two.foo()` based on 
+However, if the inliner decided to inline `child_two.foo()` based on
 profiling information, the relocation would be the Profiled Inlined
 Method variant.
 
 # Generating Guards & External Relocations
 
 During an AOT compilation, i.e. when the code is first generated, external
-relocation are generated at various points. Once all of these external 
+relocation are generated at various points. Once all of these external
 relocations are added to a list, the inlined method external relocations
 are then added in reverse order; because entries are added to the
 list at the front, an external relocation associated with the last inlined
@@ -97,16 +97,16 @@ materialize the `J9Method` of `baz`, one first needs the `J9Method` of `bar`,
 which first requires the `J9Method` of `foo`.
 
 If the inlined method has a guard assocated with it, then the Inlined Method
-with NOP Guard / Profiled Inlined Method with Guard relocations are 
+with NOP Guard / Profiled Inlined Method with Guard relocations are
 generated. If not, then the Inlined Method / Profiled Inlined Method
-relocations are generated. Additionally, unless the 
+relocations are generated. Additionally, unless the
 [SVM](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/aot/SymbolValidationManager.md)
 is enabled, the inlined method external relocations are the
 last entries added to the list; if the SVM is enabled, the SVM validation
 records are added next - part of the validation that would've been done by
 the inlined method validation procedure is delegated to the SVM.
 
-# Validating Inlined Sites 
+# Validating Inlined Sites
 
 The way an inlined method is validated depends on whether it was
 profiled or not.
@@ -144,9 +144,9 @@ The success or failure is then cached in `reloPrivateData->_failValidation`.
 # Relocating the Inlining Table in the J9JITExceptionTable
 
 In both variants of validating the inlined sites, the final task if everything
-succeeded is to relocate the entry in the inlining table in the 
-J9JITExceptionTable. `TR_RelocationRecordInlinedMethod::fixInlinedSiteInfo` 
-is called, which relocates the entry in the table, and registers an assumption 
+succeeded is to relocate the entry in the inlining table in the
+J9JITExceptionTable. `TR_RelocationRecordInlinedMethod::fixInlinedSiteInfo`
+is called, which relocates the entry in the table, and registers an assumption
 to patch the entry in the table should the class of the method get unloaded.
 
 # Relocating (Activating / Invalidating)  Guards
@@ -158,7 +158,7 @@ guards.
 ## Inlined Methods with NOP Guards
 
 If `reloPrivateData->_failValidation` is true, then if the SVM is enabled
-the AOT load is aborted; if the SVM is disabled then 
+the AOT load is aborted; if the SVM is disabled then
 `TR_RelocationRecordNopGuard::invalidateGuard` is called, which patches
 the guard to branch to the slow path. If `reloPrivateData->_failValidation`
 is false, then `TR_RelocationRecordNopGuard::activateGuard` is called, which
@@ -169,11 +169,11 @@ is false, then `TR_RelocationRecordNopGuard::activateGuard` is called, which
 ## Profiled Inlined Methods with Guards
 
 If `reloPrivateData->_failValidation` is true, then if the SVM is enabled
-the AOT load is aborted. If false, nothing is done here. Because these 
-guards are **not** NOP guards, but explicit tests, the materialization of 
-the pointer which is put into a register to be used in the comparison 
-instruction is relocated in a separate relocation record (either a 
-`TR_RelocationRecordClassPointer` or 
+the AOT load is aborted. If false, nothing is done here. Because these
+guards are **not** NOP guards, but explicit tests, the materialization of
+the pointer which is put into a register to be used in the comparison
+instruction is relocated in a separate relocation record (either a
+`TR_RelocationRecordClassPointer` or
 `TR_RelocationRecordMethodPointer` relocation record).
 
 # Subtleties
@@ -184,20 +184,20 @@ above, or are not immediately obvious.
 ### Inlined Method Validations/Relocations have to happen first
 
 If the SVM is enabled, then the SVM validations are performed first.
-However, regardless of whether the SVM is enabled or not, the inlined 
+However, regardless of whether the SVM is enabled or not, the inlined
 method validations/relocations have to happen before the other
 relocations. This is because many relocation records will store a CP
 index and an inlined site index; this means that in order to materialize
-the value, the relocation infrastructure needs to look in the constant 
-pool of the class of the method inlined at the specified inlined site. 
-Therefore, the inlining table in the J9JITExceptionTable must hold 
+the value, the relocation infrastructure needs to look in the constant
+pool of the class of the method inlined at the specified inlined site.
+Therefore, the inlining table in the J9JITExceptionTable must hold
 valid entries by this point.
 
 ### Aborting compilation with SVM enabled for an invalid inlined site
 
 If the SVM is enabled, if all SVM validations pass then it is (almost)
-not possible for any of the various tests for both Inlined Method and 
-Profiled Inlined Method to fail; the exception is if 
+not possible for any of the various tests for both Inlined Method and
+Profiled Inlined Method to fail; the exception is if
 `inlinedSiteCanBeActivated` returns false which can happen because of
 debug or other JVM restrictions.
 
@@ -206,7 +206,7 @@ obvious whether it is safe to execute the code. Without validating
 an inlined method, it is not clear if some other part of the code's
 functional correctness depends on the inlined method being the
 same in the second run. As such, it is better to just take the
-conservative approach of failing the AOT load rather than execute a 
+conservative approach of failing the AOT load rather than execute a
 potentially incorrect body.
 
 ### Class Initialization
@@ -239,3 +239,17 @@ redefined method, the inlining table entry must remain unchanged in
 case there are threads that are still executing the old inlined bodies
 (perhaps because they haven't reached a point where they can
 transition to the new code).
+
+### Class Loading
+
+The Class Table Mutex has to be held across the both `preparePrivateData` and
+`applyRelocationAtAllOffsets` to ensure that an inlined method does not get
+overridden between the point where the inlined site validation occurs and the
+runtime assumptions are registered.
+
+### Class Unloading
+
+After relocation, the compiler checks whether the compilation should be
+interrupted via a flag in the `CompilationInfoPerThread`; this flag is set
+in the class unload hook. Thus, the relocation infrastructure does not need any
+special handling to address class unloading.
