@@ -278,7 +278,11 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
  */
 def get_other_workspaces(workspaceDir) {
     // fetch all directories in workspaceDir (this should not fail)
-    def workspaces = sh(script: "ls ${workspaceDir}", returnStdout: true).trim().tokenize(System.lineSeparator())
+    def workspaces = sh(
+                        script: """
+                            ls "${workspaceDir}"
+                        """,
+                        returnStdout: true).trim().tokenize(System.lineSeparator())
     // remove current build workspace
     def otherWS = workspaces.findAll { ws -> ws.startsWith(JOB_NAME) == false }
 
