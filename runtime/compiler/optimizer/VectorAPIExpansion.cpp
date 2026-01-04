@@ -1416,7 +1416,9 @@ TR_VectorAPIExpansion::isVectorizedOrScalarizedNode(TR::Node *node, TR::DataType
        node->getOpCodeValue() == TR::astore ||
        (node->getOpCode().isVectorOpCode() &&
         (node->getOpCode().getVectorOperation() == TR::vload ||
-         node->getOpCode().getVectorOperation() == TR::vstore)
+         node->getOpCode().getVectorOperation() == TR::vstore ||
+         node->getOpCode().getVectorOperation() == TR::mload ||
+         node->getOpCode().getVectorOperation() == TR::mstore)
         ))
       {
 
