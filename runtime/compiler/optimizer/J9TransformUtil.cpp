@@ -3144,21 +3144,40 @@ TR::MethodSymbol::Kinds getTargetMethodCallKind(TR::RecognizedMethod rm)
    }
 
 // Use getIndirectCall(datatype), pass in return type
-TR::ILOpCodes getTargetMethodCallOpCode(TR::RecognizedMethod rm, TR::DataType type)
+TR::ILOpCodes getTargetMethodCallOpCode(TR::RecognizedMethod rm, TR::SymbolReference *methodSymRef, TR::DataType type)
    {
+   bool useDirectCall = false;
+
    switch (rm)
       {
       case TR::java_lang_invoke_MethodHandle_invokeBasic:
       case TR::java_lang_invoke_MethodHandle_linkToStatic:
       case TR::java_lang_invoke_MethodHandle_linkToSpecial:
-         return TR::ILOpCode::getDirectCall(type);
+         {
+         useDirectCall = true;
+         break;
+         }
       case TR::java_lang_invoke_MethodHandle_linkToVirtual:
+         {
+         // linkToVirtual could be used to call a method that
+         // cannot be overridden.  Take advantage of that
+         // opportunity to use direct method dispatch.
+         //
+         useDirectCall = methodSymRef->getSymbol()->isFinal();
+         break;
+         }
       case TR::java_lang_invoke_MethodHandle_linkToInterface:
-         return TR::ILOpCode::getIndirectCall(type);
+         {
+         useDirectCall = false;
+         break;
+         }
       default:
+         {
          TR_ASSERT_FATAL(0, "Unsupported method");
+         }
       }
-   return TR::BadILOp;
+   return useDirectCall ? TR::ILOpCode::getDirectCall(type)
+                        : TR::ILOpCode::getIndirectCall(type);
    }
 
 bool
@@ -3229,9 +3248,7 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
       }
 
    TR::MethodSymbol::Kinds callKind = getTargetMethodCallKind(rm);
-   TR::ILOpCodes callOpCode = getTargetMethodCallOpCode(rm, node->getDataType());
 
-   TR::SymbolReference* newSymRef = NULL;
    uint32_t vTableSlot = 0;
    int32_t jitVTableOffset = 0;
    if (rm == TR::java_lang_invoke_MethodHandle_linkToVirtual)
@@ -3250,8 +3267,11 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
       return false;
 
    auto resolvedMethod = fej9->createResolvedMethodWithVTableSlot(comp->trMemory(), vTableSlot, info.vmtarget, symRef->getOwningMethod(comp));
+   TR::SymbolReference *newSymRef = comp->getSymRefTab()->findOrCreateMethodSymbol(symRef->getOwningMethodIndex(),
+                                                             -1, resolvedMethod, callKind);
 
-   newSymRef = comp->getSymRefTab()->findOrCreateMethodSymbol(symRef->getOwningMethodIndex(), -1, resolvedMethod, callKind);
+   TR::ILOpCodes callOpCode = getTargetMethodCallOpCode(rm, newSymRef, node->getDataType());
+
    if (callKind == TR::MethodSymbol::Virtual)
       newSymRef->setOffset(jitVTableOffset);
 
@@ -3260,8 +3280,10 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
    switch (rm)
       {
       case TR::java_lang_invoke_MethodHandle_linkToVirtual:
-         if (callKind == TR::MethodSymbol::Virtual)
-            needVftChild = true;
+         {
+         const bool canUseDirectDispatch = newSymRef->getSymbol()->isFinal();
+         needVftChild = !canUseDirectDispatch;
+         }
          // fall through
       case TR::java_lang_invoke_MethodHandle_linkToSpecial:
          needNullChk = true;
