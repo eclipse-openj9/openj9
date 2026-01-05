@@ -83,6 +83,16 @@ class RecognizedCallTransformer : public OMR::RecognizedCallTransformer
     *       <cast class object>
     *       <class object to be checked>
     *     \endcode
+    *
+    *     or
+    *
+    *     \code
+    *     icalli <java/lang/Class.IsAssignableFrom(Ljava/lang/Class;)Z>
+    *       aloadi <vft-symbol>
+    *         <cast class object>
+    *       <cast class object>
+    *       <class object to be checked>
+    *     \endcode
     */
    void process_java_lang_Class_IsAssignableFrom(TR::TreeTop* treetop, TR::Node* node);
 
@@ -99,6 +109,16 @@ class RecognizedCallTransformer : public OMR::RecognizedCallTransformer
     *
     *     \code
     *     acall java/lang/Class.cast(Ljava/lang/Object;)Ljava/lang/Object;
+    *       <cast class object>
+    *       <instance to be checked>
+    *     \endcode
+    *
+    *     or
+    *
+    *     \code
+    *     acalli java/lang/Class.cast(Ljava/lang/Object;)Ljava/lang/Object;
+    *       aloadi <vft-symbol>
+    *         <cast class object>
     *       <cast class object>
     *       <instance to be checked>
     *     \endcode
