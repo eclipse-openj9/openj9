@@ -3054,11 +3054,11 @@ fail:
 			allocationRequests[RAM_METHODS_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_METHODS_FRAGMENT].alignedSize = (romClass->romMethodCount + defaultConflictCount) * sizeof(J9Method);
 			allocationRequests[RAM_METHODS_FRAGMENT].address = NULL;
-#if !defined(LINUXPPC)
-			allocationRequests[RAM_METHODS_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
-#else /* !defined(LINUXPPC) */
+#if defined(LINUXPPC)
 			allocationRequests[RAM_METHODS_FRAGMENT].segmentKind = SK_SUB4G;
-#endif /* !defined(LINUXPPC) */
+#else /* defined(LINUXPPC) */
+			allocationRequests[RAM_METHODS_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
+#endif /* defined(LINUXPPC) */
 
 			/* superclasses fragment */
 			allocationRequests[RAM_SUPERCLASSES_FRAGMENT].prefixSize = 0;
@@ -3070,44 +3070,44 @@ fail:
 			}
 			allocationRequests[RAM_SUPERCLASSES_FRAGMENT].alignedSize = OMR_MAX(superclassSizeBytes, minimumSuperclassArraySizeBytes);
 			allocationRequests[RAM_SUPERCLASSES_FRAGMENT].address = NULL;
-#if !defined(LINUXPPC)
-			allocationRequests[RAM_SUPERCLASSES_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
-#else /* !defined(LINUXPPC) */
+#if defined(LINUXPPC)
 			allocationRequests[RAM_SUPERCLASSES_FRAGMENT].segmentKind = SK_SUB4G;
-#endif /* !defined(LINUXPPC) */
+#else /* defined(LINUXPPC) */
+			allocationRequests[RAM_SUPERCLASSES_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
+#endif /* defined(LINUXPPC) */
 
 			/* instance description fragment */
 			allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].prefixSize = 0;
 			allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].alignedSize = instanceDescriptionSlotCount * sizeof(UDATA);
 			allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].address = NULL;
-#if !defined(LINUXPPC)
-			allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
-#else /* !defined(LINUXPPC) */
+#if defined(LINUXPPC)
 			allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].segmentKind = SK_SUB4G;
-#endif /* !defined(LINUXPPC) */
+#else /* defined(LINUXPPC) */
+			allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
+#endif /* defined(LINUXPPC) */
 
 			/* iTable fragment */
 			allocationRequests[RAM_ITABLE_FRAGMENT].prefixSize = 0;
 			allocationRequests[RAM_ITABLE_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_ITABLE_FRAGMENT].alignedSize = iTableSlotCount * sizeof(UDATA);
 			allocationRequests[RAM_ITABLE_FRAGMENT].address = NULL;
-#if !defined(LINUXPPC)
-			allocationRequests[RAM_ITABLE_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
-#else /* !defined(LINUXPPC) */
+#if defined(LINUXPPC)
 			allocationRequests[RAM_ITABLE_FRAGMENT].segmentKind = SK_SUB4G;
-#endif /* !defined(LINUXPPC) */
+#else /* defined(LINUXPPC) */
+			allocationRequests[RAM_ITABLE_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
+#endif /* defined(LINUXPPC) */
 
 			/* static slots fragment */
 			allocationRequests[RAM_STATICS_FRAGMENT].prefixSize = 0;
 			allocationRequests[RAM_STATICS_FRAGMENT].alignment = sizeof(U_64);
 			allocationRequests[RAM_STATICS_FRAGMENT].alignedSize = totalStaticSlots * sizeof(UDATA);
 			allocationRequests[RAM_STATICS_FRAGMENT].address = NULL;
-#if !defined(LINUXPPC)
-			allocationRequests[RAM_STATICS_FRAGMENT].segmentKind = SK_ABOVE4G_FREQUENTLY_ACCESSED;
-#else /* !defined(LINUXPPC) */
+#if defined(LINUXPPC)
 			allocationRequests[RAM_STATICS_FRAGMENT].segmentKind = SK_SUB4G;
-#endif /* !defined(LINUXPPC) */
+#else /* defined(LINUXPPC) */
+			allocationRequests[RAM_STATICS_FRAGMENT].segmentKind = SK_ABOVE4G_FREQUENTLY_ACCESSED;
+#endif /* defined(LINUXPPC) */
 
 			/* constant pool fragment */
 			allocationRequests[RAM_CONSTANT_POOL_FRAGMENT].prefixSize = 0;
@@ -3121,11 +3121,11 @@ fail:
 			allocationRequests[RAM_CALL_SITES_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_CALL_SITES_FRAGMENT].alignedSize = romClass->callSiteCount * sizeof(UDATA);
 			allocationRequests[RAM_CALL_SITES_FRAGMENT].address = NULL;
-#if !defined(LINUXPPC)
-			allocationRequests[RAM_CALL_SITES_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
-#else /* !defined(LINUXPPC) */
+#if defined(LINUXPPC)
 			allocationRequests[RAM_CALL_SITES_FRAGMENT].segmentKind = SK_SUB4G;
-#endif /* !defined(LINUXPPC) */
+#else /* defined(LINUXPPC) */
+			allocationRequests[RAM_CALL_SITES_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
+#endif /* defined(LINUXPPC) */
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 			/* invoke cache fragment */
@@ -3133,32 +3133,32 @@ fail:
 			allocationRequests[RAM_INVOKE_CACHE_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_INVOKE_CACHE_FRAGMENT].alignedSize = romClass->invokeCacheCount * sizeof(UDATA);
 			allocationRequests[RAM_INVOKE_CACHE_FRAGMENT].address = NULL;
-#if !defined(LINUXPPC)
-			allocationRequests[RAM_INVOKE_CACHE_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
-#else /* !defined(LINUXPPC) */
+#if defined(LINUXPPC)
 			allocationRequests[RAM_INVOKE_CACHE_FRAGMENT].segmentKind = SK_SUB4G;
-#endif /* !defined(LINUXPPC) */
+#else /* defined(LINUXPPC) */
+			allocationRequests[RAM_INVOKE_CACHE_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
+#endif /* defined(LINUXPPC) */
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 			/* method types fragment */
 			allocationRequests[RAM_METHOD_TYPES_FRAGMENT].prefixSize = 0;
 			allocationRequests[RAM_METHOD_TYPES_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_METHOD_TYPES_FRAGMENT].alignedSize = romClass->methodTypeCount * sizeof(UDATA);
 			allocationRequests[RAM_METHOD_TYPES_FRAGMENT].address = NULL;
-#if !defined(LINUXPPC)
-			allocationRequests[RAM_METHOD_TYPES_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
-#else /* !defined(LINUXPPC) */
+#if defined(LINUXPPC)
 			allocationRequests[RAM_METHOD_TYPES_FRAGMENT].segmentKind = SK_SUB4G;
-#endif /* !defined(LINUXPPC) */
+#else /* defined(LINUXPPC) */
+			allocationRequests[RAM_METHOD_TYPES_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
+#endif /* defined(LINUXPPC) */
 			/* varhandle method types fragment */
 			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].prefixSize = 0;
 			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].alignedSize = romClass->varHandleMethodTypeCount * sizeof(UDATA);
 			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].address = NULL;
-#if !defined(LINUXPPC)
-			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
-#else /* !defined(LINUXPPC) */
+#if defined(LINUXPPC)
 			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].segmentKind = SK_SUB4G;
-#endif /* !defined(LINUXPPC) */
+#else /* defined(LINUXPPC) */
+			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
+#endif /* defined(LINUXPPC) */
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 			/* static split table fragment */
@@ -3166,22 +3166,22 @@ fail:
 			allocationRequests[RAM_STATIC_SPLIT_TABLE_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_STATIC_SPLIT_TABLE_FRAGMENT].alignedSize = romClass->staticSplitMethodRefCount * sizeof(J9Method *);
 			allocationRequests[RAM_STATIC_SPLIT_TABLE_FRAGMENT].address = NULL;
-#if !defined(LINUXPPC)
-			allocationRequests[RAM_STATIC_SPLIT_TABLE_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
-#else /* !defined(LINUXPPC) */
+#if defined(LINUXPPC)
 			allocationRequests[RAM_STATIC_SPLIT_TABLE_FRAGMENT].segmentKind = SK_SUB4G;
-#endif /* !defined(LINUXPPC) */
+#else /* defined(LINUXPPC) */
+			allocationRequests[RAM_STATIC_SPLIT_TABLE_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
+#endif /* defined(LINUXPPC) */
 
 			/* special split table fragment */
 			allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].prefixSize = 0;
 			allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].alignedSize = romClass->specialSplitMethodRefCount * sizeof(J9Method *);
 			allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].address = NULL;
-#if !defined(LINUXPPC)
-			allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
-#else /* !defined(LINUXPPC) */
+#if defined(LINUXPPC)
 			allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].segmentKind = SK_SUB4G;
-#endif /* !defined(LINUXPPC) */
+#else /* defined(LINUXPPC) */
+			allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
+#endif /* defined(LINUXPPC) */
 
 			/* flattened classes cache */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
@@ -3193,11 +3193,11 @@ fail:
 			allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].alignment = OMR_MAX(sizeof(J9Class *), sizeof(UDATA));
 			allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].alignedSize = flattenedClassCacheAllocSize;
 			allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].address = NULL;
-#if !defined(LINUXPPC)
-			allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
-#else /* !defined(LINUXPPC) */
+#if defined(LINUXPPC)
 			allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].segmentKind = SK_SUB4G;
-#endif /* !defined(LINUXPPC) */
+#else /* defined(LINUXPPC) */
+			allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
+#endif /* defined(LINUXPPC) */
 #endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 
 			if (fastHCR) {
