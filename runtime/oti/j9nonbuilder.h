@@ -585,6 +585,11 @@ typedef struct J9JFRThreadDump {
 	UDATA bufferSize;
 } J9JFRThreadDump;
 
+typedef struct J9JFRThreadAllocationStatistics {
+	J9JFR_EVENT_COMMON_FIELDS
+	U_64 allocated;
+} J9JFRThreadAllocationStatistics;
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 /* @ddr_namespace: map_to_type=J9CfrError */
@@ -6764,6 +6769,9 @@ typedef struct J9JavaVM {
 	IDATA jfrAsyncKey;
 	IDATA jfrThreadCPULoadAsyncKey;
 	UDATA isJFRExcludedOffset;
+#if JAVA_SPEC_VERSION >= 17
+	IDATA jfrThreadAllocationStatisticsAsyncKey;
+#endif /* JAVA_SPEC_VERSION >= 17 */
 #endif /* defined(J9VM_OPT_JFR) */
 	UDATA unsafeIndexableHeaderSize;
 #if defined(J9VM_OPT_SNAPSHOTS)

@@ -64,7 +64,6 @@ J9_DECLARE_CONSTANT_UTF8(jfrEventClassUTF8, "jdk/jfr/Event");
 
 static void jfrStartSamplingThread(J9JavaVM *vm);
 static void initializeEventFields(J9VMThread *currentThread, J9VMThread *sampleThread, J9JFREvent *jfrEvent, UDATA eventType);
-static I_64 getThreadTID(J9VMThread *currentThread, J9VMThread *vmThread);
 static int J9THREAD_PROC jfrSamplingThreadProc(void *entryArg);
 static void jfrExecutionSampleCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData);
 static void jfrThreadCPULoadCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData);
@@ -73,6 +72,7 @@ static jlong getTypeIdImpl(J9VMThread *currentThread, J9ClassLoader *classLoader
 #if JAVA_SPEC_VERSION >= 17
 static bool addEventIds(J9JavaVM *vm);
 static bool addTypeIds(J9JavaVM *vm);
+static void jfrThreadAllocationStatisticsCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData);
 #endif /* JAVA_SPEC_VERSION >= 17 */
 static void jfrShutdownInternalStructures(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void notifyForChunkRotation(J9VMThread *currentThread);
@@ -184,6 +184,9 @@ jfrEventSize(J9JFREvent *jfrEvent)
 		break;
 	case J9JFR_EVENT_TYPE_THREAD_DUMP:
 		size = sizeof(J9JFRThreadDump) + (((J9JFRThreadDump *)jfrEvent)->bufferSize * sizeof(U_8));
+		break;
+	case J9JFR_EVENT_TYPE_THREAD_ALLOCATION_STATISTICS:
+		size = sizeof(J9JFRThreadAllocationStatistics);
 		break;
 	case J9JFR_EVENT_TYPE_JVM_INFORMATION:
 	case J9JFR_EVENT_TYPE_CPU_INFORMATION:
@@ -974,6 +977,13 @@ initializeJFR(J9JavaVM *vm)
 		goto fail;
 	}
 
+#if JAVA_SPEC_VERSION >= 17
+	vm->jfrThreadAllocationStatisticsAsyncKey = J9RegisterAsyncEvent(vm, jfrThreadAllocationStatisticsCallback, NULL);
+	if (vm->jfrThreadAllocationStatisticsAsyncKey < 0) {
+		goto fail;
+	}
+#endif /* JAVA_SPEC_VERSION >= 17 */
+
 	/* Allocate constantEvents. */
 	vm->jfrState.constantEvents = j9mem_allocate_memory(sizeof(JFRConstantEvents), J9MEM_CATEGORY_JFR);
 	if (NULL == vm->jfrState.constantEvents) {
@@ -1233,11 +1243,17 @@ tearDownJFR(J9JavaVM *vm)
 		J9UnregisterAsyncEvent(vm, vm->jfrThreadCPULoadAsyncKey);
 		vm->jfrThreadCPULoadAsyncKey = -1;
 	}
+#if JAVA_SPEC_VERSION >= 17
+	if (vm->jfrThreadAllocationStatisticsAsyncKey >= 0) {
+		J9UnregisterAsyncEvent(vm, vm->jfrThreadAllocationStatisticsAsyncKey);
+		vm->jfrThreadAllocationStatisticsAsyncKey = -1;
+	}
+#endif /* JAVA_SPEC_VERSION >= 17 */
 	omrthread_monitor_destroy(vm->jfrSamplerMutex);
 	vm->jfrSamplerMutex = NULL;
 }
 
-static I_64
+I_64
 getThreadTID(J9VMThread *currentThread, J9VMThread *vmThread)
 {
 	J9JavaVM *vm = currentThread->javaVM;
@@ -2174,6 +2190,9 @@ JfrPeriodicEventSet::requestEvent(J9VMThread *currentThread, jlong id)
 	case JfrSystemProcessEvent:
 		requestSystemProcess(currentThread);
 		break;
+	case JfrThreadAllocationStatisticsEvent:
+		requestThreadAllocation(currentThread);
+		break;
 	case JfrThreadContextSwitchRateEvent:
 		requestThreadContextSwitchRate(currentThread);
 		break;
@@ -2401,6 +2420,28 @@ JfrPeriodicEventSet::requestYoungGenerationConfiguration(J9VMThread *currentThre
 	if (NULL != jfrEvent) {
 		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_YOUNG_GENERATION_CONFIGURATION);
 	}
+}
+
+void
+JfrPeriodicEventSet::requestThreadAllocation(J9VMThread *currentThread)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9SignalAsyncEvent(vm, NULL, vm->jfrThreadAllocationStatisticsAsyncKey);
+}
+
+static void
+jfrThreadAllocationStatisticsCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9MemoryManagerFunctions *mmfns = vm->memoryManagerFunctions;
+	J9JFRThreadAllocationStatistics *jfrEvent = (J9JFRThreadAllocationStatistics *)reserveBuffer(currentThread, currentThread, sizeof(J9JFRThreadAllocationStatistics));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_THREAD_ALLOCATION_STATISTICS);
+		UDATA allocated = 0;
+		mmfns->j9gc_get_cumulative_bytes_allocated_by_thread(currentThread, &allocated);
+		jfrEvent->allocated = (U_64)allocated;
+	}
+
 }
 #endif /* JAVA_SPEC_VERSION >= 17 */
 
