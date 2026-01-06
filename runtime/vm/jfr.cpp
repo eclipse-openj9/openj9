@@ -74,7 +74,7 @@ J9_DECLARE_CONSTANT_UTF8(initJFRSigUTF8, "()V");
 J9_DECLARE_CONSTANT_NAS(initJFRNAS, initJFRUTF8, initJFRSigUTF8);
 J9_DECLARE_CONSTANT_UTF8(jvmUpcallUTF8, "jdk/jfr/internal/JVMUpcalls");
 J9_DECLARE_CONSTANT_UTF8(bytesForEagerInstrumentationUTF8, "bytesForEagerInstrumentation");
-J9_DECLARE_CONSTANT_UTF8(bytesForEagerInstrumentationSigUTF8, "(JZZLjava/lang/Class;[B)[B");
+J9_DECLARE_CONSTANT_UTF8(bytesForEagerInstrumentationSigUTF8, "(JZLjava/lang/Class;[B)[B");
 J9_DECLARE_CONSTANT_NAS(bytesForEagerInstrumentationNAS, bytesForEagerInstrumentationUTF8, bytesForEagerInstrumentationSigUTF8);
 
 /**

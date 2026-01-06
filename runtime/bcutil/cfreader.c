@@ -1284,7 +1284,7 @@ readPool(J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* 
 			if (!ALLOC_ARRAY(info->bytes, size + 1, U_8)) {
 				return -2;
 			}
-			CHECK_EOF(size);
+			CHECK_EOF_DEBUG(size);
 			verifyResult = j9bcutil_verifyCanonisizeAndCopyUTF8(info->bytes, index, size, &(info->flags1));
 			info->slot1 = (U_32) verifyResult;
 			if ((verifyResult < 0) ||
@@ -3047,6 +3047,11 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 
 	NEXT_U16(classfile->thisClass, index);
 	NEXT_U16(classfile->superClass, index);
+
+	if (J9_ARE_ALL_BITS_SET(flags, BCT_SuperClassOnly)) {
+		return 0;
+	}
+
 	NEXT_U16(classfile->interfacesCount, index);
 
 	/* Space for the interfaces */

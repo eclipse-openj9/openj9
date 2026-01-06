@@ -424,6 +424,7 @@ jvmUpcallsOnRetransform(jvmtiEnv *jvmtiEnv, JNIEnv *env, jclass classBeingRedefi
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9MemoryManagerFunctions *mmfns = vm->memoryManagerFunctions;
+	U_8 *modifiedBytes = NULL;
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
@@ -492,12 +493,12 @@ jvmUpcallsOnRetransform(jvmtiEnv *jvmtiEnv, JNIEnv *env, jclass classBeingRedefi
 	outputByteArray = (j9object_t)currentThread->returnValue;
 
 	*newClassDataLength = (jint)J9INDEXABLEOBJECT_SIZE(currentThread, outputByteArray);
-	if (JVMTI_ERROR_NONE != jvmtiEnv->Allocate(*newClassDataLength, newClassData)) {
+	if (JVMTI_ERROR_NONE != jvmtiEnv->Allocate(*newClassDataLength, &modifiedBytes)) {
 		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 		goto done;
 	}
-
-	VM_ArrayCopyHelpers::memcpyFromArray(currentThread, outputByteArray, (UDATA)0, (UDATA)0, *newClassDataLength, *newClassData);
+	*newClassData = modifiedBytes;
+	VM_ArrayCopyHelpers::memcpyFromArray(currentThread, outputByteArray, (UDATA)0, (UDATA)0, *newClassDataLength, modifiedBytes);
 
 	vmFuncs->internalExitVMToJNI(currentThread);
 
