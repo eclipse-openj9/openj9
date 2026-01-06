@@ -21,14 +21,13 @@
  */
 package com.ibm.j9ddr.vm29.view.dtfj.java;
 
-
 import com.ibm.dtfj.image.CorruptDataException;
 import com.ibm.dtfj.image.DataUnavailable;
 import com.ibm.dtfj.java.JavaReference;
 
 /**
  * JavaReference is intended to represent either a standard reference within a java heap,
- * for example a reference from one object to another, or a root. A root is a reference 
+ * for example a reference from one object to another, or a root. A root is a reference
  * that is held outside of the heap, in the Java stack or within the JVM itself.
  */
 public class DTFJJavaReference implements com.ibm.dtfj.java.JavaReference
@@ -38,19 +37,19 @@ public class DTFJJavaReference implements com.ibm.dtfj.java.JavaReference
 	private static final int ResolutionType_OBJECT = 2;
 	private static final int ResolutionType_BROKEN = 3;
 
-	private String _description = null;
-	private int    _reachability = REACHABILITY_UNKNOWN;
-	private int    _referencetype = REFERENCE_UNKNOWN;
-	private int    _roottype = HEAP_ROOT_UNKNOWN;
-	private Object _source = null;
-	private Object _target = null;
-	private int _resolution = ResolutionType_UNRESOLVED;
-	
+	private final String _description;
+	private final int    _reachability;
+	private final int    _referencetype;
+	private final int    _roottype;
+	private final Object _source;
+	private final Object _target;
+	private final int    _resolution;
+
 	@Override
 	public String toString()
 	{
 		StringBuilder toReturn = new StringBuilder();
-		
+
 		toReturn.append("Reference from \"");
 		toReturn.append(_source);
 		toReturn.append("\" to \"");
@@ -58,7 +57,7 @@ public class DTFJJavaReference implements com.ibm.dtfj.java.JavaReference
 		toReturn.append("\". Description: ");
 		toReturn.append(_description);
 		toReturn.append(". Reachability: ");
-		
+
 		switch (_reachability) {
 		case JavaReference.REACHABILITY_STRONG:
 			toReturn.append("STRONG");
@@ -76,10 +75,10 @@ public class DTFJJavaReference implements com.ibm.dtfj.java.JavaReference
 			toReturn.append("UNKNOWN");
 			break;
 		default:
-			toReturn.append("Unrecognised reachability code: " + _reachability);
+			toReturn.append("Unrecognised reachability code: ").append(_reachability);
 			break;
 		}
-		
+
 		toReturn.append(". Resolution: ");
 		toReturn.append(_resolution);
 		toReturn.append(". Roottype: ");
@@ -87,21 +86,20 @@ public class DTFJJavaReference implements com.ibm.dtfj.java.JavaReference
 		toReturn.append(". Reference type: ");
 		toReturn.append(_referencetype);
 		toReturn.append(".");
-		
-		
+
 		return toReturn.toString();
 	}
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param javaVM JavaRuntime
 	 * @param source Object The source of this reference/root, for example the JVM or an object on the heap
 	 * @param target Object The target object of this reference/root.
-	 * @param description String  
-	 * @param referencetype int Mutually exclusive with respect to roottype. 
+	 * @param description String
+	 * @param referencetype int Mutually exclusive with respect to roottype.
 	 * @param roottype int Mutually exclusive with respect to referencetype.
-	 * @param reachability int The strength of the reference (this helps the GC in selection of objects for collection).  
+	 * @param reachability int The strength of the reference (this helps the GC in selection of objects for collection).
 	 */
 	public DTFJJavaReference(Object source, Object target, String description, int referencetype, int roottype, int reachability) {
 		_source = source;
@@ -114,10 +112,10 @@ public class DTFJJavaReference implements com.ibm.dtfj.java.JavaReference
 		if (target == null) {
 			throw new IllegalArgumentException("Target may not be null");
 		}
-		
-		if (JavaReference.HEAP_ROOT_SYSTEM_CLASS == _roottype || 
-			JavaReference.REFERENCE_CLASS == _referencetype || 
-			JavaReference.REFERENCE_SUPERCLASS == _referencetype || 
+
+		if (JavaReference.HEAP_ROOT_SYSTEM_CLASS == _roottype ||
+			JavaReference.REFERENCE_CLASS == _referencetype ||
+			JavaReference.REFERENCE_SUPERCLASS == _referencetype ||
 			JavaReference.REFERENCE_LOADED_CLASS == _referencetype ||
 			JavaReference.REFERENCE_ASSOCIATED_CLASS == _referencetype) {
 			/* target is a class. */
@@ -148,7 +146,7 @@ public class DTFJJavaReference implements com.ibm.dtfj.java.JavaReference
 			_resolution = ResolutionType_BROKEN;
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.java.JavaReference#getDescription()
 	 */
@@ -193,7 +191,6 @@ public class DTFJJavaReference implements com.ibm.dtfj.java.JavaReference
 		return _target;
 	}
 
-	
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.java.JavaReference#isClassReference()
 	 */
