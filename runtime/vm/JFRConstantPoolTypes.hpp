@@ -315,6 +315,12 @@ struct ClassLoaderStatisticsEntry {
 	U_64 hiddenBlockSize;
 };
 
+struct ThreadAllocationStatisticsEntry {
+	I_64 ticks;
+	U_32 threadIndex;
+	U_64 allocated;
+};
+
 struct ThreadContextSwitchRateEntry {
 	I_64 ticks;
 	float switchRate;
@@ -547,6 +553,8 @@ private:
 	UDATA _networkUtilizationCount;
 	J9Pool *_dataLossTable;
 	UDATA _dataLossCount;
+	J9Pool *_threadAllocationStatisticsTable;
+	UDATA _threadAllocationStatisticsCount;
 
 	/* Periodic events. */
 	bool _shouldWriteJVMInformation;
@@ -564,6 +572,7 @@ private:
 	bool _shouldWriteModuleExport;
 	bool _shouldWriteClassLoaderStatistics;
 	bool _shouldWriteThreadDump;
+	bool _shouldWriteThreadAllocation;
 
 	/* Processing buffers */
 	StackFrame *_currentStackFrameBuffer;
@@ -719,8 +728,6 @@ private:
 	U_32 addStringUTF8Entry(J9UTF8 *string);
 
 	U_32 addStringUTF8Entry(J9UTF8 *string, bool free);
-
-	U_32 addThreadEntry(J9VMThread *vmThread);
 
 	U_32 addNetworkInterfaceNameEntry(const char *networkInterfaceName);
 
@@ -927,6 +934,11 @@ public:
 		return _classLoaderStatisticsTable;
 	}
 
+	J9Pool *getThreadAllocationStatisticsTable()
+	{
+		return _threadAllocationStatisticsTable;
+	}
+
 	J9Pool *getThreadContextSwitchRateTable()
 	{
 		return _threadContextSwitchRateTable;
@@ -1080,6 +1092,11 @@ public:
 	UDATA getClassLoaderStatisticsCount()
 	{
 		return _classLoaderStatisticsCount;
+	}
+
+	UDATA getThreadAllocationStatisticsCount()
+	{
+		return _threadAllocationStatisticsCount;
 	}
 
 	UDATA getThreadContextSwitchRateCount()
@@ -1282,31 +1299,6 @@ public:
 		return _shouldWritePhysicalMemory;
 	}
 
-	bool shouldWriteSystemProcess()
-	{
-		return _shouldWriteSystemProcess;
-	}
-
-	bool shouldWriteNativeLibrary()
-	{
-		return _shouldWriteNativeLibrary;
-	}
-
-	bool shouldWriteModuleRequire()
-	{
-		return _shouldWriteModuleRequire;
-	}
-
-	bool shouldWriteModuleExport()
-	{
-		return _shouldWriteModuleExport;
-	}
-
-	bool shouldWriteClassLoaderStatistics()
-	{
-		return _shouldWriteClassLoaderStatistics;
-	}
-
 	bool shouldWriteThreadDump()
 	{
 		return _shouldWriteThreadDump;
@@ -1439,6 +1431,9 @@ public:
 			case J9JFR_EVENT_TYPE_DATA_LOSS:
 				addDataLossEntry((J9JFRDataLoss *)event);
 				break;
+			case J9JFR_EVENT_TYPE_THREAD_ALLOCATION:
+				_shouldWriteThreadAllocation = true;
+				break;
 			default:
 				Assert_VM_unreachable();
 				break;
@@ -1458,6 +1453,7 @@ public:
 				loadNativeLibraries(_currentThread);
 				loadModuleRequireAndModuleExportEvents();
 				loadClassLoaderStatisticsEvents(_currentThread);
+				loadThreadAllocationStatisticsEvents();
 			}
 		} else {
 			if (_shouldWriteSystemProcess) {
@@ -1471,6 +1467,9 @@ public:
 			}
 			if (_shouldWriteClassLoaderStatistics) {
 				loadClassLoaderStatisticsEvents(_currentThread);
+			}
+			if (_shouldWriteThreadAllocation) {
+				loadThreadAllocationStatisticsEvents();
 			}
 		}
 
@@ -2045,6 +2044,44 @@ done:
 		vmFuncs->allClassLoadersEndDo(&walkState);
 	}
 
+   /**
+	* @brief Generate and add ThreadAllocationStatistics events to _threadAllocationStatisticsTable.
+	*/
+	void loadThreadAllocationStatisticsEvents()
+	{
+		int64_t time = j9time_nano_time();
+		J9InternalVMFunctions *vmFuncs = _vm->internalVMFunctions;
+		J9MemoryManagerFunctions *mmfns = _vm->memoryManagerFunctions;
+
+		Assert_VM_mustHaveVMAccess(_currentThread);
+		vmFuncs->acquireExclusiveVMAccess(_currentThread);
+
+		J9VMThread *walkThread = J9_LINKED_LIST_START_DO(_vm->mainThread);
+
+		while (NULL != walkThread) {
+			ThreadAllocationStatisticsEntry *entry = (ThreadAllocationStatisticsEntry *)pool_newElement(_threadAllocationStatisticsTable);
+			if (NULL == entry) {
+				_buildResult = OutOfMemory;
+				break;
+			}
+			memset(entry, 0, sizeof(*entry));
+
+			entry->ticks = time;
+			entry->threadIndex = getThreadTID(_currentThread, walkThread);
+			if (isResultNotOKay()) {
+				goto done;
+			}
+			UDATA allocated = 0;
+			mmfns->j9gc_get_cumulative_bytes_allocated_by_thread(walkThread, &allocated);
+			entry->allocated = (U_64)allocated;
+
+			_threadAllocationStatisticsCount += 1;
+			walkThread = J9_LINKED_LIST_NEXT_DO(_vm->mainThread, walkThread);
+		}
+done:
+		vmFuncs->releaseExclusiveVMAccess(_currentThread);
+	}
+
 	VM_JFRConstantPoolTypes(J9VMThread *currentThread)
 		: _currentThread(currentThread)
 		, _vm(currentThread->javaVM)
@@ -2121,6 +2158,8 @@ done:
 		, _networkUtilizationCount(0)
 		, _dataLossTable(NULL)
 		, _dataLossCount(0)
+		, _threadAllocationStatisticsTable(NULL)
+		, _threadAllocationStatisticsCount(0)
 		, _shouldWriteJVMInformation(false)
 		, _shouldWriteCPUInformationEvent(false)
 		, _shouldWriteVirtualizationInformationEvent(false)
@@ -2136,6 +2175,7 @@ done:
 		, _shouldWriteModuleExport(false)
 		, _shouldWriteClassLoaderStatistics(false)
 		, _shouldWriteThreadDump(false)
+		, _shouldWriteThreadAllocation(false)
 		, _previousStackTraceEntry(NULL)
 		, _firstStackTraceEntry(NULL)
 		, _previousThreadEntry(NULL)
@@ -2274,6 +2314,12 @@ done:
 
 		_classLoaderStatisticsTable = pool_new(sizeof(ClassLoaderStatisticsEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
 		if (NULL == _classLoaderStatisticsTable) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+
+		_threadAllocationStatisticsTable = pool_new(sizeof(ThreadAllocationStatisticsEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		if (NULL == _threadAllocationStatisticsTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
@@ -2461,6 +2507,7 @@ done:
 		pool_kill(_gcHeapSummaryTable);
 		pool_kill(_networkUtilizationTable);
 		pool_kill(_dataLossTable);
+		pool_kill(_threadAllocationStatisticsTable);
 		freeNetworkInterfaceNames();
 		j9mem_free_memory(_globalStringTable);
 	}

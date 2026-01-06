@@ -64,7 +64,6 @@ J9_DECLARE_CONSTANT_UTF8(jfrEventClassUTF8, "jdk/jfr/Event");
 
 static void jfrStartSamplingThread(J9JavaVM *vm);
 static void initializeEventFields(J9VMThread *currentThread, J9VMThread *sampleThread, J9JFREvent *jfrEvent, UDATA eventType);
-static I_64 getThreadTID(J9VMThread *currentThread, J9VMThread *vmThread);
 static int J9THREAD_PROC jfrSamplingThreadProc(void *entryArg);
 static void jfrExecutionSampleCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData);
 static void jfrThreadCPULoadCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData);
@@ -194,6 +193,7 @@ jfrEventSize(J9JFREvent *jfrEvent)
 	case J9JFR_EVENT_TYPE_CLASS_LOADER_STATISTICS:
 	case J9JFR_EVENT_TYPE_NATIVE_LIBRARY:
 	case J9JFR_EVENT_TYPE_THREAD_DUMP:
+	case J9JFR_EVENT_TYPE_THREAD_ALLOCATION:
 		size = sizeof(J9JFREvent);
 		break;
 	default:
@@ -1184,7 +1184,7 @@ tearDownJFR(J9JavaVM *vm)
 	}
 }
 
-static I_64
+I_64
 getThreadTID(J9VMThread *currentThread, J9VMThread *vmThread)
 {
 	J9JavaVM *vm = currentThread->javaVM;
@@ -2099,6 +2099,9 @@ JfrPeriodicEventSet::requestEvent(J9VMThread *currentThread, jlong id)
 	case JfrSystemProcessEvent:
 		requestSystemProcess(currentThread);
 		break;
+	case JfrThreadAllocationStatisticsEvent:
+		requestThreadAllocation(currentThread);
+		break;
 	case JfrThreadContextSwitchRateEvent:
 		requestThreadContextSwitchRate(currentThread);
 		break;
@@ -2294,6 +2297,15 @@ JfrPeriodicEventSet::requestYoungGenerationConfiguration(J9VMThread *currentThre
 	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
 	if (NULL != jfrEvent) {
 		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_YOUNG_GENERATION_CONFIGURATION);
+	}
+}
+
+void
+JfrPeriodicEventSet::requestThreadAllocation(J9VMThread *currentThread)
+{
+	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_THREAD_ALLOCATION);
 	}
 }
 
