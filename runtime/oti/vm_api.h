@@ -6031,6 +6031,9 @@ requestJFREvent(J9VMThread *currentThread, jlong id);
 UDATA
 getThreadDump(J9VMThread *currentThread, U_8 *buffer, UDATA bufferSize);
 
+I_64
+getThreadTID(J9VMThread *currentThread, J9VMThread *vmThread);
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 #ifdef __cplusplus

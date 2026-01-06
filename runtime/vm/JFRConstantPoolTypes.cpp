@@ -1548,6 +1548,24 @@ done:
 }
 
 void
+VM_JFRConstantPoolTypes::addThreadAllocationStatistics(J9JFRThreadAllocationStatistics *threadAlocationData)
+{
+	ThreadAllocationStatisticsEntry *entry = (ThreadAllocationStatisticsEntry *)pool_newElement(_threadAllocationStatisticsTable);
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = threadAlocationData->startTicks;
+	entry->threadIndex = threadAlocationData->currentThreadTID;
+	entry->allocated = threadAlocationData->allocated;
+
+done:
+	return;
+}
+
+void
 VM_JFRConstantPoolTypes::printTables()
 {
 	j9tty_printf(PORTLIB, "--------------- StringUTF8Table ---------------\n");
