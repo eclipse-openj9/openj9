@@ -3047,6 +3047,11 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 
 	NEXT_U16(classfile->thisClass, index);
 	NEXT_U16(classfile->superClass, index);
+
+	if (J9_ARE_ALL_BITS_SET(flags, BCT_SuperClassOnly)) {
+		return 0;
+	}
+
 	NEXT_U16(classfile->interfacesCount, index);
 
 	/* Space for the interfaces */

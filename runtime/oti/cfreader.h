@@ -92,7 +92,6 @@
 	{ \
 		errorCode = (U_32)J9NLS_CFR_ERR_UNEXPECTED_EOF__ID; \
 		offset = (U_32)(dataEnd - data); \
-		__asm__("int3"); \
 		goto _errorFound; \
 	}
 
