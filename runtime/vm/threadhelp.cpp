@@ -484,7 +484,7 @@ timeCompensationHelper(J9VMThread *vmThread, U_8 threadHelperType, omrthread_mon
 continueTimeCompensation:
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #if defined(OMR_THR_YIELD_ALG)
-	UDATA parkPolicy = **(UDATA **)omrthread_global((char *)"parkPolicy");
+	UDATA parkPolicy = **(UDATA **)omrthread_global("parkPolicy");
 	if (OMRTHREAD_PARK_POLICY_SLEEP == parkPolicy) {
 		J9JavaVM *vm = vmThread->javaVM;
 		PORT_ACCESS_FROM_JAVAVM(vm);
@@ -515,7 +515,7 @@ continueTimeCompensation:
 							UDATA cpuTimeDelta = currentProcCPUTimes._systemTime + currentProcCPUTimes._userTime - vm->prevProcCPUTime;
 							double util = cpuTimeDelta / timeElapsedAllCores * 100;
 
-							**(UDATA **)omrthread_global((char *)"cpuUtilCache") = (UDATA)util;
+							**(UDATA **)omrthread_global("cpuUtilCache") = (UDATA)util;
 							Trc_VM_timeCompensationHelper_CPU_util(vmThread, numberOfCpus, timeDelta, cpuTimeDelta, util);
 
 							vm->prevProcCPUTime = currentProcCPUTimes._userTime + currentProcCPUTimes._systemTime;
