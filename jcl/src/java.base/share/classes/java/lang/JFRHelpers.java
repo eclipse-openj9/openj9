@@ -30,6 +30,7 @@ import java.util.regex.Pattern;
 
 import jdk.internal.misc.Unsafe;
 
+
 final class JFRHelpers {
 	private static Class<?> jfrjvmClass;
 	private static Class<?> jfrUpCallClass;
@@ -250,6 +251,7 @@ final class JFRHelpers {
 
 				Unsafe.getUnsafe().ensureClassInitialized(jfrjvmClass);
 				Unsafe.getUnsafe().ensureClassInitialized(jfrUpCallClass);
+				Unsafe.getUnsafe().ensureClassInitialized(Class.forName("jdk.jfr.events.AbstractJDKEvent"));
 				jfrClassesInitialized = true;
 			} catch (ReflectiveOperationException e) {
 				throw new RuntimeException(e);

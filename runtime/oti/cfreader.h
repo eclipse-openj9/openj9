@@ -92,7 +92,15 @@
 	{ \
 		errorCode = (U_32)J9NLS_CFR_ERR_UNEXPECTED_EOF__ID; \
 		offset = (U_32)(dataEnd - data); \
+		goto _errorFound; \
+	}
+
+#define CHECK_EOF_DEBUG(nextRead) \
+	if((UDATA)(nextRead) > (UDATA)(dataEnd - index)) \
+	{ \
 		__asm__("int3"); \
+		errorCode = (U_32)J9NLS_CFR_ERR_UNEXPECTED_EOF__ID; \
+		offset = (U_32)(dataEnd - data); \
 		goto _errorFound; \
 	}
 
