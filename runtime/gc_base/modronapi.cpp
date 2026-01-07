@@ -991,16 +991,37 @@ j9gc_get_explicit_GC_disabled(J9JavaVM *javaVM)
 }
 
 /**
- * API to return a unique GC ID based on all counts
+ * API to return a unique GC cycle count based on all counts
  *
  * @parm[in] javaVM The J9JavaVM
- * @return unique GC ID count
+ * @return unique GC cycle count
  */
 UDATA
-j9gc_get_unique_GC_count(J9JavaVM *javaVM)
+j9gc_get_total_cycle_count(J9JavaVM *javaVM)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
 	return extensions->getUniqueGCCycleCount();
+}
+
+/**
+ * API to return a unique GC ID based on what is set in cycle state. Returns 0 if there is no active GC cycle.
+ * Meant to be called from cycle start or cycle end callbacks. Should be called from a thread that's involved in GC
+ * and has cycle state initialized.
+ *
+ * @param[in] vmThread the J9VMThread
+ * @return unique GC cycle ID, 0 if there is no active GC cycle
+ */
+UDATA
+j9gc_get_unique_cycle_ID(J9VMThread *vmThread)
+{
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
+	UDATA result = 0;
+
+	if (NULL != env->_cycleState) {
+		result = env->_cycleState->_currentCycleID;
+	}
+
+	return result;
 }
 
 /**

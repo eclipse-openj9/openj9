@@ -483,7 +483,7 @@ MM_IncrementalGenerationalGC::internalPreCollect(MM_EnvironmentBase *env, MM_Mem
 		env->_cycleState->_collectionType = MM_CycleState::CT_GLOBAL_GARBAGE_COLLECTION;
 		env->_cycleState->_collectionStatistics = &_globalCollectionStatistics;
 		static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats.clear();
-		
+
 		/* Regardless if we are transitioning from GMP , the cycle type will be set to Global GC. */
 		env->_cycleState->_type = OMR_GC_CYCLE_TYPE_VLHGC_GLOBAL_GARBAGE_COLLECT;
 
@@ -524,8 +524,6 @@ bool
 MM_IncrementalGenerationalGC::internalGarbageCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *subSpace, MM_AllocateDescription *allocDescription)
 {
 	MM_EnvironmentVLHGC *envVLHGC = MM_EnvironmentVLHGC::getEnvironment(env);
-	
-	_extensions->globalVLHGCStats.gcCount += 1;
 
 	/* we make the decision to treat soft refs as weak once we know what kind of cycle this is to be.  If it is an OOM, we need to clear all possible soft refs in the GC before we throw this exception */
 	env->_cycleState->_referenceObjectOptions = MM_CycleState::references_default;
@@ -920,6 +918,7 @@ MM_IncrementalGenerationalGC::partialGarbageCollectPreWork(MM_EnvironmentVLHGC *
 
 	/* Perform any main-specific setup */
 	_extensions->globalVLHGCStats.gcCount += 1;
+	env->_cycleState->_currentCycleID = _extensions->getUniqueGCCycleCount();
 
 	/*
 	 * Core collection work.
@@ -1071,7 +1070,10 @@ MM_IncrementalGenerationalGC::runGlobalMarkPhaseIncrement(MM_EnvironmentVLHGC *e
 	setupBeforeGlobalGC(env, env->_cycleState->_gcCode);
 
 	/* If a GMP hasn't already begun, this will be the first increment of a new cycle */
-	if(!isGlobalMarkPhaseRunning()) {
+	if (!isGlobalMarkPhaseRunning()) {
+		_extensions->globalVLHGCStats.gcCount += 1;
+		env->_cycleState->_currentCycleID = _extensions->getUniqueGCCycleCount();
+
 		reportGMPCycleStart(env);
 		/* Inform scheduling delegate that it's internal metrics need to update/reset */
 		_schedulingDelegate.globalMarkCycleStart(env);
@@ -1082,9 +1084,6 @@ MM_IncrementalGenerationalGC::runGlobalMarkPhaseIncrement(MM_EnvironmentVLHGC *e
 	/* NOTE: May want to move any tracepoints up into this routine */
 	reportGMPIncrementStart(env);
 	reportGCIncrementStart(env, "GMP increment", env->_cycleState->_currentIncrement);
-
-	/* Perform any main-specific setup */
-	_extensions->globalVLHGCStats.gcCount += 1;
 
 	if ((_globalMarkPhaseIncrementBytesStillToScan > 0) || (MM_CycleState::state_process_work_packets_after_initial_mark != _persistentGlobalMarkPhaseState._markDelegateState)) {
 		globalMarkPhase(env, true);
@@ -1150,9 +1149,11 @@ void
 MM_IncrementalGenerationalGC::runGlobalGarbageCollection(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription)
 {
 	/* If a GMP is already running, then the cycle will be commandeered.  Otherwise, start a new cycle representing the global collection.  */
-	if(isGlobalMarkPhaseRunning()) {
+	if (isGlobalMarkPhaseRunning()) {
 		reportGMPCycleContinue(env);
 	} else {
+		_extensions->globalVLHGCStats.gcCount += 1;
+		env->_cycleState->_currentCycleID = _extensions->getUniqueGCCycleCount();
 		reportGCCycleStart(env);
 	}
 	reportGlobalGCStart(env);

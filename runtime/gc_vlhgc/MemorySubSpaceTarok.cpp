@@ -1174,7 +1174,6 @@ MM_MemorySubSpaceTarok::calculateContractionSize(MM_EnvironmentBase *env, MM_All
 	}
 
 	/* Don't shrink if we expanded in last extensions->heapContractionStabilizationCount global collections */
-	/* Note that the gcCount includes System GCs, PGCs, AFs and GMP increments */
 	uintptr_t gcCount = _extensions->globalVLHGCStats.gcCount;
 	if (_extensions->heap->getResizeStats()->getLastHeapExpansionGCCount() + _extensions->heapContractionStabilizationCount > gcCount) {
 		Trc_MM_MemorySubSpaceTarok_timeForHeapContract_Exit5(env->getLanguageVMThread());
@@ -1251,8 +1250,7 @@ MM_MemorySubSpaceTarok::performExpand(MM_EnvironmentBase *env)
 	
 		/* Remember the gc count at the time last expansion. If expand is outside a gc this will be 
 		 * number of last gc.
-	 	 */ 
-		/* Note that the gcCount includes System GCs, PGCs, AFs and GMP increments */
+		 */
 		uintptr_t gcCount = _extensions->globalVLHGCStats.gcCount;
 
 		_extensions->heap->getResizeStats()->setLastHeapExpansionGCCount(gcCount);
@@ -1320,7 +1318,6 @@ MM_MemorySubSpaceTarok::performContract(MM_EnvironmentBase *env, MM_AllocateDesc
 			/* Remember the gc count at the time of last contraction. If contract is outside a gc 
 	 		 * this will be number of last gc.
 	 		 */
-			/* Note that the gcCount includes System GCs, PGCs, AFs and GMP increments */
 			uintptr_t gcCount = _extensions->globalVLHGCStats.gcCount;
 
 			_extensions->heap->getResizeStats()->setLastHeapContractionGCCount(gcCount);
@@ -1394,7 +1391,6 @@ MM_MemorySubSpaceTarok::calculateExpansionSizeInternal(MM_EnvironmentBase *env, 
 
 	if ((_extensions->heap->getResizeStats()->getLastHeapExpansionGCCount() + _extensions->heapExpansionStabilizationCount <= gcCount) && (_extensions->globalVLHGCStats._heapSizingData.readyToResizeAtGlobalEnd || (0 == _extensions->globalVLHGCStats._heapSizingData.freeTenure))) {
 		/* Only expand if we didn't expand in last _extensions->heapExpansionStabilizationCount global collections */
-		/* Note that the gcCount includes System GCs, PGCs, AFs and GMP increments */
 		uintptr_t heapSizeWithinGoodHybridRange = getHeapSizeWithinBounds(env);
 		uintptr_t activeMemorySize = getActiveMemorySize();
 
