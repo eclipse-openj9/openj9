@@ -4474,6 +4474,11 @@ public final class Unsafe {
 		Objects.requireNonNull(clz);
 		throw new Error("notifyStrictStaticAccess() unimplemented"); //$NON-NLS-1$
 	}
+
+	public int[] getFieldMap(Class<?> clz) {
+		Objects.requireNonNull(clz);
+		throw new Error("getFieldMap() unimplemented"); //$NON-NLS-1$
+	}
 	/*[ENDIF] INLINE-TYPES */
 
 	/**
@@ -7257,6 +7262,14 @@ public final class Unsafe {
 
 	public <V> Object getAndSetFlatValueAcquire(Object obj, long offset, int layout, Class<?> valueType, V newValue) {
 		return getAndSetFlatValue(obj, offset, layout, valueType, newValue);
+	}
+
+	public long arrayInstanceBaseOffset(Object[] array) {
+		throw new Error("jdk.internal.misc.Unsafe.arrayInstanceBaseOffset unimplemented"); //$NON-NLS-1$
+	}
+
+	public int arrayInstanceIndexScale(Object[] array) {
+		throw new Error("jdk.internal.misc.Unsafe.arrayInstanceIndexScale unimplemented"); //$NON-NLS-1$
 	}
 	/*[ENDIF] INLINE-TYPES */
 }
