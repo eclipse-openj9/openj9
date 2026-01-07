@@ -22,35 +22,38 @@
 
 package org.openj9.test.management;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
-import org.testng.log4testng.Logger;
-import org.openj9.test.management.util.ChildWatchdog;
+import com.ibm.virtualization.management.GuestOSInfoRetrievalException;
+import com.ibm.virtualization.management.GuestOSMemoryUsage;
+import com.ibm.virtualization.management.GuestOSMXBean;
+import com.ibm.virtualization.management.GuestOSProcessorUsage;
+import com.ibm.virtualization.management.HypervisorMXBean;
+
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
 import javax.management.JMX;
+import javax.management.MalformedObjectNameException;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
-import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
-import java.lang.management.ManagementFactory;
-
-import com.ibm.virtualization.management.*;
-
+import org.openj9.test.management.util.ChildWatchdog;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+import org.testng.log4testng.Logger;
 
 /**
- * Class for testing the API that are provided as part of the GuestOSMXBean
+ * Class for testing the API that are provided as part of the GuestOSMXBean.
  *
  */
 @Test(groups = { "level.extended" })
@@ -78,8 +81,6 @@ public class GuestOSMXBeanTest {
 	/**
 	 * Starting point for the test program. Invokes the memory and processor test routines and
 	 * indicates success or failure accordingly.
-	 *
-	 * @param args
 	 */
 	@Test
 	public static void runGuestOSMXBeanTest() {
@@ -121,7 +122,7 @@ public class GuestOSMXBeanTest {
 		}
 
 		/* Perform the appropriate test as instructed through the command line. */
-		if (false == localTest) {
+		if (!localTest) {
 			/* A remote test needs to be performed. Start the remote server if it is not running yet.
 			 * Also, attach a watch dog to this, to bail out, in case it hangs.
 			 */
@@ -146,7 +147,7 @@ public class GuestOSMXBeanTest {
 					 *  object name for the class GuestOSMXBean.
 					 */
 					mxbeanProxy = JMX.newMXBeanProxy(mbeanConnection, mxbeanName, GuestOSMXBean.class);
-					if (true != mbeanConnection.isRegistered(mxbeanName)) {
+					if (!mbeanConnection.isRegistered(mxbeanName)) {
 						Assert.fail("GuestOSMXBean is not registered. Cannot Proceed with the test. !!!Test Failed !!!");
 					}
 
@@ -178,11 +179,11 @@ public class GuestOSMXBeanTest {
 			 */
 			try {
 				mbeanServer = ManagementFactory.getPlatformMBeanServer();
-				if(true != mbeanServer.isRegistered(mxbeanName)) {
+				if (!mbeanServer.isRegistered(mxbeanName)) {
 					Assert.fail("GuestOSMXBean is not registered. Cannot Proceed with the test.");
 				}
-				mxbeanProxy =  JMX.newMXBeanProxy(mbeanServer, mxbeanName, GuestOSMXBean.class);
-			} catch(Exception e){
+				mxbeanProxy = JMX.newMXBeanProxy(mbeanServer, mxbeanName, GuestOSMXBean.class);
+			} catch (Exception e) {
 				Assert.fail("Exception occurred in setting up local test environment." + e.getMessage(), e);
 			}
 		}
@@ -203,8 +204,8 @@ public class GuestOSMXBeanTest {
 			error |= test_processorInfo(mxbeanProxy);
 		} finally {
 			/* Do all clean up here. */
-			if (false == localTest) {
-				/* Close the connection and Stop the remote Server */
+			if (!localTest) {
+				/* Close the connection and Stop the remote Server. */
 				try {
 					connector.close();
 					stopRemoteServer();
@@ -215,7 +216,7 @@ public class GuestOSMXBeanTest {
 			}
 		}
 
-		if (false != error) {
+		if (error) {
 			Assert.fail(" !!!Test Failed !!!");
 		}
 	}
@@ -267,8 +268,8 @@ public class GuestOSMXBeanTest {
 			logger.debug("Sampled at timestamp: " + timeStamp + " microseconds");
 
 			/*
-			 * Validate the statistics obtained.
-			 * - Memused cannot be <0.
+			 * Validate the statistics obtained:
+			 * - Memused cannot be < 0.
 			 * - Memused cannot be greater than maxMemlimit.
 			 * - Timestamp cannot be 0.
 			 */
@@ -279,7 +280,7 @@ public class GuestOSMXBeanTest {
 			}
 
 			if (timeStamp <= 0) {
-				Assert.fail("Invalid timestamp received, timeStamp cannot be 0!!");
+				Assert.fail("Invalid timestamp received, timeStamp cannot be less or equal to 0!!");
 			}
 		} catch(GuestOSInfoRetrievalException mu) {
 
@@ -288,40 +289,49 @@ public class GuestOSMXBeanTest {
 			if (mu.getMessage().contains(VMWARE_ERROR)) {
 				/*
 				 * Ignore the error for now until the hypervisor:NoGuestSDK tag
-				 * is added
+				 * is added.
 				 */
 				logger.warn("Cannot Proceed with the test, check for the VMWare Guest SDK");
 				return false;
 
 			} else if (mu.getMessage().contains(LPARCFG_MEM_UNSUPPORTED_ERROR)) {
 				/*
-				 * Validate the error condition i.e if the lparcfg version is
-				 * greater/equal to < 1.8 If version is < 1.8, ignore the error
-				 * else fail the test
+				 * Validate the error condition. If version is < 1.8 or the version
+				 * is >= 1.8 and there is no entitled_memory entry, ignore the error.
+				 * Otherwise fail the test.
 				 */
 				File file = new File(LPARCFG_FILE);
 				try {
 					/*
-					 * Use a Scanner to scan through the /proc/ppc64/lparcfg
+					 * Use a Scanner to scan through /proc/ppc64/lparcfg.
 					 */
 					Scanner scanner = new Scanner(file);
-					String str = "lparcfg ";
-					while (scanner.hasNext("lparcfg")) {
-						String line = scanner.nextLine();
-						Float version = Float.valueOf(line.substring(str.length(), line.length()));
-						logger.warn("Version of lparcfg: " + version);
+					scanner.useDelimiter("=|\\p{javaWhitespace}+");
+					String lparcfgStr = "lparcfg";
+					while (scanner.hasNextLine()) {
+						if (scanner.hasNext(lparcfgStr)) {
+							scanner.next(); // consume "lparcfg"
+							if (!scanner.hasNextFloat()) {
+								logger.warn("Cannot proceed with the test, the lparcfg version missing");
+								return false;
+							}
+							float version = scanner.nextFloat();
+							logger.warn("Version of lparcfg: " + version);
 
-						if (version < 1.8) {
-							logger.warn("Cannot proceed with the test, the lparcfg version must be 1.8 or greater");
-							return false;
-
-						} else {
+							if (version < 1.8) {
+								logger.warn("Cannot proceed with the test, the lparcfg version must be 1.8 or greater");
+								return false;
+							}
+						} else if (scanner.hasNext("entitled_memory")) {
 							Assert.fail("Invalid Guest Memory Usage statistics recieved!!");
 						}
+						scanner.nextLine();
 					}
 					scanner.close();
+					logger.warn("Cannot proceed with the test, the lparcfg has no entitled_memory");
+					return false;
 				} catch (FileNotFoundException e) {
-					Assert.fail("/proc/ppc64/lparcfg file not found.. Exiting.");
+					Assert.fail("/proc/ppc64/lparcfg file not found. Exiting.");
 				}
 			} else if (mu.getMessage().contains(NO_HYPERVISOR_ERROR)) {
 				logger.warn("Not running on a Hypervisor, Guest Statistics cannot be retrieved!");
@@ -333,13 +343,13 @@ public class GuestOSMXBeanTest {
 				logger.warn("HYPFS update failed!");
 				return false;
 			} else {
-				/* Received a valid exception, test failed */
+				/* Received a valid exception, test failed. */
 				Assert.fail("Received a valid exception, test failed");
 			}
 		} catch(Exception e) {
 			Assert.fail("Unknown exception occurred:" + e.getMessage(), e);
 		}
-		return false; /* No error */
+		return false; /* no error */
 	}
 
 	/**
@@ -368,14 +378,14 @@ public class GuestOSMXBeanTest {
 			cpuEnt = procUsage.getCpuEntitlement();
 
 			logger.debug("Guest Processor statistics received....");
-			if (osname.equals("z/OS") == true) {
+			if (osname.equals("z/OS")) {
 				logger.debug("The Host CPU Clock Speed	:" + hostSpeed + "MSU");
 			} else {
 				logger.debug("The Host CPU Clock Speed	:" + hostSpeed + "MHz");
 			}
 
 			/* CPU entitlement is expected to be -1 on PowerKVM hypervisor. */
-			if ((-1 == cpuEnt) && (true == HypervisorName.contentEquals("PowerKVM"))) {
+			if ((-1 == cpuEnt) && HypervisorName.contentEquals("PowerKVM")) {
 				logger.warn("The CPU Entitlement assigned for this Guest : <unsupported>");
 			} else {
 				logger.debug("The CPU Entitlement assigned for this Guest : " + cpuEnt);
@@ -384,7 +394,7 @@ public class GuestOSMXBeanTest {
 			logger.debug("Sampled at timeStamp						: " + timeStamp + " microseconds");
 
 			/*
-			 * Validate the statistics received
+			 * Validate the statistics received:
 			 * - hostCpuClockSpeed of Guest OS is not 0
 	 		 * - timeStamp is not 0
 	 		 * - cpuTime is not 0
@@ -400,7 +410,7 @@ public class GuestOSMXBeanTest {
 			if (pu.getMessage().contains(VMWARE_ERROR)) {
 				/*
 				 * Ignore the error for now until the hypervisor:NoGuestSDK tag
-				 * is added
+				 * is added.
 				 */
 				logger.warn("Cannot Proceed with the test, check for the VMWare Guest SDK");
 				return false;
@@ -429,7 +439,7 @@ public class GuestOSMXBeanTest {
 	{
 		logger.info("Starting Remote Server!");
 
-		ArrayList<String> argBuffer = new ArrayList<String>();
+		ArrayList<String> argBuffer = new ArrayList<>();
 		char fs = File.separatorChar;
 
 		String javaExec = System.getProperty("java.home") + fs + "bin" + fs	+ "java";
