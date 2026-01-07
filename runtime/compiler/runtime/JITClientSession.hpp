@@ -138,6 +138,7 @@ class TR_J9MethodFieldAttributes
 using TR_FieldAttributesCache = PersistentUnorderedMap<int32_t, TR_J9MethodFieldAttributes>;
 
 using ClassLoaderStringPair = std::pair<J9ClassLoader *, std::string>;
+using ClassMethodNamePair = std::pair<J9Class *, std::string>;
 
 
 struct ClassUnloadedData
@@ -406,6 +407,7 @@ public:
    PersistentUnorderedMap<J9Class *, ClassInfo> &getROMClassMap() { return _romClassMap; }
    PersistentUnorderedMap<J9Method *, J9MethodInfo> &getJ9MethodMap() { return _J9MethodMap; }
    PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock *> &getClassBySignatureMap() { return _classBySignatureMap; }
+   PersistentUnorderedMap<ClassMethodNamePair, TR_OpaqueMethodBlock *> &getMethodByNameMap() { return _methodByNameMap; }
    PersistentUnorderedSet<J9Method*> &getDLTedMethodSet() { return _DLTedMethodSet; }
    PersistentUnorderedMap<J9Class *, ClassChainData> &getClassChainDataMap() { return _classChainDataMap; }
    PersistentUnorderedMap<J9ConstantPool *, TR_OpaqueClassBlock *> &getConstantPoolToClassMap() { return _constantPoolToClassMap; }
@@ -414,6 +416,7 @@ public:
    void processIllegalFinalFieldModificationList(const std::vector<TR_OpaqueClassBlock*> &classes);
    TR::Monitor *getROMMapMonitor() { return _romMapMonitor; }
    TR::Monitor *getClassMapMonitor() { return _classMapMonitor; }
+   TR::Monitor *getMethodMapMonitor() { return _methodMapMonitor; }
    TR::Monitor *getDLTSetMonitor() { return _DLTSetMonitor; }
    TR::Monitor *getClassChainDataMapMonitor() { return _classChainDataMapMonitor; }
    TR_IPBytecodeHashTableEntry *getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent);
@@ -604,6 +607,8 @@ private:
    // The following hashtable caches <classname> --> <J9Class> mappings
    // All classes in here are loaded by the systemClassLoader so we know they cannot be unloaded
    PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> _classBySignatureMap;
+   // The following hashtable caches <J9Class*,methodName> --> <J9Method*> mappings
+   PersistentUnorderedMap<ClassMethodNamePair, TR_OpaqueMethodBlock*> _methodByNameMap;
    // The set of j9methods that have been DLTed. This may be queried by the Inliner. Protected by _DLTSetMonitor.
    PersistentUnorderedSet<J9Method*> _DLTedMethodSet;
 
@@ -612,6 +617,7 @@ private:
    PersistentUnorderedMap<J9ConstantPool *, TR_OpaqueClassBlock *> _constantPoolToClassMap;
    TR::Monitor *_romMapMonitor;
    TR::Monitor *_classMapMonitor;
+   TR::Monitor *_methodMapMonitor;
    TR::Monitor *_DLTSetMonitor; // Protects the set of methods that have been DLTed: _DLTedMethodSet
    TR::Monitor *_classChainDataMapMonitor;
    // The following monitor is used to protect access to _lastProcessedCriticalSeqNo and

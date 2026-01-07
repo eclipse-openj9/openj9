@@ -167,7 +167,6 @@ public:
    virtual bool hasFinalizer(TR_OpaqueClassBlock *clazz) override;
    virtual uintptr_t getClassDepthAndFlagsValue(TR_OpaqueClassBlock *clazz) override;
    virtual uintptr_t getClassFlagsValue(TR_OpaqueClassBlock * clazz) override;
-   virtual TR_OpaqueMethodBlock *getMethodFromName(const char *className, const char *methodName, const char *signature) override;
    virtual TR_OpaqueMethodBlock *getMethodFromClass(TR_OpaqueClassBlock *methodClass, const char *methodName, const char *signature, TR_OpaqueClassBlock *callingClass) override;
    virtual bool isStable(J9Class *fieldClass, int32_t cpIndex) override;
    virtual bool isForceInline(TR_ResolvedMethod *method) override;
@@ -387,7 +386,6 @@ public:
    virtual void *findPersistentMHJ2IThunk(char *signatureChars) override { TR_ASSERT_FATAL(0, "findPersistentMHJ2IThunk should not be called on the server"); return NULL; }
    virtual J9Class *getClassForAllocationInlining(TR::Compilation *comp, TR::SymbolReference *classSymRef) override;
    virtual bool ensureOSRBufferSize(TR::Compilation *comp, uintptr_t osrFrameSizeInBytes, uintptr_t osrScratchBufferSizeInBytes, uintptr_t osrStackFrameSizeInBytes) override;
-   virtual TR_OpaqueMethodBlock *getMethodFromName(const char *className, const char *methodName, const char *signature) override;
    virtual TR_OpaqueMethodBlock *getResolvedVirtualMethod(TR_OpaqueClassBlock *classObject, int32_t cpIndex, bool ignoreReResolve = true) override;
    virtual TR_OpaqueMethodBlock *getResolvedInterfaceMethod(TR_OpaqueMethodBlock *ownerMethod, TR_OpaqueClassBlock *classObject, int32_t cpIndex) override;
 
