@@ -867,8 +867,7 @@ illegalAccess:
 				}
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 				if (J9_ARE_ANY_BITS_SET(modifiers, J9AccStrictInit)) {
-					localClassAndFlagsData &= ~J9StaticFieldRefStrictInitMask;
-					localClassAndFlagsData |= J9StaticFieldRefStrictInitUnset;
+					localClassAndFlagsData |= J9StaticFieldRefStrict;
 				}
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 				if (0 != (resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER)) {
