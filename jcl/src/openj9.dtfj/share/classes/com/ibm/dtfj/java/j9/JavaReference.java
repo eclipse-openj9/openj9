@@ -28,12 +28,11 @@ import com.ibm.dtfj.image.ImagePointer;
 import com.ibm.dtfj.image.j9.CorruptData;
 
 /**
- * @author nhardman
- *
  * JavaReference is intended to represent either a standard reference within a java heap,
  * for example a reference from one object to another, or a root. A root is a reference
  * that is held outside of the heap, in the Java stack or within the JVM itself.
  *
+ * @author nhardman
  */
 public class JavaReference implements com.ibm.dtfj.java.JavaReference
 {
@@ -42,15 +41,15 @@ public class JavaReference implements com.ibm.dtfj.java.JavaReference
 	private static final int ResolutionType_OBJECT = 2;
 	private static final int ResolutionType_BROKEN = 3;
 
-	private JavaRuntime _javaVM = null;
-	private String _description = null;
-	private int    _reachability = REACHABILITY_UNKNOWN;
-	private int    _referencetype = REFERENCE_UNKNOWN;
-	private int    _roottype = HEAP_ROOT_UNKNOWN;
-	private Object _source = null;
-	private Object _target = null;
-	private long   _address = 0;
-	private int _resolution = ResolutionType_UNRESOLVED;
+	private final JavaRuntime _javaVM;
+	private final String _description;
+	private final int    _reachability;
+	private final int    _referencetype;
+	private final int    _roottype;
+	private final Object _source;
+	private       Object _target;
+	private final long   _address;
+	private       int    _resolution = ResolutionType_UNRESOLVED;
 
 	/**
 	 * Constructor
@@ -87,6 +86,7 @@ public class JavaReference implements com.ibm.dtfj.java.JavaReference
 	public JavaReference(JavaRuntime javaVM, Object source, Object target, String description, int referencetype, int roottype, int reachability) {
 		_javaVM = javaVM;
 		_source = source;
+		_address = 0;
 		_target = target;
 		_description = description;
 		_referencetype = referencetype;
@@ -94,32 +94,32 @@ public class JavaReference implements com.ibm.dtfj.java.JavaReference
 		_reachability = reachability;
 
 		if (null != _target) {
-			if (JavaReference.HEAP_ROOT_SYSTEM_CLASS == _roottype ||
-				JavaReference.REFERENCE_CLASS == _referencetype ||
-				JavaReference.REFERENCE_SUPERCLASS == _referencetype ||
-				JavaReference.REFERENCE_LOADED_CLASS == _referencetype ||
-				JavaReference.REFERENCE_ASSOCIATED_CLASS == _referencetype) {
+			if ((HEAP_ROOT_SYSTEM_CLASS == _roottype) ||
+				(REFERENCE_CLASS == _referencetype) ||
+				(REFERENCE_SUPERCLASS == _referencetype) ||
+				(REFERENCE_LOADED_CLASS == _referencetype) ||
+				(REFERENCE_ASSOCIATED_CLASS == _referencetype)) {
 				/* target is a class. */
 				_resolution = ResolutionType_CLASS;
-			} else if ((JavaReference.HEAP_ROOT_JNI_GLOBAL == _roottype) ||
-					   (JavaReference.HEAP_ROOT_JNI_LOCAL == _roottype) ||
-					   (JavaReference.HEAP_ROOT_MONITOR == _roottype) ||
-					   (JavaReference.HEAP_ROOT_OTHER == _roottype) ||
-					   (JavaReference.HEAP_ROOT_STACK_LOCAL == _roottype) ||
-					   (JavaReference.HEAP_ROOT_THREAD == _roottype) ||
-					   (JavaReference.HEAP_ROOT_FINALIZABLE_OBJ == _roottype) ||
-					   (JavaReference.HEAP_ROOT_UNFINALIZED_OBJ == _roottype) ||
-					   (JavaReference.HEAP_ROOT_CLASSLOADER == _roottype) ||
-					   (JavaReference.HEAP_ROOT_STRINGTABLE == _roottype) ||
-					   (JavaReference.REFERENCE_ARRAY_ELEMENT == _referencetype) ||
-					   (JavaReference.REFERENCE_CLASS_LOADER == _referencetype) ||
-					   (JavaReference.REFERENCE_CONSTANT_POOL == _referencetype) ||
-					   (JavaReference.REFERENCE_FIELD == _referencetype) ||
-					   (JavaReference.REFERENCE_INTERFACE == _referencetype) ||
-					   (JavaReference.REFERENCE_PROTECTION_DOMAIN == _referencetype) ||
-					   (JavaReference.REFERENCE_SIGNERS == _referencetype) ||
-					   (JavaReference.REFERENCE_STATIC_FIELD == _referencetype) ||
-					   (JavaReference.REFERENCE_CLASS_OBJECT == _referencetype)) {
+			} else if ((HEAP_ROOT_JNI_GLOBAL == _roottype) ||
+					   (HEAP_ROOT_JNI_LOCAL == _roottype) ||
+					   (HEAP_ROOT_MONITOR == _roottype) ||
+					   (HEAP_ROOT_OTHER == _roottype) ||
+					   (HEAP_ROOT_STACK_LOCAL == _roottype) ||
+					   (HEAP_ROOT_THREAD == _roottype) ||
+					   (HEAP_ROOT_FINALIZABLE_OBJ == _roottype) ||
+					   (HEAP_ROOT_UNFINALIZED_OBJ == _roottype) ||
+					   (HEAP_ROOT_CLASSLOADER == _roottype) ||
+					   (HEAP_ROOT_STRINGTABLE == _roottype) ||
+					   (REFERENCE_ARRAY_ELEMENT == _referencetype) ||
+					   (REFERENCE_CLASS_LOADER == _referencetype) ||
+					   (REFERENCE_CONSTANT_POOL == _referencetype) ||
+					   (REFERENCE_FIELD == _referencetype) ||
+					   (REFERENCE_INTERFACE == _referencetype) ||
+					   (REFERENCE_PROTECTION_DOMAIN == _referencetype) ||
+					   (REFERENCE_SIGNERS == _referencetype) ||
+					   (REFERENCE_STATIC_FIELD == _referencetype) ||
+					   (REFERENCE_CLASS_OBJECT == _referencetype)) {
 				/* target is an object. */
 				_resolution = ResolutionType_OBJECT;
 			} else {
@@ -136,6 +136,7 @@ public class JavaReference implements com.ibm.dtfj.java.JavaReference
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.java.JavaReference#getDescription()
 	 */
+	@Override
 	public String getDescription() {
 		/* return the description of this reference. */
 		return _description;
@@ -144,6 +145,7 @@ public class JavaReference implements com.ibm.dtfj.java.JavaReference
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.java.JavaReference#getReachability()
 	 */
+	@Override
 	public int getReachability() throws CorruptDataException {
 		return _reachability;
 	}
@@ -151,6 +153,7 @@ public class JavaReference implements com.ibm.dtfj.java.JavaReference
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.java.JavaReference#getReferenceType()
 	 */
+	@Override
 	public int getReferenceType() throws CorruptDataException {
 		return _referencetype;
 	}
@@ -158,6 +161,7 @@ public class JavaReference implements com.ibm.dtfj.java.JavaReference
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.java.JavaReference#getRootType()
 	 */
+	@Override
 	public int getRootType() throws CorruptDataException {
 		return _roottype;
 	}
@@ -165,6 +169,7 @@ public class JavaReference implements com.ibm.dtfj.java.JavaReference
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.java.JavaReference#getSource()
 	 */
+	@Override
 	public Object getSource() throws DataUnavailable, CorruptDataException {
 		/* source object for this reference (i.e. the object that contains this reference). */
 		return _source;
@@ -173,6 +178,7 @@ public class JavaReference implements com.ibm.dtfj.java.JavaReference
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.java.JavaReference#getTarget()
 	 */
+	@Override
 	public Object getTarget() throws DataUnavailable, CorruptDataException {
 		if (null == _target) {
 			if (0 == _address) {
@@ -181,11 +187,11 @@ public class JavaReference implements com.ibm.dtfj.java.JavaReference
 				return null;
 			}
 
-			if (JavaReference.HEAP_ROOT_SYSTEM_CLASS == _roottype ||
-				JavaReference.REFERENCE_CLASS == _referencetype ||
-				JavaReference.REFERENCE_SUPERCLASS == _referencetype ||
-				JavaReference.REFERENCE_LOADED_CLASS == _referencetype ||
-				JavaReference.REFERENCE_ASSOCIATED_CLASS == _referencetype) {
+			if ((HEAP_ROOT_SYSTEM_CLASS == _roottype) ||
+				(REFERENCE_CLASS == _referencetype) ||
+				(REFERENCE_SUPERCLASS == _referencetype) ||
+				(REFERENCE_LOADED_CLASS == _referencetype) ||
+				(REFERENCE_ASSOCIATED_CLASS == _referencetype)) {
 
 				// this is a class reference, so create a class to represent the target.
 				_target = _javaVM.getClassForID(_address);
@@ -195,25 +201,25 @@ public class JavaReference implements com.ibm.dtfj.java.JavaReference
 					throw new CorruptDataException(new CorruptData("Unknown class ID", pointer));
 				}
 				_resolution = ResolutionType_CLASS;
-			} else if ((JavaReference.HEAP_ROOT_JNI_GLOBAL == _roottype) ||
-					   (JavaReference.HEAP_ROOT_JNI_LOCAL == _roottype) ||
-					   (JavaReference.HEAP_ROOT_MONITOR == _roottype) ||
-					   (JavaReference.HEAP_ROOT_OTHER == _roottype) ||
-					   (JavaReference.HEAP_ROOT_STACK_LOCAL == _roottype) ||
-					   (JavaReference.HEAP_ROOT_THREAD == _roottype) ||
-					   (JavaReference.HEAP_ROOT_FINALIZABLE_OBJ == _roottype) ||
-					   (JavaReference.HEAP_ROOT_UNFINALIZED_OBJ == _roottype) ||
-					   (JavaReference.HEAP_ROOT_CLASSLOADER == _roottype) ||
-					   (JavaReference.HEAP_ROOT_STRINGTABLE == _roottype) ||
-					   (JavaReference.REFERENCE_ARRAY_ELEMENT == _referencetype) ||
-					   (JavaReference.REFERENCE_CLASS_LOADER == _referencetype) ||
-					   (JavaReference.REFERENCE_CONSTANT_POOL == _referencetype) ||
-					   (JavaReference.REFERENCE_FIELD == _referencetype) ||
-					   (JavaReference.REFERENCE_INTERFACE == _referencetype) ||
-					   (JavaReference.REFERENCE_PROTECTION_DOMAIN == _referencetype) ||
-					   (JavaReference.REFERENCE_SIGNERS == _referencetype) ||
-					   (JavaReference.REFERENCE_STATIC_FIELD == _referencetype) ||
-					   (JavaReference.REFERENCE_CLASS_OBJECT == _referencetype)) {
+			} else if ((HEAP_ROOT_JNI_GLOBAL == _roottype) ||
+					   (HEAP_ROOT_JNI_LOCAL == _roottype) ||
+					   (HEAP_ROOT_MONITOR == _roottype) ||
+					   (HEAP_ROOT_OTHER == _roottype) ||
+					   (HEAP_ROOT_STACK_LOCAL == _roottype) ||
+					   (HEAP_ROOT_THREAD == _roottype) ||
+					   (HEAP_ROOT_FINALIZABLE_OBJ == _roottype) ||
+					   (HEAP_ROOT_UNFINALIZED_OBJ == _roottype) ||
+					   (HEAP_ROOT_CLASSLOADER == _roottype) ||
+					   (HEAP_ROOT_STRINGTABLE == _roottype) ||
+					   (REFERENCE_ARRAY_ELEMENT == _referencetype) ||
+					   (REFERENCE_CLASS_LOADER == _referencetype) ||
+					   (REFERENCE_CONSTANT_POOL == _referencetype) ||
+					   (REFERENCE_FIELD == _referencetype) ||
+					   (REFERENCE_INTERFACE == _referencetype) ||
+					   (REFERENCE_PROTECTION_DOMAIN == _referencetype) ||
+					   (REFERENCE_SIGNERS == _referencetype) ||
+					   (REFERENCE_STATIC_FIELD == _referencetype) ||
+					   (REFERENCE_CLASS_OBJECT == _referencetype)) {
 				// this is an object reference, so create a object to represent the target.
 				ImagePointer pointer = _javaVM.pointerInAddressSpace(_address);
 				try {
@@ -241,10 +247,11 @@ public class JavaReference implements com.ibm.dtfj.java.JavaReference
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.java.JavaReference#isClassReference()
 	 */
+	@Override
 	public boolean isClassReference() throws DataUnavailable, CorruptDataException {
 		if (ResolutionType_UNRESOLVED == _resolution) {
 			// the target is unresolved, so we need to get it.
-			_target = getTarget();
+			getTarget();
 		}
 
 		if (ResolutionType_BROKEN == _resolution) {
@@ -257,10 +264,11 @@ public class JavaReference implements com.ibm.dtfj.java.JavaReference
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.java.JavaReference#isObjectReference()
 	 */
+	@Override
 	public boolean isObjectReference() throws DataUnavailable, CorruptDataException {
 		if (ResolutionType_UNRESOLVED == _resolution) {
 			// the target is unresolved, so we need to get it.
-			_target = getTarget();
+			getTarget();
 		}
 
 		if (ResolutionType_BROKEN == _resolution) {
@@ -269,4 +277,5 @@ public class JavaReference implements com.ibm.dtfj.java.JavaReference
 
 		return ResolutionType_OBJECT == _resolution;
 	}
+
 }

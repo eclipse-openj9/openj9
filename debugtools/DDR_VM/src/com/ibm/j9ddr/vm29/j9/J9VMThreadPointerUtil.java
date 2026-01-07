@@ -57,13 +57,13 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
 public class J9VMThreadPointerUtil {
-	
+
 	// Constants from com.ibm.dtfj.java.JavaThread version 1.3
 	// Copied here because we should not require the DTFJ interface.
 	// Mapping should NOT be done at DTFJ layer because J9State constants
 	// could be different for different J9Versions.  Likewise DTFJ constants
 	// could (but probably are not) different for different DTFJ versions
-	
+
 	/** The thread is alive	 */
 	private static int STATE_ALIVE						= 0x00000001;
 	/** The thread has terminated */
@@ -100,14 +100,14 @@ public class J9VMThreadPointerUtil {
 	private static int STATE_VENDOR_2					= 0x20000000;
 	/** The thread is in a vendor specific state */
 	private static int STATE_VENDOR_3					= 0x40000000;
-	
-	private static final int J9THREAD_MONITOR_OBJECT = 0x60000;  
-	
-	private static final HashMap<Long, Integer>threadStateMap = new HashMap<Long, Integer>(9); 
-	
+
+	private static final int J9THREAD_MONITOR_OBJECT = 0x60000;
+
+	private static final HashMap<Long, Integer> threadStateMap = new HashMap<Long, Integer>(9);
+
 	static {
 		threadStateMap.put(J9VMTHREAD_STATE_DEAD, STATE_TERMINATED);
-		threadStateMap.put(J9VMTHREAD_STATE_SUSPENDED ,STATE_ALIVE | STATE_SUSPENDED);
+		threadStateMap.put(J9VMTHREAD_STATE_SUSPENDED, STATE_ALIVE | STATE_SUSPENDED);
 		threadStateMap.put(J9VMTHREAD_STATE_RUNNING, STATE_ALIVE | STATE_RUNNABLE);
 		threadStateMap.put(J9VMTHREAD_STATE_BLOCKED, STATE_ALIVE | STATE_BLOCKED_ON_MONITOR_ENTER);
 		threadStateMap.put(J9VMTHREAD_STATE_WAITING, STATE_ALIVE | STATE_WAITING | STATE_WAITING_INDEFINITELY | STATE_IN_OBJECT_WAIT);
@@ -115,14 +115,14 @@ public class J9VMThreadPointerUtil {
 		threadStateMap.put(J9VMTHREAD_STATE_SLEEPING, STATE_ALIVE | STATE_WAITING | STATE_SLEEPING);
 		threadStateMap.put(J9VMTHREAD_STATE_PARKED, STATE_ALIVE | STATE_WAITING | STATE_WAITING_INDEFINITELY | STATE_PARKED);
 		threadStateMap.put(J9VMTHREAD_STATE_PARKED_TIMED, STATE_ALIVE | STATE_WAITING | STATE_WAITING_WITH_TIMEOUT | STATE_PARKED);
-	};
-	
+	}
+
 	private static class ThreadState {
-		
+
 		private UDATA flags;
 		private J9ThreadMonitorPointer blocker;
 		private J9ThreadPointer owner;
-		
+
 		public ThreadState(J9ThreadPointer j9self) throws CorruptDataException {
 			super();
 			if (j9self.isNull()) {
@@ -140,7 +140,7 @@ public class J9VMThreadPointerUtil {
 			}
 		}
 	}
-	
+
 	public static int getDTFJState(J9VMThreadPointer vmThread) throws CorruptDataException {
 		try {
 			return threadStateMap.get(getJ9State(vmThread).state);
@@ -148,50 +148,49 @@ public class J9VMThreadPointerUtil {
 			return STATE_VENDOR_3;
 		}
 	}
-	
-	
+
 	// Taken from thrinfo.c getVMThreadStateHelper
 	//Note that DDR has access to a wrapper for getting information about object monitors
 	//this should be used as the single point of access for obtaining this information rather
 	//than local copies of the functionality e.g. monitorPeekTable.
 	public static ThreadInfo getJ9State(J9VMThreadPointer targetThread) throws CorruptDataException {
 		final ThreadInfo thrinfo = new ThreadInfo();
-		
+
 		if (targetThread.isNull()) {
-			thrinfo.state = new UDATA(J9VMTHREAD_STATE_UNKNOWN).longValue(); 
+			thrinfo.state = new UDATA(J9VMTHREAD_STATE_UNKNOWN).longValue();
 			return thrinfo;
 		}
-		
+
 		thrinfo.thread = targetThread;
 		long vmstate = J9VMTHREAD_STATE_RUNNING;
 		UDATA publicFlags = targetThread.publicFlags();
 		J9ThreadPointer j9self = targetThread.osThread();
-		
+
 		/* j9self may be NULL if this function is used by RAS on a corrupt VM */
 		ThreadState j9state = new ThreadState(j9self);
-		
+
 		if (publicFlags.anyBitsIn(J9_PUBLIC_FLAGS_THREAD_BLOCKED | J9_PUBLIC_FLAGS_THREAD_WAITING)) {
 
 			/* Assert_VMUtil_true(targetThread->blockingEnterObject != NULL); */
-	
+
 			thrinfo.lockObject = targetThread.blockingEnterObject();
 
 			//use the DDR object monitor wrapper
 			ObjectMonitor monitor = ObjectMonitor.fromJ9Object(thrinfo.lockObject);
-			
+
 			// isInflated
-			if(monitor.isInflated()) {
+			if (monitor.isInflated()) {
 
 			/*
 			 * If the monitor is out-of-line and NULL, then it was never entered,
 			 * so the target thread is still runnable.
 			 */
-			
+
 				/* count = READU(objmon->count); */
-				
+
 				if (publicFlags.anyBitsIn(J9_PUBLIC_FLAGS_THREAD_BLOCKED)) {
 					if (monitor.getOwner().notNull() && !monitor.getOwner().equals(j9self)) {
-						/* 
+						/*
 						 * The omrthread may be accessing other raw monitors, but
 						 * the vmthread is blocked while the object monitor is
 						 * owned by a competing thread.
@@ -210,34 +209,34 @@ public class J9VMThreadPointerUtil {
 					}  else if (monitor.getInflatedMonitor().equals(j9state.blocker)) {
 						vmstate = getInflatedMonitorState(j9self, j9state, thrinfo);
 					}
-					/* 
+					/*
 					 * If the omrthread is using a different monitor, it must be for vm access.
 					 * So the vmthread is either not waiting yet or already awakened.
 					 */
 				}
 			} else {
-				/* 
+				/*
 				 * Can't wait on an uninflated object monitor, so the thread
 				 * must be blocked.
 				 */
-				
+
 				/* Assert_VMUtil_true(publicFlags & J9_PUBLIC_FLAGS_THREAD_BLOCKED); */
-				
+
 				if (monitor.getOwner().notNull() && (!monitor.getOwner().equals(targetThread))) {
 					/* count = J9_FLATLOCK_COUNT(lockWord); */
 					/* rawLock = (omrthread_monitor_t)monitorTablePeekMonitor(targetThread->javaVM, lockObject); */
 					vmstate = J9VMTHREAD_STATE_BLOCKED;
 				}
 			}
-			/* 
-			 * targetThread may be blocked attempting to reacquire VM access, after 
-			 * succeeding to acquire the object monitor. In this case, the returned 
+			/*
+			 * targetThread may be blocked attempting to reacquire VM access, after
+			 * succeeding to acquire the object monitor. In this case, the returned
 			 * vmstate depends on includeRawMonitors.
 			 * includeRawMonitors == FALSE: the vmstate is RUNNING.
 			 * includeRawMonitors == TRUE: the vmstate depends on the state of
 			 * the omrthread. e.g. The omrthread may be blocked on publicFlagsMutex.
 			 */
-			
+
 		} else if (publicFlags.anyBitsIn(J9_PUBLIC_FLAGS_THREAD_PARKED)) {
 			/* if the osthread is not parked, then the thread is runnable */
 			if (j9self.isNull() || (j9state.flags.anyBitsIn(J9THREAD_FLAG_PARKED))) {
@@ -248,14 +247,14 @@ public class J9VMThreadPointerUtil {
 					vmstate = J9VMTHREAD_STATE_PARKED;
 				}
 			}
-				
+
 		} else if (publicFlags.anyBitsIn(J9_PUBLIC_FLAGS_THREAD_SLEEPING)) {
 			/* if the osthread is not sleeping, then the thread is runnable */
 			if (j9self.isNull() || (j9state.flags.anyBitsIn(J9THREAD_FLAG_SLEEPING))) {
 				vmstate = J9VMTHREAD_STATE_SLEEPING;
 			}
 
-		} else { 
+		} else {
 			/* no vmthread flags apply, so go through the omrthread flags */
 			if (j9self.isNull()) {
 				vmstate = J9VMTHREAD_STATE_UNKNOWN;
@@ -269,23 +268,23 @@ public class J9VMThreadPointerUtil {
 				vmstate = J9VMTHREAD_STATE_SLEEPING;
 			} else if (j9state.flags.anyBitsIn(J9THREAD_FLAG_DEAD)) {
 				vmstate = J9VMTHREAD_STATE_DEAD;
-			} 
+			}
 		}
-		
+
 		if (J9VMTHREAD_STATE_RUNNING == vmstate) {
 			/* check if the omrthread is blocked/waiting on a raw monitor */
 			thrinfo.lockObject = null;
 			vmstate = getInflatedMonitorState(j9self, j9state, thrinfo);
 		}
 
-		if((thrinfo.lockObject == null) || thrinfo.lockObject.isNull()) {
-			if(!((thrinfo.rawLock == null) || thrinfo.rawLock.isNull())) {
-				if(thrinfo.rawLock.flags().allBitsIn(J9THREAD_MONITOR_OBJECT)) {
+		if ((thrinfo.lockObject == null) || thrinfo.lockObject.isNull()) {
+			if (!((thrinfo.rawLock == null) || thrinfo.rawLock.isNull())) {
+				if (thrinfo.rawLock.flags().allBitsIn(J9THREAD_MONITOR_OBJECT)) {
 					thrinfo.lockObject = J9ObjectPointer.cast(thrinfo.rawLock.userData());
 				}
 			}
 		}
-		
+
 		/*
 		 * Refer to the JVMTI docs for Get Thread State.
 		 * INTERRUPTED and SUSPENDED are not mutually exclusive with the other states.
@@ -294,35 +293,32 @@ public class J9VMThreadPointerUtil {
 		if (j9state.flags.anyBitsIn(J9THREAD_FLAG_INTERRUPTED)) {
 			vmstate |= J9VMTHREAD_STATE_INTERRUPTED;
 		}
-		
+
 		if (j9state.flags.anyBitsIn(J9THREAD_FLAG_SUSPENDED)) {
 			vmstate |= J9VMTHREAD_STATE_SUSPENDED;
 		}
-		
+
 		if (publicFlags.anyBitsIn(J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND)) {
 			vmstate |= J9VMTHREAD_STATE_SUSPENDED;
 		}
-		
+
 		thrinfo.state = new UDATA(vmstate).longValue();
 		return thrinfo;
 	}
 
-
-
-	
 //	#define READMON_ADDR(fieldAddr) dbgReadU32((U_32 *)(fieldAddr))
-	
+
 //	#define J9OBJECT_MONITOR_EA_SAFE(vmToken, object) TMP_J9OBJECT_MONITOR_EA(object)
 //	private static UDATA J9OBJECT_MONITOR_EA_SAFE(J9VMThreadPointer vmtoken, J9ObjectPointer object) throws CorruptDataException {
 //		return tmpJ9ObjectMonitorEA(object);
 //	}
-	
+
 //	#define TMP_J9OBJECT_MONITOR_EA(object) ((j9objectmonitor_t*)((U_8 *)object + TMP_LOCKWORD_OFFSET(object)))
 //	private static UDATA tmpJ9ObjectMonitorEA(J9ObjectPointer object) throws CorruptDataException {
 //		return new UDATA(new U8(object.getAddress()).add(tmpLockwordOffset(object)));
 //	}
 
-	
+
 //	#define TMP_LOCKWORD_OFFSET(object) (dbgReadUDATA((UDATA*)((U_8*)((UDATA)(dbgReadU32((U_32*)(((U_8*)object) + offsetof(J9Object, clazz))))+ offsetof(J9Class,lockOffset)))))
 //	private static UDATA tmpLockwordOffset(J9ObjectPointer object) throws CorruptDataException {
 //		return J9ObjectHelper.rawClazz(object).lockOffset();
@@ -332,7 +328,7 @@ public class J9VMThreadPointerUtil {
 		if (j9self.isNull()) {
 			return J9VMTHREAD_STATE_UNKNOWN;
 		}
-		
+
 		if (j9state.flags.anyBitsIn(J9THREAD_FLAG_BLOCKED)) {
 			/* Check for BLOCKED before WAITING to catch waiting threads that
 			 * have been notified.
@@ -341,8 +337,8 @@ public class J9VMThreadPointerUtil {
 				thrinfo.rawLock = j9state.blocker;
 				return J9VMTHREAD_STATE_BLOCKED;
 			}
-		} 
-		
+		}
+
 		if (j9state.flags.anyBitsIn(J9THREAD_FLAG_WAITING)) {
 			/* The blocking object of a waiting thread need not be owned. */
 			if (!j9state.owner.equals(j9self)) {
@@ -357,16 +353,16 @@ public class J9VMThreadPointerUtil {
 
 		return J9VMTHREAD_STATE_RUNNING;
 	}
-	
+
 	public static class ThreadInfo {
 		private long state = 0;
 		private J9ObjectPointer lockObject;
 		private J9ThreadMonitorPointer rawLock;
 		private J9VMThreadPointer lockOwner;
 		private J9VMThreadPointer thread;
-		
+
 		private ThreadInfo() {
-			//can only be created by parent class
+			// can only be created by parent class
 		}
 
 		public long getState() {
@@ -380,11 +376,11 @@ public class J9VMThreadPointerUtil {
 		public J9ThreadMonitorPointer getRawLock() {
 			return rawLock;
 		}
-		
+
 		public J9VMThreadPointer getLockOwner() {
 			return lockOwner;
 		}
-	
+
 		public J9VMThreadPointer getThread() {
 			return thread;
 		}
