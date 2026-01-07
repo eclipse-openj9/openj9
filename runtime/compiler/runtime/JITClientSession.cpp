@@ -47,6 +47,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_Pers
    _romClassMap(decltype(_romClassMap)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _J9MethodMap(decltype(_J9MethodMap)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _classBySignatureMap(decltype(_classBySignatureMap)::allocator_type(persistentMemory->_persistentAllocator.get())),
+   _methodByNameMap(decltype(_methodByNameMap)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _DLTedMethodSet(decltype(_DLTedMethodSet)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _classChainDataMap(decltype(_classChainDataMap)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _constantPoolToClassMap(decltype(_constantPoolToClassMap)::allocator_type(persistentMemory->_persistentAllocator.get())),
@@ -78,6 +79,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_Pers
    _numActiveThreads = 0;
    _romMapMonitor = TR::Monitor::create("JIT-JITServerROMMapMonitor");
    _classMapMonitor = TR::Monitor::create("JIT-JITServerClassMapMonitor");
+   _methodMapMonitor = TR::Monitor::create("JIT-JITServerMethodMapMonitor");
    _DLTSetMonitor = TR::Monitor::create("JIT-JITServerDLTSetMonitor");
    _classChainDataMapMonitor = TR::Monitor::create("JIT-JITServerClassChainDataMapMonitor");
    _sequencingMonitor = TR::Monitor::create("JIT-JITServerSequencingMonitor");
@@ -132,6 +134,7 @@ ClientSessionData::destroyMonitors()
    {
    TR::Monitor::destroy(_romMapMonitor);
    TR::Monitor::destroy(_classMapMonitor);
+   TR::Monitor::destroy(_methodMapMonitor);
    TR::Monitor::destroy(_DLTSetMonitor);
    TR::Monitor::destroy(_classChainDataMapMonitor);
    TR::Monitor::destroy(_sequencingMonitor);
@@ -281,6 +284,26 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
          purgeCache(unloadedClasses, _classRecordMap, &ClassUnloadedData::_record);
          }
       } // end critical section getROMMapMonitor()
+
+   ClientSessionData::VMInfo *vminfo = compInfoPT->getClientData()->getOrCacheVMInfo(compInfoPT->getMethodBeingCompiled()->_stream);
+   J9ClassLoader *systemClassLoader = (J9ClassLoader*)(vminfo->_systemClassLoader);
+   for (ClassUnloadedData &clsdat: unloadedClasses)
+      {
+      if (!clsdat._cached || (clsdat._pair.first != systemClassLoader)) continue;
+      OMR::CriticalSection methodByNameMapPurge(compInfoPT->getClientData()->getMethodMapMonitor());
+      J9Class* unloadedClazz = (J9Class*)clsdat._class;
+      for (auto it = _methodByNameMap.begin(); it != _methodByNameMap.end();)
+         {
+         if (it->first.first == unloadedClazz)
+            {
+            it = _methodByNameMap.erase(it);
+            }
+         else
+            {
+            ++it;
+            }
+         }
+      }
 
    // remove the class chain data from the cache for the unloaded class.
    {
