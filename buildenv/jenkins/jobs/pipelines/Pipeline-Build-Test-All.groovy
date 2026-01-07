@@ -268,6 +268,7 @@ try {
         timestamps {
             node(SETUP_LABEL) {
                 try {
+                    echo "foo"
                     def gitConfig = scm.getUserRemoteConfigs().get(0)
                     def remoteConfigParameters = [url: "${gitConfig.getUrl()}"]
                     remoteConfigParameters.put("refspec", SCM_REFSPEC)
