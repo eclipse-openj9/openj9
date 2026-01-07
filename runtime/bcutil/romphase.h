@@ -27,7 +27,7 @@
 /* @ddr_namespace: default */
 /*
  * ROMClassCreationPhase is an enumeration of phases in the ROM class creation process.
- * Any changes to this enum should be reflected in the strings in ROMClassCreationContext::printVerbosePhase.
+ * Any changes to this enum should be reflected in the strings in ROMClassCreationContext::verbosePrintPhase.
  * A basic assumption is that nested phases are strictly greater than their parent phase.
  */
 enum ROMClassCreationPhase {
@@ -87,11 +87,10 @@ enum ROMClassCreationPhase {
 	ParseClassFileInlineJSRs,
 	ConstantPoolMapping,
 	SRPOffsetTableCreation,
-	ROMClassCreationPhaseCount
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
-	,
-	WalkUnsetFields
+	WalkUnsetFields,
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+	ROMClassCreationPhaseCount
 };
 
 #endif /* romphase_h */

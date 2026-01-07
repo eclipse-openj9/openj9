@@ -39,7 +39,7 @@ romVerboseRecordPhaseEnd(void *verboseContext, UDATA phase)
 void
 ROMClassCreationContext::verbosePrintPhase(ROMClassCreationPhase phase, bool *printedPhases, UDATA indent)
 {
-	static const char *verbosePhaseName[] = { /* Ensure this matches ROMClassCreationPhase */
+	static const char *verbosePhaseName[] = { /* Ensure this matches ROMClassCreationPhase. */
 		"ROMClassCreation",
 		"ROMClassTranslation",
 		"CompareHashtableROMClass",
@@ -80,6 +80,7 @@ ROMClassCreationContext::verbosePrintPhase(ROMClassCreationPhase phase, bool *pr
 		"MethodIsEmpty",
 		"MethodIsGetter",
 		"MethodIsVirtual",
+		"MethodIsNonStaticNonAbstract",
 		"MethodIsObjectConstructor",
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		"MethodIsNonStaticSynchronized",
@@ -94,7 +95,10 @@ ROMClassCreationContext::verbosePrintPhase(ROMClassCreationPhase phase, bool *pr
 		"ParseClassFileVerifyClass",
 		"ParseClassFileInlineJSRs",
 		"ConstantPoolMapping",
-		"SRPOffsetTableCreation"
+		"SRPOffsetTableCreation",
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+		"WalkUnsetFields",
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 	};
 
 	if (!printedPhases[phase]) {
