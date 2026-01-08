@@ -90,7 +90,12 @@ J9::KnownObjectTable::getOrCreateIndex(uintptr_t objectPointer)
    TR_ASSERT(thread, "assertion failure");
    _objectInfos.setSize(nextIndex+1);
    _objectInfos[nextIndex]._jniReference = (uintptr_t*)thread->javaVM->internalVMFunctions->j9jni_createLocalRef((JNIEnv*)thread, (j9object_t)objectPointer);
-
+   // Fill out the remaining fields of the entry
+   TR_OpaqueClassBlock *objClass = fej9->getObjectClass(objectPointer);
+   _objectInfos[nextIndex]._clazz = objClass;
+   _objectInfos[nextIndex]._isString = fej9->isString(objClass);
+   _objectInfos[nextIndex]._jlClass = fej9->getClassClassPointer(objClass);
+   _objectInfos[nextIndex]._isFixedJavaLangClass = (objClass == _objectInfos[nextIndex]._jlClass);
    return nextIndex;
    }
 
@@ -115,12 +120,11 @@ J9::KnownObjectTable::getOrCreateIndexAt(uintptr_t *objectReferenceLocation)
       {
       auto stream = self()->comp()->getStream();
       stream->write(JITServer::MessageType::KnownObjectTable_getOrCreateIndexAt, objectReferenceLocation);
-      auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t *>();
-
+      auto recv = stream->read<TR::KnownObjectTable::Index, struct ObjectInfo>();
       result = std::get<0>(recv);
-      uintptr_t *objectReferenceLocationClient = std::get<1>(recv);
+      const struct ObjectInfo &objInfo = std::get<1>(recv);
 
-      updateKnownObjectTableAtServer(result, objectReferenceLocationClient);
+      updateKnownObjectTableAtServer(result, objInfo);
       }
    else
 #endif /* defined(J9VM_OPT_JITSERVER) */
@@ -248,6 +252,37 @@ J9::KnownObjectTable::updateKnownObjectTableAtServer(Index index, uintptr_t *obj
       TR_ASSERT_FATAL((objectReferenceLocationClient == _objectInfos[index]._jniReference),
             "comp %p: server _references[%d]=%p is not the same as the client _references[%d]=%p (total size = %u)",
             self()->comp(), index, _objectInfos[index]._jniReference, index, objectReferenceLocationClient, nextIndex);
+      }
+   else
+      {
+      TR_ASSERT_FATAL(false, "index %d from the client is greater than the KOT nextIndex %d at the server", index, nextIndex);
+      }
+
+   if (isArrayWithConstantElements)
+      addArrayWithConstantElements(index);
+   }
+
+void
+J9::KnownObjectTable::updateKnownObjectTableAtServer(Index index, const struct ObjectInfo &objInfo, bool isArrayWithConstantElements)
+   {
+   TR_ASSERT_FATAL(self()->comp()->isOutOfProcessCompilation(), "updateKnownObjectTableAtServer should only be called at the server");
+   if (index == TR::KnownObjectTable::UNKNOWN)
+      return;
+
+   TR_ASSERT(objInfo._jniReference || (index == 0), "jniReference should not be NULL (index=%d)", index);
+
+   uint32_t nextIndex = self()->getEndIndex();
+
+   if (index == nextIndex) // Adding a new element
+      {
+      _objectInfos.setSize(nextIndex+1); // Growing the size of the KNOT
+      _objectInfos[nextIndex] = objInfo;
+      }
+   else if (index < nextIndex)
+      {
+      TR_ASSERT_FATAL((objInfo._jniReference == _objectInfos[index]._jniReference),
+            "comp %p: server _references[%d]=%p is not the same as the client _references[%d]=%p (total size = %u)",
+            self()->comp(), index, _objectInfos[index]._jniReference, index, objInfo._jniReference, nextIndex);
       }
    else
       {
