@@ -1429,4 +1429,14 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
 		<data type="I_64" name="startTicks" description="current ticks when GC began" />
 	</event>
+
+	<event>
+		<name>J9HOOK_VM_THREAD_END_SYSTEM_THREAD</name>
+		<description>
+			Triggered when a system thread (e.g. a JIT thread) is about to die. The current thread
+			does not have VM access when this hook is fired.
+		</description>
+		<struct>J9VMThreadEndSystemThreadEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+	</event>
 </interface>
