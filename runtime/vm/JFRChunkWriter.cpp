@@ -1054,6 +1054,31 @@ VM_JFRChunkWriter::writeClassLoaderStatisticsEvent(void *anElement, void *userDa
 }
 
 void
+VM_JFRChunkWriter::writeThreadAllocationStatisticsEvent(void *anElement, void *userData)
+{
+	ThreadAllocationStatisticsEntry *entry = (ThreadAllocationStatisticsEntry *)anElement;
+	VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
+
+	/* reserve size field */
+	U_8 *dataStart = reserveEventSize(_bufferWriter);
+
+	/* write event type */
+	_bufferWriter->writeLEB128(ThreadAllocationStatisticsID);
+
+	/* write start time */
+	_bufferWriter->writeLEB128(entry->ticks);
+
+	/* write allocated bytes */
+	_bufferWriter->writeLEB128(entry->allocated);
+
+	/* write thread */
+	_bufferWriter->writeLEB128(entry->threadIndex);
+
+	/* write size */
+	writeEventSize(_bufferWriter, dataStart);
+}
+
+void
 VM_JFRChunkWriter::writeThreadContextSwitchRateEvent(void *anElement, void *userData)
 {
 	ThreadContextSwitchRateEntry *entry = (ThreadContextSwitchRateEntry *)anElement;
