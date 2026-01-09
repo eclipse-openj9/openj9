@@ -789,12 +789,25 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 
 	if (NULL != ctrlDirName) {
 		if (appendBaseDir) {
-			if (omrstr_printf(shmemdir, bufLength, "%s\\%s", ctrlDirName, J9SH_BASEDIR) == bufLength - 1) {
+			if (omrstr_printf(
+					shmemdir,
+					bufLength,
+					SHM_STRING_ENDS_WITH_CHAR(ctrlDirName, DIR_SEPARATOR)
+						? "%s%s" DIR_SEPARATOR_STR
+						: "%s" DIR_SEPARATOR_STR "%s" DIR_SEPARATOR_STR,
+					ctrlDirName,
+					J9SH_BASEDIR) >= bufLength) {
 				Trc_PRT_j9shmem_getDir_ExitFailedOverflow();
 				return J9PORT_ERROR_SHMEM_GET_DIR_BUF_OVERFLOW;
 			}
 		} else {
-			if (omrstr_printf(shmemdir, bufLength, "%s\\", ctrlDirName) == bufLength - 1) {
+			if (omrstr_printf(
+					shmemdir,
+					bufLength,
+					SHM_STRING_ENDS_WITH_CHAR(ctrlDirName, DIR_SEPARATOR)
+						? "%s"
+						: "%s" DIR_SEPARATOR_STR,
+					ctrlDirName) >= bufLength) {
 				Trc_PRT_j9shmem_getDir_ExitFailedOverflow();
 				return J9PORT_ERROR_SHMEM_GET_DIR_BUF_OVERFLOW;
 			}
@@ -815,12 +828,25 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 		if(SUCCEEDED(rc)) {
 			/* Convert Unicode to UTF8 */
 			if (appendBaseDir) {
-				if (omrstr_printf(shmemdir, bufLength, "%ls\\%s", appdatadir, J9SH_BASEDIR) == bufLength - 1) {
+				if (omrstr_printf(
+						shmemdir,
+						bufLength,
+						SHM_STRING_ENDS_WITH_CHAR((char*)appdatadir, DIR_SEPARATOR)
+							? "%ls%s" DIR_SEPARATOR_STR
+							: "%ls" DIR_SEPARATOR_STR "%s" DIR_SEPARATOR_STR,
+						appdatadir,
+						J9SH_BASEDIR) >= bufLength) {
 					Trc_PRT_j9shmem_getDir_ExitFailedOverflow();
 					return J9PORT_ERROR_SHMEM_GET_DIR_BUF_OVERFLOW;
 				}
 			} else {
-				if (omrstr_printf(shmemdir, bufLength, "%ls\\", appdatadir) == bufLength - 1) {
+				if (omrstr_printf(
+						shmemdir,
+						bufLength,
+						SHM_STRING_ENDS_WITH_CHAR((char*)appdatadir, DIR_SEPARATOR)
+							? "%ls"
+							: "%ls" DIR_SEPARATOR_STR,
+						appdatadir) >= bufLength) {
 					Trc_PRT_j9shmem_getDir_ExitFailedOverflow();
 					return J9PORT_ERROR_SHMEM_GET_DIR_BUF_OVERFLOW;
 				}
@@ -840,12 +866,25 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 				}
 			}
 			if (appendBaseDir) {
-				if (omrstr_printf(shmemdir, bufLength, "%s\\%s", appdatadir, J9SH_BASEDIR) == bufLength - 1) {
+				if (omrstr_printf(
+						shmemdir,
+						bufLength,
+						SHM_STRING_ENDS_WITH_CHAR(appdatadir, DIR_SEPARATOR)
+							? "%s%s" DIR_SEPARATOR_STR
+							: "%s" DIR_SEPARATOR_STR "%s" DIR_SEPARATOR_STR,
+						appdatadir,
+						J9SH_BASEDIR) >= bufLength) {
 					Trc_PRT_j9shmem_getDir_ExitFailedOverflow();
 					return J9PORT_ERROR_SHMEM_GET_DIR_BUF_OVERFLOW;
 				}
 			} else {
-				if (omrstr_printf(shmemdir, bufLength, "%s\\", appdatadir) == bufLength - 1) {
+				if (omrstr_printf(
+						shmemdir,
+						bufLength,
+						SHM_STRING_ENDS_WITH_CHAR(appdatadir, DIR_SEPARATOR)
+							? "%s"
+							: "%s" DIR_SEPARATOR_STR,
+						appdatadir) >= bufLength) {
 					Trc_PRT_j9shmem_getDir_ExitFailedOverflow();
 					return J9PORT_ERROR_SHMEM_GET_DIR_BUF_OVERFLOW;
 				}

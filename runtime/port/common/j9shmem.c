@@ -335,6 +335,8 @@ j9shmem_handle_stat(struct J9PortLibrary *portLibrary, struct j9shmem_handle *ha
  * @param[out] buffer Pointer to a buffer to hold the returned path
  * @param[in] length the length of the buffer
  *
+ * The returned path always ends with a DIR_SEPARATOR, ensuring it represents a directory.
+ *
  * @return 0 for success
  * J9PORT_ERROR_SHMEM_GET_DIR_BUF_OVERFLOW The cache directory is too long
  * J9PORT_ERROR_SHMEM_GET_DIR_FAILED_TO_GET_HOME Cannot get the home directory
