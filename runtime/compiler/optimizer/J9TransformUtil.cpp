@@ -3261,7 +3261,12 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
       {
       case TR::java_lang_invoke_MethodHandle_linkToVirtual:
          if (callKind == TR::MethodSymbol::Virtual)
-            needVftChild = true;
+            {
+            const bool useDirectCall =
+                    newSymRef->getSymbol()->isFinal()
+                    || resolvedMethod->isPrivate();
+            needVftChild = !useDirectCall;
+            }
          // fall through
       case TR::java_lang_invoke_MethodHandle_linkToSpecial:
          needNullChk = true;
