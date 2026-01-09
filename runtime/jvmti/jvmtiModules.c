@@ -115,15 +115,21 @@ addModuleExportsOrOpens(jvmtiEnv* jvmtiEnv, jobject fromModule, const char* pkgN
 		vmFuncs->internalExitVMToJNI(currentThread);
 		if ((JVMTI_ERROR_NONE == rc) && (FALSE == isUnnamedOrOpen)) {
 			jstring pkg = NULL;
-			if (NULL == vm->addExports) {
-				jmethodID addExports = (*env)->GetMethodID(env, moduleJClass, "implAddExportsOrOpens", "(Ljava/lang/String;Ljava/lang/Module;ZZ)V");
-
-				if (NULL == addExports) {
+			const char *methodName = exports ? "implAddExports" : "implAddOpens";
+			BOOLEAN doGetMethodID = exports ? (NULL == vm->addExports) : (NULL == vm->addOpens);
+			if (doGetMethodID) {
+				jmethodID addExportsOrOpens = (*env)->GetMethodID(
+						env, moduleJClass, methodName,
+						"(Ljava/lang/String;Ljava/lang/Module;)V");
+				if (NULL == addExportsOrOpens) {
 					rc = JVMTI_ERROR_INTERNAL;
 					goto done;
 				}
-
-				vm->addExports = addExports;
+				if (exports) {
+					vm->addExports = addExportsOrOpens;
+				} else {
+					vm->addOpens = addExportsOrOpens;
+				}
 			}
 			pkg = (*env)->NewStringUTF(env, pkgName);
 			if (NULL == pkg) {
@@ -131,11 +137,9 @@ addModuleExportsOrOpens(jvmtiEnv* jvmtiEnv, jobject fromModule, const char* pkgN
 			} else {
 				(*env)->CallVoidMethod(env,
 						fromModule,
-						vm->addExports,
+						exports ? vm->addExports : vm->addOpens,
 						pkg,
-						toModule,
-						!exports,
-						JNI_TRUE);
+						toModule);
 			}
 			if ((*env)->ExceptionCheck(env)) {
 				rc = JVMTI_ERROR_INTERNAL;
