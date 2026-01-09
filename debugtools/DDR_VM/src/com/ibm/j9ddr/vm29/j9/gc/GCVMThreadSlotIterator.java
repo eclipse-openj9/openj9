@@ -33,23 +33,42 @@ import com.ibm.j9ddr.vm29.pointer.StructurePointer.StructureField;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
 
-public class GCVMThreadSlotIterator extends GCIterator
-{
-	protected J9VMThreadPointer vmThread;
-	protected Iterator<StructureField> slotIterator;
-	
-	protected GCVMThreadSlotIterator(J9VMThreadPointer vmThread)
-	{
+public class GCVMThreadSlotIterator extends GCIterator {
+
+	/**
+	 * In core files, typedef types may be expanded: This helper method
+	 * recognizes types that are equivalent to j9object_t:
+	 *     typedef struct J9Object *j9object_t;
+	 */
+	private static boolean isObjectTyped(String type) {
+		/*
+		 * Because ddrgen doesn't distinguish between class and struct types
+		 * when reading .pdb files, we recognize both flavours here.
+		 */
+		switch (type) {
+		case "j9object_t":
+		case "class J9Object*":
+		case "struct J9Object*":
+			return true;
+		default:
+			return false;
+		}
+	}
+
+	protected final J9VMThreadPointer vmThread;
+	protected final Iterator<StructureField> slotIterator;
+
+	protected GCVMThreadSlotIterator(J9VMThreadPointer vmThread) {
 		this.vmThread = vmThread;
 		StructureField[] fields = vmThread.getStructureFields();
-		ArrayList<StructureField> objectFields = new ArrayList<StructureField>();
+		ArrayList<StructureField> objectFields = new ArrayList<>();
 		for (StructureField structureField : fields) {
-			// Look for object-typed fields
-			if(structureField.type.equals("j9object_t")) {
-				// With a non-null value or a fault (for reporting)
-				if(structureField.value != null && ((J9ObjectPointer)structureField.value).notNull()) {
+			// look for object-typed fields
+			if (isObjectTyped(structureField.type)) {
+				// with a fault (for reporting) or a non-null value
+				if (structureField.cde != null) {
 					objectFields.add(structureField);
-				} else if(structureField.cde != null) {
+				} else if ((structureField.value != null) && ((J9ObjectPointer) structureField.value).notNull()) {
 					objectFields.add(structureField);
 				}
 			}
@@ -57,22 +76,21 @@ public class GCVMThreadSlotIterator extends GCIterator
 		slotIterator = objectFields.iterator();
 	}
 
-	public static GCVMThreadSlotIterator fromJ9VMThread(J9VMThreadPointer vmThread) throws CorruptDataException
-	{
+	public static GCVMThreadSlotIterator fromJ9VMThread(J9VMThreadPointer vmThread) throws CorruptDataException {
 		return new GCVMThreadSlotIterator(vmThread);
 	}
 
-	public boolean hasNext()
-	{
+	@Override
+	public boolean hasNext() {
 		return slotIterator.hasNext();
 	}
 
-	public J9ObjectPointer next()
-	{
-		if(hasNext()) {
+	@Override
+	public J9ObjectPointer next() {
+		if (hasNext()) {
 			StructureField field = slotIterator.next();
-			if(field.cde == null) {
-				return (J9ObjectPointer)field.value;
+			if (field.cde == null) {
+				return (J9ObjectPointer) field.value;
 			} else {
 				raiseCorruptDataEvent("Unable to retrieve thread slot", field.cde, false);
 				return null;
@@ -82,11 +100,11 @@ public class GCVMThreadSlotIterator extends GCIterator
 		}
 	}
 
-	public VoidPointer nextAddress()
-	{
-		if(hasNext()) {
+	@Override
+	public VoidPointer nextAddress() {
+		if (hasNext()) {
 			StructureField field = slotIterator.next();
-			if(field.cde == null) {
+			if (field.cde == null) {
 				return VoidPointer.cast(vmThread.addOffset(field.offset));
 			} else {
 				raiseCorruptDataEvent("Unable to retrieve thread slot", field.cde, false);
@@ -96,4 +114,5 @@ public class GCVMThreadSlotIterator extends GCIterator
 			throw new NoSuchElementException("There are no more items available through this iterator");
 		}
 	}
+
 }
