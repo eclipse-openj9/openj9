@@ -53,7 +53,7 @@
 #include "ut_j9bcu.h"
 
 static const UDATA INITIAL_CLASS_FILE_BUFFER_SIZE = 4096;
-static const UDATA INITIAL_BUFFER_MANAGER_SIZE = 32768 * 10;
+static const UDATA INITIAL_BUFFER_MANAGER_SIZE = 32768 * 100;
 
 ROMClassBuilder::ROMClassBuilder(J9JavaVM *javaVM, J9PortLibrary *portLibrary, UDATA maxStringInternTableSize, U_8 * verifyExcludeAttribute, VerifyClassFunction verifyClassFunction) :
 	_javaVM(javaVM),

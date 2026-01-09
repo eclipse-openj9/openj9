@@ -2390,6 +2390,25 @@ exit:
 			ramClassUDATABlockFreeListPtr = *(UDATA **)ramClassUDATABlockFreeListPtr;
 		}
 	}
+
+	static VMINLINE U_32
+	hashJ9UTF8(J9UTF8 *utf8)
+	{
+		U_32 hash = 0;
+		U_16 len = J9UTF8_LENGTH(utf8);
+
+		for (U_16 i = 0; i < len; i++) {
+			hash = J9UTF8_DATA(utf8)[i] + (hash << 6) + (hash << 16) - hash;
+		}
+
+		return hash;
+	}
+
+	static VMINLINE J9UTF8*
+	getJ9ClassName(J9Class *clazz)
+	{
+		return J9ROMCLASS_CLASSNAME(clazz->romClass);
+	}
 };
 
 #endif /* !defined(VMHELPERS_HPP_) */

@@ -5777,6 +5777,8 @@ hasMemoryScope(J9VMThread *walkThread, j9object_t scope);
 /* ------------------- jfr.cpp ------------------- */
 
 #if defined(J9VM_OPT_JFR)
+#define JFR_STRING_BUFFER 256
+
 /**
  * Initialize JFR.
  *
@@ -5787,6 +5789,9 @@ hasMemoryScope(J9VMThread *walkThread, j9object_t scope);
  */
 jint
 initializeJFR(J9JavaVM *vm, BOOLEAN lateInit);
+
+jint
+initializeJFRv2(J9JavaVM *vm);
 
 /**
  * Check if a JFR is enabled on the JVM.
@@ -5865,7 +5870,7 @@ getTypeId(J9VMThread *currentThread, J9Class *clazz);
  * @param className name of JFR event class
  */
 jlong
-getTypeIdUTF8(J9VMThread *currentThread, const J9UTF8 *className);
+getTypeIdUTF8(J9VMThread *currentThread, J9ClassLoader *classLoader, const J9UTF8 *className, BOOLEAN freeName);
 
 /**
  * Initialize JFR ID structures
@@ -5882,6 +5887,9 @@ initializeJFRIDs(J9JavaVM *vm);
  */
 void
 shutdownJFRIDs(J9JavaVM *vm);
+
+void
+jvmUpcallsEagerByteInstrumentation(J9VMThread *currentThread, J9Class *superClass, U_8 *className, U_16 classNameLength, J9ClassLoader *loader, U_8 *classData, UDATA classDataLength, U_8 **newClassData, UDATA *newClassDataLength);
 
 #endif /* defined(J9VM_OPT_JFR) */
 

@@ -21,7 +21,7 @@
  *******************************************************************************/
 
 #ifndef cfreader_h
-#define cfreader_h 
+#define cfreader_h
 
 #include "cfr.h"
 #include "cfrerrnls.h"
@@ -215,7 +215,7 @@
 #define SWAPPING_ENDIAN(flags) ((flags) & BCT_BigEndianOutput)
 #else /* BIG_ENDIAN */
 #define SWAPPING_ENDIAN(flags) ((flags) & BCT_LittleEndianOutput)
-#endif	
+#endif
 
 #endif     /* cfreader_h */
 

@@ -528,7 +528,7 @@ static void completeInitialization() {
 	/*[ENDIF]*/	//!Sidecar19-SE_RAWPLUSJ9&!Sidecar18-SE-OpenJ9
 
 	/*[IF JFR_SUPPORT]*/
-	JFRHelpers.initJFR();
+	//JFRHelpers.initJFR();
 	/*[ENDIF] JFR_SUPPORT */
 }
 

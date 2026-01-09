@@ -36,7 +36,8 @@ extern "C" {
 
 typedef struct J9JFRTypeID {
 	jlong id;
-	J9Class *clazz;
+	const J9UTF8 *className;
+	BOOLEAN free;
 } J9JFRTypeID;
 
 #undef DEBUG
@@ -60,11 +61,21 @@ typedef struct J9JFRTypeID {
 #define DOUBLE_TYPE_ID 8
 #define STACKTRACE_TYPE_ID 9
 
+static jlong getTypeIdImpl(J9VMThread *currentThread, J9ClassLoader *classloader, const J9UTF8 *className, BOOLEAN freeName);
 static void jfrStartSamplingThread(J9JavaVM *vm);
 static void initializeEventFields(J9VMThread *currentThread, J9JFREvent *jfrEvent, UDATA eventType);
 static int J9THREAD_PROC jfrSamplingThreadProc(void *entryArg);
 static void jfrExecutionSampleCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData);
 static void jfrThreadCPULoadCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData);
+static void jfrCheckJFRCMDLineOptions(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
+
+J9_DECLARE_CONSTANT_UTF8(initJFRUTF8, "initJFR");
+J9_DECLARE_CONSTANT_UTF8(initJFRSigUTF8, "()V");
+J9_DECLARE_CONSTANT_NAS(initJFRNAS, initJFRUTF8, initJFRSigUTF8);
+J9_DECLARE_CONSTANT_UTF8(jvmUpcallUTF8, "jdk/jfr/internal/JVMUpcalls");
+J9_DECLARE_CONSTANT_UTF8(bytesForEagerInstrumentationUTF8, "bytesForEagerInstrumentation");
+J9_DECLARE_CONSTANT_UTF8(bytesForEagerInstrumentationSigUTF8, "(JZZLjava/lang/Class;[B)[B");
+J9_DECLARE_CONSTANT_NAS(bytesForEagerInstrumentationNAS, bytesForEagerInstrumentationUTF8, bytesForEagerInstrumentationSigUTF8);
 
 /**
  * Calculate the size in bytes of a JFR event.
@@ -602,8 +613,52 @@ jfrVMInitialized(J9HookInterface **hook, UDATA eventNum, void *eventData, void *
 	PORT_ACCESS_FROM_VMC(currentThread);
 	j9tty_printf(PORTLIB, "\n!!! VM init %p\n", currentThread);
 #endif /* defined(DEBUG) */
+	/* Launch JFR subsystem */
+
+
+
 	jfrStartSamplingThread(currentThread->javaVM);
 }
+
+jint
+initializeJFRv2(J9JavaVM *vm)
+{
+	jint rc = JNI_ERR;
+	J9HookInterface **vmHooks = getVMHookInterface(vm);
+
+	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZED, jfrCheckJFRCMDLineOptions, OMR_GET_CALLSITE(), NULL)) {
+		goto done;
+	}
+
+	if (0 != initializeJFRIDs(vm)) {
+		goto done;
+	}
+
+	rc = JNI_OK;
+
+done:
+	return rc;
+}
+
+/**
+ * Hook for VM intialized. Called without VM access.
+ *
+ * @param hook[in] the VM hook interface, not used
+ * @param eventNum[in] the event number, not used
+ * @param eventData[in] the event data
+ * @param userData[in] the registered user data, not used
+ */
+static void
+jfrCheckJFRCMDLineOptions(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
+{
+	J9VMThread *currentThread = ((J9VMInitEvent *)eventData)->vmThread;
+
+	internalAcquireVMAccess(currentThread);
+	runStaticMethod(currentThread, (U_8*)"java/lang/JFRHelpers", (J9NameAndSignature *)&initJFRNAS, 0, NULL);
+	internalReleaseVMAccess(currentThread);
+}
+
+
 
 /**
  * Start JFR sampling thread. Called without VM access.
@@ -1220,8 +1275,9 @@ static UDATA
 jfrTypeIDHashFn(void *key, void *userData)
 {
 	const J9JFRTypeID *entry = (const J9JFRTypeID *)key;
+	const J9UTF8 *className = entry->className;
 
-	return (UDATA)entry->clazz;
+	return (UDATA)VM_VMHelpers::computeHashForUTF8(J9UTF8_DATA(className), J9UTF8_LENGTH(className));
 }
 
 static UDATA
@@ -1230,7 +1286,7 @@ jfrTypeIDHashEqualFn(void *tableNode, void *queryNode, void *userData)
 	const J9JFRTypeID *tableEntry = (const J9JFRTypeID *)tableNode;
 	const J9JFRTypeID *queryEntry = (const J9JFRTypeID *)queryNode;
 
-	return tableEntry->clazz == queryEntry->clazz;
+	return J9UTF8_EQUALS(tableEntry->className, queryEntry->className);
 }
 
 UDATA
@@ -1296,24 +1352,18 @@ getKnownJFREventType(const J9UTF8 *className)
 }
 
 jlong
-getTypeIdUTF8(J9VMThread *currentThread, const J9UTF8 *className)
+getTypeIdUTF8(J9VMThread *currentThread, J9ClassLoader *classLoader, const J9UTF8 *className, BOOLEAN freeName)
 {
-	J9JavaVM *vm = currentThread->javaVM;
 	jlong result = INVALID_TYPE_ID;
 
-	Trc_VM_getTypeIdUTF8_Entry(currentThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+	//Trc_VM_getTypeIdUTF8_Entry(currentThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
 
-	omrthread_monitor_enter(vm->classTableMutex);
-	J9Class *clazz = hashClassTableAt(vm->systemClassLoader, (U_8 *)J9UTF8_DATA(className), J9UTF8_LENGTH(className), 0);
-	omrthread_monitor_exit(vm->classTableMutex);
-
-	if (NULL != clazz) {
-		result = getTypeId(currentThread, clazz);
-	} else {
-		result = getKnownJFREventType(className);
+	result = getKnownJFREventType(className);
+	if (INVALID_TYPE_ID == result) {
+		result = getTypeIdImpl(currentThread, classLoader, className, freeName);
 	}
 
-	Trc_VM_getTypeIdUTF8_Exit(currentThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), clazz, result);
+	//Trc_VM_getTypeIdUTF8_Exit(currentThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), clazz, result);
 
 	return result;
 }
@@ -1321,18 +1371,24 @@ getTypeIdUTF8(J9VMThread *currentThread, const J9UTF8 *className)
 jlong
 getTypeId(J9VMThread *currentThread, J9Class *clazz)
 {
+	return getTypeIdImpl(currentThread, clazz->classLoader, J9ROMCLASS_CLASSNAME(clazz->romClass), FALSE);
+}
+
+static jlong
+getTypeIdImpl(J9VMThread *currentThread, J9ClassLoader *classLoader, const J9UTF8 *className, BOOLEAN freeName)
+{
 	J9JavaVM *vm = currentThread->javaVM;
 	jlong result = INVALID_TYPE_ID;
 	J9JFRTypeID entry = {0};
 	J9JFRTypeID *jfrTypeID = &entry;
 
-	Trc_VM_getTypeId_Entry(currentThread, clazz);
+	//Trc_VM_getTypeId_Entry(currentThread, clazz);
 
 	Assert_VM_mustHaveVMAccess(currentThread);
 
 	omrthread_monitor_enter(vm->jfrState.typeIDMonitor);
 
-	J9HashTable *typeIDTable = clazz->classLoader->typeIDs;
+	J9HashTable *typeIDTable = classLoader->typeIDs;
 
 	if (NULL == typeIDTable) {
 		PORT_ACCESS_FROM_JAVAVM(vm);
@@ -1353,15 +1409,16 @@ getTypeId(J9VMThread *currentThread, J9Class *clazz)
 			setNativeOutOfMemoryError(currentThread, 0, 0);
 			goto done;
 		}
-		clazz->classLoader->typeIDs = typeIDTable;
+		classLoader->typeIDs = typeIDTable;
 	}
 
-	jfrTypeID->clazz = clazz;
+	jfrTypeID->className = className;
 	jfrTypeID = (J9JFRTypeID *)hashTableFind(typeIDTable, jfrTypeID);
 
 	if (NULL == jfrTypeID) {
 		jfrTypeID = &entry;
 		jfrTypeID->id = vm->jfrState.typeIDcount;
+		jfrTypeID->free = freeName;
 
 		vm->jfrState.typeIDcount += 1;
 		Assert_VM_true(vm->jfrState.typeIDcount > 0);
@@ -1376,10 +1433,81 @@ getTypeId(J9VMThread *currentThread, J9Class *clazz)
 
 done:
 	omrthread_monitor_exit(vm->jfrState.typeIDMonitor);
-	Trc_VM_getTypeId_Exit(currentThread, clazz, result);
+	//Trc_VM_getTypeId_Exit(currentThread, clazz, result);
 
 	return result;
 }
+
+void
+jvmUpcallsEagerByteInstrumentation(J9VMThread *currentThread, J9Class *superClass, U_8 *className, U_16 classNameLength, J9ClassLoader *loader, U_8 *classData, UDATA classDataLength, U_8 **newClassData, UDATA *newClassDataLength)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9MemoryManagerFunctions *mmfns = vm->memoryManagerFunctions;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	jlong traceID = 0;
+
+	U_8 buf[JFR_STRING_BUFFER + 2];
+	J9UTF8 *nameUTF8 = (J9UTF8 *)buf;
+
+	if (classNameLength > JFR_STRING_BUFFER) {
+		nameUTF8 = (J9UTF8 *)j9mem_allocate_memory(classNameLength + 2, OMRMEM_CATEGORY_VM);
+	}
+	J9UTF8_LENGTH(nameUTF8) = (U_16)classNameLength;
+	memcpy(J9UTF8_DATA(nameUTF8), className, classNameLength);
+
+	traceID = getTypeIdUTF8(currentThread, loader, nameUTF8, TRUE);
+
+	j9object_t inputByteArray = NULL;
+	j9object_t outputByteArray = NULL;
+	UDATA args[5];
+
+	if (-1 == traceID) {
+		/* Not a JFR event class so skip. */
+		goto done;
+	}
+
+	inputByteArray = mmfns->J9AllocateIndexableObject(currentThread, vm->byteReflectClass->arrayClass, classDataLength, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+	if (NULL == inputByteArray) {
+		vmFuncs->setHeapOutOfMemoryError(currentThread);
+		goto done;
+	}
+
+	if (NULL == vm->jfrState.onRetransformUpcallMethod) {
+		J9Class *jvmUpcallClass = vmFuncs->internalFindClassUTF8(currentThread, (U_8 *)J9UTF8_DATA(&jvmUpcallUTF8), J9UTF8_LENGTH(&jvmUpcallUTF8), vm->systemClassLoader, J9_FINDCLASS_FLAG_THROW_ON_FAIL);
+		if (NULL == jvmUpcallClass) {
+			goto done;
+		}
+		vm->jfrState.onRetransformUpcallMethod = (J9Method *)vmFuncs->javaLookupMethodImpl(currentThread, jvmUpcallClass, (J9ROMNameAndSignature *)&bytesForEagerInstrumentationNAS, jvmUpcallClass, J9_LOOK_STATIC | J9_LOOK_DIRECT_NAS, NULL);
+		if (NULL == vm->jfrState.onRetransformUpcallMethod) {
+			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+			goto done;
+		}
+	}
+	args[0] = (UDATA)traceID;
+	args[1] = (UDATA)FALSE;
+	args[2] = (UDATA)loader->classLoaderObject;
+	args[3] = (UDATA)superClass->classObject;
+	args[4] = (UDATA)inputByteArray;
+
+	vmFuncs->internalRunStaticMethod(currentThread, vm->jfrState.onRetransformUpcallMethod, TRUE, 5, args);
+	outputByteArray = (j9object_t)currentThread->returnValue;
+
+	*newClassDataLength = (jint)J9INDEXABLEOBJECT_SIZE(currentThread, outputByteArray);
+	newClassData = (U_8 **)j9mem_allocate_memory(*newClassDataLength, OMRMEM_CATEGORY_VM);
+	if (NULL == newClassData) {
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+		goto done;
+	}
+
+	VM_ArrayCopyHelpers::memcpyFromArray(currentThread, outputByteArray, (UDATA)0, (UDATA)0, *newClassDataLength, *newClassData);
+
+	vmFuncs->internalExitVMToJNI(currentThread);
+
+done:
+	return;
+}
+
 
 } /* extern "C" */
 

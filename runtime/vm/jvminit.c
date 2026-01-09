@@ -2294,14 +2294,6 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				goto _error;
 			}
 
-#if defined(J9VM_OPT_JFR)
-			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_JFR_ENABLED)) {
-				if (0 != initializeJFRIDs(vm)) {
-					goto _error;
-				}
-			}
-#endif /* defined(J9VM_OPT_JFR) */
-
 			if (FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XALLOWCONTENDEDCLASSLOAD, NULL) >= 0) {
 				contendedLoadTableFree(vm);
 			}
@@ -7785,6 +7777,17 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	if (JNI_OK != attachVMToOMR(vm)) {
 		goto error;
 	}
+
+#if defined(J9VM_OPT_JFR)
+	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_JFR_ENABLED)) {
+		initializeJFRv2(vm);
+		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_START_FLIGHT_RECORDING)) {
+			if (JNI_OK != initializeJFR(vm, FALSE)) {
+				goto error;
+			}
+		}
+	}
+#endif /* defined(J9VM_OPT_JFR) */
 
 	/* Use this stage to load libraries which need to set up hooks as early as possible */
 	if (JNI_OK != runLoadStage(vm, EARLY_LOAD)) {
