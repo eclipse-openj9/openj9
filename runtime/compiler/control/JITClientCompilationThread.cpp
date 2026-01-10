@@ -2753,7 +2753,8 @@ handleResponse(JITServer::MessageType response, JITServer::ClientStream *client,
          {
          uintptr_t *objectPointerReferenceServerQuery = std::get<0>(client->getRecvData<uintptr_t*>());
          TR::KnownObjectTable::Index index = knot->getOrCreateIndexAt(objectPointerReferenceServerQuery);
-         client->write(response, index, knot->getPointerLocation(index));
+         // Need to send back the entire knot entry
+         client->write(response, index, knot->getObjectInfo(index));
          }
          break;
       case MessageType::KnownObjectTable_getExistingIndexAt:
