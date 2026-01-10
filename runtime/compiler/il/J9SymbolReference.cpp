@@ -327,10 +327,6 @@ SymbolReference::getTypeSignature(int32_t & len, TR_AllocationKind allocKind, bo
             len = 1;
             return dataTypeToSig[_symbol->getDataType()];
             }
-         if (_symbol->isStaticDefaultValueInstance())
-            {
-            return 0;
-            }
 
          persistentClassInfo =
             (comp->getPersistentInfo()->getPersistentCHTable() == NULL) ? NULL :

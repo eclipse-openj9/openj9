@@ -267,8 +267,6 @@ static const char* getNameForMethodRelocation (int type)
             return "TR_VirtualRamMethodConst";
          case TR_ClassAddress:
             return "TR_ClassAddress";
-         case TR_StaticDefaultValueInstance:
-            return "TR_StaticDefaultValueInstance";
          default:
             TR_ASSERT(0, "We already cleared one switch, hard to imagine why we would have a different type here");
             break;
@@ -411,7 +409,6 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
       case TR_StaticRamMethodConst:
       case TR_SpecialRamMethodConst:
       case TR_VirtualRamMethodConst:
-      case TR_StaticDefaultValueInstance:
       case TR_ClassAddress:
          {
          TR_RelocationRecordConstantPoolWithIndex *cpiRecord = reinterpret_cast<TR_RelocationRecordConstantPoolWithIndex *>(reloRecord);
@@ -1551,7 +1548,6 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          }
          break;
 
-      case TR_StaticDefaultValueInstance:
       case TR_ClassAddress:
          {
          TR_RelocationRecordConstantPoolWithIndex *cpiRecord = reinterpret_cast<TR_RelocationRecordConstantPoolWithIndex *>(reloRecord);

@@ -104,10 +104,6 @@ GC_ClassIterator::nextSlot()
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 	case classiterator_state_valuetypes:
-		slotPtr = _valueTypesIterator.nextSlot();
-		if (NULL != slotPtr) {
-			return slotPtr;
-		}
 		_state += 1;
 
 	default:

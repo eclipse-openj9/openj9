@@ -80,8 +80,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<saveoutput regex="no" type="required" saveName="quadLongInstance" splitIndex="1" splitBy="= !j9object " showMatch="yes">[9] = !fj9object 0x</saveoutput>
 		<saveoutput regex="no" type="required" saveName="doubleQuadLongInstance" splitIndex="1" splitBy="= !j9object " showMatch="yes">[10] = !fj9object 0x</saveoutput>
 		<saveoutput regex="no" type="required" saveName="flatUnAlignedSingleBackfill2Array" splitIndex="1" splitBy="= !j9object " showMatch="yes">[11] = !fj9object 0x</saveoutput>
-		<!-- TODO: Disabled temporarily due to https://github.com/eclipse-openj9/openj9/issues/22642. -->
-		<!-- saveoutput regex="no" type="required" saveName="quadLongArray" splitIndex="1" splitBy="= !j9object " showMatch="yes">[12] = !fj9object 0x</saveoutput -->
+		<saveoutput regex="no" type="required" saveName="quadLongArray" splitIndex="1" splitBy="= !j9object " showMatch="yes">[12] = !fj9object 0x</saveoutput>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
@@ -393,8 +392,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
-	<!-- TODO: Disabled temporarily due to https://github.com/eclipse-openj9/openj9/issues/22642. -->
-	<!-- test id="Test 30: Run !j9object $doubleLongInstance$ to show the fields of the reference object">
+	<test id="Test 30: Run !j9object $doubleLongInstance$ to show the fields of the reference object">
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core $DUMPFILE$</arg>
 			<input>!j9object $doubleLongInstance$</input>
@@ -404,7 +402,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">l \(offset = 0\) \(.*ValueTypeLong\)</output>
 		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">\// \(.*ValueTypeDoubleLong\)</output>
 		<output regex="no" type="failure">Problem running command</output>
-	</test -->
+	</test>
 
 	<test id="Test 31: Run !j9object $doubleLongInstance$ l">
 		<command command="$JDMPVIEW_EXE$">
@@ -469,8 +467,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
-	<!-- TODO: Disabled temporarily due to https://github.com/eclipse-openj9/openj9/issues/22642. -->
-	<!-- test id="Test 36: Run !j9object $quadLongInstance$ l.l">
+	<test id="Test 36: Run !j9object $quadLongInstance$ l.l">
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core $DUMPFILE$</arg>
 			<input>!j9object $quadLongInstance$ l</input>
@@ -480,7 +477,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">\// .*ValueTypeLong</output>
 		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">J j = 0xFAFBFCFD11223344 \(offset = 0\) \(.*ValueTypeLong\)</output>
 		<output regex="no" type="failure">Problem running command</output>
-	</test -->
+	</test>
 
 	<test id="Test 37: Run !j9object $quadLongInstance$ l2">
 		<command command="$JDMPVIEW_EXE$">
@@ -561,8 +558,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
-	<!-- TODO: Disabled temporarily due to https://github.com/eclipse-openj9/openj9/issues/22642. -->
-	<!-- test id="Test 43: Run !j9object $doubleQuadLongInstance$ l2 to show the fields of the reference object">
+	<test id="Test 43: Run !j9object $doubleQuadLongInstance$ l2 to show the fields of the reference object">
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core $DUMPFILE$</arg>
 			<input>!j9object $doubleQuadLongInstance$ l2</input>
@@ -572,7 +568,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">l2.l \(offset = 0\) \(.*ValueTypeLong\)</output>
 		<output regex="no" type="success" showMatch="yes">offset in top level container = 40;</output>
 		<output regex="no" type="failure">Problem running command</output>
-	</test -->
+	</test>
 
 	<test id="Test 44: Run !j9object $doubleQuadLongInstance$ l2.l to show the fields of the reference object">
 		<command command="$JDMPVIEW_EXE$">
@@ -660,8 +656,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
-	<!-- TODO: Disabled temporarily due to https://github.com/eclipse-openj9/openj9/issues/22642. -->
-	<!-- test id="Test 50: Run !j9object $flatUnAlignedSingleBackfill2Array$ [1].l">
+	<test id="Test 50: Run !j9object $flatUnAlignedSingleBackfill2Array$ [1].l">
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core $DUMPFILE$</arg>
 			<input>!j9object $flatUnAlignedSingleBackfill2Array$ [1].l</input>
@@ -671,7 +666,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output regex="no" type="success" showMatch="yes">offset in top level container = 52;</output>
 		<output regex="no" type="success" showMatch="yes">// FlatUnAlignedSingleBackfill2</output>
 		<output regex="no" type="failure">Problem running command</output>
-	</test -->
+	</test>
 
 	<test id="Test 51: Run !flatobject $flatUnAlignedSingleBackfill2Array$ [1]">
 		<command command="$JDMPVIEW_EXE$">
@@ -687,8 +682,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
-	<!-- TODO: Disabled temporarily due to https://github.com/eclipse-openj9/openj9/issues/22642. -->
-	<!-- test id="Test 52: Run !j9object $quadLongArray$ [1]">
+	<test id="Test 52: Run !j9object $quadLongArray$ [1]">
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core $DUMPFILE$</arg>
 			<input>!j9object $quadLongArray$ [1]</input>
@@ -715,5 +709,5 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output regex="no" type="success" showMatch="yes">offset in top level container = 40;</output>
 		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">\// .*ValueTypeQuadLong</output>
 		<output regex="no" type="failure">Problem running command</output>
-	</test -->
+	</test>
 </suite>

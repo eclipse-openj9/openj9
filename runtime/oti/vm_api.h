@@ -2769,33 +2769,6 @@ void
 calculateFlattenedFieldAddresses(J9VMThread *currentThread, J9Class *clazz);
 
 /**
- * Initialize fields to default values when the class
- * contains unflattened flattenables.
- *
- * @param[in] *currentThread the current thread
- * @param[in] *clazz the resolved class
- * @param[in] instance J9Object with unflattened flattenable fields
- *
- * @returns void
- */
-void
-defaultValueWithUnflattenedFlattenables(J9VMThread *currentThread, J9Class *clazz, j9object_t instance);
-
-/**
- * Initialize static fields to default values when the class
- * contains flattenable statics. Currently none of the static fields are flattened.
- *
- * @param[in] currentThread the current thread
- * @param[in] clazz the class being loaded
- * @param[in] entry The FCC entry for the static field
- * @param[in] entryClazz the clazz in the FCC entry for the static field
- *
- * @returns void
- */
-void
-classPrepareWithWithUnflattenedFlattenables(J9VMThread *currentThread, J9Class *clazz, J9FlattenedClassCacheEntry *entry, J9Class *entryClazz);
-
-/**
  * Compare two objects for equality. This helper will perform a
  * structural comparison if both objecst are valueTypes
  *
@@ -4385,14 +4358,6 @@ getVMHookInterface(J9JavaVM* vm);
 */
 IDATA
 initializeVMHookInterface(J9JavaVM* vm);
-
-/**
- * @brief Retrieves the address of the default value slot for a value class
- * @param clazz The class to retrieve the default address value for. Must be an initialized value class.
- * @return the address of the default value slot for the value class
- */
-j9object_t*
-getDefaultValueSlotAddress(J9Class* clazz);
 
 /**
 * @brief

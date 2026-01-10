@@ -38,7 +38,6 @@
 #include "EnvironmentBase.hpp"
 #include "GCExtensionsBase.hpp"
 #include "MethodTypesIterator.hpp"
-#include "ValueTypesIterator.hpp"
 
 /**
  * State constants representing the current stage of the iteration process
@@ -78,7 +77,6 @@ protected:
 #if defined(J9VM_OPT_METHOD_HANDLE)
 	GC_MethodTypesIterator _varHandlesMethodTypesIterator;
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */
-	GC_ValueTypesIterator _valueTypesIterator;
 	const bool _shouldScanClassObject; /**< Boolean needed for balanced GC to prevent ClassObject from being scanned twice  */
 
 public:
@@ -95,7 +93,6 @@ public:
 		, _methodTypesIterator(clazz->romClass->methodTypeCount, clazz->methodTypes)
 		, _varHandlesMethodTypesIterator(clazz->romClass->varHandleMethodTypeCount, clazz->varHandleMethodTypes)
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
-		, _valueTypesIterator(clazz)
 		, _shouldScanClassObject(shouldScanClassObject)
 	{}
 
@@ -112,7 +109,6 @@ public:
 		, _methodTypesIterator(clazz->romClass->methodTypeCount, clazz->methodTypes)
 		, _varHandlesMethodTypesIterator(clazz->romClass->varHandleMethodTypeCount, clazz->varHandleMethodTypes)
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
-		, _valueTypesIterator(clazz)
 		, _shouldScanClassObject(true)
 	{}
 
