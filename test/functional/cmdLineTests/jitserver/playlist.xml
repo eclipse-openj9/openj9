@@ -37,7 +37,7 @@
 		<command>
 			if [ -x $(Q)$(TEST_JDK_BIN)$(D)jitserver$(Q) ]; \
 			then \
-				TR_Options=$(Q)disableSuffixLogs$(Q) \
+				TR_Options=$(Q)dontApplyLogFileNameSuffix$(Q) \
 				$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 				-DSCRIPPATH=$(TEST_RESROOT)$(D)jitserverScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
 				-DTEST_JDK_BIN=$(TEST_JDK_BIN) \
