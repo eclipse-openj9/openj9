@@ -733,11 +733,15 @@ done:
 	static VMINLINE bool
 	shouldGrowForSP(J9VMThread *currentThread, UDATA *checkSP)
 	{
+		J9JavaVM *vm = currentThread->javaVM;
 		bool checkRequired = false;
 		if (checkSP < currentThread->stackOverflowMark2) {
 			checkRequired = true;
 			if (J9_ARE_ANY_BITS_SET(currentThread->privateFlags, J9_PRIVATE_FLAGS_STACK_OVERFLOW)) {
 				UDATA *absoluteLimit = (UDATA*)((UDATA)currentThread->stackObject + J9_STACK_OVERFLOW_RESERVED_SIZE);
+				if (J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JAVA_STACK_GUARD_PAGES)) {
+					absoluteLimit = (UDATA *)((UDATA)absoluteLimit + vm->defaultPageSize);
+				}
 				if (checkSP >= absoluteLimit) {
 					checkRequired = false;
 				}
