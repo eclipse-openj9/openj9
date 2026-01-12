@@ -30,6 +30,7 @@
 #include "ut_j9bcu.h"
 #include "objhelp.h"
 #include "j2sever.h"
+#include "cfreader.h"
 #include "bcutil_api.h"
 #include "bcutil_internal.h"
 #include "SCQueryFunctions.h"
@@ -76,6 +77,10 @@ internalDefineClass(
 	J9LoadROMClassData loadData = {0};
 	BOOLEAN isAnonFlagSet = J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON);
 	BOOLEAN isHiddenFlagSet = J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_HIDDEN);
+	J9Class *superClass = NULL;
+	U_8* jfrModifiedBytes = NULL;
+	UDATA jfrModifiedBytesLength = 0;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
 	/* This trace point is obsolete. It is retained only because j9vm test depends on it.
 	 * Once j9vm tests are fixed, it would be marked as Obsolete in j9bcu.tdf
@@ -86,6 +91,73 @@ internalDefineClass(
 	Trc_BCU_internalDefineClass_FullData(vmThread, classDataLength, classData, classLoader);
 
 	classLoader = GET_CLASS_LOADER_FROM_ID(vm, classLoader);
+
+	//if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_ENABLE_JFR_CLASSLOAD_TRANSFORM)) {
+	if (TRUE) {
+		if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_SHRC_ROMCLASS_EXISTS)) {
+			J9UTF8* superClassNameUTF8 = J9ROMCLASS_SUPERCLASSNAME((J9ROMClass *)classData);
+			if (NULL != superClassNameUTF8) {
+				superClass = vmFuncs->internalFindClassUTF8(vmThread, J9UTF8_DATA(superClassNameUTF8), J9UTF8_LENGTH(superClassNameUTF8), classLoader, 0);
+			}
+		} else {
+			PORT_ACCESS_FROM_JAVAVM(vm);
+			UDATA flags = 0;
+			U_32 segmentLength = ESTIMATE_SIZE(classDataLength) * 20;
+			J9CfrClassFile *classFileBuffer = NULL;
+			I_32 readResult = 0;
+
+			U_8 *segment = (U_8 *)j9mem_allocate_memory(segmentLength, J9MEM_CATEGORY_CLASSES);
+
+#ifdef J9VM_ENV_LITTLE_ENDIAN
+			flags = BCT_LittleEndianOutput;
+#else
+			flags = BCT_BigEndianOutput;
+#endif
+			flags |= BCT_JavaMaxMajorVersionShifted | BCT_AnyPreviewVersion | BCT_SuperClassOnly;
+			if (NULL == segment) {
+				//vmFuncs->setNativeOutOfMemoryError(vmThread, 0, 0);
+
+				printf("*******failure native OOM\n");
+				return NULL;
+			}
+
+			printf("pre load super flags 0x%lx\n", 	flags);
+
+			readResult = j9bcutil_readClassFileBytes(
+					privatePortLibrary,
+					NULL,
+					classData, classDataLength,
+					segment, segmentLength,
+					flags,
+					NULL,
+					NULL,
+					0,
+					UDATA_MAX);
+
+
+
+			if (readResult != 0) {
+				printf("*****internal error\n");
+				//vmFuncs->setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+				return NULL;
+			}
+
+			classFileBuffer = (J9CfrClassFile *)segment;
+
+			J9CfrConstantPoolInfo *superClassSlot = &(classFileBuffer->constantPool[classFileBuffer->superClass]);
+			J9CfrConstantPoolInfo *superClassNameSlot = &(classFileBuffer->constantPool[superClassSlot->slot1]);
+			if (NULL != superClassNameSlot->bytes) {
+				superClass = vmFuncs->internalFindClassUTF8(vmThread, superClassNameSlot->bytes, superClassNameSlot->slot1, classLoader, 0);
+			}
+
+			j9mem_free_memory(segment);
+		}
+		// if (isSameOrSuperClassOf(vm->jfrState.jfrEventClass, superClass)) {
+		// 	vmFuncs->jvmUpcallsEagerByteInstrumentation(vmThread, superClass, className, (U_16)classNameLength, classLoader, classData, classDataLength, &jfrModifiedBytes, &jfrModifiedBytesLength);
+		// 	classData = jfrModifiedBytes;
+		// 	classDataLength = jfrModifiedBytesLength;
+		// }
+	}
 
 	/* remember the current classpath entry so we can record it at the end */
 	vmThread->privateFlags &= ~J9_PRIVATE_FLAGS_CLOAD_NO_MEM;
@@ -563,6 +635,11 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 
 	/* TODO toss tracepoint?? Trc_BCU_internalLoadROMClass_AttemptExisting(vmThread, segment, romAvailable, bytesRequired); */
 	/* Attempt dynamic load */
+	printf("Attempt dynamic load name=%.*s flags=0x%lx\n",  (int)loadData->classNameLength, loadData->className, translationFlags);
+	if (0 == strncmp("java/util/ImmutableCollections$AbstractImmutableCollection", loadData->className, loadData->classNameLength )) {
+		__asm__("int3");
+	}
+
 	result = callDynamicLoader(vmThread, loadData, intermediateClassData, intermediateClassDataLength, translationFlags, classFileBytesReplacedByRIA, classFileBytesReplacedByRCA, localBuffer);
 
 	/* Free the class file bytes if necessary */

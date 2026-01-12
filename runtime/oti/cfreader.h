@@ -21,7 +21,7 @@
  *******************************************************************************/
 
 #ifndef cfreader_h
-#define cfreader_h 
+#define cfreader_h
 
 #include "cfr.h"
 #include "cfrerrnls.h"
@@ -90,6 +90,15 @@
 #define CHECK_EOF(nextRead) \
 	if((UDATA)(nextRead) > (UDATA)(dataEnd - index)) \
 	{ \
+		errorCode = (U_32)J9NLS_CFR_ERR_UNEXPECTED_EOF__ID; \
+		offset = (U_32)(dataEnd - data); \
+		goto _errorFound; \
+	}
+
+#define CHECK_EOF_DEBUG(nextRead) \
+	if((UDATA)(nextRead) > (UDATA)(dataEnd - index)) \
+	{ \
+		__asm__("int3"); \
 		errorCode = (U_32)J9NLS_CFR_ERR_UNEXPECTED_EOF__ID; \
 		offset = (U_32)(dataEnd - data); \
 		goto _errorFound; \
@@ -215,7 +224,7 @@
 #define SWAPPING_ENDIAN(flags) ((flags) & BCT_BigEndianOutput)
 #else /* BIG_ENDIAN */
 #define SWAPPING_ENDIAN(flags) ((flags) & BCT_LittleEndianOutput)
-#endif	
+#endif
 
 #endif     /* cfreader_h */
 

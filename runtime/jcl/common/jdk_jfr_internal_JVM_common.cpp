@@ -35,7 +35,16 @@ extern "C" {
 #define LOG_LEVEL_WARN 4
 #define LOG_LEVEL_ERROR 5
 
-#define JFR_STRING_BUFFER 256
+J9_DECLARE_CONSTANT_UTF8(jfrEventClassUTF8, "jdk/internal/event/Event");
+J9_DECLARE_CONSTANT_UTF8(jvmUpcallUTF8, "jdk/jfr/internal/JVMUpcalls");
+J9_DECLARE_CONSTANT_UTF8(onRetransformUTF8, "bytesForEagerInstrumentation");
+J9_DECLARE_CONSTANT_UTF8(onRetransformSigUTF8, "(JZZLjava/lang/Class;[B)[B");
+J9_DECLARE_CONSTANT_NAS(onRetransformNAS, onRetransformUTF8, onRetransformSigUTF8);
+
+static jboolean initializeJVMTIAgent(JNIEnv *env);
+static jboolean initializeJFREventUpcalls(jvmtiEnv *jvmtiEnv);
+extern "C" void JNICALL
+jvmUpcallsOnRetransform(jvmtiEnv *jvmtiEnv, JNIEnv *env, jclass classBeingRedefined, jobject loader, const char *name, jobject protectionDomain, jint classDataLength, const unsigned char *classData, jint *newClassDataLength, unsigned char **newClassData);
 
 void JNICALL
 Java_jdk_jfr_internal_JVM_registerNatives(JNIEnv *env, jclass clazz)
@@ -312,14 +321,188 @@ jboolean JNICALL
 Java_jdk_jfr_internal_JVM_getAllowedToDoEventRetransforms(JNIEnv *env, jobject obj)
 {
 	// TODO: implementation
-	return JNI_FALSE;
+	return JNI_TRUE;
 }
 
 jboolean JNICALL
 Java_jdk_jfr_internal_JVM_createJFR(JNIEnv *env, jobject obj, jboolean simulateFailure)
 {
-	// TODO: implementation
-	return JNI_FALSE;
+	jboolean rc = JNI_TRUE;
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	jvmtiEnv *jvmtiEnv = vm->jfrState.jvmtiEnv;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	if (simulateFailure) {
+		rc = JNI_FALSE;
+		goto done;
+	}
+
+	if (NULL == jvmtiEnv) {
+		if (!initializeJVMTIAgent(env)) {
+			rc = JNI_FALSE;
+			goto done;
+		}
+		jvmtiEnv = vm->jfrState.jvmtiEnv;
+	}
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	vm->jfrState.jfrEventClass = vmFuncs->internalFindClassUTF8(currentThread, (U_8 *)J9UTF8_DATA(&jfrEventClassUTF8), J9UTF8_LENGTH(&jfrEventClassUTF8), vm->systemClassLoader, 0);
+	vmFuncs->internalExitVMToJNI(currentThread);
+
+	if (NULL == vm->jfrState.jfrEventClass) {
+		rc = JNI_FALSE;
+		goto done;
+	}
+
+	rc = initializeJFREventUpcalls(jvmtiEnv);
+
+	vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_ENABLE_JFR_CLASSLOAD_TRANSFORM;
+done:
+	return rc;
+}
+
+static jboolean
+initializeJVMTIAgent(JNIEnv *env)
+{
+	jboolean rc = JNI_TRUE;
+	JavaVM *jvm = NULL;
+	jvmtiEnv *jvmtiEnv = NULL;
+
+	if (JNI_OK != env->GetJavaVM(&jvm)) {
+		rc = JNI_FALSE;
+		goto done;
+	}
+
+	if (JNI_OK != jvm->GetEnv((void**)&jvmtiEnv, JVMTI_VERSION_11)) {
+		rc = JNI_FALSE;
+		goto done;
+	}
+
+	((J9VMThread *)env)->javaVM->jfrState.jvmtiEnv = jvmtiEnv;
+
+done:
+	return rc;
+}
+
+static jboolean
+initializeJFREventUpcalls(jvmtiEnv *jvmtiEnv)
+{
+	jboolean rc = JNI_TRUE;
+
+	jvmtiCapabilities capabilities = {0};
+	jvmtiEventCallbacks callbacks = {0};
+
+	capabilities.can_retransform_classes = 1;
+	//capabilities.can_retransform_any_class = 1;
+
+	if (JVMTI_ERROR_NONE != jvmtiEnv->AddCapabilities(&capabilities)) {
+		rc = JNI_FALSE;
+		goto done;
+	}
+
+	//callbacks.ClassFileLoadHook = jvmUpcallsOnRetransform;
+	if (JVMTI_ERROR_NONE != jvmtiEnv->SetEventCallbacks(&callbacks, sizeof(jvmtiEventCallbacks))) {
+		rc = JNI_FALSE;
+		goto done;
+	}
+
+
+	if (JVMTI_ERROR_NONE != jvmtiEnv->SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_CLASS_FILE_LOAD_HOOK, NULL)) {
+		rc = JNI_FALSE;
+		goto done;
+	}
+
+done:
+	return rc;
+}
+
+extern "C" void JNICALL
+jvmUpcallsOnRetransform(jvmtiEnv *jvmtiEnv, JNIEnv *env, jclass classBeingRedefined, jobject loader, const char *name, jobject protectionDomain, jint classDataLength, const unsigned char *classData, jint *newClassDataLength, unsigned char **newClassData)
+{
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9MemoryManagerFunctions *mmfns = vm->memoryManagerFunctions;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+
+	j9object_t classObject = NULL;
+	jlong traceID = 0;
+	BOOLEAN bootLoader = TRUE;
+
+	if (NULL == classBeingRedefined) {
+		U_8 buf[JFR_STRING_BUFFER + 2];
+		UDATA len = strlen(name);
+		J9UTF8 *nameUTF8 = (J9UTF8 *)buf;
+		J9ClassLoader *classLoader = vm->systemClassLoader;
+
+		if (len > JFR_STRING_BUFFER) {
+			PORT_ACCESS_FROM_JAVAVM(vm);
+			nameUTF8 = (J9UTF8 *)j9mem_allocate_memory(len + 2, OMRMEM_CATEGORY_VM);
+		}
+		J9UTF8_LENGTH(nameUTF8) = (U_16)len;
+		memcpy(J9UTF8_DATA(nameUTF8), name, len);
+		if (NULL != loader) {
+			bootLoader = FALSE;
+			classLoader = J9VMJAVALANGCLASSLOADER_VMREF(currentThread, J9_JNI_UNWRAP_REFERENCE(loader));
+		}
+		traceID = vmFuncs->getTypeIdUTF8(currentThread, classLoader, nameUTF8, TRUE);
+	} else {
+
+
+		// classObject = J9_JNI_UNWRAP_REFERENCE(classBeingRedefined);
+		// ramClass = J9VMJAVALANGCLASS_VMREF(currentThread, classObject);
+		// traceID = vmFuncs->getTypeId(currentThread, ramClass);
+	}
+
+	j9object_t inputByteArray = NULL;
+	j9object_t outputByteArray = NULL;
+	UDATA args[5];
+
+	if (-1 == traceID) {
+		/* Not a JFR event class so skip. */
+		goto done;
+	}
+
+	inputByteArray = mmfns->J9AllocateIndexableObject(currentThread, vm->byteReflectClass->arrayClass, classDataLength, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+	if (NULL == inputByteArray) {
+		vmFuncs->setHeapOutOfMemoryError(currentThread);
+		goto done;
+	}
+
+	if (NULL == vm->jfrState.onRetransformUpcallMethod) {
+		J9Class *jvmUpcallClass = vmFuncs->internalFindClassUTF8(currentThread, (U_8 *)J9UTF8_DATA(&jvmUpcallUTF8), J9UTF8_LENGTH(&jvmUpcallUTF8), vm->systemClassLoader, J9_FINDCLASS_FLAG_THROW_ON_FAIL);
+		if (NULL == jvmUpcallClass) {
+			goto done;
+		}
+		vm->jfrState.onRetransformUpcallMethod = (J9Method *)vmFuncs->javaLookupMethodImpl(currentThread, jvmUpcallClass, (J9ROMNameAndSignature *)&onRetransformNAS, jvmUpcallClass, J9_LOOK_STATIC | J9_LOOK_DIRECT_NAS, NULL);
+		if (NULL == vm->jfrState.onRetransformUpcallMethod) {
+			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+			goto done;
+		}
+	}
+	args[0] = (UDATA)traceID;
+	args[1] = (UDATA)FALSE;
+	args[2] = (UDATA)bootLoader;
+	args[3] = (UDATA)classObject;
+	args[4] = (UDATA)inputByteArray;
+
+	vmFuncs->internalRunStaticMethod(currentThread, vm->jfrState.onRetransformUpcallMethod, TRUE, 5, args);
+	outputByteArray = (j9object_t)currentThread->returnValue;
+
+	*newClassDataLength = (jint)J9INDEXABLEOBJECT_SIZE(currentThread, outputByteArray);
+	if (JVMTI_ERROR_NONE != jvmtiEnv->Allocate(*newClassDataLength, newClassData)) {
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+		goto done;
+	}
+
+	VM_ArrayCopyHelpers::memcpyFromArray(currentThread, outputByteArray, (UDATA)0, (UDATA)0, *newClassDataLength, *newClassData);
+
+	vmFuncs->internalExitVMToJNI(currentThread);
+
+done:
+	return;
 }
 
 jboolean JNICALL

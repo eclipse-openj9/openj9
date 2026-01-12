@@ -98,7 +98,7 @@ Java_jdk_jfr_internal_JVM_getTypeId__Ljava_lang_String_2(JNIEnv *env, jobject ob
 	if (NULL == typeName) {
 		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 	} else {
-		result = vmFuncs->getTypeIdUTF8(currentThread, typeName);
+		result = vmFuncs->getTypeIdUTF8(currentThread, vm->systemClassLoader, typeName, FALSE);
 		if (buf != (char *)typeName) {
 			PORT_ACCESS_FROM_JAVAVM(vm);
 			j9mem_free_memory(typeName);
