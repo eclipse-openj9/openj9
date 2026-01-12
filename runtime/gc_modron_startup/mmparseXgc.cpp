@@ -94,14 +94,14 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		}
 		goto _exit;
 	}
-	if(try_scan(scan_start, "tlhSurvivorDiscardThreshold=")) {
-		if(!scan_udata_helper(javaVM, scan_start, &extensions->tlhSurvivorDiscardThreshold, "tlhSurvivorDiscardThreshold=")) {
+	if (try_scan(scan_start, "tlhSurvivorDiscardThreshold=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &extensions->tlhSurvivorDiscardThreshold, "tlhSurvivorDiscardThreshold=")) {
 			goto _error;
 		}
 		goto _exit;
 	}	
-	if(try_scan(scan_start, "tlhTenureDiscardThreshold=")) {
-		if(!scan_udata_helper(javaVM, scan_start, &extensions->tlhTenureDiscardThreshold, "tlhTenureDiscardThreshold=")) {
+	if (try_scan(scan_start, "tlhTenureDiscardThreshold=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &extensions->tlhTenureDiscardThreshold, "tlhTenureDiscardThreshold=")) {
 			goto _error;
 		}
 		goto _exit;
@@ -109,26 +109,26 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 
 #endif /* defined(J9VM_GC_THREAD_LOCAL_HEAP) */
 #if defined(J9VM_GC_SEGREGATED_HEAP)
-	if(try_scan(scan_start, "allocationCacheMinimumSize=")) {
-		if(!scan_udata_helper(javaVM, scan_start, &extensions->allocationCacheMinimumSize, "allocationCacheMinimumSize=")) {
+	if (try_scan(scan_start, "allocationCacheMinimumSize=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &extensions->allocationCacheMinimumSize, "allocationCacheMinimumSize=")) {
 			goto _error;
 		}
 		goto _exit;
 	}
-	if(try_scan(scan_start, "allocationCacheMaximumSize=")) {
-		if(!scan_udata_helper(javaVM, scan_start, &extensions->allocationCacheMaximumSize, "allocationCacheMaximumSize=")) {
+	if (try_scan(scan_start, "allocationCacheMaximumSize=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &extensions->allocationCacheMaximumSize, "allocationCacheMaximumSize=")) {
 			goto _error;
 		}
 		goto _exit;
 	}
-	if(try_scan(scan_start, "allocationCacheInitialSize=")) {
-		if(!scan_udata_helper(javaVM, scan_start, &extensions->allocationCacheInitialSize, "allocationCacheInitialSize=")) {
+	if (try_scan(scan_start, "allocationCacheInitialSize=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &extensions->allocationCacheInitialSize, "allocationCacheInitialSize=")) {
 			goto _error;
 		}
 		goto _exit;
 	}
-	if(try_scan(scan_start, "allocationCacheIncrementSize=")) {
-		if(!scan_udata_helper(javaVM, scan_start, &extensions->allocationCacheIncrementSize, "allocationCacheMaximumSize=")) {
+	if (try_scan(scan_start, "allocationCacheIncrementSize=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &extensions->allocationCacheIncrementSize, "allocationCacheMaximumSize=")) {
 			goto _error;
 		}
 		goto _exit;
@@ -147,7 +147,7 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}		
 	if (try_scan(scan_start, "targetUtilization=")) {
-		if(!scan_udata_helper(javaVM, scan_start, &(extensions->targetUtilizationPercentage), "targetUtilization=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &(extensions->targetUtilizationPercentage), "targetUtilization=")) {
 			goto _error;
 		}
 		if ((extensions->targetUtilizationPercentage < 1) || (99 < extensions->targetUtilizationPercentage)) {
@@ -157,11 +157,11 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 	if (try_scan(scan_start, "threads=")) {
-		if(!scan_udata_helper(javaVM, scan_start, &(extensions->gcThreadCount), "threads=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &(extensions->gcThreadCount), "threads=")) {
 			goto _error;
 		}
 
-		if(0 == extensions->gcThreadCount) {
+		if (0 == extensions->gcThreadCount) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, "threads=", (UDATA)0);
 			goto _error;
 		}
@@ -170,7 +170,7 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		extensions->gcThreadCountForced = true;
 		goto _exit;
 	}		
-	if(try_scan(scan_start, "noClassGC")) {
+	if (try_scan(scan_start, "noClassGC")) {
 		/* Metronome currently does not unload classes */
 		/* We do not care if this option is set or not, but if it is, it is just silently parsed */
 		goto _exit;
@@ -187,10 +187,10 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 	if (try_scan(scan_start, "targetPausetime=")) {
 		/* the unit of target pause time option is in milliseconds */
 		UDATA beatMilli = 0;
-		if(!scan_udata_helper(javaVM, scan_start, &beatMilli, "targetPausetime=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &beatMilli, "targetPausetime=")) {
 			goto _error;
 		}
-		if(0 == beatMilli) {
+		if (0 == beatMilli) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, "targetPausetime=", (UDATA)0);
 			goto _error;
 		}
@@ -213,9 +213,9 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 //Remove once LOA code stable 
 #if defined(J9VM_GC_LARGE_OBJECT_AREA)
 
-	if(try_scan(scan_start, "largeObjectMinimumSize=")) {
+	if (try_scan(scan_start, "largeObjectMinimumSize=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "largeObjectMinimumSize=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "largeObjectMinimumSize=")) {
 			goto _error;
 		}
 		
@@ -224,12 +224,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 	
-	if(try_scan(scan_start, "debugLOAFreelist")) {
+	if (try_scan(scan_start, "debugLOAFreelist")) {
 		extensions->debugLOAFreelist = true;
 		goto _exit;
 	}
 	
-	if(try_scan(scan_start, "debugLOAAllocate")) {
+	if (try_scan(scan_start, "debugLOAAllocate")) {
 		extensions->debugLOAAllocate = true;
 		goto _exit;
 	}
@@ -237,12 +237,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 #endif /* J9VM_GC_LARGE_OBJECT_AREA) */	
 
 
-	if(try_scan(scan_start, "threadCount=")) {
-		if(!scan_udata_helper(javaVM, scan_start, &extensions->gcThreadCount, "threadCount=")) {
+	if (try_scan(scan_start, "threadCount=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &extensions->gcThreadCount, "threadCount=")) {
 			goto _error;
 		}
 		
-		if(0 == extensions->gcThreadCount) {
+		if (0 == extensions->gcThreadCount) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, "threadCount=", (UDATA)0);
 			goto _error;
 		}
@@ -259,9 +259,9 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 
 #if defined(J9VM_GC_MODRON_SCAVENGER)
 
-	if(try_scan(scan_start, "tenureBytesDeviationBoost=")) {
+	if (try_scan(scan_start, "tenureBytesDeviationBoost=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "tenureBytesDeviationBoost=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "tenureBytesDeviationBoost=")) {
 			goto _error;
 		}
 
@@ -269,24 +269,24 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "scavenge")) {
+	if (try_scan(scan_start, "scavenge")) {
 		extensions->configurationOptions._forceOptionScavenge = true;
 		extensions->scavengerEnabled = true;
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "noScavenge")) {
+	if (try_scan(scan_start, "noScavenge")) {
 		extensions->configurationOptions._forceOptionScavenge = true;
 		extensions->scavengerEnabled = false;
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "concurrentKickoffTenuringHeadroom=")) {
+	if (try_scan(scan_start, "concurrentKickoffTenuringHeadroom=")) {
 		UDATA value = 0;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "concurrentKickoffTenuringHeadroom=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "concurrentKickoffTenuringHeadroom=")) {
 			goto _error;
 		}
-		if(value > 100) {
+		if (value > 100) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "concurrentKickoffTenuringHeadroom=", (UDATA)0, (UDATA)100);
 			goto _error;
 		}
@@ -298,52 +298,52 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	/* Parsing of concurrentScavengeBackground/Slack must happen before concurrentScavenge, since the later option is a substring of the former(s).
 	 * However, there is no effective limitation on relative order of these options in a command line. */
-	if(try_scan(scan_start, "concurrentScavengeSlack=")) {
-		if(!scan_udata_helper(javaVM, scan_start, &extensions->concurrentScavengerSlack, "concurrentScavengeSlack=")) {
+	if (try_scan(scan_start, "concurrentScavengeSlack=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &extensions->concurrentScavengerSlack, "concurrentScavengeSlack=")) {
 			goto _error;
 		}
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "concurrentScavengeBackground=")) {
-		if(!scan_udata_helper(javaVM, scan_start, &extensions->concurrentScavengerBackgroundThreads, "concurrentScavengeBackground=")) {
+	if (try_scan(scan_start, "concurrentScavengeBackground=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &extensions->concurrentScavengerBackgroundThreads, "concurrentScavengeBackground=")) {
 			goto _error;
 		}
 		extensions->concurrentScavengerBackgroundThreadsForced = true;
 		goto _exit;
 	}
 	/* Must be parsed after concurrentScavengeBackground/Slack. */
-	if(try_scan(scan_start, "concurrentScavenge")) {
+	if (try_scan(scan_start, "concurrentScavenge")) {
 		extensions->concurrentScavengerForced = true;
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "noConcurrentScavenge")) {
+	if (try_scan(scan_start, "noConcurrentScavenge")) {
 		extensions->concurrentScavengerForced = false;
 		goto _exit;
 	}
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
-	if(try_scan(scan_start, "failedTenureThreshold=")) {
-		if(!scan_udata_helper(javaVM, scan_start, &extensions->scavengerFailedTenureThreshold, "failedTenureThreshold=")) {
+	if (try_scan(scan_start, "failedTenureThreshold=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &extensions->scavengerFailedTenureThreshold, "failedTenureThreshold=")) {
 			goto _error;	
 		}	
 		goto _exit;
 	}
 	
-	if(try_scan(scan_start, "maxScavengeBeforeGlobal=")) {
-		if(!scan_udata_helper(javaVM, scan_start, &extensions->maxScavengeBeforeGlobal, "maxScavengeBeforeGlobal=")) {
+	if (try_scan(scan_start, "maxScavengeBeforeGlobal=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &extensions->maxScavengeBeforeGlobal, "maxScavengeBeforeGlobal=")) {
 			goto _error;	
 		}
 		goto _exit;
 	}
 	
-	if(try_scan(scan_start, "scvCollectorExpandRatio=")) {
+	if (try_scan(scan_start, "scvCollectorExpandRatio=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "scvCollectorExpandRatio=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "scvCollectorExpandRatio=")) {
 			goto _error;
 		}
-		if((0 == value) || (100 < value)) {
+		if ((0 == value) || (100 < value)) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "scvCollectorExpandRatio=", (UDATA)1, (UDATA)100);
 		}
 
@@ -351,9 +351,9 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 	
-	if(try_scan(scan_start, "scvMaximumCollectorExpandSize=")) {
+	if (try_scan(scan_start, "scvMaximumCollectorExpandSize=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "scvMaximumCollectorExpandSize=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "scvMaximumCollectorExpandSize=")) {
 			goto _error;
 		}
 		
@@ -386,12 +386,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "scvTenureSurvivalThreshold=")) {
+	if (try_scan(scan_start, "scvTenureSurvivalThreshold=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "scvTenureSurvivalThreshold=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "scvTenureSurvivalThreshold=")) {
 			goto _error;
 		}
-		if(value > 100) {
+		if (value > 100) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "scvTenureSurvivalThreshold=", (UDATA)0, (UDATA)100);
 			goto _error;
 		}
@@ -400,12 +400,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 	}
 
 #if defined(J9VM_GC_ADAPTIVE_TENURING)
-	if(try_scan(scan_start, "adaptiveTenure")) {
+	if (try_scan(scan_start, "adaptiveTenure")) {
 		extensions->scvTenureStrategyAdaptive = true;
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "noAdaptiveTenure")) {
+	if (try_scan(scan_start, "noAdaptiveTenure")) {
 		extensions->scvTenureStrategyFixed = true;
 		extensions->scvTenureStrategyAdaptive = false;
 		extensions->scvTenureStrategyLookback = false;
@@ -413,12 +413,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "tenureAge=")) {
+	if (try_scan(scan_start, "tenureAge=")) {
 		UDATA tenureAge = 0;
-		if(!scan_udata_helper(javaVM, scan_start, &tenureAge, "tenureAge=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &tenureAge, "tenureAge=")) {
 			goto _error;
 		}
-		if((tenureAge > OBJECT_HEADER_AGE_MAX) || (tenureAge < OBJECT_HEADER_AGE_MIN)) {
+		if ((tenureAge > OBJECT_HEADER_AGE_MAX) || (tenureAge < OBJECT_HEADER_AGE_MIN)) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "tenureAge=", (UDATA)OBJECT_HEADER_AGE_MIN, (UDATA)OBJECT_HEADER_AGE_MAX);
 			goto _error;
 		}
@@ -427,7 +427,7 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 	
-	if(try_scan(scan_start, "scvNoAdaptiveTenure")) {
+	if (try_scan(scan_start, "scvNoAdaptiveTenure")) {
 		extensions->scvTenureStrategyFixed = true;
 		extensions->scvTenureStrategyAdaptive = false;
 		extensions->scvTenureStrategyLookback = false;
@@ -435,12 +435,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "scvTenureAge=")) {
+	if (try_scan(scan_start, "scvTenureAge=")) {
 		UDATA tenureAge = 0;
-		if(!scan_udata_helper(javaVM, scan_start, &tenureAge, "scvTenureAge=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &tenureAge, "scvTenureAge=")) {
 			goto _error;
 		}
-		if((tenureAge > OBJECT_HEADER_AGE_MAX) || (tenureAge < OBJECT_HEADER_AGE_MIN)) {
+		if ((tenureAge > OBJECT_HEADER_AGE_MAX) || (tenureAge < OBJECT_HEADER_AGE_MIN)) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "scvTenureAge=", (UDATA)OBJECT_HEADER_AGE_MIN, (UDATA)OBJECT_HEADER_AGE_MAX);
 			goto _error;
 		}
@@ -449,12 +449,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 	
-	if(try_scan(scan_start, "scvAdaptiveTenureAge=")) {
+	if (try_scan(scan_start, "scvAdaptiveTenureAge=")) {
 		UDATA adaptiveTenureAge = 0;
-		if(!scan_udata_helper(javaVM, scan_start, &adaptiveTenureAge, "scvAdaptiveTenureAge=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &adaptiveTenureAge, "scvAdaptiveTenureAge=")) {
 			goto _error;
 		}
-		if((adaptiveTenureAge > OBJECT_HEADER_AGE_MAX) || (adaptiveTenureAge < OBJECT_HEADER_AGE_MIN)) {
+		if ((adaptiveTenureAge > OBJECT_HEADER_AGE_MAX) || (adaptiveTenureAge < OBJECT_HEADER_AGE_MIN)) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "scvAdaptiveTenureAge=", (UDATA)OBJECT_HEADER_AGE_MIN, (UDATA)OBJECT_HEADER_AGE_MAX);
 			goto _error;
 		}
@@ -462,12 +462,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 	
-	if(try_scan(scan_start, "scvFixedTenureAge=")) {
+	if (try_scan(scan_start, "scvFixedTenureAge=")) {
 		UDATA fixedTenureAge = 0;
-		if(!scan_udata_helper(javaVM, scan_start, &fixedTenureAge, "scvFixedTenureAge=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &fixedTenureAge, "scvFixedTenureAge=")) {
 			goto _error;
 		}
-		if((fixedTenureAge > OBJECT_HEADER_AGE_MAX) || (fixedTenureAge < OBJECT_HEADER_AGE_MIN)) {
+		if ((fixedTenureAge > OBJECT_HEADER_AGE_MAX) || (fixedTenureAge < OBJECT_HEADER_AGE_MIN)) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "scvFixedTenureAge=", (UDATA)OBJECT_HEADER_AGE_MIN, (UDATA)OBJECT_HEADER_AGE_MAX);
 			goto _error;
 		}
@@ -475,21 +475,21 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "scvth=")) {
-		if(!scan_udata_helper(javaVM, scan_start, &extensions->scvTenureRatioHigh, "scvth=")) {
+	if (try_scan(scan_start, "scvth=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &extensions->scvTenureRatioHigh, "scvth=")) {
 			goto _error;
 		}
-		if(extensions->scvTenureRatioHigh > 100) {
+		if (extensions->scvTenureRatioHigh > 100) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "scvth=", (UDATA)0, (UDATA)100);
 			goto _error;
 		}
 		goto _exit;
 	}
-	if(try_scan(scan_start, "scvtl=")) {
-		if(!scan_udata_helper(javaVM, scan_start, &extensions->scvTenureRatioLow, "scvtl=")) {
+	if (try_scan(scan_start, "scvtl=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &extensions->scvTenureRatioLow, "scvtl=")) {
 			goto _error;
 		}
-		if(extensions->scvTenureRatioLow > 100) {
+		if (extensions->scvTenureRatioLow > 100) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "scvtl=", (UDATA)0, (UDATA)100);
 			goto _error;
 		}
@@ -502,36 +502,36 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 	 * with what's printed in -verbose:gc and is intuitive. However we store these ratios internally
 	 * as the percentage of survivor space. So a specified value of 30 is stored as 70.
 	 */
-	if(try_scan(scan_start, "scvTiltRatioMax=")) {
+	if (try_scan(scan_start, "scvTiltRatioMax=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "scvTiltRatioMax=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "scvTiltRatioMax=")) {
 			goto _error;
 		}
-		if((50 > value) || (90 < value)) {
+		if ((50 > value) || (90 < value)) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "scvTiltRatioMax=", (UDATA)50, (UDATA)90);
 		}
 
 		extensions->survivorSpaceMinimumSizeRatio = (100 - value) / (double)100.0;
 		goto _exit;
 	}
-	if(try_scan(scan_start, "scvTiltRatioMin=")) {
+	if (try_scan(scan_start, "scvTiltRatioMin=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "scvTiltRatioMin=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "scvTiltRatioMin=")) {
 			goto _error;
 		}
-		if((50 > value) || (90 < value)) {
+		if ((50 > value) || (90 < value)) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "scvTiltRatioMin=", (UDATA)50, (UDATA)90);
 		}
 
 		extensions->survivorSpaceMaximumSizeRatio = (100 - value) / (double)100.0;
 		goto _exit;
 	}
-	if(try_scan(scan_start, "scvTiltIncreaseMax=")) {
+	if (try_scan(scan_start, "scvTiltIncreaseMax=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "scvTiltIncreaseMax=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "scvTiltIncreaseMax=")) {
 			goto _error;
 		}
-		if(0 == value) {
+		if (0 == value) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, "scvTiltIncreaseMax=", (UDATA)0);
 			goto _error;
 		}
@@ -539,40 +539,40 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		extensions->tiltedScavengeMaximumIncrease = value / (double)100.0;
 		goto _exit;
 	}	
-	if(try_scan(scan_start, "scvDebugTiltedNursery")) {
+	if (try_scan(scan_start, "scvDebugTiltedNursery")) {
 		extensions->debugTiltedScavenge = true;
 		goto _exit;
 	}
-	if(try_scan(scan_start, "scvTiltedNursery")) {
+	if (try_scan(scan_start, "scvTiltedNursery")) {
 		extensions->tiltedScavenge = true;
 		goto _exit;
 	}
-	if(try_scan(scan_start, "scvNoTiltedNursery")) {
+	if (try_scan(scan_start, "scvNoTiltedNursery")) {
 		extensions->tiltedScavenge = false;
 		goto _exit;
 	}
 #endif /* J9VM_GC_TILTED_NEW_SPACE */
 
 
-	if(try_scan(scan_start, "noHeapExpansionAfterExpansionGCCount=")) {
+	if (try_scan(scan_start, "noHeapExpansionAfterExpansionGCCount=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "noHeapExpansionAfterExpansionGCCount=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "noHeapExpansionAfterExpansionGCCount=")) {
 			goto _error;
 		}
 		extensions->heapExpansionStabilizationCount = value;
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "noHeapContractionAfterExpansionGCCount=")) {
+	if (try_scan(scan_start, "noHeapContractionAfterExpansionGCCount=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "noHeapContractionAfterExpansionGCCount=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "noHeapContractionAfterExpansionGCCount=")) {
 			goto _error;
 		}
 		extensions->heapContractionStabilizationCount = value;
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "ignoreHeapStatsAfterHeapExpansion")) {
+	if (try_scan(scan_start, "ignoreHeapStatsAfterHeapExpansion")) {
 		/* this is the same as setting these options to 3 -- the size of the heap stats */
 		extensions->heapExpansionStabilizationCount = 3;
 		extensions->heapContractionStabilizationCount = 3;
@@ -580,39 +580,39 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 	}
 
 #if defined(J9VM_GC_DYNAMIC_NEW_SPACE_SIZING)
-	if(try_scan(scan_start, "dynamicNewSpaceSizing")) {
+	if (try_scan(scan_start, "dynamicNewSpaceSizing")) {
 		extensions->dynamicNewSpaceSizing = true;
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "noDynamicNewSpaceSizing")) {
+	if (try_scan(scan_start, "noDynamicNewSpaceSizing")) {
 		extensions->dynamicNewSpaceSizing = false;
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "debugDynamicNewSpaceSizing")) {
+	if (try_scan(scan_start, "debugDynamicNewSpaceSizing")) {
 		extensions->debugDynamicNewSpaceSizing = true;
 		goto _exit;
 	}
 
 	/* VMDESIGN 1690: (default) hint to try to avoid moving objects during dynamic new space resizing */
-	if(try_scan(scan_start, "dnssAvoidMovingObjects")) {
+	if (try_scan(scan_start, "dnssAvoidMovingObjects")) {
 		extensions->dnssAvoidMovingObjects = true;
 		goto _exit;
 	}
 	
 	/* VMDESIGN 1690: use pre-Java 6 new space resizing policy */
-	if(try_scan(scan_start, "dnssNoAvoidMovingObjects")) {
+	if (try_scan(scan_start, "dnssNoAvoidMovingObjects")) {
 		extensions->dnssAvoidMovingObjects = false;
 		goto _exit;
 	}
 	
-	if(try_scan(scan_start, "dnssMaximumContraction=")) {
+	if (try_scan(scan_start, "dnssMaximumContraction=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "dnssMaximumContraction=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "dnssMaximumContraction=")) {
 			goto _error;
 		}
-		if(value > 100) {
+		if (value > 100) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dnssMaximumContraction=", (UDATA)0, (UDATA)100);
 			goto _error;
 		}
@@ -620,12 +620,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 	
-	if(try_scan(scan_start, "dnssMaximumExpansion=")) {
+	if (try_scan(scan_start, "dnssMaximumExpansion=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "dnssMaximumExpansion=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "dnssMaximumExpansion=")) {
 			goto _error;
 		}
-		if(value > 100) {
+		if (value > 100) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dnssMaximumExpansion=", (UDATA)0, (UDATA)100);
 			goto _error;
 		}
@@ -633,12 +633,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 	
-	if(try_scan(scan_start, "dnssMinimumContraction=")) {
+	if (try_scan(scan_start, "dnssMinimumContraction=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "dnssMinimumContraction=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "dnssMinimumContraction=")) {
 			goto _error;
 		}
-		if(value > 100) {
+		if (value > 100) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dnssMinimumContraction=", (UDATA)0, (UDATA)100);
 			goto _error;
 		}
@@ -646,12 +646,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 	
-	if(try_scan(scan_start, "loaFreeHistorySize=")) {
+	if (try_scan(scan_start, "loaFreeHistorySize=")) {
 				UDATA value;
-				if(!scan_udata_helper(javaVM, scan_start, &value, "loaFreeHistorySize=")) {
+				if (!scan_udata_helper(javaVM, scan_start, &value, "loaFreeHistorySize=")) {
 					goto _error;
 				}
-				if(value > 100) {
+				if (value > 100) {
 					j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "loaFreeHistorySize=", (UDATA)0, (UDATA)100);
 					goto _error;
 				}
@@ -659,12 +659,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 				goto _exit;
      }
 
-	if(try_scan(scan_start, "dnssMinimumExpansion=")) {
+	if (try_scan(scan_start, "dnssMinimumExpansion=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "dnssMinimumExpansion=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "dnssMinimumExpansion=")) {
 			goto _error;
 		}
-		if(value > 100) {
+		if (value > 100) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dnssMinimumExpansion=", (UDATA)0, (UDATA)100);
 			goto _error;
 		}
@@ -672,12 +672,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}	
 	
-	if(try_scan(scan_start, "dnssExpectedTimeRatioMinimum=")) {
+	if (try_scan(scan_start, "dnssExpectedTimeRatioMinimum=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "dnssExpectedTimeRatioMinimum=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "dnssExpectedTimeRatioMinimum=")) {
 			goto _error;
 		}
-		if(value > 100) {
+		if (value > 100) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dnssExpectedTimeRatioMinimum=", (UDATA)0, (UDATA)100);
 			goto _error;
 		}
@@ -686,12 +686,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "dnssExpectedTimeRatioMaximum=")) {
+	if (try_scan(scan_start, "dnssExpectedTimeRatioMaximum=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "dnssExpectedTimeRatioMaximum=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "dnssExpectedTimeRatioMaximum=")) {
 			goto _error;
 		}
-		if(value > 100) {
+		if (value > 100) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dnssExpectedTimeRatioMaximum=", (UDATA)0, (UDATA)100);
 			goto _error;
 		}
@@ -700,12 +700,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "dnssWeightedTimeRatioFactorIncreaseSmall=")) {
+	if (try_scan(scan_start, "dnssWeightedTimeRatioFactorIncreaseSmall=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "dnssWeightedTimeRatioFactorIncreaseSmall=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "dnssWeightedTimeRatioFactorIncreaseSmall=")) {
 			goto _error;
 		}
-		if(value > 100) {
+		if (value > 100) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dnssWeightedTimeRatioFactorIncreaseSmall=", (UDATA)0, (UDATA)100);
 			goto _error;
 		}
@@ -713,12 +713,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "dnssWeightedTimeRatioFactorIncreaseMedium=")) {
+	if (try_scan(scan_start, "dnssWeightedTimeRatioFactorIncreaseMedium=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "dnssWeightedTimeRatioFactorIncreaseMedium=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "dnssWeightedTimeRatioFactorIncreaseMedium=")) {
 			goto _error;
 		}
-		if(value > 100) {
+		if (value > 100) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dnssWeightedTimeRatioFactorIncreaseMedium=", (UDATA)0, (UDATA)100);
 			goto _error;
 		}
@@ -726,12 +726,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "dnssWeightedTimeRatioFactorIncreaseLarge=")) {
+	if (try_scan(scan_start, "dnssWeightedTimeRatioFactorIncreaseLarge=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "dnssWeightedTimeRatioFactorIncreaseLarge=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "dnssWeightedTimeRatioFactorIncreaseLarge=")) {
 			goto _error;
 		}
-		if(value > 100) {
+		if (value > 100) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dnssWeightedTimeRatioFactorIncreaseLarge=", (UDATA)0, (UDATA)100);
 			goto _error;
 		}
@@ -739,12 +739,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "dnssWeightedTimeRatioFactorDecrease=")) {
+	if (try_scan(scan_start, "dnssWeightedTimeRatioFactorDecrease=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "dnssWeightedTimeRatioFactorDecrease=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "dnssWeightedTimeRatioFactorDecrease=")) {
 			goto _error;
 		}
-		if(value > 100) {
+		if (value > 100) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dnssWeightedTimeRatioFactorDecrease=", (UDATA)0, (UDATA)100);
 			goto _error;
 		}
@@ -755,12 +755,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 #endif /* J9VM_GC_DYNAMIC_NEW_SPACE_SIZING */
 #endif /* J9VM_GC_MODRON_SCAVENGER */
 
-	if(try_scan(scan_start, "globalMaximumContraction=")) {
+	if (try_scan(scan_start, "globalMaximumContraction=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "globalMaximumContraction=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "globalMaximumContraction=")) {
 			goto _error;
 		}
-		if(value > 100) {
+		if (value > 100) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "globalMaximumContraction=", (UDATA)0, (UDATA)100);
 			goto _error;
 		}
@@ -768,12 +768,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "globalMinimumContraction=")) {
+	if (try_scan(scan_start, "globalMinimumContraction=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "globalMinimumContraction=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "globalMinimumContraction=")) {
 			goto _error;
 		}
-		if(value > 100) {
+		if (value > 100) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "globalMinimumContraction=", (UDATA)0, (UDATA)100);
 			goto _error;
 		}
@@ -782,12 +782,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 	}
 
 	/* Alternate option to set globalMaximumContraction */
-	if(try_scan(scan_start, "maxContractPercent=")) {
+	if (try_scan(scan_start, "maxContractPercent=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "maxContractPercent=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "maxContractPercent=")) {
 			goto _error;
 		}
-		if(value > 100) {
+		if (value > 100) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "maxContractPercent=", (UDATA)0, (UDATA)100);
 			goto _error;
 		}
@@ -796,12 +796,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 	}
 
 	/* Alternate option to set globalMinimumContraction */
-	if(try_scan(scan_start, "minContractPercent=")) {
+	if (try_scan(scan_start, "minContractPercent=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "minContractPercent=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "minContractPercent=")) {
 			goto _error;
 		}
-		if(value > 100) {
+		if (value > 100) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "minContractPercent=", (UDATA)0, (UDATA)100);
 			goto _error;
 		}
@@ -809,17 +809,17 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "excessiveGCdebug")) {
+	if (try_scan(scan_start, "excessiveGCdebug")) {
 		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTION_DEPRECATED, "-Xgc:excessiveGCdebug=", "-Xtgc:excessivegc");
 		goto _error;
 	}
 
-	if(try_scan(scan_start, "excessiveGCratio=")) {
+	if (try_scan(scan_start, "excessiveGCratio=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "excessiveGCratio=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "excessiveGCratio=")) {
 			goto _error;
 		}
-		if((value > 100) || (value < 10)) {
+		if ((value > 100) || (value < 10)) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "excessiveGCratio=", (UDATA)10, (UDATA)100);
 			goto _error;
 		}
@@ -827,12 +827,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "excessiveGCFreeSizeRatio=")) {
+	if (try_scan(scan_start, "excessiveGCFreeSizeRatio=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "excessiveGCFreeSizeRatio=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "excessiveGCFreeSizeRatio=")) {
 			goto _error;
 		}
-		if(value > 100) {
+		if (value > 100) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "excessiveGCFreeSizeRatio=", (UDATA)0, (UDATA)100);
 			goto _error;
 		}
@@ -840,12 +840,12 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 	
-	if(try_scan(scan_start, "excessiveGCnewRatioWeight=")) {
+	if (try_scan(scan_start, "excessiveGCnewRatioWeight=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "excessiveGCnewRatioWeight=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "excessiveGCnewRatioWeight=")) {
 			goto _error;
 		}
-		if((value < 1) || (value > 90)) {
+		if ((value < 1) || (value > 90)) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "excessiveGCnewRatioWeight=", (UDATA)1, (UDATA)90);
 			goto _error;
 		}
@@ -854,7 +854,7 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 	}
 
 #if defined(J9VM_GC_MODRON_COMPACTION)
-	if(try_scan(scan_start, "stdGlobalCompactToSatisfyAllocate")) {
+	if (try_scan(scan_start, "stdGlobalCompactToSatisfyAllocate")) {
 		extensions->compactToSatisfyAllocate = true;
 		goto _exit;
 	}
@@ -862,9 +862,9 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 	/* Incremental compaction is no longer supported.
 	 * Options are supported but deprecated.
 	 */
-	if(try_scan(scan_start, "icompact=")) {
+	if (try_scan(scan_start, "icompact=")) {
 		UDATA incrementalCompactSteps;
-		if(!scan_udata_helper(javaVM, scan_start, &incrementalCompactSteps, "icompact=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &incrementalCompactSteps, "icompact=")) {
 			goto _error;
 		}
 		goto _exit;
@@ -872,18 +872,18 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 #endif /* J9VM_GC_MODRON_COMPACTION */
 
 #if defined (OMR_GC_MODRON_CONCURRENT_MARK)
-	if(try_scan(scan_start, "concurrentMark")) {
+	if (try_scan(scan_start, "concurrentMark")) {
 		extensions->configurationOptions._forceOptionConcurrentMark = true;
 		extensions->concurrentMark = true;
 		goto _exit;
 	}
 	
-	if(try_scan(scan_start, "noConcurrentMarkKO")) {
+	if (try_scan(scan_start, "noConcurrentMarkKO")) {
 		extensions->concurrentKickoffEnabled = false;
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "concurrentSlack=")) {
+	if (try_scan(scan_start, "concurrentSlack=")) {
 	
 		/* if concurrentSlack=macrofrag is set, we will count estimateFragmentation when deciding concurrentgc kickoff , concurrentSlackFragmentationAdjustmentWeight is set as 1.0 as default */
 		if (try_scan(scan_start, "macrofrag")) {
@@ -893,7 +893,7 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 			goto _exit;
 		} else {
 			UDATA value;
-			if(!scan_udata_helper(javaVM, scan_start, &value, "concurrentSlack=")) {
+			if (!scan_udata_helper(javaVM, scan_start, &value, "concurrentSlack=")) {
 				goto _error;
 			}
 			extensions->concurrentSlack = value;
@@ -903,10 +903,10 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 
 	if (try_scan(scan_start, "concurrentSlackFragmentationAdjustmentWeight=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "concurrentSlackFragmentationAdjustmentWeight=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "concurrentSlackFragmentationAdjustmentWeight=")) {
 			goto _error;
 		}
-		if(value > 500) {
+		if (value > 500) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "concurrentSlackFragmentationAdjustmentWeight==", (UDATA)0, (UDATA)500);
 			goto _error;
 		}
@@ -914,33 +914,33 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "noConcurrentMark")) {
+	if (try_scan(scan_start, "noConcurrentMark")) {
 		extensions->configurationOptions._forceOptionConcurrentMark = true;
 		extensions->concurrentMark = false;
 		goto _exit;
 	}		
 
-	if(try_scan(scan_start, "optimizeConcurrentWB")) {
+	if (try_scan(scan_start, "optimizeConcurrentWB")) {
 		extensions->optimizeConcurrentWB = true;
 		goto _exit;
 	}
 	
-	if(try_scan(scan_start, "noOptimizeConcurrentWB")) {
+	if (try_scan(scan_start, "noOptimizeConcurrentWB")) {
 		extensions->optimizeConcurrentWB = false;
 		goto _exit;
 	}	
 	
-	if(try_scan(scan_start, "debugConcurrentMark")) {
+	if (try_scan(scan_start, "debugConcurrentMark")) {
 		extensions->debugConcurrentMark = true;
 		goto _exit;
 	}
 	
-	if(try_scan(scan_start, "cardCleaningPasses=")) {
+	if (try_scan(scan_start, "cardCleaningPasses=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "cardCleaningPasses=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "cardCleaningPasses=")) {
 			goto _error;
 		}
-		if(value > 2) {
+		if (value > 2) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "cardCleaningPasses=", (UDATA)0, (UDATA)2);
 			goto _error;
 		}
@@ -948,21 +948,21 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 	
-	if(try_scan(scan_start, "cardCleanPass2Boost=")) {
-		if(!scan_udata_helper(javaVM, scan_start, &extensions->cardCleanPass2Boost, "cardCleanPass2Boost=")) {
+	if (try_scan(scan_start, "cardCleanPass2Boost=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &extensions->cardCleanPass2Boost, "cardCleanPass2Boost=")) {
 			goto _error;
 		}
 		goto _exit;
 	}
 #endif /* OMR_GC_MODRON_CONCURRENT_MARK */
 
-	if(try_scan(scan_start, "version")) {
+	if (try_scan(scan_start, "version")) {
 		j9tty_printf(PORTLIB, "GC Version: %s\n", versionString);
 		goto _exit;
 	}
 
 #if defined(J9VM_GC_BATCH_CLEAR_TLH)
-	if(try_scan(scan_start, "batchClearTLH")) {
+	if (try_scan(scan_start, "batchClearTLH")) {
 		extensions->batchClearTLH = 1;
 		goto _exit;
 	}
@@ -973,35 +973,35 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 	 * Temporary: Accept but silently ignore any subpool option
 	 * subpool gc policy is not supported any more just it is an alias for optthruput
 	 */
-	if(try_scan(scan_start, "subPoolsDebug")) {
+	if (try_scan(scan_start, "subPoolsDebug")) {
 		goto _exit;
 	}
 		
-	if(try_scan(scan_start, "disableSubPoolLargeHeap")) {
+	if (try_scan(scan_start, "disableSubPoolLargeHeap")) {
 		goto _exit;
 	}	
 	
-	if(try_scan(scan_start, "microFragmentationDetectionThreshold=")) {
+	if (try_scan(scan_start, "microFragmentationDetectionThreshold=")) {
 		UDATA value;
-		if(!scan_udata_helper(javaVM, scan_start, &value, "microFragmentationDetectionThreshold=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &value, "microFragmentationDetectionThreshold=")) {
 			goto _error;
 		}
 		goto _exit;
 	}
 		
-	if(try_scan(scan_start, "microFragmentationDetection")) {
+	if (try_scan(scan_start, "microFragmentationDetection")) {
 		goto _exit;
 	}	
 #endif /* defined(J9VM_GC_SUBPOOLS_ALIAS) */
 
 #if defined(J9VM_GC_CONCURRENT_SWEEP)
-	if(try_scan(scan_start, "concurrentSweep")) {
+	if (try_scan(scan_start, "concurrentSweep")) {
 		extensions->configurationOptions._forceOptionConcurrentSweep = true;
 		extensions->concurrentSweep = true;
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "noConcurrentSweep")) {
+	if (try_scan(scan_start, "noConcurrentSweep")) {
 		extensions->configurationOptions._forceOptionConcurrentSweep = true;
 		extensions->concurrentSweep = false;
 		goto _exit;
@@ -1009,7 +1009,7 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 #endif /* J9VM_GC_CONCURRENT_SWEEP */
 
 	/* Additional -Xgc:fvtest options */
-	if(try_scan(scan_start, "fvtest=")) {
+	if (try_scan(scan_start, "fvtest=")) {
 #if defined(J9VM_GC_MODRON_SCAVENGER) || defined(J9VM_GC_VLHGC)
 #if defined(J9VM_GC_MODRON_SCAVENGER)
 		/* This option forces the scavenger to backout every other collect */
@@ -1040,7 +1040,7 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		/* This takes a UDATA that restricts the number of scan caches - used to force scan cache overflow */
 		if (try_scan(scan_start, "scanCacheCount")) {
 			/* Read in restricted scan cache size */
-			if(!scan_udata_helper(javaVM, scan_start, &extensions->fvtest_scanCacheCount, "scanCacheCount")) {
+			if (!scan_udata_helper(javaVM, scan_start, &extensions->fvtest_scanCacheCount, "scanCacheCount")) {
 				goto _error;
 			}
 			goto _exit;
@@ -1069,7 +1069,7 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 
 		/* Force an excessive GC to throw OOM after this many global GCs */
 		if (try_scan(scan_start, "forceExcessiveAllocFailureAfter=")) {
-			if(!scan_udata_helper(javaVM, scan_start, &(extensions->fvtest_forceExcessiveAllocFailureAfter), "forceExcessiveAllocFailureAfter=")) {
+			if (!scan_udata_helper(javaVM, scan_start, &(extensions->fvtest_forceExcessiveAllocFailureAfter), "forceExcessiveAllocFailureAfter=")) {
 				goto _error;
 			}
 			goto _exit;
@@ -1077,13 +1077,13 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 
 		/* VM Design 1869: force the heap to be allocated between these values */
 		if (try_scan(scan_start, "verifyHeapAbove=")) {
-			if(!scan_udata_memory_size_helper(javaVM, scan_start, (UDATA *)&(extensions->fvtest_verifyHeapAbove), "verifyHeapAbove=")) {
+			if (!scan_udata_memory_size_helper(javaVM, scan_start, (UDATA *)&(extensions->fvtest_verifyHeapAbove), "verifyHeapAbove=")) {
 				goto _error;
 			}
 			goto _exit;
 		}
 		if (try_scan(scan_start, "verifyHeapBelow=")) {
-			if(!scan_udata_memory_size_helper(javaVM, scan_start, (UDATA *)&(extensions->fvtest_verifyHeapBelow), "verifyHeapBelow=")) {
+			if (!scan_udata_memory_size_helper(javaVM, scan_start, (UDATA *)&(extensions->fvtest_verifyHeapBelow), "verifyHeapBelow=")) {
 				goto _error;
 			}
 			goto _exit;
@@ -1095,7 +1095,7 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		}
 #endif /* defined(J9VM_GC_VLHGC) */
 		
-		if( try_scan(scan_start, "disableInlineAllocation")) {
+		if (try_scan(scan_start, "disableInlineAllocation")) {
 			extensions->fvtest_disableInlineAllocation = true;
 			goto _exit;
 		}
@@ -1119,7 +1119,7 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 
 #if defined(J9VM_GC_MODRON_SCAVENGER) || defined(J9VM_GC_VLHGC)
 	/* If dynamicBreadthFirstScanOrdering is enabled, set scavengerScanOrdering and other required options */
-	if(try_scan(scan_start, "dynamicBreadthFirstScanOrdering")) {
+	if (try_scan(scan_start, "dynamicBreadthFirstScanOrdering")) {
 		extensions->scavengerScanOrdering = MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_DYNAMIC_BREADTH_FIRST;
 		/* Below options are required options for dynamicBreadthFirstScanOrdering */
 		extensions->scavengerAlignHotFields = false;
@@ -1130,42 +1130,42 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 #if defined(J9VM_GC_MODRON_SCAVENGER)
 	if (try_scan(scan_start, "scanCacheSize=")) {
 		/* Read in restricted scan cache size */
-		if(!scan_udata_helper(javaVM, scan_start, &extensions->scavengerScanCacheMaximumSize, "scanCacheSize=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &extensions->scavengerScanCacheMaximumSize, "scanCacheSize=")) {
 			goto _error;
 		}
-		if(0 == extensions->scavengerScanCacheMaximumSize) {
+		if (0 == extensions->scavengerScanCacheMaximumSize) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, "scanCacheSize=", (UDATA)0);
 			goto _error;
 		}
 		goto _exit;
 	}
 	
-	if(try_scan(scan_start, "hierarchicalScanOrdering")) {
+	if (try_scan(scan_start, "hierarchicalScanOrdering")) {
 		extensions->scavengerScanOrdering = MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_HIERARCHICAL;
 		goto _exit;
 	}
 	
-	if(try_scan(scan_start, "breadthFirstScanOrdering")) {
+	if (try_scan(scan_start, "breadthFirstScanOrdering")) {
 		extensions->scavengerScanOrdering = MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_BREADTH_FIRST;
 		goto _exit;
 	}
 #endif /* J9VM_GC_MODRON_SCAVENGER */
 
-	if(try_scan(scan_start, "alwaysCallWriteBarrier")) {
+	if (try_scan(scan_start, "alwaysCallWriteBarrier")) {
 		extensions->alwaysCallWriteBarrier = true;
 		goto _exit;
 	}
 	
-	if(try_scan(scan_start, "alwaysCallReadBarrier")) {
+	if (try_scan(scan_start, "alwaysCallReadBarrier")) {
 		extensions->alwaysCallReadBarrier = true;
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "sweepchunksize=")) {
-		if(!scan_udata_helper(javaVM, scan_start, &extensions->parSweepChunkSize, "sweepchunksize=")) {
+	if (try_scan(scan_start, "sweepchunksize=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &extensions->parSweepChunkSize, "sweepchunksize=")) {
 			goto _error;
 		}
-		if(0 == extensions->parSweepChunkSize) {
+		if (0 == extensions->parSweepChunkSize) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, "sweepchunksize=", (UDATA)0);
 			goto _error;
 		}
@@ -1174,11 +1174,11 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 
-	if(try_scan(scan_start, "verbosegcCycleTime=")) {
-		if(!scan_udata_helper(javaVM, scan_start, &extensions->verbosegcCycleTime, "verbosegcCycleTime=")) {
+	if (try_scan(scan_start, "verbosegcCycleTime=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &extensions->verbosegcCycleTime, "verbosegcCycleTime=")) {
 			goto _error;
 		}
-		if(0 == extensions->verbosegcCycleTime) {
+		if (0 == extensions->verbosegcCycleTime) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, "verbosegcCycleTime=", (UDATA)0);
 			goto _error;
 		}
@@ -1276,10 +1276,10 @@ gcParseXgcArguments(J9JavaVM *vm, char *optArg)
 
 #if defined(J9VM_GC_JNI_ARRAY_CACHE)
 		if (try_scan(&scan_start, "jniArrayCacheMax=")) {
-			if(try_scan(&scan_start, "unlimited")) {
+			if (try_scan(&scan_start, "unlimited")) {
 				vm->jniArrayCacheMaxSize=((UDATA)-1);
 			} else {
-				if(!scan_udata_helper(vm, &scan_start, &vm->jniArrayCacheMaxSize, "jniArrayCacheMax=")) {
+				if (!scan_udata_helper(vm, &scan_start, &vm->jniArrayCacheMaxSize, "jniArrayCacheMax=")) {
 					returnValue = JNI_EINVAL;
 					break;
 				}
@@ -1293,7 +1293,7 @@ gcParseXgcArguments(J9JavaVM *vm, char *optArg)
 			if (try_scan(&scan_start, "nodelay")) {
 				extensions->finalizeCycleInterval = -1;
 			} else {
-				if(!scan_udata_helper(vm, &scan_start, (UDATA *)&extensions->finalizeCycleInterval, "finInterval=")) {
+				if (!scan_udata_helper(vm, &scan_start, (UDATA *)&extensions->finalizeCycleInterval, "finInterval=")) {
 					returnValue = JNI_EINVAL;
 					break;
 				}
@@ -1305,11 +1305,11 @@ gcParseXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 		if (try_scan(&scan_start, "finalizeMainPriority=")) {
-			if(!scan_udata_helper(vm, &scan_start, &extensions->finalizeMainPriority, "finalizeMainPriority=")) {
+			if (!scan_udata_helper(vm, &scan_start, &extensions->finalizeMainPriority, "finalizeMainPriority=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
-			if((extensions->finalizeMainPriority < J9THREAD_PRIORITY_USER_MIN) || (extensions->finalizeMainPriority > J9THREAD_PRIORITY_USER_MAX)) {
+			if ((extensions->finalizeMainPriority < J9THREAD_PRIORITY_USER_MIN) || (extensions->finalizeMainPriority > J9THREAD_PRIORITY_USER_MAX)) {
 				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "-Xgc:finalizeMainPriority", (UDATA)J9THREAD_PRIORITY_USER_MIN, (UDATA)J9THREAD_PRIORITY_USER_MAX);
 				returnValue = JNI_EINVAL;
 				break;
@@ -1317,11 +1317,11 @@ gcParseXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 		if (try_scan(&scan_start, "finalizeWorkerPriority=")) {
-			if(!scan_udata_helper(vm, &scan_start, &extensions->finalizeWorkerPriority, "finalizeWorkerPriority=")) {
+			if (!scan_udata_helper(vm, &scan_start, &extensions->finalizeWorkerPriority, "finalizeWorkerPriority=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
-			if((extensions->finalizeWorkerPriority < J9THREAD_PRIORITY_USER_MIN) || (extensions->finalizeWorkerPriority > J9THREAD_PRIORITY_USER_MAX)) {
+			if ((extensions->finalizeWorkerPriority < J9THREAD_PRIORITY_USER_MIN) || (extensions->finalizeWorkerPriority > J9THREAD_PRIORITY_USER_MAX)) {
 				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "-Xgc:finalizeWorkerPriority", (UDATA)J9THREAD_PRIORITY_USER_MIN, (UDATA)J9THREAD_PRIORITY_USER_MAX);
 				returnValue = JNI_EINVAL;
 				break;
@@ -1332,21 +1332,21 @@ gcParseXgcArguments(J9JavaVM *vm, char *optArg)
 
 #if defined(J9MODRON_USE_CUSTOM_SPINLOCKS)
 		if (try_scan(&scan_start, "spinCount1=")) {
-			if(!scan_udata_helper(vm, &scan_start, &extensions->lnrlOptions.spinCount1, "spinCount1=")) {
+			if (!scan_udata_helper(vm, &scan_start, &extensions->lnrlOptions.spinCount1, "spinCount1=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
 			continue;
 		}
 		if (try_scan(&scan_start, "spinCount2=")) {
-			if(!scan_udata_helper(vm, &scan_start, &extensions->lnrlOptions.spinCount2, "spinCount2=")) {
+			if (!scan_udata_helper(vm, &scan_start, &extensions->lnrlOptions.spinCount2, "spinCount2=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
 			continue;
 		}
 		if (try_scan(&scan_start, "spinCount3=")) {
-			if(!scan_udata_helper(vm, &scan_start, &extensions->lnrlOptions.spinCount3, "spinCount3=")) {
+			if (!scan_udata_helper(vm, &scan_start, &extensions->lnrlOptions.spinCount3, "spinCount3=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
@@ -1356,7 +1356,7 @@ gcParseXgcArguments(J9JavaVM *vm, char *optArg)
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 		if (try_scan(&scan_start, "deadClassLoaderCache=")) {
-			if(!scan_udata_memory_size_helper(vm, &scan_start, &extensions->deadClassLoaderCacheSize, "deadClassLoaderCache=")) {
+			if (!scan_udata_memory_size_helper(vm, &scan_start, &extensions->deadClassLoaderCacheSize, "deadClassLoaderCache=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
@@ -1364,26 +1364,26 @@ gcParseXgcArguments(J9JavaVM *vm, char *optArg)
 		}
 		
 		if (try_scan(&scan_start, "classUnloadingThreshold=")) {
-			if ( !scan_udata_helper(vm, &scan_start, &extensions->dynamicClassUnloadingThreshold, "classUnloadingThreshold=")) {
+			if (!scan_udata_helper(vm, &scan_start, &extensions->_dynamicClassUnloadingThreshold, "classUnloadingThreshold=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
-			extensions->dynamicClassUnloadingThresholdForced = true;
+			extensions->_dynamicClassUnloadingThresholdForced = true;
 			continue;
 		}
 		
 		if (try_scan(&scan_start,"classUnloadingKickoffThreshold=")) {
-			if ( !scan_udata_helper(vm, &scan_start, &extensions->dynamicClassUnloadingKickoffThreshold, "classUnloadingKickoffThreshold=")) {
+			if (!scan_udata_helper(vm, &scan_start, &extensions->_dynamicClassUnloadingKickoffThreshold, "classUnloadingKickoffThreshold=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
-			extensions->dynamicClassUnloadingKickoffThresholdForced = true;
+			extensions->_dynamicClassUnloadingKickoffThresholdForced = true;
 			continue;
 		}
 
 		if (try_scan(&scan_start, "classUnloadingAnonymousClassWeight=")) {
 			UDATA divisor = 0;
-			if(!scan_udata_helper(vm, &scan_start, &divisor, "classUnloadingAnonymousClassWeight=")) {
+			if (!scan_udata_helper(vm, &scan_start, &divisor, "classUnloadingAnonymousClassWeight=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
@@ -1393,7 +1393,7 @@ gcParseXgcArguments(J9JavaVM *vm, char *optArg)
 				returnValue = JNI_EINVAL;
 				break;
 			} else {
-				extensions->classUnloadingAnonymousClassWeight = (1.0 / (double)divisor);
+				extensions->_classUnloadingAnonymousClassWeight = (1.0 / (double)divisor);
 			}
 			continue;
 		}
@@ -1401,7 +1401,7 @@ gcParseXgcArguments(J9JavaVM *vm, char *optArg)
 
 
 		if (try_scan(&scan_start, "allocationSamplingGranularity=")) {
-			if ( !scan_udata_memory_size_helper(vm, &scan_start, &extensions->oolObjectSamplingBytesGranularity, "allocationSamplingGranularity=")) {
+			if (!scan_udata_memory_size_helper(vm, &scan_start, &extensions->oolObjectSamplingBytesGranularity, "allocationSamplingGranularity=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
@@ -1422,7 +1422,7 @@ gcParseXgcArguments(J9JavaVM *vm, char *optArg)
 		/* see if we are forcing shifting to a specific value */
 		if (try_scan(&scan_start, "preferredHeapBase=")) {
 			UDATA preferredHeapBase = 0;
-			if(!scan_hex_helper(vm, &scan_start, &preferredHeapBase, "preferredHeapBase=")) {
+			if (!scan_hex_helper(vm, &scan_start, &preferredHeapBase, "preferredHeapBase=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
@@ -1437,11 +1437,11 @@ gcParseXgcArguments(J9JavaVM *vm, char *optArg)
 
 		/* see if they are requesting an initial suballocator heap size */
 		if (try_scan(&scan_start, "suballocatorInitialSize=")) {
-			if(!scan_udata_memory_size_helper(vm, &scan_start, &extensions->suballocatorInitialSize, "suballocatorInitialSize=")) {
+			if (!scan_udata_memory_size_helper(vm, &scan_start, &extensions->suballocatorInitialSize, "suballocatorInitialSize=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
-			if(0 == extensions->suballocatorInitialSize) {
+			if (0 == extensions->suballocatorInitialSize) {
 				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, "-Xgc:suballocatorInitialSize=", (UDATA)0);
 				returnValue = JNI_EINVAL;
 				break;
@@ -1451,11 +1451,11 @@ gcParseXgcArguments(J9JavaVM *vm, char *optArg)
 		
 		/* see if they are requesting a commit suballocator heap size */
 		if (try_scan(&scan_start, "suballocatorCommitSize=")) {
-			if(!scan_udata_memory_size_helper(vm, &scan_start, &extensions->suballocatorCommitSize, "suballocatorCommitSize=")) {
+			if (!scan_udata_memory_size_helper(vm, &scan_start, &extensions->suballocatorCommitSize, "suballocatorCommitSize=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
-			if(0 == extensions->suballocatorCommitSize) {
+			if (0 == extensions->suballocatorCommitSize) {
 				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, "-Xgc:suballocatorCommitSize=", (UDATA)0);
 				returnValue = JNI_EINVAL;
 				break;
@@ -1502,7 +1502,7 @@ gcParseXgcArguments(J9JavaVM *vm, char *optArg)
 
 		/* Check for a user-specified region size for the fixed-sized table regions */
 		if (try_scan(&scan_start, "regionSize=")) {
-			if(!scan_udata_memory_size_helper(vm, &scan_start, &extensions->regionSize, "regionSize=")) {
+			if (!scan_udata_memory_size_helper(vm, &scan_start, &extensions->regionSize, "regionSize=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
@@ -1529,14 +1529,14 @@ gcParseXgcArguments(J9JavaVM *vm, char *optArg)
 
 #if defined (J9VM_GC_VLHGC)
 		if (try_scan(&scan_start, "fvtest_tarokForceNUMANode=")) {
-			if(!scan_udata_helper(vm, &scan_start, &extensions->fvtest_tarokForceNUMANode, "fvtest_tarokForceNUMANode=")) {
+			if (!scan_udata_helper(vm, &scan_start, &extensions->fvtest_tarokForceNUMANode, "fvtest_tarokForceNUMANode=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
 			continue;
 		}
 		if (try_scan(&scan_start, "fvtest_tarokFirstContext=")) {
-			if(!scan_udata_helper(vm, &scan_start, &extensions->fvtest_tarokFirstContext, "fvtest_tarokFirstContext=")) {
+			if (!scan_udata_helper(vm, &scan_start, &extensions->fvtest_tarokFirstContext, "fvtest_tarokFirstContext=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}

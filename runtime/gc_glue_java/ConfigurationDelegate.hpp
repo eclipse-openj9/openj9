@@ -97,7 +97,7 @@ public:
 		/* set allocation type for J9 VM */
 		javaVM->gcAllocationType = allocationType;
 
-		if (!_extensions->dynamicClassUnloadingSet) {
+		if (!_extensions->_dynamicClassUnloadingSet) {
 			_extensions->dynamicClassUnloading = MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_ON_CLASS_LOADER_CHANGES;
 		}
 
@@ -111,11 +111,11 @@ public:
 #define DYNAMIC_CLASS_UNLOADING_THRESHOLD			6
 #define DYNAMIC_CLASS_UNLOADING_KICKOFF_THRESHOLD	80000
 
-		if (!_extensions->dynamicClassUnloadingThresholdForced) {
-			_extensions->dynamicClassUnloadingThreshold = DYNAMIC_CLASS_UNLOADING_THRESHOLD;
+		if (!_extensions->_dynamicClassUnloadingThresholdForced) {
+			_extensions->_dynamicClassUnloadingThreshold = DYNAMIC_CLASS_UNLOADING_THRESHOLD;
 		}
-		if (!_extensions->dynamicClassUnloadingKickoffThresholdForced) {
-			_extensions->dynamicClassUnloadingKickoffThreshold = DYNAMIC_CLASS_UNLOADING_KICKOFF_THRESHOLD;
+		if (!_extensions->_dynamicClassUnloadingKickoffThresholdForced) {
+			_extensions->_dynamicClassUnloadingKickoffThreshold = DYNAMIC_CLASS_UNLOADING_KICKOFF_THRESHOLD;
 		}
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)

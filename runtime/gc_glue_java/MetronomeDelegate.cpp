@@ -188,11 +188,11 @@ MM_MetronomeDelegate::initialize(MM_EnvironmentBase *env)
 	}
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-	if (!_extensions->dynamicClassUnloadingThresholdForced) {
-		_extensions->dynamicClassUnloadingThreshold = 1;
+	if (!_extensions->_dynamicClassUnloadingThresholdForced) {
+		_extensions->_dynamicClassUnloadingThreshold = 1;
 	}
-	if (!_extensions->dynamicClassUnloadingKickoffThresholdForced) {
-		_extensions->dynamicClassUnloadingKickoffThreshold = 0;
+	if (!_extensions->_dynamicClassUnloadingKickoffThresholdForced) {
+		_extensions->_dynamicClassUnloadingKickoffThreshold = 0;
 	}
 #endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
 
@@ -335,13 +335,13 @@ MM_MetronomeDelegate::mainSetupForGC(MM_EnvironmentBase *env)
 	/* Set the dynamic class unloading flag based on command line and runtime state */
 	switch (_extensions->dynamicClassUnloading) {
 		case MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_NEVER:
-			_extensions->runtimeCheckDynamicClassUnloading = false;
+			_extensions->_runtimeCheckDynamicClassUnloading = false;
 			break;
 		case MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_ALWAYS:
-			_extensions->runtimeCheckDynamicClassUnloading = true;
+			_extensions->_runtimeCheckDynamicClassUnloading = true;
 			break;
 		case MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_ON_CLASS_LOADER_CHANGES:
-			 _extensions->runtimeCheckDynamicClassUnloading = (_extensions->aggressive || _extensions->classLoaderManager->isTimeForClassUnloading(env));
+			 _extensions->_runtimeCheckDynamicClassUnloading = (_extensions->aggressive || _extensions->classLoaderManager->isTimeForClassUnloading(env));
 			break;
 		default:
 			break;
@@ -372,7 +372,7 @@ void
 MM_MetronomeDelegate::incrementalCollectStart(MM_EnvironmentRealtime *env)
 {
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-	_dynamicClassUnloadingEnabled = ((_extensions->runtimeCheckDynamicClassUnloading != 0) ? true : false);
+	_dynamicClassUnloadingEnabled = ((_extensions->_runtimeCheckDynamicClassUnloading != 0) ? true : false);
 #endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
 }
 
@@ -381,9 +381,9 @@ MM_MetronomeDelegate::incrementalCollect(MM_EnvironmentRealtime *env)
 {
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	_dynamicClassUnloadingEnabled = ((_extensions->runtimeCheckDynamicClassUnloading != 0) ? true : false);
+	_dynamicClassUnloadingEnabled = ((_extensions->_runtimeCheckDynamicClassUnloading != 0) ? true : false);
 
-	if (_extensions->runtimeCheckDynamicClassUnloading != 0) {
+	if (_extensions->_runtimeCheckDynamicClassUnloading != 0) {
 		MM_ClassUnloadStats *classUnloadStats = &_extensions->globalGCStats.classUnloadStats;
 		_realtimeGC->setCollectorUnloadingClassLoaders();
 		reportClassUnloadingStart(env);
