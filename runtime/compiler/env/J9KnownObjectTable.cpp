@@ -92,10 +92,19 @@ J9::KnownObjectTable::getOrCreateIndex(uintptr_t objectPointer)
    _objectInfos[nextIndex]._jniReference = (uintptr_t*)thread->javaVM->internalVMFunctions->j9jni_createLocalRef((JNIEnv*)thread, (j9object_t)objectPointer);
    // Fill out the remaining fields of the entry
    TR_OpaqueClassBlock *objClass = fej9->getObjectClass(objectPointer);
-   _objectInfos[nextIndex]._clazz = objClass;
    _objectInfos[nextIndex]._isString = fej9->isString(objClass);
    _objectInfos[nextIndex]._jlClass = fej9->getClassClassPointer(objClass);
    _objectInfos[nextIndex]._isFixedJavaLangClass = (objClass == _objectInfos[nextIndex]._jlClass);
+   if (_objectInfos[nextIndex]._isFixedJavaLangClass)
+      {
+      // When the class happens to be java/lang/Class we change that
+      // to the class that the java/lang/Class object represents.
+      _objectInfos[nextIndex]._clazz = fej9->getClassFromJavaLangClass(objectPointer);
+      }
+   else
+      {
+      _objectInfos[nextIndex]._clazz = objClass;
+      }
    return nextIndex;
    }
 
