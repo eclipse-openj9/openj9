@@ -891,14 +891,26 @@ final class Access implements JavaLangAccess {
 
 	/*[IF JAVA_SPEC_VERSION >= 22]*/
 	@Override
+	/*[IF (JAVA_SPEC_VERSION >= 27) & !INLINE-TYPES]*/
+	public boolean bytesCompatible(String string, Charset charset, int srcIndex, int numChars) {
+		return string.bytesCompatible(charset, srcIndex, numChars);
+	}
+	/*[ELSE] (JAVA_SPEC_VERSION >= 27) & !INLINE-TYPES */
 	public boolean bytesCompatible(String string, Charset charset) {
 		return string.bytesCompatible(charset);
 	}
+	/*[ENDIF] (JAVA_SPEC_VERSION >= 27) & !INLINE-TYPES */
 
 	@Override
+	/*[IF (JAVA_SPEC_VERSION >= 27) & !INLINE-TYPES]*/
+	public void copyToSegmentRaw(String string, MemorySegment segment, long offset, int srcIndex, int srcLength) {
+		string.copyToSegmentRaw(segment, offset, srcIndex, srcLength);
+	}
+	/*[ELSE] (JAVA_SPEC_VERSION >= 27) & !INLINE-TYPES */
 	public void copyToSegmentRaw(String string, MemorySegment segment, long offset) {
 		string.copyToSegmentRaw(segment, offset);
 	}
+	/*[ENDIF] (JAVA_SPEC_VERSION >= 27) & !INLINE-TYPES */
 
 	@Override
 	public Method findMethod(Class<?> clazz, boolean publicOnly, String methodName, Class<?>... parameterTypes) {
