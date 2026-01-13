@@ -945,18 +945,6 @@ TR_J9ServerVM::getObjectClassFromKnownObjectIndex(TR::Compilation *comp, TR::Kno
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
 
-TR_OpaqueClassBlock *
-TR_J9ServerVM::getObjectClassFromKnownObjectIndex(TR::Compilation *comp,
-                                                  TR::KnownObjectTable::Index idx,
-                                                  bool *isJavaLangClass)
-   {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_getObjectClassFromKnownObjectIndexJLClass, idx);
-   auto recv = stream->read<TR_OpaqueClassBlock *, bool>();
-   *isJavaLangClass = std::get<1>(recv);
-   return std::get<0>(recv);
-   }
-
 uintptr_t
 TR_J9ServerVM::getStaticReferenceFieldAtAddress(uintptr_t fieldAddress)
    {

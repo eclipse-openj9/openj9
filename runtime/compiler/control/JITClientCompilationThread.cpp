@@ -623,15 +623,6 @@ handleResponse(JITServer::MessageType response, JITServer::ClientStream *client,
          client->write(response, fe->getObjectClassFromKnownObjectIndex(comp, idx));
          }
          break;
-      case MessageType::VM_getObjectClassFromKnownObjectIndexJLClass:
-         {
-         auto recv = client->getRecvData<TR::KnownObjectTable::Index>();
-         auto idx = std::get<0>(recv);
-         bool isJL;
-         TR_OpaqueClassBlock *result = fe->getObjectClassFromKnownObjectIndex(comp, idx, &isJL);
-         client->write(response, result, isJL);
-         }
-         break;
       case MessageType::VM_getObjectClassInfoFromKnotIndex:
          {
          auto recv = client->getRecvData<TR::KnownObjectTable::Index>();
