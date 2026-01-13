@@ -1030,6 +1030,7 @@ setupVMSnapshotImplPortLibrary(J9PortLibrary *portLibrary)
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	memcpy(&(vmSnapshotImplPortLibrary->portLibrary), privateOmrPortLibrary, sizeof(OMRPortLibrary));
 	vmSnapshotImplPortLibrary->portLibrary.mem_allocate_memory = snapshot_mem_allocate_memory;
+	vmSnapshotImplPortLibrary->portLibrary.mem_reallocate_memory = snapshot_mem_reallocate_memory;
 	vmSnapshotImplPortLibrary->portLibrary.mem_free_memory = snapshot_mem_free_memory;
 	vmSnapshotImplPortLibrary->portLibrary.mem_allocate_memory32 = snapshot_mem_allocate_memory32;
 	vmSnapshotImplPortLibrary->portLibrary.mem_free_memory32 = snapshot_mem_free_memory32;
