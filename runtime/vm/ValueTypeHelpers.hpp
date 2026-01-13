@@ -129,16 +129,21 @@ private:
 					break;
 				}
 				case 'L': {
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 					bool flattened = false;
 					J9Class *fieldClass = NULL;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 					rc = false;
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 					if (J9ROMFIELD_IS_NULL_RESTRICTED(result->field)) {
 						fieldClass = findJ9ClassInFlattenedClassCache(clazz->flattenedClassCache, sigChar + 1, J9UTF8_LENGTH(signature) - 2);
 						flattened = J9_IS_FIELD_FLATTENED(fieldClass, result->field);
 					}
 					if (flattened) {
 						rc = isSubstitutable(currentThread, objectAccessBarrier, lhs, rhs, startOffset + result->offset, fieldClass);
-					} else {
+					} else
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+					{
 						j9object_t lhsFieldObject = objectAccessBarrier.inlineMixedObjectReadObject(currentThread, lhs, startOffset + result->offset);
 						j9object_t rhsFieldObject = objectAccessBarrier.inlineMixedObjectReadObject(currentThread, rhs, startOffset + result->offset);
 
@@ -581,6 +586,34 @@ done:
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+	/**
+	 * Finds the J9FlattenedClassCacheEntry in the ramClass corresponding
+	 * to an offset. Asserts that an entry exists to a strict field.
+	 * @param ramClass class to search for field entry
+	 * @param matchOffset static field offset
+	 * @return J9FlattenedClassCacheEntry corresponding to matchOffset.
+	 */
+	static VMINLINE J9FlattenedClassCacheEntry *
+
+	findJ9FlattenedClassCacheEntryForStaticAddress(J9Class *ramClass, UDATA matchOffset)
+	{
+		J9FlattenedClassCacheEntry *entry = NULL;
+		UDATA numberOfEntries = 0;
+		Assert_VM_true(NULL != ramClass->flattenedClassCache);
+		numberOfEntries = ramClass->flattenedClassCache->numberOfEntries;
+		for (UDATA i = 0; i < numberOfEntries; i++) {
+			J9FlattenedClassCacheEntry *tempEntry = J9_VM_FCC_ENTRY_FROM_CLASS(ramClass, i);
+			if (tempEntry->offset == matchOffset) {
+				entry = tempEntry;
+				break;
+			}
+		}
+		Assert_VM_true(NULL != entry);
+		Assert_VM_true(J9_VM_FCC_ENTRY_IS_STATIC_FIELD(entry));
+		return entry;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 };
 
 #endif /* VALUETYPEHELPERS_HPP_ */

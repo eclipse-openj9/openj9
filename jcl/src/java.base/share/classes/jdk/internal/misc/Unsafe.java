@@ -4472,8 +4472,10 @@ public final class Unsafe {
 
 	public void notifyStrictStaticAccess(Class<?> clz, long staticFieldOffset, boolean writing) {
 		Objects.requireNonNull(clz);
-		throw new Error("notifyStrictStaticAccess() unimplemented"); //$NON-NLS-1$
+		notifyStrictStaticAccess0(clz, staticFieldOffset, writing);
 	}
+
+	private native void notifyStrictStaticAccess0(Class<?> clz, long staticFieldOffset, boolean writing);
 
 	public int[] getFieldMap(Class<?> clz) {
 		Objects.requireNonNull(clz);

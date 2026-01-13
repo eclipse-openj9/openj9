@@ -410,8 +410,10 @@ doVerify:
 					}
 				}
 
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-				/* verify flattenable fields */
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+				/* Verify fields in J9FlattenedClassCache. Set object addresses.
+				 * Set class addresses for static fields.
+				 */
 				if (NULL != clazz->flattenedClassCache) {
 					UDATA numberOfFlattenedFields = clazz->flattenedClassCache->numberOfEntries;
 
@@ -421,6 +423,10 @@ doVerify:
 						J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_CLASS(clazz, i);
 						J9Class *entryClazz = NULL;
 						bool isStatic = J9_VM_FCC_ENTRY_IS_STATIC_FIELD(entry);
+
+						if (J9_VM_FCC_ENTRY_IS_STRICT_STATIC_PRIMITIVE(entry)) {
+							continue;
+						}
 
 						if (isStatic) {
 							J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(entry->field);
@@ -456,7 +462,7 @@ doVerify:
 							entry->clazz = (J9Class *)((UDATA)valueClass | (UDATA)entry->clazz);
 						}
 						entryClazz = J9_VM_FCC_CLASS_FROM_ENTRY(entry);
-
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 						if (isStatic) {
 							omrthread_monitor_enter(vm->valueTypeVerificationMutex);
 							BOOLEAN cycleDetected = isCyclePresentInVerification(currentThread, entryClazz->classLoader, entryClazz);
@@ -470,6 +476,7 @@ doVerify:
 								continue;
 							}
 						}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 						Trc_VM_classInitStateMachine_verifyFlattenableField(currentThread, entryClazz);
 						PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
@@ -477,11 +484,13 @@ doVerify:
 						initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 						clazz = VM_VMHelpers::currentClass(clazz);
 
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 						if (isStatic) {
 							omrthread_monitor_enter(vm->valueTypeVerificationMutex);
 							popFromVerificationStack(currentThread);
 							omrthread_monitor_exit(vm->valueTypeVerificationMutex);
 						}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 						if (VM_VMHelpers::exceptionPending(currentThread)) {
 							initializationLock = setInitStatus(currentThread, clazz, J9ClassInitUnverified, initializationLock);
@@ -490,7 +499,7 @@ doVerify:
 						}
 					}
 				}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 				/* Verify this class */
 				PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
@@ -597,6 +606,11 @@ doVerify:
 
 					for (UDATA i = 0; i < numberOfFlattenedFields; i++) {
 						J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_CLASS(clazz, i);
+
+						if (J9_VM_FCC_ENTRY_IS_STRICT_STATIC_PRIMITIVE(entry)) {
+							continue;
+						}
+
 						J9Class *entryClazz = J9_VM_FCC_CLASS_FROM_ENTRY(entry);
 
 						bool isStatic = J9_VM_FCC_ENTRY_IS_STATIC_FIELD(entry);
@@ -605,12 +619,20 @@ doVerify:
 							U_32 fieldModifiers = entry->field->modifiers;
 							if (J9_ARE_ALL_BITS_SET(fieldModifiers, J9FieldFlagIsNullRestricted)) {
 								J9ROMClass *entryRomClass = entryClazz->romClass;
-								/* A NullRestricted field must be in a value class. */
+								/* A null-restricted field must be in a value class. */
 								if (!J9ROMCLASS_IS_VALUE(entryRomClass)) {
 									J9UTF8 *romClassName = J9ROMCLASS_CLASSNAME(entryRomClass);
 									setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_VALUE_CLASS, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(romClassName), J9UTF8_DATA(romClassName));
 									goto done;
 								}
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+								/* A static null-restricted field must also be strict to guarantee an initial value is set. */
+								if (J9_ARE_NO_BITS_SET(fieldModifiers, J9AccStrictInit)) {
+									J9UTF8 *romClassName = J9ROMCLASS_CLASSNAME(entryRomClass);
+									setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_STRICT, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(romClassName), J9UTF8_DATA(romClassName));
+									goto done;
+								}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 							}
 
 							initializationLock = enterInitializationLock(currentThread, initializationLock);
@@ -645,10 +667,6 @@ doVerify:
 
 						if (VM_VMHelpers::exceptionPending(currentThread)) {
 							goto done;
-						}
-
-						if (isStatic) {
-							classPrepareWithWithUnflattenedFlattenables(currentThread, clazz, entry, entryClazz);
 						}
 					}
 				}
@@ -759,6 +777,9 @@ doVerify:
 
 					for (UDATA i = 0; i < numberOfFlattenedFields; i++) {
 						J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_CLASS(clazz, i);
+						if (J9_VM_FCC_ENTRY_IS_STRICT_STATIC_PRIMITIVE(entry)) {
+							continue;
+						}
 						J9Class *entryClazz = J9_VM_FCC_CLASS_FROM_ENTRY(entry);
 						Trc_VM_classInitStateMachine_initFlattenableField(currentThread, entryClazz);
 						PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
@@ -793,7 +814,7 @@ initFailed:
 				}
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 				/* All strict static fields must be set by the end of <clinit>. */
-				if (clazz->strictStaticFieldCounter > 0) {
+				if ((NULL != clazz->flattenedClassCache) && (clazz->flattenedClassCache->strictStaticFieldCounter > 0)) {
 					J9UTF8 *className = J9ROMCLASS_CLASSNAME(clazz->romClass);
 					setCurrentExceptionNLSWithArgs(
 							currentThread,

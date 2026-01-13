@@ -2018,22 +2018,33 @@ typedef struct J9ModuleExtraInfo {
 
 #define J9_VM_FCC_CLASS_FLAGS_MASK ((UDATA) 0xFF)
 #define J9_VM_FCC_CLASS_FLAGS_STATIC_FIELD ((UDATA)0x1)
+#define J9_VM_FCC_CLASS_FLAGS_STRICT_STATIC_FIELD_WRITTEN ((UDATA)0x2)
+#define J9_VM_FCC_CLASS_FLAGS_STRICT_STATIC_FIELD_READ ((UDATA)0x4)
+#define J9_VM_FCC_CLASS_FLAGS_STRICT_STATIC_FIELD_PRIMITIVE ((UDATA)0x8)
 
 typedef struct J9FlattenedClassCacheEntry {
 	struct J9Class* clazz;
 	struct J9ROMFieldShape * field;
+	/* For static fields offset points to the address. */
 	UDATA offset;
 } J9FlattenedClassCacheEntry;
 
 typedef struct J9FlattenedClassCache {
 	j9object_t defaultValue;
 	UDATA numberOfEntries;
+	U_16 strictStaticFieldCounter;
 } J9FlattenedClassCache;
 
 #define J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, index) (((J9FlattenedClassCacheEntry *)((flattenedClassCache) + 1)) + (index))
 #define J9_VM_FCC_ENTRY_FROM_CLASS(clazz, index) J9_VM_FCC_ENTRY_FROM_FCC((clazz)->flattenedClassCache, index)
 #define J9_VM_FCC_CLASS_FROM_ENTRY(entry) ((J9Class *)((UDATA)(entry)->clazz & ~J9_VM_FCC_CLASS_FLAGS_MASK))
 #define J9_VM_FCC_ENTRY_IS_STATIC_FIELD(entry) J9_ARE_ALL_BITS_SET((UDATA)(entry)->clazz, J9_VM_FCC_CLASS_FLAGS_STATIC_FIELD)
+#define J9_VM_FCC_ENTRY_IS_STRICT_STATIC_UNSET(entry) J9_ARE_NO_BITS_SET((UDATA)(entry)->clazz, J9_VM_FCC_CLASS_FLAGS_STRICT_STATIC_FIELD_WRITTEN)
+#define J9_VM_FCC_ENTRY_IS_STRICT_STATIC_READ(entry) J9_ARE_ALL_BITS_SET((UDATA)(entry)->clazz, J9_VM_FCC_CLASS_FLAGS_STRICT_STATIC_FIELD_READ)
+#define J9_VM_FCC_ENTRY_IS_STRICT_STATIC_PRIMITIVE(entry) J9_ARE_ALL_BITS_SET((UDATA)(entry)->clazz, J9_VM_FCC_CLASS_FLAGS_STRICT_STATIC_FIELD_PRIMITIVE)
+
+#define J9_VM_FCC_ENTRY_SET_AS_READ(entry) (entry)->clazz = (J9Class *)((UDATA)(entry)->clazz | J9_VM_FCC_CLASS_FLAGS_STRICT_STATIC_FIELD_READ)
+#define J9_VM_FCC_ENTRY_SET_AS_WRITTEN(entry) (entry)->clazz = (J9Class *)((UDATA)(entry)->clazz | J9_VM_FCC_CLASS_FLAGS_STRICT_STATIC_FIELD_WRITTEN)
 
 struct J9TranslationBufferSet;
 typedef struct J9VerboseStruct {
@@ -3582,9 +3593,6 @@ typedef struct J9Class {
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	struct J9Class *nullRestrictedArrayClass;
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
-	U_16 strictStaticFieldCounter;
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 } J9Class;
 
 /* Interface classes can never be instantiated, so the following fields in J9Class will not be used:
@@ -3688,9 +3696,6 @@ typedef struct J9ArrayClass {
 	 */
 	struct J9Class *companionArray;
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
-	U_16 strictStaticFieldCounter;
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 } J9ArrayClass;
 
 #if defined(LINUX) && defined(J9VM_ARCH_X86) && !defined(OSX)

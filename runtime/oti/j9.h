@@ -224,7 +224,7 @@ typedef struct J9ClassLoaderWalkState {
 #define J9_ARRAY_DIMENSION_LIMIT 255
 
 #define J9FLAGSANDCLASS_FROM_CLASSANDFLAGS(classAndFlags) (((classAndFlags) >> J9_REQUIRED_CLASS_SHIFT) | ((classAndFlags) << (sizeof(UDATA) * 8 - J9_REQUIRED_CLASS_SHIFT)))
-#define J9CLASSANDFLAGS_FROM_FLAGSANDCLASS(flagsAndClass) (((flagsAndClass) >> (8 * sizeof(UDATA) - J9_REQUIRED_CLASS_SHIFT)) | ((flagsAndClass) << J9_REQUIRED_CLASS_SHIFT))
+#define J9CLASSANDFLAGS_FROM_FLAGSANDCLASS(flagsAndClass) ((J9StaticFieldRefFlagBits & ((flagsAndClass) >> (8 * sizeof(UDATA) - J9_REQUIRED_CLASS_SHIFT))) | ((flagsAndClass) << J9_REQUIRED_CLASS_SHIFT))
 #define J9RAMSTATICFIELDREF_CLASS(base) ((J9Class *) ((base)->flagsAndClass << J9_REQUIRED_CLASS_SHIFT))
 /* In a resolved J9RAMStaticFieldRef, the high bit of valueOffset is set, so it must be masked when adding valueOffset to the ramStatics address.
  * Note that ~IDATA_MIN has all but the high bit set. */
