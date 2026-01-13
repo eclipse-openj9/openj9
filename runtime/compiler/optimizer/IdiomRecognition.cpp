@@ -1538,8 +1538,8 @@ TR_CISCGraph::importUDchains(TR::Compilation *comp, TR_UseDefInfo *useDefInfo, b
             {
             TR_ASSERT_FATAL_WITH_NODE(
                trNode,
-               trNode->getSymbol()->isStatic(),
-               "direct store to non-auto, non-static");
+               trNode->getSymbol()->isStatic() || trNode->getSymbol()->isMethodMetaData(),
+               "direct store to non-auto, non-static, non-MethodMetaData");
 
             // Regardless of the uses that we can see within this method (which
             // may not even appear, since we won't necessarily get use-def
