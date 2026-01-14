@@ -1424,7 +1424,9 @@ class CheckEngine
 	{
 		int result = checkObjectIndirect(object);
 		if (J9MODRON_GCCHK_RC_OK != result) {
-			CheckError error = new CheckError(object, null, _cycle, _currentCheck, result, _cycle.nextErrorCount(), CheckError.check_type_finalizable);
+			CheckError error = new CheckError(
+					object, PointerPointer.NULL, _cycle, _currentCheck, result,
+					_cycle.nextErrorCount(), CheckError.check_type_finalizable);
 			_reporter.report(error);
 		}
 		return J9MODRON_SLOT_ITERATOR_OK;
