@@ -619,8 +619,8 @@ public class LinearDumper implements IClassWalkCallbacks {
 								flags += "J9StaticFieldRefVolatile, ";
 							}
 
-							if (0 != (J9JavaAccessFlags.J9StaticFieldIsNullRestricted & slotAddressOriginal)) {
-								flags += "J9StaticFieldIsNullRestricted, ";
+							if (0 != (J9JavaAccessFlags.J9StaticFieldRefNullRestricted & slotAddressOriginal)) {
+								flags += "J9StaticFieldRefNullRestricted, ";
 							}
 							
 							/* Check there is any flag or not */

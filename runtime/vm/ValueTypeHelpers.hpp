@@ -595,7 +595,6 @@ done:
 	 * @return J9FlattenedClassCacheEntry corresponding to matchOffset.
 	 */
 	static VMINLINE J9FlattenedClassCacheEntry *
-
 	findJ9FlattenedClassCacheEntryForStaticAddress(J9Class *ramClass, UDATA matchOffset)
 	{
 		J9FlattenedClassCacheEntry *entry = NULL;
