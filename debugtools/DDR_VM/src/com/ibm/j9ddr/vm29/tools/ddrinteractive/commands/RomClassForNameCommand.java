@@ -55,23 +55,22 @@ public class RomClassForNameCommand extends Command
 
 			int hitCount = 0;
 			String searchClassName = args[0];
-			PatternString pattern = new PatternString (searchClassName);
-			
-			out.println(String.format(
-					"Searching for ROMClasses named '%1$s' in VM=%2$s",
-					searchClassName, Long.toHexString(vm.getAddress())));
+			PatternString pattern = new PatternString(searchClassName);
+
+			out.format(
+					"Searching for ROMClasses named '%1$s' in VM=%2$s%n",
+					searchClassName, Long.toHexString(vm.getAddress()));
 			while (iterator.hasNext()) {
 				J9ROMClassPointer romClassPointer = iterator.next();
 				String javaName = J9UTF8Helper.stringValue(romClassPointer.className());
 				if (pattern.isMatch(javaName)) {
 					hitCount++;
-					
+
 					String hexString = romClassPointer.getHexAddress();
-					out.println(String.format("!j9romclass %1$s named %2$s", hexString, javaName));					
+					out.format("!j9romclass %1$s named %2$s%n", hexString, javaName);
 				}
 			}
-			out.println(String.format("Found %1$d ROMClass(es) named %2$s",
-					hitCount, searchClassName));
+			out.format("Found %1$d ROMClass(es) named %2$s%n", hitCount, searchClassName);
 		} catch (CorruptDataException e) {
 			throw new DDRInteractiveCommandException(e);
 		}

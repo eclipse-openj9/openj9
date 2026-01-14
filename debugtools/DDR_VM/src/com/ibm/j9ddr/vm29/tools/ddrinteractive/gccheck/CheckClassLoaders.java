@@ -63,13 +63,13 @@ class CheckClassLoaders extends Check
 	{
 		try {
 			GCClassLoaderIterator classLoaderIterator = GCClassLoaderIterator.from();
-			getReporter().println(String.format("<gc check: Start scan classLoaderBlocks (%s)>", formatPointer(getJavaVM().classLoaderBlocks())));
-			while(classLoaderIterator.hasNext()) {
+			getReporter().format("<gc check: Start scan classLoaderBlocks (%s)>%n", formatPointer(getJavaVM().classLoaderBlocks()));
+			while (classLoaderIterator.hasNext()) {
 				J9ClassLoaderPointer classLoader = classLoaderIterator.next();
-				getReporter().println(String.format("  <classLoader (%s)>", formatPointer(classLoader)));
-				getReporter().println(String.format("    <flags=%d, classLoaderObject=%s>", classLoader.gcFlags().longValue(), formatPointer(classLoader.classLoaderObject())));
+				getReporter().format("  <classLoader (%s)>%n", formatPointer(classLoader));
+				getReporter().format("    <flags=%d, classLoaderObject=%s>%n", classLoader.gcFlags().longValue(), formatPointer(classLoader.classLoaderObject()));
 			}
-			getReporter().println(String.format("<gc check: End scan classLoaderBlocks (%s)>", formatPointer(getJavaVM().classLoaderBlocks())));
+			getReporter().format("<gc check: End scan classLoaderBlocks (%s)>%n", formatPointer(getJavaVM().classLoaderBlocks()));
 		} catch (CorruptDataException e) {
 			// TODO: handle exception
 		}

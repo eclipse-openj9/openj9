@@ -275,7 +275,7 @@ public class DeadlockUtils
 		// Based on JavaCoreDumpWriter::writeSystemMonitor()
 		//			JavaCoreDumpWriter::writeMonitor()
 		//			JavaCoreDumpWriter::writeMonitorObject()
-		
+
 		if (null != node.javaLock) {
 			String monitorName = "[system]";
 			if (node.javaLock.name().notNull()) {
@@ -283,27 +283,24 @@ public class DeadlockUtils
 			}
 			out.print("\t\t" + monitorName);
 			out.println(" lock (" + node.javaLock.formatShortInteractive() + ")");
-		}
-		else if ((null == node.javaLock) && (null != node.lockObject)) {
-			
+		} else if ((null == node.javaLock) && (null != node.lockObject)) {
 			String className = J9ObjectHelper.getClassName(node.lockObject);
-			out.format("\t\t%s\t\"%s\"\n",node.lockObject.formatShortInteractive(), className);
+			out.format("\t\t%s\t\"%s\"%n", node.lockObject.formatShortInteractive(), className);
 			ObjectMonitor objMon = (ObjectMonitor) objectMonitorsMap.get(node.lockObject);
 			J9ObjectMonitorPointer j9objMonPtr = objMon.getJ9ObjectMonitorPointer();
-			
+
 			if ((null != j9objMonPtr) && (j9objMonPtr.notNull())) {
-				out.print(String.format("\t\t%s\n", j9objMonPtr.formatShortInteractive()));
-				out.print(String.format("\t\t%s\n", j9objMonPtr.monitor().formatShortInteractive()));
-				out.print(String.format("\t\t%s\n", objMon.getOwner().osThread().formatShortInteractive()));
+				out.format("\t\t%s%n", j9objMonPtr.formatShortInteractive());
+				out.format("\t\t%s%n", j9objMonPtr.monitor().formatShortInteractive());
+				out.format("\t\t%s%n", objMon.getOwner().osThread().formatShortInteractive());
 			}
-		}
-		else if (null != node.nativeLock) { // Case of a Java thread blocking on a system monitor		
+		} else if (null != node.nativeLock) { // case of a Java thread blocking on a system monitor
 			printNativeLockHelper(node.nativeLock, out);
 		}
-		
+
 		out.println("\twhich is owned by:");
 	}
-	
+
 	/**
 	 * 
 	 * @param node

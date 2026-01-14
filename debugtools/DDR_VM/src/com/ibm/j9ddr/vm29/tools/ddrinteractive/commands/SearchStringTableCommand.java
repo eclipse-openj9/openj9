@@ -38,17 +38,17 @@ public class SearchStringTableCommand extends Command{
 	public SearchStringTableCommand() {
 		addCommand("searchstringtable", "<address>", "Search for J9Object* in string table");
 	}
-	
+
 	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException {
 		try {
 			if (1 == args.length) {
 				J9ObjectPointer objectPointer = J9ObjectPointer.cast(CommandUtils.parsePointer(args[0], J9BuildFlags.J9VM_ENV_DATA64));
 				J9ObjectPointer data = StringTable.from().search(objectPointer);
-				
+
 				if (data.notNull()) {
-					String stringValue = J9ObjectHelper.stringValue(data);					
+					String stringValue = J9ObjectHelper.stringValue(data);
 					String hexAddr = data.formatShortInteractive();
-					out.println(String.format("%s <%s>", hexAddr, stringValue));
+					out.format("%s <%s>%n", hexAddr, stringValue);
 				} else {
 					out.println("Not found");
 				}

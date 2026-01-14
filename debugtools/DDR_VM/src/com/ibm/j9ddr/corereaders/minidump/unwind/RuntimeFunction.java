@@ -44,7 +44,7 @@ public class RuntimeFunction implements Comparable<RuntimeFunction> {
 	}
 
 	public boolean contains(long address) {
-		// System.err.println(String.format("Checking 0x%08x <= 0x%08x < 0x%08x", startOffset, address, endOffset ));
+		// System.err.format("Checking 0x%08x <= 0x%08x < 0x%08x%n", startOffset, address, endOffset);
 		if (address >= startOffset && address < endOffset) {
 			return true;
 		}

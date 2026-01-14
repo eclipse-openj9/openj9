@@ -85,15 +85,12 @@ public class DumpRomClassCommand extends Command {
 						hitCount++;
 						J9ROMClassPointer clazz = classPointer.romClass();
 						String hexString = clazz.getHexAddress();
-						out.println(String.format("ROMClass %1$s named %2$s\n",
-								hexString, javaName));
+						out.format("ROMClass %1$s named %2$s%n%n", hexString, javaName);
 
 						J9BCUtil.j9bcutil_dumpRomClass(out, clazz, maps);
 					}
 				}
-				out.println(String.format(
-						"Found %1$d class(es) with name %2$s\n", hitCount,
-						searchClassName));
+				out.format("Found %1$d class(es) with name %2$s%n%n", hitCount, searchClassName);
 			} else {
 				/* treat argument as address */
 				long addr = CommandUtils.parsePointer(args[0], J9BuildFlags.J9VM_ENV_DATA64);

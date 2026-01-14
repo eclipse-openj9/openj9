@@ -55,23 +55,22 @@ public class ClassForNameCommand extends Command
 
 			int hitCount = 0;
 			String searchClassName = args[0];
-			PatternString pattern = new PatternString (searchClassName);
-			
-			out.println(String.format(
-					"Searching for classes named '%1$s' in VM=%2$s",
-					searchClassName, Long.toHexString(vm.getAddress())));
+			PatternString pattern = new PatternString(searchClassName);
+
+			out.format(
+					"Searching for classes named '%1$s' in VM=%2$s%n",
+					searchClassName, Long.toHexString(vm.getAddress()));
 			while (iterator.hasNext()) {
 				J9ClassPointer classPointer = (J9ClassPointer) iterator.next();
 				String javaName = J9ClassHelper.getJavaName(classPointer);
 				if (pattern.isMatch(javaName)) {
 					hitCount++;
-					
+
 					String hexString = classPointer.getHexAddress();
-					out.println(String.format("!j9class %1$s named %2$s", hexString, javaName));					
+					out.format("!j9class %1$s named %2$s%n", hexString, javaName);
 				}
 			}
-			out.println(String.format("Found %1$d class(es) named %2$s",
-					hitCount, searchClassName));
+			out.format("Found %1$d class(es) named %2$s%n", hitCount, searchClassName);
 		} catch (CorruptDataException e) {
 			throw new DDRInteractiveCommandException(e);
 		}

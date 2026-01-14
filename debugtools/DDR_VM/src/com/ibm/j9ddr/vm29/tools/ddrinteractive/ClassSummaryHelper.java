@@ -65,12 +65,10 @@ public class ClassSummaryHelper {
 		}
 
 		// Print the global stats
-		out.println(String.format("%d classes, using: %d bytes or %d kB",
-				numberOfClasses, totalSize, totalSize / 1024));
+		out.format("%d classes, using: %d bytes or %d kB%n", numberOfClasses, totalSize, totalSize / 1024);
 
 		// Print the sections
-		out.println(String.format("%-39s %-8s %-8s %-6s",
-				"Section", "Byte", "kB", "%"));
+		out.format("%-39s %-8s %-8s %-6s%n", "Section", "Byte", "kB", "%");
 		for (Map.Entry<String, Long> entry : data.entrySet()) {
 			out.println(printSize(entry.getKey(), entry.getValue(), totalSize));
 		}

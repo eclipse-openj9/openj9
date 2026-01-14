@@ -106,8 +106,8 @@ public class DumpRomMethodCommand extends Command {
 					throw new DDRInteractiveCommandException(e);
 				}
 			}
-			for (J9ROMClassAndMethod mi: methodIterator) {
-				out.println(String.format("Class: %s",  J9UTF8Helper.stringValue(mi.romClass.className())));
+			for (J9ROMClassAndMethod mi : methodIterator) {
+				out.format("Class: %s%n", J9UTF8Helper.stringValue(mi.romClass.className()));
 				J9BCUtil.j9bcutil_dumpRomMethod(out, mi.romMethod, mi.romClass, dumpFlags, J9BCUtil.BCUtil_DumpAnnotations);
 			}
 		} catch (CorruptDataException e) {

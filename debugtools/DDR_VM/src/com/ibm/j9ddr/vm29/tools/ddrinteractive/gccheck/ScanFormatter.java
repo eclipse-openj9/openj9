@@ -34,13 +34,13 @@ class ScanFormatter
 	public ScanFormatter(Check check, String title, AbstractPointer pointer)
 	{
 		_reporter = check.getReporter();
-		_reporter.println(String.format("<gc check: Start scan %s (%s)>", title, formatPointer(pointer)));
+		_reporter.format("<gc check: Start scan %s (%s)>%n", title, formatPointer(pointer));
 	}
 
 	public ScanFormatter(Check check, String title)
 	{
 		_reporter = check.getReporter();
-		_reporter.println(String.format("<gc check: Start scan %s>", title));
+		_reporter.format("<gc check: Start scan %s>%n", title);
 	}
 
 	static String formatPointer(AbstractPointer pointer)
@@ -54,13 +54,13 @@ class ScanFormatter
 
 	public void section(String type)
 	{
-		_reporter.println(String.format("  <%s>", type));
+		_reporter.format("  <%s>%n", type);
 		_currentCount = 0;
 	}
 
 	public void section(String type, AbstractPointer pointer)
 	{
-		_reporter.println(String.format("  <%s (%s)>", type, formatPointer(pointer)));
+		_reporter.format("  <%s (%s)>%n", type, formatPointer(pointer));
 		_currentCount = 0;
 	}
 
@@ -93,7 +93,7 @@ class ScanFormatter
 		if ((0 != _currentCount) && _displayedData) {
 			_reporter.println(">");
 		}
-		_reporter.println(String.format("<gc check: End scan %s (%s)>", type, formatPointer(pointer)));
+		_reporter.format("<gc check: End scan %s (%s)>%n", type, formatPointer(pointer));
 	}
 
 	public void end(String type)
@@ -101,6 +101,6 @@ class ScanFormatter
 		if ((0 != _currentCount) && _displayedData) {
 			_reporter.println(">");
 		}
-		_reporter.println(String.format("<gc check: End scan %s>", type));
+		_reporter.format("<gc check: End scan %s>%n", type);
 	}
 }

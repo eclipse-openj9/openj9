@@ -90,14 +90,12 @@ public class DumpContendedLoadTable extends Command
 						ldStatus = "ILLEGAL VALUE: " + entryPointer.status();
 					}
 					J9VMThreadPointer loadingThread = entryPointer.thread();
-					out.print(
-							String.format("\tClassname: %s;\n\t\tLoader:  %s; Loading thread: %s %s\n\t\tStatus: %s; Table entry hash 0x%X\n",
-									entryPointer.className().getCStringAtOffset(0, entryPointer.classNameLength().longValue()), 
-									entryPointer.classLoader().formatShortInteractive(), 
-									J9VMThreadHelper.getName(loadingThread), loadingThread.formatShortInteractive(),
-									ldStatus, 
-									entryPointer.hashValue().longValue())
-							);
+					out.format("\tClassname: %s;%n\t\tLoader:  %s; Loading thread: %s %s%n\t\tStatus: %s; Table entry hash 0x%X%n",
+							entryPointer.className().getCStringAtOffset(0, entryPointer.classNameLength().longValue()),
+							entryPointer.classLoader().formatShortInteractive(),
+							J9VMThreadHelper.getName(loadingThread), loadingThread.formatShortInteractive(),
+							ldStatus,
+							entryPointer.hashValue().longValue());
 				}
 
 				MonitorIterator iterator = new MonitorIterator(javaVM);
@@ -114,9 +112,9 @@ public class DumpContendedLoadTable extends Command
 								for (J9ThreadPointer tp: waitingThreads) {
 									J9VMThreadPointer vmThread = J9ThreadHelper.getVMThread(tp);
 									if (vmThread.notNull()) {
-										out.print(String.format("\t%s\t%s\n", vmThread.formatShortInteractive(), J9VMThreadHelper.getName(vmThread)));
+										out.format("\t%s\t%s%n", vmThread.formatShortInteractive(), J9VMThreadHelper.getName(vmThread));
 									} else {
-										out.print(String.format("\t%s\t%s\n", tp.formatShortInteractive(), "[osthread]"));
+										out.format("\t%s\t%s%n", tp.formatShortInteractive(), "[osthread]");
 									}
 								}
 							}
@@ -130,10 +128,7 @@ public class DumpContendedLoadTable extends Command
 		} catch (CorruptDataException e) {
 			throw new DDRInteractiveCommandException(e);
 		}
-
 	}
-
-
 
 	private void help(PrintStream out) {
 		out.append("!dumpcontload       -- the contents of the VM contended class load table");

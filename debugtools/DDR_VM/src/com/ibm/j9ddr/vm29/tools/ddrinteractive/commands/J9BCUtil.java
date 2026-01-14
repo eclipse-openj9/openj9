@@ -972,8 +972,8 @@ public class J9BCUtil {
 		U16Pointer bsmIndices = U16Pointer.cast(callSiteData.addOffset(4*callSiteCount));
 
 		if (0 != callSiteCount) {
-			out.println(String.format("  Call Sites (%d):\n", callSiteCount));
-			for(int i = 0; i < callSiteCount; i++){
+			out.format("  Call Sites (%d):%n%n", callSiteCount);
+			for (int i = 0; i < callSiteCount; i++) {
 				J9ROMNameAndSignaturePointer nameAndSig = J9ROMNameAndSignaturePointer.cast(callSiteData.add(i).get());
 				out.println("    Name: " + J9UTF8Helper.stringValue(nameAndSig.name()));
 				out.println("    Signature: " + J9UTF8Helper.stringValue(nameAndSig.signature()));
@@ -987,8 +987,8 @@ public class J9BCUtil {
 			U32Pointer cpShapeDescription = J9ROMClassHelper.cpShapeDescription(romClass);
 			U16Pointer bsmDataCursor = bsmIndices.add(callSiteCount);
 
-			out.println(String.format("  Bootstrap Methods (%d):", bsmCount));
-			for(int i = 0; i < bsmCount; i++){
+			out.format("  Bootstrap Methods (%d):%n", bsmCount);
+			for (int i = 0; i < bsmCount; i++) {
 				J9ROMMethodHandleRefPointer methodHandleRef = J9ROMMethodHandleRefPointer.cast(constantPool.add(bsmDataCursor.at(0).longValue()));
 				bsmDataCursor = bsmDataCursor.add(1);
 				/* methodRef will be either a field or a method ref - they both have the same shape so we can pretend it is always a methodref */
@@ -1003,7 +1003,7 @@ public class J9BCUtil {
 
 				out.println("    Signature: " + J9UTF8Helper.stringValue(nameAndSig.signature()));
 
-				out.println(String.format("    Bootstrap Method Arguments (%d):", bsmArgumentCount));
+				out.format("    Bootstrap Method Arguments (%d):%n", bsmArgumentCount);
 
 				for (; 0 != bsmArgumentCount; bsmArgumentCount--) {
 					long argCPIndex = bsmDataCursor.at(0).longValue();
@@ -1104,12 +1104,12 @@ public class J9BCUtil {
 	{
 		int splitTableCount = romClass.staticSplitMethodRefCount().intValue();
 		if (splitTableCount > 0) {
-			out.println(String.format("Static Split Table (%d):\n", splitTableCount));
+			out.format("Static Split Table (%d):%n%n", splitTableCount);
 			out.println("    SplitTable Index -> CP Index");
 			U16Pointer cursor = romClass.staticSplitMethodRefIndexes();
 			for (int i = 0; i < splitTableCount; i++) {
 				cursor.add(i);
-				out.println(String.format("    %16d -> %d", i, cursor.at(i).intValue()));
+				out.format("    %16d -> %d%n", i, cursor.at(i).intValue());
 			}
 		}
 	}
@@ -1127,12 +1127,12 @@ public class J9BCUtil {
 	{
 		int splitTableCount = romClass.specialSplitMethodRefCount().intValue();
 		if (splitTableCount > 0) {
-			out.println(String.format("Special Split Table (%d):\n", splitTableCount));
+			out.format("Special Split Table (%d):%n%n", splitTableCount);
 			out.println("    SplitTable Index -> CP Index");
 			U16Pointer cursor = romClass.specialSplitMethodRefIndexes();
 			for (int i = 0; i < splitTableCount; i++) {
 				cursor.add(i);
-				out.println(String.format("    %16d -> %d", i, cursor.at(i).intValue()));
+				out.format("    %16d -> %d%n", i, cursor.at(i).intValue());
 			}
 		}
 	}
@@ -1234,23 +1234,23 @@ public class J9BCUtil {
 		J9MethodParametersDataPointer methodParameters = ROMHelp.getMethodParametersFromROMMethod(romMethod);
 		if (methodParameters != J9MethodParametersDataPointer.NULL) {
 			J9MethodParameterPointer parameters = methodParameters.parameters();
-			out.println(String.format("  Method Parameters (%d):\n", methodParameters.parameterCount().longValue()));
+			out.format("  Method Parameters (%d):%n%n", methodParameters.parameterCount().longValue());
 			for (int i = 0 ; i < methodParameters.parameterCount().longValue(); i++) {
 				J9UTF8Pointer name = J9UTF8Pointer.cast(parameters.nameEA().get());
 				long parameterFlags = parameters.flags().longValue();
+				out.print("    ");
 				if (name.isNull()) {
-					out.print("    <no name>");
+					out.print("<no name>");
 				} else {
-					out.print("    " + J9UTF8Helper.stringValue(name));
+					out.print(J9UTF8Helper.stringValue(name));
 				}
 
-				out.print(String.format("    0x%x ( ", parameterFlags));
+				out.format("    0x%x ( ", parameterFlags);
 				dumpModifiers(out, parameterFlags, MODIFIERSOURCE_METHODPARAMETER, ONLY_SPEC_MODIFIERS, false);
-				out.println(" )\n");
+				out.format(" )%n%n");
 			}
 			out.println("\n");
 		}
-
 	}
 
 	static U8Pointer dumpStackMapSlots(PrintStream out, J9ROMClassPointer classfile, U8Pointer slotData, long slotCount) throws CorruptDataException

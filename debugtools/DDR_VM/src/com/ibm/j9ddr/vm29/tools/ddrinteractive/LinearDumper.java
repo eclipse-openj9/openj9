@@ -459,24 +459,24 @@ public class LinearDumper implements IClassWalkCallbacks {
 		} else if (nesting > nestingThreshold) {
 			return;
 		}
-		
+
 		/* section start */
 		if (region != null) {
 			String str = String.format("Section Start: %s (%d bytes)", region.getName(), region.getLength());
 			out.println();
-			out.println(String.format("=== %-85s ===", str));
+			out.format("=== %-85s ===%n", str);
 		}
-		
+
 		/* subsections */
-		for (J9ClassRegionNode classRegionNode:regionNode.getChildren()) {
+		for (J9ClassRegionNode classRegionNode : regionNode.getChildren()) {
 			printAllRegions(out, clazz, nestingThreshold, classRegionNode, nesting + 1);
 		}
-		
+
 		/* section end */
 		if (region != null) {
 			String str = String.format("Section End: %s", region.getName());
 			out.println();
-			out.println(String.format("=== %-85s ===", str));
+			out.format("=== %-85s ===%n", str);
 		}
 	}
 

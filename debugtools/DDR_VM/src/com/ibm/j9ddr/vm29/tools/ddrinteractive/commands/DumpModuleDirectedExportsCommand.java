@@ -78,7 +78,7 @@ public class DumpModuleDirectedExportsCommand extends Command
 					String hexAddress = exportModulePtr.getHexAddress();
 					out.printf("%-30s !j9module %s%n", moduleName, hexAddress);
 				}
-				out.println(String.format("Found %d module(s) that the package is exported to\n", hitCount));
+				out.format("Found %d module(s) that the package is exported to%n%n", hitCount);
 			}
 		} catch (CorruptDataException e) {
 			throw new DDRInteractiveCommandException(e);

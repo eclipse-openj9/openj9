@@ -64,6 +64,7 @@ public abstract class CheckReporter
 	/**
 	 * Output non-error information
 	 */
+	public abstract void format(String format, Object... arguments);
 	public abstract void print(String arg);
 	public abstract void println(String arg);
 	public void print()

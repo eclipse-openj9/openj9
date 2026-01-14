@@ -107,7 +107,7 @@ public class WalkJ9PoolCommand extends Command
 			int i = 0;
 			while (poolIterator.hasNext()) {
 				currentElement = poolIterator.next();
-				out.println(String.format("\t[%d]\t=\t%s", i++, currentElement.getHexAddress()));
+				out.format("\t[%d]\t=\t%s%n", i++, currentElement.getHexAddress());
 			}
 		} catch (CorruptDataException e) {
 			throw new DDRInteractiveCommandException("Either address is not a valid pool address or pool itself is corrupted.");

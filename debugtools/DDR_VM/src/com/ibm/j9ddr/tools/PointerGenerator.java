@@ -1402,9 +1402,9 @@ public class PointerGenerator {
 			writer.println("import com.ibm.j9ddr.CorruptDataException;");
 		}
 		String version = opts.get("-v");
-		writer.println(String.format("import com.ibm.j9ddr.vm%s.pointer.*;", version));
-		writer.println(String.format("import com.ibm.j9ddr.vm%s.structure.*;", version));
-		writer.println(String.format("import com.ibm.j9ddr.vm%s.types.*;", version));
+		writer.format("import com.ibm.j9ddr.vm%s.pointer.*;%n", version);
+		writer.format("import com.ibm.j9ddr.vm%s.structure.*;%n", version);
+		writer.format("import com.ibm.j9ddr.vm%s.types.*;%n", version);
 		if (cacheClass) {
 			writer.println("import java.util.HashMap;");
 		}

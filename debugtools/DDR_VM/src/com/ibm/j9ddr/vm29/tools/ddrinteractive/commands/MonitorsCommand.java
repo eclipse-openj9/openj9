@@ -327,11 +327,11 @@ public class MonitorsCommand extends Command
 			}
 
 			// Step 1: Print the general info for the VM and native threads:
-			out.println(String.format(
-					"!j9vmthread 0x%08x\t!j9thread 0x%08x\t// %s",
+			out.format(
+					"!j9vmthread 0x%08x\t!j9thread 0x%08x\t// %s%n",
 					thread.getAddress(),
 					thread.osThread().getAddress(),
-					J9VMThreadHelper.getName(thread)));
+					J9VMThreadHelper.getName(thread));
 			
 			printMonitorsForJ9VMThread(out, vm, thread);
 			
@@ -352,20 +352,20 @@ public class MonitorsCommand extends Command
 				ObjectMonitor objMon = (ObjectMonitor) current;
 				// Step 2: Print any monitors that the thread is the owner of:
 				if (thread.equals(objMon.getOwner())) {
-					out.print("Owns Object Monitor:\n\t");
+					out.format("Owns Object Monitor:%n\t");
 					writeObjectMonitor(defaultFilter, objMon, out);
 				}
 				// Step 3: Print any monitors that the thread is blocking on::
 				for (J9VMThreadPointer threadPtr : objMon.getBlockedThreads()) {
 					if (threadPtr.equals(thread)) {
-						out.print(String.format("Blocking on (Enter Waiter):\n\t"));
+						out.format("Blocking on (Enter Waiter):%n\t");
 						writeObjectMonitor(defaultFilter, objMon, out);
 					}
 				}
 				// Step 4: Print any monitors that the thread is waiting on:
 				for (J9VMThreadPointer threadPtr : objMon.getWaitingThreads()) {
 					if (threadPtr.equals(thread)) {
-						out.print(String.format("Waiting on (Notify Waiter):\n\t"));
+						out.format("Waiting on (Notify Waiter):%n\t");
 						writeObjectMonitor(defaultFilter, objMon, out);
 					}
 				}
@@ -422,16 +422,14 @@ public class MonitorsCommand extends Command
 			J9VMThreadPointer vmThread = J9ThreadHelper.getVMThread(osThreadPtr);
 			
 			// Step 1: Print the general info for the VM and native threads:
-			out.println(String.format(
-					"%s\t%s\t// %s",
+			out.format(
+					"%s\t%s\t// %s%n",
 					osThreadPtr.formatShortInteractive(),
 					vmThread.notNull() ? vmThread.formatShortInteractive() : "<none>",
-					vmThread.notNull() ? J9VMThreadHelper.getName(vmThread) : "[osthread]")
-			);
-			
+					vmThread.notNull() ? J9VMThreadHelper.getName(vmThread) : "[osthread]");
+
 			printMonitorsForJ9Thread(out, vm, osThreadPtr);
-		
-		}  catch (CorruptDataException e) {
+		} catch (CorruptDataException e) {
 			throw new DDRInteractiveCommandException(e);
 		}
 	}

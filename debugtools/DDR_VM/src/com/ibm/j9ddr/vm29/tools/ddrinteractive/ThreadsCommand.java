@@ -42,8 +42,6 @@ import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.MonitorsCommand;
 
 public class ThreadsCommand extends Command
 {
-	private static final String nl = System.getProperty("line.separator");
-
 	public ThreadsCommand()
 	{
 		addCommand("threads", "cmd|help", "Lists VM threads");
@@ -59,8 +57,7 @@ public class ThreadsCommand extends Command
 			if (argument.equalsIgnoreCase("help")) {
 				help(out);
 			} else {
-				out.append("Attached Threads List. For more options, run !threads help\n");
-				out.append(nl);
+				out.format("Attached Threads List. For more options, run !threads help%n%n");
 				if (argument.equalsIgnoreCase("stack")) {
 					stack(out, context, "");
 				} else if (argument.equalsIgnoreCase("stackslots")) {
@@ -110,7 +107,7 @@ public class ThreadsCommand extends Command
 				J9VMThreadPointer threadCursor = vm.mainThread();
 
 				do {
-					out.append(String.format("    !stack 0x%s  !j9vmthread 0x%s  !j9thread 0x%s  tid 0x%s (%d) !utthreaddata 0x%s // %s",
+					out.append(String.format("    !stack 0x%s  !j9vmthread 0x%s  !j9thread 0x%s  tid 0x%s (%d) !utthreaddata 0x%s // %s%n",
 							Long.toHexString(threadCursor.getAddress()),
 							Long.toHexString(threadCursor.getAddress()),
 							Long.toHexString(threadCursor.osThread().getAddress()),
@@ -118,7 +115,6 @@ public class ThreadsCommand extends Command
 							threadCursor.osThread().tid().longValue(),
 							Long.toHexString(threadCursor.omrVMThread()._trace$uteThread().getAddress()),
 							getThreadName(threadCursor)));
-					out.append(nl);
 					threadCursor = threadCursor.linkNext();
 				} while (!threadCursor.eq(mainThread));
 			}
@@ -148,11 +144,12 @@ public class ThreadsCommand extends Command
 
 				if (!currentMonitorTable.equals(previousMonitorTable)) {
 					/* Print header for new monitor table */
-					out.append("Table = " + currentMonitorTable.getTableName() + ", itemCount=" + currentMonitorTable.getCount());
-					out.append(nl);
+					out.format("Table = %s, itemCount=%s%n",
+							currentMonitorTable.getTableName(), currentMonitorTable.getCount());
 				}
-				out.append(String.format("\n    !j9thread 0x%s    !j9threadmonitor 0x%s", Long.toHexString(objectMonitorPointer.monitor().owner().getAddress()), Long.toHexString(objectMonitorPointer.monitor().getAddress())));
-				out.append(nl);
+				out.format("%n    !j9thread 0x%s    !j9threadmonitor 0x%s%n",
+						Long.toHexString(objectMonitorPointer.monitor().owner().getAddress()),
+						Long.toHexString(objectMonitorPointer.monitor().getAddress()));
 
 				previousMonitorTable = currentMonitorTable;
 			}
@@ -170,13 +167,13 @@ public class ThreadsCommand extends Command
 
 				do {
 					if (threadCursor.osThread().tid().eq(tid)) {
-						out.println(String.format("\t!stack 0x%08x\t!j9vmthread 0x%08x\t!j9thread 0x%08x\ttid 0x%x (%d) // %s",
+						out.format("\t!stack 0x%08x\t!j9vmthread 0x%08x\t!j9thread 0x%08x\ttid 0x%x (%d) // %s%n",
 								threadCursor.getAddress(),
 								threadCursor.getAddress(),
 								threadCursor.osThread().getAddress(),
 								threadCursor.osThread().tid().longValue(),
 								threadCursor.osThread().tid().longValue(),
-								getThreadName(threadCursor)));
+								getThreadName(threadCursor));
 						break;
 					}
 					threadCursor = threadCursor.linkNext();
@@ -194,10 +191,17 @@ public class ThreadsCommand extends Command
 			if (mainThread.notNull()) {
 				J9VMThreadPointer threadCursor = vm.mainThread();
 
-				do {//
-					out.append(String.format("    !j9vmthread 0x%s %s %s %s %s %s %s %s %s", Long.toHexString(threadCursor.getAddress()), Long.toHexString(threadCursor.debugEventData1().longValue()), Long.toHexString(threadCursor.debugEventData2().longValue()), Long.toHexString(threadCursor.debugEventData3().longValue()), Long.toHexString(threadCursor.debugEventData4()
-							.longValue()), Long.toHexString(threadCursor.debugEventData5().longValue()), Long.toHexString(threadCursor.debugEventData6().longValue()), Long.toHexString(threadCursor.debugEventData7().longValue()), Long.toHexString(threadCursor.debugEventData8().longValue())));
-					out.append(nl);
+				do {
+					out.format("    !j9vmthread 0x%s %s %s %s %s %s %s %s %s%n",
+							Long.toHexString(threadCursor.getAddress()),
+							Long.toHexString(threadCursor.debugEventData1().longValue()),
+							Long.toHexString(threadCursor.debugEventData2().longValue()),
+							Long.toHexString(threadCursor.debugEventData3().longValue()),
+							Long.toHexString(threadCursor.debugEventData4().longValue()),
+							Long.toHexString(threadCursor.debugEventData5().longValue()),
+							Long.toHexString(threadCursor.debugEventData6().longValue()),
+							Long.toHexString(threadCursor.debugEventData7().longValue()),
+							Long.toHexString(threadCursor.debugEventData8().longValue()));
 					threadCursor = threadCursor.linkNext();
 				} while (!threadCursor.eq(mainThread));
 			}
@@ -214,13 +218,12 @@ public class ThreadsCommand extends Command
 				J9VMThreadPointer threadCursor = vm.mainThread();
 
 				do {
-					out.append(String.format("    !j9vmthread 0x%s publicFlags=%s privateFlags=%s inNative=%s // %s",
+					out.append(String.format("    !j9vmthread 0x%s publicFlags=%s privateFlags=%s inNative=%s // %s%n",
 							Long.toHexString(threadCursor.getAddress()),
 							Long.toHexString(threadCursor.publicFlags().longValue()),
 							Long.toHexString(threadCursor.privateFlags().longValue()),
 							Long.toHexString(threadCursor.inNative().longValue()),
 							getThreadName(threadCursor)));
-					out.append(nl);
 					threadCursor = threadCursor.linkNext();
 				} while (!threadCursor.eq(mainThread));
 			}
@@ -239,16 +242,15 @@ public class ThreadsCommand extends Command
 				J9VMThreadPointer threadCursor = vm.mainThread();
 
 				do {
-					out.println(String.format("\t!stack 0x%08x\t!j9vmthread 0x%08x\t!j9thread 0x%08x\ttid 0x%x (%d) // %s",
+					out.format("\t!stack 0x%08x\t!j9vmthread 0x%08x\t!j9thread 0x%08x\ttid 0x%x (%d) // %s%n%n",
 							threadCursor.getAddress(),
 							threadCursor.getAddress(),
 							threadCursor.osThread().getAddress(),
 							threadCursor.osThread().tid().longValue(),
 							threadCursor.osThread().tid().longValue(),
-							getThreadName(threadCursor)));
-					out.append(nl);
+							getThreadName(threadCursor));
 					walkCommand.run(command, new String[] { Long.toString(threadCursor.getAddress()) }, context, out);
-					out.append(nl);
+					out.println();
 
 					threadCursor = threadCursor.linkNext();
 				} while (!threadCursor.eq(mainThread));
@@ -287,13 +289,13 @@ public class ThreadsCommand extends Command
 				J9VMThreadPointer threadCursor = vm.mainThread();
 
 				do {
-					out.println(String.format("\t!stack 0x%08x\t!j9vmthread 0x%08x\t!j9thread 0x%08x\ttid 0x%x (%d) // (%s)",
+					out.format("\t!stack 0x%08x\t!j9vmthread 0x%08x\t!j9thread 0x%08x\ttid 0x%x (%d) // (%s)%n",
 							threadCursor.getAddress(),
 							threadCursor.getAddress(),
 							threadCursor.osThread().getAddress(),
 							threadCursor.osThread().tid().longValue(),
 							threadCursor.osThread().tid().longValue(),
-							getThreadName(threadCursor)));
+							getThreadName(threadCursor));
 
 					threadCursor = threadCursor.linkNext();
 				} while (!threadCursor.eq(mainThread));

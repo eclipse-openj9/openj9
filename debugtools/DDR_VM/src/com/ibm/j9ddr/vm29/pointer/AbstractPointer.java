@@ -340,9 +340,9 @@ public abstract class AbstractPointer extends DataType {
 			try {
 				int word = getIntAtOffset(i * 4);
 				if (i % 4 == 0) {
-					stream.print(String.format("%08X : ", getAddress() + (i * 4)));
+					stream.format("%08X : ", getAddress() + (i * 4));
 				}
-				stream.print(String.format("%08X ", word));
+				stream.format("%08X ", word);
 				if (i % 4 == 3) {
 					stream.println();
 				}

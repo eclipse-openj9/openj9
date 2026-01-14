@@ -155,7 +155,7 @@ public abstract class BaseStructureCommand implements ICommand
 			out.println();
 
 			for (StructureDescriptor desc : inheritanceStack) {
-				out.println(String.format("  Fields for %s:", desc.getName()));
+				out.format("  Fields for %s:%n", desc.getName());
 				for (FieldDescriptor thisField : desc.getFields()) {
 					if (!thisField.isPresent()) {
 						continue;

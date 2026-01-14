@@ -271,7 +271,7 @@ public class JavaRuntimeTest extends DTFJUnitTest {
 				List bucket = map.get(key);
 				
 				if (bucket == null) {
-					System.out.println(String.format("Jextract found %s at address: %s.  Element #: %s that ddr does not know about", name, Long.toHexString(key), j));
+					System.out.format("Jextract found %s at address: %s.  Element #: %s that ddr does not know about%n", name, Long.toHexString(key), j);
 					result = false;
 					continue;
 				}
@@ -302,7 +302,7 @@ public class JavaRuntimeTest extends DTFJUnitTest {
 				Iterator<Object> contentsIter = bucket.iterator();
 				while (contentsIter.hasNext()) {
 					Object obj = contentsIter.next();
-					System.out.println(String.format("%s) %s", ++count, obj));
+					System.out.format("%s) %s%n", ++count, obj);
 				}
 			}
 		}

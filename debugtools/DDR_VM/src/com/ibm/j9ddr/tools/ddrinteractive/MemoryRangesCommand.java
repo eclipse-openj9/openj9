@@ -38,16 +38,16 @@ public class MemoryRangesCommand extends Command
 	public void run(String command, String[] args, Context context, PrintStream out)	throws DDRInteractiveCommandException 
 	{
 		IProcess process = context.process;
-		
+
 		String format = "0x%0" + (process.bytesPerPointer() * 2) + "x%" + (16 - process.bytesPerPointer()) + "s";
 		Collection<? extends IMemoryRange> ranges = process.getMemoryRanges();
-		if( ranges != null && !ranges.isEmpty() ) {
+		if (ranges != null && !ranges.isEmpty()) {
 			out.println("Base                  Top                   Size");
-			for(IMemoryRange range : ranges) {
-				out.print(String.format(format, range.getBaseAddress(), " "));
-				out.print(String.format(format, range.getTopAddress(), " "));
-				out.print(String.format(format, range.getSize(), " "));
-				out.print("\n");
+			for (IMemoryRange range : ranges) {
+				out.format(format, range.getBaseAddress(), " ");
+				out.format(format, range.getTopAddress(), " ");
+				out.format(format, range.getSize(), " ");
+				out.println();
 			}
 		} else {
 			out.println("No memory ranges found (Note: this has not yet been implemented for execution from a native debugger such as gdb)");

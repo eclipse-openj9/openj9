@@ -138,11 +138,11 @@ class CheckVMThreadStacks extends Check
 						// TODO Auto-generated catch block
 					}
 				}
-				
-				if(walkState.method.isNull()) {
-					getReporter().println(String.format("0x%08X %s (unknown method)", walkState.pc.getAddress(), className));
+
+				if (walkState.method.isNull()) {
+					getReporter().format("0x%08X %s (unknown method)%n", walkState.pc.getAddress(), className);
 				} else {
-					if(walkState.jitInfo.isNull()) {
+					if (walkState.jitInfo.isNull()) {
 						boolean isNative = false;
 						U8Pointer bytecodes = U8Pointer.NULL;
 						String name = "(corrupt)";
@@ -159,18 +159,18 @@ class CheckVMThreadStacks extends Check
 						} catch (CorruptDataException e) {
 							// This should never happen
 						}
-						
-						if(isNative) {
-							getReporter().println(String.format(" NATIVE   %s.%s%s", 
-									className, 
-									name, 
-									sig));	
+
+						if (isNative) {
+							getReporter().format(" NATIVE   %s.%s%s%n",
+									className,
+									name,
+									sig);
 						} else {
-							getReporter().println(String.format(" %08X %s.%s%s", 
+							getReporter().format(" %08X %s.%s%s%n",
 									walkState.pc.sub(bytecodes).longValue(),
-									className, 
-									name, 
-									sig));
+									className,
+									name,
+									sig);
 						}
 					} else {
 						boolean isInlined = walkState.inlineDepth != 0; 
@@ -187,20 +187,20 @@ class CheckVMThreadStacks extends Check
 						} catch (CorruptDataException e) {
 							// This should never happen
 						}
-						
-						if(isInlined) {
-							getReporter().println(String.format(" INLINED  %s.%s%s  (@%s)", 
-									className, 
-									name, 
-									sig, 
-									formatPointer(walkState.pc)));	
+
+						if (isInlined) {
+							getReporter().format(" INLINED  %s.%s%s  (@%s)%n",
+									className,
+									name,
+									sig,
+									formatPointer(walkState.pc));
 						} else {
-							getReporter().println(String.format(" %08X %s.%s%s  (@%s)", 
-									jitPC.getAddress(), 
-									className, 
-									name, 
-									sig, 
-									formatPointer(walkState.pc)));	
+							getReporter().format(" %08X %s.%s%s  (@%s)%n",
+									jitPC.getAddress(),
+									className,
+									name,
+									sig,
+									formatPointer(walkState.pc));
 						}
 					}
 				}

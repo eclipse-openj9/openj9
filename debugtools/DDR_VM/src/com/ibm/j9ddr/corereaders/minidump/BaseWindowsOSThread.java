@@ -145,8 +145,8 @@ public abstract class BaseWindowsOSThread implements IOSThread
 		long ip = getInstructionPointer();
 		long rsp = getStackPointer();
 
-		// System.err.println(String.format("Initial rsp = 0x%08x", rsp));
-		// System.err.println(String.format("Initial ip = 0x%08x", ip));
+		// System.err.format("Initial rsp = 0x%08x%n", rsp);
+		// System.err.format("Initial ip = 0x%08x%n", ip);
 
 		while( ip != 0x0) {		
 
@@ -188,8 +188,8 @@ public abstract class BaseWindowsOSThread implements IOSThread
 				rsp += 8;
 			}
 
-			// System.err.println(String.format("Next rsp = 0x%08x", rsp));
-			// System.err.println(String.format("Next ip = 0x%08x", ip));
+			// System.err.format("Next rsp = 0x%08x%n", rsp);
+			// System.err.format("Next ip = 0x%08x%n", ip);
 		}
 	}
 	
