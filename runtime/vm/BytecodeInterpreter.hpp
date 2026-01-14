@@ -11655,7 +11655,7 @@ illegalStateException_getStrictStaticNotSet:
 illegalStateException_putStrictStaticFinalAfterRead:
 	updateVMStruct(REGISTER_ARGS);
 	prepareForExceptionThrow(_currentThread);
-	setCurrentExceptionNLS(_currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALSTATEEXCEPTION, J9NLS_VM_PUT_FINAL_STRICT_STATIC_AFTER_READ);
+	setCurrentExceptionNLS(_currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALSTATEEXCEPTION, J9NLS_VM_PUT_STRICT_STATIC_FINAL_AFTER_READ);
 	VMStructHasBeenUpdated(REGISTER_ARGS);
 	goto throwCurrentException;
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */

@@ -2538,11 +2538,11 @@ J9NLS_VM_GET_STRICT_STATIC_NOT_SET.system_action=The JVM will throw an IllegalSt
 J9NLS_VM_GET_STRICT_STATIC_NOT_SET.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_PUT_FINAL_STRICT_STATIC_AFTER_READ=Final strict static field is set after read.
+J9NLS_VM_PUT_STRICT_STATIC_FINAL_AFTER_READ=Strict static final field is set after read.
 # START NON-TRANSLATABLE
-J9NLS_VM_PUT_FINAL_STRICT_STATIC_AFTER_READ.explanation=The value of a final strict static field cannot change once it has been read.
-J9NLS_VM_PUT_FINAL_STRICT_STATIC_AFTER_READ.system_action=The JVM will throw an IllegalStateException.
-J9NLS_VM_PUT_FINAL_STRICT_STATIC_AFTER_READ.user_response=Contact the provider of the classfile for a corrected version.
+J9NLS_VM_PUT_STRICT_STATIC_FINAL_AFTER_READ.explanation=The value of a strict static final field cannot change once it has been read.
+J9NLS_VM_PUT_STRICT_STATIC_FINAL_AFTER_READ.system_action=The JVM will throw an IllegalStateException.
+J9NLS_VM_PUT_STRICT_STATIC_FINAL_AFTER_READ.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
 # NullRestricted is not translatable

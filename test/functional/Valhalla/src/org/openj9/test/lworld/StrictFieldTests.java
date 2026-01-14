@@ -65,7 +65,7 @@ public class StrictFieldTests {
 	 * read, an exception is thrown.
 	 */
 	@Test(expectedExceptions = IllegalStateException.class,
-		expectedExceptionsMessageRegExp = ".*Final strict static field is set after read.*")
+		expectedExceptionsMessageRegExp = ".*Strict static final field is set after read.*")
 	static public void testPutStaticInLarvalForReadStrictFinalField() throws Throwable {
 		Class<?> c = StrictFieldGenerator.generateTestPutStaticInLarvalForReadStrictFinalField();
 		try {
@@ -151,7 +151,7 @@ public class StrictFieldTests {
 		c.newInstance();
 	}
 
-	/* A non-final strict instance field may be assigned after invoking
+	/* A strict non-final instance field may be assigned after invoking
 	 * another instance initialization method of this.
 	 */
 	@Test
