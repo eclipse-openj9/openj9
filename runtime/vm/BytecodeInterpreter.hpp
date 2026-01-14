@@ -4556,82 +4556,87 @@ done:
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-/* jdk.internal.misc.Unsafe: public native <V> V getValue(Object obj, long offset, Class<?> clz); */
+	/* jdk.internal.misc.Unsafe: public native <V> V getFlatValue(Object obj, long offset, int layoutKind, Class<?> clz); */
 	VMINLINE VM_BytecodeAction
-	inlUnsafeGetValue(REGISTER_ARGS_LIST)
+	inlUnsafeGetFlatValue(REGISTER_ARGS_LIST)
 	{
 		j9object_t clz = *(j9object_t*)_sp;
-		I_64 offset = *(I_64*)(_sp + 1);
-		j9object_t obj = *(j9object_t*)(_sp + 3);
+		I_32 layoutKind = *(I_32*)(_sp + 1);
+		I_64 offset = *(I_64*)(_sp + 2);
+		j9object_t obj = *(j9object_t*)(_sp + 4);
 
 		j9object_t result = NULL;
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 
-		/* TODO (#14073): update this function to have the same behavior as OpenJDK when obj is null, clz is null, or when clz is not a VT class (currently OpenJDK segfaults in all of these scenarios) */
-		if (NULL != obj && NULL != clz) {
+		if (0 == layoutKind) {
+			rc = THROW_ILLEGAL_ARGUMENT_EXCEPTION;
+			goto done;
+		} else if (NULL != obj && NULL != clz) {
 			J9Class *clzJ9Class = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, clz);
-
-			if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(clzJ9Class)) {
+			if (J9_IS_J9CLASS_VALUETYPE(clzJ9Class)) {
 				result = VM_ValueTypeHelpers::getFlattenedFieldAtOffset(
-					_currentThread,
-					_objectAccessBarrier,
-					_objectAllocate,
-					clzJ9Class,
-					obj,
-					offset,
-					true);
-
-				if (NULL == result) {
-					buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
-					updateVMStruct(REGISTER_ARGS);
-					result = VM_ValueTypeHelpers::getFlattenedFieldAtOffset(
 						_currentThread,
 						_objectAccessBarrier,
 						_objectAllocate,
 						clzJ9Class,
 						obj,
 						offset,
-						false);
-					VMStructHasBeenUpdated(REGISTER_ARGS);
-					restoreGenericSpecialStackFrame(REGISTER_ARGS);
+						true);
+				if (NULL == result) {
+					buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+					updateVMStruct(REGISTER_ARGS);
+					result = VM_ValueTypeHelpers::getFlattenedFieldAtOffset(
+							_currentThread,
+							_objectAccessBarrier,
+							_objectAllocate,
+							clzJ9Class,
+							obj,
+							offset,
+							false);
 				}
 			}
 		} else {
 			rc = THROW_NPE;
+			goto done;
 		}
 
-		returnObjectFromINL(REGISTER_ARGS, result, 5);
+		returnObjectFromINL(REGISTER_ARGS, result, 6);
+done:
 		return rc;
 	}
 
-	/* jdk.internal.misc.Unsafe: public native <V> void putValue(Object obj, long offset, Class<?> clz, V value); */
+	/* jdk.internal.misc.Unsafe: public native <V> void putFlatValue(Object obj, long offset, int layoutKind, Class<?> clz, V value); */
 	VMINLINE VM_BytecodeAction
-	inlUnsafePutValue(REGISTER_ARGS_LIST)
+	inlUnsafePutFlatValue(REGISTER_ARGS_LIST)
 	{
 		j9object_t value = *(j9object_t*)_sp;
 		j9object_t clz = *(j9object_t*)(_sp + 1);
-		I_64 offset = *(I_64*)(_sp + 2);
-		j9object_t obj = *(j9object_t*)(_sp + 4);
+		I_32 layoutKind = *(I_32*)(_sp + 2);
+		I_64 offset = *(I_64*)(_sp + 3);
+		j9object_t obj = *(j9object_t*)(_sp + 5);
 
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 
-		/* TODO (#14073): update this function to have the same behavior as OpenJDK when obj is null, clz is null, or when clz is not a VT class (currently OpenJDK segfaults in all of these scenarios) */
-		if ((NULL != obj) && (NULL != clz) && (NULL != value)) {
+		if (0 == layoutKind) {
+			rc = THROW_ILLEGAL_ARGUMENT_EXCEPTION;
+			goto done;
+		} else if ((NULL != obj) && (NULL != clz) && (NULL != value)) {
 			J9Class *clzJ9Class = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, clz);
-
-			if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(clzJ9Class)) {
+			if (J9_IS_J9CLASS_VALUETYPE(clzJ9Class)) {
 				VM_ValueTypeHelpers::putFlattenedFieldAtOffset(_currentThread,
-					_objectAccessBarrier,
-					clzJ9Class,
-					value,
-					obj,
-					offset);
+						_objectAccessBarrier,
+						clzJ9Class,
+						value,
+						obj,
+						offset);
 			}
 		} else {
 			rc = THROW_NPE;
+			goto done;
 		}
 
-		returnVoidFromINL(REGISTER_ARGS, 6);
+		returnVoidFromINL(REGISTER_ARGS, 7);
+done:
 		return rc;
 	}
 	/* jdk.internal.misc.Unsafe: public native boolean isFlatArray(Class<?> clz); */
@@ -10766,8 +10771,8 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECTSIZE),
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETVALUE),
-		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTVALUE),
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETFLATVALUE),
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTFLATVALUE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATARRAY),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATFIELD),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFIELDATOFFSETFLATTENED),
@@ -11397,10 +11402,10 @@ runMethod: {
 		PERFORM_ACTION(inlUnsafeGetObjectSize(REGISTER_ARGS));
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETVALUE):
-		PERFORM_ACTION(inlUnsafeGetValue(REGISTER_ARGS));
-	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTVALUE):
-		PERFORM_ACTION(inlUnsafePutValue(REGISTER_ARGS));
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETFLATVALUE):
+		PERFORM_ACTION(inlUnsafeGetFlatValue(REGISTER_ARGS));
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTFLATVALUE):
+		PERFORM_ACTION(inlUnsafePutFlatValue(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATARRAY):
 		PERFORM_ACTION(inlUnsafeIsFlatArray(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATFIELD):
