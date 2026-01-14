@@ -1821,7 +1821,9 @@ jvmtiHookMethodExit(J9HookInterface** hook, UDATA eventNum, void* eventData, voi
 				jmethodID methodID;
 				jvalue returnValue;
 
-				if (!poppedByException) {
+				if (poppedByException) {
+					memset(&returnValue, 0, sizeof(jvalue));
+				} else {
 					fillInJValue(signatureType, &returnValue, valueAddress,  (j9object_t*) currentThread->arg0EA);
 				}
 				methodID = getCurrentMethodID(currentThread, method);
