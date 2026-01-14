@@ -990,6 +990,8 @@ UDATA jit390Handler(J9VMThread* vmThread, U_32 sigType, void* sigInfo)
             {
             trapType = TRAP_TYPE_NULL_CHECK;
             infoType = j9sig_info(sigInfo, J9PORT_SIG_GPR, 7, &infoName, &infoValue);
+            if (infoType != J9PORT_SIG_VALUE_ADDRESS)
+               return J9PORT_SIG_EXCEPTION_CONTINUE_SEARCH;
             entryPointRegister = (UDATA *) infoValue;
 
             /* Defect 120395 : Save original value of GPR7 in vm->tempSlot, the trapHandlers will restore it from there */
@@ -1010,6 +1012,8 @@ UDATA jit390Handler(J9VMThread* vmThread, U_32 sigType, void* sigInfo)
          {
          /* Unsafe.get*() APIs may trigger a SIGABEND on z/OS which should be converted to a java/lang/InternalError. */
          infoType = j9sig_info(sigInfo, J9PORT_SIG_GPR, 7, &infoName, &infoValue);
+         if (infoType != J9PORT_SIG_VALUE_ADDRESS)
+            return J9PORT_SIG_EXCEPTION_CONTINUE_SEARCH;
          entryPointRegister = (UDATA *) infoValue;
 
          trapType = TRAP_TYPE_INTERNAL_ERROR;
