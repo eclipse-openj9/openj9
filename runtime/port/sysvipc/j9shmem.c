@@ -71,19 +71,18 @@
  * for the various sysvipc shared memory platforms.
  * The settings are determined by:
  *    o  whether we are running on zOS
- *    o  if on zOS whether APAR OA11519 is installed 
+ *    o  if on zOS whether APAR OA11519 is installed
  *    o  if zOS whether we are building a 31 or 64 bit JVM
  *  There are default values for all other platforms.
- * 
- * Note in particular the inclusion of __IPC_MEGA on zOS systems.  If we 
- * are building a 31 bit JVM this is required.  However, it must NOT be 
- * included for the 64 bit zOS JVM.  This is because __IPC_MEGA allocates 
+ *
+ * Note in particular the inclusion of __IPC_MEGA on zOS systems.  If we
+ * are building a 31 bit JVM this is required.  However, it must NOT be
+ * included for the 64 bit zOS JVM.  This is because __IPC_MEGA allocates
  * the shared memory below the 2GB line.  This is OK for processes running
  * in key 8 (such as Websphere server regions), but key 2 processes, such as
  * the Websphere control region, can only share memory ABOVE the 2GB line.
  * Therefore __IPC_MEGA must not be specified for the zOS 64 bit JVM.
  */
-
 
 #define SHMFLAGS_BASE_COMMON (IPC_CREAT | IPC_EXCL)
 
@@ -193,7 +192,7 @@ j9shmem_openDeprecated (struct J9PortLibrary *portLibrary, const char* cacheDirN
 		Trc_PRT_shmem_j9shmem_openDeprecated_Message("Error: could not alloc handle.");
 		goto error;
 	}
-	tmphandle->baseFileName = (char *) (((char *) tmphandle) + handleStructLength);
+	tmphandle->baseFileName = ((char *) tmphandle) + handleStructLength;
 	tmphandle->controlStorageProtectKey = 0;
 	tmphandle->currentStorageProtectKey = 0;
 
@@ -353,7 +352,7 @@ j9shmem_open (J9PortLibrary *portLibrary, const char* cacheDirName, uintptr_t gr
 		Trc_PRT_shmem_j9shmem_open_ExitWithMsg("Error: could not alloc handle.");
 		return J9PORT_ERROR_SHMEM_OPFAILED;
 	}
-	tmphandle->baseFileName = (char *) (((char *) tmphandle) + handleStructLength);
+	tmphandle->baseFileName = ((char *) tmphandle) + handleStructLength;
 	tmphandle->controlStorageProtectKey = 0;
 	tmphandle->currentStorageProtectKey = 0;
 	tmphandle->flags = flags;
@@ -1279,7 +1278,7 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 			 *  So check "HOME" first, if failed, then check getpwuid(getuid())->pw_dir.
 			 */
 			if (0 == omrsysinfo_get_env("HOME", homeDirBuf, J9SH_MAXPATH)) {
-				uintptr_t dirLen = strlen((const char*)homeDirBuf);
+				uintptr_t dirLen = strlen(homeDirBuf);
 				if (0 < dirLen
 					&& ((dirLen + baseDirLen) < minBufLen))
 				{
@@ -1765,12 +1764,12 @@ openSharedMemory (J9PortLibrary *portLibrary, intptr_t fd, const char *baseFile,
 #endif
 			{
 #if defined (J9OS_I5)
-                                /* The statement 'buf.shm_perm.key != controlinfo->common.ftok_key' will never fail on IBM i platform,
-                                 * as the definition of structure ipc_perm is different:
-                                 *  'key' field doesn't exists in structure ipc_perm on IBM i and the value of 'key' always zero.
-                                 *  Simply log the error here, and then ignore it to avoid more incorrect messages
-                                 */
-                                Trc_PRT_shmem_j9shmem_openSharedMemory_Msg("The <key,id> pair in our control file is not valid, but we ignore it here to avoid more incorrect messages."); 
+				/* The statement 'buf.shm_perm.key != controlinfo->common.ftok_key' will never fail on IBM i platform,
+				 * as the definition of structure ipc_perm is different:
+				 *  'key' field doesn't exists in structure ipc_perm on IBM i and the value of 'key' always zero.
+				 *  Simply log the error here, and then ignore it to avoid more incorrect messages
+				 */
+				Trc_PRT_shmem_j9shmem_openSharedMemory_Msg("The <key,id> pair in our control file is not valid, but we ignore it here to avoid more incorrect messages.");
 #else /* defined (J9OS_I5) */
 				Trc_PRT_shmem_j9shmem_openSharedMemory_Msg("The <key,id> pair in our control file is no longer valid.");
 				/* Clear any stale portlibrary error code */
