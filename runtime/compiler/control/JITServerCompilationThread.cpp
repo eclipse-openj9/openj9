@@ -193,7 +193,8 @@ outOfProcessCompilationEnd(TR_MethodToBeCompiled *entry, TR::Compilation *comp)
          auto cache = clientData->getAOTCache();
          cache->storeMethod(compInfoPT->getDefiningClassChainRecord(), compInfoPT->getMethodIndex(),
                             entry->_optimizationPlan->getOptLevel(), clientData->getAOTHeaderRecord(),
-                            comp->getSerializationRecords(), codeCacheHeader, codeSize,
+                            comp->getSerializationRecords(), comp->getAOTMethodDependencies(),
+                            codeCacheHeader, codeSize,
                             dataCacheHeader, dataSize, comp->signature(), clientData->getClientUID(), methodRecord);
          }
       else if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -214,6 +215,7 @@ outOfProcessCompilationEnd(TR_MethodToBeCompiled *entry, TR::Compilation *comp)
                                                      entry->_optimizationPlan->getOptLevel(),
                                                      clientData->getAOTHeaderRecord(),
                                                      comp->getSerializationRecords(),
+                                                     comp->getAOTMethodDependencies(),
                                                      codeCacheHeader, codeSize,
                                                      dataCacheHeader, dataSize,
                                                      comp->signature());
