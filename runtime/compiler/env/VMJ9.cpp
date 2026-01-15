@@ -1227,25 +1227,20 @@ TR_J9VMBase::getObjectClassFromKnownObjectIndex(TR::Compilation *comp,
                                                 TR::KnownObjectTable::Index idx,
                                                 bool *isJavaLangClass)
    {
-   TR::VMAccessCriticalSection vpKnownObjectCriticalSection(comp);
-
    TR::KnownObjectTable *knot = comp->getKnownObjectTable();
    if (!knot)
       return NULL;
 
-   TR_OpaqueClassBlock *clazz = getObjectClass(knot->getPointer(idx));
-   TR_OpaqueClassBlock *jlClass = getClassClassPointer(clazz);
-   *isJavaLangClass = (clazz == jlClass);
-   if (*isJavaLangClass)
-      {
-      clazz = getClassFromJavaLangClass(knot->getPointer(idx));
-      }
+   TR::KnownObjectTable::ObjectInfo objInfo = getObjClassInfoFromKnotIndex(comp, idx);
+   *isJavaLangClass = objInfo._isFixedJavaLangClass;
 
-   J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
-   cpg->addEdge(cpg->knownObject(idx), clazz);
-
-   return clazz;
+   // Don't nedd to add an edge to comp->constProvenanceGraph() because this
+   // is done in getObjClassInfoFromKnotIndex() frontend query
+   //J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
+   //cpg->addEdge(cpg->knownObject(idx), clazz);
+   return objInfo._clazz;
    }
+
 uintptr_t
 TR_J9VMBase::getStaticReferenceFieldAtAddress(uintptr_t fieldAddress)
    {
