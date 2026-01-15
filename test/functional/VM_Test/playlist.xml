@@ -32,6 +32,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode501 -XXgc:disableVirtualLargeObjectHeap</variation>
 			<variation>Mode551 -XXgc:disableVirtualLargeObjectHeap</variation>
 			<variation>Mode610</variation>
+			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -Xint \
@@ -87,6 +88,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode610</variation>
             <variation>Mode501</variation>
             <variation>Mode551</variation>
+			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(P)$(LIB_DIR)$(D)junit4.jar$(Q) \
@@ -130,6 +132,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		</disables>
 		<variations>
 			<variation>NoOptions</variation>
+			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-javaagent:$(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(Q) \
@@ -179,6 +182,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode501</variation>
 			<variation>Mode551</variation>
 			<variation>Mode610</variation>
+			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) -Xdump -Xint -Dj9vm.testing.tests.path=$(TEST_RESROOT) \
 	-cp $(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q)  \
@@ -209,6 +213,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode610</variation>
             <variation>Mode501</variation>
             <variation>Mode551</variation>
+			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) -Dplatform=$(PLATFORM) -cp $(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(Q) \
 	j9vm.runner.Menu -test=$(Q)j9vm.test.xlp$(Q) -exe=$(Q)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(Q) \
@@ -237,6 +242,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode501</variation>
 			<variation>Mode551</variation>
 			<variation>Mode550</variation>
+			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) -Dplatform=$(PLATFORM) -cp $(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(Q) \
 	j9vm.runner.Menu -test=$(Q)j9vm.test.xlpcodecache$(Q) -exe=$(Q)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(Q) \
