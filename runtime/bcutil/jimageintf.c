@@ -326,11 +326,10 @@ jimageFindResource(J9JImageIntf *jimageIntf, UDATA handle, const char *moduleNam
 
 		if (NULL != locationRef) {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-			/* Valhalla enables --enable-preview by default at jvminit.c;
-			 * The parameter is_preview_mode is set to TRUE which might require change
-			 * if the Valhalla project is merged into openjdk head stream.
-			 */
-			*locationRef = libJImageFindResource(jimage, moduleName, name, TRUE, (jlong *)size);
+			J9JavaVM *vm = jimageIntf->vm;
+			BOOLEAN enablePreview = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW);
+
+			*locationRef = libJImageFindResource(jimage, moduleName, name, enablePreview, (jlong *)size);
 #else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			*locationRef = libJImageFindResource(jimage, moduleName, JIMAGE_VERSION_NUMBER, name, (jlong *)size);
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
