@@ -833,7 +833,9 @@ Java_jdk_internal_misc_Unsafe_objectFieldOffset1(JNIEnv *env, jobject receiver, 
 	}
 
 	if (NULL == romField) {
+		vmFuncs->internalExitVMToJNI(currentThread);
 		char *errormsg = createErrorMsgHelper(env, clazz, name, " is not found");
+		vmFuncs->internalEnterVMFromJNI(currentThread);
 		if (NULL == errormsg) {
 			vmFuncs->setCurrentException(
 					currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR,
@@ -846,7 +848,9 @@ Java_jdk_internal_misc_Unsafe_objectFieldOffset1(JNIEnv *env, jobject receiver, 
 		}
 	} else if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccStatic)) {
 #if JAVA_SPEC_VERSION >= 26
+		vmFuncs->internalExitVMToJNI(currentThread);
 		char *errormsg = createErrorMsgHelper(env, clazz, name, " is a static field");
+		vmFuncs->internalEnterVMFromJNI(currentThread);
 		if (NULL == errormsg) {
 			vmFuncs->setCurrentException(
 					currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR,
