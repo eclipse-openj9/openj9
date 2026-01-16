@@ -247,8 +247,11 @@ if(OMR_OS_LINUX OR OMR_OS_OSX)
 		-Wreturn-type
 		-pthread
 	)
-	# Workaround for problem seen in x86_64-macOS builds for JDK 22.
-	if((NOT JAVA_SPEC_VERSION LESS 22) AND OMR_OS_OSX AND OMR_ARCH_X86)
+	# Enable frame pointers to avoid crashes on x86_64-macOS
+	# where stack-probe prologues can be paired with incorrect
+	# compact unwind encodings, which can lead to bogus stack size
+	# decoding during unwinding.
+	if(OMR_OS_OSX AND OMR_ARCH_X86)
 		list(APPEND J9_SHAREDFLAGS
 			-fno-omit-frame-pointer
 		)
