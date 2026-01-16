@@ -156,24 +156,24 @@ MM_GlobalCollectorDelegate::mainThreadGarbageCollectStarted(MM_EnvironmentBase *
 	/* Set the dynamic class unloading flag based on command line and runtime state */
 	switch (_extensions->dynamicClassUnloading) {
 		case MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_NEVER:
-			_extensions->runtimeCheckDynamicClassUnloading = false;
+			_extensions->_runtimeCheckDynamicClassUnloading = false;
 			forceUnloading = false;
 			break;
 		case MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_ALWAYS:
-			_extensions->runtimeCheckDynamicClassUnloading = true;
+			_extensions->_runtimeCheckDynamicClassUnloading = true;
 			forceUnloading = true;
 			break;
 		case MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_ON_CLASS_LOADER_CHANGES:
 			forceUnloading = env->_cycleState->_gcCode.isAggressiveGC();
-			_extensions->runtimeCheckDynamicClassUnloading = forceUnloading || _extensions->classLoaderManager->isTimeForClassUnloading(env);
+			_extensions->_runtimeCheckDynamicClassUnloading = forceUnloading || _extensions->classLoaderManager->isTimeForClassUnloading(env);
 			break;
 		default:
 			break;
 	}
 
-	if (_extensions->runtimeCheckDynamicClassUnloading) {
+	if (_extensions->_runtimeCheckDynamicClassUnloading) {
 		/* request collector enter classUnloadMutex if possible (if forceUnloading is set - always)*/
-		_extensions->runtimeCheckDynamicClassUnloading = enterClassUnloadMutex(env, forceUnloading);
+		_extensions->_runtimeCheckDynamicClassUnloading = enterClassUnloadMutex(env, forceUnloading);
 	}
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 }
@@ -201,7 +201,7 @@ MM_GlobalCollectorDelegate::mainThreadGarbageCollectFinished(MM_EnvironmentBase 
 	MM_MarkingDelegate::clearClassLoadersScannedFlag(env);
 
 	/* If we allowed class unloading during this gc, we must release the classUnloadMutex */
-	if (_extensions->runtimeCheckDynamicClassUnloading) {
+	if (_extensions->_runtimeCheckDynamicClassUnloading) {
 		exitClassUnloadMutex(env);
 	}
 
@@ -243,7 +243,7 @@ void
 MM_GlobalCollectorDelegate::postMarkProcessing(MM_EnvironmentBase *env)
 {
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-	if (_extensions->runtimeCheckDynamicClassUnloading != 0) {
+	if (_extensions->_runtimeCheckDynamicClassUnloading != 0) {
 		PORT_ACCESS_FROM_ENVIRONMENT(env);
 		OMR_VMThread *vmThread = env->getOmrVMThread();
 		Trc_MM_ClassUnloadingStart((J9VMThread *)vmThread->_language_vmthread);
@@ -355,19 +355,19 @@ MM_GlobalCollectorDelegate::isTimeForGlobalGCKickoff()
 	Trc_MM_GlobalCollector_isTimeForGlobalGCKickoff_Entry(
 		_extensions->dynamicClassUnloading,
 		numClassLoaderBlocks,
-		_extensions->dynamicClassUnloadingKickoffThreshold,
+		_extensions->_dynamicClassUnloadingKickoffThreshold,
 		_extensions->classLoaderManager->getLastUnloadNumOfClassLoaders());
 
 	Trc_MM_GlobalCollector_isTimeForGlobalGCKickoff_anonClasses(
 		numAnonymousClasses,
 		_extensions->classLoaderManager->getLastUnloadNumOfAnonymousClasses(),
-		_extensions->classUnloadingAnonymousClassWeight
+		_extensions->_classUnloadingAnonymousClassWeight
 	);
 
 	Assert_MM_true(numAnonymousClasses >= _extensions->classLoaderManager->getLastUnloadNumOfAnonymousClasses());
 
-	if ((0 != _extensions->dynamicClassUnloadingKickoffThreshold) && (_extensions->dynamicClassUnloading != MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_NEVER)) {
-		uintptr_t recentlyLoaded = (uintptr_t) ((numAnonymousClasses - _extensions->classLoaderManager->getLastUnloadNumOfAnonymousClasses()) * _extensions->classUnloadingAnonymousClassWeight);
+	if ((0 != _extensions->_dynamicClassUnloadingKickoffThreshold) && (_extensions->dynamicClassUnloading != MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_NEVER)) {
+		uintptr_t recentlyLoaded = (uintptr_t) ((numAnonymousClasses - _extensions->classLoaderManager->getLastUnloadNumOfAnonymousClasses()) * _extensions->_classUnloadingAnonymousClassWeight);
 		/* todo aryoung: getLastUnloadNumOfClassLoaders() includes the class loaders which
 		 * were unloaded but still required finalization when the last classUnloading occured.
 		 * This means that the threshold check is wrong when there are classes which require finalization.
@@ -376,7 +376,7 @@ MM_GlobalCollectorDelegate::isTimeForGlobalGCKickoff()
 		if (numClassLoaderBlocks > _extensions->classLoaderManager->getLastUnloadNumOfClassLoaders()) {
 			recentlyLoaded += (numClassLoaderBlocks - _extensions->classLoaderManager->getLastUnloadNumOfClassLoaders());
 		}
-		result = recentlyLoaded >= _extensions->dynamicClassUnloadingKickoffThreshold;
+		result = recentlyLoaded >= _extensions->_dynamicClassUnloadingKickoffThreshold;
 	}
 
 	Trc_MM_GlobalCollector_isTimeForGlobalGCKickoff_Exit(result ? "true" : "false");

@@ -1088,7 +1088,7 @@ gcParseSovereignArguments(J9JavaVM *vm)
 				extensions->dynamicClassUnloading = MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_ALWAYS;
 				break;
 		}
-		extensions->dynamicClassUnloadingSet = true;
+		extensions->_dynamicClassUnloadingSet = true;
 	}
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 	if (-1 != option_set_pair(vm, "-Xdisablestringconstantgc", "-Xenablestringconstantgc", &index)) {

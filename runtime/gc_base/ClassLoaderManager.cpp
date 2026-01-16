@@ -213,20 +213,20 @@ MM_ClassLoaderManager::isTimeForClassUnloading(MM_EnvironmentBase *env)
 	Trc_MM_GlobalCollector_isTimeForClassUnloading_Entry(
 			_extensions->dynamicClassUnloading,
 			numClassLoaderBlocks,
-			_extensions->dynamicClassUnloadingThreshold,
+			_extensions->_dynamicClassUnloadingThreshold,
 			_lastUnloadNumOfClassLoaders
 	);
 
 	Trc_MM_GlobalCollector_isTimeForClassUnloading_anonClasses(
 		numAnonymousClasses,
 		_lastUnloadNumOfAnonymousClasses,
-		 _extensions->classUnloadingAnonymousClassWeight
+		 _extensions->_classUnloadingAnonymousClassWeight
 	);
 
 	Assert_MM_true(numAnonymousClasses >= _lastUnloadNumOfAnonymousClasses);
 
 	if (_extensions->dynamicClassUnloading != MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_NEVER) {
-		uintptr_t recentlyLoaded = (uintptr_t)((numAnonymousClasses - _lastUnloadNumOfAnonymousClasses) *  _extensions->classUnloadingAnonymousClassWeight);
+		uintptr_t recentlyLoaded = (uintptr_t)((numAnonymousClasses - _lastUnloadNumOfAnonymousClasses) *  _extensions->_classUnloadingAnonymousClassWeight);
 		/* todo aryoung: _lastUnloadNumOfClassLoaders includes the class loaders which
 		 * were unloaded but still required finalization when the last classUnloading occured.
 		 * This means that the threshold check is wrong when there are classes which require finalization.
@@ -235,7 +235,7 @@ MM_ClassLoaderManager::isTimeForClassUnloading(MM_EnvironmentBase *env)
 		if (numClassLoaderBlocks >= _lastUnloadNumOfClassLoaders) {
 			recentlyLoaded += (numClassLoaderBlocks - _lastUnloadNumOfClassLoaders);
 		}
-		result = recentlyLoaded >= _extensions->dynamicClassUnloadingThreshold;
+		result = recentlyLoaded >= _extensions->_dynamicClassUnloadingThreshold;
 	}
 	
 	Trc_MM_GlobalCollector_isTimeForClassUnloading_Exit(result ? "true" : "false");

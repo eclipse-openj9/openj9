@@ -189,7 +189,7 @@ MM_MarkingDelegate::mainSetupForGC(MM_EnvironmentBase *env)
 {
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	clearClassLoadersScannedFlag(env);
-	_markMap = (0 != _extensions->runtimeCheckDynamicClassUnloading) ? _markingScheme->getMarkMap() : NULL;
+	_markMap = (0 != _extensions->_runtimeCheckDynamicClassUnloading) ? _markingScheme->getMarkMap() : NULL;
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
 	_collectStringConstantsEnabled = _extensions->collectStringConstants;

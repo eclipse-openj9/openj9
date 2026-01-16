@@ -126,14 +126,14 @@ public:
 	};
 	DynamicClassUnloading dynamicClassUnloading;
 
-	bool dynamicClassUnloadingSet; /**< is true if value for dynamicClassUnloading was specified in command line */
+	bool _dynamicClassUnloadingSet; /**< is true if value for dynamicClassUnloading was specified in command line */
 
-	uintptr_t runtimeCheckDynamicClassUnloading; /**< set to true if class unloading is to be performed for the current GC cycle */
-	bool dynamicClassUnloadingKickoffThresholdForced; /**< true if classUnloadingKickoffThreshold is specified in java options. */
-	bool dynamicClassUnloadingThresholdForced; /**< true if classUnloadingThresholdForced is specified in java options. */
-	uintptr_t dynamicClassUnloadingKickoffThreshold; /**< the threshold to kickoff a concurrent global GC from a scavenge */
-	uintptr_t dynamicClassUnloadingThreshold; /**< the threshold to trigger class unloading during a global GC */
-	double classUnloadingAnonymousClassWeight; /**< The weight factor to apply to anonymous classes for threshold comparisons */
+	uintptr_t _runtimeCheckDynamicClassUnloading; /**< set to true if class unloading is to be performed for the current GC cycle */
+	bool _dynamicClassUnloadingKickoffThresholdForced; /**< true if classUnloadingKickoffThreshold is specified in java options. */
+	bool _dynamicClassUnloadingThresholdForced; /**< true if classUnloadingThresholdForced is specified in java options. */
+	uintptr_t _dynamicClassUnloadingKickoffThreshold; /**< the threshold to kickoff a concurrent global GC from a scavenge */
+	uintptr_t _dynamicClassUnloadingThreshold; /**< the threshold to trigger class unloading during a global GC */
+	double _classUnloadingAnonymousClassWeight; /**< The weight factor to apply to anonymous classes for threshold comparisons */
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
 	U_32 _stringTableListToTreeThreshold; /**< Threshold at which we start using trees instead of lists for collision resolution in the String table */
@@ -408,12 +408,13 @@ public:
 		, finalizeCycleLimit(0)  /* 0 seconds (i.e. no time limit) */
 #endif /* J9VM_GC_FINALIZATION */
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-		, dynamicClassUnloadingSet(false)
-		, dynamicClassUnloadingKickoffThresholdForced(false)
-		, dynamicClassUnloadingThresholdForced(false)
-		, dynamicClassUnloadingKickoffThreshold(0)
-		, dynamicClassUnloadingThreshold(0)
-		, classUnloadingAnonymousClassWeight(1.0)
+		, dynamicClassUnloading(DYNAMIC_CLASS_UNLOADING_NEVER)
+		, _dynamicClassUnloadingSet(false)
+		, _dynamicClassUnloadingKickoffThresholdForced(false)
+		, _dynamicClassUnloadingThresholdForced(false)
+		, _dynamicClassUnloadingKickoffThreshold(0)
+		, _dynamicClassUnloadingThreshold(0)
+		, _classUnloadingAnonymousClassWeight(1.0)
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 		, _stringTableListToTreeThreshold(1024)
 		, maxSoftReferenceAge(32)
