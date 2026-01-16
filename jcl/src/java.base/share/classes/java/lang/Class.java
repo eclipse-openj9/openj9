@@ -60,6 +60,9 @@ import java.lang.ref.*;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.Constable;
 /*[ENDIF] JAVA_SPEC_VERSION >= 12 */
+/*[IF JAVA_SPEC_VERSION >= 25]*/
+import java.lang.constant.ConstantDescs;
+/*[ENDIF] JAVA_SPEC_VERSION >= 25 */
 
 import sun.reflect.generics.repository.ClassRepository;
 /*[IF JAVA_SPEC_VERSION >= 25]*/
@@ -4240,9 +4243,22 @@ public Constructor<?> getEnclosingConstructor()
 		/*[PR CMVC 201439] To remove CheckPackageAccess call from getEnclosingMethod of J9 */
 		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	/*[IF JAVA_SPEC_VERSION >= 25]*/
-	} else if (enclosing instanceof String descriptor) {
-		// The enclosing constructor can't be found, returning string from getEnclosingObject()
-		// is the constructor descriptor, validate it for error handling.
+	} else if (enclosing instanceof String[] nameAndDescriptor) {
+		// The enclosing constructor can't be found, returning string array from getEnclosingObject()
+		// contains the name and descriptor, validate it for error handling.
+		// The string array format must match java_lang_Class.cpp:Java_java_lang_Class_getEnclosingObject().
+		String name = nameAndDescriptor[0];
+		String descriptor = nameAndDescriptor[1];
+		if ((name == null)
+				|| (descriptor == null)
+				|| !ConstantDescs.INIT_NAME.equals(name)
+		) {
+			// The returning enclosing object name/descriptor is not a constructor.
+			return null;
+		}
+		if (descriptor.isEmpty() || (descriptor.charAt(0) != '(')) {
+			throw new GenericSignatureFormatError("Bad method signature: " + descriptor);
+		}
 		ConstructorRepository typeInfo = ConstructorRepository.make(descriptor, getFactory());
 		typeInfo.getParameterTypes();
 		typeInfo.getExceptionTypes();
@@ -4285,9 +4301,23 @@ public Method getEnclosingMethod()
 		/*[PR CMVC 201439] To remove CheckPackageAccess call from getEnclosingMethod of J9 */
 		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	/*[IF JAVA_SPEC_VERSION >= 25]*/
-	} else if (enclosing instanceof String descriptor) {
-		// The enclosing method can't be found, returning string from getEnclosingObject()
-		// is the method descriptor, validate it for error handling.
+	} else if (enclosing instanceof String[] nameAndDescriptor) {
+		// The enclosing method can't be found, returning a string array from getEnclosingObject()
+		// contains the name and descriptor, validate it for error handling.
+		// The string array format must match java_lang_Class.cpp:Java_java_lang_Class_getEnclosingObject().
+		String name = nameAndDescriptor[0];
+		String descriptor = nameAndDescriptor[1];
+		if ((name == null)
+				|| (descriptor == null)
+				|| ConstantDescs.INIT_NAME.equals(name)
+				|| ConstantDescs.CLASS_INIT_NAME.equals(name)
+		) {
+			// The returning enclosing object name/descriptor is not a method.
+			return null;
+		}
+		if (descriptor.isEmpty() || (descriptor.charAt(0) != '(')) {
+			throw new GenericSignatureFormatError("Bad method signature: " + descriptor);
+		}
 		MethodRepository typeInfo = MethodRepository.make(descriptor, getFactory());
 		typeInfo.getReturnType();
 		typeInfo.getParameterTypes();

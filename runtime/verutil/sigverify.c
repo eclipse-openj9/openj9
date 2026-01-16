@@ -129,6 +129,13 @@ verifyIdentifierUtf8Impl (U_8* identifierStart, U_8 *limit, BOOLEAN allowSlashes
 	U_8 *cursor = identifierStart;
 	BOOLEAN slash = FALSE;
 
+#if JAVA_SPEC_VERSION >= 25
+	/* Keep pre-JDK25 behaviour intact until OpenJDK backports this new check. */
+	if ((cursor < limit) && ('/' == *cursor)) {
+		/* Identifier must not start with /. */
+		return -1;
+	}
+#endif /* JAVA_SPEC_VERSION >= 25 */
 	while ((';' != *cursor) && (cursor < limit)) {
 		/* check for subset of illegal characters:  46(.) 47(/) 91([) in JVMS 4.2.2*/
 		switch (*cursor) {
@@ -150,7 +157,7 @@ verifyIdentifierUtf8Impl (U_8* identifierStart, U_8 *limit, BOOLEAN allowSlashes
 		}
 		++cursor;
 	}
-	/* Identifier must not end in / (i.e. must have specified a type name after any package name) */
+	/* Identifier must not end with / (i.e. must have specified a type name after any package name). */
 	if (slash) {
 		return -1;
 	}

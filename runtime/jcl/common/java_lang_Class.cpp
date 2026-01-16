@@ -857,10 +857,32 @@ Java_java_lang_Class_getEnclosingObject(JNIEnv *env, jobject recv)
 #if JAVA_SPEC_VERSION >= 25
 					} else {
 						/* There is an enclosing constructor or method from getEnclosingMethodForROMClass(),
-						 * but it can't be found, return its descriptor string for error handling.
+						 * but it can't be found, return its name/descriptor string for error handling.
 						 */
-						resultObject = vm->memoryManagerFunctions->j9gc_createJavaLangString(
-								currentThread, J9UTF8_DATA(enclosingMethodSigUTF), J9UTF8_LENGTH(enclosingMethodSigUTF), 0);
+						J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
+						resultObject = mmFuncs->J9AllocateIndexableObject(
+								currentThread, ((J9Class *)J9VMJAVALANGSTRING_OR_NULL(vm))->arrayClass,
+								2, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+						if (NULL == resultObject) {
+							vmFuncs->setHeapOutOfMemoryError(currentThread);
+							/* j9jni_createLocalRef() returns NULL in this case. */
+						} else {
+							PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, resultObject);
+							j9object_t methodName = mmFuncs->j9gc_createJavaLangString(
+									currentThread, J9UTF8_DATA(enclosingMethodNameUTF),
+									J9UTF8_LENGTH(enclosingMethodNameUTF), 0);
+							resultObject = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+
+							J9JAVAARRAYOFOBJECT_STORE(currentThread, resultObject, 0, methodName);
+
+							PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, resultObject);
+							j9object_t methodDescriptor = mmFuncs->j9gc_createJavaLangString(
+									currentThread, J9UTF8_DATA(enclosingMethodSigUTF),
+									J9UTF8_LENGTH(enclosingMethodSigUTF), 0);
+							resultObject = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+
+							J9JAVAARRAYOFOBJECT_STORE(currentThread, resultObject, 1, methodDescriptor);
+						}
 #endif /* JAVA_SPEC_VERSION >= 25 */
 					}
 				}
