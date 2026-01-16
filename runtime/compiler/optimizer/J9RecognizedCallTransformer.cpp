@@ -65,20 +65,28 @@ void J9::RecognizedCallTransformer::processConvertingUnaryIntrinsicFunction(TR::
 
 void J9::RecognizedCallTransformer::process_java_lang_Class_IsAssignableFrom(TR::TreeTop* treetop, TR::Node* node)
    {
-   auto toClass = node->getChild(0);
-   auto fromClass = node->getChild(1);
+   // The call to Class.isAssignableFrom will usually be direct, but could be
+   // indirect in rare circumstances.  Make sure any NULLCHK that might appear
+   // for a dereference of the vft-symbol is preserved.
+   //
+   TR::TransformUtil::separateNullCheck(comp(), treetop, trace());
+
+   auto toClass = node->getArgument(0);
+   auto fromClass = node->getArgument(1);
    auto nullchk = comp()->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp()->getMethodSymbol());
    treetop->insertBefore(TR::TreeTop::create(comp(), TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, TR::Node::create(node, TR::PassThrough, 1, toClass), nullchk)));
    treetop->insertBefore(TR::TreeTop::create(comp(), TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, TR::Node::create(node, TR::PassThrough, 1, fromClass), nullchk)));
 
-   TR::Node::recreate(treetop->getNode(), TR::treetop);
-   node->setSymbolReference(comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_checkAssignable));
-   node->setAndIncChild(0, TR::Node::createWithSymRef(TR::aloadi, 1, 1, toClass, comp()->getSymRefTab()->findOrCreateClassFromJavaLangClassSymbolRef()));
-   node->setAndIncChild(1, TR::Node::createWithSymRef(TR::aloadi, 1, 1, fromClass, comp()->getSymRefTab()->findOrCreateClassFromJavaLangClassSymbolRef()));
-   node->swapChildren();
+   prepareToReplaceNode(node);
+   node->setNumChildren(2);
 
-   toClass->recursivelyDecReferenceCount();
-   fromClass->recursivelyDecReferenceCount();
+   TR::SymbolReference *jitCheckAssignableSR = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_checkAssignable);
+   TR::Node::recreateWithSymRef(node, TR::icall, jitCheckAssignableSR);
+
+   TR::SymbolReference *classFromJavaLangClassSR = comp()->getSymRefTab()->findOrCreateClassFromJavaLangClassSymbolRef();
+
+   node->setAndIncChild(0, TR::Node::createWithSymRef(TR::aloadi, 1, 1, fromClass, classFromJavaLangClassSR));
+   node->setAndIncChild(1, TR::Node::createWithSymRef(TR::aloadi, 1, 1, toClass, classFromJavaLangClassSR));
    }
 
 static void substituteNode(
