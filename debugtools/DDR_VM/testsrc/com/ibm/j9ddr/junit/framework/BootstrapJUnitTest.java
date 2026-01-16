@@ -80,7 +80,7 @@ public abstract class BootstrapJUnitTest implements IBootstrapRunnable {
 	@Test
 	public void runTests() throws Exception {
 		int testCount = 0;
-		System.out.println(String.format("Running tests in: %s", getClass().getName()));
+		System.out.format("Running tests in: %s%n", getClass().getName());
 		Method[] methods = this.getClass().getMethods();
 		for (int i = 0; i < methods.length; i++) {
 			Method method = methods[i];
@@ -89,11 +89,11 @@ public abstract class BootstrapJUnitTest implements IBootstrapRunnable {
 				vmData.bootstrap(getClass().getName(), new Object[] { method.getName() });
 			}
 		}
-		
+
 		if (testCount == 0) {
 			fail(String.format("No tests found.  Define some *Impl methods"));
 		} else {
-			System.out.println(String.format("Ran %s tests.", testCount));
+			System.out.format("Ran %s tests.%n", testCount);
 		}
 	}
 

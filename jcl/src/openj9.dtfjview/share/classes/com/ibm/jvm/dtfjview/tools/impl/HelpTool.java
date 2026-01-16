@@ -119,7 +119,10 @@ public class HelpTool extends Tool
 		ToolsRegistry.executeJdmpviewCommand(JDMPVIEW_HELP_COMMAND, out);
 		for (ITool aTool : ToolsRegistry.getAllTools()) {
 			if (aTool instanceof HelpTool == false) {
-				out.println(String.format(COMMAND_FORMAT, aTool.getCommandName(), aTool.getArgumentDescription(), aTool.getHelpDescription()));
+				out.format(COMMAND_FORMAT + "%n",
+						aTool.getCommandName(),
+						aTool.getArgumentDescription(),
+						aTool.getHelpDescription());
 			}
 		}
 	}

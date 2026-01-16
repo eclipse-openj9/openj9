@@ -99,7 +99,7 @@ public class UnwindModule extends Module {
 		output.println("Dumping unwind info for: " + getName());
 		try {
 			for( RuntimeFunction rf: runtimeFunctionEntries) {
-				output.println(String.format("Found ImageRuntimeFunctionEntry %s", rf));
+				output.format("Found ImageRuntimeFunctionEntry %s%n", rf);
 				// Skip chained entries, they don't have real info. They are handled in the
 				// get code above so their existence is transparent to everyone else.
 				if( rf.getUnwindInfoAddress() % 2 == 0 ) {

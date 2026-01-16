@@ -86,8 +86,8 @@ public abstract class BaseStructureFormatter implements IStructureFormatter
 		}
 		
 		if (! found) {
-			//Default behaviour - write out !j9x address
-			out.print(String.format("!j9x 0x%x", address));
+			// Default behaviour - write out !j9x address
+			out.format("!j9x 0x%x", address);
 		}
 		
 		/* postFormat */

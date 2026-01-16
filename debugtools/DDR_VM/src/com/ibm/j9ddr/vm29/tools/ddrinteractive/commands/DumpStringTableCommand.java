@@ -79,9 +79,9 @@ public class DumpStringTableCommand extends Command {
 			} catch (CorruptDataException e) {
 				// ignore
 			}
-			
-			String hexAddr = objectPointer.formatShortInteractive();				
-			out.println(String.format("%s value = <%s>", hexAddr, value));
+
+			String hexAddr = objectPointer.formatShortInteractive();
+			out.format("%s value = <%s>%n", hexAddr, value);
 		}
 		out.println("Table Size = " + stringTableObjects.size());
 	}

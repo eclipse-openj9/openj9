@@ -57,7 +57,7 @@ public class DumpRamClassLinearCommand extends Command
 		}
 		J9ClassPointer clazz = J9ClassPointer.cast(addr);
 		try {
-			out.println(String.format("RAM Class '%s' at %s", J9UTF8Helper.stringValue(clazz.romClass().className()), clazz.getHexAddress()));
+			out.format("RAM Class '%s' at %s%n", J9UTF8Helper.stringValue(clazz.romClass().className()), clazz.getHexAddress());
 			ClassWalker classWalker = new RamClassWalker(clazz, context);
 			new LinearDumper().gatherLayoutInfo(out, classWalker, nestingThreshold);
 		} catch (CorruptDataException e) {

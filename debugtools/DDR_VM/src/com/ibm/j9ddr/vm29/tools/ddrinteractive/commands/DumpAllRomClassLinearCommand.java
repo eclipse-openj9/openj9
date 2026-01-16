@@ -71,8 +71,7 @@ public class DumpAllRomClassLinearCommand extends Command
 				J9ROMClassPointer classPointer = iterator.next();
 				out.println("!dumpromclasslinear " +  classPointer.getHexAddress());
 				//ROM Class 'org/apache/tomcat/util/buf/MessageBytes' at 0x0DCF9008:
-				out.println(String.format("ROM Class '%s' at %s", J9UTF8Helper.stringValue(classPointer.className()), classPointer.getHexAddress()));
-				out.println();
+				out.format("ROM Class '%s' at %s%n%n", J9UTF8Helper.stringValue(classPointer.className()), classPointer.getHexAddress());
 				ClassWalker classWalker = new RomClassWalker(classPointer, context);
 				new LinearDumper().gatherLayoutInfo(out, classWalker, nestingThreashold);
 				out.println();

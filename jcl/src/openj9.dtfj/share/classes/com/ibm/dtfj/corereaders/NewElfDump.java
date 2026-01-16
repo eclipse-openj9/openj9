@@ -1238,7 +1238,7 @@ public class NewElfDump extends CoreReaderSupport {
 				}
 				soname = readSONAMEFromProgramHeader(entry);
 				if (soname != null) {
-					// System.err.println(String.format("Found module name %s, adding to _additionalFileNames", soname));
+					// System.err.format("Found module name %s, adding to _additionalFileNames%n", soname);
 					break;
 				}
 			}

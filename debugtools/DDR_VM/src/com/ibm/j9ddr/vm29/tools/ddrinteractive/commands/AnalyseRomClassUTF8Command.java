@@ -222,7 +222,7 @@ public class AnalyseRomClassUTF8Command extends Command {
 						int count = 0;
 						for (String string : entry.getValue()) {
 							long weight = (timesDuplicated - 1) * string.length();
-							out.println(String.format("%-5d %-11d %-5d \"%s\"", count++, timesDuplicated, weight, string));
+							out.format("%-5d %-11d %-5d \"%s\"%n", count++, timesDuplicated, weight, string);
 						}
 					}
 				}
@@ -327,7 +327,7 @@ public class AnalyseRomClassUTF8Command extends Command {
 						int count = 0;
 						for (String string : entry.getValue()) {
 							long weight = (timesDuplicated - 1) * string.length();
-							out.println(String.format("%-5d %-11d %-5d \"%s\"", count++, timesDuplicated, weight, string));
+							out.format("%-5d %-11d %-5d \"%s\"%n", count++, timesDuplicated, weight, string);
 						}
 					}
 				}

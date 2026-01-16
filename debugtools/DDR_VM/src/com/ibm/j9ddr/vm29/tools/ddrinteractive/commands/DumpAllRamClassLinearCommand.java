@@ -71,8 +71,7 @@ public class DumpAllRamClassLinearCommand extends Command
 				J9ClassPointer classPointer = (J9ClassPointer)classSegmentIterator.next();
 				out.println("!dumpramclasslinear " +  classPointer.getHexAddress());
 				//RAM Class 'org/apache/tomcat/util/buf/MessageBytes' at 0x0DCF9008:
-				out.println(String.format("RAM Class '%s' at %s", J9ClassHelper.getJavaName(classPointer), classPointer.getHexAddress()));
-				out.println();
+				out.format("RAM Class '%s' at %s%n%n", J9ClassHelper.getJavaName(classPointer), classPointer.getHexAddress());
 				ClassWalker classWalker = new RamClassWalker(classPointer, context);
 				new LinearDumper().gatherLayoutInfo(out, classWalker, nestingThreashold);
 				out.println();

@@ -218,7 +218,7 @@ public class FindInMemoryCommand extends Command
 	private boolean findFirst(PrintStream out, IProcess process) {
 		out.print("Scanning memory for ");
 		for (int i = 0; i < currentPattern.length; i++) {
-			out.print(String.format("%02x ", currentPattern[i] & 0xFF));
+			out.format("%02x ", currentPattern[i] & 0xFF);
 		}
 		out.println("aligned to " + currentAlignment + " starting from 0x" + Long.toHexString(currentAddress));
 		long result = process.findPattern(currentPattern, currentAlignment, currentAddress);

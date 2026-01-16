@@ -138,8 +138,8 @@ public class AddStructureBlob {
 			StructureKey key = new StructureKey(keyString);
 			store.add(key, structureName, true);
 			store.updateSuperset();
-			System.out.println(String.format("Added %s to %s/%s as %s", structureName, directoryName, store.getSuperSetFileName(), keyString));
-		}		
+			System.out.format("Added %s to %s/%s as %s%n", structureName, directoryName, store.getSuperSetFileName(), keyString);
+		}
 	}
 	
 	//the order in which files are added is controlled by a properties file, it expects the -f parameter to point to a directory containing
@@ -158,7 +158,7 @@ public class AddStructureBlob {
 				StructureKey key = new StructureKey(file.getName() + "." + keyString);
 				store.add(key, file.getPath(), false);
 				store.updateSuperset();
-				System.out.println(String.format("Added %s to %s/%s as %s", file.getAbsolutePath(), directoryName, store.getSuperSetFileName(), key));
+				System.out.format("Added %s to %s/%s as %s%n", file.getAbsolutePath(), directoryName, store.getSuperSetFileName(), key);
 			} else {
 				System.out.println("WARNING : The specified structure file " + file.getName() + " does not exist and was ignored");
 			}

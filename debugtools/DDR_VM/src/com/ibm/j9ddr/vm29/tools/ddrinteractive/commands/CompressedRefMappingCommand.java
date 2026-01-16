@@ -73,7 +73,7 @@ public class CompressedRefMappingCommand extends Command
 			}
 
 			if (command.startsWith("!fj9objecttoj9object")) {
-				out.println(String.format("!fj9object %s -> !j9object %s", ptr.getHexAddress(), mappedValue.getHexAddress()));
+				out.format("!fj9object %s -> !j9object %s%n", ptr.getHexAddress(), mappedValue.getHexAddress());
 			} else {
 				context.execute("!j9object", new String[] { mappedValue.getHexAddress() }, out);
 			}
@@ -84,7 +84,7 @@ public class CompressedRefMappingCommand extends Command
 			} else {
 				tokenValue = ptr.getAddress();
 			}
-			out.println(String.format("!j9object %s -> !fj9object 0x%s\n", ptr.getHexAddress(), Long.toHexString(tokenValue)));
+			out.format("!j9object %s -> !fj9object 0x%s%n%n", ptr.getHexAddress(), Long.toHexString(tokenValue));
 		}
 	}
 

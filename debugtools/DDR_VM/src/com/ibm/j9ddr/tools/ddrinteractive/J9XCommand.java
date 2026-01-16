@@ -99,27 +99,27 @@ public class J9XCommand extends Command
 				
 		while (bytesToPrint > 0) {
 			if (column % numColumns == 0) {
-				out.print(String.format("0x%08X : ", addr));
+				out.format("0x%08X : ", addr);
 				asciiIndex = 0;
 			}
-			
+
 			out.append(" ");
-			
+
 			switch (width) {
 			case 1:
-				out.print(String.format("%02x", context.process.getByteAt(addr)));
+				out.format("%02x", context.process.getByteAt(addr));
 				break;
-			case 2:				
-				out.print(String.format("%04x", context.process.getShortAt(addr)));
+			case 2:
+				out.format("%04x", context.process.getShortAt(addr));
 				break;
 			case 4:
-				out.print(String.format("%08x", context.process.getIntAt(addr)));
+				out.format("%08x", context.process.getIntAt(addr));
 				break;
 			case 8:
-				out.print(String.format("%016x", context.process.getLongAt(addr)));
+				out.format("%016x", context.process.getLongAt(addr));
 				break;
 			default:
-				out.print(String.format("Invalid width specified\n"));
+				out.println("Invalid width specified");
 				return;
 			}
 

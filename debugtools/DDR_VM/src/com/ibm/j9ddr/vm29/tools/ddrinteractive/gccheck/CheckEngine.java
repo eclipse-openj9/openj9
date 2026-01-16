@@ -1448,7 +1448,9 @@ class CheckEngine
 		boolean ret = true;
 		if ((UNINITIALIZED_SIZE != _ownableSynchronizerObjectCountOnList) && (UNINITIALIZED_SIZE != _ownableSynchronizerObjectCountOnHeap)) {
 			if (_ownableSynchronizerObjectCountOnList != _ownableSynchronizerObjectCountOnHeap) {
-				_reporter.println(String.format("<gc check: found count=%d of OwnableSynchronizerObjects on Heap doesn't match count=%d on lists>", _ownableSynchronizerObjectCountOnHeap, _ownableSynchronizerObjectCountOnList));
+				_reporter.format(
+						"<gc check: found count=%d of OwnableSynchronizerObjects on Heap doesn't match count=%d on lists>%n",
+						_ownableSynchronizerObjectCountOnHeap, _ownableSynchronizerObjectCountOnList);
 				ret = false;
 			}
 		}

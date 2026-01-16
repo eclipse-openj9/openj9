@@ -119,9 +119,9 @@ public class SegmentsUtil {
 
 	private static void printMemoryUsed(PrintStream out, long totalMemory, long totalMemoryInUse) {
 		long totalMemoryFree = totalMemory - totalMemoryInUse;
-		out.println(String.format("Total memory:           %016d (%016x)", totalMemory, totalMemory));
-		out.println(String.format("Total memory in use:    %016d (%016x)", totalMemoryInUse, totalMemoryInUse));
-		out.println(String.format("Total memory free:      %016d (%016x)", totalMemoryFree, totalMemoryFree));
+		out.format("Total memory:           %016d (%016x)%n", totalMemory, totalMemory);
+		out.format("Total memory in use:    %016d (%016x)%n", totalMemoryInUse, totalMemoryInUse);
+		out.format("Total memory free:      %016d (%016x)%n", totalMemoryFree, totalMemoryFree);
 	}
 
 	private static class SegmentSortException extends RuntimeException {

@@ -130,7 +130,7 @@ public class UnwindInfo {
 			long unwindCodeAddr = OFFSET_UNWINDCODE + address;
 
 			for (byte codeIndex = 0; codeIndex < countOfCodes;) {
-				//System.err.println(String.format("Stack pointer is: 0x%08x", stackPointer));
+				// System.err.format("Stack pointer is: 0x%08x%n", stackPointer);
 				UnwindCode c = new UnwindCode(process, module, this, unwindCodeAddr);
 
 				//System.err.println("Applying: " + c.formatOp());

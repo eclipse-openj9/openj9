@@ -142,17 +142,24 @@ public class CheckReporterTTY extends CheckReporter
 					default:
 						slotValue = UDATAPointer.cast(slot).at(0);
 				}
-				out.println(String.format("  <gc check (%d): %s: %s: %sslot %x(%x) -> %x: %s>", error._errorNumber, "from debugger", error._check.getCheckName(), error._elementName, error._object.getAddress(), slot.getAddress(), slotValue.longValue(), getErrorType(error._errorCode)));
+				format("  <gc check (%d): %s: %s: %sslot %x(%x) -> %x: %s>%n",
+						error._errorNumber, "from debugger", error._check.getCheckName(), error._elementName,
+						error._object.getAddress(), slot.getAddress(), slotValue.longValue(),
+						getErrorType(error._errorCode));
 			} else {
-				out.println(String.format("  <gc check (%d): %s: %s: %s%x: %s>", error._errorNumber, "from debugger", error._check.getCheckName(), error._elementName, error._object.getAddress(), getErrorType(error._errorCode)));
-				
+				format("  <gc check (%d): %s: %s: %s%x: %s>%n",
+						error._errorNumber, "from debugger", error._check.getCheckName(), error._elementName,
+						error._object.getAddress(), getErrorType(error._errorCode));
+
 				/* If the basic checks have been made (alignment, etc.) display header info. */
 				if (error._objectType == check_type_object) {
 					reportObjectHeader(error, J9ObjectPointer.cast(error._object), "");
-				}	
+				}
 			}
 		} catch (CorruptDataException cde) {
-			out.println(String.format("  <gc check (%d): %s: %s: %s%x: %s>", error._errorNumber, "from debugger", error._check.getCheckName(), error._elementName, error._object.getAddress(), getErrorType(error._errorCode)));
+			format("  <gc check (%d): %s: %s: %s%x: %s>%n",
+					error._errorNumber, "from debugger", error._check.getCheckName(), error._elementName,
+					error._object.getAddress(), getErrorType(error._errorCode));
 		}
 	}
 
@@ -169,18 +176,18 @@ public class CheckReporterTTY extends CheckReporter
 	public void reportClass(CheckError error, J9ClassPointer clazz, String prefix)
 	{
 		String prefixString = prefix == null ? "" : prefix;
-		
-		if(!shouldReport(error)) {
+
+		if (!shouldReport(error)) {
 			return;
-		}		
-		
-		out.println(String.format("  <gc check (%d): %sClass %x>", error._errorNumber, prefixString, clazz.getAddress()));
+		}
+
+		format("  <gc check (%d): %sClass %x>%n", error._errorNumber, prefixString, clazz.getAddress());
 	}
 
 	@Override
 	public void reportFatalError(CheckError error)
 	{
-		out.println(String.format("  <gc check (%d): Cannot resolve problem detected on heap, aborting check>", error._errorNumber));
+		format("  <gc check (%d): Cannot resolve problem detected on heap, aborting check>%n", error._errorNumber);
 	}
 
 	@Override
@@ -196,7 +203,7 @@ public class CheckReporterTTY extends CheckReporter
 				}
 			}
 		} else {
-			out.println(String.format("  <gc check (%d): %x was first object encountered on heap>", error._errorNumber, error._object.getAddress()));
+			format("  <gc check (%d): %x was first object encountered on heap>%n", error._errorNumber, error._object.getAddress());
 		}
 	}
 
@@ -218,21 +225,25 @@ public class CheckReporterTTY extends CheckReporter
 				isIndexable = ObjectModel.isIndexable(object);
 			}
 			isValid = true;
-		} catch (CorruptDataException cde) {}
+		} catch (CorruptDataException cde) {
+		}
 
-		if(isValid) {
-			if(isIndexable) {
-				out.print(String.format("  <gc check (%d): %sIObject %x header:", error._errorNumber, prefixString, object.getAddress()));
+		if (isValid) {
+			if (isIndexable) {
+				format("  <gc check (%d): %sIObject %x header:",
+						error._errorNumber, prefixString, object.getAddress());
 			} else {
 				String elementName = isHole ? "Hole" : "Object";
-				out.print(String.format("  <gc check (%d): %s%s %x header:", error._errorNumber, prefixString, elementName, object.getAddress()));
+				format("  <gc check (%d): %s%s %x header:",
+						error._errorNumber, prefixString, elementName, object.getAddress());
 			}
 		} else {
-			out.print(String.format("  <gc check (%d): %s%s %x header:", error._errorNumber, prefixString, "Corrupt", object.getAddress()));
+			format("  <gc check (%d): %s%s %x header:",
+					error._errorNumber, prefixString, "Corrupt", object.getAddress());
 		}
-		
-		int headerSize = (int)J9ObjectHelper.headerSize();
-		if(isHole) {
+
+		int headerSize = (int) J9ObjectHelper.headerSize();
+		if (isHole) {
 			headerSize = (int)MM_HeapLinkedFreeHeader.SIZEOF;
 		} else {
 			try {
@@ -243,7 +254,7 @@ public class CheckReporterTTY extends CheckReporter
 		try {
 			U32Pointer data = U32Pointer.cast(object);
 			for(int i = 0; i < headerSize / U32.SIZEOF; i++) {
-				out.print(String.format(" %08X", data.at(i).longValue()));
+				format(" %08X", data.at(i).longValue());
 			}
 		} catch (CorruptDataException cde) {
 		}
@@ -251,11 +262,16 @@ public class CheckReporterTTY extends CheckReporter
 	}
 
 	@Override
+	public void format(String format, Object... arguments) {
+		out.format(format, arguments);
+	}
+
+	@Override
 	public void println(String arg)
 	{
 		out.println(arg);
 	}
-	
+
 	public void print(String arg)
 	{
 		out.print(arg);
@@ -264,6 +280,6 @@ public class CheckReporterTTY extends CheckReporter
 	@Override
 	public void reportForwardedObject(J9ObjectPointer object, J9ObjectPointer newObject)
 	{
-		out.println(String.format("  <gc check: found forwarded pointer %x -> %x>", object.getAddress(), newObject.getAddress()));
+		format("  <gc check: found forwarded pointer %x -> %x>%n", object.getAddress(), newObject.getAddress());
 	}
 }

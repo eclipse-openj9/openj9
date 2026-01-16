@@ -57,8 +57,8 @@ public class DumpRomClassLinearCommand extends Command
 		}
 		J9ROMClassPointer clazz = J9ROMClassPointer.cast(addr);
 		try {
-			//ROM Class 'org/apache/tomcat/util/buf/MessageBytes' at 0x0DCF9008:
-			out.println(String.format("ROM Class '%s' at %s", J9UTF8Helper.stringValue(clazz.className()), clazz.getHexAddress()));
+			// ROM Class 'org/apache/tomcat/util/buf/MessageBytes' at 0x0DCF9008:
+			out.format("ROM Class '%s' at %s%n", J9UTF8Helper.stringValue(clazz.className()), clazz.getHexAddress());
 			ClassWalker classWalker = new RomClassWalker(clazz, context);
 			new LinearDumper().gatherLayoutInfo(out, classWalker, nestingThreshold);
 		} catch (CorruptDataException e) {
