@@ -498,7 +498,7 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    bool isOSRProhibitedOverRangeOfTrees() { return _osrProhibitedOverRangeOfTrees; }
 
 #if defined(PERSISTENT_COLLECTIONS_UNSUPPORTED)
-   void addAOTMethodDependency(TR_OpaqueClassBlock *ramClass, uintptr_t chainOffse = TR_SharedCache::INVALID_CLASS_CHAIN_OFFSETt) {}
+   void addAOTMethodDependency(TR_OpaqueClassBlock *ramClass, uintptr_t chainOffset = TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET) {}
 #else
    /**
     * \brief Add the provided class as an AOT Method Dependency
