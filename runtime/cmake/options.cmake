@@ -146,6 +146,7 @@ option(J9VM_OPT_SHARED_CLASSES "Support for class sharing")
 
 option(J9VM_OPT_SNAPSHOTS "Support for RAM class snapshot images")
 
+option(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS "Enables support for Project Valhalla compact layouts")
 option(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES "Enables support for Project Valhalla Flattenable Value Types")
 option(J9VM_OPT_VALHALLA_STRICT_FIELDS "Enables support for Project Valhalla Strict Fields")
 option(J9VM_OPT_VALHALLA_VALUE_TYPES "Enables support for Project Valhalla Value Object")
