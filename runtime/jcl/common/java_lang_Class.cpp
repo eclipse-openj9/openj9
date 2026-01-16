@@ -586,13 +586,14 @@ Java_java_lang_Class_allocateAndFillArray(JNIEnv *env, jobject recv, jint size)
 	J9VMThread *currentThread = (J9VMThread*)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
-	j9object_t resultObject = NULL;
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(recv));
 	J9Class *arrayClass = fetchArrayClass(currentThread, clazz);
+	jobject result = NULL;
 	if (NULL != arrayClass) {
-		resultObject = mmFuncs->J9AllocateIndexableObject(currentThread, arrayClass, (U_32)size, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+		J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
+		j9object_t resultObject = mmFuncs->J9AllocateIndexableObject(
+				currentThread, arrayClass, (U_32)size, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 		if (NULL == resultObject) {
 oom:
 			vmFuncs->setHeapOutOfMemoryError(currentThread);
@@ -606,9 +607,9 @@ oom:
 				}
 				J9JAVAARRAYOFOBJECT_STORE(currentThread, resultObject, i, element);
 			}
+			result = vmFuncs->j9jni_createLocalRef(env, resultObject);
 		}
 	}
-	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
 	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
