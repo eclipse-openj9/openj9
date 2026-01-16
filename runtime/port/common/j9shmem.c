@@ -328,6 +328,8 @@ j9shmem_handle_stat(struct J9PortLibrary *portLibrary, struct j9shmem_handle *ha
  * The directory will be passed to the other shmem or shmem_deprecated functions.
  *
  * If ctrlDirName is NULL, a platform specific directory will be chosen.
+ *
+ * The returned path always ends with a DIR_SEPARATOR, ensuring it represents a directory.
  * 
  * @param[in] portLibrary The port library
  * @param[in] ctrlDirName The name of the control directory, ignored if cacheDirName is set

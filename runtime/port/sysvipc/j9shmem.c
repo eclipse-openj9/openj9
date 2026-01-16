@@ -1363,8 +1363,8 @@ j9shmem_getDir(struct J9PortLibrary* portLibrary, const char* ctrlDirName, uint3
 					buffer,
 					bufLength,
 					SHM_STRING_ENDS_WITH_CHAR(rootDir, DIR_SEPARATOR)
-						? "%s%s" DIR_SEPARATOR_STR
-						: "%s" DIR_SEPARATOR_STR "%s" DIR_SEPARATOR_STR,
+						? "%s%s"
+						: "%s" DIR_SEPARATOR_STR "%s",
 					rootDir,
 					J9SH_BASEDIR) >= bufLength
 			) {
