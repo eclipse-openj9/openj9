@@ -645,16 +645,12 @@ final class Access implements JavaLangAccess {
 	/*[ENDIF] JAVA_SPEC_VERSION < 25 */
 
 	@Override
-	/*[IF (JAVA_SPEC_VERSION == 25) | (JAVA_SPEC_VERSION >= 27) ]*/
+	/*[IF JAVA_SPEC_VERSION >= 25]*/
 	public int uncheckedEncodeASCII(char[] sa, int sp, byte[] da, int dp, int len) {
-	/*[ELSE] (JAVA_SPEC_VERSION == 25) | (JAVA_SPEC_VERSION >= 27) */
+	/*[ELSE] JAVA_SPEC_VERSION >= 25 */
 	public int encodeASCII(char[] sa, int sp, byte[] da, int dp, int len) {
-	/*[ENDIF] (JAVA_SPEC_VERSION == 25) | (JAVA_SPEC_VERSION >= 27) */
-		/*[IF JAVA_SPEC_VERSION == 26]*/
-		return StringCoding.encodeAsciiArray(sa, sp, da, dp, len);
-		/*[ELSE] JAVA_SPEC_VERSION == 26 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 25 */
 		return StringCoding.implEncodeAsciiArray(sa, sp, da, dp, len);
-		/*[ENDIF] JAVA_SPEC_VERSION == 26 */
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
