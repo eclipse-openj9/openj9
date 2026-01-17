@@ -793,14 +793,19 @@ Java_sun_misc_Unsafe_shouldBeInitialized(JNIEnv *env, jobject receiver, jclass c
 }
 
 #if JAVA_SPEC_VERSION >= 10
-/* The return value needs to be freed. */
+/* The return value needs to be freed.
+ * The caller should have VM access.
+ */
 static char *
 createErrorMsgHelper(JNIEnv *env, jclass clazz, jstring name, const char *message)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
+	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
 	PORT_ACCESS_FROM_ENV(env);
 	J9UTF8 *className = J9ROMCLASS_CLASSNAME(J9VM_J9CLASS_FROM_JCLASS(currentThread, clazz)->romClass);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	const char *nameUTF = env->GetStringUTFChars(name, NULL);
+	vmFuncs->internalEnterVMFromJNI(currentThread);
 	size_t namelen = strlen(nameUTF);
 	size_t msglen = strlen(message) + 1; /* include the NULL */
 	size_t totallen = namelen + J9UTF8_LENGTH(className) + msglen + 1; /* include the '.' */
@@ -833,9 +838,7 @@ Java_jdk_internal_misc_Unsafe_objectFieldOffset1(JNIEnv *env, jobject receiver, 
 	}
 
 	if (NULL == romField) {
-		vmFuncs->internalExitVMToJNI(currentThread);
 		char *errormsg = createErrorMsgHelper(env, clazz, name, " is not found");
-		vmFuncs->internalEnterVMFromJNI(currentThread);
 		if (NULL == errormsg) {
 			vmFuncs->setCurrentException(
 					currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR,
@@ -848,9 +851,7 @@ Java_jdk_internal_misc_Unsafe_objectFieldOffset1(JNIEnv *env, jobject receiver, 
 		}
 	} else if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccStatic)) {
 #if JAVA_SPEC_VERSION >= 26
-		vmFuncs->internalExitVMToJNI(currentThread);
 		char *errormsg = createErrorMsgHelper(env, clazz, name, " is a static field");
-		vmFuncs->internalEnterVMFromJNI(currentThread);
 		if (NULL == errormsg) {
 			vmFuncs->setCurrentException(
 					currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR,
