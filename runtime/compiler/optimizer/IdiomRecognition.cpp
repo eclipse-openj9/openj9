@@ -2061,6 +2061,27 @@ TR_CISCTransformer::createLoopCandidates(List<TR_RegionStructure> *loopCandidate
             logprintf(enableTracing, log, "\tRejected loop %d - cold loop.\n", naturalLoop->getNumber());
             continue;     // cold loop
             }
+
+         // Reject if any catch handler block appears in the loop region (including nested blocks).
+         bool containsCatchBlock = false;
+         TR_ScratchList<TR::Block> blocksInLoop(trMemory());
+         naturalLoop->getBlocks(&blocksInLoop);
+         ListIterator<TR::Block> blocksIt(&blocksInLoop);
+         TR::Block *nextBlock;
+
+         for (nextBlock = blocksIt.getFirst(); nextBlock; nextBlock = blocksIt.getNext())
+            if (nextBlock->isCatchBlock())
+               {
+               containsCatchBlock = true;
+               break;
+               }
+
+         if (containsCatchBlock)
+            {
+            logprintf(enableTracing, log, "\tRejected loop %d - loop has catch block (Exception handler).\n", naturalLoop->getNumber());
+            continue;
+            }
+
          loopCount++;
          loopCandidates->add(naturalLoop);
 
