@@ -430,6 +430,20 @@ TR_MethodHandleTransformer::computeObjectInfoOfNode(TR::TreeTop *tt, TR::Node *n
             break;
             }
 
+         case TR::java_lang_reflect_Method_acquireMethodAccessor:
+            {
+            auto methodIndex = getObjectInfoOfNode(node->getFirstArgument());
+            if (knot
+               && isKnownObject(methodIndex)
+               && !knot->isNull(methodIndex))
+               {
+               auto maIndex = comp()->fej9()->getMethodAccessorIndex(comp(), methodIndex);
+               logprintf(trace(), log, "Method.acquireMethodAccessor with known Method object %d, updating node n%dn with known MethodAccessor object %d from MA field\n", methodIndex, node->getGlobalIndex(), maIndex);
+               koi = maIndex;
+               }
+            break;
+            }
+
          default:
             break;
          }
@@ -505,8 +519,11 @@ void TR_MethodHandleTransformer::visitIndirectLoad(TR::TreeTop* tt, TR::Node* no
       }
 
    auto symbol = node->getSymbol();
-   if (!symRef->isUnresolved() && symbol &&
-       (symbol->isFinal() || symbol->isArrayShadowSymbol()))
+   if (!symRef->isUnresolved() &&
+       symbol &&
+       (symbol->isFinal() ||
+        symbol->isArrayShadowSymbol() ||
+        comp()->fej9()->canDereferenceAtCompileTime(symRef, comp())))
       {
       auto baseNode = symbol->isArrayShadowSymbol() ? node->getFirstChild()->getFirstChild() : node->getFirstChild();
       auto baseSymRef = baseNode->getSymbolReference();

@@ -192,6 +192,7 @@ const char *messageNames[] =
    "VM_getVarHandleAccessDescriptorMode",
    "VM_getMethodHandleTableEntryIndex",
    "VM_getLayoutVarHandle",
+   "VM_getMethodAccessorIndex",
    "VM_mutableCallSiteEpoch",
    "VM_numInterfacesImplemented",
    "VM_getObjectClassInfoFromKnotIndex",
