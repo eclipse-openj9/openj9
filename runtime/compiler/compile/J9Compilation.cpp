@@ -1692,10 +1692,24 @@ J9::Compilation::addAOTMethodDependency(uintptr_t chainOffset, bool ensureClassI
    if (self()->getOptions()->getVerboseOption(TR_VerboseDependencyTrackingDetails))
       {
       auto method = self()->getMethodBeingCompiled()->getPersistentIdentifier();
-      auto sharedCache = self()->fej9()->sharedCache();
-      auto romClassOffset = sharedCache->startingROMClassOffsetOfClassChain(sharedCache->pointerFromOffsetInSharedCache(chainOffset));
-      TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Method %p dependency: chainOffset=%lu romClassOffset=%lu needsInit=%d",
-                                     method, chainOffset, romClassOffset, ensureClassIsInitialized);
+
+         {
+         TR_VerboseLog::CriticalSection addDepsCS;
+
+         TR_VerboseLog::write(TR_Vlog_INFO, "Method %p dependency: chainOffset=%lu ", method, chainOffset);
+
+         if (!self()->isOutOfProcessCompilation())
+            {
+            auto sharedCache = self()->fej9()->sharedCache();
+            auto romClassOffset =
+               sharedCache->startingROMClassOffsetOfClassChain(
+                  sharedCache->pointerFromOffsetInSharedCache(chainOffset));
+
+            TR_VerboseLog::write("romClassOffset=%lu ", romClassOffset);
+            }
+
+         TR_VerboseLog::writeLine("needsInit=%d", ensureClassIsInitialized);
+         }
       }
    }
 
