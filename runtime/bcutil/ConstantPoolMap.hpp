@@ -179,11 +179,10 @@ public:
 	U_16 getStaticSplitEntryCount() const { return _staticSplitEntryCount; }
 	U_16 getSpecialSplitEntryCount() const { return _specialSplitEntryCount; }
 
-	U_16 getROMClassCPIndex(U_16 cfrCPIndex, UDATA splitType) const
+	U_16 getROMClassCPIndex(U_16 cfrCPIndex) const
 	{
 		return _constantPoolEntries[cfrCPIndex].romCPIndex;
 	}
-	U_16 getROMClassCPIndex(U_16 cfrCPIndex) const { return getROMClassCPIndex(cfrCPIndex, 0); }
 
 	/*
 	 * Note: InvokeDynamicInfo CP entries are not marked in the same way as other CP entries. In particular,
@@ -214,9 +213,6 @@ public:
 	U_8  getCPTag(U_16 cfrCPIndex)   const { return _classFileOracle->getCPTag(cfrCPIndex); }
 	U_32 getCPSlot1(U_16 cfrCPIndex) const { return _classFileOracle->getCPSlot1(cfrCPIndex); }
 	U_32 getCPSlot2(U_16 cfrCPIndex) const { return _classFileOracle->getCPSlot2(cfrCPIndex); }
-
-	U_16 getROMClassCPIndexForReference(U_16 cfrCPIndex)  const { return getROMClassCPIndex(cfrCPIndex); }
-	U_16 getROMClassCPIndexForAnnotation(U_16 cfrCPIndex) const { return getROMClassCPIndex(cfrCPIndex); }
 
 	bool isUTF8ConstantReferenced(U_16 cfrCPIndex) const { return isMarked(cfrCPIndex); }
 	bool isNATConstantReferenced(U_16 cfrCPIndex)  const { return isMarked(cfrCPIndex); }

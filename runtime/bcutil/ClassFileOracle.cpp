@@ -2666,7 +2666,6 @@ ClassFileOracle::markConstantAsUsedByAnnotation(U_16 cpIndex)
 	if ((CFR_CONSTANT_Double == cpTag) || (CFR_CONSTANT_Long == cpTag)) {
 		_constantPoolMap->markConstantAsReferencedDoubleSlot(cpIndex);
 	} else if (CFR_CONSTANT_Utf8 == cpTag) {
-		markConstantUTF8AsReferenced(cpIndex); /* Mark descriptor UTF8 */
 		/* Is not equivalent to markConstantAsReferenced(), as that does something else for UTF8s. */
 		_constantPoolMap->markConstantAsUsedByAnnotationUTF8(cpIndex);
 	} else {
