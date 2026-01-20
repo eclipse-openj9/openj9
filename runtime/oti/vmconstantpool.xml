@@ -534,6 +534,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<!-- Security manager check -->
 	<staticfieldref class="java/lang/System" name="security" signature="Ljava/lang/SecurityManager;" versions="8-23"/>
 
+	<!-- Access to Direct Byte Buffer native memory allocation data -->
+	<classref name="java/nio/Bits"/> 
+	<classref name="java/util/concurrent/atomic/AtomicLong"/> 
+	<staticfieldref class="java/nio/Bits" name="count" signature="Ljava/util/concurrent/atomic/AtomicLong;"/>
+	<staticfieldref class="java/nio/Bits" name="reservedMemory" signature="Ljava/util/concurrent/atomic/AtomicLong;"/>
+	<fieldref class="java/util/concurrent/atomic/AtomicLong" name="value" signature="J"/>
+
 	<!-- VM constants in java -->
 	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_WRITE_BARRIER_TYPE" signature="I"/>
 	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_WRITE_BARRIER_TYPE_NONE" signature="I"/>
