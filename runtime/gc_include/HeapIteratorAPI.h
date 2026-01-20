@@ -20,7 +20,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
-
 /**
  * @file
  * @ingroup GC_Include
@@ -49,16 +48,14 @@ extern "C" {
 #define SCAN_FINALIZABLE_OBJECTS  0x00010
 #define SCAN_JNI_GLOBAL  0x00020
 #define SCAN_STRING_TABLE 0x00040
-#define SCAN_UNUSED_1 0x00080
-#define SCAN_UNUSED_2 0x00100
-#define SCAN_UNUSED_3 0x00200
+/* unused: 0x00080 0x00100 0x00200 */
 #define SCAN_UNFINALIZABLE 0x00400
 #define SCAN_MONITORS 0x00800
 #define SCAN_JNI_WEAK 0x01000
 #define SCAN_DEBUGGER 0x02000
 #define SCAN_DEBUGGER_CLASS_REF 0x04000
 #define SCAN_REMEBERED_SET 0x08000
-#define SCAN_JVMTI_OBJECT_TAG_TABLE	0x10000
+#define SCAN_JVMTI_OBJECT_TAG_TABLE 0x10000
 #define SCAN_OWNABLE_SYNCHRONIZER 0x20000
 #define SCAN_CONTINUATION 0x40000
 #define SCAN_ALL 0x7FFFF

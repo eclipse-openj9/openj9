@@ -220,7 +220,7 @@
 #define J9RuntimeFlagArgencodingLatin 0x4000
 #define J9RuntimeFlagArgencodingUnicode 0x2000
 #define J9RuntimeFlagArgencodingUtf8 0x8000
-#define J9RuntimeFlagUnused0x80 0x80 /* unused flag */
+/* unused: 0x80 */
 #define J9RuntimeFlagCleanUp 0x40
 #define J9RuntimeFlagJavaBaseModuleCreated 0x8
 #define J9RuntimeFlagDFPBD 0x4000000
@@ -234,7 +234,7 @@
 #define J9RuntimeFlagPaintStack 0x400
 #define J9RuntimeFlagPPC32On64 0x80000000
 #define J9RuntimeFlagReportStackUse 0x1
-#define J9RuntimeFlagUnused0x10000000 0x10000000
+/* unused: 0x10000000 */
 #define J9RuntimeFlagShowVersion 0x40000000
 #define J9RuntimeFlagShutdown 0x100
 #define J9RuntimeFlagShutdownStarted 0x400000
@@ -276,12 +276,7 @@
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 #define J9_ROMCLASS_OPTINFO_LOADABLEDESCRIPTORS_ATTRIBUTE 0x20000
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-#define J9_ROMCLASS_OPTINFO_UNUSED_40000 0x40000
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-#define J9_ROMCLASS_OPTINFO_UNUSED_80000 0x80000
-#define J9_ROMCLASS_OPTINFO_UNUSED_100000 0x100000
-#define J9_ROMCLASS_OPTINFO_UNUSED 0x200000
+/* unused: 0x40000 0x80000 0x100000 0x200000 */
 #define J9_ROMCLASS_OPTINFO_TYPE_ANNOTATION_INFO 0x400000
 #define J9_ROMCLASS_OPTINFO_RECORD_ATTRIBUTE 0x800000
 #define J9_ROMCLASS_OPTINFO_PERMITTEDSUBCLASSES_ATTRIBUTE 0x1000000
@@ -1462,7 +1457,6 @@ typedef struct J9SharedCacheHeader {
 #define J9SHAREDCACHEHEADER_CORRUPTFLAGPTR(base) WSRP_GET((base)->corruptFlagPtr, U_8*)
 #define J9SHAREDCACHEHEADER_SHAREDSTRINGHEAD(base) SRP_GET((base)->sharedStringHead, struct J9SharedInternSRPHashTableEntry*)
 #define J9SHAREDCACHEHEADER_SHAREDSTRINGTAIL(base) SRP_GET((base)->sharedStringTail, struct J9SharedInternSRPHashTableEntry*)
-#define J9SHAREDCACHEHEADER_UNUSED01(base) SRP_GET((base)->unused01, void*)
 
 /* Maximum length of the cache name (including NULL char) specified by user in the command line */
 #define USER_SPECIFIED_CACHE_NAME_MAXLEN 65
@@ -2139,10 +2133,8 @@ typedef struct J9TranslationBufferSet {
 	IDATA  ( *transformROMClassFunction)(struct J9JavaVM *javaVM, struct J9PortLibrary *portLibrary, struct J9ROMClass *romClass, U_8 **classData, U_32 *size) ;
 } J9TranslationBufferSet;
 
-#define BCU_UNUSED_2  2
 #define BCU_VERBOSE  1
 #define BCU_TRACK_UTF8DATA  4
-#define BCU_UNUSED_40  64
 #define BCU_ENABLE_INVARIANT_INTERNING  8
 #define BCU_ENABLE_ROMCLASS_RESIZING  0x100
 
@@ -3256,7 +3248,6 @@ typedef struct J9Object {
 #define OBJECT_HEADER_SHAPE_BYTES  2
 #define OBJECT_HEADER_SHAPE_WORDS  4
 #define OBJECT_HEADER_SHAPE_LONGS  6
-#define OBJECT_HEADER_SHAPE_UNUSED8  8
 #define OBJECT_HEADER_SHAPE_DOUBLES  10
 #define OBJECT_HEADER_SHAPE_POINTERS  12
 #define OBJECT_HEADER_SHAPE_MIXED  14
