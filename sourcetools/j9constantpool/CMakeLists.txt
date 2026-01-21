@@ -20,17 +20,6 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 ################################################################################
 
-# CMake uses ':' as the path separator when building in cygwin which isn't
-# appropriate for a Windows java executable (which expects path elements to
-# be separated by ';'). In JDK11+, fixpath.sh will compensate, but for JDK8,
-# we need to put the classpath in a file in a form that fixpath will support.
-if(WIN32 AND (NOT CMAKE_HOST_WIN32) AND (JAVA_SPEC_VERSION EQUAL 8))
-	file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/cygwin_classpath" CONTENT "-classpath\n$<TARGET_PROPERTY:objectmodel,JAR_FILE>\n")
-	set(CYGWIN_CP "@${CMAKE_CURRENT_BINARY_DIR}/cygwin_classpath")
-else()
-	set(CYGWIN_CP)
-endif()
-
 add_jar(j9vmcp
 	SOURCES
 		com/ibm/oti/VMCPTool/ClassRef.java
@@ -49,9 +38,6 @@ add_jar(j9vmcp
 		com/ibm/oti/VMCPTool/SpecialMethodRef.java
 		com/ibm/oti/VMCPTool/StaticFieldRef.java
 		com/ibm/oti/VMCPTool/StaticMethodRef.java
-		com/ibm/oti/VMCPTool/UmaFlagInfo.java
 		com/ibm/oti/VMCPTool/Util.java
 		com/ibm/oti/VMCPTool/VirtualMethodRef.java
-		${CYGWIN_CP}
-	INCLUDE_JARS objectmodel
 )

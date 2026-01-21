@@ -39,6 +39,5 @@ set(CMAKE_JAVA_COMPILE_FLAGS -nowarn)
 
 # Note add_jar isn't as good at tracking target dependencies as regular cmake.
 # In particular it will not let you link against a target which will be defined later.
-add_subdirectory(objectmodel)
 add_subdirectory(j9constantpool)
 add_subdirectory(j9nls)

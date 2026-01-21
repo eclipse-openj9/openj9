@@ -183,19 +183,15 @@ public class Main implements Constants {
 			? Charset.forName("IBM-1047")
 			: Charset.defaultCharset();
 
-	private static final String optionBuildSpecId = "-buildSpecId";
 	private static final String optionHelp = "-help";
 	private static final String optionVersion = "-version";
 	private static final String optionRootDir = "-rootDir";
-	private static final String optionConfigDir = "-configDir";
 	private static final String optionOutputDir = "-outputDir";
 	private static final String optionCmakeCache = "-cmakeCache";
 	private static final String optionVerbose = "-verbose";
 	private static final String constantPool = "vmconstantpool.xml";
 
-	private static String buildSpecId;
 	private static Integer version;
-	private static String configDirectory;
 	private static String rootDirectory = ".";
 	private static String outputDirectory;
 	private static String cmakeCache;
@@ -217,15 +213,11 @@ public class Main implements Constants {
 					try {
 						version = Integer.valueOf(versionValue);
 					} catch (NumberFormatException e) {
-						System.err.printf("ERROR: argument for '%s' must be numeric (%s)\n", optionVersion, versionValue);
+						System.err.printf("ERROR: argument for '%s' must be numeric (%s)%n", optionVersion, versionValue);
 						isValid = false;
 					}
 				} else if (optionRootDir.equalsIgnoreCase(arg)) {
 					rootDirectory = args[++i];
-				} else if (optionConfigDir.equalsIgnoreCase(arg)) {
-					configDirectory = args[++i];
-				} else if (optionBuildSpecId.equalsIgnoreCase(arg)) {
-					buildSpecId = args[++i];
 				} else if (optionOutputDir.equalsIgnoreCase(arg)) {
 					outputDirectory = args[++i];
 				} else if (optionCmakeCache.equalsIgnoreCase(arg)) {
@@ -233,7 +225,7 @@ public class Main implements Constants {
 				} else if (optionVerbose.equalsIgnoreCase(arg)) {
 					verbose = true;
 				} else {
-					System.err.printf("Unrecognized option '%s'\n", arg);
+					System.err.printf("Unrecognized option '%s'%n", arg);
 					return false;
 				}
 			}
@@ -242,24 +234,18 @@ public class Main implements Constants {
 		}
 
 		if (version == null) {
-			System.err.printf("ERROR: required argument '%s' not given\n", optionVersion);
+			System.err.printf("ERROR: required argument '%s' not given%n", optionVersion);
 			isValid = false;
 		}
 
 		if (rootDirectory == null) {
-			System.err.printf("ERROR: required argument '%s' not given\n", optionRootDir);
+			System.err.printf("ERROR: required argument '%s' not given%n", optionRootDir);
 			isValid = false;
 		}
 
 		if (cmakeCache == null) {
-			if (configDirectory == null) {
-				System.err.printf("ERROR: required argument '%s' not given\n", optionConfigDir);
-				isValid = false;
-			}
-			if (buildSpecId == null) {
-				System.err.printf("ERROR: required argument '%s' not given\n", optionBuildSpecId);
-				isValid = false;
-			}
+			System.err.printf("ERROR: required argument '%s' not given%n", optionCmakeCache);
+			isValid = false;
 		}
 
 		return isValid;
@@ -269,12 +255,12 @@ public class Main implements Constants {
 		System.err.println(Main.class.getName() + ":");
 		System.err.println();
 		System.err.println("Usage:");
-
-		String commonOptStr = "\t" + optionRootDir + " <directory> [" + optionOutputDir + " <directory>] ";
-		String trailingOptStr = optionVersion + " <version>";
-
-		System.err.println(commonOptStr + optionConfigDir + " <directory> " + optionBuildSpecId + "<specId> " + trailingOptStr);
-		System.err.println(commonOptStr + optionCmakeCache + " <cacheFile> " + trailingOptStr);
+		System.err.println(
+				"\t" + optionRootDir
+				+ " <directory> "
+				+ "[" + optionOutputDir + " <directory>] "
+				+ optionCmakeCache + " <cacheFile> "
+				+ optionVersion + " <version>");
 	}
 
 	public static void main(String[] args) throws Throwable {
@@ -283,17 +269,7 @@ public class Main implements Constants {
 			System.exit(1);
 		}
 
-		if (cmakeCache != null) {
-			if (configDirectory != null) {
-				System.err.println("Ignoring option " + optionConfigDir);
-			}
-			if (buildSpecId != null) {
-				System.err.println("Ignoring option " + optionBuildSpecId);
-			}
-			flagInfo = new CmakeFlagInfo(cmakeCache);
-		} else {
-			flagInfo = new UmaFlagInfo(configDirectory, buildSpecId);
-		}
+		flagInfo = new CmakeFlagInfo(cmakeCache);
 
 		ConstantPool pool = parseConstantPool();
 

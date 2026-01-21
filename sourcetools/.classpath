@@ -24,7 +24,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<classpathentry kind="src" output="bin/jpp" path="com.ibm.jpp.preprocessor"/>
 	<classpathentry kind="src" output="bin/j9vmcp" path="j9constantpool"/>
 	<classpathentry kind="src" output="bin/j9nls" path="j9nls"/>
-	<classpathentry kind="src" output="bin/om" path="objectmodel"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8">
 		<accessrules>
 			<accessrule kind="accessible" pattern="org/apache/xerces/**"/>
