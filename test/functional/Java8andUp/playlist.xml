@@ -64,7 +64,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<testCaseName>regressionFastresolve_mode110</testCaseName>
 		<variations>
 			<variation> Mode110 -Xfastresolve0</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xss1536k \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -87,7 +86,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<testCaseName>regressionFastresolve_mode150</testCaseName>
 		<variations>
 			<variation>Mode150 -Xfastresolve0</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xss1536k \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -113,7 +111,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode150</variation>
 			<variation>Mode501</variation>
 			<variation>Mode551</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	$(ADD_EXPORTS_JDK_INTERNAL_REFLECT) $(ADD_EXPORTS_JDK_INTERNAL_MISC) \
@@ -138,7 +135,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<variations>
 			<variation>Mode100</variation>
 			<variation>NoOptions</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
@@ -789,7 +785,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<variations>
 			<variation>-Xgcpolicy:gencon -Xmx512m</variation>
 			<variation>-Xgcpolicy:gencon -XX:+HeapManagementMXBeanCompatibility -Xmx512m</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -813,7 +808,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<variations>
 			<variation>-Xgcpolicy:optthruput -Xmx512m</variation>
 			<variation>-Xgcpolicy:optthruput -XX:+HeapManagementMXBeanCompatibility -Xmx512m</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -837,7 +831,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<variations>
 			<variation>-Xgcpolicy:optavgpause -Xmx512m</variation>
 			<variation>-Xgcpolicy:optavgpause -XX:+HeapManagementMXBeanCompatibility -Xmx512m</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -861,7 +854,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<variations>
 			<variation>Mode551 -Xmx512m</variation>
 			<variation>Mode551 -XX:+HeapManagementMXBeanCompatibility -Xmx512m</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -885,7 +877,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<variations>
 			<variation>Mode351 -Xmx512m</variation>
 			<variation>Mode351 -XX:+HeapManagementMXBeanCompatibility -Xmx512m</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -909,7 +900,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<variations>
 			<variation>-Xgcpolicy:nogc -Xms128m -Xmx1G -verbose:gc</variation>
 			<variation>-XX:+UseNoGC -Xms128m -Xmx1G</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -933,7 +923,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<variations>
 			<variation>-Xgcpolicy:nogc -Xms128m -Xmx1G</variation>
 			<variation>-Xgcpolicy:nogc -Xms128m -Xmx1G -Xdump:none:events=systhrow,filter=java/lang/OutOfMemoryError</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -959,7 +948,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>-XX:-RestrictContended</variation>
 			<variation>-XX:+RestrictContended</variation>
 			<variation>-XX:-EnableContended</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 		$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -994,7 +982,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>-XX:-RestrictContended</variation>
 			<variation>-XX:+RestrictContended</variation>
 			<variation>-XX:-EnableContended</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 		$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -1048,7 +1035,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
 			<variation>-XX:+CompactStrings</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JAVA_SECURITY_MANAGER) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
@@ -1113,7 +1099,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
 			<variation>-XX:+CompactStrings</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JAVA_SECURITY_MANAGER) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
@@ -1159,7 +1144,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
 			<variation>-XX:+CompactStrings</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JAVA_SECURITY_MANAGER) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
@@ -1208,7 +1192,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
@@ -1256,7 +1239,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<variations>
 			<variation>-Xshareclasses:none</variation>
 			<variation>-Xshareclasses:none -XX:RecreateClassfileOnload</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JAVA_SECURITY_MANAGER) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
@@ -1320,7 +1302,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<variations>
 			<variation>-Xshareclasses:none</variation>
 			<variation>-Xshareclasses:none -XX:RecreateClassfileOnload</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JAVA_SECURITY_MANAGER) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
@@ -1365,7 +1346,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<variations>
 			<variation>-Xshareclasses:none</variation>
 			<variation>-XX:RecreateClassfileOnload -Xshareclasses:none</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
@@ -1413,7 +1393,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump:none -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
@@ -1454,7 +1433,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
 			<variation>-XX:+CompactStrings</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
@@ -1506,7 +1484,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
@@ -1543,7 +1520,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump:none -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(TEST_RESROOT)$(D)TestResources.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
@@ -1573,7 +1549,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<testCaseName>J9VMInternals_Test</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(MKDIR) -p $(REPORTDIR); \
 	cd $(REPORTDIR); \
@@ -1605,7 +1580,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<testCaseName>J9VMInternals_Test_SM</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(MKDIR) -p $(REPORTDIR); \
 	cd $(REPORTDIR); \
@@ -1638,7 +1612,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(MKDIR) -p $(REPORTDIR); \
 	cd $(REPORTDIR); \
@@ -1682,7 +1655,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		</disables>
 		<variations>
 			<variation>NoOptions</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace \
 	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)testacc.policy$(Q) \
@@ -1727,7 +1699,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		</disables>
 		<variations>
 			<variation>NoOptions</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JAVA_SECURITY_MANAGER) $(JVM_OPTIONS) -verbose:stacktrace \
 	--add-modules openj9.sharedclasses $(ADD_MODULE_JAVA_SE_EE) \
@@ -1766,7 +1737,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<testCaseName>JCL_TEST_Java-Security_SM</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JAVA_SECURITY_MANAGER) $(JVM_OPTIONS) -verbose:stacktrace \
 	--add-modules openj9.sharedclasses $(ADD_MODULE_JAVA_SE_EE) \
@@ -1819,7 +1789,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>-Xjit:count=0 -XX:+CompactStrings</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -XX:-CompactStrings</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -XX:+CompactStrings</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<impls>
 			<impl>openj9</impl>
@@ -1851,7 +1820,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>-Xjit:count=0 -XX:+CompactStrings</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -XX:-CompactStrings</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -XX:+CompactStrings</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<impls>
 			<impl>openj9</impl>
@@ -1862,7 +1830,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<testCaseName>JCL_TEST_MathMethods</testCaseName>
 		<variations>
 			<variation>$(SQ)-Xjit:disableAsyncCompilation,{*Test_Math*}(count=1)$(SQ)</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -1917,7 +1884,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode550</variation>
 			<variation>Mode501 -Xjit:noJitUntilMain,count=0,optlevel=warm</variation>
 			<variation>Mode551 -Xjit:noJitUntilMain,count=0,optlevel=warm</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -1952,7 +1918,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode610</variation>
 			<variation>Mode501</variation>
 			<variation>Mode551</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -1995,7 +1960,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode610 -Xthr:minimizeUserCPU</variation>
 			<variation>Mode501 -Xthr:minimizeUserCPU</variation>
 			<variation>Mode551 -Xthr:minimizeUserCPU</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -2026,7 +1990,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode610</variation>
 			<variation>Mode501</variation>
 			<variation>Mode551</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -2055,7 +2018,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode101</variation>
 			<variation>Mode600</variation>
 			<variation>Mode619</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -2084,7 +2046,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode101</variation>
 			<variation>Mode600</variation>
 			<variation>Mode619</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:none \
@@ -2112,7 +2073,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode101</variation>
 			<variation>Mode600</variation>
 			<variation>Mode619</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:none \
@@ -2235,7 +2195,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode351</variation>
 			<variation>Mode501</variation>
 			<variation>Mode551</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -2266,7 +2225,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 			<variation>Mode551</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -2313,7 +2271,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode610</variation>
 			<variation>Mode501</variation>
 			<variation>Mode551</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<!-- OpenJ9 issue 1421, failed on zos:
 		z/OS documentation indicates the destructor supplied
@@ -2427,7 +2384,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode610</variation>
 			<variation>Mode501</variation>
 			<variation>Mode551</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -2452,7 +2408,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<variations>
 			<variation>Mode101</variation>
 			<variation>Mode601</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -2482,7 +2437,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<variations>
 			<variation>Mode101</variation>
 			<variation>Mode601</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -2755,7 +2709,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode610</variation>
 			<variation>Mode501</variation>
 			<variation>Mode551</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -2780,7 +2733,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<testCaseName>testStringStreams</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -2808,7 +2760,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode150</variation>
 			<variation>Mode501</variation>
 			<variation>Mode551</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
