@@ -34,7 +34,6 @@
 			<variation>-Xnocompressedrefs -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 			<variation>-Xnocompressedrefs -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 			<variation>-Xnocompressedrefs -Xgcpolicy:gencon</variation>
-			<variation>-XX:+GuardPageOnJavaStack</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 		-Xint --enable-preview \
