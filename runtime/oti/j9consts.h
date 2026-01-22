@@ -584,7 +584,7 @@ extern "C" {
 #define BCV_ERR_WRONG_RETURN_TYPE						-16
 #define BCV_ERR_INVALID_ARRAY_REFERENCE                 -17
 #define BCV_ERR_CLASS_RELATIONSHIP_RECORD_REQUIRED		-18
-#define BCV_ERR_UNUSED_19							-19
+#define BCV_ERR_NOT_THROWABLE							-19
 #define BCV_ERR_WRONG_TOP_TYPE							-20
 #define BCV_ERR_EXPECT_STACKMAP_FRAME					-21
 #define BCV_ERR_WRONG_STACKMAP_FRAME					-22
@@ -607,7 +607,6 @@ extern "C" {
 #define BCV_ERR_STRICT_FIELD_NOT_VALID                  -38
 #define BCV_ERR_STRICT_FIELD_STACK_MAP_INCONSISTENT     -39
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
-#define BCV_ERR_NOT_THROWABLE                           -38
 
 #define J9_GC_OBJ_HEAP_HOLE 0x1
 #define J9_GC_MULTI_SLOT_HOLE 0x1
