@@ -565,6 +565,7 @@
 
    java_lang_reflect_Array_getLength,
    java_lang_reflect_Method_invoke,
+   java_lang_reflect_Method_acquireMethodAccessor,
    java_util_Arrays_fill,
    java_util_Arrays_equals,
    java_lang_String_equals,

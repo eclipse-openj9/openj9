@@ -1272,6 +1272,16 @@ handleResponse(JITServer::MessageType response, JITServer::ClientStream *client,
          client->write(response, vhIndex, vhObj);
          }
          break;
+      case MessageType::VM_getMethodAccessorIndex:
+         {
+         auto recv = client->getRecvData<TR::KnownObjectTable::Index>();
+         TR::KnownObjectTable::Index maIndex = fe->getMethodAccessorIndex(comp, std::get<0>(recv));
+         uintptr_t* maObj = NULL;
+         if (maIndex != TR::KnownObjectTable::UNKNOWN)
+            maObj = knot->getPointerLocation(maIndex);
+         client->write(response, maIndex, maObj);
+         }
+         break;
 #endif // J9VM_OPT_OPENJDK_METHODHANDLE
       case MessageType::VM_isStable:
          {

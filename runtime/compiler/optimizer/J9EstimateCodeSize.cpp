@@ -765,7 +765,8 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
                if (rm == TR::java_util_HashMap_put ||
                    rm == TR::java_util_HashMap_get ||
                    rm == TR::java_util_concurrent_ConcurrentHashMap_get ||
-                   rm == TR::java_lang_Object_hashCode)
+                   rm == TR::java_lang_Object_hashCode ||
+                   rm == TR::java_lang_reflect_Method_invoke)
                   {
                   nph.setNeedsPeekingToTrue();
                   heuristicTrace(tracer(), "Depth %d: invokevirtual call at bc index %d has Signature %s, enabled peeking for caller to propagate prex arg info from caller.", _recursionDepth, i, tracer()->traceSignature(resolvedMethod));
@@ -811,6 +812,13 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
             TR::Node *parent = 0;
             TR::Node *callNode = 0;
             TR::ResolvedMethodSymbol *resolvedSymbol = 0;
+            TR::Method *meth = comp()->fej9()->createMethod(comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
+            const char * sig = meth->signature(comp()->trMemory());
+            if (sig && (!strncmp(sig, "jdk/internal/reflect/DirectMethodHandleAccessor.invokeImpl", 58)))
+               {
+               nph.setNeedsPeekingToTrue();
+               heuristicTrace(tracer(), "Depth %d: invokespecial call at bc index %d has Signature %s, enabled peeking for caller to propagate prex arg info from caller.", _recursionDepth, i, sig);
+               }
             if (!resolvedMethod || isUnresolvedInCP || resolvedMethod->isCold(comp(), false))
                {
                if(tracer()->heuristicLevel())
@@ -823,7 +831,6 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
                       {
                       if (bc == J9BCinvokespecialsplit)
                          cpIndex |= J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG;
-                      TR::Method *meth = comp()->fej9()->createMethod(comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
                       heuristicTrace(tracer(), "Depth %d: Call at bc index %d is Cold.  Not searching for targets. Signature %s",_recursionDepth,i,tracer()->traceSignature(meth));
                       }
                    }
@@ -888,7 +895,10 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
                   heuristicTrace(tracer(), "Depth %d: invokeinterface call at bc index %d has Signature %s, enabled peeking for caller to propagate prex arg info from caller.", _recursionDepth, i, sig);
                   }
 #if JAVA_SPEC_VERSION >= 21
-               else if (sig && (!strncmp(sig, "java/lang/foreign/MemorySegment.get", 35) || !strncmp(sig, "java/lang/foreign/MemorySegment.set", 35) ))
+               else if (sig && (!strncmp(sig, "java/lang/foreign/MemorySegment.get", 35) ||
+                                !strncmp(sig, "java/lang/foreign/MemorySegment.set", 35) ||
+                                !strncmp(sig, "jdk/internal/reflect/MethodAccessor.invoke", 42) ||
+                                !strncmp(sig, "jdk/internal/reflect/DirectMethodHandleAccessor.invoke", 54)))
                   {
                   nph.setNeedsPeekingToTrue();
                   heuristicTrace(tracer(), "Depth %d: invokeinterface call at bc index %d has Signature %s, enabled peeking for caller to fold layout field load necessary for VarHandle operation inlining.", _recursionDepth, i, sig);
@@ -1434,7 +1444,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       heuristicTrace(tracer(), "*** Depth %d: ECS CSI -- needsPeeking is true for calltarget %p",
       _recursionDepth, calltarget);
 
-      bool ilgenSuccess = (NULL != methodSymbol->getResolvedMethod()->genMethodILForPeekingEvenUnderMethodRedefinition(methodSymbol, comp(), false, NULL));
+      bool ilgenSuccess = (NULL != methodSymbol->getResolvedMethod()->genMethodILForPeekingEvenUnderMethodRedefinition(methodSymbol, comp(), false, calltarget->_ecsPrexArgInfo));
       if (ilgenSuccess)
          {
          heuristicTrace(tracer(), "*** Depth %d: ECS CSI -- peeking was successfull for calltarget %p", _recursionDepth, calltarget);

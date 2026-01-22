@@ -478,6 +478,17 @@ public:
     */
    virtual TR::KnownObjectTable::Index getLayoutVarHandle(TR::Compilation *comp, TR::KnownObjectTable::Index layoutIndex);
 
+   /**
+    * @brief Get the MethodAccessor Index of a java/lang/reflect/Method object, if the MethodAccessor has been set. When the Method object
+    * is known, and its methodAccessor field is populated, we can evaluate the result of
+    * java/lang/reflect/Method.acquireMethodAccessor()Ljdk/internal/reflect/MethodAccessor; at compile time.
+    *
+    * @param comp the compilation
+    * @param methodIndex the java/lang/reflect/Method known object index
+    * @return TR::KnownObjectTable::Index the known object index of the MethodAccessor object if valid, TR::KnownObjectTable::UNKNOWN otherwise
+    */
+   virtual TR::KnownObjectTable::Index getMethodAccessorIndex(TR::Compilation *comp, TR::KnownObjectTable::Index methodIndex);
+
    virtual TR::Method * createMethod(TR_Memory *, TR_OpaqueClassBlock *, int32_t);
    virtual TR_ResolvedMethod * createResolvedMethod(TR_Memory *, TR_OpaqueMethodBlock *, TR_ResolvedMethod * = 0, TR_OpaqueClassBlock * = 0);
    virtual TR_ResolvedMethod * createResolvedMethodWithVTableSlot(TR_Memory *, uint32_t vTableSlot, TR_OpaqueMethodBlock * aMethod, TR_ResolvedMethod * owningMethod = 0, TR_OpaqueClassBlock * classForNewInstance = 0);

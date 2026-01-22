@@ -2532,6 +2532,21 @@ TR_J9ServerVM::getLayoutVarHandle(TR::Compilation *comp, TR::KnownObjectTable::I
 
    }
 
+TR::KnownObjectTable::Index
+TR_J9ServerVM::getMethodAccessorIndex(TR::Compilation *comp, TR::KnownObjectTable::Index methodIndex)
+   {
+   TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+   if (!knot) return TR::KnownObjectTable::UNKNOWN;
+
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITServer::MessageType::VM_getMethodAccessorIndex, methodIndex);
+   auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t *>();
+
+   TR::KnownObjectTable::Index maIndex = std::get<0>(recv);
+   knot->updateKnownObjectTableAtServer(maIndex, std::get<1>(recv));
+   return maIndex;
+   }
+
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 TR::KnownObjectTable::Index

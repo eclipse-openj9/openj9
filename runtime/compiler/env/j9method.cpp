@@ -3162,6 +3162,7 @@ void TR_ResolvedJ9Method::construct()
    static X MethodMethods[] =
       {
       {  TR::java_lang_reflect_Method_invoke, 6, "invoke", (int16_t)-1, "*"},
+      {x(TR::java_lang_reflect_Method_acquireMethodAccessor, "acquireMethodAccessor", "()Ljdk/internal/reflect/MethodAccessor;")},
       {  TR::unknownMethod}
       };
 

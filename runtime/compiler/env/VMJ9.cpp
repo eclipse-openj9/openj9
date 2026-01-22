@@ -5291,6 +5291,41 @@ TR_J9VMBase::getLayoutVarHandle(TR::Compilation *comp, TR::KnownObjectTable::Ind
    return result;
    }
 
+TR::KnownObjectTable::Index
+TR_J9VMBase::getMethodAccessorIndex(TR::Compilation *comp, TR::KnownObjectTable::Index methodIndex)
+   {
+   TR::VMAccessCriticalSection getMAIndex(this);
+   TR::KnownObjectTable::Index result = TR::KnownObjectTable::UNKNOWN;
+   TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+   if (!knot) return result;
+
+   const char * const methodClassName = "java/lang/reflect/Method";
+   const int32_t methodClassNameLen = (int32_t) strlen(methodClassName);
+   TR_OpaqueClassBlock *methodClass =
+      getSystemClassFromClassName(methodClassName, methodClassNameLen);
+
+   TR_OpaqueClassBlock *methodObjClass =
+      getObjectClassFromKnownObjectIndex(comp, methodIndex);
+
+   if (methodClass == NULL ||
+       isInstanceOf(methodObjClass, methodClass, true, true) != TR_yes)
+      {
+      logprintf(comp->getOption(TR_TraceOptDetails), comp->log(), "getMethodAccessorIndex: failed java/lang/reflect/Method type check.\n");
+      return result;
+      }
+
+   uintptr_t methodObj = knot->getPointer(methodIndex);
+   uintptr_t maObject = getReferenceField(methodObj,
+                                 "methodAccessor",
+                                 "Ljdk/internal/reflect/MethodAccessor;");
+   if (!maObject) return result;
+   result = knot->getOrCreateIndex(maObject);
+
+   J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
+   cpg->addEdge(cpg->knownObject(methodIndex), cpg->knownObject(result));
+   return result;
+   }
+
 int32_t
 TR_J9VMBase::getVarHandleAccessDescriptorMode(TR::Compilation *comp, TR::KnownObjectTable::Index adIndex)
    {
