@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
-#ifndef J9CONSTS_H
+#if !defined(J9CONSTS_H)
 #define J9CONSTS_H
 
 /* @ddr_namespace: map_to_type=J9Consts */
@@ -59,18 +59,18 @@ extern "C" {
 #define J9_JIT_RETURN_TYPES_SIZE 0x6
 
 /* Java stack layout:
- *	A - J9JavaStack struct header
- *	B - space reserved for signal handling on the java stack
- *	C - space reserved for unchecked access during StackOverflowError construction
- *		<fatal stack overflow if below here when constructing StackOverflowError>
- *	D - space reserved for checked access during StackOverflowError construction
- *		<stackOverflowMark is here>
- *	E - normal stack area
+ *   A - J9JavaStack struct header
+ *   B - space reserved for signal handling on the java stack
+ *   C - space reserved for unchecked access during StackOverflowError construction
+ *       <fatal stack overflow if below here when constructing StackOverflowError>
+ *   D - space reserved for checked access during StackOverflowError construction
+ *       <stackOverflowMark is here>
+ *   E - normal stack area
  *
- *	Base reserved size is 1K.  Add another 3K on x86 platforms (signal handlers may run on
- *	the java stack temporarily due to ESP re-use).  Double that value on 64-bit targets.
+ *   Base reserved size is 1K.  Add another 3K on x86 platforms (signal handlers may run on
+ *   the java stack temporarily due to ESP re-use).  Double that value on 64-bit targets.
  *
- *	Overflow size is the above plus another 1K (2K on 64-bit).
+ * Overflow size is the above plus another 1K (2K on 64-bit).
  */
 #if defined(J9VM_ENV_DATA64)
 #if defined(J9VM_ARCH_X86)
@@ -90,13 +90,13 @@ extern "C" {
 #endif /* J9VM_ARCH_X86 */
 #endif /* J9VM_ENV_DATA64 */
 
-/* The maximum number of bytes allowed in the data portion of an array object.  This value must be
+/* The maximum number of bytes allowed in the data portion of an array object. This value must be
  * small enough that adding the header size and any other non-arrayoid overhead (such as the alignment
  * value for keeping objects aligned) can not overflow a UDATA.
  *
- * For now, make this (UDATA_MAX+1) - 1K.  That's certainly enough to prevent the overflow, as the header
- * overhead will never be 1K.  It's also large enough that this will not impact the practical upper
- * bound on array element sizes, as the VM overhead will certainly be more than 1K.
+ * For now, make this (UDATA_MAX + 1) - 1k. That's certainly enough to prevent the overflow, as the header
+ * overhead will never be 1k. It's also large enough that this will not impact the practical upper
+ * bound on array element sizes, as the VM overhead will certainly be more than 1k.
  */
 #define J9_MAXIMUM_INDEXABLE_DATA_SIZE ((UDATA)-1024)
 
@@ -162,7 +162,7 @@ extern "C" {
 #if JAVA_SPEC_VERSION >= 16
 #define J9_PRIVATE_FLAGS_FFI_UPCALL_THREAD 0x20000
 #endif /* JAVA_SPEC_VERSION >= 16 */
-#define J9_PRIVATE_FLAGS_UNUSED_0x40000 0x40000
+/* unused: 0x40000 */
 #define J9_PRIVATE_FLAGS_VIRTUAL_THREAD_HIDDEN_FRAMES 0x80000
 #define J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE 0x100000
 #define J9_PRIVATE_FLAGS_USE_BOOTSTRAP_LOADER 0x200000
@@ -177,7 +177,7 @@ extern "C" {
 #define J9_PRIVATE_FLAGS_STACKS_OUT_OF_SYNC 0x40000000
 #define J9_PRIVATE_FLAGS_FINAL_CALL_OUT_OF_MEMORY 0x80000000
 
-#define J9_PRIVATE_FLAGS2_IN_SHARED_CACHE_READ_MUTEX  0x1
+#define J9_PRIVATE_FLAGS2_IN_SHARED_CACHE_READ_MUTEX 0x1
 #define J9_PRIVATE_FLAGS2_CHECK_PACKAGE_ACCESS 0x2
 #define J9_PRIVATE_FLAGS2_UNSAFE_HANDLE_SIGBUS 0x4
 #define J9_PRIVATE_FLAGS2_ASYNC_GET_CALL_TRACE 0x8 /* DO NOT set this anywhere but AsyncGetCallTrace */
@@ -208,8 +208,7 @@ extern "C" {
 #define J9_PUBLIC_FLAGS_HALT_THREAD_FOR_CHECKPOINT 0x200000
 #define J9_PUBLIC_FLAGS_JNI_CRITICAL_REGION 0x400000
 #define J9_PUBLIC_FLAGS_POP_FRAMES_INTERRUPT 0x800000
-#define J9_PUBLIC_FLAGS_UNUSED_0x10000000 0x10000000
-#define J9_PUBLIC_FLAGS_UNUSED_0x20000000 0x20000000
+/* unused: 0x10000000 0x20000000 */
 #define J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS 0x40000000
 #define J9_PUBLIC_FLAGS_QUEUED_FOR_EXCLUSIVE 0x80000000
 
@@ -229,9 +228,9 @@ extern "C" {
 #define J9_METHOD_ENTER_RASTRACE 0x10
 #define J9_METHOD_ENTER_NEW_HOOK_INTERFACE 0x20
 
-#define J9_JIT_QUEUED_FOR_COMPILATION -5
-#define J9_JIT_NEVER_TRANSLATE -3
-#define J9_JIT_RESOLVE_FAIL_COMPILE -2
+#define J9_JIT_QUEUED_FOR_COMPILATION (-5)
+#define J9_JIT_NEVER_TRANSLATE (-3)
+#define J9_JIT_RESOLVE_FAIL_COMPILE (-2)
 #define J9_JIT_DCE_EXCEPTION_INFO 0x1
 #define J9_JIT_TRANSITION_METHOD_ENTER 0x1
 #define J9_JIT_TOGGLE_RI_ON_TRANSITION 0x1
@@ -274,7 +273,7 @@ extern "C" {
 #define J9_RUNTIME_JIT_ACTIVE 0x20
 #define J9_RUNTIME_CLEANUP 0x40
 
-/* Determines whether the java/lang/String.value has [B or [C signature */
+/* Determines whether the java/lang/String.value has [B or [C signature. */
 #define J9_RUNTIME_STRING_BYTE_ARRAY 0x80
 
 #define J9_RUNTIME_SHUTDOWN 0x100
@@ -286,14 +285,12 @@ extern "C" {
 #define J9_RUNTIME_ARGENCODING_LATIN 0x4000
 #define J9_RUNTIME_ARGENCODING_UTF8 0x8000
 #define J9_RUNTIME_ALLOW_DYNAMIC_AGENT 0x10000
-#define J9_RUNTIME_UNUSED_0x20000 0x20000
-#define J9_RUNTIME_UNUSED_0x40000 0x40000
-#define J9_RUNTIME_UNUSED_0x80000 0x80000
+/* unused: 0x20000 0x40000 0x80000 */
 #define J9_RUNTIME_AGGRESSIVE 0x100000
 #define J9_RUNTIME_EXTENDED_METHOD_BLOCK 0x200000
 #define J9_RUNTIME_SHUTDOWN_STARTED 0x400000
 #define J9_RUNTIME_EXIT_STARTED 0x800000
-#define J9_RUNTIME_UNUSED_0x1000000 0x1000000
+/* unused: 0x1000000 */
 #define J9_RUNTIME_NO_PRIORITIES 0x2000000
 #define J9_RUNTIME_SHOW_HIDDEN_FRAMES 0x4000000
 #define J9_RUNTIME_DISABLE_VM_SHUTDOWN 0x8000000
@@ -303,7 +300,7 @@ extern "C" {
 #define J9_RUNTIME_TUNE_VIRTUALIZED 0x80000000
 
 #define J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS 0x1
-#define J9_EXTENDED_RUNTIME_ENABLE_CPU_MONITOR	0x2
+#define J9_EXTENDED_RUNTIME_ENABLE_CPU_MONITOR 0x2
 #define J9_EXTENDED_RUNTIME_ALWAYS_USE_JNI_CRITICAL 0x4
 #define J9_EXTENDED_RUNTIME_ALLOW_CONTENDED_FIELDS 0x8
 #define J9_EXTENDED_RUNTIME_RESTRICT_IFA 0x10
@@ -335,7 +332,7 @@ extern "C" {
 #define J9_EXTENDED_RUNTIME_JIT_INLINE_WATCHES 0x40000000
 #define J9_EXTENDED_RUNTIME_REDUCE_CPU_MONITOR_OVERHEAD 0x80000000
 
-/* constants for J9JavaVM.extendedRuntimeFlags2 */
+/* Constants for J9JavaVM.extendedRuntimeFlags2. */
 #define J9_EXTENDED_RUNTIME2_JFR_ENABLED 0x1
 #define J9_EXTENDED_RUNTIME2_COMPRESS_OBJECT_REFERENCES 0x2
 #define J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW 0x4
@@ -369,7 +366,7 @@ extern "C" {
 #define J9_EXTENDED_RUNTIME2_RAMSTATE_SNAPSHOT_RUN 0x40000000
 #define J9_EXTENDED_RUNTIME2_RAMSTATE_RESTORE_RUN 0x80000000
 
-/* constants for J9JavaVM.extendedRuntimeFlags3 */
+/* Constants for J9JavaVM.extendedRuntimeFlags3. */
 #define J9_EXTENDED_RUNTIME3_START_FLIGHT_RECORDING 0x1
 #define J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION 0x2
 #define J9_EXTENDED_RUNTIME3_CACHE_MAPS 0x4
@@ -395,7 +392,7 @@ extern "C" {
 #define J9_STARTPC_DLT_READY 0x8
 #define J9_STARTPC_STATUS 0xF
 
-/* Stackwalk return values */
+/* Stackwalk return values. */
 #define J9_STACKWALK_RC_NONE 0x0
 #define J9_STACKWALK_STOP_ITERATING 0x0 /* Must be the same as no error */
 #define J9_STACKWALK_KEEP_ITERATING 0x1
@@ -404,10 +401,10 @@ extern "C" {
 #define J9_STACKWALK_RC_BAD_STATE_BUFFER 0x4
 #define J9_STACKWALK_RC_STACK_CORRUPT 0x5
 
-/* Tag for JIT artifact search cache */
+/* Tag for JIT artifact search cache. */
 #define J9_STACKWALK_NO_JIT_CACHE 0x1
 
-/* Stackwalk flags */
+/* Stackwalk flags. */
 #define J9_STACKWALK_RECORD_BYTECODE_PC_OFFSET 0x1
 #define J9_STACKWALK_DO_NOT_SNIFF_AND_WHACK 0x2
 #define J9_STACKWALK_ITERATE_METHOD_CLASS_SLOTS 0x4
@@ -473,7 +470,7 @@ extern "C" {
 #define J9_FINDKNOWNCLASS_FLAG_EXISTING_ONLY 0x2
 #define J9_FINDKNOWNCLASS_FLAG_NON_FATAL 0x4
 
-/* TODO: COMBOSPEC: Remove J9_GC_ARRAYLET_LAYOUT* and fix DDR */
+/* TODO: COMBOSPEC: Remove J9_GC_ARRAYLET_LAYOUT* and fix DDR. */
 #define J9_GC_ARRAYLET_LAYOUT_DATA_IN_SPINE_BIT 0x0
 #define J9_GC_ARRAYLET_LAYOUT_DISCONTIGUOUS_BIT 0x0
 #define J9_GC_ARRAYLET_LAYOUT_MASK 0x0
@@ -560,52 +557,51 @@ extern "C" {
 
 #define BCV_SUCCESS 0
 #define BCV_FAIL 1
-#define BCV_NOT_FOUND -1
+#define BCV_NOT_FOUND (-1)
 
 /* TODO: Given that BCV_NOT_FOUND (-1) and BCV_ERR_INTERNAL_ERROR (-1) coexist in the existing code,
  * the conflict between BCV_NOT_FOUND and BCV_ERR_INTERNAL_ERROR will be addressed later in task 88899.
  */
-#define BCV_ERR_INTERNAL_ERROR							-1
-#define BCV_ERR_INSUFFICIENT_MEMORY						-2
-
-#define BCV_ERR_FRAMES_INCOMPATIBLE_TYPE				-3
-#define BCV_ERR_INCOMPATIBLE_TYPE						-4
-#define BCV_ERR_STACK_SIZE_MISMATCH						-5
-#define BCV_ERR_STACK_UNDERFLOW							-6
-#define BCV_ERR_STACK_OVERFLOW							-7
-#define BCV_ERR_JSR_STACK_UNDERFLOW						-8
-#define BCV_ERR_JSR_STACK_OVERFLOW						-9
-#define BCV_ERR_JSR_RET_ADDRESS_ON_STACK				-10
-#define BCV_ERR_JSR_ILLEGAL_LOAD_OPERATION				-11
-#define BCV_ERR_STACKMAP_FRAME_STACK_OVERFLOW			-12
-#define BCV_ERR_STACKMAP_FRAME_LOCALS_UNDERFLOW			-13
-#define BCV_ERR_STACKMAP_FRAME_LOCALS_OVERFLOW			-14
-#define BCV_ERR_INIT_NOT_CALL_INIT						-15
-#define BCV_ERR_WRONG_RETURN_TYPE						-16
-#define BCV_ERR_INVALID_ARRAY_REFERENCE                 -17
-#define BCV_ERR_CLASS_RELATIONSHIP_RECORD_REQUIRED		-18
-#define BCV_ERR_NOT_THROWABLE							-19
-#define BCV_ERR_WRONG_TOP_TYPE							-20
-#define BCV_ERR_EXPECT_STACKMAP_FRAME					-21
-#define BCV_ERR_WRONG_STACKMAP_FRAME					-22
-#define BCV_ERR_NO_STACKMAP_FRAME						-23
-#define BCV_ERR_DEAD_CODE								-24
-#define BCV_ERR_ARGUMENTS_MISMATCH						-25
-#define BCV_ERR_BAD_ACCESS_PROTECTED					-26
-#define BCV_ERR_BAD_INVOKESPECIAL						-27
-#define BCV_ERR_BAD_INIT_OBJECT							-28
-#define BCV_ERR_ARRAY_ARITY_OVERFLOW					-29
-#define BCV_ERR_ARRAY_DIMENSION_MISMATCH				-30
-#define BCV_ERR_BAD_BYTECODE							-31
-#define BCV_ERR_UNEXPECTED_EOF							-32
-#define BCV_ERR_INACCESSIBLE_CLASS						-33
-#define BCV_ERR_BYTECODE_ERROR							-34
-#define BCV_ERR_NEW_OJBECT_MISMATCH						-35
-#define BCV_ERR_INIT_FLAGS_MISMATCH						-36
+#define BCV_ERR_INTERNAL_ERROR                          (-1)
+#define BCV_ERR_INSUFFICIENT_MEMORY                     (-2)
+#define BCV_ERR_FRAMES_INCOMPATIBLE_TYPE                (-3)
+#define BCV_ERR_INCOMPATIBLE_TYPE                       (-4)
+#define BCV_ERR_STACK_SIZE_MISMATCH                     (-5)
+#define BCV_ERR_STACK_UNDERFLOW                         (-6)
+#define BCV_ERR_STACK_OVERFLOW                          (-7)
+#define BCV_ERR_JSR_STACK_UNDERFLOW                     (-8)
+#define BCV_ERR_JSR_STACK_OVERFLOW                      (-9)
+#define BCV_ERR_JSR_RET_ADDRESS_ON_STACK                (-10)
+#define BCV_ERR_JSR_ILLEGAL_LOAD_OPERATION              (-11)
+#define BCV_ERR_STACKMAP_FRAME_STACK_OVERFLOW           (-12)
+#define BCV_ERR_STACKMAP_FRAME_LOCALS_UNDERFLOW         (-13)
+#define BCV_ERR_STACKMAP_FRAME_LOCALS_OVERFLOW          (-14)
+#define BCV_ERR_INIT_NOT_CALL_INIT                      (-15)
+#define BCV_ERR_WRONG_RETURN_TYPE                       (-16)
+#define BCV_ERR_INVALID_ARRAY_REFERENCE                 (-17)
+#define BCV_ERR_CLASS_RELATIONSHIP_RECORD_REQUIRED      (-18)
+#define BCV_ERR_NOT_THROWABLE                           (-19)
+#define BCV_ERR_WRONG_TOP_TYPE                          (-20)
+#define BCV_ERR_EXPECT_STACKMAP_FRAME                   (-21)
+#define BCV_ERR_WRONG_STACKMAP_FRAME                    (-22)
+#define BCV_ERR_NO_STACKMAP_FRAME                       (-23)
+#define BCV_ERR_DEAD_CODE                               (-24)
+#define BCV_ERR_ARGUMENTS_MISMATCH                      (-25)
+#define BCV_ERR_BAD_ACCESS_PROTECTED                    (-26)
+#define BCV_ERR_BAD_INVOKESPECIAL                       (-27)
+#define BCV_ERR_BAD_INIT_OBJECT                         (-28)
+#define BCV_ERR_ARRAY_ARITY_OVERFLOW                    (-29)
+#define BCV_ERR_ARRAY_DIMENSION_MISMATCH                (-30)
+#define BCV_ERR_BAD_BYTECODE                            (-31)
+#define BCV_ERR_UNEXPECTED_EOF                          (-32)
+#define BCV_ERR_INACCESSIBLE_CLASS                      (-33)
+#define BCV_ERR_BYTECODE_ERROR                          (-34)
+#define BCV_ERR_NEW_OJBECT_MISMATCH                     (-35)
+#define BCV_ERR_INIT_FLAGS_MISMATCH                     (-36)
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
-#define BCV_ERR_STRICT_FIELDS_UNASSIGNED                -37
-#define BCV_ERR_STRICT_FIELD_NOT_VALID                  -38
-#define BCV_ERR_STRICT_FIELD_STACK_MAP_INCONSISTENT     -39
+#define BCV_ERR_STRICT_FIELDS_UNASSIGNED                (-37)
+#define BCV_ERR_STRICT_FIELD_NOT_VALID                  (-38)
+#define BCV_ERR_STRICT_FIELD_STACK_MAP_INCONSISTENT     (-39)
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 #define J9_GC_OBJ_HEAP_HOLE 0x1
@@ -646,15 +642,15 @@ extern "C" {
 #define J9_STR_INTERN 0x8
 #define J9_STR_UNICODE 0x10
 #define J9_STR_ANON_CLASS_NAME 0x20
-/* Determines whether a copied string result will be null terminated */
+/* Determines whether a copied string result will be null terminated. */
 #define J9_STR_NULL_TERMINATE_RESULT 0x40
 
 #define J9_JCL_FLAG_REFERENCE_OBJECTS 0x1
 #define J9_JCL_FLAG_FINALIZATION 0x2
 #define J9_JCL_FLAG_THREADGROUPS 0x8
-/* #define J9_JCL_FLAG_UNUSED_10 0x10 */
+/* unused: 0x10 */
 #define J9_JCL_FLAG_COM_SUN_MANAGEMENT_PROP 0x20
-#define J9_JCL_FLAG_JDK_MODULE_PATCH_PROP	0x40
+#define J9_JCL_FLAG_JDK_MODULE_PATCH_PROP 0x40
 
 #define J9_SIG_NO_SIG_QUIT 0x1
 #define J9_SIG_NO_SIG_ABRT 0x2
@@ -895,18 +891,18 @@ extern "C" {
 #define J9_IDLE_TUNING_COMPACT_ON_IDLE 0x2
 #define J9_IDLE_TUNING_IGNORE_UNRECOGNIZED_OPTIONS 0x4
 
-#define J9_CLASSLOADER_TYPE_OTHERS		0
-#define J9_CLASSLOADER_TYPE_BOOT		1
-#define J9_CLASSLOADER_TYPE_PLATFORM	2
-#define J9_CLASSLOADER_TYPE_APP			3
+#define J9_CLASSLOADER_TYPE_OTHERS      0
+#define J9_CLASSLOADER_TYPE_BOOT        1
+#define J9_CLASSLOADER_TYPE_PLATFORM    2
+#define J9_CLASSLOADER_TYPE_APP         3
 
-/* Flag for Nestmates invokeVirtual on private methods */
+/* Flag for Nestmates invokeVirtual on private methods. */
 #define J9_VTABLE_INDEX_DIRECT_METHOD_FLAG 0x1
 
 /* Tag bits for J9RAMInterfaceMethodRef->methodIndexAndArgCount:
  *
- *	J9_ITABLE_INDEX_METHOD_INDEX - index represents a direct method index
- *	J9_ITABLE_INDEX_OBJECT       - use Object rather than the targetted interfaceClass
+ *   J9_ITABLE_INDEX_METHOD_INDEX - index represents a direct method index
+ *   J9_ITABLE_INDEX_OBJECT       - use Object rather than the targetted interfaceClass
  *
  * Private methods in interface will have only J9_ITABLE_INDEX_METHOD_INDEX set, indicating that
  * the underlying index is a method index into the interfaceClass of the ref.
@@ -930,8 +926,8 @@ extern "C" {
 
 /* Tag bits for iTableOffset field in JIT interface snippet data:
  *
- *	J9_ITABLE_OFFSET_DIRECT  - offset field is actually a direct J9Method*
- *	J9_ITABLE_OFFSET_VIRTUAL - offset field represents a vTable offset, not iTable
+ *   J9_ITABLE_OFFSET_DIRECT  - offset field is actually a direct J9Method*
+ *   J9_ITABLE_OFFSET_VIRTUAL - offset field represents a vTable offset, not iTable
  */
 #define J9_ITABLE_OFFSET_DIRECT 1
 #define J9_ITABLE_OFFSET_VIRTUAL 2
@@ -955,13 +951,13 @@ extern "C" {
 #define J9_JAVA_NATIVE 0x100
 #define J9_JAVA_STATIC 0x8
 
-/* Stack walker frame Types */
+/* Stack walker frame Types. */
 #define J9VM_STACK_FRAME_INTERPRETER 0
 #define J9VM_STACK_FRAME_JIT 1
 #define J9VM_STACK_FRAME_JIT_INLINE 2
 #define J9VM_STACK_FRAME_NATIVE 3
 
-/* JFR event types */
+/* JFR event types. */
 
 #define J9JFR_EVENT_TYPE_EXECUTION_SAMPLE 0
 #define J9JFR_EVENT_TYPE_THREAD_START 1
@@ -977,11 +973,11 @@ extern "C" {
 #define J9JFR_EVENT_TYPE_MONITOR_ENTER 11
 #define J9JFR_EVENT_TYPE_SYSTEM_GC 12
 
-/* JFR thread states */
+/* JFR thread states. */
 
 #define J9JFR_THREAD_STATE_RUNNING 0
 
-/* Constants for JIT flattened field resolution */
+/* Constants for JIT flattened field resolution. */
 
 #define J9TR_FLAT_RESOLVE_GETFIELD 1
 #define J9TR_FLAT_RESOLVE_PUTFIELD 2
@@ -995,15 +991,15 @@ extern "C" {
 #define J9_CLASSFILE_OR_ROMCLASS_SUPPORTS_STRICT_FIELDS(classfileOrRomClass) (((classfileOrRomClass)->majorVersion >= STRICT_FIELDS_MAJOR_VERSION) && (PREVIEW_MINOR_VERSION == (classfileOrRomClass)->minorVersion))
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-/* Constants for java.lang.reflect.Field flags */
+/* Constants for java.lang.reflect.Field flags. */
 #define TRUST_FINAL 0x10
 #define NULL_RESTRICTED 0x20
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES)*/
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 #define J9VM_DISCLAIMCLASSMEMORY_STOP_ON_FIRST_FAILURE 1
 
 #ifdef __cplusplus
-}
+} /* extern "C" */
 #endif
 
-#endif /* J9CONSTS_H */
+#endif /* !defined(J9CONSTS_H) */

@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
-#ifndef STACKWALK_H
+#if !defined(STACKWALK_H)
 #define STACKWALK_H
 
 /*
@@ -37,16 +37,16 @@ extern "C" {
 #include "j9consts.h"
 #include "bcnames.h"
 
-#define UNTAG2(source, type) ((type) (((UDATA) (source)) & ~3))
+#define UNTAG2(source, type) ((type) (((UDATA)(source)) & ~3))
 
 #define UNTAGGED_METHOD_CP(method) J9_CP_FROM_METHOD(method)
 
 #define UNTAGGED_A0(fp) UNTAG2((fp)->savedA0, UDATA *)
 
 #ifdef J9VM_INTERP_GROWABLE_STACKS
-#define CONVERT_TO_RELATIVE_STACK_OFFSET(vmThread, ptr) ((UDATA *) (((U_8 *) (vmThread)->stackObject->end) - (U_8 *) (ptr)))
+#define CONVERT_TO_RELATIVE_STACK_OFFSET(vmThread, ptr) ((UDATA *)(((U_8 *)(vmThread)->stackObject->end) - (U_8 *) (ptr)))
 #else
-#define CONVERT_TO_RELATIVE_STACK_OFFSET(vmThread, ptr) ((UDATA *) (ptr))
+#define CONVERT_TO_RELATIVE_STACK_OFFSET(vmThread, ptr) ((UDATA *)(ptr))
 #endif
 #define CONVERT_FROM_RELATIVE_STACK_OFFSET(vmThread, ptr) CONVERT_TO_RELATIVE_STACK_OFFSET(vmThread, ptr)
 
@@ -70,9 +70,9 @@ extern "C" {
 #define MARK_SLOT_AS_OBJECT(walkState, slot)
 #endif
 
-#define IS_SPECIAL_FRAME_PC(pc) ( (UDATA)(pc) <= J9SF_MAX_SPECIAL_FRAME_TYPE )
+#define IS_SPECIAL_FRAME_PC(pc) ((UDATA)(pc) <= J9SF_MAX_SPECIAL_FRAME_TYPE)
 
-#define IS_JNI_CALLIN_FRAME_PC(pc) ( *(U_8*)(pc) == JBimpdep2 )
+#define IS_JNI_CALLIN_FRAME_PC(pc) (*(U_8 *)(pc) == JBimpdep2)
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 #define SWALK_PRINT_CLASS_OF_RUNNING_METHOD(walkState) swPrintf((walkState), 4, "\tClass of running method\n")
@@ -81,9 +81,9 @@ extern "C" {
 #endif
 
 #if defined(J9VM_ARCH_S390) && !defined(J9VM_ENV_DATA64)
-#define MASK_PC(pc) ((U_8 *) (((UDATA) (pc)) & 0x7FFFFFFF))
+#define MASK_PC(pc) ((U_8 *)(((UDATA)(pc)) & 0x7FFFFFFF))
 #else
-#define MASK_PC(pc) ((U_8 *) (pc))
+#define MASK_PC(pc) ((U_8 *)(pc))
 #endif
 
 #define WALK_METHOD_CLASS(walkState) \
@@ -96,7 +96,7 @@ extern "C" {
 			classObject = J9VM_J9CLASS_TO_HEAPCLASS((walkState)->constantPool->ramClass); \
 			WALK_O_SLOT( &classObject ); \
 		} \
-	} while(0)
+	} while (0)
 
 #define J9SW_JIT_RETURN_TABLE_SIZE 0x9
 
@@ -110,14 +110,14 @@ extern "C" {
 #define J9_STACK_FLAGS_USE_SPECIFIED_CLASS_LOADER 0x00040000
 #define J9_STACK_FLAGS_JIT_NATIVE_TRANSITION 0x40000000
 #define J9_STACK_INVISIBLE_FRAME 0x00000002
-#define J9_STACK_FLAGS_UNUSED_0x80000000 0x80000000
+/* unused: 0x80000000 */
 #define J9_STACK_FLAGS_JIT_CALL_IN_TYPE_J2_I 0x00000000
 #define J9_STACK_FLAGS_JNI_REFS_REDIRECTED 0x00010000
-#define J9_STACK_FLAGS_UNUSED_0x2 0x00000002
+/* unused: 0x00000002 */
 #define J9_STACK_FLAGS_JIT_JNI_CALL_OUT_FRAME 0x20000000
 #define J9_STACK_FLAGS_RELEASE_VMACCESS 0x00020000
 #define J9_STACK_REPORT_FRAME_POP 0x00000001
-#define J9_STACK_FLAGS_JIT_UNUSED_0x04000000 0x04000000
+/* unused: 0x04000000 */
 #define J9_JNI_PUSHED_REFERENCE_COUNT_MASK 0x000000FF
 #define J9_STACK_FLAGS_CALL_OUT_FRAME_ALLOCATED 0x00020000
 
@@ -188,7 +188,7 @@ extern "C" {
 #undef  J9SW_JIT_VIRTUAL_METHOD_RESOLVE_OFFSET_TO_SAVED_RECEIVER
 #define J9SW_LOWEST_MEMORY_PRESERVED_REGISTER jit_rbx
 
-#else /* J9VM_ENV_DATA64 */
+#else /* defined(J9VM_ENV_DATA64) */
 
 /* X86-32 */
 
@@ -213,7 +213,7 @@ extern "C" {
 #define J9SW_JIT_CALLEE_PRESERVED_SIZE 3
 #define J9SW_LOWEST_MEMORY_PRESERVED_REGISTER jit_esi
 
-#endif /* J9VM_ENV_DATA64 */
+#endif /* defined(J9VM_ENV_DATA64) */
 
 #elif defined(J9VM_ARCH_POWER)
 
@@ -247,13 +247,13 @@ extern "C" {
 
 #define J9SW_JIT_CALLEE_PRESERVED_SIZE 16
 
-#else /* J9VM_ENV_DATA64 */
+#else /* defined(J9VM_ENV_DATA64) */
 
 /* PPC-32 */
 
 #define J9SW_JIT_CALLEE_PRESERVED_SIZE 17
 
-#endif /* J9VM_ENV_DATA64 */
+#endif /* defined(J9VM_ENV_DATA64) */
 
 #elif defined(J9VM_ARCH_S390)
 
@@ -287,7 +287,7 @@ extern "C" {
 #define J9SW_JIT_CALLEE_PRESERVED_SIZE 7
 #define J9SW_LOWEST_MEMORY_PRESERVED_REGISTER jit_r12
 
-#else /* J9VM_ENV_DATA64 */
+#else /* defined(J9VM_ENV_DATA64) */
 
 /* 390-32 */
 
@@ -296,7 +296,7 @@ extern "C" {
 #define J9SW_JIT_CALLEE_PRESERVED_SIZE 14
 #define J9SW_LOWEST_MEMORY_PRESERVED_REGISTER jit_r28
 
-#endif /* J9VM_ENV_DATA64 */
+#endif /* defined(J9VM_ENV_DATA64) */
 
 #elif defined(J9VM_ARCH_ARM)
 
@@ -389,7 +389,7 @@ extern "C" {
 #undef  J9SW_JIT_VIRTUAL_METHOD_RESOLVE_OFFSET_TO_SAVED_RECEIVER
 #define J9SW_LOWEST_MEMORY_PRESERVED_REGISTER jit_r25
 
-#else /* J9VM_ENV_DATA64 */
+#else /* defined(J9VM_ENV_DATA64) */
 
 /* RISCV-32 */
 
@@ -411,7 +411,7 @@ extern "C" {
 #define J9SW_JIT_CALLEE_PRESERVED_SIZE 3
 #define J9SW_LOWEST_MEMORY_PRESERVED_REGISTER
 
-#endif /* J9VM_ENV_DATA64 */
+#endif /* defined(J9VM_ENV_DATA64) */
 
 #else
 #error Unsupported platform
@@ -420,12 +420,13 @@ extern "C" {
 #if defined(J9SW_ARGUMENT_REGISTER_COUNT)
 extern U_8 jitArgumentRegisterNumbers[J9SW_ARGUMENT_REGISTER_COUNT];
 #endif /* J9SW_ARGUMENT_REGISTER_COUNT */
+
 #if defined(J9SW_JIT_FLOAT_ARGUMENT_REGISTER_COUNT)
 extern U_8 jitFloatArgumentRegisterNumbers[J9SW_JIT_FLOAT_ARGUMENT_REGISTER_COUNT];
 #endif /* J9SW_JIT_FLOAT_ARGUMENT_REGISTER_COUNT */
 
 #ifdef __cplusplus
-}
+} /* extern "C" */
 #endif
 
-#endif /* STACKWALK_H */
+#endif /* !defined(STACKWALK_H) */

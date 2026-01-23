@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright IBM Corp. and others 1991
  *
@@ -38,7 +37,7 @@
  * @anchor scanFlags
  * @{
  */
- 
+
 /* scan flags */
 #define J9MODRON_GCCHK_SCAN_ALL_SLOTS ((UDATA)0xFFFFFFF)
 #define J9MODRON_GCCHK_SCAN_OBJECT_HEAP ((UDATA)0x00000001)
@@ -47,8 +46,7 @@
 #define J9MODRON_GCCHK_SCAN_UNFINALIZED ((UDATA)0x00000008)
 #define J9MODRON_GCCHK_SCAN_FINALIZABLE ((UDATA)0x00000010)
 #define J9MODRON_GCCHK_SCAN_OWNABLE_SYNCHRONIZER ((UDATA)0x00000020)
-#define J9MODRON_GCCHK_SCAN_UNUSED1 ((UDATA)0x00000040)
-#define J9MODRON_GCCHK_SCAN_UNUSED2 ((UDATA)0x00000080)
+/* unused: 0x00000040 0x00000080 */
 #define J9MODRON_GCCHK_SCAN_STRING_TABLE ((UDATA)0x00000100)
 #define J9MODRON_GCCHK_SCAN_CLASS_LOADERS ((UDATA)0x00000200)
 #define J9MODRON_GCCHK_SCAN_JNI_GLOBAL_REFERENCES ((UDATA)0x00000400)
@@ -56,15 +54,15 @@
 #define J9MODRON_GCCHK_SCAN_DEBUGGER_REFERENCES ((UDATA)0x00001000)
 #define J9MODRON_GCCHK_SCAN_DEBUGGER_CLASS_REFERENCES ((UDATA)0x00002000)
 #define J9MODRON_GCCHK_SCAN_VM_CLASS_SLOTS ((UDATA)0x00004000)
-#define J9MODRON_GCCHK_SCAN_VMTHREADS	((UDATA)0x00008000)
-#define J9MODRON_GCCHK_SCAN_THREADSTACKS	((UDATA)0x00010000)
+#define J9MODRON_GCCHK_SCAN_VMTHREADS ((UDATA)0x00008000)
+#define J9MODRON_GCCHK_SCAN_THREADSTACKS ((UDATA)0x00010000)
 #define J9MODRON_GCCHK_SCAN_JVMTI_OBJECT_TAG_TABLES ((UDATA)0x00020000)
 #define J9MODRON_GCCHK_SCAN_MONITOR_TABLE ((UDATA)0x00040000)
 #define J9MODRON_GCCHK_SCAN_SCOPES ((UDATA)0x00080000)
 /**
  * @}
  */
- 
+
 /**
  * @anchor checkFlags
  * @name Check options
@@ -83,7 +81,7 @@
  * @anchor miscFlags
  * @name Misc options
  * @{
- */ 
+ */
 #define J9MODRON_GCCHK_VERBOSE ((UDATA)0x00000001)
 #define J9MODRON_GCCHK_INTERVAL ((UDATA)0x00000002)
 #define J9MODRON_GCCHK_GLOBAL_INTERVAL ((UDATA)0x00000004)
@@ -111,59 +109,57 @@
  * otherwise it terminates.
  * @name Iterator return codes
  * @{
- */  
-#define J9MODRON_SLOT_ITERATOR_OK 	((UDATA)0x00000000) /**< Indicates success */
-#define J9MODRON_SLOT_ITERATOR_UNRECOVERABLE_ERROR	((UDATA)0x00000001) /**< Indicates that an unrecoverable error was detected */
+ */
+#define J9MODRON_SLOT_ITERATOR_OK ((UDATA)0x00000000) /**< Indicates success */
+#define J9MODRON_SLOT_ITERATOR_UNRECOVERABLE_ERROR ((UDATA)0x00000001) /**< Indicates that an unrecoverable error was detected */
 #define J9MODRON_SLOT_ITERATOR_RECOVERABLE_ERROR ((UDATA)0x00000002) /** < Indicates that a recoverable error was detected */
 /** @} */
 
 /**
  * Error codes returned to the iterator methods by helper utilities.
  * @anchor GCCheckWalkStageErrorCodes
- * @name Error Codes 
- * @{ 
+ * @name Error Codes
+ * @{
  */
-/* Error codes applicable to all stages */ 
+/* Error codes applicable to all stages. */
 #define J9MODRON_GCCHK_RC_OK ((UDATA)0)
 #define J9MODRON_GCCHK_RC_UNALIGNED ((UDATA)1)
 #define J9MODRON_GCCHK_RC_DOUBLE_ARRAY_UNALIGNED ((UDATA)2)
 #define J9MODRON_GCCHK_RC_NOT_IN_OBJECT_REGION ((UDATA)3)
 #define J9MODRON_GCCHK_RC_NOT_FOUND ((UDATA)4)
-#define J9MODRON_GCCHK_RC_INVALID_RANGE	 ((UDATA)5)
-#define J9MODRON_GCCHK_RC_STACK_OBJECT ((UDATA) 6)
-#define J9MODRON_GCCHK_RC_DEAD_OBJECT ((UDATA) 25)
-#define J9MODRON_GCCHK_RC_J9CLASS_HEADER_INVALID ((UDATA) 26)
-#define J9MODRON_GCCHK_RC_OBJECT_SLOT_POINTS_TO_J9CLASS ((UDATA) 41)
+#define J9MODRON_GCCHK_RC_INVALID_RANGE ((UDATA)5)
+#define J9MODRON_GCCHK_RC_STACK_OBJECT ((UDATA)6)
+#define J9MODRON_GCCHK_RC_DEAD_OBJECT ((UDATA)25)
+#define J9MODRON_GCCHK_RC_J9CLASS_HEADER_INVALID ((UDATA)26)
+#define J9MODRON_GCCHK_RC_OBJECT_SLOT_POINTS_TO_J9CLASS ((UDATA)41)
 
-/* Special error codes for when J9MODRON_GCCHK_VERIFY_CLASS_SLOT is set (all stages)*/ 
+/* Special error codes for when J9MODRON_GCCHK_VERIFY_CLASS_SLOT is set (all stages). */
 #define J9MODRON_GCCHK_RC_NULL_CLASS_POINTER ((UDATA)7)
 #define J9MODRON_GCCHK_RC_CLASS_POINTER_UNALIGNED ((UDATA)8)
 #define J9MODRON_GCCHK_RC_CLASS_NOT_FOUND ((UDATA)9)
 #define J9MODRON_GCCHK_RC_CLASS_INVALID_RANGE ((UDATA)10)
 #define J9MODRON_GCCHK_RC_CLASS_POINTER_NOT_JLCLASS ((UDATA)11)
-#define J9MODRON_GCCHK_RC_CLASS_STACK_OBJECT ((UDATA) 12)
-#define J9MODRON_GCCHK_RC_CLASS_OBJECT_NOT_JLCLASS ((UDATA) 27)
-#define J9MODRON_GCCHK_RC_CLASS_IS_UNDEAD ((UDATA) 29)
-#define J9MODRON_GCCHK_RC_CLASS_STATICS_FIELD_POINTS_WRONG_OBJECT ((UDATA) 30)
-#define J9MODRON_GCCHK_RC_CLASS_HOT_SWAPPED_POINTS_TO_STATICS ((UDATA) 31)
-#define J9MODRON_GCCHK_RC_CLASS_STATICS_REFERENCE_IS_NOT_IN_SCANNING_RANGE ((UDATA) 32)
-#define J9MODRON_GCCHK_RC_CLASS_STATICS_WRONG_NUMBER_OF_REFERENCES ((UDATA) 33)
-/* obsolete code 35 */
-/* obsolete code 36 */
-/* obsolete code 37 */
-#define J9MODRON_GCCHK_RC_CLASS_HOT_SWAPPED_FOR_ARRAY ((UDATA) 39)
-#define J9MODRON_GCCHK_RC_REPLACED_CLASS_HAS_NO_HOTSWAP_FLAG ((UDATA) 40)
-#define J9MODRON_GCCHK_RC_CLASS_IS_UNLOADED ((UDATA) 48)
+#define J9MODRON_GCCHK_RC_CLASS_STACK_OBJECT ((UDATA)12)
+#define J9MODRON_GCCHK_RC_CLASS_OBJECT_NOT_JLCLASS ((UDATA)27)
+#define J9MODRON_GCCHK_RC_CLASS_IS_UNDEAD ((UDATA)29)
+#define J9MODRON_GCCHK_RC_CLASS_STATICS_FIELD_POINTS_WRONG_OBJECT ((UDATA)30)
+#define J9MODRON_GCCHK_RC_CLASS_HOT_SWAPPED_POINTS_TO_STATICS ((UDATA)31)
+#define J9MODRON_GCCHK_RC_CLASS_STATICS_REFERENCE_IS_NOT_IN_SCANNING_RANGE ((UDATA)32)
+#define J9MODRON_GCCHK_RC_CLASS_STATICS_WRONG_NUMBER_OF_REFERENCES ((UDATA)33)
+/* obsolete codes 34-38 */
+#define J9MODRON_GCCHK_RC_CLASS_HOT_SWAPPED_FOR_ARRAY ((UDATA)39)
+#define J9MODRON_GCCHK_RC_REPLACED_CLASS_HAS_NO_HOTSWAP_FLAG ((UDATA)40)
+#define J9MODRON_GCCHK_RC_CLASS_IS_UNLOADED ((UDATA)48)
 
-/* Special error codes for indexable data address field dataAddr checks */
-#define J9MODRON_GCCHK_RC_INVALID_INDEXABLE_DATA_ADDRESS ((UDATA) 34)
+/* Special error codes for indexable data address field dataAddr checks. */
+#define J9MODRON_GCCHK_RC_INVALID_INDEXABLE_DATA_ADDRESS ((UDATA)34)
 
-/* Special error codes for when J9MODRON_GCCHK_VERIFY_FLAGS is set (all stages)*/
+/* Special error codes for when J9MODRON_GCCHK_VERIFY_FLAGS is set (all stages). */
 #define J9MODRON_GCCHK_RC_INVALID_FLAGS ((UDATA)13)
 #define J9MODRON_GCCHK_RC_OLD_SEGMENT_INVALID_FLAGS ((UDATA)14)
 #define J9MODRON_GCCHK_RC_NEW_SEGMENT_INVALID_FLAGS ((UDATA)15)
 
-/* Error codes applicable only to stage_object_heap */
+/* Error codes applicable only to stage_object_heap. */
 #define J9MODRON_GCCHK_RC_DEAD_OBJECT_SIZE ((UDATA)16)
 #define J9MODRON_GCCHK_RC_NEW_POINTER_NOT_REMEMBERED ((UDATA)17)
 #define J9MODRON_GCCHK_RC_DEAD_OBJECT_SIZE_NOT_ALIGNED ((UDATA)44)
@@ -171,23 +167,23 @@
 #define J9MODRON_GCCHK_RC_DEAD_OBJECT_NEXT_IS_NOT_IN_REGION ((UDATA)46)
 #define J9MODRON_GCCHK_RC_DEAD_OBJECT_NEXT_IS_POINTED_INSIDE ((UDATA)47)
 
-/* Error codes applicable only to stage_remembered_set */
+/* Error codes applicable only to stage_remembered_set. */
 #define J9MODRON_GCCHK_RC_REMEMBERED_SET_WRONG_SEGMENT ((UDATA)18)
 #define J9MODRON_GCCHK_RC_REMEMBERED_SET_FLAGS ((UDATA)19)
 #define J9MODRON_GCCHK_RC_REMEMBERED_SET_OLD_OBJECT ((UDATA)20)
 
-/* Deprecated error codes applicable to puddle flags */
+/* Deprecated error codes applicable to puddle flags. */
 #define J9MODRON_GCCHK_RC_UNUSED_21 ((UDATA)21)
 #define J9MODRON_GCCHK_RC_UNUSED_22 ((UDATA)22)
 
-/* Error codes applicable for card-marking remembered set */
+/* Error codes applicable for card-marking remembered set. */
 #define J9MODRON_GCCHK_RC_HEAP_OBJECT_REMEMBERED ((UDATA)23)
 #define J9MODRON_GCCHK_RC_NEW_POINTER_NOT_REMEMBERED_IN_CARD_TABLE ((UDATA)24)
 
-/* Error codes applicable for scopes */
+/* Error codes applicable for scopes. */
 #define J9MODRON_GCCHK_RC_INTERNAL_POINTER_NOT_IN_SCOPE ((UDATA)28)
 
-/* Error codes for instances of java.util.concurrent.locks.AbstractOwnableSynchronizer */
+/* Error codes for instances of java.util.concurrent.locks.AbstractOwnableSynchronizer. */
 #define J9MODRON_GCCHK_RC_OWNABLE_SYNCHRONIZER_INVALID_CLASS ((UDATA)38)
 #define J9MODRON_GCCHK_OWNABLE_SYNCHRONIZER_OBJECT_IS_NOT_ATTACHED_TO_THE_LIST ((UDATA)42)
 #define J9MODRON_GCCHK_OWNABLE_SYNCHRONIZER_LIST_HAS_CIRCULAR_REFERENCE ((UDATA)43)
@@ -222,10 +218,10 @@ typedef struct GCCHK_Extensions {
 	UDATA globalGcInterval;
 	UDATA globalGcCount;
 	UDATA gcStartIndex;
-#if defined(J9VM_GC_MODRON_SCAVENGER)	
+#if defined(J9VM_GC_MODRON_SCAVENGER)
 	UDATA localGcInterval;
 	UDATA localGcCount;
-#endif /* J9VM_GC_MODRON_SCAVENGER */
+#endif /* defined(J9VM_GC_MODRON_SCAVENGER) */
 } GCCHK_Extensions;
-#endif /* CHECKBASE_HPP_ */
 
+#endif /* !defined(CHECKBASE_HPP_) */
