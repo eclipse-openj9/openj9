@@ -500,12 +500,11 @@ else
 fi
   echo "# Update make."
   echo "RUN cd /tmp \\"
-  echo " && $wget_O make.tar.gz https://github.com/mirror/make/archive/$make_version.tar.gz \\"
+  echo " && $wget_O make.tar.gz https://ftp.gnu.org/gnu/make/make-$make_version.tar.gz \\"
   echo " && tar -xzf make.tar.gz \\"
   echo " && cd make-$make_version \\"
   echo " && ACLOCAL_PATH=/usr/share/aclocal autoreconf -i \\"
   echo " && ./configure \\"
-  echo " && make update \\"
   echo " && make \\"
   echo " && make install \\"
   echo " && ln -s make /usr/local/bin/gmake \\"
