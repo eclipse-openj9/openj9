@@ -22,12 +22,19 @@
 package com.ibm.oti.VMCPTool;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.Reader;
 import java.io.StringWriter;
+import java.io.Writer;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -163,6 +170,18 @@ public class Main implements Constants {
 	private static final String[] closeHeader = {
 		"#endif /* J9VM_CONSTANT_POOL_H */"
 	};
+
+	/*
+	 * On z/OS, generated source files must be written and compared using
+	 * IBM-1047 (EBCDIC). On all other platforms, use the JVM default charset.
+	 *
+	 * This constant centralizes the platform-specific charset choice so that
+	 * all file reads/writes are consistent and do not rely on implicit defaults.
+	 */
+	private static final Charset FILE_CHARSET =
+		"z/OS".equals(System.getProperty("os.name"))
+			? Charset.forName("IBM-1047")
+			: Charset.defaultCharset();
 
 	private static final String optionBuildSpecId = "-buildSpecId";
 	private static final String optionHelp = "-help";
@@ -493,11 +512,13 @@ public class Main implements Constants {
 		if (fileOnDisk.exists()) {
 			StringBuilder fileBuffer = new StringBuilder();
 			try {
-				try (FileReader fr = new FileReader(fileOnDisk)) {
+				try (InputStream stream = new FileInputStream(fileOnDisk);
+					Reader reader = new InputStreamReader(stream, FILE_CHARSET)
+				) {
 					char charArray[] = new char[1024];
 
 					int numRead = -1;
-					while ((numRead = fr.read(charArray)) != -1) {
+					while ((numRead = reader.read(charArray)) != -1) {
 						fileBuffer.append(charArray, 0, numRead);
 					}
 
@@ -526,8 +547,10 @@ public class Main implements Constants {
 			System.out.println("** Writing " + file.getPath());
 			file.delete();
 
-			try (FileWriter fw = new FileWriter(file.getPath())) {
-				fw.write(desiredContent);
+			try (OutputStream stream = new FileOutputStream(file);
+				Writer writer = new OutputStreamWriter(stream, FILE_CHARSET)
+			) {
+				writer.write(desiredContent);
 			}
 		} else if (verbose) {
 			System.out.println("** Skipped writing [same as on file system]: " + file.getPath());
