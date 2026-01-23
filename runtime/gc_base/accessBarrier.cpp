@@ -62,6 +62,56 @@ j9gc_objaccess_mixedObjectStoreAddress(J9VMThread *vmThread, J9Object *destObjec
 	barrier->mixedObjectStoreAddress(vmThread, destObject, offset, value, 0 != isVolatile);
 }
 
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+U_8
+j9gc_objaccess_mixedObjectReadU8(J9VMThread *vmThread, J9Object *srcObject, UDATA offset, UDATA isVolatile) {
+	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
+	return barrier->mixedObjectReadU8(vmThread, srcObject, offset, 0 != isVolatile);
+}
+
+void
+j9gc_objaccess_mixedObjectStoreU8(J9VMThread *vmThread, J9Object *destObject, UDATA offset, U_8 value, UDATA isVolatile) {
+	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
+	barrier->mixedObjectStoreU8(vmThread, destObject, offset, value, 0 != isVolatile);
+}
+
+I_8
+j9gc_objaccess_mixedObjectReadI8(J9VMThread *vmThread, J9Object *srcObject, UDATA offset, UDATA isVolatile) {
+	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
+	return barrier->mixedObjectReadI8(vmThread, srcObject, offset, 0 != isVolatile);
+}
+
+void
+j9gc_objaccess_mixedObjectStoreI8(J9VMThread *vmThread, J9Object *destObject, UDATA offset, I_8 value, UDATA isVolatile) {
+	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
+	barrier->mixedObjectStoreI8(vmThread, destObject, offset, value, 0 != isVolatile);
+}
+
+U_16
+j9gc_objaccess_mixedObjectReadU16(J9VMThread *vmThread, J9Object *srcObject, UDATA offset, UDATA isVolatile) {
+	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
+	return barrier->mixedObjectReadU16(vmThread, srcObject, offset, 0 != isVolatile);
+}
+
+void
+j9gc_objaccess_mixedObjectStoreU16(J9VMThread *vmThread, J9Object *destObject, UDATA offset, U_16 value, UDATA isVolatile) {
+	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
+	barrier->mixedObjectStoreU16(vmThread, destObject, offset, value, 0 != isVolatile);
+}
+
+I_16
+j9gc_objaccess_mixedObjectReadI16(J9VMThread *vmThread, J9Object *srcObject, UDATA offset, UDATA isVolatile) {
+	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
+	return barrier->mixedObjectReadI16(vmThread, srcObject, offset, 0 != isVolatile);
+}
+
+void
+j9gc_objaccess_mixedObjectStoreI16(J9VMThread *vmThread, J9Object *destObject, UDATA offset, I_16 value, UDATA isVolatile) {
+	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
+	barrier->mixedObjectStoreI16(vmThread, destObject, offset, value, 0 != isVolatile);
+}
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
+
 UDATA
 j9gc_objaccess_mixedObjectReadU32(J9VMThread *vmThread, J9Object *srcObject, UDATA offset, UDATA isVolatile) {
 	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread)->accessBarrier;

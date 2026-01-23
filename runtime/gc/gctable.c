@@ -146,12 +146,24 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9gc_objaccess_indexableStoreObject,
 	j9gc_objaccess_indexableStoreAddress,
 	j9gc_objaccess_indexableDataDisplacement,
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+	j9gc_objaccess_mixedObjectReadI8,
+	j9gc_objaccess_mixedObjectReadU8,
+	j9gc_objaccess_mixedObjectReadI16,
+	j9gc_objaccess_mixedObjectReadU16,
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 	j9gc_objaccess_mixedObjectReadI32,
 	j9gc_objaccess_mixedObjectReadU32,
 	j9gc_objaccess_mixedObjectReadI64,
 	j9gc_objaccess_mixedObjectReadU64,
 	j9gc_objaccess_mixedObjectReadObject,
 	j9gc_objaccess_mixedObjectReadAddress,
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+	j9gc_objaccess_mixedObjectStoreI8,
+	j9gc_objaccess_mixedObjectStoreU8,
+	j9gc_objaccess_mixedObjectStoreI16,
+	j9gc_objaccess_mixedObjectStoreU16,
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 	j9gc_objaccess_mixedObjectStoreI32,
 	j9gc_objaccess_mixedObjectStoreU32,
 	j9gc_objaccess_mixedObjectStoreI64,

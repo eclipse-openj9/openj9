@@ -8004,6 +8004,20 @@ retry:
 						}
 						_sp += (slotsToPop - 1);
 						*(j9object_t*)_sp = newObjectRef;
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+					} else if ((flags & J9FieldTypeMask) == J9FieldTypeBoolean) {
+						_sp += (slotsToPop - 1);
+						*(U_32*)_sp = _objectAccessBarrier.inlineMixedObjectReadU8(_currentThread, objectref, newValueOffset, isVolatile);
+					} else if ((flags & J9FieldTypeMask) == J9FieldTypeByte) {
+						_sp += (slotsToPop - 1);
+						*(I_32*)_sp = (I_32)_objectAccessBarrier.inlineMixedObjectReadI8(_currentThread, objectref, newValueOffset, isVolatile);
+					} else if ((flags & J9FieldTypeMask) == J9FieldTypeChar) {
+						_sp += (slotsToPop - 1);
+						*(U_32*)_sp = _objectAccessBarrier.inlineMixedObjectReadU16(_currentThread, objectref, newValueOffset, isVolatile);
+					} else if ((flags & J9FieldTypeMask) == J9FieldTypeShort) {
+						_sp += (slotsToPop - 1);
+						*(I_32*)_sp = (I_32)_objectAccessBarrier.inlineMixedObjectReadI16(_currentThread, objectref, newValueOffset, isVolatile);
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 					} else {
 						_sp += (slotsToPop - 1);
 						*(U_32*)_sp = _objectAccessBarrier.inlineMixedObjectReadU32(_currentThread, objectref, newValueOffset, isVolatile);
@@ -8091,51 +8105,59 @@ done:
 				}
 				_objectAccessBarrier.inlineMixedObjectStoreU64(_currentThread, objectref, newValueOffset, *(U_64*)_sp, isVolatile);
 				_sp += 3;
-			} else if (flags & J9FieldFlagObject) {
-				j9object_t objectref = *(j9object_t*)(_sp + 1);
-				if (NULL == objectref) {
-					rc = THROW_NPE;
-					goto done;
-				}
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-				/* NullRestricted field cannot be set to null. */
-				if (J9_ARE_ALL_BITS_SET(flags, J9FieldFlagIsNullRestricted)) {
-					j9object_t valueref = *(j9object_t*)_sp;
-					if (NULL == valueref) {
-						rc = THROW_NPE;
-						goto done;
-					}
-				}
-				if (flags & J9FieldFlagFlattened) {
-					VM_ValueTypeHelpers::putFlattenableField(_currentThread, _objectAccessBarrier, ramFieldRef, objectref, *(j9object_t*)_sp);
-				} else
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-				{
-					_objectAccessBarrier.inlineMixedObjectStoreObject(_currentThread, objectref, newValueOffset, *(j9object_t*)_sp, isVolatile);
-				}
-				_sp += 2;
 			} else {
 				j9object_t objectref = *(j9object_t*)(_sp + 1);
 				if (NULL == objectref) {
 					rc = THROW_NPE;
 					goto done;
 				}
-				U_32 value = *(U_32*)_sp;
-				switch(flags & J9FieldTypeMask) {
-				case J9FieldTypeBoolean:
-					value &= 1;
-					break;
-				case J9FieldTypeByte:
-					value = (U_32)(I_32)(I_8)value;
-					break;
-				case J9FieldTypeChar:
-					value &= 0xFFFF;
-					break;
-				case J9FieldTypeShort:
-					value = (U_32)(I_32)(I_16)value;
-					break;
+				if (flags & J9FieldFlagObject) {
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+					/* NullRestricted field cannot be set to null. */
+					if (J9_ARE_ALL_BITS_SET(flags, J9FieldFlagIsNullRestricted)) {
+						j9object_t valueref = *(j9object_t*)_sp;
+						if (NULL == valueref) {
+							rc = THROW_NPE;
+							goto done;
+						}
+					}
+					if (flags & J9FieldFlagFlattened) {
+						VM_ValueTypeHelpers::putFlattenableField(_currentThread, _objectAccessBarrier, ramFieldRef, objectref, *(j9object_t*)_sp);
+					} else
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+					{
+						_objectAccessBarrier.inlineMixedObjectStoreObject(_currentThread, objectref, newValueOffset, *(j9object_t*)_sp, isVolatile);
+					}
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+				} else if ((flags & J9FieldTypeMask) == J9FieldTypeBoolean) {
+					_objectAccessBarrier.inlineMixedObjectStoreU8(_currentThread, objectref, newValueOffset, *(U_32*)_sp, isVolatile);
+				} else if ((flags & J9FieldTypeMask) ==  J9FieldTypeByte) {
+					_objectAccessBarrier.inlineMixedObjectStoreI8(_currentThread, objectref, newValueOffset, *(U_32*)_sp, isVolatile);
+				} else if ((flags & J9FieldTypeMask) == J9FieldTypeChar) {
+					_objectAccessBarrier.inlineMixedObjectStoreU16(_currentThread, objectref, newValueOffset, *(U_32*)_sp, isVolatile);
+				} else if ((flags & J9FieldTypeMask) == J9FieldTypeShort) {
+					_objectAccessBarrier.inlineMixedObjectStoreI16(_currentThread, objectref, newValueOffset, *(U_32*)_sp, isVolatile);
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
+				} else {
+					U_32 value = *(U_32*)_sp;
+#if !defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+					switch(flags & J9FieldTypeMask) {
+					case J9FieldTypeBoolean:
+						value &= 1;
+						break;
+					case J9FieldTypeByte:
+						value = (U_32)(I_32)(I_8)value;
+						break;
+					case J9FieldTypeChar:
+						value &= 0xFFFF;
+						break;
+					case J9FieldTypeShort:
+						value = (U_32)(I_32)(I_16)value;
+						break;
+					}
+#endif /* !defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
+					_objectAccessBarrier.inlineMixedObjectStoreU32(_currentThread, objectref, newValueOffset, value, isVolatile);
 				}
-				_objectAccessBarrier.inlineMixedObjectStoreU32(_currentThread, objectref, newValueOffset, value, isVolatile);
 				_sp += 2;
 			}
 		}

@@ -209,6 +209,12 @@ public:
 
 	virtual J9Object *mixedObjectReadObject(J9VMThread *vmThread, J9Object *srcObject, UDATA srcOffset, bool isVolatile=false);
 	virtual void *mixedObjectReadAddress(J9VMThread *vmThread, J9Object *srcObject, UDATA srcOffset, bool isVolatile=false);
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+	virtual U_8 mixedObjectReadU8(J9VMThread *vmThread, J9Object *srcObject, UDATA srcOffset, bool isVolatile=false);
+	virtual I_8 mixedObjectReadI8(J9VMThread *vmThread, J9Object *srcObject, UDATA srcOffset, bool isVolatile=false);
+	virtual U_16 mixedObjectReadU16(J9VMThread *vmThread, J9Object *srcObject, UDATA srcOffset, bool isVolatile=false);
+	virtual I_16 mixedObjectReadI16(J9VMThread *vmThread, J9Object *srcObject, UDATA srcOffset, bool isVolatile=false);
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 	virtual U_32 mixedObjectReadU32(J9VMThread *vmThread, J9Object *srcObject, UDATA srcOffset, bool isVolatile=false);
 	virtual I_32 mixedObjectReadI32(J9VMThread *vmThread, J9Object *srcObject, UDATA srcOffset, bool isVolatile=false);
 	virtual U_64 mixedObjectReadU64(J9VMThread *vmThread, J9Object *srcObject, UDATA srcOffset, bool isVolatile=false);
@@ -216,6 +222,12 @@ public:
 
 	virtual void mixedObjectStoreObject(J9VMThread *vmThread, J9Object *destObject, UDATA destOffset, J9Object *value, bool isVolatile=false);
 	virtual void mixedObjectStoreAddress(J9VMThread *vmThread, J9Object *destObject, UDATA destOffset, void *value, bool isVolatile=false);
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+	virtual void mixedObjectStoreU8(J9VMThread *vmThread, J9Object *destObject, UDATA destOffset, U_8 value, bool isVolatile=false);
+	virtual void mixedObjectStoreI8(J9VMThread *vmThread, J9Object *destObject, UDATA destOffset, I_8 value, bool isVolatile=false);
+	virtual void mixedObjectStoreU16(J9VMThread *vmThread, J9Object *destObject, UDATA destOffset, U_16 value, bool isVolatile=false);
+	virtual void mixedObjectStoreI16(J9VMThread *vmThread, J9Object *destObject, UDATA destOffset, I_16 value, bool isVolatile=false);
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 	virtual void mixedObjectStoreU32(J9VMThread *vmThread, J9Object *destObject, UDATA destOffset, U_32 value, bool isVolatile=false);
 	virtual void mixedObjectStoreI32(J9VMThread *vmThread, J9Object *destObject, UDATA destOffset, I_32 value, bool isVolatile=false);
 	virtual void mixedObjectStoreU64(J9VMThread *vmThread, J9Object *destObject, UDATA destOffset, U_64 value, bool isVolatile=false);

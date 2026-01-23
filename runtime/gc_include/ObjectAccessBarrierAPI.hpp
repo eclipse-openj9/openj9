@@ -617,6 +617,216 @@ public:
 #endif /* J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER */
 	}
 
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+	/**
+	 * Read an I_8 field: perform any pre-use barriers, calculate an effective address
+	 * and perform the work.
+	 *
+	 * @param srcObject The object being used.
+	 * @param srcOffset The offset of the field.
+	 * @param isVolatile non-zero if the field is volatile.
+	 * @return I_8
+	 */
+	VMINLINE I_8
+	inlineMixedObjectReadI8(J9VMThread *vmThread, j9object_t srcObject, UDATA srcOffset, bool isVolatile = false) {
+#if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
+		return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_mixedObjectReadI8(vmThread, srcObject, srcOffset, isVolatile);
+#elif defined(J9VM_GC_COMBINATION_SPEC)
+		I_8 *actualAddress = J9OAB_MIXEDOBJECT_EA(srcObject, srcOffset, I_8);
+
+		protectIfVolatileBefore(isVolatile, true);
+		I_8 result = readI8Impl(vmThread, actualAddress, isVolatile);
+		protectIfVolatileAfter(isVolatile, true);
+
+		return result;
+#else /* J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER */
+#error unsupported barrier
+#endif /* J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER */
+	}
+
+	/**
+	 * Store an I_8 value into an object.
+	 *
+	 * This function performs all of the necessary barriers and calls OOL when it can not handle
+	 * the barrier itself.
+	 *
+	 * @param srcObject the object being stored into
+	 * @param srcOffset the offset with in srcObject to store value
+	 * @param value the value to be stored
+	 * @param isVolatile non-zero if the field is volatile, zero otherwise
+	 */
+	VMINLINE void
+	inlineMixedObjectStoreI8(J9VMThread *vmThread, j9object_t srcObject, UDATA srcOffset, I_8 value, bool isVolatile = false) {
+#if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
+		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_mixedObjectStoreI8(vmThread, srcObject, srcOffset, value, isVolatile);
+#elif defined(J9VM_GC_COMBINATION_SPEC)
+		I_8 *actualAddress = J9OAB_MIXEDOBJECT_EA(srcObject, srcOffset, I_8);
+
+		protectIfVolatileBefore(isVolatile, false);
+		storeI8Impl(vmThread, actualAddress, value, isVolatile);
+		protectIfVolatileAfter(isVolatile, false);
+#else /* J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER */
+#error unsupported barrier
+#endif /* J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER */
+	}
+
+	/**
+	 * Read a U_8 field: perform any pre-use barriers, calculate an effective address
+	 * and perform the work.
+	 *
+	 * @param srcObject The object being used.
+	 * @param srcOffset The offset of the field.
+	 * @param isVolatile non-zero if the field is volatile.
+	 * @return U_8
+	 */
+	VMINLINE U_8
+	inlineMixedObjectReadU8(J9VMThread *vmThread, j9object_t srcObject, UDATA srcOffset, bool isVolatile = false) {
+#if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
+		return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_mixedObjectReadU8(vmThread, srcObject, srcOffset, isVolatile);
+#elif defined(J9VM_GC_COMBINATION_SPEC)
+		U_8 *actualAddress = J9OAB_MIXEDOBJECT_EA(srcObject, srcOffset, U_8);
+
+		protectIfVolatileBefore(isVolatile, true);
+		U_8 result = readU8Impl(vmThread, actualAddress, isVolatile);
+		protectIfVolatileAfter(isVolatile, true);
+
+		return result;
+#else /* J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER */
+#error unsupported barrier
+#endif /* J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER */
+	}
+
+	/**
+	 * Store a U_8 value into an object.
+	 *
+	 * This function performs all of the necessary barriers and calls OOL when it can not handle
+	 * the barrier itself.
+	 *
+	 * @param srcObject the object being stored into
+	 * @param srcOffset the offset with in srcObject to store value
+	 * @param value the value to be stored
+	 * @param isVolatile non-zero if the field is volatile, zero otherwise
+	 */
+	VMINLINE void
+	inlineMixedObjectStoreU8(J9VMThread *vmThread, j9object_t srcObject, UDATA srcOffset, U_8 value, bool isVolatile = false) {
+#if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
+		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_mixedObjectStoreU8(vmThread, srcObject, srcOffset, value, isVolatile);
+#elif defined(J9VM_GC_COMBINATION_SPEC)
+		U_8 *actualAddress = J9OAB_MIXEDOBJECT_EA(srcObject, srcOffset, U_8);
+
+		protectIfVolatileBefore(isVolatile, false);
+		storeU8Impl(vmThread, actualAddress, value, isVolatile);
+		protectIfVolatileAfter(isVolatile, false);
+#else /* J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER */
+#error unsupported barrier
+#endif /* J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER */
+	}
+
+	/**
+	 * Read an I_16 field: perform any pre-use barriers, calculate an effective address
+	 * and perform the work.
+	 *
+	 * @param srcObject The object being used.
+	 * @param srcOffset The offset of the field.
+	 * @param isVolatile non-zero if the field is volatile.
+	 * @return I_16
+	 */
+	VMINLINE I_16
+	inlineMixedObjectReadI16(J9VMThread *vmThread, j9object_t srcObject, UDATA srcOffset, bool isVolatile = false) {
+#if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
+		return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_mixedObjectReadI16(vmThread, srcObject, srcOffset, isVolatile);
+#elif defined(J9VM_GC_COMBINATION_SPEC)
+		I_16 *actualAddress = J9OAB_MIXEDOBJECT_EA(srcObject, srcOffset, I_16);
+
+		protectIfVolatileBefore(isVolatile, true);
+		I_16 result = readI16Impl(vmThread, actualAddress, isVolatile);
+		protectIfVolatileAfter(isVolatile, true);
+
+		return result;
+#else /* J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER */
+#error unsupported barrier
+#endif /* J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER */
+	}
+
+	/**
+	 * Store an I_16 value into an object.
+	 *
+	 * This function performs all of the necessary barriers and calls OOL when it can not handle
+	 * the barrier itself.
+	 *
+	 * @param srcObject the object being stored into
+	 * @param srcOffset the offset with in srcObject to store value
+	 * @param value the value to be stored
+	 * @param isVolatile non-zero if the field is volatile, zero otherwise
+	 */
+	VMINLINE void
+	inlineMixedObjectStoreI16(J9VMThread *vmThread, j9object_t srcObject, UDATA srcOffset, I_16 value, bool isVolatile = false) {
+#if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
+		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_mixedObjectStoreI16(vmThread, srcObject, srcOffset, value, isVolatile);
+#elif defined(J9VM_GC_COMBINATION_SPEC)
+		I_16 *actualAddress = J9OAB_MIXEDOBJECT_EA(srcObject, srcOffset, I_16);
+
+		protectIfVolatileBefore(isVolatile, false);
+		storeI16Impl(vmThread, actualAddress, value, isVolatile);
+		protectIfVolatileAfter(isVolatile, false);
+#else /* J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER */
+#error unsupported barrier
+#endif /* J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER */
+	}
+
+	/**
+	 * Read a U_16 field: perform any pre-use barriers, calculate an effective address
+	 * and perform the work.
+	 *
+	 * @param srcObject The object being used.
+	 * @param srcOffset The offset of the field.
+	 * @param isVolatile non-zero if the field is volatile.
+	 * @return U_16
+	 */
+	VMINLINE U_16
+	inlineMixedObjectReadU16(J9VMThread *vmThread, j9object_t srcObject, UDATA srcOffset, bool isVolatile = false) {
+#if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
+		return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_mixedObjectReadU16(vmThread, srcObject, srcOffset, isVolatile);
+#elif defined(J9VM_GC_COMBINATION_SPEC)
+		U_16 *actualAddress = J9OAB_MIXEDOBJECT_EA(srcObject, srcOffset, U_16);
+
+		protectIfVolatileBefore(isVolatile, true);
+		U_16 result = readU16Impl(vmThread, actualAddress, isVolatile);
+		protectIfVolatileAfter(isVolatile, true);
+
+		return result;
+#else /* J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER */
+#error unsupported barrier
+#endif /* J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER */
+	}
+
+	/**
+	 * Store a U_16 value into an object.
+	 *
+	 * This function performs all of the necessary barriers and calls OOL when it can not handle
+	 * the barrier itself.
+	 *
+	 * @param srcObject the object being stored into
+	 * @param srcOffset the offset with in srcObject to store value
+	 * @param value the value to be stored
+	 * @param isVolatile non-zero if the field is volatile, zero otherwise
+	 */
+	VMINLINE void
+	inlineMixedObjectStoreU16(J9VMThread *vmThread, j9object_t srcObject, UDATA srcOffset, U_16 value, bool isVolatile = false) {
+#if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
+		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_mixedObjectStoreU16(vmThread, srcObject, srcOffset, value, isVolatile);
+#elif defined(J9VM_GC_COMBINATION_SPEC)
+		U_16 *actualAddress = J9OAB_MIXEDOBJECT_EA(srcObject, srcOffset, U_16);
+
+		protectIfVolatileBefore(isVolatile, false);
+		storeU16Impl(vmThread, actualAddress, value, isVolatile);
+		protectIfVolatileAfter(isVolatile, false);
+#else /* J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER */
+#error unsupported barrier
+#endif /* J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER */
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
+
 	/**
 	 * Read an I_32 field: perform any pre-use barriers, calculate an effective address
 	 * and perform the work.
@@ -624,6 +834,7 @@ public:
 	 * @param srcObject The object being used.
 	 * @param srcOffset The offset of the field.
 	 * @param isVolatile non-zero if the field is volatile.
+	 * @return I_32
 	 */
 	VMINLINE I_32
 	inlineMixedObjectReadI32(J9VMThread *vmThread, j9object_t srcObject, UDATA srcOffset, bool isVolatile = false)
