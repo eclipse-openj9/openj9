@@ -43,7 +43,7 @@
 extern "C" {
 
 void* J9FASTCALL
-old_slow_jitThrowNullPointerException(J9VMThread *currentThread);
+old_slow_jitThrowArrayStoreException(J9VMThread *currentThread);
 
 J9_EXTERN_BUILDER_SYMBOL(throwCurrentExceptionFromJIT);
 J9_EXTERN_BUILDER_SYMBOL(handlePopFramesFromJIT);
@@ -1499,18 +1499,20 @@ old_fast_jitCheckCastForArrayStore(J9VMThread *currentThread)
 {
 	void *slowPath = NULL;
 	OLD_JIT_HELPER_PROLOGUE(2);
-	DECLARE_JIT_CLASS_PARM(castClass, 1);
+	DECLARE_JIT_CLASS_PARM(castClassArray, 1);	// <-- castClassArray should be the array class, not its base class
 	DECLARE_JIT_PARM(j9object_t, object, 2);
-	/* null can be cast to anything, except if castClass is a primitive VT */
+	Assert_CodertVM_true(J9CLASS_IS_ARRAY(castClassArray));
+	/* null can be cast to anything, except if castClassArray is a null-restricted array */
 	if (NULL != object) {
 		J9Class *instanceClass = J9OBJECT_CLAZZ(currentThread, object);
+		J9Class *castClass = ((J9ArrayClass*)castClassArray)->componentType;
 		if (!VM_VMHelpers::inlineCheckCast(instanceClass, castClass)) {
 			slowPath = (void*)old_slow_jitCheckCastForArrayStore;
 		}
 	}
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	else if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(castClass)) {
-		slowPath = (void*)old_slow_jitThrowNullPointerException;
+	else if (J9_IS_J9ARRAYCLASS_NULL_RESTRICTED(castClassArray)) {
+		slowPath = (void*)old_slow_jitThrowArrayStoreException;
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	return slowPath;
@@ -3668,25 +3670,27 @@ fast_jitCheckCast(J9VMThread *currentThread, J9Class *castClass, j9object_t obje
 void* J9FASTCALL
 #if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
 /* TODO Will be cleaned once all platforms adopt the correct parameter order */
-fast_jitCheckCastForArrayStore(J9VMThread *currentThread, j9object_t object, J9Class *castClass)
+fast_jitCheckCastForArrayStore(J9VMThread *currentThread, j9object_t object, J9Class *castClassArray)
 #else /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
-fast_jitCheckCastForArrayStore(J9VMThread *currentThread, J9Class *castClass, j9object_t object)
+fast_jitCheckCastForArrayStore(J9VMThread *currentThread, J9Class *castClassArray, j9object_t object)
 #endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 {
 //	extern void* slow_jitCheckCastForArrayStore(J9VMThread *currentThread);
 	JIT_HELPER_PROLOGUE();
 	void *slowPath = NULL;
-	/* null can be cast to anything, except if castClass is a primitive VT */
+	Assert_CodertVM_true(J9CLASS_IS_ARRAY(castClassArray));
+	/* null can be cast to anything, except if castClassArray is a null-restricted array */
 	if (NULL != object) {
 		J9Class *instanceClass = J9OBJECT_CLAZZ(currentThread, object);
+		J9Class *castClass = ((J9ArrayClass*)castClassArray)->componentType;
 		if (J9_UNEXPECTED(!VM_VMHelpers::inlineCheckCast(instanceClass, castClass))) {
 			SET_PARM_COUNT(0);
 			slowPath = (void*)old_slow_jitCheckCastForArrayStore;
 		}
 	}
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	else if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(castClass)) {
-		slowPath = (void*)old_slow_jitThrowNullPointerException;
+	else if (J9_IS_J9ARRAYCLASS_NULL_RESTRICTED(castClassArray)) {
+		slowPath = (void*)old_slow_jitThrowArrayStoreException;
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	return slowPath;
