@@ -229,7 +229,7 @@ ppc64le_linux:
     docker_image: 'adoptopenjdk/centos7_build_image:latest'
   build_env:
     vars:
-      all: 'CC=/usr/local/gcc11/bin/gcc-11.2 CXX=/usr/local/gcc11/bin/g++-11.2'
+      all: 'CC=/usr/local/gcc13/bin/gcc-13.2 CXX=/usr/local/gcc13/bin/g++-13.2'
 #========================================#
 # Linux PPCLE 64bits /w JITSERVER
 #========================================#
@@ -251,7 +251,7 @@ s390x_linux:
     build: 'ci.role.build && hw.arch.s390x && sw.os.rhel.7'
   build_env:
     cmd:
-      all: 'source /home/jenkins/set_gcc_11.2.0_env'
+      all: 'source /home/jenkins/set_gcc_13.2.0_env'
 #========================================#
 # Linux S390 64bits /w JITSERVER
 #========================================#
@@ -321,7 +321,7 @@ x86-64_linux:
       all: 'adoptopenjdk/centos7_build_image:latest'
   build_env:
     vars:
-      all: 'CC=/usr/local/gcc11/bin/gcc-11.2 CXX=/usr/local/gcc11/bin/g++-11.2'
+      all: 'CC=/usr/local/gcc13/bin/gcc-13.2 CXX=/usr/local/gcc13/bin/g++-13.2'
   extra_test_labels:
     11: '!sw.os.cent.6'
     17: '!sw.os.cent.6'
