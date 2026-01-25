@@ -82,16 +82,16 @@
 
 #ifdef TR_TARGET_64BIT
 #include "codegen/AMD64PrivateLinkage.hpp"
-#endif
+#endif /* TR_TARGET_64BIT */
 #ifdef TR_TARGET_32BIT
 #include "codegen/IA32PrivateLinkage.hpp"
 #include "codegen/IA32LinkageUtils.hpp"
-#endif
+#endif /* TR_TARGET_32BIT */
 
 #ifdef LINUX
 #include <time.h>
 
-#endif
+#endif /* LINUX */
 
 #define NUM_PICS 3
 
@@ -899,7 +899,7 @@ extern void TEMPORARY_initJ9X86TreeEvaluatorTable(TR::CodeGenerator *cg)
    tet[TR::d2lu] =                  TR::TreeEvaluator::d2lEvaluator;
    tet[TR::ldiv] =                  TR::TreeEvaluator::integerPairDivEvaluator;
    tet[TR::lrem] =                  TR::TreeEvaluator::integerPairRemEvaluator;
-#endif
+#endif /* defined(TR_TARGET_32BIT) */
    }
 
 
@@ -1029,7 +1029,7 @@ TR::Register *J9::X86::I386::TreeEvaluator::conditionalHelperEvaluator(TR::Node 
    cg->decReferenceCount(testNode);
    return NULL;
    }
-#endif
+#endif /* TR_TARGET_32BIT */
 
 #ifdef TR_TARGET_64BIT
 TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node *node, TR::CodeGenerator *cg)
@@ -1199,14 +1199,14 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
    cg->decReferenceCount(testNode);
    return NULL;
    }
-#endif
+#endif  /* TR_TARGET_64BIT */
 
 TR::Register* J9::X86::TreeEvaluator::performHeapLoadWithReadBarrier(TR::Node* node, TR::CodeGenerator* cg)
    {
 #ifndef OMR_GC_CONCURRENT_SCAVENGER
    TR_ASSERT_FATAL(0, "Concurrent Scavenger not supported.");
    return NULL;
-#else
+#else /* OMR_GC_CONCURRENT_SCAVENGER */
    TR::Compilation *comp = cg->comp();
    bool use64BitClasses = comp->target().is64Bit() && !comp->useCompressedPointers();
 
@@ -1265,7 +1265,7 @@ TR::Register* J9::X86::TreeEvaluator::performHeapLoadWithReadBarrier(TR::Node* n
       }
    cg->stopUsingRegister(address);
    return object;
-#endif
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
    }
 
 // Should only be called for pure TR::awrtbar and TR::awrtbari nodes.
@@ -5044,7 +5044,7 @@ void J9::X86::TreeEvaluator::inlineRecursiveMonitor(
       node,
       generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetOwnedMonitorCountOffset(), cg),
       cg);
-#endif
+#endif /* defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19) */
 
    TR::RegisterDependencyConditions *restartDeps = generateRegisterDependencyConditions((uint8_t)0, 4, cg);
    restartDeps->addPostCondition(objectReg, TR::RealRegister::NoReg, cg);
@@ -5487,7 +5487,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
       node,
       generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetOwnedMonitorCountOffset(), cg),
       cg);
-#endif
+#endif /* defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19) */
 
    // Create dependencies for the registers used.
    // The dependencies must be in the order:
@@ -5809,7 +5809,7 @@ J9::X86::TreeEvaluator::VMmonexitEvaluator(
       node,
       generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetOwnedMonitorCountOffset(), cg),
       cg);
-#endif
+#endif /* defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19) */
 
    // Create dependencies for the registers used.
    // The first dependencies must be objectReg, vmThreadReg, tempReg
@@ -6045,7 +6045,7 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(
          generateLabelInstruction(TR::InstOpCode::JAE4, node, doneLabel, cg);
          generateRegImmInstruction(TR::InstOpCode::MOVRegImm4(), node, segmentReg, J9_GC_MINIMUM_OBJECT_SIZE, cg);
          generateLabelInstruction(TR::InstOpCode::label, node, doneLabel, cg);
-#endif
+#endif /* J9VM_INTERP_FLAGS_IN_CLASS_SLOT */
 
          // get size class
          generateRegMemInstruction(TR::InstOpCode::LRegMem(),
@@ -6189,7 +6189,7 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(
 
       // we're done
       return;
-#endif
+#endif /* defined(J9VM_GC_REALTIME) */
       }
    else
       {
@@ -6205,7 +6205,7 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(
          heapTop_offset = offsetof(J9VMThread, nonZeroHeapTop);
          tlhPrefetchFTA_offset = offsetof(J9VMThread, nonZeroTlhPrefetchFTA);
          }
-#endif
+#endif /* J9VM_GC_NON_ZERO_TLH */
       // Load the base of the next available heap storage.  This load is done speculatively on the assumption that the
       // allocation will be inlined.  If the assumption turns out to be false then the performance impact should be minimal
       // because the helper will be called in that case.  It is necessary to insert this load here so that it dominates all
@@ -6296,7 +6296,7 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(
       //
       TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
       generateLabelInstruction(TR::InstOpCode::label, node, loopLabel, cg);
-#endif
+#endif /* !defined(J9VM_GC_THREAD_LOCAL_HEAP) */
 
       if (sizeReg)
          {
@@ -6346,11 +6346,11 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(
                }
             }
          else
-#endif
+#endif /* J9VM_INTERP_FLAGS_IN_CLASS_SLOT */
             {
 #ifdef J9VM_INTERP_FLAGS_IN_CLASS_SLOT
          generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, tempReg, tempReg, cg);
-#endif
+#endif /* J9VM_INTERP_FLAGS_IN_CLASS_SLOT */
 
 
          generateRegMemInstruction(
@@ -6360,9 +6360,9 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(
                                    generateX86MemoryReference(
 #ifdef J9VM_INTERP_FLAGS_IN_CLASS_SLOT
                                                               tempReg,
-#else
+#else /* J9VM_INTERP_FLAGS_IN_CLASS_SLOT */
                                                               eaxReal,
-#endif
+#endif /* J9VM_INTERP_FLAGS_IN_CLASS_SLOT */
                                                               sizeReg,
                                                               TR::MemoryReference::convertMultiplierToStride(elementSize),
                                                               allocationSizeOrDataOffset+disp32, cg), cg);
@@ -6379,7 +6379,7 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(
          generateRegImmInstruction(TR::InstOpCode::MOVRegImm4(), node, tempReg, J9_GC_MINIMUM_OBJECT_SIZE, cg);
          generateLabelInstruction(TR::InstOpCode::label, node, doneLabel, cg);
          generateRegRegInstruction(TR::InstOpCode::ADDRegReg(), node, tempReg, eaxReal, cg);
-#endif
+#endif /* J9VM_INTERP_FLAGS_IN_CLASS_SLOT */
             }
          }
       else
@@ -6452,7 +6452,7 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(
             {
             prefetchThunkGenerated = (fej9->getAllocationNoZeroPrefetchCodeSnippetAddress(comp) !=0);
             }
-#endif
+#endif /* J9VM_GC_NON_ZERO_TLH */
          if (useSharedCodeCacheSnippet && prefetchThunkGenerated)
             {
             useDirectPrefetchCall = true;
@@ -6480,19 +6480,19 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(
                {
                helperSymbol->setMethodAddress(fej9->getAllocationPrefetchCodeSnippetAddress(comp));
                }
-#else
+#else /* J9VM_GC_NON_ZERO_TLH */
             helperSymbol->setMethodAddress(fej9->getAllocationPrefetchCodeSnippetAddress(comp));
-#endif
+#endif /* J9VM_GC_NON_ZERO_TLH */
             generateImmSymInstruction(TR::InstOpCode::CALLImm4, node, (uintptr_t)helperSymbol->getMethodAddress(), helperSymRef, cg);
             }
 
          generateLabelInstruction(TR::InstOpCode::label, node, restartLabel, cg);
          }
 
-#else // J9VM_GC_THREAD_LOCAL_HEAP
+#else /* defined(J9VM_GC_THREAD_LOCAL_HEAP) */
       generateMemRegInstruction(TR::InstOpCode::CMPXCHGMemReg(), node, generateX86MemoryReference(vmThreadReg, heapAlloc_offset, cg), tempReg, cg);
       generateLabelInstruction(TR::InstOpCode::JNE4, node, loopLabel, cg);
-#endif // !J9VM_GC_THREAD_LOCAL_HEAP
+#endif /* defined(J9VM_GC_THREAD_LOCAL_HEAP) */
       }
    }
 
@@ -6785,9 +6785,9 @@ static void genInitObjectHeader(TR::Node             *node,
                                 generateX86MemoryReference(objectReg, TMP_OFFSETOF_J9OBJECT_FLAGS, cg),
                                 orFlags, cg);
 
-#endif /* !J9VM_OPT_NEW_OBJECT_HASH */
+#endif /* defined(J9VM_OPT_NEW_OBJECT_HASH) */
       }
-#endif /* FLAGS_IN_CLASS_SLOT */
+#endif /* J9VM_INTERP_FLAGS_IN_CLASS_SLOT */
 
    // --------------------------------------------------------------------------------
    //
@@ -7156,7 +7156,7 @@ static bool genZeroInitForEntireObjectOrHybridArraylet(
          }
       else
          {
-#endif
+#endif /* TR_TARGET_64BIT */
          // Begin zero initialization after the header
          //
          generateRegMemInstruction(
@@ -7187,7 +7187,7 @@ static bool genZeroInitForEntireObjectOrHybridArraylet(
             }
 #ifdef TR_TARGET_64BIT
          }
-#endif
+#endif /* TR_TARGET_64BIT */
 
       return true;
       }
@@ -7922,7 +7922,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
       {
       logprintf(trace, log, "NOSKIPZEROINIT: for %p,  keep symbol as %p ", node, node->getSymbolReference());
       }
-#endif
+#endif /* J9VM_GC_NON_ZERO_TLH */
 
    segmentReg = srm->findOrCreateScratchRegister();
    tempReg = srm->findOrCreateScratchRegister();
@@ -7990,7 +7990,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
 #ifdef J9VM_GC_NON_ZERO_TLH
    if (!enableTLHBatchClearing || realTimeGC)
       {
-#endif
+#endif /* J9VM_GC_NON_ZERO_TLH */
       if (!maxZeroInitWordsPerIteration)
          {
          static char *p = feGetEnv("TR_MaxZeroInitWordsPerIteration");
@@ -8158,7 +8158,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
       monitorSlotIsInitialized = false;
       useRepInstruction = false;
       }
-#endif
+#endif /* J9VM_GC_NON_ZERO_TLH */
 
    // --------------------------------------------------------------------------------
    // Initialize the header
@@ -8923,7 +8923,7 @@ addFPXMMDependencies(
          }
       }
    }
-#endif
+#endif /* defined(TR_TARGET_32BIT) */
 
 #define J9TIME_NANOSECONDS_PER_SECOND ((I_64) 1000000000)
 #if defined(TR_TARGET_64BIT)
@@ -9016,7 +9016,7 @@ inlineNanoTime(
       return false;
       }
    }
-#else // !64bit
+#else /* defined(TR_TARGET_64BIT) */
 static bool
 inlineNanoTime(
       TR::Node *node,
@@ -9201,8 +9201,8 @@ inlineNanoTime(
 
    return true;
    }
-#endif
-#endif // LINUX
+#endif /* defined(TR_TARGET_64BIT) */
+#endif /* LINUX */
 
 TR::Register* J9::X86::TreeEvaluator::inlineMathFma(TR::Node* node, TR::CodeGenerator* cg)
    {
@@ -10533,7 +10533,7 @@ static TR::Register* inlineCompareAndSwapObjectNative(TR::Node* node, TR::CodeGe
          TR_ASSERT(false, "Unsupported Read Barrier Type.");
          break;
       }
-#endif
+#endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
 
    generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, EAX, oldValue, cg);
    generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, tmp, newValue, cg);
@@ -11426,7 +11426,7 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
             callWasInlined = inlineNanoTime(node, cg);
             break;
             }
-#endif
+#endif /* LINUX */
          default:
             break;
          }
@@ -12912,7 +12912,7 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
       {
       return returnRegister;
       }
-#endif
+#endif /* J9VM_OPT_JAVA_CRYPTO_ACCELERATION */
 
    if (symbol->isHelper())
       {
@@ -14603,7 +14603,7 @@ void J9::X86::I386::TreeEvaluator::lStoreEvaluatorSetHighLowMRIfNeeded(TR::Node 
          }
       }
    }
-#endif
+#endif /* TR_TARGET_32BIT */
 
 #ifdef TR_TARGET_64BIT
 TR::Register *J9::X86::AMD64::TreeEvaluator::dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
@@ -14647,7 +14647,7 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::dwrtbariEvaluator(TR::Node *node, T
    cg->decReferenceCount(sideEffectNode);
    return TR::TreeEvaluator::floatingPointStoreEvaluator(node, cg);
    }
-#endif
+#endif /* TR_TARGET_64BIT */
 
 TR::Register *J9::X86::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
