@@ -2791,7 +2791,7 @@ J9::Z::TreeEvaluator::inlineUTF16BEEncodeSIMD(TR::Node *node, TR::CodeGenerator 
    processUnder8Chars->setStartInternalControlFlow();
 
    // Calculate the number of residue bytes available
-   generateRRInstruction(cg, TR::InstOpCode::getSubstractRegOpCode(), node, inputLen, translated);
+   generateRRInstruction(cg, TR::InstOpCode::getSubtractRegOpCode(), node, inputLen, translated);
 
    // Branch to the end if there is no residue
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC0, node, processUnder8CharsEnd);
@@ -3091,7 +3091,7 @@ hashCodeHelper(TR::Node* node, TR::CodeGenerator* cg, TR::DataType elementType, 
    generateRSInstruction(cg, TR::InstOpCode::SLLK, node, registerTemp, registerHash, 5);
 
    // registerTemp -= registerHash
-   generateRRInstruction(cg, TR::InstOpCode::getSubstractRegOpCode(), node, registerTemp, registerHash);
+   generateRRInstruction(cg, TR::InstOpCode::getSubtractRegOpCode(), node, registerTemp, registerHash);
 
    switch (elementType)
       {
@@ -3760,8 +3760,8 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
       bool isConstantHeapSize = !comp->getOptions()->isVariableHeapSizeForBarrierRange0();
       int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
       TR::InstOpCode::Mnemonic opLoadReg = TR::InstOpCode::getLoadRegOpCode();
-      TR::InstOpCode::Mnemonic opSubtractReg = TR::InstOpCode::getSubstractRegOpCode();
-      TR::InstOpCode::Mnemonic opSubtract = TR::InstOpCode::getSubstractOpCode();
+      TR::InstOpCode::Mnemonic opSubtractReg = TR::InstOpCode::getSubtractRegOpCode();
+      TR::InstOpCode::Mnemonic opSubtract = TR::InstOpCode::getSubtractOpCode();
       TR::InstOpCode::Mnemonic opCmpLog = TR::InstOpCode::getCmpLogicalOpCode();
       bool disableSrcObjCheck = true; //comp->getOption(TR_DisableWrtBarSrcObjCheck);
       bool constantHeapCase = ((!comp->compileRelocatableCode()) && isConstantHeapBase && isConstantHeapSize && shiftAmount == 0 && (!is64Bit || TR::Compiler->om.generateCompressedObjectHeaders()));
@@ -3979,7 +3979,7 @@ VMCardCheckEvaluator(
          // Defect 91242 - If we can clobber the destination reg, then use owningObjectReg instead of cardOffReg.
          if (!clobberDstReg)
             generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, cardOffReg, owningObjectReg);
-         generateRXInstruction(cg, TR::InstOpCode::getSubstractOpCode(), node, cardOffReg,
+         generateRXInstruction(cg, TR::InstOpCode::getSubtractOpCode(), node, cardOffReg,
                                generateS390MemoryReference(mdReg, offsetof(J9VMThread, heapBaseForBarrierRange0), cg));
 
          // Unless we know it's definitely a heap object, we need to check if offset
