@@ -4424,6 +4424,12 @@ TR::Register *J9::Power::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR:
    if (objectClassReg)
       srm->reclaimScratchRegister(objectClassReg);
 
+   if (numSequencesRemaining == 1 &&
+       (sequences[0] == GoToFalse || sequences[0] == HelperCall)) { // in case of single sequence with helper or failure
+      if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting branch to OOL in case of single sequence of Helper or failure\n",node->getOpCode().getName());
+      generateLabelInstruction(cg, TR::InstOpCode::b, node, nextSequenceLabel);
+   }
+
    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
 
    cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfOrCheckCast/%s/fastPath",
@@ -4601,6 +4607,11 @@ TR::Register *J9::Power::TreeEvaluator::VMinstanceOfEvaluator(TR::Node *node, TR
    if (objectClassReg)
       srm->reclaimScratchRegister(objectClassReg);
 
+   if (numSequencesRemaining == 1 &&
+       sequences[0] == HelperCall) { // in case of single sequence with helper
+      if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting branch to OOL in case of single sequence of Helper\n",node->getOpCode().getName());
+      generateLabelInstruction(cg, TR::InstOpCode::b, node, nextSequenceLabel);
+   }
    if (true)
       {
       generateLabelInstruction(cg, TR::InstOpCode::label, node, oppositeResultLabel);
