@@ -909,7 +909,7 @@ createArrayAddressTree(TR::Compilation *comp, bool is64bit, TR::Node *baseNode, 
       {
       TR::Node *c2 = createIndexOffsetTree(comp, is64bit, indexNode, multiply);
       TR::Node *aload = createLoad(baseNode);
-      return TR::TransformUtil::generateArrayElementAddressTrees(comp, aload, c2);
+      return TR::TransformUtil::generateArrayElementAddressTrees(comp, aload, c2, true);
       }
    }
 
