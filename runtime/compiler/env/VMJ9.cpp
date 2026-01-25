@@ -4100,6 +4100,13 @@ TR_J9VMBase::isIntrinsicCandidate(TR_ResolvedMethod *method)
                                                   (J9Method*)method->getPersistentIdentifier());
    }
 
+bool
+TR_J9VMBase::isPrimitiveArray(J9Class *fieldClass, int cpIndex)
+   {
+   TR_ASSERT_FATAL(fieldClass, "fieldClass must not be NULL");
+   return jitIsPrimitiveArray(vmThread(), fieldClass, cpIndex);
+   }
+
 // Creates a node to initialize the local object flags field
 //
 TR::Node *
