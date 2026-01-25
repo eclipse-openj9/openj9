@@ -447,6 +447,29 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<impl>ibm</impl>
 		</impls>
 	</test>
+	<test>
+		<testCaseName>jsr292_InDyn_OSRTest</testCaseName>
+		<variations>
+			<variation>-Xjit:"dontInline={*dummy*},limit={*dummy*},count=1,disableAsyncCompilation,initialOptLevel=warm,disableGuardedCountingRecompilation"</variation>
+		</variations>
+		<command>TR_EnableStartupNextGenHCRAtAllOpts=1 $(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng$(XMLSUFFIX).xml$(Q) \
+	-testnames jsr292_InDyn_OSRTest \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
 	<!--
 		TODO: The following test cases specific to Lookup are temporarily excluded in Java 14
 		as there is no backward compatibility of these APIs since Java 14 due to the new changes
