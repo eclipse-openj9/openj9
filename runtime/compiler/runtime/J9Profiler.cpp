@@ -1621,7 +1621,15 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
    TR_ByteCodeInfo bciCheck(bci);
    bciCheck.setCallerIndex(queriedCallerIndex);
 
-   int64_t maxCount = normalizeForCallers ? getMaxRawCount() : getMaxRawCount(queriedCallerIndex);
+   // If we have inlined the method in the profiled compilation, isMatchingBCI
+   // should be set to true so is isMatchingBCI is set to false, it suggests
+   // that we did not inline the method, in such case, we would take a look at
+   // the other method's profiling info to find the frequency of the
+   // bytecodeInfo with correct context. Set maxCount to the maxCount observed
+   // in this method.
+   // This maxCount will be used to get the outterProfiledFrequency which would
+   // be the correct maxCount if normalizeForCallers is set to false.
+   int64_t maxCount = normalizeForCallers || !isMatchingBCI ? getMaxRawCount() : getMaxRawCount(queriedCallerIndex);
 
    int32_t frequency = isMatchingBCI ? getRawCount(callerIndex < 0 ? comp->getMethodSymbol() : comp->getInlinedResolvedMethodSymbol(callerIndex), bciCheck, _callSiteInfo, maxCount, comp) : -1;
    logprintf(trace, log, "raw frequency on outter level was %d for bci %d:%d\n", frequency, bci.getCallerIndex(), bci.getByteCodeIndex());
@@ -1651,7 +1659,14 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
       int64_t outterProfiledFrequency = getRawCount(comp->getMethodSymbol(), bciToCheck, _callSiteInfo, maxCount, comp);
       if (outterProfiledFrequency == 0)
          return 0;
+      // We didn't inline the method in previous profiled compilation, when
+      // making a decision to see if the method can be inlined or not, use this
+      // outterProfiledFrequency which represents the frequency of call as
+      // maxCount.
+      if (!normalizeForCallers)
+         maxCount = outterProfiledFrequency;
 
+      double innerFrequencyScale = 1;
       while (!callStack.empty())
          {
          auto extraCaller = callStack.back();
@@ -1661,7 +1676,6 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
          TR_ResolvedMethod *resolvedMethod = callerIndex > -1 ? comp->getInlinedResolvedMethod(callerIndex) : comp->getCurrentMethod();
          TR::ResolvedMethodSymbol *resolvedMethodSymbol = callerIndex > -1 ? comp->getInlinedResolvedMethodSymbol(callerIndex) : comp->getMethodSymbol();
          int32_t callerFrequency = getRawCount(resolvedMethodSymbol, bciToCheck, _callSiteInfo, maxCount, comp);
-         double innerFrequencyScale = 1;
          // we have found a frame where we don't have profiling info
          if (callerFrequency < 0)
             {
@@ -1729,7 +1743,12 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
                      entry.setCallerIndex(-1);
                      entry.setByteCodeIndex(0);
                      int32_t entryCount = bfi->getRawCount(resolvedMethodSymbol, entry, info->getCallSiteInfo(), bfi->getMaxRawCount(), comp);
-                     TR_ByteCodeInfo call = callStack.back().second;
+                     // bciToCheck represents the bytecode of the call in the
+                     // callStack. If we didn't have the same call chain inlined
+                     // in the profiled compilation, to provide correct context,
+                     // the frequency should be adjusted to the frequency of the
+                     // call.
+                     TR_ByteCodeInfo call = bciToCheck;
                      call.setCallerIndex(-1);
                      int32_t rawCount = bfi->getRawCount(resolvedMethodSymbol, call, info->getCallSiteInfo(), bfi->getMaxRawCount(), comp);
                      if (rawCount == 0)
