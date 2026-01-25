@@ -9720,7 +9720,21 @@ done:
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 	}
 
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+
+	VMINLINE bool
+	j9ObjIsNull(j9object_t j9Obj, bool fromJIT, REGISTER_ARGS_LIST, UDATA decSP)
+	{
+		if (J9_UNEXPECTED(NULL == j9Obj)) {
+			if (fromJIT) {
+				_sp -= decSP;
+				buildJITResolveFrame(REGISTER_ARGS);
+			}
+			return true;
+		}
+		return false;
+	}
+
 	/* This INL only covers invokeBasic dispatched directly from bytecode, invokeBasic calls
 	 * dispatched from linkToVirtual is inlined to avoid need of flags and tempValues to
 	 * pass the correct argCount during VM transition since the ramCP index still points
@@ -9747,23 +9761,23 @@ done:
 			mhReceiverIndex = (methodIndexAndArgCount & 0xFF);
 		}
 
+		j9object_t lambdaForm = NULL;
+		j9object_t memberName = NULL;
 		j9object_t mhReceiver = ((j9object_t *)_sp)[mhReceiverIndex];
-		if (J9_UNEXPECTED(NULL == mhReceiver)) {
-			if (fromJIT) {
-				buildJITResolveFrame(REGISTER_ARGS);
-			}
-			return THROW_NPE;
+		if (j9ObjIsNull(mhReceiver, fromJIT, REGISTER_ARGS, 0)) {
+			rc = THROW_NPE;
+			goto done;
 		}
 
-		j9object_t lambdaForm = J9VMJAVALANGINVOKEMETHODHANDLE_FORM(_currentThread, mhReceiver);
-		j9object_t memberName = J9VMJAVALANGINVOKELAMBDAFORM_VMENTRY(_currentThread, lambdaForm);
+		lambdaForm = J9VMJAVALANGINVOKEMETHODHANDLE_FORM(_currentThread, mhReceiver);
+		memberName = J9VMJAVALANGINVOKELAMBDAFORM_VMENTRY(_currentThread, lambdaForm);
 		_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberName, _vm->vmtargetOffset);
 
 		if (fromJIT) {
 			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, (void *)_literals);
 			rc = j2iTransition(REGISTER_ARGS, true);
 		}
-
+done:
 		return rc;
 	}
 
@@ -9777,8 +9791,9 @@ done:
 
 		/* Pop memberNameObject from the stack. */
 		j9object_t memberNameObject = *(j9object_t *)_sp++;
-		if (J9_UNEXPECTED(NULL == memberNameObject)) {
-			goto throw_npe;
+		if (j9ObjIsNull(memberNameObject, fromJIT, REGISTER_ARGS, true)) {
+			rc = THROW_NPE;
+			goto done;
 		}
 
 		_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmtargetOffset);
@@ -9788,8 +9803,9 @@ done:
 
 			if (J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccStatic)) {
 				j9object_t mhReceiver = ((j9object_t *)_sp)[methodArgCount - 1];
-				if (J9_UNEXPECTED(NULL == mhReceiver)) {
-					goto throw_npe;
+				if (j9ObjIsNull(mhReceiver, false, REGISTER_ARGS, false)) {
+					rc = THROW_NPE;
+					goto done;
 				}
 			}
 		}
@@ -9838,38 +9854,33 @@ done:
 			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, (void *)_literals);
 			rc = j2iTransition(REGISTER_ARGS, true);
 		}
-
+done:
 		return rc;
-
-throw_npe:
-		if (fromJIT) {
-			/* Restore SP to before popping memberNameObject. */
-			_sp -= 1;
-			buildJITResolveFrame(REGISTER_ARGS);
-		}
-		return THROW_NPE;
 	}
 
 	VMINLINE VM_BytecodeAction
 	linkToVirtual(REGISTER_ARGS_LIST)
 	{
 		VM_BytecodeAction rc = GOTO_RUN_METHOD;
+		J9Method *method = NULL;
+		J9ROMMethod *romMethod = NULL;
+		UDATA methodArgCount = 0;
+		bool isInvokeBasic = false;
+		j9object_t receiverObject = NULL;
+		UDATA vTableOffset = 0;
+		J9Class *receiverClass = NULL;
 		bool fromJIT = J9_ARE_ANY_BITS_SET(jitStackFrameFlags(REGISTER_ARGS, 0), J9_SSF_JIT_NATIVE_TRANSITION_FRAME);
 
 		/* Pop memberNameObject from the stack. */
 		j9object_t memberNameObject = *(j9object_t *)_sp++;
-		if (J9_UNEXPECTED(NULL == memberNameObject)) {
-			if (fromJIT) {
-				/* Restore SP to before popping memberNameObject. */
-				_sp -= 1;
-				buildJITResolveFrame(REGISTER_ARGS);
-			}
-			return THROW_NPE;
+		if (j9ObjIsNull(memberNameObject, fromJIT, REGISTER_ARGS, true)) {
+			rc = THROW_NPE;
+			goto done;
 		}
 
-		J9Method *method = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmtargetOffset);
-		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-		UDATA methodArgCount = 0;
+		method = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmtargetOffset);
+		romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+		methodArgCount = 0;
 		bool isInvokeBasic = (J9_BCLOOP_SEND_TARGET_METHODHANDLE_INVOKEBASIC == J9_BCLOOP_DECODE_SEND_TARGET(method->methodRunAddress));
 
 		/* In MethodHandle.loop API it may generate a invokeBasic NamedFunction (see LambdaForm$NamedFunction(MethodType basicInvokerType))
@@ -9884,14 +9895,10 @@ throw_npe:
 			methodArgCount = romMethod->argCount;
 		}
 
-		j9object_t receiverObject = ((j9object_t *)_sp)[methodArgCount - 1];
-		if (J9_UNEXPECTED(NULL == receiverObject)) {
-			if (fromJIT) {
-				/* Restore SP to before popping memberNameObject. */
-				_sp -= 1;
-				buildJITResolveFrame(REGISTER_ARGS);
-			}
-			return THROW_NPE;
+		receiverObject = ((j9object_t *)_sp)[methodArgCount - 1];
+		if (j9ObjIsNull(receiverObject, fromJIT, REGISTER_ARGS, true)) {
+			rc = THROW_NPE;
+			goto done;
 		}
 
 		/* The vTable offset has been stored in memberNameObject.vmindex.
@@ -9902,8 +9909,8 @@ throw_npe:
 		 * In that case, MemberName resolution has already done the iTable walk to get the corresponding vTable offset in
 		 * C and stored it in vmindex. The receiver is always an instance of C (or a subclass).
 		 */
-		UDATA vTableOffset = (UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmindexOffset);
-		J9Class *receiverClass = J9OBJECT_CLAZZ(_currentThread, receiverObject);
+		vTableOffset = (UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmindexOffset);
+		receiverClass = J9OBJECT_CLAZZ(_currentThread, receiverObject);
 		_sendMethod = *(J9Method **)(((UDATA)receiverClass) + vTableOffset);
 
 		/* The invokeBasic INL uses the methodArgCount from ramCP to locate the receiver object,
@@ -9936,7 +9943,7 @@ throw_npe:
 			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, (void *)_literals);
 			rc = j2iTransition(REGISTER_ARGS, true);
 		}
-
+done:
 		return rc;
 	}
 
@@ -9957,12 +9964,7 @@ throw_npe:
 
 		/* Pop memberNameObject from the stack. */
 		j9object_t memberNameObject = *(j9object_t *)_sp++;
-		if (J9_UNEXPECTED(NULL == memberNameObject)) {
-			if (fromJIT) {
-				/* Restore SP to before popping memberNameObject. */
-				_sp -= 1;
-				buildJITResolveFrame(REGISTER_ARGS);
-			}
+		if (j9ObjIsNull(memberNameObject, fromJIT, REGISTER_ARGS, true)) {
 			rc = THROW_NPE;
 			goto done;
 		}
@@ -9972,12 +9974,7 @@ throw_npe:
 		methodArgCount = romMethod->argCount;
 
 		receiverObject = ((j9object_t *)_sp)[methodArgCount - 1];
-		if (J9_UNEXPECTED(NULL == receiverObject)) {
-			if (fromJIT) {
-				/* Restore SP to before popping memberNameObject. */
-				_sp -= 1;
-				buildJITResolveFrame(REGISTER_ARGS);
-			}
+		if (j9ObjIsNull(receiverObject, fromJIT, REGISTER_ARGS, true)) {
 			rc = THROW_NPE;
 			goto done;
 		}
@@ -10061,6 +10058,11 @@ done:
 	linkToNative(REGISTER_ARGS_LIST)
 	{
 		VM_BytecodeAction rc = GOTO_RUN_METHOD;
+		j9object_t nepObject = NULL;
+		j9object_t methodType = NULL;
+		j9object_t invokeCacheArray = NULL;
+		j9object_t memberName = NULL;
+		j9object_t appendix = NULL;
 		bool fromJIT = J9_ARE_ANY_BITS_SET(jitStackFrameFlags(REGISTER_ARGS, 0), J9_SSF_JIT_NATIVE_TRANSITION_FRAME);
 
 		/* Pop up the dummy argument (the placeholder for the method type of the bound MH)
@@ -10071,24 +10073,20 @@ done:
 		}
 
 		j9object_t nativeMH = *(j9object_t *)_sp;
-		if (J9_UNEXPECTED(NULL == nativeMH)) {
-			if (fromJIT) {
-				/* Restore SP to before popping the dummy argument. */
-				_sp -= 1;
-				buildJITResolveFrame(REGISTER_ARGS);
-			}
-			return THROW_NPE;
+		if (j9ObjIsNull(nativeMH, fromJIT, REGISTER_ARGS, true)) {
+			rc = THROW_NPE;
+			goto done;
 		}
 
-		j9object_t nepObject = J9VMJAVALANGINVOKENATIVEMETHODHANDLE_NEP(_currentThread, nativeMH);
-		j9object_t methodType = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, nepObject);
+		nepObject = J9VMJAVALANGINVOKENATIVEMETHODHANDLE_NEP(_currentThread, nativeMH);
+		methodType = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, nepObject);
 		UDATA methodArgCount = VM_VMHelpers::methodTypeParameterSlotCount(_currentThread, methodType);
 
 		/* The cache array stores the data (memberName & appendix) for the bound MH which
 		 * has been resolved when generating the downcall handler.
 		 */
-		j9object_t invokeCacheArray = J9VMJAVALANGINVOKENATIVEMETHODHANDLE_INVOKECACHE(_currentThread, nativeMH);
-		j9object_t memberName = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(_currentThread, invokeCacheArray, 0);
+		invokeCacheArray = J9VMJAVALANGINVOKENATIVEMETHODHANDLE_INVOKECACHE(_currentThread, nativeMH);
+		memberName = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(_currentThread, invokeCacheArray, 0);
 		_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberName, _vm->vmtargetOffset);
 
 		/* Shift arguments by 1 and place the NEP object as the placeholder before the first argument
@@ -10097,7 +10095,7 @@ done:
 		memmove(_sp, _sp + 1, methodArgCount * sizeof(UDATA));
 		_sp[methodArgCount] = (UDATA)nepObject;
 
-		j9object_t appendix = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(_currentThread, invokeCacheArray, 1);
+		appendix = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(_currentThread, invokeCacheArray, 1);
 		/* The slot the dummy argument is replaced with the method type to ensure it works with
 		 * and without JIT in terms of the argument count.
 		 */
@@ -10107,7 +10105,7 @@ done:
 			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, (void *)_literals);
 			rc = j2iTransition(REGISTER_ARGS, true);
 		}
-
+done:
 		return rc;
 	}
 #endif /* JAVA_SPEC_VERSION >= 22 */
