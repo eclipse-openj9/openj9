@@ -522,6 +522,13 @@ J9::X86::CodeGenerator::supportsInliningOfIsAssignableFrom()
    return !disableInliningOfIsAssignableFrom;
    }
 
+bool
+J9::X86::CodeGenerator::supportsNonHelperIsAssignableFrom()
+   {
+   static const bool disableNonHelprIsAssignableFrom = feGetEnv("TR_disableNonHelperIsAssignableFrom") != NULL;
+   return !disableNonHelprIsAssignableFrom;
+   }
+
 void
 J9::X86::CodeGenerator::reserveNTrampolines(int32_t numTrampolines)
    {
