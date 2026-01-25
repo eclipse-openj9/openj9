@@ -114,7 +114,17 @@ public class Test_Class {
 		}
 	}
 
-public static class SubClassTest extends ClassTest{
+	static Class getClazz(String name) {
+	Class clazz = null;
+	try {
+		clazz = Class.forName(name);
+	} catch (ClassNotFoundException e) {
+		AssertJUnit.assertTrue(String.format("Should be able to find the class %s", name), false);
+	}
+	return clazz;
+}
+
+	public static class SubClassTest extends ClassTest{
 	}
 
 /**
@@ -815,13 +825,13 @@ public void test_getConstructors() {
  */
 @Test
 public void test_getDeclaredClasses() {
-	int len = 65;
+	int len = 67;
 	// Test for method java.lang.Class [] java.lang.Class.getDeclaredClasses()
 	Class[] declaredClasses = Test_Class.class.getDeclaredClasses();
 	if (declaredClasses.length != len) {
 		for (int i=0; i<declaredClasses.length; i++)
 			logger.debug("declared[" + i + "]: " + declaredClasses[i]);
-		Assert.fail("Incorrect class array returned: expected 65 but returned " + declaredClasses.length);
+		Assert.fail(String.format("Incorrect class array returned: expected %d but returned %d", len, declaredClasses.length));
 	}
 }
 
@@ -1375,6 +1385,17 @@ public void test_isArray() {
 	AssertJUnit.assertTrue( "Non-array Object type claims to be." , !clazz.isArray());
 }
 
+
+static abstract class AClass {
+	public abstract int a();
+}
+
+static class AClassImpl extends AClass {
+	public int a() {
+		return 1;
+	}
+}
+
 /**
  * @tests java.lang.Class#isAssignableFrom(java.lang.Class)
  */
@@ -1383,36 +1404,59 @@ public void test_isAssignableFrom() {
 	// Test for method boolean java.lang.Class.isAssignableFrom(java.lang.Class)
 	Class clazz1 = null;
 	Class clazz2 = null;
-	try {
-		clazz1 = Class.forName("java.lang.Object");
-	} catch (ClassNotFoundException e) {
-		AssertJUnit.assertTrue("Should be able to find the class java.lang.Object", false);
-	}
-	try {
-		clazz2 = Class.forName("java.lang.Class");
-	} catch (ClassNotFoundException e) {
-		AssertJUnit.assertTrue("Should be able to find the class java.lang.Class", false);
-	}
-	AssertJUnit.assertTrue("returned false for superclass", clazz1.isAssignableFrom(clazz2));
+	Class objClass = getClazz("java.lang.Object");
 
-	try {
-		clazz1 = Class.forName("org.openj9.test.java.lang.Test_Class$ClassTest");
-	} catch (ClassNotFoundException e) {
-		AssertJUnit.assertTrue("Should be able to find the class org.openj9.test.java.lang.Test_Class$ClassTest", false);
-	}
+	clazz2 = getClazz("java.lang.Class");
+	AssertJUnit.assertTrue("returned false for superclass", objClass.isAssignableFrom(clazz2));
+
+	clazz1 = getClazz("org.openj9.test.java.lang.Test_Class$ClassTest");
 	AssertJUnit.assertTrue("returned false for same class", clazz1.isAssignableFrom(clazz1));
 
-	try {
-		clazz1 = Class.forName("java.lang.Runnable");
-	} catch (ClassNotFoundException e) {
-		AssertJUnit.assertTrue("Should be able to find the class java.lang.Runnable", false);
-	}
-	try {
-		clazz2 = Class.forName("java.lang.Thread");
-	} catch (ClassNotFoundException e) {
-		AssertJUnit.assertTrue("Should be able to find the class java.lang.Thread", false);
-	}
+	clazz1 = getClazz("java.lang.Runnable");
+	clazz2 = getClazz("java.lang.Thread");
 	AssertJUnit.assertTrue("returned false for implemented interface", clazz1.isAssignableFrom(clazz2));
+
+	clazz1 = getClazz("org.openj9.test.java.lang.Test_Class$SuperInterface");
+	AssertJUnit.assertTrue("returned false for same interface", clazz1.isAssignableFrom(clazz1));
+
+	clazz2 = getClazz("org.openj9.test.java.lang.Test_Class$SubInterface");
+	AssertJUnit.assertTrue("returned false for sub-interface", clazz1.isAssignableFrom(clazz2));
+
+	clazz1 = getClazz("org.openj9.test.java.lang.Test_Class$AClass");
+	clazz2 = getClazz("org.openj9.test.java.lang.Test_Class$AClassImpl");
+	AssertJUnit.assertTrue("returned false for implemented abstract parent", clazz1.isAssignableFrom(clazz2));
+	AssertJUnit.assertTrue("returned false for same abstract class", clazz1.isAssignableFrom(clazz1));
+
+	clazz1 = getClazz("[Lorg.openj9.test.java.lang.Test_Class$ParentClass;");
+	clazz2 = getClazz("[[Lorg.openj9.test.java.lang.Test_Class$ParentClass;");
+	AssertJUnit.assertTrue("returned false for array class to java.lang.Object", objClass.isAssignableFrom(clazz1));
+	AssertJUnit.assertTrue("returned false for array class to java.lang.Object", objClass.isAssignableFrom(clazz2));
+
+	AssertJUnit.assertFalse("returned true for mismatched arities", clazz1.isAssignableFrom(clazz2));
+	AssertJUnit.assertFalse("returned true for mismatched arities", clazz2.isAssignableFrom(clazz1));
+
+	clazz2 = getClazz("org.openj9.test.java.lang.Test_Class$ParentClass");
+	AssertJUnit.assertFalse("Array to non-array only valid if non-array is java.lang.Object", clazz2.isAssignableFrom(clazz1));
+
+	clazz1 = getClazz("[Ljava.lang.Object;");
+	clazz2 = getClazz("[[Lorg.openj9.test.java.lang.Test_Class$ParentClass;");
+	AssertJUnit.assertTrue("class array to java.lang.Object array is valid when class array has greater arity", clazz1.isAssignableFrom(clazz2));
+
+	clazz1 = getClazz("[[Ljava.lang.Object;");
+	clazz2 = getClazz("[Lorg.openj9.test.java.lang.Test_Class$ParentClass;");
+	AssertJUnit.assertFalse("class array to java.lang.Obect array is only valid when class array has greater arity", clazz1.isAssignableFrom(clazz2));
+
+	clazz1 = getClazz("[Lorg.openj9.test.java.lang.Test_Class$ParentClass;");
+	clazz2 = getClazz("[Lorg.openj9.test.java.lang.Test_Class$ChildClass;");
+	AssertJUnit.assertTrue("returned false for child array to parent array of same arity", clazz1.isAssignableFrom(clazz2));
+
+	clazz1 = getClazz("[Lorg.openj9.test.java.lang.Test_Class$SubInterface;");
+	clazz2 = getClazz("[Lorg.openj9.test.java.lang.Test_Class$ClassImplInterface;");
+	AssertJUnit.assertTrue("returned false for implemented interface array to interface array of same arity", clazz1.isAssignableFrom(clazz2));
+
+	clazz1 = getClazz("[Lorg.openj9.test.java.lang.Test_Class$AClass;");
+	clazz2 = getClazz("[Lorg.openj9.test.java.lang.Test_Class$AClassImpl;");
+	AssertJUnit.assertTrue("returned false for implemented abstract array to abstract array of same arity", clazz1.isAssignableFrom(clazz2));
 }
 
 /**
