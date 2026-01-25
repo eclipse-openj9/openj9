@@ -242,6 +242,7 @@ class TR_RelocationRecord
       virtual const char *name() { return "TR_RelocationRecord"; }
 
       virtual bool isValidationRecord() { return false; }
+      virtual bool needsClassTableMutex() { return false; }
 
 
       static TR_RelocationRecord *create(TR_RelocationRecord *storage, TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, TR_RelocationRecordBinaryTemplate *record);
@@ -890,6 +891,8 @@ class TR_RelocationRecordInlinedVirtualMethodWithNopGuard : public TR_Relocation
       TR_RelocationRecordInlinedVirtualMethodWithNopGuard() {}
       TR_RelocationRecordInlinedVirtualMethodWithNopGuard(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordNopGuard(reloRuntime, record) {}
       virtual const char *name();
+      virtual bool needsClassTableMutex() { return true; }
+
    private:
       virtual TR_OpaqueMethodBlock *getMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpindex, TR_OpaqueMethodBlock *callerMethod);
       virtual void updateFailedStats(TR_AOTStats *aotStats);
@@ -913,6 +916,8 @@ class TR_RelocationRecordInlinedInterfaceMethodWithNopGuard : public TR_Relocati
       TR_RelocationRecordInlinedInterfaceMethodWithNopGuard() {}
       TR_RelocationRecordInlinedInterfaceMethodWithNopGuard(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordNopGuard(reloRuntime, record) {}
       virtual const char *name();
+      virtual bool needsClassTableMutex() { return true; }
+
    protected:
       virtual bool needsReceiverClassFromID() { return true; }
    private:
@@ -938,6 +943,8 @@ class TR_RelocationRecordInlinedAbstractMethodWithNopGuard : public TR_Relocatio
       TR_RelocationRecordInlinedAbstractMethodWithNopGuard() {}
       TR_RelocationRecordInlinedAbstractMethodWithNopGuard(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordNopGuard(reloRuntime, record) {}
       virtual const char *name();
+      virtual bool needsClassTableMutex() { return true; }
+
    protected:
       virtual bool needsReceiverClassFromID() { return true; }
    private:
