@@ -88,7 +88,6 @@ public:
    uint32_t getX86ProcessorFeatureFlags8();
 
    bool is_test(OMRProcessorArchitecture p);
-   bool supports_feature_test(uint32_t feature);
    };
 
 }
