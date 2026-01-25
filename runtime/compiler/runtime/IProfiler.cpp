@@ -4808,8 +4808,11 @@ TR_IProfiler::dumpIPBCDataCallGraph(J9VMThread* vmThread)
       return;
       }
    traverseIProfilerTableAndCollectEntries(&aggregationHT, vmThread, true/*collectOnlyCallGraphEntries*/);
-   char tmp[1025];
-   char *fn = _vm->getFormattedName(tmp, sizeof(tmp), "ipdata", NULL, true);
+   const int32_t bufSize = 1025;
+   char buf[bufSize];
+   char *fn = TR::Options::buildLogFileName(buf, bufSize, "ipdata", -1, TR::Options::getLogFileNameSuffix(), true);
+   TR_ASSERT_FATAL(fn, "Error building IPBCData filename");
+
    aggregationHT.sortByNameAndPrint(fn);
 
    fprintf(stderr, "Finished dumping info\n");
@@ -4826,8 +4829,12 @@ TR_IProfiler::dumpAllBytecodeProfilingData(J9VMThread* vmThread)
       return;
       }
    traverseIProfilerTableAndCollectEntries(&aggregationHT, vmThread, false/*collectOnlyCallGraphEntries*/);
-   char tmp[1025];
-   char *fn = _vm->getFormattedName(tmp, sizeof(tmp), "ipdata", NULL, true);
+
+   const int32_t bufSize = 1025;
+   char buf[bufSize];
+   char *fn = TR::Options::buildLogFileName(buf, bufSize, "ipdata", -1, TR::Options::getLogFileNameSuffix(), true);
+   TR_ASSERT_FATAL(fn, "Error building bytecode profiling filename");
+
    aggregationHT.sortByNameAndPrint(fn);
 
    fprintf(stderr, "Finished dumping info\n");

@@ -46,6 +46,7 @@
 #include "control/RecompilationInfo.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
+#include "env/TRMemory.hpp"
 #include "env/VMJ9.h"
 #include "env/VerboseLog.hpp"
 #include "env/jittypes.h"
@@ -2607,12 +2608,6 @@ J9::Options::fePreProcess(void * base)
    PORT_ACCESS_FROM_JAVAVM(vm);
    OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
-   #if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
-      bool forceSuffixLogs = false;
-   #else
-      bool forceSuffixLogs = true;
-   #endif
-
    int32_t xxLateSCCDisclaimTime = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXLateSCCDisclaimTimeOption);
    if (xxLateSCCDisclaimTime >= 0)
       {
@@ -2667,8 +2662,11 @@ J9::Options::fePreProcess(void * base)
       self()->setOption(TR_DisableTraps);
    #endif
 
-   if (forceSuffixLogs)
-      self()->setOption(TR_EnablePIDExtension);
+#if !defined(DEBUG) && !defined(PROD_WITH_ASSUMES)
+    // Production (PROD) builds force the application of the log filename suffix
+    //
+    self()->setOption(TR_ApplyLogFileNameSuffix);
+#endif
 
    if (jitConfig->runtimeFlags & J9JIT_CG_REGISTER_MAPS)
       self()->setOption(TR_RegisterMaps);
@@ -3586,13 +3584,13 @@ J9::Options::createLoggerForLogFile(TR::FILE *file)
 
    if (self()->getOption(TR_ForceCStdIOForLoggers))
       {
-      logger = OMR::CStdIOStreamLogger::create(file->_stream);
+      logger = OMR::CStdIOStreamLogger::create(trPersistentMemory, file->_stream);
       }
    else
       {
       // An OMR::TRIOStreamLogger is the default logger
       //
-      logger = OMR::TRIOStreamLogger::create(file);
+      logger = OMR::TRIOStreamLogger::create(trPersistentMemory, file);
       }
 
    return logger;
@@ -3605,7 +3603,6 @@ J9::Options::printPID()
    }
 
 #if defined(J9VM_OPT_JITSERVER)
-void getTRPID(char *buf, size_t size);
 
 static void
 appendRegex(TR::SimpleRegex *&regexPtr, uint8_t *&curPos)
@@ -3656,34 +3653,25 @@ std::string
 J9::Options::packOptions(const TR::Options *origOptions)
    {
    size_t logFileNameLength = 0;
-   size_t suffixLogsFormatLength = 0;
    size_t blockShufflingSequenceLength = 0;
    size_t induceOSRLength = 0;
 
    char buf[JITSERVER_LOG_FILENAME_MAX_SIZE];
-   char *origLogFileName = NULL;
-   if (origOptions->_logFileName)
+   if (origOptions->getLogFileNameBase())
       {
-      origLogFileName = origOptions->_logFileName;
-      char pidBuf[20];
-      memset(pidBuf, 0, sizeof(pidBuf));
-      getTRPID(pidBuf, sizeof(pidBuf));
-      logFileNameLength = strlen(origOptions->_logFileName) + strlen(".") + strlen(pidBuf) + strlen(".server") + 1;
-      // If logFileNameLength is greater than JITSERVER_LOG_FILENAME_MAX_SIZE, PID might not be appended to the log file name
-      // and the log file name could be truncated as well.
-      if (logFileNameLength > JITSERVER_LOG_FILENAME_MAX_SIZE)
-         logFileNameLength = JITSERVER_LOG_FILENAME_MAX_SIZE;
-      snprintf(buf, logFileNameLength, "%s.%s.server", origOptions->_logFileName, pidBuf);
+      char *fn = TR::Options::buildLogFileName(buf, JITSERVER_LOG_FILENAME_MAX_SIZE, origOptions->getLogFileNameBase(), -1,
+         ".%pid.server", true);
+
+      TR_ASSERT_FATAL(fn, "Error building JitServer log filename");
       }
-   if (origOptions->_suffixLogsFormat)
-      suffixLogsFormatLength = strlen(origOptions->_suffixLogsFormat) + 1;
+
    if (origOptions->_blockShufflingSequence)
       blockShufflingSequenceLength = strlen(origOptions->_blockShufflingSequence) + 1;
    if (origOptions->_induceOSR)
       induceOSRLength = strlen(origOptions->_induceOSR) + 1;
 
    // sizeof(bool) is reserved to pack J9JIT_RUNTIME_RESOLVE
-   size_t totalSize = sizeof(TR::Options) + logFileNameLength + suffixLogsFormatLength + blockShufflingSequenceLength + induceOSRLength + sizeof(bool);
+   size_t totalSize = sizeof(TR::Options) + logFileNameLength + blockShufflingSequenceLength + induceOSRLength + sizeof(bool);
 
    addRegexStringSize(origOptions->_disabledOptTransformations, totalSize);
    addRegexStringSize(origOptions->_disabledInlineSites, totalSize);
@@ -3713,8 +3701,8 @@ J9::Options::packOptions(const TR::Options *origOptions)
    TR::Options * options = (TR::Options *)optionsStr.data();
    memcpy(options, origOptions, sizeof(TR::Options));
 
-   if (origOptions->_logFileName)
-      options->_logFileName = buf;
+   if (origOptions->getLogFileNameBase())
+      options->setLogFileNameBase(buf);
 
    uint8_t *curPos = ((uint8_t *)options) + sizeof(TR::Options);
 
@@ -3758,8 +3746,7 @@ J9::Options::packOptions(const TR::Options *origOptions)
    // Append the data pointed by a pointer to the content and patch the pointer
    // as a self-referring-pointer, or a relative pointer, which is
    // the offset of the data with respect to the pointer.
-   curPos = appendContent(options->_logFileName, curPos, logFileNameLength);
-   curPos = appendContent(options->_suffixLogsFormat, curPos, suffixLogsFormatLength);
+   curPos = appendContent(options->_logFileNameBase, curPos, logFileNameLength);
    curPos = appendContent(options->_blockShufflingSequence, curPos, blockShufflingSequenceLength);
    curPos = appendContent(options->_induceOSR, curPos, induceOSRLength);
 
@@ -3782,10 +3769,8 @@ J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR::Co
 
    // Convert relative pointers to absolute pointers
    // pointer = address of field + offset
-   if (options->_logFileName)
-      options->_logFileName = (char *)((uint8_t *)&(options->_logFileName) + (ptrdiff_t)options->_logFileName);
-   if (options->_suffixLogsFormat)
-      options->_suffixLogsFormat = (char *)((uint8_t *)&(options->_suffixLogsFormat) + (ptrdiff_t)options->_suffixLogsFormat);
+   if (options->getLogFileNameBase())
+      options->setLogFileNameBase((char *)((uint8_t *)&(options->_logFileNameBase) + (ptrdiff_t)options->_logFileNameBase));
    if (options->_blockShufflingSequence)
       options->_blockShufflingSequence = (char *)((uint8_t *)&(options->_blockShufflingSequence) + (ptrdiff_t)options->_blockShufflingSequence);
    if (options->_induceOSR)
@@ -3849,12 +3834,12 @@ J9::Options::packLogFile(TR::FILE *fp)
 int
 J9::Options::writeLogFileFromServer(const std::string& logFileContent)
    {
-   if (logFileContent.empty() || !_logFileName)
+   if (logFileContent.empty() || !getLogFileNameBase())
       return 0;
 
    char buf[JITSERVER_LOG_FILENAME_MAX_SIZE];
    _fe->acquireLogMonitor();
-   snprintf(buf, sizeof(buf), "%s.%d.REMOTE", _logFileName, ++_compilationSequenceNumber);
+   snprintf(buf, sizeof(buf), "%s.%d.REMOTE", getLogFileNameBase(), ++_compilationSequenceNumber);
    int sequenceNumber = _compilationSequenceNumber;
    _fe->releaseLogMonitor();
 
@@ -3869,10 +3854,12 @@ J9::Options::writeLogFileFromServer(const std::string& logFileContent)
          }
       return 0; // may overflow the buffer
       }
-   char tmp[JITSERVER_LOG_FILENAME_MAX_SIZE];
-   char * filename = _fe->getFormattedName(tmp, JITSERVER_LOG_FILENAME_MAX_SIZE, buf, _suffixLogsFormat, true);
 
-   TR::FILE *logFile = trfopen(filename, "wb", false);
+   char tmp[JITSERVER_LOG_FILENAME_MAX_SIZE];
+   char *fn = TR::Options::buildLogFileName(tmp, JITSERVER_LOG_FILENAME_MAX_SIZE, buf, -1, TR::Options::getLogFileNameSuffix(), true);
+   TR_ASSERT_FATAL(fn, "Error building JitServer log filename");
+
+   TR::FILE *logFile = trfopen(tmp, "wb", false);
    ::fputs(logFileContent.c_str(), logFile->_stream);
    trfflush(logFile);
    trfclose(logFile);
@@ -3890,18 +3877,18 @@ TR_Debug *createDebugObject(TR::Compilation *);
 void
 J9::Options::setLogFileForClientOptions(int suffixNumber)
    {
-   if (_logFileName)
+   if (getLogFileNameBase())
       {
       _fe->acquireLogMonitor();
       if (suffixNumber)
          {
-         self()->setOption(TR_EnablePIDExtension, true);
+         self()->setOption(TR_ApplyLogFileNameSuffix, true);
          self()->openLogFileCreateLogger(suffixNumber);
          }
       else
          {
          _compilationSequenceNumber++;
-         self()->setOption(TR_EnablePIDExtension, false);
+         self()->setOption(TR_ApplyLogFileNameSuffix, false);
          self()->openLogFileCreateLogger(_compilationSequenceNumber);
          }
 
@@ -3986,3 +3973,11 @@ J9::Options::resetFSD(J9JavaVM *vm, J9VMThread *vmThread, bool &doAOT)
    return fsdStatusJIT;
    }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
+void
+J9::Options::initialize()
+   {
+   self()->OMR::OptionsConnector::initialize();
+   }
+
+char *J9::Options::_logFileNameSuffix = ".%Y%m%d.%H%M%S.%pid";
