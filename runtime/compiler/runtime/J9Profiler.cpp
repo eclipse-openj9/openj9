@@ -67,7 +67,9 @@
 #include "runtime/ExternalProfiler.hpp"
 #include "runtime/J9Runtime.hpp"
 #include "runtime/J9ValueProfiler.hpp"
-
+#if defined(TR_TARGET_X86)
+#include "x/runtime/X86Runtime.hpp"
+#endif
 //*************************************************************************
 //
 // Optimization passes to insert recompilation counters, etc
@@ -3054,4 +3056,96 @@ TR_JProfilerThread::deleteProfileInfo(TR_PersistentProfileInfo * volatile *prevN
       }
 
    return next;
+   }
+
+TR_JProfBlockFrequencyCounterSites *
+TR_JProfBlockFrequencyCounterSites::make(TR_FrontEnd *fe,
+                                          TR_PersistentMemory *pm,
+                                          uintptr_t key,
+                                          TR::JProfBFPatchSites *sites,
+                                          OMR::RuntimeAssumption **sentinel)
+   {
+   TR_JProfBlockFrequencyCounterSites *res = new (pm) TR_JProfBlockFrequencyCounterSites(pm, key, sites);
+   sites->addReference();
+   res->addToRAT(pm, RuntimeAssumptionOnPatchJProfBlockFreqCounters, fe, sentinel);
+   return res;
+   }
+
+void
+TR_JProfBlockFrequencyCounterSites::compensate(TR_FrontEnd *vm, bool disableDataCollection, void *newKey)
+   {
+   // Instead of patching flag, this routine will update the whole instruction (E.g, 6 Bytes on Z with NOP)
+   // PatchSites will hold two pointers, first one will have a location to update, second one is the original instruction which we would be caching.
+   // If modifying instruction to be NOP, the second entry would not be used, but in case if if we are enabling the profiling again, we will  update
+   // NOP with the instruction to update counter which is already stored in the patch site second entry.
+   // _patchFlag zero means data collection is ON, in that case update all the increment code with NOP.
+   if (disableDataCollection && _patchFlag == 0)
+      {
+      for (size_t i = 0; i < _patchSites->getSize(); i++)
+         {
+         uint8_t *cursor = _patchSites->getLocation(i);
+         uint8_t instructionLength = *(uint8_t *)(_patchSites->getBumpInstructionPointer(i));
+#if defined(TR_TARGET_S390)
+         *(uint16_t*)cursor = 0xC004;
+#elif defined(TR_TARGET_X86)
+         if (instructionLength == 2)
+            {
+            *(uint16_t *)cursor = 0x9066;
+            }
+         else if (instructionLength == 3)
+            {
+            *(uint16_t *)cursor = 0xfeeb;
+            patchingFence16(cursor);
+            // byte 2
+            cursor[2] = 0x00;
+            patchingFence16(cursor);
+            *(uint16_t*)cursor = 0x1F0F;
+            }
+         else if (instructionLength == 4)
+            {
+            *(uint32_t *)cursor = 0x00401F0F;
+            }
+         else
+            {
+            TR_ASSERT_FATAL(0, "Unexpected instruction lenght - Can not patch");
+            }
+#endif
+         _patchFlag = 1;
+         }
+      }
+   else if (_patchFlag == 1)
+      {
+      for (size_t i = 0; i < _patchSites->getSize(); i++)
+         {
+         uint8_t *cursor = _patchSites->getLocation(i);
+         uint8_t *bumpInstruction = _patchSites->getBumpInstructionPointer(i);
+         uint8_t instructionLength = *bumpInstruction;
+         bumpInstruction += sizeof(uint8_t);
+#if defined(TR_TARGET_S390)
+         *(uint16_t*)cursor = *(uint16_t*)(bumpInstruction);
+#elif defined(TR_TARGET_X86)
+         if (instructionLength == 2)
+            {
+            *(uint16_t*)cursor = *(uint16_t*)(bumpInstruction);
+            }
+         else if (instructionLength == 3)
+            {
+            *(uint16_t *)cursor = 0xfeeb;
+            patchingFence16(cursor);
+            cursor[2] = *(uint8_t*)(bumpInstruction+2);
+            patchingFence16(cursor);
+            *(uint16_t*)cursor = *(uint16_t*)(bumpInstruction);
+            }
+         else if(instructionLength == 4)
+            {
+            *(uint32_t *)cursor = *(uint32_t*)(bumpInstruction);
+            }
+         else
+            {
+            TR_ASSERT_FATAL(0, "Unexpected instruction lenght - Can not patch");
+            }
+#endif
+         _patchFlag = 0;
+         }
+      }
    }
