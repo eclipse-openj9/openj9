@@ -674,7 +674,14 @@ jvmtiNotifyFramePop(jvmtiEnv *env,
 						} else
 #endif /* J9VM_JIT_FULL_SPEED_DEBUG */
 						{
-							*walkState.bp |= J9SF_A0_REPORT_FRAME_POP_TAG;
+#if JAVA_SPEC_VERSION >= 25
+							if (OMR_ARE_ANY_BITS_SET(*walkState.bp, J9SF_A0_REPORT_FRAME_POP_TAG)) {
+								rc = JVMTI_ERROR_DUPLICATE;
+							} else
+#endif /* JAVA_SPEC_VERSION >= 25 */
+							{
+								*walkState.bp |= J9SF_A0_REPORT_FRAME_POP_TAG;
+							}
 						}
 					}
 				}
