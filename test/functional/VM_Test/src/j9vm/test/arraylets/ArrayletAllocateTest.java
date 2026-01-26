@@ -21,6 +21,9 @@
  */
 package j9vm.test.arraylets;
 
+import com.ibm.lang.management.MemoryMXBean;
+import java.lang.management.ManagementFactory;
+
 /*
  * Test allocation of arrays near powers of two.
  * This can expose errors in arraylet calculations, resulting in crashes (such as CMVC 168253).
@@ -36,6 +39,12 @@ public class ArrayletAllocateTest {
 	public static Object[] objects = null;
 	
 	public static void main(String[] args) {
+		MemoryMXBean mb = (MemoryMXBean)ManagementFactory.getMemoryMXBean();
+		if (!("-Xgcpolicy:balanced".equals(mb.getGCMode()))) {
+			System.out.println("Only runs in -Xgcpolicy:balanced mode.");
+			return;
+		}
+
 		long maxMemory = Runtime.getRuntime().freeMemory();
 		
 		/* first, run the traditional version of the test */
