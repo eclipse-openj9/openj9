@@ -69,7 +69,7 @@ add_custom_command(
 	OUTPUT
 		${gen_constpool_files}
 	COMMAND "${Java_JAVA_EXECUTABLE}"
-		-cp "$<TARGET_PROPERTY:j9vmcp,JAR_FILE>${JAVA_PATH_SEP}$<TARGET_PROPERTY:objectmodel,JAR_FILE>"
+		-cp "$<TARGET_PROPERTY:j9vmcp,JAR_FILE>"
 		com.ibm.oti.VMCPTool.Main
 			-rootDir "${j9vm_SOURCE_DIR}"
 			-outputDir "${CONST_POOL_OUT_DIR}"
@@ -80,7 +80,6 @@ add_custom_command(
 		${j9vm_SOURCE_DIR}/oti/vmconstantpool.xml
 		"${CMAKE_CURRENT_BINARY_DIR}/parsed_cache.txt"
 		j9vmcp
-		objectmodel
 )
 add_custom_target(run_cptool
 	DEPENDS ${gen_constpool_files}
