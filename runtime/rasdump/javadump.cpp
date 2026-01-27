@@ -5716,7 +5716,7 @@ JavaCoreDumpWriter::writeCPUinfo(void)
 			"2CITARGETCPU   Target CPUs: ");
 	_OutputStream.writeInteger(target, "%i\n");
 
-	char buff[1024];
+	char buff[2048];
 	intptr_t rc = -1;
 	if (NULL != _VirtualMachine->jitConfig) {
 		rc = omrsysinfo_get_processor_feature_string(&_VirtualMachine->jitConfig->targetProcessor, buff, sizeof(buff));
