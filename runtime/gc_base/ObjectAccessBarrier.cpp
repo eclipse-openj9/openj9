@@ -704,12 +704,87 @@ MM_ObjectAccessBarrier::mixedObjectReadAddress(J9VMThread *vmThread, J9Object *s
 	return result;
 }
 
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
 /**
  * Read an object field: perform any pre-use barriers, calculate an effective address
  * and perform the work.
  * @param srcObject The object being used.
  * @param srcOffset The offset of the field.
  * @param isVolatile non-zero if the field is volatile.
+ * @return U_8
+ */
+ U_8
+MM_ObjectAccessBarrier::mixedObjectReadU8(J9VMThread *vmThread, J9Object *srcObject, UDATA srcOffset, bool isVolatile)
+{
+	U_8 *actualAddress = J9OAB_MIXEDOBJECT_EA(srcObject, srcOffset, U_8);
+	protectIfVolatileBefore(vmThread, isVolatile, true, false);
+	U_8 result = readU8Impl(vmThread, srcObject, actualAddress, isVolatile);
+	protectIfVolatileAfter(vmThread, isVolatile, true, false);
+	return result;
+}
+
+/**
+ * Read an object field: perform any pre-use barriers, calculate an effective address
+ * and perform the work.
+ * @param srcObject The object being used.
+ * @param srcOffset The offset of the field.
+ * @param isVolatile non-zero if the field is volatile.
+ * @return I_8
+ */
+ I_8
+MM_ObjectAccessBarrier::mixedObjectReadI8(J9VMThread *vmThread, J9Object *srcObject, UDATA srcOffset, bool isVolatile)
+{
+	I_8 *actualAddress = J9OAB_MIXEDOBJECT_EA(srcObject, srcOffset, I_8);
+	protectIfVolatileBefore(vmThread, isVolatile, true, false);
+	I_8 result = readI8Impl(vmThread, srcObject, actualAddress, isVolatile);
+	protectIfVolatileAfter(vmThread, isVolatile, true, false);
+	return result;
+}
+
+/**
+ * Read an object field: perform any pre-use barriers, calculate an effective address
+ * and perform the work.
+ * @param srcObject The object being used.
+ * @param srcOffset The offset of the field.
+ * @param isVolatile non-zero if the field is volatile.
+ * @return U_16
+ */
+ U_16
+MM_ObjectAccessBarrier::mixedObjectReadU16(J9VMThread *vmThread, J9Object *srcObject, UDATA srcOffset, bool isVolatile)
+{
+	U_16 *actualAddress = J9OAB_MIXEDOBJECT_EA(srcObject, srcOffset, U_16);
+	protectIfVolatileBefore(vmThread, isVolatile, true, false);
+	U_16 result = readU16Impl(vmThread, srcObject, actualAddress, isVolatile);
+	protectIfVolatileAfter(vmThread, isVolatile, true, false);
+	return result;
+}
+
+/**
+ * Read an object field: perform any pre-use barriers, calculate an effective address
+ * and perform the work.
+ * @param srcObject The object being used.
+ * @param srcOffset The offset of the field.
+ * @param isVolatile non-zero if the field is volatile.
+ * @return I_16
+ */
+ I_16
+MM_ObjectAccessBarrier::mixedObjectReadI16(J9VMThread *vmThread, J9Object *srcObject, UDATA srcOffset, bool isVolatile)
+{
+	I_16 *actualAddress = J9OAB_MIXEDOBJECT_EA(srcObject, srcOffset, I_16);
+	protectIfVolatileBefore(vmThread, isVolatile, true, false);
+	I_16 result = readI16Impl(vmThread, srcObject, actualAddress, isVolatile);
+	protectIfVolatileAfter(vmThread, isVolatile, true, false);
+	return result;
+}
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
+
+/**
+ * Read an object field: perform any pre-use barriers, calculate an effective address
+ * and perform the work.
+ * @param srcObject The object being used.
+ * @param srcOffset The offset of the field.
+ * @param isVolatile non-zero if the field is volatile.
+ * @return U_32
  */
  U_32
 MM_ObjectAccessBarrier::mixedObjectReadU32(J9VMThread *vmThread, J9Object *srcObject, UDATA srcOffset, bool isVolatile)
@@ -727,6 +802,7 @@ MM_ObjectAccessBarrier::mixedObjectReadU32(J9VMThread *vmThread, J9Object *srcOb
  * @param srcObject The object being used.
  * @param srcOffset The offset of the field.
  * @param isVolatile non-zero if the field is volatile.
+ * @return I_32
  */
  I_32
 MM_ObjectAccessBarrier::mixedObjectReadI32(J9VMThread *vmThread, J9Object *srcObject, UDATA srcOffset, bool isVolatile)
@@ -811,12 +887,82 @@ MM_ObjectAccessBarrier::mixedObjectStoreAddress(J9VMThread *vmThread, J9Object *
 	protectIfVolatileAfter(vmThread, isVolatile, false, false);
 }
 
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
 /**
  * Store an object field: perform any pre-use barriers, calculate an effective address
  * and perform the work.
  * @param destObject The object being used.
  * @param destOffset The offset of the field.
- * @param value The value to be stored
+ * @param value The U_8 value to be stored
+ * @param isVolatile non-zero if the field is volatile.
+ */
+void
+MM_ObjectAccessBarrier::mixedObjectStoreU8(J9VMThread *vmThread, J9Object *destObject, UDATA destOffset, U_8 value, bool isVolatile)
+{
+	U_8 *actualAddress = J9OAB_MIXEDOBJECT_EA(destObject, destOffset, U_8);
+	protectIfVolatileBefore(vmThread, isVolatile, false, false);
+	storeU8Impl(vmThread, destObject, actualAddress, value, isVolatile);
+	protectIfVolatileAfter(vmThread, isVolatile, false, false);
+}
+
+/**
+ * Store an object field: perform any pre-use barriers, calculate an effective address
+ * and perform the work.
+ * @param destObject The object being used.
+ * @param destOffset The offset of the field.
+ * @param value The I_8 value to be stored
+ * @param isVolatile non-zero if the field is volatile.
+ */
+void
+MM_ObjectAccessBarrier::mixedObjectStoreI8(J9VMThread *vmThread, J9Object *destObject, UDATA destOffset, I_8 value, bool isVolatile)
+{
+	I_8 *actualAddress = J9OAB_MIXEDOBJECT_EA(destObject, destOffset, I_8);
+	protectIfVolatileBefore(vmThread, isVolatile, false, false);
+	storeI8Impl(vmThread, destObject, actualAddress, value, isVolatile);
+	protectIfVolatileAfter(vmThread, isVolatile, false, false);
+}
+
+/**
+ * Store an object field: perform any pre-use barriers, calculate an effective address
+ * and perform the work.
+ * @param destObject The object being used.
+ * @param destOffset The offset of the field.
+ * @param value The U_16 value to be stored
+ * @param isVolatile non-zero if the field is volatile.
+ */
+void
+MM_ObjectAccessBarrier::mixedObjectStoreU16(J9VMThread *vmThread, J9Object *destObject, UDATA destOffset, U_16 value, bool isVolatile)
+{
+	U_16 *actualAddress = J9OAB_MIXEDOBJECT_EA(destObject, destOffset, U_16);
+	protectIfVolatileBefore(vmThread, isVolatile, false, false);
+	storeU16Impl(vmThread, destObject, actualAddress, value, isVolatile);
+	protectIfVolatileAfter(vmThread, isVolatile, false, false);
+}
+
+/**
+ * Store an object field: perform any pre-use barriers, calculate an effective address
+ * and perform the work.
+ * @param destObject The object being used.
+ * @param destOffset The offset of the field.
+ * @param value The I_16 value to be stored
+ * @param isVolatile non-zero if the field is volatile.
+ */
+void
+MM_ObjectAccessBarrier::mixedObjectStoreI16(J9VMThread *vmThread, J9Object *destObject, UDATA destOffset, I_16 value, bool isVolatile)
+{
+	I_16 *actualAddress = J9OAB_MIXEDOBJECT_EA(destObject, destOffset, I_16);
+	protectIfVolatileBefore(vmThread, isVolatile, false, false);
+	storeI16Impl(vmThread, destObject, actualAddress, value, isVolatile);
+	protectIfVolatileAfter(vmThread, isVolatile, false, false);
+}
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
+
+/**
+ * Store an object field: perform any pre-use barriers, calculate an effective address
+ * and perform the work.
+ * @param destObject The object being used.
+ * @param destOffset The offset of the field.
+ * @param value The U_32 value to be stored
  * @param isVolatile non-zero if the field is volatile.
  */
 void
@@ -833,7 +979,7 @@ MM_ObjectAccessBarrier::mixedObjectStoreU32(J9VMThread *vmThread, J9Object *dest
  * and perform the work.
  * @param destObject The object being used.
  * @param destOffset The offset of the field.
- * @param value The value to be stored
+ * @param value The I_32 value to be stored
  * @param isVolatile non-zero if the field is volatile.
  */
 void
