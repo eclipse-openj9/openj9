@@ -63,8 +63,6 @@ public class ValueTypeTests {
 	static MethodHandle makePoint2D = null;
 	static MethodHandle getX = null;
 	static MethodHandle getY = null;
-	static MethodHandle withX = null;
-	static MethodHandle withY = null;
 	/* line2D */
 	static Class<?> line2DClass = null;
 	static MethodHandle makeLine2D = null;
@@ -72,9 +70,7 @@ public class ValueTypeTests {
 	static Class<?> flattenedLine2DClass = null;
 	static MethodHandle makeFlattenedLine2D = null;
 	static MethodHandle getFlatSt = null;
-	static MethodHandle withFlatSt = null;
  	static MethodHandle getFlatEn = null;
- 	static MethodHandle withFlatEn = null;
 	/* triangle2D */
 	static Class<?> triangle2DClass = null;
 	static MethodHandle makeTriangle2D = null;
@@ -85,27 +81,22 @@ public class ValueTypeTests {
 	static Class<?> valueLongClass = null;
 	static MethodHandle makeValueLong = null;
 	static MethodHandle getLong = null;
-	static MethodHandle withLong = null;
 	/* valueInt */
 	static Class<?> valueIntClass = null;
 	static MethodHandle makeValueInt = null;
 	static MethodHandle getInt = null;
-	static MethodHandle withInt = null;
 	/* valueDouble */
 	static Class<?> valueDoubleClass = null;
 	static MethodHandle makeValueDouble = null;
 	static MethodHandle getDouble = null;
-	static MethodHandle withDouble = null;
 	/* valueFloat */
 	static Class<?> valueFloatClass = null;
 	static MethodHandle makeValueFloat = null;
 	static MethodHandle getFloat = null;
-	static MethodHandle withFloat = null;
 	/* valueObject */
 	static Class<?> valueObjectClass = null;
 	static MethodHandle makeValueObject = null;
 	static MethodHandle getObject = null;
-	static MethodHandle withObject = null;
 	/* largeObject */
 	static Class<?> largeObjectValueClass = null;
 	static MethodHandle makeLargeObjectValue = null;
