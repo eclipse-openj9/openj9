@@ -40,14 +40,13 @@ usage() {
   echo "  --print               write the Dockerfile to stdout (default; overrides '--build')"
   echo "  --tag=...             specify a name for the docker image (may be repeated, default: none)"
   echo "  --user=...            specify the user name (default: 'jenkins')"
+  echo "  --uid=...             specify the user id (default: system-dependent, typically >=1000)"
   echo "  --version=...         specify the distribution version (e.g. 6, 18.04)"
   echo ""
   local arch="$(uname -m)"
   echo "Supported build patterns on this host ($arch):"
 if [ $arch = x86_64 ] ; then
   echo "  bash mkdocker.sh --tag=openj9/cent6 --dist=centos --version=6  --build"
-fi
-if [ $arch = x86_64 -o $arch = ppc64le ] ; then
   echo "  bash mkdocker.sh --tag=openj9/cent7 --dist=centos --version=7  --build"
 fi
   echo "  bash mkdocker.sh --tag=openj9/ub18  --dist=ubuntu --version=18 --build"
@@ -72,7 +71,7 @@ jdk_versions=all
 registry=
 tags=()
 user=jenkins
-userid=1000
+userid=
 version=unspecified
 
 # Frequently used commands.
@@ -120,6 +119,9 @@ parse_options() {
         ;;
       --user=*)
         user="${arg#*=}"
+        ;;
+      --uid=*)
+        userid="${arg#*=}"
         ;;
       --version=*)
         version="${arg#*=}"
@@ -203,10 +205,6 @@ validate_options() {
           exit 1
           ;;
       esac
-      if [ $version = 24.04 ] ; then
-          # userid 1000 already exists in 24.04
-          userid=1001
-      fi
       ;;
     unspecified)
       echo "Unspecified distribution: use '--dist' option" >&2
@@ -502,12 +500,11 @@ else
 fi
   echo "# Update make."
   echo "RUN cd /tmp \\"
-  echo " && $wget_O make.tar.gz https://github.com/mirror/make/archive/$make_version.tar.gz \\"
+  echo " && $wget_O make.tar.gz https://ftp.gnu.org/gnu/make/make-$make_version.tar.gz \\"
   echo " && tar -xzf make.tar.gz \\"
   echo " && cd make-$make_version \\"
   echo " && ACLOCAL_PATH=/usr/share/aclocal autoreconf -i \\"
   echo " && ./configure \\"
-  echo " && make update \\"
   echo " && make \\"
   echo " && make install \\"
   echo " && ln -s make /usr/local/bin/gmake \\"
@@ -660,7 +657,7 @@ prepare_user() {
 create_user() {
   echo ""
   echo "# Add user home and copy authorized_keys and known_hosts."
-  echo "RUN useradd -ms /bin/bash --uid $userid $user --home-dir /home/$user \\"
+  echo "RUN useradd -ms /bin/bash ${userid:+--uid $userid} $user --home-dir /home/$user \\"
   echo " && mkdir /home/$user/.ssh \\"
   echo " && chmod 700 /home/$user/.ssh"
   echo "COPY authorized_keys known_hosts /home/$user/.ssh/"
