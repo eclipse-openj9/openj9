@@ -74,7 +74,7 @@ Java_jdk_internal_vm_vector_VectorSupport_getMaxLaneCount(JNIEnv *env, jclass cl
 jstring JNICALL
 Java_jdk_internal_vm_vector_VectorSupport_getCPUFeatures(JNIEnv *env, jclass clazz)
 {
-	char buf[1024];
+	char buf[2048];
 	OMRPORT_ACCESS_FROM_J9VMTHREAD((J9VMThread *)env);
 	OMRProcessorDesc processorDesc;
 	buf[0] = '\0';
