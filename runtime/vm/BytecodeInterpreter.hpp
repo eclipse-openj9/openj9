@@ -3218,7 +3218,13 @@ done:
 
 		if (isArray) {
 			/* OR in the required Sun bits */
-			modifiers |= (J9AccAbstract + J9AccFinal);
+			modifiers |= (J9AccAbstract | J9AccFinal);
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			if (J9_IS_CLASSFILE_OR_ROMCLASS_VALUETYPE_VERSION(romClass)) {
+				modifiers |= J9AccClassHasIdentity;
+			}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		}
 		returnSingleFromINL(REGISTER_ARGS, modifiers, 1);
 		return EXECUTE_BYTECODE;

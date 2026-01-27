@@ -42,10 +42,13 @@ import java.security.PrivilegedExceptionAction;
 import java.security.Permissions;
 import java.security.ProtectionDomain;
 import java.util.Collection;
+/*[IF INLINE-TYPES]*/
+import java.util.Collections;
+/*[ENDIF] INLINE-TYPES */
 import java.util.HashMap;
-/*[IF JAVA_SPEC_VERSION >= 16]*/
+/*[IF (JAVA_SPEC_VERSION >= 16) | INLINE-TYPES]*/
 import java.util.HashSet;
-/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
+/*[ENDIF] (JAVA_SPEC_VERSION >= 16) | INLINE-TYPES */
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -171,6 +174,10 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	private static final int ANNOTATION = 0x2000;
 	private static final int ENUM = 0x4000;
 	private static final int MEMBER_INVALID_TYPE = -1;
+/*[IF INLINE-TYPES]*/
+	private static final int CLASSFILE_MAJOR_VALHALLA = 44 + 27;
+	private static final int CLASSFILE_MINOR_PREVIEW = 65535;
+/*[ENDIF] INLINE-TYPES */
 
 /*[IF]*/
 	/**
@@ -2405,16 +2412,18 @@ public int getModifiers() {
 	/*[PR CMVC 89071, 89373] Return SYNTHETIC, ANNOTATION, ENUM modifiers */
 	int rawModifiers = getModifiersImpl();
 	if (isArray()) {
-		rawModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED |
-				Modifier.ABSTRACT | Modifier.FINAL;
-	} else {
-		int masks = Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED |
-				Modifier.STATIC | Modifier.FINAL | Modifier.INTERFACE |
-				Modifier.ABSTRACT | SYNTHETIC | ENUM | ANNOTATION;
+		rawModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED
 /*[IF INLINE-TYPES]*/
-		masks |= Modifier.IDENTITY | Modifier.STRICT;
+				| Modifier.IDENTITY
 /*[ENDIF] INLINE-TYPES */
-		rawModifiers &= masks;
+				| Modifier.ABSTRACT | Modifier.FINAL;
+	} else {
+		rawModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED
+/*[IF INLINE-TYPES]*/
+				| Modifier.IDENTITY | Modifier.STRICT
+/*[ENDIF] INLINE-TYPES */
+				| Modifier.STATIC | Modifier.FINAL | Modifier.INTERFACE
+				| Modifier.ABSTRACT | SYNTHETIC | ENUM | ANNOTATION;
 	}
 	return rawModifiers;
 }
@@ -6166,6 +6175,22 @@ public Class<?>[] getNestMembers()
 	/*[ENDIF] (11 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24) */
 
 /*[IF JAVA_SPEC_VERSION >= 20]*/
+
+/*[IF INLINE-TYPES]*/
+	private static int getClassFileMajorVersion(int classFileVersion) {
+		return classFileVersion & 0xFFFF;
+	}
+
+	private static int getClassFileMinorVersion(int classFileVersion) {
+		return classFileVersion >>> 16;
+	}
+
+	private static boolean isValhallaPreviewClassFile(int classFileVersion) {
+		return (getClassFileMajorVersion(classFileVersion) >= CLASSFILE_MAJOR_VALHALLA)
+			&& (getClassFileMinorVersion(classFileVersion) == CLASSFILE_MINOR_PREVIEW);
+	}
+/*[ENDIF] INLINE-TYPES */
+
 	/**
 	 * For an array class, the PUBLIC, PRIVATE and PROTECTED access flags should be the
 	 * same as those of its component type, and the FINAL access flag should always be
@@ -6178,26 +6203,39 @@ public Class<?>[] getNestMembers()
 	 * @since 20
 	 */
 	public Set<AccessFlag> accessFlags() {
-		int rawModifiers = getModifiersImpl();
+		final int rawModifiers = getModifiersImpl();
+		final boolean isArrayClass = isArray();
 		/* Uses the implementation from getModifiers() and adds SUPER access flag to
 		 * the mask, instead of directly invoking getModifiers(), because the SUPER flag
 		 * may or may not be set in the rawModifiers.
 		 */
+		int maskedModifiers = rawModifiers;
 		AccessFlag.Location location = AccessFlag.Location.CLASS;
-		if (isArray()) {
-			rawModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED |
-						Modifier.ABSTRACT | Modifier.FINAL;
+		if (isArrayClass) {
+			maskedModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED
+					| Modifier.ABSTRACT | Modifier.FINAL;
 			location = AccessFlag.Location.INNER_CLASS;
 		} else {
-			rawModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED |
-						Modifier.STATIC | Modifier.FINAL | Modifier.INTERFACE |
-						Modifier.ABSTRACT | SYNTHETIC | ENUM | ANNOTATION |
-						AccessFlag.SUPER.mask() | AccessFlag.MODULE.mask();
+			maskedModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED
+					| Modifier.STATIC | Modifier.FINAL | Modifier.INTERFACE
+					| Modifier.ABSTRACT | SYNTHETIC | ENUM | ANNOTATION
+					| AccessFlag.SUPER.mask() | AccessFlag.MODULE.mask();
 			if (isMemberClass() || isLocalClass() || isAnonymousClass()) {
 				location = AccessFlag.Location.INNER_CLASS;
 			}
 		}
-		return AccessFlag.maskToAccessFlags(rawModifiers, location);
+
+		Set<AccessFlag> flags = AccessFlag.maskToAccessFlags(maskedModifiers, location);
+/*[IF INLINE-TYPES]*/
+		if (isValhallaPreviewClassFile(getClassFileVersion())) {
+			if (isArrayClass && Modifier.isIdentity(rawModifiers)) {
+				flags = new HashSet<>(flags);
+				flags.add(AccessFlag.IDENTITY);
+				flags = Collections.unmodifiableSet(flags);
+			}
+		}
+/*[ENDIF] INLINE-TYPES */
+		return flags;
 	}
 
 	/**
