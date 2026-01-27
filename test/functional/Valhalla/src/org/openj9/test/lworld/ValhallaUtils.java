@@ -27,9 +27,10 @@ import static org.objectweb.asm.Opcodes.*;
 
 public class ValhallaUtils {
 	/**
-	 * Currently value type is built on JDK27, so use java file major version (44 + 27) for now.
+	 * Currently value types are built on JDK27, so use java file major version (44 + 27) for now.
 	 * If moved this needs to be incremented to the next class file version.
 	 * VALUE_TYPES_MAJOR_VERSION in oti/j9consts.h needs to be updated as well.
+	 * Also update CLASSFILE_MAJOR_VALHALLA/CLASSFILE_MINOR_PREVIEW in Class.java when the version changes.
 	 * Minor version is in 16 most significant bits for asm.
 	 */
 	static final int VALUE_TYPE_CLASS_FILE_VERSION = (65535 << 16) | (44 + 27);
