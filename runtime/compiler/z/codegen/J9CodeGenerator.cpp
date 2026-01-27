@@ -4254,3 +4254,13 @@ J9::Z::CodeGenerator::supportsInliningOfIsAssignableFrom()
    static const bool disableInliningOfIsAssignableFrom = feGetEnv("TR_disableInlineIsAssignableFrom") != NULL;
    return !disableInliningOfIsAssignableFrom;
    }
+
+bool J9::Z::CodeGenerator::supportsNonHelper(TR::SymbolReferenceTable::CommonNonhelperSymbol symbol)
+   {
+   if (symbol == TR::SymbolReferenceTable::jitDispatchJ9MethodSymbol)
+      {
+      return true;
+      }
+
+   return J9::CodeGenerator::supportsNonHelper(symbol);
+}
