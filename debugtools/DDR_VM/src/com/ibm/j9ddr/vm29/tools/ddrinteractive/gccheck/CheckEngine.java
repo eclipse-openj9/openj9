@@ -62,7 +62,6 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.MM_GCExtensionsPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.MM_HeapRegionManagerPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.MM_OwnableSynchronizerObjectListPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.MM_SublistPuddlePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.MM_UnfinalizedObjectListPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
@@ -99,9 +98,6 @@ class CheckEngine
 	private J9ObjectPointer[] _checkedObjectCache = new J9ObjectPointer[OBJECT_CACHE_SIZE];
 
 	private static final int UNINITIALIZED_SIZE = -1;
-	private int _ownableSynchronizerObjectCountOnList = UNINITIALIZED_SIZE; /**< the count of ownableSynchronizerObjects on the ownableSynchronizerLists, =UNINITIALIZED_SIZE indicates that the count has not been calculated */
-	private int _ownableSynchronizerObjectCountOnHeap = UNINITIALIZED_SIZE; /**< the count of ownableSynchronizerObjects on the heap, =UNINITIALIZED_SIZE indicates that the count has not been calculated */
-	private boolean _needVerifyOwnableSynchronizerConsistency;
 	private boolean _isVirtualLargeObjectHeapEnabled;
 
 	private GCHeapRegionManager _hrm;
@@ -234,25 +230,6 @@ class CheckEngine
 				_reporter.reportHeapWalkError(error, _lastHeapObject1, _lastHeapObject2, _lastHeapObject3);
 				return J9MODRON_SLOT_ITERATOR_UNRECOVERABLE_ERROR;
 			}
-		}
-
-		try {
-			/* check Ownable Synchronizer Object consistency */
-			if (needVerifyOwnableSynchronizerConsistency()) {
-				if (J9Object.OBJECT_HEADER_SHAPE_MIXED == ObjectModel.getClassShape(clazz).intValue() && !J9ClassHelper.classFlags(clazz).bitAnd(J9AccClassOwnableSynchronizer).eq(0)) {
-					if (ObjectAccessBarrier.isObjectInOwnableSynchronizerList(object).isNull()) {
-						CheckError error = new CheckError(object, _cycle, _currentCheck, "Object ", J9MODRON_GCCHK_OWNABLE_SYNCHRONIZER_OBJECT_IS_NOT_ATTACHED_TO_THE_LIST, _cycle.nextErrorCount());
-						_reporter.report(error);
-					} else {
-						_ownableSynchronizerObjectCountOnHeap += 1;
-					}
-				}
-			}
-		} catch (CorruptDataException cde) {
-			// TODO : cde should be part of the error
-			CheckError error = new CheckError(object, _cycle, _currentCheck, "Object ", J9MODRON_GCCHK_RC_CORRUPT_DATA_EXCEPTION, _cycle.nextErrorCount());
-			_reporter.report(error);
-			return J9MODRON_SLOT_ITERATOR_UNRECOVERABLE_ERROR;
 		}
 
 		if (J9MODRON_GCCHK_RC_OK == result) {
@@ -1302,13 +1279,6 @@ class CheckEngine
 //		clearRegionDescription(null); // &_regionDesc
 		clearCheckedCache();
 
-		if (CheckBase.J9MODRON_GCCHK_MISC_OWNABLESYNCHRONIZER_CONSISTENCY == (_cycle.getMiscFlags() & CheckBase.J9MODRON_GCCHK_MISC_OWNABLESYNCHRONIZER_CONSISTENCY) ) {
-			_needVerifyOwnableSynchronizerConsistency = true;
-		}
-		else {
-			_needVerifyOwnableSynchronizerConsistency = false;
-		}
-		clearCountsForOwnableSynchronizerObjects();
 		prepareForHeapWalk();
 	}
 
@@ -1392,34 +1362,6 @@ class CheckEngine
 		return J9MODRON_SLOT_ITERATOR_OK;
 	}
 
-	public int checkSlotOwnableSynchronizerList(J9ObjectPointer object, MM_OwnableSynchronizerObjectListPointer currentList)
-	{
-		if (needVerifyOwnableSynchronizerConsistency()) {
-			_ownableSynchronizerObjectCountOnList += 1;
-		}
-		try {
-			int result = checkObjectIndirect(object);
-			if (J9MODRON_GCCHK_RC_OK != result) {
-				CheckError error = new CheckError(currentList, object, _cycle, _currentCheck, result, _cycle.nextErrorCount());
-				_reporter.report(error);
-				_reporter.reportHeapWalkError(error, _lastHeapObject1, _lastHeapObject2, _lastHeapObject3);
-				return J9MODRON_SLOT_ITERATOR_UNRECOVERABLE_ERROR;
-			}
-
-			J9ClassPointer instanceClass = J9ObjectHelper.clazz(object);
-			if (J9ClassHelper.classFlags(instanceClass).bitAnd(J9AccClassOwnableSynchronizer).eq(0)) {
-				CheckError error = new CheckError(currentList, object, _cycle, _currentCheck, J9MODRON_GCCHK_RC_INVALID_FLAGS, _cycle.nextErrorCount());
-				_reporter.report(error);
-			}
-		} catch (CorruptDataException e) {
-			CheckError error = new CheckError(currentList, object, _cycle, _currentCheck, J9MODRON_GCCHK_RC_CORRUPT_DATA_EXCEPTION, _cycle.nextErrorCount());
-			_reporter.report(error);
-			_reporter.reportHeapWalkError(error, _lastHeapObject1, _lastHeapObject2, _lastHeapObject3);
-			return J9MODRON_SLOT_ITERATOR_UNRECOVERABLE_ERROR;
-		}
-		return J9MODRON_SLOT_ITERATOR_OK;
-	}
-
 	public int checkSlotFinalizableList(J9ObjectPointer object)
 	{
 		int result = checkObjectIndirect(object);
@@ -1435,48 +1377,5 @@ class CheckEngine
 	public void setMaxErrorsToReport(int count)
 	{
 		_reporter.setMaxErrorsToReport(count);
-	}
-
-	public void clearCountsForOwnableSynchronizerObjects()
-	{
-		_ownableSynchronizerObjectCountOnList = UNINITIALIZED_SIZE;
-		_ownableSynchronizerObjectCountOnHeap = UNINITIALIZED_SIZE;
-	}
-
-	public boolean verifyOwnableSynchronizerObjectCounts()
-	{
-		boolean ret = true;
-		if ((UNINITIALIZED_SIZE != _ownableSynchronizerObjectCountOnList) && (UNINITIALIZED_SIZE != _ownableSynchronizerObjectCountOnHeap)) {
-			if (_ownableSynchronizerObjectCountOnList != _ownableSynchronizerObjectCountOnHeap) {
-				_reporter.format(
-						"<gc check: found count=%d of OwnableSynchronizerObjects on Heap doesn't match count=%d on lists>%n",
-						_ownableSynchronizerObjectCountOnHeap, _ownableSynchronizerObjectCountOnList);
-				ret = false;
-			}
-		}
-
-		return ret;
-	}
-
-	public void reportOwnableSynchronizerCircularReferenceError(J9ObjectPointer object, MM_OwnableSynchronizerObjectListPointer currentList)
-	{
-		CheckError error = new CheckError(currentList, object, _cycle, _currentCheck, J9MODRON_GCCHK_OWNABLE_SYNCHRONIZER_LIST_HAS_CIRCULAR_REFERENCE, _cycle.nextErrorCount());
-		_reporter.report(error);
-		_reporter.reportHeapWalkError(error, _lastHeapObject1, _lastHeapObject2, _lastHeapObject3);
-	}
-
-	public void initializeOwnableSynchronizerCountOnList()
-	{
-		_ownableSynchronizerObjectCountOnList = 0;
-	}
-
-	public void initializeOwnableSynchronizerCountOnHeap()
-	{
-		_ownableSynchronizerObjectCountOnHeap = 0;
-	}
-
-	public boolean needVerifyOwnableSynchronizerConsistency()
-	{
-		return _needVerifyOwnableSynchronizerConsistency;
 	}
 }

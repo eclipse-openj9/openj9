@@ -33,7 +33,6 @@ set(gc_check_sources
 	CheckJVMTIObjectTagTables.cpp
 	CheckMonitorTable.cpp
 	CheckObjectHeap.cpp
-	CheckOwnableSynchronizerList.cpp
 	CheckRememberedSet.cpp
 	CheckReporter.cpp
 	CheckReporterTTY.cpp

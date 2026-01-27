@@ -1,5 +1,9 @@
 /*******************************************************************************
+<<<<<<< Upstream, based on Upstream/master
  * Copyright IBM Corp. and others 1991
+=======
+ * Copyright (c) 1991, 2022 IBM Corp. and others
+>>>>>>> 4b2ce39 New OwnableSynchronizerObjectList
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +34,6 @@
 #include "GCExtensions.hpp"
 #include "ObjectAllocationInterface.hpp"
 #include "OMRVMThreadInterface.hpp"
-#include "OwnableSynchronizerObjectBuffer.hpp"
 #include "SublistFragment.hpp"
 #include "UnfinalizedObjectBuffer.hpp"
 #include "VMThreadStackSlotIterator.hpp"

@@ -71,16 +71,7 @@ private:
 public:
 
 	void clear();
-	/* clear only OwnableSynchronizerObject related data */
-	void clearOwnableSynchronizerCounts();
-	/* merge only OwnableSynchronizerObject related data */
-	void mergeOwnableSynchronizerCounts(MM_ScavengerJavaStats *statsToMerge);
 	
-	MMINLINE void 
-	updateOwnableSynchronizerNurseryCounts(uintptr_t survivedCount)
-	{
-		_ownableSynchronizerNurserySurvived += survivedCount;
-	}
 	/* clear only ContinuationObject related data */
 	void clearContinuationCounts();
 	/* merge only ContinuationObject related data */

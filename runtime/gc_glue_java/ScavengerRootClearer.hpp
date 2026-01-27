@@ -151,9 +151,6 @@ public:
 	}
 #endif /* J9VM_GC_FINALIZATION */
 
-	/* empty, move ownable synchronizer processing in main scan phase */
-	virtual void scanOwnableSynchronizerObjects(MM_EnvironmentBase *env) {}
-
 	virtual void
 	scanContinuationObjects(MM_EnvironmentBase *env)
 	{

@@ -158,6 +158,11 @@ public:
 			extensions->stringTable->kill(env);
 			extensions->stringTable = NULL;
 		}
+
+		if (NULL != extensions->ownableSynchronizerObjectList) {
+			extensions->ownableSynchronizerObjectList->kill(env);
+			extensions->ownableSynchronizerObjectList = NULL;
+		}
 	}
 
 	OMR_SizeClasses *getSegregatedSizeClasses(MM_EnvironmentBase *env)
@@ -193,14 +198,12 @@ public:
 		reinitializeGCParameters(env);
 
 		/**
-		 *  backup and reset the root of global lists (unfinalizedObjectLists, ownableSynchronizerObjectLists, continuationObjectLists)
+		 *  backup and reset the root of global lists (unfinalizedObjectLists, continuationObjectLists)
 		 *  preparing for rebuilding the lists.
 		 *  global referenceObjectLists(no need to backup/reset) is only for realtime collector, not for standard collectors.
 		 */
 		MM_UnfinalizedObjectList *unfinalizedObjectLists = _extensions->unfinalizedObjectLists;
 		_extensions->unfinalizedObjectLists = NULL;
-		MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectLists = _extensions->getOwnableSynchronizerObjectLists();
-		_extensions->setOwnableSynchronizerObjectLists(NULL);
 		MM_ContinuationObjectList *continuationObjectLists = _extensions->getContinuationObjectLists();
 		_extensions->setContinuationObjectLists(NULL);
 
@@ -217,9 +220,6 @@ public:
 		/* restore the root of global lists if the lists were not rebuilt during reinitializeForRestore */
 		if (NULL == _extensions->unfinalizedObjectLists) {
 			_extensions->unfinalizedObjectLists = unfinalizedObjectLists;
-		}
-		if (NULL == _extensions->getOwnableSynchronizerObjectLists()) {
-			_extensions->setOwnableSynchronizerObjectLists(ownableSynchronizerObjectLists);
 		}
 		if (NULL == _extensions->getContinuationObjectLists()) {
 			_extensions->setContinuationObjectLists(continuationObjectLists);

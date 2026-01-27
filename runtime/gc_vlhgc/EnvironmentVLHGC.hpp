@@ -40,7 +40,7 @@
 #endif /* J9VM_GC_MODRON_COMPACTION */
 #include "CycleStateVLHGC.hpp"
 #include "EnvironmentBase.hpp"
-#include "OwnableSynchronizerObjectBufferVLHGC.hpp"
+#include "ObjectAccessBarrier.hpp"
 #include "ReferenceObjectBufferVLHGC.hpp"
 #include "UnfinalizedObjectBufferVLHGC.hpp"
 #include "WorkStack.hpp"

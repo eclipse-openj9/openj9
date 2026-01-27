@@ -271,14 +271,6 @@ MM_VerboseHandlerOutputVLHGC::outputUnfinalizedInfo(MM_EnvironmentBase *env, UDA
 }
 
 void
-MM_VerboseHandlerOutputVLHGC::outputOwnableSynchronizerInfo(MM_EnvironmentBase *env, UDATA indent, UDATA ownableSynchronizerCandidates, UDATA ownableSynchronizerCleared)
-{
-	if (0 != ownableSynchronizerCandidates) {
-		_manager->getWriterChain()->formatAndOutput(env, indent, "<ownableSynchronizers candidates=\"%zu\" cleared=\"%zu\" />", ownableSynchronizerCandidates, ownableSynchronizerCleared);
-	}
-}
-
-void
 MM_VerboseHandlerOutputVLHGC::outputContinuationInfo(MM_EnvironmentBase *env, UDATA indent, UDATA continuationCandidates, UDATA continuationCleared)
 {
 	if (0 != continuationCandidates) {
@@ -464,7 +456,6 @@ MM_VerboseHandlerOutputVLHGC::handleCopyForwardEnd(J9HookInterface** hook, UDATA
 	outputOffHeapInfo(env, 1, copyForwardStats->_offHeapRegionCandidates, copyForwardStats->_offHeapRegionsCleared);
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 	outputUnfinalizedInfo(env, 1, copyForwardStats->_unfinalizedCandidates, copyForwardStats->_unfinalizedEnqueued);
-	outputOwnableSynchronizerInfo(env, 1, copyForwardStats->_ownableSynchronizerCandidates, (copyForwardStats->_ownableSynchronizerCandidates-copyForwardStats->_ownableSynchronizerSurvived));
 	outputContinuationInfo(env, 1, copyForwardStats->_continuationCandidates, copyForwardStats->_continuationCleared);
 
 	outputReferenceInfo(env, 1, "soft", &copyForwardStats->_softReferenceStats, extensions->getDynamicMaxSoftReferenceAge(), extensions->getMaxSoftReferenceAge());
@@ -615,7 +606,6 @@ MM_VerboseHandlerOutputVLHGC::outputMarkSummary(MM_EnvironmentBase *env, const c
 	outputOffHeapInfo(env, 1, markStats->_offHeapRegionCandidates, markStats->_offHeapRegionsCleared);
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 	outputUnfinalizedInfo(env, 1, markStats->_unfinalizedCandidates, markStats->_unfinalizedEnqueued);
-	outputOwnableSynchronizerInfo(env, 1, markStats->_ownableSynchronizerCandidates, markStats->_ownableSynchronizerCleared);
 	outputContinuationInfo(env, 1, markStats->_continuationCandidates, markStats->_continuationCleared);
 
 	outputReferenceInfo(env, 1, "soft", &markStats->_softReferenceStats, extensions->getDynamicMaxSoftReferenceAge(), extensions->getMaxSoftReferenceAge());

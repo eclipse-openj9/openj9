@@ -34,7 +34,6 @@
 #include "CheckJVMTIObjectTagTables.hpp"
 #include "CheckMonitorTable.hpp"
 #include "CheckObjectHeap.hpp"
-#include "CheckOwnableSynchronizerList.hpp"
 #include "CheckRememberedSet.hpp"
 #include "CheckStringTable.hpp"
 #include "CheckUnfinalizedList.hpp"
@@ -46,10 +45,6 @@
 
 #define TOTAL_NUM_CHECKS (sizeof(GC_CheckCycle::funcArray) / sizeof(GC_CheckCycle::funcStruct))
 const GC_CheckCycle::funcStruct GC_CheckCycle::funcArray[] = {
-	/* move ownablesynchronizer check before objectheap check in order to ownablesynchronizer check runs after objectheap check(the checks in stack, last in first out) 
-	 * for ownablesynchronizer consistency check, which defends on both ownablesynchronizer check before objectheap check. the verify consistency only at the end of ownablesynchronizer check. 
-	 */
-	{"ownablesynchronizer", J9MODRON_GCCHK_SCAN_OWNABLE_SYNCHRONIZER, GC_CheckOwnableSynchronizerList::newInstance},
  	{"objectheap", J9MODRON_GCCHK_SCAN_OBJECT_HEAP, GC_CheckObjectHeap::newInstance},
 	{"classheap", J9MODRON_GCCHK_SCAN_CLASS_HEAP, GC_CheckClassHeap::newInstance},
 #if defined(J9VM_GC_GENERATIONAL)
@@ -407,15 +402,6 @@ done:
 	generateCheckList(scanFlags);
 	_checkFlags = checkFlags;
 	_miscFlags = miscFlags;
-	
-	if (J9MODRON_GCCHK_SCAN_OBJECT_HEAP == (scanFlags & J9MODRON_GCCHK_SCAN_OBJECT_HEAP)) {
-		/* initialize OwnableSynchronizerCount On Object Heap for ownableSynchronizer consistency check */
-		_engine->initializeOwnableSynchronizerCountOnHeap();
-	}
-	if (J9MODRON_GCCHK_SCAN_OWNABLE_SYNCHRONIZER == (scanFlags & J9MODRON_GCCHK_SCAN_OWNABLE_SYNCHRONIZER)) {
-		/* initialize OwnableSynchronizerCount On Lists for ownableSynchronizer consistency check */
-		_engine->initializeOwnableSynchronizerCountOnList();
-	}
 	
 	return true;
 

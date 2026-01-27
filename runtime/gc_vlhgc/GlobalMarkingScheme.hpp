@@ -271,12 +271,6 @@ private:
 #endif /* J9VM_GC_FINALIZATION */
 
 	/**
-	 * Scan all ownable synchronizer objects in the collection set.
-	 * @param env[in] the current thread
-	 */
-	void scanOwnableSynchronizerObjects(MM_EnvironmentVLHGC *env);
-
-	/**
 	 * Scan all continuation objects in the collection set.
 	 * @param env[in] the current thread
 	 */

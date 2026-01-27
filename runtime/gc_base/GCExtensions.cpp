@@ -277,12 +277,20 @@ MM_GCExtensions::computeDefaultMaxHeapForJava(bool enableOriginalJDK8HeapSizeCom
 	return maxMemoryValue;
 }
 
-MM_OwnableSynchronizerObjectList *
-MM_GCExtensions::getOwnableSynchronizerObjectListsExternal(J9VMThread *vmThread)
+void
+MM_GCExtensions::rebuildOwnableSynchronizerObjectList(MM_EnvironmentBase* env)
+{
+	ownableSynchronizerObjectList->reset();
+	ownableSynchronizerObjectList->rebuildList(env);
+}
+
+MM_OwnableSynchronizerObjectList*
+MM_GCExtensions::getOwnableSynchronizerObjectListExternal()
 {
 	Assert_MM_true(!isConcurrentScavengerInProgress());
+	Assert_MM_true(ownableSynchronizerObjectList->isRefreshed());
+	return ownableSynchronizerObjectList;
 
-	return ownableSynchronizerObjectLists;
 }
 
 MM_ContinuationObjectList *

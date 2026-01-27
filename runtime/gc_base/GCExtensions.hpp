@@ -93,9 +93,10 @@ class MM_IdleGCManager;
  */
 class MM_GCExtensions : public MM_GCExtensionsBase {
 private:
-	MM_OwnableSynchronizerObjectList* ownableSynchronizerObjectLists; /**< The global linked list of ownable synchronizer object lists. */
 	MM_ContinuationObjectList* continuationObjectLists; /**< The global linked list of continuation object lists. */
 public:
+	MM_OwnableSynchronizerObjectList* ownableSynchronizerObjectList;
+	bool needToEnsureHeapWalkableForRebuildingOSOL;
 	MM_StringTable* stringTable; /**< top level String Table structure (internally organized as a set of hash sub-tables */
 
 	void* gcchkExtensions;
@@ -167,7 +168,7 @@ public:
 
 	MM_UnfinalizedObjectList* unfinalizedObjectLists; /**< The global linked list of unfinalized object lists. */
 	
-	uintptr_t objectListFragmentCount; /**< the size of Local Object Buffer(per gc thread), used by referenceObjectBuffer, UnfinalizedObjectBuffer and OwnableSynchronizerObjectBuffer */
+	uintptr_t objectListFragmentCount; /**< the size of Local Object Buffer(per gc thread), used by referenceObjectBuffer, UnfinalizedObjectBuffer */
 
 	MM_Wildcard* numaCommonThreadClassNamePatterns; /**< A linked list of thread class names which should be associated with the common context */
 
@@ -333,16 +334,9 @@ public:
 	static MM_GCExtensions* getExtensions(MM_EnvironmentBase* env) { return getExtensions(env->getExtensions()); }
 
 	MMINLINE J9JavaVM* getJavaVM() {return static_cast<J9JavaVM*>(_omrVM->_language_vm);}
-	
-	/**
-	 * Return ownable synchronizer object lists by first ensuring that the lists are in a consistent state (e.g., during concurrent gc).
-	 * This should be used by any external consumer (non-GC consuming the list)     
-	 * @param vmThread The current J9VMThread thread (used to invoke j9gc apis if required)
-	 * @return Linked list of ownable synchronizer objects
-	 */
-	MM_OwnableSynchronizerObjectList* getOwnableSynchronizerObjectListsExternal(J9VMThread *vmThread);
-	MMINLINE MM_OwnableSynchronizerObjectList* getOwnableSynchronizerObjectLists() { return ownableSynchronizerObjectLists; }
-	MMINLINE void setOwnableSynchronizerObjectLists(MM_OwnableSynchronizerObjectList* newOwnableSynchronizerObjectLists) { ownableSynchronizerObjectLists = newOwnableSynchronizerObjectLists; }
+
+	void rebuildOwnableSynchronizerObjectList(MM_EnvironmentBase* env);
+	MM_OwnableSynchronizerObjectList* getOwnableSynchronizerObjectListExternal();
 
 	MM_ContinuationObjectList* getContinuationObjectListsExternal(J9VMThread *vmThread);
 	MMINLINE MM_ContinuationObjectList* getContinuationObjectLists() { return continuationObjectLists; }
@@ -398,8 +392,9 @@ public:
 	 */
 	MM_GCExtensions()
 		: MM_GCExtensionsBase()
-		, ownableSynchronizerObjectLists(NULL)
 		, continuationObjectLists(NULL)
+		, ownableSynchronizerObjectList(NULL)
+		, needToEnsureHeapWalkableForRebuildingOSOL(true)
 		, stringTable(NULL)
 		, gcchkExtensions(NULL)
 		, tgcExtensions(NULL)

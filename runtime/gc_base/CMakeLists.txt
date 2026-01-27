@@ -38,7 +38,6 @@ set(gc_base_sources
 	modronapi.cpp
 	ObjectAccessBarrier.cpp
 	ObjectCheck.cpp
-	OwnableSynchronizerObjectBuffer.cpp
 	OwnableSynchronizerObjectList.cpp
 	PacketSlotIterator.cpp
 	QueryGCStatus.cpp

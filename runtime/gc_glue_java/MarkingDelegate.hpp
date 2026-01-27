@@ -54,7 +54,6 @@ private:
 	MM_MarkingScheme *_markingScheme;
 	bool _collectStringConstantsEnabled;
 	bool _shouldScanUnfinalizedObjects;
-	bool _shouldScanOwnableSynchronizerObjects;
 	bool _shouldScanContinuationObjects;
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	MM_MarkMap *_markMap;							/**< This is set when dynamic class loading is enabled, NULL otherwise */
@@ -101,7 +100,6 @@ public:
 		, _markingScheme(NULL)
 		, _collectStringConstantsEnabled(false)
 		, _shouldScanUnfinalizedObjects(false)
-		, _shouldScanOwnableSynchronizerObjects(false)
 		, _shouldScanContinuationObjects(false)
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 		, _markMap(NULL)
@@ -164,7 +162,6 @@ public:
 		case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
 		case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 		case GC_ObjectModel::SCAN_MIXED_OBJECT:
-		case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
 		case GC_ObjectModel::SCAN_CLASS_OBJECT:
 		case GC_ObjectModel::SCAN_CLASSLOADER_OBJECT:
 			objectScanner = GC_MixedObjectScanner::newInstance(env, objectPtr, scannerSpace, 0);
@@ -238,22 +235,11 @@ public:
 	}
 
 	MMINLINE bool
-	shouldScanOwnableSynchronizerObjects()
-	{
-		return _shouldScanOwnableSynchronizerObjects;
-	}
-
-	MMINLINE bool
 	shouldScanContinuationObjects()
 	{
 		return _shouldScanContinuationObjects;
 	}
 
-	MMINLINE void
-	shouldScanOwnableSynchronizerObjects(bool shouldScanOwnableSynchronizerObjects)
-	{
-		_shouldScanOwnableSynchronizerObjects = shouldScanOwnableSynchronizerObjects;
-	}
 	MMINLINE void
 	shouldScanContinuationObjects(bool shouldScanContinuationObjects)
 	{

@@ -59,7 +59,7 @@ MM_ScavengerBackOutScanner::scanAllSlots(MM_EnvironmentBase *env)
 	/* Walk roots fixing up pointers through reverse forwarding information */
 	MM_RootScanner::scanAllSlots(env);
 
-	/* Back out Ownable Synchronizer and Continuation Processing */
+	/* Back out Continuation Processing */
 	MM_HeapRegionDescriptorStandard *region = NULL;
 	GC_HeapRegionIteratorStandard regionIterator(_extensions->heapRegionManager);
 
@@ -73,7 +73,6 @@ MM_ScavengerBackOutScanner::scanAllSlots(MM_EnvironmentBase *env)
 				}
 			} else {
 				/* Back out all of regions (includes tenure region, which is backed up during startProcessing). */
-				regionExtension->_ownableSynchronizerObjectLists[i].backoutList();
 				regionExtension->_continuationObjectLists[i].backoutList();
 			}
 		}

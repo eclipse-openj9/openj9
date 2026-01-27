@@ -29,7 +29,6 @@
 #include "modron.h"
 
 #include "BaseNonVirtual.hpp"
-#include "ObjectAccessBarrier.hpp"
 
 class MM_EnvironmentBase;
 
@@ -40,128 +39,55 @@ class MM_OwnableSynchronizerObjectList : public MM_BaseNonVirtual
 {
 /* data members */
 private:
+	bool				_needRefresh;
 	volatile j9object_t _head; /**< the head of the linked list of OwnableSynchronizer objects */
-	j9object_t _priorHead; /**< the head of the linked list before OwnableSynchronizer object processing */
-	MM_OwnableSynchronizerObjectList *_nextList; /**< a pointer to the next OwnableSynchronizer list in the global linked list of lists */
-	MM_OwnableSynchronizerObjectList *_previousList; /**< a pointer to the previous OwnableSynchronizer list in the global linked list of lists */
-#if defined(J9VM_GC_VLHGC)
-	UDATA _objectCount; /**< the number of objects in the list */
-#endif /* defined(J9VM_GC_VLHGC) */
+	J9JavaVM 			*_javaVM;
+	MM_GCExtensions 	*_extensions;
 protected:
 public:
 	
 /* function members */
 private:
+	bool isOwnableSynchronizerObject(j9object_t object);
+	void add(j9object_t object);
+
 protected:
 public:
-	/**
-	 * Allocate and initialize an array of MM_OwnableSynchronizerObjectList instances, resembling the functionality of operator new[].
-	 *
-	 * @param env the current thread
-	 * @param arrayElementsTotal the number of lists to create
-	 * @param listsToCopy existing MM_OwnableSynchronizerObjectList array to use to construct a new array of lists
-	 * @param arrayElementsToCopy the size of the list array to be copied
-	 *
-	 * @return a pointer to the first list in the array, or NULL if we failed to allocate/init the array
-	 */
-	static MM_OwnableSynchronizerObjectList *newInstanceArray(MM_EnvironmentBase *env, uintptr_t arrayElementsTotal, MM_OwnableSynchronizerObjectList *listsToCopy, uintptr_t arrayElementsToCopy);
-	bool initialize(MM_EnvironmentBase *env);
+
+	static MM_OwnableSynchronizerObjectList* newInstance(MM_EnvironmentBase *env, MM_GCExtensions* extensions);
+	virtual void kill(MM_EnvironmentBase* env);
 
 	/**
-	 * Add the specified linked list of objects to the buffer.
-	 * The objects are expected to be in a NULL terminated linked
-	 * list, starting from head and end at tail.
-	 * This call is thread safe.
-	 * 
-	 * @param env[in] the current thread
-	 * @param head[in] the first object in the list to add
-	 * @param tail[in] the last object in the list to add
+	 * check if an object, which was encountered directly while walking the heap, is ownableSynchronizerObject,
+	 * and if the object is ownableSynchronizerObject, add it in OwnableSynchronizerObjectList.
+	 *
+	 * @param objectDesc the object
+	 * @regionDesc the region which contains the object
+	 *
+	 * @return #J9MODRON_SLOT_ITERATOR_OK on success, #J9MODRON_SLOT_ITERATOR_UNRECOVERABLE_ERROR on failure
 	 */
-	void addAll(MM_EnvironmentBase* env, j9object_t head, j9object_t tail);
+	uintptr_t walkObjectHeap(J9JavaVM *javaVM, J9MM_IterateObjectDescriptor *objectDesc, J9MM_IterateRegionDescriptor *regionDesc);
 
 	/**
 	 * Fetch the head of the linked list, as it appeared at the beginning of OwnableSynchronizer object processing.
 	 * @return the head object, or NULL if the list is empty
 	 */
-	MMINLINE j9object_t getHeadOfList() { return _head; }
+	j9object_t getHeadOfList(MM_EnvironmentBase *env = NULL);
 
-	/**
-	 * Move the list to the prior list and reset the current list to empty.
-	 * The prior list may be examined with wasEmpty() and getPriorList().
-	 */
-	void startOwnableSynchronizerProcessing() {
-		_priorHead = _head;
-		_head = NULL; 
-#if defined(J9VM_GC_VLHGC)
-		clearObjectCount();
-#endif /* defined(J9VM_GC_VLHGC) */
+	MMINLINE void reset() {
+		_needRefresh = true;
+		_head = NULL;
 	}
-	
-	/**
-	 * copy the list to the prior list for backup, can be restored via calling backoutList()
+	bool isRefreshed() {return (!_needRefresh); }
+	void ensureHeapWalkable(MM_EnvironmentBase *env);
+	/*
+	 * rebuildList need to run under ExclusiveVMAccess and no ConcurrentScavengerInProgress
 	 */
-	MMINLINE void backupList() {
-		_priorHead = _head;
-	}
-
-	/**
-	 * restore the list from the prior list, and reset the prior list to empty.
-	 */
-	MMINLINE void backoutList() {
-		_head = _priorHead;
-		_priorHead = NULL;
-	}
-
-	/**
-	 * Determine if the list was empty at the beginning of OwnableSynchronizer object processing.
-	 * @return true if the list was empty, false otherwise
-	 */
-	bool wasEmpty() { return NULL == _priorHead; }
-	
-	/**
-	 * Fetch the head of the linked list, as it appeared at the beginning of OwnableSynchronizer object processing.
-	 * @return the head object, or NULL if the list is empty
-	 */
-	j9object_t getPriorList() { return _priorHead; }
-	
-	/**
-	 * Return a pointer to the next OwnableSynchronizer object list in the global linked list of lists, or NULL if this is the last list.
-	 * @return the next list in the global list
-	 */
-	MMINLINE MM_OwnableSynchronizerObjectList* getNextList() { return _nextList; }
-	
-	/**
-	 * Set the link to the next OwnableSynchronizer object list in the global linked list of lists.
-	 * @param nextList[in] the next list, or NULL
-	 */
-	void setNextList(MM_OwnableSynchronizerObjectList* nextList) { _nextList = nextList; }
-
-	/**
-	 * Return a pointer to the previous OwnableSynchronizer object list in the global linked list of lists, or NULL if this is the first list.
-	 * @return the next list in the global list
-	 */
-	MMINLINE MM_OwnableSynchronizerObjectList* getPreviousList() { return _previousList; }
-
-	/**
-	 * Set the link to the previous OwnableSynchronizer object list in the global linked list of lists.
-	 * @param nextList[in] the next list, or NULL
-	 */
-	void setPreviousList(MM_OwnableSynchronizerObjectList* previousList) { _previousList = previousList; }
-
+	void rebuildList(MM_EnvironmentBase *env);
 	/**
 	 * Construct a new list.
 	 */
-	MM_OwnableSynchronizerObjectList();
-
-#if defined(J9VM_GC_VLHGC)
-	MMINLINE UDATA getObjectCount() { return _objectCount; }
-	MMINLINE void clearObjectCount() { _objectCount = 0; }
-	MMINLINE void incrementObjectCount(UDATA count)
-	{
-		MM_AtomicOperations::add((volatile UDATA *)&_objectCount, count);
-	}
-#endif /* defined(J9VM_GC_VLHGC) */
-
+	MM_OwnableSynchronizerObjectList(MM_GCExtensions* extensions);
 };
 
 #endif /* OWNABLESYNCHRONIZEROBJECTLIST_HPP_ */

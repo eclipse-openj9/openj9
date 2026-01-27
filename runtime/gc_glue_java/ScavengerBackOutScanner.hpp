@@ -115,9 +115,6 @@ public:
 		reportScanningEnded(RootScannerEntity_FinalizableObjects);
 	}
 #endif /* J9VM_GC_FINALIZATION */
-
-	/* empty, move ownable synchronizer backout processing in scanAllSlots() */
-	virtual void scanOwnableSynchronizerObjects(MM_EnvironmentBase *env) {}
 	virtual void scanContinuationObjects(MM_EnvironmentBase *env)
 	{
 		reportScanningStarted(RootScannerEntity_ContinuationObjects);

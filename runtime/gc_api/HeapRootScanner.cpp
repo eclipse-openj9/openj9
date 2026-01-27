@@ -47,7 +47,6 @@
 #include "ObjectAccessBarrier.hpp"
 #include "ObjectHeapIterator.hpp"
 #include "ObjectModel.hpp"
-#include "OwnableSynchronizerObjectList.hpp"
 #include "ContinuationObjectList.hpp"
 #include "PointerArrayIterator.hpp"
 #include "SegmentIterator.hpp"
@@ -66,12 +65,6 @@ MM_HeapRootScanner::doClassLoader(J9ClassLoader *classLoader)
 	if (J9_GC_CLASS_LOADER_DEAD != (classLoader->gcFlags & J9_GC_CLASS_LOADER_DEAD) ) {
 		doSlot(J9GC_J9CLASSLOADER_CLASSLOADEROBJECT_EA(classLoader));
 	}
-}
-
-void
-MM_HeapRootScanner::doOwnableSynchronizerObject(J9Object *objectPtr)
-{
-	doObject(objectPtr);
 }
 
 void
@@ -468,26 +461,6 @@ MM_HeapRootScanner::scanUnfinalizedObjects()
 	reportScanningEnded(RootScannerEntity_UnfinalizedObjects);
 }
 #endif /* J9VM_GC_FINALIZATION */
-
-void
-MM_HeapRootScanner::scanOwnableSynchronizerObjects()
-{
-	reportScanningStarted(RootScannerEntity_OwnableSynchronizerObjects);
-	setReachability(RootScannerEntityReachability_Weak);
-
-	MM_ObjectAccessBarrier *barrier = _extensions->accessBarrier;
-	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectList = _extensions->getOwnableSynchronizerObjectLists();
-
-	while (NULL != ownableSynchronizerObjectList) {
-		J9Object *objectPtr = ownableSynchronizerObjectList->getHeadOfList();
-		while (NULL != objectPtr) {
-			doOwnableSynchronizerObject(objectPtr);
-			objectPtr = barrier->getOwnableSynchronizerLink(objectPtr);
-		}
-		ownableSynchronizerObjectList = ownableSynchronizerObjectList->getNextList();
-	}
-	reportScanningEnded(RootScannerEntity_OwnableSynchronizerObjects);
-}
 
 void
 MM_HeapRootScanner::scanContinuationObjects()

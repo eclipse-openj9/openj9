@@ -73,10 +73,6 @@ private:
 	enum { OBJECT_CACHE_SIZE = 61 }; /**< The size of the checked object caches (a prime number) */ 
 	J9Object *_checkedObjectCache[OBJECT_CACHE_SIZE]; /**< A cache of recently checked objects */ 
 
-	#define UNINITIALIZED_SIZE_FOR_OWNABLESYNCHRONIER ((UDATA)-1)
-	UDATA	_ownableSynchronizerObjectCountOnList; /**< the count of ownableSynchronizerObjects on the ownableSynchronizerLists, =UNINITIALIZED_SIZE_FOR_OWNABLESYNCHRONIER indicates that the count has not been calculated */
-	UDATA	_ownableSynchronizerObjectCountOnHeap; /**< the count of ownableSynchronizerObjects on the heap, =UNINITIALIZED_SIZE_FOR_OWNABLESYNCHRONIER indicates that the count has not been calculated */
-	
 protected:
 
 public:
@@ -128,11 +124,6 @@ public:
 	void pushPreviousObject(J9Object *objectPtr);
 	void pushPreviousClass(J9Class *clazz);
 
-	void clearCountsForOwnableSynchronizerObjects();
-	bool verifyOwnableSynchronizerObjectCounts();
-	MMINLINE void initializeOwnableSynchronizerCountOnList() { _ownableSynchronizerObjectCountOnList = 0; };
-	MMINLINE void initializeOwnableSynchronizerCountOnHeap() { _ownableSynchronizerObjectCountOnHeap = 0; };
-
 	UDATA checkObjectHeap(J9JavaVM *javaVM, J9MM_IterateObjectDescriptor *objectDesc, J9MM_IterateRegionDescriptor *regionDesc);
 	UDATA checkSlotObjectHeap(J9JavaVM *javaVM, J9Object *objectPtr, fj9object_t *objectIndirect, J9MM_IterateRegionDescriptor *regionDesc, J9Object *objectIndirectBase);
 	UDATA checkSlotVMThread(J9JavaVM *javaVM, J9Object **objectIndirect, void *objectIndirectBase, UDATA objectType, GC_VMThreadIterator *vmthreadIterator);
@@ -140,15 +131,6 @@ public:
 	UDATA checkSlotRememberedSet(J9JavaVM *javaVM, J9Object **objectIndirect, MM_SublistPuddle *puddle);
 	UDATA checkSlotUnfinalizedList(J9JavaVM *javaVM, J9Object **objectIndirect, MM_UnfinalizedObjectList *currentList);
 	
-	/**
-	 * Verify a ownableSynchronizer object list slot.
-	 *
-	 * @param objectIndirect the slot to be verified
-	 * @param currentList the ownableSynchronizerObjectList which contains the slot
-	 *
-	 * @return #J9MODRON_SLOT_ITERATOR_OK
-	 */	
-	UDATA checkSlotOwnableSynchronizerList(J9JavaVM *javaVM, J9Object **objectIndirect, MM_OwnableSynchronizerObjectList *currentList);
 	UDATA checkSlotFinalizableList(J9JavaVM *javaVM, J9Object **objectIndirect, GC_FinalizeListManager *listManager);
 	UDATA checkSlotPool(J9JavaVM *javaVM, J9Object **objectIndirect, void *objectIndirectBase);
 	UDATA checkClassHeap(J9JavaVM *javaVM, J9Class *clazz, J9MemorySegment *segment);
@@ -182,8 +164,6 @@ public:
 		, _lastHeapObject1()
 		, _lastHeapObject2()
 		, _lastHeapObject3()
-		, _ownableSynchronizerObjectCountOnList(UNINITIALIZED_SIZE_FOR_OWNABLESYNCHRONIER)
-		, _ownableSynchronizerObjectCountOnHeap(UNINITIALIZED_SIZE_FOR_OWNABLESYNCHRONIER)
 #if defined(J9VM_GC_MODRON_SCAVENGER)	
 		, _scavengerBackout(false)
 		, _rsOverflowState(false)

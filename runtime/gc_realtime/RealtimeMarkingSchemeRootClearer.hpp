@@ -232,16 +232,6 @@ public:
 #endif /* J9VM_GC_FINALIZATION */
 
 	virtual void
-	scanOwnableSynchronizerObjects(MM_EnvironmentBase *envBase)	{
-		MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase);
-
-		reportScanningStarted(RootScannerEntity_OwnableSynchronizerObjects);
-		/* allow the marking scheme to handle this */
-		_realtimeGC->getRealtimeDelegate()->scanOwnableSynchronizerObjects(env);
-		reportScanningEnded(RootScannerEntity_OwnableSynchronizerObjects);
-	}
-
-	virtual void
 	scanContinuationObjects(MM_EnvironmentBase *envBase)	{
 		MM_EnvironmentRealtime *env = MM_EnvironmentRealtime::getEnvironment(envBase);
 
