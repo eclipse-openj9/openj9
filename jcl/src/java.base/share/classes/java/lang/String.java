@@ -2546,6 +2546,18 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @return a String with occurrences of oldChar replaced by newChar
 	 */
 	public String replace(char oldChar, char newChar) {
+		/*
+		 * Short-circuit commonly used patterns like these:
+		 *   path.replace(File.separatorChar, '/')
+		 *   path.replace('/', File.separatorChar)
+		 *
+		 * Except on Windows, File.separatorChar is '/', so the code below
+		 * would otherwise do more work than necessary.
+		 */
+		if (oldChar == newChar) {
+			return this;
+		}
+
 		int index = indexOf(oldChar, 0);
 
 		if (index == -1) {
@@ -6676,6 +6688,18 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @return a String with occurrences of oldChar replaced by newChar
 	 */
 	public String replace(char oldChar, char newChar) {
+		/*
+		 * Short-circuit commonly used patterns like these:
+		 *   path.replace(File.separatorChar, '/')
+		 *   path.replace('/', File.separatorChar)
+		 *
+		 * Except on Windows, File.separatorChar is '/', so the code below
+		 * would otherwise do more work than necessary.
+		 */
+		if (oldChar == newChar) {
+			return this;
+		}
+
 		int index = indexOf(oldChar, 0);
 
 		if (index == -1) {
