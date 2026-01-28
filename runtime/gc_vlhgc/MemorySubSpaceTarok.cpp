@@ -995,6 +995,10 @@ MM_MemorySubSpaceTarok::checkResize(MM_EnvironmentBase *env, MM_AllocateDescript
 
 	/* Adjust the heap size by both the required amount for eden AND non-eden. Non-eden size should generally be kept the same size, so that GMP kickoff, and incremental defragmentation timing stays accurate */
 	heapSizeChange += edenChangeRegionsBytes;
+	if (edenChangeRegionsBytes > heapSizeChange) {
+		Trc_MM_MemorySubSpaceTarok_checkResize(env->getLanguageVMThread(), heapSizeChange, edenChangeRegionsBytes);
+		heapSizeChange = edenChangeRegionsBytes;
+	}
 
 	if (0 > heapSizeChange) {
 		_contractionSize = (uintptr_t)(heapSizeChange * -1);
