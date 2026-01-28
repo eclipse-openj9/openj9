@@ -221,6 +221,8 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9gc_get_explicit_GC_disabled,
 	j9gc_get_total_cycle_count,
 	j9gc_get_unique_cycle_ID,
+	j9gc_get_cycle_start_time,
+	j9gc_get_cycle_end_time,
 	j9gc_modron_global_collect,
 	j9gc_modron_global_collect_with_overrides,
 	j9gc_modron_local_collect,

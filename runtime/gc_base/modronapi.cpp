@@ -1025,6 +1025,44 @@ j9gc_get_unique_cycle_ID(J9VMThread *vmThread)
 }
 
 /**
+ * API to return the start time of the cycle. Start time is a snapshot taken at the beggining of each cycle.
+ *
+ * @param[in] vmThread the J9VMThread
+ * @return start time of the cycle
+ */
+U_64
+j9gc_get_cycle_start_time(J9VMThread *vmThread)
+{
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
+	U_64 result = 0;
+
+	if (NULL != env->_cycleState) {
+		result = env->_cycleState->_startTime;
+	}
+
+	return result;
+}
+
+/**
+ * API to return the end time of the cycle. End time is a snapshot taken at the end of each cycle.
+ *
+ * @param[in] vmThread the J9VMThread
+ * @return end time of the cycle
+ */
+U_64
+j9gc_get_cycle_end_time(J9VMThread *vmThread)
+{
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
+	U_64 result = 0;
+
+	if (NULL != env->_cycleState) {
+		result = env->_cycleState->_endTime;
+	}
+
+	return result;
+}
+
+/**
  * Called whenever the allocation threshold values or enablement state changes.
  * 
  * @parm[in] currentThread The current VM Thread

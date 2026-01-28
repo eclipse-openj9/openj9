@@ -4989,6 +4989,8 @@ typedef struct J9MemoryManagerFunctions {
 	BOOLEAN ( *j9gc_get_explicit_GC_disabled)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_get_total_cycle_count)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_get_unique_cycle_ID)(struct J9VMThread *vmThread) ;
+	U_64  ( *j9gc_get_cycle_start_time)(struct J9VMThread *vmThread) ;
+	U_64  ( *j9gc_get_cycle_end_time)(struct J9VMThread *vmThread) ;
 	UDATA  ( *j9gc_modron_global_collect)(struct J9VMThread *vmThread) ;
 	UDATA  ( *j9gc_modron_global_collect_with_overrides)(struct J9VMThread *vmThread, U_32 overrideFlags) ;
 	UDATA  ( *j9gc_modron_local_collect)(struct J9VMThread *vmThread) ;

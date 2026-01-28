@@ -388,6 +388,8 @@ MM_RealtimeGC::internalPreCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *su
 		_fixHeapForWalk = true;
 	}
 	/* we are about to collect so generate the appropriate cycle start and increment start events */
+	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	env->_cycleState->_startTime = j9time_hires_clock();
 	reportGCCycleStart(rtEnv);
 	reportGCIncrementStart(rtEnv);
 	_sched->reportStartGCIncrement(rtEnv);
@@ -449,6 +451,8 @@ MM_RealtimeGC::internalPostCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *s
 	 * processed before the very last METRONOME_INCREMENT_STOP event before the PRIVATE_GC_POST_CYCLE_END event. Otherwise
 	 * the METRONOME_INCREMENT_START/END events become out of order and verbose GC will fail.
 	 */
+	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	env->_cycleState->_endTime = j9time_hires_clock();
 	reportGCCycleFinalIncrementEnding(env);
 	reportGCIncrementEnd(env);
 
@@ -467,13 +471,11 @@ MM_RealtimeGC::internalPostCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *s
 void
 MM_RealtimeGC::reportGCCycleFinalIncrementEnding(MM_EnvironmentBase *env)
 {
-	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
-
 	MM_CommonGCData commonData;
 	TRIGGER_J9HOOK_MM_OMR_GC_CYCLE_END(
 		_extensions->omrHookInterface,
 		env->getOmrVMThread(),
-		omrtime_hires_clock(),
+		env->_cycleState->_endTime,
 		J9HOOK_MM_OMR_GC_CYCLE_END,
 		_extensions->getHeap()->initializeCommonGCData(env, &commonData),
 		env->_cycleState->_type,
@@ -545,7 +547,6 @@ MM_RealtimeGC::reportSyncGCEnd(MM_EnvironmentBase *env)
 void
 MM_RealtimeGC::reportGCCycleStart(MM_EnvironmentBase *env)
 {
-	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	/* Let VM know that GC cycle is about to start. JIT, in particular uses it,
 	 * to not compile while GC cycle is on.
 	 */
@@ -561,7 +562,7 @@ MM_RealtimeGC::reportGCCycleStart(MM_EnvironmentBase *env)
 	TRIGGER_J9HOOK_MM_OMR_GC_CYCLE_START(
 		_extensions->omrHookInterface,
 		env->getOmrVMThread(),
-		omrtime_hires_clock(),
+		env->_cycleState->_startTime,
 		J9HOOK_MM_OMR_GC_CYCLE_START,
 		_extensions->getHeap()->initializeCommonGCData(env, &commonData),
 		env->_cycleState->_type
@@ -576,7 +577,6 @@ MM_RealtimeGC::reportGCCycleStart(MM_EnvironmentBase *env)
 void
 MM_RealtimeGC::reportGCCycleEnd(MM_EnvironmentBase *env)
 {
-	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	omrthread_monitor_enter(env->getOmrVM()->_gcCycleOnMonitor);
 
 	uintptr_t approximateFreeMemorySize = _memoryPool->getApproximateFreeMemorySize();
@@ -588,7 +588,7 @@ MM_RealtimeGC::reportGCCycleEnd(MM_EnvironmentBase *env)
 	TRIGGER_J9HOOK_MM_PRIVATE_GC_POST_CYCLE_END(
 		_extensions->privateHookInterface,
 		env->getOmrVMThread(),
-		omrtime_hires_clock(),
+		env->_cycleState->_endTime,
 		J9HOOK_MM_PRIVATE_GC_POST_CYCLE_END,
 		_extensions->getHeap()->initializeCommonGCData(env, &commonData),
 		env->_cycleState->_type,
@@ -603,7 +603,7 @@ MM_RealtimeGC::reportGCCycleEnd(MM_EnvironmentBase *env)
 	if (_memoryPool->getBytesInUse() < _extensions->gcInitialTrigger) {
 		_previousCycleBelowTrigger = true;
 		TRIGGER_J9HOOK_MM_PRIVATE_METRONOME_TRIGGER_END(_extensions->privateHookInterface,
-			env->getOmrVMThread(), omrtime_hires_clock(),
+			env->getOmrVMThread(), env->_cycleState->_endTime,
 			J9HOOK_MM_PRIVATE_METRONOME_TRIGGER_END
 		);
 	}
