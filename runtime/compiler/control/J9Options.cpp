@@ -2806,9 +2806,6 @@ J9::Options::fePreProcess(void * base)
       self()->setOption(TR_EnableSharedCacheDisclaiming, false);
       }
 
-   // Temporarily disable constProvenanceGraph due to functional issues and large CompCPU overhead at the client
-   self()->setOption(TR_DisableConstProvenance);
-
    return true;
    }
 
