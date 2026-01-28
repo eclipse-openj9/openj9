@@ -1028,25 +1028,54 @@ TR_J9ByteCodeIlGenerator::genExceptionHandlers(TR::Block * lastBlock)
                }
             }
 
-         /*
-          * Spill the exception object into a temporary if it isn't immediately done so
-          * in the catch block.  This is necessary because the exception object will not
-          * be preserved across method calls (and for a handful of other reasons) and
-          * cannot be materialized from the metadata.  A stack temp is necessary in this
-          * case.
-          */
-         uint8_t firstOpCode = _code[_bcIndex];
-         int32_t bc = convertOpCodeToByteCodeEnum(firstOpCode);
+         // Historically, ILGen gated clearing ExceptionMeta on (bc != J9BCastore).
+         // As a result, catch handlers whose first bytecode was the indexed `astore` left
+         // ExceptionMeta holding the exception object, whereas handlers starting with
+         // `astore_0..3` (and other non-`astore` opcodes) cleared ExceptionMeta to NULL.
+         // This created an inconsistency between `astore` and `astore_n` forms. This
+         // inconsistency could keep the exception object live in ExceptionMeta longer
+         // than necessary.
+         //
+         // To minimize retention and to remove the astore vs astore_n inconsistency,
+         // we now always:
+         //   (1) Anchor the current exception value (from the ILGen operand stack)
+         //       with a treetop, forcing it to be evaluated before we overwrite ExceptionMeta.
+         //   (2) Store NULL back into ExceptionMeta to allow earlier collection.
+         //
+         // The exception object itself remains available on the ILGen operand stack for
+         // the handler’s bytecodes (e.g., an initial astore/astore_n will still
+         // consume it normally).
+         //
+         // Corner case: handlerBlockFromNonExceptionControlFlow
+         //   In this (rare/unsupported) scenario the handler block was already generated
+         //   as reachable from normal control flow. setupBBStartContext(firstIndex)
+         //   sets _block = blocks(firstIndex), so emitting trees with genTreeTop(...)
+         //   would mutate the mainline-reachable block. Instead, we create detached TreeTops
+         //   here and prepend them onto the cloned handler block after cloneHandler(...).
+         //
+         TR::TreeTop *anchorExceptionMetaTT = NULL;
+         TR::TreeTop *clearExceptionMetaTT  = NULL;
 
-         if (bc != J9BCastore)
+         // Anchor the current exception value on the ILGen operand stack.
+         TR::Node *exceptionLoad = _stack->top();
+         TR::Node *anchorNode = TR::Node::create(TR::treetop, 1, exceptionLoad);
+         anchorNode->copyByteCodeInfo(exceptionLoad);
+
+         // Clear ExceptionMeta to NULL without disturbing the ILGen operand stack.
+         TR::Node *clearNode = TR::Node::createStore(catchObjectSymRef, TR::Node::aconst(0));
+         clearNode->copyByteCodeInfo(exceptionLoad);
+
+         if (handlerBlockFromNonExceptionControlFlow)
             {
-            TR::SymbolReference *exceptionObjectSymRef = symRefTab()->createTemporary(_methodSymbol, TR::Address);
-            TR::Node *exceptionNode = pop();
-            genTreeTop(TR::Node::createStore(exceptionObjectSymRef, exceptionNode));
-            loadConstant(TR::aconst, (void *)0);
-            genTreeTop(TR::Node::createStore(exceptionNode->getSymbolReference(), pop()));
-            loadSymbol(TR::aload, exceptionObjectSymRef);
-            logprints(trace, comp()->log(), "catch block first BC is not an astore, inserting explicit store of exception object\n");
+            // Do not append into _block here (would modify the original mainline-reachable block).
+            // These TreeTops will be prepended to the cloned handler block later.
+            anchorExceptionMetaTT = TR::TreeTop::create(comp(), anchorNode);
+            clearExceptionMetaTT  = TR::TreeTop::create(comp(), clearNode);
+            }
+         else
+            {
+            genTreeTop(anchorNode);
+            genTreeTop(clearNode);
             }
 
          TR::Node *node = _stack->top();
@@ -1083,6 +1112,13 @@ TR_J9ByteCodeIlGenerator::genExceptionHandlers(TR::Block * lastBlock)
             {
             lastBlock = cloneHandler(&handlerInfo, handlerBlockFromNonExceptionControlFlow, handlerBlockFromNonExceptionControlFlow, lastBlock, &clonedCatchBlocks);
             lastBlock->prepend(storeTree);
+
+            // Prepend in reverse order so execution order at handler entry is:
+            //   anchor(exceptionLoad) -> clear(ExceptionMeta=null) -> storeTree(...)
+            if (clearExceptionMetaTT)
+               lastBlock->prepend(clearExceptionMetaTT);
+            if (anchorExceptionMetaTT)
+               lastBlock->prepend(anchorExceptionMetaTT);
             }
          else
             {
