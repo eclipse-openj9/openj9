@@ -60,6 +60,9 @@ UDATA initializeVMThreading(J9JavaVM *vm)
 		omrthread_monitor_init_with_name(&vm->classLoaderModuleAndLocationMutex, 0, "VM class loader modules") ||
 		omrthread_monitor_init_with_name(&vm->classLoaderBlocksMutex, 0, "VM class loader blocks") ||
 		omrthread_monitor_init_with_name(&vm->classTableMutex, 0, "VM class table") ||
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+		omrthread_monitor_init_with_name(&vm->constRefsMutex, 0, "JIT/GC const refs") ||
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		omrthread_monitor_init_with_name(&vm->segmentMutex, 0 ,"VM segment") ||
 		omrthread_monitor_init_with_name(&vm->jniFrameMutex, 0, "VM JNI frame") ||
 #endif
@@ -154,6 +157,9 @@ void terminateVMThreading(J9JavaVM *vm)
 #ifdef J9VM_THR_PREEMPTIVE
 	if (vm->segmentMutex) omrthread_monitor_destroy(vm->segmentMutex);
 	if (vm->classTableMutex) omrthread_monitor_destroy(vm->classTableMutex);
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	if (vm->constRefsMutex) omrthread_monitor_destroy(vm->constRefsMutex);
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	if (vm->classLoaderModuleAndLocationMutex) omrthread_monitor_destroy(vm->classLoaderModuleAndLocationMutex);
 	if (vm->classLoaderBlocksMutex) omrthread_monitor_destroy(vm->classLoaderBlocksMutex);
 	if (vm->jniFrameMutex) omrthread_monitor_destroy(vm->jniFrameMutex);
