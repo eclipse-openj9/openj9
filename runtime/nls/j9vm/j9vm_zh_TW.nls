@@ -2530,3 +2530,25 @@ J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_VALUE_CLASS.explanation=Please consult
 J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_VALUE_CLASS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
 J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_VALUE_CLASS.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
+
+J9NLS_VM_GET_STRICT_STATIC_NOT_SET=\u56b4\u683c\u975c\u614b\u6b04\u4f4d\u5728\u9996\u6b21\u8b80\u53d6\u524d\u4e0d\u6703\u88ab\u521d\u59cb\u5316\u3002
+# START NON-TRANSLATABLE
+J9NLS_VM_GET_STRICT_STATIC_NOT_SET.explanation=Strict static fields must be set to an initial value before being read.
+J9NLS_VM_GET_STRICT_STATIC_NOT_SET.system_action=The JVM will throw an IllegalStateException.
+J9NLS_VM_GET_STRICT_STATIC_NOT_SET.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_PUT_STRICT_STATIC_FINAL_AFTER_READ=\u56b4\u683c\u975c\u614b\u6700\u7d42\u5b57\u6bb5\u5728\u8b80\u53d6\u5f8c\u88ab\u8a2d\u5b9a\u3002
+# START NON-TRANSLATABLE
+J9NLS_VM_PUT_STRICT_STATIC_FINAL_AFTER_READ.explanation=The value of a strict static final field cannot change once it has been read.
+J9NLS_VM_PUT_STRICT_STATIC_FINAL_AFTER_READ.system_action=The JVM will throw an IllegalStateException.
+J9NLS_VM_PUT_STRICT_STATIC_FINAL_AFTER_READ.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# NullRestricted is not translatable
+J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_STRICT=\u5177\u6709 NullRestricted \u5c6c\u6027\u7684\u975c\u614b\u6b04\u4f4d\u5fc5\u9808\u63a1\u7528strict\u6a21\u5f0f\u3002
+# START NON-TRANSLATABLE
+J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_STRICT.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_STRICT.system_action=The JVM will throw a java.lang.IncompatibleClassChangeError.
+J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_STRICT.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE

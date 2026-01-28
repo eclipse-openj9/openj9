@@ -2530,3 +2530,25 @@ J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_VALUE_CLASS.explanation=Please consult
 J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_VALUE_CLASS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
 J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_VALUE_CLASS.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
+
+J9NLS_VM_GET_STRICT_STATIC_NOT_SET=El campo est\u00e1tico estricto no est\u00e1 establecido antes de la primera lectura.
+# START NON-TRANSLATABLE
+J9NLS_VM_GET_STRICT_STATIC_NOT_SET.explanation=Strict static fields must be set to an initial value before being read.
+J9NLS_VM_GET_STRICT_STATIC_NOT_SET.system_action=The JVM will throw an IllegalStateException.
+J9NLS_VM_GET_STRICT_STATIC_NOT_SET.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_PUT_STRICT_STATIC_FINAL_AFTER_READ=El campo est\u00e1tico final estricto se establece despu\u00e9s de la lectura.
+# START NON-TRANSLATABLE
+J9NLS_VM_PUT_STRICT_STATIC_FINAL_AFTER_READ.explanation=The value of a strict static final field cannot change once it has been read.
+J9NLS_VM_PUT_STRICT_STATIC_FINAL_AFTER_READ.system_action=The JVM will throw an IllegalStateException.
+J9NLS_VM_PUT_STRICT_STATIC_FINAL_AFTER_READ.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# NullRestricted is not translatable
+J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_STRICT=Un campo est\u00e1tico con un atributo \u00ab NullRestricted \u00bb debe ser estricto.
+# START NON-TRANSLATABLE
+J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_STRICT.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_STRICT.system_action=The JVM will throw a java.lang.IncompatibleClassChangeError.
+J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_STRICT.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
