@@ -42,6 +42,7 @@
 #include "p/codegen/PPCEvaluator.hpp"
 #include "p/codegen/PPCInstruction.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
+#include "p/codegen/CallSnippet.hpp"
 #include "ras/Logger.hpp"
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheManager.hpp"
@@ -276,7 +277,7 @@ TR::PPCReadMonitorSnippet::print(OMR::Logger *log, TR_Debug *debug)
    debug->printPrefix(log, NULL, cursor, 4);
    log->printf("%s \t%s, [%s, %d]\t; Load", TR::InstOpCode::metadata[getLoadOpCode()].name, debug->getName(loadResultReg), debug->getName(loadBaseReg), getLoadOffset());
 
-   debug->print(log, (TR::PPCHelperCallSnippet *)this);
+   TR::PPCHelperCallSnippet::print(log, debug);
    }
 
 uint32_t TR::PPCReadMonitorSnippet::getLength(int32_t estimatedSnippetStart)
@@ -292,6 +293,43 @@ int32_t TR::PPCReadMonitorSnippet::setEstimatedCodeLocation(int32_t estimatedSni
    getSnippetLabel()->setEstimatedCodeLocation(estimatedSnippetStart+28);
    return(estimatedSnippetStart);
    }
+
+uint8_t *TR::PPCJ9HelperCallSnippet::emitSnippetBody() {
+    uint8_t *buffer = cg()->getBinaryBufferCursor();
+    uint8_t *gtrmpln, *trmpln;
+
+    getSnippetLabel()->setCodeLocation(buffer);
+    buffer = TR::PPCCallSnippet::flushArgumentsToStack(buffer, this->getNode(), this->getSizeOfArguments(), cg());
+
+    if (this->getNode()->isJitDispatchJ9MethodCall(cg()->comp()))
+      {
+         // move value in r11 to r3 for the interpreter
+         // or     r11   r3    r11    444        0
+         // 011111 01011 00011 01011  0110111100 0
+         *(int32_t *)buffer = 0x7D635B78;
+         buffer += 4;
+      }
+
+    return this->genHelperCall(buffer);
+}
+
+uint32_t TR::PPCJ9HelperCallSnippet::getLength(int32_t estimatedSnippetStart) {
+   uint32_t len = (1 + TR::PPCCallSnippet::instructionCountForArguments(getNode(), cg())) * PPC_INSTRUCTION_LENGTH;
+   return len + TR::PPCHelperCallSnippet::getLength(len+estimatedSnippetStart);
+}
+
+void TR::PPCJ9HelperCallSnippet::print(OMR::Logger *log, TR_Debug* debug) {
+   uint8_t *cursor = getSnippetLabel()->getCodeLocation();
+
+   debug->printSnippetLabel(log, getSnippetLabel(), cursor, "J9 Helper Call Snippet");
+
+   cursor = debug->printPPCArgumentsFlush(log, getNode(), cursor, getSizeOfArguments());
+
+   debug->printPrefix(log, NULL, cursor, 4);
+   log->printf("%s \t\t\t; %s", "mov gr3 gr11", "move j9method pointer to x0 for interpreter");
+   cursor += PPC_INSTRUCTION_LENGTH;
+   TR::PPCHelperCallSnippet::printInner(log, debug, cursor);
+}
 
 TR::PPCAllocPrefetchSnippet::PPCAllocPrefetchSnippet(
    TR::CodeGenerator   *codeGen,
@@ -1270,4 +1308,3 @@ uint32_t TR::PPCNonZeroAllocPrefetchSnippet::getLength(int32_t estimatedCodeStar
 
    return PPC_INSTRUCTION_LENGTH;
    }
-
