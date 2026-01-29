@@ -66,7 +66,9 @@ import java.lang.constant.Constable;
 /*[IF JAVA_SPEC_VERSION >= 25]*/
 import java.lang.constant.ConstantDescs;
 /*[ENDIF] JAVA_SPEC_VERSION >= 25 */
-
+/*[IF INLINE-TYPES]*/
+import jdk.internal.misc.PreviewFeatures;
+/*[ENDIF] INLINE-TYPES */
 import sun.reflect.generics.repository.ClassRepository;
 /*[IF JAVA_SPEC_VERSION >= 25]*/
 import sun.reflect.generics.repository.ConstructorRepository;
@@ -2413,10 +2415,12 @@ public int getModifiers() {
 	int rawModifiers = getModifiersImpl();
 	if (isArray()) {
 		rawModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED
-/*[IF INLINE-TYPES]*/
-				| AccessFlag.IDENTITY.mask()
-/*[ENDIF] INLINE-TYPES */
 				| Modifier.ABSTRACT | Modifier.FINAL;
+/*[IF INLINE-TYPES]*/
+		if(PreviewFeatures.isEnabled()){
+			rawModifiers |= AccessFlag.IDENTITY.mask();
+		}
+/*[ENDIF] INLINE-TYPES */
 	} else {
 		rawModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED
 /*[IF INLINE-TYPES]*/
