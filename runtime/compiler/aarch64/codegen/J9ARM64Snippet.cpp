@@ -23,6 +23,7 @@
 #include "j9.h"
 
 #include "codegen/ARM64Instruction.hpp"
+#include "codegen/CallSnippet.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/GCStackAtlas.hpp"
 #include "codegen/J9ARM64Snippet.hpp"
@@ -43,6 +44,51 @@ TR::ARM64MonitorEnterSnippet::ARM64MonitorEnterSnippet(
    // Helper call, preserves all registers
    incLabel->setSnippet(this);
    gcMap().setGCRegisterMask(0xFFFFFFFF);
+   }
+
+uint8_t *TR::ARM64J9HelperCallSnippet::emitSnippetBody()
+   {
+   uint8_t *cursor = cg()->getBinaryBufferCursor();
+   getSnippetLabel()->setCodeLocation(cursor);
+   cursor = TR::ARM64CallSnippet::flushArgumentsToStack(cursor, this->getNode(), this->getSizeOfArguments(), cg());
+   if (this->getNode()->isJitDispatchJ9MethodCall(cg()->comp()))
+      {
+      /*
+         * move value in x10 to x0 for the interpreter
+         * This is needed since x0 is an argument register, so private linkage cannot use x0 for the j9method pointer
+         * and we must wait until we are inside the snippet, where we know the target method is interpreted, to move the j9method
+         * pointer to x0 where j2iTransition expects it
+         *
+         * orr x0 x10 x10
+         * 10101010 00 0 01010 000000 01010 00000
+         */
+      *(int32_t *)cursor = 0xAA0A0140;
+      cursor += 4;
+      }
+
+   return emitSnippetBodyInner(cursor);
+   }
+
+uint32_t TR::ARM64J9HelperCallSnippet::getLength(int32_t estimatedSnippetStart)
+   {
+   // register move adds an instruction
+   int32_t len = (1 + TR::ARM64CallSnippet::instructionCountForArguments(getNode(), cg())) * ARM64_INSTRUCTION_LENGTH;
+   return len + TR::ARM64HelperCallSnippet::getLength(estimatedSnippetStart + len);
+   }
+
+void TR::ARM64J9HelperCallSnippet::print(OMR::Logger *log, TR_Debug * debug)
+   {
+   uint8_t *bufferPos = getSnippetLabel()->getCodeLocation();
+
+   debug->printSnippetLabel(log, getSnippetLabel(), bufferPos, debug->getName(this), getNode()->isJitDispatchJ9MethodCall(cg()->comp()) ? "j2iTransition" : NULL);
+
+   bufferPos = debug->printARM64ArgumentsFlush(log, getNode(), bufferPos, getSizeOfArguments());
+
+   debug->printPrefix(log, NULL, bufferPos, 4);
+   log->printf("%s \t\t\t; %s", "mov x0 x10", "move j9method pointer to x0 for interpreter");
+   bufferPos += 4;
+   bufferPos += ARM64_INSTRUCTION_LENGTH;
+   TR::ARM64HelperCallSnippet::printInner(log, debug, bufferPos);
    }
 
 uint8_t *
