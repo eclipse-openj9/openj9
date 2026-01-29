@@ -268,6 +268,17 @@ extern J9_CFUNC void j9gc_get_offheap_data(J9JavaVM *javaVM, void **offheapContr
 extern J9_CFUNC void j9gc_get_CPU_times(J9JavaVM *javaVM, U_64* mainCpuMillis, U_64* workerCpuMillis, U_32* maxThreads, U_32* currentThreads);
 extern J9_CFUNC void j9gc_ensureLockedSynchronizersIntegrity(J9VMThread *vmThread);
 
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+extern J9_CFUNC I_8 j9gc_objaccess_mixedObjectReadI8(J9VMThread *vmThread, J9Object *srcObject, UDATA offset, UDATA isVolatile);
+extern J9_CFUNC U_8 j9gc_objaccess_mixedObjectReadU8(J9VMThread *vmThread, J9Object *srcObject, UDATA offset, UDATA isVolatile);
+extern J9_CFUNC I_16 j9gc_objaccess_mixedObjectReadI16(J9VMThread *vmThread, J9Object *srcObject, UDATA offset, UDATA isVolatile);
+extern J9_CFUNC U_16 j9gc_objaccess_mixedObjectReadU16(J9VMThread *vmThread, J9Object *srcObject, UDATA offset, UDATA isVolatile);
+extern J9_CFUNC void j9gc_objaccess_mixedObjectStoreI8(J9VMThread *vmThread, J9Object *destObject, UDATA offset, I_8 value, UDATA isVolatile);
+extern J9_CFUNC void j9gc_objaccess_mixedObjectStoreU8(J9VMThread *vmThread, J9Object *destObject, UDATA offset, U_8 value, UDATA isVolatile);
+extern J9_CFUNC void j9gc_objaccess_mixedObjectStoreI16(J9VMThread *vmThread, J9Object *destObject, UDATA offset, I_16 value, UDATA isVolatile);
+extern J9_CFUNC void j9gc_objaccess_mixedObjectStoreU16(J9VMThread *vmThread, J9Object *destObject, UDATA offset, U_16 value, UDATA isVolatile);
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
+
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 extern J9_CFUNC void j9gc_prepare_for_checkpoint(J9VMThread *vmThread);
 extern J9_CFUNC BOOLEAN j9gc_reinitialize_for_restore(J9VMThread *vmThread, const char **nlsMsgFormat);

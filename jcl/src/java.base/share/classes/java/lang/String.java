@@ -1,4 +1,4 @@
-/*[INCLUDE-IF JAVA_SPEC_VERSION < 17]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION <= 11]*/
 /*
  * Copyright IBM Corp. and others 1998
  *
@@ -24,39 +24,28 @@ package java.lang;
 
 import java.io.Serializable;
 
-import java.util.Locale;
-import java.util.Comparator;
 import java.io.UnsupportedEncodingException;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-import java.util.Formatter;
-import java.util.StringJoiner;
-import java.util.Iterator;
 import java.nio.charset.Charset;
-/*[IF JAVA_SPEC_VERSION >= 12]*/
-import java.util.function.Function;
-import java.util.Optional;
-/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
+import java.util.Comparator;
+import java.util.Formatter;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.StringJoiner;
 /*[IF JAVA_SPEC_VERSION >= 9]*/
 import java.util.Spliterator;
-import java.util.stream.StreamSupport;
-
-import jdk.internal.misc.Unsafe;
-import java.util.stream.IntStream;
-/*[ELSE] JAVA_SPEC_VERSION >= 9 */
-import sun.misc.Unsafe;
 /*[ENDIF] JAVA_SPEC_VERSION >= 9*/
-
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+/*[IF JAVA_SPEC_VERSION >= 9]*/
+import java.util.stream.IntStream;
 /*[IF JAVA_SPEC_VERSION >= 11]*/
 import java.util.stream.Stream;
 /*[ENDIF] JAVA_SPEC_VERSION >= 11 */
-
-/*[IF JAVA_SPEC_VERSION >= 12]*/
-import java.lang.constant.Constable;
-import java.lang.constant.ConstantDesc;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodHandles.Lookup;
-/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
+import java.util.stream.StreamSupport;
+import jdk.internal.misc.Unsafe;
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
+import sun.misc.Unsafe;
+/*[ENDIF] JAVA_SPEC_VERSION >= 9*/
 
 /**
  * Strings are objects which represent immutable arrays of characters.
@@ -67,9 +56,6 @@ import java.lang.invoke.MethodHandles.Lookup;
  * @see StringBuffer
  */
 public final class String implements Serializable, Comparable<String>, CharSequence
-/*[IF JAVA_SPEC_VERSION >= 12]*/
-	, Constable, ConstantDesc
-/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 {
 
 	/*
@@ -108,31 +94,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			return UTF16;
 		}
 	}
-
-/*[IF JAVA_SPEC_VERSION >= 16]*/
-	/**
-	 * Copy bytes from value starting at srcIndex into the bytes array starting at
-	 * destIndex. No range checking is needed. Caller ensures bytes is in UTF16.
-	 *
-	 * @param bytes copy destination
-	 * @param srcIndex index into value
-	 * @param destIndex index into bytes
-	 * @param coder LATIN1 or UTF16
-	 * @param length the number of elements to copy
-	 */
-	void getBytes(byte[] bytes, int srcIndex, int destIndex, byte coder, int length) {
-		// Check if the String is compressed
-		if (COMPACT_STRINGS && (null == compressionFlag || this.coder == LATIN1)) {
-			if (String.LATIN1 == coder) {
-				compressedArrayCopy(value, srcIndex, bytes, destIndex, length);
-			} else {
-				StringLatin1.inflate(value, srcIndex, bytes, destIndex, length);
-			}
-		} else {
-			decompressedArrayCopy(value, srcIndex, bytes, destIndex, length);
-		}
-	}
-/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 
 	// no range checking, caller ensures bytes is in UTF16
 	// coder is one of LATIN1 or UTF16
@@ -1545,19 +1506,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				int codepointAtO2 = charAtO2;
 
 				if (charAtO1 == charAtO2) {
-					/*[IF JAVA_SPEC_VERSION >= 16]*/
-					if (Character.isHighSurrogate(charAtO1) && (o1 < end)) {
-						codepointAtO1 = Character.toCodePoint(charAtO1, s1.charAtInternal(o1++, s1Value));
-						codepointAtO2 = Character.toCodePoint(charAtO2, s2.charAtInternal(o2++, s2Value));
-						if (codepointAtO1 == codepointAtO2) {
-							continue;
-						}
-					} else {
-						continue;
-					}
-					/*[ELSE]*/
 					continue;
-					/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 				}
 
 				int result = compareValue(codepointAtO1) - compareValue(codepointAtO2);
@@ -1844,34 +1793,13 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 			if ((charAtO1Last != charAtO2Last)
 					&& !charValuesEqualIgnoreCase(charAtO1Last, charAtO2Last)
-					/*[IF JAVA_SPEC_VERSION >= 16]*/
-					&& (!Character.isLowSurrogate(charAtO1Last) || !Character.isLowSurrogate(charAtO2Last))
-					/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 			) {
 				return false;
 			}
 
-			/*[IF JAVA_SPEC_VERSION >= 16]*/
-			while (o1 < end) {
-			/*[ELSE]*/
 			while (o1 < end - 1) {
-			/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 				char charAtO1 = s1.charAtInternal(o1++, s1Value);
 				char charAtO2 = s2.charAtInternal(o2++, s2Value);
-
-				/*[IF JAVA_SPEC_VERSION >= 16]*/
-				if (Character.isHighSurrogate(charAtO1) && Character.isHighSurrogate(charAtO2) && (o1 < end)) {
-					int codepointAtO1 = Character.toCodePoint(charAtO1, s1.charAtInternal(o1++, s1Value));
-					int codepointAtO2 = Character.toCodePoint(charAtO2, s2.charAtInternal(o2++, s2Value));
-					if ((codepointAtO1 != codepointAtO2)
-							&& (compareValue(codepointAtO1) != compareValue(codepointAtO2))
-					) {
-						return false;
-					} else {
-						continue;
-					}
-				}
-				/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 
 				if ((charAtO1 != charAtO2)
 						&& (!charValuesEqualIgnoreCase(charAtO1, charAtO2))
@@ -2513,18 +2441,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				char charAtO1 = s1.charAtInternal(o1++, s1Value);
 				char charAtO2 = s2.charAtInternal(o2++, s2Value);
 
-				/*[IF JAVA_SPEC_VERSION >= 16]*/
-				if (Character.isHighSurrogate(charAtO1) && Character.isHighSurrogate(charAtO2) && (o1 < end)) {
-					int codepointAtO1 = Character.toCodePoint(charAtO1, s1.charAtInternal(o1++, s1Value));
-					int codepointAtO2 = Character.toCodePoint(charAtO2, s2.charAtInternal(o2++, s2Value));
-					if ((codepointAtO1 != codepointAtO2)
-							&& (compareValue(codepointAtO1) != compareValue(codepointAtO2))
-					) {
-						return false;
-					}
-				}
-				/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
-
 				if ((charAtO1 != charAtO2)
 						&& (!charValuesEqualIgnoreCase(charAtO1, charAtO2))
 				) {
@@ -2546,6 +2462,18 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @return a String with occurrences of oldChar replaced by newChar
 	 */
 	public String replace(char oldChar, char newChar) {
+		/*
+		 * Short-circuit commonly used patterns like these:
+		 *   path.replace(File.separatorChar, '/')
+		 *   path.replace('/', File.separatorChar)
+		 *
+		 * Except on Windows, File.separatorChar is '/', so the code below
+		 * would otherwise do more work than necessary.
+		 */
+		if (oldChar == newChar) {
+			return this;
+		}
+
 		int index = indexOf(oldChar, 0);
 
 		if (index == -1) {
@@ -6676,6 +6604,18 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @return a String with occurrences of oldChar replaced by newChar
 	 */
 	public String replace(char oldChar, char newChar) {
+		/*
+		 * Short-circuit commonly used patterns like these:
+		 *   path.replace(File.separatorChar, '/')
+		 *   path.replace('/', File.separatorChar)
+		 *
+		 * Except on Windows, File.separatorChar is '/', so the code below
+		 * would otherwise do more work than necessary.
+		 */
+		if (oldChar == newChar) {
+			return this;
+		}
+
 		int index = indexOf(oldChar, 0);
 
 		if (index == -1) {
@@ -8511,290 +8451,4 @@ written authorization of the copyright holder.
 
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
-/*[IF JAVA_SPEC_VERSION >= 12]*/
-	/**
-	 * Apply a function to this string. The function expects a single String input
-	 * and returns an R.
-	 *
-	 * @param f
-	 *          the functional interface to be applied
-	 *
-	 * @return the result of application of the function to this string
-	 *
-	 * @since 12
-	 */
-	public <R> R transform(Function<? super String, ? extends R> f) {
-		return f.apply(this);
-	}
-
-	/**
-	 * Returns the nominal descriptor of this String instance, or an empty optional
-	 * if construction is not possible.
-	 *
-	 * @return Optional with nominal descriptor of String instance
-	 *
-	 * @since 12
-	 */
-	public Optional<String> describeConstable() {
-		return Optional.of(this);
-	}
-
-	/**
-	 * Resolves this ConstantDesc instance.
-	 *
-	 * @param lookup
-	 *          parameter is ignored
-	 *
-	 * @return the resolved Constable value
-	 *
-	 * @since 12
-	 */
-	public String resolveConstantDesc(MethodHandles.Lookup lookup) {
-		return this;
-	}
-
-	/**
-	 * Indents each line of the string depending on the value of n, and normalizes
-	 * line terminators to the newline character "\n".
-	 *
-	 * @param n
-	 *          the number of spaces to indent the string
-	 *
-	 * @return the indented string with normalized line terminators
-	 *
-	 * @since 12
-	 */
-	public String indent(int n) {
-		Stream<String> lines = lines();
-		Iterator<String> iter = lines.iterator();
-		StringBuilder builder = new StringBuilder();
-
-		String spaces = n > 0 ? " ".repeat(n) : null;
-		int absN = Math.abs(n);
-
-		while (iter.hasNext()) {
-			String currentLine = iter.next();
-
-			if (n > 0) {
-				builder.append(spaces);
-			} else if (n < 0) {
-				int start = 0;
-
-				while ((currentLine.length() > start)
-					&& (Character.isWhitespace(currentLine.charAt(start)))
-				) {
-					start++;
-
-					if (start >= absN) {
-						break;
-					}
-				}
-				currentLine = currentLine.substring(start);
-			}
-
-			/**
-			 * Line terminators are removed when lines() is called. A newline character is
-			 * added to the end of each line, to normalize line terminators.
-			 */
-			builder.append(currentLine);
-			builder.append("\n");
-		}
-
-		return builder.toString();
-	}
-/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
-
-/*[IF JAVA_SPEC_VERSION >= 13]*/
-	/**
-	 * Determine if current String object is LATIN1.
-	 *
-	 * @return true if it is LATIN1, otherwise false.
-	 */
-	boolean isLatin1() {
-		return LATIN1 == coder();
-	}
-
-	/**
-	 * Format the string using this string as the format with supplied args.
-	 *
-	 * @param args
-	 *          the format arguments to use
-	 *
-	 * @return the formatted result
-	 *
-	 * @see #format(String, Object...)
-	 *
-	 * @since 15
-	 */
-	public String formatted(Object... args) {
-		return String.format(this, args);
-	}
-
-	/**
-	 * Removes the minimum indentation from the beginning of each line and
-	 * removes the trailing spaces in every line from the string
-	 *
-	 * @return this string with incidental whitespaces removed from every line
-	 *
-	 * @since 15
-	 */
-	public String stripIndent() {
-		if (isEmpty()) {
-			return this;
-		}
-
-		char lastChar = charAt(length() - 1);
-		boolean trailingNewLine = ('\n' == lastChar) || ('\r' == lastChar);
-
-		Iterator<String> iter = lines().iterator();
-		int min = Integer.MAX_VALUE;
-
-		if (trailingNewLine) {
-			min = 0;
-		} else {
-			while (iter.hasNext()) {
-				String line = iter.next();
-
-				/* The minimum indentation is calculated based on the number of leading
-				 * whitespace characters from all non-blank lines and the last line even
-				 * if it is blank.
-				 */
-				if (!line.isBlank() || !iter.hasNext()) {
-					int count = 0;
-					int limit = Math.min(min, line.length());
-					while ((count < limit) && Character.isWhitespace(line.charAt(count))) {
-						count++;
-					}
-
-					if (min > count) {
-						min = count;
-					}
-				}
-			}
-			/* reset iterator to beginning of the string */
-			iter = lines().iterator();
-		}
-
-		StringBuilder builder = new StringBuilder();
-
-		while (iter.hasNext()) {
-			String line = iter.next();
-
-			if (line.isBlank()) {
-				builder.append("");
-			} else {
-				line = line.substring(min);
-				builder.append(line.stripTrailing());
-			}
-			builder.append("\n");
-		}
-
-		if (!trailingNewLine) {
-			builder.setLength(builder.length() - 1);
-		}
-
-		return builder.toString();
-	}
-
-	/**
-	 * Translate the escape sequences in this string as if in a string literal
-	 *
-	 * @return result string after translation
-	 *
-	 * @throws IllegalArgumentException
-	 *          If invalid escape sequence is detected
-	 *
-	 * @since 15
-	 */
-	public String translateEscapes() {
-		StringBuilder builder = new StringBuilder();
-		char[] charArray = toCharArray();
-		int index = 0;
-		int strLength = length();
-		while (index < strLength) {
-			if ('\\' == charArray[index]) {
-				index++;
-				if (index >= strLength) {
-					/*[MSG "K0D00", "Invalid escape sequence detected: {0}"]*/
-					throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0D00", "\\")); //$NON-NLS-1$ //$NON-NLS-2$
-				}
-				int octal = 0;
-				switch (charArray[index]) {
-				case 'b':
-					builder.append('\b');
-					break;
-				case 't':
-					builder.append('\t');
-					break;
-				case 'n':
-					builder.append('\n');
-					break;
-				case 'f':
-					builder.append('\f');
-					break;
-				case 'r':
-					builder.append('\r');
-					break;
-				case 's':
-					builder.append(' '); /* '\s' is a new escape sequence for space (U+0020) added in JEP 368: Text Blocks (Second Preview) */
-					break;
-				case '\"':
-				case '\'':
-				case '\\':
-					builder.append(charArray[index]);
-					break;
-				case '0':
-				case '1':
-				case '2':
-				case '3':
-					octal = charArray[index] - '0';
-					/* If the octal escape sequence only has a single digit, then translate the escape and search for next escape sequence
-					 * If there is more than one digit, fall though to case 4-7 and save the current digit as the first digit of the sequence
-					 */
-					if ((index < strLength - 1) && ('0' <= charArray[index + 1]) && ('7' >= charArray[index + 1])) {
-						index++;
-					} else {
-						builder.append((char)octal);
-						break;
-					}
-					//$FALL-THROUGH$
-				case '4':
-				case '5':
-				case '6':
-				case '7':
-					/* Shift octal value (either 0 or value fall through from the previous case) left one digit then add the current digit */
-					octal = (octal * 010) + (charArray[index] - '0');
-
-					/* Check for last possible digit in octal escape sequence */
-					if ((index < strLength - 1) && ('0' <= charArray[index + 1]) && ('7' >= charArray[index + 1])) {
-						index++;
-						octal = (octal * 010) + (charArray[index] - '0');
-					}
-					builder.append((char)octal);
-					break;
-				/**
-				 * JEP 368: Text Blocks (Second Preview)
-				 * '\r', "\r\n" and '\n' are ignored as per new continuation \<line-terminator> escape sequence
-				 * i.e. ignore line terminator and continue line
-				 * */
-				case '\r':
-					/* Check if the next character is the newline character, i.e. case "\r\n" */
-					if (((index + 1) < strLength) && ('\n' == charArray[index + 1])) {
-						index++;
-					}
-					break;
-				case '\n':
-					break;
-				default:
-					/*[MSG "K0D00", "Invalid escape sequence detected: {0}"]*/
-					throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0D00", "\\" + charArray[index])); //$NON-NLS-1$ //$NON-NLS-2$
-				}
-			} else {
-				builder.append(charArray[index]);
-			}
-			index++;
-		}
-		return builder.toString();
-	}
-/*[ENDIF] JAVA_SPEC_VERSION >= 13 */
 }

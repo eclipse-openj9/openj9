@@ -4914,12 +4914,24 @@ typedef struct J9MemoryManagerFunctions {
 	void  ( *j9gc_objaccess_indexableStoreObject)(struct J9VMThread *vmThread, J9IndexableObject *destObject, I_32 index, j9object_t value, UDATA isVolatile) ;
 	void  ( *j9gc_objaccess_indexableStoreAddress)(struct J9VMThread *vmThread, J9IndexableObject *destObject, I_32 index, void *value, UDATA isVolatile) ;
 	IDATA  ( *j9gc_objaccess_indexableDataDisplacement)(struct J9StackWalkState *walkState, J9IndexableObject *src, J9IndexableObject *dst) ;
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+	I_8  ( *j9gc_objaccess_mixedObjectReadI8)(struct J9VMThread *vmThread, j9object_t srcObject, UDATA offset, UDATA isVolatile) ;
+	U_8  ( *j9gc_objaccess_mixedObjectReadU8)(struct J9VMThread *vmThread, j9object_t srcObject, UDATA offset, UDATA isVolatile) ;
+	I_16  ( *j9gc_objaccess_mixedObjectReadI16)(struct J9VMThread *vmThread, j9object_t srcObject, UDATA offset, UDATA isVolatile) ;
+	U_16  ( *j9gc_objaccess_mixedObjectReadU16)(struct J9VMThread *vmThread, j9object_t srcObject, UDATA offset, UDATA isVolatile) ;
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 	IDATA  ( *j9gc_objaccess_mixedObjectReadI32)(struct J9VMThread *vmThread, j9object_t srcObject, UDATA offset, UDATA isVolatile) ;
 	UDATA  ( *j9gc_objaccess_mixedObjectReadU32)(struct J9VMThread *vmThread, j9object_t srcObject, UDATA offset, UDATA isVolatile) ;
 	I_64  ( *j9gc_objaccess_mixedObjectReadI64)(struct J9VMThread *vmThread, j9object_t srcObject, UDATA offset, UDATA isVolatile) ;
 	U_64  ( *j9gc_objaccess_mixedObjectReadU64)(struct J9VMThread *vmThread, j9object_t srcObject, UDATA offset, UDATA isVolatile) ;
 	j9object_t  ( *j9gc_objaccess_mixedObjectReadObject)(struct J9VMThread *vmThread, j9object_t srcObject, UDATA offset, UDATA isVolatile) ;
 	void*  ( *j9gc_objaccess_mixedObjectReadAddress)(struct J9VMThread *vmThread, j9object_t srcObject, UDATA offset, UDATA isVolatile) ;
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+	void  ( *j9gc_objaccess_mixedObjectStoreI8)(struct J9VMThread *vmThread, j9object_t destObject, UDATA offset, I_8 value, UDATA isVolatile) ;
+	void  ( *j9gc_objaccess_mixedObjectStoreU8)(struct J9VMThread *vmThread, j9object_t destObject, UDATA offset, U_8 value, UDATA isVolatile) ;
+	void  ( *j9gc_objaccess_mixedObjectStoreI16)(struct J9VMThread *vmThread, j9object_t destObject, UDATA offset, I_16 value, UDATA isVolatile) ;
+	void  ( *j9gc_objaccess_mixedObjectStoreU16)(struct J9VMThread *vmThread, j9object_t destObject, UDATA offset, U_16 value, UDATA isVolatile) ;
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 	void  ( *j9gc_objaccess_mixedObjectStoreI32)(struct J9VMThread *vmThread, j9object_t destObject, UDATA offset, I_32 value, UDATA isVolatile) ;
 	void  ( *j9gc_objaccess_mixedObjectStoreU32)(struct J9VMThread *vmThread, j9object_t destObject, UDATA offset, U_32 value, UDATA isVolatile) ;
 	void  ( *j9gc_objaccess_mixedObjectStoreI64)(struct J9VMThread *vmThread, j9object_t destObject, UDATA offset, I_64 value, UDATA isVolatile) ;
