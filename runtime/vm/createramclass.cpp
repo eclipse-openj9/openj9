@@ -2049,7 +2049,7 @@ loadFlattenableFieldClasses(J9VMThread *currentThread, J9ClassLoader *classLoade
 						}
 
 						if (!J9_IS_FIELD_FLATTENED(valueClass, field)) {
-							*valueTypeFlags |= (J9ClassContainsUnflattenedFlattenables | J9ClassHasReferences);
+							*valueTypeFlags |= J9ClassHasReferences;
 							eligibleForFastSubstitutability = false;
 						} else if (J9_ARE_NO_BITS_SET(valueClass->classFlags, J9ClassCanSupportFastSubstitutability)) {
 							eligibleForFastSubstitutability = false;
@@ -2436,9 +2436,6 @@ nativeOOM:
 			classFlags |= J9ClassHasIdentity;
 		}
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassContainsUnflattenedFlattenables)) {
-			classFlags |= J9ClassContainsUnflattenedFlattenables;
-		}
 		if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassHasReferences)) {
 			classFlags |= J9ClassHasReferences;
 
@@ -3460,7 +3457,7 @@ fail:
 			 *
 			 *                        + J9ClassLargestAlignmentConstraintDouble
 			 *                       + J9ClassIsExemptFromValidation (inherited)
-			 *                      + J9ClassContainsUnflattenedFlattenables
+			 *                      + Unused
 			 *                     + J9ClassCanSupportFastSubstitutability
 			 *
 			 *                   + J9ClassHasReferences
@@ -3752,11 +3749,6 @@ fail:
 						J9ARRAYCLASS_SET_STRIDE(ramClass, J9_VALUETYPE_FLATTENED_SIZE(elementClass));
 					}
 				} else {
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-					if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_CLASS_OPTION_NULL_RESTRICTED_ARRAY)) {
-						ramArrayClass->classFlags |= J9ClassContainsUnflattenedFlattenables;
-					}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 					J9ARRAYCLASS_SET_STRIDE(ramClass, (((UDATA) 1) << (((J9ROMArrayClass*)romClass)->arrayShape & 0x0000FFFF)));
 				}
 				Assert_VM_true(J9ARRAYCLASS_GET_STRIDE(ramClass) <= I_32_MAX);

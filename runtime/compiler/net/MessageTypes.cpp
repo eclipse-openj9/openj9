@@ -216,7 +216,6 @@ const char *messageNames[] =
    "ClassEnv_getITable",
    "ClassEnv_enumerateFields",
    "ClassEnv_flattenedArrayElementSize",
-   "ClassEnv_getDefaultValueSlotAddress",
    "ClassEnv_setClassHasIllegalStaticFinalFieldModification",
    "SharedCache_getClassChainOffsetIdentifyingLoader",
    "SharedCache_rememberClass",

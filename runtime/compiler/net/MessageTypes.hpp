@@ -231,7 +231,6 @@ enum MessageType : uint16_t
    ClassEnv_getITable,
    ClassEnv_enumerateFields,
    ClassEnv_flattenedArrayElementSize,
-   ClassEnv_getDefaultValueSlotAddress,
    ClassEnv_setClassHasIllegalStaticFinalFieldModification,
 
    // For TR_J9SharedCache
