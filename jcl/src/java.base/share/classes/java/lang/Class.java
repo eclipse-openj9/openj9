@@ -48,6 +48,7 @@ import java.util.Collections;
 import java.util.HashMap;
 /*[IF (JAVA_SPEC_VERSION >= 16) | INLINE-TYPES]*/
 import java.util.HashSet;
+import jdk.internal.misc.PreviewFeatures;
 /*[ENDIF] (JAVA_SPEC_VERSION >= 16) | INLINE-TYPES */
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -2413,14 +2414,16 @@ public int getModifiers() {
 	int rawModifiers = getModifiersImpl();
 	if (isArray()) {
 		rawModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED
-/*[IF INLINE-TYPES]*/
-				| Modifier.IDENTITY
-/*[ENDIF] INLINE-TYPES */
 				| Modifier.ABSTRACT | Modifier.FINAL;
+/*[IF INLINE-TYPES]*/
+		if(PreviewFeatures.isEnabled()){
+			rawModifiers |= AccessFlag.IDENTITY.mask();
+		}
+/*[ENDIF] INLINE-TYPES */
 	} else {
 		rawModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED
 /*[IF INLINE-TYPES]*/
-				| Modifier.IDENTITY | Modifier.STRICT
+				| AccessFlag.IDENTITY.mask() | Modifier.STRICT
 /*[ENDIF] INLINE-TYPES */
 				| Modifier.STATIC | Modifier.FINAL | Modifier.INTERFACE
 				| Modifier.ABSTRACT | SYNTHETIC | ENUM | ANNOTATION;
@@ -3029,7 +3032,7 @@ public String toGenericString() {
 	 * Modifier.toString() is used later in this function which translates them to "synchronized" and "volatile",
 	 * which is incorrect. So remove these bits if they are set.
 	 */
-	modifiers &= ~(Modifier.IDENTITY | Modifier.STRICT);
+	modifiers &= ~(AccessFlag.IDENTITY.mask() | Modifier.STRICT);
 /*[ENDIF] INLINE-TYPES */
 
 	// Build generic string
@@ -6228,7 +6231,7 @@ public Class<?>[] getNestMembers()
 		Set<AccessFlag> flags = AccessFlag.maskToAccessFlags(maskedModifiers, location);
 /*[IF INLINE-TYPES]*/
 		if (isValhallaPreviewClassFile(getClassFileVersion())) {
-			if (isArrayClass && Modifier.isIdentity(rawModifiers)) {
+			if (isArrayClass && (rawModifiers & AccessFlag.IDENTITY.mask()) != 0) {
 				flags = new HashSet<>(flags);
 				flags.add(AccessFlag.IDENTITY);
 				flags = Collections.unmodifiableSet(flags);
