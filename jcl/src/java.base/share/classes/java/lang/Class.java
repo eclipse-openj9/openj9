@@ -53,6 +53,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.lang.classfile.ClassFile;
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.util.Optional;
 /*[ENDIF] JAVA_SPEC_VERSION >= 12 */
@@ -6228,7 +6229,7 @@ public Class<?>[] getNestMembers()
 		Set<AccessFlag> flags = AccessFlag.maskToAccessFlags(maskedModifiers, location);
 /*[IF INLINE-TYPES]*/
 		if (isValhallaPreviewClassFile(getClassFileVersion())) {
-			if (isArrayClass && Modifier.isIdentity(rawModifiers)) {
+			if (isArrayClass && (rawModifiers & ClassFile.ACC_IDENTITY) != 0) {
 				flags = new HashSet<>(flags);
 				flags.add(AccessFlag.IDENTITY);
 				flags = Collections.unmodifiableSet(flags);
