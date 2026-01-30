@@ -173,6 +173,8 @@ extern J9_CFUNC UDATA j9gc_get_object_total_footprint_in_bytes(J9JavaVM *javaVM,
 extern J9_CFUNC BOOLEAN j9gc_get_explicit_GC_disabled(J9JavaVM *javaVM);
 extern J9_CFUNC UDATA j9gc_get_total_cycle_count(J9JavaVM *javaVM);
 extern J9_CFUNC UDATA j9gc_get_unique_cycle_ID(J9VMThread *vmThread);
+extern J9_CFUNC U_64 j9gc_get_cycle_start_time(J9VMThread *vmThread);
+extern J9_CFUNC U_64 j9gc_get_cycle_end_time(J9VMThread *vmThread);
 extern J9_CFUNC UDATA j9gc_objaccess_compressedPointersShift(J9VMThread *vmThread);
 extern J9_CFUNC void j9gc_objaccess_indexableStoreU64Split(J9VMThread *vmThread, J9IndexableObject *destObject, I_32 index, U_32 valueSlot0, U_32 valueSlot1, UDATA isVolatile);
 extern J9_CFUNC void cleanupMutatorModelJava(J9VMThread* vmThread);

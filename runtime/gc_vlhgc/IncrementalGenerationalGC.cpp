@@ -934,6 +934,8 @@ MM_IncrementalGenerationalGC::partialGarbageCollectPreWork(MM_EnvironmentVLHGC *
 	Assert_MM_false(_workPacketsForPartialGC->getOverflowFlag());
 	Assert_MM_true(0 == static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats.getTotalStallTime());
 
+	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	env->_cycleState->_startTime = j9time_hires_clock();
 	reportGCCycleStart(env);
 	reportPGCStart(env);
 	reportGCIncrementStart(env, "partial collect", 0);
@@ -1009,6 +1011,9 @@ MM_IncrementalGenerationalGC::partialGarbageCollectPostWork(MM_EnvironmentVLHGC 
 
 	incrementRegionAges(env, _taxationThreshold, true);
 
+	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	env->_cycleState->_endTime = j9time_hires_clock();
+
 	reportGCCycleFinalIncrementEnding(env);
 	reportGCIncrementEnd(env);
 	reportPGCEnd(env);
@@ -1074,6 +1079,8 @@ MM_IncrementalGenerationalGC::runGlobalMarkPhaseIncrement(MM_EnvironmentVLHGC *e
 		_extensions->globalVLHGCStats.gcCount += 1;
 		env->_cycleState->_currentCycleID = _extensions->getUniqueGCCycleCount();
 
+		PORT_ACCESS_FROM_ENVIRONMENT(env);
+		env->_cycleState->_startTime = j9time_hires_clock();
 		reportGMPCycleStart(env);
 		/* Inform scheduling delegate that it's internal metrics need to update/reset */
 		_schedulingDelegate.globalMarkCycleStart(env);
@@ -1118,6 +1125,9 @@ MM_IncrementalGenerationalGC::runGlobalMarkPhaseIncrement(MM_EnvironmentVLHGC *e
 	/* If the GMP is no longer running, then we have run the final increment of the cycle. */
 	Assert_MM_true(0 == static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats.getStallTime());
 	if(!isGlobalMarkPhaseRunning()) {
+		PORT_ACCESS_FROM_ENVIRONMENT(env);
+		env->_cycleState->_endTime = j9time_hires_clock();
+
 		reportGCCycleFinalIncrementEnding(env);
 		/* TODO: TEMPORARY: This is a temporary call that should be deleted once the new verbose format is in place */
 		/* NOTE: May want to move any tracepoints up into this routine */
@@ -1154,6 +1164,8 @@ MM_IncrementalGenerationalGC::runGlobalGarbageCollection(MM_EnvironmentVLHGC *en
 	} else {
 		_extensions->globalVLHGCStats.gcCount += 1;
 		env->_cycleState->_currentCycleID = _extensions->getUniqueGCCycleCount();
+		PORT_ACCESS_FROM_ENVIRONMENT(env);
+		env->_cycleState->_startTime = j9time_hires_clock();
 		reportGCCycleStart(env);
 	}
 	reportGlobalGCStart(env);
@@ -1240,6 +1252,10 @@ MM_IncrementalGenerationalGC::runGlobalGarbageCollection(MM_EnvironmentVLHGC *en
 	/* Global Collection - we max out ages on all live regions to remove them from the nursery collection set */
 	setRegionAgesToMax(env);
 	Assert_MM_true(0 == static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats.getStallTime());
+
+	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	env->_cycleState->_endTime = j9time_hires_clock();
+
 	reportGCCycleFinalIncrementEnding(env);
 	/* TODO: TEMPORARY: This is a temporary call that should be deleted once the new verbose format is in place */
 	/* NOTE: May want to move any tracepoints up into this routine */
@@ -1253,13 +1269,12 @@ MM_IncrementalGenerationalGC::runGlobalGarbageCollection(MM_EnvironmentVLHGC *en
 void
 MM_IncrementalGenerationalGC::reportGCCycleFinalIncrementEnding(MM_EnvironmentBase *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(env);
 	MM_CommonGCData commonData;
 	TRIGGER_J9HOOK_MM_OMR_GC_CYCLE_END(
 		extensions->omrHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		env->_cycleState->_endTime,
 		J9HOOK_MM_OMR_GC_CYCLE_END,
 		extensions->getHeap()->initializeCommonGCData(env, &commonData),
 		env->_cycleState->_type,
@@ -2140,7 +2155,6 @@ MM_IncrementalGenerationalGC::reportGMPCycleEnd(MM_EnvironmentBase *env)
 void
 MM_IncrementalGenerationalGC::reportGCCycleStart(MM_EnvironmentBase *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	MM_CollectionStatisticsVLHGC *stats = (MM_CollectionStatisticsVLHGC *)env->_cycleState->_collectionStatistics;
 	stats->clearPauseStats();
 	MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(env);
@@ -2151,7 +2165,7 @@ MM_IncrementalGenerationalGC::reportGCCycleStart(MM_EnvironmentBase *env)
 	TRIGGER_J9HOOK_MM_OMR_GC_CYCLE_START(
 		extensions->omrHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		env->_cycleState->_startTime,
 		J9HOOK_MM_OMR_GC_CYCLE_START,
 		extensions->getHeap()->initializeCommonGCData(env, &commonData),
 		env->_cycleState->_type);
@@ -2179,7 +2193,6 @@ MM_IncrementalGenerationalGC::reportGCCycleContinue(MM_EnvironmentBase *env, UDA
 void
 MM_IncrementalGenerationalGC::reportGCCycleEnd(MM_EnvironmentBase *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(env);
 	MM_CommonGCData commonData;
 
@@ -2188,7 +2201,7 @@ MM_IncrementalGenerationalGC::reportGCCycleEnd(MM_EnvironmentBase *env)
 	TRIGGER_J9HOOK_MM_PRIVATE_GC_POST_CYCLE_END(
 		extensions->privateHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		env->_cycleState->_endTime,
 		J9HOOK_MM_PRIVATE_GC_POST_CYCLE_END,
 		extensions->getHeap()->initializeCommonGCData(env, &commonData),
 		env->_cycleState->_type,
