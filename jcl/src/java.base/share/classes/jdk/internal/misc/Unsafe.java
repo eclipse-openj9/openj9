@@ -237,6 +237,10 @@ public final class Unsafe {
 	/* Field layout constants */
 	private static final int FIELD_LAYOUT_FLATTENED = 1;
 	private static final int FIELD_LAYOUT_REFERENCE = 0;
+
+	/* Array Layout constants */
+	public static final int ARRAY_LAYOUT_FLATTENED = 1;
+	public static final int ARRAY_LAYOUT_REFERENCE = 0;
 	/*[ENDIF] INLINE-TYPES */
 
 	static {
@@ -6658,29 +6662,6 @@ public final class Unsafe {
 	}
 
 	/*[IF INLINE-TYPES]*/
-	/**
-	 * Retrieves the value of the value type in the obj parameter referenced by offset.
-	 * The value type in obj at the given offset must be flattened.
-	 * This is a non-volatile operation.
-	 *
-	 * @param obj object from which to retrieve the value type
-	 * @param offset position of the value type in obj
-	 * @param clz the class of value type to return
-	 * @return the value stored in obj at the given offset
-	 */
-	public native <V> V getValue(Object obj, long offset, Class<?> clz);
-
-	/**
-	 * Sets the value of the value type in the obj parameter at memory offset.
-	 * Both the new value and the value type in obj at the given offset must be flattened.
-	 * This is a non-volatile operation.
-	 *
-	 * @param obj object into which to store the value type
-	 * @param offset position of the value type in obj
-	 * @param clz the class of the value type to store in obj
-	 * @param value value type to store in obj
-	 */
-	public native <V> void putValue(Object obj, long offset, Class<?> clz, V value);
 
 	/**
 	 * Determines the size of the header for a specified value class
@@ -6722,304 +6703,6 @@ public final class Unsafe {
 	 * @return a boolean indicating whether a flattened field exists at the given offset
 	 */
 	private native boolean isFieldAtOffsetFlattened(Class<?> clz, long offset);
-
-	/**
-	 * Atomically sets the value type at offset in obj if the parameter v1
-	 * matches the existing value in the object.
-	 * The get operation has memory semantics of getVolatile.
-	 * The set operation has the memory semantics of setVolatile.
-	 *
-	 * @param obj object into which to store the value
-	 * @param offset location to compare and store value in obj
-	 * @param clz the class of the parameters v1 and v2
-	 * @param v1 value that is expected to be in obj at offset
-	 * @param v2 value that will be set in obj at offset if the comparison is successful
-	 * @return boolean value indicating whether the field was updated
-	 */
-	public final <V> boolean compareAndSetValue(Object obj, long offset, Class<?> clz, V v1, V v2) {
-		boolean result = false;
-		if (isFlatArray(obj.getClass()) || isFieldAtOffsetFlattened(obj.getClass(), offset)) {
-			synchronized (inlineTypesLock) {
-				if (getValue(obj, offset, clz) == v1) {
-					putValue(obj, offset, clz, v2);
-					result = true;
-				}
-			}
-		} else {
-			result = compareAndSetReference(obj, offset, v1, v2);
-		}
-		return result;
-	}
-
-	/**
-	 * Atomically sets the value type at offset in obj if the parameter v1
-	 * matches the existing value in the object.
-	 * The get operation has memory semantics of getVolatile.
-	 * The set operation has the memory semantics of setVolatile.
-	 *
-	 * @param obj object into which to store the value
-	 * @param offset location to compare and store value in obj
-	 * @param clz the class of the parameters v1 and v2
-	 * @param v1 value that is expected to be in obj at offset
-	 * @param v2 value that will be set in obj at offset if the comparison is successful
-	 * @return value in obj at offset before this operation. This will be v1 if the exchange was successful
-	 */
-	public final <V> Object compareAndExchangeValue(Object obj, long offset, Class<?> clz, V v1, V v2) {
-		Object result = null;
-		if (isFlatArray(obj.getClass()) || isFieldAtOffsetFlattened(obj.getClass(), offset)) {
-			synchronized (inlineTypesLock) {
-				result = getValue(obj, offset, clz);
-				if (result == v1) {
-					putValue(obj, offset, clz, v2);
-				}
-			}
-		} else {
-			result = compareAndExchangeReference(obj, offset, v1, v2);
-		}
-		return result;
-	}
-
-	/**
-	 * Atomically sets the value type at offset in obj if the parameter v1
-	 * matches the existing value in the object.
-	 * The get operation has memory semantics of getAcquire.
-	 * The set operation has the memory semantics of set.
-	 *
-	 * @param obj object into which to store the value
-	 * @param offset location to compare and store value in obj
-	 * @param clz the class of the parameters v1 and v2
-	 * @param v1 value that is expected to be in obj at offset
-	 * @param v2 value that will be set in obj at offset if the comparison is successful
-	 * @return value in obj at offset before this operation. This will be v1 if the exchange was successful
-	 */
-	public final <V> Object compareAndExchangeValueAcquire(Object obj, long offset, Class<?> clz, V v1, V v2) {
-		return compareAndExchangeValue(obj, offset, clz, v1, v2);
-	}
-
-	/**
-	 * Atomically sets the value type at offset in obj if the parameter v1
-	 * matches the existing value in the object.
-	 * The get operation has memory semantics of get.
-	 * The set operation has the memory semantics of setRelease.
-	 *
-	 * @param obj object into which to store the value
-	 * @param offset location to compare and store value in obj
-	 * @param clz the class of the parameters v1 and v2
-	 * @param v1 value that is expected to be in obj at offset
-	 * @param v2 value that will be set in obj at offset if the comparison is successful
-	 * @return value in obj at offset before this operation. This will be v1 if the exchange was successful
-	 */
-	public final <V> Object compareAndExchangeValueRelease(Object obj, long offset, Class<?> clz, V v1, V v2) {
-		return compareAndExchangeValue(obj, offset, clz, v1, v2);
-	}
-
-	/**
-	 * Sets the value type at offset in obj if the parameter v1
-	 * matches the existing value in the object.
-	 * The get operation has memory semantics of get.
-	 * The set operation has the memory semantics of set.
-	 *
-	 * @param obj object into which to store the value
-	 * @param offset location to compare and store value in obj
-	 * @param clz the class of the parameters v1 and v2
-	 * @param v1 value that is expected to be in obj at offset
-	 * @param v2 value that will be set in obj at offset if the comparison is successful
-	 * @return boolean value indicating whether the field was updated
-	 */
-	public final <V> boolean weakCompareAndSetValuePlain(Object obj, long offset, Class<?> clz, V v1, V v2) {
-		return compareAndSetValue(obj, offset, clz, v1, v2);
-	}
-
-	/**
-	 * Sets the value type at offset in obj if the parameter v1
-	 * matches the existing value in the object.
-	 * The get operation has memory semantics of getAcquire.
-	 * The set operation has the memory semantics of set.
-	 *
-	 * @param obj object into which to store the value
-	 * @param offset location to compare and store value in obj
-	 * @param clz the class of the parameters v1 and v2
-	 * @param v1 value that is expected to be in obj at offset
-	 * @param v2 value that will be set in obj at offset if the comparison is successful
-	 * @return boolean value indicating whether the field was updated
-	 */
-	public final <V> boolean weakCompareAndSetValueAcquire(Object obj, long offset, Class<?> clz, V v1, V v2) {
-		return compareAndSetValue(obj, offset, clz, v1, v2);
-	}
-
-	/**
-	 * Sets the value type at offset in obj if the parameter v1
-	 * matches the existing value in the object.
-	 * The get operation has memory semantics of get.
-	 * The set operation has the memory semantics of setRelease.
-	 *
-	 * @param obj object into which to store the value
-	 * @param offset location to compare and store value in obj
-	 * @param clz the class of the parameters v1 and v2
-	 * @param v1 value that is expected to be in obj at offset
-	 * @param v2 value that will be set in obj at offset if the comparison is successful
-	 * @return boolean value indicating whether the field was updated
-	 */
-	public final <V> boolean weakCompareAndSetValueRelease(Object obj, long offset, Class<?> clz, V v1, V v2) {
-		return compareAndSetValue(obj, offset, clz, v1, v2);
-	}
-
-	/**
-	 * Sets the value type at offset in obj if the parameter v1
-	 * matches the existing value in the object.
-	 * The get operation has memory semantics of get.
-	 * The set operation has the memory semantics of set.
-	 *
-	 * @param obj object into which to store the value
-	 * @param offset location to compare and store value in obj
-	 * @param clz the class of the parameters v1 and v2
-	 * @param v1 value that is expected to be in obj at offset
-	 * @param v2 value that will be set in obj at offset if the comparison is successful
-	 * @return boolean value indicating whether the field was updated
-	 */
-	public final <V> boolean weakCompareAndSetValue(Object obj, long offset, Class<?> clz, V v1, V v2) {
-		return compareAndSetValue(obj, offset, clz, v1, v2);
-	}
-
-	/**
-	 * Atomically retrieves the value type in the obj parameter referenced by offset.
-	 *
-	 * @param obj object from which to retrieve the value type
-	 * @param offset position of the value type in obj
-	 * @param clz the class of value type to return
-	 * @return value type stored in obj
-	 */
-	public final <V> Object getValueVolatile(Object obj, long offset, Class<?> clz) {
-		synchronized (inlineTypesLock) {
-			return getValue(obj, offset, clz);
-		}
-	}
-
-	/**
-	 * Atomically sets the value of the value type in the obj parameter at memory offset.
-	 * This is a non-volatile operation.
-	 *
-	 * @param obj object into which to store the value type
-	 * @param offset position of the value type in obj
-	 * @param clz the class of the value type to store in obj
-	 * @param v value type to store in obj
-	 */
-	public final <V> void putValueVolatile(Object obj, long offset, Class<?> clz, V v) {
-		synchronized (inlineTypesLock) {
-			putValue(obj, offset, clz, v);
-		}
-	}
-
-	/**
-	 * Retrieves the value type in the obj parameter referenced by offset using acquire semantics.
-	 * Preceding loads will not be reordered with subsequent loads/stores.
-	 *
-	 * @param obj object from which to retrieve the value type
-	 * @param offset position of the value type in obj
-	 * @param clz the class of value type to return
-	 * @return value type stored in obj
-	 */
-	public final <V> Object getValueAcquire(Object obj, long offset, Class<?> clz) {
-		return getValueVolatile(obj, offset, clz);
-	}
-
-	/**
-	 * Sets the value of value type in the obj parameter at memory offset using acquire semantics.
-	 * Preceding stores will not be reordered with subsequent loads/stores.
-	 *
-	 * @param obj object into which to store the value type
-	 * @param offset position of the value type in obj
-	 * @param clz the class of the value type to store in obj
-	 * @param v value type to store in obj
-	 */
-	public final <V> void putValueRelease(Object obj, long offset, Class<?> clz, V v) {
-		putValueVolatile(obj, offset, clz, v);
-	}
-
-	/**
-	 * Retrieves the value type in the obj parameter referenced by offset.
-	 * The operation is in program order, but does enforce ordering with respect to other threads.
-	 *
-	 * @param obj object from which to retrieve the value type
-	 * @param offset position of the value type in obj
-	 * @param clz the class of value type to return
-	 * @return value type stored in obj
-	 */
-	public final <V> Object getValueOpaque(Object obj, long offset, Class<?> clz) {
-		return getValueVolatile(obj, offset, clz);
-	}
-
-	/**
-	 * Sets the value of value type in the obj parameter at memory offset.
-	 * The operation is in program order, but does enforce ordering with respect to other threads.
-	 *
-	 * @param obj object into which to store the value type
-	 * @param offset position of the value type in obj
-	 * @param clz the class of the value type to store in obj
-	 * @param v value type to store in obj
-	 */
-	public final <V> void putValueOpaque(Object obj, long offset, Class<?> clz, V v) {
-		putValueVolatile(obj, offset, clz, v);
-	}
-
-	/**
-	 * Atomically sets the value type at offset in obj
-	 * and returns the value of the field prior to the update.
-	 * The get operation has the memory semantics of getVolatile.
-	 * The set operation has the memory semantics of setVolatile.
-	 *
-	 * @param obj object into which to store the value type
-	 * @param offset position of the value type in obj
-	 * @param clz the class of the value type to store in obj
-	 * @param v value type to store in obj
-	 * @return value type in obj at offset before update
-	 */
-	public final <V> Object getAndSetValue(Object obj, long offset, Class<?> clz, V v) {
-		Object valueAtOffset = null;
-
-		if (isFlatArray(obj.getClass()) || isFieldAtOffsetFlattened(obj.getClass(), offset)) {
-			synchronized (inlineTypesLock) {
-				valueAtOffset = getValue(obj, offset, clz);
-				putValue(obj, offset, clz, v);
-			}
-		} else {
-			valueAtOffset = getAndSetReference(obj, offset, v);
-		}
-
-		return valueAtOffset;
-	}
-
-	/**
-	 * Atomically sets the value type at offset in obj
-	 * and returns the value of the field prior to the update.
-	 * The get operation has the memory semantics of get.
-	 * The set operation has the memory semantics of setRelease.
-	 *
-	 * @param obj object into which to store the value type
-	 * @param offset position of the value type in obj
-	 * @param clz the class of the value type to store in obj
-	 * @param v value type to store in obj
-	 * @return value type in obj at offset before update
-	 */
-	public final <V> Object getAndSetValueRelease(Object obj, long offset, Class<?> clz, V v) {
-		return getAndSetValue(obj, offset, clz, v);
-	}
-
-	/**
-	 * Atomically sets the value type at offset in obj
-	 * and returns the value of the field prior to the update.
-	 * The get operation has the memory semantics of getAcquire.
-	 * The set operation has the memory semantics of set.
-	 *
-	 * @param obj object into which to store the value type
-	 * @param offset position of the value type in obj
-	 * @param clz the class of the value type to store in obj
-	 * @param v value type to store in obj
-	 * @return value type in obj at offset before update
-	 */
-	public final <V> Object getAndSetValueAcquire(Object obj, long offset, Class<?> clz, V v) {
-		return getAndSetValue(obj, offset, clz, v);
-	}
 
 	/**
 	 * Atomically sets the reference at offset in obj if the compare value
@@ -7180,7 +6863,10 @@ public final class Unsafe {
 	}
 
 	public int arrayLayout(Class<?> arrayClass) {
-		throw new Error("jdk.internal.misc.Unsafe.arrayLayout unimplemented"); //$NON-NLS-1$
+		if (null == arrayClass) {
+			throw new NullPointerException();
+		}
+		return isFlatArray(arrayClass) ? ARRAY_LAYOUT_FLATTENED : ARRAY_LAYOUT_REFERENCE;
 	}
 
 	public int fieldLayout(Field f) {
@@ -7190,78 +6876,335 @@ public final class Unsafe {
 		return isFlatField(f) ? FIELD_LAYOUT_FLATTENED : FIELD_LAYOUT_REFERENCE;
 	}
 
-	public <V> V getFlatValue(Object obj, long offset, int layoutKind, Class<?> valueType) {
-		throw new Error("jdk.internal.misc.Unsafe.getFlatValue unimplemented"); //$NON-NLS-1$
-	}
+	/**
+	 * Retrieves the value of the value type in the obj parameter referenced by offset.
+	 * The value type in obj at the given offset must be flattened.
+	 * This is a non-volatile operation.
+	 *
+	 * @param obj object from which to retrieve the value type
+	 * @param offset position of the value type in obj
+	 * @param layoutKind layout of the field or array element
+	 * @param valueType the class of value type to return
+	 * @return the value stored in obj at the given offset
+	 */
+	public native <V> V getFlatValue(Object obj, long offset, int layoutKind, Class<?> valueType);
 
-	public <V> void putFlatValue(Object obj, long offset, int layoutKind, Class<?> valueType, V v) {
-		throw new Error("jdk.internal.misc.Unsafe.putFlatValue unimplemented"); //$NON-NLS-1$
-	}
+	/**
+	 * Sets the value of the value type in the obj parameter at memory offset.
+	 * Both the new value and the value type in obj at the given offset must be flattened.
+	 * This is a non-volatile operation.
+	 *
+	 * @param obj object into which to store the value type
+	 * @param offset position of the value type in obj
+	 * @param layoutKind layout of the field or srray element
+	 * @param valueType the class of the value type to store in obj
+	 * @param v value type to store in obj
+	 */
+	 public native <V> void putFlatValue(Object obj, long offset, int layoutKind, Class<?> valueType, V v);
 
+	/**
+	 * Atomically retrieves the value type in the base parameter referenced by offset.
+	 *
+	 * @param obj object from which to retrieve the value type
+	 * @param offset position of the value type in obj
+	 * @param layout layout of the field or array element
+	 * @param valueType the class of value type to return
+	 * @return value type stored in obj
+	 */
 	public <V> Object getFlatValueVolatile(Object base, long offset, int layout, Class<?> valueType) {
-		throw new Error("jdk.internal.misc.Unsafe.getFlatValueVolatile unimplemented"); //$NON-NLS-1$
+		synchronized (inlineTypesLock) {
+			return getFlatValue(base, offset, layout, valueType);
+		}
 	}
 
+	/**
+	 * Retrieves the value type in the base parameter referenced by offset.
+	 * The operation is in program order, but does enforce ordering with respect to other threads.
+	 *
+	 * @param base object from which to retrieve the value type
+	 * @param offset position of the value type in base
+	 * @param layout layout of the field or array element
+	 * @param valueType the class of value type to return
+	 * @return value type stored in obj
+	 */
 	public <V> Object getFlatValueOpaque(Object base, long offset, int layout, Class<?> valueType) {
 		return getFlatValueVolatile(base, offset, layout, valueType);
 	}
 
+	/**
+	 * Retrieves the value type in the base parameter referenced by offset using acquire semantics.
+	 * Preceding loads will not be reordered with subsequent loads/stores.
+	 *
+	 * @param base object from which to retrieve the value type
+	 * @param offset position of the value type in base
+	 * @param layout layout of the field or array element
+	 * @param valueType the class of value type to return
+	 * @return value type stored in obj
+	 */
 	public <V> Object getFlatValueAcquire(Object base, long offset, int layout, Class<?> valueType) {
 		return getFlatValueVolatile(base, offset, layout, valueType);
 	}
 
+	/**
+	 * Atomically sets the value of the value type in the obj parameter at memory offset.
+	 * This is a non-volatile operation.
+	 *
+	 * @param obj object into which to store the value type
+	 * @param offset position of the value type in obj
+	 * @param layout layout of the field or array element
+	 * @param valueType the class of the value type to store in obj
+	 * @param x value type to store in obj
+	 */
 	public <V> void putFlatValueVolatile(Object obj, long offset, int layout, Class<?> valueType, V x) {
-		throw new Error("jdk.internal.misc.Unsafe.putFlatValueVolatile unimplemented"); //$NON-NLS-1$
+		synchronized (inlineTypesLock) {
+			putFlatValue(obj, offset, layout, valueType, x);
+		}
 	}
 
+	/**
+	 * Sets the value of value type in the obj parameter at memory offset.
+	 * The operation is in program order, but does enforce ordering with respect to other threads.
+	 *
+	 * @param obj object into which to store the value type
+	 * @param offset position of the value type in obj
+	 * @param layout layout of the field or array element
+	 * @param valueType the class of the value type to store in obj
+	 * @param x value type to store in obj
+	 */
 	public <V> void putFlatValueOpaque(Object obj, long offset, int layout, Class<?> valueType, V x) {
 		putFlatValueVolatile(obj, offset, layout, valueType, x);
 	}
 
+	/**
+	 * Sets the value of value type in the obj parameter at memory offset using acquire semantics.
+	 * Preceding stores will not be reordered with subsequent loads/stores.
+	 *
+	 * @param obj object into which to store the value type
+	 * @param offset position of the value type in obj
+	 * @param layout layout of the field or array element
+	 * @param valueType the class of the value type to store in obj
+	 * @param x value type to store in obj
+	 */
 	public <V> void putFlatValueRelease(Object obj, long offset, int layout, Class<?> valueType, V x) {
 		putFlatValueVolatile(obj, offset, layout, valueType, x);
 	}
 
+	/**
+	 * Atomically sets the value type at offset in obj if the parameter expected
+	 * matches the existing value in the object.
+	 * The get operation has memory semantics of getFlatVolatile.
+	 * The set operation has the memory semantics of putFlatVolatile.
+	 *
+	 * @param obj object into which to store the value
+	 * @param offset location to compare and store value in obj
+	 * @param layout layout of the field or array element
+	 * @param valueType the class of the parameters expected and x
+	 * @param expected value that is expected to be in obj at offset
+	 * @param x value that will be set in obj at offset if the comparison is successful
+	 * @return value in obj at offset before this operation. This will be expected if the exchange was successful
+	 */
 	public <V> Object compareAndExchangeFlatValue(Object obj, long offset, int layout, Class<?> valueType, V expected, V x) {
-		throw new Error("jdk.internal.misc.Unsafe.compareAndExchangeFlatValue unimplemented"); //$NON-NLS-1$
+		Object result = null;
+		if (isFlatArray(obj.getClass()) || isFieldAtOffsetFlattened(obj.getClass(), offset)) {
+			synchronized (inlineTypesLock) {
+				result = getFlatValue(obj, offset, layout, valueType);
+				if (result == expected) {
+					putFlatValue(obj, offset, layout, valueType, x);
+				}
+			}
+		}
+		return result;
 	}
 
+	/**
+	 * Atomically sets the value type at offset in obj if the parameter expected
+	 * matches the existing value in the object.
+	 * The get operation has memory semantics of getAcquire.
+	 * The set operation has the memory semantics of set.
+	 *
+	 * @param obj object into which to store the value
+	 * @param offset location to compare and store value in obj
+	 * @param layout layout of the field or array element
+	 * @param valueType the class of the parameters expected and x
+	 * @param expected value that is expected to be in obj at offset
+	 * @param x value that will be set in obj at offset if the comparison is successful
+	 * @return value in obj at offset before this operation. This will be expected if the exchange was successful
+	 */
 	public <V> Object compareAndExchangeFlatValueAcquire(Object obj, long offset, int layout, Class<?> valueType, V expected, V x) {
 		return compareAndExchangeFlatValue(obj, offset, layout, valueType, expected, x);
 	}
 
+	/**
+	 * Atomically sets the value type at offset in obj if the parameter expected
+	 * matches the existing value in the object.
+	 * The get operation has memory semantics of get.
+	 * The set operation has the memory semantics of setRelease.
+	 *
+	 * @param obj object into which to store the value
+	 * @param offset location to compare and store value in obj
+	 * @param layout layout of the field or array element
+	 * @param valueType the class of the parameters expected and x
+	 * @param expected value that is expected to be in obj at offset
+	 * @param x value that will be set in obj at offset if the comparison is successful
+	 * @return value in obj at offset before this operation. This will be expected if the exchange was successful
+	 */
 	public <V> Object compareAndExchangeFlatValueRelease(Object obj, long offset, int layout, Class<?> valueType, V expected, V x) {
 		return compareAndExchangeFlatValue(obj, offset, layout, valueType, expected, x);
 	}
 
+	/**
+	 * Atomically sets the value type at offset in obj if the parameter expected
+	 * matches the existing value in the object.
+	 * The get operation has memory semantics of getVolatile.
+	 * The set operation has the memory semantics of setVolatile.
+	 *
+	 * @param obj object into which to store the value
+	 * @param offset location to compare and store value in obj
+	 * @param layout layout of the field or array element
+	 * @param valueType the class of the parameters expected and x
+	 * @param expected value that is expected to be in obj at offset
+	 * @param x value that will be set in obj at offset if the comparison is successful
+	 * @return boolean value indicating whether the field was updated
+	 */
 	public <V> boolean compareAndSetFlatValue(Object obj, long offset, int layout, Class<?> valueType, V expected, V x) {
-		throw new Error("jdk.internal.misc.Unsafe.compareAndSetFlatValue unimplemented"); //$NON-NLS-1$
+		boolean result = false;
+		if (isFlatArray(obj.getClass()) || isFieldAtOffsetFlattened(obj.getClass(), offset)) {
+			synchronized (inlineTypesLock) {
+				if (getFlatValue(obj, offset, layout, valueType) == expected) {
+					putFlatValue(obj, offset, layout, valueType, x);
+					result = true;
+				}
+			}
+		}
+		return result;
 	}
 
+	/**
+	 * Sets the value type at offset in obj if the parameter expected
+	 * matches the existing value in the object.
+	 * The get operation has memory semantics of get.
+	 * The set operation has the memory semantics of set.
+	 *
+	 * @param obj object into which to store the value
+	 * @param offset location to compare and store value in obj
+	 * @param layout layout of the field or array element
+	 * @param valueType the class of the parameters expected and x
+	 * @param expected value that is expected to be in obj at offset
+	 * @param x value that will be set in obj at offset if the comparison is successful
+	 * @return boolean value indicating whether the field was updated
+	 */
 	public <V> boolean weakCompareAndSetFlatValuePlain(Object obj, long offset, int layout, Class<?> valueType, V expected, V x) {
 		return compareAndSetFlatValue(obj, offset, layout, valueType, expected, x);
 	}
 
+	/**
+	 * Sets the value type at offset in obj if the parameter expected
+	 * matches the existing value in the object.
+	 * The get operation has memory semantics of get.
+	 * The set operation has the memory semantics of set.
+	 *
+	 * @param obj object into which to store the value
+	 * @param offset location to compare and store value in obj
+	 * @param layout layout of the field or array element
+	 * @param valueType the class of the parameters expected and x
+	 * @param expected value that is expected to be in obj at offset
+	 * @param x value that will be set in obj at offset if the comparison is successful
+	 * @return boolean value indicating whether the field was updated
+	 */
 	public <V> boolean weakCompareAndSetFlatValue(Object obj, long offset, int layout, Class<?> valueType, V expected, V x) {
 		return compareAndSetFlatValue(obj, offset, layout, valueType, expected, x);
 	}
 
+	/**
+	 * Sets the value type at offset in obj if the parameter expected
+	 * matches the existing value in the object.
+	 * The get operation has memory semantics of get.
+	 * The set operation has the memory semantics of setRelease.
+	 *
+	 * @param obj object into which to store the value
+	 * @param offset location to compare and store value in obj
+	 * @param layout layout of the field or array element
+	 * @param valueType the class of the parameters expected and x
+	 * @param expected value that is expected to be in obj at offset
+	 * @param x value that will be set in obj at offset if the comparison is successful
+	 * @return boolean value indicating whether the field was updated
+	 */
 	public <V> boolean weakCompareAndSetFlatValueRelease(Object obj, long offset, int layout, Class<?> valueType, V expected, V x) {
 		return compareAndSetFlatValue(obj, offset, layout, valueType, expected, x);
 	}
 
+	/**
+	 * Sets the value type at offset in obj if the parameter expected
+	 * matches the existing value in the object.
+	 * The get operation has memory semantics of getAcquire.
+	 * The set operation has the memory semantics of set.
+	 *
+	 * @param obj object into which to store the value
+	 * @param offset location to compare and store value in obj
+	 * @param layout layout of the field or array element
+	 * @param valueType the class of the parameters expected and x
+	 * @param expected value that is expected to be in obj at offset
+	 * @param x value that will be set in obj at offset if the comparison is successful
+	 * @return boolean value indicating whether the field was updated
+	 */
 	public <V> boolean weakCompareAndSetFlatValueAcquire(Object obj, long offset, int layout, Class<?> valueType, V expected, V x) {
 		return compareAndSetFlatValue(obj, offset, layout, valueType, expected, x);
 	}
 
+	/**
+	 * Atomically sets the value type at offset in obj
+	 * and returns the value of the field prior to the update.
+	 * The get operation has the memory semantics of getVolatile.
+	 * The set operation has the memory semantics of setVolatile.
+	 *
+	 * @param obj object into which to store the value
+	 * @param offset location to compare and store value in obj
+	 * @param layout layout of the field or array element
+	 * @param valueType the class of the value type to store in obj
+	 * @param newValue value type to store in obj
+	 * @return value type in obj at offset before update
+	 */
 	public <V> Object getAndSetFlatValue(Object obj, long offset, int layout, Class<?> valueType, V newValue) {
-		throw new Error("jdk.internal.misc.Unsafe.getAndSetFlatValue unimplemented"); //$NON-NLS-1$
+		Object valueAtOffset = null;
+		if (isFlatArray(obj.getClass()) || isFieldAtOffsetFlattened(obj.getClass(), offset)) {
+			synchronized (inlineTypesLock) {
+				valueAtOffset = getFlatValue(obj, offset, layout, valueType);
+				putFlatValue(obj, offset, layout, valueType, newValue);
+			}
+		}
+		return valueAtOffset;
 	}
 
+	/**
+	 * Atomically sets the value type at offset in obj
+	 * and returns the value of the field prior to the update.
+	 * The get operation has the memory semantics of get.
+	 * The set operation has the memory semantics of setRelease.
+	 *
+	 * @param obj object into which to store the value
+	 * @param offset location to compare and store value in obj
+	 * @param layout layout of the field or array element
+	 * @param valueType the class of the value type to store in obj
+	 * @param newValue value type to store in obj
+	 * @return value type in obj at offset before update
+	 */
 	public <V> Object getAndSetFlatValueRelease(Object obj, long offset, int layout, Class<?> valueType, V newValue) {
 		return getAndSetFlatValue(obj, offset, layout, valueType, newValue);
 	}
 
+	/**
+	 * Atomically sets the value type at offset in obj
+	 * and returns the value of the field prior to the update.
+	 * The get operation has the memory semantics of getAcquire.
+	 * The set operation has the memory semantics of set.
+	 *
+	 * @param obj object into which to store the value
+	 * @param offset location to compare and store value in obj
+	 * @param layout layout of the field or array element
+	 * @param valueType the class of the value type to store in obj
+	 * @param newValue value type to store in obj
+	 * @return value type in obj at offset before update
+	 */
 	public <V> Object getAndSetFlatValueAcquire(Object obj, long offset, int layout, Class<?> valueType, V newValue) {
 		return getAndSetFlatValue(obj, offset, layout, valueType, newValue);
 	}

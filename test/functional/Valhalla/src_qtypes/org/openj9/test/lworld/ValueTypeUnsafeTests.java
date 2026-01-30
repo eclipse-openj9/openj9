@@ -100,7 +100,9 @@ public class ValueTypeUnsafeTests {
 		vtPointAry[1] = new ValueTypePoint2D(new ValueTypeInt(10), new ValueTypeInt(20));
 
 		vtPointAryOffset1 = vtPointAryOffset0 + arrayElementSize(vtPointAry);
-		vtIntAry = new ValueTypeInt[] { new ValueTypeInt(1), new ValueTypeInt(2) };
+		vtIntAry = (ValueTypeInt[]) ValueClass.newNullRestrictedAtomicArray(ValueTypeInt.class, 2,
+				 new ValueTypeInt(1));
+		vtIntAry[1] = new ValueTypeInt(2);
 		vtIntAryOffset1 = vtIntAryOffset0 + arrayElementSize(vtIntAry);
 	}
 
@@ -110,14 +112,14 @@ public class ValueTypeUnsafeTests {
 		public CompareAndDoSomethingFunction(String methodName) throws NoSuchMethodException {
 			this.method = myUnsafe.getClass().getMethod(
 				methodName,
-				new Class[]{Object.class, long.class, Class.class, Object.class, Object.class}
+				new Class[]{Object.class, long.class, int.class, Class.class, Object.class, Object.class}
 			);
 		}
 
-		public boolean execute(Object obj, long offset, Class<?> clz, Object v1, Object v2) throws Throwable {
+		public boolean execute(Object obj, long offset, int layout, Class<?> clz, Object v1, Object v2) throws Throwable {
 			Object returned = null;
 			try {
-				returned = method.invoke(myUnsafe, obj, offset, clz, v1, v2);
+				returned = method.invoke(myUnsafe, obj, offset, layout, clz, v1, v2);
 			} catch (InvocationTargetException exception) {
 				throw exception.getCause();
 			}
@@ -138,8 +140,8 @@ public class ValueTypeUnsafeTests {
 	@DataProvider(name = "compareAndDoSomethingFuncs")
 	static public Object[][] compareAndDoSomethingFuncs() throws NoSuchMethodException {
 		return new Object[][] {
-			{new CompareAndDoSomethingFunction("compareAndSetValue")},
-			{new CompareAndDoSomethingFunction("compareAndExchangeValue")},
+			{new CompareAndDoSomethingFunction("compareAndSetFlatValue")},
+			{new CompareAndDoSomethingFunction("compareAndExchangeFlatValue")},
 		};
 	}
 
@@ -250,59 +252,74 @@ public class ValueTypeUnsafeTests {
 
 	@Test
 	static public void testNullObjGetValue() throws Throwable {
-		assertThrows(NullPointerException.class, () -> {
-			myUnsafe.getValue(null, 0, ValueTypeInt.class);
-		});
+		if (isFlatteningEnabled) {
+			int layout = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("x"));
+			assertThrows(NullPointerException.class, () -> {
+				myUnsafe.getFlatValue(null, 0, layout, ValueTypeInt.class);
+			});
+		}
 	}
 
 	@Test
 	static public void testNullClzGetValue() throws Throwable {
-		assertThrows(NullPointerException.class, () -> {
-			myUnsafe.getValue(vtPoint, vtPointOffsetX, null);
-		});
+		if (isFlatteningEnabled) {
+			int layout = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("x"));
+			assertThrows(NullPointerException.class, () -> {
+				myUnsafe.getFlatValue(vtPoint, vtPointOffsetX, layout, null);
+			});
+		}
 	}
 
 	@Test
 	static public void testNonVTClzGetValue() throws Throwable {
-		assertNull(myUnsafe.getValue(vtPoint, intWrapperOffsetVti, IntWrapper.class));
+		if (isFlatteningEnabled) {
+			int layout = myUnsafe.fieldLayout(IntWrapper.class.getDeclaredField("vti"));
+			assertNull(myUnsafe.getFlatValue(vtPoint, intWrapperOffsetVti, layout, IntWrapper.class));
+		}
 	}
 
 	@Test
 	static public void testGetValuesOfArray() throws Throwable {
 		if (isFlatteningEnabled) {
-			ValueTypePoint2D p = myUnsafe.getValue(vtPointAry, vtPointAryOffset0, ValueTypePoint2D.class);
+			int layout = myUnsafe.arrayLayout(vtPointAry.getClass());
+			ValueTypePoint2D p = myUnsafe.getFlatValue(vtPointAry, vtPointAryOffset0, layout, ValueTypePoint2D.class);
 			assertEquals(p.x.i, vtPointAry[0].x.i);
 			assertEquals(p.y.i, vtPointAry[0].y.i);
-			p = myUnsafe.getValue(vtPointAry, vtPointAryOffset1, ValueTypePoint2D.class);
+			p = myUnsafe.getFlatValue(vtPointAry, vtPointAryOffset1, layout, ValueTypePoint2D.class);
 			assertEquals(p.x.i, vtPointAry[1].x.i);
 			assertEquals(p.y.i, vtPointAry[1].y.i);
 		}
 	}
 
-	// TODO https://github.com/eclipse-openj9/openj9/issues/23134
-	@Test(enabled = false)
+	@Test
 	static public void testGetValueOfZeroSizeVTArrayDoesNotCauseError() throws Throwable {
-		ZeroSizeValueType[] zsvtAry = new ZeroSizeValueType[] {
-			new ZeroSizeValueType(),
-			new ZeroSizeValueType()
-		};
-		long zsvtAryOffset0 = myUnsafe.arrayBaseOffset(zsvtAry.getClass());
-		assertNotNull(myUnsafe.getValue(zsvtAry, zsvtAryOffset0, ZeroSizeValueType.class));
+		if (isFlatteningEnabled) {
+			ZeroSizeValueType[] zsvtAry = (ZeroSizeValueType[]) ValueClass.newNullRestrictedAtomicArray(ZeroSizeValueType.class,
+					2,
+					new ZeroSizeValueType());
+			long zsvtAryOffset0 = myUnsafe.arrayBaseOffset(zsvtAry.getClass());
+			int layout = myUnsafe.arrayLayout(zsvtAry.getClass());
+			assertNotNull(myUnsafe.getFlatValue(zsvtAry, zsvtAryOffset0, layout, ZeroSizeValueType.class));
+		}
 	}
 
-	// TODO https://github.com/eclipse-openj9/openj9/issues/23134
-	@Test(enabled = false)
+	@Test
 	static public void testGetValueOfZeroSizeVTObjectDoesNotCauseError() throws Throwable {
-		ZeroSizeValueTypeWrapper zsvtw = new ZeroSizeValueTypeWrapper();
-		long zsvtwOffset0 = myUnsafe.objectFieldOffset(ZeroSizeValueTypeWrapper.class.getDeclaredField("z"));
-		assertNotNull(myUnsafe.getValue(zsvtw, zsvtwOffset0, ZeroSizeValueType.class));
+		if (isFlatteningEnabled) {
+			ZeroSizeValueTypeWrapper zsvtw = new ZeroSizeValueTypeWrapper();
+			long zsvtwOffset0 = myUnsafe.objectFieldOffset(ZeroSizeValueTypeWrapper.class.getDeclaredField("z"));
+			int layout = myUnsafe.fieldLayout(zsvtw.getClass().getDeclaredField("z"));
+			assertNotNull(myUnsafe.getFlatValue(zsvtw, zsvtwOffset0, layout, ZeroSizeValueType.class));
+		}
 	}
 
 	@Test
 	static public void testGetValuesOfObject() throws Throwable {
-		ValueTypeInt x = myUnsafe.getValue(vtPoint, vtPointOffsetX, ValueTypeInt.class);
-		ValueTypeInt y = myUnsafe.getValue(vtPoint, vtPointOffsetY, ValueTypeInt.class);
 		if (isFlatteningEnabled) {
+			int layoutX = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("x"));
+			int layoutY = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("y"));
+			ValueTypeInt x = myUnsafe.getFlatValue(vtPoint, vtPointOffsetX, layoutX, ValueTypeInt.class);
+			ValueTypeInt y = myUnsafe.getFlatValue(vtPoint, vtPointOffsetY, layoutY, ValueTypeInt.class);
 			assertEquals(x.i, vtPoint.x.i);
 			assertEquals(y.i, vtPoint.y.i);
 		}
@@ -311,10 +328,12 @@ public class ValueTypeUnsafeTests {
 	@Test
 	static public void testGetValueOnVTWithLongFields() throws Throwable {
 		ValueTypeLongPoint2D vtLongPoint = new ValueTypeLongPoint2D(123, 456);
-		ValueTypeLong x = myUnsafe.getValue(vtLongPoint, vtLongPointOffsetX, ValueTypeLong.class);
-		ValueTypeLong y = myUnsafe.getValue(vtLongPoint, vtLongPointOffsetY, ValueTypeLong.class);
 
 		if (isFlatteningEnabled) {
+			int layoutX = myUnsafe.fieldLayout(vtLongPoint.getClass().getDeclaredField("x"));
+			int layoutY = myUnsafe.fieldLayout(vtLongPoint.getClass().getDeclaredField("y"));
+			ValueTypeLong x = myUnsafe.getFlatValue(vtLongPoint, vtLongPointOffsetX, layoutX, ValueTypeLong.class);
+			ValueTypeLong y = myUnsafe.getFlatValue(vtLongPoint, vtLongPointOffsetY, layoutY, ValueTypeLong.class);
 			assertEquals(x.l, vtLongPoint.x.l);
 			assertEquals(y.l, vtLongPoint.y.l);
 		}
@@ -327,7 +346,8 @@ public class ValueTypeUnsafeTests {
 	static public void testGetValueOnNonVTObj() throws Throwable {
 		if (isFlatteningEnabled) {
 			IntWrapper iw = new IntWrapper(7);
-			ValueTypeInt vti = myUnsafe.getValue(iw, intWrapperOffsetVti, ValueTypeInt.class);
+			int layout = myUnsafe.fieldLayout(iw.getClass().getDeclaredField("vti"));
+			ValueTypeInt vti = myUnsafe.getFlatValue(iw, intWrapperOffsetVti, layout, ValueTypeInt.class);
 			assertEquals(vti.i, iw.vti.i);
 			assertEquals(iw.vti.i, 7);
 		}
@@ -335,39 +355,54 @@ public class ValueTypeUnsafeTests {
 
 	@Test
 	static public void testNullObjPutValue() throws Throwable {
-		assertThrows(NullPointerException.class, () -> {
-			myUnsafe.putValue(null, vtPointOffsetX, ValueTypeInt.class, new ValueTypeInt(1));
-		});
+		if (isFlatteningEnabled) {
+			int layout = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("x"));
+			assertThrows(NullPointerException.class, () -> {
+				myUnsafe.putFlatValue(null, vtPointOffsetX, layout, ValueTypeInt.class, new ValueTypeInt(1));
+			});
+		}
 	}
 
 	@Test
 	static public void testNullClzPutValue() throws Throwable {
-		assertThrows(NullPointerException.class, () -> {
-			myUnsafe.putValue(vtPoint, vtPointOffsetX, null, new ValueTypeInt(1));
-		});
+		if (isFlatteningEnabled) {
+			int layout = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("x"));
+			assertThrows(NullPointerException.class, () -> {
+				myUnsafe.putFlatValue(vtPoint, vtPointOffsetX, layout, null, new ValueTypeInt(1));
+			});
+		}
 	}
 
 	@Test
 	static public void testNullValuePutValue() throws Throwable {
-		assertThrows(NullPointerException.class, () -> {
-			myUnsafe.putValue(vtPoint, vtPointOffsetX, ValueTypeInt.class, null);
-		});
+		if (isFlatteningEnabled) {
+			int layout = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("x"));
+			assertThrows(NullPointerException.class, () -> {
+				myUnsafe.putFlatValue(vtPoint, vtPointOffsetX, layout, ValueTypeInt.class, null);
+			});
+		}
 	}
 
 	@Test
 	static public void testPutValueWithNonVTclzAndValue() throws Throwable {
-		int xBeforeTest = vtPoint.x.i;
-		assertNotEquals(xBeforeTest, 10000);
-		myUnsafe.putValue(vtPoint, vtPointOffsetX, IntWrapper.class, new IntWrapper(10000));
-		assertEquals(vtPoint.x.i, xBeforeTest);
+		if (isFlatteningEnabled) {
+			int xBeforeTest = vtPoint.x.i;
+			assertNotEquals(xBeforeTest, 10000);
+			int layout = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("x"));
+			myUnsafe.putFlatValue(vtPoint, vtPointOffsetX, layout, IntWrapper.class, new IntWrapper(10000));
+			assertEquals(vtPoint.x.i, xBeforeTest);
+		}
 	}
 
 	@Test
 	static public void testPutValueWithNonVTClzButVTValue() throws Throwable {
-		int xBeforeTest = vtPoint.x.i;
-		assertNotEquals(xBeforeTest, 10000);
-		myUnsafe.putValue(vtPoint, vtPointOffsetX, IntWrapper.class, new ValueTypeInt(10000));
-		assertEquals(vtPoint.x.i, xBeforeTest);
+		if (isFlatteningEnabled) {
+			int xBeforeTest = vtPoint.x.i;
+			assertNotEquals(xBeforeTest, 10000);
+			int layout = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("x"));
+			myUnsafe.putFlatValue(vtPoint, vtPointOffsetX, layout, IntWrapper.class, new ValueTypeInt(10000));
+			assertEquals(vtPoint.x.i, xBeforeTest);
+		}
 	}
 
 	@Test
@@ -375,7 +410,8 @@ public class ValueTypeUnsafeTests {
 		if (isFlatteningEnabled) {
 			IntWrapper iw = new IntWrapper(7);
 			ValueTypeInt newVal = new ValueTypeInt(5892);
-			myUnsafe.putValue(iw, intWrapperOffsetVti, ValueTypeInt.class, newVal);
+			int layout = myUnsafe.fieldLayout(iw.getClass().getDeclaredField("vti"));
+			myUnsafe.putFlatValue(iw, intWrapperOffsetVti, layout, ValueTypeInt.class, newVal);
 			assertEquals(iw.vti.i, newVal.i);
 			assertEquals(newVal.i, 5892);
 		}
@@ -385,10 +421,11 @@ public class ValueTypeUnsafeTests {
 	static public void testPutValuesOfArray() throws Throwable {
 		if (isFlatteningEnabled) {
 			ValueTypePoint2D p = new ValueTypePoint2D(new ValueTypeInt(34857), new ValueTypeInt(784382));
-			myUnsafe.putValue(vtPointAry, vtPointAryOffset0, ValueTypePoint2D.class, p);
+			int layout = myUnsafe.arrayLayout(vtPointAry.getClass());
+			myUnsafe.putFlatValue(vtPointAry, vtPointAryOffset0, layout, ValueTypePoint2D.class, p);
 			assertEquals(vtPointAry[0].x.i, p.x.i);
 			assertEquals(vtPointAry[0].y.i, p.y.i);
-			myUnsafe.putValue(vtPointAry, vtPointAryOffset1, ValueTypePoint2D.class, p);
+			myUnsafe.putFlatValue(vtPointAry, vtPointAryOffset1, layout, ValueTypePoint2D.class, p);
 			assertEquals(vtPointAry[1].x.i, p.x.i);
 			assertEquals(vtPointAry[1].y.i, p.y.i);
 			assertEquals(p.x.i, 34857);
@@ -398,27 +435,34 @@ public class ValueTypeUnsafeTests {
 
 	@Test
 	static public void testPutValueWithZeroSizeVTArrayDoesNotCauseError() throws Throwable {
-		ZeroSizeValueType[] zsvtAry = new ZeroSizeValueType[] {
-			new ZeroSizeValueType(),
-			new ZeroSizeValueType()
-		};
-		long zsvtAryOffset0 = myUnsafe.arrayBaseOffset(zsvtAry.getClass());
-		myUnsafe.putValue(zsvtAry, zsvtAryOffset0, ZeroSizeValueType.class, new ZeroSizeValueType());
+		if (isFlatteningEnabled) {
+			ZeroSizeValueType[] zsvtAry = (ZeroSizeValueType[]) ValueClass.newNullRestrictedAtomicArray(ZeroSizeValueType.class,
+					2,
+					new ZeroSizeValueType());
+			long zsvtAryOffset0 = myUnsafe.arrayBaseOffset(zsvtAry.getClass());
+			int layout = myUnsafe.arrayLayout(zsvtAry.getClass());
+			myUnsafe.putFlatValue(zsvtAry, zsvtAryOffset0, layout, ZeroSizeValueType.class, new ZeroSizeValueType());
+		}
 	}
 
 	@Test
 	static public void testPutValueOfZeroSizeVTObjectDoesNotCauseError() throws Throwable {
-		ZeroSizeValueTypeWrapper zsvtw = new ZeroSizeValueTypeWrapper();
-		long zsvtwOffset0 = myUnsafe.objectFieldOffset(ZeroSizeValueTypeWrapper.class.getDeclaredField("z"));
-		myUnsafe.putValue(zsvtw, zsvtwOffset0, ZeroSizeValueType.class, new ZeroSizeValueType());
+		if (isFlatteningEnabled) {
+			ZeroSizeValueTypeWrapper zsvtw = new ZeroSizeValueTypeWrapper();
+			long zsvtwOffset0 = myUnsafe.objectFieldOffset(zsvtw.getClass().getDeclaredField("z"));
+			int layout = myUnsafe.fieldLayout(zsvtw.getClass().getDeclaredField("z"));
+			myUnsafe.putFlatValue(zsvtw, zsvtwOffset0, layout, ZeroSizeValueType.class, new ZeroSizeValueType());
+		}
 	}
 
 	@Test
 	static public void testPutValuesOfObject() throws Throwable {
 		ValueTypeInt newI = new ValueTypeInt(47538);
-		myUnsafe.putValue(vtPoint, vtPointOffsetX, ValueTypeInt.class, newI);
-		myUnsafe.putValue(vtPoint, vtPointOffsetY, ValueTypeInt.class, newI);
 		if (isFlatteningEnabled) {
+			int layoutX = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("x"));
+			int layoutY = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("y"));
+			myUnsafe.putFlatValue(vtPoint, vtPointOffsetX, layoutX, ValueTypeInt.class, newI);
+			myUnsafe.putFlatValue(vtPoint, vtPointOffsetY, layoutY, ValueTypeInt.class, newI);
 			assertEquals(vtPoint.x.i, newI.i);
 			assertEquals(vtPoint.y.i, newI.i);
 		}
@@ -429,9 +473,11 @@ public class ValueTypeUnsafeTests {
 	static public void testPutValueOnVTWithLongFields() throws Throwable {
 		ValueTypeLongPoint2D vtLongPoint = new ValueTypeLongPoint2D(123, 456);
 		ValueTypeLong newVal = new ValueTypeLong(23427);
-		myUnsafe.putValue(vtLongPoint, vtLongPointOffsetX, ValueTypeLong.class, newVal);
-		myUnsafe.putValue(vtLongPoint, vtLongPointOffsetY, ValueTypeLong.class, newVal);
 		if (isFlatteningEnabled) {
+			int layoutX = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("x"));
+			int layoutY = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("y"));
+			myUnsafe.putFlatValue(vtLongPoint, vtLongPointOffsetX, layoutX, ValueTypeLong.class, newVal);
+			myUnsafe.putFlatValue(vtLongPoint, vtLongPointOffsetY, layoutY, ValueTypeLong.class, newVal);
 			assertEquals(vtLongPoint.y.l, newVal.l);
 			assertEquals(vtLongPoint.x.l, newVal.l);
 		}
@@ -492,233 +538,260 @@ public class ValueTypeUnsafeTests {
 
 	@Test(dataProvider = "compareAndDoSomethingFuncs")
 	static public void testCompareAndSetNullObj(CompareAndDoSomethingFunction compareAndSwapValue) throws Throwable {
-		assertThrows(NullPointerException.class, () -> {
-			compareAndSwapValue.execute(null, vtPointOffsetX, ValueTypeInt.class, vtPoint.x, new ValueTypeInt(1));
-		});
+		if (isFlatteningEnabled) {
+			int layout = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("x"));
+			assertThrows(NullPointerException.class, () -> {
+				compareAndSwapValue.execute(null, vtPointOffsetX, layout, ValueTypeInt.class, vtPoint.x, new ValueTypeInt(1));
+			});
+		}
 	}
 
 	@Test(dataProvider = "compareAndDoSomethingFuncs")
 	static public void testCompareAndSetNullClz(CompareAndDoSomethingFunction compareAndSwapValue) throws Throwable {
 		if (isFlatteningEnabled) {
+			int layout = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("x"));
 			assertThrows(NullPointerException.class, () -> {
-				compareAndSwapValue.execute(vtPoint, vtPointOffsetX, null, vtPoint.x, new ValueTypeInt(1));
+				compareAndSwapValue.execute(vtPoint, vtPointOffsetX, layout, null, vtPoint.x, new ValueTypeInt(1));
 			});
-		} else {
-			boolean result = compareAndSwapValue.execute(vtPoint, vtPointOffsetX, null, vtPoint.x, new ValueTypeInt(1));
-			assertTrue(result);
-			assertEquals(vtPoint.x.i, 1);
 		}
 	}
 
 	@Test(dataProvider = "compareAndDoSomethingFuncs")
 	static public void testCompareAndSetNullV1(CompareAndDoSomethingFunction compareAndSwapValue) throws Throwable {
-		int original = vtPoint.x.i;
-		boolean success = compareAndSwapValue.execute(vtPoint, vtPointOffsetX, ValueTypeInt.class, null, new ValueTypeInt(1));
-		assertFalse(success);
-		assertEquals(vtPoint.x.i, original);
+		if (isFlatteningEnabled) {
+			int original = vtPoint.x.i;
+			int layout = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("x"));
+			boolean success = compareAndSwapValue.execute(vtPoint, vtPointOffsetX, layout, ValueTypeInt.class, null, new ValueTypeInt(1));
+			assertFalse(success);
+			assertEquals(vtPoint.x.i, original);
+		}
 	}
 
 	@Test(dataProvider = "compareAndDoSomethingFuncs")
 	static public void testCompareAndSetNullV2(CompareAndDoSomethingFunction compareAndSwapValue) throws Throwable {
-		int original = vtPoint.x.i;
-		boolean success = compareAndSwapValue.execute(vtPoint, vtPointOffsetX, ValueTypeInt.class, new ValueTypeInt(original + 1), null);
-		assertFalse(success);
-		assertEquals(vtPoint.x.i, original);
-
 		if (isFlatteningEnabled) {
+			int layout = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("x"));
 			assertThrows(NullPointerException.class, () -> {
-				compareAndSwapValue.execute(vtPoint, vtPointOffsetX, ValueTypeInt.class, vtPoint.x, null);
+				compareAndSwapValue.execute(vtPoint, vtPointOffsetX, layout, ValueTypeInt.class, vtPoint.x, null);
 			});
-		} else {
-			success = compareAndSwapValue.execute(vtPoint, vtPointOffsetX, ValueTypeInt.class, vtPoint.x, null);
-			assertTrue(success);
-			assertEquals(vtPoint.x, null);
 		}
 	}
 
 	@Test(dataProvider = "compareAndDoSomethingFuncs")
 	static public void testCompareAndSetPointXSuccess(CompareAndDoSomethingFunction compareAndSwapValue) throws Throwable {
-		int original = vtPoint.x.i;
-		ValueTypeInt newVti = new ValueTypeInt(328);
-		boolean success = compareAndSwapValue.execute(vtPoint, vtPointOffsetX, ValueTypeInt.class, vtPoint.x, newVti);
-		assertEquals(newVti.i, 328);
-		assertTrue(success);
-		assertEquals(vtPoint.x.i, newVti.i);
+		if (isFlatteningEnabled) {
+			int original = vtPoint.x.i;
+			int layout = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("x"));
+			ValueTypeInt newVti = new ValueTypeInt(328);
+			boolean success = compareAndSwapValue.execute(vtPoint, vtPointOffsetX, layout, ValueTypeInt.class, vtPoint.x, newVti);
+			assertEquals(newVti.i, 328);
+			assertTrue(success);
+			assertEquals(vtPoint.x.i, newVti.i);
+		}
 	}
 
 	@Test(dataProvider = "compareAndDoSomethingFuncs")
 	static public void testCompareAndSetPointYSuccess(CompareAndDoSomethingFunction compareAndSwapValue) throws Throwable {
-		int original = vtPoint.y.i;
-		ValueTypeInt newVti = new ValueTypeInt(328);
-		boolean success = compareAndSwapValue.execute(vtPoint, vtPointOffsetY, ValueTypeInt.class, vtPoint.y, newVti);
-		assertEquals(newVti.i, 328);
-		assertTrue(success);
-		assertEquals(vtPoint.y.i, newVti.i);
+		if (isFlatteningEnabled) {
+			int original = vtPoint.y.i;
+			int layout = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("y"));
+			ValueTypeInt newVti = new ValueTypeInt(328);
+			boolean success = compareAndSwapValue.execute(vtPoint, vtPointOffsetY, layout, ValueTypeInt.class, vtPoint.y, newVti);
+			assertEquals(newVti.i, 328);
+			assertTrue(success);
+			assertEquals(vtPoint.y.i, newVti.i);
+		}
 	}
 
 	@Test(dataProvider = "compareAndDoSomethingFuncs")
 	static public void testCompareAndSetPointXFailure(CompareAndDoSomethingFunction compareAndSwapValue) throws Throwable {
-		int original = vtPoint.x.i;
-		ValueTypeInt newVti = new ValueTypeInt(328);
-		boolean success = compareAndSwapValue.execute(vtPoint, vtPointOffsetX, ValueTypeInt.class, new ValueTypeInt(original + 1), newVti);
-		assertEquals(newVti.i, 328);
-		assertFalse(success);
-		assertEquals(vtPoint.x.i, original);
+		if (isFlatteningEnabled) {
+			int original = vtPoint.x.i;
+			int layout = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("x"));
+			ValueTypeInt newVti = new ValueTypeInt(328);
+			boolean success = compareAndSwapValue.execute(vtPoint, vtPointOffsetX, layout, ValueTypeInt.class, new ValueTypeInt(original + 1), newVti);
+			assertEquals(newVti.i, 328);
+			assertFalse(success);
+			assertEquals(vtPoint.x.i, original);
+		}
 	}
 
 	@Test(dataProvider = "compareAndDoSomethingFuncs")
 	static public void testCompareAndSetPointYFailure(CompareAndDoSomethingFunction compareAndSwapValue) throws Throwable {
-		int original = vtPoint.y.i;
-		ValueTypeInt newVti = new ValueTypeInt(328);
-		boolean success = compareAndSwapValue.execute(vtPoint, vtPointOffsetY, ValueTypeInt.class, new ValueTypeInt(original + 1), newVti);
-		assertEquals(newVti.i, 328);
-		assertFalse(success);
-		assertEquals(vtPoint.y.i, original);
+		if (isFlatteningEnabled) {
+			int original = vtPoint.y.i;
+			int layout = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("y"));
+			ValueTypeInt newVti = new ValueTypeInt(328);
+			boolean success = compareAndSwapValue.execute(vtPoint, vtPointOffsetY, layout, ValueTypeInt.class, new ValueTypeInt(original + 1), newVti);
+			assertEquals(newVti.i, 328);
+			assertFalse(success);
+			assertEquals(vtPoint.y.i, original);
+		}
 	}
 
 	@Test(dataProvider = "compareAndDoSomethingFuncs")
 	static public void testCompareAndSetArray0Success(CompareAndDoSomethingFunction compareAndSwapValue) throws Throwable {
-		int original = vtIntAry[0].i;
-		ValueTypeInt newVti = new ValueTypeInt(456);
-		boolean success = compareAndSwapValue.execute(vtIntAry, vtIntAryOffset0, ValueTypeInt.class, vtIntAry[0], newVti);
-		assertEquals(newVti.i, 456);
-		assertTrue(success);
-		assertEquals(vtIntAry[0].i, newVti.i);
+		if (isFlatteningEnabled) {
+			int original = vtIntAry[0].i;
+			ValueTypeInt newVti = new ValueTypeInt(456);
+			int layout = myUnsafe.arrayLayout(vtIntAry.getClass());
+			boolean success = compareAndSwapValue.execute(vtIntAry, vtIntAryOffset0, layout, ValueTypeInt.class, vtIntAry[0], newVti);
+			assertEquals(newVti.i, 456);
+			assertTrue(success);
+			assertEquals(vtIntAry[0].i, newVti.i);
+		}
 	}
 
 	@Test(dataProvider = "compareAndDoSomethingFuncs")
 	static public void testCompareAndSetArray1Success(CompareAndDoSomethingFunction compareAndSwapValue) throws Throwable {
-		int original = vtIntAry[1].i;
-		ValueTypeInt newVti = new ValueTypeInt(456);
-		boolean success = compareAndSwapValue.execute(vtIntAry, vtIntAryOffset1, ValueTypeInt.class, vtIntAry[1], newVti);
-		assertEquals(newVti.i, 456);
-		assertTrue(success);
-		assertEquals(vtIntAry[1].i, newVti.i);
+		if (isFlatteningEnabled) {
+			int original = vtIntAry[1].i;
+			ValueTypeInt newVti = new ValueTypeInt(456);
+			int layout = myUnsafe.arrayLayout(vtIntAry.getClass());
+			boolean success = compareAndSwapValue.execute(vtIntAry, vtIntAryOffset1, layout, ValueTypeInt.class, vtIntAry[1], newVti);
+			assertEquals(newVti.i, 456);
+			assertTrue(success);
+			assertEquals(vtIntAry[1].i, newVti.i);
+		}
 	}
 
 	@Test(dataProvider = "compareAndDoSomethingFuncs")
 	static public void testCompareAndSetArray0Failure(CompareAndDoSomethingFunction compareAndSwapValue) throws Throwable {
-		int original = vtIntAry[0].i;
-		ValueTypeInt newVti = new ValueTypeInt(328);
-		boolean success = compareAndSwapValue.execute(vtIntAry, vtIntAryOffset0, ValueTypeInt.class, new ValueTypeInt(original + 1), newVti);
-		assertEquals(newVti.i, 328);
-		assertFalse(success);
-		assertEquals(vtIntAry[0].i, original);
+		if (isFlatteningEnabled) {
+			int original = vtIntAry[0].i;
+			ValueTypeInt newVti = new ValueTypeInt(328);
+			int layout = myUnsafe.arrayLayout(vtIntAry.getClass());
+			boolean success = compareAndSwapValue.execute(vtIntAry, vtIntAryOffset0, layout, ValueTypeInt.class, new ValueTypeInt(original + 1), newVti);
+			assertEquals(newVti.i, 328);
+			assertFalse(success);
+			assertEquals(vtIntAry[0].i, original);
+		}
 	}
 
 	@Test(dataProvider = "compareAndDoSomethingFuncs")
 	static public void testCompareAndSetArray1Failure(CompareAndDoSomethingFunction compareAndSwapValue) throws Throwable {
-		int original = vtIntAry[1].i;
-		ValueTypeInt newVti = new ValueTypeInt(328);
-		boolean success = compareAndSwapValue.execute(vtIntAry, vtIntAryOffset1, ValueTypeInt.class, new ValueTypeInt(original + 1), newVti);
-		assertEquals(newVti.i, 328);
-		assertFalse(success);
-		assertEquals(vtIntAry[1].i, original);
+		if (isFlatteningEnabled) {
+			int original = vtIntAry[1].i;
+			ValueTypeInt newVti = new ValueTypeInt(328);
+			int layout = myUnsafe.arrayLayout(vtIntAry.getClass());
+			boolean success = compareAndSwapValue.execute(vtIntAry, vtIntAryOffset1, layout, ValueTypeInt.class, new ValueTypeInt(original + 1), newVti);
+			assertEquals(newVti.i, 328);
+			assertFalse(success);
+			assertEquals(vtIntAry[1].i, original);
+		}
 	}
 
 	@Test(dataProvider = "compareAndDoSomethingFuncs")
 	static public void testCompareAndSetOnVTWithLongFields(CompareAndDoSomethingFunction compareAndSwapValue) throws Throwable {
-		ValueTypeLongPoint2D vtLongPoint = new ValueTypeLongPoint2D(123, 456);
-		assertEquals(vtLongPoint.x.l, 123);
-		assertEquals(vtLongPoint.y.l, 456);
+		if (isFlatteningEnabled) {
+			ValueTypeLongPoint2D vtLongPoint = new ValueTypeLongPoint2D(123, 456);
+			assertEquals(vtLongPoint.x.l, 123);
+			assertEquals(vtLongPoint.y.l, 456);
 
-		long original = vtLongPoint.x.l;
-		ValueTypeLong newVtl = new ValueTypeLong(372);
-		boolean success = compareAndSwapValue.execute(vtLongPoint, vtLongPointOffsetX, ValueTypeLong.class, vtLongPoint.x, newVtl);
-		assertEquals(newVtl.l, 372);
-		assertTrue(success);
-		assertEquals(vtLongPoint.x.l, newVtl.l);
+			long original = vtLongPoint.x.l;
+			ValueTypeLong newVtl = new ValueTypeLong(372);
+
+			int layout = myUnsafe.fieldLayout(vtLongPoint.getClass().getDeclaredField("x"));
+
+			boolean success = compareAndSwapValue.execute(vtLongPoint, vtLongPointOffsetX, layout, ValueTypeLong.class, vtLongPoint.x, newVtl);
+			assertEquals(newVtl.l, 372);
+			assertTrue(success);
+			assertEquals(vtLongPoint.x.l, newVtl.l);
+		}
 	}
 
 	@Test(dataProvider = "compareAndDoSomethingFuncs")
 	static public void testCompareAndSetWrongClz(CompareAndDoSomethingFunction compareAndSwapValue) throws Throwable {
 		int original = vtPoint.x.i;
 		ValueTypeInt newVti = new ValueTypeInt(328);
-		boolean success = compareAndSwapValue.execute(vtPoint, vtPointOffsetX, ValueTypeInt2.class, vtPoint.x, newVti);
 		assertEquals(newVti.i, 328);
 		if (isFlatteningEnabled) {
+			int layout = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("x"));
+			boolean success = compareAndSwapValue.execute(vtPoint, vtPointOffsetX, layout, ValueTypeInt2.class, vtPoint.x, newVti);
 			assertFalse(success);
 			assertEquals(vtPoint.x.i, original);
-		} else {
-			assertTrue(success);
-			assertEquals(vtPoint.x.i, newVti.i);
 		}
 	}
 
 	@Test
 	static public void testGetAndSetNullObj() throws Throwable {
 		assertThrows(NullPointerException.class, () -> {
-			myUnsafe.getAndSetValue(null, vtPointOffsetX, ValueTypeInt.class, new ValueTypeInt(1));
+			int layout = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("x"));
+			myUnsafe.getAndSetFlatValue(null, vtPointOffsetX, layout, ValueTypeInt.class, new ValueTypeInt(1));
 		});
 	}
 
 	@Test
 	static public void testGetAndSetNullClz() throws Throwable {
 		if (isFlatteningEnabled) {
+			int layout = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("x"));
 			assertThrows(NullPointerException.class, () -> {
-				myUnsafe.getAndSetValue(vtPoint, vtPointOffsetX, null, new ValueTypeInt(1));
+				myUnsafe.getAndSetFlatValue(vtPoint, vtPointOffsetX, layout, null, new ValueTypeInt(1));
 			});
-		} else {
-			int original = vtPoint.x.i;
-			Object result = myUnsafe.getAndSetValue(vtPoint, vtPointOffsetX, null, new ValueTypeInt(1));
-			assertEquals(((ValueTypeInt)result).i, original);
-			assertEquals(vtPoint.x.i, 1);
 		}
 	}
 
 	@Test
 	static public void testGetAndSetNullV() throws Throwable {
 		int original = vtPoint.x.i;
-
 		if (isFlatteningEnabled) {
+			int layout = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("x"));
 			assertThrows(NullPointerException.class, () -> {
-				myUnsafe.getAndSetValue(vtPoint, vtPointOffsetX, ValueTypeInt.class, null);
+				myUnsafe.getAndSetFlatValue(vtPoint, vtPointOffsetX, layout, ValueTypeInt.class, null);
 			});
-		} else {
-			Object result = myUnsafe.getAndSetValue(vtPoint, vtPointOffsetX, ValueTypeInt.class, null);
-			assertEquals(((ValueTypeInt)result).i, original);
-			assertEquals(vtPoint.x, null);
 		}
 	}
 
 	@Test
 	static public void testGetAndSetPointX() throws Throwable {
-		int original = vtPoint.x.i;
-		ValueTypeInt newVti = new ValueTypeInt(328);
-		Object result = myUnsafe.getAndSetValue(vtPoint, vtPointOffsetX, ValueTypeInt.class, newVti);
-		assertEquals(newVti.i, 328);
-		assertEquals(((ValueTypeInt)result).i, original);
-		assertEquals(vtPoint.x.i, newVti.i);
+		if (isFlatteningEnabled) {
+			int layout = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("x"));
+			int original = vtPoint.x.i;
+			ValueTypeInt newVti = new ValueTypeInt(328);
+			Object result = myUnsafe.getAndSetFlatValue(vtPoint, vtPointOffsetX, layout, ValueTypeInt.class, newVti);
+			assertEquals(newVti.i, 328);
+			assertEquals(((ValueTypeInt)result).i, original);
+			assertEquals(vtPoint.x.i, newVti.i);
+		}
 	}
 
 	@Test
 	static public void testGetAndSetPointY() throws Throwable {
-		int original = vtPoint.y.i;
-		ValueTypeInt newVti = new ValueTypeInt(328);
-		Object result = myUnsafe.getAndSetValue(vtPoint, vtPointOffsetY, ValueTypeInt.class, newVti);
-		assertEquals(newVti.i, 328);
-		assertEquals(((ValueTypeInt)result).i, original);
-		assertEquals(vtPoint.y.i, newVti.i);
+		if (isFlatteningEnabled) {
+			int layout = myUnsafe.fieldLayout(vtPoint.getClass().getDeclaredField("y"));
+			int original = vtPoint.y.i;
+			ValueTypeInt newVti = new ValueTypeInt(328);
+			Object result = myUnsafe.getAndSetFlatValue(vtPoint, vtPointOffsetY, layout, ValueTypeInt.class, newVti);
+			assertEquals(newVti.i, 328);
+			assertEquals(((ValueTypeInt)result).i, original);
+			assertEquals(vtPoint.y.i, newVti.i);
+		}
 	}
 
 	@Test
 	static public void testGetAndSetArray0() throws Throwable {
-		int original = vtIntAry[0].i;
-		ValueTypeInt newVti = new ValueTypeInt(456);
-		Object result = myUnsafe.getAndSetValue(vtIntAry, vtIntAryOffset0, ValueTypeInt.class, newVti);
-		assertEquals(newVti.i, 456);
-		assertEquals(((ValueTypeInt)result).i, original);
-		assertEquals(vtIntAry[0].i, newVti.i);
+		if (isFlatteningEnabled) {
+			int layout = myUnsafe.arrayLayout(vtIntAry.getClass());
+			int original = vtIntAry[0].i;
+			ValueTypeInt newVti = new ValueTypeInt(456);
+			Object result = myUnsafe.getAndSetFlatValue(vtIntAry, vtIntAryOffset0, layout, ValueTypeInt.class, newVti);
+			assertEquals(newVti.i, 456);
+			assertEquals(((ValueTypeInt)result).i, original);
+			assertEquals(vtIntAry[0].i, newVti.i);
+		}
 	}
 
 	@Test
 	static public void testGetAndSetArray1() throws Throwable {
-		int original = vtIntAry[1].i;
-		ValueTypeInt newVti = new ValueTypeInt(456);
-		Object result = myUnsafe.getAndSetValue(vtIntAry, vtIntAryOffset1, ValueTypeInt.class, newVti);
-		assertEquals(newVti.i, 456);
-		assertEquals(((ValueTypeInt)result).i, original);
-		assertEquals(vtIntAry[1].i, newVti.i);
+		if (isFlatteningEnabled) {
+			int layout = myUnsafe.arrayLayout(vtIntAry.getClass());
+			int original = vtIntAry[1].i;
+			ValueTypeInt newVti = new ValueTypeInt(456);
+			Object result = myUnsafe.getAndSetFlatValue(vtIntAry, vtIntAryOffset1, layout, ValueTypeInt.class, newVti);
+			assertEquals(newVti.i, 456);
+			assertEquals(((ValueTypeInt)result).i, original);
+			assertEquals(vtIntAry[1].i, newVti.i);
+		}
 	}
 
 	@Test
@@ -727,11 +800,14 @@ public class ValueTypeUnsafeTests {
 		assertEquals(vtLongPoint.x.l, 123);
 		assertEquals(vtLongPoint.y.l, 456);
 
-		long original = vtLongPoint.x.l;
-		ValueTypeLong newVtl = new ValueTypeLong(372);
-		Object result = myUnsafe.getAndSetValue(vtLongPoint, vtLongPointOffsetX, ValueTypeLong.class, newVtl);
-		assertEquals(newVtl.l, 372);
-		assertEquals(((ValueTypeLong)result).l, original);
-		assertEquals(vtLongPoint.x.l, newVtl.l);
+		if (isFlatteningEnabled) {
+			int layout = myUnsafe.fieldLayout(vtLongPoint.getClass().getDeclaredField("x"));
+			long original = vtLongPoint.x.l;
+			ValueTypeLong newVtl = new ValueTypeLong(372);
+			Object result = myUnsafe.getAndSetFlatValue(vtLongPoint, vtLongPointOffsetX, layout, ValueTypeLong.class, newVtl);
+			assertEquals(newVtl.l, 372);
+			assertEquals(((ValueTypeLong)result).l, original);
+			assertEquals(vtLongPoint.x.l, newVtl.l);
+		}
 	}
 }
