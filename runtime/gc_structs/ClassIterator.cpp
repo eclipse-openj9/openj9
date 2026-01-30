@@ -110,6 +110,15 @@ GC_ClassIterator::nextSlot()
 		}
 		_state += 1;
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	case classiterator_state_constrefs:
+		slotPtr = _constRefsIterator.nextSlot();
+		if (NULL != slotPtr) {
+			return slotPtr;
+		}
+		_state += 1;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
 	default:
 		break;
 	}

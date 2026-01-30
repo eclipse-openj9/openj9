@@ -969,6 +969,11 @@ freeJavaVM(J9JavaVM * vm)
 	}
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	if (NULL != vm->constRefArrayPool) {
+		pool_kill(vm->constRefArrayPool);
+		vm->constRefArrayPool = NULL;
+	}
+
 	if (NULL != vm->memberNameListsMutex) {
 		omrthread_monitor_destroy(vm->memberNameListsMutex);
 		vm->memberNameListsMutex = NULL;
@@ -7536,6 +7541,11 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 
 	/* Initialize the pool and mutex for per-class MemberName lists. */
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	vm->constRefArrayPool = pool_new(sizeof(J9ConstRefArray), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_JIT, POOL_FOR_PORT(portLibrary));
+	if (NULL == vm->constRefArrayPool) {
+		goto error;
+	}
+
 	vm->memberNameListNodePool = pool_new(sizeof(J9MemberNameListNode), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(portLibrary));
 	if (NULL == vm->memberNameListNodePool) {
 		goto error;
@@ -8516,8 +8526,9 @@ freeClassNativeMemory(J9HookInterface** hook, UDATA eventNum, void* eventData, v
 		J9INTERFACECLASS_SET_METHODORDERING(clazz, NULL);
 	}
 
-	/* Free the MemberName list. */
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	/* Free the MemberName list. */
+
 	omrthread_monitor_enter(vm->memberNameListsMutex);
 
 	if (NULL != clazz->memberNames) {
@@ -8537,6 +8548,52 @@ freeClassNativeMemory(J9HookInterface** hook, UDATA eventNum, void* eventData, v
 	}
 
 	omrthread_monitor_exit(vm->memberNameListsMutex);
+
+	/* Free the const ref arrays, and all other const ref arrays in common JIT
+	 * bodies.
+	 *
+	 * Because clazz is unloaded, JIT bodies that were using const refs owned
+	 * by it are (a) not on the stack and (b) invalidated, so they will never
+	 * run again, and all of their const refs are therefore dead. Eagerly
+	 * destroying all of the const refs for such a body means that it's not
+	 * necessary to remove single nodes from the per-JIT-body list, and it's
+	 * not necessary to find a surviving node (if there is one) to put into
+	 * J9JITExceptionTable.constRefArrays.
+	 */
+
+	omrthread_monitor_enter(vm->constRefsMutex);
+
+	if (NULL != clazz->constRefArrays) {
+		J9ConstRefArray *sentinel = clazz->constRefArrays;
+		J9ConstRefArray *node = sentinel->nextInClass;
+		while (node != sentinel) {
+			J9ConstRefArray *next = node->nextInClass;
+			J9ConstRefArray *otherNode = node->nextInJITBody;
+			while (otherNode != node) {
+				J9ConstRefArray *nextOtherNode = otherNode->nextInJITBody;
+				J9ConstRefArray *otherNext = otherNode->nextInClass;
+				J9ConstRefArray *otherPrev = otherNode->prevInClass;
+				Assert_VM_true(otherNode->jitBodyMetaData == node->jitBodyMetaData);
+				otherPrev->nextInClass = otherNext;
+				otherNext->prevInClass = otherPrev;
+				pool_removeElement(vm->constRefArrayPool, otherNode);
+				otherNode = nextOtherNode;
+			}
+
+			/* Clear the JIT body's constRefArrays so that it doesn't dangle
+			 * during code cache reclamation.
+			 */
+			node->jitBodyMetaData->constRefArrays = NULL;
+
+			pool_removeElement(vm->constRefArrayPool, node);
+			node = next;
+		}
+
+		pool_removeElement(vm->constRefArrayPool, sentinel);
+		clazz->constRefArrays = NULL;
+	}
+
+	omrthread_monitor_exit(vm->constRefsMutex);
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 }
 
