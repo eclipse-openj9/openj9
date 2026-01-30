@@ -2735,12 +2735,6 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				if (FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_ENABLE_PREVIEW, NULL) >= 0) {
 					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW;
 				}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				else {
-					/* Valhalla enables --enable-preview by default. */
-					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW;
-				}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			}
 			if ((argIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XSIGQUITTOFILE, NULL)) >= 0) {
 				GET_OPTION_VALUE(argIndex, ':', &optionValue);
