@@ -302,19 +302,6 @@ public:
 		_tenureBase = base;
 		_tenureSize = size;
 
-		/* todo: dagar move back to MemorySubSpaceGeneric addTenureRange() and removeTenureRange() once
-		 * heapBaseForBarrierRange0 heapSizeForBarrierRange0 can be removed from J9VMThread
-		 *
-		 * setTenureAddressRange() can be removed fromo GCExtensions.hpp and made inline again
-		 */
-		GC_OMRVMThreadListIterator omrVMThreadListIterator(_omrVM);
-		while (OMR_VMThread* walkThread = omrVMThreadListIterator.nextOMRVMThread()) {
-			walkThread->lowTenureAddress = heapBaseForBarrierRange0;
-			walkThread->highTenureAddress = (void*)((uintptr_t)heapBaseForBarrierRange0 + heapSizeForBarrierRange0);
-			walkThread->heapBaseForBarrierRange0 = heapBaseForBarrierRange0;
-			walkThread->heapSizeForBarrierRange0 = heapSizeForBarrierRange0;
-		}
-
 		GC_VMThreadListIterator vmThreadListIterator((J9JavaVM*)_omrVM->_language_vm);
 		while (J9VMThread* walkThread = vmThreadListIterator.nextVMThread()) {
 			walkThread->lowTenureAddress = heapBaseForBarrierRange0;

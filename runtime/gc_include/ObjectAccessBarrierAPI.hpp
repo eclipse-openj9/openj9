@@ -95,13 +95,13 @@ public:
 	internalPostBatchStoreObjectCardTableAndGenerational(J9VMThread *vmThread, j9object_t object)
 	{
 		/* Check to see if object is old.  If object is not old neither barrier is required
-		 * if ((object - vmThread->omrVMThread->heapBaseForBarrierRange0) < vmThread->omrVMThread->heapSizeForBarrierRange0) then old
+		 * if ((object - vmThread->heapBaseForBarrierRange0) < vmThread->heapSizeForBarrierRange0) then old
 		 *
 		 * Since card dirtying also requires this calculation remember these values
 		 */
-		UDATA base = (UDATA)vmThread->omrVMThread->heapBaseForBarrierRange0;
+		UDATA base = (UDATA)vmThread->heapBaseForBarrierRange0;
 		UDATA objectDelta = (UDATA)object - base;
-		UDATA size = vmThread->omrVMThread->heapSizeForBarrierRange0;
+		UDATA size = vmThread->heapSizeForBarrierRange0;
 		if (objectDelta < size) {
 			/* object is old so check for concurrent barrier */
 			if (0 != (vmThread->privateFlags & J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE)) {
@@ -118,13 +118,13 @@ public:
 	internalPostBatchStoreObjectGenerational(J9VMThread *vmThread, j9object_t object)
 	{
 		/* Check to see if object is old.  If object is not old neither barrier is required
-		 * if ((object - vmThread->omrVMThread->heapBaseForBarrierRange0) < vmThread->omrVMThread->heapSizeForBarrierRange0) then old
+		 * if ((object - vmThread->heapBaseForBarrierRange0) < vmThread->heapSizeForBarrierRange0) then old
 		 *
 		 * Since card dirtying also requires this calculation remember these values
 		 */
-		UDATA base = (UDATA)vmThread->omrVMThread->heapBaseForBarrierRange0;
+		UDATA base = (UDATA)vmThread->heapBaseForBarrierRange0;
 		UDATA objectDelta = (UDATA)object - base;
-		UDATA size = vmThread->omrVMThread->heapSizeForBarrierRange0;
+		UDATA size = vmThread->heapSizeForBarrierRange0;
 		if (objectDelta < size) {
 			/* generational barrier is required if object is old*/
 			rememberObject(vmThread, object);
@@ -135,13 +135,13 @@ public:
 	internalPostBatchStoreObjectCardTableIncremental(J9VMThread *vmThread, j9object_t object)
 	{
 		/* Check to see if object is within the barrier range.
-		 * if ((object - vmThread->omrVMThread->heapBaseForBarrierRange0) < vmThread->omrVMThread->heapSizeForBarrierRange0)
+		 * if ((object - vmThread->heapBaseForBarrierRange0) < vmThread->heapSizeForBarrierRange0)
 		 *
 		 * Since card dirtying also requires this calculation remember these values
 		 */
-		UDATA base = (UDATA)vmThread->omrVMThread->heapBaseForBarrierRange0;
+		UDATA base = (UDATA)vmThread->heapBaseForBarrierRange0;
 		UDATA objectDelta = (UDATA)object - base;
-		UDATA size = vmThread->omrVMThread->heapSizeForBarrierRange0;
+		UDATA size = vmThread->heapSizeForBarrierRange0;
 		if (objectDelta < size) {
 			/* Object is within the barrier range.  Dirty the card */
 			dirtyCard(vmThread, objectDelta);
@@ -152,13 +152,13 @@ public:
 	internalPostBatchStoreObjectCardTable(J9VMThread *vmThread, j9object_t object)
 	{
 		/* Check to see if object is old.  If object is not old neither barrier is required
-		 * if ((object - vmThread->omrVMThread->heapBaseForBarrierRange0) < vmThread->omrVMThread->heapSizeForBarrierRange0) then old
+		 * if ((object - vmThread->heapBaseForBarrierRange0) < vmThread->heapSizeForBarrierRange0) then old
 		 *
 		 * Since card dirtying also requires this calculation remember these values
 		 */
-		UDATA base = (UDATA)vmThread->omrVMThread->heapBaseForBarrierRange0;
+		UDATA base = (UDATA)vmThread->heapBaseForBarrierRange0;
 		UDATA objectDelta = (UDATA)object - base;
-		UDATA size = vmThread->omrVMThread->heapSizeForBarrierRange0;
+		UDATA size = vmThread->heapSizeForBarrierRange0;
 		if (objectDelta < size) {
 			/* object is old so check for concurrent barrier */
 			if (0 != (vmThread->privateFlags & J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE)) {
@@ -182,13 +182,13 @@ public:
 		/* if value is NULL neither barrier is required */
 		if (NULL != value) {
 			/* Check to see if object is old.  If object is not old neither barrier is required
-			 * if ((object - vmThread->omrVMThread->heapBaseForBarrierRange0) < vmThread->omrVMThread->heapSizeForBarrierRange0) then old
+			 * if ((object - vmThread->heapBaseForBarrierRange0) < vmThread->heapSizeForBarrierRange0) then old
 			 *
 			 * Since card dirtying also requires this calculation remember these values
 			 */
-			UDATA base = (UDATA)vmThread->omrVMThread->heapBaseForBarrierRange0;
+			UDATA base = (UDATA)vmThread->heapBaseForBarrierRange0;
 			UDATA objectDelta = (UDATA)object - base;
-			UDATA size = vmThread->omrVMThread->heapSizeForBarrierRange0;
+			UDATA size = vmThread->heapSizeForBarrierRange0;
 			if (objectDelta < size) {
 				/* object is old so check for concurrent barrier */
 				if (0 != (vmThread->privateFlags & J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE)) {
@@ -221,13 +221,13 @@ public:
 		/* if value is NULL neither barrier is required */
 		if (NULL != value) {
 			/* Check to see if object is old.
-			 * if ((object - vmThread->omrVMThread->heapBaseForBarrierRange0) < vmThread->omrVMThread->heapSizeForBarrierRange0) then old
+			 * if ((object - vmThread->heapBaseForBarrierRange0) < vmThread->heapSizeForBarrierRange0) then old
 			 *
 			 * Since card dirtying also requires this calculation remember these values
 			 */
-			UDATA base = (UDATA)vmThread->omrVMThread->heapBaseForBarrierRange0;
+			UDATA base = (UDATA)vmThread->heapBaseForBarrierRange0;
 			UDATA objectDelta = (UDATA)object - base;
-			UDATA size = vmThread->omrVMThread->heapSizeForBarrierRange0;
+			UDATA size = vmThread->heapSizeForBarrierRange0;
 			if (objectDelta < size) {
 				/* object is old so check for concurrent barrier */
 				if (0 != (vmThread->privateFlags & J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE)) {
@@ -252,13 +252,13 @@ public:
 		/* if value is NULL neither barrier is required */
 		if (NULL != value) {
 			/* Check to see if object is within the barrier range.
-			 * if ((object - vmThread->omrVMThread->heapBaseForBarrierRange0) < vmThread->omrVMThread->heapSizeForBarrierRange0)
+			 * if ((object - vmThread->heapBaseForBarrierRange0) < vmThread->heapSizeForBarrierRange0)
 			 *
 			 * Since card dirtying also requires this calculation remember these values
 			 */
-			UDATA base = (UDATA)vmThread->omrVMThread->heapBaseForBarrierRange0;
+			UDATA base = (UDATA)vmThread->heapBaseForBarrierRange0;
 			UDATA objectDelta = (UDATA)object - base;
-			UDATA size = vmThread->omrVMThread->heapSizeForBarrierRange0;
+			UDATA size = vmThread->heapSizeForBarrierRange0;
 			if (objectDelta < size) {
 				/* Object is within the barrier range.  Dirty the card */
 				dirtyCard(vmThread, objectDelta);
@@ -280,13 +280,13 @@ public:
 		/* if value is NULL neither barrier is required */
 		if (NULL != value) {
 			/* Check to see if object is old.
-			 * if ((object - vmThread->omrVMThread->heapBaseForBarrierRange0) < vmThread->omrVMThread->heapSizeForBarrierRange0) then old
+			 * if ((object - vmThread->heapBaseForBarrierRange0) < vmThread->heapSizeForBarrierRange0) then old
 			 *
 			 * Since card dirtying also requires this calculation remember these values
 			 */
-			UDATA base = (UDATA)vmThread->omrVMThread->heapBaseForBarrierRange0;
+			UDATA base = (UDATA)vmThread->heapBaseForBarrierRange0;
 			UDATA objectDelta = (UDATA)object - base;
-			UDATA size = vmThread->omrVMThread->heapSizeForBarrierRange0;
+			UDATA size = vmThread->heapSizeForBarrierRange0;
 			if (objectDelta < size) {
 				/* generational barrier is required if object is old and value is new */
 				/* Check to see if value is new using the same optimization as above */
@@ -311,13 +311,13 @@ public:
 	internalPostObjectStoreGenerationalNoValueCheck(J9VMThread *vmThread, j9object_t object)
 	{
 		/* Check to see if object is old.
-		 * if ((object - vmThread->omrVMThread->heapBaseForBarrierRange0) < vmThread->omrVMThread->heapSizeForBarrierRange0) then old
+		 * if ((object - vmThread->heapBaseForBarrierRange0) < vmThread->heapSizeForBarrierRange0) then old
 		 *
 		 * Since card dirtying also requires this calculation remember these values
 		 */
-		UDATA base = (UDATA)vmThread->omrVMThread->heapBaseForBarrierRange0;
+		UDATA base = (UDATA)vmThread->heapBaseForBarrierRange0;
 		UDATA objectDelta = (UDATA)object - base;
-		UDATA size = vmThread->omrVMThread->heapSizeForBarrierRange0;
+		UDATA size = vmThread->heapSizeForBarrierRange0;
 		if (objectDelta < size) {
 			rememberObject(vmThread, object);
 		}
