@@ -2299,7 +2299,6 @@ J9::SymbolReferenceTable::findOrCreateUnsafeSymbolRef(TR::DataType type, bool ja
       {
       TR::Symbol * sym = TR::Symbol::createShadow(trHeapMemory(),type);
       sym->setUnsafeShadowSymbol();
-      sym->setArrayShadowSymbol();
       sym->setMemoryOrdering(ordering);
       (*unsafeSymRefs)[type] = symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, comp()->getMethodSymbol()->getResolvedMethodIndex(), -1);
       aliasBuilder.unsafeSymRefNumbers().set(symRef->getReferenceNumber());
