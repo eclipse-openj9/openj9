@@ -47,6 +47,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_Pers
    _romClassMap(decltype(_romClassMap)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _J9MethodMap(decltype(_J9MethodMap)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _classBySignatureMap(decltype(_classBySignatureMap)::allocator_type(persistentMemory->_persistentAllocator.get())),
+   _methodByNameMap(decltype(_methodByNameMap)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _DLTedMethodSet(decltype(_DLTedMethodSet)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _classChainDataMap(decltype(_classChainDataMap)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _constantPoolToClassMap(decltype(_constantPoolToClassMap)::allocator_type(persistentMemory->_persistentAllocator.get())),
@@ -78,6 +79,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_Pers
    _numActiveThreads = 0;
    _romMapMonitor = TR::Monitor::create("JIT-JITServerROMMapMonitor");
    _classMapMonitor = TR::Monitor::create("JIT-JITServerClassMapMonitor");
+   _methodMapMonitor = TR::Monitor::create("JIT-JITServerMethodMapMonitor");
    _DLTSetMonitor = TR::Monitor::create("JIT-JITServerDLTSetMonitor");
    _classChainDataMapMonitor = TR::Monitor::create("JIT-JITServerClassChainDataMapMonitor");
    _sequencingMonitor = TR::Monitor::create("JIT-JITServerSequencingMonitor");
@@ -132,6 +134,7 @@ ClientSessionData::destroyMonitors()
    {
    TR::Monitor::destroy(_romMapMonitor);
    TR::Monitor::destroy(_classMapMonitor);
+   TR::Monitor::destroy(_methodMapMonitor);
    TR::Monitor::destroy(_DLTSetMonitor);
    TR::Monitor::destroy(_classChainDataMapMonitor);
    TR::Monitor::destroy(_sequencingMonitor);
@@ -184,6 +187,10 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
    //Vector to hold the list of the unloaded classes and the corresponding data needed for purging the Caches
    std::vector<ClassUnloadedData> unloadedClasses;
    unloadedClasses.reserve(numOfUnloadedClasses);
+
+   std::vector<J9Class*> unloadedClassesSystemClassLoader;
+   ClientSessionData::VMInfo *vminfo = compInfoPT->getClientData()->getOrCacheVMInfo(compInfoPT->getMethodBeingCompiled()->_stream);
+   J9ClassLoader *systemClassLoader = (J9ClassLoader*)(vminfo->_systemClassLoader);
       {
       OMR::CriticalSection processUnloadedClasses(getROMMapMonitor());
 
@@ -229,6 +236,8 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
          const AOTCacheClassRecord *record = it->second._aotCacheClassRecord;
          //Class is cached, so retain the data to be used for purging the caches.
          unloadedClasses.push_back({ clazz, key, cp, record, true });
+         if (cl == systemClassLoader)
+            unloadedClassesSystemClassLoader.push_back((J9Class*)clazz);
 
          // For _classBySignatureMap entries that were cached by referencing class loader
          // we need to delete them using the correct class loader
@@ -281,6 +290,22 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
          purgeCache(unloadedClasses, _classRecordMap, &ClassUnloadedData::_record);
          }
       } // end critical section getROMMapMonitor()
+
+   for (J9Class* unloadedClazz: unloadedClassesSystemClassLoader)
+      {
+      OMR::CriticalSection methodByNameMapPurge(compInfoPT->getClientData()->getMethodMapMonitor());
+      for (auto it = _methodByNameMap.begin(); it != _methodByNameMap.end();)
+         {
+         if (it->first.first == unloadedClazz)
+            {
+            it = _methodByNameMap.erase(it);
+            }
+         else
+            {
+            ++it;
+            }
+         }
+      }
 
    // remove the class chain data from the cache for the unloaded class.
    {

@@ -1483,21 +1483,52 @@ TR_J9ServerVM::getClassFlagsValue(TR_OpaqueClassBlock *clazz)
    }
 
 TR_OpaqueMethodBlock *
-TR_J9ServerVM::getMethodFromName(const char *className, const char *methodName, const char *signature)
-   {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_getMethodFromName, std::string(className, strlen(className)),
-         std::string(methodName, strlen(methodName)), std::string(signature, strlen(signature)));
-   return std::get<0>(stream->read<TR_OpaqueMethodBlock *>());
-   }
-
-TR_OpaqueMethodBlock *
 TR_J9ServerVM::getMethodFromClass(TR_OpaqueClassBlock *methodClass, const char *methodName, const char *signature, TR_OpaqueClassBlock *callingClass)
    {
+   ClassMethodNamePair key{(J9Class*)methodClass, std::string(methodName) + signature};
+   PersistentUnorderedMap<ClassMethodNamePair, TR_OpaqueMethodBlock*> &methodMap = _compInfoPT->getClientData()->getMethodByNameMap();
+   // If callingClass is non-null, a visibility check will be done during the look up.
+   // Only methods visible to the callingClass will be returned. The caching mechanism
+   // becomes simpler when we only use it when callingClass is (nil).
+   if (!callingClass)
+      {
+      OMR::CriticalSection getMethodFromClassCS(_compInfoPT->getClientData()->getMethodMapMonitor());
+      auto it = methodMap.find(key);
+      if (it != methodMap.end())
+         return it->second;
+      }
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITServer::MessageType::VM_getMethodFromClass, methodClass, std::string(methodName, strlen(methodName)),
          std::string(signature, strlen(signature)), callingClass);
-   return std::get<0>(stream->read<TR_OpaqueMethodBlock *>());
+   TR_OpaqueMethodBlock *method = std::get<0>(stream->read<TR_OpaqueMethodBlock *>());
+
+   if (method)
+      {
+      // we only cache methods whose class loader is known to
+      // be the system class loader. This is because it allows
+      // us to optimize the cache invalidation when classes are
+      // unloaded
+      bool cache = false;
+         {
+         OMR::CriticalSection getClassLoader(_compInfoPT->getClientData()->getROMMapMonitor());
+         auto &romClassMap = _compInfoPT->getClientData()->getROMClassMap();
+         auto it = romClassMap.find((J9Class*)methodClass);
+         if (it != romClassMap.end())
+            {
+            J9ClassLoader *classLoader = (J9ClassLoader*)it->second._classLoader;
+            ClientSessionData::VMInfo *vminfo = _compInfoPT->getClientData()->getOrCacheVMInfo(_compInfoPT->getMethodBeingCompiled()->_stream);
+            J9ClassLoader *systemClassLoader = (J9ClassLoader*)(vminfo->_systemClassLoader);
+            cache = (classLoader == systemClassLoader);
+            }
+         }
+      if (cache)
+         {
+         OMR::CriticalSection getMethodFromClassCS(_compInfoPT->getClientData()->getMethodMapMonitor());
+         methodMap[key] = method;
+         }
+      }
+
+   return method;
    }
 
 bool
@@ -3545,15 +3576,6 @@ TR_J9SharedCacheServerVM::getClassFromNewArrayType(int32_t arrayType)
    if (comp && comp->getOption(TR_UseSymbolValidationManager))
       return TR_J9ServerVM::getClassFromNewArrayType(arrayType);
    return NULL;
-   }
-
-TR_OpaqueMethodBlock *
-TR_J9SharedCacheServerVM::getMethodFromName(const char *className, const char *methodName, const char *signature)
-   {
-   // The TR_J9VM version of this method implicitly creates SVM record during AOT compilation.
-   // The TR_J9ServerVM version doesn't account for that, so need to override it
-   // The downside is that this results in 2 remote calls, instead of 1.
-   return TR_J9VM::getMethodFromName(className, methodName, signature);
    }
 
 TR_OpaqueMethodBlock *
