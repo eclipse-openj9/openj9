@@ -57,6 +57,7 @@ class PPCCallSnippet : public TR::Snippet
    TR::SymbolReference * _realMethodSymbolReference;
 
    public:
+   static uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg);
 
    PPCCallSnippet(TR::CodeGenerator *cg, TR::Node *c, TR::LabelSymbol *lab, int32_t s)
       : TR::Snippet(cg, c, lab, needsGCMap(cg, c->getSymbolReference())), sizeOfArguments(s), callRA(0)
