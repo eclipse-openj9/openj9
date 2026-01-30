@@ -232,7 +232,7 @@ public class ValueTypeGenerator extends ClassLoader {
 			String[] nameAndSigValue = s.split(":");
 			final int fieldModifiers;
 			if (isRef) {
-				fieldModifiers = ACC_PUBLIC;
+				fieldModifiers = ACC_PUBLIC + ACC_STRICT_INIT;
 			} else {
 				if ((nameAndSigValue.length > 2) && nameAndSigValue[2].equals("static")) {
 					fieldModifiers = ACC_PUBLIC + ACC_STATIC;
@@ -269,8 +269,6 @@ public class ValueTypeGenerator extends ClassLoader {
 		if (!isVerifiable) {
 			makeGeneric(cw, className, "makeObjectGeneric", "makeObject", makeValueSig, makeValueGenericSig, fields, makeMaxLocal);
 		}
-		makeDefaultValue(cw, className, makeValueSig, fields, makeMaxLocal);
-		makeDefaultValueGeneric(cw, className, makeValueSig, fields, makeMaxLocal);
 		if (isRef) {
 			testMonitorExitOnObject(cw, className, fields);
 			testMonitorEnterAndExitWithRefType(cw, className, fields);
@@ -596,28 +594,6 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitFrame(F_SAME, 3, new Object[] {INTEGER, containerClassName, "java/lang/Object"}, 0, new Object[]{});
 		mv.visitInsn(RETURN);
 		mv.visitMaxs(2, 3);
-		mv.visitEnd();
-	}
-
-	private static void makeDefaultValue(ClassWriter cw, String className, String makeValueSig, String[] fields, int makeMaxLocal) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "makeDefaultValue", "()L" + className + ";", null, null);
-		mv.visitCode();
-		mv.visitTypeInsn(NEW, className);
-		mv.visitInsn(DUP);
-		mv.visitMethodInsn(INVOKESPECIAL, className, "<init>", "()V", false);
-		mv.visitInsn(ARETURN);
-		mv.visitMaxs(2, 0);
-		mv.visitEnd();
-	}
-
-	private static void makeDefaultValueGeneric(ClassWriter cw, String className, String makeValueSig, String[] fields, int makeMaxLocal) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "makeDefaultValueGeneric", "()Ljava/lang/Object;", null, null);
-		mv.visitCode();
-		mv.visitTypeInsn(NEW, className);
-		mv.visitInsn(DUP);
-		mv.visitMethodInsn(INVOKESPECIAL, className, "<init>", "()V", false);
-		mv.visitInsn(ARETURN);
-		mv.visitMaxs(2, 0);
 		mv.visitEnd();
 	}
 

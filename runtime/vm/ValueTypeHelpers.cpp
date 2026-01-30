@@ -74,33 +74,6 @@ calculateFlattenedFieldAddresses(J9VMThread *currentThread, J9Class *clazz)
 	}
 }
 
-void
-defaultValueWithUnflattenedFlattenables(J9VMThread *currentThread, J9Class *clazz, j9object_t instance)
-{
-	J9FlattenedClassCacheEntry * entry = NULL;
-	J9Class * entryClazz = NULL;
-	UDATA length = clazz->flattenedClassCache->numberOfEntries;
-	UDATA const objectHeaderSize = J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
-	MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
-	for (UDATA index = 0; index < length; index++) {
-		entry = J9_VM_FCC_ENTRY_FROM_CLASS(clazz, index);
-		entryClazz = J9_VM_FCC_CLASS_FROM_ENTRY(entry);
-		if (!J9_VM_FCC_ENTRY_IS_STATIC_FIELD(entry) && !J9_IS_FIELD_FLATTENED(entryClazz, entry->field)) {
-			objectAccessBarrier.inlineMixedObjectStoreObject(currentThread,
-												instance,
-												entry->offset + objectHeaderSize,
-												entryClazz->flattenedClassCache->defaultValue,
-												false);
-		}
-	}
-}
-
-void
-classPrepareWithWithUnflattenedFlattenables(J9VMThread *currentThread, J9Class *clazz, J9FlattenedClassCacheEntry *entry, J9Class *entryClazz)
-{
-	MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
-	objectAccessBarrier.inlineStaticStoreObject(currentThread, clazz, (j9object_t *)entry->offset, entryClazz->flattenedClassCache->defaultValue);
-}
 
 BOOLEAN
 valueTypeCapableAcmp(J9VMThread *currentThread, j9object_t lhs, j9object_t rhs)
@@ -265,20 +238,6 @@ areFlattenableValueTypesEnabled(J9JavaVM *vm)
 #else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	return FALSE;
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-}
-
-j9object_t*
-getDefaultValueSlotAddress(J9Class* clazz)
-{
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	Assert_VM_true(J9_IS_J9CLASS_VALUETYPE(clazz));
-	Assert_VM_true(J9ClassInitSucceeded == clazz->initializeStatus); /* make sure class has been initialized (otherwise defaultValue won't exist) */
-	j9object_t* result = &clazz->flattenedClassCache->defaultValue;
-	Assert_VM_notNull(*result);
-	return result;
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-	return NULL;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 }
 
 } /* extern "C" */

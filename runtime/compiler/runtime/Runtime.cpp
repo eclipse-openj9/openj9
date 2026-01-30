@@ -2093,7 +2093,6 @@ bool isOrderedPair(U_8 recordType)
       case TR_ClassAddress:
       case TR_MethodObject:
       //case TR_DataAddress:
-      case TR_StaticDefaultValueInstance:
 #endif
 #if defined(TR_HOST_32BIT) && defined(TR_HOST_POWER)
       case TR_ArrayCopyHelper:

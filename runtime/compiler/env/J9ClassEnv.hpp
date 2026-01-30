@@ -140,23 +140,6 @@ public:
     */
    bool classSupportsDirectMemoryComparison(TR_OpaqueClassBlock *clazz);
 
-   /**
-    * \brief
-    *    Checks whether instances of the specified class can be trivially initialized by
-    *    "zeroing" their fields.
-    *    In the case of OpenJ9, this tests whether any field is of null-restricted type that
-    *    has not been "flattened" (that is, had the value type's fields inlined into this class).
-    *    Such a value type field must be initialized with the default value of the type.
-    *
-    * \param clazz
-    *    The class that is to be checked
-    *
-    * \return
-    *    `true` if instances of the specified class can be initialized by zeroing their fields;
-    *    `false` otherwise (that is, if the class has value type fields whose fields have not
-    *    been inlined)
-    */
-   bool isZeroInitializable(TR_OpaqueClassBlock *clazz);
    bool isPrimitiveClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazz);
    bool isAnonymousClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazz);
    bool isPrimitiveArray(TR::Compilation *comp, TR_OpaqueClassBlock *);
@@ -267,17 +250,6 @@ public:
     * 2 concrete classses and false otherwise.
     */
    bool containsZeroOrOneConcreteClass(TR::Compilation *comp, List<TR_PersistentClassInfo>* subClasses);
-
-   /** \brief
-    *     Returns the reference to the address of the default value instance for a value class.
-    *
-    *  \param clazz
-    *     The class that the default value instance belongs to. Must be an initialized value class.
-    *
-    *  \return
-    *     The reference to the address of the default value instance.
-    */
-   j9object_t *getDefaultValueSlotAddress(TR::Compilation *comp, TR_OpaqueClassBlock *clazz);
    };
 
 }

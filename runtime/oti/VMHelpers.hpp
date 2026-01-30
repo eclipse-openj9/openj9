@@ -857,7 +857,6 @@ done:
 	 *
 	 * Perform a non-instrumentable allocation of an indexable flattened or unflattened class.
 	 *
-	 * Unflattened array classes that contain the J9ClassContainsUnflattenedFlattenables flag will return NULL
 	 *
 	 * @param currentThread[in] the current J9VMThread
 	 * @param objectAllocate[in] instance of MM_ObjectAllocationAPI created on the current thread
@@ -877,7 +876,7 @@ done:
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		if (J9_IS_J9CLASS_FLATTENED(arrayClass)) {
 			instance = objectAllocate->inlineAllocateIndexableValueTypeObject(currentThread, arrayClass, size, initializeSlots, memoryBarrier, sizeCheck);
-		} else if (J9_ARE_NO_BITS_SET(arrayClass->classFlags, J9ClassContainsUnflattenedFlattenables))
+		} else
 #endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 		{
 			instance = objectAllocate->inlineAllocateIndexableObject(currentThread, arrayClass, size, initializeSlots, memoryBarrier, sizeCheck);

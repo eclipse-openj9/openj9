@@ -1992,17 +1992,6 @@ class TR_RelocationRecordValidateJ2IThunkFromMethod : public TR_RelocationRecord
       uint16_t methodID(TR_RelocationTarget *reloTarget);
    };
 
-class TR_RelocationRecordStaticDefaultValueInstance : public TR_RelocationRecordClassAddress
-   {
-   public:
-      TR_RelocationRecordStaticDefaultValueInstance() {}
-      TR_RelocationRecordStaticDefaultValueInstance(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordClassAddress(reloRuntime, record) {}
-
-      virtual const char *name();
-      virtual TR_RelocationErrorCode applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
-      virtual TR_RelocationErrorCode applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocationHigh, uint8_t *reloLocationLow);
-   };
-
 class TR_RelocationRecordValidateIsClassVisible : public TR_RelocationRecord
    {
    public:

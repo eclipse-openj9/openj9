@@ -1537,7 +1537,6 @@ ClientSessionData::ClassInfo::ClassInfo(TR_PersistentMemory *persistentMemory) :
    _classNameIdentifyingLoader(),
    _aotCacheClassRecord(NULL),
    _arrayElementSize(0),
-   _defaultValueSlotAddress(NULL),
    _nullRestrictedArrayClass(NULL),
    _classOfStaticCache(decltype(_classOfStaticCache)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _constantClassPoolCache(decltype(_constantClassPoolCache)::allocator_type(persistentMemory->_persistentAllocator.get())),

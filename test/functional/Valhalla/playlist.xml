@@ -191,7 +191,7 @@
 	<test>
 		<testCaseName>ValueTypeUnsafeTests</testCaseName>
 		<variations>
-			<!-- TODO: Disabled as per https://github.com/eclipse-openj9/openj9/issues/22642. -->
+			<!-- TODO: Disabled as per https://github.com/eclipse-openj9/openj9/issues/23134. -->
 			<!-- variation>-Xcompressedrefs -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 			<variation>-Xnocompressedrefs -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation -->
 			<variation>-Xcompressedrefs -XX:-EnableArrayFlattening</variation>

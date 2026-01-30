@@ -219,7 +219,6 @@ public:
       std::string _classNameIdentifyingLoader;
       const AOTCacheClassRecord *_aotCacheClassRecord;
       int32_t _arrayElementSize;
-      j9object_t * _defaultValueSlotAddress;
 
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _classOfStaticCache;
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _constantClassPoolCache;

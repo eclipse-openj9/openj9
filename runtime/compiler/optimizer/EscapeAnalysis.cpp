@@ -1072,25 +1072,6 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
             logprintf(trace(), log, "   Make [%p] non-local because we can't have locking when candidate escapes in cold blocks\n", candidate->_node);
             }
 
-         // Primitive value type fields of objects created with a NEW bytecode must be initialized
-         // with their default values.  EA is not yet set up to perform such iniitialization
-         // if the value type's own fields have not been inlined into the class that
-         // has a field of that type, so remove the candidate from consideration.
-         if (candidate->_kind == TR::New)
-            {
-            TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock *)candidate->_node->getFirstChild()->getSymbol()->getStaticSymbol()->getStaticAddress();
-
-            if (!TR::Compiler->cls.isZeroInitializable(clazz))
-               {
-               logprintf(trace(), log,
-                  "   Fail [%p] because the candidate is not zero initializable (that is, it has a field of a primitive value type whose fields have not been inlined into this candidate's class)\n",
-                  candidate->_node);
-               rememoize(candidate);
-               _candidates.remove(candidate);
-               continue;
-               }
-            }
-
          // If a contiguous candidate has reference slots, then stack-allocating it means putting
          // stores in the first block of the method.  If the first block is really hot, those stores
          // are expensive, and stack-allocation is probably not worthwhile.
