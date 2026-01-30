@@ -1692,6 +1692,9 @@ obj:
 			VMStructHasBeenUpdated(REGISTER_ARGS);
 			switch(action) {
 			case J9_CHECK_ASYNC_THROW_EXCEPTION:
+#if JAVA_SPEC_VERSION >= 22
+			case J9_CHECK_ASYNC_SCOPED_EXCEPTION:
+#endif /* JAVA_SPEC_VERSION >= 22 */
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
 				break;
 	#if defined(DEBUG_VERSION)
@@ -2041,7 +2044,11 @@ throwStackOverflow:
 			updateVMStruct(REGISTER_ARGS);
 			UDATA action = javaCheckAsyncMessages(_currentThread, TRUE);
 			VMStructHasBeenUpdated(REGISTER_ARGS);
-			if (J9_CHECK_ASYNC_THROW_EXCEPTION == action) {
+			if ((J9_CHECK_ASYNC_THROW_EXCEPTION == action)
+#if JAVA_SPEC_VERSION >= 22
+				|| (J9_CHECK_ASYNC_SCOPED_EXCEPTION == action)
+#endif /* JAVA_SPEC_VERSION >= 22 */
+			) {
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
 				goto done;
 			}

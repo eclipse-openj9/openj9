@@ -785,7 +785,7 @@ done:
 	 *
 	 * 		J9_CHECK_ASYNC_NO_ACTION
 	 * 			- nothing needs to be done
-	 * 		J9_CHECK_ASYNC_THROW_EXCEPTION
+	 * 		J9_CHECK_ASYNC_THROW_EXCEPTION or J9_CHECK_ASYNC_SCOPED_EXCEPTION
 	 * 			- throw the current exception immediately
 	 * 		J9_CHECK_ASYNC_POP_FRAMES
 	 * 			- pop the current frame immediately

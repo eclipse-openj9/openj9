@@ -174,9 +174,18 @@ restoreJITResolveFrame(J9VMThread *currentThread, void *oldPC, bool checkAsync =
 	J9SFJITResolveFrame *resolveFrame = (J9SFJITResolveFrame*)currentThread->sp;
 	if (checkAsync) {
 		if (VM_VMHelpers::immediateAsyncPending(currentThread)) {
-			if (J9_CHECK_ASYNC_POP_FRAMES == currentThread->javaVM->internalVMFunctions->javaCheckAsyncMessages(currentThread, FALSE)) {
+			UDATA asyncAction = currentThread->javaVM->internalVMFunctions->javaCheckAsyncMessages(currentThread, FALSE);
+			switch(asyncAction) {
+#if JAVA_SPEC_VERSION >= 22
+			case J9_CHECK_ASYNC_SCOPED_EXCEPTION:
+				addr = J9_JITHELPER_ACTION_THROW;
+				goto done;
+#endif /* JAVA_SPEC_VERSION >= 22 */
+			case J9_CHECK_ASYNC_POP_FRAMES:
 				addr = J9_JITHELPER_ACTION_POP_FRAMES;
 				goto done;
+			default:
+				break;
 			}
 		}
 	}
@@ -1363,11 +1372,16 @@ throwStackOverflow:
 		UDATA asyncAction = currentThread->javaVM->internalVMFunctions->javaCheckAsyncMessages(currentThread, TRUE);
 		switch(asyncAction) {
 		case J9_CHECK_ASYNC_THROW_EXCEPTION:
+#if JAVA_SPEC_VERSION >= 22
+		case J9_CHECK_ASYNC_SCOPED_EXCEPTION:
+#endif /* JAVA_SPEC_VERSION >= 22 */
 			addr = J9_JITHELPER_ACTION_THROW;
 			goto done;
 		case J9_CHECK_ASYNC_POP_FRAMES:
 			addr = J9_JITHELPER_ACTION_POP_FRAMES;
 			goto done;
+		default:
+			break;
 		}
 		addr = restoreJITResolveFrame(currentThread, oldPC);
 	}
@@ -1429,9 +1443,18 @@ old_slow_jitCheckAsyncMessages(J9VMThread *currentThread)
 	void *addr = NULL;
 	if (VM_VMHelpers::asyncMessagePending(currentThread)) {
 		void *oldPC = buildJITResolveFrame(currentThread, J9_SSF_JIT_RESOLVE, parmCount, false);
-		if (J9_CHECK_ASYNC_POP_FRAMES == currentThread->javaVM->internalVMFunctions->javaCheckAsyncMessages(currentThread, FALSE)) {
+		UDATA asyncAction = currentThread->javaVM->internalVMFunctions->javaCheckAsyncMessages(currentThread, FALSE);
+		switch(asyncAction) {
+#if JAVA_SPEC_VERSION >= 22
+		case J9_CHECK_ASYNC_SCOPED_EXCEPTION:
+			addr = J9_JITHELPER_ACTION_THROW;
+			goto done;
+#endif /* JAVA_SPEC_VERSION >= 22 */
+		case J9_CHECK_ASYNC_POP_FRAMES:
 			addr = J9_JITHELPER_ACTION_POP_FRAMES;
 			goto done;
+		default:
+			break;
 		}
 		addr = restoreJITResolveFrame(currentThread, oldPC, false, false);
 	}

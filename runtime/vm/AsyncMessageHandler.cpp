@@ -143,38 +143,25 @@ javaCheckAsyncMessages(J9VMThread *currentThread, UDATA throwExceptions)
 #if JAVA_SPEC_VERSION >= 22
 		/* Check for a close scope request. */
 		if (J9_ARE_ANY_BITS_SET(publicFlags, J9_PUBLIC_FLAGS_CLOSE_SCOPE)) {
-			bool notifyThreads = false;
 			if (hasMemoryScope(currentThread, currentThread->closeScopeObj)) {
-				if (throwExceptions) {
-					currentThread->currentException = currentThread->scopedError;
-					currentThread->scopedError = NULL;
-					currentThread->closeScopeObj = NULL;
-					clearEventFlag(currentThread, J9_PUBLIC_FLAGS_CLOSE_SCOPE);
-					result = J9_CHECK_ASYNC_THROW_EXCEPTION;
-					notifyThreads = true;
-				} else {
-					VM_VMHelpers::indicateAsyncMessagePending(currentThread);
-				}
-			} else {
-				currentThread->scopedError = NULL;
-				currentThread->closeScopeObj = NULL;
-				clearEventFlag(currentThread, J9_PUBLIC_FLAGS_CLOSE_SCOPE);
-				notifyThreads = true;
+				currentThread->currentException = currentThread->scopedError;
+				result = J9_CHECK_ASYNC_SCOPED_EXCEPTION;
 			}
-			if (notifyThreads) {
-				J9JavaVM *vm = currentThread->javaVM;
-				/* Notify all threads that are waiting in ScopedMemoryAccess closeScope0
-				 * to continue since the MemorySession(s) will no longer be used and it
-				 * is safe to close them.
-				 */
-				omrthread_monitor_enter(vm->closeScopeMutex);
-				Assert_VM_true(vm->closeScopeNotifyCount > 0);
-				vm->closeScopeNotifyCount -= 1;
-				if (0 == vm->closeScopeNotifyCount) {
-					omrthread_monitor_notify_all(vm->closeScopeMutex);
-				}
-				omrthread_monitor_exit(vm->closeScopeMutex);
+			currentThread->scopedError = NULL;
+			currentThread->closeScopeObj = NULL;
+			clearEventFlag(currentThread, J9_PUBLIC_FLAGS_CLOSE_SCOPE);
+			J9JavaVM *vm = currentThread->javaVM;
+			/* Notify all threads that are waiting in ScopedMemoryAccess closeScope0
+			 * to continue since the MemorySession(s) will no longer be used and it
+			 * is safe to close them.
+			 */
+			omrthread_monitor_enter(vm->closeScopeMutex);
+			Assert_VM_true(vm->closeScopeNotifyCount > 0);
+			vm->closeScopeNotifyCount -= 1;
+			if (0 == vm->closeScopeNotifyCount) {
+				omrthread_monitor_notify_all(vm->closeScopeMutex);
 			}
+			omrthread_monitor_exit(vm->closeScopeMutex);
 			break;
 		}
 #endif /* JAVA_SPEC_VERSION >= 22 */

@@ -113,6 +113,9 @@ J9_EXTERN_BUILDER_SYMBOL(executeCurrentBytecodeFromJIT);
 J9_EXTERN_BUILDER_SYMBOL(enterMethodMonitorFromJIT);
 J9_EXTERN_BUILDER_SYMBOL(reportMethodEnterFromJIT);
 J9_EXTERN_BUILDER_SYMBOL(handlePopFramesFromJIT);
+#if JAVA_SPEC_VERSION >= 22
+J9_EXTERN_BUILDER_SYMBOL(throwCurrentExceptionFromJIT);
+#endif /* JAVA_SPEC_VERSION >= 22 */
 
 static J9OSRFrame* findOSRFrameAtInlineDepth(J9OSRBuffer *osrBuffer, UDATA inlineDepth);
 static void   jitFramePopNotificationAdded(J9VMThread * currentThread, J9StackWalkState * walkState, UDATA inlineDepth);
@@ -2675,9 +2678,18 @@ c_jitReportExceptionCatch(J9VMThread *currentThread)
 		j9object_t exception = ((J9SFJITResolveFrame*)currentThread->sp)->savedJITException;
 		ALWAYS_TRIGGER_J9HOOK_VM_EXCEPTION_CATCH(vm->hookInterface, currentThread, exception, NULL);
 		if (VM_VMHelpers::immediateAsyncPending(currentThread)) {
-			if (J9_CHECK_ASYNC_POP_FRAMES == vm->internalVMFunctions->javaCheckAsyncMessages(currentThread, FALSE)) {
+			UDATA asyncAction = vm->internalVMFunctions->javaCheckAsyncMessages(currentThread, FALSE);
+			switch(asyncAction) {
+#if JAVA_SPEC_VERSION >= 22
+			case J9_CHECK_ASYNC_SCOPED_EXCEPTION:
+				jitPC = J9_BUILDER_SYMBOL(throwCurrentExceptionFromJIT);
+				goto done;
+#endif /* JAVA_SPEC_VERSION >= 22 */
+			case J9_CHECK_ASYNC_POP_FRAMES:
 				jitPC = J9_BUILDER_SYMBOL(handlePopFramesFromJIT);
 				goto done;
+			default:
+				break;
 			}
 		}
 		/* Do not cache the resolve frame pointer as the hook call may modify the SP value */
