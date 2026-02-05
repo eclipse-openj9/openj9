@@ -13098,6 +13098,18 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
                return result;
             }
          }
+#ifdef TR_TARGET_64BIT
+      case TR::java_util_zip_CRC32C_updateBytes:
+         {
+         static bool disableCRC32C = feGetEnv("TR_DisableCRC32CHelper") != NULL;
+         if (!disableCRC32C && !TR::Compiler->om.canGenerateArraylets()
+            && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE4_2) && cg->comp()->compilePortableCode())
+            {
+            return TR::TreeEvaluator::callCRC32CUpdateHelper(node, cg);
+            }
+         break;
+         }
+#endif
       case TR::java_lang_Math_sqrt:
       case TR::java_lang_StrictMath_sqrt:
       case TR::java_lang_System_nanoTime:
@@ -13383,6 +13395,45 @@ J9::X86::TreeEvaluator::encodeUTF16Evaluator(TR::Node *node, TR::CodeGenerator *
    return resultReg;
    }
 
+#ifdef TR_TARGET_64BIT
+TR::Register *
+J9::X86::AMD64::TreeEvaluator::callCRC32CUpdateHelper(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions((uint8_t)0, 6, cg);
+   TR::Register *resultReg = cg->allocateRegister();
+
+   TR::Register *crc = cg->gprClobberEvaluate(node->getChild(0), TR::InstOpCode::MOVRegReg());
+   TR::Register *buf = cg->gprClobberEvaluate(node->getChild(1), TR::InstOpCode::MOVRegReg());
+   TR::Register *off = cg->gprClobberEvaluate(node->getChild(2), TR::InstOpCode::MOVRegReg());
+   TR::Register *end = cg->evaluate(node->getChild(3));
+   TR::Register *dummy = cg->allocateRegister(TR_GPR);
+
+   dependencies->addPostCondition(crc, TR::RealRegister::edi, cg);
+   dependencies->addPostCondition(buf, TR::RealRegister::esi, cg);
+   dependencies->addPostCondition(off, TR::RealRegister::edx, cg);
+   dependencies->addPostCondition(end, TR::RealRegister::ecx, cg);
+   dependencies->addPostCondition(dummy, TR::RealRegister::r8, cg);
+   dependencies->addPostCondition(resultReg, TR::RealRegister::eax, cg);
+
+   dependencies->stopAddingConditions();
+
+   TR::MemoryReference *memRef = generateX86MemoryReference(buf, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg);
+   generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, buf, memRef, cg);
+   // Add header offset to buffer address
+
+   generateHelperCallInstruction(node, TR_AMD64java_util_zip_CRC32C_updateBytes, dependencies, cg);
+
+   cg->stopUsingRegister(dummy);
+   node->setRegister(resultReg);
+
+   for (uint16_t i = 0; i < node->getNumChildren(); i++)
+      {
+      cg->decReferenceCount(node->getChild(i));
+      }
+
+   return resultReg;
+   }
+#endif
 
 /*
  * The CaseConversionManager is used to store info about the conversion. It defines the lower bound and upper bound value depending on

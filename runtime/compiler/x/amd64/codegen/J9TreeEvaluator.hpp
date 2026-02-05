@@ -54,6 +54,29 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::X86::TreeEvaluator
    static TR::Register *dwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *dwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
+   /**
+    * @brief Generates a call to the CRC32C update helper function. The helper
+    * function only supports 64-bit mode.
+    *
+    * This function generates the call to a helper function that computes
+    * the CRC32C checksum update. The CRC32C (Cyclic Redundancy Check with
+    * Castagnoli polynomial) is commonly used to verify data integrity and
+    * hashing applications. This function adjusts the address of buffer to
+    * account for the object header size.
+    *
+    * The call node must have the expected children
+    *   (0) crc - current crc32c value
+    *   (1) buf - object reference to buffer
+    *   (2) off - offset into the buffer
+    *   (3) end - the last index to process
+    *
+    * @param node The IL call node.
+    * @param cg The code generator responsible for producing machine code.
+    * @return The result register containing the CRC32C checksum.
+    *
+    */
+   static TR::Register *callCRC32CUpdateHelper(TR::Node *node, TR::CodeGenerator *cg);
+
    };
 
 } // namespace AMD64
