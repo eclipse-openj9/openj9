@@ -35,7 +35,7 @@ typedef J9::Optimizer OptimizerConnector;
 } // namespace J9
 #endif
 
-#include "optimizer/OMROptimizer.hpp"
+#include "optimizer/FullOptimizer.hpp"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -51,19 +51,15 @@ class TR_J9InlinerUtil;
 
 namespace J9 {
 
-class Optimizer : public OMR::OptimizerConnector {
+class Optimizer : public TR::FullOptimizer {
 public:
-    Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen,
-        const OptimizationStrategy *strategy = NULL, uint16_t VNType = 0);
+    Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen);
 
     OMR_InlinerPolicy *getInlinerPolicy();
     OMR_InlinerUtil *getInlinerUtil();
 
     bool switchToProfiling(uint32_t f, uint32_t c);
     bool switchToProfiling();
-
-    static const OptimizationStrategy *optimizationStrategy(TR::Compilation *c);
-    static ValueNumberInfoBuildType valueNumberInfoBuildType();
 
 private:
     TR::Optimizer *self();
