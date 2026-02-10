@@ -216,7 +216,7 @@ TR::FILE *fileOpen(TR::Options *options, J9JITConfig *jitConfig, char *name, cha
 
 TR::CompilationInfo *getCompilationInfo(J9JITConfig *jitConfig);
 
-class TR_J9VMBase : public TR_FrontEnd {
+class TR_J9VMBase : public TR::FrontEnd {
 public:
     void *operator new(size_t, void *placement) { return placement; }
 
