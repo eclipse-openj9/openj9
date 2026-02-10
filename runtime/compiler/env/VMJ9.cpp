@@ -63,7 +63,7 @@
 #include "compile/Compilation.hpp"
 #include "compile/CompilationTypes.hpp"
 #include "compile/Method.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "compile/VirtualGuard.hpp"
 #include "control/OptionsUtil.hpp"
 #include "control/CompilationController.hpp"
@@ -732,7 +732,7 @@ TR_J9VMBase *TR_J9VMBase::get(J9JITConfig *jitConfig, J9VMThread *vmThread, VM_T
 }
 
 TR_J9VMBase::TR_J9VMBase(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo, J9VMThread *vmThread)
-    : TR_FrontEnd()
+    : TR::FrontEnd()
     , _vmThread(vmThread)
     , _portLibrary(jitConfig->javaVM->portLibrary)
     , _jitConfig(jitConfig)
