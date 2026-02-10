@@ -29,7 +29,7 @@
 #include "codegen/PrivateLinkage.hpp"
 #include "codegen/Snippet.hpp"
 #include "codegen/PreprologueConst.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/jittypes.h"
 #include "env/j9method.h"

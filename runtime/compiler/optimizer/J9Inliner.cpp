@@ -26,7 +26,7 @@
 #include <algorithm>
 #include "env/KnownObjectTable.hpp"
 #include "compile/OSRData.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/CHTable.hpp"
 #include "env/HeuristicRegion.hpp"

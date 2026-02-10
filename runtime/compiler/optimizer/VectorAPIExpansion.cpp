@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "compiler/infra/String.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "env/TypeLayout.hpp"

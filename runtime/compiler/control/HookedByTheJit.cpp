@@ -48,7 +48,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "compile/CompilationTypes.hpp"
 #include "compile/Method.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "control/OptimizationPlan.hpp"
 #include "control/OptionsUtil.hpp"
 #include "control/Recompilation.hpp"

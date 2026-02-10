@@ -29,7 +29,7 @@
 #include "env/FrontEnd.hpp"
 #include "compile/AOTClassInfo.hpp"
 #include "compile/Compilation.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "compile/VirtualGuard.hpp"
 #include "env/CHTable.hpp"
 #include "env/CompilerEnv.hpp"

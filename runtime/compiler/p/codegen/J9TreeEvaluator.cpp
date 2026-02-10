@@ -44,7 +44,7 @@
 #include "codegen/Relocation.hpp"
 #include "codegen/Snippet.hpp"
 #include "codegen/TreeEvaluator.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "codegen/J9PPCWatchedInstanceFieldSnippet.hpp"

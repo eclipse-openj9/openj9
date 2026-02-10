@@ -26,7 +26,7 @@
 #include "j9.h"
 #include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "env/jittypes.h"
 #include "env/VMJ9.h"
 #include "ras/Logger.hpp"

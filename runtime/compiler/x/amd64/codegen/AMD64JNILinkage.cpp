@@ -33,7 +33,7 @@
 #include "codegen/Register.hpp"
 #include "codegen/RegisterDependency.hpp"
 #include "codegen/Snippet.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/jittypes.h"
 #include "il/LabelSymbol.hpp"

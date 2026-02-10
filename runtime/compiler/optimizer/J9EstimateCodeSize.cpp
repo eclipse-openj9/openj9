@@ -25,7 +25,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "compile/InlineBlock.hpp"
 #include "compile/Method.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #if defined(J9VM_OPT_JITSERVER)
 #include "env/j9methodServer.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */

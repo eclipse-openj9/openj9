@@ -32,7 +32,7 @@
 #include "codegen/Snippet.hpp"
 #include "codegen/UnresolvedDataSnippet.hpp"
 #include "compile/Method.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "compile/VirtualGuard.hpp"
 #if defined(J9VM_OPT_JITSERVER)
 #include "control/CompilationThread.hpp"

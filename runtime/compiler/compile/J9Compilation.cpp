@@ -35,7 +35,7 @@
 #include "compile/Compilation_inlines.hpp"
 #include "compile/CompilationTypes.hpp"
 #include "env/DependencyTable.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "control/OptimizationPlan.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"

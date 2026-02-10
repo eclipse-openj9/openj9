@@ -28,7 +28,7 @@
 #include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "omrformatconsts.h"
 
 // only purpose of this class is to test that annotations are working.  Will

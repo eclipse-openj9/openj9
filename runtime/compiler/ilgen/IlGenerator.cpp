@@ -23,7 +23,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "compile/InlineBlock.hpp"
 #include "compile/Method.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "env/PersistentCHTable.hpp"

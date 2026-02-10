@@ -22,7 +22,7 @@
 
 #include "optimizer/RecognizedCallTransformer.hpp"
 
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/VMJ9.h"
 #include "env/jittypes.h"

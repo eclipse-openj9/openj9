@@ -32,4 +32,4 @@
 #include "env/annotations/TestAnnotation.hpp"
 #include "env/annotations/TROptAnnotation.hpp"
 #include "env/annotations/TRNoSideFXAnnotation.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"

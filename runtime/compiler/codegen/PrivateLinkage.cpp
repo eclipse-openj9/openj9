@@ -24,7 +24,7 @@
 
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/Linkage_inlines.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/jittypes.h"
 #include "il/ParameterSymbol.hpp"
