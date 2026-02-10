@@ -250,9 +250,6 @@ static const OptimizationStrategy fsdStrategyOptsForMethodsWithoutSlotSharing[] 
     { OMR::endOpts },
 };
 
-static const OptimizationStrategy *fsdStrategies[]
-    = { fsdStrategyOptsForMethodsWithSlotSharing, fsdStrategyOptsForMethodsWithoutSlotSharing };
-
 // **********************************************************
 //
 // NO-OPT STRATEGY
@@ -648,10 +645,12 @@ static const OptimizationStrategy cheapTacticalGlobalRegisterAllocatorOpts[] = {
     { OMR::endGroup }
 };
 
-J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen,
-    const OptimizationStrategy *strategy, uint16_t VNType)
-    : OMR::Optimizer(comp, methodSymbol, isIlGen, strategy, VNType)
+J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen)
+    : TR::FullOptimizer(comp, methodSymbol, isIlGen)
 {
+    if (isIlGen)
+        return; // nothing more to do on top of TR::FullOptimizer's constructor, including setStrategy
+
     // initialize additional J9 optimizations
 
     _opts[OMR::inlining] = new (comp->allocator()) TR::OptimizationManager(self(), TR_Inliner::create, OMR::inlining);
@@ -804,6 +803,18 @@ J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *method
         self()->setRequestOptimization(OMR::sequentialLoadAndStoreWarmGroup, true);
     if (comp->getOption(TR_EnableSequentialLoadStoreCold))
         self()->setRequestOptimization(OMR::sequentialLoadAndStoreColdGroup, true);
+
+    if (comp->getOption(TR_MimicInterpreterFrameShape)) {
+        if (comp->getJittedMethodSymbol()->sharesStackSlots(comp))
+            setStrategy(fsdStrategyOptsForMethodsWithSlotSharing);
+        else
+            setStrategy(fsdStrategyOptsForMethodsWithoutSlotSharing);
+        return;
+    }
+
+    TR_Hotness strategy = comp->getMethodHotness();
+    TR_ASSERT_FATAL(strategy <= scorching, "unexpected hotness %d\n", strategy);
+    setStrategy(j9CompilationStrategies[strategy]);
 }
 
 inline TR::Optimizer *J9::Optimizer::self() { return (static_cast<TR::Optimizer *>(this)); }
@@ -830,19 +841,3 @@ bool J9::Optimizer::switchToProfiling()
 {
     return self()->switchToProfiling(DEFAULT_PROFILING_FREQUENCY, DEFAULT_PROFILING_COUNT);
 }
-
-const OptimizationStrategy *J9::Optimizer::optimizationStrategy(TR::Compilation *c)
-{
-    if (c->getOption(TR_MimicInterpreterFrameShape)) {
-        if (c->getJittedMethodSymbol()->sharesStackSlots(c))
-            return fsdStrategies[0]; // 0 is fsdStrategyOptsForMethodsWithSlotSharing
-        else
-            return fsdStrategies[1]; // 1 is fsdStrategyOptsForMethodsWithoutSlotSharing
-    }
-
-    TR_Hotness strategy = c->getMethodHotness();
-    TR_ASSERT_FATAL(strategy <= scorching, "unexpected hotness %d\n", strategy);
-    return j9CompilationStrategies[strategy];
-}
-
-ValueNumberInfoBuildType J9::Optimizer::valueNumberInfoBuildType() { return PrePartitionVN; }

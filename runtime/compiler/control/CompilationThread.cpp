@@ -10745,7 +10745,7 @@ void TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(J9VMThread *v
                 {
                     OMR::Optimizations jitPhaseOMROpt = static_cast<OMR::Optimizations>(jitPhase);
                     TR_VerboseLog::write(" OptIdx=%d", compiler->getOptIndex());
-                    TR_VerboseLog::write(" OptName=%s", OMR::Optimizer::getOptimizationName(jitPhaseOMROpt));
+                    TR_VerboseLog::write(" OptName=%s", TR::Optimizer::getOptimizationName(jitPhaseOMROpt));
                 }
                 TR_VerboseLog::write(" memLimit=%zu KB", scratchSegmentProvider.allocationLimit() >> 10);
 

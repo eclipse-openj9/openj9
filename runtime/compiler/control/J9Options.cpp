@@ -688,12 +688,11 @@ const char *Options::vmStateOption(const char *option, void *base, TR::OptionTab
                                 vmStateArray[index]._xname);
                     } else {
                         OMR::Optimizations opts = static_cast<OMR::Optimizations>((state & 0xFF00) >> 8);
-                        OMR::Optimizer::AnalysisPhases phase
-                            = static_cast<OMR::Optimizer::AnalysisPhases>(state & 0xFF);
+                        TR::Optimizer::AnalysisPhases phase = static_cast<TR::Optimizer::AnalysisPhases>(state & 0xFF);
 
                         if (opts < OMR::numOpts) {
                             j9tty_printf(PORTLIB, "vmState [0x%x]: {%s} {%s} {%s}\n", state, vmStateArray[index]._xname,
-                                OMR::Optimizer::getOptimizationName(opts), OMR::Optimizer::getAnalysisPhaseName(phase));
+                                TR::Optimizer::getOptimizationName(opts), TR::Optimizer::getAnalysisPhaseName(phase));
                         } else
                             j9tty_printf(PORTLIB, "vmState [0x%x]: {%s} {Illegal optimization number}\n", state,
                                 vmStateArray[index]._xname);
