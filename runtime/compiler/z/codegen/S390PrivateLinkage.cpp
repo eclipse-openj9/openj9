@@ -26,7 +26,7 @@
 #include "codegen/GCStackAtlas.hpp"
 #include "codegen/Linkage_inlines.hpp"
 #include "codegen/Snippet.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "compile/VirtualGuard.hpp"
 #include "env/CHTable.hpp"
 #include "env/CompilerEnv.hpp"

@@ -47,7 +47,7 @@
 #include "codegen/S390CHelperLinkage.hpp"
 #include "codegen/S390PrivateLinkage.hpp"
 #include "codegen/TreeEvaluator.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "compile/VirtualGuard.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"

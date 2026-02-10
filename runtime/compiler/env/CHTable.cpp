@@ -27,7 +27,7 @@
 #include "env/CompilerEnv.hpp"
 #include "env/KnownObjectTable.hpp"
 #include "compile/CompilationTypes.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "compile/VirtualGuard.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"

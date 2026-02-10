@@ -27,7 +27,7 @@
 #include "codegen/RealRegister.hpp"
 #include "codegen/Register.hpp"
 #include "codegen/Snippet.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "env/jittypes.h"
 #include "env/CompilerEnv.hpp"
 #include "env/VMJ9.h"

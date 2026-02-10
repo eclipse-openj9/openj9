@@ -30,7 +30,7 @@
 #include "compile/InlineBlock.hpp"
 #include "compile/Method.hpp"
 #include "compile/OSRData.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/CHTable.hpp"
 #include "env/J9ConstProvenanceGraph.hpp"
