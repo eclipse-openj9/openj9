@@ -35,6 +35,7 @@
 #define J9_EXTERNAL_TO_VM
 #include "vmaccess.h"
 #include "control/CompilationRuntime.hpp"
+#include "control/Options.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "env/FrontEnd.hpp"
@@ -59,6 +60,14 @@
 TR::CodeCacheManager *J9::CodeCacheManager::_codeCacheManager = NULL;
 J9JavaVM *J9::CodeCacheManager::_javaVM = NULL;
 J9JITConfig *J9::CodeCacheManager::_jitConfig = NULL;
+
+J9::CodeCacheManager::CodeCacheManager(TR_FrontEnd *fe, TR::RawAllocator rawAllocator)
+    : OMR::CodeCacheManagerConnector(rawAllocator)
+    , _fe(fe)
+{
+    _codeCacheManager = reinterpret_cast<TR::CodeCacheManager *>(this);
+    _disclaimEnabled = TR::Options::getCmdLineOptions()->getOption(TR_EnableCodeCacheDisclaiming);
+}
 
 TR::CodeCacheManager *J9::CodeCacheManager::self() { return static_cast<TR::CodeCacheManager *>(this); }
 

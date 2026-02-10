@@ -32,7 +32,6 @@ typedef CodeCacheManager CodeCacheManagerConnector;
 } // namespace J9
 #endif
 
-#include "control/Options.hpp"
 #include "env/jittypes.h"
 // #include "runtime/CodeCacheMemorySegment.hpp"
 // #include "runtime/CodeCache.hpp"
@@ -55,13 +54,7 @@ class OMR_EXTENSIBLE CodeCacheManager : public OMR::CodeCacheManagerConnector {
     TR::CodeCacheManager *self();
 
 public:
-    CodeCacheManager(TR_FrontEnd *fe, TR::RawAllocator rawAllocator)
-        : OMR::CodeCacheManagerConnector(rawAllocator)
-        , _fe(fe)
-    {
-        _codeCacheManager = reinterpret_cast<TR::CodeCacheManager *>(this);
-        _disclaimEnabled = TR::Options::getCmdLineOptions()->getOption(TR_EnableCodeCacheDisclaiming);
-    }
+    CodeCacheManager(TR_FrontEnd *fe, TR::RawAllocator rawAllocator);
 
     void *operator new(size_t s, TR::CodeCacheManager *m) { return m; }
 
