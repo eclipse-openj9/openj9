@@ -29,7 +29,7 @@
 #include "env/PersistentCHTable.hpp"
 #include "env/VMJ9.h"
 #include "compile/Compilation.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/IO.hpp"

@@ -24,7 +24,7 @@
 
 #include "j9nonbuilder.h"
 #include "compile/Compilation.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "env/ClassLoaderTable.hpp"
 #include "env/ClassTableCriticalSection.hpp"
 #include "env/J9ConstProvenanceGraph.hpp"

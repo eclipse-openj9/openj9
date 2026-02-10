@@ -32,7 +32,7 @@
 #include "codegen/RegisterPair.hpp"
 #include "codegen/Snippet.hpp"
 #include "compile/Method.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "env/CHTable.hpp"

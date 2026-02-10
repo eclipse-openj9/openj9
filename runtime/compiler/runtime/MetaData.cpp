@@ -42,7 +42,7 @@
 #include "codegen/Snippet.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/OSRData.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "env/jittypes.h"

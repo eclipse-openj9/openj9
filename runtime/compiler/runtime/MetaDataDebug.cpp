@@ -25,7 +25,7 @@
 #include "codegen/GCStackAtlas.hpp"
 #include "codegen/Instruction.hpp"
 #include "compile/Compilation.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "env/IO.hpp"
 #include "env/jittypes.h"
 #include "env/CompilerEnv.hpp"

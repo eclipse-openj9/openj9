@@ -24,7 +24,7 @@
 
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/Relocation.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/jittypes.h"
 #include "env/VMJ9.h"

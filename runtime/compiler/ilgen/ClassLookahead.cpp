@@ -23,7 +23,7 @@
 #include "ilgen/ClassLookahead.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "compile/Method.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "compiler/il/OMRTreeTop_inlines.hpp"
 #include "env/ClassTableCriticalSection.hpp"
 #include "env/IO.hpp"

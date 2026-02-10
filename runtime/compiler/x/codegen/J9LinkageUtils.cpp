@@ -37,7 +37,7 @@
 #include "env/VMJ9.h"
 #include "codegen/Machine.hpp"
 #include "x/codegen/IA32LinkageUtils.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/VMJ9.h"
 

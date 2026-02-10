@@ -39,7 +39,7 @@
 #include "codegen/RegisterPair.hpp"
 #include "codegen/Relocation.hpp"
 #include "compile/Compilation.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
