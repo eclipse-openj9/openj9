@@ -1954,13 +1954,13 @@ void TR_VectorAPIExpansion::visitNodeToTransformIL(TR::TreeTop *treeTop, TR::Nod
                       _nodeTable[nodeIndex]._canVectorize = true;
                       _nodeTable[nodeIndex]._elementType = operandElementType;
                       _nodeTable[nodeIndex]._vecLen = operandBitsLength;
-                      _nodeTable[nodeIndex]._objectType = operandObjectType;
+                      _nodeTable[nodeIndex]._objectType = Mask;
 
                       vectorizedOrScalarizedNode = true;
                       scalarized = false;
                       elementType = operandElementType;
                       bitsLength = operandBitsLength;
-                      objectType = operandObjectType;
+                      objectType = Mask;
 
                       logprintf(_trace, log, "Vectorized node %p based on operand %d\n", node, i);
 
