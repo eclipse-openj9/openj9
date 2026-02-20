@@ -592,8 +592,7 @@ J9::X86::CodeGenerator::reserveNTrampolines(int32_t numTrampolines)
 bool
 J9::X86::CodeGenerator::supportsNonHelper(TR::SymbolReferenceTable::CommonNonhelperSymbol symbol)
    {
-   if (symbol == TR::SymbolReferenceTable::jitDispatchJ9MethodSymbol
-       && self()->comp()->target().is64Bit())
+   if (symbol == TR::SymbolReferenceTable::jitDispatchJ9MethodSymbol)
       {
       return true;
       }
