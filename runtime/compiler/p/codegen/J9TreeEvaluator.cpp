@@ -10317,6 +10317,370 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
    return resultReg;
    }
 
+// duplicate from the static method in Z
+static TR::SymbolReference *getClassSymRefAndDepth(TR::Node *classNode,
+      TR::Compilation *comp, int32_t &classDepth)
+   {
+   classDepth = -1;
+   TR::SymbolReference *classSymRef = NULL;
+   const TR::ILOpCodes opcode = classNode->getOpCodeValue();
+   bool isClassNodeLoadAddr = opcode == TR::loadaddr;
+
+   // getting the symbol ref
+   if (isClassNodeLoadAddr)
+      {
+      classSymRef = classNode->getSymbolReference();
+      }
+   else if (opcode == TR::aloadi)
+      {
+      // recognizedCallTransformer adds another layer of aloadi
+      while (classNode->getOpCodeValue() == TR::aloadi && classNode->getFirstChild()->getOpCodeValue() == TR::aloadi)
+         {
+         classNode = classNode->getFirstChild();
+         }
+
+      if (classNode->getOpCodeValue() == TR::aloadi && classNode->getFirstChild()->getOpCodeValue() == TR::loadaddr)
+         {
+         classSymRef = classNode->getFirstChild()->getSymbolReference();
+         }
+      }
+
+   // the class node being <loadaddr> is an edge case - likely will not happen since we shouldn't see
+   // Class.isAssignableFrom on classes known at compile (javac) time, but still possible.
+   if (!isClassNodeLoadAddr && (classNode->getOpCodeValue() != TR::aloadi ||
+        classNode->getSymbolReference() != comp->getSymRefTab()->findJavaLangClassFromClassSymbolRef() ||
+        classNode->getFirstChild()->getOpCodeValue() != TR::loadaddr))
+      {
+      return classSymRef; // cannot find class depth
+      }
+
+   TR::Node *classRef = isClassNodeLoadAddr ? classNode : classNode->getFirstChild();
+   TR::SymbolReference *symRef = classRef->getOpCode().hasSymbolReference() ? classRef->getSymbolReference() : NULL;
+
+   if (symRef != NULL && !symRef->isUnresolved())
+      {
+      TR::StaticSymbol *classSym = symRef->getSymbol()->getStaticSymbol();
+      TR_OpaqueClassBlock *clazz = (classSym != NULL) ? (TR_OpaqueClassBlock *) classSym->getStaticAddress() : NULL;
+      if (clazz != NULL)
+         classDepth = static_cast<int32_t>(TR::Compiler->cls.classDepthOf(clazz));
+      }
+
+   return classSymRef;
+   }
+
+// jumps to trueLabel if toClass is the interface of fromClass, falseLabel otherwise
+static void genCheckAssignableFromInterfaceTest(TR::Node *node, TR::CodeGenerator *cg,
+                                                TR::Register *condReg,
+                                                TR::Register *fromClassReg,
+                                                TR::Register *toClassReg,
+                                                TR::LabelSymbol *trueLabel,
+                                                TR::LabelSymbol *falseLabel,
+                                                TR_PPCScratchRegisterManager *srm)
+   {
+   TR::Compilation *comp = cg->comp();
+
+   TR::LabelSymbol *linkedListLabel = generateLabelSymbol(cg);
+
+   TR::Register *iTableReg = srm->findOrCreateScratchRegister();
+   TR::Register *interfaceClassReg = srm->findOrCreateScratchRegister();
+
+   // First, check if the cached iTable matches.
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, iTableReg,
+         TR::MemoryReference::createWithDisplacement(cg, fromClassReg,
+               offsetof(J9Class, lastITable), TR::Compiler->om.sizeofReferenceAddress()));
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, interfaceClassReg,
+         TR::MemoryReference::createWithDisplacement(cg, iTableReg,
+               offsetof(J9ITable, interfaceClass), TR::Compiler->om.sizeofReferenceAddress()));
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::Op_cmpl, node, condReg, interfaceClassReg, toClassReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, trueLabel, condReg);
+
+   // Then, go through the linked list of iTables to find the one that matches.
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, iTableReg,
+         TR::MemoryReference::createWithDisplacement(cg, fromClassReg,
+               offsetof(J9Class, iTable), TR::Compiler->om.sizeofReferenceAddress()));
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, linkedListLabel);
+   // check null
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::Op_cmpi, node, condReg, iTableReg, 0);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, falseLabel, condReg);
+   // load the interface class candidate
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, interfaceClassReg,
+         TR::MemoryReference::createWithDisplacement(cg, iTableReg,
+               offsetof(J9ITable, interfaceClass), TR::Compiler->om.sizeofReferenceAddress()));
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::Op_cmpl, node, condReg, interfaceClassReg, toClassReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, trueLabel, condReg);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, iTableReg,
+         TR::MemoryReference::createWithDisplacement(cg, iTableReg,
+               offsetof(J9ITable, next), TR::Compiler->om.sizeofReferenceAddress()));
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, linkedListLabel);
+
+   srm->reclaimScratchRegister(iTableReg);
+   srm->reclaimScratchRegister(interfaceClassReg);
+   }
+
+// jumps to trueLabel if toClass is an array of objects that is the superclass of
+// fromClass's elements, falseLabel otherwise
+// in some cases it needs to go back to the startLabel after getting the component classes
+static void genCheckAssignableFromSuperArrayTest(TR::Node *node, TR::CodeGenerator *cg,
+                                                TR::Register *condReg,
+                                                TR::Register *fromClassReg,
+                                                TR::Register *toClassReg,
+                                                TR::LabelSymbol *startLabel,
+                                                TR::LabelSymbol *trueLabel,
+                                                TR::LabelSymbol *falseLabel,
+                                                TR_PPCScratchRegisterManager *srm)
+   {
+   TR::Compilation *comp = cg->comp();
+   TR::Register *temp1Reg = srm->findOrCreateScratchRegister();
+   TR::Register *temp2Reg = srm->findOrCreateScratchRegister();
+
+   TR::LabelSymbol *equalLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *retryLabel = generateLabelSymbol(cg);
+
+   // temp1 = toClass->arity
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, temp1Reg,
+         TR::MemoryReference::createWithDisplacement(cg, toClassReg,
+               offsetof(J9ArrayClass, arity), TR::Compiler->om.sizeofReferenceAddress()));
+   // temp2 = fromClass->arity
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, temp2Reg,
+         TR::MemoryReference::createWithDisplacement(cg, fromClassReg,
+               offsetof(J9ArrayClass, arity), TR::Compiler->om.sizeofReferenceAddress()));
+
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, condReg, temp2Reg, temp1Reg);
+   // fromClassArity < toClassArity
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, falseLabel, condReg);
+   // fromClassArity == toClassArity
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, equalLabel, condReg);
+   // fromClassArity > toClassArity
+   // In this case, we need to strip out the extra layers of '[' in the fromClass corresponding to
+   // the arity of the toClass.
+   // E.g. for [[a to be assignable from [[[b, a must be assignable from [b
+   generateSrc1Instruction(cg, TR::InstOpCode::mtctr, node, temp1Reg);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
+   // fromClass = fromClass->componentType
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, fromClassReg,
+         TR::MemoryReference::createWithDisplacement(cg, fromClassReg,
+               offsetof(J9ArrayClass, componentType), TR::Compiler->om.sizeofReferenceAddress()));
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bdnz, node, loopLabel, condReg);
+
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, retryLabel);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, equalLabel);
+   // fromClass = fromClass->leafComponentType
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, fromClassReg,
+         TR::MemoryReference::createWithDisplacement(cg, fromClassReg,
+               offsetof(J9ArrayClass, leafComponentType), TR::Compiler->om.sizeofReferenceAddress()));
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, retryLabel);
+   // toClass = toClass->leafComponentType
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, toClassReg,
+         TR::MemoryReference::createWithDisplacement(cg, toClassReg,
+               offsetof(J9ArrayClass, leafComponentType), TR::Compiler->om.sizeofReferenceAddress()));
+   // go back to start
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, startLabel);
+
+   srm->reclaimScratchRegister(temp1Reg);
+   srm->reclaimScratchRegister(temp2Reg);
+   }
+
+static TR::Register *inlineCheckAssignableFromEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Compilation *comp = cg->comp();
+
+   // original form: toClass.isAssignableFrom(fromClass)
+   TR::Node *fromClass = node->getFirstChild();
+   TR::Node *toClass = node->getSecondChild();
+
+   TR::Register *fromClassReg = cg->gprClobberEvaluate(fromClass);
+   TR::Register *toClassReg = cg->gprClobberEvaluate(toClass);
+
+   TR::Register *cacheReg = cg->allocateRegister();
+
+   TR::Register *condReg = cg->allocateRegister(TR_CCR);
+
+   TR::Register *resultReg = cg->allocateRegister();
+
+   TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *oolJumpLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
+
+   TR::LabelSymbol *failLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *successLabel = endLabel;
+
+   TR_PPCScratchRegisterManager *srm = cg->generateScratchRegisterManager();
+
+   // jump to the out of line code if inlined code cannot handle it
+   TR_PPCOutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory())
+      TR_PPCOutOfLineCodeSection(node, TR::icall, resultReg, oolJumpLabel, endLabel, cg);
+   cg->getPPCOutOfLineCodeSectionList().push_front(outlinedHelperCall);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, startLabel);
+   startLabel->setStartInternalControlFlow();
+
+   // Checking at compile time if possible.
+   int32_t toClassDepth = -1;
+   TR::SymbolReference *toClassSymRef = getClassSymRefAndDepth(toClass, comp, toClassDepth);
+   bool fastFail = false;
+   if (comp->getOption(TR_TraceCG))
+      {
+      traceMsg(comp, "%s: toClassSymRef is %s\n", node->getOpCode().getName(),
+            NULL == toClassSymRef ? "null" : "non-null");
+      if (toClassSymRef)
+         {
+         traceMsg(comp, "%s: toClass is %s, %s, %s\n", node->getOpCode().getName(),
+               toClassSymRef->isClassInterface(comp) ? "an interface" : "not an interface",
+               toClassSymRef->isClassAbstract(comp) ? "abstract" : "non-abstract");
+         }
+      }
+   TR::SymbolReference *fromClassSymRef = NULL;
+   if ((NULL != toClassSymRef) && !toClassSymRef->isClassInterface(comp))
+      {
+      int32_t fromClassDepth = -1;
+      fromClassSymRef = getClassSymRefAndDepth(fromClass, comp, fromClassDepth);
+      if (comp->getOption(TR_TraceCG))
+         {
+         traceMsg(comp, "%s: fromClassSymRef is %s\n", node->getOpCode().getName(),
+               NULL == fromClassSymRef ? "null" : "non-null");
+         if (fromClassSymRef)
+            {
+            traceMsg(comp, "%s: fromClass is %s, %s, %s\n", node->getOpCode().getName(),
+                  fromClassSymRef->isClassInterface(comp) ? "an interface" : "not an interface",
+                  fromClassSymRef->isClassAbstract(comp) ? "abstract" : "non-abstract");
+            }
+         }
+      if ((NULL != fromClassSymRef) && !fromClassSymRef->isClassInterface(comp))
+         {
+         if (comp->getOption(TR_TraceCG))
+            traceMsg(comp, "depths %d %d\n", toClassDepth, fromClassDepth);
+         if (toClassDepth > -1 && fromClassDepth > -1 && toClassDepth > fromClassDepth)
+            {
+            // fall into the failLabel
+            fastFail = true;
+            }
+         }
+      }
+
+   if (!fastFail) // generate the inline tests if we cannot figure it out on compile time
+      {
+      //generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 0x777); // eyecatcher
+      // default to success
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 1);
+
+      // equality test
+      generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmpl, node, condReg, fromClassReg, toClassReg);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, successLabel, condReg);
+
+      // castClassCache test
+      if ((NULL == toClassSymRef) || (!toClassSymRef->isClassAbstract(comp)))
+         {
+         generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, cacheReg,
+               TR::MemoryReference::createWithDisplacement(cg, fromClassReg,
+                     offsetof(J9Class, castClassCache), TR::Compiler->om.sizeofReferenceAddress()));
+         generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmpl, node, condReg, cacheReg, toClassReg);
+         generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, successLabel, condReg);
+         }
+
+      // superClass test
+      if ((NULL == toClassSymRef) || (!toClassSymRef->isClassInterface(comp)))
+         {
+         TR::LabelSymbol *notSuperLabel= generateLabelSymbol(cg);
+         genInstanceOfOrCheckCastSuperClassTest(node, condReg, fromClassReg, toClassReg,
+               toClassDepth, notSuperLabel, srm, cg);
+         generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, successLabel, condReg);
+         generateLabelInstruction(cg, TR::InstOpCode::label, node, notSuperLabel);
+         }
+
+      // interface test
+      if ((NULL == toClassSymRef) || (toClassSymRef->isClassInterface(comp)))
+         {
+         TR::LabelSymbol *notInterfaceLabel= generateLabelSymbol(cg);
+         if (NULL == toClassSymRef) // check for interface at run time if we have to
+            {
+            TR::Register *sReg = srm->findOrCreateScratchRegister();
+            generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, sReg,
+                  TR::MemoryReference::createWithDisplacement(cg, toClassReg, offsetof(J9Class, romClass),
+                        TR::Compiler->om.sizeofReferenceAddress()));
+            generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, sReg,
+                  TR::MemoryReference::createWithDisplacement(cg, sReg,
+                        offsetof(J9ROMClass, modifiers), 4));
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andis_r, node, sReg, sReg, J9AccInterface>>16);
+            // At this point cr0[eq] will be set if this is not an interface
+            generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, notInterfaceLabel, condReg);
+            srm->reclaimScratchRegister(sReg);
+            }
+         // Since we can confirm the toClass is an interface class, we can confidently jump to
+         // fail if this test failed.
+         genCheckAssignableFromInterfaceTest(node, cg, condReg, fromClassReg, toClassReg,
+               successLabel, failLabel, srm);
+         generateLabelInstruction(cg, TR::InstOpCode::label, node, notInterfaceLabel);
+         }
+
+      // super array test
+      // Both to and from classes must be arrays, we try to check them on compile time first,
+      // but fall back to runtime checks if needed.
+      // Since we know the classes are not equivalent from the previous test, nothing can be
+      // assignable to a primitive array; we similarly check on both compile and run time.
+      if (((NULL == toClassSymRef)
+               || (toClassSymRef->isClassArray(comp)
+                  // TODO: find a way to get whether the class is mixed on compile time
+                  && J9CLASS_IS_MIXED(((J9ArrayClass*) toClassSymRef->getSymbol()->getStaticSymbol()->getStaticAddress())->leafComponentType)))
+            && (NULL == fromClassSymRef || fromClassSymRef->isClassArray(comp)))
+         {
+         TR::LabelSymbol *notArrayLabel = generateLabelSymbol(cg);
+         if (NULL == toClassSymRef) {
+            genInstanceOfOrCheckCastObjectArrayTest(node, condReg, toClassReg, notArrayLabel,
+                  srm, cg);
+            // At this point cr0[eq] will be set if this is not a primitive array.
+            generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, failLabel, condReg);
+         }
+         if (NULL == fromClassSymRef) {
+            genInstanceOfOrCheckCastObjectArrayTest(node, condReg, fromClassReg, notArrayLabel,
+                  srm, cg);
+            // unlike toClass, the C helper didn't preclude a primitive array being the fromClass.
+         }
+
+         genCheckAssignableFromSuperArrayTest(node, cg, condReg, fromClassReg, toClassReg,
+               startLabel, successLabel, failLabel, srm);
+
+         generateLabelInstruction(cg, TR::InstOpCode::label, node, notArrayLabel);
+         }
+
+      // fallback to the helper
+      generateLabelInstruction(cg, TR::InstOpCode::b, node, oolJumpLabel);
+      }
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, failLabel);
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 0);
+
+   srm->stopUsingRegisters();
+   cg->stopUsingRegister(fromClassReg);
+   cg->stopUsingRegister(toClassReg);
+   cg->stopUsingRegister(cacheReg);
+
+   const short numReg = 4 + srm->numAvailableRegisters();
+   TR::RegisterDependencyConditions *dependencies =
+         new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0,
+               numReg, cg->trMemory());
+
+   srm->addScratchRegistersToDependencyList(dependencies);
+
+   dependencies->addPostCondition(fromClassReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(toClassReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(cacheReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(resultReg, TR::RealRegister::NoReg);
+
+   for (int i = 0; i < numReg; i++) {
+      dependencies->getPostConditions()->getRegisterDependency(i)->setExcludeGPR0();
+   }
+
+   generateDepLabelInstruction(cg, TR::InstOpCode::label, node, endLabel, dependencies);
+
+   endLabel->setEndInternalControlFlow();
+   node->setRegister(resultReg);
+   return resultReg;
+   }
+
 static TR::Register *inlineConcurrentLinkedQueueTMOffer(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = cg->comp();
@@ -14372,6 +14736,11 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
       }
    else if (OMR::CodeGeneratorConnector::inlineDirectCall(node, resultReg))
       {
+      return true;
+      }
+   else if (node->getSymbolReference()->getReferenceNumber() == TR_checkAssignable)
+      {
+      resultReg = inlineCheckAssignableFromEvaluator(node, cg);
       return true;
       }
    else if (methodSymbol)

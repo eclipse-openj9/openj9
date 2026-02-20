@@ -115,8 +115,9 @@ public:
 
    // See J9::CodeGenerator::guaranteesResolvedDirectDispatchForSVM
    bool guaranteesResolvedDirectDispatchForSVM() { return true; }
-   };
 
+   bool supportsInliningOfIsAssignableFrom() {return true;}
+   };
 }
 
 }
