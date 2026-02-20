@@ -119,6 +119,9 @@ public:
    bool suppressInliningOfRecognizedMethod(TR::RecognizedMethod method);
 
    bool callUsesHelperImplementation(TR::Symbol *sym);
+
+   // See J9::CodeGenerator::guaranteesResolvedDirectDispatchForSVM
+   bool guaranteesResolvedDirectDispatchForSVM() { return true; }
    };
 
 }
