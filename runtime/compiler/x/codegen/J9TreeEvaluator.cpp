@@ -15162,3 +15162,27 @@ TR::Register *J9::X86::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeG
    // counts of the children evaluated here and let this helper handle it.
    return TR::TreeEvaluator::writeBarrierEvaluator(node, cg);
    }
+
+void J9::X86::TreeEvaluator::setupProfiledGuardRelocation(TR::X86RegImmInstruction *cmpInstruction, TR::Node *node,
+    TR_ExternalRelocationTargetKind reloKind)
+{
+   // The following makes sure that the TR_ProfiledInlinedMethod relocation for this inlined site will be created
+   // later in TR::CodeGenerator::processRelocations()
+   TR::Compilation *comp = TR::comp();
+   TR_VirtualGuard *virtualGuard = comp->findVirtualGuardInfo(node);
+   TR_AOTGuardSite *site = comp->addAOTNOPSite();
+   site->setLocation(NULL);
+   site->setType(TR_ProfiledGuard);
+   site->setGuard(virtualGuard);
+   site->setNode(node);
+   site->setAconstNode(node->getSecondChild());
+
+   // If we've generated an instruction, then make sure it is marked to get the right kind of relocation
+   if (cmpInstruction) {
+      cmpInstruction->setReloKind(reloKind);
+      cmpInstruction->setNode(node->getSecondChild());
+   }
+
+   logprintf(comp->getOption(TR_TraceCG), comp->log(), "setupProfiledGuardRelocation: site %p type %d node %p\n", site,
+       site->getType(), node);
+}

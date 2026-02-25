@@ -177,6 +177,9 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *d2lEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    class CaseConversionManager;
    static TR::Register *stringCaseConversionHelper(TR::Node *node, TR::CodeGenerator *cg, CaseConversionManager& manager);
+  static void setupProfiledGuardRelocation(TR::X86RegImmInstruction *cmpInstruction, TR::Node *node,
+    TR_ExternalRelocationTargetKind reloKind);
+
 
    private:
    static TR::Register* performHeapLoadWithReadBarrier(TR::Node* node, TR::CodeGenerator* cg);
