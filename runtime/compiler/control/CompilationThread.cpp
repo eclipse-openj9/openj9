@@ -10232,11 +10232,11 @@ TR::CompilationInfoPerThreadBase::compile(
          // Put a metaData pointer into the Code Cache Header(s).
          //
          uint8_t *warmMethodHeader = compiler->cg()->getBinaryBufferStart() - sizeof(OMR::CodeCacheMethodHeader);
-         memcpy( warmMethodHeader + offsetof(OMR::CodeCacheMethodHeader, _metaData), &metaData, sizeof(metaData) );
+         reinterpret_cast<OMR::CodeCacheMethodHeader *>(warmMethodHeader)->_metaData = metaData;
          if ( metaData->startColdPC )
             {
             uint8_t *coldMethodHeader = reinterpret_cast<uint8_t *>(metaData->startColdPC) - sizeof(OMR::CodeCacheMethodHeader);
-            memcpy( coldMethodHeader + offsetof(OMR::CodeCacheMethodHeader, _metaData), &metaData, sizeof(metaData) );
+            reinterpret_cast<OMR::CodeCacheMethodHeader *>(coldMethodHeader)->_metaData = metaData;
             }
 
          // FAR: should we do postpone this copying until after CHTable commit?
