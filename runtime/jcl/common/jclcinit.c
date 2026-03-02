@@ -681,6 +681,7 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 			}
 			J9VMJAVALANGCLASS_SET_VMREF(vmThread, classObj, clazz);
 			clazz->classObject = classObj;
+			clazz->classFlags |= J9ClassNoEarlyInit;
 			lockObject = gcFuncs->J9AllocateObject(vmThread, lockClass, allocateFlags);
 			classObj = clazz->classObject;
 			if (lockObject == NULL) {
@@ -697,15 +698,17 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	 */
 	vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_CLASS_OBJECT_ASSIGNED;
 
-	if (!IS_RESTORE_RUN(vm)) {
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_RESTORE_RUN(vm)) {
+		vmFuncs->initializeBaseClasses(vm);
+	} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	{
 		if (0 != vmFuncs->internalCreateBaseTypePrimitiveAndArrayClasses(vmThread)) {
 			return 1;
 		}
-	} else {
-#if defined(J9VM_OPT_SNAPSHOTS)
-		vmFuncs->initializeBaseClasses(vm);
-#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	}
+
 	/* Initialize early since sendInitialize() uses this. */
 	if (initializeStaticMethod(vm, J9VMCONSTANTPOOL_JAVALANGJ9VMINTERNALS_INITIALIZATIONALREADYFAILED)) {
 		return 1;
@@ -720,7 +723,6 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	if ((NULL == stringClass) || (NULL != vmThread->currentException)) {
 		return 1;
 	}
-
 	/* Initialize the java.lang.String.compressionFlag static field early enough so that we have
 	 * access to it during the resolution of other classes in which Strings may need to be created
 	 * in StringTable.cpp
@@ -760,7 +762,14 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 			return 1;
 		}
 	}
-
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_RESTORE_RUN(vm)) {
+		clazz = vmFuncs->allClassesStartDo(&state, vm, vm->systemClassLoader);
+		do {
+			vmFuncs->initializeClass(vmThread, clazz);
+		} while (NULL != (clazz = vmFuncs->allClassesNextDo(&state)));
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_LOAD_AGENT_MODULE)
 		&& (NULL != vm->modulesPathEntry->extraInfo))
 	{

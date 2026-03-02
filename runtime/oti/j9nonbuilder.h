@@ -100,11 +100,14 @@
  * As soon as the class is fully loaded, the frozen flag is removed.
  */
 #define J9ClassIsFrozen 0x8000000
+
 /*
  * Indicates that when the class was initially loaded in the snapshot run,
  * it was loaded from defineClassCommon() in jcldefine.c.
  */
 #define J9ClassIsJCLDefineClass 0x10000000
+#define J9ClassInitClassInWarmLoad 0x20000000
+#define J9ClassNoEarlyInit 0x40000000
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 
