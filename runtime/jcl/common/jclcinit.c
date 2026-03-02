@@ -554,6 +554,9 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 			J9VMCONSTANTPOOL_JAVALANGTHREADFIELDHOLDER,
 			J9VMCONSTANTPOOL_JAVALANGBASEVIRTUALTHREAD,
 #endif /* JAVA_SPEC_VERSION >= 19 */
+#if defined(J9VM_OPT_SNAPSHOTS)
+			J9VMCONSTANTPOOL_JAVALANGBOOLEAN,
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	};
 
 	/* Determine java/lang/String.value signature before any required class is initialized */
@@ -740,7 +743,7 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	if (vmThread->currentException != NULL) {
 		return 1;
 	}
-
+	vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_RCP_LOAD_STATIC_REF;
 	/* Initialize java.lang.Class. */
 	vmFuncs->initializeClass(vmThread, classClass);
 	if (vmThread->currentException != NULL) {
