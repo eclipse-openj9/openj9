@@ -8814,12 +8814,15 @@ done:
 		j9object_t lhs = *(j9object_t*)(_sp + 1);
 		U_8 *profilingCursor = startProfilingRecord(REGISTER_ARGS, sizeof(U_8));
 		_sp += 2;
-		if(VM_ValueTypeHelpers::acmp(_currentThread, _objectAccessBarrier, lhs, rhs)) {
+		I_32 cmp = VM_ValueTypeHelpers::acmp(_currentThread, _objectAccessBarrier, lhs, rhs);
+		if (1 == cmp) {
 			_pc += *(I_16*)(_pc + 1);
 			if (NULL != profilingCursor) {
 				*profilingCursor = 1;
 			}
 			rc = GOTO_BRANCH_WITH_ASYNC_CHECK;
+		} else if (-1 == cmp) {
+			rc = THROW_NATIVE_OOM;
 		} else {
 			_pc += 3;
 			if (NULL != profilingCursor) {
@@ -8838,12 +8841,15 @@ done:
 		j9object_t lhs = *(j9object_t*)(_sp + 1);
 		U_8 *profilingCursor = startProfilingRecord(REGISTER_ARGS, sizeof(U_8));
 		_sp += 2;
-		if(!VM_ValueTypeHelpers::acmp(_currentThread, _objectAccessBarrier, lhs, rhs)) {
+		I_32 cmp = VM_ValueTypeHelpers::acmp(_currentThread, _objectAccessBarrier, lhs, rhs);
+		if (0 == cmp) {
 			_pc += *(I_16*)(_pc + 1);
 			if (NULL != profilingCursor) {
 				*profilingCursor = 1;
 			}
 			rc = GOTO_BRANCH_WITH_ASYNC_CHECK;
+		} else if (-1 == cmp) {
+			rc = THROW_NATIVE_OOM;
 		} else {
 			_pc += 3;
 			if (NULL != profilingCursor) {
@@ -10967,6 +10973,8 @@ public:
 			goto failedToAllocateMonitor; \
 		case THROW_HEAP_OOM: \
 			goto heapOOM; \
+		case THROW_NATIVE_OOM: \
+			goto nativeOOM; \
 		case THROW_NEGATIVE_ARRAY_SIZE: \
 			goto negativeArraySize; \
 		case THROW_NPE: \
@@ -11740,6 +11748,13 @@ heapOOM:
 	updateVMStruct(REGISTER_ARGS);
 	prepareForExceptionThrow(_currentThread);
 	setHeapOutOfMemoryError(_currentThread);
+	VMStructHasBeenUpdated(REGISTER_ARGS);
+	goto throwCurrentException;
+
+nativeOOM:
+	updateVMStruct(REGISTER_ARGS);
+	prepareForExceptionThrow(_currentThread);
+	setNativeOutOfMemoryError(_currentThread, J9NLS_VM_NATIVE_OOM);
 	VMStructHasBeenUpdated(REGISTER_ARGS);
 	goto throwCurrentException;
 

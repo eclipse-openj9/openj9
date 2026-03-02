@@ -74,8 +74,7 @@ calculateFlattenedFieldAddresses(J9VMThread *currentThread, J9Class *clazz)
 	}
 }
 
-
-BOOLEAN
+I_32
 valueTypeCapableAcmp(J9VMThread *currentThread, j9object_t lhs, j9object_t rhs)
 {
 	MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
