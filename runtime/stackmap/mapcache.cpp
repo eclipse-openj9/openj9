@@ -117,23 +117,26 @@ updateROMMethodInfoCache(J9JavaVM *vm, J9ClassLoader *classLoader, J9ROMMethodIn
 
 	omrthread_monitor_exit(mapCacheMutex);
 }
-
 static void
 getROMMethodInfoCommon(J9StackWalkState *walkState, J9ClassLoader *classLoader, J9ROMMethod *romMethod)
 {
-	J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
-	J9JavaVM *vm = walkState->javaVM;
-	J9Method *method = walkState->method;
-	J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
-	if (romMethodInfo->argCount <= (J9_ARGBITS_CACHE_SLOTS * 32)) {
-		j9localmap_ArgBitsForPC0(
-				romClass,
-				romMethod,
-				romMethodInfo->argbits);
-			romMethodInfo->flags |= J9MAPCACHE_ARGBITS_CACHED;
-	}
+        J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
+        J9JavaVM *vm = walkState->javaVM;
+        J9Method *method = walkState->method;
 
-	updateROMMethodInfoCache(vm, classLoader, romMethodInfo);
+        /* Only compute argbits if method has arguments */
+        if (romMethodInfo->argCount > 0) {
+                J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
+                if (romMethodInfo->argCount <= (J9_ARGBITS_CACHE_SLOTS * 32)) {
+                        j9localmap_ArgBitsForPC0(
+                                        romClass,
+                                        romMethod,
+                                        romMethodInfo->argbits);
+                         romMethodInfo->flags |= J9MAPCACHE_ARGBITS_CACHED;
+                }
+        }
+
+        updateROMMethodInfoCache(vm, classLoader, romMethodInfo);
 }
 
 static void
@@ -181,25 +184,42 @@ getROMMethodInfoForBytecodePCInternal(J9StackWalkState *walkState, J9ClassLoader
 
 	getROMMethodInfoCommon(walkState, classLoader, romMethod);
 }
-
+	
 void
 getROMMethodInfoForROMMethod(J9StackWalkState *walkState, J9ROMMethod *romMethod)
 {
-	J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
-	J9JavaVM *vm = walkState->javaVM;
-	J9Method *method = walkState->method;
-	J9ClassLoader *classLoader = J9_CLASS_FROM_METHOD(method)->classLoader;
-	void *key = (void *)romMethod;
+        J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
+        J9JavaVM *vm = walkState->javaVM;
+        J9Method *method = walkState->method;
 
-	if (checkROMMethodInfoCache(classLoader, key, romMethodInfo)) {
-		return;
-	}
+        /* Deconstruct UNTAGGED_METHOD_CP to handle NULL CP safely */
+        J9ConstantPool *cp = J9_CP_FROM_METHOD(method);
+        J9Class *clazz = (NULL == cp) ? NULL : J9_CLASS_FROM_CP(cp);
+        J9ClassLoader *classLoader;
 
-	memset(romMethodInfo, 0, sizeof(*romMethodInfo));
-	romMethodInfo->key = key;
-	initializeBasicROMMethodInfo(walkState, romMethod);
+        /* Handle NULL class (special frame markers or methods with NULL CP) */
+        if (NULL == clazz) {
+                /* Special frame -  use bootstrap loader */
+                classLoader = vm->systemClassLoader;
+        } else {
+                /* Normal method - get class loader from class */
+                classLoader = clazz->classLoader;
+        }
 
-	getROMMethodInfoCommon(walkState, classLoader, romMethod);
+        void *key = (void *)romMethod;
+
+        /* Check cache first */
+        if (checkROMMethodInfoCache(classLoader, key, romMethodInfo)) {
+                return;
+        }
+
+        /* Cache miss - initialize and compute */
+        memset(romMethodInfo, 0, sizeof(*romMethodInfo));
+        romMethodInfo->key = key;
+        initializeBasicROMMethodInfo(walkState, romMethod);
+
+        /* Compute argbits and update cache */
+        getROMMethodInfoCommon(walkState, classLoader, romMethod);
 }
 
 void
