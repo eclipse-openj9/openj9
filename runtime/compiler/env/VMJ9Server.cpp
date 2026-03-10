@@ -2445,6 +2445,21 @@ bool TR_J9ServerVM::isMethodHandleExpectedType(TR::Compilation *comp, TR::KnownO
     return std::get<0>(recv);
 }
 
+OMR::KnownObjectTable::Index TR_J9ServerVM::getConvertedMethodHandle(TR::Compilation *comp,
+    TR::KnownObjectTable::Index mhIndex, TR::KnownObjectTable::Index desiredTypeIndex)
+{
+    TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+    if (!knot)
+        return TR::KnownObjectTable::UNKNOWN;
+    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+    stream->write(JITServer::MessageType::VM_getConvertedMethodHandle, mhIndex, desiredTypeIndex);
+    auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t *>();
+
+    TR::KnownObjectTable::Index convertedMHIndex = std::get<0>(recv);
+    knot->updateKnownObjectTableAtServer(convertedMHIndex, std::get<1>(recv));
+    return convertedMHIndex;
+}
+
 bool TR_J9ServerVM::isLambdaFormGeneratedMethod(TR_OpaqueMethodBlock *method)
 {
     JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
