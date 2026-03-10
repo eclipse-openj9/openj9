@@ -156,7 +156,7 @@ public:
 
         Note that the discovery of the incompatibility is done in the first message
         that the client sends to the server. This function is actually called to
-        determine if we need to try the compatibilty check again. The idea is that
+        determine if we need to try the compatibility check again. The idea is that
         the incompatible server could be killed and another one (compatible) could be
         instantiated. If enough time has passed since the server was found to be
         incompatible, then the client should try again. "Enough time" is defined as a
@@ -188,7 +188,7 @@ private:
     static int _incompatibilityCount;
     static uint64_t _incompatibleStartTime; // Time when version incomptibility has been detected
     static const uint64_t
-        RETRY_COMPATIBILITY_INTERVAL_MS; // (ms) When we should perform again a version compatibilty check
+        RETRY_COMPATIBILITY_INTERVAL_MS; // (ms) When we should perform again a version compatibility check
     static const int INCOMPATIBILITY_COUNT_LIMIT;
 
     static SSL_CTX *_sslCtx;
