@@ -216,8 +216,8 @@ jitInfoSecondTryMatch:
 						lswRecord(walkState, LSW_TYPE_METHOD, walkState->method);
 						lswRecord(walkState, LSW_TYPE_JIT_FRAME_INFO, walkState);
 #endif
-						//initializeBasicROMMethodInfo(walkState, J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method));
-						getROMMethodInfoForBytecodeFrame(walkState);
+						J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method);
+						getROMMethodInfoForROMMethod(walkState, romMethod);
 
 						if ((rc = walkFrame(walkState)) != J9_STACKWALK_KEEP_ITERATING) {
 							return rc;
@@ -257,8 +257,8 @@ resumeWalkInline:
 #ifdef J9VM_INTERP_LINEAR_STACKWALK_TRACING
 		lswRecord(walkState, LSW_TYPE_JIT_FRAME_INFO, walkState);
 #endif	 
-		//initializeBasicROMMethodInfo(walkState, J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method));
-		getROMMethodInfoForBytecodeFrame(walkState);
+		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method);
+		getROMMethodInfoForROMMethod(walkState, romMethod);
 		if ((rc = walkFrame(walkState)) != J9_STACKWALK_KEEP_ITERATING) {
 			return rc;
 		}
@@ -2023,7 +2023,6 @@ jitWalkOSRFrame(J9StackWalkState *walkState, J9OSRFrame *osrFrame)
 	J9MonitorEnterRecord *enterRecord = osrFrame->monitorEnterRecords;
 	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 
-	//initializeBasicROMMethodInfo(walkState, romMethod);
 	getROMMethodInfoForOSRFrame(walkState, osrFrame);
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
