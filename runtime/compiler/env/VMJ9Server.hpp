@@ -319,6 +319,8 @@ public:
         TR::KnownObjectTable::Index mhIndex, const char *fieldName) override;
     virtual bool isMethodHandleExpectedType(TR::Compilation *comp, TR::KnownObjectTable::Index mhIndex,
         TR::KnownObjectTable::Index expectedTypeIndex) override;
+    virtual OMR::KnownObjectTable::Index getConvertedMethodHandle(TR::Compilation *comp,
+        TR::KnownObjectTable::Index mhIndex, TR::KnownObjectTable::Index desiredTypeIndex) override;
     virtual bool inSnapshotMode() override;
     virtual bool isSnapshotModeEnabled() override;
     virtual bool isPortableRestoreModeEnabled() override;

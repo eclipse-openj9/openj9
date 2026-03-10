@@ -192,6 +192,7 @@ enum MessageType : uint16_t {
     VM_getMemberNameMethodInfo,
     VM_getMemberNameFieldKnotIndexFromMethodHandleKnotIndex,
     VM_isMethodHandleExpectedType,
+    VM_getConvertedMethodHandle,
     VM_isStable,
     VM_delegatingMethodHandleTarget,
     VM_getVMTargetOffset,

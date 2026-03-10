@@ -1151,6 +1151,18 @@ public:
     virtual bool isMethodHandleExpectedType(TR::Compilation *comp, TR::KnownObjectTable::Index mhIndex,
         TR::KnownObjectTable::Index expectedTypeIndex);
 
+    /**
+     * \brief
+     *   Gets the KOI of the adapted MethodHandle
+     *
+     * \param comp the compilation object
+     * \param mhIndex known object index of the java/lang/invoke/MethodHandle object
+     * \param desiredTypeIndex known object index of  java/lang/invoke/MethodType object
+     * \return the KOI index of the adapted method handle, which will be UNKNOWN if the MethodTypes do not match
+     */
+    virtual OMR::KnownObjectTable::Index getConvertedMethodHandle(TR::Compilation *comp,
+        TR::KnownObjectTable::Index mhIndex, TR::KnownObjectTable::Index desiredTypeIndex);
+
     /*
      * \brief
      *    tell whether it's possible to dereference a field given the field symbol reference at compile time

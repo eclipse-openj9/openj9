@@ -4936,6 +4936,40 @@ bool TR_J9VMBase::isMethodHandleExpectedType(TR::Compilation *comp, TR::KnownObj
     return mtObject == etObject;
 }
 
+OMR::KnownObjectTable::Index TR_J9VMBase::getConvertedMethodHandle(TR::Compilation *comp,
+    TR::KnownObjectTable::Index mhIndex, TR::KnownObjectTable::Index desiredTypeIndex)
+{
+    /* Individual type compatibility checks on each type in the MT are not needed. Since we only fold
+     * when we have a populated cache, and a call to asType would make <desiredType> and the asType result's
+     * MT match, we only need to check for MT pointer equality.
+     */
+    TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+    if (!knot)
+        return TR::KnownObjectTable::UNKNOWN;
+
+    TR::VMAccessCriticalSection vmAccess(this);
+
+    /* We shouldn't need to check for anonymous classes or for same class loaders for the Hard Cache case.
+     * The java.lang.invoke infrastructure only sets this cache when it is safe to do so.
+     *
+     * If we find that the normal asTypeCache doesn't get many hits, we should look into adding SoftCache checks.
+     */
+    uintptr_t mhObject = knot->getPointer(mhIndex);
+    uintptr_t cachedMT = 0;
+    uintptr_t cachedMH = getReferenceField(mhObject, "asTypeCache", "Ljava/lang/invoke/MethodHandle;");
+    if (cachedMH != 0) {
+        cachedMT = getReferenceField(cachedMH, "type", "Ljava/lang/invoke/MethodType;");
+    }
+
+    uintptr_t desiredMTObject = knot->getPointer(desiredTypeIndex);
+    // there is only one MT instance per unique signature, so this check is valid
+    if (desiredMTObject == cachedMT) {
+        logprintf(comp->getOption(TR_TraceOptDetails), comp->log(), "(Hard) cache match\n");
+        return knot->getOrCreateIndex(cachedMH);
+    }
+    return TR::KnownObjectTable::UNKNOWN;
+}
+
 /**
  * \brief
  *    Check if two java/lang/String objects are equal. Equivalent to java/lang/String.equals.

@@ -1028,6 +1028,18 @@ static bool handleResponse(JITServer::MessageType response, JITServer::ClientStr
             client->write(response, result, knot->getPointerLocation(mhIndex),
                 knot->getPointerLocation(expectedTypeIndex));
         } break;
+        case MessageType::VM_getConvertedMethodHandle: {
+            auto recv = client->getRecvData<TR::KnownObjectTable::Index, TR::KnownObjectTable::Index>();
+            TR::KnownObjectTable::Index mhIndex = std::get<0>(recv);
+            TR::KnownObjectTable::Index desiredTypeIndex = std::get<1>(recv);
+
+            TR::KnownObjectTable::Index convertedMHIndex
+                = fe->getConvertedMethodHandle(comp, mhIndex, desiredTypeIndex);
+            uintptr_t *mhObj = NULL;
+            if (convertedMHIndex != TR::KnownObjectTable::UNKNOWN)
+                mhObj = knot->getPointerLocation(convertedMHIndex);
+            client->write(response, convertedMHIndex, mhObj);
+        } break;
         case MessageType::VM_getMethodHandleTableEntryIndex: {
             auto recv = client->getRecvData<TR::KnownObjectTable::Index, TR::KnownObjectTable::Index>();
             TR::KnownObjectTable::Index mhIndex
