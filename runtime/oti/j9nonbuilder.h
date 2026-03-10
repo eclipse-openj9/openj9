@@ -1232,24 +1232,24 @@ typedef struct J9CudaGlobals {
 	jmethodID runnable_run;
 } J9CudaGlobals;
 
-/* Cache slot sizes must all be multiples of 2 */
-#define J9_STACKMAP_CACHE_SLOTS 2
-#define J9_LOCALMAP_CACHE_SLOTS 2
-#define J9_ARGBITS_CACHE_SLOTS 2
+/* Cache slot sizes must all be multiples of 64 bits. */
+#define J9_STACKMAP_CACHE_BITS 64
+#define J9_LOCALMAP_CACHE_BITS 64
+#define J9_ARGBITS_CACHE_BITS 64
 
-/* Flag values for J9ROMMethodInfo */
+/* Flag values for J9ROMMethodInfo. */
 #define J9MAPCACHE_STACKMAP_CACHED 1
 #define J9MAPCACHE_LOCALMAP_CACHED 2
 #define J9MAPCACHE_ARGBITS_CACHED 4
 #define J9MAPCACHE_METHOD_IS_CONSTRUCTOR 8
 #define J9MAPCACHE_VALID 128
 
-/* J9ROMMethodInfo must be a multiple of 8 bytes in size */
+/* J9ROMMethodInfo must be a multiple of 8 bytes in size. */
 typedef struct J9ROMMethodInfo {
 	void *key;
-	U_32 stackmap[J9_STACKMAP_CACHE_SLOTS];
-	U_32 localmap[J9_ARGBITS_CACHE_SLOTS];
-	U_32 argbits[J9_ARGBITS_CACHE_SLOTS];
+	U_32 stackMap[J9_STACKMAP_CACHE_BITS / 32];
+	U_32 localMap[J9_LOCALMAP_CACHE_BITS / 32];
+	U_32 argBits[J9_ARGBITS_CACHE_BITS / 32];
 	U_32 modifiers;
 	U_16 tempCount;
 	U_8 argCount;
@@ -3883,7 +3883,7 @@ typedef struct J9ClassLoader {
 	UDATA initClassPathEntryCount;
 	UDATA asyncGetCallTraceUsed;
 	omrthread_monitor_t mapCacheMutex;
-	struct J9HashTable* romMethodInfoCache;
+	struct J9HashTable *romMethodInfoCache;
 #if defined(J9VM_OPT_JFR)
 	J9HashTable *typeIDs;
 #endif /* defined(J9VM_OPT_JFR) */
