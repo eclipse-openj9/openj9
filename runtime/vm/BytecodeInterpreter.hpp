@@ -3149,15 +3149,6 @@ done:
 		returnSingleFromINL(REGISTER_ARGS, (isValue ? 1 : 0), 1);
 		return EXECUTE_BYTECODE;
 	}
-
-	/* java.lang.J9VMInternals: positiveOnlyHashcodes() */
-	VMINLINE VM_BytecodeAction
-	inlPositiveOnlyHashcodes(REGISTER_ARGS_LIST)
-	{
-		bool positiveOnlyHashcodes = J9_ARE_ANY_BITS_SET(_vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_POSITIVE_HASHCODE);
-		returnSingleFromINL(REGISTER_ARGS, positiveOnlyHashcodes, 0);
-		return EXECUTE_BYTECODE;
-	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 #if (JAVA_SPEC_VERSION >= 20) || defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
@@ -3408,7 +3399,16 @@ done:
 		j9object_t obj = *(j9object_t*)_sp;
 		/* Caller has null-checked obj already */
 		_pc += 3;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		bool oomOccurred = false;
+		I_32 hashValue = VM_ObjectHash::inlineObjectHashCode(_vm, obj, &oomOccurred);
+		if (oomOccurred) {
+			return THROW_NATIVE_OOM;
+		}
+		*(I_32*)_sp = hashValue;
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		*(I_32*)_sp = VM_ObjectHash::inlineObjectHashCode(_vm, obj);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		return EXECUTE_BYTECODE;
 	}
 
@@ -10730,7 +10730,6 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_PRIMITIVE),
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_VALUE),
-		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_INTERNALS_POSITIVE_ONLY_HASHCODES),
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if (JAVA_SPEC_VERSION >= 20) || defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_CLASS_FILEVERSION),
@@ -10960,6 +10959,8 @@ public:
 			goto failedToAllocateMonitor; \
 		case THROW_HEAP_OOM: \
 			goto heapOOM; \
+		case THROW_NATIVE_OOM: \
+			goto nativeOOM; \
 		case THROW_NEGATIVE_ARRAY_SIZE: \
 			goto negativeArraySize; \
 		case THROW_NPE: \
@@ -11287,8 +11288,6 @@ runMethod: {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_VALUE):
 		PERFORM_ACTION(inlClassIsValue(REGISTER_ARGS));
-	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_INTERNALS_POSITIVE_ONLY_HASHCODES):
-		PERFORM_ACTION(inlPositiveOnlyHashcodes(REGISTER_ARGS));
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if (JAVA_SPEC_VERSION >= 20) || defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_CLASS_FILEVERSION):
@@ -11731,6 +11730,13 @@ heapOOM:
 	updateVMStruct(REGISTER_ARGS);
 	prepareForExceptionThrow(_currentThread);
 	setHeapOutOfMemoryError(_currentThread);
+	VMStructHasBeenUpdated(REGISTER_ARGS);
+	goto throwCurrentException;
+
+nativeOOM:
+	updateVMStruct(REGISTER_ARGS);
+	prepareForExceptionThrow(_currentThread);
+	setNativeOutOfMemoryError(_currentThread, J9NLS_VM_NATIVE_OOM);
 	VMStructHasBeenUpdated(REGISTER_ARGS);
 	goto throwCurrentException;
 

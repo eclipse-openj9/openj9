@@ -875,18 +875,40 @@ setClassLoadingConstraintError(J9VMThread * currentThread, J9ClassLoader * initi
 		J9UTF8 * initiatingLoaderClassNameUTF = J9ROMCLASS_CLASSNAME(initiatingLoaderClass->romClass);
 		U_16 initiatingLoaderClassNameLength = J9UTF8_LENGTH(initiatingLoaderClassNameUTF);
 		U_8 * initiatingLoaderClassName = J9UTF8_DATA(initiatingLoaderClassNameUTF);
-		I_32 initiatingLoaderHash = objectHashCode(currentThread->javaVM, initiatingLoaderObject);
+		I_32 initiatingLoaderHash = 0;
+
 		J9ClassLoader * definingLoader = existingClass->classLoader;
 		j9object_t definingLoaderObject = definingLoader->classLoaderObject;
 		J9Class * definingLoaderClass = J9OBJECT_CLAZZ(currentThread, definingLoaderObject);
 		J9UTF8 * definingLoaderClassNameUTF = J9ROMCLASS_CLASSNAME(definingLoaderClass->romClass);
 		U_16 definingLoaderClassNameLength = J9UTF8_LENGTH(definingLoaderClassNameUTF);
 		U_8 * definingLoaderClassName = J9UTF8_DATA(definingLoaderClassNameUTF);
-		I_32 definingLoaderHash = objectHashCode(currentThread->javaVM, definingLoaderObject);
+		I_32 definingLoaderHash = 0;
+
 		J9UTF8 * existingClassNameUTF = J9ROMCLASS_CLASSNAME(existingClass->romClass);
 		U_16 existingClassNameLength = J9UTF8_LENGTH(existingClassNameUTF);
 		U_8 * existingClassName = J9UTF8_DATA(existingClassNameUTF);
-		UDATA msgLen = j9str_printf(NULL, 0, nlsMessage,
+		UDATA msgLen = 0;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		jboolean oomOccurred = JNI_FALSE;
+		I_32 hashValue = 0;
+		hashValue = objectHashCode(currentThread->javaVM, initiatingLoaderObject, &oomOccurred);
+		if (oomOccurred) {
+			setNativeOutOfMemoryError(currentThread, 0, 0);
+			return;
+		}
+		initiatingLoaderHash = hashValue;
+		hashValue = objectHashCode(currentThread->javaVM, definingLoaderObject, &oomOccurred);
+		if (oomOccurred) {
+			setNativeOutOfMemoryError(currentThread, 0, 0);
+			return;
+		}
+		definingLoaderHash = hashValue;
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		initiatingLoaderHash = objectHashCode(currentThread->javaVM, initiatingLoaderObject);
+		definingLoaderHash = objectHashCode(currentThread->javaVM, definingLoaderObject);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		msgLen = j9str_printf(NULL, 0, nlsMessage,
 			initiatingLoaderClassNameLength, initiatingLoaderClassName, initiatingLoaderHash,
 			existingClassNameLength, existingClassName,
 			definingLoaderClassNameLength, definingLoaderClassName, definingLoaderHash);
@@ -915,7 +937,7 @@ setClassLoadingConstraintSignatureError(J9VMThread *currentThread, J9ClassLoader
 		J9UTF8 * loader1ClassNameUTF = J9ROMCLASS_CLASSNAME(loader1Class->romClass);
 		U_16 loader1ClassNameLength = J9UTF8_LENGTH(loader1ClassNameUTF);
 		U_8 * loader1ClassName = J9UTF8_DATA(loader1ClassNameUTF);
-		I_32 loader1Hash = objectHashCode(currentThread->javaVM, loader1Object);
+		I_32 loader1Hash = 0;
 
 		/* Loader2 name and length */
 		j9object_t loader2Object = loader2->classLoaderObject;
@@ -923,7 +945,7 @@ setClassLoadingConstraintSignatureError(J9VMThread *currentThread, J9ClassLoader
 		J9UTF8 * loader2ClassNameUTF = J9ROMCLASS_CLASSNAME(loader2Class->romClass);
 		U_16 loader2ClassNameLength = J9UTF8_LENGTH(loader2ClassNameUTF);
 		U_8 * loader2ClassName = J9UTF8_DATA(loader2ClassNameUTF);
-		I_32 loader2Hash = objectHashCode(currentThread->javaVM, loader2Object);
+		I_32 loader2Hash = 0;
 
 		/* Class1 name and length */
 		J9UTF8 * class1NameUTF = J9ROMCLASS_CLASSNAME(class1->romClass);
@@ -940,7 +962,27 @@ setClassLoadingConstraintSignatureError(J9VMThread *currentThread, J9ClassLoader
 		U_16 exceptionClassNameLength = J9UTF8_LENGTH(exceptionClassNameUTF);
 		U_8 * exceptionClassName = J9UTF8_DATA(exceptionClassNameUTF);
 
-		UDATA msgLen = j9str_printf(NULL, 0, nlsMessage,
+		UDATA msgLen = 0;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		jboolean oomOccurred = JNI_FALSE;
+		I_32 hashValue = 0;
+		hashValue = objectHashCode(currentThread->javaVM, loader1Object, &oomOccurred);
+		if (oomOccurred) {
+			setNativeOutOfMemoryError(currentThread, 0, 0);
+			return;
+		}
+		loader1Hash = hashValue;
+		hashValue = objectHashCode(currentThread->javaVM, loader2Object, &oomOccurred);
+		if (oomOccurred) {
+			setNativeOutOfMemoryError(currentThread, 0, 0);
+			return;
+		}
+		loader2Hash = hashValue;
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		loader1Hash = objectHashCode(currentThread->javaVM, loader1Object);
+		loader2Hash = objectHashCode(currentThread->javaVM, loader2Object);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		msgLen = j9str_printf(NULL, 0, nlsMessage,
 				exceptionClassNameLength, exceptionClassName,
 				methodNameLength, methodName,
 				signatureLength, signature,
@@ -978,7 +1020,7 @@ setClassLoadingConstraintOverrideError(J9VMThread *currentThread, J9UTF8 *newCla
 		J9UTF8 * loader1ClassNameUTF = J9ROMCLASS_CLASSNAME(loader1Class->romClass);
 		U_16 loader1ClassNameLength = J9UTF8_LENGTH(loader1ClassNameUTF);
 		U_8 * loader1ClassName = J9UTF8_DATA(loader1ClassNameUTF);
-		I_32 loader1Hash = objectHashCode(currentThread->javaVM, loader1Object);
+		I_32 loader1Hash = 0;
 
 		/* Loader2 name and length */
 		j9object_t loader2Object = loader2->classLoaderObject;
@@ -986,7 +1028,7 @@ setClassLoadingConstraintOverrideError(J9VMThread *currentThread, J9UTF8 *newCla
 		J9UTF8 * loader2ClassNameUTF = J9ROMCLASS_CLASSNAME(loader2Class->romClass);
 		U_16 loader2ClassNameLength = J9UTF8_LENGTH(loader2ClassNameUTF);
 		U_8 * loader2ClassName = J9UTF8_DATA(loader2ClassNameUTF);
-		I_32 loader2Hash = objectHashCode(currentThread->javaVM, loader2Object);
+		I_32 loader2Hash = 0;
 
 		/* Class1 name and length */
 		U_16 class1ClassNameLength = J9UTF8_LENGTH(class1NameUTF);
@@ -1004,7 +1046,27 @@ setClassLoadingConstraintOverrideError(J9VMThread *currentThread, J9UTF8 *newCla
 		U_16 newClassNameLength = J9UTF8_LENGTH(newClassNameUTF);
 		U_8 * newClassName = J9UTF8_DATA(newClassNameUTF);
 
-		UDATA msgLen = j9str_printf(NULL, 0, nlsMessage,
+		UDATA msgLen = 0;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		jboolean oomOccurred = JNI_FALSE;
+		I_32 hashValue = 0;
+		hashValue = objectHashCode(currentThread->javaVM, loader1Object, &oomOccurred);
+		if (oomOccurred) {
+			setNativeOutOfMemoryError(currentThread, 0, 0);
+			return;
+		}
+		loader1Hash = hashValue;
+		hashValue = objectHashCode(currentThread->javaVM, loader2Object, &oomOccurred);
+		if (oomOccurred) {
+			setNativeOutOfMemoryError(currentThread, 0, 0);
+			return;
+		}
+		loader2Hash = hashValue;
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		loader1Hash = objectHashCode(currentThread->javaVM, loader1Object);
+		loader2Hash = objectHashCode(currentThread->javaVM, loader2Object);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		msgLen = j9str_printf(NULL, 0, nlsMessage,
 				exceptionClassNameLength, exceptionClassName,
 				methodNameLength, methodName,
 				signatureLength, signature,

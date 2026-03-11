@@ -2617,8 +2617,7 @@ public class ValueTypeTests {
 		assertEquals(valueClass.descriptorString(), "LtestMethodTypeDescriptorValue;");
 	}
 
-	/* https://github.com/eclipse-openj9/openj9/issues/15768 */
-	@Test(priority=1, enabled = false)
+	@Test(priority=1)
 	static public void testValueClassHashCode() throws Throwable {
 		Object p1 = new ValueClassPoint2D(new ValueClassInt(1), new ValueClassInt(2));
 		Object p2 = new ValueClassPoint2D(new ValueClassInt(1), new ValueClassInt(2));
@@ -2652,8 +2651,7 @@ public class ValueTypeTests {
 		assertEquals(h5, h5_afterGC);
 	}
 
-	/* https://github.com/eclipse-openj9/openj9/issues/15768 */
-	@Test(priority=1, enabled = false)
+	@Test(priority=1)
 	static public void testValueTypeHashCodeWithNullRestrictedFields() throws Throwable {
 		Object p1 = new ValueTypePoint2D(new ValueTypeInt(1), new ValueTypeInt(2));
 		Object p2 = new ValueTypePoint2D(new ValueTypeInt(1), new ValueTypeInt(2));
@@ -2676,8 +2674,7 @@ public class ValueTypeTests {
 		assertEquals(h3, h3_afterGC);
 	}
 
-	/* https://github.com/eclipse-openj9/openj9/issues/15768 */
-	@Test(priority=1, enabled = false)
+	@Test(priority=1)
 	static public void testValueTypeHashCodeWithIdentityField() throws Throwable {
 		Object p1 = new ValueClassWithIdentityField(1);
 		Object p2 = new ValueClassWithIdentityField(1);
@@ -2700,8 +2697,7 @@ public class ValueTypeTests {
 		assertEquals(h3, h3_afterGC);
 	}
 
-	/* https://github.com/eclipse-openj9/openj9/issues/15768 */
-	@Test(priority=1, enabled = false)
+	@Test(priority=1)
 	static public void testValueTypeHashCodeWithNullReference() throws Throwable {
 		Object p1 = new ValueClassPoint2D(new ValueClassInt(1), null);
 		Object p2 = new ValueClassPoint2D(new ValueClassInt(1), null);
@@ -2719,8 +2715,7 @@ public class ValueTypeTests {
 		assertEquals(h2, h2_afterGC);
 	}
 
-	/* https://github.com/eclipse-openj9/openj9/issues/15768 */
-	@Test(priority=1, enabled = false)
+	@Test(priority=1)
 	static public void testValueTypeHashCodeWithSameIdentityField() throws Throwable {
 		Object p1 = new ValueClassSubArray(0, 5);
 		Object p2 = new ValueClassSubArray(1, 4);
@@ -2734,6 +2729,41 @@ public class ValueTypeTests {
 		int h2_afterGC = p2.hashCode();
 
 		assertNotEquals(h1, h2);
+		assertEquals(h1, h1_afterGC);
+		assertEquals(h2, h2_afterGC);
+	}
+
+	@Test(priority=1)
+	static public void testHashCodeOfEmptyValueClasses() throws Throwable {
+		Object p1 = new V1();
+		Object p2 = new V2();
+
+		int h1 = p1.hashCode();
+		int h2 = p2.hashCode();
+
+		System.gc();
+
+		int h1_afterGC = p1.hashCode();
+		int h2_afterGC = p2.hashCode();
+
+		assertEquals(h1, h1_afterGC);
+		assertEquals(h2, h2_afterGC);
+	}
+
+	/* Hash code of similar value objects with the same fields values is not equal. */
+	@Test(priority=1)
+	static public void testHashCodeOfSimilarValueClasses() throws Throwable {
+		Object p1 = new Point(0, 0);
+		Object p2 = new Velocity(0, 0);
+
+		int h1 = p1.hashCode();
+		int h2 = p2.hashCode();
+
+		System.gc();
+
+		int h1_afterGC = p1.hashCode();
+		int h2_afterGC = p2.hashCode();
+
 		assertEquals(h1, h1_afterGC);
 		assertEquals(h2, h2_afterGC);
 	}

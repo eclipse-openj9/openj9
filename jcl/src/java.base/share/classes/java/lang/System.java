@@ -1087,11 +1087,6 @@ public static int identityHashCode(Object anObject) {
 	if (anObject == null) {
 		return 0;
 	}
-/*[IF INLINE-TYPES]*/
-	if (anObject.getClass().isValue()) {
-		return J9VMInternals.valueHashCode(anObject);
-	}
-/*[ENDIF] INLINE-TYPES */
 	return J9VMInternals.fastIdentityHashCode(anObject);
 }
 

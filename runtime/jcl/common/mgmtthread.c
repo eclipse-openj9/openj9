@@ -2075,11 +2075,23 @@ saveObjectRefs(JNIEnv *env, ThreadInfo *info)
 		info->lockedMonitors.arr_safe = j9mem_allocate_memory(sizeof(MonitorInfo) * info->lockedMonitors.len, J9MEM_CATEGORY_VM_JCL);
 		if (info->lockedMonitors.arr_safe) {
 			for (i = 0; i < info->lockedMonitors.len; ++i) {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				jboolean oomOccurred = JNI_FALSE;
+				I_32 hashValue = 0;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				j9object_t object = info->lockedMonitors.arr_unsafe[i].object;
-
 				info->lockedMonitors.arr_safe[i].clazz =
 					vmfns->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS(J9OBJECT_CLAZZ((J9VMThread *)env, object)));
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				hashValue = objectHashCode(vm, object, &oomOccurred);
+				if (oomOccurred) {
+					exc = J9VMCONSTANTPOOL_JAVALANGOUTOFMEMORYERROR;
+					break;
+				}
+				info->lockedMonitors.arr_safe[i].identityHashCode = hashValue;
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				info->lockedMonitors.arr_safe[i].identityHashCode = objectHashCode(vm, object);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				info->lockedMonitors.arr_safe[i].count = info->lockedMonitors.arr_unsafe[i].count;
 				info->lockedMonitors.arr_safe[i].depth = info->lockedMonitors.arr_unsafe[i].depth;
 			}
