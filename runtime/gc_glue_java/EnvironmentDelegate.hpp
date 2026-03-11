@@ -198,7 +198,7 @@ public:
 
 		if (hashed && !moved) {
 			/* calculate this BEFORE we (potentially) destroy the object */
-			_gcEnv.movedObjectHashCodeCache.originalHashCode = computeObjectAddressToHash((J9JavaVM *)_extensions->getOmrVM()->_language_vm, objectPtr);
+			_gcEnv.movedObjectHashCodeCache.originalHashCode = objectModel->computeObjectAddressToHashForObject((J9JavaVM *)_extensions->getOmrVM()->_language_vm, objectPtr);
 		}
 
 #if defined(J9VM_ENV_DATA64)

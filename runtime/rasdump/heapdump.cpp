@@ -2315,7 +2315,13 @@ int BinaryHeapDumpWriter::getObjectHashCode(j9object_t object) {
 #else /* defined(J9VM_OPT_NEW_OBJECT_HASH) */
 	int hashCode = (object->flags & OBJECT_HEADER_HASH_MASK) >> 16;
 	if (hashCode == 0) {
+#if defined(J9VM_OPT_VALHALLA_VALUETYPES)
+		/* Do not compute hash code for value objects during heap dump
+		 * generation (it could trigger GC): Just return zero.
+		 */
+#else /* defined(J9VM_OPT_VALHALLA_VALUETYPES) */
 		objectHashCode(_VirtualMachine, object);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUETYPES) */
 		hashCode = (object->flags & OBJECT_HEADER_HASH_MASK) >> 16;
 	}
 #endif /* defined(J9VM_OPT_NEW_OBJECT_HASH) */
