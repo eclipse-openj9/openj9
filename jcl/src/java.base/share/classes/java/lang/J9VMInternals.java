@@ -68,11 +68,6 @@ final class J9VMInternals {
 	static boolean initialized;
 	private static Unsafe unsafe;
 
-	/*[IF INLINE-TYPES]*/
-	static boolean positiveOnlyHashcodes = positiveOnlyHashcodes();
-	static Method valueObjectHashCode;
-	/*[ENDIF] INLINE-TYPES */
-
 	/* Ensure this class cannot be instantiated */
 	private J9VMInternals() {
 	}
@@ -508,13 +503,21 @@ final class J9VMInternals {
 			int ptr = h.getIntFromObject(anObject, 0L);
 			if ((ptr & com.ibm.oti.vm.VM.OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS) != 0) {
 				int j9class = ptr & com.ibm.oti.vm.VM.J9_JAVA_CLASS_MASK;
-				return h.getIntFromObject(anObject, h.getBackfillOffsetFromJ9Class32(j9class));
+				int hashValue = h.getIntFromObject(anObject, h.getBackfillOffsetFromJ9Class32(j9class));
+				/* If the hash is 0, it may be a value object and the hash should be calculated. */
+				if (0 != hashValue) {
+					return hashValue;
+				}
 			}
 		} else {
 			long ptr = (com.ibm.oti.vm.VM.FJ9OBJECT_SIZE == 4) ? Integer.toUnsignedLong(h.getIntFromObject(anObject, 0L)) : h.getLongFromObject(anObject, 0L);
 			if ((ptr & com.ibm.oti.vm.VM.OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS) != 0) {
 				long j9class = ptr & com.ibm.oti.vm.VM.J9_JAVA_CLASS_MASK;
-				return h.getIntFromObject(anObject, h.getBackfillOffsetFromJ9Class64(j9class));
+				int hashValue = h.getIntFromObject(anObject, h.getBackfillOffsetFromJ9Class64(j9class));
+				/* If the hash is 0, it may be a value object and the hash should be calculated. */
+				if (0 != hashValue) {
+					return hashValue;
+				}
 			}
 		}
 		return identityHashCode(anObject);
@@ -534,56 +537,6 @@ final class J9VMInternals {
 	 * @see			java.lang.Object#hashCode
 	 */
 	static native int identityHashCode(Object anObject);
-
-	/*[IF INLINE-TYPES]*/
-	/**
-	 * Answers an integer hash code for the parameter.
-	 * The caller must ensure that the parameter is a value type.
-	 * The hash code returned is the same one that would
-	 * be returned by java.lang.Object.hashCode(), assuming
-	 * the object's class has not overridden hashCode() and
-	 * that the parameter is a value type.
-	 *
-	 * @param		anObject	the object
-	 * @return		the hash code for the object
-	 * @throws		InternalError if the object is not a value type
-	 *
-	 * @see			java.lang.Object#hashCode
-	 */
-	static int valueHashCode(Object anObject) {
-		int hashcode;
-
-		if (null == valueObjectHashCode) {
-			try {
-				Class<?> valueObjectMethods = Class.forName("java.lang.runtime.ValueObjectMethods");
-				valueObjectHashCode = valueObjectMethods.getDeclaredMethod("valueObjectHashCode", Object.class);
-				valueObjectHashCode.setAccessible(true);
-			} catch (ClassNotFoundException | NoSuchMethodException e) {
-				throw new InternalError(e);
-			}
-		}
-
-		try {
-			hashcode = (Integer)valueObjectHashCode.invoke(null, anObject);
-		} catch (IllegalAccessException | InvocationTargetException e) {
-			throw new InternalError(e);
-		}
-
-		if (positiveOnlyHashcodes) {
-			hashcode &= 0x7FFF_FFFF;
-		}
-
-		return hashcode;
-	}
-
-	/**
-	 * Returns true if hash codes are positive only,
-	 * false otherwise.
-	 *
-	 * @return		A boolean indicating whether hash codes are all positive
-	 */
-	static native boolean positiveOnlyHashcodes();
-	/*[ENDIF] INLINE-TYPES */
 
 	/**
 	 * Primitive implementation of Object.clone().

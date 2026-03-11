@@ -358,9 +358,57 @@ public:
 		return result;
 	}
 
+	MMINLINE int32_t
+	internalConvertObjectToHash(J9JavaVM *vm, j9object_t object)
+	{
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		J9Class *clazz = J9OBJECT_CLAZZ_VM(vm, object);
+		J9VMThread *currentThread = vm->internalVMFunctions->currentVMThread(vm);
+		return convertObjectToHash(vm, currentThread, object, clazz);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		return convertValueToHash(vm, (uintptr_t)object);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	}
+
+	MMINLINE int32_t
+	convertValueToHashForObject(J9JavaVM *vm, j9object_t object)
+	{
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		J9Class *clazz = J9OBJECT_CLAZZ_VM(vm, object);
+		if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
+			return 0;
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		return convertValueToHash(vm, (uintptr_t)object);
+	}
+
+	MMINLINE int32_t
+	computeObjectAddressToHashForObject(J9JavaVM *vm, j9object_t object)
+	{
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		J9Class *clazz = J9OBJECT_CLAZZ_VM(vm, object);
+		if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
+			return 0;
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		return computeObjectAddressToHash(vm, object);
+	}
+
+	MMINLINE int32_t
+	convertValueToHashForObject(J9JavaVM *vm, uintptr_t value, J9Class *clazz)
+	{
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
+			return 0;
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		return convertValueToHash(vm, value);
+	}
+
 	/**
 	 * Determine the basic hash code for the specified object. This may modify the object. For example, it may
 	 * set the HAS_BEEN_HASHED bit in the object's header. Object must not be NULL.
+	 * Hash code for valuetypes is not calculated during GC as objects may be moved.
 	 *
 	 * @param object[in] the object to be hashed
 	 * @return the persistent, basic hash code for the object
@@ -372,13 +420,18 @@ public:
 #if defined (OMR_GC_MODRON_COMPACTION) || defined (J9VM_GC_GENERATIONAL)
 		if (hasBeenMoved(object)) {
 			uintptr_t hashOffset = getHashcodeOffset(object);
-			result = *(int32_t*)((uint8_t*)object + hashOffset);
+			int32_t *hashCodePointer = (int32_t *)((uint8_t *)object + hashOffset);
+			result = *hashCodePointer;
+			if (0 == result) {
+				result = internalConvertObjectToHash(vm, object);
+				*hashCodePointer = result;
+			}
 		} else {
 			atomicSetObjectFlags(object, 0, OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS);
-			result = convertValueToHash(vm, (uintptr_t)object);
+			result = internalConvertObjectToHash(vm, object);
 		}
 #else /* defined (OMR_GC_MODRON_COMPACTION) || defined (J9VM_GC_GENERATIONAL) */
-		result = computeObjectAddressToHash(vm, object);
+		result = internalConvertObjectToHash(vm, object);
 #endif /* defined (OMR_GC_MODRON_COMPACTION) || defined (J9VM_GC_GENERATIONAL) */
 		return result;
 	}
@@ -395,9 +448,8 @@ public:
 	{
 #if defined (OMR_GC_MODRON_COMPACTION) || defined (J9VM_GC_GENERATIONAL)
 		uintptr_t hashOffset = getHashcodeOffset(objectPtr);
-		uint32_t *hashCodePointer = (uint32_t*)((uint8_t*)objectPtr + hashOffset);
-
-		*hashCodePointer = convertValueToHash(vm, (uintptr_t)objectPtr);
+		int32_t *hashCodePointer = (int32_t *)((uint8_t *)objectPtr + hashOffset);
+		*hashCodePointer = internalConvertObjectToHash(vm, objectPtr);
 		setObjectHasBeenMoved(objectPtr);
 #endif /* defined (OMR_GC_MODRON_COMPACTION) || defined (J9VM_GC_GENERATIONAL) */
 	}
@@ -493,7 +545,8 @@ public:
 	MMINLINE int32_t
 	computeObjectHash(MM_ForwardedHeader *forwardedHeader)
 	{
-		return convertValueToHash(_javaVM, (uintptr_t)forwardedHeader->getObject());
+		J9Class *clazz = getPreservedClass(forwardedHeader);
+		return convertValueToHashForObject(_javaVM, (uintptr_t)forwardedHeader->getObject(), clazz);
 	}
 
 	MMINLINE uintptr_t
@@ -566,6 +619,7 @@ public:
 	/**
 	 * This will install the correct (i.e. unforwarded) class pointer, update the hashed/moved
 	 * flags and install the hash code if the object has been hashed but not previously moved.
+	 * Store 0 for valuetypes. Actual hash code will be computed by the VM when requested.
 	 *
 	 * @param[in] forwardedHeader pointer to the MM_ForwardedHeader instance encapsulating the object
 	 * @param[in] destinationObjectPtr pointer to the copied object to be fixed up
@@ -591,7 +645,7 @@ public:
 			}
 		} else if (hasBeenHashed(getPreservedFlags(forwardedHeader))) {
 			/* The object has been hashed and has not been moved so we must store the previous address into the hashcode slot at hashcode offset. */
-			uintptr_t hashOffset;
+			uintptr_t hashOffset = 0;
 			J9Class *clazz = getPreservedClass(forwardedHeader);
 			if (isIndexable(clazz)) {
 				hashOffset = _indexableObjectModel->getPreservedHashcodeOffset(forwardedHeader);
@@ -599,8 +653,8 @@ public:
 				hashOffset = _mixedObjectModel->getHashcodeOffset(clazz);
 			}
 
-			uint32_t *hashCodePointer = (uint32_t*)((uint8_t*) destinationObjectPtr + hashOffset);
-			*hashCodePointer = convertValueToHash(_javaVM, (uintptr_t)forwardedHeader->getObject());
+			int32_t *hashCodePointer = (int32_t *)((uint8_t *)destinationObjectPtr + hashOffset);
+			*hashCodePointer = convertValueToHashForObject(_javaVM, (uintptr_t)forwardedHeader->getObject(), clazz);
 			setObjectJustHasBeenMoved(destinationObjectPtr);
 		}
 	}

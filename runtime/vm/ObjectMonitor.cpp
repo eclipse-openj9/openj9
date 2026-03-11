@@ -339,7 +339,7 @@ objectMonitorEnterNonBlocking(J9VMThread *currentThread, j9object_t object)
 {
 	UDATA result = (UDATA)object;
 	J9JavaVM *vm = currentThread->javaVM;
-	j9objectmonitor_t volatile *lwEA = VM_ObjectMonitor::inlineGetLockAddress(currentThread, object);
+	j9objectmonitor_t volatile *lwEA = NULL;
 #if JAVA_SPEC_VERSION >= 16
 	J9Class * objClass = J9OBJECT_CLAZZ(currentThread, object);
 #endif /* JAVA_SPEC_VERSION >= 16 */
@@ -353,6 +353,7 @@ objectMonitorEnterNonBlocking(J9VMThread *currentThread, j9object_t object)
 		goto done;
 	}
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+	lwEA = VM_ObjectMonitor::inlineGetLockAddress(currentThread, object);
 #if JAVA_SPEC_VERSION >= 16
 	if (J9_IS_J9CLASS_VALUEBASED(objClass)) {
 		U_32 runtimeFlags2 = vm->extendedRuntimeFlags2;

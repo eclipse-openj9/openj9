@@ -134,11 +134,6 @@ public final native Class<? extends Object> getClass();
  * @see	#equals
  */
 public int hashCode() {
-	/*[IF INLINE-TYPES]*/
-	if (this.getClass().isValue()) {
-		return J9VMInternals.valueHashCode(this);
-	}
-	/*[ENDIF] INLINE-TYPES */
 	return J9VMInternals.fastIdentityHashCode(this);
 }
 

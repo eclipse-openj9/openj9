@@ -50,7 +50,16 @@ Fast_java_lang_J9VMInternals_getSuperclass(J9VMThread *currentThread, j9object_t
 jint JNICALL
 Fast_java_lang_J9VMInternals_identityHashCode(J9VMThread *currentThread, j9object_t objectPointer)
 {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	bool oomOccurred = false;
+	I_32 hashValue = VM_ObjectHash::inlineObjectHashCode(currentThread->javaVM, objectPointer, &oomOccurred);
+	if (oomOccurred) {
+		setNativeOutOfMemoryError(currentThread, 0, 0);
+	}
+	return hashValue;
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	return VM_ObjectHash::inlineObjectHashCode(currentThread->javaVM, objectPointer);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 }
 
 /* java.lang.J9VMInternals: static native Object primitiveClone(Object anObject) throws CloneNotSupportedException; */

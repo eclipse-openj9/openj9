@@ -61,7 +61,14 @@ hashMonitorHash(void *key, void *userData)
 	if (0 == hash) {
 		J9ThreadAbstractMonitor *monitor = (J9ThreadAbstractMonitor *) (((J9ObjectMonitor *) key)->monitor);
 		j9object_t object = (j9object_t)monitor->userData;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		J9Class *clazz = J9OBJECT_CLAZZ_VM(javaVM, object);
+		/* Value objects cannot be used as monitors as they don't have an identity. */
+		Assert_VM_false(J9_IS_J9CLASS_VALUETYPE(clazz));
+		hash = (UDATA)(U_32)objectHashCode(javaVM, object, NULL);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		hash = (UDATA)(U_32)objectHashCode(javaVM, object);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		((J9ObjectMonitor *) key)->hash = (U_32)hash;
 	}
 
@@ -268,7 +275,14 @@ monitorTableAt(J9VMThread* vmStruct, j9object_t object)
 	/* Create a "fake" monitor just to probe the hash-table */
 	key_monitor.userData = (UDATA) object;
 	key_objectMonitor.monitor = (omrthread_monitor_t) &key_monitor;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	J9Class *clazz = J9OBJECT_CLAZZ_VM(vm, object);
+	/* Value objects cannot be used as monitors as they don't have an identity. */
+	Assert_VM_false(J9_IS_J9CLASS_VALUETYPE(clazz));
+	key_objectMonitor.hash = objectHashCode(vm, object, NULL);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	key_objectMonitor.hash = objectHashCode(vm, object);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	index = key_objectMonitor.hash % (U_32)vm->monitorTableCount;
 	monitorTable = vm->monitorTables[index];
 

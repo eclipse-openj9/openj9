@@ -45,6 +45,94 @@ class VM_ObjectHash
  * Data members
  */
 private:
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	struct ValueTypeHashQueueEntry {
+		j9object_t objectPointer;
+		J9Class *clazz;
+		UDATA startOffset;
+	};
+
+	struct ValueTypeHashQueue {
+		J9JavaVM * const vm;
+		ValueTypeHashQueueEntry *entries;
+		UDATA capacity;
+		UDATA head;
+		UDATA tail;
+		ValueTypeHashQueueEntry space[128];
+
+		ValueTypeHashQueue(J9JavaVM *vm)
+			: vm(vm)
+			, entries(space)
+			, capacity(sizeof(space) / sizeof(space[0]))
+			, head(0)
+			, tail(0)
+		{
+		}
+
+		~ValueTypeHashQueue()
+		{
+			PORT_ACCESS_FROM_JAVAVM(vm);
+			if (space != entries) {
+				j9mem_free_memory(entries);
+			}
+		}
+
+		/**
+		 * Append an entry to this queue.
+		 *
+		 * Handles transition from internal space to heap space on overflow.
+		 *
+		 * @param objectPointer  a pointer to an object to be queued
+		 * @param clazz          the class of that object
+		 * @param startOffset    the starting offset in that object
+		 * @return true if successful, false if additional space could not be allocated
+		 */
+		VMINLINE bool
+		append(j9object_t objectPointer, J9Class *clazz, UDATA startOffset)
+		{
+			if (tail >= capacity) {
+				PORT_ACCESS_FROM_JAVAVM(vm);
+				UDATA newCapacity = capacity * 2;
+				ValueTypeHashQueueEntry *newEntries = (ValueTypeHashQueueEntry *)j9mem_allocate_memory(newCapacity * sizeof(ValueTypeHashQueueEntry), OMRMEM_CATEGORY_VM);
+				if (NULL == newEntries) {
+					return false;
+				}
+				UDATA size = tail - head;
+				memcpy(newEntries, &entries[head], size * sizeof(ValueTypeHashQueueEntry));
+				if (space != entries) {
+					j9mem_free_memory(entries);
+				}
+				entries = newEntries;
+				capacity = newCapacity;
+				tail = size;
+				head = 0;
+			}
+
+			entries[tail].objectPointer = objectPointer;
+			entries[tail].clazz = clazz;
+			entries[tail].startOffset = startOffset;
+			tail += 1;
+			return true;
+		}
+
+		/**
+		 * Copy the entry at the head of this queue.
+		 *
+		 * @param entry a pointer to space to receive the entry
+		 * @return true if the queue was not empty
+		 */
+		VMINLINE bool
+		remove(ValueTypeHashQueueEntry *entry)
+		{
+			if (head < tail) {
+				*entry = entries[head];
+				head += 1;
+				return true;
+			}
+			return false;
+		}
+	};
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 protected:
 public:
 
@@ -68,13 +156,22 @@ private:
 	}
 
 	static VMINLINE U_32
-	getSalt(J9JavaVM *vm, UDATA objectPointer)
+	getSalt(J9JavaVM *vm, UDATA objectPointer
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			, bool isValueType = false
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	)
 	{
 		/* set up the default salt */
 		U_32 salt = 1421595292 ^ (U_32) (UDATA) vm;
 
 		J9IdentityHashData *hashData = vm->identityHashData;
 		UDATA saltPolicy = hashData->hashSaltPolicy;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (isValueType) {
+			saltPolicy = J9_IDENTITY_HASH_SALT_POLICY_NONE;
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		switch(saltPolicy) {
 		case J9_IDENTITY_HASH_SALT_POLICY_STANDARD:
 			/* Gencon/optavgpause/optthruput use the default salt for non heap and
@@ -147,9 +244,229 @@ private:
 		hashValue += ADD1;
 		return hashValue;
 	}
+
+	/**
+	 * Finalize a MurmurHash3 hash value.
+	 *
+	 * @param hashValue the hash value
+	 * @param numBytesHashed the number of bytes hashed
+	 * @return finalized hash value
+	 */
+	static VMINLINE U_32
+	finalizeMurmur3Hash(U_32 hashValue, U_32 numBytesHashed)
+	{
+		const U_32 MUL1 = 0x85ebca6b;
+		const U_32 MUL2 = 0xc2b2ae35;
+
+		hashValue ^= numBytesHashed;
+		hashValue ^= hashValue >> 16;
+		hashValue *= MUL1;
+		hashValue ^= hashValue >> 13;
+		hashValue *= MUL2;
+		hashValue ^= hashValue >> 16;
+
+		return hashValue;
+	}
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	/**
+	 * Calculate hashcode for valuetypes by hashing all its fields iteratively.
+	 * Use inlineConvertValueToHash for reference fields.
+	 * Use a queue to iterate through the fields of a valuetype.
+	 *
+	 * @param vm                a java VM
+	 * @param objectPointer     a valid valuetype object
+	 * @param clazz             class of the valuetye object
+	 * @param startOffset       offset to start reading fields from
+	 * @param[out] oomOccurred  true if an OOM occurred during hash computation
+	 * @return the calculated hash code or 0 if an OOM occurred
+	 */
+	static I_32
+	convertValueObjectAtOffsetToHash(J9JavaVM *vm, J9VMThread *currentThread, j9object_t objectPointer, J9Class *clazz, UDATA startOffset, bool *oomOccurred)
+	{
+		MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
+		I_32 hashValue = getSalt(vm, (UDATA)objectPointer, true);
+		U_32 numBytesHashed = 0;
+		ValueTypeHashQueue queue(vm);
+		ValueTypeHashQueueEntry entry = {objectPointer, clazz, startOffset};
+		bool oom = false;
+
+		hashValue = mix(hashValue, (U_32)(UDATA)clazz);
+		numBytesHashed = sizeof(UDATA);
+
+		while (true) {
+			J9ROMFieldOffsetWalkState state;
+			J9ROMFieldOffsetWalkResult *result = vm->internalVMFunctions->fieldOffsetsStartDo(
+					vm, entry.clazz->romClass, VM_VMHelpers::getSuperclass(entry.clazz), &state,
+					J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE, entry.clazz->flattenedClassCache);
+			while (NULL != result->field) {
+				UDATA fieldOffset = entry.startOffset + result->offset;
+				J9UTF8 *signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(&result->field->nameAndSignature);
+				U_8 *sigChar = J9UTF8_DATA(signature);
+				switch (*sigChar) {
+				case 'Z': /* boolean */
+				case 'B': /* byte */
+				case 'C': /* char */
+				case 'I': /* int */
+				case 'F': /* float */
+				case 'S': /* short */ {
+					U_32 datum = objectAccessBarrier.inlineMixedObjectReadU32(currentThread, entry.objectPointer, fieldOffset);
+					hashValue = mix(hashValue, datum);
+					numBytesHashed += 4;
+					break;
+				}
+
+				case 'J': /* long */
+				case 'D': /* double */ {
+					U_64 datum = objectAccessBarrier.inlineMixedObjectReadU64(currentThread, entry.objectPointer, fieldOffset);
+					hashValue = mix(hashValue, (U_32)(datum & 0xffffffff));
+					hashValue = mix(hashValue, (U_32)(datum >> 32));
+					numBytesHashed += 8;
+					break;
+				}
+
+				case '[':
+				case 'L': {
+					U_32 datum = 0;
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+					if (J9ROMFIELD_IS_NULL_RESTRICTED(result->field)) {
+						if (vm->internalVMFunctions->isFlattenableFieldFlattened(entry.clazz, result->field)) {
+							/* Null-restricted flattened field. */
+							J9Class *flatClazz = vm->internalVMFunctions->getFlattenableFieldType(entry.clazz, result->field);
+							if (!queue.append(entry.objectPointer, flatClazz, fieldOffset)) {
+								hashValue = 0;
+								oom = true;
+								goto done;
+							}
+						} else {
+							/* Null-restricted non-flattened field. */
+							j9object_t fieldObject = objectAccessBarrier.inlineMixedObjectReadObject(currentThread, entry.objectPointer, fieldOffset);
+							if (NULL != fieldObject) {
+								J9Class *fieldClazz = J9OBJECT_CLAZZ(currentThread, fieldObject);
+								UDATA flags = J9OBJECT_FLAGS_FROM_CLAZZ(currentThread, fieldObject);
+								bool addToQueue = true;
+								if (J9_ARE_ANY_BITS_SET(flags, OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS)) {
+									UDATA hashSlotOffset = fieldClazz->backfillOffset;
+									I_32 storedHash = objectAccessBarrier.inlineMixedObjectReadI32(currentThread, fieldObject, hashSlotOffset);
+									if (0 != storedHash) {
+										datum = (U_32)storedHash;
+										hashValue = mix(hashValue, datum);
+										numBytesHashed += 4;
+										addToQueue = false;
+									}
+								}
+								if (addToQueue) {
+									if (!queue.append(fieldObject, fieldClazz, J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread))) {
+										hashValue = 0;
+										oom = true;
+										goto done;
+									}
+								}
+							}
+						}
+					} else
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+					{
+						j9object_t fieldObject = objectAccessBarrier.inlineMixedObjectReadObject(currentThread, entry.objectPointer, fieldOffset);
+						if (NULL != fieldObject) {
+							J9Class *fieldClazz = J9OBJECT_CLAZZ(currentThread, fieldObject);
+							UDATA flags = J9OBJECT_FLAGS_FROM_CLAZZ(currentThread, fieldObject);
+							if (J9_ARE_ANY_BITS_SET(flags, OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS)) {
+								bool addToQueue = true;
+								I_32 storedHash = 0;
+								if (J9CLASS_IS_ARRAY(fieldClazz)) {
+									if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+										storedHash = inlineIndexableObjectHashCodeCompressed(vm, fieldObject, fieldClazz);
+									} else {
+										storedHash = inlineIndexableObjectHashCodeFull(vm, fieldObject, fieldClazz);
+									}
+								} else {
+									UDATA hashSlotOffset = fieldClazz->backfillOffset;
+									storedHash = objectAccessBarrier.inlineMixedObjectReadI32(currentThread, fieldObject, hashSlotOffset);
+								}
+								if (0 != storedHash) {
+									datum = (U_32)storedHash;
+									hashValue = mix(hashValue, datum);
+									numBytesHashed += 4;
+									addToQueue = false;
+								}
+								if (addToQueue) {
+									if (!queue.append(fieldObject, fieldClazz, J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread))) {
+										hashValue = 0;
+										oom = true;
+										goto done;
+									}
+								}
+							} else if (J9_IS_J9CLASS_VALUETYPE(fieldClazz)) {
+								if (!queue.append(fieldObject, fieldClazz, J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread))) {
+									hashValue = 0;
+									oom = true;
+									goto done;
+								}
+							} else {
+								datum = (U_32)inlineObjectHashCode(vm, fieldObject, oomOccurred);
+								if (*oomOccurred) {
+									hashValue = 0;
+									oom = true;
+									goto done;
+								}
+								hashValue = mix(hashValue, datum);
+								numBytesHashed += 4;
+							}
+						}
+					}
+					break;
+				}
+				default:
+					/* Invalid field signature. Should assert but we are in util. */
+					break;
+				}
+				result = vm->internalVMFunctions->fieldOffsetsNextDo(&state);
+			}
+			if (!queue.remove(&entry)) {
+				break;
+			}
+		}
+
+		hashValue = finalizeMurmur3Hash(hashValue, numBytesHashed);
+		/* Hash code for value types should not be zero. */
+		if (0 == hashValue) {
+			hashValue = 1;
+		}
+done:
+		if (oom) {
+			*oomOccurred = oom;
+		}
+		return hashValue;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 protected:
 
 public:
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	/**
+	 * Convert object to hash, handling both regular objects and ValueTypes.
+	 *
+	 * @param vm               a java VM
+	 * @param currentThread    the current VM Thread
+	 * @param objectPointer    a valid valuetype object
+	 * @param[out] oomOccurred true if an OOM occurred
+	 * @return the calculated hash code or 0 if oom occurred
+	 */
+	static VMINLINE I_32
+	inlineConvertObjectToHash(J9JavaVM *vm, J9VMThread *currentThread, j9object_t objectPointer, bool *oomOccurred)
+	{
+		I_32 hashValue = 0;
+		J9Class *clazz = J9OBJECT_CLAZZ(currentThread, objectPointer);
+		if ((NULL != clazz) && J9_IS_J9CLASS_VALUETYPE(clazz)) {
+			hashValue = convertValueObjectAtOffsetToHash(vm, currentThread, objectPointer, clazz, J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread), oomOccurred);
+		} else {
+			hashValue = inlineConvertValueToHash(vm, (UDATA)objectPointer);
+		}
+		return hashValue;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 	/**
 	 * Hash an UDATA via murmur3 algorithm
 	 *
@@ -159,9 +476,6 @@ public:
 	static VMINLINE I_32
 	inlineConvertValueToHash(J9JavaVM *vm, UDATA value)
 	{
-		const U_32 MUL1 = 0x85ebca6b;
-		const U_32 MUL2 = 0xc2b2ae35;
-
 		U_32 hashValue = getSalt(vm, value);
 		UDATA shiftedAddress = value >>  vm->omrVM->_objectAlignmentShift;
 
@@ -172,14 +486,7 @@ public:
 		datum = (U_32) (shiftedAddress >> 32);
 		hashValue = mix(hashValue, datum);
 #endif
-
-		hashValue ^= sizeof(UDATA);
-
-		hashValue ^= hashValue >> 16;
-		hashValue *= MUL1;
-		hashValue ^= hashValue >> 13;
-		hashValue *= MUL2;
-		hashValue ^= hashValue >> 16;
+		hashValue = finalizeMurmur3Hash(hashValue, sizeof(UDATA));
 
 		/* If forcing positive hash codes, AND out the sign bit */
 		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_POSITIVE_HASHCODE)) {
@@ -284,13 +591,22 @@ public:
 	 *
 	 * @pre objectPointer must be a valid object reference
 	 *
-	 * @param vm			a java VM
-	 * @param objectPointer 	a valid object reference
+	 * @param vm               a java VM
+	 * @param objectPointer    a valid object reference
+	 * @param[out] oomOccurred true if an OOM occurred (for value types)
+	 * @return the calculated hash code
 	 */
 	static VMINLINE I_32
-	inlineObjectHashCode(J9JavaVM *vm, j9object_t objectPointer)
+	inlineObjectHashCode(J9JavaVM *vm, j9object_t objectPointer
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			, bool *oomOccurred
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	)
 	{
 		I_32 hashValue = 0;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		J9VMThread *currentThread = vm->internalVMFunctions->currentVMThread(vm);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		if (VM_VMHelpers::mustCallWriteAccessBarrier(vm)) {
 			hashValue = vm->memoryManagerFunctions->j9gc_objaccess_getObjectHashCode(vm, objectPointer);
 		} else {
@@ -308,15 +624,33 @@ public:
 				} else {
 					hashValue = *(I_32 *)((UDATA)objectPointer + objectClass->backfillOffset);
 				}
-
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				if (0 == hashValue) {
+					if (J9_IS_J9CLASS_VALUETYPE(objectClass)) {
+						hashValue = convertValueObjectAtOffsetToHash(vm, currentThread, objectPointer, objectClass, J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread), oomOccurred);
+						if (!*oomOccurred) {
+							/* hashValue cannot be zero. Should assert here but we are in util. */
+							*(I_32 *)((UDATA)objectPointer + objectClass->backfillOffset) = hashValue;
+						}
+					}
+				}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			} else {
 				if (J9_ARE_NO_BITS_SET(flags, OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS)) {
 					setHasBeenHashed(vm, objectPointer);
 				}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				hashValue = inlineConvertObjectToHash(vm, currentThread, objectPointer, oomOccurred);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				hashValue = inlineConvertValueToHash(vm, (UDATA)objectPointer);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			}
 #else /* defined(J9VM_GC_MODRON_COMPACTION) || defined(J9VM_GC_GENERATIONAL) */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			hashValue = inlineConvertObjectToHash(vm, currentThread, objectPointer, oomOccurred);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			hashValue = inlineConvertValueToHash(vm, (UDATA)objectPointer);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #endif /* defined(J9VM_GC_MODRON_COMPACTION) || defined(J9VM_GC_GENERATIONAL) */
 		}
 		return hashValue;

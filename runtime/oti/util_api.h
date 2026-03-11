@@ -2622,17 +2622,36 @@ I_32 convertValueToHash(J9JavaVM *vm, UDATA value);
  */
 I_32 computeObjectAddressToHash(J9JavaVM *vm, j9object_t objectPointer);
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+/**
+ * Compute object hash.
+ * Handles both identity types and value types.
+ * Returns 0 if OOM occurs during hash computation.
+ *
+ * @param vm                    a java vm
+ * @param currentThread         the current VM thread
+ * @param objectPointer         a valid value type object reference
+ * @param clazz                 the class of the value type object
+ * @return hash value           an I_32 that may be negative or zero (if OOM occurs)
+ */
+I_32 convertObjectToHash(J9JavaVM *vm, J9VMThread *currentThread, j9object_t objectPointer, J9Class *clazz);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 /**
  * Fetch objectPointer's hashcode
  *
  * @pre objectPointer must be a valid object reference
  *
- * @param vm				a java VM
- * @param objectPointer 	a valid object reference.
- * @return hash value		a I_32 that may be negative or zero
+ * @param vm                a java VM
+ * @param objectPointer     a valid object reference
+ * @param[out] oomOccurred  true if OOM occurred (for value types)
+ * @return hash value       a I_32 that may be negative or zero
  */
-I_32 objectHashCode(J9JavaVM *vm, j9object_t objectPointer);
+I_32 objectHashCode(J9JavaVM *vm, j9object_t objectPointer
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		, jboolean *oomOccurred
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+);
 
 #if defined(WIN32)
 /* ---------------- openlibrary.c ---------------- */
