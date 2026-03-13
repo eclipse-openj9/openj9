@@ -445,14 +445,64 @@ protected:
     bool isAotResolvedDirectDispatchGuaranteed(TR::Compilation *comp);
     bool isAotResolvedVirtualDispatchGuaranteed(TR::Compilation *comp);
 
+    /**
+     * @brief Helper to test if a ram method has a specific name/signature
+     *
+     * A helper method to determine if the method passed in has the same name
+     * and signature as the methodName/signature parameters passed in.
+     *
+     * Should be called with VMAccess.
+     *
+     * @param method The method to compare
+     * @param romMethod The J9ROMMethod of the method
+     * @param classPointer The J9Class of the method
+     * @param methodIndex The method's index into the classPointer's array of
+     *                    J9Methods
+     * @param methodName The method name to compare
+     * @param nameLength The length of methodName
+     * @param signature The signature to compare
+     * @param sigLength The length of signature
+     * @param ignoreSig Flag to control whether the signature should be ignored
+     *                  when comparing against the method
+     *
+     * @return true if method's name/signature matches methodName/signature;
+     *         false otherwise.
+     */
+    bool matchedMethod(TR_OpaqueMethodBlock *method, J9ROMMethod *romMethod, TR_OpaqueClassBlock *classPointer,
+        uint32_t methodIndex, const char *methodName, size_t nameLength, const char *signature, size_t sigLength,
+        bool ignoreSig = false);
+
+    /**
+     * @brief Finds a method in a class with a specific name/signature
+     *
+     * Should be called with VMAccess.
+     *
+     * @param classPointer The class used to find the method
+     * @param methodName The name of the method
+     * @param signature The signature of the method
+     */
+    TR_OpaqueMethodBlock *getMatchingMethodFromNameAndSignature(TR_OpaqueClassBlock *classPointer,
+        const char *methodName, const char *signature);
+
 public:
     virtual TR_OpaqueMethodBlock *getMethodFromClass(TR_OpaqueClassBlock *, const char *, const char *,
         TR_OpaqueClassBlock * = NULL);
 
-    TR_OpaqueMethodBlock *getMatchingMethodFromNameAndSignature(TR_OpaqueClassBlock *classPointer,
-        const char *methodName, const char *signature, bool validate = true);
-
-    virtual void getResolvedMethods(TR_Memory *, TR_OpaqueClassBlock *, List<TR_ResolvedMethod> *);
+    /**
+     * @brief Gets resolved methods in a class
+     *
+     * If methodName is NULL, then this returns all resolved methods in the
+     * class. Otherwise, this returns only the methods that match methodName
+     * (regardless of signature).
+     *
+     * @param trMemory The TR_Memory instance to allocate memory from
+     * @param classPointer The class whose methods should be found
+     * @param resolvedMethodsInClass A List<TR_ResolvedMethod> containing the
+     *                               list of TR_ResolvedMethods
+     * @param methodName Optional, the method name that the methods must match
+     */
+    virtual void getResolvedMethods(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer,
+        List<TR_ResolvedMethod> *resolvedMethodsInClass, const char *methodName = NULL);
     /**
      * @brief Create a TR_ResolvedMethod given a class, method name and signature
      *
@@ -467,6 +517,19 @@ public:
      */
     virtual TR_ResolvedMethod *getResolvedMethodForNameAndSignature(TR_Memory *trMemory,
         TR_OpaqueClassBlock *classPointer, const char *methodName, const char *signature);
+
+    /**
+     * @brief A specialized version of getResolvedMethodForNameAndSignature for constructors
+     *
+     * @param trMemory     Pointer to TR_Memory object used for memory allocation
+     * @param classPointer The j9class that is searched for method name/signature
+     * @param signature    Null terminated string denoting the signature of the method we want
+     *
+     * @return             A pointer to a TR_ResolvedMethod for the indicated j9method, or null if not found
+     */
+    virtual TR_ResolvedMethod *getResolvedMethodForConstructorWithSig(TR_Memory *trMemory,
+        TR_OpaqueClassBlock *classPointer, const char *signature);
+
     virtual TR_OpaqueMethodBlock *getResolvedVirtualMethod(TR_OpaqueClassBlock *classObject, int32_t cpIndex,
         bool ignoreReResolve = true);
     virtual TR_OpaqueMethodBlock *getResolvedInterfaceMethod(TR_OpaqueMethodBlock *ownerMethod,
@@ -1907,7 +1970,8 @@ public:
     virtual bool canMethodExitEventBeHooked();
     virtual bool methodsCanBeInlinedEvenIfEventHooksEnabled(TR::Compilation *comp);
     virtual TR_OpaqueClassBlock *getClassOfMethod(TR_OpaqueMethodBlock *method);
-    virtual void getResolvedMethods(TR_Memory *, TR_OpaqueClassBlock *, List<TR_ResolvedMethod> *);
+    virtual void getResolvedMethods(TR_Memory *, TR_OpaqueClassBlock *, List<TR_ResolvedMethod> *,
+        const char *methodName = NULL);
     virtual TR_ResolvedMethod *getResolvedMethodForNameAndSignature(TR_Memory *trMemory,
         TR_OpaqueClassBlock *classPointer, const char *methodName, const char *signature);
     virtual uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock *classPointer, const char *fieldName, uint32_t fieldLen,

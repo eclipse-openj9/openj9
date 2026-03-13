@@ -6050,22 +6050,67 @@ bool TR_J9VMBase::isContinuationClass(TR_OpaqueClassBlock *clazz)
 const char *TR_J9VMBase::getByteCodeName(uint8_t opcode) { return JavaBCNames[opcode]; }
 
 void TR_J9VMBase::getResolvedMethods(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer,
-    List<TR_ResolvedMethod> *resolvedMethodsInClass)
+    List<TR_ResolvedMethod> *resolvedMethodsInClass, const char *methodName)
 {
+    size_t nameLength = methodName ? strlen(methodName) : 0;
+
     TR::VMAccessCriticalSection getResolvedMethods(this); // Prevent HCR
-    J9Method *resolvedMethods = (J9Method *)getMethods(classPointer);
-    uint32_t i;
+
+    J9ROMClass *romClass = TR::Compiler->cls.romClassOf(classPointer);
+    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
+
+    J9Method *j9methods = (J9Method *)getMethods(classPointer);
     uint32_t numMethods = getNumMethods(classPointer);
-    for (i = 0; i < numMethods; i++) {
-        resolvedMethodsInClass->add(createResolvedMethod(trMemory, (TR_OpaqueMethodBlock *)&(resolvedMethods[i]), 0));
+    for (uint32_t i = 0; i < numMethods; i++) {
+        TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *)(j9methods + i);
+        bool addTolist = true;
+
+        if (methodName) {
+            const bool ignoreSig = true;
+            addTolist = matchedMethod(method, romMethod, classPointer, i, methodName, nameLength, NULL, 0, ignoreSig);
+            romMethod = nextROMMethod(romMethod);
+        }
+
+        if (addTolist) {
+            resolvedMethodsInClass->add(createResolvedMethod(trMemory, method, 0));
+        }
     }
 }
 
 /*
  * Should be called with VMAccess
  */
+bool TR_J9VMBase::matchedMethod(TR_OpaqueMethodBlock *method, J9ROMMethod *romMethod, TR_OpaqueClassBlock *classPointer,
+    uint32_t methodIndex, const char *methodName, size_t nameLength, const char *signature, size_t sigLength,
+    bool ignoreSig)
+{
+    bool matched = false;
+
+    J9UTF8 *mName = J9ROMMETHOD_NAME(romMethod);
+    if ((J9UTF8_LENGTH(mName) == nameLength) && (memcmp(utf8Data(mName), methodName, nameLength) == 0)) {
+        if (!ignoreSig) {
+            J9UTF8 *mSig = J9ROMMETHOD_SIGNATURE(romMethod);
+            matched = (J9UTF8_LENGTH(mSig) == sigLength) && (memcmp(utf8Data(mSig), signature, sigLength) == 0);
+        } else {
+            matched = true;
+        }
+
+        if (matched) {
+            TR::Compilation *comp = _compInfoPT ? _compInfoPT->getCompilation() : NULL;
+            if (comp && comp->getOption(TR_UseSymbolValidationManager)) {
+                comp->getSymbolValidationManager()->addMethodFromClassRecord(method, classPointer, methodIndex);
+            }
+        }
+    }
+
+    return matched;
+}
+
+/*
+ * Should be called with VMAccess
+ */
 TR_OpaqueMethodBlock *TR_J9VMBase::getMatchingMethodFromNameAndSignature(TR_OpaqueClassBlock *classPointer,
-    const char *methodName, const char *signature, bool validate)
+    const char *methodName, const char *signature)
 {
     size_t nameLength = strlen(methodName);
     size_t sigLength = strlen(signature);
@@ -6080,20 +6125,13 @@ TR_OpaqueMethodBlock *TR_J9VMBase::getMatchingMethodFromNameAndSignature(TR_Opaq
 
     // Iterate over all romMethods until the desired one is found
     for (uint32_t i = 0; i < numMethods; i++) {
-        J9UTF8 *mName = J9ROMMETHOD_NAME(romMethod);
-        J9UTF8 *mSig = J9ROMMETHOD_SIGNATURE(romMethod);
-        if (J9UTF8_LENGTH(mName) == nameLength && J9UTF8_LENGTH(mSig) == sigLength
-            && memcmp(utf8Data(mName), methodName, nameLength) == 0
-            && memcmp(utf8Data(mSig), signature, sigLength) == 0) {
-            method = (TR_OpaqueMethodBlock *)(j9Methods + i);
-            if (validate) {
-                TR::Compilation *comp = TR::comp();
-                if (comp && comp->getOption(TR_UseSymbolValidationManager)) {
-                    comp->getSymbolValidationManager()->addMethodFromClassRecord(method, classPointer, i);
-                }
-            }
+        TR_OpaqueMethodBlock *methodToCheck = (TR_OpaqueMethodBlock *)(j9Methods + i);
+
+        if (matchedMethod(methodToCheck, romMethod, classPointer, i, methodName, nameLength, signature, sigLength)) {
+            method = methodToCheck;
             break;
         }
+
         romMethod = nextROMMethod(romMethod);
     }
 
@@ -6111,6 +6149,12 @@ TR_ResolvedMethod *TR_J9VMBase::getResolvedMethodForNameAndSignature(TR_Memory *
         rm = createResolvedMethod(trMemory, method, 0);
 
     return rm;
+}
+
+TR_ResolvedMethod *TR_J9VMBase::getResolvedMethodForConstructorWithSig(TR_Memory *trMemory,
+    TR_OpaqueClassBlock *classPointer, const char *signature)
+{
+    return getResolvedMethodForNameAndSignature(trMemory, classPointer, "<init>", signature);
 }
 
 void *TR_J9VMBase::getMethods(TR_OpaqueClassBlock *classPointer)
@@ -8084,7 +8128,7 @@ TR_OpaqueClassBlock *TR_J9SharedCacheVM::getSuperClass(TR_OpaqueClassBlock *clas
 }
 
 void TR_J9SharedCacheVM::getResolvedMethods(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer,
-    List<TR_ResolvedMethod> *resolvedMethodsInClass)
+    List<TR_ResolvedMethod> *resolvedMethodsInClass, const char *methodName)
 {
     TR::Compilation *comp = _compInfoPT->getCompilation();
     TR_ASSERT(comp, "Should be called only within a compilation");
@@ -8103,10 +8147,16 @@ void TR_J9SharedCacheVM::getResolvedMethods(TR_Memory *trMemory, TR_OpaqueClassB
         TR::VMAccessCriticalSection getResolvedMethods(this); // Prevent HCR
 
         if (comp->getOption(TR_UseSymbolValidationManager)) {
-            comp->getSymbolValidationManager()->addMethodsFromClassRecord(classPointer);
+            // TR_J9VM::getResolvedMethods, more specifically
+            // TR_J9VM::matchedMethod, will add a validation record for each
+            // method that matches the methodName. However, if methodName is
+            // NULL, then ensure that the MethodsFromClass record is added.
+            if (methodName == NULL) {
+                comp->getSymbolValidationManager()->addMethodsFromClassRecord(classPointer);
+            }
         }
 
-        TR_J9VM::getResolvedMethods(trMemory, classPointer, resolvedMethodsInClass);
+        TR_J9VM::getResolvedMethods(trMemory, classPointer, resolvedMethodsInClass, methodName);
     }
 }
 
