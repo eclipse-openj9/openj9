@@ -3571,8 +3571,7 @@ bool J9::ValuePropagation::canClassBeTrustedAsFixedClass(TR::SymbolReference *sy
 }
 
 static void getHelperSymRefs(OMR::ValuePropagation *vp, TR::Node *curCallNode, TR::SymbolReference *&getHelpersSymRef,
-    TR::SymbolReference *&helperSymRef, const char *helperSig, int32_t helperSigLen,
-    TR::MethodSymbol::Kinds helperCallKind)
+    TR::SymbolReference *&helperSymRef, const char *helperSig, TR::MethodSymbol::Kinds helperCallKind)
 {
     // Function to retrieve the JITHelpers.getHelpers and JITHelpers.<helperSig> method symbol references.
     //
@@ -3583,12 +3582,24 @@ static void getHelperSymRefs(OMR::ValuePropagation *vp, TR::Node *curCallNode, T
     if (!jitHelpersClass || !TR::Compiler->cls.isClassInitialized(vp->comp(), jitHelpersClass))
         return;
 
+    const char *getHelpersSig = "jitHelpers";
+    int32_t getHelpersSiglen = strlen(getHelpersSig);
+    int32_t helperSigLen = strlen(helperSig);
+
     TR_ScratchList<TR_ResolvedMethod> helperMethods(vp->trMemory());
-    vp->comp()->fej9()->getResolvedMethods(vp->trMemory(), jitHelpersClass, &helperMethods);
-    ListIterator<TR_ResolvedMethod> it(&helperMethods);
+    vp->comp()->fej9()->getResolvedMethods(vp->trMemory(), jitHelpersClass, &helperMethods, helperSig);
+
+    // Because the helperMethods scratch list is reused here, in an AOT
+    // compilation, the compiler will try and redundantly add validations for
+    // the methods acquired from the previous query; however, this isn't really
+    // an issue since the relo infrastructure does not add duplicate validation
+    // records. Doing this this way makes the code much more readable. This
+    // comes at the expense of making AOT compiles slightly inefficient.
+    vp->comp()->fej9()->getResolvedMethods(vp->trMemory(), jitHelpersClass, &helperMethods, getHelpersSig);
 
     // Find the symRefs
     //
+    ListIterator<TR_ResolvedMethod> it(&helperMethods);
     for (TR_ResolvedMethod *m = it.getCurrent(); m; m = it.getNext()) {
         char *sig = m->nameChars();
         if (!strncmp(sig, helperSig, helperSigLen)) {
@@ -3603,7 +3614,7 @@ static void getHelperSymRefs(OMR::ValuePropagation *vp, TR::Node *curCallNode, T
                 helperSymRef = vp->comp()->getSymRefTab()->findOrCreateMethodSymbol(
                     curCallNode->getSymbolReference()->getOwningMethodIndex(), -1, m, helperCallKind);
             }
-        } else if (!strncmp(sig, "jitHelpers", 10)) {
+        } else if (!strncmp(sig, getHelpersSig, getHelpersSiglen)) {
             getHelpersSymRef = vp->comp()->getSymRefTab()->findOrCreateMethodSymbol(JITTED_METHOD_INDEX, -1, m,
                 TR::MethodSymbol::Static);
         }
@@ -3615,7 +3626,7 @@ static void transformToOptimizedCloneCall(OMR::ValuePropagation *vp, TR::Node *n
     TR::SymbolReference *getHelpersSymRef = NULL;
     TR::SymbolReference *optimizedCloneSymRef = NULL;
 
-    getHelperSymRefs(vp, node, getHelpersSymRef, optimizedCloneSymRef, "optimizedClone", 14, TR::MethodSymbol::Special);
+    getHelperSymRefs(vp, node, getHelpersSymRef, optimizedCloneSymRef, "optimizedClone", TR::MethodSymbol::Special);
 
     if (optimizedCloneSymRef && getHelpersSymRef
         && performTransformation(vp->comp(), "%sChanging call to new optimizedClone at node [%p]\n", OPT_DETAILS,

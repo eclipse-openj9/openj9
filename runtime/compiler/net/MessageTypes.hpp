@@ -171,6 +171,7 @@ enum MessageType : uint16_t {
     VM_createMethodHandleArchetypeSpecimen,
     VM_instanceOfOrCheckCast,
     VM_getResolvedMethodsAndMirror,
+    VM_getResolvedMethodsForNameAndMirror,
     VM_getVMInfo,
     VM_dereferenceStaticAddress,
     VM_getClassFromCP,

@@ -2114,15 +2114,7 @@ TR_Debug *TR_J9VMBase::createDebug(TR::Compilation *comp)
 
 TR_ResolvedMethod *TR_J9VMBase::getDefaultConstructor(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer)
 {
-    TR::VMAccessCriticalSection getDefaultConstructor(this);
-    List<TR_ResolvedMethod> list(trMemory);
-    getResolvedMethods(trMemory, classPointer, &list);
-    ListIterator<TR_ResolvedMethod> methods(&list);
-    TR_ResolvedMethod *m = methods.getFirst();
-    for (; m; m = methods.getNext())
-        if (m->isConstructor() && m->signatureLength() == 3 && !strncmp(m->signatureChars(), "()V", 3))
-            break;
-    return m;
+    return getResolvedMethodForConstructorWithSig(trMemory, classPointer, "()V");
 }
 
 extern "C" J9NameAndSignature newInstancePrototypeNameAndSig;
@@ -6077,22 +6069,76 @@ bool TR_J9VMBase::isContinuationClass(TR_OpaqueClassBlock *clazz)
 const char *TR_J9VMBase::getByteCodeName(uint8_t opcode) { return JavaBCNames[opcode]; }
 
 void TR_J9VMBase::getResolvedMethods(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer,
-    List<TR_ResolvedMethod> *resolvedMethodsInClass)
+    List<TR_ResolvedMethod> *resolvedMethodsInClass, const char *methodName)
 {
+    size_t nameLength = methodName ? strlen(methodName) : 0;
+
     TR::VMAccessCriticalSection getResolvedMethods(this); // Prevent HCR
-    J9Method *resolvedMethods = (J9Method *)getMethods(classPointer);
-    uint32_t i;
+
+    J9ROMClass *romClass = TR::Compiler->cls.romClassOf(classPointer);
+    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
+
+    J9Method *j9methods = (J9Method *)getMethods(classPointer);
     uint32_t numMethods = getNumMethods(classPointer);
-    for (i = 0; i < numMethods; i++) {
-        resolvedMethodsInClass->add(createResolvedMethod(trMemory, (TR_OpaqueMethodBlock *)&(resolvedMethods[i]), 0));
+    for (uint32_t i = 0; i < numMethods; i++) {
+        TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *)(j9methods + i);
+        bool addTolist = true;
+
+        if (methodName) {
+            const bool ignoreSig = true;
+            addTolist = matchedMethod(method, romMethod, classPointer, i, methodName, nameLength, NULL, 0, ignoreSig);
+            romMethod = nextROMMethod(romMethod);
+        }
+
+        if (addTolist) {
+            resolvedMethodsInClass->add(createResolvedMethod(trMemory, method, 0));
+        }
     }
 }
 
 /*
- * Should be called with VMAccess
+ * Should be called with VMAccess.
+ *
+ * Helper to determine if the given RAM method has a name/signature matching
+ * the provided methodName/signature parameters. If ignoreSig is true, only
+ * the name is compared. If a match is found and the Symbol Validation Manager
+ * is active, a validation record is added for the method.
+ */
+bool TR_J9VMBase::matchedMethod(TR_OpaqueMethodBlock *method, J9ROMMethod *romMethod, TR_OpaqueClassBlock *classPointer,
+    uint32_t methodIndex, const char *methodName, size_t nameLength, const char *signature, size_t sigLength,
+    bool ignoreSig)
+{
+    bool matched = false;
+
+    J9UTF8 *mName = J9ROMMETHOD_NAME(romMethod);
+    if ((J9UTF8_LENGTH(mName) == nameLength) && (memcmp(utf8Data(mName), methodName, nameLength) == 0)) {
+        if (!ignoreSig) {
+            J9UTF8 *mSig = J9ROMMETHOD_SIGNATURE(romMethod);
+            matched = (J9UTF8_LENGTH(mSig) == sigLength) && (memcmp(utf8Data(mSig), signature, sigLength) == 0);
+        } else {
+            matched = true;
+        }
+
+        if (matched) {
+            TR::Compilation *comp = _compInfoPT ? _compInfoPT->getCompilation() : NULL;
+            if (comp && comp->getOption(TR_UseSymbolValidationManager)) {
+                comp->getSymbolValidationManager()->addMethodFromClassRecord(method, classPointer, methodIndex);
+            }
+        }
+    }
+
+    return matched;
+}
+
+/*
+ * Should be called with VMAccess.
+ *
+ * Iterates over all ROM methods in the given class and returns the
+ * TR_OpaqueMethodBlock for the first method matching methodName and
+ * signature, or NULL if not found.
  */
 TR_OpaqueMethodBlock *TR_J9VMBase::getMatchingMethodFromNameAndSignature(TR_OpaqueClassBlock *classPointer,
-    const char *methodName, const char *signature, bool validate)
+    const char *methodName, const char *signature)
 {
     size_t nameLength = strlen(methodName);
     size_t sigLength = strlen(signature);
@@ -6107,20 +6153,13 @@ TR_OpaqueMethodBlock *TR_J9VMBase::getMatchingMethodFromNameAndSignature(TR_Opaq
 
     // Iterate over all romMethods until the desired one is found
     for (uint32_t i = 0; i < numMethods; i++) {
-        J9UTF8 *mName = J9ROMMETHOD_NAME(romMethod);
-        J9UTF8 *mSig = J9ROMMETHOD_SIGNATURE(romMethod);
-        if (J9UTF8_LENGTH(mName) == nameLength && J9UTF8_LENGTH(mSig) == sigLength
-            && memcmp(utf8Data(mName), methodName, nameLength) == 0
-            && memcmp(utf8Data(mSig), signature, sigLength) == 0) {
-            method = (TR_OpaqueMethodBlock *)(j9Methods + i);
-            if (validate) {
-                TR::Compilation *comp = TR::comp();
-                if (comp && comp->getOption(TR_UseSymbolValidationManager)) {
-                    comp->getSymbolValidationManager()->addMethodFromClassRecord(method, classPointer, i);
-                }
-            }
+        TR_OpaqueMethodBlock *methodToCheck = (TR_OpaqueMethodBlock *)(j9Methods + i);
+
+        if (matchedMethod(methodToCheck, romMethod, classPointer, i, methodName, nameLength, signature, sigLength)) {
+            method = methodToCheck;
             break;
         }
+
         romMethod = nextROMMethod(romMethod);
     }
 
@@ -6138,6 +6177,12 @@ TR_ResolvedMethod *TR_J9VMBase::getResolvedMethodForNameAndSignature(TR_Memory *
         rm = createResolvedMethod(trMemory, method, 0);
 
     return rm;
+}
+
+TR_ResolvedMethod *TR_J9VMBase::getResolvedMethodForConstructorWithSig(TR_Memory *trMemory,
+    TR_OpaqueClassBlock *classPointer, const char *signature)
+{
+    return getResolvedMethodForNameAndSignature(trMemory, classPointer, "<init>", signature);
 }
 
 void *TR_J9VMBase::getMethods(TR_OpaqueClassBlock *classPointer)
@@ -7396,20 +7441,13 @@ TR::Node *TR_J9VM::inlineNativeCall(TR::Compilation *comp, TR::TreeTop *callNode
         }
         case TR::java_lang_J9VMInternals_defaultClone: {
             TR_OpaqueClassBlock *bdClass = getClassFromSignature("java/lang/Object", 16, comp->getCurrentMethod());
-            TR_ScratchList<TR_ResolvedMethod> bdMethods(comp->trMemory());
-            getResolvedMethods(comp->trMemory(), bdClass, &bdMethods);
-            ListIterator<TR_ResolvedMethod> bdit(&bdMethods);
-
-            TR_ResolvedMethod *method = NULL;
-            for (method = bdit.getCurrent(); method; method = bdit.getNext()) {
-                const char *sig = method->signature(comp->trMemory());
-                int32_t len = strlen(sig);
-                if (!strncmp(sig, "java/lang/Object.clone()Ljava/lang/Object;", len)) {
-                    callNode->setSymbolReference(comp->getSymRefTab()->findOrCreateMethodSymbol(
-                        callNode->getSymbolReference()->getOwningMethodIndex(), -1, method, TR::MethodSymbol::Special));
-                    break;
-                }
+            TR_ResolvedMethod *method
+                = getResolvedMethodForNameAndSignature(comp->trMemory(), bdClass, "clone", "()Ljava/lang/Object;");
+            if (method) {
+                callNode->setSymbolReference(comp->getSymRefTab()->findOrCreateMethodSymbol(
+                    callNode->getSymbolReference()->getOwningMethodIndex(), -1, method, TR::MethodSymbol::Special));
             }
+
             return callNode;
         }
         case TR::java_lang_J9VMInternals_isClassModifierPublic: {
@@ -7542,17 +7580,31 @@ TR::Node *TR_J9VM::inlineNativeCall(TR::Compilation *comp, TR::TreeTop *callNode
             if (jitHelpersClass && isClassInitialized(jitHelpersClass)) {
                 // fish for the getSuperclass method in JITHelpers
                 //
-                const char *callerSig = comp->signature();
                 const char *getHelpersSig = "jitHelpers";
-                int32_t getHelpersSigLength = 10;
+                int32_t getHelpersSigLength = strlen(getHelpersSig);
+                const char *getSuperclassSig = "getSuperclass";
+                int32_t getSuperclassSigLength = strlen(getSuperclassSig);
+
                 TR::SymbolReference *getSuperclassSymRef = NULL;
                 TR::SymbolReference *getHelpersSymRef = NULL;
+
                 TR_ScratchList<TR_ResolvedMethod> helperMethods(comp->trMemory());
-                getResolvedMethods(comp->trMemory(), jitHelpersClass, &helperMethods);
+                getResolvedMethods(comp->trMemory(), jitHelpersClass, &helperMethods, getHelpersSig);
+
+                // Because the helperMethods scratch list is reused here, in an
+                // AOT compilation, the compiler will try and redundantly add
+                // validations for the methods acquired from the previous
+                // query; however, this isn't really an issue since the relo
+                // infrastructure does not add duplicate validation records.
+                // Doing this this way makes the code much more readable. This
+                // comes at the expense of making AOT compiles slightly
+                // inefficient.
+                getResolvedMethods(comp->trMemory(), jitHelpersClass, &helperMethods, getSuperclassSig);
+
                 ListIterator<TR_ResolvedMethod> it(&helperMethods);
                 for (TR_ResolvedMethod *m = it.getCurrent(); m; m = it.getNext()) {
                     char *sig = m->nameChars();
-                    if (!strncmp(sig, "getSuperclass", 13)) {
+                    if (!strncmp(sig, getSuperclassSig, getSuperclassSigLength)) {
                         getSuperclassSymRef = comp->getSymRefTab()->findOrCreateMethodSymbol(
                             callNode->getSymbolReference()->getOwningMethodIndex(), -1, m, TR::MethodSymbol::Virtual);
                         getSuperclassSymRef->setOffset(getVTableSlot(m->getPersistentIdentifier(), jitHelpersClass));
@@ -8120,7 +8172,7 @@ TR_OpaqueClassBlock *TR_J9SharedCacheVM::getSuperClass(TR_OpaqueClassBlock *clas
 }
 
 void TR_J9SharedCacheVM::getResolvedMethods(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer,
-    List<TR_ResolvedMethod> *resolvedMethodsInClass)
+    List<TR_ResolvedMethod> *resolvedMethodsInClass, const char *methodName)
 {
     TR::Compilation *comp = _compInfoPT->getCompilation();
     TR_ASSERT(comp, "Should be called only within a compilation");
@@ -8139,10 +8191,16 @@ void TR_J9SharedCacheVM::getResolvedMethods(TR_Memory *trMemory, TR_OpaqueClassB
         TR::VMAccessCriticalSection getResolvedMethods(this); // Prevent HCR
 
         if (comp->getOption(TR_UseSymbolValidationManager)) {
-            comp->getSymbolValidationManager()->addMethodsFromClassRecord(classPointer);
+            // TR_J9VM::getResolvedMethods, more specifically
+            // TR_J9VM::matchedMethod, will add a validation record for each
+            // method that matches the methodName. However, if methodName is
+            // NULL, then ensure that the MethodsFromClass record is added.
+            if (methodName == NULL) {
+                comp->getSymbolValidationManager()->addMethodsFromClassRecord(classPointer);
+            }
         }
 
-        TR_J9VM::getResolvedMethods(trMemory, classPointer, resolvedMethodsInClass);
+        TR_J9VM::getResolvedMethods(trMemory, classPointer, resolvedMethodsInClass, methodName);
     }
 }
 
