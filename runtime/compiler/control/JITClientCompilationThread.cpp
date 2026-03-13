@@ -381,6 +381,38 @@ static bool handleResponse(JITServer::MessageType response, JITServer::ClientStr
             }
             client->write(response, methods, methodsInfo);
         } break;
+        case MessageType::VM_getResolvedMethodsForNameAndMirror: {
+            auto recv = client->getRecvData<TR_OpaqueClassBlock *, std::string>();
+            TR_OpaqueClassBlock *clazz = std::get<0>(recv);
+            auto &methodNameString = std::get<1>(recv);
+
+            auto nameLength = methodNameString.size();
+            J9Method *j9methods = (J9Method *)fe->getMethods(clazz);
+            uint32_t numMethods = fe->getNumMethods(clazz);
+
+            // Create mirrors and put methodInfo for each method in a vector to be sent to the server
+            J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(TR::Compiler->cls.romClassOf(clazz));
+            std::vector<J9Method *> methods;
+            std::vector<TR_ResolvedJ9JITServerMethodInfo> methodsInfo;
+            for (uint32_t i = 0; i < numMethods; i++) {
+                J9Method *method = j9methods + i;
+
+                J9UTF8 *mName = J9ROMMETHOD_NAME(romMethod);
+                if ((J9UTF8_LENGTH(mName) == nameLength)
+                    && (memcmp(utf8Data(mName), methodNameString.c_str(), nameLength) == 0)) {
+                    TR_ResolvedJ9JITServerMethodInfo methodInfo;
+                    TR_ResolvedJ9JITServerMethod::createResolvedMethodMirror(methodInfo, (TR_OpaqueMethodBlock *)method,
+                        0, 0, fe, trMemory);
+
+                    methods.push_back(method);
+                    methodsInfo.push_back(methodInfo);
+                }
+
+                romMethod = nextROMMethod(romMethod);
+            }
+
+            client->write(response, methods, methodsInfo);
+        } break;
         case MessageType::VM_getVMInfo: {
             ClientSessionData::VMInfo vmInfo = {};
             J9JavaVM *javaVM = vmThread->javaVM;

@@ -62,6 +62,32 @@ void TR_J9ServerVM::getResolvedMethodsAndMethods(TR_Memory *trMemory, TR_OpaqueC
     }
 }
 
+void TR_J9ServerVM::getResolvedMethodsAndMethodsForName(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer,
+    List<TR_ResolvedMethod> *resolvedMethodsInClass, const char *methodName, bool relocatable)
+{
+    TR_MethodToBeCompiled *entry = _compInfoPT->getMethodBeingCompiled();
+    JITServer::ServerStream *stream = entry->_stream;
+    std::string methodNameString(methodName);
+    stream->write(JITServer::MessageType::VM_getResolvedMethodsForNameAndMirror, classPointer, methodNameString);
+    auto recv = stream->read<std::vector<J9Method *>, std::vector<TR_ResolvedJ9JITServerMethodInfo> >();
+    auto &methodsInClass = std::get<0>(recv);
+    auto &methodsInfo = std::get<1>(recv);
+
+    TR_ASSERT_FATAL(methodsInClass.size() == methodsInfo.size(),
+        "methodsInClass and methodsInfo do not have the same size\n");
+
+    for (int i = 0; i < methodsInfo.size(); ++i) {
+        // create resolved methods, using information from mirrors
+        auto resolvedMethod = relocatable
+            ? new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9JITServerMethod(
+                  (TR_OpaqueMethodBlock *)methodsInClass[i], this, trMemory, methodsInfo[i], 0)
+            : new (trMemory->trHeapMemory()) TR_ResolvedJ9JITServerMethod((TR_OpaqueMethodBlock *)methodsInClass[i],
+                  this, trMemory, methodsInfo[i], 0);
+
+        resolvedMethodsInClass->add(resolvedMethod);
+    }
+}
+
 bool TR_J9ServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
 {
     return isClassLibraryClass(getClassFromMethodBlock(method));
@@ -823,9 +849,13 @@ void *TR_J9ServerVM::getMethods(TR_OpaqueClassBlock *clazz)
 }
 
 void TR_J9ServerVM::getResolvedMethods(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer,
-    List<TR_ResolvedMethod> *resolvedMethodsInClass)
+    List<TR_ResolvedMethod> *resolvedMethodsInClass, const char *methodName)
 {
-    getResolvedMethodsAndMethods(trMemory, classPointer, resolvedMethodsInClass);
+    if (methodName) {
+        getResolvedMethodsAndMethodsForName(trMemory, classPointer, resolvedMethodsInClass, methodName);
+    } else {
+        getResolvedMethodsAndMethods(trMemory, classPointer, resolvedMethodsInClass);
+    }
 }
 
 bool TR_J9ServerVM::isPrimitiveArray(TR_OpaqueClassBlock *clazz)
@@ -2945,7 +2975,7 @@ TR_OpaqueClassBlock *TR_J9SharedCacheServerVM::getSuperClass(TR_OpaqueClassBlock
 }
 
 void TR_J9SharedCacheServerVM::getResolvedMethods(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer,
-    List<TR_ResolvedMethod> *resolvedMethodsInClass)
+    List<TR_ResolvedMethod> *resolvedMethodsInClass, const char *methodName)
 {
     TR::Compilation *comp = _compInfoPT->getCompilation();
     TR_ASSERT(comp, "Should be called only within a compilation");
@@ -2961,25 +2991,47 @@ void TR_J9SharedCacheServerVM::getResolvedMethods(TR_Memory *trMemory, TR_Opaque
     }
 
     if (validated) {
-        J9Method *resolvedMethods;
-        uint32_t numMethods;
+        if (methodName) {
+            // getResolvedMethodsAndMethodsForName will create resolved
+            // methods; for AOT compilations, the constructor will check if the
+            // method and its defining class has already be validated; however,
+            // the validations are added below, after returning. Thus, wrap
+            // this query in a heuristic region to prevent the potential SVM
+            // assert.
+            comp->enterHeuristicRegion();
+            TR_J9ServerVM::getResolvedMethodsAndMethodsForName(trMemory, classPointer, resolvedMethodsInClass,
+                methodName, true /* relocatable */);
+            comp->exitHeuristicRegion();
 
-        // getResolvedMethodsAndMethods will create resolved methods; for AOT
-        // compilations, the constructor will check if the method and its
-        // defining class has already be validated; however, the validations
-        // are added below, after returning. Thus, wrap this query in a
-        // heuristic region to prevent the potential SVM assert.
-        comp->enterHeuristicRegion();
-        TR_J9ServerVM::getResolvedMethodsAndMethods(trMemory, classPointer, resolvedMethodsInClass, &resolvedMethods,
-            &numMethods, true /* relocatable */);
-        comp->exitHeuristicRegion();
+            // Add the necessary validation records
+            if (comp->getOption(TR_UseSymbolValidationManager)) {
+                ListIterator<TR_ResolvedMethod> it(resolvedMethodsInClass);
+                for (TR_ResolvedMethod *m = it.getCurrent(); m; m = it.getNext()) {
+                    comp->getSymbolValidationManager()->addMethodFromClassRecord(m->getNonPersistentIdentifier(),
+                        classPointer, -1);
+                }
+            }
+        } else {
+            J9Method *resolvedMethods;
+            uint32_t numMethods;
 
-        // Add the necessary validation records
-        if (comp->getOption(TR_UseSymbolValidationManager)) {
-            uint32_t indexIntoArray;
-            for (indexIntoArray = 0; indexIntoArray < numMethods; indexIntoArray++) {
-                comp->getSymbolValidationManager()->addMethodFromClassRecord(
-                    (TR_OpaqueMethodBlock *)&(resolvedMethods[indexIntoArray]), classPointer, indexIntoArray);
+            // getResolvedMethodsAndMethods will create resolved methods; for
+            // AOT compilations, the constructor will check if the method and
+            // its defining class has already be validated; however, the
+            // validations are added below, after returning. Thus, wrap this
+            // query in a heuristic region to prevent the potential SVM assert.
+            comp->enterHeuristicRegion();
+            TR_J9ServerVM::getResolvedMethodsAndMethods(trMemory, classPointer, resolvedMethodsInClass,
+                &resolvedMethods, &numMethods, true /* relocatable */);
+            comp->exitHeuristicRegion();
+
+            // Add the necessary validation records
+            if (comp->getOption(TR_UseSymbolValidationManager)) {
+                uint32_t indexIntoArray;
+                for (indexIntoArray = 0; indexIntoArray < numMethods; indexIntoArray++) {
+                    comp->getSymbolValidationManager()->addMethodFromClassRecord(
+                        (TR_OpaqueMethodBlock *)&(resolvedMethods[indexIntoArray]), classPointer, indexIntoArray);
+                }
             }
         }
     }

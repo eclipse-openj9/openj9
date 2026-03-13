@@ -4676,20 +4676,8 @@ TR::Node *TR_J9ByteCodeIlGenerator::genInvokeInner(TR::SymbolReference *symRef, 
                 }
 
                 if (orbClass && !fej9()->isClassLoadedBySystemClassLoader(cl)) {
-                    TR_ScratchList<TR_ResolvedMethod> methods(trMemory());
-                    fej9()->getResolvedMethods(trMemory(), orbClass, &methods);
-                    ListIterator<TR_ResolvedMethod> it(&methods);
-                    TR_ResolvedMethod *replacementMethod;
-                    for (replacementMethod = it.getCurrent(); replacementMethod; replacementMethod = it.getNext()) {
-                        if (replacementMethod->nameLength() == ORB_REPLACE_METHOD_NAME_LEN
-                            && !strncmp(replacementMethod->nameChars(), ORB_REPLACE_METHOD_NAME,
-                                ORB_REPLACE_METHOD_NAME_LEN)) {
-                            if ((replacementMethod->signatureLength() == ORB_REPLACE_METHOD_SIG_LEN)
-                                && !strncmp(replacementMethod->signatureChars(), ORB_REPLACE_METHOD_SIG,
-                                    ORB_REPLACE_METHOD_SIG_LEN))
-                                break; // found it
-                        }
-                    }
+                    TR_ResolvedMethod *replacementMethod = fej9()->getResolvedMethodForNameAndSignature(trMemory(),
+                        orbClass, ORB_REPLACE_METHOD_NAME, ORB_REPLACE_METHOD_SIG);
 
                     if (replacementMethod) {
                         if (performTransformation(comp(),
@@ -4753,21 +4741,10 @@ TR::Node *TR_J9ByteCodeIlGenerator::genInvokeInner(TR::SymbolReference *symRef, 
                         logprintf(traceILGen, log, "serialClass = %p, serialClassLoader %s systemClassLoader\n",
                             serialClass, (!fej9()->isClassLoadedBySystemClassLoader(cl)) ? "!=" : "==");
                         if (serialClass && !fej9()->isClassLoadedBySystemClassLoader(cl)) {
-                            TR_ScratchList<TR_ResolvedMethod> methods(trMemory());
-                            fej9()->getResolvedMethods(trMemory(), serialClass, &methods);
-                            ListIterator<TR_ResolvedMethod> it(&methods);
-                            TR_ResolvedMethod *replacementMethod;
-                            for (replacementMethod = it.getCurrent(); replacementMethod;
-                                 replacementMethod = it.getNext()) {
-                                if (replacementMethod->nameLength() == JAVA_SERIAL_REPLACE_METHOD_NAME_LEN
-                                    && !strncmp(replacementMethod->nameChars(), JAVA_SERIAL_REPLACE_METHOD_NAME,
-                                        JAVA_SERIAL_REPLACE_METHOD_NAME_LEN)) {
-                                    if ((replacementMethod->signatureLength() == JAVA_SERIAL_REPLACE_METHOD_SIG_LEN)
-                                        && !strncmp(replacementMethod->signatureChars(), JAVA_SERIAL_REPLACE_METHOD_SIG,
-                                            JAVA_SERIAL_REPLACE_METHOD_SIG_LEN))
-                                        break; // found it
-                                }
-                            }
+                            TR_ResolvedMethod *replacementMethod
+                                = fej9()->getResolvedMethodForNameAndSignature(trMemory(), serialClass,
+                                    JAVA_SERIAL_REPLACE_METHOD_NAME, JAVA_SERIAL_REPLACE_METHOD_SIG);
+
                             if (replacementMethod) {
                                 if (performTransformation(comp(),
                                         "O^O JAVA SERIALIZATION OPTIMIZATION : changing ObjectInputStream.readObject "
