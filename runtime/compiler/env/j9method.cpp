@@ -2407,6 +2407,13 @@ void TR_ResolvedJ9Method::construct()
               { x(TR::java_math_BigInteger_bitCount, "bitCount", "()I") },
               { x(TR::java_math_BigInteger_bitLength, "bitLength", "()I") }, { TR::unknownMethod } };
 
+    static X MutableBigIntegerMethods[] = {
+        { x(TR::java_math_MutableBigInteger_divideMagnitude, "divideMagnitude",
+            "(Ljava/math/MutableBigInteger;Ljava/math/MutableBigInteger;Z)Ljava/math/MutableBigInteger;") },
+        { x(TR::java_math_MutableBigInteger_divideOneWord, "divideOneWord", "(ILjava/math/MutableBigInteger;)I") },
+        { TR::unknownMethod }
+    };
+
     static X OSMemoryMethods[]
         = { { x(TR::org_apache_harmony_luni_platform_OSMemory_putByte_JB_V, "putByte", "(JB)V") },
               { x(TR::org_apache_harmony_luni_platform_OSMemory_putShort_JS_V, "putShort", "(JS)V") },
@@ -4017,6 +4024,7 @@ void TR_ResolvedJ9Method::construct()
         { "sun/nio/cs/ext/SBCS_Decoder", EncodeMethods },
         { "java/lang/invoke/FoldHandle", FoldHandleMethods },
         { "java/lang/ref/SoftReference", JavaLangRefSoftReferenceMethods },
+        { "java/math/MutableBigInteger", MutableBigIntegerMethods },
         { 0 }
     };
 

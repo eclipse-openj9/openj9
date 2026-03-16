@@ -498,6 +498,8 @@ FirstJ9Method = LastOMRMethod + 1,
     java_math_BigInteger_init_long, java_math_BigInteger_toByteArray, java_math_BigInteger_stripLeadingZeroBytes1,
     java_math_BigInteger_stripLeadingZeroBytes2, java_math_BigInteger_bitCount, java_math_BigInteger_bitLength,
 
+    java_math_MutableBigInteger_divideMagnitude, java_math_MutableBigInteger_divideOneWord,
+
     java_text_NumberFormat_format,
 
     /* recognize the native subset of StrictMath */
