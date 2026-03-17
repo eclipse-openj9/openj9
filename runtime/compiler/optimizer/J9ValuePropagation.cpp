@@ -2234,7 +2234,24 @@ void J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                 }
                 break;
             }
+            case TR::java_lang_invoke_MethodHandleImpl_isCompileConstant: {
+                TR::Node *mhNode = node->getFirstChild();
+                bool isGlobal;
+                logprintf(trace(), log, "Trying to fold MethodHandleImpl.isCompileConstant\n");
+                TR::VPConstraint *mhConstraint = getConstraint(mhNode, isGlobal);
+                if (mhConstraint && mhConstraint->getKnownObject() && mhConstraint->isNonNullObject()) {
+                    transformCallToIconstInPlaceOrInDelayedTransformations(_curTree, 1, isGlobal, true, false);
+                    logprintf(trace(), log, "MethodHandleImpl.isCompileConstant folded to true\n");
+                    return;
+                }
 
+                if (!lastTimeThrough())
+                    return;
+
+                transformCallToIconstInPlaceOrInDelayedTransformations(_curTree, 0, isGlobal, true, false);
+                logprintf(trace(), log, "MethodHandleImpl.isCompileConstant folded to false\n");
+                break;
+            }
             default:
                 break;
         }

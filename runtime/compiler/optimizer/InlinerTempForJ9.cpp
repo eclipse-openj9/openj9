@@ -5731,6 +5731,7 @@ TR_InlinerFailureReason TR_J9InlinerPolicy::checkIfTargetInlineable(TR_CallTarge
         case TR::java_lang_invoke_MethodHandle_asType:
         case TR::java_lang_invoke_Invokers_checkVarHandleGenericType:
         case TR::java_lang_invoke_Invokers_checkGenericType:
+        case TR::java_lang_invoke_MethodHandleImpl_isCompileConstant:
             return DontInline_Callee;
         default:
             break;
