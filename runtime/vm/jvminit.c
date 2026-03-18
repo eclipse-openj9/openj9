@@ -133,6 +133,9 @@ J9_EXTERN_BUILDER_SYMBOL(cInterpreter);
 /* Generic rounding macro - result is a UDATA */
 #define ROUND_TO(granularity, number) (((UDATA)(number) + (granularity) - 1) & ~((UDATA)(granularity) - 1))
 
+#define MAX(A, B) (((A) > (B)) ? (A) : (B))
+#define MAX_FOUR(A, B, C, D) MAX(MAX(A, B), MAX(C, D))
+
 extern vmiError J9VMI_Initialize(J9JavaVM* vm);
 
 #if (defined(J9VM_OPT_SIDECAR))
@@ -2500,19 +2503,20 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			/* -Xtune:virtualized was added so that consumers could start adding it to their command lines */
 			IDATA xtuneVirtualizedIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_TUNE_VIRTUALIZED, NULL);
 			IDATA xtuneThroughputIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_TUNE_THROUGHPUT, NULL);
+			IDATA xtuneFootprintIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_TUNE_FOOTPRINT, NULL);
 
-			/* Only the last appearance of any of VMOPT_TUNE_VIRTUALIZED, VMOPT_TUNE_THROUGHPUT, VMOPT_TUNE_QUICKSTART will take effect */
-			if (xtuneVirtualizedIndex > xtuneThroughputIndex) {
-				if (xtuneVirtualizedIndex > xtuneQuickstartIndex) {
+			/* Only the last appearance of any of VMOPT_TUNE_VIRTUALIZED, VMOPT_TUNE_THROUGHPUT,
+			 * VMOPT_TUNE_QUICKSTART, VMOPT_TUNE_FOOTPRINT will take effect */
+			IDATA mx = MAX_FOUR(xtuneQuickstartIndex, xtuneVirtualizedIndex, xtuneThroughputIndex, xtuneFootprintIndex);
+			if (mx != -1) {
+				if (mx == xtuneQuickstartIndex) {
+					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_TUNE_QUICKSTART;
+				} else if (mx == xtuneVirtualizedIndex) {
 					vm->runtimeFlags |= J9_RUNTIME_TUNE_VIRTUALIZED;
-				} else {
-					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_TUNE_QUICKSTART;
-				}
-			} else {
-				if (xtuneThroughputIndex > xtuneQuickstartIndex) {
+				} else if (mx == xtuneThroughputIndex) {
 					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_TUNE_THROUGHPUT;
-				} else if (xtuneQuickstartIndex >= 0) {
-					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_TUNE_QUICKSTART;
+				} else if (mx == xtuneFootprintIndex) {
+					vm->runtimeFlags |= J9_RUNTIME_TUNE_FOOTPRINT;
 				}
 			}
 
@@ -3704,7 +3708,7 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 		JVMINIT_VERBOSE_INIT_VM_TRACE(vm, "-Xjit set\n");
 	}
 
-	if (xint == FALSE && xnoaot == FALSE) {
+	if (xint == FALSE && xnoaot == FALSE && (vm->runtimeFlags & J9_RUNTIME_TUNE_FOOTPRINT) == 0) {
 		/* Enable AOT if neither -Xint nor -Xnoaot is set as that is the default behavior */
 		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_AOT;
 	}

@@ -1480,6 +1480,8 @@ gcParseXXArguments(J9JavaVM *vm)
 			} else {
 				extensions->useGCStartupHints = false;
 			}
+		} else if (vm->runtimeFlags & J9_RUNTIME_TUNE_FOOTPRINT) {
+			extensions->useGCStartupHints = false;
 		}
 	}
 

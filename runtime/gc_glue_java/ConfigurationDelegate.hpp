@@ -118,20 +118,27 @@ public:
 			_extensions->_dynamicClassUnloadingKickoffThreshold = DYNAMIC_CLASS_UNLOADING_KICKOFF_THRESHOLD;
 		}
 
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-		/* Favour reduced memory consumption over pause times when checkpointing is enabled by
-		 * scaling the default min and max DNSS expected ratios by a constant factor, unless
-		 * at least one ratio was directly specified by the user.
+		/* Favour reduced memory consumption over pause times when checkpointing
+		 * is enabled or when -Xtune:footprint is specified, by scaling
+		 * the default min and max DNSS expected ratios by a constant factor,
+		 * unless at least one ratio was directly specified by the user.
 		 */
-		if (javaVM->internalVMFunctions->isCRaCorCRIUSupportEnabled(javaVM)) {
-			const double scaleFactor = 2;
-			if (!_extensions->dnssExpectedRatioMaximum._wasSpecified &&
-			    !_extensions->dnssExpectedRatioMinimum._wasSpecified) {
-				_extensions->dnssExpectedRatioMaximum._valueSpecified *= scaleFactor;
-				_extensions->dnssExpectedRatioMinimum._valueSpecified *= scaleFactor;
-			}
+        double scaleFactor = 1;
+        bool xtune_footprint = javaVM->runtimeFlags & J9_RUNTIME_TUNE_FOOTPRINT;
+        if (xtune_footprint) {
+            scaleFactor = 4;
+        } else {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+            if (javaVM->internalVMFunctions->isCRaCorCRIUSupportEnabled(javaVM)) {
+                scaleFactor = 2;
+            }
+#endif
+        }
+        if (!_extensions->dnssExpectedRatioMaximum._wasSpecified &&
+			!_extensions->dnssExpectedRatioMinimum._wasSpecified) {
+			_extensions->dnssExpectedRatioMaximum._valueSpecified *= scaleFactor;
+			_extensions->dnssExpectedRatioMinimum._valueSpecified *= scaleFactor;
 		}
-#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 		return true;
 	}
