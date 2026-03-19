@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include "optimizer/Optimization.hpp"
 #include "optimizer/OptimizationManager.hpp"
+#include "optimizer/UseDefInfo.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "env/VerboseLog.hpp"
@@ -44,7 +45,8 @@ class Block;
  *  -# peform a quick pass through the treetops to see if there are any Vector API calls in the method,
  *     return if there are no any to avoid unnecessary analysis
  *  -# use the following data structures:
- *      - \c _aliasTable: alias table, indexed by symbol reference number. It is used for aliasing and class validation
+ *      - \c _aliasTable: alias table, indexed by symbol reference number or by global node index.
+ *        It is used for aliasing and class validation
  *      - \c _nodeTable: node table, indexed by global node index. It is used for mapping original nodes to their scalar
  * equivalents
  *      - \c _methodTable: table of method handlers indexed by the recognized method id
@@ -339,6 +341,26 @@ public:
     };
 
     /** \brief
+     *     Element of the symRef table.
+     *
+     */
+    class symRefTableElement {
+    public:
+        TR_ALLOC(TR_Memory::Inliner); // TODO: add new type
+
+        symRefTableElement()
+            : _vecSymRefs(NULL)
+            , _scalarSymRefs(NULL)
+        {}
+
+        // List of vectorized symRefs with different types (linear search by type)
+        TR_Array<TR::SymbolReference *> *_vecSymRefs;
+
+        // For scalarization: array of scalar symRefs (one per lane)
+        TR_Array<TR::SymbolReference *> *_scalarSymRefs;
+    };
+
+    /** \brief
      *     Element of the alias table.
      *  -# After a call to \c buildVectorAliases():
      *        - for each symbol reference,  \c _aliases points to all symbol references it is aliased with.
@@ -360,9 +382,7 @@ public:
         TR_ALLOC(TR_Memory::Inliner); // TODO: add new type
 
         vectorAliasTableElement()
-            : _symRef(NULL)
-            , _vecSymRef(NULL)
-            , _vinfo()
+            : _vinfo()
             , _aliases(NULL)
             , _classId(0)
             , _cantVectorize(false)
@@ -370,13 +390,6 @@ public:
             , _tempAliases(NULL)
             , _tempClassId(0)
         {}
-
-        TR::SymbolReference *_symRef;
-
-        union {
-            TR::SymbolReference *_vecSymRef;
-            TR_Array<TR::SymbolReference *> *_scalarSymRefs;
-        };
 
         vectorInfo _vinfo;
         TR_BitVector *_aliases;
@@ -410,7 +423,56 @@ public:
         TR_Array<TR::Node *> *_scalarNodes;
     };
 
+    TR_Array<symRefTableElement> _symRefTable;
+
     TR_Array<vectorAliasTableElement> _aliasTable;
+
+    uint32_t _aliasTableSize;
+    TR_UseDefInfo *_useDefInfo;
+
+    /** \brief
+     *     Returns node's alias id that is used in alias webs
+     *
+     *  \param node
+     *     Node
+     */
+    uint32_t nodeAliasId(TR::Node *node)
+    {
+        return _useDefBasedAliasing ? node->getUseDefIndex() : node->getSymbolReference()->getReferenceNumber();
+    }
+
+    /** \brief
+     *     Returns alias table size
+     *
+     */
+    uint32_t getAliasTableSize()
+    {
+        return _useDefBasedAliasing ? _useDefInfo->getTotalNodes() : comp()->getSymRefTab()->getNumSymRefs();
+    }
+
+    /** \brief
+     *     Returns symbol reference for alias id
+     *
+     *  \param id
+     *     Alias id
+     *
+     */
+    TR::SymbolReference *getSymRefFromAliasId(uint32_t id)
+    {
+        TR::SymbolReference *symRef = NULL;
+
+        if (_useDefBasedAliasing) {
+            TR::Node *node = _useDefInfo->getNode(id);
+
+            if (node && node->getOpCode().hasSymbolReference())
+                symRef = node->getSymbolReference();
+        } else {
+            symRef = comp()->getSymRefTab()->getSymRef(id);
+        }
+
+        return symRef;
+    }
+
     TR_Array<nodeTableElement> _nodeTable;
     TR_Array<TR_Array<TR_Array<TR_OpaqueClassBlock *> *> *> _boxingClasses;
 
@@ -420,6 +482,7 @@ public:
     TR_BitVector _visitedNodes;
     TR_BitVector _seenClasses;
     bool _boxingAllowed;
+    bool _useDefBasedAliasing;
 
     /** \brief
      *     Checks if vector is supported on current platform
@@ -578,8 +641,12 @@ public:
     /** \brief
      *     The method either checks if all boxing is supported
      *     or perfroms final IL transformation
+     *
+     *  \return
+     *     \c true if the check was successful
+     *     \c false if the check was not successful
      */
-    void transformIL(bool checkBoxing);
+    bool transformIL(bool checkBoxing);
 
     /** \brief
      *     Method called by transfomIL for each node recursively
@@ -596,8 +663,12 @@ public:
      *   \param checkBoxing
      *     true if in checkBoxing mode and false in transformation mode
      *
+     *  \return
+     *     \c true if the check was successful
+     *     \c false if the check was not successful
+     *
      */
-    void visitNodeToTransformIL(TR::TreeTop *treeTop, TR::Node *node, TR::Node *parent, bool checkBoxing);
+    bool visitNodeToTransformIL(TR::TreeTop *treeTop, TR::Node *node, TR::Node *parent, bool checkBoxing);
 
     /** \brief
      *     The method performs analysis and transformation
@@ -803,13 +874,13 @@ public:
         int32_t vectorAliasTableElement::*classField);
 
     /** \brief
-     *     Sets \c _classId of a symbol reference to -1 to indicate it's invalid
+     *     Sets \c _classId of a node to -1 to indicate it's invalid
      *
-     *   \param symRef
-     *     Symbol reference
+     *   \param node
+     *     Node
      *
      */
-    void invalidateSymRef(TR::SymbolReference *symRef);
+    void invalidateNode(TR::Node *node);
 
     /** \brief
      *     Adds symbol references of two nodes to each other alias sets
@@ -824,6 +895,16 @@ public:
      *     true if aliasing is caused by storing one temp into another
      */
     void alias(TR::Node *node1, TR::Node *node2, bool aliasTemps = false);
+    /** \brief
+     *     Aliases a definition node with all its uses using use-def chains
+     *
+     *  \param defNode
+     *     Definition node (astore) to be aliased with its uses
+     *
+     *  \param rhsHasKnownType
+     *     RHS has known type
+     */
+    void aliasDefNode(TR::Node *defNode, bool rhsHasKnownType);
 
     /** \brief
      *     Finds vector length from SPECIES node if it's a known object
