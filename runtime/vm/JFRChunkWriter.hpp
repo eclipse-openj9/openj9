@@ -110,6 +110,7 @@ enum MetadataTypeID {
 	CPULoadID = 95,
 	ThreadCPULoadID = 96,
 	ThreadContextSwitchRateID = 97,
+	NetworkUtilizationID = 98,
 	ThreadStatisticsID = 99,
 	ClassLoadingStatisticsID = 100,
 	ClassLoaderStatisticsID = 101,
@@ -122,6 +123,7 @@ enum MetadataTypeID {
 	GCHeapConfigID = 133,
 	YoungGenerationConfigID = 134,
 	VirtualSpaceID = 149,
+	NetworkInterfaceNameID = 163,
 	ThreadID = 164,
 	ThreadGroupID = 165,
 	ClassID = 166,
@@ -236,6 +238,7 @@ private:
 	static constexpr int YOUNG_GARBAGE_COLLECTION_EVENT_SIZE = sizeof(U_8) + (2 * LEB128_64_SIZE) + (3 * LEB128_32_SIZE);
 	static constexpr int GARBAGE_COLLECTION_EVENT_SIZE = sizeof(U_8) + (6 * LEB128_64_SIZE) + (2 * LEB128_32_SIZE);
 	static constexpr int GC_HEAP_SUMMARY_EVENT_SIZE = sizeof(U_8) + (7 * LEB128_64_SIZE) + (3 * LEB128_32_SIZE);
+	static constexpr int NETWORK_UTILIZATION_EVENT_SIZE = (4 * sizeof(U_64)) + sizeof(U_32);
 
 	static constexpr int METADATA_ID = 1;
 
@@ -430,6 +433,8 @@ done:
 
 			writeStacktraceCheckpointEvent();
 
+			writeNetworkInterfaceNameCheckpointEvent();
+
 			pool_do(_constantPoolTypes.getExecutionSampleTable(), &writeExecutionSampleEvent, _bufferWriter);
 
 			pool_do(_constantPoolTypes.getThreadStartTable(), &writeThreadStartEvent, _bufferWriter);
@@ -470,7 +475,9 @@ done:
 
 			pool_do(_constantPoolTypes.getGCHeapSummaryTable(), &writeGCHeapSummaryEvent, _bufferWriter);
 
-			/* Only write constant events in first chunk */
+			pool_do(_constantPoolTypes.getNetworkUtilizationTable(), &writeNetworkUtilizationEvent, this);
+
+			/* Only write constant events in first chunk. */
 			if (0 == _vm->jfrState.jfrChunkCount) {
 				writeJVMInformationEvent();
 
@@ -878,6 +885,8 @@ done:
 
 	U_8 *writeStacktraceCheckpointEvent();
 
+	U_8 *writeNetworkInterfaceNameCheckpointEvent();
+
 	U_8 *writeJVMInformationEvent();
 
 	U_8 *writePhysicalMemoryEvent();
@@ -931,6 +940,8 @@ done:
 	static void writeGarbageCollectionEvent(void *anElement, void *userData);
 
 	static void writeGCHeapSummaryEvent(void *anElement, void *userData);
+
+	static void writeNetworkUtilizationEvent(void *anElement, void *userData);
 
 	UDATA
 	calculateRequiredBufferSize()
@@ -1031,6 +1042,8 @@ done:
 		requiredBufferSize += (_constantPoolTypes.getGarbageCollectionCount() * GARBAGE_COLLECTION_EVENT_SIZE);
 
 		requiredBufferSize += (_constantPoolTypes.getGCHeapSummaryCount() * GC_HEAP_SUMMARY_EVENT_SIZE);
+
+		requiredBufferSize += (_constantPoolTypes.getNetworkUtilizationCount() * NETWORK_UTILIZATION_EVENT_SIZE);
 
 		return requiredBufferSize;
 	}

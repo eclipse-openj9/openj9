@@ -667,6 +667,37 @@ VM_JFRChunkWriter::writeStacktraceCheckpointEvent()
 }
 
 U_8 *
+VM_JFRChunkWriter::writeNetworkInterfaceNameCheckpointEvent()
+{
+	U_8 *dataStart = NULL;
+
+	if (_constantPoolTypes.getNetworkInterfaceNameCount() > 0) {
+		dataStart = writeCheckpointEventHeader(Generic, 1);
+
+		/* Write class ID. */
+		_bufferWriter->writeLEB128(NetworkInterfaceNameID);
+
+		/* Write number of entries. */
+		_bufferWriter->writeLEB128(_constantPoolTypes.getNetworkInterfaceNameCount());
+
+		NetworkInterfaceNameEntry *entry = _constantPoolTypes.getNetworkInterfaceNameEntry();
+		while (NULL != entry) {
+			/* Write index. */
+			_bufferWriter->writeLEB128(entry->index);
+
+			/* Write network interface name. */
+			writeStringLiteral(entry->networkInterfaceName);
+			entry = entry->next;
+		}
+
+		/* Write size. */
+		writeEventSize(dataStart);
+	}
+
+	return dataStart;
+}
+
+U_8 *
 VM_JFRChunkWriter::writeJVMInformationEvent()
 {
 	JVMInformationEntry *jvmInfo= &(VM_JFRConstantPoolTypes::getJFRConstantEvents(_vm)->JVMInfoEntry);
@@ -1643,6 +1674,35 @@ VM_JFRChunkWriter::writeGCHeapSummaryEvent(void *anElement, void *userData)
 	bufferWriter->writeLEB128(entry->heapUsed);
 
 	/* Write size */
+	writeEventSize(bufferWriter, dataStart);
+}
+
+void
+VM_JFRChunkWriter::writeNetworkUtilizationEvent(void *anElement, void *userData)
+{
+	NetworkUtilizationEntry *entry = (NetworkUtilizationEntry *)anElement;
+	VM_JFRChunkWriter *chunkWriter = (VM_JFRChunkWriter  *)userData;
+	VM_BufferWriter *bufferWriter = chunkWriter->_bufferWriter;
+
+	/* Reserve size field. */
+	U_8 *dataStart = reserveEventSize(bufferWriter);
+
+	/* Write event type. */
+	bufferWriter->writeLEB128(NetworkUtilizationID);
+
+	/* Write start time. */
+	bufferWriter->writeLEB128(entry->ticks);
+
+	/* Write network interface name index. */
+	bufferWriter->writeLEB128(entry->networkInterfaceIndex);
+
+	/* Write read rate. */
+	bufferWriter->writeLEB128(entry->readRate);
+
+	/* Write write rate. */
+	bufferWriter->writeLEB128(entry->writeRate);
+
+	/* Write size. */
 	writeEventSize(bufferWriter, dataStart);
 }
 
