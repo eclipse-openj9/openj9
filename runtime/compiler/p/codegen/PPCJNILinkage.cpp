@@ -162,6 +162,16 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
         passReceiver = !fej9->jniDoNotPassReceiver(resolvedMethod);
         passThread = !fej9->jniDoNotPassThread(resolvedMethod);
         targetAddress = (uintptr_t)resolvedMethod->startAddressForJNIMethod(comp());
+
+        if (resolvedMethodSymbol->getMandatoryRecognizedMethod() == TR::java_lang_invoke_MethodHandle_linkToNative) {
+            // The target C function does not expect JNIEnv* as first argument.
+            passThread = false;
+            // After the linkToNative transformation only primitive args remain as
+            // children -- no receiver exists.  passReceiver must stay true so
+            // child 0 is not skipped.  wrapRefs must be false because there are
+            // no JNI object references to wrap/unwrap.
+            wrapRefs = false;
+        }
     } else {
         gpuHelperSymRef = comp()->getSymRefTab()->methodSymRefFromName(comp()->getMethodSymbol(),
             "com/ibm/jit/JITHelpers", "GPUHelper", "()V", TR::MethodSymbol::Static);

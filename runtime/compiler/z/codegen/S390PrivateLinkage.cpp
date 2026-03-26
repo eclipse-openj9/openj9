@@ -2981,6 +2981,22 @@ TR::Register *J9::Z::JNILinkage::buildDirectDispatch(TR::Node *callNode)
     bool isCollapseJNIReferenceFrame = !fej9->jniNoSpecialTeardown(resolvedMethod);
     bool isCheckException = !fej9->jniNoExceptionsThrown(resolvedMethod);
     bool isKillAllUnlockedGPRs = isJNIGCPoint;
+    bool isUnwrapJNIReturnValue = true;
+
+    if (cs->getMandatoryRecognizedMethod() == TR::java_lang_invoke_MethodHandle_linkToNative) {
+        // The target C function does not expect JNIEnv* as first argument.
+        isPassJNIThread = false;
+        // After the linkToNative transformation only primitive args remain as
+        // children -- no receiver exists. passReceiver must stay true so child 0
+        // is not skipped.  isUnwrapJNIReturnValue must be false because there are
+        // no JNI object references to unwrap.  This is the Z equivalent of
+        // wrapRefs=false on other platforms.
+        isUnwrapJNIReturnValue = false;
+        // isCollapseJNIReferenceFrame must be false because canDirectNativeCall
+        // will set isJNICallOutFrame=false (no JNI frame created), so there is
+        // nothing to collapse.
+        isCollapseJNIReferenceFrame = false;
+    }
 
     killMask = killAndAssignRegister(killMask, deps, &methodAddressReg,
         (comp()->target().isLinux()) ? TR::RealRegister::GPR1 : TR::RealRegister::GPR9, codeGen, true);
@@ -3136,7 +3152,9 @@ TR::Register *J9::Z::JNILinkage::buildDirectDispatch(TR::Node *callNode)
         new (trHeapMemory()) TR::MemoryReference(methodMetaDataVirtualRegister,
             (int32_t)fej9->thisThreadGetJavaLiteralsOffset(), codeGen));
 
-    processJNIReturnValue(callNode, codeGen, javaReturnRegister);
+    if (isUnwrapJNIReturnValue) {
+        processJNIReturnValue(callNode, codeGen, javaReturnRegister);
+    }
 
     if (isCollapseJNIReferenceFrame) {
         collapseJNIReferenceFrame(callNode, javaStackPointerRealRegister, javaLitPoolVirtualRegister, methodAddressReg);
