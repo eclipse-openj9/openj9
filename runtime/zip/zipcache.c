@@ -47,17 +47,15 @@
  */
 #define ZIP_CACHE_VERSION 1
 
-#define UDATA_TOP_BIT    (((UDATA)1)<<(sizeof(UDATA)*8-1))
-#define ISCLASS_BIT    UDATA_TOP_BIT
-#define NOT_FOUND	((UDATA) (~0))
-#define OFFSET_MASK	(~ISCLASS_BIT)
-#define	IMPLICIT_ENTRY	(~ISCLASS_BIT)
-
+#define ISCLASS_BIT (((U_64)1) << ((sizeof(U_64) * 8) - 1))
+#define NOT_FOUND (~(U_64)0)
+#define OFFSET_MASK (~ISCLASS_BIT)
+#define IMPLICIT_ENTRY (~ISCLASS_BIT)
 
 void zipCache_freeChunk (J9PortLibrary * portLib, J9ZipChunkHeader *chunk);
 J9ZipDirEntry *zipCache_searchDirListCaseInsensitive (J9ZipDirEntry * dirEntry, const char *namePtr, UDATA nameSize, BOOLEAN isClass);
 J9ZipChunkHeader *zipCache_allocateChunk (J9PortLibrary * portLib);
-J9ZipFileEntry *zipCache_addToFileList (J9PortLibrary * portLib, J9ZipCacheEntry * zce, J9ZipDirEntry * dirEntry, const char *namePtr, IDATA nameSize, BOOLEAN isClass, UDATA elementOffset);
+J9ZipFileEntry *zipCache_addToFileList (J9PortLibrary *portLib, J9ZipCacheEntry *zce, J9ZipDirEntry *dirEntry, const char *namePtr, IDATA nameSize, BOOLEAN isClass, U_64 elementOffset);
 static UDATA *zipCache_reserveEntry (J9ZipCacheEntry *zce, J9ZipChunkHeader * chunk, UDATA entryBytes, UDATA stringBytes, char **namePtrOut);
 J9ZipFileEntry *zipCache_searchFileList (J9ZipDirEntry * dirEntry, const char *namePtr, UDATA nameSize, BOOLEAN isClass);
 J9ZipDirEntry *zipCache_addToDirList (J9PortLibrary * portLib, J9ZipCacheEntry * zce, J9ZipDirEntry * dirEntry,const char *namePtr, IDATA nameSize, BOOLEAN isClass);
@@ -91,10 +89,9 @@ void zipCache_walkCache(J9PortLibrary * portLib, J9ZipCacheEntry *zce, J9ZipDirE
  * @param[in] zipNameLength
  *
  * @return the new zip cache if one was successfully created, NULL otherwise
- *
-*/
-
-J9ZipCache *zipCache_new(J9PortLibrary * portLib, char *zipName, IDATA zipNameLength, IDATA zipFileSize, I_64 zipTimeStamp)
+ */
+J9ZipCache *
+zipCache_new(J9PortLibrary *portLib, char *zipName, IDATA zipNameLength, I_64 zipFileSize, I_64 zipTimeStamp)
 {
 	J9ZipChunkHeader *chunk;
 	J9ZipCacheInternal *zci;
@@ -155,11 +152,12 @@ J9ZipCache *zipCache_new(J9PortLibrary * portLib, char *zipName, IDATA zipNameLe
  * @param[in] zipCache the zip cache to modify
  * @param[in] startCentralDir the offset to the central dir in the zip file
 */
-void zipCache_setStartCentralDir(J9ZipCache * zipCache, IDATA startCentralDir)
+void
+zipCache_setStartCentralDir(J9ZipCache *zipCache, U_64 startCentralDir)
 {
 	J9ZipCacheInternal *zci = (J9ZipCacheInternal *)zipCache;
 	J9ZipCacheEntry *zce = zci->entry;
-	zce->startCentralDir = startCentralDir;
+	zce->startCentralDir = (I_64)startCentralDir;
 }
 
 
@@ -437,7 +435,9 @@ BOOLEAN zipCache_isCopied(J9ZipCache * zipCache) {
  * 
  * @return TRUE if the parameters match this zip cache
  */
-BOOLEAN zipCache_isSameZipFile(J9ZipCache * zipCache, IDATA zipTimeStamp, IDATA zipFileSize, const char *zipFileName, IDATA zipFileNameLength) {
+BOOLEAN
+zipCache_isSameZipFile(J9ZipCache *zipCache, IDATA zipTimeStamp, I_64 zipFileSize, const char *zipFileName, IDATA zipFileNameLength)
+{
 	J9ZipCacheInternal *zci = (J9ZipCacheInternal *)zipCache;
 	J9ZipCacheEntry *zce = zci->entry;
 	const char *localZipFileName;
@@ -472,10 +472,12 @@ BOOLEAN zipCache_isSameZipFile(J9ZipCache * zipCache, IDATA zipTimeStamp, IDATA 
  * 
  * @return the startCentralDir of the cache
  */
-IDATA zipCache_getStartCentralDir(J9ZipCache *zipCache) {
+U_64
+zipCache_getStartCentralDir(J9ZipCache *zipCache)
+{
 	J9ZipCacheInternal *zci = (J9ZipCacheInternal *)zipCache;
 	J9ZipCacheEntry *zce = zci->entry;
-	return zce->startCentralDir;
+	return (U_64)zce->startCentralDir;
 }
 
 
@@ -550,7 +552,7 @@ J9ZipDirEntry *zipCache_copyDirEntry(J9ZipCacheEntry *orgzce, J9ZipDirEntry *org
 */
 
 BOOLEAN 
-zipCache_addElement(J9ZipCache * zipCache, char *elementName, IDATA elementNameLength, UDATA elementOffset)
+zipCache_addElement(J9ZipCache *zipCache, char *elementName, IDATA elementNameLength, U_64 elementOffset)
 {
 	J9PortLibrary * portLib = zipCache->portLib;
 	J9ZipCacheInternal *zci = (J9ZipCacheInternal *)zipCache;
@@ -646,7 +648,7 @@ zipCache_addElement(J9ZipCache * zipCache, char *elementName, IDATA elementNameL
  * @return -1 if no element of that name has been explicitly added to the cache.
  *
 */
-UDATA
+U_64
 zipCache_findElement(J9ZipCache * zipCache, const char *elementName, IDATA elementNameLength, BOOLEAN searchDirList)
 {
 	J9ZipCacheInternal *zci = (J9ZipCacheInternal *)zipCache;
@@ -821,14 +823,15 @@ J9ZipDirEntry *zipCache_addToDirList(J9PortLibrary * portLib, J9ZipCacheEntry *z
 /* If possible, the new file entry will be appended to the active zipFileRecord. */
 /* Otherwise, a new zipFileRecord will be allocated to hold the new zipFileEntry. */
 
-J9ZipFileEntry *zipCache_addToFileList(J9PortLibrary *portLib, J9ZipCacheEntry *zce, J9ZipDirEntry * dirEntry, const char *namePtr, IDATA nameSize,
-									 BOOLEAN isClass, UDATA elementOffset)
+J9ZipFileEntry *
+zipCache_addToFileList(J9PortLibrary *portLib, J9ZipCacheEntry *zce, J9ZipDirEntry *dirEntry,
+		const char *namePtr, IDATA nameSize, BOOLEAN isClass, U_64 elementOffset)
 {
-	J9ZipFileEntry *entry;
-	J9ZipFileRecord *record;
+	J9ZipFileEntry *entry = NULL;
+	J9ZipFileRecord *record = NULL;
 	J9ZipChunkHeader *chunk = ZIP_SRP_GET(zce->currentChunk, J9ZipChunkHeader *);
 	J9ZipDirEntry *chunkActiveDir = ZIP_SRP_GET(zce->chunkActiveDir, J9ZipDirEntry *);
-	char *name;
+	char *name = NULL;
 
 	if (chunkActiveDir == dirEntry) {
 		entry = (J9ZipFileEntry *) zipCache_reserveEntry(zce, chunk, sizeof(*entry), nameSize, &name);
@@ -1111,9 +1114,9 @@ IDATA zipCache_enumNew(J9ZipCache * zipCache, char *directoryName, void **handle
  * @return the required size of nameBuf if nameBufSize is insufficient to hold the entire name (does not skip the element)
  *
  * @see zipCache_enumNew
-*
-*/
-IDATA zipCache_enumElement(void *handle, char *nameBuf, UDATA nameBufSize, UDATA * offset)
+ */
+IDATA
+zipCache_enumElement(void *handle, char *nameBuf, UDATA nameBufSize, U_64 *offset)
 {
 	J9ZipCacheTraversal *traversal = (J9ZipCacheTraversal *) handle;
 	J9ZipCacheInternal *zci = (J9ZipCacheInternal *)traversal->zipCache;
