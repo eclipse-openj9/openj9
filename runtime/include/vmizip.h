@@ -67,10 +67,10 @@ typedef struct VMIZipEntry
   U_8 *filename;
   U_8 *extraField;
   U_8 *fileComment;
-  I_32 dataPointer;
-  I_32 filenamePointer;
-  I_32 extraFieldPointer;
-  I_32 fileCommentPointer;
+  I_64 dataPointer;
+  I_64 filenamePointer;
+  I_64 extraFieldPointer;
+  I_64 fileCommentPointer;
   U_32 compressedSize;
   U_32 uncompressedSize;
   U_32 crc32;

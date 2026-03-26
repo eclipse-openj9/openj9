@@ -107,10 +107,10 @@ typedef struct J9ZipEntry {
     U_8* filename;
     U_8* extraField;
     U_8* fileComment;
-    U_32 dataPointer;
-    U_32 filenamePointer;
-    U_32 extraFieldPointer;
-    I_32 fileCommentPointer;
+    I_64 dataPointer;
+    I_64 filenamePointer;
+    I_64 extraFieldPointer;
+    I_64 fileCommentPointer;
     U_32 compressedSize;
     U_32 uncompressedSize;
     U_32 crc32;

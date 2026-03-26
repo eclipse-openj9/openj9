@@ -100,7 +100,7 @@ void* zdataalloc (void* opaque, U_32 items, U_32 size);
 static I_32 getZipEntryUsingDirectory(J9PortLibrary *portLib, J9ZipFile *zipFile, J9ZipEntry *entry,
 		const char *fileName, IDATA fileNameLength, BOOLEAN readDataPointer);
 static BOOLEAN isSeekFailure(I_64 seekResult, I_64 expectedValue);
-static BOOLEAN isOutside4Gig(I_64 value);
+static BOOLEAN isUnsupported(I_64 value);
 
 #if defined(J9VM_THR_PREEMPTIVE)
 #include "omrthread.h"
@@ -199,21 +199,25 @@ openFailed:
 /**
  * @param seekResult actual result of the seek
  * @param expectedValue expected seek result
- * @return true if seekResult is negative or larger than the maximum U_32 positive value or does not match the expected position
+ * @return true if seekResult is negative or too big or does not match the expected position
  */
 static VMINLINE BOOLEAN
 isSeekFailure(I_64 seekResult, I_64 expectedValue) {
-	return isOutside4Gig(seekResult) || (seekResult != expectedValue);
+	return isUnsupported(seekResult) || (seekResult != expectedValue);
 }
 
 /**
  * @param value value to test
  * @param expectedValue expected seek result
- * @return true if seekResult is negative or larger than the maximum U_32 positive value
+ * @return true if seekResult is negative or too big
  */
 static VMINLINE BOOLEAN
-isOutside4Gig(I_64 value) {
-	return (value < 0) || (value > UINT32_MAX);
+isUnsupported(I_64 value) {
+#if defined(J9VM_ENV_DATA64)
+	return value < 0;
+#else /* defined(J9VM_ENV_DATA64) */
+	return (value < 0) || (value > (I_64)UINT32_MAX);
+#endif /* defined(J9VM_ENV_DATA64) */
 }
 
 /*
@@ -293,7 +297,7 @@ static I_32 inflateData(struct workBuffer* workBuf, U_8* inputBuffer, U_32 input
  			    ZIP_ERR_OUT_OF_MEMORY if can't allocate memory
 */
 I_32
-zip_getZipComment(J9PortLibrary* portLib, J9ZipFile *zipFile, U_8 ** commentString, UDATA * commentLength)
+zip_getZipComment(J9PortLibrary *portLib, J9ZipFile *zipFile, U_8 **commentString, UDATA *commentLength)
 {
 	U_8 *current;
 	U_8 buffer[SCAN_CHUNK_SIZE + MIN_ZIPFILE_SIZE];
@@ -314,13 +318,13 @@ zip_getZipComment(J9PortLibrary* portLib, J9ZipFile *zipFile, U_8 ** commentStri
 	*commentString = NULL;
 	*commentLength = 0;
 	seekResult = j9file_seek(zipFile->fd, 0, EsSeekEnd);
-	if (isOutside4Gig(seekResult)) {
+	if (isUnsupported(seekResult)) {
 		zipFile->pointer = -1;
 		EXIT();
 		return ZIP_ERR_FILE_READ_ERROR;
 	}
 	fileSize = seekResult;
-	zipFile->pointer = (U_32) fileSize;
+	zipFile->pointer = fileSize;
 	while (TRUE)  {
 		I_64 size = 0;
 		I_64 i = 0;
@@ -343,13 +347,13 @@ zip_getZipComment(J9PortLibrary* portLib, J9ZipFile *zipFile, U_8 ** commentStri
 		}
 		bytesAlreadyRead += size;
 		seekResult = j9file_seek(zipFile->fd, fileSize-bytesAlreadyRead, EsSeekSet);
-		if (isOutside4Gig(seekResult)) {
+		if (isUnsupported(seekResult)) {
 			zipFile->pointer = -1;
 			EXIT();
 			return ZIP_ERR_FILE_READ_ERROR;
 		}
-		zipFile->pointer = (U_32) seekResult;
-		if(readFromEnd == FALSE) {
+		zipFile->pointer = seekResult;
+		if (!readFromEnd) {
 			/* First scan of SCAN_CHUNK_SIZE should find ECDR
 			 * if not then zipfile comment starts near 1k*n boundary
 			 * where n is 1..64 (one eg is comment size of 1003 bytes),
@@ -367,7 +371,7 @@ zip_getZipComment(J9PortLibrary* portLib, J9ZipFile *zipFile, U_8 ** commentStri
 			EXIT();
 			return ZIP_ERR_FILE_READ_ERROR;
 		}
-		zipFile->pointer += (U_32) size;
+		zipFile->pointer += size;
 		dataSize = 0;
 		/* Scan the buffer (backwards) for CentralEnd signature = PK^E^F. */
 		for (i = size; i--; dataSize++, commentOffsetFromEnd++)
@@ -432,7 +436,7 @@ zip_getZipComment(J9PortLibrary* portLib, J9ZipFile *zipFile, U_8 ** commentStri
 								/* Buffer may not be able to hold complete comment string, so get it from file */
 								zipFile->pointer =  zipFile->pointer - dataSize + ZIPFILE_COMMENT_OFFSET;
 								seekResult = j9file_seek(zipFile->fd, zipFile->pointer, EsSeekSet);
-								if (isOutside4Gig(seekResult)) {
+								if (isUnsupported(seekResult)) {
 									zipFile->pointer = -1;
 									j9mem_free_memory(*commentString);
 									EXIT();
@@ -501,12 +505,12 @@ zip_freeZipComment(J9PortLibrary * portLib, U_8 * commentString)
 I_32
 scanForZipCentralEnd(J9PortLibrary *portLib, J9ZipFile *zipFile, J9ZipCentralEnd *endEntry)
 {
-	U_8 *current;
+	U_8 *current = NULL;
 	U_8 buffer[SCAN_CHUNK_SIZE + MIN_ZIPFILE_SIZE];
 	I_32 state = 0;
 	I_64 size = 0;
 	U_32 dataSize = 0;
-	I_64 seekResult;
+	I_64 seekResult = 0;
 	I_64 fileSize = 0;
 	I_64 bytesAlreadyRead = 0;
 	BOOLEAN readFromEnd = TRUE;
@@ -515,17 +519,17 @@ scanForZipCentralEnd(J9PortLibrary *portLib, J9ZipFile *zipFile, J9ZipCentralEnd
 	PORT_ACCESS_FROM_PORT(portLib);
 
 	seekResult = j9file_seek(zipFile->fd, 0, EsSeekEnd);
-	if (isOutside4Gig(seekResult)) {
+	if (isUnsupported(seekResult)) {
 		zipFile->pointer = -1;
 		return ZIP_ERR_FILE_READ_ERROR;
 	}
 	fileSize = seekResult;
-	zipFile->pointer = (U_32) fileSize;
+	zipFile->pointer = fileSize;
 
-	while(TRUE)  {
-		I_64 i;
+	while (TRUE) {
+		I_64 i = 0;
 		/* Fill the buffer. */
-		if (bytesAlreadyRead == fileSize)  {
+		if (bytesAlreadyRead == fileSize) {
 			zipFile->pointer = -1;
 			return ZIP_ERR_FILE_CORRUPT;
 		}
@@ -536,12 +540,12 @@ scanForZipCentralEnd(J9PortLibrary *portLib, J9ZipFile *zipFile, J9ZipCentralEnd
 		}
 		bytesAlreadyRead += size;
 		seekResult = j9file_seek(zipFile->fd, fileSize-bytesAlreadyRead, EsSeekSet);
-		if (isOutside4Gig(seekResult)) {
+		if (isUnsupported(seekResult)) {
 			zipFile->pointer = -1;
 			return ZIP_ERR_FILE_READ_ERROR;
 		}
-		zipFile->pointer = (U_32)seekResult;
-		if(readFromEnd == FALSE) {
+		zipFile->pointer = seekResult;
+		if (!readFromEnd) {
 			/* First scan of SCAN_CHUNK_SIZE should find ECDR
 			 * if not then zipfile comments are greater than 1002 bytes,
 			 * so read 22(size of ECDR) more bytes in 2nd and later scans
@@ -555,7 +559,7 @@ scanForZipCentralEnd(J9PortLibrary *portLib, J9ZipFile *zipFile, J9ZipCentralEnd
 				zipFile->pointer = -1;
 				return ZIP_ERR_FILE_READ_ERROR;
 		}
-		zipFile->pointer += (U_32) size;
+		zipFile->pointer += size;
 
 		/* Scan the buffer (backwards) for CentralEnd signature = PK^E^F. */
 		for (i = size; i--; dataSize++)
@@ -637,11 +641,11 @@ readZip64CentralEnd(J9PortLibrary *portLib, J9ZipFile *zipFile, J9ZipCentralEnd 
 
 	seekResult = j9file_seek(zipFile->fd, endEntry->endCentralDirRecordPosition, EsSeekSet);
 	/* The size limit should be removed by the issue https://github.com/eclipse-openj9/openj9/issues/23441 */
-	if (isOutside4Gig(seekResult)) {
+	if (isUnsupported(seekResult)) {
 		zipFile->pointer = -1;
 		return ZIP_ERR_FILE_READ_ERROR;
 	}
-	zipFile->pointer = (U_32) seekResult;
+	zipFile->pointer = seekResult;
 	if (ZIP64_EOCD_SIZE != j9file_read( zipFile->fd, buffer, ZIP64_EOCD_SIZE)) {
 		zipFile->pointer = -1;
 		return ZIP_ERR_FILE_READ_ERROR;
@@ -689,11 +693,11 @@ scanForZip64CentralEnd(J9PortLibrary *portLib, J9ZipFile *zipFile, J9ZipCentralE
 	U_8 *current = NULL;
 
 	seekResult = j9file_seek(zipFile->fd, endEntry->endCentralDirRecordPosition - ZIP64_EOCD_LOCATOR_SIZE, EsSeekSet);
-	if (isOutside4Gig(seekResult)) {
+	if (isUnsupported(seekResult)) {
 		zipFile->pointer = -1;
 		return ZIP_ERR_FILE_READ_ERROR;
 	}
-	zipFile->pointer = (U_32) seekResult;
+	zipFile->pointer = seekResult;
 	if (ZIP64_EOCD_LOCATOR_SIZE != j9file_read( zipFile->fd, buffer, ZIP64_EOCD_LOCATOR_SIZE)) {
 		zipFile->pointer = -1;
 		return ZIP_ERR_FILE_READ_ERROR;
@@ -754,14 +758,15 @@ I_32 scanForDataDescriptor(J9PortLibrary* portLib, J9ZipFile *zipFile, J9ZipEntr
 	U_8 *current;
 	U_8 buffer[SCAN_CHUNK_SIZE], descriptor[16];
 	I_32 state = 0;
-	U_32 dataSize, blockPointer;
-	I_64 seekResult;
+	I_64 dataSize = 0;
+	I_64 blockPointer = 0;
+	I_64 seekResult = 0;
 
 	PORT_ACCESS_FROM_PORT(portLib);
 
 	/* Skip ahead and read the data descriptor. The compressed size should be 0. */
-	if (zipFile->pointer != (IDATA)(zipEntry->dataPointer + zipEntry->compressedSize))  {
-		zipFile->pointer = (U_32) zipEntry->dataPointer + zipEntry->compressedSize;
+	if (zipFile->pointer != (zipEntry->dataPointer + zipEntry->compressedSize))  {
+		zipFile->pointer = zipEntry->dataPointer + zipEntry->compressedSize;
 	}
 	seekResult = j9file_seek(zipFile->fd, zipFile->pointer, EsSeekSet);
 	if (isSeekFailure(seekResult, zipFile->pointer)) {
@@ -783,8 +788,8 @@ I_32 scanForDataDescriptor(J9PortLibrary* portLib, J9ZipFile *zipFile, J9ZipEntr
 			zipFile->pointer = -1;
 			return ZIP_ERR_FILE_READ_ERROR;
 		}
-		zipFile->pointer += (U_32) size;
-		blockPointer += (U_32) size;
+		zipFile->pointer += size;
+		blockPointer += size;
 
 		/* Scan the buffer. */
 		for(i = 0; i < size; i++, dataSize++) {
@@ -822,11 +827,11 @@ I_32 scanForDataDescriptor(J9PortLibrary* portLib, J9ZipFile *zipFile, J9ZipEntr
 							current = &buffer[i + 1];
 						} else {
 							seekResult = j9file_seek(zipFile->fd, zipEntry->dataPointer + dataSize + 1, EsSeekSet);
-							if (isOutside4Gig(seekResult)) {
+							if (isUnsupported(seekResult)) {
 								zipFile->pointer = -1;
 								return ZIP_ERR_FILE_READ_ERROR;
 							}
-							zipFile->pointer = (U_32) seekResult;
+							zipFile->pointer = seekResult;
 							if( j9file_read( zipFile->fd, descriptor, 12 ) != 12) {
 								zipFile->pointer = -1;
 								return ZIP_ERR_FILE_READ_ERROR;
@@ -848,11 +853,11 @@ I_32 scanForDataDescriptor(J9PortLibrary* portLib, J9ZipFile *zipFile, J9ZipEntr
 
 						/* Header looked bogus. Reset the pointer and continue scanning. */
 						seekResult = j9file_seek(zipFile->fd, zipEntry->dataPointer + blockPointer, EsSeekSet);
-						if (isOutside4Gig(seekResult)) {
+						if (isUnsupported(seekResult)) {
 							zipFile->pointer = -1;
 							return ZIP_ERR_FILE_READ_ERROR;
 						}
-						zipFile->pointer = (U_32) seekResult;
+						zipFile->pointer = seekResult;
 					}
 					else state = 0;
 					break;
@@ -874,13 +879,14 @@ I_32 scanForDataDescriptor(J9PortLibrary* portLib, J9ZipFile *zipFile, J9ZipEntr
 			ZIP_ERR_OUT_OF_MEMORY
 			ZIP_ERR_INTERNAL_ERROR
 */
-static I_32 zip_populateCache(J9PortLibrary* portLib, J9ZipFile *zipFile, J9ZipCentralEnd *endEntry, IDATA startCentralDir)
+static I_32
+zip_populateCache(J9PortLibrary *portLib, J9ZipFile *zipFile, J9ZipCentralEnd *endEntry, IDATA startCentralDir)
 {
 	PORT_ACCESS_FROM_PORT(portLib);
 
 	I_32 result = 0;
 	IDATA bufferSize = ZIP_WORK_BUFFER_SIZE;
-	IDATA unreadSize = 0;
+	I_64 unreadSize = 0;
 	IDATA bufferedSize = 0;
 	IDATA bytesToRead = 0;
 	IDATA filenameCopied;
@@ -888,21 +894,23 @@ static I_32 zip_populateCache(J9PortLibrary* portLib, J9ZipFile *zipFile, J9ZipC
 	U_8 *buffer = NULL;
 	U_8 *filename = NULL;
 	IDATA filenameSize = 256;  /* Should be sufficient for most filenames */
-	U_8 *current;
-	U_32 sig;
-	U_32 localHeaderOffset;
-	I_64 seekResult;
-	J9ZipCachePool *cachePool;
+	U_8 *current = NULL;
+	U_32 sig = 0;
+	U_32 localHeaderOffset = 0;
+	I_64 seekResult = 0;
+	J9ZipCachePool *cachePool = NULL;
 	BOOLEAN freeFilename = FALSE;
 	BOOLEAN freeBuffer = FALSE;
 
 	if (!zipFile->cache)  return ZIP_ERR_INTERNAL_ERROR;
 
 	unreadSize = endEntry->dirSize + 4 /* slop */;
-
-	if (zipFile->pointer != startCentralDir)  {
-		zipFile->pointer = (U_32) startCentralDir;
-	}
+#if defined(J9VM_ENV_DATA64)
+	zipFile->pointer = startCentralDir;
+#else
+	/* Cast startCentralDir, which should be defined as UDATA. */
+	zipFile->pointer = (U_32)startCentralDir;
+#endif
 	seekResult = j9file_seek(zipFile->fd, zipFile->pointer, EsSeekSet);
 	if (isSeekFailure(seekResult, zipFile->pointer)) {
 		zipFile->pointer = -1;
@@ -925,7 +933,9 @@ static I_32 zip_populateCache(J9PortLibrary* portLib, J9ZipFile *zipFile, J9ZipC
 	}
 
 	/* No point in allocating more than we'll actually need.. */
-	if (bufferSize > unreadSize)  bufferSize = unreadSize;
+	if (bufferSize > unreadSize) {
+		bufferSize = (IDATA)unreadSize;
+	}
 
 	if (buffer == NULL) {
 		freeBuffer = freeFilename = TRUE;
@@ -950,32 +960,31 @@ static I_32 zip_populateCache(J9PortLibrary* portLib, J9ZipFile *zipFile, J9ZipC
 	while(unreadSize)  {
 		I_64 readResult = 0;
 		/* Read as much as needed into buffer. */
-		bytesToRead = bufferSize-bufferedSize;
-		if (bytesToRead > unreadSize)  bytesToRead = unreadSize;
+		bytesToRead = bufferSize - bufferedSize;
+		if (bytesToRead > unreadSize) {
+			bytesToRead = (IDATA)unreadSize;
+		}
 		readResult = j9file_read(zipFile->fd, buffer+bufferedSize, bytesToRead);
 		if (readResult < 0)  {
 			result = ZIP_ERR_FILE_READ_ERROR;
 			zipFile->pointer = -1;
 			goto finished;
 		}
-		zipFile->pointer += (U_32) readResult;
-		unreadSize -= (U_32) readResult;
-		bufferedSize += (U_32) readResult;
+		zipFile->pointer += (U_32)readResult;
+		unreadSize -= (U_32)readResult;
+		bufferedSize += (U_32)readResult;
 		current = buffer;
 
 		/* consume entries until we run out. */
 		while ( current+46 < buffer+bufferedSize )  {
-			IDATA entryPointer;
-
-			entryPointer = (IDATA)(zipFile->pointer + (current-(buffer+bufferedSize)));
-
+			UDATA entryPointer = (UDATA)(zipFile->pointer + (current - (buffer + bufferedSize)));
 			ZIP_NEXT_U32(sig, current);
-			if(sig == ZIP_CentralEnd)  {
+			if (ZIP_CentralEnd == sig) {
 				/* We're done here. */
 				result = 0;
 				goto finished;
 			}
-			if (sig != ZIP_CentralHeader)  {
+			if (ZIP_CentralHeader != sig) {
 				/* This is unexpected. */
 				result = ZIP_ERR_FILE_CORRUPT;
 				goto finished;
@@ -1035,16 +1044,18 @@ static I_32 zip_populateCache(J9PortLibrary* portLib, J9ZipFile *zipFile, J9ZipC
 					goto finished;
 				}
 				bytesToRead = bufferSize-bufferedSize;
-				if (bytesToRead > unreadSize)  bytesToRead = unreadSize;
+				if (bytesToRead > unreadSize) {
+					bytesToRead = (IDATA)unreadSize;
+				}
 				readResult = j9file_read(zipFile->fd, buffer+bufferedSize, bytesToRead);
 				if (readResult < 0)  {
 					result = ZIP_ERR_FILE_READ_ERROR;
 					zipFile->pointer = -1;
 					goto finished;
 				}
-				zipFile->pointer += (U_32) readResult;
-				unreadSize -= (U_32) readResult;
-				bufferedSize += (U_32) readResult;
+				zipFile->pointer += (U_32)readResult;
+				unreadSize -= (U_32)readResult;
+				bufferedSize += (U_32)readResult;
 				current = buffer;
 			}
 			filename[entry.filenameLength] = '\0';  /* null-terminate */
@@ -1078,12 +1089,12 @@ static I_32 zip_populateCache(J9PortLibrary* portLib, J9ZipFile *zipFile, J9ZipC
 				unreadSize -= bytesToRead;
 		
 				seekResult = j9file_seek(zipFile->fd, bytesToRead, EsSeekCur);
-				if (isOutside4Gig(seekResult)) {
+				if (isUnsupported(seekResult)) {
 					zipFile->pointer = -1;
 					result = ZIP_ERR_FILE_READ_ERROR;
 					goto finished;
 				}
-				zipFile->pointer = (U_32) seekResult;
+				zipFile->pointer = seekResult;
 			}
 		}
 		bufferedSize -= (current-buffer);
@@ -1114,21 +1125,22 @@ finished:
 			ZIP_ERR_NO_MORE_ENTRIES
 */
 static I_32
-readZipEntry(J9PortLibrary * portLib, J9ZipFile * zipFile, J9ZipEntry * zipEntry, const char *filename, IDATA filenameLength,
-		IDATA * enumerationPointer, IDATA * entryStart, BOOLEAN findDirectory, BOOLEAN readDataPointer)
+readZipEntry(J9PortLibrary *portLib, J9ZipFile *zipFile, J9ZipEntry *zipEntry, const char *filename, IDATA filenameLength,
+		IDATA *enumerationPointer, IDATA *entryStart, BOOLEAN findDirectory, BOOLEAN readDataPointer)
 {
 	PORT_ACCESS_FROM_PORT(portLib);
 
 	I_32 result = 0;
 	U_8 buffer[46 + 128];
-	U_8 *current;
-	U_32 sig;
+	U_8 *current = NULL;
+	U_32 sig = 0;
 	I_64 readLength = 0;
-	I_64 seekResult;
-	I_64 readResult= 0;
-	U_8 *readBuffer;
-	IDATA currentEntryPointer, localEntryPointer;
-	I_64 headerSize;
+	I_64 seekResult = 0;
+	I_64 readResult = 0;
+	U_8 *readBuffer = NULL;
+	I_64 currentEntryPointer = 0;
+	I_64 localEntryPointer = 0;
+	I_64 headerSize = 0;
 
   retry:
 	if (entryStart)
@@ -1156,7 +1168,7 @@ readZipEntry(J9PortLibrary * portLib, J9ZipFile * zipFile, J9ZipEntry * zipEntry
 			return ZIP_ERR_OUT_OF_MEMORY;
 	}
 
-	currentEntryPointer = localEntryPointer = (IDATA)zipFile->pointer;
+	currentEntryPointer = localEntryPointer = zipFile->pointer;
 
 	readResult = j9file_read(zipFile->fd, current, (IDATA) readLength);
 	if ((readResult < 22) || (filename && !(readResult == readLength || (findDirectory && readResult == (readLength-1))))) {
@@ -1178,12 +1190,12 @@ readZipEntry(J9PortLibrary * portLib, J9ZipFile * zipFile, J9ZipEntry * zipEntry
 		/* We failed to predict a data descriptor here.  This should be an error (i.e. only happens in malformed zips?) 
 		   but, but we will silently skip over it */
 		seekResult = j9file_seek(zipFile->fd, currentEntryPointer + 16, EsSeekSet);
-		if (isOutside4Gig(seekResult)) {
+		if (isUnsupported(seekResult)) {
 			zipFile->pointer = -1;
 			result = ZIP_ERR_FILE_READ_ERROR;
 			goto finished;
 		}
-		zipFile->pointer = (U_32) seekResult;
+		zipFile->pointer = seekResult;
 
 		if (zipFile->pointer == currentEntryPointer + 16) {
 			if (readBuffer) {
@@ -1283,8 +1295,8 @@ readZipEntry(J9PortLibrary * portLib, J9ZipFile * zipFile, J9ZipEntry * zipEntry
 		}
 	}
 
-	zipEntry->filenamePointer = (U_32) (currentEntryPointer + headerSize);
-	zipEntry->extraFieldPointer = (U_32) (localEntryPointer + 30 + zipEntry->filenameLength);
+	zipEntry->filenamePointer = currentEntryPointer + headerSize;
+	zipEntry->extraFieldPointer = localEntryPointer + 30 + zipEntry->filenameLength;
 	/* Must always set the dataPointer as it may be used by scanForDataDescriptor()
 	 * when reading a local header.
 	 */
@@ -1299,8 +1311,8 @@ readZipEntry(J9PortLibrary * portLib, J9ZipFile * zipFile, J9ZipEntry * zipEntry
 		U_8 *buf2 = buf;
 		U_16 lost;
 		/* Also, we know where the comment is */
-		zipEntry->fileCommentPointer = (U_32) (currentEntryPointer + headerSize +
-			zipEntry->filenameLength + zipEntry->extraFieldLength);
+		zipEntry->fileCommentPointer = currentEntryPointer + headerSize
+				+ zipEntry->filenameLength + zipEntry->extraFieldLength;
 		/* Fix the dataPointer when reading the central directory. The extraFieldLength in the central
 		 * directory gives the size of the extra field data in the central directory, not the size of
 		 * the extra field data in the corresponding local entry.
@@ -1310,7 +1322,7 @@ readZipEntry(J9PortLibrary * portLib, J9ZipFile * zipFile, J9ZipEntry * zipEntry
 				if ( j9file_read( zipFile->fd, buf, 2 ) == 2 ) {
 					ZIP_NEXT_U16( lost, buf2 );
 					zipEntry->dataPointer = zipEntry->extraFieldPointer + lost;
-					zipFile->pointer = (U_32) (localEntryPointer + 30);
+					zipFile->pointer = localEntryPointer + 30;
 				}
 			}
 		}
@@ -1329,7 +1341,11 @@ readZipEntry(J9PortLibrary * portLib, J9ZipFile * zipFile, J9ZipEntry * zipEntry
 
 	if (enumerationPointer) {
 		/* Work out where the next entry is supposed to be */
+#if defined(J9VM_ENV_DATA64)
 		*enumerationPointer = zipEntry->fileCommentPointer + zipEntry->fileCommentLength;
+#else /* defined(J9VM_ENV_DATA64) */
+		*enumerationPointer = (U_32)(zipEntry->fileCommentPointer + zipEntry->fileCommentLength);
+#endif /* defined(J9VM_ENV_DATA64) */
 	}
 
 	if (readBuffer)
@@ -1433,7 +1449,7 @@ zip_searchCache(J9PortLibrary * portLib, char *filename, J9ZipCachePool *cachePo
 	filenameLength = strlen((const char*)filename);
 	timeStamp = j9file_lastmod((const char*)filename);
 	actualFileSize = j9file_length((const char*)filename);
-	if (isOutside4Gig(actualFileSize)) {
+	if (isUnsupported(actualFileSize)) {
 		result = ZIP_ERR_INTERNAL_ERROR;
 		goto finished;
 	}
@@ -1466,7 +1482,7 @@ finished:
  * @return	ZIP_ERR_INTERNAL_ERROR if there was an internal error
  */
 I_32
-zip_setupCache(J9PortLibrary * portLib, J9ZipFile *zipFile, J9ZipCache *cache, J9ZipCachePool *cachePool)
+zip_setupCache(J9PortLibrary *portLib, J9ZipFile *zipFile, J9ZipCache *cache, J9ZipCachePool *cachePool)
 {
 	PORT_ACCESS_FROM_PORT(portLib);	
 	I_32 result = 0;
@@ -1491,7 +1507,7 @@ zip_setupCache(J9PortLibrary * portLib, J9ZipFile *zipFile, J9ZipCache *cache, J
 	filenameLength = strlen((const char*)zipFile->filename);
 	timeStamp = j9file_lastmod((const char*)zipFile->filename);
 	actualFileSize = j9file_length((const char*)zipFile->filename);
-	if (isOutside4Gig(actualFileSize)) {
+	if (isUnsupported(actualFileSize)) {
 		result = ZIP_ERR_INTERNAL_ERROR;
 		goto finished;
 	}
@@ -1665,9 +1681,9 @@ void zip_freeZipEntry(J9PortLibrary * portLib, J9ZipEntry * entry)
  * @return 	ZIP_ERR_OUT_OF_MEMORY if there is not enough memory to complete this call
  *
  * @see zip_freeZipEntry
- *
-*/
-I_32 zip_getNextZipEntry(J9PortLibrary* portLib, J9ZipFile* zipFile, J9ZipEntry* zipEntry, IDATA* nextEntryPointer, BOOLEAN readDataPointer)
+ */
+I_32
+zip_getNextZipEntry(J9PortLibrary *portLib, J9ZipFile *zipFile, J9ZipEntry *zipEntry, IDATA *nextEntryPointer, BOOLEAN readDataPointer)
 {
 	PORT_ACCESS_FROM_PORT(portLib);
 	I_32 result = 0;
@@ -1687,7 +1703,11 @@ retry:
 
 	/* Seek to the entry's position in the file. */
 	if (pointer != zipFile->pointer)  {
-		zipFile->pointer = (U_32) pointer;
+#if defined(J9VM_ENV_DATA64)
+		zipFile->pointer = pointer;
+#else /* defined(J9VM_ENV_DATA64) */
+		zipFile->pointer = (U_32)pointer;
+#endif /* defined(J9VM_ENV_DATA64) */
 	}
 	seekResult =  j9file_seek(zipFile->fd, zipFile->pointer, EsSeekSet);
 	if (isSeekFailure(seekResult, zipFile->pointer)) {
@@ -1780,7 +1800,11 @@ zip_getZipEntry(J9PortLibrary * portLib, J9ZipFile * zipFile, J9ZipEntry *entry,
 
 		/* Seek to the entry's position in the file. */
 		if (zipFile->pointer != position) {
+#if defined(J9VM_ENV_DATA64)
+			zipFile->pointer = position;
+#else /* defined(J9VM_ENV_DATA64) */
 			zipFile->pointer = (U_32) position;
+#endif /* defined(J9VM_ENV_DATA64) */
 		}
 		seekResult =  j9file_seek(zipFile->fd, zipFile->pointer, EsSeekSet);
 		if (isSeekFailure(seekResult, zipFile->pointer)) {
@@ -1818,7 +1842,11 @@ zip_getZipEntry(J9PortLibrary * portLib, J9ZipFile * zipFile, J9ZipEntry *entry,
 		while (TRUE) {
 
 			if (zipFile->pointer != position) {
+#if defined(J9VM_ENV_DATA64)
+				zipFile->pointer = position;
+#else /* defined(J9VM_ENV_DATA64) */
 				zipFile->pointer = (U_32) position;
+#endif /* defined(J9VM_ENV_DATA64) */
 			}
 			seekResult = j9file_seek(zipFile->fd, zipFile->pointer, EsSeekSet);
 			if (isSeekFailure(seekResult, zipFile->pointer)) {
@@ -1932,7 +1960,7 @@ getZipEntryUsingDirectory(J9PortLibrary *portLib, J9ZipFile *zipFile, J9ZipEntry
 					break;
 				}
 				if (0 == strncmp(fileName, (const char*)readBuffer, fileNameLength)) {
-					zipFile->pointer = (U_32) (localHeaderOffset + offsetCorrection);
+					zipFile->pointer = localHeaderOffset + offsetCorrection;
 					seekResult = j9file_seek(zipFile->fd,zipFile->pointer, EsSeekSet); /* go to the actual entry */
 					if (isSeekFailure(seekResult, zipFile->pointer)) {
 						result = ZIP_ERR_FILE_READ_ERROR;
@@ -2017,7 +2045,7 @@ I_32 zip_getZipEntryData(J9PortLibrary* portLib, J9ZipFile* zipFile, J9ZipEntry*
 		IDATA readResult = 0;
 		/* No compression - just read the data in. */
 		if (zipFile->pointer != entry->dataPointer)  {
-			zipFile->pointer = (U_32) entry->dataPointer;
+			zipFile->pointer = entry->dataPointer;
 		}
 		seekResult =  j9file_seek(zipFile->fd, zipFile->pointer, EsSeekSet);
 		if (isSeekFailure(seekResult, zipFile->pointer)) {
@@ -2593,7 +2621,7 @@ void zip_resetZipFile(J9PortLibrary* portLib, J9ZipFile* zipFile, IDATA *nextEnt
  *
  * @see zip_freeZipEntry
 */
-I_32 zip_getZipEntryFromOffset(J9PortLibrary * portLib, J9ZipFile * zipFile, J9ZipEntry * entry, IDATA offset, BOOLEAN readDataPointer)
+I_32 zip_getZipEntryFromOffset(J9PortLibrary *portLib, J9ZipFile *zipFile, J9ZipEntry *entry, IDATA offset, BOOLEAN readDataPointer)
 {
 	PORT_ACCESS_FROM_PORT(portLib);
 	I_32 result;
@@ -2602,10 +2630,14 @@ I_32 zip_getZipEntryFromOffset(J9PortLibrary * portLib, J9ZipFile * zipFile, J9Z
 	ENTER();
 
 	if (zipFile->pointer != offset) {
+#if defined(J9VM_ENV_DATA64)
+		zipFile->pointer = offset;
+#else /* defined(J9VM_ENV_DATA64) */
 		zipFile->pointer = (U_32) offset;
+#endif /* defined(J9VM_ENV_DATA64) */
 	}
 	seekResult = j9file_seek(zipFile->fd, zipFile->pointer, EsSeekSet);
-	if (isOutside4Gig(seekResult) || (zipFile->pointer != offset)) {
+	if (isUnsupported(seekResult) || (zipFile->pointer != offset)) {
 		zipFile->pointer = -1;
 		EXIT();
 		return ZIP_ERR_FILE_READ_ERROR;
