@@ -41,6 +41,9 @@ extern "C" {
 
 #include "j9port.h"
 
+/* Allow DDR to distinguish dumps from older ones that predate 64-bit support. */
+#define ZIP64_SUPPORT 1
+
 typedef struct J9ZipCachePool J9ZipCachePool;
 
 #define J9WSRP IDATA
@@ -85,18 +88,9 @@ typedef struct J9ZipCentralEnd {
     U_16 diskNumber;
     U_16 dirStartDisk;
     U_16 thisDiskEntries;
-#if defined(J9VM_ENV_DATA64)
-    /* entries in the central dir <= INT32_MAX */
-    I_32 totalEntries;
-    /* size of the central dir <= LLONG_MAX */
-    I_64 dirSize;
-    /* offset of the central dir <= LLONG_MAX */
-    I_64 dirOffset;
-#else /* defined(J9VM_ENV_DATA64) */
-    U_16 totalEntries;
-    U_32 dirSize;
-    U_32 dirOffset;
-#endif /* defined(J9VM_ENV_DATA64) */
+    U_32 totalEntries; /**< entries in the central dir <= INT32_MAX */
+    U_64 dirSize; /**< size of the central dir <= INT64_MAX */
+    U_64 dirOffset; /**< offset of the central dir <= INT64_MAX */
     U_16 commentLength;
     U_8* comment;
     U_64 endCentralDirRecordPosition;
@@ -107,10 +101,10 @@ typedef struct J9ZipEntry {
     U_8* filename;
     U_8* extraField;
     U_8* fileComment;
-    U_32 dataPointer;
-    U_32 filenamePointer;
-    U_32 extraFieldPointer;
-    I_32 fileCommentPointer;
+    U_64 dataPointer;
+    U_64 filenamePointer;
+    U_64 extraFieldPointer;
+    U_64 fileCommentPointer;
     U_32 compressedSize;
     U_32 uncompressedSize;
     U_32 crc32;
@@ -132,7 +126,7 @@ typedef struct J9ZipFile {
     struct J9ZipCache* cache;
     void* cachePool;
     IDATA fd;
-    I_64 pointer;
+    U_64 pointer;
     U_8 internalFilename[80];
     U_8 type;
 } J9ZipFile;
@@ -147,7 +141,7 @@ typedef struct J9ZipChunkHeader {
 
 typedef struct J9ZipFileEntry {
     UDATA nameLength;
-    UDATA zipFileOffset;
+    U_64 zipFileOffset;
 } J9ZipFileEntry;
 
 typedef struct J9ZipFileRecord {
@@ -162,7 +156,7 @@ typedef struct J9ZipDirEntry {
     J9WSRP next;
     J9WSRP fileList;
     J9WSRP dirList;
-    UDATA zipFileOffset;
+    U_64 zipFileOffset;
 } J9ZipDirEntry;
 
 #define J9ZIPDIRENTRY_NEXT(base) WSRP_GET((base)->next, struct J9ZipDirEntry*)
@@ -171,9 +165,9 @@ typedef struct J9ZipDirEntry {
 
 typedef struct J9ZipCacheEntry {
     J9WSRP zipFileName;
-    IDATA zipFileSize;
+    I_64 zipFileSize;
     I_64 zipTimeStamp;
-    IDATA startCentralDir;
+    I_64 startCentralDir; /**< should be U_64 (due to DDR limitation), read/write will use U_64 */
     J9WSRP currentChunk;
     J9WSRP chunkActiveDir;
     struct J9ZipDirEntry root;

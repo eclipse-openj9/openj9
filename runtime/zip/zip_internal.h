@@ -76,7 +76,7 @@ struct J9ZipCachePool  {
 	I_64 zipTimeStamp;
 	char const *zipFileName;
 	IDATA zipFileNameLength;
-	IDATA zipFileSize;
+	I_64 zipFileSize;
 	MUTEX mutex;
 	IDATA hookInitRC;
 	void* userData;
@@ -148,16 +148,16 @@ typedef struct J9ZipCacheTraversal {
 * @return BOOLEAN
 */
 BOOLEAN 
-zipCache_isSameZipFile(J9ZipCache * zipCache, IDATA zipTimeStamp, IDATA zipFileSize, const char *zipFileName, IDATA zipFileNameLength);
+zipCache_isSameZipFile(J9ZipCache *zipCache, IDATA zipTimeStamp, I_64 zipFileSize, const char *zipFileName, IDATA zipFileNameLength);
 
 
 /**
 * @brief
 * @param zipCache
-* @return IDATA
+* @return U_64
 */
-IDATA 
-zipCache_getStartCentralDir(J9ZipCache * zipCache);
+U_64
+zipCache_getStartCentralDir(J9ZipCache *zipCache);
 
 
 /**

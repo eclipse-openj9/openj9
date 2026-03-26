@@ -37,7 +37,7 @@
 #define EXIT()
 #endif
 
-I_32 
+I_32
 vmizip_getZipEntryData(VMInterface * vmi, VMIZipFile * zipFile, VMIZipEntry * entry, U_8 * buffer, U_32 bufferSize) 
 {
 	J9VMInterface* j9vmi = (J9VMInterface*)vmi;
@@ -45,16 +45,16 @@ vmizip_getZipEntryData(VMInterface * vmi, VMIZipFile * zipFile, VMIZipEntry * en
 	return zip_getZipEntryData(PORTLIB, (J9ZipFile *)zipFile, (J9ZipEntry *)entry, buffer, bufferSize);
 }
 
-I_32 
-vmizip_getZipEntryRawData(VMInterface * vmi, VMIZipFile * zipFile, VMIZipEntry * entry, U_8 * buffer, U_32 bufferSize, U_32 offset) 
+I_32
+vmizip_getZipEntryRawData(VMInterface *vmi, VMIZipFile *zipFile, VMIZipEntry *entry, U_8 *buffer, U_32 bufferSize, U_64 offset)
 {
-	J9VMInterface* j9vmi = (J9VMInterface*)vmi;
+	J9VMInterface *j9vmi = (J9VMInterface *)vmi;
 	PORT_ACCESS_FROM_JAVAVM(j9vmi->javaVM);
 	return zip_getZipEntryRawData(PORTLIB, (J9ZipFile *)zipFile, (J9ZipEntry *)entry, buffer, bufferSize, offset);
 }
 
 I_32
-vmizip_getZipEntryFromOffset(VMInterface * vmi, VMIZipFile * zipFile, VMIZipEntry * entry, IDATA offset, I_32 flags) 
+vmizip_getZipEntryFromOffset(VMInterface *vmi, VMIZipFile *zipFile, VMIZipEntry *entry, U_64 offset, I_32 flags)
 {
 	J9VMInterface* j9vmi = (J9VMInterface*)vmi;
 	PORT_ACCESS_FROM_JAVAVM(j9vmi->javaVM);
@@ -62,22 +62,22 @@ vmizip_getZipEntryFromOffset(VMInterface * vmi, VMIZipFile * zipFile, VMIZipEntr
 }
 
 void
-vmizip_resetZipFile(VMInterface * vmi, VMIZipFile * zipFile, IDATA * nextEntryPointer)
+vmizip_resetZipFile(VMInterface *vmi, VMIZipFile *zipFile, U_64 *nextEntryPointer)
 {
 	J9VMInterface* j9vmi = (J9VMInterface*)vmi;
 	PORT_ACCESS_FROM_JAVAVM(j9vmi->javaVM);
 	zip_resetZipFile(PORTLIB, (J9ZipFile *)zipFile, nextEntryPointer);
 }
 
-I_32 
-vmizip_getNextZipEntry(VMInterface * vmi, VMIZipFile * zipFile, VMIZipEntry * zipEntry, IDATA * nextEntryPointer, I_32 flags)
+I_32
+vmizip_getNextZipEntry(VMInterface *vmi, VMIZipFile *zipFile, VMIZipEntry *zipEntry, U_64 *nextEntryPointer, I_32 flags)
 {
 	J9VMInterface* j9vmi = (J9VMInterface*)vmi;
 	PORT_ACCESS_FROM_JAVAVM(j9vmi->javaVM);
 	return zip_getNextZipEntry(PORTLIB, (J9ZipFile *)zipFile, (J9ZipEntry *)zipEntry, nextEntryPointer, (BOOLEAN)((flags & (I_32)ZIP_FLAG_READ_DATA_POINTER) != 0));
 }
 
-I_32 
+I_32
 vmizip_getZipEntry(VMInterface * vmi, VMIZipFile * zipFile, VMIZipEntry * entry, const char *filename, I_32 flags)
 {
 	J9VMInterface* j9vmi = (J9VMInterface*)vmi;
@@ -107,7 +107,7 @@ vmizip_getZipEntryWithSize(VMInterface * vmi, VMIZipFile * zipFile, VMIZipEntry 
 	return zip_getZipEntry(PORTLIB, (J9ZipFile *) zipFile, (J9ZipEntry *) entry, filename, filenameLength, zipEntryFlags);
 }
 
-I_32 
+I_32
 vmizip_getZipEntryExtraField(VMInterface * vmi, VMIZipFile * zipFile, VMIZipEntry * entry, U_8 * buffer, U_32 bufferSize)
 {
 	J9VMInterface* j9vmi = (J9VMInterface*)vmi;
@@ -308,9 +308,9 @@ vmizipCache_enumNew(void * zipCache, char *directoryName, void **handle)
 {
 	return zipCache_enumNew((J9ZipCache *)zipCache, directoryName, handle);
 }
-	
-IDATA 
-vmizipCache_enumElement(void *handle, char *nameBuf, UDATA nameBufSize, UDATA * offset)
+
+IDATA
+vmizipCache_enumElement(void *handle, char *nameBuf, UDATA nameBufSize, U_64 *offset)
 {
 	return zipCache_enumElement(handle, nameBuf, nameBufSize, offset);
 }

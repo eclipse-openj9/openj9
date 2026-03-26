@@ -67,18 +67,18 @@ extern "C" {
 typedef struct J9ZipFunctionTable {
 	void (*zip_freeZipComment)(J9PortLibrary * portLib, U_8 * commentString);
 	void (*zip_freeZipEntry)(J9PortLibrary * portLib, J9ZipEntry * entry);
-	I_32 (*zip_getNextZipEntry)(J9PortLibrary* portLib, J9ZipFile* zipFile, J9ZipEntry* zipEntry, IDATA* nextEntryPointer, BOOLEAN readDataPointer);
+	I_32 (*zip_getNextZipEntry)(J9PortLibrary *portLib, J9ZipFile *zipFile, J9ZipEntry *zipEntry, U_64 *nextEntryPointer, BOOLEAN readDataPointer);
 	I_32 (*zip_getZipComment)(J9PortLibrary* portLib, J9ZipFile *zipFile, U_8 ** commentString, UDATA * commentLength);
 	I_32 (*zip_getZipEntry)(J9PortLibrary *portLib, J9ZipFile *zipFile, J9ZipEntry *entry, const char *filename, IDATA fileNameLength, U_32 flags);
 	I_32 (*zip_getZipEntryComment)(J9PortLibrary * portLib, J9ZipFile * zipFile, J9ZipEntry * entry, U_8 * buffer, U_32 bufferSize);
 	I_32 (*zip_getZipEntryData)(J9PortLibrary* portLib, J9ZipFile* zipFile, J9ZipEntry* entry, U_8* buffer, U_32 bufferSize);
 	I_32 (*zip_getZipEntryExtraField)(J9PortLibrary* portLib, J9ZipFile* zipFile, J9ZipEntry* entry, U_8* buffer, U_32 bufferSize);
-	I_32 (*zip_getZipEntryFromOffset)(J9PortLibrary * portLib, J9ZipFile * zipFile, J9ZipEntry * entry, IDATA offset, BOOLEAN readDataPointer);
-	I_32 (*zip_getZipEntryRawData)(J9PortLibrary* portLib, J9ZipFile* zipFile, J9ZipEntry* entry, U_8* buffer, U_32 bufferSize, U_32 offset);
+	I_32 (*zip_getZipEntryFromOffset)(J9PortLibrary * portLib, J9ZipFile * zipFile, J9ZipEntry * entry, U_64 offset, BOOLEAN readDataPointer);
+	I_32 (*zip_getZipEntryRawData)(J9PortLibrary *portLib, J9ZipFile *zipFile, J9ZipEntry *entry, U_8 *buffer, U_32 bufferSize, U_64 offset);
 	void (*zip_initZipEntry)(J9PortLibrary* portLib, J9ZipEntry* entry);
 	I_32 (*zip_openZipFile)(J9PortLibrary *portLib, char *filename, J9ZipFile *zipFile, J9ZipCachePool *cachePool, U_32 flags);
 	I_32 (*zip_releaseZipFile)(J9PortLibrary* portLib, struct J9ZipFile* zipFile);
-	void (*zip_resetZipFile)(J9PortLibrary* portLib, J9ZipFile* zipFile, IDATA *nextEntryPointer);
+	void (*zip_resetZipFile)(J9PortLibrary *portLib, J9ZipFile *zipFile, U_64 *nextEntryPointer);
 } J9ZipFunctionTable;
 
 /* ---------------- zcpool.c ---------------- */
@@ -110,7 +110,8 @@ BOOLEAN zipCachePool_addRef(J9ZipCachePool *zcp, J9ZipCache *zipCache);
 * @param zipTimeStamp
 * @return J9ZipCache *
 */
-J9ZipCache * zipCachePool_findCache(J9ZipCachePool *zcp, char const *zipFileName, IDATA zipFileNameLength, IDATA zipFileSize, I_64 zipTimeStamp);
+J9ZipCache *
+zipCachePool_findCache(J9ZipCachePool *zcp, char const *zipFileName, IDATA zipFileNameLength, I_64 zipFileSize, I_64 zipTimeStamp);
 
 
 /**
@@ -179,7 +180,7 @@ void zfree(void* opaque, void* address);
 * @return BOOLEAN
 */
 BOOLEAN 
-zipCache_addElement(J9ZipCache * zipCache, char *elementName, IDATA elementNameLength, UDATA elementOffset);
+zipCache_addElement(J9ZipCache *zipCache, char *elementName, IDATA elementNameLength, U_64 elementOffset);
 
 
 /**
@@ -191,7 +192,7 @@ zipCache_addElement(J9ZipCache * zipCache, char *elementName, IDATA elementNameL
 * @return IDATA
 */
 IDATA 
-zipCache_enumElement(void *handle, char *nameBuf, UDATA nameBufSize, UDATA * offset);
+zipCache_enumElement(void *handle, char *nameBuf, UDATA nameBufSize, U_64 *offset);
 
 
 /**
@@ -231,9 +232,9 @@ zipCache_enumNew(J9ZipCache * zipCache, char *directoryName, void **handle);
 * @param *elementName
 * @param elementNameLength
 * @param searchDirList
-* @return UDATA
+* @return U_64
 */
-UDATA 
+U_64
 zipCache_findElement(J9ZipCache * zipCache, const char *elementName, IDATA elementNameLength, BOOLEAN searchDirList);
 
 
@@ -256,7 +257,7 @@ zipCache_kill(J9ZipCache * zipCache);
 * @return J9ZipCache *
 */
 J9ZipCache *
-zipCache_new(J9PortLibrary * portLib, char *zipName, IDATA zipNameLength, IDATA zipFileSize, I_64 zipTimeStamp);
+zipCache_new(J9PortLibrary *portLib, char *zipName, IDATA zipNameLength, I_64 zipFileSize, I_64 zipTimeStamp);
 
 
 /**
@@ -264,7 +265,8 @@ zipCache_new(J9PortLibrary * portLib, char *zipName, IDATA zipNameLength, IDATA 
 * @param zipCache
 * @param startCentralDir
 */
-void zipCache_setStartCentralDir(J9ZipCache * zipCache, IDATA startCentralDir);
+void
+zipCache_setStartCentralDir(J9ZipCache *zipCache, U_64 startCentralDir);
 
 
 /**
@@ -404,7 +406,7 @@ zip_freeZipEntry(J9PortLibrary * portLib, J9ZipEntry * entry);
 * @return I_32
 */
 I_32 
-zip_getNextZipEntry(J9PortLibrary* portLib, J9ZipFile* zipFile, J9ZipEntry* zipEntry, IDATA* nextEntryPointer, BOOLEAN readDataPointer);
+zip_getNextZipEntry(J9PortLibrary *portLib, J9ZipFile *zipFile, J9ZipEntry *zipEntry, U_64 *nextEntryPointer, BOOLEAN readDataPointer);
 
 
 /**
@@ -478,7 +480,7 @@ zip_getZipEntryData(J9PortLibrary* portLib, J9ZipFile* zipFile, J9ZipEntry* entr
 * @return I_32
 */
 I_32 
-zip_getZipEntryRawData(J9PortLibrary* portLib, J9ZipFile* zipFile, J9ZipEntry* entry, U_8* buffer, U_32 bufferSize, U_32 offset);
+zip_getZipEntryRawData(J9PortLibrary *portLib, J9ZipFile *zipFile, J9ZipEntry *entry, U_8 *buffer, U_32 bufferSize, U_64 offset);
 
 
 /**
@@ -504,7 +506,7 @@ zip_getZipEntryExtraField(J9PortLibrary* portLib, J9ZipFile* zipFile, J9ZipEntry
 * @return I_32
 */
 I_32 
-zip_getZipEntryFromOffset(J9PortLibrary * portLib, J9ZipFile * zipFile, J9ZipEntry * entry, IDATA offset, BOOLEAN readDataPointer);
+zip_getZipEntryFromOffset(J9PortLibrary *portLib, J9ZipFile *zipFile, J9ZipEntry *entry, U_64 offset, BOOLEAN readDataPointer);
 
 
 /**
@@ -564,7 +566,7 @@ zip_openZipFile(J9PortLibrary *portLib, char *filename, J9ZipFile *zipFile, J9Zi
 * @return void
 */
 void 
-zip_resetZipFile(J9PortLibrary* portLib, J9ZipFile* zipFile, IDATA *nextEntryPointer);
+zip_resetZipFile(J9PortLibrary *portLib, J9ZipFile *zipFile, U_64 *nextEntryPointer);
 
 
 void
