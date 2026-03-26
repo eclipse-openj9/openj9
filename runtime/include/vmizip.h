@@ -67,10 +67,10 @@ typedef struct VMIZipEntry
   U_8 *filename;
   U_8 *extraField;
   U_8 *fileComment;
-  I_32 dataPointer;
-  I_32 filenamePointer;
-  I_32 extraFieldPointer;
-  I_32 fileCommentPointer;
+  U_64 dataPointer;
+  U_64 filenamePointer;
+  U_64 extraFieldPointer;
+  U_64 fileCommentPointer;
   U_32 compressedSize;
   U_32 uncompressedSize;
   U_32 crc32;
@@ -93,7 +93,7 @@ typedef struct VMIZipFile
   void *cache;
   void *cachePool;
   IDATA fd;
-  I_64 pointer;
+  U_64 pointer;
   U_8 internalFilename[80];
   U_8 type;
 } VMIZipFile;
@@ -101,17 +101,17 @@ typedef struct VMIZipFile
 typedef struct VMIZipFunctionTable {
 	I_32 (*zip_closeZipFile) (VMInterface * vmi, VMIZipFile * zipFile) ;
 	void (*zip_freeZipEntry) (VMInterface * vmi, VMIZipEntry * entry) ;
-	I_32 (*zip_getNextZipEntry) (VMInterface * vmi, VMIZipFile * zipFile, VMIZipEntry * zipEntry, IDATA * nextEntryPointer, I_32 flags) ;
+	I_32 (*zip_getNextZipEntry) (VMInterface *vmi, VMIZipFile *zipFile, VMIZipEntry *zipEntry, U_64 *nextEntryPointer, I_32 flags) ;
 	I_32 (*zip_getZipEntry) (VMInterface * vmi, VMIZipFile * zipFile, VMIZipEntry * entry, const char *filename, I_32 flags) ;
 	I_32 (*zip_getZipEntryComment) (VMInterface * vmi, VMIZipFile * zipFile, VMIZipEntry * entry, U_8 * buffer, U_32 bufferSize) ;
 	I_32 (*zip_getZipEntryData) (VMInterface * vmi, VMIZipFile * zipFile, VMIZipEntry * entry, U_8 * buffer, U_32 bufferSize) ;
 	I_32 (*zip_getZipEntryExtraField) (VMInterface * vmi, VMIZipFile * zipFile, VMIZipEntry * entry, U_8 * buffer, U_32 bufferSize) ;
-	I_32 (*zip_getZipEntryFromOffset) (VMInterface * vmi, VMIZipFile * zipFile, VMIZipEntry * entry, IDATA offset, I_32 flags) ;
-	I_32 (*zip_getZipEntryRawData) (VMInterface * vm, VMIZipFile * zipFile, VMIZipEntry * entry, U_8 * buffer, U_32 bufferSize, U_32 offset) ;
+	I_32 (*zip_getZipEntryFromOffset) (VMInterface *vmi, VMIZipFile *zipFile, VMIZipEntry *entry, U_64 offset, I_32 flags) ;
+	I_32 (*zip_getZipEntryRawData) (VMInterface *vm, VMIZipFile *zipFile, VMIZipEntry *entry, U_8 *buffer, U_32 bufferSize, U_64 offset) ;
 	void (*zip_initZipEntry) (VMInterface * vmi, VMIZipEntry * entry) ;
 	I_32 (*zip_openZipFile) (VMInterface * vmi, char *filename, VMIZipFile * zipFile, I_32 flags) ;
-	void (*zip_resetZipFile) (VMInterface * vmi, VMIZipFile * zipFile, IDATA * nextEntryPointer) ;
-	IDATA (*zipCache_enumElement) (void *handle, char *nameBuf, UDATA nameBufSize, UDATA * offset) ;
+	void (*zip_resetZipFile) (VMInterface *vmi, VMIZipFile *zipFile, U_64 *nextEntryPointer) ;
+	IDATA (*zipCache_enumElement) (void *handle, char *nameBuf, UDATA nameBufSize, U_64 *offset) ;
 	IDATA (*zipCache_enumGetDirName) (void *handle, char *nameBuf, UDATA nameBufSize) ;
 	void (*zipCache_enumKill) (void *handle) ;
 	IDATA (*zipCache_enumNew) (void * zipCache, char *directoryName, void **handle) ;

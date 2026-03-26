@@ -2519,16 +2519,16 @@ processAllFiles(char **files, U_32 flags)
 
 
 static I_32
-processAllInZIP(char* zipFilename, U_32 flags)
+processAllInZIP(char *zipFilename, U_32 flags)
 {
-	J9ROMClass* romClass = NULL;
-	J9CfrClassFile* classfile = NULL;
+	J9ROMClass *romClass = NULL;
+	J9CfrClassFile *classfile = NULL;
 	J9ZipFile zipFile;
 	J9ZipEntry entry;
-	U_8* dataBuffer = NULL;
+	U_8 *dataBuffer = NULL;
 	U_32 dataBufferSize = 1024;
-	I_32 result;
-	IDATA nextEntry;
+	I_32 result = 0;
+	U_64 nextEntry = 0;
 
 	PORT_ACCESS_FROM_PORT(portLib);
 
