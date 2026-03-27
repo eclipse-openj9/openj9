@@ -1679,37 +1679,32 @@ J9VM_initializeJNI31Table(JNIEnv *env)
 
 /*
  * 1) Private routine.  Used to delete a jni global reference from an actual object pointer.
- * 2) We don't acquire VM access - caller must already have it.
+ * 2) We don't acquire VM access - caller must already have it, or exclusive access.
  * 3) globalRef may be NULL
  */
 void JNICALL
 j9jni_deleteGlobalRef(JNIEnv *env, jobject globalRef, jboolean isWeak)
 {
-	J9VMThread * vmThread = (J9VMThread *) env;
-	J9JavaVM * vm = vmThread->javaVM;
+	J9VMThread *vmThread = (J9VMThread*)env;
+	J9JavaVM *vm = vmThread->javaVM;
 
-	Assert_VM_mustHaveVMAccess(vmThread);
+	Assert_VM_true(J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_VM_ACCESS)
+			|| (J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState)
+			|| (J9_XACCESS_EXCLUSIVE == vm->safePointState));
 
-	if (globalRef != NULL) {
-
+	if (NULL != globalRef) {
 #ifdef J9VM_THR_PREEMPTIVE
 		omrthread_monitor_enter(vm->jniFrameMutex);
 #endif
-
-#if defined(J9VM_GC_REALTIME)
 		vm->memoryManagerFunctions->j9gc_objaccess_jniDeleteGlobalReference(vmThread, *((j9object_t*)globalRef));
-#endif /* defined(J9VM_GC_REALTIME) */
-		if (pool_includesElement(isWeak ? vm->jniWeakGlobalReferences : vm->jniGlobalReferences, globalRef) == TRUE) {
+		if (pool_includesElement(isWeak ? vm->jniWeakGlobalReferences : vm->jniGlobalReferences, globalRef)) {
 			pool_removeElement(isWeak ? vm->jniWeakGlobalReferences : vm->jniGlobalReferences, globalRef);
 		}
-
 #ifdef J9VM_THR_PREEMPTIVE
 		omrthread_monitor_exit(vm->jniFrameMutex);
 #endif
-
 	}
 }
-
 
 /*
  * 1) Private routine.  Used to create a jni global reference from an actual object pointer.
