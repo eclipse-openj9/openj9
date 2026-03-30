@@ -23,6 +23,11 @@ package com.ibm.j9ddr.vm29.pointer.helper;
 
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldFlagObject;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldSizeDouble;
+import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldTypeBoolean;
+import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldTypeByte;
+import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldTypeChar;
+import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldTypeMask;
+import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldTypeShort;
 import static com.ibm.j9ddr.vm29.structure.J9ROMFieldOffsetWalkState.J9VM_FIELD_OFFSET_WALK_INCLUDE_HIDDEN;
 import static com.ibm.j9ddr.vm29.structure.J9ROMFieldOffsetWalkState.J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE;
 
@@ -36,7 +41,11 @@ import com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffset;
 import com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffsetIterator;
 import com.ibm.j9ddr.vm29.j9.ObjectModel;
 import com.ibm.j9ddr.vm29.pointer.AbstractPointer;
+import com.ibm.j9ddr.vm29.pointer.I8Pointer;
+import com.ibm.j9ddr.vm29.pointer.I16Pointer;
 import com.ibm.j9ddr.vm29.pointer.I32Pointer;
+import com.ibm.j9ddr.vm29.pointer.U8Pointer;
+import com.ibm.j9ddr.vm29.pointer.U16Pointer;
 import com.ibm.j9ddr.vm29.pointer.U32Pointer;
 import com.ibm.j9ddr.vm29.pointer.U64Pointer;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
@@ -275,7 +284,22 @@ public class PrintObjectFieldsHelper {
 				out.format("!fj9object 0x%x", ptr.at(0).longValue());
 			}
 		} else {
-			out.print(I32Pointer.cast(valuePtr).at(0).getHexValue());
+			if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) {
+				long fieldType = fieldShape.modifiers().longValue() & J9FieldTypeMask;
+				if (fieldType == J9FieldTypeByte) {
+					out.print(I8Pointer.cast(valuePtr).at(0).getHexValue());
+				} else if (fieldType == J9FieldTypeBoolean) {
+					out.print(U8Pointer.cast(valuePtr).at(0).getHexValue());
+				} else if (fieldType == J9FieldTypeShort) {
+					out.print(I16Pointer.cast(valuePtr).at(0).getHexValue());
+				} else if (fieldType == J9FieldTypeChar) {
+					out.print(U16Pointer.cast(valuePtr).at(0).getHexValue());
+				} else {
+					out.print(I32Pointer.cast(valuePtr).at(0).getHexValue());
+				}
+			} else {
+				out.print(I32Pointer.cast(valuePtr).at(0).getHexValue());
+			}
 		}
 		if (fieldIsFlattened) {
 			out.format(" (offset = %d) (%s)", fieldOffset.longValue(), fieldSignature.substring(1, fieldSignature.length() - 1));
@@ -337,7 +361,18 @@ public class PrintObjectFieldsHelper {
 				out.format("!fj9object 0x%x%n", ptr.at(0).longValue());
 			}
 		} else {
-			out.print(I32Pointer.cast(valuePtr).at(0).getHexValue());
+			if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) {
+				long fieldType = fieldShape.modifiers().longValue() & J9FieldTypeMask;
+				if ((fieldType == J9FieldTypeByte) || (fieldType == J9FieldTypeBoolean)) {
+					out.print(I8Pointer.cast(valuePtr).at(0).getHexValue());
+				} else if ((fieldType == J9FieldTypeShort) || (fieldType == J9FieldTypeChar)) {
+					out.print(I16Pointer.cast(valuePtr).at(0).getHexValue());
+				} else {
+					out.print(I32Pointer.cast(valuePtr).at(0).getHexValue());
+				}
+			} else {
+				out.print(I32Pointer.cast(valuePtr).at(0).getHexValue());
+			}
 		}
 
 		if (fieldIsFlattened) {

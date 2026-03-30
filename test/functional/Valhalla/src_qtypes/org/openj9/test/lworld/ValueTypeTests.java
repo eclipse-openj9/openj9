@@ -108,6 +108,22 @@ public class ValueTypeTests {
 	static Class<?> valueObjectClass = null;
 	static MethodHandle makeValueObject = null;
 	static MethodHandle getObject = null;
+	/* valueByte */
+	static Class<?> valueByteClass = null;
+	static MethodHandle makeValueByte = null;
+	static MethodHandle getByte = null;
+	/* valueShort */
+	static Class<?> valueShortClass = null;
+	static MethodHandle makeValueShort = null;
+	static MethodHandle getShort = null;
+	/* valueChar */
+	static Class<?> valueCharClass = null;
+	static MethodHandle makeValueChar = null;
+	static MethodHandle getChar = null;
+	/* valueBoolean */
+	static Class<?> valueBooleanClass = null;
+	static MethodHandle makeValueBoolean = null;
+	static MethodHandle getBoolean = null;
 	/* largeObject */
 	static Class<?> largeObjectValueClass = null;
 	static MethodHandle makeLargeObjectValue = null;
@@ -155,6 +171,33 @@ public class ValueTypeTests {
 	static MethodHandle makeObjectBackfillClass = null;
 	static MethodHandle getObjectO = null;
 	static MethodHandle getObjectL = null;
+	/* LayoutsWithPrimitivesAndSmallTypes classes */
+	static Class<?> compactSingleBackfillClass = null;
+	static MethodHandle makeCompactSingleBackfill = null;
+	static MethodHandle getCompactSingleI = null;
+	static MethodHandle getCompactSingleO = null;
+	static MethodHandle getCompactSingleL = null;
+	static MethodHandle getCompactSingleB = null;
+	static MethodHandle getCompactSingleS = null;
+	static Class<?> compactObjectBackfillClass = null;
+	static MethodHandle makeCompactObjectBackfill = null;
+	static MethodHandle getCompactObjectO = null;
+	static MethodHandle getCompactObjectL = null;
+	static MethodHandle getCompactObjectC = null;
+	static MethodHandle getCompactObjectZ = null;
+	/* Compact layout test classes for the four new scenarios */
+	static Class<?> compactByteClass = null;
+	static MethodHandle makeCompactByte = null;
+	static MethodHandle[] getCompactBytes = null;
+	static Class<?> compactShortClass = null;
+	static MethodHandle makeCompactShort = null;
+	static MethodHandle[] getCompactShorts = null;
+	static Class<?> compactByteShortClass = null;
+	static MethodHandle makeCompactByteShort = null;
+	static MethodHandle[] getCompactByteShortFields = null;
+	static Class<?> compactAssortedClass = null;
+	static MethodHandle makeCompactAssorted = null;
+	static MethodHandle[] getCompactAssortedFields = null;
 	/* LayoutsWithValueTypes classes */
 	static Class<?> flatSingleBackfillClass = null;
 	static MethodHandle makeFlatSingleBackfillClass = null;
@@ -201,6 +244,10 @@ public class ValueTypeTests {
 		"line:LFlattenedLine2D;:NR",
 		"i:LValueInt;:NR",
 		"f:LValueFloat;:NR",
+		"b:LValueByte;:NR",
+		"s:LValueShort;:NR",
+		"c:LValueChar;:NR",
+		"z:LValueBoolean;:NR",
 		"tri2:LTriangle2D;:NR"
 	};
 	static String[] typeWithObjectAlignmentFields = {
@@ -210,6 +257,10 @@ public class ValueTypeTests {
 		"o:LValueObject;:NR",
 		"i:LValueInt;:NR",
 		"f:LValueFloat;:NR",
+		"b:LValueByte;:NR",
+		"s:LValueShort;:NR",
+		"c:LValueChar;:NR",
+		"z:LValueBoolean;:NR",
 		"tri2:LTriangle2D;:NR"
 	};
 	static String[] typeWithLongAlignmentFields = {
@@ -219,6 +270,10 @@ public class ValueTypeTests {
 		"l:LValueLong;:NR",
 		"d:LValueDouble;:NR",
 		"i:LValueInt;:NR",
+		"b:LValueByte;:NR",
+		"s:LValueShort;:NR",
+		"c:LValueChar;:NR",
+		"z:LValueBoolean;:NR",
 		"tri:LTriangle2D;:NR"
 	};
 	
@@ -250,6 +305,15 @@ public class ValueTypeTests {
 	static double defaultDoubleNew = -123412341.21341234d;
 	static float defaultFloatNew = -123423.12341234f;
 	static Object defaultObjectNew = (Object)0xFFEEFFEE;
+	/* compact layout default values */
+	static byte defaultByte = (byte)0x7F;
+	static short defaultShort = (short)0x7FFF;
+	static char defaultChar = 'Z';
+	static boolean defaultBoolean = true;
+	static byte defaultByteNew = (byte)0x42;
+	static short defaultShortNew = (short)0x1234;
+	static char defaultCharNew = 'A';
+	static boolean defaultBooleanNew = false;
 	/* miscellaneous constants */
 	static final int genericArraySize = 10;
 	static final int objectGCScanningIterationCount = 1000;
@@ -853,6 +917,10 @@ public class ValueTypeTests {
 			defaultLongNew,
 			defaultDoubleNew,
 			defaultIntNew,
+			defaultByteNew,
+			defaultShortNew,
+			defaultCharNew,
+			defaultBooleanNew,
 			defaultTrianglePositionsNew
 		};
 		Object[] newObjectFields = {
@@ -862,6 +930,10 @@ public class ValueTypeTests {
 			defaultObjectNew,
 			defaultIntNew,
 			defaultFloatNew,
+			defaultByteNew,
+			defaultShortNew,
+			defaultCharNew,
+			defaultBooleanNew,
 			defaultTrianglePositionsNew
 		};
 
@@ -1216,6 +1288,98 @@ public class ValueTypeTests {
 
 		assertEquals(getObject.invoke(valueObject), val);
 	}
+
+	/*
+	 * Create a value type with a byte primitive member
+	 *
+	 * value ValueByte {
+	 * 	byte b;
+	 * }
+	 */
+	@Test(priority=1)
+	static public void testCreateValueByte() throws Throwable {
+		String[] fields = {"b:B"};
+		valueByteClass = ValueTypeGenerator.generateValueClass("ValueByte", fields);
+
+		makeValueByte = lookup.findStatic(valueByteClass, "makeObjectGeneric",
+				MethodType.methodType(Object.class, Object.class));
+
+		getByte = generateGenericGetter(valueByteClass, "b");
+
+		byte b = Byte.MAX_VALUE;
+		Object valueByte = makeValueByte.invoke(b);
+
+		assertEquals(getByte.invoke(valueByte), b);
+	}
+
+	/*
+	 * Create a value type with a short primitive member
+	 *
+	 * value ValueShort {
+	 * 	short s;
+	 * }
+	 */
+	@Test(priority=1)
+	static public void testCreateValueShort() throws Throwable {
+		String[] fields = {"s:S"};
+		valueShortClass = ValueTypeGenerator.generateValueClass("ValueShort", fields);
+
+		makeValueShort = lookup.findStatic(valueShortClass, "makeObjectGeneric",
+				MethodType.methodType(Object.class, Object.class));
+
+		getShort = generateGenericGetter(valueShortClass, "s");
+
+		short s = Short.MAX_VALUE;
+		Object valueShort = makeValueShort.invoke(s);
+
+		assertEquals(getShort.invoke(valueShort), s);
+	}
+
+	/*
+	 * Create a value type with a char primitive member
+	 *
+	 * value ValueChar {
+	 * 	char c;
+	 * }
+	 */
+	@Test(priority=1)
+	static public void testCreateValueChar() throws Throwable {
+		String[] fields = {"c:C"};
+		valueCharClass = ValueTypeGenerator.generateValueClass("ValueChar", fields);
+
+		makeValueChar = lookup.findStatic(valueCharClass, "makeObjectGeneric",
+				MethodType.methodType(Object.class, Object.class));
+
+		getChar = generateGenericGetter(valueCharClass, "c");
+
+		char c = Character.MAX_VALUE;
+		Object valueChar = makeValueChar.invoke(c);
+
+		assertEquals(getChar.invoke(valueChar), c);
+	}
+
+	/*
+	 * Create a value type with a boolean primitive member
+	 *
+	 * value ValueBoolean {
+	 * 	boolean z;
+	 * }
+	 */
+	@Test(priority=1)
+	static public void testCreateValueBoolean() throws Throwable {
+		String[] fields = {"z:Z"};
+		valueBooleanClass = ValueTypeGenerator.generateValueClass("ValueBoolean", fields);
+
+		makeValueBoolean = lookup.findStatic(valueBooleanClass, "makeObjectGeneric",
+				MethodType.methodType(Object.class, Object.class));
+
+		getBoolean = generateGenericGetter(valueBooleanClass, "z");
+
+		boolean z = true;
+		Object valueBoolean = makeValueBoolean.invoke(z);
+
+		assertEquals(getBoolean.invoke(valueBoolean), z);
+	}
 	
 	/*	
 	 * Create a class with four valueType members including 2 volatile.
@@ -1252,6 +1416,10 @@ public class ValueTypeTests {
 	 *	flattened ValueLong l;
 	 *	flattened ValueDouble d;
 	 *	flattened ValueInt i;
+	 *	flattened ValueByte b;
+	 *	flattened ValueShort s;
+	 *	flattened ValueChar c;
+	 *	flattened ValueBoolean z;
 	 *	flattened Triangle2D tri;
 	 * }
 	 */
@@ -1261,7 +1429,8 @@ public class ValueTypeTests {
 
 		makeAssortedValueWithLongAlignment = lookup.findStatic(assortedValueWithLongAlignmentClass,
 				"makeObjectGeneric", MethodType.methodType(Object.class, Object.class,
-						Object.class, Object.class, Object.class, Object.class, Object.class, Object.class));
+						Object.class, Object.class, Object.class, Object.class, Object.class, Object.class,
+						Object.class, Object.class, Object.class, Object.class));
 		/*
 		 * Getters are created in array getterList[i][0] according to the order of fields i
 		 */
@@ -1277,13 +1446,17 @@ public class ValueTypeTests {
 	/*
 	 * Create an assorted refType with long alignment
 	 *
-	 * class AssortedReftWithLongAlignment {
+	 * class AssortedRefWithLongAlignment {
 	 *	flattened Point2D point;
 	 *	flattened Line2D line;
 	 *	flattened ValueObject o;
 	 *	flattened ValueLong l;
 	 *	flattened ValueDouble d;
 	 *	flattened ValueInt i;
+	 *	flattened ValueByte b;
+	 *	flattened ValueShort s;
+	 *	flattened ValueChar c;
+	 *	flattened ValueBoolean z;
 	 *	flattened Triangle2D tri;
 	 * }
 	 */
@@ -1292,9 +1465,9 @@ public class ValueTypeTests {
 		assortedRefWithLongAlignmentClass = ValueTypeGenerator.generateRefClass("AssortedRefWithLongAlignment", typeWithLongAlignmentFields);
 
 		makeAssortedRefWithLongAlignment = lookup.findStatic(assortedRefWithLongAlignmentClass,
-				"makeObjectGeneric", MethodType.methodType(Object.class, Object.class, Object.class,
-						Object.class, Object.class, Object.class, Object.class, Object.class));
-
+				"makeObjectGeneric", MethodType.methodType(Object.class, Object.class,
+						Object.class, Object.class, Object.class, Object.class, Object.class, Object.class,
+						Object.class, Object.class, Object.class, Object.class));
 		/*
 		 * Getters are created in array getterAndSetter[i][0] according to the order of fields i
 		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
@@ -1336,6 +1509,129 @@ public class ValueTypeTests {
 		Object objectBackfillInstance = makeObjectBackfillClass.invoke(defaultLong, defaultObject);
 		assertEquals(getObjectO.invoke(objectBackfillInstance), defaultObject);
 		assertEquals(getObjectL.invoke(objectBackfillInstance), defaultLong);
+	}
+
+	static public MethodHandle createObjectOfCompactLayoutScenarios() throws Throwable {
+		String[] fields = {"compactByte:LCompactByte;:NR", "compactShort:LCompactShort;:NR",
+		"compactByteShort:LCompactByteShort;:NR", "compactAssorted:LCompactAssorted;:NR"};
+
+		Class<?> clazz = ValueTypeGenerator.generateValueClass("CompactLayoutScenarios", fields);
+		MethodHandle make = lookup.findStatic(clazz, "makeObjectGeneric",
+			MethodType.methodType(Object.class, Object.class, Object.class, Object.class, Object.class));
+		return make;
+	}
+
+	@Test(priority=2)
+	static public void testCreateLayoutsWithPrimitivesAndSmallTypes() throws Throwable {
+		String[] compactByteFields = {"b0:B", "b1:B", "b2:B", "b3:B"};
+		String[] compactShortFields = {"s0:S", "s1:S", "s2:S", "s3:S"};
+		String[] compactByteShortFields = {"b0:B", "s0:S", "b1:B", "s1:S"};
+		String[] compactAssortedFields = {"i0:I", "i1:I", "s:S", "b:B"};
+
+		compactByteClass = ValueTypeGenerator.generateValueClass("CompactByte", compactByteFields);
+		makeCompactByte = lookup.findStatic(compactByteClass, "makeObjectGeneric",
+			MethodType.methodType(Object.class, Object.class, Object.class, Object.class, Object.class));
+		getCompactBytes = new MethodHandle[4];
+		for (int i = 0; i < 4; i++) {
+			getCompactBytes[i] = generateGenericGetter(compactByteClass, "b" + i);
+		}
+
+		compactShortClass = ValueTypeGenerator.generateValueClass("CompactShort", compactShortFields);
+		makeCompactShort = lookup.findStatic(compactShortClass, "makeObjectGeneric",
+			MethodType.methodType(Object.class, Object.class, Object.class, Object.class, Object.class));
+		getCompactShorts = new MethodHandle[4];
+		for (int i = 0; i < 4; i++) {
+			getCompactShorts[i] = generateGenericGetter(compactShortClass, "s" + i);
+		}
+
+		compactByteShortClass = ValueTypeGenerator.generateValueClass("CompactByteShort", compactByteShortFields);
+		makeCompactByteShort = lookup.findStatic(compactByteShortClass, "makeObjectGeneric",
+			MethodType.methodType(Object.class, Object.class, Object.class, Object.class, Object.class));
+		getCompactByteShortFields = new MethodHandle[4];
+		getCompactByteShortFields[0] = generateGenericGetter(compactByteShortClass, "b0");
+		getCompactByteShortFields[1] = generateGenericGetter(compactByteShortClass, "s0");
+		getCompactByteShortFields[2] = generateGenericGetter(compactByteShortClass, "b1");
+		getCompactByteShortFields[3] = generateGenericGetter(compactByteShortClass, "s1");
+
+		compactAssortedClass = ValueTypeGenerator.generateValueClass("CompactAssorted", compactAssortedFields);
+		makeCompactAssorted = lookup.findStatic(compactAssortedClass, "makeObjectGeneric",
+			MethodType.methodType(Object.class, Object.class, Object.class, Object.class, Object.class));
+		getCompactAssortedFields = new MethodHandle[4];
+		getCompactAssortedFields[0] = generateGenericGetter(compactAssortedClass, "i0");
+		getCompactAssortedFields[1] = generateGenericGetter(compactAssortedClass, "i1");
+		getCompactAssortedFields[2] = generateGenericGetter(compactAssortedClass, "s");
+		getCompactAssortedFields[3] = generateGenericGetter(compactAssortedClass, "b");
+
+		/* 8-bit and 16-bit fields are not eligible for backfill. */
+		String[] compactSingleBackfill = {"l:J", "o:Ljava/lang/Object;", "i:I", "b:B", "s:S"};
+		compactSingleBackfillClass = ValueTypeGenerator.generateValueClass("CompactSingleBackfill", compactSingleBackfill);
+		makeCompactSingleBackfill = lookup.findStatic(compactSingleBackfillClass, "makeObjectGeneric",
+			MethodType.methodType(Object.class, Object.class, Object.class, Object.class, Object.class, Object.class));
+		getCompactSingleI = generateGenericGetter(compactSingleBackfillClass, "i");
+		getCompactSingleO = generateGenericGetter(compactSingleBackfillClass, "o");
+		getCompactSingleL = generateGenericGetter(compactSingleBackfillClass, "l");
+		getCompactSingleB = generateGenericGetter(compactSingleBackfillClass, "b");
+		getCompactSingleS = generateGenericGetter(compactSingleBackfillClass, "s");
+
+		String[] compactObjectBackfill = {"l:J", "o:Ljava/lang/Object;", "c:C", "z:Z"};
+		compactObjectBackfillClass = ValueTypeGenerator.generateValueClass("CompactObjectBackfill", compactObjectBackfill);
+		makeCompactObjectBackfill = lookup.findStatic(compactObjectBackfillClass, "makeObjectGeneric",
+			MethodType.methodType(Object.class, Object.class, Object.class, Object.class, Object.class));
+		getCompactObjectO = generateGenericGetter(compactObjectBackfillClass, "o");
+		getCompactObjectL = generateGenericGetter(compactObjectBackfillClass, "l");
+		getCompactObjectC = generateGenericGetter(compactObjectBackfillClass, "c");
+		getCompactObjectZ = generateGenericGetter(compactObjectBackfillClass, "z");
+	}
+
+	@Test(priority=3, invocationCount=2)
+	static public void testCompactLayoutScenarios() throws Throwable {
+		/* Test Scenario 1: Four byte fields */
+		byte b1 = (byte)0x11, b2 = (byte)0x22, b3 = (byte)0x33, b4 = (byte)0x44;
+		Object compactByteInstance = makeCompactByte.invoke(b1, b2, b3, b4);
+		assertEquals(getCompactBytes[0].invoke(compactByteInstance), b1);
+		assertEquals(getCompactBytes[1].invoke(compactByteInstance), b2);
+		assertEquals(getCompactBytes[2].invoke(compactByteInstance), b3);
+		assertEquals(getCompactBytes[3].invoke(compactByteInstance), b4);
+
+		/* Test Scenario 2: Four short fields */
+		short s1 = (short)0x1111, s2 = (short)0x2222, s3 = (short)0x3333, s4 = (short)0x4444;
+		Object compactShortInstance = makeCompactShort.invoke(s1, s2, s3, s4);
+		assertEquals(getCompactShorts[0].invoke(compactShortInstance), s1);
+		assertEquals(getCompactShorts[1].invoke(compactShortInstance), s2);
+		assertEquals(getCompactShorts[2].invoke(compactShortInstance), s3);
+		assertEquals(getCompactShorts[3].invoke(compactShortInstance), s4);
+
+		/* Test Scenario 3: Mixed byte and short fields */
+		byte bs1 = (byte)0x55, bs2 = (byte)0x66;
+		short ss1 = (short)0x5555, ss2 = (short)0x6666;
+		Object compactByteShortInstance = makeCompactByteShort.invoke(bs1, ss1, bs2, ss2);
+		assertEquals(getCompactByteShortFields[0].invoke(compactByteShortInstance), bs1);
+		assertEquals(getCompactByteShortFields[1].invoke(compactByteShortInstance), ss1);
+		assertEquals(getCompactByteShortFields[2].invoke(compactByteShortInstance), bs2);
+		assertEquals(getCompactByteShortFields[3].invoke(compactByteShortInstance), ss2);
+
+		/* Test Scenario 4: Assorted fields (int, int, short, byte) */
+		int i1 = 0x11111111, i2 = 0x22222222;
+		short as = (short)0x7777;
+		byte ab = (byte)0x88;
+		Object compactAssortedInstance = makeCompactAssorted.invoke(i1, i2, as, ab);
+		assertEquals(getCompactAssortedFields[0].invoke(compactAssortedInstance), i1);
+		assertEquals(getCompactAssortedFields[1].invoke(compactAssortedInstance), i2);
+		assertEquals(getCompactAssortedFields[2].invoke(compactAssortedInstance), as);
+		assertEquals(getCompactAssortedFields[3].invoke(compactAssortedInstance), ab);
+
+		Object compactSingleBackfillInstance = makeCompactSingleBackfill.invoke(defaultLong, defaultObject, defaultInt, defaultByte, defaultShort);
+		assertEquals(getCompactSingleI.invoke(compactSingleBackfillInstance), defaultInt);
+		assertEquals(getCompactSingleO.invoke(compactSingleBackfillInstance), defaultObject);
+		assertEquals(getCompactSingleL.invoke(compactSingleBackfillInstance), defaultLong);
+		assertEquals(getCompactSingleB.invoke(compactSingleBackfillInstance), defaultByte);
+		assertEquals(getCompactSingleS.invoke(compactSingleBackfillInstance), defaultShort);
+
+		Object compactObjectBackfillInstance = makeCompactObjectBackfill.invoke(defaultLong, defaultObject, defaultChar, defaultBoolean);
+		assertEquals(getCompactObjectO.invoke(compactObjectBackfillInstance), defaultObject);
+		assertEquals(getCompactObjectL.invoke(compactObjectBackfillInstance), defaultLong);
+		assertEquals(getCompactObjectC.invoke(compactObjectBackfillInstance), defaultChar);
+		assertEquals(getCompactObjectZ.invoke(compactObjectBackfillInstance), defaultBoolean);
 	}
 	
 	@Test(priority=4)
@@ -1466,6 +1762,10 @@ public class ValueTypeTests {
 	 * 	flattened ValueObject o;
 	 * 	flattened ValueInt i;
 	 * 	flattened ValueFloat f;
+	 * 	flattened ValueByte b;
+	 * 	flattened ValueShort s;
+	 * 	flattened ValueChar c;
+	 * 	flattened ValueBoolean z;
 	 * 	flattened Triangle2D tri2;
 	 * }
 	 */
@@ -1476,7 +1776,8 @@ public class ValueTypeTests {
 
 		makeAssortedValueWithObjectAlignment = lookup.findStatic(assortedValueWithObjectAlignmentClass,
 			"makeObjectGeneric", MethodType.methodType(Object.class, Object.class,
-					Object.class, Object.class, Object.class, Object.class, Object.class, Object.class));
+					Object.class, Object.class, Object.class, Object.class, Object.class, Object.class,
+					Object.class, Object.class, Object.class, Object.class));
 		/*
 		 * Getters are created in array getterAndSetter[i][0] according to the order of fields i
 		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
@@ -1500,6 +1801,10 @@ public class ValueTypeTests {
 	 * 	flattened ValueObject o;
 	 * 	flattened ValueInt i;
 	 * 	flattened ValueFloat f;
+	 * 	flattened ValueByte b;
+	 * 	flattened ValueShort s;
+	 * 	flattened ValueChar c;
+	 * 	flattened ValueBoolean z;
 	 * 	flattened Triangle2D tri2;
 	 * }
 	 */
@@ -1509,7 +1814,8 @@ public class ValueTypeTests {
 
 		makeAssortedRefWithObjectAlignment = lookup.findStatic(assortedRefWithObjectAlignmentClass,
 				"makeObjectGeneric", MethodType.methodType(Object.class, Object.class, Object.class,
-						Object.class, Object.class, Object.class, Object.class, Object.class));
+						Object.class, Object.class, Object.class, Object.class, Object.class,
+						Object.class, Object.class, Object.class, Object.class));
 		/*
 		 * Getters are created in array getterAndSetter[i][0] according to the order of fields i
 		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
@@ -1532,6 +1838,10 @@ public class ValueTypeTests {
 	 * 	flattened Line2D line;
 	 * 	flattened ValueInt i;
 	 * 	flattened ValueFloat f;
+	 * 	flattened ValueByte b;
+	 * 	flattened ValueShort s;
+	 * 	flattened ValueChar c;
+	 * 	flattened ValueBoolean z;
 	 * 	flattened Triangle2D tri2;
 	 * }
 	 */
@@ -1541,7 +1851,8 @@ public class ValueTypeTests {
 
 		makeAssortedValueWithSingleAlignment = lookup.findStatic(assortedValueWithSingleAlignmentClass,
 			"makeObjectGeneric", MethodType.methodType(Object.class, Object.class,
-					Object.class, Object.class, Object.class, Object.class, Object.class));
+					Object.class, Object.class, Object.class, Object.class, Object.class,
+					Object.class, Object.class, Object.class, Object.class));
 		/*
 		 * Getters are created in array getterAndSetter[i][0] according to the order of fields i
 		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
@@ -1564,6 +1875,10 @@ public class ValueTypeTests {
 	 * 	flattened Line2D line;
 	 * 	flattened ValueInt i;
 	 * 	flattened ValueFloat f;
+	 * 	flattened ValueByte b;
+	 * 	flattened ValueShort s;
+	 * 	flattened ValueChar c;
+	 * 	flattened ValueBoolean z;
 	 * 	flattened Triangle2D tri2;
 	 * }
 	 */
@@ -1573,7 +1888,8 @@ public class ValueTypeTests {
 
 		makeAssortedRefWithSingleAlignment = lookup.findStatic(assortedRefWithSingleAlignmentClass,
 				"makeObjectGeneric", MethodType.methodType(Object.class, Object.class, Object.class,
-						Object.class, Object.class, Object.class, Object.class));
+						Object.class, Object.class, Object.class, Object.class, Object.class,
+						Object.class, Object.class, Object.class));
 		/*
 		 * Getters are created in array getterAndSetter[i][0] according to the order of fields i
 		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
@@ -2940,6 +3256,18 @@ public class ValueTypeTests {
 			case "LValueLong;":
 				args[i] = makeValueLong.invoke(useInitFields ? (long)initFields[i] : defaultLong);
 				break;
+			case "LValueByte;":
+				args[i] = makeValueByte.invoke(useInitFields ? (byte)initFields[i] : defaultByte);
+				break;
+			case "LValueShort;":
+				args[i] = makeValueShort.invoke(useInitFields ? (short)initFields[i] : defaultShort);
+				break;
+			case "LValueChar;":
+				args[i] = makeValueChar.invoke(useInitFields ? (char)initFields[i] : defaultChar);
+				break;
+			case "LValueBoolean;":
+				args[i] = makeValueBoolean.invoke(useInitFields ? (boolean)initFields[i] : defaultBoolean);
+				break;
 			case "LLargeObject;":
 				args[i] = createLargeObject(useInitFields ? (Object)initFields[i] : defaultObject);
 				break;
@@ -3066,6 +3394,38 @@ public class ValueTypeTests {
 				if (!isValue) {
 					fieldAccessMHs[i][1].invoke(instance, lNew);
 					assertEquals(getLong.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultLongNew);
+				}
+				break;
+			case "LValueByte;":
+				assertEquals(getByte.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultByte);
+				Object bNew = makeValueByte.invoke(defaultByteNew);
+				if (!isValue) {
+					fieldAccessMHs[i][1].invoke(instance, bNew);
+					assertEquals(getByte.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultByteNew);
+				}
+				break;
+			case "LValueShort;":
+				assertEquals(getShort.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultShort);
+				Object sNew = makeValueShort.invoke(defaultShortNew);
+				if (!isValue) {
+					fieldAccessMHs[i][1].invoke(instance, sNew);
+					assertEquals(getShort.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultShortNew);
+				}
+				break;
+			case "LValueChar;":
+				assertEquals(getChar.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultChar);
+				Object cNew = makeValueChar.invoke(defaultCharNew);
+				if (!isValue) {
+					fieldAccessMHs[i][1].invoke(instance, cNew);
+					assertEquals(getChar.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultCharNew);
+				}
+				break;
+			case "LValueBoolean;":
+				assertEquals(getBoolean.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultBoolean);
+				Object zNew = makeValueBoolean.invoke(defaultBooleanNew);
+				if (!isValue) {
+					fieldAccessMHs[i][1].invoke(instance, zNew);
+					assertEquals(getBoolean.invoke(fieldAccessMHs[i][0].invoke(instance)), defaultBooleanNew);
 				}
 				break;
 			case "LLargeObject;":

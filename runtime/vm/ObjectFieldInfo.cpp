@@ -90,6 +90,14 @@ ObjectFieldInfo::countInstanceFields(void)
 			} else if (modifiers & J9FieldSizeDouble) {
 				_instanceDoubleCount += 1;
 				_totalDoubleCount += 1;
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+			} else if (((modifiers & J9FieldTypeMask) == J9FieldTypeChar) || ((modifiers & J9FieldTypeMask) == J9FieldTypeShort)) {
+				_instanceShortCount += 1;
+				_totalShortCount += 1;
+			} else if (((modifiers & J9FieldTypeMask) == J9FieldTypeBoolean) || ((modifiers & J9FieldTypeMask) == J9FieldTypeByte)) {
+				_instanceByteCount += 1;
+				_totalByteCount += 1;
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 			} else {
 				_instanceSingleCount += 1;
 				_totalSingleCount += 1;
@@ -107,6 +115,14 @@ ObjectFieldInfo::countInstanceFields(void)
 		_contendedSingleCount = _instanceSingleCount;
 		_totalSingleCount -= _instanceSingleCount;
 		_instanceSingleCount = 0;
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+		_contendedShortCount = _instanceShortCount;
+		_totalShortCount -= _instanceShortCount;
+		_instanceShortCount = 0;
+		_contendedByteCount = _instanceByteCount;
+		_totalByteCount -= _instanceByteCount;
+		_instanceByteCount = 0;
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 	}
 }
 
@@ -126,6 +142,12 @@ ObjectFieldInfo::countAndCopyHiddenFields(J9HiddenInstanceField *hiddenFieldList
 				_totalObjectCount += 1;
 			} else if (J9_ARE_ANY_BITS_SET(modifiers, J9FieldSizeDouble)) {
 				_totalDoubleCount += 1;
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+			} else if (((modifiers & J9FieldTypeMask) == J9FieldTypeChar) || ((modifiers & J9FieldTypeMask) == J9FieldTypeShort)) {
+				_totalShortCount += 1;
+			} else if (((modifiers & J9FieldTypeMask) == J9FieldTypeBoolean) || ((modifiers & J9FieldTypeMask) == J9FieldTypeByte)) {
+				_totalByteCount += 1;
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 			} else {
 				_totalSingleCount += 1;
 			}
@@ -147,9 +169,18 @@ ObjectFieldInfo::calculateTotalFieldsSizeAndBackfill()
 
 		accumulator = getPaddedTrueNonContendedSize(); /* this includes the header */
 		accumulator += (_contendedObjectCount * _referenceSize) + (_contendedSingleCount * sizeof(U_32)) + (_contendedDoubleCount * sizeof(U_64)); /* add the contended fields */
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+		accumulator += (_contendedShortCount * sizeof(U_16)) + (_contendedByteCount * sizeof(U_8));
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 		accumulator = ROUND_UP_TO_POWEROF2((UDATA)accumulator, (UDATA)_cacheLineSize) - _objectHeaderSize; /* Rounding takes care of the odd number of 4-byte fields. Remove the header */
 	} else {
 		accumulator = _superclassFieldsSize + (_totalObjectCount * _referenceSize) + (_totalSingleCount * sizeof(U_32)) + (_totalDoubleCount * sizeof(U_64));
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+		U_32 smallTypeSize = (_totalShortCount * sizeof(U_16)) + (_totalByteCount * sizeof(U_8));
+		/* 16 and 8-bit fields must be aligned to 32 bits. */
+		U_32 smallTypeSizeRounded = ROUND_UP_TO_POWEROF2((UDATA)smallTypeSize, sizeof(U_32));
+		accumulator += smallTypeSizeRounded;
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		accumulator += _totalFlatFieldDoubleBytes + _totalFlatFieldRefBytes + _totalFlatFieldSingleBytes;
 
