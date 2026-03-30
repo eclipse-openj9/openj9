@@ -559,7 +559,7 @@ MM_CopyForwardScheme::postProcessRegions(MM_EnvironmentVLHGC *env)
 				region->getSubSpace()->recycleRegion(env, region);
 			} else {
 				/* this is non-empty merged region - estimate its age based on compact group */
-				setAllocationAgeForMergedRegion(env, region);
+				setAgeForMergedRegion(env, region);
 			}
 		}
 
@@ -697,11 +697,10 @@ MM_CopyForwardScheme::reinitCache(MM_EnvironmentVLHGC *env, MM_CopyScanCacheVLHG
 	
 	Assert_MM_true(compactGroup < _compactGroupMaxCount);
 	cache->_compactGroup = compactGroup;
-	Assert_MM_true(0.0 == cache->_allocationAgeSizeProduct);
 	
 	MM_HeapRegionDescriptorVLHGC * region = (MM_HeapRegionDescriptorVLHGC *)_regionManager->tableDescriptorForAddress(cache->cacheBase);
 	Trc_MM_CopyForwardScheme_reinitCache(env->getLanguageVMThread(), _regionManager->mapDescriptorToRegionTableIndex(region), cache,
-			region->getAllocationAgeSizeProduct() / (1024 * 1024) / (1024 * 1024), (double)((uintptr_t)cache->cacheAlloc - (uintptr_t)region->getLowAddress()) / (1024 * 1024));
+			0, (double)((uintptr_t)cache->cacheAlloc - (uintptr_t)region->getLowAddress()) / (1024 * 1024));
 
 	/* store back the given flags */
 	cache->flags = OMR_COPYSCAN_CACHE_TYPE_COPY | (cache->flags & OMR_COPYSCAN_CACHE_MASK_PERSISTENT);
@@ -805,7 +804,7 @@ MM_CopyForwardScheme::acquireEmptyRegion(MM_EnvironmentVLHGC *env, MM_ReservedRe
 			 * real allocation age will be updated after PGC
 			 */
 			uintptr_t logicalRegionAge = MM_CompactGroupManager::getRegionAgeFromGroup(env, compactGroup);
-			newRegion->setAge(0, logicalRegionAge);
+			newRegion->setAge(logicalRegionAge);
 
 			Assert_MM_true(newRegion->getReferenceObjectList()->isSoftListEmpty());
 			Assert_MM_true(newRegion->getReferenceObjectList()->isWeakListEmpty());
@@ -1542,7 +1541,6 @@ MM_CopyForwardScheme::mergeGCStats(MM_EnvironmentVLHGC *env)
 
 		if (0 != totalCopiedBytes) {
 			MM_AtomicOperations::add(&persistentStats[compactGroupNumber]._measuredBytesCopiedToGroupDuringCopyForward, totalCopiedBytes);
-			MM_AtomicOperations::addU64(&persistentStats[compactGroupNumber]._measuredAllocationAgeToGroupDuringCopyForward, compactGroup->_allocationAge);
 		}
 
 		if (0 != (totalCopiedBytes + compactGroup->_discardedBytes)) {
@@ -1842,21 +1840,14 @@ MM_CopyForwardScheme::stopCopyingIntoCache(MM_EnvironmentVLHGC *env, uintptr_t c
 		
 		MM_HeapRegionDescriptorVLHGC * region = (MM_HeapRegionDescriptorVLHGC *)_regionManager->tableDescriptorForAddress(copyCache->cacheBase);
 
-		/* atomically add (age * usedBytes) product from this cache to the regions product */
-		double newAllocationAgeSizeProduct = region->atomicIncrementAllocationAgeSizeProduct(copyCache->_allocationAgeSizeProduct);
-		region->updateAgeBounds(copyCache->_lowerAgeBound, copyCache->_upperAgeBound);
-
 		/* Return any remaining memory to the pool */
 		discardRemainingCache(env, copyCache, copyCacheLock, wastedMemory);
 
 		Trc_MM_CopyForwardScheme_stopCopyingIntoCache(env->getLanguageVMThread(), _regionManager->mapDescriptorToRegionTableIndex(region), copyCache,
-				(double)(newAllocationAgeSizeProduct - copyCache->_allocationAgeSizeProduct) / (1024 * 1024) / (1024 * 1024), (double)((uintptr_t)copyCache->cacheAlloc - (uintptr_t)region->getLowAddress()) / (1024 * 1024),
-				(double)copyCache->_allocationAgeSizeProduct / (1024 * 1024) / (1024 * 1024), (double)copyCache->_objectSize / (1024 * 1024), (double)newAllocationAgeSizeProduct / (1024 * 1024) / (1024 * 1024));
+				0, (double)((uintptr_t)copyCache->cacheAlloc - (uintptr_t)region->getLowAddress()) / (1024 * 1024),
+				0, (double)copyCache->_objectSize / (1024 * 1024), 0);
 
-		copyCache->_allocationAgeSizeProduct = 0.0;
 		copyCache->_objectSize = 0;
-		copyCache->_lowerAgeBound = U_64_MAX;
-		copyCache->_upperAgeBound = 0;
 
 		/* Push any cached mark map data out */
 		flushCacheMarkMap(env, copyCache);
@@ -2084,10 +2075,7 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 					env->_copyForwardCompactGroups[destinationCompactGroup]._nonEdenStats._copiedObjects += 1;
 					env->_copyForwardCompactGroups[destinationCompactGroup]._nonEdenStats._copiedBytes += objectCopySizeInBytes;
 				}
-				copyCache->_allocationAgeSizeProduct += ((double)objectReserveSizeInBytes * (double)sourceRegion->getAllocationAge());
 				copyCache->_objectSize += objectReserveSizeInBytes;
-				copyCache->_lowerAgeBound = OMR_MIN(copyCache->_lowerAgeBound, sourceRegion->getLowerAgeBound());
-				copyCache->_upperAgeBound = OMR_MAX(copyCache->_upperAgeBound, sourceRegion->getUpperAgeBound());
 
 #if defined(J9VM_GC_LEAF_BITS)
 				if (_extensions->tarokEnableLeafFirstCopying) {
@@ -5624,19 +5612,8 @@ MM_CopyForwardScheme::setRegionAsSurvivor(MM_EnvironmentVLHGC *env, MM_HeapRegio
 {
 	uintptr_t usedBytes = region->getSize() - region->getMemoryPool()->getFreeMemoryAndDarkMatterBytes();
 
-	/* convert allocation age into (usedBytes * age) multiple. it will be converted back to pure age at the end of GC.
-	 * in the mean time as caches are allocated from the region, the age will be merged
-	 */
-	double allocationAgeSizeProduct = (double)usedBytes * (double)region->getAllocationAge();
-
 	Trc_MM_CopyForwardScheme_setRegionAsSurvivor(env->getLanguageVMThread(), _regionManager->mapDescriptorToRegionTableIndex(region), MM_CompactGroupManager::getCompactGroupNumber(env, region),
-	    (double)region->getAllocationAge() / (1024 * 1024), (double)usedBytes / (1024 * 1024), allocationAgeSizeProduct / (1024 * 1024) / (1024 * 1024));
-
-	Assert_MM_true(0.0 == region->getAllocationAgeSizeProduct());
-	region->setAllocationAgeSizeProduct(allocationAgeSizeProduct);
-	if (freshSurvivor) {
-		region->resetAgeBounds();
-	}
+	    0, (double)usedBytes / (1024 * 1024), 0);
 
 	/* update the pool so it only knows about the free memory occurring before survivor base.  We will add whatever we don't use at the end of the copy-forward */
 	Assert_MM_false(region->_copyForwardData._requiresPhantomReferenceProcessing);
@@ -5645,35 +5622,9 @@ MM_CopyForwardScheme::setRegionAsSurvivor(MM_EnvironmentVLHGC *env, MM_HeapRegio
 }
 
 void
-MM_CopyForwardScheme::setAllocationAgeForMergedRegion(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region)
+MM_CopyForwardScheme::setAgeForMergedRegion(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region)
 {
-	uintptr_t compactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, region);
-	uintptr_t usedBytes = region->getSize() - region->getMemoryPool()->getFreeMemoryAndDarkMatterBytes();
-
-	Assert_MM_true(0 != usedBytes);
-
-	/* convert allocation age product (usedBytes * age) back to pure age */
-	uint64_t newAllocationAge = (uint64_t)(region->getAllocationAgeSizeProduct() / (double)usedBytes);
-
-	Trc_MM_CopyForwardScheme_setAllocationAgeForMergedRegion(env->getLanguageVMThread(), _regionManager->mapDescriptorToRegionTableIndex(region), compactGroup,
-	    region->getAllocationAgeSizeProduct() / (1024 * 1024) / (1024 * 1024), (double)usedBytes / (1024 * 1024), (double)newAllocationAge / (1024 * 1024),
-	    (double)region->getLowerAgeBound() / (1024 * 1024), (double)region->getUpperAgeBound() / (1024 * 1024));
-
-	if (_extensions->tarokAllocationAgeEnabled) {
-		Assert_MM_true(newAllocationAge < _extensions->compactGroupPersistentStats[compactGroup]._maxAllocationAge);
-		Assert_MM_true((MM_CompactGroupManager::getRegionAgeFromGroup(env, compactGroup) == 0) || (newAllocationAge >= _extensions->compactGroupPersistentStats[compactGroup - 1]._maxAllocationAge));
-	}
-
-	uintptr_t logicalAge = 0;
-	if (_extensions->tarokAllocationAgeEnabled) {
-		logicalAge = MM_CompactGroupManager::calculateLogicalAgeForRegion(env, newAllocationAge);
-	} else {
-		logicalAge = MM_CompactGroupManager::getRegionAgeFromGroup(env, compactGroup);
-	}
-
-	region->setAge(newAllocationAge, logicalAge);
-	/* reset aging auxiliary datea for future usage */
-	region->setAllocationAgeSizeProduct(0.0);
+	region->setAge(MM_CompactGroupManager::getRegionAgeFromGroup(env, MM_CompactGroupManager::getCompactGroupNumber(env, region)));
 }
 
 bool

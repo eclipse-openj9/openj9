@@ -124,87 +124,6 @@ public:
 	}
 
 	/**
-	 * Calculate Logical age for region based on Allocation age
-	 *
-	 * Each next ages interval growth exponentially (specified-based)
-	 * To avoid exponent/logarithm operations and as far as maximum logical age is a small constant (order of tens)
-	 * it is safe to do calculation incrementally.
-	 * Also it is easy to control possible overflow at each step of calculation and explicitly limit amount of work
-	 *
-	 * 	AgesIntervalSize(n+1) = AgesIntervalSize(n) * exponentBase;
-	 * 	ThresholdForAge(n+1) = ThresholdForAge(n) + AgesIntervalSize(n+1);
-	 *
-	 * @param env current thread environment
-	 * @param allocationAge for region
-	 * @return calculated logical region age
-	 */
-	MMINLINE static UDATA calculateLogicalAgeForRegion(MM_EnvironmentVLHGC *env, U_64 allocationAge)
-	{
-		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-
-		U_64 unit = (U_64)extensions->tarokAllocationAgeUnit;
-		double exponentBase = extensions->tarokAllocationAgeExponentBase;
-
-		Assert_MM_true(unit > 0);
-		Assert_MM_true(allocationAge <= extensions->tarokMaximumAgeInBytes);
-
-		UDATA logicalAge = 0;
-		bool tooLarge = false;
-
-		U_64 threshold = unit;
-
-		while (!tooLarge && (threshold <= allocationAge)) {
-			unit = (U_64)(unit * exponentBase);
-			U_64 nextThreshold = threshold + unit;
-
-			tooLarge = (nextThreshold < threshold)									/* overflow */
-					|| (logicalAge >= extensions->tarokRegionMaxAge);				/* maximum logical age reached */
-
-			if (tooLarge) {
-				logicalAge = extensions->tarokRegionMaxAge;
-			} else {
-				threshold = nextThreshold;
-				logicalAge += 1;
-			}
-		}
-
-		return logicalAge;
-	}
-
-	/**
-	 * Calculate initial value for maximum allocation age in bytes based on maximumLogicalAge
-	 * @param env current thread environment
-	 * @param maximumLogicalAge maximum logical age allocation age calculated for
-	 */
-	MMINLINE static U_64 calculateMaximumAllocationAge(MM_EnvironmentVLHGC *env, UDATA maximumLogicalAge)
-	{
-		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-		U_64 unit = (U_64)extensions->tarokAllocationAgeUnit;
-		double exponentBase = extensions->tarokAllocationAgeExponentBase;
-		Assert_MM_true(unit > 0);
-		Assert_MM_true(maximumLogicalAge > 0);
-		UDATA logicalAge = 1;
-		bool tooLarge = false;
-		U_64 allocationAge = unit;
-
-		while (!tooLarge && (logicalAge < maximumLogicalAge)) {
-			unit = (U_64)(unit * exponentBase);
-			U_64 nextThreshold = allocationAge + unit;
-
-			tooLarge = (nextThreshold < allocationAge);	/* overflow */
-
-			if (tooLarge) {
-				allocationAge = U_64_MAX;
-			} else {
-				allocationAge = nextThreshold;
-				logicalAge += 1;
-			}
-		}
-
-		return allocationAge;
-	}
-
-	/**
 	 * Check is given region is a member of Nursery Collection Set
 	 * Eden region is mandatory part of Nursery Collection Set regardless it's age
 	 * non-Eden region is part of Nursery Collection Set if it's age is lower or equal of nursery threshold
@@ -215,15 +134,7 @@ public:
 	MMINLINE static bool isRegionInNursery(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region)
 	{
 		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-		bool result = false;
-
-		if (extensions->tarokAllocationAgeEnabled) {
-			result = region->isEden() || (region->getAllocationAge() <= extensions->tarokMaximumNurseryAgeInBytes);
-		} else {
-			result = region->isEden() || (region->getLogicalAge() <= extensions->tarokNurseryMaxAge._valueSpecified);
-		}
-
-		return result;
+		return region->isEden() || (region->getLogicalAge() <= extensions->tarokNurseryMaxAge._valueSpecified);
 	}
 
 	/**
@@ -235,16 +146,7 @@ public:
 	 */
 	MMINLINE static bool isRegionDCSSCandidate(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region)
 	{
-		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-		bool result = false;
-
-		if (extensions->tarokAllocationAgeEnabled) {
-			result = !isRegionInNursery(env, region) && (region->getAllocationAge() < extensions->tarokMaximumAgeInBytes);
-		} else {
-			result = !isRegionInNursery(env, region) && (region->getLogicalAge() < extensions->tarokRegionMaxAge);
-		}
-
-		return result;
+		return !isRegionInNursery(env, region) && (region->getLogicalAge() < MM_GCExtensions::getExtensions(env)->tarokRegionMaxAge);
 	}
 
 	/**
