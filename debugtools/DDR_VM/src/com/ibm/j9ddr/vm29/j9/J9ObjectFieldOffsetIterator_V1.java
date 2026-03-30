@@ -29,6 +29,11 @@ import static com.ibm.j9ddr.vm29.j9.ObjectFieldInfo.fj9object_t_SizeOf;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldFlagIsNullRestricted;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldFlagObject;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldSizeDouble;
+import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldTypeBoolean;
+import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldTypeByte;
+import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldTypeChar;
+import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldTypeMask;
+import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldTypeShort;
 import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.J9AccStatic;
 import static com.ibm.j9ddr.vm29.structure.J9ROMFieldOffsetWalkState.J9VM_FIELD_OFFSET_WALK_BACKFILL_OBJECT_FIELD;
 import static com.ibm.j9ddr.vm29.structure.J9ROMFieldOffsetWalkState.J9VM_FIELD_OFFSET_WALK_BACKFILL_SINGLE_FIELD;
@@ -62,6 +67,8 @@ import com.ibm.j9ddr.vm29.pointer.helper.ValueTypeHelper;
 import com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags;
 import com.ibm.j9ddr.vm29.types.IDATA;
 import com.ibm.j9ddr.vm29.types.Scalar;
+import com.ibm.j9ddr.vm29.types.U8;
+import com.ibm.j9ddr.vm29.types.U16;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.U64;
 import com.ibm.j9ddr.vm29.types.UDATA;
@@ -81,11 +88,11 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 	private Iterator romFieldsShapeIterator;
 	private J9ClassPointer instanceClass;
 
-	private U32 doubleSeen = new U32(0);
-	private U32 doubleStaticsSeen = new U32(0);
 	private UDATA firstDoubleOffset = new UDATA(0);
 	private UDATA firstSingleOffset = new UDATA(0);
 	private UDATA firstObjectOffset = new UDATA(0);
+	private UDATA firstShortOffset = new UDATA(0);
+	private UDATA firstByteOffset = new UDATA(0);
 
 	private UDATA firstFlatDoubleOffset = new UDATA(0);
 	private UDATA firstFlatObjectOffset = new UDATA(0);
@@ -95,10 +102,14 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 	private UDATA currentFlatSingleOffset = new UDATA(0);
 	private UDATA flatBackFillSize = new UDATA(0);
 
+	private U32 doubleSeen = new U32(0);
+	private U32 doubleStaticsSeen = new U32(0);
 	private U32 objectsSeen = new U32(0);
 	private U32 objectStaticsSeen = new U32(0);
 	private U32 singlesSeen = new U32(0);
 	private U32 singleStaticsSeen = new U32(0);
+	private U32 shortsSeen = new U32(0);
+	private U32 bytesSeen = new U32(0);
 	private U32 walkFlags = new U32(0);
 
 	private J9ROMFieldShapePointer field;
@@ -292,6 +303,18 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 						if (modifiers.anyBitsIn(J9FieldSizeDouble)) {
 							offset = firstDoubleOffset.add(doubleSeen.mult(U64.SIZEOF));
 							doubleSeen = doubleSeen.add(1);
+						} else if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+							&& (modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeChar)
+								|| modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeShort))
+						) {
+							offset = firstShortOffset.add(shortsSeen.mult(U16.SIZEOF));
+							shortsSeen = shortsSeen.add(1);
+						} else if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+							&& (modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeBoolean)
+								|| modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeByte))
+						) {
+							offset = firstByteOffset.add(bytesSeen.mult(U8.SIZEOF));
+							bytesSeen = bytesSeen.add(1);
 						} else {
 							if (walkFlags.anyBitsIn(J9VM_FIELD_OFFSET_WALK_BACKFILL_SINGLE_FIELD)) {
 								// Assert_VM_true(state->backfillOffsetToUse >= 0);
@@ -424,6 +447,10 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 			firstObjectOffset = new UDATA(fieldInfo.addFlatObjectsArea(firstFlatObjectOffset.intValue()));
 			firstFlatSingleOffset = new UDATA(fieldInfo.addObjectsArea(firstObjectOffset.intValue()));
 			firstSingleOffset = new UDATA(fieldInfo.addFlatSinglesArea(firstFlatSingleOffset.intValue()));
+			if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) {
+				firstShortOffset = new UDATA(fieldInfo.addSinglesArea(firstSingleOffset.intValue()));
+				firstByteOffset = new UDATA(fieldInfo.addShortsArea(firstShortOffset.intValue()));
+			}
 		} else {
 			firstDoubleOffset = new UDATA(fieldInfo.calculateFieldDataStart());
 			firstObjectOffset = new UDATA(fieldInfo.addDoublesArea(firstDoubleOffset.intValue()));
@@ -464,6 +491,12 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 			UDATA hiddenSingleOffset = firstSingleOffset.add(J9ObjectHelper.headerSize() + (fieldInfo.getNonBackfilledInstanceSingleCount() * U32.SIZEOF));
 			UDATA hiddenDoubleOffset = firstDoubleOffset.add(J9ObjectHelper.headerSize() + (fieldInfo.getInstanceDoubleCount() * U64.SIZEOF));
 			UDATA hiddenObjectOffset = firstObjectOffset.add(J9ObjectHelper.headerSize() + (fieldInfo.getNonBackfilledInstanceObjectCount() * fj9object_t_SizeOf));
+			UDATA hiddenShortOffset = new UDATA(0);
+			UDATA hiddenByteOffset = new UDATA(0);
+			if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) {
+				hiddenShortOffset = firstShortOffset.add(J9ObjectHelper.headerSize() + (fieldInfo.getInstanceShortCount() * U16.SIZEOF));
+				hiddenByteOffset = firstByteOffset.add(J9ObjectHelper.headerSize() + (fieldInfo.getInstanceByteCount() * U8.SIZEOF));
+			}
 			boolean useBackfillForObject = false;
 			boolean useBackfillForSingle = false;
 
@@ -490,6 +523,18 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 				} else if (modifiers.allBitsIn(J9FieldSizeDouble)) {
 					hiddenField.setFieldOffset(hiddenDoubleOffset);
 					hiddenDoubleOffset = hiddenDoubleOffset.add(U64.SIZEOF);
+				} else if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+					&& (modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeChar)
+						|| modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeShort))
+				) {
+					hiddenField.setFieldOffset(hiddenShortOffset);
+					hiddenShortOffset = hiddenShortOffset.add(U16.SIZEOF);
+				} else if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+					&& (modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeBoolean)
+						|| modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeByte))
+				) {
+					hiddenField.setFieldOffset(hiddenByteOffset);
+					hiddenByteOffset = hiddenByteOffset.add(U8.SIZEOF);
 				} else {
 					if (useBackfillForSingle) {
 						hiddenField.setFieldOffset(fieldInfo.getMyBackfillOffsetForHiddenField());

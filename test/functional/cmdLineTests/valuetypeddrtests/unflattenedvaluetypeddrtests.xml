@@ -73,6 +73,7 @@
 		<saveoutput regex="no" type="required" saveName="valueAddr1" splitIndex="1" splitBy="= !j9object " showMatch="yes">[0] = !fj9object 0x</saveoutput>
 		<saveoutput regex="no" type="required" saveName="valueAddr2" splitIndex="1" splitBy="= !j9object " showMatch="yes">[1] = !fj9object 0x</saveoutput>
 		<saveoutput regex="no" type="required" saveName="arrayAddr" splitIndex="1" splitBy="= !j9object " showMatch="yes">[2] = !fj9object 0x</saveoutput>
+		<saveoutput regex="no" type="required" saveName="compactLayoutAddr" splitIndex="1" splitBy="= !j9object " showMatch="yes">[4] = !fj9object 0x</saveoutput>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
@@ -138,6 +139,76 @@
 		<output regex="no" type="success" showMatch="yes">Triangle2D; tri = !fj9object</output>
 		<output regex="no" type="success" showMatch="yes">ValueInt; i = !fj9object</output>
 		<output regex="no" type="success" showMatch="yes">Triangle2D; tri2 = !fj9object</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<!-- Compact Layout Scenarios Tests -->
+	<test id="Run !j9object $compactLayoutAddr$ to show compact layout scenarios container">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $compactLayoutAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">CompactByte; compactByte = !fj9object 0x</output>
+		<saveoutput regex="no" type="required" saveName="compactByteAddr" splitIndex="4" splitBy=" " showMatch="yes">CompactByte; compactByte = !fj9object 0x</saveoutput>
+		<output regex="no" type="success" showMatch="yes">CompactShort; compactShort = !fj9object 0x</output>
+		<saveoutput regex="no" type="required" saveName="compactShortAddr" splitIndex="4" splitBy=" " showMatch="yes">CompactShort; compactShort = !fj9object 0x</saveoutput>
+		<output regex="no" type="success" showMatch="yes">CompactByteShort; compactByteShort = !fj9object 0x</output>
+		<saveoutput regex="no" type="required" saveName="compactByteShortAddr" splitIndex="4" splitBy=" " showMatch="yes">CompactByteShort; compactByteShort = !fj9object 0x</saveoutput>
+		<output regex="no" type="success" showMatch="yes">CompactAssorted; compactAssorted = !fj9object 0x</output>
+		<saveoutput regex="no" type="required" saveName="compactAssortedAddr" splitIndex="4" splitBy=" " showMatch="yes">CompactAssorted; compactAssorted = !fj9object 0x</saveoutput>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !fj9object $compactByteAddr$ to verify byte field offsets">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!fj9object $compactByteAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">B b0 = 0x7f \(offset = 0\) \(.*CompactByte\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">B b1 = 0x42 \(offset = 1\) \(.*CompactByte\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">B b2 = 0x7f \(offset = 2\) \(.*CompactByte\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">B b3 = 0x42 \(offset = 3\) \(.*CompactByte\)</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !fj9object $compactShortAddr$ to verify short field offsets">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!fj9object $compactShortAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">S s0 = 0x7fff \(offset = 0\) \(.*CompactShort\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">S s1 = 0x1234 \(offset = 2\) \(.*CompactShort\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">S s2 = 0x7fff \(offset = 4\) \(.*CompactShort\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">S s3 = 0x1234 \(offset = 6\) \(.*CompactShort\)</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !fj9object $compactByteShortAddr$ to verify mixed byte/short field offsets">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!fj9object $compactByteShortAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">B b0 = 0x7f \(offset = 4\) \(.*CompactByteShort\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">S s0 = 0x7fff \(offset = 0\) \(.*CompactByteShort\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">B b1 = 0x42 \(offset = 5\) \(.*CompactByteShort\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">S s1 = 0x1234 \(offset = 2\) \(.*CompactByteShort\)</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !fj9object $compactAssortedAddr$ to verify assorted field offsets">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!fj9object $compactAssortedAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">I i0 = 0x12123434 \(offset = 0\) \(.*CompactAssorted\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">I i1 = 0x45456767 \(offset = 4\) \(.*CompactAssorted\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">S s = 0x7fff \(offset = 8\) \(.*CompactAssorted\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">B b = 0x7f \(offset = 10\) \(.*CompactAssorted\)</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 </suite>

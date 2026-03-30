@@ -48,14 +48,26 @@ private:
 	U_32 _instanceObjectCount;
 	U_32 _instanceSingleCount;
 	U_32 _instanceDoubleCount;
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+	U_32 _instanceShortCount;
+	U_32 _instanceByteCount;
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 	U_32 _totalObjectCount;
 	U_32 _totalSingleCount;
 	U_32 _totalDoubleCount;
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+	U_32 _totalShortCount;
+	U_32 _totalByteCount;
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 
 	/* the following count fields annotated with @Contended, including regular fields in classes annotated with @Contended. */
 	U_32 _contendedObjectCount;
 	U_32 _contendedSingleCount;
 	U_32 _contendedDoubleCount;
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+	U_32 _contendedShortCount;
+	U_32 _contendedByteCount;
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	bool _isValue;
@@ -86,6 +98,12 @@ private:
 	{
 		U_32 accumulator = _superclassFieldsSize +  _objectHeaderSize; /* get the true size with header */
 		accumulator += (_totalObjectCount * _objectHeaderSize) + (_totalSingleCount * sizeof(U_32)) + (_totalDoubleCount * sizeof(U_64)); /* add the non-contended and hidden fields */
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+		U_32 smallTypeSize = (_totalShortCount * sizeof(U_16)) + (_totalByteCount * sizeof(U_8));
+		/* 16 and 8-bit fields must be aligned to 32 bits. */
+		U_32 smallTypeSizeRounded = ROUND_UP_TO_POWEROF2((UDATA)smallTypeSize, sizeof(U_32));
+		accumulator += smallTypeSizeRounded;
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 		accumulator = ROUND_DOWN_TO_POWEROF2(accumulator, OBJECT_SIZE_INCREMENT_IN_BYTES) + _cacheLineSize; /* get the worst-case cache line boundary and add a cache size */
 		return accumulator;
 	}
@@ -113,12 +131,24 @@ public:
 		_instanceObjectCount(0),
 		_instanceSingleCount(0),
 		_instanceDoubleCount(0),
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+		_instanceShortCount(0),
+		_instanceByteCount(0),
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 		_totalObjectCount(0),
 		_totalSingleCount(0),
 		_totalDoubleCount(0),
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+		_totalShortCount(0),
+		_totalByteCount(0),
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 		_contendedObjectCount(0),
 		_contendedSingleCount(0),
 		_contendedDoubleCount(0),
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+		_contendedShortCount(0),
+		_contendedByteCount(0),
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		_isValue(J9ROMCLASS_IS_VALUE(romClass)),
 		_flattenedClassCache(flattenedClassCache),
@@ -182,6 +212,14 @@ public:
 		return _totalSingleCount;
 	}
 
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+	VMINLINE U_32
+	getTotalShortCount(void) const
+	{
+		return _totalShortCount;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
+
 	/**
 	 * Priorities for slots are:
 	 * 1. instance singles
@@ -211,11 +249,12 @@ public:
 		return nonBackfilledObjects;
 	}
 
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
 	VMINLINE U_32
 	getNonBackfilledSingleCount(void) const
 	{
 		U_32 nonBackfilledSingle = _totalSingleCount;
-		if (isBackfillSuitableSingleAvailable()
+		if ((isBackfillSuitableInstanceSingleAvailable() || (isBackfillSuitableSingleAvailable() && !isBackfillSuitableObjectAvailable()))
 			&& isMyBackfillSlotAvailable()
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 			&& (0 != nonBackfilledSingle)
@@ -225,6 +264,7 @@ public:
 		}
 		return nonBackfilledSingle;
 	}
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 
 	VMINLINE U_32
 	getNonBackfilledInstanceObjectCount(void) const
@@ -274,6 +314,20 @@ public:
 	{
 		return _instanceSingleCount;
 	}
+
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+	VMINLINE U_32
+	getInstanceShortCount(void) const
+	{
+		return _instanceShortCount;
+	}
+
+	VMINLINE U_32
+	getInstanceByteCount(void) const
+	{
+		return _instanceByteCount;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 
 	VMINLINE U_32
 	getHiddenFieldCount(void) const
@@ -496,6 +550,28 @@ public:
 		return start + (isContendedClassLayout() ? _contendedObjectCount: getNonBackfilledObjectCount()) * _referenceSize;
 	}
 
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+	/**
+	 * @param start end of previous field area
+	 * @return offset to end of the shorts area
+	 * @note takes into account singles which will go in the backfill
+	 */
+	VMINLINE UDATA
+	addSinglesArea(UDATA start) const
+	{
+		return start + ((isContendedClassLayout() ? _contendedSingleCount : getNonBackfilledSingleCount()) * sizeof(U_32));
+	}
+
+	/**
+	 * @param start end of previous field area
+	 * @return offset to end of the shorts area
+	 */
+	VMINLINE UDATA
+	addShortsArea(UDATA start) const
+	{
+		return start + ((isContendedClassLayout() ? _contendedShortCount : _totalShortCount) * sizeof(U_16));
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	/**
 	 * @param start end of previous field area, which should be the first field area
