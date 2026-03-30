@@ -560,41 +560,21 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 		if (try_scan(&scan_start, "tarokAllocationAgeEnabled")) {
-			extensions->tarokAllocationAgeEnabled = true;
 			continue;
 		}
 		if (try_scan(&scan_start, "tarokAllocationAgeDisabled")) {
-			extensions->tarokAllocationAgeEnabled = false;
 			continue;
 		}
 		if (try_scan(&scan_start, "tarokAllocationAgeExponentBase=")) {
-			UDATA exponentBase = 0;
-			if(!scan_udata_helper(vm, &scan_start, &exponentBase, "tarokAllocationAgeExponentBase=")) {
-				returnValue = JNI_EINVAL;
-				break;
-			}
-			extensions->tarokAllocationAgeExponentBase = ((double)exponentBase) / 100.0;
 			continue ;
 		}
 		if (try_scan(&scan_start, "tarokAllocationAgeUnit=")) {
-			if(!scan_udata_memory_size_helper(vm, &scan_start, &(extensions->tarokAllocationAgeUnit), "tarokAllocationAgeUnit=")) {
-				returnValue = JNI_EINVAL;
-				break;
-			}
 			continue;
 		}
 		if (try_scan(&scan_start, "tarokMaximumAgeInBytes=")) {
-			if(!scan_u64_memory_size_helper(vm, &scan_start, &(extensions->tarokMaximumAgeInBytes), "tarokMaximumAgeInBytes=")) {
-				returnValue = JNI_EINVAL;
-				break;
-			}
 			continue;
 		}
 		if (try_scan(&scan_start, "tarokMaximumNurseryAgeInBytes=")) {
-			if(!scan_u64_memory_size_helper(vm, &scan_start, &(extensions->tarokMaximumNurseryAgeInBytes), "tarokMaximumNurseryAgeInBytes=")) {
-				returnValue = JNI_EINVAL;
-				break;
-			}
 			continue;
 		}
 		if (try_scan(&scan_start, "tarokEnableProjectedSurvivalCollectionSet")) {

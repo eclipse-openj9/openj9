@@ -282,9 +282,10 @@ public:
 	 * all regions allocated at this time required to have their age corrected
 	 * Currently age just set up to time of Collector's start up
 	 * @param env[in] The main GC thread
-	 * @param increment number of allocated bytes age should be set up
+//	 * @param increment number of allocated bytes age should be set up
 	 */
-	void initialRegionAgesSetup(MM_EnvironmentVLHGC *env, UDATA age);
+//	void initialRegionAgesSetup(MM_EnvironmentVLHGC *env, UDATA age);
+	void initialRegionAgesSetup(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Increment the nursery age of region.

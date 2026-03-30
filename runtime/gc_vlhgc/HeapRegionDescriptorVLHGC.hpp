@@ -90,10 +90,6 @@ protected:
 	MM_GCExtensions * _extensions;
 
 private:
-	U_64 _allocationAge; /**< allocation age (number of bytes allocated since the last attempted allocation) */
-	U_64 _lowerAgeBound; /**< lowest possible age of any object in this region */
-	U_64 _upperAgeBound; /**< highest possible age of any object in this region */
-	double _allocationAgeSizeProduct; /**< sum of (age * size) products for each object in the region. used for age merging math in survivor regions */
 	uintptr_t _age; /**< logical allocation age (number of GC cycles since the last attempted allocation) */
 	MM_RememberedSetCardList _rememberedSetCardList; /**< remembered set card list */
 	MM_RememberedSetCard *_rsclBufferPool;			 /**< RSCL Buffer pool owned by this region (Buffers can still be shared among other regions) */
@@ -111,100 +107,25 @@ public:
 	MM_HeapRegionDescriptorVLHGC(MM_EnvironmentVLHGC *env, void *lowAddress, void *highAddress);
 
 	/**
-	 * Get Allocation Age - return back allocation age
-	 * @return allocation age value
-	 */
-	MMINLINE U_64 getAllocationAge() { return _allocationAge; }
-
-	MMINLINE U_64 getLowerAgeBound() { return _lowerAgeBound; }
-	MMINLINE U_64 getUpperAgeBound() { return _upperAgeBound; }
-
-	/**
-	 * get current value of (age * size) product used for survivor regions
-	 * @return allocationAgeSizeProduct value
-	 */
-	MMINLINE double getAllocationAgeSizeProduct()
-	{
-		 return _allocationAgeSizeProduct;
-	}
-
-	/**
-	 * set current value of (age * size) product used for survivor regions (used for setting its initial value)
-	 */
-	MMINLINE void setAllocationAgeSizeProduct(double allocationAgeSizeProduct)
-	{
-		 _allocationAgeSizeProduct = allocationAgeSizeProduct;
-	}
-
-
-	/**
-	 * increment atomically allocation (age * size) product
-	 * @param allocationAgeSizeProduct age to increment with
-	 * @return new allocationAgeSizeProduct value
-	 */
-	MMINLINE double atomicIncrementAllocationAgeSizeProduct(double allocationAgeSizeProduct)
-	{
-		 return MM_AtomicOperations::addDouble(&_allocationAgeSizeProduct, allocationAgeSizeProduct);
-	}
-
-	/**
 	 *	Get Logical Age - return back logical age in range 0-tarokRegionMaxAge
 	 *	@return return age value
 	 */
 	MMINLINE uintptr_t getLogicalAge() { return _age; }
 
 	/**
-	 * Set Age - set both allocation and logical age
-	 * @param allocationAge allocation age to set
+	 * Set Age - set logical age
 	 * @param logicalAge logical age to set
 	 */
-	MMINLINE void setAge(U_64 allocationAge, uintptr_t logicalAge)
+	MMINLINE void setAge(uintptr_t logicalAge)
 	{
-		_allocationAge = allocationAge;
 		_age = logicalAge;
 	}
 
 	/**
-	 * Update lowest and higher object age bounds (propageted info from just filled-up copy cache)
-	 */
-	MMINLINE void updateAgeBounds(U_64 lowerAgeBound, U_64 upperAgeBound) {
-		/* ideally, these should be atomic updates, but bounds are anyway just an approximation */
-		_lowerAgeBound = OMR_MIN(_lowerAgeBound, lowerAgeBound);
-		_upperAgeBound = OMR_MAX(_upperAgeBound, upperAgeBound);
-	}
-
-	/**
-	 * Increment lowest and higher object age bounds (when doing region aging)
-	 */
-	MMINLINE void incrementAgeBounds(uintptr_t increment) {
-		_lowerAgeBound += increment;
-		_upperAgeBound += increment;
-	}
-
-	/**
-	 * Set age bounds from newly allocated region
-	 */
-	MMINLINE void setAgeBounds(U_64 lowerAgeBound, U_64 upperAgeBound) {
-		_lowerAgeBound = lowerAgeBound;
-		_upperAgeBound = upperAgeBound;
-	}
-
-	/**
-	 * Reset age bounds for IDLE/FREE regions
-	 */
-	MMINLINE void resetAgeBounds() {
-		_lowerAgeBound = U_64_MAX;
-		_upperAgeBound = 0;
-	}
-
-
-	/**
 	 * Reset Age
-	 * Supports both old and bytes-allocated-based aging systems
 	 * @param env[in] the current thread
-	 * @param allocationAge allocation age to set
 	 */
-	void resetAge(MM_EnvironmentVLHGC *env, U_64 allocationAge);
+	void resetAge(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Is Eden - return true if region is Eden

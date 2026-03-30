@@ -48,8 +48,6 @@ MM_HeapRegionDescriptorVLHGC::MM_HeapRegionDescriptorVLHGC(MM_EnvironmentVLHGC *
 	,_compactDestinationQueueNext(NULL)
 	,_defragmentationTarget(false)
 	,_extensions(MM_GCExtensions::getExtensions(env))
-	,_allocationAge(0)
-	,_allocationAgeSizeProduct(0.0)
 	,_age(0)
 	,_rememberedSetCardList()
 	,_rsclBufferPool(NULL)
@@ -163,22 +161,8 @@ MM_HeapRegionDescriptorVLHGC::getProjectedReclaimableBytes()
 }
 
 void 
-MM_HeapRegionDescriptorVLHGC::resetAge(MM_EnvironmentVLHGC *env, U_64 allocationAge)
+MM_HeapRegionDescriptorVLHGC::resetAge(MM_EnvironmentVLHGC *env)
 {
-	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-	uintptr_t logicalAge = 0;
-	if (extensions->tarokAllocationAgeEnabled) {
-		logicalAge = MM_CompactGroupManager::calculateLogicalAgeForRegion(env, allocationAge);
-	}
-	setAge(allocationAge, logicalAge);
-
-	U_64 maxAllocationAge = extensions->compactGroupPersistentStats[logicalAge]._maxAllocationAge;
-	U_64 minAllocationAge = 0;
-
-	if (logicalAge > 0) {
-		minAllocationAge = extensions->compactGroupPersistentStats[logicalAge - 1]._maxAllocationAge;
-	}
-
-	setAgeBounds(minAllocationAge, maxAllocationAge);
+	setAge(0);
 }
 
