@@ -1982,10 +1982,18 @@ typedef struct J9ROMFieldOffsetWalkState {
 	UDATA firstSingleOffset;
 	UDATA firstObjectOffset;
 	UDATA firstDoubleOffset;
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+	UDATA firstShortOffset;
+	UDATA firstByteOffset;
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 	IDATA backfillOffsetToUse;
 	U_32 singlesSeen;
 	U_32 objectsSeen;
 	U_32 doublesSeen;
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+	U_32 shortsSeen;
+	U_32 bytesSeen;
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 	U_32 singleStaticsSeen;
 	U_32 objectStaticsSeen;
 	U_32 doubleStaticsSeen;

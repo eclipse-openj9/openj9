@@ -24,12 +24,18 @@ package com.ibm.j9ddr.vm29.j9;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldFlagIsNullRestricted;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldFlagObject;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldSizeDouble;
+import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldTypeBoolean;
+import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldTypeByte;
+import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldTypeChar;
+import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldTypeMask;
+import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldTypeShort;
 import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.J9AccStatic;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 
 import com.ibm.j9ddr.CorruptDataException;
+import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldShapePointer;
@@ -39,6 +45,8 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.pointer.helper.ValueTypeHelper;
 import com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags;
 import com.ibm.j9ddr.vm29.types.Scalar;
+import com.ibm.j9ddr.vm29.types.U8;
+import com.ibm.j9ddr.vm29.types.U16;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.U64;
 import com.ibm.j9ddr.vm29.types.UDATA;
@@ -57,9 +65,13 @@ public class ObjectFieldInfo {
 	int instanceObjectCount;
 	int instanceSingleCount;
 	int instanceDoubleCount;
+	int instanceShortCount;
+	int instanceByteCount;
 	int totalObjectCount;
 	int totalSingleCount;
 	int totalDoubleCount;
+	int totalShortCount;
+	int totalByteCount;
 	int hiddenFieldCount;
 	int superclassBackfillOffset; /* inherited backfill */
 	int myBackfillOffset; /* backfill available for this class's fields */
@@ -86,9 +98,13 @@ public class ObjectFieldInfo {
 		instanceObjectCount = 0;
 		instanceSingleCount = 0;
 		instanceDoubleCount = 0;
+		instanceShortCount = 0;
+		instanceByteCount = 0;
 		totalObjectCount = 0;
 		totalSingleCount = 0;
 		totalDoubleCount = 0;
+		totalShortCount = 0;
+		totalByteCount = 0;
 		hiddenFieldCount = 0;
 		this.romClass = romClass;
 		superclassFieldsSize = -1;
@@ -179,6 +195,14 @@ public class ObjectFieldInfo {
 
 	int getInstanceDoubleCount() {
 		return instanceDoubleCount;
+	}
+
+	int getInstanceShortCount() {
+		return instanceShortCount;
+	}
+
+	int getInstanceByteCount() {
+		return instanceByteCount;
 	}
 
 	int getInstanceObjectCount() {
@@ -319,6 +343,23 @@ public class ObjectFieldInfo {
 	}
 
 	/**
+	 * @param start end of previous field area
+	 * @return offset to end of the singles area
+	 * @note takes into account singles which will go in the backfill
+	 */
+	int addSinglesArea(int start) {
+		return start + (getNonBackfilledInstanceSingleCount() * U32.SIZEOF);
+	}
+
+	/**
+	 * @param start end of previous field area
+	 * @return offset to end of the shorts area
+	 */
+	int addShortsArea(int start) {
+		return start + (totalShortCount * U16.SIZEOF);
+	}
+
+	/**
 	 * @note This is used for instance fields.
 	 * The backfill slot can either be embedded within the superclass,
 	 * or it can be the result of padding the superclass.
@@ -434,6 +475,18 @@ public class ObjectFieldInfo {
 				} else if (modifiers.anyBitsIn(J9FieldSizeDouble)) {
 					instanceDoubleCount += 1;
 					totalDoubleCount += 1;
+				} else if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+					&& (modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeChar)
+						|| modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeShort))
+				) {
+					instanceShortCount += 1;
+					totalShortCount += 1;
+				} else if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+					&& (modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeBoolean)
+						|| modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeByte))
+				) {
+					instanceByteCount += 1;
+					totalByteCount += 1;
 				} else {
 					instanceSingleCount += 1;
 					totalSingleCount += 1;
@@ -454,6 +507,16 @@ public class ObjectFieldInfo {
 					totalObjectCount += 1;
 				} else if (modifiers.anyBitsIn(J9FieldSizeDouble)) {
 					totalDoubleCount += 1;
+				} else if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+					&& (modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeChar)
+						|| modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeShort))
+				) {
+					totalShortCount += 1;
+				} else if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+					&& (modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeBoolean)
+						|| modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeByte))
+				) {
+					totalByteCount += 1;
 				} else {
 					totalSingleCount += 1;
 				}
