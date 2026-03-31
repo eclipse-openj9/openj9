@@ -176,6 +176,7 @@ MM_CopyForwardScheme::MM_CopyForwardScheme(MM_EnvironmentVLHGC *env, MM_HeapRegi
 	, _markMap(NULL)
 	, _heapBase(NULL)
 	, _heapTop(NULL)
+	, _regionShift((uint8_t)_regionManager->getRegionShift())
 	, _abortFlag(false)
 	, _abortInProgress(false)
 	, _regionCountCannotBeEvacuated(0)
@@ -195,6 +196,7 @@ MM_CopyForwardScheme::MM_CopyForwardScheme(MM_EnvironmentVLHGC *env, MM_HeapRegi
 	, _shouldScanFinalizableObjects(false)
 	, _objectAlignmentInBytes(env->getObjectAlignmentInBytes())
 	, _compressedSurvivorTable(NULL)
+	, _regionShouldMark(NULL)
 {
 	_typeId = __FUNCTION__;
 }
@@ -336,6 +338,12 @@ MM_CopyForwardScheme::initialize(MM_EnvironmentVLHGC *env)
 		return false;
 	}
 
+	_regionShouldMark  = (bool *)env->getForge()->allocate(_regionManager->getTableRegionCount() * sizeof(bool), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+	if (NULL == _regionShouldMark) {
+		return false;
+	}
+	memset(_regionShouldMark, 0, _regionManager->getTableRegionCount() * sizeof(bool));
+
 	return true;
 }
 
@@ -381,6 +389,11 @@ MM_CopyForwardScheme::tearDown(MM_EnvironmentVLHGC *env)
 	if (NULL != _compressedSurvivorTable) {
 		env->getForge()->free(_compressedSurvivorTable);
 		_compressedSurvivorTable = NULL;
+	}
+
+	if (NULL != _regionShouldMark) {
+		env->getForge()->free(_regionShouldMark);
+		_regionShouldMark = NULL;
 	}
 }
 
@@ -480,6 +493,7 @@ MM_CopyForwardScheme::preProcessRegions(MM_EnvironmentVLHGC *env)
 	while (NULL != (region = regionIterator.nextRegion())) {
 		region->_copyForwardData._survivor = false;
 		region->_copyForwardData._freshSurvivor = false;
+		_regionShouldMark[_regionManager->mapDescriptorToRegionTableIndex(region)] = region->_markData._shouldMark;
 		if (region->containsObjects()) {
 			region->_copyForwardData._initialLiveSet = true;
 			region->_copyForwardData._evacuateSet = region->_markData._shouldMark;
@@ -630,12 +644,9 @@ MM_CopyForwardScheme::isObjectInEvacuateMemory(J9Object *objectPtr)
 MMINLINE bool
 MM_CopyForwardScheme::isObjectInEvacuateMemoryNoCheck(J9Object *objectPtr)
 {
-	bool result = false;
-
-	MM_HeapRegionDescriptorVLHGC *region = NULL;
-	region = (MM_HeapRegionDescriptorVLHGC *)_regionManager->tableDescriptorForAddress(objectPtr);
-	result = region->_markData._shouldMark;
-	return result;
+	uintptr_t heapDelta = (uintptr_t)objectPtr - (uintptr_t)_heapBase;
+	uintptr_t regionIndex = heapDelta >> _regionShift;
+	return _regionShouldMark[regionIndex];
 }
 
 MMINLINE bool
@@ -801,6 +812,7 @@ MM_CopyForwardScheme::acquireEmptyRegion(MM_EnvironmentVLHGC *env, MM_ReservedRe
 			/* Might have been set by a PGC in past, and meanwhile removed from the active region list (via heap contraction),
 			 * so that it would be missed to clear at the start of PGC (as any other active region in the list would). */
 			newRegion->_markData._shouldMark = false;
+			_regionShouldMark[_regionManager->mapDescriptorToRegionTableIndex(newRegion)] = false;
 			newRegion->_reclaimData._shouldReclaim = false;
 
 			/*
@@ -1275,7 +1287,7 @@ MM_CopyForwardScheme::copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationCont
 	J9Object *objectPtr = originalObjectPtr;
 	bool success = true;
 
-	if ((NULL != objectPtr) && isObjectInEvacuateMemory(objectPtr)) {
+	if (isObjectInEvacuateMemory(objectPtr)) {
 		/* Object needs to be copy and forwarded.  Check if the work has already been done */
 		MM_ForwardedHeader forwardHeader(objectPtr, _extensions->compressObjectReferences());
 		objectPtr = forwardHeader.getForwardedObject();
@@ -1912,12 +1924,11 @@ MM_CopyForwardScheme::addCopyCachesToFreeList(MM_EnvironmentVLHGC *env)
 J9Object *
 MM_CopyForwardScheme::updateForwardedPointer(J9Object *objectPtr)
 {
-	J9Object *forwardPtr;
 
 	if (isObjectInEvacuateMemory(objectPtr)) {
 		MM_ForwardedHeader forwardedHeader(objectPtr, _extensions->compressObjectReferences());
-		forwardPtr = forwardedHeader.getForwardedObject();
-		if (forwardPtr != NULL) {
+		J9Object *forwardPtr = forwardedHeader.getForwardedObject();
+		if (NULL != forwardPtr) {
 			return forwardPtr;
 		}
 	}

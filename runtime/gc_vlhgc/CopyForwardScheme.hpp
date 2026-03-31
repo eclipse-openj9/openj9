@@ -133,6 +133,8 @@ private:
 	void *_heapBase;  /**< Cached base pointer of heap */
 	void *_heapTop;  /**< Cached top pointer of heap */
 
+	uint8_t _regionShift;
+
 	volatile bool _abortFlag;  /**< Flag indicating whether the current copy forward cycle should be aborted due to insufficient heap to complete */
 	bool _abortInProgress;  /**< Flag indicating that the copy forward mechanism is now operating in abort mode, which is attempting to secure integrity of the heap to continue execution */
 
@@ -160,6 +162,8 @@ private:
 	const uintptr_t _objectAlignmentInBytes;	/**< Run-time objects alignment in bytes */
 
 	uintptr_t *_compressedSurvivorTable;	/**< start address of compressed survivor table (1 bit presents CARD_SIZE of Heap) */
+
+	bool *_regionShouldMark;	/**< Array of region _shouldMark values to improve access time by caching */
 
 protected:
 public:
