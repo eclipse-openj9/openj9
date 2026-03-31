@@ -4903,8 +4903,26 @@ TR::KnownObjectTable::Index TR_J9VMBase::getMethodHandleTableEntryIndex(TR::Comp
     uintptr_t methodTypeObj = getReferenceField(methodHandleObj, "type", "Ljava/lang/invoke/MethodType;");
     uintptr_t symbolicMTInvokerObj
         = getReferenceField(accessDescriptorObj, "symbolicMethodTypeInvoker", "Ljava/lang/invoke/MethodType;");
-    if (methodTypeObj != symbolicMTInvokerObj)
+
+    // the cached methodhandle will not be in the table; MethodHandleTransformer's processing of
+    // checkVarHandleGenericType may not work properly if TR_ALLOW_NON_CONST_KNOWN_OBJECTS is defined.
+#ifdef TR_ALLOW_NON_CONST_KNOWN_OBJECTS
+    if (methodTypeObj != symbolicMTInvokerObj) {
         return result;
+    }
+#else // TR_ALLOW_NON_CONST_KNOWN_OBJECTS
+    if (methodTypeObj != symbolicMTInvokerObj) {
+        uintptr_t cachedMT = 0;
+        uintptr_t cachedMH = getReferenceField(methodHandleObj, "asTypeCache", "Ljava/lang/invoke/MethodHandle;");
+        if (cachedMH != 0)
+            cachedMT = getReferenceField(cachedMH, "type", "Ljava/lang/invoke/MethodType;");
+
+        if (cachedMT != 0 && symbolicMTInvokerObj == cachedMT)
+            methodHandleObj = cachedMH;
+        else
+            return result;
+    }
+#endif // TR_ALLOW_NON_CONST_KNOWN_OBJECTS
 
     result = knot->getOrCreateIndex(methodHandleObj);
 
