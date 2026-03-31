@@ -76,7 +76,7 @@ testGetNextStackMapFrame(J9PortLibrary *portLib, const char *classFileName)
 		outputErrorMessage(TEST_ERROR_ARGS, "Failed to read classfile: %s \n", classFileName );
 		return reportTestExit(PORTLIB, classFileName);
 	}
-	rc = j9bcutil_buildRomClassIntoBuffer(classFileBytes, classFileSize, PORTLIB, verifyBuffers, flags, 0, 0, romClassBuffer, romClassBufferSize, NULL, 0, NULL, 0, NULL);
+	rc = j9bcutil_buildRomClassIntoBuffer(classFileBytes, classFileSize, PORTLIB, verifyBuffers, flags, 0, 0, romClassBuffer, romClassBufferSize, NULL, 0, NULL, 0, NULL, UDATA_MAX);
 	if ( BCT_ERR_NO_ERROR != rc ) {
 		outputErrorMessage(TEST_ERROR_ARGS, "Failed to create ROMClass for class: %s \n", classFileName );
 		return reportTestExit(PORTLIB, classFileName);

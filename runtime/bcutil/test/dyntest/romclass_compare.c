@@ -73,7 +73,7 @@ testClass(J9PortLibrary *portLib, const char *classFileName, UDATA testMode)
 		outputErrorMessage(TEST_ERROR_ARGS, "Failed to read classfile: %s \n", classFileName );
 		goto _exit_test;
 	}
-	rc = j9bcutil_buildRomClassIntoBuffer(classFileBytes, classFileSize, PORTLIB, verifyBuffers, flags, 0, 0, romClassBuffer, romClassBufferSize, lineNumberBuffer, lineNumberBufferSize, varInfoBuffer, varInfoBufferSize, NULL);
+	rc = j9bcutil_buildRomClassIntoBuffer(classFileBytes, classFileSize, PORTLIB, verifyBuffers, flags, 0, 0, romClassBuffer, romClassBufferSize, lineNumberBuffer, lineNumberBufferSize, varInfoBuffer, varInfoBufferSize, NULL, UDATA_MAX);
 
 	if ( BCT_ERR_NO_ERROR != rc ){
 		outputErrorMessage(TEST_ERROR_ARGS, "Failed to create ROMClass for class: %s \n", classFileName );
@@ -90,7 +90,7 @@ testClass(J9PortLibrary *portLib, const char *classFileName, UDATA testMode)
 
 
 	rc = j9bcutil_compareRomClass(classFileBytes, classFileSize,
-			PORTLIB, verifyBuffers, flags, 0, (J9ROMClass *)romClassBuffer);
+			PORTLIB, verifyBuffers, flags, 0, (J9ROMClass *)romClassBuffer, UDATA_MAX);
 	if ( BCT_ERR_NO_ERROR != rc ) {
 		outputErrorMessage(TEST_ERROR_ARGS, "Failed to match ROMClass for class: %s \n", classFileName );
 	}

@@ -5630,7 +5630,7 @@ typedef struct J9InternalVMFunctions {
 	j9object_t ( *cloneValueType)(struct J9VMThread *currentThread, struct J9Class *receiverClass, j9object_t original, BOOLEAN fastPath);
 	void ( *putFlattenableField)(struct J9VMThread *currentThread, struct J9RAMFieldRef *cpEntry, j9object_t receiver, j9object_t paramObject);
 #if JAVA_SPEC_VERSION >= 15
-	I_32 (*checkClassBytes) (struct J9VMThread *currentThread, U_8* classBytes, UDATA classBytesLength, U_8* segment, U_32 segmentLength);
+	I_32 (*checkClassBytes) (struct J9VMThread *currentThread, U_8* classBytes, UDATA classBytesLength, U_8* segment, U_32 segmentLength, UDATA availableOSStackSpace);
 #endif /* JAVA_SPEC_VERSION >= 15 */
 	void ( *storeFlattenableArrayElement)(struct J9VMThread *currentThread, j9object_t receiverObject, U_32 index, j9object_t paramObject);
 	j9object_t ( *loadFlattenableArrayElement)(struct J9VMThread *currentThread, j9object_t receiverObject, U_32 index, BOOLEAN fast);

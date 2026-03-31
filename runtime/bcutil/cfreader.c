@@ -29,6 +29,7 @@
 #include "romphase.h"
 #include "bcutil_internal.h"
 #include "util_api.h"
+#include "j9cfg_builder.h"
 
 /*
  * Note: The attrlookup.h file contains a generated perfect hash table
@@ -44,29 +45,48 @@
 #include "attrlookup.h"
 
 static I_32 checkAttributes (J9PortLibrary* portLib, J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 attributesCount, U_8* segment, I_32 maxBootstrapMethodIndex, U_32 extra, U_32 flags);
-static I_32 readAttributes (J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 attributesCount, U_8 * data, U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags, UDATA * syntheticFound);
+static I_32 readAttributes (J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 attributesCount, U_8 * data, U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags, UDATA * syntheticFound, UDATA availableOSStackSpace, UDATA startingSP);
 static I_32 checkFields (J9PortLibrary* portLib, J9CfrClassFile * classfile, U_8 * segment, U_32 flags);
 static U_8 attributeTagFor (J9CfrConstantPoolInfo *utf8, BOOLEAN stripDebugAttributes);
-static I_32 readAnnotations (J9CfrClassFile * classfile, J9CfrAnnotation * pAnnotations, U_32 annotationCount, U_8 * data, U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags);
-static I_32 readTypeAnnotation (J9CfrClassFile * classfile, J9CfrTypeAnnotation * pAnnotations, U_8 * data, U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags);
-static I_32 readAnnotationElement (J9CfrClassFile * classfile, J9CfrAnnotationElement ** pAnnotationElement, U_8 * data, U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags);
+static I_32 readAnnotations (J9CfrClassFile * classfile, J9CfrAnnotation * pAnnotations, U_32 annotationCount, U_8 * data, U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags, UDATA availableOSStackSpace, UDATA startingSP);
+static I_32 readTypeAnnotation (J9CfrClassFile * classfile, J9CfrTypeAnnotation * pAnnotations, U_8 * data, U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags, UDATA availableOSStackSpace, UDATA startingSP);
+static I_32 readAnnotationElement (J9CfrClassFile * classfile, J9CfrAnnotationElement ** pAnnotationElement, U_8 * data, U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags, UDATA availableOSStackSpace, UDATA startingSP);
 static I_32 checkClassVersion (J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted, U_32 flags);
 static BOOLEAN utf8EqualUtf8 (J9CfrConstantPoolInfo *utf8a, J9CfrConstantPoolInfo *utf8b);
 static BOOLEAN utf8Equal (J9CfrConstantPoolInfo* utf8, char* string, UDATA length);
-static I_32 readMethods (J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* segmentEnd, U_8** pIndex, U_8** pFreePointer, U_32 flags);
-static I_32 readPool (J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* segmentEnd, U_8** pIndex, U_8** pFreePointer);
+static I_32 readMethods (J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* segmentEnd, U_8** pIndex, U_8** pFreePointer, U_32 flags, UDATA availableOSStackSpace, UDATA startingSP);
+static I_32 readPool (J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* segmentEnd, U_8** pIndex, U_8** pFreePointer, UDATA availableOSStackSpace, UDATA startingSP);
 static I_32 checkDuplicateMembers (J9PortLibrary* portLib, J9CfrClassFile * classfile, U_8 * segment, U_32 flags, UDATA memberSize);
 static I_32 checkPool (J9CfrClassFile* classfile, U_8* segment, U_8* poolStart, I_32 *maxBootstrapMethodIndex, U_32 flags);
 static I_32 checkClass (J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32 endOfConstantPool, U_32 vmVersionShifted, U_32 flags);
-static I_32 readFields (J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* segmentEnd, U_8** pIndex, U_8** pFreePointer, U_32 flags);
+static I_32 readFields (J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* segmentEnd, U_8** pIndex, U_8** pFreePointer, U_32 flags, UDATA availableOSStackSpace, UDATA startingSP);
 static I_32 checkMethods (J9PortLibrary* portLib, J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted, U_32 flags);
 static BOOLEAN memberEqual (J9CfrClassFile * classfile, J9CfrMember* a, J9CfrMember* b);
 static void sortMethodIndex(J9CfrConstantPoolInfo* constantPool, J9CfrMethod *list, IDATA start, IDATA end);
 static IDATA compareMethodIDs(J9CfrConstantPoolInfo* constantPool, J9CfrMethod *a, J9CfrMethod *b);
 static U_8* getUTF8Data(J9CfrConstantPoolInfo* constantPool, U_16 cpIndex);
 static U_16 getUTF8Length(J9CfrConstantPoolInfo* constantPool, U_16 cpIndex);
+static BOOLEAN checkStackOverflow(UDATA startingSP, UDATA availableStackSpace);
 
 #define OUTSIDE_CODE	((U_32) -1)
+
+static BOOLEAN
+checkStackOverflow(UDATA startingSP, UDATA availableStackSpace)
+{
+	UDATA localVar = 0;
+	UDATA currentSP  = (UDATA)&localVar;
+	UDATA usedStack = 0;
+
+	if (currentSP < startingSP) {
+		usedStack = startingSP - currentSP;
+	}
+
+	if ((availableStackSpace - usedStack) < J9_OS_STACK_GUARD) {
+		return FALSE;
+	}
+
+	return TRUE;
+}
 
 /* set DUP_TIMING to 1 to determine the best value
  * for DUP_HASH_THRESHOLD on a particular
@@ -129,7 +149,7 @@ attributeTagFor(J9CfrConstantPoolInfo *utf8, BOOLEAN stripDebugAttributes)
 
 static I_32
 readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 attributesCount, U_8 * data,
-						   U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags, UDATA * syntheticFound)
+						   U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags, UDATA * syntheticFound, UDATA availableOSStackSpace, UDATA startingSP)
 {
 	J9CfrAttribute **attributes = *pAttributes;
 	U_8 *index = *pIndex;
@@ -181,6 +201,10 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 	BOOLEAN nestAttributeRead = FALSE;
 	BOOLEAN signatureAttributeRead = FALSE;
 #endif /* JAVA_SPEC_VERSION >= 11 */
+
+	if (!checkStackOverflow(startingSP, availableOSStackSpace)) {
+		return BCT_ERR_STACK_OVERFLOW;
+	}
 
 	if (NULL != syntheticFound) {
 		*syntheticFound = FALSE;
@@ -286,7 +310,7 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 			if (!ALLOC_ARRAY(code->attributes, code->attributesCount, J9CfrAttribute *)) {
 				return -2;
 			}
-			if ((result = readAttributes(classfile, &(code->attributes), code->attributesCount, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags, NULL)) != 0) {
+			if ((result = readAttributes(classfile, &(code->attributes), code->attributesCount, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags, NULL, availableOSStackSpace, startingSP)) != 0) {
 				return result;
 			}
 			break;
@@ -399,7 +423,7 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 			}
 
 			result = readAnnotationElement(classfile, &((J9CfrAttributeAnnotationDefault *)attrib)->defaultValue,
-					data, dataEnd, segment, segmentEnd, &index, &freePointer, flags);
+					data, dataEnd, segment, segmentEnd, &index, &freePointer, flags, availableOSStackSpace, startingSP);
 			if (result != 0) {
 				return result;
 			}
@@ -459,7 +483,7 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 					return BCT_ERR_OUT_OF_ROM;
 				}
 
-				result = readAnnotations(classfile, annotations->annotations, annotations->numberOfAnnotations, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags);
+				result = readAnnotations(classfile, annotations->annotations, annotations->numberOfAnnotations, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags, availableOSStackSpace, startingSP);
 			}
 
 			if (BCT_ERR_OUT_OF_ROM == result) {
@@ -586,7 +610,7 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 				}
 
 				result = readAnnotations(classfile, parameterAnnotations->annotations,	parameterAnnotations->numberOfAnnotations, data, dataEnd,
-						segment, segmentEnd, &index, &freePointer, flags);
+						segment, segmentEnd, &index, &freePointer, flags, availableOSStackSpace, startingSP);
 
 				if (BCT_ERR_NO_ERROR != result) {
 					break;
@@ -699,7 +723,7 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 				* Silently ignore errors.
 				*/
 				for (j = 0; j < annotations->numberOfAnnotations; j++, typeAnnotations++) {
-					result = readTypeAnnotation(classfile, typeAnnotations, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags);
+					result = readTypeAnnotation(classfile, typeAnnotations, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags, availableOSStackSpace, startingSP);
 					if (BCT_ERR_NO_ERROR != result) {
 						break;
 					}
@@ -905,7 +929,7 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 				if (!ALLOC_ARRAY(recordComponent->attributes, recordComponent->attributesCount, J9CfrAttribute *)) {
 					return -2;
 				}
-				result = readAttributes(classfile, &(recordComponent->attributes), recordComponent->attributesCount, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags, NULL);
+				result = readAttributes(classfile, &(recordComponent->attributes), recordComponent->attributesCount, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags, NULL, availableOSStackSpace, startingSP);
 				if (result != 0) {
 					return result;
 				}
@@ -1107,7 +1131,7 @@ _errorFound:
 */
 
 static I_32
-readMethods(J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* segmentEnd, U_8** pIndex, U_8** pFreePointer, U_32 flags)
+readMethods(J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* segmentEnd, U_8** pIndex, U_8** pFreePointer, U_32 flags, UDATA availableOSStackSpace, UDATA startingSP)
 {
 	U_8* index = *pIndex;
 	U_8* freePointer = *pFreePointer;
@@ -1115,6 +1139,11 @@ readMethods(J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_
 	UDATA errorCode, offset;
 	U_32 i;
 	I_32 result;
+
+	/* Check for stack overflow */
+	if (!checkStackOverflow(startingSP, availableOSStackSpace)) {
+		return BCT_ERR_STACK_OVERFLOW;
+	}
 
 	for (i = 0; i < classfile->methodsCount; i++) {
 		U_32 j;
@@ -1135,7 +1164,7 @@ readMethods(J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_
 		}
 
 		/* Read the attributes. */
-		if ((result = readAttributes(classfile, &(method->attributes), method->attributesCount, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags, &syntheticFound))!= 0) {
+		if ((result = readAttributes(classfile, &(method->attributes), method->attributesCount, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags, &syntheticFound, availableOSStackSpace, startingSP))!= 0) {
 			return result;
 		}
 		if (syntheticFound) {
@@ -1193,7 +1222,7 @@ _errorFound:
 */
 
 static I_32
-readFields(J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* segmentEnd, U_8** pIndex, U_8** pFreePointer, U_32 flags)
+readFields(J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* segmentEnd, U_8** pIndex, U_8** pFreePointer, U_32 flags, UDATA availableOSStackSpace, UDATA startingSP)
 {
 	U_8* index = *pIndex;
 	U_8* freePointer = *pFreePointer;
@@ -1201,6 +1230,11 @@ readFields(J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8
 	UDATA errorCode, offset;
 	U_32 i, j;
 	I_32 result;
+
+	/* Check for stack overflow */
+	if (!checkStackOverflow(startingSP, availableOSStackSpace)) {
+		return BCT_ERR_STACK_OVERFLOW;
+	}
 
 	field = classfile->fields;
 	for (i = 0; i < classfile->fieldsCount; i++, field++) {
@@ -1219,7 +1253,7 @@ readFields(J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8
 		}
 
 		/* Read the attributes. */
-		if ((result = readAttributes(classfile, &(field->attributes), field->attributesCount, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags, &syntheticFound)) != 0) {
+		if ((result = readAttributes(classfile, &(field->attributes), field->attributesCount, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags, &syntheticFound, availableOSStackSpace, startingSP)) != 0) {
 			return result;
 		}
 		if (syntheticFound) {
@@ -1256,7 +1290,7 @@ _errorFound:
 */
 
 static I_32
-readPool(J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* segmentEnd, U_8** pIndex, U_8** pFreePointer)
+readPool(J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* segmentEnd, U_8** pIndex, U_8** pFreePointer, UDATA availableOSStackSpace, UDATA startingSP)
 {
 	U_8* index = *pIndex;
 	U_8* freePointer = *pFreePointer;
@@ -1266,6 +1300,11 @@ readPool(J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* 
 	U_32 size, errorCode, offset;
 	U_32 i;
 	I_32 verifyResult;
+
+	/* Check for stack overflow */
+	if (!checkStackOverflow(startingSP, availableOSStackSpace)) {
+		return BCT_ERR_STACK_OVERFLOW;
+	}
 
 	/* Explicitly zero the null entry */
 	info = &(classfile->constantPool[0]);
@@ -2895,7 +2934,7 @@ checkClass(J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32
 	} while (0)
 
 I_32
-j9bcutil_readSuperClassFromClassFileBytes(J9PortLibrary *portLib, U_8 *classData, UDATA classDataLength, UDATA *superClassNameLength, U_8 **nameBuffer, UDATA bufferLength)
+j9bcutil_readSuperClassFromClassFileBytes(J9PortLibrary *portLib, U_8 *classData, UDATA classDataLength, UDATA *superClassNameLength, U_8 **nameBuffer, UDATA bufferLength, UDATA availableStackSpace)
 {
 	PORT_ACCESS_FROM_PORT(portLib);
 	U_32 flags = 0;
@@ -2923,7 +2962,8 @@ j9bcutil_readSuperClassFromClassFileBytes(J9PortLibrary *portLib, U_8 *classData
 			NULL,
 			NULL,
 			0,
-			UDATA_MAX);
+			UDATA_MAX,
+			availableStackSpace);
 
 	if (BCT_ERR_NO_ERROR != readResult) {
 		goto free;
@@ -2959,7 +2999,7 @@ free:
 I_32
 j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	IDATA (*verifyFunction) (J9PortLibrary *aPortLib, J9CfrClassFile* classfile, U_8* segment, U_8* segmentLength, U_8* freePointer, U_32 vmVersionShifted, U_32 flags, I_32 *hasRET),
-	U_8* data, UDATA dataLength, U_8* segment, UDATA segmentLength, U_32 flags, U_8** segmentFreePointer, void *verboseContext, UDATA findClassFlags, UDATA romClassSortingThreshold)
+	U_8* data, UDATA dataLength, U_8* segment, UDATA segmentLength, U_32 flags, U_8** segmentFreePointer, void *verboseContext, UDATA findClassFlags, UDATA romClassSortingThreshold, UDATA availableOSStackSpace)
 {
 	U_8* dataEnd;
 	U_8* segmentEnd;
@@ -2976,6 +3016,8 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	U_32 vmVersionShifted = flags & BCT_MajorClassFileVersionMask;
 	U_16 constantPoolAllocationSize = 0;
 	U_16 errorAction = CFR_ThrowClassFormatError;
+	UDATA localVar = 0;
+	UDATA startingSP  = (UDATA)&localVar;
 
 	Trc_BCU_j9bcutil_readClassFileBytes_Entry();
 
@@ -2983,6 +3025,10 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	if ((segmentLength < (UDATA) sizeof(J9CfrClassFile)) || (segmentLength < (UDATA) sizeof(J9CfrError))) {
 		Trc_BCU_j9bcutil_readClassFileBytes_Exit(-2);
 		return -2;
+	}
+
+	if (UDATA_MAX == availableOSStackSpace) {
+		availableOSStackSpace = J9_OS_STACK_SIZE / 2;
 	}
 
 	index = data;
@@ -3063,7 +3109,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	}
 
 	/* Read the pool. */
-	if ((result = readPool(classfile, data, dataEnd, segment, segmentEnd, &index, &freePointer)) != 0) {
+	if ((result = readPool(classfile, data, dataEnd, segment, segmentEnd, &index, &freePointer, availableOSStackSpace, startingSP)) != 0) {
 		Trc_BCU_j9bcutil_readClassFileBytes_Exit(result);
 		return result;
 	}
@@ -3157,7 +3203,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	}
 
 	/* Read the fields. */
-	if((result = readFields(classfile, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags)) != 0) {
+	if((result = readFields(classfile, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags, availableOSStackSpace, startingSP)) != 0) {
 		Trc_BCU_j9bcutil_readClassFileBytes_Exit(result);
 		return result;
 	}
@@ -3174,7 +3220,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	}
 
 	/* Read the methods. */
-	if((result = readMethods(classfile, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags)) != 0) {
+	if((result = readMethods(classfile, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags, availableOSStackSpace, startingSP)) != 0) {
 		Trc_BCU_j9bcutil_readClassFileBytes_Exit(result);
 		return result;
 	}
@@ -3196,7 +3242,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	}
 
 	/* Read the attributes. */
-	if((result = readAttributes(classfile, &(classfile->attributes), classfile->attributesCount, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags, &syntheticFound)) != 0) {
+	if((result = readAttributes(classfile, &(classfile->attributes), classfile->attributesCount, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags, &syntheticFound, availableOSStackSpace, startingSP)) != 0) {
 		Trc_BCU_j9bcutil_readClassFileBytes_Exit(result);
 		return result;
 	}
@@ -3536,7 +3582,7 @@ memberEqual(J9CfrClassFile * classfile, J9CfrMember* a, J9CfrMember* b)
 
 static I_32
 readAnnotations(J9CfrClassFile * classfile, J9CfrAnnotation * pAnnotations, U_32 annotationCount, U_8 * data,
-						   U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags)
+						   U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags, UDATA availableOSStackSpace, UDATA startingSP)
 {
 	J9CfrAnnotation *annotationList = pAnnotations;
 	U_8 *index = *pIndex;
@@ -3544,6 +3590,11 @@ readAnnotations(J9CfrClassFile * classfile, J9CfrAnnotation * pAnnotations, U_32
 	U_32 errorCode, offset;
 	U_32 i, j;
 	I_32 result;
+
+	/* Check for stack overflow */
+	if (!checkStackOverflow(startingSP, availableOSStackSpace)) {
+		return BCT_ERR_STACK_OVERFLOW;
+	}
 
 	for (i = 0; i < annotationCount; i++) {
 		CHECK_EOF(4);
@@ -3564,7 +3615,7 @@ readAnnotations(J9CfrClassFile * classfile, J9CfrAnnotation * pAnnotations, U_32
 			NEXT_U16(annotationList[i].elementValuePairs[j].elementNameIndex, index);
 
 			result = readAnnotationElement(classfile, &annotationList[i].elementValuePairs[j].value,
-					data, dataEnd, segment, segmentEnd, &index, &freePointer, flags);
+					data, dataEnd, segment, segmentEnd, &index, &freePointer, flags, availableOSStackSpace, startingSP);
 			if (result != 0) {
 				return result;
 			}
@@ -3588,7 +3639,7 @@ _errorFound:
 
 static I_32
 readTypeAnnotation(J9CfrClassFile * classfile, J9CfrTypeAnnotation * tAnn, U_8 * data,
-						   U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags)
+						   U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags, UDATA availableOSStackSpace, UDATA startingSP)
 {
 	U_8 targetType = 0;
 	U_8 *index = *pIndex;
@@ -3597,6 +3648,11 @@ readTypeAnnotation(J9CfrClassFile * classfile, J9CfrTypeAnnotation * tAnn, U_8 *
 	U_32 i = 0;
 	I_32 result = 0;
 	U_8 *freePointer = *pFreePointer;
+
+	/* Check for stack overflow */
+	if (!checkStackOverflow(startingSP, availableOSStackSpace)) {
+		return BCT_ERR_STACK_OVERFLOW;
+	}
 
 	CHECK_EOF(1);
 	NEXT_U8(targetType, index);
@@ -3714,7 +3770,7 @@ readTypeAnnotation(J9CfrClassFile * classfile, J9CfrTypeAnnotation * tAnn, U_8 *
 
 	/* read the annotation text */
 	result = readAnnotations(classfile, &(tAnn->annotation), 1, data,
-			dataEnd, segment, segmentEnd, &index, &freePointer, flags);
+			dataEnd, segment, segmentEnd, &index, &freePointer, flags, availableOSStackSpace, startingSP);
 	*pFreePointer = freePointer;
 	*pIndex = index;
 	return result;
@@ -3731,7 +3787,7 @@ _errorFound:
 
 static I_32
 readAnnotationElement(J9CfrClassFile * classfile, J9CfrAnnotationElement ** pAnnotationElement, U_8 * data,
-						   U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags)
+						   U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags, UDATA availableOSStackSpace, UDATA startingSP)
 {
 	J9CfrAnnotationElement *element;
 	U_8 *index = *pIndex; /* used by CHECK_EOF macro */
@@ -3743,6 +3799,11 @@ readAnnotationElement(J9CfrClassFile * classfile, J9CfrAnnotationElement ** pAnn
 	U_32 j;
 	I_32 result; /* used by ALLOC_* macros */
 	U_32 annotationTag;
+
+	/* Check for stack overflow */
+	if (!checkStackOverflow(startingSP, availableOSStackSpace)) {
+		return BCT_ERR_STACK_OVERFLOW;
+	}
 
 	CHECK_EOF(1);
 	NEXT_U8(annotationTag, index);
@@ -3807,7 +3868,7 @@ readAnnotationElement(J9CfrClassFile * classfile, J9CfrAnnotationElement ** pAnn
 
 		annotation = &((J9CfrAnnotationElementAnnotation *)element)->annotationValue;
 
-		result = readAnnotations(classfile, annotation, 1, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags);
+		result = readAnnotations(classfile, annotation, 1, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags, availableOSStackSpace, startingSP);
 		if (BCT_ERR_NO_ERROR != result) {
 			return result;
 		}
@@ -3829,7 +3890,7 @@ readAnnotationElement(J9CfrClassFile * classfile, J9CfrAnnotationElement ** pAnn
 
 		arrayWalk = array->values;
 		for (j = 0; j < array->numberOfValues; j++, arrayWalk++) {
-			result = readAnnotationElement(classfile, arrayWalk, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags);
+			result = readAnnotationElement(classfile, arrayWalk, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags, availableOSStackSpace, startingSP);
 			if (result != 0) {
 				return result;
 			}
@@ -3951,13 +4012,13 @@ sortMethodIndex(J9CfrConstantPoolInfo* constantPool, J9CfrMethod *list, IDATA st
 
 #if JAVA_SPEC_VERSION >= 15
 I_32
-checkClassBytes(J9VMThread *currentThread, U_8* classBytes, UDATA classBytesLength, U_8* segment, U_32 segmentLength)
+checkClassBytes(J9VMThread *currentThread, U_8* classBytes, UDATA classBytesLength, U_8* segment, U_32 segmentLength, UDATA availableOSStackSpace)
 {
 	I_32 rc = 0;
 	U_32 cfrFlags = BCT_JavaMaxMajorVersionShifted | BCT_AnyPreviewVersion | BCT_BasicCheckOnly;
 	PORT_ACCESS_FROM_VMC(currentThread);
 	if (NULL != classBytes) {
-		rc = j9bcutil_readClassFileBytes(PORTLIB, NULL, classBytes, classBytesLength, segment, segmentLength, cfrFlags, NULL, NULL, 0, 0);
+		rc = j9bcutil_readClassFileBytes(PORTLIB, NULL, classBytes, classBytesLength, segment, segmentLength, cfrFlags, NULL, NULL, 0, 0, availableOSStackSpace);
 	}
 	return rc;
 }
