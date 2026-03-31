@@ -193,7 +193,7 @@ testClass(J9PortLibrary *portLib, RCCorrectnessConfig *testData )
 		outputErrorMessage(TEST_ERROR_ARGS, "Failed to open classfile: %s \n", testData->classFileName );
 		goto _exit_test;
 	}
-	
+
 	classFileSize = (U_32)j9file_seek(fd, 0, EsSeekEnd);
 	j9file_seek(fd, 0, EsSeekSet);
 	classFileBytes = j9mem_allocate_memory(classFileSize, J9MEM_CATEGORY_CLASSES);
@@ -202,7 +202,7 @@ testClass(J9PortLibrary *portLib, RCCorrectnessConfig *testData )
 		outputErrorMessage(TEST_ERROR_ARGS, "Failed to read classfile: %s \n", testData->classFileName );
 		goto _exit_test;
 	}
-	rc = j9bcutil_buildRomClassIntoBuffer(classFileBytes, classFileSize, PORTLIB, verifyBuffers, flags, 0, testData->findClassFlags, romClassBuffer, romClassBufferSize, NULL, 0, NULL, 0, NULL);
+	rc = j9bcutil_buildRomClassIntoBuffer(classFileBytes, classFileSize, PORTLIB, verifyBuffers, flags, 0, testData->findClassFlags, romClassBuffer, romClassBufferSize, NULL, 0, NULL, 0, NULL, UDATA_MAX);
 
 	if ( BCT_ERR_NO_ERROR != rc ) {
 		outputErrorMessage(TEST_ERROR_ARGS, "Failed to create ROMClass for class: %s \n", testData->classFileName );
