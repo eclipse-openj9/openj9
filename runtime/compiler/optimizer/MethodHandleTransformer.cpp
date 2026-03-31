@@ -837,11 +837,11 @@ VarHandle$TypesAndInvokers field as the MethodHandle table exists as a field of 
 void TR_MethodHandleTransformer::process_java_lang_invoke_Invokers_checkVarHandleGenericType(TR::TreeTop *tt,
     TR::Node *node)
 {
-#ifdef TR_ALLOW_NON_CONST_KNOWN_OBJECTS
     static const bool disableFoldingVHGenType = feGetEnv("TR_disableFoldingVHGenType") != NULL;
     if (disableFoldingVHGenType) {
         return;
     }
+#ifdef TR_ALLOW_NON_CONST_KNOWN_OBJECTS
 
     auto vhIndex = getObjectInfoOfNode(node->getFirstArgument());
     auto adIndex = getObjectInfoOfNode(node->getLastChild());
@@ -950,6 +950,30 @@ void TR_MethodHandleTransformer::process_java_lang_invoke_Invokers_checkVarHandl
     if (comp()->useCompressedPointers()) {
         tt->insertBefore(TR::TreeTop::create(comp(), TR::Node::createCompressedRefsAnchor(node)));
     }
+#else // TR_ALLOW_NON_CONST_KNOWN_OBJECTS
+    auto vhIndex = getObjectInfoOfNode(node->getFirstArgument());
+    auto adIndex = getObjectInfoOfNode(node->getLastChild());
+    auto knot = comp()->getKnownObjectTable();
+    if (knot == NULL || !isKnownObject(adIndex) || !isKnownObject(vhIndex) || knot->isNull(vhIndex)
+        || knot->isNull(adIndex)) {
+        return;
+    }
+
+    auto mhIndex = comp()->fej9()->getMethodHandleTableEntryIndex(comp(), vhIndex, adIndex);
+    if (TR::KnownObjectTable::UNKNOWN == mhIndex)
+        return;
+
+    if (!performTransformation(comp(), "%sReplacing VarHandle access node n%un [%p] with MethodHandle known obj %d\n",
+            optDetailString(), node->getGlobalIndex(), node, mhIndex))
+        return;
+
+    J9::ConstProvenanceGraph *cpg = comp()->constProvenanceGraph();
+    cpg->addEdge(cpg->knownObject(vhIndex), cpg->knownObject(mhIndex));
+
+    anchorAllChildren(node, tt);
+    node->removeAllChildren();
+    TR::Node::recreateWithSymRef(node, TR::aload, knot->constSymRef(mhIndex));
+    return;
 #endif // TR_ALLOW_NON_CONST_KNOWN_OBJECTS
 }
 
