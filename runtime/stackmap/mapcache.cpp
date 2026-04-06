@@ -153,33 +153,41 @@ getROMMethodInfoForBytecodePCInternal(J9StackWalkState *walkState, J9ClassLoader
 	romMethodInfo->key = bytecodePC;
 
 	if (numberOfLocals <= J9_LOCALMAP_CACHE_BITS) {
-		IDATA rc = vm->localMapFunction(
-				vm->portLibrary,
-				romClass,
-				romMethod,
-				pcOffset,
-				romMethodInfo->localMap,
-				NULL,
-				NULL,
-				NULL);
-		if (0 == rc) {
-			romMethodInfo->flags |= J9MAPCACHE_LOCALMAP_CACHED;
+		/* Verify the result will fit in the cache array */
+		UDATA mapWords = (numberOfLocals + 31) >> 5;
+		if (mapWords <= (J9_LOCALMAP_CACHE_BITS / 32)) {
+			IDATA rc = vm->localMapFunction(
+					vm->portLibrary,
+					romClass,
+					romMethod,
+					pcOffset,
+					romMethodInfo->localMap,
+					vm,
+					j9mapmemory_GetBuffer,
+					j9mapmemory_ReleaseBuffer);
+			if (0 == rc) {
+				romMethodInfo->flags |= J9MAPCACHE_LOCALMAP_CACHED;
+			}
 		}
 	}
 
 	if ((pendingCount != 0) && (pendingCount <= J9_STACKMAP_CACHE_BITS)) {
-		IDATA rc = j9stackmap_StackBitsForPC(
-				vm->portLibrary,
-				pcOffset,
-				romClass,
-				romMethod,
-				romMethodInfo->stackMap,
-				pendingCount,
-				NULL,
-				NULL,
-				NULL);
-		if (0 == rc) {
-			romMethodInfo->flags |= J9MAPCACHE_STACKMAP_CACHED;
+		/* Verify the result will fit in the cache array */
+		UDATA mapWords = (pendingCount + 31) >> 5;
+		if (mapWords <= (J9_STACKMAP_CACHE_BITS / 32)) {
+			IDATA rc = j9stackmap_StackBitsForPC(
+					vm->portLibrary,
+					pcOffset,
+					romClass,
+					romMethod,
+					romMethodInfo->stackMap,
+					pendingCount,
+					vm,
+					j9mapmemory_GetBuffer,
+					j9mapmemory_ReleaseBuffer);
+			if (0 == rc) {
+				romMethodInfo->flags |= J9MAPCACHE_STACKMAP_CACHED;
+			}
 		}
 	}
 
@@ -231,7 +239,11 @@ getROMMethodInfoForBytecodeFrame(J9StackWalkState *walkState)
 	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 
 	UDATA pcOffset = (UDATA)(walkState->pc - J9_BYTECODE_START_FROM_RAM_METHOD(method));
-
+	if (pcOffset >= (UDATA)J9_BYTECODE_SIZE_FROM_ROM_METHOD(romMethod)) {
+		initializeBasicROMMethodInfo(walkState, romMethod);
+		romMethodInfo->key = (void *)romMethod;
+		return;
+	}
 	void *bytecodePC = (void *)(J9_BYTECODE_START_FROM_ROM_METHOD(romMethod) + pcOffset);
 
 	if (checkROMMethodInfoCache(classLoader, bytecodePC, romMethodInfo)) {
