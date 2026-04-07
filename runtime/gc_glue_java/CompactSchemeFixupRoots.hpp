@@ -33,11 +33,20 @@
 
 class MM_CompactSchemeFixupRoots : public MM_RootScanner {
 private:
-	MM_CompactScheme* _compactScheme;
+#if defined(J9VM_GC_MODRON_SCAVENGER)
+	MM_CompactSchemeFixupObject _fixupObject;
+	bool _nurseryOnly; /**< if true, Nursery is only compacted and Tenure fixed-up via RS, otherwise whole heap is compacted/fixed-up */
+#endif /* defined(J9VM_GC_MODRON_SCAVENGER) */
+
+	MM_CompactScheme *_compactScheme;
 
 public:
-	MM_CompactSchemeFixupRoots(MM_EnvironmentBase *env, MM_CompactScheme* compactScheme) :
+	MM_CompactSchemeFixupRoots(MM_EnvironmentBase *env, MM_CompactScheme *compactScheme, bool nurseryOnly = false) :
 		MM_RootScanner(env),
+#if defined(J9VM_GC_MODRON_SCAVENGER)
+		_fixupObject(env, compactScheme),
+		_nurseryOnly(nurseryOnly),
+#endif /* defined(J9VM_GC_MODRON_SCAVENGER) */
 		_compactScheme(compactScheme)
 	{
 		setIncludeStackFrameClassReferences(false);
@@ -98,6 +107,25 @@ public:
 		fixupContinuationObjects(env);
 		reportScanningEnded(RootScannerEntity_ContinuationObjects);
 	}
+
+#if defined(J9VM_GC_MODRON_SCAVENGER)
+	virtual void doRememberedSetSlot(J9Object **slotPtr, GC_RememberedSetSlotIterator *rememberedSetSlotIterator)
+	{
+		if (_nurseryOnly) {
+			/* Objects in Tenure did not move -> no need to fix up RS slots.
+			 * Object in Nursery moved -> slots of remembered objects in Nursery need to fix up.
+			 */
+			_fixupObject.fixupObject(MM_EnvironmentStandard::getEnvironment(_env), *slotPtr);
+		} else {
+			/* Objects in tenure moved -> need to fix up RS slots.
+			 * Remembered (Tenured) object slots have been already fixed up by now (as any other object slots).
+			 */
+			MM_RootScanner::doRememberedSetSlot(slotPtr, rememberedSetSlotIterator);
+		}
+	}
+#endif /* defined(J9VM_GC_MODRON_SCAVENGER) */
+
+
 
 private:
 #if defined(J9VM_GC_FINALIZATION)
