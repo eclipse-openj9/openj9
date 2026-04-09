@@ -196,30 +196,15 @@ j9stackmap_StackBitsForPC(J9PortLibrary * portLib, UDATA pc, J9ROMClass * romCla
 		UDATA * (* getBuffer) (void * userData), 
 		void (* releaseBuffer) (void * userData));
 
+/* ---------------- mapcache.cpp ---------------- */
 
-/* ------------------- mapcache.cpp ----------------- */
-
-/* These are cache wrapper functions with the same parameters as the j9localmap_ versions,
- * with VM and J9ClassLoader added on the end.
- */
-
-IDATA
-j9cached_StackBitsForPC(UDATA pc, J9ROMClass * romClass, J9ROMMethod * romMethod,
-								U_32 * resultArrayBase, UDATA resultArraySize,
-								void * userData,
-								UDATA * (* getBuffer) (void * userData),
-								void (* releaseBuffer) (void * userData),
-								J9JavaVM *vm, J9ClassLoader *classLoader);
-
+/**
+* @brief
+* @param walkState
+* @param romMethod
+*/
 void
-j9cached_ArgBitsForPC0(J9ROMClass *romClass, J9ROMMethod *romMethod, U_32 *resultArrayBase, J9JavaVM *vm, J9ClassLoader *classLoader);
-
-IDATA
-j9cached_LocalBitsForPC(J9ROMClass * romClass, J9ROMMethod * romMethod, UDATA pc, U_32 * resultArrayBase,
-								void * userData,
-								UDATA * (* getBuffer) (void * userData),
-								void (* releaseBuffer) (void * userData),
-								J9JavaVM *vm, J9ClassLoader * classLoader);
+initializeBasicROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod);
 
 #ifdef __cplusplus
 }
