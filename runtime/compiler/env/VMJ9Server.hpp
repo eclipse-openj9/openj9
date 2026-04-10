@@ -141,7 +141,7 @@ public:
     virtual uintptr_t getStaticReferenceFieldAtAddress(uintptr_t fieldAddress) override;
     virtual TR::KnownObjectTable::ObjectInfo getObjClassInfoFromKnotIndexNoCaching(TR::Compilation *comp,
         TR::KnownObjectTable::Index knotIndex) override;
-    virtual bool stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *clazz) override;
+    virtual TR_YesNoMaybe stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *clazz) override;
     virtual bool hasFinalFieldsInClass(TR_OpaqueClassBlock *clazz) override;
     virtual const char *sampleSignature(TR_OpaqueMethodBlock *aMethod, char *buf, int32_t bufLen,
         TR_Memory *memory) override;
@@ -255,7 +255,7 @@ public:
     //   safe answer, might change in the future
     virtual bool instanceOfOrCheckCast(J9Class *instanceClass, J9Class *castClass) override;
     virtual bool instanceOfOrCheckCastNoCacheUpdate(J9Class *instanceClass, J9Class *castClass) override;
-    virtual bool transformJlrMethodInvoke(J9Method *callerMethod, J9Class *callerClass) override;
+    virtual TR_YesNoMaybe transformJlrMethodInvoke(J9Method *callerMethod, J9Class *callerClass) override;
     using TR_J9VM ::isAnonymousClass;
     virtual bool isAnonymousClass(TR_OpaqueClassBlock *j9clazz) override;
     virtual bool isHiddenClass(TR_OpaqueClassBlock *j9clazz) override;
@@ -423,7 +423,8 @@ public:
     virtual bool isStable(J9Class *fieldClass, int32_t cpIndex) override { return false; }
 
     virtual bool isClassVisible(TR_OpaqueClassBlock *sourceClass, TR_OpaqueClassBlock *destClass) override;
-    virtual bool stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass) override;
+    virtual TR_YesNoMaybe stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method,
+        TR_OpaqueClassBlock *methodClass) override;
     virtual bool isMethodTracingEnabled(TR_OpaqueMethodBlock *method) override;
     virtual bool traceableMethodsCanBeInlined() override;
     virtual bool canMethodEnterEventBeHooked() override;

@@ -212,38 +212,51 @@ int32_t TR_J9VMBase::getCompThreadIDForVMThread(void *vmThread)
     return id;
 }
 
-bool TR_J9VM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass)
+TR_YesNoMaybe TR_J9VM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass)
 {
     if (!method)
-        return false;
+        return TR_no;
 
     TR::VMAccessCriticalSection stackWalkerMaySkipFrames(this);
 
     // Maybe I should be using isSameMethod ?
     if (vmThread()->javaVM->jlrMethodInvoke == NULL || ((J9Method *)method) == vmThread()->javaVM->jlrMethodInvoke) {
-        return true;
+        return TR_yes;
     }
 
     if (!methodClass) {
-        return false;
+        return TR_no;
     }
 
 #if defined(J9VM_OPT_SIDECAR)
-    if ((vmThread()->javaVM->srMethodAccessor != NULL)
-        && TR_J9VM::isInstanceOf(methodClass,
-            (TR_OpaqueClassBlock *)J9VM_J9CLASS_FROM_JCLASS(vmThread(), vmThread()->javaVM->srMethodAccessor), false)) {
-        return true;
+    /*
+     * We assume here that no methods:
+     *  - defined in interfaces (default or static methods)
+     *  - where the interface is not implemented by 'srMethodAccessor'
+     *  - appear as frames in a reflective call path
+     */
+    bool callerTypeIsFixed = isInterfaceClass(methodClass);
+
+    if (vmThread()->javaVM->srMethodAccessor != NULL) {
+        TR_YesNoMaybe isMethodAccessor = TR_J9VM::isInstanceOf(methodClass,
+            (TR_OpaqueClassBlock *)J9VM_J9CLASS_FROM_JCLASS(vmThread(), vmThread()->javaVM->srMethodAccessor),
+            callerTypeIsFixed);
+        if (isMethodAccessor != TR_no) {
+            return isMethodAccessor;
+        }
     }
 
-    if ((vmThread()->javaVM->srConstructorAccessor != NULL)
-        && TR_J9VM::isInstanceOf(methodClass,
+    if (vmThread()->javaVM->srConstructorAccessor != NULL) {
+        TR_YesNoMaybe isConstructorAccessor = TR_J9VM::isInstanceOf(methodClass,
             (TR_OpaqueClassBlock *)J9VM_J9CLASS_FROM_JCLASS(vmThread(), vmThread()->javaVM->srConstructorAccessor),
-            false)) {
-        return true;
+            callerTypeIsFixed);
+        if (isConstructorAccessor != TR_no) {
+            return isConstructorAccessor;
+        }
     }
 #endif // J9VM_OPT_SIDECAR
 
-    return false;
+    return TR_no;
 }
 
 bool TR_J9VMBase::isMethodBreakpointed(TR_OpaqueMethodBlock *method)
@@ -7196,10 +7209,13 @@ TR::Node *TR_J9VM::inlineNativeCall(TR::Compilation *comp, TR::TreeTop *callNode
                     if (targetInlineDepth == 0) {
                         // Logic for whether we should skip an inlined frame should match up with what the VM is doing.
                         // See the VM implementation of `getCallerClassIterator` for details.
-                        skipFrameAtDepth0 = transformJlrMethodInvoke(callerMethod, callerClass);
-                        if (skipFrameAtDepth0) {
+                        TR_YesNoMaybe skipFrame = transformJlrMethodInvoke(callerMethod, callerClass);
+                        if (skipFrame == TR_yes) {
+                            skipFrameAtDepth0 = true;
                             callerIndex = comp->getInlinedCallSite(callerIndex)._byteCodeInfo.getCallerIndex();
                             continue;
+                        } else if (skipFrame == TR_maybe) {
+                            return 0;
                         }
 
                         break;
@@ -7754,13 +7770,13 @@ TR::Node *TR_J9VM::inlineNativeCall(TR::Compilation *comp, TR::TreeTop *callNode
     return 0;
 }
 
-bool TR_J9VM::transformJlrMethodInvoke(J9Method *callerMethod, J9Class *callerClass)
+TR_YesNoMaybe TR_J9VM::transformJlrMethodInvoke(J9Method *callerMethod, J9Class *callerClass)
 {
     {
         TR::VMAccessCriticalSection jlrMethodInvoke(this);
 
         if (vmThread()->javaVM->jlrMethodInvoke == NULL)
-            return false;
+            return TR_no;
     }
 
     return stackWalkerMaySkipFrames((TR_OpaqueMethodBlock *)callerMethod, (TR_OpaqueClassBlock *)callerClass);
@@ -7982,9 +7998,10 @@ bool TR_J9SharedCacheVM::isClassVisible(TR_OpaqueClassBlock *sourceClass, TR_Opa
     return (validated ? isVisible : false);
 }
 
-bool TR_J9SharedCacheVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass)
+TR_YesNoMaybe TR_J9SharedCacheVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method,
+    TR_OpaqueClassBlock *methodClass)
 {
-    bool skipFrames = TR_J9VM::stackWalkerMaySkipFrames(method, methodClass);
+    TR_YesNoMaybe skipFrames = TR_J9VM::stackWalkerMaySkipFrames(method, methodClass);
     TR::Compilation *comp = TR::comp();
     if (comp && comp->getOption(TR_UseSymbolValidationManager)) {
         bool recordCreated

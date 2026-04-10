@@ -329,8 +329,8 @@ bool TR_J9ByteCodeIlGenerator::internalGenIL()
                 TR_OpaqueClassBlock *callerClass = caller ? caller->classOfMethod() : 0;
                 TR_OpaqueClassBlock *callerClass1 = caller1 ? caller1->classOfMethod() : 0;
 
-                bool doIt = !(fej9()->stackWalkerMaySkipFrames(caller->getPersistentIdentifier(), callerClass)
-                    || fej9()->stackWalkerMaySkipFrames(caller1->getPersistentIdentifier(), callerClass1));
+                bool doIt = (fej9()->stackWalkerMaySkipFrames(caller->getPersistentIdentifier(), callerClass) == TR_no)
+                    && (fej9()->stackWalkerMaySkipFrames(caller1->getPersistentIdentifier(), callerClass1) == TR_no);
 
                 if (doIt && !comp()->compileRelocatableCode()) {
                     if (recognizedMethod == TR::java_lang_ClassLoader_callerClassLoader) {

@@ -4919,7 +4919,7 @@ TR_RelocationErrorCode TR_RelocationRecordValidateStackWalkerMaySkipFrames::appl
 {
     uint16_t methodID = this->methodID(reloTarget);
     uint16_t methodClassID = this->methodClassID(reloTarget);
-    bool skipFrames = this->skipFrames(reloTarget);
+    TR_YesNoMaybe skipFrames = this->skipFrames(reloTarget);
 
     if (reloRuntime->comp()->getSymbolValidationManager()->validateStackWalkerMaySkipFramesRecord(methodID,
             methodClassID, skipFrames))
@@ -4935,7 +4935,7 @@ void TR_RelocationRecordValidateStackWalkerMaySkipFrames::print(TR_RelocationRun
     TR_RelocationRecord::print(reloRuntime);
     reloLogger->printf("\tmethodID %d\n", methodID(reloTarget));
     reloLogger->printf("\tmethodClassID %d\n", methodClassID(reloTarget));
-    reloLogger->printf("\tskipFrames %s\n", skipFrames(reloTarget) ? "true" : "false");
+    reloLogger->printf("\tskipFrames %d\n", skipFrames(reloTarget));
 }
 
 void TR_RelocationRecordValidateStackWalkerMaySkipFrames::setMethodID(TR_RelocationTarget *reloTarget,
@@ -4965,15 +4965,15 @@ uint16_t TR_RelocationRecordValidateStackWalkerMaySkipFrames::methodClassID(TR_R
 }
 
 void TR_RelocationRecordValidateStackWalkerMaySkipFrames::setSkipFrames(TR_RelocationTarget *reloTarget,
-    bool skipFrames)
+    TR_YesNoMaybe skipFrames)
 {
     reloTarget->storeUnsigned8b((uint8_t)skipFrames,
         (uint8_t *)&((TR_RelocationRecordValidateStackWalkerMaySkipFramesBinaryTemplate *)_record)->_skipFrames);
 }
 
-bool TR_RelocationRecordValidateStackWalkerMaySkipFrames::skipFrames(TR_RelocationTarget *reloTarget)
+TR_YesNoMaybe TR_RelocationRecordValidateStackWalkerMaySkipFrames::skipFrames(TR_RelocationTarget *reloTarget)
 {
-    return (bool)reloTarget->loadUnsigned8b(
+    return (TR_YesNoMaybe)reloTarget->loadUnsigned8b(
         (uint8_t *)&((TR_RelocationRecordValidateStackWalkerMaySkipFramesBinaryTemplate *)_record)->_skipFrames);
 }
 
