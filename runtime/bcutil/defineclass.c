@@ -153,6 +153,7 @@ internalDefineClass(
 
 #if defined(J9VM_OPT_JFR)
 	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_ENABLE_JFR_CLASSLOAD_TRANSFORM)) {
+		Trc_BCU_Assert_True(FALSE);
 		J9Class *superClass = preloadSuperClass(vmThread, classData, classDataLength, classLoader, options);
 		if (J9_ARE_ALL_BITS_SET(vmThread->privateFlags2, J9_PRIVATE_FLAGS2_SUPERCLASS_REQUIRED_FIRST) || (NULL != vmThread->currentException)) {
 			/* CTM is already released in this case. */
