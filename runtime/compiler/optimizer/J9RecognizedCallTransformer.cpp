@@ -279,6 +279,93 @@ void J9::RecognizedCallTransformer::process_java_lang_StringCoding_encodeASCII(T
     cfg->removeEdge(fallthroughBlock, fallbackPathBlock);
 }
 
+void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_compareTo_BBII(TR::TreeTop *treetop, TR::Node *node)
+{
+    /*
+     * Replace the call to StringLatin1.compareTo([B[BII)I by arraycmplen
+     */
+    TR_ASSERT_FATAL(comp()->cg()->getSupportsArrayCmpLen(), "Support for arraycmplen is required");
+
+    static const bool verboseLatin1compareTo = (feGetEnv("TR_verboseLatin1compareTo") != NULL);
+    if (verboseLatin1compareTo) {
+        fprintf(stderr, "Recognize StringLatin1.compareTo([B[BII)I: %s @ %s\n", comp()->signature(),
+            comp()->getHotnessName(comp()->getMethodHotness()));
+    }
+
+    TransformUtil::createTempsForCall(this, treetop);
+
+    TR::Node *arrayObj1 = node->getChild(0);
+    TR::Node *arrayObj2 = node->getChild(1);
+    TR::Node *arrayLen1 = node->getChild(2);
+    TR::Node *arrayLen2 = node->getChild(3);
+
+    TR::Node *lim = TR::Node::create(node, TR::i2l, 1, TR::Node::create(node, TR::imin, 2, arrayLen1, arrayLen2));
+
+    TR::Node *arrayAddr1 = TR::TransformUtil::generateArrayElementAddressTrees(comp(), arrayObj1, NULL, node);
+    TR::Node *arrayAddr2 = TR::TransformUtil::generateArrayElementAddressTrees(comp(), arrayObj2, NULL, node);
+
+    TR::Node *arraycmplenNode = TR::Node::create(node, TR::arraycmplen, 3);
+    arraycmplenNode->setAndIncChild(0, arrayAddr1);
+    arraycmplenNode->setAndIncChild(1, arrayAddr2);
+    arraycmplenNode->setAndIncChild(2, lim);
+    arraycmplenNode->setSymbolReference(getSymRefTab()->findOrCreateArrayCmpLenSymbol());
+
+    TR::DataType arraycmplenDataType = arraycmplenNode->getDataType();
+    TR::SymbolReference *arraycmplenSymRef
+        = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), arraycmplenDataType);
+    TR::Node *arraycmplenStoreNode = TR::Node::createStore(node, arraycmplenSymRef, arraycmplenNode);
+
+    TR::TreeTop *arraycmplenTreeTop = TR::TreeTop::create(comp(), treetop->getPrevTreeTop(), arraycmplenStoreNode);
+
+    /*
+     * generate the following:
+     *   if (lim == arraycmplen) {
+     *     result = arrayLen1 - arrayLen2;
+     *   } else {
+     *     result = array1[arraycmplen] - array2[arraycmplen];
+     *   }
+     */
+    // compare lim and arraycmplen
+    TR::Node *ifCmpNode
+        = TR::Node::createif(TR::iflcmpeq, lim->duplicateTree(), TR::Node::createLoad(node, arraycmplenSymRef));
+    TR::TreeTop *ifCmpTreeTop = TR::TreeTop::create(comp(), ifCmpNode);
+
+    TR::DataType resultDataType = node->getDataType();
+    TR::SymbolReference *resultSymRef
+        = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), resultDataType);
+
+    // result = arrayLen1 - arrayLen2;
+    TR::Node *isubNode1 = TR::Node::create(node, TR::isub, 2, arrayLen1->duplicateTree(), arrayLen2->duplicateTree());
+    TR::Node *storeResult1 = TR::Node::createStore(node, resultSymRef, isubNode1);
+    TR::TreeTop *storeTreeTop1 = TR::TreeTop::create(comp(), storeResult1);
+
+    // result = array1[arraycmplen] - array2[arraycmplen];
+    TR::SymbolReferenceTable *srTab = comp()->getSymRefTab();
+    TR::Node *aclNode = TR::Node::createLoad(node, arraycmplenSymRef);
+    TR::Node *arrayElemAddr1 = TR::Node::create(node, TR::aladd, 2, arrayAddr1->duplicateTree(), aclNode);
+    TR::SymbolReference *arraySymRef1 = srTab->findOrCreateArrayShadowSymbolRef(TR::Int8, arrayObj1);
+    TR::Node *arrayByte1 = TR::Node::createWithSymRef(node, TR::bloadi, 1, arrayElemAddr1, arraySymRef1);
+    TR::Node *arrayInt1 = TR::Node::create(node, TR::bu2i, 1, arrayByte1);
+    TR::Node *arrayElemAddr2 = TR::Node::create(node, TR::aladd, 2, arrayAddr2->duplicateTree(), aclNode);
+    TR::SymbolReference *arraySymRef2 = srTab->findOrCreateArrayShadowSymbolRef(TR::Int8, arrayObj2);
+    TR::Node *arrayByte2 = TR::Node::createWithSymRef(node, TR::bloadi, 1, arrayElemAddr2, arraySymRef2);
+    TR::Node *arrayInt2 = TR::Node::create(node, TR::bu2i, 1, arrayByte2);
+    TR::Node *isubNode2 = TR::Node::create(node, TR::isub, 2, arrayInt1, arrayInt2);
+    TR::Node *storeResult2 = TR::Node::createStore(node, resultSymRef, isubNode2);
+    TR::TreeTop *storeTreeTop2 = TR::TreeTop::create(comp(), storeResult2);
+
+    // Replace original call node with the load of the temporary
+    // variable that is stored on both sides of the if branch.
+    prepareToReplaceNode(node);
+    TR::Node::recreate(node, comp()->il.opCodeForDirectLoad(resultDataType));
+    node->removeAllChildren();
+    node->setSymbolReference(resultSymRef);
+
+    TR::Block *callBlock = treetop->getEnclosingBlock();
+    TR::Block *remainderBlock = callBlock->createConditionalBlocksBeforeTree(treetop, ifCmpTreeTop, storeTreeTop1,
+        storeTreeTop2, comp()->getFlowGraph(), false, false);
+}
+
 void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_inflate_BIBII(TR::TreeTop *treetop, TR::Node *node)
 {
     /*
@@ -1873,6 +1960,9 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop *treetop)
             case TR::java_lang_StringCoding_encodeASCII:
             case TR::java_lang_String_encodeASCII:
                 return cg()->getSupportsInlineEncodeASCII();
+            case TR::java_lang_StringLatin1_compareTo_BBII:
+                return (
+                    cg()->getSupportsArrayCmpLen() && !comp()->target().cpu.isPower() && !comp()->target().cpu.isZ());
             case TR::java_lang_StringLatin1_inflate_BIBII:
                 return (cg()->getSupportsArrayTranslateTROTNoBreak() && !comp()->target().cpu.isPower());
             case TR::jdk_internal_util_ArraysSupport_vectorizedMismatch:
@@ -2016,6 +2106,9 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop *treetop)
             case TR::java_lang_StringCoding_encodeASCII:
             case TR::java_lang_String_encodeASCII:
                 process_java_lang_StringCoding_encodeASCII(treetop, node);
+                break;
+            case TR::java_lang_StringLatin1_compareTo_BBII:
+                process_java_lang_StringLatin1_compareTo_BBII(treetop, node);
                 break;
             case TR::java_lang_StringLatin1_inflate_BIBII:
                 process_java_lang_StringLatin1_inflate_BIBII(treetop, node);

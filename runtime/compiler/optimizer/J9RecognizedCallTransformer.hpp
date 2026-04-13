@@ -144,6 +144,24 @@ private:
      */
     void process_java_lang_StringCoding_encodeASCII(TR::TreeTop *treetop, TR::Node *node);
     /** \brief
+     *     Transforms java/lang/StringLatin1.compareTo([B[BII)I using arraycmplen
+     *
+     *  \param treetop
+     *     The treetop which anchors the call node.
+     *
+     *  \param node
+     *     The call node representing a call to java/lang/StringLatin1.compareTo([B[BII)I which has the following shape:
+     *
+     *     \code
+     *     icall <java/lang/StringLatin1.compareTo([B[BII)I>
+     *       <src byte array>
+     *       <dst byte array>
+     *       <src length>
+     *       <dst length>
+     *     \endcode
+     */
+    void process_java_lang_StringLatin1_compareTo_BBII(TR::TreeTop *treetop, TR::Node *node);
+    /** \brief
      *     Transforms java/lang/StringLatin1.inflate([BI[BII)V using arraytranslate
      *
      *  \param treetop
