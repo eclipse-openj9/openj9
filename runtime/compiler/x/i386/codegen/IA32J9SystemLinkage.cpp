@@ -149,10 +149,10 @@ int32_t TR::IA32J9SystemLinkage::buildParametersOnCStack(TR::Node *callNode, int
     // Load C Stack Pointer
     auto cSP = cg()->allocateRegister();
     generateRegMemInstruction(TR::InstOpCode::L4RegMem, callNode, cSP,
-        generateX86MemoryReference(cg()->getVMThreadRegister(), fej9->thisThreadGetMachineSPOffset(), cg()), cg());
+        MRef_Bdisp32(cg()->getVMThreadRegister(), fej9->thisThreadGetMachineSPOffset(), cg()), cg());
     // Pass in the env to the jni method as the lexically first arg.
     if (passVMThread) {
-        auto slot = generateX86MemoryReference(cSP, 0, cg());
+        auto slot = MRef_Bdisp32(cSP, 0, cg());
         generateMemRegInstruction(TR::InstOpCode::S4MemReg, callNode, slot, cg()->getVMThreadRegister(), cg());
         paramsSlotsOnStack.push(slot);
     }
@@ -160,7 +160,7 @@ int32_t TR::IA32J9SystemLinkage::buildParametersOnCStack(TR::Node *callNode, int
     for (size_t i = firstParamIndex; i < callNode->getNumChildren(); i++) {
         auto child = callNode->getChild(i);
         auto param = cg()->evaluate(child);
-        auto slot = generateX86MemoryReference(cSP, 0, cg());
+        auto slot = MRef_Bdisp32(cSP, 0, cg());
         paramsSlotsOnStack.push(slot);
         switch (child->getDataType()) {
             case TR::Int8:
@@ -178,7 +178,7 @@ int32_t TR::IA32J9SystemLinkage::buildParametersOnCStack(TR::Node *callNode, int
                         TR::Register *tmp = cg()->allocateRegister();
                         generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, child, tmp, tmp, cg());
                         generateMemImmInstruction(TR::InstOpCode::CMP4MemImms, child,
-                            generateX86MemoryReference(child->getRegister(), 0, cg()), 0, cg());
+                            MRef_Bdisp32(child->getRegister(), 0, cg()), 0, cg());
                         generateRegRegInstruction(TR::InstOpCode::CMOVNE4RegReg, child, tmp, child->getRegister(),
                             cg());
                         generateMemRegInstruction(TR::InstOpCode::S4MemReg, callNode, slot, tmp, cg());
@@ -191,7 +191,7 @@ int32_t TR::IA32J9SystemLinkage::buildParametersOnCStack(TR::Node *callNode, int
             case TR::Int64:
                 generateMemRegInstruction(TR::InstOpCode::S4MemReg, callNode, slot, param->getLowOrder(), cg());
                 {
-                    auto highslot = generateX86MemoryReference(cSP, 0, cg());
+                    auto highslot = MRef_Bdisp32(cSP, 0, cg());
                     paramsSlotsOnStack.push(highslot);
                     generateMemRegInstruction(TR::InstOpCode::S4MemReg, callNode, highslot, param->getHighOrder(),
                         cg());
