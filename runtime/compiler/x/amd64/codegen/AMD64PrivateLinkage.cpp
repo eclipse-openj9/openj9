@@ -389,7 +389,7 @@ TR::Instruction *J9::X86::AMD64::PrivateLinkage::generateFlushInstruction(TR::In
 
     // Generate the instruction
     //
-    TR::MemoryReference *memRef = generateX86MemoryReference(espReg, offset, cg);
+    TR::MemoryReference *memRef = MRef_Bdisp32(espReg, offset, cg);
     switch (operandType) {
         case RegMem:
             result = new (cg->trHeapMemory()) TR::X86RegMemInstruction(prev, opCode, argReg, memRef, deps, cg);
@@ -659,8 +659,7 @@ TR::Instruction *J9::X86::AMD64::PrivateLinkage::savePreservedRegisters(TR::Inst
         TR::RealRegister *reg = machine()->getRealRegister(idx);
         if (reg->getHasBeenAssignedInMethod() && (reg->getState() != TR::RealRegister::Locked)) {
             cursor = generateMemRegInstruction(cursor, TR::Linkage::movOpcodes(MemReg, fullRegisterMovType(reg)),
-                generateX86MemoryReference(machine()->getRealRegister(TR::RealRegister::vfp), offsetCursor, cg()), reg,
-                cg());
+                MRef_Bdisp32(machine()->getRealRegister(TR::RealRegister::vfp), offsetCursor, cg()), reg, cg());
             offsetCursor -= pointerSize;
         }
     }
@@ -684,8 +683,7 @@ TR::Instruction *J9::X86::AMD64::PrivateLinkage::restorePreservedRegisters(TR::I
         TR::RealRegister *reg = machine()->getRealRegister(idx);
         if (reg->getHasBeenAssignedInMethod()) {
             cursor = generateRegMemInstruction(cursor, TR::Linkage::movOpcodes(RegMem, fullRegisterMovType(reg)), reg,
-                generateX86MemoryReference(machine()->getRealRegister(TR::RealRegister::vfp), offsetCursor, cg()),
-                cg());
+                MRef_Bdisp32(machine()->getRealRegister(TR::RealRegister::vfp), offsetCursor, cg()), cg());
             offsetCursor -= _properties.getPointerSize();
         }
     }
@@ -954,11 +952,11 @@ int32_t J9::X86::AMD64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNo
             if ((rregIndex == noReg) || (rregIndex != noReg && createDummyLinkageRegisters)) {
                 if (vreg)
                     generateMemRegInstruction(TR::Linkage::movOpcodes(MemReg, fullRegisterMovType(vreg)), child,
-                        generateX86MemoryReference(stackPointer, parmAreaSize - offset, cg()), vreg, cg());
+                        MRef_Bdisp32(stackPointer, parmAreaSize - offset, cg()), vreg, cg());
                 else {
                     int32_t konst = child->getInt();
                     generateMemImmInstruction(TR::InstOpCode::S8MemImm4, child,
-                        generateX86MemoryReference(stackPointer, parmAreaSize - offset, cg()), konst, cg());
+                        MRef_Bdisp32(stackPointer, parmAreaSize - offset, cg()), konst, cg());
                 }
             }
         }
@@ -1027,8 +1025,8 @@ TR::Instruction *J9::X86::AMD64::PrivateLinkage::buildPICSlot(TR::X86PICSlot pic
     // VFT register into the ModRM r/m field of the generated instruction.
     //
     if (picSlot.getMethodAddress())
-        generateMemRegInstruction(TR::InstOpCode::CMP8MemReg, node,
-            generateX86MemoryReference(vftReg, picSlot.getSlot(), cg()), cachedAddressRegister, cg());
+        generateMemRegInstruction(TR::InstOpCode::CMP8MemReg, node, MRef_Bdisp32(vftReg, picSlot.getSlot(), cg()),
+            cachedAddressRegister, cg());
     else
         generateRegRegInstruction(TR::InstOpCode::CMP8RegReg, node, cachedAddressRegister, vftReg, cg());
 
@@ -1232,7 +1230,7 @@ void J9::X86::AMD64::PrivateLinkage::buildVirtualOrComputedCall(TR::X86CallSite 
         }
 
         buildVFTCall(site, TR::InstOpCode::CALLMem, NULL,
-            generateX86MemoryReference(site.evaluateVFT(), methodSymRef->getOffset(), cg()));
+            MRef_Bdisp32(site.evaluateVFT(), methodSymRef->getOffset(), cg()));
     } else {
         site.evaluateVFT(); // We must evaluate the VFT here to avoid a later evaluation that pollutes the VPic shape.
         buildVPIC(site, entryLabel, doneLabel);

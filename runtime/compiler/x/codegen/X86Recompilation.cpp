@@ -164,11 +164,11 @@ TR::Instruction *TR_X86Recompilation::generatePrologue(TR::Instruction *cursor)
                 TR::RealRegister *scratchReg = machine->getRealRegister(TR::RealRegister::edi);
                 cursor = new (trHeapMemory()) TR::AMD64RegImm64Instruction(cursor, TR::InstOpCode::MOV8RegImm64,
                     scratchReg, (uintptr_t)getCounterAddress(), cg());
-                mRef = generateX86MemoryReference(scratchReg, 0, cg());
+                mRef = MRef_Bdisp32(scratchReg, 0, cg());
             } else {
                 TR_ASSERT(linkage->getMinimumFirstInstructionSize() <= 5,
                     "Can't satisfy first instruction size constraint");
-                mRef = generateX86MemoryReference((intptr_t)getCounterAddress(), cg());
+                mRef = MRef_abs((intptr_t)getCounterAddress(), cg());
             }
 
             if (!isProfilingCompilation())

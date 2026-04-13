@@ -243,8 +243,8 @@ TR::Register *J9::X86::HelperCallSite::BuildCall()
                 generateRegInstruction(TR::InstOpCode::PUSHReg, _Node, _Params[i], cg());
             } else {
                 size_t offset = StackSlotSize * (index - StackIndexAdjustment);
-                generateMemRegInstruction(TR::InstOpCode::SMemReg(), _Node,
-                    generateX86MemoryReference(ESP, offset, cg()), _Params[i], cg());
+                generateMemRegInstruction(TR::InstOpCode::SMemReg(), _Node, MRef_Bdisp32(ESP, offset, cg()), _Params[i],
+                    cg());
             }
         }
     }

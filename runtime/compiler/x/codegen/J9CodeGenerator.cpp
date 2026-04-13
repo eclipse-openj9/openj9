@@ -293,7 +293,7 @@ void J9::X86::CodeGenerator::beginInstructionSelection()
     //
     if (self()->enableSinglePrecisionMethods() && comp->getJittedMethodSymbol()->usesSinglePrecisionMode()) {
         auto cds = self()->findOrCreate2ByteConstant(startNode, SINGLE_PRECISION_ROUND_TO_NEAREST);
-        generateMemInstruction(TR::InstOpCode::LDCWMem, startNode, generateX86MemoryReference(cds, self()), self());
+        generateMemInstruction(TR::InstOpCode::LDCWMem, startNode, MRef_const(cds, self()), self());
     }
 }
 
@@ -316,7 +316,7 @@ void J9::X86::CodeGenerator::endInstructionSelection()
         auto cds = self()->findOrCreate2ByteConstant(self()->getLastCatchAppendInstruction()->getNode(),
             DOUBLE_PRECISION_ROUND_TO_NEAREST);
         generateMemInstruction(self()->getLastCatchAppendInstruction(), TR::InstOpCode::LDCWMem,
-            generateX86MemoryReference(cds, self()), self());
+            MRef_const(cds, self()), self());
     }
 }
 
