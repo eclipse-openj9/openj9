@@ -103,17 +103,38 @@ int32_t CpuUtilization::getCpuUtil(J9JITConfig *jitConfig, J9SysinfoCPUTime *mac
 
     // get access to portlib
     PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+    portLibraryStatusVm = j9thread_get_process_times(vmCpuStats);
+#if defined(J9ZOS390)
+    /* On z/OS, CPU load is retrieved directly from system control structures
+     * (via j9sysinfo_get_CPU_load) rather than calculating it from
+     * user/system/idle times.
+     */
+    double cpuLoad = 0.0;
+    portLibraryStatusSys = j9sysinfo_get_CPU_load(&cpuLoad);
 
+    double cpuCapacity = 0.0;
+    if (0 == portLibraryStatusSys) {
+        portLibraryStatusSys = j9sysinfo_get_CPU_capacity(&cpuCapacity);
+        /* CPU capacity on z/OS is double but J9SysinfoCPUTime expects an integer
+         * CPU count, so we set numberOfCpus to -1 to indicate that it's not applicable.
+         * CPU capacity is queried in updateCpuUtil.
+         */
+        machineCpuStats->numberOfCpus = -1; // not used for z/OS, setting it to -1
+        machineCpuStats->timestamp = j9time_nano_time();
+    }
+#else
     // get CPU stats for the machine
     portLibraryStatusSys = j9sysinfo_get_CPU_utilization(machineCpuStats);
-    portLibraryStatusVm = j9thread_get_process_times(vmCpuStats);
+    if (machineCpuStats->numberOfCpus <= 0) {
+        portLibraryStatusSys = -1;
+    }
+#endif /* defined(J9ZOS390) */
 
     // if either call failed, disable self
-    if (portLibraryStatusSys < 0 || portLibraryStatusVm < 0 || machineCpuStats->numberOfCpus <= 0) {
+    if (portLibraryStatusSys < 0 || portLibraryStatusVm < 0) {
         disable();
         return (-1);
     }
-
     return 0;
 }
 
@@ -148,6 +169,28 @@ int CpuUtilization::updateCpuUtil(J9JITConfig *jitConfig)
     double cpuLoad = 0.0;
     double cpuIdle = 0.0;
 
+#if defined(J9ZOS390)
+    // get access to portlib
+    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+    /* On z/OS, we can retrieve CPU usage directly from control structures
+     * using j9sysinfo_get_CPU_load, eliminating the need to rely on
+     * user/system/idle time breakdowns.
+     */
+    IDATA portLibraryStatus = j9sysinfo_get_CPU_load(&cpuLoad);
+    if (portLibraryStatus < 0) { // error
+        return (-1);
+    }
+
+    double cpuCapacity = 0.0;
+    portLibraryStatus = j9sysinfo_get_CPU_capacity(&cpuCapacity);
+    if (portLibraryStatus < 0) {
+        return -1;
+    }
+
+    cpuIdle = 1.0 - cpuLoad;
+    _cpuUsage = 100.0 * cpuCapacity * cpuLoad;
+    _cpuIdle = 100.0 * cpuCapacity * cpuIdle;
+#else /* defined(J9ZOS390) */
     if ((-1 != _prevMachineUserTime) && (-1 != _prevMachineSystemTime) && (-1 != _prevMachineIdleTime)
         && (-1 != machineCpuStats.userTime) && (-1 != machineCpuStats.systemTime) && (-1 != machineCpuStats.idleTime)) {
         int64_t userDelta = machineCpuStats.userTime - _prevMachineUserTime;
@@ -162,13 +205,13 @@ int CpuUtilization::updateCpuUtil(J9JITConfig *jitConfig)
     } else {
         int64_t cpuTimeDelta = machineCpuStats.cpuTime - _prevMachineCpuTime;
         cpuLoad = cpuTimeDelta / ((double)machineCpuStats.numberOfCpus * elapsedTime);
-        cpuIdle = 1 - cpuLoad;
+        cpuIdle = 1.0 - cpuLoad;
     }
-
-    _avgCpuUsage = 100.0 * cpuLoad;
-    _avgCpuIdle = 100.0 * cpuIdle;
     _cpuUsage = 100.0 * machineCpuStats.numberOfCpus * cpuLoad;
     _cpuIdle = 100.0 * machineCpuStats.numberOfCpus * cpuIdle;
+#endif /* defined(J9ZOS390) */
+    _avgCpuUsage = 100.0 * cpuLoad;
+    _avgCpuIdle = 100.0 * cpuIdle;
     _vmCpuUsage = (100 * (newTotalTimeUsedByVm - prevTotalTimeUsedByVm)) / elapsedTime;
 
     // If _prevMachineUptime is different than 0 (initial value) it means that we already
@@ -178,10 +221,13 @@ int CpuUtilization::updateCpuUtil(J9JITConfig *jitConfig)
 
     // remember values for next time
     _prevMachineUptime = machineCpuStats.timestamp;
+#if !defined(J9ZOS390)
+    // z/OS doesn't support these fields, because it gets CPU load directly from control structures
     _prevMachineCpuTime = machineCpuStats.cpuTime;
     _prevMachineUserTime = machineCpuStats.userTime;
     _prevMachineSystemTime = machineCpuStats.systemTime;
     _prevMachineIdleTime = machineCpuStats.idleTime;
+#endif /* !defined(J9ZOS390) */
     _prevVmSysTime = vmCpuStats._systemTime;
     _prevVmUserTime = vmCpuStats._userTime;
 
@@ -203,10 +249,13 @@ int32_t CpuUtilization::updateCpuUsageCircularBuffer(J9JITConfig *jitConfig)
         return (-1);
 
     _cpuUsageCircularBuffer[_cpuUsageCircularBufferIndex]._timeStamp = machineCpuStats.timestamp;
+#if !defined(J9ZOS390)
+    // z/OS doesn't support these fields, because it gets CPU load directly from control structures
     _cpuUsageCircularBuffer[_cpuUsageCircularBufferIndex]._sampleSystemCpu = machineCpuStats.cpuTime;
     _cpuUsageCircularBuffer[_cpuUsageCircularBufferIndex]._sampleUserTime = machineCpuStats.userTime;
     _cpuUsageCircularBuffer[_cpuUsageCircularBufferIndex]._sampleSystemTime = machineCpuStats.systemTime;
     _cpuUsageCircularBuffer[_cpuUsageCircularBufferIndex]._sampleIdleTime = machineCpuStats.idleTime;
+#endif /* !defined(J9ZOS390) */
     _cpuUsageCircularBuffer[_cpuUsageCircularBufferIndex]._sampleJvmCpu = vmCpuStats._systemTime + vmCpuStats._userTime;
 
     _cpuUsageCircularBufferIndex = (_cpuUsageCircularBufferIndex + 1) % _cpuUsageCircularBufferSize;

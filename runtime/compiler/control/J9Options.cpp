@@ -338,6 +338,7 @@ bool J9::Options::_aggressiveLockReservation = false;
 bool J9::Options::_xrsSync = false;
 
 int32_t J9::Options::_jvmStarvationThreshold = 40; // 40% CPU utilization. Use 10 (or lower) to disable the feature
+int32_t J9::Options::_cpuStatsPrintInterval = 1000; // Write CPU stats to JIT verbose log every second
 
 void J9::Options::findExternalOptions(J9JavaVM *vm, bool consume)
 {
@@ -931,6 +932,8 @@ TR::OptionTable OMR::Options::_feOptions[] = {
     { "cpuEntitlementForConservativeScorching=", "M<nnn>\tPercentage. 200 means two full cpus",
      TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_cpuEntitlementForConservativeScorching, 0, "F%d",
      NOT_IN_SUBSET },
+    { "cpuStatsPrintInterval=", "M<nnn>\tInterval in milliseconds at which cpu stats are printed",
+     TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_cpuStatsPrintInterval, 0, "F%d", NOT_IN_SUBSET },
     { "cpuUtilThresholdForStarvation=", "M<nnn>\tThreshold for deciding that a comp thread is not starved",
      TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_cpuUtilThresholdForStarvation, 0, "F%d",
      NOT_IN_SUBSET },
@@ -1368,11 +1371,9 @@ bool J9::Options::showPID()
 {
     static bool showedAlready = false;
 
-    if (!showedAlready) {
-        if (TR::Options::getVerboseOption(TR_VerboseMMap)) {
-            showedAlready = true;
-            return true;
-        }
+    if (!showedAlready && TR::Options::isAnyVerboseOptionSet(TR_VerboseMMap, TR_VerboseCPUStats)) {
+        showedAlready = true;
+        return true;
     }
     return false;
 }

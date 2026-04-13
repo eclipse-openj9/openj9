@@ -541,6 +541,9 @@ public:
 
     static char *_logFileNameSuffix;
 
+    // Frequency (in ms) at which CPU stats are printed when -Xjit:verbose={CPUStats} is specified
+    static int32_t _cpuStatsPrintInterval;
+
     static ExternalOptionsMetadata _externalOptionsMetadata[ExternalOptions::TR_NumExternalOptions];
 
     /**

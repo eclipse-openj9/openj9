@@ -755,6 +755,10 @@ extern J9_CFUNC int32_t j9port_isCompatible(struct J9PortLibraryVersion *expecte
 #define j9sysinfo_get_open_file_count(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_get_open_file_count(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
 #define j9sysinfo_get_os_description(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_get_os_description(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
 #define j9sysinfo_os_has_feature(param1,param2) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_os_has_feature(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2)
+#define j9sysinfo_get_CPU_load(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_get_CPU_load(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
+#if defined(J9ZOS390)
+#define j9sysinfo_get_CPU_capacity(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_get_CPU_load(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
+#endif /* defined(J9ZOS390) */
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 #define j9sysinfo_get_process_start_time(param1,param2) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_get_process_start_time(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2)
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */

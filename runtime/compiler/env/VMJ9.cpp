@@ -1463,7 +1463,7 @@ void TR_J9VMBase::printPID()
 
     pascb = ppsa->psaaold; // PSAAOLD -> ASCB
     TR_ASSERT(pascb->eye == 0xc1e2c3c2, "eye catcher not found");
-    TR_VerboseLog::write("ASID=%d, ", (int)pascb->ascbasid);
+    TR_VerboseLog::write("ASID=%x, ", (int)pascb->ascbasid);
 
 #endif /* z/OS specific ASID printing */
 
