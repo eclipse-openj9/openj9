@@ -157,8 +157,7 @@ TR::Instruction *J9::X86::I386::PrivateLinkage::savePreservedRegisters(TR::Instr
         TR::RealRegister *reg = machine()->getRealRegister(idx);
         if (reg->getHasBeenAssignedInMethod() && reg->getState() != TR::RealRegister::Locked) {
             cursor = generateMemRegInstruction(cursor, TR::InstOpCode::S4MemReg,
-                generateX86MemoryReference(machine()->getRealRegister(TR::RealRegister::vfp), offsetCursor, cg()), reg,
-                cg());
+                MRef_Bdisp32(machine()->getRealRegister(TR::RealRegister::vfp), offsetCursor, cg()), reg, cg());
             offsetCursor -= pointerSize;
         }
     }
@@ -178,8 +177,7 @@ TR::Instruction *J9::X86::I386::PrivateLinkage::restorePreservedRegisters(TR::In
         TR::RealRegister *reg = machine()->getRealRegister(idx);
         if (reg->getHasBeenAssignedInMethod()) {
             cursor = generateRegMemInstruction(cursor, TR::InstOpCode::L4RegMem, reg,
-                generateX86MemoryReference(machine()->getRealRegister(TR::RealRegister::vfp), offsetCursor, cg()),
-                cg());
+                MRef_Bdisp32(machine()->getRealRegister(TR::RealRegister::vfp), offsetCursor, cg()), cg());
             offsetCursor -= pointerSize;
         }
     }
@@ -375,7 +373,7 @@ TR::Instruction *J9::X86::I386::PrivateLinkage::buildPICSlot(TR::X86PICSlot picS
     if (picSlot.getMethodAddress()) {
         addrToBeCompared = (uintptr_t)picSlot.getMethodAddress();
         firstInstruction = generateMemImmInstruction(TR::InstOpCode::CMPMemImm4(false), node,
-            generateX86MemoryReference(vftReg, picSlot.getSlot(), cg()), (uint32_t)addrToBeCompared, cg());
+            MRef_Bdisp32(vftReg, picSlot.getSlot(), cg()), (uint32_t)addrToBeCompared, cg());
     } else
         firstInstruction = generateRegImmInstruction(TR::InstOpCode::CMP4RegImm4, node, vftReg, addrToBeCompared, cg());
 
@@ -596,7 +594,7 @@ void J9::X86::I386::PrivateLinkage::buildVirtualOrComputedCall(TR::X86CallSite &
         if (!resolvedSite)
             offset = 0;
 
-        buildVFTCall(site, TR::InstOpCode::CALLMem, NULL, generateX86MemoryReference(site.evaluateVFT(), offset, cg()));
+        buildVFTCall(site, TR::InstOpCode::CALLMem, NULL, MRef_Bdisp32(site.evaluateVFT(), offset, cg()));
     } else {
         J9::X86::PrivateLinkage::buildVPIC(site, entryLabel, doneLabel);
     }
