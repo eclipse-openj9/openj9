@@ -660,3 +660,22 @@ Java_com_ibm_oti_vm_VM_isRCPRestoreRun(JNIEnv *env, jclass clazz)
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	return result;
 }
+
+/*
+ * Check if RCP is enabled.
+ *
+ * @return JNI_TRUE: if enabled in JVM, otherwise JNI_FALSE
+ */
+jboolean JNICALL
+Java_com_ibm_oti_vm_VM_isRCPEnabled(JNIEnv *env, jclass clazz)
+{
+	jboolean result = JNI_FALSE;
+#if defined(J9VM_OPT_SNAPSHOTS)
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	if (IS_RESTORE_RUN(vm) || IS_SNAPSHOT_RUN(vm)) {
+		result = JNI_TRUE;
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	return result;
+}
