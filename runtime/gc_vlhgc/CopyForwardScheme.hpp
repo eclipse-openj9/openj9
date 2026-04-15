@@ -940,6 +940,13 @@ private:
 #endif /* J9VM_GC_LEAF_BITS */
 
 	/**
+	 * Calculate estimation for age based on compact group and set it to the merged region
+	 * @param[in] env The current thread
+	 * @param[in] region The region to adjust age to
+	 */
+	void setAgeForMergedRegion(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region);
+
+	/**
 	 * check if the Object in jni critical region
 	 */
 	bool isObjectInNoEvacuationRegions(MM_EnvironmentVLHGC *env, J9Object *objectPtr);
