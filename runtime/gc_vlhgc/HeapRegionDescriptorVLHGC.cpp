@@ -49,8 +49,6 @@ MM_HeapRegionDescriptorVLHGC::MM_HeapRegionDescriptorVLHGC(MM_EnvironmentVLHGC *
 	,_defragmentationTarget(false)
 	,_extensions(MM_GCExtensions::getExtensions(env))
 	,_age(0)
-	,_currentCompactGroup(0)
-	,_cyclesInCurrentCompactGroup(0)
 	,_rememberedSetCardList()
 	,_rsclBufferPool(NULL)
 	,_dynamicSelectionNext(NULL)
@@ -166,22 +164,5 @@ void
 MM_HeapRegionDescriptorVLHGC::resetAge(MM_EnvironmentVLHGC *env)
 {
 	setAge(0);
-	/* Reset compact group tracking for newly allocated regions */
-	_currentCompactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, this);
-	_cyclesInCurrentCompactGroup = 0;
-}
-
-void
-MM_HeapRegionDescriptorVLHGC::updateCompactGroupTracking(MM_EnvironmentVLHGC *env)
-{
-	uintptr_t newCompactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, this);
-	if (newCompactGroup != _currentCompactGroup) {
-		/* Region moved to a different compact group */
-		_currentCompactGroup = newCompactGroup;
-		_cyclesInCurrentCompactGroup = 0;
-	} else {
-		/* Region stayed in same compact group, increment cycle count */
-		_cyclesInCurrentCompactGroup += 1;
-	}
 }
 

@@ -820,8 +820,6 @@ MM_CopyForwardScheme::acquireEmptyRegion(MM_EnvironmentVLHGC *env, MM_ReservedRe
 			 */
 			uintptr_t logicalRegionAge = MM_CompactGroupManager::getRegionAgeFromGroup(env, compactGroup);
 			newRegion->setAge(logicalRegionAge);
-			/* Update compact group tracking for new survivor region */
-			newRegion->updateCompactGroupTracking(env);
 
 			Assert_MM_true(newRegion->getReferenceObjectList()->isSoftListEmpty());
 			Assert_MM_true(newRegion->getReferenceObjectList()->isWeakListEmpty());
@@ -5643,8 +5641,6 @@ void
 MM_CopyForwardScheme::setAgeForMergedRegion(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region)
 {
 	region->setAge(MM_CompactGroupManager::getRegionAgeFromGroup(env, MM_CompactGroupManager::getCompactGroupNumber(env, region)));
-	/* Update compact group tracking for merged region */
-	region->updateCompactGroupTracking(env);
 }
 
 bool
