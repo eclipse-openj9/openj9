@@ -91,8 +91,6 @@ protected:
 
 private:
 	uintptr_t _age; /**< logical allocation age (number of GC cycles since the last attempted allocation) */
-	uintptr_t _currentCompactGroup; /**< the compact group this region currently belongs to */
-	uintptr_t _cyclesInCurrentCompactGroup; /**< number of PGC cycles this region has been in its current compact group */
 	MM_RememberedSetCardList _rememberedSetCardList; /**< remembered set card list */
 	MM_RememberedSetCard *_rsclBufferPool;			 /**< RSCL Buffer pool owned by this region (Buffers can still be shared among other regions) */
 	
@@ -113,19 +111,6 @@ public:
 	 *	@return return age value
 	 */
 	MMINLINE uintptr_t getLogicalAge() { return _age; }
-
-	/**
-	 * Get the number of PGC cycles this region has been in its current compact group
-	 * @return number of cycles in current compact group
-	 */
-	MMINLINE uintptr_t getCyclesInCurrentCompactGroup() { return _cyclesInCurrentCompactGroup; }
-
-	/**
-	 * Update compact group tracking when region ages
-	 * Should be called after a PGC cycle to track compact group membership
-	 * @param env[in] The current thread
-	 */
-	void updateCompactGroupTracking(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Set Age - set logical age
