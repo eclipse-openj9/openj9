@@ -874,7 +874,7 @@ I_32 scanForDataDescriptor(J9PortLibrary* portLib, J9ZipFile *zipFile, J9ZipEntr
 			ZIP_ERR_OUT_OF_MEMORY
 			ZIP_ERR_INTERNAL_ERROR
 */
-static I_32 zip_populateCache(J9PortLibrary* portLib, J9ZipFile *zipFile, J9ZipCentralEnd *endEntry, IDATA startCentralDir)
+static I_32 zip_populateCache(J9PortLibrary* portLib, J9ZipFile *zipFile, J9ZipCentralEnd *endEntry, I_64 startCentralDir)
 {
 	PORT_ACCESS_FROM_PORT(portLib);
 
@@ -1554,7 +1554,7 @@ zip_readCacheData(J9PortLibrary * portLib, J9ZipFile *zipFile)
 {
 	I_32 result = 0;
 	J9ZipCentralEnd endEntry;
-	IDATA startCentralDir;
+	I_64 startCentralDir;
 	
 	/* zip_setupCache() must have already been called. */
 	if (!zipFile->cachePool || !zipFile->cache) {
