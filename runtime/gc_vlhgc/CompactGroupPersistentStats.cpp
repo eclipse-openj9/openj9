@@ -626,9 +626,15 @@ MM_CompactGroupPersistentStats::decayProjectedLiveBytesForRegions(MM_Environment
 			/* Clamp survival rate to valid range [0.0, 1.0] */
 			survivalRate = OMR_MAX(0.0, OMR_MIN(1.0, survivalRate));
 
+			/* Get how many PGC cycles this region has been in this compact group */
+			uintptr_t cyclesInGroup = region->getCyclesInCurrentCompactGroup();
+
+			/* Apply survival rate multiple times for long-lived regions */
+			double cumulativeSurvivalRate = pow(survivalRate, (double)cyclesInGroup);
+
 			uintptr_t oldProjectedLiveBytes = region->_projectedLiveBytes;
 
-			region->_projectedLiveBytes = (uintptr_t)((double)oldProjectedLiveBytes * survivalRate);
+			region->_projectedLiveBytes = (uintptr_t)((double)oldProjectedLiveBytes * cumulativeSurvivalRate);
 
 			Trc_MM_CompactGroupPersistentStats_decayProjectedLiveBytesForRegions(
 				env->getLanguageVMThread(),

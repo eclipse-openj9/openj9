@@ -126,7 +126,7 @@ MM_HeapRegionDataForAllocate::taskAsFreePool(MM_EnvironmentBase *env)
 	/* set _projectedLiveBytes to 'uninitialized' value. it will be initialized at the beginning of the first PGC */
 	_region->_projectedLiveBytes = UDATA_MAX;
 	_region->_projectedLiveBytesDeviation = 0;
-	_region->resetAge(0);
+	_region->resetAge(MM_EnvironmentVLHGC::getEnvironment(env));
 	_region->_defragmentationTarget = false;
 }
 
@@ -146,7 +146,7 @@ MM_HeapRegionDataForAllocate::taskAsIdlePool(MM_EnvironmentVLHGC *env)
 	/* set _projectedLiveBytes to 'uninitialized' value. it will be initialized at the beginning of the first PGC */
 	_region->_projectedLiveBytes = UDATA_MAX;
 	_region->_projectedLiveBytesDeviation = 0;
-	_region->resetAge(0);
+	_region->resetAge(MM_EnvironmentVLHGC::getEnvironment(env));
 	_region->_defragmentationTarget = false;
 
 	/* When a region becomes idle ensure that identity hash salt for this region gets updated */
