@@ -72,7 +72,7 @@ public:
 	 */
 	MMINLINE static UDATA getCompactGroupNumberInContext(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region, MM_AllocationContextTarok *migrationDestination)
 	{
-		return getCompactGroupNumberForAge(env, region->getLogicalAge(), migrationDestination);
+		return getCompactGroupNumberForAge(env, region->getAge(), migrationDestination);
 	}
 
 	/**
@@ -134,7 +134,7 @@ public:
 	MMINLINE static bool isRegionInNursery(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region)
 	{
 		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-		return region->isEden() || (region->getLogicalAge() <= extensions->tarokNurseryMaxAge._valueSpecified);
+		return region->isEden() || (region->getAge() <= extensions->tarokNurseryMaxAge._valueSpecified);
 	}
 
 	/**
@@ -146,7 +146,7 @@ public:
 	 */
 	MMINLINE static bool isRegionDCSSCandidate(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region)
 	{
-		return !isRegionInNursery(env, region) && (region->getLogicalAge() < MM_GCExtensions::getExtensions(env)->tarokRegionMaxAge);
+		return !isRegionInNursery(env, region) && (region->getAge() < MM_GCExtensions::getExtensions(env)->tarokRegionMaxAge);
 	}
 
 	/**

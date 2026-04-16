@@ -159,10 +159,3 @@ MM_HeapRegionDescriptorVLHGC::getProjectedReclaimableBytes()
 	uintptr_t projectedReclaimableBytes = consumedBytes - _projectedLiveBytes;
 	return projectedReclaimableBytes;
 }
-
-void 
-MM_HeapRegionDescriptorVLHGC::resetAge(MM_EnvironmentVLHGC *env)
-{
-	setAge(0);
-}
-

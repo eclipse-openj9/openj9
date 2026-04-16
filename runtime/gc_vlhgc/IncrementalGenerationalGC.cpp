@@ -970,7 +970,7 @@ MM_IncrementalGenerationalGC::partialGarbageCollectPostWork(MM_EnvironmentVLHGC 
 
 	env->_cycleState->_externalCycleState = NULL;
 
-	incrementRegionAges(env, _taxationThreshold, true);
+	incrementRegionAges(env, true);
 
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	env->_cycleState->_endTime = j9time_hires_clock();
@@ -1083,7 +1083,7 @@ MM_IncrementalGenerationalGC::runGlobalMarkPhaseIncrement(MM_EnvironmentVLHGC *e
 		env->_cycleState->_currentIncrement = 0;
 	}
 
-	incrementRegionAges(env, _taxationThreshold, false);
+	incrementRegionAges(env, false);
 
 	/* If the GMP is no longer running, then we have run the final increment of the cycle. */
 	Assert_MM_true(0 == static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats.getStallTime());
@@ -1507,14 +1507,14 @@ MM_IncrementalGenerationalGC::initialRegionAgesSetup(MM_EnvironmentVLHGC *env)
 
 	while (NULL != (region = regionIterator.nextRegion())) {
 		/* Adjust age for non-empty regions. */
-		if(region->containsObjects() || region->isArrayletLeaf()) {
+		if (region->containsObjects() || region->isArrayletLeaf()) {
 			region->resetAge(env);
 		}
 	}
 }
 
 void
-MM_IncrementalGenerationalGC::incrementRegionAges(MM_EnvironmentVLHGC *env, UDATA increment, bool isPGC)
+MM_IncrementalGenerationalGC::incrementRegionAges(MM_EnvironmentVLHGC *env, bool isPGC)
 {
 	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager, MM_HeapRegionDescriptor::MANAGED);
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
@@ -1525,9 +1525,9 @@ MM_IncrementalGenerationalGC::incrementRegionAges(MM_EnvironmentVLHGC *env, UDAT
 		/* Adjust age for non-empty regions. */
 		if(region->containsObjects() || region->isArrayletLeaf()) {
 
-			UDATA previousLogicalAge = region->getLogicalAge();
+			UDATA previousage = region->getAge();
 			/* Increment ages up to the maximum allowable region age */
-			incrementRegionAge(env, region, increment, isPGC);
+			incrementRegionAge(env, region, isPGC);
 
 			MM_AllocationContextTarok *owner = region->_allocateData._owningContext;
 			if (owner->shouldMigrateRegionToCommonContext(env, region)) {
@@ -1541,13 +1541,13 @@ MM_IncrementalGenerationalGC::incrementRegionAges(MM_EnvironmentVLHGC *env, UDAT
 				}
 			}
 
-			if (region->containsObjects() && (region->getLogicalAge() == env->getExtensions()->tarokRegionMaxAge)) {
+			if (region->containsObjects() && (region->getAge() == env->getExtensions()->tarokRegionMaxAge)) {
 				/* regions that are full and age out are considered 'stable' */
 				_interRegionRememberedSet->overflowIfStableRegion(env, region);
 
 				/* regions that age out, but are not full (thus not stable => accurate), should merge with other old non-full regions (in same AC) */
 				if (region->getRememberedSetCardList()->isAccurate()) {
-					if (previousLogicalAge < _extensions->tarokRegionMaxAge) {
+					if (previousage < _extensions->tarokRegionMaxAge) {
 						_schedulingDelegate.updateCurrentMacroDefragmentationWork(env, region);
 					}
 				}
@@ -1562,32 +1562,15 @@ MM_IncrementalGenerationalGC::incrementRegionAges(MM_EnvironmentVLHGC *env, UDAT
 }
 
 void 
-MM_IncrementalGenerationalGC::incrementRegionAge(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region, UDATA increment, bool isPGC)
+MM_IncrementalGenerationalGC::incrementRegionAge(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region, bool isPGC)
 {
+	uintptr_t age = region->getAge();
 
-	UDATA logicalAgeBefore = region->getLogicalAge();
-	UDATA logicalAge = 0;
-
-	/* Calculate age for PGC-count-based (old) aging system */
-	logicalAge = region->getLogicalAge();
 	if (isPGC) {
-		if (logicalAge < _extensions->tarokRegionMaxAge) {
-			logicalAge += 1;
+		if (age < _extensions->tarokRegionMaxAge) {
+			region->setAge(age + 1);
 		}
 	}
-	
-	Trc_MM_IncrementalGenerationalGC_incrementRegionAge(env->getLanguageVMThread(),
-			_regionManager->mapDescriptorToRegionTableIndex(region),
-			isPGC,
-			(double)increment/(1024*1024),
-			0.0, /* allocationAgeBefore - simplified away */
-			0.0, /* allocationAge - simplified away */
-			0.0, /* region->getLowerAgeBound() - simplified away */
-			0.0, /* region->getUpperAgeBound() - simplified away */
-			logicalAgeBefore,
-			logicalAge);
-
-	region->setAge(logicalAge);
 }
 
 void
@@ -1600,7 +1583,7 @@ MM_IncrementalGenerationalGC::setRegionAgesToMax(MM_EnvironmentVLHGC *env)
 		/* Adjust age for non-empty regions.  Note: Currently object artifact regions (e.g., arraylet leaves) won't
 		 * have their age adjusted.  The parent of the artifact will have its region age, which it implicitly inherits.
 		 */
-		if(region->containsObjects()) {
+		if (region->containsObjects()) {
 			region->setAge(_extensions->tarokRegionMaxAge);
 			/* migrate to common context */
 			MM_AllocationContextTarok *owner = region->_allocateData._owningContext;
@@ -2185,8 +2168,8 @@ MM_IncrementalGenerationalGC::exportStats(MM_EnvironmentVLHGC *env, MM_Collectio
 					MM_MemoryPool *memoryPool = region->getMemoryPool();
 					Assert_MM_true(NULL != memoryPool);
 					/* Eden region containing objects, Allocation Age must be smaller then amount allocated since last PGC,
-					 * more accurately, its logical age must be equal to zero */
-					if (0 == region->getLogicalAge()) {
+					 * more accurately, its age must be equal to zero */
+					if (0 == region->getAge()) {
 						UDATA size = memoryPool->getActualFreeMemorySize();
 						stats->_edenFreeHeapSize += size;
 						usedMemory = regionSize - size;
@@ -2197,7 +2180,7 @@ MM_IncrementalGenerationalGC::exportStats(MM_EnvironmentVLHGC *env, MM_Collectio
 				} else {
 					Assert_MM_true(region->isArrayletLeaf());
 					usedMemory = regionSize;
-					if (0 == region->getLogicalAge()) {
+					if (0 == region->getAge()) {
 						allocateEdenTotal += regionSize;
 					}
 				}
