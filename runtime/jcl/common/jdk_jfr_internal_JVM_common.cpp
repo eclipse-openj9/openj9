@@ -22,6 +22,7 @@
 
 #include "j9.h"
 #include "jni.h"
+#include "jclprots.h"
 
 #include "ObjectAccessBarrierAPI.hpp"
 #include "VMHelpers.hpp"
@@ -49,7 +50,7 @@ Java_jdk_jfr_internal_JVM_registerNatives(JNIEnv *env, jclass clazz)
 void JNICALL
 Java_jdk_jfr_internal_JVM_beginRecording(JNIEnv *env, jobject obj)
 {
-	// TODO: implementation
+	Java_com_ibm_oti_vm_VM_startJFR(env, NULL);
 }
 
 jlong JNICALL
@@ -75,7 +76,7 @@ Java_jdk_jfr_internal_JVM_emitEvent(JNIEnv *env, jobject obj, jlong eventTypeId,
 void JNICALL
 Java_jdk_jfr_internal_JVM_endRecording(JNIEnv *env, jobject obj)
 {
-	// TODO: implementation
+	Java_com_ibm_oti_vm_VM_stopJFR(env, NULL);
 }
 
 jobject JNICALL
@@ -273,7 +274,7 @@ Java_jdk_jfr_internal_JVM_setMemorySize(JNIEnv *env, jobject obj, jlong size)
 void JNICALL
 Java_jdk_jfr_internal_JVM_setOutput(JNIEnv *env, jobject obj, jstring file)
 {
-	// TODO: implementation
+	Java_com_ibm_oti_vm_VM_setJFRRecordingFileName(env, NULL, file);
 }
 
 void JNICALL

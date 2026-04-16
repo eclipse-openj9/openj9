@@ -229,15 +229,17 @@ Java_com_ibm_oti_vm_VM_setJFRRecordingFileName(JNIEnv *env, jclass unused, jstri
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	jboolean result = JNI_FALSE;
 
-	vmFuncs->internalEnterVMFromJNI(currentThread);
-	j9object_t fileNameObject = J9_JNI_UNWRAP_REFERENCE(fileNameString);
-	char *fileName = vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, fileNameObject, J9_STR_NULL_TERMINATE_RESULT, "", 0, NULL, 0, NULL);
-	if (NULL == fileName) {
-		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
-	} else {
-		result = vmFuncs->setJFRRecordingFileName(vm, fileName);
+	if (NULL != fileNameString) {
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+		j9object_t fileNameObject = J9_JNI_UNWRAP_REFERENCE(fileNameString);
+		char *fileName = vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, fileNameObject, J9_STR_NULL_TERMINATE_RESULT, "", 0, NULL, 0, NULL);
+		if (NULL == fileName) {
+			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+		} else {
+			result = vmFuncs->setJFRRecordingFileName(vm, fileName);
+		}
+		vmFuncs->internalExitVMToJNI(currentThread);
 	}
-	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return result;
 }
