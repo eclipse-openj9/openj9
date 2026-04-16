@@ -216,9 +216,9 @@ MM_TgcDynamicCollectionSetData::dumpDynamicCollectionSetStatistics(MM_Environmen
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	while (NULL != (region = regionIterator.nextRegion())) {
 		if (region->containsObjects()) {
-			UDATA ageIndex = region->getLogicalAge();
+			UDATA ageIndex = region->getAge();
 
-			Assert_MM_true(region->getLogicalAge() <= extensions->tarokRegionMaxAge);
+			Assert_MM_true(region->getAge() <= extensions->tarokRegionMaxAge);
 			currentHistoryTable[ageIndex].regionCount += 1;
 		}
 	}

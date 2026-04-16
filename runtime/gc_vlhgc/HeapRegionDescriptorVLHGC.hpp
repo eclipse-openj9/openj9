@@ -90,7 +90,7 @@ protected:
 	MM_GCExtensions * _extensions;
 
 private:
-	uintptr_t _age; /**< logical allocation age (number of GC cycles since the last attempted allocation) */
+	uintptr_t _age; /**< number of GC cycles since the last attempted allocation */
 	MM_RememberedSetCardList _rememberedSetCardList; /**< remembered set card list */
 	MM_RememberedSetCard *_rsclBufferPool;			 /**< RSCL Buffer pool owned by this region (Buffers can still be shared among other regions) */
 	
@@ -107,26 +107,28 @@ public:
 	MM_HeapRegionDescriptorVLHGC(MM_EnvironmentVLHGC *env, void *lowAddress, void *highAddress);
 
 	/**
-	 *	Get Logical Age - return back logical age in range 0-tarokRegionMaxAge
+	 *	Get Age - return back age in range 0-tarokRegionMaxAge
 	 *	@return return age value
 	 */
-	MMINLINE uintptr_t getLogicalAge() { return _age; }
+	MMINLINE uintptr_t getAge() { return _age; }
 
 	/**
-	 * Set Age - set logical age
-	 * @param logicalAge logical age to set
+	 * Set Age - set age
+	 * @param age age to set
 	 */
-	MMINLINE void setAge(uintptr_t logicalAge)
+	MMINLINE void setAge(uintptr_t age)
 	{
-		_age = logicalAge;
+		_age = age;
 	}
 
 	/**
 	 * Reset Age
 	 * @param env[in] the current thread
 	 */
-	void resetAge(MM_EnvironmentVLHGC *env);
-
+	MMINLINE void resetAge(MM_EnvironmentVLHGC *env)
+	{
+		setAge(0);
+	}
 	/**
 	 * Is Eden - return true if region is Eden
 	 * By definition Eden space is allocated since last PGC and has not been marked yet

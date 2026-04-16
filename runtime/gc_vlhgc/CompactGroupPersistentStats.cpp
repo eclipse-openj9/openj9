@@ -327,9 +327,9 @@ MM_CompactGroupPersistentStats::calculateLiveBytesForRegion(
 	} else {
 		/* Non-Eden regions: use logical age to determine recency */
 
-		/* Get the logical age of this region (GC cycles since allocation) */
-		uintptr_t regionLogicalAge = region->getLogicalAge();
-		uintptr_t maxLogicalAge = extensions->tarokRegionMaxAge;
+		/* Get the age of this region (GC cycles since allocation) */
+		uintptr_t regionAge = region->getAge();
+		uintptr_t maxAge = extensions->tarokRegionMaxAge;
 
 		/* Calculate age-based recency factor
 		 * Younger regions (lower logical age) have higher recency
@@ -337,12 +337,12 @@ MM_CompactGroupPersistentStats::calculateLiveBytesForRegion(
 		 */
 		double recencyFactor = 1.0;
 
-		if (maxLogicalAge > 0) {
+		if (maxAge > 0) {
 			/* Regions with age 0 (youngest) get factor 1.0
-			 * Regions with age maxLogicalAge (oldest) get factor approaching 0
+			 * Regions with age maxAge (oldest) get factor approaching 0
 			 * This creates a decay curve similar to the old allocation-age approach
 			 */
-			recencyFactor = 1.0 - ((double)regionLogicalAge / (double)(maxLogicalAge + 1));
+			recencyFactor = 1.0 - ((double)regionAge / (double)(maxAge + 1));
 		}
 
 		/* Apply recency factor to projected live bytes from previous PGC

@@ -559,24 +559,6 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			extensions->tarokEnableStableRegionDetection = false;
 			continue;
 		}
-		if (try_scan(&scan_start, "tarokAllocationAgeEnabled")) {
-			continue;
-		}
-		if (try_scan(&scan_start, "tarokAllocationAgeDisabled")) {
-			continue;
-		}
-		if (try_scan(&scan_start, "tarokAllocationAgeExponentBase=")) {
-			continue ;
-		}
-		if (try_scan(&scan_start, "tarokAllocationAgeUnit=")) {
-			continue;
-		}
-		if (try_scan(&scan_start, "tarokMaximumAgeInBytes=")) {
-			continue;
-		}
-		if (try_scan(&scan_start, "tarokMaximumNurseryAgeInBytes=")) {
-			continue;
-		}
 		if (try_scan(&scan_start, "tarokEnableProjectedSurvivalCollectionSet")) {
 			extensions->tarokUseProjectedSurvivalCollectionSet = true;
 			continue;

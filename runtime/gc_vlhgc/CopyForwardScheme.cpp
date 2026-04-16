@@ -542,7 +542,7 @@ MM_CopyForwardScheme::postProcessRegions(MM_EnvironmentVLHGC *env)
 			}
 		} else if (region->isFreshSurvivorRegion()) {
 			/* check Eden Survivor Regions */
-			if (0 == region->getLogicalAge()) {
+			if (0 == region->getAge()) {
 				static_cast<MM_CycleStateVLHGC *>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._edenSurvivorRegionCount += 1;
 			} else {
 				static_cast<MM_CycleStateVLHGC *>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._nonEdenSurvivorRegionCount += 1;
@@ -571,9 +571,6 @@ MM_CopyForwardScheme::postProcessRegions(MM_EnvironmentVLHGC *env)
 				 */
 				pool->reset(MM_MemoryPool::any);
 				region->getSubSpace()->recycleRegion(env, region);
-			} else {
-				/* this is non-empty merged region - estimate its age based on compact group */
-				setAgeForMergedRegion(env, region);
 			}
 		}
 
@@ -4555,7 +4552,7 @@ MM_CopyForwardScheme::verifyDumpObjectDetails(MM_EnvironmentVLHGC *env, const ch
 				region->_copyForwardData._initialLiveSet ? 'Y' : 'N',
 				region->isSurvivorRegion() ? 'Y' : 'N',
 				region->isFreshSurvivorRegion() ? 'Y' : 'N',
-				region->getLogicalAge()
+				region->getAge()
 		);
 	}
 }
@@ -5635,12 +5632,6 @@ MM_CopyForwardScheme::setRegionAsSurvivor(MM_EnvironmentVLHGC *env, MM_HeapRegio
 	Assert_MM_false(region->_copyForwardData._requiresPhantomReferenceProcessing);
 	region->_copyForwardData._survivor = true;
 	region->_copyForwardData._freshSurvivor = freshSurvivor;
-}
-
-void
-MM_CopyForwardScheme::setAgeForMergedRegion(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region)
-{
-	region->setAge(MM_CompactGroupManager::getRegionAgeFromGroup(env, MM_CompactGroupManager::getCompactGroupNumber(env, region)));
 }
 
 bool

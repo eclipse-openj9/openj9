@@ -195,7 +195,7 @@ MM_HeapRegionManagerVLHGC::getHeapMemorySnapshot(MM_GCExtensionsBase *extensions
 				Assert_MM_true(region->isArrayletLeaf());
 				free = 0;
 			}
-			age = region->getLogicalAge();
+			age = region->getAge();
 			if (0 == age) {
 				allocateEdenTotal += regionSize;
 				snapshot->_freeRegionEdenSize += free;

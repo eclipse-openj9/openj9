@@ -271,10 +271,9 @@ public:
 	/**
 	 * Increment the nursery age of every region which contains objects, up to the maximum age.
 	 * @param env[in] The main GC thread
-	 * @param increment number of allocated bytes age should be incremented for
 	 * @param isPGC set to true if it is a PCG cycle - for compatibility with old aging system
 	 */
-	void incrementRegionAges(MM_EnvironmentVLHGC *env, UDATA increment, bool isPGC);
+	void incrementRegionAges(MM_EnvironmentVLHGC *env, bool isPGC);
 
 	/**
 	 * Initial increment of region ages
@@ -282,18 +281,15 @@ public:
 	 * all regions allocated at this time required to have their age corrected
 	 * Currently age just set up to time of Collector's start up
 	 * @param env[in] The main GC thread
-//	 * @param increment number of allocated bytes age should be set up
 	 */
-//	void initialRegionAgesSetup(MM_EnvironmentVLHGC *env, UDATA age);
 	void initialRegionAgesSetup(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Increment the nursery age of region.
 	 * @param env[in] The main GC thread
-	 * @param increment number of allocated bytes age should be incremented for
 	 * @param isPGC set to true if it is a PCG cycle - for compatibility with old aging system
 	 */
-	void incrementRegionAge(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region, UDATA increment, bool isPGC);
+	void incrementRegionAge(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region, bool isPGC);
 
 	/**
 	 * Set the nursery age of every region which contains objects to the maximum age.

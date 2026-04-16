@@ -63,7 +63,6 @@ public:
 	UDATA _measuredLiveBytesAfterCollectInCollectedSet;	/**< The number of bytes allocated in the collection set subset in this group at the    */
 	volatile UDATA _measuredBytesCopiedFromGroupDuringCopyForward;	/**< The total number of bytes measured to be live during a copy-forward which were copied from this compact group (the destination could be this group or another) */
 	volatile UDATA _measuredBytesCopiedToGroupDuringCopyForward; /**< The total number of bytes measured to be copied to group during a copy-forward */
-	/* TODO: lpnguyen group everything into anonymous structs */
 
 	double _projectedInstantaneousSurvivalRate; /**< survivor rate between this and previous age group */
 	double _projectedInstantaneousSurvivalRatePerAgeUnit; /**< fraction of _projectedInstantaneousSurvivalRate, in case age group is a multiple of age units. this is an average of _projectedInstantaneousSurvivalRateThisPGCPerAgeUnit */
