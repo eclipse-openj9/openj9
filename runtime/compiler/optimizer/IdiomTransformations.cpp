@@ -8606,7 +8606,7 @@ bool CISCTransform2ArraySet(TR_CISCTransformer *trans)
 
     if (disptrace)
         logprintf(disptrace, log,
-            "Examining exit comparison CICS node %d, and determined required length modifier to be: %d\n",
+            "Examining exit comparison CISC node %d, and determined required length modifier to be: %d\n",
             cmpIfAllCISCNode->getID(), lengthMod);
 
     TR_ScratchList<TR::Node> listStores(comp->trMemory());
@@ -8674,9 +8674,10 @@ bool CISCTransform2ArraySet(TR_CISCTransformer *trans)
     //
     ListIterator<TR::Node> iteratorStores(&listStores);
     TR::Node *indexNode = createLoad(indexRepNode);
+    bool sawPreviousStore = false;
 
-    // check if the induction variable
-    // is being stored into the array
+    // Determine whether the induction variable is being stored into the array
+    // or if there are multiple array stores, whether the arrays might overlap
     for (inStoreNode = iteratorStores.getFirst(); inStoreNode; inStoreNode = iteratorStores.getNext()) {
         TR::Node *valueNode = inStoreNode->getChild(1);
         if (valueNode->getOpCode().isLoadDirect() && valueNode->getOpCode().hasSymbolReference()) {
@@ -8688,6 +8689,29 @@ bool CISCTransform2ArraySet(TR_CISCTransformer *trans)
                 return false;
             }
         }
+
+        if (sawPreviousStore) {
+            TR::SymbolReference *inStoreSymRef = inStoreNode->getSymbolReference();
+            TR_UseDefAliasSetInterface useDefAliases = inStoreSymRef->getUseDefAliases();
+
+            ListIterator<TR::Node> otherStoresIt(&listStores);
+
+            // Look at array stores found in loop pairwise to check for aliases - they prevent use of arrayset
+            for (TR::Node *otherStoreNode = otherStoresIt.getFirst();
+                 (otherStoreNode != inStoreNode) && (otherStoreNode != NULL);
+                 otherStoreNode = otherStoresIt.getNext()) {
+                TR::SymbolReference *otherStoreSymRef = otherStoreNode->getSymbolReference();
+
+                if ((inStoreSymRef == otherStoreSymRef) || useDefAliases.contains(otherStoreSymRef, comp)) {
+                    dumpOptDetails(comp,
+                        "Array store n%dn [%p] could overlap array store n%dn [%p] - cannot transform to arraysets\n",
+                        inStoreNode->getGlobalIndex(), inStoreNode, otherStoreNode->getGlobalIndex(), otherStoreNode);
+                    return false;
+                }
+            }
+        }
+
+        sawPreviousStore = true;
     }
 
     List<TR::Node> listArraySet(comp->trMemory());
