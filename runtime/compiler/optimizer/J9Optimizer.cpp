@@ -42,11 +42,13 @@
 #include "control/RecompilationInfo.hpp"
 #include "il/ResolvedMethodSymbol.hpp"
 #include "optimizer/AllocationSinking.hpp"
+#include "optimizer/CFGSimplifier.hpp"
 #include "optimizer/IdiomRecognition.hpp"
 #include "optimizer/Inliner.hpp"
 #include "optimizer/J9Inliner.hpp"
 #include "optimizer/JitProfiler.hpp"
 #include "optimizer/LiveVariablesForGC.hpp"
+#include "optimizer/LocalOpts.hpp"
 #include "optimizer/OptimizationManager.hpp"
 #include "optimizer/OptimizationStrategies.hpp"
 #include "optimizer/Optimizations.hpp"
@@ -72,6 +74,7 @@
 #include "optimizer/StripMiner.hpp"
 #include "optimizer/ValuePropagation.hpp"
 #include "optimizer/TrivialDeadBlockRemover.hpp"
+#include "optimizer/OSRDefAnalysis.hpp"
 #include "optimizer/OSRGuardInsertion.hpp"
 #include "optimizer/OSRGuardRemoval.hpp"
 #include "optimizer/JProfilingBlock.hpp"
@@ -84,6 +87,7 @@
 #include "optimizer/StaticFinalFieldFolding.hpp"
 #include "optimizer/HandleRecompilationOps.hpp"
 #include "optimizer/MethodHandleTransformer.hpp"
+#include "optimizer/RecognizedCallTransformer.hpp"
 #include "optimizer/VectorAPIExpansion.hpp"
 #include "optimizer/CatchBlockProfiler.hpp"
 
@@ -619,6 +623,28 @@ const OptimizationStrategy sequentialStoreSimplificationOpts[]
           { OMR::treeSimplification }, // might fold expressions created by versioning/induction variables
           { OMR::endGroup } };
 
+// **************************************************************************
+//
+// Strategy that is run for each non-peeking IlGeneration - this allows early
+// optimizations to be run even before the IL is available to Inliner
+//
+// **************************************************************************
+static const OptimizationStrategy ilgenStrategyOpts[] = {
+    { OMR::osrLiveRangeAnalysis, OMR::IfOSR },
+    { OMR::osrDefAnalysis, OMR::IfInvoluntaryOSR },
+    { OMR::methodHandleTransformer },
+    { OMR::varHandleTransformer, OMR::MustBeDone },
+    { OMR::handleRecompilationOps, OMR::MustBeDone },
+    { OMR::unsafeFastPath },
+    { OMR::recognizedCallTransformer },
+    { OMR::coldBlockMarker },
+    { OMR::CFGSimplification },
+    { OMR::allocationSinking, OMR::IfNews },
+    { OMR::invariantArgumentPreexistence,
+     OMR::IfNotClassLoadPhaseAndNotProfiling }, // Should not run if a recompilation is possible
+    { OMR::endOpts },
+};
+
 static const OptimizationStrategy *j9CompilationStrategies[] = {
     noOptStrategyOpts,
     coldStrategyOpts,
@@ -648,8 +674,34 @@ static const OptimizationStrategy cheapTacticalGlobalRegisterAllocatorOpts[] = {
 J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen)
     : TR::FullOptimizer(comp, methodSymbol, isIlGen)
 {
-    if (isIlGen)
-        return; // nothing more to do on top of TR::FullOptimizer's constructor, including setStrategy
+    // these opts are all needed for ilGenStrategyOpts (and also for other strategies)
+    _opts[OMR::osrLiveRangeAnalysis] = new (comp->allocator())
+        TR::OptimizationManager(self(), TR_OSRLiveRangeAnalysis::create, OMR::osrLiveRangeAnalysis);
+    _opts[OMR::osrDefAnalysis]
+        = new (comp->allocator()) TR::OptimizationManager(self(), TR_OSRDefAnalysis::create, OMR::osrDefAnalysis);
+    _opts[OMR::methodHandleTransformer] = new (comp->allocator())
+        TR::OptimizationManager(self(), TR_MethodHandleTransformer::create, OMR::methodHandleTransformer);
+    _opts[OMR::varHandleTransformer] = new (comp->allocator())
+        TR::OptimizationManager(self(), TR_VarHandleTransformer::create, OMR::varHandleTransformer);
+    _opts[OMR::handleRecompilationOps] = new (comp->allocator())
+        TR::OptimizationManager(self(), TR_HandleRecompilationOps::create, OMR::handleRecompilationOps);
+    _opts[OMR::unsafeFastPath]
+        = new (comp->allocator()) TR::OptimizationManager(self(), TR_UnsafeFastPath::create, OMR::unsafeFastPath);
+    _opts[OMR::recognizedCallTransformer] = new (comp->allocator())
+        TR::OptimizationManager(self(), TR::RecognizedCallTransformer::create, OMR::recognizedCallTransformer);
+    _opts[OMR::coldBlockMarker]
+        = new (comp->allocator()) TR::OptimizationManager(self(), TR_ColdBlockMarker::create, OMR::coldBlockMarker);
+    _opts[OMR::CFGSimplification]
+        = new (comp->allocator()) TR::OptimizationManager(self(), TR::CFGSimplifier::create, OMR::CFGSimplification);
+    _opts[OMR::allocationSinking]
+        = new (comp->allocator()) TR::OptimizationManager(self(), TR_AllocationSinking::create, OMR::allocationSinking);
+    _opts[OMR::invariantArgumentPreexistence] = new (comp->allocator())
+        TR::OptimizationManager(self(), TR_InvariantArgumentPreexistence::create, OMR::invariantArgumentPreexistence);
+
+    if (isIlGen) {
+        setStrategy(ilgenStrategyOpts);
+        return;
+    }
 
     // initialize additional J9 optimizations
 
@@ -699,18 +751,10 @@ J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *method
         = new (comp->allocator()) TR::OptimizationManager(self(), TR::SwitchAnalyzer::create, OMR::switchAnalyzer);
     _opts[OMR::treeLowering]
         = new (comp->allocator()) TR::OptimizationManager(self(), TR::TreeLowering::create, OMR::treeLowering);
-    _opts[OMR::varHandleTransformer] = new (comp->allocator())
-        TR::OptimizationManager(self(), TR_VarHandleTransformer::create, OMR::varHandleTransformer);
-    _opts[OMR::methodHandleTransformer] = new (comp->allocator())
-        TR::OptimizationManager(self(), TR_MethodHandleTransformer::create, OMR::methodHandleTransformer);
-    _opts[OMR::unsafeFastPath]
-        = new (comp->allocator()) TR::OptimizationManager(self(), TR_UnsafeFastPath::create, OMR::unsafeFastPath);
     _opts[OMR::idiomRecognition]
         = new (comp->allocator()) TR::OptimizationManager(self(), TR_CISCTransformer::create, OMR::idiomRecognition);
     _opts[OMR::loopAliasRefiner]
         = new (comp->allocator()) TR::OptimizationManager(self(), TR_LoopAliasRefiner::create, OMR::loopAliasRefiner);
-    _opts[OMR::allocationSinking]
-        = new (comp->allocator()) TR::OptimizationManager(self(), TR_AllocationSinking::create, OMR::allocationSinking);
     _opts[OMR::samplingJProfiling]
         = new (comp->allocator()) TR::OptimizationManager(self(), TR_JitProfiler::create, OMR::samplingJProfiling);
     _opts[OMR::SPMDKernelParallelization] = new (comp->allocator())
@@ -729,8 +773,6 @@ J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *method
         = new (comp->allocator()) TR::OptimizationManager(self(), TR_JProfilingValue::create, OMR::jProfilingValue);
     _opts[OMR::staticFinalFieldFolding] = new (comp->allocator())
         TR::OptimizationManager(self(), TR_StaticFinalFieldFolding::create, OMR::staticFinalFieldFolding);
-    _opts[OMR::handleRecompilationOps] = new (comp->allocator())
-        TR::OptimizationManager(self(), TR_HandleRecompilationOps::create, OMR::handleRecompilationOps);
     _opts[OMR::hotFieldMarking]
         = new (comp->allocator()) TR::OptimizationManager(self(), TR_HotFieldMarking::create, OMR::hotFieldMarking);
     _opts[OMR::vectorAPIExpansion] = new (comp->allocator())
