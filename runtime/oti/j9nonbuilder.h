@@ -5616,6 +5616,7 @@ typedef struct J9InternalVMFunctions {
 #if defined(J9VM_OPT_JFR)
 	jint (*initializeJFR)(struct J9JavaVM *vm, BOOLEAN lateInit);
 	jboolean (*isJFREnabled)(struct J9JavaVM *vm);
+	jboolean (*isJFRV2SupportEnabled)(struct J9JavaVM *vm);
 	jboolean (*isJFRRecordingStarted)(struct J9JavaVM *vm);
 	void (*jfrDump)(struct J9VMThread *currentThread, BOOLEAN finalWrite);
 	void (*jfrExecutionSample)(struct J9VMThread *currentThread, struct J9VMThread *sampleThread);

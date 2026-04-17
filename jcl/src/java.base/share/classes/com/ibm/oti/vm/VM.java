@@ -675,8 +675,19 @@ public static Properties internalGetProperties() {
 }
 
 /*[IF JFR_SUPPORT]*/
-
+/**
+ * Check if the JFR support is enabled with either V1 or V2 implementation.
+ *
+ * @return true if the JFR support is enabled, false otherwise
+ */
 public static native boolean isJFREnabled();
+
+/**
+ * Check if the JFR support with V2 implementation is enabled.
+ *
+ * @return true if the JFR V2 support is enabled, false otherwise
+ */
+public static native boolean isJFRV2SupportEnabled();
 
 /**
  * Check if a JFR recording has been started.

@@ -4620,15 +4620,44 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		}
 	}
 	{
+#if JAVA_SPEC_VERSION == 17
+		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_JFR_ENABLED)) {
+			/* JFR V2 implementation can be enabled only when JFR support is enabled. */
+			IDATA enableJFRV2 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLEOPENJ9EXPERIMENTALFLIGHTRECORDING, NULL);
+			IDATA disableJFRV2 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLEOPENJ9EXPERIMENTALFLIGHTRECORDING, NULL);
+
+			if (enableJFRV2 > disableJFRV2) {
+				/* TODO Temporarily limit this to JDK17. */
+				vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_JFR_V2_SUPPORT;
+			}
+		}
+#endif /* JAVA_SPEC_VERSION == 17 */
+	}
+	{
 		IDATA startFlightRecordingIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XXSTARTFLIGHTRECORDING, NULL);
 		if (0 <= startFlightRecordingIndex) {
-			char *optionBuffer = NULL;
-			PORT_ACCESS_FROM_JAVAVM(vm);
+			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JFR_V2_SUPPORT)) {
+				/* JFR V2 support is enabled. */
+				char *jfrOptionBuffer = NULL;
+				if (0 <= FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XXSTARTFLIGHTRECORDING_EQUALS, NULL)) {
+					GET_OPTION_VALUE(startFlightRecordingIndex, '=', &jfrOptionBuffer);
+				} else if (0 <= FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XXSTARTFLIGHTRECORDING_COLON, NULL)) {
+					GET_OPTION_OPTION(startFlightRecordingIndex, ':', ':', &jfrOptionBuffer);
+				}
+				if (NULL == jfrOptionBuffer) {
+					vm->jfrState.jfrCMDLineOption = "dumponexit=false";
+				} else {
+					vm->jfrState.jfrCMDLineOption = jfrOptionBuffer;
+				}
+			} else {
+				/* Fall back to the first JFR version. */
+				char *optionBuffer = NULL;
+				PORT_ACCESS_FROM_JAVAVM(vm);
 
-			vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_START_FLIGHT_RECORDING;
-			GET_OPTION_VALUE(startFlightRecordingIndex, '=', &optionBuffer);
+				vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_START_FLIGHT_RECORDING;
+				GET_OPTION_VALUE(startFlightRecordingIndex, '=', &optionBuffer);
 
-			if (NULL != optionBuffer) {
+				if (NULL != optionBuffer) {
 #define JFR_OPTION_FILENAME "filename="
 #define JFR_OPTION_DELAY "delay="
 #define JFR_OPTION_DURATION "duration="
@@ -4674,26 +4703,7 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 #undef JFR_OPTION_FILENAME
 #undef JFR_OPTION_DELAY
 #undef JFR_OPTION_DURATION
-			}
-		}
-	}
-	{
-		IDATA jfrOptionIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XXSTARTOPENJ9EXPERIMENTALFLIGHTRECORDING, NULL);
-		if (0 <= jfrOptionIndex) {
-			char *jfrOptionBuffer = NULL;
-#if JAVA_SPEC_VERSION == 17
-			/* TODO Temporarily limit this to JDK17. */
-			vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_JFR_V2_SUPPORT;
-#endif /* JAVA_SPEC_VERSION == 17 */
-			if (0 <= FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XXSTARTOPENJ9EXPERIMENTALFLIGHTRECORDING_EQUALS, NULL)) {
-				GET_OPTION_VALUE(jfrOptionIndex, '=', &jfrOptionBuffer);
-			} else if (0 <= FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XXSTARTOPENJ9EXPERIMENTALFLIGHTRECORDING_COLON, NULL)) {
-				GET_OPTION_OPTION(jfrOptionIndex, ':', ':', &jfrOptionBuffer);
-			}
-			if (NULL == jfrOptionBuffer) {
-				vm->jfrState.jfrCMDLineOption = "dumponexit=false";
-			} else {
-				vm->jfrState.jfrCMDLineOption = jfrOptionBuffer;
+				}
 			}
 		}
 	}

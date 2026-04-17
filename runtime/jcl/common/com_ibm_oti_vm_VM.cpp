@@ -198,6 +198,14 @@ Java_com_ibm_oti_vm_VM_isJFREnabled(JNIEnv *env, jclass unused)
 }
 
 jboolean JNICALL
+Java_com_ibm_oti_vm_VM_isJFRV2SupportEnabled(JNIEnv *env, jclass unused)
+{
+	J9JavaVM *vm = ((J9VMThread*)env)->javaVM;
+
+	return vm->internalVMFunctions->isJFRV2SupportEnabled(vm) ? JNI_TRUE : JNI_FALSE;
+}
+
+jboolean JNICALL
 Java_com_ibm_oti_vm_VM_isJFRRecordingStarted(JNIEnv *env, jclass unused)
 {
 	J9JavaVM *vm = ((J9VMThread *)env)->javaVM;

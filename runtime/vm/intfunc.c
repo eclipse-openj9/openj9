@@ -472,6 +472,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 #if defined(J9VM_OPT_JFR)
 	initializeJFR,
 	isJFREnabled,
+	isJFRV2SupportEnabled,
 	isJFRRecordingStarted,
 	jfrDump,
 	jfrExecutionSample,
