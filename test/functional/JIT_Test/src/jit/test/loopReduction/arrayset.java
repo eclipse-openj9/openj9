@@ -40,6 +40,8 @@ public class arrayset {
 
    public static int[] intArr = new int[18097];
 
+   public static int[] overlapIntArr = intArr;
+
    public static long[] longArr = new long[18097];
 
    public static short[] shortArr = new short[18097];
@@ -932,6 +934,48 @@ public class arrayset {
          java.util.Arrays.fill(byteArrB, (byte) -1);
          if (!java.util.Arrays.equals(byteArrB, byteArrBBase)) {
             c.printerr("arrB/arrBBase compares equal - wrong - on iter" + iters);
+         }
+      }
+   }
+
+   public void testOverlappingArrayset(Context c) {
+      int initVal1 = 0x1;
+      int initVal2 = 0x2;
+      int initVal3 = 0x3;
+      int initVal4 = 0x4;
+
+      java.util.Arrays.fill(intArr, 0);
+
+      for (int i = 0; i < 256; i++) {
+          intArr[i] = initVal1;
+          overlapIntArr[i+64] = initVal2;
+      }
+
+      for (int i = 256+64; i < 512; i++) {
+          intArr[i+64] = initVal3;
+          overlapIntArr[i] = initVal4;
+      }
+
+      if (c.verify()) {
+         for (int i = 0; i < 256; i++) {
+             if (intArr[i] != initVal1) {
+                 c.printerr("intArr["+i+"] expected "+initVal1+", but found "+intArr[i]);
+             }
+         }
+         for (int i = 256; i < 256+64; i++) {
+             if (intArr[i] != initVal2) {
+                 c.printerr("intArr["+i+"] expected "+initVal2+", but found "+intArr[i]);
+             }
+         }
+         for (int i = 256+64; i < 512; i++) {
+             if (intArr[i] != initVal4) {
+                 c.printerr("intArr["+i+"] expected "+initVal4+", but found "+intArr[i]);
+             }
+         }
+         for (int i = 512; i < 512+64; i++) {
+             if (intArr[i] != initVal3) {
+                 c.printerr("intArr["+i+"] expected "+initVal3+", but found "+intArr[i]);
+             }
          }
       }
    }
