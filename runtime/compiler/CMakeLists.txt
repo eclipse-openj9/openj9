@@ -192,6 +192,9 @@ set(REMOVED_OMR_FILES
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRVirtualMachineRegister.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRVirtualMachineRegisterInStruct.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRVirtualMachineState.cpp
+	${omr_SOURCE_DIR}/compiler/p/runtime/AsmUtil.spp
+	${omr_SOURCE_DIR}/compiler/p/runtime/CodeDispatch.spp
+	${omr_SOURCE_DIR}/compiler/z/codegen/S390Snippets.cpp
 )
 
 get_target_property(compiler_defines j9vm_compiler_defines INTERFACE_COMPILE_DEFINITIONS)
