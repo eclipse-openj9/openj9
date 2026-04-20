@@ -43,7 +43,6 @@ j9jit_files(
 	p/runtime/J9PPCEncodeUTF16.spp
 	p/runtime/J9PPCCRC32.spp
 	p/runtime/J9PPCCRC32_wrapper.c
-	p/runtime/CodeSync.cpp
 	p/runtime/Math.spp
 	p/runtime/PicBuilder.spp
 	p/runtime/PPCRelocationTarget.cpp
