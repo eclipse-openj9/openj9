@@ -65,8 +65,8 @@ public:
 	volatile UDATA _measuredBytesCopiedToGroupDuringCopyForward; /**< The total number of bytes measured to be copied to group during a copy-forward */
 
 	double _projectedInstantaneousSurvivalRate; /**< survivor rate between this and previous age group */
-	double _projectedInstantaneousSurvivalRatePerAgeUnit; /**< fraction of _projectedInstantaneousSurvivalRate, in case age group is a multiple of age units. this is an average of _projectedInstantaneousSurvivalRateThisPGCPerAgeUnit */
-	double _projectedInstantaneousSurvivalRateThisPGCPerAgeUnit; /**< same as _projectedInstantaneousSurvivalRatePerAgeUnit, but for this PGC (not an average over time) */
+//	double _projectedInstantaneousSurvivalRatePerAgeUnit; /**< fraction of _projectedInstantaneousSurvivalRate, in case age group is a multiple of age units. this is an average of _projectedInstantaneousSurvivalRateThisPGCPerAgeUnit */
+	double _projectedInstantaneousSurvivalRateThisPGC; /**< same as _projectedInstantaneousSurvivalRate, but for this PGC (not an average over time) */
 
 
 	UDATA _projectedLiveBytes; /** < The sum of projected live bytes of all regions in the compact group */
