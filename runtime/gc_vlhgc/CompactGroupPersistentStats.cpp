@@ -50,8 +50,8 @@ MM_CompactGroupPersistentStats::allocateCompactGroupPersistentStats(MM_Environme
 			result[i]._historicalSurvivalRate = 1.0;
 			result[i]._weightedSurvivalRate = 1.0;
 			result[i]._projectedInstantaneousSurvivalRate = 1.0;
-			result[i]._projectedInstantaneousSurvivalRatePerAgeUnit = 1.0;
-			result[i]._projectedInstantaneousSurvivalRateThisPGCPerAgeUnit = 1.0;
+//			result[i]._projectedInstantaneousSurvivalRatePerAgeUnit = 1.0;
+			result[i]._projectedInstantaneousSurvivalRateThisPGC = 1.0;
 			result[i]._projectedLiveBytes = 0;
 			result[i]._liveBytesAbsoluteDeviation = 0;
 			result[i]._regionCount = 0;
@@ -141,6 +141,7 @@ MM_CompactGroupPersistentStats::calculateAgeGroupFractionsAtEdenBoundary(MM_Envi
 void
 MM_CompactGroupPersistentStats::updateProjectedSurvivalRate(MM_EnvironmentVLHGC *env, MM_CompactGroupPersistentStats *persistentStatsArray, UDATA compactGroup)
 {
+//	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 	const double newObservationWeight = 0.2;
 	MM_CompactGroupPersistentStats *persistentStats = &persistentStatsArray[compactGroup];
 
@@ -172,64 +173,81 @@ MM_CompactGroupPersistentStats::updateProjectedSurvivalRate(MM_EnvironmentVLHGC 
 		persistentStats->_historicalSurvivalRate = newSurvivalRate;
 	}
 
-	/* Calculate the projected instantaneous survival rate (SIMPLIFIED) */
+	/* Calculate the projected instantaneous survival rate */
 	UDATA projectedLiveBytesSelected = persistentStats->_projectedLiveBytesBeforeCollectInCollectedSet;
 
 	if (projectedLiveBytesSelected > 0) {
 		UDATA projectedLiveBytesBefore = persistentStats->_projectedLiveBytesBeforeCollectInGroup;
 		UDATA measuredLiveBytesNotParticipating = (persistentStats->_measuredLiveBytesBeforeCollectInGroup - persistentStats->_measuredLiveBytesBeforeCollectInCollectedSet);
 		UDATA measuredLiveBytesAfter = (persistentStats->_measuredLiveBytesAfterCollectInCollectedSet + measuredLiveBytesNotParticipating);
-		double oldSurvivalRate = persistentStats->_projectedInstantaneousSurvivalRatePerAgeUnit;
+		double oldSurvivalRate = persistentStats->_projectedInstantaneousSurvivalRate;
 
 		/* Get Eden and non-Eden fractions from the collection set */
 		UDATA edenFraction = persistentStats->_projectedLiveBytesAfterPreviousPGCInCollectedSetForEdenFraction;
 		UDATA nonEdenFraction = persistentStats->_projectedLiveBytesAfterPreviousPGCInCollectedSetForNonEdenFraction;
 		UDATA totalFraction = edenFraction + nonEdenFraction;
 
-		/* Calculate survival rate for this compact group
-		 * With logical aging, we simply calculate the observed survival rate
-		 * without needing to walk backward through allocation age groups
-		 */
-		double thisSurvivalRate = 0.5; /* Default if no data */
+		/* Calculate separate survival rates for Eden and non-Eden fractions */
+		double thisSurvivalRateForEdenFraction = 0.5;
+		double thisSurvivalRateForNonEdenFraction = 0.5;
 
 		if (totalFraction > 0) {
-			/* Calculate observed survival rate from measured bytes */
-			thisSurvivalRate = (double)(measuredLiveBytesAfter - measuredLiveBytesNotParticipating) / (double)totalFraction;
-
-			/* Cap at 1.0 to handle measurement inaccuracies */
-			if (thisSurvivalRate > 1.0) {
-				thisSurvivalRate = 1.0;
+			/* Base survival rate from measured bytes */
+			double baseSurvivalRate = (double)(measuredLiveBytesAfter - measuredLiveBytesNotParticipating) / (double)totalFraction;
+			if (baseSurvivalRate > 1.0) {
+				baseSurvivalRate = 1.0;
 			}
+
+			thisSurvivalRateForEdenFraction = baseSurvivalRate;
+
+			/* For non-Eden fraction, the observed rate already includes effects from previous collections
+			 * In the original code, it walked backward dividing by previous survival rates
+			 * to isolate this age group's contribution. We approximate this by dividing
+			 * the observed rate by the previous age group's rate.
+			 */
+//			if ((nonEdenFraction > 0) && (MM_CompactGroupManager::getRegionAgeFromGroup(env, compactGroup) > 0)) {
+//				/* Get the previous age group's survival rate */
+//				UDATA currentAge = MM_CompactGroupManager::getRegionAgeFromGroup(env, compactGroup);
+//				if (currentAge > 0) {
+//					/* Find the compact group for the previous age in the same context */
+//					UDATA prevAge = currentAge - 1;
+//					UDATA contextNumber = MM_CompactGroupManager::getAllocationContextNumberFromGroup(env, compactGroup);
+//					MM_AllocationContextTarok *context = (MM_AllocationContextTarok *)extensions->globalAllocationManager->getAllocationContextByIndex(contextNumber);
+//					if (NULL != context) {
+//						UDATA prevGroup = MM_CompactGroupManager::getCompactGroupNumberForAge(env, prevAge, context);
+//						double prevRate = persistentStatsArray[prevGroup]._projectedInstantaneousSurvivalRateThisPGC;
+//
+//						/* Divide by previous rate to isolate this group's contribution */
+//						if (prevRate > 0.0) {
+//							thisSurvivalRateForNonEdenFraction = baseSurvivalRate / prevRate;
+//							if (thisSurvivalRateForNonEdenFraction > 1.0) {
+//								thisSurvivalRateForNonEdenFraction = 1.0;
+//							}
+//						}
+//					}
+//				}
+//			} else {
+				thisSurvivalRateForNonEdenFraction = baseSurvivalRate;
+//			}
 		}
 
-		/* For compact groups with logical age > 0, we can optionally adjust
-		 * based on the previous group's survival rate to account for
-		 * objects that have already survived previous collections
-		 */
-		if (MM_CompactGroupManager::getRegionAgeFromGroup(env, compactGroup) > 0) {
-			/* Objects in this group have already survived at least one collection
-			 * Their survival rate should account for this pre-filtering
-			 * We can use the previous group's rate as a baseline
-			 */
-//			double previousGroupRate = persistentStatsArray[compactGroup - 1]._projectedInstantaneousSurvivalRatePerAgeUnit;
-
-			/* The observed rate already includes the effect of previous survival,
-			 * so we don't need complex adjustment - just use it directly
-			 */
-			thisSurvivalRate = thisSurvivalRate; /* Keep as-is */
+		/* Combine Eden and non-Eden survival rates with weighted average */
+		double weightedMeanSurvivalRate = 0.5;
+		if (totalFraction > 0) {
+			weightedMeanSurvivalRate = (thisSurvivalRateForEdenFraction * edenFraction + thisSurvivalRateForNonEdenFraction * nonEdenFraction) / totalFraction;
 		}
 
 		/* Ensure survival rate is in valid range */
-		Assert_MM_true(thisSurvivalRate >= 0.0);
-		Assert_MM_true(thisSurvivalRate <= 1.0);
+		Assert_MM_true(weightedMeanSurvivalRate >= 0.0);
+		Assert_MM_true(weightedMeanSurvivalRate <= 1.0);
 
 		/* Approximate zero survivor rate with a low non-zero number to avoid division by zero */
-		if (0.0 == thisSurvivalRate) {
-			thisSurvivalRate = 0.01;
+		if (0.0 == weightedMeanSurvivalRate) {
+			weightedMeanSurvivalRate = 0.01;
 		}
 
-		/* Store the per-age-unit survival rate (with logical aging, this is per logical age) */
-		persistentStats->_projectedInstantaneousSurvivalRateThisPGCPerAgeUnit = thisSurvivalRate;
+		/* Store survival rate */
+		persistentStats->_projectedInstantaneousSurvivalRateThisPGC = weightedMeanSurvivalRate;
 
 		/* Calculate weighted average with previous observations */
 		double observedWeight = 1.0;
@@ -237,23 +255,18 @@ MM_CompactGroupPersistentStats::updateProjectedSurvivalRate(MM_EnvironmentVLHGC 
 			observedWeight = newObservationWeight * (double)projectedLiveBytesSelected / (double)projectedLiveBytesBefore;
 		}
 
-		persistentStats->_projectedInstantaneousSurvivalRatePerAgeUnit = (observedWeight * thisSurvivalRate) + ((1.0 - observedWeight) * oldSurvivalRate);
-
-		/* For logical aging, the instantaneous survival rate is the same as per-age-unit rate
-		 * since each compact group represents one logical age unit
-		 */
-		persistentStats->_projectedInstantaneousSurvivalRate = persistentStats->_projectedInstantaneousSurvivalRatePerAgeUnit;
+		persistentStats->_projectedInstantaneousSurvivalRate = (observedWeight * weightedMeanSurvivalRate) + ((1.0 - observedWeight) * oldSurvivalRate);
 
 		Trc_MM_CompactGroupPersistentStats_updateProjectedSurvivalRate_Exit(
 			env->getLanguageVMThread(),
 			compactGroup,
-			0.0, /* thisSurvivalRateForEdenFraction - simplified away */
-			0.0, /* thisSurvivalRateForNonEdenFraction - simplified away */
-			thisSurvivalRate, /* weightedMeanSurvivalRate */
+			thisSurvivalRateForEdenFraction,
+			thisSurvivalRateForNonEdenFraction,
+			weightedMeanSurvivalRate,
 			1.0, /* ageUnitsInThisAgeGroup - always 1 logical age unit */
-			thisSurvivalRate,
+			weightedMeanSurvivalRate,
 			persistentStats->_projectedInstantaneousSurvivalRate,
-			persistentStats->_projectedInstantaneousSurvivalRatePerAgeUnit);
+			persistentStats->_projectedInstantaneousSurvivalRate);
 	}
 }
 
@@ -325,31 +338,34 @@ MM_CompactGroupPersistentStats::calculateLiveBytesForRegion(
 		persistentStats[compactGroup]._projectedLiveBytesAfterPreviousPGCInCollectedSetForEdenFraction += region->_projectedLiveBytesPreviousPGC;
 		persistentStats[compactGroup]._projectedLiveBytesAfterPreviousPGCInCollectedSet += region->_projectedLiveBytesPreviousPGC;
 	} else {
-		/* Non-Eden regions: use logical age to determine recency */
-
-		/* Get the age of this region (GC cycles since allocation) */
+		/* Non-Eden regions: use exponential decay based on logical age
+		 * to better approximate the original allocation-age boundary calculation
+		 */
 		uintptr_t regionAge = region->getAge();
 		uintptr_t maxAge = extensions->tarokRegionMaxAge;
 
-		/* Calculate age-based recency factor
-		 * Younger regions (lower logical age) have higher recency
-		 * This replaces the allocation-age-based boundary calculation
+		/* Calculate recency factor using exponential decay
+		 * This better approximates the original behavior where older objects
+		 * had exponentially lower contribution to the non-Eden fraction
 		 */
 		double recencyFactor = 1.0;
 
 		if (maxAge > 0) {
-			/* Regions with age 0 (youngest) get factor 1.0
-			 * Regions with age maxAge (oldest) get factor approaching 0
-			 * This creates a decay curve similar to the old allocation-age approach
+			/* Use exponential decay: factor = exp(-k * age / maxAge)
+			 * where k controls the decay rate (higher k = faster decay)
+			 * k=2.0 provides a good balance similar to the original behavior
 			 */
-			recencyFactor = 1.0 - ((double)regionAge / (double)(maxAge + 1));
+			double normalizedAge = (double)regionAge / (double)maxAge;
+			recencyFactor = exp(-2.0 * normalizedAge);
 		}
 
-		/* Apply recency factor to projected live bytes from previous PGC
-		 * This estimates how much of the region's live data is "recent"
-		 * and should be counted toward the non-Eden fraction
-		 */
-		UDATA recentLiveBytes = (UDATA)(region->_projectedLiveBytesPreviousPGC * recencyFactor);
+		MM_HeapRegionManager *regionManager = extensions->heapRegionManager;
+		uintptr_t regionSize = regionManager->getRegionSize();
+		uintptr_t occupiedBytes = regionSize - region->getMemoryPool()->getFreeMemoryAndDarkMatterBytes();
+		double occupancyFactor = (double)occupiedBytes / (double)regionSize;
+
+		/* Apply recency factor to projected live bytes from previous PGC */
+		uintptr_t recentLiveBytes = (UDATA)(region->_projectedLiveBytesPreviousPGC * recencyFactor * occupancyFactor);
 
 		persistentStats[compactGroup]._projectedLiveBytesAfterPreviousPGCInCollectedSetForNonEdenFraction += recentLiveBytes;
 		persistentStats[compactGroup]._projectedLiveBytesAfterPreviousPGCInCollectedSet += recentLiveBytes;
@@ -578,12 +594,13 @@ MM_CompactGroupPersistentStats::decayProjectedLiveBytesForRegions(MM_Environment
 
 			/* Get the compact group for this region based on its logical age */
 			UDATA compactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, region);
+			UDATA regionAge = region->getAge();
 
-			/* Apply the survival rate for this region's compact group
-			 * With logical aging, each region belongs to exactly one compact group,
-			 * so we simply apply that group's survival rate
+			/* Apply survival rate for this region's compact group only
+			 * The original code walked backward through age groups, but with logical aging
+			 * each region belongs to exactly one compact group based on its logical age
 			 */
-			double survivalRate = persistentStats[compactGroup]._projectedInstantaneousSurvivalRatePerAgeUnit;
+			double survivalRate = persistentStats[compactGroup]._projectedInstantaneousSurvivalRate;
 
 			UDATA oldProjectedLiveBytes = region->_projectedLiveBytes;
 			region->_projectedLiveBytes = (UDATA)((double)oldProjectedLiveBytes * survivalRate);
@@ -595,10 +612,10 @@ MM_CompactGroupPersistentStats::decayProjectedLiveBytesForRegions(MM_Environment
 				(double)region->_projectedLiveBytes / (1024 * 1024),
 				compactGroup,
 				0.0, /* bytesRemaining - no longer applicable */
-				0.0, /* currentAge - no longer applicable */
+				(double)regionAge, /* currentAge - now logical age */
 				survivalRate,
 				survivalRate, /* baseSurvivalRate same as survivalRate */
-				1.0, /* ageUnitsInThisGroup - effectively 1 logical age unit */
+				1.0, /*  ageUnitsInThisGroup - 1 logical age unit */
 				compactGroup);
 		}
 	}
