@@ -2794,6 +2794,7 @@ void TR_ResolvedJ9Method::construct()
         { x(TR::sun_misc_Unsafe_allocateUninitializedArray0, "allocateUninitializedArray0",
             "(Ljava/lang/Class;I)Ljava/lang/Object;") },
         { x(TR::jdk_internal_misc_Unsafe_copyMemory0, "copyMemory0", "(Ljava/lang/Object;JLjava/lang/Object;JJ)V") },
+        { x(TR::jdk_internal_misc_Unsafe_setMemory0, "setMemory0", "(Ljava/lang/Object;JJB)V") },
         { x(TR::jdk_internal_misc_Unsafe_getCharUnaligned, "getCharUnaligned", "(Ljava/lang/Object;J)C") },
         { x(TR::jdk_internal_misc_Unsafe_getShortUnaligned, "getShortUnaligned", "(Ljava/lang/Object;J)S") },
         { x(TR::jdk_internal_misc_Unsafe_getIntUnaligned, "getIntUnaligned", "(Ljava/lang/Object;J)I") },
