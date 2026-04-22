@@ -485,6 +485,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	getTypeId,
 	jvmUpcallsEagerByteInstrumentation,
 	jvmUpcallTransformArrayToList,
+	jfrInitializeInternalStructures,
 #endif /* defined(J9VM_OPT_JFR) */
 #if defined(J9VM_OPT_SNAPSHOTS)
 	initializeSnapshotClassLoaderObject,

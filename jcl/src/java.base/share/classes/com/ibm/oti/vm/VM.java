@@ -769,6 +769,11 @@ public static native boolean isStartFlightRecordingSpecified();
  * @return a Module which is the unnamed module for system loader
  */
 public static native Module getUnnamedModuleForSystemLoader();
+
+/**
+ * Native used to initialize internal JFR structures
+ */
+public static native void initializeInternalJFRStructures();
 /*[ENDIF] JFR_SUPPORT */
 
 /*[IF JAVA_SPEC_VERSION >= 24]*/

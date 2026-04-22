@@ -48,7 +48,14 @@ final class JFRHelpers {
 	private static Method bytesForEagerInstrumentation;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 	private static volatile boolean jfrClassesInitialized = false;
-	private static String jfrCMDLineOption = VM.getjfrCMDLineOption();
+	private static String jfrCMDLineOption = null;
+
+	static {
+		if (VM.isJFREnabled() && VM.isJFRV2SupportEnabled()) {
+			VM.initializeInternalJFRStructures();
+			initJFRClasses();
+		}
+	}
 
 	private static Long convertToBytes(String text) {
 		Pattern pattern = Pattern.compile("(\\d+)([gkm]b?)?", Pattern.CASE_INSENSITIVE);
@@ -310,8 +317,13 @@ final class JFRHelpers {
 
 	/*[IF JAVA_SPEC_VERSION == 17]*/
 	private static byte[] transformClassAndInvokebytesForEagerInstrumentation(long traceId, boolean forceInstrumentation, Class<?> superClass, byte[] oldBytes, boolean addMethods) throws ReflectiveOperationException {
-		oldBytes = JFRClassTransformer.transformClass(oldBytes, addMethods);
-		return (byte[])bytesForEagerInstrumentation.invoke(null, traceId, forceInstrumentation, superClass, oldBytes);
+		try {
+			oldBytes = JFRClassTransformer.transformClass(oldBytes, addMethods);
+			return (byte[])bytesForEagerInstrumentation.invoke(null, traceId, forceInstrumentation, superClass, oldBytes);
+		} catch (Throwable t) {
+			t.printStackTrace();
+			throw t;
+		}
 	}
 
 	private static List<?> transformToList(Object[] array) {
@@ -326,6 +338,8 @@ final class JFRHelpers {
 		if (!VM.isJFREnabled() || !VM.isJFRV2SupportEnabled()) {
 			return;
 		}
+
+		jfrCMDLineOption = VM.getjfrCMDLineOption();
 		// JFR support is enabled with V2 implementation.
 		if (null != jfrCMDLineOption) {
 			initJFRClasses();

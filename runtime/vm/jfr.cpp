@@ -50,6 +50,8 @@ J9_DECLARE_CONSTANT_NAS(bytesForEagerInstrumentationNAS, bytesForEagerInstrument
 J9_DECLARE_CONSTANT_UTF8(transformToListUTF8, "transformToList");
 J9_DECLARE_CONSTANT_UTF8(transformToListSigUTF8, "([Ljava/lang/Object;)Ljava/util/List;");
 J9_DECLARE_CONSTANT_NAS(transformToListNAS, transformToListUTF8, transformToListSigUTF8);
+J9_DECLARE_CONSTANT_UTF8(jfrInternalEventClassUTF8, "jdk/internal/event/Event");
+J9_DECLARE_CONSTANT_UTF8(jfrEventClassUTF8, "jdk/jfr/Event");
 
 // TODO: allow configureable values
 #define J9JFR_THREAD_BUFFER_SIZE (1024*1024)
@@ -70,6 +72,7 @@ static jlong getTypeIdImpl(J9VMThread *currentThread, J9ClassLoader *classLoader
 static bool addEventIds(J9JavaVM *vm);
 static bool addTypeIds(J9JavaVM *vm);
 #endif /* JAVA_SPEC_VERSION >= 17 */
+static void jfrShutdownInternalStructures(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 
 /**
  * Calculate the size in bytes of a JFR event.
@@ -1473,6 +1476,10 @@ initializeJFRv2(J9JavaVM *vm)
 		goto done;
 	}
 
+	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_SHUTTING_DOWN, jfrShutdownInternalStructures, OMR_GET_CALLSITE(), NULL)) {
+		goto done;
+	}
+
 	if (0 != initializeJFRIDs(vm)) {
 		goto done;
 	}
@@ -1481,6 +1488,49 @@ initializeJFRv2(J9JavaVM *vm)
 
 done:
 	return rc;
+}
+
+void
+jfrInitializeInternalStructures(J9VMThread *currentThread)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9Class *jfrInternalEventClass = NULL;
+	J9Class *jfrEventClass = NULL;
+
+	jfrInternalEventClass = vmFuncs->internalFindClassUTF8(currentThread, (U_8 *)J9UTF8_DATA(&jfrInternalEventClassUTF8), J9UTF8_LENGTH(&jfrInternalEventClassUTF8), vm->systemClassLoader, 0);
+	Assert_VM_notNull(jfrInternalEventClass);
+
+	jfrEventClass = vmFuncs->internalFindClassUTF8(currentThread, (U_8 *)J9UTF8_DATA(&jfrEventClassUTF8), J9UTF8_LENGTH(&jfrEventClassUTF8), vm->systemClassLoader, 0);
+	Assert_VM_notNull(jfrEventClass);
+
+	vm->jfrState.jfrInternalEventClassRef = (jclass) vmFuncs->j9jni_createGlobalRef((JNIEnv *)currentThread, jfrInternalEventClass->classObject, FALSE);
+	vm->jfrState.jfrEventClassRef = (jclass) vmFuncs->j9jni_createGlobalRef((JNIEnv *)currentThread, jfrEventClass->classObject, FALSE);
+
+	if ((NULL == vm->jfrState.jfrEventClassRef) || (NULL == vm->jfrState.jfrInternalEventClassRef)) {
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+	} else {
+		vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_ENABLE_JFR_CLASSLOAD_TRANSFORM;
+	}
+
+	return;
+}
+
+static void
+jfrShutdownInternalStructures(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
+{
+	J9VMThread *currentThread = ((J9VMInitEvent *)eventData)->vmThread;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	vm->extendedRuntimeFlags3 &= ~J9_EXTENDED_RUNTIME3_ENABLE_JFR_CLASSLOAD_TRANSFORM;
+
+	internalAcquireVMAccess(currentThread);
+	vmFuncs->j9jni_deleteGlobalRef((JNIEnv *)currentThread, vm->jfrState.jfrEventClassRef, FALSE);
+	vmFuncs->j9jni_deleteGlobalRef((JNIEnv *)currentThread, vm->jfrState.jfrInternalEventClassRef, FALSE);
+	internalReleaseVMAccess(currentThread);
+	vm->jfrState.jfrEventClassRef = NULL;
+	vm->jfrState.jfrInternalEventClassRef = NULL;
 }
 
 static void

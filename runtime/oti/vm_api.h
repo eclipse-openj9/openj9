@@ -5935,6 +5935,17 @@ jvmUpcallsEagerByteInstrumentation(J9VMThread *currentThread, J9Class *superClas
 j9object_t
 jvmUpcallTransformArrayToList(J9VMThread *currentThread, j9object_t array);
 
+/**
+ * Initialize internal VM structures for JFR. This must be called before triggering
+ * JFR initialization in the JCL.
+ *
+ * Sets exception in the current thread if there is a failure. Must be called without VM access.
+ *
+ * @param currentThread[in] the current J9VMThread
+ */
+void
+jfrInitializeInternalStructures(J9VMThread *currentThread);
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 #ifdef __cplusplus
