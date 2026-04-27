@@ -1848,7 +1848,7 @@ MM_CopyForwardScheme::stopCopyingIntoCache(MM_EnvironmentVLHGC *env, uintptr_t c
 		MM_HeapRegionDescriptorVLHGC * region = (MM_HeapRegionDescriptorVLHGC *)_regionManager->tableDescriptorForAddress(copyCache->cacheBase);
 
 		/* atomically add (age * usedBytes) product from this cache to the regions product */
-		double newAllocationAgeSizeProduct = region->atomicIncrementAllocationAgeSizeProduct(copyCache->_allocationAgeSizeProduct);
+		double newAllocationAgeSizeProduct = region->atomicIncrementAllocationAgeSizeProduct(copyCache->_allocationAgeSizeProduct, copyCache->_objectSize);
 		region->updateAgeBounds(copyCache->_lowerAgeBound, copyCache->_upperAgeBound);
 
 		/* Return any remaining memory to the pool */
@@ -5638,7 +5638,7 @@ MM_CopyForwardScheme::setRegionAsSurvivor(MM_EnvironmentVLHGC *env, MM_HeapRegio
 	    (double)region->getAllocationAge() / (1024 * 1024), (double)usedBytes / (1024 * 1024), allocationAgeSizeProduct / (1024 * 1024) / (1024 * 1024));
 
 	Assert_MM_true(0.0 == region->getAllocationAgeSizeProduct());
-	region->setAllocationAgeSizeProduct(allocationAgeSizeProduct);
+	region->setAllocationAgeSizeProduct(allocationAgeSizeProduct, usedBytes);
 	if (freshSurvivor) {
 		region->resetAgeBounds();
 	}
@@ -5652,13 +5652,18 @@ MM_CopyForwardScheme::setRegionAsSurvivor(MM_EnvironmentVLHGC *env, MM_HeapRegio
 void
 MM_CopyForwardScheme::setAllocationAgeForMergedRegion(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region)
 {
-	uintptr_t compactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, region);
-	uintptr_t usedBytes = region->getSize() - region->getMemoryPool()->getFreeMemoryAndDarkMatterBytes();
+	/* "Dark matter" refers to memory that appears allocated but isn't reachable.
+	 * This can cause inaccurate projections and potential Boundaries Overflow.
+	 * so use actual copied byte instead of calculating from getFreeMemoryAndDarkMatterBytes() for usedBytes.
+	 */
+//	uintptr_t usedBytes = region->getSize() - region->getMemoryPool()->getFreeMemoryAndDarkMatterBytes();
+	uintptr_t usedBytes = region->getUsedAllocationBytes();
 
 	Assert_MM_true(0 != usedBytes);
 
 	/* convert allocation age product (usedBytes * age) back to pure age */
 	uint64_t newAllocationAge = (uint64_t)(region->getAllocationAgeSizeProduct() / (double)usedBytes);
+	uintptr_t compactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, region);
 
 	Trc_MM_CopyForwardScheme_setAllocationAgeForMergedRegion(env->getLanguageVMThread(), _regionManager->mapDescriptorToRegionTableIndex(region), compactGroup,
 	    region->getAllocationAgeSizeProduct() / (1024 * 1024) / (1024 * 1024), (double)usedBytes / (1024 * 1024), (double)newAllocationAge / (1024 * 1024),
@@ -5677,8 +5682,9 @@ MM_CopyForwardScheme::setAllocationAgeForMergedRegion(MM_EnvironmentVLHGC *env, 
 	}
 
 	region->setAge(newAllocationAge, logicalAge);
-	/* reset aging auxiliary datea for future usage */
-	region->setAllocationAgeSizeProduct(0.0);
+
+	/* reset aging auxiliary data for future usage */
+	region->setAllocationAgeSizeProduct(0.0, 0);
 }
 
 bool
