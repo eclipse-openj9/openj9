@@ -3612,6 +3612,8 @@ bool J9::Z::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resul
     bool disableCASInlining = !cg->getSupportsInlineUnsafeCompareAndSet();
     bool disableCAEInlining = !cg->getSupportsInlineUnsafeCompareAndExchange();
 
+    static const bool disableStringIntrinsicFlagChk = (feGetEnv("TR_DisableStringIntrinsicFlagChk") != NULL);
+
     switch (methodSymbol->getRecognizedMethod()) {
         case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
             // In Java9 this can be either the jdk.internal JNI method or the sun.misc Java wrapper.
@@ -3815,6 +3817,11 @@ bool J9::Z::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resul
             break;
         case TR::java_lang_StringLatin1_inflate_BICII:
             if (cg->getSupportsInlineStringLatin1Inflate() && !disableStringInflateByteToChar) {
+#if JAVA_SPEC_VERSION < 25
+                if (!disableStringIntrinsicFlagChk && !node->isSafeForCGToInlineStringIntrinsic()) {
+                    break;
+                }
+#endif /* JAVA_SPEC_VERSION < 25 */
                 resultReg = TR::TreeEvaluator::inlineStringLatin1Inflate(node, cg);
                 return resultReg != NULL;
             }
@@ -3936,10 +3943,22 @@ bool J9::Z::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resul
     if (cg->getSupportsInlineStringIndexOfString()) {
         switch (methodSymbol->getRecognizedMethod()) {
             case TR::java_lang_StringLatin1_indexOf:
+#if JAVA_SPEC_VERSION < 25
+                if (!disableStringIntrinsicFlagChk && !node->isSafeForCGToInlineStringIntrinsic()) {
+                    break;
+                }
+                /* Intentional fallthrough. */
+#endif /* JAVA_SPEC_VERSION < 25 */
             case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringLatin1:
                 resultReg = TR::TreeEvaluator::inlineVectorizedStringIndexOf(node, cg, false);
                 return resultReg != NULL;
             case TR::java_lang_StringUTF16_indexOf:
+#if JAVA_SPEC_VERSION < 25
+                if (!disableStringIntrinsicFlagChk && !node->isSafeForCGToInlineStringIntrinsic()) {
+                    break;
+                }
+                /* Intentional fallthrough. */
+#endif /* JAVA_SPEC_VERSION < 25 */
             case TR::java_lang_StringUTF16_indexOfUnsafe:
             case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringUTF16:
                 resultReg = TR::TreeEvaluator::inlineVectorizedStringIndexOf(node, cg, true);

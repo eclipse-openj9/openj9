@@ -366,6 +366,221 @@ void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_compareTo_BBI
         storeTreeTop2, comp()->getFlowGraph(), false, false);
 }
 
+void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_inflate_BICII(TR::TreeTop *treetop, TR::Node *node)
+{
+    /*
+     * Prior to JDK25, it is possible for an AbstractStringBuilder race condition to trigger a call to
+     * java/lang/StringLatin1.inflate([BI[CII)V in such a way that an out of bounds exception gets triggered. This
+     * transformation adds a check for that possibility and calls the slow path if an exception needs to be thrown in
+     * the future.
+     */
+    TransformUtil::createTempsForCall(this, treetop);
+
+    /* Input byte array containing the string to inflate. */
+    TR::Node *srcObjNode = node->getFirstChild();
+
+    /* Offset into the input byte array. Unit is number of bytes. */
+    TR::Node *srcOffNode = node->getSecondChild();
+
+    /* Output char array to be modified with the result. */
+    TR::Node *dstObjNode = node->getChild(2);
+
+    /* Offset into the output char array. Unit is number of chars. */
+    TR::Node *dstOffNode = node->getChild(3);
+
+    /* Number of bytes to read from source and also number of chars to write to destination. */
+    TR::Node *copyLenNode = node->getChild(4);
+
+    TR::Node *srcArrayLenNode = TR::Node::create(TR::arraylength, 1, srcObjNode->duplicateTree());
+    srcArrayLenNode->setIsNonNegative(true);
+
+    TR::Node *dstArrayLenNode = TR::Node::create(TR::arraylength, 1, dstObjNode->duplicateTree());
+    dstArrayLenNode->setIsNonNegative(true);
+
+    /*
+     * The call node is duplicated to set up a fast path and a slow path.
+     * The fast path has the inlineStringIntrinsic flag set so that it gets transformed by inlineDirectCall.
+     * The slow path has the skipRecognizedCallTransformation flag set so it doesn't get transformed and
+     * RecognizedCallTransformer won't look at it again.
+     */
+    TR::TreeTop *slowPathTreeTop = TR::TreeTop::create(comp(), treetop->getNode()->duplicateTree());
+    slowPathTreeTop->getNode()->getFirstChild()->setSkipRecognizedCallTransformation(true);
+
+    TR::TreeTop *fastPathTreeTop = TR::TreeTop::create(comp(), treetop->getNode()->duplicateTree());
+    fastPathTreeTop->getNode()->getFirstChild()->setIsSafeForCGToInlineStringIntrinsic(true);
+
+    /*
+     * Add the following two checks to confirm that src and dst arrays are big enough:
+     *   srcArray.length >= (srcOffNode+copyLenNode)
+     *   dstArray.length >= (dstOffNode+copyLenNode)
+     * If either is false, an out of bounds exception will occur so the code must branch to the slow path.
+     */
+    TR::Node *srcOffsetPlusLenNode
+        = TR::Node::create(TR::iadd, 2, srcOffNode->duplicateTree(), copyLenNode->duplicateTree());
+    TR::Node *dstOffsetPlusLenNode
+        = TR::Node::create(TR::iadd, 2, dstOffNode->duplicateTree(), copyLenNode->duplicateTree());
+
+    TR::Node *srcCmpNode = TR::Node::createif(TR::ificmplt, srcArrayLenNode, srcOffsetPlusLenNode, NULL);
+    TR::TreeTop *srcCmpTree = TR::TreeTop::create(comp(), srcCmpNode);
+
+    TR::Node *dstCmpNode = TR::Node::createif(TR::ificmplt, dstArrayLenNode, dstOffsetPlusLenNode, NULL);
+    TR::TreeTop *dstCmpTree = TR::TreeTop::create(comp(), dstCmpNode);
+
+    TR::Block *callBlock = treetop->getEnclosingBlock();
+
+    /*
+     * createConditionalBlocksBeforeTree is used to create the source array length check.
+     * treetop is the current call treetop and the split point.
+     * srcCmpTree is the check to see if out of bounds access will occur in the src array.
+     * slowPathTreeTop is the slow path. This is a cold block that is branched to if an OOB exception will happen.
+     * fastPathTreeTop is the fast path. This is the fallthrough path.
+     * The slow path and fast path then merge back into each other.
+     */
+    callBlock->createConditionalBlocksBeforeTree(treetop, srcCmpTree, slowPathTreeTop, fastPathTreeTop,
+        comp()->getFlowGraph(), false, true);
+
+    /*
+     * dstCmpTree is the check to see if out of bounds access will occur in the dst array.
+     * The check is placed after the src out of bounds access check.
+     * If the dst array is too small, the code branches to the slow path to handle the OOB exception.
+     */
+    TR::Block *dstCmpBlock = TR::Block::createEmptyBlock(srcCmpNode, comp(), 0, NULL);
+    dstCmpBlock->setFrequency(callBlock->getFrequency());
+    comp()->getFlowGraph()->addNode(dstCmpBlock);
+
+    callBlock->getExit()->join(dstCmpBlock->getEntry());
+    dstCmpBlock->getExit()->join(fastPathTreeTop->getEnclosingBlock()->getEntry());
+    comp()->getFlowGraph()->copyExceptionSuccessors(callBlock, dstCmpBlock);
+
+    dstCmpBlock->append(dstCmpTree);
+    dstCmpNode->setBranchDestination(srcCmpNode->getBranchDestination());
+
+    comp()->getFlowGraph()->addEdge(TR::CFGEdge::createEdge(callBlock, dstCmpBlock, comp()->trMemory()));
+    comp()->getFlowGraph()->addEdge(
+        TR::CFGEdge::createEdge(dstCmpBlock, fastPathTreeTop->getEnclosingBlock(), comp()->trMemory()));
+    comp()->getFlowGraph()->addEdge(
+        TR::CFGEdge::createEdge(dstCmpBlock, slowPathTreeTop->getEnclosingBlock(), comp()->trMemory()));
+
+    comp()->getFlowGraph()->removeEdge(callBlock, fastPathTreeTop->getEnclosingBlock());
+
+    TR::DebugCounter::prependDebugCounter(comp(),
+        TR::DebugCounter::debugCounterName(comp(), "treesIntrinsicLatin1Inflate/fast/(%s)", comp()->signature()),
+        fastPathTreeTop);
+    TR::DebugCounter::prependDebugCounter(comp(),
+        TR::DebugCounter::debugCounterName(comp(), "treesIntrinsicLatin1Inflate/slow/(%s)", comp()->signature()),
+        slowPathTreeTop);
+}
+
+void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_indexOf_BIBII(TR::TreeTop *treetop, TR::Node *node)
+{
+    process_java_lang_StringLatin1_indexOf_BIBII(treetop, node, false /* isLatin1 */);
+}
+
+void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_indexOf_BIBII(TR::TreeTop *treetop, TR::Node *node,
+    bool isLatin1)
+{
+    /*
+     * The indexOf operation is searching for an index of a substring inside of another string. Prior to JDK25, it is
+     * possible for an AbstractStringBuilder race condition to trigger a call to indexOf in such a way that an out of
+     * bounds exception gets triggered. This transformation checks for that possibility and calls the slow path for
+     * safety if there is a chance it may occur.
+     */
+
+    TransformUtil::createTempsForCall(this, treetop);
+
+    /* This is the byte[] containing the characters for the string being searched in. */
+    TR::Node *arrayObjNode = node->getFirstChild();
+
+    /*
+     * This is the number of characters thought to be in the string being searched in. Due to the race condition, it
+     * may be incorrect.
+     */
+    TR::Node *arrayLenNode = node->getSecondChild();
+
+    /*
+     * maxArrayLenNode represents the maxmimum number of bytes that can be in the String being searched in without going
+     * out of bounds.
+     */
+    TR::Node *maxArrayLenNode = TR::Node::create(TR::arraylength, 1, arrayObjNode->duplicateTree());
+    maxArrayLenNode->setIsNonNegative(true);
+
+    /*
+     * The call node is duplicated to set up a fast path and a slow path.
+     * The fast path has the inlineStringIntrinsic flag set so that it gets transformed by inlineDirectCall.
+     * The slow path has the skipRecognizedCallTransformation flag set so it doesn't get transformed and
+     * RecognizedCallTransformer won't look at it again.
+     */
+    TR::TreeTop *slowPathTreeTop = TR::TreeTop::create(comp(), treetop->getNode()->duplicateTree());
+    slowPathTreeTop->getNode()->getFirstChild()->setSkipRecognizedCallTransformation(true);
+
+    TR::TreeTop *fastPathTreeTop = TR::TreeTop::create(comp(), treetop->getNode()->duplicateTree());
+    fastPathTreeTop->getNode()->getFirstChild()->setIsSafeForCGToInlineStringIntrinsic(true);
+
+    TR::SymbolReference *newSymbolReference = NULL;
+    TR::DataType dataType = node->getDataType();
+
+    /* If the call node has a reference count >1, a symref is created to hold the result. */
+    if (node->getReferenceCount() > 1) {
+        newSymbolReference = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), dataType);
+        TR::Node::recreate(node, comp()->il.opCodeForDirectLoad(dataType));
+        node->setSymbolReference(newSymbolReference);
+        node->removeAllChildren();
+    }
+
+    /*
+     * For latin1, the value of maxArrayLenNode must be greater than or equal to the value of arrayLenNode.
+     * For UTF16, the value of (maxArrayLenNode >> 1) must be greater than or equal to the value of arrayLenNode.
+     * If this isn't true, it is possible for the indexOf operation to go out of bounds so the slow path must be taken.
+     */
+    if (!isLatin1) {
+        maxArrayLenNode = TR::Node::create(TR::ishr, 2, maxArrayLenNode, TR::Node::create(TR::iconst, 0, 1));
+    }
+    TR::Node *cmpNode = TR::Node::createif(TR::ificmpgt, arrayLenNode->duplicateTree(), maxArrayLenNode, NULL);
+    TR::TreeTop *cmpTree = TR::TreeTop::create(comp(), cmpNode);
+
+    TR::Block *callBlock = treetop->getEnclosingBlock();
+
+    /*
+     * createConditionalBlocksBeforeTree puts everything together.
+     * treetop is the current call treetop and the split point.
+     * cmpTree is the check to see if out of bounds access is possible.
+     * slowPathTreeTop is the slow path. This is a cold block that is branched to if OOB is possible.
+     * fastPathTreeTop is the fast path. This is the fallthrough path.
+     * The slow path and fast path then merge back into each other.
+     */
+    callBlock->createConditionalBlocksBeforeTree(treetop, cmpTree, slowPathTreeTop, fastPathTreeTop,
+        comp()->getFlowGraph(), false, true);
+
+    /* If the call node has a reference count >1, a symref is used to record the return value from the call. */
+    if (newSymbolReference) {
+        TR::Node *fastPathStoreNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(dataType), 1, 1,
+            fastPathTreeTop->getNode()->getFirstChild(), newSymbolReference);
+        TR::TreeTop *fastPathStoreTree = TR::TreeTop::create(comp(), fastPathStoreNode);
+        fastPathTreeTop->insertAfter(fastPathStoreTree);
+
+        TR::Node *slowPathStoreNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(dataType), 1, 1,
+            slowPathTreeTop->getNode()->getFirstChild(), newSymbolReference);
+        TR::TreeTop *slowPathStoreTree = TR::TreeTop::create(comp(), slowPathStoreNode);
+        slowPathTreeTop->insertAfter(slowPathStoreTree);
+    }
+
+    if (isLatin1) {
+        TR::DebugCounter::prependDebugCounter(comp(),
+            TR::DebugCounter::debugCounterName(comp(), "treesIntrinsicLatin1IndexOf/fast/(%s)", comp()->signature()),
+            fastPathTreeTop);
+        TR::DebugCounter::prependDebugCounter(comp(),
+            TR::DebugCounter::debugCounterName(comp(), "treesIntrinsicLatin1IndexOf/slow/(%s)", comp()->signature()),
+            slowPathTreeTop);
+    } else {
+        TR::DebugCounter::prependDebugCounter(comp(),
+            TR::DebugCounter::debugCounterName(comp(), "treesIntrinsicUTF16IndexOf/fast/(%s)", comp()->signature()),
+            fastPathTreeTop);
+        TR::DebugCounter::prependDebugCounter(comp(),
+            TR::DebugCounter::debugCounterName(comp(), "treesIntrinsicUTF16IndexOf/slow/(%s)", comp()->signature()),
+            slowPathTreeTop);
+    }
+}
+
 void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_inflate_BIBII(TR::TreeTop *treetop, TR::Node *node)
 {
     /*
@@ -1895,6 +2110,7 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop *treetop)
     TR::RecognizedMethod rm = node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod();
 
     bool isILGenPass = !getLastRun();
+    static const bool disableStringIntrinsicFlagChk = (feGetEnv("TR_DisableStringIntrinsicFlagChk") != NULL);
     if (isILGenPass) {
         switch (rm) {
             case TR::sun_misc_Unsafe_getAndAddInt:
@@ -1977,6 +2193,19 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop *treetop)
                     cg()->getSupportsArrayCmpLen() && !comp()->target().cpu.isPower() && !comp()->target().cpu.isZ());
             case TR::java_lang_StringLatin1_inflate_BIBII:
                 return (cg()->getSupportsArrayTranslateTROTNoBreak() && !comp()->target().cpu.isPower());
+#if JAVA_SPEC_VERSION < 25
+            case TR::java_lang_StringLatin1_inflate_BICII:
+                return (!disableStringIntrinsicFlagChk && cg()->getSupportsInlineStringLatin1Inflate()
+                    && !node->isSafeForCGToInlineStringIntrinsic() && !node->checkSkipRecognizedCallTransformation());
+            case TR::java_lang_StringUTF16_indexOf:
+                if (comp()->target().cpu.isPower()) {
+                    return false;
+                }
+                /* Intentional fallthrough. */
+            case TR::java_lang_StringLatin1_indexOf:
+                return (!disableStringIntrinsicFlagChk && cg()->getSupportsInlineStringIndexOfString()
+                    && !node->isSafeForCGToInlineStringIntrinsic() && !node->checkSkipRecognizedCallTransformation());
+#endif /* JAVA_SPEC_VERSION < 25 */
             case TR::jdk_internal_util_ArraysSupport_vectorizedMismatch:
                 return cg()->getSupportsInlineVectorizedMismatch();
             default:
@@ -2125,6 +2354,17 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop *treetop)
             case TR::java_lang_StringLatin1_inflate_BIBII:
                 process_java_lang_StringLatin1_inflate_BIBII(treetop, node);
                 break;
+#if JAVA_SPEC_VERSION < 25
+            case TR::java_lang_StringLatin1_inflate_BICII:
+                process_java_lang_StringLatin1_inflate_BICII(treetop, node);
+                break;
+            case TR::java_lang_StringUTF16_indexOf:
+                process_java_lang_StringUTF16_indexOf_BIBII(treetop, node);
+                break;
+            case TR::java_lang_StringLatin1_indexOf:
+                process_java_lang_StringLatin1_indexOf_BIBII(treetop, node, true);
+                break;
+#endif /* JAVA_SPEC_VERSION < 25 */
             case TR::java_lang_StrictMath_sqrt:
             case TR::java_lang_Math_sqrt:
                 process_java_lang_StrictMath_and_Math_sqrt(treetop, node);
