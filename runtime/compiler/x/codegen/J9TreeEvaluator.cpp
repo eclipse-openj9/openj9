@@ -10873,6 +10873,8 @@ static TR::Register *inlineIntrinsicStringIndexOfString(TR::Node *node, TR::Code
     doneLabel->setEndInternalControlFlow();
 
     generateLabelInstruction(TR::InstOpCode::label, node, startLabel, cg);
+    cg->generateDebugCounter(
+        TR::DebugCounter::debugCounterName(cg->comp(), "inlineIntrinsicIndexOf/(%s)", cg->comp()->signature()));
 
     int32_t hdrSize = static_cast<int32_t>(TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
 
@@ -13240,6 +13242,8 @@ TR::Register *J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::Co
         }
     }
 
+    static const bool disableStringIntrinsicFlagChk = (feGetEnv("TR_DisableStringIntrinsicFlagChk") != NULL);
+
     switch (symbol->getMandatoryRecognizedMethod()) {
         case TR::java_lang_StringLatin1_indexOfChar:
         case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
@@ -13254,6 +13258,12 @@ TR::Register *J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::Co
             break;
 
         case TR::java_lang_StringLatin1_indexOf:
+#if JAVA_SPEC_VERSION < 25
+            if (!disableStringIntrinsicFlagChk && !node->isSafeForCGToInlineStringIntrinsic()) {
+                break;
+            }
+            /* Intentional fallthrough. */
+#endif /* JAVA_SPEC_VERSION < 25 */
         case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringLatin1:
             if (cg->getSupportsInlineStringIndexOfString())
                 returnRegister = inlineIntrinsicStringIndexOfString(node, cg, true);
@@ -13262,6 +13272,12 @@ TR::Register *J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::Co
             break;
 
         case TR::java_lang_StringUTF16_indexOf:
+#if JAVA_SPEC_VERSION < 25
+            if (!disableStringIntrinsicFlagChk && !node->isSafeForCGToInlineStringIntrinsic()) {
+                break;
+            }
+            /* Intentional fallthrough. */
+#endif /* JAVA_SPEC_VERSION < 25 */
         case TR::java_lang_StringUTF16_indexOfUnsafe:
         case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringUTF16:
             if (cg->getSupportsInlineStringIndexOfString())
@@ -13376,6 +13392,11 @@ TR::Register *J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::Co
             break;
         case TR::java_lang_StringLatin1_inflate_BICII:
             if (cg->getSupportsInlineStringLatin1Inflate()) {
+#if JAVA_SPEC_VERSION < 25
+                if (!disableStringIntrinsicFlagChk && !node->isSafeForCGToInlineStringIntrinsic()) {
+                    break;
+                }
+#endif /* JAVA_SPEC_VERSION < 25 */
                 return TR::TreeEvaluator::inlineStringLatin1Inflate(node, cg);
             }
             break;
@@ -13473,6 +13494,8 @@ TR::Register *J9::X86::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, 
     TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
     startLabel->setStartInternalControlFlow();
     generateLabelInstruction(TR::InstOpCode::label, node, startLabel, cg);
+    cg->generateDebugCounter(
+        TR::DebugCounter::debugCounterName(cg->comp(), "inlineIntrinsicInflate/(%s)", cg->comp()->signature()));
 
     TR::Node *destOffsetNode = node->getChild(3);
 

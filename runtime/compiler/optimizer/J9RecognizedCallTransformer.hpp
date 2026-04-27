@@ -163,6 +163,63 @@ private:
      */
     void process_java_lang_StringLatin1_inflate_BIBII(TR::TreeTop *treetop, TR::Node *node);
     /** \brief
+     *     Transforms java/lang/StringUTF16.indexOf([BI[BII)I
+     *
+     *  \param treetop
+     *     The treetop which anchors the call node.
+     *
+     *  \param node
+     *     The call node representing a call to java/lang/StringUTF16.indexOf([BI[BII)I which has the following shape:
+     *
+     *     \code
+     *     icall <java/lang/StringUTF16.indexOf([BI[BII)I>
+     *       <byte array containing StringUTF16 characters to search in>
+     *       <num of StringUTF16 characters in the array being searched in (2 bytes each)>
+     *       <byte array containing StringUTF16 characters to search for>
+     *       <num of StringUTF16 characters in the array containing characters being searched for (2 bytes each)>
+     *       <offset>
+     *     \endcode
+     */
+    void process_java_lang_StringUTF16_indexOf_BIBII(TR::TreeTop *treetop, TR::Node *node);
+    /** \brief
+     *     Transforms java/lang/StringLatin1.indexOf([BI[BII)I
+     *
+     *  \param treetop
+     *     The treetop which anchors the call node.
+     *
+     *  \param node
+     *     The call node representing a call to java/lang/StringLatin1.indexOf([BI[BII)I which has the following shape:
+     *
+     *     \code
+     *     icall <java/lang/StringLatin1.indexOf([BI[BII)I>
+     *       <byte array containing StringLatin1 characters to search in>
+     *       <num of StringLatin1 characters in the array being searched in (1 byte each)>
+     *       <byte array containing StringLatin1 characters to search for>
+     *       <num of StringLatin1 characters in the array containing characters being searched for (1 byte each)>
+     *       <offset>
+     *     \endcode
+     */
+    void process_java_lang_StringLatin1_indexOf_BIBII(TR::TreeTop *treetop, TR::Node *node, bool isLatin1);
+    /** \brief
+     *     Transforms java/lang/StringLatin1.inflate([BI[CII)V
+     *
+     *  \param treetop
+     *     The treetop which anchors the call node.
+     *
+     *  \param node
+     *     The call node representing a call to java/lang/StringLatin1.inflate([BI[CII)V which has the following shape:
+     *
+     *     \code
+     *     call <java/lang/StringLatin1.inflate([BI[CII)V>
+     *       <src byte array>
+     *       <src offset>
+     *       <dst char array>
+     *       <dst offset>
+     *       <length>
+     *     \endcode
+     */
+    void process_java_lang_StringLatin1_inflate_BICII(TR::TreeTop *treetop, TR::Node *node);
+    /** \brief
      *     Transforms java/lang/StringUTF16.toBytes([CII)[B into a fast allocate and arraycopy sequence with equivalent
      *     semantics.
      *

@@ -12548,6 +12548,8 @@ static TR::Register *inlineIntrinsicIndexOfString(TR::Node *node, TR::CodeGenera
     endLabel->setEndInternalControlFlow();
 
     generateLabelInstruction(cg, TR::InstOpCode::label, node, startLabel);
+    cg->generateDebugCounter(
+        TR::DebugCounter::debugCounterName(comp, "inlineIntrinsicIndexOf/(%s)", comp->signature()));
 
     {
         /* If offset + number of characters in the substring is greater than the number of characters in the main string
@@ -14291,6 +14293,8 @@ bool J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&r
         bool disableCASInlining = !cg->getSupportsInlineUnsafeCompareAndSet();
         bool disableCAEInlining = !cg->getSupportsInlineUnsafeCompareAndExchange();
         static bool disableOSW = feGetEnv("TR_noPauseOnSpinWait") != NULL;
+        static const bool disableStringIntrinsicFlagChk = (feGetEnv("TR_DisableStringIntrinsicFlagChk") != NULL);
+
         switch (methodSymbol->getRecognizedMethod()) {
             case TR::java_lang_Thread_onSpinWait: {
                 if (!disableOSW) {
@@ -14571,6 +14575,11 @@ bool J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&r
 
             case TR::java_lang_StringLatin1_indexOf:
                 if (cg->getSupportsInlineStringIndexOfString()) {
+#if JAVA_SPEC_VERSION < 25
+                    if (!disableStringIntrinsicFlagChk && !node->isSafeForCGToInlineStringIntrinsic()) {
+                        break;
+                    }
+#endif /* JAVA_SPEC_VERSION < 25 */
                     resultReg = inlineIntrinsicIndexOfString(node, cg, true);
                     return resultReg != nullptr;
                 }
@@ -14578,6 +14587,11 @@ bool J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&r
 
             case TR::java_lang_StringLatin1_inflate_BICII:
                 if (cg->getSupportsInlineStringLatin1Inflate()) {
+#if JAVA_SPEC_VERSION < 25
+                    if (!disableStringIntrinsicFlagChk && !node->isSafeForCGToInlineStringIntrinsic()) {
+                        break;
+                    }
+#endif /* JAVA_SPEC_VERSION < 25 */
                     bool result = inlineIntrinsicInflate(node, cg);
                     if (result) {
                         resultReg = nullptr;
