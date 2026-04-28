@@ -90,6 +90,7 @@ monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos
 		PORT_ACCESS_FROM_JAVAVM(javaVM);
 		J9Class *monitorClass = NULL;
 		I_64 startTicks = j9time_nano_time();
+		bool pinningSupportEnabled = J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION);
 
 		monitorClass = J9OBJECT_CLAZZ(vmThread, object);
 
@@ -99,11 +100,14 @@ monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos
 			thrstate = J9_PUBLIC_FLAGS_THREAD_WAITING;
 		}
 #if JAVA_SPEC_VERSION >= 24
-		j9objectmonitor_t volatile *lwEA = VM_ObjectMonitor::inlineGetLockAddress(vmThread, object);
-		j9objectmonitor_t lock = J9_LOAD_LOCKWORD(vmThread, lwEA);
-		Assert_VM_true(J9_LOCK_IS_INFLATED(lock));
-		J9ObjectMonitor *objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
-		VM_AtomicSupport::addU32(&objectMonitor->platformThreadWaitCount, 1);
+		J9ObjectMonitor *objectMonitor = NULL;
+		if (pinningSupportEnabled) {
+			j9objectmonitor_t volatile *lwEA = VM_ObjectMonitor::inlineGetLockAddress(vmThread, object);
+			j9objectmonitor_t lock = J9_LOAD_LOCKWORD(vmThread, lwEA);
+			Assert_VM_true(J9_LOCK_IS_INFLATED(lock));
+			objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
+			VM_AtomicSupport::addU32(&objectMonitor->platformThreadWaitCount, 1);
+		}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 		omrthread_monitor_pin(monitor, vmThread->osThread);
 		/* We need to put the blocking object in the special frame since calling out to the hooks could cause
@@ -120,7 +124,7 @@ monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos
 		Trc_VM_ThreadHelp_monitorWaitImpl(vmThread, object, monitor);
 		object = NULL;
 #if JAVA_SPEC_VERSION >= 24
-		if (J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
+		if (pinningSupportEnabled) {
 			J9VM_SEND_VIRTUAL_UNBLOCKER_THREAD_SIGNAL(javaVM);
 		}
 #endif /* JAVA_SPEC_VERSION >= 24 */
@@ -138,7 +142,9 @@ monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos
 		J9VMTHREAD_SET_BLOCKINGENTEROBJECT(vmThread, vmThread, NULL);
 		omrthread_monitor_unpin(monitor, vmThread->osThread);
 #if JAVA_SPEC_VERSION >= 24
-		VM_AtomicSupport::subtractU32(&objectMonitor->platformThreadWaitCount, 1);
+		if (pinningSupportEnabled) {
+			VM_AtomicSupport::subtractU32(&objectMonitor->platformThreadWaitCount, 1);
+		}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 		TRIGGER_J9HOOK_VM_MONITOR_WAITED(javaVM->hookInterface, vmThread, monitor, millis, nanos, rc, startTicks, (UDATA) monitor, VM_VMHelpers::currentClass(monitorClass));
 
@@ -538,10 +544,13 @@ continueTimeCompensation:
 		break;
 	case HELPER_TYPE_MONITOR_WAIT_TIMED:
 #if JAVA_SPEC_VERSION >= 24
-		rc = omrthread_monitor_wait_timed_with_callback(monitor, millis, nanos, notifyUnblocker, vmThread);
-#else /* JAVA_SPEC_VERSION >= 24 */
-		rc = omrthread_monitor_wait_timed(monitor, millis, nanos);
+		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
+			rc = omrthread_monitor_wait_timed_with_callback(monitor, millis, nanos, notifyUnblocker, vmThread);
+		} else
 #endif /* JAVA_SPEC_VERSION >= 24 */
+		{
+			rc = omrthread_monitor_wait_timed(monitor, millis, nanos);
+		}
 		break;
 	case HELPER_TYPE_THREAD_PARK:
 		rc = omrthread_park(millis, nanos);
