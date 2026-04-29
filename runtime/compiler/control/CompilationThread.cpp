@@ -9426,6 +9426,20 @@ TR_MethodMetaData *TR::CompilationInfoPerThreadBase::compile(J9VMThread *vmThrea
             optimizationPlan);
 
         TRIGGER_J9HOOK_JIT_COMPILING_END(_jitConfig->hookInterface, vmThread, method);
+
+        if (_compiler && _methodBeingCompiled->isOutOfProcessCompReq()) {
+            // In JITServer mode preemtively call _compiler->retainedMethods() to
+            // create the retainedMethod set if it doesn't exist. If this operation
+            // is not done now, it will be done later during:
+            // postCompilationTasks
+            //   - compilationEnd
+            //     - outOfProcessCompilationEnd
+            //       - computeDataForCHTableCommit
+            //         - getDataForClient
+            // The server will send a message to the client, which could cause an
+            // exception and exceptions are not allowed to be triggerred from postCompilationTasks()
+            _compiler->retainedMethods();
+        }
     } catch (const std::exception &e) {
         const char *exceptionName;
 

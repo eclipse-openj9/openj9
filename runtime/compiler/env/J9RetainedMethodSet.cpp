@@ -583,6 +583,8 @@ void J9::RepeatRetainedMethodsAnalysis::getDataForClient(TR::Compilation *comp,
     }
 
     TR_ResolvedMethod *keepaliveMethod = NULL;
+    // retainedMethods is guaranteed to exist, so no messages
+    // will be sent to the server. See issue #23845
     auto keepaliveMethodsIter = comp->retainedMethods()->keepaliveMethods();
     while (keepaliveMethodsIter.next(&keepaliveMethod)) {
         keepaliveMethods.push_back(static_cast<TR_ResolvedJ9JITServerMethod *>(keepaliveMethod)->getRemoteMirror());
