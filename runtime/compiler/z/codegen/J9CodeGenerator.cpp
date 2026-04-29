@@ -3600,6 +3600,8 @@ bool J9::Z::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resul
 
     static const char *enableTRTRE = feGetEnv("TR_enableTRTRE");
     static const bool enableOSW = feGetEnv("TR_noPauseOnSpinWait") == NULL;
+    static const bool disableStringInflateByteToByte = feGetEnv("TR_DisableStringInflateByteToByte") != NULL;
+    static const bool disableStringInflateByteToChar = feGetEnv("TR_DisableStringInflateByteToChar") != NULL;
 
     bool disableCASInlining = !cg->getSupportsInlineUnsafeCompareAndSet();
     bool disableCAEInlining = !cg->getSupportsInlineUnsafeCompareAndExchange();
@@ -3799,9 +3801,14 @@ bool J9::Z::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resul
             }
             break;
         }
-
+        case TR::java_lang_StringLatin1_inflate_BIBII:
+            if (cg->getSupportsInlineStringLatin1Inflate() && !disableStringInflateByteToByte) {
+                resultReg = TR::TreeEvaluator::inlineStringLatin1Inflate(node, cg);
+                return resultReg != NULL;
+            }
+            break;
         case TR::java_lang_StringLatin1_inflate_BICII:
-            if (cg->getSupportsInlineStringLatin1Inflate()) {
+            if (cg->getSupportsInlineStringLatin1Inflate() && !disableStringInflateByteToChar) {
                 resultReg = TR::TreeEvaluator::inlineStringLatin1Inflate(node, cg);
                 return resultReg != NULL;
             }

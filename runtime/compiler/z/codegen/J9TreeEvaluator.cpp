@@ -293,10 +293,6 @@ void J9::Z::TreeEvaluator::inlineEncodeASCII(TR::Node *node, TR::CodeGenerator *
 
 TR::Register *J9::Z::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenerator *cg)
 {
-    static bool disableStringInflate = feGetEnv("TR_DisableStringInflate") != NULL;
-    if (disableStringInflate) {
-        return NULL;
-    }
     TR_ASSERT_FATAL(cg->getSupportsInlineStringLatin1Inflate(),
         "This evaluator should only be triggered when inlining StringLatin1.inflate([BI[CII)V is enabled on Java 11 "
         "onwards!\n");

@@ -5477,7 +5477,8 @@ bool TR_J9InlinerPolicy::suppressInliningRecognizedInitialCallee(TR_CallSite *ca
             }
             break;
         case TR::java_lang_StringLatin1_inflate_BIBII:
-            if (cg->getSupportsArrayTranslateTROTNoBreak() && !comp->target().cpu.isPower()) {
+            if ((!comp->target().cpu.isPower())
+                && (cg->getSupportsArrayTranslateTROTNoBreak() || cg->getSupportsInlineStringLatin1Inflate())) {
                 return true;
             }
             break;
