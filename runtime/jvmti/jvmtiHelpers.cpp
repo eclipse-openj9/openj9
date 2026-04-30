@@ -868,16 +868,32 @@ fillInJValue(char signatureType, jvalue * jvaluePtr, void * valueAddress, j9obje
 
 	switch (signatureType) {
 		case 'Z':
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+			jvaluePtr->z = (jboolean) *((U_8 *) valueAddress);
+#else /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 			jvaluePtr->z = (jboolean) *((I_32 *) valueAddress);
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 			break;
 		case 'B':
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+			jvaluePtr->b = (jbyte) *((I_8 *) valueAddress);
+#else /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 			jvaluePtr->b = (jbyte) *((I_32 *) valueAddress);
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 			break;
 		case 'C':
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+			jvaluePtr->c = (jchar) *((U_16 *) valueAddress);
+#else /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 			jvaluePtr->c = (jchar) *((I_32 *) valueAddress);
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 			break;
 		case 'S':
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+			jvaluePtr->s = (jshort) *((I_16 *) valueAddress);
+#else /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 			jvaluePtr->s = (jshort) *((I_32 *) valueAddress);
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 			break;
 		case 'I':
 			jvaluePtr->i = (jint) *((I_32 *) valueAddress);
