@@ -165,14 +165,14 @@ struct StringUTF8Entry {
 };
 
 struct ThreadEntry {
-	J9VMThread *vmThread;
-	U_32 index;
-	U_64 osTID;
-	U_64 javaTID;
+	U_64 index;
+	I_64 osTID;
+	I_64 javaTID;
 	J9UTF8 *javaThreadName;
 	J9UTF8 *osThreadName;
 	U_32 threadGroupIndex;
 	ThreadEntry *next;
+	BOOLEAN freeName;
 };
 
 struct ThreadGroupEntry {
@@ -197,33 +197,32 @@ struct StackFrame {
 };
 
 struct ExecutionSampleEntry {
-	J9VMThread *vmThread;
 	I_64 ticks;
 	ThreadState state;
 	U_32 stackTraceIndex;
-	U_32 threadIndex;
+	U_64 threadIndex;
 };
 
 struct ThreadStartEntry {
 	I_64 ticks;
 	U_32 stackTraceIndex;
-	U_32 threadIndex;
-	U_32 eventThreadIndex;
-	U_32 parentThreadIndex;
+	U_64 threadIndex;
+	U_64 eventThreadIndex;
+	U_64 parentThreadIndex;
 };
 
 struct ThreadEndEntry {
 	I_64 ticks;
-	U_32 threadIndex;
-	U_32 eventThreadIndex;
+	U_64 threadIndex;
+	U_64 eventThreadIndex;
 };
 
 struct ThreadSleepEntry {
 	I_64 ticks;
 	I_64 duration;
 	I_64 sleepTime;
-	U_32 threadIndex;
-	U_32 eventThreadIndex;
+	U_64 threadIndex;
+	U_64 eventThreadIndex;
 	U_32 stackTraceIndex;
 };
 
@@ -233,9 +232,9 @@ struct MonitorWaitEntry {
 	I_64 timeOut;
 	I_64 monitorAddress;
 	U_32 monitorClass;
-	U_32 notifierThread;
-	U_32 threadIndex;
-	U_32 eventThreadIndex;
+	U_64 notifierThread;
+	U_64 threadIndex;
+	U_64 eventThreadIndex;
 	U_32 stackTraceIndex;
 	BOOLEAN timedOut;
 };
@@ -245,17 +244,17 @@ struct MonitorEnterEntry {
 	I_64 duration;
 	I_64 monitorAddress;
 	U_32 monitorClass;
-	U_32 previousOwnerThread;
-	U_32 threadIndex;
-	U_32 eventThreadIndex;
+	I_64 previousOwnerThread;
+	U_64 threadIndex;
+	U_64 eventThreadIndex;
 	U_32 stackTraceIndex;
 };
 
 struct ThreadParkEntry {
 	I_64 ticks;
 	I_64 duration;
-	U_32 threadIndex;
-	U_32 eventThreadIndex;
+	U_64 threadIndex;
+	U_64 eventThreadIndex;
 	U_32 stackTraceIndex;
 	U_32 parkedClass;
 	I_64 timeOut;
@@ -264,7 +263,8 @@ struct ThreadParkEntry {
 };
 
 struct StackTraceEntry {
-	J9VMThread *vmThread;
+	U_64 currentThreadID;
+	U_64 vmThread;
 	I_64 ticks;
 	U_32 numOfFrames;
 	U_32 index;
@@ -282,7 +282,7 @@ struct CPULoadEntry {
 
 struct ThreadCPULoadEntry {
 	I_64 ticks;
-	U_32 threadIndex;
+	U_64 threadIndex;
 	float userCPULoad;
 	float systemCPULoad;
 };
@@ -322,7 +322,7 @@ struct ThreadStatisticsEntry {
 struct SystemGCEntry {
 	I_64 ticks;
 	I_64 duration;
-	U_32 eventThreadIndex;
+	U_64 eventThreadIndex;
 	U_32 stackTraceIndex;
 };
 
@@ -466,7 +466,7 @@ private:
 	J9HashTable *_methodTable;
 	J9HashTable *_stackTraceTable;
 	J9HashTable *_stringUTF8Table;
-	J9HashTable *_threadTable;
+	J9Pool *_threadTable;
 	J9HashTable *_threadGroupTable;
 	U_32 _classCount;
 	U_32 _packageCount;
@@ -626,7 +626,11 @@ private:
 
 	static UDATA walkClassLoadersTablePrint(void *entry, void *userData);
 
-	static UDATA walkThreadTablePrint(void *entry, void *userData);
+	static void walkThreadTablePrint(void *entry, void *userData);
+
+	static void walkThreadStartTablePrint(void *entry, void *userData);
+
+	static void walkThreadParkTablePrint(void *entry, void *userData);
 
 	static UDATA walkThreadGroupTablePrint(void *entry, void *userData);
 
@@ -652,7 +656,7 @@ private:
 
 	static UDATA freeStackStraceEntries(void *entry, void *userData);
 
-	static UDATA freeThreadNameEntries(void *entry, void *userData);
+	static void freeThreadNameEntries(void *entry, void *userData);
 
 	static UDATA freeThreadGroupNameEntries(void *entry, void *userData);
 
@@ -688,7 +692,9 @@ private:
 
 	U_32 addThreadGroupEntry(j9object_t threadGroup);
 
-	U_32 addStackTraceEntry(J9VMThread *vmThread, I_64 ticks, U_32 numOfFrames);
+	U_32 addStackTraceEntry(U_64 walkThreadID, I_64 ticks, U_32 numOfFrames);
+
+	void addAllThreads();
 
 	void printMergedStringTables();
 
@@ -772,18 +778,17 @@ done:
 	}
 
 	void addUnknownThreadEntry() {
-		ThreadEntry unknownThreadEntry = {0};
-		unknownThreadEntry.vmThread = NULL;
-		unknownThreadEntry.index = 0;
-		unknownThreadEntry.osTID = 0;
-		unknownThreadEntry.javaTID = 0;
-		unknownThreadEntry.javaThreadName = (J9UTF8 *)&unknownThread;
-		unknownThreadEntry.osThreadName = (J9UTF8 *)&unknownThread;
-		unknownThreadEntry.threadGroupIndex = 0;
+		ThreadEntry *unknownThreadEntry = (ThreadEntry *)pool_newElement(_threadTable);
+		unknownThreadEntry->index = 0;
+		unknownThreadEntry->osTID = (U_64)I_64_MAX;
+		unknownThreadEntry->javaTID = (U_64)I_64_MAX;
+		unknownThreadEntry->javaThreadName = (J9UTF8 *)&unknownThread;
+		unknownThreadEntry->osThreadName = (J9UTF8 *)&unknownThread;
+		unknownThreadEntry->threadGroupIndex = 0;
+		unknownThreadEntry->freeName = FALSE;
 
-		ThreadEntry *entry = (ThreadEntry *)hashTableAdd(_threadTable, &unknownThreadEntry);
-		_firstThreadEntry = entry;
-		_previousThreadEntry = entry;
+		_firstThreadEntry = unknownThreadEntry;
+		_previousThreadEntry = unknownThreadEntry;
 	}
 
 protected:
@@ -825,6 +830,8 @@ public:
 	void addGCHeapSummaryEntry(J9JFRGCHeapSummary *gcHeapSummaryData);
 
 	void addNetworkUtilizationEntry(J9JFRNetworkUtilization *networkUtilizationData);
+
+	void addThreadObjectEntry(J9JFRThreadObject *tableEntry);
 
 	J9Pool *getExecutionSampleTable()
 	{
@@ -1271,6 +1278,8 @@ public:
 			goto done;
 		}
 
+		addAllThreads();
+
 		if (dumpCalled) {
 			loadSystemProcesses(_currentThread);
 			loadNativeLibraries(_currentThread);
@@ -1295,7 +1304,7 @@ done:
 		return;
 	}
 
-	U_32 consumeStackTrace(J9VMThread *walkThread, UDATA *walkStateCache, UDATA numberOfFrames) {
+	U_32 consumeStackTrace(U_64 walkThreadTID, UDATA *walkStateCache, UDATA numberOfFrames) {
 		U_32 index = U_32_MAX;
 		UDATA expandedStackTraceCount = 0;
 
@@ -1315,7 +1324,7 @@ done:
 
 		iterateStackTraceImpl(_currentThread, (j9object_t *)walkStateCache, &stackTraceCallback, this, FALSE, FALSE, numberOfFrames, FALSE);
 
-		index = addStackTraceEntry(walkThread, j9time_nano_time(), _currentFrameCount);
+		index = addStackTraceEntry(walkThreadTID, j9time_nano_time(), _currentFrameCount);
 		_stackFrameCount += (U_32)expandedStackTraceCount;
 		_currentStackFrameBuffer = NULL;
 
@@ -1981,12 +1990,6 @@ done:
 			goto done;
 		}
 
-		_threadTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(ThreadEntry), sizeof(U_64), 0, J9MEM_CATEGORY_JFR, threadHashFn, threadHashEqualFn, NULL, _currentThread);
-		if (NULL == _threadTable) {
-			_buildResult = OutOfMemory;
-			goto done;
-		}
-
 		_stackTraceTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(StackTraceEntry), sizeof(U_64), 0, J9MEM_CATEGORY_JFR, stackTraceHashFn, stackTraceHashEqualFn, NULL, _vm);
 		if (NULL == _stackTraceTable) {
 			_buildResult = OutOfMemory;
@@ -1995,6 +1998,12 @@ done:
 
 		_threadGroupTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(ThreadGroupEntry), sizeof(U_64), 0, J9MEM_CATEGORY_JFR, threadGroupHashFn, threadGroupHashEqualFn, NULL, _vm);
 		if (NULL == _threadGroupTable) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+
+		_threadTable = pool_new(sizeof(ThreadEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		if (NULL == _threadTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
@@ -2207,7 +2216,7 @@ done:
 	{
 		hashTableForEachDo(_stringUTF8Table, &freeUTF8Strings, _currentThread);
 		hashTableForEachDo(_stackTraceTable, &freeStackStraceEntries, _currentThread);
-		hashTableForEachDo(_threadTable, &freeThreadNameEntries, _currentThread);
+		pool_do(_threadTable, &freeThreadNameEntries, _currentThread);
 		hashTableForEachDo(_threadGroupTable, &freeThreadGroupNameEntries, _currentThread);
 		hashTableFree(_classTable);
 		hashTableFree(_packageTable);
@@ -2215,7 +2224,7 @@ done:
 		hashTableFree(_classLoaderTable);
 		hashTableFree(_methodTable);
 		hashTableFree(_stackTraceTable);
-		hashTableFree(_threadTable);
+		pool_kill(_threadTable);
 		hashTableFree(_threadGroupTable);
 		hashTableFree(_stringUTF8Table);
 		pool_kill(_executionSampleTable);

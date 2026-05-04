@@ -389,12 +389,18 @@ typedef struct J9JFRBuffer {
 	U_8 *bufferCurrent;
 } J9JFRBuffer;
 
+typedef struct J9JFRThreadObject {
+	jobject threadObject;
+	I_64 nativeTID;
+	I_64 javaTID;
+} J9JFRThreadObject;
+
 /* JFR event structures */
 
 #define J9JFR_EVENT_COMMON_FIELDS \
 	I_64 startTicks; \
 	UDATA eventType; \
-	struct J9VMThread *vmThread;
+	I_64 currentThreadTID;
 
 #define J9JFR_EVENT_WITH_STACKTRACE_FIELDS \
 	J9JFR_EVENT_COMMON_FIELDS \
@@ -419,8 +425,8 @@ typedef struct J9JFRExecutionSample {
 /* Variable-size structure - stackTraceSize worth of UDATA follow the fixed portion */
 typedef struct J9JFRThreadStart {
 	J9JFR_EVENT_WITH_STACKTRACE_FIELDS
-	struct J9VMThread *thread;
-	struct J9VMThread *parentThread;
+	I_64 threadTID;
+	I_64 parentThreadTID;
 } J9JFRThreadStart;
 
 #define J9JFRTHREADSTART_STACKTRACE(jfrEvent) ((UDATA *)(((J9JFRThreadStart *)(jfrEvent)) + 1))
@@ -440,7 +446,7 @@ typedef struct J9JFRMonitorWaited {
 	I_64 time;
 	I_64 duration;
 	struct J9Class *monitorClass;
-	struct J9VMThread *notifierThread;
+	I_64 notifierThreadTID;
 	BOOLEAN timedOut;
 	UDATA monitorAddress;
 } J9JFRMonitorWaited;
@@ -450,7 +456,6 @@ typedef struct J9JFRMonitorWaited {
 typedef struct J9JFRThreadParked {
 	J9JFR_EVENT_WITH_STACKTRACE_FIELDS
 	I_64 duration;
-	struct J9VMThread *thread;
 	struct J9Class *parkedClass;
 	I_64 timeOut;
 	I_64 untilTime;
@@ -462,9 +467,9 @@ typedef struct J9JFRThreadParked {
 typedef struct J9JFRMonitorEntered {
 	J9JFR_EVENT_WITH_STACKTRACE_FIELDS
 	I_64 duration;
-	struct J9VMThread *thread;
+	I_64 threadTID;
 	struct J9Class *monitorClass;
-	struct J9VMThread *previousOwner;
+	I_64 previousOwnerTID;
 	UDATA monitorAddress;
 } J9JFRMonitorEntered;
 
@@ -6177,6 +6182,8 @@ typedef struct JFRState {
 	jclass jfrEventClassRef;
 	J9Method *onRetransformUpcallMethod;
 	J9Method *transformToListMethod;
+	J9HashTable *threadObjectJNIRefTable;
+	omrthread_monitor_t threadObjectsMutex;
 } JFRState;
 
 typedef struct J9ReflectFunctionTable {
