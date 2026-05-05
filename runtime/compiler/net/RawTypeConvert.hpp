@@ -158,30 +158,55 @@ template<typename T> struct RawTypeConvert<T, typename std::enable_if<std::is_tr
 // For vectors
 template<typename T>
 struct RawTypeConvert<T, typename std::enable_if<std::is_same<T, std::vector<typename T::value_type> >::value>::type> {
+    static constexpr uint32_t MAX_VECTOR_ELEMENTS = 100000;
+
     static inline T onRecv(Message::DataDescriptor *desc)
     {
         if (desc->getDataType() == Message::DataDescriptor::DataType::EMPTY_VECTOR) {
             return std::vector<typename T::value_type>();
         }
         if (desc->getDataType() == Message::DataDescriptor::DataType::SIMPLE_VECTOR) {
-            TR_ASSERT(desc->getVectorElementSize() == sizeof(typename T::value_type), "Vector element size missmatch");
+            if (desc->getVectorElementSize() != sizeof(typename T::value_type))
+                throw StreamFailure("Malformed VECTOR payload: element type does not match descriptor");
             typename T::value_type *dataStart = static_cast<typename T::value_type *>(desc->getDataStart());
             typename T::value_type *dataEnd = reinterpret_cast<typename T::value_type *>(
                 reinterpret_cast<uintptr_t>(dataStart) + desc->getPayloadSize());
             return T(dataStart, dataEnd);
         }
 
-        TR_ASSERT(desc->getDataType() == Message::DataDescriptor::DataType::VECTOR, "onRecv type missmatch VECTOR");
-        // The first element is another descriptor to represent the number of elements in the vector
+        if (desc->getDataType() != Message::DataDescriptor::DataType::VECTOR)
+            throw StreamFailure("onRecv type missmatch VECTOR");
+
+        // Compute bounds for the data to be read
+        void *parentStart = desc->getDataStart();
+        void *parentEnd = desc->getDataEnd();
+
+        // The first element is a UINT32 descriptor to represent the number of elements in the vector.
         Message::DataDescriptor *sizeDesc = static_cast<Message::DataDescriptor *>(desc->getDataStart());
-        uint32_t size = RawTypeConvert<uint32_t>::onRecv(sizeDesc);
+        // Validate this descriptor
+        if (!sizeDesc->isWithin(parentStart, parentEnd))
+            throw StreamFailure("Malformed VECTOR payload: element descriptor for number of elements is out of bounds");
 
+        uint32_t numElem = RawTypeConvert<uint32_t>::onRecv(sizeDesc);
+        if (numElem > MAX_VECTOR_ELEMENTS)
+            throw StreamFailure("VECTOR size exceeds maximum allowed elements");
+
+        // Allocate memory for a vector with specified number of elements.
         std::vector<typename T::value_type> values;
-        values.reserve(size);
+        try {
+            values.reserve(numElem);
+        } catch (const std::bad_alloc &) {
+            throw StreamFailure("Failed to allocate memory for VECTOR elements");
+        }
 
-        // Find the descriptor of the first element in the array
+        // Find the descriptor of the first element in the array.
         auto curDesc = sizeDesc->getNextDescriptor();
-        for (uint32_t i = 0; i < size; ++i) {
+        // Iterate through all the remaining descriptors.
+        for (uint32_t i = 0; i < numElem; ++i) {
+            // Validate descriptor.
+            if (!curDesc->isWithin(parentStart, parentEnd))
+                throw StreamFailure("Malformed VECTOR payload: element descriptor/payload out of bounds");
+
             values.push_back(RawTypeConvert<typename T::value_type>::onRecv(curDesc));
             curDesc = curDesc->getNextDescriptor();
         }
@@ -210,6 +235,9 @@ struct RawTypeConvert<T, typename std::enable_if<std::is_same<T, std::vector<typ
         // Complex vectors here
         uint32_t descIndex = msg.getNumDescriptors();
         uint32_t descOffset = msg.reserveDescriptor();
+
+        if (value.size() > MAX_VECTOR_ELEMENTS)
+            throw StreamFailure("VECTOR size exceeds maximum allowed elements");
 
         // Write the size of the vector as a data point
         uint32_t totalSize = (value.size() + 1) * sizeof(Message::DataDescriptor);

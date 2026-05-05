@@ -82,6 +82,9 @@ void CommunicationStream::readMessage(Message &msg)
     if (bytesRead > serializedSize) {
         throw JITServer::StreamFailure("JITServer I/O error: read more than the message size");
     }
+    // A malicious actor could craft a message with a very large size
+    if (serializedSize > MAX_MSG_SIZE)
+        throw JITServer::StreamFailure("JITServer I/O error: message size to receive is too big");
 
     // serializedSize >= bytesRead
     uint32_t bytesLeftToRead = serializedSize - bytesRead;
@@ -89,6 +92,7 @@ void CommunicationStream::readMessage(Message &msg)
     if (bytesLeftToRead > 0) {
         if (serializedSize > bufferCapacity) {
             // bytesRead could be less than the buffer capacity.
+            // Buffer expansion may throw bad_alloc.
             msg.expandBuffer(serializedSize, bytesRead);
 
             // The buffer storage will change after the buffer is expanded.
@@ -114,6 +118,10 @@ void CommunicationStream::readMessage(Message &msg)
 void CommunicationStream::writeMessage(Message &msg)
 {
     char *serialMsg = msg.serialize();
+    // Some sanity check
+    if (msg.serializedSize() > MAX_MSG_SIZE)
+        throw JITServer::StreamFailure("JITServer I/O error: message size to send is too big");
+
     // write serialized message to the socket
     writeBlocking(serialMsg, msg.serializedSize());
     msg.clearForWrite();

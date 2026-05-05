@@ -123,7 +123,8 @@ public:
             , _vectorElementSize(0)
         {
             // Round the _size up to a 4-byte multiple to ensure that the
-            // descriptor coming after this data point is 4-byte aligned
+            // descriptor coming after this data point is 4-byte aligned.
+            // The padding comes after the payload.
             _size = OMR::alignNoCheck(payloadSize, sizeof(uint32_t));
             _paddingSize = static_cast<uint8_t>(_size - payloadSize);
         }
@@ -201,15 +202,34 @@ public:
         }
 
         /**
+           @brief Get the pointer to the ending of data attached to this descriptor.
+
+           This could be used for bounds checks
+
+           @return A pointer to the end of the data defined by this descriptor
+        */
+        void *getDataEnd() { return static_cast<void *>(static_cast<char *>(static_cast<void *>(this + 1)) + _size); }
+
+        /**
+           @brief Check that the data defined by this descriptor is within the range [start, end).
+
+           @return Return true if the data is within the range [start, end), false otherwise.
+        */
+        bool isWithin(const void *start, const void *end)
+        {
+            if (static_cast<void *>(this) < start || static_cast<void *>(this + 1) > end)
+                return false;
+            if (getDataEnd() > end)
+                return false;
+            return true;
+        }
+
+        /**
             @brief Get a pointer to the beginning of the next descriptor in the MessageBuffer.
 
             @return Returns a pointer to the following descriptor in the MessageBuffer
         */
-        DataDescriptor *getNextDescriptor()
-        {
-            return static_cast<DataDescriptor *>(
-                static_cast<void *>(static_cast<char *>(static_cast<void *>(this + 1)) + _size));
-        }
+        DataDescriptor *getNextDescriptor() { return static_cast<DataDescriptor *>(static_cast<void *>(getDataEnd())); }
 
         uint32_t print(uint32_t nestingLevel);
 

@@ -48,6 +48,7 @@ public:
     static uint64_t _totalMsgSize;
     static uint32_t _lastReadError;
     static uint32_t _numConsecutiveReadErrorsOfSameType;
+    static constexpr uint32_t MAX_MSG_SIZE = 128 * 1024 * 1024; // 128 MB
     // The max read retry should be 1 less than the max compile attempt so we do
     // local compilations in the last attempt
     static const uint32_t MAX_READ_RETRY = MAX_COMPILE_ATTEMPTS - 1;
@@ -128,7 +129,7 @@ protected:
     // likely to lose an increment when merging/rebasing/etc.
     //
     static const uint8_t MAJOR_NUMBER = 1;
-    static const uint16_t MINOR_NUMBER = 102; // ID: pZ74UIsffkVgvUgGWXhc
+    static const uint16_t MINOR_NUMBER = 103; // ID: 4Gl+x5RWgtmgiwMonK0j
     static const uint8_t PATCH_NUMBER = 0;
     static uint32_t CONFIGURATION_FLAGS;
 
