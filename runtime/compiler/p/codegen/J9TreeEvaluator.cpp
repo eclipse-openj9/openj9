@@ -20,6 +20,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+// Assisted-by: IBM Bob
+
 #include <limits.h>
 #include <math.h>
 #include <stdint.h>
@@ -5377,6 +5379,8 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
     conditions->getPostConditions()->getRegisterDependency(conditions->getAddCursorForPost() - 1)->setExcludeGPR0();
 
     TR::addDependency(conditions, tempReg, TR::RealRegister::NoReg, TR_GPR, cg);
+    conditions->getPreConditions()->getRegisterDependency(conditions->getAddCursorForPre() - 1)->setExcludeGPR0();
+    conditions->getPostConditions()->getRegisterDependency(conditions->getAddCursorForPost() - 1)->setExcludeGPR0();
 
     TR::addDependency(conditions, threadReg, TR::RealRegister::NoReg, TR_GPR, cg);
 
@@ -9311,6 +9315,7 @@ static TR::Register *inlineAtomicOps(TR::Node *node, TR::CodeGenerator *cg, int8
     TR::Node *valueChild = node->getFirstChild();
     TR::Node *deltaChild = NULL;
     TR::Register *valueReg = cg->evaluate(valueChild);
+    TR::Register *oldValueReg = nullptr;
     TR::Register *deltaReg = NULL;
     TR::Register *resultReg = cg->allocateRegister();
     TR::Register *cndReg = cg->allocateRegister(TR_CCR);
@@ -9533,6 +9538,8 @@ static TR::Register *inlineAtomicOps(TR::Node *node, TR::CodeGenerator *cg, int8
                     TR::MemoryReference::createWithDisplacement(cg, valueReg, arrayFieldOffset,
                         TR::Compiler->om.sizeofReferenceAddress()));
 
+            numDeps++;
+            oldValueReg = valueReg;
             valueReg = memRefRegister;
 
             generateShiftLeftImmediate(cg, node, fieldOffsetReg, indexRegister, shiftAmount);
@@ -9597,16 +9604,19 @@ static TR::Register *inlineAtomicOps(TR::Node *node, TR::CodeGenerator *cg, int8
     // Set the conditions and dependencies
     conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, (uint16_t)numDeps, cg->trMemory());
     conditions->addPostCondition(valueReg, TR::RealRegister::NoReg);
-    conditions->getPostConditions()->getRegisterDependency(0)->setExcludeGPR0();
+    conditions->getPostConditions()->getRegisterDependency(conditions->getAddCursorForPost() - 1)->setExcludeGPR0();
     conditions->addPostCondition(resultReg, TR::RealRegister::NoReg);
-    conditions->getPostConditions()->getRegisterDependency(1)->setExcludeGPR0();
+    conditions->getPostConditions()->getRegisterDependency(conditions->getAddCursorForPost() - 1)->setExcludeGPR0();
     conditions->addPostCondition(deltaReg, TR::RealRegister::NoReg);
     conditions->addPostCondition(cndReg, TR::RealRegister::cr0);
     conditions->addPostCondition(fieldOffsetReg, TR::RealRegister::NoReg);
+    conditions->getPostConditions()->getRegisterDependency(conditions->getAddCursorForPost() - 1)->setExcludeGPR0();
     if (tempReg)
         conditions->addPostCondition(tempReg, TR::RealRegister::NoReg);
-    if (scratchRegister)
-        conditions->addPostCondition(scratchRegister, TR::RealRegister::NoReg);
+    if (oldValueReg) {
+        conditions->addPostCondition(oldValueReg, TR::RealRegister::NoReg);
+        conditions->getPostConditions()->getRegisterDependency(conditions->getAddCursorForPost() - 1)->setExcludeGPR0();
+    }
 
     doneLabel->setEndInternalControlFlow();
     generateDepLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
@@ -10192,12 +10202,13 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
     TR::RegisterDependencyConditions *conditions;
     conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, numDeps, cg->trMemory());
     conditions->addPostCondition(valueReg, TR::RealRegister::NoReg);
-    conditions->getPostConditions()->getRegisterDependency(0)->setExcludeGPR0();
+    conditions->getPostConditions()->getRegisterDependency(conditions->getAddCursorForPost() - 1)->setExcludeGPR0();
     conditions->addPostCondition(currentReg, TR::RealRegister::NoReg);
 
     numDeps -= 2;
     if (fieldOffsetReg != NULL) {
         conditions->addPostCondition(fieldOffsetReg, TR::RealRegister::NoReg);
+        conditions->getPostConditions()->getRegisterDependency(conditions->getAddCursorForPost() - 1)->setExcludeGPR0();
         numDeps--;
     }
     if (resultReg != fieldOffsetReg) {
@@ -10309,6 +10320,8 @@ static TR::Register *inlineConcurrentLinkedQueueTMOffer(TR::Node *node, TR::Code
     TR::addDependency(conditions, pReg, TR::RealRegister::gr3, TR_GPR, cg); // dstReg for wrtbar
     TR::addDependency(conditions, qReg, TR::RealRegister::gr11, TR_GPR, cg); // temp1Reg for wrtbar
     TR::addDependency(conditions, retryCountReg, TR::RealRegister::NoReg, TR_GPR, cg); // temp2Reg for wrtbar
+    conditions->getPreConditions()->getRegisterDependency(conditions->getAddCursorForPre() - 1)->setExcludeGPR0();
+    conditions->getPostConditions()->getRegisterDependency(conditions->getAddCursorForPost() - 1)->setExcludeGPR0();
     TR::addDependency(conditions, nReg, TR::RealRegister::gr4, TR_GPR, cg); // srcReg for wrtbar
 
     static char *disableTMOffer = feGetEnv("TR_DisableTMOffer");
@@ -13960,7 +13973,6 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
     deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
 
     deps->addPostCondition(lengthReg, TR::RealRegister::NoReg);
-    deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
 
     deps->addPostCondition(tempReg, TR::RealRegister::NoReg);
 
@@ -13971,6 +13983,8 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
     deps->addPostCondition(vtmp1Reg, TR::RealRegister::NoReg);
 
     deps->addPostCondition(storeReg, TR::RealRegister::NoReg);
+    deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
+
     deps->addPostCondition(maskReg, TR::RealRegister::NoReg);
 
     generateDepLabelInstruction(cg, TR::InstOpCode::label, node, endLabel, deps);
