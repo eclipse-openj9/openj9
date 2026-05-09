@@ -353,6 +353,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<library name="pdh.lib" type="system" delayload="true">
 				<include-if condition="spec.win_.*"/>
 			</library>
+			<library name="version.lib" type="system" delayload="true">
+				<include-if condition="spec.win_.*"/>
+			</library>
 		</libraries>
 	</artifact>
 
