@@ -78,9 +78,8 @@ TR::Instruction *TR_ARM64Recompilation::generatePrePrologue()
         cursor = new (cg()->trHeapMemory())
             TR::ARM64Trg1Src2Instruction(TR::InstOpCode::orrx, firstNode, x8, xzr, lr, cursor, cg());
         cursor = generateImmSymInstruction(cg(), TR::InstOpCode::bl, firstNode,
-            (uintptr_t)recompileMethodSymRef->getMethodAddress(),
-            new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(0, 0, cg()->trMemory()), recompileMethodSymRef,
-            NULL, cursor);
+            (uintptr_t)recompileMethodSymRef->getMethodAddress(), RegDeps(0, 0, cg()), recompileMethodSymRef, NULL,
+            cursor);
         cursor = generateRelocatableImmInstruction(cg(), TR::InstOpCode::dd, firstNode, (uintptr_t)info,
             TR_BodyInfoAddress, cursor);
 

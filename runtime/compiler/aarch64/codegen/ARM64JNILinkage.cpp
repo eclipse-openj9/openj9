@@ -98,8 +98,7 @@ void J9::ARM64::JNILinkage::releaseVMAccess(TR::Node *callNode, TR::Register *vm
 
     TR::LabelSymbol *loopHead = generateLabelSymbol(cg());
     generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, loopHead);
-    generateTrg1MemInstruction(cg(), TR::InstOpCode::ldxrx, callNode, scratchReg2,
-        TR::MemoryReference::createWithDisplacement(cg(), scratchReg0, 0));
+    generateTrg1MemInstruction(cg(), TR::InstOpCode::ldxrx, callNode, scratchReg2, MRef_disp(cg(), scratchReg0, 0));
     generateTestInstruction(cg(), callNode, scratchReg2, scratchReg1, true);
 
     TR::LabelSymbol *releaseVMAccessSnippetLabel = generateLabelSymbol(cg());
@@ -122,8 +121,8 @@ void J9::ARM64::JNILinkage::releaseVMAccess(TR::Node *callNode, TR::Register *vm
         loadConstant64(cg(), callNode, mask, scratchReg3);
         generateTrg1Src2Instruction(cg(), TR::InstOpCode::andx, callNode, scratchReg2, scratchReg2, scratchReg3);
     }
-    generateTrg1MemSrc1Instruction(cg(), TR::InstOpCode::stxrx, callNode, scratchReg2,
-        TR::MemoryReference::createWithDisplacement(cg(), scratchReg0, 0), scratchReg2);
+    generateTrg1MemSrc1Instruction(cg(), TR::InstOpCode::stxrx, callNode, scratchReg2, MRef_disp(cg(), scratchReg0, 0),
+        scratchReg2);
     generateCompareBranchInstruction(cg(), TR::InstOpCode::cbnzx, callNode, scratchReg2, loopHead);
     generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, releaseVMAccessRestartLabel);
 }
@@ -151,8 +150,7 @@ void J9::ARM64::JNILinkage::acquireVMAccess(TR::Node *callNode, TR::Register *vm
 
     TR::LabelSymbol *loopHead = generateLabelSymbol(cg());
     generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, loopHead);
-    generateTrg1MemInstruction(cg(), TR::InstOpCode::ldxrx, callNode, scratchReg2,
-        TR::MemoryReference::createWithDisplacement(cg(), scratchReg0, 0));
+    generateTrg1MemInstruction(cg(), TR::InstOpCode::ldxrx, callNode, scratchReg2, MRef_disp(cg(), scratchReg0, 0));
 
     TR::LabelSymbol *reacquireVMAccessSnippetLabel = generateLabelSymbol(cg());
     TR::LabelSymbol *reacquireVMAccessRestartLabel = generateLabelSymbol(cg());
@@ -165,8 +163,8 @@ void J9::ARM64::JNILinkage::acquireVMAccess(TR::Node *callNode, TR::Register *vm
     generateCompareBranchInstruction(cg(), TR::InstOpCode::cbnzx, callNode, scratchReg2, reacquireVMAccessSnippetLabel);
     reacquireVMAccessSnippet->gcMap().setGCRegisterMask(0);
 
-    generateTrg1MemSrc1Instruction(cg(), TR::InstOpCode::stxrx, callNode, scratchReg2,
-        TR::MemoryReference::createWithDisplacement(cg(), scratchReg0, 0), scratchReg1);
+    generateTrg1MemSrc1Instruction(cg(), TR::InstOpCode::stxrx, callNode, scratchReg2, MRef_disp(cg(), scratchReg0, 0),
+        scratchReg1);
     generateCompareBranchInstruction(cg(), TR::InstOpCode::cbnzx, callNode, scratchReg2, loopHead);
     // dmb ishld (Inner Shareable load barrier)
     generateSynchronizationInstruction(cg(), TR::InstOpCode::dmb, callNode, TR::InstOpCode::ishld);
@@ -195,18 +193,18 @@ void J9::ARM64::JNILinkage::releaseVMAccessAtomicFree(TR::Node *callNode, TR::Re
     generateTrg1ImmInstruction(cg(), TR::InstOpCode::movzx, callNode, scratchReg0, 1);
 #ifdef J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH
     auto strInNativeInstr = generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, callNode,
-        TR::MemoryReference::createWithDisplacement(cg(), vmThreadReg, offsetof(J9VMThread, inNative)), scratchReg0);
+        MRef_disp(cg(), vmThreadReg, offsetof(J9VMThread, inNative)), scratchReg0);
     auto ldrPubliFlagsInstr = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, callNode, scratchReg1,
-        TR::MemoryReference::createWithDisplacement(cg(), vmThreadReg, fej9->thisThreadGetPublicFlagsOffset()));
+        MRef_disp(cg(), vmThreadReg, fej9->thisThreadGetPublicFlagsOffset()));
 #else /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
     generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addimmx, callNode, scratchReg1, vmThreadReg,
         offsetof(J9VMThread, inNative));
     auto strInNativeInstr = generateMemSrc1Instruction(cg(), TR::InstOpCode::stlrx, callNode,
-        TR::MemoryReference::createWithDisplacement(cg(), scratchReg1, 0), scratchReg0);
+        MRef_disp(cg(), scratchReg1, 0), scratchReg0);
     generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addimmx, callNode, scratchReg0, vmThreadReg,
         fej9->thisThreadGetPublicFlagsOffset());
     auto ldrPubliFlagsInstr = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldarx, callNode, scratchReg1,
-        TR::MemoryReference::createWithDisplacement(cg(), scratchReg0, 0));
+        MRef_disp(cg(), scratchReg0, 0));
 #endif
     if (debugObj) {
         debugObj->addInstructionComment(strInNativeInstr, "store 1 to vmThread->inNative");
@@ -244,12 +242,12 @@ void J9::ARM64::JNILinkage::acquireVMAccessAtomicFree(TR::Node *callNode, TR::Re
     static_assert(static_cast<uint64_t>(J9_PUBLIC_FLAGS_VM_ACCESS) < (1 << 12),
         "J9_PUBLIC_FLAGS_VM_ACCESS must fit in immediate");
     auto strInNativeInstr = generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, callNode,
-        TR::MemoryReference::createWithDisplacement(cg(), vmThreadReg, offsetof(J9VMThread, inNative)), zeroReg);
+        MRef_disp(cg(), vmThreadReg, offsetof(J9VMThread, inNative)), zeroReg);
 #ifndef J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH
     generateSynchronizationInstruction(cg(), TR::InstOpCode::dmb, callNode, TR::InstOpCode::ish);
 #endif
     auto ldrPubliFlagsInstr = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, callNode, scratchReg0,
-        TR::MemoryReference::createWithDisplacement(cg(), vmThreadReg, fej9->thisThreadGetPublicFlagsOffset()));
+        MRef_disp(cg(), vmThreadReg, fej9->thisThreadGetPublicFlagsOffset()));
     if (debugObj) {
         debugObj->addInstructionComment(strInNativeInstr, "store 0 to vmThread->inNative");
         debugObj->addInstructionComment(ldrPubliFlagsInstr, "load vmThread->publicFlags");
@@ -283,18 +281,16 @@ void J9::ARM64::JNILinkage::buildJNICallOutFrame(TR::Node *callNode, bool isWrap
      * do this unconditionally.  No need to check for overflow.
      */
     generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, callNode, scratchReg1,
-        TR::MemoryReference::createWithDisplacement(cg(), vmThreadReg, fej9->thisThreadGetCallOutCountOffset()));
+        MRef_disp(cg(), vmThreadReg, fej9->thisThreadGetCallOutCountOffset()));
     generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addimmx, callNode, scratchReg1, scratchReg1, 1);
     generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, callNode,
-        TR::MemoryReference::createWithDisplacement(cg(), vmThreadReg, fej9->thisThreadGetCallOutCountOffset()),
-        scratchReg1);
+        MRef_disp(cg(), vmThreadReg, fej9->thisThreadGetCallOutCountOffset()), scratchReg1);
 #endif
 
     // begin: mask out the magic bit that indicates JIT frames below
     loadConstant64(cg(), callNode, 0, scratchReg1);
     generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, callNode,
-        TR::MemoryReference::createWithDisplacement(cg(), vmThreadReg, fej9->thisThreadGetJavaFrameFlagsOffset()),
-        scratchReg1);
+        MRef_disp(cg(), vmThreadReg, fej9->thisThreadGetJavaFrameFlagsOffset()), scratchReg1);
 
     // Grab 5 slots in the frame.
     //
@@ -312,25 +308,21 @@ void J9::ARM64::JNILinkage::buildJNICallOutFrame(TR::Node *callNode, bool isWrap
     loadConstant64(cg(), callNode, tagBits, scratchReg0);
 
     generateMemSrc1Instruction(cg(), TR::InstOpCode::strprex, callNode,
-        TR::MemoryReference::createWithDisplacement(cg(), javaStackReg, -TR::Compiler->om.sizeofReferenceAddress()),
-        scratchReg0);
+        MRef_disp(cg(), javaStackReg, -TR::Compiler->om.sizeofReferenceAddress()), scratchReg0);
 
     // empty saved pc slot
     generateMemSrc1Instruction(cg(), TR::InstOpCode::strprex, callNode,
-        TR::MemoryReference::createWithDisplacement(cg(), javaStackReg, -TR::Compiler->om.sizeofReferenceAddress()),
-        scratchReg1);
+        MRef_disp(cg(), javaStackReg, -TR::Compiler->om.sizeofReferenceAddress()), scratchReg1);
 
     // push return address (savedCP)
     generateTrg1ImmSymInstruction(cg(), TR::InstOpCode::adr, callNode, scratchReg0, 0, returnAddrLabel);
     generateMemSrc1Instruction(cg(), TR::InstOpCode::strprex, callNode,
-        TR::MemoryReference::createWithDisplacement(cg(), javaStackReg, -TR::Compiler->om.sizeofReferenceAddress()),
-        scratchReg0);
+        MRef_disp(cg(), javaStackReg, -TR::Compiler->om.sizeofReferenceAddress()), scratchReg0);
 
     // push flags
     loadConstant64(cg(), callNode, fej9->constJNICallOutFrameFlags(), scratchReg0);
     generateMemSrc1Instruction(cg(), TR::InstOpCode::strprex, callNode,
-        TR::MemoryReference::createWithDisplacement(cg(), javaStackReg, -TR::Compiler->om.sizeofReferenceAddress()),
-        scratchReg0);
+        MRef_disp(cg(), javaStackReg, -TR::Compiler->om.sizeofReferenceAddress()), scratchReg0);
 
     TR::ResolvedMethodSymbol *resolvedMethodSymbol = callNode->getSymbol()->castToResolvedMethodSymbol();
     TR_ResolvedMethod *resolvedMethod = resolvedMethodSymbol->getResolvedMethod();
@@ -368,22 +360,19 @@ void J9::ARM64::JNILinkage::buildJNICallOutFrame(TR::Node *callNode, bool isWrap
         loadConstant64(cg(), callNode, methodAddr, scratchReg0);
     }
     generateMemSrc1Instruction(cg(), TR::InstOpCode::strprex, callNode,
-        TR::MemoryReference::createWithDisplacement(cg(), javaStackReg, -TR::Compiler->om.sizeofReferenceAddress()),
-        scratchReg0);
+        MRef_disp(cg(), javaStackReg, -TR::Compiler->om.sizeofReferenceAddress()), scratchReg0);
 
     // store out java sp
     generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, callNode,
-        TR::MemoryReference::createWithDisplacement(cg(), vmThreadReg, fej9->thisThreadGetJavaSPOffset()),
-        javaStackReg);
+        MRef_disp(cg(), vmThreadReg, fej9->thisThreadGetJavaSPOffset()), javaStackReg);
 
     // store out pc and literals values indicating the callout frame
     loadConstant64(cg(), callNode, fej9->constJNICallOutFrameType(), scratchReg0);
     generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, callNode,
-        TR::MemoryReference::createWithDisplacement(cg(), vmThreadReg, fej9->thisThreadGetJavaPCOffset()), scratchReg0);
+        MRef_disp(cg(), vmThreadReg, fej9->thisThreadGetJavaPCOffset()), scratchReg0);
 
     generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, callNode,
-        TR::MemoryReference::createWithDisplacement(cg(), vmThreadReg, fej9->thisThreadGetJavaLiteralsOffset()),
-        scratchReg1);
+        MRef_disp(cg(), vmThreadReg, fej9->thisThreadGetJavaLiteralsOffset()), scratchReg1);
 }
 
 void J9::ARM64::JNILinkage::restoreJNICallOutFrame(TR::Node *callNode, bool tearDownJNIFrame, TR::Register *vmThreadReg,
@@ -397,18 +386,17 @@ void J9::ARM64::JNILinkage::restoreJNICallOutFrame(TR::Node *callNode, bool tear
      * do this unconditionally.  No need to check for underflow.
      */
     generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, callNode, scratchReg,
-        TR::MemoryReference::createWithDisplacement(cg(), vmThreadReg, fej9->thisThreadGetCallOutCountOffset()));
+        MRef_disp(cg(), vmThreadReg, fej9->thisThreadGetCallOutCountOffset()));
     generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::subimmx, callNode, scratchReg, scratchReg, 1);
     generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, callNode,
-        TR::MemoryReference::createWithDisplacement(cg(), vmThreadReg, fej9->thisThreadGetCallOutCountOffset()),
-        scratchReg);
+        MRef_disp(cg(), vmThreadReg, fej9->thisThreadGetCallOutCountOffset()), scratchReg);
 #endif
 
     // restore stack pointer: need to deal with growable stack -- stack may already be moved.
     generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, callNode, scratchReg,
-        TR::MemoryReference::createWithDisplacement(cg(), vmThreadReg, fej9->thisThreadGetJavaLiteralsOffset()));
+        MRef_disp(cg(), vmThreadReg, fej9->thisThreadGetJavaLiteralsOffset()));
     generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, callNode, javaStackReg,
-        TR::MemoryReference::createWithDisplacement(cg(), vmThreadReg, fej9->thisThreadGetJavaSPOffset()));
+        MRef_disp(cg(), vmThreadReg, fej9->thisThreadGetJavaSPOffset()));
     generateTrg1Src2Instruction(cg(), TR::InstOpCode::addx, callNode, javaStackReg, scratchReg, javaStackReg);
 
     if (tearDownJNIFrame) {
@@ -422,7 +410,7 @@ void J9::ARM64::JNILinkage::restoreJNICallOutFrame(TR::Node *callNode, bool tear
             TR::ARM64HelperCallSnippet(cg(), callNode, refPoolSnippetLabel, collapseSymRef, refPoolRestartLabel);
         cg()->addSnippet(snippet);
         generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, callNode, scratchReg,
-            TR::MemoryReference::createWithDisplacement(cg(), javaStackReg, fej9->constJNICallOutFrameFlagsOffset()));
+            MRef_disp(cg(), javaStackReg, fej9->constJNICallOutFrameFlagsOffset()));
 
         TR_ASSERT_FATAL(fej9->constJNIReferenceFrameAllocatedFlags() == 0x30000,
             "constJNIReferenceFrameAllocatedFlags must be 0x30000");
@@ -806,7 +794,7 @@ TR::Register *J9::ARM64::JNILinkage::pushJNIReferenceArg(TR::Node *child)
                 pushRegister = pushAddressArg(child);
             } else {
                 TR::Register *addrReg = cg()->evaluate(child);
-                TR::MemoryReference *tmpMemRef = TR::MemoryReference::createWithDisplacement(cg(), addrReg, (int32_t)0);
+                TR::MemoryReference *tmpMemRef = MRef_disp(cg(), addrReg, (int32_t)0);
                 TR::Register *whatReg = cg()->allocateCollectedReferenceRegister();
 
                 checkSplit = false;
@@ -836,7 +824,7 @@ TR::Register *J9::ARM64::JNILinkage::pushJNIReferenceArg(TR::Node *child)
                 cg()->decReferenceCount(child);
             } else {
                 TR::Register *addrReg = cg()->evaluate(child);
-                TR::MemoryReference *tmpMemRef = TR::MemoryReference::createWithDisplacement(cg(), addrReg, (int32_t)0);
+                TR::MemoryReference *tmpMemRef = MRef_disp(cg(), addrReg, (int32_t)0);
                 TR::Register *whatReg = cg()->allocateCollectedReferenceRegister();
 
                 checkSplit = false;
@@ -885,7 +873,7 @@ void J9::ARM64::JNILinkage::adjustReturnValue(TR::Node *callNode, bool wrapRefs,
                 // unwrap when the returned object is non-null
                 generateCompareBranchInstruction(cg(), TR::InstOpCode::cbzx, callNode, returnRegister, tempLabel);
                 generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, callNode, returnRegister,
-                    TR::MemoryReference::createWithDisplacement(cg(), returnRegister, 0));
+                    MRef_disp(cg(), returnRegister, 0));
                 generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, tempLabel);
             }
             break;
@@ -917,7 +905,7 @@ void J9::ARM64::JNILinkage::checkForJNIExceptions(TR::Node *callNode, TR::Regist
     TR_J9VMBase *fej9 = reinterpret_cast<TR_J9VMBase *>(fe());
 
     generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, callNode, scratchReg,
-        TR::MemoryReference::createWithDisplacement(cg(), vmThreadReg, fej9->thisThreadGetCurrentExceptionOffset()));
+        MRef_disp(cg(), vmThreadReg, fej9->thisThreadGetCurrentExceptionOffset()));
 
     TR::SymbolReference *throwSymRef
         = cg()->getSymRefTab()->findOrCreateThrowCurrentExceptionSymbolRef(comp()->getJittedMethodSymbol());
@@ -1026,8 +1014,7 @@ TR::Register *J9::ARM64::JNILinkage::buildDirectDispatch(TR::Node *callNode)
 #else
     const int maxPostRegisters = maxRegisters + extraPostReg;
 #endif
-    TR::RegisterDependencyConditions *deps
-        = new (trHeapMemory()) TR::RegisterDependencyConditions(maxRegisters, maxPostRegisters, trMemory());
+    TR::RegisterDependencyConditions *deps = RegDeps(maxRegisters, maxPostRegisters, cg());
 
     buildJNIArgs(callNode, deps, passThread, passReceiver, killNonVolatileGPRs);
 
