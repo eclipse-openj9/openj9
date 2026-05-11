@@ -163,10 +163,15 @@ timeout(time: 6, unit: 'HOURS') {
                             // Do not gc on aix or master. Seems to be problematic #20346
                             gc = false
                         }
+                        def aggressive = true
+                        if (nodeLabels.contains('sw.os.windows')) {
+                            // Do not use aggressive gc on Windows since it's really slow.
+                            aggressive = false
+                        }
                         jobs["${nodeName}"] = {
                             node("${nodeName}") {
                                 stage("${nodeName} - Update Reference Repo") {
-                                    refresh(nodeName, get_cache_dir(), repos, foundLabel, gc)
+                                    refresh(nodeName, get_cache_dir(), repos, foundLabel, gc, aggressive)
                                 }
                             }
                         }
@@ -194,7 +199,7 @@ timeout(time: 6, unit: 'HOURS') {
 /*
  * Creates and updates the git reference repository cache on the node.
  */
-def refresh(node, cacheDir, repos, isKnownOs, gc) {
+def refresh(node, cacheDir, repos, isKnownOs, gc, aggressive) {
     if (CLEAN_CACHE_DIR) {
         sh "rm -fr ${cacheDir}"
     }
@@ -217,7 +222,11 @@ def refresh(node, cacheDir, repos, isKnownOs, gc) {
         }
         if (gc) {
             stage("${node} - GC Repo") {
-                sh "git gc --aggressive --prune=all"
+				if (aggressive) {
+                    sh "git gc --aggressive --prune=all"
+                } else {
+                    sh "git gc --prune=all"
+                }
             }
         }
     }
