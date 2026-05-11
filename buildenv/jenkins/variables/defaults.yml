@@ -340,7 +340,7 @@ aarch64_linux:
     11: 'linux-aarch64-normal-server-release'
   node_labels:
     build: 'ci.role.build && hw.arch.aarch64 && sw.tool.docker'
-    docker_image: 'adoptopenjdk/centos7_build_image'
+    docker_image: 'ghcr.io/adoptium/adoptium_build_image:centos7'
   build_env:
     vars:
       default: 'CC=/usr/local/gcc10/bin/gcc-10.3 CXX=/usr/local/gcc10/bin/g++-10.3'
