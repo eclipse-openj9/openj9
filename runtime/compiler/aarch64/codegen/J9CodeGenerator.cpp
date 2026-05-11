@@ -223,9 +223,8 @@ TR::Instruction *J9::ARM64::CodeGenerator::generateSwitchToInterpreterPrePrologu
         TR::ARM64Trg1Src2Instruction(TR::InstOpCode::orrx, node, x8, xzr, lr, cursor, self());
     cursor = self()->getLinkage()->saveParametersToStack(cursor);
     cursor = generateImmSymInstruction(self(), TR::InstOpCode::bl, node,
-        (uintptr_t)revertToInterpreterSymRef->getMethodAddress(),
-        new (self()->trHeapMemory()) TR::RegisterDependencyConditions(0, 0, self()->trMemory()),
-        revertToInterpreterSymRef, NULL, cursor);
+        (uintptr_t)revertToInterpreterSymRef->getMethodAddress(), RegDeps(0, 0, self()), revertToInterpreterSymRef,
+        NULL, cursor);
     cursor = generateRelocatableImmInstruction(self(), TR::InstOpCode::dd, node, (uintptr_t)ramMethod, TR_RamMethod,
         cursor);
 
