@@ -44,6 +44,7 @@ import java.security.ProtectionDomain;
 import java.util.Collection;
 /*[IF INLINE-TYPES]*/
 import java.util.Collections;
+import jdk.internal.misc.PreviewFeatures;
 /*[ENDIF] INLINE-TYPES */
 import java.util.HashMap;
 /*[IF (JAVA_SPEC_VERSION >= 16) | INLINE-TYPES]*/
@@ -174,10 +175,6 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	private static final int ANNOTATION = 0x2000;
 	private static final int ENUM = 0x4000;
 	private static final int MEMBER_INVALID_TYPE = -1;
-/*[IF INLINE-TYPES]*/
-	private static final int CLASSFILE_MAJOR_VALHALLA = 44 + 27;
-	private static final int CLASSFILE_MINOR_PREVIEW = 65535;
-/*[ENDIF] INLINE-TYPES */
 
 /*[IF]*/
 	/**
@@ -6173,21 +6170,6 @@ public Class<?>[] getNestMembers()
 
 /*[IF JAVA_SPEC_VERSION >= 20]*/
 
-/*[IF INLINE-TYPES]*/
-	private static int getClassFileMajorVersion(int classFileVersion) {
-		return classFileVersion & 0xFFFF;
-	}
-
-	private static int getClassFileMinorVersion(int classFileVersion) {
-		return classFileVersion >>> 16;
-	}
-
-	private static boolean isValhallaPreviewClassFile(int classFileVersion) {
-		return (getClassFileMajorVersion(classFileVersion) >= CLASSFILE_MAJOR_VALHALLA)
-			&& (getClassFileMinorVersion(classFileVersion) == CLASSFILE_MINOR_PREVIEW);
-	}
-/*[ENDIF] INLINE-TYPES */
-
 	/**
 	 * For an array class, the PUBLIC, PRIVATE and PROTECTED access flags should be the
 	 * same as those of its component type, and the FINAL access flag should always be
@@ -6224,8 +6206,8 @@ public Class<?>[] getNestMembers()
 
 		Set<AccessFlag> flags = AccessFlag.maskToAccessFlags(maskedModifiers, location);
 /*[IF INLINE-TYPES]*/
-		if (isValhallaPreviewClassFile(getClassFileVersion())) {
-			if (isArrayClass && (rawModifiers & AccessFlag.IDENTITY.mask()) != 0) {
+		if (PreviewFeatures.isEnabled()) {
+			if (isArrayClass || (rawModifiers & AccessFlag.IDENTITY.mask()) != 0) {
 				flags = new HashSet<>(flags);
 				flags.add(AccessFlag.IDENTITY);
 				flags = Collections.unmodifiableSet(flags);

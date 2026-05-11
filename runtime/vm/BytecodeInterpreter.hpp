@@ -3214,15 +3214,18 @@ done:
 		if (isArray) {
 			/* OR in the required Sun bits */
 			modifiers |= (J9AccAbstract | J9AccFinal);
-
+		}
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-			if (J9_IS_CLASSFILE_OR_ROMCLASS_VALUETYPE_VERSION(romClass)
-				&& J9_ARE_ANY_BITS_SET(_vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW)
+		if (J9_ARE_ANY_BITS_SET(_vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW)) {
+			if ((!J9_IS_J9CLASS_VALUETYPE(receiverClazz)
+					&& !J9ROMCLASS_IS_INTERFACE(romClass)
+					&& !J9ROMCLASS_IS_PRIMITIVE_TYPE(romClass))
+					|| isArray
 			) {
 				modifiers |= J9AccClassHasIdentity;
 			}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		returnSingleFromINL(REGISTER_ARGS, modifiers, 1);
 		return EXECUTE_BYTECODE;
 	}
