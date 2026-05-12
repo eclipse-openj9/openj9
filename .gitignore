@@ -51,3 +51,6 @@ doc/release-notes/.DS_Store
 
 # config cmake file for vim autocompletion
 compile_commands.json
+
+# Bob configuration files
+.bob
