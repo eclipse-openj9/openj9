@@ -1,4 +1,4 @@
-/*[INCLUDE-IF JAVA_SPEC_VERSION >= 26]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 25]*/
 /*
  * Copyright IBM Corp. and others 2025
  *
