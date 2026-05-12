@@ -1153,8 +1153,8 @@ _inconsistentStack2:
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 						if ((JBifacmpeq == bc) || (JBifacmpne == bc) || (JBifnonnull == bc) || (JBifnull == bc)) {
 							errorType = J9NLS_BCV_ERR_UNINITIALIZED_VALUE_OBJECT__ID;
-							storeVerifyErrorData(verifyData, (I_16)bc, (U_32)errorStackIndex, (UDATA)-1, (UDATA)-1, start);
-							goto _verifyError;
+							verboseErrorCode = BCV_ERR_ILLEGAL_WITH_UNINITIALIZED_VALUE_OBJECT;
+							goto _miscError;
 						}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 					}
