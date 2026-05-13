@@ -843,6 +843,40 @@ def build_all() {
 }
 
 /*
+ * Helper function to create a badge summary.
+ * Try new method first (badge plugin v3.583+), fallback to deprecated method for older versions.
+ */
+def createBadgeSummary(iconName) {
+    def summary = null
+    try {
+        summary = manager.addSummary(iconName)
+    } catch (Exception e) {
+        echo "addSummary failed, trying deprecated createSummary method: ${e.message}"
+        try {
+            summary = manager.createSummary(iconName)
+        } catch (Exception e2) {
+            echo "Both addSummary and createSummary failed: ${e2.message}"
+            throw e2
+        }
+    }
+    return summary
+}
+
+/*
+ * Helper function to append text to a badge summary.
+ * Try new method first, fallback to deprecated method for older versions.
+ */
+def appendSummaryText(summary, text) {
+    try {
+        def currentText = summary.getText() ?: ""
+        summary.setText(currentText + text)
+    } catch (Exception e) {
+        echo "setText failed, trying deprecated appendText: ${e.message}"
+        summary.appendText(text, false)
+    }
+}
+
+/*
  * Adds status badges for the given downstream build.
  */
 def add_badges(downstreamBuilds) {
@@ -895,8 +929,9 @@ def add_summary_badge(downstreamBuilds) {
 
     summaryText += "</table>"
 
-    // add summary badge
-    manager.createSummary("plugin.png").appendText(summaryText)
+    // add summary badge using helper functions
+    def summary = createBadgeSummary("plugin.png")
+    appendSummaryText(summary, summaryText)
 }
 
 return this
