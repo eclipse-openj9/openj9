@@ -701,6 +701,7 @@ if(J9VM_OPT_JFR)
 		Java_com_ibm_oti_vm_VM_getJfrRecordingFileName
 		Java_com_ibm_oti_vm_VM_getUnnamedModuleForSystemLoader
 		Java_com_ibm_oti_vm_VM_isJFREnabled
+		Java_com_ibm_oti_vm_VM_isJFRV2SupportEnabled
 		Java_com_ibm_oti_vm_VM_isJFRRecordingStarted
 		Java_com_ibm_oti_vm_VM_isStartFlightRecordingSpecified
 		Java_com_ibm_oti_vm_VM_jfrDump

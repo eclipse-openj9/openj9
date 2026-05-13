@@ -1308,6 +1308,8 @@ Java_com_ibm_oti_vm_VM_isStartFlightRecordingSpecified(JNIEnv *env, jclass clazz
 jboolean JNICALL
 Java_com_ibm_oti_vm_VM_isJFREnabled(JNIEnv *env, jclass unused);
 jboolean JNICALL
+Java_com_ibm_oti_vm_VM_isJFRV2SupportEnabled(JNIEnv *env, jclass unused);
+jboolean JNICALL
 Java_com_ibm_oti_vm_VM_isJFRRecordingStarted(JNIEnv *env, jclass unused);
 void JNICALL
 Java_com_ibm_oti_vm_VM_jfrDump(JNIEnv *env, jclass unused);

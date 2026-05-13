@@ -5766,14 +5766,24 @@ jint
 initializeJFRv2(J9JavaVM *vm);
 
 /**
- * Check if a JFR is enabled on the JVM.
+ * Check if the JFR support is enabled with either V1 or V2 implementation.
  *
  * @param vm[in] the J9JavaVM
  *
- * @returns JNI_TRUE if a JFR enabled, JNI_FALSE otherwise
+ * @returns JNI_TRUE if a JFR is enabled, JNI_FALSE otherwise
  */
 jboolean
 isJFREnabled(J9JavaVM *vm);
+
+/**
+ * Check if the JFR support with V2 implementation is enabled.
+ *
+ * @param vm[in] the J9JavaVM
+ *
+ * @returns JNI_TRUE if a JFR V2 support is enabled, JNI_FALSE otherwise
+ */
+jboolean
+isJFRV2SupportEnabled(J9JavaVM *vm);
 
 /**
  * Check if a JFR recording has been started.

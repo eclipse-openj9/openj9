@@ -37,6 +37,8 @@ public class JFRCMDLineTest {
 
 		if (VM.isJFREnabled()) {
 			System.out.println("JFR is enabled");
+		} else if (VM.isJFRV2SupportEnabled()) {
+			System.out.println("JFR is enabled with V2 implementation");
 		} else {
 			System.out.println("JFR is not enabled");
 		}

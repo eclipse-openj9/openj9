@@ -1083,6 +1083,12 @@ isJFREnabled(J9JavaVM *vm)
 }
 
 jboolean
+isJFRV2SupportEnabled(J9JavaVM *vm)
+{
+	return J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JFR_V2_SUPPORT) ? JNI_TRUE : JNI_FALSE;
+}
+
+jboolean
 isJFRRecordingStarted(J9JavaVM *vm)
 {
 	return vm->jfrState.isStarted ? JNI_TRUE : JNI_FALSE;

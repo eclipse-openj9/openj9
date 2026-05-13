@@ -323,9 +323,10 @@ final class JFRHelpers {
 	/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 
 	private static void initJFRv2() {
-		if (!VM.isJFREnabled()) {
+		if (!VM.isJFREnabled() || !VM.isJFRV2SupportEnabled()) {
 			return;
 		}
+		// JFR support is enabled with V2 implementation.
 		if (null != jfrCMDLineOption) {
 			initJFRClasses();
 			initJFRCmdlineOptions();
@@ -333,10 +334,10 @@ final class JFRHelpers {
 	}
 
 	static void initJFR() {
-		if (!VM.isJFREnabled()) {
+		if (!VM.isJFREnabled() || VM.isJFRV2SupportEnabled()) {
 			return;
 		}
-
+		// JFR support is enabled with V1 implementation.
 		if (VM.isStartFlightRecordingSpecified()) {
 			String filenameStr = VM.getJfrRecordingFileName();
 			String delayStr = VM.getJfrDelay();
