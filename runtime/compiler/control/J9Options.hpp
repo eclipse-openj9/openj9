@@ -615,6 +615,8 @@ public:
     static const char *limitfileOption(const char *option, void *, TR::OptionTable *entry);
     static const char *versionOption(const char *option, void *, TR::OptionTable *entry);
 
+    void setTuneFootprintOptions(J9JITConfig *jitConfig);
+
     /** \brief
      *    Set memory manager functions related configuration.
      *

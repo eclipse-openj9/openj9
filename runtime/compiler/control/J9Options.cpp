@@ -569,6 +569,17 @@ const char *J9::Options::inlinefileOption(const char *option, void *base, TR::Op
     }
 }
 
+void J9::Options::setTuneFootprintOptions(J9JITConfig *jitConfig)
+{
+    //  NOTE: More options will be added as more experiment are run
+
+    // set initial opt level to warm and
+    _initialOptLevel = TR_Hotness::warm;
+
+    // reduce the malloc-trim period
+    _mallocTrimPeriod = 1;
+}
+
 struct vmX {
     uint32_t _xstate;
     const char *_xname;
@@ -1642,8 +1653,8 @@ void J9::Options::preProcessMode(J9JavaVM *vm, J9JITConfig *jitConfig)
         // Start with a default level and override as needed
         _aggressivenessLevel = TR::Options::TR_AggresivenessLevel::DEFAULT;
 
-        // -Xquickstart/-Xtune:quickstart, -Xtune:virtualized and -Xtune:throughput are mutually exclusive
-        // This is ensured by VM option processing
+        // -Xquickstart/-Xtune:quickstart, -Xtune:virtualized, -Xtune:throughput, -Xtune:footprint are mutually
+        // exclusive. This is ensured by VM option processing
         if (J9_ARE_ANY_BITS_SET(jitConfig->runtimeFlags, J9JIT_QUICKSTART)) {
             _aggressivenessLevel = TR::Options::TR_AggresivenessLevel::QUICKSTART;
         } else if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_TUNE_THROUGHPUT)) {
@@ -2567,9 +2578,13 @@ bool J9::Options::fePreProcess(void *base)
         }
     }
 
+    if (vm->runtimeFlags & J9_RUNTIME_TUNE_FOOTPRINT)
+        setTuneFootprintOptions(jitConfig);
+
 #if defined(LINUX) && defined(J9VM_OPT_SHARED_CLASSES)
     // Enable SCC disclaiming by default
     self()->setOption(TR_EnableSharedCacheDisclaiming);
+
 #if defined(J9VM_OPT_CRIU_SUPPORT)
     // For CRIU we disclaim more aggressively
     if (vm->internalVMFunctions->isCRaCorCRIUSupportEnabled(vm))

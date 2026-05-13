@@ -502,6 +502,7 @@ enum INIT_STAGE {
 #define VMOPT_TUNE_QUICKSTART "-Xtune:quickstart"
 #define VMOPT_TUNE_THROUGHPUT "-Xtune:throughput"
 #define VMOPT_TUNE_VIRTUALIZED "-Xtune:virtualized"
+#define VMOPT_TUNE_FOOTPRINT "-Xtune:footprint"
 
 #define VMOPT_XXCOMPACTSTRINGS "-XX:+CompactStrings"
 #define VMOPT_XXNOCOMPACTSTRINGS "-XX:-CompactStrings"
