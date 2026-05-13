@@ -4728,7 +4728,7 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		IDATA disableYieldPinning = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOYIELDPINNEDVIRTUALTHREADS, NULL);
 
 		/* Enable yielding of pinned continuations by default. */
-		vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION;
+		//vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION;
 
 		if (enableYieldPinning < disableYieldPinning) {
 			/* Disable yielding of pinned continuations. */
