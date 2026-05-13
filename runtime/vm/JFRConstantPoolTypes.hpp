@@ -548,6 +548,23 @@ private:
 	J9Pool *_dataLossTable;
 	UDATA _dataLossCount;
 
+	/* Periodic events. */
+	bool _shouldWriteJVMInformation;
+	bool _shouldWriteCPUInformationEvent;
+	bool _shouldWriteVirtualizationInformationEvent;
+	bool _shouldWriteOSInformationEvent;
+	bool _shouldWriteInitialSystemPropertyEvents;
+	bool _shouldWriteInitialEnvironmentVariableEvents;
+	bool _shouldWritewriteGCHeapConfigurationEvent;
+	bool _shouldWriteYoungGenerationConfigurationEvent;
+	bool _shouldWritePhysicalMemory;
+	bool _shouldWriteSystemProcess;
+	bool _shouldWriteNativeLibrary;
+	bool _shouldWriteModuleRequire;
+	bool _shouldWriteModuleExport;
+	bool _shouldWriteClassLoaderStatistics;
+	bool _shouldWriteThreadDump;
+
 	/* Processing buffers */
 	StackFrame *_currentStackFrameBuffer;
 	StackTraceEntry *_previousStackTraceEntry;
@@ -1220,6 +1237,81 @@ public:
 		return _stackFrameCount;
 	}
 
+	bool shouldWriteJVMInformation()
+	{
+		return _shouldWriteJVMInformation;
+	}
+
+	bool shouldWriteCPUInformationEvent()
+	{
+		return _shouldWriteCPUInformationEvent;
+	}
+
+	bool shouldWriteVirtualizationInformationEvent()
+	{
+		return _shouldWriteVirtualizationInformationEvent;
+	}
+
+	bool shouldWriteOSInformationEvent()
+	{
+		return _shouldWriteOSInformationEvent;
+	}
+
+	bool shouldWriteInitialSystemPropertyEvents()
+	{
+		return _shouldWriteInitialSystemPropertyEvents;
+	}
+
+	bool shouldWriteInitialEnvironmentVariableEvents()
+	{
+		return _shouldWriteInitialEnvironmentVariableEvents;
+	}
+
+	bool shouldWriteGCHeapConfigurationEvent()
+	{
+		return _shouldWritewriteGCHeapConfigurationEvent;
+	}
+
+	bool shouldWriteYoungGenerationConfigurationEvent()
+	{
+		return _shouldWriteYoungGenerationConfigurationEvent;
+	}
+
+	bool shouldWritePhysicalMemory()
+	{
+		return _shouldWritePhysicalMemory;
+	}
+
+	bool shouldWriteSystemProcess()
+	{
+		return _shouldWriteSystemProcess;
+	}
+
+	bool shouldWriteNativeLibrary()
+	{
+		return _shouldWriteNativeLibrary;
+	}
+
+	bool shouldWriteModuleRequire()
+	{
+		return _shouldWriteModuleRequire;
+	}
+
+	bool shouldWriteModuleExport()
+	{
+		return _shouldWriteModuleExport;
+	}
+
+	bool shouldWriteClassLoaderStatistics()
+	{
+		return _shouldWriteClassLoaderStatistics;
+	}
+
+	bool shouldWriteThreadDump()
+	{
+		return _shouldWriteThreadDump;
+	}
+
 	/**
 	* Helper to get JFR constantEvents field.
 	*
@@ -1299,6 +1391,51 @@ public:
 			case J9JFR_EVENT_TYPE_NETWORKUTILIZATION:
 				addNetworkUtilizationEntry((J9JFRNetworkUtilization *)event);
 				break;
+			case J9JFR_EVENT_TYPE_JVM_INFORMATION:
+				_shouldWriteJVMInformation = true;
+				break;
+			case J9JFR_EVENT_TYPE_CPU_INFORMATION:
+				_shouldWriteCPUInformationEvent = true;
+				break;
+			case J9JFR_EVENT_TYPE_VIRTUALIZATION_INFORMATION:
+				_shouldWriteVirtualizationInformationEvent = true;
+				break;
+			case J9JFR_EVENT_TYPE_OS_INFORMATION:
+				_shouldWriteOSInformationEvent = true;
+				break;
+			case J9JFR_EVENT_TYPE_INITIAL_SYSTEM_PROPERTY:
+				_shouldWriteInitialSystemPropertyEvents = true;
+				break;
+			case J9JFR_EVENT_TYPE_INITIAL_ENVIRONMENT_VARIABLE:
+				_shouldWriteInitialEnvironmentVariableEvents = true;
+				break;
+			case J9JFR_EVENT_TYPE_GC_HEAP_CONFIGURATION:
+				_shouldWritewriteGCHeapConfigurationEvent = true;
+				break;
+			case J9JFR_EVENT_TYPE_YOUNG_GENERATION_CONFIGURATION:
+				_shouldWriteYoungGenerationConfigurationEvent = true;
+				break;
+			case J9JFR_EVENT_TYPE_PHYSICAL_MEMORY:
+				_shouldWritePhysicalMemory = true;
+				break;
+			case J9JFR_EVENT_TYPE_SYSTEM_PROCESS:
+				_shouldWriteSystemProcess = true;
+				break;
+			case J9JFR_EVENT_TYPE_NATIVE_LIBRARY:
+				_shouldWriteNativeLibrary = true;
+				break;
+			case J9JFR_EVENT_TYPE_MODULE_REQUIRE:
+				_shouldWriteModuleRequire = true;
+				break;
+			case J9JFR_EVENT_TYPE_MODULE_EXPORT:
+				_shouldWriteModuleExport = true;
+				break;
+			case J9JFR_EVENT_TYPE_CLASS_LOADER_STATISTICS:
+				_shouldWriteClassLoaderStatistics = true;
+				break;
+			case J9JFR_EVENT_TYPE_THREAD_DUMP:
+				_shouldWriteThreadDump = true;
+				break;
 			case J9JFR_EVENT_TYPE_DATA_LOSS:
 				addDataLossEntry((J9JFRDataLoss *)event);
 				break;
@@ -1315,11 +1452,26 @@ public:
 
 		addAllThreads();
 
-		if (dumpCalled) {
-			loadSystemProcesses(_currentThread);
-			loadNativeLibraries(_currentThread);
-			loadModuleRequireAndModuleExportEvents();
-			loadClassLoaderStatisticsEvents(_currentThread);
+		if (J9_ARE_NO_BITS_SET(_vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JFR_V2_SUPPORT)) {
+			if (dumpCalled) {
+				loadSystemProcesses(_currentThread);
+				loadNativeLibraries(_currentThread);
+				loadModuleRequireAndModuleExportEvents();
+				loadClassLoaderStatisticsEvents(_currentThread);
+			}
+		} else {
+			if (_shouldWriteSystemProcess) {
+				loadSystemProcesses(_currentThread);
+			}
+			if (_shouldWriteNativeLibrary) {
+				loadNativeLibraries(_currentThread);
+			}
+			if (_shouldWriteModuleRequire || _shouldWriteModuleExport) {
+				loadModuleRequireAndModuleExportEvents();
+			}
+			if (_shouldWriteClassLoaderStatistics) {
+				loadClassLoaderStatisticsEvents(_currentThread);
+			}
 		}
 
 		shallowEntries = pool_new(sizeof(ClassEntry **), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
@@ -1969,6 +2121,21 @@ done:
 		, _networkUtilizationCount(0)
 		, _dataLossTable(NULL)
 		, _dataLossCount(0)
+		, _shouldWriteJVMInformation(false)
+		, _shouldWriteCPUInformationEvent(false)
+		, _shouldWriteVirtualizationInformationEvent(false)
+		, _shouldWriteOSInformationEvent(false)
+		, _shouldWriteInitialSystemPropertyEvents(false)
+		, _shouldWriteInitialEnvironmentVariableEvents(false)
+		, _shouldWritewriteGCHeapConfigurationEvent(false)
+		, _shouldWriteYoungGenerationConfigurationEvent(false)
+		, _shouldWritePhysicalMemory(false)
+		, _shouldWriteSystemProcess(false)
+		, _shouldWriteNativeLibrary(false)
+		, _shouldWriteModuleRequire(false)
+		, _shouldWriteModuleExport(false)
+		, _shouldWriteClassLoaderStatistics(false)
+		, _shouldWriteThreadDump(false)
 		, _previousStackTraceEntry(NULL)
 		, _firstStackTraceEntry(NULL)
 		, _previousThreadEntry(NULL)

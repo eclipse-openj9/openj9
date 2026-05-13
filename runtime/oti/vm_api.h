@@ -5973,6 +5973,16 @@ jfrInitializeInternalStructures(J9VMThread *currentThread);
 void
 jfrEmitDataLoss(J9VMThread *currentThread, U_64 bytes);
 
+/**
+ * Request a JFR periodic event to be generated.
+ *
+ * @param[in] currentThread the current J9VMThread
+ * @param[in] id the ID of the event to be requested
+ * @return true if the event was committed
+ */
+jboolean
+requestJFREvent(J9VMThread *currentThread, jlong id);
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 #ifdef __cplusplus

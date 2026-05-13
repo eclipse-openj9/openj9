@@ -33,6 +33,7 @@
 #include "AtomicSupport.hpp"
 #if JAVA_SPEC_VERSION >= 17
 #include "JFRTypeMappings.hpp"
+#include "JFRPeriodic.hpp"
 #endif /* JAVA_SPEC_VERSION >= 17 */
 #include "JFRWriter.hpp"
 
@@ -177,6 +178,23 @@ jfrEventSize(J9JFREvent *jfrEvent)
 		break;
 	case J9JFR_EVENT_TYPE_DATA_LOSS:
 		size = sizeof(J9JFRDataLoss);
+		break;
+	case J9JFR_EVENT_TYPE_JVM_INFORMATION:
+	case J9JFR_EVENT_TYPE_CPU_INFORMATION:
+	case J9JFR_EVENT_TYPE_VIRTUALIZATION_INFORMATION:
+	case J9JFR_EVENT_TYPE_OS_INFORMATION:
+	case J9JFR_EVENT_TYPE_INITIAL_SYSTEM_PROPERTY:
+	case J9JFR_EVENT_TYPE_INITIAL_ENVIRONMENT_VARIABLE:
+	case J9JFR_EVENT_TYPE_GC_HEAP_CONFIGURATION:
+	case J9JFR_EVENT_TYPE_YOUNG_GENERATION_CONFIGURATION:
+	case J9JFR_EVENT_TYPE_PHYSICAL_MEMORY:
+	case J9JFR_EVENT_TYPE_SYSTEM_PROCESS:
+	case J9JFR_EVENT_TYPE_MODULE_REQUIRE:
+	case J9JFR_EVENT_TYPE_MODULE_EXPORT:
+	case J9JFR_EVENT_TYPE_CLASS_LOADER_STATISTICS:
+	case J9JFR_EVENT_TYPE_NATIVE_LIBRARY:
+	case J9JFR_EVENT_TYPE_THREAD_DUMP:
+		size = sizeof(J9JFREvent);
 		break;
 	default:
 		Assert_VM_unreachable();
@@ -1519,23 +1537,25 @@ jfrSamplingThreadProc(void *entryArg)
 		UDATA count = 0;
 		while (J9JFR_SAMPLER_STATE_STOP != vm->jfrSamplerState) {
 			J9SignalAsyncEvent(vm, NULL, vm->jfrAsyncKey);
-			if (0 == (count % 100)) { // 1 second
-				omrthread_monitor_exit(vm->jfrSamplerMutex);
-				internalAcquireVMAccess(currentThread);
-				jfrCPULoad(currentThread);
-				jfrClassLoadingStatistics(currentThread);
-				jfrThreadStatistics(currentThread);
-				if (0 == (count % 1000)) { // 10 seconds
-					J9SignalAsyncEvent(vm, NULL, vm->jfrThreadCPULoadAsyncKey);
-					jfrThreadContextSwitchRate(currentThread);
+			if (J9_ARE_NO_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JFR_V2_SUPPORT)) {
+				if (0 == (count % 100)) { // 1 second
+					omrthread_monitor_exit(vm->jfrSamplerMutex);
+					internalAcquireVMAccess(currentThread);
+					jfrCPULoad(currentThread);
+					jfrClassLoadingStatistics(currentThread);
+					jfrThreadStatistics(currentThread);
+					if (0 == (count % 1000)) { // 10 seconds
+						J9SignalAsyncEvent(vm, NULL, vm->jfrThreadCPULoadAsyncKey);
+						jfrThreadContextSwitchRate(currentThread);
+					}
+					if (0 == (count % 500)) { // 5 seconds
+						jfrNetworkUtilization(currentThread);
+					}
+					internalReleaseVMAccess(currentThread);
+					omrthread_monitor_enter(vm->jfrSamplerMutex);
 				}
-				if (0 == (count % 500)) { // 5 seconds
-					jfrNetworkUtilization(currentThread);
-				}
-				internalReleaseVMAccess(currentThread);
-				omrthread_monitor_enter(vm->jfrSamplerMutex);
+				count += 1;
 			}
-			count += 1;
 			omrthread_monitor_wait_timed(vm->jfrSamplerMutex, J9JFR_SAMPLING_RATE, 0);
 		}
 		omrthread_monitor_exit(vm->jfrSamplerMutex);
@@ -2015,6 +2035,265 @@ jfrEmitDataLoss(J9VMThread *currentThread, U_64 bytes)
 		initializeEventFields(currentThread, currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_DATA_LOSS);
 		jfrEvent->amount = bytes;
 		jfrEvent->total = currentThread->threadJfrState.dataLostTotal;
+	}
+}
+
+jboolean
+requestJFREvent(J9VMThread *currentThread, jlong id)
+{
+	return JfrPeriodicEventSet::requestEvent(currentThread, id);
+}
+
+jboolean
+JfrPeriodicEventSet::requestEvent(J9VMThread *currentThread, jlong id)
+{
+	switch (id) {
+	case JfrClassLoaderStatisticsEvent:
+		requestClassLoaderStatistics(currentThread);
+		break;
+	case JfrClassLoadingStatisticsEvent:
+		requestClassLoadingStatistics(currentThread);
+		break;
+	case JfrCPUInformationEvent:
+		requestCPUInformation(currentThread);
+		break;
+	case JfrCPULoadEvent:
+		requestCPULoad(currentThread);
+		break;
+	case JfrExecutionSampleEvent:
+		requestExecutionSample(currentThread);
+		break;
+	case JfrGCHeapConfigurationEvent:
+		requestGCHeapConfiguration(currentThread);
+		break;
+	case JfrInitialEnvironmentVariableEvent:
+		requestInitialEnvironmentVariable(currentThread);
+		break;
+	case JfrInitialSystemPropertyEvent:
+		requestInitialSystemProperty(currentThread);
+		break;
+	case JfrJavaThreadStatisticsEvent:
+		requestJavaThreadStatistics(currentThread);
+		break;
+	case JfrJVMInformationEvent:
+		requestJVMInformation(currentThread);
+		break;
+	case JfrModuleExportEvent:
+		requestModuleExport(currentThread);
+		break;
+	case JfrModuleRequireEvent:
+		requestModuleRequire(currentThread);
+		break;
+	case JfrNativeLibraryEvent:
+		requestNativeLibrary(currentThread);
+		break;
+	case JfrNetworkUtilizationEvent:
+		requestNetworkUtilization(currentThread);
+		break;
+	case JfrOSInformationEvent:
+		requestOSInformation(currentThread);
+		break;
+	case JfrPhysicalMemoryEvent:
+		requestPhysicalMemory(currentThread);
+		break;
+	case JfrSystemProcessEvent:
+		requestSystemProcess(currentThread);
+		break;
+	case JfrThreadContextSwitchRateEvent:
+		requestThreadContextSwitchRate(currentThread);
+		break;
+	case JfrThreadCPULoadEvent:
+		requestThreadCPULoad(currentThread);
+		break;
+	case JfrThreadDumpEvent:
+		requestThreadDump(currentThread);
+		break;
+	case JfrVirtualizationInformationEvent:
+		requestVirtualizationInformation(currentThread);
+		break;
+	case JfrYoungGenerationConfigurationEvent:
+		requestYoungGenerationConfiguration(currentThread);
+		break;
+	default:
+		return JNI_FALSE;
+	}
+	return JNI_TRUE;
+}
+
+void
+JfrPeriodicEventSet::requestJVMInformation(J9VMThread *currentThread)
+{
+	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_JVM_INFORMATION);
+	}
+}
+
+void
+JfrPeriodicEventSet::requestOSInformation(J9VMThread *currentThread)
+{
+	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_OS_INFORMATION);
+	}
+}
+
+void
+JfrPeriodicEventSet::requestVirtualizationInformation(J9VMThread *currentThread)
+{
+	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_VIRTUALIZATION_INFORMATION);
+	}
+}
+
+void
+JfrPeriodicEventSet::requestInitialSystemProperty(J9VMThread *currentThread)
+{
+	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_INITIAL_SYSTEM_PROPERTY);
+	}
+}
+
+void
+JfrPeriodicEventSet::requestInitialEnvironmentVariable(J9VMThread *currentThread)
+{
+	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_INITIAL_ENVIRONMENT_VARIABLE);
+	}
+}
+
+void
+JfrPeriodicEventSet::requestSystemProcess(J9VMThread *currentThread)
+{
+	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_SYSTEM_PROCESS);
+	}
+}
+
+void
+JfrPeriodicEventSet::requestCPUInformation(J9VMThread *currentThread)
+{
+	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_CPU_INFORMATION);
+	}
+}
+
+void
+JfrPeriodicEventSet::requestCPULoad(J9VMThread *currentThread)
+{
+	jfrCPULoad(currentThread);
+}
+
+void
+JfrPeriodicEventSet::requestThreadCPULoad(J9VMThread *currentThread)
+{
+	jfrThreadCPULoad(currentThread, currentThread);
+}
+
+void
+JfrPeriodicEventSet::requestThreadContextSwitchRate(J9VMThread *currentThread)
+{
+	jfrThreadContextSwitchRate(currentThread);
+}
+
+void
+JfrPeriodicEventSet::requestNetworkUtilization(J9VMThread *currentThread)
+{
+	jfrNetworkUtilization(currentThread);
+}
+
+void
+JfrPeriodicEventSet::requestJavaThreadStatistics(J9VMThread *currentThread)
+{
+	jfrThreadStatistics(currentThread);
+}
+
+void
+JfrPeriodicEventSet::requestClassLoadingStatistics(J9VMThread *currentThread)
+{
+	jfrClassLoadingStatistics(currentThread);
+}
+
+void
+JfrPeriodicEventSet::requestClassLoaderStatistics(J9VMThread *currentThread)
+{
+	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_CLASS_LOADER_STATISTICS);
+	}
+}
+
+void
+JfrPeriodicEventSet::requestPhysicalMemory(J9VMThread *currentThread)
+{
+	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_PHYSICAL_MEMORY);
+	}
+}
+
+void
+JfrPeriodicEventSet::requestExecutionSample(J9VMThread *currentThread)
+{
+	jfrExecutionSample(currentThread, currentThread);
+}
+
+void
+JfrPeriodicEventSet::requestThreadDump(J9VMThread *currentThread)
+{
+	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_THREAD_DUMP);
+	}
+}
+
+void
+JfrPeriodicEventSet::requestNativeLibrary(J9VMThread *currentThread)
+{
+	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_NATIVE_LIBRARY);
+	}
+}
+
+void
+JfrPeriodicEventSet::requestModuleRequire(J9VMThread *currentThread)
+{
+	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_MODULE_REQUIRE);
+	}
+}
+
+void
+JfrPeriodicEventSet::requestModuleExport(J9VMThread *currentThread)
+{
+	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_MODULE_EXPORT);
+	}
+}
+
+void
+JfrPeriodicEventSet::requestGCHeapConfiguration(J9VMThread *currentThread)
+{
+	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_GC_HEAP_CONFIGURATION);
+	}
+}
+
+void
+JfrPeriodicEventSet::requestYoungGenerationConfiguration(J9VMThread *currentThread)
+{
+	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_YOUNG_GENERATION_CONFIGURATION);
 	}
 }
 
