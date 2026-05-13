@@ -102,6 +102,7 @@
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 #include "runtime/CRRuntime.hpp"
 #endif /* if defined(J9VM_OPT_CRIU_SUPPORT) */
+#include "omrport.h"
 
 extern "C" {
 struct J9JavaVM;
@@ -6289,6 +6290,10 @@ static int32_t J9THREAD_PROC samplerThreadProc(void *entryarg)
     compInfo->setSamplingThreadLifetimeState(TR::CompilationInfo::SAMPLE_THR_ATTACHED);
     j9thread_monitor_notify_all(jitConfig->samplerMonitor);
     j9thread_monitor_exit(jitConfig->samplerMonitor);
+#if defined(J9ZOS390)
+    uint64_t processStartTime = 0;
+    uint64_t lastSecondCPUUsageCheck = 0;
+#endif /* defined(J9ZOS390) */
 
     // Read some stats about SCC. This code could have stayed in aboutToBootstrap,
     // but here we execute it on a separate thread and hide its overhead
@@ -6363,6 +6368,41 @@ static int32_t J9THREAD_PROC samplerThreadProc(void *entryarg)
         } else {
             TR_VerboseLog::writeLine(TR_Vlog_INFO, "CPU entitlement = %3.2f", compInfo->getJvmCpuEntitlement());
         }
+#if defined(J9ZOS390)
+        if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCPUStats)) {
+            OMRPORT_ACCESS_FROM_J9VMTHREAD(vm);
+
+            // Print CPU usage metrics
+            struct CpuUsageStats usageStats = { 0 };
+            int rc = omrsysinfo_get_CPU_usage_stats(&usageStats);
+            if (rc == 0) {
+                TR_VerboseLog::writeLine(TR_Vlog_INFO, "zIIP count= %ld", usageStats.onlineZiipCount);
+                TR_VerboseLog::writeLine(TR_Vlog_INFO, "ziipCapacity= %f", usageStats.ziipCapacity);
+                TR_VerboseLog::writeLine(TR_Vlog_INFO, "GCP count= %ld", usageStats.onlineGcpCount);
+                TR_VerboseLog::writeLine(TR_Vlog_INFO, "CPU count= %ld", usageStats.onlineCpuCount);
+                TR_VerboseLog::writeLine(TR_Vlog_INFO, "CPU capacity= %f", usageStats.cpuCapacity);
+                TR_VerboseLog::writeLine(TR_Vlog_INFO, "SVT normalization= %f", usageStats.svtNormalizationFactor);
+                TR_VerboseLog::writeLine(TR_Vlog_INFO, "Threads per zIIP core= %d", usageStats.threadsPerZiipCore);
+                TR_VerboseLog::writeLine(TR_Vlog_INFO, "Is IIPHonorPriority set= %d", usageStats.isIipHonorPrioritySet);
+                TR_VerboseLog::writeLine(TR_Vlog_INFO, "svtIFAFlags= %x", usageStats.svtIFAFlags);
+            } else {
+                TR_VerboseLog::writeLine(TR_Vlog_INFO, "call to omrsysinfo_get_CPU_usage_stats FAILED with %d", rc);
+            }
+
+            // Get current process PID
+            uintptr_t pid = omrsysinfo_get_pid();
+            // Get process start time
+            int rc = omrsysinfo_get_process_start_time(pid, &processStartTime);
+            if (rc == 0) {
+                // Convert nanosecond timestamps to milliseconds for easier
+                // readability
+                TR_VerboseLog::writeLine(TR_Vlog_INFO, "process start timestamp (ms)= %llu",
+                    processStartTime / 1000000LL);
+            } else {
+                TR_VerboseLog::writeLine(TR_Vlog_INFO, "call to omrsysinfo_get_process_start_time FAILED with %d", rc);
+            }
+        }
+#endif /* defined(J9ZOS390) */
     } // if (TR::Options::isAnyVerboseOptionSet())
 
     if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableScorchingSampleThresholdScalingBasedOnNumProc)) {
@@ -6811,6 +6851,59 @@ static int32_t J9THREAD_PROC samplerThreadProc(void *entryarg)
 
             // Determine the CPU load factor based on number of active threads and CPU utilization of the machine/JVM
             uint32_t cpuLoadFactor = computeCpuLoadFactor(numActiveThreads, compInfo);
+
+#if defined(J9ZOS390)
+            // Print CPU stats every second
+            if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCPUStats)
+                && (crtTime - lastSecondCPUUsageCheck >= TR::Options::_cpuStatsPrintInterval)) {
+                lastSecondCPUUsageCheck = crtTime;
+                OMRPORT_ACCESS_FROM_J9VMTHREAD(vm);
+
+                // Calculate total elapsed time for current process (in nanoseconds)
+                uint64_t currentTimestamp = omrtime_nano_time();
+                uint64_t elapsedTime = currentTimestamp - processStartTime;
+                if (elapsedTime > 0) {
+                    TR_VerboseLog::CriticalSection vlogLock;
+                    TR_VerboseLog::writeLine(TR_Vlog_INFO, "t (us)= %llu",
+                        elapsedTime / 1000LL); // print elapsed time in micro seconds
+                    TR_VerboseLog::writeLine(TR_Vlog_INFO, "current timestamp (ms)= %llu",
+                        currentTimestamp / 1000000LL);
+                } else {
+                    TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Invalid elapsedTime, %llu", elapsedTime);
+                }
+
+                // Print CPU usage metrics
+                struct CpuUsageStats usageStats = { 0 };
+                int rc = omrsysinfo_get_CPU_usage_stats(&usageStats);
+                if (rc == 0) {
+                    TR_VerboseLog::CriticalSection vlogLock;
+                    TR_VerboseLog::writeLine(TR_Vlog_INFO, "number of active threads= %lu", numActiveThreads);
+                    TR_VerboseLog::writeLine(TR_Vlog_INFO, "gcp-utilization(ccvutilp)= %3.2f%%",
+                        usageStats.gcpLoad * 100);
+                    TR_VerboseLog::writeLine(TR_Vlog_INFO, "ziip-utilization(ccvutils)= %3.2f%%",
+                        usageStats.ziipLoad * 100);
+                    TR_VerboseLog::writeLine(TR_Vlog_INFO, "average-combined-utilization(ccvutila)= %3.2f%%",
+                        usageStats.combinedLoad * 100);
+                    TR_VerboseLog::writeLine(TR_Vlog_INFO, "calculatedCombinedCpuLoad= %3.2f%%",
+                        usageStats.calculatedCombinedCpuLoad * 100);
+                    TR_VerboseLog::writeLine(TR_Vlog_INFO, "process-cpu-utilization= %3.2f%%",
+                        usageStats.perProcessUtilization * 100);
+
+                    // Convert nanosecond timestamps to milliseconds for easier readability
+                    TR_VerboseLog::writeLine(TR_Vlog_INFO, "oldestCpuTime->timestamp (ms)= %llu",
+                        usageStats.oldestCpuTime.timestamp / 1000000LL);
+                    TR_VerboseLog::writeLine(TR_Vlog_INFO, "oldestCpuTime->cpuTime (ms)= %llu",
+                        usageStats.oldestCpuTime.cpuTime / 1000000LL);
+                    TR_VerboseLog::writeLine(TR_Vlog_INFO, "latestCpuTime->timestamp (ms)= %llu",
+                        usageStats.latestCpuTime.timestamp / 1000000LL);
+                    TR_VerboseLog::writeLine(TR_Vlog_INFO, "latestCpuTime->cpuTime (ms)= %llu",
+                        usageStats.latestCpuTime.cpuTime / 1000000LL);
+                } else {
+                    TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,
+                        "call to omrsysinfo_get_CPU_usage_stats FAILED with %d", rc);
+                }
+            }
+#endif /* defined(J9ZOS390) */
 
             UDATA samplingFreq = jitConfig->samplingFrequency;
             // TODO: Should the sampling frequency types in TR::Options be changed to more closely match the J9JITConfig
