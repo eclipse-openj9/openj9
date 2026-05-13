@@ -375,6 +375,7 @@ done:
 				VM_JFRConstantPoolTypes::initializeJFRConstantEvents(_vm, _currentThread, &_buildResult);
 				if (isResultNotOKay()) {
 					VM_JFRConstantPoolTypes::freeJFRConstantEvents(_vm);
+					omrthread_monitor_exit(_vm->jfrState.isConstantEventsInitializedMutex);
 					goto done;
 				}
 				/* Ensure that initialization is complete when the initialized variable is set to true */
@@ -481,31 +482,75 @@ done:
 
 			pool_do(_constantPoolTypes.getDataLossTable(), &writeDataLossEvent, _bufferWriter);
 
-			/* Only write constant events in first chunk. */
-			if (0 == _vm->jfrState.jfrChunkCount) {
-				writeJVMInformationEvent();
+			pool_do(_constantPoolTypes.getSystemProcessTable(), &writeSystemProcessEvent, this);
 
-				writeCPUInformationEvent();
+			pool_do(_constantPoolTypes.getNativeLibraryTable(), &writeNativeLibraryEvent, this);
 
-				writeVirtualizationInformationEvent();
+			if (J9_ARE_NO_BITS_SET(_vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JFR_V2_SUPPORT)) {
+				/* Only write constant events in first chunk. */
+				if (0 == _vm->jfrState.jfrChunkCount) {
+					writeJVMInformationEvent();
 
-				writeOSInformationEvent();
+					writeCPUInformationEvent();
 
-				writeInitialSystemPropertyEvents(_vm);
+					writeVirtualizationInformationEvent();
 
-				writeInitialEnvironmentVariableEvents();
+					writeOSInformationEvent();
 
-				writeGCHeapConfigurationEvent();
+					writeInitialSystemPropertyEvents(_vm);
 
-				writeYoungGenerationConfigurationEvent();
-			}
+					writeInitialEnvironmentVariableEvents();
 
-			writePhysicalMemoryEvent();
+					writeGCHeapConfigurationEvent();
 
-			if (dumpCalled) {
-				writeThreadDumpEvent();
-				pool_do(_constantPoolTypes.getSystemProcessTable(), &writeSystemProcessEvent, this);
-				pool_do(_constantPoolTypes.getNativeLibraryTable(), &writeNativeLibraryEvent, this);
+					writeYoungGenerationConfigurationEvent();
+				}
+
+				writePhysicalMemoryEvent();
+
+				if (dumpCalled) {
+					writeThreadDumpEvent();
+				}
+			} else {
+				if (_constantPoolTypes.shouldWriteJVMInformation()) {
+					writeJVMInformationEvent();
+				}
+
+				if (_constantPoolTypes.shouldWriteCPUInformationEvent()) {
+					writeCPUInformationEvent();
+				}
+
+				if (_constantPoolTypes.shouldWriteVirtualizationInformationEvent()) {
+					writeVirtualizationInformationEvent();
+				}
+
+				if (_constantPoolTypes.shouldWriteOSInformationEvent()) {
+					writeOSInformationEvent();
+				}
+
+				if (_constantPoolTypes.shouldWriteInitialSystemPropertyEvents()) {
+					writeInitialSystemPropertyEvents(_vm);
+				}
+
+				if (_constantPoolTypes.shouldWriteInitialEnvironmentVariableEvents()) {
+					writeInitialEnvironmentVariableEvents();
+				}
+
+				if (_constantPoolTypes.shouldWriteGCHeapConfigurationEvent()) {
+					writeGCHeapConfigurationEvent();
+				}
+
+				if (_constantPoolTypes.shouldWriteYoungGenerationConfigurationEvent()) {
+					writeYoungGenerationConfigurationEvent();
+				}
+
+				if (_constantPoolTypes.shouldWritePhysicalMemory()) {
+					writePhysicalMemoryEvent();
+				}
+
+				if (_constantPoolTypes.shouldWriteThreadDump()) {
+					writeThreadDumpEvent();
+				}
 			}
 
 			writeJFRHeader();
