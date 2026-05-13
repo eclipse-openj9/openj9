@@ -52,6 +52,7 @@ public class TestPrintStats06 extends TestUtils {
 		checkOutputContains("Current statistics for cache", "Did not find expected line of output 'Current statistics for cache'");
 		
 		/* using nonpersistent cache now should result in cache corruption due to semaphore mismatch */
+		delayBeforeDestroyNonPersistent();
 		runSimpleJavaProgramWithNonPersistentCache("Foo", "disablecorruptcachedumps");
 		checkOutputContains("JVMSHRC508E", "Did not find expected message about mismatch semaphore");
 		checkOutputContains("JVMSHRC442E", "Did not find expected message about corrupt cache");
@@ -64,6 +65,7 @@ public class TestPrintStats06 extends TestUtils {
 		/* JVMSHRC023E Cache does not exist */
 		checkOutputContains("JVMSHRC023E", "Did not find expected line of output 'Cache does not exist'");
 		/* destroy control files */
+		delayBeforeDestroyNonPersistent();
 		destroyNonPersistentCache("Foo");
 		runDestroyAllCaches();
 	}
