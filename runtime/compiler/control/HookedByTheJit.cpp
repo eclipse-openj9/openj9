@@ -6381,7 +6381,7 @@ static int32_t J9THREAD_PROC samplerThreadProc(void *entryarg)
             // Get current process PID
             uintptr_t pid = omrsysinfo_get_pid();
             // Get process start time
-            int rc = omrsysinfo_get_process_start_time(pid, &processStartTime);
+            rc = omrsysinfo_get_process_start_time(pid, &processStartTime);
             if (rc == 0) {
                 // Convert nanosecond timestamps to milliseconds for easier
                 // readability
