@@ -371,6 +371,8 @@ static const OptimizationStrategy warmStrategyOpts[] = {
     { OMR::methodHandleInvokeInliningGroup, OMR::IfEnabled },
     { OMR::staticFinalFieldFolding },
     { OMR::osrGuardInsertion, OMR::MustBeDone },
+    // Vector API expansion may have left unused const ref loads. Remove them before const ref privatization.
+    { OMR::deadTreesElimination, OMR::IfVectorAPI },
     { OMR::osrExceptionEdgeRemoval }, // most inlining is done by now
     { OMR::jProfilingBlock },
     { OMR::virtualGuardTailSplitter }, // merge virtual guards
@@ -433,6 +435,7 @@ static const OptimizationStrategy warmStrategyOpts[] = {
     { OMR::samplingJProfiling },
     { OMR::trivialBlockExtension },
     { OMR::localCSE, OMR::IfEnabled }, //  common up lit pool refs in the same block
+    { OMR::trivialDeadStoreElimination, OMR::IfEnabled }, // eliminate stores to never-loaded autos, particularly constants that have been propagated
     { OMR::deadTreesElimination, OMR::IfEnabled }, // cleanup at the end
     { OMR::treeSimplification,
      OMR::IfEnabledMarkLastRun }, // Simplify non-normalized address computations introduced by prefetch insertion
@@ -517,6 +520,7 @@ const OptimizationStrategy hotStrategyOpts[] = {
     { OMR::dynamicLiteralPool, OMR::IfNotProfiling },
     { OMR::trivialBlockExtension },
     { OMR::localDeadStoreElimination, OMR::IfEnabled }, //  remove the astore if no literal pool is required
+    { OMR::trivialDeadStoreElimination, OMR::IfEnabled }, // eliminate stores to never-loaded autos, particularly constants that have been propagated
     { OMR::localCSE, OMR::IfEnabled }, //  common up lit pool refs in the same block
     { OMR::deadTreesElimination, OMR::IfEnabled }, // cleanup at the end
     { OMR::signExtendLoadsGroup, OMR::IfEnabled }, // last opt before GRA
@@ -610,7 +614,9 @@ const OptimizationStrategy scorchingStrategyOpts[] = {
     { OMR::dynamicLiteralPool, OMR::IfNotProfiling },
     { OMR::trivialBlockExtension },
     { OMR::localDeadStoreElimination, OMR::IfEnabled }, //  remove the astore if no literal pool is required
+    { OMR::trivialDeadStoreElimination, OMR::IfEnabled }, // eliminate stores to never-loaded autos, particularly constants that have been propagated
     { OMR::localCSE, OMR::IfEnabled }, //  common up lit pool refs in the same block
+    { OMR::deadTreesElimination, OMR::IfEnabled }, // cleanup at the end
     { OMR::signExtendLoadsGroup, OMR::IfEnabled }, // last opt before GRA
     { OMR::arraysetStoreElimination },
     { OMR::localValuePropagation, OMR::MarkLastRun },
@@ -698,7 +704,9 @@ static const OptimizationStrategy jitProfilingOpts[] = {
 
 static const OptimizationStrategy cheapTacticalGlobalRegisterAllocatorOpts[] = {
     { OMR::redundantGotoElimination, OMR::IfNotJitProfiling }, // need to be run before global register allocator
+    { OMR::constRefPrivatization, OMR::IfEnabled },
     { OMR::tacticalGlobalRegisterAllocator, OMR::IfEnabled },
+    { OMR::constRefRematerialization, OMR::IfEnabled },
     { OMR::endGroup }
 };
 // clang-format on
@@ -864,6 +872,12 @@ J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *method
     self()->setRequestOptimization(OMR::tacticalGlobalRegisterAllocatorGroup, true);
 
     self()->setRequestOptimization(OMR::tacticalGlobalRegisterAllocator, true);
+
+    if (comp->useConstRefs()) {
+        self()->setRequestOptimization(OMR::trivialDeadStoreElimination, true);
+        self()->setRequestOptimization(OMR::constRefPrivatization, true);
+        self()->setRequestOptimization(OMR::constRefRematerialization, true);
+    }
 
     if (shouldEnableSEL(comp))
         self()->setRequestOptimization(OMR::signExtendLoadsGroup, true);
