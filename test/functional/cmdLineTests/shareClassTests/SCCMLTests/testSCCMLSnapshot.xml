@@ -152,6 +152,8 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
+
+	<exec command="sleep 0.5" platforms="linux.*" />
 	
 	<test id="Test 6: Clean up, destroy the non-persistent cache if it exists" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,nonpersistent,destroy</command>
