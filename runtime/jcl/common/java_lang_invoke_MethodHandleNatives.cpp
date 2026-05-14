@@ -1255,12 +1255,12 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 					vmindex = vmindexValueForMethodMemberName(methodID, newJ9Clazz, new_flags);
 				}
 			} else if (J9_ARE_ANY_BITS_SET(flags, MN_IS_FIELD)) {
-				J9Class *declaringClass;
-				J9ROMFieldShape *romField;
+				J9Class *declaringClass = NULL;
+				J9ROMFieldShape *romField = NULL;
 				UDATA lookupOptions = 0;
-				U_64 offset = 0;
+				UDATA offset = 0;
 #if JAVA_SPEC_VERSION >= 11
-				if (JNI_TRUE == speculativeResolve) {
+				if (speculativeResolve) {
 					lookupOptions |= J9_RESOLVE_FLAG_NO_THROW_ON_FAIL;
 				}
 #endif /* JAVA_SPEC_VERSION >= 11 */
@@ -1269,14 +1269,15 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 				 * the resolve code have to attempt to resolve as instance field first,
 				 * then as static field if the first attempt failed.
 				 */
-				offset = vmFuncs->instanceFieldOffset(currentThread,
+				offset = (UDATA)vmFuncs->instanceFieldOffset(
+					currentThread,
 					resolvedClass,
 					J9UTF8_DATA(name), J9UTF8_LENGTH(name),
 					J9UTF8_DATA(signature), J9UTF8_LENGTH(signature),
 					&declaringClass, (UDATA*)&romField,
 					lookupOptions);
 
-				if (offset == (U_64)-1) {
+				if ((UDATA)-1 == offset) {
 					declaringClass = NULL;
 
 					if (VM_VMHelpers::exceptionPending(currentThread)) {
@@ -1291,7 +1292,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 						lookupOptions,
 						NULL);
 
-					if (fieldAddress == NULL) {
+					if (NULL == fieldAddress) {
 						declaringClass = NULL;
 					} else {
 						offset = (UDATA)fieldAddress - (UDATA)declaringClass->ramStatics;
@@ -1335,7 +1336,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 						}
 					}
 
-					U_64 inconsistentData = 0;
+					UDATA inconsistentData = 0;
 					J9JNIFieldID *fieldID = vmFuncs->getJNIFieldID(currentThread, declaringClass, romField, offset, &inconsistentData);
 					vmindex = JLONG_FROM_POINTER(fieldID);
 
@@ -1375,7 +1376,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 						}
 					}
 
-					target = (jlong)offset;
+					target = (jlong)(IDATA)offset;
 				}
 			}
 			/* A field may start at offset 0, so no need to check if (0 != target). */
