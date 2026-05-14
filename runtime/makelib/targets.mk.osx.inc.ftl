@@ -53,9 +53,9 @@ endif
 UMA_BEGIN_DASH_L =
 UMA_END_DASH_L =
 
-<#-- Reduce __PAGEZERO segment size from 4GB to 4KB to allocate memory below 4 GB. -->
+<#-- Reduce __PAGEZERO segment size from 4GB to 16KB to allocate memory below 4GB. -->
 <#if uma.spec.processor.amd64>
-UMA_EXE_PREFIX_FLAGS += -pagezero_size 0x1000
+UMA_EXE_PREFIX_FLAGS += -pagezero_size 0x4000
 </#if>
 
 UMA_EXE_POSTFIX_FLAGS += -lm -liconv -lc -ldl -lutil -Wl,-rpath,@loader_path
