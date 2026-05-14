@@ -1893,9 +1893,10 @@ static void genSuperClassTest(TR::Node *node, TR::Node *classNode, TR::Register 
             castClassDepthReg = srm->findOrCreateScratchRegister();
             loadConstant32(cg, node, castClassDepth, castClassDepthReg);
         }
-        generateLogicalShiftLeftImmInstruction(cg, node, castClassDepthReg, castClassDepthReg, 3, false);
-        generateTrg1MemInstruction(cg, TR::InstOpCode::ldroffx, node, instanceClassSuperClassReg,
-            TR::MemoryReference::createWithIndexReg(cg, instanceClassSuperClassesArrayReg, castClassDepthReg));
+        TR::MemoryReference *mr
+            = TR::MemoryReference::createWithIndexReg(cg, instanceClassSuperClassesArrayReg, castClassDepthReg, 3);
+        mr->setIndexSignExtendedWord(); // SXTW
+        generateTrg1MemInstruction(cg, TR::InstOpCode::ldroffx, node, instanceClassSuperClassReg, mr);
     }
     generateCompareInstruction(cg, node, instanceClassSuperClassReg, castClassReg, true);
 
