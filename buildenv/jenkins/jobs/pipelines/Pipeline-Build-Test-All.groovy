@@ -697,7 +697,8 @@ def draw_summary_table() {
             }
         }
 
-        manager.createSummary('plugin.png').appendText(table)
+        def summary = buildFile.createBadgeSummary("plugin.png")
+        buildFile.appendSummaryText(summary, table)
     }
 }
 
