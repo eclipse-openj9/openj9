@@ -1335,7 +1335,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 						}
 					}
 
-					UDATA inconsistentData = 0;
+					U_64 inconsistentData = 0;
 					J9JNIFieldID *fieldID = vmFuncs->getJNIFieldID(currentThread, declaringClass, romField, offset, &inconsistentData);
 					vmindex = JLONG_FROM_POINTER(fieldID);
 
