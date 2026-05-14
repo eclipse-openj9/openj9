@@ -31,6 +31,9 @@
 #if defined(J9VM_OPT_JFR)
 
 #include "AtomicSupport.hpp"
+#if JAVA_SPEC_VERSION >= 17
+#include "JFRTypeMappings.hpp"
+#endif /* JAVA_SPEC_VERSION >= 17 */
 #include "JFRWriter.hpp"
 
 extern "C" {
@@ -54,20 +57,7 @@ J9_DECLARE_CONSTANT_NAS(transformToListNAS, transformToListUTF8, transformToList
 #define J9JFR_SAMPLING_RATE 10
 #define J9JFR_CLASSNAME_BUFFER_SIZE 128
 
-/* Value needs to be the same as jdk.jfr.internal.JVM.RESERVED_CLASS_ID_LIMIT. */
-#define RESERVED_CLASS_ID_LIMIT 500
-
 #define INVALID_TYPE_ID -1
-#define BOOLEAN_TYPE_ID 212
-#define BYTE_TYPE_ID 209
-#define CHAR_TYPE_ID 213
-#define SHORT_TYPE_ID 208
-#define INT_TYPE_ID 207
-#define FLOAT_TYPE_ID 211
-#define LONG_TYPE_ID 206
-#define DOUBLE_TYPE_ID 210
-#define STACKTRACE_TYPE_ID 188
-#define STRING_TYPE_ID 214
 
 static void jfrStartSamplingThread(J9JavaVM *vm);
 static void initializeEventFields(J9VMThread *currentThread, J9JFREvent *jfrEvent, UDATA eventType);
@@ -76,6 +66,10 @@ static void jfrExecutionSampleCallback(J9VMThread *currentThread, IDATA handlerK
 static void jfrThreadCPULoadCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData);
 static void jfrCheckJFRCMDLineOptions(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static jlong getTypeIdImpl(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *className, BOOLEAN freeName);
+#if JAVA_SPEC_VERSION >= 17
+static bool addEventIds(J9JavaVM *vm);
+static bool addTypeIds(J9JavaVM *vm);
+#endif /* JAVA_SPEC_VERSION >= 17 */
 
 /**
  * Calculate the size in bytes of a JFR event.
@@ -1350,7 +1344,7 @@ initializeJFRIDs(J9JavaVM *vm)
 		goto done;
 	}
 
-	vm->jfrState.typeIDcount = RESERVED_CLASS_ID_LIMIT;
+	vm->jfrState.typeIDcount = 0;
 
 done:
 	return result;
@@ -1365,45 +1359,6 @@ shutdownJFRIDs(J9JavaVM *vm)
 	}
 }
 
-/**
- * Known event types are only ever looked up by name and are always
- * JVM event types so they can be below the RESERVED_CLASS_ID_LIMIT. The
- * JVM determines the IDs for these types. They will always be loaded
- * by the boot loader.
- *
- * TODO this function will be expanded in the future to provide general
- * support for known JVM event types. Currently, the types supported are
- * the ones needed to bootstrap JFR JCL initialization.
- */
-static jlong
-getKnownJFREventType(const J9UTF8 *className)
-{
-	jlong result = INVALID_TYPE_ID;
-	if (J9UTF8_LITERAL_EQUALS_UTF8(className, "boolean")) {
-		result = BOOLEAN_TYPE_ID;
-	} else if (J9UTF8_LITERAL_EQUALS_UTF8(className, "byte")) {
-		result = BYTE_TYPE_ID;
-	} else if (J9UTF8_LITERAL_EQUALS_UTF8(className, "char")) {
-		result = CHAR_TYPE_ID;
-	} else if (J9UTF8_LITERAL_EQUALS_UTF8(className, "short")) {
-		result = SHORT_TYPE_ID;
-	} else if (J9UTF8_LITERAL_EQUALS_UTF8(className, "int")) {
-		result = INT_TYPE_ID;
-	} else if (J9UTF8_LITERAL_EQUALS_UTF8(className, "float")) {
-		result = FLOAT_TYPE_ID;
-	} else if (J9UTF8_LITERAL_EQUALS_UTF8(className, "long")) {
-		result = LONG_TYPE_ID;
-	} else if (J9UTF8_LITERAL_EQUALS_UTF8(className, "double")) {
-		result = DOUBLE_TYPE_ID;
-	} else if (J9UTF8_LITERAL_EQUALS_UTF8(className, "jdk/types/StackTrace")) {
-		result = STACKTRACE_TYPE_ID;
-	} else if (J9UTF8_LITERAL_EQUALS_UTF8(className, "java/lang/String")) {
-		result = STRING_TYPE_ID;
-	}
-
-	return result;
-}
-
 jlong
 getTypeIdUTF8(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *className, BOOLEAN freeName)
 {
@@ -1412,10 +1367,7 @@ getTypeIdUTF8(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *cla
 
 	Trc_VM_getTypeIdUTF8_Entry(currentThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
 	if (J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JFR_V2_SUPPORT)) {
-		result = getKnownJFREventType(className);
-		if (INVALID_TYPE_ID == result) {
-			result = getTypeIdImpl(currentThread, classLoader, className, freeName);
-		}
+		result = getTypeIdImpl(currentThread, classLoader, className, freeName);
 	}
 	Trc_VM_getTypeIdUTF8_Exit(currentThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), NULL, result);
 
@@ -1463,12 +1415,33 @@ getTypeIdImpl(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *cla
 			goto done;
 		}
 		classLoader->typeIDs = typeIDTable;
+
+#if JAVA_SPEC_VERSION >= 17
+		if (vm->systemClassLoader == classLoader) {
+			/* Pre-populate table with known JFR event IDs */
+			if (!addEventIds(vm)) {
+				hashTableFree(typeIDTable);
+				classLoader->typeIDs = NULL;
+				setNativeOutOfMemoryError(currentThread, 0, 0);
+				goto done;
+			}
+
+			/* Pre-populate table with known JFR type IDs */
+			if (!addTypeIds(vm)) {
+				hashTableFree(typeIDTable);
+				classLoader->typeIDs = NULL;
+				setNativeOutOfMemoryError(currentThread, 0, 0);
+				goto done;
+			}
+		}
+#endif /* JAVA_SPEC_VERSION >= 17 */
 	}
 
 	jfrTypeID->className = className;
 	jfrTypeID = (J9JFRTypeID *)hashTableFind(typeIDTable, jfrTypeID);
 
 	if (NULL == jfrTypeID) {
+		/* Entry not found - add new entry with incremented counter */
 		jfrTypeID = &entry;
 		jfrTypeID->id = vm->jfrState.typeIDcount;
 		jfrTypeID->free = freeName;
@@ -1629,6 +1602,88 @@ done:
 	return result;
 }
 
+#if JAVA_SPEC_VERSION >= 17
+/**
+ * Helper function to add a JFR event or type to the hash table.
+ * This function is called by addEventIds() and addTypeIds() functions.
+ *
+ * @param vm[in] the J9JavaVM
+ * @param eventOrTypeName[in] the name of the event or type
+ * @param id[in] the ID to assign
+ * @param isEvent[in] true if this is an event, false if it's a type
+ *
+ * @returns true on success, false on failure
+ */
+static bool
+addType(J9JavaVM *vm, const char *eventOrTypeName, UDATA id, bool isEvent)
+{
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	J9ClassLoader *classLoader = vm->systemClassLoader;
+	J9HashTable *typeIDTable = classLoader->typeIDs;
+	bool result = false;
+	J9UTF8 *className = NULL;
+
+	/* typeIDTable should already be created by caller */
+	Assert_VM_notNull(typeIDTable);
+
+	J9JFRTypeID entry = {0};
+	UDATA nameLength = strlen(eventOrTypeName);
+
+	/* Create J9UTF8 structure for the event/type name */
+	className = (J9UTF8 *)j9mem_allocate_memory(
+		sizeof(J9UTF8) + nameLength, J9MEM_CATEGORY_JFR);
+	if (NULL == className) {
+		goto done;
+	}
+
+	J9UTF8_SET_LENGTH(className, (U_16)nameLength);
+	memcpy(J9UTF8_DATA(className), eventOrTypeName, nameLength);
+
+	vm->jfrState.typeIDcount = OMR_MAX(vm->jfrState.typeIDcount, (jlong)id);
+
+	/* Populate J9JFRTypeID entry */
+	entry.id = id;
+	entry.className = className;
+	entry.free = TRUE;
+
+	/* Add to hash table */
+	if (NULL == hashTableAdd(typeIDTable, &entry)) {
+		j9mem_free_memory(className);
+		goto done;
+	}
+
+	result = true;
+
+done:
+	return result;
+}
+
+static bool
+addEventIds(J9JavaVM *vm) {
+	bool result = true;
+	const size_t numEvents = sizeof(EVENT_MAPPINGS) / sizeof(EVENT_MAPPINGS[0]);
+	for (size_t i = 0; i < numEvents; i++) {
+		if (!addType(vm, EVENT_MAPPINGS[i].name, EVENT_MAPPINGS[i].id, true)) {
+			result = false;
+			break;
+		}
+	}
+	return result;
+}
+
+static bool
+addTypeIds(J9JavaVM *vm) {
+	bool result = true;
+	const size_t numTypes = sizeof(TYPE_MAPPINGS) / sizeof(TYPE_MAPPINGS[0]);
+	for (size_t i = 0; i < numTypes; i++) {
+		if (!addType(vm, TYPE_MAPPINGS[i].name, TYPE_MAPPINGS[i].id, false)) {
+			result = false;
+			break;
+		}
+	}
+	return result;
+}
+#endif /* JAVA_SPEC_VERSION >= 17 */
 
 } /* extern "C" */
 
