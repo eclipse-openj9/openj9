@@ -123,18 +123,18 @@ public:
 		 * the default min and max DNSS expected ratios by a constant factor,
 		 * unless at least one ratio was directly specified by the user.
 		 */
-        double scaleFactor = 1;
-        bool xtune_footprint = javaVM->runtimeFlags & J9_RUNTIME_TUNE_FOOTPRINT;
-        if (xtune_footprint) {
-            scaleFactor = 4;
-        } else {
+		double scaleFactor = 1;
+		bool xtune_footprint = javaVM->runtimeFlags & J9_RUNTIME_TUNE_FOOTPRINT;
+		if (xtune_footprint) {
+			scaleFactor = 4;
+		} else {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-            if (javaVM->internalVMFunctions->isCRaCorCRIUSupportEnabled(javaVM)) {
-                scaleFactor = 2;
-            }
-#endif
-        }
-        if (!_extensions->dnssExpectedRatioMaximum._wasSpecified &&
+			if (javaVM->internalVMFunctions->isCRaCorCRIUSupportEnabled(javaVM)) {
+				scaleFactor = 2;
+			}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+		}
+		if (!_extensions->dnssExpectedRatioMaximum._wasSpecified &&
 			!_extensions->dnssExpectedRatioMinimum._wasSpecified) {
 			_extensions->dnssExpectedRatioMaximum._valueSpecified *= scaleFactor;
 			_extensions->dnssExpectedRatioMinimum._valueSpecified *= scaleFactor;
