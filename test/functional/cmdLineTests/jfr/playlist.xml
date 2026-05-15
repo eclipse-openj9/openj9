@@ -23,6 +23,39 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TKG/resources/playlist.xsd">
 	<include>../variables.mk</include>
 	<test>
+		<testCaseName>cmdLineTester_jfr_v2</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>
+			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
+			-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
+			-DJFR_EXE=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jfr$(Q) \
+			-DRESJAR=$(Q)$(TEST_RESROOT)$(D)jfr.jar$(Q) \
+			-jar $(CMDLINETESTER_JAR) \
+			-config $(Q)$(TEST_RESROOT)$(D)jfrV2.xml$(Q) \
+			-explainExcludes \
+			-nonZeroExitWhenError \
+			-plats all,$(PLATFORM) \
+			-xids all,$(PLATFORM),$(VARIATION); \
+			${TEST_STATUS}
+		</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+		<!-- For the time being, these tests are only limited to JDK17. -->
+		<versions>
+			<version>17</version>
+		</versions>
+	</test>
+	<test>
 		<testCaseName>cmdLineTester_jfr</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>

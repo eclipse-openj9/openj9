@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+Copyright IBM Corp. and others 2026
+
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
+
+[1] https://www.gnu.org/software/classpath/license.html
+[2] https://openjdk.org/legal/assembly-exception.html
+
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="JFR v2 Tests" timeout="3000">
+	<test id="Test JFRv2 cmdline option - no options">
+		<command>$EXE$ -XX:+EnableOpenJ9ExperimentalFlightRecording -XX:StartFlightRecording -Xshare:off -Djfr.unsupported.vm=false  -version</command>
+		<output type="success" caseSensitive="yes" regex="no">Eclipse OpenJ9 VM</output>
+		<output type="required" caseSensitive="yes" regex="no">OpenJDK Runtime Environment</output>
+	</test>
+	<test id="Test JFRv2 cmdline option - memcheck">
+		<command>$EXE$ -XX:+EnableOpenJ9ExperimentalFlightRecording -Dibm.java9.forceCommonCleanerShutdown=true -Xint -XX:StartFlightRecording -Xshare:off -Djfr.unsupported.vm=false  -version</command>
+		<output type="success" caseSensitive="yes" regex="no">Eclipse OpenJ9 VM</output>
+		<output type="required" caseSensitive="yes" regex="no">OpenJDK Runtime Environment</output>
+	</test>
+	<test id="Test JFRv2 with file">
+		<command>$EXE$ -XX:+EnableOpenJ9ExperimentalFlightRecording -XX:StartFlightRecording=filename=experimentalRecording.jfr -Xshare:off -Djfr.unsupported.vm=false  -version</command>
+		<output type="success" caseSensitive="yes" regex="no">Eclipse OpenJ9 VM</output>
+		<output type="required" caseSensitive="yes" regex="no">OpenJDK Runtime Environment</output>
+	</test>
+	<test id="test jfr summary - approx 30seconds">
+		<command>$JFR_EXE$ summary experimentalRecording.jfr</command>
+		<output type="required" caseSensitive="yes" regex="no">Version: 2.1</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.ExecutionSample</output>
+		<output type="success" caseSensitive="yes" regex="no">jdk.CPULoad</output>
+		<output type="success" caseSensitive="yes" regex="no">jdk.JavaThreadStatistics</output>
+		<output type="success" caseSensitive="yes" regex="no">jdk.ClassLoadingStatistics</output>
+		<output type="success" caseSensitive="yes" regex="no">jdk.ThreadCPULoad</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.Metadata</output>
+	</test>
+	<test id="test jfr print - approx 30seconds">
+		<command>$JFR_EXE$ print --xml --events "*" --stack-depth 1 experimentalRecording.jfr</command>
+		<output type="required" caseSensitive="yes" regex="no">ExecutionSample</output>
+		<output type="success" caseSensitive="yes" regex="no">stackTrace</output>
+		<output type="required" caseSensitive="yes" regex="no">JVMInformation</output>
+	</test>
+</suite>
