@@ -90,7 +90,6 @@ monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos
 		PORT_ACCESS_FROM_JAVAVM(javaVM);
 		J9Class *monitorClass = NULL;
 		I_64 startTicks = j9time_nano_time();
-		bool pinningSupportEnabled = J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION);
 
 		monitorClass = J9OBJECT_CLAZZ(vmThread, object);
 
@@ -101,6 +100,7 @@ monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos
 		}
 #if JAVA_SPEC_VERSION >= 24
 		J9ObjectMonitor *objectMonitor = NULL;
+		bool pinningSupportEnabled = J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION);
 		if (pinningSupportEnabled) {
 			j9objectmonitor_t volatile *lwEA = VM_ObjectMonitor::inlineGetLockAddress(vmThread, object);
 			j9objectmonitor_t lock = J9_LOAD_LOCKWORD(vmThread, lwEA);
