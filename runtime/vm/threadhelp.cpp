@@ -544,7 +544,7 @@ continueTimeCompensation:
 		break;
 	case HELPER_TYPE_MONITOR_WAIT_TIMED:
 #if JAVA_SPEC_VERSION >= 24
-		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
+		if (J9_ARE_ANY_BITS_SET(vmThread->javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
 			rc = omrthread_monitor_wait_timed_with_callback(monitor, millis, nanos, notifyUnblocker, vmThread);
 		} else
 #endif /* JAVA_SPEC_VERSION >= 24 */
