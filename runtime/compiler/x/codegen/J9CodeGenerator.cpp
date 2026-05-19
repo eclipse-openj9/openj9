@@ -246,35 +246,35 @@ void J9::X86::CodeGenerator::beginInstructionSelection()
         if (comp->target().is64Bit()) {
             // A copy of the first two bytes of the method, in case we need to un-patch them
             //
-            new (self()->trHeapMemory()) TR::X86ImmInstruction(cursor, TR::InstOpCode::DWImm2, 0xcccc, self());
+            new (self()->trHeapMemory()) TR::X86ImmInstruction(cursor, OP::DWImm2, 0xcccc, self());
         }
     } else if (methodSymbol->isJNI()) {
         intptr_t methodAddress = (intptr_t)methodSymbol->getResolvedMethod()->startAddressForJNIMethod(comp);
 
         if (comp->target().is64Bit())
             new (self()->trHeapMemory())
-                TR::AMD64Imm64Instruction((TR::Instruction *)NULL, TR::InstOpCode::DQImm64, methodAddress, self());
+                TR::AMD64Imm64Instruction((TR::Instruction *)NULL, OP::DQImm64, methodAddress, self());
         else
             new (self()->trHeapMemory())
-                TR::X86ImmInstruction((TR::Instruction *)NULL, TR::InstOpCode::DDImm4, methodAddress, self());
+                TR::X86ImmInstruction((TR::Instruction *)NULL, OP::DDImm4, methodAddress, self());
     }
 
     if (methodSymbol->getLinkageConvention() == TR_Private && !_returnTypeInfoInstruction) {
         // linkageInfo word
         if (self()->getAppendInstruction())
-            _returnTypeInfoInstruction = Inst_Imm(TR::InstOpCode::DDImm4, startNode, 0, self());
+            _returnTypeInfoInstruction = Inst_Imm(OP::DDImm4, startNode, 0, self());
         else
-            _returnTypeInfoInstruction = new (self()->trHeapMemory())
-                TR::X86ImmInstruction((TR::Instruction *)NULL, TR::InstOpCode::DDImm4, 0, self());
+            _returnTypeInfoInstruction
+                = new (self()->trHeapMemory()) TR::X86ImmInstruction((TR::Instruction *)NULL, OP::DDImm4, 0, self());
     }
 
     if (methodSymbol->getLinkageConvention() == TR_System && !_returnTypeInfoInstruction) {
         // linkageInfo word
         if (self()->getAppendInstruction())
-            _returnTypeInfoInstruction = Inst_Imm(TR::InstOpCode::DDImm4, startNode, 0, self());
+            _returnTypeInfoInstruction = Inst_Imm(OP::DDImm4, startNode, 0, self());
         else
-            _returnTypeInfoInstruction = new (self()->trHeapMemory())
-                TR::X86ImmInstruction((TR::Instruction *)NULL, TR::InstOpCode::DDImm4, 0, self());
+            _returnTypeInfoInstruction
+                = new (self()->trHeapMemory()) TR::X86ImmInstruction((TR::Instruction *)NULL, OP::DDImm4, 0, self());
     }
 
     TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, (uint8_t)1, self());
@@ -285,15 +285,15 @@ void J9::X86::CodeGenerator::beginInstructionSelection()
     deps->stopAddingPostConditions();
 
     if (self()->getAppendInstruction())
-        Inst(TR::InstOpCode::proc, startNode, deps, self());
+        Inst(OP::proc, startNode, deps, self());
     else
-        new (self()->trHeapMemory()) TR::Instruction(deps, TR::InstOpCode::proc, (TR::Instruction *)NULL, self());
+        new (self()->trHeapMemory()) TR::Instruction(deps, OP::proc, (TR::Instruction *)NULL, self());
 
     // Set the default FPCW to single precision mode if we are allowed to.
     //
     if (self()->enableSinglePrecisionMethods() && comp->getJittedMethodSymbol()->usesSinglePrecisionMode()) {
         auto cds = self()->findOrCreate2ByteConstant(startNode, SINGLE_PRECISION_ROUND_TO_NEAREST);
-        Inst_Mem(TR::InstOpCode::LDCWMem, startNode, MRef_const(cds, self()), self());
+        Inst_Mem(OP::LDCWMem, startNode, MRef_const(cds, self()), self());
     }
 }
 
@@ -315,7 +315,7 @@ void J9::X86::CodeGenerator::endInstructionSelection()
 
         auto cds = self()->findOrCreate2ByteConstant(self()->getLastCatchAppendInstruction()->getNode(),
             DOUBLE_PRECISION_ROUND_TO_NEAREST);
-        Inst_Mem(self()->getLastCatchAppendInstruction(), TR::InstOpCode::LDCWMem, MRef_const(cds, self()), self());
+        Inst_Mem(self()->getLastCatchAppendInstruction(), OP::LDCWMem, MRef_const(cds, self()), self());
     }
 }
 
@@ -379,12 +379,12 @@ TR::Instruction *J9::X86::CodeGenerator::generateSwitchToInterpreterPrePrologue(
     if (comp->target().is32Bit()) {
         // Put the alignment before the interpreter jump so the jump's offset is fixed
         //
-        alignmentMargin += 6; // TR::InstOpCode::MOV4RegImm4 below
+        alignmentMargin += 6; // OP::MOV4RegImm4 below
         prev = Inst_Alignment(prev, alignment, alignmentMargin, self());
     }
 
     startLabel = generateLabelSymbol(self());
-    prev = Inst_Label(prev, TR::InstOpCode::label, startLabel, self());
+    prev = Inst_Label(prev, OP::label, startLabel, self());
     self()->setSwitchToInterpreterLabel(startLabel);
 
     TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)1, (uint8_t)0, self());
@@ -393,17 +393,17 @@ TR::Instruction *J9::X86::CodeGenerator::generateSwitchToInterpreterPrePrologue(
     TR::SymbolReference *helperSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition);
 
     if (comp->target().is64Bit()) {
-        prev = Inst_RegImm64(prev, TR::InstOpCode::MOV8RegImm64, ediRegister, feMethod, self(), TR_RamMethod);
+        prev = Inst_RegImm64(prev, OP::MOV8RegImm64, ediRegister, feMethod, self(), TR_RamMethod);
         if (comp->getOption(TR_EnableHCR))
             comp->getStaticHCRPICSites()->push_front(prev);
         prev = self()->getLinkage(methodSymbol->getLinkageConvention())->storeArguments(prev, methodSymbol);
     } else {
-        prev = Inst_RegImm(prev, TR::InstOpCode::MOV4RegImm4, ediRegister, feMethod, self(), TR_RamMethod);
+        prev = Inst_RegImm(prev, OP::MOV4RegImm4, ediRegister, feMethod, self(), TR_RamMethod);
         if (comp->getOption(TR_EnableHCR))
             comp->getStaticHCRPICSites()->push_front(prev);
     }
 
-    prev = new (self()->trHeapMemory()) TR::X86ImmSymInstruction(prev, TR::InstOpCode::JMP4,
+    prev = new (self()->trHeapMemory()) TR::X86ImmSymInstruction(prev, OP::JMP4,
         (uintptr_t)helperSymRef->getMethodAddress(), helperSymRef, deps, self());
     self()->stopUsingRegister(ediRegister);
 
@@ -411,13 +411,13 @@ TR::Instruction *J9::X86::CodeGenerator::generateSwitchToInterpreterPrePrologue(
         // Generate a mini-trampoline jump to the start of the
         // SwitchToInterpreterPrePrologue.  This comes after the alignment
         // instruction so we know where it will be relative to startPC.  Note
-        // that it ought to be a TR::InstOpCode::JMP1 despite the fact that we're using a TR::InstOpCode::JMP4
+        // that it ought to be a OP::JMP1 despite the fact that we're using a OP::JMP4
         // opCode; otherwise, this instruction is not 2 bytes long, so it will
         // mess up alignment.
         //
         alignmentMargin += 2; // Size of the mini-trampoline
         prev = Inst_Alignment(prev, alignment, alignmentMargin, self());
-        prev = new (self()->trHeapMemory()) TR::X86LabelInstruction(prev, TR::InstOpCode::JMP4, startLabel, self());
+        prev = new (self()->trHeapMemory()) TR::X86LabelInstruction(prev, OP::JMP4, startLabel, self());
     }
 
     return prev;

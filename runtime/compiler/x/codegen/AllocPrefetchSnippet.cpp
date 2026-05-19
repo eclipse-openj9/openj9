@@ -204,10 +204,10 @@ uint8_t *TR::X86AllocPrefetchSnippet::emitSharedBody(uint8_t *prefetchSnippetBuf
         prefetchSnippetBuffer += 3;
     }
 
-    // TR::InstOpCode::PREFETCHNTA [rcx + distance]
-    // TR::InstOpCode::PREFETCHNTA [rcx + distance + lineSize]
+    // OP::PREFETCHNTA [rcx + distance]
+    // OP::PREFETCHNTA [rcx + distance + lineSize]
     // ...
-    // TR::InstOpCode::PREFETCHNTA [rcx + distance + n*lineSize]
+    // OP::PREFETCHNTA [rcx + distance + n*lineSize]
     //
     for (int32_t lineOffset = 0; lineOffset < numLines; ++lineOffset) {
         prefetchSnippetBuffer[0] = 0x0F;
@@ -241,7 +241,7 @@ uint8_t *TR::X86AllocPrefetchSnippet::emitSharedBody(uint8_t *prefetchSnippetBuf
     //
     *prefetchSnippetBuffer++ = 0x59;
 
-    // TR::InstOpCode::RET
+    // OP::RET
     //
     *prefetchSnippetBuffer++ = 0xC3;
 

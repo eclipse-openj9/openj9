@@ -213,7 +213,7 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
             if (unresolvedDispatch() && _hasJ2IThunkInPicData)
                 cursor = encodeJ2IThunkPointer(cursor);
         } else {
-            // ModRM byte of TR::InstOpCode::CMPMemImm4 instruction
+            // ModRM byte of OP::CMPMemImm4 instruction
             //
             uint8_t *slotPatchInstructionBytes = _slotPatchInstruction->getBinaryEncoding();
             *cursor = *(slotPatchInstructionBytes + 1);
@@ -261,11 +261,11 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
                 //
                 *cursor++ = *slotPatchInstructionBytes;
 
-                // REX prefix for the TR::InstOpCode::CALLMem instruction.
+                // REX prefix for the OP::CALLMem instruction.
                 //
                 *cursor++ = *(slotPatchInstructionBytes + 9);
 
-                // Convert the CMP ModRM byte into the ModRM byte for the TR::InstOpCode::CALLMem instruction.
+                // Convert the CMP ModRM byte into the ModRM byte for the OP::CALLMem instruction.
                 //
                 slotPatchInstructionBytes += 11;
                 callModRMByte = (*slotPatchInstructionBytes & 7) + 0x90;
@@ -478,7 +478,7 @@ void TR_Debug::print(OMR::Logger *log, TR::X86PicDataSnippet *snippet)
                     bufferPos += sizeof(uintptr_t);
                 }
             } else {
-                // ModRM of TR::InstOpCode::CMPRegImm4
+                // ModRM of OP::CMPRegImm4
                 //
                 printPrefix(log, NULL, bufferPos, 1);
                 log->printf("%s\t%s%02x%s\t\t\t\t\t\t\t\t%s ModRM of CMP", dbString(), hexPrefixString(), *bufferPos,
@@ -508,12 +508,12 @@ void TR_Debug::print(OMR::Logger *log, TR::X86PicDataSnippet *snippet)
 
                 callModRM = *bufferPos;
                 printPrefix(log, NULL, bufferPos, 1);
-                log->printf("%s\t%02x\t\t\t\t\t\t\t\t%s ModRM for TR::InstOpCode::CALLMem", dbString(), *bufferPos,
+                log->printf("%s\t%02x\t\t\t\t\t\t\t\t%s ModRM for OP::CALLMem", dbString(), *bufferPos,
                     commentString());
                 bufferPos += 1;
             } else {
                 printPrefix(log, NULL, bufferPos, 1);
-                log->printf("%s\t%02x\t\t\t\t\t\t\t\t%s ModRM for TR::InstOpCode::CMPRegImm4", dbString(), *bufferPos,
+                log->printf("%s\t%02x\t\t\t\t\t\t\t\t%s ModRM for OP::CMPRegImm4", dbString(), *bufferPos,
                     commentString());
                 bufferPos += 1;
             }
