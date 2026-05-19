@@ -262,7 +262,7 @@ void J9::X86::CodeGenerator::beginInstructionSelection()
     if (methodSymbol->getLinkageConvention() == TR_Private && !_returnTypeInfoInstruction) {
         // linkageInfo word
         if (self()->getAppendInstruction())
-            _returnTypeInfoInstruction = generateImmInstruction(TR::InstOpCode::DDImm4, startNode, 0, self());
+            _returnTypeInfoInstruction = Inst_Imm(TR::InstOpCode::DDImm4, startNode, 0, self());
         else
             _returnTypeInfoInstruction = new (self()->trHeapMemory())
                 TR::X86ImmInstruction((TR::Instruction *)NULL, TR::InstOpCode::DDImm4, 0, self());
@@ -271,7 +271,7 @@ void J9::X86::CodeGenerator::beginInstructionSelection()
     if (methodSymbol->getLinkageConvention() == TR_System && !_returnTypeInfoInstruction) {
         // linkageInfo word
         if (self()->getAppendInstruction())
-            _returnTypeInfoInstruction = generateImmInstruction(TR::InstOpCode::DDImm4, startNode, 0, self());
+            _returnTypeInfoInstruction = Inst_Imm(TR::InstOpCode::DDImm4, startNode, 0, self());
         else
             _returnTypeInfoInstruction = new (self()->trHeapMemory())
                 TR::X86ImmInstruction((TR::Instruction *)NULL, TR::InstOpCode::DDImm4, 0, self());
@@ -285,7 +285,7 @@ void J9::X86::CodeGenerator::beginInstructionSelection()
     deps->stopAddingPostConditions();
 
     if (self()->getAppendInstruction())
-        generateInstruction(TR::InstOpCode::proc, startNode, deps, self());
+        Inst(TR::InstOpCode::proc, startNode, deps, self());
     else
         new (self()->trHeapMemory()) TR::Instruction(deps, TR::InstOpCode::proc, (TR::Instruction *)NULL, self());
 
@@ -293,7 +293,7 @@ void J9::X86::CodeGenerator::beginInstructionSelection()
     //
     if (self()->enableSinglePrecisionMethods() && comp->getJittedMethodSymbol()->usesSinglePrecisionMode()) {
         auto cds = self()->findOrCreate2ByteConstant(startNode, SINGLE_PRECISION_ROUND_TO_NEAREST);
-        generateMemInstruction(TR::InstOpCode::LDCWMem, startNode, MRef_const(cds, self()), self());
+        Inst_Mem(TR::InstOpCode::LDCWMem, startNode, MRef_const(cds, self()), self());
     }
 }
 
@@ -315,8 +315,7 @@ void J9::X86::CodeGenerator::endInstructionSelection()
 
         auto cds = self()->findOrCreate2ByteConstant(self()->getLastCatchAppendInstruction()->getNode(),
             DOUBLE_PRECISION_ROUND_TO_NEAREST);
-        generateMemInstruction(self()->getLastCatchAppendInstruction(), TR::InstOpCode::LDCWMem,
-            MRef_const(cds, self()), self());
+        Inst_Mem(self()->getLastCatchAppendInstruction(), TR::InstOpCode::LDCWMem, MRef_const(cds, self()), self());
     }
 }
 
@@ -336,7 +335,7 @@ void J9::X86::CodeGenerator::preBinaryEncodingHook()
                     // address of the function may be beyond the body of this function. In this case, we must add
                     // padding to end of the function to prevent the stack walker from detecting an illegal return
                     // address.
-                    generatePaddingInstruction(lastInstruction, 1, self());
+                    Inst_Padding(lastInstruction, 1, self());
                 }
                 break;
             }
@@ -381,11 +380,11 @@ TR::Instruction *J9::X86::CodeGenerator::generateSwitchToInterpreterPrePrologue(
         // Put the alignment before the interpreter jump so the jump's offset is fixed
         //
         alignmentMargin += 6; // TR::InstOpCode::MOV4RegImm4 below
-        prev = generateAlignmentInstruction(prev, alignment, alignmentMargin, self());
+        prev = Inst_Alignment(prev, alignment, alignmentMargin, self());
     }
 
     startLabel = generateLabelSymbol(self());
-    prev = generateLabelInstruction(prev, TR::InstOpCode::label, startLabel, self());
+    prev = Inst_Label(prev, TR::InstOpCode::label, startLabel, self());
     self()->setSwitchToInterpreterLabel(startLabel);
 
     TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)1, (uint8_t)0, self());
@@ -394,14 +393,12 @@ TR::Instruction *J9::X86::CodeGenerator::generateSwitchToInterpreterPrePrologue(
     TR::SymbolReference *helperSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition);
 
     if (comp->target().is64Bit()) {
-        prev = generateRegImm64Instruction(prev, TR::InstOpCode::MOV8RegImm64, ediRegister, feMethod, self(),
-            TR_RamMethod);
+        prev = Inst_RegImm64(prev, TR::InstOpCode::MOV8RegImm64, ediRegister, feMethod, self(), TR_RamMethod);
         if (comp->getOption(TR_EnableHCR))
             comp->getStaticHCRPICSites()->push_front(prev);
         prev = self()->getLinkage(methodSymbol->getLinkageConvention())->storeArguments(prev, methodSymbol);
     } else {
-        prev
-            = generateRegImmInstruction(prev, TR::InstOpCode::MOV4RegImm4, ediRegister, feMethod, self(), TR_RamMethod);
+        prev = Inst_RegImm(prev, TR::InstOpCode::MOV4RegImm4, ediRegister, feMethod, self(), TR_RamMethod);
         if (comp->getOption(TR_EnableHCR))
             comp->getStaticHCRPICSites()->push_front(prev);
     }
@@ -419,7 +416,7 @@ TR::Instruction *J9::X86::CodeGenerator::generateSwitchToInterpreterPrePrologue(
         // mess up alignment.
         //
         alignmentMargin += 2; // Size of the mini-trampoline
-        prev = generateAlignmentInstruction(prev, alignment, alignmentMargin, self());
+        prev = Inst_Alignment(prev, alignment, alignmentMargin, self());
         prev = new (self()->trHeapMemory()) TR::X86LabelInstruction(prev, TR::InstOpCode::JMP4, startLabel, self());
     }
 
