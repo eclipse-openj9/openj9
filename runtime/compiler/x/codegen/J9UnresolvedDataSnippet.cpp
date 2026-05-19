@@ -98,7 +98,7 @@ uint8_t *J9::X86::UnresolvedDataSnippet::emitSnippetBody()
     TR::Instruction *stackMapInstr = getDataReferenceInstruction();
 
     if (!stackMapInstr) {
-        return TR::InstOpCode(TR::InstOpCode::bad).binary(cursor, OMR::X86::Default);
+        return TR::InstOpCode(OP::bad).binary(cursor, OMR::X86::Default);
     }
 
     _glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(getHelper());
@@ -145,7 +145,7 @@ uint8_t *J9::X86::UnresolvedDataSnippet::emitResolveHelperCall(uint8_t *cursor)
         TR_ASSERT(IS_32BIT_RIP(glueAddress, rip), "Local helper trampoline should be reachable directly.\n");
     }
 
-    *cursor++ = 0xe8; // TR::InstOpCode::CALLImm4
+    *cursor++ = 0xe8; // OP::CALLImm4
 
     int32_t offset = (int32_t)((intptr_t)glueAddress - rip);
     *(int32_t *)cursor = offset;
@@ -174,16 +174,16 @@ uint32_t J9::X86::UnresolvedDataSnippet::getUnresolvedStaticStoreDeltaWithMemBar
     uint8_t delta = instIter->getBinaryEncoding() - dataRefInstOffset;
 
     if (cg()->comp()->getOption(TR_X86UseMFENCE)) {
-        while (instIter->getOpCode().getOpCodeValue() != TR::InstOpCode::MFENCE && delta <= 20) {
+        while (instIter->getOpCode().getOpCodeValue() != OP::MFENCE && delta <= 20) {
             instIter = instIter->getNext();
             delta = instIter->getBinaryEncoding() - dataRefInstOffset;
         }
 
         // Return the appropriate offset flag.
         //
-        if (delta == 20 && instIter->getOpCode().getOpCodeValue() == TR::InstOpCode::MFENCE) {
+        if (delta == 20 && instIter->getOpCode().getOpCodeValue() == OP::MFENCE) {
             return cpIndex_extremeStaticMemBarPos;
-        } else if (delta == 16 && instIter->getOpCode().getOpCodeValue() == TR::InstOpCode::MFENCE) {
+        } else if (delta == 16 && instIter->getOpCode().getOpCodeValue() == OP::MFENCE) {
             return cpIndex_genStaticMemBarPos;
         } else {
             TR_ASSERT(0,
@@ -193,16 +193,16 @@ uint32_t J9::X86::UnresolvedDataSnippet::getUnresolvedStaticStoreDeltaWithMemBar
             return 0;
         }
     } else {
-        while (instIter->getOpCode().getOpCodeValue() != TR::InstOpCode::LOR4MemImms && delta <= 24) {
+        while (instIter->getOpCode().getOpCodeValue() != OP::LOR4MemImms && delta <= 24) {
             instIter = instIter->getNext();
             delta = instIter->getBinaryEncoding() - dataRefInstOffset;
         }
 
         // Return the appropriate offset flag.
         //
-        if (delta == 24 && instIter->getOpCode().getOpCodeValue() == TR::InstOpCode::LOR4MemImms) {
+        if (delta == 24 && instIter->getOpCode().getOpCodeValue() == OP::LOR4MemImms) {
             return cpIndex_extremeStaticMemBarPos;
-        } else if (delta == 16 && instIter->getOpCode().getOpCodeValue() == TR::InstOpCode::LOR4MemImms) {
+        } else if (delta == 16 && instIter->getOpCode().getOpCodeValue() == OP::LOR4MemImms) {
             return cpIndex_genStaticMemBarPos;
         } else {
             TR_ASSERT(0,
@@ -341,13 +341,13 @@ uint8_t *J9::X86::UnresolvedDataSnippet::emitConstantPoolIndex(uint8_t *cursor)
 
     if (!comp->getOption(TR_DisableNewX86VolatileSupport) && getDataReferenceInstruction() != NULL) {
         TR::Instruction *dataRefInst = getDataReferenceInstruction();
-        TR::InstOpCode::Mnemonic opCode = dataRefInst->getOpCode().getOpCodeValue();
+        OP::Mnemonic opCode = dataRefInst->getOpCode().getOpCodeValue();
 
         // If this is a store operation on an unresolved field, set the volatility check flag.
         //
         if (comp->target().isSMP()) {
             if (!getDataSymbol()->isClassObject() && !getDataSymbol()->isConstObjectRef() && isUnresolvedStore()
-                && opCode != TR::InstOpCode::CMPXCHG8BMem && getDataSymbol()->isVolatile()) {
+                && opCode != OP::CMPXCHG8BMem && getDataSymbol()->isVolatile()) {
                 cpIndex |= cpIndex_checkVolatility;
 
                 if (comp->target().is64Bit() && ((TR::X86MemInstruction *)dataRefInst)->getMemoryReference()) {
@@ -417,16 +417,16 @@ uint8_t *J9::X86::UnresolvedDataSnippet::fixupDataReferenceInstruction(uint8_t *
         bytesToCopy = std::max<uint8_t>(8, length);
         memcpy(cursor, instructionStart, bytesToCopy);
 
-        // If the TR::InstOpCode::RET will overwrite one of the eight bytes that will eventually be patched
+        // If the OP::RET will overwrite one of the eight bytes that will eventually be patched
         // then the byte it overwrites needs to be preserved.
         //
         if (length < 8) {
             uint8_t b = *(cursor + length);
-            *(cursor + length) = 0xc3; // TR::InstOpCode::RET
+            *(cursor + length) = 0xc3; // OP::RET
             cursor += bytesToCopy;
             *cursor++ = b;
         } else {
-            *(cursor + length) = 0xc3; // TR::InstOpCode::RET
+            *(cursor + length) = 0xc3; // OP::RET
             cursor += (bytesToCopy + 1);
         }
     } else {
@@ -481,7 +481,7 @@ uint32_t J9::X86::UnresolvedDataSnippet::getLength(int32_t estimatedSnippetStart
 {
     uint32_t length;
 
-    length = 5; // TR::InstOpCode::CALLImm4 to resolve helper
+    length = 5; // OP::CALLImm4 to resolve helper
 
     // cpAddr
     //
@@ -496,8 +496,8 @@ uint32_t J9::X86::UnresolvedDataSnippet::getLength(int32_t estimatedSnippetStart
     // 32-bit adjustments
     //
     if (cg()->comp()->target().is32Bit()) {
-        length += (1 // TR::InstOpCode::PUSHImm4 for cpAddr
-            + 1 // TR::InstOpCode::PUSHImm4 for cpIndex
+        length += (1 // OP::PUSHImm4 for cpAddr
+            + 1 // OP::PUSHImm4 for cpIndex
             + 1 // descriptor byte
         );
     }
@@ -507,8 +507,8 @@ uint32_t J9::X86::UnresolvedDataSnippet::getLength(int32_t estimatedSnippetStart
         //
         uint32_t instructionLength = getDataReferenceInstruction()->getBinaryLength();
 
-        // +1 is for either a TR::InstOpCode::RET instruction if instructionLength > 7 or for a copy of
-        // the byte that the TR::InstOpCode::RET instruction overwrites if instructionLength < 8.
+        // +1 is for either a OP::RET instruction if instructionLength > 7 or for a copy of
+        // the byte that the OP::RET instruction overwrites if instructionLength < 8.
         //
         length += std::max<uint32_t>(8, instructionLength) + 1;
     } else {
@@ -604,16 +604,16 @@ void TR_Debug::print(OMR::Logger *log, TR::UnresolvedDataSnippet *snippet)
         if (length < 8) {
             printPrefix(log, NULL, bufferPos, bytesToCopy);
             bufferPos += bytesToCopy;
-            log->printf("%s\t(%d)\t\t\t%s patch instruction bytes + TR::InstOpCode::RET + residue", dbString(),
-                bytesToCopy, commentString());
+            log->printf("%s\t(%d)\t\t\t%s patch instruction bytes + OP::RET + residue", dbString(), bytesToCopy,
+                commentString());
             printPrefix(log, NULL, bufferPos, 1);
-            log->printf("%s\t\t\t\t\t\t%s byte that TR::InstOpCode::RET overwrote", dbString(), commentString());
+            log->printf("%s\t\t\t\t\t\t%s byte that OP::RET overwrote", dbString(), commentString());
             bufferPos++;
         } else {
             printPrefix(log, NULL, bufferPos, bytesToCopy + 1);
             bufferPos += (bytesToCopy + 1);
-            log->printf("%s\t(%d)\t\t\t\t%s patch instruction bytes + TR::InstOpCode::RET", dbString(),
-                (bytesToCopy + 1), commentString());
+            log->printf("%s\t(%d)\t\t\t\t%s patch instruction bytes + OP::RET", dbString(), (bytesToCopy + 1),
+                commentString());
         }
     } else {
         int32_t bytesToCopy;
@@ -628,8 +628,7 @@ void TR_Debug::print(OMR::Logger *log, TR::UnresolvedDataSnippet *snippet)
                 bytesToCopy = 2;
                 printPrefix(log, NULL, bufferPos, bytesToCopy);
                 bufferPos += bytesToCopy;
-                log->printf("%s\t\t\t\t\t\t\t\t%s REX + op of TR::InstOpCode::MOV8RegImm64", dwString(),
-                    commentString());
+                log->printf("%s\t\t\t\t\t\t\t\t%s REX + op of OP::MOV8RegImm64", dwString(), commentString());
             }
         } else {
             if (snippet->getDataSymbol()->isConstString()) {

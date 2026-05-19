@@ -234,22 +234,21 @@ TR::Register *J9::X86::HelperCallSite::BuildCall()
     for (size_t i = 0; i < _Params.size(); i++) {
         size_t index = _Params.size() - i - 1;
         if (index < NumberOfIntParamRegisters) {
-            Inst_RegReg(TR::InstOpCode::MOVRegReg(), _Node, RealRegisters.Use(IntParamRegisters[index]), _Params[i],
-                cg());
+            Inst_RegReg(OP::MOVRegReg(), _Node, RealRegisters.Use(IntParamRegisters[index]), _Params[i], cg());
         } else {
             NumberOfParamOnStack++;
             if (CalleeCleanup) {
-                Inst_Reg(TR::InstOpCode::PUSHReg, _Node, _Params[i], cg());
+                Inst_Reg(OP::PUSHReg, _Node, _Params[i], cg());
             } else {
                 size_t offset = StackSlotSize * (index - StackIndexAdjustment);
-                Inst_MemReg(TR::InstOpCode::SMemReg(), _Node, MRef_Bdisp32(ESP, offset, cg()), _Params[i], cg());
+                Inst_MemReg(OP::SMemReg(), _Node, MRef_Bdisp32(ESP, offset, cg()), _Params[i], cg());
             }
         }
     }
 
     // Call helper
-    TR::X86ImmInstruction *instr = Inst_ImmSym(TR::InstOpCode::CALLImm4, _Node, (uintptr_t)_SymRef->getMethodAddress(),
-        _SymRef, RealRegisters.BuildRegisterDependencyConditions(), cg());
+    TR::X86ImmInstruction *instr = Inst_ImmSym(OP::CALLImm4, _Node, (uintptr_t)_SymRef->getMethodAddress(), _SymRef,
+        RealRegisters.BuildRegisterDependencyConditions(), cg());
     instr->setNeedsGCMap(PreservedRegisterMapForGC);
 
     // Stack adjustment
@@ -286,7 +285,7 @@ TR::Register *J9::X86::HelperCallSite::BuildCall()
             break;
     }
     if (ret) {
-        Inst_RegReg(TR::InstOpCode::MOVRegReg(), _Node, ret, EAX, cg());
+        Inst_RegReg(OP::MOVRegReg(), _Node, ret, EAX, cg());
     }
 
     return ret;

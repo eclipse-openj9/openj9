@@ -156,7 +156,7 @@ TR::Instruction *J9::X86::I386::PrivateLinkage::savePreservedRegisters(TR::Instr
         TR::RealRegister::RegNum idx = _properties.getPreservedRegister((uint32_t)pindex);
         TR::RealRegister *reg = machine()->getRealRegister(idx);
         if (reg->getHasBeenAssignedInMethod() && reg->getState() != TR::RealRegister::Locked) {
-            cursor = Inst_MemReg(cursor, TR::InstOpCode::S4MemReg,
+            cursor = Inst_MemReg(cursor, OP::S4MemReg,
                 MRef_Bdisp32(machine()->getRealRegister(TR::RealRegister::vfp), offsetCursor, cg()), reg, cg());
             offsetCursor -= pointerSize;
         }
@@ -176,7 +176,7 @@ TR::Instruction *J9::X86::I386::PrivateLinkage::restorePreservedRegisters(TR::In
         TR::RealRegister::RegNum idx = _properties.getPreservedRegister((uint32_t)pindex);
         TR::RealRegister *reg = machine()->getRealRegister(idx);
         if (reg->getHasBeenAssignedInMethod()) {
-            cursor = Inst_RegMem(cursor, TR::InstOpCode::L4RegMem, reg,
+            cursor = Inst_RegMem(cursor, OP::L4RegMem, reg,
                 MRef_Bdisp32(machine()->getRealRegister(TR::RealRegister::vfp), offsetCursor, cg()), cg());
             offsetCursor -= pointerSize;
         }
@@ -265,7 +265,7 @@ int32_t J9::X86::I386::PrivateLinkage::buildArgs(TR::Node *callNode, TR::Registe
 
         if (thisChild->getReferenceCount() > 1) {
             eaxRegister = cg()->allocateCollectedReferenceRegister();
-            Inst_RegReg(TR::InstOpCode::MOV4RegReg, thisChild, eaxRegister, rcvrReg, cg());
+            Inst_RegReg(OP::MOV4RegReg, thisChild, eaxRegister, rcvrReg, cg());
         } else {
             eaxRegister = rcvrReg;
         }
@@ -288,8 +288,7 @@ TR::UnresolvedDataSnippet *J9::X86::I386::PrivateLinkage::generateX86UnresolvedD
         = TR::UnresolvedDataSnippet::create(cg(), child, symRef, false, (debug("gcOnResolve") != NULL));
     cg()->addSnippet(snippet);
 
-    TR::Instruction *dataReferenceInstruction
-        = Inst_ImmSnippet(TR::InstOpCode::PUSHImm4, child, cpIndex, snippet, cg());
+    TR::Instruction *dataReferenceInstruction = Inst_ImmSnippet(OP::PUSHImm4, child, cpIndex, snippet, cg());
     snippet->setDataReferenceInstruction(dataReferenceInstruction);
     Inst_BoundaryAvoidance(TR::X86BoundaryAvoidanceInstruction::unresolvedAtomicRegions, 8, 8, dataReferenceInstruction,
         cg());
@@ -303,11 +302,11 @@ TR::Register *J9::X86::I386::PrivateLinkage::pushIntegerWordArg(TR::Node *child)
     if (child->getRegister() == NULL) {
         if (child->getOpCode().isLoadConst()) {
             int32_t value = child->getInt();
-            TR::InstOpCode::Mnemonic pushOp;
+            OP::Mnemonic pushOp;
             if (value >= -128 && value <= 127) {
-                pushOp = TR::InstOpCode::PUSHImms;
+                pushOp = OP::PUSHImms;
             } else {
-                pushOp = TR::InstOpCode::PUSHImm4;
+                pushOp = OP::PUSHImm4;
             }
 
             if (child->getOpCodeValue() == TR::aconst && child->isMethodPointerConstant()
@@ -330,7 +329,7 @@ TR::Register *J9::X86::I386::PrivateLinkage::pushIntegerWordArg(TR::Node *child)
                 } else {
                     // Must pass symbol reference so that aot can put out a relocation for it
                     //
-                    Inst_ImmSym(TR::InstOpCode::PUSHImm4, child, (uintptr_t)sym->getStaticAddress(), symRef, cg());
+                    Inst_ImmSym(OP::PUSHImm4, child, (uintptr_t)sym->getStaticAddress(), symRef, cg());
                 }
 
                 cg()->decReferenceCount(child);
@@ -348,7 +347,7 @@ TR::Register *J9::X86::I386::PrivateLinkage::pushThis(TR::Node *child)
     // had a chance to set up its dependency conditions
     //
     TR::Register *tempRegister = cg()->evaluate(child);
-    Inst_Reg(TR::InstOpCode::PUSHReg, child, tempRegister, cg());
+    Inst_Reg(OP::PUSHReg, child, tempRegister, cg());
     return tempRegister;
 }
 
@@ -371,10 +370,10 @@ TR::Instruction *J9::X86::I386::PrivateLinkage::buildPICSlot(TR::X86PICSlot picS
     TR::Instruction *firstInstruction;
     if (picSlot.getMethodAddress()) {
         addrToBeCompared = (uintptr_t)picSlot.getMethodAddress();
-        firstInstruction = Inst_MemImm(TR::InstOpCode::CMPMemImm4(false), node,
-            MRef_Bdisp32(vftReg, picSlot.getSlot(), cg()), (uint32_t)addrToBeCompared, cg());
+        firstInstruction = Inst_MemImm(OP::CMPMemImm4(false), node, MRef_Bdisp32(vftReg, picSlot.getSlot(), cg()),
+            (uint32_t)addrToBeCompared, cg());
     } else
-        firstInstruction = Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, vftReg, addrToBeCompared, cg());
+        firstInstruction = Inst_RegImm(OP::CMP4RegImm4, node, vftReg, addrToBeCompared, cg());
 
     firstInstruction->setNeedsGCMap(site.getPreservedRegisterMask());
 
@@ -387,35 +386,33 @@ TR::Instruction *J9::X86::I386::PrivateLinkage::buildPICSlot(TR::X86PICSlot picS
 
     if (picSlot.needsJumpOnNotEqual()) {
         if (picSlot.needsLongConditionalBranch()) {
-            Inst_LongLabel(TR::InstOpCode::JNE4, node, mismatchLabel, cg());
+            Inst_LongLabel(OP::JNE4, node, mismatchLabel, cg());
         } else {
-            TR::InstOpCode::Mnemonic op
-                = picSlot.needsShortConditionalBranch() ? TR::InstOpCode::JNE1 : TR::InstOpCode::JNE4;
+            OP::Mnemonic op = picSlot.needsShortConditionalBranch() ? OP::JNE1 : OP::JNE4;
             Inst_Label(op, node, mismatchLabel, cg());
         }
     } else if (picSlot.needsJumpOnEqual()) {
         if (picSlot.needsLongConditionalBranch()) {
-            Inst_LongLabel(TR::InstOpCode::JE4, node, mismatchLabel, cg());
+            Inst_LongLabel(OP::JE4, node, mismatchLabel, cg());
         } else {
-            TR::InstOpCode::Mnemonic op
-                = picSlot.needsShortConditionalBranch() ? TR::InstOpCode::JE1 : TR::InstOpCode::JE4;
+            OP::Mnemonic op = picSlot.needsShortConditionalBranch() ? OP::JE1 : OP::JE4;
             Inst_Label(op, node, mismatchLabel, cg());
         }
     } else if (picSlot.needsNopAndJump()) {
         Inst_Padding(1, node, cg())->setNeedsGCMap((site.getArgSize() << 14) | site.getPreservedRegisterMask());
-        Inst_LongLabel(TR::InstOpCode::JMP4, node, mismatchLabel, cg());
+        Inst_LongLabel(OP::JMP4, node, mismatchLabel, cg());
     }
 
     TR::Instruction *instr;
     if (picSlot.getMethod()) {
-        instr = Inst_Imm(TR::InstOpCode::CALLImm4, node,
-            (uint32_t)(uintptr_t)picSlot.getMethod()->startAddressForJittedMethod(), cg());
+        instr = Inst_Imm(OP::CALLImm4, node, (uint32_t)(uintptr_t)picSlot.getMethod()->startAddressForJittedMethod(),
+            cg());
     } else if (picSlot.getHelperMethodSymbolRef()) {
         TR::MethodSymbol *helperMethod = picSlot.getHelperMethodSymbolRef()->getSymbol()->castToMethodSymbol();
-        instr = Inst_ImmSym(TR::InstOpCode::CALLImm4, node, (uint32_t)(uintptr_t)helperMethod->getMethodAddress(),
+        instr = Inst_ImmSym(OP::CALLImm4, node, (uint32_t)(uintptr_t)helperMethod->getMethodAddress(),
             picSlot.getHelperMethodSymbolRef(), cg());
     } else {
-        instr = Inst_Imm(TR::InstOpCode::CALLImm4, node, 0, cg());
+        instr = Inst_Imm(OP::CALLImm4, node, 0, cg());
     }
 
     instr->setNeedsGCMap(site.getPreservedRegisterMask());
@@ -430,12 +427,12 @@ TR::Instruction *J9::X86::I386::PrivateLinkage::buildPICSlot(TR::X86PICSlot picS
     // TODO: Can we get rid of some of these?  Maybe they don't cost anything.
     //
     if (picSlot.needsJumpToDone()) {
-        instr = Inst_Label(TR::InstOpCode::JMP4, node, doneLabel, cg());
+        instr = Inst_Label(OP::JMP4, node, doneLabel, cg());
         instr->setNeedsGCMap(site.getPreservedRegisterMask());
     }
 
     if (picSlot.generateNextSlotLabelInstruction()) {
-        Inst_Label(TR::InstOpCode::label, node, mismatchLabel, cg());
+        Inst_Label(OP::label, node, mismatchLabel, cg());
     }
 
     return firstInstruction;
@@ -480,7 +477,7 @@ void J9::X86::I386::PrivateLinkage::buildIPIC(TR::X86CallSite &site, TR::LabelSy
     TR_ASSERT(doneLabel, "a doneLabel is required for IPIC dispatches");
 
     if (entryLabel)
-        Inst_Label(TR::InstOpCode::label, site.getCallNode(), entryLabel, cg());
+        Inst_Label(OP::label, site.getCallNode(), entryLabel, cg());
 
     TR::Instruction *startOfPicInstruction = cg()->getAppendInstruction();
 
@@ -501,7 +498,7 @@ void J9::X86::I386::PrivateLinkage::buildIPIC(TR::X86CallSite &site, TR::LabelSy
 
     if (useLastITableCache) {
         if (breakBeforeIPICUsingLastITable)
-            Inst(TR::InstOpCode::INT3, site.getCallNode(), cg());
+            Inst(OP::INT3, site.getCallNode(), cg());
         if (numIPicSlotsBeforeLastITable)
             numIPicSlots = atoi(numIPicSlotsBeforeLastITable);
     }
@@ -558,7 +555,7 @@ void J9::X86::I386::PrivateLinkage::buildIPIC(TR::X86CallSite &site, TR::LabelSy
     // of the PIC.
     //
     startOfPicInstruction = startOfPicInstruction->getNext();
-    while (startOfPicInstruction->getOpCodeValue() == TR::InstOpCode::bad) {
+    while (startOfPicInstruction->getOpCodeValue() == OP::bad) {
         startOfPicInstruction = startOfPicInstruction->getNext();
     }
 
@@ -581,18 +578,18 @@ void J9::X86::I386::PrivateLinkage::buildVirtualOrComputedCall(TR::X86CallSite &
         TR::Register *targetAddress = site.evaluateVFT();
         if (targetAddress->getRegisterPair())
             targetAddress = targetAddress->getRegisterPair()->getLowOrder();
-        buildVFTCall(site, TR::InstOpCode::CALLReg, targetAddress, NULL);
+        buildVFTCall(site, OP::CALLReg, targetAddress, NULL);
     } else if (resolvedSite && site.resolvedVirtualShouldUseVFTCall()) {
         // There are no J2I thunks on x86-32, so no J2I thunk validation is needed
 
         if (entryLabel)
-            Inst_Label(TR::InstOpCode::label, site.getCallNode(), entryLabel, cg());
+            Inst_Label(OP::label, site.getCallNode(), entryLabel, cg());
 
         intptr_t offset = site.getSymbolReference()->getOffset();
         if (!resolvedSite)
             offset = 0;
 
-        buildVFTCall(site, TR::InstOpCode::CALLMem, NULL, MRef_Bdisp32(site.evaluateVFT(), offset, cg()));
+        buildVFTCall(site, OP::CALLMem, NULL, MRef_Bdisp32(site.evaluateVFT(), offset, cg()));
     } else {
         J9::X86::PrivateLinkage::buildVPIC(site, entryLabel, doneLabel);
     }
