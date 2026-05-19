@@ -22,8 +22,9 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
-<project name="criu" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
+<project name="criu" default="build" basedir="."
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
 	<description>
 		Build cmdLineTests_criu
 	</description>
@@ -49,59 +50,50 @@
 		<echo>===executable:                   ${compiler.javac}</echo>
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
-		<if>
+		<condition property="is_JDK_VERSION_match">
 			<not>
 				<matches string="${JDK_VERSION}" pattern="^(8|9|1[0-9])$$" />
 			</not>
-			<then>
-				<property name="enablePreview" value="--enable-preview -source ${JDK_VERSION}" />
-			</then>
-			<else>
-				<property name="enablePreview" value="" />
-				<property name="excludeTestMachineResourceChange" value="org/openj9/criu/TestMachineResourceChange.java" />
-			</else>
-		</if>
-		<if>
+		</condition>
+
+		<property name="enablePreview" value="--enable-preview -source ${JDK_VERSION}" if:set="is_JDK_VERSION_match"/>
+		<property name="enablePreview" value="" unless:set="is_JDK_VERSION_match"/>
+		<property name="excludeTestMachineResourceChange" value="org/openj9/criu/TestMachineResourceChange.java" unless:set="is_JDK_VERSION_match"/>
+		<condition property="excludeTestJDKCRAC" value="org/openj9/criu/TestJDKCRAC.java">
 			<not>
 				<contains string="${TEST_FLAG}" substring="CRAC" />
 			</not>
-			<then>
-				<property name="excludeTestJDKCRAC" value="org/openj9/criu/TestJDKCRAC.java" />
-			</then>
-		</if>
-		<if>
+		</condition>
+		<condition property="is_JDK_VERSION_8">
 			<equals arg1="${JDK_VERSION}" arg2="8" />
-			<then>
-				<property name="excludeJDK11UpTimeoutAdjustmentTest" value="org/openj9/criu/JDK11UpTimeoutAdjustmentTest.java" />
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<exclude name="${excludeJDK11UpTimeoutAdjustmentTest}" />
-					<exclude name="${excludeTestMachineResourceChange}" />
-					<src path="${src}" />
-					<src path="${TestUtilities}" />
-					<classpath>
-						<pathelement location="${LIB_DIR}/testng.jar"/>
-					</classpath>
-				</javac>
-			</then>
-			<else>
-				<property name="addExports" value="--add-exports jdk.management/jdk.crac.management=ALL-UNNAMED --add-exports java.base/jdk.crac=ALL-UNNAMED
-					--add-exports java.base/openj9.internal.criu=ALL-UNNAMED --add-exports java.base/jdk.internal.misc=ALL-UNNAMED" />
-				<echo>===addExports:        ${addExports}</echo>
-				<echo>===enablePreview:     ${enablePreview}</echo>
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<compilerarg line="${addExports}" />
-					<compilerarg line="${enablePreview}" />
-					<exclude name="${excludeTestJDKCRAC}" />
-					<exclude name="${excludeTestMachineResourceChange}" />
-					<src path="${src}" />
-					<src path="${TestUtilities}" />
-					<src path="${TestUtilitiesJ9}" />
-					<classpath>
-						<pathelement location="${LIB_DIR}/testng.jar"/>
-					</classpath>
-				</javac>
-			</else>
-		</if>
+		</condition>
+
+		<property name="excludeJDK11UpTimeoutAdjustmentTest" value="org/openj9/criu/JDK11UpTimeoutAdjustmentTest.java" if:set="is_JDK_VERSION_8"/>
+		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" if:set="is_JDK_VERSION_8">
+			<exclude name="${excludeJDK11UpTimeoutAdjustmentTest}" />
+			<exclude name="${excludeTestMachineResourceChange}" />
+			<src path="${src}" />
+			<src path="${TestUtilities}" />
+			<classpath>
+				<pathelement location="${LIB_DIR}/testng.jar"/>
+			</classpath>
+		</javac>
+		<property name="addExports" value="--add-exports jdk.management/jdk.crac.management=ALL-UNNAMED --add-exports java.base/jdk.crac=ALL-UNNAMED
+			--add-exports java.base/openj9.internal.criu=ALL-UNNAMED --add-exports java.base/jdk.internal.misc=ALL-UNNAMED" />
+		<echo unless:set="is_JDK_VERSION_8">===addExports:        ${addExports}</echo>
+		<echo unless:set="is_JDK_VERSION_8">===enablePreview:     ${enablePreview}</echo>
+		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" unless:set="is_JDK_VERSION_8">
+			<compilerarg line="${addExports}" />
+			<compilerarg line="${enablePreview}" />
+			<exclude name="${excludeTestJDKCRAC}" />
+			<exclude name="${excludeTestMachineResourceChange}" />
+			<src path="${src}" />
+			<src path="${TestUtilities}" />
+			<src path="${TestUtilitiesJ9}" />
+			<classpath>
+				<pathelement location="${LIB_DIR}/testng.jar"/>
+			</classpath>
+		</javac>
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
@@ -123,14 +115,13 @@
 	</target>
 
 	<target name="build" depends="buildCmdLineTestTools">
-		<if>
+		<condition property="is_CRAC">
 			<or>
 				<contains string="${TEST_FLAG}" substring="CRAC" />
 				<contains string="${TEST_FLAG}" substring="CRIU" />
 			</or>
-			<then>
-				<antcall target="clean" inheritall="true" />
-			</then>
-		</if>
+		</condition>
+
+		<antcall target="clean" inheritall="true" if:set="is_CRAC"/>
 	</target>
 </project>

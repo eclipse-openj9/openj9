@@ -23,7 +23,6 @@
 -->
 
 <project name="cmdLineTester_XcheckJNI" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
 	<description>
 		Build cmdLineTester_XcheckJNI
 	</description>

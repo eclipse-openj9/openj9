@@ -23,7 +23,6 @@
 -->
 
 <project name=" JSR335 InterfaceStaticMethod Test" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
 	<description>
 		Build JSR335 InterfaceStaticMethod Test
 	</description>

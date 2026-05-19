@@ -20,8 +20,9 @@
 
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
-<project name="OpenJ9 JSR 292 API Tests" default="build" basedir=".">
-	<taskdef resource='net/sf/antcontrib/antlib.xml'/>
+<project name="OpenJ9 JSR 292 API Tests" default="build" basedir="."
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
 	<description>
 		Build OpenJ9 JSR 292 API Tests 
 	</description>
@@ -68,18 +69,17 @@
 		<echo>===executable:                   ${compiler.javac}</echo>
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
-		<if>
+		<condition property="is_JDK_VERSION_8">
 			<not>
 				<equals arg1="${JDK_VERSION}" arg2="8"/>
 			</not>
-			<then>
-				<property name="modulec_path" value="--module-path ${mods_dir} -d ${modulec_bin}" />
-				<javac srcdir="${modulec_src}" destdir="${modulec_bin}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${modulec_src}"/>
-					<compilerarg line='${modulec_path}' />
-				</javac>
-			</then>
-		</if>
+		</condition>
+
+		<property name="modulec_path" value="--module-path ${mods_dir} -d ${modulec_bin}" if:set="is_JDK_VERSION_8"/>
+		<javac srcdir="${modulec_src}" destdir="${modulec_bin}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" if:set="is_JDK_VERSION_8">
+			<src path="${modulec_src}"/>
+			<compilerarg line='${modulec_path}' />
+		</javac>
 	</target>
 
 	<target name="compile_moduleb" depends="init" description="Compile the module files in mods.moduleb">
@@ -91,18 +91,17 @@
 		<echo>===executable:                   ${compiler.javac}</echo>
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
-		<if>
+		<condition property="is_JDK_VERSION_8">
 			<not>
 				<equals arg1="${JDK_VERSION}" arg2="8"/>
 			</not>
-			<then>
-				<property name="moduleb_path" value="--module-path ${mods_dir} -d ${moduleb_bin}" />
-				<javac srcdir="${moduleb_src}" destdir="${moduleb_bin}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${moduleb_src}"/>
-					<compilerarg line='${moduleb_path}' />
-				</javac>
-			</then>
-		</if>
+		</condition>
+
+		<property name="moduleb_path" value="--module-path ${mods_dir} -d ${moduleb_bin}" if:set="is_JDK_VERSION_8"/>
+		<javac srcdir="${moduleb_src}" destdir="${moduleb_bin}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" if:set="is_JDK_VERSION_8">
+			<src path="${moduleb_src}"/>
+			<compilerarg line='${moduleb_path}' />
+		</javac>
 	</target>
 	
 	<target name="compile_modulea" depends="init,compile_moduleb,compile_modulec" description="Compile the module files in mods.modulea">
@@ -114,18 +113,17 @@
 		<echo>===executable:                   ${compiler.javac}</echo>
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
-		<if>
+		<condition property="is_JDK_VERSION_8">
 			<not>
 				<equals arg1="${JDK_VERSION}" arg2="8"/>
 			</not>
-			<then>
-				<property name="modulea_path" value="--module-path ${mods_dir} -d ${modulea_bin}" />
-				<javac srcdir="${modulea_src}" destdir="${modulea_bin}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${modulea_src}"/>
-					<compilerarg line='${modulea_path}' />
-				</javac>
-			</then>
-		</if>
+		</condition>
+
+		<property name="modulea_path" value="--module-path ${mods_dir} -d ${modulea_bin}" if:set="is_JDK_VERSION_8"/>
+		<javac srcdir="${modulea_src}" destdir="${modulea_bin}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" if:set="is_JDK_VERSION_8">
+			<src path="${modulea_src}"/>
+			<compilerarg line='${modulea_path}' />
+		</javac>
 	</target>
 	
 	<target name="compile_tests" depends="init,compile_modulea,compile_moduleb,compile_modulec,getDependentLibs" description="compile the test source code" >
@@ -136,24 +134,23 @@
 		<echo>===executable:                   ${compiler.javac}</echo>
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
-		<if>
+		<condition property="is_JDK_VERSION_8">
 			<not>
 				<equals arg1="${JDK_VERSION}" arg2="8"/>
 			</not>
-			<then>
-				<property name="addModules" value="--add-modules ${modulea_name},${moduleb_name},${modulec_name}  --module-path ${mods_dir}" />
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src}"/>
-					<src path="${transformerListener}" />
-					<compilerarg line='${addModules}' />
-					<classpath>
-						<pathelement location="${LIB_DIR}/asm-all.jar" />
-						<pathelement location="${LIB_DIR}/testng.jar"/>
-						<pathelement location="${LIB_DIR}/jcommander.jar"/>
-					</classpath>
-				</javac>
-			</then>
-		</if>
+		</condition>
+
+		<property name="addModules" value="--add-modules ${modulea_name},${moduleb_name},${modulec_name}  --module-path ${mods_dir}" if:set="is_JDK_VERSION_8"/>
+		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" if:set="is_JDK_VERSION_8">
+			<src path="${src}"/>
+			<src path="${transformerListener}" />
+			<compilerarg line='${addModules}' />
+			<classpath>
+			<pathelement location="${LIB_DIR}/asm-all.jar" />
+			<pathelement location="${LIB_DIR}/testng.jar"/>
+			<pathelement location="${LIB_DIR}/jcommander.jar"/>
+			</classpath>
+		</javac>
 	</target>
 
 	<target name="DEST" depends="compile_tests" description="generate the distribution" >
@@ -174,16 +171,15 @@
 	</target>
 
 	<target name="build" >
-		<if>
+		<condition property="is_JCL_VERSION_current">
 			<not>
 				<and>
 					<matches string="${JDK_VERSION}" pattern="^(9|10)$$" />
 					<equals arg1="${JCL_VERSION}" arg2="current"/>
 				</and>
 			</not>
-			<then>
-				<antcall target="clean" inheritall="true" />
-			</then>
-		</if>
+		</condition>
+
+		<antcall target="clean" inheritall="true" if:set="is_JCL_VERSION_current"/>
 	</target>
 </project>

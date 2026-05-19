@@ -22,8 +22,9 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
-<project name="BUILD_FUNCTIONAL_TEST" default="build_functional" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
+<project name="BUILD_FUNCTIONAL_TEST" default="build_functional" basedir="."
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
 	<description>
 		Build functional tests
 	</description>
@@ -39,22 +40,19 @@
 	</target>
 	
 	<target name="build_functional" depends="dist_functional">
-		<if>
+		<condition property="is_JDK_VERSION_Panama">
 			<equals arg1="${JDK_VERSION}" arg2="Panama"/>
-			<then>
-				<subant target="">
-					<fileset dir="./">
-						<include name="Panama/build.xml" />
-					</fileset>
-				</subant>
-			</then>
-			<else>
-				<subant target="">
-					<fileset dir="." includes="*/build.xml" >
-						<exclude name="Panama/build.xml" />
-					</fileset>
-				</subant>
-			</else>
-		</if>
+		</condition>
+
+		<subant target="" if:set="is_JDK_VERSION_Panama">
+			<fileset dir="./">
+			<include name="Panama/build.xml" />
+			</fileset>
+		</subant>
+		<subant target="" unless:set="is_JDK_VERSION_Panama">
+			<fileset dir="." includes="*/build.xml" >
+			<exclude name="Panama/build.xml" />
+			</fileset>
+		</subant>
 	</target>
 </project>

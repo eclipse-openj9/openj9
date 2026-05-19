@@ -20,8 +20,9 @@ OpenJDK Assembly Exception [2].
 
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
-<project name="Java17AndUp" default="build" basedir=".">
-	<taskdef resource='net/sf/antcontrib/antlib.xml' />
+<project name="Java17AndUp" default="build" basedir="."
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
 	<description>
 		Tests for Java 17 and up
 	</description>
@@ -36,16 +37,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml" />
 	<property name="TestUtilities" location="../TestUtilities/src"/>
 
-	<if>
+		<condition property="src_170" value="src_170">
 		<equals arg1="${JDK_VERSION}" arg2="17" />
-		<then>
-			<!-- Java APIs of JEP389 and related features in Java 16 is incompatible with the APIs in Java17 and beyond -->
-			<property name="src_170" value="src_170" />
-		</then>
-		<else>
-			<property name="src_170" value="" />
-		</else>
-	</if>
+	</condition>
+	<property name="src_170" value=""/>
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
@@ -60,38 +55,35 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
 
-		<if>
+		<condition property="is_JDK_VERSION_17">
 			<equals arg1="${JDK_VERSION}" arg2="17"/>
-			<then>
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src}" />
-					<src path="${src_170}" />
-					<src path="${TestUtilities}" />
-					<compilerarg line='--enable-preview --source ${JDK_VERSION}' />
-					<compilerarg line='--add-modules jdk.incubator.foreign' />
-					<compilerarg line='--add-opens jdk.incubator.foreign/jdk.internal.foreign=ALL-UNNAMED' />
-					<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED' />
-					<compilerarg line='--add-opens java.base/jdk.internal.misc=ALL-UNNAMED' />
-					<classpath>
-						<pathelement location="${LIB_DIR}/testng.jar" />
-						<pathelement location="${LIB_DIR}/jcommander.jar" />
-						<pathelement location="${LIB_DIR}/asm.jar" />
-						<pathelement location="${build}" />
-					</classpath>
-				</javac>
-			</then>
-			<else>
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src}" />
-					<classpath>
-						<pathelement location="${LIB_DIR}/testng.jar" />
-						<pathelement location="${LIB_DIR}/jcommander.jar" />
-						<pathelement location="${LIB_DIR}/asm.jar" />
-						<pathelement location="${build}" />
-					</classpath>
-				</javac>
-			</else>
-		</if>
+		</condition>
+
+		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" if:set="is_JDK_VERSION_17">
+			<src path="${src}" />
+			<src path="${src_170}" />
+			<src path="${TestUtilities}" />
+			<compilerarg line='--enable-preview --source ${JDK_VERSION}' />
+			<compilerarg line='--add-modules jdk.incubator.foreign' />
+			<compilerarg line='--add-opens jdk.incubator.foreign/jdk.internal.foreign=ALL-UNNAMED' />
+			<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED' />
+			<compilerarg line='--add-opens java.base/jdk.internal.misc=ALL-UNNAMED' />
+			<classpath>
+			<pathelement location="${LIB_DIR}/testng.jar" />
+			<pathelement location="${LIB_DIR}/jcommander.jar" />
+			<pathelement location="${LIB_DIR}/asm.jar" />
+			<pathelement location="${build}" />
+			</classpath>
+		</javac>
+		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" unless:set="is_JDK_VERSION_17">
+			<src path="${src}" />
+			<classpath>
+			<pathelement location="${LIB_DIR}/testng.jar" />
+			<pathelement location="${LIB_DIR}/jcommander.jar" />
+			<pathelement location="${LIB_DIR}/asm.jar" />
+			<pathelement location="${build}" />
+			</classpath>
+		</javac>
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
@@ -107,14 +99,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</target>
 
 	<target name="build">
-		<if>
+		<condition property="is_JDK_VERSION_match">
 			<not>
 				<matches string="${JDK_VERSION}" pattern="^(8|9|10|11|12|13|14|15|16)$$" />
 			</not>
-			<then>
-				<antcall target="clean" inheritall="true" />
-			</then>
-		</if>
+		</condition>
+
+		<antcall target="clean" inheritall="true" if:set="is_JDK_VERSION_match"/>
 	</target>
 
 	<target name="clean" depends="dist" description="clean up">

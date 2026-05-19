@@ -22,8 +22,9 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
-<project name="cmdLineTests" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
+<project name="cmdLineTests" default="build" basedir="."
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
 	<description>
 		Build cmdLineTests_proxyFieldAccess
 	</description>
@@ -47,20 +48,17 @@
 		<echo>===executable:                   ${compiler.javac}</echo>
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${build}</echo>
-		<if>
+		<condition property="is_JDK_VERSION_8">
 			<equals arg1="${JDK_VERSION}" arg2="8"/>
-			<then>
-				<javac srcdir="${src.dir}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" encoding="ISO-8859-1">
-					<src path="${src.dir}" />
-				</javac>
-			</then>
-			<else>
-				<javac srcdir="${src.dir}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src.dir}" />
-					<compilerarg line='--patch-module java.base=${src.dir} --add-modules jdk.unsupported --add-reads java.base=jdk.unsupported' />
-				</javac>
-			</else>
-		</if>
+		</condition>
+
+		<javac srcdir="${src.dir}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" encoding="ISO-8859-1" if:set="is_JDK_VERSION_8">
+			<src path="${src.dir}" />
+		</javac>
+		<javac srcdir="${src.dir}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" unless:set="is_JDK_VERSION_8">
+			<src path="${src.dir}" />
+			<compilerarg line='--patch-module java.base=${src.dir} --add-modules jdk.unsupported --add-reads java.base=jdk.unsupported' />
+		</javac>
 	</target>
 	
 	<target name="dist" depends="compile" description="generate the distribution">

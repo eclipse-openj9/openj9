@@ -22,8 +22,9 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
-<project name="runtimemxbeanTests" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
+<project name="runtimemxbeanTests" default="build" basedir="."
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
 	<description>
 		Build cmdLineTests_runtimemxbeanTests
 	</description>
@@ -52,15 +53,10 @@
 		</javac>
 	</target>
 
-	<if>
+		<condition property="TEXT_ENCODING" value="IBM-1047">
 		<contains string="${SPEC}" substring="zos"/>
-		<then>
-			<property name="TEXT_ENCODING" value="IBM-1047"/>
-		</then>
-		<else>
-			<property name="TEXT_ENCODING" value="ISO-8859-1"/>
-		</else>
-	</if>
+	</condition>
+	<property name="TEXT_ENCODING" value="ISO-8859-1"/>
 
 	<target name="dist" depends="compile" description="generate the distribution">
 		<jar jarfile="${DEST}/runtimemxbeanTests.jar" filesonly="true">
@@ -83,13 +79,12 @@
 	</target>
 
 	<target name="build" depends="buildCmdLineTestTools">
-		<if>
+		<condition property="is_JDK_VERSION_match">
 			<not>
 				<matches string="${JDK_VERSION}" pattern="^(8|9)$$" />
 			</not>
-			<then>
-				<antcall target="clean" inheritall="true" />
-			</then>
-		</if>
+		</condition>
+
+		<antcall target="clean" inheritall="true" if:set="is_JDK_VERSION_match"/>
 	</target>
 </project>

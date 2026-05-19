@@ -57,7 +57,6 @@ FROM ${IMAGE_NAME}:${IMAGE_VERSION}
 RUN apt-get update \
  && apt-get install -qq -y --no-install-recommends \
     ant \
-    ant-contrib \
     build-essential \
     perl \
     vim \

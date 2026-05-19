@@ -23,7 +23,6 @@
 -->
 
 <project name="Test Example" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
 	<description>
     	Test Example
     </description>

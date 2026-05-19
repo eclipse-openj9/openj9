@@ -20,8 +20,9 @@ OpenJDK Assembly Exception [2].
 
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
-<project name="Java22AndUp" default="build" basedir=".">
-	<taskdef resource='net/sf/antcontrib/antlib.xml' />
+<project name="Java22AndUp" default="build" basedir="."
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
 	<description>
 		Tests for Java 22 and up
 	</description>
@@ -74,14 +75,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</target>
 
 	<target name="build">
-		<if>
+		<condition property="is_JDK_VERSION_match">
 			<not>
 				<matches string="${JDK_VERSION}" pattern="^(8|9|1[0-9]|2[0-1])$$" />
 			</not>
-			<then>
-				<antcall target="clean" inheritall="true" />
-			</then>
-		</if>
+		</condition>
+
+		<antcall target="clean" inheritall="true" if:set="is_JDK_VERSION_match"/>
 	</target>
 
 	<target name="clean" depends="dist" description="clean up">

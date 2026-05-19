@@ -22,8 +22,9 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
-<project name="cmdLineTests" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
+<project name="cmdLineTests" default="build" basedir="."
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
 	<description>
 		Build cmdLineTests locales
 	</description>
@@ -34,15 +35,10 @@
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/locales" />
 	<property name="src" location="." />
 
-	<if>
+		<condition property="TEXT_ENCODING" value="IBM-1047">
 		<contains string="${SPEC}" substring="zos"/>
-		<then>
-			<property name="TEXT_ENCODING" value="IBM-1047"/>
-		</then>
-		<else>
-			<property name="TEXT_ENCODING" value="ISO-8859-1"/>
-		</else>
-	</if>
+	</condition>
+	<property name="TEXT_ENCODING" value="ISO-8859-1"/>
 
 	<target name="dist" description="generate the distribution">
 		<copy todir="${DEST}" outputencoding="${TEXT_ENCODING}">

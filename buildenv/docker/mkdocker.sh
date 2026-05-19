@@ -447,10 +447,7 @@ fi
   echo " && unzip -q ant.zip -d /opt \\"
   echo " && ln -s apache-ant-$ant_version /opt/ant \\"
   echo " && ln -s /opt/ant/bin/ant /usr/bin/ant \\"
-  echo " && $wget_O ant-contrib.tar.gz https://sourceforge.net/projects/ant-contrib/files/ant-contrib/1.0b3/ant-contrib-1.0b3-bin.tar.gz \\"
-  echo " && tar -xzf ant-contrib.tar.gz \\"
-  echo " && mv ant-contrib/ant-contrib-1.0b3.jar /opt/ant/lib \\"
-  echo " && rm -rf ant-contrib ant.zip ant-contrib.tar.gz"
+  echo " && rm -f ant.zip"
   echo ""
   local git_version=2.5.3
   echo "# Install git."
@@ -538,7 +535,6 @@ if [ $version = 18.04 ] || [ $version = 20.04 ] ; then
 fi
   echo " && apt-get install -qq -y --no-install-recommends \\"
   echo "    ant \\"
-  echo "    ant-contrib \\"
   echo "    autoconf \\"
   echo "    build-essential \\"
   echo "    ca-certificates \\"

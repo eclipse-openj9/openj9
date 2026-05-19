@@ -23,7 +23,6 @@
 -->
 
 <project name="SCCommandLineOptionTests" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
 	<description>
 		Build SCCommandLineOptionTests
 	</description>

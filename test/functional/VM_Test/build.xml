@@ -22,8 +22,9 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
-<project name="VM_Test" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
+<project name="VM_Test" default="build" basedir="."
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
 	<description>
 		Build VM_Test
 	</description>
@@ -85,102 +86,83 @@
 
 		<property name="addExports" value="--add-modules openj9.sharedclasses --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/com.ibm.oti.util=ALL-UNNAMED --add-exports=java.management/com.ibm.java.lang.management.internal=ALL-UNNAMED --add-exports=jdk.management/com.ibm.lang.management.internal=ALL-UNNAMED" />
 
-		<if>
+		<condition property="is_JDK_VERSION_8">
 			<equals arg1="${JDK_VERSION}" arg2="8"/>
-			<then>
-				<javac destdir="${classUnloadingBin}" nowarn="on" debug="true" fork="true" executable="${compiler.javac}" classpathref="build.cp" encoding="ISO-8859-1">
-					<src path="${classUnloadingSupportTests}"/>
-					<src path="${src}"/>
-					<include name="j9vm/test/classunloading/**"/>
-				</javac>
-			</then>
-			<else>
-				<javac destdir="${classUnloadingBin}" nowarn="on" debug="true" fork="true" executable="${compiler.javac}" classpathref="build.cp" encoding="ISO-8859-1">
-					<src path="${classUnloadingSupportTests}"/>
-					<src path="${src}"/>
-					<include name="j9vm/test/classunloading/**"/>
-					<compilerarg line='${addExports}' />
-				</javac>
-			</else>
-		</if>
+		</condition>
 
-		<if>
+		<javac destdir="${classUnloadingBin}" nowarn="on" debug="true" fork="true" executable="${compiler.javac}" classpathref="build.cp" encoding="ISO-8859-1" if:set="is_JDK_VERSION_8">
+			<src path="${classUnloadingSupportTests}"/>
+			<src path="${src}"/>
+			<include name="j9vm/test/classunloading/**"/>
+		</javac>
+		<javac destdir="${classUnloadingBin}" nowarn="on" debug="true" fork="true" executable="${compiler.javac}" classpathref="build.cp" encoding="ISO-8859-1" unless:set="is_JDK_VERSION_8">
+			<src path="${classUnloadingSupportTests}"/>
+			<src path="${src}"/>
+			<include name="j9vm/test/classunloading/**"/>
+			<compilerarg line='${addExports}' />
+		</javac>
+
+		<condition property="is_JDK_VERSION_8">
 			<equals arg1="${JDK_VERSION}" arg2="8"/>
-			<then>
-				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
-					<src path="${src}" />
-					<src path="${excludeFiles}"/>
-					<src path="${TestUtilities}" />
-					<exclude name="**/attachAPI/**" />
-					<classpath>
-						<pathelement location="${LIB_DIR}/testng.jar"/>
-					</classpath>
-				</javac>
-			</then>
-			<elseif>
-					<matches string="${JDK_VERSION}" pattern="^(9|10)$$" />
-				<then>
-					<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
-						<src path="${src}" />
-						<src path="${excludeFiles}"/>
-						<src path="${TestUtilities}" />
-						<exclude name="**/attachAPI/**" />
-						<!-- 133609: ClassPathSettingClassLoaderTest failed in jdk9 -->
-						<exclude name="**/ClassPathSettingClassLoader.java" />
-						<exclude name="**/ClassPathSettingClassLoaderTest.java" />
-						<compilerarg line='${addExports}' />
-						<classpath>
-							<pathelement location="${LIB_DIR}/testng.jar"/>
-						</classpath>
-					</javac>
-				</then>
-			</elseif>
-			<elseif>
-				<matches string="${JDK_VERSION}" pattern="^(1[1-9]|2[0-5])$" />
-				<!-- JDK_VERSION JDK11 - 25 -->
-				<then>
-				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
-					<src path="${src}" />
-					<src path="${excludeFiles}"/>
-					<src path="${TestUtilities}" />
-					<exclude name="**/attachAPI/**" />
-					<!-- 133609: ClassPathSettingClassLoaderTest failed in jdk9 -->
-					<exclude name="**/ClassPathSettingClassLoader.java" />
-					<exclude name="**/ClassPathSettingClassLoaderTest.java" />
-					<compilerarg line='${addExports}' />
-					<classpath>
-						<pathelement location="${LIB_DIR}/testng.jar"/>
-					</classpath>
-				</javac>
-				</then>
-			</elseif>
-			<else>
-				<!-- JDK_VERSION JDK26+ -->
-				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
-					<src path="${src}"/>
-					<src path="${excludeFiles}"/>
-					<src path="${TestUtilities}" />
-					<exclude name="**/attachAPI/**" />
-					<!-- 133609: ClassPathSettingClassLoaderTest failed in jdk9 -->
-					<exclude name="**/ClassPathSettingClassLoader.java" />
-					<exclude name="**/ClassPathSettingClassLoaderTest.java" />
-					<!-- Thread.stop() is no longer available starting from JDK 26 -->
-					<exclude name="j9vm/test/threads/regression/RegressionTests.java" />
-					<exclude name="j9vm/test/threads/regression/ProcessWaitForStop.java" />
-					<compilerarg line='${addExports}' />
-					<classpath>
-						<pathelement location="${LIB_DIR}/testng.jar"/>
-					</classpath>
-				</javac>
-				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
-					<src path="${src_26}"/>
-					<compilerarg line='${addExports}' />
-					<classpath>
-						<pathelement location="${LIB_DIR}/testng.jar"/>
-					</classpath>
-				</javac>
-			</else>
-		</if>
+		</condition>
+
+		<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp" if:set="is_JDK_VERSION_8">
+			<src path="${src}" />
+			<src path="${excludeFiles}"/>
+			<src path="${TestUtilities}" />
+			<exclude name="**/attachAPI/**" />
+			<classpath>
+			<pathelement location="${LIB_DIR}/testng.jar"/>
+			</classpath>
+		</javac>
+		<condition property="is_JDK_26_plus" unless:set="is_JDK_VERSION_8">
+			<not>
+				<matches string="${JDK_VERSION}" pattern="^(9|10|1[1-9]|2[0-5])$$" />
+			</not>
+		</condition>
+		<condition property="is_JDK_9_to_25" unless:set="is_JDK_VERSION_8">
+			<not>
+				<isset property="is_JDK_26_plus" />
+			</not>
+		</condition>
+		<!-- JDK 9-25 -->
+		<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp" if:set="is_JDK_9_to_25">
+			<src path="${src}"/>
+			<src path="${excludeFiles}"/>
+			<src path="${TestUtilities}" />
+			<exclude name="**/attachAPI/**" />
+			<!-- 133609: ClassPathSettingClassLoaderTest failed in jdk9 -->
+			<exclude name="**/ClassPathSettingClassLoader.java" />
+			<exclude name="**/ClassPathSettingClassLoaderTest.java" />
+			<compilerarg line='${addExports}' />
+			<classpath>
+			<pathelement location="${LIB_DIR}/testng.jar"/>
+			</classpath>
+		</javac>
+		<!-- JDK 26+ -->
+		<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp" if:set="is_JDK_26_plus">
+			<src path="${src}"/>
+			<src path="${excludeFiles}"/>
+			<src path="${TestUtilities}" />
+			<exclude name="**/attachAPI/**" />
+			<!-- 133609: ClassPathSettingClassLoaderTest failed in jdk9 -->
+			<exclude name="**/ClassPathSettingClassLoader.java" />
+			<exclude name="**/ClassPathSettingClassLoaderTest.java" />
+			<!-- Thread.stop() is no longer available starting from JDK 26 -->
+			<exclude name="j9vm/test/threads/regression/RegressionTests.java" />
+			<exclude name="j9vm/test/threads/regression/ProcessWaitForStop.java" />
+			<compilerarg line='${addExports}' />
+			<classpath>
+			<pathelement location="${LIB_DIR}/testng.jar"/>
+			</classpath>
+		</javac>
+		<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp" if:set="is_JDK_26_plus">
+			<src path="${src_26}"/>
+			<compilerarg line='${addExports}' />
+			<classpath>
+			<pathelement location="${LIB_DIR}/testng.jar"/>
+			</classpath>
+		</javac>
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
@@ -237,14 +219,13 @@
 	</target>
 
 	<target name="build" depends="check-jar" unless="jar.exist">
-		<if>
+		<condition property="is_JDK_IMPL_ibm">
 			<or>
 				<equals arg1="${JDK_IMPL}" arg2="ibm"  />
 				<equals arg1="${JDK_IMPL}" arg2="openj9" />
 			</or>
-			<then>
-				<antcall target="clean" inheritall="true" />
-			</then>
-		</if>
+		</condition>
+
+		<antcall target="clean" inheritall="true" if:set="is_JDK_IMPL_ibm"/>
 	</target>
 </project>

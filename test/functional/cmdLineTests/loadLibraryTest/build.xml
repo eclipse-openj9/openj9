@@ -22,8 +22,9 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
-<project name="loadLibraryTest" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
+<project name="loadLibraryTest" default="build" basedir="."
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
 	<description>
 		Build cmdLineTests_loadLibraryTest
 	</description>
@@ -47,15 +48,9 @@
 		<echo>===executable:                   ${compiler.javac}</echo>
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
-		<if>
+		<condition property="addExports" value="" else="--add-exports java.desktop/sun.font=ALL-UNNAMED">
 			<equals arg1="${JDK_VERSION}" arg2="8"/>
-			<then>
-				<property name="addExports" value="" />
-			</then>
-			<else>
-				<property name="addExports" value='--add-exports java.desktop/sun.font=ALL-UNNAMED' />
-			</else>
-		</if>
+		</condition>
 
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" >
 			<compilerarg line='${addExports}' />

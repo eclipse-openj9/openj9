@@ -20,8 +20,9 @@ OpenJDK Assembly Exception [2].
 
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
-<project name="utils" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
+<project name="utils" default="build" basedir="."
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
 	<description>
 		Build utils
 	</description>
@@ -49,41 +50,32 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<echo>===executable:                   ${compiler.javac}</echo>
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
-		<if>
+		<condition property="is_JDK_VERSION_8">
 			<equals arg1="${JDK_VERSION}" arg2="8" />
-			<then>
-				<property name="src_access" location="${TEST_ROOT}/functional/UnsafeAccess/src" />
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src_shared}" />
-					<src path="${src_access}" />
-					<classpath>
-						<pathelement location="${LIB_DIR}/testng.jar" />
-					</classpath>
-				</javac>
-			</then>
-			<else>
-				<if>
-					<matches string="${JDK_VERSION}" pattern="^1[1-6]$$" />
-					<then>
-						<!-- Java 11-16 -->
-						<property name="src_access" location="${TEST_ROOT}/functional/UnsafeAccess/src_110" />
-					</then>
-					<else>
-						<!-- Java 17+ -->
-						<property name="src_access" location="${TEST_ROOT}/functional/UnsafeAccess/src_170" />
-					</else>
-				</if>
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src_shared}" />
-					<src path="${src_access}" />
-					<classpath>
-						<pathelement location="${LIB_DIR}/testng.jar" />
-					</classpath>
-					<compilerarg value="--add-exports" />
-					<compilerarg value="java.base/jdk.internal.misc=ALL-UNNAMED" />
-				</javac>
-			</else>
-		</if>
+		</condition>
+
+		<property name="src_access" location="${TEST_ROOT}/functional/UnsafeAccess/src" if:set="is_JDK_VERSION_8"/>
+		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" if:set="is_JDK_VERSION_8">
+			<src path="${src_shared}" />
+			<src path="${src_access}" />
+			<classpath>
+			<pathelement location="${LIB_DIR}/testng.jar" />
+			</classpath>
+		</javac>
+		<condition property="src_access_dir" value="${TEST_ROOT}/functional/UnsafeAccess/src_110" unless:set="is_JDK_VERSION_8">
+			<matches string="${JDK_VERSION}" pattern="^1[1-6]$$" />
+		</condition>
+		<property name="src_access_dir" value="${TEST_ROOT}/functional/UnsafeAccess/src_170" unless:set="is_JDK_VERSION_8"/>
+		<property name="src_access" location="${src_access_dir}" unless:set="is_JDK_VERSION_8"/>
+		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" unless:set="is_JDK_VERSION_8">
+			<src path="${src_shared}" />
+			<src path="${src_access}" />
+			<classpath>
+			<pathelement location="${LIB_DIR}/testng.jar" />
+			</classpath>
+			<compilerarg value="--add-exports" />
+			<compilerarg value="java.base/jdk.internal.misc=ALL-UNNAMED" />
+		</javac>
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
@@ -107,14 +99,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</target>
 
 	<target name="build" depends="check-jar" unless="jar.exist">
-		<if>
+		<condition property="is_JDK_IMPL_ibm">
 			<or>
 				<equals arg1="${JDK_IMPL}" arg2="ibm" />
 				<equals arg1="${JDK_IMPL}" arg2="openj9" />
 			</or>
-			<then>
-				<antcall target="clean" inheritall="true" />
-			</then>
-		</if>
+		</condition>
+
+		<antcall target="clean" inheritall="true" if:set="is_JDK_IMPL_ibm"/>
 	</target>
 </project>
