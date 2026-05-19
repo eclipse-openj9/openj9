@@ -97,10 +97,10 @@ TR::Register *TR::IA32J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, b
         numXmmRegs = (uint8_t)(machine()->getLastXMMR() - machine()->getFirstXMMR() + 1);
 
     TR::RegisterDependencyConditions *deps;
-    deps = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)6 + numXmmRegs, cg());
+    deps = RegDeps((uint8_t)0, (uint8_t)6 + numXmmRegs, cg());
     TR::Register *returnReg = buildVolatileAndReturnDependencies(callNode, deps);
 
-    TR::RegisterDependencyConditions *dummy = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)0, cg());
+    TR::RegisterDependencyConditions *dummy = RegDeps((uint8_t)0, (uint8_t)0, cg());
 
     // Call-out
     Inst_RegImm(argSize >= -128 && argSize <= 127 ? TR::InstOpCode::SUB4RegImms : TR::InstOpCode::SUB4RegImm4, callNode,

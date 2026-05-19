@@ -98,8 +98,8 @@ TR::Register *TR::AMD64J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, 
     //
     uint32_t pre = getProperties().getNumIntegerArgumentRegisters() + getProperties().getNumFloatArgumentRegisters();
     uint32_t post = getProperties().getNumVolatileRegisters() + 1 + (callNode->getDataType() == TR::NoType ? 0 : 1);
-    TR::RegisterDependencyConditions *preDeps = generateRegisterDependencyConditions(pre, 0, cg());
-    TR::RegisterDependencyConditions *postDeps = generateRegisterDependencyConditions(0, post, cg());
+    TR::RegisterDependencyConditions *preDeps = RegDeps(pre, 0, cg());
+    TR::RegisterDependencyConditions *postDeps = RegDeps(0, post, cg());
 
     // Evaluate outgoing arguments on the system stack and build pre-conditions.
     //

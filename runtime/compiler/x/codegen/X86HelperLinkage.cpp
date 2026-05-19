@@ -72,10 +72,9 @@ public:
     // Build the dependencies for each virtual-real register pair
     TR::RegisterDependencyConditions *BuildRegisterDependencyConditions()
     {
-        TR::RegisterDependencyConditions *deps
-            = generateRegisterDependencyConditions(NumberOfRegistersInUse() + 1, // For VMThread
-                NumberOfRegistersInUse() + 1, // For VMThread
-                _cg);
+        TR::RegisterDependencyConditions *deps = RegDeps(NumberOfRegistersInUse() + 1, // For VMThread
+            NumberOfRegistersInUse() + 1, // For VMThread
+            _cg);
         for (uint8_t i = (uint8_t)TR::RealRegister::NoReg; i < (uint8_t)TR::RealRegister::NumRegisters; i++) {
             if (_Registers[i] != NULL) {
                 deps->addPreCondition(_Registers[i], (TR::RealRegister::RegNum)i, _cg);

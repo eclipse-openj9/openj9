@@ -381,7 +381,7 @@ TR::Instruction *J9::X86::AMD64::PrivateLinkage::generateFlushInstruction(TR::In
     //
     TR::Register *argReg = cg->allocateRegister(movRegisterKind(movType(dataType)));
 
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)2, 2, cg);
+    TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)2, 2, cg);
     deps->addPreCondition(argReg, regIndex, cg);
     deps->addPostCondition(argReg, regIndex, cg);
     deps->addPreCondition(espReg, TR::RealRegister::esp, cg);

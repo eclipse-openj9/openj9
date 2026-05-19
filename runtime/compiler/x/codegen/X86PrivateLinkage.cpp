@@ -1065,10 +1065,9 @@ TR::X86CallSite::X86CallSite(TR::Node *callNode, TR::Linkage *calleeLinkage)
     uint32_t numPostconditions = calleeLinkage->getProperties().getNumberOfVolatileGPRegisters()
         + calleeLinkage->getProperties().getNumberOfVolatileXMMRegisters() + 3; // return reg + VM Thread + scratch
 
-    _preConditionsUnderConstruction = generateRegisterDependencyConditions(numPreconditions, 0, cg());
-    _postConditionsUnderConstruction
-        = generateRegisterDependencyConditions((COPY_PRECONDITIONS_TO_POSTCONDITIONS ? numPreconditions : 0),
-            numPostconditions + (COPY_PRECONDITIONS_TO_POSTCONDITIONS ? numPreconditions : 0), cg());
+    _preConditionsUnderConstruction = RegDeps(numPreconditions, 0, cg());
+    _postConditionsUnderConstruction = RegDeps((COPY_PRECONDITIONS_TO_POSTCONDITIONS ? numPreconditions : 0),
+        numPostconditions + (COPY_PRECONDITIONS_TO_POSTCONDITIONS ? numPreconditions : 0), cg());
 
     _preservedRegisterMask = getLinkage()->getProperties().getPreservedRegisterMapForGC();
     if (getMethodSymbol()->preservesAllRegisters()) {
@@ -2369,7 +2368,7 @@ static void generateITableEntryLoop(uint32_t iterations, TR::Node *callNode, TR:
                 gotoLastITableDispatchLabel, cg);
         }
     } else {
-        TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(0, 4, cg);
+        TR::RegisterDependencyConditions *deps = RegDeps(0, 4, cg);
         TR::LabelSymbol *startLoopLabel = generateLabelSymbol(cg);
         TR::LabelSymbol *endLoopLabel = generateLabelSymbol(cg);
         TR::Register *indexReg = cg->allocateRegister();
@@ -2581,7 +2580,7 @@ void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable(TR::X86CallS
     TR::Register *vftReg = site.evaluateVFT();
     TR::Register *scratchReg = cg()->allocateRegister();
     TR::Register *vtableIndexReg = cg()->allocateRegister();
-    TR::RegisterDependencyConditions *vtableIndexRegDeps = generateRegisterDependencyConditions(1, 0, cg());
+    TR::RegisterDependencyConditions *vtableIndexRegDeps = RegDeps(1, 0, cg());
     vtableIndexRegDeps->addPreCondition(vtableIndexReg, getProperties().getVTableIndexArgumentRegister(), cg());
     // Now things get weird.
     //
