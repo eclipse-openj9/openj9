@@ -243,8 +243,7 @@ JVM_NewNullRestrictedNonAtomicArray(JNIEnv *env, jclass componentType, jint leng
 JNIEXPORT jarray JNICALL
 JVM_NewReferenceArray(JNIEnv *env, jclass componentType, jint length)
 {
-	assert(!"JVM_NewReferenceArray() stubbed!");
-	return NULL;
+	return newArrayHelper(env, componentType, length, false, NULL);
 }
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
