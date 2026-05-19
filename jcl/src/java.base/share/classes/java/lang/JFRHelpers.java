@@ -34,6 +34,7 @@ import java.util.regex.Pattern;
 import com.ibm.oti.vm.VM;
 import jdk.internal.misc.Unsafe;
 
+@SuppressWarnings("nls")
 final class JFRHelpers {
 	private static Class<?> jfrjvmClass;
 	private static Class<?> logTagClass;
@@ -56,6 +57,27 @@ final class JFRHelpers {
 			initJFRClasses();
 		}
 	}
+
+	private static final class DCmdInvocation {
+		private Object dcmdInstance;
+		private Method dcmdExecute;
+
+		DCmdInvocation(Object dcmdInstance, Method dcmdExecute) {
+			this.dcmdInstance = dcmdInstance;
+			this.dcmdExecute = dcmdExecute;
+		}
+
+		Object getDCmdInstance() {
+			return this.dcmdInstance;
+		}
+		Method getDcmdExecute() {
+			return this.dcmdExecute;
+		}
+	}
+	private static DCmdInvocation dcmdStart;
+	private static DCmdInvocation dcmdStop;
+	private static DCmdInvocation dcmdConfigure;
+	private static DCmdInvocation dcmdDump;
 
 	private static Long convertToBytes(String text) {
 		Pattern pattern = Pattern.compile("(\\d+)([gkm]b?)?", Pattern.CASE_INSENSITIVE);
@@ -130,12 +152,9 @@ final class JFRHelpers {
 	}
 
 	private static void initJFRCmdlineOptions() {
+		/*[IF (JAVA_SPEC_VERSION == 11) | (JAVA_SPEC_VERSION == 17)]*/
 		try {
-			Class<?> dcmdStartClass = Class.forName("jdk.jfr.internal.dcmd.DCmdStart");
-			Constructor<?> constructor = dcmdStartClass.getDeclaredConstructor();
-			constructor.setAccessible(true);
-			Object dcmdStartInstance = constructor.newInstance();
-
+			dcmdStart = initDCmdInvocation(dcmdStart, "jdk.jfr.internal.dcmd.DCmdStart");
 			/*[IF JAVA_SPEC_VERSION == 11]*/
 			String fileName = null;
 			String settings = null;
@@ -184,24 +203,8 @@ final class JFRHelpers {
 			}
 			/* Convert the string to a String array */
 			String[] settingsArray = new String[] { settings };
-
-			Method executeMethod = dcmdStartClass.getDeclaredMethod(
-				"execute",
-				String.class, //name
-				String[].class, //settings
-				Long.class, //delay
-				Long.class, //duration
-				Boolean.class, //disk
-				String.class, //path
-				Long.class, //maxAge
-				Long.class, //maxSize
-				Boolean.class, //dumpOnExit
-				Boolean.class //pathToGcRoots
-			);
-
-			executeMethod.setAccessible(true);
-			String results = (String) executeMethod.invoke(
-				dcmdStartInstance,
+			String results = (String) dcmdStart.getDcmdExecute().invoke(
+				dcmdStart.getDCmdInstance(),
 				null,
 				settingsArray,
 				delay,
@@ -216,24 +219,23 @@ final class JFRHelpers {
 			if (null != results) {
 				logJFR(results, 0, 2);
 			}
-			/*[ELSEIF JAVA_SPEC_VERSION >= 17]*/
-			Method executeMethod = dcmdStartClass.getSuperclass().getDeclaredMethod("execute", String.class, String.class, char.class);
-			executeMethod.setAccessible(true);
-
-			String[] results = (String []) executeMethod.invoke(dcmdStartInstance, "internal", jfrCMDLineOption, ',');
+			/*[ELSE] JAVA_SPEC_VERSION == 11 */
+			String[] results = (String []) dcmdStart.getDcmdExecute().invoke(
+					dcmdStart.getDCmdInstance(), "internal", jfrCMDLineOption, ',');
 			if (null != results) {
 				for (String result : results) {
 					logJFR(result, 0, 2);
 				}
 			}
-			/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+			/*[ENDIF] JAVA_SPEC_VERSION == 11 */
 		} catch (InvocationTargetException e) {
-			Throwable cause = e.getCause();
-			e.printStackTrace();
-			throw new InternalError(cause);
+			throw new InternalError(e.getCause());
 		} catch (Exception e) {
 			throw new InternalError(e);
 		}
+		/*[ELSE] (JAVA_SPEC_VERSION == 11) | (JAVA_SPEC_VERSION == 17) */
+		throw new InternalError("JFR support is not enabled");
+		/*[ENDIF] (JAVA_SPEC_VERSION == 11) | (JAVA_SPEC_VERSION == 17) */
 	}
 
 	/**
@@ -249,9 +251,11 @@ final class JFRHelpers {
 				loggerClass = Class.forName("jdk.jfr.internal.Logger");
 				jfrUpCallClass = Class.forName("jdk.jfr.internal.JVMUpcalls");
 
+				Module javabase = System.class.getModule();
 				Module jdkJFR = jfrjvmClass.getModule();
 				Module systemUnnamedModule = VM.getUnnamedModuleForSystemLoader();
-				jdkJFR.implAddExports("jdk.jfr.internal", System.class.getModule());
+				jdkJFR.implAddExports("jdk.jfr.internal", javabase);
+				jdkJFR.implAddExports("jdk.jfr.internal.dcmd", javabase);
 				jdkJFR.implAddExports("jdk.jfr.internal.handlers", systemUnnamedModule);
 				jdkJFR.implAddExportsToAllUnnamed("jdk.jfr.internal.handlers");
 				VM.getUnnamedModuleForSystemLoader().implAddReads(jdkJFR);
@@ -429,4 +433,156 @@ final class JFRHelpers {
 		stopThread.setDaemon(true);
 		stopThread.start();
 	}
+
+	/*[IF (JAVA_SPEC_VERSION == 11) | (JAVA_SPEC_VERSION == 17) ]*/
+	private static DCmdInvocation initDCmdInvocation(DCmdInvocation dcmdInvocation, String className) {
+		// No synchronization overhead, it is okay to initialize dcmdInvocation more than once.
+		if (dcmdInvocation == null) {
+			try {
+				Class<?> dcmdClass = Class.forName(className);
+				Constructor<?> constructor = dcmdClass.getDeclaredConstructor();
+				constructor.setAccessible(true);
+				Method dcmdExecute;
+				if (className.equals("jdk.jfr.internal.dcmd.DCmdConfigure")) {
+					// DCmdConfigure doesn't implement execute(ArgumentParser parser)
+					dcmdExecute = dcmdClass.getDeclaredMethod(
+							"execute",
+							boolean.class, // verbose
+							String.class, // repositoryPath
+							String.class, // dumpPath
+							Integer.class, // stackDepth
+							Long.class, // globalBufferCount
+							Long.class, // globalBufferSize
+							Long.class, // threadBufferSize
+							Long.class, // memorySize
+							Long.class, // maxChunkSize
+							Boolean.class // sampleThreads
+							);
+				} else
+				/*[IF JAVA_SPEC_VERSION == 11]*/
+				if (className.equals("jdk.jfr.internal.dcmd.DCmdStart")) {
+					dcmdExecute = dcmdClass.getDeclaredMethod(
+							"execute",
+							String.class, // name
+							String[].class, // settings
+							Long.class, // delay
+							Long.class, // duration
+							Boolean.class, // disk
+							String.class, // path
+							Long.class, // maxAge
+							Long.class, // maxSize
+							Boolean.class, // dumpOnExit
+							Boolean.class // pathToGcRoots
+							);
+				} else
+				/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+				{
+					dcmdExecute = dcmdClass.getSuperclass().getDeclaredMethod(
+							"execute",
+							String.class, // source
+							String.class, // arg
+							char.class // delimiter
+							);
+				}
+				dcmdExecute.setAccessible(true);
+				dcmdInvocation = new DCmdInvocation(constructor.newInstance(), dcmdExecute);
+			} catch (InvocationTargetException e) {
+				throw new InternalError(e.getCause());
+			} catch (Exception e) {
+				throw new InternalError(e);
+			}
+		}
+		return dcmdInvocation;
+	}
+
+	/**
+	 * Invoke jdk.jfr.internal.dcmd.DCmdStart.execute().
+	 *
+	 * @param execArgs The string arguments separated by a delimiter
+	 * @return A string array returned from DCmdStart.execute()
+	 */
+	public static String[] doJFRDCmdStartExecute(String execArgs) {
+		dcmdStart = initDCmdInvocation(dcmdStart, "jdk.jfr.internal.dcmd.DCmdStart");
+		try {
+			return (String[]) dcmdStart.getDcmdExecute().invoke(dcmdStart.getDCmdInstance(), "internal", execArgs, ',');
+		} catch (InvocationTargetException e) {
+			throw new InternalError(e.getCause());
+		} catch (Exception e) {
+			throw new InternalError(e);
+		}
+	}
+
+	/**
+	 * Invoke jdk.jfr.internal.dcmd.DCmdStop.execute().
+	 *
+	 * @param execArgs The string arguments separated by a delimiter
+	 * @return A string array returned from DCmdStop.execute()
+	 */
+	public static String[] doJFRDCmdStopExecute(String execArgs) {
+		dcmdStop = initDCmdInvocation(dcmdStop, "jdk.jfr.internal.dcmd.DCmdStop");
+		try {
+			return (String[]) dcmdStop.getDcmdExecute().invoke(dcmdStop.getDCmdInstance(), "internal", execArgs, ',');
+		} catch (InvocationTargetException e) {
+			throw new InternalError(e.getCause());
+		} catch (Exception e) {
+			throw new InternalError(e);
+		}
+	}
+
+	/**
+	 * Invoke jdk.jfr.internal.dcmd.DCmdConfigure.execute().
+	 *
+	 * @param verbose print verbose output
+	 * @param repositoryPath the repository path
+	 * @param dumpPath the dump path when fatal error
+	 * @param stackDepth the stack trace depth
+	 * @param globalBufferCount the number of global buffers
+	 * @param globalBufferSize the size of global buffers
+	 * @param threadBufferSize the size of thread buffer
+	 * @param memorySize the memory size
+	 * @param maxChunkSize the chunk size threshold that a new one is to be created
+	 * @param sampleThreads if thread sampling is to be enabled
+	 * @return A string array returned from DCmdConfigure.execute()
+	 */
+	public static String[] doJFRDCmdConfigureExecute(
+			boolean verbose, String repositoryPath, String dumpPath, Integer stackDepth, Long globalBufferCount,
+			Long globalBufferSize, Long threadBufferSize, Long memorySize, Long maxChunkSize, Boolean sampleThreads) {
+		dcmdConfigure = initDCmdInvocation(dcmdConfigure, "jdk.jfr.internal.dcmd.DCmdConfigure");
+		try {
+			return (String[]) dcmdConfigure.getDcmdExecute().invoke(
+					dcmdConfigure.getDCmdInstance(),
+					verbose,
+					repositoryPath,
+					dumpPath,
+					stackDepth,
+					globalBufferCount,
+					globalBufferSize,
+					threadBufferSize,
+					memorySize,
+					maxChunkSize,
+					sampleThreads);
+		} catch (InvocationTargetException e) {
+			throw new InternalError(e.getCause());
+		} catch (Exception e) {
+			throw new InternalError(e);
+		}
+	}
+
+	/**
+	 * Invoke jdk.jfr.internal.dcmd.DCmdDump.execute().
+	 *
+	 * @param execArgs The string arguments separated by a delimiter
+	 * @return A string array returned from DCmdDump.execute()
+	 */
+	public static String[] doJFRDCmdDumpExecute(String execArgs) {
+		dcmdDump = initDCmdInvocation(dcmdDump, "jdk.jfr.internal.dcmd.DCmdDump");
+		try {
+			return (String[]) dcmdDump.getDcmdExecute().invoke(dcmdDump.getDCmdInstance(), "internal", execArgs, ',');
+		} catch (InvocationTargetException e) {
+			throw new InternalError(e.getCause());
+		} catch (Exception e) {
+			throw new InternalError(e);
+		}
+	}
+	/*[ENDIF] (JAVA_SPEC_VERSION == 11) | (JAVA_SPEC_VERSION == 17) */
 }

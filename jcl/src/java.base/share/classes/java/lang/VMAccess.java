@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar16]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*
  * Copyright IBM Corp. and others 2012
  *
@@ -289,4 +289,71 @@ final class VMAccess implements VMLangAccess {
 	public ConstantPool getConstantPoolCache(Class<?> clazz) {
 		return clazz.constantPoolObject;
 	}
+
+	/*[IF JAVA_SPEC_VERSION == 17]*/
+	/**
+	 * Invoke jdk.jfr.internal.dcmd.DCmdStart.execute().
+	 *
+	 * @param execArgs The string arguments separated by a delimiter
+	 * @return A string array returned from DCmdStart.execute()
+	 */
+	@Override
+	public String[] doJFRDCmdStartExecute(String execArgs) {
+		return JFRHelpers.doJFRDCmdStartExecute(execArgs);
+	}
+
+	/**
+	 * Invoke jdk.jfr.internal.dcmd.DCmdStop.execute().
+	 *
+	 * @param execArgs The string arguments separated by a delimiter
+	 * @return A string array returned from DCmdStop.execute()
+	 */
+	@Override
+	public String[] doJFRDCmdStopExecute(String execArgs) {
+		return JFRHelpers.doJFRDCmdStopExecute(execArgs);
+	}
+
+	/**
+	 * Invoke jdk.jfr.internal.dcmd.DCmdConfigure.execute().
+	 *
+	 * @param verbose print verbose output
+	 * @param repositoryPath the repository path
+	 * @param dumpPath the dump path when fatal error
+	 * @param stackDepth the stack trace depth
+	 * @param globalBufferCount the number of global buffers
+	 * @param globalBufferSize the size of global buffers
+	 * @param threadBufferSize the size of thread buffer
+	 * @param memorySize the memory size
+	 * @param maxChunkSize the chunk size threshold that a new one is to be created
+	 * @param sampleThreads if thread sampling is to be enabled
+	 * @return A string array returned from DCmdConfigure.execute()
+	 */
+	@Override
+	public String[] doJFRDCmdConfigureExecute(
+			boolean verbose, String repositoryPath, String dumpPath, Integer stackDepth, Long globalBufferCount,
+			Long globalBufferSize, Long threadBufferSize, Long memorySize, Long maxChunkSize, Boolean sampleThreads) {
+		return JFRHelpers.doJFRDCmdConfigureExecute(
+				verbose,
+				repositoryPath,
+				dumpPath,
+				stackDepth,
+				globalBufferCount,
+				globalBufferSize,
+				threadBufferSize,
+				memorySize,
+				maxChunkSize,
+				sampleThreads);
+	}
+
+	/**
+	 * Invoke jdk.jfr.internal.dcmd.DCmdDump.execute().
+	 *
+	 * @param execArgs The string arguments separated by a delimiter
+	 * @return A string array returned from DCmdDump.execute()
+	 */
+	@Override
+	public String[] doJFRDCmdDumpExecute(String execArgs) {
+		return JFRHelpers.doJFRDCmdDumpExecute(execArgs);
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 }

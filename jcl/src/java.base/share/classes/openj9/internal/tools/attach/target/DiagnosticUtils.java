@@ -32,9 +32,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import com.ibm.oti.vm.VM;
@@ -58,8 +55,8 @@ import openj9.management.internal.ThreadInfoBase;
 @SuppressWarnings("nls")
 public class DiagnosticUtils {
 
-	private static final String FORMAT_PREFIX = " Format: ";
-	private static final String SYNTAX_PREFIX = "Syntax : ";
+	static final String FORMAT_PREFIX = " Format: ";
+	static final String SYNTAX_PREFIX = "Syntax : ";
 
 	private static final String HEAP_DUMP_OPTION_HELP = " [request=<options>] [opts=<options>] [<file path>]%n"
 			+ " Set optional request= and opts= -Xdump options. The order of the parameters does not matter.%n";
@@ -75,35 +72,6 @@ public class DiagnosticUtils {
 			" <file path> is optional, otherwise a default path/name is used.%n"
 			+ " Relative paths are resolved to the target's working directory.%n"
 			+ " The dump agent may choose a different file path if the requested file exists.%n";
-
-/*[IF JFR_SUPPORT]*/
-	private static String jfrRecordingFileName = "defaultJ9recording.jfr";
-	private static final String JFR_START_OPTION_HELP =
-			" [options]%n"
-			+ "%n"
-			+ "Options:%n"
-			+ "%n"
-			+ "duration     (Optional) Length of time to record. Note that 0s means forever.%n"
-			+ "             (INTEGER followed by 's' for seconds 'm' for minutes or 'h' for hours)%n"
-			+ "%n"
-			+ "filename     (Optional) Name of the file to which the flight recording data is%n"
-			+ "              written when the recording is stopped.%n";
-
-	private static final String JFR_STOP_OPTION_HELP =
-			" [options]%n"
-			+ "%n"
-			+ "Options:%n"
-			+ "%n"
-			+ "filename     (Optional) Name of the file to which the recording is written%n"
-			+ "              when the recording is stopped.%n";
-
-	private static final String JFR_DUMP_OPTION_HELP =
-			" [options]%n"
-			+ "%n"
-			+ "Options:%n"
-			+ "%n"
-			+ "filename        (Optional) Name of the file to which the flight recording data is written.%n";
-/*[ENDIF] JFR_SUPPORT */
 
 	/**
 	 * Command strings for executeDiagnosticCommand()
@@ -158,18 +126,6 @@ public class DiagnosticUtils {
 	private static final String DIAGNOSTICS_DUMP_JAVA = "Dump.java";
 	private static final String DIAGNOSTICS_DUMP_SNAP = "Dump.snap";
 	private static final String DIAGNOSTICS_DUMP_SYSTEM = "Dump.system";
-
-/*[IF JFR_SUPPORT]*/
-	/**
-	 * Commands for JFR start, stop and dump
-	 */
-	private static final String DIAGNOSTICS_JFR_START = "JFR.start";
-	private static final String DIAGNOSTICS_JFR_DUMP = "JFR.dump";
-	private static final String DIAGNOSTICS_JFR_STOP = "JFR.stop";
-
-	private static final int ERROR_NO_TIME_UNIT = -1;
-	private static final int ERROR_NO_TIME_DURATION = -2;
-/*[ENDIF] JFR_SUPPORT */
 
 	/**
 	 * Get JVM statistics
@@ -239,7 +195,7 @@ public class DiagnosticUtils {
 /*[IF JFR_SUPPORT]*/
 		if (optionsLength >= 2) {
 			// there is a jcmd command
-			if (DIAGNOSTICS_JFR_START.equalsIgnoreCase(options[1])) {
+			if (JFR.DIAGNOSTICS_JFR_START.equalsIgnoreCase(options[1])) {
 				// search JFR.start options
 				for (int i = 2; i < optionsLength; i++) {
 					String option = options[i];
@@ -449,156 +405,6 @@ public class DiagnosticUtils {
 		return result;
 	}
 
-/*[IF JFR_SUPPORT]*/
-	private static long convertToMilliseconds(String timeValue) {
-		long timeInMilli = 0L;
-
-		// extract the numeric part and the time unit
-		String numericPart = timeValue.replaceAll("[^0-9]", "");
-
-		// convert the unit to lowercase for consistency
-		String timeUnit = timeValue.replaceAll("[0-9]", "").toLowerCase();
-
-		// parse the numeric part
-		long time = Long.parseLong(numericPart);
-
-		// convert to milliseconds based on the unit
-		switch (timeUnit) {
-		case "s":
-			timeInMilli = TimeUnit.SECONDS.toMillis(time);
-			break;
-		case "m":
-			timeInMilli = TimeUnit.MINUTES.toMillis(time);
-			break;
-		case "h":
-			timeInMilli = TimeUnit.HOURS.toMillis(time);
-			break;
-		case "d":
-			timeInMilli = TimeUnit.DAYS.toMillis(time);
-			break;
-		default:
-			// no unit or unrecognized unit, return ERROR_NO_TIME_UNIT
-			timeInMilli = ERROR_NO_TIME_UNIT;
-			break;
-		}
-		return timeInMilli;
-	}
-
-	/**
-	 * Parse a time parameter, and return the duration in milliseconds.
-	 * If the time unit is missing, ERROR_NO_TIME_UNIT is returned.
-	 * If the paramName is not in parameters, ERROR_NO_TIME_DURATION is returned.
-	 *
-	 * @param paramName the parameter name
-	 * @param parameters the parameter array
-	 *
-	 * @return the duration in milliseconds,
-	 *         ERROR_NO_TIME_UNIT if no time unit,
-	 *         ERROR_NO_TIME_DURATION if paramName wasn't found.
-	 */
-	private static long parseTimeParameter(String paramName, String[] parameters) {
-		for (String param : parameters) {
-			if (param.startsWith(paramName + "=")) {
-				int valueStart = param.indexOf("=");
-				if (valueStart != -1) {
-					return convertToMilliseconds(param.substring(valueStart + 1));
-				}
-			}
-		}
-		return ERROR_NO_TIME_DURATION;
-	}
-
-	private static String parseStringParameter(String paramName, String[] parameters, String defaultValue) {
-		for (String param : parameters) {
-			if (param.startsWith(paramName + "=")) {
-				int valueStart = param.indexOf("=");
-				if (valueStart != -1) {
-					return param.substring(valueStart + 1);
-				}
-			}
-		}
-		return defaultValue;
-	}
-
-	private static DiagnosticProperties doJFR(String diagnosticCommand) {
-		if (VM.isStartFlightRecordingSpecified()) {
-			return DiagnosticProperties.makeStringResult("Cannot use jcmd JFR options at the same time as -XX:startFlightRecording.");
-		}
-
-		DiagnosticProperties result = null;
-		// split the command and arguments
-		String[] parts = diagnosticCommand.split(DIAGNOSTICS_OPTION_SEPARATOR);
-		IPC.logMessage("doJFR: ", diagnosticCommand);
-		// ensure there's at least one part for the command
-		if (parts.length == 0) {
-			return DiagnosticProperties.makeErrorProperties("Error: No JFR command specified");
-		}
-		String command = parts[0].trim();
-		String[] parameters = Arrays.copyOfRange(parts, 1, parts.length);
-		String fileName = parseStringParameter("filename", parameters, null);
-		IPC.logMessage("doJFR: filename = ", fileName);
-
-		try {
-			if (command.equalsIgnoreCase(DIAGNOSTICS_JFR_START)) {
-				if (VM.isJFRRecordingStarted()) {
-					result = DiagnosticProperties.makeErrorProperties("One JFR recording is in progress [" + jfrRecordingFileName + "], only one recording is allowed at a time.");
-				} else {
-					// only JFR.start command is allowed to change the recording filename
-					boolean setFileName = (fileName != null) && !fileName.isEmpty();
-					if (setFileName) {
-						// the recording filename should be set before VM.startJFR() which invokes JFRWriter:openJFRFile()
-						if (!VM.setJFRRecordingFileName(fileName)) {
-							return DiagnosticProperties.makeErrorProperties("setJFRRecordingFileName() failed");
-						} else {
-							jfrRecordingFileName = fileName;
-						}
-					}
-					long duration = parseTimeParameter("duration", parameters);
-					IPC.logMessage("doJFR: duration = " + duration);
-					if (duration == ERROR_NO_TIME_UNIT) {
-						return DiagnosticProperties.makeErrorProperties("The duration doesn't have a time unit.");
-					}
-					VM.startJFR();
-					if (duration > 0) {
-						Timer timer = new Timer();
-						TimerTask jfrDumpTask = new TimerTask() {
-							public void run() {
-								if (VM.isJFRRecordingStarted()) {
-									VM.stopJFR();
-								}
-							}
-						};
-						timer.schedule(jfrDumpTask, duration);
-					} else {
-						// the recording is on until JFR.stop
-					}
-					result = DiagnosticProperties.makeStringResult("Start JFR recording to " + jfrRecordingFileName);
-				}
-			} else if (command.equalsIgnoreCase(DIAGNOSTICS_JFR_STOP)) {
-				if (VM.isJFRRecordingStarted()) {
-					VM.stopJFR();
-					result = DiagnosticProperties.makeStringResult("Stop JFR recording, and dump all Java threads to " + jfrRecordingFileName);
-				} else {
-					result = DiagnosticProperties.makeErrorProperties("Could not stop recording [" + jfrRecordingFileName + "], run JFR.start first.");
-				}
-			} else if (command.equalsIgnoreCase(DIAGNOSTICS_JFR_DUMP)) {
-				if (VM.isJFRRecordingStarted()) {
-					VM.jfrDump();
-					result = DiagnosticProperties.makeStringResult("Dump all Java threads to " + jfrRecordingFileName);
-				} else {
-					result = DiagnosticProperties.makeErrorProperties("Could not create a JFR recording [" + jfrRecordingFileName + "], run JFR.start first.");
-				}
-			} else {
-				result = DiagnosticProperties.makeErrorProperties("Command not recognized: " + command);
-			}
-		} catch (Exception e) {
-			result = DiagnosticProperties.makeErrorProperties("Error in JFR: " + e.getMessage());
-		}
-
-		return result;
-	}
-/*[ENDIF] JFR_SUPPORT */
-
 	private static native ThreadInfoBase[] dumpAllThreadsImpl(boolean lockedMonitors,
 			boolean lockedSynchronizers, int maxDepth);
 
@@ -799,17 +605,6 @@ public class DiagnosticUtils {
 			+ "NOTE: this utility might significantly affect the performance of the target VM.%n";
 /*[ENDIF] CRIU_SUPPORT */
 
-/*[IF JFR_SUPPORT]*/
-	private static final String DIAGNOSTICS_JFR_START_HELP = "Start a new Recording%n%n"
-			+ SYNTAX_PREFIX + DIAGNOSTICS_JFR_START + JFR_START_OPTION_HELP;
-
-	private static final String DIAGNOSTICS_JFR_DUMP_HELP = "Dump a JFR recording to file%n%n"
-			+ SYNTAX_PREFIX + DIAGNOSTICS_JFR_DUMP + JFR_DUMP_OPTION_HELP;
-
-	private static final String DIAGNOSTICS_JFR_STOP_HELP = "Stop a JFR recording%n%n"
-			+ SYNTAX_PREFIX + FORMAT_PREFIX + DIAGNOSTICS_JFR_STOP + JFR_STOP_OPTION_HELP;
-/*[ENDIF] JFR_SUPPORT */
-
 	/* Initialize the command and help text tables */
 	static {
 		IDCacheInitializer.init();
@@ -865,16 +660,32 @@ public class DiagnosticUtils {
 
 /*[IF JFR_SUPPORT]*/
 		if (VM.isJFREnabled()) {
-			commandTable.put(DIAGNOSTICS_JFR_START, DiagnosticUtils::doJFR);
-			helpTable.put(DIAGNOSTICS_JFR_START, DIAGNOSTICS_JFR_START_HELP);
+/*[IF JAVA_SPEC_VERSION == 17]*/
+			if (VM.isJFRV2SupportEnabled()) {
+				commandTable.put(JFR.DIAGNOSTICS_JFR_START, JFR::doJFRv2);
+				helpTable.put(JFR.DIAGNOSTICS_JFR_START, JFR.DIAGNOSTICS_JFR_START_HELP);
 
-			commandTable.put(DIAGNOSTICS_JFR_DUMP, DiagnosticUtils::doJFR);
-			helpTable.put(DIAGNOSTICS_JFR_DUMP, DIAGNOSTICS_JFR_DUMP_HELP);
+				commandTable.put(JFR.DIAGNOSTICS_JFR_DUMP, JFR::doJFRv2);
+				helpTable.put(JFR.DIAGNOSTICS_JFR_DUMP, JFR.DIAGNOSTICS_JFR_DUMP_HELP);
 
-			commandTable.put(DIAGNOSTICS_JFR_STOP, DiagnosticUtils::doJFR);
-			helpTable.put(DIAGNOSTICS_JFR_STOP, DIAGNOSTICS_JFR_STOP_HELP);
+				commandTable.put(JFR.DIAGNOSTICS_JFR_STOP, JFR::doJFRv2);
+				helpTable.put(JFR.DIAGNOSTICS_JFR_STOP, JFR.DIAGNOSTICS_JFR_STOP_HELP);
+
+				commandTable.put(JFR.DIAGNOSTICS_JFR_CONFIGURE, JFR::doJFRv2);
+				helpTable.put(JFR.DIAGNOSTICS_JFR_CONFIGURE, JFR.DIAGNOSTICS_JFR_CONFIGURE_HELP);
+			} else
+/*[ENDIF] JAVA_SPEC_VERSION == 17 */
+			{
+				commandTable.put(JFR.DIAGNOSTICS_JFR_START, JFR::doJFR);
+				helpTable.put(JFR.DIAGNOSTICS_JFR_START, JFR.DIAGNOSTICS_JFR_START_HELP);
+
+				commandTable.put(JFR.DIAGNOSTICS_JFR_DUMP, JFR::doJFR);
+				helpTable.put(JFR.DIAGNOSTICS_JFR_DUMP, JFR.DIAGNOSTICS_JFR_DUMP_HELP);
+
+				commandTable.put(JFR.DIAGNOSTICS_JFR_STOP, JFR::doJFR);
+				helpTable.put(JFR.DIAGNOSTICS_JFR_STOP, JFR.DIAGNOSTICS_JFR_STOP_HELP);
+			}
 		}
-
 /*[ENDIF] JFR_SUPPORT */
 	}
 }

@@ -40,6 +40,7 @@ import java.util.Optional;
 
 import org.openj9.test.util.PlatformInfo;
 import org.openj9.test.util.StringUtilities;
+import org.openj9.test.util.VersionCheck;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -71,6 +72,16 @@ public class TestJcmd extends AttachApiTest {
 		DUMP_SYSTEM, GC_CLASS_HISTOGRAM, GC_HEAP_DUMP, GC_RUN, HELP_COMMAND, THREAD_PRINT};
 	private static String[] JCMD_COMMANDS_REQUIRE_OPTION = {GC_CLASS_HISTOGRAM, GC_RUN, HELP_COMMAND, THREAD_PRINT};
 	private static String[] JCMD_COMMANDS_DUMP = {DUMP_HEAP, DUMP_JAVA, DUMP_SNAP, DUMP_SYSTEM, GC_HEAP_DUMP};
+
+	// Same as DiagnosticUtils.DIAGNOSTICS_OPTION_SEPARATOR.
+	private static final String DIAGNOSTICS_OPTION_SEPARATOR = ",";
+
+	private static final ArrayList<String> TEST_JFR_VM_ARGS = new ArrayList<>(List.of(
+			"-XX:+EnableOpenJ9ExperimentalFlightRecording",
+			"-Dibm.java9.forceCommonCleanerShutdown=true",
+			"-Xint",
+			"-Xshare:off",
+			"-Xshareclasses:none"));
 
 	/*
 	 * Contains strings expected to be contained in the outputs of various commands
@@ -400,6 +411,156 @@ public class TestJcmd extends AttachApiTest {
 		testDisplayNameHelper("0");
 	}
 
+	@Test
+	public void testJFRStart() throws IOException {
+		if (VersionCheck.major() != 17) {
+			log("Skip JFR V2 test for non JDK17");
+			return;
+		}
+		TargetManager tgt = new TargetManager(TestConstants.TARGET_VM_CLASS, null,
+				TEST_JFR_VM_ARGS, Collections.emptyList());
+		tgt.syncWithTarget();
+		String targetId = tgt.targetId;
+		assertNotNull(targetId, ERROR_TARGET_NOT_LAUNCH);
+		try {
+			List<String> args = new ArrayList<>();
+			args.add(targetId);
+			String command = "JFR.start";
+			log("testJFRStart() command = " + command);
+			args.add(command);
+			List<String> jcmdOutput = runCommandAndLogOutput(args);
+			log("testJFRStart() jcmdOutput = " + jcmdOutput);
+			log("testJFRStart() getOutOutput() : " + tgt.getOutOutput());
+			log("testJFRStart() getErrOutput() : " + tgt.getErrOutput());
+			Optional<String> searchResult = StringUtilities.searchSubstring("Started recording", jcmdOutput);
+			assertTrue(searchResult.isPresent(), "Unpexpected jcmd output: " + jcmdOutput);
+		} finally {
+			tgt.terminateTarget();
+		}
+	}
+
+	@Test
+	public void testJFRDump() throws IOException {
+		if (VersionCheck.major() != 17) {
+			log("Skip JFR V2 test for non JDK17");
+			return;
+		}
+		TargetManager tgt = new TargetManager(TestConstants.TARGET_VM_CLASS, null,
+				TEST_JFR_VM_ARGS, Collections.emptyList());
+		tgt.syncWithTarget();
+		String targetId = tgt.targetId;
+		assertNotNull(targetId, ERROR_TARGET_NOT_LAUNCH);
+		try {
+			List<String> args = new ArrayList<>();
+			args.add(targetId);
+			String command = "JFR.start";
+			log("testJFRDump() command = " + command);
+			args.add(command);
+			List<String> jcmdOutput = runCommandAndLogOutput(args);
+			log("testJFRDump() jcmdOutput (JFR.start) = " + jcmdOutput);
+			Optional<String> searchResult = StringUtilities.searchSubstring("Started recording", jcmdOutput);
+			assertTrue(searchResult.isPresent(), "Unpexpected jcmd output: " + jcmdOutput);
+
+			args.clear();
+			args.add(targetId);
+			command = "JFR.dump";
+			log("testJFRDump() command = " + command);
+			args.add(command);
+			jcmdOutput = runCommandAndLogOutput(args);
+			log("testJFRDump() jcmdOutput (JFR.dump) = " + jcmdOutput);
+			searchResult = StringUtilities.searchSubstring("Dumped recording", jcmdOutput);
+			assertTrue(searchResult.isPresent(), "Unpexpected jcmd output: " + jcmdOutput);
+		} finally {
+			tgt.terminateTarget();
+		}
+	}
+
+	@Test
+	public void testJFRStop() throws IOException {
+		if (VersionCheck.major() != 17) {
+			log("Skip JFR V2 test for non JDK17");
+			return;
+		}
+		TargetManager tgt = new TargetManager(TestConstants.TARGET_VM_CLASS, null,
+				TEST_JFR_VM_ARGS, Collections.emptyList());
+		tgt.syncWithTarget();
+		String targetId = tgt.targetId;
+		assertNotNull(targetId, ERROR_TARGET_NOT_LAUNCH);
+		try {
+			List<String> args = new ArrayList<>();
+			args.add(targetId);
+			String command = "JFR.start";
+			log("testJFRStop() command = " + command);
+			args.add(command);
+			List<String> jcmdOutput = runCommandAndLogOutput(args);
+			log("testJFRStop() jcmdOutput (JFR.start) = " + jcmdOutput);
+			Optional<String> searchResult = StringUtilities.searchSubstring("Started recording", jcmdOutput);
+			assertTrue(searchResult.isPresent(), "Unpexpected jcmd output: " + jcmdOutput);
+
+			args.clear();
+			args.add(targetId);
+			command = "JFR.stop" + DIAGNOSTICS_OPTION_SEPARATOR + "name=1";
+			log("testJFRStop() command = " + command);
+			args.add(command);
+			jcmdOutput = runCommandAndLogOutput(args);
+			log("testJFRStop() jcmdOutput (JFR.stop) = " + jcmdOutput);
+			searchResult = StringUtilities.searchSubstring("Stopped recording", jcmdOutput);
+			assertTrue(searchResult.isPresent(), "Unpexpected jcmd output: " + jcmdOutput);
+		} finally {
+			tgt.terminateTarget();
+		}
+	}
+
+	@Test
+	public void testJFRConfigure() throws IOException {
+		if (VersionCheck.major() != 17) {
+			log("Skip JFR V2 test for non JDK17");
+			return;
+		}
+		TargetManager tgt = new TargetManager(TestConstants.TARGET_VM_CLASS, null,
+				TEST_JFR_VM_ARGS, Collections.emptyList());
+		tgt.syncWithTarget();
+		String targetId = tgt.targetId;
+		assertNotNull(targetId, ERROR_TARGET_NOT_LAUNCH);
+		try {
+			List<String> args = new ArrayList<>();
+			args.add(targetId);
+			String command = "JFR.configure";
+			log("testJFRConfigure() command = " + command);
+			args.add(command);
+			List<String> jcmdOutput = runCommandAndLogOutput(args);
+			log("testJFRConfigure() jcmdOutput = " + jcmdOutput);
+
+			String[] expectedStrings = new String[] {
+					"Current configuration:",
+					"Repository path:",
+					"Stack depth:",
+					"Global buffer count:",
+					"Global buffer size:",
+					"Memory size:",
+					"Sample threads:"};
+			Optional<String> searchResult;
+			for (String expectedString : expectedStrings) {
+				searchResult = StringUtilities.searchSubstring(expectedString, jcmdOutput);
+				assertTrue(searchResult.isPresent(), "Unpexpected jcmd output: " + jcmdOutput);
+			}
+
+			args.add("stackdepth=256");
+			jcmdOutput = runCommandAndLogOutput(args);
+			log("testJFRConfigure() jcmdOutput with stackdepth=256 = " + jcmdOutput);
+			searchResult = StringUtilities.searchSubstring("Stack depth: 256", jcmdOutput);
+			assertTrue(searchResult.isPresent(), "Unpexpected jcmd output: " + jcmdOutput);
+
+			args.add("samplethreads=false");
+			jcmdOutput = runCommandAndLogOutput(args);
+			log("testJFRConfigure() jcmdOutput with samplethreads=false = " + jcmdOutput);
+			searchResult = StringUtilities.searchSubstring("Sample threads: false", jcmdOutput);
+			assertTrue(searchResult.isPresent(), "Unpexpected jcmd output: " + jcmdOutput);
+		} finally {
+			tgt.terminateTarget();
+		}
+	}
+
 	@BeforeMethod
 	protected void setUp(Method testMethod) {
 		testName = testMethod.getName();
@@ -423,5 +584,4 @@ public class TestJcmd extends AttachApiTest {
 		commandExpectedOutputs.put(DUMP_SNAP, WRONG_NUMBER_OF_ARGUMENTS);
 		commandExpectedOutputs.put(DUMP_SYSTEM, WRONG_NUMBER_OF_ARGUMENTS);
 	}
-
 }
