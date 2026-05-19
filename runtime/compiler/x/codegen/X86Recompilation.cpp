@@ -105,7 +105,7 @@ TR::Instruction *TR_X86Recompilation::generatePrePrologue()
         //
         prev = cg()->generateSwitchToInterpreterPrePrologue(prev, alignmentBoundary, alignmentMargin);
     } else {
-        prev = generateAlignmentInstruction(prev, alignmentBoundary, alignmentMargin, cg());
+        prev = Inst_Alignment(prev, alignmentBoundary, alignmentMargin, cg());
     }
 
     if (cg()->comp()->target().is64Bit()) {
@@ -120,7 +120,7 @@ TR::Instruction *TR_X86Recompilation::generatePrePrologue()
         // 4-byte boundary, which is more than enough to ensure it can be patched
         // atomically.
         //
-        prev = generateHelperCallInstruction(prev, SAMPLING_RECOMPILE_METHOD, cg());
+        prev = Inst_HelperCall(prev, SAMPLING_RECOMPILE_METHOD, cg());
     }
 
     // The address of the persistent method info is inserted in the pre-prologue
@@ -145,7 +145,7 @@ TR::Instruction *TR_X86Recompilation::generatePrePrologue()
     // even if the linkage is not private, so that all the offsets are
     // predictable.
     //
-    return generateImmInstruction(TR::InstOpCode::DDImm4, startNode, 0, cg());
+    return Inst_Imm(TR::InstOpCode::DDImm4, startNode, 0, cg());
 }
 
 TR::Instruction *TR_X86Recompilation::generatePrologue(TR::Instruction *cursor)

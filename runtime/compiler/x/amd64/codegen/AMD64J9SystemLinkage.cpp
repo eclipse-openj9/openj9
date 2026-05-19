@@ -86,8 +86,8 @@ TR::Register *TR::AMD64J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, 
 
     TR::Register *returnReg;
 
-    TR::X86VFPDedicateInstruction *vfpDedicateInstruction = generateVFPDedicateInstruction(
-        machine()->getRealRegister(getProperties().getIntegerScratchRegister(0)), callNode, cg());
+    TR::X86VFPDedicateInstruction *vfpDedicateInstruction
+        = Inst_VFPDedicate(machine()->getRealRegister(getProperties().getIntegerScratchRegister(0)), callNode, cg());
 
     TR::J9LinkageUtils::switchToMachineCStack(callNode, cg());
 
@@ -123,13 +123,13 @@ TR::Register *TR::AMD64J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, 
     TR::Instruction *instr;
     if (methodSymbol->getMethodAddress()) {
         TR_ASSERT(scratchReg, "could not find second scratch register");
-        generateRegImm64Instruction(TR::InstOpCode::MOV8RegImm64, callNode, scratchReg,
-            (uintptr_t)methodSymbol->getMethodAddress(), cg());
+        Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, callNode, scratchReg, (uintptr_t)methodSymbol->getMethodAddress(),
+            cg());
 
-        instr = generateRegInstruction(TR::InstOpCode::CALLReg, callNode, scratchReg, preDeps, cg());
+        instr = Inst_Reg(TR::InstOpCode::CALLReg, callNode, scratchReg, preDeps, cg());
     } else {
-        instr = generateImmSymInstruction(TR::InstOpCode::CALLImm4, callNode,
-            (uintptr_t)methodSymbol->getMethodAddress(), methodSymRef, preDeps, cg());
+        instr = Inst_ImmSym(TR::InstOpCode::CALLImm4, callNode, (uintptr_t)methodSymbol->getMethodAddress(),
+            methodSymRef, preDeps, cg());
     }
 
     instr->setNeedsGCMap(getProperties().getPreservedRegisterMapForGC());
@@ -142,7 +142,7 @@ TR::Register *TR::AMD64J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, 
         TR::RealRegister *espReal = machine()->getRealRegister(TR::RealRegister::esp);
         TR::InstOpCode::Mnemonic op = (memoryArgSize >= -128 && memoryArgSize <= 127) ? TR::InstOpCode::ADDRegImms()
                                                                                       : TR::InstOpCode::ADDRegImm4();
-        generateRegImmInstruction(op, callNode, espReal, memoryArgSize, cg());
+        Inst_RegImm(op, callNode, espReal, memoryArgSize, cg());
     }
 
     if (returnReg && !(methodSymbol->isHelper()))
@@ -150,10 +150,10 @@ TR::Register *TR::AMD64J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, 
 
     TR::J9LinkageUtils::switchToJavaStack(callNode, cg());
 
-    generateVFPReleaseInstruction(vfpDedicateInstruction, callNode, cg());
+    Inst_VFPRelease(vfpDedicateInstruction, callNode, cg());
 
     TR::LabelSymbol *postDepLabel = generateLabelSymbol(cg());
-    generateLabelInstruction(TR::InstOpCode::label, callNode, postDepLabel, postDeps, cg());
+    Inst_Label(TR::InstOpCode::label, callNode, postDepLabel, postDeps, cg());
 
     return returnReg;
 }

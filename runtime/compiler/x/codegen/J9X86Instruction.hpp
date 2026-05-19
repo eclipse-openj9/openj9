@@ -93,16 +93,16 @@ public:
 
 } // namespace TR
 
-TR::X86MemImmSnippetInstruction *generateMemImmSnippetInstruction(TR::InstOpCode::Mnemonic op, TR::Node *,
-    TR::MemoryReference *mr, int32_t imm, TR::UnresolvedDataSnippet *, TR::CodeGenerator *cg);
+TR::X86MemImmSnippetInstruction *Inst_MemImmSnippet(TR::InstOpCode::Mnemonic op, TR::Node *, TR::MemoryReference *mr,
+    int32_t imm, TR::UnresolvedDataSnippet *, TR::CodeGenerator *cg);
 
-TR::X86CheckAsyncMessagesMemImmInstruction *generateCheckAsyncMessagesInstruction(TR::Node *node,
-    TR::InstOpCode::Mnemonic op, TR::MemoryReference *mr, int32_t value, TR::CodeGenerator *cg);
+TR::X86CheckAsyncMessagesMemImmInstruction *Inst_CheckAsyncMessages(TR::Node *node, TR::InstOpCode::Mnemonic op,
+    TR::MemoryReference *mr, int32_t value, TR::CodeGenerator *cg);
 
-TR::X86CheckAsyncMessagesMemRegInstruction *generateCheckAsyncMessagesInstruction(TR::Node *node,
-    TR::InstOpCode::Mnemonic op, TR::MemoryReference *mr, TR::Register *reg, TR::CodeGenerator *cg);
+TR::X86CheckAsyncMessagesMemRegInstruction *Inst_CheckAsyncMessages(TR::Node *node, TR::InstOpCode::Mnemonic op,
+    TR::MemoryReference *mr, TR::Register *reg, TR::CodeGenerator *cg);
 
-TR::X86StackOverflowCheckInstruction *generateStackOverflowCheckInstruction(TR::Instruction *precedingInstruction,
+TR::X86StackOverflowCheckInstruction *Inst_StackOverflowCheck(TR::Instruction *precedingInstruction,
     TR::InstOpCode::Mnemonic op, TR::Register *cmpRegister, TR::MemoryReference *mr, TR::CodeGenerator *cg);
 
 #endif

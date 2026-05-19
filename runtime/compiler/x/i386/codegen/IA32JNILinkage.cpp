@@ -102,10 +102,10 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
     begLabel->setStartInternalControlFlow();
     endLabel->setEndInternalControlFlow();
 
-    generateLabelInstruction(TR::InstOpCode::label, callNode, begLabel, cg());
+    Inst_Label(TR::InstOpCode::label, callNode, begLabel, cg());
 
     // Save VFP
-    TR::X86VFPSaveInstruction *vfpSave = generateVFPSaveInstruction(callNode, cg());
+    TR::X86VFPSaveInstruction *vfpSave = Inst_VFPSave(callNode, cg());
 
     returnAddrLabel = generateLabelSymbol(cg());
     if (createJNIFrame) {
@@ -115,7 +115,7 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
 
         // Begin: mask out the magic bit that indicates JIT frames below
         //
-        generateMemImmInstruction(TR::InstOpCode::S4MemImm4, callNode,
+        Inst_MemImm(TR::InstOpCode::S4MemImm4, callNode,
             MRef_Bdisp32(ebpReal, fej9->thisThreadGetJavaFrameFlagsOffset(), cg()), 0, cg());
         // End: mask out the magic bit that indicates JIT frames below
 
@@ -134,21 +134,21 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
 
         // Push tag bits (savedA0 slot).
         //
-        generateImmInstruction(TR::InstOpCode::PUSHImm4, callNode, tagBits, cg());
+        Inst_Imm(TR::InstOpCode::PUSHImm4, callNode, tagBits, cg());
 
         // Allocate space to get to frame size for special frames (skip savedPC slot).
         //
-        generateRegImmInstruction(TR::InstOpCode::SUB4RegImms, callNode, espReal, 4, cg());
+        Inst_RegImm(TR::InstOpCode::SUB4RegImms, callNode, espReal, 4, cg());
 
         // Push return address in this frame (savedCP slot).
         //
         TR::X86LabelInstruction *returnAddrLabelInstruction
-            = generateLabelInstruction(TR::InstOpCode::PUSHImm4, callNode, returnAddrLabel, cg());
+            = Inst_Label(TR::InstOpCode::PUSHImm4, callNode, returnAddrLabel, cg());
         returnAddrLabelInstruction->setReloType(TR_AbsoluteMethodAddress);
 
         // Push frame flags.
         //
-        generateImmInstruction(TR::InstOpCode::PUSHImm4, callNode, fej9->constJNICallOutFrameFlags(), cg());
+        Inst_Imm(TR::InstOpCode::PUSHImm4, callNode, fej9->constJNICallOutFrameFlags(), cg());
 
         // Push the RAM method for the native.
         //
@@ -156,35 +156,34 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
             TR_NoRelocation /*Interfaces*/, TR_StaticRamMethodConst, TR_SpecialRamMethodConst };
         int rType = resolvedMethodSymbol->getMethodKind() - 1; // method kinds are 1-based
         TR_ASSERT(reloTypes[rType] != TR_NoRelocation, "There shouldn't be direct JNI interface calls!");
-        generateImmInstruction(TR::InstOpCode::PUSHImm4, callNode, (uintptr_t)resolvedMethod->resolvedMethodAddress(),
-            cg(), reloTypes[rType]);
+        Inst_Imm(TR::InstOpCode::PUSHImm4, callNode, (uintptr_t)resolvedMethod->resolvedMethodAddress(), cg(),
+            reloTypes[rType]);
 
         // Store out pc and literals values indicating the callout frame.
         //
-        generateMemImmInstruction(TR::InstOpCode::S4MemImm4, callNode,
-            MRef_Bdisp32(ebpReal, fej9->thisThreadGetJavaPCOffset(), cg()), fej9->constJNICallOutFrameType(), cg());
-        generateMemImmInstruction(TR::InstOpCode::S4MemImm4, callNode,
+        Inst_MemImm(TR::InstOpCode::S4MemImm4, callNode, MRef_Bdisp32(ebpReal, fej9->thisThreadGetJavaPCOffset(), cg()),
+            fej9->constJNICallOutFrameType(), cg());
+        Inst_MemImm(TR::InstOpCode::S4MemImm4, callNode,
             MRef_Bdisp32(ebpReal, fej9->thisThreadGetJavaLiteralsOffset(), cg()), 0, cg());
     }
 
     // Store out jsp.
     //
-    generateMemRegInstruction(TR::InstOpCode::S4MemReg, callNode,
-        MRef_Bdisp32(ebpReal, fej9->thisThreadGetJavaSPOffset(), cg()), espReal, cg());
+    Inst_MemReg(TR::InstOpCode::S4MemReg, callNode, MRef_Bdisp32(ebpReal, fej9->thisThreadGetJavaSPOffset(), cg()),
+        espReal, cg());
 
     // Switch stacks.
     // Load up machine SP.
     //
-    generateRegMemInstruction(TR::InstOpCode::L4RegMem, callNode, espReal,
+    Inst_RegMem(TR::InstOpCode::L4RegMem, callNode, espReal,
         MRef_Bdisp32(ebpReal, ((TR_J9VMBase *)fej9)->thisThreadGetMachineSPOffset(), cg()), cg());
 
     // Save ESP to EDI, a callee preserved register
     // It is necessary because the JNI method may be either caller-cleanup or callee-cleanup
     TR::Register *ediReal = cg()->allocateRegister();
-    generateRegRegInstruction(TR::InstOpCode::MOV4RegReg, callNode, ediReal, espReal, cg());
-    generateRegImmInstruction(argSize >= -128 && argSize <= 127 ? TR::InstOpCode::SUB4RegImms
-                                                                : TR::InstOpCode::SUB4RegImm4,
-        callNode, espReal, argSize, cg());
+    Inst_RegReg(TR::InstOpCode::MOV4RegReg, callNode, ediReal, espReal, cg());
+    Inst_RegImm(argSize >= -128 && argSize <= 127 ? TR::InstOpCode::SUB4RegImms : TR::InstOpCode::SUB4RegImm4, callNode,
+        espReal, argSize, cg());
 
     // We have to be careful to allocate the return register after the
     // dependency conditions for the other killed registers have been set up,
@@ -237,35 +236,34 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
     }
 
     if (dropVMAccess) {
-        generateMemImmInstruction(TR::InstOpCode::S4MemImm4, callNode,
+        Inst_MemImm(TR::InstOpCode::S4MemImm4, callNode,
             MRef_Bdisp32(ebpReal, offsetof(struct J9VMThread, inNative), cg()), 1, cg());
 
 #if !defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
         TR::MemoryReference *mr = MRef_Bdisp32(espReal, intptr_t(0), cg());
         mr->setRequiresLockPrefix();
-        generateMemImmInstruction(TR::InstOpCode::OR4MemImms, callNode, mr, 0, cg());
+        Inst_MemImm(TR::InstOpCode::OR4MemImms, callNode, mr, 0, cg());
 #endif /* !J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 
         TR::LabelSymbol *longReleaseSnippetLabel = generateLabelSymbol(cg());
         TR::LabelSymbol *longReleaseRestartLabel = generateLabelSymbol(cg());
 
         static_assert(J9_PUBLIC_FLAGS_VM_ACCESS <= 0x7fffffff, "VM access bit must be immediate");
-        generateMemImmInstruction(TR::InstOpCode::CMP4MemImm4, callNode,
+        Inst_MemImm(TR::InstOpCode::CMP4MemImm4, callNode,
             MRef_Bdisp32(ebpReal, fej9->thisThreadGetPublicFlagsOffset(), cg()), J9_PUBLIC_FLAGS_VM_ACCESS, cg());
-        generateLabelInstruction(TR::InstOpCode::JNE4, callNode, longReleaseSnippetLabel, cg());
-        generateLabelInstruction(TR::InstOpCode::label, callNode, longReleaseRestartLabel, cg());
+        Inst_Label(TR::InstOpCode::JNE4, callNode, longReleaseSnippetLabel, cg());
+        Inst_Label(TR::InstOpCode::label, callNode, longReleaseRestartLabel, cg());
 
         TR_OutlinedInstructionsGenerator og(longReleaseSnippetLabel, callNode, cg());
         auto helper = comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getMethodSymbol());
-        generateImmSymInstruction(TR::InstOpCode::CALLImm4, callNode, (uintptr_t)helper->getMethodAddress(), helper,
-            cg());
-        generateLabelInstruction(TR::InstOpCode::JMP4, callNode, longReleaseRestartLabel, cg());
+        Inst_ImmSym(TR::InstOpCode::CALLImm4, callNode, (uintptr_t)helper->getMethodAddress(), helper, cg());
+        Inst_Label(TR::InstOpCode::JMP4, callNode, longReleaseRestartLabel, cg());
         og.endOutlinedInstructionSequence();
     }
 
     // Dispatch jni method directly.
     //
-    TR::Instruction *instr = generateImmSymInstruction(TR::InstOpCode::CALLImm4, callNode,
+    TR::Instruction *instr = Inst_ImmSym(TR::InstOpCode::CALLImm4, callNode,
         (uintptr_t)resolvedMethodSymbol->getResolvedMethod()->startAddressForJNIMethod(comp()),
         callNode->getSymbolReference(), cg());
 
@@ -280,10 +278,10 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
 
     // Lay down a label for the frame push to reference.
     //
-    generateLabelInstruction(TR::InstOpCode::label, callNode, returnAddrLabel, cg());
+    Inst_Label(TR::InstOpCode::label, callNode, returnAddrLabel, cg());
 
     // Restore stack pointer
-    generateRegRegInstruction(TR::InstOpCode::MOV4RegReg, callNode, espReal, ediReal, cg());
+    Inst_RegReg(TR::InstOpCode::MOV4RegReg, callNode, espReal, ediReal, cg());
     cg()->stopUsingRegister(ediReal);
 
     // Need to squirrel away the return value for some data types to avoid register
@@ -300,50 +298,48 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
             if (isBoolean) {
                 // For bool return type, must check whether value returned by
                 // JNI is zero (false) or non-zero (true) to yield Java result
-                generateRegRegInstruction(TR::InstOpCode::TEST1RegReg, callNode, eaxReal, eaxReal, cg());
-                generateRegInstruction(TR::InstOpCode::SETNE1Reg, callNode, eaxReal, cg());
+                Inst_RegReg(TR::InstOpCode::TEST1RegReg, callNode, eaxReal, eaxReal, cg());
+                Inst_Reg(TR::InstOpCode::SETNE1Reg, callNode, eaxReal, cg());
             }
-            generateRegRegInstruction((isUnsigned || isBoolean) ? TR::InstOpCode::MOVZXReg4Reg1
-                                                                : TR::InstOpCode::MOVSXReg4Reg1,
+            Inst_RegReg((isUnsigned || isBoolean) ? TR::InstOpCode::MOVZXReg4Reg1 : TR::InstOpCode::MOVSXReg4Reg1,
                 callNode, ecxReal, eaxReal, cg());
             break;
         case TR::Int16:
-            generateRegRegInstruction(isUnsigned ? TR::InstOpCode::MOVZXReg4Reg2 : TR::InstOpCode::MOVSXReg4Reg2,
-                callNode, ecxReal, eaxReal, cg());
+            Inst_RegReg(isUnsigned ? TR::InstOpCode::MOVZXReg4Reg2 : TR::InstOpCode::MOVSXReg4Reg2, callNode, ecxReal,
+                eaxReal, cg());
             break;
         case TR::Address:
         case TR::Int64:
         case TR::Int32:
-            generateRegRegInstruction(TR::InstOpCode::MOV4RegReg, callNode, ecxReal, eaxReal, cg());
+            Inst_RegReg(TR::InstOpCode::MOV4RegReg, callNode, ecxReal, eaxReal, cg());
             break;
     }
 
     if (dropVMAccess) {
         // Re-acquire vm access.
         //
-        generateMemImmInstruction(TR::InstOpCode::S4MemImm4, callNode,
+        Inst_MemImm(TR::InstOpCode::S4MemImm4, callNode,
             MRef_Bdisp32(ebpReal, offsetof(struct J9VMThread, inNative), cg()), 0, cg());
 
 #if !defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
         TR::MemoryReference *mr = MRef_Bdisp32(espReal, intptr_t(0), cg());
         mr->setRequiresLockPrefix();
-        generateMemImmInstruction(TR::InstOpCode::OR4MemImms, callNode, mr, 0, cg());
+        Inst_MemImm(TR::InstOpCode::OR4MemImms, callNode, mr, 0, cg());
 #endif /* !J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 
         TR::LabelSymbol *longAcquireSnippetLabel = generateLabelSymbol(cg());
         TR::LabelSymbol *longAcquireRestartLabel = generateLabelSymbol(cg());
 
         static_assert(J9_PUBLIC_FLAGS_VM_ACCESS <= 0x7fffffff, "VM access bit must be immediate");
-        generateMemImmInstruction(TR::InstOpCode::CMP4MemImm4, callNode,
+        Inst_MemImm(TR::InstOpCode::CMP4MemImm4, callNode,
             MRef_Bdisp32(ebpReal, fej9->thisThreadGetPublicFlagsOffset(), cg()), J9_PUBLIC_FLAGS_VM_ACCESS, cg());
-        generateLabelInstruction(TR::InstOpCode::JNE4, callNode, longAcquireSnippetLabel, cg());
-        generateLabelInstruction(TR::InstOpCode::label, callNode, longAcquireRestartLabel, cg());
+        Inst_Label(TR::InstOpCode::JNE4, callNode, longAcquireSnippetLabel, cg());
+        Inst_Label(TR::InstOpCode::label, callNode, longAcquireRestartLabel, cg());
 
         TR_OutlinedInstructionsGenerator og(longAcquireSnippetLabel, callNode, cg());
         auto helper = comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getMethodSymbol());
-        generateImmSymInstruction(TR::InstOpCode::CALLImm4, callNode, (uintptr_t)helper->getMethodAddress(), helper,
-            cg());
-        generateLabelInstruction(TR::InstOpCode::JMP4, callNode, longAcquireRestartLabel, cg());
+        Inst_ImmSym(TR::InstOpCode::CALLImm4, callNode, (uintptr_t)helper->getMethodAddress(), helper, cg());
+        Inst_Label(TR::InstOpCode::JMP4, callNode, longAcquireRestartLabel, cg());
         og.endOutlinedInstructionSequence();
     }
 
@@ -351,26 +347,26 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
         // Unless NULL, need to indirect once to get the real java reference
         //
         TR::LabelSymbol *tempLab = generateLabelSymbol(cg());
-        generateRegRegInstruction(TR::InstOpCode::TEST4RegReg, callNode, ecxReal, ecxReal, cg());
-        generateLabelInstruction(TR::InstOpCode::JE4, callNode, tempLab, cg());
-        generateRegMemInstruction(TR::InstOpCode::L4RegMem, callNode, ecxReal, MRef_Bdisp32(ecxReal, 0, cg()), cg());
-        generateLabelInstruction(TR::InstOpCode::label, callNode, tempLab, cg());
+        Inst_RegReg(TR::InstOpCode::TEST4RegReg, callNode, ecxReal, ecxReal, cg());
+        Inst_Label(TR::InstOpCode::JE4, callNode, tempLab, cg());
+        Inst_RegMem(TR::InstOpCode::L4RegMem, callNode, ecxReal, MRef_Bdisp32(ecxReal, 0, cg()), cg());
+        Inst_Label(TR::InstOpCode::label, callNode, tempLab, cg());
     }
 
     // Switch stacks back.
     // First store out the machine sp into the vm thread.  It has to be done as sometimes
     // it gets tromped on by call backs.
     //
-    generateMemRegInstruction(TR::InstOpCode::S4MemReg, callNode,
-        MRef_Bdisp32(ebpReal, fej9->thisThreadGetMachineSPOffset(), cg()), espReal, cg());
+    Inst_MemReg(TR::InstOpCode::S4MemReg, callNode, MRef_Bdisp32(ebpReal, fej9->thisThreadGetMachineSPOffset(), cg()),
+        espReal, cg());
 
     // Next load up the java sp so we have the callout frame on top of the java stack.
     //
-    generateRegMemInstruction(TR::InstOpCode::L4RegMem, callNode, espReal,
+    Inst_RegMem(TR::InstOpCode::L4RegMem, callNode, espReal,
         MRef_Bdisp32(ebpReal, fej9->thisThreadGetJavaSPOffset(), cg()), cg());
 
     if (createJNIFrame) {
-        generateRegMemInstruction(TR::InstOpCode::ADD4RegMem, callNode, espReal,
+        Inst_RegMem(TR::InstOpCode::ADD4RegMem, callNode, espReal,
             MRef_Bdisp32(ebpReal, fej9->thisThreadGetJavaLiteralsOffset(), cg()), cg());
 
         if (tearDownJNIFrame) {
@@ -382,20 +378,20 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
                 = flagValue <= 255 ? TR::InstOpCode::TEST1MemImm1 : TR::InstOpCode::TEST4MemImm4;
             TR::LabelSymbol *refPoolSnippetLabel = generateLabelSymbol(cg());
             TR::LabelSymbol *refPoolRestartLabel = generateLabelSymbol(cg());
-            generateMemImmInstruction(op, callNode,
-                MRef_Bdisp32(espReal, fej9->constJNICallOutFrameFlagsOffset(), cg()), flagValue, cg());
-            generateLabelInstruction(TR::InstOpCode::JNE4, callNode, refPoolSnippetLabel, cg());
-            generateLabelInstruction(TR::InstOpCode::label, callNode, refPoolRestartLabel, cg());
+            Inst_MemImm(op, callNode, MRef_Bdisp32(espReal, fej9->constJNICallOutFrameFlagsOffset(), cg()), flagValue,
+                cg());
+            Inst_Label(TR::InstOpCode::JNE4, callNode, refPoolSnippetLabel, cg());
+            Inst_Label(TR::InstOpCode::label, callNode, refPoolRestartLabel, cg());
 
             TR_OutlinedInstructionsGenerator og(refPoolSnippetLabel, callNode, cg());
-            generateHelperCallInstruction(callNode, TR_IA32jitCollapseJNIReferenceFrame, NULL, cg());
-            generateLabelInstruction(TR::InstOpCode::JMP4, callNode, refPoolRestartLabel, cg());
+            Inst_HelperCall(callNode, TR_IA32jitCollapseJNIReferenceFrame, NULL, cg());
+            Inst_Label(TR::InstOpCode::JMP4, callNode, refPoolRestartLabel, cg());
             og.endOutlinedInstructionSequence();
         }
 
         // Now set esp back to its previous value.
         //
-        generateRegImmInstruction(TR::InstOpCode::ADD4RegImms, callNode, espReal, 20, cg());
+        Inst_RegImm(TR::InstOpCode::ADD4RegImms, callNode, espReal, 20, cg());
     }
 
     // Get return registers set up before preserved regs are restored.
@@ -427,10 +423,10 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
     if (checkExceptions) {
         // Check exceptions.
         //
-        generateMemImmInstruction(TR::InstOpCode::CMP4MemImms, callNode,
+        Inst_MemImm(TR::InstOpCode::CMP4MemImms, callNode,
             MRef_Bdisp32(ebpReal, fej9->thisThreadGetCurrentExceptionOffset(), cg()), 0, cg());
         TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg());
-        instr = generateLabelInstruction(TR::InstOpCode::JNE4, callNode, snippetLabel, cg());
+        instr = Inst_Label(TR::InstOpCode::JNE4, callNode, snippetLabel, cg());
         instr->setNeedsGCMap((argSize << 14) | 0xFF00FFFF);
 
         TR::Snippet *snippet = new (trHeapMemory())
@@ -440,8 +436,8 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
     }
 
     // Restore VFP
-    generateVFPRestoreInstruction(vfpSave, callNode, cg());
-    generateLabelInstruction(TR::InstOpCode::label, callNode, endLabel, deps, cg());
+    Inst_VFPRestore(vfpSave, callNode, cg());
+    Inst_Label(TR::InstOpCode::label, callNode, endLabel, deps, cg());
 
     // Stop using the killed registers that are not going to persist.
     //

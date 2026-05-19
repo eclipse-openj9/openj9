@@ -131,20 +131,20 @@ uint8_t *TR::X86StackOverflowCheckInstruction::generateBinaryEncoding()
     return cursor;
 };
 
-TR::X86StackOverflowCheckInstruction *generateStackOverflowCheckInstruction(TR::Instruction *precedingInstruction,
+TR::X86StackOverflowCheckInstruction *Inst_StackOverflowCheck(TR::Instruction *precedingInstruction,
     TR::InstOpCode::Mnemonic op, TR::Register *cmpRegister, TR::MemoryReference *mr, TR::CodeGenerator *cg)
 {
     return new (cg->trHeapMemory()) TR::X86StackOverflowCheckInstruction(precedingInstruction, op, cmpRegister, mr, cg);
 }
 
-TR::X86CheckAsyncMessagesMemImmInstruction *generateCheckAsyncMessagesInstruction(TR::Node *node,
-    TR::InstOpCode::Mnemonic op, TR::MemoryReference *mr, int32_t value, TR::CodeGenerator *cg)
+TR::X86CheckAsyncMessagesMemImmInstruction *Inst_CheckAsyncMessages(TR::Node *node, TR::InstOpCode::Mnemonic op,
+    TR::MemoryReference *mr, int32_t value, TR::CodeGenerator *cg)
 {
     return new (cg->trHeapMemory()) TR::X86CheckAsyncMessagesMemImmInstruction(node, op, mr, value, cg);
 }
 
-TR::X86CheckAsyncMessagesMemRegInstruction *generateCheckAsyncMessagesInstruction(TR::Node *node,
-    TR::InstOpCode::Mnemonic op, TR::MemoryReference *mr, TR::Register *reg, TR::CodeGenerator *cg)
+TR::X86CheckAsyncMessagesMemRegInstruction *Inst_CheckAsyncMessages(TR::Node *node, TR::InstOpCode::Mnemonic op,
+    TR::MemoryReference *mr, TR::Register *reg, TR::CodeGenerator *cg)
 {
     return new (cg->trHeapMemory()) TR::X86CheckAsyncMessagesMemRegInstruction(node, op, mr, reg, cg);
 }
@@ -161,7 +161,7 @@ uint8_t *TR::X86CheckAsyncMessagesMemRegInstruction::generateBinaryEncoding()
     return cursor;
 };
 
-TR::X86MemImmSnippetInstruction *generateMemImmSnippetInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node,
+TR::X86MemImmSnippetInstruction *Inst_MemImmSnippet(TR::InstOpCode::Mnemonic op, TR::Node *node,
     TR::MemoryReference *mr, int32_t imm, TR::UnresolvedDataSnippet *snippet, TR::CodeGenerator *cg)
 {
     return new (cg->trHeapMemory()) TR::X86MemImmSnippetInstruction(op, node, mr, imm, snippet, cg);
