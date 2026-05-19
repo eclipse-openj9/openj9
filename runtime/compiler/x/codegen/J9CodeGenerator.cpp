@@ -277,7 +277,7 @@ void J9::X86::CodeGenerator::beginInstructionSelection()
                 TR::X86ImmInstruction((TR::Instruction *)NULL, TR::InstOpCode::DDImm4, 0, self());
     }
 
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)1, self());
+    TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, (uint8_t)1, self());
     if (_linkageProperties->getMethodMetaDataRegister() != TR::RealRegister::NoReg) {
         deps->addPostCondition(self()->getVMThreadRegister(),
             (TR::RealRegister::RegNum)self()->getVMThreadRegister()->getAssociation(), self());
@@ -387,7 +387,7 @@ TR::Instruction *J9::X86::CodeGenerator::generateSwitchToInterpreterPrePrologue(
     prev = Inst_Label(prev, TR::InstOpCode::label, startLabel, self());
     self()->setSwitchToInterpreterLabel(startLabel);
 
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)1, (uint8_t)0, self());
+    TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)1, (uint8_t)0, self());
     deps->addPreCondition(ediRegister, TR::RealRegister::edi, self());
 
     TR::SymbolReference *helperSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition);

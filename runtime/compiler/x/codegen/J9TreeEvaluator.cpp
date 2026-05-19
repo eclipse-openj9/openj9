@@ -517,7 +517,7 @@ TR::Register *J9::X86::TreeEvaluator::fpConvertToLong(TR::Node *node, TR::Symbol
         TR::Register *highReg = cg->allocateRegister(TR_GPR);
         TR::RealRegister *espReal = cg->machine()->getRealRegister(TR::RealRegister::esp);
 
-        deps = generateRegisterDependencyConditions((uint8_t)0, 3, cg);
+        deps = RegDeps((uint8_t)0, 3, cg);
         deps->addPostCondition(lowReg, TR::RealRegister::NoReg, cg);
         deps->addPostCondition(highReg, TR::RealRegister::NoReg, cg);
         deps->addPostCondition(doubleReg, TR::RealRegister::NoReg, cg);
@@ -624,7 +624,7 @@ TR::Register *J9::X86::TreeEvaluator::fpConvertToLong(TR::Node *node, TR::Symbol
         cg->addSnippet(new (cg->trHeapMemory()) TR::X86FPConvertToLongSnippet(reStartLabel, snippetLabel, helperSymRef,
             node, loadHighInstr, loadLowInstr, cg));
 
-        TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, accReg ? 3 : 2, cg);
+        TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, accReg ? 3 : 2, cg);
 
         // Make sure the high and low long registers are assigned to something.
         //
@@ -709,7 +709,7 @@ TR::Register *J9::X86::TreeEvaluator::f2iEvaluator(TR::Node *node, TR::CodeGener
     }
 
     // TODO: (omr issue #4969): Remove once support for spills in OOL paths is added
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)2, cg);
+    TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, (uint8_t)2, cg);
     deps->addPostCondition(targetRegister, TR::RealRegister::NoReg, cg);
     deps->addPostCondition(sourceRegister, TR::RealRegister::NoReg, cg);
 
@@ -1154,7 +1154,7 @@ TR::Register *J9::X86::TreeEvaluator::performHeapLoadWithReadBarrier(TR::Node *n
             begLabel->setStartInternalControlFlow();
             endLabel->setEndInternalControlFlow();
 
-            TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)2, 2, cg);
+            TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)2, 2, cg);
             deps->addPreCondition(object, TR::RealRegister::NoReg, cg);
             deps->addPreCondition(address, TR::RealRegister::NoReg, cg);
             deps->addPostCondition(object, TR::RealRegister::NoReg, cg);
@@ -1791,7 +1791,7 @@ static TR::Register *generate2DArrayWithInlineAllocators(TR::Node *node, TR::Cod
     Inst_Label(TR::InstOpCode::JG4, node, loopLabel, cg);
 
     // done, OOL helper will return to this point
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(0, 14, cg);
+    TR::RegisterDependencyConditions *deps = RegDeps(0, 14, cg);
     deps->addPostCondition(spinePtrReg, TR::RealRegister::NoReg, cg);
 
     deps->addPostCondition(nDimsReg, TR::RealRegister::NoReg, cg);
@@ -2091,7 +2091,7 @@ static TR::Register *generate2DZeroLengthArrayWithInlineAllocators(TR::Node *nod
 
     Inst_Label(TR::InstOpCode::JMP4, node, doneLabel, cg);
 
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, 13, cg);
+    TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, 13, cg);
 
     deps->addPostCondition(dimsPtrReg, TR::RealRegister::NoReg, cg);
     deps->addPostCondition(dimReg, TR::RealRegister::NoReg, cg);
@@ -2138,7 +2138,7 @@ static TR::Register *generate2DZeroLengthArrayWithInlineAllocators(TR::Node *nod
     // Copy the newly allocated object into a collected reference register now that it is a valid object.
     //
     TR::Register *targetReg2 = cg->allocateCollectedReferenceRegister();
-    TR::RegisterDependencyConditions *deps2 = generateRegisterDependencyConditions(0, 1, cg);
+    TR::RegisterDependencyConditions *deps2 = RegDeps(0, 1, cg);
     deps2->addPostCondition(targetReg2, TR::RealRegister::eax, cg);
     Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, targetReg2, targetReg, deps2, cg);
     cg->stopUsingRegister(targetReg);
@@ -2232,7 +2232,7 @@ TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Cod
 
     if (!node->isNoArrayStoreCheckArrayCopy()) {
         // Nothing to optimize, simply call jitReferenceArrayCopy helper
-        auto deps = generateRegisterDependencyConditions((uint8_t)3, 3, cg);
+        auto deps = RegDeps((uint8_t)3, 3, cg);
         deps->addPreCondition(srcReg, TR::RealRegister::esi, cg);
         deps->addPreCondition(dstReg, TR::RealRegister::edi, cg);
         deps->addPreCondition(sizeReg, TR::RealRegister::ecx, cg);
@@ -2293,7 +2293,7 @@ TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Cod
         Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, RCX, sizeReg, cg);
 
         int8_t numDeps = enableInlineForSmallSize ? 9 : 5;
-        TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(numDeps, numDeps, cg);
+        TR::RegisterDependencyConditions *deps = RegDeps(numDeps, numDeps, cg);
 
         deps->addPreCondition(RSI, TR::RealRegister::esi, cg);
         deps->addPreCondition(RDI, TR::RealRegister::edi, cg);
@@ -2851,7 +2851,7 @@ TR::Register *J9::X86::TreeEvaluator::DIVCHKEvaluator(TR::Node *node, TR::CodeGe
         // We need to make sure that any spilling occurs only after restartLabel,
         // otherwise the divide check snippet may store into the wrong register.
         //
-        TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, 2, cg);
+        TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, 2, cg);
         TR::Register *scratchRegister;
 
         if (useRegisterPairs) {
@@ -3513,7 +3513,7 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
     //
     // -------------------------------------------------------------------------
 
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(13, 13, cg);
+    TR::RegisterDependencyConditions *deps = RegDeps(13, 13, cg);
     deps->unionPostCondition(destinationRegister, TR::RealRegister::NoReg, cg);
     deps->unionPostCondition(sourceRegister, TR::RealRegister::NoReg, cg);
 
@@ -3766,7 +3766,7 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node
 
     // TODO: don't always require the VM thread
     //
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, 1, cg);
+    TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, 1, cg);
 
     deps->addPostCondition(cg->getVMThreadRegister(),
         (TR::RealRegister::RegNum)cg->getVMThreadRegister()->getAssociation(), cg);
@@ -3879,7 +3879,7 @@ TR::Register *J9::X86::TreeEvaluator::readbarEvaluator(TR::Node *node, TR::CodeG
     cg->setImplicitExceptionPoint(forwardingInstr);
 
     if (needBranchAroundForNULL) {
-        TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, 1, cg);
+        TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, 1, cg);
         deps->addPostCondition(handleRegister, TR::RealRegister::NoReg, cg);
 
         // and we're done
@@ -3905,7 +3905,7 @@ static TR::Register *highestOneBit(TR::Node *node, TR::CodeGenerator *cg, TR::Re
     Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, scratchReg, scratchReg, cg);
     Inst_RegReg(TR::InstOpCode::BSRRegReg(is64Bit), node, bsrReg, reg, cg);
     Inst_Reg(TR::InstOpCode::SETNE1Reg, node, scratchReg, cg);
-    TR::RegisterDependencyConditions *shiftDependencies = generateRegisterDependencyConditions((uint8_t)1, 1, cg);
+    TR::RegisterDependencyConditions *shiftDependencies = RegDeps((uint8_t)1, 1, cg);
     shiftDependencies->addPreCondition(bsrReg, TR::RealRegister::ecx, cg);
     shiftDependencies->addPostCondition(bsrReg, TR::RealRegister::ecx, cg);
     shiftDependencies->stopAddingConditions();
@@ -4280,7 +4280,7 @@ inline void generateInlinedCheckCastForDynamicCastClass(TR::Node *node, TR::Code
         og.endOutlinedInstructionSequence();
     }
 
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, 8, cg);
+    TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, 8, cg);
 
     deps->addPostCondition(ObjReg, TR::RealRegister::NoReg, cg);
     deps->addPostCondition(castClassReg, TR::RealRegister::NoReg, cg);
@@ -4442,7 +4442,7 @@ static void inlineCheckCastOrInstanceOfObjectArrayCastClass(TR::Node *node, TR_O
         + (outlinedHelperCall ? 2 : 0);  // 2 helper args: objectRef + castClass
     // clang-format on
 
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, numRegDeps, cg);
+    TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, numRegDeps, cg);
 
     deps->addPostCondition(objectReg, TR::RealRegister::NoReg, cg);
 
@@ -4622,7 +4622,7 @@ static void inlineCheckCastOrInstanceOfFinalArrayCastClass(TR::Node *node, TR_Op
         + (scratchReg ? 1 : 0);
     // clang-format on
 
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, numRegDeps, cg);
+    TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, numRegDeps, cg);
 
     deps->addPostCondition(objectReg, TR::RealRegister::NoReg, cg);
 
@@ -5139,7 +5139,7 @@ static void inlineCheckCastOrInstanceOfKnownArrayCastClass(TR::Node *node, TR_Op
         + (scratchReg3 ? 1 : 0);
     // clang-format on
 
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, numRegDeps, cg);
+    TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, numRegDeps, cg);
 
     deps->addPostCondition(objectReg, TR::RealRegister::NoReg, cg);
 
@@ -5356,7 +5356,7 @@ inline void generateInlinedCheckCastOrInstanceOfForInterface(TR::Node *node, TR_
     TR::Register *scratchReg = (!doClassCache && isCheckCast) ? cg->allocateRegister() : NULL;
 
     uint8_t numDeps = 1 + (castClassReg != NULL) + (scratchReg != NULL);
-    auto deps = generateRegisterDependencyConditions(numDeps, numDeps, cg);
+    auto deps = RegDeps(numDeps, numDeps, cg);
     deps->addPreCondition(instanceClassReg, TR::RealRegister::NoReg, cg);
     deps->addPostCondition(instanceClassReg, TR::RealRegister::NoReg, cg);
     if (castClassReg) {
@@ -5550,7 +5550,7 @@ inline void generateInlinedCheckCastOrInstanceOfForClass(TR::Node *node, TR_Opaq
     auto j9class = cg->allocateRegister();
     auto tmp = cg->allocateRegister();
 
-    auto deps = generateRegisterDependencyConditions((uint8_t)2, (uint8_t)2, cg);
+    auto deps = RegDeps((uint8_t)2, (uint8_t)2, cg);
     deps->addPreCondition(tmp, TR::RealRegister::NoReg, cg);
     deps->addPreCondition(j9class, TR::RealRegister::NoReg, cg);
     deps->addPostCondition(tmp, TR::RealRegister::NoReg, cg);
@@ -5792,7 +5792,7 @@ void J9::X86::TreeEvaluator::asyncGCMapCheckPatching(TR::Node *node, TR::CodeGen
         Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, tempReg, (uint64_t)0x0, cg);
         Inst_RegReg(TR::InstOpCode::AND8RegReg, node, patchValReg, tempReg, cg);
 
-        TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, 4, cg);
+        TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, 4, cg);
         deps->addPostCondition(patchableAddrReg, TR::RealRegister::NoReg, cg);
         deps->addPostCondition(patchValReg, TR::RealRegister::NoReg, cg);
         deps->addPostCondition(tempReg, TR::RealRegister::NoReg, cg);
@@ -5882,7 +5882,7 @@ void J9::X86::TreeEvaluator::asyncGCMapCheckPatching(TR::Node *node, TR::CodeGen
         Inst_RegReg(TR::InstOpCode::MOV4RegReg, node, highPatchValReg, highExistingValReg, cg);
         Inst_RegImm(TR::InstOpCode::OR4RegImm4, node, highPatchValReg, (uint32_t)0x000000ff, cg);
 
-        TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, 6, cg);
+        TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, 6, cg);
 
         deps->addPostCondition(patchableAddrReg, TR::RealRegister::edi, cg);
         deps->addPostCondition(lowPatchValReg, TR::RealRegister::ebx, cg);
@@ -5968,7 +5968,7 @@ void J9::X86::TreeEvaluator::inlineRecursiveMonitor(TR::Node *node, TR::CodeGene
         MRef_Bdisp32(vmThreadReg, fej9->thisThreadGetOwnedMonitorCountOffset(), cg), cg);
 #endif
 
-    TR::RegisterDependencyConditions *restartDeps = generateRegisterDependencyConditions((uint8_t)0, 4, cg);
+    TR::RegisterDependencyConditions *restartDeps = RegDeps((uint8_t)0, 4, cg);
     restartDeps->addPostCondition(objectReg, TR::RealRegister::NoReg, cg);
     restartDeps->addPostCondition(vmThreadReg, TR::RealRegister::ebp, cg);
     restartDeps->addPostCondition(lockWordMaskedReg, TR::RealRegister::NoReg, cg);
@@ -5981,7 +5981,7 @@ void J9::X86::TreeEvaluator::inlineRecursiveMonitor(TR::Node *node, TR::CodeGene
     cg->stopUsingRegister(lockWordReg);
     cg->stopUsingRegister(lockWordMaskedReg);
 
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, 1, cg);
+    TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, 1, cg);
     deps->addPostCondition(vmThreadReg, TR::RealRegister::ebp, cg);
     deps->stopAddingConditions();
     Inst_Label(TR::InstOpCode::label, node, outlinedEndLabel, deps, cg);
@@ -6373,7 +6373,7 @@ TR::Register *J9::X86::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Code
     //      objectReg, eaxReal, vmThreadReg
     // since the snippet needs to find them to grab the real registers from them.
     //
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)numDeps, cg);
+    TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, (uint8_t)numDeps, cg);
     deps->addPostCondition(objectReg, TR::RealRegister::NoReg, cg);
     deps->addPostCondition(eaxReal, TR::RealRegister::eax, cg);
     deps->addPostCondition(vmThreadReg, TR::RealRegister::ebp, cg);
@@ -6656,7 +6656,7 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::Cod
     // Or, for readmonitors they must be objectReg, vmThreadReg, unlockedReg, eaxReal
     // snippet needs to find them to grab the real registers from them.
     //
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)numDeps, cg);
+    TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, (uint8_t)numDeps, cg);
     deps->addPostCondition(objectReg, TR::RealRegister::NoReg, cg);
     deps->addPostCondition(vmThreadReg, TR::RealRegister::ebp, cg);
 
@@ -8698,7 +8698,7 @@ TR::Register *J9::X86::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGen
 
     numDeps += srm->numAvailableRegisters();
 
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, numDeps, cg);
+    TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, numDeps, cg);
 
     if (sizeReg)
         deps->addPostCondition(sizeReg, TR::RealRegister::NoReg, cg);
@@ -8745,7 +8745,7 @@ TR::Register *J9::X86::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGen
     // now that it is a valid object.
     //
     TR::Register *targetReg2 = cg->allocateCollectedReferenceRegister();
-    TR::RegisterDependencyConditions *deps2 = generateRegisterDependencyConditions(0, 1, cg);
+    TR::RegisterDependencyConditions *deps2 = RegDeps(0, 1, cg);
     deps2->addPostCondition(targetReg2, TR::RealRegister::eax, cg);
     Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, targetReg2, targetReg, deps2, cg);
     cg->stopUsingRegister(targetReg);
@@ -9303,7 +9303,7 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
 
     // Now generate the fall-through label
     //
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)4, cg);
+    TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, (uint8_t)4, cg);
     deps->addPostCondition(object1Reg, TR::RealRegister::NoReg, cg);
     deps->addPostCondition(object2Reg, TR::RealRegister::NoReg, cg);
     deps->addPostCondition(tempReg, TR::RealRegister::NoReg, cg);
@@ -9456,8 +9456,7 @@ static bool inlineNanoTime(TR::Node *node, TR::CodeGenerator *cg)
         // directly. Since this is a "C"-style call, ebx, esi and edi are preserved
         //
         int32_t extraFPDeps = (uint8_t)(cg->machine()->getLastXMMR() - cg->machine()->getFirstXMMR() + 1);
-        TR::RegisterDependencyConditions *deps
-            = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)4 + extraFPDeps, cg);
+        TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, (uint8_t)4 + extraFPDeps, cg);
         TR::Register *temp1 = cg->allocateRegister();
         deps->addPostCondition(temp1, TR::RealRegister::eax, cg);
         cg->stopUsingRegister(temp1);
@@ -9484,7 +9483,7 @@ static bool inlineNanoTime(TR::Node *node, TR::CodeGenerator *cg)
         TR::Register *reglow = cg->allocateRegister();
         Inst_RegMem(TR::InstOpCode::L4RegMem, node, reglow, MRef_Bdisp32(resultAddress, 4, cg), cg);
 
-        TR::RegisterDependencyConditions *dep1 = generateRegisterDependencyConditions((uint8_t)2, 2, cg);
+        TR::RegisterDependencyConditions *dep1 = RegDeps((uint8_t)2, 2, cg);
         dep1->addPreCondition(eaxReal, TR::RealRegister::eax, cg);
         dep1->addPreCondition(edxReal, TR::RealRegister::edx, cg);
         dep1->addPostCondition(eaxReal, TR::RealRegister::eax, cg);
@@ -9567,8 +9566,7 @@ static bool inlineNanoTime(TR::Node *node, TR::CodeGenerator *cg)
         // Build register dependencies and call the method in the port library
         // directly. Since this is a "C"-style call, ebx, esi and edi are preserved
         //
-        TR::RegisterDependencyConditions *deps
-            = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)4 + extraFPDeps, cg);
+        TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, (uint8_t)4 + extraFPDeps, cg);
         TR::Register *temp1 = cg->allocateRegister();
         deps->addPostCondition(temp1, TR::RealRegister::ecx, cg);
         cg->stopUsingRegister(temp1);
@@ -9840,7 +9838,7 @@ static TR::Register *inlineStringHashCode(TR::Node *node, bool isCompressed, TR:
     auto loopLabel = generateLabelSymbol(cg);
     begLabel->setStartInternalControlFlow();
     endLabel->setEndInternalControlFlow();
-    auto deps = generateRegisterDependencyConditions((uint8_t)6, (uint8_t)6, cg);
+    auto deps = RegDeps((uint8_t)6, (uint8_t)6, cg);
     deps->addPreCondition(address, TR::RealRegister::NoReg, cg);
     deps->addPreCondition(index, TR::RealRegister::NoReg, cg);
     deps->addPreCondition(length, TR::RealRegister::NoReg, cg);
@@ -10055,7 +10053,7 @@ TR::Register *J9::X86::TreeEvaluator::vectorizedHashCodeLoopHelper(TR::Node *nod
     int32_t vectorSizeElements = vectorSizes[vl - TR::VectorLength128];
     int32_t numElements = vectorSizeElements * unrollCount;
 
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)11, cg);
+    TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, (uint8_t)11, cg);
     TR::Register *tmp = cg->allocateRegister(TR_GPR);
     TR::Register *tmpVRF = cg->allocateRegister(TR_VRF);
     TR::Register *multiplierVRF = cg->allocateRegister(TR_VRF);
@@ -10263,7 +10261,7 @@ TR::Register *J9::X86::TreeEvaluator::vectorizedHashCodeHelper(TR::Node *node, T
     TR::Register *result = cg->allocateRegister();
     TR::Register *tmp = cg->allocateRegister();
 
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(0, 6, cg);
+    TR::RegisterDependencyConditions *deps = RegDeps(0, 6, cg);
 
     deps->addPostCondition(result, TR::RealRegister::NoReg, cg);
     deps->addPostCondition(address, TR::RealRegister::NoReg, cg);
@@ -10476,7 +10474,7 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, TR::CodeGenerator *c
     auto scratchXMM = cg->allocateRegister(TR_VRF);
     auto valueXMM = cg->allocateRegister(TR_VRF);
 
-    auto dependencies = generateRegisterDependencyConditions((uint8_t)7, (uint8_t)7, cg);
+    auto dependencies = RegDeps((uint8_t)7, (uint8_t)7, cg);
     dependencies->addPreCondition(ECX, TR::RealRegister::ecx, cg);
     dependencies->addPreCondition(array, TR::RealRegister::NoReg, cg);
     dependencies->addPreCondition(length, TR::RealRegister::NoReg, cg);
@@ -10682,7 +10680,7 @@ static TR::Register *inlineIntrinsicStringIndexOfString(TR::Node *node, TR::Code
     TR::Register *s1addrReg = cg->allocateRegister(TR_GPR);
     TR::Register *s2idxReg = cg->allocateRegister(TR_GPR);
 
-    TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions((uint8_t)12, (uint8_t)12, cg);
+    TR::RegisterDependencyConditions *dependencies = RegDeps((uint8_t)12, (uint8_t)12, cg);
     dependencies->addPreCondition(s1Reg, TR::RealRegister::NoReg, cg);
     dependencies->addPreCondition(s2Reg, TR::RealRegister::NoReg, cg);
     dependencies->addPreCondition(s2lenReg, TR::RealRegister::NoReg, cg);
@@ -10917,7 +10915,7 @@ static TR::Register *inlineCompareAndSwapObjectNative(TR::Node *node, TR::CodeGe
             begLabel->setStartInternalControlFlow();
             endLabel->setEndInternalControlFlow();
 
-            TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)1, 1, cg);
+            TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)1, 1, cg);
             deps->addPreCondition(tmp, TR::RealRegister::NoReg, cg);
             deps->addPostCondition(tmp, TR::RealRegister::NoReg, cg);
 
@@ -10962,7 +10960,7 @@ static TR::Register *inlineCompareAndSwapObjectNative(TR::Node *node, TR::CodeGe
         }
     }
 
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)1, 1, cg);
+    TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)1, 1, cg);
     deps->addPreCondition(EAX, TR::RealRegister::eax, cg);
     deps->addPostCondition(EAX, TR::RealRegister::eax, cg);
     Inst_MemReg(use64BitClasses ? TR::InstOpCode::LCMPXCHG8MemReg : TR::InstOpCode::LCMPXCHG4MemReg, node,
@@ -11173,7 +11171,7 @@ static bool inlineCompareAndSwapNative(TR::Node *node, int8_t size, bool isObjec
         if (scratchRegisterManagerForRealTime)
             numDeps += scratchRegisterManagerForRealTime->numAvailableRegisters();
 
-        deps = generateRegisterDependencyConditions(numDeps, numDeps, cg);
+        deps = RegDeps(numDeps, numDeps, cg);
         deps->addPreCondition(oldValueRegister->getLowOrder(), TR::RealRegister::eax, cg);
         deps->addPreCondition(oldValueRegister->getHighOrder(), TR::RealRegister::edx, cg);
         deps->addPreCondition(newValueRegister->getLowOrder(), TR::RealRegister::ebx, cg);
@@ -11199,7 +11197,7 @@ static bool inlineCompareAndSwapNative(TR::Node *node, int8_t size, bool isObjec
         if (scratchRegisterManagerForRealTime)
             numDeps += scratchRegisterManagerForRealTime->numAvailableRegisters();
 
-        deps = generateRegisterDependencyConditions(numDeps, numDeps, cg);
+        deps = RegDeps(numDeps, numDeps, cg);
         deps->addPreCondition(oldValueRegister, TR::RealRegister::eax, cg);
         deps->addPostCondition(oldValueRegister, TR::RealRegister::eax, cg);
 
@@ -11318,8 +11316,7 @@ static TR::Register *inlineHasNegativesOrCountPositives(TR::Node *node, TR::Reco
     }
 
     uint8_t numDependencies = useVectorInstructions ? 9 : 8;
-    TR::RegisterDependencyConditions *dependencies
-        = generateRegisterDependencyConditions(numDependencies, numDependencies, cg);
+    TR::RegisterDependencyConditions *dependencies = RegDeps(numDependencies, numDependencies, cg);
     dependencies->addPreCondition(bufReg, TR::RealRegister::NoReg, cg);
     dependencies->addPreCondition(offsetReg, TR::RealRegister::NoReg, cg);
     dependencies->addPreCondition(lengthReg, TR::RealRegister::NoReg, cg);
@@ -11619,8 +11616,7 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(TR::Node *node, bool isIndire
                         numDeps++;
                     }
 
-                    TR::RegisterDependencyConditions *deps
-                        = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)numDeps, cg);
+                    TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, (uint8_t)numDeps, cg);
                     deps->addPostCondition(nativeThreadReg, TR::RealRegister::NoReg, cg);
                     if (comp->target().is32Bit()) {
                         deps->addPostCondition(nativeThreadRegHigh, TR::RealRegister::NoReg, cg);
@@ -12008,8 +12004,7 @@ void J9::X86::TreeEvaluator::VMwrtbarRealTimeWithoutStoreEvaluator(TR::Node *nod
             numPostConditions++;
         }
 
-        TR::RegisterDependencyConditions *conditions
-            = generateRegisterDependencyConditions((uint8_t)0, numPostConditions, cg);
+        TR::RegisterDependencyConditions *conditions = RegDeps((uint8_t)0, numPostConditions, cg);
 
         conditions->addPostCondition(owningObjectReg, TR::RealRegister::NoReg, cg);
         if (srcReg) {
@@ -12610,8 +12605,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(TR::Node *node,
         numPostConditions++;
     }
 
-    TR::RegisterDependencyConditions *conditions
-        = generateRegisterDependencyConditions((uint8_t)0, numPostConditions, cg);
+    TR::RegisterDependencyConditions *conditions = RegDeps((uint8_t)0, numPostConditions, cg);
 
     conditions->addPostCondition(owningObjectReg, TR::RealRegister::NoReg, cg);
     if (srcReg) {
@@ -12740,7 +12734,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithStoreEvaluator(TR::Node *node, TR::Memo
             Inst_RegReg(TR::InstOpCode::TESTRegReg(), node, sourceRegister, sourceRegister, cg);
             Inst_Label(TR::InstOpCode::JE4, node, doneWrtBarLabel, cg);
 
-            deps = generateRegisterDependencyConditions(0, 3, cg);
+            deps = RegDeps(0, 3, cg);
             deps->addPostCondition(sourceRegister, TR::RealRegister::NoReg, cg);
             deps->addPostCondition(owningObjectRegister, TR::RealRegister::NoReg, cg);
             deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
@@ -12872,7 +12866,7 @@ TR::Register *J9::X86::TreeEvaluator::tstartEvaluator(TR::Node *node, TR::CodeGe
     TR::Register *objReg = cg->evaluate(objNode);
     TR::Register *accReg = cg->allocateRegister();
     TR::Register *monReg = cg->allocateRegister();
-    TR::RegisterDependencyConditions *fallBackConditions = generateRegisterDependencyConditions((uint8_t)0, 2, cg);
+    TR::RegisterDependencyConditions *fallBackConditions = RegDeps((uint8_t)0, 2, cg);
     TR::RegisterDependencyConditions *endLabelConditions;
     TR::RegisterDependencyConditions *fallThroughConditions = NULL;
     TR::RegisterDependencyConditions *persistentConditions = NULL;
@@ -12881,24 +12875,21 @@ TR::Register *J9::X86::TreeEvaluator::tstartEvaluator(TR::Node *node, TR::CodeGe
     if (fallThroughNode->getNumChildren() != 0) {
         GRANode = fallThroughNode->getFirstChild();
         cg->evaluate(GRANode);
-        List<TR::Register> popRegisters(cg->trMemory());
-        fallThroughConditions = generateRegisterDependencyConditions(GRANode, cg, 0, &popRegisters);
+        fallThroughConditions = RegDeps(GRANode, cg, 0);
         cg->decReferenceCount(GRANode);
     }
 
     if (persistentFailureNode->getNumChildren() != 0) {
         GRANode = persistentFailureNode->getFirstChild();
         cg->evaluate(GRANode);
-        List<TR::Register> popRegisters(cg->trMemory());
-        persistentConditions = generateRegisterDependencyConditions(GRANode, cg, 0, &popRegisters);
+        persistentConditions = RegDeps(GRANode, cg, 0);
         cg->decReferenceCount(GRANode);
     }
 
     if (transientFailureNode->getNumChildren() != 0) {
         GRANode = transientFailureNode->getFirstChild();
         cg->evaluate(GRANode);
-        List<TR::Register> popRegisters(cg->trMemory());
-        transientConditions = generateRegisterDependencyConditions(GRANode, cg, 0, &popRegisters);
+        transientConditions = RegDeps(GRANode, cg, 0);
         cg->decReferenceCount(GRANode);
     }
 
@@ -12906,7 +12897,7 @@ TR::Register *J9::X86::TreeEvaluator::tstartEvaluator(TR::Node *node, TR::CodeGe
     // add place holder register so that eax would not contain any useful value before xbegin
     TR::Register *dummyReg = cg->allocateRegister();
     dummyReg->setPlaceholderReg();
-    TR::RegisterDependencyConditions *startLabelConditions = generateRegisterDependencyConditions((uint8_t)0, 1, cg);
+    TR::RegisterDependencyConditions *startLabelConditions = RegDeps((uint8_t)0, 1, cg);
     startLabelConditions->addPostCondition(dummyReg, TR::RealRegister::eax, cg);
     startLabelConditions->stopAddingConditions();
     cg->stopUsingRegister(dummyReg);
@@ -12953,7 +12944,7 @@ TR::Register *J9::X86::TreeEvaluator::tstartEvaluator(TR::Node *node, TR::CodeGe
     // fall_back_path:
     Inst_Label(TR::InstOpCode::label, node, fallBackPathLabel, cg);
 
-    endLabelConditions = generateRegisterDependencyConditions((uint8_t)0, 1, cg);
+    endLabelConditions = RegDeps((uint8_t)0, 1, cg);
     endLabelConditions->addPostCondition(accReg, TR::RealRegister::eax, cg);
     endLabelConditions->stopAddingConditions();
 
@@ -12995,7 +12986,7 @@ TR::Register *J9::X86::TreeEvaluator::tstartEvaluator(TR::Node *node, TR::CodeGe
     Inst(TR::InstOpCode::PAUSE, node, cg);
     Inst(TR::InstOpCode::PAUSE, node, cg);
     Inst_Reg(TR::InstOpCode::DEC4Reg, node, counterReg, cg);
-    TR::RegisterDependencyConditions *loopConditions = generateRegisterDependencyConditions((uint8_t)0, 1, cg);
+    TR::RegisterDependencyConditions *loopConditions = RegDeps((uint8_t)0, 1, cg);
     loopConditions->addPostCondition(counterReg, TR::RealRegister::NoReg, cg);
     loopConditions->stopAddingConditions();
     Inst_Label(TR::InstOpCode::JNE4, node, spinLabel, loopConditions, cg);
@@ -13157,7 +13148,7 @@ TR::Register *J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::Co
             // cases, this label will have no effect on the generated code, and
             // will only affect GC maps.
             //
-            TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)1, (uint8_t)1, cg);
+            TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)1, (uint8_t)1, cg);
             deps->addPreCondition(valueToKeepAlive, TR::RealRegister::NoReg, cg);
             deps->addPostCondition(valueToKeepAlive, TR::RealRegister::NoReg, cg);
             new (cg->trHeapMemory())
@@ -13265,7 +13256,7 @@ TR::Register *J9::X86::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, 
     TR::Register *scratchReg = cg->allocateRegister(TR_GPR);
 
     int maxDepCount = 10;
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(0, maxDepCount, cg);
+    TR::RegisterDependencyConditions *deps = RegDeps(0, maxDepCount, cg);
     deps->addPostCondition(xmmHighReg, TR::RealRegister::NoReg, cg);
     deps->addPostCondition(xmmLowReg, TR::RealRegister::NoReg, cg);
     deps->addPostCondition(zeroReg, TR::RealRegister::NoReg, cg);
@@ -13441,7 +13432,7 @@ TR::Register *J9::X86::TreeEvaluator::encodeUTF16Evaluator(TR::Node *node, TR::C
         fprClobbers[i] = cg->allocateRegister(TR_FPR);
 
     int depCount = 11;
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, depCount, cg);
+    TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, depCount, cg);
 
     deps->addPostCondition(srcPtrReg, TR::RealRegister::esi, cg);
     deps->addPostCondition(dstPtrReg, TR::RealRegister::edi, cg);
@@ -13684,7 +13675,7 @@ TR::Register *J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node,
 #define iComment(str) \
     if (debug)        \
         debug->addInstructionComment(cursor, (const_cast<char *>(str)));
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)14, (uint8_t)14, cg);
+    TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)14, (uint8_t)14, cg);
     TR::Register *srcArray = cg->evaluate(node->getChild(1));
     deps->addPostCondition(srcArray, TR::RealRegister::NoReg, cg);
     deps->addPreCondition(srcArray, TR::RealRegister::NoReg, cg);
@@ -13936,7 +13927,7 @@ void J9::X86::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(T
     {
         numOfConditions++;
     }
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(numOfConditions, numOfConditions, cg);
+    TR::RegisterDependencyConditions *deps = RegDeps(numOfConditions, numOfConditions, cg);
     TR::Register *resultReg = NULL;
     TR::Register *dataBlockReg = cg->allocateRegister();
     deps->addPreCondition(dataBlockReg, TR::RealRegister::NoReg, cg);
@@ -14232,7 +14223,7 @@ void J9::X86::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::Cod
 
     uint8_t numOfConditions = getNumOfConditionsForReportFieldAccess(node, !node->getSymbolReference()->isUnresolved(),
         isWrite, isInstanceField, cg);
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(numOfConditions, numOfConditions, cg);
+    TR::RegisterDependencyConditions *deps = RegDeps(numOfConditions, numOfConditions, cg);
     if (isInstanceField || !isResolved || fieldClassNeedsRelocation) {
         deps->addPreCondition(fieldClassReg, TR::RealRegister::NoReg, cg);
         deps->addPostCondition(fieldClassReg, TR::RealRegister::NoReg, cg);
@@ -14457,7 +14448,7 @@ TR::Register *J9::X86::I386::TreeEvaluator::integerPairDivEvaluator(TR::Node *no
 
     TR::Instruction *divInstr = NULL;
 
-    TR::RegisterDependencyConditions *idivDependencies = generateRegisterDependencyConditions((uint8_t)6, 6, cg);
+    TR::RegisterDependencyConditions *idivDependencies = RegDeps((uint8_t)6, 6, cg);
     idivDependencies->addPreCondition(lowRegister, TR::RealRegister::eax, cg);
     idivDependencies->addPreCondition(highRegister, TR::RealRegister::edx, cg);
     idivDependencies->addPostCondition(lowRegister, TR::RealRegister::eax, cg);
@@ -14492,7 +14483,7 @@ TR::Register *J9::X86::I386::TreeEvaluator::integerPairDivEvaluator(TR::Node *no
     cg->setImplicitExceptionPoint(divInstr);
     divInstr->setNeedsGCMap(0xFF00FFF6);
 
-    TR::RegisterDependencyConditions *xorDependencies1 = generateRegisterDependencyConditions((uint8_t)2, 2, cg);
+    TR::RegisterDependencyConditions *xorDependencies1 = RegDeps((uint8_t)2, 2, cg);
     xorDependencies1->addPreCondition(lowRegister, TR::RealRegister::eax, cg);
     xorDependencies1->addPreCondition(highRegister, TR::RealRegister::edx, cg);
     xorDependencies1->addPostCondition(lowRegister, TR::RealRegister::eax, cg);
@@ -14503,7 +14494,7 @@ TR::Register *J9::X86::I386::TreeEvaluator::integerPairDivEvaluator(TR::Node *no
 
     Inst_Label(TR::InstOpCode::label, node, callLabel, cg);
 
-    TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions((uint8_t)0, 2, cg);
+    TR::RegisterDependencyConditions *dependencies = RegDeps((uint8_t)0, 2, cg);
     dependencies->addPostCondition(lowRegister, TR::RealRegister::eax, cg);
     dependencies->addPostCondition(highRegister, TR::RealRegister::edx, cg);
     J9::IA32PrivateLinkage *linkage = static_cast<J9::IA32PrivateLinkage *>(cg->getLinkage(TR_Private));
@@ -14518,7 +14509,7 @@ TR::Register *J9::X86::I386::TreeEvaluator::integerPairDivEvaluator(TR::Node *no
     //
     instr->setNeedsGCMap(0xFF00FFF6);
 
-    TR::RegisterDependencyConditions *labelDependencies = generateRegisterDependencyConditions((uint8_t)6, 6, cg);
+    TR::RegisterDependencyConditions *labelDependencies = RegDeps((uint8_t)6, 6, cg);
     labelDependencies->addPreCondition(lowRegister, TR::RealRegister::eax, cg);
     labelDependencies->addPreCondition(highRegister, TR::RealRegister::edx, cg);
     labelDependencies->addPostCondition(lowRegister, TR::RealRegister::eax, cg);
@@ -14556,7 +14547,7 @@ TR::Register *J9::X86::I386::TreeEvaluator::integerPairRemEvaluator(TR::Node *no
 
     TR::Instruction *divInstr = NULL;
 
-    TR::RegisterDependencyConditions *idivDependencies = generateRegisterDependencyConditions((uint8_t)6, 6, cg);
+    TR::RegisterDependencyConditions *idivDependencies = RegDeps((uint8_t)6, 6, cg);
     idivDependencies->addPreCondition(lowRegister, TR::RealRegister::eax, cg);
     idivDependencies->addPreCondition(highRegister, TR::RealRegister::edx, cg);
     idivDependencies->addPostCondition(lowRegister, TR::RealRegister::eax, cg);
@@ -14599,7 +14590,7 @@ TR::Register *J9::X86::I386::TreeEvaluator::integerPairRemEvaluator(TR::Node *no
 
     Inst_Label(TR::InstOpCode::label, node, callLabel, cg);
 
-    TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions((uint8_t)4, 6, cg);
+    TR::RegisterDependencyConditions *dependencies = RegDeps((uint8_t)4, 6, cg);
 
     dependencies->addPostCondition(lowRegister, TR::RealRegister::eax, cg);
     dependencies->addPostCondition(highRegister, TR::RealRegister::edx, cg);
@@ -14624,7 +14615,7 @@ TR::Register *J9::X86::I386::TreeEvaluator::integerPairRemEvaluator(TR::Node *no
     //
     instr->setNeedsGCMap(0xFF00FFF6);
 
-    TR::RegisterDependencyConditions *movDependencies = generateRegisterDependencyConditions((uint8_t)6, 6, cg);
+    TR::RegisterDependencyConditions *movDependencies = RegDeps((uint8_t)6, 6, cg);
     movDependencies->addPreCondition(lowRegister, TR::RealRegister::eax, cg);
     movDependencies->addPreCondition(highRegister, TR::RealRegister::edx, cg);
     movDependencies->addPostCondition(lowRegister, TR::RealRegister::eax, cg);

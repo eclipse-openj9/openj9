@@ -625,8 +625,8 @@ void J9::X86::AMD64::JNILinkage::buildOutgoingJNIArgsAndDependencies(TR::Node *c
         + _systemLinkage->getProperties().getNumPreservedRegisters() + 1
         + (callNode->getDataType() == TR::NoType ? 0 : 1);
 
-    _JNIDispatchInfo.callPostDeps = generateRegisterDependencyConditions(callPre, callPost, cg());
-    _JNIDispatchInfo.mergeLabelPostDeps = generateRegisterDependencyConditions(0, labelPost, cg());
+    _JNIDispatchInfo.callPostDeps = RegDeps(callPre, callPost, cg());
+    _JNIDispatchInfo.mergeLabelPostDeps = RegDeps(0, labelPost, cg());
 
     // Evaluate outgoing arguments on the system stack and build pre-conditions.
     //
@@ -806,7 +806,7 @@ void J9::X86::AMD64::JNILinkage::releaseVMAccess(TR::Node *callNode)
     Inst_Label(TR::InstOpCode::JNE4, callNode, loopHeadLabel, cg());
 
     int8_t numDeps = scratchReg3 ? 3 : 2;
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(numDeps, numDeps, cg());
+    TR::RegisterDependencyConditions *deps = RegDeps(numDeps, numDeps, cg());
     deps->addPreCondition(scratchReg1, TR::RealRegister::eax, cg());
     deps->addPostCondition(scratchReg1, TR::RealRegister::eax, cg());
     cg()->stopUsingRegister(scratchReg1);
@@ -871,7 +871,7 @@ void J9::X86::AMD64::JNILinkage::acquireVMAccess(TR::Node *callNode)
         Inst_Label(TR::InstOpCode::JMP4, callNode, longReacquireRestartLabel, cg());
         og.endOutlinedInstructionSequence();
     }
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(2, 2, cg());
+    TR::RegisterDependencyConditions *deps = RegDeps(2, 2, cg());
     deps->addPreCondition(scratchReg1, TR::RealRegister::eax, cg());
     deps->addPostCondition(scratchReg1, TR::RealRegister::eax, cg());
     cg()->stopUsingRegister(scratchReg1);

@@ -59,7 +59,7 @@ TR::Register *J9::X86::I386::JNILinkage::buildDirectDispatch(TR::Node *callNode,
 
 TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
 {
-    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, 20, cg());
+    TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, 20, cg());
 
     TR::SymbolReference *callSymRef = callNode->getSymbolReference();
     TR::MethodSymbol *callSymbol = callSymRef->getSymbol()->castToMethodSymbol();
