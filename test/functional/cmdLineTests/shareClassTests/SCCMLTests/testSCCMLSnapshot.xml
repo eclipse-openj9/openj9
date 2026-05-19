@@ -410,6 +410,8 @@
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
 	</test>
 	
+	<exec command="sleep 0.5" platforms="linux.*" />
+
 	<test id="At end destroy non-persistent cache for cleanup" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,nonpersistent,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
