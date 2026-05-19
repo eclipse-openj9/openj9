@@ -847,19 +847,10 @@ def build_all() {
  * Try new method first (badge plugin v3.583+), fallback to deprecated method for older versions.
  */
 def createBadgeSummary(iconName) {
-    def summary = null
-    try {
-        summary = manager.addSummary(iconName)
-    } catch (Exception e) {
-        echo "addSummary failed, trying deprecated createSummary method: ${e.message}"
-        try {
-            summary = manager.createSummary(iconName)
-        } catch (Exception e2) {
-            echo "Both addSummary and createSummary failed: ${e2.message}"
-            throw e2
-        }
+    if (manager.metaClass.respondsTo(manager, 'addSummary', String)) {
+        return manager.addSummary(iconName)
     }
-    return summary
+    return manager.createSummary(iconName)
 }
 
 /*
@@ -867,11 +858,10 @@ def createBadgeSummary(iconName) {
  * Try new method first, fallback to deprecated method for older versions.
  */
 def appendSummaryText(summary, text) {
-    try {
+    if (summary.metaClass.respondsTo(summary, 'setText', String)) {
         def currentText = summary.getText() ?: ""
         summary.setText(currentText + text)
-    } catch (Exception e) {
-        echo "setText failed, trying deprecated appendText: ${e.message}"
+    } else {
         summary.appendText(text, false)
     }
 }
