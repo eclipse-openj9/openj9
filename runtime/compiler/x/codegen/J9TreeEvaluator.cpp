@@ -95,7 +95,7 @@
 
 #define NUM_PICS 3
 
-// Minimum number of words for zero-initialization via REP TR::InstOpCode::STOSD
+// Minimum number of words for zero-initialization via REP OP::STOSD
 //
 #define MIN_REPSTOSD_WORDS 64
 static int32_t minRepstosdWords = 0;
@@ -152,7 +152,7 @@ inline void generateLoadJ9Class(TR::Node *node, TR::Register *j9class, TR::Regis
     }
 
     auto use64BitClasses = cg->comp()->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
-    auto instr = Inst_RegMem(TR::InstOpCode::LRegMem(use64BitClasses), node, j9class,
+    auto instr = Inst_RegMem(OP::LRegMem(use64BitClasses), node, j9class,
         MRef_Bdisp32(object, TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
     if (needsNULLCHK) {
         cg->setImplicitExceptionPoint(instr);
@@ -163,9 +163,8 @@ inline void generateLoadJ9Class(TR::Node *node, TR::Register *j9class, TR::Regis
 
     auto mask = TR::Compiler->om.maskOfObjectVftField();
     if (~mask != 0) {
-        Inst_RegImm(~mask <= 127 ? TR::InstOpCode::ANDRegImms(use64BitClasses)
-                                 : TR::InstOpCode::ANDRegImm4(use64BitClasses),
-            node, j9class, mask, cg);
+        Inst_RegImm(~mask <= 127 ? OP::ANDRegImms(use64BitClasses) : OP::ANDRegImm4(use64BitClasses), node, j9class,
+            mask, cg);
     }
 }
 
@@ -194,7 +193,7 @@ static TR_OutlinedInstructions *generateArrayletReference(TR::Node *node, TR::No
 
     arrayletRef->swapInstructionListsWithCompilation();
 
-    Inst_Label(NULL, TR::InstOpCode::label, arrayletRefLabel, cg)->setNode(node);
+    Inst_Label(NULL, OP::label, arrayletRefLabel, cg)->setNode(node);
 
     // TODO: REMOVE THIS!
     //
@@ -205,7 +204,7 @@ static TR_OutlinedInstructions *generateArrayletReference(TR::Node *node, TR::No
 
     static char *forceArrayletInt = feGetEnv("TR_forceArrayletInt");
     if (forceArrayletInt) {
-        Inst(TR::InstOpCode::INT3, node, cg);
+        Inst(OP::INT3, node, cg);
     }
 
     // -----------------------------------------------------------------------------------
@@ -223,11 +222,11 @@ static TR_OutlinedInstructions *generateArrayletReference(TR::Node *node, TR::No
 
         TR::MemoryReference *arraySizeMR = MRef_Bdisp32(baseArrayReg, fej9->getOffsetOfContiguousArraySizeField(), cg);
 
-        Inst_MemImm(TR::InstOpCode::CMP4MemImms, node, arraySizeMR, 0, cg);
+        Inst_MemImm(OP::CMP4MemImms, node, arraySizeMR, 0, cg);
 
         TR::LabelSymbol *boundCheckFailureLabel = generateLabelSymbol(cg);
 
-        checkInstruction = Inst_Label(TR::InstOpCode::JNE4, node, boundCheckFailureLabel, cg);
+        checkInstruction = Inst_Label(OP::JNE4, node, boundCheckFailureLabel, cg);
 
         cg->addSnippet(new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg, node->getSymbolReference(),
             boundCheckFailureLabel, checkInstruction, false));
@@ -239,15 +238,14 @@ static TR_OutlinedInstructions *generateArrayletReference(TR::Node *node, TR::No
         arraySizeMR = MRef_Bdisp32(baseArrayReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg);
 
         if (!indexReg) {
-            TR::InstOpCode::Mnemonic op
-                = (indexValue >= -128 && indexValue <= 127) ? TR::InstOpCode::CMP4MemImms : TR::InstOpCode::CMP4MemImm4;
+            OP::Mnemonic op = (indexValue >= -128 && indexValue <= 127) ? OP::CMP4MemImms : OP::CMP4MemImm4;
             Inst_MemImm(op, node, arraySizeMR, indexValue, cg);
         } else {
-            Inst_MemReg(TR::InstOpCode::CMP4MemReg, node, arraySizeMR, indexReg, cg);
+            Inst_MemReg(OP::CMP4MemReg, node, arraySizeMR, indexReg, cg);
         }
 
         boundCheckFailureLabel = generateLabelSymbol(cg);
-        checkInstruction = Inst_Label(TR::InstOpCode::JBE4, node, boundCheckFailureLabel, cg);
+        checkInstruction = Inst_Label(OP::JBE4, node, boundCheckFailureLabel, cg);
 
         cg->addSnippet(new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg, node->getSymbolReference(),
             boundCheckFailureLabel, checkInstruction, false));
@@ -298,12 +296,11 @@ static TR_OutlinedInstructions *generateArrayletReference(TR::Node *node, TR::No
     // Load the arraylet from the spine.
     //
     if (indexReg) {
-        TR::InstOpCode::Mnemonic op
-            = comp->target().is64Bit() ? TR::InstOpCode::MOVSXReg8Reg4 : TR::InstOpCode::MOVRegReg();
+        OP::Mnemonic op = comp->target().is64Bit() ? OP::MOVSXReg8Reg4 : OP::MOVRegReg();
         Inst_RegReg(op, node, scratchReg, indexReg, cg);
 
         int32_t spineShift = fej9->getArraySpineShift(elementSize);
-        Inst_RegImm(TR::InstOpCode::SARRegImm1(), node, scratchReg, spineShift, cg);
+        Inst_RegImm(OP::SARRegImm1(), node, scratchReg, spineShift, cg);
 
         spineMR = MRef_BISdisp32(baseArrayReg, scratchReg,
             TR::MemoryReference::convertMultiplierToStride(spinePointerSize), arrayHeaderSize, cg);
@@ -314,7 +311,7 @@ static TR_OutlinedInstructions *generateArrayletReference(TR::Node *node, TR::No
         spineMR = MRef_Bdisp32(baseArrayReg, spineDisp32, cg);
     }
 
-    TR::InstOpCode::Mnemonic op = (spinePointerSize == 8) ? TR::InstOpCode::L8RegMem : TR::InstOpCode::L4RegMem;
+    OP::Mnemonic op = (spinePointerSize == 8) ? OP::L8RegMem : OP::L4RegMem;
     Inst_RegMem(op, node, scratchReg, spineMR, cg);
 
     // Decompress the arraylet pointer from the spine.
@@ -323,7 +320,7 @@ static TR_OutlinedInstructions *generateArrayletReference(TR::Node *node, TR::No
     if (comp->target().is64Bit() && comp->useCompressedPointers()) {
         shiftOffset = TR::Compiler->om.compressedReferenceShiftOffset();
         if (shiftOffset > 0) {
-            Inst_RegImm(TR::InstOpCode::SHL8RegImm1, node, scratchReg, shiftOffset, cg);
+            Inst_RegImm(OP::SHL8RegImm1, node, scratchReg, shiftOffset, cg);
         }
     }
 
@@ -334,8 +331,8 @@ static TR_OutlinedInstructions *generateArrayletReference(TR::Node *node, TR::No
     if (indexReg) {
         TR::Register *scratchReg2 = cg->allocateRegister();
 
-        Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, scratchReg2, indexReg, cg);
-        Inst_RegImm(TR::InstOpCode::ANDRegImm4(), node, scratchReg2, arrayletMask, cg);
+        Inst_RegReg(OP::MOVRegReg(), node, scratchReg2, indexReg, cg);
+        Inst_RegImm(OP::ANDRegImm4(), node, scratchReg2, arrayletMask, cg);
         arrayletMR = MRef_BIS(scratchReg, scratchReg2, TR::MemoryReference::convertMultiplierToStride(elementSize), cg);
 
         cg->stopUsingRegister(scratchReg2);
@@ -347,7 +344,7 @@ static TR_OutlinedInstructions *generateArrayletReference(TR::Node *node, TR::No
     cg->stopUsingRegister(scratchReg);
 
     if (!actualLoadOrStoreOrArrayElementNode->getOpCode().isStore()) {
-        TR::InstOpCode::Mnemonic op;
+        OP::Mnemonic op;
 
         TR::MemoryReference *highArrayletMR = NULL;
         TR::Register *highRegister = NULL;
@@ -358,25 +355,25 @@ static TR_OutlinedInstructions *generateArrayletReference(TR::Node *node, TR::No
         if ((!actualLoadOrStoreOrArrayElementNode->getOpCode().hasSymbolReference()
                 || !actualLoadOrStoreOrArrayElementNode->getSymbolReference()->getSymbol()->isArrayShadowSymbol())
             && !node->isSpineCheckWithArrayElementChild()) {
-            op = TR::InstOpCode::LEARegMem();
+            op = OP::LEARegMem();
         } else {
             switch (dt) {
                 case TR::Int8:
-                    op = TR::InstOpCode::L1RegMem;
+                    op = OP::L1RegMem;
                     break;
                 case TR::Int16:
-                    op = TR::InstOpCode::L2RegMem;
+                    op = OP::L2RegMem;
                     break;
                 case TR::Int32:
-                    op = TR::InstOpCode::L4RegMem;
+                    op = OP::L4RegMem;
                     break;
                 case TR::Int64:
                     if (comp->target().is64Bit())
-                        op = TR::InstOpCode::L8RegMem;
+                        op = OP::L8RegMem;
                     else {
                         TR_ASSERT(loadOrStoreReg->getRegisterPair(), "expecting a register pair");
 
-                        op = TR::InstOpCode::L4RegMem;
+                        op = OP::L4RegMem;
                         highArrayletMR = MRef_MRefOff(*arrayletMR, 4, cg);
                         highRegister = loadOrStoreReg->getHighOrder();
                         loadOrStoreReg = loadOrStoreReg->getLowOrder();
@@ -384,22 +381,22 @@ static TR_OutlinedInstructions *generateArrayletReference(TR::Node *node, TR::No
                     break;
 
                 case TR::Float:
-                    op = TR::InstOpCode::MOVSSRegMem;
+                    op = OP::MOVSSRegMem;
                     break;
                 case TR::Double:
-                    op = TR::InstOpCode::MOVSDRegMem;
+                    op = OP::MOVSDRegMem;
                     break;
 
                 case TR::Address:
                     if (comp->target().is32Bit() || comp->useCompressedPointers())
-                        op = TR::InstOpCode::L4RegMem;
+                        op = OP::L4RegMem;
                     else
-                        op = TR::InstOpCode::L8RegMem;
+                        op = OP::L8RegMem;
                     break;
 
                 default:
                     TR_ASSERT(0, "unsupported array element load type");
-                    op = TR::InstOpCode::bad;
+                    op = OP::bad;
             }
         }
 
@@ -414,7 +411,7 @@ static TR_OutlinedInstructions *generateArrayletReference(TR::Node *node, TR::No
         if (loadNeedsDecompression) {
             if (comp->target().is64Bit() && comp->useCompressedPointers()) {
                 if (shiftOffset > 0) {
-                    Inst_RegImm(TR::InstOpCode::SHL8RegImm1, node, loadOrStoreReg, shiftOffset, cg);
+                    Inst_RegImm(OP::SHL8RegImm1, node, loadOrStoreReg, shiftOffset, cg);
                 }
             }
         }
@@ -422,37 +419,37 @@ static TR_OutlinedInstructions *generateArrayletReference(TR::Node *node, TR::No
         if (dt != TR::Address) {
             // movE [S + S2], value
             //
-            TR::InstOpCode::Mnemonic op;
+            OP::Mnemonic op;
             bool needStore = true;
 
             switch (dt) {
                 case TR::Int8:
-                    op = valueReg ? TR::InstOpCode::S1MemReg : TR::InstOpCode::S1MemImm1;
+                    op = valueReg ? OP::S1MemReg : OP::S1MemImm1;
                     break;
                 case TR::Int16:
-                    op = valueReg ? TR::InstOpCode::S2MemReg : TR::InstOpCode::S2MemImm2;
+                    op = valueReg ? OP::S2MemReg : OP::S2MemImm2;
                     break;
                 case TR::Int32:
-                    op = valueReg ? TR::InstOpCode::S4MemReg : TR::InstOpCode::S4MemImm4;
+                    op = valueReg ? OP::S4MemReg : OP::S4MemImm4;
                     break;
                 case TR::Int64:
                     if (comp->target().is64Bit()) {
                         // The range of the immediate must be verified before this function to
                         // fall within a signed 32-bit integer.
                         //
-                        op = valueReg ? TR::InstOpCode::S8MemReg : TR::InstOpCode::S8MemImm4;
+                        op = valueReg ? OP::S8MemReg : OP::S8MemImm4;
                     } else {
                         if (valueReg) {
                             TR_ASSERT(valueReg->getRegisterPair(), "value must be a register pair");
-                            Inst_MemReg(TR::InstOpCode::S4MemReg, node, arrayletMR, valueReg->getLowOrder(), cg);
-                            Inst_MemReg(TR::InstOpCode::S4MemReg, node, MRef_MRefOff(*arrayletMR, 4, cg),
-                                valueReg->getHighOrder(), cg);
+                            Inst_MemReg(OP::S4MemReg, node, arrayletMR, valueReg->getLowOrder(), cg);
+                            Inst_MemReg(OP::S4MemReg, node, MRef_MRefOff(*arrayletMR, 4, cg), valueReg->getHighOrder(),
+                                cg);
                         } else {
                             TR::Node *valueChild = actualLoadOrStoreOrArrayElementNode->getSecondChild();
                             TR_ASSERT(valueChild->getOpCode().isLoadConst(), "expecting a long constant child");
 
-                            Inst_MemImm(TR::InstOpCode::S4MemImm4, node, arrayletMR, valueChild->getLongIntLow(), cg);
-                            Inst_MemImm(TR::InstOpCode::S4MemImm4, node, MRef_MRefOff(*arrayletMR, 4, cg),
+                            Inst_MemImm(OP::S4MemImm4, node, arrayletMR, valueChild->getLongIntLow(), cg);
+                            Inst_MemImm(OP::S4MemImm4, node, MRef_MRefOff(*arrayletMR, 4, cg),
                                 valueChild->getLongIntHigh(), cg);
                         }
 
@@ -461,15 +458,15 @@ static TR_OutlinedInstructions *generateArrayletReference(TR::Node *node, TR::No
                     break;
 
                 case TR::Float:
-                    op = TR::InstOpCode::MOVSSMemReg;
+                    op = OP::MOVSSMemReg;
                     break;
                 case TR::Double:
-                    op = TR::InstOpCode::MOVSDMemReg;
+                    op = OP::MOVSDMemReg;
                     break;
 
                 default:
                     TR_ASSERT(0, "unsupported array element store type");
-                    op = TR::InstOpCode::bad;
+                    op = OP::bad;
             }
 
             if (needStore) {
@@ -486,7 +483,7 @@ static TR_OutlinedInstructions *generateArrayletReference(TR::Node *node, TR::No
         }
     }
 
-    Inst_Label(TR::InstOpCode::JMP4, node, restartLabel, cg);
+    Inst_Label(OP::JMP4, node, restartLabel, cg);
 
     // -----------------------------------------------------------------------------------
     // Stop tracking virtual register usage.
@@ -534,16 +531,16 @@ TR::Register *J9::X86::TreeEvaluator::fpConvertToLong(TR::Node *node, TR::Symbol
         // Attempt to convert a double in an XMM register to an integer using CVTTSD2SI.
         // If the conversion succeeds, put the integer in lowReg and sign-extend it to highReg.
         // If the conversion fails (the double is too large), call the helper.
-        Inst_RegReg(TR::InstOpCode::CVTTSD2SIReg4Reg, node, lowReg, doubleReg, cg);
-        Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, lowReg, 0x80000000, cg);
+        Inst_RegReg(OP::CVTTSD2SIReg4Reg, node, lowReg, doubleReg, cg);
+        Inst_RegImm(OP::CMP4RegImm4, node, lowReg, 0x80000000, cg);
 
-        Inst_Label(TR::InstOpCode::label, node, StartLabel, cg);
-        Inst_Label(TR::InstOpCode::JE4, node, CallLabel, cg);
+        Inst_Label(OP::label, node, StartLabel, cg);
+        Inst_Label(OP::JE4, node, CallLabel, cg);
 
-        Inst_RegReg(TR::InstOpCode::MOV4RegReg, node, highReg, lowReg, cg);
-        Inst_RegImm(TR::InstOpCode::SAR4RegImm1, node, highReg, 31, cg);
+        Inst_RegReg(OP::MOV4RegReg, node, highReg, lowReg, cg);
+        Inst_RegImm(OP::SAR4RegImm1, node, highReg, 31, cg);
 
-        Inst_Label(TR::InstOpCode::label, node, reStartLabel, deps, cg);
+        Inst_Label(OP::label, node, reStartLabel, deps, cg);
 
         TR::Register *targetRegister = cg->allocateRegisterPair(lowReg, highReg);
         TR::SymbolReference *d2l = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_IA32double2LongSSE);
@@ -571,7 +568,7 @@ TR::Register *J9::X86::TreeEvaluator::fpConvertToLong(TR::Node *node, TR::Symbol
         startLabel->setStartInternalControlFlow();
         reStartLabel->setEndInternalControlFlow();
 
-        Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+        Inst_Label(OP::label, node, startLabel, cg);
 
         // These instructions must be set appropriately prior to the creation
         // of the snippet near the end of this method. Also see warnings below.
@@ -580,27 +577,27 @@ TR::Register *J9::X86::TreeEvaluator::fpConvertToLong(TR::Node *node, TR::Symbol
         TR::X86RegMemInstruction *loadLowInstr; // loads the low dword of the converted long
 
         TR::MemoryReference *tempMR = cg->machine()->getDummyLocalMR(TR::Float);
-        Inst_MemReg(TR::InstOpCode::MOVSSMemReg, node, tempMR, floatReg, cg);
-        Inst_Mem(TR::InstOpCode::FLDMem, node, MRef_MRefOff(*tempMR, 0, cg), cg);
+        Inst_MemReg(OP::MOVSSMemReg, node, tempMR, floatReg, cg);
+        Inst_Mem(OP::FLDMem, node, MRef_MRefOff(*tempMR, 0, cg), cg);
 
-        Inst(TR::InstOpCode::FLDDUP, node, cg);
+        Inst(OP::FLDDUP, node, cg);
 
         // For slow conversion only, change the rounding mode on the FPU via its control word register.
         //
         TR::MemoryReference *convertedLongMR = (cg->machine())->getDummyLocalMR(TR::Int64);
 
         if (cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE3)) {
-            Inst_Mem(TR::InstOpCode::FLSTTPMem, node, convertedLongMR, cg);
+            Inst_Mem(OP::FLSTTPMem, node, convertedLongMR, cg);
         } else {
             int16_t fpcw = comp->getJittedMethodSymbol()->usesSinglePrecisionMode() ? SINGLE_PRECISION_ROUND_TO_ZERO
                                                                                     : DOUBLE_PRECISION_ROUND_TO_ZERO;
-            Inst_Mem(TR::InstOpCode::LDCWMem, node, MRef_const(cg->findOrCreate2ByteConstant(node, fpcw), cg), cg);
-            Inst_Mem(TR::InstOpCode::FLSTPMem, node, convertedLongMR, cg);
+            Inst_Mem(OP::LDCWMem, node, MRef_const(cg->findOrCreate2ByteConstant(node, fpcw), cg), cg);
+            Inst_Mem(OP::FLSTPMem, node, convertedLongMR, cg);
 
             fpcw = comp->getJittedMethodSymbol()->usesSinglePrecisionMode() ? SINGLE_PRECISION_ROUND_TO_NEAREST
                                                                             : DOUBLE_PRECISION_ROUND_TO_NEAREST;
 
-            Inst_Mem(TR::InstOpCode::LDCWMem, node, MRef_const(cg->findOrCreate2ByteConstant(node, fpcw), cg), cg);
+            Inst_Mem(OP::LDCWMem, node, MRef_const(cg->findOrCreate2ByteConstant(node, fpcw), cg), cg);
         }
 
         // WARNING:
@@ -608,16 +605,16 @@ TR::Register *J9::X86::TreeEvaluator::fpConvertToLong(TR::Node *node, TR::Symbol
         // The following load instructions are dissected in the snippet to determine the target registers.
         // If they or their format is changed, you may need to change the snippet also.
         //
-        loadHighInstr = Inst_RegMem(TR::InstOpCode::L4RegMem, node, highReg, MRef_MRefOff(*convertedLongMR, 4, cg), cg);
+        loadHighInstr = Inst_RegMem(OP::L4RegMem, node, highReg, MRef_MRefOff(*convertedLongMR, 4, cg), cg);
 
-        loadLowInstr = Inst_RegMem(TR::InstOpCode::L4RegMem, node, lowReg, MRef_MRefOff(*convertedLongMR, 0, cg), cg);
+        loadLowInstr = Inst_RegMem(OP::L4RegMem, node, lowReg, MRef_MRefOff(*convertedLongMR, 0, cg), cg);
 
         // Jump to the snippet if the converted value is an indefinite integer; otherwise continue.
         //
-        Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, highReg, INT_MIN, cg);
-        Inst_Label(TR::InstOpCode::JNE4, node, reStartLabel, cg);
-        Inst_RegReg(TR::InstOpCode::TEST4RegReg, node, lowReg, lowReg, cg);
-        Inst_Label(TR::InstOpCode::JE4, node, snippetLabel, cg);
+        Inst_RegImm(OP::CMP4RegImm4, node, highReg, INT_MIN, cg);
+        Inst_Label(OP::JNE4, node, reStartLabel, cg);
+        Inst_RegReg(OP::TEST4RegReg, node, lowReg, lowReg, cg);
+        Inst_Label(OP::JE4, node, snippetLabel, cg);
 
         // Create the conversion snippet.
         //
@@ -635,10 +632,10 @@ TR::Register *J9::X86::TreeEvaluator::fpConvertToLong(TR::Node *node, TR::Symbol
         deps->addPostCondition(lowReg, TR::RealRegister::NoReg, cg);
         deps->addPostCondition(highReg, TR::RealRegister::NoReg, cg);
 
-        Inst_Label(TR::InstOpCode::label, node, reStartLabel, deps, cg);
+        Inst_Label(OP::label, node, reStartLabel, deps, cg);
 
         cg->decReferenceCount(child);
-        Inst(TR::InstOpCode::FSTPST0, node, cg);
+        Inst(OP::FSTPST0, node, cg);
 
         TR::Register *targetRegister = cg->allocateRegisterPair(lowReg, highReg);
         node->setRegister(targetRegister);
@@ -652,26 +649,26 @@ TR::Register *J9::X86::TreeEvaluator::f2iEvaluator(TR::Node *node, TR::CodeGener
 {
     bool doubleSource;
     bool longTarget;
-    TR::InstOpCode::Mnemonic cvttOpCode;
+    OP::Mnemonic cvttOpCode;
 
     switch (node->getOpCodeValue()) {
         case TR::f2i:
-            cvttOpCode = TR::InstOpCode::CVTTSS2SIReg4Reg;
+            cvttOpCode = OP::CVTTSS2SIReg4Reg;
             doubleSource = false;
             longTarget = false;
             break;
         case TR::f2l:
-            cvttOpCode = TR::InstOpCode::CVTTSS2SIReg8Reg;
+            cvttOpCode = OP::CVTTSS2SIReg8Reg;
             doubleSource = false;
             longTarget = true;
             break;
         case TR::d2i:
-            cvttOpCode = TR::InstOpCode::CVTTSD2SIReg4Reg;
+            cvttOpCode = OP::CVTTSD2SIReg4Reg;
             doubleSource = true;
             longTarget = false;
             break;
         case TR::d2l:
-            cvttOpCode = TR::InstOpCode::CVTTSD2SIReg8Reg;
+            cvttOpCode = OP::CVTTSD2SIReg8Reg;
             doubleSource = true;
             longTarget = true;
             break;
@@ -694,18 +691,18 @@ TR::Register *J9::X86::TreeEvaluator::f2iEvaluator(TR::Node *node, TR::CodeGener
     startLabel->setStartInternalControlFlow();
     endLabel->setEndInternalControlFlow();
 
-    Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+    Inst_Label(OP::label, node, startLabel, cg);
 
     if (longTarget) {
         TR_ASSERT_FATAL(cg->comp()->target().is64Bit(), "We should only get here on AMD64");
         // We can't compare with 0x8000000000000000.
         // Instead, rotate left 1 bit and compare with 0x0000000000000001.
-        Inst_Reg(TR::InstOpCode::ROL8Reg1, node, targetRegister, cg);
-        Inst_RegImm(TR::InstOpCode::CMP8RegImms, node, targetRegister, 1, cg);
-        Inst_Label(TR::InstOpCode::JE4, node, exceptionLabel, cg);
+        Inst_Reg(OP::ROL8Reg1, node, targetRegister, cg);
+        Inst_RegImm(OP::CMP8RegImms, node, targetRegister, 1, cg);
+        Inst_Label(OP::JE4, node, exceptionLabel, cg);
     } else {
-        Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, targetRegister, INT_MIN, cg);
-        Inst_Label(TR::InstOpCode::JE4, node, exceptionLabel, cg);
+        Inst_RegImm(OP::CMP4RegImm4, node, targetRegister, INT_MIN, cg);
+        Inst_Label(OP::JE4, node, exceptionLabel, cg);
     }
 
     // TODO: (omr issue #4969): Remove once support for spills in OOL paths is added
@@ -717,30 +714,30 @@ TR::Register *J9::X86::TreeEvaluator::f2iEvaluator(TR::Node *node, TR::CodeGener
         TR_OutlinedInstructionsGenerator og(exceptionLabel, node, cg);
         // at this point, target is set to -INF and there can only be THREE possible results: -INF, +INF, NaN
         // compare source with ZERO
-        Inst_RegMem(doubleSource ? TR::InstOpCode::UCOMISDRegMem : TR::InstOpCode::UCOMISSRegMem, node, sourceRegister,
+        Inst_RegMem(doubleSource ? OP::UCOMISDRegMem : OP::UCOMISSRegMem, node, sourceRegister,
             MRef_const(doubleSource ? cg->findOrCreate8ByteConstant(node, 0) : cg->findOrCreate4ByteConstant(node, 0),
                 cg),
             cg);
         // load max int if source is positive, note that for long case, LLONG_MAX << 1 is loaded as it will be shifted
         // right
-        Inst_RegMem(TR::InstOpCode::CMOVARegMem(longTarget), node, targetRegister,
+        Inst_RegMem(OP::CMOVARegMem(longTarget), node, targetRegister,
             MRef_const(longTarget ? cg->findOrCreate8ByteConstant(node, LLONG_MAX << 1)
                                   : cg->findOrCreate4ByteConstant(node, INT_MAX),
                 cg),
             cg);
         // load zero if source is NaN
-        Inst_RegMem(TR::InstOpCode::CMOVPRegMem(longTarget), node, targetRegister,
+        Inst_RegMem(OP::CMOVPRegMem(longTarget), node, targetRegister,
             MRef_const(longTarget ? cg->findOrCreate8ByteConstant(node, 0) : cg->findOrCreate4ByteConstant(node, 0),
                 cg),
             cg);
 
-        Inst_Label(TR::InstOpCode::JMP4, node, endLabel, cg);
+        Inst_Label(OP::JMP4, node, endLabel, cg);
         og.endOutlinedInstructionSequence();
     }
 
-    Inst_Label(TR::InstOpCode::label, node, endLabel, deps, cg);
+    Inst_Label(OP::label, node, endLabel, deps, cg);
     if (longTarget) {
-        Inst_Reg(TR::InstOpCode::ROR8Reg1, node, targetRegister, cg);
+        Inst_Reg(OP::ROR8Reg1, node, targetRegister, cg);
     }
 
     node->setRegister(targetRegister);
@@ -844,55 +841,52 @@ static void generateCommonLockNurseryCodes(TR::Node *node, TR::CodeGenerator *cg
     if (comp->getOption(TR_EnableMonitorCacheLookup)) {
         if (monent)
             lwOffset = 0;
-        Inst_Label(TR::InstOpCode::JLE4, node, monitorLookupCacheLabel, cg);
-        Inst_Label(TR::InstOpCode::JMP4, node, fallThruFromMonitorLookupCacheLabel, cg);
+        Inst_Label(OP::JLE4, node, monitorLookupCacheLabel, cg);
+        Inst_Label(OP::JMP4, node, fallThruFromMonitorLookupCacheLabel, cg);
 
-        Inst_Label(TR::InstOpCode::label, node, monitorLookupCacheLabel, cg);
+        Inst_Label(OP::label, node, monitorLookupCacheLabel, cg);
 
         lookupOffsetReg = cg->allocateRegister();
         numDeps++;
 
         int32_t offsetOfMonitorLookupCache = offsetof(J9VMThread, objectMonitorLookupCache);
 
-        // Inst_RegMem(TR::InstOpCode::LRegMem(), node, objectClassReg,
+        // Inst_RegMem(OP::LRegMem(), node, objectClassReg,
         // MRef_Bdisp32(vmThreadReg, offsetOfMonitorLookupCache, cg), cg);
-        Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, lookupOffsetReg, objectReg, cg);
+        Inst_RegReg(OP::MOVRegReg(), node, lookupOffsetReg, objectReg, cg);
 
-        Inst_RegImm(TR::InstOpCode::SARRegImm1(comp->target().is64Bit()), node, lookupOffsetReg,
+        Inst_RegImm(OP::SARRegImm1(comp->target().is64Bit()), node, lookupOffsetReg,
             trailingZeroes(TR::Compiler->om.getObjectAlignmentInBytes()), cg);
 
         J9JavaVM *jvm = fej9->getJ9JITConfig()->javaVM;
-        Inst_RegImm(TR::InstOpCode::ANDRegImms(), node, lookupOffsetReg, J9VMTHREAD_OBJECT_MONITOR_CACHE_SIZE - 1, cg);
-        Inst_RegImm(TR::InstOpCode::SHLRegImm1(), node, lookupOffsetReg,
-            trailingZeroes(TR::Compiler->om.sizeofReferenceField()), cg);
-        Inst_RegMem((comp->target().is64Bit() && fej9->generateCompressedLockWord()) ? TR::InstOpCode::L4RegMem
-                                                                                     : TR::InstOpCode::LRegMem(),
+        Inst_RegImm(OP::ANDRegImms(), node, lookupOffsetReg, J9VMTHREAD_OBJECT_MONITOR_CACHE_SIZE - 1, cg);
+        Inst_RegImm(OP::SHLRegImm1(), node, lookupOffsetReg, trailingZeroes(TR::Compiler->om.sizeofReferenceField()),
+            cg);
+        Inst_RegMem((comp->target().is64Bit() && fej9->generateCompressedLockWord()) ? OP::L4RegMem : OP::LRegMem(),
             node, objectClassReg, MRef_BISdisp32(vmThreadReg, lookupOffsetReg, 0, offsetOfMonitorLookupCache, cg), cg);
 
-        Inst_RegReg(TR::InstOpCode::TESTRegReg(), node, objectClassReg, objectClassReg, cg);
-        Inst_Label(TR::InstOpCode::JE4, node, snippetLabel, cg);
+        Inst_RegReg(OP::TESTRegReg(), node, objectClassReg, objectClassReg, cg);
+        Inst_Label(OP::JE4, node, snippetLabel, cg);
 
         int32_t offsetOfMonitor = offsetof(J9ObjectMonitor, monitor);
-        Inst_RegMem(TR::InstOpCode::LRegMem(), node, lookupOffsetReg, MRef_Bdisp32(objectClassReg, offsetOfMonitor, cg),
-            cg);
+        Inst_RegMem(OP::LRegMem(), node, lookupOffsetReg, MRef_Bdisp32(objectClassReg, offsetOfMonitor, cg), cg);
 
         int32_t offsetOfUserData = offsetof(J9ThreadAbstractMonitor, userData);
-        Inst_RegMem(TR::InstOpCode::LRegMem(), node, lookupOffsetReg,
-            MRef_Bdisp32(lookupOffsetReg, offsetOfUserData, cg), cg);
+        Inst_RegMem(OP::LRegMem(), node, lookupOffsetReg, MRef_Bdisp32(lookupOffsetReg, offsetOfUserData, cg), cg);
 
-        Inst_RegReg(TR::InstOpCode::CMPRegReg(), node, lookupOffsetReg, objectReg, cg);
-        Inst_Label(TR::InstOpCode::JNE4, node, snippetLabel, cg);
+        Inst_RegReg(OP::CMPRegReg(), node, lookupOffsetReg, objectReg, cg);
+        Inst_Label(OP::JNE4, node, snippetLabel, cg);
 
         int32_t offsetOfAlternateLockWord = offsetof(J9ObjectMonitor, alternateLockword);
-        // Inst_RegMem(TR::InstOpCode::LRegMem(), node, lookupOffsetReg,
+        // Inst_RegMem(OP::LRegMem(), node, lookupOffsetReg,
         // MRef_Bdisp32(objectClassReg, offsetOfAlternateLockWord, cg), cg);
-        Inst_RegImm(TR::InstOpCode::ADDRegImms(), node, objectClassReg, offsetOfAlternateLockWord, cg);
-        // Inst_RegReg(TR::InstOpCode::ADDRegReg(), node, objectClassReg, lookupOffsetReg, cg);
-        Inst_RegReg(TR::InstOpCode::SUBRegReg(), node, objectClassReg, objectReg, cg);
+        Inst_RegImm(OP::ADDRegImms(), node, objectClassReg, offsetOfAlternateLockWord, cg);
+        // Inst_RegReg(OP::ADDRegReg(), node, objectClassReg, lookupOffsetReg, cg);
+        Inst_RegReg(OP::SUBRegReg(), node, objectClassReg, objectReg, cg);
 
-        Inst_Label(TR::InstOpCode::label, node, fallThruFromMonitorLookupCacheLabel, cg);
+        Inst_Label(OP::label, node, fallThruFromMonitorLookupCacheLabel, cg);
     } else
-        Inst_Label(TR::InstOpCode::JLE4, node, snippetLabel, cg);
+        Inst_Label(OP::JLE4, node, snippetLabel, cg);
 }
 
 #ifdef TR_TARGET_32BIT
@@ -917,19 +911,18 @@ TR::Register *J9::X86::I386::TreeEvaluator::conditionalHelperEvaluator(TR::Node 
     if (secondChild->getOpCode().isLoadConst() && secondChild->getRegister() == NULL) {
         int32_t value = secondChild->getInt();
         TR::Node *firstChild = testNode->getFirstChild();
-        TR::InstOpCode::Mnemonic opCode;
+        OP::Mnemonic opCode;
         if (value >= -128 && value <= 127)
-            opCode = TR::InstOpCode::CMP4MemImms;
+            opCode = OP::CMP4MemImms;
         else
-            opCode = TR::InstOpCode::CMP4MemImm4;
+            opCode = OP::CMP4MemImm4;
         TR::MemoryReference *memRef = MRef_node(firstChild, cg);
         Inst_MemImm(opCode, node, memRef, value, cg);
         memRef->decNodeReferenceCounts(cg);
         cg->decReferenceCount(secondChild);
     } else {
         TR_X86CompareAnalyser temp(cg);
-        temp.integerCompareAnalyser(testNode, TR::InstOpCode::CMP4RegReg, TR::InstOpCode::CMP4RegMem,
-            TR::InstOpCode::CMP4MemReg);
+        temp.integerCompareAnalyser(testNode, OP::CMP4RegReg, OP::CMP4RegMem, OP::CMP4MemReg);
     }
 
     TR::LabelSymbol *startLabel = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
@@ -937,9 +930,8 @@ TR::Register *J9::X86::I386::TreeEvaluator::conditionalHelperEvaluator(TR::Node 
     TR::LabelSymbol *snippetLabel = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
     startLabel->setStartInternalControlFlow();
     reStartLabel->setEndInternalControlFlow();
-    Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
-    Inst_Label(testNode->getOpCodeValue() == TR::icmpeq ? TR::InstOpCode::JE4 : TR::InstOpCode::JNE4, node,
-        snippetLabel, cg);
+    Inst_Label(OP::label, node, startLabel, cg);
+    Inst_Label(testNode->getOpCodeValue() == TR::icmpeq ? OP::JE4 : OP::JNE4, node, snippetLabel, cg);
 
     TR::Snippet *snippet;
     if (node->getNumChildren() == 2)
@@ -951,7 +943,7 @@ TR::Register *J9::X86::I386::TreeEvaluator::conditionalHelperEvaluator(TR::Node 
 
     cg->addSnippet(snippet);
 
-    Inst_Label(TR::InstOpCode::label, node, reStartLabel, cg);
+    Inst_Label(OP::label, node, reStartLabel, cg);
     cg->decReferenceCount(testNode);
     return NULL;
 }
@@ -1031,15 +1023,15 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
         // Try to compare memory directly with immediate
         //
         TR::MemoryReference *memRef = MRef_node(testNode->getFirstChild(), cg);
-        TR::InstOpCode::Mnemonic op;
+        OP::Mnemonic op;
 
         if (testIs64Bit) {
             int64_t value = secondChild->getLongInt();
-            op = IS_8BIT_SIGNED(value) ? TR::InstOpCode::CMP8MemImms : TR::InstOpCode::CMP8MemImm4;
+            op = IS_8BIT_SIGNED(value) ? OP::CMP8MemImms : OP::CMP8MemImm4;
             Inst_MemImm(op, node, memRef, value, cg);
         } else {
             int32_t value = secondChild->getInt();
-            op = IS_8BIT_SIGNED(value) ? TR::InstOpCode::CMP4MemImms : TR::InstOpCode::CMP4MemImm4;
+            op = IS_8BIT_SIGNED(value) ? OP::CMP4MemImms : OP::CMP4MemImm4;
             Inst_MemImm(op, node, memRef, value, cg);
         }
 
@@ -1047,8 +1039,8 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
         cg->decReferenceCount(secondChild);
     } else {
         TR_X86CompareAnalyser temp(cg);
-        temp.integerCompareAnalyser(testNode, TR::InstOpCode::CMPRegReg(testIs64Bit),
-            TR::InstOpCode::CMPRegMem(testIs64Bit), TR::InstOpCode::CMPMemReg(testIs64Bit));
+        temp.integerCompareAnalyser(testNode, OP::CMPRegReg(testIs64Bit), OP::CMPRegMem(testIs64Bit),
+            OP::CMPMemReg(testIs64Bit));
     }
 
     TR::LabelSymbol *startLabel = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
@@ -1057,7 +1049,7 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
     startLabel->setStartInternalControlFlow();
     reStartLabel->setEndInternalControlFlow();
 
-    TR::Instruction *startInstruction = Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+    TR::Instruction *startInstruction = Inst_Label(OP::label, node, startLabel, cg);
 
     if (node->getOpCodeValue() == TR::MethodEnterHook || node->getOpCodeValue() == TR::MethodExitHook) {
         TR::Node *callNode = node->getSecondChild();
@@ -1065,7 +1057,7 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
         // Generate an inverted jump around the call.  This is necessary because we want to do the call inline rather
         // than through the snippet.
         //
-        Inst_Label(testIsEQ ? TR::InstOpCode::JNE4 : TR::InstOpCode::JE4, node, reStartLabel, cg);
+        Inst_Label(testIsEQ ? OP::JNE4 : OP::JE4, node, reStartLabel, cg);
         TR::TreeEvaluator::performCall(callNode, false, false, cg);
 
         // Collect postconditions from the internal control flow region and put
@@ -1085,7 +1077,7 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
         for (TR::Instruction *cursor = cg->getAppendInstruction(); cursor != startInstruction;
              cursor = cursor->getPrev()) {
             TR::RegisterDependencyConditions *cursorDeps = cursor->getDependencyConditions();
-            if (cursorDeps && cursor->getOpCodeValue() != TR::InstOpCode::assocreg) {
+            if (cursorDeps && cursor->getOpCodeValue() != OP::assocreg) {
                 for (int32_t i = 0; i < cursorDeps->getNumPostConditions(); i++) {
                     TR::RegisterDependency *cursorPostCondition
                         = cursorDeps->getPostConditions()->getRegisterDependency(i);
@@ -1096,9 +1088,9 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
         }
         postConditions->stopAddingPostConditions();
 
-        Inst_Label(TR::InstOpCode::label, node, reStartLabel, postConditions, cg);
+        Inst_Label(OP::label, node, reStartLabel, postConditions, cg);
     } else {
-        Inst_Label(testIsEQ ? TR::InstOpCode::JE4 : TR::InstOpCode::JNE4, node, snippetLabel, cg);
+        Inst_Label(testIsEQ ? OP::JE4 : OP::JNE4, node, snippetLabel, cg);
 
         TR::Snippet *snippet;
         if (node->getNumChildren() == 2)
@@ -1109,7 +1101,7 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
                 TR::X86HelperCallSnippet(cg, node, reStartLabel, snippetLabel, node->getSymbolReference());
 
         cg->addSnippet(snippet);
-        Inst_Label(TR::InstOpCode::label, node, reStartLabel, cg);
+        Inst_Label(OP::label, node, reStartLabel, cg);
     }
 
     cg->decReferenceCount(testNode);
@@ -1133,8 +1125,7 @@ TR::Register *J9::X86::TreeEvaluator::performHeapLoadWithReadBarrier(TR::Node *n
     sourceMR->decNodeReferenceCounts(cg);
 
     TR::Register *object = cg->allocateRegister();
-    TR::Instruction *load
-        = Inst_RegMem(TR::InstOpCode::LRegMem(use64BitClasses), node, object, MRef_Bdisp32(address, 0, cg), cg);
+    TR::Instruction *load = Inst_RegMem(OP::LRegMem(use64BitClasses), node, object, MRef_Bdisp32(address, 0, cg), cg);
     cg->setImplicitExceptionPoint(load);
 
     switch (TR::Compiler->om.readBarrierType()) {
@@ -1142,10 +1133,10 @@ TR::Register *J9::X86::TreeEvaluator::performHeapLoadWithReadBarrier(TR::Node *n
             TR_ASSERT(false, "This path should only be reached when a read barrier is required.");
             break;
         case gc_modron_readbar_always:
-            Inst_MemReg(TR::InstOpCode::SMemReg(), node,
+            Inst_MemReg(OP::SMemReg(), node,
                 MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg), address, cg);
             Inst_HelperCall(node, TR_softwareReadBarrier, NULL, cg);
-            Inst_RegMem(TR::InstOpCode::LRegMem(use64BitClasses), node, object, MRef_Bdisp32(address, 0, cg), cg);
+            Inst_RegMem(OP::LRegMem(use64BitClasses), node, object, MRef_Bdisp32(address, 0, cg), cg);
             break;
         case gc_modron_readbar_range_check: {
             TR::LabelSymbol *begLabel = generateLabelSymbol(cg);
@@ -1160,25 +1151,25 @@ TR::Register *J9::X86::TreeEvaluator::performHeapLoadWithReadBarrier(TR::Node *n
             deps->addPostCondition(object, TR::RealRegister::NoReg, cg);
             deps->addPostCondition(address, TR::RealRegister::NoReg, cg);
 
-            Inst_Label(TR::InstOpCode::label, node, begLabel, cg);
-            Inst_RegMem(TR::InstOpCode::CMPRegMem(use64BitClasses), node, object,
+            Inst_Label(OP::label, node, begLabel, cg);
+            Inst_RegMem(OP::CMPRegMem(use64BitClasses), node, object,
                 MRef_Bdisp32(cg->getVMThreadRegister(), comp->fej9()->thisThreadGetEvacuateBaseAddressOffset(), cg),
                 cg);
-            Inst_Label(TR::InstOpCode::JAE4, node, rdbarLabel, cg);
+            Inst_Label(OP::JAE4, node, rdbarLabel, cg);
             {
                 TR_OutlinedInstructionsGenerator og(rdbarLabel, node, cg);
-                Inst_RegMem(TR::InstOpCode::CMPRegMem(use64BitClasses), node, object,
+                Inst_RegMem(OP::CMPRegMem(use64BitClasses), node, object,
                     MRef_Bdisp32(cg->getVMThreadRegister(), comp->fej9()->thisThreadGetEvacuateTopAddressOffset(), cg),
                     cg);
-                Inst_Label(TR::InstOpCode::JA4, node, endLabel, cg);
-                Inst_MemReg(TR::InstOpCode::SMemReg(), node,
+                Inst_Label(OP::JA4, node, endLabel, cg);
+                Inst_MemReg(OP::SMemReg(), node,
                     MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg), address, cg);
                 Inst_HelperCall(node, TR_softwareReadBarrier, NULL, cg);
-                Inst_RegMem(TR::InstOpCode::LRegMem(use64BitClasses), node, object, MRef_Bdisp32(address, 0, cg), cg);
-                Inst_Label(TR::InstOpCode::JMP4, node, endLabel, cg);
+                Inst_RegMem(OP::LRegMem(use64BitClasses), node, object, MRef_Bdisp32(address, 0, cg), cg);
+                Inst_Label(OP::JMP4, node, endLabel, cg);
                 og.endOutlinedInstructionSequence();
             }
-            Inst_Label(TR::InstOpCode::label, node, endLabel, deps, cg);
+            Inst_Label(OP::label, node, endLabel, deps, cg);
         } break;
         default:
             TR_ASSERT(false, "Unsupported Read Barrier Type.");
@@ -1274,11 +1265,10 @@ TR::Register *J9::X86::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::Co
             || (comp->target().is64Bit() && !IS_32BIT_SIGNED(secondChild->getLongInt()))) {
             TR::Register *valueReg = cg->evaluate(secondChild);
             TR::X86CheckAsyncMessagesMemRegInstruction *ins
-                = Inst_CheckAsyncMessages(node, TR::InstOpCode::CMPMemReg(), mr, valueReg, cg);
+                = Inst_CheckAsyncMessages(node, OP::CMPMemReg(), mr, valueReg, cg);
         } else {
             int32_t value = secondChild->getInt();
-            TR::InstOpCode::Mnemonic op
-                = (value < 127 && value >= -128) ? TR::InstOpCode::CMPMemImms() : TR::InstOpCode::CMPMemImm4();
+            OP::Mnemonic op = (value < 127 && value >= -128) ? OP::CMPMemImms() : OP::CMPMemImm4();
             TR::X86CheckAsyncMessagesMemImmInstruction *ins = Inst_CheckAsyncMessages(node, op, mr, value, cg);
         }
 
@@ -1294,21 +1284,21 @@ TR::Register *J9::X86::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::Co
     TR_ASSERT(testIsEqual, "unrecognized asynccheck test: test is not equal");
 
     startControlFlowLabel->setStartInternalControlFlow();
-    Inst_Label(TR::InstOpCode::label, node, startControlFlowLabel, cg);
+    Inst_Label(OP::label, node, startControlFlowLabel, cg);
 
-    Inst_Label(testIsEqual ? TR::InstOpCode::JE4 : TR::InstOpCode::JNE4, node, snippetLabel, cg);
+    Inst_Label(testIsEqual ? OP::JE4 : OP::JNE4, node, snippetLabel, cg);
 
     {
         TR_OutlinedInstructionsGenerator og(snippetLabel, node, cg);
-        Inst_ImmSym(TR::InstOpCode::CALLImm4, node, (uintptr_t)node->getSymbolReference()->getMethodAddress(),
+        Inst_ImmSym(OP::CALLImm4, node, (uintptr_t)node->getSymbolReference()->getMethodAddress(),
             node->getSymbolReference(), cg)
             ->setNeedsGCMap(0xFF00FFFF);
-        Inst_Label(TR::InstOpCode::JMP4, node, endControlFlowLabel, cg);
+        Inst_Label(OP::JMP4, node, endControlFlowLabel, cg);
         og.endOutlinedInstructionSequence();
     }
 
     endControlFlowLabel->setEndInternalControlFlow();
-    Inst_Label(TR::InstOpCode::label, node, endControlFlowLabel, cg);
+    Inst_Label(OP::label, node, endControlFlowLabel, cg);
 
     cg->decReferenceCount(compareNode);
 
@@ -1524,129 +1514,124 @@ static TR::Register *generate2DArrayWithInlineAllocators(TR::Node *node, TR::Cod
     // Calculate spine array size
 
     TR::Register *spineSizeReg = cg->allocateRegister();
-    Inst_RegImm(TR::InstOpCode::MOV8RegImm4, node, spineSizeReg, contiguousArrayHeaderSize, cg);
+    Inst_RegImm(OP::MOV8RegImm4, node, spineSizeReg, contiguousArrayHeaderSize, cg);
 
     int32_t zeroArraySizeAligned = OMR::align(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), alignmentInBytes);
     TR::Register *tempReg = cg->allocateRegister();
-    Inst_RegImm(TR::InstOpCode::MOV8RegImm4, node, tempReg, zeroArraySizeAligned, cg);
+    Inst_RegImm(OP::MOV8RegImm4, node, tempReg, zeroArraySizeAligned, cg);
 
     TR::Register *firstDimReg = cg->allocateRegister();
-    Inst_RegMem(TR::InstOpCode::MOVSXReg8Mem4, node, firstDimReg, MRef_Bdisp32(dimsPtrReg, 4, cg), cg);
+    Inst_RegMem(OP::MOVSXReg8Mem4, node, firstDimReg, MRef_Bdisp32(dimsPtrReg, 4, cg), cg);
 
     // if first dim = 0 load the zero array size and skip over calculating the leaf block size
-    Inst_RegReg(TR::InstOpCode::TEST8RegReg, node, firstDimReg, firstDimReg, cg);
-    Inst_RegReg(TR::InstOpCode::CMOVE8RegReg, node, spineSizeReg, tempReg, cg);
+    Inst_RegReg(OP::TEST8RegReg, node, firstDimReg, firstDimReg, cg);
+    Inst_RegReg(OP::CMOVE8RegReg, node, spineSizeReg, tempReg, cg);
     TR::LabelSymbol *startControlFlow = generateLabelSymbol(cg);
     startControlFlow->setStartInternalControlFlow();
-    Inst_Label(TR::InstOpCode::label, node, startControlFlow, cg);
+    Inst_Label(OP::label, node, startControlFlow, cg);
     TR::LabelSymbol *allocateLabel = generateLabelSymbol(cg);
-    Inst_Label(TR::InstOpCode::JE4, node, allocateLabel, cg);
+    Inst_Label(OP::JE4, node, allocateLabel, cg);
 
     // if first dim < 0 go to OOL helper
-    Inst_Label(TR::InstOpCode::JL4, node, helperLabel, cg);
+    Inst_Label(OP::JL4, node, helperLabel, cg);
 
     // spine size += first dim * reference size
-    Inst_RegMem(TR::InstOpCode::LEA8RegMem, node, spineSizeReg,
+    Inst_RegMem(OP::LEA8RegMem, node, spineSizeReg,
         MRef_BISdisp32(spineSizeReg, firstDimReg, trailingZeroes((int32_t)referenceSize), 0, cg), cg);
 
     // pad spine size so leaf arrays will be aligned
     if (needsAlignSpine) {
-        Inst_RegImm(TR::InstOpCode::ADD8RegImm4, node, spineSizeReg, alignmentInBytes - 1, cg);
-        Inst_RegImm(TR::InstOpCode::AND8RegImm4, node, spineSizeReg, -alignmentInBytes, cg);
+        Inst_RegImm(OP::ADD8RegImm4, node, spineSizeReg, alignmentInBytes - 1, cg);
+        Inst_RegImm(OP::AND8RegImm4, node, spineSizeReg, -alignmentInBytes, cg);
     }
 
     // Calculate leaf array block size
 
     TR::Register *leafSizeReg = cg->allocateRegister();
-    Inst_RegImm(TR::InstOpCode::MOV8RegImm4, node, leafSizeReg, contiguousArrayHeaderSize, cg);
+    Inst_RegImm(OP::MOV8RegImm4, node, leafSizeReg, contiguousArrayHeaderSize, cg);
 
     // if second dim = 0 load the zero array size and skip over calculating the leaf size
     TR::Register *secondDimReg = cg->allocateRegister();
-    Inst_RegMem(TR::InstOpCode::MOVSXReg8Mem4, node, secondDimReg, MRef_Bdisp32(dimsPtrReg, 0, cg), cg);
+    Inst_RegMem(OP::MOVSXReg8Mem4, node, secondDimReg, MRef_Bdisp32(dimsPtrReg, 0, cg), cg);
 
-    Inst_RegReg(TR::InstOpCode::TEST8RegReg, node, secondDimReg, secondDimReg, cg);
-    Inst_RegReg(TR::InstOpCode::CMOVE8RegReg, node, leafSizeReg, tempReg, cg);
+    Inst_RegReg(OP::TEST8RegReg, node, secondDimReg, secondDimReg, cg);
+    Inst_RegReg(OP::CMOVE8RegReg, node, leafSizeReg, tempReg, cg);
     TR::LabelSymbol *calculateLeafBlockSize = generateLabelSymbol(cg);
-    Inst_Label(TR::InstOpCode::JE4, node, calculateLeafBlockSize, cg);
+    Inst_Label(OP::JE4, node, calculateLeafBlockSize, cg);
 
     // if second dim < 0 go to OOL helper
-    Inst_Label(TR::InstOpCode::JL4, node, helperLabel, cg);
+    Inst_Label(OP::JL4, node, helperLabel, cg);
 
     // leaf size = header size + second dim * leaf element size
-    Inst_RegMem(TR::InstOpCode::LEA8RegMem, node, leafSizeReg,
+    Inst_RegMem(OP::LEA8RegMem, node, leafSizeReg,
         MRef_BISdisp32(leafSizeReg, secondDimReg, trailingZeroes(leafArrayElementSize), 0, cg), cg);
 
     // pad leafSize for alignment
     if (needsAlignLeaf) {
-        Inst_RegImm(TR::InstOpCode::ADD8RegImm4, node, leafSizeReg, alignmentInBytes - 1, cg);
-        Inst_RegImm(TR::InstOpCode::AND8RegImm4, node, leafSizeReg, -alignmentInBytes, cg);
+        Inst_RegImm(OP::ADD8RegImm4, node, leafSizeReg, alignmentInBytes - 1, cg);
+        Inst_RegImm(OP::AND8RegImm4, node, leafSizeReg, -alignmentInBytes, cg);
     }
 
-    Inst_Label(TR::InstOpCode::label, node, calculateLeafBlockSize, cg);
+    Inst_Label(OP::label, node, calculateLeafBlockSize, cg);
 
-    Inst_RegReg(TR::InstOpCode::MOV8RegReg, node, tempReg, firstDimReg, cg);
-    Inst_RegReg(TR::InstOpCode::IMUL8RegReg, node, tempReg, leafSizeReg, cg);
+    Inst_RegReg(OP::MOV8RegReg, node, tempReg, firstDimReg, cg);
+    Inst_RegReg(OP::IMUL8RegReg, node, tempReg, leafSizeReg, cg);
 
     // spineSize += leafBlockSize
-    Inst_RegReg(TR::InstOpCode::ADD8RegReg, node, spineSizeReg, tempReg, cg);
+    Inst_RegReg(OP::ADD8RegReg, node, spineSizeReg, tempReg, cg);
 
-    Inst_Label(TR::InstOpCode::label, node, allocateLabel, cg);
+    Inst_Label(OP::label, node, allocateLabel, cg);
 
     // spinePtrReg = vmThread->heapAlloc
     TR::Register *vmThreadReg = cg->getVMThreadRegister();
-    Inst_RegMem(TR::InstOpCode::L8RegMem, node, spinePtrReg,
-        MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), cg);
+    Inst_RegMem(OP::L8RegMem, node, spinePtrReg, MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), cg);
 
     // allocEnd = spinePtr + spineSize + leafBlockSize
     TR::Register *leafPtrReg = cg->allocateRegister();
-    Inst_RegMem(TR::InstOpCode::LEA8RegMem, node, leafPtrReg, MRef_BISdisp32(spinePtrReg, spineSizeReg, 0, 0, cg), cg);
+    Inst_RegMem(OP::LEA8RegMem, node, leafPtrReg, MRef_BISdisp32(spinePtrReg, spineSizeReg, 0, 0, cg), cg);
 
     // if allocEnd > vmThread->heapTop go to helper
-    Inst_RegMem(TR::InstOpCode::CMP8RegMem, node, leafPtrReg,
-        MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapTop), cg), cg);
-    Inst_Label(TR::InstOpCode::JA4, node, helperLabel, cg);
+    Inst_RegMem(OP::CMP8RegMem, node, leafPtrReg, MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapTop), cg), cg);
+    Inst_Label(OP::JA4, node, helperLabel, cg);
 
     // bump vmThread->heapAlloc to allocate the memory needed
-    Inst_MemReg(TR::InstOpCode::S8MemReg, node, MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg),
-        leafPtrReg, cg);
+    Inst_MemReg(OP::S8MemReg, node, MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), leafPtrReg, cg);
 
     // load class into spine header
-    Inst_MemReg(TR::InstOpCode::SMemReg(use64BitClasses), node, MRef_Bdisp32(spinePtrReg, classOffset, cg), classReg,
-        cg);
+    Inst_MemReg(OP::SMemReg(use64BitClasses), node, MRef_Bdisp32(spinePtrReg, classOffset, cg), classReg, cg);
 
     // if first dim = 0 goto initialise zero length spine
     TR::LabelSymbol *initZeroLengthLabel = generateLabelSymbol(cg);
-    Inst_RegReg(TR::InstOpCode::TEST8RegReg, node, firstDimReg, firstDimReg, cg);
-    Inst_Label(TR::InstOpCode::JE4, node, initZeroLengthLabel, cg);
+    Inst_RegReg(OP::TEST8RegReg, node, firstDimReg, firstDimReg, cg);
+    Inst_Label(OP::JE4, node, initZeroLengthLabel, cg);
 
     // initialise zero length array
     TR_OutlinedInstructionsGenerator zeroLengthOOL(initZeroLengthLabel, node, cg);
 
     // init size and mustBeZero ('0') fields to 0
-    Inst_MemImm(TR::InstOpCode::S4MemImm4, node,
-        MRef_Bdisp32(spinePtrReg, fej9->getOffsetOfContiguousArraySizeField(), cg), 0, cg);
-    Inst_MemImm(TR::InstOpCode::S4MemImm4, node,
-        MRef_Bdisp32(spinePtrReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg), 0, cg);
+    Inst_MemImm(OP::S4MemImm4, node, MRef_Bdisp32(spinePtrReg, fej9->getOffsetOfContiguousArraySizeField(), cg), 0, cg);
+    Inst_MemImm(OP::S4MemImm4, node, MRef_Bdisp32(spinePtrReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg), 0,
+        cg);
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
     if (isOffHeapAllocationEnabled) {
         // Init 1st dim dataAddr slot to 0
-        Inst_MemImm(TR::InstOpCode::S8MemImm4, node,
-            MRef_Bdisp32(spinePtrReg, fej9->getOffsetOfDiscontiguousDataAddrField(), cg), 0, cg);
+        Inst_MemImm(OP::S8MemImm4, node, MRef_Bdisp32(spinePtrReg, fej9->getOffsetOfDiscontiguousDataAddrField(), cg),
+            0, cg);
     }
 #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
-    Inst_Label(TR::InstOpCode::JMP4, node, doneLabel, cg);
+    Inst_Label(OP::JMP4, node, doneLabel, cg);
     zeroLengthOOL.endOutlinedInstructionSequence();
 
     // otherwise load first dim into spine header
-    Inst_MemReg(TR::InstOpCode::S4MemReg, node, MRef_Bdisp32(spinePtrReg, sizeOffset, cg), firstDimReg, cg);
+    Inst_MemReg(OP::S4MemReg, node, MRef_Bdisp32(spinePtrReg, sizeOffset, cg), firstDimReg, cg);
 
     // zero out the leaf portion of the allocation if necessary
     bool clearAllocation = !fej9->tlhHasBeenCleared();
     if (clearAllocation) {
         // adjust leafPtr to the beginning of the leaf array block
-        Inst_RegReg(TR::InstOpCode::SUB8RegReg, node, leafPtrReg, tempReg, cg);
+        Inst_RegReg(OP::SUB8RegReg, node, leafPtrReg, tempReg, cg);
 
         // clear leafBlockSize bytes starting at leafPtr
         // leafBlockSize = m * (contiguousArrayHeaderSize + n * leafArrayElementSize + padding)
@@ -1657,23 +1642,21 @@ static TR::Register *generate2DArrayWithInlineAllocators(TR::Node *node, TR::Cod
             | static_cast<int32_t>(
                 needsAlignHeader ? alignmentInBytes : (contiguousArrayHeaderSize | leafArrayElementSize)));
 
-        static const TR::InstOpCode::Mnemonic xorOpCode[] = { TR::InstOpCode::XOR1RegReg, TR::InstOpCode::XOR2RegReg,
-            TR::InstOpCode::XOR4RegReg, TR::InstOpCode::XOR8RegReg };
+        static const OP::Mnemonic xorOpCode[] = { OP::XOR1RegReg, OP::XOR2RegReg, OP::XOR4RegReg, OP::XOR8RegReg };
 
         Inst_RegReg(xorOpCode[sizeShift], node, spineSizeReg, spineSizeReg, cg);
 
         if (sizeShift != 0)
-            Inst_RegImm(TR::InstOpCode::SHRRegImm1(), node, tempReg, sizeShift, cg);
+            Inst_RegImm(OP::SHRRegImm1(), node, tempReg, sizeShift, cg);
 
-        static const TR::InstOpCode::Mnemonic repstosOpCode[] = { TR::InstOpCode::REPSTOSB, TR::InstOpCode::REPSTOSW,
-            TR::InstOpCode::REPSTOSD, TR::InstOpCode::REPSTOSQ };
+        static const OP::Mnemonic repstosOpCode[] = { OP::REPSTOSB, OP::REPSTOSW, OP::REPSTOSD, OP::REPSTOSQ };
 
         Inst(repstosOpCode[sizeShift], node, cg);
         // leafPtrReg is pointing to the end of the allocation again
     }
 
     // load element class
-    Inst_RegMem(TR::InstOpCode::LRegMem(use64BitClasses), node, tempReg,
+    Inst_RegMem(OP::LRegMem(use64BitClasses), node, tempReg,
         MRef_Bdisp32(classReg, offsetof(J9ArrayClass, componentType), cg), cg);
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
@@ -1681,15 +1664,15 @@ static TR::Register *generate2DArrayWithInlineAllocators(TR::Node *node, TR::Cod
         /* Populate dataAddr slot of spine array. Arrays of non-zero size
          * use contiguous header layout while zero size arrays use discontiguous header layout.
          */
-        Inst_RegMem(TR::InstOpCode::LEARegMem(), node, spineSizeReg,
+        Inst_RegMem(OP::LEARegMem(), node, spineSizeReg,
             MRef_Bdisp32(spinePtrReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
-        Inst_MemReg(TR::InstOpCode::SMemReg(), node,
-            MRef_Bdisp32(spinePtrReg, fej9->getOffsetOfContiguousDataAddrField(), cg), spineSizeReg, cg);
+        Inst_MemReg(OP::SMemReg(), node, MRef_Bdisp32(spinePtrReg, fej9->getOffsetOfContiguousDataAddrField(), cg),
+            spineSizeReg, cg);
     }
 #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
     // adjust leafPtr to prepare for loop
-    Inst_RegReg(TR::InstOpCode::SUB8RegReg, node, leafPtrReg, leafSizeReg, cg);
+    Inst_RegReg(OP::SUB8RegReg, node, leafPtrReg, leafSizeReg, cg);
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
     // for zero-length offheap arrays, the work to initialize zero length arrays is sufficiently different that a
@@ -1697,17 +1680,16 @@ static TR::Register *generate2DArrayWithInlineAllocators(TR::Node *node, TR::Cod
     if (isOffHeapAllocationEnabled) {
         // if second dimension = 0, use OOL loop for initializing zero length arrays
         TR::LabelSymbol *initZeroLengthLoopLabel = generateLabelSymbol(cg);
-        Inst_RegReg(TR::InstOpCode::TEST8RegReg, node, secondDimReg, secondDimReg, cg);
-        Inst_Label(TR::InstOpCode::JE4, node, initZeroLengthLoopLabel, cg);
+        Inst_RegReg(OP::TEST8RegReg, node, secondDimReg, secondDimReg, cg);
+        Inst_Label(OP::JE4, node, initZeroLengthLoopLabel, cg);
 
         // initialise zero length arrays
         TR_OutlinedInstructionsGenerator zeroLengthLoopOOL(initZeroLengthLoopLabel, node, cg);
         TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
-        Inst_Label(TR::InstOpCode::label, node, loopLabel, cg);
+        Inst_Label(OP::label, node, loopLabel, cg);
 
         // initialise leaf array class
-        Inst_MemReg(TR::InstOpCode::SMemReg(use64BitClasses), node, MRef_Bdisp32(leafPtrReg, classOffset, cg), tempReg,
-            cg);
+        Inst_MemReg(OP::SMemReg(use64BitClasses), node, MRef_Bdisp32(leafPtrReg, classOffset, cg), tempReg, cg);
         // length, mustBeZero, and dataAddr fields are already set to zero since the allocation is zeroed
 
         // insert leaf array reference into spine array
@@ -1717,21 +1699,21 @@ static TR::Register *generate2DArrayWithInlineAllocators(TR::Node *node, TR::Cod
             trailingZeroes((int32_t)referenceSize), contiguousArrayHeaderSize - referenceSize, cg);
         if (comp->useCompressedPointers()) {
             int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
-            Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, spineSizeReg, leafPtrReg, cg);
+            Inst_RegReg(OP::MOVRegReg(), node, spineSizeReg, leafPtrReg, cg);
             if (shiftAmount != 0) {
-                Inst_RegImm(TR::InstOpCode::SHRRegImm1(), node, spineSizeReg, shiftAmount, cg);
+                Inst_RegImm(OP::SHRRegImm1(), node, spineSizeReg, shiftAmount, cg);
             }
-            Inst_MemReg(TR::InstOpCode::S4MemReg, node, spineSlotMemRef, spineSizeReg, cg);
+            Inst_MemReg(OP::S4MemReg, node, spineSlotMemRef, spineSizeReg, cg);
         } else {
-            Inst_MemReg(TR::InstOpCode::S8MemReg, node, spineSlotMemRef, leafPtrReg, cg);
+            Inst_MemReg(OP::S8MemReg, node, spineSlotMemRef, leafPtrReg, cg);
         }
 
         // decrement firstDim and leafPtr and loop back
-        Inst_RegReg(TR::InstOpCode::SUB8RegReg, node, leafPtrReg, leafSizeReg, cg);
-        Inst_Reg(TR::InstOpCode::DEC8Reg, node, firstDimReg, cg);
-        Inst_Label(TR::InstOpCode::JG4, node, loopLabel, cg);
+        Inst_RegReg(OP::SUB8RegReg, node, leafPtrReg, leafSizeReg, cg);
+        Inst_Reg(OP::DEC8Reg, node, firstDimReg, cg);
+        Inst_Label(OP::JG4, node, loopLabel, cg);
 
-        Inst_Label(TR::InstOpCode::JMP4, node, doneLabel, cg);
+        Inst_Label(OP::JMP4, node, doneLabel, cg);
         zeroLengthLoopOOL.endOutlinedInstructionSequence();
     }
 #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
@@ -1741,20 +1723,19 @@ static TR::Register *generate2DArrayWithInlineAllocators(TR::Node *node, TR::Cod
     bool arrayHeaderFitsInGPR = !use64BitClasses && ((classOffset + 4) == sizeOffset);
 
     if (arrayHeaderFitsInGPR) {
-        Inst_RegImm(TR::InstOpCode::SHL8RegImm1, node, secondDimReg, 32, cg);
-        Inst_RegReg(TR::InstOpCode::OR8RegReg, node, secondDimReg, tempReg, cg);
+        Inst_RegImm(OP::SHL8RegImm1, node, secondDimReg, 32, cg);
+        Inst_RegReg(OP::OR8RegReg, node, secondDimReg, tempReg, cg);
     }
 
     TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
-    Inst_Label(TR::InstOpCode::label, node, loopLabel, cg);
+    Inst_Label(OP::label, node, loopLabel, cg);
 
     // initialise leaf array
     if (arrayHeaderFitsInGPR) {
-        Inst_MemReg(TR::InstOpCode::S8MemReg, node, MRef_Bdisp32(leafPtrReg, classOffset, cg), secondDimReg, cg);
+        Inst_MemReg(OP::S8MemReg, node, MRef_Bdisp32(leafPtrReg, classOffset, cg), secondDimReg, cg);
     } else {
-        Inst_MemReg(TR::InstOpCode::SMemReg(use64BitClasses), node, MRef_Bdisp32(leafPtrReg, classOffset, cg), tempReg,
-            cg);
-        Inst_MemReg(TR::InstOpCode::S4MemReg, node, MRef_Bdisp32(leafPtrReg, sizeOffset, cg), secondDimReg, cg);
+        Inst_MemReg(OP::SMemReg(use64BitClasses), node, MRef_Bdisp32(leafPtrReg, classOffset, cg), tempReg, cg);
+        Inst_MemReg(OP::S4MemReg, node, MRef_Bdisp32(leafPtrReg, sizeOffset, cg), secondDimReg, cg);
     }
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
@@ -1762,10 +1743,10 @@ static TR::Register *generate2DArrayWithInlineAllocators(TR::Node *node, TR::Cod
         /* Populate dataAddr slot of leaf array. Arrays of non-zero size
          * use contiguous header layout while zero size arrays use discontiguous header layout.
          */
-        Inst_RegMem(TR::InstOpCode::LEARegMem(), node, spineSizeReg,
+        Inst_RegMem(OP::LEARegMem(), node, spineSizeReg,
             MRef_Bdisp32(leafPtrReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
-        Inst_MemReg(TR::InstOpCode::SMemReg(), node,
-            MRef_Bdisp32(leafPtrReg, fej9->getOffsetOfContiguousDataAddrField(), cg), spineSizeReg, cg);
+        Inst_MemReg(OP::SMemReg(), node, MRef_Bdisp32(leafPtrReg, fej9->getOffsetOfContiguousDataAddrField(), cg),
+            spineSizeReg, cg);
     }
 #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
@@ -1776,19 +1757,19 @@ static TR::Register *generate2DArrayWithInlineAllocators(TR::Node *node, TR::Cod
         trailingZeroes((int32_t)referenceSize), contiguousArrayHeaderSize - referenceSize, cg);
     if (comp->useCompressedPointers()) {
         int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
-        Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, spineSizeReg, leafPtrReg, cg);
+        Inst_RegReg(OP::MOVRegReg(), node, spineSizeReg, leafPtrReg, cg);
         if (shiftAmount != 0) {
-            Inst_RegImm(TR::InstOpCode::SHRRegImm1(), node, spineSizeReg, shiftAmount, cg);
+            Inst_RegImm(OP::SHRRegImm1(), node, spineSizeReg, shiftAmount, cg);
         }
-        Inst_MemReg(TR::InstOpCode::S4MemReg, node, spineSlotMemRef, spineSizeReg, cg);
+        Inst_MemReg(OP::S4MemReg, node, spineSlotMemRef, spineSizeReg, cg);
     } else {
-        Inst_MemReg(TR::InstOpCode::S8MemReg, node, spineSlotMemRef, leafPtrReg, cg);
+        Inst_MemReg(OP::S8MemReg, node, spineSlotMemRef, leafPtrReg, cg);
     }
 
     // decrement firstDim and leafPtr and loop back
-    Inst_RegReg(TR::InstOpCode::SUB8RegReg, node, leafPtrReg, leafSizeReg, cg);
-    Inst_Reg(TR::InstOpCode::DEC8Reg, node, firstDimReg, cg);
-    Inst_Label(TR::InstOpCode::JG4, node, loopLabel, cg);
+    Inst_RegReg(OP::SUB8RegReg, node, leafPtrReg, leafSizeReg, cg);
+    Inst_Reg(OP::DEC8Reg, node, firstDimReg, cg);
+    Inst_Label(OP::JG4, node, loopLabel, cg);
 
     // done, OOL helper will return to this point
     TR::RegisterDependencyConditions *deps = RegDeps(0, 14, cg);
@@ -1835,7 +1816,7 @@ static TR::Register *generate2DArrayWithInlineAllocators(TR::Node *node, TR::Cod
     }
 
     deps->stopAddingConditions();
-    Inst_Label(TR::InstOpCode::label, node, doneLabel, deps, cg);
+    Inst_Label(OP::label, node, doneLabel, deps, cg);
 
     cg->stopUsingRegister(spineSizeReg);
     cg->stopUsingRegister(firstDimReg);
@@ -1846,7 +1827,7 @@ static TR::Register *generate2DArrayWithInlineAllocators(TR::Node *node, TR::Cod
 
     // now that the array is properly allocated, move into a collected reference register
     TR::Register *returnReg = cg->allocateCollectedReferenceRegister();
-    Inst_RegReg(TR::InstOpCode::MOV8RegReg, node, returnReg, spinePtrReg, cg);
+    Inst_RegReg(OP::MOV8RegReg, node, returnReg, spinePtrReg, cg);
 
     cg->stopUsingRegister(spinePtrReg);
 
@@ -1912,7 +1893,7 @@ static TR::Register *generate2DZeroLengthArrayWithInlineAllocators(TR::Node *nod
     TR::LabelSymbol *oolFailLabel = generateLabelSymbol(cg);
     TR::LabelSymbol *oolJumpPoint = generateLabelSymbol(cg);
 
-    Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+    Inst_Label(OP::label, node, startLabel, cg);
 
     // Generate the heap allocation, and the snippet that will handle heap overflow.
     TR_OutlinedInstructions *outlinedHelperCall
@@ -1929,167 +1910,157 @@ static TR::Register *generate2DZeroLengthArrayWithInlineAllocators(TR::Node *nod
 
     // inlined code for allocating zero length arrays where the zero len is in either the first or second dimension
 
-    Inst_RegMem(TR::InstOpCode::L4RegMem, node, secondDimLenReg, MRef_Bdisp32(dimsPtrReg, 0, cg), cg);
+    Inst_RegMem(OP::L4RegMem, node, secondDimLenReg, MRef_Bdisp32(dimsPtrReg, 0, cg), cg);
     // Load the 32-bit length value as a 64-bit value so that the top half of the register
     // can be zeroed out. This will allow us to treat the value as 64-bit when performing
     // calculations later on.
-    Inst_RegMem(TR::InstOpCode::MOVSXReg8Mem4, node, firstDimLenReg, MRef_Bdisp32(dimsPtrReg, 4, cg), cg);
+    Inst_RegMem(OP::MOVSXReg8Mem4, node, firstDimLenReg, MRef_Bdisp32(dimsPtrReg, 4, cg), cg);
 
-    Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, secondDimLenReg, 0, cg);
+    Inst_RegImm(OP::CMP4RegImm4, node, secondDimLenReg, 0, cg);
 
-    Inst_Label(TR::InstOpCode::JNE4, node, oolJumpPoint, cg);
+    Inst_Label(OP::JNE4, node, oolJumpPoint, cg);
     // Second Dim length is 0
 
-    Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, firstDimLenReg, 0, cg);
-    Inst_Label(TR::InstOpCode::JNE4, node, nonZeroFirstDimLabel, cg);
+    Inst_RegImm(OP::CMP4RegImm4, node, firstDimLenReg, 0, cg);
+    Inst_Label(OP::JNE4, node, nonZeroFirstDimLabel, cg);
 
     // First Dim zero, only allocate 1 zero-length object array
-    Inst_RegMem(TR::InstOpCode::LRegMem(), node, targetReg,
-        MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), cg);
+    Inst_RegMem(OP::LRegMem(), node, targetReg, MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), cg);
 
     // Take into account alignment requirements for the size of the zero-length array header
     int32_t zeroArraySizeAligned = OMR::align(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(),
         TR::Compiler->om.getObjectAlignmentInBytes());
-    Inst_RegMem(TR::InstOpCode::LEARegMem(), node, temp1Reg, MRef_Bdisp32(targetReg, zeroArraySizeAligned, cg), cg);
+    Inst_RegMem(OP::LEARegMem(), node, temp1Reg, MRef_Bdisp32(targetReg, zeroArraySizeAligned, cg), cg);
 
-    Inst_RegMem(TR::InstOpCode::CMPRegMem(), node, temp1Reg,
-        MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapTop), cg), cg);
-    Inst_Label(TR::InstOpCode::JA4, node, oolJumpPoint, cg);
-    Inst_MemReg(TR::InstOpCode::SMemReg(), node, MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg),
-        temp1Reg, cg);
+    Inst_RegMem(OP::CMPRegMem(), node, temp1Reg, MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapTop), cg), cg);
+    Inst_Label(OP::JA4, node, oolJumpPoint, cg);
+    Inst_MemReg(OP::SMemReg(), node, MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), temp1Reg, cg);
 
     // Init class
     bool use64BitClasses = comp->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
-    Inst_MemReg(TR::InstOpCode::SMemReg(use64BitClasses), node,
+    Inst_MemReg(OP::SMemReg(use64BitClasses), node,
         MRef_Bdisp32(targetReg, TR::Compiler->om.offsetOfObjectVftField(), cg), classReg, cg);
 
     // Init size and mustBeZero ('0') fields to 0
-    Inst_MemImm(TR::InstOpCode::S4MemImm4, node,
-        MRef_Bdisp32(targetReg, fej9->getOffsetOfContiguousArraySizeField(), cg), 0, cg);
-    Inst_MemImm(TR::InstOpCode::S4MemImm4, node,
-        MRef_Bdisp32(targetReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg), 0, cg);
+    Inst_MemImm(OP::S4MemImm4, node, MRef_Bdisp32(targetReg, fej9->getOffsetOfContiguousArraySizeField(), cg), 0, cg);
+    Inst_MemImm(OP::S4MemImm4, node, MRef_Bdisp32(targetReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg), 0,
+        cg);
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
     if (isOffHeapAllocationEnabled) {
         // Init 1st dim dataAddr slot to 0
-        Inst_MemImm(TR::InstOpCode::S8MemImm4, node,
-            MRef_Bdisp32(targetReg, fej9->getOffsetOfDiscontiguousDataAddrField(), cg), 0, cg);
+        Inst_MemImm(OP::S8MemImm4, node, MRef_Bdisp32(targetReg, fej9->getOffsetOfDiscontiguousDataAddrField(), cg), 0,
+            cg);
     }
 #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
-    Inst_Label(TR::InstOpCode::JMP4, node, doneLabel, cg);
+    Inst_Label(OP::JMP4, node, doneLabel, cg);
 
     // First dim length not 0
-    Inst_Label(TR::InstOpCode::label, node, nonZeroFirstDimLabel, cg);
+    Inst_Label(OP::label, node, nonZeroFirstDimLabel, cg);
 
-    Inst_RegMem(TR::InstOpCode::LRegMem(), node, componentClassReg,
+    Inst_RegMem(OP::LRegMem(), node, componentClassReg,
         MRef_Bdisp32(classReg, offsetof(J9ArrayClass, componentType), cg), cg);
 
     int32_t elementSize = TR::Compiler->om.sizeofReferenceField();
 
     uintptr_t maxObjectSize = cg->getMaxObjectSizeGuaranteedNotToOverflow();
     uintptr_t maxObjectSizeInElements = maxObjectSize / elementSize;
-    Inst_RegImm(TR::InstOpCode::CMPRegImm4(), node, firstDimLenReg, static_cast<int32_t>(maxObjectSizeInElements), cg);
+    Inst_RegImm(OP::CMPRegImm4(), node, firstDimLenReg, static_cast<int32_t>(maxObjectSizeInElements), cg);
 
     // Must be an unsigned comparison on sizes.
-    Inst_Label(TR::InstOpCode::JAE4, node, oolJumpPoint, cg);
+    Inst_Label(OP::JAE4, node, oolJumpPoint, cg);
 
-    Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, temp1Reg, firstDimLenReg, cg);
+    Inst_RegReg(OP::MOVRegReg(), node, temp1Reg, firstDimLenReg, cg);
 
     int32_t elementSizeAligned = OMR::align(elementSize, TR::Compiler->om.getObjectAlignmentInBytes());
     int32_t alignmentCompensation = (elementSize == elementSizeAligned) ? 0 : elementSizeAligned - 1;
 
     TR_ASSERT_FATAL(elementSize <= 8, "multianewArrayEvaluator - elementSize cannot be greater than 8!");
-    Inst_RegImm(TR::InstOpCode::SHLRegImm1(), node, temp1Reg,
-        TR::MemoryReference::convertMultiplierToStride(elementSize), cg);
-    Inst_RegImm(TR::InstOpCode::ADDRegImm4(), node, temp1Reg,
+    Inst_RegImm(OP::SHLRegImm1(), node, temp1Reg, TR::MemoryReference::convertMultiplierToStride(elementSize), cg);
+    Inst_RegImm(OP::ADDRegImm4(), node, temp1Reg,
         TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + alignmentCompensation, cg);
 
     if (alignmentCompensation != 0) {
-        Inst_RegImm(TR::InstOpCode::ANDRegImm4(), node, temp1Reg, -elementSizeAligned, cg);
+        Inst_RegImm(OP::ANDRegImm4(), node, temp1Reg, -elementSizeAligned, cg);
     }
 
     TR_ASSERT_FATAL(zeroArraySizeAligned >= 0 && zeroArraySizeAligned <= 127,
         "discontiguousArrayHeaderSizeInBytes cannot be > 127 for IMulRegRegImms instruction");
-    Inst_RegRegImm(TR::InstOpCode::IMULRegRegImm4(), node, temp2Reg, firstDimLenReg, zeroArraySizeAligned, cg);
+    Inst_RegRegImm(OP::IMULRegRegImm4(), node, temp2Reg, firstDimLenReg, zeroArraySizeAligned, cg);
 
     // temp2Reg = temp2Reg + temp1Reg
-    Inst_RegReg(TR::InstOpCode::ADDRegReg(), node, temp2Reg, temp1Reg, cg);
+    Inst_RegReg(OP::ADDRegReg(), node, temp2Reg, temp1Reg, cg);
 
-    Inst_RegMem(TR::InstOpCode::LRegMem(), node, targetReg,
-        MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), cg);
+    Inst_RegMem(OP::LRegMem(), node, targetReg, MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), cg);
     // temp2Reg = temp2Reg + J9VMThread->heapAlloc
-    Inst_RegReg(TR::InstOpCode::ADDRegReg(), node, temp2Reg, targetReg, cg);
+    Inst_RegReg(OP::ADDRegReg(), node, temp2Reg, targetReg, cg);
 
-    Inst_RegMem(TR::InstOpCode::CMPRegMem(), node, temp2Reg,
-        MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapTop), cg), cg);
-    Inst_Label(TR::InstOpCode::JA4, node, oolJumpPoint, cg);
-    Inst_MemReg(TR::InstOpCode::SMemReg(), node, MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg),
-        temp2Reg, cg);
+    Inst_RegMem(OP::CMPRegMem(), node, temp2Reg, MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapTop), cg), cg);
+    Inst_Label(OP::JA4, node, oolJumpPoint, cg);
+    Inst_MemReg(OP::SMemReg(), node, MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), temp2Reg, cg);
 
     // init 1st dim array class field
-    Inst_MemReg(TR::InstOpCode::SMemReg(use64BitClasses), node,
+    Inst_MemReg(OP::SMemReg(use64BitClasses), node,
         MRef_Bdisp32(targetReg, TR::Compiler->om.offsetOfObjectVftField(), cg), classReg, cg);
     // Init 1st dim array size field
-    Inst_MemReg(TR::InstOpCode::S4MemReg, node,
-        MRef_Bdisp32(targetReg, fej9->getOffsetOfContiguousArraySizeField(), cg), firstDimLenReg, cg);
+    Inst_MemReg(OP::S4MemReg, node, MRef_Bdisp32(targetReg, fej9->getOffsetOfContiguousArraySizeField(), cg),
+        firstDimLenReg, cg);
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
     if (isOffHeapAllocationEnabled) {
         /* Populate dataAddr slot of 1st dimension array. Arrays of non-zero size
          * use contiguous header layout while zero size arrays use discontiguous header layout.
          */
-        Inst_RegMem(TR::InstOpCode::LEARegMem(), node, temp3Reg,
+        Inst_RegMem(OP::LEARegMem(), node, temp3Reg,
             MRef_Bdisp32(targetReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
-        Inst_MemReg(TR::InstOpCode::SMemReg(), node,
-            MRef_Bdisp32(targetReg, fej9->getOffsetOfContiguousDataAddrField(), cg), temp3Reg, cg);
+        Inst_MemReg(OP::SMemReg(), node, MRef_Bdisp32(targetReg, fej9->getOffsetOfContiguousDataAddrField(), cg),
+            temp3Reg, cg);
     }
 #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
     // temp2 point to end of 1st dim array i.e. start of 2nd dim
-    Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, temp2Reg, targetReg, cg);
-    Inst_RegReg(TR::InstOpCode::ADDRegReg(), node, temp2Reg, temp1Reg, cg);
+    Inst_RegReg(OP::MOVRegReg(), node, temp2Reg, targetReg, cg);
+    Inst_RegReg(OP::ADDRegReg(), node, temp2Reg, temp1Reg, cg);
     // temp1 points to 1st dim array past header
-    Inst_RegMem(TR::InstOpCode::LEARegMem(), node, temp1Reg,
+    Inst_RegMem(OP::LEARegMem(), node, temp1Reg,
         MRef_Bdisp32(targetReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
 
     // loop start
-    Inst_Label(TR::InstOpCode::label, node, loopLabel, cg);
+    Inst_Label(OP::label, node, loopLabel, cg);
     // Init 2nd dim element's class
-    Inst_MemReg(TR::InstOpCode::SMemReg(use64BitClasses), node,
+    Inst_MemReg(OP::SMemReg(use64BitClasses), node,
         MRef_Bdisp32(temp2Reg, TR::Compiler->om.offsetOfObjectVftField(), cg), componentClassReg, cg);
     // Init 2nd dim element's size and mustBeZero ('0') fields to 0
-    Inst_MemImm(TR::InstOpCode::S4MemImm4, node,
-        MRef_Bdisp32(temp2Reg, fej9->getOffsetOfContiguousArraySizeField(), cg), 0, cg);
-    Inst_MemImm(TR::InstOpCode::S4MemImm4, node,
-        MRef_Bdisp32(temp2Reg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg), 0, cg);
+    Inst_MemImm(OP::S4MemImm4, node, MRef_Bdisp32(temp2Reg, fej9->getOffsetOfContiguousArraySizeField(), cg), 0, cg);
+    Inst_MemImm(OP::S4MemImm4, node, MRef_Bdisp32(temp2Reg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg), 0, cg);
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
     if (isOffHeapAllocationEnabled) {
         // Populate dataAddr slot for 2nd dimension zero size array.
-        Inst_MemImm(TR::InstOpCode::S8MemImm4, node,
-            MRef_Bdisp32(temp2Reg, fej9->getOffsetOfDiscontiguousDataAddrField(), cg), 0, cg);
+        Inst_MemImm(OP::S8MemImm4, node, MRef_Bdisp32(temp2Reg, fej9->getOffsetOfDiscontiguousDataAddrField(), cg), 0,
+            cg);
     }
 #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
     // Store 2nd dim element into 1st dim array slot, compress temp2 if needed
     if (comp->target().is64Bit() && comp->useCompressedPointers()) {
         int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
-        Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, temp3Reg, temp2Reg, cg);
+        Inst_RegReg(OP::MOVRegReg(), node, temp3Reg, temp2Reg, cg);
         if (shiftAmount != 0) {
-            Inst_RegImm(TR::InstOpCode::SHRRegImm1(), node, temp3Reg, shiftAmount, cg);
+            Inst_RegImm(OP::SHRRegImm1(), node, temp3Reg, shiftAmount, cg);
         }
-        Inst_MemReg(TR::InstOpCode::S4MemReg, node, MRef_Bdisp32(temp1Reg, 0, cg), temp3Reg, cg);
+        Inst_MemReg(OP::S4MemReg, node, MRef_Bdisp32(temp1Reg, 0, cg), temp3Reg, cg);
     } else {
-        Inst_MemReg(TR::InstOpCode::SMemReg(), node, MRef_Bdisp32(temp1Reg, 0, cg), temp2Reg, cg);
+        Inst_MemReg(OP::SMemReg(), node, MRef_Bdisp32(temp1Reg, 0, cg), temp2Reg, cg);
     }
 
     // Advance cursors temp1 and temp2
-    Inst_RegImm(TR::InstOpCode::ADDRegImms(), node, temp2Reg, zeroArraySizeAligned, cg);
-    Inst_RegImm(TR::InstOpCode::ADDRegImms(), node, temp1Reg, elementSize, cg);
+    Inst_RegImm(OP::ADDRegImms(), node, temp2Reg, zeroArraySizeAligned, cg);
+    Inst_RegImm(OP::ADDRegImms(), node, temp1Reg, elementSize, cg);
 
-    Inst_Reg(TR::InstOpCode::DEC4Reg, node, firstDimLenReg, cg);
-    Inst_Label(TR::InstOpCode::JA4, node, loopLabel, cg);
+    Inst_Reg(OP::DEC4Reg, node, firstDimLenReg, cg);
+    Inst_Label(OP::JA4, node, loopLabel, cg);
 
-    Inst_Label(TR::InstOpCode::JMP4, node, doneLabel, cg);
+    Inst_Label(OP::JMP4, node, doneLabel, cg);
 
     TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, 13, cg);
 
@@ -2130,17 +2101,17 @@ static TR::Register *generate2DZeroLengthArrayWithInlineAllocators(TR::Node *nod
 
     deps->stopAddingConditions();
 
-    Inst_Label(TR::InstOpCode::label, node, oolJumpPoint, cg);
-    Inst_Label(TR::InstOpCode::JMP4, node, oolFailLabel, cg);
+    Inst_Label(OP::label, node, oolJumpPoint, cg);
+    Inst_Label(OP::JMP4, node, oolFailLabel, cg);
 
-    Inst_Label(TR::InstOpCode::label, node, doneLabel, deps, cg);
+    Inst_Label(OP::label, node, doneLabel, deps, cg);
 
     // Copy the newly allocated object into a collected reference register now that it is a valid object.
     //
     TR::Register *targetReg2 = cg->allocateCollectedReferenceRegister();
     TR::RegisterDependencyConditions *deps2 = RegDeps(0, 1, cg);
     deps2->addPostCondition(targetReg2, TR::RealRegister::eax, cg);
-    Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, targetReg2, targetReg, deps2, cg);
+    Inst_RegReg(OP::MOVRegReg(), node, targetReg2, targetReg, deps2, cg);
     cg->stopUsingRegister(targetReg);
     targetReg = targetReg2;
 
@@ -2227,7 +2198,7 @@ TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Cod
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 
     if (comp->target().is64Bit() && !TR::TreeEvaluator::getNodeIs64Bit(node->getChild(4), cg)) {
-        Inst_RegReg(TR::InstOpCode::MOVZXReg8Reg4, node, sizeReg, sizeReg, cg);
+        Inst_RegReg(OP::MOVZXReg8Reg4, node, sizeReg, sizeReg, cg);
     }
 
     if (!node->isNoArrayStoreCheckArrayCopy()) {
@@ -2240,14 +2211,14 @@ TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Cod
         deps->addPostCondition(dstReg, TR::RealRegister::edi, cg);
         deps->addPostCondition(sizeReg, TR::RealRegister::ecx, cg);
 
-        Inst_MemReg(TR::InstOpCode::SMemReg(), node,
-            MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg), srcObjReg, cg);
-        Inst_MemReg(TR::InstOpCode::SMemReg(), node,
-            MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp2), cg), dstObjReg, cg);
+        Inst_MemReg(OP::SMemReg(), node, MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg),
+            srcObjReg, cg);
+        Inst_MemReg(OP::SMemReg(), node, MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp2), cg),
+            dstObjReg, cg);
         Inst_HelperCall(node, TR_referenceArrayCopy, deps, cg)->setNeedsGCMap(0xFF00FFFF);
 
         auto snippetLabel = generateLabelSymbol(cg);
-        auto instr = Inst_Label(TR::InstOpCode::JNE4, node, snippetLabel,
+        auto instr = Inst_Label(OP::JNE4, node, snippetLabel,
             cg); // ReferenceArrayCopy set ZF when succeed.
         auto snippet = new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg,
             cg->symRefTab()->findOrCreateRuntimeHelper(TR_arrayStoreException), snippetLabel, instr, false);
@@ -2288,9 +2259,9 @@ TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Cod
             tmpXmmYmmReg2 = cg->allocateRegister(TR_VRF);
         }
 
-        Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, RSI, srcReg, cg);
-        Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, RDI, dstReg, cg);
-        Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, RCX, sizeReg, cg);
+        Inst_RegReg(OP::MOVRegReg(), node, RSI, srcReg, cg);
+        Inst_RegReg(OP::MOVRegReg(), node, RDI, dstReg, cg);
+        Inst_RegReg(OP::MOVRegReg(), node, RCX, sizeReg, cg);
 
         int8_t numDeps = enableInlineForSmallSize ? 9 : 5;
         TR::RegisterDependencyConditions *deps = RegDeps(numDeps, numDeps, cg);
@@ -2323,25 +2294,25 @@ TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Cod
         begLabel->setStartInternalControlFlow();
         endLabel->setEndInternalControlFlow();
 
-        Inst_Label(TR::InstOpCode::label, node, begLabel, cg);
+        Inst_Label(OP::label, node, begLabel, cg);
 
         if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none) {
             bool use64BitClasses = comp->target().is64Bit() && !comp->useCompressedPointers();
 
             TR::LabelSymbol *rdbarLabel = generateLabelSymbol(cg);
             // EvacuateTopAddress == 0 means Concurrent Scavenge is inactive
-            Inst_MemImm(TR::InstOpCode::CMPMemImms(use64BitClasses), node,
+            Inst_MemImm(OP::CMPMemImms(use64BitClasses), node,
                 MRef_Bdisp32(cg->getVMThreadRegister(), comp->fej9()->thisThreadGetEvacuateTopAddressOffset(), cg), 0,
                 cg);
-            Inst_Label(TR::InstOpCode::JNE4, node, rdbarLabel, cg);
+            Inst_Label(OP::JNE4, node, rdbarLabel, cg);
 
             TR_OutlinedInstructionsGenerator og(rdbarLabel, node, cg);
-            Inst_MemReg(TR::InstOpCode::SMemReg(), node,
+            Inst_MemReg(OP::SMemReg(), node,
                 MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg), srcObjReg, cg);
-            Inst_MemReg(TR::InstOpCode::SMemReg(), node,
+            Inst_MemReg(OP::SMemReg(), node,
                 MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp2), cg), dstObjReg, cg);
             Inst_HelperCall(node, TR_referenceArrayCopy, NULL, cg)->setNeedsGCMap(0xFF00FFFF);
-            Inst_Label(TR::InstOpCode::JMP4, node, endLabel, cg);
+            Inst_Label(OP::JMP4, node, endLabel, cg);
             og.endOutlinedInstructionSequence();
         }
 
@@ -2358,35 +2329,35 @@ TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Cod
                     tmpXmmYmmReg2, cg, repMovsThresholdBytes, repMovsLabel, endLabel);
             }
 
-            Inst_Label(TR::InstOpCode::label, node, repMovsLabel, cg);
+            Inst_Label(OP::label, node, repMovsLabel, cg);
         }
 
         if (!node->isForwardArrayCopy()) {
             TR::LabelSymbol *backwardLabel = generateLabelSymbol(cg);
 
-            Inst_RegReg(TR::InstOpCode::SUBRegReg(), node, RDI, RSI, cg); // dst = dst - src
-            Inst_RegReg(TR::InstOpCode::CMPRegReg(), node, RDI, RCX, cg); // cmp dst, size
-            Inst_RegMem(TR::InstOpCode::LEARegMem(), node, RDI, MRef_BIS(RDI, RSI, 0, cg),
+            Inst_RegReg(OP::SUBRegReg(), node, RDI, RSI, cg); // dst = dst - src
+            Inst_RegReg(OP::CMPRegReg(), node, RDI, RCX, cg); // cmp dst, size
+            Inst_RegMem(OP::LEARegMem(), node, RDI, MRef_BIS(RDI, RSI, 0, cg),
                 cg); // dst = dst + src
-            Inst_Label(TR::InstOpCode::JB4, node, backwardLabel, cg); // jb, skip backward copy setup
+            Inst_Label(OP::JB4, node, backwardLabel, cg); // jb, skip backward copy setup
 
             TR_OutlinedInstructionsGenerator og(backwardLabel, node, cg);
-            Inst_RegMem(TR::InstOpCode::LEARegMem(), node, RSI,
+            Inst_RegMem(OP::LEARegMem(), node, RSI,
                 MRef_BISdisp32(RSI, RCX, 0, -TR::Compiler->om.sizeofReferenceField(), cg), cg);
-            Inst_RegMem(TR::InstOpCode::LEARegMem(), node, RDI,
+            Inst_RegMem(OP::LEARegMem(), node, RDI,
                 MRef_BISdisp32(RDI, RCX, 0, -TR::Compiler->om.sizeofReferenceField(), cg), cg);
-            Inst_RegImm(TR::InstOpCode::SHRRegImm1(), node, RCX, use64BitClasses ? 3 : 2, cg);
-            Inst(TR::InstOpCode::STD, node, cg);
-            Inst(use64BitClasses ? TR::InstOpCode::REPMOVSQ : TR::InstOpCode::REPMOVSD, node, cg);
-            Inst(TR::InstOpCode::CLD, node, cg);
-            Inst_Label(TR::InstOpCode::JMP4, node, endLabel, cg);
+            Inst_RegImm(OP::SHRRegImm1(), node, RCX, use64BitClasses ? 3 : 2, cg);
+            Inst(OP::STD, node, cg);
+            Inst(use64BitClasses ? OP::REPMOVSQ : OP::REPMOVSD, node, cg);
+            Inst(OP::CLD, node, cg);
+            Inst_Label(OP::JMP4, node, endLabel, cg);
             og.endOutlinedInstructionSequence();
         }
 
-        Inst_RegImm(TR::InstOpCode::SHRRegImm1(), node, RCX, use64BitClasses ? 3 : 2, cg);
-        Inst(use64BitClasses ? TR::InstOpCode::REPMOVSQ : TR::InstOpCode::REPMOVSD, node, cg);
+        Inst_RegImm(OP::SHRRegImm1(), node, RCX, use64BitClasses ? 3 : 2, cg);
+        Inst(use64BitClasses ? OP::REPMOVSQ : OP::REPMOVSD, node, cg);
 
-        Inst_Label(TR::InstOpCode::label, node, endLabel, deps, cg);
+        Inst_Label(OP::label, node, endLabel, deps, cg);
 
         cg->stopUsingRegister(RSI);
         cg->stopUsingRegister(RDI);
@@ -2425,9 +2396,9 @@ TR::Register *J9::X86::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::C
     TR::MemoryReference *discontiguousArraySizeMR
         = MRef_Bdisp32(objectReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg);
 
-    Inst_RegMem(TR::InstOpCode::L4RegMem, node, lengthReg, contiguousArraySizeMR, cg);
-    Inst_RegReg(TR::InstOpCode::TEST4RegReg, node, lengthReg, lengthReg, cg);
-    Inst_RegMem(TR::InstOpCode::CMOVE4RegMem, node, lengthReg, discontiguousArraySizeMR, cg);
+    Inst_RegMem(OP::L4RegMem, node, lengthReg, contiguousArraySizeMR, cg);
+    Inst_RegReg(OP::TEST4RegReg, node, lengthReg, lengthReg, cg);
+    Inst_RegMem(OP::CMOVE4RegMem, node, lengthReg, discontiguousArraySizeMR, cg);
 
     cg->decReferenceCount(node->getFirstChild());
     node->setRegister(lengthReg);
@@ -2436,7 +2407,7 @@ TR::Register *J9::X86::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::C
 
 TR::Register *J9::X86::TreeEvaluator::exceptionRangeFenceEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 {
-    Inst_Fence(TR::InstOpCode::fence, node, node, cg);
+    Inst_Fence(OP::fence, node, node, cg);
     return NULL;
 }
 
@@ -2613,7 +2584,7 @@ TR::Register *J9::X86::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Nod
                 } else {
                     memRef = MRef_Bdisp32(refRegister, 0, cg);
                 }
-                appendTo = Inst_MemImm(appendTo, TR::InstOpCode::TEST1MemImm1, memRef, 0, cg);
+                appendTo = Inst_MemImm(appendTo, OP::TEST1MemImm1, memRef, 0, cg);
                 cg->setImplicitExceptionPoint(appendTo);
             }
         }
@@ -2640,7 +2611,7 @@ TR::Register *J9::X86::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Nod
             if (!appendTo)
                 appendTo = cg->getAppendInstruction();
 
-            TR::InstOpCode::Mnemonic op = TR::InstOpCode::CMPMemImms();
+            OP::Mnemonic op = OP::CMPMemImms();
             appendTo = Inst_MemImm(appendTo, op, tempMR, NULLVALUE, cg);
             tempMR->decNodeReferenceCounts(cg);
             needLateEvaluation = false;
@@ -2650,11 +2621,11 @@ TR::Register *J9::X86::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Nod
             if (!appendTo)
                 appendTo = cg->getAppendInstruction();
 
-            appendTo = Inst_RegReg(appendTo, TR::InstOpCode::TESTRegReg(), targetRegister, targetRegister, cg);
+            appendTo = Inst_RegReg(appendTo, OP::TESTRegReg(), targetRegister, targetRegister, cg);
         }
 
         TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
-        appendTo = Inst_Label(appendTo, TR::InstOpCode::JE4, snippetLabel, cg);
+        appendTo = Inst_Label(appendTo, OP::JE4, snippetLabel, cg);
         // the _node field should point to the current node
         appendTo->setNode(node);
         appendTo->setLiveLocals(cg->getLiveLocals());
@@ -2823,25 +2794,23 @@ TR::Register *J9::X86::TreeEvaluator::DIVCHKEvaluator(TR::Node *node, TR::CodeGe
         startLabel->setStartInternalControlFlow();
         restartLabel->setEndInternalControlFlow();
 
-        Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+        Inst_Label(OP::label, node, startLabel, cg);
 
         if (useRegisterPairs) {
             TR::Register *tempReg = cg->allocateRegister(TR_GPR);
-            lowDivisorTestInstr = Inst_RegReg(TR::InstOpCode::MOV4RegReg, node, tempReg, divisorReg->getLowOrder(), cg);
-            highDivisorTestInstr
-                = Inst_RegReg(TR::InstOpCode::OR4RegReg, node, tempReg, divisorReg->getHighOrder(), cg);
-            Inst_RegReg(TR::InstOpCode::TEST4RegReg, node, tempReg, tempReg, cg);
+            lowDivisorTestInstr = Inst_RegReg(OP::MOV4RegReg, node, tempReg, divisorReg->getLowOrder(), cg);
+            highDivisorTestInstr = Inst_RegReg(OP::OR4RegReg, node, tempReg, divisorReg->getHighOrder(), cg);
+            Inst_RegReg(OP::TEST4RegReg, node, tempReg, tempReg, cg);
             cg->stopUsingRegister(tempReg);
         } else
-            lowDivisorTestInstr
-                = Inst_RegReg(TR::InstOpCode::TESTRegReg(use64BitRegisters), node, divisorReg, divisorReg, cg);
+            lowDivisorTestInstr = Inst_RegReg(OP::TESTRegReg(use64BitRegisters), node, divisorReg, divisorReg, cg);
 
-        Inst_Label(TR::InstOpCode::JE4, node, divideByZeroSnippetLabel, cg);
+        Inst_Label(OP::JE4, node, divideByZeroSnippetLabel, cg);
 
         cg->addSnippet(new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg, node->getSymbolReference(),
             divideByZeroSnippetLabel, cg->getAppendInstruction()));
 
-        Inst_Label(TR::InstOpCode::label, node, divisionLabel, cg);
+        Inst_Label(OP::label, node, divisionLabel, cg);
 
         TR::Register *resultRegister = cg->evaluate(divisionNode);
 
@@ -2879,7 +2848,7 @@ TR::Register *J9::X86::TreeEvaluator::DIVCHKEvaluator(TR::Node *node, TR::CodeGe
                     TR_ASSERT(0, "bad division opcode for DIVCHK\n");
             }
 
-        Inst_Label(TR::InstOpCode::label, node, restartLabel, deps, cg);
+        Inst_Label(OP::label, node, restartLabel, deps, cg);
 
         if (hasConversion) {
             cg->evaluate(node->getFirstChild());
@@ -2914,7 +2883,7 @@ static bool isInteger(TR::ILOpCode &op, TR::CodeGenerator *cg)
         return op.isIntegerOrAddress() && (op.getSize() <= 4);
 }
 
-static TR::InstOpCode::Mnemonic branchOpCodeForCompare(TR::ILOpCode &op, bool opposite = false)
+static OP::Mnemonic branchOpCodeForCompare(TR::ILOpCode &op, bool opposite = false)
 {
     int32_t index = 0;
     if (op.isCompareTrueIfLess())
@@ -2929,23 +2898,23 @@ static TR::InstOpCode::Mnemonic branchOpCodeForCompare(TR::ILOpCode &op, bool op
     if (opposite)
         index ^= 7;
 
-    static const TR::InstOpCode::Mnemonic opTable[] = {
-        TR::InstOpCode::bad,
-        TR::InstOpCode::JL4,
-        TR::InstOpCode::JG4,
-        TR::InstOpCode::JNE4,
-        TR::InstOpCode::JE4,
-        TR::InstOpCode::JLE4,
-        TR::InstOpCode::JGE4,
-        TR::InstOpCode::bad,
-        TR::InstOpCode::bad,
-        TR::InstOpCode::JB4,
-        TR::InstOpCode::JA4,
-        TR::InstOpCode::JNE4,
-        TR::InstOpCode::JE4,
-        TR::InstOpCode::JBE4,
-        TR::InstOpCode::JAE4,
-        TR::InstOpCode::bad,
+    static const OP::Mnemonic opTable[] = {
+        OP::bad,
+        OP::JL4,
+        OP::JG4,
+        OP::JNE4,
+        OP::JE4,
+        OP::JLE4,
+        OP::JGE4,
+        OP::bad,
+        OP::bad,
+        OP::JB4,
+        OP::JA4,
+        OP::JNE4,
+        OP::JE4,
+        OP::JBE4,
+        OP::JAE4,
+        OP::bad,
     };
     return opTable[index];
 }
@@ -3013,11 +2982,11 @@ TR::Register *J9::X86::TreeEvaluator::ZEROCHKEvaluator(TR::Node *node, TR::CodeG
         Inst_Label(branchOpCodeForCompare(valueToCheck->getOpCode(), true), node, slowPathLabel, cg);
     } else {
         TR::Register *value = cg->evaluate(node->getFirstChild());
-        Inst_RegReg(TR::InstOpCode::TEST4RegReg, node, value, value, cg);
+        Inst_RegReg(OP::TEST4RegReg, node, value, value, cg);
         cg->decReferenceCount(node->getFirstChild());
-        Inst_Label(TR::InstOpCode::JE4, node, slowPathLabel, cg);
+        Inst_Label(OP::JE4, node, slowPathLabel, cg);
     }
-    Inst_Label(TR::InstOpCode::label, node, restartLabel, cg);
+    Inst_Label(OP::label, node, restartLabel, cg);
 
     return NULL;
 }
@@ -3046,7 +3015,7 @@ bool isConditionCodeSetForCompare(TR::Node *node, bool *jumpOnOppositeCondition,
     //
     TR::Instruction *prevInstr;
     for (prevInstr = comp->cg()->getAppendInstruction(); prevInstr; prevInstr = prevInstr->getPrev()) {
-        if (prevInstr->getOpCodeValue() == TR::InstOpCode::CMP4RegReg) {
+        if (prevInstr->getOpCodeValue() == OP::CMP4RegReg) {
             TR::Register *prevInstrTargetRegister = prevInstr->getTargetRegister();
             TR::Register *prevInstrSourceRegister = prevInstr->getSourceRegister();
 
@@ -3062,7 +3031,7 @@ bool isConditionCodeSetForCompare(TR::Node *node, bool *jumpOnOppositeCondition,
             }
         }
 
-        if (prevInstr->getOpCodeValue() == TR::InstOpCode::label) {
+        if (prevInstr->getOpCodeValue() == OP::label) {
             // This instruction is a possible branch target.
             return false;
         }
@@ -3095,8 +3064,8 @@ void setImplicitNULLCHKExceptionInfo(TR::Node *node, TR::CodeGenerator *cg)
         //
         // The last instruction is a branch, the comparison is before.
         TR::Instruction *cmpInstruction = cg->getAppendInstruction()->getPrev();
-        TR::InstOpCode::Mnemonic mnemonic = cmpInstruction->getOpCodeValue();
-        bool isComparisonMemForm = mnemonic == TR::InstOpCode::CMP4MemReg || mnemonic == TR::InstOpCode::CMP4RegMem;
+        OP::Mnemonic mnemonic = cmpInstruction->getOpCodeValue();
+        bool isComparisonMemForm = mnemonic == OP::CMP4MemReg || mnemonic == OP::CMP4RegMem;
         if (comp->useCompressedPointers() && faultingInstruction != cmpInstruction && isComparisonMemForm) {
             logprintf(isTraceCG, comp->log(), "Faulting instruction (previously %p) updated to %p\n",
                 faultingInstruction, cmpInstruction);
@@ -3132,7 +3101,7 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
     bool jumpOnOppositeCondition = false;
     if (firstChild->getOpCode().isLoadConst()) {
         if (secondChild->getOpCode().isLoadConst() && firstChild->getInt() <= secondChild->getInt()) {
-            instr = Inst_Label(TR::InstOpCode::JMP4, node, boundCheckFailureLabel, cg);
+            instr = Inst_Label(OP::JMP4, node, boundCheckFailureLabel, cg);
             cg->decReferenceCount(firstChild);
             cg->decReferenceCount(secondChild);
         } else {
@@ -3140,23 +3109,23 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
                 node->swapChildren();
                 TR::TreeEvaluator::compareIntegersForOrder(node, cg);
                 node->swapChildren();
-                instr = Inst_Label(TR::InstOpCode::JAE4, node, boundCheckFailureLabel, cg);
+                instr = Inst_Label(OP::JAE4, node, boundCheckFailureLabel, cg);
             } else
                 skippedComparison = true;
         }
     } else {
         if (!isConditionCodeSetForCompare(node, &jumpOnOppositeCondition, cg->comp())) {
             TR::TreeEvaluator::compareIntegersForOrder(node, cg);
-            instr = Inst_Label(TR::InstOpCode::JBE4, node, boundCheckFailureLabel, cg);
+            instr = Inst_Label(OP::JBE4, node, boundCheckFailureLabel, cg);
         } else
             skippedComparison = true;
     }
 
     if (skippedComparison) {
         if (jumpOnOppositeCondition)
-            instr = Inst_Label(TR::InstOpCode::JAE4, node, boundCheckFailureLabel, cg);
+            instr = Inst_Label(OP::JAE4, node, boundCheckFailureLabel, cg);
         else
-            instr = Inst_Label(TR::InstOpCode::JBE4, node, boundCheckFailureLabel, cg);
+            instr = Inst_Label(OP::JBE4, node, boundCheckFailureLabel, cg);
 
         cg->decReferenceCount(firstChild);
         cg->decReferenceCount(secondChild);
@@ -3189,7 +3158,7 @@ TR::Register *J9::X86::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node *node, T
             if (firstChild->getInt() < secondChild->getInt()) {
                 // Check will always fail, just jump to failure snippet
                 //
-                instr = Inst_Label(TR::InstOpCode::JMP4, node, boundCheckFailureLabel, cg);
+                instr = Inst_Label(OP::JMP4, node, boundCheckFailureLabel, cg);
             } else {
                 // Check will always succeed, no need for an instruction
                 //
@@ -3201,11 +3170,11 @@ TR::Register *J9::X86::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node *node, T
             node->swapChildren();
             TR::TreeEvaluator::compareIntegersForOrder(node, cg);
             node->swapChildren();
-            instr = Inst_Label(TR::InstOpCode::JG4, node, boundCheckFailureLabel, cg);
+            instr = Inst_Label(OP::JG4, node, boundCheckFailureLabel, cg);
         }
     } else {
         TR::TreeEvaluator::compareIntegersForOrder(node, cg);
-        instr = Inst_Label(TR::InstOpCode::JL4, node, boundCheckFailureLabel, cg);
+        instr = Inst_Label(OP::JL4, node, boundCheckFailureLabel, cg);
     }
 
     if (instr)
@@ -3341,8 +3310,8 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
             // valid for useShiftedOffsets
             compressedRegister = cg->evaluate(firstChild->getSecondChild());
             if (!usingLowMemHeap) {
-                Inst_RegReg(TR::InstOpCode::TESTRegReg(), firstChild, sourceRegister, sourceRegister, cg);
-                Inst_RegReg(TR::InstOpCode::CMOVERegReg(), firstChild, compressedRegister, sourceRegister, cg);
+                Inst_RegReg(OP::TESTRegReg(), firstChild, sourceRegister, sourceRegister, cg);
+                Inst_RegReg(OP::CMOVERegReg(), firstChild, compressedRegister, sourceRegister, cg);
             }
         }
     }
@@ -3358,13 +3327,13 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
 
     startLabel = generateLabelSymbol(cg);
     startLabel->setStartInternalControlFlow();
-    Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+    Inst_Label(OP::label, node, startLabel, cg);
 
-    Inst_RegReg(TR::InstOpCode::TESTRegReg(), node, sourceRegister, sourceRegister, cg);
+    Inst_RegReg(OP::TESTRegReg(), node, sourceRegister, sourceRegister, cg);
 
     TR::LabelSymbol *nullTargetLabel = isRealTimeGC ? startOfWrtbarLabel : doNullStoreLabel;
 
-    Inst_Label(TR::InstOpCode::JE4, node, nullTargetLabel, cg);
+    Inst_Label(OP::JE4, node, nullTargetLabel, cg);
 
     // -------------------------------------------------------------------------
     //
@@ -3402,7 +3371,7 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
                 = TR_VirtualGuard::createArrayStoreCheckGuard(comp, node, node->getArrayStoreClassInNode());
             Inst_VirtualGuardNOP(node, virtualGuard->addNOPSite(), NULL, oolASCLabel, cg);
         } else {
-            Inst_Label(TR::InstOpCode::JMP4, node, oolASCLabel, cg);
+            Inst_Label(OP::JMP4, node, oolASCLabel, cg);
         }
 
         // Restore the reference counts of the children created for the temporary vacll node above.
@@ -3423,7 +3392,7 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
     bool isSourceNonNull = sourceChild->isNonNull();
 
     if (generateWriteBarrier) {
-        Inst_Label(TR::InstOpCode::label, node, startOfWrtbarLabel, cg);
+        Inst_Label(OP::label, node, startOfWrtbarLabel, cg);
 
         if (!isRealTimeGC) {
             // HACK: set the nullness property on the source so that the write barrier
@@ -3442,7 +3411,7 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
     } else if (postASCLabel) {
         // Lay down a arestart label for OOL ASC if the write barrier was skipped
         //
-        Inst_Label(TR::InstOpCode::label, node, postASCLabel, cg);
+        Inst_Label(OP::label, node, postASCLabel, cg);
     }
 
     // -------------------------------------------------------------------------
@@ -3473,11 +3442,11 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
             tempMR2 = MRef_MRefOff(*tempMR, 0, cg);
 
             if (usingCompressedPointers)
-                Inst_MemReg(TR::InstOpCode::S4MemReg, node, tempMR2, compressedRegister, cg);
+                Inst_MemReg(OP::S4MemReg, node, tempMR2, compressedRegister, cg);
             else
-                Inst_MemReg(TR::InstOpCode::SMemReg(), node, tempMR2, sourceRegister, cg);
+                Inst_MemReg(OP::SMemReg(), node, tempMR2, sourceRegister, cg);
 
-            Inst_Label(TR::InstOpCode::JMP4, node, doneLabel, cg);
+            Inst_Label(OP::JMP4, node, doneLabel, cg);
             og.endOutlinedInstructionSequence();
         } else if (!generateWriteBarrier) {
             // No write barrier emitted.  Evaluate the store here.
@@ -3494,9 +3463,9 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
             TR::X86MemRegInstruction *storeInstr;
 
             if (usingCompressedPointers)
-                storeInstr = Inst_MemReg(TR::InstOpCode::S4MemReg, node, tempMR, compressedRegister, cg);
+                storeInstr = Inst_MemReg(OP::S4MemReg, node, tempMR, compressedRegister, cg);
             else
-                storeInstr = Inst_MemReg(TR::InstOpCode::SMemReg(), node, tempMR, sourceRegister, cg);
+                storeInstr = Inst_MemReg(OP::SMemReg(), node, tempMR, sourceRegister, cg);
 
             cg->setImplicitExceptionPoint(storeInstr);
 
@@ -3561,9 +3530,9 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
     scratchRegisterManager->stopUsingRegisters();
 
     if (dependencyAnchorInstruction) {
-        Inst_Label(dependencyAnchorInstruction, TR::InstOpCode::label, doneLabel, deps, cg);
+        Inst_Label(dependencyAnchorInstruction, OP::label, doneLabel, deps, cg);
     } else {
-        Inst_Label(TR::InstOpCode::label, node, doneLabel, deps, cg);
+        Inst_Label(OP::label, node, doneLabel, deps, cg);
     }
 
     if (usingCompressedPointers) {
@@ -3609,7 +3578,7 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node
     // that the array bound is a constant, and lowered TR::arraylength into an
     // iconst.  In this case, make sure that the constant is the second child.
     //
-    TR::InstOpCode::Mnemonic branchOpCode;
+    OP::Mnemonic branchOpCode;
 
     // For primitive stores anchored under the check node, we must evaluate the source node
     // before the bound check branch so that its available to the snippet.  We can make
@@ -3642,7 +3611,7 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node
                 // Create real check failure snippet if we can prove the
                 // bound check will always fail.
                 //
-                branchOpCode = TR::InstOpCode::JMP4;
+                branchOpCode = OP::JMP4;
                 cg->decReferenceCount(arrayLengthChild);
                 cg->decReferenceCount(indexChild);
             } else {
@@ -3654,7 +3623,7 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node
                     // Create real check failure snippet if we can prove the spine check
                     // will always fail
                     //
-                    branchOpCode = TR::InstOpCode::JMP4;
+                    branchOpCode = OP::JMP4;
                     cg->decReferenceCount(arrayLengthChild);
                     if (!indexChild->getOpCode().isLoadConst()) {
                         cg->evaluate(indexChild);
@@ -3667,7 +3636,7 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node
                     // Check the bounds.
                     //
                     TR::TreeEvaluator::compareIntegersForOrder(node, indexChild, arrayLengthChild, cg);
-                    branchOpCode = TR::InstOpCode::JAE4;
+                    branchOpCode = OP::JAE4;
                     faultingInstruction = cg->getImplicitExceptionPoint();
                 }
             }
@@ -3675,13 +3644,13 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node
             // Check the bounds.
             //
             TR::TreeEvaluator::compareIntegersForOrder(node, arrayLengthChild, indexChild, cg);
-            branchOpCode = TR::InstOpCode::JBE4;
+            branchOpCode = OP::JBE4;
             faultingInstruction = cg->getImplicitExceptionPoint();
         }
 
         static char *forceArraylet = feGetEnv("TR_forceArraylet");
         if (forceArraylet) {
-            branchOpCode = TR::InstOpCode::JMP4;
+            branchOpCode = OP::JMP4;
         }
 
         checkInstr = Inst_Label(branchOpCode, node, boundCheckFailureLabel, cg);
@@ -3696,8 +3665,8 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node
 
         TR::MemoryReference *arraySizeMR = MRef_Bdisp32(baseArrayReg, fej9->getOffsetOfContiguousArraySizeField(), cg);
 
-        Inst_MemImm(TR::InstOpCode::CMP4MemImms, node, arraySizeMR, 0, cg);
-        Inst_Label(TR::InstOpCode::JE4, node, boundCheckFailureLabel, cg);
+        Inst_MemImm(OP::CMP4MemImms, node, arraySizeMR, 0, cg);
+        Inst_Label(OP::JE4, node, boundCheckFailureLabel, cg);
     }
 
     // -----------------------------------------------------------------------------------
@@ -3775,7 +3744,7 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node
 
     TR::LabelSymbol *mergeLabel = generateLabelSymbol(cg);
     mergeLabel->setInternalControlFlowMerge();
-    TR::X86LabelInstruction *restartInstr = Inst_Label(TR::InstOpCode::label, node, mergeLabel, deps, cg);
+    TR::X86LabelInstruction *restartInstr = Inst_Label(OP::label, node, mergeLabel, deps, cg);
 
     TR_OutlinedInstructions *arrayletOI
         = generateArrayletReference(node, loadOrStoreChild, checkInstr, boundCheckFailureLabel, mergeLabel,
@@ -3825,15 +3794,15 @@ TR::Register *J9::X86::TreeEvaluator::barrierFenceEvaluator(TR::Node *node, TR::
 {
     TR::ILOpCodes opCode = node->getOpCodeValue();
     if (opCode == TR::fullFence && node->canOmitSync()) {
-        Inst_Label(TR::InstOpCode::label, node, generateLabelSymbol(cg), cg);
+        Inst_Label(OP::label, node, generateLabelSymbol(cg), cg);
     } else if (cg->comp()->getOption(TR_X86UseMFENCE)) {
-        Inst(TR::InstOpCode::MFENCE, node, cg);
+        Inst(OP::MFENCE, node, cg);
     } else {
         TR::RealRegister *stackReg = cg->machine()->getRealRegister(TR::RealRegister::esp);
         TR::MemoryReference *mr = MRef_Bdisp32(stackReg, intptr_t(0), cg);
 
         mr->setRequiresLockPrefix();
-        Inst_MemImm(TR::InstOpCode::OR4MemImms, node, mr, 0, cg);
+        Inst_MemImm(OP::OR4MemImms, node, mr, 0, cg);
         cg->stopUsingRegister(stackReg);
     }
     return NULL;
@@ -3861,7 +3830,7 @@ TR::Register *J9::X86::TreeEvaluator::readbarEvaluator(TR::Node *node, TR::CodeG
         startLabel = generateLabelSymbol(cg);
         doneLabel = generateLabelSymbol(cg);
 
-        Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+        Inst_Label(OP::label, node, startLabel, cg);
         startLabel->setStartInternalControlFlow();
     }
 
@@ -3869,13 +3838,13 @@ TR::Register *J9::X86::TreeEvaluator::readbarEvaluator(TR::Node *node, TR::CodeG
 
     if (needBranchAroundForNULL) {
         // if handle is NULL, then just branch around the redirection
-        Inst_RegReg(TR::InstOpCode::TESTRegReg(), node, handleRegister, handleRegister, cg);
-        Inst_Label(TR::InstOpCode::JE4, handleNode, doneLabel, cg);
+        Inst_RegReg(OP::TESTRegReg(), node, handleRegister, handleRegister, cg);
+        Inst_Label(OP::JE4, handleNode, doneLabel, cg);
     }
 
     // handle is not NULL or we're an implicit nullcheck, so go through forwarding pointer to get object
     TR::MemoryReference *handleMR = MRef_Bdisp32(handleRegister, node->getSymbolReference()->getOffset(), cg);
-    TR::Instruction *forwardingInstr = Inst_RegMem(TR::InstOpCode::L4RegMem, handleNode, handleRegister, handleMR, cg);
+    TR::Instruction *forwardingInstr = Inst_RegMem(OP::L4RegMem, handleNode, handleRegister, handleMR, cg);
     cg->setImplicitExceptionPoint(forwardingInstr);
 
     if (needBranchAroundForNULL) {
@@ -3883,7 +3852,7 @@ TR::Register *J9::X86::TreeEvaluator::readbarEvaluator(TR::Node *node, TR::CodeG
         deps->addPostCondition(handleRegister, TR::RealRegister::NoReg, cg);
 
         // and we're done
-        Inst_Label(TR::InstOpCode::label, node, doneLabel, deps, cg);
+        Inst_Label(OP::label, node, doneLabel, deps, cg);
 
         doneLabel->setEndInternalControlFlow();
     }
@@ -3902,14 +3871,14 @@ static TR::Register *highestOneBit(TR::Node *node, TR::CodeGenerator *cg, TR::Re
     // shl r1, r2
     TR::Register *scratchReg = cg->allocateRegister();
     TR::Register *bsrReg = cg->allocateRegister();
-    Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, scratchReg, scratchReg, cg);
-    Inst_RegReg(TR::InstOpCode::BSRRegReg(is64Bit), node, bsrReg, reg, cg);
-    Inst_Reg(TR::InstOpCode::SETNE1Reg, node, scratchReg, cg);
+    Inst_RegReg(OP::XOR4RegReg, node, scratchReg, scratchReg, cg);
+    Inst_RegReg(OP::BSRRegReg(is64Bit), node, bsrReg, reg, cg);
+    Inst_Reg(OP::SETNE1Reg, node, scratchReg, cg);
     TR::RegisterDependencyConditions *shiftDependencies = RegDeps((uint8_t)1, 1, cg);
     shiftDependencies->addPreCondition(bsrReg, TR::RealRegister::ecx, cg);
     shiftDependencies->addPostCondition(bsrReg, TR::RealRegister::ecx, cg);
     shiftDependencies->stopAddingConditions();
-    Inst_RegReg(TR::InstOpCode::SHLRegCL(is64Bit), node, scratchReg, bsrReg, shiftDependencies, cg);
+    Inst_RegReg(OP::SHLRegCL(is64Bit), node, scratchReg, bsrReg, shiftDependencies, cg);
     cg->stopUsingRegister(bsrReg);
     return scratchReg;
 }
@@ -3946,11 +3915,11 @@ TR::Register *J9::X86::TreeEvaluator::longHighestOneBit(TR::Node *node, TR::Code
         TR::Register *maskReg = cg->allocateRegister();
         TR::Register *resultHigh = highestOneBit(node, cg, inputHigh, false);
         TR::Register *resultLow = highestOneBit(node, cg, inputLow, false);
-        Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, maskReg, maskReg, cg);
-        Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, inputHigh, 0, cg);
-        Inst_Reg(TR::InstOpCode::SETNE1Reg, node, maskReg, cg);
-        Inst_Reg(TR::InstOpCode::DEC4Reg, node, maskReg, cg);
-        Inst_RegReg(TR::InstOpCode::AND4RegReg, node, resultLow, maskReg, cg);
+        Inst_RegReg(OP::XOR4RegReg, node, maskReg, maskReg, cg);
+        Inst_RegImm(OP::CMP4RegImm4, node, inputHigh, 0, cg);
+        Inst_Reg(OP::SETNE1Reg, node, maskReg, cg);
+        Inst_Reg(OP::DEC4Reg, node, maskReg, cg);
+        Inst_RegReg(OP::AND4RegReg, node, resultLow, maskReg, cg);
         resultReg = cg->allocateRegisterPair(resultLow, resultHigh);
         cg->stopUsingRegister(maskReg);
     }
@@ -3962,9 +3931,9 @@ TR::Register *J9::X86::TreeEvaluator::longHighestOneBit(TR::Node *node, TR::Code
 static TR::Register *lowestOneBit(TR::Node *node, TR::CodeGenerator *cg, TR::Register *reg, bool is64Bit)
 {
     TR::Register *resultReg = cg->allocateRegister();
-    Inst_RegReg(TR::InstOpCode::MOVRegReg(is64Bit), node, resultReg, reg, cg);
-    Inst_Reg(TR::InstOpCode::NEGReg(is64Bit), node, resultReg, cg);
-    Inst_RegReg(TR::InstOpCode::ANDRegReg(is64Bit), node, resultReg, reg, cg);
+    Inst_RegReg(OP::MOVRegReg(is64Bit), node, resultReg, reg, cg);
+    Inst_Reg(OP::NEGReg(is64Bit), node, resultReg, cg);
+    Inst_RegReg(OP::ANDRegReg(is64Bit), node, resultReg, reg, cg);
     return resultReg;
 }
 
@@ -3999,11 +3968,11 @@ TR::Register *J9::X86::TreeEvaluator::longLowestOneBit(TR::Node *node, TR::CodeG
         TR::Register *inputHigh = inputReg->getHighOrder();
         TR::Register *inputLow = inputReg->getLowOrder();
         TR::Register *scratchReg = cg->allocateRegister();
-        Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, scratchReg, scratchReg, cg);
+        Inst_RegReg(OP::XOR4RegReg, node, scratchReg, scratchReg, cg);
         TR::Register *resultLow = lowestOneBit(node, cg, inputLow, false);
-        Inst_Reg(TR::InstOpCode::SETNE1Reg, node, scratchReg, cg);
-        Inst_Reg(TR::InstOpCode::DEC4Reg, node, scratchReg, cg);
-        Inst_RegReg(TR::InstOpCode::AND4RegReg, node, scratchReg, inputHigh, cg);
+        Inst_Reg(OP::SETNE1Reg, node, scratchReg, cg);
+        Inst_Reg(OP::DEC4Reg, node, scratchReg, cg);
+        Inst_RegReg(OP::AND4RegReg, node, scratchReg, inputHigh, cg);
         TR::Register *resultHigh = lowestOneBit(node, cg, scratchReg, false);
         cg->stopUsingRegister(scratchReg);
         resultReg = cg->allocateRegisterPair(resultLow, resultHigh);
@@ -4027,14 +3996,14 @@ static TR::Register *numberOfLeadingZeros(TR::Node *node, TR::CodeGenerator *cg,
     // ret r1
     TR::Register *maskReg = cg->allocateRegister();
     TR::Register *bsrReg = cg->allocateRegister();
-    Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, maskReg, maskReg, cg);
-    Inst_RegReg(TR::InstOpCode::BSRRegReg(is64Bit), node, bsrReg, reg, cg);
-    Inst_Reg(TR::InstOpCode::SETE1Reg, node, maskReg, cg);
-    Inst_Reg(TR::InstOpCode::DECReg(is64Bit), node, maskReg, cg);
-    Inst_Reg(TR::InstOpCode::INCReg(is64Bit), node, bsrReg, cg);
-    Inst_RegReg(TR::InstOpCode::ANDRegReg(is64Bit), node, bsrReg, maskReg, cg);
-    Inst_RegImm(TR::InstOpCode::MOVRegImm4(is64Bit), node, maskReg, isLong ? 64 : 32, cg);
-    Inst_RegReg(TR::InstOpCode::SUBRegReg(is64Bit), node, maskReg, bsrReg, cg);
+    Inst_RegReg(OP::XOR4RegReg, node, maskReg, maskReg, cg);
+    Inst_RegReg(OP::BSRRegReg(is64Bit), node, bsrReg, reg, cg);
+    Inst_Reg(OP::SETE1Reg, node, maskReg, cg);
+    Inst_Reg(OP::DECReg(is64Bit), node, maskReg, cg);
+    Inst_Reg(OP::INCReg(is64Bit), node, bsrReg, cg);
+    Inst_RegReg(OP::ANDRegReg(is64Bit), node, bsrReg, maskReg, cg);
+    Inst_RegImm(OP::MOVRegImm4(is64Bit), node, maskReg, isLong ? 64 : 32, cg);
+    Inst_RegReg(OP::SUBRegReg(is64Bit), node, maskReg, bsrReg, cg);
     cg->stopUsingRegister(bsrReg);
     return maskReg;
 }
@@ -4072,12 +4041,12 @@ TR::Register *J9::X86::TreeEvaluator::longNumberOfLeadingZeros(TR::Node *node, T
         TR::Register *resultHigh = numberOfLeadingZeros(node, cg, inputHigh, false, false);
         TR::Register *resultLow = numberOfLeadingZeros(node, cg, inputLow, false, false);
         TR::Register *maskReg = cg->allocateRegister();
-        Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, maskReg, maskReg, cg);
-        Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, inputHigh, 0, cg);
-        Inst_Reg(TR::InstOpCode::SETNE1Reg, node, maskReg, cg);
-        Inst_Reg(TR::InstOpCode::DEC4Reg, node, maskReg, cg);
-        Inst_RegReg(TR::InstOpCode::AND4RegReg, node, resultLow, maskReg, cg);
-        Inst_RegReg(TR::InstOpCode::ADD4RegReg, node, resultHigh, resultLow, cg);
+        Inst_RegReg(OP::XOR4RegReg, node, maskReg, maskReg, cg);
+        Inst_RegImm(OP::CMP4RegImm4, node, inputHigh, 0, cg);
+        Inst_Reg(OP::SETNE1Reg, node, maskReg, cg);
+        Inst_Reg(OP::DEC4Reg, node, maskReg, cg);
+        Inst_RegReg(OP::AND4RegReg, node, resultLow, maskReg, cg);
+        Inst_RegReg(OP::ADD4RegReg, node, resultHigh, resultLow, cg);
         cg->stopUsingRegister(resultLow);
         cg->stopUsingRegister(maskReg);
         resultReg = resultHigh;
@@ -4103,14 +4072,14 @@ static TR::Register *numberOfTrailingZeros(TR::Node *node, TR::CodeGenerator *cg
     TR::Register *bsfReg = cg->allocateRegister();
     TR::Register *tempReg = cg->allocateRegister();
     TR::Register *maskReg = cg->allocateRegister();
-    Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, tempReg, tempReg, cg);
-    Inst_RegReg(TR::InstOpCode::BSFRegReg(is64Bit), node, bsfReg, reg, cg);
-    Inst_Reg(TR::InstOpCode::SETE1Reg, node, tempReg, cg);
-    Inst_RegReg(TR::InstOpCode::MOVRegReg(is64Bit), node, maskReg, tempReg, cg);
-    Inst_Reg(TR::InstOpCode::DECReg(is64Bit), node, maskReg, cg);
-    Inst_RegImm(TR::InstOpCode::SHLRegImm1(is64Bit), node, tempReg, isLong ? 6 : 5, cg);
-    Inst_RegReg(TR::InstOpCode::ANDRegReg(is64Bit), node, bsfReg, maskReg, cg);
-    Inst_RegReg(TR::InstOpCode::ADDRegReg(is64Bit), node, bsfReg, tempReg, cg);
+    Inst_RegReg(OP::XOR4RegReg, node, tempReg, tempReg, cg);
+    Inst_RegReg(OP::BSFRegReg(is64Bit), node, bsfReg, reg, cg);
+    Inst_Reg(OP::SETE1Reg, node, tempReg, cg);
+    Inst_RegReg(OP::MOVRegReg(is64Bit), node, maskReg, tempReg, cg);
+    Inst_Reg(OP::DECReg(is64Bit), node, maskReg, cg);
+    Inst_RegImm(OP::SHLRegImm1(is64Bit), node, tempReg, isLong ? 6 : 5, cg);
+    Inst_RegReg(OP::ANDRegReg(is64Bit), node, bsfReg, maskReg, cg);
+    Inst_RegReg(OP::ADDRegReg(is64Bit), node, bsfReg, tempReg, cg);
     cg->stopUsingRegister(tempReg);
     cg->stopUsingRegister(maskReg);
     return bsfReg;
@@ -4149,12 +4118,12 @@ TR::Register *J9::X86::TreeEvaluator::longNumberOfTrailingZeros(TR::Node *node, 
         TR::Register *maskReg = cg->allocateRegister();
         TR::Register *resultLow = numberOfTrailingZeros(node, cg, inputLow, false, false);
         TR::Register *resultHigh = numberOfTrailingZeros(node, cg, inputHigh, false, false);
-        Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, maskReg, maskReg, cg);
-        Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, resultLow, 32, cg);
-        Inst_Reg(TR::InstOpCode::SETNE1Reg, node, maskReg, cg);
-        Inst_Reg(TR::InstOpCode::DEC4Reg, node, maskReg, cg);
-        Inst_RegReg(TR::InstOpCode::AND4RegReg, node, maskReg, resultHigh, cg);
-        Inst_RegReg(TR::InstOpCode::ADD4RegReg, node, resultLow, maskReg, cg);
+        Inst_RegReg(OP::XOR4RegReg, node, maskReg, maskReg, cg);
+        Inst_RegImm(OP::CMP4RegImm4, node, resultLow, 32, cg);
+        Inst_Reg(OP::SETNE1Reg, node, maskReg, cg);
+        Inst_Reg(OP::DEC4Reg, node, maskReg, cg);
+        Inst_RegReg(OP::AND4RegReg, node, maskReg, resultHigh, cg);
+        Inst_RegReg(OP::ADD4RegReg, node, resultLow, maskReg, cg);
         cg->stopUsingRegister(resultHigh);
         cg->stopUsingRegister(maskReg);
         resultReg = resultLow;
@@ -4187,7 +4156,7 @@ inline void generateInlinedCheckCastForDynamicCastClass(TR::Node *node, TR::Code
     startLabel->setStartInternalControlFlow();
     fallThruLabel->setEndInternalControlFlow();
 
-    Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+    Inst_Label(OP::label, node, startLabel, cg);
 
     TR_OutlinedInstructions *outlinedHelperCall
         = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::call, NULL, outlinedCallLabel, fallThruLabel, cg);
@@ -4198,61 +4167,59 @@ inline void generateInlinedCheckCastForDynamicCastClass(TR::Node *node, TR::Code
         generateLoadJ9Class(node, objClassReg, ObjReg, cg);
 
     // temp2Reg holds romClass of cast class, for testing array, interface class type
-    Inst_RegMem(TR::InstOpCode::LRegMem(), node, temp2Reg, MRef_Bdisp32(castClassReg, offsetof(J9Class, romClass), cg),
-        cg);
+    Inst_RegMem(OP::LRegMem(), node, temp2Reg, MRef_Bdisp32(castClassReg, offsetof(J9Class, romClass), cg), cg);
 
     // If cast class is array, call out of line helper
-    Inst_MemImm(TR::InstOpCode::TEST4MemImm4, node, MRef_Bdisp32(temp2Reg, offsetof(J9ROMClass, modifiers), cg),
-        J9AccClassArray, cg);
-    Inst_Label(TR::InstOpCode::JNE4, node, outlinedCallLabel, cg);
+    Inst_MemImm(OP::TEST4MemImm4, node, MRef_Bdisp32(temp2Reg, offsetof(J9ROMClass, modifiers), cg), J9AccClassArray,
+        cg);
+    Inst_Label(OP::JNE4, node, outlinedCallLabel, cg);
 
     // objClassReg holds object class
     if (!isCheckCastAndNullCheck) {
-        Inst_RegReg(TR::InstOpCode::TESTRegReg(), node, ObjReg, ObjReg, cg);
-        Inst_Label(TR::InstOpCode::JE4, node, fallThruLabel, cg);
+        Inst_RegReg(OP::TESTRegReg(), node, ObjReg, ObjReg, cg);
+        Inst_Label(OP::JE4, node, fallThruLabel, cg);
         generateLoadJ9Class(node, objClassReg, ObjReg, cg);
     }
 
     // Object not array, inline checks
     // Check cast class is interface
-    Inst_MemImm(TR::InstOpCode::TEST4MemImm4, node, MRef_Bdisp32(temp2Reg, offsetof(J9ROMClass, modifiers), cg),
-        J9AccInterface, cg);
-    Inst_Label(TR::InstOpCode::JE4, node, isClassLabel, cg);
+    Inst_MemImm(OP::TEST4MemImm4, node, MRef_Bdisp32(temp2Reg, offsetof(J9ROMClass, modifiers), cg), J9AccInterface,
+        cg);
+    Inst_Label(OP::JE4, node, isClassLabel, cg);
 
     // Obtain I-Table
     // temp1Reg holds head of J9Class->iTable of obj class
-    Inst_RegMem(TR::InstOpCode::LRegMem(), node, temp1Reg, MRef_Bdisp32(objClassReg, offsetof(J9Class, iTable), cg),
-        cg);
+    Inst_RegMem(OP::LRegMem(), node, temp1Reg, MRef_Bdisp32(objClassReg, offsetof(J9Class, iTable), cg), cg);
     // Loop through I-Table
     // temp1Reg holds iTable list element through the loop
-    Inst_Label(TR::InstOpCode::label, node, iTableLoopLabel, cg);
-    Inst_RegReg(TR::InstOpCode::TESTRegReg(), node, temp1Reg, temp1Reg, cg);
-    Inst_Label(TR::InstOpCode::JE4, node, throwLabel, cg);
+    Inst_Label(OP::label, node, iTableLoopLabel, cg);
+    Inst_RegReg(OP::TESTRegReg(), node, temp1Reg, temp1Reg, cg);
+    Inst_Label(OP::JE4, node, throwLabel, cg);
     auto interfaceMR = MRef_Bdisp32(temp1Reg, offsetof(J9ITable, interfaceClass), cg);
-    Inst_MemReg(TR::InstOpCode::CMPMemReg(), node, interfaceMR, castClassReg, cg);
-    Inst_RegMem(TR::InstOpCode::LRegMem(), node, temp1Reg, MRef_Bdisp32(temp1Reg, offsetof(J9ITable, next), cg), cg);
-    Inst_Label(TR::InstOpCode::JNE4, node, iTableLoopLabel, cg);
+    Inst_MemReg(OP::CMPMemReg(), node, interfaceMR, castClassReg, cg);
+    Inst_RegMem(OP::LRegMem(), node, temp1Reg, MRef_Bdisp32(temp1Reg, offsetof(J9ITable, next), cg), cg);
+    Inst_Label(OP::JNE4, node, iTableLoopLabel, cg);
 
     // Found from I-Table
-    Inst_Label(TR::InstOpCode::JMP4, node, fallThruLabel, cg);
+    Inst_Label(OP::JMP4, node, fallThruLabel, cg);
 
     // cast class is non-interface class
-    Inst_Label(TR::InstOpCode::label, node, isClassLabel, cg);
+    Inst_Label(OP::label, node, isClassLabel, cg);
     // equality test
-    Inst_RegReg(TR::InstOpCode::CMPRegReg(use64BitClasses), node, objClassReg, castClassReg, cg);
-    Inst_Label(TR::InstOpCode::JE4, node, fallThruLabel, cg);
+    Inst_RegReg(OP::CMPRegReg(use64BitClasses), node, objClassReg, castClassReg, cg);
+    Inst_Label(OP::JE4, node, fallThruLabel, cg);
 
     // class not equal
     // temp2 holds cast class depth
     // class depth mask must be low 16 bits to safely load without the mask.
     static_assert(J9AccClassDepthMask == 0xffff, "J9_JAVA_CLASS_DEPTH_MASK must be 0xffff");
-    Inst_RegMem(comp->target().is64Bit() ? TR::InstOpCode::MOVZXReg8Mem2 : TR::InstOpCode::MOVZXReg4Mem2, node,
-        temp2Reg, MRef_Bdisp32(castClassReg, offsetof(J9Class, classDepthAndFlags), cg), cg);
+    Inst_RegMem(comp->target().is64Bit() ? OP::MOVZXReg8Mem2 : OP::MOVZXReg4Mem2, node, temp2Reg,
+        MRef_Bdisp32(castClassReg, offsetof(J9Class, classDepthAndFlags), cg), cg);
 
     // cast class depth >= obj class depth, throw
-    Inst_RegMem(TR::InstOpCode::CMP2RegMem, node, temp2Reg,
-        MRef_Bdisp32(objClassReg, offsetof(J9Class, classDepthAndFlags), cg), cg);
-    Inst_Label(TR::InstOpCode::JAE4, node, throwLabel, cg);
+    Inst_RegMem(OP::CMP2RegMem, node, temp2Reg, MRef_Bdisp32(objClassReg, offsetof(J9Class, classDepthAndFlags), cg),
+        cg);
+    Inst_Label(OP::JAE4, node, throwLabel, cg);
 
     // check obj class's super class array entry
     // temp1Reg holds superClasses array of obj class
@@ -4263,17 +4230,16 @@ inline void generateInlinedCheckCastForDynamicCastClass(TR::Node *node, TR::Code
     // On 64 bit, the extra reg isn't likely to cause significant register pressure.
     // On 32 bit, it could put more register pressure due to limited number of regs.
     // Since 64-bit is more prevalent, we opt to optimize for 64bit in this case
-    Inst_RegMem(TR::InstOpCode::LRegMem(), node, temp1Reg,
-        MRef_Bdisp32(objClassReg, offsetof(J9Class, superclasses), cg), cg);
-    Inst_RegMem(TR::InstOpCode::CMPRegMem(use64BitClasses), node, castClassReg,
+    Inst_RegMem(OP::LRegMem(), node, temp1Reg, MRef_Bdisp32(objClassReg, offsetof(J9Class, superclasses), cg), cg);
+    Inst_RegMem(OP::CMPRegMem(use64BitClasses), node, castClassReg,
         MRef_BIS(temp1Reg, temp2Reg, comp->target().is64Bit() ? 3 : 2, cg), cg);
-    Inst_Label(TR::InstOpCode::JNE4, node, throwLabel, cg);
+    Inst_Label(OP::JNE4, node, throwLabel, cg);
 
     // throw classCastException
     {
         TR_OutlinedInstructionsGenerator og(throwLabel, node, cg);
-        Inst_Reg(TR::InstOpCode::PUSHReg, node, objClassReg, cg);
-        Inst_Reg(TR::InstOpCode::PUSHReg, node, castClassReg, cg);
+        Inst_Reg(OP::PUSHReg, node, objClassReg, cg);
+        Inst_Reg(OP::PUSHReg, node, castClassReg, cg);
         auto call = Inst_HelperCall(node, TR_throwClassCastException, NULL, cg);
         call->setNeedsGCMap(0xFF00FFFF);
         call->setAdjustsFramePointerBy(-2 * (int32_t)sizeof(J9Class *));
@@ -4305,7 +4271,7 @@ inline void generateInlinedCheckCastForDynamicCastClass(TR::Node *node, TR::Code
 
     deps->stopAddingConditions();
 
-    Inst_Label(TR::InstOpCode::label, node, fallThruLabel, deps, cg);
+    Inst_Label(OP::label, node, fallThruLabel, deps, cg);
 
     cg->stopUsingRegister(temp1Reg);
     cg->stopUsingRegister(temp2Reg);
@@ -4377,14 +4343,14 @@ static void inlineCheckCastOrInstanceOfObjectArrayCastClass(TR::Node *node, TR_O
         cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
     }
 
-    Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+    Inst_Label(OP::label, node, startLabel, cg);
 
     static char *breakOnInlineObjectArrayCheck = feGetEnv("TR_BreakOnInlineObjectArrayCheck");
     if (breakOnInlineObjectArrayCheck)
-        Inst(TR::InstOpCode::INT3, node, cg);
+        Inst(OP::INT3, node, cg);
 
     if (!isCheckCast) {
-        Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, resultReg, resultReg, cg);
+        Inst_RegReg(OP::XOR4RegReg, node, resultReg, resultReg, cg);
     }
 
     // -----------------------------------------------------------------------
@@ -4396,8 +4362,8 @@ static void inlineCheckCastOrInstanceOfObjectArrayCastClass(TR::Node *node, TR_O
     // -----------------------------------------------------------------------
 
     if (!objectNode->isNonNull()) {
-        Inst_RegReg(TR::InstOpCode::TESTRegReg(), node, objectReg, objectReg, cg);
-        Inst_Label(TR::InstOpCode::JE4, node, fallThruLabel, cg);
+        Inst_RegReg(OP::TESTRegReg(), node, objectReg, objectReg, cg);
+        Inst_Label(OP::JE4, node, fallThruLabel, cg);
     }
 
     // The cast class is an array of j/l/Objects. Check if the
@@ -4413,24 +4379,22 @@ static void inlineCheckCastOrInstanceOfObjectArrayCastClass(TR::Node *node, TR_O
 
     // Check if romClass is an array
     //
-    Inst_RegMem(TR::InstOpCode::LRegMem(), node, romClassReg,
-        MRef_Bdisp32(objectClassReg, offsetof(J9Class, romClass), cg), cg);
-    Inst_MemImm(TR::InstOpCode::TEST4MemImm4, node, MRef_Bdisp32(romClassReg, offsetof(J9ROMClass, modifiers), cg),
-        J9AccClassArray, cg);
-    Inst_Label(TR::InstOpCode::JE4, node, notCastableLabel, cg);
+    Inst_RegMem(OP::LRegMem(), node, romClassReg, MRef_Bdisp32(objectClassReg, offsetof(J9Class, romClass), cg), cg);
+    Inst_MemImm(OP::TEST4MemImm4, node, MRef_Bdisp32(romClassReg, offsetof(J9ROMClass, modifiers), cg), J9AccClassArray,
+        cg);
+    Inst_Label(OP::JE4, node, notCastableLabel, cg);
 
     // Check if object class is a primitive array
     //
-    Inst_RegMem(TR::InstOpCode::LRegMem(), node, componentClassReg,
+    Inst_RegMem(OP::LRegMem(), node, componentClassReg,
         MRef_Bdisp32(objectClassReg, offsetof(J9ArrayClass, componentType), cg), cg);
-    Inst_RegMem(TR::InstOpCode::LRegMem(), node, romClassReg,
-        MRef_Bdisp32(componentClassReg, offsetof(J9Class, romClass), cg), cg);
-    Inst_MemImm(TR::InstOpCode::TEST4MemImm4, node, MRef_Bdisp32(romClassReg, offsetof(J9ROMClass, modifiers), cg),
+    Inst_RegMem(OP::LRegMem(), node, romClassReg, MRef_Bdisp32(componentClassReg, offsetof(J9Class, romClass), cg), cg);
+    Inst_MemImm(OP::TEST4MemImm4, node, MRef_Bdisp32(romClassReg, offsetof(J9ROMClass, modifiers), cg),
         J9AccClassInternalPrimitiveType, cg);
-    Inst_Label(TR::InstOpCode::JNE4, node, notCastableLabel, cg);
+    Inst_Label(OP::JNE4, node, notCastableLabel, cg);
 
     if (!isCheckCast) {
-        Inst_RegImm(TR::InstOpCode::MOV4RegImm4, node, resultReg, 1, cg);
+        Inst_RegImm(OP::MOV4RegImm4, node, resultReg, 1, cg);
     }
 
     // clang-format off
@@ -4472,7 +4436,7 @@ static void inlineCheckCastOrInstanceOfObjectArrayCastClass(TR::Node *node, TR_O
     }
 
     deps->stopAddingConditions();
-    Inst_Label(TR::InstOpCode::label, node, fallThruLabel, deps, cg);
+    Inst_Label(OP::label, node, fallThruLabel, deps, cg);
 
     cg->stopUsingRegister(scratchReg);
     if (objectReg != objectClassReg)
@@ -4547,12 +4511,12 @@ static void inlineCheckCastOrInstanceOfFinalArrayCastClass(TR::Node *node, TR_Op
 
     static char *breakOnInlineFinalArrayCastClass = feGetEnv("TR_BreakOnInlineFinalArrayCastClass");
     if (breakOnInlineFinalArrayCastClass)
-        Inst(TR::InstOpCode::INT3, node, cg);
+        Inst(OP::INT3, node, cg);
 
-    Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+    Inst_Label(OP::label, node, startLabel, cg);
 
     if (!isCheckCast) {
-        Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, resultReg, resultReg, cg);
+        Inst_RegReg(OP::XOR4RegReg, node, resultReg, resultReg, cg);
     }
 
     // -----------------------------------------------------------------------
@@ -4564,12 +4528,12 @@ static void inlineCheckCastOrInstanceOfFinalArrayCastClass(TR::Node *node, TR_Op
     // -----------------------------------------------------------------------
 
     if (!objectNode->isNonNull()) {
-        Inst_RegReg(TR::InstOpCode::TEST8RegReg, node, objectReg, objectReg, cg);
+        Inst_RegReg(OP::TEST8RegReg, node, objectReg, objectReg, cg);
 
         // checkcast leaves the operand stack unaffected
         // instanceof returns 0 if the objectRef is null
         //
-        Inst_Label(TR::InstOpCode::JE4, node, fallThruLabel, cg);
+        Inst_Label(OP::JE4, node, fallThruLabel, cg);
     }
 
     // -----------------------------------------------------------------------
@@ -4588,11 +4552,11 @@ static void inlineCheckCastOrInstanceOfFinalArrayCastClass(TR::Node *node, TR_Op
     uintptr_t clazzAddress = (uintptr_t)clazz;
 
     if (IS_32BIT_SIGNED(clazzAddress) && !comp->compileRelocatableCode()) {
-        Inst_RegImm(TR::InstOpCode::CMP8RegImm4, node, objectClassReg, (int32_t)clazzAddress, cg);
+        Inst_RegImm(OP::CMP8RegImm4, node, objectClassReg, (int32_t)clazzAddress, cg);
     } else {
         scratchReg = cg->allocateRegister();
-        Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, scratchReg, clazzAddress, cg, TR_ClassPointer);
-        Inst_RegReg(TR::InstOpCode::CMP8RegReg, node, objectClassReg, scratchReg, cg);
+        Inst_RegImm64(OP::MOV8RegImm64, node, scratchReg, clazzAddress, cg, TR_ClassPointer);
+        Inst_RegReg(OP::CMP8RegReg, node, objectClassReg, scratchReg, cg);
     }
 
     if (isCheckCast) {
@@ -4604,9 +4568,9 @@ static void inlineCheckCastOrInstanceOfFinalArrayCastClass(TR::Node *node, TR_Op
             TR_OutlinedInstructions(node, TR::call, NULL, outlinedHelperCallLabel, fallThruLabel, cg);
         cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
 
-        Inst_Label(TR::InstOpCode::JNE4, node, outlinedHelperCallLabel, cg);
+        Inst_Label(OP::JNE4, node, outlinedHelperCallLabel, cg);
     } else {
-        Inst_Reg(TR::InstOpCode::SETE1Reg, node, resultReg, cg);
+        Inst_Reg(OP::SETE1Reg, node, resultReg, cg);
     }
 
     // ----------------------------------------------------------------------
@@ -4653,7 +4617,7 @@ static void inlineCheckCastOrInstanceOfFinalArrayCastClass(TR::Node *node, TR_Op
     }
 
     deps->stopAddingConditions();
-    Inst_Label(TR::InstOpCode::label, node, fallThruLabel, deps, cg);
+    Inst_Label(OP::label, node, fallThruLabel, deps, cg);
 
     if (scratchReg)
         cg->stopUsingRegister(scratchReg);
@@ -4696,12 +4660,12 @@ static void generateCastClassCacheUpdate(TR::Register *objectClassReg, uintptr_t
         && (!use64BitClasses || (use64BitClasses && IS_32BIT_SIGNED(clazzAddress)));
 
     if (use32Bit) {
-        Inst_MemImm(TR::InstOpCode::S8MemImm4, node, castClassMR, (int32_t)clazzAddress, cg);
+        Inst_MemImm(OP::S8MemImm4, node, castClassMR, (int32_t)clazzAddress, cg);
     } else {
         if (!scratchReg)
             scratchReg = cg->allocateRegister();
-        Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, scratchReg, clazzAddress, cg, TR_ClassPointer);
-        Inst_MemReg(TR::InstOpCode::S8MemReg, node, castClassMR, scratchReg, cg);
+        Inst_RegImm64(OP::MOV8RegImm64, node, scratchReg, clazzAddress, cg, TR_ClassPointer);
+        Inst_MemReg(OP::S8MemReg, node, castClassMR, scratchReg, cg);
     }
 }
 
@@ -4835,14 +4799,14 @@ static void inlineCheckCastOrInstanceOfKnownArrayCastClass(TR::Node *node, TR_Op
 
     static char *breakOnInlineArrayCastClass = feGetEnv("TR_BreakOnInlineArrayCastClass");
     if (breakOnInlineArrayCastClass)
-        Inst(TR::InstOpCode::INT3, node, cg);
+        Inst(OP::INT3, node, cg);
 
     TR::LabelSymbol *castableDoNotCacheLabel = generateLabelSymbol(cg);
     TR::LabelSymbol *castableAndUpdateCacheLabel = generateLabelSymbol(cg);
     TR::LabelSymbol *notCastableDoNotCacheLabel = generateLabelSymbol(cg);
     TR::LabelSymbol *notCastableUpdateCacheLabel = generateLabelSymbol(cg);
 
-    Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+    Inst_Label(OP::label, node, startLabel, cg);
 
     // -----------------------------------------------------------------------
     // If the object is NULL, no exception is thrown for a checkcast and a 0
@@ -4853,13 +4817,13 @@ static void inlineCheckCastOrInstanceOfKnownArrayCastClass(TR::Node *node, TR_Op
     // -----------------------------------------------------------------------
 
     if (!objectNode->isNonNull()) {
-        Inst_RegReg(TR::InstOpCode::TEST8RegReg, node, objectReg, objectReg, cg);
+        Inst_RegReg(OP::TEST8RegReg, node, objectReg, objectReg, cg);
 
         // checkcast leaves the operand stack unaffected
         // instanceof returns 0 if the objectRef is null
         //
         TR::LabelSymbol *nullTargetLabel = isCheckCast ? fallThruLabel : notCastableDoNotCacheLabel;
-        Inst_Label(TR::InstOpCode::JE4, node, nullTargetLabel, cg);
+        Inst_Label(OP::JE4, node, nullTargetLabel, cg);
     }
 
     // -----------------------------------------------------------------------
@@ -4875,14 +4839,14 @@ static void inlineCheckCastOrInstanceOfKnownArrayCastClass(TR::Node *node, TR_Op
     uintptr_t clazzAddress = (uintptr_t)clazz;
 
     if (IS_32BIT_SIGNED(clazzAddress) && !comp->compileRelocatableCode()) {
-        Inst_RegImm(TR::InstOpCode::CMP8RegImm4, node, objectClassReg, (int32_t)clazzAddress, cg);
+        Inst_RegImm(OP::CMP8RegImm4, node, objectClassReg, (int32_t)clazzAddress, cg);
     } else {
         scratchReg = cg->allocateRegister();
-        Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, scratchReg, clazzAddress, cg, TR_ClassPointer);
-        Inst_RegReg(TR::InstOpCode::CMP8RegReg, node, objectClassReg, scratchReg, cg);
+        Inst_RegImm64(OP::MOV8RegImm64, node, scratchReg, clazzAddress, cg, TR_ClassPointer);
+        Inst_RegReg(OP::CMP8RegReg, node, objectClassReg, scratchReg, cg);
     }
 
-    Inst_Label(TR::InstOpCode::JE4, node, castableDoNotCacheLabel, cg);
+    Inst_Label(OP::JE4, node, castableDoNotCacheLabel, cg);
 
     // ----------------------------------------------------------------------
     // Next, check for a hit in the object's classCastCache
@@ -4891,34 +4855,34 @@ static void inlineCheckCastOrInstanceOfKnownArrayCastClass(TR::Node *node, TR_Op
     if (!scratchReg)
         scratchReg = cg->allocateRegister();
 
-    Inst_RegMem(TR::InstOpCode::L8RegMem, node, scratchReg,
-        MRef_Bdisp32(objectClassReg, offsetof(J9Class, castClassCache), cg), cg);
+    Inst_RegMem(OP::L8RegMem, node, scratchReg, MRef_Bdisp32(objectClassReg, offsetof(J9Class, castClassCache), cg),
+        cg);
 
     if (use64BitClasses) {
         if (IS_32BIT_SIGNED(clazzAddress) && !comp->compileRelocatableCode()) {
-            Inst_RegImm(TR::InstOpCode::XOR8RegImm4, node, scratchReg, (int32_t)clazzAddress, cg);
+            Inst_RegImm(OP::XOR8RegImm4, node, scratchReg, (int32_t)clazzAddress, cg);
         } else {
             if (!scratchReg2)
                 scratchReg2 = cg->allocateRegister();
-            Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, scratchReg2, clazzAddress, cg, TR_ClassPointer);
-            Inst_RegReg(TR::InstOpCode::XOR8RegReg, node, scratchReg, scratchReg2, cg);
+            Inst_RegImm64(OP::MOV8RegImm64, node, scratchReg2, clazzAddress, cg, TR_ClassPointer);
+            Inst_RegReg(OP::XOR8RegReg, node, scratchReg, scratchReg2, cg);
         }
     } else {
-        Inst_RegImm(TR::InstOpCode::XOR4RegImm4, node, scratchReg, (int32_t)clazzAddress, cg);
+        Inst_RegImm(OP::XOR4RegImm4, node, scratchReg, (int32_t)clazzAddress, cg);
     }
 
-    Inst_RegImm(TR::InstOpCode::TEST8RegImm4, node, scratchReg, CAST_CLASS_CACHE_MASK, cg);
+    Inst_RegImm(OP::TEST8RegImm4, node, scratchReg, CAST_CLASS_CACHE_MASK, cg);
 
     TR::LabelSymbol *castClassCacheMissLabel = generateLabelSymbol(cg);
-    Inst_Label(TR::InstOpCode::JNE4, node, castClassCacheMissLabel, cg);
+    Inst_Label(OP::JNE4, node, castClassCacheMissLabel, cg);
 
     // ----------------------------------------------------------------------
     // objectClass was found in the cache. Determine whether it was castable
     // or not and exit appropriately.
     // ----------------------------------------------------------------------
 
-    Inst_RegImm(TR::InstOpCode::TEST8RegImm4, node, scratchReg, CAST_CLASS_CACHE_UNCASTABLE, cg);
-    Inst_Label(TR::InstOpCode::JE4, node, castableDoNotCacheLabel, cg);
+    Inst_RegImm(OP::TEST8RegImm4, node, scratchReg, CAST_CLASS_CACHE_UNCASTABLE, cg);
+    Inst_Label(OP::JE4, node, castableDoNotCacheLabel, cg);
 
     // ----------------------------------------------------------------------
     // If the cast class leaf component is not a reference array, the result
@@ -4927,31 +4891,31 @@ static void inlineCheckCastOrInstanceOfKnownArrayCastClass(TR::Node *node, TR_Op
     if (fej9->isClassMixed((TR_OpaqueClassBlock *)castClassLeafJ9Class)) {
         // The JMP is required on this path to complete the above cache check
         //
-        Inst_Label(TR::InstOpCode::JMP4, node, notCastableDoNotCacheLabel, cg);
-        Inst_Label(TR::InstOpCode::label, node, castClassCacheMissLabel, cg);
+        Inst_Label(OP::JMP4, node, notCastableDoNotCacheLabel, cg);
+        Inst_Label(OP::label, node, castClassCacheMissLabel, cg);
 
         // ----------------------------------------------------------------------
         // Check if objectClass is an array. Not castable if it is not.
         // ----------------------------------------------------------------------
 
-        Inst_MemImm(IS_8BIT_SIGNED(J9AccClassRAMArray) ? TR::InstOpCode::TEST1MemImm1 : TR::InstOpCode::TEST4MemImm4,
-            node, MRef_Bdisp32(objectClassReg, offsetof(J9Class, classDepthAndFlags), cg), J9AccClassRAMArray, cg);
-        Inst_Label(TR::InstOpCode::JE4, node, notCastableUpdateCacheLabel, cg);
+        Inst_MemImm(IS_8BIT_SIGNED(J9AccClassRAMArray) ? OP::TEST1MemImm1 : OP::TEST4MemImm4, node,
+            MRef_Bdisp32(objectClassReg, offsetof(J9Class, classDepthAndFlags), cg), J9AccClassRAMArray, cg);
+        Inst_Label(OP::JE4, node, notCastableUpdateCacheLabel, cg);
 
         // ----------------------------------------------------------------------
         // For an array objectClass, if objectClass->arity != castClass->arity
         // then perform cast check in helper
         // ----------------------------------------------------------------------
 
-        Inst_RegMem(TR::InstOpCode::L8RegMem, node, scratchReg,
-            MRef_Bdisp32(objectClassReg, offsetof(J9ArrayClass, arity), cg), cg);
+        Inst_RegMem(OP::L8RegMem, node, scratchReg, MRef_Bdisp32(objectClassReg, offsetof(J9ArrayClass, arity), cg),
+            cg);
 
         UDATA arity = static_cast<TR_J9VM *>(fej9)->getArityFromArrayClass((TR_OpaqueClassBlock *)clazz);
-        Inst_RegImm(TR::InstOpCode::CMP8RegImm4, node, scratchReg, arity, cg);
+        Inst_RegImm(OP::CMP8RegImm4, node, scratchReg, arity, cg);
 
         if (!oolHelperCallTrampolineLabel)
             oolHelperCallTrampolineLabel = generateLabelSymbol(cg);
-        Inst_Label(TR::InstOpCode::JNE4, node, oolHelperCallTrampolineLabel, cg);
+        Inst_Label(OP::JNE4, node, oolHelperCallTrampolineLabel, cg);
 
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
         J9Class *castClassJ9Class = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
@@ -4959,14 +4923,12 @@ static void inlineCheckCastOrInstanceOfKnownArrayCastClass(TR::Node *node, TR_Op
             static_assert(J9ClassArrayIsNullRestricted == 0x2000000,
                 "J9ClassArrayIsNullRestricted must be 0x2000000 for simple bit test");
 
-            Inst_MemImm(IS_8BIT_SIGNED(J9ClassArrayIsNullRestricted) ? TR::InstOpCode::TEST1MemImm1
-                                                                     : TR::InstOpCode::TEST4MemImm4,
-                node, MRef_Bdisp32(objectClassReg, offsetof(J9Class, classFlags), cg), J9ClassArrayIsNullRestricted,
-                cg);
+            Inst_MemImm(IS_8BIT_SIGNED(J9ClassArrayIsNullRestricted) ? OP::TEST1MemImm1 : OP::TEST4MemImm4, node,
+                MRef_Bdisp32(objectClassReg, offsetof(J9Class, classFlags), cg), J9ClassArrayIsNullRestricted, cg);
 
             // Fail, since a nullable array class cannot be cast to a null-restricted class
             //
-            Inst_Label(TR::InstOpCode::JE4, node, notCastableUpdateCacheLabel, cg);
+            Inst_Label(OP::JE4, node, notCastableUpdateCacheLabel, cg);
         }
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
@@ -4977,7 +4939,7 @@ static void inlineCheckCastOrInstanceOfKnownArrayCastClass(TR::Node *node, TR_Op
         if (!objectClassLeafReg)
             objectClassLeafReg = cg->allocateRegister();
 
-        Inst_RegMem(TR::InstOpCode::L8RegMem, node, objectClassLeafReg,
+        Inst_RegMem(OP::L8RegMem, node, objectClassLeafReg,
             MRef_Bdisp32(objectClassReg, offsetof(J9ArrayClass, leafComponentType), cg), cg);
 
         // ----------------------------------------------------------------------
@@ -4985,13 +4947,11 @@ static void inlineCheckCastOrInstanceOfKnownArrayCastClass(TR::Node *node, TR_Op
         // notCastableUpdateCache
         // ----------------------------------------------------------------------
 
-        Inst_RegMem(TR::InstOpCode::L8RegMem, node, scratchReg,
+        Inst_RegMem(OP::L8RegMem, node, scratchReg,
             MRef_Bdisp32(objectClassLeafReg, offsetof(J9Class, classDepthAndFlags), cg), cg);
-        Inst_RegImm(TR::InstOpCode::AND8RegImm4, node, scratchReg,
-            (OBJECT_HEADER_SHAPE_MASK << J9AccClassRAMShapeShift), cg);
-        Inst_RegImm(TR::InstOpCode::CMP8RegImm4, node, scratchReg,
-            (OBJECT_HEADER_SHAPE_MIXED << J9AccClassRAMShapeShift), cg);
-        Inst_Label(TR::InstOpCode::JNE4, node, notCastableUpdateCacheLabel, cg);
+        Inst_RegImm(OP::AND8RegImm4, node, scratchReg, (OBJECT_HEADER_SHAPE_MASK << J9AccClassRAMShapeShift), cg);
+        Inst_RegImm(OP::CMP8RegImm4, node, scratchReg, (OBJECT_HEADER_SHAPE_MIXED << J9AccClassRAMShapeShift), cg);
+        Inst_Label(OP::JNE4, node, notCastableUpdateCacheLabel, cg);
 
         // ----------------------------------------------------------------------
         // If objectClassLeafClass == castClassLeafClass then
@@ -5001,13 +4961,13 @@ static void inlineCheckCastOrInstanceOfKnownArrayCastClass(TR::Node *node, TR_Op
         uintptr_t componentClazzAddress = (uintptr_t)castClassLeafJ9Class;
 
         if (IS_32BIT_SIGNED(componentClazzAddress) && !comp->compileRelocatableCode()) {
-            Inst_RegImm(TR::InstOpCode::CMP8RegImm4, node, objectClassLeafReg, (int32_t)componentClazzAddress, cg);
+            Inst_RegImm(OP::CMP8RegImm4, node, objectClassLeafReg, (int32_t)componentClazzAddress, cg);
         } else {
-            Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, scratchReg, componentClazzAddress, cg, TR_ClassPointer);
-            Inst_RegReg(TR::InstOpCode::CMP8RegReg, node, objectClassLeafReg, scratchReg, cg);
+            Inst_RegImm64(OP::MOV8RegImm64, node, scratchReg, componentClazzAddress, cg, TR_ClassPointer);
+            Inst_RegReg(OP::CMP8RegReg, node, objectClassLeafReg, scratchReg, cg);
         }
 
-        Inst_Label(TR::InstOpCode::JE4, node, castableAndUpdateCacheLabel, cg);
+        Inst_Label(OP::JE4, node, castableAndUpdateCacheLabel, cg);
 
         // ----------------------------------------------------------------------
         // Skip the subclass check if the castClassLeaf is final
@@ -5026,7 +4986,7 @@ static void inlineCheckCastOrInstanceOfKnownArrayCastClass(TR::Node *node, TR_Op
             static_assert(J9AccClassDepthMask == 0xffff, "J9AccClassDepthMask must be 0xffff");
             TR::MemoryReference *objectClassLeafDepthMR
                 = MRef_Bdisp32(objectClassLeafReg, offsetof(J9Class, classDepthAndFlags), cg);
-            Inst_MemImm(TR::InstOpCode::CMP2MemImm2, node, objectClassLeafDepthMR, castClassLeafDepth, cg);
+            Inst_MemImm(OP::CMP2MemImm2, node, objectClassLeafDepthMR, castClassLeafDepth, cg);
 
             if (castClassLeafIsInterface) {
                 // Too complex for inline; perform cast check in helper.
@@ -5034,14 +4994,14 @@ static void inlineCheckCastOrInstanceOfKnownArrayCastClass(TR::Node *node, TR_Op
                 //
                 if (!oolHelperCallTrampolineLabel)
                     oolHelperCallTrampolineLabel = generateLabelSymbol(cg);
-                Inst_Label(TR::InstOpCode::JBE4, node, oolHelperCallTrampolineLabel, cg);
+                Inst_Label(OP::JBE4, node, oolHelperCallTrampolineLabel, cg);
             } else {
                 TR_ASSERT_FATAL(!TR::Compiler->cls.isClassArray(comp, castClassLeafClass),
                     "Expected cast class leaf component to be non-array");
-                Inst_Label(TR::InstOpCode::JBE4, node, notCastableUpdateCacheLabel, cg);
+                Inst_Label(OP::JBE4, node, notCastableUpdateCacheLabel, cg);
             }
 
-            Inst_RegMem(TR::InstOpCode::L8RegMem, node, scratchReg,
+            Inst_RegMem(OP::L8RegMem, node, scratchReg,
                 MRef_Bdisp32(objectClassLeafReg, offsetof(J9Class, superclasses), cg), cg);
             auto offset = castClassLeafDepth * sizeof(J9Class *);
             TR_ASSERT_FATAL(IS_32BIT_SIGNED(offset), "superclass array offset is unreasonably large");
@@ -5049,26 +5009,25 @@ static void inlineCheckCastOrInstanceOfKnownArrayCastClass(TR::Node *node, TR_Op
             TR::MemoryReference *superclassMR2 = MRef_Bdisp32(scratchReg, offset, cg);
             if (use64BitClasses) {
                 if (IS_32BIT_SIGNED(componentClazzAddress) && !comp->compileRelocatableCode()) {
-                    Inst_MemImm(TR::InstOpCode::CMP8MemImm4, node, superclassMR2, (int32_t)componentClazzAddress, cg);
+                    Inst_MemImm(OP::CMP8MemImm4, node, superclassMR2, (int32_t)componentClazzAddress, cg);
                 } else {
                     if (!scratchReg3)
                         scratchReg3 = cg->allocateRegister();
 
-                    Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, scratchReg3, componentClazzAddress, cg,
-                        TR_ClassPointer);
-                    Inst_MemReg(TR::InstOpCode::CMP8MemReg, node, superclassMR2, scratchReg3, cg);
+                    Inst_RegImm64(OP::MOV8RegImm64, node, scratchReg3, componentClazzAddress, cg, TR_ClassPointer);
+                    Inst_MemReg(OP::CMP8MemReg, node, superclassMR2, scratchReg3, cg);
                 }
             } else {
-                Inst_MemImm(TR::InstOpCode::CMP4MemImm4, node, superclassMR2, (int32_t)componentClazzAddress, cg);
+                Inst_MemImm(OP::CMP4MemImm4, node, superclassMR2, (int32_t)componentClazzAddress, cg);
             }
 
-            Inst_Label(TR::InstOpCode::JE4, node, castableAndUpdateCacheLabel, cg);
+            Inst_Label(OP::JE4, node, castableAndUpdateCacheLabel, cg);
         }
 
         if (castClassLeafIsInterface) {
             if (!oolHelperCallTrampolineLabel)
                 oolHelperCallTrampolineLabel = generateLabelSymbol(cg);
-            Inst_Label(TR::InstOpCode::JMP4, node, oolHelperCallTrampolineLabel, cg);
+            Inst_Label(OP::JMP4, node, oolHelperCallTrampolineLabel, cg);
         } else {
             TR_ASSERT_FATAL(!TR::Compiler->cls.isClassArray(comp, castClassLeafClass),
                 "Expected cast class leaf component to be non-array");
@@ -5077,17 +5036,17 @@ static void inlineCheckCastOrInstanceOfKnownArrayCastClass(TR::Node *node, TR_Op
         // Generated code will fall through to notCastableUpdateCacheLabel
 
     } else {
-        Inst_Label(TR::InstOpCode::label, node, castClassCacheMissLabel, cg);
+        Inst_Label(OP::label, node, castClassCacheMissLabel, cg);
     }
 
-    Inst_Label(TR::InstOpCode::label, node, notCastableUpdateCacheLabel, cg);
+    Inst_Label(OP::label, node, notCastableUpdateCacheLabel, cg);
     generateCastClassCacheUpdate(objectClassReg, clazzAddress | 1, use64BitClasses, scratchReg, node, cg);
 
-    Inst_Label(TR::InstOpCode::label, node, notCastableDoNotCacheLabel, cg);
+    Inst_Label(OP::label, node, notCastableDoNotCacheLabel, cg);
 
     if (!isCheckCast) {
-        Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, resultReg, resultReg, cg);
-        Inst_Label(TR::InstOpCode::JMP4, node, fallThruLabel, cg);
+        Inst_RegReg(OP::XOR4RegReg, node, resultReg, resultReg, cg);
+        Inst_Label(OP::JMP4, node, fallThruLabel, cg);
     } else {
         // The out-of-line helper will throw the CastClassException
         //
@@ -5111,17 +5070,17 @@ static void inlineCheckCastOrInstanceOfKnownArrayCastClass(TR::Node *node, TR_Op
         // have not been fully determined, but until they are fully understood and that OOL
         // design is reworked, use a single branch to reach each unique OOL helper call.
         //
-        Inst_Label(TR::InstOpCode::label, node, oolHelperCallTrampolineLabel, cg);
-        Inst_Label(TR::InstOpCode::JMP4, node, outlinedHelperCallLabel, cg);
+        Inst_Label(OP::label, node, oolHelperCallTrampolineLabel, cg);
+        Inst_Label(OP::JMP4, node, outlinedHelperCallLabel, cg);
     }
 
-    Inst_Label(TR::InstOpCode::label, node, castableAndUpdateCacheLabel, cg);
+    Inst_Label(OP::label, node, castableAndUpdateCacheLabel, cg);
     generateCastClassCacheUpdate(objectClassReg, clazzAddress, use64BitClasses, scratchReg, node, cg);
 
-    Inst_Label(TR::InstOpCode::label, node, castableDoNotCacheLabel, cg);
+    Inst_Label(OP::label, node, castableDoNotCacheLabel, cg);
 
     if (!isCheckCast) {
-        Inst_RegImm(TR::InstOpCode::MOV4RegImm4, node, resultReg, 1, cg);
+        Inst_RegImm(OP::MOV4RegImm4, node, resultReg, 1, cg);
     }
 
     // ----------------------------------------------------------------------
@@ -5176,7 +5135,7 @@ static void inlineCheckCastOrInstanceOfKnownArrayCastClass(TR::Node *node, TR_Op
     }
 
     deps->stopAddingConditions();
-    Inst_Label(TR::InstOpCode::label, node, fallThruLabel, deps, cg);
+    Inst_Label(OP::label, node, fallThruLabel, deps, cg);
 
     if (scratchReg)
         cg->stopUsingRegister(scratchReg);
@@ -5248,7 +5207,7 @@ static void generateInlinedCheckCastOrInstanceOfForArrayClass(TR::Node *node, TR
         // Just touch the memory in case this is a NULL pointer and we need to throw
         // the exception after the checkcast. If the checkcast was combined with nullpointer
         // there's nobody after the checkcast to throw the exception.
-        auto instr = Inst_MemImm(TR::InstOpCode::TEST1MemImm1, node,
+        auto instr = Inst_MemImm(OP::TEST1MemImm1, node,
             MRef_Bdisp32(object, TR::Compiler->om.offsetOfObjectVftField(), cg), 0, cg);
         cg->setImplicitExceptionPoint(instr);
         instr->setNeedsGCMap(0xFF00FFFF);
@@ -5277,23 +5236,23 @@ static void inlineInterfaceLookup(TR::Node *node, TR::CodeGenerator *cg, TR::Lab
     TR::LabelSymbol *iTableLoopLabel = generateLabelSymbol(cg);
 
     if (castClassReg) {
-        Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, castClassReg, reinterpret_cast<uintptr_t>(castClass), cg,
+        Inst_RegImm64(OP::MOV8RegImm64, node, castClassReg, reinterpret_cast<uintptr_t>(castClass), cg,
             TR_ClassAddress);
     }
 
     // Loop through I-Table
-    Inst_Label(TR::InstOpCode::label, node, iTableLoopLabel, cg);
-    Inst_RegReg(TR::InstOpCode::TESTRegReg(), node, itableReg, itableReg, cg);
-    Inst_Label(TR::InstOpCode::JE4, node, iTableLookUpFailLabel, cg);
+    Inst_Label(OP::label, node, iTableLoopLabel, cg);
+    Inst_RegReg(OP::TESTRegReg(), node, itableReg, itableReg, cg);
+    Inst_Label(OP::JE4, node, iTableLookUpFailLabel, cg);
     auto interfaceMR = MRef_Bdisp32(itableReg, offsetof(J9ITable, interfaceClass), cg);
     if (castClassReg) {
-        Inst_MemReg(TR::InstOpCode::CMP8MemReg, node, interfaceMR, castClassReg, cg);
+        Inst_MemReg(OP::CMP8MemReg, node, interfaceMR, castClassReg, cg);
     } else {
-        Inst_MemImmSym(TR::InstOpCode::CMP4MemImm4, node, interfaceMR, reinterpret_cast<uintptr_t>(castClass),
+        Inst_MemImmSym(OP::CMP4MemImm4, node, interfaceMR, reinterpret_cast<uintptr_t>(castClass),
             node->getChild(1)->getSymbolReference(), cg);
     }
-    Inst_RegMem(TR::InstOpCode::LRegMem(), node, itableReg, MRef_Bdisp32(itableReg, offsetof(J9ITable, next), cg), cg);
-    Inst_Label(TR::InstOpCode::JNE4, node, iTableLoopLabel, cg);
+    Inst_RegMem(OP::LRegMem(), node, itableReg, MRef_Bdisp32(itableReg, offsetof(J9ITable, next), cg), cg);
+    Inst_Label(OP::JNE4, node, iTableLoopLabel, cg);
 
     // If the loop does not iterate then a match was found
 }
@@ -5377,15 +5336,15 @@ inline void generateInlinedCheckCastOrInstanceOfForInterface(TR::Node *node, TR_
     TR::LabelSymbol *iTableLookUpPathLabel = generateLabelSymbol(cg);
     TR::LabelSymbol *iTableLookUpFailLabel = generateLabelSymbol(cg);
 
-    Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, instanceClassReg, node->getChild(0)->getRegister(), cg);
-    Inst_Label(TR::InstOpCode::label, node, begLabel, cg);
+    Inst_RegReg(OP::MOVRegReg(), node, instanceClassReg, node->getChild(0)->getRegister(), cg);
+    Inst_Label(OP::label, node, begLabel, cg);
 
     // Null test
     if (!node->getChild(0)->isNonNull() && node->getOpCodeValue() != TR::checkcastAndNULLCHK) {
         // instanceClassReg contains the object at this point, reusing the register as object is no longer used after
         // this point.
-        Inst_RegReg(TR::InstOpCode::TESTRegReg(), node, instanceClassReg, instanceClassReg, cg);
-        Inst_Label(TR::InstOpCode::JE4, node, endLabel, cg);
+        Inst_RegReg(OP::TESTRegReg(), node, instanceClassReg, instanceClassReg, cg);
+        Inst_Label(OP::JE4, node, endLabel, cg);
     }
 
     // Load J9Class
@@ -5396,22 +5355,22 @@ inline void generateInlinedCheckCastOrInstanceOfForInterface(TR::Node *node, TR_
         auto cache = sizeof(J9Class *) == 4 ? cg->create4ByteData(node, (uint32_t)guessClass)
                                             : cg->create8ByteData(node, (uint64_t)guessClass);
         cache->setClassAddress(true);
-        Inst_RegMem(TR::InstOpCode::CMPRegMem(use64BitClasses), node, instanceClassReg, MRef_const(cache, cg), cg);
-        Inst_Label(TR::InstOpCode::JNE4, node, iTableLookUpPathLabel, cg);
+        Inst_RegMem(OP::CMPRegMem(use64BitClasses), node, instanceClassReg, MRef_const(cache, cg), cg);
+        Inst_Label(OP::JNE4, node, iTableLookUpPathLabel, cg);
 
         // I-Table lookup out-of-line
         {
             TR_OutlinedInstructionsGenerator og(iTableLookUpPathLabel, node, cg);
 
             // Preserve the instance class before the register is reused
-            Inst_Reg(TR::InstOpCode::PUSHReg, node, instanceClassReg, cg);
+            Inst_Reg(OP::PUSHReg, node, instanceClassReg, cg);
 
             // Save VFP
             auto vfp = Inst_VFPSave(node, cg);
 
             // Obtain I-Table
             // Re-use the instanceClassReg register to perform itable lookup
-            Inst_RegMem(TR::InstOpCode::LRegMem(), node, instanceClassReg,
+            Inst_RegMem(OP::LRegMem(), node, instanceClassReg,
                 MRef_Bdisp32(instanceClassReg, offsetof(J9Class, iTable), cg), cg);
 
             inlineInterfaceLookup(node, cg, iTableLookUpFailLabel, castClass, castClassReg, instanceClassReg);
@@ -5428,35 +5387,34 @@ inline void generateInlinedCheckCastOrInstanceOfForInterface(TR::Node *node, TR_
              */
             static bool updateCacheSlot = feGetEnv("TR_updateInterfaceCheckCastCacheSlot") != NULL;
             if (updateCacheSlot) {
-                Inst_Mem(TR::InstOpCode::POPMem, node, MRef_const(cache, cg),
+                Inst_Mem(OP::POPMem, node, MRef_const(cache, cg),
                     cg); // j9class
             } else {
-                Inst_Reg(TR::InstOpCode::POPReg, node, instanceClassReg, cg); // j9class
+                Inst_Reg(OP::POPReg, node, instanceClassReg, cg); // j9class
             }
 
             if (!isCheckCast) {
-                Inst(TR::InstOpCode::STC, node, cg);
+                Inst(OP::STC, node, cg);
             }
-            Inst_Label(TR::InstOpCode::JMP4, node, endLabel, cg);
+            Inst_Label(OP::JMP4, node, endLabel, cg);
 
             // Not found
             Inst_VFPRestore(vfp, node, cg);
 
-            Inst_Label(TR::InstOpCode::label, node, iTableLookUpFailLabel, cg);
+            Inst_Label(OP::label, node, iTableLookUpFailLabel, cg);
 
             if (isCheckCast) {
                 if (castClassReg) {
-                    Inst_Reg(TR::InstOpCode::PUSHReg, node, castClassReg, cg);
+                    Inst_Reg(OP::PUSHReg, node, castClassReg, cg);
                 } else {
-                    Inst_Imm(TR::InstOpCode::PUSHImm4, node,
-                        static_cast<int32_t>(reinterpret_cast<uintptr_t>(castClass)), cg);
+                    Inst_Imm(OP::PUSHImm4, node, static_cast<int32_t>(reinterpret_cast<uintptr_t>(castClass)), cg);
                 }
                 auto call = Inst_HelperCall(node, TR_throwClassCastException, NULL, cg);
                 call->setNeedsGCMap(0xFF00FFFF);
                 call->setAdjustsFramePointerBy(-2 * (int32_t)sizeof(J9Class *));
             } else {
-                Inst_Reg(TR::InstOpCode::POPReg, node, instanceClassReg, cg);
-                Inst_Label(TR::InstOpCode::JMP4, node, endLabel, cg);
+                Inst_Reg(OP::POPReg, node, instanceClassReg, cg);
+                Inst_Label(OP::JMP4, node, endLabel, cg);
             }
 
             og.endOutlinedInstructionSequence();
@@ -5464,7 +5422,7 @@ inline void generateInlinedCheckCastOrInstanceOfForInterface(TR::Node *node, TR_
 
         // Succeed
         if (!isCheckCast) {
-            Inst(TR::InstOpCode::STC, node, cg);
+            Inst(OP::STC, node, cg);
         }
     } else {
         /**
@@ -5479,28 +5437,26 @@ inline void generateInlinedCheckCastOrInstanceOfForInterface(TR::Node *node, TR_
         TR::Register *itableReg = scratchReg ? scratchReg : instanceClassReg;
 
         // Obtain I-Table
-        Inst_RegMem(TR::InstOpCode::LRegMem(), node, itableReg,
-            MRef_Bdisp32(instanceClassReg, offsetof(J9Class, iTable), cg), cg);
+        Inst_RegMem(OP::LRegMem(), node, itableReg, MRef_Bdisp32(instanceClassReg, offsetof(J9Class, iTable), cg), cg);
 
         inlineInterfaceLookup(node, cg, isCheckCast ? iTableLookUpFailLabel : endLabel, castClass, castClassReg,
             itableReg);
 
         if (!isCheckCast) {
             // Class found in itable
-            Inst(TR::InstOpCode::STC, node, cg);
+            Inst(OP::STC, node, cg);
 
             // Fall through to endLabel
         } else {
             // CheckCast iTable fail lookup out-of-line
             TR_OutlinedInstructionsGenerator og(iTableLookUpFailLabel, node, cg);
 
-            Inst_Reg(TR::InstOpCode::PUSHReg, node, instanceClassReg, cg);
+            Inst_Reg(OP::PUSHReg, node, instanceClassReg, cg);
 
             if (castClassReg) {
-                Inst_Reg(TR::InstOpCode::PUSHReg, node, castClassReg, cg);
+                Inst_Reg(OP::PUSHReg, node, castClassReg, cg);
             } else {
-                Inst_Imm(TR::InstOpCode::PUSHImm4, node, static_cast<int32_t>(reinterpret_cast<uintptr_t>(castClass)),
-                    cg);
+                Inst_Imm(OP::PUSHImm4, node, static_cast<int32_t>(reinterpret_cast<uintptr_t>(castClass)), cg);
             }
             auto call = Inst_HelperCall(node, TR_throwClassCastException, NULL, cg);
             call->setNeedsGCMap(0xFF00FFFF);
@@ -5510,7 +5466,7 @@ inline void generateInlinedCheckCastOrInstanceOfForInterface(TR::Node *node, TR_
         }
     }
 
-    Inst_Label(TR::InstOpCode::label, node, endLabel, deps, cg);
+    Inst_Label(OP::label, node, endLabel, deps, cg);
 
     cg->stopUsingRegister(instanceClassReg);
 
@@ -5564,14 +5520,14 @@ inline void generateInlinedCheckCastOrInstanceOfForClass(TR::Node *node, TR_Opaq
     auto successLabel = isCheckCast ? endLabel : generateLabelSymbol(cg);
     auto failLabel = isCheckCast ? generateLabelSymbol(cg) : endLabel;
 
-    Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, j9class, node->getChild(0)->getRegister(), cg);
-    Inst_Label(TR::InstOpCode::label, node, begLabel, cg);
+    Inst_RegReg(OP::MOVRegReg(), node, j9class, node->getChild(0)->getRegister(), cg);
+    Inst_Label(OP::label, node, begLabel, cg);
 
     // Null test
     if (!node->getChild(0)->isNonNull() && node->getOpCodeValue() != TR::checkcastAndNULLCHK) {
         // j9class contains the object at this point, reusing the register as object is no longer used after this point.
-        Inst_RegReg(TR::InstOpCode::TESTRegReg(), node, j9class, j9class, cg);
-        Inst_Label(TR::InstOpCode::JE4, node, endLabel, cg);
+        Inst_RegReg(OP::TESTRegReg(), node, j9class, j9class, cg);
+        Inst_Label(OP::JE4, node, endLabel, cg);
     }
 
     // Load J9Class
@@ -5584,12 +5540,12 @@ inline void generateInlinedCheckCastOrInstanceOfForClass(TR::Node *node, TR_Opaq
         // However, LHS for TR_checkAssignable may be abstract or interface as it may be an arbitrary class, and
         // hence equality test is always needed.
         if (use64BitClasses) {
-            Inst_RegMem(TR::InstOpCode::CMP8RegMem, node, j9class, MRef_const(clazzData, cg), cg);
+            Inst_RegMem(OP::CMP8RegMem, node, j9class, MRef_const(clazzData, cg), cg);
         } else {
-            Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, j9class, (uintptr_t)clazz, cg);
+            Inst_RegImm(OP::CMP4RegImm4, node, j9class, (uintptr_t)clazz, cg);
         }
         if (!fej9->isClassFinal(clazz)) {
-            Inst_Label(TR::InstOpCode::JE4, node, successLabel, cg);
+            Inst_Label(OP::JE4, node, successLabel, cg);
         }
     }
     // at this point, ZF == 1 indicates success
@@ -5600,56 +5556,55 @@ inline void generateInlinedCheckCastOrInstanceOfForClass(TR::Node *node, TR_Opaq
         if (depth >= comp->getOptions()->_minimumSuperclassArraySize) {
             static_assert(J9AccClassDepthMask == 0xffff, "J9AccClassDepthMask must be 0xffff");
             auto depthMR = MRef_Bdisp32(j9class, offsetof(J9Class, classDepthAndFlags), cg);
-            Inst_MemImm(TR::InstOpCode::CMP2MemImm2, node, depthMR, depth, cg);
+            Inst_MemImm(OP::CMP2MemImm2, node, depthMR, depth, cg);
             if (!isCheckCast) {
                 // Need ensure CF is cleared before reaching to fail label
                 auto outlineLabel = generateLabelSymbol(cg);
-                Inst_Label(TR::InstOpCode::JBE4, node, outlineLabel, cg);
+                Inst_Label(OP::JBE4, node, outlineLabel, cg);
 
                 TR_OutlinedInstructionsGenerator og(outlineLabel, node, cg);
-                Inst(TR::InstOpCode::CLC, node, cg);
-                Inst_Label(TR::InstOpCode::JMP4, node, failLabel, cg);
+                Inst(OP::CLC, node, cg);
+                Inst_Label(OP::JMP4, node, failLabel, cg);
                 og.endOutlinedInstructionSequence();
             } else {
-                Inst_Label(TR::InstOpCode::JBE4, node, failLabel, cg);
+                Inst_Label(OP::JBE4, node, failLabel, cg);
             }
         }
 
-        Inst_RegMem(TR::InstOpCode::LRegMem(), node, tmp, MRef_Bdisp32(j9class, offsetof(J9Class, superclasses), cg),
-            cg);
+        Inst_RegMem(OP::LRegMem(), node, tmp, MRef_Bdisp32(j9class, offsetof(J9Class, superclasses), cg), cg);
         auto offset = depth * sizeof(J9Class *);
         TR_ASSERT(IS_32BIT_SIGNED(offset), "The offset to superclass is unreasonably large.");
         auto superclass = MRef_Bdisp32(tmp, offset, cg);
         if (use64BitClasses) {
-            Inst_RegMem(TR::InstOpCode::L8RegMem, node, tmp, superclass, cg);
-            Inst_RegMem(TR::InstOpCode::CMP8RegMem, node, tmp, MRef_const(clazzData, cg), cg);
+            Inst_RegMem(OP::L8RegMem, node, tmp, superclass, cg);
+            Inst_RegMem(OP::CMP8RegMem, node, tmp, MRef_const(clazzData, cg), cg);
         } else {
-            Inst_MemImm(TR::InstOpCode::CMP4MemImm4, node, superclass, (int32_t)(uintptr_t)clazz, cg);
+            Inst_MemImm(OP::CMP4MemImm4, node, superclass, (int32_t)(uintptr_t)clazz, cg);
         }
     }
     // at this point, ZF == 1 indicates success
 
     // Branch to success/fail path
     if (!isCheckCast) {
-        Inst(TR::InstOpCode::CLC, node, cg);
+        Inst(OP::CLC, node, cg);
     }
-    Inst_Label(TR::InstOpCode::JNE4, node, failLabel, cg);
+    Inst_Label(OP::JNE4, node, failLabel, cg);
 
     // Set CF to report success
     if (!isCheckCast) {
-        Inst_Label(TR::InstOpCode::label, node, successLabel, cg);
-        Inst(TR::InstOpCode::STC, node, cg);
+        Inst_Label(OP::label, node, successLabel, cg);
+        Inst(OP::STC, node, cg);
     }
 
     // Throw exception for CheckCast
     if (isCheckCast) {
         TR_OutlinedInstructionsGenerator og(failLabel, node, cg);
 
-        Inst_Reg(TR::InstOpCode::PUSHReg, node, j9class, cg);
+        Inst_Reg(OP::PUSHReg, node, j9class, cg);
         if (use64BitClasses) {
-            Inst_Mem(TR::InstOpCode::PUSHMem, node, MRef_const(clazzData, cg), cg);
+            Inst_Mem(OP::PUSHMem, node, MRef_const(clazzData, cg), cg);
         } else {
-            Inst_Imm(TR::InstOpCode::PUSHImm4, node, (int32_t)(uintptr_t)clazz, cg);
+            Inst_Imm(OP::PUSHImm4, node, (int32_t)(uintptr_t)clazz, cg);
         }
         auto call = Inst_HelperCall(node, TR_throwClassCastException, NULL, cg);
         call->setNeedsGCMap(0xFF00FFFF);
@@ -5659,7 +5614,7 @@ inline void generateInlinedCheckCastOrInstanceOfForClass(TR::Node *node, TR_Opaq
     }
 
     // Succeed
-    Inst_Label(TR::InstOpCode::label, node, endLabel, deps, cg);
+    Inst_Label(OP::label, node, endLabel, deps, cg);
 
     cg->stopUsingRegister(j9class);
     cg->stopUsingRegister(tmp);
@@ -5697,8 +5652,8 @@ TR::Register *J9::X86::TreeEvaluator::checkcastinstanceofEvaluator(TR::Node *nod
         }
         if (!isCheckCast) {
             auto result = cg->allocateRegister();
-            Inst_Reg(TR::InstOpCode::SETB1Reg, node, result, cg);
-            Inst_RegReg(TR::InstOpCode::MOVZXReg4Reg1, node, result, result, cg);
+            Inst_Reg(OP::SETB1Reg, node, result, cg);
+            Inst_RegReg(OP::MOVZXReg4Reg1, node, result, result, cg);
             node->setRegister(result);
         }
         cg->decReferenceCount(node->getChild(0));
@@ -5744,33 +5699,32 @@ void J9::X86::TreeEvaluator::asyncGCMapCheckPatching(TR::Node *node, TR::CodeGen
         outlinedStartLabel->setStartInternalControlFlow();
         outlinedEndLabel->setEndInternalControlFlow();
 
-        // Inst_Label(TR::InstOpCode::CALLImm4, node, gcMapPatchingLabel, cg);
+        // Inst_Label(OP::CALLImm4, node, gcMapPatchingLabel, cg);
         Inst_PatchableCodeAlignment(TR::X86PatchableCodeAlignmentInstruction::CALLImm4AtomicRegions,
-            Inst_Label(TR::InstOpCode::CALLImm4, node, gcMapPatchingLabel, cg), cg);
+            Inst_Label(OP::CALLImm4, node, gcMapPatchingLabel, cg), cg);
 
         TR_OutlinedInstructionsGenerator og(gcMapPatchingLabel, node, cg);
 
-        Inst_Label(TR::InstOpCode::label, node, outlinedStartLabel, cg);
+        Inst_Label(OP::label, node, outlinedStartLabel, cg);
         // Load the address that we are going to patch and clean up the stack
         //
-        Inst_Reg(TR::InstOpCode::POPReg, node, patchableAddrReg, cg);
+        Inst_Reg(OP::POPReg, node, patchableAddrReg, cg);
 
         // check if there is already an async even pending
         //
-        Inst_MemImm(TR::InstOpCode::CMP8MemImm4, node, SOMmr, -1, cg);
-        Inst_Label(TR::InstOpCode::JE4, node, asyncWithoutPatch, cg);
+        Inst_MemImm(OP::CMP8MemImm4, node, SOMmr, -1, cg);
+        Inst_Label(OP::JE4, node, asyncWithoutPatch, cg);
 
         // Signal the async event
         //
         static char *d = feGetEnv("TR_GCOnAsyncBREAK");
         if (d)
-            Inst(TR::InstOpCode::INT3, node, cg);
+            Inst(OP::INT3, node, cg);
 
-        Inst_MemImm(TR::InstOpCode::S8MemImm4, node,
+        Inst_MemImm(OP::S8MemImm4, node,
             MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, stackOverflowMark), cg), -1, cg);
-        Inst_RegImm(TR::InstOpCode::MOV8RegImm4, node, tempReg,
-            1 << comp->getPersistentInfo()->getGCMapCheckEventHandle(), cg);
-        Inst_MemReg(TR::InstOpCode::LOR8MemReg, node,
+        Inst_RegImm(OP::MOV8RegImm4, node, tempReg, 1 << comp->getPersistentInfo()->getGCMapCheckEventHandle(), cg);
+        Inst_MemReg(OP::LOR8MemReg, node,
             MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, asyncEventFlags), cg), tempReg, cg);
 
         // Populate the code we are going to patch in
@@ -5786,11 +5740,11 @@ void J9::X86::TreeEvaluator::asyncGCMapCheckPatching(TR::Node *node, TR::CodeGen
         // Load the original value
         //
 
-        Inst_RegMem(TR::InstOpCode::L8RegMem, node, patchValReg, MRef_Bdisp32(patchableAddrReg, -5, cg), cg);
-        Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, tempReg, (uint64_t)0x0, cg);
-        Inst_RegReg(TR::InstOpCode::OR8RegReg, node, patchValReg, tempReg, cg);
-        Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, tempReg, (uint64_t)0x0, cg);
-        Inst_RegReg(TR::InstOpCode::AND8RegReg, node, patchValReg, tempReg, cg);
+        Inst_RegMem(OP::L8RegMem, node, patchValReg, MRef_Bdisp32(patchableAddrReg, -5, cg), cg);
+        Inst_RegImm64(OP::MOV8RegImm64, node, tempReg, (uint64_t)0x0, cg);
+        Inst_RegReg(OP::OR8RegReg, node, patchValReg, tempReg, cg);
+        Inst_RegImm64(OP::MOV8RegImm64, node, tempReg, (uint64_t)0x0, cg);
+        Inst_RegReg(OP::AND8RegReg, node, patchValReg, tempReg, cg);
 
         TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, 4, cg);
         deps->addPostCondition(patchableAddrReg, TR::RealRegister::NoReg, cg);
@@ -5799,14 +5753,14 @@ void J9::X86::TreeEvaluator::asyncGCMapCheckPatching(TR::Node *node, TR::CodeGen
         deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
         deps->stopAddingConditions();
 
-        Inst_MemReg(TR::InstOpCode::S8MemReg, node, MRef_Bdisp32(patchableAddrReg, -5, cg), patchValReg, deps, cg);
-        Inst_Label(TR::InstOpCode::label, node, asyncWithoutPatch, cg);
-        Inst_Label(TR::InstOpCode::JMP4, node, snippetLabel, cg);
+        Inst_MemReg(OP::S8MemReg, node, MRef_Bdisp32(patchableAddrReg, -5, cg), patchValReg, deps, cg);
+        Inst_Label(OP::label, node, asyncWithoutPatch, cg);
+        Inst_Label(OP::JMP4, node, snippetLabel, cg);
 
         cg->stopUsingRegister(patchableAddrReg);
         cg->stopUsingRegister(patchValReg);
         cg->stopUsingRegister(tempReg);
-        Inst_Label(TR::InstOpCode::label, node, outlinedEndLabel, cg);
+        Inst_Label(OP::label, node, outlinedEndLabel, cg);
 
         og.endOutlinedInstructionSequence();
     } else {
@@ -5833,31 +5787,31 @@ void J9::X86::TreeEvaluator::asyncGCMapCheckPatching(TR::Node *node, TR::CodeGen
         outlinedEndLabel->setEndInternalControlFlow();
 
         // Inst_BoundaryAvoidance(TR::X86BoundaryAvoidanceInstruction::CALLImm4AtomicRegions, 8,
-        // 8,Inst_Label(TR::InstOpCode::CALLImm4, node, gcMapPatchingLabel, cg), cg);
+        // 8,Inst_Label(OP::CALLImm4, node, gcMapPatchingLabel, cg), cg);
         TR::Instruction *callInst
             = Inst_PatchableCodeAlignment(TR::X86PatchableCodeAlignmentInstruction::CALLImm4AtomicRegions,
-                Inst_Label(TR::InstOpCode::CALLImm4, node, gcMapPatchingLabel, cg), cg);
+                Inst_Label(OP::CALLImm4, node, gcMapPatchingLabel, cg), cg);
         TR::X86VFPSaveInstruction *vfpSaveInst = Inst_VFPSave(callInst->getPrev(), cg);
 
         TR_OutlinedInstructionsGenerator og(gcMapPatchingLabel, node, cg);
 
-        Inst_Label(TR::InstOpCode::label, node, outlinedStartLabel, cg);
+        Inst_Label(OP::label, node, outlinedStartLabel, cg);
         // Load the address that we are going to patch and clean up the stack
         //
-        Inst_Reg(TR::InstOpCode::POPReg, node, patchableAddrReg, cg);
+        Inst_Reg(OP::POPReg, node, patchableAddrReg, cg);
 
         // check if there is already an async even pending
         //
-        Inst_MemImm(TR::InstOpCode::CMP4MemImm4, node, SOMmr, -1, cg);
-        Inst_Label(TR::InstOpCode::JE4, node, asyncWithoutPatch, cg);
+        Inst_MemImm(OP::CMP4MemImm4, node, SOMmr, -1, cg);
+        Inst_Label(OP::JE4, node, asyncWithoutPatch, cg);
 
         // Signal the async event
         //
-        Inst_MemImm(TR::InstOpCode::S4MemImm4, node,
+        Inst_MemImm(OP::S4MemImm4, node,
             MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, stackOverflowMark), cg), -1, cg);
-        Inst_RegImm(TR::InstOpCode::MOV4RegImm4, node, lowPatchValReg,
-            1 << comp->getPersistentInfo()->getGCMapCheckEventHandle(), cg);
-        Inst_MemReg(TR::InstOpCode::LOR4MemReg, node,
+        Inst_RegImm(OP::MOV4RegImm4, node, lowPatchValReg, 1 << comp->getPersistentInfo()->getGCMapCheckEventHandle(),
+            cg);
+        Inst_MemReg(OP::LOR4MemReg, node,
             MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, asyncEventFlags), cg), lowPatchValReg, cg);
 
         // Populate the registers we are going to use in the lock cmp xchg
@@ -5865,12 +5819,12 @@ void J9::X86::TreeEvaluator::asyncGCMapCheckPatching(TR::Node *node, TR::CodeGen
 
         static char *d = feGetEnv("TR_GCOnAsyncBREAK");
         if (d)
-            Inst(TR::InstOpCode::INT3, node, cg);
+            Inst(OP::INT3, node, cg);
 
         // Populate the existing inline code
         //
-        Inst_RegMem(TR::InstOpCode::L4RegMem, node, lowExistingValReg, MRef_Bdisp32(patchableAddrReg, -5, cg), cg);
-        Inst_RegMem(TR::InstOpCode::L4RegMem, node, highExistingValReg, MRef_Bdisp32(patchableAddrReg, -1, cg), cg);
+        Inst_RegMem(OP::L4RegMem, node, lowExistingValReg, MRef_Bdisp32(patchableAddrReg, -5, cg), cg);
+        Inst_RegMem(OP::L4RegMem, node, highExistingValReg, MRef_Bdisp32(patchableAddrReg, -1, cg), cg);
 
         // Populate the code we are going to patch in
         // 837d28ff        cmp     dword ptr [ebp+28h],0FFFFFFFFh <--- patching in
@@ -5878,9 +5832,9 @@ void J9::X86::TreeEvaluator::asyncGCMapCheckPatching(TR::Node *node, TR::CodeGen
         //*******************
         //                 call imm4                              <---- patching over
         //
-        Inst_RegImm(TR::InstOpCode::MOV4RegImm4, node, lowPatchValReg, (uint32_t)0x287d8390, cg);
-        Inst_RegReg(TR::InstOpCode::MOV4RegReg, node, highPatchValReg, highExistingValReg, cg);
-        Inst_RegImm(TR::InstOpCode::OR4RegImm4, node, highPatchValReg, (uint32_t)0x000000ff, cg);
+        Inst_RegImm(OP::MOV4RegImm4, node, lowPatchValReg, (uint32_t)0x287d8390, cg);
+        Inst_RegReg(OP::MOV4RegReg, node, highPatchValReg, highExistingValReg, cg);
+        Inst_RegImm(OP::OR4RegImm4, node, highPatchValReg, (uint32_t)0x000000ff, cg);
 
         TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, 6, cg);
 
@@ -5891,16 +5845,16 @@ void J9::X86::TreeEvaluator::asyncGCMapCheckPatching(TR::Node *node, TR::CodeGen
         deps->addPostCondition(highExistingValReg, TR::RealRegister::edx, cg);
         deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
         deps->stopAddingConditions();
-        Inst_Mem(TR::InstOpCode::LCMPXCHG8BMem, node, MRef_Bdisp32(patchableAddrReg, -5, cg), deps, cg);
-        Inst_Label(TR::InstOpCode::label, node, asyncWithoutPatch, cg);
-        Inst_VFPRestore(Inst_Label(TR::InstOpCode::JMP4, node, snippetLabel, cg), vfpSaveInst, cg);
+        Inst_Mem(OP::LCMPXCHG8BMem, node, MRef_Bdisp32(patchableAddrReg, -5, cg), deps, cg);
+        Inst_Label(OP::label, node, asyncWithoutPatch, cg);
+        Inst_VFPRestore(Inst_Label(OP::JMP4, node, snippetLabel, cg), vfpSaveInst, cg);
 
         cg->stopUsingRegister(patchableAddrReg);
         cg->stopUsingRegister(lowPatchValReg);
         cg->stopUsingRegister(highPatchValReg);
         cg->stopUsingRegister(lowExistingValReg);
         cg->stopUsingRegister(highExistingValReg);
-        Inst_Label(TR::InstOpCode::label, node, outlinedEndLabel, cg);
+        Inst_Label(OP::label, node, outlinedEndLabel, cg);
 
         og.endOutlinedInstructionSequence();
     }
@@ -5939,7 +5893,7 @@ void J9::X86::TreeEvaluator::inlineRecursiveMonitor(TR::Node *node, TR::CodeGene
 
     TR_OutlinedInstructionsGenerator og(inlineRecursiveSnippetLabel, node, cg);
 
-    Inst_Label(TR::InstOpCode::label, node, outlinedStartLabel, cg);
+    Inst_Label(OP::label, node, outlinedStartLabel, cg);
     TR::Register *lockWordReg = cg->allocateRegister();
     TR::Register *lockWordMaskedReg = cg->allocateRegister();
     TR::Register *vmThreadReg = cg->getVMThreadRegister();
@@ -5948,15 +5902,14 @@ void J9::X86::TreeEvaluator::inlineRecursiveMonitor(TR::Node *node, TR::CodeGene
         = node->getSymbolReference() == cg->comp()->getSymRefTab()->findOrCreateMethodMonitorEntrySymbolRef(NULL)
         || node->getSymbolReference() == cg->comp()->getSymRefTab()->findOrCreateMonitorEntrySymbolRef(NULL);
 
-    Inst_RegMem(TR::InstOpCode::LRegMem(use64bitOp), node, lockWordReg, MRef_Bdisp32(objectReg, lwOffset, cg), cg);
-    Inst_RegImm(TR::InstOpCode::ADDRegImm4(use64bitOp), node, lockWordReg,
-        isMonitorEnter ? INC_DEC_VALUE : -INC_DEC_VALUE, cg);
-    Inst_RegImm(TR::InstOpCode::MOVRegImm4(use64bitOp), node, lockWordMaskedReg, NON_INC_DEC_MASK - RES_BIT, cg);
-    Inst_RegReg(TR::InstOpCode::ANDRegReg(use64bitOp), node, lockWordMaskedReg, lockWordReg, cg);
-    Inst_RegReg(TR::InstOpCode::CMPRegReg(use64bitOp), node, lockWordMaskedReg, vmThreadReg, cg);
+    Inst_RegMem(OP::LRegMem(use64bitOp), node, lockWordReg, MRef_Bdisp32(objectReg, lwOffset, cg), cg);
+    Inst_RegImm(OP::ADDRegImm4(use64bitOp), node, lockWordReg, isMonitorEnter ? INC_DEC_VALUE : -INC_DEC_VALUE, cg);
+    Inst_RegImm(OP::MOVRegImm4(use64bitOp), node, lockWordMaskedReg, NON_INC_DEC_MASK - RES_BIT, cg);
+    Inst_RegReg(OP::ANDRegReg(use64bitOp), node, lockWordMaskedReg, lockWordReg, cg);
+    Inst_RegReg(OP::CMPRegReg(use64bitOp), node, lockWordMaskedReg, vmThreadReg, cg);
 
-    Inst_Label(TR::InstOpCode::JNE4, node, jitMonitorEnterOrExitSnippetLabel, cg);
-    Inst_MemReg(TR::InstOpCode::SMemReg(use64bitOp), node, MRef_Bdisp32(objectReg, lwOffset, cg), lockWordReg, cg);
+    Inst_Label(OP::JNE4, node, jitMonitorEnterOrExitSnippetLabel, cg);
+    Inst_MemReg(OP::SMemReg(use64bitOp), node, MRef_Bdisp32(objectReg, lwOffset, cg), lockWordReg, cg);
 
 #if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
     // Adjust J9VMThread ownedMonitorCount for execution paths that do not
@@ -5964,7 +5917,7 @@ void J9::X86::TreeEvaluator::inlineRecursiveMonitor(TR::Node *node, TR::CodeGene
     // this unconditionally.  There is no need to check for overflow or
     // underflow.
     //
-    Inst_Mem(isMonitorEnter ? TR::InstOpCode::INC8Mem : TR::InstOpCode::DEC8Mem, node,
+    Inst_Mem(isMonitorEnter ? OP::INC8Mem : OP::DEC8Mem, node,
         MRef_Bdisp32(vmThreadReg, fej9->thisThreadGetOwnedMonitorCountOffset(), cg), cg);
 #endif
 
@@ -5974,9 +5927,9 @@ void J9::X86::TreeEvaluator::inlineRecursiveMonitor(TR::Node *node, TR::CodeGene
     restartDeps->addPostCondition(lockWordMaskedReg, TR::RealRegister::NoReg, cg);
     restartDeps->addPostCondition(lockWordReg, TR::RealRegister::NoReg, cg);
     restartDeps->stopAddingConditions();
-    Inst_Label(TR::InstOpCode::label, node, snippetRestartLabel, restartDeps, cg);
+    Inst_Label(OP::label, node, snippetRestartLabel, restartDeps, cg);
 
-    Inst_Label(TR::InstOpCode::JMP4, node, fallThruLabel, cg);
+    Inst_Label(OP::JMP4, node, fallThruLabel, cg);
 
     cg->stopUsingRegister(lockWordReg);
     cg->stopUsingRegister(lockWordMaskedReg);
@@ -5984,7 +5937,7 @@ void J9::X86::TreeEvaluator::inlineRecursiveMonitor(TR::Node *node, TR::CodeGene
     TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)0, 1, cg);
     deps->addPostCondition(vmThreadReg, TR::RealRegister::ebp, cg);
     deps->stopAddingConditions();
-    Inst_Label(TR::InstOpCode::label, node, outlinedEndLabel, deps, cg);
+    Inst_Label(OP::label, node, outlinedEndLabel, deps, cg);
 
     og.endOutlinedInstructionSequence();
 }
@@ -5998,14 +5951,14 @@ void J9::X86::TreeEvaluator::generateCheckForValueMonitorEnterOrExit(TR::Node *n
     auto fej9 = (TR_J9VMBase *)(cg->fe());
     TR::MemoryReference *classFlagsMR = MRef_Bdisp32(j9classReg, (uintptr_t)(fej9->getOffsetOfClassFlags()), cg);
 
-    TR::InstOpCode::Mnemonic testOpCode;
+    OP::Mnemonic testOpCode;
     if ((uint32_t)classFlag <= USHRT_MAX)
-        testOpCode = TR::InstOpCode::TEST2MemImm2;
+        testOpCode = OP::TEST2MemImm2;
     else
-        testOpCode = TR::InstOpCode::TEST4MemImm4;
+        testOpCode = OP::TEST4MemImm4;
 
     Inst_MemImm(testOpCode, node, classFlagsMR, classFlag, cg);
-    Inst_Label(TR::InstOpCode::JNE4, node, snippetLabel, cg);
+    Inst_Label(OP::JNE4, node, snippetLabel, cg);
 }
 
 TR::Register *J9::X86::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
@@ -6074,7 +6027,7 @@ TR::Register *J9::X86::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Code
 
     startLabel->setStartInternalControlFlow();
     fallThruLabel->setEndInternalControlFlow();
-    Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+    Inst_Label(OP::label, node, startLabel, cg);
 
     TR::Register *vmThreadReg = cg->getVMThreadRegister();
 
@@ -6182,13 +6135,13 @@ TR::Register *J9::X86::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Code
     //    label   restartLabel
     //
     TR::Register *lockedReg = NULL;
-    TR::InstOpCode::Mnemonic op = TR::InstOpCode::bad;
+    OP::Mnemonic op = OP::bad;
 
     bool isSMP = comp->target().isSMP();
     if (is64Bit && !fej9->generateCompressedLockWord()) {
-        op = isSMP ? TR::InstOpCode::LCMPXCHG8MemReg : TR::InstOpCode::CMPXCHG8MemReg;
+        op = isSMP ? OP::LCMPXCHG8MemReg : OP::CMPXCHG8MemReg;
     } else {
-        op = isSMP ? TR::InstOpCode::LCMPXCHG4MemReg : TR::InstOpCode::CMPXCHG4MemReg;
+        op = isSMP ? OP::LCMPXCHG4MemReg : OP::CMPXCHG4MemReg;
     }
 
     TR::Register *objectClassReg = NULL;
@@ -6199,8 +6152,7 @@ TR::Register *J9::X86::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Code
         objectClassReg = cg->allocateRegister();
         numDeps++;
 
-        TR::InstOpCode::Mnemonic loadOp
-            = (TR::Compiler->om.compressObjectReferences()) ? TR::InstOpCode::L4RegMem : TR::InstOpCode::LRegMem();
+        OP::Mnemonic loadOp = (TR::Compiler->om.compressObjectReferences()) ? OP::L4RegMem : OP::LRegMem();
         TR::X86RegMemInstruction *instr = Inst_RegMem(loadOp, node, objectClassReg, objectClassMR, cg);
 
         // This instruction may try to dereference a null memory address
@@ -6211,9 +6163,8 @@ TR::Register *J9::X86::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Code
 
         TR::TreeEvaluator::generateVFTMaskInstruction(node, objectClassReg, cg);
         int32_t offsetOfLockOffset = offsetof(J9Class, lockOffset);
-        Inst_RegMem(TR::InstOpCode::LRegMem(), node, objectClassReg,
-            MRef_Bdisp32(objectClassReg, offsetOfLockOffset, cg), cg);
-        Inst_RegImm(TR::InstOpCode::CMPRegImms(), node, objectClassReg, 0, cg);
+        Inst_RegMem(OP::LRegMem(), node, objectClassReg, MRef_Bdisp32(objectClassReg, offsetOfLockOffset, cg), cg);
+        Inst_RegImm(OP::CMPRegImms(), node, objectClassReg, 0, cg);
 
         generateCommonLockNurseryCodes(node, cg,
             true, // true for VMmonentEvaluator, false for VMmonexitEvaluator
@@ -6225,53 +6176,49 @@ TR::Register *J9::X86::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Code
         TR::LabelSymbol *mismatchLabel
             = TR::Options::_aggressiveLockReservation ? snippetLabel : generateLabelSymbol(cg);
 
-        Inst_RegMem(TR::InstOpCode::LEARegMem(), node, eaxReal, MRef_Bdisp32(vmThreadReg, RES_BIT, cg), cg);
+        Inst_RegMem(OP::LEARegMem(), node, eaxReal, MRef_Bdisp32(vmThreadReg, RES_BIT, cg), cg);
 
-        TR::InstOpCode::Mnemonic cmpMemRegOp = (is64Bit && fej9->generateCompressedLockWord())
-            ? TR::InstOpCode::CMP4MemReg
-            : TR::InstOpCode::CMPMemReg(is64Bit);
+        OP::Mnemonic cmpMemRegOp
+            = (is64Bit && fej9->generateCompressedLockWord()) ? OP::CMP4MemReg : OP::CMPMemReg(is64Bit);
         TR::X86MemRegInstruction *instr
             = Inst_MemReg(cmpMemRegOp, node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), eaxReal, cg);
 
         cg->setImplicitExceptionPoint(instr);
         instr->setNeedsGCMap(0xFF00FFFF);
 
-        Inst_Label(TR::InstOpCode::JNE4, node, mismatchLabel, cg);
+        Inst_Label(OP::JNE4, node, mismatchLabel, cg);
 
         if (!node->isPrimitiveLockedRegion()) {
-            TR::InstOpCode::Mnemonic addMemImmOp = (is64Bit && fej9->generateCompressedLockWord())
-                ? TR::InstOpCode::ADD4MemImms
-                : TR::InstOpCode::ADDMemImms();
+            OP::Mnemonic addMemImmOp
+                = (is64Bit && fej9->generateCompressedLockWord()) ? OP::ADD4MemImms : OP::ADDMemImms();
             Inst_MemImm(addMemImmOp, node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), REC_BIT, cg);
         }
 
         if (!TR::Options::_aggressiveLockReservation) {
             // Jump over the non-reservable path
-            Inst_Label(TR::InstOpCode::JMP4, node, inlinedMonEnterFallThruLabel, cg);
+            Inst_Label(OP::JMP4, node, inlinedMonEnterFallThruLabel, cg);
 
             // It's possible that the lock may be available, but not reservable. In
             // that case we should try the usual cmpxchg for non-reserving enter.
             // Otherwise we'll necessarily call the helper.
-            Inst_Label(TR::InstOpCode::label, node, mismatchLabel, cg);
+            Inst_Label(OP::label, node, mismatchLabel, cg);
 
-            TR::InstOpCode::Mnemonic cmpMemImmOp = (is64Bit && fej9->generateCompressedLockWord())
-                ? TR::InstOpCode::CMP4MemImms
-                : TR::InstOpCode::CMPMemImms();
+            OP::Mnemonic cmpMemImmOp
+                = (is64Bit && fej9->generateCompressedLockWord()) ? OP::CMP4MemImms : OP::CMPMemImms();
 
             auto lwMR = getMemoryReference(objectClassReg, objectReg, lwOffset, cg);
             Inst_MemImm(cmpMemImmOp, node, lwMR, 0, cg);
-            Inst_Label(TR::InstOpCode::JNE4, node, snippetLabel, cg);
-            Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, eaxReal, eaxReal, cg);
+            Inst_Label(OP::JNE4, node, snippetLabel, cg);
+            Inst_RegReg(OP::XOR4RegReg, node, eaxReal, eaxReal, cg);
             lwMR = getMemoryReference(objectClassReg, objectReg, lwOffset, cg);
             Inst_MemReg(op, node, lwMR, vmThreadReg, cg);
-            Inst_Label(TR::InstOpCode::JNE4, node, snippetLabel, cg);
+            Inst_Label(OP::JNE4, node, snippetLabel, cg);
         }
     } else {
         if (TR::Options::_aggressiveLockReservation) {
             if (comp->getOption(TR_ReservingLocks) && normalLockPreservingReservation) {
-                TR::InstOpCode::Mnemonic cmpMemImmOp = (is64Bit && fej9->generateCompressedLockWord())
-                    ? TR::InstOpCode::CMP4MemImms
-                    : TR::InstOpCode::CMPMemImms();
+                OP::Mnemonic cmpMemImmOp
+                    = (is64Bit && fej9->generateCompressedLockWord()) ? OP::CMP4MemImms : OP::CMPMemImms();
 
                 TR::X86MemImmInstruction *instr = Inst_MemImm(cmpMemImmOp, node,
                     getMemoryReference(objectClassReg, objectReg, lwOffset, cg), 0, cg);
@@ -6279,18 +6226,18 @@ TR::Register *J9::X86::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Code
                 cg->setImplicitExceptionPoint(instr);
                 instr->setNeedsGCMap(0xFF00FFFF);
 
-                Inst_Label(TR::InstOpCode::JNE4, node, snippetLabel, cg);
+                Inst_Label(OP::JNE4, node, snippetLabel, cg);
             }
 
-            Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, eaxReal, eaxReal, cg);
+            Inst_RegReg(OP::XOR4RegReg, node, eaxReal, eaxReal, cg);
         } else if (!comp->getOption(TR_ReservingLocks)) {
-            Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, eaxReal, eaxReal, cg);
+            Inst_RegReg(OP::XOR4RegReg, node, eaxReal, eaxReal, cg);
         } else {
-            TR::InstOpCode::Mnemonic loadOp = TR::InstOpCode::LRegMem();
-            TR::InstOpCode::Mnemonic testOp = TR::InstOpCode::TESTRegImm4();
+            OP::Mnemonic loadOp = OP::LRegMem();
+            OP::Mnemonic testOp = OP::TESTRegImm4();
             if (is64Bit && fej9->generateCompressedLockWord()) {
-                loadOp = TR::InstOpCode::L4RegMem;
-                testOp = TR::InstOpCode::TEST4RegImm4;
+                loadOp = OP::L4RegMem;
+                testOp = OP::TEST4RegImm4;
             }
 
             auto lwMR = getMemoryReference(objectClassReg, objectReg, lwOffset, cg);
@@ -6299,15 +6246,15 @@ TR::Register *J9::X86::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Code
             instr->setNeedsGCMap(0xFF00FFFF);
 
             Inst_RegImm(testOp, node, eaxReal, (int32_t)~RES_BIT, cg);
-            Inst_Label(TR::InstOpCode::JNE4, node, snippetLabel, cg);
+            Inst_Label(OP::JNE4, node, snippetLabel, cg);
         }
 
         if (node->isReadMonitor()) {
             lockedReg = cg->allocateRegister();
             if (is64Bit && fej9->generateCompressedLockWord())
-                Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, lockedReg, lockedReg,
+                Inst_RegReg(OP::XOR4RegReg, node, lockedReg, lockedReg,
                     cg); // After lockedReg is allocated zero it out.
-            Inst_RegImm(TR::InstOpCode::MOVRegImm4(), node, lockedReg, INC_DEC_VALUE, cg);
+            Inst_RegImm(OP::MOVRegImm4(), node, lockedReg, INC_DEC_VALUE, cg);
             ++numDeps;
         } else {
             bool conditionallyReserve = false;
@@ -6340,11 +6287,11 @@ TR::Register *J9::X86::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Code
                 // prevent any future reservation of the same lock.
 
                 bool b64 = is64Bit && !fej9->generateCompressedLockWord();
-                Inst_RegReg(TR::InstOpCode::MOVRegReg(b64), node, lockedReg, eaxReal, cg);
-                Inst_RegImm(TR::InstOpCode::SHRRegImm1(b64), node, lockedReg, RES_BIT_POSITION, cg);
-                Inst_Reg(TR::InstOpCode::NEGReg(b64), node, lockedReg, cg);
-                Inst_RegImm(TR::InstOpCode::ANDRegImms(b64), node, lockedReg, RES_BIT | INC_DEC_VALUE, cg);
-                Inst_RegReg(TR::InstOpCode::ADDRegReg(b64), node, lockedReg, vmThreadReg, cg);
+                Inst_RegReg(OP::MOVRegReg(b64), node, lockedReg, eaxReal, cg);
+                Inst_RegImm(OP::SHRRegImm1(b64), node, lockedReg, RES_BIT_POSITION, cg);
+                Inst_Reg(OP::NEGReg(b64), node, lockedReg, cg);
+                Inst_RegImm(OP::ANDRegImms(b64), node, lockedReg, RES_BIT | INC_DEC_VALUE, cg);
+                Inst_RegReg(OP::ADDRegReg(b64), node, lockedReg, vmThreadReg, cg);
             }
         }
 
@@ -6354,18 +6301,17 @@ TR::Register *J9::X86::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Code
         cg->setImplicitExceptionPoint(instr);
         instr->setNeedsGCMap(0xFF00FFFF);
 
-        Inst_Label(TR::InstOpCode::JNE4, node, snippetLabel, cg);
+        Inst_Label(OP::JNE4, node, snippetLabel, cg);
     }
 
-    Inst_Label(TR::InstOpCode::label, node, inlinedMonEnterFallThruLabel, cg);
+    Inst_Label(OP::label, node, inlinedMonEnterFallThruLabel, cg);
 
 #if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
     // Adjust J9VMThread ownedMonitorCount for execution paths that do not
     // go out of line to acquire the lock.  It is safe and efficient to do
     // this unconditionally.  There is no need to check for overflow..
     //
-    Inst_Mem(TR::InstOpCode::INC8Mem, node, MRef_Bdisp32(vmThreadReg, fej9->thisThreadGetOwnedMonitorCountOffset(), cg),
-        cg);
+    Inst_Mem(OP::INC8Mem, node, MRef_Bdisp32(vmThreadReg, fej9->thisThreadGetOwnedMonitorCountOffset(), cg), cg);
 #endif
 
     // Create dependencies for the registers used.
@@ -6393,7 +6339,7 @@ TR::Register *J9::X86::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Code
 
     deps->stopAddingConditions();
 
-    Inst_Label(TR::InstOpCode::label, node, fallThruLabel, deps, cg);
+    Inst_Label(OP::label, node, fallThruLabel, deps, cg);
 
     cg->decReferenceCount(objectRef);
     cg->stopUsingRegister(eaxReal);
@@ -6482,7 +6428,7 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::Cod
     startLabel->setStartInternalControlFlow();
     TR::LabelSymbol *snippetFallThruLabel = inlineRecursive ? generateLabelSymbol(cg) : fallThruLabel;
     fallThruLabel->setEndInternalControlFlow();
-    Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+    Inst_Label(OP::label, node, startLabel, cg);
 
     TR::Register *eaxReal = NULL;
     TR::Register *unlockedReg = NULL;
@@ -6496,8 +6442,7 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::Cod
 
     if (lwOffset <= 0) {
         TR::MemoryReference *objectClassMR = MRef_Bdisp32(objectReg, TMP_OFFSETOF_J9OBJECT_CLAZZ, cg);
-        TR::InstOpCode::Mnemonic op
-            = TR::Compiler->om.compressObjectReferences() ? TR::InstOpCode::L4RegMem : TR::InstOpCode::LRegMem();
+        OP::Mnemonic op = TR::Compiler->om.compressObjectReferences() ? OP::L4RegMem : OP::LRegMem();
         objectClassReg = cg->allocateRegister();
 
         TR::Instruction *instr = Inst_RegMem(op, node, objectClassReg, objectClassMR, cg);
@@ -6509,12 +6454,11 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::Cod
 
         TR::TreeEvaluator::generateVFTMaskInstruction(node, objectClassReg, cg);
         int32_t offsetOfLockOffset = offsetof(J9Class, lockOffset);
-        Inst_RegMem(TR::InstOpCode::LRegMem(), node, objectClassReg,
-            MRef_Bdisp32(objectClassReg, offsetOfLockOffset, cg), cg);
+        Inst_RegMem(OP::LRegMem(), node, objectClassReg, MRef_Bdisp32(objectClassReg, offsetOfLockOffset, cg), cg);
 
         numDeps++;
 
-        Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, objectClassReg, 0, cg);
+        Inst_RegImm(OP::CMP4RegImm4, node, objectClassReg, 0, cg);
 
         generateCommonLockNurseryCodes(node, cg,
             false, // true for VMmonentEvaluator, false for VMmonexitEvaluator
@@ -6580,33 +6524,32 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::Cod
     if (node->isReadMonitor()) {
         unlockedReg = cg->allocateRegister();
         eaxReal = cg->allocateRegister();
-        Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, unlockedReg, unlockedReg, cg);
-        Inst_RegImm(TR::InstOpCode::MOVRegImm4(), node, eaxReal, INC_DEC_VALUE, cg);
+        Inst_RegReg(OP::XOR4RegReg, node, unlockedReg, unlockedReg, cg);
+        Inst_RegImm(OP::MOVRegImm4(), node, eaxReal, INC_DEC_VALUE, cg);
 
-        TR::InstOpCode::Mnemonic op = cg->comp()->target().isSMP() ? TR::InstOpCode::LCMPXCHGMemReg(gen64BitInstr)
-                                                                   : TR::InstOpCode::CMPXCHGMemReg(gen64BitInstr);
+        OP::Mnemonic op
+            = cg->comp()->target().isSMP() ? OP::LCMPXCHGMemReg(gen64BitInstr) : OP::CMPXCHGMemReg(gen64BitInstr);
         cg->setImplicitExceptionPoint(
             Inst_MemReg(op, node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), unlockedReg, cg));
         numDeps += 2;
     } else {
         if (reservingLock) {
             if (node->isPrimitiveLockedRegion()) {
-                cg->setImplicitExceptionPoint(Inst_RegMem(TR::InstOpCode::LRegMem(gen64BitInstr), node, tempReg,
+                cg->setImplicitExceptionPoint(Inst_RegMem(OP::LRegMem(gen64BitInstr), node, tempReg,
                     getMemoryReference(objectClassReg, objectReg, lwOffset, cg), cg));
 
                 // Mask out the thread ID and reservation count
-                Inst_RegImm(TR::InstOpCode::ANDRegImms(), node, tempReg, FLAGS_MASK, cg);
+                Inst_RegImm(OP::ANDRegImms(), node, tempReg, FLAGS_MASK, cg);
                 // If only the RES flag is set and no other we can continue
-                Inst_RegImm(TR::InstOpCode::XORRegImms(), node, tempReg, RES_BIT, cg);
+                Inst_RegImm(OP::XORRegImms(), node, tempReg, RES_BIT, cg);
             } else {
                 reservingDecrementNeeded = true;
-                Inst_RegMem(TR::InstOpCode::LEARegMem(), node, tempReg,
-                    MRef_Bdisp32(vmThreadReg, (REC_BIT | RES_BIT), cg), cg);
-                cg->setImplicitExceptionPoint(Inst_MemReg(TR::InstOpCode::CMPMemReg(gen64BitInstr), node,
+                Inst_RegMem(OP::LEARegMem(), node, tempReg, MRef_Bdisp32(vmThreadReg, (REC_BIT | RES_BIT), cg), cg);
+                cg->setImplicitExceptionPoint(Inst_MemReg(OP::CMPMemReg(gen64BitInstr), node,
                     getMemoryReference(objectClassReg, objectReg, lwOffset, cg), tempReg, cg));
             }
         } else {
-            cg->setImplicitExceptionPoint(Inst_RegMem(TR::InstOpCode::CMPRegMem(gen64BitInstr), node, vmThreadReg,
+            cg->setImplicitExceptionPoint(Inst_RegMem(OP::CMPRegMem(gen64BitInstr), node, vmThreadReg,
                 getMemoryReference(objectClassReg, objectReg, lwOffset, cg), cg));
         }
     }
@@ -6614,41 +6557,40 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::Cod
     TR::LabelSymbol *mismatchLabel
         = (reservingLock && !TR::Options::_aggressiveLockReservation) ? generateLabelSymbol(cg) : snippetLabel;
 
-    Inst_Label(TR::InstOpCode::JNE4, node, mismatchLabel, cg);
+    Inst_Label(OP::JNE4, node, mismatchLabel, cg);
 
     if (reservingDecrementNeeded) {
         // Subtract the reservation count
-        Inst_MemImm(TR::InstOpCode::SUBMemImms(gen64BitInstr), node,
-            getMemoryReference(objectClassReg, objectReg, lwOffset, cg), REC_BIT,
-            cg); // I'm not sure TR::InstOpCode::SUB4MemImms will work.
+        Inst_MemImm(OP::SUBMemImms(gen64BitInstr), node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg),
+            REC_BIT,
+            cg); // I'm not sure OP::SUB4MemImms will work.
     }
 
     if (!node->isReadMonitor() && !reservingLock) {
-        Inst_MemImm(TR::InstOpCode::SMemImm4(gen64BitInstr), node,
-            getMemoryReference(objectClassReg, objectReg, lwOffset, cg), 0, cg);
+        Inst_MemImm(OP::SMemImm4(gen64BitInstr), node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), 0,
+            cg);
     }
 
     if (reservingLock && !TR::Options::_aggressiveLockReservation) {
-        Inst_Label(TR::InstOpCode::JMP4, node, inlinedMonExitFallThruLabel, cg);
+        Inst_Label(OP::JMP4, node, inlinedMonExitFallThruLabel, cg);
 
         // Avoid the helper for non-recursive exit in case it isn't reserved
-        Inst_Label(TR::InstOpCode::label, node, mismatchLabel, cg);
+        Inst_Label(OP::label, node, mismatchLabel, cg);
         auto lwMR = getMemoryReference(objectClassReg, objectReg, lwOffset, cg);
-        Inst_MemReg(TR::InstOpCode::CMPMemReg(gen64BitInstr), node, lwMR, vmThreadReg, cg);
-        Inst_Label(TR::InstOpCode::JNE4, node, snippetLabel, cg);
+        Inst_MemReg(OP::CMPMemReg(gen64BitInstr), node, lwMR, vmThreadReg, cg);
+        Inst_Label(OP::JNE4, node, snippetLabel, cg);
         lwMR = getMemoryReference(objectClassReg, objectReg, lwOffset, cg);
-        Inst_MemImm(TR::InstOpCode::SMemImm4(gen64BitInstr), node, lwMR, 0, cg);
+        Inst_MemImm(OP::SMemImm4(gen64BitInstr), node, lwMR, 0, cg);
     }
 
-    Inst_Label(TR::InstOpCode::label, node, inlinedMonExitFallThruLabel, cg);
+    Inst_Label(OP::label, node, inlinedMonExitFallThruLabel, cg);
 
 #if defined(TR_TARGET_64BIT) && (JAVA_SPEC_VERSION >= 19)
     // Adjust J9VMThread ownedMonitorCount for execution paths that do not
     // go out of line to release the lock.  It is safe and efficient to do
     // this unconditionally.  There is no need to check for underflow.
     //
-    Inst_Mem(TR::InstOpCode::DEC8Mem, node, MRef_Bdisp32(vmThreadReg, fej9->thisThreadGetOwnedMonitorCountOffset(), cg),
-        cg);
+    Inst_Mem(OP::DEC8Mem, node, MRef_Bdisp32(vmThreadReg, fej9->thisThreadGetOwnedMonitorCountOffset(), cg), cg);
 #endif
 
     // Create dependencies for the registers used.
@@ -6676,7 +6618,7 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::Cod
         deps->addPostCondition(objectClassReg, TR::RealRegister::NoReg, cg);
 
     deps->stopAddingConditions();
-    Inst_Label(TR::InstOpCode::label, node, fallThruLabel, deps, cg);
+    Inst_Label(OP::label, node, fallThruLabel, deps, cg);
 
     if (eaxReal)
         cg->stopUsingRegister(eaxReal);
@@ -6758,7 +6700,7 @@ static void insertAllocationPrefetch(TR::Node *node, int32_t numPrefetches, TR::
     TR::CodeGenerator *cg)
 {
     for (int32_t i = 0; i < numPrefetches; i++) {
-        Inst_Mem(TR::InstOpCode::PREFETCHNTA, node, MRef_Bdisp32(allocationReg, offset, cg), cg);
+        Inst_Mem(OP::PREFETCHNTA, node, MRef_Bdisp32(allocationReg, offset, cg), cg);
         offset += 64;
     }
 }
@@ -6794,24 +6736,24 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(TR::Node *node, TR_Opaq
         UDATA sizeClass = fej9->getObjectSizeClass(allocationSizeOrDataOffset);
 
         if (comp->getOption(TR_BreakOnNew))
-            Inst(TR::InstOpCode::INT3, node, cg);
+            Inst(OP::INT3, node, cg);
 
         // heap allocation, so proceed
         if (sizeReg) {
-            Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, eaxReal, eaxReal, cg);
+            Inst_RegReg(OP::XOR4RegReg, node, eaxReal, eaxReal, cg);
 
             // make sure size isn't too big
             // convert max object size to num elements because computing an object size from num elements may overflow
             TR_ASSERT(fej9->getMaxObjectSizeForSizeClass() <= UINT_MAX, "assertion failure");
-            Inst_RegImm(TR::InstOpCode::CMPRegImm4(), node, sizeReg,
+            Inst_RegImm(OP::CMPRegImm4(), node, sizeReg,
                 (fej9->getMaxObjectSizeForSizeClass() - allocationSizeOrDataOffset) / elementSize, cg);
-            Inst_Label(TR::InstOpCode::JA4, node, failLabel, cg);
+            Inst_Label(OP::JA4, node, failLabel, cg);
 
             // Hybrid arraylets need a zero length test if the size is unknown.
             //
             if (!generateArraylets) {
-                Inst_RegReg(TR::InstOpCode::TEST4RegReg, node, sizeReg, sizeReg, cg);
-                Inst_Label(TR::InstOpCode::JE4, node, failLabel, cg);
+                Inst_RegReg(OP::TEST4RegReg, node, sizeReg, sizeReg, cg);
+                Inst_Label(OP::JE4, node, failLabel, cg);
             }
 
             // need to round up to sizeof(UDATA) so we can use it to index into size class index array
@@ -6821,28 +6763,28 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(TR::Node *node, TR_Opaq
                 round = sizeof(UDATA) - 1;
 
             // now compute size of object in bytes
-            Inst_RegMem(TR::InstOpCode::LEARegMem(), node, segmentReg,
+            Inst_RegMem(OP::LEARegMem(), node, segmentReg,
                 MRef_BISdisp32(eaxReal, sizeReg, TR::MemoryReference::convertMultiplierToStride(elementSize),
                     allocationSizeOrDataOffset + round, cg),
                 cg);
 
             if (elementSize < sizeof(UDATA))
-                Inst_RegImm(TR::InstOpCode::ANDRegImms(), node, segmentReg, -(int32_t)sizeof(UDATA), cg);
+                Inst_RegImm(OP::ANDRegImms(), node, segmentReg, -(int32_t)sizeof(UDATA), cg);
 
 #ifdef J9VM_INTERP_FLAGS_IN_CLASS_SLOT
-            Inst_RegImm(TR::InstOpCode::CMPRegImm4(), node, segmentReg, J9_GC_MINIMUM_OBJECT_SIZE, cg);
+            Inst_RegImm(OP::CMPRegImm4(), node, segmentReg, J9_GC_MINIMUM_OBJECT_SIZE, cg);
             TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
-            Inst_Label(TR::InstOpCode::JAE4, node, doneLabel, cg);
-            Inst_RegImm(TR::InstOpCode::MOVRegImm4(), node, segmentReg, J9_GC_MINIMUM_OBJECT_SIZE, cg);
-            Inst_Label(TR::InstOpCode::label, node, doneLabel, cg);
+            Inst_Label(OP::JAE4, node, doneLabel, cg);
+            Inst_RegImm(OP::MOVRegImm4(), node, segmentReg, J9_GC_MINIMUM_OBJECT_SIZE, cg);
+            Inst_Label(OP::label, node, doneLabel, cg);
 #endif
 
             // get size class
-            Inst_RegMem(TR::InstOpCode::LRegMem(), node, tempReg,
-                MRef_Bdisp32(vmThreadReg, fej9->thisThreadJavaVMOffset(), cg), cg);
-            Inst_RegMem(TR::InstOpCode::LRegMem(), node, tempReg,
-                MRef_Bdisp32(tempReg, fej9->getRealtimeSizeClassesOffset(), cg), cg);
-            Inst_RegMem(TR::InstOpCode::LRegMem(), node, tempReg,
+            Inst_RegMem(OP::LRegMem(), node, tempReg, MRef_Bdisp32(vmThreadReg, fej9->thisThreadJavaVMOffset(), cg),
+                cg);
+            Inst_RegMem(OP::LRegMem(), node, tempReg, MRef_Bdisp32(tempReg, fej9->getRealtimeSizeClassesOffset(), cg),
+                cg);
+            Inst_RegMem(OP::LRegMem(), node, tempReg,
                 MRef_BISdisp32(tempReg, segmentReg, TR::MemoryReference::convertMultiplierToStride(1),
                     fej9->getSizeClassesIndexOffset(), cg),
                 cg);
@@ -6860,7 +6802,7 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(TR::Node *node, TR_Opaq
                 //   We need a shift instruction to be able to do stride 16
                 //   To avoid two shifts, only do one for stride sizeof(UDATA) and use a multiplier in memory ref for 16
                 //   64-bit, so shift 3 times for sizeof(UDATA) and use multiplier stride 2 in memory references
-                Inst_RegImm(TR::InstOpCode::SHLRegImm1(), node, tempReg, 3, cg);
+                Inst_RegImm(OP::SHLRegImm1(), node, tempReg, 3, cg);
                 currentMemRef = MRef_BISdisp32(vmThreadReg, tempReg, TR::MemoryReference::convertMultiplierToStride(2),
                     fej9->thisThreadAllocationCacheCurrentOffset(0), cg);
                 topMemRef = MRef_BISdisp32(vmThreadReg, tempReg, TR::MemoryReference::convertMultiplierToStride(2),
@@ -6888,26 +6830,26 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(TR::Node *node, TR_Opaq
             // (64-bit)
 
             // get next cell for this size class
-            Inst_RegMem(TR::InstOpCode::LRegMem(), node, eaxReal, currentMemRef, cg);
+            Inst_RegMem(OP::LRegMem(), node, eaxReal, currentMemRef, cg);
 
             // if null, then no cell available, use slow path
-            Inst_RegMem(TR::InstOpCode::CMPRegMem(), node, eaxReal, topMemRef, cg);
-            Inst_Label(TR::InstOpCode::JAE4, node, failLabel, cg);
+            Inst_RegMem(OP::CMPRegMem(), node, eaxReal, topMemRef, cg);
+            Inst_Label(OP::JAE4, node, failLabel, cg);
 
             // have a valid cell, need to update current cell pointer
-            Inst_RegMem(TR::InstOpCode::LRegMem(), node, segmentReg,
-                MRef_Bdisp32(vmThreadReg, fej9->thisThreadJavaVMOffset(), cg), cg);
-            Inst_RegMem(TR::InstOpCode::LRegMem(), node, segmentReg,
+            Inst_RegMem(OP::LRegMem(), node, segmentReg, MRef_Bdisp32(vmThreadReg, fej9->thisThreadJavaVMOffset(), cg),
+                cg);
+            Inst_RegMem(OP::LRegMem(), node, segmentReg,
                 MRef_Bdisp32(segmentReg, fej9->getRealtimeSizeClassesOffset(), cg), cg);
             if (cg->comp()->target().is64Bit()) {
                 // tempReg already has already been shifted for sizeof(UDATA)
-                Inst_RegMem(TR::InstOpCode::LRegMem(), node, segmentReg,
+                Inst_RegMem(OP::LRegMem(), node, segmentReg,
                     MRef_BISdisp32(segmentReg, tempReg, TR::MemoryReference::convertMultiplierToStride(1),
                         fej9->getSmallCellSizesOffset(), cg),
                     cg);
             } else {
                 // tempReg needs to be shifted for sizeof(UDATA)
-                Inst_RegMem(TR::InstOpCode::LRegMem(), node, segmentReg,
+                Inst_RegMem(OP::LRegMem(), node, segmentReg,
                     MRef_BISdisp32(segmentReg, tempReg, TR::MemoryReference::convertMultiplierToStride(sizeof(UDATA)),
                         fej9->getSmallCellSizesOffset(), cg),
                     cg);
@@ -6915,26 +6857,26 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(TR::Node *node, TR_Opaq
             // segmentReg now holds cell size
 
             // update current cell by cell size
-            Inst_MemReg(TR::InstOpCode::ADDMemReg(), node, currentMemRefBump, segmentReg, cg);
+            Inst_MemReg(OP::ADDMemReg(), node, currentMemRefBump, segmentReg, cg);
         } else {
-            Inst_RegMem(TR::InstOpCode::LRegMem(), node, eaxReal,
+            Inst_RegMem(OP::LRegMem(), node, eaxReal,
                 MRef_Bdisp32(vmThreadReg, fej9->thisThreadAllocationCacheCurrentOffset(sizeClass), cg), cg);
 
-            Inst_RegMem(TR::InstOpCode::CMPRegMem(), node, eaxReal,
+            Inst_RegMem(OP::CMPRegMem(), node, eaxReal,
                 MRef_Bdisp32(vmThreadReg, fej9->thisThreadAllocationCacheTopOffset(sizeClass), cg), cg);
 
-            Inst_Label(TR::InstOpCode::JAE4, node, failLabel, cg);
+            Inst_Label(OP::JAE4, node, failLabel, cg);
 
             // we have an object in eaxReal, now bump the current updatepointer
-            TR::InstOpCode::Mnemonic opcode;
+            OP::Mnemonic opcode;
             uint32_t cellSize = fej9->getCellSizeForSizeClass(sizeClass);
             if (cellSize <= 127)
-                opcode = TR::InstOpCode::ADDMemImms();
+                opcode = OP::ADDMemImms();
             else if (cellSize == 128) {
-                opcode = TR::InstOpCode::SUBMemImms();
+                opcode = OP::SUBMemImms();
                 cellSize = (uint32_t)-128;
             } else
-                opcode = TR::InstOpCode::ADDMemImm4();
+                opcode = OP::ADDMemImm4();
 
             Inst_MemImm(opcode, node,
                 MRef_Bdisp32(vmThreadReg, fej9->thisThreadAllocationCacheCurrentOffset(sizeClass), cg), cellSize, cg);
@@ -6961,7 +6903,7 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(TR::Node *node, TR_Opaq
         // minimal because the helper will be called in that case.  It is necessary to insert this load here so that it
         // dominates all control paths through this internal control flow region.
         //
-        Inst_RegMem(TR::InstOpCode::LRegMem(), node, eaxReal, MRef_Bdisp32(vmThreadReg, heapAlloc_offset, cg), cg);
+        Inst_RegMem(OP::LRegMem(), node, eaxReal, MRef_Bdisp32(vmThreadReg, heapAlloc_offset, cg), cg);
 
         bool canSkipOverflowCheck = false;
 
@@ -6970,7 +6912,7 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(TR::Node *node, TR_Opaq
         //
         if (generateArraylets && (node->getOpCodeValue() == TR::anewarray || node->getOpCodeValue() == TR::newarray)) {
             if (comp->getOption(TR_DisableTarokInlineArrayletAllocation))
-                Inst_Label(TR::InstOpCode::JMP4, node, failLabel, cg);
+                Inst_Label(OP::JMP4, node, failLabel, cg);
 
             if (sizeReg) {
                 uint32_t maxContiguousArrayletLeafSizeInBytes
@@ -6980,11 +6922,11 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(TR::Node *node, TR_Opaq
 
                 // Hybrid arraylets need a zero length test if the size is unknown.
                 //
-                Inst_RegReg(TR::InstOpCode::TEST4RegReg, node, sizeReg, sizeReg, cg);
-                Inst_Label(TR::InstOpCode::JE4, node, failLabel, cg);
+                Inst_RegReg(OP::TEST4RegReg, node, sizeReg, sizeReg, cg);
+                Inst_Label(OP::JE4, node, failLabel, cg);
 
-                Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, sizeReg, maxArrayletSizeInElements, cg);
-                Inst_Label(TR::InstOpCode::JAE4, node, failLabel, cg);
+                Inst_RegImm(OP::CMP4RegImm4, node, sizeReg, maxArrayletSizeInElements, cg);
+                Inst_Label(OP::JAE4, node, failLabel, cg);
 
                 // If the max arraylet leaf size is less than the amount of free space available on
                 // the stack, there is no need to check for an overflow scenario.
@@ -6998,7 +6940,7 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(TR::Node *node, TR_Opaq
                 // Actually, we should never get here because we've already checked
                 // constant lengths for discontiguity...
                 //
-                Inst_Label(TR::InstOpCode::JMP4, node, failLabel, cg);
+                Inst_Label(OP::JMP4, node, failLabel, cg);
             }
         }
 
@@ -7007,8 +6949,8 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(TR::Node *node, TR_Opaq
             // The length could be zero.
             //
             if (!generateArraylets) {
-                Inst_RegReg(TR::InstOpCode::TEST4RegReg, node, sizeReg, sizeReg, cg);
-                Inst_Label(TR::InstOpCode::JE4, node, failLabel, cg);
+                Inst_RegReg(OP::TEST4RegReg, node, sizeReg, sizeReg, cg);
+                Inst_Label(OP::JE4, node, failLabel, cg);
             }
 
             // The GC will guarantee that at least 'maxObjectSizeGuaranteedNotToOverflow' bytes
@@ -7019,22 +6961,22 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(TR::Node *node, TR_Opaq
 
             if (cg->comp()->target().is64Bit()
                 && !(maxObjectSizeInElements > 0 && maxObjectSizeInElements <= (uintptr_t)INT_MAX)) {
-                Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, tempReg, maxObjectSizeInElements, cg);
-                Inst_RegReg(TR::InstOpCode::CMP8RegReg, node, sizeReg, tempReg, cg);
+                Inst_RegImm64(OP::MOV8RegImm64, node, tempReg, maxObjectSizeInElements, cg);
+                Inst_RegReg(OP::CMP8RegReg, node, sizeReg, tempReg, cg);
             } else {
-                Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, sizeReg, (int32_t)maxObjectSizeInElements, cg);
+                Inst_RegImm(OP::CMP4RegImm4, node, sizeReg, (int32_t)maxObjectSizeInElements, cg);
             }
 
             // Must be an unsigned comparison on sizes.
             //
-            Inst_Label(TR::InstOpCode::JAE4, node, failLabel, cg);
+            Inst_Label(OP::JAE4, node, failLabel, cg);
         }
 
 #if !defined(J9VM_GC_THREAD_LOCAL_HEAP)
         // Establish a loop label in case the new heap pointer cannot be committed.
         //
         TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
-        Inst_Label(TR::InstOpCode::label, node, loopLabel, cg);
+        Inst_Label(OP::label, node, loopLabel, cg);
 #endif
 
         if (sizeReg) {
@@ -7072,22 +7014,22 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(TR::Node *node, TR_Opaq
                     "Expecting a minimum indexable object size >= 8 (actual minimum is %d)\n",
                     J9_GC_MINIMUM_OBJECT_SIZE);
 
-                Inst_RegMem(TR::InstOpCode::LEARegMem(), node, tempReg,
+                Inst_RegMem(OP::LEARegMem(), node, tempReg,
                     MRef_BISdisp32(eaxReal, sizeReg, TR::MemoryReference::convertMultiplierToStride(elementSize),
                         allocationSizeOrDataOffset + disp32, cg),
                     cg);
 
                 if (round) {
-                    Inst_RegImm(TR::InstOpCode::ANDRegImm4(), node, tempReg, -round, cg);
+                    Inst_RegImm(OP::ANDRegImm4(), node, tempReg, -round, cg);
                 }
             } else
 #endif
             {
 #ifdef J9VM_INTERP_FLAGS_IN_CLASS_SLOT
-                Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, tempReg, tempReg, cg);
+                Inst_RegReg(OP::XOR4RegReg, node, tempReg, tempReg, cg);
 #endif
 
-                Inst_RegMem(TR::InstOpCode::LEARegMem(), node, tempReg,
+                Inst_RegMem(OP::LEARegMem(), node, tempReg,
                     MRef_BISdisp32(
 #ifdef J9VM_INTERP_FLAGS_IN_CLASS_SLOT
                         tempReg,
@@ -7099,16 +7041,16 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(TR::Node *node, TR_Opaq
                     cg);
 
                 if (round) {
-                    Inst_RegImm(TR::InstOpCode::ANDRegImm4(), node, tempReg, -round, cg);
+                    Inst_RegImm(OP::ANDRegImm4(), node, tempReg, -round, cg);
                 }
 
 #ifdef J9VM_INTERP_FLAGS_IN_CLASS_SLOT
-                Inst_RegImm(TR::InstOpCode::CMPRegImm4(), node, tempReg, J9_GC_MINIMUM_OBJECT_SIZE, cg);
+                Inst_RegImm(OP::CMPRegImm4(), node, tempReg, J9_GC_MINIMUM_OBJECT_SIZE, cg);
                 TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
-                Inst_Label(TR::InstOpCode::JAE4, node, doneLabel, cg);
-                Inst_RegImm(TR::InstOpCode::MOVRegImm4(), node, tempReg, J9_GC_MINIMUM_OBJECT_SIZE, cg);
-                Inst_Label(TR::InstOpCode::label, node, doneLabel, cg);
-                Inst_RegReg(TR::InstOpCode::ADDRegReg(), node, tempReg, eaxReal, cg);
+                Inst_Label(OP::JAE4, node, doneLabel, cg);
+                Inst_RegImm(OP::MOVRegImm4(), node, tempReg, J9_GC_MINIMUM_OBJECT_SIZE, cg);
+                Inst_Label(OP::label, node, doneLabel, cg);
+                Inst_RegReg(OP::ADDRegReg(), node, tempReg, eaxReal, cg);
 #endif
             }
         } else {
@@ -7117,42 +7059,39 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(TR::Node *node, TR_Opaq
                 & (-TR::Compiler->om.getObjectAlignmentInBytes());
 
             if ((uint32_t)allocationSizeOrDataOffset > cg->getMaxObjectSizeGuaranteedNotToOverflow()) {
-                Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, tempReg, eaxReal, cg);
+                Inst_RegReg(OP::MOVRegReg(), node, tempReg, eaxReal, cg);
                 if (allocationSizeOrDataOffset <= 127)
-                    Inst_RegImm(TR::InstOpCode::ADDRegImms(), node, tempReg, allocationSizeOrDataOffset, cg);
+                    Inst_RegImm(OP::ADDRegImms(), node, tempReg, allocationSizeOrDataOffset, cg);
                 else if (allocationSizeOrDataOffset == 128)
-                    Inst_RegImm(TR::InstOpCode::SUBRegImms(), node, tempReg, (unsigned)-128, cg);
+                    Inst_RegImm(OP::SUBRegImms(), node, tempReg, (unsigned)-128, cg);
                 else
-                    Inst_RegImm(TR::InstOpCode::ADDRegImm4(), node, tempReg, allocationSizeOrDataOffset, cg);
+                    Inst_RegImm(OP::ADDRegImm4(), node, tempReg, allocationSizeOrDataOffset, cg);
 
                 // Check for overflow
-                Inst_Label(TR::InstOpCode::JB4, node, failLabel, cg);
+                Inst_Label(OP::JB4, node, failLabel, cg);
             } else {
-                Inst_RegMem(TR::InstOpCode::LEARegMem(), node, tempReg,
-                    MRef_Bdisp32(eaxReal, allocationSizeOrDataOffset, cg), cg);
+                Inst_RegMem(OP::LEARegMem(), node, tempReg, MRef_Bdisp32(eaxReal, allocationSizeOrDataOffset, cg), cg);
             }
         }
 
-        Inst_RegMem(TR::InstOpCode::CMPRegMem(), node, tempReg, MRef_Bdisp32(vmThreadReg, heapTop_offset, cg), cg);
+        Inst_RegMem(OP::CMPRegMem(), node, tempReg, MRef_Bdisp32(vmThreadReg, heapTop_offset, cg), cg);
 
-        Inst_Label(TR::InstOpCode::JA4, node, failLabel, cg);
+        Inst_Label(OP::JA4, node, failLabel, cg);
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
 
         // Make sure that the arraylet is aligned properly.
         //
         if (generateArraylets && (node->getOpCodeValue() == TR::anewarray || node->getOpCodeValue() == TR::newarray)) {
-            Inst_RegMem(TR::InstOpCode::LEARegMem(), node, tempReg,
+            Inst_RegMem(OP::LEARegMem(), node, tempReg,
                 MRef_Bdisp32(tempReg, TR::Compiler->om.getObjectAlignmentInBytes() - 1, cg), cg);
             if (cg->comp()->target().is64Bit())
-                Inst_RegImm(TR::InstOpCode::AND8RegImm4, node, tempReg, -TR::Compiler->om.getObjectAlignmentInBytes(),
-                    cg);
+                Inst_RegImm(OP::AND8RegImm4, node, tempReg, -TR::Compiler->om.getObjectAlignmentInBytes(), cg);
             else
-                Inst_RegImm(TR::InstOpCode::AND4RegImm4, node, tempReg, -TR::Compiler->om.getObjectAlignmentInBytes(),
-                    cg);
+                Inst_RegImm(OP::AND4RegImm4, node, tempReg, -TR::Compiler->om.getObjectAlignmentInBytes(), cg);
         }
 
-        Inst_MemReg(TR::InstOpCode::SMemReg(), node, MRef_Bdisp32(vmThreadReg, heapAlloc_offset, cg), tempReg, cg);
+        Inst_MemReg(OP::SMemReg(), node, MRef_Bdisp32(vmThreadReg, heapAlloc_offset, cg), tempReg, cg);
 
         if (!isSmallAllocation && cg->enableTLHPrefetching()) {
             TR::LabelSymbol *prefetchSnippetLabel = generateLabelSymbol(cg);
@@ -7176,14 +7115,13 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(TR::Node *node, TR_Opaq
                 useDirectPrefetchCall = true;
             }
 
-            Inst_RegReg(TR::InstOpCode::SUB4RegReg, node, tempReg, eaxReal, cg);
+            Inst_RegReg(OP::SUB4RegReg, node, tempReg, eaxReal, cg);
 
-            Inst_MemReg(TR::InstOpCode::SUB4MemReg, node, MRef_Bdisp32(vmThreadReg, tlhPrefetchFTA_offset, cg), tempReg,
-                cg);
+            Inst_MemReg(OP::SUB4MemReg, node, MRef_Bdisp32(vmThreadReg, tlhPrefetchFTA_offset, cg), tempReg, cg);
             if (!useDirectPrefetchCall)
-                Inst_Label(TR::InstOpCode::JLE4, node, prefetchSnippetLabel, cg);
+                Inst_Label(OP::JLE4, node, prefetchSnippetLabel, cg);
             else {
-                Inst_Label(TR::InstOpCode::JG4, node, restartLabel, cg);
+                Inst_Label(OP::JG4, node, restartLabel, cg);
                 TR::SymbolReference *helperSymRef
                     = cg->getSymRefTab()->findOrCreateRuntimeHelper(TR_X86CodeCachePrefetchHelper);
                 TR::MethodSymbol *helperSymbol = helperSymRef->getSymbol()->castToMethodSymbol();
@@ -7196,17 +7134,15 @@ static void genHeapAllocForDiscontiguousArraysOrRealtime(TR::Node *node, TR_Opaq
 #else
                 helperSymbol->setMethodAddress(fej9->getAllocationPrefetchCodeSnippetAddress(comp));
 #endif
-                Inst_ImmSym(TR::InstOpCode::CALLImm4, node, (uintptr_t)helperSymbol->getMethodAddress(), helperSymRef,
-                    cg);
+                Inst_ImmSym(OP::CALLImm4, node, (uintptr_t)helperSymbol->getMethodAddress(), helperSymRef, cg);
             }
 
-            Inst_Label(TR::InstOpCode::label, node, restartLabel, cg);
+            Inst_Label(OP::label, node, restartLabel, cg);
         }
 
 #else // J9VM_GC_THREAD_LOCAL_HEAP
-        Inst_MemReg(TR::InstOpCode::CMPXCHGMemReg(), node, MRef_Bdisp32(vmThreadReg, heapAlloc_offset, cg), tempReg,
-            cg);
-        Inst_Label(TR::InstOpCode::JNE4, node, loopLabel, cg);
+        Inst_MemReg(OP::CMPXCHGMemReg(), node, MRef_Bdisp32(vmThreadReg, heapAlloc_offset, cg), tempReg, cg);
+        Inst_Label(OP::JNE4, node, loopLabel, cg);
 #endif // !J9VM_GC_THREAD_LOCAL_HEAP
     }
 }
@@ -7248,20 +7184,19 @@ static void genHeapAllocForObjectOrHybridArraylet(TR::Node *node, TR_OpaqueClass
             && !(maxObjectSizeInElements > 0 && maxObjectSizeInElements <= (uintptr_t)INT_MAX)) {
             // nextTLHAllocReg can be used as a scratch register until it is defined below
             //
-            Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, nextTLHAllocReg, maxObjectSizeInElements, cg);
-            Inst_RegReg(TR::InstOpCode::CMP8RegReg, node, sizeReg, nextTLHAllocReg, cg);
+            Inst_RegImm64(OP::MOV8RegImm64, node, nextTLHAllocReg, maxObjectSizeInElements, cg);
+            Inst_RegReg(OP::CMP8RegReg, node, sizeReg, nextTLHAllocReg, cg);
         } else {
-            Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, sizeReg, (int32_t)maxObjectSizeInElements, cg);
+            Inst_RegImm(OP::CMP4RegImm4, node, sizeReg, (int32_t)maxObjectSizeInElements, cg);
         }
 
         // Must be an unsigned comparison on sizes.
         //
-        Inst_Label(TR::InstOpCode::JAE4, node, failLabel, cg);
+        Inst_Label(OP::JAE4, node, failLabel, cg);
 
-        Inst_RegMem(TR::InstOpCode::LRegMem(), node, eaxReal,
-            MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), cg);
+        Inst_RegMem(OP::LRegMem(), node, eaxReal, MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), cg);
 
-        Inst_RegReg(TR::InstOpCode::MOV4RegReg, node, nextTLHAllocReg, sizeReg, cg);
+        Inst_RegReg(OP::MOV4RegReg, node, nextTLHAllocReg, sizeReg, cg);
 
         // Artificially adjust the number of elements by 1 if the array is zero length.  This works
         // because either the array is zero length and needs a discontiguous array length field
@@ -7271,13 +7206,13 @@ static void genHeapAllocForObjectOrHybridArraylet(TR::Node *node, TR_OpaqueClass
         // contiguous and discontiguous array headers are the same size.
         //
         if (comp->target().is32Bit() || (comp->target().is64Bit() && comp->useCompressedPointers())) {
-            Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, nextTLHAllocReg, 1, cg);
-            Inst_RegImm(TR::InstOpCode::ADC4RegImm4, node, nextTLHAllocReg, 0, cg);
+            Inst_RegImm(OP::CMP4RegImm4, node, nextTLHAllocReg, 1, cg);
+            Inst_RegImm(OP::ADC4RegImm4, node, nextTLHAllocReg, 0, cg);
         }
 
         uint8_t shiftVal = TR::MemoryReference::convertMultiplierToStride(elementSize);
         if (shiftVal > 0) {
-            Inst_RegImm(TR::InstOpCode::SHLRegImm1(), node, nextTLHAllocReg, shiftVal, cg);
+            Inst_RegImm(OP::SHLRegImm1(), node, nextTLHAllocReg, shiftVal, cg);
         }
 
         // calculate variable size, rounding up if necessary to a intptr_t multiple boundary
@@ -7289,24 +7224,23 @@ static void genHeapAllocForObjectOrHybridArraylet(TR::Node *node, TR_OpaqueClass
             : TR::Compiler->om.getObjectAlignmentInBytes();
         int32_t disp32 = round ? (round - 1) : 0;
 
-        Inst_RegImm(TR::InstOpCode::ADDRegImm4(), node, nextTLHAllocReg, allocationSizeOrDataOffset + disp32, cg);
+        Inst_RegImm(OP::ADDRegImm4(), node, nextTLHAllocReg, allocationSizeOrDataOffset + disp32, cg);
 
         if (round) {
-            Inst_RegImm(TR::InstOpCode::ANDRegImm4(), node, nextTLHAllocReg, -round, cg);
+            Inst_RegImm(OP::ANDRegImm4(), node, nextTLHAllocReg, -round, cg);
         }
 
-        // Copy full object size in bytes to RCX for zero init via REP TR::InstOpCode::STOSQ
+        // Copy full object size in bytes to RCX for zero init via REP OP::STOSQ
         //
-        Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, tempReg, nextTLHAllocReg, cg);
+        Inst_RegReg(OP::MOVRegReg(), node, tempReg, nextTLHAllocReg, cg);
 
-        Inst_RegReg(TR::InstOpCode::ADDRegReg(), node, nextTLHAllocReg, eaxReal, cg);
+        Inst_RegReg(OP::ADDRegReg(), node, nextTLHAllocReg, eaxReal, cg);
     } else {
         // ----------
         // FIXED SIZE
         // ----------
 
-        Inst_RegMem(TR::InstOpCode::LRegMem(), node, eaxReal,
-            MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), cg);
+        Inst_RegMem(OP::LRegMem(), node, eaxReal, MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), cg);
 
         if (comp->getOptLevel() < hot)
             isTooSmallToPrefetch = allocationSizeOrDataOffset <= 0x40 ? true : false;
@@ -7315,19 +7249,19 @@ static void genHeapAllocForObjectOrHybridArraylet(TR::Node *node, TR_OpaqueClass
             & (-TR::Compiler->om.getObjectAlignmentInBytes());
 
         if ((uint32_t)allocationSizeOrDataOffset > cg->getMaxObjectSizeGuaranteedNotToOverflow()) {
-            Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, nextTLHAllocReg, eaxReal, cg);
+            Inst_RegReg(OP::MOVRegReg(), node, nextTLHAllocReg, eaxReal, cg);
             if (allocationSizeOrDataOffset <= 127)
-                Inst_RegImm(TR::InstOpCode::ADDRegImms(), node, nextTLHAllocReg, allocationSizeOrDataOffset, cg);
+                Inst_RegImm(OP::ADDRegImms(), node, nextTLHAllocReg, allocationSizeOrDataOffset, cg);
             else if (allocationSizeOrDataOffset == 128)
-                Inst_RegImm(TR::InstOpCode::SUBRegImms(), node, nextTLHAllocReg, (unsigned)-128, cg);
+                Inst_RegImm(OP::SUBRegImms(), node, nextTLHAllocReg, (unsigned)-128, cg);
             else
-                Inst_RegImm(TR::InstOpCode::ADDRegImm4(), node, nextTLHAllocReg, allocationSizeOrDataOffset, cg);
+                Inst_RegImm(OP::ADDRegImm4(), node, nextTLHAllocReg, allocationSizeOrDataOffset, cg);
 
             // Check for overflow
-            Inst_Label(TR::InstOpCode::JB4, node, failLabel, cg);
+            Inst_Label(OP::JB4, node, failLabel, cg);
         } else {
-            Inst_RegMem(TR::InstOpCode::LEARegMem(), node, nextTLHAllocReg,
-                MRef_Bdisp32(eaxReal, allocationSizeOrDataOffset, cg), cg);
+            Inst_RegMem(OP::LEARegMem(), node, nextTLHAllocReg, MRef_Bdisp32(eaxReal, allocationSizeOrDataOffset, cg),
+                cg);
         }
     }
 
@@ -7335,17 +7269,17 @@ static void genHeapAllocForObjectOrHybridArraylet(TR::Node *node, TR_OpaqueClass
     // MERGED PATH
     // -----------
 
-    Inst_RegMem(TR::InstOpCode::CMPRegMem(), node, nextTLHAllocReg,
-        MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapTop), cg), cg);
+    Inst_RegMem(OP::CMPRegMem(), node, nextTLHAllocReg, MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapTop), cg),
+        cg);
 
-    Inst_Label(TR::InstOpCode::JA4, node, failLabel, cg);
+    Inst_Label(OP::JA4, node, failLabel, cg);
 
     if (!isTooSmallToPrefetch && cg->enableTLHPrefetching()) {
         insertAllocationPrefetch(node, 1, nextTLHAllocReg, 0xc0, cg);
     }
 
-    Inst_MemReg(TR::InstOpCode::SMemReg(), node, MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg),
-        nextTLHAllocReg, cg);
+    Inst_MemReg(OP::SMemReg(), node, MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), nextTLHAllocReg,
+        cg);
 
     if (!isTooSmallToPrefetch && node->getOpCodeValue() != TR::New && cg->enableTLHPrefetching()) {
         insertAllocationPrefetch(node, 3, nextTLHAllocReg, 0x100, cg);
@@ -7374,7 +7308,7 @@ static void genInitObjectHeader(TR::Node *node, TR_OpaqueClassBlock *clazz, TR::
     //
     // --------------------------------------------------------------------------------
     //
-    TR::InstOpCode::Mnemonic opSMemReg = TR::InstOpCode::SMemReg(use64BitClasses);
+    OP::Mnemonic opSMemReg = OP::SMemReg(use64BitClasses);
 
     TR::Register *clzReg = classReg;
 
@@ -7384,16 +7318,14 @@ static void genInitObjectHeader(TR::Node *node, TR_OpaqueClassBlock *clazz, TR::
             "Dynamic allocation currently only supports reference arrays");
         TR_ASSERT(classReg, "must have a classReg for dynamic allocation");
         clzReg = tempReg;
-        Inst_RegMem(TR::InstOpCode::LRegMem(), node, clzReg, MRef_Bdisp32(classReg, offsetof(J9Class, arrayClass), cg),
-            cg);
+        Inst_RegMem(OP::LRegMem(), node, clzReg, MRef_Bdisp32(classReg, offsetof(J9Class, arrayClass), cg), cg);
     }
     // TODO: should be able to use a TR_ClassPointer relocation without this stuff (along with class validation)
     else if (cg->needClassAndMethodPointerRelocations() && !comp->getOption(TR_UseSymbolValidationManager)) {
         TR::Register *vmThreadReg = cg->getVMThreadRegister();
         if (node->getOpCodeValue() == TR::newarray) {
-            Inst_RegMem(TR::InstOpCode::LRegMem(), node, tempReg,
-                MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, javaVM), cg), cg);
-            Inst_RegMem(TR::InstOpCode::LRegMem(), node, tempReg,
+            Inst_RegMem(OP::LRegMem(), node, tempReg, MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, javaVM), cg), cg);
+            Inst_RegMem(OP::LRegMem(), node, tempReg,
                 MRef_Bdisp32(tempReg,
                     offsetof(J9JavaVM, booleanArrayClass) + (node->getSecondChild()->getInt() - 4) * sizeof(J9Class *),
                     cg),
@@ -7417,22 +7349,20 @@ static void genInitObjectHeader(TR::Node *node, TR_OpaqueClassBlock *clazz, TR::
         TR::Instruction *instr = NULL;
         if (use64BitClasses) {
             if (cg->needClassAndMethodPointerRelocations() && comp->getOption(TR_UseSymbolValidationManager))
-                instr = Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, tempReg, ((intptr_t)clazz | orFlagsClass), cg,
+                instr = Inst_RegImm64(OP::MOV8RegImm64, node, tempReg, ((intptr_t)clazz | orFlagsClass), cg,
                     TR_ClassPointer);
             else
-                instr
-                    = Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, tempReg, ((intptr_t)clazz | orFlagsClass), cg);
-            Inst_MemReg(TR::InstOpCode::S8MemReg, node,
-                MRef_Bdisp32(objectReg, TR::Compiler->om.offsetOfObjectVftField(), cg), tempReg, cg);
+                instr = Inst_RegImm64(OP::MOV8RegImm64, node, tempReg, ((intptr_t)clazz | orFlagsClass), cg);
+            Inst_MemReg(OP::S8MemReg, node, MRef_Bdisp32(objectReg, TR::Compiler->om.offsetOfObjectVftField(), cg),
+                tempReg, cg);
         } else {
-            instr = Inst_MemImm(TR::InstOpCode::S4MemImm4, node,
+            instr = Inst_MemImm(OP::S4MemImm4, node,
                 MRef_Bdisp32(objectReg, TR::Compiler->om.offsetOfObjectVftField(), cg),
                 (int32_t)((uintptr_t)clazz | orFlagsClass), cg);
         }
     } else {
         if (orFlagsClass != 0)
-            Inst_RegImm(use64BitClasses ? TR::InstOpCode::OR8RegImm4 : TR::InstOpCode::OR4RegImm4, node, clzReg,
-                orFlagsClass, cg);
+            Inst_RegImm(use64BitClasses ? OP::OR8RegImm4 : OP::OR4RegImm4, node, clzReg, orFlagsClass, cg);
         Inst_MemReg(opSMemReg, node, MRef_Bdisp32(objectReg, TR::Compiler->om.offsetOfObjectVftField(), cg), clzReg,
             cg);
     }
@@ -7456,8 +7386,7 @@ static void genInitObjectHeader(TR::Node *node, TR_OpaqueClassBlock *clazz, TR::
 
 #if defined(J9VM_OPT_NEW_OBJECT_HASH)
         // put orFlags or 0 into header if needed
-        Inst_MemImm(TR::InstOpCode::S4MemImm4, node, MRef_Bdisp32(objectReg, TMP_OFFSETOF_J9OBJECT_FLAGS, cg), orFlags,
-            cg);
+        Inst_MemImm(OP::S4MemImm4, node, MRef_Bdisp32(objectReg, TMP_OFFSETOF_J9OBJECT_FLAGS, cg), orFlags, cg);
 
 #endif /* !J9VM_OPT_NEW_OBJECT_HASH */
     }
@@ -7474,13 +7403,12 @@ static void genInitObjectHeader(TR::Node *node, TR_OpaqueClassBlock *clazz, TR::
     // 0 will force the locking to go to the slow locking path.
     if (isDynamicAllocation) {
         TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
-        Inst_RegMem(TR::InstOpCode::LRegMem(), node, tempReg,
-            MRef_Bdisp32(clzReg, offsetof(J9ArrayClass, lockOffset), cg), cg);
-        Inst_RegImm(TR::InstOpCode::CMPRegImm4(), node, tempReg, (int32_t)-1, cg);
-        Inst_Label(TR::InstOpCode::JE4, node, doneLabel, cg);
-        Inst_MemImm(TR::InstOpCode::SMemImm4(comp->target().is64Bit() && !fej9->generateCompressedLockWord()), node,
+        Inst_RegMem(OP::LRegMem(), node, tempReg, MRef_Bdisp32(clzReg, offsetof(J9ArrayClass, lockOffset), cg), cg);
+        Inst_RegImm(OP::CMPRegImm4(), node, tempReg, (int32_t)-1, cg);
+        Inst_Label(OP::JE4, node, doneLabel, cg);
+        Inst_MemImm(OP::SMemImm4(comp->target().is64Bit() && !fej9->generateCompressedLockWord()), node,
             MRef_BIS(objectReg, tempReg, 0, cg), 0, cg);
-        Inst_Label(TR::InstOpCode::label, node, doneLabel, cg);
+        Inst_Label(OP::label, node, doneLabel, cg);
     } else {
         bool initReservable = TR::Compiler->cls.classFlagReservableWordInitValue(clazz);
         if (!isZeroInitialized || initReservable) {
@@ -7494,8 +7422,8 @@ static void genInitObjectHeader(TR::Node *node, TR_OpaqueClassBlock *clazz, TR::
                 if (initReservable)
                     initialLwValue = OBJECT_HEADER_LOCK_RESERVED;
 
-                Inst_MemImm(TR::InstOpCode::SMemImm4(comp->target().is64Bit() && !fej9->generateCompressedLockWord()),
-                    node, MRef_Bdisp32(objectReg, lwOffset, cg), initialLwValue, cg);
+                Inst_MemImm(OP::SMemImm4(comp->target().is64Bit() && !fej9->generateCompressedLockWord()), node,
+                    MRef_Bdisp32(objectReg, lwOffset, cg), initialLwValue, cg);
             }
         }
     }
@@ -7550,16 +7478,15 @@ static void genInitArrayHeader(TR::Node *node, TR_OpaqueClassBlock *clazz, TR::R
         if (canUseFastInlineAllocation) {
             // Native 64-bit needs to cover the discontiguous size field
             //
-            TR::InstOpCode::Mnemonic storeOp = (comp->target().is64Bit() && !comp->useCompressedPointers())
-                ? TR::InstOpCode::S8MemReg
-                : TR::InstOpCode::S4MemReg;
+            OP::Mnemonic storeOp
+                = (comp->target().is64Bit() && !comp->useCompressedPointers()) ? OP::S8MemReg : OP::S4MemReg;
             Inst_MemReg(storeOp, node, arraySizeMR, sizeReg, cg);
         } else {
-            Inst_MemReg(TR::InstOpCode::S4MemReg, node, arraySizeMR, sizeReg, cg);
+            Inst_MemReg(OP::S4MemReg, node, arraySizeMR, sizeReg, cg);
         }
         // Take care of zero sized arrays as they are discontiguous and not contiguous
         if (shouldInitZeroSizedArrayHeader) {
-            Inst_MemImm(TR::InstOpCode::S4MemImm4, node, arrayDiscontiguousSizeMR, 0, cg);
+            Inst_MemImm(OP::S4MemImm4, node, arrayDiscontiguousSizeMR, 0, cg);
         }
     } else {
         // Fixed size
@@ -7568,18 +7495,17 @@ static void genInitArrayHeader(TR::Node *node, TR_OpaqueClassBlock *clazz, TR::R
         if (canUseFastInlineAllocation) {
             // Native 64-bit needs to cover the discontiguous size field
             //
-            TR::InstOpCode::Mnemonic storeOp = (comp->target().is64Bit() && !comp->useCompressedPointers())
-                ? TR::InstOpCode::S8MemImm4
-                : TR::InstOpCode::S4MemImm4;
+            OP::Mnemonic storeOp
+                = (comp->target().is64Bit() && !comp->useCompressedPointers()) ? OP::S8MemImm4 : OP::S4MemImm4;
             instanceSize = node->getFirstChild()->getInt();
             Inst_MemImm(storeOp, node, arraySizeMR, instanceSize, cg);
         } else {
             instanceSize = node->getFirstChild()->getInt();
-            Inst_MemImm(TR::InstOpCode::S4MemImm4, node, arraySizeMR, instanceSize, cg);
+            Inst_MemImm(OP::S4MemImm4, node, arraySizeMR, instanceSize, cg);
         }
         // Take care of zero sized arrays as they are discontiguous and not contiguous
         if (shouldInitZeroSizedArrayHeader && (instanceSize == 0)) {
-            Inst_MemImm(TR::InstOpCode::S4MemImm4, node, arrayDiscontiguousSizeMR, 0, cg);
+            Inst_MemImm(OP::S4MemImm4, node, arrayDiscontiguousSizeMR, 0, cg);
         }
     }
 
@@ -7587,20 +7513,19 @@ static void genInitArrayHeader(TR::Node *node, TR_OpaqueClassBlock *clazz, TR::R
 
     if (generateArraylets) {
         // write arraylet pointer
-        TR::InstOpCode::Mnemonic storeOp;
+        OP::Mnemonic storeOp;
 
-        Inst_RegMem(TR::InstOpCode::LEARegMem(), node, tempReg, MRef_Bdisp32(objectReg, arrayletDataOffset, cg), cg);
+        Inst_RegMem(OP::LEARegMem(), node, tempReg, MRef_Bdisp32(objectReg, arrayletDataOffset, cg), cg);
 
         if (comp->useCompressedPointers()) {
-            storeOp = TR::InstOpCode::S4MemReg;
+            storeOp = OP::S4MemReg;
 
             // Compress the arraylet pointer.
             //
             if (TR::Compiler->om.compressedReferenceShiftOffset() > 0)
-                Inst_RegImm(TR::InstOpCode::SHR8RegImm1, node, tempReg,
-                    TR::Compiler->om.compressedReferenceShiftOffset(), cg);
+                Inst_RegImm(OP::SHR8RegImm1, node, tempReg, TR::Compiler->om.compressedReferenceShiftOffset(), cg);
         } else {
-            storeOp = TR::InstOpCode::SMemReg();
+            storeOp = OP::SMemReg();
         }
 
         TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
@@ -7656,7 +7581,7 @@ static bool genZeroInitForEntireObjectOrHybridArraylet(TR::Node *node, int32_t o
     }
 
     if (sizeReg || objectSizeInBytes >= minRepstosdWords) {
-        // Zero-initialize by using REP TR::InstOpCode::STOSB.
+        // Zero-initialize by using REP OP::STOSB.
         //
         if (sizeReg) {
             // -------------
@@ -7668,16 +7593,16 @@ static bool genZeroInitForEntireObjectOrHybridArraylet(TR::Node *node, int32_t o
             // When the size is in a register, the numBytesToZeroInitReg contains the
             // rounded object size including the header
             //
-            Inst_RegImm(TR::InstOpCode::SUBRegImms(), node, numBytesToZeroInitReg, headerSizeInBytes, cg);
+            Inst_RegImm(OP::SUBRegImms(), node, numBytesToZeroInitReg, headerSizeInBytes, cg);
         } else {
             // ----------
             // FIXED SIZE
             // ----------
 
             if (comp->target().is64Bit() && !IS_32BIT_SIGNED(objectSizeInBytes)) {
-                Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, numBytesToZeroInitReg, objectSizeInBytes, cg);
+                Inst_RegImm64(OP::MOV8RegImm64, node, numBytesToZeroInitReg, objectSizeInBytes, cg);
             } else {
-                Inst_RegImm(TR::InstOpCode::MOVRegImm4(), node, numBytesToZeroInitReg, objectSizeInBytes, cg);
+                Inst_RegImm(OP::MOVRegImm4(), node, numBytesToZeroInitReg, objectSizeInBytes, cg);
             }
         }
 
@@ -7716,26 +7641,26 @@ static bool genZeroInitForEntireObjectOrHybridArraylet(TR::Node *node, int32_t o
             TR::LabelSymbol *repStosInitLabelSym = generateLabelSymbol(cg);
             TR::LabelSymbol *mergeInitLabelSym = generateLabelSymbol(cg);
 
-            Inst_RegImm(TR::InstOpCode::CMPRegImms(), node, numBytesToZeroInitReg,
+            Inst_RegImm(OP::CMPRegImms(), node, numBytesToZeroInitReg,
                 repStosZeroInitThresholdBytes + repSTOSThresholdAdjustment, cg);
-            Inst_Label(TR::InstOpCode::JG4, node, repStosInitLabelSym, cg);
+            Inst_Label(OP::JG4, node, repStosInitLabelSym, cg);
 
             // Begin zero initialization after the header, adjusting for header size
             // if necessary
             //
-            Inst_RegMem(TR::InstOpCode::LEARegMem(), node, segmentReg,
+            Inst_RegMem(OP::LEARegMem(), node, segmentReg,
                 MRef_Bdisp32(newObjectAddressReg, headerSizeInBytes + startingAddressAdjustment, cg), cg);
 
-            Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, zeroInitScratchReg, zeroInitScratchReg, cg);
+            Inst_RegReg(OP::XOR4RegReg, node, zeroInitScratchReg, zeroInitScratchReg, cg);
 
             // Generate mainline zero initialization with stores
             //
             TR::LabelSymbol *zeroInitLoopLabelSym = generateLabelSymbol(cg);
-            Inst_Label(TR::InstOpCode::label, node, zeroInitLoopLabelSym, cg);
-            Inst_MemReg(TR::InstOpCode::S8MemReg, node, MRef_Bdisp32(segmentReg, 0, cg), zeroInitScratchReg, cg);
-            Inst_RegImm(TR::InstOpCode::ADD8RegImms, node, segmentReg, 8, cg);
-            Inst_RegImm(TR::InstOpCode::SUB8RegImms, node, numBytesToZeroInitReg, 8, cg);
-            Inst_Label(TR::InstOpCode::JG4, node, zeroInitLoopLabelSym, cg);
+            Inst_Label(OP::label, node, zeroInitLoopLabelSym, cg);
+            Inst_MemReg(OP::S8MemReg, node, MRef_Bdisp32(segmentReg, 0, cg), zeroInitScratchReg, cg);
+            Inst_RegImm(OP::ADD8RegImms, node, segmentReg, 8, cg);
+            Inst_RegImm(OP::SUB8RegImms, node, numBytesToZeroInitReg, 8, cg);
+            Inst_Label(OP::JG4, node, zeroInitLoopLabelSym, cg);
 
             {
                 // Generate out-of-line REP STOS initialization
@@ -7748,14 +7673,14 @@ static bool genZeroInitForEntireObjectOrHybridArraylet(TR::Node *node, int32_t o
 
                 // Begin zero initialization after the header
                 //
-                Inst_RegMem(TR::InstOpCode::LEARegMem(), node, segmentReg,
-                    MRef_Bdisp32(newObjectAddressReg, headerSizeInBytes, cg), cg);
+                Inst_RegMem(OP::LEARegMem(), node, segmentReg, MRef_Bdisp32(newObjectAddressReg, headerSizeInBytes, cg),
+                    cg);
 
-                Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, zeroInitScratchReg, newObjectAddressReg, cg);
-                Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, newObjectAddressReg, newObjectAddressReg, cg);
-                Inst(TR::InstOpCode::REPSTOSB, node, cg);
-                Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, newObjectAddressReg, zeroInitScratchReg, cg);
-                Inst_Label(TR::InstOpCode::JMP4, node, mergeInitLabelSym, cg);
+                Inst_RegReg(OP::MOVRegReg(), node, zeroInitScratchReg, newObjectAddressReg, cg);
+                Inst_RegReg(OP::XOR4RegReg, node, newObjectAddressReg, newObjectAddressReg, cg);
+                Inst(OP::REPSTOSB, node, cg);
+                Inst_RegReg(OP::MOVRegReg(), node, newObjectAddressReg, zeroInitScratchReg, cg);
+                Inst_Label(OP::JMP4, node, mergeInitLabelSym, cg);
                 og.endOutlinedInstructionSequence();
             }
 
@@ -7763,26 +7688,26 @@ static bool genZeroInitForEntireObjectOrHybridArraylet(TR::Node *node, int32_t o
 
             // Merge
             //
-            Inst_Label(TR::InstOpCode::label, node, mergeInitLabelSym, cg);
+            Inst_Label(OP::label, node, mergeInitLabelSym, cg);
         } else {
 #endif
             // Begin zero initialization after the header
             //
-            Inst_RegMem(TR::InstOpCode::LEARegMem(), node, segmentReg,
-                MRef_Bdisp32(newObjectAddressReg, headerSizeInBytes, cg), cg);
+            Inst_RegMem(OP::LEARegMem(), node, segmentReg, MRef_Bdisp32(newObjectAddressReg, headerSizeInBytes, cg),
+                cg);
 
             if (comp->target().is64Bit()) {
-                Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, zeroInitScratchReg, newObjectAddressReg, cg);
+                Inst_RegReg(OP::MOVRegReg(), node, zeroInitScratchReg, newObjectAddressReg, cg);
             } else {
-                Inst_Reg(TR::InstOpCode::PUSHReg, node, newObjectAddressReg, cg);
+                Inst_Reg(OP::PUSHReg, node, newObjectAddressReg, cg);
             }
-            Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, newObjectAddressReg, newObjectAddressReg, cg);
-            Inst(TR::InstOpCode::REPSTOSB, node, cg);
+            Inst_RegReg(OP::XOR4RegReg, node, newObjectAddressReg, newObjectAddressReg, cg);
+            Inst(OP::REPSTOSB, node, cg);
             if (comp->target().is64Bit()) {
-                Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, newObjectAddressReg, zeroInitScratchReg, cg);
+                Inst_RegReg(OP::MOVRegReg(), node, newObjectAddressReg, zeroInitScratchReg, cg);
                 srm->reclaimScratchRegister(zeroInitScratchReg);
             } else {
-                Inst_Reg(TR::InstOpCode::POPReg, node, newObjectAddressReg, cg);
+                Inst_Reg(OP::POPReg, node, newObjectAddressReg, cg);
             }
 #ifdef TR_TARGET_64BIT
         }
@@ -7797,23 +7722,23 @@ static bool genZeroInitForEntireObjectOrHybridArraylet(TR::Node *node, int32_t o
         }
 
         TR::Register *scratchReg = srm->findOrCreateScratchRegister(TR_FPR);
-        Inst_RegReg(TR::InstOpCode::PXORRegReg, node, scratchReg, scratchReg, cg);
+        Inst_RegReg(OP::PXORRegReg, node, scratchReg, scratchReg, cg);
         int32_t offset = 0;
         while (objectSizeInBytes >= 16) {
-            Inst_MemReg(TR::InstOpCode::MOVDQUMemReg, node,
-                MRef_Bdisp32(newObjectAddressReg, headerSizeInBytes + offset, cg), scratchReg, cg);
+            Inst_MemReg(OP::MOVDQUMemReg, node, MRef_Bdisp32(newObjectAddressReg, headerSizeInBytes + offset, cg),
+                scratchReg, cg);
             objectSizeInBytes -= 16;
             offset += 16;
         }
 
         switch (objectSizeInBytes) {
             case 8:
-                Inst_MemReg(TR::InstOpCode::MOVQMemReg, node,
-                    MRef_Bdisp32(newObjectAddressReg, headerSizeInBytes + offset, cg), scratchReg, cg);
+                Inst_MemReg(OP::MOVQMemReg, node, MRef_Bdisp32(newObjectAddressReg, headerSizeInBytes + offset, cg),
+                    scratchReg, cg);
                 break;
             case 4:
-                Inst_MemReg(TR::InstOpCode::MOVDMemReg, node,
-                    MRef_Bdisp32(newObjectAddressReg, headerSizeInBytes + offset, cg), scratchReg, cg);
+                Inst_MemReg(OP::MOVDMemReg, node, MRef_Bdisp32(newObjectAddressReg, headerSizeInBytes + offset, cg),
+                    scratchReg, cg);
                 break;
             case 0:
                 break;
@@ -7923,15 +7848,14 @@ static bool genZeroInitEntireObject(TR::Node *node, int32_t objectSize, int32_t 
             minRepstosdWords = MIN_REPSTOSD_WORDS; // Use default value
     }
 
-    int32_t alignmentDelta
-        = 0; // for aligning properly to get best performance from REP TR::InstOpCode::STOSD/TR::InstOpCode::STOSQ
+    int32_t alignmentDelta = 0; // for aligning properly to get best performance from REP OP::STOSD/OP::STOSQ
 
     if (sizeReg || (numSlots + alignmentDelta) >= minRepstosdWords) {
-        // Zero-initialize by using REP TR::InstOpCode::STOSD/TR::InstOpCode::STOSQ.
+        // Zero-initialize by using REP OP::STOSD/OP::STOSQ.
         //
         // startOffset will be monitorSlot only for arrays
 
-        Inst_RegMem(TR::InstOpCode::LEARegMem(), node, segmentReg, MRef_Bdisp32(targetReg, startOfZeroInits, cg), cg);
+        Inst_RegMem(OP::LEARegMem(), node, segmentReg, MRef_Bdisp32(targetReg, startOfZeroInits, cg), cg);
 
         if (sizeReg) {
             int32_t additionalSlots = 0;
@@ -7948,42 +7872,40 @@ static bool genZeroInitEntireObject(TR::Node *node, int32_t objectSize, int32_t 
                 //
                 case 1:
                     if (comp->target().is64Bit()) {
-                        Inst_RegMem(TR::InstOpCode::LEA8RegMem, node, tempReg,
-                            MRef_Bdisp32(sizeReg, (additionalSlots * 8) + 7, cg), cg);
-                        Inst_RegImm(TR::InstOpCode::SHR8RegImm1, node, tempReg, 3, cg);
+                        Inst_RegMem(OP::LEA8RegMem, node, tempReg, MRef_Bdisp32(sizeReg, (additionalSlots * 8) + 7, cg),
+                            cg);
+                        Inst_RegImm(OP::SHR8RegImm1, node, tempReg, 3, cg);
                     } else {
-                        Inst_RegMem(TR::InstOpCode::LEA4RegMem, node, tempReg,
-                            MRef_Bdisp32(sizeReg, (additionalSlots * 4) + 3, cg), cg);
-                        Inst_RegImm(TR::InstOpCode::SHR4RegImm1, node, tempReg, 2, cg);
+                        Inst_RegMem(OP::LEA4RegMem, node, tempReg, MRef_Bdisp32(sizeReg, (additionalSlots * 4) + 3, cg),
+                            cg);
+                        Inst_RegImm(OP::SHR4RegImm1, node, tempReg, 2, cg);
                     }
                     break;
                 case 2:
                     if (comp->target().is64Bit()) {
-                        Inst_RegMem(TR::InstOpCode::LEA8RegMem, node, tempReg,
-                            MRef_Bdisp32(sizeReg, (additionalSlots * 4) + 3, cg), cg);
-                        Inst_RegImm(TR::InstOpCode::SHR8RegImm1, node, tempReg, 2, cg);
+                        Inst_RegMem(OP::LEA8RegMem, node, tempReg, MRef_Bdisp32(sizeReg, (additionalSlots * 4) + 3, cg),
+                            cg);
+                        Inst_RegImm(OP::SHR8RegImm1, node, tempReg, 2, cg);
                     } else {
-                        Inst_RegMem(TR::InstOpCode::LEA4RegMem, node, tempReg,
-                            MRef_Bdisp32(sizeReg, (additionalSlots * 2) + 1, cg), cg);
-                        Inst_RegImm(TR::InstOpCode::SHR4RegImm1, node, tempReg, 1, cg);
+                        Inst_RegMem(OP::LEA4RegMem, node, tempReg, MRef_Bdisp32(sizeReg, (additionalSlots * 2) + 1, cg),
+                            cg);
+                        Inst_RegImm(OP::SHR4RegImm1, node, tempReg, 1, cg);
                     }
                     break;
                 case 4:
                     if (comp->target().is64Bit()) {
-                        Inst_RegMem(TR::InstOpCode::LEA8RegMem, node, tempReg,
-                            MRef_Bdisp32(sizeReg, (additionalSlots * 2) + 1, cg), cg);
-                        Inst_RegImm(TR::InstOpCode::SHR8RegImm1, node, tempReg, 1, cg);
+                        Inst_RegMem(OP::LEA8RegMem, node, tempReg, MRef_Bdisp32(sizeReg, (additionalSlots * 2) + 1, cg),
+                            cg);
+                        Inst_RegImm(OP::SHR8RegImm1, node, tempReg, 1, cg);
                     } else {
-                        Inst_RegMem(TR::InstOpCode::LEA4RegMem, node, tempReg,
-                            MRef_Bdisp32(sizeReg, additionalSlots, cg), cg);
+                        Inst_RegMem(OP::LEA4RegMem, node, tempReg, MRef_Bdisp32(sizeReg, additionalSlots, cg), cg);
                     }
                     break;
                 case 8:
                     if (comp->target().is64Bit()) {
-                        Inst_RegMem(TR::InstOpCode::LEA8RegMem, node, tempReg,
-                            MRef_Bdisp32(sizeReg, additionalSlots, cg), cg);
+                        Inst_RegMem(OP::LEA8RegMem, node, tempReg, MRef_Bdisp32(sizeReg, additionalSlots, cg), cg);
                     } else {
-                        Inst_RegMem(TR::InstOpCode::LEA4RegMem, node, tempReg,
+                        Inst_RegMem(OP::LEA4RegMem, node, tempReg,
                             MRef_BISdisp32(NULL, sizeReg, TR::MemoryReference::convertMultiplierToStride(2),
                                 additionalSlots, cg),
                             cg);
@@ -7993,23 +7915,23 @@ static bool genZeroInitEntireObject(TR::Node *node, int32_t objectSize, int32_t 
         } else {
             // Fixed size
             //
-            Inst_RegImm(TR::InstOpCode::MOVRegImm4(), node, tempReg, numSlots + alignmentDelta, cg);
+            Inst_RegImm(OP::MOVRegImm4(), node, tempReg, numSlots + alignmentDelta, cg);
             if (comp->target().is64Bit()) {
                 // TODO AMD64: replace both instructions with a LEA tempReg, [disp32]
                 //
-                Inst_RegReg(TR::InstOpCode::MOVSXReg8Reg4, node, tempReg, tempReg, cg);
+                Inst_RegReg(OP::MOVSXReg8Reg4, node, tempReg, tempReg, cg);
             }
         }
 
         TR::Register *scratchReg = NULL;
         if (comp->target().is64Bit()) {
             scratchReg = srm->findOrCreateScratchRegister();
-            Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, scratchReg, targetReg, cg);
+            Inst_RegReg(OP::MOVRegReg(), node, scratchReg, targetReg, cg);
         } else {
-            Inst_Reg(TR::InstOpCode::PUSHReg, node, targetReg, cg);
+            Inst_Reg(OP::PUSHReg, node, targetReg, cg);
         }
 
-        Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, targetReg, targetReg, cg);
+        Inst_RegReg(OP::XOR4RegReg, node, targetReg, targetReg, cg);
 
         // We just pushed targetReg on the stack and zeroed it out. targetReg contained the address of the
         // beginning of the header. We want to use the 0-reg to initialize the monitor slot, so we use
@@ -8020,36 +7942,34 @@ static bool genZeroInitEntireObject(TR::Node *node, int32_t objectSize, int32_t 
         initLw = false;
 
         if (initLw) {
-            TR::InstOpCode::Mnemonic op = (comp->target().is64Bit() && fej9->generateCompressedLockWord())
-                ? TR::InstOpCode::S4MemReg
-                : TR::InstOpCode::SMemReg();
+            OP::Mnemonic op
+                = (comp->target().is64Bit() && fej9->generateCompressedLockWord()) ? OP::S4MemReg : OP::SMemReg();
             Inst_MemReg(op, node, MRef_Bdisp32(segmentReg, lwOffset - startOfZeroInits, cg), targetReg, cg);
         }
 
-        TR::InstOpCode::Mnemonic op = comp->target().is64Bit() ? TR::InstOpCode::REPSTOSQ : TR::InstOpCode::REPSTOSD;
+        OP::Mnemonic op = comp->target().is64Bit() ? OP::REPSTOSQ : OP::REPSTOSD;
         Inst(op, node, cg);
 
         if (comp->target().is64Bit()) {
-            Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, targetReg, scratchReg, cg);
+            Inst_RegReg(OP::MOVRegReg(), node, targetReg, scratchReg, cg);
             srm->reclaimScratchRegister(scratchReg);
         } else {
-            Inst_Reg(TR::InstOpCode::POPReg, node, targetReg, cg);
+            Inst_Reg(OP::POPReg, node, targetReg, cg);
         }
 
         return true;
     }
 
     if (numSlots > 0) {
-        Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, tempReg, tempReg, cg);
+        Inst_RegReg(OP::XOR4RegReg, node, tempReg, tempReg, cg);
 
         bool initLw = (node->getOpCodeValue() != TR::New);
         int lwOffset = fej9->getByteOffsetToLockword(clazz);
         initLw = false;
 
         if (initLw) {
-            TR::InstOpCode::Mnemonic op = (comp->target().is64Bit() && fej9->generateCompressedLockWord())
-                ? TR::InstOpCode::S4MemReg
-                : TR::InstOpCode::SMemReg();
+            OP::Mnemonic op
+                = (comp->target().is64Bit() && fej9->generateCompressedLockWord()) ? OP::S4MemReg : OP::SMemReg();
             Inst_MemReg(op, node, MRef_Bdisp32(targetReg, lwOffset, cg), tempReg, cg);
         }
     } else {
@@ -8058,9 +7978,8 @@ static bool genZeroInitEntireObject(TR::Node *node, int32_t objectSize, int32_t 
         initLw = false;
 
         if (initLw) {
-            TR::InstOpCode::Mnemonic op = (comp->target().is64Bit() && fej9->generateCompressedLockWord())
-                ? TR::InstOpCode::S4MemImm4
-                : TR::InstOpCode::SMemImm4();
+            OP::Mnemonic op
+                = (comp->target().is64Bit() && fej9->generateCompressedLockWord()) ? OP::S4MemImm4 : OP::SMemImm4();
             Inst_MemImm(op, node, MRef_Bdisp32(targetReg, lwOffset, cg), 0, cg);
         }
         return false;
@@ -8075,28 +7994,27 @@ static bool genZeroInitEntireObject(TR::Node *node, int32_t objectSize, int32_t 
 
         endOffset = (int32_t)(numLoopSlots * TR::Compiler->om.sizeofReferenceAddress() + startOfZeroInits);
 
-        Inst_RegImm(TR::InstOpCode::MOVRegImm4(), node, segmentReg,
-            -((numIterations - 1) * maxZeroInitWordsPerIteration), cg);
+        Inst_RegImm(OP::MOVRegImm4(), node, segmentReg, -((numIterations - 1) * maxZeroInitWordsPerIteration), cg);
 
         if (comp->target().is64Bit())
-            Inst_RegReg(TR::InstOpCode::MOVSXReg8Reg4, node, segmentReg, segmentReg, cg);
+            Inst_RegReg(OP::MOVSXReg8Reg4, node, segmentReg, segmentReg, cg);
 
         TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
-        Inst_Label(TR::InstOpCode::label, node, loopLabel, cg);
+        Inst_Label(OP::label, node, loopLabel, cg);
         for (i = maxZeroInitWordsPerIteration; i > 0; i--) {
-            Inst_MemReg(TR::InstOpCode::SMemReg(), node,
+            Inst_MemReg(OP::SMemReg(), node,
                 MRef_BISdisp32(targetReg, segmentReg,
                     TR::MemoryReference::convertMultiplierToStride((int32_t)TR::Compiler->om.sizeofReferenceAddress()),
                     endOffset - TR::Compiler->om.sizeofReferenceAddress() * i, cg),
                 tempReg, cg);
         }
-        Inst_RegImm(TR::InstOpCode::ADDRegImms(), node, segmentReg, maxZeroInitWordsPerIteration, cg);
-        Inst_Label(TR::InstOpCode::JLE4, node, loopLabel, cg);
+        Inst_RegImm(OP::ADDRegImms(), node, segmentReg, maxZeroInitWordsPerIteration, cg);
+        Inst_Label(OP::JLE4, node, loopLabel, cg);
 
         // Generate the left-over initializations
         //
         for (i = 0; i < numSlots % maxZeroInitWordsPerIteration; i++) {
-            Inst_MemReg(TR::InstOpCode::SMemReg(), node,
+            Inst_MemReg(OP::SMemReg(), node,
                 MRef_Bdisp32(targetReg, endOffset + TR::Compiler->om.sizeofReferenceAddress() * i, cg), tempReg, cg);
         }
     } else {
@@ -8105,7 +8023,7 @@ static bool genZeroInitEntireObject(TR::Node *node, int32_t objectSize, int32_t 
         for (i = 0; i < numSlots; i++) {
             // Don't bother initializing the array-size slot
             //
-            Inst_MemReg(TR::InstOpCode::SMemReg(), node,
+            Inst_MemReg(OP::SMemReg(), node,
                 MRef_Bdisp32(targetReg, i * TR::Compiler->om.sizeofReferenceAddress() + startOfZeroInits, cg), tempReg,
                 cg);
         }
@@ -8157,36 +8075,35 @@ static void handleOffHeapDataForArrays(TR::Node *node, TR::Register *sizeReg, TR
             fej9->getOffsetOfDiscontiguousDataAddrField(), fej9->getOffsetOfContiguousDataAddrField());
 
         TR::Register *discontiguousDataAddrOffsetReg = srm->findOrCreateScratchRegister();
-        Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, discontiguousDataAddrOffsetReg, discontiguousDataAddrOffsetReg,
-            cg);
+        Inst_RegReg(OP::XOR4RegReg, node, discontiguousDataAddrOffsetReg, discontiguousDataAddrOffsetReg, cg);
         // Since array size is capped at 32 bits, we only need to check lower half (0-31 bits) of sizeReg.
-        Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, sizeReg, 1, cg);
-        Inst_RegImm(TR::InstOpCode::ADCRegImm4(), node, discontiguousDataAddrOffsetReg, 0, cg);
+        Inst_RegImm(OP::CMP4RegImm4, node, sizeReg, 1, cg);
+        Inst_RegImm(OP::ADCRegImm4(), node, discontiguousDataAddrOffsetReg, 0, cg);
 
         dataAddrMR = MRef_BISdisp32(targetReg, discontiguousDataAddrOffsetReg, 3,
             TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg);
         dataAddrSlotMR = MRef_BISdisp32(targetReg, discontiguousDataAddrOffsetReg, 3,
             fej9->getOffsetOfContiguousDataAddrField(), cg);
         // Load first data element address
-        Inst_RegMem(TR::InstOpCode::LEARegMem(), node, tempReg, dataAddrMR, cg);
+        Inst_RegMem(OP::LEARegMem(), node, tempReg, dataAddrMR, cg);
 
         // Clear out tempReg if dealing with 0 length array
         zeroReg = srm->findOrCreateScratchRegister();
-        Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, zeroReg, zeroReg, cg);
+        Inst_RegReg(OP::XOR4RegReg, node, zeroReg, zeroReg, cg);
         // Since array size is capped at 32 bits, we only need to check lower half (0-31 bits) of sizeReg.
-        Inst_RegReg(TR::InstOpCode::TEST4RegReg, node, sizeReg, sizeReg, cg);
-        Inst_RegReg(TR::InstOpCode::CMOVERegReg(), node, tempReg, zeroReg, cg);
+        Inst_RegReg(OP::TEST4RegReg, node, sizeReg, sizeReg, cg);
+        Inst_RegReg(OP::CMOVERegReg(), node, tempReg, zeroReg, cg);
         srm->reclaimScratchRegister(zeroReg);
 
         // Write first data element address to dataAddr slot
-        Inst_MemReg(TR::InstOpCode::SMemReg(), node, dataAddrSlotMR, tempReg, cg);
+        Inst_MemReg(OP::SMemReg(), node, dataAddrSlotMR, tempReg, cg);
         srm->reclaimScratchRegister(discontiguousDataAddrOffsetReg);
     } else if (NULL == sizeReg && node->getFirstChild()->getOpCode().isLoadConst()
         && node->getFirstChild()->getInt() == 0) {
         logprintf(trace, log, "Node (%p): Dealing with full/compressed refs fixed length zero size array.\n", node);
 
         dataAddrSlotMR = MRef_Bdisp32(targetReg, fej9->getOffsetOfDiscontiguousDataAddrField(), cg);
-        Inst_MemImm(TR::InstOpCode::SMemImm4(), node, dataAddrSlotMR, 0, cg);
+        Inst_MemImm(OP::SMemImm4(), node, dataAddrSlotMR, 0, cg);
     } else {
         logprintf(trace, log,
             "Node (%p): Dealing with either full/compressed refs fixed length non-zero size array or full refs "
@@ -8205,19 +8122,19 @@ static void handleOffHeapDataForArrays(TR::Node *node, TR::Register *sizeReg, TR
         dataAddrMR = MRef_Bdisp32(targetReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg);
         dataAddrSlotMR = MRef_Bdisp32(targetReg, fej9->getOffsetOfContiguousDataAddrField(), cg);
         // Load first data element address
-        Inst_RegMem(TR::InstOpCode::LEARegMem(), node, tempReg, dataAddrMR, cg);
+        Inst_RegMem(OP::LEARegMem(), node, tempReg, dataAddrMR, cg);
 
         if (!TR::Compiler->om.compressObjectReferences() && NULL != sizeReg) {
             // Clear out tempReg if dealing with 0 length array
             zeroReg = srm->findOrCreateScratchRegister();
-            Inst_RegReg(TR::InstOpCode::XORRegReg(), node, zeroReg, zeroReg, cg);
+            Inst_RegReg(OP::XORRegReg(), node, zeroReg, zeroReg, cg);
             // Since array size is capped at 32 bits, we only need to check lower half (0-31 bits) of sizeReg.
-            Inst_RegReg(TR::InstOpCode::TEST4RegReg, node, sizeReg, sizeReg, cg);
-            Inst_RegReg(TR::InstOpCode::CMOVERegReg(), node, tempReg, zeroReg, cg);
+            Inst_RegReg(OP::TEST4RegReg, node, sizeReg, sizeReg, cg);
+            Inst_RegReg(OP::CMOVERegReg(), node, tempReg, zeroReg, cg);
             srm->reclaimScratchRegister(zeroReg);
         }
         // Write first data element address to dataAddr slot
-        Inst_MemReg(TR::InstOpCode::SMemReg(), node, dataAddrSlotMR, tempReg, cg);
+        Inst_MemReg(OP::SMemReg(), node, dataAddrSlotMR, tempReg, cg);
     }
 }
 #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
@@ -8454,7 +8371,7 @@ TR::Register *J9::X86::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGen
 
     TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
     startLabel->setStartInternalControlFlow();
-    Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+    Inst_Label(OP::label, node, startLabel, cg);
 
     // Generate the helper call for out-of-line allocation
     //
@@ -8525,10 +8442,10 @@ TR::Register *J9::X86::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGen
             TR_BitVectorIterator bvi(*initInfo->zeroInitSlots);
             static bool UseOldBVI = feGetEnv("TR_UseOldBVI");
             if (UseOldBVI) {
-                Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, tempReg, tempReg, cg);
+                Inst_RegReg(OP::XOR4RegReg, node, tempReg, tempReg, cg);
                 while (bvi.hasMoreElements()) {
-                    Inst_MemReg(TR::InstOpCode::S4MemReg, node,
-                        MRef_Bdisp32(targetReg, bvi.getNextElement() * 4 + dataOffset, cg), tempReg, cg);
+                    Inst_MemReg(OP::S4MemReg, node, MRef_Bdisp32(targetReg, bvi.getNextElement() * 4 + dataOffset, cg),
+                        tempReg, cg);
                 }
             } else {
                 int32_t lastElementIndex = -1;
@@ -8536,7 +8453,7 @@ TR::Register *J9::X86::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGen
                 int32_t span = 0;
                 int32_t lastSpan = -1;
                 scratchReg = srm->findOrCreateScratchRegister(TR_FPR);
-                Inst_RegReg(TR::InstOpCode::PXORRegReg, node, scratchReg, scratchReg, cg);
+                Inst_RegReg(OP::PXORRegReg, node, scratchReg, scratchReg, cg);
                 while (bvi.hasMoreElements()) {
                     nextE = bvi.getNextElement();
                     if (-1 == lastElementIndex)
@@ -8547,18 +8464,18 @@ TR::Register *J9::X86::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGen
                         lastSpan = span;
                         continue;
                     } else if (span == 3) {
-                        Inst_MemReg(TR::InstOpCode::MOVDQUMemReg, node,
+                        Inst_MemReg(OP::MOVDQUMemReg, node,
                             MRef_Bdisp32(targetReg, lastElementIndex * 4 + dataOffset, cg), scratchReg, cg);
                         lastSpan = -1;
                         lastElementIndex = -1;
                     } else if (span > 3) {
-                        TR::InstOpCode::Mnemonic storeOpCode;
+                        OP::Mnemonic storeOpCode;
                         if (lastSpan == 0) {
-                            storeOpCode = TR::InstOpCode::MOVDMemReg;
+                            storeOpCode = OP::MOVDMemReg;
                         } else if (lastSpan == 1) {
-                            storeOpCode = TR::InstOpCode::MOVQMemReg;
+                            storeOpCode = OP::MOVQMemReg;
                         } else {
-                            storeOpCode = TR::InstOpCode::MOVDQUMemReg;
+                            storeOpCode = OP::MOVDQUMemReg;
                         }
 
                         Inst_MemReg(storeOpCode, node, MRef_Bdisp32(targetReg, lastElementIndex * 4 + dataOffset, cg),
@@ -8570,25 +8487,25 @@ TR::Register *J9::X86::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGen
                 }
 
                 int32_t adjustedDataOffset = dataOffset;
-                TR::InstOpCode::Mnemonic storeOpCode = TR::InstOpCode::bad;
+                OP::Mnemonic storeOpCode = OP::bad;
 
                 switch (lastSpan) {
                     case 0:
-                        storeOpCode = TR::InstOpCode::MOVDMemReg;
+                        storeOpCode = OP::MOVDMemReg;
                         break;
                     case 1:
-                        storeOpCode = TR::InstOpCode::MOVQMemReg;
+                        storeOpCode = OP::MOVQMemReg;
                         break;
                     case 2:
                         TR_ASSERT(dataOffset >= 4, "dataOffset must be >= 4.");
-                        storeOpCode = TR::InstOpCode::MOVDQUMemReg;
+                        storeOpCode = OP::MOVDQUMemReg;
                         adjustedDataOffset -= 4;
                         break;
                     default:
                         break;
                 }
 
-                if (storeOpCode != TR::InstOpCode::bad) {
+                if (storeOpCode != OP::bad) {
                     Inst_MemReg(storeOpCode, node,
                         MRef_Bdisp32(targetReg, lastElementIndex * 4 + adjustedDataOffset, cg), scratchReg, cg);
                 }
@@ -8625,7 +8542,7 @@ TR::Register *J9::X86::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGen
                 // via the contiguous length slot.
                 //
                 if (node->getOpCodeValue() != TR::New && (comp->target().is32Bit() || comp->useCompressedPointers())) {
-                    Inst_MemImm(TR::InstOpCode::SMemImm4(), node,
+                    Inst_MemImm(OP::SMemImm4(), node,
                         MRef_Bdisp32(targetReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg), 0, cg);
                     shouldInitZeroSizedArrayHeader = false;
                 }
@@ -8739,7 +8656,7 @@ TR::Register *J9::X86::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGen
 
     deps->stopAddingConditions();
 
-    Inst_Label(TR::InstOpCode::label, node, fallThru, deps, cg);
+    Inst_Label(OP::label, node, fallThru, deps, cg);
 
     // Copy the newly allocated object into a collected reference register
     // now that it is a valid object.
@@ -8747,7 +8664,7 @@ TR::Register *J9::X86::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGen
     TR::Register *targetReg2 = cg->allocateCollectedReferenceRegister();
     TR::RegisterDependencyConditions *deps2 = RegDeps(0, 1, cg);
     deps2->addPostCondition(targetReg2, TR::RealRegister::eax, cg);
-    Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, targetReg2, targetReg, deps2, cg);
+    Inst_RegReg(OP::MOVRegReg(), node, targetReg2, targetReg, deps2, cg);
     cg->stopUsingRegister(targetReg);
     targetReg = targetReg2;
 
@@ -8793,7 +8710,7 @@ void J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(TR::Node *node, TR::Node *
 
             TR::MemoryReference *destTypeMR = MRef_Bdisp32(destReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
 
-            Inst_RegMem(TR::InstOpCode::L4RegMem, node, destComponentClassReg, destTypeMR,
+            Inst_RegMem(OP::L4RegMem, node, destComponentClassReg, destTypeMR,
                 cg); // class pointer is 32 bits
             TR::TreeEvaluator::generateVFTMaskInstruction(node, destComponentClassReg, cg);
 
@@ -8807,10 +8724,9 @@ void J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(TR::Node *node, TR::Node *
 
             TR_ASSERT((((uintptr_t)objectClass) >> 32) == 0,
                 "TR_OpaqueClassBlock must fit on 32 bits when using class pointer compression");
-            instr = Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, destComponentClassReg,
-                (uint32_t)((uint64_t)objectClass), cg);
+            instr = Inst_RegImm(OP::CMP4RegImm4, node, destComponentClassReg, (uint32_t)((uint64_t)objectClass), cg);
 
-            Inst_Label(TR::InstOpCode::JE4, node, wrtbarLabel, cg);
+            Inst_Label(OP::JE4, node, wrtbarLabel, cg);
 
             // here we may have to convert the TR_OpaqueClassBlock into a J9Class pointer
             // and store it in destComponentClassReg
@@ -8818,7 +8734,7 @@ void J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(TR::Node *node, TR::Node *
 
             TR::MemoryReference *destCompTypeMR
                 = MRef_Bdisp32(destComponentClassReg, offsetof(J9ArrayClass, componentType), cg);
-            Inst_RegMem(TR::InstOpCode::LRegMem(), node, destComponentClassReg, destCompTypeMR, cg);
+            Inst_RegMem(OP::LRegMem(), node, destComponentClassReg, destCompTypeMR, cg);
 
             // here we may have to convert the J9Class pointer from destComponentClassReg into
             // a TR_OpaqueClassBlock and store it back into destComponentClassReg
@@ -8826,35 +8742,35 @@ void J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(TR::Node *node, TR::Node *
 
             TR::MemoryReference *sourceRegClassMR
                 = MRef_Bdisp32(sourceReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
-            Inst_RegMem(TR::InstOpCode::L4RegMem, node, sourceClassReg, sourceRegClassMR, cg);
+            Inst_RegMem(OP::L4RegMem, node, sourceClassReg, sourceRegClassMR, cg);
             TR::TreeEvaluator::generateVFTMaskInstruction(node, sourceClassReg, cg);
 
-            Inst_RegReg(TR::InstOpCode::CMP4RegReg, node, destComponentClassReg, sourceClassReg,
+            Inst_RegReg(OP::CMP4RegReg, node, destComponentClassReg, sourceClassReg,
                 cg); // compare only 32 bits
-            Inst_Label(TR::InstOpCode::JE4, node, wrtbarLabel, cg);
+            Inst_Label(OP::JE4, node, wrtbarLabel, cg);
 
             // -------------------------------------------------------------------------
             //          // Check the source class cast cache
             //
             // -------------------------------------------------------------------------
 
-            Inst_MemReg(TR::InstOpCode::CMP4MemReg, node,
-                MRef_Bdisp32(sourceClassReg, offsetof(J9Class, castClassCache), cg), destComponentClassReg, cg);
+            Inst_MemReg(OP::CMP4MemReg, node, MRef_Bdisp32(sourceClassReg, offsetof(J9Class, castClassCache), cg),
+                destComponentClassReg, cg);
         } else // no class pointer compression
         {
             TR::MemoryReference *sourceClassMR = MRef_Bdisp32(sourceReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
-            Inst_RegMem(TR::InstOpCode::LRegMem(), node, sourceClassReg, sourceClassMR, cg);
+            Inst_RegMem(OP::LRegMem(), node, sourceClassReg, sourceClassMR, cg);
             TR::TreeEvaluator::generateVFTMaskInstruction(node, sourceClassReg, cg);
 
             TR::MemoryReference *destClassMR = MRef_Bdisp32(destReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
-            Inst_RegMem(TR::InstOpCode::LRegMem(), node, destComponentClassReg, destClassMR, cg);
+            Inst_RegMem(OP::LRegMem(), node, destComponentClassReg, destClassMR, cg);
             TR::TreeEvaluator::generateVFTMaskInstruction(node, destComponentClassReg, cg);
             TR::MemoryReference *destCompTypeMR
                 = MRef_Bdisp32(destComponentClassReg, offsetof(J9ArrayClass, componentType), cg);
-            Inst_RegMem(TR::InstOpCode::LRegMem(), node, destComponentClassReg, destCompTypeMR, cg);
+            Inst_RegMem(OP::LRegMem(), node, destComponentClassReg, destCompTypeMR, cg);
 
-            Inst_RegReg(TR::InstOpCode::CMPRegReg(), node, destComponentClassReg, sourceClassReg, cg);
-            Inst_Label(TR::InstOpCode::JE4, node, wrtbarLabel, cg);
+            Inst_RegReg(OP::CMPRegReg(), node, destComponentClassReg, sourceClassReg, cg);
+            Inst_Label(OP::JE4, node, wrtbarLabel, cg);
 
             // -------------------------------------------------------------------------
             //
@@ -8862,10 +8778,10 @@ void J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(TR::Node *node, TR::Node *
             //
             // -------------------------------------------------------------------------
 
-            Inst_MemReg(TR::InstOpCode::CMPMemReg(), node,
-                MRef_Bdisp32(sourceClassReg, offsetof(J9Class, castClassCache), cg), destComponentClassReg, cg);
+            Inst_MemReg(OP::CMPMemReg(), node, MRef_Bdisp32(sourceClassReg, offsetof(J9Class, castClassCache), cg),
+                destComponentClassReg, cg);
         }
-        Inst_Label(TR::InstOpCode::JE4, node, wrtbarLabel, cg);
+        Inst_Label(OP::JE4, node, wrtbarLabel, cg);
 
         instr = NULL;
         /*
@@ -8885,32 +8801,32 @@ void J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(TR::Node *node, TR::Node *
               if (TR::Compiler->om.compressObjectReferences())
                  {
                  TR_ASSERT((((uintptr_t)objectClass) >> 32) == 0, "TR_OpaqueClassBlock must fit on 32 bits when using
-        class pointer compression"); instr = Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node,
+        class pointer compression"); instr = Inst_RegImm(OP::CMP4RegImm4, node,
         destComponentClassReg, (uint32_t) ((uint64_t) objectClass), cg);
                  }
               else // 64 bit but no class pointer compression
                  {
                  if ((uintptr_t)objectClass <= (uintptr_t)0x7fffffff)
                     {
-                    instr = Inst_RegImm(TR::InstOpCode::CMP8RegImm4, node, destComponentClassReg,
+                    instr = Inst_RegImm(OP::CMP8RegImm4, node, destComponentClassReg,
         (uintptr_t) objectClass, cg);
                     }
                  else
                     {
                     TR::Register *objectClassReg = scratchRegisterManager->findOrCreateScratchRegister();
-                    instr = Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, objectClassReg, (uintptr_t)
-        objectClass, cg); Inst_RegReg(TR::InstOpCode::CMP8RegReg, node, destComponentClassReg,
+                    instr = Inst_RegImm64(OP::MOV8RegImm64, node, objectClassReg, (uintptr_t)
+        objectClass, cg); Inst_RegReg(OP::CMP8RegReg, node, destComponentClassReg,
         objectClassReg, cg); scratchRegisterManager->reclaimScratchRegister(objectClassReg);
                     }
                  }
            }
         else
            {
-           instr = Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, destComponentClassReg,
+           instr = Inst_RegImm(OP::CMP4RegImm4, node, destComponentClassReg,
         (int32_t)(uintptr_t) objectClass, cg);
            }
 
-        Inst_Label(TR::InstOpCode::JE4, node, wrtbarLabel, cg);
+        Inst_Label(OP::JE4, node, wrtbarLabel, cg);
         */
 
         // ---------------------------------------------
@@ -8926,7 +8842,7 @@ void J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(TR::Node *node, TR::Node *
                 if (TR::Compiler->om.compressObjectReferences()) {
                     TR_ASSERT((((uintptr_t)arrayComponentClass) >> 32) == 0,
                         "TR_OpaqueClassBlock must fit on 32 bits when using class pointer compression");
-                    instr = Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, destComponentClassReg,
+                    instr = Inst_RegImm(OP::CMP4RegImm4, node, destComponentClassReg,
                         (uint32_t)((uint64_t)arrayComponentClass), cg);
 
                     if (fej9->isUnloadAssumptionRequired(arrayComponentClass, comp->getCurrentMethod()))
@@ -8935,28 +8851,27 @@ void J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(TR::Node *node, TR::Node *
                 } else // 64 bit but no class pointer compression
                 {
                     if ((uintptr_t)arrayComponentClass <= (uintptr_t)0x7fffffff) {
-                        instr = Inst_RegImm(TR::InstOpCode::CMP8RegImm4, node, destComponentClassReg,
+                        instr = Inst_RegImm(OP::CMP8RegImm4, node, destComponentClassReg,
                             (uintptr_t)arrayComponentClass, cg);
                         if (fej9->isUnloadAssumptionRequired(arrayComponentClass, comp->getCurrentMethod()))
                             comp->getStaticPICSites()->push_front(instr);
 
                     } else {
                         TR::Register *arrayComponentClassReg = scratchRegisterManager->findOrCreateScratchRegister();
-                        instr = Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, arrayComponentClassReg,
+                        instr = Inst_RegImm64(OP::MOV8RegImm64, node, arrayComponentClassReg,
                             (uintptr_t)arrayComponentClass, cg);
-                        Inst_RegReg(TR::InstOpCode::CMP8RegReg, node, destComponentClassReg, arrayComponentClassReg,
-                            cg);
+                        Inst_RegReg(OP::CMP8RegReg, node, destComponentClassReg, arrayComponentClassReg, cg);
                         scratchRegisterManager->reclaimScratchRegister(arrayComponentClassReg);
                     }
                 }
             } else {
-                instr = Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, destComponentClassReg,
+                instr = Inst_RegImm(OP::CMP4RegImm4, node, destComponentClassReg,
                     (int32_t)(uintptr_t)arrayComponentClass, cg);
                 if (fej9->isUnloadAssumptionRequired(arrayComponentClass, comp->getCurrentMethod()))
                     comp->getStaticPICSites()->push_front(instr);
             }
 
-            Inst_Label(TR::InstOpCode::JE4, node, wrtbarLabel, cg);
+            Inst_Label(OP::JE4, node, wrtbarLabel, cg);
         }
 
         // For compressed references:
@@ -8984,22 +8899,20 @@ void J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(TR::Node *node, TR::Node *
 
         if (eliminateDepthMask) {
             if (comp->target().is64Bit())
-                Inst_RegMem(TR::InstOpCode::MOVZXReg8Mem2, node, destComponentClassDepthReg, destComponentClassDepthMR,
-                    cg);
+                Inst_RegMem(OP::MOVZXReg8Mem2, node, destComponentClassDepthReg, destComponentClassDepthMR, cg);
             else
-                Inst_RegMem(TR::InstOpCode::MOVZXReg4Mem2, node, destComponentClassDepthReg, destComponentClassDepthMR,
-                    cg);
+                Inst_RegMem(OP::MOVZXReg4Mem2, node, destComponentClassDepthReg, destComponentClassDepthMR, cg);
         } else {
-            Inst_RegMem(TR::InstOpCode::LRegMem(), node, destComponentClassDepthReg, destComponentClassDepthMR, cg);
+            Inst_RegMem(OP::LRegMem(), node, destComponentClassDepthReg, destComponentClassDepthMR, cg);
         }
 
         if (!eliminateDepthMask) {
             if (comp->target().is64Bit()) {
                 TR_ASSERT(!(J9AccClassDepthMask & 0x80000000), "AMD64: need to use a second register for AND mask");
                 if (!(J9AccClassDepthMask & 0x80000000))
-                    Inst_RegImm(TR::InstOpCode::AND8RegImm4, node, destComponentClassDepthReg, J9AccClassDepthMask, cg);
+                    Inst_RegImm(OP::AND8RegImm4, node, destComponentClassDepthReg, J9AccClassDepthMask, cg);
             } else {
-                Inst_RegImm(TR::InstOpCode::AND4RegImm4, node, destComponentClassDepthReg, J9AccClassDepthMask, cg);
+                Inst_RegImm(OP::AND4RegImm4, node, destComponentClassDepthReg, J9AccClassDepthMask, cg);
             }
         }
 
@@ -9022,24 +8935,24 @@ void J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(TR::Node *node, TR::Node *
 
         TR::Register *sourceClassDepthReg = NULL;
         if (eliminateDepthMask) {
-            Inst_MemReg(TR::InstOpCode::CMP2MemReg, node, mr, destComponentClassDepthReg, cg);
+            Inst_MemReg(OP::CMP2MemReg, node, mr, destComponentClassDepthReg, cg);
         } else {
             sourceClassDepthReg = scratchRegisterManager->findOrCreateScratchRegister();
-            Inst_RegMem(TR::InstOpCode::LRegMem(), node, sourceClassDepthReg, mr, cg);
+            Inst_RegMem(OP::LRegMem(), node, sourceClassDepthReg, mr, cg);
 
             if (comp->target().is64Bit()) {
                 TR_ASSERT(!(J9AccClassDepthMask & 0x80000000), "AMD64: need to use a second register for AND mask");
                 if (!(J9AccClassDepthMask & 0x80000000))
-                    Inst_RegImm(TR::InstOpCode::AND8RegImm4, node, sourceClassDepthReg, J9AccClassDepthMask, cg);
+                    Inst_RegImm(OP::AND8RegImm4, node, sourceClassDepthReg, J9AccClassDepthMask, cg);
             } else {
-                Inst_RegImm(TR::InstOpCode::AND4RegImm4, node, sourceClassDepthReg, J9AccClassDepthMask, cg);
+                Inst_RegImm(OP::AND4RegImm4, node, sourceClassDepthReg, J9AccClassDepthMask, cg);
             }
-            Inst_RegReg(TR::InstOpCode::CMP4RegReg, node, sourceClassDepthReg, destComponentClassDepthReg, cg);
+            Inst_RegReg(OP::CMP4RegReg, node, sourceClassDepthReg, destComponentClassDepthReg, cg);
         }
 
         /*TR::Register *sourceClassDepthReg = scratchRegisterManager->findOrCreateScratchRegister();
         Inst_RegMem(
-           TR::InstOpCode::LRegMem(),
+           OP::LRegMem(),
            node,
            sourceClassDepthReg,
            mr, cg);
@@ -9048,18 +8961,18 @@ void J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(TR::Node *node, TR::Node *
            {
            TR_ASSERT(!(J9AccClassDepthMask & 0x80000000), "AMD64: need to use a second register for AND mask");
            if (!(J9AccClassDepthMask & 0x80000000))
-              Inst_RegImm(TR::InstOpCode::AND8RegImm4, node, sourceClassDepthReg, J9AccClassDepthMask,
+              Inst_RegImm(OP::AND8RegImm4, node, sourceClassDepthReg, J9AccClassDepthMask,
         cg);
            }
         else
            {
-           Inst_RegImm(TR::InstOpCode::AND4RegImm4, node, sourceClassDepthReg, J9AccClassDepthMask, cg);
+           Inst_RegImm(OP::AND4RegImm4, node, sourceClassDepthReg, J9AccClassDepthMask, cg);
            }
 
-        Inst_RegReg(TR::InstOpCode::CMP4RegReg, node, sourceClassDepthReg, destComponentClassDepthReg,
+        Inst_RegReg(OP::CMP4RegReg, node, sourceClassDepthReg, destComponentClassDepthReg,
         cg);*/
 
-        Inst_Label(TR::InstOpCode::JBE4, node, helperCallLabel, cg);
+        Inst_Label(OP::JBE4, node, helperCallLabel, cg);
         if (sourceClassDepthReg != NULL)
             scratchRegisterManager->reclaimScratchRegister(sourceClassDepthReg);
 
@@ -9072,7 +8985,7 @@ void J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(TR::Node *node, TR::Node *
             //
             sourceClassReg = scratchRegisterManager->findOrCreateScratchRegister();
             TR::MemoryReference *sourceClassMR = MRef_Bdisp32(sourceReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
-            Inst_RegMem(TR::InstOpCode::LRegMem(), node, sourceClassReg, sourceClassMR, cg);
+            Inst_RegMem(OP::LRegMem(), node, sourceClassReg, sourceClassMR, cg);
             TR::TreeEvaluator::generateVFTMaskInstruction(node, sourceClassReg, cg);
         }
 
@@ -9084,7 +8997,7 @@ void J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(TR::Node *node, TR::Node *
 
         TR::Register *sourceSuperClassReg = scratchRegisterManager->findOrCreateScratchRegister();
 
-        Inst_RegMem(TR::InstOpCode::LRegMem(), node, sourceSuperClassReg, tempMR, cg);
+        Inst_RegMem(OP::LRegMem(), node, sourceSuperClassReg, tempMR, cg);
 
         TR::MemoryReference *leaMR
             = MRef_BISdisp32(sourceSuperClassReg, destComponentClassDepthReg, logBase2(sizeof(uintptr_t)), 0, cg);
@@ -9095,20 +9008,20 @@ void J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(TR::Node *node, TR::Node *
         // We may need to convert superClass to a class offset before doing the comparison
 
         if (comp->target().is32Bit()) {
-            Inst_RegMem(TR::InstOpCode::LRegMem(), node, sourceSuperClassReg, leaMR, cg);
+            Inst_RegMem(OP::LRegMem(), node, sourceSuperClassReg, leaMR, cg);
 
             // Rematerialize destination component class
             //
             TR::MemoryReference *destClassMR = MRef_Bdisp32(destReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
 
-            Inst_RegMem(TR::InstOpCode::LRegMem(), node, destComponentClassReg, destClassMR, cg);
+            Inst_RegMem(OP::LRegMem(), node, destComponentClassReg, destClassMR, cg);
             TR::TreeEvaluator::generateVFTMaskInstruction(node, destComponentClassReg, cg);
             TR::MemoryReference *destCompTypeMR
                 = MRef_Bdisp32(destComponentClassReg, offsetof(J9ArrayClass, componentType), cg);
 
-            Inst_MemReg(TR::InstOpCode::CMPMemReg(), node, destCompTypeMR, sourceSuperClassReg, cg);
+            Inst_MemReg(OP::CMPMemReg(), node, destCompTypeMR, sourceSuperClassReg, cg);
         } else {
-            Inst_RegMem(TR::InstOpCode::CMP4RegMem, node, destComponentClassReg, leaMR, cg);
+            Inst_RegMem(OP::CMP4RegMem, node, destComponentClassReg, leaMR, cg);
         }
 
         scratchRegisterManager->reclaimScratchRegister(destComponentClassReg);
@@ -9116,7 +9029,7 @@ void J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(TR::Node *node, TR::Node *
         scratchRegisterManager->reclaimScratchRegister(sourceClassReg);
         scratchRegisterManager->reclaimScratchRegister(sourceSuperClassReg);
 
-        Inst_Label(TR::InstOpCode::JE4, node, wrtbarLabel, cg);
+        Inst_Label(OP::JE4, node, wrtbarLabel, cg);
     }
 
     // The fast paths failed; execute the type-check helper call.
@@ -9125,11 +9038,11 @@ void J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(TR::Node *node, TR::Node *
     TR::Node *helperCallNode
         = TR::Node::createWithSymRef(TR::call, 2, 2, sourceChild, destinationChild, node->getSymbolReference());
     helperCallNode->copyByteCodeInfo(node);
-    Inst_Label(TR::InstOpCode::JMP4, helperCallNode, helperCallLabel, cg);
+    Inst_Label(OP::JMP4, helperCallNode, helperCallLabel, cg);
     TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory())
         TR_OutlinedInstructions(helperCallNode, TR::call, NULL, helperCallLabel, helperReturnLabel, cg);
     cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
-    Inst_Label(TR::InstOpCode::label, helperCallNode, helperReturnLabel, cg);
+    Inst_Label(OP::label, helperCallNode, helperReturnLabel, cg);
     cg->decReferenceCount(sourceChild);
     cg->decReferenceCount(destinationChild);
 }
@@ -9156,32 +9069,32 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
 
     startLabel->setStartInternalControlFlow();
     fallThrough->setEndInternalControlFlow();
-    Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+    Inst_Label(OP::label, node, startLabel, cg);
 
     // If the objects are the same and one of them is known to be an array, they
     // are compatible.
     //
     if (node->isArrayChkPrimitiveArray1() || node->isArrayChkReferenceArray1() || node->isArrayChkPrimitiveArray2()
         || node->isArrayChkReferenceArray2()) {
-        Inst_RegReg(TR::InstOpCode::CMPRegReg(), node, object1Reg, object2Reg, cg);
-        Inst_Label(TR::InstOpCode::JE4, node, fallThrough, cg);
+        Inst_RegReg(OP::CMPRegReg(), node, object1Reg, object2Reg, cg);
+        Inst_Label(OP::JE4, node, fallThrough, cg);
     }
 
     else {
         // Neither object is known to be an array
         // Check that object 1 is an array. If not, throw exception.
         //
-        TR::InstOpCode::Mnemonic testOpCode;
+        OP::Mnemonic testOpCode;
         if ((J9AccClassRAMArray >= CHAR_MIN) && (J9AccClassRAMArray <= CHAR_MAX))
-            testOpCode = TR::InstOpCode::TEST1MemImm1;
+            testOpCode = OP::TEST1MemImm1;
         else
-            testOpCode = TR::InstOpCode::TEST4MemImm4;
+            testOpCode = OP::TEST4MemImm4;
 
         if (TR::Compiler->om.compressObjectReferences())
-            Inst_RegMem(TR::InstOpCode::L4RegMem, node, tempReg,
+            Inst_RegMem(OP::L4RegMem, node, tempReg,
                 MRef_Bdisp32(object1Reg, TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
         else
-            Inst_RegMem(TR::InstOpCode::LRegMem(), node, tempReg,
+            Inst_RegMem(OP::LRegMem(), node, tempReg,
                 MRef_Bdisp32(object1Reg, TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
 
         TR::TreeEvaluator::generateVFTMaskInstruction(node, tempReg, cg);
@@ -9189,19 +9102,19 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
             J9AccClassRAMArray, cg);
         if (!snippetLabel) {
             snippetLabel = generateLabelSymbol(cg);
-            instr = Inst_Label(TR::InstOpCode::JE4, node, snippetLabel, cg);
+            instr = Inst_Label(OP::JE4, node, snippetLabel, cg);
             snippet = new (cg->trHeapMemory())
                 TR::X86CheckFailureSnippet(cg, node->getSymbolReference(), snippetLabel, instr);
             cg->addSnippet(snippet);
         } else
-            Inst_Label(TR::InstOpCode::JE4, node, snippetLabel, cg);
+            Inst_Label(OP::JE4, node, snippetLabel, cg);
     }
 
     // Test equality of the object classes.
     //
-    Inst_RegMem(TR::InstOpCode::LRegMem(use64BitClasses), node, tempReg,
+    Inst_RegMem(OP::LRegMem(use64BitClasses), node, tempReg,
         MRef_Bdisp32(object1Reg, TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
-    Inst_RegMem(TR::InstOpCode::XORRegMem(use64BitClasses), node, tempReg,
+    Inst_RegMem(OP::XORRegMem(use64BitClasses), node, tempReg,
         MRef_Bdisp32(object2Reg, TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
     TR::TreeEvaluator::generateVFTMaskInstruction(node, tempReg, cg);
 
@@ -9212,19 +9125,19 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
     if (node->isArrayChkPrimitiveArray1() || node->isArrayChkPrimitiveArray2()) {
         if (!snippetLabel) {
             snippetLabel = generateLabelSymbol(cg);
-            instr = Inst_Label(TR::InstOpCode::JNE4, node, snippetLabel, cg);
+            instr = Inst_Label(OP::JNE4, node, snippetLabel, cg);
             snippet = new (cg->trHeapMemory())
                 TR::X86CheckFailureSnippet(cg, node->getSymbolReference(), snippetLabel, instr);
             cg->addSnippet(snippet);
         } else
-            Inst_Label(TR::InstOpCode::JNE4, node, snippetLabel, cg);
+            Inst_Label(OP::JNE4, node, snippetLabel, cg);
     }
 
     // Otherwise, there is more testing to do. If the classes are equal we
     // are done, and branch to the fallThrough label.
     //
     else {
-        Inst_Label(TR::InstOpCode::JE4, node, fallThrough, cg);
+        Inst_Label(OP::JE4, node, fallThrough, cg);
 
         // If either object is not known to be a reference array type, check it
         // We already know that object1 is an array type but we may have to now
@@ -9232,69 +9145,65 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
         //
         if (!node->isArrayChkReferenceArray1()) {
             if (TR::Compiler->om.compressObjectReferences())
-                Inst_RegMem(TR::InstOpCode::L4RegMem, node, tempReg,
+                Inst_RegMem(OP::L4RegMem, node, tempReg,
                     MRef_Bdisp32(object1Reg, TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
             else
-                Inst_RegMem(TR::InstOpCode::LRegMem(), node, tempReg,
+                Inst_RegMem(OP::LRegMem(), node, tempReg,
                     MRef_Bdisp32(object1Reg, TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
 
             TR::TreeEvaluator::generateVFTMaskInstruction(node, tempReg, cg);
-            Inst_RegMem(TR::InstOpCode::LRegMem(), node, tempReg,
-                MRef_Bdisp32(tempReg, offsetof(J9Class, classDepthAndFlags), cg), cg);
+            Inst_RegMem(OP::LRegMem(), node, tempReg, MRef_Bdisp32(tempReg, offsetof(J9Class, classDepthAndFlags), cg),
+                cg);
             // X = (ramclass->ClassDepthAndFlags)>>J9AccClassRAMShapeShift
 
             // X & OBJECT_HEADER_SHAPE_MASK
-            Inst_RegImm(TR::InstOpCode::ANDRegImm4(), node, tempReg,
-                (OBJECT_HEADER_SHAPE_MASK << J9AccClassRAMShapeShift), cg);
-            Inst_RegImm(TR::InstOpCode::CMPRegImm4(), node, tempReg,
-                (OBJECT_HEADER_SHAPE_POINTERS << J9AccClassRAMShapeShift), cg);
+            Inst_RegImm(OP::ANDRegImm4(), node, tempReg, (OBJECT_HEADER_SHAPE_MASK << J9AccClassRAMShapeShift), cg);
+            Inst_RegImm(OP::CMPRegImm4(), node, tempReg, (OBJECT_HEADER_SHAPE_POINTERS << J9AccClassRAMShapeShift), cg);
 
             if (!snippetLabel) {
                 snippetLabel = generateLabelSymbol(cg);
-                instr = Inst_Label(TR::InstOpCode::JNE4, node, snippetLabel, cg);
+                instr = Inst_Label(OP::JNE4, node, snippetLabel, cg);
                 snippet = new (cg->trHeapMemory())
                     TR::X86CheckFailureSnippet(cg, node->getSymbolReference(), snippetLabel, instr);
                 cg->addSnippet(snippet);
             } else
-                Inst_Label(TR::InstOpCode::JNE4, node, snippetLabel, cg);
+                Inst_Label(OP::JNE4, node, snippetLabel, cg);
         }
         if (!node->isArrayChkReferenceArray2()) {
             // Check that object 2 is an array. If not, throw exception.
             //
-            TR::InstOpCode::Mnemonic testOpCode;
+            OP::Mnemonic testOpCode;
             if ((J9AccClassRAMArray >= CHAR_MIN) && (J9AccClassRAMArray <= CHAR_MAX))
-                testOpCode = TR::InstOpCode::TEST1MemImm1;
+                testOpCode = OP::TEST1MemImm1;
             else
-                testOpCode = TR::InstOpCode::TEST4MemImm4;
+                testOpCode = OP::TEST4MemImm4;
 
             // Check that object 2 is an array. If not, throw exception.
             //
             if (TR::Compiler->om.compressObjectReferences())
-                Inst_RegMem(TR::InstOpCode::L4RegMem, node, tempReg,
+                Inst_RegMem(OP::L4RegMem, node, tempReg,
                     MRef_Bdisp32(object2Reg, TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
             else
-                Inst_RegMem(TR::InstOpCode::LRegMem(), node, tempReg,
+                Inst_RegMem(OP::LRegMem(), node, tempReg,
                     MRef_Bdisp32(object2Reg, TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
             TR::TreeEvaluator::generateVFTMaskInstruction(node, tempReg, cg);
             Inst_MemImm(testOpCode, node, MRef_Bdisp32(tempReg, offsetof(J9Class, classDepthAndFlags), cg),
                 J9AccClassRAMArray, cg);
             if (!snippetLabel) {
                 snippetLabel = generateLabelSymbol(cg);
-                instr = Inst_Label(TR::InstOpCode::JE4, node, snippetLabel, cg);
+                instr = Inst_Label(OP::JE4, node, snippetLabel, cg);
                 snippet = new (cg->trHeapMemory())
                     TR::X86CheckFailureSnippet(cg, node->getSymbolReference(), snippetLabel, instr);
                 cg->addSnippet(snippet);
             } else
-                Inst_Label(TR::InstOpCode::JE4, node, snippetLabel, cg);
+                Inst_Label(OP::JE4, node, snippetLabel, cg);
 
-            Inst_RegMem(TR::InstOpCode::LRegMem(), node, tempReg,
-                MRef_Bdisp32(tempReg, offsetof(J9Class, classDepthAndFlags), cg), cg);
-            Inst_RegImm(TR::InstOpCode::ANDRegImm4(), node, tempReg,
-                (OBJECT_HEADER_SHAPE_MASK << J9AccClassRAMShapeShift), cg);
-            Inst_RegImm(TR::InstOpCode::CMPRegImm4(), node, tempReg,
-                (OBJECT_HEADER_SHAPE_POINTERS << J9AccClassRAMShapeShift), cg);
+            Inst_RegMem(OP::LRegMem(), node, tempReg, MRef_Bdisp32(tempReg, offsetof(J9Class, classDepthAndFlags), cg),
+                cg);
+            Inst_RegImm(OP::ANDRegImm4(), node, tempReg, (OBJECT_HEADER_SHAPE_MASK << J9AccClassRAMShapeShift), cg);
+            Inst_RegImm(OP::CMPRegImm4(), node, tempReg, (OBJECT_HEADER_SHAPE_POINTERS << J9AccClassRAMShapeShift), cg);
 
-            Inst_Label(TR::InstOpCode::JNE4, node, snippetLabel, cg);
+            Inst_Label(OP::JNE4, node, snippetLabel, cg);
         }
 
         // Now both objects are known to be reference arrays, so they are
@@ -9309,7 +9218,7 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
     deps->addPostCondition(tempReg, TR::RealRegister::NoReg, cg);
     deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
 
-    Inst_Label(TR::InstOpCode::label, node, fallThrough, deps, cg);
+    Inst_Label(OP::label, node, fallThrough, deps, cg);
 
     cg->stopUsingRegister(tempReg);
     cg->decReferenceCount(object1);
@@ -9373,25 +9282,22 @@ static bool inlineNanoTime(TR::Node *node, TR::CodeGenerator *cg)
         // result = tv_sec * 1,000,000,000 (converts seconds to nanoseconds)
 
         tv_sec = MRef_node(timevalNode, cg, false);
-        Inst_RegMem(TR::InstOpCode::L8RegMem, node, result, tv_sec, cg);
-        Inst_RegRegImm(TR::InstOpCode::IMUL8RegRegImm4, node, result, result, J9TIME_NANOSECONDS_PER_SECOND, cg);
+        Inst_RegMem(OP::L8RegMem, node, result, tv_sec, cg);
+        Inst_RegRegImm(OP::IMUL8RegRegImm4, node, result, result, J9TIME_NANOSECONDS_PER_SECOND, cg);
 
         // reg = tv_usec
-        Inst_RegMem(TR::InstOpCode::L8RegMem, node, reg, MRef_MRefOff(*tv_sec, offsetof(struct timespec, tv_nsec), cg),
-            cg);
+        Inst_RegMem(OP::L8RegMem, node, reg, MRef_MRefOff(*tv_sec, offsetof(struct timespec, tv_nsec), cg), cg);
 
         // result = reg + result
-        Inst_RegMem(TR::InstOpCode::LEA8RegMem, node, result, MRef_BIS(reg, result, 0, cg), cg);
+        Inst_RegMem(OP::LEA8RegMem, node, result, MRef_BIS(reg, result, 0, cg), cg);
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
         if (fej9->isSnapshotModeEnabled()) {
             // result = result - nanoTimeMonotonicClockDelta
             TR::Register *vmThreadReg = cg->getVMThreadRegister();
-            Inst_RegMem(TR::InstOpCode::L8RegMem, node, reg,
-                MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, javaVM), cg), cg);
-            Inst_RegMem(TR::InstOpCode::L8RegMem, node, reg, MRef_Bdisp32(reg, offsetof(J9JavaVM, portLibrary), cg),
-                cg);
-            Inst_RegMem(TR::InstOpCode::SUB8RegMem, node, result,
+            Inst_RegMem(OP::L8RegMem, node, reg, MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, javaVM), cg), cg);
+            Inst_RegMem(OP::L8RegMem, node, reg, MRef_Bdisp32(reg, offsetof(J9JavaVM, portLibrary), cg), cg);
+            Inst_RegMem(OP::SUB8RegMem, node, result,
                 MRef_Bdisp32(reg, offsetof(J9PortLibrary, nanoTimeMonotonicClockDelta), cg), cg);
         }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
@@ -9400,7 +9306,7 @@ static bool inlineNanoTime(TR::Node *node, TR::CodeGenerator *cg)
 
         // Store the result to memory if necessary
         if (resultAddress) {
-            Inst_MemReg(TR::InstOpCode::S8MemReg, node, MRef_Bdisp32(resultAddress, 0, cg), result, cg);
+            Inst_MemReg(OP::S8MemReg, node, MRef_Bdisp32(resultAddress, 0, cg), result, cg);
 
             cg->decReferenceCount(node->getFirstChild());
             if (node->getReferenceCount() == 1
@@ -9433,19 +9339,19 @@ static bool inlineNanoTime(TR::Node *node, TR::CodeGenerator *cg)
         TR::Register *resultAddress;
         if (node->getNumChildren() == 1) {
             resultAddress = cg->evaluate(node->getFirstChild());
-            Inst_Reg(TR::InstOpCode::PUSHReg, node, resultAddress, cg);
-            Inst_Imm(TR::InstOpCode::PUSHImm4, node, CLOCK_MONOTONIC, cg);
+            Inst_Reg(OP::PUSHReg, node, resultAddress, cg);
+            Inst_Imm(OP::PUSHImm4, node, CLOCK_MONOTONIC, cg);
         } else {
             // Leave space on the stack for the 64-bit result
             //
 
-            Inst_RegImm(TR::InstOpCode::SUB4RegImms, node, espReal, 8, cg);
+            Inst_RegImm(OP::SUB4RegImms, node, espReal, 8, cg);
 
             resultAddress = cg->allocateRegister();
-            Inst_RegReg(TR::InstOpCode::MOV4RegReg, node, resultAddress, espReal,
+            Inst_RegReg(OP::MOV4RegReg, node, resultAddress, espReal,
                 cg); // save away esp before the push
-            Inst_Reg(TR::InstOpCode::PUSHReg, node, resultAddress, cg);
-            Inst_Imm(TR::InstOpCode::PUSHImm4, node, CLOCK_MONOTONIC, cg);
+            Inst_Reg(OP::PUSHReg, node, resultAddress, cg);
+            Inst_Imm(OP::PUSHImm4, node, CLOCK_MONOTONIC, cg);
             cg->stopUsingRegister(resultAddress);
             resultAddress = espReal;
         }
@@ -9472,16 +9378,16 @@ static bool inlineNanoTime(TR::Node *node, TR::CodeGenerator *cg)
         addFPXMMDependencies(cg, deps);
         deps->stopAddingConditions();
 
-        TR::X86ImmInstruction *callInstr = Inst_Imm(TR::InstOpCode::CALLImm4, node, (int32_t)&clock_gettime, deps, cg);
+        TR::X86ImmInstruction *callInstr = Inst_Imm(OP::CALLImm4, node, (int32_t)&clock_gettime, deps, cg);
 
-        Inst_RegImm(TR::InstOpCode::ADD4RegImms, node, espReal, 8, cg);
+        Inst_RegImm(OP::ADD4RegImms, node, espReal, 8, cg);
 
         TR::Register *eaxReal = cg->allocateRegister();
         TR::Register *edxReal = cg->allocateRegister();
 
         // load usec to a register
         TR::Register *reglow = cg->allocateRegister();
-        Inst_RegMem(TR::InstOpCode::L4RegMem, node, reglow, MRef_Bdisp32(resultAddress, 4, cg), cg);
+        Inst_RegMem(OP::L4RegMem, node, reglow, MRef_Bdisp32(resultAddress, 4, cg), cg);
 
         TR::RegisterDependencyConditions *dep1 = RegDeps((uint8_t)2, 2, cg);
         dep1->addPreCondition(eaxReal, TR::RealRegister::eax, cg);
@@ -9491,32 +9397,30 @@ static bool inlineNanoTime(TR::Node *node, TR::CodeGenerator *cg)
 
         // load second to eax then multiply by 1,000,000,000
 
-        Inst_RegMem(TR::InstOpCode::L4RegMem, node, edxReal, MRef_Bdisp32(resultAddress, 0, cg), cg);
-        Inst_RegImm(TR::InstOpCode::MOV4RegImm4, node, eaxReal, J9TIME_NANOSECONDS_PER_SECOND, cg);
-        Inst_RegReg(TR::InstOpCode::IMUL4AccReg, node, eaxReal, edxReal, dep1, cg);
+        Inst_RegMem(OP::L4RegMem, node, edxReal, MRef_Bdisp32(resultAddress, 0, cg), cg);
+        Inst_RegImm(OP::MOV4RegImm4, node, eaxReal, J9TIME_NANOSECONDS_PER_SECOND, cg);
+        Inst_RegReg(OP::IMUL4AccReg, node, eaxReal, edxReal, dep1, cg);
 
         // add the two parts
-        Inst_RegReg(TR::InstOpCode::ADD4RegReg, node, eaxReal, reglow, cg);
-        Inst_RegImm(TR::InstOpCode::ADC4RegImm4, node, edxReal, 0x0, cg);
+        Inst_RegReg(OP::ADD4RegReg, node, eaxReal, reglow, cg);
+        Inst_RegImm(OP::ADC4RegImm4, node, edxReal, 0x0, cg);
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
         if (fej9->isSnapshotModeEnabled()) {
             // subtract nanoTimeMonotonicClockDelta from the result
             TR::Register *vmThreadReg = cg->getVMThreadRegister();
-            Inst_RegMem(TR::InstOpCode::L4RegMem, node, regLow,
-                MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, javaVM), cg), cg);
-            Inst_RegMem(TR::InstOpCode::L4RegMem, node, regLow,
-                MRef_Bdisp32(regLow, offsetof(J9JavaVM, portLibrary), cg), cg);
-            Inst_RegMem(TR::InstOpCode::SUB4RegMem, node, eaxReal,
+            Inst_RegMem(OP::L4RegMem, node, regLow, MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, javaVM), cg), cg);
+            Inst_RegMem(OP::L4RegMem, node, regLow, MRef_Bdisp32(regLow, offsetof(J9JavaVM, portLibrary), cg), cg);
+            Inst_RegMem(OP::SUB4RegMem, node, eaxReal,
                 MRef_Bdisp32(regLow, offsetof(J9PortLibrary, nanoTimeMonotonicClockDelta), cg), cg);
-            Inst_RegMem(TR::InstOpCode::SBB4RegMem, node, edxReal,
+            Inst_RegMem(OP::SBB4RegMem, node, edxReal,
                 MRef_Bdisp32(regLow, offsetof(J9PortLibrary, nanoTimeMonotonicClockDelta) + 4, cg), cg);
         }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
         // store it back
-        Inst_MemReg(TR::InstOpCode::S4MemReg, node, MRef_Bdisp32(resultAddress, 0, cg), eaxReal, cg);
-        Inst_MemReg(TR::InstOpCode::S4MemReg, node, MRef_Bdisp32(resultAddress, 4, cg), edxReal, cg);
+        Inst_MemReg(OP::S4MemReg, node, MRef_Bdisp32(resultAddress, 0, cg), eaxReal, cg);
+        Inst_MemReg(OP::S4MemReg, node, MRef_Bdisp32(resultAddress, 4, cg), edxReal, cg);
 
         cg->stopUsingRegister(eaxReal);
         cg->stopUsingRegister(edxReal);
@@ -9528,8 +9432,8 @@ static bool inlineNanoTime(TR::Node *node, TR::CodeGenerator *cg)
         if (node->getNumChildren() == 1) {
             if (node->getReferenceCount() > 1
                 || cg->getCurrentEvaluationTreeTop()->getNode()->getOpCodeValue() != TR::treetop) {
-                Inst_RegMem(TR::InstOpCode::L4RegMem, node, lowReg, MRef_Bdisp32(resultAddress, 0, cg), cg);
-                Inst_RegMem(TR::InstOpCode::L4RegMem, node, highReg, MRef_Bdisp32(resultAddress, 4, cg), cg);
+                Inst_RegMem(OP::L4RegMem, node, lowReg, MRef_Bdisp32(resultAddress, 0, cg), cg);
+                Inst_RegMem(OP::L4RegMem, node, highReg, MRef_Bdisp32(resultAddress, 4, cg), cg);
 
                 TR::RegisterPair *result = cg->allocateRegisterPair(lowReg, highReg);
                 node->setRegister(result);
@@ -9538,8 +9442,8 @@ static bool inlineNanoTime(TR::Node *node, TR::CodeGenerator *cg)
         } else {
             // The result of the call is now on the stack. Get it into registers.
             //
-            Inst_Reg(TR::InstOpCode::POPReg, node, lowReg, cg);
-            Inst_Reg(TR::InstOpCode::POPReg, node, highReg, cg);
+            Inst_Reg(OP::POPReg, node, lowReg, cg);
+            Inst_Reg(OP::POPReg, node, highReg, cg);
             TR::RegisterPair *result = cg->allocateRegisterPair(lowReg, highReg);
             node->setRegister(result);
         }
@@ -9554,12 +9458,10 @@ static bool inlineNanoTime(TR::Node *node, TR::CodeGenerator *cg)
         // Leave space on the stack for the 64-bit result
         //
         temp2 = cg->allocateRegister();
-        Inst_RegMem(TR::InstOpCode::L4RegMem, node, temp2, MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, javaVM), cg),
-            cg);
-        Inst_RegMem(TR::InstOpCode::L4RegMem, node, temp2, MRef_Bdisp32(temp2, offsetof(J9JavaVM, portLibrary), cg),
-            cg);
-        Inst_Reg(TR::InstOpCode::PUSHReg, node, espReal, cg);
-        Inst_Reg(TR::InstOpCode::PUSHReg, node, temp2, cg);
+        Inst_RegMem(OP::L4RegMem, node, temp2, MRef_Bdisp32(vmThreadReg, offsetof(J9VMThread, javaVM), cg), cg);
+        Inst_RegMem(OP::L4RegMem, node, temp2, MRef_Bdisp32(temp2, offsetof(J9JavaVM, portLibrary), cg), cg);
+        Inst_Reg(OP::PUSHReg, node, espReal, cg);
+        Inst_Reg(OP::PUSHReg, node, temp2, cg);
 
         int32_t extraFPDeps = (uint8_t)(cg->machine()->getLastXMMR() - cg->machine()->getFirstXMMR() + 1);
 
@@ -9583,11 +9485,10 @@ static bool inlineNanoTime(TR::Node *node, TR::CodeGenerator *cg)
         addFPXMMDependencies(cg, deps);
         deps->stopAddingConditions();
 
-        Inst_CallMem(TR::InstOpCode::CALLMem, node, MRef_Bdisp32(temp2, offsetof(OMRPortLibrary, time_hires_clock), cg),
-            deps, cg);
+        Inst_CallMem(OP::CALLMem, node, MRef_Bdisp32(temp2, offsetof(OMRPortLibrary, time_hires_clock), cg), deps, cg);
         cg->stopUsingRegister(temp2);
 
-        Inst_RegImm(TR::InstOpCode::ADD4RegImms, node, espReal, 8, cg);
+        Inst_RegImm(OP::ADD4RegImms, node, espReal, 8, cg);
 
         TR::RegisterPair *result = cg->allocateRegisterPair(lowReg, highReg);
         node->setRegister(result);
@@ -9620,7 +9521,7 @@ TR::Register *J9::X86::TreeEvaluator::inlineMathFma(TR::Node *node, TR::CodeGene
 
     bool is64Bit = node->getDataType().isDouble();
 
-    TR::InstOpCode::Mnemonic fpMovRegRegOpcode = is64Bit ? TR::InstOpCode::MOVSDRegReg : TR::InstOpCode::MOVSSRegReg;
+    OP::Mnemonic fpMovRegRegOpcode = is64Bit ? OP::MOVSDRegReg : OP::MOVSSRegReg;
     result->setIsSinglePrecision(!is64Bit);
 
     TR_ASSERT_FATAL(cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_FMA),
@@ -9628,26 +9529,25 @@ TR::Register *J9::X86::TreeEvaluator::inlineMathFma(TR::Node *node, TR::CodeGene
 
     // Choose fma instruction carefully, based on operand form, to reduce number of copies
     if (memLoadLhs) {
-        TR::InstOpCode::Mnemonic opcode
-            = is64Bit ? TR::InstOpCode::VFMADD231SDRegRegMem : TR::InstOpCode::VFMADD231SSRegRegMem;
+        OP::Mnemonic opcode = is64Bit ? OP::VFMADD231SDRegRegMem : OP::VFMADD231SSRegRegMem;
         TR::MemoryReference *lhsMR = MRef_node(firstChild, cg);
 
         if (memLoadRhs) {
             // a (2) * b (3) + c (1)
             TR::MemoryReference *rhsMR = MRef_node(thirdChild, cg);
-            Inst_RegMem(TR::InstOpCode::MOVSRegMem(is64Bit), node, result, rhsMR, cg);
+            Inst_RegMem(OP::MOVSRegMem(is64Bit), node, result, rhsMR, cg);
 
             midReg = cg->evaluate(secondChild);
             memLoadMiddle = false; // No choice but to evaluate;
             Inst_RegRegMem(opcode, node, result, midReg, lhsMR, cg);
         } else if (memLoadMiddle) {
             // fma = a (1) * b (3) + c (2)
-            opcode = is64Bit ? TR::InstOpCode::VFMADD132SDRegRegMem : TR::InstOpCode::VFMADD132SSRegRegMem;
+            opcode = is64Bit ? OP::VFMADD132SDRegRegMem : OP::VFMADD132SSRegRegMem;
 
             TR::MemoryReference *midMR = MRef_node(secondChild, cg);
             rhsReg = cg->evaluate(thirdChild);
 
-            Inst_RegMem(TR::InstOpCode::MOVSRegMem(is64Bit), node, result, lhsMR, cg);
+            Inst_RegMem(OP::MOVSRegMem(is64Bit), node, result, lhsMR, cg);
             Inst_RegRegMem(opcode, node, result, rhsReg, midMR, cg);
         } else {
             // fma = a (2) * b (3) + c (1)
@@ -9662,16 +9562,14 @@ TR::Register *J9::X86::TreeEvaluator::inlineMathFma(TR::Node *node, TR::CodeGene
 
         if (memLoadRhs) {
             // fma = a (2) * b (1) + c (3)
-            TR::InstOpCode::Mnemonic opcode
-                = is64Bit ? TR::InstOpCode::VFMADD213SDRegRegMem : TR::InstOpCode::VFMADD213SSRegRegMem;
+            OP::Mnemonic opcode = is64Bit ? OP::VFMADD213SDRegRegMem : OP::VFMADD213SSRegRegMem;
             TR::MemoryReference *rhsMR = MRef_node(thirdChild, cg);
 
-            Inst_RegMem(TR::InstOpCode::MOVSRegMem(is64Bit), node, result, midMR, cg);
+            Inst_RegMem(OP::MOVSRegMem(is64Bit), node, result, midMR, cg);
             Inst_RegRegMem(opcode, node, result, lhsReg, rhsMR, cg);
         } else {
             // fma = a (1) * b (3) + c (2)
-            TR::InstOpCode::Mnemonic opcode
-                = is64Bit ? TR::InstOpCode::VFMADD132SDRegRegMem : TR::InstOpCode::VFMADD132SSRegRegMem;
+            OP::Mnemonic opcode = is64Bit ? OP::VFMADD132SDRegRegMem : OP::VFMADD132SSRegRegMem;
             rhsReg = cg->evaluate(thirdChild);
 
             Inst_RegReg(fpMovRegRegOpcode, node, result, lhsReg, cg);
@@ -9679,8 +9577,7 @@ TR::Register *J9::X86::TreeEvaluator::inlineMathFma(TR::Node *node, TR::CodeGene
         }
     } else if (memLoadRhs) {
         // fma = a (2) * b (1) + c (3)
-        TR::InstOpCode::Mnemonic opcode
-            = is64Bit ? TR::InstOpCode::VFMADD213SDRegRegMem : TR::InstOpCode::VFMADD213SSRegRegMem;
+        OP::Mnemonic opcode = is64Bit ? OP::VFMADD213SDRegRegMem : OP::VFMADD213SSRegRegMem;
 
         TR::MemoryReference *rhsMR = MRef_node(thirdChild, cg);
         lhsReg = cg->evaluate(firstChild);
@@ -9690,8 +9587,7 @@ TR::Register *J9::X86::TreeEvaluator::inlineMathFma(TR::Node *node, TR::CodeGene
         Inst_RegRegMem(opcode, node, result, midReg, rhsMR, cg);
     } else {
         // fma = a (2) * b (1) + c (3)
-        TR::InstOpCode::Mnemonic opcode
-            = is64Bit ? TR::InstOpCode::VFMADD213SDRegRegReg : TR::InstOpCode::VFMADD213SSRegRegReg;
+        OP::Mnemonic opcode = is64Bit ? OP::VFMADD213SDRegRegReg : OP::VFMADD213SSRegRegReg;
 
         lhsReg = cg->evaluate(firstChild);
         midReg = cg->evaluate(secondChild);
@@ -9852,10 +9748,9 @@ static TR::Register *inlineStringHashCode(TR::Node *node, bool isCompressed, TR:
     deps->addPostCondition(tmpXMM, TR::RealRegister::NoReg, cg);
     deps->addPostCondition(hashXMM, TR::RealRegister::NoReg, cg);
 
-    Inst_RegReg(TR::InstOpCode::MOV4RegReg, node, index, length, cg);
-    Inst_RegImm(TR::InstOpCode::AND4RegImms, node, index, size - 1, cg); // mod size
-    Inst_RegMem(TR::InstOpCode::CMOVE4RegMem, node, index, MRef_const(cg->findOrCreate4ByteConstant(node, size), cg),
-        cg);
+    Inst_RegReg(OP::MOV4RegReg, node, index, length, cg);
+    Inst_RegImm(OP::AND4RegImms, node, index, size - 1, cg); // mod size
+    Inst_RegMem(OP::CMOVE4RegMem, node, index, MRef_const(cg->findOrCreate4ByteConstant(node, size), cg), cg);
 
     // Prepend zeros
     {
@@ -9863,55 +9758,54 @@ static TR::Register *inlineStringHashCode(TR::Node *node, bool isCompressed, TR:
 
         static uint64_t MASKDECOMPRESSED[] = { 0x0000000000000000ULL, 0xffffffffffffffffULL };
         static uint64_t MASKCOMPRESSED[] = { 0xffffffff00000000ULL, 0x0000000000000000ULL };
-        Inst_RegMem(isCompressed ? TR::InstOpCode::MOVDRegMem : TR::InstOpCode::MOVQRegMem, node, hashXMM,
+        Inst_RegMem(isCompressed ? OP::MOVDRegMem : OP::MOVQRegMem, node, hashXMM,
             MRef_BISdisp32(address, index, shift,
                 -(size << shift) + TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg),
             cg);
-        Inst_RegMem(TR::InstOpCode::LEARegMem(), node, tmp,
+        Inst_RegMem(OP::LEARegMem(), node, tmp,
             MRef_const(cg->findOrCreate16ByteConstant(node, isCompressed ? MASKCOMPRESSED : MASKDECOMPRESSED), cg), cg);
 
         auto mr = MRef_BISdisp32(tmp, index, shift, 0, cg);
         if (comp->target().cpu.supportsAVX()) {
-            Inst_RegMem(TR::InstOpCode::PANDRegMem, node, hashXMM, mr, cg);
+            Inst_RegMem(OP::PANDRegMem, node, hashXMM, mr, cg);
         } else {
-            Inst_RegMem(TR::InstOpCode::MOVDQURegMem, node, tmpXMM, mr, cg);
-            Inst_RegReg(TR::InstOpCode::PANDRegReg, node, hashXMM, tmpXMM, cg);
+            Inst_RegMem(OP::MOVDQURegMem, node, tmpXMM, mr, cg);
+            Inst_RegReg(OP::PANDRegReg, node, hashXMM, tmpXMM, cg);
         }
-        Inst_RegReg(isCompressed ? TR::InstOpCode::PMOVZXBDRegReg : TR::InstOpCode::PMOVZXWDRegReg, node, hashXMM,
-            hashXMM, cg);
+        Inst_RegReg(isCompressed ? OP::PMOVZXBDRegReg : OP::PMOVZXWDRegReg, node, hashXMM, hashXMM, cg);
     }
 
     // Reduction Loop
     {
         static uint32_t multiplier[] = { 31 * 31 * 31 * 31, 31 * 31 * 31 * 31, 31 * 31 * 31 * 31, 31 * 31 * 31 * 31 };
-        Inst_Label(TR::InstOpCode::label, node, begLabel, cg);
-        Inst_RegReg(TR::InstOpCode::CMP4RegReg, node, index, length, cg);
-        Inst_Label(TR::InstOpCode::JGE4, node, endLabel, cg);
-        Inst_RegMem(TR::InstOpCode::MOVDQURegMem, node, multiplierXMM,
+        Inst_Label(OP::label, node, begLabel, cg);
+        Inst_RegReg(OP::CMP4RegReg, node, index, length, cg);
+        Inst_Label(OP::JGE4, node, endLabel, cg);
+        Inst_RegMem(OP::MOVDQURegMem, node, multiplierXMM,
             MRef_const(cg->findOrCreate16ByteConstant(node, multiplier), cg), cg);
-        Inst_Label(TR::InstOpCode::label, node, loopLabel, cg);
-        Inst_RegReg(TR::InstOpCode::PMULLDRegReg, node, hashXMM, multiplierXMM, cg);
-        Inst_RegMem(isCompressed ? TR::InstOpCode::PMOVZXBDRegMem : TR::InstOpCode::PMOVZXWDRegMem, node, tmpXMM,
+        Inst_Label(OP::label, node, loopLabel, cg);
+        Inst_RegReg(OP::PMULLDRegReg, node, hashXMM, multiplierXMM, cg);
+        Inst_RegMem(isCompressed ? OP::PMOVZXBDRegMem : OP::PMOVZXWDRegMem, node, tmpXMM,
             MRef_BISdisp32(address, index, shift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
-        Inst_RegImm(TR::InstOpCode::ADD4RegImms, node, index, 4, cg);
-        Inst_RegReg(TR::InstOpCode::PADDDRegReg, node, hashXMM, tmpXMM, cg);
-        Inst_RegReg(TR::InstOpCode::CMP4RegReg, node, index, length, cg);
-        Inst_Label(TR::InstOpCode::JL4, node, loopLabel, cg);
-        Inst_Label(TR::InstOpCode::label, node, endLabel, deps, cg);
+        Inst_RegImm(OP::ADD4RegImms, node, index, 4, cg);
+        Inst_RegReg(OP::PADDDRegReg, node, hashXMM, tmpXMM, cg);
+        Inst_RegReg(OP::CMP4RegReg, node, index, length, cg);
+        Inst_Label(OP::JL4, node, loopLabel, cg);
+        Inst_Label(OP::label, node, endLabel, deps, cg);
     }
 
     // Finalization
     {
         static uint32_t multiplier[] = { 31 * 31 * 31, 31 * 31, 31, 1 };
-        Inst_RegMem(TR::InstOpCode::PMULLDRegMem, node, hashXMM,
-            MRef_const(cg->findOrCreate16ByteConstant(node, multiplier), cg), cg);
-        Inst_RegRegImm(TR::InstOpCode::PSHUFDRegRegImm1, node, tmpXMM, hashXMM, 0x0e, cg);
-        Inst_RegReg(TR::InstOpCode::PADDDRegReg, node, hashXMM, tmpXMM, cg);
-        Inst_RegRegImm(TR::InstOpCode::PSHUFDRegRegImm1, node, tmpXMM, hashXMM, 0x01, cg);
-        Inst_RegReg(TR::InstOpCode::PADDDRegReg, node, hashXMM, tmpXMM, cg);
+        Inst_RegMem(OP::PMULLDRegMem, node, hashXMM, MRef_const(cg->findOrCreate16ByteConstant(node, multiplier), cg),
+            cg);
+        Inst_RegRegImm(OP::PSHUFDRegRegImm1, node, tmpXMM, hashXMM, 0x0e, cg);
+        Inst_RegReg(OP::PADDDRegReg, node, hashXMM, tmpXMM, cg);
+        Inst_RegRegImm(OP::PSHUFDRegRegImm1, node, tmpXMM, hashXMM, 0x01, cg);
+        Inst_RegReg(OP::PADDDRegReg, node, hashXMM, tmpXMM, cg);
     }
 
-    Inst_RegReg(TR::InstOpCode::MOVDReg4Reg, node, hash, hashXMM, cg);
+    Inst_RegReg(OP::MOVDReg4Reg, node, hash, hashXMM, cg);
 
     cg->stopUsingRegister(index);
     cg->stopUsingRegister(tmp);
@@ -9964,14 +9858,14 @@ TR::Register *J9::X86::TreeEvaluator::vectorizedHashCodeReductionHelper(TR::Node
     int32_t numVectors, TR::Register *tmpVectorRegVRF, TR::Register *result, TR::VectorLength vl, TR::DataType dt,
     TR::CodeGenerator *cg)
 {
-    TR::InstOpCode opcode = TR::InstOpCode::PADDDRegReg;
+    TR::InstOpCode opcode = OP::PADDDRegReg;
     TR::Register *vectorRegVRF = vectorRegisters[0];
 
     // If we unrolled the main loop, vertically add the vectors together first
     // then proceed to do horizontal reduction
     for (int32_t i = 1; i < numVectors; i++) {
         OMR::X86::Encoding opcodeEncoding = opcode.getSIMDEncoding(&cg->comp()->target().cpu, vl);
-        Inst_RegReg(TR::InstOpCode::PADDDRegReg, node, vectorRegVRF, vectorRegisters[i], cg, opcodeEncoding);
+        Inst_RegReg(OP::PADDDRegReg, node, vectorRegVRF, vectorRegisters[i], cg, opcodeEncoding);
     }
 
     // Reduce lanes -> horizontally add all vector elements together
@@ -9980,27 +9874,27 @@ TR::Register *J9::X86::TreeEvaluator::vectorizedHashCodeReductionHelper(TR::Node
     switch (vl) {
         case TR::VectorLength512:
             // extract 256-bits from zmm and store in ymm, then perform vertical operation
-            Inst_RegRegImm(TR::InstOpCode::VEXTRACTF64X4YmmZmmImm1, node, tmpVectorRegVRF, vectorRegVRF, 0xFF, cg);
+            Inst_RegRegImm(OP::VEXTRACTF64X4YmmZmmImm1, node, tmpVectorRegVRF, vectorRegVRF, 0xFF, cg);
             Inst_RegReg(opcode.getMnemonic(), node, vectorRegVRF, tmpVectorRegVRF, cg,
                 opcode.getSIMDEncoding(&cg->comp()->target().cpu, TR::VectorLength256));
             // Fallthrough to treat remaining result as 256-bit vector
         case TR::VectorLength256:
             // extract 128 bits from ymm and store in xmm, then perform vertical operation
-            Inst_RegRegImm(TR::InstOpCode::VEXTRACTF128RegRegImm1, node, tmpVectorRegVRF, vectorRegVRF, 0xFF, cg);
+            Inst_RegRegImm(OP::VEXTRACTF128RegRegImm1, node, tmpVectorRegVRF, vectorRegVRF, 0xFF, cg);
             Inst_RegReg(opcode.getMnemonic(), node, vectorRegVRF, tmpVectorRegVRF, cg,
                 opcode.getSIMDEncoding(&cg->comp()->target().cpu, TR::VectorLength128));
             // Fallthrough to treat remaining result as 128-bit vector
         case TR::VectorLength128:
-            Inst_RegRegImm(TR::InstOpCode::PSHUFDRegRegImm1, node, tmpVectorRegVRF, vectorRegVRF, 0x0e, cg);
-            Inst_RegReg(TR::InstOpCode::PADDDRegReg, node, vectorRegVRF, tmpVectorRegVRF, cg);
-            Inst_RegRegImm(TR::InstOpCode::PSHUFDRegRegImm1, node, tmpVectorRegVRF, vectorRegVRF, 0x01, cg);
-            Inst_RegReg(TR::InstOpCode::PADDDRegReg, node, vectorRegVRF, tmpVectorRegVRF, cg);
+            Inst_RegRegImm(OP::PSHUFDRegRegImm1, node, tmpVectorRegVRF, vectorRegVRF, 0x0e, cg);
+            Inst_RegReg(OP::PADDDRegReg, node, vectorRegVRF, tmpVectorRegVRF, cg);
+            Inst_RegRegImm(OP::PSHUFDRegRegImm1, node, tmpVectorRegVRF, vectorRegVRF, 0x01, cg);
+            Inst_RegReg(OP::PADDDRegReg, node, vectorRegVRF, tmpVectorRegVRF, cg);
             break;
         default:
             TR_ASSERT_FATAL(false, "Unsupported vector length");
     }
 
-    Inst_RegReg(TR::InstOpCode::MOVDReg4Reg, node, result, vectorRegVRF, cg);
+    Inst_RegReg(OP::MOVDReg4Reg, node, result, vectorRegVRF, cg);
     return result;
 }
 
@@ -10082,25 +9976,25 @@ TR::Register *J9::X86::TreeEvaluator::vectorizedHashCodeLoopHelper(TR::Node *nod
     begLabel->setStartInternalControlFlow();
     endLabel->setEndInternalControlFlow();
 
-    Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, result, initialHash, cg);
-    Inst_Label(TR::InstOpCode::label, node, begLabel, cg);
-    Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, tmp, length, cg);
-    Inst_RegImm(TR::InstOpCode::AND4RegImm4, node, tmp, ~(numElements - 1), cg);
+    Inst_RegReg(OP::MOVRegReg(), node, result, initialHash, cg);
+    Inst_Label(OP::label, node, begLabel, cg);
+    Inst_RegReg(OP::MOVRegReg(), node, tmp, length, cg);
+    Inst_RegImm(OP::AND4RegImm4, node, tmp, ~(numElements - 1), cg);
 
     {
-        Inst_RegReg(TR::InstOpCode::CMP4RegReg, node, index, tmp, cg);
-        Inst_Label(TR::InstOpCode::JGE4, node, endLabel, cg);
+        Inst_RegReg(OP::CMP4RegReg, node, index, tmp, cg);
+        Inst_Label(OP::JGE4, node, endLabel, cg);
 
         // Initialize Constants outside of loop body but after the first compare
         for (int32_t i = 0; i < unrollCount; i++)
-            Inst_RegReg(TR::InstOpCode::PXORRegReg, node, hashRegsVRF[i], hashRegsVRF[i], cg, vectorEncoding);
+            Inst_RegReg(OP::PXORRegReg, node, hashRegsVRF[i], hashRegsVRF[i], cg, vectorEncoding);
 
-        Inst_RegReg(TR::InstOpCode::MOVDRegReg4, node, hashRegsVRF[0], initialHash, cg);
+        Inst_RegReg(OP::MOVDRegReg4, node, hashRegsVRF[0], initialHash, cg);
 
         int32_t multiplier31PowNData[16];
         // Fill multiplier array with 31^numElements
         std::fill_n(multiplier31PowNData, 16, powersOf31[64 - numElements]);
-        Inst_RegMem(TR::InstOpCode::MOVDQURegMem, node, multiplierVRF,
+        Inst_RegMem(OP::MOVDQURegMem, node, multiplierVRF,
             MRef_const(
                 cg->findOrCreateConstantDataSnippet(node, multiplier31PowNData, vectorSizeElements * sizeof(int32_t)),
                 cg),
@@ -10127,31 +10021,31 @@ TR::Register *J9::X86::TreeEvaluator::vectorizedHashCodeLoopHelper(TR::Node *nod
             int32_t *multiplier = const_cast<int32_t *>(powersOf31 + offset);
             TR::MemoryReference *mr = MRef_const(cg->findOrCreateConstantDataSnippet(node, multiplier, vectorSize), cg);
 
-            Inst_RegMem(TR::InstOpCode::MOVDQURegMem, node, multiplier31PowN_i, mr, cg, vectorEncoding);
+            Inst_RegMem(OP::MOVDQURegMem, node, multiplier31PowN_i, mr, cg, vectorEncoding);
         }
     }
 
-    Inst_Label(TR::InstOpCode::label, node, loopLabel, cg);
+    Inst_Label(OP::label, node, loopLabel, cg);
 
     {
         // Main loop body;
 
         for (int32_t i = 0; i < unrollCount; i++) {
             // Load in the next batch of elements. (sign/zero) extend i8, i16 to i32
-            TR::InstOpCode::Mnemonic loadOpcode = TR::InstOpCode::bad;
+            OP::Mnemonic loadOpcode = OP::bad;
             int32_t elementSize;
 
             switch (dt) {
                 case TR::Int8:
-                    loadOpcode = isSigned ? TR::InstOpCode::PMOVSXBDRegMem : TR::InstOpCode::PMOVZXBDRegMem;
+                    loadOpcode = isSigned ? OP::PMOVSXBDRegMem : OP::PMOVZXBDRegMem;
                     elementSize = 1;
                     break;
                 case TR::Int16:
-                    loadOpcode = isSigned ? TR::InstOpCode::PMOVSXWDRegMem : TR::InstOpCode::PMOVZXWDRegMem;
+                    loadOpcode = isSigned ? OP::PMOVSXWDRegMem : OP::PMOVZXWDRegMem;
                     elementSize = 2;
                     break;
                 case TR::Int32:
-                    loadOpcode = TR::InstOpCode::MOVDQURegMem;
+                    loadOpcode = OP::MOVDQURegMem;
                     elementSize = 4;
                     break;
                 default:
@@ -10166,21 +10060,21 @@ TR::Register *J9::X86::TreeEvaluator::vectorizedHashCodeLoopHelper(TR::Node *nod
             Inst_RegMem(loadOpcode, node, tmpVRF, mr, cg, vectorEncoding);
 
             // tmpVRF = tmpVRF * multiplierVRF
-            Inst_RegReg(TR::InstOpCode::PMULLDRegReg, node, tmpVRF, multiplier31PowNRegsVRF[i], cg, vectorEncoding);
+            Inst_RegReg(OP::PMULLDRegReg, node, tmpVRF, multiplier31PowNRegsVRF[i], cg, vectorEncoding);
             // hashRegsVRF = ( hashRegsVRF * {31^vl, ..., 31^vl} ) + tmpVRF
-            Inst_RegReg(TR::InstOpCode::PMULLDRegReg, node, hashRegsVRF[i], multiplierVRF, cg, vectorEncoding);
-            Inst_RegReg(TR::InstOpCode::PADDDRegReg, node, hashRegsVRF[i], tmpVRF, cg, vectorEncoding);
+            Inst_RegReg(OP::PMULLDRegReg, node, hashRegsVRF[i], multiplierVRF, cg, vectorEncoding);
+            Inst_RegReg(OP::PADDDRegReg, node, hashRegsVRF[i], tmpVRF, cg, vectorEncoding);
         }
     }
 
     // Increase loop index by the number of processed elements
-    Inst_RegImm(TR::InstOpCode::ADD4RegImms, node, index, numElements, cg);
+    Inst_RegImm(OP::ADD4RegImms, node, index, numElements, cg);
     // Compare index with numElements and loop back if necessary
-    Inst_RegReg(TR::InstOpCode::CMP4RegReg, node, index, tmp, cg);
-    Inst_Label(TR::InstOpCode::JL4, node, loopLabel, cg);
+    Inst_RegReg(OP::CMP4RegReg, node, index, tmp, cg);
+    Inst_Label(OP::JL4, node, loopLabel, cg);
 
     vectorizedHashCodeReductionHelper(node, hashRegsVRF, unrollCount, tmpVRF, result, vl, dt, cg);
-    Inst_Label(TR::InstOpCode::label, node, endLabel, deps, cg);
+    Inst_Label(OP::label, node, endLabel, deps, cg);
 
     cg->stopUsingRegister(tmp);
     cg->stopUsingRegister(tmpVRF);
@@ -10274,16 +10168,16 @@ TR::Register *J9::X86::TreeEvaluator::vectorizedHashCodeHelper(TR::Node *node, T
     if (nonZeroOffset) {
         TR::Register *offset = cg->evaluate(node->getChild(1));
         TR::MemoryReference *memRef = MRef_BISdisp32(address, offset, shift, 0, cg);
-        Inst_RegMem(TR::InstOpCode::LEARegMem(), node, address, memRef, cg);
+        Inst_RegMem(OP::LEARegMem(), node, address, memRef, cg);
     }
 
     if (!nodeHash) {
         // If nodeHash is not provided, assume initial hash value of 0.
-        Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, initHash, initHash, cg);
+        Inst_RegReg(OP::XOR4RegReg, node, initHash, initHash, cg);
     }
 
     // Set index ptr to 0
-    Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, index, index, cg);
+    Inst_RegReg(OP::XOR4RegReg, node, index, index, cg);
 
     // Generate Main Loop; 4x Unrolled seems to yield the best performance for large arrays
     static char *unrollVar = feGetEnv("TR_setInlineVectorHashCodeUnrollCount");
@@ -10300,7 +10194,7 @@ TR::Register *J9::X86::TreeEvaluator::vectorizedHashCodeHelper(TR::Node *node, T
 
     // Generate a second vectorized loop if not disabled and Vl/unrollCount are not the same as the first loop
     if (!disableSecondLoop && (unrollCount != 1 || vl != TR::VectorLength128)) {
-        Inst_RegReg(TR::InstOpCode::MOV4RegReg, node, initHash, result, cg);
+        Inst_RegReg(OP::MOV4RegReg, node, initHash, result, cg);
         vectorizedHashCodeLoopHelper(node, dt, TR::VectorLength128, isSigned, result, initHash, index, length, address,
             1, cg);
     }
@@ -10315,32 +10209,29 @@ TR::Register *J9::X86::TreeEvaluator::vectorizedHashCodeHelper(TR::Node *node, T
         residueBeginLoopLabel->setStartInternalControlFlow();
         residueEndLoopLabel->setEndInternalControlFlow();
 
-        Inst_Label(TR::InstOpCode::label, node, residueBeginLoopLabel, cg);
-        Inst_RegReg(TR::InstOpCode::CMP4RegReg, node, index, length, cg);
-        Inst_Label(TR::InstOpCode::JGE4, node, residueEndLoopLabel, cg);
-        Inst_Label(TR::InstOpCode::label, node, residueLoopLabel, cg);
+        Inst_Label(OP::label, node, residueBeginLoopLabel, cg);
+        Inst_RegReg(OP::CMP4RegReg, node, index, length, cg);
+        Inst_Label(OP::JGE4, node, residueEndLoopLabel, cg);
+        Inst_Label(OP::label, node, residueLoopLabel, cg);
 
         // hash = 31 * hash + arr[index] = tmp * hash + arr[index]
-        Inst_RegRegImm(TR::InstOpCode::IMUL4RegRegImm4, node, result, result, 31, cg);
+        Inst_RegRegImm(OP::IMUL4RegRegImm4, node, result, result, 31, cg);
 
-        static TR::InstOpCode::Mnemonic signedLoadOpcode[3]
-            = { TR::InstOpCode::MOVSXReg4Mem1, TR::InstOpCode::MOVSXReg4Mem2, TR::InstOpCode::L4RegMem };
-        static TR::InstOpCode::Mnemonic unsignedLoadOpcode[3]
-            = { TR::InstOpCode::MOVZXReg4Mem1, TR::InstOpCode::MOVZXReg4Mem2, TR::InstOpCode::L4RegMem };
-        TR::InstOpCode::Mnemonic loadOpcode
-            = isSigned ? signedLoadOpcode[dt - TR::Int8] : unsignedLoadOpcode[dt - TR::Int8];
+        static OP::Mnemonic signedLoadOpcode[3] = { OP::MOVSXReg4Mem1, OP::MOVSXReg4Mem2, OP::L4RegMem };
+        static OP::Mnemonic unsignedLoadOpcode[3] = { OP::MOVZXReg4Mem1, OP::MOVZXReg4Mem2, OP::L4RegMem };
+        OP::Mnemonic loadOpcode = isSigned ? signedLoadOpcode[dt - TR::Int8] : unsignedLoadOpcode[dt - TR::Int8];
 
         Inst_RegMem(loadOpcode, node, tmp,
             MRef_BISdisp32(address, index, shift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
-        Inst_RegReg(TR::InstOpCode::ADDRegReg(), node, result, tmp, cg);
+        Inst_RegReg(OP::ADDRegReg(), node, result, tmp, cg);
 
         // Increase loop index by the number of processed elements
-        Inst_Reg(TR::InstOpCode::INCReg(), node, index, cg);
+        Inst_Reg(OP::INCReg(), node, index, cg);
 
         // Compare index with numElements and loop back if necessary
-        Inst_RegReg(TR::InstOpCode::CMP4RegReg, node, index, length, cg);
-        Inst_Label(TR::InstOpCode::JL4, node, residueLoopLabel, cg);
-        Inst_Label(TR::InstOpCode::label, node, residueEndLoopLabel, deps, cg);
+        Inst_RegReg(OP::CMP4RegReg, node, index, length, cg);
+        Inst_Label(OP::JL4, node, residueLoopLabel, cg);
+        Inst_Label(OP::label, node, residueEndLoopLabel, deps, cg);
     }
 
     if (nonZeroOffset) {
@@ -10448,14 +10339,14 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, TR::CodeGenerator *c
     uint8_t width = 16;
     uint8_t shift = 0;
     uint8_t *shuffleMask = NULL;
-    auto compareOp = TR::InstOpCode::bad;
+    auto compareOp = OP::bad;
     if (isLatin1) {
         shuffleMask = MASKOFSIZEONE;
-        compareOp = TR::InstOpCode::PCMPEQBRegReg;
+        compareOp = OP::PCMPEQBRegReg;
         shift = 0;
     } else {
         shuffleMask = MASKOFSIZETWO;
-        compareOp = TR::InstOpCode::PCMPEQWRegReg;
+        compareOp = OP::PCMPEQWRegReg;
         shift = 1;
     }
 
@@ -10496,53 +10387,53 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, TR::CodeGenerator *c
     begLabel->setStartInternalControlFlow();
     endLabel->setEndInternalControlFlow();
 
-    Inst_RegReg(TR::InstOpCode::MOVDRegReg4, node, valueXMM, ch, cg);
-    Inst_RegMem(TR::InstOpCode::PSHUFBRegMem, node, valueXMM,
-        MRef_const(cg->findOrCreate16ByteConstant(node, shuffleMask), cg), cg);
+    Inst_RegReg(OP::MOVDRegReg4, node, valueXMM, ch, cg);
+    Inst_RegMem(OP::PSHUFBRegMem, node, valueXMM, MRef_const(cg->findOrCreate16ByteConstant(node, shuffleMask), cg),
+        cg);
 
-    Inst_RegReg(TR::InstOpCode::MOV4RegReg, node, result, offset, cg);
+    Inst_RegReg(OP::MOV4RegReg, node, result, offset, cg);
 
-    Inst_Label(TR::InstOpCode::label, node, begLabel, cg);
-    Inst_RegMem(TR::InstOpCode::LEARegMem(), node, scratch,
+    Inst_Label(OP::label, node, begLabel, cg);
+    Inst_RegMem(OP::LEARegMem(), node, scratch,
         MRef_BISdisp32(array, result, shift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
-    Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, ECX, scratch, cg);
-    Inst_RegImm(TR::InstOpCode::ANDRegImms(), node, scratch, ~(width - 1), cg);
-    Inst_RegImm(TR::InstOpCode::ANDRegImms(), node, ECX, width - 1, cg);
-    Inst_Label(TR::InstOpCode::JE1, node, loopLabel, cg);
+    Inst_RegReg(OP::MOVRegReg(), node, ECX, scratch, cg);
+    Inst_RegImm(OP::ANDRegImms(), node, scratch, ~(width - 1), cg);
+    Inst_RegImm(OP::ANDRegImms(), node, ECX, width - 1, cg);
+    Inst_Label(OP::JE1, node, loopLabel, cg);
 
-    Inst_RegMem(TR::InstOpCode::MOVDQURegMem, node, scratchXMM, MRef_Bdisp32(scratch, 0, cg), cg);
+    Inst_RegMem(OP::MOVDQURegMem, node, scratchXMM, MRef_Bdisp32(scratch, 0, cg), cg);
     Inst_RegReg(compareOp, node, scratchXMM, valueXMM, cg);
-    Inst_RegReg(TR::InstOpCode::PMOVMSKB4RegReg, node, scratch, scratchXMM, cg);
-    Inst_Reg(TR::InstOpCode::SHR4RegCL, node, scratch, cg);
-    Inst_RegReg(TR::InstOpCode::TEST4RegReg, node, scratch, scratch, cg);
-    Inst_Label(TR::InstOpCode::JNE1, node, endLabel, cg);
+    Inst_RegReg(OP::PMOVMSKB4RegReg, node, scratch, scratchXMM, cg);
+    Inst_Reg(OP::SHR4RegCL, node, scratch, cg);
+    Inst_RegReg(OP::TEST4RegReg, node, scratch, scratch, cg);
+    Inst_Label(OP::JNE1, node, endLabel, cg);
     if (shift) {
-        Inst_RegImm(TR::InstOpCode::SHR4RegImm1, node, ECX, shift, cg);
+        Inst_RegImm(OP::SHR4RegImm1, node, ECX, shift, cg);
     }
-    Inst_RegImm(TR::InstOpCode::ADD4RegImms, node, result, width >> shift, cg);
-    Inst_RegReg(TR::InstOpCode::SUB4RegReg, node, result, ECX, cg);
-    Inst_RegReg(TR::InstOpCode::CMP4RegReg, node, result, length, cg);
-    Inst_Label(TR::InstOpCode::JGE1, node, endLabel, cg);
+    Inst_RegImm(OP::ADD4RegImms, node, result, width >> shift, cg);
+    Inst_RegReg(OP::SUB4RegReg, node, result, ECX, cg);
+    Inst_RegReg(OP::CMP4RegReg, node, result, length, cg);
+    Inst_Label(OP::JGE1, node, endLabel, cg);
 
-    Inst_Label(TR::InstOpCode::label, node, loopLabel, cg);
-    Inst_RegMem(TR::InstOpCode::MOVDQURegMem, node, scratchXMM,
+    Inst_Label(OP::label, node, loopLabel, cg);
+    Inst_RegMem(OP::MOVDQURegMem, node, scratchXMM,
         MRef_BISdisp32(array, result, shift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
     Inst_RegReg(compareOp, node, scratchXMM, valueXMM, cg);
-    Inst_RegReg(TR::InstOpCode::PMOVMSKB4RegReg, node, scratch, scratchXMM, cg);
-    Inst_RegReg(TR::InstOpCode::TEST4RegReg, node, scratch, scratch, cg);
-    Inst_Label(TR::InstOpCode::JNE1, node, endLabel, cg);
-    Inst_RegImm(TR::InstOpCode::ADD4RegImms, node, result, width >> shift, cg);
-    Inst_RegReg(TR::InstOpCode::CMP4RegReg, node, result, length, cg);
-    Inst_Label(TR::InstOpCode::JL1, node, loopLabel, cg);
-    Inst_Label(TR::InstOpCode::label, node, endLabel, dependencies, cg);
+    Inst_RegReg(OP::PMOVMSKB4RegReg, node, scratch, scratchXMM, cg);
+    Inst_RegReg(OP::TEST4RegReg, node, scratch, scratch, cg);
+    Inst_Label(OP::JNE1, node, endLabel, cg);
+    Inst_RegImm(OP::ADD4RegImms, node, result, width >> shift, cg);
+    Inst_RegReg(OP::CMP4RegReg, node, result, length, cg);
+    Inst_Label(OP::JL1, node, loopLabel, cg);
+    Inst_Label(OP::label, node, endLabel, dependencies, cg);
 
-    Inst_RegReg(TR::InstOpCode::BSF4RegReg, node, scratch, scratch, cg);
+    Inst_RegReg(OP::BSF4RegReg, node, scratch, scratch, cg);
     if (shift) {
-        Inst_RegImm(TR::InstOpCode::SHR4RegImm1, node, scratch, shift, cg);
+        Inst_RegImm(OP::SHR4RegImm1, node, scratch, shift, cg);
     }
-    Inst_RegReg(TR::InstOpCode::ADDRegReg(), node, result, scratch, cg);
-    Inst_RegReg(TR::InstOpCode::CMPRegReg(), node, result, length, cg);
-    Inst_RegMem(TR::InstOpCode::CMOVGERegMem(), node, result,
+    Inst_RegReg(OP::ADDRegReg(), node, result, scratch, cg);
+    Inst_RegReg(OP::CMPRegReg(), node, result, length, cg);
+    Inst_RegMem(OP::CMOVGERegMem(), node, result,
         MRef_const(cg->comp()->target().is32Bit() ? cg->findOrCreate4ByteConstant(node, -1)
                                                   : cg->findOrCreate8ByteConstant(node, -1),
             cg),
@@ -10610,7 +10501,7 @@ static TR::Register *inlineIntrinsicStringIndexOfString(TR::Node *node, TR::Code
         maxReg = s1lenReg;
     } else {
         maxReg = cg->allocateRegister(TR_GPR);
-        Inst_RegReg(TR::InstOpCode::MOV4RegReg, node, maxReg, s1lenReg, cg);
+        Inst_RegReg(OP::MOV4RegReg, node, maxReg, s1lenReg, cg);
     }
 
     TR::Register *resultReg;
@@ -10618,7 +10509,7 @@ static TR::Register *inlineIntrinsicStringIndexOfString(TR::Node *node, TR::Code
         resultReg = offsetReg;
     } else {
         resultReg = cg->allocateRegister(TR_GPR);
-        Inst_RegReg(TR::InstOpCode::MOV4RegReg, node, resultReg, offsetReg, cg);
+        Inst_RegReg(OP::MOV4RegReg, node, resultReg, offsetReg, cg);
     }
 
     static uint8_t MASKOFSIZEONE[] = {
@@ -10661,14 +10552,14 @@ static TR::Register *inlineIntrinsicStringIndexOfString(TR::Node *node, TR::Code
     const uint8_t width = 16;
     uint8_t shift = 0;
     uint8_t *shuffleMask = NULL;
-    TR::InstOpCode::Mnemonic compareOp = TR::InstOpCode::bad;
+    OP::Mnemonic compareOp = OP::bad;
     if (isLatin1) {
         shuffleMask = MASKOFSIZEONE;
-        compareOp = TR::InstOpCode::PCMPEQBRegReg;
+        compareOp = OP::PCMPEQBRegReg;
         shift = 0;
     } else {
         shuffleMask = MASKOFSIZETWO;
-        compareOp = TR::InstOpCode::PCMPEQWRegReg;
+        compareOp = OP::PCMPEQWRegReg;
         shift = 1;
     }
 
@@ -10721,116 +10612,114 @@ static TR::Register *inlineIntrinsicStringIndexOfString(TR::Node *node, TR::Code
     startLabel->setStartInternalControlFlow();
     doneLabel->setEndInternalControlFlow();
 
-    Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+    Inst_Label(OP::label, node, startLabel, cg);
 
     int32_t hdrSize = static_cast<int32_t>(TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
 
     // load first char of s2
-    Inst_RegMem(isLatin1 ? TR::InstOpCode::MOVZXReg4Mem1 : TR::InstOpCode::MOVZXReg4Mem2, node, tmpReg,
-        MRef_Bdisp32(s2Reg, hdrSize, cg), cg);
-    Inst_RegReg(TR::InstOpCode::MOVDRegReg4, node, xmmReg2, tmpReg, cg);
-    Inst_RegMem(TR::InstOpCode::PSHUFBRegMem, node, xmmReg2,
-        MRef_const(cg->findOrCreate16ByteConstant(node, shuffleMask), cg), cg);
+    Inst_RegMem(isLatin1 ? OP::MOVZXReg4Mem1 : OP::MOVZXReg4Mem2, node, tmpReg, MRef_Bdisp32(s2Reg, hdrSize, cg), cg);
+    Inst_RegReg(OP::MOVDRegReg4, node, xmmReg2, tmpReg, cg);
+    Inst_RegMem(OP::PSHUFBRegMem, node, xmmReg2, MRef_const(cg->findOrCreate16ByteConstant(node, shuffleMask), cg), cg);
 
     // calculate max
-    Inst_RegReg(TR::InstOpCode::SUB4RegReg, node, maxReg, s2lenReg, cg); // s1len - s2len
+    Inst_RegReg(OP::SUB4RegReg, node, maxReg, s2lenReg, cg); // s1len - s2len
 
     // outer loop
-    Inst_Label(TR::InstOpCode::label, node, outerLoopLabel, cg);
-    Inst_RegReg(TR::InstOpCode::CMP4RegReg, node, resultReg, maxReg, cg);
-    Inst_Label(TR::InstOpCode::JG4, node, notFoundLabel, cg);
+    Inst_Label(OP::label, node, outerLoopLabel, cg);
+    Inst_RegReg(OP::CMP4RegReg, node, resultReg, maxReg, cg);
+    Inst_Label(OP::JG4, node, notFoundLabel, cg);
 
-    Inst_RegMem(TR::InstOpCode::LEARegMem(), node, tmpReg, MRef_BISdisp32(s1Reg, resultReg, shift, hdrSize, cg), cg);
-    Inst_RegReg(TR::InstOpCode::MOV4RegReg, node, ECX, tmpReg, cg);
-    Inst_RegImm(TR::InstOpCode::AND4RegImms, node, ECX, width - 1, cg);
-    Inst_Label(TR::InstOpCode::JE1, node, firstCharLoopLabel, cg);
+    Inst_RegMem(OP::LEARegMem(), node, tmpReg, MRef_BISdisp32(s1Reg, resultReg, shift, hdrSize, cg), cg);
+    Inst_RegReg(OP::MOV4RegReg, node, ECX, tmpReg, cg);
+    Inst_RegImm(OP::AND4RegImms, node, ECX, width - 1, cg);
+    Inst_Label(OP::JE1, node, firstCharLoopLabel, cg);
 
-    Inst_RegImm(TR::InstOpCode::ANDRegImms(), node, tmpReg, ~(width - 1), cg);
-    Inst_RegMem(TR::InstOpCode::MOVDQURegMem, node, xmmReg1, MRef_Bdisp32(tmpReg, 0, cg), cg);
+    Inst_RegImm(OP::ANDRegImms(), node, tmpReg, ~(width - 1), cg);
+    Inst_RegMem(OP::MOVDQURegMem, node, xmmReg1, MRef_Bdisp32(tmpReg, 0, cg), cg);
     Inst_RegReg(compareOp, node, xmmReg1, xmmReg2, cg);
-    Inst_RegReg(TR::InstOpCode::PMOVMSKB4RegReg, node, tmpReg, xmmReg1, cg);
-    Inst_Reg(TR::InstOpCode::SHR4RegCL, node, tmpReg, cg);
-    Inst_RegReg(TR::InstOpCode::TEST4RegReg, node, tmpReg, tmpReg, cg);
-    Inst_Label(TR::InstOpCode::JNE1, node, firstCharMatchedLabel, cg);
+    Inst_RegReg(OP::PMOVMSKB4RegReg, node, tmpReg, xmmReg1, cg);
+    Inst_Reg(OP::SHR4RegCL, node, tmpReg, cg);
+    Inst_RegReg(OP::TEST4RegReg, node, tmpReg, tmpReg, cg);
+    Inst_Label(OP::JNE1, node, firstCharMatchedLabel, cg);
     if (!isLatin1) {
-        Inst_RegImm(TR::InstOpCode::SHR4RegImm1, node, ECX, 1, cg);
+        Inst_RegImm(OP::SHR4RegImm1, node, ECX, 1, cg);
     }
-    Inst_RegImm(TR::InstOpCode::ADD4RegImms, node, resultReg, width >> shift, cg);
-    Inst_RegReg(TR::InstOpCode::SUB4RegReg, node, resultReg, ECX, cg);
-    Inst_RegReg(TR::InstOpCode::CMP4RegReg, node, resultReg, maxReg, cg);
-    Inst_Label(TR::InstOpCode::JG4, node, notFoundLabel, cg);
+    Inst_RegImm(OP::ADD4RegImms, node, resultReg, width >> shift, cg);
+    Inst_RegReg(OP::SUB4RegReg, node, resultReg, ECX, cg);
+    Inst_RegReg(OP::CMP4RegReg, node, resultReg, maxReg, cg);
+    Inst_Label(OP::JG4, node, notFoundLabel, cg);
 
     // loop for finding the first char
-    Inst_Label(TR::InstOpCode::label, node, firstCharLoopLabel, cg);
-    Inst_RegMem(TR::InstOpCode::MOVDQURegMem, node, xmmReg1, MRef_BISdisp32(s1Reg, resultReg, shift, hdrSize, cg), cg);
+    Inst_Label(OP::label, node, firstCharLoopLabel, cg);
+    Inst_RegMem(OP::MOVDQURegMem, node, xmmReg1, MRef_BISdisp32(s1Reg, resultReg, shift, hdrSize, cg), cg);
     Inst_RegReg(compareOp, node, xmmReg1, xmmReg2, cg);
-    Inst_RegReg(TR::InstOpCode::PMOVMSKB4RegReg, node, tmpReg, xmmReg1, cg);
-    Inst_RegReg(TR::InstOpCode::TEST4RegReg, node, tmpReg, tmpReg, cg);
-    Inst_Label(TR::InstOpCode::JNE1, node, firstCharMatchedLabel, cg);
-    Inst_RegImm(TR::InstOpCode::ADD4RegImms, node, resultReg, width >> shift, cg);
-    Inst_RegReg(TR::InstOpCode::CMP4RegReg, node, resultReg, maxReg, cg);
-    Inst_Label(TR::InstOpCode::JLE1, node, firstCharLoopLabel, cg);
-    Inst_Label(TR::InstOpCode::JMP4, node, notFoundLabel, cg);
+    Inst_RegReg(OP::PMOVMSKB4RegReg, node, tmpReg, xmmReg1, cg);
+    Inst_RegReg(OP::TEST4RegReg, node, tmpReg, tmpReg, cg);
+    Inst_Label(OP::JNE1, node, firstCharMatchedLabel, cg);
+    Inst_RegImm(OP::ADD4RegImms, node, resultReg, width >> shift, cg);
+    Inst_RegReg(OP::CMP4RegReg, node, resultReg, maxReg, cg);
+    Inst_Label(OP::JLE1, node, firstCharLoopLabel, cg);
+    Inst_Label(OP::JMP4, node, notFoundLabel, cg);
 
     // first char matched
-    Inst_Label(TR::InstOpCode::label, node, firstCharMatchedLabel, cg);
+    Inst_Label(OP::label, node, firstCharMatchedLabel, cg);
 
-    Inst_RegReg(TR::InstOpCode::BSF4RegReg, node, tmpReg, tmpReg, cg);
+    Inst_RegReg(OP::BSF4RegReg, node, tmpReg, tmpReg, cg);
     if (!isLatin1) {
-        Inst_RegImm(TR::InstOpCode::SHR4RegImm1, node, tmpReg, 1, cg);
+        Inst_RegImm(OP::SHR4RegImm1, node, tmpReg, 1, cg);
     }
-    Inst_RegReg(TR::InstOpCode::ADD4RegReg, node, resultReg, tmpReg, cg);
+    Inst_RegReg(OP::ADD4RegReg, node, resultReg, tmpReg, cg);
 
-    Inst_RegReg(TR::InstOpCode::CMP4RegReg, node, resultReg, maxReg, cg);
-    Inst_Label(TR::InstOpCode::JG4, node, notFoundLabel, cg);
+    Inst_RegReg(OP::CMP4RegReg, node, resultReg, maxReg, cg);
+    Inst_Label(OP::JG4, node, notFoundLabel, cg);
 
-    Inst_RegMem(TR::InstOpCode::LEARegMem(), node, s1addrReg, MRef_BISdisp32(s1Reg, resultReg, shift, hdrSize, cg),
+    Inst_RegMem(OP::LEARegMem(), node, s1addrReg, MRef_BISdisp32(s1Reg, resultReg, shift, hdrSize, cg),
         cg); // s1addr = &(s1[resultReg << shift])
-    Inst_RegImm(TR::InstOpCode::MOV4RegImm4, node, s2idxReg, 1, cg); // s2idx = 1
+    Inst_RegImm(OP::MOV4RegImm4, node, s2idxReg, 1, cg); // s2idx = 1
 
-    Inst_RegMem(TR::InstOpCode::LEARegMem(), node, ECX, MRef_Bdisp32(s2lenReg, -1, cg),
+    Inst_RegMem(OP::LEARegMem(), node, ECX, MRef_Bdisp32(s2lenReg, -1, cg),
         cg); // ECX = s2len - 1: 1st char has already matched
-    Inst_RegImm(TR::InstOpCode::SHR4RegImm1, node, ECX, 4 - shift, cg); // div by 16 or 8
-    Inst_Label(TR::InstOpCode::JE1, node, byteLoopLabel, cg);
+    Inst_RegImm(OP::SHR4RegImm1, node, ECX, 4 - shift, cg); // div by 16 or 8
+    Inst_Label(OP::JE1, node, byteLoopLabel, cg);
 
     // Compare by 16 bytes
-    Inst_Label(TR::InstOpCode::label, node, qwordLoopLabel, cg);
-    Inst_RegMem(TR::InstOpCode::MOVDQURegMem, node, xmmReg1, MRef_BISdisp32(s1addrReg, s2idxReg, shift, 0, cg), cg);
-    Inst_RegMem(TR::InstOpCode::MOVDQURegMem, node, xmmReg3, MRef_BISdisp32(s2Reg, s2idxReg, shift, hdrSize, cg), cg);
-    Inst_RegReg(TR::InstOpCode::PCMPEQBRegReg, node, xmmReg1, xmmReg3, cg);
-    Inst_RegReg(TR::InstOpCode::PMOVMSKB4RegReg, node, tmpReg, xmmReg1, cg);
-    Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, tmpReg, 0xffff, cg);
-    Inst_Label(TR::InstOpCode::JNE1, node, unmatchedLabel, cg);
+    Inst_Label(OP::label, node, qwordLoopLabel, cg);
+    Inst_RegMem(OP::MOVDQURegMem, node, xmmReg1, MRef_BISdisp32(s1addrReg, s2idxReg, shift, 0, cg), cg);
+    Inst_RegMem(OP::MOVDQURegMem, node, xmmReg3, MRef_BISdisp32(s2Reg, s2idxReg, shift, hdrSize, cg), cg);
+    Inst_RegReg(OP::PCMPEQBRegReg, node, xmmReg1, xmmReg3, cg);
+    Inst_RegReg(OP::PMOVMSKB4RegReg, node, tmpReg, xmmReg1, cg);
+    Inst_RegImm(OP::CMP4RegImm4, node, tmpReg, 0xffff, cg);
+    Inst_Label(OP::JNE1, node, unmatchedLabel, cg);
 
-    Inst_RegImm(TR::InstOpCode::ADD4RegImms, node, s2idxReg, width >> shift, cg);
-    Inst_RegImm(TR::InstOpCode::SUB4RegImms, node, ECX, 1, cg);
-    Inst_Label(TR::InstOpCode::JG1, node, qwordLoopLabel, cg);
+    Inst_RegImm(OP::ADD4RegImms, node, s2idxReg, width >> shift, cg);
+    Inst_RegImm(OP::SUB4RegImms, node, ECX, 1, cg);
+    Inst_Label(OP::JG1, node, qwordLoopLabel, cg);
 
     // Compare each byte
-    Inst_Label(TR::InstOpCode::label, node, byteLoopLabel, cg);
-    Inst_RegReg(TR::InstOpCode::CMP4RegReg, node, s2lenReg, s2idxReg, cg);
-    Inst_Label(TR::InstOpCode::JLE1, node, doneLabel, cg); // resultReg has the result
+    Inst_Label(OP::label, node, byteLoopLabel, cg);
+    Inst_RegReg(OP::CMP4RegReg, node, s2lenReg, s2idxReg, cg);
+    Inst_Label(OP::JLE1, node, doneLabel, cg); // resultReg has the result
 
-    Inst_RegMem(isLatin1 ? TR::InstOpCode::L1RegMem : TR::InstOpCode::L2RegMem, node, tmpReg,
+    Inst_RegMem(isLatin1 ? OP::L1RegMem : OP::L2RegMem, node, tmpReg,
         MRef_BISdisp32(s2Reg, s2idxReg, shift, hdrSize, cg), cg);
-    Inst_MemReg(isLatin1 ? TR::InstOpCode::CMP1MemReg : TR::InstOpCode::CMP2MemReg, node,
-        MRef_BISdisp32(s1addrReg, s2idxReg, shift, 0, cg), tmpReg, cg);
-    Inst_Label(TR::InstOpCode::JNE1, node, unmatchedLabel, cg);
+    Inst_MemReg(isLatin1 ? OP::CMP1MemReg : OP::CMP2MemReg, node, MRef_BISdisp32(s1addrReg, s2idxReg, shift, 0, cg),
+        tmpReg, cg);
+    Inst_Label(OP::JNE1, node, unmatchedLabel, cg);
 
-    Inst_RegImm(TR::InstOpCode::ADD4RegImms, node, s2idxReg, 1, cg);
-    Inst_Label(TR::InstOpCode::JMP1, node, byteLoopLabel, cg);
+    Inst_RegImm(OP::ADD4RegImms, node, s2idxReg, 1, cg);
+    Inst_Label(OP::JMP1, node, byteLoopLabel, cg);
 
     // substring did not match
-    Inst_Label(TR::InstOpCode::label, node, unmatchedLabel, cg);
-    Inst_RegImm(TR::InstOpCode::ADD4RegImms, node, resultReg, 1, cg);
-    Inst_Label(TR::InstOpCode::JMP4, node, outerLoopLabel, cg);
+    Inst_Label(OP::label, node, unmatchedLabel, cg);
+    Inst_RegImm(OP::ADD4RegImms, node, resultReg, 1, cg);
+    Inst_Label(OP::JMP4, node, outerLoopLabel, cg);
 
     // not found
-    Inst_Label(TR::InstOpCode::label, node, notFoundLabel, cg);
-    Inst_RegImm(TR::InstOpCode::OR4RegImms, node, resultReg, -1, cg);
+    Inst_Label(OP::label, node, notFoundLabel, cg);
+    Inst_RegImm(OP::OR4RegImms, node, resultReg, -1, cg);
     // fall through to doneLabel
 
-    Inst_Label(TR::InstOpCode::label, node, doneLabel, dependencies, cg);
+    Inst_Label(OP::label, node, doneLabel, dependencies, cg);
 
     cg->stopUsingRegister(ECX);
     cg->stopUsingRegister(tmpReg);
@@ -10901,13 +10790,13 @@ static TR::Register *inlineCompareAndSwapObjectNative(TR::Node *node, TR::CodeGe
         case gc_modron_readbar_none:
             break;
         case gc_modron_readbar_always:
-            Inst_RegMem(TR::InstOpCode::LEARegMem(), node, tmp, MRef_BIS(object, offset, 0, cg), cg);
-            Inst_MemReg(TR::InstOpCode::SMemReg(), node,
+            Inst_RegMem(OP::LEARegMem(), node, tmp, MRef_BIS(object, offset, 0, cg), cg);
+            Inst_MemReg(OP::SMemReg(), node,
                 MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg), tmp, cg);
             Inst_HelperCall(node, TR_softwareReadBarrier, NULL, cg);
             break;
         case gc_modron_readbar_range_check: {
-            Inst_RegMem(TR::InstOpCode::LRegMem(use64BitClasses), node, tmp, MRef_BIS(object, offset, 0, cg), cg);
+            Inst_RegMem(OP::LRegMem(use64BitClasses), node, tmp, MRef_BIS(object, offset, 0, cg), cg);
 
             TR::LabelSymbol *begLabel = generateLabelSymbol(cg);
             TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
@@ -10919,29 +10808,29 @@ static TR::Register *inlineCompareAndSwapObjectNative(TR::Node *node, TR::CodeGe
             deps->addPreCondition(tmp, TR::RealRegister::NoReg, cg);
             deps->addPostCondition(tmp, TR::RealRegister::NoReg, cg);
 
-            Inst_Label(TR::InstOpCode::label, node, begLabel, cg);
+            Inst_Label(OP::label, node, begLabel, cg);
 
-            Inst_RegMem(TR::InstOpCode::CMPRegMem(use64BitClasses), node, tmp,
+            Inst_RegMem(OP::CMPRegMem(use64BitClasses), node, tmp,
                 MRef_Bdisp32(cg->getVMThreadRegister(), comp->fej9()->thisThreadGetEvacuateBaseAddressOffset(), cg),
                 cg);
-            Inst_Label(TR::InstOpCode::JAE4, node, rdbarLabel, cg);
+            Inst_Label(OP::JAE4, node, rdbarLabel, cg);
 
             {
                 TR_OutlinedInstructionsGenerator og(rdbarLabel, node, cg);
-                Inst_RegMem(TR::InstOpCode::CMPRegMem(use64BitClasses), node, tmp,
+                Inst_RegMem(OP::CMPRegMem(use64BitClasses), node, tmp,
                     MRef_Bdisp32(cg->getVMThreadRegister(), comp->fej9()->thisThreadGetEvacuateTopAddressOffset(), cg),
                     cg);
-                Inst_Label(TR::InstOpCode::JA4, node, endLabel, cg);
-                Inst_RegMem(TR::InstOpCode::LEARegMem(), node, tmp, MRef_BIS(object, offset, 0, cg), cg);
-                Inst_MemReg(TR::InstOpCode::SMemReg(), node,
+                Inst_Label(OP::JA4, node, endLabel, cg);
+                Inst_RegMem(OP::LEARegMem(), node, tmp, MRef_BIS(object, offset, 0, cg), cg);
+                Inst_MemReg(OP::SMemReg(), node,
                     MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg), tmp, cg);
                 Inst_HelperCall(node, TR_softwareReadBarrier, NULL, cg);
-                Inst_Label(TR::InstOpCode::JMP4, node, endLabel, cg);
+                Inst_Label(OP::JMP4, node, endLabel, cg);
 
                 og.endOutlinedInstructionSequence();
             }
 
-            Inst_Label(TR::InstOpCode::label, node, endLabel, deps, cg);
+            Inst_Label(OP::label, node, endLabel, deps, cg);
         } break;
         default:
             TR_ASSERT(false, "Unsupported Read Barrier Type.");
@@ -10949,32 +10838,32 @@ static TR::Register *inlineCompareAndSwapObjectNative(TR::Node *node, TR::CodeGe
     }
 #endif
 
-    Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, EAX, oldValue, cg);
-    Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, tmp, newValue, cg);
+    Inst_RegReg(OP::MOVRegReg(), node, EAX, oldValue, cg);
+    Inst_RegReg(OP::MOVRegReg(), node, tmp, newValue, cg);
     if (TR::Compiler->om.compressedReferenceShiftOffset() != 0) {
         if (!oldValueNode->isNull()) {
-            Inst_RegImm(TR::InstOpCode::SHRRegImm1(), node, EAX, TR::Compiler->om.compressedReferenceShiftOffset(), cg);
+            Inst_RegImm(OP::SHRRegImm1(), node, EAX, TR::Compiler->om.compressedReferenceShiftOffset(), cg);
         }
         if (!newValueNode->isNull()) {
-            Inst_RegImm(TR::InstOpCode::SHRRegImm1(), node, tmp, TR::Compiler->om.compressedReferenceShiftOffset(), cg);
+            Inst_RegImm(OP::SHRRegImm1(), node, tmp, TR::Compiler->om.compressedReferenceShiftOffset(), cg);
         }
     }
 
     TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)1, 1, cg);
     deps->addPreCondition(EAX, TR::RealRegister::eax, cg);
     deps->addPostCondition(EAX, TR::RealRegister::eax, cg);
-    Inst_MemReg(use64BitClasses ? TR::InstOpCode::LCMPXCHG8MemReg : TR::InstOpCode::LCMPXCHG4MemReg, node,
-        MRef_BIS(object, offset, 0, cg), tmp, deps, cg);
+    Inst_MemReg(use64BitClasses ? OP::LCMPXCHG8MemReg : OP::LCMPXCHG4MemReg, node, MRef_BIS(object, offset, 0, cg), tmp,
+        deps, cg);
 
     if (isExchange) {
         result = EAX;
         result->setContainsCollectedReference();
         if (TR::Compiler->om.compressedReferenceShiftOffset() != 0) {
-            Inst_RegImm(TR::InstOpCode::SHLRegImm1(), node, EAX, TR::Compiler->om.compressedReferenceShiftOffset(), cg);
+            Inst_RegImm(OP::SHLRegImm1(), node, EAX, TR::Compiler->om.compressedReferenceShiftOffset(), cg);
         }
     } else {
-        Inst_Reg(TR::InstOpCode::SETE1Reg, node, result, cg);
-        Inst_RegReg(TR::InstOpCode::MOVZXReg4Reg1, node, result, result, cg);
+        Inst_Reg(OP::SETE1Reg, node, result, cg);
+        Inst_RegReg(OP::MOVZXReg4Reg1, node, result, result, cg);
     }
 
     // Non-realtime: Generate a write barrier for this kind of object.
@@ -11018,7 +10907,7 @@ static bool inlineCompareAndSwapNative(TR::Node *node, int8_t size, bool isObjec
     TR::Compilation *comp = cg->comp();
     TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
 
-    TR::InstOpCode::Mnemonic op;
+    OP::Mnemonic op;
 
     if (TR::Compiler->om.canGenerateArraylets() && !node->isUnsafeGetPutCASCallOnNonArray())
         return false;
@@ -11032,13 +10921,13 @@ static bool inlineCompareAndSwapNative(TR::Node *node, int8_t size, bool isObjec
     //
     switch (size) {
         case 4:
-            op = TR::InstOpCode::LCMPXCHG4MemReg;
+            op = OP::LCMPXCHG4MemReg;
             break;
         case 8:
             if (comp->target().is64Bit()) {
-                op = TR::InstOpCode::LCMPXCHG8MemReg;
+                op = OP::LCMPXCHG8MemReg;
             } else if (comp->target().cpu.supportsFeature(OMR_FEATURE_X86_CX8)) {
-                op = TR::InstOpCode::LCMPXCHG8BMem;
+                op = OP::LCMPXCHG8BMem;
             } else {
                 return false;
             }
@@ -11141,7 +11030,7 @@ static bool inlineCompareAndSwapNative(TR::Node *node, int8_t size, bool isObjec
         //   beforehand
         // For simplicity, just evaluate the store address into storeAddressRegForRealTime right now
         storeAddressRegForRealTime = scratchRegisterManagerForRealTime->findOrCreateScratchRegister();
-        Inst_RegMem(TR::InstOpCode::LEARegMem(), node, storeAddressRegForRealTime, mr, cg);
+        Inst_RegMem(OP::LEARegMem(), node, storeAddressRegForRealTime, mr, cg);
         if (node->getSymbolReference()->isUnresolved()) {
             TR::TreeEvaluator::padUnresolvedDataReferences(node, *node->getSymbolReference(), cg);
 
@@ -11161,7 +11050,7 @@ static bool inlineCompareAndSwapNative(TR::Node *node, int8_t size, bool isObjec
     TR::MemoryReference *cmpxchgMR = mr;
 
     TR::Register *resultReg;
-    if (op == TR::InstOpCode::LCMPXCHG8BMem) {
+    if (op == OP::LCMPXCHG8BMem) {
         int numDeps = 4;
         if (storeAddressRegForRealTime != NULL) {
             numDeps++;
@@ -11215,8 +11104,7 @@ static bool inlineCompareAndSwapNative(TR::Node *node, int8_t size, bool isObjec
         if (isObject) {
             resultReg->setContainsCollectedReference();
             if (TR::Compiler->om.compressedReferenceShiftOffset() != 0) {
-                Inst_RegImm(TR::InstOpCode::SHLRegImm1(), node, resultReg,
-                    TR::Compiler->om.compressedReferenceShiftOffset(), cg);
+                Inst_RegImm(OP::SHLRegImm1(), node, resultReg, TR::Compiler->om.compressedReferenceShiftOffset(), cg);
             }
         }
     }
@@ -11229,8 +11117,8 @@ static bool inlineCompareAndSwapNative(TR::Node *node, int8_t size, bool isObjec
 
     if (!isExchange) {
         resultReg = cg->allocateRegister();
-        Inst_Reg(TR::InstOpCode::SETE1Reg, node, resultReg, cg);
-        Inst_RegReg(TR::InstOpCode::MOVZXReg4Reg1, node, resultReg, resultReg, cg);
+        Inst_Reg(OP::SETE1Reg, node, resultReg, cg);
+        Inst_RegReg(OP::MOVZXReg4Reg1, node, resultReg, resultReg, cg);
     }
 
     // Non-realtime: Generate a write barrier for this kind of object.
@@ -11299,7 +11187,7 @@ static TR::Register *inlineHasNegativesOrCountPositives(TR::Node *node, TR::Reco
     // A key part of the main loop of this algorithm is the pmovmskb instruction,
     // which extracts the sign bits from a source register and collects them into a destination register
     // We need to specify the encoding of this instruction so that the code generator knows we want the 16 byte version
-    TR::InstOpCode pmovmskb = TR::InstOpCode::PMOVMSKB4RegReg;
+    TR::InstOpCode pmovmskb = OP::PMOVMSKB4RegReg;
     OMR::X86::Encoding pmovmskbEncoding = pmovmskb.getSIMDEncoding(&cg->comp()->target().cpu, TR::VectorLength128);
     static bool disableSIMDHasNegativesCountPositives = feGetEnv("TR_disableSIMDHasNegativesCountPositives") != NULL;
     bool useVectorInstructions
@@ -11360,13 +11248,13 @@ static TR::Register *inlineHasNegativesOrCountPositives(TR::Node *node, TR::Reco
     begLabel->setStartInternalControlFlow();
     endLabel->setEndInternalControlFlow();
 
-    Inst_Label(TR::InstOpCode::label, node, begLabel, cg);
+    Inst_Label(OP::label, node, begLabel, cg);
 
     // If offheap is enabled, we will update bufReg to point to the actual start of the array data
     // and set offsetToDataElements to zero
 #ifdef J9VM_GC_SPARSE_HEAP_ALLOCATION
     if (TR::Compiler->om.isOffHeapAllocationEnabled()) {
-        Inst_RegMem(TR::InstOpCode::L8RegMem, node, bufReg,
+        Inst_RegMem(OP::L8RegMem, node, bufReg,
             MRef_Bdisp32(bufReg, cg->comp()->fej9()->getOffsetOfContiguousDataAddrField(), cg), cg);
 
         // We'll be loading first data element address from array header so no need for offset
@@ -11375,65 +11263,64 @@ static TR::Register *inlineHasNegativesOrCountPositives(TR::Node *node, TR::Reco
 #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
     // index = offset
-    Inst_RegReg(TR::InstOpCode::MOV4RegReg, node, indexReg, offsetReg, cg);
+    Inst_RegReg(OP::MOV4RegReg, node, indexReg, offsetReg, cg);
 
     // limit = offset + length
-    Inst_RegMem(TR::InstOpCode::LEA4RegMem, node, limitReg, MRef_BISdisp32(offsetReg, lengthReg, 0, 0, cg), cg);
+    Inst_RegMem(OP::LEA4RegMem, node, limitReg, MRef_BISdisp32(offsetReg, lengthReg, 0, 0, cg), cg);
 
     // loopLimit = (length & -16) + offset
-    Inst_RegReg(TR::InstOpCode::MOV4RegReg, node, loopLimitReg, lengthReg, cg);
-    Inst_RegImm(TR::InstOpCode::AND4RegImm4, node, loopLimitReg, -16, cg);
-    Inst_RegReg(TR::InstOpCode::ADD4RegReg, node, loopLimitReg, offsetReg, cg);
+    Inst_RegReg(OP::MOV4RegReg, node, loopLimitReg, lengthReg, cg);
+    Inst_RegImm(OP::AND4RegImm4, node, loopLimitReg, -16, cg);
+    Inst_RegReg(OP::ADD4RegReg, node, loopLimitReg, offsetReg, cg);
 
     // If the 16 byte encoding of the pmovmskb instruction is not supported on this architecture,
     // Prepare an 8 byte sign bit mask so we can run an alternate version of the algorithm
     if (!useVectorInstructions) {
-        Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, maskReg, 0x8080808080808080, cg);
+        Inst_RegImm64(OP::MOV8RegImm64, node, maskReg, 0x8080808080808080, cg);
     }
 
-    Inst_Label(TR::InstOpCode::label, node, loopLabel, cg);
+    Inst_Label(OP::label, node, loopLabel, cg);
 
     // if index >= loopLimit, jump to handling the residual bytes
-    Inst_RegReg(TR::InstOpCode::CMP4RegReg, node, indexReg, loopLimitReg, cg);
-    Inst_Label(TR::InstOpCode::JGE4, node, residualLabel, cg);
+    Inst_RegReg(OP::CMP4RegReg, node, indexReg, loopLimitReg, cg);
+    Inst_Label(OP::JGE4, node, residualLabel, cg);
 
     // If the 16 byte version of pmovmskb is supported on this architecture,
     // we can proceed to generate code for the loop
     if (useVectorInstructions) {
         // Load 16 bytes from address [buf + index]
-        Inst_RegMem(TR::InstOpCode::MOVDQURegMem, node, xmmChunkReg,
-            MRef_BISdisp32(bufReg, indexReg, 0, offsetToDataElements, cg), cg);
+        Inst_RegMem(OP::MOVDQURegMem, node, xmmChunkReg, MRef_BISdisp32(bufReg, indexReg, 0, offsetToDataElements, cg),
+            cg);
 
         // Extract bitmask of sign bits
-        Inst_RegReg(TR::InstOpCode::PMOVMSKB4RegReg, node, maskReg, xmmChunkReg, cg, pmovmskbEncoding);
+        Inst_RegReg(OP::PMOVMSKB4RegReg, node, maskReg, xmmChunkReg, cg, pmovmskbEncoding);
 
         // Check if any negative values exist
-        Inst_RegReg(TR::InstOpCode::TEST2RegReg, node, maskReg, maskReg, cg);
+        Inst_RegReg(OP::TEST2RegReg, node, maskReg, maskReg, cg);
     }
     // If the 16 byte version of pmovmskb is not supported,
     // run an alternate version of the loop with an 8 byte chunk instead of a 16 byte chunk
     else {
         // Load 8 bytes from address [buf + index]
-        Inst_RegMem(TR::InstOpCode::L8RegMem, node, chunkReg,
-            MRef_BISdisp32(bufReg, indexReg, 0, offsetToDataElements, cg), cg);
+        Inst_RegMem(OP::L8RegMem, node, chunkReg, MRef_BISdisp32(bufReg, indexReg, 0, offsetToDataElements, cg), cg);
 
         // Check if any negative values exist
-        Inst_RegReg(TR::InstOpCode::TEST8RegReg, node, chunkReg, maskReg, cg);
+        Inst_RegReg(OP::TEST8RegReg, node, chunkReg, maskReg, cg);
     }
 
     // If the result is nonzero, we found at least one negative byte
-    Inst_Label(TR::InstOpCode::JNE4, node, isHasNegatives ? returnBooleanLabel : returnHasNegativesLabel, cg);
+    Inst_Label(OP::JNE4, node, isHasNegatives ? returnBooleanLabel : returnHasNegativesLabel, cg);
 
     // increment index by the appropriate amount and jump back to the top of the loop
-    Inst_RegImm(TR::InstOpCode::ADD4RegImm4, node, indexReg, useVectorInstructions ? 16 : 8, cg);
-    Inst_Label(TR::InstOpCode::JMP4, node, loopLabel, cg);
+    Inst_RegImm(OP::ADD4RegImm4, node, indexReg, useVectorInstructions ? 16 : 8, cg);
+    Inst_Label(OP::JMP4, node, loopLabel, cg);
 
     // Deal with the residual (last 15 or fewer) bytes
-    Inst_Label(TR::InstOpCode::label, node, residualLabel, cg);
+    Inst_Label(OP::label, node, residualLabel, cg);
 
     // Calculate bytes remaining: loopLimit = -(loopLimit - limit)
-    Inst_RegReg(TR::InstOpCode::SUB4RegReg, node, loopLimitReg, limitReg, cg);
-    Inst_Reg(TR::InstOpCode::NEG4Reg, node, loopLimitReg, cg);
+    Inst_RegReg(OP::SUB4RegReg, node, loopLimitReg, limitReg, cg);
+    Inst_Reg(OP::NEG4Reg, node, loopLimitReg, cg);
 
     /*
      *    if loopLimit == 0
@@ -11467,102 +11354,94 @@ static TR::Register *inlineHasNegativesOrCountPositives(TR::Node *node, TR::Reco
      */
 
     // if loopLimit = 0, we did not find any negative bytes
-    Inst_RegReg(TR::InstOpCode::TEST4RegReg, node, loopLimitReg, loopLimitReg, cg);
-    Inst_Label(TR::InstOpCode::JE4, node, isHasNegatives ? returnBooleanLabel : returnNoNegativesLabel, cg);
+    Inst_RegReg(OP::TEST4RegReg, node, loopLimitReg, loopLimitReg, cg);
+    Inst_Label(OP::JE4, node, isHasNegatives ? returnBooleanLabel : returnNoNegativesLabel, cg);
 
     // Prepare an 8 byte sign bit mask
     // (if the 16 byte pmovmskb instruction above isn't supported, we already did this at the start)
     if (useVectorInstructions) {
-        Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, maskReg, 0x8080808080808080, cg);
+        Inst_RegImm64(OP::MOV8RegImm64, node, maskReg, 0x8080808080808080, cg);
     }
 
     // if loopLimit > 8, jump to nineOrMoreBytesLabel
-    Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, loopLimitReg, 8, cg);
-    Inst_Label(TR::InstOpCode::JG4, node, nineOrMoreBytesLabel, cg);
+    Inst_RegImm(OP::CMP4RegImm4, node, loopLimitReg, 8, cg);
+    Inst_Label(OP::JG4, node, nineOrMoreBytesLabel, cg);
 
     // Zero out the chunk register
-    Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, chunkReg, chunkReg, cg);
+    Inst_RegReg(OP::XOR4RegReg, node, chunkReg, chunkReg, cg);
 
     // if loopLimit > 2, jump to threeOrMoreBytesLabel
-    Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, loopLimitReg, 2, cg);
-    Inst_Label(TR::InstOpCode::JG4, node, threeOrMoreBytesLabel, cg);
+    Inst_RegImm(OP::CMP4RegImm4, node, loopLimitReg, 2, cg);
+    Inst_Label(OP::JG4, node, threeOrMoreBytesLabel, cg);
 
     // Case in which there are one or two residual bytes
     // Load the byte at address [buf + index] into the chunk register
-    Inst_RegMem(TR::InstOpCode::L1RegMem, node, chunkReg, MRef_BISdisp32(bufReg, indexReg, 0, offsetToDataElements, cg),
-        cg);
+    Inst_RegMem(OP::L1RegMem, node, chunkReg, MRef_BISdisp32(bufReg, indexReg, 0, offsetToDataElements, cg), cg);
     // OR the second byte (which is the same byte again in the 1 byte case)
-    Inst_RegMem(TR::InstOpCode::OR1RegMem, node, chunkReg,
-        MRef_BISdisp32(bufReg, limitReg, 0, offsetToDataElements - 1, cg), cg);
+    Inst_RegMem(OP::OR1RegMem, node, chunkReg, MRef_BISdisp32(bufReg, limitReg, 0, offsetToDataElements - 1, cg), cg);
 
-    Inst_Label(TR::InstOpCode::JMP4, node, residualTestLabel, cg);
+    Inst_Label(OP::JMP4, node, residualTestLabel, cg);
 
     // Case in which there are three or more residual bytes
-    Inst_Label(TR::InstOpCode::label, node, threeOrMoreBytesLabel, cg);
+    Inst_Label(OP::label, node, threeOrMoreBytesLabel, cg);
 
     // if loopLimit > 4, jump to fiveOrMoreBytesLabel
-    Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, loopLimitReg, 4, cg);
-    Inst_Label(TR::InstOpCode::JG4, node, fiveOrMoreBytesLabel, cg);
+    Inst_RegImm(OP::CMP4RegImm4, node, loopLimitReg, 4, cg);
+    Inst_Label(OP::JG4, node, fiveOrMoreBytesLabel, cg);
 
     // Load the first two bytes at address [buf + index] into the chunk register
-    Inst_RegMem(TR::InstOpCode::L2RegMem, node, chunkReg, MRef_BISdisp32(bufReg, indexReg, 0, offsetToDataElements, cg),
-        cg);
+    Inst_RegMem(OP::L2RegMem, node, chunkReg, MRef_BISdisp32(bufReg, indexReg, 0, offsetToDataElements, cg), cg);
     // OR the second two bytes at address [buf + (limit - 2)] into the chunk register
-    Inst_RegMem(TR::InstOpCode::OR2RegMem, node, chunkReg,
-        MRef_BISdisp32(bufReg, limitReg, 0, offsetToDataElements - 2, cg), cg);
+    Inst_RegMem(OP::OR2RegMem, node, chunkReg, MRef_BISdisp32(bufReg, limitReg, 0, offsetToDataElements - 2, cg), cg);
 
-    Inst_Label(TR::InstOpCode::JMP4, node, residualTestLabel, cg);
+    Inst_Label(OP::JMP4, node, residualTestLabel, cg);
 
     // Case in which there are five or more residual bytes
-    Inst_Label(TR::InstOpCode::label, node, fiveOrMoreBytesLabel, cg);
+    Inst_Label(OP::label, node, fiveOrMoreBytesLabel, cg);
 
     // Load the first four bytes at address [buf + index] into the chunk register
-    Inst_RegMem(TR::InstOpCode::L4RegMem, node, chunkReg, MRef_BISdisp32(bufReg, indexReg, 0, offsetToDataElements, cg),
-        cg);
+    Inst_RegMem(OP::L4RegMem, node, chunkReg, MRef_BISdisp32(bufReg, indexReg, 0, offsetToDataElements, cg), cg);
     // OR the second four bytes at address [buf + (limit - 4)] into the chunk register
-    Inst_RegMem(TR::InstOpCode::OR4RegMem, node, chunkReg,
-        MRef_BISdisp32(bufReg, limitReg, 0, offsetToDataElements - 4, cg), cg);
+    Inst_RegMem(OP::OR4RegMem, node, chunkReg, MRef_BISdisp32(bufReg, limitReg, 0, offsetToDataElements - 4, cg), cg);
 
-    Inst_Label(TR::InstOpCode::JMP4, node, residualTestLabel, cg);
+    Inst_Label(OP::JMP4, node, residualTestLabel, cg);
 
     // Case in which there are nine or more residual bytes
-    Inst_Label(TR::InstOpCode::label, node, nineOrMoreBytesLabel, cg);
+    Inst_Label(OP::label, node, nineOrMoreBytesLabel, cg);
 
     // Load the first eight bytes at address [buf + index] into the chunk register
-    Inst_RegMem(TR::InstOpCode::L8RegMem, node, chunkReg, MRef_BISdisp32(bufReg, indexReg, 0, offsetToDataElements, cg),
-        cg);
+    Inst_RegMem(OP::L8RegMem, node, chunkReg, MRef_BISdisp32(bufReg, indexReg, 0, offsetToDataElements, cg), cg);
     // OR the second eight bytes at address [buf + (limit - 8)] into the chunk register
-    Inst_RegMem(TR::InstOpCode::OR8RegMem, node, chunkReg,
-        MRef_BISdisp32(bufReg, limitReg, 0, offsetToDataElements - 8, cg), cg);
+    Inst_RegMem(OP::OR8RegMem, node, chunkReg, MRef_BISdisp32(bufReg, limitReg, 0, offsetToDataElements - 8, cg), cg);
 
     // Examine the chunk register now that all of the residual bytes have been ORed into it
-    Inst_Label(TR::InstOpCode::label, node, residualTestLabel, cg);
+    Inst_Label(OP::label, node, residualTestLabel, cg);
     // AND the residual bytes with the new mask
-    Inst_RegReg(TR::InstOpCode::TEST8RegReg, node, chunkReg, maskReg, cg);
+    Inst_RegReg(OP::TEST8RegReg, node, chunkReg, maskReg, cg);
     if (!isHasNegatives) {
         // If the result is nonzero (i.e. at least one of the sign bits is set), jump to returnHasNegativesLabel
-        Inst_Label(TR::InstOpCode::JNE4, node, returnHasNegativesLabel, cg);
+        Inst_Label(OP::JNE4, node, returnHasNegativesLabel, cg);
     }
 
     // Return result
     if (isHasNegatives) {
-        Inst_Label(TR::InstOpCode::label, node, returnBooleanLabel, cg);
+        Inst_Label(OP::label, node, returnBooleanLabel, cg);
         // If the result of the previous comparison is nonzero, a negative byte has been found somewhere, so return true
         // Otherwise, return false
-        Inst_Reg(TR::InstOpCode::SETNE1Reg, node, indexReg, cg);
-        Inst_RegReg(TR::InstOpCode::MOVZXReg4Reg1, node, indexReg, indexReg, cg);
+        Inst_Reg(OP::SETNE1Reg, node, indexReg, cg);
+        Inst_RegReg(OP::MOVZXReg4Reg1, node, indexReg, indexReg, cg);
     } else {
         // no negatives found case, result = length
-        Inst_Label(TR::InstOpCode::label, node, returnNoNegativesLabel, cg);
-        Inst_RegReg(TR::InstOpCode::MOV4RegReg, node, indexReg, lengthReg, cg);
-        Inst_Label(TR::InstOpCode::JMP4, node, endLabel, cg);
+        Inst_Label(OP::label, node, returnNoNegativesLabel, cg);
+        Inst_RegReg(OP::MOV4RegReg, node, indexReg, lengthReg, cg);
+        Inst_Label(OP::JMP4, node, endLabel, cg);
 
         // negative(s) found case, result = index - offset
-        Inst_Label(TR::InstOpCode::label, node, returnHasNegativesLabel, cg);
-        Inst_RegReg(TR::InstOpCode::SUB4RegReg, node, indexReg, offsetReg, cg);
+        Inst_Label(OP::label, node, returnHasNegativesLabel, cg);
+        Inst_RegReg(OP::SUB4RegReg, node, indexReg, offsetReg, cg);
     }
 
-    Inst_Label(TR::InstOpCode::label, node, endLabel, dependencies, cg);
+    Inst_Label(OP::label, node, endLabel, dependencies, cg);
 
     cg->stopUsingRegister(bufReg);
     cg->stopUsingRegister(loopLimitReg);
@@ -11627,14 +11506,14 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(TR::Node *node, bool isIndire
                         TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
                         TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
                         startLabel->setStartInternalControlFlow();
-                        Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+                        Inst_Label(OP::label, node, startLabel, cg);
 
-                        Inst_RegMem(TR::InstOpCode::LRegMem(), node, nativeThreadReg,
+                        Inst_RegMem(OP::LRegMem(), node, nativeThreadReg,
                             MRef_Bdisp32(vmThreadReg, fej9->thisThreadOSThreadOffset(), cg), cg);
-                        Inst_RegMem(TR::InstOpCode::LRegMem(), node, nativeThreadReg,
+                        Inst_RegMem(OP::LRegMem(), node, nativeThreadReg,
                             MRef_Bdisp32(nativeThreadReg, offsetof(J9Thread, handle), cg), cg);
                         doneLabel->setEndInternalControlFlow();
-                        Inst_Label(TR::InstOpCode::label, node, doneLabel, deps, cg);
+                        Inst_Label(OP::label, node, doneLabel, deps, cg);
                     } else {
                         TR::MemoryReference *lowMR = MRef_Bdisp32(vmThreadReg, fej9->thisThreadOSThreadOffset(), cg);
                         TR::MemoryReference *highMR = MRef_MRefOff(*lowMR, 4, cg);
@@ -11642,20 +11521,20 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(TR::Node *node, bool isIndire
                         TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
                         TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
                         startLabel->setStartInternalControlFlow();
-                        Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+                        Inst_Label(OP::label, node, startLabel, cg);
 
-                        Inst_RegMem(TR::InstOpCode::L4RegMem, node, nativeThreadReg, lowMR, cg);
-                        Inst_RegMem(TR::InstOpCode::L4RegMem, node, nativeThreadRegHigh, highMR, cg);
+                        Inst_RegMem(OP::L4RegMem, node, nativeThreadReg, lowMR, cg);
+                        Inst_RegMem(OP::L4RegMem, node, nativeThreadRegHigh, highMR, cg);
 
                         TR::MemoryReference *lowHandleMR
                             = MRef_Bdisp32(nativeThreadReg, offsetof(J9Thread, handle), cg);
                         TR::MemoryReference *highHandleMR = MRef_MRefOff(*lowMR, 4, cg);
 
-                        Inst_RegMem(TR::InstOpCode::L4RegMem, node, nativeThreadReg, lowHandleMR, cg);
-                        Inst_RegMem(TR::InstOpCode::L4RegMem, node, nativeThreadRegHigh, highHandleMR, cg);
+                        Inst_RegMem(OP::L4RegMem, node, nativeThreadReg, lowHandleMR, cg);
+                        Inst_RegMem(OP::L4RegMem, node, nativeThreadRegHigh, highHandleMR, cg);
 
                         doneLabel->setEndInternalControlFlow();
-                        Inst_Label(TR::InstOpCode::label, node, doneLabel, deps, cg);
+                        Inst_Label(OP::label, node, doneLabel, deps, cg);
                     }
 
                     if (comp->target().is32Bit()) {
@@ -11766,7 +11645,7 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(TR::Node *node, bool isIndire
  *
  * Note that RealTimeGC is handled separately in a different method.
  */
-static void generateWriteBarrierCall(TR::InstOpCode::Mnemonic branchOp, TR::Node *node, MM_GCWriteBarrierType gcMode,
+static void generateWriteBarrierCall(OP::Mnemonic branchOp, TR::Node *node, MM_GCWriteBarrierType gcMode,
     TR::Register *owningObjectReg, TR::Register *sourceReg, TR::LabelSymbol *doneLabel, TR::CodeGenerator *cg)
 {
     TR::Compilation *comp = cg->comp();
@@ -11801,14 +11680,14 @@ static void generateWriteBarrierCall(TR::InstOpCode::Mnemonic branchOp, TR::Node
 
     TR_OutlinedInstructionsGenerator og(wrtBarLabel, node, cg);
 
-    Inst_MemReg(TR::InstOpCode::SMemReg(), node,
-        MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg), owningObjectReg, cg);
+    Inst_MemReg(OP::SMemReg(), node, MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg),
+        owningObjectReg, cg);
     if (helperArgCount > 1) {
-        Inst_MemReg(TR::InstOpCode::SMemReg(), node,
-            MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp2), cg), sourceReg, cg);
+        Inst_MemReg(OP::SMemReg(), node, MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp2), cg),
+            sourceReg, cg);
     }
-    Inst_ImmSym(TR::InstOpCode::CALLImm4, node, (uintptr_t)wrtBarSymRef->getMethodAddress(), wrtBarSymRef, cg);
-    Inst_Label(TR::InstOpCode::JMP4, node, doneLabel, cg);
+    Inst_ImmSym(OP::CALLImm4, node, (uintptr_t)wrtBarSymRef->getMethodAddress(), wrtBarSymRef, cg);
+    Inst_Label(OP::JMP4, node, doneLabel, cg);
 
     og.endOutlinedInstructionSequence();
 }
@@ -11916,12 +11795,12 @@ void J9::X86::TreeEvaluator::VMwrtbarRealTimeWithoutStoreEvaluator(TR::Node *nod
     if (doInternalControlFlow) {
         TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
         startLabel->setStartInternalControlFlow();
-        Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+        Inst_Label(OP::label, node, startLabel, cg);
         doneLabel->setEndInternalControlFlow();
     }
 
     if (comp->getOption(TR_BreakOnWriteBarrier)) {
-        Inst(TR::InstOpCode::INT3, node, cg);
+        Inst(OP::INT3, node, cg);
     }
 
     TR::SymbolReference *wrtBarSymRef = NULL;
@@ -11962,7 +11841,7 @@ void J9::X86::TreeEvaluator::VMwrtbarRealTimeWithoutStoreEvaluator(TR::Node *nod
         if (comp->getOption(TR_CountWriteBarriersRT)) {
             TR::MemoryReference *barrierCountMR
                 = MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, debugEventData6), cg);
-            Inst_Mem(TR::InstOpCode::INCMem(comp->target().is64Bit()), node, barrierCountMR, cg);
+            Inst_Mem(OP::INCMem(comp->target().is64Bit()), node, barrierCountMR, cg);
         }
 
         tempReg = srm->findOrCreateScratchRegister();
@@ -11970,27 +11849,27 @@ void J9::X86::TreeEvaluator::VMwrtbarRealTimeWithoutStoreEvaluator(TR::Node *nod
         // if barrier not enabled, nothing to do
         TR::MemoryReference *fragmentParentMR = MRef_Bdisp32(cg->getVMThreadRegister(),
             fej9->thisThreadRememberedSetFragmentOffset() + fej9->getFragmentParentOffset(), cg);
-        Inst_RegMem(TR::InstOpCode::LRegMem(comp->target().is64Bit()), node, tempReg, fragmentParentMR, cg);
+        Inst_RegMem(OP::LRegMem(comp->target().is64Bit()), node, tempReg, fragmentParentMR, cg);
         TR::MemoryReference *globalFragmentIDMR
             = MRef_Bdisp32(tempReg, fej9->getRememberedSetGlobalFragmentOffset(), cg);
-        Inst_MemImm(TR::InstOpCode::CMPMemImms(), node, globalFragmentIDMR, 0, cg);
-        Inst_Label(TR::InstOpCode::JE4, node, doneLabel, cg);
+        Inst_MemImm(OP::CMPMemImms(), node, globalFragmentIDMR, 0, cg);
+        Inst_Label(OP::JE4, node, doneLabel, cg);
 
         // now check if double barrier is enabled and definitely execute the barrier if it is
         // if (vmThread->localFragmentIndex == 0) goto snippetLabel
         TR::MemoryReference *localFragmentIndexMR = MRef_Bdisp32(cg->getVMThreadRegister(),
             fej9->thisThreadRememberedSetFragmentOffset() + fej9->getLocalFragmentOffset(), cg);
-        Inst_MemImm(TR::InstOpCode::CMPMemImms(), node, localFragmentIndexMR, 0, cg);
-        Inst_Label(TR::InstOpCode::JE4, node, snippetLabel, cg);
+        Inst_MemImm(OP::CMPMemImms(), node, localFragmentIndexMR, 0, cg);
+        Inst_Label(OP::JE4, node, snippetLabel, cg);
 
         // null test on the reference we're about to store over: if it is null goto doneLabel
         // if (destObject->field == null) goto doneLabel
         TR::MemoryReference *nullTestMR = MRef_Bdisp32(storeAddressRegForRealTime, 0, cg);
         if (comp->target().is64Bit() && comp->useCompressedPointers())
-            Inst_MemImm(TR::InstOpCode::CMP4MemImms, node, nullTestMR, 0, cg);
+            Inst_MemImm(OP::CMP4MemImms, node, nullTestMR, 0, cg);
         else
-            Inst_MemImm(TR::InstOpCode::CMPMemImms(), node, nullTestMR, 0, cg);
-        Inst_Label(TR::InstOpCode::JNE4, node, snippetLabel, cg);
+            Inst_MemImm(OP::CMPMemImms(), node, nullTestMR, 0, cg);
+        Inst_Label(OP::JNE4, node, snippetLabel, cg);
 
         // fall-through means write barrier not needed, just do the store
     }
@@ -12034,12 +11913,12 @@ void J9::X86::TreeEvaluator::VMwrtbarRealTimeWithoutStoreEvaluator(TR::Node *nod
         srm->addScratchRegistersToDependencyList(conditions);
         conditions->stopAddingConditions();
 
-        Inst_Label(TR::InstOpCode::label, node, doneLabel, conditions, cg);
+        Inst_Label(OP::label, node, doneLabel, conditions, cg);
 
         srm->stopUsingRegisters();
     } else {
         TR_ASSERT(node->getOpCodeValue() == TR::ArrayStoreCHK, "assertion failure");
-        Inst_Label(TR::InstOpCode::label, node, doneLabel, cg);
+        Inst_Label(OP::label, node, doneLabel, cg);
     }
 }
 
@@ -12219,12 +12098,12 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(TR::Node *node,
     if (doInternalControlFlow) {
         TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
         startLabel->setStartInternalControlFlow();
-        Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+        Inst_Label(OP::label, node, startLabel, cg);
         doneLabel->setEndInternalControlFlow();
     }
 
     if (comp->getOption(TR_BreakOnWriteBarrier)) {
-        Inst(TR::InstOpCode::INT3, node, cg);
+        Inst(OP::INT3, node, cg);
     }
 
     TR::MemoryReference *fragmentParentMR = MRef_Bdisp32(cg->getVMThreadRegister(),
@@ -12235,38 +12114,36 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(TR::Node *node,
     if (doInlineCardMarkingWithoutOldSpaceCheck && doCheckConcurrentMarkActive) {
         TR::MemoryReference *vmThreadPrivateFlagsMR
             = MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, privateFlags), cg);
-        Inst_MemImm(TR::InstOpCode::TEST4MemImm4, node, vmThreadPrivateFlagsMR, J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE,
-            cg);
+        Inst_MemImm(OP::TEST4MemImm4, node, vmThreadPrivateFlagsMR, J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE, cg);
 
         // Branch to outlined instructions to inline card dirtying.
         //
         TR::LabelSymbol *inlineCardMarkLabel = generateLabelSymbol(cg);
 
-        Inst_Label(TR::InstOpCode::JNE4, node, inlineCardMarkLabel, cg);
+        Inst_Label(OP::JNE4, node, inlineCardMarkLabel, cg);
 
         // Dirty the card table.
         //
         TR_OutlinedInstructionsGenerator og(inlineCardMarkLabel, node, cg);
         TR::Register *tempReg = srm->findOrCreateScratchRegister();
 
-        Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, tempReg, owningObjectReg, cg);
+        Inst_RegReg(OP::MOVRegReg(), node, tempReg, owningObjectReg, cg);
 
         if (comp->getOptions()->isVariableHeapBaseForBarrierRange0()) {
             TR::MemoryReference *vhbMR
                 = MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, heapBaseForBarrierRange0), cg);
-            Inst_RegMem(TR::InstOpCode::SUBRegMem(), node, tempReg, vhbMR, cg);
+            Inst_RegMem(OP::SUBRegMem(), node, tempReg, vhbMR, cg);
         } else {
             uintptr_t chb = comp->getOptions()->getHeapBaseForBarrierRange0();
 
             if (comp->target().is64Bit()
                 && (!IS_32BIT_SIGNED(chb) || TR::Compiler->om.nativeAddressesCanChangeSize())) {
                 TR::Register *chbReg = srm->findOrCreateScratchRegister();
-                Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, chbReg, chb, cg, TR_HEAP_BASE_FOR_BARRIER_RANGE);
-                Inst_RegReg(TR::InstOpCode::SUBRegReg(), node, tempReg, chbReg, cg);
+                Inst_RegImm64(OP::MOV8RegImm64, node, chbReg, chb, cg, TR_HEAP_BASE_FOR_BARRIER_RANGE);
+                Inst_RegReg(OP::SUBRegReg(), node, tempReg, chbReg, cg);
                 srm->reclaimScratchRegister(chbReg);
             } else {
-                Inst_RegImm(TR::InstOpCode::SUBRegImm4(), node, tempReg, (int32_t)chb, cg,
-                    TR_HEAP_BASE_FOR_BARRIER_RANGE);
+                Inst_RegImm(OP::SUBRegImm4(), node, tempReg, (int32_t)chb, cg, TR_HEAP_BASE_FOR_BARRIER_RANGE);
             }
         }
 
@@ -12276,27 +12153,25 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(TR::Node *node,
             if (comp->getOptions()->isVariableHeapSizeForBarrierRange0()) {
                 TR::MemoryReference *vhsMR
                     = MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, heapSizeForBarrierRange0), cg);
-                Inst_RegMem(TR::InstOpCode::CMPRegMem(), node, tempReg, vhsMR, cg);
+                Inst_RegMem(OP::CMPRegMem(), node, tempReg, vhsMR, cg);
             } else {
                 uintptr_t chs = comp->getOptions()->getHeapSizeForBarrierRange0();
 
                 if (comp->target().is64Bit()
                     && (!IS_32BIT_SIGNED(chs) || TR::Compiler->om.nativeAddressesCanChangeSize())) {
                     TR::Register *chsReg = srm->findOrCreateScratchRegister();
-                    Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, chsReg, chs, cg, TR_HEAP_SIZE_FOR_BARRIER_RANGE);
-                    Inst_RegReg(TR::InstOpCode::CMPRegReg(), node, tempReg, chsReg, cg);
+                    Inst_RegImm64(OP::MOV8RegImm64, node, chsReg, chs, cg, TR_HEAP_SIZE_FOR_BARRIER_RANGE);
+                    Inst_RegReg(OP::CMPRegReg(), node, tempReg, chsReg, cg);
                     srm->reclaimScratchRegister(chsReg);
                 } else {
-                    Inst_RegImm(TR::InstOpCode::CMPRegImm4(), node, tempReg, (int32_t)chs, cg,
-                        TR_HEAP_SIZE_FOR_BARRIER_RANGE);
+                    Inst_RegImm(OP::CMPRegImm4(), node, tempReg, (int32_t)chs, cg, TR_HEAP_SIZE_FOR_BARRIER_RANGE);
                 }
             }
 
-            Inst_Label(TR::InstOpCode::JAE4, node, cardMarkDoneLabel, cg);
+            Inst_Label(OP::JAE4, node, cardMarkDoneLabel, cg);
         }
 
-        Inst_RegImm(TR::InstOpCode::SHRRegImm1(), node, tempReg, comp->getOptions()->getHeapAddressToCardAddressShift(),
-            cg);
+        Inst_RegImm(OP::SHRRegImm1(), node, tempReg, comp->getOptions()->getHeapAddressToCardAddressShift(), cg);
 
         // Mark the card
         //
@@ -12307,7 +12182,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(TR::Node *node,
         if (comp->getOptions()->isVariableActiveCardTableBase()) {
             TR::MemoryReference *actbMR
                 = MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, activeCardTableBase), cg);
-            Inst_RegMem(TR::InstOpCode::ADDRegMem(), node, tempReg, actbMR, cg);
+            Inst_RegMem(OP::ADDRegMem(), node, tempReg, actbMR, cg);
             cardTableMR = MRef_Bdisp32(tempReg, 0, cg);
         } else {
             uintptr_t actb = comp->getOptions()->getActiveCardTableBase();
@@ -12315,7 +12190,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(TR::Node *node,
             if (comp->target().is64Bit()
                 && (!IS_32BIT_SIGNED(actb) || TR::Compiler->om.nativeAddressesCanChangeSize())) {
                 TR::Register *tempReg3 = srm->findOrCreateScratchRegister();
-                Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, tempReg3, actb, cg, TR_ACTIVE_CARD_TABLE_BASE);
+                Inst_RegImm64(OP::MOV8RegImm64, node, tempReg3, actb, cg, TR_ACTIVE_CARD_TABLE_BASE);
                 cardTableMR = MRef_BIS(tempReg3, tempReg, 0, cg);
                 srm->reclaimScratchRegister(tempReg3);
             } else {
@@ -12324,9 +12199,9 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(TR::Node *node,
             }
         }
 
-        Inst_MemImm(TR::InstOpCode::S1MemImm1, node, cardTableMR, dirtyCard, cg);
+        Inst_MemImm(OP::S1MemImm1, node, cardTableMR, dirtyCard, cg);
         srm->reclaimScratchRegister(tempReg);
-        Inst_Label(TR::InstOpCode::JMP4, node, doneLabel, cg);
+        Inst_Label(OP::JMP4, node, doneLabel, cg);
 
         og.endOutlinedInstructionSequence();
     } else if (doInlineCardMarkingWithoutOldSpaceCheck && !dirtyCardTableOutOfLine) {
@@ -12334,24 +12209,23 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(TR::Node *node,
         //
         TR::Register *tempReg = srm->findOrCreateScratchRegister();
 
-        Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, tempReg, owningObjectReg, cg);
+        Inst_RegReg(OP::MOVRegReg(), node, tempReg, owningObjectReg, cg);
 
         if (comp->getOptions()->isVariableHeapBaseForBarrierRange0()) {
             TR::MemoryReference *vhbMR
                 = MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, heapBaseForBarrierRange0), cg);
-            Inst_RegMem(TR::InstOpCode::SUBRegMem(), node, tempReg, vhbMR, cg);
+            Inst_RegMem(OP::SUBRegMem(), node, tempReg, vhbMR, cg);
         } else {
             uintptr_t chb = comp->getOptions()->getHeapBaseForBarrierRange0();
 
             if (comp->target().is64Bit()
                 && (!IS_32BIT_SIGNED(chb) || TR::Compiler->om.nativeAddressesCanChangeSize())) {
                 TR::Register *chbReg = srm->findOrCreateScratchRegister();
-                Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, chbReg, chb, cg, TR_HEAP_BASE_FOR_BARRIER_RANGE);
-                Inst_RegReg(TR::InstOpCode::SUBRegReg(), node, tempReg, chbReg, cg);
+                Inst_RegImm64(OP::MOV8RegImm64, node, chbReg, chb, cg, TR_HEAP_BASE_FOR_BARRIER_RANGE);
+                Inst_RegReg(OP::SUBRegReg(), node, tempReg, chbReg, cg);
                 srm->reclaimScratchRegister(chbReg);
             } else {
-                Inst_RegImm(TR::InstOpCode::SUBRegImm4(), node, tempReg, (int32_t)chb, cg,
-                    TR_HEAP_BASE_FOR_BARRIER_RANGE);
+                Inst_RegImm(OP::SUBRegImm4(), node, tempReg, (int32_t)chb, cg, TR_HEAP_BASE_FOR_BARRIER_RANGE);
             }
         }
 
@@ -12361,27 +12235,25 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(TR::Node *node,
             if (comp->getOptions()->isVariableHeapSizeForBarrierRange0()) {
                 TR::MemoryReference *vhsMR
                     = MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, heapSizeForBarrierRange0), cg);
-                Inst_RegMem(TR::InstOpCode::CMPRegMem(), node, tempReg, vhsMR, cg);
+                Inst_RegMem(OP::CMPRegMem(), node, tempReg, vhsMR, cg);
             } else {
                 uintptr_t chs = comp->getOptions()->getHeapSizeForBarrierRange0();
 
                 if (comp->target().is64Bit()
                     && (!IS_32BIT_SIGNED(chs) || TR::Compiler->om.nativeAddressesCanChangeSize())) {
                     TR::Register *chsReg = srm->findOrCreateScratchRegister();
-                    Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, chsReg, chs, cg, TR_HEAP_SIZE_FOR_BARRIER_RANGE);
-                    Inst_RegReg(TR::InstOpCode::CMPRegReg(), node, tempReg, chsReg, cg);
+                    Inst_RegImm64(OP::MOV8RegImm64, node, chsReg, chs, cg, TR_HEAP_SIZE_FOR_BARRIER_RANGE);
+                    Inst_RegReg(OP::CMPRegReg(), node, tempReg, chsReg, cg);
                     srm->reclaimScratchRegister(chsReg);
                 } else {
-                    Inst_RegImm(TR::InstOpCode::CMPRegImm4(), node, tempReg, (int32_t)chs, cg,
-                        TR_HEAP_SIZE_FOR_BARRIER_RANGE);
+                    Inst_RegImm(OP::CMPRegImm4(), node, tempReg, (int32_t)chs, cg, TR_HEAP_SIZE_FOR_BARRIER_RANGE);
                 }
             }
 
-            Inst_Label(TR::InstOpCode::JAE4, node, cardMarkDoneLabel, cg);
+            Inst_Label(OP::JAE4, node, cardMarkDoneLabel, cg);
         }
 
-        Inst_RegImm(TR::InstOpCode::SHRRegImm1(), node, tempReg, comp->getOptions()->getHeapAddressToCardAddressShift(),
-            cg);
+        Inst_RegImm(OP::SHRRegImm1(), node, tempReg, comp->getOptions()->getHeapAddressToCardAddressShift(), cg);
 
         // Mark the card
         //
@@ -12392,7 +12264,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(TR::Node *node,
         if (comp->getOptions()->isVariableActiveCardTableBase()) {
             TR::MemoryReference *actbMR
                 = MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, activeCardTableBase), cg);
-            Inst_RegMem(TR::InstOpCode::ADDRegMem(), node, tempReg, actbMR, cg);
+            Inst_RegMem(OP::ADDRegMem(), node, tempReg, actbMR, cg);
             cardTableMR = MRef_Bdisp32(tempReg, 0, cg);
         } else {
             uintptr_t actb = comp->getOptions()->getActiveCardTableBase();
@@ -12400,7 +12272,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(TR::Node *node,
             if (comp->target().is64Bit()
                 && (!IS_32BIT_SIGNED(actb) || TR::Compiler->om.nativeAddressesCanChangeSize())) {
                 TR::Register *tempReg3 = srm->findOrCreateScratchRegister();
-                Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, tempReg3, actb, cg, TR_ACTIVE_CARD_TABLE_BASE);
+                Inst_RegImm64(OP::MOV8RegImm64, node, tempReg3, actb, cg, TR_ACTIVE_CARD_TABLE_BASE);
                 cardTableMR = MRef_BIS(tempReg3, tempReg, 0, cg);
                 srm->reclaimScratchRegister(tempReg3);
             } else {
@@ -12409,24 +12281,24 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(TR::Node *node,
             }
         }
 
-        Inst_MemImm(TR::InstOpCode::S1MemImm1, node, cardTableMR, dirtyCard, cg);
+        Inst_MemImm(OP::S1MemImm1, node, cardTableMR, dirtyCard, cg);
 
         srm->reclaimScratchRegister(tempReg);
     }
 
     if (doIsDestAHeapObjectCheck && doIsDestInOldSpaceCheck) {
-        Inst_Label(TR::InstOpCode::label, node, cardMarkDoneLabel, cg);
+        Inst_Label(OP::label, node, cardMarkDoneLabel, cg);
     }
 
     if (doSrcIsNullCheck) {
-        Inst_RegReg(TR::InstOpCode::TESTRegReg(), node, srcReg, srcReg, cg);
-        Inst_Label(TR::InstOpCode::JE4, node, doneLabel, cg);
+        Inst_RegReg(OP::TESTRegReg(), node, srcReg, srcReg, cg);
+        Inst_Label(OP::JE4, node, doneLabel, cg);
     }
 
     if (doIsDestInOldSpaceCheck) {
         static char *disableWrtbarOpt = feGetEnv("TR_DisableWrtbarOpt");
 
-        TR::InstOpCode::Mnemonic branchOp;
+        OP::Mnemonic branchOp;
         auto gcModeForSnippet = gcMode;
 
         bool skipSnippetIfSrcNotOld = false;
@@ -12440,7 +12312,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(TR::Node *node,
             //
             // TODO: this should be an inline call.
             //
-            branchOp = TR::InstOpCode::JMP4;
+            branchOp = OP::JMP4;
         } else if (doCheckConcurrentMarkActive) {
             // TR_ASSERT(wrtbarNode, "Must not be an arraycopy");
 
@@ -12461,56 +12333,55 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(TR::Node *node,
                     uintptr_t che = comp->getOptions()->getHeapBaseForBarrierRange0()
                         + comp->getOptions()->getHeapSizeForBarrierRange0();
                     if (comp->target().is64Bit() && !IS_32BIT_SIGNED(che)) {
-                        Inst_RegMem(TR::InstOpCode::CMP8RegMem, node, owningObjectReg,
+                        Inst_RegMem(OP::CMP8RegMem, node, owningObjectReg,
                             MRef_const(cg->findOrCreate8ByteConstant(node, che), cg), cg);
                     } else {
-                        Inst_RegImm(TR::InstOpCode::CMPRegImm4(), node, owningObjectReg, (int32_t)che, cg);
+                        Inst_RegImm(OP::CMPRegImm4(), node, owningObjectReg, (int32_t)che, cg);
                     }
                 } else {
                     uintptr_t chb = comp->getOptions()->getHeapBaseForBarrierRange0();
                     TR::Register *tempOwningObjReg = srm->findOrCreateScratchRegister();
-                    Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, tempOwningObjReg, owningObjectReg, cg);
+                    Inst_RegReg(OP::MOVRegReg(), node, tempOwningObjReg, owningObjectReg, cg);
                     if (comp->target().is64Bit()
                         && (!IS_32BIT_SIGNED(chb) || TR::Compiler->om.nativeAddressesCanChangeSize())) {
                         TR::Register *chbReg = srm->findOrCreateScratchRegister();
-                        Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, chbReg, chb, cg,
-                            TR_HEAP_BASE_FOR_BARRIER_RANGE);
-                        Inst_RegReg(TR::InstOpCode::SUBRegReg(), node, tempOwningObjReg, chbReg, cg);
+                        Inst_RegImm64(OP::MOV8RegImm64, node, chbReg, chb, cg, TR_HEAP_BASE_FOR_BARRIER_RANGE);
+                        Inst_RegReg(OP::SUBRegReg(), node, tempOwningObjReg, chbReg, cg);
                         srm->reclaimScratchRegister(chbReg);
                     } else {
-                        Inst_RegImm(TR::InstOpCode::SUBRegImm4(), node, tempOwningObjReg, (int32_t)chb, cg,
+                        Inst_RegImm(OP::SUBRegImm4(), node, tempOwningObjReg, (int32_t)chb, cg,
                             TR_HEAP_BASE_FOR_BARRIER_RANGE);
                     }
                     TR::MemoryReference *vhsMR1
                         = MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, heapSizeForBarrierRange0), cg);
-                    Inst_RegMem(TR::InstOpCode::CMPRegMem(), node, tempOwningObjReg, vhsMR1, cg);
+                    Inst_RegMem(OP::CMPRegMem(), node, tempOwningObjReg, vhsMR1, cg);
                     srm->reclaimScratchRegister(tempOwningObjReg);
                 }
 
-                Inst_Label(TR::InstOpCode::JAE1, node, doneLabel, cg);
+                Inst_Label(OP::JAE1, node, doneLabel, cg);
 
                 skipSnippetIfSrcNotOld = true;
             } else {
                 skipSnippetIfDestOld = true;
             }
 
-            // See if we can do a TR::InstOpCode::TEST1MemImm1
+            // See if we can do a OP::TEST1MemImm1
             //
             int32_t byteOffset = byteOffsetForMask(J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE, cg);
             if (byteOffset != -1) {
                 TR::MemoryReference *vmThreadPrivateFlagsMR
                     = MRef_Bdisp32(cg->getVMThreadRegister(), byteOffset + offsetof(J9VMThread, privateFlags), cg);
-                Inst_MemImm(TR::InstOpCode::TEST1MemImm1, node, vmThreadPrivateFlagsMR,
+                Inst_MemImm(OP::TEST1MemImm1, node, vmThreadPrivateFlagsMR,
                     J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE >> (8 * byteOffset), cg);
             } else {
                 TR::MemoryReference *vmThreadPrivateFlagsMR
                     = MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, privateFlags), cg);
-                Inst_MemImm(TR::InstOpCode::TEST4MemImm4, node, vmThreadPrivateFlagsMR,
-                    J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE, cg);
+                Inst_MemImm(OP::TEST4MemImm4, node, vmThreadPrivateFlagsMR, J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE,
+                    cg);
             }
 
-            generateWriteBarrierCall(TR::InstOpCode::JNE4, node, gc_modron_wrtbar_cardmark_and_oldcheck,
-                owningObjectReg, srcReg, doneLabel, cg);
+            generateWriteBarrierCall(OP::JNE4, node, gc_modron_wrtbar_cardmark_and_oldcheck, owningObjectReg, srcReg,
+                doneLabel, cg);
 
             // If the destination object is old and not remembered then process the remembered
             // set update out-of-line with the generational helper.
@@ -12545,34 +12416,31 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(TR::Node *node,
                 uintptr_t che = comp->getOptions()->getHeapBaseForBarrierRange0()
                     + comp->getOptions()->getHeapSizeForBarrierRange0();
                 if (comp->target().is64Bit() && !IS_32BIT_SIGNED(che)) {
-                    Inst_RegMem(TR::InstOpCode::CMP8RegMem, node, checkDest ? owningObjectReg : srcReg,
+                    Inst_RegMem(OP::CMP8RegMem, node, checkDest ? owningObjectReg : srcReg,
                         MRef_const(cg->findOrCreate8ByteConstant(node, che), cg), cg);
                 } else {
-                    Inst_RegImm(TR::InstOpCode::CMPRegImm4(), node, checkDest ? owningObjectReg : srcReg, (int32_t)che,
-                        cg);
+                    Inst_RegImm(OP::CMPRegImm4(), node, checkDest ? owningObjectReg : srcReg, (int32_t)che, cg);
                 }
             } else {
                 uintptr_t chb = comp->getOptions()->getHeapBaseForBarrierRange0();
                 TR::Register *tempReg = srm->findOrCreateScratchRegister();
-                Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, tempReg, checkDest ? owningObjectReg : srcReg, cg);
+                Inst_RegReg(OP::MOVRegReg(), node, tempReg, checkDest ? owningObjectReg : srcReg, cg);
                 if (comp->target().is64Bit()
                     && (!IS_32BIT_SIGNED(chb) || TR::Compiler->om.nativeAddressesCanChangeSize())) {
                     TR::Register *chbReg = srm->findOrCreateScratchRegister();
-                    Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, chbReg, chb, cg, TR_HEAP_BASE_FOR_BARRIER_RANGE);
-                    Inst_RegReg(TR::InstOpCode::SUBRegReg(), node, tempReg, chbReg, cg);
+                    Inst_RegImm64(OP::MOV8RegImm64, node, chbReg, chb, cg, TR_HEAP_BASE_FOR_BARRIER_RANGE);
+                    Inst_RegReg(OP::SUBRegReg(), node, tempReg, chbReg, cg);
                     srm->reclaimScratchRegister(chbReg);
                 } else {
-                    Inst_RegImm(TR::InstOpCode::SUBRegImm4(), node, tempReg, (int32_t)chb, cg,
-                        TR_HEAP_BASE_FOR_BARRIER_RANGE);
+                    Inst_RegImm(OP::SUBRegImm4(), node, tempReg, (int32_t)chb, cg, TR_HEAP_BASE_FOR_BARRIER_RANGE);
                 }
                 TR::MemoryReference *vhsMR1
                     = MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, heapSizeForBarrierRange0), cg);
-                Inst_RegMem(TR::InstOpCode::CMPRegMem(), node, tempReg, vhsMR1, cg);
+                Inst_RegMem(OP::CMPRegMem(), node, tempReg, vhsMR1, cg);
             }
 
-            branchOp = skipSnippetIfOld ? TR::InstOpCode::JB4 : TR::InstOpCode::JAE4; // For branch to snippet
-            TR::InstOpCode::Mnemonic reverseBranchOp
-                = skipSnippetIfOld ? TR::InstOpCode::JAE4 : TR::InstOpCode::JB4; // For branch past snippet
+            branchOp = skipSnippetIfOld ? OP::JB4 : OP::JAE4; // For branch to snippet
+            OP::Mnemonic reverseBranchOp = skipSnippetIfOld ? OP::JAE4 : OP::JB4; // For branch past snippet
 
             // Now performing check for remembered
             if (skipSnippetIfDestRemembered) {
@@ -12583,20 +12451,20 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(TR::Node *node,
                 if (byteOffset != -1) {
                     TR::MemoryReference *MR
                         = MRef_Bdisp32(owningObjectReg, byteOffset + TR::Compiler->om.offsetOfHeaderFlags(), cg);
-                    Inst_MemImm(TR::InstOpCode::TEST1MemImm1, node, MR,
+                    Inst_MemImm(OP::TEST1MemImm1, node, MR,
                         J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST >> (8 * byteOffset), cg);
                 } else {
                     TR::MemoryReference *MR = MRef_Bdisp32(owningObjectReg, TR::Compiler->om.offsetOfHeaderFlags(), cg);
-                    Inst_MemImm(TR::InstOpCode::TEST4MemImm4, node, MR, J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST, cg);
+                    Inst_MemImm(OP::TEST4MemImm4, node, MR, J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST, cg);
                 }
-                branchOp = TR::InstOpCode::JE4;
+                branchOp = OP::JE4;
             }
         }
 
         generateWriteBarrierCall(branchOp, node, gcModeForSnippet, owningObjectReg, srcReg, doneLabel, cg);
 
         if (labelAfterBranchToSnippet)
-            Inst_Label(TR::InstOpCode::label, node, labelAfterBranchToSnippet, cg);
+            Inst_Label(OP::label, node, labelAfterBranchToSnippet, cg);
     }
 
     int32_t numPostConditions = 2 + srm->numAvailableRegisters();
@@ -12617,7 +12485,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(TR::Node *node,
     srm->addScratchRegistersToDependencyList(conditions);
     conditions->stopAddingConditions();
 
-    Inst_Label(TR::InstOpCode::label, node, doneLabel, conditions, cg);
+    Inst_Label(OP::label, node, doneLabel, conditions, cg);
 
     srm->stopUsingRegisters();
 }
@@ -12626,7 +12494,7 @@ static TR::Instruction *doReferenceStore(TR::Node *node, TR::MemoryReference *st
     bool usingCompressedPointers, TR::CodeGenerator *cg)
 {
     TR::Compilation *comp = cg->comp();
-    TR::InstOpCode::Mnemonic storeOp = usingCompressedPointers ? TR::InstOpCode::S4MemReg : TR::InstOpCode::SMemReg();
+    OP::Mnemonic storeOp = usingCompressedPointers ? OP::S4MemReg : OP::SMemReg();
     TR::Instruction *instr = Inst_MemReg(storeOp, node, storeMR, sourceReg, cg);
 
     // for real-time GC, the data reference has already been resolved into an earlier LEA instruction so this padding
@@ -12685,8 +12553,8 @@ void J9::X86::TreeEvaluator::VMwrtbarWithStoreEvaluator(TR::Node *node, TR::Memo
         else {
             translatedSourceReg = cg->evaluate(translatedStore->getSecondChild());
             if (!usingLowMemHeap) {
-                Inst_RegReg(TR::InstOpCode::TESTRegReg(), translatedStore, sourceRegister, sourceRegister, cg);
-                Inst_RegReg(TR::InstOpCode::CMOVERegReg(), translatedStore, translatedSourceReg, sourceRegister, cg);
+                Inst_RegReg(OP::TESTRegReg(), translatedStore, sourceRegister, sourceRegister, cg);
+                Inst_RegReg(OP::CMOVERegReg(), translatedStore, translatedSourceReg, sourceRegister, cg);
             }
         }
     }
@@ -12703,7 +12571,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithStoreEvaluator(TR::Node *node, TR::Memo
         //   beforehand
         // For simplicity, just evaluate the store address into storeAddressRegForRealTime right now
         storeAddressRegForRealTime = scratchRegisterManager->findOrCreateScratchRegister();
-        Inst_RegMem(TR::InstOpCode::LEARegMem(), node, storeAddressRegForRealTime, storeMR, cg);
+        Inst_RegMem(OP::LEARegMem(), node, storeAddressRegForRealTime, storeMR, cg);
         if (node->getSymbolReference()->isUnresolved()) {
             TR::TreeEvaluator::padUnresolvedDataReferences(node, *node->getSymbolReference(), cg);
 
@@ -12730,9 +12598,9 @@ void J9::X86::TreeEvaluator::VMwrtbarWithStoreEvaluator(TR::Node *node, TR::Memo
             startLabel->setStartInternalControlFlow();
             doneWrtBarLabel->setEndInternalControlFlow();
 
-            Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
-            Inst_RegReg(TR::InstOpCode::TESTRegReg(), node, sourceRegister, sourceRegister, cg);
-            Inst_Label(TR::InstOpCode::JE4, node, doneWrtBarLabel, cg);
+            Inst_Label(OP::label, node, startLabel, cg);
+            Inst_RegReg(OP::TESTRegReg(), node, sourceRegister, sourceRegister, cg);
+            Inst_Label(OP::JE4, node, doneWrtBarLabel, cg);
 
             deps = RegDeps(0, 3, cg);
             deps->addPostCondition(sourceRegister, TR::RealRegister::NoReg, cg);
@@ -12741,15 +12609,15 @@ void J9::X86::TreeEvaluator::VMwrtbarWithStoreEvaluator(TR::Node *node, TR::Memo
             deps->stopAddingConditions();
         }
 
-        Inst_MemReg(TR::InstOpCode::SMemReg(), node,
-            MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg), owningObjectRegister, cg);
-        Inst_MemReg(TR::InstOpCode::SMemReg(), node,
-            MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp2), cg), sourceRegister, cg);
+        Inst_MemReg(OP::SMemReg(), node, MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp1), cg),
+            owningObjectRegister, cg);
+        Inst_MemReg(OP::SMemReg(), node, MRef_Bdisp32(cg->getVMThreadRegister(), offsetof(J9VMThread, floatTemp2), cg),
+            sourceRegister, cg);
 
         TR::SymbolReference *wrtBarSymRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef();
-        Inst_ImmSym(TR::InstOpCode::CALLImm4, node, (uintptr_t)wrtBarSymRef->getMethodAddress(), wrtBarSymRef, cg);
+        Inst_ImmSym(OP::CALLImm4, node, (uintptr_t)wrtBarSymRef->getMethodAddress(), wrtBarSymRef, cg);
 
-        Inst_Label(TR::InstOpCode::label, node, doneWrtBarLabel, deps, cg);
+        Inst_Label(OP::label, node, doneWrtBarLabel, deps, cg);
     } else {
         if (isRealTimeGC) {
             TR::TreeEvaluator::VMwrtbarRealTimeWithoutStoreEvaluator(node, storeMR, storeAddressRegForRealTime,
@@ -12788,9 +12656,9 @@ void J9::X86::TreeEvaluator::generateVFTMaskInstruction(TR::Node *node, TR::Regi
     if (~mask == 0) {
         // no mask instruction required
     } else if (~mask <= 127) {
-        Inst_RegImm(TR::InstOpCode::ANDRegImms(is64Bit), node, reg, TR::Compiler->om.maskOfObjectVftField(), cg);
+        Inst_RegImm(OP::ANDRegImms(is64Bit), node, reg, TR::Compiler->om.maskOfObjectVftField(), cg);
     } else {
-        Inst_RegImm(TR::InstOpCode::ANDRegImm4(is64Bit), node, reg, TR::Compiler->om.maskOfObjectVftField(), cg);
+        Inst_RegImm(OP::ANDRegImm4(is64Bit), node, reg, TR::Compiler->om.maskOfObjectVftField(), cg);
     }
 }
 
@@ -12810,9 +12678,9 @@ void VMgenerateCatchBlockBBStartPrologue(TR::Node *node, TR::Instruction *fenceI
         TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
         TR::LabelSymbol *restartLabel = generateLabelSymbol(cg);
 
-        Inst_Mem(TR::InstOpCode::DEC4Mem, node, MRef_sym(comp->getRecompilationInfo()->getCounterSymRef(), cg), cg);
-        Inst_Label(TR::InstOpCode::JE4, node, snippetLabel, cg);
-        Inst_Label(TR::InstOpCode::label, node, restartLabel, cg);
+        Inst_Mem(OP::DEC4Mem, node, MRef_sym(comp->getRecompilationInfo()->getCounterSymRef(), cg), cg);
+        Inst_Label(OP::JE4, node, snippetLabel, cg);
+        Inst_Label(OP::label, node, restartLabel, cg);
         cg->addSnippet(new (cg->trHeapMemory()) TR::X86ForceRecompilationSnippet(cg, node, restartLabel, snippetLabel));
         cg->comp()->getRecompilationInfo()->getJittedBodyInfo()->setHasEdoSnippet();
     }
@@ -12901,103 +12769,103 @@ TR::Register *J9::X86::TreeEvaluator::tstartEvaluator(TR::Node *node, TR::CodeGe
     startLabelConditions->addPostCondition(dummyReg, TR::RealRegister::eax, cg);
     startLabelConditions->stopAddingConditions();
     cg->stopUsingRegister(dummyReg);
-    Inst_Label(TR::InstOpCode::label, node, startLabel, startLabelConditions, cg);
+    Inst_Label(OP::label, node, startLabel, startLabelConditions, cg);
 
     // xbegin fall_back_path
-    Inst_LongLabel(TR::InstOpCode::XBEGIN4, node, fallBackPathLabel, cg);
+    Inst_LongLabel(OP::XBEGIN4, node, fallBackPathLabel, cg);
     // mov monReg, obj+offset
     int32_t lwOffset = cg->fej9()->getByteOffsetToLockword((TR_OpaqueClassBlock *)cg->getMonClass(node));
     TR::MemoryReference *objLockRef = MRef_Bdisp32(objReg, lwOffset, cg);
     if (comp->target().is64Bit() && cg->fej9()->generateCompressedLockWord()) {
-        Inst_RegMem(TR::InstOpCode::L4RegMem, node, monReg, objLockRef, cg);
+        Inst_RegMem(OP::L4RegMem, node, monReg, objLockRef, cg);
     } else {
-        Inst_RegMem(TR::InstOpCode::LRegMem(), node, monReg, objLockRef, cg);
+        Inst_RegMem(OP::LRegMem(), node, monReg, objLockRef, cg);
     }
 
     if (comp->target().is64Bit() && cg->fej9()->generateCompressedLockWord()) {
-        Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, monReg, 0, cg);
+        Inst_RegImm(OP::CMP4RegImm4, node, monReg, 0, cg);
     } else {
-        Inst_RegImm(TR::InstOpCode::CMPRegImm4(), node, monReg, 0, cg);
+        Inst_RegImm(OP::CMPRegImm4(), node, monReg, 0, cg);
     }
 
     if (fallThroughConditions)
-        Inst_Label(TR::InstOpCode::JE4, node, fallThroughLabel, fallThroughConditions, cg);
+        Inst_Label(OP::JE4, node, fallThroughLabel, fallThroughConditions, cg);
     else
-        Inst_Label(TR::InstOpCode::JE4, node, fallThroughLabel, cg);
+        Inst_Label(OP::JE4, node, fallThroughLabel, cg);
 
     TR::Register *vmThreadReg = cg->getVMThreadRegister();
     if (comp->target().is64Bit() && cg->fej9()->generateCompressedLockWord()) {
-        Inst_RegReg(TR::InstOpCode::CMP4RegReg, node, monReg, vmThreadReg, cg);
+        Inst_RegReg(OP::CMP4RegReg, node, monReg, vmThreadReg, cg);
     } else {
-        Inst_RegReg(TR::InstOpCode::CMPRegReg(), node, monReg, vmThreadReg, cg);
+        Inst_RegReg(OP::CMPRegReg(), node, monReg, vmThreadReg, cg);
     }
 
     if (fallThroughConditions)
-        Inst_Label(TR::InstOpCode::JE4, node, fallThroughLabel, fallThroughConditions, cg);
+        Inst_Label(OP::JE4, node, fallThroughLabel, fallThroughConditions, cg);
     else
-        Inst_Label(TR::InstOpCode::JE4, node, fallThroughLabel, cg);
+        Inst_Label(OP::JE4, node, fallThroughLabel, cg);
 
     // xabort
-    Inst_Imm(TR::InstOpCode::XABORT, node, 0x01, cg);
+    Inst_Imm(OP::XABORT, node, 0x01, cg);
 
     cg->stopUsingRegister(monReg);
     // fall_back_path:
-    Inst_Label(TR::InstOpCode::label, node, fallBackPathLabel, cg);
+    Inst_Label(OP::label, node, fallBackPathLabel, cg);
 
     endLabelConditions = RegDeps((uint8_t)0, 1, cg);
     endLabelConditions->addPostCondition(accReg, TR::RealRegister::eax, cg);
     endLabelConditions->stopAddingConditions();
 
     // test eax, 0x2
-    Inst_RegImm(TR::InstOpCode::TEST1AccImm1, node, accReg, 0x2, cg);
-    Inst_Label(TR::InstOpCode::JNE4, node, gotoTransientFailure, cg);
+    Inst_RegImm(OP::TEST1AccImm1, node, accReg, 0x2, cg);
+    Inst_Label(OP::JNE4, node, gotoTransientFailure, cg);
 
     // abort because of nonzero lockword is also transient failure
-    Inst_RegImm(TR::InstOpCode::TEST4AccImm4, node, accReg, 0x00000001, cg);
+    Inst_RegImm(OP::TEST4AccImm4, node, accReg, 0x00000001, cg);
     if (persistentConditions)
-        Inst_Label(TR::InstOpCode::JE4, node, persistentFailureLabel, persistentConditions, cg);
+        Inst_Label(OP::JE4, node, persistentFailureLabel, persistentConditions, cg);
     else
-        Inst_Label(TR::InstOpCode::JE4, node, persistentFailureLabel, cg);
+        Inst_Label(OP::JE4, node, persistentFailureLabel, cg);
 
-    Inst_RegImm(TR::InstOpCode::TEST4AccImm4, node, accReg, 0x01000000, cg);
+    Inst_RegImm(OP::TEST4AccImm4, node, accReg, 0x01000000, cg);
     // je gotransientFailureNodeLabel
-    Inst_Label(TR::InstOpCode::JNE4, node, gotoTransientFailure, cg);
+    Inst_Label(OP::JNE4, node, gotoTransientFailure, cg);
 
     if (persistentConditions)
-        Inst_Label(TR::InstOpCode::JMP4, node, persistentFailureLabel, persistentConditions, cg);
+        Inst_Label(OP::JMP4, node, persistentFailureLabel, persistentConditions, cg);
     else
-        Inst_Label(TR::InstOpCode::JMP4, node, persistentFailureLabel, cg);
+        Inst_Label(OP::JMP4, node, persistentFailureLabel, cg);
     cg->stopUsingRegister(accReg);
 
     // gotoTransientFailureLabel:
     if (transientConditions)
-        Inst_Label(TR::InstOpCode::label, node, gotoTransientFailure, transientConditions, cg);
+        Inst_Label(OP::label, node, gotoTransientFailure, transientConditions, cg);
     else
-        Inst_Label(TR::InstOpCode::label, node, gotoTransientFailure, cg);
+        Inst_Label(OP::label, node, gotoTransientFailure, cg);
 
     // delay
     TR::Register *counterReg = cg->allocateRegister();
-    Inst_RegImm(TR::InstOpCode::MOV4RegImm4, node, counterReg, 100, cg);
+    Inst_RegImm(OP::MOV4RegImm4, node, counterReg, 100, cg);
     TR::LabelSymbol *spinLabel = TR::LabelSymbol::create(cg->trHeapMemory(), cg);
-    Inst_Label(TR::InstOpCode::label, node, spinLabel, cg);
-    Inst(TR::InstOpCode::PAUSE, node, cg);
-    Inst(TR::InstOpCode::PAUSE, node, cg);
-    Inst(TR::InstOpCode::PAUSE, node, cg);
-    Inst(TR::InstOpCode::PAUSE, node, cg);
-    Inst(TR::InstOpCode::PAUSE, node, cg);
-    Inst_Reg(TR::InstOpCode::DEC4Reg, node, counterReg, cg);
+    Inst_Label(OP::label, node, spinLabel, cg);
+    Inst(OP::PAUSE, node, cg);
+    Inst(OP::PAUSE, node, cg);
+    Inst(OP::PAUSE, node, cg);
+    Inst(OP::PAUSE, node, cg);
+    Inst(OP::PAUSE, node, cg);
+    Inst_Reg(OP::DEC4Reg, node, counterReg, cg);
     TR::RegisterDependencyConditions *loopConditions = RegDeps((uint8_t)0, 1, cg);
     loopConditions->addPostCondition(counterReg, TR::RealRegister::NoReg, cg);
     loopConditions->stopAddingConditions();
-    Inst_Label(TR::InstOpCode::JNE4, node, spinLabel, loopConditions, cg);
+    Inst_Label(OP::JNE4, node, spinLabel, loopConditions, cg);
     cg->stopUsingRegister(counterReg);
 
     if (transientConditions)
-        Inst_Label(TR::InstOpCode::JMP4, node, transientFailureLabel, transientConditions, cg);
+        Inst_Label(OP::JMP4, node, transientFailureLabel, transientConditions, cg);
     else
-        Inst_Label(TR::InstOpCode::JMP4, node, transientFailureLabel, cg);
+        Inst_Label(OP::JMP4, node, transientFailureLabel, cg);
 
-    Inst_Label(TR::InstOpCode::label, node, endLabel, endLabelConditions, cg);
+    Inst_Label(OP::label, node, endLabel, endLabelConditions, cg);
     cg->decReferenceCount(objNode);
     cg->decReferenceCount(persistentFailureNode);
     cg->decReferenceCount(transientFailureNode);
@@ -13006,13 +12874,13 @@ TR::Register *J9::X86::TreeEvaluator::tstartEvaluator(TR::Node *node, TR::CodeGe
 
 TR::Register *J9::X86::TreeEvaluator::tfinishEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 {
-    Inst(TR::InstOpCode::XEND, node, cg);
+    Inst(OP::XEND, node, cg);
     return NULL;
 }
 
 TR::Register *J9::X86::TreeEvaluator::tabortEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 {
-    Inst_Imm(TR::InstOpCode::XABORT, node, 0x04, cg);
+    Inst_Imm(OP::XABORT, node, 0x04, cg);
     return NULL;
 }
 
@@ -13112,7 +12980,7 @@ TR::Register *J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::Co
         case TR::java_lang_Thread_onSpinWait: {
             static char *disableOSW = feGetEnv("TR_noPauseOnSpinWait");
             if (!disableOSW) {
-                Inst(TR::InstOpCode::PAUSE, node, cg);
+                Inst(OP::PAUSE, node, cg);
 
                 static char *printIt = feGetEnv("TR_showPauseOnSpinWait");
                 if (printIt && comp->getOption(TR_TraceCG)) {
@@ -13151,8 +13019,7 @@ TR::Register *J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::Co
             TR::RegisterDependencyConditions *deps = RegDeps((uint8_t)1, (uint8_t)1, cg);
             deps->addPreCondition(valueToKeepAlive, TR::RealRegister::NoReg, cg);
             deps->addPostCondition(valueToKeepAlive, TR::RealRegister::NoReg, cg);
-            new (cg->trHeapMemory())
-                TR::X86LabelInstruction(TR::InstOpCode::label, node, generateLabelSymbol(cg), deps, cg);
+            new (cg->trHeapMemory()) TR::X86LabelInstruction(OP::label, node, generateLabelSymbol(cg), deps, cg);
             cg->decReferenceCount(node->getFirstChild());
 
             return NULL; // keepAlive has no return value
@@ -13245,10 +13112,10 @@ TR::Register *J9::X86::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, 
     uint8_t vectorLengthConst = 16;
 
     TR::Register *srcBufferReg = cg->evaluate(node->getChild(0));
-    TR::Register *srcOffsetReg = cg->gprClobberEvaluate(node->getChild(1), TR::InstOpCode::MOV4RegReg);
+    TR::Register *srcOffsetReg = cg->gprClobberEvaluate(node->getChild(1), OP::MOV4RegReg);
     TR::Register *destBufferReg = cg->evaluate(node->getChild(2));
-    TR::Register *destOffsetReg = cg->gprClobberEvaluate(node->getChild(3), TR::InstOpCode::MOV4RegReg);
-    TR::Register *lengthReg = cg->gprClobberEvaluate(node->getChild(4), TR::InstOpCode::MOV4RegReg);
+    TR::Register *destOffsetReg = cg->gprClobberEvaluate(node->getChild(3), OP::MOV4RegReg);
+    TR::Register *lengthReg = cg->gprClobberEvaluate(node->getChild(4), OP::MOV4RegReg);
 
     TR::Register *xmmHighReg = cg->allocateRegister(TR_VRF);
     TR::Register *xmmLowReg = cg->allocateRegister(TR_VRF);
@@ -13273,23 +13140,23 @@ TR::Register *J9::X86::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, 
 
     TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
     startLabel->setStartInternalControlFlow();
-    Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+    Inst_Label(OP::label, node, startLabel, cg);
 
     TR::Node *destOffsetNode = node->getChild(3);
 
     if (!destOffsetNode->isConstZeroValue()) {
         // dest offset measured in characters, convert it to bytes
-        Inst_RegReg(TR::InstOpCode::ADD4RegReg, node, destOffsetReg, destOffsetReg, cg);
+        Inst_RegReg(OP::ADD4RegReg, node, destOffsetReg, destOffsetReg, cg);
     }
 
-    Inst_RegReg(TR::InstOpCode::TEST4RegReg, node, lengthReg, lengthReg, cg);
-    Inst_Label(TR::InstOpCode::JE4, node, doneLabel, cg);
+    Inst_RegReg(OP::TEST4RegReg, node, lengthReg, lengthReg, cg);
+    Inst_Label(OP::JE4, node, doneLabel, cg);
 
-    Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, lengthReg, 8, cg);
-    Inst_Label(TR::InstOpCode::JL4, node, afterCopy8Label, cg);
+    Inst_RegImm(OP::CMP4RegImm4, node, lengthReg, 8, cg);
+    Inst_Label(OP::JL4, node, afterCopy8Label, cg);
 
     // make sure the register is zero before interleaving
-    Inst_RegReg(TR::InstOpCode::PXORRegReg, node, zeroReg, zeroReg, cg);
+    Inst_RegReg(OP::PXORRegReg, node, zeroReg, zeroReg, cg);
 
     TR::LabelSymbol *startLoop = generateLabelSymbol(cg);
     TR::LabelSymbol *endLoop = generateLabelSymbol(cg);
@@ -13297,52 +13164,52 @@ TR::Register *J9::X86::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, 
     // vectorized add in loop, 16 bytes per iteration
     // use srcOffsetReg for loop counter, add starting offset to lengthReg, subtract 16 (xmm register size)
     // to prevent reading/writing beyond the end of the array
-    Inst_RegMem(TR::InstOpCode::LEA4RegMem, node, scratchReg,
-        MRef_BISdisp32(lengthReg, srcOffsetReg, 0, -vectorLengthConst, cg), cg);
+    Inst_RegMem(OP::LEA4RegMem, node, scratchReg, MRef_BISdisp32(lengthReg, srcOffsetReg, 0, -vectorLengthConst, cg),
+        cg);
 
-    Inst_Label(TR::InstOpCode::label, node, startLoop, cg);
-    Inst_RegReg(TR::InstOpCode::CMP4RegReg, node, srcOffsetReg, scratchReg, cg);
-    Inst_Label(TR::InstOpCode::JG4, node, endLoop, cg);
+    Inst_Label(OP::label, node, startLoop, cg);
+    Inst_RegReg(OP::CMP4RegReg, node, srcOffsetReg, scratchReg, cg);
+    Inst_Label(OP::JG4, node, endLoop, cg);
 
-    Inst_RegMem(TR::InstOpCode::MOVDQURegMem, node, xmmHighReg,
+    Inst_RegMem(OP::MOVDQURegMem, node, xmmHighReg,
         MRef_BISdisp32(srcBufferReg, srcOffsetReg, 0, headerOffsetConst, cg), cg);
 
-    Inst_RegReg(TR::InstOpCode::MOVDQURegReg, node, xmmLowReg, xmmHighReg, cg);
-    Inst_RegReg(TR::InstOpCode::PUNPCKHBWRegReg, node, xmmLowReg, zeroReg, cg);
-    Inst_MemReg(TR::InstOpCode::MOVDQUMemReg, node,
+    Inst_RegReg(OP::MOVDQURegReg, node, xmmLowReg, xmmHighReg, cg);
+    Inst_RegReg(OP::PUNPCKHBWRegReg, node, xmmLowReg, zeroReg, cg);
+    Inst_MemReg(OP::MOVDQUMemReg, node,
         MRef_BISdisp32(destBufferReg, destOffsetReg, 0, headerOffsetConst + vectorLengthConst, cg), xmmLowReg, cg);
 
-    Inst_RegReg(TR::InstOpCode::PUNPCKLBWRegReg, node, xmmHighReg, zeroReg, cg);
-    Inst_MemReg(TR::InstOpCode::MOVDQUMemReg, node,
-        MRef_BISdisp32(destBufferReg, destOffsetReg, 0, headerOffsetConst, cg), xmmHighReg, cg);
+    Inst_RegReg(OP::PUNPCKLBWRegReg, node, xmmHighReg, zeroReg, cg);
+    Inst_MemReg(OP::MOVDQUMemReg, node, MRef_BISdisp32(destBufferReg, destOffsetReg, 0, headerOffsetConst, cg),
+        xmmHighReg, cg);
 
     // increase src offset by size of imm register
     // increase dest offset by double, to account for the byte->char inflation
-    Inst_RegImm(TR::InstOpCode::ADD4RegImm4, node, srcOffsetReg, vectorLengthConst, cg);
-    Inst_RegImm(TR::InstOpCode::ADD4RegImm4, node, destOffsetReg, 2 * vectorLengthConst, cg);
+    Inst_RegImm(OP::ADD4RegImm4, node, srcOffsetReg, vectorLengthConst, cg);
+    Inst_RegImm(OP::ADD4RegImm4, node, destOffsetReg, 2 * vectorLengthConst, cg);
 
     // LOOP BACK
-    Inst_Label(TR::InstOpCode::JMP4, node, startLoop, cg);
-    Inst_Label(TR::InstOpCode::label, node, endLoop, cg);
+    Inst_Label(OP::JMP4, node, startLoop, cg);
+    Inst_Label(OP::label, node, endLoop, cg);
 
     // AND length with 15 to compute residual remainder
     // then copy and interleave 8 bytes from src buffer with 0s into dest buffer if possible
-    Inst_RegImm(TR::InstOpCode::AND4RegImm4, node, lengthReg, vectorLengthConst - 1, cg);
+    Inst_RegImm(OP::AND4RegImm4, node, lengthReg, vectorLengthConst - 1, cg);
 
-    Inst_RegImm(TR::InstOpCode::CMP4RegImm4, node, lengthReg, 8, cg);
-    Inst_Label(TR::InstOpCode::JL1, node, afterCopy8Label, cg);
+    Inst_RegImm(OP::CMP4RegImm4, node, lengthReg, 8, cg);
+    Inst_Label(OP::JL1, node, afterCopy8Label, cg);
 
-    Inst_RegMem(TR::InstOpCode::MOVQRegMem, node, xmmLowReg,
-        MRef_BISdisp32(srcBufferReg, srcOffsetReg, 0, headerOffsetConst, cg), cg);
-    Inst_RegReg(TR::InstOpCode::PUNPCKLBWRegReg, node, xmmLowReg, zeroReg, cg);
-    Inst_MemReg(TR::InstOpCode::MOVDQUMemReg, node,
-        MRef_BISdisp32(destBufferReg, destOffsetReg, 0, headerOffsetConst, cg), xmmLowReg, cg);
-    Inst_RegImm(TR::InstOpCode::SUB4RegImm4, node, lengthReg, 8, cg);
+    Inst_RegMem(OP::MOVQRegMem, node, xmmLowReg, MRef_BISdisp32(srcBufferReg, srcOffsetReg, 0, headerOffsetConst, cg),
+        cg);
+    Inst_RegReg(OP::PUNPCKLBWRegReg, node, xmmLowReg, zeroReg, cg);
+    Inst_MemReg(OP::MOVDQUMemReg, node, MRef_BISdisp32(destBufferReg, destOffsetReg, 0, headerOffsetConst, cg),
+        xmmLowReg, cg);
+    Inst_RegImm(OP::SUB4RegImm4, node, lengthReg, 8, cg);
 
-    Inst_RegImm(TR::InstOpCode::ADD4RegImm4, node, srcOffsetReg, 8, cg);
-    Inst_RegImm(TR::InstOpCode::ADD4RegImm4, node, destOffsetReg, 16, cg);
+    Inst_RegImm(OP::ADD4RegImm4, node, srcOffsetReg, 8, cg);
+    Inst_RegImm(OP::ADD4RegImm4, node, destOffsetReg, 16, cg);
 
-    Inst_Label(TR::InstOpCode::label, node, afterCopy8Label, cg);
+    Inst_Label(OP::label, node, afterCopy8Label, cg);
 
     // handle residual (< 8 bytes left) & jump to copy instructions based on the number of bytes left
     // calculate how many bytes to skip based on length;
@@ -13353,8 +13220,8 @@ TR::Register *J9::X86::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, 
     // since copy_instruction_size could change depending on which registers are allocated to scratchReg, srcOffsetReg
     // and destOffsetReg we reserve them to be eax, ecx, edx, respectively
 
-    Inst_RegRegImm(TR::InstOpCode::IMUL4RegRegImm4, node, lengthReg, lengthReg, -copy_instruction_size, cg);
-    Inst_RegImm(TR::InstOpCode::ADD4RegImm4, node, lengthReg, copy_instruction_size * 7, cg);
+    Inst_RegRegImm(OP::IMUL4RegRegImm4, node, lengthReg, lengthReg, -copy_instruction_size, cg);
+    Inst_RegImm(OP::ADD4RegImm4, node, lengthReg, copy_instruction_size * 7, cg);
 
     bool is64bit = cg->comp()->target().is64Bit();
     // calculate address to jump too
@@ -13365,27 +13232,25 @@ TR::Register *J9::X86::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, 
         deps->addPostCondition(residueLabelMR->getAddressRegister(), TR::RealRegister::NoReg, cg);
     }
 
-    Inst_RegMem(TR::InstOpCode::LEARegMem(is64bit), node, scratchReg, residueLabelMR, cg);
-    Inst_RegReg(TR::InstOpCode::ADDRegReg(is64bit), node, lengthReg, scratchReg, cg);
+    Inst_RegMem(OP::LEARegMem(is64bit), node, scratchReg, residueLabelMR, cg);
+    Inst_RegReg(OP::ADDRegReg(is64bit), node, lengthReg, scratchReg, cg);
 
-    Inst_RegMem(TR::InstOpCode::LEARegMem(is64bit), node, srcOffsetReg,
-        MRef_BISdisp32(srcBufferReg, srcOffsetReg, 0, 0, cg), cg);
-    Inst_RegMem(TR::InstOpCode::LEARegMem(is64bit), node, destOffsetReg,
-        MRef_BISdisp32(destBufferReg, destOffsetReg, 0, 0, cg), cg);
+    Inst_RegMem(OP::LEARegMem(is64bit), node, srcOffsetReg, MRef_BISdisp32(srcBufferReg, srcOffsetReg, 0, 0, cg), cg);
+    Inst_RegMem(OP::LEARegMem(is64bit), node, destOffsetReg, MRef_BISdisp32(destBufferReg, destOffsetReg, 0, 0, cg),
+        cg);
 
-    Inst_Reg(TR::InstOpCode::JMPReg, node, lengthReg, cg);
+    Inst_Reg(OP::JMPReg, node, lengthReg, cg);
 
-    Inst_Label(TR::InstOpCode::label, node, copyResidueLabel, cg);
+    Inst_Label(OP::label, node, copyResidueLabel, cg);
 
     for (int i = 0; i < 7; i++) {
-        Inst_RegMem(TR::InstOpCode::MOVZXReg2Mem1, node, scratchReg,
-            MRef_Bdisp32(srcOffsetReg, headerOffsetConst + 6 - i, cg), cg);
-        Inst_MemReg(TR::InstOpCode::S2MemReg, node, MRef_Bdisp32(destOffsetReg, headerOffsetConst + 2 * (6 - i), cg),
-            scratchReg, cg);
+        Inst_RegMem(OP::MOVZXReg2Mem1, node, scratchReg, MRef_Bdisp32(srcOffsetReg, headerOffsetConst + 6 - i, cg), cg);
+        Inst_MemReg(OP::S2MemReg, node, MRef_Bdisp32(destOffsetReg, headerOffsetConst + 2 * (6 - i), cg), scratchReg,
+            cg);
     }
 
     deps->stopAddingConditions();
-    Inst_Label(TR::InstOpCode::label, node, doneLabel, deps, cg);
+    Inst_Label(OP::label, node, doneLabel, deps, cg);
     doneLabel->setEndInternalControlFlow();
 
     cg->stopUsingRegister(srcOffsetReg);
@@ -13725,41 +13590,41 @@ TR::Register *J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node,
     // Under decompressed string case for 32bits platforms, bail out if string is larger than INT_MAX32/2 since #
     // character to # byte conversion will cause overflow.
     if (!cg->comp()->target().is64Bit() && !manager.isCompressedString()) {
-        Inst_RegImm(TR::InstOpCode::CMPRegImm4(), node, length, (uint16_t)0x8000, cg);
-        Inst_Label(TR::InstOpCode::JGE4, node, failLabel, cg);
+        Inst_RegImm(OP::CMPRegImm4(), node, length, (uint16_t)0x8000, cg);
+        Inst_Label(OP::JGE4, node, failLabel, cg);
     }
 
     // 1. preparation (load value into registers, calculate length etc)
     auto lowerBndMinus1 = MRef_const(cg->findOrCreate16ByteConstant(node, manager.getLowerBndMinus1()), cg);
-    cursor = Inst_RegMem(TR::InstOpCode::MOVDQURegMem, node, xmmRegLowerBndMinus1, lowerBndMinus1, cg);
+    cursor = Inst_RegMem(OP::MOVDQURegMem, node, xmmRegLowerBndMinus1, lowerBndMinus1, cg);
     iComment("lower bound ascii value minus one");
 
     auto upperBnd = MRef_const(cg->findOrCreate16ByteConstant(node, manager.getUpperBnd()), cg);
-    cursor = Inst_RegMem(TR::InstOpCode::MOVDQURegMem, node, xmmRegUpperBnd, upperBnd, cg);
+    cursor = Inst_RegMem(OP::MOVDQURegMem, node, xmmRegUpperBnd, upperBnd, cg);
     iComment("upper bound ascii value");
 
     auto conversionDiff = MRef_const(cg->findOrCreate16ByteConstant(node, manager.getConversionDiff()), cg);
-    cursor = Inst_RegMem(TR::InstOpCode::MOVDQURegMem, node, xmmRegConversionDiff, conversionDiff, cg);
+    cursor = Inst_RegMem(OP::MOVDQURegMem, node, xmmRegConversionDiff, conversionDiff, cg);
     iComment("case conversion diff value");
 
     auto minus1 = MRef_const(cg->findOrCreate16ByteConstant(node, MINUS1), cg);
-    cursor = Inst_RegMem(TR::InstOpCode::MOVDQURegMem, node, xmmRegMinus1, minus1, cg);
+    cursor = Inst_RegMem(OP::MOVDQURegMem, node, xmmRegMinus1, minus1, cg);
     iComment("-1");
 
     auto asciiUpperBnd = MRef_const(cg->findOrCreate16ByteConstant(node, manager.getAsciiMax()), cg);
-    cursor = Inst_RegMem(TR::InstOpCode::MOVDQURegMem, node, xmmRegAsciiUpperBnd, asciiUpperBnd, cg);
+    cursor = Inst_RegMem(OP::MOVDQURegMem, node, xmmRegAsciiUpperBnd, asciiUpperBnd, cg);
     iComment("maximum ascii value ");
 
-    Inst_RegImm(TR::InstOpCode::MOV4RegImm4, node, result, 1, cg);
+    Inst_RegImm(OP::MOV4RegImm4, node, result, 1, cg);
 
     // initialize the loop counter
-    cursor = Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, counter, counter, cg);
+    cursor = Inst_RegReg(OP::XOR4RegReg, node, counter, counter, cg);
     iComment("initialize loop counter");
 
     // calculate the residueStartLength. Later instructions compare the counter with this length and decide when to jump
     // to the residue handling sequence
-    Inst_RegReg(TR::InstOpCode::MOVRegReg(), node, residueStartLength, length, cg);
-    Inst_RegImm(TR::InstOpCode::SUBRegImms(), node, residueStartLength, strideSize - 1, cg);
+    Inst_RegReg(OP::MOVRegReg(), node, residueStartLength, length, cg);
+    Inst_RegImm(OP::SUBRegImms(), node, residueStartLength, strideSize - 1, cg);
 
     // 2. vectorized case conversion loop
     TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
@@ -13769,95 +13634,94 @@ TR::Register *J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node,
 
     startLabel->setStartInternalControlFlow();
     endLabel->setEndInternalControlFlow();
-    Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+    Inst_Label(OP::label, node, startLabel, cg);
 
     TR::LabelSymbol *caseConversionMainLoopLabel = generateLabelSymbol(cg);
-    Inst_Label(TR::InstOpCode::label, node, caseConversionMainLoopLabel, cg);
-    Inst_RegReg(TR::InstOpCode::CMPRegReg(), node, counter, residueStartLength, cg);
-    Inst_Label(TR::InstOpCode::JGE4, node, residueStartLabel, cg);
+    Inst_Label(OP::label, node, caseConversionMainLoopLabel, cg);
+    Inst_RegReg(OP::CMPRegReg(), node, counter, residueStartLength, cg);
+    Inst_Label(OP::JGE4, node, residueStartLabel, cg);
 
     auto srcArrayMemRef = MRef_BISdisp32(srcArray, counter, 0, headerSize, cg);
-    Inst_RegMem(TR::InstOpCode::MOVDQURegMem, node, xmmRegArrayContentCopy0, srcArrayMemRef, cg);
+    Inst_RegMem(OP::MOVDQURegMem, node, xmmRegArrayContentCopy0, srcArrayMemRef, cg);
 
     // detect invalid characters
-    Inst_RegReg(TR::InstOpCode::MOVDQURegReg, node, xmmRegArrayContentCopy1, xmmRegArrayContentCopy0, cg);
-    Inst_RegReg(TR::InstOpCode::MOVDQURegReg, node, xmmRegArrayContentCopy2, xmmRegArrayContentCopy0, cg);
-    cursor = Inst_RegReg(manager.isCompressedString() ? TR::InstOpCode::PCMPGTBRegReg : TR::InstOpCode::PCMPGTWRegReg,
-        node, xmmRegArrayContentCopy1, xmmRegMinus1, cg);
+    Inst_RegReg(OP::MOVDQURegReg, node, xmmRegArrayContentCopy1, xmmRegArrayContentCopy0, cg);
+    Inst_RegReg(OP::MOVDQURegReg, node, xmmRegArrayContentCopy2, xmmRegArrayContentCopy0, cg);
+    cursor = Inst_RegReg(manager.isCompressedString() ? OP::PCMPGTBRegReg : OP::PCMPGTWRegReg, node,
+        xmmRegArrayContentCopy1, xmmRegMinus1, cg);
     iComment(" > -1");
-    cursor = Inst_RegReg(manager.isCompressedString() ? TR::InstOpCode::PCMPGTBRegReg : TR::InstOpCode::PCMPGTWRegReg,
-        node, xmmRegArrayContentCopy2, xmmRegAsciiUpperBnd, cg);
+    cursor = Inst_RegReg(manager.isCompressedString() ? OP::PCMPGTBRegReg : OP::PCMPGTWRegReg, node,
+        xmmRegArrayContentCopy2, xmmRegAsciiUpperBnd, cg);
     iComment(" > maximum ascii value");
-    cursor = Inst_RegReg(TR::InstOpCode::PANDNRegReg, node, xmmRegArrayContentCopy2, xmmRegArrayContentCopy1, cg);
+    cursor = Inst_RegReg(OP::PANDNRegReg, node, xmmRegArrayContentCopy2, xmmRegArrayContentCopy1, cg);
     iComment(" >-1 && !(> maximum ascii value) valid when all bits are set");
-    cursor = Inst_RegReg(TR::InstOpCode::PXORRegReg, node, xmmRegArrayContentCopy2, xmmRegMinus1, cg);
+    cursor = Inst_RegReg(OP::PXORRegReg, node, xmmRegArrayContentCopy2, xmmRegMinus1, cg);
     iComment("reverse all bits");
-    Inst_RegReg(TR::InstOpCode::PTESTRegReg, node, xmmRegArrayContentCopy2, xmmRegArrayContentCopy2, cg);
-    Inst_Label(TR::InstOpCode::JNE4, node, failLabel, cg);
+    Inst_RegReg(OP::PTESTRegReg, node, xmmRegArrayContentCopy2, xmmRegArrayContentCopy2, cg);
+    Inst_Label(OP::JNE4, node, failLabel, cg);
     iComment("jump out if invalid chars are detected");
 
     // calculate case conversion with vector registers
-    Inst_RegReg(TR::InstOpCode::MOVDQURegReg, node, xmmRegArrayContentCopy1, xmmRegArrayContentCopy0, cg);
-    Inst_RegReg(TR::InstOpCode::MOVDQURegReg, node, xmmRegArrayContentCopy2, xmmRegArrayContentCopy0, cg);
-    cursor = Inst_RegReg(manager.isCompressedString() ? TR::InstOpCode::PCMPGTBRegReg : TR::InstOpCode::PCMPGTWRegReg,
-        node, xmmRegArrayContentCopy0, xmmRegLowerBndMinus1, cg);
+    Inst_RegReg(OP::MOVDQURegReg, node, xmmRegArrayContentCopy1, xmmRegArrayContentCopy0, cg);
+    Inst_RegReg(OP::MOVDQURegReg, node, xmmRegArrayContentCopy2, xmmRegArrayContentCopy0, cg);
+    cursor = Inst_RegReg(manager.isCompressedString() ? OP::PCMPGTBRegReg : OP::PCMPGTWRegReg, node,
+        xmmRegArrayContentCopy0, xmmRegLowerBndMinus1, cg);
     iComment(manager.toLowerCase() ? " > 'A-1'" : "> 'a-1'");
-    cursor = Inst_RegReg(manager.isCompressedString() ? TR::InstOpCode::PCMPGTBRegReg : TR::InstOpCode::PCMPGTWRegReg,
-        node, xmmRegArrayContentCopy1, xmmRegUpperBnd, cg);
+    cursor = Inst_RegReg(manager.isCompressedString() ? OP::PCMPGTBRegReg : OP::PCMPGTWRegReg, node,
+        xmmRegArrayContentCopy1, xmmRegUpperBnd, cg);
     iComment(manager.toLowerCase() ? " > 'Z'" : " > 'z'");
-    cursor = Inst_RegReg(TR::InstOpCode::PANDNRegReg, node, xmmRegArrayContentCopy1, xmmRegArrayContentCopy0, cg);
+    cursor = Inst_RegReg(OP::PANDNRegReg, node, xmmRegArrayContentCopy1, xmmRegArrayContentCopy0, cg);
     iComment(const_cast<char *>(manager.toLowerCase() ? " >='A' && !( >'Z')" : " >='a' && !( >'z')"));
-    Inst_RegReg(TR::InstOpCode::PANDRegReg, node, xmmRegArrayContentCopy1, xmmRegConversionDiff, cg);
+    Inst_RegReg(OP::PANDRegReg, node, xmmRegArrayContentCopy1, xmmRegConversionDiff, cg);
 
     if (manager.toLowerCase())
-        Inst_RegReg(manager.isCompressedString() ? TR::InstOpCode::PADDBRegReg : TR::InstOpCode::PADDWRegReg, node,
-            xmmRegArrayContentCopy2, xmmRegArrayContentCopy1, cg);
+        Inst_RegReg(manager.isCompressedString() ? OP::PADDBRegReg : OP::PADDWRegReg, node, xmmRegArrayContentCopy2,
+            xmmRegArrayContentCopy1, cg);
     else
-        Inst_RegReg(manager.isCompressedString() ? TR::InstOpCode::PSUBBRegReg : TR::InstOpCode::PSUBWRegReg, node,
-            xmmRegArrayContentCopy2, xmmRegArrayContentCopy1, cg);
+        Inst_RegReg(manager.isCompressedString() ? OP::PSUBBRegReg : OP::PSUBWRegReg, node, xmmRegArrayContentCopy2,
+            xmmRegArrayContentCopy1, cg);
 
     auto dstArrayMemRef = MRef_BISdisp32(dstArray, counter, 0, headerSize, cg);
-    Inst_MemReg(TR::InstOpCode::MOVDQUMemReg, node, dstArrayMemRef, xmmRegArrayContentCopy2, cg);
-    Inst_RegImm(TR::InstOpCode::ADDRegImms(), node, counter, strideSize, cg);
-    Inst_Label(TR::InstOpCode::JMP4, node, caseConversionMainLoopLabel, cg);
+    Inst_MemReg(OP::MOVDQUMemReg, node, dstArrayMemRef, xmmRegArrayContentCopy2, cg);
+    Inst_RegImm(OP::ADDRegImms(), node, counter, strideSize, cg);
+    Inst_Label(OP::JMP4, node, caseConversionMainLoopLabel, cg);
 
     // 3. handle residue with non vectorized case conversion loop
-    Inst_Label(TR::InstOpCode::label, node, residueStartLabel, cg);
-    Inst_RegReg(TR::InstOpCode::CMPRegReg(), node, counter, length, cg);
-    Inst_Label(TR::InstOpCode::JGE4, node, endLabel, cg);
+    Inst_Label(OP::label, node, residueStartLabel, cg);
+    Inst_RegReg(OP::CMPRegReg(), node, counter, length, cg);
+    Inst_Label(OP::JGE4, node, endLabel, cg);
     srcArrayMemRef = MRef_BISdisp32(srcArray, counter, 0, headerSize, cg);
-    Inst_RegMem(manager.isCompressedString() ? TR::InstOpCode::MOVZXReg4Mem1 : TR::InstOpCode::MOVZXReg4Mem2, node,
-        singleChar, srcArrayMemRef, cg);
+    Inst_RegMem(manager.isCompressedString() ? OP::MOVZXReg4Mem1 : OP::MOVZXReg4Mem2, node, singleChar, srcArrayMemRef,
+        cg);
 
     // use unsigned compare to detect invalid range
-    Inst_RegImm(TR::InstOpCode::CMP4RegImms, node, singleChar, 0x7F, cg);
-    Inst_Label(TR::InstOpCode::JA4, node, failLabel, cg);
+    Inst_RegImm(OP::CMP4RegImms, node, singleChar, 0x7F, cg);
+    Inst_Label(OP::JA4, node, failLabel, cg);
 
-    Inst_RegImm(TR::InstOpCode::CMP4RegImms, node, singleChar, manager.toLowerCase() ? 'A' : 'a', cg);
-    Inst_Label(TR::InstOpCode::JB4, node, storeToArrayLabel, cg);
+    Inst_RegImm(OP::CMP4RegImms, node, singleChar, manager.toLowerCase() ? 'A' : 'a', cg);
+    Inst_Label(OP::JB4, node, storeToArrayLabel, cg);
 
-    Inst_RegImm(TR::InstOpCode::CMP4RegImms, node, singleChar, manager.toLowerCase() ? 'Z' : 'z', cg);
-    Inst_Label(TR::InstOpCode::JA4, node, storeToArrayLabel, cg);
+    Inst_RegImm(OP::CMP4RegImms, node, singleChar, manager.toLowerCase() ? 'Z' : 'z', cg);
+    Inst_Label(OP::JA4, node, storeToArrayLabel, cg);
 
     if (manager.toLowerCase())
-        Inst_RegMem(TR::InstOpCode::LEARegMem(), node, singleChar, MRef_Bdisp32(singleChar, 0x20, cg), cg);
+        Inst_RegMem(OP::LEARegMem(), node, singleChar, MRef_Bdisp32(singleChar, 0x20, cg), cg);
 
     else
-        Inst_RegImm(TR::InstOpCode::SUB4RegImms, node, singleChar, 0x20, cg);
+        Inst_RegImm(OP::SUB4RegImms, node, singleChar, 0x20, cg);
 
-    Inst_Label(TR::InstOpCode::label, node, storeToArrayLabel, cg);
+    Inst_Label(OP::label, node, storeToArrayLabel, cg);
 
     dstArrayMemRef = MRef_BISdisp32(dstArray, counter, 0, headerSize, cg);
-    Inst_MemReg(manager.isCompressedString() ? TR::InstOpCode::S1MemReg : TR::InstOpCode::S2MemReg, node,
-        dstArrayMemRef, singleChar, cg);
-    Inst_RegImm(TR::InstOpCode::ADDRegImms(), node, counter, manager.isCompressedString() ? 1 : 2, cg);
-    Inst_Label(TR::InstOpCode::JMP4, node, residueStartLabel, cg);
+    Inst_MemReg(manager.isCompressedString() ? OP::S1MemReg : OP::S2MemReg, node, dstArrayMemRef, singleChar, cg);
+    Inst_RegImm(OP::ADDRegImms(), node, counter, manager.isCompressedString() ? 1 : 2, cg);
+    Inst_Label(OP::JMP4, node, residueStartLabel, cg);
 
     // 4. handle invalid case
-    Inst_Label(TR::InstOpCode::label, node, failLabel, cg);
-    Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, result, result, cg);
+    Inst_Label(OP::label, node, failLabel, cg);
+    Inst_RegReg(OP::XOR4RegReg, node, result, result, cg);
 
-    Inst_Label(TR::InstOpCode::label, node, endLabel, deps, cg);
+    Inst_Label(OP::label, node, endLabel, deps, cg);
     node->setRegister(result);
 
     cg->stopUsingRegister(length);
@@ -13933,10 +13797,10 @@ void J9::X86::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(T
     deps->addPreCondition(dataBlockReg, TR::RealRegister::NoReg, cg);
     deps->addPostCondition(dataBlockReg, TR::RealRegister::NoReg, cg);
 
-    Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
-    Inst_RegMem(TR::InstOpCode::LEARegMem(), node, dataBlockReg, MRef_label(dataSnippet->getSnippetLabel(), cg), cg);
-    Inst_MemImm(TR::InstOpCode::CMPMemImms(), node, MRef_Bdisp32(dataBlockReg, offsetInDataBlock, cg), -1, cg);
-    Inst_Label(TR::InstOpCode::JE4, node, unresolveLabel, cg);
+    Inst_Label(OP::label, node, startLabel, cg);
+    Inst_RegMem(OP::LEARegMem(), node, dataBlockReg, MRef_label(dataSnippet->getSnippetLabel(), cg), cg);
+    Inst_MemImm(OP::CMPMemImms(), node, MRef_Bdisp32(dataBlockReg, offsetInDataBlock, cg), -1, cg);
+    Inst_Label(OP::JE4, node, unresolveLabel, cg);
 
     {
         TR_OutlinedInstructionsGenerator og(unresolveLabel, node, cg);
@@ -13945,12 +13809,12 @@ void J9::X86::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(T
             TR::Register *fieldClassReg;
             if (isWrite) {
                 fieldClassReg = cg->allocateRegister();
-                Inst_RegMem(TR::InstOpCode::LRegMem(), node, fieldClassReg,
+                Inst_RegMem(OP::LRegMem(), node, fieldClassReg,
                     MRef_Bdisp32(sideEffectRegister, comp->fej9()->getOffsetOfClassFromJavaLangClassField(), cg), cg);
             } else {
                 fieldClassReg = sideEffectRegister;
             }
-            Inst_MemReg(TR::InstOpCode::SMemReg(is64Bit), node,
+            Inst_MemReg(OP::SMemReg(is64Bit), node,
                 MRef_Bdisp32(dataBlockReg, (intptr_t)(offsetof(J9JITWatchedStaticFieldData, fieldClass)), cg),
                 fieldClassReg, cg);
             deps->addPreCondition(fieldClassReg, TR::RealRegister::NoReg, cg);
@@ -13966,10 +13830,10 @@ void J9::X86::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(T
         if (is64Bit) {
             TR::Register *cpAddressReg = cg->allocateRegister();
             TR::Register *cpIndexReg = cg->allocateRegister();
-            Inst_RegImm64Sym(TR::InstOpCode::MOV8RegImm64, node, cpAddressReg,
+            Inst_RegImm64Sym(OP::MOV8RegImm64, node, cpAddressReg,
                 (uintptr_t)methodSymbol->getResolvedMethod()->constantPool(),
                 comp->getSymRefTab()->findOrCreateConstantPoolAddressSymbolRef(methodSymbol), cg);
-            Inst_RegImm(TR::InstOpCode::MOV8RegImm4, node, cpIndexReg, symRef->getCPIndex(), cg);
+            Inst_RegImm(OP::MOV8RegImm4, node, cpIndexReg, symRef->getCPIndex(), cg);
             deps->addPreCondition(cpAddressReg, linkageProperties.getArgumentRegister(0, false /* isFloat */), cg);
             deps->addPostCondition(cpAddressReg, linkageProperties.getArgumentRegister(0, false /* isFloat */), cg);
             deps->addPreCondition(cpIndexReg, linkageProperties.getArgumentRegister(1, false /* isFloat */), cg);
@@ -13978,8 +13842,8 @@ void J9::X86::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(T
             resultReg
                 = cpAddressReg; // for 64bit private linkage both the first argument reg and the return reg are rax
         } else {
-            Inst_Imm(TR::InstOpCode::PUSHImm4, node, symRef->getCPIndex(), cg);
-            Inst_ImmSym(TR::InstOpCode::PUSHImm4, node, (uintptr_t)methodSymbol->getResolvedMethod()->constantPool(),
+            Inst_Imm(OP::PUSHImm4, node, symRef->getCPIndex(), cg);
+            Inst_ImmSym(OP::PUSHImm4, node, (uintptr_t)methodSymbol->getResolvedMethod()->constantPool(),
                 comp->getSymRefTab()->findOrCreateConstantPoolAddressSymbolRef(methodSymbol), cg);
             resultReg = cg->allocateRegister();
             deps->addPreCondition(resultReg, linkageProperties.getIntegerReturnRegister(), cg);
@@ -13993,20 +13857,19 @@ void J9::X86::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(T
         subtract the header size to get the offset needed by field watch helpers
         */
         if (!isStatic) {
-            Inst_RegImm(TR::InstOpCode::SubRegImm4(is64Bit, false /*isWithBorrow*/), node, resultReg,
+            Inst_RegImm(OP::SubRegImm4(is64Bit, false /*isWithBorrow*/), node, resultReg,
                 TR::Compiler->om.objectHeaderSizeInBytes(), cg);
         }
 
         // store result into J9JITWatchedStaticFieldData.fieldAddress / J9JITWatchedInstanceFieldData.offset
-        Inst_MemReg(TR::InstOpCode::SMemReg(is64Bit), node, MRef_Bdisp32(dataBlockReg, offsetInDataBlock, cg),
-            resultReg, cg);
-        Inst_Label(TR::InstOpCode::JMP4, node, endLabel, cg);
+        Inst_MemReg(OP::SMemReg(is64Bit), node, MRef_Bdisp32(dataBlockReg, offsetInDataBlock, cg), resultReg, cg);
+        Inst_Label(OP::JMP4, node, endLabel, cg);
 
         og.endOutlinedInstructionSequence();
     }
 
     deps->stopAddingConditions();
-    Inst_Label(TR::InstOpCode::label, node, endLabel, deps, cg);
+    Inst_Label(OP::label, node, endLabel, deps, cg);
     cg->stopUsingRegister(dataBlockReg);
     cg->stopUsingRegister(resultReg);
 }
@@ -14061,18 +13924,18 @@ void generateReportFieldAccessOutlinedInstructions(TR::Node *node, TR::LabelSymb
         if (!valueReg->getRegisterPair()) {
             if (valueReg->getKind() == TR_GPR) {
                 TR::AutomaticSymbol *autoSymbol = valueMR->getSymbolReference().getSymbol()->getAutoSymbol();
-                Inst_MemReg(TR::InstOpCode::SMemReg(autoSymbol->getRoundedSize() == 8), node, valueMR, valueReg, cg);
+                Inst_MemReg(OP::SMemReg(autoSymbol->getRoundedSize() == 8), node, valueMR, valueReg, cg);
             } else if (valueReg->isSinglePrecision())
-                Inst_MemReg(TR::InstOpCode::MOVSSMemReg, node, valueMR, valueReg, cg);
+                Inst_MemReg(OP::MOVSSMemReg, node, valueMR, valueReg, cg);
             else
-                Inst_MemReg(TR::InstOpCode::MOVSDMemReg, node, valueMR, valueReg, cg);
+                Inst_MemReg(OP::MOVSDMemReg, node, valueMR, valueReg, cg);
             // valueReg and valueReferenceReg are different. Add conditions for valueReg here
             deps->addPreCondition(valueReg, TR::RealRegister::NoReg, cg);
             deps->addPostCondition(valueReg, TR::RealRegister::NoReg, cg);
             valueReferenceReg = cg->allocateRegister();
         } else { // 32bit long
-            Inst_MemReg(TR::InstOpCode::SMemReg(), node, valueMR, valueReg->getLowOrder(), cg);
-            Inst_MemReg(TR::InstOpCode::SMemReg(), node, MRef_MRefOff(*valueMR, 4, cg), valueReg->getHighOrder(), cg);
+            Inst_MemReg(OP::SMemReg(), node, valueMR, valueReg->getLowOrder(), cg);
+            Inst_MemReg(OP::SMemReg(), node, MRef_MRefOff(*valueMR, 4, cg), valueReg->getHighOrder(), cg);
 
             // Add the dependency for higher half register here
             deps->addPostCondition(valueReg->getHighOrder(), TR::RealRegister::NoReg, cg);
@@ -14086,10 +13949,10 @@ void generateReportFieldAccessOutlinedInstructions(TR::Node *node, TR::LabelSymb
         }
 
         // store the stack location into a register
-        Inst_RegMem(TR::InstOpCode::LEARegMem(), node, valueReferenceReg, valueMR, cg);
+        Inst_RegMem(OP::LEARegMem(), node, valueReferenceReg, valueMR, cg);
     }
 
-    Inst_RegMem(TR::InstOpCode::LEARegMem(), node, dataBlockReg, MRef_label(dataSnippet->getSnippetLabel(), cg), cg);
+    Inst_RegMem(OP::LEARegMem(), node, dataBlockReg, MRef_label(dataSnippet->getSnippetLabel(), cg), cg);
     int numArgs = 0;
     if (is64Bit) {
         deps->addPreCondition(dataBlockReg, linkageProperties.getArgumentRegister(numArgs, false /* isFloat */), cg);
@@ -14112,17 +13975,17 @@ void generateReportFieldAccessOutlinedInstructions(TR::Node *node, TR::LabelSymb
         }
     } else {
         if (isWrite) {
-            Inst_Reg(TR::InstOpCode::PUSHReg, node, valueReferenceReg, cg);
+            Inst_Reg(OP::PUSHReg, node, valueReferenceReg, cg);
             deps->addPostCondition(valueReferenceReg, TR::RealRegister::NoReg, cg);
             deps->addPreCondition(valueReferenceReg, TR::RealRegister::NoReg, cg);
         }
 
         if (isInstanceField) {
-            Inst_Reg(TR::InstOpCode::PUSHReg, node, sideEffectRegister, cg);
+            Inst_Reg(OP::PUSHReg, node, sideEffectRegister, cg);
             deps->addPreCondition(sideEffectRegister, TR::RealRegister::NoReg, cg);
             deps->addPostCondition(sideEffectRegister, TR::RealRegister::NoReg, cg);
         }
-        Inst_Reg(TR::InstOpCode::PUSHReg, node, dataBlockReg, cg);
+        Inst_Reg(OP::PUSHReg, node, dataBlockReg, cg);
         deps->addPreCondition(dataBlockReg, TR::RealRegister::NoReg, cg);
         deps->addPostCondition(dataBlockReg, TR::RealRegister::NoReg, cg);
     }
@@ -14131,10 +13994,10 @@ void generateReportFieldAccessOutlinedInstructions(TR::Node *node, TR::LabelSymb
     call->setNeedsGCMap(0xFF00FFFF);
     // Restore the value of lower part register
     if (isWrite && valueReg->getRegisterPair() && valueReg->getKind() == TR_GPR)
-        Inst_RegMem(TR::InstOpCode::L4RegMem, node, valueReg->getLowOrder(), valueMR, cg);
+        Inst_RegMem(OP::L4RegMem, node, valueReg->getLowOrder(), valueMR, cg);
     if (!reuseValueReg)
         cg->stopUsingRegister(valueReferenceReg);
-    Inst_Label(TR::InstOpCode::JMP4, node, endLabel, cg);
+    Inst_Label(OP::JMP4, node, endLabel, cg);
     cg->stopUsingRegister(dataBlockReg);
 }
 
@@ -14175,7 +14038,7 @@ void J9::X86::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::Cod
     startLabel->setStartInternalControlFlow();
     endLabel->setEndInternalControlFlow();
 
-    Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+    Inst_Label(OP::label, node, startLabel, cg);
 
     TR::Register *fieldClassReg = NULL;
     TR::MemoryReference *classFlagsMemRef = NULL;
@@ -14200,16 +14063,15 @@ void J9::X86::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::Cod
                 // because the fieldClass in an AOT body will be invalid if we load using the dataSnippet's helper query
                 // at compile time.
                 fieldClassReg = cg->allocateRegister();
-                Inst_RegMem(TR::InstOpCode::LEARegMem(), node, fieldClassReg,
-                    MRef_label(dataSnippet->getSnippetLabel(), cg), cg);
-                Inst_RegMem(TR::InstOpCode::LRegMem(), node, fieldClassReg,
+                Inst_RegMem(OP::LEARegMem(), node, fieldClassReg, MRef_label(dataSnippet->getSnippetLabel(), cg), cg);
+                Inst_RegMem(OP::LRegMem(), node, fieldClassReg,
                     MRef_Bdisp32(fieldClassReg, offsetof(J9JITWatchedStaticFieldData, fieldClass), cg), cg);
                 classFlagsMemRef = MRef_Bdisp32(fieldClassReg, fej9->getOffsetOfClassFlags(), cg);
             }
         } else {
             if (isWrite) {
                 fieldClassReg = cg->allocateRegister();
-                Inst_RegMem(TR::InstOpCode::LRegMem(), node, fieldClassReg,
+                Inst_RegMem(OP::LRegMem(), node, fieldClassReg,
                     MRef_Bdisp32(sideEffectRegister, fej9->getOffsetOfClassFromJavaLangClassField(), cg), cg);
             } else {
                 fieldClassReg = sideEffectRegister;
@@ -14218,8 +14080,8 @@ void J9::X86::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::Cod
         }
     }
 
-    Inst_MemImm(TR::InstOpCode::TEST2MemImm2, node, classFlagsMemRef, J9ClassHasWatchedFields, cg);
-    Inst_Label(TR::InstOpCode::JNE4, node, fieldReportLabel, cg);
+    Inst_MemImm(OP::TEST2MemImm2, node, classFlagsMemRef, J9ClassHasWatchedFields, cg);
+    Inst_Label(OP::JNE4, node, fieldReportLabel, cg);
 
     uint8_t numOfConditions = getNumOfConditionsForReportFieldAccess(node, !node->getSymbolReference()->isUnresolved(),
         isWrite, isInstanceField, cg);
@@ -14236,7 +14098,7 @@ void J9::X86::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::Cod
         og.endOutlinedInstructionSequence();
     }
     deps->stopAddingConditions();
-    Inst_Label(TR::InstOpCode::label, node, endLabel, deps, cg);
+    Inst_Label(OP::label, node, endLabel, deps, cg);
 
     if (isInstanceField || (!isResolved && isWrite) || fieldClassNeedsRelocation) {
         cg->stopUsingRegister(fieldClassReg);
@@ -14256,7 +14118,7 @@ TR::Register *J9::X86::TreeEvaluator::generateConcurrentScavengeSequence(TR::Nod
                                     ->fieldSignatureChars(node->getSymbolReference()->getCPIndex(), len);
 
         if (fieldName && strstr(fieldName, "Ljava/lang/String;")) {
-            Inst_Mem(TR::InstOpCode::PREFETCHT0, node, MRef_Bdisp32(object, 0, cg), cg);
+            Inst_Mem(OP::PREFETCHT0, node, MRef_Bdisp32(object, 0, cg), cg);
         }
     }
     return object;
@@ -14469,16 +14331,15 @@ TR::Register *J9::X86::I386::TreeEvaluator::integerPairDivEvaluator(TR::Node *no
     startLabel->setStartInternalControlFlow();
     doneLabel->setEndInternalControlFlow();
 
-    Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+    Inst_Label(OP::label, node, startLabel, cg);
 
-    Inst_RegReg(TR::InstOpCode::MOV4RegReg, node, highRegister, secondHigh, cg);
-    Inst_RegReg(TR::InstOpCode::OR4RegReg, node, highRegister, firstHigh, cg);
-    // Inst_RegReg(TR::InstOpCode::TEST4RegReg, node, highRegister, highRegister, cg);
-    Inst_Label(TR::InstOpCode::JNE4, node, callLabel, cg);
+    Inst_RegReg(OP::MOV4RegReg, node, highRegister, secondHigh, cg);
+    Inst_RegReg(OP::OR4RegReg, node, highRegister, firstHigh, cg);
+    // Inst_RegReg(OP::TEST4RegReg, node, highRegister, highRegister, cg);
+    Inst_Label(OP::JNE4, node, callLabel, cg);
 
-    Inst_RegReg(TR::InstOpCode::MOV4RegReg, node, lowRegister, firstRegister->getLowOrder(), cg);
-    divInstr = Inst_RegReg(TR::InstOpCode::DIV4AccReg, node, lowRegister, secondRegister->getLowOrder(),
-        idivDependencies, cg);
+    Inst_RegReg(OP::MOV4RegReg, node, lowRegister, firstRegister->getLowOrder(), cg);
+    divInstr = Inst_RegReg(OP::DIV4AccReg, node, lowRegister, secondRegister->getLowOrder(), idivDependencies, cg);
 
     cg->setImplicitExceptionPoint(divInstr);
     divInstr->setNeedsGCMap(0xFF00FFF6);
@@ -14488,11 +14349,11 @@ TR::Register *J9::X86::I386::TreeEvaluator::integerPairDivEvaluator(TR::Node *no
     xorDependencies1->addPreCondition(highRegister, TR::RealRegister::edx, cg);
     xorDependencies1->addPostCondition(lowRegister, TR::RealRegister::eax, cg);
     xorDependencies1->addPostCondition(highRegister, TR::RealRegister::edx, cg);
-    Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, highRegister, highRegister, xorDependencies1, cg);
+    Inst_RegReg(OP::XOR4RegReg, node, highRegister, highRegister, xorDependencies1, cg);
 
-    Inst_Label(TR::InstOpCode::JMP4, node, doneLabel, cg);
+    Inst_Label(OP::JMP4, node, doneLabel, cg);
 
-    Inst_Label(TR::InstOpCode::label, node, callLabel, cg);
+    Inst_Label(OP::label, node, callLabel, cg);
 
     TR::RegisterDependencyConditions *dependencies = RegDeps((uint8_t)0, 2, cg);
     dependencies->addPostCondition(lowRegister, TR::RealRegister::eax, cg);
@@ -14523,7 +14384,7 @@ TR::Register *J9::X86::I386::TreeEvaluator::integerPairDivEvaluator(TR::Node *no
     labelDependencies->addPostCondition(firstRegister->getLowOrder(), TR::RealRegister::NoReg, cg);
     labelDependencies->addPostCondition(secondRegister->getLowOrder(), TR::RealRegister::NoReg, cg);
 
-    Inst_Label(TR::InstOpCode::label, node, doneLabel, labelDependencies, cg);
+    Inst_Label(OP::label, node, doneLabel, labelDependencies, cg);
 
     TR::Register *targetRegister = cg->allocateRegisterPair(lowRegister, highRegister);
     node->setRegister(targetRegister);
@@ -14568,27 +14429,26 @@ TR::Register *J9::X86::I386::TreeEvaluator::integerPairRemEvaluator(TR::Node *no
     startLabel->setStartInternalControlFlow();
     doneLabel->setEndInternalControlFlow();
 
-    Inst_Label(TR::InstOpCode::label, node, startLabel, cg);
+    Inst_Label(OP::label, node, startLabel, cg);
 
-    Inst_RegReg(TR::InstOpCode::MOV4RegReg, node, highRegister, secondHigh, cg);
-    Inst_RegReg(TR::InstOpCode::OR4RegReg, node, highRegister, firstHigh, cg);
+    Inst_RegReg(OP::MOV4RegReg, node, highRegister, secondHigh, cg);
+    Inst_RegReg(OP::OR4RegReg, node, highRegister, firstHigh, cg);
     // it doesn't need the test instruction, OR will set the flags properly
-    // Inst_RegReg(TR::InstOpCode::TEST4RegReg, node, highRegister, highRegister, cg);
-    Inst_Label(TR::InstOpCode::JNE4, node, callLabel, cg);
+    // Inst_RegReg(OP::TEST4RegReg, node, highRegister, highRegister, cg);
+    Inst_Label(OP::JNE4, node, callLabel, cg);
 
-    Inst_RegReg(TR::InstOpCode::MOV4RegReg, node, lowRegister, firstRegister->getLowOrder(), cg);
-    divInstr = Inst_RegReg(TR::InstOpCode::DIV4AccReg, node, lowRegister, secondRegister->getLowOrder(),
-        idivDependencies, cg);
+    Inst_RegReg(OP::MOV4RegReg, node, lowRegister, firstRegister->getLowOrder(), cg);
+    divInstr = Inst_RegReg(OP::DIV4AccReg, node, lowRegister, secondRegister->getLowOrder(), idivDependencies, cg);
 
     cg->setImplicitExceptionPoint(divInstr);
     divInstr->setNeedsGCMap(0xFF00FFF6);
 
-    Inst_RegReg(TR::InstOpCode::MOV4RegReg, node, lowRegister, highRegister, cg);
+    Inst_RegReg(OP::MOV4RegReg, node, lowRegister, highRegister, cg);
 
-    Inst_RegReg(TR::InstOpCode::XOR4RegReg, node, highRegister, highRegister, cg);
-    Inst_Label(TR::InstOpCode::JMP4, node, doneLabel, cg);
+    Inst_RegReg(OP::XOR4RegReg, node, highRegister, highRegister, cg);
+    Inst_Label(OP::JMP4, node, doneLabel, cg);
 
-    Inst_Label(TR::InstOpCode::label, node, callLabel, cg);
+    Inst_Label(OP::label, node, callLabel, cg);
 
     TR::RegisterDependencyConditions *dependencies = RegDeps((uint8_t)4, 6, cg);
 
@@ -14629,7 +14489,7 @@ TR::Register *J9::X86::I386::TreeEvaluator::integerPairRemEvaluator(TR::Node *no
     movDependencies->addPostCondition(firstRegister->getLowOrder(), TR::RealRegister::NoReg, cg);
     movDependencies->addPostCondition(secondRegister->getLowOrder(), TR::RealRegister::NoReg, cg);
 
-    Inst_Label(TR::InstOpCode::label, node, doneLabel, movDependencies, cg);
+    Inst_Label(OP::label, node, doneLabel, movDependencies, cg);
 
     TR::Register *targetRegister = cg->allocateRegisterPair(lowRegister, highRegister);
     node->setRegister(targetRegister);

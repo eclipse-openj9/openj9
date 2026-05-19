@@ -123,13 +123,12 @@ TR::Register *TR::AMD64J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, 
     TR::Instruction *instr;
     if (methodSymbol->getMethodAddress()) {
         TR_ASSERT(scratchReg, "could not find second scratch register");
-        Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, callNode, scratchReg, (uintptr_t)methodSymbol->getMethodAddress(),
-            cg());
+        Inst_RegImm64(OP::MOV8RegImm64, callNode, scratchReg, (uintptr_t)methodSymbol->getMethodAddress(), cg());
 
-        instr = Inst_Reg(TR::InstOpCode::CALLReg, callNode, scratchReg, preDeps, cg());
+        instr = Inst_Reg(OP::CALLReg, callNode, scratchReg, preDeps, cg());
     } else {
-        instr = Inst_ImmSym(TR::InstOpCode::CALLImm4, callNode, (uintptr_t)methodSymbol->getMethodAddress(),
-            methodSymRef, preDeps, cg());
+        instr = Inst_ImmSym(OP::CALLImm4, callNode, (uintptr_t)methodSymbol->getMethodAddress(), methodSymRef, preDeps,
+            cg());
     }
 
     instr->setNeedsGCMap(getProperties().getPreservedRegisterMapForGC());
@@ -140,8 +139,7 @@ TR::Register *TR::AMD64J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, 
         // adjust sp is necessary, because for java, the stack is native stack, not java stack.
         // we need to restore native stack sp properly to the correct place.
         TR::RealRegister *espReal = machine()->getRealRegister(TR::RealRegister::esp);
-        TR::InstOpCode::Mnemonic op = (memoryArgSize >= -128 && memoryArgSize <= 127) ? TR::InstOpCode::ADDRegImms()
-                                                                                      : TR::InstOpCode::ADDRegImm4();
+        OP::Mnemonic op = (memoryArgSize >= -128 && memoryArgSize <= 127) ? OP::ADDRegImms() : OP::ADDRegImm4();
         Inst_RegImm(op, callNode, espReal, memoryArgSize, cg());
     }
 
@@ -153,7 +151,7 @@ TR::Register *TR::AMD64J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, 
     Inst_VFPRelease(vfpDedicateInstruction, callNode, cg());
 
     TR::LabelSymbol *postDepLabel = generateLabelSymbol(cg());
-    Inst_Label(TR::InstOpCode::label, callNode, postDepLabel, postDeps, cg());
+    Inst_Label(OP::label, callNode, postDepLabel, postDeps, cg());
 
     return returnReg;
 }

@@ -249,8 +249,8 @@ J9::X86::AMD64::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
 // Argument manipulation
 //
 
-static uint8_t *flushArgument(uint8_t *cursor, TR::InstOpCode::Mnemonic op, TR::RealRegister::RegNum regIndex,
-    int32_t offset, TR::CodeGenerator *cg)
+static uint8_t *flushArgument(uint8_t *cursor, OP::Mnemonic op, TR::RealRegister::RegNum regIndex, int32_t offset,
+    TR::CodeGenerator *cg)
 {
     /* TODO:AMD64: Share code with the other flushArgument */
     cursor = TR::InstOpCode(op).binary(cursor, OMR::X86::Default);
@@ -280,7 +280,7 @@ static uint8_t *flushArgument(uint8_t *cursor, TR::InstOpCode::Mnemonic op, TR::
     return cursor;
 }
 
-static int32_t flushArgumentSize(TR::InstOpCode::Mnemonic op, int32_t offset)
+static int32_t flushArgumentSize(OP::Mnemonic op, int32_t offset)
 {
     int32_t size = TR::InstOpCode(op).length(OMR::X86::Default) + 1; // length including ModRM + 1 SIB
     return size + (((offset >= -128 && offset <= 127)) ? 1 : 4);
@@ -302,7 +302,7 @@ uint8_t *J9::X86::AMD64::PrivateLinkage::flushArguments(TR::Node *callNode, uint
         offset += sizeof(intptr_t);
 
     TR::RealRegister::RegNum reg = TR::RealRegister::NoReg;
-    TR::InstOpCode::Mnemonic op = TR::InstOpCode::bad;
+    OP::Mnemonic op = OP::bad;
     TR::DataType dt = TR::NoType;
 
     if (calculateSizeOnly)
@@ -375,7 +375,7 @@ TR::Instruction *J9::X86::AMD64::PrivateLinkage::generateFlushInstruction(TR::In
 
     // Opcode
     //
-    TR::InstOpCode::Mnemonic opCode = TR::Linkage::movOpcodes(operandType, movType(dataType));
+    OP::Mnemonic opCode = TR::Linkage::movOpcodes(operandType, movType(dataType));
 
     // Registers
     //
@@ -490,7 +490,7 @@ uint8_t *J9::X86::AMD64::PrivateLinkage::generateVirtualIndirectThunk(TR::Node *
     TR::Compilation *comp = cg()->comp();
 
     (void)storeArguments(callNode, NULL, true, &codeSize);
-    codeSize += 12; // +10 TR::InstOpCode::MOV8RegImm64 +2 TR::InstOpCode::JMPReg
+    codeSize += 12; // +10 OP::MOV8RegImm64 +2 OP::JMPReg
 
     TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg()->fe());
 
@@ -537,14 +537,14 @@ uint8_t *J9::X86::AMD64::PrivateLinkage::generateVirtualIndirectThunk(TR::Node *
         *((int32_t *)thunk + 1) = cursor - thunkEntry;
     }
 
-    // TR::InstOpCode::MOV8RegImm64 rdi, glueAddress
+    // OP::MOV8RegImm64 rdi, glueAddress
     //
     *(uint16_t *)cursor = 0xbf48;
     cursor += 2;
     *(uint64_t *)cursor = (uintptr_t)glueSymRef->getMethodAddress();
     cursor += 8;
 
-    // TR::InstOpCode::JMPReg rdi
+    // OP::JMPReg rdi
     //
     *(uint8_t *)cursor++ = 0xff;
     *(uint8_t *)cursor++ = 0xe7;
@@ -566,13 +566,13 @@ TR_MHJ2IThunk *J9::X86::AMD64::PrivateLinkage::generateInvokeExactJ2IThunk(TR::N
     //
     int32_t codeSize;
     (void)storeArguments(callNode, NULL, true, &codeSize);
-    codeSize += 10; // TR::InstOpCode::MOV8RegImm64
+    codeSize += 10; // OP::MOV8RegImm64
     if (comp->getOption(TR_BreakOnJ2IThunk))
         codeSize += 1; // breakpoint opcode
     if (comp->getOptions()->getVerboseOption(TR_VerboseJ2IThunks))
         codeSize += 5; // JMPImm4
     else
-        codeSize += 2; // TR::InstOpCode::JMPReg
+        codeSize += 2; // OP::JMPReg
 
     TR_MHJ2IThunkTable *thunkTable = comp->getPersistentInfo()->getInvokeExactJ2IThunkTable();
     TR_MHJ2IThunk *thunk = TR_MHJ2IThunk::allocate(codeSize, signature, cg(), thunkTable);
@@ -606,7 +606,7 @@ TR_MHJ2IThunk *J9::X86::AMD64::PrivateLinkage::generateInvokeExactJ2IThunk(TR::N
     if (comp->getOption(TR_BreakOnJ2IThunk))
         *cursor++ = 0xcc;
 
-    // TR::InstOpCode::MOV8RegImm64 rdi, glueAddress
+    // OP::MOV8RegImm64 rdi, glueAddress
     //
     *(uint16_t *)cursor = 0xbf48;
     cursor += 2;
@@ -627,7 +627,7 @@ TR_MHJ2IThunk *J9::X86::AMD64::PrivateLinkage::generateInvokeExactJ2IThunk(TR::N
         *(int32_t *)(++cursor) = disp32;
         cursor += 4;
     } else {
-        // TR::InstOpCode::JMPReg rdi
+        // OP::JMPReg rdi
         //
         *(uint8_t *)cursor++ = 0xff;
         *(uint8_t *)cursor++ = 0xe7;
@@ -847,8 +847,8 @@ int32_t J9::X86::AMD64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNo
                 parmAreaSize, alignedParmAreaSize);
         }
         if (alignedParmAreaSize > 0)
-            Inst_RegImm((alignedParmAreaSize <= 127 ? TR::InstOpCode::SUBRegImms() : TR::InstOpCode::SUBRegImm4()),
-                callNode, stackPointer, alignedParmAreaSize, cg());
+            Inst_RegImm((alignedParmAreaSize <= 127 ? OP::SUBRegImms() : OP::SUBRegImm4()), callNode, stackPointer,
+                alignedParmAreaSize, cg());
     }
 
     int32_t i;
@@ -928,7 +928,7 @@ int32_t J9::X86::AMD64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNo
                 if (vreg->containsCollectedReference())
                     preCondReg->setContainsCollectedReference();
 
-                Inst_RegReg(needsZeroExtension ? TR::InstOpCode::MOVZXReg8Reg4
+                Inst_RegReg(needsZeroExtension ? OP::MOVZXReg8Reg4
                                                : TR::Linkage::movOpcodes(RegReg, movType(child->getDataType())),
                     child, preCondReg, vreg, cg());
                 vreg = preCondReg;
@@ -938,7 +938,7 @@ int32_t J9::X86::AMD64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNo
             } else {
                 preCondReg = vreg;
                 if (needsZeroExtension)
-                    Inst_RegReg(TR::InstOpCode::MOVZXReg8Reg4, child, preCondReg, vreg, cg());
+                    Inst_RegReg(OP::MOVZXReg8Reg4, child, preCondReg, vreg, cg());
             }
 
             dependencies->addPreCondition(preCondReg, rregIndex, cg());
@@ -953,8 +953,8 @@ int32_t J9::X86::AMD64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNo
                         MRef_Bdisp32(stackPointer, parmAreaSize - offset, cg()), vreg, cg());
                 else {
                     int32_t konst = child->getInt();
-                    Inst_MemImm(TR::InstOpCode::S8MemImm4, child,
-                        MRef_Bdisp32(stackPointer, parmAreaSize - offset, cg()), konst, cg());
+                    Inst_MemImm(OP::S8MemImm4, child, MRef_Bdisp32(stackPointer, parmAreaSize - offset, cg()), konst,
+                        cg());
                 }
             }
         }
@@ -1002,11 +1002,10 @@ TR::Instruction *J9::X86::AMD64::PrivateLinkage::buildPICSlot(TR::X86PICSlot pic
     TR::Instruction *firstInstruction;
     if (picSlot.getMethodAddress()) {
         addrToBeCompared = (uint64_t)picSlot.getMethodAddress();
-        firstInstruction
-            = Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, cachedAddressRegister, addrToBeCompared, cg());
+        firstInstruction = Inst_RegImm64(OP::MOV8RegImm64, node, cachedAddressRegister, addrToBeCompared, cg());
     } else
-        firstInstruction = Inst_RegImm64(TR::InstOpCode::MOV8RegImm64, node, cachedAddressRegister,
-            (uint64_t)picSlot.getClassAddress(), cg());
+        firstInstruction
+            = Inst_RegImm64(OP::MOV8RegImm64, node, cachedAddressRegister, (uint64_t)picSlot.getClassAddress(), cg());
 
     firstInstruction->setNeedsGCMap(site.getPreservedRegisterMask());
 
@@ -1023,27 +1022,24 @@ TR::Instruction *J9::X86::AMD64::PrivateLinkage::buildPICSlot(TR::X86PICSlot pic
     // VFT register into the ModRM r/m field of the generated instruction.
     //
     if (picSlot.getMethodAddress())
-        Inst_MemReg(TR::InstOpCode::CMP8MemReg, node, MRef_Bdisp32(vftReg, picSlot.getSlot(), cg()),
-            cachedAddressRegister, cg());
+        Inst_MemReg(OP::CMP8MemReg, node, MRef_Bdisp32(vftReg, picSlot.getSlot(), cg()), cachedAddressRegister, cg());
     else
-        Inst_RegReg(TR::InstOpCode::CMP8RegReg, node, cachedAddressRegister, vftReg, cg());
+        Inst_RegReg(OP::CMP8RegReg, node, cachedAddressRegister, vftReg, cg());
 
     cg()->stopUsingRegister(cachedAddressRegister);
 
     if (picSlot.needsJumpOnNotEqual()) {
         if (picSlot.needsLongConditionalBranch()) {
-            Inst_LongLabel(TR::InstOpCode::JNE4, node, mismatchLabel, cg());
+            Inst_LongLabel(OP::JNE4, node, mismatchLabel, cg());
         } else {
-            TR::InstOpCode::Mnemonic op
-                = picSlot.needsShortConditionalBranch() ? TR::InstOpCode::JNE1 : TR::InstOpCode::JNE4;
+            OP::Mnemonic op = picSlot.needsShortConditionalBranch() ? OP::JNE1 : OP::JNE4;
             Inst_Label(op, node, mismatchLabel, cg());
         }
     } else if (picSlot.needsJumpOnEqual()) {
         if (picSlot.needsLongConditionalBranch()) {
-            Inst_LongLabel(TR::InstOpCode::JE4, node, mismatchLabel, cg());
+            Inst_LongLabel(OP::JE4, node, mismatchLabel, cg());
         } else {
-            TR::InstOpCode::Mnemonic op
-                = picSlot.needsShortConditionalBranch() ? TR::InstOpCode::JE1 : TR::InstOpCode::JE4;
+            OP::Mnemonic op = picSlot.needsShortConditionalBranch() ? OP::JE1 : OP::JE4;
             Inst_Label(op, node, mismatchLabel, cg());
         }
     }
@@ -1053,14 +1049,14 @@ TR::Instruction *J9::X86::AMD64::PrivateLinkage::buildPICSlot(TR::X86PICSlot pic
         TR::SymbolReference *callSymRef = comp()->getSymRefTab()->findOrCreateMethodSymbol(
             node->getSymbolReference()->getOwningMethodIndex(), -1, picSlot.getMethod(), TR::MethodSymbol::Virtual);
 
-        instr = Inst_ImmSym(TR::InstOpCode::CALLImm4, node,
-            (intptr_t)picSlot.getMethod()->startAddressForJittedMethod(), callSymRef, cg());
+        instr = Inst_ImmSym(OP::CALLImm4, node, (intptr_t)picSlot.getMethod()->startAddressForJittedMethod(),
+            callSymRef, cg());
     } else if (picSlot.getHelperMethodSymbolRef()) {
         TR::MethodSymbol *helperMethod = picSlot.getHelperMethodSymbolRef()->getSymbol()->castToMethodSymbol();
-        instr = Inst_ImmSym(TR::InstOpCode::CALLImm4, node, (uint32_t)(uintptr_t)helperMethod->getMethodAddress(),
+        instr = Inst_ImmSym(OP::CALLImm4, node, (uint32_t)(uintptr_t)helperMethod->getMethodAddress(),
             picSlot.getHelperMethodSymbolRef(), cg());
     } else {
-        instr = Inst_Imm(TR::InstOpCode::CALLImm4, node, 0, cg());
+        instr = Inst_Imm(OP::CALLImm4, node, 0, cg());
     }
 
     instr->setNeedsGCMap(site.getPreservedRegisterMask());
@@ -1071,12 +1067,12 @@ TR::Instruction *J9::X86::AMD64::PrivateLinkage::buildPICSlot(TR::X86PICSlot pic
     // TODO: Can we get rid of some of these?  Maybe they don't cost anything.
     //
     if (picSlot.needsJumpToDone()) {
-        instr = Inst_Label(TR::InstOpCode::JMP4, node, doneLabel, cg());
+        instr = Inst_Label(OP::JMP4, node, doneLabel, cg());
         instr->setNeedsGCMap(site.getPreservedRegisterMask());
     }
 
     if (picSlot.generateNextSlotLabelInstruction()) {
-        Inst_Label(TR::InstOpCode::label, node, mismatchLabel, cg());
+        Inst_Label(OP::label, node, mismatchLabel, cg());
     }
 
     return firstInstruction;
@@ -1102,7 +1098,7 @@ void J9::X86::AMD64::PrivateLinkage::buildIPIC(TR::X86CallSite &site, TR::LabelS
     TR_ASSERT(doneLabel, "a doneLabel is required for PIC dispatches");
 
     if (entryLabel)
-        Inst_Label(TR::InstOpCode::label, site.getCallNode(), entryLabel, cg());
+        Inst_Label(OP::label, site.getCallNode(), entryLabel, cg());
 
     int32_t numIPicSlots = IPicParameters.defaultNumberOfSlots;
 
@@ -1129,7 +1125,7 @@ void J9::X86::AMD64::PrivateLinkage::buildIPIC(TR::X86CallSite &site, TR::LabelS
             // let's just lay it down.  It's likely not worth the effort to get
             // this exactly right in all cases.
             //
-            Inst(TR::InstOpCode::INT3, site.getCallNode(), cg());
+            Inst(OP::INT3, site.getCallNode(), cg());
         }
     }
 
@@ -1195,7 +1191,7 @@ void J9::X86::AMD64::PrivateLinkage::buildVirtualOrComputedCall(TR::X86CallSite 
 {
     TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
     if (entryLabel)
-        Inst_Label(TR::InstOpCode::label, site.getCallNode(), entryLabel, cg());
+        Inst_Label(OP::label, site.getCallNode(), entryLabel, cg());
 
     TR::SymbolReference *methodSymRef = site.getSymbolReference();
     logprintf(comp()->getOption(TR_TraceCG), comp()->log(), "buildVirtualOrComputedCall(%p), isComputed=%d\n",
@@ -1204,7 +1200,7 @@ void J9::X86::AMD64::PrivateLinkage::buildVirtualOrComputedCall(TR::X86CallSite 
     bool evaluateVftEarly = methodSymRef->isUnresolved() || !fej9->isResolvedVirtualDispatchGuaranteed(comp());
 
     if (methodSymRef->getSymbol()->castToMethodSymbol()->isComputed()) {
-        buildVFTCall(site, TR::InstOpCode::CALLReg, site.evaluateVFT(), NULL);
+        buildVFTCall(site, OP::CALLReg, site.evaluateVFT(), NULL);
     } else if (evaluateVftEarly) {
         site.evaluateVFT(); // We must evaluate the VFT here to avoid a later evaluation that pollutes the VPic shape.
         buildVPIC(site, entryLabel, doneLabel);
@@ -1227,8 +1223,7 @@ void J9::X86::AMD64::PrivateLinkage::buildVirtualOrComputedCall(TR::X86CallSite 
             comp()->getSymbolValidationManager()->addJ2IThunkFromMethodRecord(thunk, method);
         }
 
-        buildVFTCall(site, TR::InstOpCode::CALLMem, NULL,
-            MRef_Bdisp32(site.evaluateVFT(), methodSymRef->getOffset(), cg()));
+        buildVFTCall(site, OP::CALLMem, NULL, MRef_Bdisp32(site.evaluateVFT(), methodSymRef->getOffset(), cg()));
     } else {
         site.evaluateVFT(); // We must evaluate the VFT here to avoid a later evaluation that pollutes the VPic shape.
         buildVPIC(site, entryLabel, doneLabel);
