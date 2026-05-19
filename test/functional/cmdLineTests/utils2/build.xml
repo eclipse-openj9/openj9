@@ -60,10 +60,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<pathelement location="${LIB_DIR}/testng.jar" />
 			</classpath>
 		</javac>
-		<condition property="src_access_dir" value="${TEST_ROOT}/functional/UnsafeAccess/src_110" unless:set="is_JDK_VERSION_8">
+		<condition property="src_access_dir" value="${TEST_ROOT}/functional/UnsafeAccess/src_110" else="${TEST_ROOT}/functional/UnsafeAccess/src_170" unless:set="is_JDK_VERSION_8">
 			<matches string="${JDK_VERSION}" pattern="^1[1-6]$$" />
 		</condition>
-		<property name="src_access_dir" value="${TEST_ROOT}/functional/UnsafeAccess/src_170" unless:set="is_JDK_VERSION_8"/>
 		<property name="src_access" location="${src_access_dir}" unless:set="is_JDK_VERSION_8"/>
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" unless:set="is_JDK_VERSION_8">
 			<src path="${src_shared}" />

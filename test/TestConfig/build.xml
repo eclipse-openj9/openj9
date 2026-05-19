@@ -36,10 +36,9 @@
 		<mkdir dir="${DEST}" />
 	</target>
 
-		<condition property="TEXT_ENCODING" value="IBM-1047">
+	<condition property="TEXT_ENCODING" value="IBM-1047" else="ISO-8859-1">
 		<contains string="${SPEC}" substring="zos"/>
 	</condition>
-	<property name="TEXT_ENCODING" value="ISO-8859-1"/>
 
 	<target name="build" depends="init">
 			<copy todir="${DEST}">

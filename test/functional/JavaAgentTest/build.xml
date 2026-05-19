@@ -47,10 +47,9 @@
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===executable:                   ${compiler.javac}</echo>
 		<echo>===destdir:                      ${DEST}</echo>
-		<condition property="src_version_dir" value="./src_java8">
+		<condition property="src_version_dir" value="./src_java8" else="./src_java12">
 			<matches string="${JDK_VERSION}" pattern="^(8|9|10|11)$$" />
 		</condition>
-		<property name="src_version_dir" value="./src_java12"/>
 		<property name="src_version" location="${src_version_dir}"/>
 		<condition property="is_JDK_VERSION_8">
 			<equals arg1="${JDK_VERSION}" arg2="8"/>

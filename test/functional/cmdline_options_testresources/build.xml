@@ -64,17 +64,13 @@
 			<src path="${src}" />
 			<src path="${src_80}" />
 		</javac>
-		<condition property="addExports" value="--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED" unless:set="is_JDK_VERSION_8">
-			<equals arg1="${JCL_VERSION}" arg2="latest"/>
-		</condition>
-		<property name="addExports" value="--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED" unless:set="is_JDK_VERSION_8"/>
 		<javac srcdir="${src}" destdir="${build}" source="1.9" target="1.9" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" unless:set="is_JDK_VERSION_8">
 			<src path="${src}" />
 			<src path="${src_90}" />
 			<src path="${TestUtilities}" />
-			<compilerarg line='${addExports}' />
+			<compilerarg line="--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED" />
 			<classpath>
-			<pathelement location="${LIB_DIR}/testng.jar"/>
+				<pathelement location="${LIB_DIR}/testng.jar"/>
 			</classpath>
 		</javac>
 	</target>

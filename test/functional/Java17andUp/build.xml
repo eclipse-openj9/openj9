@@ -37,10 +37,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml" />
 	<property name="TestUtilities" location="../TestUtilities/src"/>
 
-		<condition property="src_170" value="src_170">
+	<condition property="src_170" value="src_170" else="">
 		<equals arg1="${JDK_VERSION}" arg2="17" />
 	</condition>
-	<property name="src_170" value=""/>
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
