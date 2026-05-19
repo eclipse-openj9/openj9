@@ -76,13 +76,6 @@ These are the steps to run the tests on your machine.
    make compile
    ```
 
-   NOTE: to compile and run tests, ant-contrib.jar is needed, and on some systems just installing ant will not install ant-contrib.
-   On Ubuntu, the easiest way to get it is to run:
-
-   ```
-   sudo apt-get install ant-contrib
-   ```
-
 4. Run the tests!
 
    Manually start the server if `JITAAS` TEST_FLAG is not used.

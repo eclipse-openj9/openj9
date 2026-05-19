@@ -20,8 +20,9 @@ OpenJDK Assembly Exception [2].
 
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
-<project name="DDR_Test" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
+<project name="DDR_Test" default="build" basedir="."
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
 	<description>
 		DDR_Test
 	</description>
@@ -49,44 +50,41 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<echo>===executable:                   ${compiler.javac}</echo>
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
-		<if>
+		<condition property="is_JDK_VERSION_8">
 			<equals arg1="${JDK_VERSION}" arg2="8" />
-			<then>
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src}" />
-					<src path="${transformerListener}" />
-					<src path="${TestUtilities}" />
-					<classpath>
-						<pathelement location="${LIB_DIR}/junit4.jar" />
-						<pathelement location="${LIB_DIR}/testng.jar" />
-						<pathelement location="${LIB_DIR}/asm-all.jar" />
-						<pathelement location="${TEST_JDK_HOME}/jre/lib/ddr/j9ddr.jar" />
-					</classpath>
-				</javac>
-			</then>
-			<else>
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src}" />
-					<src path="${transformerListener}" />
-					<src path="${TestUtilities}" />
-					<classpath>
-						<pathelement location="${LIB_DIR}/junit4.jar" />
-						<pathelement location="${LIB_DIR}/testng.jar" />
-						<pathelement location="${LIB_DIR}/asm-all.jar" />
-					</classpath>
-					<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr=ALL-UNNAMED" />
-					<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.tools.ddrinteractive=ALL-UNNAMED" />
-					<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.tools.ddrinteractive.annotations=ALL-UNNAMED" />
-					<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.j9=ALL-UNNAMED" />
-					<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.j9.gc=ALL-UNNAMED" />
-					<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.j9.walkers=ALL-UNNAMED" />
-					<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.pointer=ALL-UNNAMED" />
-					<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.pointer.generated=ALL-UNNAMED" />
-					<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.pointer.helper=ALL-UNNAMED" />
-					<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.types=ALL-UNNAMED" />
-				</javac>
-			</else>
-		</if>
+		</condition>
+
+		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" if:set="is_JDK_VERSION_8">
+			<src path="${src}" />
+			<src path="${transformerListener}" />
+			<src path="${TestUtilities}" />
+			<classpath>
+			<pathelement location="${LIB_DIR}/junit4.jar" />
+			<pathelement location="${LIB_DIR}/testng.jar" />
+			<pathelement location="${LIB_DIR}/asm-all.jar" />
+			<pathelement location="${TEST_JDK_HOME}/jre/lib/ddr/j9ddr.jar" />
+			</classpath>
+		</javac>
+		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" unless:set="is_JDK_VERSION_8">
+			<src path="${src}" />
+			<src path="${transformerListener}" />
+			<src path="${TestUtilities}" />
+			<classpath>
+			<pathelement location="${LIB_DIR}/junit4.jar" />
+			<pathelement location="${LIB_DIR}/testng.jar" />
+			<pathelement location="${LIB_DIR}/asm-all.jar" />
+			</classpath>
+			<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr=ALL-UNNAMED" />
+			<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.tools.ddrinteractive=ALL-UNNAMED" />
+			<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.tools.ddrinteractive.annotations=ALL-UNNAMED" />
+			<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.j9=ALL-UNNAMED" />
+			<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.j9.gc=ALL-UNNAMED" />
+			<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.j9.walkers=ALL-UNNAMED" />
+			<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.pointer=ALL-UNNAMED" />
+			<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.pointer.generated=ALL-UNNAMED" />
+			<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.pointer.helper=ALL-UNNAMED" />
+			<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.types=ALL-UNNAMED" />
+		</javac>
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
@@ -119,26 +117,22 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 
 	<target name="build">
 		<echo>os.name: ${os.name}</echo>
-		<if>
+		<condition property="is_JDK_IMPL_ibm">
 			<or>
 				<equals arg1="${JDK_IMPL}" arg2="ibm" />
 				<equals arg1="${JDK_IMPL}" arg2="openj9" />
 			</or>
-			<then>
-				<if>
-					<resourcecount when="greater" count="0">
-						<fileset dir="${TEST_JDK_HOME}">
-							<include name="**/j9ddr.dat" />
-						</fileset>
-					</resourcecount>
-					<then>
-						<antcall target="clean" inheritall="true" />
-					</then>
-					<else>
-						<echo>File 'j9ddr.dat' not found; assuming JDK '${TEST_JDK_HOME}' does not support DDR.</echo>
-					</else>
-				</if>
-			</then>
-		</if>
+		</condition>
+
+		<condition property="condition_flag" if:set="is_JDK_IMPL_ibm">
+			<resourcecount when="greater" count="0">
+			<fileset dir="${TEST_JDK_HOME}">
+			<include name="**/j9ddr.dat" />
+			</fileset>
+			</resourcecount>
+		</condition>
+
+		<antcall target="clean" inheritall="true" if:set="condition_flag"/>
+		<echo unless:set="condition_flag" if:set="is_JDK_IMPL_ibm">File 'j9ddr.dat' not found; assuming JDK '${TEST_JDK_HOME}' does not support DDR.</echo>
 	</target>
 </project>

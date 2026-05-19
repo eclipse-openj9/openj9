@@ -23,7 +23,6 @@
 -->
 
 <project name="JNIARGTESTS" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
 	<description>JNIARGTESTS</description>
 
 	<!-- set global properties for this build -->

@@ -23,7 +23,6 @@
 -->
 
 <project name="cmdLineTest_jit" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
 	<description>
 		Build cmdLineTest_jit
 	</description>

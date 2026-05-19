@@ -20,8 +20,9 @@ OpenJDK Assembly Exception [2].
 
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
-<project name="Java21Only" default="build" basedir=".">
-	<taskdef resource='net/sf/antcontrib/antlib.xml' />
+<project name="Java21Only" default="build" basedir="."
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
 	<description>
 		Tests for Java 21 only
 	</description>
@@ -77,12 +78,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</target>
 
 	<target name="build">
-		<if>
+		<condition property="is_JDK_VERSION_21">
 			<equals arg1="${JDK_VERSION}" arg2="21" />
-			<then>
-				<antcall target="clean" inheritall="true" />
-			</then>
-		</if>
+		</condition>
+
+		<antcall target="clean" inheritall="true" if:set="is_JDK_VERSION_21"/>
 	</target>
 
 	<target name="clean" depends="dist" description="clean up">

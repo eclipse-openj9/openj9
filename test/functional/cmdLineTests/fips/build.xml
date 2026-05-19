@@ -22,8 +22,9 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
-<project name="fips" default="build" basedir=".">
-    <taskdef resource="net/sf/antcontrib/antlib.xml" />
+<project name="fips" default="build" basedir="."
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
     <description>
         Build cmdLineTests_fips
     </description>
@@ -67,11 +68,10 @@
     </target>
 
     <target name="build" depends="buildCmdLineTestTools">
-        <if>
-            <contains string="${TEST_FLAG}" substring="FIPS" />
-            <then>
-                <antcall target="clean" inheritall="true" />
-            </then>
-        </if>
+		<condition property="is_FIPS">
+			<contains string="${TEST_FLAG}" substring="FIPS" />
+		</condition>
+
+        <antcall target="clean" inheritall="true" if:set="is_FIPS"/>
     </target>
 </project>

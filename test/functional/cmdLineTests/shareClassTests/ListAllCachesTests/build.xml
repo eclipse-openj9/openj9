@@ -23,7 +23,6 @@
 -->
 
 <project name="ShareClassesListAllCachesTests" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
 	<description>
 		Build ShareClassesListAllCachesTests
 	</description>

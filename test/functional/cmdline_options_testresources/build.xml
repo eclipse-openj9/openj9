@@ -22,8 +22,9 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
-<project name="cmdline_options_testresources tests" default="build" basedir=".">
-	<taskdef resource='net/sf/antcontrib/antlib.xml'/>
+<project name="cmdline_options_testresources tests" default="build" basedir="."
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
 	<description>
 		Build cmdline_options_testresources
 	</description>
@@ -55,35 +56,27 @@
 		<echo>===destdir:                      ${DEST}</echo>
 
 
-		<if>
+		<condition property="is_JDK_VERSION_8">
 			<equals arg1="${JDK_VERSION}" arg2="8"/>
-			<then>
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src}" />
-					<src path="${src_80}" />
-				</javac>
-			</then>
-			<else>
-				<if>
-					<equals arg1="${JCL_VERSION}" arg2="latest"/>
-					<then>
-						<property name="addExports" value="--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED" />
-					</then>
-					<else>
-						<property name="addExports" value='--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED' />
-					</else>
-				</if>
-				<javac srcdir="${src}" destdir="${build}" source="1.9" target="1.9" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src}" />
-					<src path="${src_90}" />
-					<src path="${TestUtilities}" />
-					<compilerarg line='${addExports}' />
-					<classpath>
-						<pathelement location="${LIB_DIR}/testng.jar"/>
-					</classpath>
-				</javac>
-			</else>
-		</if>
+		</condition>
+
+		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" if:set="is_JDK_VERSION_8">
+			<src path="${src}" />
+			<src path="${src_80}" />
+		</javac>
+		<condition property="addExports" value="--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED" unless:set="is_JDK_VERSION_8">
+			<equals arg1="${JCL_VERSION}" arg2="latest"/>
+		</condition>
+		<property name="addExports" value="--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED" unless:set="is_JDK_VERSION_8"/>
+		<javac srcdir="${src}" destdir="${build}" source="1.9" target="1.9" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" unless:set="is_JDK_VERSION_8">
+			<src path="${src}" />
+			<src path="${src_90}" />
+			<src path="${TestUtilities}" />
+			<compilerarg line='${addExports}' />
+			<classpath>
+			<pathelement location="${LIB_DIR}/testng.jar"/>
+			</classpath>
+		</javac>
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution" >
@@ -107,14 +100,13 @@
 	</target>
 
 	<target name="build" depends="check-jar" unless="jar.exist">
-		<if>
+		<condition property="is_JDK_IMPL_ibm">
 			<or>
 				<equals arg1="${JDK_IMPL}" arg2="ibm"  />
 				<equals arg1="${JDK_IMPL}" arg2="openj9" />
 			</or>
-			<then>
-				<antcall target="clean" inheritall="true" />
-			</then>
-		</if>
+		</condition>
+
+		<antcall target="clean" inheritall="true" if:set="is_JDK_IMPL_ibm"/>
 	</target>
 </project>

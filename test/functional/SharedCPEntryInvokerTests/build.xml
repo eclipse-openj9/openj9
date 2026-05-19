@@ -23,7 +23,6 @@
 -->
 
 <project name="J9 Shared ConstantPoolEntry Invoker Tests" default="clean" basedir=".">
-	<taskdef resource='net/sf/antcontrib/antlib.xml'/>
 	<description>
        Build J9 Shared ConstantPoolEntry Invoker Tests
     </description>

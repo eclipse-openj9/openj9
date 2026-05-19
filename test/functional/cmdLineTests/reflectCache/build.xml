@@ -22,8 +22,9 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
-<project name="loadLibraryTest" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
+<project name="loadLibraryTest" default="build" basedir="."
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
 	<description>
 		Build cmdLineTests reflectCache
 	</description>
@@ -49,25 +50,22 @@
 		<echo>===executable:                   ${compiler.javac}</echo>
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
-		<if>
+		<condition property="is_JDK_VERSION_8">
 			<or>
 				<equals arg1="${JDK_VERSION}" arg2="8"/>
 				<equals arg1="${JDK_VERSION}" arg2="11"/>
 			</or>
-			<then>
-				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src}" />
-					<src path="${src_8}"/>
-				</javac>
-			</then>
-			<else>
-				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src}"/>
-					<src path="${src_15}"/>
-					<compilerarg line="--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED" />
-				</javac>
-			</else>
-		</if>
+		</condition>
+
+		<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" if:set="is_JDK_VERSION_8">
+			<src path="${src}" />
+			<src path="${src_8}"/>
+		</javac>
+		<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" unless:set="is_JDK_VERSION_8">
+			<src path="${src}"/>
+			<src path="${src_15}"/>
+			<compilerarg line="--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED" />
+		</javac>
 
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" />
 	</target>

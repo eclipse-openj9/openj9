@@ -23,7 +23,6 @@
 -->
 
 <project name="Instrumentation javaagent jar" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
 	<description>
 		Build Instrumentation agent java agent
 	</description>

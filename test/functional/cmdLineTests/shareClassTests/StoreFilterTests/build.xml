@@ -22,8 +22,9 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
-<project name="StoreFilterTests" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
+<project name="StoreFilterTests" default="build" basedir="."
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
 	<description>
 		Build StoreFilterTests
 	</description>
@@ -59,23 +60,20 @@
 			<fileset dir="./APITests/"/>
 		</copy>
 
-		<if>
+		<condition property="is_JDK_VERSION_8">
 			<equals arg1="${JDK_VERSION}" arg2="8"/>
-			<then>
-				<javac srcdir="${build}/APITests" destdir="${build}" debug="true" debuglevel="lines,vars,source" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" >
-					<src path="${SharedClassUtils_srddir}"/>
-					<src path="${build}/APITests"/>
-				</javac>
-			</then>
-			<else>
-				<property name="addExports" value="--add-modules openj9.sharedclasses --add-exports java.base/com.ibm.oti.util=ALL-UNNAMED" />
-				<javac srcdir="${build}/APITests" destdir="${build}" classpath="${build}" fork="true" debug="true" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1" >
-					<src path="${build}/APITests"/>
-					<src path="${SharedClassUtils_srddir}"/>
-					<compilerarg line='${addExports}' />
-				</javac>
-			</else>
-		</if>
+		</condition>
+
+		<javac srcdir="${build}/APITests" destdir="${build}" debug="true" debuglevel="lines,vars,source" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" if:set="is_JDK_VERSION_8">
+			<src path="${SharedClassUtils_srddir}"/>
+			<src path="${build}/APITests"/>
+		</javac>
+		<property name="addExports" value="--add-modules openj9.sharedclasses --add-exports java.base/com.ibm.oti.util=ALL-UNNAMED" unless:set="is_JDK_VERSION_8"/>
+		<javac srcdir="${build}/APITests" destdir="${build}" classpath="${build}" fork="true" debug="true" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1" unless:set="is_JDK_VERSION_8">
+			<src path="${build}/APITests"/>
+			<src path="${SharedClassUtils_srddir}"/>
+			<compilerarg line='${addExports}' />
+		</javac>
 
 		<!--
 		2.) Resources directory ...
@@ -84,21 +82,18 @@
 		<copy todir="${build}/Resources">
 			<fileset dir="./Resources/"/>
 		</copy>
-		<if>
+		<condition property="is_JDK_VERSION_8">
 			<equals arg1="${JDK_VERSION}" arg2="8"/>
-			<then>
-				<javac srcdir="${build}/Resources" destdir="${build}/Resources" fork="true" debug="true" debuglevel="lines,vars,source" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" >
-					<src path="${SharedClassUtils_srddir}"/>
-				</javac>
-			</then>
-			<else>
-				<property name="addExports" value="--add-modules openj9.sharedclasses --add-exports java.base/com.ibm.oti.util=ALL-UNNAMED" />
-				<javac srcdir="${build}/Resources" destdir="${build}/Resources"  classpath="${build}" fork="true" debug="true" debuglevel="lines,vars,source" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" >
-					<src path="${SharedClassUtils_srddir}"/>
-					<compilerarg line='${addExports}' />
-				</javac>
-			</else>
-		</if>
+		</condition>
+
+		<javac srcdir="${build}/Resources" destdir="${build}/Resources" fork="true" debug="true" debuglevel="lines,vars,source" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" if:set="is_JDK_VERSION_8">
+			<src path="${SharedClassUtils_srddir}"/>
+		</javac>
+		<property name="addExports" value="--add-modules openj9.sharedclasses --add-exports java.base/com.ibm.oti.util=ALL-UNNAMED" unless:set="is_JDK_VERSION_8"/>
+		<javac srcdir="${build}/Resources" destdir="${build}/Resources"  classpath="${build}" fork="true" debug="true" debuglevel="lines,vars,source" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" unless:set="is_JDK_VERSION_8">
+			<src path="${SharedClassUtils_srddir}"/>
+			<compilerarg line='${addExports}' />
+		</javac>
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
@@ -117,14 +112,13 @@
 	</target>
 
 	<target name="build" depends="buildCmdLineTestTools">
-		<if>
+		<condition property="is_JDK_IMPL_ibm">
 			<or>
 				<equals arg1="${JDK_IMPL}" arg2="ibm"  />
 				<equals arg1="${JDK_IMPL}" arg2="openj9" />
 			</or>
-			<then>
-				<antcall target="clean" inheritall="true" />
-			</then>
-		</if>
+		</condition>
+
+		<antcall target="clean" inheritall="true" if:set="is_JDK_IMPL_ibm"/>
 	</target>
 </project>

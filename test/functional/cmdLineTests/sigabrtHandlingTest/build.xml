@@ -23,7 +23,6 @@
 -->
 
 <project name="sigabrtHandlingTest" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
 	<description>
 		Build cmdLineTests sigabrtHandlingTest
 	</description>

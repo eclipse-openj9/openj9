@@ -20,8 +20,9 @@ OpenJDK Assembly Exception [2].
 
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
-<project name="DDR Extension Test" default="clean">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
+<project name="DDR Extension Test" default="clean"
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
 
 	<property name="JAVA_COMMAND" value="${JAVA_COMMAND}" />
 	<property name="TEST_ROOT" value="${TEST_ROOT}" />
@@ -38,36 +39,25 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 
 	<property name="dump.name" value="DDREXT.J9CORE.DMP" />
 	<property name="system.dump" value="${REPORTDIR}/${dump.name}" />
-	<if>
+		<condition property="condition_flag">
 		<equals arg1="${OS}" arg2="os.zos" />
-		<then>
-			<property name="DUMP_OPTION" value="-Xdump:system:defaults:label=%uid.${dump.name},request=exclusive+compact+prepwalk -Xscmx16m -Xshareclasses:name=ddrextjunitSCC,addtestjithints -Xjit -Xaot:forceaot,count=5,disableAsyncCompilation -Xmx512M" />
-			<if>
-				<equals arg1="${BITS}" arg2="bits.64" />
-				<then>
-					<property name="zos.core.suffix" value=".X001" />
-				</then>
-				<else>
-					<property name="zos.core.suffix" value="" />
-				</else>
-			</if>
-		</then>
-		<else>
-			<property name="DUMP_OPTION" value="-Xdump:system:defaults:label=${system.dump},request=exclusive+compact+prepwalk -Xscmx16m -Xshareclasses:name=ddrextjunitSCC,addtestjithints -Xjit:count=0 -Xaot:forceaot,count=5,disableAsyncCompilation -Xmx512M" />
-		</else>
-	</if>
+	</condition>
 
-	<if>
+	<property name="DUMP_OPTION" value="-Xdump:system:defaults:label=%uid.${dump.name},request=exclusive+compact+prepwalk -Xscmx16m -Xshareclasses:name=ddrextjunitSCC,addtestjithints -Xjit -Xaot:forceaot,count=5,disableAsyncCompilation -Xmx512M" if:set="condition_flag"/>
+	<condition property="zos.core.suffix" value=".X001" if:set="condition_flag">
+		<equals arg1="${BITS}" arg2="bits.64" />
+	</condition>
+	<property name="zos.core.suffix" value="" if:set="condition_flag"/>
+	<property name="DUMP_OPTION" value="-Xdump:system:defaults:label=${system.dump},request=exclusive+compact+prepwalk -Xscmx16m -Xshareclasses:name=ddrextjunitSCC,addtestjithints -Xjit:count=0 -Xaot:forceaot,count=5,disableAsyncCompilation -Xmx512M" unless:set="condition_flag"/>
+
+		<condition property="is_JDK_VERSION_8">
 		<equals arg1="${JDK_VERSION}" arg2="8" />
-		<then>
-			<path id="tck.class.path.j9ddr.jar">
-				<pathelement location="${TEST_JDK_HOME}/jre/lib/ddr/j9ddr.jar" />
-			</path>
-		</then>
-		<else>
-			<path id="tck.class.path.j9ddr.jar" />
-		</else>
-	</if>
+	</condition>
+
+	<path id="tck.class.path.j9ddr.jar" if:set="is_JDK_VERSION_8">
+		<pathelement location="${TEST_JDK_HOME}/jre/lib/ddr/j9ddr.jar" />
+	</path>
+	<path id="tck.class.path.j9ddr.jar" unless:set="is_JDK_VERSION_8"/>
 	<path id="tck.class.path">
 		<pathelement location="${LIB_DIR}/junit4.jar" />
 		<pathelement location="${LIB_DIR}/testng.jar" />
@@ -93,42 +83,39 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		</java>
 	</target>
 
-	<if>
+		<condition property="is_JDK_VERSION_8">
 		<equals arg1="${JDK_VERSION}" arg2="8" />
-		<then>
-			<macrodef name="java-wrapper">
-				<attribute name="classname" />
-				<attribute name="failonerror" />
-				<attribute name="fork" default="true" />
-				<attribute name="jvm" />
-				<attribute name="timeout" />
-				<element name="common-elements" />
-				<element name="modular-elements" />
-				<sequential>
-					<java classname="@{classname}" failonerror="@{failonerror}" fork="@{fork}" jvm="@{jvm}" timeout="@{timeout}">
-						<common-elements />
-					</java>
-				</sequential>
-			</macrodef>
-		</then>
-		<else>
-			<macrodef name="java-wrapper">
-				<attribute name="classname" />
-				<attribute name="failonerror" />
-				<attribute name="fork" default="true" />
-				<attribute name="jvm" />
-				<attribute name="timeout" />
-				<element name="common-elements" />
-				<element name="modular-elements" />
-				<sequential>
-					<java classname="@{classname}" failonerror="@{failonerror}" fork="@{fork}" jvm="@{jvm}" timeout="@{timeout}">
-						<common-elements />
-						<modular-elements />
-					</java>
-				</sequential>
-			</macrodef>
-		</else>
-	</if>
+	</condition>
+
+	<macrodef name="java-wrapper" if:set="is_JDK_VERSION_8">
+		<attribute name="classname" />
+		<attribute name="failonerror" />
+		<attribute name="fork" default="true" />
+		<attribute name="jvm" />
+		<attribute name="timeout" />
+		<element name="common-elements" />
+		<element name="modular-elements" />
+		<sequential>
+		<java classname="@{classname}" failonerror="@{failonerror}" fork="@{fork}" jvm="@{jvm}" timeout="@{timeout}">
+		<common-elements />
+		</java>
+		</sequential>
+	</macrodef>
+	<macrodef name="java-wrapper" unless:set="is_JDK_VERSION_8">
+		<attribute name="classname" />
+		<attribute name="failonerror" />
+		<attribute name="fork" default="true" />
+		<attribute name="jvm" />
+		<attribute name="timeout" />
+		<element name="common-elements" />
+		<element name="modular-elements" />
+		<sequential>
+		<java classname="@{classname}" failonerror="@{failonerror}" fork="@{fork}" jvm="@{jvm}" timeout="@{timeout}">
+		<common-elements />
+		<modular-elements />
+		</java>
+		</sequential>
+	</macrodef>
 
 	<target name="TCK.run.tests.ddrext" depends="TCK.destroy.cache">
 		<!-- MacOSX needs -XstartOnFirstThread -->
@@ -209,12 +196,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<arg value="${TESTNUM}" />
 		</exec>
 
-		<if>
+		<condition property="condition_flag">
 			<equals arg1="${OS}" arg2="os.zos" />
-			<then>
-				<antcall target="TCK.move.dump.ddrext" />
-			</then>
-		</if>
+		</condition>
+
+		<antcall target="TCK.move.dump.ddrext" if:set="condition_flag"/>
 	</target>
 
 	<target name="TCK.move.dump.ddrext" description="Move core file from MVS to HFS">
@@ -276,15 +262,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<os family="z/os" />
 		</condition>
 
-		<if>
+		<condition property="system.dump.location" value="${dump.name}${zos.core.suffix}">
 			<isset property="isZOS" />
-			<then>
-				<property name="system.dump.location" value="${dump.name}${zos.core.suffix}" />
-			</then>
-			<else>
-				<property name="system.dump.location" location="${system.dump}" />
-			</else>
-		</if>
+		</condition>
+		<property name="system.dump.location" location="${system.dump}"/>
 		<property name="tck.config.dump.opt.1" value="-Xdump:system:defaults:label=${system.dump.location},request=exclusive+compact+prepwalk" />
 
 		<property name="tck.config.dump.opts" value="${tck.config.dump.opt.1} ${tck.config.dump.opt.2} ${tck.config.dump.opt.3} ${tck.config.dump.opt.4} ${tck.core.xmx} ${tck.config.dump.opt.extra}" />

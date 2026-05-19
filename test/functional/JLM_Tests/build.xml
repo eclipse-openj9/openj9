@@ -20,7 +20,9 @@ OpenJDK Assembly Exception [2].
 
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
-<project name="JLM_Tests" default="build" basedir=".">
+<project name="JLM_Tests" default="build" basedir="."
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
 
 	<description>
 		Build JLM Tests
@@ -55,58 +57,62 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${build}</echo>
 
-		<if>
+		<condition property="is_JDK_VERSION_8">
 			<equals arg1="${JDK_VERSION}" arg2="8"/>
-			<then>
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src}" />
-					<src path="${src_80}" />
-					<src path="${transformerListener}" />
-					<src path="${TestUtilities}" />
-					<classpath>
-						<pathelement location="${LIB_DIR}/testng.jar" />
-						<pathelement location="${LIB_DIR}/jcommander.jar" />
-						<pathelement location="${LIB_DIR}/commons-exec.jar" />
-						<pathelement location="${TEST_JDK_HOME}/lib/tools.jar" />
-					</classpath>
-					<exclude name="${excludeTestCRaCMXBean}" />
-				</javac>
-			</then>
-			<else>
-				<property name="addExports" value="--add-exports jdk.management/jdk.crac.management=ALL-UNNAMED
-					--add-exports java.management/com.ibm.java.lang.management.internal=ALL-UNNAMED
-					--add-exports jdk.management/com.ibm.lang.management.internal=ALL-UNNAMED
-					--add-exports java.management/javax.management=ALL-UNNAMED
-					--add-exports java.base/java.security=ALL-UNNAMED" />
-				<property name="TestUtilitiesExports" value="--add-exports java.base/openj9.internal.tools.attach.target=ALL-UNNAMED" />
-				<property name="srcpath" location="${src}:${src_90}:${transformerListener}:${TestUtilities}" />
-				<path id="build.cp">
-					<fileset dir="${LIB_DIR}/" includes="testng.jar"/>
-					<fileset dir="${LIB_DIR}/" includes="jcommander.jar"/>
-					<fileset dir="${LIB_DIR}/" includes="commons-exec.jar"/>
-				</path>
-				<if>
-					<matches string="${JDK_VERSION}" pattern="^(9|(1[0-8]))$$" />
-					<then>
-						<!-- Java 9-18 -->
-						<javac srcdir="${srcpath}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
-							<compilerarg line='${addExports} ${TestUtilitiesExports}' />
-							<exclude name="${excludeTestCRaCMXBean}" />
-						</javac>
-					</then>
-					<else>
-						<!-- Java 19+ (SecurityManager removed) -->
-						<javac srcdir="${srcpath}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
-							<compilerarg line='${addExports} ${TestUtilitiesExports}' />
-							<!-- exclude tests that depend on SecurityManager -->
-							<exclude name="org/openj9/test/java/lang/management/TestSharedClassMemoryMXBean_SM.java" />
-							<exclude name="org/openj9/test/java/lang/management/TestRegression_SM.java" />
-							<exclude name="${excludeTestCRaCMXBean}" />
-						</javac>
-					</else>
-				</if>
-			</else>
-		</if>
+		</condition>
+
+		<!-- JDK 8 compilation -->
+		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" if:set="is_JDK_VERSION_8">
+			<src path="${src}" />
+			<src path="${src_80}" />
+			<src path="${transformerListener}" />
+			<src path="${TestUtilities}" />
+			<classpath>
+				<pathelement location="${LIB_DIR}/testng.jar" />
+				<pathelement location="${LIB_DIR}/jcommander.jar" />
+				<pathelement location="${LIB_DIR}/commons-exec.jar" />
+				<pathelement location="${TEST_JDK_HOME}/lib/tools.jar" />
+			</classpath>
+			<exclude name="${excludeTestCRaCMXBean}" />
+		</javac>
+
+		<!-- JDK 9+ properties -->
+		<property name="addExports" value="--add-exports jdk.management/jdk.crac.management=ALL-UNNAMED
+			--add-exports java.management/com.ibm.java.lang.management.internal=ALL-UNNAMED
+			--add-exports jdk.management/com.ibm.lang.management.internal=ALL-UNNAMED
+			--add-exports java.management/javax.management=ALL-UNNAMED
+			--add-exports java.base/java.security=ALL-UNNAMED" />
+		<property name="TestUtilitiesExports" value="--add-exports java.base/openj9.internal.tools.attach.target=ALL-UNNAMED" />
+		<property name="srcpath" location="${src}:${src_90}:${transformerListener}:${TestUtilities}" />
+		<path id="build.cp">
+			<fileset dir="${LIB_DIR}/" includes="testng.jar"/>
+			<fileset dir="${LIB_DIR}/" includes="jcommander.jar"/>
+			<fileset dir="${LIB_DIR}/" includes="commons-exec.jar"/>
+		</path>
+
+		<condition property="is_JDK_9_to_18" unless:set="is_JDK_VERSION_8">
+			<matches string="${JDK_VERSION}" pattern="^(9|(1[0-8]))$$" />
+		</condition>
+		<condition property="is_JDK_19_plus" unless:set="is_JDK_VERSION_8">
+			<not>
+				<matches string="${JDK_VERSION}" pattern="^(8|9|(1[0-8]))$$" />
+			</not>
+		</condition>
+
+		<!-- Java 9-18 -->
+		<javac srcdir="${srcpath}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp" if:set="is_JDK_9_to_18">
+			<compilerarg line='${addExports} ${TestUtilitiesExports}' />
+			<exclude name="${excludeTestCRaCMXBean}" />
+		</javac>
+
+		<!-- Java 19+ (SecurityManager removed) -->
+		<javac srcdir="${srcpath}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp" if:set="is_JDK_19_plus">
+			<compilerarg line='${addExports} ${TestUtilitiesExports}' />
+			<!-- exclude tests that depend on SecurityManager -->
+			<exclude name="org/openj9/test/java/lang/management/TestSharedClassMemoryMXBean_SM.java" />
+			<exclude name="org/openj9/test/java/lang/management/TestRegression_SM.java" />
+			<exclude name="${excludeTestCRaCMXBean}" />
+		</javac>
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
@@ -131,14 +137,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</target>
 
 	<target name="build" >
-		<if>
+		<condition property="is_JDK_IMPL_ibm">
 			<or>
 				<equals arg1="${JDK_IMPL}" arg2="ibm" />
 				<equals arg1="${JDK_IMPL}" arg2="openj9" />
 			</or>
-			<then>
-				<antcall target="clean" inheritall="true" />
-			</then>
-		</if>
+		</condition>
+		<antcall target="clean" inheritall="true" if:set="is_JDK_IMPL_ibm"/>
 	</target>
 </project>

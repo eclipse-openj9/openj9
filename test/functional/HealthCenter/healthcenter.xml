@@ -20,31 +20,29 @@ OpenJDK Assembly Exception [2].
 
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
-<project name="HealthCenter" default="sanity">
+<project name="HealthCenter" default="sanity"
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
 
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
 
 	<target name="sanity">
-		<if>
+		<condition property="condition_flag">
 			<resourcecount when="greater" count="0">
 				<fileset dir="${TEST_JDK_HOME}">
 					<include name="**/healthcenter.properties" />
 				</fileset>
 			</resourcecount>
-			<then>
-				<echo>Running 'java -Xhealthcenter -version'</echo>
-				<echo>JAVA_COMMAND:  ${JAVA_COMMAND}</echo>
-				<echo>os.name:       ${os.name}</echo>
+		</condition>
 
-				<exec executable="${JAVA_COMMAND}" failonerror="true">
-					<arg value="-Xhealthcenter" />
-					<arg value="-version" />
-				</exec>
-			</then>
-			<else>
-				<echo>File 'healthcenter.properties' not found; assuming JDK '${TEST_JDK_HOME}' does not support HealthCenter.</echo>
-			</else>
-		</if>
+		<echo if:set="condition_flag">Running 'java -Xhealthcenter -version'</echo>
+		<echo if:set="condition_flag">JAVA_COMMAND:  ${JAVA_COMMAND}</echo>
+		<echo if:set="condition_flag">os.name:       ${os.name}</echo>
+
+		<exec executable="${JAVA_COMMAND}" failonerror="true" if:set="condition_flag">
+			<arg value="-Xhealthcenter" />
+			<arg value="-version" />
+		</exec>
+		<echo unless:set="condition_flag">File 'healthcenter.properties' not found; assuming JDK '${TEST_JDK_HOME}' does not support HealthCenter.</echo>
 	</target>
 
 </project>

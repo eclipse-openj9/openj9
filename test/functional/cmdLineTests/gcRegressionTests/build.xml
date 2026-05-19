@@ -23,7 +23,6 @@
 -->
 
 <project name="gcRegressionTests" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
 	<description>
 		Build cmdLineTests_GCRegressionTests
 	</description>

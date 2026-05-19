@@ -1,4 +1,6 @@
-<project name="symlink_jcl" basedir=".">
+<project name="symlink_jcl" basedir="."
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
 	<!--
 	   Copyright IBM Corp. and others 2014
 
@@ -23,7 +25,6 @@
 	<description>Creates symlinks between </description>
 
 	<!-- Import custom tasks -->
-	<taskdef resource='net/sf/antcontrib/antlib.xml'/>
 	<taskdef resource='com/ibm/j9/ant/antlib.xml'/>
 	<taskdef name="stringutil" classname="ise.antelope.tasks.StringUtilTask"/>
 
@@ -45,83 +46,50 @@
 		<lowercase/>
 	</stringutil>
 
-	<if>
+	<condition property="build.tag" value="cbuild_${build.component}">
 		<equals arg1="${build.type}" arg2="continuous"/>
-		<then>
-			<property name="build.tag" value="cbuild_${build.component}" />
-		</then>
-	</if>
-	<if>
+	</condition>
+	<condition property="build.tag" value="pbuild_${build.component}">
 		<equals arg1="${build.type}" arg2="promotion"/>
-		<then>
-			<property name="build.tag" value="pbuild_${build.component}" />
-		</then>
-	</if>
-	<if>
+	</condition>
+	<condition property="build.tag" value="ibuild">
 		<equals arg1="${build.type}" arg2="integration"/>
-		<then>
-			<property name="build.tag" value="ibuild" />
-		</then>
-	</if>
-	<if>
+	</condition>
+	<condition property="build.tag" value="fbuild">
 		<equals arg1="${build.type}" arg2="feature"/>
-		<then>
-			<property name="build.tag" value="fbuild" />
-		</then>
-	</if>
-	<if>
+	</condition>
+	<condition property="build.tag" value="sbuild">
 		<equals arg1="${build.type}" arg2="service"/>
-		<then>
-			<property name="build.tag" value="sbuild" />
-		</then>
-	</if>
-	<if>
+	</condition>
+	<condition property="build.tag" value="ibuild">
 		<equals arg1="${build.type}" arg2="monolithic"/>
-		<then>
-			<property name="build.tag" value="ibuild" />
-		</then>
-	</if>
-	<if>
+	</condition>
+	<condition property="build.tag" value="developer">
 		<equals arg1="${build.type}" arg2="developer"/>
-		<then>
-			<property name="build.tag" value="developer" />
-		</then>
-	</if>
-	<if>
+	</condition>
+	<condition property="build.tag" value="customized">
 		<equals arg1="${build.type}" arg2="customized" />
-		<then>
-			<property name="build.tag" value="customized" />
-		</then>
-	</if>
-	<if>
+	</condition>
+	<condition property="build.tag" value="codecoverage">
 		<equals arg1="${build.type}" arg2="codecoverage"/>
-		<then>
-			<property name="build.tag" value="codecoverage" />
-		</then>
-	</if>
-	<if>
+	</condition>
+	<condition property="build.tag" value="acceptance">
 		<equals arg1="${build.type}" arg2="acceptance"/>
-		<then>
-			<property name="build.tag" value="acceptance" />
-		</then>
-	</if>
+	</condition>
 
     <target name="symlink_JCLs_in_vmtank">
 
     <property name="dest.dir"           value="${store.root.dir}/${stream}/JCLandJCLTests/${job.buildId}" />
 
-    <if>
-            <equals arg1="${build.type}" arg2="feature" />
-            <then>
-                    <property name="feature.dest.dir"     value="${store.root.dir}/${product}/JCLandJCLTests" />
-                    <property name="command_line"         value="mkdir -p ${feature.dest.dir}/ ; rm -r ${feature.dest.dir}/${job.buildId} ; ln -s ${dest.dir} ${feature.dest.dir}/${job.buildId}" />
-            </then>
-            <else>
-                    <property name="dest.dir.symlink_1"   value="${store.root.dir}/${stream}/JCLandJCLTests/${build.tag}_${job.buildId}" />
-                    <property name="dest.dir.symlink_2"   value="${store.root.dir}/${stream}/JCLandJCLTests/${timestamp}_${job.buildId}" />
-                    <property name="command_line"         value="cd ${dest.dir} ; rm -r ${dest.dir.symlink_1}; ln -s ${job.buildId} ${dest.dir.symlink_1}; rm -r ${dest.dir.symlink_2}; ln -s ${job.buildId} ${dest.dir.symlink_2}" />
-            </else>
-    </if>
+    <condition property="condition_flag">
+        <equals arg1="${build.type}" arg2="feature" />
+    </condition>
+
+    <property name="feature.dest.dir"     value="${store.root.dir}/${product}/JCLandJCLTests" if:set="condition_flag"/>
+    <property name="command_line"         value="mkdir -p ${feature.dest.dir}/ ; rm -r ${feature.dest.dir}/${job.buildId} ; ln -s ${dest.dir} ${feature.dest.dir}/${job.buildId}" if:set="condition_flag"/>
+    <property name="dest.dir.symlink_1"   value="${store.root.dir}/${stream}/JCLandJCLTests/${build.tag}_${job.buildId}" unless:set="condition_flag"/>
+    <property name="dest.dir.symlink_2"   value="${store.root.dir}/${stream}/JCLandJCLTests/${timestamp}_${job.buildId}" unless:set="condition_flag"/>
+    <property name="command_line"         value="cd ${dest.dir} ; rm -r ${dest.dir.symlink_1}; ln -s ${job.buildId} ${dest.dir.symlink_1}; rm -r ${dest.dir.symlink_2}; ln -s ${job.buildId} ${dest.dir.symlink_2}" unless:set="condition_flag"/>
 		
 		<echo>Symlinking ${job.buildId} to ${dest.dir.symlink}</echo>
 		<sshexec host="${storage.server}"

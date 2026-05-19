@@ -23,7 +23,6 @@
 -->
 
 <project name="cmdline_options_tester" default="build" basedir=".">
-	<taskdef resource='net/sf/antcontrib/antlib.xml'/>
 	<description>
 		Build cmdline_options_tester
 	</description>

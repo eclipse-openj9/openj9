@@ -22,8 +22,9 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
-<project name="DataHelperTests" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
+<project name="DataHelperTests" default="build" basedir="."
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
 	<description>
 		Build DataHelperTests   
 	</description>
@@ -59,35 +60,9 @@
 		<!--
 		2.) datacaching directory ...
 		-->
-		<trycatch>
-			<try>
-				<mkdir dir="${build}/datacaching"/>
-			</try>
-			<catch>
-				<sleep milliseconds="10"/>	
-				<mkdir dir="${build}/datacaching"/>
-			</catch>	
-		</trycatch>
-		
-		<trycatch>
-			<try>
-				<mkdir dir="${build}/datacaching/dataone.contents"/>
-			</try>
-			<catch>
-				<sleep milliseconds="10"/>	
-				<mkdir dir="${build}/datacaching/dataone.contents"/>
-			</catch>
-		</trycatch>
-		
-		<trycatch>
-			<try>
-				<mkdir dir="${build}/datacaching/datatwo.contents"/>		
-			</try>
-			<catch>
-				<sleep milliseconds="10"/>	
-				<mkdir dir="${build}/datacaching/datatwo.contents"/>		
-			</catch>
-		</trycatch>
+		<mkdir dir="${build}/datacaching"/>
+		<mkdir dir="${build}/datacaching/dataone.contents"/>
+		<mkdir dir="${build}/datacaching/datatwo.contents"/>
 		
 		<copy todir="${build}/datacaching/dataone.contents">
 			<fileset dir="./datacaching/dataone.contents"/>
@@ -96,21 +71,18 @@
 			<fileset dir="./datacaching/datatwo.contents"/>
 		</copy>		
 		
-		<if>
+		<condition property="is_JDK_VERSION_8">
 			<equals arg1="${JDK_VERSION}" arg2="8"/>
-			<then>
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" >
-					<src path="${src}" />
-				</javac>
-			</then>
-			<else>
-				<property name="addExports" value="--add-modules openj9.sharedclasses" />
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" >
-					<src path="${src}" />
-					<compilerarg line='${addExports}' />
-				</javac>
-			</else>
-		</if>
+		</condition>
+
+		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" if:set="is_JDK_VERSION_8">
+			<src path="${src}" />
+		</javac>
+		<property name="addExports" value="--add-modules openj9.sharedclasses" unless:set="is_JDK_VERSION_8"/>
+		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" unless:set="is_JDK_VERSION_8">
+			<src path="${src}" />
+			<compilerarg line='${addExports}' />
+		</javac>
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
@@ -133,14 +105,13 @@
 	</target>
 
 	<target name="build" depends="check-jar,buildCmdLineTestTools" unless="jar.exist">
-		<if>
+		<condition property="is_JDK_IMPL_ibm">
 			<or>
 				<equals arg1="${JDK_IMPL}" arg2="ibm"  />
 				<equals arg1="${JDK_IMPL}" arg2="openj9" />
 			</or>
-			<then>
-				<antcall target="clean" inheritall="true" />
-			</then>
-		</if>
+		</condition>
+
+		<antcall target="clean" inheritall="true" if:set="is_JDK_IMPL_ibm"/>
 	</target>
 </project>

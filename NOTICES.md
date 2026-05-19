@@ -146,11 +146,6 @@ Apache Log4J (2.16)
 
 * License: Apache-2.0
 
-apache-ant-contrib (1.0)
-
-* License: Apache-1.1 AND Apache-2.0
-* Project: http://ant-contrib.sourceforge.net/
-
 ASM (9.0)
 
 * License: New BSD License

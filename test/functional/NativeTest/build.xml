@@ -23,7 +23,6 @@
 -->
 
 <project name="NativeTest" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
 	<description>
 		Build NativeTest
 	</description>

@@ -20,8 +20,9 @@ OpenJDK Assembly Exception [2].
 
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
-<project name="JVMTI tests" default="build" basedir=".">
-	<taskdef resource='net/sf/antcontrib/antlib.xml' />
+<project name="JVMTI tests" default="build" basedir="."
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
 	<description>
 		Build JVMTI tests
 	</description>
@@ -52,77 +53,65 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<echo>===destdir:                      ${build}</echo>
 
 		<!-- Define variables to exclude Java21 and up tests for Java 8, 11 and 17. -->
-		<if>
+		<condition property="excludeJDK21UpGetStackTraceExtendedTest" value="com/ibm/jvmti/tests/getStackTraceExtended/gste002.java">
 			<matches string="${JDK_VERSION}" pattern="^(8|11|17)$$" />
-			<then>
-				<property name="excludeJDK21UpGetStackTraceExtendedTest" value="com/ibm/jvmti/tests/getStackTraceExtended/gste002.java" />
-				<property name="excludeJDK21UpGetThreadListStackTracesExtendedTest" value="com/ibm/jvmti/tests/getThreadListStackTracesExtended/gtlste002.java" />
-			</then>
-			<else>
-				<property name="excludeJDK21UpGetStackTraceExtendedTest" value="" />
-				<property name="excludeJDK21UpGetThreadListStackTracesExtendedTest" value="" />
-			</else>
-		</if>
+		</condition>
+		<property name="excludeJDK21UpGetStackTraceExtendedTest" value=""/>
+		<condition property="excludeJDK21UpGetThreadListStackTracesExtendedTest" value="com/ibm/jvmti/tests/getThreadListStackTracesExtended/gtlste002.java">
+			<matches string="${JDK_VERSION}" pattern="^(8|11|17)$$" />
+		</condition>
+		<property name="excludeJDK21UpGetThreadListStackTracesExtendedTest" value=""/>
 
-		<if>
+		<condition property="is_JDK_VERSION_8">
 			<equals arg1="${JDK_VERSION}" arg2="8" />
-			<then>
-				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src}" />
-					<exclude name="${excludeJDK21UpGetStackTraceExtendedTest}" />
-					<exclude name="${excludeJDK21UpGetThreadListStackTracesExtendedTest}" />
-					<classpath>
-						<pathelement location="${asm.jar}" />
-						<pathelement location="${TEST_JDK_HOME}/lib/tools.jar" />
-					</classpath>
-				</javac>
-			</then>
-			<else>
-				<property name="addExports" value="--add-exports java.base/jdk.internal.module=ALL-UNNAMED --add-exports java.base/openj9.internal.tools.attach.target=ALL-UNNAMED --add-exports java.base/com.ibm.tools.attach=ALL-UNNAMED --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED" />
-				<if>
-					<equals arg1="${JCL_VERSION}" arg2="latest" />
-					<then>
-						<property name="extraSrc" value="${src_latest}" />
-						<property name="excludeFile" value="**/modularityTests/**" />
-					</then>
-					<else>
-						<property name="extraSrc" value="${src_current}" />
-						<property name="excludeFile" value="" />
-					</else>
-				</if>
-				<if>
-					<matches string="${JDK_VERSION}" pattern="^(8|9|1[0-9]|2[0-2])$$" />
-					<then>
-						<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-							<src path="${src}" />
-							<src path="${extraSrc}" />
-							<exclude name="${excludeFile}" />
-							<exclude name="${excludeJDK21UpGetStackTraceExtendedTest}" />
-							<exclude name="${excludeJDK21UpGetThreadListStackTracesExtendedTest}" />
-							<compilerarg line="${addExports}" />
-							<classpath>
-								<pathelement location="${asm.jar}" />
-							</classpath>
-						</javac>
-					</then>
-					<else>
-						<!-- Java 23+ (SecurityManage and several Thread functions removed) -->
-						<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-							<src path="${src}" />
-							<src path="${extraSrc}" />
-							<exclude name="${excludeFile}" />
-							<exclude name="${excludeJDK21UpGetStackTraceExtendedTest}" />
-							<exclude name="${excludeJDK21UpGetThreadListStackTracesExtendedTest}" />
-							<compilerarg line="${addExports}" />
-							<exclude name="com/ibm/jvmti/tests/getThreadState/gts001.java" />
-							<classpath>
-								<pathelement location="${asm.jar}" />
-							</classpath>
-						</javac>
-					</else>
-				</if>
-			</else>
-		</if>
+		</condition>
+
+		<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" if:set="is_JDK_VERSION_8">
+			<src path="${src}" />
+			<exclude name="${excludeJDK21UpGetStackTraceExtendedTest}" />
+			<exclude name="${excludeJDK21UpGetThreadListStackTracesExtendedTest}" />
+			<classpath>
+			<pathelement location="${asm.jar}" />
+			<pathelement location="${TEST_JDK_HOME}/lib/tools.jar" />
+			</classpath>
+		</javac>
+		<property name="addExports" value="--add-exports java.base/jdk.internal.module=ALL-UNNAMED --add-exports java.base/openj9.internal.tools.attach.target=ALL-UNNAMED --add-exports java.base/com.ibm.tools.attach=ALL-UNNAMED --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED" unless:set="is_JDK_VERSION_8"/>
+		<condition property="extraSrc" value="${src_latest}" unless:set="is_JDK_VERSION_8">
+			<equals arg1="${JCL_VERSION}" arg2="latest" />
+		</condition>
+		<property name="extraSrc" value="${src_current}" unless:set="is_JDK_VERSION_8"/>
+		<condition property="excludeFile" value="**/modularityTests/**" unless:set="is_JDK_VERSION_8">
+			<equals arg1="${JCL_VERSION}" arg2="latest" />
+		</condition>
+		<property name="excludeFile" value="" unless:set="is_JDK_VERSION_8"/>
+		<condition property="is_JDK_VERSION_match">
+			<matches string="${JDK_VERSION}" pattern="^(8|9|1[0-9]|2[0-2])$$" />
+		</condition>
+
+		<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" if:set="is_JDK_VERSION_match" unless:set="is_JDK_VERSION_8">
+			<src path="${src}" />
+			<src path="${extraSrc}" />
+			<exclude name="${excludeFile}" />
+			<exclude name="${excludeJDK21UpGetStackTraceExtendedTest}" />
+			<exclude name="${excludeJDK21UpGetThreadListStackTracesExtendedTest}" />
+			<compilerarg line="${addExports}" />
+			<classpath>
+			<pathelement location="${asm.jar}" />
+			</classpath>
+		</javac>
+		<!-- Java 23+ (SecurityManage and several Thread functions removed) -->
+		<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" unless:set="is_JDK_VERSION_match">
+			<src path="${src}" />
+			<src path="${extraSrc}" />
+			<exclude name="${excludeFile}" />
+			<exclude name="${excludeJDK21UpGetStackTraceExtendedTest}" />
+			<exclude name="${excludeJDK21UpGetThreadListStackTracesExtendedTest}" />
+			<compilerarg line="${addExports}" />
+			<exclude name="com/ibm/jvmti/tests/getThreadState/gts001.java" />
+			<classpath>
+			<pathelement location="${asm.jar}" />
+			</classpath>
+		</javac>
 
 		<!-- Compile VersionedClass separately -->
 		<copy file="${src}/com/ibm/jvmti/tests/getClassVersionNumbers/VersionedClass.java.dont_auto_compile"
@@ -162,14 +151,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</target>
 
 	<target name="build" depends="buildCmdLineTestTools">
-		<if>
+		<condition property="is_JDK_IMPL_ibm">
 			<or>
 				<equals arg1="${JDK_IMPL}" arg2="ibm" />
 				<equals arg1="${JDK_IMPL}" arg2="openj9" />
 			</or>
-			<then>
-				<antcall target="clean" inheritall="true" />
-			</then>
-		</if>
+		</condition>
+
+		<antcall target="clean" inheritall="true" if:set="is_JDK_IMPL_ibm"/>
 	</target>
 </project>

@@ -22,8 +22,9 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
-<project name="J9 Javaagent tests" default="build" basedir=".">
-	<taskdef resource='net/sf/antcontrib/antlib.xml'/>
+<project name="J9 Javaagent tests" default="build" basedir="."
+	xmlns:if="ant:if"
+	xmlns:unless="ant:unless">
 	<description>
        Build J9 Javaagent tests
     </description>
@@ -46,53 +47,42 @@
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===executable:                   ${compiler.javac}</echo>
 		<echo>===destdir:                      ${DEST}</echo>
-		<if>
+		<condition property="src_version_dir" value="./src_java8">
 			<matches string="${JDK_VERSION}" pattern="^(8|9|10|11)$$" />
-			<then>
-				<property name="src_version" location="./src_java8" />
-			</then>
-			<else> 
-				<!-- Java 12+ -->
-				<property name="src_version" location="./src_java12" />
-			</else>
-		</if>
-		<if>
+		</condition>
+		<property name="src_version_dir" value="./src_java12"/>
+		<property name="src_version" location="${src_version_dir}"/>
+		<condition property="is_JDK_VERSION_8">
 			<equals arg1="${JDK_VERSION}" arg2="8"/>
-			<then>
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src}" />
-					<src path="${src_version}" />
-					<src path="${transformerListener}" />
-					<classpath>
-						<pathelement location="${LIB_DIR}/testng.jar" />
-						<pathelement location="${LIB_DIR}/jcommander.jar" />
-						<pathelement location="${LIB_DIR}/asm-all.jar"/>
-					</classpath>
-				</javac>
-			</then>
-			<else>
-				<if>
-					<matches string="${JDK_VERSION}" pattern="^(1[1-9]|2[0-4])$$" />
-					<then>
-						<property name="addExports" value="--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm.tree=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm.util=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm.commons=ALL-UNNAMED"/>
-						<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-							<src path="${src}" />
-							<src path="${src_version}" />
-							<src path="${transformerListener}" />
-							<compilerarg line='${addExports}' />
-							<classpath>
-								<pathelement location="${LIB_DIR}/testng.jar" />
-								<pathelement location="${LIB_DIR}/jcommander.jar" />
-								<pathelement location="${LIB_DIR}/asm-all.jar"/>
-							</classpath>
-						</javac>
-					</then>
-					<else>
-						<!-- Java 25+ is disabled temporarily - https://github.com/eclipse-openj9/openj9/issues/21463 -->
-					</else>
-				</if>
-			</else>
-		</if>
+		</condition>
+
+		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" if:set="is_JDK_VERSION_8">
+			<src path="${src}" />
+			<src path="${src_version}" />
+			<src path="${transformerListener}" />
+			<classpath>
+			<pathelement location="${LIB_DIR}/testng.jar" />
+			<pathelement location="${LIB_DIR}/jcommander.jar" />
+			<pathelement location="${LIB_DIR}/asm-all.jar"/>
+			</classpath>
+		</javac>
+		<condition property="is_JDK_VERSION_match" unless:set="is_JDK_VERSION_8">
+			<matches string="${JDK_VERSION}" pattern="^(1[1-9]|2[0-4])$$" />
+		</condition>
+
+		<property name="addExports" value="--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm.tree=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm.util=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm.commons=ALL-UNNAMED" if:set="is_JDK_VERSION_match" unless:set="is_JDK_VERSION_8"/>
+		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" if:set="is_JDK_VERSION_match" unless:set="is_JDK_VERSION_8">
+			<src path="${src}" />
+			<src path="${src_version}" />
+			<src path="${transformerListener}" />
+			<compilerarg line='${addExports}' />
+			<classpath>
+			<pathelement location="${LIB_DIR}/testng.jar" />
+			<pathelement location="${LIB_DIR}/jcommander.jar" />
+			<pathelement location="${LIB_DIR}/asm-all.jar"/>
+			</classpath>
+		</javac>
+		<!-- Java 25+ is disabled temporarily - https://github.com/eclipse-openj9/openj9/issues/21463 -->
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution" >
@@ -113,14 +103,13 @@
 	</target>
 
 	<target name="build" >
-		<if>
+		<condition property="is_JDK_IMPL_ibm">
 			<or>
 				<equals arg1="${JDK_IMPL}" arg2="ibm"  />
 				<equals arg1="${JDK_IMPL}" arg2="openj9" />
 			</or>
-			<then>
-				<antcall target="clean" inheritall="true" />
-			</then>
-		</if>
+		</condition>
+
+		<antcall target="clean" inheritall="true" if:set="is_JDK_IMPL_ibm"/>
 	</target>
 </project>
