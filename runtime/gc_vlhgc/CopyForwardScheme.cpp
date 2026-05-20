@@ -558,6 +558,11 @@ MM_CopyForwardScheme::postProcessRegions(MM_EnvironmentVLHGC *env)
 				pool->reset(MM_MemoryPool::any);
 				region->getSubSpace()->recycleRegion(env, region);
 			}
+			else  {
+				UDATA compactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, region);
+				PORT_ACCESS_FROM_ENVIRONMENT(env);
+				j9tty_printf(PORTLIB, "postProcessRegions survivorRegion region=%p, compactGroup=%zu\n", region, compactGroup);
+			}
 		}
 
 		/* Clear any copy forward data */
@@ -5597,6 +5602,12 @@ MM_CopyForwardScheme::convertFreeMemoryCandidateToSurvivorRegion(MM_EnvironmentV
 	Assert_MM_false(region->isFreshSurvivorRegion());
 
 	setRegionAsSurvivor(env, region, false);
+
+	{
+		UDATA compactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, region);
+		PORT_ACCESS_FROM_ENVIRONMENT(env);
+		j9tty_printf(PORTLIB, "convertFreeMemoryCandidateToSurvivorRegion region=%p, compactGroup=%zu\n", region, compactGroup);
+	}
 
 	/* TODO: Remembering does not really have to be done under a lock, but dual (prev, current) list implementation indirectly forces us to do it this way. */
 	rememberAndResetReferenceLists(env, region);
