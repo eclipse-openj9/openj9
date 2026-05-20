@@ -2842,13 +2842,6 @@ public native boolean isPrimitive();
  * @return	true if receiver is a value class type, and false otherwise.
  */
 public native boolean isValue();
-
-/**
- * Answers true if the receiver represents an identity class type.
- *
- * @return	true if receiver is an identity class, and false otherwise.
- */
-public native boolean isIdentity();
 /*[ENDIF] INLINE-TYPES */
 
 /**
