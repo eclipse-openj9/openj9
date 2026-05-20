@@ -170,6 +170,10 @@ MM_CompactGroupPersistentStats::updateProjectedSurvivalRate(MM_EnvironmentVLHGC 
 		Assert_MM_true(newSurvivalRate >= 0.0);
 		Assert_MM_true(newSurvivalRate <= 1.0);
 
+		PORT_ACCESS_FROM_ENVIRONMENT(env);
+		j9tty_printf(PORTLIB, "updateProjectedSurvivalRate Historical Survival Rate compactGroup=%zu, totalBytesBeforeCollect=%zu, liveBytesInCollectedSetAfterCollect=%zu, weightOfOldStats=%f, weightOfNewStats=%f, thisSurvivalRate=%f, oldSurvivalRate=%f, newSurvivalRate=%f\n",
+				compactGroup, totalBytesBeforeCollect, liveBytesInCollectedSetAfterCollect, weightOfOldStats, weightOfNewStats, thisSurvivalRate, persistentStats->_historicalSurvivalRate, newSurvivalRate);
+
 		persistentStats->_historicalSurvivalRate = newSurvivalRate;
 	}
 
@@ -257,6 +261,10 @@ MM_CompactGroupPersistentStats::updateProjectedSurvivalRate(MM_EnvironmentVLHGC 
 
 		persistentStats->_projectedInstantaneousSurvivalRate = (observedWeight * weightedMeanSurvivalRate) + ((1.0 - observedWeight) * oldSurvivalRate);
 
+		PORT_ACCESS_FROM_ENVIRONMENT(env);
+		j9tty_printf(PORTLIB, "updateProjectedSurvivalRate the projected instantaneous survival rate compactGroup=%zu, edenFraction=%zu, nonEdenFraction=%zu, totalFraction=%zu, baseSurvivalRate=%F, _projectedInstantaneousSurvivalRateThisPGC=%f oldSurvivalRate=%f, _projectedInstantaneousSurvivalRate=%f,\n",
+				compactGroup, edenFraction, nonEdenFraction, totalFraction, thisSurvivalRateForNonEdenFraction, weightedMeanSurvivalRate, oldSurvivalRate, persistentStats->_projectedInstantaneousSurvivalRate);
+
 		Trc_MM_CompactGroupPersistentStats_updateProjectedSurvivalRate_Exit(
 			env->getLanguageVMThread(),
 			compactGroup,
@@ -328,8 +336,6 @@ MM_CompactGroupPersistentStats::calculateLiveBytesForRegion(
 		UDATA measuredLiveBytes,
 		UDATA projectedLiveBytes)
 {
-	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-
 	persistentStats[compactGroup]._measuredLiveBytesBeforeCollectInCollectedSet += measuredLiveBytes;
 	persistentStats[compactGroup]._projectedLiveBytesBeforeCollectInCollectedSet += projectedLiveBytes;
 
@@ -338,35 +344,62 @@ MM_CompactGroupPersistentStats::calculateLiveBytesForRegion(
 		persistentStats[compactGroup]._projectedLiveBytesAfterPreviousPGCInCollectedSetForEdenFraction += region->_projectedLiveBytesPreviousPGC;
 		persistentStats[compactGroup]._projectedLiveBytesAfterPreviousPGCInCollectedSet += region->_projectedLiveBytesPreviousPGC;
 	} else {
-		/* Non-Eden regions: use exponential decay based on logical age
-		 * to better approximate the original allocation-age boundary calculation
-		 */
-		uintptr_t regionAge = region->getAge();
-		uintptr_t maxAge = extensions->tarokRegionMaxAge;
+//--------------------------------------------------------------
+//		/* Non-Eden regions: use exponential decay based on logical age
+//		 * to better approximate the original allocation-age boundary calculation
+//		 */
+//		uintptr_t regionAge = region->getAge();
+//		uintptr_t maxAge = extensions->tarokRegionMaxAge;
+//
+//		/* Calculate recency factor using exponential decay
+//		 * This better approximates the original behavior where older objects
+//		 * had exponentially lower contribution to the non-Eden fraction
+//		 */
+//		double recencyFactor = 1.0;
+//
+//		if (maxAge > 0) {
+//			/* Use exponential decay: factor = exp(-k * age / maxAge)
+//			 * where k controls the decay rate (higher k = faster decay)
+//			 * k=2.0 provides a good balance similar to the original behavior
+//			 */
+//			double normalizedAge = (double)regionAge / (double)maxAge;
+//			recencyFactor = exp(-2.0 * normalizedAge);
+//		}
+//
+//		MM_HeapRegionManager *regionManager = extensions->heapRegionManager;
+//		uintptr_t regionSize = regionManager->getRegionSize();
+//		uintptr_t occupiedBytes = regionSize - region->getMemoryPool()->getFreeMemoryAndDarkMatterBytes();
+//		double occupancyFactor = (double)occupiedBytes / (double)regionSize;
+//
+//		/* Apply recency factor to projected live bytes from previous PGC */
+//		uintptr_t recentLiveBytes = (UDATA)(region->_projectedLiveBytesPreviousPGC * recencyFactor * occupancyFactor);
+//--------------------------------------------------------------
+		/* Non-Eden regions: use logical age to determine recency */
 
-		/* Calculate recency factor using exponential decay
-		 * This better approximates the original behavior where older objects
-		 * had exponentially lower contribution to the non-Eden fraction
-		 */
+		/* Get the age of this region (GC cycles since allocation) */
+//		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+//		uintptr_t regionAge = region->getAge();
+//		uintptr_t maxAge = extensions->tarokRegionMaxAge;
+
+//		/* Calculate age-based recency factor
+//		 * Younger regions (lower logical age) have higher recency
+//		 * This replaces the allocation-age-based boundary calculation
+//		 */
 		double recencyFactor = 1.0;
-
-		if (maxAge > 0) {
-			/* Use exponential decay: factor = exp(-k * age / maxAge)
-			 * where k controls the decay rate (higher k = faster decay)
-			 * k=2.0 provides a good balance similar to the original behavior
-			 */
-			double normalizedAge = (double)regionAge / (double)maxAge;
-			recencyFactor = exp(-2.0 * normalizedAge);
-		}
-
-		MM_HeapRegionManager *regionManager = extensions->heapRegionManager;
-		uintptr_t regionSize = regionManager->getRegionSize();
-		uintptr_t occupiedBytes = regionSize - region->getMemoryPool()->getFreeMemoryAndDarkMatterBytes();
-		double occupancyFactor = (double)occupiedBytes / (double)regionSize;
-
-		/* Apply recency factor to projected live bytes from previous PGC */
-		uintptr_t recentLiveBytes = (UDATA)(region->_projectedLiveBytesPreviousPGC * recencyFactor * occupancyFactor);
-
+//
+//		if (maxAge > 0) {
+//			/* Regions with age 0 (youngest) get factor 1.0
+//			 * Regions with age maxAge (oldest) get factor approaching 0
+//			 * This creates a decay curve similar to the old allocation-age approach
+//			 */
+//			recencyFactor = 1.0 - ((double)regionAge / (double)(maxAge + 1));
+//		}
+//
+//		/* Apply recency factor to projected live bytes from previous PGC
+//		 * This estimates how much of the region's live data is "recent"
+//		 * and should be counted toward the non-Eden fraction
+//		 */
+		UDATA recentLiveBytes = (UDATA)(region->_projectedLiveBytesPreviousPGC * recencyFactor);
 		persistentStats[compactGroup]._projectedLiveBytesAfterPreviousPGCInCollectedSetForNonEdenFraction += recentLiveBytes;
 		persistentStats[compactGroup]._projectedLiveBytesAfterPreviousPGCInCollectedSet += recentLiveBytes;
 	}
