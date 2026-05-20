@@ -166,6 +166,7 @@ if(OMR_OS_WINDOWS)
 			Iphlpapi.lib
 			psapi.lib
 			pdh.lib
+			version.lib
 	)
 endif()
 

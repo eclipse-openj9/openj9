@@ -366,6 +366,9 @@
 			<library name="pdh.lib" type="system" delayload="true">
 				<include-if condition="spec.win_.*"/>
 			</library>
+			<library name="version.lib" type="system" delayload="true">
+				<include-if condition="spec.win_.*"/>
+			</library>
 		</libraries>
 	</artifact>
 </module>
