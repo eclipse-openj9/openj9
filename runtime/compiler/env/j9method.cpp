@@ -4646,7 +4646,7 @@ void TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
                 case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
                 case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
                 case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
-                case TR::java_lang_Class_isAssignableFrom: // worked
+                case TR::java_lang_Class_isAssignableFrom:
                 case TR::java_lang_ref_Reference_getImpl:
                 case TR::java_lang_Object_getClass:
                 case TR::sun_misc_Unsafe_copyMemory:
@@ -4745,7 +4745,7 @@ void TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
                 case TR::org_apache_harmony_luni_platform_OSMemory_putShort_JS_V:
                 case TR::sun_misc_Unsafe_putInt_JI_V:
                 case TR::org_apache_harmony_luni_platform_OSMemory_putInt_JI_V:
-                case TR::sun_misc_Unsafe_putLong_JJ_V: ///////////////////////////
+                case TR::sun_misc_Unsafe_putLong_JJ_V:
                 case TR::org_apache_harmony_luni_platform_OSMemory_putLong_JJ_V:
                 case TR::sun_misc_Unsafe_putFloat_JF_V:
                 case TR::org_apache_harmony_luni_platform_OSMemory_putFloat_JF_V:
@@ -4868,26 +4868,10 @@ void TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
                 case TR::sun_nio_ch_NativeThread_current:
                 case TR::com_ibm_crypto_provider_AEScryptInHardware_cbcDecrypt:
                 case TR::com_ibm_crypto_provider_AEScryptInHardware_cbcEncrypt:
-                    // case TR::java_lang_Class_isAssignableFrom: done
-
-                    // SYM    6746  0.24    TR::java_lang_J9VMInternals_identityHashCode --> used in VPhandlers
-                    // SYM    5455  0.19    TR::java_lang_J9VMInternals_primitiveClone
-                    // SYM    4567  0.16    TR::java_lang_Class_isAssignableFrom  DONE
-                    // SYM    2832  0.10    TR::java_lang_ref_Reference_getImpl   DONE
-                    // SYM    2812  0.10    TR::java_lang_Class_getModifiersImpl  --> not found
-                    // SYM    2365  0.08    TR::java_lang_Object_getClass         DONE
-                    // SYM    2301  0.08    JVM_GetClassAccessFlags_Impl
-                    // SYM    1680  0.06    TR::java_lang_Class_isInstance
-                    // SYM    1398  0.05    TR::sun_misc_Unsafe_putObject
-                    // SYM    1391  0.05    TR::sun_misc_Unsafe_copyMemory__      DONE
-                    // SYM     936  0.03    TR::sun_misc_Unsafe_putOrderedObject --> not found
-                    // SYM     627  0.02    Java_sun_reflect_Reflection_getClassAccessFlags
-                    // SYM     596  0.02    TR::java_lang_Class_isPrimitive
-                    // SYM     564  0.02    TR::sun_misc_Unsafe_putLong(__complex __complex)
                     setRecognizedMethod(rm);
                 default:
                     break;
-            } // ens case
+            }
         } else {
             setRecognizedMethod(rm);
         }
