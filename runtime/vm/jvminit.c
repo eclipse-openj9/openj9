@@ -3515,13 +3515,20 @@ consumeVMArgs(J9JavaVM* vm, J9VMInitArgs* j9vm_args)
 	BOOLEAN assertOptionFound = FALSE;
 
 	findArgInVMArgs( PORTLIB, j9vm_args, EXACT_MATCH, VMOPT_XINT, NULL, TRUE);
-	/* If -Xverify:none, other -Xverify args previous to that should be ignored. As of Java 13 -Xverify:none and -noverify are deprecated. */
-	if (findArgInVMArgs( PORTLIB, j9vm_args, STARTSWITH_MATCH, VMOPT_XVERIFY_COLON, OPT_NONE, TRUE) >= 0) {
+
+	/* If -Xverify:none, other -Xverify args previous to that should be ignored.
+	 * As of Java 13 -Xverify:none and -noverify are deprecated.
+	 * As of Java 27 -Xverify:none and -noverify are no longer recognized.
+	 */
+	if ((JAVA_SPEC_VERSION < 27)
+		&& (findArgInVMArgs(PORTLIB, j9vm_args, STARTSWITH_MATCH, VMOPT_XVERIFY_COLON, OPT_NONE, TRUE) >= 0)
+	) {
 		if (JAVA_SPEC_VERSION >= 13) {
 			j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_VM_XVERIFYNONE_DEPRECATED);
 		}
-		findArgInVMArgs( PORTLIB, j9vm_args, OPTIONAL_LIST_MATCH, VMOPT_XVERIFY, NULL, TRUE);
+		findArgInVMArgs(PORTLIB, j9vm_args, OPTIONAL_LIST_MATCH, VMOPT_XVERIFY, NULL, TRUE);
 	}
+
 #if defined(J9VM_INTERP_VERBOSE)
 	/* If -verbose:none, other -verbose args previous to that should be ignored */
 	if (findArgInVMArgs( PORTLIB, j9vm_args, STARTSWITH_MATCH, OPT_VERBOSE_COLON, OPT_NONE, TRUE) >= 0) {
@@ -3588,7 +3595,6 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 	BOOLEAN xint = FALSE;
 	BOOLEAN xjit = FALSE;
 	BOOLEAN xnojit = FALSE;
-	BOOLEAN xverify = FALSE;
 	BOOLEAN xxverboseverification = FALSE;
 	BOOLEAN verbose = FALSE;
 	BOOLEAN xnolinenumbers = FALSE;
@@ -3612,7 +3618,7 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 #define ADD_FLAG_AT_INDEX(flag, index) j9vm_args->j9Options[index].flags |= flag
 #define SET_FLAG_AT_INDEX(flag, index) j9vm_args->j9Options[index].flags = flag | (j9vm_args->j9Options[index].flags & ARG_MEMORY_ALLOCATION)
 
-	xverify = ((xverifyIndex = findArgInVMArgs( PORTLIB, j9vm_args, OPTIONAL_LIST_MATCH, VMOPT_XVERIFY, NULL, FALSE))>=0);
+	xverifyIndex = findArgInVMArgs(PORTLIB, j9vm_args, OPTIONAL_LIST_MATCH, VMOPT_XVERIFY, NULL, FALSE);
 
 	xxverboseverificationIndex = findArgInVMArgs( PORTLIB, j9vm_args, EXACT_MATCH, VMOPT_XXVERBOSEVERIFICATION, NULL, FALSE);
 	xxnoverboseverificationIndex = findArgInVMArgs( PORTLIB, j9vm_args, EXACT_MATCH, VMOPT_XXNOVERBOSEVERIFICATION, NULL, FALSE);
@@ -3855,21 +3861,26 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 		FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XXJITDIRECTORY_EQUALS, NULL);
 	}
 
-	if (xverify) {
-		ADD_FLAG_AT_INDEX( ARG_REQUIRES_LIBRARY, xverifyIndex );
-		optionValueOperations(PORTLIB, j9vm_args, xverifyIndex, GET_OPTION, &optionValue, 0, ':', 0, NULL); /* get option value for xverify: */
+	if (xverifyIndex >= 0) {
+		/* get option value for -Xverify: */
+		optionValueOperations(PORTLIB, j9vm_args, xverifyIndex, GET_OPTION, &optionValue, 0, ':', 0, NULL);
 	} else {
 		optionValue = NULL;
 	}
 
-	if ((optionValue != NULL) && (strcmp(optionValue, OPT_NONE) == 0)) {
+	if ((NULL != optionValue) && (0 == strcmp(optionValue, OPT_NONE))) {
+		/* Clear the DllMain function pointer so the library is never called. */
 		entry = findDllLoadInfo(loadTable, J9_VERIFY_DLL_NAME);
-		/* Unsetting the DllMain function pointer so library is never called */
-		entry->j9vmdllmain = 0;
-	} else if (xxverboseverification || xxverifyerrordetails) {
-		entry = getVerboseDllLoadInfo(vm);
-		entry->loadFlags |= LOAD_BY_DEFAULT;
-		JVMINIT_VERBOSE_INIT_VM_TRACE(vm, "verbose support required... whacking table\n");
+		entry->j9vmdllmain = NULL;
+	} else {
+		if (xverifyIndex >= 0) {
+			ADD_FLAG_AT_INDEX(ARG_REQUIRES_LIBRARY, xverifyIndex);
+		}
+		if (xxverboseverification || xxverifyerrordetails) {
+			entry = getVerboseDllLoadInfo(vm);
+			entry->loadFlags |= LOAD_BY_DEFAULT;
+			JVMINIT_VERBOSE_INIT_VM_TRACE(vm, "verbose support required... whacking table\n");
+		}
 	}
 
 #if defined( J9VM_OPT_SIDECAR )
@@ -3907,7 +3918,7 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 #ifndef J9VM_OPT_DYNAMIC_LOAD_SUPPORT
 		entry = findDllLoadInfo(loadTable, J9_DYNLOAD_DLL_NAME);
 		/* Unsetting the DllMain function pointer so library is never called */
-		entry->j9vmdllmain = 0;
+		entry->j9vmdllmain = NULL;
 		JVMINIT_VERBOSE_INIT_VM_TRACE(vm, "No dynamic load support... whacking table\n");
 #endif
 
@@ -4857,7 +4868,7 @@ runJ9VMDllMain(void* dllLoadInfo, void* userDataTemp)
 	if (userData->filterFlags==0 || ((userData->filterFlags & entry->loadFlags) == userData->filterFlags)) {
 
 		/* Loaded libraries are guaranteed to have a descriptor. NOT_A_LIBRARY entries will already have a j9vmdllmain entry */
-		if (!entry->j9vmdllmain && entry->descriptor) {
+		if ((NULL == entry->j9vmdllmain) && (0 != entry->descriptor)) {
 			if (j9sl_lookup_name (entry->descriptor , "J9VMDllMain", (void *) &J9VMDllMainFunc, "PLpL")) {
 				setErrorJ9dll(PORTLIB, entry, j9nls_lookup_message(J9NLS_DO_NOT_APPEND_NEWLINE | J9NLS_ERROR, J9NLS_VM_J9VMDLLMAIN_NOT_FOUND, NULL), FALSE);
 				return;
@@ -4865,7 +4876,7 @@ runJ9VMDllMain(void* dllLoadInfo, void* userDataTemp)
 				entry->j9vmdllmain = J9VMDllMainFunc;
 			}
 		}
-		if (entry->j9vmdllmain) {
+		if (NULL != entry->j9vmdllmain) {
 			I_64 start = 0;
 			I_64 end = 0;
 			char* dllName = (entry->loadFlags & ALTERNATE_LIBRARY_USED) ? entry->alternateDllName : entry->dllName;
@@ -5025,10 +5036,10 @@ unloadDLL(void* dllLoadInfo, void* userDataTemp)
 	J9VMDllLoadInfo* entry = (J9VMDllLoadInfo*) dllLoadInfo;
 	LoadInitData* userData = (LoadInitData*) userDataTemp;
 
-	if (entry->descriptor && (entry->loadFlags & userData->flags)) {
+	if ((0 != entry->descriptor) && (0 != (entry->loadFlags & userData->flags))) {
 		if (shutdownDLL(userData->vm, entry->descriptor, FALSE) == 0) {
 			entry->descriptor = 0;
-			entry->j9vmdllmain = 0;
+			entry->j9vmdllmain = NULL;
 			entry->loadFlags &= ~LOADED;
 			JVMINIT_VERBOSE_INIT_VM_TRACE1(userData->vm, "\tfor %s\n", entry->dllName);
 		} else {
@@ -5416,7 +5427,7 @@ runJVMOnLoad(J9JavaVM* vm, J9VMDllLoadInfo* loadInfo, char* options)
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	if (loadInfo->descriptor) {
+	if (0 != loadInfo->descriptor) {
 		if (j9sl_lookup_name ( loadInfo->descriptor , "JVM_OnLoad", (void *) &jvmOnLoadFunc, "iLLL")) {
 			setErrorJ9dll(PORTLIB, loadInfo, "JVM_OnLoad not found", FALSE);
 		} else {
@@ -5442,7 +5453,7 @@ closeAllDLLs(J9JavaVM* vm)
 
 		entry = (J9VMDllLoadInfo*) pool_startDo(vm->dllLoadTable, &aState);
 		while(entry) {
-			if (entry->descriptor && !(entry->loadFlags & NEVER_CLOSE_DLL)) {
+			if ((0 != entry->descriptor) && (0 == (entry->loadFlags & NEVER_CLOSE_DLL))) {
 				char* dllName = (entry->loadFlags & ALTERNATE_LIBRARY_USED) ? entry->alternateDllName : entry->dllName;
 
 				j9sl_close_shared_library(entry->descriptor);
@@ -5493,8 +5504,8 @@ runUnOnloads(J9JavaVM* vm, UDATA shutdownDueToExit)
 
 		entry = (J9VMDllLoadInfo*) pool_startDo(vm->dllLoadTable, &aState);
 		while(entry) {
-			if (entry->descriptor && ((entry->loadFlags & (NO_J9VMDLLMAIN | AGENT_XRUN)) == NO_J9VMDLLMAIN)) {
-				if(0 == j9sl_lookup_name ( entry->descriptor , "JVM_OnUnload", (void *) &j9OnUnLoadFunc, "iLL")) {
+			if ((0 != entry->descriptor) && (NO_J9VMDLLMAIN == (entry->loadFlags & (NO_J9VMDLLMAIN | AGENT_XRUN)))) {
+				if (0 == j9sl_lookup_name(entry->descriptor, "JVM_OnUnload", (void *) &j9OnUnLoadFunc, "iLL")) {
 					JVMINIT_VERBOSE_INIT_VM_TRACE1(vm, "Running JVM_OnUnload for %s\n", entry->dllName);
 					(*j9OnUnLoadFunc) (vm, (void *) shutdownDueToExit);
 				}

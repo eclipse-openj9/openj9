@@ -86,8 +86,8 @@ static void bcvHookClassesUnload (J9HookInterface** hook, UDATA eventNum, void* 
 static void printMethod (J9BytecodeVerificationData * verifyData);
 static IDATA simulateStack (J9BytecodeVerificationData * verifyData);
 
-static IDATA parseOptions (J9JavaVM *vm, char *optionValues, const char **errorString);
-static IDATA setVerifyState ( J9JavaVM *vm, char *option, const char **errorString );
+static IDATA parseOptions(J9JavaVM *vm, const char *optionValues, const char **errorString);
+static IDATA setVerifyState(J9JavaVM *vm, const char *option, const char **errorString );
 
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 static UDATA strictFieldHashFn(void *key, void *userData);
@@ -2788,10 +2788,10 @@ _done:
 IDATA
 j9bcv_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved)
 {
-	J9BytecodeVerificationData* verifyData = NULL;
-	char optionValuesBuffer[128];					/* Needs to be big enough to hold -Xverify option values */
-	char* optionValuesBufferPtr = optionValuesBuffer;
-	J9VMDllLoadInfo* loadInfo = NULL;
+	J9BytecodeVerificationData *verifyData = NULL;
+	char optionValuesBuffer[128]; /* Needs to be big enough to hold -Xverify option values. */
+	char *optionValuesBufferPtr = optionValuesBuffer;
+	J9VMDllLoadInfo *loadInfo = NULL;
 	IDATA xVerifyIndex = -1;
 	IDATA xVerifyColonIndex = -1;
 	IDATA verboseVerificationIndex = -1;
@@ -2802,12 +2802,12 @@ j9bcv_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved)
 	IDATA noClassRelationshipVerifierIndex = -1;
 	IDATA returnVal = J9VMDLLMAIN_OK;
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-	J9HookInterface ** vmHooks = vm->internalVMFunctions->getVMHookInterface(vm);
+	J9HookInterface **vmHooks = vm->internalVMFunctions->getVMHookInterface(vm);
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	switch(stage) {
+	switch (stage) {
 
 		case ALL_VM_ARGS_CONSUMED :
 			FIND_AND_CONSUME_VMARG( OPTIONAL_LIST_MATCH, OPT_XVERIFY, NULL);
@@ -2843,15 +2843,15 @@ j9bcv_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved)
 			 *
 			 * This parsing is a duplicate of the parsing in the function VMInitStages of jvminit.c
 			 */
-			xVerifyIndex = FIND_ARG_IN_VMARGS( EXACT_MATCH, OPT_XVERIFY, NULL);
-			xVerifyColonIndex = FIND_ARG_IN_VMARGS_FORWARD( STARTSWITH_MATCH, OPT_XVERIFY_COLON, NULL);
+			xVerifyIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, OPT_XVERIFY, NULL);
+			xVerifyColonIndex = FIND_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, OPT_XVERIFY_COLON, NULL);
 			while (xVerifyColonIndex >= 0) {
-				/* Ignore -Xverify:<opt>'s prior to the last -Xverify */
+				/* Ignore -Xverify:<opt>'s prior to the last -Xverify. */
 				if (xVerifyColonIndex > xVerifyIndex) {
-					/* Deal with possible -Xverify:<opt>,<opt> case */
-					GET_OPTION_VALUES( xVerifyColonIndex, ':', ',', &optionValuesBufferPtr, 128 );
+					/* Deal with possible -Xverify:<opt>,<opt> case. */
+					GET_OPTION_VALUES(xVerifyColonIndex, ':', ',', &optionValuesBufferPtr, sizeof(optionValuesBuffer));
 
-					if ('\0' != *optionValuesBuffer) {
+					if ('\0' != optionValuesBuffer[0]) {
 						const char *errorString = NULL;
 						if (!parseOptions(vm, optionValuesBuffer, &errorString)) {
 							vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, errorString, FALSE);
@@ -2906,7 +2906,7 @@ j9bcv_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved)
 
 
 static IDATA
-setVerifyState(J9JavaVM *vm, char *option, const char **errorString)
+setVerifyState(J9JavaVM *vm, const char *option, const char **errorString)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
@@ -2925,25 +2925,25 @@ setVerifyState(J9JavaVM *vm, char *option, const char **errorString)
 		vm->bytecodeVerificationData->verificationFlags |= J9_VERIFY_IGNORE_STACK_MAPS;
 	} else if (0 == strncmp(option, OPT_EXCLUDEATTRIBUTE_EQUAL, sizeof(OPT_EXCLUDEATTRIBUTE_EQUAL) - 1)) {
 		if (0 != option[sizeof(OPT_EXCLUDEATTRIBUTE_EQUAL)]) {
-			UDATA length;
+			UDATA length = 0;
 			vm->bytecodeVerificationData->verificationFlags |= J9_VERIFY_EXCLUDE_ATTRIBUTE;
 			/* Save the parameter string, NULL terminated and the length excluding the NULL */
 			length = strlen(option) - sizeof(OPT_EXCLUDEATTRIBUTE_EQUAL) + 1;
 			vm->bytecodeVerificationData->excludeAttribute = j9mem_allocate_memory(length + 1, J9MEM_CATEGORY_CLASSES);
 			if (NULL == vm->bytecodeVerificationData->excludeAttribute) {
-				if (errorString) {
+				if (NULL != errorString) {
 					*errorString = "Out of memory processing -Xverify:<opt>";
 				}
 				return FALSE;
 			}
-			memcpy(vm->bytecodeVerificationData->excludeAttribute, &(option[sizeof(OPT_EXCLUDEATTRIBUTE_EQUAL) - 1]), length + 1);
+			memcpy(vm->bytecodeVerificationData->excludeAttribute, &option[sizeof(OPT_EXCLUDEATTRIBUTE_EQUAL) - 1], length + 1);
 		}
 	} else if (0 == strcmp(option, OPT_BOOTCLASSPATH_STATIC)) {
 		vm->bytecodeVerificationData->verificationFlags |= J9_VERIFY_BOOTCLASSPATH_STATIC;
 	} else if (0 == strcmp(option, OPT_DO_PROTECTED_ACCESS_CHECK)) {
 		vm->bytecodeVerificationData->verificationFlags |= J9_VERIFY_DO_PROTECTED_ACCESS_CHECK;
 	} else {
-		if (errorString) {
+		if (NULL != errorString) {
 			*errorString = "Unrecognised option(s) for -Xverify:<opt>";
 		}
 		return FALSE;
@@ -2954,16 +2954,16 @@ setVerifyState(J9JavaVM *vm, char *option, const char **errorString)
 
 
 static IDATA
-parseOptions(J9JavaVM *vm, char *optionValues, const char **errorString)
+parseOptions(J9JavaVM *vm, const char *optionValues, const char **errorString)
 {
-	char *optionValue = optionValues;			/* Values are separated by single NULL characters. */
+	const char *optionValue = optionValues; /* Values are separated by single NULL characters. */
 
 	/* call setVerifyState on each individual option */
-	while (*optionValue) {
-		if( !setVerifyState( vm, optionValue, errorString ) ) {
+	while ('\0' != optionValue[0]) {
+		if (!setVerifyState(vm, optionValue, errorString)) {
 			return FALSE;
 		}
-		optionValue = optionValue + strlen(optionValue) + 1;			/* Step past null separator to next element */
+		optionValue += strlen(optionValue) + 1; /* Step past NULL separator to next element. */
 	}
 	return TRUE;
 }
@@ -3015,5 +3015,3 @@ static UDATA earlyLarvalFrameEqualFn(void *leftKey, void *rightKey, void *userDa
 	return (leftEntry->baseFramePC == rightEntry->baseFramePC);
 }
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
-
-
