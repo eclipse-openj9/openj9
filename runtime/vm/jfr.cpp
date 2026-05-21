@@ -826,6 +826,44 @@ jfrGarbageCollection(OMR_VMThread *omrVMThread)
 	}
 }
 
+void
+jfrGCHeapSummary(OMR_VMThread *omrVMThread, U_32 gcWhenID)
+{
+	/* Extract the J9VMThread from the OMR_VMThread */
+	J9VMThread *currentThread = (J9VMThread *)omrVMThread->_language_vmthread;
+	J9JavaVM *javaVM = currentThread->javaVM;
+
+	/* Reserve buffer space for the JFR event */
+	J9JFRGCHeapSummary *jfrEvent = (J9JFRGCHeapSummary *)reserveBuffer(currentThread, sizeof(J9JFRGCHeapSummary));
+	if (NULL != jfrEvent) {
+		/* Initialize common event fields (timestamp, thread ID, etc.) */
+		initializeEventFields(currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_GC_HEAP_SUMMARY_ENTRY);
+
+		/* Populate GC heap summary fields */
+		jfrEvent->startTicks = javaVM->memoryManagerFunctions->j9gc_get_cycle_start_time(currentThread);
+		jfrEvent->duration = 0; /* Duration is 0 for heap summary events */
+		jfrEvent->gcID = javaVM->memoryManagerFunctions->j9gc_get_unique_cycle_ID(currentThread);
+		jfrEvent->gcWhenID = gcWhenID; /* BeforeGC or AfterGC */
+
+		/* Get heap information from memory manager */
+		void *heapBase = javaVM->memoryManagerFunctions->j9gc_get_heap_base(javaVM);
+		void *heapTop = javaVM->memoryManagerFunctions->j9gc_get_heap_top(javaVM);
+		UDATA heapSize = javaVM->memoryManagerFunctions->j9gc_heap_total_memory(javaVM);
+		UDATA freeMemory = javaVM->memoryManagerFunctions->j9gc_heap_free_memory(javaVM);
+
+		/* Populate virtual space fields */
+		jfrEvent->vStart = (U_64)(uintptr_t)heapBase;
+		jfrEvent->vCommittedEnd = (U_64)((uintptr_t)heapBase + heapSize);
+		jfrEvent->vCommittedSize = (U_64)heapSize;
+		jfrEvent->vReservedEnd = (U_64)(uintptr_t)heapTop;
+		jfrEvent->vReservedSize = (U_64)((uintptr_t)heapTop - (uintptr_t)heapBase);
+
+		/* Calculate heap used */
+		jfrEvent->heapUsed = (I_64)(heapSize - freeMemory);
+	}
+}
+
+
 jint
 initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 {

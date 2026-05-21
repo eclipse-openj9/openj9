@@ -479,6 +479,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	jfrOldGarbageCollection,
 	jfrYoungGarbageCollection,
 	jfrGarbageCollection,
+	jfrGCHeapSummary,
 	setJFRRecordingFileName,
 	tearDownJFR,
 	getTypeIdUTF8,

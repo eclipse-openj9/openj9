@@ -225,6 +225,8 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9gc_get_sum_of_pauses,
 	j9gc_register_jfr_hooks,
 	j9gc_deregister_jfr_hooks,
+	j9gc_get_heap_base,
+	j9gc_get_heap_top,
 	j9gc_modron_global_collect,
 	j9gc_modron_global_collect_with_overrides,
 	j9gc_modron_local_collect,

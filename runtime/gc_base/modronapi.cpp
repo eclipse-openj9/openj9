@@ -857,6 +857,26 @@ j9gc_get_maximum_heap_size(J9JavaVM *javaVM)
 }
 
 /**
+ * API to return the heap base address
+ */
+void *
+j9gc_get_heap_base(J9JavaVM *javaVM)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
+	return extensions->heap->getHeapBase();
+}
+
+/**
+ * API to return the heap top address
+ */
+void *
+j9gc_get_heap_top(J9JavaVM *javaVM)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
+	return extensions->heap->getHeapTop();
+}
+
+/**
  * API to return the minimum young generation memory size
  * for all GC policies that apply:
  * - Nursery minimum size for Gencon

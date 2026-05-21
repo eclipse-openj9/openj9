@@ -5847,6 +5847,15 @@ void
 jfrGarbageCollection(OMR_VMThread *omrVMThread);
 
 /**
+ * JFR GC heap summary event.
+ *
+ * @param omrVMThread[in] the OMR VM thread
+ * @param gcWhenID[in] BeforeGC or AfterGC
+ */
+void
+jfrGCHeapSummary(OMR_VMThread *omrVMThread, U_32 gcWhenID);
+
+/**
  * Set JFR recording file name.
  *
  * @param vm[in] the J9JavaVM

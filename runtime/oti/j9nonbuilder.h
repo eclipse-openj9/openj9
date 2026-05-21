@@ -5111,6 +5111,8 @@ typedef struct J9MemoryManagerFunctions {
 	U_64  ( *j9gc_get_sum_of_pauses)(struct J9VMThread *vmThread) ;
 	jint  ( *j9gc_register_jfr_hooks)(struct J9JavaVM *javaVM) ;
 	void  ( *j9gc_deregister_jfr_hooks)(struct J9JavaVM *javaVM) ;
+	void*  ( *j9gc_get_heap_base)(struct J9JavaVM *javaVM) ;
+	void*  ( *j9gc_get_heap_top)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_modron_global_collect)(struct J9VMThread *vmThread) ;
 	UDATA  ( *j9gc_modron_global_collect_with_overrides)(struct J9VMThread *vmThread, U_32 overrideFlags) ;
 	UDATA  ( *j9gc_modron_local_collect)(struct J9VMThread *vmThread) ;
@@ -5623,6 +5625,7 @@ typedef struct J9InternalVMFunctions {
 	void  (*jfrOldGarbageCollection)(struct OMR_VMThread *omrVMThread) ;
 	void  (*jfrYoungGarbageCollection)(struct OMR_VMThread *omrVMThread) ;
 	void  (*jfrGarbageCollection)(struct OMR_VMThread *omrVMThread) ;
+	void  (*jfrGCHeapSummary)(struct OMR_VMThread *omrVMThread, U_32 gcWhenID) ;
 	jboolean (*setJFRRecordingFileName)(struct J9JavaVM *vm, char *fileName);
 	void (*tearDownJFR)(struct J9JavaVM *vm);
 	jlong (*getTypeIdUTF8)(struct J9VMThread *currentThread, struct J9ClassLoader *classLoader, struct J9UTF8 *className, BOOLEAN freeName);

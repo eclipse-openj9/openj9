@@ -30,12 +30,16 @@
 #include "mmomrhook.h"
 #include "modronapi.hpp"
 
+#define BEFORE_GC 0
+#define AFTER_GC 1
+
 /**
  * Register GC-related JFR hooks.
  *
  * This function registers all garbage collection related hooks for JFR event recording:
- * - jfrPublioGCEndHook (corresponding to public OMR hook)
- * - jfrPrivateGCEndHook (corresponding to private OMR hook)
+ * - jfrGCCycleStartHook (corresponding to public OMR GC cycle start trigger)
+ * - jfrPublicGCEndHook (corresponding to public OMR GC cycle end trigger)
+ * - jfrPrivateGCEndHook (corresponding to private OMR GC cycle end trigger)
  *
  * @param vm[in] The Java VM
  * @return 0 on success, non-zero on failure
@@ -46,6 +50,9 @@ jfrRegisterGCHooks(J9JavaVM *vm)
 	J9HookInterface** gcOmrHooks = vm->memoryManagerFunctions->j9gc_get_omr_hook_interface(vm->omrVM);
 	J9HookInterface** gcPrivateHooks = vm->memoryManagerFunctions->j9gc_get_private_hook_interface(vm);
 
+	if ((*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_GC_CYCLE_START, jfrGCCycleStartHook, OMR_GET_CALLSITE(), NULL)) {
+		return -1;
+	}
 	if ((*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_GC_CYCLE_END, jfrPublicGCEndHook, OMR_GET_CALLSITE(), NULL)) {
 		return -1;
 	}
@@ -62,9 +69,32 @@ jfrRegisterGCHooks(J9JavaVM *vm)
 }
 
 /**
- * JFR GC Hook corresponding to public OMR hook data.
+ * JFR GC Hook corresponding to public OMR cycle start trigger.
  *
- * This function calls all garbage collection related JFR event recording functions on the public OMR hook.
+ * This function emits all garbage collection related JFR events on the public OMR cycle start trigger.
+ *
+ * @param hook[in] the VM hook interface
+ * @param eventNum[in] the event number
+ * @param eventData[in] the event data
+ * @param userData[in] the registered user data
+ */
+void
+jfrGCCycleStartHook(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
+{
+	MM_GCCycleStartEvent *event = (MM_GCCycleStartEvent *)eventData;
+	OMR_VMThread *omrVMThread = (OMR_VMThread *)event->omrVMThread;
+	J9VMThread *currentThread = (J9VMThread *)omrVMThread->_language_vmthread;
+	J9JavaVM *javaVM = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = javaVM->internalVMFunctions;
+
+	/* Emit heap summary with gcWhenID = BeforeGC */
+	vmFuncs->jfrGCHeapSummary(omrVMThread, BEFORE_GC);
+}
+
+/**
+ * JFR GC Hook corresponding to public OMR cycle end trigger.
+ *
+ * This function emits all garbage collection related JFR events on the public OMR cycle end trigger.
  *
  * @param hook[in] the VM hook interface
  * @param eventNum[in] the event number
@@ -88,9 +118,9 @@ jfrPublicGCEndHook(J9HookInterface **hook, UDATA eventNum, void *eventData, void
 }
 
 /**
- * JFR GC Hook corresponding to private OMR hook data.
+ * JFR GC Hook corresponding to private OMR cycle end trigger.
  *
- * This function calls all garbage collection related JFR event recording functions on the public OMR hook.
+ * This function emits all garbage collection related JFR events on the private OMR cycle end trigger.
  *
  * @param hook[in] the VM hook interface
  * @param eventNum[in] the event number
@@ -107,6 +137,8 @@ jfrPrivateGCEndHook(J9HookInterface **hook, UDATA eventNum, void *eventData, voi
 	J9InternalVMFunctions *vmFuncs = javaVM->internalVMFunctions;
 
 	vmFuncs->jfrGarbageCollection(omrVMThread);
+	/* Emit heap summary with gcWhenID = AfterGC */
+	vmFuncs->jfrGCHeapSummary(omrVMThread, AFTER_GC);
 
 }
 
@@ -124,6 +156,7 @@ jfrDeregisterGCHooks(J9JavaVM *vm)
 	J9HookInterface** gcOmrHooks = vm->memoryManagerFunctions->j9gc_get_omr_hook_interface(vm->omrVM);
 	J9HookInterface** gcPrivateHooks = vm->memoryManagerFunctions->j9gc_get_private_hook_interface(vm);
 
+	(*gcOmrHooks)->J9HookUnregister(gcOmrHooks, J9HOOK_MM_OMR_GC_CYCLE_START, jfrGCCycleStartHook, NULL);
 	(*gcOmrHooks)->J9HookUnregister(gcOmrHooks, J9HOOK_MM_OMR_GC_CYCLE_END, jfrPublicGCEndHook, NULL);
 	(*gcPrivateHooks)->J9HookUnregister(gcPrivateHooks, J9HOOK_MM_PRIVATE_GC_POST_CYCLE_END, jfrPrivateGCEndHook, NULL);
 }

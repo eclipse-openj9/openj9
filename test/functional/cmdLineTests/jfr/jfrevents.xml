@@ -158,4 +158,14 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output type="success" caseSensitive="yes" regex="no">longestPause</output>
 		<output type="failure" caseSensitive="yes" regex="no">jfr print: could not read recording</output>
 	</test>
+	<test id="test jfr GCHeapSummary - approx 30 seconds">
+		<command>$JFR_EXE$ print --xml --events "GCHeapSummary" defaultJ9recording.jfr</command>
+		<output type="required" caseSensitive="yes" regex="no">http://www.w3.org/2001/XMLSchema-instance</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.GCHeapSummary</output>
+		<output type="required" caseSensitive="yes" regex="no">gcId</output>
+		<output type="required" caseSensitive="yes" regex="no">when</output>
+		<output type="required" caseSensitive="yes" regex="no">heapUsed</output>
+		<output type="success" caseSensitive="yes" regex="no">heapSpace</output>
+		<output type="failure" caseSensitive="yes" regex="no">jfr print: could not read recording</output>
+	</test>
 </suite>

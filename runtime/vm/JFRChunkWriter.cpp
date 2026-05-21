@@ -885,6 +885,29 @@ VM_JFRChunkWriter::writeGCCauseTypesEvent()
 }
 
 void
+VM_JFRChunkWriter::writeGCWhenTypesEvent()
+{
+	U_8 *dataStart = writeCheckpointEventHeader(Generic, 1);
+
+	/* class ID */
+	_bufferWriter->writeLEB128(GCWhensID);
+
+	/* number of states */
+	_bufferWriter->writeLEB128(GCWhenTypeCount);
+
+	for (int i = 0; i < GCWhenTypeCount; i++) {
+		/* constant index */
+		_bufferWriter->writeLEB128(i);
+
+		/* write string */
+		writeStringLiteral(gcWhens[i]);
+	}
+
+	/* write size */
+	writeEventSize(dataStart);
+}
+
+void
 VM_JFRChunkWriter::writeGCHeapConfigurationEvent()
 {
 	GCHeapConfigurationEntry *gcConfig = &(VM_JFRConstantPoolTypes::getJFRConstantEvents(_vm)->GCHeapConfigEntry);
@@ -1592,8 +1615,7 @@ void
 VM_JFRChunkWriter::writeGCHeapSummaryEvent(void *anElement, void *userData)
 {
 	GCHeapSummaryEntry *entry = (GCHeapSummaryEntry *)anElement;
-	VM_JFRChunkWriter *writer = (VM_JFRChunkWriter *)userData;
-	VM_BufferWriter *bufferWriter = writer->_bufferWriter;
+	VM_BufferWriter *bufferWriter = (VM_BufferWriter *)userData;
 
 	/* Reserve size field */
 	U_8 *dataStart = reserveEventSize(bufferWriter);
@@ -1608,7 +1630,7 @@ VM_JFRChunkWriter::writeGCHeapSummaryEvent(void *anElement, void *userData)
 	bufferWriter->writeLEB128(entry->gcID);
 
 	/* Write when summary is generated */
-	writer->writeStringLiteral(gcWhens[entry->gcWhenID]);
+	bufferWriter->writeLEB128(entry->gcWhenID);
 
 	/* Write heap space info */
 	bufferWriter->writeLEB128(entry->heapSpace.start);

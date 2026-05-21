@@ -85,6 +85,8 @@ UDATA j9gc_set_softmx(J9JavaVM *javaVM, UDATA newsoftMx);
 UDATA j9gc_get_softmx(J9JavaVM *javaVM);
 UDATA j9gc_get_initial_heap_size(J9JavaVM *javaVM);
 UDATA j9gc_get_maximum_heap_size(J9JavaVM *javaVM);
+void *j9gc_get_heap_base(J9JavaVM *javaVM);
+void *j9gc_get_heap_top(J9JavaVM *javaVM);
 UDATA j9gc_get_minimum_young_generation_size(J9JavaVM *javaVM);
 UDATA j9gc_get_maximum_young_generation_size(J9JavaVM *javaVM);
 const char *j9gc_get_gcmodestring(J9JavaVM *javaVM);

@@ -88,6 +88,12 @@ enum GCCauseType {
 	GCCauseTypeCount,
 };
 
+enum GCWhenType {
+	BeforeGC = 0,
+	AfterGC = 1,
+	GCWhenTypeCount
+};
+
 enum ThreadState {
 	NEW = 0,
 	TERMINATED,

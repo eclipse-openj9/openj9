@@ -46,6 +46,19 @@ jint
 jfrRegisterGCHooks(J9JavaVM *vm);
 
 /**
+ * JFR GC Hook for cycle start.
+ *
+ * This function emits the GC heap summary event before GC starts.
+ *
+ * @param hook[in] the VM hook interface
+ * @param eventNum[in] the event number
+ * @param eventData[in] the event data
+ * @param userData[in] the registered user data
+ */
+void
+jfrGCCycleStartHook(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
+
+/**
  * JFR GC Hook corresponding to public OMR hook data.
  *
  * This function calls all garbage collection related JFR event recording functions on the public OMR hook.
