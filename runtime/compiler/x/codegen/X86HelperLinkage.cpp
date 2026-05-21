@@ -62,7 +62,7 @@ public:
     TR::Register *Use(TR::RealRegister::RegNum RealRegister)
     {
         if (_Registers[RealRegister] == NULL) {
-            bool isGPR = RealRegister >= TR::RealRegister::FirstGPR && RealRegister <= TR::RealRegister::LastGPR;
+            bool isGPR = RealRegister >= _cg->machine()->getFirstGPR() && RealRegister <= _cg->machine()->getLastGPR();
             _Registers[RealRegister] = _cg->allocateRegister(isGPR ? TR_GPR : TR_FPR);
             _NumberOfRegistersInUse++;
         }
