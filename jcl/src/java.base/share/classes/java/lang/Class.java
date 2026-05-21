@@ -50,7 +50,6 @@ import java.util.HashMap;
 /*[IF (JAVA_SPEC_VERSION >= 16) | INLINE-TYPES]*/
 import java.util.HashSet;
 /*[ENDIF] (JAVA_SPEC_VERSION >= 16) | INLINE-TYPES */
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -257,11 +256,11 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	}
 
 	private static final class AnnotationCache {
-		final LinkedHashMap<Class<? extends Annotation>, Annotation> directAnnotationMap;
-		final LinkedHashMap<Class<? extends Annotation>, Annotation> annotationMap;
+		final HashMap<Class<? extends Annotation>, Annotation> directAnnotationMap;
+		final HashMap<Class<? extends Annotation>, Annotation> annotationMap;
 		AnnotationCache(
-				LinkedHashMap<Class<? extends Annotation>, Annotation> directMap,
-				LinkedHashMap<Class<? extends Annotation>, Annotation> annMap
+				HashMap<Class<? extends Annotation>, Annotation> directMap,
+				HashMap<Class<? extends Annotation>, Annotation> annMap
 		) {
 			directAnnotationMap = directMap;
 			annotationMap = annMap;
@@ -3372,7 +3371,7 @@ static Class<?> currentLoadedClass() {
  */
 public <A extends Annotation> A getAnnotation(Class<A> annotation) {
 	if (annotation == null) throw new NullPointerException();
-	LinkedHashMap<Class<? extends Annotation>, Annotation> map = getAnnotationCache().annotationMap;
+	HashMap<Class<? extends Annotation>, Annotation> map = getAnnotationCache().annotationMap;
 	if (map != null) {
 		return (A)map.get(annotation);
 	}
@@ -3392,7 +3391,7 @@ public <A extends Annotation> A getAnnotation(Class<A> annotation) {
  * @since 1.5
  */
 public Annotation[] getAnnotations() {
-	LinkedHashMap<Class<? extends Annotation>, Annotation> map = getAnnotationCache().annotationMap;
+	HashMap<Class<? extends Annotation>, Annotation> map = getAnnotationCache().annotationMap;
 	if (map != null) {
 		Collection<Annotation> annotations = map.values();
 		return annotations.toArray(new Annotation[annotations.size()]);
@@ -3410,7 +3409,7 @@ public Annotation[] getAnnotations() {
  */
 public <A extends Annotation> A getDeclaredAnnotation(Class<A> annotation) {
 	if (annotation == null) throw new NullPointerException();
-	LinkedHashMap<Class<? extends Annotation>, Annotation> map = getAnnotationCache().directAnnotationMap;
+	HashMap<Class<? extends Annotation>, Annotation> map = getAnnotationCache().directAnnotationMap;
 	if (map != null) {
 		return (A)map.get(annotation);
 	}
@@ -3470,7 +3469,7 @@ public String getTypeName() {
  * @since 1.5
  */
 public Annotation[] getDeclaredAnnotations() {
-	LinkedHashMap<Class<? extends Annotation>, Annotation> map = getAnnotationCache().directAnnotationMap;
+	HashMap<Class<? extends Annotation>, Annotation> map = getAnnotationCache().directAnnotationMap;
 	if (map != null) {
 		Collection<Annotation> annotations = map.values();
 		return annotations.toArray(new Annotation[annotations.size()]);
@@ -3523,7 +3522,7 @@ private <A extends Annotation> ArrayList<A> internalGetDeclaredAnnotationsByType
 	AnnotationCache currentAnnotationCache = getAnnotationCache();
 	ArrayList<A> annotationsList = new ArrayList<>();
 
-	LinkedHashMap<Class<? extends Annotation>, Annotation> map = currentAnnotationCache.directAnnotationMap;
+	HashMap<Class<? extends Annotation>, Annotation> map = currentAnnotationCache.directAnnotationMap;
 	if (map != null) {
 		Repeatable repeatable = annotationClass.getDeclaredAnnotation(Repeatable.class);
 		if (repeatable == null) {
@@ -3778,27 +3777,27 @@ private static Annotation[] getAnnotationsArrayFromValue(Annotation container, C
 }
 
 private boolean isInheritedAnnotationType() {
-	LinkedHashMap<Class<? extends Annotation>, Annotation> map = getAnnotationCache().directAnnotationMap;
+	HashMap<Class<? extends Annotation>, Annotation> map = getAnnotationCache().directAnnotationMap;
 	if (map != null) {
 		return map.get(Inherited.class) != null;
 	}
 	return false;
 }
 
-private LinkedHashMap<Class<? extends Annotation>, Annotation> buildAnnotations(LinkedHashMap<Class<? extends Annotation>, Annotation> directAnnotationsMap) {
+private HashMap<Class<? extends Annotation>, Annotation> buildAnnotations(HashMap<Class<? extends Annotation>, Annotation> directAnnotationsMap) {
 	Class<?> superClass = getSuperclass();
 	if (superClass == null) {
 		return directAnnotationsMap;
 	}
-	LinkedHashMap<Class<? extends Annotation>, Annotation> superAnnotations = superClass.getAnnotationCache().annotationMap;
-	LinkedHashMap<Class<? extends Annotation>, Annotation> annotationsMap = null;
+	HashMap<Class<? extends Annotation>, Annotation> superAnnotations = superClass.getAnnotationCache().annotationMap;
+	HashMap<Class<? extends Annotation>, Annotation> annotationsMap = null;
 	if (superAnnotations != null) {
 		for (Map.Entry<Class<? extends Annotation>, Annotation> entry : superAnnotations.entrySet()) {
 			Class<? extends Annotation> annotationType = entry.getKey();
 			// if the annotation is Inherited store the annotation
 			if (annotationType.isInheritedAnnotationType()) {
 				if (annotationsMap == null) {
-					annotationsMap = new LinkedHashMap<>((superAnnotations.size() + (directAnnotationsMap != null ? directAnnotationsMap.size() : 0)) * 4 / 3);
+					annotationsMap = new HashMap<>((superAnnotations.size() + (directAnnotationsMap != null ? directAnnotationsMap.size() : 0)) * 4 / 3);
 				}
 				annotationsMap.put(annotationType, entry.getValue());
 			}
@@ -3834,7 +3833,7 @@ private AnnotationCache getAnnotationCache() {
 								cp,
 								this));
 
-			LinkedHashMap<Class<? extends Annotation>, Annotation> directAnnotationsMap = new LinkedHashMap<>(directAnnotations.length * 4 / 3);
+			HashMap<Class<? extends Annotation>, Annotation> directAnnotationsMap = new HashMap<>(directAnnotations.length * 4 / 3);
 			for (Annotation annotation : directAnnotations) {
 				Class<? extends Annotation> annotationType = annotation.annotationType();
 				directAnnotationsMap.put(annotationType, annotation);
