@@ -150,13 +150,11 @@
 			</or>
 		</condition>
 
-		<condition property="is_not_JDK_VERSION_8" if:set="is_JDK_IMPL_ibm">
-			<not>
-				<equals arg1="${JDK_VERSION}" arg2="8"/>
-			</not>
+		<condition property="is_JDK_VERSION_8">
+			<equals arg1="${JDK_VERSION}" arg2="8"/>
 		</condition>
 
-		<antcall target="clean" inheritall="true" if:set="is_not_JDK_VERSION_8"/>
+		<antcall target="clean" inheritall="true" if:set="is_JDK_IMPL_ibm" unless:set="is_JDK_VERSION_8"/>
 	</target>
 
 	<target name="clean" depends="dist" description="clean up" >

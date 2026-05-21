@@ -35,10 +35,9 @@
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/sigxfszHandlingTest" />
 	<property name="src" location="." />
 
-		<condition property="TEXT_ENCODING" value="IBM-1047">
+	<condition property="TEXT_ENCODING" value="IBM-1047" else="ISO-8859-1">
 		<contains string="${SPEC}" substring="zos"/>
 	</condition>
-	<property name="TEXT_ENCODING" value="ISO-8859-1"/>
 
 	<target name="dist" description="generate the distribution">
 		<copy todir="${DEST}" outputencoding="${TEXT_ENCODING}">
