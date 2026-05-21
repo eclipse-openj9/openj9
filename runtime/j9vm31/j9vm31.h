@@ -343,7 +343,7 @@ jboolean JNICALL IsVirtualThread(JNIEnv *env, jobject obj);
 jlong JNICALL GetStringUTFLengthAsLong(JNIEnv *env, jstring string);
 #endif /* JAVA_SPEC_VERSION >= 24 */
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-jboolean JNICALL IsValueObject(JNIEnv *env, jobject obj);
+jboolean JNICALL HasIdentity(JNIEnv *env, jobject obj);
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 /* The JNI convert functions that the shim library will implement. */

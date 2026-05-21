@@ -1564,14 +1564,13 @@ void J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
             }
             break;
         }
-        case TR::java_lang_Class_isValue:
-        case TR::java_lang_Class_isIdentity: {
+        case TR::java_lang_Class_isValue: {
             TR::Node *classChild = node->getLastChild();
             bool classChildGlobal;
             TR::VPConstraint *classChildConstraint = getConstraint(classChild, classChildGlobal);
 
-            // If the class is known for a call to Class.isValue or
-            // Class.isIdentity, fold it at compile-time.  Otherwise, inline a test of the
+            // If the class is known for a call to Class.isValue,
+            // fold it at compile-time.  Otherwise, inline a test of the
             // class flags
             //
             if (classChildConstraint && classChildConstraint->isJavaLangClassObject() == TR_yes
@@ -1579,9 +1578,7 @@ void J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                 && classChildConstraint->getClassType()->asFixedClass()) {
                 TR_OpaqueClassBlock *thisClass = classChildConstraint->getClass();
 
-                const int queryResult
-                    = ((rm == TR::java_lang_Class_isValue) && TR::Compiler->cls.isValueTypeClass(thisClass))
-                    || ((rm == TR::java_lang_Class_isIdentity) && TR::Compiler->cls.classHasIdentity(thisClass));
+                const int queryResult = TR::Compiler->cls.isValueTypeClass(thisClass);
                 transformCallToIconstInPlaceOrInDelayedTransformations(_curTree, queryResult, classChildGlobal, true,
                     false);
                 TR::DebugCounter::incStaticDebugCounter(comp(),
@@ -1595,8 +1592,8 @@ void J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                 // (ii) The operand is definitely a non-null instance of java.lang.Class.  In that case, load the
                 //      J9Class from the java.lang.Class by way of <classFromJavaLangClass>
                 //
-                // The result of Class.isValueType() and Class.isIdentity() can then be determined by checking
-                // the corresponding bit in the classFlags field.
+                // The result of Class.isValueType() can then be determined by checking
+                // the bit in the classFlags field.
                 //
                 TR::SymbolReference *symRef
                     = classChild->getOpCode().hasSymbolReference() ? classChild->getSymbolReference() : NULL;
@@ -1609,25 +1606,9 @@ void J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                         comp()->getSymRefTab()->findOrCreateClassFromJavaLangClassSymbolRef());
                 }
 
-                TR::Node *testFlagsNode = NULL;
-                TR::ILOpCodes testFlagsCompareOp;
+                TR::Node *testFlagsNode = comp()->fej9()->testIsClassValueType(classOperand);
 
-                switch (rm) {
-                    case TR::java_lang_Class_isValue: {
-                        testFlagsNode = comp()->fej9()->testIsClassValueType(classOperand);
-                        break;
-                    }
-                    case TR::java_lang_Class_isIdentity: {
-                        testFlagsNode = comp()->fej9()->testIsClassIdentityType(classOperand);
-                        break;
-                    }
-                    default: {
-                        TR_ASSERT_FATAL(false, "%s:  How did we get here?\n", __FUNCTION__);
-                        break;
-                    }
-                }
-
-                // The testIsClass*Type methods will produce IL whose result is zero if the specified
+                // The testIsClassValueType method will produce IL whose result is zero if the specified
                 // flags(s) are not set, and non-zero if any of the specified flag(s) are set;
                 // compare the result to zero to force the result to be zero or one.
                 //

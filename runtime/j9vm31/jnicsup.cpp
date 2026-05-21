@@ -320,7 +320,7 @@ struct JNINativeInterface_ EsJNIFunctions = {
 	GetStringUTFLengthAsLong,
 #endif /* JAVA_SPEC_VERSION >= 24 */
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	IsValueObject,
+	HasIdentity,
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 };
 
@@ -870,13 +870,13 @@ IsVirtualThread(JNIEnv *env, jobject obj)
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 jboolean JNICALL
-IsValueObject(JNIEnv *env, jobject obj)
+HasIdentity(JNIEnv *env, jobject obj)
 {
 	const jint NUM_ARGS = 2;
 	 J9_CEL4RO64_ArgType argTypes[NUM_ARGS] = { CEL4RO64_type_JNIEnv64, CEL4RO64_type_jobject };
 	 uint64_t argValues[NUM_ARGS] = { JNIENV64_FROM_JNIENV31(env), obj };
 	 jboolean returnValue = JNI_FALSE;
-	 FUNCTION_DESCRIPTOR_FROM_JNIENV31(env, IsValueObject);
+	 FUNCTION_DESCRIPTOR_FROM_JNIENV31(env, HasIdentity);
 	 j9_cel4ro64_call_function(functionDescriptor, argTypes, argValues, NUM_ARGS, CEL4RO64_type_jboolean, &returnValue);
 	 return returnValue;
 }

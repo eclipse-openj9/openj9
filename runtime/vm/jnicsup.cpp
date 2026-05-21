@@ -141,7 +141,7 @@ static jboolean JNICALL isVirtualThread(JNIEnv *env, jobject obj);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-static jboolean JNICALL isValueObject(JNIEnv *env, jobject obj);
+static jboolean JNICALL hasIdentity(JNIEnv *env, jobject obj);
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 #define FIND_CLASS gpCheckFindClass
@@ -1596,7 +1596,7 @@ struct JNINativeInterface_ EsJNIFunctions = {
 	getStringUTFLengthAsLong,
 #endif /* JAVA_SPEC_VERSION >= 24 */
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	isValueObject,
+	hasIdentity,
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 };
 
@@ -2537,18 +2537,20 @@ isVirtualThread(JNIEnv *env, jobject obj)
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 static jboolean JNICALL
-isValueObject(JNIEnv *env, jobject obj)
+hasIdentity(JNIEnv *env, jobject obj)
 {
-	jboolean result = JNI_FALSE;
+	jboolean result = JNI_TRUE;
 	J9VMThread *vmThread = (J9VMThread *)env;
 
-	if (NULL != obj) {
+	if (NULL == obj) {
+		result = JNI_FALSE;
+	} else {
 		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 		j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
 		if (NULL != object) {
 			J9Class *clazz = J9OBJECT_CLAZZ(vmThread, object);
 			if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
-				result = JNI_TRUE;
+				result = JNI_FALSE;
 			}
 		}
 		VM_VMAccess::inlineExitVMToJNI(vmThread);
