@@ -821,8 +821,8 @@ jfrGarbageCollection(OMR_VMThread *omrVMThread)
 		jfrEvent->gcID = javaVM->memoryManagerFunctions->j9gc_get_unique_cycle_ID(currentThread);
 		jfrEvent->gcNameID = javaVM->memoryManagerFunctions->j9gc_get_gc_collector_type(currentThread);
 		jfrEvent->gcCauseID = javaVM->memoryManagerFunctions->j9gc_get_gc_cause_type(currentThread);
-		jfrEvent->sumOfPauses = javaVM->memoryManagerFunctions->j9gc_get_longest_pause(currentThread);
-		jfrEvent->longestPause = javaVM->memoryManagerFunctions->j9gc_get_sum_of_pauses(currentThread);
+		jfrEvent->sumOfPauses = javaVM->memoryManagerFunctions->j9gc_get_sum_of_pauses(currentThread);
+		jfrEvent->longestPause = javaVM->memoryManagerFunctions->j9gc_get_longest_pause(currentThread);
 	}
 }
 
