@@ -72,7 +72,7 @@ public:
 
 	void verifyHeap(MM_EnvironmentBase *env, MM_MarkMap *markMap);
 
-	void fixupRoots(MM_EnvironmentBase *env,  MM_CompactScheme *compactScheme);
+	void fixupRoots(MM_EnvironmentBase *env,  MM_CompactScheme *compactScheme, bool nurseryOnly = false);
 
 	void workerCleanupAfterGC(MM_EnvironmentBase *env);
 
