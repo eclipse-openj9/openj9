@@ -101,6 +101,10 @@ void J9::Recompilation::setupMethodInfo()
         _methodInfo->setNextCompileLevel(optimizationPlan->getOptLevel(),
             (optimizationPlan->insertInstrumentation() != 0));
         _methodInfo->setWasNeverInterpreted(!comp()->fej9()->methodMayHaveBeenInterpreted(comp()));
+
+        if (_compilation->getOption(TR_InhibitRecompilation)) {
+            _methodInfo->setIsInhibitRecompilation(true);
+        }
     } else // this is a recompilation
     {
         // There already is a persistent method info for this method which already

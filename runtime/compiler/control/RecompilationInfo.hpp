@@ -246,6 +246,10 @@ public:
         }
     }
 
+    bool inhibitRecompilation() { return _flags.testAny(IsInhibitRecompilation); }
+
+    void setIsInhibitRecompilation(bool b) { _flags.set(IsInhibitRecompilation, b); }
+
     enum InfoBits {
         // Normally set by the previous compilation to indicate that the next
         // compilation should use profiling.  Sometimes we can start out without
@@ -316,6 +320,8 @@ public:
                                           // Attention: this is not always accurate
         WasScannedForInlining = 0x00400000, // New scanning for warm method inlining
         IsInDataCache = 0x00800000, // This TR_PersistentMethodInfo is stored in the datacache for AOT
+
+        IsInhibitRecompilation = 0x01000000,
 
         lastFlag = 0x80000000
     };
