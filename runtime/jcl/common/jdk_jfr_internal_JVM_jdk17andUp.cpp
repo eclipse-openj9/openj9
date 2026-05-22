@@ -54,13 +54,31 @@ Java_jdk_jfr_internal_JVM_setThrottle(JNIEnv *env, jobject obj, jlong eventTypeI
 void JNICALL
 Java_jdk_jfr_internal_JVM_exclude(JNIEnv *env, jobject obj, jobject thread)
 {
-	// TODO: implementation
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
+	J9VMThread *targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, threadObject);
+	if (NULL != targetThread) {
+		targetThread->threadJfrState.isJfrExcluded = TRUE;
+	}
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 void JNICALL
 Java_jdk_jfr_internal_JVM_include(JNIEnv *env, jobject obj, jobject thread)
 {
-	// TODO: implementation
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
+	J9VMThread *targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, threadObject);
+	if (NULL != targetThread) {
+		targetThread->threadJfrState.isJfrExcluded = FALSE;
+	}
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 jboolean JNICALL
@@ -70,8 +88,19 @@ Java_jdk_jfr_internal_JVM_isExcluded(JNIEnv *env, jobject obj, jobject thread)
 Java_jdk_jfr_internal_JVM_isExcluded__Ljava_lang_Thread_2(JNIEnv *env, jobject obj, jobject thread)
 #endif /* JAVA_SPEC_VERSION == 17 */
 {
-	// TODO: implementation
-	return JNI_FALSE;
+	jboolean result = JNI_FALSE;
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
+	J9VMThread *targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, threadObject);
+	if (NULL != targetThread) {
+		result = targetThread->threadJfrState.isJfrExcluded ? JNI_TRUE : JNI_FALSE;
+	}
+	vmFuncs->internalExitVMToJNI(currentThread);
+
+	return result;
 }
 
 jlong JNICALL

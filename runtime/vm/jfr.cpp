@@ -348,7 +348,7 @@ reserveBuffer(J9VMThread *currentThread, UDATA size)
 	Assert_VM_true(((currentThread)->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)
 	|| ((J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState)));
 
-	if (!areJFRBuffersReadyForWrite(currentThread)) {
+	if (!areJFRBuffersReadyForWrite(currentThread) || currentThread->threadJfrState.isJfrExcluded) {
 		goto done;
 	}
 
@@ -434,6 +434,7 @@ jfrThreadCreated(J9HookInterface **hook, UDATA eventNum, void *eventData, void *
 		currentThread->jfrBuffer.bufferCurrent = buffer;
 		currentThread->jfrBuffer.bufferSize = J9JFR_THREAD_BUFFER_SIZE;
 		currentThread->jfrBuffer.bufferRemaining = J9JFR_THREAD_BUFFER_SIZE;
+		currentThread->threadJfrState.isJfrExcluded = FALSE;
 #if defined(DEBUG)
 		memset(currentThread->jfrBuffer.bufferStart, 0, J9JFR_THREAD_BUFFER_SIZE);
 #endif /* defined(DEBUG) */
@@ -1002,6 +1003,7 @@ initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 					walkThread->jfrBuffer.bufferCurrent = buffer;
 					walkThread->jfrBuffer.bufferSize = J9JFR_THREAD_BUFFER_SIZE;
 					walkThread->jfrBuffer.bufferRemaining = J9JFR_THREAD_BUFFER_SIZE;
+					walkThread->threadJfrState.isJfrExcluded = FALSE;
 				}
 			}
 

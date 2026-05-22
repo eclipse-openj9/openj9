@@ -374,6 +374,7 @@ struct J9VMContinuation;
 typedef struct J9ThreadJFRState {
 	omrthread_thread_time_t prevThreadCPUTimes;
 	int64_t prevTimestamp;
+	BOOLEAN isJfrExcluded;
 } J9ThreadJFRState;
 
 typedef struct J9JFRBufferWalkState {
