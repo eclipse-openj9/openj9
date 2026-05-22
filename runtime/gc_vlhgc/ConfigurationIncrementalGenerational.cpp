@@ -152,7 +152,7 @@ MM_ConfigurationIncrementalGenerational::createHeapWithManager(MM_EnvironmentBas
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 	if (extensions->isVirtualLargeObjectHeapEnabled) {
 		/* Create off-heap */
-		MM_SparseVirtualMemory *largeObjectVirtualMemory = MM_SparseVirtualMemory::newInstance(env, OMRMEM_CATEGORY_MM_RUNTIME_HEAP, heap);
+		MM_SparseVirtualMemory *largeObjectVirtualMemory = MM_SparseVirtualMemory::newInstance(env, OMRMEM_CATEGORY_MM_RUNTIME_HEAP_SPARSE, heap);
 		if (NULL != largeObjectVirtualMemory) {
 			extensions->largeObjectVirtualMemory = largeObjectVirtualMemory;
 			extensions->indexableObjectModel.setEnableVirtualLargeObjectHeap(true);
