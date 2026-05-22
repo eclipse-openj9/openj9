@@ -4719,7 +4719,7 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		OMRPORT_ACCESS_FROM_J9PORT(vm->portLibrary);
 		BOOLEAN inContainer = omrsysinfo_is_running_in_container();
 
-		if ((gcContainerHeuristics > noGcContainerHeuristics) || (gcContainerHeuristics == noGcContainerHeuristics && inContainer)) {
+		if ((gcContainerHeuristics > noGcContainerHeuristics) || ((gcContainerHeuristics == noGcContainerHeuristics) && inContainer)) {
 			vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_GCCONTAINERHEURISTICS;
 		}
 	}
