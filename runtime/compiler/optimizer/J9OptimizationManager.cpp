@@ -126,7 +126,10 @@ J9::OptimizationManager::OptimizationManager(TR::Optimizer *o, OptimizationFacto
             _flags.set(doesNotRequireAliasSets | supportsIlGenOptLevel);
             break;
         case OMR::vectorAPIExpansion:
-            _flags.set(verifyTrees);
+            if (self()->comp()->getOption(TR_EnableUseDefBasedVectorAPIExpansion))
+                _flags.set(verifyTrees | requiresLocalsUseDefInfo);
+            else
+                _flags.set(verifyTrees);
             break;
         default:
             // do nothing
