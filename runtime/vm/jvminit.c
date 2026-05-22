@@ -4716,8 +4716,10 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 	{
 		IDATA gcContainerHeuristics = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXGCCONTAINERHEURISTICS, NULL);
 		IDATA noGcContainerHeuristics = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOGCCONTAINERHEURISTICS, NULL);
+		OMRPORT_ACCESS_FROM_J9PORT(vm->portLibrary);
+		BOOLEAN inContainer = omrsysinfo_is_running_in_container();
 
-		if (gcContainerHeuristics > noGcContainerHeuristics) {
+		if ((gcContainerHeuristics > noGcContainerHeuristics) || (gcContainerHeuristics == noGcContainerHeuristics && inContainer)) {
 			vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_GCCONTAINERHEURISTICS;
 		}
 	}
