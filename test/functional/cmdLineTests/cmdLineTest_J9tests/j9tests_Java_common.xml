@@ -64,6 +64,9 @@
  <test id="noverify">
   <command>$EXE$ -noverify $CLASS$</command>
   <output>$FIBOUT$</output>
+  <versions>
+    <version>[8,26]</version>
+  </versions>
  </test>
 
  <test id="Xint">
