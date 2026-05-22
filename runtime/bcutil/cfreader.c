@@ -3227,9 +3227,9 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 			return result;
 		}
 	} else {
-		/* Special checking to look for jsr's if -noverify - the verifyFunction normally scans and tags
-		 * for inlining methods and classes that contain jsr's unless the class file version is 51 or
-		 * greater as jsr / ret are always illegal in that case
+		/* Special checking to look for JSRs if -Xverify:none - the verifyFunction normally scans and tags
+		 * for inlining methods and classes that contain JSRs unless the class file version is 51 or
+		 * greater as JSR / RET are always illegal in that case.
 		 */
 		if (classfile->majorVersion < 51) {
 			hasRET = checkForJsrs(classfile);
