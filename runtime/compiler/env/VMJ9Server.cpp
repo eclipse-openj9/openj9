@@ -890,10 +890,10 @@ TR::KnownObjectTable::ObjectInfo TR_J9ServerVM::getObjClassInfoFromKnotIndexNoCa
     return retrievedObjInfo;
 }
 
-bool TR_J9ServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *clazz)
+TR_YesNoMaybe TR_J9ServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *clazz)
 {
     if (!method) {
-        return false;
+        return TR_no;
     }
 
     JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
@@ -909,15 +909,23 @@ bool TR_J9ServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_Op
         vmInfo->_srConstructorAccessorClass = std::get<2>(recv);
         freshInfo = true;
         if (vmInfo->_jlrMethodInvoke == NULL)
-            return true;
+            return TR_yes;
     }
     if (vmInfo->_jlrMethodInvoke == ((J9Method *)method)) {
-        return true;
+        return TR_yes;
     }
     if (!clazz) {
-        return false;
+        return TR_no;
     }
 #if defined(J9VM_OPT_SIDECAR)
+    /*
+     * We assume here that no methods:
+     *  - defined in interfaces (default or static methods)
+     *  - where the interface is not implemented by '_srMethodAccessorClass'
+     *  - appear as frames in a reflective call path
+     */
+    bool callerTypeIsFixed = isInterfaceClass(clazz);
+
     if (vmInfo->_srMethodAccessorClass == NULL && !freshInfo) {
         // Cached information could be outdated. Ask the client again.
         stream->write(JITServer::MessageType::VM_stackWalkerMaySkipFrames, JITServer::Void());
@@ -927,9 +935,12 @@ bool TR_J9ServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_Op
         vmInfo->_srConstructorAccessorClass = std::get<2>(recv);
         freshInfo = true;
     }
-    if (vmInfo->_srMethodAccessorClass != NULL
-        && TR_J9ServerVM::isInstanceOf(clazz, vmInfo->_srMethodAccessorClass, false)) {
-        return true;
+    if (vmInfo->_srMethodAccessorClass != NULL) {
+        TR_YesNoMaybe isMethodAccessor
+            = TR_J9ServerVM::isInstanceOf(clazz, vmInfo->_srMethodAccessorClass, callerTypeIsFixed);
+        if (isMethodAccessor != TR_no) {
+            return isMethodAccessor;
+        }
     }
     if (vmInfo->_srConstructorAccessorClass == NULL && !freshInfo) {
         // Cached information could be outdated. Ask the client again.
@@ -940,13 +951,16 @@ bool TR_J9ServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_Op
         vmInfo->_srConstructorAccessorClass = std::get<2>(recv);
         freshInfo = true;
     }
-    if (vmInfo->_srConstructorAccessorClass != NULL
-        && TR_J9ServerVM::isInstanceOf(clazz, vmInfo->_srConstructorAccessorClass, false)) {
-        return true;
+    if (vmInfo->_srConstructorAccessorClass != NULL) {
+        TR_YesNoMaybe isConstructorAccessor
+            = TR_J9ServerVM::isInstanceOf(clazz, vmInfo->_srConstructorAccessorClass, callerTypeIsFixed);
+        if (isConstructorAccessor != TR_no) {
+            return isConstructorAccessor;
+        }
     }
 #endif // J9VM_OPT_SIDECAR
 
-    return false;
+    return TR_no;
 }
 
 bool TR_J9ServerVM::hasFinalFieldsInClass(TR_OpaqueClassBlock *clazz)
@@ -1917,11 +1931,11 @@ bool TR_J9ServerVM::instanceOfOrCheckCastNoCacheUpdate(J9Class *instanceClass, J
     return instanceOfOrCheckCastHelper(instanceClass, castClass, false);
 }
 
-bool TR_J9ServerVM::transformJlrMethodInvoke(J9Method *callerMethod, J9Class *callerClass)
+TR_YesNoMaybe TR_J9ServerVM::transformJlrMethodInvoke(J9Method *callerMethod, J9Class *callerClass)
 {
     JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
     stream->write(JITServer::MessageType::VM_transformJlrMethodInvoke, callerMethod, callerClass);
-    return std::get<0>(stream->read<bool>());
+    return std::get<0>(stream->read<TR_YesNoMaybe>());
 }
 
 bool TR_J9ServerVM::isAnonymousClass(TR_OpaqueClassBlock *j9clazz)
@@ -2821,9 +2835,10 @@ bool TR_J9SharedCacheServerVM::isPrimitiveClass(TR_OpaqueClassBlock *classPointe
     return validated ? isPrimClass : false;
 }
 
-bool TR_J9SharedCacheServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass)
+TR_YesNoMaybe TR_J9SharedCacheServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method,
+    TR_OpaqueClassBlock *methodClass)
 {
-    bool skipFrames = false;
+    TR_YesNoMaybe skipFrames = TR_no;
     TR::Compilation *comp = _compInfoPT->getCompilation();
     // For AOT with SVM do not optimize the messages by calling TR_J9ServerVM::stackWalkerMaySkipFrames
     // because this will call isInstanceOf() and then isSuperClass() which will fail the
@@ -2831,7 +2846,7 @@ bool TR_J9SharedCacheServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *me
     if (comp && comp->getOption(TR_UseSymbolValidationManager)) {
         JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
         stream->write(JITServer::MessageType::VM_stackWalkerMaySkipFramesSVM, method, methodClass);
-        skipFrames = std::get<0>(stream->read<bool>());
+        skipFrames = std::get<0>(stream->read<TR_YesNoMaybe>());
         bool recordCreated
             = comp->getSymbolValidationManager()->addStackWalkerMaySkipFramesRecord(method, methodClass, skipFrames);
         SVM_ASSERT(recordCreated, "Failed to validate addStackWalkerMaySkipFramesRecord");

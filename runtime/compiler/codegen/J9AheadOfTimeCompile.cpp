@@ -1870,9 +1870,9 @@ uint8_t *J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool 
 
             self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
             logprintf(isVerbose, log,
-                "\n Validate Stack Walker May Skip Frames: methodID=%d, methodClassID=%d, skipFrames=%s ",
+                "\n Validate Stack Walker May Skip Frames: methodID=%d, methodClassID=%d, skipFrames=%d ",
                 (uint32_t)swmsfRecord->methodID(reloTarget), (uint32_t)swmsfRecord->methodClassID(reloTarget),
-                swmsfRecord->skipFrames(reloTarget) ? "true" : "false");
+                swmsfRecord->skipFrames(reloTarget));
         } break;
 
         case TR_ValidateClassInfoIsInitialized: {

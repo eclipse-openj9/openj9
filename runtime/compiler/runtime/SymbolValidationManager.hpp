@@ -1130,7 +1130,8 @@ struct StackWalkerMaySkipFramesRecord : public SymbolValidationRecord {
      * @param skipFrames Whether the stack walker may skip frames for this
      *                   method
      */
-    StackWalkerMaySkipFramesRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass, bool skipFrames)
+    StackWalkerMaySkipFramesRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass,
+        TR_YesNoMaybe skipFrames)
         : SymbolValidationRecord(TR_ValidateStackWalkerMaySkipFramesRecord)
         , _method(method)
         , _methodClass(methodClass)
@@ -1154,7 +1155,7 @@ struct StackWalkerMaySkipFramesRecord : public SymbolValidationRecord {
     /** The class containing the method */
     TR_OpaqueClassBlock *_methodClass;
     /** Whether the stack walker may skip frames for this method */
-    bool _skipFrames;
+    TR_YesNoMaybe _skipFrames;
 };
 
 /**
@@ -1948,7 +1949,7 @@ public:
      * @return true if record was added, false otherwise
      */
     bool addStackWalkerMaySkipFramesRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass,
-        bool skipFrames);
+        TR_YesNoMaybe skipFrames);
 
     /**
      * @brief Add a class-info-is-initialized validation record
@@ -2258,7 +2259,8 @@ public:
      * @param couldSkipFrames Whether the stack walker could skip frames
      * @return true if validation succeeds, false otherwise
      */
-    bool validateStackWalkerMaySkipFramesRecord(uint16_t methodID, uint16_t methodClassID, bool couldSkipFrames);
+    bool validateStackWalkerMaySkipFramesRecord(uint16_t methodID, uint16_t methodClassID,
+        TR_YesNoMaybe couldSkipFrames);
 
     /**
      * @brief Validate a class-info-is-initialized record

@@ -985,7 +985,7 @@ bool TR::SymbolValidationManager::addHandleMethodFromCPIndex(TR_OpaqueMethodBloc
 }
 
 bool TR::SymbolValidationManager::addStackWalkerMaySkipFramesRecord(TR_OpaqueMethodBlock *method,
-    TR_OpaqueClassBlock *methodClass, bool skipFrames)
+    TR_OpaqueClassBlock *methodClass, TR_YesNoMaybe skipFrames)
 {
     if (!method || !methodClass)
         return false;
@@ -1565,12 +1565,12 @@ bool TR::SymbolValidationManager::validateHandleMethodFromCPIndex(uint16_t metho
 }
 
 bool TR::SymbolValidationManager::validateStackWalkerMaySkipFramesRecord(uint16_t methodID, uint16_t methodClassID,
-    bool couldSkipFrames)
+    TR_YesNoMaybe couldSkipFrames)
 {
     TR_OpaqueMethodBlock *method = getMethodFromID(methodID);
     TR_OpaqueClassBlock *methodClass = getClassFromID(methodClassID);
 
-    bool canSkipFrames = _fej9->stackWalkerMaySkipFrames(method, methodClass);
+    TR_YesNoMaybe canSkipFrames = _fej9->stackWalkerMaySkipFrames(method, methodClass);
 
     return (canSkipFrames == couldSkipFrames);
 }
@@ -2092,7 +2092,7 @@ void TR::StackWalkerMaySkipFramesRecord::printFields()
     log->printf("\t_method=0x%p\n", _method);
     log->printf("\t_methodClass=0x%p\n", _methodClass);
     printClass(_methodClass);
-    log->printf("\t_skipFrames=%sp\n", _skipFrames ? "true" : "false");
+    log->printf("\t_skipFrames=%d\n", _skipFrames);
 }
 
 bool TR::ClassInfoIsInitialized::isLessThanWithinKind(SymbolValidationRecord *other)

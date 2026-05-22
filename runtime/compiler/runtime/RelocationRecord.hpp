@@ -2081,8 +2081,8 @@ public:
     void setMethodClassID(TR_RelocationTarget *reloTarget, uint16_t methodClassID);
     uint16_t methodClassID(TR_RelocationTarget *reloTarget);
 
-    void setSkipFrames(TR_RelocationTarget *reloTarget, bool skipFrames);
-    bool skipFrames(TR_RelocationTarget *reloTarget);
+    void setSkipFrames(TR_RelocationTarget *reloTarget, TR_YesNoMaybe skipFrames);
+    TR_YesNoMaybe skipFrames(TR_RelocationTarget *reloTarget);
 };
 
 class TR_RelocationRecordValidateClassInfoIsInitialized : public TR_RelocationRecord {

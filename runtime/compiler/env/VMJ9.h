@@ -361,7 +361,7 @@ public:
     // Not implemented
     virtual TR_ResolvedMethod *getObjectNewInstanceImplMethod(TR_Memory *) { return 0; }
 
-    virtual bool stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass) = 0;
+    virtual TR_YesNoMaybe stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass) = 0;
 
     virtual bool supportsEmbeddedHeapBounds() { return true; }
 
@@ -1748,7 +1748,7 @@ public:
      *         - otherwise, \c callNode is returned.
      */
     virtual TR::Node *inlineNativeCall(TR::Compilation *comp, TR::TreeTop *callNodeTreeTop, TR::Node *callNode);
-    virtual bool transformJlrMethodInvoke(J9Method *callerMethod, J9Class *callerClass);
+    virtual TR_YesNoMaybe transformJlrMethodInvoke(J9Method *callerMethod, J9Class *callerClass);
     virtual TR_OpaqueClassBlock *getClassOfMethod(TR_OpaqueMethodBlock *method);
     virtual int32_t getObjectAlignmentInBytes();
 
@@ -1794,7 +1794,7 @@ public:
     virtual TR_YesNoMaybe isInstanceOf(TR_OpaqueClassBlock *instanceClass, TR_OpaqueClassBlock *castClass,
         bool instanceIsFixed, bool castIsFixed = true, bool optimizeForAOT = false);
 
-    virtual bool stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass);
+    virtual TR_YesNoMaybe stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass);
 
     virtual TR_OpaqueClassBlock *getSuperClass(TR_OpaqueClassBlock *classPointer);
     virtual bool isSameOrSuperClass(J9Class *superClass, J9Class *subClass);
@@ -1900,7 +1900,7 @@ public:
 
     virtual bool isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT = false);
 
-    virtual bool stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass);
+    virtual TR_YesNoMaybe stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass);
 
     virtual bool isMethodTracingEnabled(TR_OpaqueMethodBlock *method);
     virtual bool traceableMethodsCanBeInlined();
