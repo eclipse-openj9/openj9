@@ -183,7 +183,7 @@
 		<saveoutput regex="no" type="required" saveName="vlineAddr" splitIndex="1" splitBy="vline = !fj9object " showMatch="yes">vline = !fj9object 0x</saveoutput>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
-	
+
 	<test id="Run !flatobject $vlineAddr$ to show the field vline of IdentityClassWithVolatileValueTypeFields. Make sure it has the correct values">
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core $DUMPFILE$</arg>
@@ -202,7 +202,7 @@
 		<saveoutput regex="no" type="required" saveName="DUMPFILE" splitIndex="1" splitBy="System dump written to ">System dump written to </saveoutput>
 		<output regex="no" type="failure">Exception caught!</output>
 	</test>
-	
+
 	<test id="Run !threads on nocompressedrefs core">
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core $DUMPFILE$</arg>
@@ -224,7 +224,7 @@
 		<saveoutput regex="no" type="required" saveName="objectAddr" splitIndex="1" splitBy="= " showMatch="yes">I-Slot: a0[0x</saveoutput>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
-	
+
 	<test id="Run !j9object $objectAddr$ to display container array contents on nocompressedrefs core">
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core $DUMPFILE$</arg>
@@ -237,7 +237,7 @@
 		<saveoutput regex="no" type="required" saveName="valueAddr1" splitIndex="1" splitBy="= !j9object " showMatch="yes">[3] = !fj9object 0x</saveoutput>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
-	
+
 	<test id="Run !j9object $valueAddr1$ to show the fields are all at 8 bytes aligned offsets on nocompressedrefs core">
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core $DUMPFILE$</arg>
