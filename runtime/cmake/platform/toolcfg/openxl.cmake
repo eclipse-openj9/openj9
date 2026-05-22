@@ -29,7 +29,7 @@ list(APPEND OMR_PLATFORM_COMPILE_OPTIONS
 list(APPEND OMR_PLATFORM_CXX_COMPILE_OPTIONS -fno-rtti)
 
 if(OMR_OS_ZOS)
-	list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -gdwarf-5 -gsplit-dwarf -fno-eliminate-unused-debug-types)
+	list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -gdwarf-5 -gsplit-dwarf)
 endif()
 
 # OMR_PLATFORM_CXX_COMPILE_OPTIONS get applied to JIT code (which needs exceptions),
