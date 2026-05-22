@@ -29,9 +29,6 @@
 
 extern "C" {
 
-J9_DECLARE_CONSTANT_UTF8(jfrInternalEventClassUTF8, "jdk/internal/event/Event");
-J9_DECLARE_CONSTANT_UTF8(jfrEventClassUTF8, "jdk/jfr/Event");
-
 /* Make sure these logging levels lineup with jdk/jfr/internal/LogLevel.java */
 #define LOG_LEVEL_TRACE 1
 #define LOG_LEVEL_DEBUG 2
@@ -347,33 +344,12 @@ jboolean JNICALL
 Java_jdk_jfr_internal_JVM_createJFR(JNIEnv *env, jobject obj, jboolean simulateFailure)
 {
 	jboolean rc = JNI_TRUE;
-	J9VMThread *currentThread = (J9VMThread *)env;
-	J9JavaVM *vm = currentThread->javaVM;
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	J9Class *jfrInternalEventClass = NULL;
-	J9Class *jfrEventClass = NULL;
 
 	if (simulateFailure) {
 		rc = JNI_FALSE;
 		goto done;
 	}
 
-	vmFuncs->internalEnterVMFromJNI(currentThread);
-	jfrInternalEventClass = vmFuncs->internalFindClassUTF8(currentThread, (U_8 *)J9UTF8_DATA(&jfrInternalEventClassUTF8), J9UTF8_LENGTH(&jfrInternalEventClassUTF8), vm->systemClassLoader, 0);
-	jfrEventClass = vmFuncs->internalFindClassUTF8(currentThread, (U_8 *)J9UTF8_DATA(&jfrEventClassUTF8), J9UTF8_LENGTH(&jfrEventClassUTF8), vm->systemClassLoader, 0);
-
-	if ((NULL != jfrInternalEventClass) && (NULL != jfrEventClass)) {
-		vm->jfrState.jfrInternalEventClassRef = (jclass) vmFuncs->j9jni_createGlobalRef(env, jfrInternalEventClass->classObject, FALSE);
-		vm->jfrState.jfrEventClassRef = (jclass) vmFuncs->j9jni_createGlobalRef(env, jfrEventClass->classObject, FALSE);
-	}
-	vmFuncs->internalExitVMToJNI(currentThread);
-
-	if ((NULL == vm->jfrState.jfrEventClassRef) || (NULL == vm->jfrState.jfrInternalEventClassRef)) {
-		rc = JNI_FALSE;
-		goto done;
-	}
-
-	vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_ENABLE_JFR_CLASSLOAD_TRANSFORM;
 done:
 	return rc;
 }
@@ -382,18 +358,6 @@ jboolean JNICALL
 Java_jdk_jfr_internal_JVM_destroyJFR(JNIEnv *env, jobject obj)
 {
 	jboolean rc = JNI_TRUE;
-	J9VMThread *currentThread = (J9VMThread *)env;
-	J9JavaVM *vm = currentThread->javaVM;
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-
-	vm->extendedRuntimeFlags3 &= ~J9_EXTENDED_RUNTIME3_ENABLE_JFR_CLASSLOAD_TRANSFORM;
-
-	vmFuncs->internalEnterVMFromJNI(currentThread);
-	vmFuncs->j9jni_deleteGlobalRef(env, vm->jfrState.jfrEventClassRef, FALSE);
-	vmFuncs->j9jni_deleteGlobalRef(env, vm->jfrState.jfrInternalEventClassRef, FALSE);
-	vm->jfrState.jfrEventClassRef = NULL;
-	vm->jfrState.jfrInternalEventClassRef = NULL;
-	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return rc;
 }

@@ -158,7 +158,8 @@ internalDefineClass(
 			/* CTM is already released in this case. */
 			return NULL;
 		} else if (NULL != superClass) {
-			if (isSameOrSuperClassOf(J9VMJAVALANGCLASS_VMREF(vmThread, J9_JNI_UNWRAP_REFERENCE(vm->jfrState.jfrInternalEventClassRef)), superClass)) {
+			J9Class *internalEventClass = J9VMJAVALANGCLASS_VMREF(vmThread, J9_JNI_UNWRAP_REFERENCE(vm->jfrState.jfrInternalEventClassRef));
+			if (isSameOrSuperClassOf(internalEventClass, superClass)) {
 				U_8* jfrModifiedBytes = NULL;
 				UDATA jfrModifiedBytesLength = 0;
 				omrthread_monitor_exit(vm->classTableMutex);
