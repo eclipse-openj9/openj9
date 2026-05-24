@@ -228,8 +228,7 @@ ppc64le_linux:
     build: 'ci.role.build && hw.arch.ppc64le && sw.tool.docker'
     docker_image: 'ghcr.io/adoptium/adoptium_build_image:centos7'
   build_env:
-    vars:
-      default: 'CC=/usr/local/gcc14/bin/gcc-14.2 CXX=/usr/local/gcc14/bin/g++-14.2'
+    vars: 'CC=/usr/local/gcc14/bin/gcc-14.2 CXX=/usr/local/gcc14/bin/g++-14.2'
 #========================================#
 # Linux PPCLE 64bits /w JITSERVER
 #========================================#
@@ -318,8 +317,7 @@ x86-64_linux:
       default: 'ci.role.build && hw.arch.x86 && sw.tool.docker'
     docker_image: 'ghcr.io/adoptium/adoptium_build_image:centos7'
   build_env:
-    vars:
-      default: 'CC=/usr/local/gcc14/bin/gcc-14.2 CXX=/usr/local/gcc14/bin/g++-14.2'
+    vars: 'CC=/usr/local/gcc14/bin/gcc-14.2 CXX=/usr/local/gcc14/bin/g++-14.2'
   extra_test_labels:
     default: '!sw.os.cent.6'
 #========================================#
@@ -343,8 +341,7 @@ aarch64_linux:
     build: 'ci.role.build && hw.arch.aarch64 && sw.tool.docker'
     docker_image: 'ghcr.io/adoptium/adoptium_build_image:centos7'
   build_env:
-    vars:
-      default: 'CC=/usr/local/gcc10/bin/gcc-10.3 CXX=/usr/local/gcc10/bin/g++-10.3'
+    vars: 'CC=/usr/local/gcc14/bin/gcc-14.2 CXX=/usr/local/gcc14/bin/g++-14.2'
   fail_pattern: 'IOException caught during compilation:'
 #========================================#
 # Linux Aarch 64bits /w JITSERVER
@@ -548,10 +545,3 @@ s390x_linux_valhalla:
   extends: ['s390x_linux', 'valhalla']
 s390x_linux_vt_standard:
   extends: ['s390x_linux', 'valhalla_standard']
-#========================================#
-# Linux Aarch64 64bits compiled with GCC 11
-#========================================#
-aarch64_linux_gcc11:
-  extends: ['aarch64_linux']
-  build_env:
-    vars: 'CC=/usr/local/gcc11/bin/gcc-11.2 CXX=/usr/local/gcc11/bin/g++-11.2 LD_LIBRARY_PATH=/usr/local/gcc11/lib64:/usr/local/gcc11/lib'
