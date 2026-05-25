@@ -34,6 +34,7 @@
 #include "vm_internal.h"
 #include "ut_j9vm.h"
 #include "BufferWriter.hpp"
+#include "JFRTypeMappings.hpp"
 #include "JFRUtils.hpp"
 #include "ObjectAccessBarrierAPI.hpp"
 #include "VMHelpers.hpp"
@@ -1163,55 +1164,55 @@ public:
 
 		while (NULL != event) {
 			switch (event->eventType) {
-			case J9JFR_EVENT_TYPE_EXECUTION_SAMPLE:
+			case JfrExecutionSampleEvent:
 				addExecutionSampleEntry((J9JFRExecutionSample *)event);
 				break;
-			case J9JFR_EVENT_TYPE_THREAD_START:
+			case JfrThreadStartEvent:
 				addThreadStartEntry((J9JFRThreadStart *)event);
 				break;
-			case J9JFR_EVENT_TYPE_THREAD_END:
+			case JfrThreadEndEvent:
 				addThreadEndEntry((J9JFREvent *)event);
 				break;
 			case J9JFR_EVENT_TYPE_THREAD_SLEEP:
 				addThreadSleepEntry((J9JFRThreadSlept *)event);
 				break;
-			case J9JFR_EVENT_TYPE_OBJECT_WAIT:
+			case JfrJavaMonitorWaitEvent:
 				addMonitorWaitEntry((J9JFRMonitorWaited *)event);
 				break;
-			case J9JFR_EVENT_TYPE_MONITOR_ENTER:
+			case JfrJavaMonitorEnterEvent:
 				addMonitorEnterEntry((J9JFRMonitorEntered *)event);
 				break;
-			case J9JFR_EVENT_TYPE_THREAD_PARK:
+			case JfrThreadParkEvent:
 				addThreadParkEntry((J9JFRThreadParked *)event);
 				break;
-			case J9JFR_EVENT_TYPE_CPU_LOAD:
+			case JfrCPULoadEvent:
 				addCPULoadEntry((J9JFRCPULoad *)event);
 				break;
-			case J9JFR_EVENT_TYPE_THREAD_CPU_LOAD:
+			case JfrThreadCPULoadEvent:
 				addThreadCPULoadEntry((J9JFRThreadCPULoad *)event);
 				break;
-			case J9JFR_EVENT_TYPE_CLASS_LOADING_STATISTICS:
+			case JfrClassLoadingStatisticsEvent:
 				addClassLoadingStatisticsEntry((J9JFRClassLoadingStatistics *)event);
 				break;
-			case J9JFR_EVENT_TYPE_THREAD_CONTEXT_SWITCH_RATE:
+			case JfrThreadContextSwitchRateEvent:
 				addThreadContextSwitchRateEntry((J9JFRThreadContextSwitchRate *)event);
 				break;
-			case J9JFR_EVENT_TYPE_THREAD_STATISTICS:
+			case JfrJavaThreadStatisticsEvent:
 				addThreadStatisticsEntry((J9JFRThreadStatistics *)event);
 				break;
-			case J9JFR_EVENT_TYPE_SYSTEM_GC:
+			case JfrSystemGCEvent:
 				addSystemGCEntry((J9JFRSystemGC *)event);
 				break;
-			case J9JFR_EVENT_TYPE_OLD_GC_ENTRY:
+			case JfrOldGarbageCollectionEvent:
 				addOldGarbageCollectionEntry((J9JFROldGarbageCollection *)event);
 				break;
-			case J9JFR_EVENT_TYPE_YOUNG_GC_ENTRY:
+			case JfrYoungGarbageCollectionEvent:
 				addYoungGarbageCollectionEntry((J9JFRYoungGarbageCollection *)event);
 				break;
-			case J9JFR_EVENT_TYPE_GARBAGE_COLLECTION_ENTRY:
+			case JfrGarbageCollectionEvent:
 				addGarbageCollectionEntry((J9JFRGarbageCollection *)event);
 				break;
-			case J9JFR_EVENT_TYPE_GC_HEAP_SUMMARY_ENTRY:
+			case JfrGCHeapSummaryEvent:
 				addGCHeapSummaryEntry((J9JFRGCHeapSummary *)event);
 				break;
 			default:

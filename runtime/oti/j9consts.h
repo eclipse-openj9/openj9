@@ -977,7 +977,10 @@ extern "C" {
 #define J9VM_STACK_FRAME_NATIVE 3
 
 /* JFR event types. */
-
+#if JAVA_SPEC_VERSION >= 17
+/* This event is no longer a VM event in JDK21+ so we will remove it in JFRv2 in the future. */
+#define J9JFR_EVENT_TYPE_THREAD_SLEEP 10000
+#elif /* JAVA_SPEC_VERSION >= 17 */
 #define J9JFR_EVENT_TYPE_EXECUTION_SAMPLE 0
 #define J9JFR_EVENT_TYPE_THREAD_START 1
 #define J9JFR_EVENT_TYPE_THREAD_END 2
@@ -995,6 +998,7 @@ extern "C" {
 #define J9JFR_EVENT_TYPE_YOUNG_GC_ENTRY 14
 #define J9JFR_EVENT_TYPE_GARBAGE_COLLECTION_ENTRY 15
 #define J9JFR_EVENT_TYPE_GC_HEAP_SUMMARY_ENTRY 16
+#endif /* JAVA_SPEC_VERSION >= 17 */
 
 /* JFR thread states. */
 
