@@ -36,11 +36,23 @@ objectMonitorExit(J9VMThread* vmStruct, j9object_t object)
 	IDATA rc = J9THREAD_ILLEGAL_MONITOR_STATE;
 	j9objectmonitor_t *lockEA = NULL;
 	j9objectmonitor_t lock = 0;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	J9Class *clazz = NULL;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 	Assert_VM_true(vmStruct != NULL);
 	Assert_VM_true(J9_ARE_NO_BITS_SET((UDATA)vmStruct, OBJECT_HEADER_LOCK_BITS_MASK));
 
 	Trc_VM_objectMonitorExit_Entry(vmStruct, object);
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	/* There is a test that calls monitorExit without monitorEnter. */
+	clazz = J9OBJECT_CLAZZ(vmStruct, object);
+	if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
+		Trc_VM_objectMonitorExit_Exit_ValueType(vmStruct, object);
+		goto done;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 	if (!LN_HAS_LOCKWORD(vmStruct, object)) {
 		J9ObjectMonitor *objectMonitor = NULL;

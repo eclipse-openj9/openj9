@@ -174,7 +174,14 @@ done:
 		bool notify = false;
 		omrthread_monitor_t monitor = (omrthread_monitor_t)(UDATA)1; // invalid but non-NULL value
 		j9objectmonitor_t lock = 0;
-		j9objectmonitor_t *lockEA = inlineGetLockAddress(currentThread, object);
+		j9objectmonitor_t *lockEA = NULL;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		J9Class *clazz = J9OBJECT_CLAZZ(currentThread, object);
+		if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
+			goto done;
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		lockEA = inlineGetLockAddress(currentThread, object);
 		if (NULL == lockEA) {
 			goto done;
 		}
