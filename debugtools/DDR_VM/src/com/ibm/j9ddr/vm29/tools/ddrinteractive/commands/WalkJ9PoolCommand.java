@@ -35,79 +35,113 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9PoolPointer;
 
 /**
- * 
- * @author fkaraman
- * 
- * Implementation of DDR extension !walkj9pool
+ * Implementation of DDR extension !walkj9pool.
  *
+ * This extension takes a J9Pool address and an optional type argument,
+ * and prints the address of each element in the pool as a runnable DDR command.
+ * The type argument is used to derive the DDR command prefix to prepend to each
+ * element's address. If not provided, the default DDR command prefix is "!j9x".
  */
-public class WalkJ9PoolCommand extends Command 
+public class WalkJ9PoolCommand extends Command
 {
-	private static final String nl = System.getProperty("line.separator");
-	
+	private static final String POINTER_MARKER = "*";
+
 	/**
 	 * Constructor
 	 */
 	public WalkJ9PoolCommand()
 	{
-		addCommand("walkj9pool", "<address>", "Walks the elements of J9Pool");
-	}
-	
-	 /**
-     * Prints the usage for the walkj9pool command.
-     *
-     * @param out  the PrintStream the usage statement prints to
-     */
-	private void printUsage (PrintStream out) {
-		out.println("walkj9pool <address> - Walks the elements of J9Pool");
+		addCommand("walkj9pool", "<address> [<type>]", "Walks the elements of a J9Pool");
 	}
 	
 	/**
+	 * Prints the usage for the walkj9pool command.
+	 *
+	 * @param out  the PrintStream the usage statement prints to
+	 */
+	private static void printUsage(PrintStream out)
+	{
+		out.println("walkj9pool <address> [<type>] - Walks the elements of a J9Pool");
+	}
+
+	/**
 	 * Run method for !walkj9pool extension.
-	 * 
+	 *
 	 * @param command  !walkj9pool
-	 * @param args	args passed by !walkj9pool extension.
-	 * @param context Context
-	 * @param out PrintStream
+	 * @param args     args passed by !walkj9pool extension
+	 * @param context  Context
+	 * @param out      PrintStream
 	 * @throws DDRInteractiveCommandException
 	 */
-	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException 
+	@Override
+	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException
 	{
-		if ((0 == args.length) ||
-				(1 < args.length)) {
+		if ((0 == args.length) || (2 < args.length)) {
 			printUsage(out);
+			return;
 		}
 
 		long address = CommandUtils.parsePointer(args[0], J9BuildFlags.J9VM_ENV_DATA64);
-		out.append("J9Pool at 0x" 
-				+ CommandUtils.longToBigInteger(address).toString(CommandUtils.RADIX_HEXADECIMAL) 
-				+ "\n{\n");
 
-		walkJ9Pool(address, out);
+		/* Set the default values. */
+		boolean isInline = true;
+		String ddrCommand = "!j9x";
 
-		out.append("}\n");
+		if (args.length >= 2) {
+			/* Parse the supplied type argument. */
+			String typeName = args[1].trim();
+			String baseTypeName;
+			if (typeName.endsWith(POINTER_MARKER)) {
+				isInline = false;
+				baseTypeName = typeName.substring(0, typeName.length() - POINTER_MARKER.length()).trim();
+			} else {
+				baseTypeName = typeName;
+			}
 
+			baseTypeName = baseTypeName.toLowerCase();
+
+			/*
+			 * Validate: check that the derived DDR command is actually registered in
+			 * this context. This catches typos (e.g. "j9claas*") early with a clear
+			 * error message.
+			 */
+			if (!context.getCommandNames().contains(baseTypeName)) {
+				throw new DDRInteractiveCommandException(
+						"Unrecognized type '" + typeName + "'");
+			}
+
+			ddrCommand = "!" + baseTypeName;
+		}
+
+		out.format("J9Pool at 0x%s%n{%n",
+				CommandUtils.longToBigInteger(address).toString(CommandUtils.RADIX_HEXADECIMAL));
+
+		walkJ9Pool(address, isInline, ddrCommand, out);
+
+		out.println("}");
 	}
 
 	/**
-	 * This method walks through each element in the pool and prints each elements' address.
-	 * Elements can be in the same puddle or different, and this method do not print puddle information.
-	 *   
-	 * @param address address of the pool
-	 * @param out print stream
+	 * Iterates all elements in the pool and prints each element's address
+	 * as a runnable DDR command.
+	 *
+	 * @param address     address of the pool
+	 * @param isInline    true if elements are stored inline in the pool slot;
+	 *                    false if the slot holds a pointer to the element
+	 * @param ddrCommand  DDR command prefix to prepend
+	 * @param out         print stream
 	 * @throws DDRInteractiveCommandException
 	 */
-	private void walkJ9Pool(long address, PrintStream out) throws DDRInteractiveCommandException {
+	private static void walkJ9Pool(long address, boolean isInline, String ddrCommand, PrintStream out) throws DDRInteractiveCommandException
+	{
 		try {
 			J9PoolPointer j9pool = J9PoolPointer.cast(address);
-			Pool pool = Pool.fromJ9Pool(j9pool, VoidPointer.class);
+			Pool pool = Pool.fromJ9Pool(j9pool, VoidPointer.class, isInline);
 
 			SlotIterator<VoidPointer> poolIterator = pool.iterator();
-			VoidPointer currentElement;
-			int i = 0;
-			while (poolIterator.hasNext()) {
-				currentElement = poolIterator.next();
-				out.format("\t[%d]\t=\t%s%n", i++, currentElement.getHexAddress());
+			for (int i = 0; poolIterator.hasNext(); i++) {
+				VoidPointer currentElement = poolIterator.next();
+				out.format("    [%d]    =    %s %s%n", i, ddrCommand, currentElement.getHexAddress());
 			}
 		} catch (CorruptDataException e) {
 			throw new DDRInteractiveCommandException("Either address is not a valid pool address or pool itself is corrupted.");

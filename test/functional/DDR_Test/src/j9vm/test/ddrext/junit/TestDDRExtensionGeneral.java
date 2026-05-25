@@ -765,10 +765,15 @@ public class TestDDRExtensionGeneral extends DDRExtTesterBase {
 		for (int i = 0; i < lines.length; i++) {
 			String currentLine = lines[i].trim();
 			if (currentLine.startsWith("[")) {
-				/* Line format: [N]  =  0x<address> */
+				/* Line format: [N]  =  [!<cmd>] 0x<address> */
 				String[] parts = currentLine.split("=");
 				if (1 < parts.length) {
-					String addr = parts[parts.length - 1].trim();
+					/* The field is prefixed with a DDR command (e.g. "!j9x 0x..."),
+					 * so take the last whitespace-delimited token to get just the hex address.
+					 */
+					String field = parts[parts.length - 1].trim();
+					String[] tokens = field.split("\\s+");
+					String addr = tokens[tokens.length - 1];
 					if (0 < addr.length()) {
 						addresses.add(addr);
 					}
