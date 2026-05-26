@@ -20,7 +20,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
-
 #ifndef jvm_h
 #define jvm_h
 
@@ -35,7 +34,6 @@ extern "C" {
 #endif
 #endif
 
-
 #ifdef WIN32
 
 #ifdef BOOLEAN
@@ -44,7 +42,7 @@ extern "C" {
 #undef BOOLEAN
 #endif /* BOOLEAN */
 
-/* Undefine the winsockapi because winsock2 defines it.  Removes warnings. */
+/* Undefine the winsockapi because winsock2 defines it (avoids warnings). */
 #if defined(_WINSOCKAPI_) && !defined(_WINSOCK2API_)
 #undef _WINSOCKAPI_
 #endif
@@ -62,7 +60,9 @@ extern "C" {
 #include <ctype.h>
 #include <unistd.h>
 #include <dirent.h>
+#if !defined(PATH_MAX)
 #define PATH_MAX 1023
+#endif /* !defined(PATH_MAX) */
 #endif /* J9ZOS390 */
 
 #include <errno.h>
@@ -75,7 +75,7 @@ extern "C" {
 #include <setjmp.h>
 
 #include <jni.h>
-#include "j9comp.h"		/* for definition */
+#include "j9comp.h" /* for definition */
 
 #if defined(J9UNIX)
 #ifndef __USE_LARGEFILE64
@@ -89,49 +89,49 @@ extern "C" {
 /* AIX has a #define for MAXPATHLEN in /usr/include/param.h which defines MAXPATHLEN as PATH_MAX+1 */
 #ifndef MAXPATHLEN
 #ifdef AIX
-#define MAXPATHLEN   (PATH_MAX+1)
+#define MAXPATHLEN (PATH_MAX + 1)
 #else
 #define MAXPATHLEN PATH_MAX
 #endif
 #endif
 
 #ifndef O_TEMPORARY
-#define O_TEMPORARY  0x10000	/* non-standard flag on Unix */
+#define O_TEMPORARY 0x10000 /* non-standard flag on Unix */
 #endif
 
 /*
  * JVM constants
  */
-#define JVM_INTERFACE_VERSION	4
+#define JVM_INTERFACE_VERSION 4
 
-#define JVM_MAXPATHLEN	PATH_MAX
+#define JVM_MAXPATHLEN PATH_MAX
 
-#define JVM_IO_OK	0
-#define JVM_IO_ERR	-1
-#define JVM_IO_INTR	-2
+#define JVM_IO_OK    0
+#define JVM_IO_ERR  -1
+#define JVM_IO_INTR -2
 
-#define JVM_O_RDWR	O_RDWR
-#define JVM_O_CREAT	O_CREAT
-#define JVM_O_EXCL	O_EXCL
-#define JVM_O_DELETE	O_TEMPORARY
+#define JVM_O_RDWR   O_RDWR
+#define JVM_O_CREAT  O_CREAT
+#define JVM_O_EXCL   O_EXCL
+#define JVM_O_DELETE O_TEMPORARY
 
-#define JVM_EEXIST	-100
+#define JVM_EEXIST  -100
 
-#define JVM_SIGTERM	SIGTERM
+#define JVM_SIGTERM SIGTERM
 
 #define J9_SIDECAR_MAX_OBJECT_INSPECTION_AGE 10000L
 
 #define JVM_ZIP_HOOK_STATE_OPEN 1
 #define JVM_ZIP_HOOK_STATE_CLOSED 2
 #define JVM_ZIP_HOOK_STATE_RESET 3
-	
+
 #if defined(J9UNIX)
 typedef sigjmp_buf* pre_block_t;
 #else /* defined(J9UNIX) */
 typedef void* pre_block_t;
 #endif /* defined(J9UNIX) */
 
-struct sockaddr;                                                                               /* suppress warning messages */
+struct sockaddr; /* suppress warning messages */
 
 #ifndef LAUNCHERS
 #define J9MALLOC_STRINGIFY(X) #X
@@ -152,110 +152,101 @@ struct sockaddr;                                                                
 /* ---------------- jvm.c ---------------- */
 
 /**
-* @brief
-* @param env
-* @param instr
-* @param outstr
-* @param outlen
-* @param encoding
-* @return jint
-*/
-jint 
+ * @brief
+ * @param env
+ * @param instr
+ * @param outstr
+ * @param outlen
+ * @param encoding
+ * @return jint
+ */
+jint
 GetStringPlatform(JNIEnv* env, jstring instr, char* outstr, jint outlen, const char* encoding);
 
-
 /**
-* @brief
-* @param env
-* @param instr
-* @param outlen
-* @param encoding
-* @return jint
-*/
-jint 
+ * @brief
+ * @param env
+ * @param instr
+ * @param outlen
+ * @param encoding
+ * @return jint
+ */
+jint
 GetStringPlatformLength(JNIEnv* env, jstring instr, jint* outlen, const char* encoding);
 
 /**
-* @brief
-* @param *dir
-* @param *file
-* @return int
-*/
+ * @brief
+ * @param *dir
+ * @param *file
+ * @return int
+ */
 int isFileInDir(char *dir, char *file);
 
 /**
-* @brief
-* @param stream
-* @param format
-* @param ...
-* @return int
-*/
+ * @brief
+ * @param stream
+ * @param format
+ * @param ...
+ * @return int
+ */
 int
 jio_fprintf(FILE * stream, const char * format, ...);
 
-
 /**
-* @brief
-* @param str
-* @param n
-* @param format
-* @param ...
-* @return int
-*/
+ * @brief
+ * @param str
+ * @param n
+ * @param format
+ * @param ...
+ * @return int
+ */
 int
 jio_snprintf(char * str, int n, const char * format, ...);
 
 struct sockaddr;
 
-
 /**
-* @brief
-* @param (*func)(void)
-* @return void
-*/
+ * @brief
+ * @param (*func)(void)
+ * @return void
+ */
 void JNICALL
 JVM_OnExit(void (*func)(void));
 
-
 /**
-* @brief
-* @param **pvm
-* @param **penv
-* @param *vm_args
-* @return jint
-*/
+ * @brief
+ * @param **pvm
+ * @param **penv
+ * @param *vm_args
+ * @return jint
+ */
 jint JNICALL
 JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args);
 
-
 /**
-* @brief
-* @param **vmBuf
-* @param bufLen
-* @param *nVMs
-* @return jint
-*/
+ * @brief
+ * @param **vmBuf
+ * @param bufLen
+ * @param *nVMs
+ * @return jint
+ */
 jint JNICALL
 JNI_GetCreatedJavaVMs(JavaVM **vmBuf, jsize bufLen, jsize *nVMs);
 
-
 /**
-* @brief
-* @param *vm_args
-* @return jint
-*/
+ * @brief
+ * @param *vm_args
+ * @return jint
+ */
 jint JNICALL
 JNI_GetDefaultJavaVMInitArgs(void *vm_args);
-
 
 /* JVM functions are prototyped in the redirector/forwarders.ftl file
  * which allows us to keep prototypes and forwarders in sync. */
 #include "generated.h"
 
 #ifdef __cplusplus
-}
+} /* extern "C" */
 #endif
 
-#endif     /* jvm_h */
-  
-
+#endif /* jvm_h */
