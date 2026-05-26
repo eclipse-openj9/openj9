@@ -364,7 +364,6 @@ VM_JFRConstantPoolTypes::getMethodEntry(J9ROMMethod *romMethod, J9Class *ramClas
 
 	entry = &entryBuffer;
 	entry->romMethod = romMethod;
-	_buildResult = OK;
 
 	entry = (MethodEntry *) hashTableFind(_methodTable, entry);
 	if (NULL != entry) {
@@ -418,7 +417,6 @@ VM_JFRConstantPoolTypes::getClassEntry(J9Class *clazz, bool shallow)
 
 	entry = &entryBuffer;
 	entry->clazz = clazz;
-	_buildResult = OK;
 
 	entry = (ClassEntry *) hashTableFind(_classTable, entry);
 	if (NULL != entry) {
@@ -481,7 +479,6 @@ VM_JFRConstantPoolTypes::addPackageEntry(J9Class *clazz)
 	PackageEntry entryBuffer = {0};
 
 	entry = &entryBuffer;
-	_buildResult = OK;
 
 	pkgID = hashPkgTableAt(clazz->classLoader, clazz->romClass);
 	entry->romClass = clazz->romClass;
@@ -572,7 +569,6 @@ VM_JFRConstantPoolTypes::addPackageEntry(J9Module *fromModule, J9Package *packag
 	NNSRP_SET(queryROMClass->className, pkgNameUTF8);
 
 	entry = &entryBuffer;
-	_buildResult = OK;
 
 	pkgID = hashPkgTableAt(_vm->systemClassLoader, queryROMClass);
 
@@ -634,7 +630,6 @@ VM_JFRConstantPoolTypes::addModuleEntry(J9Module *module)
 
 	entry = &entryBuffer;
 	entry->module = module;
-	_buildResult = OK;
 
 	if (NULL == entry->module) {
 		/* unnamed module */
@@ -695,7 +690,6 @@ VM_JFRConstantPoolTypes::addClassLoaderEntry(J9ClassLoader *classLoader, bool sh
 
 	entry = &entryBuffer;
 	entry->classLoader = classLoader;
-	_buildResult = OK;
 
 	entry = (ClassloaderEntry *) hashTableFind(_classLoaderTable, entry);
 	if (NULL != entry) {
@@ -757,7 +751,6 @@ VM_JFRConstantPoolTypes::getShallowClassEntry(J9Class *clazz)
 
 	entry = &entryBuffer;
 	entry->clazz = clazz;
-	_buildResult = OK;
 
 	entry = (ClassEntry *) hashTableFind(_classTable, entry);
 	if (NULL != entry) {
@@ -806,7 +799,6 @@ VM_JFRConstantPoolTypes::addStringUTF8Entry(J9UTF8 *string, bool free)
 
 	entry = &entryBuffer;
 	entry->string = string;
-	_buildResult = OK;
 
 	if (NULL == string) {
 		/* default null string */
@@ -873,7 +865,6 @@ VM_JFRConstantPoolTypes::addThreadEntry(J9VMThread *vmThread)
 
 	entry = &entryBuffer;
 	entry->vmThread = vmThread;
-	_buildResult = OK;
 	osThread = vmThread->osThread;
 #if JAVA_SPEC_VERSION >= 19
 	threadObject = vmThread->carrierThreadObject;
@@ -938,6 +929,54 @@ done:
 }
 
 U_32
+VM_JFRConstantPoolTypes::addNetworkInterfaceNameEntry(const char *networkInterfaceName)
+{
+	U_32 index = U_32_MAX;
+	NetworkInterfaceNameEntry *entry = NULL;
+	size_t nameLength = 0;
+
+	Assert_VM_notNull(networkInterfaceName);
+
+	/* Search through linked list for existing entry. */
+	entry = _firstNetworkInterfaceNameEntry;
+	while (NULL != entry) {
+		if (0 == strcmp(entry->networkInterfaceName, networkInterfaceName)) {
+			index = entry->index;
+			goto done;
+		}
+		entry = entry->next;
+	}
+
+	nameLength = strlen(networkInterfaceName);
+
+	/* Not found, create new entry. */
+	entry = (NetworkInterfaceNameEntry *)j9mem_allocate_memory(sizeof(*entry) + nameLength + 1, J9MEM_CATEGORY_JFR);
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	memset(entry, 0, sizeof(*entry));
+	memcpy(entry->networkInterfaceName, networkInterfaceName, nameLength + 1);
+	entry->index = _networkInterfaceNameCount;
+	_networkInterfaceNameCount += 1;
+
+	if (NULL == _firstNetworkInterfaceNameEntry) {
+		_firstNetworkInterfaceNameEntry = entry;
+	}
+
+	if (NULL != _previousNetworkInterfaceNameEntry) {
+		_previousNetworkInterfaceNameEntry->next = entry;
+	}
+	_previousNetworkInterfaceNameEntry = entry;
+
+	index = entry->index;
+
+done:
+	return index;
+}
+
+U_32
 VM_JFRConstantPoolTypes::addThreadGroupEntry(j9object_t threadGroup)
 {
 	U_32 index = U_32_MAX;
@@ -951,7 +990,6 @@ VM_JFRConstantPoolTypes::addThreadGroupEntry(j9object_t threadGroup)
 	}
 
 	entry->threadGroupName = J9VMJAVALANGTHREADGROUP_NAME(_currentThread, threadGroup);
-	_buildResult = OK;
 
 	entry = (ThreadGroupEntry *) hashTableFind(_threadGroupTable, entry);
 	if (NULL != entry) {
@@ -1009,7 +1047,6 @@ VM_JFRConstantPoolTypes::addStackTraceEntry(J9VMThread *vmThread, I_64 ticks, U_
 	entry = &entryBuffer;
 	entry->vmThread = vmThread;
 	entry->ticks = ticks;
-	_buildResult = OK;
 
 	entry = (StackTraceEntry *) hashTableFind(_stackTraceTable, entry);
 	if (NULL != entry) {
@@ -1491,6 +1528,27 @@ done:
 }
 
 void
+VM_JFRConstantPoolTypes::addNetworkUtilizationEntry(J9JFRNetworkUtilization *networkUtilizationData)
+{
+	NetworkUtilizationEntry *entry = (NetworkUtilizationEntry *)pool_newElement(_networkUtilizationTable);
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = networkUtilizationData->startTicks;
+	entry->networkInterfaceIndex = addNetworkInterfaceNameEntry(networkUtilizationData->networkInterface);
+	entry->readRate = networkUtilizationData->readRate;
+	entry->writeRate = networkUtilizationData->writeRate;
+
+	_networkUtilizationCount += 1;
+
+done:
+	return;
+}
+
+void
 VM_JFRConstantPoolTypes::printTables()
 {
 	j9tty_printf(PORTLIB, "--------------- StringUTF8Table ---------------\n");
@@ -1609,5 +1667,16 @@ VM_JFRConstantPoolTypes::freeThreadGroupNameEntries(void *entry, void *userData)
 	return FALSE;
 }
 
+void
+VM_JFRConstantPoolTypes::freeNetworkInterfaceNames()
+{
+	NetworkInterfaceNameEntry *entry = _firstNetworkInterfaceNameEntry;
+
+	while (NULL != entry) {
+		NetworkInterfaceNameEntry *next = entry->next;
+		j9mem_free_memory(entry);
+		entry = next;
+	}
+}
 
 #endif /* defined(J9VM_OPT_JFR) */

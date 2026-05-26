@@ -137,6 +137,9 @@ jfrEventSize(J9JFREvent *jfrEvent)
 	case J9JFR_EVENT_TYPE_GC_HEAP_SUMMARY_ENTRY:
 		size = sizeof(J9JFRGCHeapSummary);
 		break;
+	case J9JFR_EVENT_TYPE_NETWORKUTILIZATION:
+		size = sizeof(J9JFRNetworkUtilization);
+		break;
 	default:
 		Assert_VM_unreachable();
 		break;
@@ -975,6 +978,10 @@ initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 		vm->jfrState.prevContextSwitches = 0;
 	}
 
+	/* Initialize network interface stats linked list. */
+	vm->jfrState.prevNetworkTimestamp = -1;
+	vm->jfrState.networkInterfaceStatsList = NULL;
+
 	if (omrthread_monitor_init_with_name(&vm->jfrBufferMutex, 0, "JFR global buffer mutex")) {
 		goto fail;
 	}
@@ -1084,6 +1091,14 @@ tearDownJFR(J9JavaVM *vm)
 		omrthread_monitor_destroy(vm->jfrState.isConstantEventsInitializedMutex);
 		vm->jfrState.isConstantEventsInitializedMutex = NULL;
 	}
+	/* Clean up network interface stats linked list. */
+	JFRNetworkInterfaceStats *current = (JFRNetworkInterfaceStats *)vm->jfrState.networkInterfaceStatsList;
+	while (NULL != current) {
+		JFRNetworkInterfaceStats *next = current->next;
+		j9mem_free_memory(current);
+		current = next;
+	}
+	vm->jfrState.networkInterfaceStatsList = NULL;
 	j9mem_free_memory(vm->jfrState.metaDataBlobFile);
 	vm->jfrState.metaDataBlobFile = NULL;
 	vm->jfrState.metaDataBlobFileSize = 0;
@@ -1281,6 +1296,96 @@ jfrThreadContextSwitchRate(J9VMThread *currentThread)
 	}
 }
 
+typedef struct NetworkCallbackData {
+	J9VMThread *currentThread;
+	int64_t currentTime;
+	int64_t prevTimestamp;
+} NetworkCallbackData;
+
+static JFRNetworkInterfaceStats *
+findNetworkInterfaceStats(JFRNetworkInterfaceStats *head, const char *interfaceName)
+{
+	JFRNetworkInterfaceStats *current = head;
+	while (NULL != current) {
+		if (0 == strcmp(current->interfaceName, interfaceName)) {
+			return current;
+		}
+		current = current->next;
+	}
+	return NULL;
+}
+
+static uintptr_t
+networkStatsCallback(const char *interfaceName, uint64_t rxBytes, uint64_t txBytes, void *userData)
+{
+	NetworkCallbackData *callbackData = (NetworkCallbackData *)userData;
+	J9VMThread *currentThread = callbackData->currentThread;
+	J9JavaVM *vm = currentThread->javaVM;
+	JFRState *jfrState = &vm->jfrState;
+	PORT_ACCESS_FROM_VMC(currentThread);
+
+	/* Look up previous stats for this interface in linked list. */
+	JFRNetworkInterfaceStats *prevStats = findNetworkInterfaceStats((JFRNetworkInterfaceStats *)jfrState->networkInterfaceStatsList, interfaceName);
+
+	J9JFRNetworkUtilization *jfrEvent = (J9JFRNetworkUtilization *)reserveBuffer(currentThread, sizeof(J9JFRNetworkUtilization));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_NETWORKUTILIZATION);
+
+		/* Copy interface name to char array. */
+		strncpy(jfrEvent->networkInterface, interfaceName, sizeof(jfrEvent->networkInterface) - 1);
+		jfrEvent->networkInterface[sizeof(jfrEvent->networkInterface) - 1] = '\0';
+
+		if ((NULL == prevStats) || (-1 == callbackData->prevTimestamp) || (callbackData->currentTime == callbackData->prevTimestamp)) {
+			jfrEvent->readRate = 0;
+			jfrEvent->writeRate = 0;
+		} else {
+			int64_t timeDelta = callbackData->currentTime - callbackData->prevTimestamp;
+			/* Calculate bytes per second. */
+			jfrEvent->readRate = I_64((rxBytes - prevStats->prevReadBytes) * 1e9 / timeDelta);
+			jfrEvent->writeRate = I_64((txBytes - prevStats->prevWriteBytes) * 1e9 / timeDelta);
+		}
+
+		/* Update or create stats entry for this interface. */
+		if (NULL == prevStats) {
+			prevStats = (JFRNetworkInterfaceStats *)j9mem_allocate_memory(sizeof(JFRNetworkInterfaceStats), J9MEM_CATEGORY_JFR);
+			if (NULL != prevStats) {
+				strncpy(prevStats->interfaceName, interfaceName, sizeof(prevStats->interfaceName) - 1);
+				prevStats->interfaceName[sizeof(prevStats->interfaceName) - 1] = '\0';
+				prevStats->prevReadBytes = 0;
+				prevStats->prevWriteBytes = 0;
+				/* Add to head of linked list. */
+				prevStats->next = (JFRNetworkInterfaceStats *)jfrState->networkInterfaceStatsList;
+				jfrState->networkInterfaceStatsList = prevStats;
+			}
+		}
+		if (NULL != prevStats) {
+			prevStats->prevReadBytes = rxBytes;
+			prevStats->prevWriteBytes = txBytes;
+		}
+	}
+
+	return 0; /* Continue enumeration. */
+}
+
+static void
+jfrNetworkUtilization(J9VMThread *currentThread)
+{
+	PORT_ACCESS_FROM_VMC(currentThread);
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+
+	JFRState *jfrState = &currentThread->javaVM->jfrState;
+	int64_t currentTime = j9time_nano_time();
+
+	NetworkCallbackData callbackData;
+	callbackData.currentThread = currentThread;
+	callbackData.currentTime = currentTime;
+	callbackData.prevTimestamp = jfrState->prevNetworkTimestamp;
+
+	omrnetwork_get_network_interfaces(networkStatsCallback, &callbackData);
+
+	jfrState->prevNetworkTimestamp = currentTime;
+}
+
 static void
 jfrThreadStatistics(J9VMThread *currentThread)
 {
@@ -1320,6 +1425,9 @@ jfrSamplingThreadProc(void *entryArg)
 				if (0 == (count % 1000)) { // 10 seconds
 					J9SignalAsyncEvent(vm, NULL, vm->jfrThreadCPULoadAsyncKey);
 					jfrThreadContextSwitchRate(currentThread);
+				}
+				if (0 == (count % 500)) { // 5 seconds
+					jfrNetworkUtilization(currentThread);
 				}
 				internalReleaseVMAccess(currentThread);
 				omrthread_monitor_enter(vm->jfrSamplerMutex);
