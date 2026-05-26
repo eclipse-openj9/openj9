@@ -2543,7 +2543,7 @@ raiseAssertion(UtThreadData **thread, UtModuleInfo *modInfo, uint32_t traceId)
  * in trcengine.c and set to be triggered on asserts by
  * the default settings in trcengine.c
  * See work item: 64106
- *    J9DMP_TRIGGER(vm, thr, J9RAS_DUMP_ON_TRACE_ASSERT, NULL);
+ *    J9DMP_TRIGGER(vm, thr, J9RAS_DUMP_ON_TRACE_ASSERT, NULL, FALSE);
  */
 	if (UT_GLOBAL(fatalassert))
 	{

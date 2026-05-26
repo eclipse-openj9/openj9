@@ -262,7 +262,7 @@ abortHandler(int sig, siginfo_t *siginfo, void *context)
 			}
 			Trc_dump_signal_pid(vmThread, "SIGABRT", eventData.siPid, eventData.detailData);
 #endif /* !defined(WIN32) */
-			rc = J9DMP_TRIGGER(cachedVM, vmThread, J9RAS_DUMP_ON_ABORT_SIGNAL, &eventData);
+			rc = J9DMP_TRIGGER(cachedVM, vmThread, J9RAS_DUMP_ON_ABORT_SIGNAL, &eventData, FALSE);
 			j9mem_free_memory(eventData.detailData);
 			if (OMR_ERROR_NONE == rc) {
 
@@ -1173,6 +1173,7 @@ pushDumpFacade(J9JavaVM *vm)
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 		queue->facade.criuReloadXDumpAgents = criuReloadXDumpAgents;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+		queue->facade.handleOutOfMemoryError = handleOutOfMemoryError;
 
 		/* Initialize default settings */
 		queue->settings = initDumpSettings(vm);

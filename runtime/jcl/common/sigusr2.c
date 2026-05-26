@@ -113,7 +113,7 @@ sigUsr2Handler(struct J9PortLibrary *portLibrary, void *userData)
 		Trc_JCL_signal_pid("SIGUSR2", eventData.siPid, eventData.detailData);
 	}
 
-	J9DMP_TRIGGER(vm, NULL, J9RAS_DUMP_ON_USER2_SIGNAL, &eventData);
+	J9DMP_TRIGGER(vm, NULL, J9RAS_DUMP_ON_USER2_SIGNAL, &eventData, FALSE);
 
 	/* Update cycle time only after finished dumps. */
 	lastDumpTime = j9time_hires_clock();

@@ -47,7 +47,7 @@
 
 #define RAS_NETWORK_WARNING_TIME 60000
 
-static omr_error_t primordialTriggerDumpAgents (struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData);
+static omr_error_t primordialTriggerDumpAgents (struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData, BOOLEAN earlyExecution);
 static omr_error_t primordialSeekDumpAgent (struct J9JavaVM *vm, struct J9RASdumpAgent **agentPtr, J9RASdumpFn dumpFn);
 static omr_error_t primordialInsertDumpAgent (struct J9JavaVM *vm, struct J9RASdumpAgent *agent);
 static omr_error_t primordialTriggerOneOffDump(struct J9JavaVM *vm, char *optionString, char *caller, char *fileName, size_t fileNameLength);
@@ -62,6 +62,7 @@ static omr_error_t primordialValidateDumpAgent(struct J9JavaVM *vm, struct J9RAS
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 static IDATA primordialCriuReloadXDumpAgents(struct J9JavaVM *vm, struct J9VMInitArgs *j9vm_args);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+static omr_error_t primordialHandleOutOfMemoryError(struct J9JavaVM *vm);
 
 void J9RASInitialize (J9JavaVM* javaVM);
 void J9RASShutdown (J9JavaVM* javaVM);
@@ -100,6 +101,7 @@ primordialDumpFacade = {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	primordialCriuReloadXDumpAgents,
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+	primordialHandleOutOfMemoryError,
 };
 
 static omr_error_t
@@ -114,6 +116,16 @@ primordialTriggerOneOffDump(struct J9JavaVM *vm, char *optionString, char *calle
 	}
 
 	return OMR_ERROR_INTERNAL;
+}
+
+static omr_error_t
+primordialHandleOutOfMemoryError(struct J9JavaVM *vm)
+{
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_VM_MISSING_DUMP_DLL_HANDLE_OUT_OF_MEMORY_ERROR, J9_RAS_DUMP_DLL_NAME);
+
+	return OMR_ERROR_NONE;
 }
 
 static omr_error_t
@@ -147,7 +159,7 @@ primordialSeekDumpAgent(struct J9JavaVM *vm, struct J9RASdumpAgent **agentPtr, J
 }
 
 static omr_error_t
-primordialTriggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData)
+primordialTriggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData, BOOLEAN earlyExecution)
 {
 	UDATA state = 0;
 	 

@@ -405,6 +405,15 @@ triggerOneOffDump(struct J9JavaVM *vm, char *optionString, char *caller, char *f
 
 
 /**
+ * Handle an OutOfMemoryError.
+ * 
+ * @param *vm VM pointer
+ */
+omr_error_t
+handleOutOfMemoryError(struct J9JavaVM *vm);
+
+
+/**
  * Query the settings of the dump agents.
  * 
  * @param *vm VM pointer
@@ -458,10 +467,11 @@ dumpLabel(struct J9JavaVM *vm, J9RASdumpAgent *agent, J9RASdumpContext *context,
 * @param *self
 * @param eventFlags
 * @param *eventData
+* @param earlyExecution
 * @return omr_error_t
 */
 omr_error_t
-triggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData);
+triggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData, BOOLEAN earlyExecution);
 
 
 /**

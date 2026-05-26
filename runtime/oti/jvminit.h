@@ -218,6 +218,7 @@ enum INIT_STAGE {
 #define VMOPT_NEEDS_JCL "_needs_jcl"
 #define VMOPT_J2SE_J9 "_j2se_j9"
 #define VMOPT_XFUTURE "-Xfuture"
+#define VMOPT_XDISABLEEARLYOOMDUMPS "-Xdisableearlyoomdumps"
 #define VMOPT_ALL "all"
 #define VMOPT_XSIGQUITTOFILE "-XsigquitToFile"
 #define VMOPT_XDEBUG "-Xdebug"

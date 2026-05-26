@@ -628,7 +628,7 @@ doConsoleDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 
 	/* Fatal dumps to stderr default to the old-style gpThreadDump */
 	if ( (context->eventFlags & J9RAS_DUMP_ON_GP_FAULT) && *label == '-' && FIND_DUMP_QUEUE(vm, queue) ) {
-		queue->oldFacade->triggerDumpAgents( vm, context->onThread, context->eventFlags, context->eventData );
+		queue->oldFacade->triggerDumpAgents( vm, context->onThread, context->eventFlags, context->eventData, FALSE );
 	} else {
 		J9VMThread *self = context->onThread;
 		if (label[0] == '-' && label[1] == '\0') {

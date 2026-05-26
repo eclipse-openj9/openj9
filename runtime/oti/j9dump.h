@@ -23,8 +23,8 @@
 #ifndef j9dump_h
 #define j9dump_h
 
-#define J9DMP_TRIGGER(vm, self, eventFlags, userData) \
-	(vm)->j9rasDumpFunctions->triggerDumpAgents(vm, self, eventFlags, userData)
+#define J9DMP_TRIGGER(vm, self, eventFlags, userData, earlyExecution) \
+	(vm)->j9rasDumpFunctions->triggerDumpAgents(vm, self, eventFlags, userData, earlyExecution)
 
 /* Rasdump Global storage block */
 typedef struct RasDumpGlobalStorage {
@@ -67,6 +67,7 @@ typedef struct J9RASdumpAgent {
 	UDATA requestMask;
 	UDATA prepState;
 	char* subFilter;
+	BOOLEAN executedEarly;
 } J9RASdumpAgent;
 
 /* Dump flags. Definitions must be simple so that DDR can process them. */
@@ -139,7 +140,7 @@ typedef struct J9RASdumpFunctions {
 	omr_error_t  (*insertDumpAgent)(struct J9JavaVM *vm, struct J9RASdumpAgent *agent) ;
 	omr_error_t  (*removeDumpAgent)(struct J9JavaVM *vm, struct J9RASdumpAgent *agent) ;
 	omr_error_t  (*seekDumpAgent)(struct J9JavaVM *vm, struct J9RASdumpAgent **agentPtr, J9RASdumpFn dumpFn) ;
-	omr_error_t  (*triggerDumpAgents)(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData) ;
+	omr_error_t  (*triggerDumpAgents)(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData, BOOLEAN earlyExecution) ;
 	omr_error_t  (*setDumpOption)(struct J9JavaVM *vm, char *optionString) ;
 	omr_error_t  (*resetDumpOptions)(struct J9JavaVM *vm) ;
 	omr_error_t  (*queryVmDump)(struct J9JavaVM *vm, int buffer_size, void* options_buffer, int* data_size) ;
@@ -150,6 +151,7 @@ typedef struct J9RASdumpFunctions {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	IDATA  (*criuReloadXDumpAgents)(struct J9JavaVM *vm, struct J9VMInitArgs *j9vm_args) ;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+	omr_error_t  (*handleOutOfMemoryError)(struct J9JavaVM *vm) ;
 } J9RASdumpFunctions;
 
 #endif /* j9dump_h */

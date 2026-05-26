@@ -127,7 +127,7 @@ sigQuitHandler(struct J9PortLibrary* portLibrary, void* userData)
 		Trc_JCL_signal_pid("SIGQUIT", eventData.siPid, eventData.detailData);
 	}
 
-	J9DMP_TRIGGER(vm, NULL, J9RAS_DUMP_ON_USER_SIGNAL, &eventData);
+	J9DMP_TRIGGER(vm, NULL, J9RAS_DUMP_ON_USER_SIGNAL, &eventData, FALSE);
 
 	/* Listeners to this event may deadlock, so run dumps first */
 	TRIGGER_J9HOOK_VM_USER_INTERRUPT(vm->hookInterface, vm);
