@@ -3154,8 +3154,7 @@ void TR_IProfiler::checkMethodHashTable()
                     J9UTF8_LENGTH(nameUTF8), J9UTF8_DATA(nameUTF8), J9UTF8_LENGTH(signatureUTF8),
                     J9UTF8_DATA(signatureUTF8));
                 fprintf(fout, "\t is %" OMR_PRIdPTR " bytecode long",
-                    J9_BYTECODE_END_FROM_ROM_METHOD(getOriginalROMMethod(method))
-                        - J9_BYTECODE_START_FROM_ROM_METHOD(getOriginalROMMethod(method)));
+                    J9_BYTECODE_SIZE_FROM_ROM_METHOD(getOriginalROMMethod(method)));
             }
             fprintf(fout, "\n");
             fflush(fout);

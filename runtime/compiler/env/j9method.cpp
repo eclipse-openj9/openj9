@@ -5087,10 +5087,7 @@ U_16 TR_ResolvedJ9Method::numberOfPendingPushes()
 
 U_8 *TR_ResolvedJ9Method::bytecodeStart() { return J9_BYTECODE_START_FROM_ROM_METHOD(romMethod()); }
 
-U_32 TR_ResolvedJ9Method::maxBytecodeIndex()
-{
-    return (U_32)(J9_BYTECODE_END_FROM_ROM_METHOD(romMethod()) - bytecodeStart());
-}
+U_32 TR_ResolvedJ9Method::maxBytecodeIndex() { return (U_32)J9_BYTECODE_SIZE_FROM_ROM_METHOD(romMethod()); }
 
 void *TR_ResolvedJ9Method::ramConstantPool() { return literals(); }
 
