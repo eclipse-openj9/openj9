@@ -54,7 +54,6 @@ public class TestPrintStats02 extends TestUtils {
 	checkOutputContains("Current statistics for cache", "Did not find expected line of output 'Current statistics for cache'");
 	checkOutputContains("1:.*CLASSPATH","Expected to find a line in the printAllStats output relating to CLASSPATH");
 	
-	delayBeforeDestroyNonPersistent();
 	runDestroyAllCaches();
   }
 }
