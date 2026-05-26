@@ -2117,7 +2117,7 @@ TR::Register *J9::X86::PrivateLinkage::buildCallPostconditions(TR::X86CallSite &
     TR::RegisterDependencyGroup *group = dependencies->getPostConditions();
     for (int i = 0; i < dependencies->getAddCursorForPost(); i++) {
         TR::RegisterDependency *dep = group->getRegisterDependency(i);
-        TR_ASSERT(dep->getRealRegister() <= TR::RealRegister::LastAssignableGPR,
+        TR_ASSERT(dep->getRealRegister() <= machine()->getLastAssignableGPR(),
             "Currently, only GPRs can be added to call postcondition before buildCallPostconditions; found %s",
             cg()->getDebug()->getRealRegisterName(dep->getRealRegister() - 1));
         gprsAlreadyPresent |= TR::RealRegister::gprMask((TR::RealRegister::RegNum)dep->getRealRegister());
@@ -2136,7 +2136,7 @@ TR::Register *J9::X86::PrivateLinkage::buildCallPostconditions(TR::X86CallSite &
             TR::RegisterDependency *preCondition = preConditions->getRegisterDependency(i);
             TR::RealRegister::RegNum regIndex = preCondition->getRealRegister();
 
-            if (regIndex <= TR::RealRegister::LastAssignableGPR
+            if (regIndex <= machine()->getLastAssignableGPR()
                 && (gprsAlreadyPresent & TR::RealRegister::gprMask(regIndex)))
                 continue;
 
@@ -2151,7 +2151,7 @@ TR::Register *J9::X86::PrivateLinkage::buildCallPostconditions(TR::X86CallSite &
         //
         TR::RealRegister::RegNum regIndex;
 
-        for (regIndex = TR::RealRegister::FirstGPR; regIndex <= TR::RealRegister::LastAssignableGPR;
+        for (regIndex = machine()->getFirstGPR(); regIndex <= machine()->getLastAssignableGPR();
              regIndex = (TR::RealRegister::RegNum)(regIndex + 1)) {
             // Skip non-assignable registers
             //
@@ -2176,7 +2176,7 @@ TR::Register *J9::X86::PrivateLinkage::buildCallPostconditions(TR::X86CallSite &
 
         if (!liveFPRs || liveFPRs->getNumberOfLiveRegisters() > 0 || !liveVRFs
             || liveVRFs->getNumberOfLiveRegisters() > 0) {
-            for (regIndex = TR::RealRegister::FirstXMMR; regIndex <= TR::RealRegister::LastXMMR;
+            for (regIndex = machine()->getFirstXMMR(); regIndex <= machine()->getLastXMMR();
                  regIndex = (TR::RealRegister::RegNum)(regIndex + 1)) {
                 TR_ASSERT(regIndex != highReturnRegIndex, "highReturnRegIndex should not be an XMM register.");
                 if ((regIndex != returnRegIndex) && !properties.isPreservedRegister(regIndex)) {

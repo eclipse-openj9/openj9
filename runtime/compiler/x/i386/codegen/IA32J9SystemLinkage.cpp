@@ -51,10 +51,11 @@ TR::Register *TR::IA32J9SystemLinkage::buildVolatileAndReturnDependencies(TR::No
     uint8_t numXmmRegs = 0;
     TR_LiveRegisters *lr = cg()->getLiveRegisters(TR_FPR);
     if (!lr || lr->getNumberOfLiveRegisters() > 0)
-        numXmmRegs = (uint8_t)(TR::RealRegister::LastXMMR - TR::RealRegister::FirstXMMR + 1);
+        numXmmRegs = (uint8_t)(machine()->getLastXMMR() - machine()->getFirstXMMR() + 1);
 
     if (numXmmRegs > 0) {
-        for (int regIndex = TR::RealRegister::FirstXMMR; regIndex <= TR::RealRegister::LastXMMR; regIndex++) {
+        for (uint8_t regIndex = machine()->getFirstXMMR(); regIndex <= static_cast<uint8_t>(machine()->getLastXMMR());
+             regIndex++) {
             TR::Register *dummy = cg()->allocateRegister(TR_FPR);
             dummy->setPlaceholderReg();
             deps->addPostCondition(dummy, (TR::RealRegister::RegNum)regIndex, cg());
@@ -93,7 +94,7 @@ TR::Register *TR::IA32J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, b
     // check to see if we need to set XMM register dependencies
     TR_LiveRegisters *lr = cg()->getLiveRegisters(TR_FPR);
     if (!lr || lr->getNumberOfLiveRegisters() > 0)
-        numXmmRegs = (uint8_t)(TR::RealRegister::LastXMMR - TR::RealRegister::FirstXMMR + 1);
+        numXmmRegs = (uint8_t)(machine()->getLastXMMR() - machine()->getFirstXMMR() + 1);
 
     TR::RegisterDependencyConditions *deps;
     deps = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)6 + numXmmRegs, cg());

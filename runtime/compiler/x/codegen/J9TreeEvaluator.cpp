@@ -9449,7 +9449,8 @@ static void addFPXMMDependencies(TR::CodeGenerator *cg, TR::RegisterDependencyCo
 {
     TR_LiveRegisters *lr = cg->getLiveRegisters(TR_FPR);
     if (!lr || lr->getNumberOfLiveRegisters() > 0) {
-        for (int regIndex = TR::RealRegister::FirstXMMR; regIndex <= TR::RealRegister::LastXMMR; regIndex++) {
+        for (uint8_t regIndex = cg->machine()->getFirstXMMR();
+             regIndex <= static_cast<uint8_t>(cg->machine()->getLastXMMR()); regIndex++) {
             TR::Register *dummy = cg->allocateRegister(TR_FPR);
             dummy->setPlaceholderReg();
             dependencies->addPostCondition(dummy, (TR::RealRegister::RegNum)regIndex, cg);
@@ -9582,7 +9583,7 @@ static bool inlineNanoTime(TR::Node *node, TR::CodeGenerator *cg)
         // Build register dependencies and call the method in the system library
         // directly. Since this is a "C"-style call, ebx, esi and edi are preserved
         //
-        int32_t extraFPDeps = (uint8_t)(TR::RealRegister::LastXMMR - TR::RealRegister::FirstXMMR + 1);
+        int32_t extraFPDeps = (uint8_t)(cg->machine()->getLastXMMR() - cg->machine()->getFirstXMMR() + 1);
         TR::RegisterDependencyConditions *deps
             = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)4 + extraFPDeps, cg);
         TR::Register *temp1 = cg->allocateRegister();
@@ -9696,7 +9697,7 @@ static bool inlineNanoTime(TR::Node *node, TR::CodeGenerator *cg)
         generateRegInstruction(TR::InstOpCode::PUSHReg, node, espReal, cg);
         generateRegInstruction(TR::InstOpCode::PUSHReg, node, temp2, cg);
 
-        int32_t extraFPDeps = (uint8_t)(TR::RealRegister::LastXMMR - TR::RealRegister::FirstXMMR + 1);
+        int32_t extraFPDeps = (uint8_t)(cg->machine()->getLastXMMR() - cg->machine()->getFirstXMMR() + 1);
 
         // Build register dependencies and call the method in the port library
         // directly. Since this is a "C"-style call, ebx, esi and edi are preserved
