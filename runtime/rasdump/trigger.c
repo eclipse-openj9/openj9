@@ -1157,9 +1157,9 @@ triggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags
  * that will throw an OutOfMemoryError. This reduces the time window between
  * the OOME condition and the dump agents producing the dumps. This increases
  * the chances that important stack frame locals, thread stack states, etc. are
- * captured in the dumps that more closely reflect the proximate driver(s) 
+ * captured in the dumps that more closely reflect the proximate driver(s)
  * of the OOME.
- * 
+ *
  * Parameters:
  *  vm [in]         - VM structure pointer
  *
