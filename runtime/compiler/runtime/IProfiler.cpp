@@ -4269,12 +4269,12 @@ J9ROMMethod *TR_IProfiler::findROMMethodFromPC(J9VMThread *vmThread, uintptr_t m
     J9JavaVM *javaVM = vmThread->javaVM;
     J9InternalVMFunctions *vmFunctions = javaVM->internalVMFunctions;
 
-    J9ClassLoader *loader;
+    J9ClassLoader *loader = NULL;
     romClass = vmFunctions->findROMClassFromPC(vmThread, (UDATA)methodPC, &loader);
 
-    J9ROMMethod *currentMethod = J9ROMCLASS_ROMMETHODS(romClass);
     J9ROMMethod *desiredMethod = NULL;
     if (romClass) {
+        J9ROMMethod *currentMethod = J9ROMCLASS_ROMMETHODS(romClass);
         // Find the method with the corresponding PC
         for (U_32 i = 0; i < romClass->romMethodCount; i++) {
             if (((UDATA)methodPC >= (UDATA)currentMethod)
