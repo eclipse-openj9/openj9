@@ -374,7 +374,6 @@ struct J9VMContinuation;
 typedef struct J9ThreadJFRState {
 	omrthread_thread_time_t prevThreadCPUTimes;
 	int64_t prevTimestamp;
-	BOOLEAN isJfrExcluded;
 } J9ThreadJFRState;
 
 typedef struct J9JFRBufferWalkState {
@@ -5640,6 +5639,9 @@ typedef struct J9InternalVMFunctions {
 	jboolean (*isJFRV2SupportEnabled)(struct J9JavaVM *vm);
 	jboolean (*isJFRRecordingStarted)(struct J9JavaVM *vm);
 	void (*jfrDump)(struct J9VMThread *currentThread, BOOLEAN finalWrite);
+	void (*enableJFRRecordingOnThread)(struct J9VMThread *currentThread, j9object_t threadObject);
+	void (*disableJFRRecordingOnThread)(struct J9VMThread *currentThread, j9object_t threadObject);
+	BOOLEAN (*isJFRRecordingDisabledOnThread)(struct J9VMThread *currentThread, j9object_t threadObject);
 	void (*jfrExecutionSample)(struct J9VMThread *currentThread, struct J9VMThread *sampleThread);
 	void  (*jfrOldGarbageCollection)(struct OMR_VMThread *omrVMThread) ;
 	void  (*jfrYoungGarbageCollection)(struct OMR_VMThread *omrVMThread) ;
@@ -6735,6 +6737,7 @@ typedef struct J9JavaVM {
 	UDATA jfrSamplerState;
 	IDATA jfrAsyncKey;
 	IDATA jfrThreadCPULoadAsyncKey;
+	UDATA isJFRExcludedOffset;
 #endif /* defined(J9VM_OPT_JFR) */
 	UDATA unsafeIndexableHeaderSize;
 #if defined(J9VM_OPT_SNAPSHOTS)

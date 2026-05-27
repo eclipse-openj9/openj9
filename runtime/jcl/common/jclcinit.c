@@ -624,6 +624,12 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	}
 #endif /* JAVA_SPEC_VERSION >= 22 */
 
+#if defined(J9VM_OPT_JFR)
+	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/Thread", "isJFRExcluded", "I", &vm->isJFRExcludedOffset)) {
+		return 1;
+	}
+#endif /* defined(J9VM_OPT_JFR) */
+
 	vmThread->privateFlags |= J9_PRIVATE_FLAGS_REPORT_ERROR_LOADING_CLASS;
 
 	objectClass = vmFuncs->internalFindKnownClass(vmThread, J9VMCONSTANTPOOL_JAVALANGOBJECT, J9_FINDKNOWNCLASS_FLAG_NON_FATAL);
