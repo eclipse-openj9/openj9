@@ -131,12 +131,6 @@ JVM_IsNullRestrictedArray(JNIEnv *env, jarray obj)
 	return result;
 }
 
-JNIEXPORT jboolean JNICALL
-JVM_IsValhallaEnabled()
-{
-	return JNI_TRUE;
-}
-
 static jarray
 newArrayHelper(JNIEnv *env, jclass componentType, jint length, bool isNullRestricted, jobject initialValueJni)
 {

@@ -472,8 +472,6 @@ _IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
 _IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
 	[_X(JVM_IsNullRestrictedArray, JNICALL, false, jboolean, JNIEnv *env, jarray obj)])
 _IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
-	[_X(JVM_IsValhallaEnabled, JNICALL, false, jboolean, void)])
-_IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
 	[_X(JVM_NewNullableAtomicArray, JNICALL, false, jarray, JNIEnv *env, jclass cls, jint length)])
 _IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
 	[_X(JVM_NewNullRestrictedAtomicArray, JNICALL, false, jarray, JNIEnv *env, jclass cls, jint length, jobject initialValue)])
