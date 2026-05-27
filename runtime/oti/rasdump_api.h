@@ -467,11 +467,10 @@ dumpLabel(struct J9JavaVM *vm, J9RASdumpAgent *agent, J9RASdumpContext *context,
 * @param *self
 * @param eventFlags
 * @param *eventData
-* @param earlyExecution
 * @return omr_error_t
 */
 omr_error_t
-triggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData, BOOLEAN earlyExecution);
+triggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData);
 
 
 /**

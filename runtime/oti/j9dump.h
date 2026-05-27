@@ -23,8 +23,8 @@
 #ifndef j9dump_h
 #define j9dump_h
 
-#define J9DMP_TRIGGER(vm, self, eventFlags, userData, earlyExecution) \
-	(vm)->j9rasDumpFunctions->triggerDumpAgents(vm, self, eventFlags, userData, earlyExecution)
+#define J9DMP_TRIGGER(vm, self, eventFlags, userData) \
+	(vm)->j9rasDumpFunctions->triggerDumpAgents(vm, self, eventFlags, userData)
 
 /* Rasdump Global storage block */
 typedef struct RasDumpGlobalStorage {
@@ -98,7 +98,8 @@ typedef struct J9RASdumpAgent {
 #define J9RAS_DUMP_ON_USER2_SIGNAL  0x1000000
 #define J9RAS_DUMP_ON_VM_CRIU_CHECKPOINT  0x2000000
 #define J9RAS_DUMP_ON_VM_CRIU_RESTORE  0x4000000
-#define J9RAS_DUMP_ON_ANY 0x7FFFFFF /* mask of all bit flags above */
+#define J9RAS_DUMP_ON_EARLY_EXECUTION  0x8000000
+#define J9RAS_DUMP_ON_ANY 0xFFFFFFF /* mask of all bit flags above */
 
 /* ...additional VM requests... */
 #define J9RAS_DUMP_DO_EXCLUSIVE_VM_ACCESS  0x01
@@ -108,6 +109,7 @@ typedef struct J9RASdumpAgent {
 #define J9RAS_DUMP_DO_ATTACH_THREAD  0x10
 #define J9RAS_DUMP_DO_MULTIPLE_HEAPS  0x020
 #define J9RAS_DUMP_DO_PREEMPT_THREADS  0x40
+#define J9RAS_DUMP_DO_EARLY_EXECUTION  0x80
 
 typedef struct J9RASdumpContext {
 	struct J9JavaVM* javaVM;
@@ -140,7 +142,7 @@ typedef struct J9RASdumpFunctions {
 	omr_error_t  (*insertDumpAgent)(struct J9JavaVM *vm, struct J9RASdumpAgent *agent) ;
 	omr_error_t  (*removeDumpAgent)(struct J9JavaVM *vm, struct J9RASdumpAgent *agent) ;
 	omr_error_t  (*seekDumpAgent)(struct J9JavaVM *vm, struct J9RASdumpAgent **agentPtr, J9RASdumpFn dumpFn) ;
-	omr_error_t  (*triggerDumpAgents)(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData, BOOLEAN earlyExecution) ;
+	omr_error_t  (*triggerDumpAgents)(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData) ;
 	omr_error_t  (*setDumpOption)(struct J9JavaVM *vm, char *optionString) ;
 	omr_error_t  (*resetDumpOptions)(struct J9JavaVM *vm) ;
 	omr_error_t  (*queryVmDump)(struct J9JavaVM *vm, int buffer_size, void* options_buffer, int* data_size) ;

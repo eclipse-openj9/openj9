@@ -65,8 +65,8 @@ static bool traceObjectCheck(J9VMThread *vmThread, bool *shouldTriggerAllocation
 
 #define STACK_FRAMES_TO_DUMP	8
 
-void
-handleOOM(J9JavaVM* javaVm)
+static void
+handleOOM(J9JavaVM *javaVm)
 {
 	javaVm->j9rasDumpFunctions->handleOutOfMemoryError(javaVm);
 }

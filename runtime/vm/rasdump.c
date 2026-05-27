@@ -47,13 +47,13 @@
 
 #define RAS_NETWORK_WARNING_TIME 60000
 
-static omr_error_t primordialTriggerDumpAgents (struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData, BOOLEAN earlyExecution);
-static omr_error_t primordialSeekDumpAgent (struct J9JavaVM *vm, struct J9RASdumpAgent **agentPtr, J9RASdumpFn dumpFn);
-static omr_error_t primordialInsertDumpAgent (struct J9JavaVM *vm, struct J9RASdumpAgent *agent);
+static omr_error_t primordialTriggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData);
+static omr_error_t primordialSeekDumpAgent(struct J9JavaVM *vm, struct J9RASdumpAgent **agentPtr, J9RASdumpFn dumpFn);
+static omr_error_t primordialInsertDumpAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent);
 static omr_error_t primordialTriggerOneOffDump(struct J9JavaVM *vm, char *optionString, char *caller, char *fileName, size_t fileNameLength);
-static omr_error_t primordialSetDumpOption (struct J9JavaVM *vm, char *optionString);
-static omr_error_t primordialResetDumpOption (struct J9JavaVM *vm);
-static omr_error_t primordialRemoveDumpAgent (struct J9JavaVM *vm, struct J9RASdumpAgent *agent);
+static omr_error_t primordialSetDumpOption(struct J9JavaVM *vm, char *optionString);
+static omr_error_t primordialResetDumpOption(struct J9JavaVM *vm);
+static omr_error_t primordialRemoveDumpAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent);
 static omr_error_t primordialQueryVmDump(struct J9JavaVM *vm, int buffer_size, void* options_buffer, int* data_size);
 static omr_error_t primordialPrintDumpAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent);
 #if defined(OMR_TDUMP_VALIDATION)
@@ -64,10 +64,10 @@ static IDATA primordialCriuReloadXDumpAgents(struct J9JavaVM *vm, struct J9VMIni
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 static omr_error_t primordialHandleOutOfMemoryError(struct J9JavaVM *vm);
 
-void J9RASInitialize (J9JavaVM* javaVM);
-void J9RASShutdown (J9JavaVM* javaVM);
+void J9RASInitialize(J9JavaVM* javaVM);
+void J9RASShutdown(J9JavaVM* javaVM);
 IDATA J9RASCheckDump(J9JavaVM *javaVM);
-void populateRASNetData (J9JavaVM *javaVM, J9RAS *rasStruct);
+void populateRASNetData(J9JavaVM *javaVM, J9RAS *rasStruct);
 static J9RAS* allocateRASStruct(J9JavaVM *javaVM);
 
 JNIEXPORT struct {
@@ -159,7 +159,7 @@ primordialSeekDumpAgent(struct J9JavaVM *vm, struct J9RASdumpAgent **agentPtr, J
 }
 
 static omr_error_t
-primordialTriggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData, BOOLEAN earlyExecution)
+primordialTriggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData)
 {
 	UDATA state = 0;
 	 

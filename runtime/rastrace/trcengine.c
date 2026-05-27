@@ -1329,7 +1329,7 @@ doTriggerActionAssertDumpEvent(OMR_VMThread *omrThr)
 	J9JavaVM *vm = (J9JavaVM *)omrThr->_vm->_language_vm;
 	J9VMThread *thr = (J9VMThread *)omrThr->_language_vmthread;
 
-	(vm)->j9rasDumpFunctions->triggerDumpAgents(vm, thr, J9RAS_DUMP_ON_TRACE_ASSERT, NULL, FALSE);
+	(vm)->j9rasDumpFunctions->triggerDumpAgents(vm, thr, J9RAS_DUMP_ON_TRACE_ASSERT, NULL);
 }
 
 /**************************************************************************

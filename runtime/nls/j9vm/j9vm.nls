@@ -2562,15 +2562,6 @@ J9NLS_VM_MISSING_DUMP_DLL_CRIU_RELOAD_AGENTS.system_action=The JVM will ignore t
 J9NLS_VM_MISSING_DUMP_DLL_CRIU_RELOAD_AGENTS.user_response=Check whether the JVM dump functions have been disabled via the -Xdump:none option.
 # END NON-TRANSLATABLE
 
-# handleOutOfMemoryError is the name of an API. It should not be translated.
-J9NLS_VM_MISSING_DUMP_DLL_HANDLE_OUT_OF_MEMORY_ERROR=handleOutOfMemoryError requires %s
-# START NON-TRANSLATABLE
-J9NLS_VM_MISSING_DUMP_DLL_HANDLE_OUT_OF_MEMORY_ERROR.sample_input_1=j9dmp29
-J9NLS_VM_MISSING_DUMP_DLL_HANDLE_OUT_OF_MEMORY_ERROR.explanation=A call to internal VM function handleOutOfMemoryError() has failed because the required DLL has not been loaded.
-J9NLS_VM_MISSING_DUMP_DLL_HANDLE_OUT_OF_MEMORY_ERROR.system_action=The JVM will ignore the failure and continue.
-J9NLS_VM_MISSING_DUMP_DLL_HANDLE_OUT_OF_MEMORY_ERROR.user_response=Check whether the JVM dump functions have been disabled via the -Xdump:none option.
-# END NON-TRANSLATABLE
-
 J9NLS_VM_JNI_WEAK_GLOBAL_REF_CANNOT_BE_VALUE_TYPE=%2$.*1$s is not an identity class. Weak reference can only be created on identity classes.
 # START NON-TRANSLATABLE
 J9NLS_VM_JNI_WEAK_GLOBAL_REF_CANNOT_BE_VALUE_TYPE.sample_input_1=3
@@ -2611,4 +2602,13 @@ J9NLS_VM_INVALID_DUMP_AGENTS=The following -Xdump:system options contain invalid
 J9NLS_VM_INVALID_DUMP_AGENTS.explanation=One or more -Xdump:system options contain invalid dsn specifications.
 J9NLS_VM_INVALID_DUMP_AGENTS.system_action=The JVM will fail to start.
 J9NLS_VM_INVALID_DUMP_AGENTS.user_response=Check and correct the listed -Xdump:system options.
+# END NON-TRANSLATABLE
+
+# handleOutOfMemoryError is the name of an API. It should not be translated.
+J9NLS_VM_MISSING_DUMP_DLL_HANDLE_OUT_OF_MEMORY_ERROR=handleOutOfMemoryError requires %s
+# START NON-TRANSLATABLE
+J9NLS_VM_MISSING_DUMP_DLL_HANDLE_OUT_OF_MEMORY_ERROR.sample_input_1=j9dmp29
+J9NLS_VM_MISSING_DUMP_DLL_HANDLE_OUT_OF_MEMORY_ERROR.explanation=A call to internal VM function handleOutOfMemoryError() has failed because the required DLL has not been loaded.
+J9NLS_VM_MISSING_DUMP_DLL_HANDLE_OUT_OF_MEMORY_ERROR.system_action=The JVM will ignore the failure and continue.
+J9NLS_VM_MISSING_DUMP_DLL_HANDLE_OUT_OF_MEMORY_ERROR.user_response=Check whether the JVM dump functions have been disabled via the -Xdump:none option.
 # END NON-TRANSLATABLE

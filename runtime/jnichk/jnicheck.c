@@ -2228,7 +2228,7 @@ jniCheckFatalErrorNLS(U_32 nlsModule, U_32 nlsIndex, ...)
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JNICHK_FATAL_ERROR);
 			j9nls_printf(PORTLIB, J9NLS_INFO, J9NLS_JNICHK_FATAL_ERROR_ADVICE);
 			if (J9_ARE_ANY_BITS_SET(options, JNICHK_ABORTONERROR)) {
-				globalJavaVM->j9rasDumpFunctions->triggerDumpAgents(globalJavaVM, currentThread, J9RAS_DUMP_ON_ABORT_SIGNAL, NULL, FALSE);
+				globalJavaVM->j9rasDumpFunctions->triggerDumpAgents(globalJavaVM, currentThread, J9RAS_DUMP_ON_ABORT_SIGNAL, NULL);
 			}
 			globalJavaVM->EsJNIFunctions->FatalError(env, "JNI error");
 		}

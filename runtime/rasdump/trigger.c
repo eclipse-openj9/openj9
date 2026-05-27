@@ -118,7 +118,6 @@ static void rasDumpHookCRIURestore(J9HookInterface **hookInterface, UDATA eventN
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 extern omr_error_t doHeapDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context);
-extern omr_error_t doSystemDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context);
 extern omr_error_t doSilentDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context);
 extern omr_error_t doToolDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context);
 
@@ -938,7 +937,7 @@ triggerOneOffDump(struct J9JavaVM *vm, char *optionString, char *caller, char *f
 	return retVal;
 }
 
-BOOLEAN
+static BOOLEAN
 shouldSkipDump(J9RASdumpAgent *agent, BOOLEAN earlyExecution)
 {
 	/* If earlyExecution is FALSE, then this is a normal dump request,
@@ -952,7 +951,7 @@ shouldSkipDump(J9RASdumpAgent *agent, BOOLEAN earlyExecution)
 }
 
 omr_error_t
-triggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData, BOOLEAN earlyExecution)
+triggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData)
 {
 	J9RASdumpQueue *queue = NULL;
 
@@ -980,6 +979,8 @@ triggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags
 		char detailBuf[J9_MAX_DUMP_DETAIL_LENGTH + 1];
 
 		J9RASdumpContext context;
+
+		BOOLEAN earlyExecution = J9_ARE_ANY_BITS_SET(eventFlags, J9RAS_DUMP_ON_EARLY_EXECUTION);
 
 		context.javaVM = vm;
 		context.onThread = self;
@@ -1169,9 +1170,10 @@ omr_error_t
 handleOutOfMemoryError(struct J9JavaVM *vm)
 {
 	omr_error_t result = OMR_ERROR_NONE;
-	J9RASdumpEventData dumpData = { 0 };
 
-	if (!J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_DISABLE_EARLY_OOM_AGENTS)) {
+	if (J9_ARE_NO_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_DISABLE_EARLY_DUMPS)) {
+		J9RASdumpEventData dumpData = { 0 };
+
 		dumpData.detailLength = J9UTF8_LENGTH((J9UTF8*)&outOfMemoryErrorUTF);
 		dumpData.detailData = (char *)J9UTF8_DATA((J9UTF8*)&outOfMemoryErrorUTF);
 
@@ -1179,7 +1181,11 @@ handleOutOfMemoryError(struct J9JavaVM *vm)
 		 * synchronization around concurrent calls to handleOutOfMemoryError which
 		 * is what we want.
 		 */
-		result = triggerDumpAgents(vm, vm->internalVMFunctions->currentVMThread(vm), J9RAS_DUMP_ON_EXCEPTION_SYSTHROW, &dumpData, TRUE);
+		result = triggerDumpAgents(
+			vm,
+			vm->internalVMFunctions->currentVMThread(vm),
+			J9RAS_DUMP_ON_EXCEPTION_SYSTHROW | J9RAS_DUMP_ON_EARLY_EXECUTION,
+			&dumpData);
 	}
 
 	return result;
@@ -1464,8 +1470,7 @@ rasDumpHookVmInit(J9HookInterface **hookInterface, UDATA eventNum, void *eventDa
 			vmThread->javaVM,
 			vmThread,
 			J9RAS_DUMP_ON_VM_STARTUP,
-			NULL,
-			FALSE);
+			NULL);
 }
 
 static void
@@ -1485,8 +1490,7 @@ rasDumpHookVmShutdown(J9HookInterface **hookInterface, UDATA eventNum, void *eve
 			vmThread->javaVM,
 			vmThread,
 			J9RAS_DUMP_ON_VM_SHUTDOWN,
-			&dumpData,
-			FALSE);
+			&dumpData);
 }
 
 static void
@@ -1505,8 +1509,7 @@ rasDumpHookClassLoad(J9HookInterface **hookInterface, UDATA eventNum, void *even
 			vmThread->javaVM,
 			vmThread,
 			J9RAS_DUMP_ON_CLASS_LOAD,
-			&dumpData,
-			FALSE);
+			&dumpData);
 }
 
 static void
@@ -1530,8 +1533,7 @@ rasDumpHookExceptionThrow(J9HookInterface **hookInterface, UDATA eventNum, void 
 				vm,
 				vmThread,
 				J9RAS_DUMP_ON_EXCEPTION_THROW,
-				&dumpData,
-				FALSE);
+				&dumpData);
 
 		data->exception = *(j9object_t *)globalRef;
 		vm->internalVMFunctions->j9jni_deleteGlobalRef((JNIEnv *)vmThread, globalRef, JNI_FALSE);
@@ -1559,8 +1561,7 @@ rasDumpHookExceptionCatch(J9HookInterface **hookInterface, UDATA eventNum, void 
 				vm,
 				vmThread,
 				J9RAS_DUMP_ON_EXCEPTION_CATCH,
-				&dumpData,
-				FALSE);
+				&dumpData);
 
 		data->exception = *(j9object_t *)globalRef;
 		vm->internalVMFunctions->j9jni_deleteGlobalRef((JNIEnv *)vmThread, globalRef, JNI_FALSE);
@@ -1577,8 +1578,7 @@ rasDumpHookThreadStart(J9HookInterface **hookInterface, UDATA eventNum, void *ev
 			vmThread->javaVM,
 			vmThread,
 			J9RAS_DUMP_ON_THREAD_START,
-			NULL,
-			FALSE);
+			NULL);
 }
 
 static void
@@ -1591,8 +1591,7 @@ rasDumpHookThreadEnd(J9HookInterface **hookInterface, UDATA eventNum, void *even
 			vmThread->javaVM,
 			vmThread,
 			J9RAS_DUMP_ON_THREAD_END,
-			NULL,
-			FALSE);
+			NULL);
 }
 
 static void
@@ -1605,8 +1604,7 @@ rasDumpHookMonitorContendedEnter(J9HookInterface **hookInterface, UDATA eventNum
 			vmThread->javaVM,
 			vmThread,
 			J9RAS_DUMP_ON_THREAD_BLOCKED,
-			NULL,
-			FALSE);
+			NULL);
 }
 
 static void
@@ -1630,8 +1628,7 @@ rasDumpHookExceptionDescribe(J9HookInterface **hookInterface, UDATA eventNum, vo
 				vm,
 				vmThread,
 				J9RAS_DUMP_ON_EXCEPTION_DESCRIBE,
-				&dumpData,
-				FALSE);
+				&dumpData);
 
 		data->exception = *(j9object_t *)globalRef;
 		vm->internalVMFunctions->j9jni_deleteGlobalRef((JNIEnv *)vmThread, globalRef, JNI_FALSE);
@@ -1703,8 +1700,7 @@ rasDumpHookAllocationThreshold(J9HookInterface **hookInterface, UDATA eventNum, 
 			vmThread->javaVM,
 			vmThread,
 			J9RAS_DUMP_ON_OBJECT_ALLOCATION,
-			&dumpData,
-			FALSE);
+			&dumpData);
 
 	data->object = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
 	popEventFrame(vmThread, hadVMAccess);
@@ -1727,8 +1723,7 @@ rasDumpHookSlowExclusive(J9HookInterface **hookInterface, UDATA eventNum, void *
 			vmThread->javaVM,
 			vmThread,
 			J9RAS_DUMP_ON_SLOW_EXCLUSIVE_ENTER,
-			&dumpData,
-			FALSE);
+			&dumpData);
 }
 
 static void
@@ -1741,8 +1736,7 @@ rasDumpHookGlobalGcStart(J9HookInterface **hookInterface, UDATA eventNum, void *
 			vmThread->javaVM,
 			vmThread,
 			J9RAS_DUMP_ON_GLOBAL_GC,
-			NULL,
-			FALSE);
+			NULL);
 }
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
@@ -1756,8 +1750,7 @@ rasDumpHookClassesUnload(J9HookInterface **hookInterface, UDATA eventNum, void *
 			vmThread->javaVM,
 			vmThread,
 			J9RAS_DUMP_ON_CLASS_UNLOAD,
-			NULL,
-			FALSE);
+			NULL);
 }
 #endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
 
@@ -1782,8 +1775,7 @@ rasDumpHookExceptionSysthrow(J9HookInterface **hookInterface, UDATA eventNum, vo
 				vm,
 				vmThread,
 				J9RAS_DUMP_ON_EXCEPTION_SYSTHROW,
-				&dumpData,
-				FALSE);
+				&dumpData);
 
 		data->exception = *(j9object_t *)globalRef;
 		vm->internalVMFunctions->j9jni_deleteGlobalRef((JNIEnv *)vmThread, globalRef, JNI_FALSE);
@@ -1800,8 +1792,7 @@ rasDumpHookCorruptCache(J9HookInterface **hookInterface, UDATA eventNum, void *e
 			vmThread->javaVM,
 			vmThread,
 			J9RAS_DUMP_ON_CORRUPT_CACHE,
-			NULL,
-			FALSE);
+			NULL);
 }
 
 /**
@@ -1823,8 +1814,7 @@ rasDumpHookExcessiveGC(J9HookInterface **hookInterface, UDATA eventNum, void *ev
 			vmThread->javaVM,
 			vmThread,
 			J9RAS_DUMP_ON_EXCESSIVE_GC,
-			NULL,
-			FALSE);
+			NULL);
 }
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
@@ -1844,7 +1834,7 @@ rasDumpHookCRIUCheckpoint(J9HookInterface **hookInterface, UDATA eventNum, void 
 	J9JavaVM *vm = vmThread->javaVM;
 
 	vm->j9rasDumpFunctions->triggerDumpAgents(
-			vm, vmThread, J9RAS_DUMP_ON_VM_CRIU_CHECKPOINT, NULL, FALSE);
+			vm, vmThread, J9RAS_DUMP_ON_VM_CRIU_CHECKPOINT, NULL);
 }
 
 /**
@@ -1863,6 +1853,6 @@ rasDumpHookCRIURestore(J9HookInterface **hookInterface, UDATA eventNum, void *ev
 	J9JavaVM *vm = vmThread->javaVM;
 
 	vm->j9rasDumpFunctions->triggerDumpAgents(
-			vm, vmThread, J9RAS_DUMP_ON_VM_CRIU_RESTORE, NULL, FALSE);
+			vm, vmThread, J9RAS_DUMP_ON_VM_CRIU_RESTORE, NULL);
 }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
