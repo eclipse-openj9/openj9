@@ -183,11 +183,20 @@ struct ThreadGroupEntry {
 	ThreadGroupEntry *next;
 };
 
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable: 4200) /* Suppress warning about use of flexible array. */
+#endif /* defined(_MSC_VER) */
+
 struct NetworkInterfaceNameEntry {
 	NetworkInterfaceNameEntry *next;
 	U_32 index;
 	char networkInterfaceName[0];
 };
+
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif /* defined(_MSC_VER) */
 
 struct StackFrame {
 	U_32 methodIndex;
