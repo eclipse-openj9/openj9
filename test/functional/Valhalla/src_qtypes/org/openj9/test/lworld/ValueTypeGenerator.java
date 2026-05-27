@@ -208,9 +208,9 @@ public class ValueTypeGenerator extends ClassLoader {
 		String classFileName = className + ".class";
 
 		if (isRef) {
-			cw.visit(ValhallaUtils.VALUE_TYPE_CLASS_FILE_VERSION, ACC_PUBLIC + ACC_FINAL + ValhallaUtils.ACC_IDENTITY + extraClassFlags, className, null, superName, null);
+			cw.visit(ValhallaUtils.VALUE_TYPE_CLASS_FILE_VERSION, ACC_PUBLIC | ACC_FINAL | ValhallaUtils.ACC_IDENTITY | extraClassFlags, className, null, superName, null);
 		} else {
-			cw.visit(ValhallaUtils.VALUE_TYPE_CLASS_FILE_VERSION, ACC_PUBLIC + ACC_FINAL + extraClassFlags, className, null, superName, null);
+			cw.visit(ValhallaUtils.VALUE_TYPE_CLASS_FILE_VERSION, ACC_PUBLIC | ACC_FINAL | extraClassFlags, className, null, superName, null);
 		}
 
 		cw.visitSource(className + ".java", null);
@@ -232,14 +232,16 @@ public class ValueTypeGenerator extends ClassLoader {
 			String[] nameAndSigValue = s.split(":");
 			final int fieldModifiers;
 			if (isRef) {
-				fieldModifiers = ACC_PUBLIC + ACC_STRICT_INIT;
+				if ((nameAndSigValue.length > 3) && nameAndSigValue[3].equals("volatile")) {
+					fieldModifiers = ACC_PUBLIC | ACC_VOLATILE | ACC_STRICT_INIT;
+				} else {
+					fieldModifiers = ACC_PUBLIC | ACC_STRICT_INIT;
+				}
 			} else {
 				if ((nameAndSigValue.length > 2) && nameAndSigValue[2].equals("static")) {
-					fieldModifiers = ACC_PUBLIC + ACC_STATIC;
-				} else if ((nameAndSigValue.length > 3) && nameAndSigValue[3].equals("volatile")) {
-					fieldModifiers = ACC_PUBLIC + ACC_FINAL + ACC_VOLATILE + ACC_STRICT_INIT;
+					fieldModifiers = ACC_PUBLIC | ACC_STATIC;
 				} else {
-					fieldModifiers = ACC_PUBLIC + ACC_FINAL + ACC_STRICT_INIT;
+					fieldModifiers = ACC_PUBLIC | ACC_FINAL | ACC_STRICT_INIT;
 				}
 			}
 			fv = cw.visitField(fieldModifiers, nameAndSigValue[0], nameAndSigValue[1], null, null);
@@ -299,7 +301,7 @@ public class ValueTypeGenerator extends ClassLoader {
 	}
 
 	private static void addStaticSynchronizedMethods(ClassWriter cw) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC + ACC_SYNCHRONIZED, "staticSynchronizedMethodReturnInt", "()I", null, null);
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC | ACC_SYNCHRONIZED, "staticSynchronizedMethodReturnInt", "()I", null, null);
 		mv.visitCode();
 		mv.visitInsn(ICONST_1);
 		mv.visitInsn(IRETURN);
@@ -308,7 +310,7 @@ public class ValueTypeGenerator extends ClassLoader {
 	}
 	
 	private static void addSynchronizedMethods(ClassWriter cw) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_SYNCHRONIZED, "synchronizedMethodReturnInt", "()I", null, null);
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_SYNCHRONIZED, "synchronizedMethodReturnInt", "()I", null, null);
 		mv.visitCode();
 		mv.visitInsn(ICONST_1);
 		mv.visitInsn(IRETURN);
@@ -396,7 +398,7 @@ public class ValueTypeGenerator extends ClassLoader {
 	 * TestMonitorExitWithRefType test
 	 */
 	private static void testMonitorExitOnObject(ClassWriter cw, String className, String[] fields) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testMonitorExitOnObject", "(Ljava/lang/Object;)V", null, null);
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, "testMonitorExitOnObject", "(Ljava/lang/Object;)V", null, null);
 		mv.visitCode();
 		mv.visitVarInsn(ALOAD, 0);
 		mv.visitInsn(MONITOREXIT);
@@ -410,7 +412,7 @@ public class ValueTypeGenerator extends ClassLoader {
 	 * TestMonitorEnterAndExitWithRefType test
 	 */
 	private static void testMonitorEnterAndExitWithRefType(ClassWriter cw, String className, String[] fields) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testMonitorEnterAndExitWithRefType", "(Ljava/lang/Object;)V", null, null);
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, "testMonitorEnterAndExitWithRefType", "(Ljava/lang/Object;)V", null, null);
 		mv.visitCode();
 		mv.visitVarInsn(ALOAD, 0);
 		mv.visitInsn(DUP);
@@ -470,7 +472,7 @@ public class ValueTypeGenerator extends ClassLoader {
 	}
 	
 	private static void makeValueTypeDefaultValue(ClassWriter cw, String valueName, String makeValueSig, String[] fields, int makeMaxLocal) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "makeValueTypeDefaultValue", "()Ljava/lang/Object;", null, null);
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, "makeValueTypeDefaultValue", "()Ljava/lang/Object;", null, null);
 		mv.visitCode();
 		mv.visitTypeInsn(NEW, valueName);
 		mv.visitInsn(DUP);
@@ -481,7 +483,7 @@ public class ValueTypeGenerator extends ClassLoader {
 	}
 
 	private static void testCheckCastNullRestrictedTypeOnNonNullType(ClassWriter cw, String className, String[] fields) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "testCheckCastNullRestrictedTypeOnNonNullType", "()Ljava/lang/Object;", null, null);
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, "testCheckCastNullRestrictedTypeOnNonNullType", "()Ljava/lang/Object;", null, null);
 		mv.visitCode();
 		mv.visitTypeInsn(NEW, className);
 		mv.visitInsn(DUP);
@@ -493,7 +495,7 @@ public class ValueTypeGenerator extends ClassLoader {
 	}
 
 	private static void testCheckCastNullRestrictedTypeOnNull(ClassWriter cw, String className, String[] fields) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testCheckCastNullRestrictedTypeOnNull", "()Ljava/lang/Object;", null, null);
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, "testCheckCastNullRestrictedTypeOnNull", "()Ljava/lang/Object;", null, null);
 		mv.visitCode();
 		mv.visitInsn(ACONST_NULL);
 		mv.visitTypeInsn(CHECKCAST, className);
@@ -503,7 +505,7 @@ public class ValueTypeGenerator extends ClassLoader {
 	}
 
 	private static void testCheckCastNullableTypeOnNull(ClassWriter cw, String className, String[] fields) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testCheckCastNullableTypeOnNull", "()Ljava/lang/Object;", null, null);
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, "testCheckCastNullableTypeOnNull", "()Ljava/lang/Object;", null, null);
 		mv.visitCode();
 		mv.visitInsn(ACONST_NULL);
 		mv.visitTypeInsn(CHECKCAST, className);
@@ -513,7 +515,7 @@ public class ValueTypeGenerator extends ClassLoader {
 	}
 
 	private static void testUnresolvedValueTypeDefaultValue(ClassWriter cw, String className, String valueUsedInCode) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testUnresolvedValueTypeDefaultValue", "(I)Ljava/lang/Object;", null, null);
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, "testUnresolvedValueTypeDefaultValue", "(I)Ljava/lang/Object;", null, null);
 		mv.visitCode();
 		mv.visitVarInsn(ILOAD, 0);
 		Label falseLabel = new Label();
@@ -537,7 +539,7 @@ public class ValueTypeGenerator extends ClassLoader {
 	}
 
 	private static void testUnresolvedValueTypeGetField(ClassWriter cw, String className, String containerClassName, String[] containerFields) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testUnresolvedValueTypeGetField", "(IL"+containerClassName+";)Ljava/lang/Object;", null, null);
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, "testUnresolvedValueTypeGetField", "(IL"+containerClassName+";)Ljava/lang/Object;", null, null);
 		mv.visitCode();
 		mv.visitVarInsn(ILOAD, 0);
 		int fieldCount = containerFields.length;
@@ -567,7 +569,7 @@ public class ValueTypeGenerator extends ClassLoader {
 	}
 
 	private static void testUnresolvedValueTypePutField(ClassWriter cw, String className, String containerClassName, String[] containerFields) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testUnresolvedValueTypePutField", "(IL"+containerClassName+";Ljava/lang/Object;)V", null, null);
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, "testUnresolvedValueTypePutField", "(IL"+containerClassName+";Ljava/lang/Object;)V", null, null);
 		mv.visitCode();
 		mv.visitVarInsn(ILOAD, 0);
 		int fieldCount = containerFields.length;
@@ -598,7 +600,7 @@ public class ValueTypeGenerator extends ClassLoader {
 	}
 
 	private static void makeGeneric(ClassWriter cw, String className, String methodName, String specificMethodName, String makeValueSig, String makeValueGenericSig, String[] fields, int makeMaxLocal) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, methodName, "(" + makeValueGenericSig + ")Ljava/lang/Object;", null, new String[] {"java/lang/Exception"});
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, methodName, "(" + makeValueGenericSig + ")Ljava/lang/Object;", null, new String[] {"java/lang/Exception"});
 		mv.visitCode();
 		for (int i = 0; i <  fields.length; i++) {
 			String[] nameAndSigValue = fields[i].split(":");
@@ -658,7 +660,7 @@ public class ValueTypeGenerator extends ClassLoader {
 	private static void makeObject(ClassWriter cw, String className, String makeValueSig, String[]fields, int makeMaxLocal) {
 		boolean doubleDetected = false;
 		int count = 0;
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "makeObject", "(" + makeValueSig + ")" + "L" + className + ";", null, null);
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, "makeObject", "(" + makeValueSig + ")" + "L" + className + ";", null, null);
 		mv.visitCode();
 		mv.visitTypeInsn(NEW, className);
 		mv.visitInsn(DUP);
@@ -1126,7 +1128,7 @@ public class ValueTypeGenerator extends ClassLoader {
 	}
 
 	public static void test2DMultiANewArray(ClassWriter cw, String className) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "generate2DMultiANewArray", "(II)Ljava/lang/Object;", null, null);
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, "generate2DMultiANewArray", "(II)Ljava/lang/Object;", null, null);
 		mv.visitCode();
 		mv.visitVarInsn(ILOAD, 0);
 		mv.visitVarInsn(ILOAD, 1);
@@ -1150,7 +1152,7 @@ public class ValueTypeGenerator extends ClassLoader {
 
 		ClassWriter classWriter = new ClassWriter(0);
 		classWriter.visit(ValhallaUtils.VALUE_TYPE_CLASS_FILE_VERSION,
-			ACC_PUBLIC + ACC_FINAL + (isRef ? ValhallaUtils.ACC_IDENTITY : 0),
+			ACC_PUBLIC | ACC_FINAL | (isRef ? ValhallaUtils.ACC_IDENTITY : 0),
 			className, null, "java/lang/Object", null);
 		classWriter.visitField(fieldFlags, fieldName, fieldDesc, null, null);
 

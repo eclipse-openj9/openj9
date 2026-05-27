@@ -60,7 +60,7 @@ public class DDRValueTypeTest {
 		};
 		Object assortedValueWithSingleAlignment = ValueTypeTests.createAssorted(makeAssortedValueWithSingleAlignment, ValueTypeTests.typeWithSingleAlignmentFields);
 		Object assortedValueWithSingleAlignmentAlt = ValueTypeTests.createAssorted(makeAssortedValueWithSingleAlignment, ValueTypeTests.typeWithSingleAlignmentFields, altFields);
-		Object valueTypeWithVolatileFields = ValueTypeTests.createValueTypeWithVolatileFields();
+		Object referenceTypeWithVolatileValueTypeFields = ValueTypeTests.createIdentityClassWithVolatileValueTypeFields();
 
 		Object[] valArray = ValueClass.newNullRestrictedAtomicArray(assortedValueWithSingleAlignmentClass, 2, assortedValueWithSingleAlignment);
 		valArray[1] = assortedValueWithSingleAlignmentAlt;
@@ -68,7 +68,7 @@ public class DDRValueTypeTest {
 		ValueTypeTests.checkObject(assortedValueWithSingleAlignment, 
 				assortedValueWithSingleAlignmentAlt, 
 				valArray, 
-				valueTypeWithVolatileFields
+				referenceTypeWithVolatileValueTypeFields
 				);
 	}
 }

@@ -1207,28 +1207,28 @@ public class ValueTypeTests {
 	}
 	
 	/*	
-	 * Create a valueType with four valueType members including 2 volatile.
+	 * Create a class with four valueType members including 2 volatile.
 	 *
-	 * value valueWithVolatile {
+	 * class refWithVolatile {
 	 *  flattened ValueInt i;
 	 *  flattened ValueInt i2;
 	 *  flattened Point2D point;   <--- 8 bytes, will be flattened.
 	 *  volatile Point2D vpoint;   <--- volatile 8 bytes, will be flattened.
-	 *  flattened Line2D 1ine;     <--- 16 bytes, will be flattened.
+	 *  flattened Line2D line;     <--- 16 bytes, will be flattened.
 	 *  volatile Line2D vline;     <--- volatile 16 bytes, will not be flattened.
 	 * }
 	 */
 	@Test(priority=3)
-	static public Object createValueTypeWithVolatileFields() throws Throwable {
+	static public Object createIdentityClassWithVolatileValueTypeFields() throws Throwable {
 		String[] fields = {"i:LValueInt;:NR", "i2:LValueInt;:NR", "point:LPoint2D;:NR", "vpoint:LPoint2D;:NR:volatile",
 				"line:LFlattenedLine2D;:NR", "vline:LFlattenedLine2D;:NR:volatile"};
-		Class<?> ValueTypeWithVolatileFieldsClass = ValueTypeGenerator.generateValueClass("ValueTypeWithVolatileFields", fields);
-		MethodHandle valueWithVolatile = lookup.findStatic(ValueTypeWithVolatileFieldsClass, "makeObjectGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class,
+		Class<?> IdentityClassWithVolatileValueTypeFieldsClass = ValueTypeGenerator.generateRefClass("IdentityClassWithVolatileValueTypeFields", fields);
+		MethodHandle refWithVolatile = lookup.findStatic(IdentityClassWithVolatileValueTypeFieldsClass, "makeObjectGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class,
 				Object.class, Object.class, Object.class));
-		MethodHandle[][] getterList = generateGenericGetterList(ValueTypeWithVolatileFieldsClass, fields);
-		Object valueWithVolatileObj = createAssorted(valueWithVolatile, fields);
-		checkFieldAccessMHOfAssortedType(getterList, valueWithVolatileObj, fields, true);
-		return valueWithVolatileObj;
+		MethodHandle[][] getterList = generateGenericGetterList(IdentityClassWithVolatileValueTypeFieldsClass, fields);
+		Object refWithVolatileObj = createAssorted(refWithVolatile, fields);
+		checkFieldAccessMHOfAssortedType(getterList, refWithVolatileObj, fields, true);
+		return refWithVolatileObj;
 	}
 
 	/*

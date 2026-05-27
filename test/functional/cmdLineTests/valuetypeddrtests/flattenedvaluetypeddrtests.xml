@@ -25,8 +25,8 @@
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
 <suite id="J9 Value Type ddr test with flattening enabled" timeout="600">
-	<variable name="ARGS" value="-Xint --enable-preview -XX:ValueTypeFlatteningThreshold=999999 -XX:+EnableArrayFlattening -Xverify:none --add-opens java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/jdk.internal.value=ALL-UNNAMED" />
-	<variable name="ARGS_NOCR" value="-Xint --enable-preview -Xnocompressedrefs -XX:ValueTypeFlatteningThreshold=999999 -XX:+EnableArrayFlattening -Xverify:none --add-opens java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/jdk.internal.value=ALL-UNNAMED" />
+	<variable name="ARGS" value="-Xint --enable-preview -XX:ValueTypeFlatteningThreshold=999999 -XX:+EnableArrayFlattening --add-opens java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/jdk.internal.value=ALL-UNNAMED" />
+	<variable name="ARGS_NOCR" value="-Xint --enable-preview -Xnocompressedrefs -XX:ValueTypeFlatteningThreshold=999999 -XX:+EnableArrayFlattening --add-opens java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/jdk.internal.value=ALL-UNNAMED" />
 	<variable name="JARS" value="-cp $ASMJAR$$CPDL$$JCOMMANDERJAR$$CPDL$$TESTNGJAR$$CPDL$$VALUETYPEJAR$" />
 	<variable name="PROGRAM" value="org.openj9.test.lworld.DDRValueTypeTest" />
 	<variable name="DUMPFILE" value="j9core.dmp" />
@@ -157,26 +157,26 @@
 			<input>!j9object $valueAddr1$</input>
 			<input>quit</input>
 		</command>
-		<output regex="no" type="success" showMatch="yes"> ValueTypeWithVolatileFields</output>
-		<output regex="no" type="required" showMatch="yes"> i (offset = 12) (ValueInt)</output>
-		<output regex="no" type="required" showMatch="yes"> i2 (offset = 16) (ValueInt)</output>
-		<output regex="no" type="required" showMatch="yes"> point (offset = 20) (Point2D)</output>
+		<output regex="no" type="success" showMatch="yes"> IdentityClassWithVolatileValueTypeFields</output>
+		<output regex="no" type="required" showMatch="yes"> i (offset = 16) (ValueInt)</output>
+		<output regex="no" type="required" showMatch="yes"> i2 (offset = 20) (ValueInt)</output>
+		<output regex="no" type="required" showMatch="yes"> point (offset = 24) (Point2D)</output>
 		<output regex="no" type="required" showMatch="yes"> vpoint (offset = 4) (Point2D)</output>
-		<output regex="no" type="required" showMatch="yes"> line (offset = 28) (FlattenedLine2D)</output>
-		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes"> vline = !fj9object 0x[\w]+ \(offset = 0\)</output>
+		<output regex="no" type="required" showMatch="yes"> line (offset = 32) (FlattenedLine2D)</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes"> vline = !fj9object 0x[\w]+ \(offset = 12\)</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
-	<test id="Run !flatobject $valueAddr1$ to show the all fields of ValueTypeWithVolatileFields. Make sure all the flattened fields have the correct values">
+	<test id="Run !flatobject $valueAddr1$ to show the all fields of IdentityClassWithVolatileValueTypeFields. Make sure all the flattened fields have the correct values">
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core $DUMPFILE$</arg>
 			<input>!flatobject $valueAddr1$</input>
 			<input>quit</input>
 		</command>
-		<output regex="no" type="success" showMatch="yes"> ValueTypeWithVolatileFields</output>
-		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">ValueInt i (.)* \(offset = 12\)[\n\r](.)*I i = 0x12123434</output>
-		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">ValueInt i2 (.)* \(offset = 16\)[\n\r](.)*I i = 0x12123434</output>
-		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">Point2D point (.)* \(offset = 20\)[\n\r](.)*I x = 0xFFEEFFEE[\n\r](.)*I y = 0xAABBAABB</output>
+		<output regex="no" type="success" showMatch="yes"> IdentityClassWithVolatileValueTypeFields</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">ValueInt i (.)* \(offset = 16\)[\n\r](.)*I i = 0x12123434</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">ValueInt i2 (.)* \(offset = 20\)[\n\r](.)*I i = 0x12123434</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">Point2D point (.)* \(offset = 24\)[\n\r](.)*I x = 0xFFEEFFEE[\n\r](.)*I y = 0xAABBAABB</output>
 		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">Point2D vpoint (.)* \(offset = 4\)[\n\r](.)*I x = 0xFFEEFFEE[\n\r](.)*I y = 0xAABBAABB</output>
 		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">Point2D st (.)*[\n\r](.)*I x = 0xFFEEFFEE[\n\r](.)*I y = 0xAABBAABB</output>
 		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">Point2D en (.)*[\n\r](.)*I x = 0xCCDDCCDD[\n\r](.)*I y = 0x33443344</output>
@@ -184,7 +184,7 @@
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 	
-	<test id="Run !flatobject $vlineAddr$ to show the field vline of ValueTypeWithVolatileFields. Make sure it has the correct values">
+	<test id="Run !flatobject $vlineAddr$ to show the field vline of IdentityClassWithVolatileValueTypeFields. Make sure it has the correct values">
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core $DUMPFILE$</arg>
 			<input>!flatobject $vlineAddr$</input>
@@ -244,13 +244,13 @@
 			<input>!j9object $valueAddr1$</input>
 			<input>quit</input>
 		</command>
-		<output regex="no" type="success" showMatch="yes"> ValueTypeWithVolatileFields</output>
-		<output regex="no" type="required" showMatch="yes">(offset = 0)</output>
+		<output regex="no" type="success" showMatch="yes"> IdentityClassWithVolatileValueTypeFields</output>
 		<output regex="no" type="required" showMatch="yes">(offset = 8)</output>
 		<output regex="no" type="required" showMatch="yes">(offset = 16)</output>
 		<output regex="no" type="required" showMatch="yes">(offset = 24)</output>
 		<output regex="no" type="required" showMatch="yes">(offset = 32)</output>
-		<output regex="no" type="required" showMatch="yes">(offset = 48)</output>
+		<output regex="no" type="required" showMatch="yes">(offset = 40)</output>
+		<output regex="no" type="required" showMatch="yes">(offset = 56)</output>
 
 		<output regex="no" type="failure">(offset = 4)</output>
 		<output regex="no" type="failure">(offset = 12)</output>
