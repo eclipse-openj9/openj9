@@ -287,11 +287,13 @@ FirstJ9Method = LastOMRMethod + 1,
     java_lang_Integer_rotateLeft, java_lang_Integer_rotateRight, java_lang_Integer_compress, java_lang_Integer_expand,
     java_lang_Integer_valueOf, java_lang_Integer_toUnsignedLong, java_lang_Integer_stringSize,
     java_lang_Integer_getChars, java_lang_Integer_getChars_charBuffer, java_lang_Integer_toString,
+    java_lang_Integer_compareUnsigned,
 
     java_lang_Long_getChars, java_lang_Long_getChars_charBuffer, java_lang_Long_bitCount, java_lang_Long_lowestOneBit,
     java_lang_Long_highestOneBit, java_lang_Long_numberOfLeadingZeros, java_lang_Long_numberOfTrailingZeros,
     java_lang_Long_reverseBytes, java_lang_Long_rotateLeft, java_lang_Long_rotateRight, java_lang_Long_compress,
     java_lang_Long_expand, java_lang_Short_reverseBytes, java_lang_Long_stringSize, java_lang_Long_toString,
+    java_lang_Long_compareUnsigned,
 
     java_math_BigDecimal_add, java_math_BigDecimal_clone, java_math_BigDecimal_subtract, java_math_BigDecimal_multiply,
     java_math_BigDecimal_valueOf, java_math_BigDecimal_valueOf_J, java_math_BigDecimal_setScale,
