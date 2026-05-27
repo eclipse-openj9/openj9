@@ -223,7 +223,7 @@ attribute that at the end of the commit message (before any human authorship
 signatures).
 
 ```
-Co-authored by <YOUR AI ASSISTANT>
+Co-authored-by: <YOUR AI ASSISTANT>
 ```
 
 ### Tagging
