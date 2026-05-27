@@ -3223,6 +3223,7 @@ void TR_ResolvedJ9Method::construct()
         { x(TR::java_lang_Integer_toString, "toString", "(I)Ljava/lang/String;") },
         { x(TR::java_lang_Integer_getChars, "getChars", "(II[B)I") },
         { x(TR::java_lang_Integer_getChars_charBuffer, "getChars", "(II[C)V") },
+        { x(TR::java_lang_Integer_compareUnsigned, "compareUnsigned", "(II)I") },
         { TR::unknownMethod }
     };
 
@@ -3243,6 +3244,7 @@ void TR_ResolvedJ9Method::construct()
         { x(TR::java_lang_Long_toString, "toString", "(J)Ljava/lang/String;") },
         { x(TR::java_lang_Long_getChars, "getChars", "(JI[B)I") },
         { x(TR::java_lang_Long_getChars_charBuffer, "getChars", "(JI[C)V") },
+        { x(TR::java_lang_Long_compareUnsigned, "compareUnsigned", "(JJ)I") },
         { TR::unknownMethod }
     };
 
