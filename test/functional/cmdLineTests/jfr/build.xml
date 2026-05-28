@@ -30,50 +30,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 
 	<import file="${TEST_ROOT}/functional/cmdLineTests/buildTools.xml" />
 
-	<!-- Liberty runtime properties. -->
-	<property name="liberty.version" value="24.0.0.1"/>
-	<property name="liberty.url" value="https://public.dhe.ibm.com/ibmdl/export/pub/software/openliberty/runtime/release/${liberty.version}/openliberty-${liberty.version}.zip"/>
-	<property name="liberty.zip" value="openliberty-runtime.zip"/>
-	<property name="liberty.sha1" value="c59edb53e8e88e674b67f0941e1abfc30eb0cd49"/>
+	<!-- Liberty runtime dependency. -->
+	<property name="LIB" value="liberty_runtime"/>
+	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
 
-	<!-- Download Liberty runtime using curl with retry (following AQA test pattern). -->
-	<target name="getLibertyRuntime" depends="init">
-		<condition property="liberty.zip.exists">
-			<available file="${liberty.zip}" type="file"/>
-		</condition>
-
-		<echo message="${liberty.zip} exists. Hence, not downloading it." if:set="liberty.zip.exists"/>
-		<property name="curl_options" value="-Lks -C - ${liberty.url} -o ${liberty.zip}"/>
-		<retry retrycount="3" unless:set="liberty.zip.exists">
-			<sequential>
-				<echo message="curl ${curl_options}"/>
-				<exec executable="curl" failonerror="true">
-					<arg line="${curl_options}"/>
-				</exec>
-			</sequential>
-		</retry>
-		<echo message="Liberty runtime downloaded successfully." unless:set="liberty.zip.exists"/>
-
-		<!-- Verify SHA1 checksum (skip on z/OS due to I/O issues with checksum task). -->
-		<condition property="is_zos">
-			<contains string="${SPEC}" substring="zos"/>
-		</condition>
-
-		<echo message="Skipping Liberty runtime checksum verification on z/OS." if:set="is_zos"/>
-		<checksum file="${liberty.zip}" algorithm="SHA1" property="${liberty.sha1}" verifyproperty="liberty.checksum.verified" unless:set="is_zos"/>
-		<condition property="liberty.checksum.ok" unless:set="is_zos">
-			<equals arg1="${liberty.checksum.verified}" arg2="true"/>
-		</condition>
-
-		<echo message="Liberty runtime checksum verified successfully." if:set="liberty.checksum.ok"/>
-		<condition property="liberty.checksum.failed" unless:set="is_zos">
-			<not><isset property="liberty.checksum.ok"/></not>
-		</condition>
-		<fail message="Liberty runtime checksum verification failed. Expected SHA1: ${liberty.sha1}" if:set="liberty.checksum.failed"/>
-	</target>
-
-	<!-- Extract Liberty runtime after download. -->
-	<target name="extractLiberty" depends="getLibertyRuntime">
+	<!-- Extract Liberty runtime from TKG dependency cache. -->
+	<target name="extractLiberty" depends="init,getDependentLibs">
 		<condition property="liberty.extracted">
 			<available file="${LIB_DIR}/wlp" type="dir"/>
 		</condition>
@@ -85,7 +47,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 
 		<echo message="Extracting Liberty runtime to ${LIB_DIR}." if:set="liberty.not.extracted"/>
 		<mkdir dir="${LIB_DIR}" if:set="liberty.not.extracted"/>
-		<unzip src="${liberty.zip}" dest="${LIB_DIR}" if:set="liberty.not.extracted"/>
+		<unzip src="${LIB_DIR}/liberty_runtime.zip" dest="${LIB_DIR}" if:set="liberty.not.extracted"/>
 		<echo message="Setting execute permissions on Liberty scripts." if:set="liberty.not.extracted"/>
 		<chmod dir="${LIB_DIR}/wlp/bin" perm="755" includes="*" if:set="liberty.not.extracted"/>
 		<echo message="Liberty runtime extracted successfully." if:set="liberty.not.extracted"/>
