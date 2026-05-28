@@ -490,6 +490,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	jvmUpcallsEagerByteInstrumentation,
 	jvmUpcallTransformArrayToList,
 	jfrInitializeInternalStructures,
+	jfrEmitDataLoss,
 #endif /* defined(J9VM_OPT_JFR) */
 #if defined(J9VM_OPT_SNAPSHOTS)
 	initializeSnapshotClassLoaderObject,

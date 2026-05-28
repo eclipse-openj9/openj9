@@ -374,6 +374,7 @@ struct J9VMContinuation;
 typedef struct J9ThreadJFRState {
 	omrthread_thread_time_t prevThreadCPUTimes;
 	int64_t prevTimestamp;
+	U_64 dataLostTotal;
 } J9ThreadJFRState;
 
 typedef struct J9JFRBufferWalkState {
@@ -568,6 +569,13 @@ typedef struct JFRNetworkInterfaceStats {
 	uint64_t prevReadBytes;
 	uint64_t prevWriteBytes;
 } JFRNetworkInterfaceStats;
+
+typedef struct J9JFRDataLoss {
+	J9JFR_EVENT_COMMON_FIELDS
+	U_64 amount;
+	U_64 total;
+} J9JFRDataLoss;
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 /* @ddr_namespace: map_to_type=J9CfrError */
@@ -5654,6 +5662,7 @@ typedef struct J9InternalVMFunctions {
 	void (*jvmUpcallsEagerByteInstrumentation)(struct J9VMThread *currentThread, struct J9Class *superClass, U_8 *className, U_16 classNameLength, struct J9ClassLoader *loader, U_8 *classData, UDATA classDataLength, U_8 **newClassData, UDATA *newClassDataLength);
 	j9object_t (*jvmUpcallTransformArrayToList)(struct J9VMThread *currentThread, j9object_t array);
 	void (*jfrInitializeInternalStructures)(struct J9VMThread *currentThread);
+	void (*jfrEmitDataLoss)(struct J9VMThread *currentThread, U_64 bytes);
 #endif /* defined(J9VM_OPT_JFR) */
 #if defined(J9VM_OPT_SNAPSHOTS)
 	void (*initializeSnapshotClassLoaderObject)(struct J9JavaVM *javaVM, struct J9ClassLoader *classLoader, j9object_t classLoaderObject);

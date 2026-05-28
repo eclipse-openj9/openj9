@@ -1717,6 +1717,31 @@ VM_JFRChunkWriter::writeNetworkUtilizationEvent(void *anElement, void *userData)
 }
 
 void
+VM_JFRChunkWriter::writeDataLossEvent(void *anElement, void *userData)
+{
+	DataLossEntry *entry = (DataLossEntry *)anElement;
+	VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
+
+	/* Reserve size field. */
+	U_8 *dataStart = reserveEventSize(_bufferWriter);
+
+	/* Write event type. */
+	_bufferWriter->writeLEB128(DataLossID);
+
+	/* Write start time. */
+	_bufferWriter->writeLEB128(entry->ticks);
+
+	/* Write amount lost. */
+	_bufferWriter->writeLEB128(entry->amount);
+
+	/* Write total lost for thread. */
+	_bufferWriter->writeLEB128(entry->total);
+
+	/* Write size. */
+	writeEventSize(_bufferWriter, dataStart);
+}
+
+void
 VM_JFRChunkWriter::writeModuleRequire(void *anElement, void *userData)
 {
 	ModuleRequireEntry *entry = (ModuleRequireEntry *)anElement;

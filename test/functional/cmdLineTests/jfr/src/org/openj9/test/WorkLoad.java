@@ -148,6 +148,7 @@ public class WorkLoad {
 			contendOnLock();
 			burnCPU();
 			generateClassLoader();
+			emitDataLoss();
 			if (vthreads) {
 				runWorkWithVirtualThreads(8);
 			}
@@ -234,6 +235,17 @@ public class WorkLoad {
 	}
 
 	public static class ClassLoaderTestClass {}
+
+	private void emitDataLoss() {
+		try {
+			Class<?> jvmClass = Class.forName("jdk.jfr.internal.JVM");
+			Method emitDataLossMethod = jvmClass.getDeclaredMethod("emitDataLoss", long.class);
+			emitDataLossMethod.setAccessible(true);
+			emitDataLossMethod.invoke(null, 1024L);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
 	private void generateClassLoader() {
 		try {

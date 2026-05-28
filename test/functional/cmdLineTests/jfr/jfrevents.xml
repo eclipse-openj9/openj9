@@ -26,7 +26,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 
 <suite id="JFR Tests" timeout="3000">
 	<test id="runWorkload - approx 300 seconds">
-		<command>$EXE$ -XX:StartFlightRecording -Dibm.java9.forceCommonCleanerShutdown=true -Xint -Xcheck:memory  --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.WorkLoad 10 100 10 false</command>
+		<command>$EXE$ -XX:StartFlightRecording -Dibm.java9.forceCommonCleanerShutdown=true -Xint -Xcheck:memory  --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.WorkLoad 10 100 10 false</command>
 		<output type="required" caseSensitive="yes" regex="no">All runs complete.</output>
 		<output type="required" caseSensitive="yes" regex="no">Memory checker statistics:</output>
 		<output type="failure" caseSensitive="yes" regex="no">unfreed blocks remaining at shutdown!</output>
@@ -173,6 +173,14 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output type="required" caseSensitive="yes" regex="no">http://www.w3.org/2001/XMLSchema-instance</output>
 		<output type="required" caseSensitive="yes" regex="no">jdk.NetworkUtilization</output>
 		<output type="success" caseSensitive="yes" regex="no">networkInterface</output>
+		<output type="failure" caseSensitive="yes" regex="no">jfr print: could not read recording</output>
+	</test>
+	<test id="test jfr DataLoss - approx 30 seconds">
+		<command>$JFR_EXE$ print --xml --events "DataLoss" defaultJ9recording.jfr</command>
+		<output type="required" caseSensitive="yes" regex="no">http://www.w3.org/2001/XMLSchema-instance</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.DataLoss</output>
+		<output type="required" caseSensitive="yes" regex="no">amount</output>
+		<output type="success" caseSensitive="yes" regex="no">total</output>
 		<output type="failure" caseSensitive="yes" regex="no">jfr print: could not read recording</output>
 	</test>
 </suite>

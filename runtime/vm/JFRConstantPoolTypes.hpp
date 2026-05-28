@@ -449,6 +449,12 @@ struct NativeLibraryEntry {
 	NativeLibraryEntry *next;
 };
 
+struct DataLossEntry {
+	I_64 ticks;
+	U_64 amount;
+	U_64 total;
+};
+
 struct JFRConstantEvents {
 	JVMInformationEntry JVMInfoEntry;
 	CPUInformationEntry CPUInfoEntry;
@@ -539,6 +545,8 @@ private:
 	UDATA _gcHeapSummaryCount;
 	J9Pool *_networkUtilizationTable;
 	UDATA _networkUtilizationCount;
+	J9Pool *_dataLossTable;
+	UDATA _dataLossCount;
 
 	/* Processing buffers */
 	StackFrame *_currentStackFrameBuffer;
@@ -843,6 +851,7 @@ public:
 	void addGCHeapSummaryEntry(J9JFRGCHeapSummary *gcHeapSummaryData);
 
 	void addNetworkUtilizationEntry(J9JFRNetworkUtilization *networkUtilizationData);
+	void addDataLossEntry(J9JFRDataLoss *dataLossData);
 
 	void addThreadObjectEntry(J9JFRThreadObject *tableEntry);
 
@@ -994,6 +1003,16 @@ public:
 	UDATA getNetworkUtilizationCount()
 	{
 		return _networkUtilizationCount;
+	}
+
+	J9Pool *getDataLossTable()
+	{
+		return _dataLossTable;
+	}
+
+	UDATA getDataLossCount()
+	{
+		return _dataLossCount;
 	}
 
 	UDATA getThreadStartCount()
@@ -1279,6 +1298,9 @@ public:
 				break;
 			case J9JFR_EVENT_TYPE_NETWORKUTILIZATION:
 				addNetworkUtilizationEntry((J9JFRNetworkUtilization *)event);
+				break;
+			case J9JFR_EVENT_TYPE_DATA_LOSS:
+				addDataLossEntry((J9JFRDataLoss *)event);
 				break;
 			default:
 				Assert_VM_unreachable();
@@ -1945,6 +1967,8 @@ done:
 		, _gcHeapSummaryCount(0)
 		, _networkUtilizationTable(NULL)
 		, _networkUtilizationCount(0)
+		, _dataLossTable(NULL)
+		, _dataLossCount(0)
 		, _previousStackTraceEntry(NULL)
 		, _firstStackTraceEntry(NULL)
 		, _previousThreadEntry(NULL)
@@ -2159,6 +2183,12 @@ done:
 			goto done;
 		}
 
+		_dataLossTable = pool_new(sizeof(DataLossEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		if (NULL == _dataLossTable) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+
 		/* Add reserved index for default entries. For strings zero is the empty or NUll string.
 		 * For package zero is the deafult package, for Module zero is the unnamed module. ThreadGroup
 		 * zero is NULL threadGroup.
@@ -2263,6 +2293,7 @@ done:
 		pool_kill(_garbageCollectionTable);
 		pool_kill(_gcHeapSummaryTable);
 		pool_kill(_networkUtilizationTable);
+		pool_kill(_dataLossTable);
 		freeNetworkInterfaceNames();
 		j9mem_free_memory(_globalStringTable);
 	}

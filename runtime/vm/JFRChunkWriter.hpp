@@ -112,6 +112,7 @@ enum MetadataTypeID {
 	ThreadContextSwitchRateID = 97,
 	NetworkUtilizationID = 98,
 	ThreadStatisticsID = 99,
+	DataLossID = 86,
 	ClassLoadingStatisticsID = 100,
 	ClassLoaderStatisticsID = 101,
 	PhysicalMemoryID = 108,
@@ -239,6 +240,7 @@ private:
 	static constexpr int GARBAGE_COLLECTION_EVENT_SIZE = sizeof(U_8) + (6 * LEB128_64_SIZE) + (2 * LEB128_32_SIZE);
 	static constexpr int GC_HEAP_SUMMARY_EVENT_SIZE = sizeof(U_8) + (7 * LEB128_64_SIZE) + (3 * LEB128_32_SIZE);
 	static constexpr int NETWORK_UTILIZATION_EVENT_SIZE = (4 * sizeof(U_64)) + sizeof(U_32);
+	static constexpr int DATA_LOSS_EVENT_SIZE = sizeof(U_8) + LEB128_32_SIZE + (3 * LEB128_64_SIZE);
 
 	static constexpr int METADATA_ID = 1;
 
@@ -476,6 +478,8 @@ done:
 			pool_do(_constantPoolTypes.getGCHeapSummaryTable(), &writeGCHeapSummaryEvent, _bufferWriter);
 
 			pool_do(_constantPoolTypes.getNetworkUtilizationTable(), &writeNetworkUtilizationEvent, this);
+
+			pool_do(_constantPoolTypes.getDataLossTable(), &writeDataLossEvent, _bufferWriter);
 
 			/* Only write constant events in first chunk. */
 			if (0 == _vm->jfrState.jfrChunkCount) {
@@ -943,6 +947,9 @@ done:
 
 	static void writeNetworkUtilizationEvent(void *anElement, void *userData);
 
+	static void writeDataLossEvent(void *anElement, void *userData);
+
+
 	UDATA
 	calculateRequiredBufferSize()
 	{
@@ -1044,6 +1051,8 @@ done:
 		requiredBufferSize += (_constantPoolTypes.getGCHeapSummaryCount() * GC_HEAP_SUMMARY_EVENT_SIZE);
 
 		requiredBufferSize += (_constantPoolTypes.getNetworkUtilizationCount() * NETWORK_UTILIZATION_EVENT_SIZE);
+
+		requiredBufferSize += (_constantPoolTypes.getDataLossCount() * DATA_LOSS_EVENT_SIZE);
 
 		return requiredBufferSize;
 	}

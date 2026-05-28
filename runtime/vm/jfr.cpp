@@ -175,6 +175,9 @@ jfrEventSize(J9JFREvent *jfrEvent)
 	case J9JFR_EVENT_TYPE_NETWORKUTILIZATION:
 		size = sizeof(J9JFRNetworkUtilization);
 		break;
+	case J9JFR_EVENT_TYPE_DATA_LOSS:
+		size = sizeof(J9JFRDataLoss);
+		break;
 	default:
 		Assert_VM_unreachable();
 		break;
@@ -2005,6 +2008,18 @@ addTypeIds(J9JavaVM *vm) {
 	return result;
 }
 #endif /* JAVA_SPEC_VERSION >= 17 */
+
+void
+jfrEmitDataLoss(J9VMThread *currentThread, U_64 bytes)
+{
+	J9JFRDataLoss *jfrEvent = (J9JFRDataLoss *)reserveBuffer(currentThread, currentThread, sizeof(J9JFRDataLoss));
+	if (NULL != jfrEvent) {
+		currentThread->threadJfrState.dataLostTotal += bytes;
+		initializeEventFields(currentThread, currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_DATA_LOSS);
+		jfrEvent->amount = bytes;
+		jfrEvent->total = currentThread->threadJfrState.dataLostTotal;
+	}
+}
 
 } /* extern "C" */
 
