@@ -98,28 +98,11 @@ VM_JFRConstantPoolTypes::methodNameHashEqualFn(void *tableNode, void *queryNode,
 }
 
 UDATA
-VM_JFRConstantPoolTypes::threadHashFn(void *key, void *userData)
-{
-	ThreadEntry *threadEntry = (ThreadEntry *) key;
-
-	return (UDATA) threadEntry->vmThread;
-}
-
-UDATA
-VM_JFRConstantPoolTypes::threadHashEqualFn(void *tableNode, void *queryNode, void *userData)
-{
-	ThreadEntry *tableEntry = (ThreadEntry *) tableNode;
-	ThreadEntry *queryEntry = (ThreadEntry *) queryNode;
-
-	return tableEntry->vmThread == queryEntry->vmThread;
-}
-
-UDATA
 VM_JFRConstantPoolTypes::stackTraceHashFn(void *key, void *userData)
 {
 	StackTraceEntry *entry = (StackTraceEntry*) key;
 
-	return (U_64)(UDATA)entry->vmThread ^ (U_64)entry->ticks;
+	return (UDATA)(entry->currentThreadID ^ entry->ticks);
 }
 
 UDATA
@@ -273,16 +256,34 @@ VM_JFRConstantPoolTypes::walkPackageTablePrint(void *entry, void *userData)
 	return FALSE;
 }
 
-UDATA
+void
 VM_JFRConstantPoolTypes::walkThreadTablePrint(void *entry, void *userData)
 {
 	ThreadEntry *tableEntry = (ThreadEntry *) entry;
 	J9VMThread *currentThread = (J9VMThread *)userData;
 	PORT_ACCESS_FROM_VMC(currentThread);
 
-	j9tty_printf(PORTLIB, "%u) osTID=%lu javaTID=%lu javaThreadName=%.*s osThreadName=%.*s threadGroupIndex=%u\n", tableEntry->index, tableEntry->osTID, tableEntry->javaTID, J9UTF8_LENGTH(tableEntry->javaThreadName), J9UTF8_DATA(tableEntry->javaThreadName), J9UTF8_LENGTH(tableEntry->osThreadName), J9UTF8_DATA(tableEntry->osThreadName), tableEntry->threadGroupIndex);
+	j9tty_printf(PORTLIB, "%u) osTID=%lld javaTID=%lld javaThreadName=%.*s osThreadName=%.*s threadGroupIndex=%u\n", tableEntry->index, tableEntry->osTID, tableEntry->javaTID, J9UTF8_LENGTH(tableEntry->javaThreadName), J9UTF8_DATA(tableEntry->javaThreadName), J9UTF8_LENGTH(tableEntry->osThreadName), J9UTF8_DATA(tableEntry->osThreadName), tableEntry->threadGroupIndex);
+}
 
-	return FALSE;
+void
+VM_JFRConstantPoolTypes::walkThreadStartTablePrint(void *entry, void *userData)
+{
+	ThreadStartEntry *tableEntry = (ThreadStartEntry *) entry;
+	J9VMThread *currentThread = (J9VMThread *)userData;
+	PORT_ACCESS_FROM_VMC(currentThread);
+
+	j9tty_printf(PORTLIB, "ticks=%lld stackTraceIndex=%u threadIndex=%llu eventThreadIndex=%llu parentThreadIndex=%llu\n", tableEntry->ticks, tableEntry->stackTraceIndex, tableEntry->threadIndex, tableEntry->eventThreadIndex, tableEntry->parentThreadIndex);
+}
+
+void
+VM_JFRConstantPoolTypes::walkThreadParkTablePrint(void *entry, void *userData)
+{
+	ThreadParkEntry *tableEntry = (ThreadParkEntry *) entry;
+	J9VMThread *currentThread = (J9VMThread *)userData;
+	PORT_ACCESS_FROM_VMC(currentThread);
+
+	j9tty_printf(PORTLIB, "ticks=%lld duration=%lld threadIndex=%llu eventThreadIndex=%llu stackTraceIndex=%u parkedClass=%u timeOut=%lld untilTime=%lld parkedAddress=%llx\n", tableEntry->ticks, tableEntry->duration, tableEntry->threadIndex, tableEntry->eventThreadIndex, tableEntry->stackTraceIndex, tableEntry->parkedClass, tableEntry->timeOut, tableEntry->untilTime, tableEntry->parkedAddress);
 }
 
 UDATA
@@ -849,49 +850,34 @@ VM_JFRConstantPoolTypes::addStringEntry(j9object_t string)
 	}
 }
 
-U_32
-VM_JFRConstantPoolTypes::addThreadEntry(J9VMThread *vmThread)
+void
+VM_JFRConstantPoolTypes::addAllThreads()
 {
-	U_32 index = U_32_MAX;
+	omrthread_monitor_enter(_vm->jfrState.threadObjectsMutex);
+	J9HashTableState hashTableState = {0};
+	J9JFRThreadObject *entry = (J9JFRThreadObject *)hashTableStartDo(_vm->jfrState.threadObjectJNIRefTable, &hashTableState);
+	while (NULL != entry) {
+		addThreadObjectEntry(entry);
+		entry = (J9JFRThreadObject *)hashTableNextDo(&hashTableState);
+	}
+	omrthread_monitor_exit(_vm->jfrState.threadObjectsMutex);
+}
+
+void
+VM_JFRConstantPoolTypes::addThreadObjectEntry(J9JFRThreadObject *tableEntry)
+{
 	ThreadEntry *entry = NULL;
-	ThreadEntry entryBuffer = {0};
-	omrthread_t osThread = NULL;
-	j9object_t threadObject = NULL;
+	j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(tableEntry->threadObject);
 
-	if (NULL == vmThread) {
-		index = 0;
+	entry = (ThreadEntry *)pool_newElement(_threadTable);
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
 		goto done;
 	}
 
-	entry = &entryBuffer;
-	entry->vmThread = vmThread;
-	osThread = vmThread->osThread;
-#if JAVA_SPEC_VERSION >= 19
-	threadObject = vmThread->carrierThreadObject;
-#else /* JAVA_SPEC_VERSION >= 19 */
-	threadObject = vmThread->threadObject;
-#endif /* JAVA_SPEC_VERSION >= 19 */
-
-	if ((NULL == osThread) || (NULL == threadObject)) {
-		/* this can happen if a thread dies during a monitor enter */
-		index = 0;
-		goto done;
-	}
-
-	entry = (ThreadEntry *) hashTableFind(_threadTable, entry);
-	if (NULL != entry) {
-		index = entry->index;
-		goto done;
-	} else {
-		entry = &entryBuffer;
-	}
-
-	entry->osTID = ((J9AbstractThread*)osThread)->tid;
 	if ((NULL != threadObject) && J9VMJAVALANGTHREAD_STARTED(_currentThread, threadObject)) {
-		entry->javaTID = J9VMJAVALANGTHREAD_TID(_currentThread, threadObject);
-
 		entry->javaThreadName = copyStringToJ9UTF8WithMemAlloc(_currentThread, J9VMJAVALANGTHREAD_NAME(_currentThread, threadObject), J9_STR_NONE, "", 0, NULL, 0);
-
+		entry->freeName = TRUE;
 		if (isResultNotOKay()) goto done;
 #if JAVA_SPEC_VERSION >= 19
 		entry->threadGroupIndex = addThreadGroupEntry(J9VMJAVALANGTHREADFIELDHOLDER_GROUP(_currentThread, (J9VMJAVALANGTHREAD_HOLDER(_currentThread, threadObject))));
@@ -904,14 +890,11 @@ VM_JFRConstantPoolTypes::addThreadEntry(J9VMThread *vmThread)
 	/* TODO is this always true? */
 	entry->osThreadName = entry->javaThreadName;
 
-	entry->index = _threadCount;
-	_threadCount++;
+	entry->javaTID = tableEntry->javaTID;
+	entry->osTID = tableEntry->nativeTID;
+	entry->index = entry->javaTID;
 
-	entry = (ThreadEntry*) hashTableAdd(_threadTable, &entryBuffer);
-	if (NULL == entry) {
-		_buildResult = OutOfMemory;
-		goto done;
-	}
+	_threadCount++;
 
 	if (NULL == _firstThreadEntry) {
 		_firstThreadEntry = entry;
@@ -922,10 +905,8 @@ VM_JFRConstantPoolTypes::addThreadEntry(J9VMThread *vmThread)
 	}
 	_previousThreadEntry = entry;
 
-	index = entry->index;
-
 done:
-	return index;
+	return;
 }
 
 U_32
@@ -1038,14 +1019,14 @@ done:
 }
 
 U_32
-VM_JFRConstantPoolTypes::addStackTraceEntry(J9VMThread *vmThread, I_64 ticks, U_32 numOfFrames)
+VM_JFRConstantPoolTypes::addStackTraceEntry(U_64 threadTID, I_64 ticks, U_32 numOfFrames)
 {
 	U_32 index = U_32_MAX;
 	StackTraceEntry *entry = NULL;
 	StackTraceEntry entryBuffer = {0};
 
 	entry = &entryBuffer;
-	entry->vmThread = vmThread;
+	entry->currentThreadID = threadTID;
 	entry->ticks = ticks;
 
 	entry = (StackTraceEntry *) hashTableFind(_stackTraceTable, entry);
@@ -1098,14 +1079,13 @@ VM_JFRConstantPoolTypes::addExecutionSampleEntry(J9JFRExecutionSample *execution
 		goto done;
 	}
 
-	entry->vmThread = executionSampleData->vmThread;
 	entry->ticks = executionSampleData->startTicks;
 	entry->state = RUNNABLE; //TODO
 
-	entry->threadIndex = addThreadEntry(entry->vmThread);
-	if (isResultNotOKay()) goto done;
+	/* Use the TID directly as the thread index */
+	entry->threadIndex = executionSampleData->currentThreadTID;
 
-	entry->stackTraceIndex = consumeStackTrace(entry->vmThread, J9JFREXECUTIONSAMPLE_STACKTRACE(executionSampleData), executionSampleData->stackTraceSize);
+	entry->stackTraceIndex = consumeStackTrace(executionSampleData->currentThreadTID, J9JFREXECUTIONSAMPLE_STACKTRACE(executionSampleData), executionSampleData->stackTraceSize);
 	if (isResultNotOKay()) goto done;
 
 	_executionSampleCount += 1;
@@ -1126,16 +1106,11 @@ VM_JFRConstantPoolTypes::addThreadStartEntry(J9JFRThreadStart *threadStartData)
 
 	entry->ticks = threadStartData->startTicks;
 
-	entry->threadIndex = addThreadEntry(threadStartData->thread);
-	if (isResultNotOKay()) goto done;
-
-	entry->eventThreadIndex = addThreadEntry(threadStartData->thread);
-	if (isResultNotOKay()) goto done;
-
-	entry->parentThreadIndex = addThreadEntry(threadStartData->parentThread);
-	if (isResultNotOKay()) goto done;
-
-	entry->stackTraceIndex = consumeStackTrace(threadStartData->parentThread, J9JFRTHREADSTART_STACKTRACE(threadStartData), threadStartData->stackTraceSize);
+	/* Use the TIDs directly as thread indices */
+	entry->threadIndex = threadStartData->threadTID;
+	entry->eventThreadIndex = threadStartData->threadTID;
+	entry->parentThreadIndex = threadStartData->parentThreadTID;
+	entry->stackTraceIndex = consumeStackTrace(threadStartData->currentThreadTID, J9JFRTHREADSTART_STACKTRACE(threadStartData), threadStartData->stackTraceSize);
 	if (isResultNotOKay()) goto done;
 
 	_threadStartCount += 1;
@@ -1156,11 +1131,9 @@ VM_JFRConstantPoolTypes::addThreadEndEntry(J9JFREvent *threadEndData)
 
 	entry->ticks = threadEndData->startTicks;
 
-	entry->threadIndex = addThreadEntry(threadEndData->vmThread);
-	if (isResultNotOKay()) goto done;
-
-	entry->eventThreadIndex = addThreadEntry(threadEndData->vmThread);
-	if (isResultNotOKay()) goto done;
+	/* Use the TID directly as the thread index */
+	entry->threadIndex = threadEndData->currentThreadTID;
+	entry->eventThreadIndex = threadEndData->currentThreadTID;
 
 	_threadEndCount += 1;
 
@@ -1182,13 +1155,11 @@ VM_JFRConstantPoolTypes::addThreadSleepEntry(J9JFRThreadSlept *threadSleepData)
 	entry->duration = threadSleepData->duration;
 	entry->sleepTime = threadSleepData->time;
 
-	entry->threadIndex = addThreadEntry(threadSleepData->vmThread);
-	if (isResultNotOKay()) goto done;
+	/* Use the TID directly as the thread index */
+	entry->threadIndex = threadSleepData->currentThreadTID;
+	entry->eventThreadIndex = threadSleepData->currentThreadTID;
 
-	entry->eventThreadIndex = addThreadEntry(threadSleepData->vmThread);
-	if (isResultNotOKay()) goto done;
-
-	entry->stackTraceIndex = consumeStackTrace(threadSleepData->vmThread, J9JFRTHREADSLEPT_STACKTRACE(threadSleepData), threadSleepData->stackTraceSize);
+	entry->stackTraceIndex = consumeStackTrace(threadSleepData->currentThreadTID, J9JFRTHREADSLEPT_STACKTRACE(threadSleepData), threadSleepData->stackTraceSize);
 	if (isResultNotOKay()) goto done;
 
 	_threadSleepCount += 1;
@@ -1213,13 +1184,11 @@ VM_JFRConstantPoolTypes::addMonitorWaitEntry(J9JFRMonitorWaited* threadWaitData)
 	entry->monitorAddress = (I_64)(U_64)threadWaitData->monitorAddress;
 	entry->timedOut = threadWaitData->timedOut;
 
-	entry->threadIndex = addThreadEntry(threadWaitData->vmThread);
-	if (isResultNotOKay()) goto done;
+	/* Use the TIDs directly as thread indices */
+	entry->threadIndex = threadWaitData->currentThreadTID;
+	entry->eventThreadIndex = threadWaitData->currentThreadTID;
 
-	entry->eventThreadIndex = addThreadEntry(threadWaitData->vmThread);
-	if (isResultNotOKay()) goto done;
-
-	entry->stackTraceIndex = consumeStackTrace(threadWaitData->vmThread, J9JFRMonitorWaitedED_STACKTRACE(threadWaitData), threadWaitData->stackTraceSize);
+	entry->stackTraceIndex = consumeStackTrace(threadWaitData->currentThreadTID, J9JFRMonitorWaitedED_STACKTRACE(threadWaitData), threadWaitData->stackTraceSize);
 	if (isResultNotOKay()) goto done;
 
 	entry->monitorClass = getClassEntry(threadWaitData->monitorClass);
@@ -1246,16 +1215,12 @@ VM_JFRConstantPoolTypes::addMonitorEnterEntry(J9JFRMonitorEntered *monitorEnterD
 	entry->duration = monitorEnterData->duration;
 	entry->monitorAddress = monitorEnterData->monitorAddress;
 
-	entry->threadIndex = addThreadEntry(monitorEnterData->vmThread);
-	if (isResultNotOKay()) goto done;
+	/* Use the TIDs directly as thread indices */
+	entry->threadIndex = monitorEnterData->currentThreadTID;
+	entry->previousOwnerThread = monitorEnterData->previousOwnerTID;
+	entry->eventThreadIndex = monitorEnterData->currentThreadTID;
 
-	entry->previousOwnerThread = addThreadEntry(monitorEnterData->previousOwner);
-	if (isResultNotOKay()) goto done;
-
-	entry->eventThreadIndex = addThreadEntry(monitorEnterData->vmThread);
-	if (isResultNotOKay()) goto done;
-
-	entry->stackTraceIndex = consumeStackTrace(monitorEnterData->vmThread, J9JFRMONITORENTERED_STACKTRACE(monitorEnterData), monitorEnterData->stackTraceSize);
+	entry->stackTraceIndex = consumeStackTrace(monitorEnterData->currentThreadTID, J9JFRMONITORENTERED_STACKTRACE(monitorEnterData), monitorEnterData->stackTraceSize);
 	if (isResultNotOKay()) goto done;
 
 	entry->monitorClass = getClassEntry(monitorEnterData->monitorClass);
@@ -1281,14 +1246,10 @@ VM_JFRConstantPoolTypes::addThreadParkEntry(J9JFRThreadParked* threadParkData)
 	entry->duration = threadParkData->duration;
 
 	entry->parkedAddress = (U_64)threadParkData->parkedAddress;
+	entry->threadIndex = threadParkData->currentThreadTID;
+	entry->eventThreadIndex = threadParkData->currentThreadTID;
 
-	entry->threadIndex = addThreadEntry(threadParkData->vmThread);
-	if (isResultNotOKay()) goto done;
-
-	entry->eventThreadIndex = addThreadEntry(threadParkData->vmThread);
-	if (isResultNotOKay()) goto done;
-
-	entry->stackTraceIndex = consumeStackTrace(threadParkData->vmThread, J9JFRTHREADPARKED_STACKTRACE(threadParkData), threadParkData->stackTraceSize);
+	entry->stackTraceIndex = consumeStackTrace(threadParkData->currentThreadTID, J9JFRTHREADPARKED_STACKTRACE(threadParkData), threadParkData->stackTraceSize);
 	if (isResultNotOKay()) goto done;
 
 	entry->parkedClass = getClassEntry(threadParkData->parkedClass);
@@ -1338,10 +1299,8 @@ VM_JFRConstantPoolTypes::addThreadCPULoadEntry(J9JFRThreadCPULoad *threadCPULoad
 	entry->userCPULoad = threadCPULoadData->userCPULoad;
 	entry->systemCPULoad = threadCPULoadData->systemCPULoad;
 
-	entry->threadIndex = addThreadEntry(threadCPULoadData->vmThread);
-	if (isResultNotOKay()) {
-		goto done;
-	}
+	/* Use the TID directly as the thread index */
+	entry->threadIndex = threadCPULoadData->currentThreadTID;
 
 	_threadCPULoadCount += 1;
 
@@ -1419,10 +1378,10 @@ VM_JFRConstantPoolTypes::addSystemGCEntry(J9JFRSystemGC *systemGCData)
 	entry->ticks = systemGCData->startTicks;
 	entry->duration = systemGCData->duration;
 
-	entry->eventThreadIndex = addThreadEntry(systemGCData->vmThread);
-	if (isResultNotOKay()) goto done;
+	/* Use the TID directly as the thread index */
+	entry->eventThreadIndex = systemGCData->currentThreadTID;
 
-	entry->stackTraceIndex = consumeStackTrace(systemGCData->vmThread, J9JFRSYSTEMGC_STACKTRACE(systemGCData), systemGCData->stackTraceSize);
+	entry->stackTraceIndex = consumeStackTrace(systemGCData->currentThreadTID, J9JFRSYSTEMGC_STACKTRACE(systemGCData), systemGCData->stackTraceSize);
 	if (isResultNotOKay()) goto done;
 
 	_systemGCCount += 1;
@@ -1570,7 +1529,16 @@ VM_JFRConstantPoolTypes::printTables()
 	hashTableForEachDo(_packageTable, &walkPackageTablePrint, _currentThread);
 
 	j9tty_printf(PORTLIB, "--------------- Thread Table ---------------\n");
-	hashTableForEachDo(_threadTable, &walkThreadTablePrint, _currentThread);
+	pool_do(_threadTable, &walkThreadTablePrint, _currentThread);
+	j9tty_printf(PORTLIB, "total count %d\n", (int)_threadCount);
+
+	j9tty_printf(PORTLIB, "--------------- ThreadStart Table ---------------\n");
+	pool_do(_threadStartTable, &walkThreadStartTablePrint, _currentThread);
+	j9tty_printf(PORTLIB, "total count %d\n", (int)_threadStartCount);
+
+	j9tty_printf(PORTLIB, "--------------- ThreadPark Table ---------------\n");
+	pool_do(_threadParkTable, &walkThreadParkTablePrint, _currentThread);
+	j9tty_printf(PORTLIB, "total count %d\n", (int)_threadParkCount);
 
 	j9tty_printf(PORTLIB, "--------------- ThreadGroup Table ---------------\n");
 	hashTableForEachDo(_threadGroupTable, &walkThreadGroupTablePrint, _currentThread);
@@ -1638,7 +1606,7 @@ VM_JFRConstantPoolTypes::freeStackStraceEntries(void *entry, void *userData)
 	return FALSE;
 }
 
-UDATA
+void
 VM_JFRConstantPoolTypes::freeThreadNameEntries(void *entry, void *userData)
 {
 	ThreadEntry *tableEntry = (ThreadEntry *) entry;
@@ -1646,12 +1614,10 @@ VM_JFRConstantPoolTypes::freeThreadNameEntries(void *entry, void *userData)
 	PORT_ACCESS_FROM_VMC(currentThread);
 
 	/* Name of the unknown thread entry cannot be freed */
-	if (0 != tableEntry->index) {
+	if (tableEntry->freeName) {
 		j9mem_free_memory(tableEntry->javaThreadName);
 	}
 	tableEntry->javaThreadName = NULL;
-
-	return FALSE;
 }
 
 UDATA
