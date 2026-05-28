@@ -1508,6 +1508,26 @@ done:
 }
 
 void
+VM_JFRConstantPoolTypes::addDataLossEntry(J9JFRDataLoss *dataLossData)
+{
+	DataLossEntry *entry = (DataLossEntry *)pool_newElement(_dataLossTable);
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = dataLossData->startTicks;
+	entry->amount = dataLossData->amount;
+	entry->total = dataLossData->total;
+
+	_dataLossCount += 1;
+
+done:
+	return;
+}
+
+void
 VM_JFRConstantPoolTypes::printTables()
 {
 	j9tty_printf(PORTLIB, "--------------- StringUTF8Table ---------------\n");

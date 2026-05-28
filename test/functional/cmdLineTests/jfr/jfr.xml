@@ -31,27 +31,27 @@ Assisted-by: IBM Bob
 		<return type="success" value="0" />
 	</test>
 	<test id="runWorkload - approx 30seconds">
-		<command>$EXE$ -XX:StartFlightRecording --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.WorkLoad</command>
+		<command>$EXE$ -XX:StartFlightRecording --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.WorkLoad</command>
 		<output type="success" caseSensitive="yes" regex="no">All runs complete.</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception</output>
 	</test>
 	<test id="runWorkload 2 - approx 2mins">
-		<command>$EXE$ -XX:StartFlightRecording --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.WorkLoad 200 20000 200</command>
+		<command>$EXE$ -XX:StartFlightRecording --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.WorkLoad 200 20000 200</command>
 		<output type="success" caseSensitive="yes" regex="no">All runs complete.</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception</output>
 	</test>
 	<test id="VM API Test - approx 2mins">
-		<command>$EXE$ --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.VMAPITest</command>
+		<command>$EXE$ --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.VMAPITest</command>
 		<output type="success" caseSensitive="yes" regex="no">All runs complete.</output>
 		<output type="failure" caseSensitive="yes" regex="no">Failed</output>
 	</test>
 	<test id="VM API Test aggressive start and stop - approx 2mins">
-		<command>$EXE$ --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.VMAPITest 1</command>
+		<command>$EXE$ --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.VMAPITest 1</command>
 		<output type="success" caseSensitive="yes" regex="no">All runs complete.</output>
 		<output type="failure" caseSensitive="yes" regex="no">Failed</output>
 	</test>
 	<test id="VM API Test2 - approx 2mins">
-		<command>$EXE$ --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.VMAPITest2</command>
+		<command>$EXE$ --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.VMAPITest2</command>
 		<output type="success" caseSensitive="yes" regex="no">All runs complete.</output>
 		<output type="failure" caseSensitive="yes" regex="no">Failed</output>
 	</test>
@@ -94,31 +94,31 @@ Assisted-by: IBM Bob
 		<output type="failure" caseSensitive="yes" regex="no">unfreed blocks remaining at shutdown</output>
 	</test>
 	<test id="Test JFR cmdline properties - filename only">
-		<command>$EXE$ -XX:StartFlightRecording=filename=test.jfr -cp $RESJAR$ org.openj9.test.JFRCmdLinePropertiesTest</command>
+		<command>$EXE$ -XX:StartFlightRecording=filename=test.jfr --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.JFRCmdLinePropertiesTest</command>
 		<output type="success" caseSensitive="yes" regex="no">filename=test.jfr</output>
 		<output type="success" caseSensitive="yes" regex="no">delay=null</output>
 		<output type="success" caseSensitive="yes" regex="no">duration=null</output>
 	</test>
 	<test id="Test JFR cmdline properties - delay only">
-		<command>$EXE$ -XX:StartFlightRecording=delay=30s -cp $RESJAR$ org.openj9.test.JFRCmdLinePropertiesTest</command>
+		<command>$EXE$ -XX:StartFlightRecording=delay=30s --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.JFRCmdLinePropertiesTest</command>
 		<output type="success" caseSensitive="yes" regex="no">filename=null</output>
 		<output type="success" caseSensitive="yes" regex="no">delay=30000000000 nanoseconds</output>
 		<output type="success" caseSensitive="yes" regex="no">duration=null</output>
 	</test>
 	<test id="Test JFR cmdline properties - duration only">
-		<command>$EXE$ -XX:StartFlightRecording=duration=1m -cp $RESJAR$ org.openj9.test.JFRCmdLinePropertiesTest</command>
+		<command>$EXE$ -XX:StartFlightRecording=duration=1m --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.JFRCmdLinePropertiesTest</command>
 		<output type="success" caseSensitive="yes" regex="no">filename=null</output>
 		<output type="success" caseSensitive="yes" regex="no">delay=null</output>
 		<output type="success" caseSensitive="yes" regex="no">duration=60000000000 nanoseconds</output>
 	</test>
 	<test id="Test JFR cmdline properties - all options">
-		<command>$EXE$ -XX:StartFlightRecording=filename=recording.jfr,delay=10s,duration=2m -cp $RESJAR$ org.openj9.test.JFRCmdLinePropertiesTest</command>
+		<command>$EXE$ -XX:StartFlightRecording=filename=recording.jfr,delay=10s,duration=2m --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.JFRCmdLinePropertiesTest</command>
 		<output type="success" caseSensitive="yes" regex="no">filename=recording.jfr</output>
 		<output type="success" caseSensitive="yes" regex="no">delay=10000000000 nanoseconds</output>
 		<output type="success" caseSensitive="yes" regex="no">duration=120000000000 nanoseconds</output>
 	</test>
 	<test id="Test JFR cmdline properties - no options">
-		<command>$EXE$ -XX:StartFlightRecording -cp $RESJAR$ org.openj9.test.JFRCmdLinePropertiesTest</command>
+		<command>$EXE$ -XX:StartFlightRecording --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.JFRCmdLinePropertiesTest</command>
 		<output type="success" caseSensitive="yes" regex="no">filename=null</output>
 		<output type="success" caseSensitive="yes" regex="no">delay=null</output>
 		<output type="success" caseSensitive="yes" regex="no">duration=null</output>

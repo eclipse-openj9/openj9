@@ -147,7 +147,12 @@ Java_jdk_jfr_internal_JVM_flush__(JNIEnv *env, jclass clazz)
 void JNICALL
 Java_jdk_jfr_internal_JVM_emitDataLoss(JNIEnv *env, jclass clazz, jlong bytes)
 {
-	// TODO: implementation
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	vmFuncs->jfrEmitDataLoss(currentThread, (U_64)bytes);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 } /* extern "C" */
