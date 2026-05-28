@@ -1037,8 +1037,7 @@ void DLTLogic(J9VMThread *vmThread, TR::CompilationInfo *compInfo)
                 if (enableDLTidx != -1) {
                     J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState.method);
                     bcIndex = enableDLTidx;
-                    if (enableDLTidx >= (J9_BYTECODE_END_FROM_ROM_METHOD(romMethod))
-                            - (J9_BYTECODE_START_FROM_ROM_METHOD(romMethod)))
+                    if (enableDLTidx >= J9_BYTECODE_SIZE_FROM_ROM_METHOD(romMethod))
                         return;
                     dltBlock->bcIndex[idx] = enableDLTidx;
                 }
@@ -3078,8 +3077,7 @@ static void updateOverriddenFlag(J9VMThread *vm, J9Class *cl)
                 if (traceIt) {
                     printf("For submethod %p, j9methods don't match.  Setting overridden bit. endbc - startbc = "
                            "%" OMR_PRIdPTR "\n",
-                        subMethod,
-                        (J9_BYTECODE_END_FROM_ROM_METHOD(subROM) - J9_BYTECODE_START_FROM_ROM_METHOD(subROM)));
+                        subMethod, J9_BYTECODE_SIZE_FROM_ROM_METHOD(subROM));
                     fflush(stdout);
                 }
 

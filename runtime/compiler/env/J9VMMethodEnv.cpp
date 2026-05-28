@@ -98,7 +98,7 @@ uint32_t J9::VMMethodEnv::bytecodeSize(TR_OpaqueMethodBlock *method)
     {
         romMethod = J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
     }
-    return (uint32_t)(J9_BYTECODE_END_FROM_ROM_METHOD(romMethod) - J9_BYTECODE_START_FROM_ROM_METHOD(romMethod));
+    return (uint32_t)J9_BYTECODE_SIZE_FROM_ROM_METHOD(romMethod);
 }
 
 bool J9::VMMethodEnv::isFrameIteratorSkipMethod(J9Method *method)
