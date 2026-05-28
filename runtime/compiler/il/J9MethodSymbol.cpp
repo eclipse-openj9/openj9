@@ -176,7 +176,8 @@ static TR::RecognizedMethod canSkipNullChecks[] = {
     // TR::java_util_Vector_addElement,
     TR::java_math_BigDecimal_longString1C, TR::java_math_BigDecimal_longString2, TR::java_math_BigInteger_init_long,
 #ifdef OPENJ9_BUILD
-    TR::java_math_BigInteger_toByteArray,
+    TR::java_math_BigInteger_toByteArray, TR::java_math_MutableBigInteger_divideMagnitude,
+    TR::java_math_MutableBigInteger_divideOneWord,
 #endif // OPENJ9_BUILD
     TR::java_math_BigInteger_stripLeadingZeroBytes1, TR::java_math_BigInteger_stripLeadingZeroBytes2,
     TR::java_util_EnumMap__nec_, TR::java_nio_Bits_getCharB, TR::java_nio_Bits_getCharL, TR::java_nio_Bits_getShortB,
@@ -259,6 +260,7 @@ static TR::RecognizedMethod canSkipBoundChecks[] = {
     TR::java_math_BigInteger_stripLeadingZeroBytes1, TR::java_math_BigInteger_stripLeadingZeroBytes2,
 #ifdef OPENJ9_BUILD
     TR::java_math_BigInteger_bitCount, TR::java_math_BigInteger_bitLength,
+    TR::java_math_MutableBigInteger_divideMagnitude, TR::java_math_MutableBigInteger_divideOneWord,
 #endif // OPENJ9_BUILD
     TR::java_util_HashMap_get, TR::java_util_HashMap_findNonNullKeyEntry, TR::java_util_HashMap_putImpl,
     TR::java_lang_String_init_int_String_int_String_String, TR::java_lang_String_init_int_int_char_boolean,
@@ -579,7 +581,7 @@ static TR::RecognizedMethod canSkipZeroInitializationOnNewarrays[] = { TR::java_
     // TR::java_lang_String_toUpperCaseCore,
     TR::java_lang_String_split_str_int, TR::java_math_BigDecimal_toString, TR::java_math_BigInteger_init_long,
 #ifdef OPENJ9_BUILD
-    TR::java_math_BigInteger_toByteArray,
+    TR::java_math_BigInteger_toByteArray, TR::java_math_MutableBigInteger_divideOneWord,
 #endif // OPENJ9_BUILD
     TR::java_math_BigInteger_stripLeadingZeroBytes1, TR::java_math_BigInteger_stripLeadingZeroBytes2,
     TR::java_lang_Integer_toString, TR::java_lang_Long_toString, TR::java_lang_StringCoding_encode,
