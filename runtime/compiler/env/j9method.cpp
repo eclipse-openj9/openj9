@@ -2821,6 +2821,12 @@ void TR_ResolvedJ9Method::construct()
         { x(TR::jdk_internal_util_Preconditions_checkIndex, "checkIndex", "(JJLjava/util/function/BiFunction;)J") },
         { TR::unknownMethod } };
 
+#if JAVA_SPEC_VERSION >= 27
+#define LANE_TYPE "I"
+#else /* JAVA_SPEC_VERSION >= 27 */
+#define LANE_TYPE "Ljava/lang/Class;"
+#endif /* JAVA_SPEC_VERSION >= 27 */
+
     static X VectorSupportMethods[] = {
 #if JAVA_SPEC_VERSION <= 21
         { x(TR::jdk_internal_vm_vector_VectorSupport_load, "load",
@@ -2829,87 +2835,87 @@ void TR_ResolvedJ9Method::construct()
             "VectorSupport$VectorPayload;") },
 #else
         { x(TR::jdk_internal_vm_vector_VectorSupport_load, "load",
-            "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;JZLjava/lang/Object;JLjdk/internal/vm/vector/"
+            "(Ljava/lang/Class;" LANE_TYPE "ILjava/lang/Object;JZLjava/lang/Object;JLjdk/internal/vm/vector/"
             "VectorSupport$VectorSpecies;Ljdk/internal/vm/vector/VectorSupport$LoadOperation;)Ljdk/internal/vm/vector/"
             "VectorSupport$VectorPayload;") },
 #endif
         { x(TR::jdk_internal_vm_vector_VectorSupport_binaryOp, "binaryOp",
-            "(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/"
+            "(ILjava/lang/Class;Ljava/lang/Class;" LANE_TYPE "ILjdk/internal/vm/vector/"
             "VectorSupport$VectorPayload;Ljdk/internal/vm/vector/VectorSupport$VectorPayload;Ljdk/internal/vm/vector/"
             "VectorSupport$VectorMask;Ljdk/internal/vm/vector/VectorSupport$BinaryOperation;)Ljdk/internal/vm/vector/"
             "VectorSupport$VectorPayload;") },
         { x(TR::jdk_internal_vm_vector_VectorSupport_blend, "blend",
-            "(Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$Vector;Ljdk/"
+            "(Ljava/lang/Class;Ljava/lang/Class;" LANE_TYPE "ILjdk/internal/vm/vector/VectorSupport$Vector;Ljdk/"
             "internal/vm/vector/VectorSupport$Vector;Ljdk/internal/vm/vector/VectorSupport$VectorMask;Ljdk/internal/vm/"
             "vector/VectorSupport$VectorBlendOp;)Ljdk/internal/vm/vector/VectorSupport$Vector;") },
         { x(TR::jdk_internal_vm_vector_VectorSupport_broadcastInt, "broadcastInt",
-            "(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$Vector;ILjdk/"
+            "(ILjava/lang/Class;Ljava/lang/Class;" LANE_TYPE "ILjdk/internal/vm/vector/VectorSupport$Vector;ILjdk/"
             "internal/vm/vector/VectorSupport$VectorMask;Ljdk/internal/vm/vector/"
             "VectorSupport$VectorBroadcastIntOp;)Ljdk/internal/vm/vector/VectorSupport$Vector;") },
         { x(TR::jdk_internal_vm_vector_VectorSupport_compare, "compare",
-            "(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$Vector;Ljdk/"
+            "(ILjava/lang/Class;Ljava/lang/Class;" LANE_TYPE "ILjdk/internal/vm/vector/VectorSupport$Vector;Ljdk/"
             "internal/vm/vector/VectorSupport$Vector;Ljdk/internal/vm/vector/VectorSupport$VectorMask;Ljdk/internal/vm/"
             "vector/VectorSupport$VectorCompareOp;)Ljdk/internal/vm/vector/VectorSupport$VectorMask;") },
         { x(TR::jdk_internal_vm_vector_VectorSupport_compressExpandOp, "compressExpandOp",
-            "(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$Vector;Ljdk/"
+            "(ILjava/lang/Class;Ljava/lang/Class;" LANE_TYPE "ILjdk/internal/vm/vector/VectorSupport$Vector;Ljdk/"
             "internal/vm/vector/VectorSupport$VectorMask;Ljdk/internal/vm/vector/"
             "VectorSupport$CompressExpandOperation;)Ljdk/internal/vm/vector/VectorSupport$VectorPayload;") },
         { x(TR::jdk_internal_vm_vector_VectorSupport_convert, "convert",
-            "(ILjava/lang/Class;Ljava/lang/Class;ILjava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/"
+            "(ILjava/lang/Class;" LANE_TYPE "ILjava/lang/Class;" LANE_TYPE "ILjdk/internal/vm/vector/"
             "VectorSupport$VectorPayload;Ljdk/internal/vm/vector/VectorSupport$VectorSpecies;Ljdk/internal/vm/vector/"
             "VectorSupport$VectorConvertOp;)Ljdk/internal/vm/vector/VectorSupport$VectorPayload;") },
 
         { x(TR::jdk_internal_vm_vector_VectorSupport_extract, "extract",
-            "(Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$VectorPayload;ILjdk/internal/vm/"
+            "(Ljava/lang/Class;" LANE_TYPE "ILjdk/internal/vm/vector/VectorSupport$VectorPayload;ILjdk/internal/vm/"
             "vector/VectorSupport$VecExtractOp;)J") },
 
         { x(TR::jdk_internal_vm_vector_VectorSupport_fromBitsCoerced, "fromBitsCoerced",
-            "(Ljava/lang/Class;Ljava/lang/Class;IJILjdk/internal/vm/vector/VectorSupport$VectorSpecies;Ljdk/internal/"
+            "(Ljava/lang/Class;" LANE_TYPE "IJILjdk/internal/vm/vector/VectorSupport$VectorSpecies;Ljdk/internal/"
             "vm/vector/VectorSupport$FromBitsCoercedOperation;)Ljdk/internal/vm/vector/VectorSupport$VectorPayload;") },
 
         { x(TR::jdk_internal_vm_vector_VectorSupport_indexPartiallyInUpperRange, "indexPartiallyInUpperRange",
-            "(Ljava/lang/Class;Ljava/lang/Class;IJJLjdk/internal/vm/vector/"
+            "(Ljava/lang/Class;" LANE_TYPE "IJJLjdk/internal/vm/vector/"
             "VectorSupport$IndexPartiallyInUpperRangeOperation;)Ljdk/internal/vm/vector/VectorSupport$VectorMask;") },
         { x(TR::jdk_internal_vm_vector_VectorSupport_indexVector, "indexVector",
-            "(Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$Vector;ILjdk/internal/vm/vector/"
+            "(Ljava/lang/Class;" LANE_TYPE "ILjdk/internal/vm/vector/VectorSupport$Vector;ILjdk/internal/vm/vector/"
             "VectorSupport$VectorSpecies;Ljdk/internal/vm/vector/VectorSupport$IndexOperation;)Ljdk/internal/vm/vector/"
             "VectorSupport$Vector;") },
 
         { x(TR::jdk_internal_vm_vector_VectorSupport_insert, "insert",
-            "(Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$Vector;IJLjdk/internal/vm/"
+            "(Ljava/lang/Class;" LANE_TYPE "ILjdk/internal/vm/vector/VectorSupport$Vector;IJLjdk/internal/vm/"
             "vector/VectorSupport$VecInsertOp;)Ljdk/internal/vm/vector/VectorSupport$Vector;") },
 
         { x(TR::jdk_internal_vm_vector_VectorSupport_loadMasked, "loadMasked",
-            "(Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;JZLjdk/internal/vm/vector/"
+            "(Ljava/lang/Class;Ljava/lang/Class;" LANE_TYPE "ILjava/lang/Object;JZLjdk/internal/vm/vector/"
             "VectorSupport$VectorMask;ILjava/lang/Object;JLjdk/internal/vm/vector/VectorSupport$VectorSpecies;Ljdk/"
             "internal/vm/vector/VectorSupport$LoadVectorMaskedOperation;)Ljdk/internal/vm/vector/"
             "VectorSupport$Vector;") },
         { x(TR::jdk_internal_vm_vector_VectorSupport_loadWithMap, "loadWithMap",
-            "(Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Class;Ljava/lang/Object;JLjdk/internal/vm/"
+            "(Ljava/lang/Class;Ljava/lang/Class;" LANE_TYPE "ILjava/lang/Class;Ljava/lang/Object;JLjdk/internal/vm/"
             "vector/VectorSupport$Vector;Ljdk/internal/vm/vector/VectorSupport$VectorMask;Ljava/lang/Object;I[IILjdk/"
             "internal/vm/vector/VectorSupport$VectorSpecies;Ljdk/internal/vm/vector/"
             "VectorSupport$LoadVectorOperationWithMap;)Ljdk/internal/vm/vector/VectorSupport$Vector;") },
 
         { x(TR::jdk_internal_vm_vector_VectorSupport_maskReductionCoerced, "maskReductionCoerced",
-            "(ILjava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$VectorMask;Ljdk/internal/vm/"
+            "(ILjava/lang/Class;" LANE_TYPE "ILjdk/internal/vm/vector/VectorSupport$VectorMask;Ljdk/internal/vm/"
             "vector/VectorSupport$VectorMaskOp;)J") },
 
         { x(TR::jdk_internal_vm_vector_VectorSupport_rearrangeOp, "rearrangeOp",
-            "(Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/"
+            "(Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;" LANE_TYPE "ILjdk/internal/vm/vector/"
             "VectorSupport$Vector;Ljdk/internal/vm/vector/VectorSupport$VectorShuffle;Ljdk/internal/vm/vector/"
             "VectorSupport$VectorMask;Ljdk/internal/vm/vector/VectorSupport$VectorRearrangeOp;)Ljdk/internal/vm/vector/"
             "VectorSupport$Vector;") },
         { x(TR::jdk_internal_vm_vector_VectorSupport_reductionCoerced, "reductionCoerced",
-            "(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$Vector;Ljdk/"
+            "(ILjava/lang/Class;Ljava/lang/Class;" LANE_TYPE "ILjdk/internal/vm/vector/VectorSupport$Vector;Ljdk/"
             "internal/vm/vector/VectorSupport$VectorMask;Ljdk/internal/vm/vector/"
             "VectorSupport$ReductionOperation;)J") },
 
         { x(TR::jdk_internal_vm_vector_VectorSupport_selectFromOp, "selectFromOp",
-            "(Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$Vector;Ljdk/"
+            "(Ljava/lang/Class;Ljava/lang/Class;" LANE_TYPE "ILjdk/internal/vm/vector/VectorSupport$Vector;Ljdk/"
             "internal/vm/vector/VectorSupport$Vector;Ljdk/internal/vm/vector/VectorSupport$VectorMask;Ljdk/internal/vm/"
             "vector/VectorSupport$VectorSelectFromOp;)Ljdk/internal/vm/vector/VectorSupport$Vector;") },
         { x(TR::jdk_internal_vm_vector_VectorSupport_selectFromTwoVectorOp, "selectFromTwoVectorOp",
-            "(Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$Vector;Ljdk/internal/vm/vector/"
+            "(Ljava/lang/Class;" LANE_TYPE "ILjdk/internal/vm/vector/VectorSupport$Vector;Ljdk/internal/vm/vector/"
             "VectorSupport$Vector;Ljdk/internal/vm/vector/VectorSupport$Vector;Ljdk/internal/vm/vector/"
             "VectorSupport$SelectFromTwoVector;)Ljdk/internal/vm/vector/VectorSupport$Vector;") },
 
@@ -2922,25 +2928,25 @@ void TR_ResolvedJ9Method::construct()
             "internal/vm/vector/VectorSupport$Vector;") },
 
         { x(TR::jdk_internal_vm_vector_VectorSupport_storeMasked, "storeMasked",
-            "(Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;JZLjdk/internal/vm/vector/"
+            "(Ljava/lang/Class;Ljava/lang/Class;" LANE_TYPE "ILjava/lang/Object;JZLjdk/internal/vm/vector/"
             "VectorSupport$Vector;Ljdk/internal/vm/vector/VectorSupport$VectorMask;Ljava/lang/Object;JLjdk/internal/vm/"
             "vector/VectorSupport$StoreVectorMaskedOperation;)V") },
         { x(TR::jdk_internal_vm_vector_VectorSupport_storeWithMap, "storeWithMap",
-            "(Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Class;Ljava/lang/Object;JLjdk/internal/vm/"
+            "(Ljava/lang/Class;Ljava/lang/Class;" LANE_TYPE "ILjava/lang/Class;Ljava/lang/Object;JLjdk/internal/vm/"
             "vector/VectorSupport$Vector;Ljdk/internal/vm/vector/VectorSupport$Vector;Ljdk/internal/vm/vector/"
             "VectorSupport$VectorMask;Ljava/lang/Object;I[IILjdk/internal/vm/vector/"
             "VectorSupport$StoreVectorOperationWithMap;)V") },
 
         { x(TR::jdk_internal_vm_vector_VectorSupport_ternaryOp, "ternaryOp",
-            "(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$Vector;Ljdk/"
+            "(ILjava/lang/Class;Ljava/lang/Class;" LANE_TYPE "ILjdk/internal/vm/vector/VectorSupport$Vector;Ljdk/"
             "internal/vm/vector/VectorSupport$Vector;Ljdk/internal/vm/vector/VectorSupport$Vector;Ljdk/internal/vm/"
             "vector/VectorSupport$VectorMask;Ljdk/internal/vm/vector/VectorSupport$TernaryOperation;)Ljdk/internal/vm/"
             "vector/VectorSupport$Vector;") },
         { x(TR::jdk_internal_vm_vector_VectorSupport_test, "test",
-            "(ILjava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$VectorMask;Ljdk/internal/vm/"
+            "(ILjava/lang/Class;" LANE_TYPE "ILjdk/internal/vm/vector/VectorSupport$VectorMask;Ljdk/internal/vm/"
             "vector/VectorSupport$VectorMask;Ljava/util/function/BiFunction;)Z") },
         { x(TR::jdk_internal_vm_vector_VectorSupport_unaryOp, "unaryOp",
-            "(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;ILjdk/internal/vm/vector/VectorSupport$Vector;Ljdk/"
+            "(ILjava/lang/Class;Ljava/lang/Class;" LANE_TYPE "ILjdk/internal/vm/vector/VectorSupport$Vector;Ljdk/"
             "internal/vm/vector/VectorSupport$VectorMask;Ljdk/internal/vm/vector/VectorSupport$UnaryOperation;)Ljdk/"
             "internal/vm/vector/VectorSupport$Vector;") },
         { x(TR::jdk_internal_vm_vector_VectorSupport_wrapShuffleIndexes, "wrapShuffleIndexes",
@@ -2954,12 +2960,14 @@ void TR_ResolvedJ9Method::construct()
             "VectorSupport$StoreVectorOperation;)V") },
 #else
         { x(TR::jdk_internal_vm_vector_VectorSupport_store, "store",
-            "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;JZLjdk/internal/vm/vector/"
+            "(Ljava/lang/Class;" LANE_TYPE "ILjava/lang/Object;JZLjdk/internal/vm/vector/"
             "VectorSupport$VectorPayload;Ljava/lang/Object;JLjdk/internal/vm/vector/"
             "VectorSupport$StoreVectorOperation;)V") },
 #endif
         { TR::unknownMethod }
     };
+
+#undef LANE_TYPE
 
     static X ArrayMethods[]
         = { { x(TR::java_lang_reflect_Array_getLength, "getLength", "(Ljava/lang/Object;)I") }, { TR::unknownMethod } };
