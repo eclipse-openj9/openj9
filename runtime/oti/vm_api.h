@@ -5964,6 +5964,15 @@ jvmUpcallTransformArrayToList(J9VMThread *currentThread, j9object_t array);
 void
 jfrInitializeInternalStructures(J9VMThread *currentThread);
 
+/**
+ * Emit a jdk.DataLoss event for the specified number of bytes lost.
+ *
+ * @param currentThread[in] the current J9VMThread
+ * @param bytes[in] number of bytes lost
+ */
+void
+jfrEmitDataLoss(J9VMThread *currentThread, U_64 bytes);
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 #ifdef __cplusplus
