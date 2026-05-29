@@ -779,16 +779,20 @@ done:
 
 	void addUnknownThreadEntry() {
 		ThreadEntry *unknownThreadEntry = (ThreadEntry *)pool_newElement(_threadTable);
-		unknownThreadEntry->index = 0;
-		unknownThreadEntry->osTID = (U_64)I_64_MAX;
-		unknownThreadEntry->javaTID = (U_64)I_64_MAX;
-		unknownThreadEntry->javaThreadName = (J9UTF8 *)&unknownThread;
-		unknownThreadEntry->osThreadName = (J9UTF8 *)&unknownThread;
-		unknownThreadEntry->threadGroupIndex = 0;
-		unknownThreadEntry->freeName = FALSE;
+		if (NULL == unknownThreadEntry) {
+			_buildResult = OutOfMemory;
+		} else {
+			unknownThreadEntry->index = 0;
+			unknownThreadEntry->osTID = (U_64)I_64_MAX;
+			unknownThreadEntry->javaTID = (U_64)I_64_MAX;
+			unknownThreadEntry->javaThreadName = (J9UTF8 *)&unknownThread;
+			unknownThreadEntry->osThreadName = (J9UTF8 *)&unknownThread;
+			unknownThreadEntry->threadGroupIndex = 0;
+			unknownThreadEntry->freeName = FALSE;
 
-		_firstThreadEntry = unknownThreadEntry;
-		_previousThreadEntry = unknownThreadEntry;
+			_firstThreadEntry = unknownThreadEntry;
+			_previousThreadEntry = unknownThreadEntry;
+		}
 	}
 
 protected:
