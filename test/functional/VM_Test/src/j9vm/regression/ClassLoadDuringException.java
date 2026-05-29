@@ -21,10 +21,10 @@
  */
 package j9vm.regression;
 
-//j9 -noverify -Xjit:count=0,noopt,limit={*.jitted*} ClassLoadDuringException
+//j9 -Xverify:none -Xjit:count=0,noopt,limit={*.jitted*} ClassLoadDuringException
 
 public class ClassLoadDuringException {
-	public static void main(String args[]) throws Throwable {
+	public static void main(String[] args) throws Throwable {
 		a();
 	}
 
@@ -35,7 +35,7 @@ public class ClassLoadDuringException {
 	public static void jittedB() {
 		try {
 			c();
-		} catch(NullPointerException e) {
+		} catch (NullPointerException e) {
 			System.out.println("caught npe");
 		}
 	}
@@ -43,11 +43,11 @@ public class ClassLoadDuringException {
 	public static void c() {
 		jittedD();
 	}
-	
+
 	public static void jittedD() {
 		try {
 			e();
-		} catch(NotLoadedYet e) {
+		} catch (NotLoadedYet e) {
 		}
 	}
 
