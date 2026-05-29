@@ -245,6 +245,14 @@ void OMR::RuntimeAssumption::dequeueFromListOfAssumptionsForJittedBody()
             // Sentinel is not a part of RAT so it will not be deleted normally.
             // Need to explicitly free it here
             if (crt->getAssumptionKind() == RuntimeAssumptionSentinel) {
+                if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions)) {
+                    TR_VerboseLog::CriticalSection vlogLock;
+                    TR_VerboseLog::write(TR_Vlog_RA,
+                        "Deleting %s assumption sentinel: ", runtimeAssumptionKindNames[crt->getAssumptionKind()]);
+                    crt->dumpInfo();
+                    TR_VerboseLog::writeLine("");
+                }
+
                 crt->paint();
                 TR_PersistentMemory::jitPersistentFree(crt);
             }
@@ -259,13 +267,6 @@ void OMR::RuntimeAssumption::dequeueFromListOfAssumptionsForJittedBody()
     // Now I completed a full circle
     prev->setNextAssumptionForSameJittedBody(crt->getNextAssumptionForSameJittedBodyEvenIfDead());
     crt->setNextAssumptionForSameJittedBody(NULL); // assumption no longer in the circular list
-
-    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions)) {
-        TR_VerboseLog::CriticalSection vlogLock;
-        TR_VerboseLog::write(TR_Vlog_RA, "Deleting %s assumption: ", runtimeAssumptionKindNames[getAssumptionKind()]);
-        dumpInfo();
-        TR_VerboseLog::writeLine("");
-    }
 }
 
 // must be executed under assumptionTableMutex
@@ -298,8 +299,14 @@ void TR_RuntimeAssumptionTable::purgeAssumptionListHead(OMR::RuntimeAssumption *
     assumptionList->compensate(fe, 0, 0);
 
     OMR::RuntimeAssumption *next = assumptionList->getNextEvenIfDead();
-    printf("Freeing Assumption 0x%" OMR_PRIxPTR " and next assumption is 0x%" OMR_PRIxPTR "\n",
-        (uintptr_t)assumptionList, (uintptr_t)next);
+
+    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions)) {
+        TR_VerboseLog::CriticalSection vlogLock;
+        TR_VerboseLog::write(TR_Vlog_RA,
+            "Deleting %s assumption head: ", runtimeAssumptionKindNames[assumptionList->getAssumptionKind()]);
+        assumptionList->dumpInfo();
+        TR_VerboseLog::writeLine("");
+    }
 
     assumptionList->dequeueFromListOfAssumptionsForJittedBody();
     incReclaimedAssumptionCount(assumptionList->getAssumptionKind());
@@ -408,6 +415,15 @@ void TR_RuntimeAssumptionTable::reclaimMarkedAssumptionsFromRAT(int32_t cleanupC
                         hashTable->_markedforDetachCount[i]--;
                         _marked--;
                         incReclaimedAssumptionCount(kind);
+
+                        if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions)) {
+                            TR_VerboseLog::CriticalSection vlogLock;
+                            TR_VerboseLog::write(TR_Vlog_RA, "Deleting %s assumption in loop: ",
+                                runtimeAssumptionKindNames[cursor->getAssumptionKind()]);
+                            cursor->dumpInfo();
+                            TR_VerboseLog::writeLine("");
+                        }
+
                         cursor->reclaim();
                         cursor->paint(); // RAS
                         TR_PersistentMemory::jitPersistentFree(cursor);
