@@ -1021,6 +1021,8 @@ MM_IncrementalGenerationalGC::partialGarbageCollectPostWork(MM_EnvironmentVLHGC 
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	env->_cycleState->_endTime = j9time_hires_clock();
 
+	verifyHeapSizing(env, false);
+
 	reportGCCycleFinalIncrementEnding(env);
 	reportGCIncrementEnd(env);
 	reportPGCEnd(env);
@@ -1263,6 +1265,8 @@ MM_IncrementalGenerationalGC::runGlobalGarbageCollection(MM_EnvironmentVLHGC *en
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	env->_cycleState->_endTime = j9time_hires_clock();
 
+	verifyHeapSizing(env, true);
+
 	reportGCCycleFinalIncrementEnding(env);
 	/* TODO: TEMPORARY: This is a temporary call that should be deleted once the new verbose format is in place */
 	/* NOTE: May want to move any tracepoints up into this routine */
@@ -1345,7 +1349,13 @@ MM_IncrementalGenerationalGC::preProcessPGCUsingCopyForward(MM_EnvironmentVLHGC 
 	 * NOTE: A second estimate for free tenure is later made - The lowest estimate for free tenure is used in heap sizing calculations
 	 */
 	_extensions->globalVLHGCStats._heapSizingData.freeTenure = freeMemoryForSurvivor;
-
+	/* in some case free eden size is significant, should not be counted as freeTenure */
+	uintptr_t allocatedSinceLastPGC = getAllocatedSinceLastPGC();
+	uintptr_t edenSize = getCurrentEdenSizeInBytes(NULL);
+	if (edenSize >= allocatedSinceLastPGC) {
+		Assert_MM_true(_extensions->globalVLHGCStats._heapSizingData.freeTenure >= (edenSize - allocatedSinceLastPGC));
+		_extensions->globalVLHGCStats._heapSizingData.freeTenure -= edenSize - allocatedSinceLastPGC;
+	}
 	cycleState->_vlhgcIncrementStats._copyForwardStats._freeMemoryBefore = freeMemoryForSurvivor;
 	cycleState->_vlhgcIncrementStats._copyForwardStats._totalMemoryBefore = _extensions->getHeap()->getMemorySize();
 
@@ -2622,4 +2632,15 @@ MM_IncrementalGenerationalGC::getBytesScannedInGlobalMarkPhase()
 		bytesScanned = _persistentGlobalMarkPhaseState._vlhgcCycleStats._markStats._bytesScanned;
 	}
 	return bytesScanned;
+}
+
+void
+MM_IncrementalGenerationalGC::verifyHeapSizing(MM_EnvironmentVLHGC *env, bool isGlobalGC)
+{
+	Assert_GC_true_with_message(env, (((MM_GlobalAllocationManagerTarok *)_extensions->globalAllocationManager)->getFreeRegionCount() >= _schedulingDelegate.getCurrentEdenSizeInRegions(env)),
+				"verifyHeapSizing freeRegionCount(%zu) is less than EdenRegionCount(%zu), allocatedSinceLastPGC=%zu bytes in current %s\n",
+				((MM_GlobalAllocationManagerTarok *)_extensions->globalAllocationManager)->getFreeRegionCount(),
+				_schedulingDelegate.getCurrentEdenSizeInRegions(env),
+				getAllocatedSinceLastPGC(),
+				(isGlobalGC)?"Global GC":"PGC");
 }
