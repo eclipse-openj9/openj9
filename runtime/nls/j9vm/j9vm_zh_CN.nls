@@ -2577,3 +2577,29 @@ J9NLS_VM_CRIU_FAILED_TO_ENABLE_JDWP_RESTORE_OPTION.explanation=The JDWP option c
 J9NLS_VM_CRIU_FAILED_TO_ENABLE_JDWP_RESTORE_OPTION.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_FAILED_TO_ENABLE_JDWP_RESTORE_OPTION.user_response=Enable -XX:+DebugOnRestore pre-checkpoint.
 # END NON-TRANSLATABLE
+
+# printDumpAgent is the name of an API: It should not be translated.
+J9NLS_VM_MISSING_DUMP_DLL_PRINT_DUMP_AGENT=printDumpAgent \u9700\u8981\u5b89\u88c5 %s
+# START NON-TRANSLATABLE
+J9NLS_VM_MISSING_DUMP_DLL_PRINT_DUMP_AGENT.sample_input_1=j9dmp29
+J9NLS_VM_MISSING_DUMP_DLL_PRINT_DUMP_AGENT.explanation=A call to internal VM function printDumpAgent() has failed because the required DLL has not been loaded.
+J9NLS_VM_MISSING_DUMP_DLL_PRINT_DUMP_AGENT.system_action=The dump agent is not printed.
+J9NLS_VM_MISSING_DUMP_DLL_PRINT_DUMP_AGENT.user_response=Check whether the JVM dump functions have been disabled via the -Xdump:none option.
+# END NON-TRANSLATABLE
+
+# validateDumpAgent is the name of an API: It should not be translated.
+J9NLS_VM_MISSING_DUMP_DLL_VALIDATE_DUMP_AGENT=validateDumpAgent \u9700\u8981\u5b89\u88c5 %s
+# START NON-TRANSLATABLE
+J9NLS_VM_MISSING_DUMP_DLL_VALIDATE_DUMP_AGENT.sample_input_1=j9dmp29
+J9NLS_VM_MISSING_DUMP_DLL_VALIDATE_DUMP_AGENT.explanation=A call to internal VM function validateDumpAgent() has failed because the required DLL has not been loaded.
+J9NLS_VM_MISSING_DUMP_DLL_VALIDATE_DUMP_AGENT.system_action=Dump agent validation is not performed.
+J9NLS_VM_MISSING_DUMP_DLL_VALIDATE_DUMP_AGENT.user_response=Check whether the JVM dump functions have been disabled via the -Xdump:none option.
+# END NON-TRANSLATABLE
+
+# -Xdump:system and dsn are parts of options: They should not be translated.
+J9NLS_VM_INVALID_DUMP_AGENTS=\u4ee5\u4e0b -Xdump:system \u9009\u9879\u5305\u542b\u65e0\u6548\u7684 dsn \u89c4\u8303\uff1a
+# START NON-TRANSLATABLE
+J9NLS_VM_INVALID_DUMP_AGENTS.explanation=One or more -Xdump:system options contain invalid dsn specifications.
+J9NLS_VM_INVALID_DUMP_AGENTS.system_action=The JVM will fail to start.
+J9NLS_VM_INVALID_DUMP_AGENTS.user_response=Check and correct the listed -Xdump:system options.
+# END NON-TRANSLATABLE
