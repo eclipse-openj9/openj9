@@ -35,7 +35,7 @@
  <!-- Arguments specific to the class unloading tests -->
  <variable name="PROGRAM" value="com.ibm.tests.garbagecollector.TestClassLoaderMain" />
  <variable name="MEM" value="8m" />
- <variable name="VMARGS" value="-Xmx$MEM$ -Xms$MEM$ -Xalwaysclassgc -Xdisableexcessivegc" />
+ <variable name="VMARGS" value="-Xmx$MEM$ -Xms$MEM$ -Xalwaysclassgc -Xdisableexcessivegc -Xverbosegclog" />
  <variable name="EXTRAVMARG" value="-Xgc:fvtest=forceFinalizeClassLoaders" />
  <variable name="EXCESSIVE_STRING" value="excessive gc activity detected, will fail on allocate" />
  
