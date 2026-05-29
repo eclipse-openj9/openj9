@@ -109,7 +109,6 @@ typedef struct J9RASdumpAgent {
 #define J9RAS_DUMP_DO_ATTACH_THREAD  0x10
 #define J9RAS_DUMP_DO_MULTIPLE_HEAPS  0x020
 #define J9RAS_DUMP_DO_PREEMPT_THREADS  0x40
-#define J9RAS_DUMP_DO_EARLY_EXECUTION  0x80
 
 typedef struct J9RASdumpContext {
 	struct J9JavaVM* javaVM;
