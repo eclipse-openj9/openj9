@@ -67,7 +67,7 @@ static UDATA equivalenceHash (void *key, void *userData);
 static UDATA equivalenceEquals (void *leftKey, void *rightKey, void *userData);
 static jvmtiError addMethodEquivalence(J9VMThread * currentThread, J9Method * oldMethod, J9Method * newMethod, J9HashTable ** methodEquivalences, U_32 size);
 static J9Method * getMethodEquivalence (J9VMThread * currentThread, J9Method * method, J9HashTable ** methodEquivalences);
-static UDATA fixJNIFieldID PROTOTYPE((J9VMThread * currentThread, J9JNIFieldID * fieldID, J9Class * replacementRAMClass));
+static UDATA fixJNIFieldID(J9VMThread *currentThread, J9JNIFieldID *fieldID, J9Class *replacementRAMClass);
 static UDATA areMethodRefsIdentical(J9ROMConstantPoolItem * romCP1, U_32 index1, J9ROMConstantPoolItem * romCP2, U_32 index2);
 static UDATA areClassRefsIdentical(J9ROMConstantPoolItem * romCP1, U_32 index1, J9ROMConstantPoolItem * romCP2, U_32 index2);
 static UDATA areFieldRefsIdentical(J9ROMConstantPoolItem * romCP1, U_32 index1, J9ROMConstantPoolItem * romCP2, U_32 index2);

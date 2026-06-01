@@ -25,8 +25,6 @@
 
 #include "j9javaPriority.h"
 
-void initializeJavaPriorityMaps PROTOTYPE((J9JavaVM *javaVM));
+void initializeJavaPriorityMaps(J9JavaVM *javaVM);
 
-
-#endif     /* javaPriority_h */
-
+#endif /* javaPriority_h */

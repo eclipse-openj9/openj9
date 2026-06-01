@@ -116,7 +116,7 @@ static void abortHandler(int sig, siginfo_t *siginfo, void *context);
 #endif /* defined(WIN32) */
 static void initRasDumpGlobalStorage(J9JavaVM *vm);
 static void freeRasDumpGlobalStorage(J9JavaVM *vm);
-static void hookVmInitialized PROTOTYPE((J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData));
+static void hookVmInitialized(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 #if defined(LINUX)
 static J9RASSystemInfo *appendSystemInfoFromFile(J9JavaVM *vm, U_32 key, const char *fileName);
 #endif /* defined(LINUX) */
