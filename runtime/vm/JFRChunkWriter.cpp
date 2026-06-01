@@ -1326,61 +1326,71 @@ writeThreadInfo(J9VMThread *currentThread, J9VMThread *walkThread, VM_BufferWrit
 {
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	UDATA javaTID = J9VMJAVALANGTHREAD_TID(currentThread, walkThread->threadObject);
+	UDATA javaTID = 0;
 	UDATA osTID = ((J9AbstractThread *)walkThread->osThread)->tid;
-	UDATA javaPriority = vmFuncs->getJavaThreadPriority(vm, walkThread);
+	UDATA javaPriority = 0;
 	UDATA state = J9VMTHREAD_STATE_UNKNOWN;
 	const char *stateStr = "?";
 	j9object_t monitorObject = NULL;
 	char *threadName = NULL;
+	j9object_t threadObject = walkThread->threadObject;
 
-	/* Get thread state and monitor */
-	state = getVMThreadObjectState(walkThread, &monitorObject, NULL, NULL);
-	switch (state) {
-	case J9VMTHREAD_STATE_RUNNING:
-		stateStr = "R";
-		break;
-	case J9VMTHREAD_STATE_BLOCKED:
-		stateStr = "B";
-		break;
-	case J9VMTHREAD_STATE_WAITING:
-	case J9VMTHREAD_STATE_WAITING_TIMED:
-	case J9VMTHREAD_STATE_SLEEPING:
-		stateStr = "CW";
-		break;
-	case J9VMTHREAD_STATE_PARKED:
-	case J9VMTHREAD_STATE_PARKED_TIMED:
-		stateStr = "P";
-		break;
-	case J9VMTHREAD_STATE_SUSPENDED:
-		stateStr = "S";
-		break;
-	case J9VMTHREAD_STATE_DEAD:
-		stateStr = "Z";
-		break;
-	case J9VMTHREAD_STATE_INTERRUPTED:
-		stateStr = "I";
-		break;
-	case J9VMTHREAD_STATE_UNKNOWN:
-		stateStr = "?";
-		break;
-	default:
-		stateStr = "??";
-		break;
-	}
+	if (NULL != threadObject) {
+		javaTID = J9VMJAVALANGTHREAD_TID(currentThread, threadObject);
+		javaPriority = vmFuncs->getJavaThreadPriority(vm, walkThread);
 
-/* Get thread name */
-#if JAVA_SPEC_VERSION >= 21
-	if (IS_JAVA_LANG_VIRTUALTHREAD(currentThread, walkThread->threadObject)) {
-		/* For VirtualThread, get name from threadObject directly. */
-		j9object_t nameObject = J9VMJAVALANGTHREAD_NAME(currentThread, walkThread->threadObject);
-		threadName = getVMThreadNameFromString(currentThread, nameObject);
-	} else
-#endif /* JAVA_SPEC_VERSION >= 21 */
-	{
+		/* Get thread state and monitor */
+		state = getVMThreadObjectState(walkThread, &monitorObject, NULL, NULL);
+		switch (state) {
+		case J9VMTHREAD_STATE_RUNNING:
+			stateStr = "R";
+			break;
+		case J9VMTHREAD_STATE_BLOCKED:
+			stateStr = "B";
+			break;
+		case J9VMTHREAD_STATE_WAITING:
+		case J9VMTHREAD_STATE_WAITING_TIMED:
+		case J9VMTHREAD_STATE_SLEEPING:
+			stateStr = "CW";
+			break;
+		case J9VMTHREAD_STATE_PARKED:
+		case J9VMTHREAD_STATE_PARKED_TIMED:
+			stateStr = "P";
+			break;
+		case J9VMTHREAD_STATE_SUSPENDED:
+			stateStr = "S";
+			break;
+		case J9VMTHREAD_STATE_DEAD:
+			stateStr = "Z";
+			break;
+		case J9VMTHREAD_STATE_INTERRUPTED:
+			stateStr = "I";
+			break;
+		case J9VMTHREAD_STATE_UNKNOWN:
+			stateStr = "?";
+			break;
+		default:
+			stateStr = "??";
+			break;
+		}
+
+	/* Get thread name */
+	#if JAVA_SPEC_VERSION >= 21
+		if (IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObject)) {
+			/* For VirtualThread, get name from threadObject directly. */
+			j9object_t nameObject = J9VMJAVALANGTHREAD_NAME(currentThread, threadObject);
+			threadName = getVMThreadNameFromString(currentThread, nameObject);
+		} else
+	#endif /* JAVA_SPEC_VERSION >= 21 */
+		{
+			threadName = getOMRVMThreadName(walkThread->omrVMThread);
+			releaseOMRVMThreadName(walkThread->omrVMThread);
+		}
+	} else {
 		threadName = getOMRVMThreadName(walkThread->omrVMThread);
 		releaseOMRVMThreadName(walkThread->omrVMThread);
 	}
+
 	bufferWriter->writeFormattedString(
 			"\"%s\" J9VMThread: %p tid: %zd nid: %zd prio: %zd state: %s rawStateValue: 0x%zX",
 			threadName,
