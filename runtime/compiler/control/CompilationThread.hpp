@@ -92,6 +92,29 @@ enum CompilationThreadState {
     COMPTHREAD_ABORT // compthread failed to initialize
 };
 
+enum AOTIneligibilityReason {
+    RELOCATABLE_COMPILE_OK = 0,
+    AOT_INELIGIBLE_JNI,
+    AOT_INELIGIBLE_NEW_INSTANCE_THUNK,
+    AOT_INELIGIBLE_METHOD_HANDLE_THUNK,
+    AOT_INELIGIBLE_DLT,
+    AOT_INELIGIBLE_RECOMP,
+    AOT_INELIGIBLE_FSD,
+    AOT_INELIGIBLE_METHOD,
+    AOT_INELIGIBLE_BOOTSTRAP_ONLY,
+    AOT_INELIGIBLE_PREV_FAIL,
+    AOT_INELIGIBLE_FIELD_WATCH,
+    AOT_INELIGIBLE_NO_SCC,
+    AOT_INELIGIBLE_ALREADY_IN_SCC,
+    AOT_INELIGIBLE_CLASS_NOT_IN_SCC,
+    AOT_INELIGIBLE_CLASS_CHAIN,
+    AOT_INELIGIBLE_NO_STORE_AOT,
+    AOT_INELIGIBLE_HEURISTIC,
+    AOT_INELIGIBLE_CHECKPOINT_IN_PROGRESS,
+    AOT_INELIGIBLE_JITSERVER_INSTRUCTED,
+    AOT_INELIGIBLE_LAST_ENTRY
+};
+
 struct CompileParameters {
     CompileParameters(TR::CompilationInfoPerThreadBase *compilationInfo, TR_J9VMBase *vm, J9VMThread *vmThread,
         TR_RelocationRuntime *reloRuntime, TR_OptimizationPlan *optimizationPlan,
@@ -184,11 +207,11 @@ public:
 
     void preCompilationTasks(J9VMThread *vmThread, TR_MethodToBeCompiled *entry, J9Method *method,
         const void **aotCachedMethod, TR_Memory &trMemory, bool &canDoRelocatableCompile,
-        bool &eligibleForRelocatableCompile, TR_RelocationRuntime *reloRuntime);
+        AOTIneligibilityReason &ineligibleForRelocatableCompile, TR_RelocationRuntime *reloRuntime);
 
     void *postCompilationTasks(J9VMThread *vmThread, TR_MethodToBeCompiled *entry, J9Method *method,
         const void *aotCachedMethod, TR_MethodMetaData *metaData, bool canDoRelocatableCompile,
-        bool eligibleForRelocatableCompile, TR_RelocationRuntime *reloRuntime);
+        AOTIneligibilityReason ineligibleForRelocatableCompile, TR_RelocationRuntime *reloRuntime);
     static const void *findAotBodyInSCC(J9VMThread *vmThread, const J9ROMMethod *romMethod);
 
 #if defined(J9VM_OPT_SHARED_CLASSES) && defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT)
