@@ -663,7 +663,7 @@ public:
 	/**
 	 * call calculateEdenSize() without allowTotalHeapResize option
 	 */
-	void reCalculateEdenSize(MM_EnvironmentVLHGC *env)
+	void recalculateEdenSize(MM_EnvironmentVLHGC *env)
 	{
 		calculateEdenSize(env);
 	}
