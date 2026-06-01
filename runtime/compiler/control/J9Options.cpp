@@ -2942,8 +2942,18 @@ static bool analyzeDiskCharacteristicsForDisclaiming(OMRBlockDeviceStats &diskSt
     if (diskStats.wrIos > 0 && diskStats.wrTicksMs == 0)
         return false;
 
-    double latencyMs = static_cast<double>(diskStats.rdTicksMs + diskStats.wrTicksMs)
-        / static_cast<double>(diskStats.rdIos + diskStats.wrIos);
+    // Calculate weighted latency, giving more importance to reads since we must wait for them to complete
+    // before continuing execution, whereas writes can be buffered/asynchronous.
+    // Using the following read-to-write weight ratio based on the observation that read latency is more critical.
+    const double readWeight = 3.0;
+    const double writeWeight = 1.0;
+
+    double weightedReadTime = readWeight * static_cast<double>(diskStats.rdTicksMs);
+    double weightedWriteTime = writeWeight * static_cast<double>(diskStats.wrTicksMs);
+    double weightedReadOps = readWeight * static_cast<double>(diskStats.rdIos);
+    double weightedWriteOps = writeWeight * static_cast<double>(diskStats.wrIos);
+
+    double latencyMs = (weightedReadTime + weightedWriteTime) / (weightedReadOps + weightedWriteOps);
     return latencyMs * 1000.0 <= TR::Options::_maxDeviceLatencyForDisclaimUs;
 }
 
