@@ -160,10 +160,23 @@ internalDefineClass(
 		} else if (NULL != superClass) {
 			J9Class *internalEventClass = J9VMJAVALANGCLASS_VMREF(vmThread, J9_JNI_UNWRAP_REFERENCE(vm->jfrState.jfrInternalEventClassRef));
 			if (isSameOrSuperClassOf(internalEventClass, superClass)) {
-				U_8* jfrModifiedBytes = NULL;
+				U_8 *jfrModifiedBytes = NULL;
 				UDATA jfrModifiedBytesLength = 0;
+				U_8 *upcallClassBytes = classData;
+				U_32 upcallClassBytesLength = classDataLength;
+
+				if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_SHRC_ROMCLASS_EXISTS)) {
+					PORT_ACCESS_FROM_JAVAVM(vm);
+					UDATA rc = BCT_ERR_NO_ERROR;
+					rc = j9bcutil_transformROMClass(vm, PORTLIB, (J9ROMClass *)classData, &upcallClassBytes, &upcallClassBytesLength);
+					if (BCT_ERR_NO_ERROR != result) {
+						Trc_BCU_internalLoadROMClass_ErrorInRecreatingClassfile(vmThread, classData, rc);
+						vmFuncs->setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+						return NULL;
+					}
+				}
 				omrthread_monitor_exit(vm->classTableMutex);
-				vmFuncs->jvmUpcallsEagerByteInstrumentation(vmThread, superClass, className, (U_16)classNameLength, classLoader, classData, classDataLength, &jfrModifiedBytes, &jfrModifiedBytesLength);
+				vmFuncs->jvmUpcallsEagerByteInstrumentation(vmThread, superClass, className, (U_16)classNameLength, classLoader, upcallClassBytes, upcallClassBytesLength, &jfrModifiedBytes, &jfrModifiedBytesLength);
 				omrthread_monitor_enter(vm->classTableMutex);
 				if ((NULL == jfrModifiedBytes) || (0 == jfrModifiedBytesLength)) {
 					omrthread_monitor_exit(vm->classTableMutex);
