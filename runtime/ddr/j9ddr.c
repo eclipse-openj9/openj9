@@ -90,17 +90,17 @@ typedef struct {
 	U_32 value[2];
 } J9DDRCoreFileConstant;
 
-static jint initializeBitfieldEncoding PROTOTYPE((J9DDRTranslationData * data));
-static jint processDDRStructTableList PROTOTYPE((J9DDRTranslationData * data));
-static jint writeDataFile PROTOTYPE((J9DDRTranslationData * data));
-static jint processDDRStructTable PROTOTYPE((J9DDRTranslationData * data, const J9DDRStructDefinition * ddrStruct));
-static U_32 stringTableOffset PROTOTYPE((J9DDRTranslationData * data, const char * cString));
-static void copyStringTable PROTOTYPE((J9DDRTranslationData * data));
-static jint processDDRField PROTOTYPE((J9DDRTranslationData * data, const J9DDRFieldDeclaration * ddrField, U_32 * size));
-static UDATA stringTableHash PROTOTYPE((void *key, void *userData));
-static UDATA stringTableEquals PROTOTYPE((void *leftKey, void *rightKey, void *userData));
-static jint processDDRConstant PROTOTYPE((J9DDRTranslationData * data, const J9DDRConstantDeclaration * ddrConstant, U_32 * size));
-static jint createDDRCoreData PROTOTYPE((J9DDRTranslationData * data));
+static jint initializeBitfieldEncoding(J9DDRTranslationData * data);
+static jint processDDRStructTableList(J9DDRTranslationData * data);
+static jint writeDataFile(J9DDRTranslationData * data);
+static jint processDDRStructTable(J9DDRTranslationData * data, const J9DDRStructDefinition * ddrStruct);
+static U_32 stringTableOffset(J9DDRTranslationData * data, const char * cString);
+static void copyStringTable(J9DDRTranslationData * data);
+static jint processDDRField(J9DDRTranslationData * data, const J9DDRFieldDeclaration * ddrField, U_32 * size);
+static UDATA stringTableHash(void *key, void *userData);
+static UDATA stringTableEquals(void *leftKey, void *rightKey, void *userData);
+static jint processDDRConstant(J9DDRTranslationData * data, const J9DDRConstantDeclaration * ddrConstant, U_32 * size);
+static jint createDDRCoreData(J9DDRTranslationData * data);
 
 /* Try to initialize the NLS catalog; otherwise use defaults   */
 static void
@@ -578,4 +578,3 @@ initializeBitfieldEncoding(J9DDRTranslationData * data)
 
 	return rc;
 }
-

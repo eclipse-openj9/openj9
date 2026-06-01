@@ -106,7 +106,7 @@ static void rasDumpHookExceptionThrow(J9HookInterface **hookInterface, UDATA eve
 static void rasDumpHookGlobalGcStart(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
 static void rasDumpHookThreadEnd(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
 static J9RASdumpMatchResult matchesFilter(J9VMThread *vmThread, J9RASdumpEventData *eventData, UDATA eventFlags, char *filter, char *subFilter);
-static void rasDumpHookExceptionSysthrow PROTOTYPE((J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData));
+static void rasDumpHookExceptionSysthrow(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
 static void rasDumpHookClassLoad(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
 static void rasDumpHookExceptionCatch(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);
 static void rasDumpHookMonitorContendedEnter(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData);

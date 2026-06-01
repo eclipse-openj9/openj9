@@ -23,13 +23,10 @@
 #ifndef J9PROTOS_H
 #define J9PROTOS_H
 
-
 #include "j9.h"
 #include "j9vmls.h"
 #include "cfr.h"
 #include "jni.h"
-
-
 
 #ifdef J9VM_MULTITHREADED
 #include "omrthread.h"
@@ -41,15 +38,13 @@
 #include <leawi.h>
 #endif
 
-
 typedef struct J9Relocation {
-    U_8* loadBase;
-    U_8* loadTop;
-    IDATA relocation;
-    UDATA relocationType;
-    UDATA relocationInfo;
+	U_8 *loadBase;
+	U_8 *loadTop;
+	IDATA relocation;
+	UDATA relocationType;
+	UDATA relocationInfo;
 } J9Relocation;
-
 
 #define RELOCATION_TYPE_CLASSTABLE  2
 #define RELOCATION_TYPE_REMOVED  3
@@ -57,44 +52,41 @@ typedef struct J9Relocation {
 #define J9SIZEOF_J9Relocation 20
 
 typedef struct J9RelocationList {
-    UDATA containsAllZeroRelocations;
-    UDATA relocateROM;
-    struct J9Pool* relocations;
-    struct J9JavaVM* globalInfo;
-    UDATA sortedElements;
-    struct J9Relocation** sortedRelocations;
-    struct J9Relocation* lastFound;
+	UDATA containsAllZeroRelocations;
+	UDATA relocateROM;
+	struct J9Pool *relocations;
+	struct J9JavaVM *globalInfo;
+	UDATA sortedElements;
+	struct J9Relocation **sortedRelocations;
+	struct J9Relocation *lastFound;
 } J9RelocationList;
 
 #define J9SIZEOF_J9RelocationList 28
 
 typedef struct J9RelocationStruct {
-    struct J9VMContext* vmContext;
-    struct J9RelocationList* relocationList;
-    IDATA fix;
-    IDATA flags;
-    j9object_t pfClass;
-    j9object_t cmClass;
-    j9object_t bctClass;
-    j9object_t bctCompactClass;
-    j9object_t stringClass;
-    j9object_t symbolClass;
-    j9object_t dbStringClass;
-    j9object_t maClass;
-    j9object_t cpmClass;
-    j9object_t mcClass;
-    j9object_t floatClass;
-    j9object_t bcaClass;
-    j9object_t threadClass;
-    UDATA mixedObjectCount;
+	struct J9VMContext *vmContext;
+	struct J9RelocationList *relocationList;
+	IDATA fix;
+	IDATA flags;
+	j9object_t pfClass;
+	j9object_t cmClass;
+	j9object_t bctClass;
+	j9object_t bctCompactClass;
+	j9object_t stringClass;
+	j9object_t symbolClass;
+	j9object_t dbStringClass;
+	j9object_t maClass;
+	j9object_t cpmClass;
+	j9object_t mcClass;
+	j9object_t floatClass;
+	j9object_t bcaClass;
+	j9object_t threadClass;
+	UDATA mixedObjectCount;
 } J9RelocationStruct;
 
 #define J9SIZEOF_J9RelocationStruct 72
 
-
 typedef J9RelocationStruct relocateStruct;
-
-
 
 #include "bcutil_api.h"
 
@@ -144,38 +136,21 @@ extern "C" {
 
 /* nlsprims.c */
 
-I_32 numCodeSets (void);
-
-
+I_32 numCodeSets(void);
 
 /* X86 for MS compilers, __i386__ for GNU compilers */
 
 #if !defined(J9_SOFT_FLOAT) && (defined(_X86_) || defined (__i386__) || defined(J9HAMMER) || (defined(OSX) && !defined(J9AARCH64)))
-
 #define J9_SETUP_FPU_STATE() helperInitializeFPU()
-
 #else
-
 #define J9_SETUP_FPU_STATE()
-
 #endif
-
-
 
 #ifdef WIN64
-
 /*HACK */
-
 #undef  J9_SETUP_FPU_STATE
-
 #define J9_SETUP_FPU_STATE()
-
 #endif
-
-
-
-
-
 
 /* J9SourceJclClearProfile*/
 
@@ -226,7 +201,6 @@ I_32 numCodeSets (void);
 /* J9SourceCommonJVMTINLS EXCLUDED */
 
 /* J9CommonJvmtiTDF EXCLUDED */
-
 
 /*================ ASM PROTOTYPES ===================*/
 
@@ -991,17 +965,17 @@ extern J9_CFUNC struct J9Class*  internalFindKnownClass (J9VMThread *currentThre
 
 /* J9SourceJvmriSupport*/
 extern J9_CFUNC void
-rasStartDeferredThreads PROTOTYPE((J9JavaVM* vm));
+rasStartDeferredThreads(J9JavaVM *vm);
 
 extern J9_CFUNC int
-initJVMRI PROTOTYPE(( J9JavaVM * vm ));
+initJVMRI(J9JavaVM *vm);
 
-struct DgRasInterface ;
+struct DgRasInterface;
 extern J9_CFUNC int
-fillInDgRasInterface PROTOTYPE((struct DgRasInterface *dri));
+fillInDgRasInterface(struct DgRasInterface *dri);
 
 extern J9_CFUNC int
-shutdownJVMRI PROTOTYPE(( J9JavaVM * vm ));
+shutdownJVMRI(J9JavaVM *vm);
 
 /* J9VMCmdSetThread*/
 #ifndef _J9VMCMDSETTHREAD_
@@ -1052,7 +1026,6 @@ extern J9_CFUNC void  jdwp_vm_suspend (J9VMThread *currentThread);
 extern J9_CFUNC void  jdwp_vm_capabilities (J9VMThread *currentThread);
 extern J9_CFUNC void  jdwp_vm_disposeObjects (J9VMThread *currentThread);
 #endif /* _J9VMCMDSETVM_ */
-
 
 /* J9VMFloatSupport*/
 #ifndef _J9VMFLOATSUPPORT_
@@ -1280,7 +1253,6 @@ extern J9_CFUNC UDATA  romImageLoad (J9VMThread *currentThread, void *segmentPoi
 #endif /* J9VM_IVE_ROM_IMAGE_HELPERS */
 #endif /* _J9VMROMIMAGESUPPORT_ */
 
-
 /* J9VMStringSupport*/
 #ifndef _J9VMSTRINGSUPPORT_
 #define _J9VMSTRINGSUPPORT_
@@ -1373,7 +1345,7 @@ extern J9_CFUNC void JNICALL sendResolveFfiCallInvokeHandle (J9VMThread *current
 #endif /* JAVA_SPEC_VERSION >= 16 */
 #endif /* _J9VMJAVAINTERPRETERSTARTUP_ */
 
-/* J9VMNativeHelpersLarge*/
+/* J9VMNativeHelpersLarge */
 #ifndef _J9VMNATIVEHELPERSLARGE_
 #define _J9VMNATIVEHELPERSLARGE_
 #if defined(J9VM_INTERP_NATIVE_SUPPORT)
