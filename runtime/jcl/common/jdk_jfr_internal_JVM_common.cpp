@@ -365,8 +365,9 @@ Java_jdk_jfr_internal_JVM_destroyJFR(JNIEnv *env, jobject obj)
 jboolean JNICALL
 Java_jdk_jfr_internal_JVM_isAvailable(JNIEnv *env, jobject obj)
 {
-	// TODO: implementation
-	return JNI_FALSE;
+	return Java_com_ibm_oti_vm_VM_isJFRV2SupportEnabled(env, NULL) && Java_com_ibm_oti_vm_VM_isJFREnabled(env, NULL)
+				? JNI_TRUE
+				: JNI_FALSE;
 }
 
 jdouble JNICALL
