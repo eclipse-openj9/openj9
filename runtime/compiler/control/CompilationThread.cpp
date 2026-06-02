@@ -7438,7 +7438,9 @@ void *TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread *vmThrea
     if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableUpdateAOTBytesSize) && metaData
         && // Compilation succeeded
         !canDoRelocatableCompile && // Non-AOT Compilation
-        ineligibleForRelocatableCompile == RELOCATABLE_COMPILE_OK && // Was eligible for AOT Compilation
+        (ineligibleForRelocatableCompile == RELOCATABLE_COMPILE_OK
+            || ineligibleForRelocatableCompile == AOT_INELIGIBLE_NO_STORE_AOT)
+        && // Was eligible for AOT Compilation
         TR::Options::getAOTCmdLineOptions()->getOption(TR_NoStoreAOT) && // AOT Disabled
         TR_J9SharedCache::isSharedCacheDisabledBecauseFull(&_compInfo)
             == TR_yes) // AOT Compilation Disabled because SCC is full
