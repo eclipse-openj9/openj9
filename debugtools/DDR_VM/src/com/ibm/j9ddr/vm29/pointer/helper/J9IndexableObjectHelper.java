@@ -71,6 +71,7 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 {
 	private static long contiguousHeaderSize;
 	private static long discontiguousHeaderSize;
+	private static Boolean isDataAddrPresent;
 
 	public static U32 flags(J9IndexableObjectPointer objPointer) throws CorruptDataException
 	{
@@ -92,15 +93,32 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 		return J9ArrayClassHelper.getName(clazz(objPointer));
 	}
 
+	public static boolean isIndexableDataAddrPresent()
+	{
+		boolean isPresent;
+
+		if (isDataAddrPresent != null) {
+			isPresent = isDataAddrPresent.booleanValue();
+		} else {
+			try {
+				if (J9BuildFlags.J9VM_ENV_DATA64) {
+					J9JavaVMPointer javaVM = J9RASHelper.getVM(DataType.getJ9RASPointer());
+					isPresent = !javaVM.isIndexableDataAddrPresent().isZero();
+				} else {
+					isPresent = false;
+				}
+			} catch (CorruptDataException | NoSuchFieldException e) {
+				isPresent = false;
+			}
+			isDataAddrPresent = Boolean.valueOf(isPresent);
+		}
+
+		return isPresent;
+	}
+
 	public static U32 rawSize(J9IndexableObjectPointer objPointer) throws CorruptDataException
 	{
-		boolean isIndexableDataAddrPresent;
-		try {
-			J9JavaVMPointer javaVM = J9RASHelper.getVM(DataType.getJ9RASPointer());
-			isIndexableDataAddrPresent = (J9BuildFlags.J9VM_ENV_DATA64 && !javaVM.isIndexableDataAddrPresent().isZero());
-		} catch (CorruptDataException | NoSuchFieldException e) {
-			isIndexableDataAddrPresent = false;
-		}
+		boolean isIndexableDataAddrPresent = isIndexableDataAddrPresent();
 
 		try {
 			if (mixedReferenceMode) {
@@ -132,14 +150,7 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 	{
 		U32 size = rawSize(objPointer);
 		if (size.isZero()) {
-			boolean isIndexableDataAddrPresent;
-			try {
-				J9JavaVMPointer javaVM = J9RASHelper.getVM(DataType.getJ9RASPointer());
-				isIndexableDataAddrPresent = (J9BuildFlags.J9VM_ENV_DATA64 && !javaVM.isIndexableDataAddrPresent().isZero());
-			} catch (CorruptDataException | NoSuchFieldException e) {
-				isIndexableDataAddrPresent = false;
-			}
-
+			boolean isIndexableDataAddrPresent = isIndexableDataAddrPresent();
 			try {
 				if (mixedReferenceMode) {
 					if (compressObjectReferences) {
@@ -184,16 +195,11 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 	public static long contiguousHeaderSize()
 	{
 		if (0 == contiguousHeaderSize) {
-			try {
-				J9JavaVMPointer javaVM = J9RASHelper.getVM(DataType.getJ9RASPointer());
-				if (J9BuildFlags.J9VM_ENV_DATA64 && !javaVM.isIndexableDataAddrPresent().isZero()) {
-					contiguousHeaderSize = contiguousHeaderSizeWithDataAddress();
-					return contiguousHeaderSize;
-				}
-			} catch (CorruptDataException | NoSuchFieldException e) {
-				// default to legacy
+			if (isIndexableDataAddrPresent()) {
+				contiguousHeaderSize = contiguousHeaderSizeWithDataAddress();
+			} else {
+				contiguousHeaderSize = contiguousHeaderSizeLegacy();
 			}
-			contiguousHeaderSize = contiguousHeaderSizeLegacy();
 		}
 		return contiguousHeaderSize;
 	}
@@ -231,16 +237,11 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 	public static long discontiguousHeaderSize()
 	{
 		if (0 == discontiguousHeaderSize) {
-			try {
-				J9JavaVMPointer javaVM = J9RASHelper.getVM(DataType.getJ9RASPointer());
-				if (J9BuildFlags.J9VM_ENV_DATA64 && !javaVM.isIndexableDataAddrPresent().isZero()) {
-					discontiguousHeaderSize = discontiguousHeaderSizeWithDataAddress();
-					return discontiguousHeaderSize;
-				}
-			} catch (CorruptDataException | NoSuchFieldException e) {
-				// default to legacy
+			if (isIndexableDataAddrPresent()) {
+				discontiguousHeaderSize = discontiguousHeaderSizeWithDataAddress();
+			} else {
+				discontiguousHeaderSize = discontiguousHeaderSizeLegacy();
 			}
-			discontiguousHeaderSize = discontiguousHeaderSizeLegacy();
 		}
 		return discontiguousHeaderSize;
 	}
@@ -340,7 +341,7 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 	/**
 	 * Determine the validity of the data address belonging to objPointer.
 	 *
-	 * @param objPointer array object who's data address validity we are checking
+	 * @param objPointer array object whose data address validity we are checking
 	 * @throws CorruptDataException if there's a problem accessing the indexable object dataAddr field
 	 * @return true if the data address of objPointer is valid, false otherwise
 	 */

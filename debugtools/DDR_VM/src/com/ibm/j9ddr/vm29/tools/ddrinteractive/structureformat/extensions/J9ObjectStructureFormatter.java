@@ -147,14 +147,6 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 
 	private void formatArrayObject(PrintStream out, J9ClassPointer localClazz, U8Pointer dataStart, J9IndexableObjectPointer localObject, int begin, int end) throws CorruptDataException
 	{
-		boolean isIndexableDataAddrPresent;
-		try {
-			J9JavaVMPointer javaVM = J9RASHelper.getVM(DataType.getJ9RASPointer());
-			isIndexableDataAddrPresent = (J9BuildFlags.J9VM_ENV_DATA64 && !javaVM.isIndexableDataAddrPresent().isZero());
-		} catch (CorruptDataException | NoSuchFieldException e) {
-			isIndexableDataAddrPresent = false;
-		}
-
 		String className = J9IndexableObjectHelper.getClassName(localObject);
 
 		out.format("!J9IndexableObject %s {%n", localObject.getHexAddress());
@@ -172,7 +164,7 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 		}
 
 		/* if IndexableDataAddrPresent in header of ArrayObject, output DataAddr */
-		if (isIndexableDataAddrPresent) {
+		if (J9IndexableObjectHelper.isIndexableDataAddrPresent()) {
 			VoidPointer dataAddr;
 			try {
 				dataAddr = J9IndexableObjectHelper.getDataAddrForIndexable(localObject);
