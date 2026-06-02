@@ -944,13 +944,13 @@ MM_MemorySubSpaceTarok::performResize(MM_EnvironmentBase *env, MM_AllocateDescri
 	} else {
 		/**
 		 * In case there is no heap resize, check if there is the case that free size is smaller than eden size
-		 * due to the conflict between eden resize and heap resize, recalculateEdenSize if it happens.
+		 * due to the conflict between eden resize and heap resize, reCalculateEdenSize if it happens.
 		 */
 		uintptr_t freeBytes = _globalAllocationManagerTarok->getFreeRegionCount()*_heapRegionManager->getRegionSize();
 		MM_IncrementalGenerationalGC *collector = (MM_IncrementalGenerationalGC*)_extensions->getGlobalCollector();
 		uintptr_t edenSizeInBytes = collector->getCurrentEdenSizeInBytes((MM_EnvironmentVLHGC *)env);
 		if (edenSizeInBytes > freeBytes) {
-			collector->recalculateEdenSize((MM_EnvironmentVLHGC *)env);
+			collector->reCalculateEdenSize((MM_EnvironmentVLHGC *)env);
 			edenSizeInBytes = collector->getCurrentEdenSizeInBytes((MM_EnvironmentVLHGC *)env);
 		}
 		Assert_MM_true(freeBytes >= edenSizeInBytes);
