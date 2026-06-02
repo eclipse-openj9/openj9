@@ -30,35 +30,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 
 	<import file="${TEST_ROOT}/functional/cmdLineTests/buildTools.xml" />
 
-	<!-- Liberty runtime dependency. -->
-	<property name="LIB" value="liberty_runtime"/>
-	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
-
-	<!-- Extract Liberty runtime from TKG dependency cache. -->
-	<target name="extractLiberty" depends="init,getDependentLibs">
-		<condition property="liberty.extracted">
-			<available file="${LIB_DIR}/wlp" type="dir"/>
-		</condition>
-		<condition property="liberty.not.extracted">
-			<not>
-				<isset property="liberty.extracted"/>
-			</not>
-		</condition>
-
-		<echo message="Extracting Liberty runtime to ${LIB_DIR}." if:set="liberty.not.extracted"/>
-		<mkdir dir="${LIB_DIR}" if:set="liberty.not.extracted"/>
-		<unzip src="${LIB_DIR}/liberty_runtime.zip" dest="${LIB_DIR}" if:set="liberty.not.extracted"/>
-		<echo message="Setting execute permissions on Liberty scripts." if:set="liberty.not.extracted"/>
-		<chmod dir="${LIB_DIR}/wlp/bin" perm="755" includes="*" if:set="liberty.not.extracted"/>
-		<echo message="Liberty runtime extracted successfully." if:set="liberty.not.extracted"/>
-		<echo message="Liberty runtime already extracted: ${LIB_DIR}/wlp." unless:set="liberty.not.extracted"/>
-	</target>
-
 	<!-- Set properties for this build. -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/jfr" />
 	<property name="src" location="src" />
 	<property name="build" location="bin" />
 
+	<!-- Define jfrEnabled early. -->
 	<condition property="jfrEnabled">
 		<and>
 			<contains string="${TEST_FLAG}" substring="JFR" />
@@ -68,6 +45,28 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			</not>
 		</and>
 	</condition>
+
+	<!-- Liberty runtime dependency. -->
+	<property name="LIB" value="liberty_runtime"/>
+	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
+
+	<!-- Extract Liberty runtime from TKG dependency cache. -->
+	<target name="extractLiberty" depends="init,getDependentLibs" if="jfrEnabled">
+		<condition property="liberty.extracted">
+			<available file="${LIB_DIR}/wlp" type="dir"/>
+		</condition>
+
+		<!-- Extract if not already extracted. -->
+		<sequential unless:set="liberty.extracted">
+			<echo message="Extracting Liberty runtime to ${LIB_DIR}."/>
+			<mkdir dir="${LIB_DIR}"/>
+			<unzip src="${LIB_DIR}/liberty_runtime.zip" dest="${LIB_DIR}"/>
+			<echo message="Setting execute permissions on Liberty scripts."/>
+			<chmod dir="${LIB_DIR}/wlp/bin" perm="755" includes="*"/>
+			<echo message="Liberty runtime extracted successfully."/>
+		</sequential>
+		<echo message="Liberty runtime already extracted: ${LIB_DIR}/wlp." if:set="liberty.extracted"/>
+	</target>
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
