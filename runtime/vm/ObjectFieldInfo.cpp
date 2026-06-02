@@ -82,7 +82,7 @@ ObjectFieldInfo::countInstanceFields(void)
 						}
 					}
 				} else
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 				{
 					_instanceObjectCount += 1;
 					_totalObjectCount += 1;
@@ -107,8 +107,6 @@ ObjectFieldInfo::countInstanceFields(void)
 		_contendedSingleCount = _instanceSingleCount;
 		_totalSingleCount -= _instanceSingleCount;
 		_instanceSingleCount = 0;
-	} else {
-		_instanceFieldBackfillEligible = (_instanceSingleCount > 0) || (_objectCanUseBackfill && (_instanceSingleCount > 0));
 	}
 }
 
@@ -157,7 +155,7 @@ ObjectFieldInfo::calculateTotalFieldsSizeAndBackfill()
 
 		/* ValueTypes cannot be subtyped and their superClass contains no fields */
 		if (!isValue()) {
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			/* if the superclass is not end aligned but we have doubleword fields, use the space before the first field as the backfill */
 			if (
 					((getSuperclassObjectSize() % OBJECT_SIZE_INCREMENT_IN_BYTES) != 0) && /* superclass is not end-aligned */
@@ -208,8 +206,7 @@ ObjectFieldInfo::calculateTotalFieldsSizeAndBackfill()
 				}
 			}
 		}
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	}
 	return accumulator;
 }
-

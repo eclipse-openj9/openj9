@@ -178,7 +178,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		}
 	}
 
-	// Based on fieldOffsetsFindNext from resolvefield.c
+	// Based on fieldOffsetsFindNext from resolvefield.cpp
 	private void fieldOffsetsFindNext() throws CorruptDataException {
 		/* start walking the fields to find the first one to return */
 		/* loop in case we have been told to only consider instance or static fields - we may have to skip past a few of the wrong kind */

@@ -60,7 +60,6 @@ public class ObjectFieldInfo {
 	int totalObjectCount;
 	int totalSingleCount;
 	int totalDoubleCount;
-	boolean instanceFieldBackfillEligible; /* use this to give instance fields priority over the hidden fields for backfill slots */
 	int hiddenFieldCount;
 	int superclassBackfillOffset; /* inherited backfill */
 	int myBackfillOffset; /* backfill available for this class's fields */
@@ -97,7 +96,6 @@ public class ObjectFieldInfo {
 		myBackfillOffset = NO_BACKFILL_AVAILABLE;
 		subclassBackfillOffset = NO_BACKFILL_AVAILABLE;
 		objectCanUseBackfill = (fj9object_t_SizeOf == BACKFILL_SIZE);
-		instanceFieldBackfillEligible = false;
 	}
 
 	ObjectFieldInfo(J9ROMClassPointer romClass, J9ClassPointer clazz) throws CorruptDataException {
@@ -380,10 +378,6 @@ public class ObjectFieldInfo {
 		return superclassBackfillOffset;
 	}
 
-	boolean isInstanceFieldBackfillEligible() {
-		return instanceFieldBackfillEligible;
-	}
-
 	void
 	countInstanceFields() throws CorruptDataException
 	{
@@ -446,7 +440,6 @@ public class ObjectFieldInfo {
 				}
 			}
 		}
-		instanceFieldBackfillEligible = (instanceSingleCount > 0) || (objectCanUseBackfill && (instanceSingleCount > 0));
 	}
 
 	int countAndCopyHiddenFields(LinkedList<HiddenInstanceField> hiddenFieldList, ArrayList<HiddenInstanceField>  hiddenFieldArray) throws CorruptDataException
