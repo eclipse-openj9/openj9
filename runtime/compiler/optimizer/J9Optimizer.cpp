@@ -91,6 +91,9 @@
 #include "optimizer/VectorAPIExpansion.hpp"
 #include "optimizer/CatchBlockProfiler.hpp"
 
+// clang-format off
+// avoids these arrays being reformatted in less readable ways
+
 static const OptimizationStrategy cheapObjectAllocationOpts[] = {
     { OMR::explicitNewInitialization, OMR::IfNews }, // do before local dead store
     { OMR::endGroup }
@@ -698,6 +701,7 @@ static const OptimizationStrategy cheapTacticalGlobalRegisterAllocatorOpts[] = {
     { OMR::tacticalGlobalRegisterAllocator, OMR::IfEnabled },
     { OMR::endGroup }
 };
+// clang-format on
 
 J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen)
     : TR::FullOptimizer(comp, methodSymbol, isIlGen)
