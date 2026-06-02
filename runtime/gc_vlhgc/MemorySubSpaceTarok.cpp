@@ -876,7 +876,7 @@ MM_MemorySubSpaceTarok::collectorExpand(MM_EnvironmentBase *env)
 	Assert_MM_true((0 == expandSize) || (_heapRegionManager->getRegionSize() == expandSize));
 
 	_extensions->heap->getResizeStats()->setLastExpandReason(SATISFY_COLLECTOR);
-
+	
 	/* expand by a single region */
 	/* for the most part the code path is not multi-threaded safe, so we do this under expandLock */
 	uintptr_t expansionAmount= expand(env, expandSize);
@@ -941,21 +941,8 @@ MM_MemorySubSpaceTarok::performResize(MM_EnvironmentBase *env, MM_AllocateDescri
 		resizeAmount = -(intptr_t)performContract(env, allocDescription);
 	} else if (_expansionSize != 0) {
 		resizeAmount = performExpand(env);
-	} else {
-		/**
-		 * In case there is no heap resize, check if there is the case that free size is smaller than eden size
-		 * due to the conflict between eden resize and heap resize, reCalculateEdenSize if it happens.
-		 */
-		uintptr_t freeBytes = _globalAllocationManagerTarok->getFreeRegionCount()*_heapRegionManager->getRegionSize();
-		MM_IncrementalGenerationalGC *collector = (MM_IncrementalGenerationalGC*)_extensions->getGlobalCollector();
-		uintptr_t edenSizeInBytes = collector->getCurrentEdenSizeInBytes((MM_EnvironmentVLHGC *)env);
-		if (edenSizeInBytes > freeBytes) {
-			collector->reCalculateEdenSize((MM_EnvironmentVLHGC *)env);
-			edenSizeInBytes = collector->getCurrentEdenSizeInBytes((MM_EnvironmentVLHGC *)env);
-		}
-		Assert_MM_true(freeBytes >= edenSizeInBytes);
 	}
-
+	
 	env->popVMstate(oldVMState);
 
 	return resizeAmount;
