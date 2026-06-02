@@ -1548,4 +1548,11 @@ public class TestUtils {
 		fail("Error: should never hit this code, directory " + dir + " is not correct.");
 		return "";
 	}
+
+	public static void delayBeforeDestroyNonPersistent() {
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+		}
+	}
 }

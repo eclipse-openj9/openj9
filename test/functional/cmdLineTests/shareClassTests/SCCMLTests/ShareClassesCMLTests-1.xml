@@ -510,6 +510,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 
+	<exec command="sleep 0.5" platforms="linux.*" />
+
 	<test id="Test 30: CMVC 168131 : Cleanup" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,nonpersistent,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
@@ -556,6 +558,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
+
+	<exec command="sleep 0.5" platforms="linux.*" />
 
 	<test id="Test 35: CMVC 168131 : Cleanup" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,nonpersistent,destroy</command>
