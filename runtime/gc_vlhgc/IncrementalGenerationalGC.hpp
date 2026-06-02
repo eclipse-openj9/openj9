@@ -421,9 +421,9 @@ public:
 		return _schedulingDelegate.getCurrentEdenSizeInBytes(env);
 	}
 
-	MMINLINE void recalculateEdenSize(MM_EnvironmentVLHGC *env)
+	MMINLINE void reCalculateEdenSize(MM_EnvironmentVLHGC *env)
 	{
-		_schedulingDelegate.recalculateEdenSize(env);
+		_schedulingDelegate.reCalculateEdenSize(env);
 	}
 
 	MM_IncrementalGenerationalGC(MM_EnvironmentVLHGC *env, MM_HeapRegionManager *manager);
