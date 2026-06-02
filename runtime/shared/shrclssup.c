@@ -458,8 +458,8 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 						&& J9_ARE_NO_BITS_SET(vm->sharedCacheAPI->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_READONLY)
 					) {
 						j9shr_guaranteed_exit(vm, FALSE);
+						j9shr_shutdown(vm);
 					}
-					j9shr_shutdown(vm);
 					return rc;
 				}
 			}
