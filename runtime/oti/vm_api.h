@@ -5804,6 +5804,15 @@ isJFRRecordingStarted(J9JavaVM *vm);
 void
 jfrDump(J9VMThread *currentThread, BOOLEAN finalWrite);
 
+void
+enableJFRRecordingOnThread(J9VMThread *currentThread, j9object_t threadObject);
+
+void
+disableJFRRecordingOnThread(J9VMThread *currentThread, j9object_t threadObject);
+
+BOOLEAN
+isJFRRecordingDisabledOnThread(J9VMThread *currentThread, j9object_t threadObject);
+
 /**
  * Take an execution sample of the current thread.
  *

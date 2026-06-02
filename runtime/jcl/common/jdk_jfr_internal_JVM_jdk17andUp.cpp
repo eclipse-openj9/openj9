@@ -55,13 +55,13 @@ void JNICALL
 Java_jdk_jfr_internal_JVM_exclude(JNIEnv *env, jobject obj, jobject thread)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
-	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
-	J9VMThread *targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, threadObject);
-	if (NULL != targetThread) {
-		targetThread->threadJfrState.isJfrExcluded = TRUE;
+	if (NULL != threadObject) {
+		vmFuncs->disableJFRRecordingOnThread(currentThread, threadObject);
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
 }
@@ -70,13 +70,13 @@ void JNICALL
 Java_jdk_jfr_internal_JVM_include(JNIEnv *env, jobject obj, jobject thread)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
-	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
-	J9VMThread *targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, threadObject);
-	if (NULL != targetThread) {
-		targetThread->threadJfrState.isJfrExcluded = FALSE;
+	if (NULL != threadObject) {
+		vmFuncs->enableJFRRecordingOnThread(currentThread, threadObject);
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
 }
@@ -90,13 +90,13 @@ Java_jdk_jfr_internal_JVM_isExcluded__Ljava_lang_Thread_2(JNIEnv *env, jobject o
 {
 	jboolean result = JNI_FALSE;
 	J9VMThread *currentThread = (J9VMThread *)env;
-	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
-	J9VMThread *targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, threadObject);
-	if (NULL != targetThread) {
-		result = targetThread->threadJfrState.isJfrExcluded ? JNI_TRUE : JNI_FALSE;
+	if (NULL != threadObject) {
+		result = vmFuncs->isJFRRecordingDisabledOnThread(currentThread, threadObject) ? JNI_TRUE : JNI_FALSE;
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
 
