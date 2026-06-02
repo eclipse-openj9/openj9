@@ -69,10 +69,9 @@ private:
 	U_32 _flatUnAlignedSingleInstanceBackfill;
 	bool _classRequiresPrePadding;
 	bool _isBackFillPostPadded;
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 	bool _hiddenFieldOffsetResolutionRequired;
-	bool _instanceFieldBackfillEligible; /* use this to give instance fields priority over the hidden fields for backfill slots */
 	U_32 _hiddenFieldCount;
 	IDATA _superclassBackfillOffset; /* inherited backfill */
 	IDATA _myBackfillOffset; /* backfill available for this class's fields */
@@ -101,9 +100,9 @@ public:
 
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	ObjectFieldInfo(J9JavaVM *vm, J9ROMClass *romClass, J9FlattenedClassCache *flattenedClassCache):
-#else
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	ObjectFieldInfo(J9JavaVM *vm, J9ROMClass *romClass):
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		_objectHeaderSize(J9JAVAVM_OBJECT_HEADER_SIZE(vm)),
 		_referenceSize(J9JAVAVM_REFERENCE_SIZE(vm)),
 		_cacheLineSize(0),
@@ -132,9 +131,8 @@ public:
 		_flatUnAlignedSingleInstanceBackfill(0),
 		_classRequiresPrePadding(false),
 		_isBackFillPostPadded(false),
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		_hiddenFieldOffsetResolutionRequired(false),
-		_instanceFieldBackfillEligible(false),
 		_hiddenFieldCount(0),
 		_superclassBackfillOffset(NO_BACKFILL_AVAILABLE),
 		_myBackfillOffset(NO_BACKFILL_AVAILABLE),
@@ -195,7 +193,7 @@ public:
 	 * 7. hidden singles
 	 * 8. hidden objects
 	 *
-	 * @return number of object fields (instance and hidden) which do not go  in a backfill slot.
+	 * @return number of object fields (instance and hidden) which do not go in a backfill slot.
 	 */
 	VMINLINE U_32
 	getNonBackfilledObjectCount(void) const
@@ -791,7 +789,7 @@ public:
 	{
 		return _isBackFillPostPadded;
 	}
-#endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 	VMINLINE bool
 	isHiddenFieldOffsetResolutionRequired(void) const
@@ -830,12 +828,6 @@ public:
 	getSuperclassBackfillOffset(void) const
 	{
 		return _superclassBackfillOffset;
-	}
-
-	VMINLINE bool
-	isInstanceFieldBackfillEligible(void) const
-	{
-		return _instanceFieldBackfillEligible;
 	}
 
 	VMINLINE bool
