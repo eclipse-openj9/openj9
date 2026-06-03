@@ -256,7 +256,7 @@ validate_options() {
     esac
   fi
 
-  all_versions="8 11 17 21 25 26 next"
+  all_versions="8 11 17 21 25 26 27 next"
   local -A known_version
   local version
   for version in $all_versions ; do
@@ -690,7 +690,7 @@ bootjdk_version() {
     26)
       echo 25
       ;;
-    next)
+    27 | next)
       echo 26
       ;;
     *)
