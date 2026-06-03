@@ -174,6 +174,12 @@ MM_GlobalCollectorDelegate::mainThreadGarbageCollectStarted(MM_EnvironmentBase *
 void
 MM_GlobalCollectorDelegate::mainThreadGarbageCollectFinished(MM_EnvironmentBase *env, bool compactedThisCycle)
 {
+	mainThreadGarbageCollectFinished(env, compactedThisCycle ? COMPACT_ALWAYS : COMPACT_NONE);
+}
+
+void
+MM_GlobalCollectorDelegate::mainThreadGarbageCollectFinished(MM_EnvironmentBase *env, CompactReason compactedThisCycle)
+{
 	/* Check that all reference object lists are empty:
 	 * lists must be processed at Mark and nothing should be flushed after
 	 */
@@ -202,13 +208,18 @@ MM_GlobalCollectorDelegate::mainThreadGarbageCollectFinished(MM_EnvironmentBase 
 	J9VMThread *vmThread = (J9VMThread *)env->getLanguageVMThread();
 	uintptr_t reclaimableMemory = _extensions->classLoaderManager->reclaimableMemory();
 	if (reclaimableMemory > 0) {
-		if (!compactedThisCycle) {
+		/* fix the heap, for the parts that are not compacted */
+		if ((COMPACT_ABORTED_SCAVENGE == compactedThisCycle) || (COMPACT_NONE == compactedThisCycle)) {
 			bool isExplicitGC = env->_cycleState->_gcCode.isExplicitGC();
 			if (isExplicitGC || (reclaimableMemory > _extensions->deadClassLoaderCacheSize)) {
 				/* fix the heap */
-				Trc_MM_DoFixHeapForUnload_Entry(vmThread, MEMORY_TYPE_RAM);
+				uintptr_t memoryFlags = MEMORY_TYPE_RAM;
+				if (COMPACT_ABORTED_SCAVENGE == compactedThisCycle) {
+					memoryFlags |= MEMORY_TYPE_OLD;
+				}
+				Trc_MM_DoFixHeapForUnload_Entry(vmThread, memoryFlags);
 				MM_ParallelGlobalGC *parallelGlobalCollector = (MM_ParallelGlobalGC *)_globalCollector;
-				uintptr_t fixedObjectCount = parallelGlobalCollector->fixHeapForWalk(env, MEMORY_TYPE_RAM, FIXUP_CLASS_UNLOADING, fixObjectIfClassDying);
+				uintptr_t fixedObjectCount = parallelGlobalCollector->fixHeapForWalk(env, memoryFlags, FIXUP_CLASS_UNLOADING, fixObjectIfClassDying);
 				if (0 < fixedObjectCount) {
 					Trc_MM_DoFixHeapForUnload_Exit(vmThread, fixedObjectCount);
 				} else {
