@@ -296,6 +296,9 @@ public class AttachHandler extends Thread {
 				IPC.logStream = new PrintStream(logFile);
 				IPC.setDefaultVmId(pidProperty);
 				IPC.printMessageWithHeader("AttachHandler initialized", IPC.logStream); //$NON-NLS-1$
+				/*[IF JAVA_SPEC_VERSION >= 11]*/
+				IPC.printMessageWithHeader(ProcessHandle.current().info().commandLine().orElse("default"), IPC.logStream);
+				/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 				loggingStatus = LOGGING_ENABLED;
 			} else {
 				loggingStatus = LOGGING_DISABLED;

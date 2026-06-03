@@ -222,4 +222,48 @@ public interface VMLangAccess {
 	 */
 	public ConstantPool getConstantPoolCache(Class<?> clazz);
 
+	/*[IF JAVA_SPEC_VERSION == 17]*/
+	/**
+	 * Invoke jdk.jfr.internal.dcmd.DCmdStart.execute().
+	 *
+	 * @param execArgs The string arguments separated by a delimiter
+	 * @return A string array returned from DCmdStart.execute()
+	 */
+	public String[] doJFRDCmdStartExecute(String execArgs);
+
+	/**
+	 * Invoke jdk.jfr.internal.dcmd.DCmdStop.execute().
+	 *
+	 * @param execArgs The string arguments separated by a delimiter
+	 * @return A string array returned from DCmdStop.execute()
+	 */
+	public String[] doJFRDCmdStopExecute(String execArgs);
+
+	/**
+	 * Invoke jdk.jfr.internal.dcmd.DCmdConfigure.execute().
+	 *
+	 * @param verbose print verbose output
+	 * @param repositoryPath the repository path
+	 * @param dumpPath the dump path when fatal error
+	 * @param stackDepth the stack trace depth
+	 * @param globalBufferCount the number of global buffers
+	 * @param globalBufferSize the size of global buffers
+	 * @param threadBufferSize the size of thread buffer
+	 * @param memorySize the memory size
+	 * @param maxChunkSize the chunk size threshold that a new one is to be created
+	 * @param sampleThreads if thread sampling is to be enabled
+	 * @return A string array returned from DCmdConfigure.execute()
+	 */
+	public String[] doJFRDCmdConfigureExecute(
+			boolean verbose, String repositoryPath, String dumpPath, Integer stackDepth, Long globalBufferCount,
+			Long globalBufferSize, Long threadBufferSize, Long memorySize, Long maxChunkSize, Boolean sampleThreads);
+
+	/**
+	 * Invoke jdk.jfr.internal.dcmd.DCmdDump.execute().
+	 *
+	 * @param execArgs The string arguments separated by a delimiter
+	 * @return A string array returned from DCmdDump.execute()
+	 */
+	public String[] doJFRDCmdDumpExecute(String execArgs);
+	/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 }
