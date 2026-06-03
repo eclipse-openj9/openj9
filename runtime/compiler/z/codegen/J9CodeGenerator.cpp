@@ -104,6 +104,12 @@ void J9::Z::CodeGenerator::initialize()
         cg->setSupportsInlineStringLatin1Inflate();
     }
 
+    static bool disableStringLatin1CompareToUTF16Values = feGetEnv("TR_DisableStringLatin1CompareToUTF16Values") != NULL;
+    if (!disableStringLatin1CompareToUTF16Values && cg->getSupportsVectorRegisters() && comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z14)
+        && !TR::Compiler->om.canGenerateArraylets()) {
+        cg->setSupportsInlineStringLatin1CompareToUTF16Values();
+    }
+
     // For IBM Java 8 ConcurrentLinkedQueue.poll and offer has been accelerated
     // using constrained transactional execution instructions.
     // If CTX feature is supported on processor, and JIT has not disabled it
@@ -3803,6 +3809,12 @@ bool J9::Z::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resul
         case TR::java_lang_StringLatin1_inflate_BICII:
             if (cg->getSupportsInlineStringLatin1Inflate()) {
                 resultReg = TR::TreeEvaluator::inlineStringLatin1Inflate(node, cg);
+                return resultReg != NULL;
+            }
+            break;
+        case TR::java_lang_StringLatin1_compareToUTF16Values:
+            if (cg->getSupportsInlineStringLatin1CompareToUTF16Values()) {
+                resultReg = TR::TreeEvaluator::inlineStringLatin1CompareToUTF16Values(node, cg);
                 return resultReg != NULL;
             }
             break;

@@ -5398,6 +5398,11 @@ bool TR_J9InlinerPolicy::suppressInliningRecognizedInitialCallee(TR_CallSite *ca
                 return true;
             }
             break;
+        case TR::java_lang_StringLatin1_compareToUTF16Values:
+            if (cg->getSupportsInlineStringLatin1CompareToUTF16Values()) {
+                return true;
+            }
+            break;
         case TR::java_lang_StringUTF16_indexOf:
         case TR::java_lang_StringUTF16_indexOfUnsafe:
         case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringLatin1:
