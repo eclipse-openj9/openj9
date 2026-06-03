@@ -454,12 +454,12 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 				if (nonfatal) {
 					return J9VMDLLMAIN_OK;
 				} else {
-					if ((J9VMDLLMAIN_SILENT_EXIT_VM == rc)
-						&& J9_ARE_NO_BITS_SET(vm->sharedCacheAPI->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_READONLY)
-					) {
-						j9shr_guaranteed_exit(vm, FALSE);
+					if (J9VMDLLMAIN_SILENT_EXIT_VM == rc) {
+						if (J9_ARE_NO_BITS_SET(vm->sharedCacheAPI->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_READONLY)) {
+							j9shr_guaranteed_exit(vm, FALSE);
+						}
+						j9shr_shutdown(vm);
 					}
-					j9shr_shutdown(vm);
 					return rc;
 				}
 			}
