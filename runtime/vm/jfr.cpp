@@ -1866,8 +1866,8 @@ jvmUpcallsEagerByteInstrumentation(J9VMThread *currentThread, J9Class *superClas
 		}
 		inputByteArray = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 	}
-	args[0] = (UDATA)traceID;
-	args[1] = 0;
+	args[0] = 0;
+	args[1] = (UDATA)traceID;
 	args[2] = (UDATA)FALSE;
 	args[3] = (UDATA)superClass->classObject;
 	args[4] = (UDATA)inputByteArray;
