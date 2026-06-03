@@ -498,6 +498,22 @@ TR_ResolvedMethod *TR_PersistentCHTable::findSingleAbstractImplementer(TR_Opaque
     if (TR::Compiler->cls.isInterfaceClass(comp, thisClass))
         return 0;
 
+    // vftSlot is a vtable offset computed against the class the call was resolved against, whereas
+    // thisClass is the receiver's (possibly refined) type. For an interface accessor, any
+    // receiver type that was refined may fall outside thisClass's vtable.
+    // Skipping this for JITServer mode, as thisClass is a client-side class pointer
+    // that must not be dereferenced here. The per-class read happens on the client, where it is
+    // guarded by the equivalent check in TR_J9VMBase::getResolvedVirtualMethod.
+    if (!comp->isOutOfProcessCompilation()) {
+        J9Class *j9thisClass = (J9Class *)TR::Compiler->cls.convertClassOffsetToClassPtr(thisClass);
+        UDATA vTableSlot = (UDATA)comp->fej9()->virtualCallOffsetToVTableSlot(vftSlot);
+        UDATA vTableNumMethods = J9VTABLE_HEADER_FROM_RAM_CLASS(j9thisClass)->size;
+        UDATA firstSlot = sizeof(J9Class) + sizeof(J9VTableHeader);
+        UDATA lastSlot = firstSlot + (0 == vTableNumMethods ? 0 : (vTableNumMethods - 1)) * sizeof(UDATA);
+        if ((0 == vTableNumMethods) || (vTableSlot < firstSlot) || (vTableSlot > lastSlot))
+            return 0;
+    }
+
     TR_ResolvedMethod *implArray[2]; // collect maximum 2 implementers if you can
     comp->enterHeuristicRegion();
     int32_t implCount

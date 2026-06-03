@@ -441,6 +441,21 @@ bool TR_J9VirtualCallSite::findCallSiteForAbstractClass(TR_InlinerBase *inliner)
         && !comp()->getOption(TR_DisableAbstractInlining)
         && (implementer
             = chTable->findSingleAbstractImplementer(_receiverClass, _vftSlot, _callerResolvedMethod, comp()))) {
+        // The (_receiverClass, _vftSlot) pair can be inconsistent when the receiver type
+        // was refined. Only devirtualize when the implementer actually matches _initialCalleeMethod.
+        if (_initialCalleeMethod
+            && (implementer->nameLength() != _initialCalleeMethod->nameLength()
+                || implementer->signatureLength() != _initialCalleeMethod->signatureLength()
+                || 0 != strncmp(implementer->nameChars(), _initialCalleeMethod->nameChars(), implementer->nameLength())
+                || 0
+                    != strncmp(implementer->signatureChars(), _initialCalleeMethod->signatureChars(),
+                        implementer->signatureLength()))) {
+            heuristicTrace(inliner->tracer(),
+                "Abstract implementer %p does not match intended callee %p (name/signature mismatch); not "
+                "devirtualizing",
+                implementer, _initialCalleeMethod);
+            return false;
+        }
         heuristicTrace(inliner->tracer(), "Found a single Abstract Implementer %p, signature = %s", implementer,
             inliner->tracer()->traceSignature(implementer));
         TR_VirtualGuardSelection *guard
@@ -1358,4 +1373,3 @@ bool TR_ProfileableCallSite::findProfiledCallTargets(TR_CallStack *callStack, TR
 
     return numTargets();
 }
-
