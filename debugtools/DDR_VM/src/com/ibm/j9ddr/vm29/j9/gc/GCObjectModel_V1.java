@@ -34,6 +34,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
+import com.ibm.j9ddr.vm29.pointer.helper.ValueTypeHelper;
 import com.ibm.j9ddr.vm29.types.I32;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.UDATA;
@@ -328,6 +329,13 @@ class GCObjectModel_V1 extends GCObjectModel
 		if (J9BuildFlags.J9VM_GC_MODRON_COMPACTION || J9BuildFlags.J9VM_GC_GENERATIONAL) {
 			if (hasBeenMoved(object)) {
 				result = I32Pointer.cast(object).addOffset(getHashcodeOffset(object).longValue()).at(0);
+				ValueTypeHelper valueTypeHelper = ValueTypeHelper.getValueTypeHelper();
+				if (valueTypeHelper.areValueTypesSupported() && result.eq(0)) {
+					J9ClassPointer clazz = J9ObjectHelper.clazz(object);
+					if (valueTypeHelper.isJ9ClassAValueType(clazz)) {
+						result = ObjectHash.inlineConvertObjectToHash(vm, object);
+					}
+				}
 			} else {
 				result = ObjectHash.convertObjectAddressToHash(vm, object);
 			}
