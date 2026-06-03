@@ -7402,13 +7402,36 @@ TR_OpaqueMethodBlock *TR_J9VMBase::getResolvedVirtualMethod(TR_OpaqueClassBlock 
     if (isInterfaceClass(classObject))
         return 0;
 
-    J9Method *ramMethod = *(J9Method **)((char *)TR::Compiler->cls.convertClassOffsetToClassPtr(classObject)
-        + virtualCallOffsetToVTableSlot(virtualCallOffset));
+    J9Class *j9class = (J9Class *)TR::Compiler->cls.convertClassOffsetToClassPtr(classObject);
+    UDATA vTableSlot = (UDATA)virtualCallOffsetToVTableSlot(virtualCallOffset);
+
+    TR::Compilation *comp = _compInfoPT->getCompilation();
+
+    // virtualCallOffset is a vtable slot computed against the class the call was resolved
+    // against, while classObject is the receiver's (possibly refined) type.  When those
+    // differ, such as when an interface accessor whose vtable slot was taken from one
+    // implementor which was then refined to a narrower implementor of the same interface,
+    // the slot can be out of range of the classObject's vtable, holding an arbitrary
+    // non-J9Method value (e.g. a heap object reference).
+    J9VTableHeader *vftHeader = J9VTABLE_HEADER_FROM_RAM_CLASS(j9class);
+    UDATA vTableNumMethods = vftHeader->size;
+    UDATA firstSlot = sizeof(J9Class) + sizeof(J9VTableHeader);
+    UDATA lastSlot = firstSlot + (0 == vTableNumMethods ? 0 : (vTableNumMethods - 1)) * sizeof(UDATA);
+    if ((0 == vTableNumMethods) || (vTableSlot < firstSlot) || (vTableSlot > lastSlot)) {
+        OMR::Logger *log = comp->log();
+        logprintf(comp->getOption(TR_TraceOptDetails), log,
+            "getResolvedVirtualMethod: vtable slot %d out of bounds for class %p (vtable holds %d methods, "
+            "valid byte range [%d..%d], virtualCallOffset=%d); failing query\n",
+            (int32_t)vTableSlot, (void *)j9class, (int32_t)vTableNumMethods, (int32_t)firstSlot, (int32_t)lastSlot,
+            virtualCallOffset);
+        return 0;
+    }
+
+    J9Method *ramMethod = *(J9Method **)((char *)j9class + vTableSlot);
 
     TR_ASSERT(ramMethod, "getResolvedVirtualMethod should always find a ramMethod in the vtable slot");
 
     // ramMethod might have been inherited from a superclass
-    TR::Compilation *comp = _compInfoPT->getCompilation();
     comp->constProvenanceGraph()->addEdge(classObject, ramMethod);
 
     if (ramMethod && (!(_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) || ignoreRtResolve)
