@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
@@ -76,12 +77,8 @@ public class TestJcmd extends AttachApiTest {
 	// Same as DiagnosticUtils.DIAGNOSTICS_OPTION_SEPARATOR.
 	private static final String DIAGNOSTICS_OPTION_SEPARATOR = ",";
 
-	private static final ArrayList<String> TEST_JFR_VM_ARGS = new ArrayList<>(List.of(
-			"-XX:+EnableOpenJ9ExperimentalFlightRecording",
-			"-Dibm.java9.forceCommonCleanerShutdown=true",
-			"-Xint",
-			"-Xshare:off",
-			"-Xshareclasses:none"));
+	private static final ArrayList<String> TEST_JFR_VM_ARGS = new ArrayList<>(Arrays.asList(
+			"-XX:+EnableOpenJ9ExperimentalFlightRecording"));
 
 	/*
 	 * Contains strings expected to be contained in the outputs of various commands
