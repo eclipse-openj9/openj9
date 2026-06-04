@@ -710,6 +710,10 @@ freeJavaVM(J9JavaVM * vm)
 		runShutdownStage(vm, INTERPRETER_SHUTDOWN, NULL, 0);
 	}
 
+	if (J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_GC_STRUCTURES_INITIALIZED)) {
+		vm->memoryManagerFunctions->gcShutdownHeapManagement(vm);
+	}
+
 #if defined(J9VM_OPT_SNAPSHOTS)
 	if (IS_SNAPSHOTTING_ENABLED(vm)) {
 		teardownVMSnapshotImpl(vm);
@@ -8147,6 +8151,8 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	if (JNI_OK != (stageRC = runInitializationStage(vm, HEAP_STRUCTURES_INITIALIZED))) {
 		goto error;
 	}
+
+	vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_GC_STRUCTURES_INITIALIZED;
 
 #if defined(OMR_THR_YIELD_ALG)
 	omrthread_monitor_init_with_name(&vm->cpuUtilCacheMutex, 0, "CPU Utilization Cache Mutex");
