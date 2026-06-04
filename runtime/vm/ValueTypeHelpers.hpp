@@ -93,11 +93,36 @@ private:
 				U_8 *sigChar = J9UTF8_DATA(signature);
 
 				switch (*sigChar) {
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+				case 'Z': /* boolean */
+				case 'B': { /* byte */
+					U_8 lhsValue = objectAccessBarrier.inlineMixedObjectReadU8(currentThread, lhs, startOffset + result->offset);
+					U_8 rhsValue = objectAccessBarrier.inlineMixedObjectReadU8(currentThread, rhs, startOffset + result->offset);
+
+					if (lhsValue != rhsValue) {
+						rc = false;
+						goto done;
+					}
+					break;
+				}
+				case 'C': /* char */
+				case 'S': { /* short */
+					U_16 lhsValue = objectAccessBarrier.inlineMixedObjectReadU16(currentThread, lhs, startOffset + result->offset);
+					U_16 rhsValue = objectAccessBarrier.inlineMixedObjectReadU16(currentThread, rhs, startOffset + result->offset);
+
+					if (lhsValue != rhsValue) {
+						rc = false;
+						goto done;
+					}
+					break;
+				}
+#else /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 				case 'Z': /* boolean */
 				case 'B': /* byte */
 				case 'C': /* char */
-				case 'I': /* int */
 				case 'S': /* short */
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
+				case 'I': /* int */
 				case 'F': { /* float */
 					U_32 lhsValue = objectAccessBarrier.inlineMixedObjectReadU32(currentThread, lhs, startOffset + result->offset);
 					U_32 rhsValue = objectAccessBarrier.inlineMixedObjectReadU32(currentThread, rhs, startOffset + result->offset);
