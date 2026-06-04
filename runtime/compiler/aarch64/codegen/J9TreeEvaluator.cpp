@@ -6955,6 +6955,8 @@ static TR::Register *inlineIntrinsicStringIndexOfString(TR::Node *node, TR::Code
     doneLabel->setEndInternalControlFlow();
 
     generateLabelInstruction(cg, TR::InstOpCode::label, node, startLabel);
+    cg->generateDebugCounter(
+        TR::DebugCounter::debugCounterName(cg->comp(), "inlineIntrinsicIndexOf/(%s)", cg->comp()->signature()));
 
     const int32_t vecWidth = 16;
     const int32_t shift = isLatin1 ? 0 : 1;
@@ -7254,6 +7256,9 @@ static TR::Register *inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenerator
 
     TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
     TR_Debug *debugObj = cg->getDebug();
+
+    cg->generateDebugCounter(
+        TR::DebugCounter::debugCounterName(cg->comp(), "inlineIntrinsicInflate/(%s)", cg->comp()->signature()));
 
     auto branchToDoneIfZeroInstr
         = generateCompareBranchInstruction(cg, TR::InstOpCode::cbzw, node, savedLengthReg, doneLabel);
@@ -7641,6 +7646,7 @@ bool J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&r
     TR::Compilation *comp = cg->comp();
     TR::MethodSymbol *methodSymbol = node->getSymbol()->getMethodSymbol();
     static const bool disableCRC32 = feGetEnv("TR_aarch64DisableCRC32") != NULL;
+    static const bool disableStringIntrinsicFlagChk = (feGetEnv("TR_DisableStringIntrinsicFlagChk") != NULL);
 
     if (OMR::CodeGeneratorConnector::inlineDirectCall(node, resultReg)) {
         return true;
@@ -7664,6 +7670,12 @@ bool J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&r
                 break;
 
             case TR::java_lang_StringLatin1_indexOf:
+#if JAVA_SPEC_VERSION < 25
+                if (!disableStringIntrinsicFlagChk && !node->isSafeForCGToInlineStringIntrinsic()) {
+                    break;
+                }
+                /* Intentional fallthrough. */
+#endif /* JAVA_SPEC_VERSION < 25 */
             case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringLatin1:
                 if (cg->getSupportsInlineStringIndexOfString()) {
                     resultReg = inlineIntrinsicStringIndexOfString(node, cg, true);
@@ -7672,6 +7684,12 @@ bool J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&r
                 break;
 
             case TR::java_lang_StringUTF16_indexOf:
+#if JAVA_SPEC_VERSION < 25
+                if (!disableStringIntrinsicFlagChk && !node->isSafeForCGToInlineStringIntrinsic()) {
+                    break;
+                }
+                /* Intentional fallthrough. */
+#endif /* JAVA_SPEC_VERSION < 25 */
             case TR::java_lang_StringUTF16_indexOfUnsafe:
             case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringUTF16:
                 if (cg->getSupportsInlineStringIndexOfString()) {
@@ -7784,6 +7802,11 @@ bool J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&r
 
             case TR::java_lang_StringLatin1_inflate_BICII:
                 if (cg->getSupportsInlineStringLatin1Inflate()) {
+#if JAVA_SPEC_VERSION < 25
+                    if (!disableStringIntrinsicFlagChk && !node->isSafeForCGToInlineStringIntrinsic()) {
+                        break;
+                    }
+#endif /* JAVA_SPEC_VERSION < 25 */
                     resultReg = inlineStringLatin1Inflate(node, cg);
                     return true;
                 }
