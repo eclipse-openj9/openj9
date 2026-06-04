@@ -27,24 +27,29 @@ import java.net.URLClassLoader;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
 public class WorkLoad {
-	private int numberOfThreads;
-	private int sizeOfNumberList;
-	private int repeats;
-	private boolean vthreads;
+
+	private static interface GlobalLoack { }
 
 	public static double average;
 	public static double stdDev;
 
-	static ArrayList<Class<?>> classes = new ArrayList<>();
+	private static final Queue<Class<?>> classes = new ConcurrentLinkedQueue<>();
 
 	private static long globalCounter = 0;
-	static interface GlobalLoack {}
-	private static Object globalLock = new GlobalLoack(){};
+
+	private static Object globalLock = new GlobalLoack() { };
+
+	private final int numberOfThreads;
+	private final int sizeOfNumberList;
+	private final int repeats;
+	private final boolean vthreads;
 
 	public WorkLoad(int numberOfThreads, int sizeOfNumberList, int repeats, boolean vthreads) {
 		this.numberOfThreads = numberOfThreads;
@@ -111,23 +116,19 @@ public class WorkLoad {
 
 			Class<?> threadClass = Thread.class;
 			Method ofVirtualMethod = threadClass.getMethod("ofVirtual");
-
 			Object virtualThreadBuilder = ofVirtualMethod.invoke(null);
 
-			Method unstartedMethod = virtualThreadBuilder.getClass()
-				.getMethod("unstarted", Runnable.class);
+			Class<?> builderClass = Class.forName("java.lang.Thread$Builder");
+			Method unstartedMethod = builderClass.getMethod("unstarted", Runnable.class);
 
+			Runnable task = () -> {
+				burnCPU();
+				generateTimedPark();
+				burnCPU();
+				completionCount.incrementAndGet();
+			};
 
-			ofVirtualMethod.setAccessible(true);
-			unstartedMethod.setAccessible(true);
 			for (int i = 0; i < numVirtualThreads; i++) {
-				Runnable task = () -> {
-					burnCPU();
-					generateTimedPark();
-					burnCPU();
-					completionCount.incrementAndGet();
-				};
-
 				Thread vthread = (Thread) unstartedMethod.invoke(virtualThreadBuilder, task);
 				threads[i] = vthread;
 				vthread.start();
@@ -136,7 +137,6 @@ public class WorkLoad {
 			e.printStackTrace();
 		}
 	}
-
 
 	private void workload() {
 		for (int i = 0; i < repeats; i++) {
@@ -178,7 +178,9 @@ public class WorkLoad {
 		if (0 == depth) {
 			try {
 				c.call();
-			} catch (Exception e) {}
+			} catch (Exception e) {
+				// ignore
+			}
 			return;
 		}
 
@@ -193,7 +195,9 @@ public class WorkLoad {
 
 		try {
 			c.call();
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			// ignore
+		}
 	}
 
 	private void generateTimedPark() {
@@ -214,7 +218,7 @@ public class WorkLoad {
 		recursiveFucntionWithCallable(10, () -> {
 			Object o = new Object();
 
-			synchronized(o) {
+			synchronized (o) {
 				o.wait(100);
 			}
 
@@ -223,7 +227,7 @@ public class WorkLoad {
 	}
 
 	private void burnCPU() {
-		ArrayList<Double> numberList = new ArrayList<Double>();
+		List<Double> numberList = new ArrayList<>();
 
 		for (int i = 0; i < sizeOfNumberList; i++) {
 			numberList.add(Math.random());
@@ -234,13 +238,12 @@ public class WorkLoad {
 		stdDev += standardDeviation(numberList);
 	}
 
-	public static class ClassLoaderTestClass {}
+	static final class ClassLoaderTestClass { }
 
 	private void emitDataLoss() {
 		try {
 			Class<?> jvmClass = Class.forName("jdk.jfr.internal.JVM");
-			Method emitDataLossMethod = jvmClass.getDeclaredMethod("emitDataLoss", long.class);
-			emitDataLossMethod.setAccessible(true);
+			Method emitDataLossMethod = jvmClass.getMethod("emitDataLoss", long.class);
 			emitDataLossMethod.invoke(null, 1024L);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -286,11 +289,15 @@ public class WorkLoad {
 	private void throwThrowable(Class<? extends Throwable> throwable) {
 		try {
 			throw throwable.getDeclaredConstructor().newInstance();
-		} catch (Throwable t) {}
+		} catch (Throwable t) {
+			// ignore
+		}
 
 		try {
 			throw throwable.getDeclaredConstructor().newInstance("random string: " + Math.random());
-		} catch (Throwable t) {}
+		} catch (Throwable t) {
+			// ignore
+		}
 	}
 
 	private void throwThrowables() {
@@ -301,4 +308,5 @@ public class WorkLoad {
 		throwThrowable(ClassCastException.class);
 		throwThrowable(NumberFormatException.class);
 	}
+
 }
