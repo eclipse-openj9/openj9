@@ -2158,46 +2158,45 @@ fixConstantPoolsForFastHCR(J9VMThread *currentThread, J9HashTable *classPairs, J
 
 
 void
-unresolveAllClasses(J9VMThread * currentThread, J9HashTable * classPairs, J9HashTable * methodPairs, UDATA extensionsUsed)
+unresolveAllClasses(J9VMThread *currentThread, J9HashTable *classPairs, J9HashTable *methodPairs, UDATA extensionsUsed)
 {
-	J9JavaVM * vm = currentThread->javaVM;
+	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9ClassWalkState state;
-	J9Class * clazz;
+	J9Class *clazz = vmFuncs->allClassesStartDo(&state, vm, NULL);
 
-
-
-	clazz = vmFuncs->allClassesStartDo(&state, vm, NULL);
-
-	while (clazz != NULL) {
+	while (NULL != clazz) {
 		U_16 i = 0;
+		J9ROMClass *romClass = clazz->romClass;
+		if (0 != romClass->ramConstantPoolCount) {
+			BOOLEAN isLambdaFormClass = FALSE;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+			J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
+			isLambdaFormClass = isLambdaFormClassName((const char *)J9UTF8_DATA(className), J9UTF8_LENGTH(className), NULL);
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
-		if (extensionsUsed) {
-
-			/* Zero the constant pool and then run the pre-init instructions.
-			 * Do not zero the first entry as it contains VM information, not a CP item. */
-			if (clazz->romClass->ramConstantPoolCount != 0) {
-				memset(((J9RAMConstantPoolItem *) J9_CP_FROM_CLASS(clazz)) + 1, 0,
-					   (clazz->romClass->ramConstantPoolCount - 1) * sizeof(J9RAMConstantPoolItem));
+			if ((0 != extensionsUsed) && !isLambdaFormClass) {
+				/* Zero the constant pool and then run the pre-init instructions.
+				 * Do not zero the first entry as it contains VM information, not a CP item.
+				 */
+				memset(
+					((J9RAMConstantPoolItem *)J9_CP_FROM_CLASS(clazz)) + 1, 0,
+					(romClass->ramConstantPoolCount - 1) * sizeof(J9RAMConstantPoolItem));
 				vmFuncs->internalRunPreInitInstructions(clazz, currentThread);
-			}
-
-		} else {
-
-			if (clazz->romClass->ramConstantPoolCount != 0) {
+			} else {
 				reresolveHotSwappedConstantPool(J9_CP_FROM_CLASS(clazz), currentThread, classPairs, methodPairs);
 			}
 		}
 
-		/* unresolve split table entries */
+		/* Unresolve split table entries. */
 		if (NULL != clazz->staticSplitMethodTable) {
-			for (i = 0; i < clazz->romClass->staticSplitMethodRefCount; ++i) {
-				clazz->staticSplitMethodTable[i] = (J9Method*)vm->initialMethods.initialStaticMethod;
+			for (i = 0; i < romClass->staticSplitMethodRefCount; ++i) {
+				clazz->staticSplitMethodTable[i] = (J9Method *)vm->initialMethods.initialStaticMethod;
 			}
 		}
 		if (NULL != clazz->specialSplitMethodTable) {
-			for (i = 0; i < clazz->romClass->specialSplitMethodRefCount; ++i) {
-				clazz->specialSplitMethodTable[i] = (J9Method*)vm->initialMethods.initialSpecialMethod;
+			for (i = 0; i < romClass->specialSplitMethodRefCount; ++i) {
+				clazz->specialSplitMethodTable[i] = (J9Method *)vm->initialMethods.initialSpecialMethod;
 			}
 		}
 
@@ -2206,10 +2205,8 @@ unresolveAllClasses(J9VMThread * currentThread, J9HashTable * classPairs, J9Hash
 
 	vmFuncs->allClassesEndDo(&state);
 
-	/* Fix the JCL Constant Pool entries containing known classes amongst other things */
-
+	/* Fix the JCL Constant Pool entries containing known classes amongst other things. */
 	reresolveHotSwappedConstantPool((J9ConstantPool *) vm->jclConstantPool, currentThread, classPairs, methodPairs);
-
 }
 
 
