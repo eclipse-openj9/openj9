@@ -92,7 +92,6 @@ static inlMapping mappings[] = {
 	{ "Java_java_lang_Class_isPrimitive__", J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_PRIMITIVE },
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	{ "Java_java_lang_Class_isValue__", J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_VALUE },
-	{ "Java_java_lang_J9VMInternals_positiveOnlyHashcodes__", J9_BCLOOP_SEND_TARGET_INL_INTERNALS_POSITIVE_ONLY_HASHCODES },
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if (JAVA_SPEC_VERSION >= 20) || defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	{ "Java_java_lang_Class_getClassFileVersion0__", J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_CLASS_FILEVERSION },

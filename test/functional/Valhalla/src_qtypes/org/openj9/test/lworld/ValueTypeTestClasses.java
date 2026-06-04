@@ -214,7 +214,7 @@ public class ValueTypeTestClasses {
 		}
 	}
 
-	/* Static array for ValueClassSubArray test */
+	/* Static array for ValueClassSubArray test. */
 	static final int[] intArray = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
 	static value class ValueClassSubArray {
@@ -226,6 +226,32 @@ public class ValueTypeTestClasses {
 			this.startFrom = startFrom;
 			this.endAt = endAt;
 			this.Array = intArray;
+		}
+	}
+
+	/* Empty value classes. */
+	static value class V1 {
+	}
+
+	static value class V2 {
+	}
+
+	/* Similar value classes. */
+	static value class Point {
+		int x;
+		int y;
+		Point(int x, int y) {
+			this.x = x;
+			this.y = y;
+		}
+	}
+
+	static value class Velocity {
+		int vx;
+		int vy;
+		Velocity(int vx, int vy) {
+			this.vx = vx;
+			this.vy = vy;
 		}
 	}
 }

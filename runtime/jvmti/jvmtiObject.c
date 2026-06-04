@@ -86,6 +86,10 @@ jvmtiGetObjectHashCode(jvmtiEnv *env,
 	rc = getCurrentVMThread(vm, &currentThread);
 	if (JVMTI_ERROR_NONE == rc) {
 		j9object_t obj = NULL;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		jboolean oomOccurred = JNI_FALSE;
+		jint hash = 0;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
@@ -95,7 +99,16 @@ jvmtiGetObjectHashCode(jvmtiEnv *env,
 		ENSURE_NON_NULL(hash_code_ptr);
 
 		obj = *((j9object_t *)object);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		hash = (jint)objectHashCode(vm, obj, &oomOccurred);
+		if (JNI_FALSE == oomOccurred) {
+			rv_hash_code = hash;
+		} else {
+			rc = JVMTI_ERROR_OUT_OF_MEMORY;
+		}
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		rv_hash_code = (jint)objectHashCode(vm, obj);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
