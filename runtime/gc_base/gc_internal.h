@@ -170,6 +170,7 @@ extern J9_CFUNC UDATA j9gc_objaccess_indexableReadU8(J9VMThread *vmThread, J9Ind
 extern J9_CFUNC UDATA j9gc_get_softmx(J9JavaVM *javaVM);
 extern J9_CFUNC UDATA j9gc_set_softmx(J9JavaVM *javaVM, UDATA newsoftmx);
 extern J9_CFUNC void j9gc_finalizer_shutdown(J9JavaVM * vm);
+extern J9_CFUNC void j9gc_gcThreads_shutdown(J9JavaVM * vm);
 extern J9_CFUNC UDATA j9gc_get_object_size_in_bytes(J9JavaVM* javaVM, j9object_t objectPtr);
 extern J9_CFUNC UDATA j9gc_get_object_total_footprint_in_bytes(J9JavaVM *javaVM, j9object_t objectPtr);
 extern J9_CFUNC BOOLEAN j9gc_get_explicit_GC_disabled(J9JavaVM *javaVM);
