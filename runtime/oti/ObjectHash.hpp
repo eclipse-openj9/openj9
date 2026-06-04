@@ -304,12 +304,29 @@ private:
 				J9UTF8 *signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(&result->field->nameAndSignature);
 				U_8 *sigChar = J9UTF8_DATA(signature);
 				switch (*sigChar) {
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+				case 'Z': /* boolean */
+				case 'B': /* byte */ {
+					U_32 datum = (U_32)objectAccessBarrier.inlineMixedObjectReadU8(currentThread, entry.objectPointer, fieldOffset);
+					hashValue = mix(hashValue, datum);
+					numBytesHashed += 1;
+					break;
+				}
+				case 'C': /* char */
+				case 'S': /* short */ {
+					U_32 datum = (U_32)objectAccessBarrier.inlineMixedObjectReadU16(currentThread, entry.objectPointer, fieldOffset);
+					hashValue = mix(hashValue, datum);
+					numBytesHashed += 2;
+					break;
+				}
+#else /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 				case 'Z': /* boolean */
 				case 'B': /* byte */
 				case 'C': /* char */
+				case 'S': /* short */
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 				case 'I': /* int */
-				case 'F': /* float */
-				case 'S': /* short */ {
+				case 'F': /* float */ {
 					U_32 datum = objectAccessBarrier.inlineMixedObjectReadU32(currentThread, entry.objectPointer, fieldOffset);
 					hashValue = mix(hashValue, datum);
 					numBytesHashed += 4;
