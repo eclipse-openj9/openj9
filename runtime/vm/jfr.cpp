@@ -54,7 +54,7 @@ J9_DECLARE_CONSTANT_UTF8(jfrInternalEventClassUTF8, "jdk/internal/event/Event");
 J9_DECLARE_CONSTANT_UTF8(jfrEventClassUTF8, "jdk/jfr/Event");
 
 // TODO: allow configureable values
-#define J9JFR_THREAD_BUFFER_SIZE (128*1024)
+#define J9JFR_THREAD_BUFFER_SIZE (128 * 1024)
 #define J9JFR_GLOBAL_BUFFER_SIZE (10 * J9JFR_THREAD_BUFFER_SIZE)
 #define J9JFR_SAMPLING_RATE 10
 #define J9JFR_CLASSNAME_BUFFER_SIZE 128
@@ -122,25 +122,25 @@ jfrEventSize(J9JFREvent *jfrEvent)
 	UDATA size = 0;
 	switch(jfrEvent->eventType) {
 	case J9JFR_EVENT_TYPE_EXECUTION_SAMPLE:
-		size = sizeof(J9JFRExecutionSample) + (((J9JFRExecutionSample*)jfrEvent)->stackTraceSize * sizeof(UDATA));
+		size = sizeof(J9JFRExecutionSample) + (((J9JFRExecutionSample *)jfrEvent)->stackTraceSize * sizeof(UDATA));
 		break;
 	case J9JFR_EVENT_TYPE_THREAD_START:
-		size = sizeof(J9JFRThreadStart) + (((J9JFRThreadStart*)jfrEvent)->stackTraceSize * sizeof(UDATA));
+		size = sizeof(J9JFRThreadStart) + (((J9JFRThreadStart *)jfrEvent)->stackTraceSize * sizeof(UDATA));
 		break;
 	case J9JFR_EVENT_TYPE_THREAD_END:
 		size = sizeof(J9JFREvent);
 		break;
 	case J9JFR_EVENT_TYPE_THREAD_SLEEP:
-		size = sizeof(J9JFRThreadSlept) + (((J9JFRThreadSlept*)jfrEvent)->stackTraceSize * sizeof(UDATA));
+		size = sizeof(J9JFRThreadSlept) + (((J9JFRThreadSlept *)jfrEvent)->stackTraceSize * sizeof(UDATA));
 		break;
 	case J9JFR_EVENT_TYPE_OBJECT_WAIT:
-		size = sizeof(J9JFRMonitorWaited) + (((J9JFRMonitorWaited*)jfrEvent)->stackTraceSize * sizeof(UDATA));
+		size = sizeof(J9JFRMonitorWaited) + (((J9JFRMonitorWaited *)jfrEvent)->stackTraceSize * sizeof(UDATA));
 		break;
 	case J9JFR_EVENT_TYPE_MONITOR_ENTER:
 		size = sizeof(J9JFRMonitorEntered) + (((J9JFRMonitorEntered *)jfrEvent)->stackTraceSize * sizeof(UDATA));
 		break;
 	case J9JFR_EVENT_TYPE_THREAD_PARK:
-		size = sizeof(J9JFRThreadParked) + (((J9JFRThreadParked*)jfrEvent)->stackTraceSize * sizeof(UDATA));
+		size = sizeof(J9JFRThreadParked) + (((J9JFRThreadParked *)jfrEvent)->stackTraceSize * sizeof(UDATA));
 		break;
 	case J9JFR_EVENT_TYPE_CPU_LOAD:
 		size = sizeof(J9JFRCPULoad);
@@ -185,7 +185,7 @@ jfrEventSize(J9JFREvent *jfrEvent)
 	return size;
 }
 
-J9JFREvent*
+J9JFREvent *
 jfrBufferStartDo(J9JFRBuffer *buffer, J9JFRBufferWalkState *walkState)
 {
 	U_8 *start = buffer->bufferStart;
@@ -195,14 +195,14 @@ jfrBufferStartDo(J9JFRBuffer *buffer, J9JFRBufferWalkState *walkState)
 	if (start == end) {
 		start = NULL;
 	}
-	return (J9JFREvent*)start;
+	return (J9JFREvent *)start;
 }
 
-J9JFREvent*
+J9JFREvent *
 jfrBufferNextDo(J9JFRBufferWalkState *walkState)
 {
 	U_8 *current = walkState->current;
-	U_8 *next = current + jfrEventSize((J9JFREvent*)current);
+	U_8 *next = current + jfrEventSize((J9JFREvent *)current);
 
 	Assert_VM_true(walkState->end >= next);
 
@@ -210,9 +210,9 @@ jfrBufferNextDo(J9JFRBufferWalkState *walkState)
 		next = NULL;
 	}
 
-	walkState->current = (U_8*)next;
+	walkState->current = (U_8 *)next;
 
-	return (J9JFREvent*)next;
+	return (J9JFREvent *)next;
 }
 
 static bool
@@ -256,7 +256,6 @@ writeOutGlobalBuffer(J9VMThread *currentThread, bool finalWrite, bool dumpCalled
 		/* Reset the buffer */
 		vm->jfrBuffer.bufferRemaining = vm->jfrBuffer.bufferSize;
 		vm->jfrBuffer.bufferCurrent = vm->jfrBuffer.bufferStart;
-
 
 #if defined(DEBUG)
 		memset(vm->jfrBuffer.bufferStart, 0, J9JFR_GLOBAL_BUFFER_SIZE);
@@ -346,7 +345,7 @@ flushAllThreadBuffers(J9VMThread *currentThread, bool freeBuffers)
 			allSucceeded = false;
 		}
 		if (freeBuffers) {
-			j9mem_free_memory((void*)loopThread->jfrBuffer.bufferStart);
+			j9mem_free_memory((void *)loopThread->jfrBuffer.bufferStart);
 			memset(&loopThread->jfrBuffer, 0, sizeof(loopThread->jfrBuffer));
 		}
 
@@ -363,7 +362,7 @@ flushAllThreadBuffers(J9VMThread *currentThread, bool freeBuffers)
 			allSucceeded = false;
 		}
 		if (freeBuffers) {
-			j9mem_free_memory((void*)currentThread->jfrBuffer.bufferStart);
+			j9mem_free_memory((void *)currentThread->jfrBuffer.bufferStart);
 			memset(&currentThread->jfrBuffer, 0, sizeof(currentThread->jfrBuffer));
 		}
 	}
@@ -379,7 +378,7 @@ flushAllThreadBuffers(J9VMThread *currentThread, bool freeBuffers)
  *
  * @returns pointer to the start of the reserved space or NULL if the space could not be reserved
  */
-U_8*
+U_8 *
 reserveBuffer(J9VMThread *currentThread, J9VMThread *sampleThread, UDATA size)
 {
 	J9JavaVM *vm = currentThread->javaVM;
@@ -390,8 +389,8 @@ reserveBuffer(J9VMThread *currentThread, J9VMThread *sampleThread, UDATA size)
 	Assert_VM_true((currentThread != sampleThread) ? ((J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState)) : TRUE);
 
 	if (!areJFRBuffersReadyForWrite(sampleThread)
-	    || (NULL != sampleThread->threadObject
-	        && isJFRRecordingDisabledOnThread(currentThread, sampleThread->threadObject))
+		|| ((NULL != sampleThread->threadObject)
+			&& isJFRRecordingDisabledOnThread(currentThread, sampleThread->threadObject))
 	) {
 		goto done;
 	}
@@ -422,7 +421,7 @@ done:
  *
  * @returns pointer to the start of the reserved space or NULL if the space could not be reserved
  */
-static J9JFREvent*
+static J9JFREvent *
 reserveBufferWithStackTrace(J9VMThread *currentThread, J9VMThread *sampleThread, UDATA eventType, UDATA eventFixedSize)
 {
 	J9JFREvent *jfrEvent = NULL;
@@ -436,12 +435,12 @@ reserveBufferWithStackTrace(J9VMThread *currentThread, J9VMThread *sampleThread,
 		UDATA framesWalked = walkState->framesWalked;
 		UDATA stackTraceBytes = framesWalked * sizeof(UDATA);
 		UDATA eventSize = eventFixedSize + stackTraceBytes;
-		jfrEvent = (J9JFREvent*)reserveBuffer(currentThread, sampleThread, eventSize);
+		jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, sampleThread, eventSize);
 		if (NULL != jfrEvent) {
 			Assert_VM_mustHaveVMAccess(currentThread);
 			initializeEventFields(currentThread, sampleThread, jfrEvent, eventType);
-			((J9JFREventWithStackTrace*)jfrEvent)->stackTraceSize = framesWalked;
-			memcpy(((U_8*)jfrEvent) + eventFixedSize, walkState->cache, stackTraceBytes);
+			((J9JFREventWithStackTrace *)jfrEvent)->stackTraceSize = framesWalked;
+			memcpy(((U_8 *)jfrEvent) + eventFixedSize, walkState->cache, stackTraceBytes);
 		}
 		freeStackWalkCaches(currentThread, walkState);
 
@@ -467,7 +466,7 @@ jfrThreadCreated(J9HookInterface **hook, UDATA eventNum, void *eventData, void *
 	PORT_ACCESS_FROM_VMC(currentThread);
 
 #if defined(DEBUG)
-	j9tty_printf(PORTLIB, "\n!!! thread created  %p\n", currentThread);
+	j9tty_printf(PORTLIB, "\n!!! thread created %p\n", currentThread);
 #endif /* defined(DEBUG) */
 
 	/* TODO: allow different buffer sizes on different threads. */
@@ -582,12 +581,12 @@ jfrThreadStarting(J9HookInterface **hook, UDATA eventNum, void *eventData, void 
 	 * reserveBuffer checks the sample thread (currentThread here), not the started thread.
 	 */
 	if ((NULL != startedThread->threadObject)
-	    && isJFRRecordingDisabledOnThread(currentThread, startedThread->threadObject)
+		&& isJFRRecordingDisabledOnThread(currentThread, startedThread->threadObject)
 	) {
 		return;
 	}
 
-	J9JFRThreadStart *jfrEvent = (J9JFRThreadStart*)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_THREAD_START, sizeof(*jfrEvent));
+	J9JFRThreadStart *jfrEvent = (J9JFRThreadStart *)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_THREAD_START, sizeof(*jfrEvent));
 	if (NULL != jfrEvent) {
 		jfrEvent->threadTID = getThreadTID(currentThread, startedThread);
 		jfrEvent->parentThreadTID = getThreadTID(currentThread, currentThread);
@@ -614,7 +613,7 @@ jfrThreadEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *user
 #endif /* defined(DEBUG) */
 
 	internalAcquireVMAccess(currentThread);
-	J9JFREvent *jfrEvent = (J9JFREvent*)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
+	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
 	if (NULL != jfrEvent) {
 		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_THREAD_END);
 	}
@@ -622,7 +621,7 @@ jfrThreadEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *user
 	flushBufferToGlobal(currentThread, currentThread);
 
 	/* Free the thread local buffer */
-	j9mem_free_memory((void*)currentThread->jfrBuffer.bufferStart);
+	j9mem_free_memory((void *)currentThread->jfrBuffer.bufferStart);
 	memset(&currentThread->jfrBuffer, 0, sizeof(currentThread->jfrBuffer));
 	internalReleaseVMAccess(currentThread);
 }
@@ -646,7 +645,7 @@ jfrVMSlept(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userDa
 	j9tty_printf(PORTLIB, "\n!!! thread sleep %p\n", currentThread);
 #endif /* defined(DEBUG) */
 
-	J9JFRThreadSlept *jfrEvent = (J9JFRThreadSlept*)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_THREAD_SLEEP, sizeof(*jfrEvent));
+	J9JFRThreadSlept *jfrEvent = (J9JFRThreadSlept *)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_THREAD_SLEEP, sizeof(*jfrEvent));
 	if (NULL != jfrEvent) {
 		// TODO: worry about overflow?
 		jfrEvent->time = (event->millis * 1000000) + event->nanos;
@@ -685,7 +684,7 @@ static void
 jfrStartSamplingThread(J9JavaVM *vm)
 {
 	/* Start the sampler thread. */
-	IDATA rc = omrthread_create(&(vm->jfrSamplerThread), vm->defaultOSStackSize, J9THREAD_PRIORITY_NORMAL, FALSE, jfrSamplingThreadProc, (void*)vm);
+	IDATA rc = omrthread_create(&(vm->jfrSamplerThread), vm->defaultOSStackSize, J9THREAD_PRIORITY_NORMAL, FALSE, jfrSamplingThreadProc, (void *)vm);
 	if (0 == rc) {
 		omrthread_monitor_enter(vm->jfrSamplerMutex);
 		while (J9JFR_SAMPLER_STATE_UNINITIALIZED == vm->jfrSamplerState) {
@@ -709,7 +708,7 @@ jfrStartSamplingThread(J9JavaVM *vm)
 static void
 jfrVMMonitorWaited(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
 {
-	J9VMMonitorWaitedEvent *event = (J9VMMonitorWaitedEvent*) eventData;
+	J9VMMonitorWaitedEvent *event = (J9VMMonitorWaitedEvent *) eventData;
 	J9VMThread *currentThread = event->currentThread;
 	PORT_ACCESS_FROM_VMC(currentThread);
 
@@ -717,7 +716,7 @@ jfrVMMonitorWaited(J9HookInterface **hook, UDATA eventNum, void *eventData, void
 	j9tty_printf(PORTLIB, "\n!!! VM monitor waited %p\n", currentThread);
 #endif /* defined(DEBUG) */
 
-	J9JFRMonitorWaited *jfrEvent = (J9JFRMonitorWaited*)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_OBJECT_WAIT, sizeof(*jfrEvent));
+	J9JFRMonitorWaited *jfrEvent = (J9JFRMonitorWaited *)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_OBJECT_WAIT, sizeof(*jfrEvent));
 	if (NULL != jfrEvent) {
 		jfrEvent->time = (event->millis * 1000000) + event->nanos;
 		jfrEvent->duration = j9time_nano_time() - event->startTicks;
@@ -766,7 +765,7 @@ jfrVMMonitorEntered(J9HookInterface **hook, UDATA eventNum, void *eventData, voi
  * @param userData[in] the registered user data
  */
 static void
-jfrVMThreadParked(J9HookInterface **hook, UDATA eventNum, void *eventData, void* userData)
+jfrVMThreadParked(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
 {
 	J9VMUnparkedEvent *event = (J9VMUnparkedEvent *)eventData;
 	J9VMThread *currentThread = event->currentThread;
@@ -776,7 +775,7 @@ jfrVMThreadParked(J9HookInterface **hook, UDATA eventNum, void *eventData, void*
 	j9tty_printf(PORTLIB, "\n!!! thread park %p\n", currentThread);
 #endif /* defined(DEBUG) */
 
-	J9JFRThreadParked *jfrEvent = (J9JFRThreadParked*)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_THREAD_PARK, sizeof(*jfrEvent));
+	J9JFRThreadParked *jfrEvent = (J9JFRThreadParked *)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_THREAD_PARK, sizeof(*jfrEvent));
 	if (NULL != jfrEvent) {
 		// TODO: worry about overflow?
 		I_64 currentTime = j9time_nano_time();
@@ -797,7 +796,7 @@ jfrVMThreadParked(J9HookInterface **hook, UDATA eventNum, void *eventData, void*
  * @param userData[in] the registered user data
  */
 static void
-jfrSystemGC(J9HookInterface **hook, UDATA eventNum, void *eventData, void* userData)
+jfrSystemGC(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
 {
 	J9VMSystemGCEvent *event = (J9VMSystemGCEvent *)eventData;
 	J9VMThread *currentThread = event->currentThread;
@@ -916,7 +915,6 @@ jfrGCHeapSummary(OMR_VMThread *omrVMThread, U_32 gcWhenID)
 		jfrEvent->heapUsed = (I_64)(heapSize - freeMemory);
 	}
 }
-
 
 jint
 initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
@@ -1137,7 +1135,7 @@ tearDownJFR(J9JavaVM *vm)
 	/* Free global data */
 	VM_JFRConstantPoolTypes::freeJFRConstantEvents(vm);
 
-	j9mem_free_memory((void*)vm->jfrBuffer.bufferStart);
+	j9mem_free_memory((void *)vm->jfrBuffer.bufferStart);
 	memset(&vm->jfrBuffer, 0, sizeof(vm->jfrBuffer));
 	if (NULL != vm->jfrBufferMutex) {
 		omrthread_monitor_destroy(vm->jfrBufferMutex);
@@ -1260,7 +1258,7 @@ jfrExecutionSample(J9VMThread *currentThread, J9VMThread *sampleThread)
 	j9tty_printf(PORTLIB, "\n!!! execution sample %p %p\n", currentThread, sampleThread);
 #endif /* defined(DEBUG) */
 
-	J9JFRExecutionSample *jfrEvent = (J9JFRExecutionSample*)reserveBufferWithStackTrace(currentThread, sampleThread, J9JFR_EVENT_TYPE_EXECUTION_SAMPLE, sizeof(*jfrEvent));
+	J9JFRExecutionSample *jfrEvent = (J9JFRExecutionSample *)reserveBufferWithStackTrace(currentThread, sampleThread, J9JFR_EVENT_TYPE_EXECUTION_SAMPLE, sizeof(*jfrEvent));
 	if (NULL != jfrEvent) {
 		jfrEvent->threadState = J9JFR_THREAD_STATE_RUNNING;
 	}
@@ -1511,7 +1509,7 @@ jfrThreadStatistics(J9VMThread *currentThread)
 static int J9THREAD_PROC
 jfrSamplingThreadProc(void *entryArg)
 {
-	J9JavaVM *vm = (J9JavaVM*)entryArg;
+	J9JavaVM *vm = (J9JavaVM *)entryArg;
 	J9VMThread *currentThread = NULL;
 
 	if (JNI_OK == attachSystemDaemonThread(vm, &currentThread, "JFR sampler")) {
@@ -1541,7 +1539,7 @@ jfrSamplingThreadProc(void *entryArg)
 			omrthread_monitor_wait_timed(vm->jfrSamplerMutex, J9JFR_SAMPLING_RATE, 0);
 		}
 		omrthread_monitor_exit(vm->jfrSamplerMutex);
-		DetachCurrentThread((JavaVM*)vm);
+		DetachCurrentThread((JavaVM *)vm);
 	}
 
 	omrthread_monitor_enter(vm->jfrSamplerMutex);
@@ -1656,7 +1654,6 @@ getTypeId(J9VMThread *currentThread, J9Class *clazz)
 {
 	return getTypeIdImpl(currentThread, clazz->classLoader, J9ROMCLASS_CLASSNAME(clazz->romClass), FALSE);
 }
-
 
 static jlong
 getTypeIdImpl(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *className, BOOLEAN freeName)
@@ -1813,7 +1810,7 @@ jfrCheckJFRCMDLineOptions(J9HookInterface **hook, UDATA eventNum, void *eventDat
 	J9VMThread *currentThread = ((J9VMInitEvent *)eventData)->vmThread;
 
 	internalAcquireVMAccess(currentThread);
-	runStaticMethod(currentThread, (U_8*)"java/lang/JFRHelpers", (J9NameAndSignature *)&initJFRNAS, 0, NULL);
+	runStaticMethod(currentThread, (U_8 *)"java/lang/JFRHelpers", (J9NameAndSignature *)&initJFRNAS, 0, NULL);
 	internalReleaseVMAccess(currentThread);
 }
 
@@ -1854,7 +1851,7 @@ jvmUpcallsEagerByteInstrumentation(J9VMThread *currentThread, J9Class *superClas
 		goto done;
 	}
 
-	VM_ArrayCopyHelpers::memcpyToArray(currentThread, inputByteArray, (UDATA)0, classDataLength, (void*)classData);
+	VM_ArrayCopyHelpers::memcpyToArray(currentThread, inputByteArray, (UDATA)0, classDataLength, (void *)classData);
 
 	if (NULL == vm->jfrState.onRetransformUpcallMethod) {
 		PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, inputByteArray);
