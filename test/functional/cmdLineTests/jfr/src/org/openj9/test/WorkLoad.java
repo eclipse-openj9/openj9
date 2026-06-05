@@ -32,6 +32,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
+import org.openj9.test.util.VersionCheck;
 
 public class WorkLoad {
 
@@ -148,7 +149,9 @@ public class WorkLoad {
 			contendOnLock();
 			burnCPU();
 			generateClassLoader();
-			emitDataLoss();
+			if (VersionCheck.major() >= 17) {
+				emitDataLoss();
+			}
 			if (vthreads) {
 				runWorkWithVirtualThreads(8);
 			}
@@ -243,10 +246,9 @@ public class WorkLoad {
 	private void emitDataLoss() {
 		try {
 			Class<?> jvmClass = Class.forName("jdk.jfr.internal.JVM");
-			Method emitDataLossMethod = jvmClass.getMethod("emitDataLoss", long.class);
-			emitDataLossMethod.invoke(null, 1024L);
+			jvmClass.getMethod("emitDataLoss", long.class).invoke(null, 1024L);
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 	}
 
