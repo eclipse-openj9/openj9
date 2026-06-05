@@ -48,6 +48,10 @@ openjdk:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk26.git'
       branch: 'openj9'
+  27:
+    default:
+      repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk27.git'
+      branch: 'openj9'
   next:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk.git'
@@ -116,6 +120,7 @@ build_discarder:
     OpenJDK21: 3
     OpenJDK25: 3
     OpenJDK26: 3
+    OpenJDK27: 3
     OpenJDK: 3
     Personal: 30
     Pipeline: 100
@@ -164,6 +169,7 @@ boot_jdk_default:
       21: '21'
       25: '25'
       26: '25'
+      27: '26'
       next: '26'
     dir_strip:
       default: '1'
@@ -190,6 +196,7 @@ disable_javac_server:
     21: '--disable-javac-server'
     25: '--disable-javac-server'
     26: '--disable-javac-server'
+    27: '--disable-javac-server'
     next: '--disable-javac-server'
 #========================================#
 # Valhalla
@@ -275,6 +282,7 @@ ppc64_aix:
       default: 'ci.role.build && hw.arch.ppc64 && sw.os.aix.7_2 && sw.tool.c++runtime.16_1'
       25: 'ci.role.build && hw.arch.ppc64 && sw.os.aix.7_2 && sw.tool.c++runtime.17_1'
       26: 'ci.role.build && hw.arch.ppc64 && sw.os.aix.7_2 && sw.tool.c++runtime.17_1'
+      27: 'ci.role.build && hw.arch.ppc64 && sw.os.aix.7_2 && sw.tool.c++runtime.17_1'
       next: 'ci.role.build && hw.arch.ppc64 && sw.os.aix.7_2 && sw.tool.c++runtime.17_1'
   extra_configure_options:
     all: '--with-cups-include=/opt/freeware/include --with-fontconfig-include=/opt/freeware/include'
@@ -284,6 +292,7 @@ ppc64_aix:
     21: '--disable-warnings-as-errors'
     25: '--disable-warnings-as-errors'
     26: '--disable-warnings-as-errors'
+    27: '--disable-warnings-as-errors'
     next: '--disable-warnings-as-errors'
   build_env:
     cmd:
@@ -295,10 +304,12 @@ ppc64_aix:
       21: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       25: 'PATH+OPENXL=/opt/IBM/openxlC/17.1.3/bin:/opt/IBM/openxlC/17.1.3/tools:/opt/IBM/openxlC/17.1.3/compat/llvm CC=ibm-clang_r CXX=ibm-clang++_r'
       26: 'PATH+OPENXL=/opt/IBM/openxlC/17.1.3/bin:/opt/IBM/openxlC/17.1.3/tools:/opt/IBM/openxlC/17.1.3/compat/llvm CC=ibm-clang_r CXX=ibm-clang++_r'
+      27: 'PATH+OPENXL=/opt/IBM/openxlC/17.1.3/bin:/opt/IBM/openxlC/17.1.3/tools:/opt/IBM/openxlC/17.1.3/compat/llvm CC=ibm-clang_r CXX=ibm-clang++_r'
       next: 'PATH+OPENXL=/opt/IBM/openxlC/17.1.3/bin:/opt/IBM/openxlC/17.1.3/tools:/opt/IBM/openxlC/17.1.3/compat/llvm CC=ibm-clang_r CXX=ibm-clang++_r'
   extra_test_labels:
     25: 'sw.tool.c++runtime.17_1'
     26: 'sw.tool.c++runtime.17_1'
+    27: 'sw.tool.c++runtime.17_1'
     next: 'sw.tool.c++runtime.17_1'
 #========================================#
 # Linux x86 64bits
