@@ -435,11 +435,24 @@ void jitRemoveAllMetaDataForClassLoader(J9VMThread *vmThread, J9ClassLoader *cla
 
 void jitReclaimMarkedAssumptions(bool isEager)
 {
-    static char *forceAggressiveRATCleaning = feGetEnv("TR_forceAggressiveRATCleaning");
-    if (isEager && forceAggressiveRATCleaning) {
+    static const char *forceAggressiveRATCleaning = feGetEnv("TR_forceAggressiveRATCleaning");
+    static const char *numRAToClean = feGetEnv("TR_numRAToClean");
+    static const int32_t numRA = (numRAToClean) ? atoi(numRAToClean) : 100;
+
+    bool forceEager = false;
+    bool forceLazy = false;
+    if (numRAToClean) {
+        if (numRA == -1) {
+            forceEager = true;
+        } else {
+            forceLazy = true;
+        }
+    }
+
+    if ((isEager && forceAggressiveRATCleaning) || forceEager) {
         reclaimMarkedAssumptionsFromRAT(-1);
-    } else if (!isEager) {
-        reclaimMarkedAssumptionsFromRAT(100);
+    } else if (forceLazy || !isEager) {
+        reclaimMarkedAssumptionsFromRAT(numRA);
     }
 }
 
