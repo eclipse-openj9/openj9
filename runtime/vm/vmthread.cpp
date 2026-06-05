@@ -1387,6 +1387,15 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 			**(UDATA **)omrthread_global("parkSleepCpuUtilThreshold") = threshold;
 			continue;
 		}
+
+		if (try_scan(&scan_start, "yieldSleepCpuUtilThreshold=")) {
+			UDATA threshold = 0;
+			if (scan_udata(&scan_start, &threshold)) {
+				goto _error;
+			}
+			**(UDATA **)omrthread_global("yieldSleepCpuUtilThreshold") = threshold;
+			continue;
+		}
 #endif /* defined(OMR_THR_YIELD_ALG) */
 
 		/* Couldn't find a match for arguments */
