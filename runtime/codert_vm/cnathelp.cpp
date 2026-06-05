@@ -2909,8 +2909,11 @@ old_fast_jitAcmpeqHelper(J9VMThread *currentThread)
 	OLD_JIT_HELPER_PROLOGUE(2);
 	DECLARE_JIT_PARM(j9object_t, lhs, 1);
 	DECLARE_JIT_PARM(j9object_t, rhs, 2);
-
-	JIT_RETURN_UDATA(currentThread->javaVM->internalVMFunctions->valueTypeCapableAcmp(currentThread, lhs, rhs));
+	IDATA cmp = currentThread->javaVM->internalVMFunctions->valueTypeCapableAcmp(currentThread, lhs, rhs);
+	if (-1 == cmp) {
+		cmp = (IDATA)setNativeOutOfMemoryErrorFromJIT(currentThread, 0, 0);
+	}
+	JIT_RETURN_UDATA(cmp);
 }
 
 void J9FASTCALL
@@ -2919,8 +2922,11 @@ old_fast_jitAcmpneHelper(J9VMThread *currentThread)
 	OLD_JIT_HELPER_PROLOGUE(2);
 	DECLARE_JIT_PARM(j9object_t, lhs, 1);
 	DECLARE_JIT_PARM(j9object_t, rhs, 2);
-
-	JIT_RETURN_UDATA(!currentThread->javaVM->internalVMFunctions->valueTypeCapableAcmp(currentThread, lhs, rhs));
+	IDATA cmp = currentThread->javaVM->internalVMFunctions->valueTypeCapableAcmp(currentThread, lhs, rhs);
+	if (-1 == cmp) {
+		JIT_RETURN_UDATA(setNativeOutOfMemoryErrorFromJIT(currentThread, 0, 0));
+	}
+	JIT_RETURN_UDATA(!cmp);
 }
 
 void* J9FASTCALL
@@ -3799,7 +3805,7 @@ fast_jitTypeCheckArrayStoreWithNullCheck(J9VMThread *currentThread, j9object_t d
 	return slowPath;
 }
 
-BOOLEAN J9FASTCALL
+UDATA J9FASTCALL
 #if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
 /* TODO Will be cleaned once all platforms adopt the correct parameter order */
 fast_jitAcmpeqHelper(J9VMThread *currentThread, j9object_t lhs, j9object_t rhs)
@@ -3809,10 +3815,14 @@ fast_jitAcmpeqHelper(J9VMThread *currentThread, j9object_t rhs, j9object_t lhs)
 {
 	JIT_HELPER_PROLOGUE();
 
-	return currentThread->javaVM->internalVMFunctions->valueTypeCapableAcmp(currentThread, lhs, rhs);
+	IDATA cmp = currentThread->javaVM->internalVMFunctions->valueTypeCapableAcmp(currentThread, lhs, rhs);
+	if (-1 == cmp) {
+		cmp = (IDATA)setNativeOutOfMemoryErrorFromJIT(currentThread, 0, 0);
+	}
+	return (UDATA)cmp;
 }
 
-BOOLEAN J9FASTCALL
+UDATA J9FASTCALL
 #if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
 /* TODO Will be cleaned once all platforms adopt the correct parameter order */
 fast_jitAcmpneHelper(J9VMThread *currentThread, j9object_t lhs, j9object_t rhs)
@@ -3822,7 +3832,11 @@ fast_jitAcmpneHelper(J9VMThread *currentThread, j9object_t rhs, j9object_t lhs)
 {
 	JIT_HELPER_PROLOGUE();
 
-	return !currentThread->javaVM->internalVMFunctions->valueTypeCapableAcmp(currentThread, lhs, rhs);
+	IDATA cmp = currentThread->javaVM->internalVMFunctions->valueTypeCapableAcmp(currentThread, lhs, rhs);
+	if (-1 == cmp) {
+		return (UDATA)setNativeOutOfMemoryErrorFromJIT(currentThread, 0, 0);
+	}
+	return (UDATA)!cmp;
 }
 
 void* J9FASTCALL

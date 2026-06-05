@@ -2776,9 +2776,9 @@ calculateFlattenedFieldAddresses(J9VMThread *currentThread, J9Class *clazz);
  * @param[in] lhs first operand
  * @param[in] rhs second operand
  *
- * @return TRUE if both objects are equal, false otherwise
+ * @return 1 if objects are equal, 0 is they differ and -1 if OOM occurred
  */
-BOOLEAN
+I_32
 valueTypeCapableAcmp(J9VMThread *currentThread, j9object_t lhs, j9object_t rhs);
 
 /**
