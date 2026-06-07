@@ -28,7 +28,7 @@
 #include "control/CompilationThread.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "env/ClassLoaderTable.hpp"
 #include "env/ClassTableCriticalSection.hpp"
 #include "env/jittypes.h"

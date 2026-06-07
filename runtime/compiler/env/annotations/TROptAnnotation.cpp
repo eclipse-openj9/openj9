@@ -28,7 +28,7 @@
 #include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 
 TR_OptAnnotation::TR_OptAnnotation(TR::Compilation *comp, TR_ResolvedMethod *resolvedMethod)
     : TR_AnnotationBase(comp)

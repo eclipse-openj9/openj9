@@ -23,7 +23,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "compile/InlineBlock.hpp"
 #include "compile/Method.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "env/PersistentCHTable.hpp"
@@ -368,7 +368,7 @@ bool TR_J9ByteCodeIlGenerator::genILFromByteCodes()
     if (isThisChanged())
         _thisChanged = true;
 
-    initialize();
+    this->TR_J9ByteCodeIteratorWithState::initialize();
 
     // don't go peeking into massive methods
     if (comp()->isPeekingMethod() && _maxByteCodeIndex >= USHRT_MAX / 8)
@@ -1356,7 +1356,7 @@ bool TR_J9ByteCodeIlGenerator::genJNIIL()
 void TR_J9ByteCodeIlGenerator::genHWOptimizedStrProcessingAvailable()
 {
     static int32_t constToLoad = -1;
-    initialize();
+    this->TR_J9ByteCodeIteratorWithState::initialize();
     int32_t firstIndex = _bcIndex;
     setIsGenerated(_bcIndex);
     if (constToLoad == -1) {
@@ -1389,7 +1389,7 @@ void TR_J9ByteCodeIlGenerator::genJITIntrinsicsEnabled()
     static int32_t constToLoad
         = (comp()->target().isZOS() || isZLinux) && !comp()->getOption(TR_DisablePackedDecimalIntrinsics) ? 1 : 0;
 
-    initialize();
+    this->TR_J9ByteCodeIteratorWithState::initialize();
     int32_t firstIndex = _bcIndex;
     setIsGenerated(_bcIndex);
 
@@ -1412,7 +1412,7 @@ void TR_J9ByteCodeIlGenerator::genJITIntrinsicsEnabled()
 void TR_J9ByteCodeIlGenerator::genIsORBDeepCopyAvailable()
 {
     static int32_t constToLoad = 1;
-    initialize();
+    this->TR_J9ByteCodeIteratorWithState::initialize();
     int32_t firstIndex = _bcIndex;
     setIsGenerated(_bcIndex);
 

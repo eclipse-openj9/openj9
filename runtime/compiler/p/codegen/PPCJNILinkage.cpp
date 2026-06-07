@@ -31,7 +31,7 @@
 #include "codegen/Register.hpp"
 #include "codegen/RegisterDependency.hpp"
 #include "codegen/TreeEvaluator.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "env/CHTable.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/VMJ9.h"

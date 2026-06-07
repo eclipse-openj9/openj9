@@ -46,7 +46,7 @@
 #include "codegen/TreeEvaluator.hpp"
 #include "codegen/UnresolvedDataSnippet.hpp"
 #include "compile/CompilationTypes.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "compile/VirtualGuard.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"

@@ -53,7 +53,7 @@
 #include "codegen/Instruction.hpp"
 #include "codegen/Snippet.hpp"
 #include "compile/Compilation.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "compile/VirtualGuard.hpp"
 #include "control/OptionsUtil.hpp"
 #include "control/CompilationController.hpp"

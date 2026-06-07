@@ -36,7 +36,7 @@
 #include "env/KnownObjectTable.hpp"
 #include "compile/AOTClassInfo.hpp"
 #include "compile/Method.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "env/CompilerEnv.hpp"

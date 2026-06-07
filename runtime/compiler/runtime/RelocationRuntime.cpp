@@ -73,7 +73,7 @@
 #include "control/RecompilationInfo.hpp"
 
 #include "codegen/CodeGenerator.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "control/CompilationRuntime.hpp"
 #if defined(J9VM_OPT_JITSERVER)
 #include "control/CompilationThread.hpp"

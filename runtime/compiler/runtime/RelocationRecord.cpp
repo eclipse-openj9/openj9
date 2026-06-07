@@ -35,7 +35,7 @@
 #include "env/FrontEnd.hpp"
 #include "codegen/PicHelpers.hpp"
 #include "codegen/Relocation.hpp"
-#include "compile/ResolvedMethod.hpp"
+#include "compile/TRResolvedMethod.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CHTable.hpp"

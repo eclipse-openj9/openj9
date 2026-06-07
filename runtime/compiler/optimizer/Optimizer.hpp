@@ -38,9 +38,8 @@ namespace TR {
 
 class Optimizer : public J9::OptimizerConnector {
 public:
-    Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen,
-        const OptimizationStrategy *strategy = NULL, uint16_t VNType = 0)
-        : J9::OptimizerConnector(comp, methodSymbol, isIlGen, strategy, VNType)
+    Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen)
+        : J9::OptimizerConnector(comp, methodSymbol, isIlGen)
     {}
 };
 
