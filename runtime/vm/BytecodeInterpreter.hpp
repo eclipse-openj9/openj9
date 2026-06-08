@@ -1207,14 +1207,11 @@ obj:
 	enterObjectMonitor(REGISTER_ARGS_LIST, j9object_t obj)
 	{
 		UDATA rc = (UDATA)obj;
-#if JAVA_SPEC_VERSION >= 24
-		bool pinningSupportEnabled = J9_ARE_ANY_BITS_SET(_vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION);
-#endif /* JAVA_SPEC_VERSION >= 24 */
 		if (!VM_ObjectMonitor::inlineFastObjectMonitorEnter(_currentThread, obj)) {
 			rc = objectMonitorEnterNonBlocking(_currentThread, obj);
 			if (J9_OBJECT_MONITOR_BLOCKING == rc) {
 #if JAVA_SPEC_VERSION >= 24
-				if (pinningSupportEnabled && VM_ContinuationHelpers::isYieldableVirtualThread(_currentThread)) {
+				if (_pinningSupportEnabled && VM_ContinuationHelpers::isYieldableVirtualThread(_currentThread)) {
 					/* Try to yield the virtual thread if it will be blocked. */
 					updateVMStruct(REGISTER_ARGS);
 					rc = preparePinnedVirtualThreadForUnmount(_currentThread, obj, false);
@@ -1228,7 +1225,7 @@ obj:
 			}
 		}
 #if JAVA_SPEC_VERSION >= 24
-		if (pinningSupportEnabled && (rc == (UDATA)obj)) {
+		if (_pinningSupportEnabled && (rc == (UDATA)obj)) {
 			J9VMContinuation *continuation = _currentThread->currentContinuation;
 			if (NULL != continuation) {
 				if (J9_ARE_ALL_BITS_SET(continuation->runtimeFlags, J9VM_CONTINUATION_RUNTIMEFLAG_JVMTI_CONTENDED_MONITOR_ENTER_RECORDED)) {
@@ -3044,7 +3041,7 @@ done:
 		{
 			if (VM_ObjectMonitor::getMonitorForNotify(_currentThread, receiver, &monitorPtr, true)) {
 #if JAVA_SPEC_VERSION >= 24
-				if (J9_ARE_ANY_BITS_SET(_vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
+				if (J9VM_ARE_PINNED_YIELDABLE_VIRTUALTHREADS_ACTIVE(_vm)) {
 					j9objectmonitor_t lock = 0;
 					j9objectmonitor_t *lockEA = NULL;
 					J9ObjectMonitor *objectMonitor = NULL;
@@ -6004,7 +6001,7 @@ ffi_OOM:
 		buildInternalNativeStackFrame(REGISTER_ARGS);
 		updateVMStruct(REGISTER_ARGS);
 #if JAVA_SPEC_VERSION >= 24
-		if (J9_ARE_ANY_BITS_SET(_vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
+		if (_pinningSupportEnabled)
 		&& (_currentThread->ownedMonitorCount > 0)
 		&& !isFinished
 		) {
@@ -10395,7 +10392,9 @@ public:
 #if defined(LOCAL_LITERALS)
 		J9Method *_literals = vmThread->literals;
 #endif
-
+#if JAVA_SPEC_VERSION >= 24
+		const bool _pinningSupportEnabled = J9_ARE_ANY_BITS_SET(vmThread->javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION
+#endif /* JAVA_SPEC_VERSION >= 24 */
 		DEBUG_MUST_HAVE_VM_ACCESS(vmThread);
 		vmThread->jitStackFrameFlags = 0;
 

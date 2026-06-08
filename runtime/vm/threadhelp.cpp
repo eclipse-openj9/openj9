@@ -465,7 +465,7 @@ notifyUnblocker(void *userData)
 {
 	J9VMThread *currentThread = (J9VMThread *)userData;
 	J9JavaVM *vm = currentThread->javaVM;
-	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
+	if (J9VM_ARE_PINNED_YIELDABLE_VIRTUALTHREADS_ACTIVE(vm)) {
 		J9VM_SEND_VIRTUAL_UNBLOCKER_THREAD_SIGNAL(vm);
 		Trc_VM_ThreadHelp_notifyUnblocker(currentThread);
 	}

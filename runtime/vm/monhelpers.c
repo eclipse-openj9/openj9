@@ -99,7 +99,7 @@ restart:
 #endif /* if !(defined(AIXPPC) || defined(LINUXPPC)) */
 #endif /* ifndef J9VM_THR_LOCK_RESERVATION */
 #if JAVA_SPEC_VERSION >= 24
-		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
+		if (J9VM_ARE_PINNED_YIELDABLE_VIRTUALTHREADS_ACTIVE(vm)) {
 			if (OBJECT_HEADER_LOCK_FLC == count) {
 				/* FLC set, non-recursive. */
 				J9ObjectMonitor *objectMonitor = objectMonitorInflate(vmStruct, object, lock);
@@ -115,7 +115,7 @@ restart:
 
 					omrthread_monitor_exit(monitor);
 
-					if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
+					if (J9VM_ARE_PINNED_YIELDABLE_VIRTUALTHREADS_ACTIVE(vm)
 					&& (0 != objectMonitor->virtualThreadWaitCount)
 					) {
 						J9VM_SEND_VIRTUAL_UNBLOCKER_THREAD_SIGNAL(vm);
@@ -314,7 +314,7 @@ restart:
 #endif /*  JAVA_SPEC_VERSION >= 24 */
 		rc = omrthread_monitor_exit((omrthread_monitor_t)monitor);
 #if JAVA_SPEC_VERSION >= 24
-		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
+		if (J9VM_ARE_PINNED_YIELDABLE_VIRTUALTHREADS_ACTIVE(vm)
 		&& (0 != objectMonitor->virtualThreadWaitCount)
 		) {
 			J9VM_SEND_VIRTUAL_UNBLOCKER_THREAD_SIGNAL(vm);
