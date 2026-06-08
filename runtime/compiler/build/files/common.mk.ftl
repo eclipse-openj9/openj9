@@ -77,7 +77,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/codegen/CodeGenPrep.cpp \
     omr/compiler/codegen/CodeGenRA.cpp \
     omr/compiler/codegen/ELFGenerator.cpp \
-    omr/compiler/env/FrontEnd.cpp \
+    omr/compiler/env/TRFrontEnd.cpp \
     omr/compiler/codegen/LiveRegister.cpp \
     omr/compiler/codegen/NodeEvaluation.cpp \
     omr/compiler/codegen/OMRAheadOfTimeCompile.cpp \
@@ -110,7 +110,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/compile/OMRMethod.cpp \
     omr/compiler/compile/OMRSymbolReferenceTable.cpp \
     omr/compiler/compile/OSRData.cpp \
-    omr/compiler/compile/ResolvedMethod.cpp \
+    omr/compiler/compile/TRResolvedMethod.cpp \
     omr/compiler/compile/TLSCompilationManager.cpp \
     omr/compiler/compile/VirtualGuard.cpp \
     omr/compiler/control/OMRCompilationStrategy.cpp \
@@ -218,7 +218,8 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/optimizer/OMRLocalCSE.cpp \
     omr/compiler/optimizer/OMROptimization.cpp \
     omr/compiler/optimizer/OMROptimizationManager.cpp \
-    omr/compiler/optimizer/OMROptimizer.cpp \
+    omr/compiler/optimizer/OMRFullOptimizer.cpp \
+    omr/compiler/optimizer/OMRSmallOptimizer.cpp \
     omr/compiler/optimizer/OMRRecognizedCallTransformer.cpp \
     omr/compiler/optimizer/OMRRegisterCandidate.cpp \
     omr/compiler/optimizer/OMRSimplifier.cpp \
