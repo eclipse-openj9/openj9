@@ -1207,11 +1207,14 @@ obj:
 	enterObjectMonitor(REGISTER_ARGS_LIST, j9object_t obj)
 	{
 		UDATA rc = (UDATA)obj;
+#if JAVA_SPEC_VERSION >= 24
+		bool pinningSupportEnabled = J9_ARE_ANY_BITS_SET(_vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION);
+#endif /* JAVA_SPEC_VERSION >= 24 */
 		if (!VM_ObjectMonitor::inlineFastObjectMonitorEnter(_currentThread, obj)) {
 			rc = objectMonitorEnterNonBlocking(_currentThread, obj);
 			if (J9_OBJECT_MONITOR_BLOCKING == rc) {
 #if JAVA_SPEC_VERSION >= 24
-				if (VM_ContinuationHelpers::isYieldableVirtualThread(_currentThread)) {
+				if (pinningSupportEnabled && VM_ContinuationHelpers::isYieldableVirtualThread(_currentThread)) {
 					/* Try to yield the virtual thread if it will be blocked. */
 					updateVMStruct(REGISTER_ARGS);
 					rc = preparePinnedVirtualThreadForUnmount(_currentThread, obj, false);
@@ -1225,7 +1228,7 @@ obj:
 			}
 		}
 #if JAVA_SPEC_VERSION >= 24
-		if (rc == (UDATA)obj) {
+		if (pinningSupportEnabled && (rc == (UDATA)obj)) {
 			J9VMContinuation *continuation = _currentThread->currentContinuation;
 			if (NULL != continuation) {
 				if (J9_ARE_ALL_BITS_SET(continuation->runtimeFlags, J9VM_CONTINUATION_RUNTIMEFLAG_JVMTI_CONTENDED_MONITOR_ENTER_RECORDED)) {
