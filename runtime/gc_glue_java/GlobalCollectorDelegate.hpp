@@ -81,6 +81,7 @@ public:
 	void mainThreadGarbageCollectStarted(MM_EnvironmentBase *env);
 	void postMarkProcessing(MM_EnvironmentBase *env);
 	void mainThreadGarbageCollectFinished(MM_EnvironmentBase *env, bool compactedThisCycle);
+	void mainThreadGarbageCollectFinished(MM_EnvironmentBase *env, CompactReason compactedThisCycle);
 	void postCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *subSpace);
 
 	bool isAllowUserHeapWalk();
