@@ -264,7 +264,7 @@ addComponentToList(UtComponentData *componentData, UtComponentList *componentLis
 }
 
 omr_error_t
-processComponentDefferedConfig(UtComponentData *componentData, UtComponentList *componentList)
+processComponentDeferredConfig(UtComponentData *componentData, UtComponentList *componentList)
 {
 	omr_error_t rc = OMR_ERROR_NONE;
 
@@ -274,13 +274,13 @@ processComponentDefferedConfig(UtComponentData *componentData, UtComponentList *
 	}
 
 	if (componentData->moduleInfo == NULL) {
-		UT_DBGOUT(1, ("<UT> Can't process defferred config info on a non live component: %s\n", componentData->componentName));
+		UT_DBGOUT(1, ("<UT> Can't process deferred config info on a non live component: %s\n", componentData->componentName));
 		return OMR_ERROR_ILLEGAL_ARGUMENT;
 	}
 
 	/* all the pent up config needs to be released */
 	if (componentList->deferredConfigInfoHead != NULL) {
-		UT_DBGOUT(2, ("<UT> processComponentDefferedConfig: component %s - applying global deferred config info\n", componentData->componentName));
+		UT_DBGOUT(2, ("<UT> processComponentDeferredConfig: component %s - applying global deferred config info\n", componentData->componentName));
 		UtDeferredConfigInfo *configInfo = componentList->deferredConfigInfoHead;
 		while (configInfo != NULL) {
 			BOOLEAN configAppliesToAll = j9_cmdla_stricmp(configInfo->componentName, UT_ALL) == 0;
@@ -304,7 +304,7 @@ processComponentDefferedConfig(UtComponentData *componentData, UtComponentList *
 			}
 			configInfo = configInfo->next;
 		}
-		UT_DBGOUT(2, ("<UT> processComponentDefferedConfig: component %s - apply global deferred config info complete\n", componentData->componentName));
+		UT_DBGOUT(2, ("<UT> processComponentDeferredConfig: component %s - apply global deferred config info complete\n", componentData->componentName));
 	}
 
 	UT_DBGOUT(2, ("<UT> addComponentToList: component %s processed deferred config info\n", componentData->componentName));
