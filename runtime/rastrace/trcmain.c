@@ -228,7 +228,7 @@ moduleLoaded(UtThreadData **thr, UtModuleInfo *modInfo)
 			rc = addComponentToList(compData, UT_GLOBAL(componentList));
 		}
 		if (OMR_ERROR_NONE == rc) {
-			rc = processComponentDefferedConfig(compData, UT_GLOBAL(componentList));
+			rc = processComponentDeferredConfig(compData, UT_GLOBAL(componentList));
 		}
 		if (OMR_ERROR_NONE != rc) {
 			/* Module not configured for trace: %s */
