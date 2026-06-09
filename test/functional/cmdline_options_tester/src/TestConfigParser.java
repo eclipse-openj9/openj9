@@ -19,11 +19,15 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  */
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 
-import com.oti.j9.exclude.*;
+import com.oti.j9.exclude.ExcludeList;
+import com.oti.j9.exclude.IXMLDocumentHandler;
+import com.oti.j9.exclude.XMLParser;
 
 class TestConfigParser {
 	private ExcludeList _excludes;
@@ -119,9 +123,9 @@ class TestConfigParser {
 		// this flag allows us to continue to use this parser implementation for the more complicated use of the command element without having to re-write it as a sort of delegating PDA
 		private boolean _isInNewCommandStanza;
 		// used to collect the contents of the in-order "arg" tags under the new-style command stanza (which are then passed as arguments to the underlying process)
-		private Vector<String> _commandArgs;
+		private List<String> _commandArgs;
 		// used to collect the contents of the in-order "input" tags under the new-style command stanza (which are then fed into the stdin of the underlying process as new-line terminated strings)
-		private Vector<String> _commandInputLines;
+		private List<String> _commandInputLines;
 
 		/**
 		 * Empty implementation
@@ -260,8 +264,8 @@ class TestConfigParser {
 					_commandExecutable = commandExecutable;
 					//also set the flag to know that we are in a command context and create the arrays for the arguments and inputs which may appear in that stanza
 					_isInNewCommandStanza = true;
-					_commandArgs = new Vector<>();
-					_commandInputLines = new Vector<>();
+					_commandArgs = new ArrayList<>();
+					_commandInputLines = new ArrayList<>();
 				}
 			} else if (elementName.equalsIgnoreCase("if")) {
 				_iterator.addCommand(new IfTest(attributes.get("testVariable"), attributes.get("testValue"),
@@ -325,6 +329,10 @@ class TestConfigParser {
 			} else if (elementName.equalsIgnoreCase("input")) {
 				if (_isInNewCommandStanza) {
 					_commandInputLines.add(readData);
+				}
+			} else if (elementName.equalsIgnoreCase("version")) {
+				if (_currentTest != null) {
+					_currentTest.constrainVersion(readData);
 				}
 			}
 			_data.setLength(0); // any data in here has outlived it's usefulness
