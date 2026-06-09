@@ -22,7 +22,6 @@ JIT_PRODUCT_BACKEND_SOURCES+= \
     omr/compiler/p/runtime/VirtualGuardRuntime.spp
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    compiler/p/runtime/CodeSync.cpp \
     compiler/p/runtime/ebb.spp \
     compiler/p/runtime/Emulation.c \
     compiler/p/runtime/J9PPCArrayCopy.spp \
@@ -36,6 +35,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/p/runtime/PicBuilder.spp \
     compiler/p/runtime/Recomp.cpp \
     compiler/p/runtime/Recompilation.spp \
+    omr/compiler/p/runtime/CodeSync.cpp \
     omr/compiler/p/runtime/OMRCodeCacheConfig.cpp
 
 ifeq ($(OS),aix)
