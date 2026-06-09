@@ -328,7 +328,7 @@ char * getFormatString(const char *componentName, int32_t tracepoint);
 char * getTracePointName(const char *componentName, UtComponentList *componentList, int32_t tracepoint);
 omr_error_t setTracePointGroupTo(const char *groupName, UtComponentData *componentData, unsigned char value, BOOLEAN suppressMessages, int32_t setActive);
 omr_error_t setTracePointsByLevelTo(UtComponentData *componentData, int level, unsigned char value, int32_t setActive);
-omr_error_t processComponentDefferedConfig(UtComponentData *componentData, UtComponentList *componentList);
+omr_error_t processComponentDeferredConfig(UtComponentData *componentData, UtComponentList *componentList);
 uint64_t incrementTraceCounter(UtModuleInfo *moduleInfo, UtComponentList *componentList, int32_t tracepoint);
 omr_error_t addTraceConfig(UtThreadData **thr, const char *cmd);
 omr_error_t addTraceConfigKeyValuePair(UtThreadData **thr, const char *cmdKey, const char *cmdValue);
