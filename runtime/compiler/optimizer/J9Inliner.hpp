@@ -126,9 +126,7 @@ private:
     bool eliminateTailRecursion(TR::ResolvedMethodSymbol *, TR_CallStack *, TR::TreeTop *, TR::Node *, TR::Node *,
         TR_VirtualGuardSelection *);
     void assignArgumentsToParameters(TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *);
-    bool isLargeCompiledMethod(TR_ResolvedMethod *calleeResolvedMethod, int32_t bytecodeSize, int32_t freq,
-        int32_t exemptionFreqCutoff, int32_t veryLargeCompiledMethodThreshold,
-        int32_t veryLargeCompiledMethodFaninThreshold);
+    bool isLargeCompiledMethod(TR_ResolvedMethod *calleeResolvedMethod, int32_t bytecodeSize, int32_t freq);
     /* \brief
      *    This API processes the call targets got chopped off from \ref _calltargets
      *
