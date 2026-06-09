@@ -554,6 +554,8 @@ typedef struct J9JFRTypeID {
 	jlong id;
 	struct J9UTF8 *className;
 	BOOLEAN free;
+	BOOLEAN isEvent;
+	struct J9Class *eventClass;
 } J9JFRTypeID;
 
 typedef struct J9JFRNetworkUtilization {
