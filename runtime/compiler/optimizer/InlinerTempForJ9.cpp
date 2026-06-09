@@ -4145,12 +4145,6 @@ int32_t TR_MultipleCallTargetInliner::scaleBasedOnFrequency(TR_CallTarget *callt
     int32_t veryLargeCompiledMethodFaninThreshold
         = comp()->getOptions()->getInlinerVeryLargeCompiledMethodFaninThreshold();
 
-    static const char *cmt = feGetEnv("TR_CompiledMethodCallGraphThreshold");
-    if (cmt) {
-        static const int32_t callGraphSizeBasedThreshold = atoi(cmt);
-        veryLargeCompiledMethodThreshold = callGraphSizeBasedThreshold;
-    }
-
     bool largeCompiledCallee = !comp()->getOption(TR_InlineVeryLargeCompiledMethods)
         && isLargeCompiledMethod(calltarget->_calleeMethod, size, frequency, exemptionFreqCutoff,
             veryLargeCompiledMethodThreshold, veryLargeCompiledMethodFaninThreshold);
@@ -4552,12 +4546,6 @@ int32_t TR_MultipleCallTargetInliner::scaleSizeBasedOnBlockFrequency(int32_t byt
     int32_t veryLargeCompiledMethodThreshold = comp()->getOptions()->getInlinerVeryLargeCompiledMethodThreshold();
     int32_t veryLargeCompiledMethodFaninThreshold
         = comp()->getOptions()->getInlinerVeryLargeCompiledMethodFaninThreshold();
-
-    static const char *bcmt = feGetEnv("TR_CompiledMethodByteCodeThreshold");
-    if (bcmt) {
-        static const int32_t byteCodeSizeBasedThreshold = atoi(bcmt);
-        veryLargeCompiledMethodThreshold = byteCodeSizeBasedThreshold;
-    }
 
     bool largeCompiledCallee = !comp()->getOption(TR_InlineVeryLargeCompiledMethods)
         && isLargeCompiledMethod(calleeResolvedMethod, bytecodeSize, frequency, exemptionFreqCutoff,
