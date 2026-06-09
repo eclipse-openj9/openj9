@@ -69,7 +69,7 @@ static int J9THREAD_PROC jfrSamplingThreadProc(void *entryArg);
 static void jfrExecutionSampleCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData);
 static void jfrThreadCPULoadCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData);
 static void jfrCheckJFRCMDLineOptions(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
-static jlong getTypeIdImpl(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *className, BOOLEAN freeName);
+static jlong getTypeIdImpl(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *className, BOOLEAN freeName, J9Class *clazz = NULL);
 #if JAVA_SPEC_VERSION >= 17
 static bool addEventIds(J9JavaVM *vm);
 static bool addTypeIds(J9JavaVM *vm);
@@ -77,6 +77,7 @@ static bool addTypeIds(J9JavaVM *vm);
 static void jfrShutdownInternalStructures(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void notifyForChunkRotation(J9VMThread *currentThread);
 static void checkAvailableSpaceInGlobalBuffer(J9VMThread *currentThread);
+static void jfrClassInitialize(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 
 static void
 freeThreadIDs(J9VMThread *currentThread)
@@ -1159,6 +1160,7 @@ stopJFRRecording(J9JavaVM *vm)
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_MONITOR_CONTENDED_ENTERED, jfrVMMonitorEntered, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_UNPARKED, jfrVMThreadParked, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_SYSTEM_GC_CALLED, jfrSystemGC, NULL);
+
 	/* Deregister GC-related hooks via gc_base */
 	vm->memoryManagerFunctions->j9gc_deregister_jfr_hooks(vm);
 }
@@ -1717,12 +1719,24 @@ getTypeId(J9VMThread *currentThread, J9Class *clazz)
 }
 
 static jlong
-getTypeIdImpl(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *className, BOOLEAN freeName)
+getTypeIdImpl(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *className, BOOLEAN freeName, J9Class *clazz)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 	jlong result = INVALID_TYPE_ID;
 	J9JFRTypeID entry = {0};
 	J9JFRTypeID *jfrTypeID = &entry;
+
+	if (NULL != clazz) {
+		if (NULL == vm->jfrState.jfrEventClassRef) {
+			return -1;
+		}
+		J9Class *eventClass = J9VMJAVALANGCLASS_VMREF(currentThread, J9_JNI_UNWRAP_REFERENCE(vm->jfrState.jfrEventClassRef));
+		if (!isSameOrSuperClassOf(eventClass, clazz)
+			|| J9_ARE_NO_BITS_SET(clazz->romClass->modifiers, J9AccAbstract)
+		) {
+			return -1;
+		}
+	}
 
 	Assert_VM_mustHaveVMAccess(currentThread);
 
@@ -1770,6 +1784,8 @@ getTypeIdImpl(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *cla
 			}
 		}
 #endif /* JAVA_SPEC_VERSION >= 17 */
+
+	classLoader->typeIDs = typeIDTable;
 	}
 
 	jfrTypeID->className = className;
@@ -1780,6 +1796,8 @@ getTypeIdImpl(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *cla
 		jfrTypeID = &entry;
 		jfrTypeID->id = vm->jfrState.typeIDcount;
 		jfrTypeID->free = freeName;
+		jfrTypeID->isEvent = FALSE;
+		jfrTypeID->eventClass = NULL;
 
 		vm->jfrState.typeIDcount += 1;
 		Assert_VM_true(vm->jfrState.typeIDcount > 0);
@@ -1789,6 +1807,9 @@ getTypeIdImpl(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *cla
 			setNativeOutOfMemoryError(currentThread, 0, 0);
 			goto done;
 		}
+	} else if (NULL != clazz) {
+		jfrTypeID->isEvent = TRUE;
+		jfrTypeID->eventClass = clazz;
 	}
 	result = jfrTypeID->id;
 
@@ -1810,6 +1831,12 @@ initializeJFRv2(J9JavaVM *vm)
 
 	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_SHUTTING_DOWN, jfrShutdownInternalStructures, OMR_GET_CALLSITE(), NULL)) {
 		goto done;
+	}
+
+	if (J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JFR_V2_SUPPORT)) {
+		if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CLASS_INITIALIZE, jfrClassInitialize, OMR_GET_CALLSITE(), NULL)) {
+			goto done;
+		}
 	}
 
 	if (0 != initializeJFRIDs(vm)) {
@@ -1865,6 +1892,9 @@ jfrShutdownInternalStructures(J9HookInterface **hook, UDATA eventNum, void *even
 	vm->jfrState.jfrEventClassRef = NULL;
 	vm->jfrState.jfrInternalEventClassRef = NULL;
 	vm->jfrState.chunkRotationMonitor = NULL;
+	if (J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JFR_V2_SUPPORT)) {
+		(*hook)->J9HookUnregister(hook, J9HOOK_VM_CLASS_INITIALIZE, jfrClassInitialize, NULL);
+	}
 }
 
 static void
@@ -2029,6 +2059,8 @@ addType(J9JavaVM *vm, const char *eventOrTypeName, UDATA id, bool isEvent)
 	entry.id = id;
 	entry.className = className;
 	entry.free = TRUE;
+	entry.isEvent = isEvent;
+	entry.eventClass = NULL;
 
 	/* Add to hash table */
 	if (NULL == hashTableAdd(typeIDTable, &entry)) {
@@ -2400,6 +2432,17 @@ checkAvailableSpaceInGlobalBuffer(J9VMThread *currentThread)
 			notifyForChunkRotation(currentThread);
 		}
 	}
+}
+
+void
+jfrClassInitialize(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
+{
+	J9VMClassInitializeEvent *event = (J9VMClassInitializeEvent *)eventData;
+	J9VMThread *currentThread = event->currentThread;
+	J9Class *clazz = event->clazz;
+
+	/* getTypeIdImpl will add clazz to the TypeID table. */
+	getTypeIdImpl(currentThread, clazz->classLoader, J9ROMCLASS_CLASSNAME(clazz->romClass), FALSE, clazz);
 }
 
 } /* extern "C" */

@@ -23,6 +23,7 @@
 #include "j9.h"
 #include "jni.h"
 #include "jclprots.h"
+#include "ut_j9jcl.h"
 
 #include "ObjectAccessBarrierAPI.hpp"
 #include "VMHelpers.hpp"
@@ -100,10 +101,85 @@ Java_jdk_jfr_internal_JVM_getAllEventClasses(JNIEnv *env, jobject obj)
 	J9VMThread *currentThread = (J9VMThread*) env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
 	jobject result = NULL;
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-	result = vmFuncs->j9jni_createLocalRef(env, vmFuncs->jvmUpcallTransformArrayToList(currentThread, NULL));
+
+	omrthread_monitor_enter(vm->jfrState.typeIDMonitor);
+
+	/* First pass: count event classes with valid eventClass pointers across all classloaders. */
+	UDATA eventCount = 0;
+	J9ClassLoaderWalkState walkState;
+	J9ClassLoader *classLoader = vmFuncs->allClassLoadersStartDo(&walkState, vm, 0);
+
+	while (NULL != classLoader) {
+		J9HashTable *typeIDTable = classLoader->typeIDs;
+		if (NULL != typeIDTable) {
+			J9HashTableState hashTableState = {0};
+			J9JFRTypeID *entry = (J9JFRTypeID *)hashTableStartDo(typeIDTable, &hashTableState);
+
+			while (NULL != entry) {
+				if (entry->isEvent && (NULL != entry->eventClass)) {
+					eventCount += 1;
+				}
+				entry = (J9JFRTypeID *)hashTableNextDo(&hashTableState);
+			}
+		}
+		classLoader = vmFuncs->allClassLoadersNextDo(&walkState);
+	}
+	vmFuncs->allClassLoadersEndDo(&walkState);
+
+	/* Get the Class class and create Class[] array class. */
+	J9Class *javaLangClass = J9VMJAVALANGCLASS_OR_NULL(vm);
+	UDATA arrayIndex = 0;
+	j9array_t classArray = NULL;
+
+	J9Class *classArrayClass = javaLangClass->arrayClass;
+	if (NULL == classArrayClass) {
+		J9ROMArrayClass *arrayOfObjectsROMClass = (J9ROMArrayClass*)J9ROMIMAGEHEADER_FIRSTCLASS(vm->arrayROMClasses);
+		classArrayClass = vmFuncs->internalCreateArrayClass(currentThread, arrayOfObjectsROMClass, javaLangClass);
+		if (NULL == classArrayClass) {
+			goto done;
+		}
+	}
+
+	/* Allocate the Class[] array. */
+	classArray = (j9array_t)mmFuncs->J9AllocateIndexableObject(
+		currentThread, classArrayClass, (U_32)eventCount, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+	if (NULL == classArray) {
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+		goto done;
+	}
+
+	/* Second pass: populate the array with event classes from all classloaders */
+	classLoader = vmFuncs->allClassLoadersStartDo(&walkState, vm, 0);
+
+	while (NULL != classLoader) {
+		J9HashTable *typeIDTable = classLoader->typeIDs;
+		if (NULL != typeIDTable) {
+			J9HashTableState hashTableState = {0};
+			J9JFRTypeID *entry = (J9JFRTypeID *)hashTableStartDo(typeIDTable, &hashTableState);
+
+			while (NULL != entry) {
+				if (entry->isEvent && (NULL != entry->eventClass)) {
+					/* Use the stored eventClass pointer directly */
+					j9object_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(entry->eventClass);
+					J9JAVAARRAYOFOBJECT_STORE(currentThread, classArray, arrayIndex, classObject);
+					arrayIndex += 1;
+				}
+				entry = (J9JFRTypeID *)hashTableNextDo(&hashTableState);
+			}
+		}
+		classLoader = vmFuncs->allClassLoadersNextDo(&walkState);
+	}
+	vmFuncs->allClassLoadersEndDo(&walkState);
+
+	/* Convert array to list and create local ref */
+	result = vmFuncs->j9jni_createLocalRef(env, vmFuncs->jvmUpcallTransformArrayToList(currentThread, (j9object_t)classArray));
+
+done:
+	omrthread_monitor_exit(vm->jfrState.typeIDMonitor);
 	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return result;
