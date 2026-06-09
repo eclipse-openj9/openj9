@@ -33,6 +33,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
+import org.openj9.test.util.VersionCheck;
+
 public class WorkLoad {
 
 	private static interface GlobalLoack { }
@@ -148,7 +150,10 @@ public class WorkLoad {
 			contendOnLock();
 			burnCPU();
 			generateClassLoader();
-			emitDataLoss();
+			if (VersionCheck.major() >= 17) {
+				// JDK11 jdk.jfr.internal.JVM doesn't have emitDataLoss().
+				emitDataLoss();
+			}
 			if (vthreads) {
 				runWorkWithVirtualThreads(8);
 			}
