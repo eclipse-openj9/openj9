@@ -4140,14 +4140,8 @@ int32_t TR_MultipleCallTargetInliner::scaleBasedOnFrequency(TR_CallTarget *callt
     int32_t maxFrequency = MAX_BLOCK_COUNT + MAX_COLD_BLOCK_COUNT;
 
     // Check for large compiled method
-    int32_t exemptionFreqCutoff = comp()->getOptions()->getLargeCompiledMethodExemptionFreqCutoff();
-    int32_t veryLargeCompiledMethodThreshold = comp()->getOptions()->getInlinerVeryLargeCompiledMethodThreshold();
-    int32_t veryLargeCompiledMethodFaninThreshold
-        = comp()->getOptions()->getInlinerVeryLargeCompiledMethodFaninThreshold();
-
     bool largeCompiledCallee = !comp()->getOption(TR_InlineVeryLargeCompiledMethods)
-        && isLargeCompiledMethod(calltarget->_calleeMethod, size, frequency, exemptionFreqCutoff,
-            veryLargeCompiledMethodThreshold, veryLargeCompiledMethodFaninThreshold);
+        && isLargeCompiledMethod(calltarget->_calleeMethod, size, frequency);
 
     if (largeCompiledCallee) {
         size = size * TR::Options::_inlinerVeryLargeCompiledMethodAdjustFactor;
@@ -4542,14 +4536,8 @@ int32_t TR_MultipleCallTargetInliner::scaleSizeBasedOnBlockFrequency(int32_t byt
 {
     int32_t maxFrequency = MAX_BLOCK_COUNT + MAX_COLD_BLOCK_COUNT;
 
-    int32_t exemptionFreqCutoff = comp()->getOptions()->getLargeCompiledMethodExemptionFreqCutoff();
-    int32_t veryLargeCompiledMethodThreshold = comp()->getOptions()->getInlinerVeryLargeCompiledMethodThreshold();
-    int32_t veryLargeCompiledMethodFaninThreshold
-        = comp()->getOptions()->getInlinerVeryLargeCompiledMethodFaninThreshold();
-
     bool largeCompiledCallee = !comp()->getOption(TR_InlineVeryLargeCompiledMethods)
-        && isLargeCompiledMethod(calleeResolvedMethod, bytecodeSize, frequency, exemptionFreqCutoff,
-            veryLargeCompiledMethodThreshold, veryLargeCompiledMethodFaninThreshold);
+        && isLargeCompiledMethod(calleeResolvedMethod, bytecodeSize, frequency);
     if (largeCompiledCallee) {
         bytecodeSize = bytecodeSize * TR::Options::_inlinerVeryLargeCompiledMethodAdjustFactor;
     } else if (frequency > borderFrequency) {
@@ -4585,9 +4573,12 @@ int32_t TR_MultipleCallTargetInliner::scaleSizeBasedOnBlockFrequency(int32_t byt
 }
 
 bool TR_MultipleCallTargetInliner::isLargeCompiledMethod(TR_ResolvedMethod *calleeResolvedMethod, int32_t bytecodeSize,
-    int32_t callerBlockFrequency, int32_t exemptionFreqCutoff, int32_t veryLargeCompiledMethodThreshold,
-    int32_t veryLargeCompiledMethodFaninThreshold)
+    int32_t callerBlockFrequency)
 {
+    int32_t exemptionFreqCutoff = comp()->getOptions()->getLargeCompiledMethodExemptionFreqCutoff();
+    int32_t veryLargeCompiledMethodThreshold = comp()->getOptions()->getInlinerVeryLargeCompiledMethodThreshold();
+    int32_t veryLargeCompiledMethodFaninThreshold
+        = comp()->getOptions()->getInlinerVeryLargeCompiledMethodFaninThreshold();
     TR_OpaqueMethodBlock *methodCallee = calleeResolvedMethod->getPersistentIdentifier();
     if (!calleeResolvedMethod->isInterpreted()) {
         TR_PersistentJittedBodyInfo *bodyInfo
