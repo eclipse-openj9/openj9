@@ -133,9 +133,15 @@ public abstract class SharedClassAbstractHelper extends SharedAbstractHelper imp
 	/*[IF JAVA_SPEC_VERSION >= 20]*/
 	@SuppressWarnings("deprecation")
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
-	private static URL getURLToCheck(URL url) {
+	private static URL getURLToCheck(URL url, String protocol) {
 		String pathString = url.toString();
-		int indexBang = pathString.indexOf("!/"); //$NON-NLS-1$
+		int indexBang = -1;
+
+		if (protocol.equals("nested")) {
+			indexBang = pathString.indexOf("/!"); //$NON-NLS-1$
+		} else {
+			indexBang = pathString.indexOf("!/"); //$NON-NLS-1$
+		}
 
 		if (-1 != indexBang) {
 			/* For a nested jar (e.g. /path/A.jar!/lib/B.jar), validate the external jar file only (/path/A.jar),
@@ -170,13 +176,13 @@ public abstract class SharedClassAbstractHelper extends SharedAbstractHelper imp
 			return true;
 		}
 		String protocol = url.getProtocol();
-		if (!(protocol.equals("file") || protocol.equals("jar"))) { //$NON-NLS-1$ //$NON-NLS-2$
+		if (!(protocol.equals("file") || protocol.equals("jar") || protocol.equals("nested"))) { //$NON-NLS-1$ //$NON-NLS-2$ ////$NON-NLS-3$
 			/*[MSG "K0597", "URL {0} does not have required file or jar protocol."]*/
 			printVerboseInfo(Msg.getString("K0597", url.toString())); //$NON-NLS-1$
 			return false;
 		}
 		if (checkExists) {
-			final URL urlToCheck = getURLToCheck(url);
+			final URL urlToCheck = getURLToCheck(url, protocol);
 			/*[IF JAVA_SPEC_VERSION < 24]*/
 			@SuppressWarnings("removal")
 			Integer fExists = AccessController.doPrivileged(new PrivilegedAction<Integer>() {

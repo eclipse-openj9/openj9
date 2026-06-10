@@ -377,6 +377,7 @@ SH_ClasspathManagerImpl2::hasTimestampChanged(J9VMThread* currentThread, Classpa
 	
 	/* Only check JARs/Jimage as we check specific classfile timestamps in directories */
 	if ((PROTO_JAR == itemToCheck->protocol)
+		|| (PROTO_JAR_NESTED == itemToCheck->protocol)
 		|| (PROTO_JIMAGE == itemToCheck->protocol)
 	) {
 		U_16 pathLen = 0;
@@ -1203,6 +1204,7 @@ SH_ClasspathManagerImpl2::setTimestamps(J9VMThread* currentThread, ClasspathWrap
 
 		/* Only store timestamps for JARs. For classfiles in directories, only timestamp the specific class */
 		if ((PROTO_JAR == current->protocol)
+			|| (PROTO_JAR_NESTED == current->protocol)
 			|| (PROTO_JIMAGE == current->protocol)
 		) {
 			newTimeStamp = _tsm->checkCPEITimeStamp(currentThread, current);

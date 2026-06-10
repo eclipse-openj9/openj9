@@ -57,18 +57,25 @@ ClasspathEntryItem::initialize(const char* path_, U_16 pathLen_, UDATA protocol_
 	path = (char*)path_;
 	pathLen = pathLen_;
 	locationPathLen = pathLen_;
-	if (protocol == PROTO_JAR) {
-		if (NULL != path) {
-			char* jarPath = strstr(path,"!/");
+	char* jarPath = NULL;
+
+	if ((NULL != path)) {
+		if (PROTO_JAR == protocol) {
+			jarPath = strstr(path,"!/");
 			if (NULL == jarPath) {
 				jarPath = strstr(path,"!\\");
 			}
 			if (NULL != jarPath) {
 				locationPathLen = jarPath - path;
 			}
+		} else if (PROTO_JAR_NESTED == protocol) {
+			jarPath = strstr(path,"/!");
+			if (NULL != jarPath) {
+				locationPathLen = jarPath - path;
+			}
 		}
-	}
 
+	}
 	return 0;
 }
 
