@@ -164,7 +164,7 @@
 		<output regex="no" type="required" showMatch="yes"> point (offset = 24) (Point2D)</output>
 		<output regex="no" type="required" showMatch="yes"> vpoint (offset = 4) (Point2D)</output>
 		<output regex="no" type="required" showMatch="yes"> line (offset = 32) (FlattenedLine2D)</output>
-		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes"> vline = !fj9object 0x[\w]+ \(offset = 12\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes"> vline = !fj9object 0x\p{XDigit}+ \(offset = 12\)</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
@@ -204,10 +204,10 @@
 			<input>quit</input>
 		</command>
 		<output regex="no" type="success" showMatch="yes">CompactLayoutScenarios</output>
-		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">compactByte = !j9object 0x[\w]+ compactByte \(offset = 0\) \(CompactByte\)</output>
-		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">compactShort = !j9object 0x[\w]+ compactShort \(offset = 4\) \(CompactShort\)</output>
-		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">compactByteShort = !j9object 0x[\w]+ compactByteShort \(offset = 12\) \(CompactByteShort\)</output>
-		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">compactAssorted = !j9object 0x[\w]+ compactAssorted \(offset = 20\) \(CompactAssorted\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">compactAssorted = !j9object 0x\p{XDigit}+ compactAssorted \(offset = 0\) \(CompactAssorted\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">compactShort = !j9object 0x\p{XDigit}+ compactShort \(offset = 12\) \(CompactShort\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">compactByteShort = !j9object 0x\p{XDigit}+ compactByteShort \(offset = 20\) \(CompactByteShort\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">compactByte = !j9object 0x\p{XDigit}+ compactByte \(offset = 26\) \(CompactByte\)</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
