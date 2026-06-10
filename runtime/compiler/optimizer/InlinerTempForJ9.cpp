@@ -4150,9 +4150,11 @@ int32_t TR_MultipleCallTargetInliner::scaleBasedOnFrequency(TR_CallTarget *callt
         float factor = (float)(maxFrequency - frequency) / (float)maxFrequency;
         factor = std::max(factor, 0.4f);
 
-        float avgMethodSize = (float)size / (float)ecs->getNumOfEstimatedCalls();
+        // getNumOfEstimatedCalls is 0 if the the call target doesn't have any nested calls and
+        // avgMethodSize should equal size in that case, so we add 1.
+        float avgMethodSize = (float)size / (float)(1 + ecs->getNumOfEstimatedCalls());
         float numCallsFactor = (float)(avgMethodSize) / 110.0f;
-        numCallsFactor = std::max(factor, 0.1f);
+        numCallsFactor = std::max(numCallsFactor, 0.1f);
 
         if (size > 100) {
             size = (int)((float)size * factor * numCallsFactor);
