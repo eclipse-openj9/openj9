@@ -4153,21 +4153,10 @@ int32_t TR_MultipleCallTargetInliner::scaleBasedOnFrequency(TR_CallTarget *callt
     if (largeCompiledCallee) {
         size = size * TR::Options::_inlinerVeryLargeCompiledMethodAdjustFactor;
     } else if (frequency > borderFrequency) {
-        // High frequency: reduce size to encourage inlining
-        float factor = (float)(maxFrequency - frequency) / (float)maxFrequency;
-        factor = std::max(factor, 0.4f);
-
-        float avgMethodSize = (float)size / (float)ecs->getNumOfEstimatedCalls();
-        float numCallsFactor = (float)(avgMethodSize) / 110.0f;
-        numCallsFactor = std::max(factor, 0.1f);
-
-        if (size > 100) {
-            size = (int)((float)size * factor * numCallsFactor);
-            if (size < 100)
-                size = 100;
-        } else {
-            size = (int)((float)size * factor * numCallsFactor);
-        }
+        float normalizedFrequency = frequency / (float)maxFrequency;
+        float callFactor = logf(1 + ecs->getNumOfEstimatedCalls());
+        float scalingFactor = 1.0f / (1.0f + normalizedFrequency * (1.0f + callFactor));
+        size = (int)(size * scalingFactor);
 
         if (comp()->trace(OMR::inlining))
             heuristicTrace(tracer(), "WeighCallSite: Adjusted call-graph size for call node %p, from %d to %d\n",
