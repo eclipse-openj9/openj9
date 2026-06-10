@@ -2076,7 +2076,7 @@ fail:
 		switch (monstatus) {
 #if JAVA_SPEC_VERSION >= 16
 		case J9_OBJECT_MONITOR_VALUE_TYPE_IMSE: {
-			J9Class* badClass = J9OBJECT_CLAZZ(vmThread, obj);
+			J9Class* badClass = J9OBJECT_CLAZZ(vmThread, object);
 			J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(badClass->romClass);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 			if (J9_IS_J9CLASS_VALUETYPE(badClass)) {

@@ -34,6 +34,7 @@
 #include "AtomicSupport.hpp"
 #include "VMAccess.hpp"
 #include "ObjectAccessBarrierAPI.hpp"
+#include "ValueTypeHelpers.hpp"
 
 extern "C" {
 
@@ -693,7 +694,52 @@ getObjectField(JNIEnv *env, jobject obj, jfieldID fieldID)
 
 	j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
 	valueOffset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
-	j9object_t value = J9OBJECT_OBJECT_LOAD(currentThread, object, valueOffset);
+	j9object_t value = NULL;
+
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	J9ROMFieldShape *field = j9FieldID->field;
+	J9Class *definingClass = j9FieldID->declaringClass;
+	bool fieldIsFlattened = false;
+
+	if (J9ROMFIELD_IS_NULL_RESTRICTED(field) && (NULL != definingClass->flattenedClassCache) && J9_ARE_NO_BITS_SET(field->modifiers, J9AccStatic)) {
+		J9Class *fieldClass = getFlattenableFieldType(definingClass, field);
+		if ((NULL != fieldClass) && J9_IS_FIELD_FLATTENED(fieldClass, field)) {
+			fieldIsFlattened = true;
+			/* Allocate value object and copy flattened field data into it */
+			MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
+			MM_ObjectAllocationAPI objectAllocate(currentThread);
+			/* Try fast path first */
+			value = VM_ValueTypeHelpers::getFlattenedFieldAtOffset(
+					currentThread,
+					objectAccessBarrier,
+					objectAllocate,
+					fieldClass,
+					object,
+					valueOffset,
+					true);
+
+			/* If fast path failed, fall back to slow path (allows GC) */
+			if (NULL == value) {
+				value = VM_ValueTypeHelpers::getFlattenedFieldAtOffset(
+						currentThread,
+						objectAccessBarrier,
+						objectAllocate,
+						fieldClass,
+						object,
+						valueOffset,
+						false);
+			}
+		}
+	}
+
+	/* If field is not flattened, read as regular object pointer */
+	if (!fieldIsFlattened)
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+	{
+		/* Regular object reference field - read the pointer */
+		object = J9_JNI_UNWRAP_REFERENCE(obj);
+		value = J9OBJECT_OBJECT_LOAD(currentThread, object, valueOffset);
+	}
 
 	if (j9FieldID->field->modifiers & J9AccVolatile) {
 		VM_AtomicSupport::readBarrier();
@@ -736,7 +782,44 @@ setObjectField(JNIEnv *env, jobject obj, jfieldID fieldID, jobject valueRef)
 	j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
 	j9object_t value = (NULL == valueRef) ? NULL : J9_JNI_UNWRAP_REFERENCE(valueRef);
 	valueOffset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
-	J9OBJECT_OBJECT_STORE(currentThread, object, valueOffset, value);
+
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	J9Class *definingClass = j9FieldID->declaringClass;
+	bool fieldIsFlattened = false;
+	J9ROMFieldShape *field = j9FieldID->field;
+
+	if (J9ROMFIELD_IS_NULL_RESTRICTED(field)) {
+		/* Check if field is null-restricted and value is NULL */
+		if (NULL == value) {
+			setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+			VM_VMAccess::inlineExitVMToJNI(currentThread);
+			return;
+		}
+
+		if ((NULL != definingClass->flattenedClassCache) && J9_ARE_NO_BITS_SET(field->modifiers, J9AccStatic)) {
+			J9Class *fieldClass = getFlattenableFieldType(definingClass, field);
+			if ((NULL != fieldClass) && J9_IS_FIELD_FLATTENED(fieldClass, field)) {
+				fieldIsFlattened = true;
+				/* Copy value object data into flattened field */
+				MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
+				VM_ValueTypeHelpers::putFlattenedFieldAtOffset(
+						currentThread,
+						objectAccessBarrier,
+						fieldClass,
+						value,
+						object,
+						valueOffset);
+			}
+		}
+	}
+
+	/* If field is not flattened, store as regular object pointer */
+	if (!fieldIsFlattened)
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+	{
+		/* Regular object reference field - store the pointer */
+		J9OBJECT_OBJECT_STORE(currentThread, object, valueOffset, value);
+	}
 
 	if (isVolatile) {
 		VM_AtomicSupport::readWriteBarrier();
@@ -988,13 +1071,35 @@ getObjectArrayElement(JNIEnv *env, jobjectArray arrayRef, jsize index)
 	/* unsigned comparison includes index < 0 case */
 	if ((UDATA)arrayBound <= (UDATA)index) {
 		setArrayIndexOutOfBoundsException(currentThread, index);
-		goto done;
+		VM_VMAccess::inlineExitVMToJNI(currentThread);
+		return valueRef;
 	}
 
-	value = J9JAVAARRAYOFOBJECT_LOAD(currentThread, array, index);
+	MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
+	MM_ObjectAllocationAPI objectAllocate(currentThread);
+	/* Use helper that handles both flattened and non-flattened arrays */
+	/* Try fast path first */
+	value = VM_ValueTypeHelpers::loadFlattenableArrayElement(
+			currentThread,
+			objectAccessBarrier,
+			objectAllocate,
+			(j9object_t)array,
+			index,
+			true);
+
+	/* If fast path failed, fall back to slow path (allows GC) */
+	if (NULL == value) {
+		value = VM_ValueTypeHelpers::loadFlattenableArrayElement(
+				currentThread,
+				objectAccessBarrier,
+				objectAllocate,
+				(j9object_t)array,
+				index,
+				false);
+	}
+
 	valueRef = VM_VMHelpers::createLocalRef(env, value);
 
-done:
 	VM_VMAccess::inlineExitVMToJNI(currentThread);
 	return valueRef;
 }
@@ -1014,7 +1119,8 @@ setObjectArrayElement(JNIEnv *env, jobjectArray arrayRef, jsize index, jobject v
 	arrayBound = J9INDEXABLEOBJECT_SIZE(currentThread, array);
 	if ((UDATA)arrayBound <= (UDATA)index) {
 		setArrayIndexOutOfBoundsException(currentThread, index);
-		goto done;
+		VM_VMAccess::inlineExitVMToJNI(currentThread);
+		return;
 	}
 
 	/* A NULL value is ok */
@@ -1027,13 +1133,30 @@ setObjectArrayElement(JNIEnv *env, jobjectArray arrayRef, jsize index, jobject v
 					((J9ArrayClass *)J9OBJECT_CLAZZ(currentThread, array))->componentType)
 		) {
 			setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYSTOREEXCEPTION, NULL);
-			goto done;
+			VM_VMAccess::inlineExitVMToJNI(currentThread);
+			return;
 		}
 	}
 
-	J9JAVAARRAYOFOBJECT_STORE(currentThread, array, index, value);
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	J9Class *arrayClass = J9OBJECT_CLAZZ(currentThread, (j9object_t)array);
+	/* Check if array is null-restricted and value is NULL */
+	if (J9_IS_J9ARRAYCLASS_NULL_RESTRICTED(arrayClass) && (NULL == value)) {
+		setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+		VM_VMAccess::inlineExitVMToJNI(currentThread);
+		return;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
-done:
+	MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
+	/* Use helper that handles both flattened and non-flattened arrays */
+	VM_ValueTypeHelpers::storeFlattenableArrayElement(
+			currentThread,
+			objectAccessBarrier,
+			(j9object_t)array,
+			index,
+			value);
+
 	VM_VMAccess::inlineExitVMToJNI(currentThread);
 }
 
