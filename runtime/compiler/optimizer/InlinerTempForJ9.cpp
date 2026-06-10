@@ -4136,7 +4136,7 @@ void TR_MultipleCallTargetInliner::getFrequencyThresholds(TR_CallTarget *calltar
         veryColdBorderFrequency = comp()->getOptions()->getInlinerCGVeryColdBorderFrequency();
 }
 
-int32_t TR_MultipleCallTargetInliner::scaleBasedOnFrequency(TR_CallTarget *calltarget, TR::Node *callNode,
+int32_t TR_MultipleCallTargetInliner::scaleBasedOnFrequency(TR::Node *callNode,
     TR_EstimateCodeSize *ecs, int32_t size, int32_t frequency, int32_t borderFrequency, int32_t coldBorderFrequency,
     int32_t veryColdBorderFrequency)
 {
@@ -4146,13 +4146,7 @@ int32_t TR_MultipleCallTargetInliner::scaleBasedOnFrequency(TR_CallTarget *callt
     int32_t origSize = size;
     int32_t maxFrequency = MAX_BLOCK_COUNT + MAX_COLD_BLOCK_COUNT;
 
-    // Check for large compiled method
-    bool largeCompiledCallee = !comp()->getOption(TR_InlineVeryLargeCompiledMethods)
-        && isLargeCompiledMethod(calltarget->_calleeMethod, size, frequency);
-
-    if (largeCompiledCallee) {
-        size = size * TR::Options::_inlinerVeryLargeCompiledMethodAdjustFactor;
-    } else if (frequency > borderFrequency) {
+    if (frequency > borderFrequency) {
         float normalizedFrequency = frequency / (float)maxFrequency;
         float callFactor = logf(1 + ecs->getNumOfEstimatedCalls());
         float scalingFactor = 1.0f / (1.0f + normalizedFrequency * (1.0f + callFactor));
@@ -4272,15 +4266,28 @@ void TR_MultipleCallTargetInliner::weighCallSite(TR_CallStack *callStack, TR_Cal
 
         if (TR::isJ9() && !comp()->getMethodSymbol()->doJSR292PerfTweaks() && calltarget->_calleeMethod
             && !alwaysWorthInlining(calltarget->_calleeMethod, callNode)) {
-            int32_t borderFrequency, coldBorderFrequency, veryColdBorderFrequency;
-            getFrequencyThresholds(calltarget, borderFrequency, coldBorderFrequency, veryColdBorderFrequency);
+            // Check for large compiled method and apply adjustment if needed
+            bool largeCompiledCallee = !comp()->getOption(TR_InlineVeryLargeCompiledMethods)
+                && isLargeCompiledMethod(calltarget->_calleeMethod, size, frequency);
 
-            if (comp()->trace(OMR::inlining))
-                heuristicTrace(tracer(), "WeighCallSite: Considering shrinking call %p with frequency %d\n", callNode,
-                    frequency);
+            if (largeCompiledCallee) {
+                int32_t origSize = size;
+                size = size * TR::Options::_inlinerVeryLargeCompiledMethodAdjustFactor;
+                if (comp()->trace(OMR::inlining))
+                    heuristicTrace(tracer(), "WeighCallSite: Adjusted size for large compiled method from %d to %d\n",
+                        origSize, size);
+            } else {
+                int32_t borderFrequency, coldBorderFrequency, veryColdBorderFrequency;
+                getFrequencyThresholds(calltarget, borderFrequency, coldBorderFrequency, veryColdBorderFrequency);
 
-            size = scaleBasedOnFrequency(calltarget, callNode, ecs, size, frequency, borderFrequency,
-                coldBorderFrequency, veryColdBorderFrequency);
+                if (comp()->trace(OMR::inlining))
+                    heuristicTrace(tracer(), "WeighCallSite: Considering shrinking call %p with frequency %d\n",
+                        callNode, frequency);
+
+                // Apply frequency-based scaling
+                size = scaleBasedOnFrequency(callNode, ecs, size, frequency, borderFrequency,
+                    coldBorderFrequency, veryColdBorderFrequency);
+            }
         }
 
         bool toInline = getPolicy()->tryToInline(calltarget, callStack, true);
