@@ -81,6 +81,8 @@ public class ObjectFieldInfo {
 	int totalFlatFieldDoubleBytes = 0;
 	int totalFlatFieldRefBytes = 0;
 	int totalFlatFieldSingleBytes = 0;
+	int totalFlatFieldShortBytes = 0;
+	int totalFlatFieldByteBytes = 0;
 	int flatAlignedObjectInstanceBackfill = 0;
 	int flatAlignedSingleInstanceBackfill = 0;
 	int flatUnAlignedObjectInstanceBackfill = 0;
@@ -121,6 +123,8 @@ public class ObjectFieldInfo {
 		totalFlatFieldDoubleBytes = 0;
 		totalFlatFieldRefBytes = 0;
 		totalFlatFieldSingleBytes = 0;
+		totalFlatFieldShortBytes = 0;
+		totalFlatFieldByteBytes = 0;
 	}
 
 	int getTotalDoubleCount() {
@@ -420,7 +424,7 @@ public class ObjectFieldInfo {
 	}
 
 	void
-	countInstanceFields() throws CorruptDataException
+	countInstanceFields() throws CorruptDataException, NoSuchFieldException
 	{
 		/* iterate over fields to count instance fields by size */
 
@@ -440,9 +444,13 @@ public class ObjectFieldInfo {
 						} else {
 							boolean forceDoubleAlignment;
 							if (fj9object_t_SizeOf == U32.SIZEOF) {
-								UDATA instanceSize = fieldClass.totalInstanceSize();
+								UDATA instanceSize = J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+									? fieldClass.flatFieldSize()
+									: fieldClass.totalInstanceSize();
 								UDATA doubleSize = new UDATA(U64.SIZEOF);
-								if (valueTypeHelper.classRequires4BytePrePadding(fieldClass)) {
+								if (!J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+									&& valueTypeHelper.classRequires4BytePrePadding(fieldClass)
+								) {
 									instanceSize = instanceSize.sub(U32.SIZEOF);
 								}
 								forceDoubleAlignment = (modifiers.allBitsIn(J9JavaAccessFlags.J9AccVolatile) && instanceSize.eq(doubleSize));
@@ -452,20 +460,40 @@ public class ObjectFieldInfo {
 							if (forceDoubleAlignment
 								|| valueTypeHelper.isJ9ClassLargestAlignmentConstraintDouble(fieldClass)
 							) {
-								UDATA doubleSize = fieldClass.totalInstanceSize();
-								if (valueTypeHelper.classRequires4BytePrePadding(fieldClass)) {
-									doubleSize = doubleSize.sub(U32.SIZEOF);
+								UDATA flatFieldSize = J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+									? fieldClass.flatFieldSize()
+									: fieldClass.totalInstanceSize();
+								if (!J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+									&& valueTypeHelper.classRequires4BytePrePadding(fieldClass)
+								) {
+									flatFieldSize = flatFieldSize.sub(U32.SIZEOF);
 								}
-								size = Scalar.roundToSizeofU64(doubleSize).intValue();
+								size = Scalar.roundToSizeofU64(flatFieldSize).intValue();
 								totalFlatFieldDoubleBytes += size;
 							} else if (valueTypeHelper.isJ9ClassLargestAlignmentConstraintReference(fieldClass)) {
-								size = Scalar.roundToSizeToFJ9object(fieldClass.totalInstanceSize()).intValue();
+								size = Scalar.roundToSizeToFJ9object(
+										J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+											? fieldClass.flatFieldSize()
+											: fieldClass.totalInstanceSize()
+										).intValue();
 								totalFlatFieldRefBytes += size;
 								setPotentialFlatObjectInstanceBackfill(size);
-							} else {
-								size = fieldClass.totalInstanceSize().intValue();
+							} else if (!J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+								|| valueTypeHelper.isJ9ClassLargestAlignmentConstraintInteger(fieldClass)
+							) {
+								size = Scalar.roundToSizeofU32(
+									J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+										? fieldClass.flatFieldSize()
+										: fieldClass.totalInstanceSize()
+									).intValue();
 								totalFlatFieldSingleBytes += size;
 								setPotentialFlatSingleInstanceBackfill(size);
+							} else if (valueTypeHelper.isJ9ClassLargestAlignmentConstraintShort(fieldClass)) {
+								size = Scalar.roundToSizeofU16(fieldClass.flatFieldSize()).intValue();
+								totalFlatFieldShortBytes += size;
+							} else {
+								size = fieldClass.flatFieldSize().intValue();
+								totalFlatFieldByteBytes += size;
 							}
 						}
 					} else {
@@ -531,7 +559,14 @@ public class ObjectFieldInfo {
 		long accumulator = superclassFieldsSize + (totalObjectCount * J9ObjectHelper.headerSize()) + (totalSingleCount * U32.SIZEOF)
 				+ (totalDoubleCount * U64.SIZEOF);
 
+		if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) {
+			accumulator += (totalShortCount * U16.SIZEOF) + (totalByteCount * U8.SIZEOF);
+		}
+
 		accumulator += totalFlatFieldDoubleBytes + totalFlatFieldRefBytes + totalFlatFieldSingleBytes;
+		if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) {
+			accumulator += totalFlatFieldShortBytes + totalFlatFieldByteBytes;
+		}
 
 		/* ValueTypes cannot be subtyped and their superClass contains no fields */
 		if (isValue) {
@@ -613,6 +648,26 @@ public class ObjectFieldInfo {
 	addFlatSinglesArea(int start)
 	{
 		return start + getNonBackfilledFlatInstanceSingleSize();
+	}
+
+	/**
+	 * @param start end of previous field area
+	 * @return offset to end of the flat shorts area
+	 */
+	int
+	addFlatShortsArea(int start)
+	{
+		return start + totalFlatFieldShortBytes;
+	}
+
+	/**
+	 * @param start end of previous field area
+	 * @return offset to end of the flat bytes area
+	 */
+	int
+	addFlatBytesArea(int start)
+	{
+		return start + totalFlatFieldByteBytes;
 	}
 	
 	int

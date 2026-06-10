@@ -195,6 +195,11 @@ public abstract class Scalar extends DataType {
 		return roundTo(value, ObjectReferencePointer.SIZEOF);
 	}
 
+	public static UDATA roundToSizeofU16(UDATA value)
+	{
+		return roundTo(value, U16.SIZEOF);
+	}
+
 	public static UDATA roundToSizeofU32(UDATA value)
 	{
 		return roundTo(value, U32.SIZEOF);

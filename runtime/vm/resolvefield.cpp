@@ -961,6 +961,9 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 
 		state->result.totalInstanceSize = fieldInfo.calculateTotalFieldsSizeAndBackfill();
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+		state->result.flatFieldSize = fieldInfo.calculateFlatFieldSize();
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 		state->flatBackFillSize = fieldInfo.getBackfillSize();
 		state->classRequiresPrePadding = fieldInfo.doesClassRequiresPrePadding();
 		state->firstFlatDoubleOffset = fieldInfo.calculateFieldDataStart();
@@ -970,8 +973,10 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 		state->firstFlatSingleOffset = fieldInfo.addObjectsArea(state->firstObjectOffset);
 		state->firstSingleOffset = fieldInfo.addFlatSinglesArea(state->firstFlatSingleOffset);
 #if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
-		state->firstShortOffset = fieldInfo.addSinglesArea(state->firstSingleOffset);
-		state->firstByteOffset = fieldInfo.addShortsArea(state->firstShortOffset);
+		state->firstFlatShortOffset = fieldInfo.addSinglesArea(state->firstSingleOffset);
+		state->firstShortOffset = fieldInfo.addFlatShortsArea(state->firstFlatShortOffset);
+		state->firstFlatByteOffset = fieldInfo.addShortsArea(state->firstShortOffset);
+		state->firstByteOffset = fieldInfo.addFlatBytesArea(state->firstFlatByteOffset);
 #endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 #else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		state->firstDoubleOffset = fieldInfo.calculateFieldDataStart();
@@ -1236,7 +1241,11 @@ fieldOffsetsFindNext(J9ROMFieldOffsetWalkState *state, J9ROMFieldShape *field)
 								state->objectsSeen++;
 							}
 						} else {
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+							U_32 size = (U_32)fieldClass->flatFieldSize;
+#else /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 							U_32 size = (U_32)fieldClass->totalInstanceSize;
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 							bool forceDoubleAlignment = false;
 							if (sizeof(U_32) == referenceSize) {
 								/**
@@ -1252,9 +1261,11 @@ fieldOffsetsFindNext(J9ROMFieldOffsetWalkState *state, J9ROMFieldShape *field)
 							if (forceDoubleAlignment
 								|| J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintDouble)
 							) {
+#if !defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
 								if (J9CLASS_HAS_4BYTE_PREPADDING(fieldClass)) {
 									size -= sizeof(U_32);
 								}
+#endif /* !defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 								state->result.offset = state->firstFlatDoubleOffset + state->currentFlatDoubleOffset;
 								Assert_VM_true((state->result.offset + referenceSize) % sizeof(U_64) == 0);
 								state->currentFlatDoubleOffset += ROUND_UP_TO_POWEROF2(size, sizeof(U_64));
@@ -1270,7 +1281,12 @@ fieldOffsetsFindNext(J9ROMFieldOffsetWalkState *state, J9ROMFieldShape *field)
 									state->result.offset = state->firstFlatObjectOffset + state->currentFlatObjectOffset;
 									state->currentFlatObjectOffset += size;
 								}
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+							} else if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintInteger)) {
+								size = (U_32)ROUND_UP_TO_POWEROF2(size, sizeof(U_32));
+#else /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 							} else {
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 								if (J9_ARE_ALL_BITS_SET(state->walkFlags, J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_SINGLE_FIELD)
 									&& (state->flatBackFillSize == size)
 								) {
@@ -1281,6 +1297,15 @@ fieldOffsetsFindNext(J9ROMFieldOffsetWalkState *state, J9ROMFieldShape *field)
 									state->result.offset = state->firstFlatSingleOffset + state->currentFlatSingleOffset;
 									state->currentFlatSingleOffset += size;
 								}
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+							} else if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintShort)) {
+								size = (U_32)ROUND_UP_TO_POWEROF2(size, sizeof(U_16));
+								state->result.offset = state->firstFlatShortOffset + state->currentFlatShortOffset;
+								state->currentFlatShortOffset += size;
+							} else { /* 8-bit case. */
+								state->result.offset = state->firstFlatByteOffset + state->currentFlatByteOffset;
+								state->currentFlatByteOffset += size;
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 							}
 						}
 					} else {
@@ -1448,7 +1473,7 @@ fullTraversalFieldOffsetsNextDo(J9ROMFullTraversalFieldOffsetWalkState *state)
 		state->clazz = NULL;
 	}
 
-	while(state->currentClass) {
+	while (NULL != state->currentClass) {
 		
 		if ((state->walkFlags & J9VM_FIELD_OFFSET_WALK_PREINDEX_INTERFACE_FIELDS) == 0) { 
 			/* add the slots for the interfaces to the index */

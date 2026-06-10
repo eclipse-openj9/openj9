@@ -83,6 +83,7 @@
 #define J9ClassLargestAlignmentConstraintReference 0x800
 #define J9ClassLargestAlignmentConstraintDouble 0x1000
 #define J9ClassIsExemptFromValidation 0x2000
+#define J9ClassLargestAlignmentConstraintInteger 0x4000
 #define J9ClassCanSupportFastSubstitutability 0x8000
 #define J9ClassHasReferences 0x10000
 #define J9ClassRequiresPrePadding 0x20000
@@ -91,6 +92,7 @@
 #define J9ClassEnsureHashed 0x100000
 #define J9ClassHasOffloadAllowSubtasksNatives 0x200000
 #define J9ClassIsPrimitiveValueType 0x400000
+#define J9ClassLargestAlignmentConstraintShort 0x800000
 #define J9ClassNeedToPruneMemberNames 0x1000000
 #define J9ClassArrayIsNullRestricted 0x2000000
 #define J9ClassIsLoadedFromSnapshot 0x4000000
@@ -1961,6 +1963,9 @@ typedef struct J9ROMFieldOffsetWalkResult {
 	IDATA backfillOffset;
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	struct J9Class* flattenedClass;
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+	UDATA flatFieldSize;
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 } J9ROMFieldOffsetWalkResult;
 
@@ -2010,9 +2015,17 @@ typedef struct J9ROMFieldOffsetWalkState {
 	UDATA firstFlatSingleOffset;
 	UDATA firstFlatObjectOffset;
 	UDATA firstFlatDoubleOffset;
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+	UDATA firstFlatShortOffset;
+	UDATA firstFlatByteOffset;
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 	UDATA currentFlatSingleOffset;
 	UDATA currentFlatObjectOffset;
 	UDATA currentFlatDoubleOffset;
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+	UDATA currentFlatShortOffset;
+	UDATA currentFlatByteOffset;
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 	BOOLEAN classRequiresPrePadding;
 	UDATA flatBackFillSize;
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
@@ -3729,6 +3742,9 @@ typedef struct J9Class {
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	struct J9Class *nullRestrictedArrayClass;
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+	UDATA flatFieldSize;
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 } J9Class;
 
@@ -3834,6 +3850,9 @@ typedef struct J9ArrayClass {
 	 * A null-restricted J9ArrayClass points to its nullable companion, if one exists.
 	 */
 	struct J9Class *companionArray;
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+	UDATA flatFieldSize;
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 } J9ArrayClass;
 

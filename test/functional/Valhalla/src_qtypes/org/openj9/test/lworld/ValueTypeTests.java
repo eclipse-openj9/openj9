@@ -360,6 +360,66 @@ public class ValueTypeTests {
 		assertEquals(getY.invoke(point2D_2_check), getY.invoke(point2D_2));
 	}
 
+	@Test(priority=2)
+	static public void testCreateArrayCompactByte() throws Throwable {
+		byte b1_1 = (byte)0x11;
+		byte b1_2 = (byte)0x22;
+		byte b1_3 = (byte)0x33;
+		byte b1_4 = (byte)0x44;
+		byte b2_1 = (byte)0x55;
+		byte b2_2 = (byte)0x66;
+		byte b2_3 = (byte)0x77;
+		byte b2_4 = (byte)0x88;
+
+		Object compactByte_1 = makeCompactByte.invoke(b1_1, b1_2, b1_3, b1_4);
+		Object compactByte_2 = makeCompactByte.invoke(b2_1, b2_2, b2_3, b2_4);
+
+		Object arrayObject = Array.newInstance(compactByteClass, 3);
+		Array.set(arrayObject, 1, compactByte_1);
+		Array.set(arrayObject, 2, compactByte_2);
+
+		Object compactByte_1_check = Array.get(arrayObject, 1);
+		Object compactByte_2_check = Array.get(arrayObject, 2);
+		assertEquals(getCompactBytes[0].invoke(compactByte_1_check), getCompactBytes[0].invoke(compactByte_1));
+		assertEquals(getCompactBytes[1].invoke(compactByte_1_check), getCompactBytes[1].invoke(compactByte_1));
+		assertEquals(getCompactBytes[2].invoke(compactByte_1_check), getCompactBytes[2].invoke(compactByte_1));
+		assertEquals(getCompactBytes[3].invoke(compactByte_1_check), getCompactBytes[3].invoke(compactByte_1));
+		assertEquals(getCompactBytes[0].invoke(compactByte_2_check), getCompactBytes[0].invoke(compactByte_2));
+		assertEquals(getCompactBytes[1].invoke(compactByte_2_check), getCompactBytes[1].invoke(compactByte_2));
+		assertEquals(getCompactBytes[2].invoke(compactByte_2_check), getCompactBytes[2].invoke(compactByte_2));
+		assertEquals(getCompactBytes[3].invoke(compactByte_2_check), getCompactBytes[3].invoke(compactByte_2));
+	}
+
+	@Test(priority=2)
+	static public void testCreateArrayCompactShort() throws Throwable {
+		short s1_1 = (short)0x1111;
+		short s1_2 = (short)0x2222;
+		short s1_3 = (short)0x3333;
+		short s1_4 = (short)0x4444;
+		short s2_1 = (short)0x5555;
+		short s2_2 = (short)0x6666;
+		short s2_3 = (short)0x7777;
+		short s2_4 = (short)0x8888;
+
+		Object compactShort_1 = makeCompactShort.invoke(s1_1, s1_2, s1_3, s1_4);
+		Object compactShort_2 = makeCompactShort.invoke(s2_1, s2_2, s2_3, s2_4);
+
+		Object arrayObject = Array.newInstance(compactShortClass, 3);
+		Array.set(arrayObject, 1, compactShort_1);
+		Array.set(arrayObject, 2, compactShort_2);
+
+		Object compactShort_1_check = Array.get(arrayObject, 1);
+		Object compactShort_2_check = Array.get(arrayObject, 2);
+		assertEquals(getCompactShorts[0].invoke(compactShort_1_check), getCompactShorts[0].invoke(compactShort_1));
+		assertEquals(getCompactShorts[1].invoke(compactShort_1_check), getCompactShorts[1].invoke(compactShort_1));
+		assertEquals(getCompactShorts[2].invoke(compactShort_1_check), getCompactShorts[2].invoke(compactShort_1));
+		assertEquals(getCompactShorts[3].invoke(compactShort_1_check), getCompactShorts[3].invoke(compactShort_1));
+		assertEquals(getCompactShorts[0].invoke(compactShort_2_check), getCompactShorts[0].invoke(compactShort_2));
+		assertEquals(getCompactShorts[1].invoke(compactShort_2_check), getCompactShorts[1].invoke(compactShort_2));
+		assertEquals(getCompactShorts[2].invoke(compactShort_2_check), getCompactShorts[2].invoke(compactShort_2));
+		assertEquals(getCompactShorts[3].invoke(compactShort_2_check), getCompactShorts[3].invoke(compactShort_2));
+	}
+
 	@Test(priority=5)
 	static public void testGCFlattenedPoint2DArray() throws Throwable {
 		int x1 = 0xFFEEFFEE;
@@ -1510,7 +1570,7 @@ public class ValueTypeTests {
 		return make;
 	}
 
-	@Test(priority=2)
+	@Test(priority=1)
 	static public void testCreateLayoutsWithPrimitivesAndSmallTypes() throws Throwable {
 		String[] compactByteFields = {"b0:B", "b1:B", "b2:B", "b3:B"};
 		String[] compactShortFields = {"s0:S", "s1:S", "s2:S", "s3:S"};
