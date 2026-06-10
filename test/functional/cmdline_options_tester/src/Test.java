@@ -34,9 +34,26 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @SuppressWarnings("nls")
 class Test {
+
+	static final class Range {
+		final int min;
+		final int max;
+
+		Range(int min, int max) {
+			this.min = min;
+			this.max = max;
+		}
+
+		boolean includes(int value) {
+			return (min <= value) && (value <= max);
+		}
+	}
+
 	private final String _id;
 	private String _command;
 	private final String _timeoutString;
@@ -54,6 +71,12 @@ class Test {
 	private String _commandExecutable;
 	private List<String> _commandArgs;
 	private List<String> _commandInputLines;
+	private final List<Range> _versionRanges;
+
+	private static final Pattern PLUS_PATTERN = Pattern.compile("\\s*(\\d+)\\s*\\+\\s*");
+	private static final Pattern RANGE_PATTERN = Pattern.compile("\\s*\\[\\s*(\\d+)\\s*,\\s*(\\d+)\\s*\\]\\s*");
+	private static final Pattern SINGLE_PATTERN = Pattern.compile("\\s*(\\d+)\\s*");
+
 	private static final long _JAVACORE_TIMEOUT_MILLIS = 5 * 60 * 1000; // 5 minute timeout
 	private static final long SHORT_TIMEOUT_MILLIS = 30 * 1000; // 30 second timeout
 
@@ -64,7 +87,7 @@ class Test {
 	 */
 	static final String CORE_COUNT_PROPERTY = "cmdline.corecount";
 	static final int CORE_COUNT = Integer.getInteger(CORE_COUNT_PROPERTY, 2).intValue();
-	
+
 	/**
 	 * The time in milliseconds between capturing core files (if CORE_COUNT > 1)
 	 * may be specified via
@@ -72,10 +95,20 @@ class Test {
 	 * The default is one minute.
 	 */
 	static final long CORE_SPACING_MILLIS = Long.getLong("cmdline.coreintervalms", 60 * 1000).longValue();
-	
-	static String archName = System.getProperty("os.arch");
-	static boolean isRiscv = archName.toLowerCase().contains("riscv");
-	static boolean isJava8 = System.getProperty("java.specification.version").equals("1.8");
+
+	static final String archName = System.getProperty("os.arch");
+	static final boolean isRiscv = archName.toLowerCase().contains("riscv");
+	static final int javaVersion;
+
+	static {
+		String versionString = System.getProperty("java.specification.version");
+
+		if (versionString.startsWith("1.")) {
+			versionString = versionString.substring(2);
+		}
+
+		javaVersion = Integer.parseInt(versionString);
+	}
 
 	/**
 	 * Create a new test case with the given id.
@@ -92,6 +125,7 @@ class Test {
 		_standardOutput = new StringBuilder();
 		_errorOutput = new StringBuilder();
 		_timedOut = false;
+		_versionRanges = new ArrayList<>();
 	}
 
 	void setOutputLimit(int outputLimit) {
@@ -125,6 +159,51 @@ class Test {
 		_testConditions.add(tc);
 	}
 
+	void constrainVersion(String constraint) {
+		Matcher matcher;
+
+		matcher = PLUS_PATTERN.matcher(constraint);
+		if (matcher.matches()) {
+			int min = Integer.parseInt(matcher.group(1).trim());
+
+			_versionRanges.add(new Range(min, Integer.MAX_VALUE));
+			return;
+		}
+
+		matcher = RANGE_PATTERN.matcher(constraint);
+		if (matcher.matches()) {
+			int min = Integer.parseInt(matcher.group(1).trim());
+			int max = Integer.parseInt(matcher.group(2).trim());
+
+			_versionRanges.add(new Range(min, max));
+			return;
+		}
+
+		matcher = SINGLE_PATTERN.matcher(constraint);
+		if (matcher.matches()) {
+			int version = Integer.parseInt(matcher.group(1).trim());
+
+			_versionRanges.add(new Range(version, version));
+			return;
+		}
+
+		throw new IllegalArgumentException(constraint);
+	}
+
+	private boolean shouldRun() {
+		if (_versionRanges.isEmpty()) {
+			return true;
+		}
+
+		for (Range range : _versionRanges) {
+			if (range.includes(javaVersion)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	/**
 	 * Does the required variable substitutions and runs the test case.
 	 *
@@ -137,6 +216,11 @@ class Test {
 	public boolean run(long defaultTimeout) {
 		// clear any previously captured output
 		destroy();
+
+		if (!shouldRun()) {
+			System.out.format("Skipping test which does not apply to Java %d%n.", javaVersion);
+			return true;
+		}
 
 		_matched = new boolean[_testConditions.size()];
 		long timer;
@@ -430,14 +514,14 @@ class Test {
 	public static boolean isLinux() {
 		String osName = System.getProperty("os.name", "<unknown>");
 
-		return osName.toLowerCase().indexOf("linux") >= 0;
+		return osName.toLowerCase().contains("linux");
 	}
 
 	public static int getPID(Process process) throws Exception {
 		if (isRiscv) {
 			return 0;
 		}
-		if (isJava8) {
+		if (javaVersion == 8) {
 			Class<?> cl = process.getClass();
 			if (!cl.getName().equals("java.lang.UNIXProcess")) {
 				return 0;

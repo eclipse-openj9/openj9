@@ -19,23 +19,24 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  */
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestIterator {
-	private TestSuite _suite;
 
-	private String _loopIndex;
-	private String _loopFrom;
-	private String _loopUntil;
-	private String _loopInc;
-	
-	private boolean _singleIterationOnly;
+	private final TestSuite _suite;
+
+	private final String _loopIndex;
+	private final String _loopFrom;
+	private final String _loopUntil;
+	private final String _loopInc;
+
+	private final boolean _singleIterationOnly;
 	private boolean _loopIndexIncremented;
-	
+
 	private boolean _isInnerLoopOpen;
-	private ArrayList _subItems;
-	
+	private final List<Object> _subItems;
+
 	/**
 	 * This constructor creates a standard TestIterator object, which runs a given set of tests/variable assignments/etc.
 	 * a number of times. The number of times that the stuff is run depends on the <code>from</code>, <code>until</code>,
@@ -48,62 +49,67 @@ public class TestIterator {
 	 * The <code>from</code>, <code>until</code>, and <code>inc</code> strings may have variables in them, but after
 	 * variable substitution, must evaluate to integers.
 	 */
-	TestIterator( TestSuite suite, String index, String from, String until, String inc ) {
+	TestIterator(TestSuite suite, String index, String from, String until, String inc) {
 		_suite = suite;
 
 		_loopIndex = index;
 		_loopFrom = from;
 		_loopUntil = until;
 		_loopInc = inc;
-		
+
+		_singleIterationOnly = false;
 		_isInnerLoopOpen = false;
-		_subItems = new ArrayList();
-		
-		TestSuite.putVariable( _loopIndex, TestSuite.evaluateVariables( _loopFrom ) );
+		_subItems = new ArrayList<>();
+
+		TestSuite.putVariable(_loopIndex, TestSuite.evaluateVariables(_loopFrom));
 	}
-	
+
 	/**
 	 * This constructor creates a single-iteration version of this iterator. It will run everything passed
 	 * to it (by the addXXX methods) exactly once.
 	 */
-	TestIterator( TestSuite suite ) {
+	TestIterator(TestSuite suite) {
 		_suite = suite;
-		
+
+		_loopIndex = null;
+		_loopFrom = null;
+		_loopUntil = null;
+		_loopInc = null;
+
 		_singleIterationOnly = true;
-		
 		_isInnerLoopOpen = false;
-		_subItems = new ArrayList();
+		_subItems = new ArrayList<>();
 	}
-	
-	void addTest( Test t ) {
+
+	void addTest(Test t) {
 		if (_isInnerLoopOpen) {
-			getLastSubIterator().addTest( t );
+			getLastSubIterator().addTest(t);
 		} else {
-			_subItems.add( t );
+			_subItems.add(t);
 			if (canRunTest()) {
-				_suite.runTest( t );
+				_suite.runTest(t);
 			}
 		}
 	}
 
-	void addSubIterator( TestIterator it ) {
+	void addSubIterator(TestIterator it) {
 		if (_isInnerLoopOpen) {
-			getLastSubIterator().addSubIterator( it );
+			getLastSubIterator().addSubIterator(it);
 		} else {
-			_subItems.add( it );
+			_subItems.add(it);
 			_isInnerLoopOpen = true;
 		}
 	}
-	
-	void addCommand( Command c ) {
+
+	void addCommand(Command c) {
 		if (_isInnerLoopOpen) {
-			getLastSubIterator().addCommand( c );
+			getLastSubIterator().addCommand(c);
 		} else {
-			_subItems.add( c );
+			_subItems.add(c);
 			c.executeSelf();
 		}
 	}
-	
+
 	boolean closeInnerLoop() {
 		if (_isInnerLoopOpen) {
 			if (getLastSubIterator().closeInnerLoop()) {
@@ -112,77 +118,79 @@ public class TestIterator {
 			_isInnerLoopOpen = false;
 			return true;
 		}
-		// end of this TestIterator's corresponding <loop> element, so now we actually run the remaining
-		// iterations of the loop
+		// End of this TestIterator's corresponding <loop> element,
+		// so now we actually run the remaining iterations of the loop.
 		incrementLoopIndex();
 		while (canRunTest()) {
 			runIteration();
 		}
 		return false;
 	}
-	
+
 	private void incrementLoopIndex() {
 		if (_singleIterationOnly) {
 			_loopIndexIncremented = true;
 			return;
 		}
-		
+
 		try {
-			int increment = (_loopInc == null ? 1 : Integer.parseInt( TestSuite.evaluateVariables( _loopInc ).trim() ));
-			String value = TestSuite.getVariable( _loopIndex );
-			value = Integer.toString( Integer.parseInt( value.trim() ) + increment );
-			TestSuite.putVariable( _loopIndex, value );
+			int increment = (_loopInc == null) ? 1 : Integer.parseInt(TestSuite.evaluateVariables(_loopInc).trim());
+			String value = TestSuite.getVariable(_loopIndex);
+			value = Integer.toString(Integer.parseInt(value.trim()) + increment);
+			TestSuite.putVariable(_loopIndex, value);
 		} catch (Exception e) {
 			notifyInfiniteLoop(e);
 			System.exit(1);
 		}
 	}
-	
+
 	private void runEntireLoop() {
-		TestSuite.putVariable( _loopIndex, TestSuite.evaluateVariables( _loopFrom ) );
+		TestSuite.putVariable(_loopIndex, TestSuite.evaluateVariables(_loopFrom));
 		while (canRunTest()) {
 			runIteration();
 		}
 	}
-	
+
 	private void runIteration() {
-		for (int i = 0; i < _subItems.size(); i++) {
-			Object o = _subItems.get(i);
+		for (Object o : _subItems) {
 			if (o instanceof Test && canRunTest()) {
-				_suite.runTest( (Test)o );
+				_suite.runTest((Test) o);
 			} else if (o instanceof TestIterator) {
-				( (TestIterator)o ).runEntireLoop();
+				((TestIterator) o).runEntireLoop();
 			} else if (o instanceof Command) {
-				( (Command)o ).executeSelf();
+				((Command) o).executeSelf();
 			}
 		}
 		incrementLoopIndex();
 	}
-	
+
 	private boolean canRunTest() {
 		if (_singleIterationOnly) {
 			return !_loopIndexIncremented;
 		}
 		try {
-			return ! (Integer.parseInt(TestSuite.getVariable(_loopIndex)) == Integer.parseInt(TestSuite.evaluateVariables(_loopUntil)));			
+			int index = Integer.parseInt(TestSuite.getVariable(_loopIndex));
+			int until = Integer.parseInt(TestSuite.evaluateVariables(_loopUntil));
+			return index != until;
 		} catch (Exception e) {
 			notifyInfiniteLoop(e);
 			System.exit(1);
+			return false; // dead code, to satisfy compiler only
 		}
-		return false;	// dead code, to satisfy compiler only
 	}
-	
+
 	private TestIterator getLastSubIterator() {
-		return (TestIterator)_subItems.get( _subItems.size() - 1 );
+		return (TestIterator) _subItems.get(_subItems.size() - 1);
 	}
-	
-	private void notifyInfiniteLoop( Exception e ) {
+
+	private void notifyInfiniteLoop(Exception e) {
 		// if there is an exception here, it's an accidental infinite loop. tell user to fix!
-		System.err.println( "The test file passed to the cmdLineTester application contained an invalid loop" );
-		System.err.println( "of " + _loopIndex + " from " + _loopFrom + " until " + _loopUntil + ", with increment " + _loopInc + ". This loop" );
-		System.err.println( "contains an error that will get it stuck in an infinite cycle. Please fix it.. or" );
-		System.err.println( "modify the cmdLineTester application to deal with it, if it really is what you" );
-		System.err.println( "want to do. The cmdLineTester application will now terminate." );
+		System.err.println("The test file passed to the cmdLineTester application contained an invalid loop");
+		System.err.format("of %s from %s until %s, with increment %s. This loop%n",
+				_loopIndex, _loopFrom, _loopUntil, _loopInc);
+		System.err.println("contains an error that will get it stuck in an infinite cycle. Please fix it, or");
+		System.err.println("modify the cmdLineTester application to deal with it, if it really is what you");
+		System.err.println("want to do. The cmdLineTester application will now terminate.");
 		e.printStackTrace();
 	}
 }

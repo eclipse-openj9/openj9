@@ -19,22 +19,22 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  */
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-
-import com.ibm.oti.util.regex.*;
+import com.ibm.oti.util.regex.Regex;
 
 class Output extends TestCondition {
-	private String _type;
-	private String _matchRegex;
-	private String _matchJavaUtilPattern;	
-	private String _matchCase;
-	private String _output;		// the output string taken from the file
-	private String _showRegexMatch;
-	
-	public Output( String matchRegex, String matchJavaUtilPattern, String showRegexMatch, String matchCase, String type ) {
+
+	private static boolean evalBoolean(String expr) {
+		return !"no".equalsIgnoreCase(TestSuite.evaluateVariables(expr));
+	}
+
+	private final String _type;
+	private final String _matchRegex;
+	private final String _matchJavaUtilPattern;
+	private final String _matchCase;
+	private String _output; // the output string taken from the file
+	private final String _showRegexMatch;
+
+	public Output(String matchRegex, String matchJavaUtilPattern, String showRegexMatch, String matchCase, String type) {
 		_matchRegex = matchRegex;
 		_matchJavaUtilPattern = matchJavaUtilPattern;
 		_showRegexMatch = showRegexMatch;
@@ -43,32 +43,32 @@ class Output extends TestCondition {
 		_output = "";
 	}
 
-	void setOutput( String s ) {
+	void setOutput(String s) {
 		_output = s;
 	}
-	
+
 	int getType() {
-		return parseType( TestSuite.evaluateVariables( _type ) );
+		return parseType(TestSuite.evaluateVariables(_type));
 	}
-	
+
 	public boolean isJavaUtilPattern() {
-		return !("no".equalsIgnoreCase( TestSuite.evaluateVariables( _matchJavaUtilPattern ) ));
+		return evalBoolean(_matchJavaUtilPattern);
 	}
-		
-	boolean match( Object o ) {
+
+	boolean match(Object o) {
 		String candidate = (String) o;
-		boolean matchRegex = !("no".equalsIgnoreCase(TestSuite.evaluateVariables(_matchRegex)));
-		boolean matchCase = !("no".equalsIgnoreCase(TestSuite.evaluateVariables(_matchCase)));
-		boolean matchJavaUtilPattern = !("no".equalsIgnoreCase(TestSuite.evaluateVariables(_matchJavaUtilPattern)));
-		boolean showRegexMatch = !("no".equalsIgnoreCase(TestSuite.evaluateVariables(_showRegexMatch)));
+		boolean matchRegex = evalBoolean(_matchRegex);
+		boolean matchCase = evalBoolean(_matchCase);
+		boolean matchJavaUtilPattern = evalBoolean(_matchJavaUtilPattern);
+		boolean showRegexMatch = evalBoolean(_showRegexMatch);
 		String string = TestSuite.evaluateVariables(_output);
 
-		if ((matchRegex) && (!matchJavaUtilPattern)) {
+		if (matchRegex && !matchJavaUtilPattern) {
 			try {
 				Regex regex = new Regex(string, matchCase);
 				boolean retval = regex.matches(candidate);
-				if(	retval && showRegexMatch) {
-					System.out.println("\tMatch ("+_type+"): "+candidate);
+				if (retval && showRegexMatch) {
+					System.out.println("\tMatch (" + _type + "): " + candidate);
 				}
 				return retval;
 			} catch (Exception e) {
@@ -77,25 +77,27 @@ class Output extends TestCondition {
 				e.printStackTrace();
 				return false;
 			}
-		} else if ((matchRegex) && (matchJavaUtilPattern)) {
+		} else if (matchRegex && matchJavaUtilPattern) {
 			/* CMVC 163891: Use of java.util.regex.Pattern/Matcher must be in a separate class, to avoid
 			 * problems with the verifier when using the embedded class library.
 			 */
-			return OutputRegexHelper.ContainsMatches(candidate,string,matchCase,showRegexMatch,_type);
+			return OutputRegexHelper.ContainsMatches(candidate, string, matchCase, showRegexMatch, _type);
 		} else {
 			if (!matchCase) {
 				string = string.toLowerCase();
 				candidate = candidate.toLowerCase();
 			}
-			boolean retval = (candidate.indexOf(string) >= 0);
-			if(	retval && showRegexMatch) {
-				System.out.println("\tMatch ("+_type+"): "+candidate);
+			boolean retval = candidate.contains(string);
+			if (retval && showRegexMatch) {
+				System.out.println("\tMatch (" + _type + "): " + candidate);
 			}
 			return retval;
 		}
 	}
-	
+
+	@Override
 	public String toString() {
-		return "Output match: " + TestSuite.evaluateVariables( _output );
+		return "Output match: " + TestSuite.evaluateVariables(_output);
 	}
+
 }
