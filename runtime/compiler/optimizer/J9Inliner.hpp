@@ -118,8 +118,8 @@ private:
     int32_t applySizeAdjustmentHeuristics(TR_CallTarget *calltarget, int32_t size, bool &wouldBenefitFromInlining);
     void getFrequencyThresholds(TR_CallTarget *calltarget, int32_t &borderFrequency, int32_t &coldBorderFrequency,
         int32_t &veryColdBorderFrequency);
-    int32_t scaleBasedOnFrequency(TR::Node *callNode, TR_EstimateCodeSize *ecs, int32_t size,
-        int32_t frequency, int32_t borderFrequency, int32_t coldBorderFrequency, int32_t veryColdBorderFrequency);
+    int32_t scaleBasedOnFrequency(TR_CallTarget *calltarget, TR::Node *callNode, TR_EstimateCodeSize *ecs,
+        int32_t size, int32_t frequency);
 
     int32_t applyArgumentHeuristics(TR_LinkHead<TR_ParameterMapping> &map, int32_t originalWeight,
         TR_CallTarget *target);

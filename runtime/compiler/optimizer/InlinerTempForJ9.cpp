@@ -4136,15 +4136,18 @@ void TR_MultipleCallTargetInliner::getFrequencyThresholds(TR_CallTarget *calltar
         veryColdBorderFrequency = comp()->getOptions()->getInlinerCGVeryColdBorderFrequency();
 }
 
-int32_t TR_MultipleCallTargetInliner::scaleBasedOnFrequency(TR::Node *callNode,
-    TR_EstimateCodeSize *ecs, int32_t size, int32_t frequency, int32_t borderFrequency, int32_t coldBorderFrequency,
-    int32_t veryColdBorderFrequency)
+int32_t TR_MultipleCallTargetInliner::scaleBasedOnFrequency(TR_CallTarget *calltarget, TR::Node *callNode,
+    TR_EstimateCodeSize *ecs, int32_t size, int32_t frequency)
 {
     if (size <= 0)
         return size;
 
     int32_t origSize = size;
     int32_t maxFrequency = MAX_BLOCK_COUNT + MAX_COLD_BLOCK_COUNT;
+
+    // Get frequency thresholds
+    int32_t borderFrequency, coldBorderFrequency, veryColdBorderFrequency;
+    getFrequencyThresholds(calltarget, borderFrequency, coldBorderFrequency, veryColdBorderFrequency);
 
     if (frequency > borderFrequency) {
         float normalizedFrequency = frequency / (float)maxFrequency;
@@ -4277,16 +4280,12 @@ void TR_MultipleCallTargetInliner::weighCallSite(TR_CallStack *callStack, TR_Cal
                     heuristicTrace(tracer(), "WeighCallSite: Adjusted size for large compiled method from %d to %d\n",
                         origSize, size);
             } else {
-                int32_t borderFrequency, coldBorderFrequency, veryColdBorderFrequency;
-                getFrequencyThresholds(calltarget, borderFrequency, coldBorderFrequency, veryColdBorderFrequency);
-
                 if (comp()->trace(OMR::inlining))
                     heuristicTrace(tracer(), "WeighCallSite: Considering shrinking call %p with frequency %d\n",
                         callNode, frequency);
 
                 // Apply frequency-based scaling
-                size = scaleBasedOnFrequency(callNode, ecs, size, frequency, borderFrequency,
-                    coldBorderFrequency, veryColdBorderFrequency);
+                size = scaleBasedOnFrequency(calltarget, callNode, ecs, size, frequency);
             }
         }
 
