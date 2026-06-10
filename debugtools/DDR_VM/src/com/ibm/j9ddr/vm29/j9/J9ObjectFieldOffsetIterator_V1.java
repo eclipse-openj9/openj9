@@ -97,9 +97,13 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 	private UDATA firstFlatDoubleOffset = new UDATA(0);
 	private UDATA firstFlatObjectOffset = new UDATA(0);
 	private UDATA firstFlatSingleOffset = new UDATA(0);
+	private UDATA firstFlatShortOffset = new UDATA(0);
+	private UDATA firstFlatByteOffset = new UDATA(0);
 	private UDATA currentFlatDoubleOffset = new UDATA(0);
 	private UDATA currentFlatObjectOffset = new UDATA(0);
 	private UDATA currentFlatSingleOffset = new UDATA(0);
+	private UDATA currentFlatShortOffset = new UDATA(0);
+	private UDATA currentFlatByteOffset = new UDATA(0);
 	private UDATA flatBackFillSize = new UDATA(0);
 
 	private U32 doubleSeen = new U32(0);
@@ -140,12 +144,12 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		// Can't call init or set romClass in the constructor because they can throw a CorruptDataException
 	}
 
-	private void init() throws CorruptDataException {
+	private void init() throws CorruptDataException, NoSuchFieldException {
 		calculateInstanceSize(romClass, superClazz); //initInstanceSize(romClass, superClazz);
 		romFieldsShapeIterator = new J9ROMFieldShapeIterator(romClass.romFields(), romClass.romFieldCount());
 	}
 
-	private void nextField() throws CorruptDataException {
+	private void nextField() throws CorruptDataException, NoSuchFieldException {
 		boolean walkHiddenFields = false;
 		isHidden = false;
 		field = null;
@@ -189,8 +193,8 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		}
 	}
 
-	// Based on fieldOffsetsFindNext from resolvefield.cpp
-	private void fieldOffsetsFindNext() throws CorruptDataException {
+	// Based on fieldOffsetsFindNext from resolvefield.cpp.
+	private void fieldOffsetsFindNext() throws CorruptDataException, NoSuchFieldException {
 		/* start walking the fields to find the first one to return */
 		/* loop in case we have been told to only consider instance or static fields - we may have to skip past a few of the wrong kind */
 
@@ -239,9 +243,13 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 								UDATA size = null;
 								boolean forceDoubleAlignment;
 								if (fj9object_t_SizeOf == U32.SIZEOF) {
-									UDATA instanceSize = fieldClass.totalInstanceSize();
+									UDATA instanceSize = J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+										? fieldClass.flatFieldSize()
+										: fieldClass.totalInstanceSize();
 									UDATA doubleSize = new UDATA(U64.SIZEOF);
-									if (valueTypeHelper.classRequires4BytePrePadding(fieldClass)) {
+									if (!J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+										&& valueTypeHelper.classRequires4BytePrePadding(fieldClass)
+									) {
 										instanceSize = instanceSize.sub(U32.SIZEOF);
 									}
 									forceDoubleAlignment = (modifiers.allBitsIn(J9JavaAccessFlags.J9AccVolatile) && instanceSize.eq(doubleSize));
@@ -251,14 +259,20 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 								if (forceDoubleAlignment
 									|| valueTypeHelper.isJ9ClassLargestAlignmentConstraintDouble(fieldClass)
 								) {
-									size = fieldClass.totalInstanceSize();
-									if (valueTypeHelper.classRequires4BytePrePadding(fieldClass)) {
+									size = J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+										? fieldClass.flatFieldSize()
+										: fieldClass.totalInstanceSize();
+									if (!J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+										&& valueTypeHelper.classRequires4BytePrePadding(fieldClass)) {
 										size = size.sub(U32.SIZEOF);
 									}
 									offset = firstFlatDoubleOffset.add(currentFlatDoubleOffset);
 									currentFlatDoubleOffset = currentFlatDoubleOffset.add(Scalar.roundToSizeofU64(size));
 								} else if (valueTypeHelper.isJ9ClassLargestAlignmentConstraintReference(fieldClass)) {
-									size = Scalar.roundToSizeToFJ9object(fieldClass.totalInstanceSize());
+									size = Scalar.roundToSizeToFJ9object(
+											J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+												? fieldClass.flatFieldSize()
+												: fieldClass.totalInstanceSize());
 									if (walkFlags.anyBitsIn(J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_OBJECT_FIELD) && size.eq(flatBackFillSize)) {
 										offset = new UDATA(backfillOffsetToUse);
 										walkFlags = walkFlags.bitAnd(new U32(new UDATA(J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_OBJECT_FIELD).bitNot()));
@@ -266,16 +280,28 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 										offset = firstFlatObjectOffset.add(currentFlatObjectOffset);
 										currentFlatObjectOffset = currentFlatObjectOffset.add(size);
 									}
-								} else {
-									size = fieldClass.totalInstanceSize();
+								} else if (!J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+									|| valueTypeHelper.isJ9ClassLargestAlignmentConstraintInteger(fieldClass)
+								) {
+									size = Scalar.roundToSizeofU32(
+											J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+												? fieldClass.flatFieldSize()
+												: fieldClass.totalInstanceSize());
 									if (walkFlags.anyBitsIn(J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_SINGLE_FIELD) && size.eq(flatBackFillSize)) {
-										// Assert_VM_true(state->backfillOffsetToUse >= 0);
 										offset = new UDATA(backfillOffsetToUse);
 										walkFlags = walkFlags.bitAnd(new U32(new UDATA(J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_SINGLE_FIELD).bitNot()));
 									} else {
 										offset = firstFlatSingleOffset.add(currentFlatSingleOffset);
 										currentFlatSingleOffset = currentFlatSingleOffset.add(size);
 									}
+								} else if (valueTypeHelper.isJ9ClassLargestAlignmentConstraintShort(fieldClass)) {
+									size = Scalar.roundToSizeofU16(fieldClass.flatFieldSize());
+									offset = firstFlatShortOffset.add(currentFlatShortOffset);
+									currentFlatShortOffset = currentFlatShortOffset.add(size);
+								} else {
+									size = fieldClass.flatFieldSize();
+									offset = firstFlatByteOffset.add(currentFlatByteOffset);
+									currentFlatByteOffset = currentFlatByteOffset.add(size);
 								}
 							} else {
 								if (walkFlags.anyBitsIn(J9VM_FIELD_OFFSET_WALK_BACKFILL_OBJECT_FIELD)) {
@@ -347,7 +373,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		return list;
 	}
 
-	private void calculateInstanceSize(J9ROMClassPointer romClass, J9ClassPointer superClazz) throws CorruptDataException {
+	private void calculateInstanceSize(J9ROMClassPointer romClass, J9ClassPointer superClazz) throws CorruptDataException, NoSuchFieldException {
 		lockwordNeeded = NO_LOCKWORD_NEEDED;
 
 		/* if we only care about statics we can skip all work related to instance size calculations */
@@ -448,8 +474,10 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 			firstFlatSingleOffset = new UDATA(fieldInfo.addObjectsArea(firstObjectOffset.intValue()));
 			firstSingleOffset = new UDATA(fieldInfo.addFlatSinglesArea(firstFlatSingleOffset.intValue()));
 			if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) {
-				firstShortOffset = new UDATA(fieldInfo.addSinglesArea(firstSingleOffset.intValue()));
-				firstByteOffset = new UDATA(fieldInfo.addShortsArea(firstShortOffset.intValue()));
+				firstFlatShortOffset = new UDATA(fieldInfo.addSinglesArea(firstSingleOffset.intValue()));
+				firstShortOffset = new UDATA(fieldInfo.addFlatShortsArea(firstFlatShortOffset.intValue()));
+				firstFlatByteOffset = new UDATA(fieldInfo.addShortsArea(firstShortOffset.intValue()));
+				firstByteOffset = new UDATA(fieldInfo.addFlatBytesArea(firstFlatByteOffset.intValue()));
 			}
 		} else {
 			firstDoubleOffset = new UDATA(fieldInfo.calculateFieldDataStart());
@@ -614,7 +642,16 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 				init();
 			} catch (CorruptDataException e) {
 				// Tell anyone listening there was corrupt data.
-				raiseCorruptDataEvent("CorruptDataException in com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffsetIterator_V1.init()", e, false);
+				raiseCorruptDataEvent(
+					"CorruptDataException in com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffsetIterator_V1.init()",
+					e,
+					false);
+				return null;
+			} catch (NoSuchFieldException nsfe) {
+				raiseCorruptDataEvent(
+					"NoSuchFieldException signals corrupt data in com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffsetIterator_V1.init()",
+					new CorruptDataException(nsfe.getMessage()),
+					false);
 				return null;
 			}
 		}
@@ -633,6 +670,12 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		} catch (CorruptDataException e) {
 			// Returning null will stop the iteration.
 			raiseCorruptDataEvent("CorruptDataException getting next field offset.", e, false);
+			return null;
+		} catch (NoSuchFieldException nsfe) {
+			raiseCorruptDataEvent(
+				"NoSuchFieldException signals corrupt data getting next field offset.",
+				new CorruptDataException(nsfe.getMessage()),
+				false);
 			return null;
 		}
 	}

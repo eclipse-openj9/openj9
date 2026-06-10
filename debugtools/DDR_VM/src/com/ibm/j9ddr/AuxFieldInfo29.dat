@@ -84,6 +84,7 @@ J9Class.classLoader = required
 J9Class.classObject = required
 J9Class.eyecatcher = required
 J9Class.finalizeLinkOffset = required
+J9Class.flatFieldSize = UDATA
 J9Class.iTable = required
 J9Class.initializeStatus = required
 J9Class.instanceDescription = required

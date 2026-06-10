@@ -338,7 +338,7 @@ static const struct { \
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-#define J9CLASS_UNPADDED_INSTANCE_SIZE(clazz) J9_VALUETYPE_FLATTENED_SIZE(clazz)
+#define J9CLASS_UNPADDED_INSTANCE_SIZE(clazz) (J9CLASS_HAS_4BYTE_PREPADDING((clazz)) ? ((clazz)->totalInstanceSize - sizeof(U_32)) : (clazz)->totalInstanceSize)
 #define J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsPrimitiveValueType)
 /**
  * This macro can only be used to determine vm flattening for a J9ArrayClass.
@@ -354,7 +354,11 @@ static const struct { \
 		(J9ROMFIELD_IS_NULL_RESTRICTED(romFieldShape) && \
 		J9_IS_J9CLASS_FLATTENED(fieldClazz) && \
 		(J9_ARE_NO_BITS_SET((romFieldShape)->modifiers, J9AccVolatile) || (J9CLASS_UNPADDED_INSTANCE_SIZE(fieldClazz) <= sizeof(U_64))))
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+#define J9_VALUETYPE_FLATTENED_SIZE(clazz) ((clazz)->flatFieldSize)
+#else /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 #define J9_VALUETYPE_FLATTENED_SIZE(clazz) (J9CLASS_HAS_4BYTE_PREPADDING((clazz)) ? ((clazz)->totalInstanceSize - sizeof(U_32)) : (clazz)->totalInstanceSize)
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 #define J9_IS_J9ARRAYCLASS_NULL_RESTRICTED(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassArrayIsNullRestricted)
 #define J9CLASS_GET_NULLRESTRICTED_ARRAY(clazz) (J9_IS_J9CLASS_VALUETYPE(clazz) ? (clazz)->nullRestrictedArrayClass : NULL)
 #else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */

@@ -363,10 +363,14 @@ public class PrintObjectFieldsHelper {
 		} else {
 			if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) {
 				long fieldType = fieldShape.modifiers().longValue() & J9FieldTypeMask;
-				if ((fieldType == J9FieldTypeByte) || (fieldType == J9FieldTypeBoolean)) {
+				if (fieldType == J9FieldTypeByte) {
 					out.print(I8Pointer.cast(valuePtr).at(0).getHexValue());
-				} else if ((fieldType == J9FieldTypeShort) || (fieldType == J9FieldTypeChar)) {
+				} else if (fieldType == J9FieldTypeBoolean) {
+					out.print(U8Pointer.cast(valuePtr).at(0).getHexValue());
+				} else if (fieldType == J9FieldTypeShort) {
 					out.print(I16Pointer.cast(valuePtr).at(0).getHexValue());
+				} else if (fieldType == J9FieldTypeChar) {
+					out.print(U16Pointer.cast(valuePtr).at(0).getHexValue());
 				} else {
 					out.print(I32Pointer.cast(valuePtr).at(0).getHexValue());
 				}
