@@ -218,7 +218,7 @@ class Test {
 		destroy();
 
 		if (!shouldRun()) {
-			System.out.format("Skipping test which does not apply to Java %d%n.", javaVersion);
+			System.out.format("Skipping test which does not apply to Java %d.%n", javaVersion);
 			return true;
 		}
 
