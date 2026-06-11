@@ -5322,9 +5322,6 @@ static void jitStateLogic(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo,
             compInfo->_intervalStats._numRecompilationsInInterval, compInfo->getMethodQueueSize(), javaVM->phase,
             avgJvmCpuUtil);
     }
-    if (TR::Options::getVerboseOption(TR_VerboseJitMemory)) {
-        TR_VerboseLog::writeLine(TR_Vlog_MEMORY, "FIXME: Report JIT memory usage");
-    }
 
     // Allocate the tracking hashtable if needed
     // Note that timeToAllocateTrackingHT will be set to something useful only if TR_UseIdleTime option is set
