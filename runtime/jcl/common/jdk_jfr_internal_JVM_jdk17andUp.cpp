@@ -141,7 +141,10 @@ Java_jdk_jfr_internal_JVM_getTypeId__Ljava_lang_String_2(JNIEnv *env, jobject ob
 void JNICALL
 Java_jdk_jfr_internal_JVM_flush__(JNIEnv *env, jclass clazz)
 {
-	Java_com_ibm_oti_vm_VM_jfrDump(env, NULL);
+	/* TODO Need to create a primitive similar to Java_com_ibm_oti_vm_VM_jfrDump
+	 * that flushes buffers to disk, but doesnt close the chunk so more entries
+	 * can be appended.
+	 */
 }
 
 void JNICALL

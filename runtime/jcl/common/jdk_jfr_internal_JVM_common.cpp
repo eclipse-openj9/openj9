@@ -365,7 +365,7 @@ jboolean JNICALL
 Java_jdk_jfr_internal_JVM_createJFR(JNIEnv *env, jobject obj, jboolean simulateFailure)
 {
 	jboolean rc = JNI_TRUE;
-	J9VMThread *currentThread = (J9VMThread*) env;
+	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
@@ -376,6 +376,11 @@ Java_jdk_jfr_internal_JVM_createJFR(JNIEnv *env, jobject obj, jboolean simulateF
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	if (JNI_OK != vmFuncs->initializeJFR(vm)) {
 		rc = JNI_FALSE;
+	}
+
+	if (!vm->internalVMFunctions->setupChunkMonitor(currentThread)) {
+		rc = JNI_FALSE;
+		goto done;
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
 
@@ -506,8 +511,7 @@ Java_jdk_jfr_internal_JVM_emitOldObjectSamples(JNIEnv *env, jobject obj, jlong c
 jboolean JNICALL
 Java_jdk_jfr_internal_JVM_shouldRotateDisk(JNIEnv *env, jobject obj)
 {
-	// TODO: implementation
-	return JNI_TRUE;
+	return ((J9VMThread *)env)->javaVM->jfrState.shouldRotateDisk;
 }
 
 } /* extern "C" */
