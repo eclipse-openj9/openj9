@@ -22,6 +22,8 @@
 
 #include "AllocateDescription.hpp"
 #include "AllocationCategory.hpp"
+#include "CollectionSetDelegate.hpp"
+#include "CompactGroupManager.hpp"
 #include "CompactScheme.hpp"
 #include "ConcurrentCardTable.hpp"
 #include "CopyScanCacheStandard.hpp"
@@ -33,10 +35,14 @@
 #include "MemoryPool.hpp"
 #include "MemoryPoolAddressOrderedList.hpp"
 #include "MemoryPoolSplitAddressOrderedList.hpp"
+#include "ProjectedSurvivalCollectionSetDelegate.hpp"
 #include "RealtimeMarkingScheme.hpp"
 #include "ScavengerForwardedHeader.hpp"
+#include "SparseHeapLinkedFreeHeader.hpp"
+#include "StartupManagerImpl.hpp"
 #include "StringTable.hpp"
 #include "SweepPoolManager.hpp"
+#include "VerboseWriterStreamOutput.hpp"
 
 #if defined(J9VM_GC_FINALIZATION)
 # include "FinalizeListManager.hpp"
@@ -56,6 +62,8 @@
 GC_DdrDebugLink(J9ModronAllocateHint)
 GC_DdrDebugLink(MM_AllocateDescription)
 GC_DdrDebugLink(MM_AllocationCategory)
+GC_DdrDebugLink(MM_CollectionSetDelegate)
+GC_DdrDebugLink(MM_CompactGroupManager)
 GC_DdrDebugLink(MM_ConcurrentCardTable)
 GC_DdrDebugLink(MM_CopyScanCacheStandard)
 GC_DdrDebugLink(MM_FreeHeapRegionList)
@@ -68,10 +76,14 @@ GC_DdrDebugLink(MM_IncrementalCardTable)
 GC_DdrDebugLink(MM_LargeObjectAllocateStats)
 GC_DdrDebugLink(MM_MemoryPoolAddressOrderedList)
 GC_DdrDebugLink(MM_MemoryPoolSplitAddressOrderedList)
+GC_DdrDebugLink(MM_ProjectedSurvivalCollectionSetDelegate)
 GC_DdrDebugLink(MM_RealtimeMarkingScheme)
 GC_DdrDebugLink(MM_ScavengerForwardedHeader)
+GC_DdrDebugLink(MM_SparseHeapLinkedFreeHeader)
+GC_DdrDebugLink(MM_StartupManagerImpl)
 GC_DdrDebugLink(MM_StringTable)
 GC_DdrDebugLink(MM_SublistPuddle)
+GC_DdrDebugLink(MM_VerboseWriterStreamOutput)
 
 #if defined(J9VM_GC_FINALIZATION)
 GC_DdrDebugLink(GC_FinalizeListManager)
