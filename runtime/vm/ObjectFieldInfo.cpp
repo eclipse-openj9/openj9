@@ -153,8 +153,8 @@ ObjectFieldInfo::calculateTotalFieldsSizeAndBackfill()
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		accumulator += _totalFlatFieldDoubleBytes + _totalFlatFieldRefBytes + _totalFlatFieldSingleBytes;
 
-		/* ValueTypes cannot be subtyped and their superClass contains no fields */
-		if (!isValue()) {
+		/* Value objects may inherit fields from abstract superclasses. */
+		if (!isValue() || (_superclassFieldsSize > 0)) {
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			/* if the superclass is not end aligned but we have doubleword fields, use the space before the first field as the backfill */
 			if (
