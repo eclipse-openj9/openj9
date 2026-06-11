@@ -5912,6 +5912,15 @@ void
 tearDownJFR(J9JavaVM *vm);
 
 /**
+ * Set up the chunk rotation monitor.
+ *
+ * @param currentThread[in] the current J9VMThread
+ * @return TRUE on success, FALSE on failure.
+ */
+BOOLEAN
+setupChunkMonitor(J9VMThread *currentThread);
+
+/**
  * Get the type ID for the JFR event type. This operation is
  * thread safe as it internally acquires a mutex. Only
  * subclasses of jdk.jfr.event.Event can be called with this

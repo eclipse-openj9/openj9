@@ -75,6 +75,8 @@ static bool addEventIds(J9JavaVM *vm);
 static bool addTypeIds(J9JavaVM *vm);
 #endif /* JAVA_SPEC_VERSION >= 17 */
 static void jfrShutdownInternalStructures(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
+static void notifyForChunkRotation(J9VMThread *currentThread);
+static void checkAvailableSpaceInGlobalBuffer(J9VMThread *currentThread);
 
 static void
 freeThreadIDs(J9VMThread *currentThread)
@@ -306,13 +308,18 @@ flushBufferToGlobal(J9VMThread *currentThread, J9VMThread *flushThread)
 	j9tty_printf(PORTLIB, "\n!!! flushing %p of size %u start=%p current=%p\n", flushThread, (U_32)bufferSize, flushThread->jfrBuffer.bufferStart, flushThread->jfrBuffer.bufferCurrent);
 #endif /* defined(DEBUG) */
 
-	if (!areJFRBuffersReadyForWrite(currentThread)) {
+	if (!areJFRBuffersReadyForWrite(flushThread)) {
 		goto done;
 	}
 
 	omrthread_monitor_enter(vm->jfrBufferMutex);
 	if (vm->jfrBuffer.bufferRemaining < bufferSize) {
-		if (!writeOutGlobalBuffer(currentThread, false, false)) {
+		if (isJFRV2SupportEnabled(vm)) {
+			notifyForChunkRotation(currentThread);
+			omrthread_monitor_exit(vm->jfrBufferMutex);
+			success = false;
+			goto done;
+		} else if (!writeOutGlobalBuffer(currentThread, false, false)) {
 			omrthread_monitor_exit(vm->jfrBufferMutex);
 			success = false;
 			goto done;
@@ -330,6 +337,7 @@ flushBufferToGlobal(J9VMThread *currentThread, J9VMThread *flushThread)
 #if defined(DEBUG)
 	memset(flushThread->jfrBuffer.bufferStart, 0, J9JFR_THREAD_BUFFER_SIZE);
 #endif /* defined(DEBUG) */
+	checkAvailableSpaceInGlobalBuffer(currentThread);
 
 done:
 	return success;
@@ -624,9 +632,9 @@ jfrThreadEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *user
 {
 	J9VMThreadEndEvent *event = (J9VMThreadEndEvent *)eventData;
 	J9VMThread *currentThread = event->currentThread;
+	PORT_ACCESS_FROM_VMC(currentThread);
 
 #if defined(DEBUG)
-	PORT_ACCESS_FROM_VMC(currentThread);
 	j9tty_printf(PORTLIB, "\n!!! thread end %p\n", currentThread);
 #endif /* defined(DEBUG) */
 
@@ -635,7 +643,6 @@ jfrThreadEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *user
 	if (NULL != jfrEvent) {
 		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_THREAD_END);
 	}
-	PORT_ACCESS_FROM_VMC(currentThread);
 	flushBufferToGlobal(currentThread, currentThread);
 
 	/* Free the thread local buffer */
@@ -1604,6 +1611,9 @@ jboolean
 setJFRRecordingFileName(J9JavaVM *vm, char *newFileName)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	if (isJFRV2SupportEnabled(vm)) {
+		vm->jfrState.shouldRotateDisk = JNI_FALSE;
+	}
 	VM_JFRWriter::closeJFRFile(vm);
 	j9mem_free_memory(vm->jfrState.jfrFileName);
 	vm->jfrState.jfrFileName = newFileName;
@@ -1850,9 +1860,11 @@ jfrShutdownInternalStructures(J9HookInterface **hook, UDATA eventNum, void *even
 	internalAcquireVMAccess(currentThread);
 	vmFuncs->j9jni_deleteGlobalRef((JNIEnv *)currentThread, vm->jfrState.jfrEventClassRef, FALSE);
 	vmFuncs->j9jni_deleteGlobalRef((JNIEnv *)currentThread, vm->jfrState.jfrInternalEventClassRef, FALSE);
+	vmFuncs->j9jni_deleteGlobalRef((JNIEnv *)currentThread, vm->jfrState.chunkRotationMonitor, FALSE);
 	internalReleaseVMAccess(currentThread);
 	vm->jfrState.jfrEventClassRef = NULL;
 	vm->jfrState.jfrInternalEventClassRef = NULL;
+	vm->jfrState.chunkRotationMonitor = NULL;
 }
 
 static void
@@ -2330,6 +2342,64 @@ requestJFREvent(J9VMThread *currentThread, jlong id)
 #else /* JAVA_SPEC_VERSION >= 17 */
 	return JNI_FALSE;
 #endif /* JAVA_SPEC_VERSION >= 17 */
+}
+
+BOOLEAN
+setupChunkMonitor(J9VMThread *currentThread)
+{
+	BOOLEAN rc = TRUE;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	j9object_t chunkMonitor = VM_VMHelpers::getStaticFieldObject(currentThread, "jdk/jfr/internal/JVM", "CHUNK_ROTATION_MONITOR", "Ljava/lang/Object;");
+	vm->jfrState.chunkRotationMonitor = vmFuncs->j9jni_createGlobalRef((JNIEnv *)currentThread, chunkMonitor, FALSE);
+
+	if (NULL == vm->jfrState.chunkRotationMonitor) {
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+		rc = FALSE;
+	}
+
+	vm->jfrState.shouldRotateDisk = JNI_FALSE;
+
+	return rc;
+}
+
+static void
+notifyForChunkRotation(J9VMThread *currentThread)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	omrthread_monitor_t monitorPtr = NULL;
+
+	if (JNI_FALSE == vm->jfrState.shouldRotateDisk) {
+#if defined(DEBUG)
+		PORT_ACCESS_FROM_VMC(currentThread);
+		j9tty_printf(PORTLIB, "\n!!! notifyForChunkRotation called\n");
+#endif /* defined(DEBUG) */
+
+		j9object_t chunkMonitor = J9_JNI_UNWRAP_REFERENCE(vm->jfrState.chunkRotationMonitor);
+		VM_ObjectMonitor::enterObjectMonitor(currentThread, chunkMonitor);
+		VM_ObjectMonitor::getMonitorForNotify(currentThread, chunkMonitor, &monitorPtr, false);
+
+		if (NULL == monitorPtr) {
+			/* If the monitor doesnt exist then no one is waiting on it. */
+		} else {
+			vm->jfrState.shouldRotateDisk = JNI_TRUE;
+			issueWriteBarrier();
+			omrthread_monitor_notify_all(monitorPtr);
+		}
+		VM_ObjectMonitor::exitObjectMonitor(currentThread, chunkMonitor);
+	}
+}
+
+static void
+checkAvailableSpaceInGlobalBuffer(J9VMThread *currentThread)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+
+	if (isJFRV2SupportEnabled(vm)) {
+		if (vm->jfrBuffer.bufferRemaining < (J9JFR_GLOBAL_BUFFER_SIZE/8)) {
+			notifyForChunkRotation(currentThread);
+		}
+	}
 }
 
 } /* extern "C" */
