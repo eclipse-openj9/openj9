@@ -52,14 +52,6 @@
 #include "j9protos.h"
 #include "ut_j9bcu.h"
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-#define J9ROM_BUILDER_SHARE_PREVIEW_CLASS true
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-#define J9ROM_BUILDER_SHARE_PREVIEW_CLASS false
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-
-#define J9ROM_BUILDER_SHARE_ENABLED_FOR_CLASS_VERSION(classfile) (J9_IS_CLASSFILE_OR_ROMCLASS_PREVIEW_VERSION(classfile) ? J9ROM_BUILDER_SHARE_PREVIEW_CLASS : true)
-
 static const UDATA INITIAL_CLASS_FILE_BUFFER_SIZE = 4096;
 static const UDATA INITIAL_BUFFER_MANAGER_SIZE = 32768 * 10;
 
@@ -255,6 +247,28 @@ ROMClassBuilder::buildROMClass(ROMClassCreationContext *context)
 
 	context->recordLoadEnd(result);
 	return result;
+}
+
+bool
+ROMClassBuilder::checkPreviewClass(ROMClassCreationContext *context, J9CfrClassFile *classFile)
+{
+	bool rc = true;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (context->isBootstrapLoader()) {
+		/**
+		 * Store the classes from the JDK to the SCC when preview is on.
+		 * Do not store if preview is off. Valhalla build is to test new Valhalla features, which are all preview now.
+		 * The cached non-preview version of value class could cause Valhalla tests (expecting preview version)
+		 * running on the same machine to fail.
+		 */
+		rc = J9_ARE_ALL_BITS_SET(_javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW);
+	}
+#else  /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	if (J9_IS_CLASSFILE_OR_ROMCLASS_PREVIEW_VERSION(classFile)) {
+		rc = false;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	return rc;
 }
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
@@ -670,7 +684,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 	if (context->isROMClassShareable()
-		&& J9ROM_BUILDER_SHARE_ENABLED_FOR_CLASS_VERSION(classFileParser->getParsedClassFile())
+		&& checkPreviewClass(context, classFileParser->getParsedClassFile())
 	) {
 		UDATA loadType = J9SHR_LOADTYPE_NORMAL;
 		if (context->isRedefining()) {

@@ -134,6 +134,7 @@ private:
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	BuildResult injectInterfaces(ClassFileOracle *classFileOracle);
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+	bool checkPreviewClass(ROMClassCreationContext *context, J9CfrClassFile *classFile);
 	U_32 computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClassCreationContext *context);
 	U_32 computeOptionalFlags(ClassFileOracle *classFileOracle, ROMClassCreationContext *context);
 	BuildResult prepareAndLaydown( BufferManager *bufferManager, ClassFileParser *classFileParser, ROMClassCreationContext *context );
