@@ -70,6 +70,7 @@ public:
     TR_J9VMBase *fej9();
 
     TR::CodeCache *initialize(bool useConsolidatedCache, uint32_t numberOfCodeCachesToCreateAtStartup);
+    void destroy() { } // must override OMR::CodeCacheManager::destroy()
 
     bool isSufficientPhysicalMemoryAvailableForAllocation(size_t requestedCodeCacheSize);
     void addCodeCache(TR::CodeCache *codeCache);
