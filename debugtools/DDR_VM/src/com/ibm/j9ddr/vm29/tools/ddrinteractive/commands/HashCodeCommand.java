@@ -33,7 +33,6 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
-import com.ibm.j9ddr.vm29.pointer.helper.ValueTypeHelper;
 
 public class HashCodeCommand extends Command {
 
@@ -54,9 +53,6 @@ public class HashCodeCommand extends Command {
 			J9ClassPointer clazz = J9ObjectHelper.clazz(objectPointer);
 			if (!J9ClassHelper.hasValidEyeCatcher(clazz)) {
 				throw new DDRInteractiveCommandException("object class is not valid (eyecatcher is not 0x99669966)");
-			}
-			if (ValueTypeHelper.getValueTypeHelper().isJ9ClassAValueType(clazz)) {
-				throw new DDRInteractiveCommandException("cannot calculate the hashcode of a value type object");
 			}
 		} catch (CorruptDataException cde) {
 			throw new DDRInteractiveCommandException("memory fault de-referencing address argument", cde);
