@@ -152,6 +152,8 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
+
+	<exec command="sleep 0.5" platforms="linux.*" />
 	
 	<test id="Test 6: Clean up, destroy the non-persistent cache if it exists" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,nonpersistent,destroy</command>
@@ -188,6 +190,8 @@
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 	
+	<exec command="sleep 0.5" platforms="linux.*" />
+
 	<test id="Test 9s: Set up for test 9. Destroy the non-persistent cache if it exists" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,nonpersistent,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
@@ -253,6 +257,8 @@
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 	
+	<exec command="sleep 0.5" platforms="linux.*" />
+
 	<test id="Test 11 - b: Setup for test 11. Destroy the non-persistent cache if it exists" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,nonpersistent,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
@@ -302,6 +308,8 @@
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 	
+	<exec command="sleep 0.5" platforms="linux.*" />
+
 	<test id="Test 14: Clean up, destroy the non-persistent cache if it exists" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,nonpersistent,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
@@ -402,6 +410,8 @@
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
 	</test>
 	
+	<exec command="sleep 0.5" platforms="linux.*" />
+
 	<test id="At end destroy non-persistent cache for cleanup" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,nonpersistent,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
