@@ -24,6 +24,7 @@
 
 #include "compile/TRResolvedMethod.hpp"
 #include "env/CompilerEnv.hpp"
+#include "env/JSR292Methods.h"
 #include "env/VMJ9.h"
 #include "env/jittypes.h"
 #include "il/Block.hpp"
@@ -1564,6 +1565,162 @@ void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_linkTo
     processVMInternalNativeFunction(treetop, node, vmTargetNode, argsList, inlCallNode);
 }
 
+void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_linkToNative(TR::TreeTop *treetop,
+    TR::Node *node)
+{
+    TR::DebugCounter::prependDebugCounter(comp(),
+        TR::DebugCounter::debugCounterName(comp(), "mh.unrefined/linkToNative/(%s)/%s", comp()->signature(),
+            comp()->getHotnessName()),
+        treetop);
+
+    TR_J9VMBase *fej9 = static_cast<TR_J9VMBase *>(comp()->fe());
+
+    // Create shadow symrefs for NativeMethodHandle fields
+    uint32_t invokeCacheOffset = fej9->getInstanceFieldOffsetIncludingHeader("Ljava/lang/invoke/NativeMethodHandle;",
+        "invokeCache", "[Ljava/lang/Object;", comp()->getCurrentMethod());
+
+    TR::SymbolReference *invokeCacheSymRef = comp()->getSymRefTab()->findOrFabricateShadowSymbol(
+        comp()->getMethodSymbol(), TR::Symbol::UnknownField, TR::Address, invokeCacheOffset,
+        /* isVolatile */ false, /* isPrivate */ true, /* isFinal */ false,
+        "java/lang/invoke/NativeMethodHandle.invokeCache [Ljava/lang/Object;");
+
+    uint32_t nepOffset = fej9->getInstanceFieldOffsetIncludingHeader("Ljava/lang/invoke/NativeMethodHandle;", "nep",
+        "Ljava/lang/invoke/MethodHandle;", comp()->getCurrentMethod());
+
+    TR::SymbolReference *nepFieldSymRef = comp()->getSymRefTab()->findOrFabricateShadowSymbol(comp()->getMethodSymbol(),
+        TR::Symbol::UnknownField, TR::Address, nepOffset,
+        /* isVolatile */ false, /* isPrivate */ false, /* isFinal */ true,
+        "java/lang/invoke/NativeMethodHandle.nep Ljava/lang/invoke/MethodHandle;");
+
+    TR::SymbolReference *vmTargetSymRef = comp()->getSymRefTab()->findOrFabricateMemberNameVmTargetShadow();
+
+    // Array element access info
+    uintptr_t ahSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+    uintptr_t elemSize = TR::Compiler->om.sizeofReferenceField();
+    TR::ILOpCodes axadd = comp()->target().is64Bit() ? TR::aladd : TR::aiadd;
+    TR::ILOpCodes refLoadOp = comp()->il.opCodeForIndirectLoad(TR::Address);
+    TR::SymbolReference *arrayShadow = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::Address, NULL);
+
+    int32_t lastChildIndex = node->getNumChildren() - 1;
+    TR::Node *nativeMHNode = node->getChild(lastChildIndex);
+
+    if (comp()->cg()->enableJitDispatchJ9Method()) {
+        // Load NativeMethodHandle.invokeCache
+        TR::Node *ic = TR::Node::createWithSymRef(node, refLoadOp, 1, nativeMHNode, invokeCacheSymRef);
+
+        // memberName = invokeCache[JSR292_invokeCacheArrayMemberNameIndex]
+        TR::Node *mnOff = comp()->target().is64Bit()
+            ? TR::Node::lconst(node, (int64_t)(ahSize + JSR292_invokeCacheArrayMemberNameIndex * elemSize))
+            : TR::Node::iconst(node, (int32_t)(ahSize + JSR292_invokeCacheArrayMemberNameIndex * elemSize));
+        TR::Node *mnNode
+            = TR::Node::createWithSymRef(refLoadOp, 1, 1, TR::Node::create(axadd, 2, ic, mnOff), arrayShadow);
+
+        // J9Method from memberName.vmtarget
+        TR::Node *target = TR::Node::createWithSymRef(node, TR::aloadi, 1, mnNode, vmTargetSymRef);
+
+        // appendix = invokeCache[JSR292_invokeCacheArrayAppendixIndex]
+        TR::Node *appOff = comp()->target().is64Bit()
+            ? TR::Node::lconst(node, (int64_t)(ahSize + JSR292_invokeCacheArrayAppendixIndex * elemSize))
+            : TR::Node::iconst(node, (int32_t)(ahSize + JSR292_invokeCacheArrayAppendixIndex * elemSize));
+        TR::Node *appendixNode
+            = TR::Node::createWithSymRef(refLoadOp, 1, 1, TR::Node::create(axadd, 2, ic, appOff), arrayShadow);
+
+        // nep from NativeMethodHandle.nep
+        TR::Node *nepNode = TR::Node::createWithSymRef(node, refLoadOp, 1, nativeMHNode, nepFieldSymRef);
+
+        // Transform to: dispatchJ9Method(J9Method*, appendix, arg0, ..., argN-1, nep)
+        //
+        // Original children:  [arg0, arg1, ..., argN-1, nativeMH]
+        // Desired children:   [J9Method*, appendix, arg0, ..., argN-1, nep]
+        node->setSymbolReference(comp()->getSymRefTab()->findOrCreateDispatchJ9MethodSymbolRef());
+
+        int32_t numArgs = lastChildIndex; // number of args before NativeMethodHandle
+
+        // 2 extra args prepended (J9Method*, appendix), 1 extra arg appended (nep), and one arg removed(nativeMH),
+        // so net 2 extra args needed
+        TR::Node *dummy = NULL;
+        node->addChildren(&dummy, 1);
+        node->addChildren(&dummy, 1);
+
+        // Shift arg0..argN-1 from [0..numArgs-1] to [2..numArgs+1]
+        for (int32_t i = numArgs + 1; i >= 2; i--)
+            node->setChild(i, node->getChild(i - 2));
+
+        node->setAndIncChild(0, target);
+        node->setAndIncChild(1, appendixNode);
+        node->setAndIncChild(numArgs + 2, nepNode);
+
+        nativeMHNode->decReferenceCount();
+        return;
+    }
+
+    // alternative path for non-jitDispatchJ9Method cases
+
+    TR::TransformUtil::separateNullCheck(comp(), treetop, trace());
+
+    // Store all original args to temps and create the INL call duplicate
+    TR::Node *inlCallNode = node->duplicateTree(false);
+    TR::list<TR::SymbolReference *> *origArgTemps = new (comp()->trStackMemory())
+        TR::list<TR::SymbolReference *>(getTypedAllocator<TR::SymbolReference *>(comp()->allocator()));
+    for (int i = 0; i < node->getNumChildren(); i++) {
+        TR::Node *child = node->getChild(i);
+        TR::SymbolReference *tmp
+            = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), child->getDataType());
+        origArgTemps->push_back(tmp);
+        treetop->insertBefore(TR::TreeTop::create(comp(), TR::Node::createStore(node, tmp, child)));
+        inlCallNode->setAndIncChild(i, TR::Node::createLoad(node, tmp));
+        child->recursivelyDecReferenceCount();
+    }
+
+    TR::SymbolReference *nativeMHTmp = origArgTemps->back();
+
+    // Load invokeCache from NativeMethodHandle, store to temp
+    TR::Node *icLoad
+        = TR::Node::createWithSymRef(node, refLoadOp, 1, TR::Node::createLoad(node, nativeMHTmp), invokeCacheSymRef);
+    TR::SymbolReference *icTmp = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), TR::Address);
+    treetop->insertBefore(TR::TreeTop::create(comp(), TR::Node::createStore(node, icTmp, icLoad)));
+
+    // memberName = invokeCache[JSR292_invokeCacheArrayMemberNameIndex]
+    TR::Node *mnOff = comp()->target().is64Bit()
+        ? TR::Node::lconst(node, (int64_t)(ahSize + JSR292_invokeCacheArrayMemberNameIndex * elemSize))
+        : TR::Node::iconst(node, (int32_t)(ahSize + JSR292_invokeCacheArrayMemberNameIndex * elemSize));
+    TR::Node *mnNode = TR::Node::createWithSymRef(refLoadOp, 1, 1,
+        TR::Node::create(axadd, 2, TR::Node::createLoad(node, icTmp), mnOff), arrayShadow);
+
+    // J9Method from memberName.vmtarget
+    TR::Node *vmTargetNode = TR::Node::createWithSymRef(node, TR::aloadi, 1, mnNode, vmTargetSymRef);
+    vmTargetNode->setIsNonNull(true);
+
+    // appendix = invokeCache[JSR292_invokeCacheArrayAppendixIndex], store to temp
+    TR::Node *appOff = comp()->target().is64Bit()
+        ? TR::Node::lconst(node, (int64_t)(ahSize + JSR292_invokeCacheArrayAppendixIndex * elemSize))
+        : TR::Node::iconst(node, (int32_t)(ahSize + JSR292_invokeCacheArrayAppendixIndex * elemSize));
+    TR::Node *appendixNode = TR::Node::createWithSymRef(refLoadOp, 1, 1,
+        TR::Node::create(axadd, 2, TR::Node::createLoad(node, icTmp), appOff), arrayShadow);
+    TR::SymbolReference *appTmp = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), TR::Address);
+    treetop->insertBefore(TR::TreeTop::create(comp(), TR::Node::createStore(node, appTmp, appendixNode)));
+
+    // nep from NativeMethodHandle.nep, store to temp
+    TR::Node *nepLoad
+        = TR::Node::createWithSymRef(node, refLoadOp, 1, TR::Node::createLoad(node, nativeMHTmp), nepFieldSymRef);
+    TR::SymbolReference *nepTmp = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), TR::Address);
+    treetop->insertBefore(TR::TreeTop::create(comp(), TR::Node::createStore(node, nepTmp, nepLoad)));
+
+    // Construct argsList for the compiled path: (appendix, arg0, ..., argN-1, nep)
+    // The interpreter dispatches linkToNative's target with these args, so the
+    // compiled method expects the same layout.
+    TR::list<TR::SymbolReference *> *argsList = new (comp()->trStackMemory())
+        TR::list<TR::SymbolReference *>(getTypedAllocator<TR::SymbolReference *>(comp()->allocator()));
+    argsList->push_back(appTmp);
+    for (auto it = origArgTemps->begin(); it != origArgTemps->end(); ++it) {
+        if (*it != nativeMHTmp)
+            argsList->push_back(*it);
+    }
+    argsList->push_back(nepTmp);
+
+    processVMInternalNativeFunction(treetop, node, vmTargetNode, argsList, inlCallNode);
+}
+
 void J9::RecognizedCallTransformer::processVMInternalNativeFunction(TR::TreeTop *treetop, TR::Node *node,
     TR::Node *vmTargetNode, TR::list<TR::SymbolReference *> *argsList, TR::Node *inlCallNode)
 {
@@ -1902,6 +2059,11 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop *treetop)
             case TR::java_lang_invoke_MethodHandle_linkToVirtual:
             case TR::java_lang_invoke_MethodHandle_linkToInterface:
                 return true;
+            case TR::java_lang_invoke_MethodHandle_linkToNative:
+                if (_processedINLCalls->get(node->getGlobalIndex()) || comp()->compileRelocatableCode())
+                    return false;
+                else
+                    return true;
             default:
                 return false;
         }
@@ -2056,6 +2218,9 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop *treetop)
                 break;
             case TR::java_lang_invoke_MethodHandle_linkToInterface:
                 process_java_lang_invoke_MethodHandle_linkToInterface(treetop, node);
+                break;
+            case TR::java_lang_invoke_MethodHandle_linkToNative:
+                process_java_lang_invoke_MethodHandle_linkToNative(treetop, node);
                 break;
             default:
                 break;

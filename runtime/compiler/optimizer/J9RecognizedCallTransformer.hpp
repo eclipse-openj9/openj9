@@ -330,6 +330,21 @@ private:
     void process_java_lang_invoke_MethodHandle_linkToStaticSpecial(TR::TreeTop *treetop, TR::Node *node);
 
     /** \brief
+     *     Transforms java/lang/MethodHandle.linkToNative calls by extracting the target J9Method from
+     *     the NativeMethodHandle's invokeCache and dispatching directly, bypassing the J2I transition.
+     *     This is analogous to the linkToStatic transformation but accounts for the different argument
+     *     layout: the interpreter dispatches linkToNative's target with (appendix, args..., nep) rather
+     *     than the bytecode-level (args..., NativeMethodHandle) layout.
+     *
+     *  \param treetop
+     *     the TreeTop anchoring the call node
+     *
+     *  \param node
+     *     the call node representing the linkToNative call
+     */
+    void process_java_lang_invoke_MethodHandle_linkToNative(TR::TreeTop *treetop, TR::Node *node);
+
+    /** \brief
      *     Transforms java/lang/MethodHandle.linkToVirtual when the MemberName object (last arg) is not a known object.
      *     linkToVirtual is a VM INL call that would construct the call frame for the target virtual method invocation.
      *     This would be the case even if the method to be invoked is compiled, resulting in j2i and i2j transitions.

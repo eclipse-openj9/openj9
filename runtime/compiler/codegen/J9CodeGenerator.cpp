@@ -765,7 +765,7 @@ void J9::CodeGenerator::lowerTreeIfNeeded(TR::Node *node, int32_t childNumberOfN
                 floatTemp1StoreNode->setByteCodeIndex(node->getByteCodeIndex());
                 TR::TreeTop::create(comp, tt->getPrevTreeTop(), floatTemp1StoreNode);
             }
-        } else if (rm == TR::java_lang_invoke_MethodHandle_linkToNative) {
+        } else if (rm == TR::java_lang_invoke_MethodHandle_linkToNative && !node->isPreparedForDirectJNI()) {
             // The interpreter will push one extra argument (the appendix) for the
             // callee to accept. This dummy null argument reserves space for the
             // appendix on the stack. The interpreter will pop it before

@@ -83,7 +83,12 @@ J9RAMConstantPoolItem *TR_ResolvedJ9JITServerMethod::literals() { return _litera
 
 J9Class *TR_ResolvedJ9JITServerMethod::constantPoolHdr() { return _ramClass; }
 
-bool TR_ResolvedJ9JITServerMethod::isJNINative() { return _isJNINative; }
+bool TR_ResolvedJ9JITServerMethod::isJNINative()
+{
+    if (_linkToNativeJniTargetAddress != NULL)
+        return true;
+    return _isJNINative;
+}
 
 void TR_ResolvedJ9JITServerMethod::setRecognizedMethodInfo(TR::RecognizedMethod rm)
 {
@@ -920,6 +925,8 @@ TR_ResolvedMethod *TR_ResolvedJ9JITServerMethod::getResolvedImproperInterfaceMet
 
 void *TR_ResolvedJ9JITServerMethod::startAddressForJNIMethod(TR::Compilation *comp)
 {
+    if (_linkToNativeJniTargetAddress != NULL)
+        return _linkToNativeJniTargetAddress;
     // For fastJNI methods, we have the address cached
     if (_jniProperties)
         return _jniTargetAddress;
