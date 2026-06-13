@@ -280,24 +280,27 @@ public:
             : _vecLen(vec_len_default)
             , _elementType(TR::NoType)
             , _objectType(NotSet)
+            , _classMax(false)
         {}
 
-        vectorInfo(vec_sz_t vecLen, TR::DataType elementType, vapiObjType objectType)
+        vectorInfo(vec_sz_t vecLen, TR::DataType elementType, vapiObjType objectType, bool classMax)
             : _vecLen(vecLen)
             , _elementType(elementType)
             , _objectType(objectType)
+            , _classMax(classMax)
         {}
 
         bool operator==(const vectorInfo &other) const
         {
             return _vecLen == other._vecLen && _elementType.getDataType() == other._elementType.getDataType()
-                && _objectType == other._objectType;
+                && _objectType == other._objectType && _classMax == other._classMax;
         }
 
         bool operator!=(const vectorInfo &other) const { return !(*this == other); }
 
         bool isSet()
         {
+            // _classMax is set iff _objectType is set
             return _vecLen != vec_len_default && _elementType.getDataType() != TR::NoType && _objectType != NotSet;
         }
 
@@ -338,6 +341,11 @@ public:
          *   Resulting object type
          */
         vapiObjType _objectType;
+
+        /** \brief
+         *   Comes from class like IntMaxVector
+         */
+        bool _classMax;
     };
 
     /** \brief
@@ -607,11 +615,14 @@ public:
      *  \param objectType
      *     Object type
      *
+     *  \param classMax
+     *     class is MaxVector
+     *
      *  \return
      *     Class block
      */
     TR_OpaqueClassBlock *getClassForBoxing(TR::Node *node, TR::DataType methodElementType, vec_sz_t bitsLength,
-        vapiObjType objectType);
+        vapiObjType objectType, bool classMax);
 
     /** \brief
      *     Depending on the checkBoxing parameter checks if boxing of node supported
@@ -933,8 +944,11 @@ public:
      *
      *  \param classNode
      *     Node that loads \c java/lang/Class
+     *
+     *  \param classMax
+     *     One of MaxVector classes
      */
-    vapiObjType getObjectTypeFromClassNode(TR::Compilation *comp, TR::Node *classNode);
+    vapiObjType getObjectTypeFromClassNode(TR::Compilation *comp, TR::Node *classNode, bool &classMax);
 
     /** \brief
      *     Maps object of type \c java/lang/Class (e.g., \c java/lang/Float.TYPE)
