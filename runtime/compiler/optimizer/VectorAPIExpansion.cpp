@@ -425,6 +425,7 @@ void TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool v
         bool isVectorAPICall = isVectorAPIMethod(methodSymbol);
         ncount_t nodeIndex = node->getGlobalIndex();
         vapiObjType objectType = getReturnType(methodSymbol); // get object type statically if known
+        bool classMax = false;
 
         _nodeTable[nodeIndex]._vinfo.setIsUnknown();
 
@@ -432,11 +433,13 @@ void TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool v
         if (isVectorAPICall) {
             // find result type and cache first class in case it's needed for boxing/unboxing
             vapiObjType objectTypeFromClass
-                = getObjectTypeFromClassNode(comp(), node->getChild(getFirstClassIndex(methodSymbol)));
+                = getObjectTypeFromClassNode(comp(), node->getChild(getFirstClassIndex(methodSymbol)), classMax);
 
             // cache second class (if exists) in case it's needed for boxing/unboxing
-            if (getSecondClassIndex(methodSymbol) != -1)
-                getObjectTypeFromClassNode(comp(), node->getChild(getSecondClassIndex(methodSymbol)));
+            if (getSecondClassIndex(methodSymbol) != -1) {
+                bool tmpClassMax = false;
+                getObjectTypeFromClassNode(comp(), node->getChild(getSecondClassIndex(methodSymbol)), tmpClassMax);
+            }
 
             if (methodSymbol->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_compressExpandOp) {
                 if (!node->getFirstChild()->getOpCode().isLoadConst()) {
@@ -453,6 +456,8 @@ void TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool v
 
         _aliasTable[methodRefNum]._vinfo._objectType = objectType;
         _nodeTable[nodeIndex]._vinfo._objectType = objectType;
+        _aliasTable[methodRefNum]._vinfo._classMax = classMax;
+        _nodeTable[nodeIndex]._vinfo._classMax = classMax;
 
         for (int32_t i = 0; i < numChildren; i++) {
             bool isMask = false;
@@ -849,7 +854,7 @@ TR::DataType TR_VectorAPIExpansion::getDataTypeFromClassNode(TR::Compilation *co
 }
 
 TR_VectorAPIExpansion::vapiObjType TR_VectorAPIExpansion::getObjectTypeFromClassNode(TR::Compilation *comp,
-    TR::Node *classNode)
+    TR::Node *classNode, bool &classMax)
 {
     TR_OpaqueClassBlock *clazz = getOpaqueClassBlockFromClassNode(comp, classNode);
 
@@ -866,6 +871,7 @@ TR_VectorAPIExpansion::vapiObjType TR_VectorAPIExpansion::getObjectTypeFromClass
     char *classNameChars = (char *)J9UTF8_DATA(className);
     TR::VectorLength vectorLength = TR::NoVectorLength;
     TR::DataType elementType = TR::NoType;
+    classMax = false;
 
     // Currently, classNode can be one of the following types
     // jdk/incubator/vector/<species name>Vector
@@ -899,6 +905,10 @@ TR_VectorAPIExpansion::vapiObjType TR_VectorAPIExpansion::getObjectTypeFromClass
     } else if (!strncmp(cursor - 3, "512", 3)) {
         vectorLength = TR::VectorLength512;
         cursor -= 3;
+    } else if (!strncmp(cursor - 3, "Max", 3)) {
+        vectorLength = TR::NoVectorLength;
+        classMax = true;
+        cursor -= 3;
     } else {
         return Unknown;
     }
@@ -921,18 +931,18 @@ TR_VectorAPIExpansion::vapiObjType TR_VectorAPIExpansion::getObjectTypeFromClass
 
     if (_boxingClasses[objectType - 1] == NULL) {
         _boxingClasses[objectType - 1] = new (comp->trStackMemory())
-            TR_Array<TR_Array<TR_OpaqueClassBlock *> *>(comp->trMemory(), TR::NumVectorLengths, true, stackAlloc);
+            TR_Array<TR_Array<TR_OpaqueClassBlock *> *>(comp->trMemory(), TR::NumVectorLengths + 1, true, stackAlloc);
     }
 
-    if ((*_boxingClasses[objectType - 1])[vectorLength - 1] == NULL) {
-        (*_boxingClasses[objectType - 1])[vectorLength - 1]
+    if ((*_boxingClasses[objectType - 1])[vectorLength] == NULL) {
+        (*_boxingClasses[objectType - 1])[vectorLength]
             = new (comp->trStackMemory()) TR_Array<TR_OpaqueClassBlock *>(comp->trMemory(), 6, true, stackAlloc);
     }
 
-    if ((*(*_boxingClasses[objectType - 1])[vectorLength - 1])[elementType - 1] == NULL) {
+    if ((*(*_boxingClasses[objectType - 1])[vectorLength])[elementType - 1] == NULL) {
         logprintf(_trace, comp->log(), "Caching class for boxing: %d %d %d", objectType, vectorLength, elementType);
 
-        (*(*_boxingClasses[objectType - 1])[vectorLength - 1])[elementType - 1] = clazz;
+        (*(*_boxingClasses[objectType - 1])[vectorLength])[elementType - 1] = clazz;
     }
 
     return objectType;
@@ -1264,23 +1274,21 @@ bool TR_VectorAPIExpansion::isVectorizedOrScalarizedNode(TR::Node *node, vectorI
                 return false;
         }
 
-        TR::DataType elementType = TR::NoType;
-        vec_sz_t bitsLength = vec_len_default;
-        vapiObjType objectType = _nodeTable[nodeIndex]._vinfo._objectType;
-
         TR::MethodSymbol *methodSymbol = node->getSymbolReference()->getSymbol()->castToMethodSymbol();
 
         if (sourceType && methodSymbol->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_convert) {
             // source type of two-type opcodes is not stored in the _nodeTable
             // so we need to analyze the node again
+            TR::DataType elementType = TR::NoType;
+            vec_sz_t bitsLength = vec_len_default;
             bool result = getConvertSourceType(this, node, elementType, bitsLength);
             TR_ASSERT_FATAL(result, "Conversion source type should be known\n");
+            vapiObjType objectType = _nodeTable[nodeIndex]._vinfo._objectType;
+            bool classMax = _nodeTable[nodeIndex]._vinfo._classMax;
+            vInfo = vectorInfo(bitsLength, elementType, objectType, classMax);
         } else {
-            elementType = _nodeTable[nodeIndex]._vinfo._elementType;
-            bitsLength = _nodeTable[nodeIndex]._vinfo._vecLen;
+            vInfo = _nodeTable[nodeIndex]._vinfo;
         }
-
-        vInfo = vectorInfo(bitsLength, elementType, objectType);
 
         if (!_nodeTable[nodeIndex]._canVectorize)
             scalarized = true;
@@ -1319,16 +1327,19 @@ bool TR_VectorAPIExpansion::isVectorizedOrScalarizedNode(TR::Node *node, vectorI
 }
 
 TR_OpaqueClassBlock *TR_VectorAPIExpansion::getClassForBoxing(TR::Node *node, TR::DataType elementType,
-    vec_sz_t bitsLength, vapiObjType objectType)
+    vec_sz_t bitsLength, vapiObjType objectType, bool classMax)
 {
     TR::VectorLength vectorLength = OMR::DataType::bitsToVectorLength(bitsLength);
 
+    if (classMax)
+        vectorLength = TR::NoVectorLength;
+
     logprintf(_trace, comp()->log(), "Getting class for boxing: %d %d %d\n", objectType, vectorLength, elementType);
 
-    if (_boxingClasses[objectType - 1] == NULL || (*_boxingClasses[objectType - 1])[vectorLength - 1] == NULL) {
+    if (_boxingClasses[objectType - 1] == NULL || (*_boxingClasses[objectType - 1])[vectorLength] == NULL) {
         return NULL;
     } else {
-        return (*(*_boxingClasses[objectType - 1])[vectorLength - 1])[elementType - 1];
+        return (*(*_boxingClasses[objectType - 1])[vectorLength])[elementType - 1];
     }
 }
 
@@ -1348,6 +1359,7 @@ bool TR_VectorAPIExpansion::boxChild(TR::TreeTop *treeTop, TR::Node *node, uint3
     vec_sz_t bitsLength = vInfo._vecLen;
     TR::DataType elementType = vInfo._elementType;
     vapiObjType objectType = vInfo._objectType;
+    bool classMax = vInfo._classMax;
 
     TR::VectorLength vectorLength = OMR::DataType::bitsToVectorLength(bitsLength);
     int32_t elementSize = OMR::DataType::getSize(elementType);
@@ -1365,7 +1377,7 @@ bool TR_VectorAPIExpansion::boxChild(TR::TreeTop *treeTop, TR::Node *node, uint3
     TR_OpaqueClassBlock *vecClass;
 
     if (boxingSupported) {
-        vecClass = getClassForBoxing(child, elementType, bitsLength, objectType);
+        vecClass = getClassForBoxing(child, elementType, bitsLength, objectType, classMax);
         if (!vecClass) {
             logprintf(_trace, comp()->log(), "Missing class for boxing of %d child of node %p\n", i, node);
 
@@ -1475,8 +1487,8 @@ TR::Node *TR_VectorAPIExpansion::unboxNode(TR::Node *parentNode, TR::Node *opera
     bool parentVectorizedOrScalarized = isVectorizedOrScalarizedNode(parentNode, vInfo, parentScalarized, true);
 
     TR::DataType elementType = vInfo._elementType;
-
     vec_sz_t bitsLength = vInfo._vecLen;
+    bool classMax = vInfo._classMax;
 
     TR_ASSERT_FATAL(parentVectorizedOrScalarized,
         "Node %p should be vectorized or scalarized since we are trying to unbox its operand %p", parentNode, operand);
@@ -1501,7 +1513,7 @@ TR::Node *TR_VectorAPIExpansion::unboxNode(TR::Node *parentNode, TR::Node *opera
     TR_OpaqueClassBlock *vecClass;
 
     if (unboxingSupported) {
-        vecClass = getClassForBoxing(operand, elementType, bitsLength, operandObjectType);
+        vecClass = getClassForBoxing(operand, elementType, bitsLength, operandObjectType, classMax);
         if (!vecClass) {
             logprintf(_trace, comp()->log(), "Missing class for unboxing of operand %p of node %p\n", operand,
                 parentNode);
@@ -1689,11 +1701,9 @@ bool TR_VectorAPIExpansion::visitNodeToTransformIL(TR::TreeTop *treeTop, TR::Nod
                     bool operandVectorizedOrScalarized
                         = isVectorizedOrScalarizedNode(operand, operandVectorInfo, operandScalarized);
 
-                    TR::DataType operandElementType = operandVectorInfo._elementType;
-                    vec_sz_t operandBitsLength = operandVectorInfo._vecLen;
-                    vapiObjType operandObjectType = operandVectorInfo._objectType;
-
                     if (operandVectorizedOrScalarized && !operandScalarized) {
+                        TR::DataType operandElementType = operandVectorInfo._elementType;
+                        vec_sz_t operandBitsLength = operandVectorInfo._vecLen;
                         TR::RecognizedMethod index = methodSymbol->getRecognizedMethod();
                         int32_t handlerIndex = static_cast<int32_t>(index) - _firstMethod;
 
@@ -1701,15 +1711,16 @@ bool TR_VectorAPIExpansion::visitNodeToTransformIL(TR::TreeTop *treeTop, TR::Nod
                         int32_t operandElementSize = OMR::DataType::getSize(operandElementType);
                         int32_t operandNumLanes = bitsLength / 8 / operandElementSize;
 
-                        bool canVectorizeMethod
-                            = methodTable[handlerIndex]._methodHandler(this, NULL, node, operandElementType,
-                                operandVectorLength, operandObjectType, operandNumLanes, checkVectorization);
+                        bool canVectorizeMethod = methodTable[handlerIndex]._methodHandler(this, NULL, node,
+                            operandElementType, operandVectorLength, operandVectorInfo._objectType, operandNumLanes,
+                            checkVectorization);
 
                         if (canVectorizeMethod) {
                             ncount_t nodeIndex = node->getGlobalIndex();
 
                             _nodeTable[nodeIndex]._canVectorize = true;
-                            _nodeTable[nodeIndex]._vinfo = vectorInfo(operandBitsLength, operandElementType, Mask);
+                            _nodeTable[nodeIndex]._vinfo = operandVectorInfo;
+                            _nodeTable[nodeIndex]._vinfo._objectType = Mask;
                             vectorizedOrScalarizedNode = true;
                             scalarized = false;
                             elementType = operandElementType;
@@ -3522,8 +3533,8 @@ TR_VectorAPIExpansion::TR_VectorAPIExpansion(TR::OptimizationManager *manager)
 
 void TR_VectorAPIExpansion::vectorInfo::print(bool trace, OMR::Logger *log) const
 {
-    logprintf(trace, log, "vecLen=%d elementType=%s objectType=%s", _vecLen, TR::DataType::getName(_elementType),
-        TR_VectorAPIExpansion::vapiObjTypeNames[_objectType]);
+    logprintf(trace, log, "vecLen=%d elementType=%s objectType=%s classMax=%d", _vecLen,
+        TR::DataType::getName(_elementType), TR_VectorAPIExpansion::vapiObjTypeNames[_objectType], _classMax);
 }
 
 // TODOs:
