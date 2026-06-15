@@ -175,6 +175,9 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	private static final int ANNOTATION = 0x2000;
 	private static final int ENUM = 0x4000;
 	private static final int MEMBER_INVALID_TYPE = -1;
+/*[IF INLINE-TYPES]*/
+	private static final int ACC_IDENTITY = 0x0020;
+/*[ENDIF] INLINE-TYPES */
 
 /*[IF]*/
 	/**
@@ -2415,13 +2418,13 @@ public int getModifiers() {
 	if (isArray()) {
 		rawModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED
 /*[IF INLINE-TYPES]*/
-				| AccessFlag.IDENTITY.mask()
+				| ACC_IDENTITY
 /*[ENDIF] INLINE-TYPES */
 				| Modifier.ABSTRACT | Modifier.FINAL;
 	} else {
 		rawModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED
 /*[IF INLINE-TYPES]*/
-				| AccessFlag.IDENTITY.mask()
+				| ACC_IDENTITY
 /*[ENDIF] INLINE-TYPES */
 				| Modifier.STATIC | Modifier.FINAL | Modifier.INTERFACE
 				| Modifier.ABSTRACT | SYNTHETIC | ENUM | ANNOTATION;
@@ -3023,7 +3026,7 @@ public String toGenericString() {
 	 * Modifier.toString() is used later in this function which translates them to "synchronized" and "volatile",
 	 * which is incorrect. So remove these bits if they are set.
 	 */
-	modifiers &= ~(AccessFlag.IDENTITY.mask() | Modifier.STRICT);
+	modifiers &= ~(ACC_IDENTITY | Modifier.STRICT);
 /*[ENDIF] INLINE-TYPES */
 
 	// Build generic string
@@ -6207,7 +6210,7 @@ public Class<?>[] getNestMembers()
 		Set<AccessFlag> flags = AccessFlag.maskToAccessFlags(maskedModifiers, location);
 /*[IF INLINE-TYPES]*/
 		if (PreviewFeatures.isEnabled()) {
-			if (isArrayClass || (rawModifiers & AccessFlag.IDENTITY.mask()) != 0) {
+			if (isArrayClass || (rawModifiers & ACC_IDENTITY) != 0) {
 				flags = new HashSet<>(flags);
 				flags.add(AccessFlag.IDENTITY);
 				flags = Collections.unmodifiableSet(flags);
