@@ -38,15 +38,14 @@
 // TR::X86MemImmSnippetInstruction:: member functions
 ////////////////////////////////////////////////////////////////////////////////
 
-TR::X86MemImmSnippetInstruction::X86MemImmSnippetInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node,
-    TR::MemoryReference *mr, int32_t imm, TR::UnresolvedDataSnippet *us, TR::CodeGenerator *cg)
+TR::X86MemImmSnippetInstruction::X86MemImmSnippetInstruction(OP::Mnemonic op, TR::Node *node, TR::MemoryReference *mr,
+    int32_t imm, TR::UnresolvedDataSnippet *us, TR::CodeGenerator *cg)
     : TR::X86MemImmInstruction(imm, mr, node, op, cg)
     , _unresolvedSnippet(us)
 {}
 
-TR::X86MemImmSnippetInstruction::X86MemImmSnippetInstruction(TR::Instruction *precedingInstruction,
-    TR::InstOpCode::Mnemonic op, TR::MemoryReference *mr, int32_t imm, TR::UnresolvedDataSnippet *us,
-    TR::CodeGenerator *cg)
+TR::X86MemImmSnippetInstruction::X86MemImmSnippetInstruction(TR::Instruction *precedingInstruction, OP::Mnemonic op,
+    TR::MemoryReference *mr, int32_t imm, TR::UnresolvedDataSnippet *us, TR::CodeGenerator *cg)
     : TR::X86MemImmInstruction(imm, mr, op, precedingInstruction, cg)
     , _unresolvedSnippet(us)
 {}
@@ -110,18 +109,18 @@ uint8_t *TR::X86MemImmSnippetInstruction::generateBinaryEncoding()
     }
 }
 
-TR::X86CheckAsyncMessagesMemImmInstruction::X86CheckAsyncMessagesMemImmInstruction(TR::Node *node,
-    TR::InstOpCode::Mnemonic op, TR::MemoryReference *mr, int32_t value, TR::CodeGenerator *cg)
+TR::X86CheckAsyncMessagesMemImmInstruction::X86CheckAsyncMessagesMemImmInstruction(TR::Node *node, OP::Mnemonic op,
+    TR::MemoryReference *mr, int32_t value, TR::CodeGenerator *cg)
     : TR::X86MemImmInstruction(value, mr, node, op, cg)
 {}
 
-TR::X86CheckAsyncMessagesMemRegInstruction::X86CheckAsyncMessagesMemRegInstruction(TR::Node *node,
-    TR::InstOpCode::Mnemonic op, TR::MemoryReference *mr, TR::Register *valueReg, TR::CodeGenerator *cg)
+TR::X86CheckAsyncMessagesMemRegInstruction::X86CheckAsyncMessagesMemRegInstruction(TR::Node *node, OP::Mnemonic op,
+    TR::MemoryReference *mr, TR::Register *valueReg, TR::CodeGenerator *cg)
     : TR::X86MemRegInstruction(valueReg, mr, node, op, cg)
 {}
 
 TR::X86StackOverflowCheckInstruction::X86StackOverflowCheckInstruction(TR::Instruction *precedingInstruction,
-    TR::InstOpCode::Mnemonic op, TR::Register *cmpRegister, TR::MemoryReference *mr, TR::CodeGenerator *cg)
+    OP::Mnemonic op, TR::Register *cmpRegister, TR::MemoryReference *mr, TR::CodeGenerator *cg)
     : TR::X86RegMemInstruction(mr, cmpRegister, op, precedingInstruction, cg)
 {}
 
@@ -131,20 +130,20 @@ uint8_t *TR::X86StackOverflowCheckInstruction::generateBinaryEncoding()
     return cursor;
 };
 
-TR::X86StackOverflowCheckInstruction *generateStackOverflowCheckInstruction(TR::Instruction *precedingInstruction,
-    TR::InstOpCode::Mnemonic op, TR::Register *cmpRegister, TR::MemoryReference *mr, TR::CodeGenerator *cg)
+TR::X86StackOverflowCheckInstruction *Inst_StackOverflowCheck(TR::Instruction *precedingInstruction, OP::Mnemonic op,
+    TR::Register *cmpRegister, TR::MemoryReference *mr, TR::CodeGenerator *cg)
 {
     return new (cg->trHeapMemory()) TR::X86StackOverflowCheckInstruction(precedingInstruction, op, cmpRegister, mr, cg);
 }
 
-TR::X86CheckAsyncMessagesMemImmInstruction *generateCheckAsyncMessagesInstruction(TR::Node *node,
-    TR::InstOpCode::Mnemonic op, TR::MemoryReference *mr, int32_t value, TR::CodeGenerator *cg)
+TR::X86CheckAsyncMessagesMemImmInstruction *Inst_CheckAsyncMessages(TR::Node *node, OP::Mnemonic op,
+    TR::MemoryReference *mr, int32_t value, TR::CodeGenerator *cg)
 {
     return new (cg->trHeapMemory()) TR::X86CheckAsyncMessagesMemImmInstruction(node, op, mr, value, cg);
 }
 
-TR::X86CheckAsyncMessagesMemRegInstruction *generateCheckAsyncMessagesInstruction(TR::Node *node,
-    TR::InstOpCode::Mnemonic op, TR::MemoryReference *mr, TR::Register *reg, TR::CodeGenerator *cg)
+TR::X86CheckAsyncMessagesMemRegInstruction *Inst_CheckAsyncMessages(TR::Node *node, OP::Mnemonic op,
+    TR::MemoryReference *mr, TR::Register *reg, TR::CodeGenerator *cg)
 {
     return new (cg->trHeapMemory()) TR::X86CheckAsyncMessagesMemRegInstruction(node, op, mr, reg, cg);
 }
@@ -161,8 +160,8 @@ uint8_t *TR::X86CheckAsyncMessagesMemRegInstruction::generateBinaryEncoding()
     return cursor;
 };
 
-TR::X86MemImmSnippetInstruction *generateMemImmSnippetInstruction(TR::InstOpCode::Mnemonic op, TR::Node *node,
-    TR::MemoryReference *mr, int32_t imm, TR::UnresolvedDataSnippet *snippet, TR::CodeGenerator *cg)
+TR::X86MemImmSnippetInstruction *Inst_MemImmSnippet(OP::Mnemonic op, TR::Node *node, TR::MemoryReference *mr,
+    int32_t imm, TR::UnresolvedDataSnippet *snippet, TR::CodeGenerator *cg)
 {
     return new (cg->trHeapMemory()) TR::X86MemImmSnippetInstruction(op, node, mr, imm, snippet, cg);
 }

@@ -51,7 +51,7 @@ void J9LinkageUtils::cleanupReturnValue(TR::Node *callNode, TR::Register *linkag
         // Native and JNI methods may not return a full register in some cases so we need to get the declared
         // type so that we sign and zero extend the narrower integer return types properly.
         //
-        TR::InstOpCode::Mnemonic op;
+        OP::Mnemonic op;
         TR::ResolvedMethodSymbol *callSymbol = callNode->getSymbol()->castToResolvedMethodSymbol();
         TR_ResolvedMethod *resolvedMethod = callSymbol->getResolvedMethod();
         TR::Compilation *comp = cg->comp();
@@ -60,27 +60,27 @@ void J9LinkageUtils::cleanupReturnValue(TR::Node *callNode, TR::Register *linkag
         switch (resolvedMethod->returnType()) {
             case TR::Int8:
                 if (isUnsigned) {
-                    op = comp->target().is64Bit() ? TR::InstOpCode::MOVZXReg8Reg1 : TR::InstOpCode::MOVZXReg4Reg1;
+                    op = comp->target().is64Bit() ? OP::MOVZXReg8Reg1 : OP::MOVZXReg4Reg1;
                 } else {
-                    op = comp->target().is64Bit() ? TR::InstOpCode::MOVSXReg8Reg1 : TR::InstOpCode::MOVSXReg4Reg1;
+                    op = comp->target().is64Bit() ? OP::MOVSXReg8Reg1 : OP::MOVSXReg4Reg1;
                 }
                 break;
             case TR::Int16:
                 if (isUnsigned) {
-                    op = comp->target().is64Bit() ? TR::InstOpCode::MOVZXReg8Reg2 : TR::InstOpCode::MOVZXReg4Reg2;
+                    op = comp->target().is64Bit() ? OP::MOVZXReg8Reg2 : OP::MOVZXReg4Reg2;
                 } else {
-                    op = comp->target().is64Bit() ? TR::InstOpCode::MOVSXReg8Reg2 : TR::InstOpCode::MOVSXReg4Reg2;
+                    op = comp->target().is64Bit() ? OP::MOVSXReg8Reg2 : OP::MOVSXReg4Reg2;
                 }
                 break;
             default:
                 // TR::Address, TR_[US]Int64, TR_[US]Int32
                 //
-                op = (linkageReturnReg != targetReg) ? TR::InstOpCode::MOVRegReg() : TR::InstOpCode::bad;
+                op = (linkageReturnReg != targetReg) ? OP::MOVRegReg() : OP::bad;
                 break;
         }
 
-        if (op != TR::InstOpCode::bad)
-            generateRegRegInstruction(op, callNode, targetReg, linkageReturnReg, cg);
+        if (op != OP::bad)
+            Inst_RegReg(op, callNode, targetReg, linkageReturnReg, cg);
     }
 }
 
@@ -92,13 +92,12 @@ void J9LinkageUtils::switchToMachineCStack(TR::Node *callNode, TR::CodeGenerator
 
     // Squirrel Java SP away into VM thread.
     //
-    generateMemRegInstruction(TR::InstOpCode::SMemReg(), callNode,
-        generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetJavaSPOffset(), cg), espReal, cg);
+    Inst_MemReg(OP::SMemReg(), callNode, MRef_Bdisp32(vmThreadReg, fej9->thisThreadGetJavaSPOffset(), cg), espReal, cg);
 
     // Load machine SP from VM thread.
     //
-    generateRegMemInstruction(TR::InstOpCode::LRegMem(), callNode, espReal,
-        generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetMachineSPOffset(), cg), cg);
+    Inst_RegMem(OP::LRegMem(), callNode, espReal, MRef_Bdisp32(vmThreadReg, fej9->thisThreadGetMachineSPOffset(), cg),
+        cg);
 }
 
 void J9LinkageUtils::switchToJavaStack(TR::Node *callNode, TR::CodeGenerator *cg)
@@ -109,8 +108,8 @@ void J9LinkageUtils::switchToJavaStack(TR::Node *callNode, TR::CodeGenerator *cg
 
     //  Load up the java sp so we have the callout frame on top of the java stack.
     //
-    generateRegMemInstruction(TR::InstOpCode::LRegMem(), callNode, espReal,
-        generateX86MemoryReference(vmThreadReg, cg->fej9()->thisThreadGetJavaSPOffset(), cg), cg);
+    Inst_RegMem(OP::LRegMem(), callNode, espReal,
+        MRef_Bdisp32(vmThreadReg, cg->fej9()->thisThreadGetJavaSPOffset(), cg), cg);
 }
 
 } // namespace TR

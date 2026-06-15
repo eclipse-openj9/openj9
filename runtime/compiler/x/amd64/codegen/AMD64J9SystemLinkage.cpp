@@ -86,8 +86,8 @@ TR::Register *TR::AMD64J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, 
 
     TR::Register *returnReg;
 
-    TR::X86VFPDedicateInstruction *vfpDedicateInstruction = generateVFPDedicateInstruction(
-        machine()->getRealRegister(getProperties().getIntegerScratchRegister(0)), callNode, cg());
+    TR::X86VFPDedicateInstruction *vfpDedicateInstruction
+        = Inst_VFPDedicate(machine()->getRealRegister(getProperties().getIntegerScratchRegister(0)), callNode, cg());
 
     TR::J9LinkageUtils::switchToMachineCStack(callNode, cg());
 
@@ -98,8 +98,8 @@ TR::Register *TR::AMD64J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, 
     //
     uint32_t pre = getProperties().getNumIntegerArgumentRegisters() + getProperties().getNumFloatArgumentRegisters();
     uint32_t post = getProperties().getNumVolatileRegisters() + 1 + (callNode->getDataType() == TR::NoType ? 0 : 1);
-    TR::RegisterDependencyConditions *preDeps = generateRegisterDependencyConditions(pre, 0, cg());
-    TR::RegisterDependencyConditions *postDeps = generateRegisterDependencyConditions(0, post, cg());
+    TR::RegisterDependencyConditions *preDeps = RegDeps(pre, 0, cg());
+    TR::RegisterDependencyConditions *postDeps = RegDeps(0, post, cg());
 
     // Evaluate outgoing arguments on the system stack and build pre-conditions.
     //
@@ -123,13 +123,12 @@ TR::Register *TR::AMD64J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, 
     TR::Instruction *instr;
     if (methodSymbol->getMethodAddress()) {
         TR_ASSERT(scratchReg, "could not find second scratch register");
-        generateRegImm64Instruction(TR::InstOpCode::MOV8RegImm64, callNode, scratchReg,
-            (uintptr_t)methodSymbol->getMethodAddress(), cg());
+        Inst_RegImm64(OP::MOV8RegImm64, callNode, scratchReg, (uintptr_t)methodSymbol->getMethodAddress(), cg());
 
-        instr = generateRegInstruction(TR::InstOpCode::CALLReg, callNode, scratchReg, preDeps, cg());
+        instr = Inst_Reg(OP::CALLReg, callNode, scratchReg, preDeps, cg());
     } else {
-        instr = generateImmSymInstruction(TR::InstOpCode::CALLImm4, callNode,
-            (uintptr_t)methodSymbol->getMethodAddress(), methodSymRef, preDeps, cg());
+        instr = Inst_ImmSym(OP::CALLImm4, callNode, (uintptr_t)methodSymbol->getMethodAddress(), methodSymRef, preDeps,
+            cg());
     }
 
     instr->setNeedsGCMap(getProperties().getPreservedRegisterMapForGC());
@@ -140,9 +139,8 @@ TR::Register *TR::AMD64J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, 
         // adjust sp is necessary, because for java, the stack is native stack, not java stack.
         // we need to restore native stack sp properly to the correct place.
         TR::RealRegister *espReal = machine()->getRealRegister(TR::RealRegister::esp);
-        TR::InstOpCode::Mnemonic op = (memoryArgSize >= -128 && memoryArgSize <= 127) ? TR::InstOpCode::ADDRegImms()
-                                                                                      : TR::InstOpCode::ADDRegImm4();
-        generateRegImmInstruction(op, callNode, espReal, memoryArgSize, cg());
+        OP::Mnemonic op = (memoryArgSize >= -128 && memoryArgSize <= 127) ? OP::ADDRegImms() : OP::ADDRegImm4();
+        Inst_RegImm(op, callNode, espReal, memoryArgSize, cg());
     }
 
     if (returnReg && !(methodSymbol->isHelper()))
@@ -150,10 +148,10 @@ TR::Register *TR::AMD64J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, 
 
     TR::J9LinkageUtils::switchToJavaStack(callNode, cg());
 
-    generateVFPReleaseInstruction(vfpDedicateInstruction, callNode, cg());
+    Inst_VFPRelease(vfpDedicateInstruction, callNode, cg());
 
     TR::LabelSymbol *postDepLabel = generateLabelSymbol(cg());
-    generateLabelInstruction(TR::InstOpCode::label, callNode, postDepLabel, postDeps, cg());
+    Inst_Label(OP::label, callNode, postDepLabel, postDeps, cg());
 
     return returnReg;
 }

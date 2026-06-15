@@ -72,10 +72,9 @@ public:
     // Build the dependencies for each virtual-real register pair
     TR::RegisterDependencyConditions *BuildRegisterDependencyConditions()
     {
-        TR::RegisterDependencyConditions *deps
-            = generateRegisterDependencyConditions(NumberOfRegistersInUse() + 1, // For VMThread
-                NumberOfRegistersInUse() + 1, // For VMThread
-                _cg);
+        TR::RegisterDependencyConditions *deps = RegDeps(NumberOfRegistersInUse() + 1, // For VMThread
+            NumberOfRegistersInUse() + 1, // For VMThread
+            _cg);
         for (uint8_t i = (uint8_t)TR::RealRegister::NoReg; i < (uint8_t)TR::RealRegister::NumRegisters; i++) {
             if (_Registers[i] != NULL) {
                 deps->addPreCondition(_Registers[i], (TR::RealRegister::RegNum)i, _cg);
@@ -235,23 +234,21 @@ TR::Register *J9::X86::HelperCallSite::BuildCall()
     for (size_t i = 0; i < _Params.size(); i++) {
         size_t index = _Params.size() - i - 1;
         if (index < NumberOfIntParamRegisters) {
-            generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), _Node, RealRegisters.Use(IntParamRegisters[index]),
-                _Params[i], cg());
+            Inst_RegReg(OP::MOVRegReg(), _Node, RealRegisters.Use(IntParamRegisters[index]), _Params[i], cg());
         } else {
             NumberOfParamOnStack++;
             if (CalleeCleanup) {
-                generateRegInstruction(TR::InstOpCode::PUSHReg, _Node, _Params[i], cg());
+                Inst_Reg(OP::PUSHReg, _Node, _Params[i], cg());
             } else {
                 size_t offset = StackSlotSize * (index - StackIndexAdjustment);
-                generateMemRegInstruction(TR::InstOpCode::SMemReg(), _Node,
-                    generateX86MemoryReference(ESP, offset, cg()), _Params[i], cg());
+                Inst_MemReg(OP::SMemReg(), _Node, MRef_Bdisp32(ESP, offset, cg()), _Params[i], cg());
             }
         }
     }
 
     // Call helper
-    TR::X86ImmInstruction *instr = generateImmSymInstruction(TR::InstOpCode::CALLImm4, _Node,
-        (uintptr_t)_SymRef->getMethodAddress(), _SymRef, RealRegisters.BuildRegisterDependencyConditions(), cg());
+    TR::X86ImmInstruction *instr = Inst_ImmSym(OP::CALLImm4, _Node, (uintptr_t)_SymRef->getMethodAddress(), _SymRef,
+        RealRegisters.BuildRegisterDependencyConditions(), cg());
     instr->setNeedsGCMap(PreservedRegisterMapForGC);
 
     // Stack adjustment
@@ -288,7 +285,7 @@ TR::Register *J9::X86::HelperCallSite::BuildCall()
             break;
     }
     if (ret) {
-        generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), _Node, ret, EAX, cg());
+        Inst_RegReg(OP::MOVRegReg(), _Node, ret, EAX, cg());
     }
 
     return ret;
