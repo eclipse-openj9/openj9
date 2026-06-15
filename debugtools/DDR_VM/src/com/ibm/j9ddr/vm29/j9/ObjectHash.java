@@ -27,6 +27,8 @@ import java.util.LinkedList;
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.pointer.I32Pointer;
 import com.ibm.j9ddr.vm29.pointer.ObjectReferencePointer;
+import com.ibm.j9ddr.vm29.pointer.U8Pointer;
+import com.ibm.j9ddr.vm29.pointer.U16Pointer;
 import com.ibm.j9ddr.vm29.pointer.U32Pointer;
 import com.ibm.j9ddr.vm29.pointer.U64Pointer;
 import com.ibm.j9ddr.vm29.pointer.UDATAPointer;
@@ -46,6 +48,8 @@ import com.ibm.j9ddr.vm29.structure.J9IdentityHashData;
 import com.ibm.j9ddr.vm29.structure.J9Object;
 import com.ibm.j9ddr.vm29.structure.J9ROMFieldOffsetWalkState;
 import com.ibm.j9ddr.vm29.types.I32;
+import com.ibm.j9ddr.vm29.types.U8;
+import com.ibm.j9ddr.vm29.types.U16;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.U64;
 import com.ibm.j9ddr.vm29.types.UDATA;
@@ -181,11 +185,27 @@ public class ObjectHash {
 				char sigChar = signature.charAt(0);
 				switch (sigChar) {
 				case 'Z': /* boolean */
-				case 'B': /* byte */
+				case 'B': /* byte */ {
+					if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) {
+						U8 datum8 = U8Pointer.cast(entry.objectPointer.addOffset(offset)).at(0);
+						hashValue = mix(hashValue, new U32(datum8));
+						numBytesHashed = numBytesHashed.add(1);
+						break;
+					}
+					/* Fall through to 32-bit case if compact layouts are not enabled. */
+				}
 				case 'C': /* char */
-				case 'I': /* int */
-				case 'F': /* float */
 				case 'S': /* short */ {
+					if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) {
+						U16 datum16 = U16Pointer.cast(entry.objectPointer.addOffset(offset)).at(0);
+						hashValue = mix(hashValue, new U32(datum16));
+						numBytesHashed = numBytesHashed.add(2);
+						break;
+					}
+					/* Fall through to 32-bit case if compact layouts are not enabled. */
+				}
+				case 'I': /* int */
+				case 'F': /* float */ {
 					U32 datum32 = U32Pointer.cast(entry.objectPointer.addOffset(offset)).at(0);
 					hashValue = mix(hashValue, datum32);
 					numBytesHashed = numBytesHashed.add(4);
