@@ -78,7 +78,8 @@ public class TestJcmd extends AttachApiTest {
 	private static final String DIAGNOSTICS_OPTION_SEPARATOR = ",";
 
 	private static final ArrayList<String> TEST_JFR_VM_ARGS = new ArrayList<>(Arrays.asList(
-			"-XX:+EnableOpenJ9ExperimentalFlightRecording"));
+			"-XX:+EnableOpenJ9ExperimentalFlightRecording",
+			"-Xshareclasses:none"));
 
 	/*
 	 * Contains strings expected to be contained in the outputs of various commands
