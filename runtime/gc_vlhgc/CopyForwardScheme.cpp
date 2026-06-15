@@ -5682,7 +5682,17 @@ MM_CopyForwardScheme::setAllocationAgeForMergedRegion(MM_EnvironmentVLHGC *env, 
 
 	if (_extensions->tarokAllocationAgeEnabled) {
 		Assert_MM_true(newAllocationAge < _extensions->compactGroupPersistentStats[compactGroup]._maxAllocationAge);
-		Assert_MM_true((MM_CompactGroupManager::getRegionAgeFromGroup(env, compactGroup) == 0) || (newAllocationAge >= _extensions->compactGroupPersistentStats[compactGroup - 1]._maxAllocationAge));
+
+		if ((MM_CompactGroupManager::getRegionAgeFromGroup(env, compactGroup) != 0) /*eden region */
+				&& (_extensions->compactGroupPersistentStats[compactGroup - 1]._maxAllocationAge != _extensions->tarokMaximumAgeInBytes) /* tenure region */
+				&& (newAllocationAge < _extensions->compactGroupPersistentStats[compactGroup - 1]._maxAllocationAge)) {
+		PORT_ACCESS_FROM_ENVIRONMENT(env);
+		j9tty_printf(PORTLIB, "setAllocationAgeForMergedRegion newAllocationAge=%zu, region->getLowerAgeBound()=%zu, _extensions->compactGroupPersistentStats[%zu]._maxAllocationAge=%zu, _extensions->compactGroupPersistentStats[%zu]._maxAllocationAge=%zu, _extensions->tarokMaximumAgeInBytes=%zu\n",
+					newAllocationAge, region->getLowerAgeBound(), compactGroup - 1, _extensions->compactGroupPersistentStats[compactGroup - 1]._maxAllocationAge, compactGroup, _extensions->compactGroupPersistentStats[compactGroup]._maxAllocationAge, _extensions->tarokMaximumAgeInBytes);
+		Assert_MM_true((MM_CompactGroupManager::getRegionAgeFromGroup(env, compactGroup) == 0) /*eden region */
+						|| _extensions->compactGroupPersistentStats[compactGroup - 1]._maxAllocationAge == _extensions->tarokMaximumAgeInBytes /* tenure region */
+						|| (newAllocationAge >= _extensions->compactGroupPersistentStats[compactGroup - 1]._maxAllocationAge));  /*survivior region */
+		}
 	}
 
 	uintptr_t logicalAge = 0;
