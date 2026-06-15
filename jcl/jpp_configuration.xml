@@ -236,7 +236,7 @@
 		  label="JAVA25"
 		  outputpath="JAVA25/src"
 		  dependencies="JAVA21"
-		  jdkcompliance="24">
+		  jdkcompliance="25">
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
 		<classpathentry kind="src" path="src/java.management/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
@@ -264,7 +264,7 @@
 		  label="JAVA26"
 		  outputpath="JAVA26/src"
 		  dependencies="JAVA25"
-		  jdkcompliance="24">
+		  jdkcompliance="26">
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
 		<classpathentry kind="src" path="src/java.management/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
@@ -292,7 +292,7 @@
 		  label="JAVA27"
 		  outputpath="JAVA27/src"
 		  dependencies="JAVA26"
-		  jdkcompliance="24">
+		  jdkcompliance="26">
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
 		<classpathentry kind="src" path="src/java.management/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
@@ -320,7 +320,7 @@
 		  label="JAVA28"
 		  outputpath="JAVA28/src"
 		  dependencies="JAVA27"
-		  jdkcompliance="24">
+		  jdkcompliance="26">
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
 		<classpathentry kind="src" path="src/java.management/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
