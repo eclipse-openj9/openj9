@@ -117,6 +117,12 @@ void J9::ARM64::CodeGenerator::initialize()
         cg->setSupportsInlineStringCodingCountPositives();
     }
 #endif /* JAVA_SPEC_VERSION >= 19 */
+
+    static bool disableCompareUnsignedInlining = feGetEnv("TR_DisableCompareUnsignedInlining") != NULL;
+    if (!disableCompareUnsignedInlining) {
+        cg->setSupportsInlineIntegerCompareUnsigned();
+        cg->setSupportsInlineLongCompareUnsigned();
+    }
 }
 
 TR::Linkage *J9::ARM64::CodeGenerator::createLinkage(TR_LinkageConventions lc)
