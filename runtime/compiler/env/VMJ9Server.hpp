@@ -133,7 +133,7 @@ public:
     virtual bool isJavaLangObject(TR_OpaqueClassBlock *clazz) override;
     virtual void *getMethods(TR_OpaqueClassBlock *clazz) override;
     virtual void getResolvedMethods(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer,
-        List<TR_ResolvedMethod> *resolvedMethodsInClass) override;
+        List<TR_ResolvedMethod> *resolvedMethodsInClass, const char *methodName = NULL) override;
     virtual bool isPrimitiveArray(TR_OpaqueClassBlock *clazz) override;
     virtual uint32_t getAllocationSize(TR::StaticSymbol *classSym, TR_OpaqueClassBlock *clazz) override;
     virtual TR_OpaqueClassBlock *getObjectClass(uintptr_t objectPointer) override;
@@ -343,6 +343,9 @@ protected:
     void getResolvedMethodsAndMethods(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer,
         List<TR_ResolvedMethod> *resolvedMethodsInClass, J9Method **methods = NULL, uint32_t *numMethods = NULL,
         bool relocatable = false);
+    void getResolvedMethodsAndMethodsForName(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer,
+        List<TR_ResolvedMethod> *resolvedMethodsInClass, const char *methodName, bool relocatable = false);
+
     bool jitFieldsOrStaticsAreIdentical(TR_ResolvedMethod *method1, I_32 cpIndex1, TR_ResolvedMethod *method2,
         I_32 cpIndex2, int32_t isStatic);
 }; // class TR_J9ServerVM
@@ -437,7 +440,8 @@ public:
         const char *sig, uint32_t sigLen, UDATA options) override;
     virtual TR_OpaqueClassBlock *getClassOfMethod(TR_OpaqueMethodBlock *method) override;
     virtual TR_OpaqueClassBlock *getSuperClass(TR_OpaqueClassBlock *classPointer) override;
-    virtual void getResolvedMethods(TR_Memory *, TR_OpaqueClassBlock *, List<TR_ResolvedMethod> *) override;
+    virtual void getResolvedMethods(TR_Memory *, TR_OpaqueClassBlock *, List<TR_ResolvedMethod> *,
+        const char *methodName = NULL) override;
     virtual TR_ResolvedMethod *getResolvedMethodForNameAndSignature(TR_Memory *trMemory,
         TR_OpaqueClassBlock *classPointer, const char *methodName, const char *signature) override;
     virtual bool isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT = false) override;
