@@ -428,6 +428,14 @@ MM_MemorySubSpaceTarok::reset()
 	Assert_MM_unreachable();
 }
 
+void
+MM_MemorySubSpaceTarok::reset(MM_EnvironmentBase *env)
+{
+	/* unused in Tarok collectors */
+	Assert_MM_unreachable();
+}
+
+
 /**
  * As opposed to reset, which will empty out, this will fill out as if everything is free
  */
