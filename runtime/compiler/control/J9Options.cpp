@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: IBM Bob
  *******************************************************************************/
 
 #include "control/J9Options.hpp"
@@ -533,6 +534,34 @@ const char *J9::Options::limitOption(const char *option, void *base, TR::OptionT
     }
 }
 
+const char *J9::Options::excludeAndDontInlineOption(const char *option, void *base, TR::OptionTable *entry)
+{
+    // This option maps the input to both exclude= and dontInline= options.
+    // First, process as exclude option.
+    const char *result = J9::Options::limitOption(option, base, entry);
+    if (!result)
+        return NULL;
+
+    // Then, process as dontInline option using the same approach as setRegex.
+    TR::SimpleRegex *regex = TR::SimpleRegex::create(option);
+    if (!regex) {
+        J9JITConfig *jitConfig = (J9JITConfig *)base;
+        PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
+        j9tty_printf(PORTLIB, "<JIT: Bad regular expression for excludeAndDontInline at --> '%s'>\n", option);
+        return NULL;
+    }
+
+    // Set the dontInline regex using the setter method.
+    // We need to set it in the appropriate options object (JIT or AOT).
+    TR::Options *opts = (J9::Options::getJITCmdLineOptions() == NULL) ? TR::Options::getAOTCmdLineOptions()
+                                                                      : TR::Options::getJITCmdLineOptions();
+
+    if (opts)
+        opts->setDontInline(regex);
+
+    return result;
+}
+
 const char *J9::Options::limitfileOption(const char *option, void *base, TR::OptionTable *entry)
 {
     if (!J9::Options::getDebug() && !J9::Options::createDebug())
@@ -964,6 +993,8 @@ TR::OptionTable OMR::Options::_feOptions[] = {
     { "dltPostponeThreshold=", "M<nnn>\tNumber of dlt attempts inv. count for a method is seen not advancing",
      TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_dltPostponeThreshold, 0, "F%d", NOT_IN_SUBSET },
     { "exclude=", "D<xxx>\tdo not compile methods beginning with xxx", TR::Options::limitOption, 1, 0, "P%s" },
+    { "excludeAndDontInline=", "D<xxx>\tdo not compile or inline methods beginning with xxx",
+     TR::Options::excludeAndDontInlineOption, 1, 0, "P%s" },
     { "expensiveCompWeight=", "M<nnn>\tweight of a comp request to be considered expensive",
      TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_expensiveCompWeight, 0, "F%d", NOT_IN_SUBSET },
     { "experimentalClassLoadPhaseInterval=", "O<nnn>\tnumber of sampling ticks to stay in a class load phase",

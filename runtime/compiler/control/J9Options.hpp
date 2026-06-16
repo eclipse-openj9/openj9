@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: IBM Bob
  *******************************************************************************/
 
 #ifndef J9_OPTIONS_INCL
@@ -614,6 +615,7 @@ public:
 
     static bool useCompressedPointers();
     static const char *limitOption(const char *option, void *, TR::OptionTable *entry);
+    static const char *excludeAndDontInlineOption(const char *option, void *, TR::OptionTable *entry);
     static const char *inlinefileOption(const char *option, void *, TR::OptionTable *entry);
     static const char *limitfileOption(const char *option, void *, TR::OptionTable *entry);
     static const char *versionOption(const char *option, void *, TR::OptionTable *entry);
