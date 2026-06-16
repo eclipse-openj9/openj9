@@ -226,7 +226,7 @@ public class TestSharedClassesExt extends DDRExtTesterBase {
 			// extract the j9rommethod address
 			String address = null;
 			String[] outputLines = null;
-			if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+			if (System.getProperty("os.name").startsWith("Windows")) {
 				outputLines = findAotOutput.split("\n");
 			} else {
 				outputLines = findAotOutput.split(Constants.NL);
@@ -297,7 +297,7 @@ public class TestSharedClassesExt extends DDRExtTesterBase {
 			// extract the j9rommethod address
 			String address = null;
 			String[] outputLines = null;
-			if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+			if (System.getProperty("os.name").startsWith("Windows")) {
 				outputLines = findAotOutput.split("\n");
 			} else {
 				outputLines = findAotOutput.split(Constants.NL);
@@ -332,7 +332,7 @@ public class TestSharedClassesExt extends DDRExtTesterBase {
 			fail("Prerequisite command shrc stats output is null");
 		} else {
 			String[] statsOutputLines = null;
-			if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+			if (System.getProperty("os.name").startsWith("Windows")) {
 				statsOutputLines = statsOutput.split("\n");
 			} else {
 				statsOutputLines = statsOutput.split(Constants.NL);

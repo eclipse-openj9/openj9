@@ -512,9 +512,7 @@ class Test {
 	}
 
 	public static boolean isLinux() {
-		String osName = System.getProperty("os.name", "<unknown>");
-
-		return osName.toLowerCase().contains("linux");
+		return "Linux".equals(System.getProperty("os.name"));
 	}
 
 	public static int getPID(Process process) throws Exception {

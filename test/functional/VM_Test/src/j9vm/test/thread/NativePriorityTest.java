@@ -72,7 +72,7 @@ public class NativePriorityTest {
 		System.out.println("osName = " + osName);
 		OS_NAMES currentOS = null;
 		
-		if (osName.contains(OS_NAMES.Windows.toString())) {
+		if (osName.startsWith("Windows")) {
 			currentOS = OS_NAMES.Windows;
 		} else {
 			try {

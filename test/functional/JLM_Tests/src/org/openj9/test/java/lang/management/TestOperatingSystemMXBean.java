@@ -125,7 +125,7 @@ public class TestOperatingSystemMXBean {
 		 * on Z and OSX.
 		 */
 		String osName = System.getProperty("os.name", "");
-		if (osName.equalsIgnoreCase("z/OS") || osName.equalsIgnoreCase("mac os x")) {
+		if (osName.equals("z/OS") || osName.equals("Mac OS X")) {
 			isSupportedOS = false;
 		} else {
 			isSupportedOS = true;

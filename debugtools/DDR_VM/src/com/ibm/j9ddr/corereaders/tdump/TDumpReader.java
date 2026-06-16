@@ -115,7 +115,7 @@ public class TDumpReader implements ICoreFileReader
 		 */
 		if (!new File(path).exists()
 			/*[IF PLATFORM-mz31 | PLATFORM-mz64]*/
-			&& !(System.getProperty("os.name").toLowerCase().contains("z/os") && com.ibm.jzos.ZFile.exists("//'" + path + "'"))
+			&& !(System.getProperty("os.name").equals("z/OS") && com.ibm.jzos.ZFile.exists("//'" + path + "'"))
 			/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 */
 		) {
 			return DumpTestResult.FILE_NOT_FOUND;

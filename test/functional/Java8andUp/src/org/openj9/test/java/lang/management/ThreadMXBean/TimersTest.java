@@ -89,8 +89,8 @@ public class TimersTest extends ThreadMXBeanTestCase {
 			return;
 		}
 
-		String osName = System.getProperty("os.name").toLowerCase();
-		if (osName.contains("linux")) {
+		String osName = System.getProperty("os.name");
+		if (osName.equals("Linux")) {
 			String osVersion = System.getProperty("os.version");
 			String osArch = System.getProperty("os.arch").toLowerCase();
 			
@@ -108,7 +108,7 @@ public class TimersTest extends ThreadMXBeanTestCase {
 				}
 			}
 		}
-		if (osName.contains("win") || osName.contains("aix")) {
+		if (osName.equals("AIX") || osName.startsWith("Windows")) {
 			supportsUserTimes = true;
 		}
 		logger.debug("os.name: " + osName + " supportsUserTimes: "

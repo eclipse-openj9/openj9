@@ -173,7 +173,7 @@ public final class Dump extends ImageInputStreamImpl {
              * is ignored: This must have the proper control flow ignoring those comments.
              */
             /*[IF PLATFORM-mz31 | PLATFORM-mz64]*/
-            if (System.getProperty("os.name").toLowerCase().contains("z/os")) {
+            if (System.getProperty("os.name").equals("z/OS")) {
                 try {
                     raf = new MVSFileReader(filename);
                 } catch (Exception ex) {

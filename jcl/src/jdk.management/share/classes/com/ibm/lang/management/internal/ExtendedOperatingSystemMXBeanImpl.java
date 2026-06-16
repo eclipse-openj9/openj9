@@ -532,7 +532,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 			if ((null != osName) && (null != hwModel)) {
 				boolean isEmuTmp = false;
 
-				if (osName.equalsIgnoreCase("z/OS")) { //$NON-NLS-1$
+				if (osName.equals("z/OS")) { //$NON-NLS-1$
 					isEmuTmp = isZosHardwareEmulated(hwModel);
 				}
 

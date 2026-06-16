@@ -258,7 +258,7 @@ public class TestOperatingSystemMXBean {
 					"Invalid Swap Memory Info retrieved , Free Swap size cannot be greater than total Swap Size. getTotalSwapSpaceSize() & getFreeSwapSpaceSize() API's failed ");
 
 		} else {
-			if ((-1 == totalSwap) && (osname.equalsIgnoreCase("z/OS") == false)) {
+			if ((-1 == totalSwap) && (osname.equals("z/OS") == false)) {
 				/*
 				 * An error has occurred since getTotalSwapSpaceSize() has returned -1.
 				 * -1 can also mean it is not supported, but we exclude these tests on
@@ -266,7 +266,7 @@ public class TestOperatingSystemMXBean {
 				 */
 				Assert.fail("Error: getTotalSwapSpaceSize() API returned -1, test failed");
 			}
-			if ((-1 == freeSwap) && (osname.equalsIgnoreCase("z/OS") == false)) {
+			if ((-1 == freeSwap) && (osname.equals("z/OS") == false)) {
 				/*
 				 * An error has occurred since getFreeSwapSpaceSize() has returned -1.
 				 * -1 can also mean it is not supported, but we exclude these tests on
@@ -307,7 +307,7 @@ public class TestOperatingSystemMXBean {
 					"Free Physical Memory size " + freeMemory + " cannot be greater than total Physical Memory Size " + totalMemory);
 			}
 		} else {
-			if ((-1 == totalMemory) && (false == osname.equalsIgnoreCase("z/OS"))) {
+			if ((-1 == totalMemory) && (false == osname.equals("z/OS"))) {
 				/*
 				 * An error has occurred since getTotalPhysicalMemorySize() has returned -1.
 				 * -1 can also mean it is not supported, but we exclude these tests on
@@ -315,7 +315,7 @@ public class TestOperatingSystemMXBean {
 				 */
 				Assert.fail("getTotalPhysicalMemorySize() API returned -1, test failed");
 			}
-			if ((-1 == freeMemory) && (false == osname.equalsIgnoreCase("z/OS"))) {
+			if ((-1 == freeMemory) && (false == osname.equals("z/OS"))) {
 				/*
 				 * An error has occurred since getFreePhysicalMemorySize() has returned -1.
 				 * -1 can also mean it is not supported, but we exclude these tests on
@@ -343,7 +343,7 @@ public class TestOperatingSystemMXBean {
 		if (-1 != processVirtualMem) {
 			Assert.assertTrue(processVirtualMem > 0,
 					"Invalid Process Virtual Memory Size retrieved, ProcessVirtualMemory cannot be less than 0");
-		} else if ((-1 == processVirtualMem) && (osname.equalsIgnoreCase("AIX") || osname.equalsIgnoreCase("z/OS"))) {
+		} else if ((-1 == processVirtualMem) && (osname.equals("AIX") || osname.equals("z/OS"))) {
 			/* API not supported on AIX for now, so we ignore the -1 */
 			logger.warn(
 					"getCommittedVirtualMemorySize() not supported on AIX and z/OS, Process Virtual Memory Size: <undefined for platform>");
@@ -910,6 +910,6 @@ public class TestOperatingSystemMXBean {
 
 	private static boolean isPlatformZOS() {
 		String osName = System.getProperty("os.name");
-		return osName.equalsIgnoreCase("z/OS");
+		return osName.equals("z/OS");
 	}
 }
