@@ -91,7 +91,7 @@ public abstract class FileManager {
 			// cannot perform the check so default to true to allow processing to continue blind
 			return true;
 		}
-		if (os.toLowerCase().contains("z/os")) { //$NON-NLS-1$
+		if (os.equals("z/OS")) { //$NON-NLS-1$
 			// z/OS check
 			// Look for it as an MVS data set. The MVSImageInputStream constructor throws FNFE if the file does not exist
 			try {

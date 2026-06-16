@@ -104,7 +104,7 @@ import openj9.management.internal.InvalidDumpOptionExceptionBase;
 public class Dump {
 
 	private static final String SystemRequestPrefix =
-		"z/OS".equalsIgnoreCase(com.ibm.oti.vm.VM.internalGetProperties().getProperty("os.name")) //$NON-NLS-1$ //$NON-NLS-2$
+		"z/OS".equals(com.ibm.oti.vm.VM.internalGetProperties().getProperty("os.name")) //$NON-NLS-1$ //$NON-NLS-2$
 			? "system:dsn=" //$NON-NLS-1$
 			: "system:file="; //$NON-NLS-1$
 

@@ -127,7 +127,7 @@ public class JavaPreprocessor {
 	private static final Charset charset;
 
 	static {
-		if ("z/OS".equalsIgnoreCase(System.getProperty("os.name"))) { //$NON-NLS-1$ //$NON-NLS-2$
+		if ("z/OS".equals(System.getProperty("os.name"))) { //$NON-NLS-1$ //$NON-NLS-2$
 			charset = Charset.forName("IBM-1047"); //$NON-NLS-1$
 		} else {
 			charset = StandardCharsets.US_ASCII;

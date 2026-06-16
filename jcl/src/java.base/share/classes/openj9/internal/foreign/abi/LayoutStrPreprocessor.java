@@ -57,7 +57,7 @@ final class LayoutStrPreprocessor {
 	private static final String osName = System.getProperty("os.name");
 	private static final String arch = System.getProperty("os.arch");
 	private static final boolean isX86_64 = arch.equals("amd64") || arch.equals("x86_64");
-	private static final boolean isLinuxS390x = arch.equals("s390x") && osName.startsWith("Linux");
+	private static final boolean isLinuxS390x = arch.equals("s390x") && osName.equals("Linux");
 
 	/*[IF JAVA_SPEC_VERSION == 17]*/
 	private static final String VARARGS_ATTR_NAME;
@@ -71,13 +71,13 @@ final class LayoutStrPreprocessor {
 				VARARGS_ATTR_NAME = "abi/sysv/varargs";
 			}
 		} else if (arch.equals("aarch64")) {
-			if (osName.startsWith("Mac")) {
+			if (osName.equals("Mac OS X")) {
 				VARARGS_ATTR_NAME = "abi/aarch64/stack_varargs";
 			} else {
 				VARARGS_ATTR_NAME = "abi/sysv/varargs";
 			}
 		} else if (arch.startsWith("ppc64")) {
-			if (osName.startsWith("Linux")) {
+			if (osName.equals("Linux")) {
 				VARARGS_ATTR_NAME = "abi/ppc64/sysv/varargs";
 			} else {
 				VARARGS_ATTR_NAME = "abi/ppc64/aix/varargs";

@@ -36,8 +36,8 @@ public class NumaTestWrapper {
 		String command = parseCommand(args);
 		
 		try {
-			String platform = System.getProperty("os.name").toLowerCase();
-			boolean checkTracepoints = ((null != platform) && (command.indexOf("gcpolicy:balanced") != -1) && (platform.indexOf("linux") != -1));
+			String platform = System.getProperty("os.name");
+			boolean checkTracepoints = "Linux".equals(platform) && command.contains("gcpolicy:balanced");
 			
 			Process proc = Runtime.getRuntime().exec(command);
 			InputStream errStream = proc.getErrorStream();

@@ -545,7 +545,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 * @return a boolean indicating if it is zOS and system dump agent
 	 */
 	private static boolean isZOSSystemAgent(String agent) {
-		if ("z/OS".equalsIgnoreCase(os) && "system".equals(agent)) {
+		if ("z/OS".equals(os) && "system".equals(agent)) {
 			return true;
 		} else {
 			return false;
@@ -600,4 +600,3 @@ public class TestOpenJ9DiagnosticsMXBean {
 		remoteServer.waitFor();
 	}
 }
-

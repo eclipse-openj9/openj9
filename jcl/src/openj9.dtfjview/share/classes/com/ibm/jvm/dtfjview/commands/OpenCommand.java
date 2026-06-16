@@ -273,8 +273,8 @@ public class OpenCommand extends BaseJdmpviewCommand {
 
 		try {
 			boolean hasLibError = true; // flag to indicate if native libs are required but not present
-			String os = cc.getImage().getSystemType().toLowerCase();
-			if (os.contains("linux") || os.contains("aix")) {
+			String os = cc.getImage().getSystemType();
+			if (os.equals("Linux") || os.equals("AIX")) {
 				if (cc.getProcess() != null) {
 					Iterator<?> modules = cc.getProcess().getLibraries();
 					if (modules.hasNext()) {

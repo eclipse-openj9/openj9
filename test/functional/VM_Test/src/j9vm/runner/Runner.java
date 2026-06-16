@@ -36,18 +36,18 @@ public class Runner {
 		UNKNOWN;
 
 		public static OSName current() {
-			String osSpec = System.getProperty("os.name", "?").toLowerCase();
+			String osSpec = System.getProperty("os.name", "?");
 
 			/* Get OS from the spec string. */
-			if (osSpec.contains("aix")) {
+			if (osSpec.equals("AIX")) {
 				return AIX;
-			} else if (osSpec.contains("linux")) {
+			} else if (osSpec.equals("Linux")) {
 				return LINUX;
-			} else if (osSpec.contains("mac")) {
+			} else if (osSpec.equals("Mac OS X")) {
 				return MAC;
-			} else if (osSpec.contains("windows")) {
+			} else if (osSpec.startsWith("Windows")) {
 				return WINDOWS;
-			} else if (osSpec.contains("z/os")) {
+			} else if (osSpec.equals("z/OS")) {
 				return ZOS;
 			} else {
 				System.out.println("Runner couldn't determine underlying OS. Got OS Name:" + osSpec);

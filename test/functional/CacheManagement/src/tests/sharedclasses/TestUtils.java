@@ -890,28 +890,27 @@ public class TestUtils {
 			checkFileExists(getCacheFileLocationForNonPersistentCache(cachename).replace("memory","semaphore"));
 		}
 	}
-	
+
 	public static void checkFileExistsForCacheSnapshot(String cachename) {
 		checkFileExists(getCacheFileLocationForCacheSnapshot(cachename));
 	}
-	
-		
+
 	public static boolean isWindows() {
-		return System.getProperty("os.name").toLowerCase().startsWith("windows");
+		return getOS().startsWith("Windows");
 	}
 
 	public static boolean isMVS() {
-		return System.getProperty("os.name").toLowerCase().startsWith("z/os");
+		return getOS().equals("z/OS");
 	}
-	
+
 	public static boolean isLinux() {
-		return System.getProperty("os.name").toLowerCase().startsWith("linux");
+		return getOS().equals("Linux");
 	}
-	
+
 	public static String getOS() {
 		return System.getProperty("os.name");
 	}
-	
+
 	public static boolean isCompressedRefEnabled() {
 		checkJavaVersion();
 		if (messageOccurred("Compressed References")) {

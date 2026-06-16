@@ -79,19 +79,19 @@ public class BufferedMemory extends AbstractMemory implements IProcess, IAddress
 
 	@Override
 	public Platform getPlatform() {
-		String platform = System.getProperty("os.name").toLowerCase();
-		if (platform.contains("aix")) {
+		String platform = System.getProperty("os.name");
+		if (platform.equals("AIX")) {
 			return Platform.AIX;
-		} else if (platform.contains("windows")) {
-			return Platform.WINDOWS;
-		} else if (platform.contains("z/os")) {
-			return Platform.ZOS;
-		} else if (platform.contains("linux")) {
+		} else if (platform.equals("Linux")) {
 			return Platform.LINUX;
-		} else if (platform.contains("mac")) {
+		} else if (platform.equals("Mac OS X")) {
 			return Platform.OSX;
+		} else if (platform.startsWith("Windows")) {
+			return Platform.WINDOWS;
+		} else if (platform.equals("z/OS")) {
+			return Platform.ZOS;
 		} else {
-			//do not expect to reach here
+			// do not expect to reach here
 			throw new InternalError("Unsupported platform");
 		}
 	}

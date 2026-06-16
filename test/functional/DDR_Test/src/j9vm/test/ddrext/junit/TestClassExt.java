@@ -272,7 +272,7 @@ public class TestClassExt extends DDRExtTesterBase {
 				new String[] {});
 		String[] outputLines = null;
 		String listAddress = null;
-		if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+		if (System.getProperty("os.name").startsWith("Windows")) {
 			outputLines = dumpAllSegmentsOutput.split("\n");
 		} else {
 			outputLines = dumpAllSegmentsOutput.split(Constants.NL);

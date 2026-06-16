@@ -500,7 +500,7 @@ public class Main {
 
 			// Add the debugger extension library into the zip, available only on AIX.
 			String osName = System.getProperty("os.name"); //$NON-NLS-1$
-			if ("AIX".equalsIgnoreCase(osName)) { //$NON-NLS-1$
+			if ("AIX".equals(osName)) { //$NON-NLS-1$
 				files.add("libdbx_j9.so"); //$NON-NLS-1$
 			}
 		} catch (Exception e) {

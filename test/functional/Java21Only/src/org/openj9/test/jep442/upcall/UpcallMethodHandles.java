@@ -57,7 +57,7 @@ import java.lang.invoke.VarHandle;
 public class UpcallMethodHandles {
 	private static final Lookup lookup = MethodHandles.lookup();
 	private static Arena arena = Arena.ofAuto();
-	private static boolean isAixOS = System.getProperty("os.name").toLowerCase().contains("aix");
+	private static final boolean isAixOS = System.getProperty("os.name").equals("AIX");
 
 	static final MethodType MT_Bool_Bool_MemSegmt = methodType(boolean.class, boolean.class, MemorySegment.class);
 	static final MethodType MT_Segmt_Bool_MemSegmt = methodType(MemorySegment.class, boolean.class, MemorySegment.class);

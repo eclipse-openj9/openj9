@@ -67,8 +67,8 @@ public abstract class ThreadMXBeanTestCaseCommon {
 	}
 
 	public static boolean isBadGettimeofdayPlatform() {
-		String osName = System.getProperty("os.name").toLowerCase();  //$NON-NLS-1$
-		if (osName.contains("linux")) {  //$NON-NLS-1$
+		String osName = System.getProperty("os.name"); //$NON-NLS-1$
+		if (osName.equals("Linux")) { //$NON-NLS-1$
 			String osVersion = System.getProperty("os.version");  //$NON-NLS-1$
 			String osArch = System.getProperty("os.arch").toLowerCase();  //$NON-NLS-1$
 			if (osArch.contains("x86") || osArch.contains("amd64")) {  //$NON-NLS-1$ //$NON-NLS-2$

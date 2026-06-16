@@ -66,9 +66,9 @@ import jdk.incubator.foreign.ValueLayout;
  */
 @Test(groups = { "level.sanity" })
 public class StructTests2 {
-	private static String osName = System.getProperty("os.name").toLowerCase();
-	private static boolean isAixOS = osName.contains("aix");
-	private static boolean isWinOS = osName.contains("win");
+	private static final String osName = System.getProperty("os.name");
+	private static final boolean isAixOS = osName.equals("AIX");
+	private static final boolean isWinOS = osName.startsWith("Windows");
 	/* long long is 64 bits on AIX/ppc64, which is the same as Windows */
 	private static ValueLayout longLayout = (isWinOS || isAixOS) ? C_LONG_LONG : C_LONG;
 	private static CLinker clinker = CLinker.getInstance();

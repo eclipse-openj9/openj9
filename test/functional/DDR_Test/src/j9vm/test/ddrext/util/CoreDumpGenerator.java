@@ -82,7 +82,7 @@ public class CoreDumpGenerator {
 		log.debug("Current Dir: " + currentDir);
 
 		try {
-			if (os.contains("windows") || os.contains("Windows")) {
+			if (os.startsWith("Windows")) {
 				// TO_DO:Change drive from C: to L:
 				// String drive = dumpLocation.substring(0,
 				// dumpLocation.indexOf(":")+1);
@@ -157,17 +157,8 @@ public class CoreDumpGenerator {
 		Process process = null;
 
 		try {
-
-			/*
-			 * if (System.getProperty("os.name").contains("windows")||System.
-			 * getProperty("os.name").contains("Windows")){ process =
-			 * runtime.exec("cmd /c start run.bat"); }else{
-			 */
 			File workDir = new File("/bin");
 			process = runtime.exec("/bin/bash", null, workDir);
-			// process.waitFor();
-			// }
-
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

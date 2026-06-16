@@ -62,13 +62,13 @@ import jdk.incubator.foreign.ValueLayout;
  */
 @Test(groups = { "level.sanity" })
 public class UpcallMHWithStructTests {
-	private static String osName = System.getProperty("os.name").toLowerCase();
-	private static String arch = System.getProperty("os.arch").toLowerCase();
-	private static boolean isAixOS = osName.contains("aix");
-	private static boolean isWinOS = osName.contains("win");
+	private static final String osName = System.getProperty("os.name");
+	private static final String arch = System.getProperty("os.arch").toLowerCase();
+	private static final boolean isAixOS = osName.equals("AIX");
+	private static final boolean isWinOS = osName.startsWith("Windows");
 	/* The padding of struct is not required on Linux/s390x and Windows/x64 */
 	private static boolean isStructPaddingNotRequired = isWinOS && (arch.equals("amd64") || arch.equals("x86_64"))
-														|| osName.contains("linux") && arch.equals("s390x");
+														|| osName.equals("Linux") && arch.equals("s390x");
 	/* long long is 64 bits on AIX/ppc64, which is the same as Windows */
 	private static ValueLayout longLayout = (isWinOS || isAixOS) ? C_LONG_LONG : C_LONG;
 	private static CLinker clinker = CLinker.getInstance();

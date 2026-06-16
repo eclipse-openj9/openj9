@@ -102,7 +102,7 @@ public class InfoThreadCommand extends BaseJdmpviewCommand {
 
 	public void doCommand(String[] args) {
 		try {
-			_is_zOS = ctx.getImage().getSystemType().toLowerCase().contains("z/os");
+			_is_zOS = ctx.getImage().getSystemType().equals("z/OS");
 		} catch (DataUnavailable e) {
 			out.print(Exceptions.getDataUnavailableString());
 		} catch (CorruptDataException e) {
