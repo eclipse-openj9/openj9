@@ -2024,25 +2024,6 @@ addTypeIds(J9JavaVM *vm) {
 	}
 	return result;
 }
-#endif /* JAVA_SPEC_VERSION >= 17 */
-
-void
-jfrEmitDataLoss(J9VMThread *currentThread, U_64 bytes)
-{
-	J9JFRDataLoss *jfrEvent = (J9JFRDataLoss *)reserveBuffer(currentThread, currentThread, sizeof(J9JFRDataLoss));
-	if (NULL != jfrEvent) {
-		currentThread->threadJfrState.dataLostTotal += bytes;
-		initializeEventFields(currentThread, currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_DATA_LOSS);
-		jfrEvent->amount = bytes;
-		jfrEvent->total = currentThread->threadJfrState.dataLostTotal;
-	}
-}
-
-jboolean
-requestJFREvent(J9VMThread *currentThread, jlong id)
-{
-	return JfrPeriodicEventSet::requestEvent(currentThread, id);
-}
 
 jboolean
 JfrPeriodicEventSet::requestEvent(J9VMThread *currentThread, jlong id)
@@ -2295,6 +2276,29 @@ JfrPeriodicEventSet::requestYoungGenerationConfiguration(J9VMThread *currentThre
 	if (NULL != jfrEvent) {
 		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_YOUNG_GENERATION_CONFIGURATION);
 	}
+}
+#endif /* JAVA_SPEC_VERSION >= 17 */
+
+void
+jfrEmitDataLoss(J9VMThread *currentThread, U_64 bytes)
+{
+	J9JFRDataLoss *jfrEvent = (J9JFRDataLoss *)reserveBuffer(currentThread, currentThread, sizeof(J9JFRDataLoss));
+	if (NULL != jfrEvent) {
+		currentThread->threadJfrState.dataLostTotal += bytes;
+		initializeEventFields(currentThread, currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_DATA_LOSS);
+		jfrEvent->amount = bytes;
+		jfrEvent->total = currentThread->threadJfrState.dataLostTotal;
+	}
+}
+
+jboolean
+requestJFREvent(J9VMThread *currentThread, jlong id)
+{
+#if JAVA_SPEC_VERSION >= 17
+	return JfrPeriodicEventSet::requestEvent(currentThread, id);
+#else /* JAVA_SPEC_VERSION >= 17 */
+	return JNI_FALSE;
+#endif /* JAVA_SPEC_VERSION >= 17 */
 }
 
 } /* extern "C" */
