@@ -181,6 +181,14 @@ void J9::Power::CodeGenerator::initialize()
 
     if (comp->fej9()->hasFixedFrameC_CallingConvention())
         cg->setHasFixedFrameC_CallingConvention();
+
+    static bool disableCompareUnsignedInlining = feGetEnv("TR_DisableCompareUnsignedInlining") != NULL;
+    if (!disableCompareUnsignedInlining) {
+        cg->setSupportsInlineIntegerCompareUnsigned();
+        if (comp->target().is64Bit()) {
+            cg->setSupportsInlineLongCompareUnsigned();
+        }
+    }
 }
 
 bool J9::Power::CodeGenerator::canEmitDataForExternallyRelocatableInstructions()
