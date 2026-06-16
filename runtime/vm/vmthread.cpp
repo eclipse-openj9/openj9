@@ -1574,23 +1574,25 @@ allocateJavaStack(J9JavaVM * vm, UDATA stackSize, J9JavaStack * previousStack)
 	UDATA pageSize = vm->defaultPageSize;
 	bool pageGuards = J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JAVA_STACK_GUARD_PAGES);
 	UDATA stackMemory = 0;
+	UDATA extraRegisterSpace = 0;
 
 	/* Allocate the stack, adding the header and overflow area size.
 	 * Add one slot for possible double-slot alignment.
 	 * If stagger is in use, add the maximum stagger value to account for that alignment.
 	 */
 
-	mallocSize = J9_STACK_OVERFLOW_AND_HEADER_SIZE + (stackSize + sizeof(UDATA)) + vm->thrStaggerMax;
-	if (pageGuards) {
-		mallocSize += (pageSize * 2);
-	}
 #if defined(WIN32)
 	/* Extra space is needed for the XSAVE buffer when the processor has AMX capabilities. The amount
 	 * amount of space needed in XSAVE for AMX is 8K. TODO in the future we should detect AMX
 	 * capabilities and selectively increase the buffer size.
 	 */
-	mallocSize += 8 * 1024;
+	extraRegisterSpace += (8 * 1024);
 #endif /* defined(WIN32) */
+
+	mallocSize = J9_STACK_OVERFLOW_AND_HEADER_SIZE + (stackSize + sizeof(UDATA)) + vm->thrStaggerMax + extraRegisterSpace;
+	if (pageGuards) {
+		mallocSize += (pageSize * 2);
+	}
 
 	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
 		stack = (J9JavaStack *)j9mem_allocate_memory32(mallocSize, OMRMEM_CATEGORY_THREADS_RUNTIME_STACK);
@@ -1628,7 +1630,7 @@ allocateJavaStack(J9JavaVM * vm, UDATA stackSize, J9JavaStack * previousStack)
 		UDATA end = 0;
 		UDATA stagger = vm->thrStagger;
 
-		end = ((UDATA) stack) + J9_STACK_OVERFLOW_AND_HEADER_SIZE + stackSize;
+		end = ((UDATA) stack) + J9_STACK_OVERFLOW_AND_HEADER_SIZE + stackSize + extraRegisterSpace;
 		if (pageGuards) {
 			end += (pageSize * 2);
 		}
