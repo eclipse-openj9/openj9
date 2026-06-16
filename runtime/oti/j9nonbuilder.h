@@ -5663,6 +5663,7 @@ typedef struct J9InternalVMFunctions {
 	j9object_t (*jvmUpcallTransformArrayToList)(struct J9VMThread *currentThread, j9object_t array);
 	void (*jfrInitializeInternalStructures)(struct J9VMThread *currentThread);
 	void (*jfrEmitDataLoss)(struct J9VMThread *currentThread, U_64 bytes);
+	jboolean (*requestJFREvent)(struct J9VMThread *currentThread, jlong id);
 #endif /* defined(J9VM_OPT_JFR) */
 #if defined(J9VM_OPT_SNAPSHOTS)
 	void (*initializeSnapshotClassLoaderObject)(struct J9JavaVM *javaVM, struct J9ClassLoader *classLoader, j9object_t classLoaderObject);

@@ -66,8 +66,10 @@ Java_jdk_jfr_internal_JVM_emitEvent(JNIEnv *env, jobject obj, jlong eventTypeId,
 #endif /* JAVA_SPEC_VERSION <= 17 */
 )
 {
-	// TODO: implementation
-	return JNI_FALSE;
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	return vmFuncs->requestJFREvent(currentThread, eventTypeId);
 }
 
 void JNICALL
