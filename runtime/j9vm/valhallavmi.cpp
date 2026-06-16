@@ -147,16 +147,6 @@ newArrayHelper(JNIEnv *env, jclass componentType, jint length, bool isNullRestri
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	ramClass = J9VMJAVALANGCLASS_VMREF(currentThread, J9_JNI_UNWRAP_REFERENCE(componentType));
 
-	if ((NULL == ramClass) || (length < 0)) {
-		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
-		goto done;
-	}
-
-	if (!J9_IS_J9CLASS_VALUETYPE(ramClass)) {
-		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
-		goto done;
-	}
-
 	if (isNullRestricted) {
 		J9Class *storeValueClass = NULL;
 		if (NULL == initialValueJni) {
