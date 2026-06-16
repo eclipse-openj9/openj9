@@ -31,10 +31,10 @@ public final class TestUtil {
 	static {
 		String osName = System.getProperty("os.name"); //$NON-NLS-1$ 
 
-		isUnix = "aix".equalsIgnoreCase(osName) //$NON-NLS-1$
-				|| "linux".equalsIgnoreCase(osName) //$NON-NLS-1$
-				|| "mac os x".equalsIgnoreCase(osName) //$NON-NLS-1$
-				|| "z/OS".equalsIgnoreCase(osName); //$NON-NLS-1$
+		isUnix = "AIX".equals(osName) //$NON-NLS-1$
+				|| "Linux".equals(osName) //$NON-NLS-1$
+				|| "Mac OS X".equals(osName) //$NON-NLS-1$
+				|| "z/OS".equals(osName); //$NON-NLS-1$
 	}
 
 	/**

@@ -50,7 +50,7 @@ import java.util.Arrays;
  */
 @Test(groups = { "level.sanity" })
 public class PrimitiveTypeTests1 {
-	private static final boolean isZos = "z/OS".equalsIgnoreCase(System.getProperty("os.name"));
+	private static final boolean isZos = "z/OS".equals(System.getProperty("os.name"));
 	private static Linker linker = Linker.nativeLinker();
 	private static Arena arena = Arena.ofAuto();
 

@@ -56,7 +56,7 @@ import java.lang.invoke.VarHandle;
  */
 @Test(groups = { "level.sanity" })
 public class UpcallMHWithMixedSigStruTests {
-	private static boolean isAixOS = System.getProperty("os.name").toLowerCase().contains("aix");
+	private static final boolean isAixOS = System.getProperty("os.name").equals("AIX");
 	private static Linker linker = Linker.nativeLinker();
 
 	static {

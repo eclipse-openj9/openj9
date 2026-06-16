@@ -39,7 +39,7 @@ public class SysPropTest
 		String argEncoding = args[0];
 		/* check -Dtestkey=TestVa?lue? */
 		try {
-			boolean isWindows = System.getProperty("os.name").contains("Windows");
+			boolean isWindows = System.getProperty("os.name").startsWith("Windows");
 			String osEncoding = "";
 			String strTestProp;
 

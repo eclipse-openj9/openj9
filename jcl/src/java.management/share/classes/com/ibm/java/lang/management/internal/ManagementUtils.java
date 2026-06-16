@@ -91,10 +91,10 @@ public final class ManagementUtils {
 		Properties properties = com.ibm.oti.vm.VM.internalGetProperties();
 		String thisOs = properties.getProperty("os.name"); //$NON-NLS-1$
 
-		isUnix = "aix".equalsIgnoreCase(thisOs) //$NON-NLS-1$
-				|| "linux".equalsIgnoreCase(thisOs) //$NON-NLS-1$
-				|| "mac os x".equalsIgnoreCase(thisOs) //$NON-NLS-1$
-				|| "z/OS".equalsIgnoreCase(thisOs); //$NON-NLS-1$
+		isUnix = "AIX".equals(thisOs) //$NON-NLS-1$
+				|| "Linux".equals(thisOs) //$NON-NLS-1$
+				|| "Mac OS X".equals(thisOs) //$NON-NLS-1$
+				|| "z/OS".equals(thisOs); //$NON-NLS-1$
 
 		VERBOSE_MODE = properties.getProperty("com.ibm.lang.management.verbose") != null; //$NON-NLS-1$
 	}

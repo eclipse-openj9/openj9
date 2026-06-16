@@ -179,7 +179,7 @@ public class JITServerTest {
 
 	private static String[] infoOfProcessUsingPort(int port) {
 		String[] output = {};
-		if (System.getProperty("os.name").toLowerCase().contains("linux")) {
+		if (System.getProperty("os.name").equals("Linux")) {
 			try {
 				Process proc = new ProcessBuilder("lsof", "-i", ":" + port).start();
 				proc.waitFor();

@@ -47,20 +47,22 @@ public class GetNativeDirectory
 
 	public static String getOSShortName()
 	{
-		// get the osName and make it lowercase
-		String osName = System.getProperty("os.name").toLowerCase();
+		// get the os name
+		String osName = System.getProperty("os.name");
 
-		// set the shortname to the osName if the current system is AIX this is all that is needed
+		// default the shortname to the osName
 		String osShortName = osName;
 
-		// if we are on z/OS remove the slash
-		if (osName.equals("z/os")) {
-			osShortName = "zos";
-		}
-
-		// if we are on a Windows machine use win as the shortname
-		if (osName.length() >= 6 && osName.substring(0, 6).equals("window")) {
+		if (osName.equals("AIX")) {
+			osShortName = "aix";
+		} else if (osName.equals("Linux")) {
+			osShortName = "linux";
+		} else if (osName.equals("Mac OS X")) {
+			osShortName = "mac";
+		} else if (osName.startsWith("Windows")) {
 			osShortName = "win";
+		} else if (osName.equals("z/OS")) {
+			osShortName = "zos";
 		}
 
 		return osShortName;

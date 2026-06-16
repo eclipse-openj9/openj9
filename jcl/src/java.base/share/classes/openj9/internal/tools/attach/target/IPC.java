@@ -102,21 +102,21 @@ public class IPC {
 	static {
 		Properties props = VM.internalGetProperties();
 		String osName = props.getProperty("os.name"); //$NON-NLS-1$
-		boolean tempIsZos = false;
-		boolean tempIsWindows = false;
 		boolean tempIsLinux = false;
+		boolean tempIsWindows = false;
+		boolean tempIsZos = false;
 		if (null != osName) {
-			if (osName.equalsIgnoreCase("z/OS")) { //$NON-NLS-1$
-				tempIsZos = true;
+			if (osName.equals("Linux")) { //$NON-NLS-1$
+				tempIsLinux = true;
 			} else if (osName.startsWith("Windows")) { //$NON-NLS-1$
 				tempIsWindows = true;
-			} else if (osName.startsWith("Linux")) { //$NON-NLS-1$
-				tempIsLinux = true;
+			} else if (osName.equals("z/OS")) { //$NON-NLS-1$
+				tempIsZos = true;
 			}
 		}
-		isZOS = tempIsZos;
-		isWindows = tempIsWindows;
 		isLinux = tempIsLinux;
+		isWindows = tempIsWindows;
+		isZOS = tempIsZos;
 
 		String propUseFileLockWatchdog = props.getProperty(COM_IBM_TOOLS_ATTACH_USE_FILELOCK_WATCHDOG);
 		if (propUseFileLockWatchdog == null) {

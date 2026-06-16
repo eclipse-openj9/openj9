@@ -250,15 +250,15 @@ public class JCImageProcess implements ImageProcess {
 
 			if (systemType == null) {
 				// system type unavailable
-			} else if (systemType.equalsIgnoreCase("AIX")) {
+			} else if (systemType.equals("AIX")) {
 				name = SignalName.forAIX(signal);
-			} else if (systemType.equalsIgnoreCase("Linux")) {
+			} else if (systemType.equals("Linux")) {
 				name = SignalName.forLinux(signal);
-			} else if (systemType.equalsIgnoreCase("Mac OS X")) {
+			} else if (systemType.equals("Mac OS X")) {
 				name = SignalName.forOSX(signal);
-			} else if (systemType.regionMatches(true, 0, "Windows", 0, 7)) {
+			} else if (systemType.startsWith("Windows")) {
 				name = SignalName.forWindows(signal);
-			} else if (systemType.equalsIgnoreCase("z/OS")) {
+			} else if (systemType.equals("z/OS")) {
 				name = SignalName.forZOS(signal);
 			}
 		} catch (CorruptDataException | DataUnavailable e) {

@@ -108,7 +108,7 @@ public class TestSharedClassMemoryMXBean_SM {
 	@Test
 	public void testSeSharedClassSoftmxSizeWithSecurityManager() throws Exception {
 		try {
-			if (!System.getProperty("os.name").toLowerCase().contains("aix")) {
+			if (!System.getProperty("os.name").equals("AIX")) {
 				/*
 				 * It hangs on AIX 64 bit at line: socket = serverSock.accept() in ProcessRunner.initializeCommunication()
 				 */
@@ -126,7 +126,7 @@ public class TestSharedClassMemoryMXBean_SM {
 	@Test
 	public void testSeSharedClassMaxAotWithSecurityManager() throws Exception {
 		try {
-			if (!System.getProperty("os.name").toLowerCase().contains("aix")) {
+			if (!System.getProperty("os.name").equals("AIX")) {
 				/*
 				 * It hangs on AIX 64 bit at line: socket = serverSock.accept() in ProcessRunner.initializeCommunication()
 				 */
@@ -144,7 +144,7 @@ public class TestSharedClassMemoryMXBean_SM {
 	@Test
 	public void testSeSharedClassMinAotWithSecurityManager() throws Exception {
 		try {
-			if (!System.getProperty("os.name").toLowerCase().contains("aix")) {
+			if (!System.getProperty("os.name").equals("AIX")) {
 				/*
 				 * It hangs on AIX 64 bit at line: socket = serverSock.accept() in ProcessRunner.initializeCommunication()
 				 */
@@ -162,7 +162,7 @@ public class TestSharedClassMemoryMXBean_SM {
 	@Test
 	public void testSeSharedClassMaxJitDataWithSecurityManager() throws Exception {
 		try {
-			if (!System.getProperty("os.name").toLowerCase().contains("aix")) {
+			if (!System.getProperty("os.name").equals("AIX")) {
 				/*
 				 * It hangs on AIX 64 bit at line: socket = serverSock.accept() in ProcessRunner.initializeCommunication()
 				 */
@@ -180,7 +180,7 @@ public class TestSharedClassMemoryMXBean_SM {
 	@Test
 	public void testSeSharedClassMinJitDataWithSecurityManager() throws Exception {
 		try {
-			if (!System.getProperty("os.name").toLowerCase().contains("aix")) {
+			if (!System.getProperty("os.name").equals("AIX")) {
 				/*
 				 * It on hangs on AIX 64 bit at line: socket = serverSock.accept() in ProcessRunner.initializeCommunication()
 				 */

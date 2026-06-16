@@ -718,7 +718,7 @@ public class VmArgumentTests {
 	 */
 	@Test
 	public void testLD_LIBRARY_PATH() {
-		if (!OS_NAME_PROPERTY.startsWith("Linux")) {
+		if (!OS_NAME_PROPERTY.equals("Linux")) {
 			logger.debug("Skipping " + testName + " on non-Linux systems");
 			return;
 		}
@@ -738,7 +738,7 @@ public class VmArgumentTests {
 
 	@Test
 	public void testLD_LIBRARY_PATH_And_LIBPATH() {
-		if (!OS_NAME_PROPERTY.startsWith("AIX")) {
+		if (!OS_NAME_PROPERTY.equals("AIX")) {
 			logger.debug("Skipping " + testName + " on non-AIX systems");
 			return;
 		}
@@ -764,7 +764,7 @@ public class VmArgumentTests {
 
 	@Test
 	public void testLIBPATH() {
-		if (!OS_NAME_PROPERTY.startsWith("z/OS")) {
+		if (!OS_NAME_PROPERTY.equals("z/OS")) {
 			logger.debug("Skipping " + testName + " on non-z/OS systems");
 			return;
 		}
