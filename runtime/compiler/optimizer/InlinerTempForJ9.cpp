@@ -4104,7 +4104,7 @@ int32_t TR_MultipleCallTargetInliner::applySizeAdjustmentHeuristics(TR_CallTarge
     return size;
 }
 
-void TR_MultipleCallTargetInliner::getFrequencyThresholds(TR_CallTarget *calltarget, int32_t &borderFrequency,
+void TR_MultipleCallTargetInliner::getFrequencyThresholds(TR_ResolvedMethod *calleeMethod, int32_t &borderFrequency,
     int32_t &coldBorderFrequency, int32_t &veryColdBorderFrequency)
 {
     borderFrequency = 9000;
@@ -4113,7 +4113,7 @@ void TR_MultipleCallTargetInliner::getFrequencyThresholds(TR_CallTarget *calltar
 
     if (comp()->isServerInlining()) {
         if (comp()->getOption(TR_DisableConservativeInlining) || (comp()->getOptLevel() >= hot)
-            || getJ9InitialBytecodeSize(calltarget->_calleeMethod, 0, comp())
+            || getJ9InitialBytecodeSize(calleeMethod, 0, comp())
                 < comp()->getOptions()->getAlwaysWorthInliningThreshold()) {
             borderFrequency = 1000;
             coldBorderFrequency = 0;
@@ -4136,7 +4136,7 @@ void TR_MultipleCallTargetInliner::getFrequencyThresholds(TR_CallTarget *calltar
         veryColdBorderFrequency = comp()->getOptions()->getInlinerCGVeryColdBorderFrequency();
 }
 
-int32_t TR_MultipleCallTargetInliner::scaleBasedOnFrequency(TR_CallTarget *calltarget, TR::Node *callNode,
+int32_t TR_MultipleCallTargetInliner::scaleBasedOnFrequency(TR_ResolvedMethod *calleeMethod, TR::Node *callNode,
     TR_EstimateCodeSize *ecs, int32_t size, int32_t frequency)
 {
     if (size <= 0)
@@ -4147,7 +4147,7 @@ int32_t TR_MultipleCallTargetInliner::scaleBasedOnFrequency(TR_CallTarget *callt
 
     // Get frequency thresholds
     int32_t borderFrequency, coldBorderFrequency, veryColdBorderFrequency;
-    getFrequencyThresholds(calltarget, borderFrequency, coldBorderFrequency, veryColdBorderFrequency);
+    getFrequencyThresholds(calleeMethod, borderFrequency, coldBorderFrequency, veryColdBorderFrequency);
 
     if (frequency > borderFrequency) {
         float normalizedFrequency = frequency / (float)maxFrequency;
@@ -4285,7 +4285,7 @@ void TR_MultipleCallTargetInliner::weighCallSite(TR_CallStack *callStack, TR_Cal
                         callNode, frequency);
 
                 // Apply frequency-based scaling
-                size = scaleBasedOnFrequency(calltarget, callNode, ecs, size, frequency);
+                size = scaleBasedOnFrequency(calltarget->_calleeMethod, callNode, ecs, size, frequency);
             }
         }
 
