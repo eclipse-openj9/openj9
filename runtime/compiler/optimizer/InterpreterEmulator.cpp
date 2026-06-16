@@ -1097,6 +1097,36 @@ Operand *InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
             }
             break;
         }
+        case TR::java_lang_invoke_Invokers_checkGenericType: {
+            if (!comp()->useConstRefs())
+                break;
+
+            Operand *receiverMHOperand = topn(1);
+            Operand *desiredMTOperand = topn(0);
+            TR::KnownObjectTable::Index mhIndex = receiverMHOperand->getKnownObjectIndex();
+            TR::KnownObjectTable::Index mtIndex = desiredMTOperand->getKnownObjectIndex();
+            debugTrace(tracer(), "Known MethodHandle koi %d\n", mhIndex);
+            debugTrace(tracer(), "Known MethodType koi %d\n", mtIndex);
+            TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
+            if (knot && mhIndex != TR::KnownObjectTable::UNKNOWN && mtIndex != TR::KnownObjectTable::UNKNOWN
+                && !knot->isNull(mhIndex) && !knot->isNull(mtIndex)) {
+                if (comp()->fej9()->isMethodHandleExpectedType(comp(), mhIndex, mtIndex)) {
+                    result = new (trStackMemory()) KnownObjOperand(mhIndex);
+                    debugTrace(tracer(), "MH.asType: exact match\n");
+                    break;
+                }
+
+                TR::KnownObjectTable::Index convertedMHIndex
+                    = comp()->fej9()->getConvertedMethodHandle(comp(), mhIndex, mtIndex);
+                if (TR::KnownObjectTable::UNKNOWN != convertedMHIndex) {
+                    J9::ConstProvenanceGraph *cpg = comp()->constProvenanceGraph();
+                    cpg->addEdge(cpg->knownObject(mhIndex), cpg->knownObject(convertedMHIndex));
+                    result = new (trStackMemory()) KnownObjOperand(convertedMHIndex);
+                    debugTrace(tracer(), "MH.asType: subtype match\n");
+                }
+            }
+            break;
+        }
         case TR::jdk_internal_foreign_layout_ValueLayouts_AbstractValueLayout_accessHandle: {
             Operand *layoutOperand = top();
             TR::KnownObjectTable::Index layoutIndex = layoutOperand->getKnownObjectIndex();
