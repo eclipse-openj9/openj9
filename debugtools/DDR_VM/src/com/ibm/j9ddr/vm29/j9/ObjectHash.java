@@ -217,6 +217,7 @@ public class ObjectHash {
 					U64 datum64 = U64Pointer.cast(entry.objectPointer.addOffset(offset)).at(0);
 					hashValue = mix(hashValue, new U32(datum64.bitAnd(0xffffffffL)));
 					hashValue = mix(hashValue, new U32(datum64.rightShift(32)));
+					numBytesHashed = numBytesHashed.add(8);
 					break;
 				}
 
