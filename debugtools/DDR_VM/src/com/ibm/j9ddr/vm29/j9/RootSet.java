@@ -34,73 +34,112 @@ import com.ibm.j9ddr.vm29.pointer.VoidPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
 
-public class RootSet
-{
-	public enum RootSetType 
-	{
-		ALL(0), STRONG_REACHABLE(1), WEAK_REACHABLE(2), ALL_SLOTS_EXCLUDING_STACK_SLOTS(3), STRONG_REACHABLE_EXCLUDING_STACK_SLOTS(4);
-		
-        private final int value;
+public final class RootSet {
 
-        private RootSetType(final int newValue) { value = newValue; }
+	public static enum RootSetType {
+		ALL,
+		STRONG_REACHABLE,
+		WEAK_REACHABLE,
+		ALL_SLOTS_EXCLUDING_STACK_SLOTS,
+		STRONG_REACHABLE_EXCLUDING_STACK_SLOTS;
 
-        public int getValue() { return value; }	
-	};
-	
-	private static RootSet[] _singletons = new RootSet[RootSetType.values().length];
-	
-	private ArrayList<J9ObjectPointer> _allRoots;
-	private ArrayList<VoidPointer> _allAddresses;
-	
-	private class RootSetScanner extends SimpleRootScanner 
-	{
-		protected RootSetScanner() throws CorruptDataException 
-		{
+		private RootSet rootSetCache;
+
+		private RootSetType() {
+			rootSetCache = null;
+		}
+
+		RootSet createRootSet(boolean useSingleton) throws CorruptDataException {
+			RootSet rootSet = rootSetCache;
+
+			if ((rootSet == null) || !useSingleton) {
+				rootSet = new RootSet(this);
+			}
+
+			if (rootSetCache == null) {
+				rootSetCache = rootSet;
+			}
+
+			return rootSet;
+		}
+
+	}
+
+	private final List<J9ObjectPointer> _allRoots;
+	private final List<VoidPointer> _allAddresses;
+
+	private final class RootSetScanner extends SimpleRootScanner {
+
+		private final boolean onlyStronglyReachable;
+
+		RootSetScanner(RootSetType rootSetType) throws CorruptDataException {
 			super();
+			this.onlyStronglyReachable =
+					   (rootSetType == RootSetType.STRONG_REACHABLE)
+					|| (rootSetType == RootSetType.STRONG_REACHABLE_EXCLUDING_STACK_SLOTS);
 		}
 
 		@Override
-		protected void doClassSlot(J9ClassPointer slot, VoidPointer address)
-		{
+		protected void doClassSlot(J9ClassPointer slot, VoidPointer address) {
 			if (slot.notNull()) {
 				doClass(slot, address);
 			}
 		}
-		
+
 		@Override
-		protected void doSlot(J9ObjectPointer slot, VoidPointer address)
-		{
+		protected void doSlot(J9ObjectPointer slot, VoidPointer address) {
 			if (slot.notNull()) {
 				_allRoots.add(slot);
 				_allAddresses.add(address);
 			}
 		}
-	
+
 		@Override
-		protected void doClass(J9ClassPointer slot, VoidPointer address)
-		{	
-			J9ObjectPointer classObject = J9ObjectPointer.NULL;
-			VoidPointer classObjectSlot = VoidPointer.NULL;
+		protected void doClass(J9ClassPointer slot, VoidPointer address) {
+			J9ObjectPointer classObject;
+			VoidPointer classObjectSlot;
 			try {
 				classObject = slot.classObject();
 				classObjectSlot = VoidPointer.cast(slot.classObjectEA());
-			} catch(CorruptDataException cde) {
-				 raiseCorruptDataEvent("Class: " + slot.getHexAddress() + " has invalid classObject slot", cde, false);
-				 return;
+			} catch (CorruptDataException cde) {
+				raiseCorruptDataEvent("Class: " + slot.getHexAddress() + " has invalid classObject slot", cde, false);
+				return;
 			}
-			
+
 			doSlot(classObject, classObjectSlot);
 		}
+
+		@Override
+		protected void doPhantomReferenceSlot(J9ObjectPointer slot, VoidPointer address) {
+			if (!onlyStronglyReachable) {
+				doSlot(slot, address);
+			}
+		}
+
+		@Override
+		protected void doSoftReferenceSlot(J9ObjectPointer slot, VoidPointer address) {
+			if (!onlyStronglyReachable) {
+				doSlot(slot, address);
+			}
+		}
+
+		@Override
+		protected void doWeakReferenceSlot(J9ObjectPointer slot, VoidPointer address) {
+			if (!onlyStronglyReachable) {
+				doSlot(slot, address);
+			}
+		}
+
 	}
 
-	private RootSet(RootSetType rootSetType) throws CorruptDataException
-	{
+	private RootSet(RootSetType rootSetType) throws CorruptDataException {
 		super();
-		_allRoots = new ArrayList<J9ObjectPointer>();
-		_allAddresses = new ArrayList<VoidPointer>();
-		RootSetScanner rootSetScanner = new RootSetScanner();
-		
-		switch(rootSetType) {
+		_allRoots = new ArrayList<>();
+		_allAddresses = new ArrayList<>();
+
+		RootSetScanner rootSetScanner = new RootSetScanner(rootSetType);
+
+		switch (rootSetType) {
 		case ALL:
 			rootSetScanner.scanAllSlots();
 			break;
@@ -117,67 +156,52 @@ public class RootSet
 		case STRONG_REACHABLE_EXCLUDING_STACK_SLOTS:
 			rootSetScanner.setScanStackSlots(false);
 			rootSetScanner.scanRoots();
+			break;
 		default:
 			throw new UnsupportedOperationException("Invalid rootSetType");
 		}
 	}
-	
+
 	/*
-	 * useSingleton parameter exists primarily so that we can be guaranteed to catch corruptData events (See EventManager) for users
-	 * who want to notified.
+	 * useSingleton parameter exists primarily so that we can be guaranteed to catch
+	 * corruptData events (see EventManager) for users who want to notified.
 	 */
-	protected static RootSet from(RootSetType rootSetType, boolean useSingleton) throws CorruptDataException 
-	{
-		RootSet rootSetToReturn;
-		
-		if (useSingleton) {
-			if (null == _singletons[rootSetType.getValue()]) {
-				rootSetToReturn = new RootSet(rootSetType);
-			} else {
-				rootSetToReturn = _singletons[rootSetType.getValue()]; 
-			}
-		} else {
-			rootSetToReturn = new RootSet(rootSetType);
-		}
-		
-		if (null == _singletons[rootSetType.getValue()]) {
-			_singletons[rootSetType.getValue()] = rootSetToReturn;
-		}
-		
-		return rootSetToReturn;
+	public static RootSet from(RootSetType rootSetType, boolean useSingleton) throws CorruptDataException {
+		return rootSetType.createRootSet(useSingleton);
 	}
-	
-	public static List<J9ObjectPointer> allRoots(RootSetType rootSetType) throws CorruptDataException
-	{
+
+	public static List<J9ObjectPointer> allRoots(RootSetType rootSetType) throws CorruptDataException {
 		RootSet rootSet = new RootSet(rootSetType);
 		return Collections.unmodifiableList(rootSet._allRoots);
 	}
-	
-	public GCIterator gcIterator(RootSetType rootSetType) throws CorruptDataException
-	{
+
+	public GCIterator gcIterator(RootSetType rootSetType) throws CorruptDataException {
 		final Iterator<J9ObjectPointer> rootSetIterator = _allRoots.iterator();
 		final Iterator<VoidPointer> rootSetAddressIterator = _allAddresses.iterator();
-		
+
 		return new GCIterator() {
+			@Override
 			public boolean hasNext() {
 				return rootSetIterator.hasNext();
 			}
 
+			@Override
 			public VoidPointer nextAddress() {
 				rootSetIterator.next();
 				return rootSetAddressIterator.next();
 			}
 
+			@Override
 			public Object next() {
 				rootSetAddressIterator.next();
-				return rootSetIterator.next(); 
+				return rootSetIterator.next();
 			}
 		};
 	}
-	
-	public static GCIterator rootIterator(RootSetType rootSetType) throws CorruptDataException
-	{
+
+	public static GCIterator rootIterator(RootSetType rootSetType) throws CorruptDataException {
 		final RootSet rootSet = RootSet.from(rootSetType, true);
 		return rootSet.gcIterator(rootSetType);
 	}
+
 }
