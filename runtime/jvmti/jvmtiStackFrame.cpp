@@ -709,6 +709,7 @@ jvmtiInternalGetStackTraceIterator(J9VMThread *currentThread, J9StackWalkState *
 	jmethodID methodID = NULL;
 	UDATA rc = J9_STACKWALK_KEEP_ITERATING;
 	J9Method *method = walkState->method;
+	J9Class *declaringClass = J9_CLASS_FROM_METHOD(method);
 
 #if JAVA_SPEC_VERSION >= 20
 	J9ROMMethod *romMethod = NULL;
@@ -747,6 +748,7 @@ jvmtiInternalGetStackTraceIterator(J9VMThread *currentThread, J9StackWalkState *
 			}
 		}
 
+		declaringClass->classLoader->keepJNIIDs = 1;
 		walkState->userData1 = frame_buffer + 1;
 	}
 
