@@ -165,7 +165,9 @@ TR::RecognizedMethod TR_VarHandleTransformer::getVarHandleAccessMethod(TR::Node 
  */
 int32_t TR_VarHandleTransformer::perform()
 {
-#if defined(J9VM_OPT_METHOD_HANDLE)
+// VarHandles only exist on JDK11+. On JDK8, java/lang/invoke/VarHandle is absent so any
+// call to it is unresolved
+#if defined(J9VM_OPT_METHOD_HANDLE) && (JAVA_SPEC_VERSION >= 11)
     bool doTrace = comp()->getOption(TR_TraceILGen);
     TR::ResolvedMethodSymbol *methodSymbol = comp()->getMethodSymbol();
     TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
@@ -380,7 +382,7 @@ int32_t TR_VarHandleTransformer::perform()
             }
         }
     }
-#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) && (JAVA_SPEC_VERSION >= 11) */
     return 0;
 }
 
