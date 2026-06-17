@@ -430,7 +430,7 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 	}
 
 	if (NULL != classLoader->jniIDs) {
-		if (J9VM_SHOULD_CLEAR_JNIIDS_FOR_ASGCT(javaVM, classLoader)) {
+		if (J9VM_SHOULD_KEEP_JNIIDS(javaVM, classLoader)) {
 			pool_state idWalkState;
 			J9GenericJNIID *jniID = pool_startDo(classLoader->jniIDs, &idWalkState);
 

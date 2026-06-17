@@ -8777,6 +8777,19 @@ freeClassNativeMemory(J9HookInterface** hook, UDATA eventNum, void* eventData, v
 	J9Class * clazz = data->clazz;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
+	if (NULL != clazz->jniIDs) {
+		J9ClassLoader *classLoader = clazz->classLoader;
+		if (J9VM_SHOULD_KEEP_JNIIDS(vm, classLoader)) {
+			UDATA size = J9VM_NUM_OF_ENTRIES_IN_CLASS_JNIID_TABLE(clazz->romClass);
+			for (UDATA i = 0; i < size; i++) {
+				J9GenericJNIID *id = (J9GenericJNIID *)(clazz->jniIDs[i]);
+				if (NULL != id) {
+					memset(id, -1, sizeof(J9GenericJNIID));
+				}
+			}
+		}
+	}
+
 	/* Free the ID table for this class, but do not free any of the IDs.  They will be freed by killing their
 		pools when the class loader is unloaded.
 	*/
@@ -8870,7 +8883,7 @@ vmHookAnonClassesUnload(J9HookInterface** hook, UDATA eventNum, void* eventData,
 		J9ClassLoader *classLoader = j9clazz->classLoader;
 		/* Anon classes are unloaded piecemeal, so clear the map cache where the anon maps may be cached */
 		freeMapCaches(classLoader);
-		if (J9VM_SHOULD_CLEAR_JNIIDS_FOR_ASGCT(vm, classLoader)) {
+		if (J9VM_SHOULD_KEEP_JNIIDS(vm, classLoader)) {
 			void **jniIDs = j9clazz->jniIDs;
 			if (NULL != jniIDs) {
 				UDATA size = J9VM_NUM_OF_ENTRIES_IN_CLASS_JNIID_TABLE(j9clazz->romClass);

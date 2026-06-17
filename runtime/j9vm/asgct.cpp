@@ -123,7 +123,7 @@ asyncFrameIterator(J9VMThread * currentThread, J9StackWalkState * walkState)
 		frame->lineno = (jint)walkState->bytecodePCOffset;
 	}
 	walkState->userData1 = (void*)(frame + 1);
-	declaringClass->classLoader->asyncGetCallTraceUsed = 1;
+	declaringClass->classLoader->keepJNIIDs = 1;
 	return J9_STACKWALK_KEEP_ITERATING;
 }
 
