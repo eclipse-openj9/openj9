@@ -2076,6 +2076,7 @@ jvmtiInternalGetStackTraceIteratorExtended(J9VMThread *currentThread, J9StackWal
 	UDATA frameCount = 0;
 	J9JVMTIStackTraceType type = (J9JVMTIStackTraceType)(UDATA)walkState->userData2;
 	J9Method *method = walkState->method;
+	J9Class *declaringClass = J9_CLASS_FROM_METHOD(method);
 
 #if JAVA_SPEC_VERSION >= 20
 	J9ROMMethod *romMethod = NULL;
@@ -2118,7 +2119,9 @@ jvmtiInternalGetStackTraceIteratorExtended(J9VMThread *currentThread, J9StackWal
 		} 
 
 		frame_buffer->method = methodID;
-		
+
+		declaringClass->classLoader->keepJNIIDs = 1;
+
 		if (J9_ARE_ANY_BITS_SET(type, J9JVMTI_STACK_TRACE_EXTRA_FRAME_INFO)) {
 			/* Fill in the extended data. */
 #if defined(J9VM_INTERP_NATIVE_SUPPORT)
