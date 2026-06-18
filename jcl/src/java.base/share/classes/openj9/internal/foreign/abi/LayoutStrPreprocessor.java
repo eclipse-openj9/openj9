@@ -54,10 +54,10 @@ import jdk.incubator.foreign.ValueLayout;
  */
 @SuppressWarnings("nls")
 final class LayoutStrPreprocessor {
-	private static final String osName = System.getProperty("os.name").toLowerCase();
-	private static final String arch = System.getProperty("os.arch").toLowerCase();
+	private static final String osName = System.getProperty("os.name");
+	private static final String arch = System.getProperty("os.arch");
 	private static final boolean isX86_64 = arch.equals("amd64") || arch.equals("x86_64");
-	private static final boolean isLinuxS390x = arch.equals("s390x") && osName.startsWith("linux");
+	private static final boolean isLinuxS390x = arch.equals("s390x") && osName.startsWith("Linux");
 
 	/*[IF JAVA_SPEC_VERSION == 17]*/
 	private static final String VARARGS_ATTR_NAME;
@@ -65,19 +65,19 @@ final class LayoutStrPreprocessor {
 	static {
 		/* Note: the attributes intended for the layout with variadic argument are defined in OpenJDK. */
 		if (isX86_64) {
-			if (osName.startsWith("windows")) {
+			if (osName.startsWith("Windows")) {
 				VARARGS_ATTR_NAME = "abi/windows/varargs";
 			} else {
 				VARARGS_ATTR_NAME = "abi/sysv/varargs";
 			}
 		} else if (arch.equals("aarch64")) {
-			if (osName.startsWith("mac")) {
+			if (osName.startsWith("Mac")) {
 				VARARGS_ATTR_NAME = "abi/aarch64/stack_varargs";
 			} else {
 				VARARGS_ATTR_NAME = "abi/sysv/varargs";
 			}
 		} else if (arch.startsWith("ppc64")) {
-			if (osName.startsWith("linux")) {
+			if (osName.startsWith("Linux")) {
 				VARARGS_ATTR_NAME = "abi/ppc64/sysv/varargs";
 			} else {
 				VARARGS_ATTR_NAME = "abi/ppc64/aix/varargs";
@@ -380,60 +380,68 @@ final class LayoutStrPreprocessor {
 
 	/* Map the specified primitive layout's kind to the symbol for primitive type in VM Spec. */
 	/*[IF JAVA_SPEC_VERSION >= 21]*/
-	private static String getPrimitiveTypeSymbol(ValueLayout targetLayout) {
+	private static char getPrimitiveTypeSymbol(ValueLayout targetLayout) {
 		Class<?> javaType = targetLayout.carrier();
-		String typeSymbol;
+		char typeSymbol;
 
-		if (javaType == byte.class) {
+		if (javaType == boolean.class) {
+			/* JAVA_BOOLEAN corresponds to C_BOOL. */
+			typeSymbol = 'B';
+		} else if (javaType == byte.class) {
 			/* JAVA_BYTE corresponds to C_CHAR (1 byte) in native. */
-			typeSymbol = "C";
-		} else if (javaType == char.class) {
-			/* JAVA_CHAR in Java corresponds to C_SHORT (2 bytes) in native. */
-			typeSymbol = "S";
+			typeSymbol = 'C';
+		} else if ((javaType == char.class) || (javaType == short.class)) {
+			/* JAVA_CHAR and JAVA_SHORT correspond to C_SHORT (2 bytes). */
+			typeSymbol = 'S';
+		} else if (javaType == int.class) {
+			typeSymbol = 'I';
 		} else if (javaType == long.class) {
 			/* Map JAVA_LONG to 'J' so as to keep consistent with the existing VM Spec. */
-			typeSymbol = "J";
+			typeSymbol = 'J';
+		} else if (javaType == double.class) {
+			typeSymbol = 'D';
+		} else if (javaType == float.class) {
+			typeSymbol = 'F';
 		} else if (javaType == MemorySegment.class) {
-			typeSymbol = "P";
+			typeSymbol = 'P';
 		} else {
-			/* Obtain the 1st character of the type class as the symbol of the native signature. */
-			typeSymbol = javaType.getSimpleName().substring(0, 1).toUpperCase();
+			throw new IllegalArgumentException("The layout's ABI Class is undefined: layout = " + targetLayout);
 		}
 
 		return typeSymbol;
 	}
 	/*[ELSE] JAVA_SPEC_VERSION >= 21 */
-	private static String getPrimitiveTypeSymbol(ValueLayout targetLayout) {
+	private static char getPrimitiveTypeSymbol(ValueLayout targetLayout) {
 		/* Extract the kind from the specified layout with the ATTR_NAME "abi/kind".
 		 * e.g. b32[abi/kind=INT]
 		 */
 		TypeKind kind = (TypeKind)targetLayout.attribute(TypeKind.ATTR_NAME)
 				.orElseThrow(() -> new IllegalArgumentException("The layout's ABI class is empty"));
-		String typeSymbol;
+		char typeSymbol;
 
 		switch (kind) {
 		case CHAR:
-			typeSymbol = "C";
+			typeSymbol = 'C';
 			break;
 		case SHORT:
-			typeSymbol = "S";
+			typeSymbol = 'S';
 			break;
 		case INT:
-			typeSymbol = "I";
+			typeSymbol = 'I';
 			break;
 		case LONG:
 		case LONG_LONG: /* A 8-byte long type on 64bit Windows as specified in the Spec. */
 			/* Map the long layout to 'J' so as to keep consistent with the existing VM Spec. */
-			typeSymbol = "J";
+			typeSymbol = 'J';
 			break;
 		case FLOAT:
-			typeSymbol = "F";
+			typeSymbol = 'F';
 			break;
 		case DOUBLE:
-			typeSymbol = "D";
+			typeSymbol = 'D';
 			break;
 		case POINTER:
-			typeSymbol = "P";
+			typeSymbol = 'P';
 			break;
 		default:
 			throw new IllegalArgumentException("The layout's ABI Class is undefined: layout = " + targetLayout);
