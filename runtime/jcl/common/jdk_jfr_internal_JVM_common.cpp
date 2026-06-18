@@ -47,7 +47,11 @@ Java_jdk_jfr_internal_JVM_registerNatives(JNIEnv *env, jclass clazz)
 void JNICALL
 Java_jdk_jfr_internal_JVM_beginRecording(JNIEnv *env, jobject obj)
 {
-	Java_com_ibm_oti_vm_VM_startJFR(env, NULL);
+	J9VMThread *currentThread = (J9VMThread*) env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	vmFuncs->startJFRRecording(vm);
 }
 
 jlong JNICALL
@@ -69,13 +73,25 @@ Java_jdk_jfr_internal_JVM_emitEvent(JNIEnv *env, jobject obj, jlong eventTypeId,
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	return vmFuncs->requestJFREvent(currentThread, eventTypeId);
+	jboolean result = JNI_FALSE;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	result = vmFuncs->requestJFREvent(currentThread, eventTypeId);
+	vmFuncs->internalExitVMToJNI(currentThread);
+
+	return result;
 }
 
 void JNICALL
 Java_jdk_jfr_internal_JVM_endRecording(JNIEnv *env, jobject obj)
 {
-	Java_com_ibm_oti_vm_VM_stopJFR(env, NULL);
+	J9VMThread *currentThread = (J9VMThread*) env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	vmFuncs->stopJFRRecording(vm);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 jobject JNICALL
@@ -289,6 +305,9 @@ Java_jdk_jfr_internal_JVM_setMemorySize(JNIEnv *env, jobject obj, jlong size)
 void JNICALL
 Java_jdk_jfr_internal_JVM_setOutput(JNIEnv *env, jobject obj, jstring file)
 {
+	if (NULL == file) {
+		Java_com_ibm_oti_vm_VM_jfrDump(env, NULL);
+	}
 	Java_com_ibm_oti_vm_VM_setJFRRecordingFileName(env, NULL, file);
 }
 
@@ -346,11 +365,19 @@ jboolean JNICALL
 Java_jdk_jfr_internal_JVM_createJFR(JNIEnv *env, jobject obj, jboolean simulateFailure)
 {
 	jboolean rc = JNI_TRUE;
+	J9VMThread *currentThread = (J9VMThread*) env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
 	if (simulateFailure) {
 		rc = JNI_FALSE;
 		goto done;
 	}
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	if (JNI_OK != vmFuncs->initializeJFR(vm)) {
+		rc = JNI_FALSE;
+	}
+	vmFuncs->internalExitVMToJNI(currentThread);
 
 done:
 	return rc;
@@ -360,6 +387,13 @@ jboolean JNICALL
 Java_jdk_jfr_internal_JVM_destroyJFR(JNIEnv *env, jobject obj)
 {
 	jboolean rc = JNI_TRUE;
+	J9VMThread *currentThread = (J9VMThread*) env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	vmFuncs->tearDownJFR(vm);
+	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return rc;
 }
@@ -473,7 +507,7 @@ jboolean JNICALL
 Java_jdk_jfr_internal_JVM_shouldRotateDisk(JNIEnv *env, jobject obj)
 {
 	// TODO: implementation
-	return JNI_FALSE;
+	return JNI_TRUE;
 }
 
 } /* extern "C" */

@@ -262,7 +262,7 @@ Java_com_ibm_oti_vm_VM_startJFR(JNIEnv *env, jclass unused)
 
 	if (!vmFuncs->isJFRRecordingStarted(vm)) {
 		/* this is to initalize JFR late after VM startup */
-		rc = vmFuncs->initializeJFR(vm, TRUE);
+		rc = vmFuncs->initializeJFR(vm);
 	}
 
 	return rc;

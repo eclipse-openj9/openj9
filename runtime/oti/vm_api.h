@@ -5752,7 +5752,25 @@ hasMemoryScope(J9VMThread *walkThread, j9object_t scope);
  * @returns JNI_OK on success, JNI error code on failure
  */
 jint
-initializeJFR(J9JavaVM *vm, BOOLEAN lateInit);
+initializeJFR(J9JavaVM *vm);
+
+/**
+ * Start JFR recording.
+ *
+ * @param vm[in] the J9JavaVM
+ *
+ * @returns TRUE on success, FALSE on failure
+ */
+BOOLEAN
+startJFRRecording(J9JavaVM *vm);
+
+/**
+ * Stop JFR recording.
+ *
+ * @param vm[in] the J9JavaVM
+ */
+void
+stopJFRRecording(J9JavaVM *vm);
 
 /**
  * Initialize JFR v2. This is the more complete version of J9 JFR support
@@ -5794,6 +5812,16 @@ isJFRV2SupportEnabled(J9JavaVM *vm);
  */
 jboolean
 isJFRRecordingStarted(J9JavaVM *vm);
+
+/**
+ * Check if JFR has been created.
+ *
+ * @param vm[in] the J9JavaVM
+ *
+ * @returns JNI_TRUE if JFR has been created, JNI_FALSE otherwise
+ */
+jboolean
+isJFRCreated(J9JavaVM *vm);
 
 /**
  * Flush all the thread buffers and write out the global buffer.

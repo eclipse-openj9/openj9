@@ -301,14 +301,14 @@ flushBufferToGlobal(J9VMThread *currentThread, J9VMThread *flushThread)
 	UDATA bufferSize = flushThread->jfrBuffer.bufferCurrent - flushThread->jfrBuffer.bufferStart;
 	bool success = true;
 
-	if (!areJFRBuffersReadyForWrite(currentThread)) {
-		goto done;
-	}
-
 #if defined(DEBUG)
 	PORT_ACCESS_FROM_VMC(currentThread);
 	j9tty_printf(PORTLIB, "\n!!! flushing %p of size %u start=%p current=%p\n", flushThread, (U_32)bufferSize, flushThread->jfrBuffer.bufferStart, flushThread->jfrBuffer.bufferCurrent);
 #endif /* defined(DEBUG) */
+
+	if (!areJFRBuffersReadyForWrite(currentThread)) {
+		goto done;
+	}
 
 	omrthread_monitor_enter(vm->jfrBufferMutex);
 	if (vm->jfrBuffer.bufferRemaining < bufferSize) {
@@ -935,20 +935,17 @@ jfrGCHeapSummary(OMR_VMThread *omrVMThread, U_32 gcWhenID)
 }
 
 jint
-initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
+initializeJFR(J9JavaVM *vm)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 	jint rc = JNI_ERR;
-	J9HookInterface **vmHooks = getVMHookInterface(vm);
 
 	U_8 *buffer = NULL;
 	UDATA timeSuccess = 0;
+	J9VMThread *walkThread = NULL;
 
-	if (lateInit && vm->jfrState.isStarted) {
-		Trc_VM_initializeJFR_isStarted();
-		goto done;
-	}
+	Assert_VM_false(vm->jfrState.isCreated);
 
 	/* Register async handler for execution samples. */
 	vm->jfrAsyncKey = J9RegisterAsyncEvent(vm, jfrExecutionSampleCallback, NULL);
@@ -958,46 +955,6 @@ initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 
 	vm->jfrThreadCPULoadAsyncKey = J9RegisterAsyncEvent(vm, jfrThreadCPULoadCallback, NULL);
 	if (vm->jfrThreadCPULoadAsyncKey < 0) {
-		goto fail;
-	}
-
-	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_THREAD_CREATED, jfrThreadCreated, OMR_GET_CALLSITE(), NULL)) {
-		goto fail;
-	}
-	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CLASSES_UNLOAD, jfrClassesUnload, OMR_GET_CALLSITE(), NULL)) {
-		goto fail;
-	}
-	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_SHUTTING_DOWN, jfrVMShutdown, OMR_GET_CALLSITE(), NULL)) {
-		goto fail;
-	}
-	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_THREAD_STARTING, jfrThreadStarting, OMR_GET_CALLSITE(), NULL)) {
-		goto fail;
-	}
-	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_THREAD_END, jfrThreadEnd, OMR_GET_CALLSITE(), NULL)) {
-		goto fail;
-	}
-	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_SLEPT, jfrVMSlept, OMR_GET_CALLSITE(), NULL)) {
-		goto fail;
-	}
-	if (!lateInit) {
-		if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZED, jfrVMInitialized, OMR_GET_CALLSITE(), NULL)) {
-			goto fail;
-		}
-	}
-	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_MONITOR_WAITED, jfrVMMonitorWaited, OMR_GET_CALLSITE(), NULL)) {
-		goto fail;
-	}
-	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_MONITOR_CONTENDED_ENTERED, jfrVMMonitorEntered, OMR_GET_CALLSITE(), NULL)) {
-		goto fail;
-	}
-	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_UNPARKED, jfrVMThreadParked, OMR_GET_CALLSITE(), NULL)) {
-		goto fail;
-	}
-	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_SYSTEM_GC_CALLED, jfrSystemGC, OMR_GET_CALLSITE(), NULL)) {
-		goto fail;
-	}
-	/* Register GC-related hooks via gc_base */
-	if (0 != (vm->memoryManagerFunctions->j9gc_register_jfr_hooks(vm))) {
 		goto fail;
 	}
 
@@ -1067,31 +1024,34 @@ initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 		goto fail;
 	}
 
-	if (lateInit) {
-		/* Go through existing threads. */
-		J9VMThread *walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
-		while (NULL != walkThread) {
-			/* only initialize a thread once */
-			if (NULL == walkThread->jfrBuffer.bufferStart) {
-				U_8 *buffer = (U_8 *)j9mem_allocate_memory(J9JFR_THREAD_BUFFER_SIZE, J9MEM_CATEGORY_JFR);
-				if (NULL == buffer) {
-					goto fail;
-				} else {
-					walkThread->jfrBuffer.bufferStart = buffer;
-					walkThread->jfrBuffer.bufferCurrent = buffer;
-					walkThread->jfrBuffer.bufferSize = J9JFR_THREAD_BUFFER_SIZE;
-					walkThread->jfrBuffer.bufferRemaining = J9JFR_THREAD_BUFFER_SIZE;
-				}
+	/* Go through existing threads. */
+	walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
+	while (NULL != walkThread) {
+		/* only initialize a thread once */
+		if (NULL == walkThread->jfrBuffer.bufferStart) {
+			U_8 *buffer = (U_8 *)j9mem_allocate_memory(J9JFR_THREAD_BUFFER_SIZE, J9MEM_CATEGORY_JFR);
+			if (NULL == buffer) {
+				goto fail;
+			} else {
+				walkThread->jfrBuffer.bufferStart = buffer;
+				walkThread->jfrBuffer.bufferCurrent = buffer;
+				walkThread->jfrBuffer.bufferSize = J9JFR_THREAD_BUFFER_SIZE;
+				walkThread->jfrBuffer.bufferRemaining = J9JFR_THREAD_BUFFER_SIZE;
 			}
-
-			walkThread = J9_LINKED_LIST_NEXT_DO(vm->mainThread, walkThread);
 		}
 
-		jfrStartSamplingThread(vm);
+		walkThread = J9_LINKED_LIST_NEXT_DO(vm->mainThread, walkThread);
+	}
+
+	vm->jfrState.isCreated = TRUE;
+
+	if (!isJFRV2SupportEnabled(vm)) {
+		if (!startJFRRecording(vm)) {
+			goto fail;
+		}
 	}
 
 done:
-	vm->jfrState.isStarted = TRUE;
 	rc = JNI_OK;
 	return rc;
 fail:
@@ -1099,16 +1059,69 @@ fail:
 	goto done;
 }
 
-void
-tearDownJFR(J9JavaVM *vm)
+BOOLEAN
+startJFRRecording(J9JavaVM *vm)
 {
-	PORT_ACCESS_FROM_JAVAVM(vm);
+	J9HookInterface **vmHooks = getVMHookInterface(vm);
+	BOOLEAN rc = FALSE;
+
+	Assert_VM_false(vm->jfrState.isStarted);
+	Assert_VM_true(vm->jfrState.isCreated);
+
+	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_THREAD_CREATED, jfrThreadCreated, OMR_GET_CALLSITE(), NULL)) {
+		goto done;
+	}
+	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CLASSES_UNLOAD, jfrClassesUnload, OMR_GET_CALLSITE(), NULL)) {
+		goto done;
+	}
+	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_SHUTTING_DOWN, jfrVMShutdown, OMR_GET_CALLSITE(), NULL)) {
+		goto done;
+	}
+	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_THREAD_STARTING, jfrThreadStarting, OMR_GET_CALLSITE(), NULL)) {
+		goto done;
+	}
+	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_THREAD_END, jfrThreadEnd, OMR_GET_CALLSITE(), NULL)) {
+		goto done;
+	}
+	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_SLEPT, jfrVMSlept, OMR_GET_CALLSITE(), NULL)) {
+		goto done;
+	}
+	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_MONITOR_WAITED, jfrVMMonitorWaited, OMR_GET_CALLSITE(), NULL)) {
+		goto done;
+	}
+	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_MONITOR_CONTENDED_ENTERED, jfrVMMonitorEntered, OMR_GET_CALLSITE(), NULL)) {
+		goto done;
+	}
+	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_UNPARKED, jfrVMThreadParked, OMR_GET_CALLSITE(), NULL)) {
+		goto done;
+	}
+	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_SYSTEM_GC_CALLED, jfrSystemGC, OMR_GET_CALLSITE(), NULL)) {
+		goto done;
+	}
+	/* Register GC-related hooks via gc_base */
+	if (0 != (vm->memoryManagerFunctions->j9gc_register_jfr_hooks(vm))) {
+		goto done;
+	}
+
+	jfrStartSamplingThread(vm);
+
+	vm->jfrState.isStarted = TRUE;
+
+	rc = TRUE;
+done:
+	return rc;
+}
+
+void
+stopJFRRecording(J9JavaVM *vm)
+{
 	J9VMThread *currentThread = currentVMThread(vm);
 	J9HookInterface **vmHooks = getVMHookInterface(vm);
-
 	Assert_VM_mustHaveVMAccess(currentThread);
-
 	internalReleaseVMAccess(currentThread);
+
+	Assert_VM_true(vm->jfrState.isStarted);
+	vm->jfrState.isStarted = FALSE;
 
 	/* Stop the sampler thread */
 	if (NULL != vm->jfrSamplerMutex) {
@@ -1124,13 +1137,9 @@ tearDownJFR(J9JavaVM *vm)
 		omrthread_monitor_destroy(vm->jfrSamplerMutex);
 		vm->jfrSamplerMutex = NULL;
 	}
-
-	internalAcquireVMAccess(currentThread);
-
-	vm->jfrState.isStarted = FALSE;
 	vm->jfrSamplerState = J9JFR_SAMPLER_STATE_UNINITIALIZED;
 
-	VM_JFRWriter::teardownJFRWriter(vm);
+	internalAcquireVMAccess(currentThread);
 
 	/* Unhook all the events */
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_CREATED, jfrThreadCreated, NULL);
@@ -1139,7 +1148,7 @@ tearDownJFR(J9JavaVM *vm)
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_STARTING, jfrThreadStarting, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_END, jfrThreadEnd, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_SLEPT, jfrVMSlept, NULL);
-	/* Unregister it anyway even it wasn't registered for initializeJFR(vm, TRUE). */
+	/* Unregister it anyway even it wasn't registered for initializeJFR(vm). */
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_INITIALIZED, jfrVMInitialized, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_MONITOR_WAITED, jfrVMMonitorWaited, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_MONITOR_CONTENDED_ENTERED, jfrVMMonitorEntered, NULL);
@@ -1147,6 +1156,22 @@ tearDownJFR(J9JavaVM *vm)
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_SYSTEM_GC_CALLED, jfrSystemGC, NULL);
 	/* Deregister GC-related hooks via gc_base */
 	vm->memoryManagerFunctions->j9gc_deregister_jfr_hooks(vm);
+}
+
+void
+tearDownJFR(J9JavaVM *vm)
+{
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	J9VMThread *currentThread = currentVMThread(vm);
+
+	Assert_VM_mustHaveVMAccess(currentThread);
+	Assert_VM_true(vm->jfrState.isCreated);
+
+	if (!isJFRV2SupportEnabled(vm)) {
+		stopJFRRecording(vm);
+	}
+	vm->jfrState.isCreated = FALSE;
+	VM_JFRWriter::teardownJFRWriter(vm);
 
 	freeThreadIDs(currentThread);
 
@@ -1265,6 +1290,12 @@ jboolean
 isJFRRecordingStarted(J9JavaVM *vm)
 {
 	return vm->jfrState.isStarted ? JNI_TRUE : JNI_FALSE;
+}
+
+jboolean
+isJFRCreated(J9JavaVM *vm)
+{
+	return vm->jfrState.isCreated ? JNI_TRUE : JNI_FALSE;
 }
 
 // TODO: add thread state parameter

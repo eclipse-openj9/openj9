@@ -141,7 +141,7 @@ Java_jdk_jfr_internal_JVM_getTypeId__Ljava_lang_String_2(JNIEnv *env, jobject ob
 void JNICALL
 Java_jdk_jfr_internal_JVM_flush__(JNIEnv *env, jclass clazz)
 {
-	// TODO: implementation
+	Java_com_ibm_oti_vm_VM_jfrDump(env, NULL);
 }
 
 void JNICALL
