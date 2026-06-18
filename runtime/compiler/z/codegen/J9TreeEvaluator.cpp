@@ -564,6 +564,283 @@ TR::Register *J9::Z::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, TR
     cg->stopUsingRegister(sourceArrayReferenceRegister2);
     return charArrayReferenceRegister;
 }
+TR::Register *J9::Z::TreeEvaluator::inlineStringLatin1CompareToUTF16Values(TR::Node *node, TR::CodeGenerator *cg)
+{
+    TR_ASSERT_FATAL(cg->getSupportsInlineStringLatin1CompareToUTF16Values(),
+        "This evaluator should only be triggered when inlining StringLatin1.compareToUTF16Values is enabled!\n");
+
+    // inlinesprivate static int compareToUTF16Values(byte[] value, byte[] other, int len1, int len2)
+    // Returns: c1 - c2 if characters differ, or len1 - len2 if all compared characters are equal
+    TR::Node *latin1ArrayNode = node->getChild(0);
+    TR::Node *utf16ArrayNode = node->getChild(1);
+    TR::Node *len1Node = node->getChild(2);
+    TR::Node *len2Node = node->getChild(3);
+
+    // Evaluate all child nodes
+    TR::Register *latin1ArrayReg = cg->gprClobberEvaluate(latin1ArrayNode);
+    TR::Register *utf16ArrayReg = cg->gprClobberEvaluate(utf16ArrayNode);
+    TR::Register *len1Reg = cg->evaluate(len1Node);
+    TR::Register *len2Reg = cg->evaluate(len2Node);
+
+    // Allocate 11 GPRs (reuse tempReg and temp2Reg for address computation)
+    TR::Register *limReg = cg->allocateRegister();
+    TR::Register *indexReg = cg->allocateRegister();
+    TR::Register *loopLimitReg = cg->allocateRegister();
+    TR::Register *resultReg = cg->allocateRegister();
+    TR::Register *tempReg = cg->allocateRegister();
+    TR::Register *temp2Reg = cg->allocateRegister();
+    TR::Register *vllLengthReg = cg->allocateRegister();
+
+    // Allocate all 5 VRFs BEFORE ICF region to avoid allocation inside ICF
+    TR::Register *vLatin1 = cg->allocateRegister(TR_VRF);
+    TR::Register *vLatin1Expanded = cg->allocateRegister(TR_VRF);
+    TR::Register *vUTF16 = cg->allocateRegister(TR_VRF);
+    TR::Register *vResult = cg->allocateRegister(TR_VRF);
+    TR::Register *vFirstDiff = cg->allocateRegister(TR_VRF);
+
+    // Array header offset
+    int32_t offsetToDataElements = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+
+#ifdef J9VM_GC_SPARSE_HEAP_ALLOCATION
+    if (TR::Compiler->om.isOffHeapAllocationEnabled()) {
+        // Load first data element address for Latin1 array
+        generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, latin1ArrayReg,
+            generateS390MemoryReference(latin1ArrayReg,
+                cg->comp()->fej9()->getOffsetOfContiguousDataAddrField(), cg));
+
+        // Load first data element address for UTF16 array
+        generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, utf16ArrayReg,
+            generateS390MemoryReference(utf16ArrayReg,
+                cg->comp()->fej9()->getOffsetOfContiguousDataAddrField(), cg));
+
+        offsetToDataElements = 0;
+    }
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
+
+    TR::LabelSymbol *cFlowRegionStart = generateLabelSymbol(cg);
+    TR::LabelSymbol *cFlowRegionEnd = generateLabelSymbol(cg);
+    TR::LabelSymbol *vectorLoopLabel = generateLabelSymbol(cg);
+    TR::LabelSymbol *residualLabel = generateLabelSymbol(cg);
+    TR::LabelSymbol *returnLenDiffLabel = generateLabelSymbol(cg);
+    TR::LabelSymbol *foundDifferenceLabel = generateLabelSymbol(cg);
+    TR::LabelSymbol *useLenLabel = generateLabelSymbol(cg);
+    TR::LabelSymbol *continueLabel = generateLabelSymbol(cg);
+
+    cFlowRegionStart->setStartInternalControlFlow();
+    cFlowRegionEnd->setEndInternalControlFlow();
+
+    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionStart);
+
+    // Calculate lim = min(len1, len2)
+    // Use LLGFR to zero-extend 32-bit int parameters to 64-bit registers
+    generateRRInstruction(cg, TR::InstOpCode::CGR, node, len1Reg, len2Reg);
+    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, node, useLenLabel);
+    generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, limReg, len2Reg);
+    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, continueLabel);
+    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, useLenLabel);
+    generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, limReg, len1Reg);
+    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, continueLabel);
+
+    // Check for empty comparison (lim == 0)
+    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, limReg, 0,
+        TR::InstOpCode::COND_BE, returnLenDiffLabel, false, false);
+
+    // Save original array pointers and adjust for data elements BEFORE ICF
+    TR::Register *latin1ArrayRegOrig = cg->allocateRegister();
+    TR::Register *utf16ArrayRegOrig = cg->allocateRegister();
+    generateRRInstruction(cg, TR::InstOpCode::LGR, node, latin1ArrayRegOrig, latin1ArrayReg);
+    generateRRInstruction(cg, TR::InstOpCode::LGR, node, utf16ArrayRegOrig, utf16ArrayReg);
+    
+    generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, latin1ArrayReg,
+        generateS390MemoryReference(latin1ArrayReg, offsetToDataElements, cg));
+    generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, utf16ArrayReg,
+        generateS390MemoryReference(utf16ArrayReg, offsetToDataElements, cg));
+
+    // Initialize index to 0 (use 64-bit XOR to clear all bits)
+    generateRRInstruction(cg, TR::InstOpCode::XGR, node, indexReg, indexReg);
+
+    // Calculate loop limit (aligned down to 8 characters)
+    generateRRInstruction(cg, TR::InstOpCode::LGR, node, loopLimitReg, limReg);
+    generateRILInstruction(cg, TR::InstOpCode::NILF, node, loopLimitReg, 0xFFFFFFF8);
+
+    // Check if we have at least 8 characters to process
+    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CGR, node, indexReg, loopLimitReg,
+        TR::InstOpCode::COND_BNL, residualLabel, false, false);
+
+    // Main loop - Process 8 characters per iteration
+    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, vectorLoopLabel);
+
+    // Load 8 Latin1 bytes (8 characters) - pointer-based addressing
+    generateRILInstruction(cg, TR::InstOpCode::LGFI, node, vllLengthReg, 7);
+    generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, vLatin1, vllLengthReg,
+        generateS390MemoryReference(latin1ArrayReg, 0, cg));
+
+    // Expand Latin1 to UTF16 format using VUPLH with M3=0 for byte elements
+    generateVRRaInstruction(cg, TR::InstOpCode::VUPLH, node, vLatin1Expanded, vLatin1, 0, 0, 0, 0);
+
+    // Load 8 UTF16 characters (16 bytes) - pointer-based addressing
+    generateVRXInstruction(cg, TR::InstOpCode::VL, node, vUTF16,
+        generateS390MemoryReference(utf16ArrayReg, 0, cg));
+
+    // Compare the two vectors element-wise (M3=1 to set condition code, M4=1 for halfword elements)
+    generateVRRbInstruction(cg, TR::InstOpCode::VCEQ, node, vResult, vLatin1Expanded, vUTF16, 1, 1);
+
+    // Check comparison result - branch if NOT all equal (CC != 0)
+    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, foundDifferenceLabel);
+
+    // Increment index and pointers, continue loop (use 64-bit add)
+    generateRILInstruction(cg, TR::InstOpCode::AGFI, node, indexReg, 8);
+    generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, latin1ArrayReg,
+        generateS390MemoryReference(latin1ArrayReg, 8, cg));
+    generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, utf16ArrayReg,
+        generateS390MemoryReference(utf16ArrayReg, 16, cg));
+    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CR, node, indexReg, loopLimitReg,
+        TR::InstOpCode::COND_BL, vectorLoopLabel, false, false);
+
+    // handle residual!
+    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, residualLabel);
+
+    // Calculate residual length (use 64-bit operations for consistency)
+    generateRRInstruction(cg, TR::InstOpCode::LGR, node, tempReg, limReg);
+    generateRRInstruction(cg, TR::InstOpCode::SGR, node, tempReg, indexReg);
+
+    // Check if any residual characters exist
+    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, tempReg, 0,
+        TR::InstOpCode::COND_BE, returnLenDiffLabel, false, false);
+
+    // Compute Latin1 VLL length: tempReg - 1, save in temp2Reg (use 64-bit)
+    generateRRInstruction(cg, TR::InstOpCode::LGR, node, temp2Reg, tempReg);
+    generateRILInstruction(cg, TR::InstOpCode::AGFI, node, temp2Reg, -1);
+    
+    // Manually compute Latin1 address in tempReg: latin1ArrayRegOrig + indexReg + offsetToDataElements
+    generateRRInstruction(cg, TR::InstOpCode::LGR, node, tempReg, latin1ArrayRegOrig);
+    generateRRInstruction(cg, TR::InstOpCode::AGR, node, tempReg, indexReg);
+    generateRILInstruction(cg, TR::InstOpCode::AGFI, node, tempReg, offsetToDataElements);
+    generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, vLatin1, temp2Reg,
+        generateS390MemoryReference(tempReg, 0, cg));
+
+    // Expand residual Latin1 to UTF16 with M3=0 for byte elements
+    generateVRRaInstruction(cg, TR::InstOpCode::VUPLH, node, vLatin1Expanded, vLatin1, 0, 0, 0, 0);
+
+    // Compute UTF16 VLL length in vllLengthReg: (residual_count * 2) - 1 (use 64-bit)
+    generateRRInstruction(cg, TR::InstOpCode::LGR, node, vllLengthReg, temp2Reg);
+    generateRSInstruction(cg, TR::InstOpCode::SLLG, node, vllLengthReg, vllLengthReg, 1);
+    generateRILInstruction(cg, TR::InstOpCode::AGFI, node, vllLengthReg, 1);
+    
+    // Compute index*2 in temp2Reg (reuse after VLL length computation, use 64-bit)
+    generateRRInstruction(cg, TR::InstOpCode::LGR, node, temp2Reg, indexReg);
+    generateRSInstruction(cg, TR::InstOpCode::SLLG, node, temp2Reg, temp2Reg, 1);
+    
+    // Manually compute UTF16 address in tempReg: utf16ArrayRegOrig + (index*2) + offsetToDataElements
+    generateRRInstruction(cg, TR::InstOpCode::LGR, node, tempReg, utf16ArrayRegOrig);
+    generateRRInstruction(cg, TR::InstOpCode::AGR, node, tempReg, temp2Reg);
+    generateRILInstruction(cg, TR::InstOpCode::AGFI, node, tempReg, offsetToDataElements);
+    generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, vUTF16, vllLengthReg,
+        generateS390MemoryReference(tempReg, 0, cg));
+
+    // Compare residual vectors (M3=1 to set condition code, M4=1 for halfword elements)
+    generateVRRbInstruction(cg, TR::InstOpCode::VCEQ, node, vResult, vLatin1Expanded, vUTF16, 1, 1);
+
+    // Check residual comparison result - branch if NOT all equal (CC != 0)
+    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, foundDifferenceLabel);
+
+    // All chars equal, so return len1 - len2
+    // Use LLGFR to zero-extend 32-bit int parameters to 64-bit
+    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, returnLenDiffLabel);
+    generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, resultReg, len1Reg);
+    // Zero-extend len2 into tempReg before subtraction to avoid garbage in high bits
+    generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, tempReg, len2Reg);
+    generateRRInstruction(cg, TR::InstOpCode::SGR, node, resultReg, tempReg);
+    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
+
+    // FOUND DIFFERENCE: Locate position and compute difference
+    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, foundDifferenceLabel);
+
+    // Find first differing element position using VFENE (Find Element Not Equal)
+    generateVRRbInstruction(cg, TR::InstOpCode::VFENE, node, vFirstDiff, vLatin1Expanded, vUTF16, 0, 1);
+
+    // Extract byte index from vector element 7
+    generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, tempReg, vFirstDiff, 
+        generateS390MemoryReference(7, cg), 0);
+
+    // Convert byte index to character index (divide by 2)
+    generateRSInstruction(cg, TR::InstOpCode::SRLG, node, tempReg, tempReg, 1);
+
+    // Add base index to get absolute character position (use 64-bit add)
+    generateRRInstruction(cg, TR::InstOpCode::AGR, node, tempReg, indexReg);
+
+    // Load the differing Latin1 character into vllLengthReg (reuse)
+    // Manually compute address: latin1ArrayRegOrig + tempReg + offsetToDataElements
+    generateRRInstruction(cg, TR::InstOpCode::LGR, node, vllLengthReg, latin1ArrayRegOrig);
+    generateRRInstruction(cg, TR::InstOpCode::AGR, node, vllLengthReg, tempReg);
+    generateRILInstruction(cg, TR::InstOpCode::AGFI, node, vllLengthReg, offsetToDataElements);
+    generateRXInstruction(cg, TR::InstOpCode::LLC, node, vllLengthReg,
+        generateS390MemoryReference(vllLengthReg, 0, cg));
+
+    // Load the differing UTF16 character into latin1ArrayRegOrig (reuse)
+    // Compute UTF16 offset: tempReg * 2 (use 64-bit load for clean high bits)
+    generateRRInstruction(cg, TR::InstOpCode::LGR, node, temp2Reg, tempReg);
+    generateRSInstruction(cg, TR::InstOpCode::SLLG, node, temp2Reg, temp2Reg, 1);
+    // Manually compute address: utf16ArrayRegOrig + (tempReg*2) + offsetToDataElements
+    generateRRInstruction(cg, TR::InstOpCode::LGR, node, latin1ArrayRegOrig, utf16ArrayRegOrig);
+    generateRRInstruction(cg, TR::InstOpCode::AGR, node, latin1ArrayRegOrig, temp2Reg);
+    generateRILInstruction(cg, TR::InstOpCode::AGFI, node, latin1ArrayRegOrig, offsetToDataElements);
+    generateRXInstruction(cg, TR::InstOpCode::LLH, node, latin1ArrayRegOrig,
+        generateS390MemoryReference(latin1ArrayRegOrig, 0, cg));
+
+    // Compute difference: c1 - c2 (vllLengthReg - latin1ArrayRegOrig) using 64-bit ops
+    generateRRInstruction(cg, TR::InstOpCode::SGR, node, vllLengthReg, latin1ArrayRegOrig);
+    generateRRInstruction(cg, TR::InstOpCode::LGR, node, resultReg, vllLengthReg);
+
+    // END LOOP
+    TR::RegisterDependencyConditions *dependencies
+        = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 18, cg);
+    dependencies->addPostConditionIfNotAlreadyInserted(latin1ArrayReg, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(utf16ArrayReg, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(len1Reg, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(len2Reg, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(limReg, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(indexReg, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(loopLimitReg, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(resultReg, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(tempReg, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(temp2Reg, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(vllLengthReg, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(latin1ArrayRegOrig, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(utf16ArrayRegOrig, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(vLatin1, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(vLatin1Expanded, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(vUTF16, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(vResult, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(vFirstDiff, TR::RealRegister::AssignAny);
+
+    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, dependencies);
+
+    // Decrement reference counts for child nodes
+    cg->decReferenceCount(latin1ArrayNode);
+    cg->decReferenceCount(utf16ArrayNode);
+    cg->decReferenceCount(len1Node);
+    cg->decReferenceCount(len2Node);
+
+    // Stop using temporary registers
+    cg->stopUsingRegister(limReg);
+    cg->stopUsingRegister(indexReg);
+    cg->stopUsingRegister(loopLimitReg);
+    cg->stopUsingRegister(tempReg);
+    cg->stopUsingRegister(temp2Reg);
+    cg->stopUsingRegister(vllLengthReg);
+    cg->stopUsingRegister(latin1ArrayRegOrig);
+    cg->stopUsingRegister(utf16ArrayRegOrig);
+    cg->stopUsingRegister(vLatin1);
+    cg->stopUsingRegister(vLatin1Expanded);
+    cg->stopUsingRegister(vUTF16);
+    cg->stopUsingRegister(vResult);
+    cg->stopUsingRegister(vFirstDiff);
+    node->setRegister(resultReg);
+
+    return resultReg;
+}
+
 
 TR::Register *J9::Z::TreeEvaluator::zdloadEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 {
