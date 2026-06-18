@@ -504,20 +504,26 @@ final class J9VMInternals {
 			if ((ptr & com.ibm.oti.vm.VM.OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS) != 0) {
 				int j9class = ptr & com.ibm.oti.vm.VM.J9_JAVA_CLASS_MASK;
 				int hashValue = h.getIntFromObject(anObject, h.getBackfillOffsetFromJ9Class32(j9class));
+/*[IF INLINE-TYPES]*/
 				/* If the hash is 0, it may be a value object and the hash should be calculated. */
-				if (0 != hashValue) {
-					return hashValue;
+				if (0 == hashValue) {
+					return identityHashCode(anObject);
 				}
+/*[ENDIF] INLINE-TYPES */
+				return hashValue;
 			}
 		} else {
 			long ptr = (com.ibm.oti.vm.VM.FJ9OBJECT_SIZE == 4) ? Integer.toUnsignedLong(h.getIntFromObject(anObject, 0L)) : h.getLongFromObject(anObject, 0L);
 			if ((ptr & com.ibm.oti.vm.VM.OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS) != 0) {
 				long j9class = ptr & com.ibm.oti.vm.VM.J9_JAVA_CLASS_MASK;
 				int hashValue = h.getIntFromObject(anObject, h.getBackfillOffsetFromJ9Class64(j9class));
+/*[IF INLINE-TYPES]*/
 				/* If the hash is 0, it may be a value object and the hash should be calculated. */
-				if (0 != hashValue) {
-					return hashValue;
+				if (0 == hashValue) {
+					return identityHashCode(anObject);
 				}
+/*[ENDIF] INLINE-TYPES */
+				return hashValue;
 			}
 		}
 		return identityHashCode(anObject);
