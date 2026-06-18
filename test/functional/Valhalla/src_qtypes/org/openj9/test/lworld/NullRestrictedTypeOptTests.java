@@ -365,8 +365,9 @@ public class NullRestrictedTypeOptTests {
 		}
 	}
 
-	/* This test cannot be expressed without lw5 level javac.
-	 * The test will be enabled when tests are migrated to src_lw5.
+	/* This test cannot be expressed with the existing
+	 * @NullRestricted annotation. Update when javac support
+	 * becomes available.
 	 * https://github.com/eclipse-openj9/openj9/issues/20268
 	 */
 	@Test(enabled = false)
@@ -383,8 +384,9 @@ public class NullRestrictedTypeOptTests {
 		Assert.fail("Expect a NullPointerException. No exception or wrong kind of exception thrown");
 	}
 
-	/* This test cannot be expressed without lw5 level javac.
-	 * The test will be enabled when tests are migrated to src_lw5.
+	/* This test cannot be expressed with the existing
+	 * @NullRestricted annotation. Update when javac support
+	 * becomes available.
 	 * https://github.com/eclipse-openj9/openj9/issues/20268
 	 */
 	@Test(enabled = false)
@@ -400,8 +402,9 @@ public class NullRestrictedTypeOptTests {
 		Assert.fail("Expect a NullPointerException. No exception or wrong kind of exception thrown");
 	}
 
-	/* This test cannot be expressed without lw5 level javac.
-	 * The test will be enabled when tests are migrated to src_lw5.
+	/* This test cannot be expressed with the existing
+	 * @NullRestricted annotation. Update when javac support
+	 * becomes available.
 	 * https://github.com/eclipse-openj9/openj9/issues/20268
 	 */
 	@Test(enabled = false)
