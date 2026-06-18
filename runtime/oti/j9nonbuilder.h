@@ -5642,10 +5642,13 @@ typedef struct J9InternalVMFunctions {
 	I_32 (*invoke31BitJNI_OnXLoad)(struct J9JavaVM *vm, void *handle, jboolean isOnLoad, void *reserved);
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17) */
 #if defined(J9VM_OPT_JFR)
-	jint (*initializeJFR)(struct J9JavaVM *vm, BOOLEAN lateInit);
+	jint (*initializeJFR)(struct J9JavaVM *vm);
+	BOOLEAN (*startJFRRecording)(struct J9JavaVM *vm);
+	void (*stopJFRRecording)(struct J9JavaVM *vm);
 	jboolean (*isJFREnabled)(struct J9JavaVM *vm);
 	jboolean (*isJFRV2SupportEnabled)(struct J9JavaVM *vm);
 	jboolean (*isJFRRecordingStarted)(struct J9JavaVM *vm);
+	jboolean (*isJFRCreated)(struct J9JavaVM *vm);
 	void (*jfrDump)(struct J9VMThread *currentThread, BOOLEAN finalWrite);
 	void (*enableJFRRecordingOnThread)(struct J9VMThread *currentThread, j9object_t threadObject);
 	void (*disableJFRRecordingOnThread)(struct J9VMThread *currentThread, j9object_t threadObject);
@@ -6179,6 +6182,7 @@ typedef struct JFRState {
 	void *constantEvents;
 	BOOLEAN isConstantEventsInitialized;
 	BOOLEAN isStarted;
+	BOOLEAN isCreated;
 	omrthread_monitor_t isConstantEventsInitializedMutex;
 	omrthread_process_time_t prevProcCPUTimes;
 	int64_t prevProcTimestamp;

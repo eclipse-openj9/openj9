@@ -1208,6 +1208,8 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 #if defined(J9VM_OPT_JFR)
 	vm->loadedClassCount = 0;
 	vm->jfrState.blobFileDescriptor = -1;
+	vm->jfrState.isCreated = FALSE;
+	vm->jfrState.isStarted = FALSE;
 #endif /* defined(J9VM_OPT_JFR) */
 	vm->defaultPageSize = j9vmem_supported_page_sizes()[0];
 #if JAVA_SPEC_VERSION >= 19
