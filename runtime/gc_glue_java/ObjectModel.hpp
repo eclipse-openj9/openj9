@@ -422,10 +422,12 @@ public:
 			uintptr_t hashOffset = getHashcodeOffset(object);
 			int32_t *hashCodePointer = (int32_t *)((uint8_t *)object + hashOffset);
 			result = *hashCodePointer;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 			if (0 == result) {
 				result = internalConvertObjectToHash(vm, object);
 				*hashCodePointer = result;
 			}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		} else {
 			atomicSetObjectFlags(object, 0, OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS);
 			result = internalConvertObjectToHash(vm, object);
