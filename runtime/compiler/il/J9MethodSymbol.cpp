@@ -573,25 +573,67 @@ bool J9::MethodSymbol::safeToSkipChecksOnArrayCopies()
 
 // Which recognized methods are known to not require zero initialization of arrays
 //
-static TR::RecognizedMethod canSkipZeroInitializationOnNewarrays[] = { TR::java_lang_Character_toLowerCase,
-    TR::java_lang_String_init, TR::java_lang_String_init_int_int_char_boolean, TR::java_lang_String_concat,
-    TR::java_lang_String_replace, TR::java_lang_String_toCharArray, TR::java_lang_String_toLowerCase,
-    // TR::java_lang_String_toUpperCase,
+static TR::RecognizedMethod canSkipZeroInitializationOnNewarraysSet1[] = {
+    // clang-format off
+    TR::java_io_Writer_write_I,
+    TR::java_io_Writer_write_lStringII,
+    TR::java_lang_Character_toLowerCase,
+    TR::java_lang_Integer_toString,
+    TR::java_lang_Long_toString,
+    TR::java_lang_String_concat,
+    TR::java_lang_String_init,
+    TR::java_lang_String_init_int_int_char_boolean,
+    TR::java_lang_String_replace,
+    TR::java_lang_String_split_str_int,
+    TR::java_lang_String_toCharArray,
+    TR::java_lang_String_toLowerCase,
     TR::java_lang_String_toLowerCaseCore,
+    // TR::java_lang_String_toUpperCase,
     // TR::java_lang_String_toUpperCaseCore,
-    TR::java_lang_String_split_str_int, TR::java_math_BigDecimal_toString, TR::java_math_BigInteger_init_long,
+    TR::java_lang_StringCoding_decode,
+    TR::java_lang_StringCoding_encode,
+    TR::java_lang_StringCoding_StringDecoder_decode,
+    TR::java_lang_StringCoding_StringEncoder_encode,
+    TR::java_math_BigDecimal_toString,
+    TR::java_math_BigInteger_init_long,
+    TR::java_math_BigInteger_stripLeadingZeroBytes1,
+    TR::java_math_BigInteger_stripLeadingZeroBytes2,
 #ifdef OPENJ9_BUILD
-    TR::java_math_BigInteger_toByteArray, TR::java_math_MutableBigInteger_divideOneWord,
+    TR::java_math_BigInteger_toByteArray,
+    TR::java_math_MutableBigInteger_divideOneWord,
 #endif // OPENJ9_BUILD
-    TR::java_math_BigInteger_stripLeadingZeroBytes1, TR::java_math_BigInteger_stripLeadingZeroBytes2,
-    TR::java_lang_Integer_toString, TR::java_lang_Long_toString, TR::java_lang_StringCoding_encode,
-    TR::java_lang_StringCoding_decode, TR::java_lang_StringCoding_StringEncoder_encode,
-    TR::java_lang_StringCoding_StringDecoder_decode, TR::sun_misc_Unsafe_allocateUninitializedArray0,
-    // TR::java_lang_StringBuilder_ensureCapacityImpl,
-    // TR::java_lang_StringBuffer_ensureCapacityImpl,
-    // TR::java_util_Arrays_copyOf,
-    TR::java_io_Writer_write_lStringII, TR::java_io_Writer_write_I, TR::java_util_regex_Matcher_init,
-    TR::java_util_regex_Matcher_usePattern, TR::unknownMethod };
+    TR::java_util_regex_Matcher_init,
+    TR::java_util_regex_Matcher_usePattern,
+    TR::sun_misc_Unsafe_allocateUninitializedArray0,
+    TR::unknownMethod
+    // clang-format on
+};
+
+static TR::RecognizedMethod canSkipZeroInitializationOnNewarraysSet2[] = {
+    // clang-format off
+    TR::java_lang_String_encode8859_1,
+    TR::java_lang_String_encodeASCII,
+    TR::java_lang_String_encodeUTF8_UTF16,
+    TR::java_lang_String_init_int_String_int_String_String,
+    TR::java_lang_String_init_String_char,
+    TR::java_lang_String_newStringUTF8NoRepl,
+    TR::java_lang_String_repeat,
+    TR::java_lang_StringLatin1_replace_CharSequence,
+    TR::java_lang_StringLatin1_toBytes,
+    TR::java_lang_StringLatin1_toBytes_III,
+    TR::java_lang_StringLatin1_toChars,
+    TR::java_lang_StringLatin1_toLowerCase,
+    TR::java_lang_StringLatin1_toUpperCase,
+    TR::java_lang_StringUTF16_compress_BII,
+    TR::java_lang_StringUTF16_compress_CII,
+    TR::java_lang_StringUTF16_compress_III,
+    TR::java_lang_StringUTF16_replace_CharSequence,
+    TR::java_lang_StringUTF16_toBytes_C,
+    TR::java_lang_StringUTF16_toBytesSup,
+    TR::java_lang_StringUTF16_toChars,
+    TR::unknownMethod
+    // clang-format on
+};
 
 bool J9::MethodSymbol::safeToSkipZeroInitializationOnNewarrays()
 {
@@ -599,9 +641,28 @@ bool J9::MethodSymbol::safeToSkipZeroInitializationOnNewarrays()
     if (methodId == TR::unknownMethod)
         return false;
 
-    for (int i = 0; canSkipZeroInitializationOnNewarrays[i] != TR::unknownMethod; ++i)
-        if (canSkipZeroInitializationOnNewarrays[i] == methodId)
-            return true;
+    /*
+     * Set 1 and Set 2 do exactly the same thing.
+     * The separation is done to make it easier to disable a subset of skipping zero initialization.
+     * If having multiple sets becomes too unwieldly in the future it is possible to combine them.
+     */
+    static char *disableStringZeroInitSkipsSet1 = feGetEnv("TR_DisableStringZeroInitSkipsSet1");
+    if (!disableStringZeroInitSkipsSet1) {
+        for (int i = 0; canSkipZeroInitializationOnNewarraysSet1[i] != TR::unknownMethod; ++i) {
+            if (canSkipZeroInitializationOnNewarraysSet1[i] == methodId) {
+                return true;
+            }
+        }
+    }
+
+    static char *disableStringZeroInitSkipsSet2 = feGetEnv("TR_DisableStringZeroInitSkipsSet2");
+    if (!disableStringZeroInitSkipsSet2) {
+        for (int i = 0; canSkipZeroInitializationOnNewarraysSet2[i] != TR::unknownMethod; ++i) {
+            if (canSkipZeroInitializationOnNewarraysSet2[i] == methodId) {
+                return true;
+            }
+        }
+    }
 
     return false;
 }
