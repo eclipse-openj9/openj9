@@ -344,6 +344,13 @@ bool TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod *calleeMethod, TR
         // AbstractMemorySegmentImpl.reinterpret methods call Reflection.getCallerClass
         case TR::jdk_internal_foreign_AbstractMemorySegmentImpl_reinterpret:
 
+        // Trivial segment accessors on the hot path of every FFM VarHandle access. They sit
+        // below inlined LambdaForm frames whose unreliable block frequencies would otherwise
+        // let the frequency-scaled size threshold reject them
+        case TR::jdk_internal_foreign_MemorySegmentImpl_unsafeGetBase:
+        case TR::jdk_internal_foreign_MemorySegmentImpl_unsafeGetOffset:
+        case TR::jdk_internal_foreign_MemorySegmentImpl_maxAlignMask:
+
         // we rely on inlining compareAndSwap so we see the inner native call and can special case it
         case TR::com_ibm_jit_JITHelpers_compareAndSwapIntInObject:
         case TR::com_ibm_jit_JITHelpers_compareAndSwapLongInObject:

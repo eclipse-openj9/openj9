@@ -2817,9 +2817,10 @@ void TR_ResolvedJ9Method::construct()
     };
 #endif /* JAVA_SPEC_VERSION >= 15 */
 
-    static X PreconditionsMethods[]
-        = { { x(TR::jdk_internal_util_Preconditions_checkIndex, "checkIndex", "(IILjava/util/function/BiFunction;)I") },
-              { TR::unknownMethod } };
+    static X PreconditionsMethods[] = { { x(TR::jdk_internal_util_Preconditions_checkIndex, "checkIndex",
+                                            "(IILjava/util/function/BiFunction;)I") },
+        { x(TR::jdk_internal_util_Preconditions_checkIndex, "checkIndex", "(JJLjava/util/function/BiFunction;)J") },
+        { TR::unknownMethod } };
 
     static X VectorSupportMethods[] = {
 #if JAVA_SPEC_VERSION <= 21
@@ -4542,6 +4543,14 @@ void TR_ResolvedJ9Method::construct()
             } else if ((classNameLen == 31) && !strncmp(className, "java/lang/foreign/MemorySegment", 31)) {
                 if (nameLen >= 3 && (!strncmp(name, "get", 3) || !strncmp(name, "set", 3)))
                     setRecognizedMethodInfo(TR::java_lang_foreign_MemorySegment_method);
+            } else if (((classNameLen == 44) && !strncmp(className, "jdk/internal/foreign/NativeMemorySegmentImpl", 44))
+                || ((classNameLen >= 42) && !strncmp(className, "jdk/internal/foreign/HeapMemorySegmentImpl", 42))) {
+                if (nameLen == 13 && !strncmp(name, "unsafeGetBase", 13))
+                    setRecognizedMethodInfo(TR::jdk_internal_foreign_MemorySegmentImpl_unsafeGetBase);
+                else if (nameLen == 15 && !strncmp(name, "unsafeGetOffset", 15))
+                    setRecognizedMethodInfo(TR::jdk_internal_foreign_MemorySegmentImpl_unsafeGetOffset);
+                else if (nameLen == 12 && !strncmp(name, "maxAlignMask", 12))
+                    setRecognizedMethodInfo(TR::jdk_internal_foreign_MemorySegmentImpl_maxAlignMask);
             }
 #endif
             else if ((classNameLen >= 59 + 3 && classNameLen <= 59 + 7)

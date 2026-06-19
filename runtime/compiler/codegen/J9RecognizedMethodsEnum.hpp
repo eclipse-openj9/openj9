@@ -698,6 +698,8 @@ FirstJ9Method = LastOMRMethod + 1,
 
     jdk_internal_foreign_layout_ValueLayouts_AbstractValueLayout_accessHandle,
     jdk_internal_foreign_AbstractMemorySegmentImpl_reinterpret, java_lang_foreign_MemorySegment_method,
+    jdk_internal_foreign_MemorySegmentImpl_unsafeGetBase, jdk_internal_foreign_MemorySegmentImpl_unsafeGetOffset,
+    jdk_internal_foreign_MemorySegmentImpl_maxAlignMask,
 
     // Clone and Deep Copy
     java_lang_J9VMInternals_is32Bit, java_lang_J9VMInternals_isClassModifierPublic,
