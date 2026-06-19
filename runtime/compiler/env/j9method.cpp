@@ -3132,6 +3132,7 @@ void TR_ResolvedJ9Method::construct()
         { x(TR::com_ibm_jit_JITHelpers_dispatchVirtual, "dispatchVirtual", "()V") }, { TR::unknownMethod } };
 
     static X StringLatin1Methods[] = { { x(TR::java_lang_StringLatin1_charAt, "charAt", "([BI)C") },
+        { x(TR::java_lang_StringLatin1_compareTo_BBII, "compareTo", "([B[BII)I") },
         { x(TR::java_lang_StringLatin1_indexOf, "indexOf", "([BI[BII)I") },
         { x(TR::java_lang_StringLatin1_indexOf_BB, "indexOf", "([B[B)I") },
         { x(TR::java_lang_StringLatin1_indexOf_BIII, "indexOf", "([BIII)I") },
@@ -4870,6 +4871,7 @@ void TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
                 case TR::java_lang_System_nanoTime:
                 case TR::java_lang_String_hashCodeImplCompressed:
                 case TR::java_lang_String_hashCodeImplDecompressed:
+                case TR::java_lang_StringLatin1_compareTo_BBII:
                 case TR::java_lang_StringLatin1_inflate_BICII:
                 case TR::java_lang_StringLatin1_inflate_BIBII:
                 case TR::java_lang_StringCoding_hasNegatives:
