@@ -63,7 +63,7 @@ public class ContendedFieldsTests {
 			CACHE_LINE_SIZE = 64;			
 		} else if (osArch.startsWith("aarch64")) {
 			String osName = System.getProperty("os.name");
-			if (osName.startsWith("Mac OS X")) {
+			if (osName.equals("Mac OS X")) {
 				CACHE_LINE_SIZE = 128;
 			} else {
 				CACHE_LINE_SIZE = 64;

@@ -90,7 +90,7 @@ public class HexdumpCommand extends BaseJdmpviewCommand {
 		boolean is_zOSdump = false;
 
 		try {
-			is_zOSdump = ctx.getImage().getSystemType().toLowerCase().contains("z/os");
+			is_zOSdump = ctx.getImage().getSystemType().equals("z/OS");
 		} catch (CorruptDataException | DataUnavailable e) {
 			// unable to get the dump OS type, continue without the additional z/OS EBCDIC option
 		}

@@ -26,8 +26,8 @@ public class PlatformInfo {
 	private static final String OS_ARCH = "os.arch"; //$NON-NLS-1$
 	private static final String osName = System.getProperty(OS_NAME);
 	private static final String osArch = System.getProperty(OS_ARCH);
-	private static final boolean isPlatformZOS = (osName != null) && osName.toLowerCase().startsWith("z/os"); //$NON-NLS-1$
-	private	static final boolean isOpenJ9Status = 
+	private static final boolean isPlatformZOS = "z/OS".equals(osName); //$NON-NLS-1$
+	private static final boolean isOpenJ9Status =
 			System.getProperty("java.vm.vendor").contains("OpenJ9"); //$NON-NLS-1$ //$NON-NLS-2$
 
 	public static boolean isWindows() {
@@ -35,7 +35,7 @@ public class PlatformInfo {
 	}
 
 	public static boolean isMacOS() {
-		return ((null != osName) && osName.startsWith("Mac OS"));
+		return ((null != osName) && osName.equals("Mac OS X"));
 	}
 
 	public static boolean isZOS() {

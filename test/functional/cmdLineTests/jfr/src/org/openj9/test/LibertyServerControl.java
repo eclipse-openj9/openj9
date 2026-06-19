@@ -40,7 +40,7 @@ import java.util.List;
  * Example: java LibertyServerControl /path/to/wlp create myServer
  */
 public class LibertyServerControl {
-    private static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase().contains("win");
+    private static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
     public static void main(String[] args) {
         if (args.length < 3) {

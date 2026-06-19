@@ -124,10 +124,7 @@ public class SimpleFileManager extends FileManager {
 		}
 		/*[IF PLATFORM-mz31 | PLATFORM-mz64 | VENDOR_UMA]*/
 		String os = System.getProperty("os.name"); //$NON-NLS-1$
-		if (os == null) {
-			throw new IOException("Cannot determine the system type from os.name"); //$NON-NLS-1$
-		}
-		if (os.toLowerCase().contains("z/os")) { //$NON-NLS-1$
+		if ("z/OS".equals(os)) { //$NON-NLS-1$
 			// z/OS check
 			// Look for it as an MVS data set. The MVSImageInputStream constructor throws FNFE if the file does not exist
 			try {
