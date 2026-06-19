@@ -55,17 +55,19 @@ private:
 	struct ValueTypeHashQueue {
 		J9JavaVM * const vm;
 		ValueTypeHashQueueEntry *entries;
-		UDATA capacity;
 		UDATA head;
 		UDATA tail;
+		UDATA capacity;
+		bool full;
 		ValueTypeHashQueueEntry space[128];
 
 		ValueTypeHashQueue(J9JavaVM *vm)
 			: vm(vm)
 			, entries(space)
-			, capacity(sizeof(space) / sizeof(space[0]))
 			, head(0)
 			, tail(0)
+			, capacity(sizeof(space) / sizeof(space[0]))
+			, full(false)
 		{
 		}
 
@@ -90,28 +92,36 @@ private:
 		VMINLINE bool
 		append(j9object_t objectPointer, J9Class *clazz, UDATA startOffset)
 		{
-			if (tail >= capacity) {
+			if (full) {
 				PORT_ACCESS_FROM_JAVAVM(vm);
 				UDATA newCapacity = capacity * 2;
 				ValueTypeHashQueueEntry *newEntries = (ValueTypeHashQueueEntry *)j9mem_allocate_memory(newCapacity * sizeof(ValueTypeHashQueueEntry), OMRMEM_CATEGORY_VM);
 				if (NULL == newEntries) {
 					return false;
 				}
-				UDATA size = tail - head;
+				/* Because this queue is full, head and tail are equal. */
+				UDATA size = capacity - head;
 				memcpy(newEntries, &entries[head], size * sizeof(ValueTypeHashQueueEntry));
+				if (0 != head) {
+					memcpy(&newEntries[size], entries, head * sizeof(ValueTypeHashQueueEntry));
+				}
 				if (space != entries) {
 					j9mem_free_memory(entries);
 				}
 				entries = newEntries;
-				capacity = newCapacity;
-				tail = size;
 				head = 0;
+				tail = capacity;
+				capacity = newCapacity;
+				full = false;
 			}
 
 			entries[tail].objectPointer = objectPointer;
 			entries[tail].clazz = clazz;
 			entries[tail].startOffset = startOffset;
-			tail += 1;
+			tail = (tail + 1) % capacity;
+			if (tail == head) {
+				full = true;
+			}
 			return true;
 		}
 
@@ -124,9 +134,10 @@ private:
 		VMINLINE bool
 		remove(ValueTypeHashQueueEntry *entry)
 		{
-			if (head < tail) {
+			if ((head != tail) || full) {
 				*entry = entries[head];
-				head += 1;
+				head = (head + 1) % capacity;
+				full = false;
 				return true;
 			}
 			return false;
