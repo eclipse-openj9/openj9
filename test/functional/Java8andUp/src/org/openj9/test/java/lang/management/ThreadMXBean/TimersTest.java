@@ -92,11 +92,11 @@ public class TimersTest extends ThreadMXBeanTestCase {
 		String osName = System.getProperty("os.name");
 		if (osName.equals("Linux")) {
 			String osVersion = System.getProperty("os.version");
-			String osArch = System.getProperty("os.arch").toLowerCase();
-			
+			String osArch = System.getProperty("os.arch");
+
 			logger.debug("Linux Info: " + osName + " " + osArch + " " + osVersion);
 
-			if (osArch.contains("x86") || osArch.contains("amd64")) {
+			if (osArch.equals("x86") || osArch.equals("amd64")) {
 				if (!isLinuxVersionPostRedhat5(osVersion)) {
 					logger.debug(osName + " " + osArch + " " + osVersion + " does not report correct CPU times.");
 					if (ignoreLinuxVersionCheck) {

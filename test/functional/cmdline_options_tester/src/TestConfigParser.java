@@ -38,8 +38,6 @@ class TestConfigParser {
 	private boolean _debugCmdOnTimeout;
 	private String _modeHints;
 
-	private static final boolean isRiscv = System.getProperty("os.arch").toLowerCase().contains("riscv");
-
 	/**
 	 * If true, the test suite will print out the full output for each test case, regardless of whether
 	 * it passed or failed.
@@ -167,7 +165,7 @@ class TestConfigParser {
 						String timeout = attributes.get("timeout");
 
 						/* Set 16 hours (57600 secs) for timeout on RISC-V due to the lack of JIT. */
-						timeout = isRiscv ? "57600" : timeout;
+						timeout = Test.isRiscv ? "57600" : timeout;
 
 						_currentTest = new Test(id, timeout, _debugCmdOnTimeout);
 					} else {

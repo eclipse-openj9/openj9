@@ -49,11 +49,11 @@ import jdk.incubator.foreign.ValueLayout;
 @Test(groups = { "level.sanity" })
 public class ApiTests {
 	private static final String osName = System.getProperty("os.name");
-	private static final String arch = System.getProperty("os.arch").toLowerCase();
+	private static final String arch = System.getProperty("os.arch");
 	private static final boolean isAixOS = osName.equals("AIX");
-	private static boolean isWinX64 = osName.startsWith("Windows") && (arch.equals("amd64") || arch.equals("x86_64"));
-	private static boolean isMacOsAarch64 = osName.equals("Mac OS X") && arch.contains("aarch64");
-	private static boolean isSysVPPC64le = osName.equals("Linux") && arch.contains("ppc64");
+	private static boolean isWinX64 = osName.startsWith("Windows") && arch.equals("amd64");
+	private static boolean isMacOsAarch64 = osName.equals("Mac OS X") && arch.equals("aarch64");
+	private static boolean isSysVPPC64le = osName.equals("Linux") && arch.equals("ppc64le");
 	/* long long is 64 bits on AIX/ppc64, which is the same as Windows */
 	private static ValueLayout longLayout = (isWinX64 || isAixOS) ? C_LONG_LONG : C_LONG;
 

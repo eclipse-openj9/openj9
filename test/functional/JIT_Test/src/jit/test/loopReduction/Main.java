@@ -36,10 +36,9 @@ public class Main {
       }
       String hardware = System.getProperty("os.arch");
       int perfRating = 2000; // rough guide to speed of hardware for reasonable testing
-      if (hardware.equalsIgnoreCase("x86")) {
+      if (hardware.equals("x86")) {
          perfRating = 4000;
-      }
-      else if (hardware.equalsIgnoreCase("s390")) {
+      } else if (hardware.equals("s390")) {
          perfRating = 1500;
       }
       if (context.timed()) {

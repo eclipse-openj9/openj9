@@ -97,7 +97,7 @@ class Test {
 	static final long CORE_SPACING_MILLIS = Long.getLong("cmdline.coreintervalms", 60 * 1000).longValue();
 
 	static final String archName = System.getProperty("os.arch");
-	static final boolean isRiscv = archName.toLowerCase().contains("riscv");
+	static final boolean isRiscv = archName.equals("riscv");
 	static final int javaVersion;
 
 	static {

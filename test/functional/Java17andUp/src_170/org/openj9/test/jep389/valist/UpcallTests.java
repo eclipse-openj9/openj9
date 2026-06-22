@@ -56,9 +56,9 @@ import jdk.incubator.foreign.ValueLayout;
 @Test(groups = { "level.sanity" })
 public class UpcallTests {
 	private static final String osName = System.getProperty("os.name");
-	private static final String arch = System.getProperty("os.arch").toLowerCase();
-	private static final boolean isX64 = arch.equals("amd64") || arch.equals("x86_64");
-	private static final boolean isWinX64 = osName.startsWith("Windows") && (arch.equals("amd64") || arch.equals("x86_64"));
+	private static final String arch = System.getProperty("os.arch");
+	private static final boolean isX64 = arch.equals("amd64");
+	private static final boolean isWinX64 = osName.startsWith("Windows") && isX64;
 	private static final boolean isLinuxAarch64 = osName.equals("Linux") && arch.equals("aarch64");
 	/* The padding of struct is not required on Power in terms of VaList */
 	private static final boolean isStructPaddingNotRequired = arch.startsWith("ppc64");
