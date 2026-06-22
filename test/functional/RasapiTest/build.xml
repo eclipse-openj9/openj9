@@ -60,7 +60,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<delete dir="${build.dir}" />
 	</target>
 
-	<target name="compile" depends="clean">
+	<target name="compile" depends="clean,getDependentLibs">
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>Compiling code to ${build.dir} and packaging ${build.jar.tests} to ${dist.dir}</echo>
 
