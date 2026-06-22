@@ -279,17 +279,19 @@ void J9::RecognizedCallTransformer::process_java_lang_StringCoding_encodeASCII(T
     cfg->removeEdge(fallthroughBlock, fallbackPathBlock);
 }
 
-void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_compareTo_BBII(TR::TreeTop *treetop, TR::Node *node)
+void J9::RecognizedCallTransformer::process_java_lang_String_compareTo(TR::TreeTop *treetop, TR::Node *node,
+    bool isLatin1)
 {
     /*
-     * Replace the call to StringLatin1.compareTo([B[BII)I by arraycmplen
+     * Replace the call to StringLatin1.compareTo([B[BII)I or StringUTF16.compareValues([B[BII)I
+     * by arraycmplen
      */
     TR_ASSERT_FATAL(comp()->cg()->getSupportsArrayCmpLen(), "Support for arraycmplen is required");
 
-    static const bool verboseLatin1compareTo = (feGetEnv("TR_verboseLatin1compareTo") != NULL);
-    if (verboseLatin1compareTo) {
-        fprintf(stderr, "Recognize StringLatin1.compareTo([B[BII)I: %s @ %s\n", comp()->signature(),
-            comp()->getHotnessName(comp()->getMethodHotness()));
+    static const bool verbosecompareTo = (feGetEnv("TR_verboseStringcompareTo") != NULL);
+    if (verbosecompareTo) {
+        fprintf(stderr, "Recognize String%s([B[BII)I: %s @ %s\n", isLatin1 ? "Latin1.compareTo" : "UTF16.compareValues",
+            comp()->signature(), comp()->getHotnessName(comp()->getMethodHotness()));
     }
 
     TransformUtil::createTempsForCall(this, treetop);
@@ -300,6 +302,10 @@ void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_compareTo_BBI
     TR::Node *arrayLen2 = node->getChild(3);
 
     TR::Node *lim = TR::Node::create(node, TR::i2l, 1, TR::Node::create(node, TR::imin, 2, arrayLen1, arrayLen2));
+    if (!isLatin1) {
+        // length to compare in # of chars -> # of bytes
+        lim = TR::Node::create(node, TR::lshl, 2, lim, TR::Node::iconst(node, 1));
+    }
 
     TR::Node *arrayAddr1 = TR::TransformUtil::generateArrayElementAddressTrees(comp(), arrayObj1, NULL, node);
     TR::Node *arrayAddr2 = TR::TransformUtil::generateArrayElementAddressTrees(comp(), arrayObj2, NULL, node);
@@ -309,6 +315,9 @@ void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_compareTo_BBI
     arraycmplenNode->setAndIncChild(1, arrayAddr2);
     arraycmplenNode->setAndIncChild(2, lim);
     arraycmplenNode->setSymbolReference(getSymRefTab()->findOrCreateArrayCmpLenSymbol());
+    // Mark arraycmplenNode as inlinedByCG as it is an intrinsic that should not be treated as a regular call by the
+    // inliner
+    arraycmplenNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->setIsInlinedByCG();
 
     TR::DataType arraycmplenDataType = arraycmplenNode->getDataType();
     TR::SymbolReference *arraycmplenSymRef
@@ -342,14 +351,20 @@ void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_compareTo_BBI
     // result = array1[arraycmplen] - array2[arraycmplen];
     TR::SymbolReferenceTable *srTab = comp()->getSymRefTab();
     TR::Node *aclNode = TR::Node::createLoad(node, arraycmplenSymRef);
+    if (!isLatin1) {
+        // clear LSB of array index
+        aclNode = TR::Node::create(node, TR::land, 2, aclNode, TR::Node::lconst(node, ~1));
+    }
     TR::Node *arrayElemAddr1 = TR::Node::create(node, TR::aladd, 2, arrayAddr1->duplicateTree(), aclNode);
     TR::SymbolReference *arraySymRef1 = srTab->findOrCreateArrayShadowSymbolRef(TR::Int8, arrayObj1);
-    TR::Node *arrayByte1 = TR::Node::createWithSymRef(node, TR::bloadi, 1, arrayElemAddr1, arraySymRef1);
-    TR::Node *arrayInt1 = TR::Node::create(node, TR::bu2i, 1, arrayByte1);
     TR::Node *arrayElemAddr2 = TR::Node::create(node, TR::aladd, 2, arrayAddr2->duplicateTree(), aclNode);
     TR::SymbolReference *arraySymRef2 = srTab->findOrCreateArrayShadowSymbolRef(TR::Int8, arrayObj2);
-    TR::Node *arrayByte2 = TR::Node::createWithSymRef(node, TR::bloadi, 1, arrayElemAddr2, arraySymRef2);
-    TR::Node *arrayInt2 = TR::Node::create(node, TR::bu2i, 1, arrayByte2);
+    TR::ILOpCodes loadOp = isLatin1 ? TR::bloadi : TR::sloadi;
+    TR::ILOpCodes convOp = isLatin1 ? TR::bu2i : TR::su2i;
+    TR::Node *arrayByte1 = TR::Node::createWithSymRef(node, loadOp, 1, arrayElemAddr1, arraySymRef1);
+    TR::Node *arrayInt1 = TR::Node::create(node, convOp, 1, arrayByte1);
+    TR::Node *arrayByte2 = TR::Node::createWithSymRef(node, loadOp, 1, arrayElemAddr2, arraySymRef2);
+    TR::Node *arrayInt2 = TR::Node::create(node, convOp, 1, arrayByte2);
     TR::Node *isubNode2 = TR::Node::create(node, TR::isub, 2, arrayInt1, arrayInt2);
     TR::Node *storeResult2 = TR::Node::createStore(node, resultSymRef, isubNode2);
     TR::TreeTop *storeTreeTop2 = TR::TreeTop::create(comp(), storeResult2);
@@ -1961,6 +1976,7 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop *treetop)
             case TR::java_lang_String_encodeASCII:
                 return cg()->getSupportsInlineEncodeASCII();
             case TR::java_lang_StringLatin1_compareTo_BBII:
+            case TR::java_lang_StringUTF16_compareValues:
                 return (
                     cg()->getSupportsArrayCmpLen() && !comp()->target().cpu.isPower() && !comp()->target().cpu.isZ());
             case TR::java_lang_StringLatin1_inflate_BIBII:
@@ -2108,7 +2124,10 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop *treetop)
                 process_java_lang_StringCoding_encodeASCII(treetop, node);
                 break;
             case TR::java_lang_StringLatin1_compareTo_BBII:
-                process_java_lang_StringLatin1_compareTo_BBII(treetop, node);
+                process_java_lang_String_compareTo(treetop, node, /* isLatin1 */ true);
+                break;
+            case TR::java_lang_StringUTF16_compareValues:
+                process_java_lang_String_compareTo(treetop, node, /* isLatin1 */ false);
                 break;
             case TR::java_lang_StringLatin1_inflate_BIBII:
                 process_java_lang_StringLatin1_inflate_BIBII(treetop, node);
