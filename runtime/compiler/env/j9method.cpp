@@ -4540,6 +4540,11 @@ void TR_ResolvedJ9Method::construct()
                                && !strncmp(className, "java/lang/invoke/VarHandleByteArrayAsShorts$ByteBufferHandle",
                                    60))) {
                     setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method);
+                } else if (classNameLen >= 39 && classNameLen <= 42
+                    && !strncmp(className, "java/lang/invoke/VarHandleSegmentAs", 35)) {
+                    // The memory segment view VarHandle operation classes
+                    // VarHandleSegmentAsBytes/Chars/Shorts/Ints/Longs/Floats/Doubles
+                    setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleSegmentAsX_method);
                 }
             } else if ((classNameLen == 31) && !strncmp(className, "java/lang/foreign/MemorySegment", 31)) {
                 if (nameLen >= 3 && (!strncmp(name, "get", 3) || !strncmp(name, "set", 3)))
@@ -5784,6 +5789,7 @@ bool TR_J9MethodBase::isVarHandleOperationMethod(TR::RecognizedMethod rm)
         case TR::java_lang_invoke_VarHandleX_FieldStaticReadOnlyOrReadWrite_method:
         case TR::java_lang_invoke_VarHandleByteArrayAsX_ArrayHandle_method:
         case TR::java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method:
+        case TR::java_lang_invoke_VarHandleSegmentAsX_method:
 #else
         case TR::java_lang_invoke_ArrayVarHandle_ArrayVarHandleOperations_OpMethod:
         case TR::java_lang_invoke_StaticFieldVarHandle_StaticFieldVarHandleOperations_OpMethod:
