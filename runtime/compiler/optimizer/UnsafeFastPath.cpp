@@ -80,8 +80,26 @@
 //
 static bool isVarHandleOperationMethod(TR::RecognizedMethod rm)
 {
-    return TR_J9MethodBase::isVarHandleOperationMethod(rm)
-        && rm != TR::java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method;
+    if (rm == TR::java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method)
+        return false;
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+    // The memory segment view operation methods perform the access on a base that is
+    // either null (NativeMemorySegmentImpl, raw native address) or a primitive array
+    // (HeapMemorySegmentImpl). Both shapes can be lowered to the same aladd(base, offset)
+    // load/store only while arrays are contiguous and on-heap, so give up when arraylets
+    // or off-heap allocation are possible.
+    if (rm == TR::java_lang_invoke_VarHandleSegmentAsX_method) {
+        if (TR::Compiler->om.canGenerateArraylets())
+            return false;
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+        if (TR::Compiler->om.isOffHeapAllocationEnabled())
+            return false;
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
+    }
+#endif /* J9VM_OPT_OPENJDK_METHODHANDLE */
+
+    return TR_J9MethodBase::isVarHandleOperationMethod(rm);
 }
 
 static TR::RecognizedMethod getVarHandleAccessMethodFromInlinedCallStack(TR::Compilation *comp, TR::Node *node)
@@ -182,6 +200,7 @@ static bool isVarHandleOperationMethodOnArray(TR::RecognizedMethod rm)
 
         case TR::java_lang_invoke_VarHandleX_Array_method:
         case TR::java_lang_invoke_VarHandleByteArrayAsX_ArrayHandle_method:
+        case TR::java_lang_invoke_VarHandleSegmentAsX_method:
 #else
         case TR::java_lang_invoke_ArrayVarHandle_ArrayVarHandleOperations_OpMethod:
         case TR::java_lang_invoke_ByteArrayViewVarHandle_ByteArrayViewVarHandleOperations_OpMethod:
@@ -370,6 +389,63 @@ bool TR_UnsafeFastPath::tryTransformUnsafeAtomicCallInVarHandleAccessMethod(TR::
     return true;
 }
 
+// The Unsafe.getXUnaligned(Object, long) / putXUnaligned(Object, long, X) wrappers are
+// plain Java methods whose bodies re-assemble the value byte- or short-wise when the
+// offset may be misaligned. On targets that support misaligned accesses they can be
+// lowered to a single load/store just like the corresponding aligned natives, but they
+// are not part of isUnsafeGetPutWithObjectArg(), so they get their own helpers here.
+static bool isUnalignedUnsafeGetPut(TR::RecognizedMethod rm)
+{
+    switch (rm) {
+        case TR::jdk_internal_misc_Unsafe_getCharUnaligned:
+        case TR::jdk_internal_misc_Unsafe_getShortUnaligned:
+        case TR::jdk_internal_misc_Unsafe_getIntUnaligned:
+        case TR::jdk_internal_misc_Unsafe_getLongUnaligned:
+        case TR::jdk_internal_misc_Unsafe_putCharUnaligned:
+        case TR::jdk_internal_misc_Unsafe_putShortUnaligned:
+        case TR::jdk_internal_misc_Unsafe_putIntUnaligned:
+        case TR::jdk_internal_misc_Unsafe_putLongUnaligned:
+            return true;
+        default:
+            return false;
+    }
+    return false;
+}
+
+static bool isUnalignedUnsafePut(TR::RecognizedMethod rm)
+{
+    switch (rm) {
+        case TR::jdk_internal_misc_Unsafe_putCharUnaligned:
+        case TR::jdk_internal_misc_Unsafe_putShortUnaligned:
+        case TR::jdk_internal_misc_Unsafe_putIntUnaligned:
+        case TR::jdk_internal_misc_Unsafe_putLongUnaligned:
+            return true;
+        default:
+            return false;
+    }
+    return false;
+}
+
+static TR::DataType dataTypeForUnalignedUnsafeGetPut(TR::RecognizedMethod rm)
+{
+    switch (rm) {
+        case TR::jdk_internal_misc_Unsafe_getCharUnaligned:
+        case TR::jdk_internal_misc_Unsafe_getShortUnaligned:
+        case TR::jdk_internal_misc_Unsafe_putCharUnaligned:
+        case TR::jdk_internal_misc_Unsafe_putShortUnaligned:
+            return TR::Int16;
+        case TR::jdk_internal_misc_Unsafe_getIntUnaligned:
+        case TR::jdk_internal_misc_Unsafe_putIntUnaligned:
+            return TR::Int32;
+        case TR::jdk_internal_misc_Unsafe_getLongUnaligned:
+        case TR::jdk_internal_misc_Unsafe_putLongUnaligned:
+            return TR::Int64;
+        default:
+            TR_ASSERT(false, "Method is not an unaligned unsafe get/put\n");
+    }
+    return TR::NoType;
+}
+
 static bool needUnsignedConversion(TR::RecognizedMethod methodToReduce)
 {
     switch (methodToReduce) {
@@ -378,6 +454,7 @@ static bool needUnsignedConversion(TR::RecognizedMethod methodToReduce)
         case TR::com_ibm_jit_JITHelpers_getCharFromArrayVolatile:
         case TR::java_lang_StringUTF16_getChar:
         case TR::java_lang_StringUTF16_putChar:
+        case TR::jdk_internal_misc_Unsafe_getCharUnaligned:
             return true;
 
         default:
@@ -751,18 +828,26 @@ int32_t TR_UnsafeFastPath::perform()
             if (recognizedVarHandleOpMethod != TR::unknownMethod)
                 callerMethod = recognizedVarHandleOpMethod;
             TR::RecognizedMethod calleeMethod = symbol->getRecognizedMethod();
-            if (isKnownUnsafeCaller(callerMethod) && TR_J9MethodBase::isUnsafeGetPutWithObjectArg(calleeMethod)) {
+            // The single load/store an unaligned wrapper reduces to uses the packed element
+            // shape, so only callers known to access packed elements (byte array views and
+            // memory segments) qualify, and only on targets that allow misaligned accesses.
+            bool isKnownCaller = isKnownUnsafeCaller(callerMethod);
+            bool isUnalignedCallee = isKnownCaller && isUnalignedUnsafeGetPut(calleeMethod)
+                && !comp()->cg()->getSupportsAlignedAccessOnly() && isUnsafeCallerAccessingArrayElement(callerMethod);
+            if (isKnownCaller && (TR_J9MethodBase::isUnsafeGetPutWithObjectArg(calleeMethod) || isUnalignedCallee)) {
                 if (isUnsafeCallerAccessingStaticField(callerMethod))
                     isStatic = true;
                 if (isUnsafeCallerAccessingArrayElement(callerMethod))
                     isArrayOperation = true;
 
-                if (isArrayOperation)
+                if (isUnalignedCallee)
+                    type = dataTypeForUnalignedUnsafeGetPut(calleeMethod);
+                else if (isArrayOperation)
                     type = TR_J9MethodBase::unsafeDataTypeForArray(calleeMethod);
                 else
                     type = TR_J9MethodBase::unsafeDataTypeForObject(calleeMethod);
 
-                if (TR_J9MethodBase::isUnsafePut(calleeMethod))
+                if (TR_J9MethodBase::isUnsafePut(calleeMethod) || isUnalignedUnsafePut(calleeMethod))
                     value = node->getChild(3);
 
                 if (TR_J9MethodBase::isVolatileUnsafe(calleeMethod))
@@ -813,7 +898,16 @@ int32_t TR_UnsafeFastPath::perform()
                 }
 
                 object = node->getChild(objectChild);
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+                // A MemorySegment access base is null for native segments, so it must not
+                // be marked non-null. The address computation below is correct either way:
+                // null base + absolute offset, or array base (non-null) + element offset.
+                if (callerMethod != TR::java_lang_invoke_VarHandleSegmentAsX_method) {
+                    object->setIsNonNull(true);
+                }
+#else /* J9VM_OPT_OPENJDK_METHODHANDLE */
                 object->setIsNonNull(true);
+#endif /* J9VM_OPT_OPENJDK_METHODHANDLE */
                 if (isStatic) {
                     TR::Node *jlClass = object;
                     TR::Node *j9Class = TR::Node::createWithSymRef(TR::aloadi, 1, 1, jlClass,
