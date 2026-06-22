@@ -174,8 +174,10 @@ MM_ProjectedSurvivalCollectionSetDelegate::createNurseryCollectionSet(MM_Environ
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	while (NULL != (region = regionIterator.nextRegion())) {
 		Assert_MM_true(MM_RegionValidator(region).validate(env));
-		Assert_MM_false(region->_markData._shouldMark);
-		Assert_MM_false(region->_reclaimData._shouldReclaim);
+		/* Might have been set by previous PGC */
+		region->_markData._shouldMark = false;
+		region->_reclaimData._shouldReclaim = false;
+
 		if (region->containsObjects()) {
 			bool regionHasCriticalRegions = (0 != region->_criticalRegionsInUse);
 			bool isSelectionForCopyForward = env->_cycleState->_shouldRunCopyForward;
@@ -452,24 +454,6 @@ MM_ProjectedSurvivalCollectionSetDelegate::createRegionCollectionSetForPartialGC
 }
 
 void
-MM_ProjectedSurvivalCollectionSetDelegate::deleteRegionCollectionSetForPartialGC(MM_EnvironmentVLHGC *env)
-{
-	Assert_MM_true(MM_CycleState::CT_PARTIAL_GARBAGE_COLLECTION == env->_cycleState->_collectionType);
-
-	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
-	MM_HeapRegionDescriptorVLHGC *region = NULL;
-	while (NULL != (region = regionIterator.nextRegion())) {
-		/* there shouldn't be any regions that have some occupancy but not marked left if the increment is done */
-		Assert_MM_false(MM_HeapRegionDescriptor::ADDRESS_ORDERED == region->getRegionType());
-		Assert_MM_true(MM_RegionValidator(region).validate(env));
-
-		region->_markData._shouldMark = false;
-		region->_markData._noEvacuation = false;
-		region->_reclaimData._shouldReclaim = false;
-	}
-}
-
-void
 MM_ProjectedSurvivalCollectionSetDelegate::createRegionCollectionSetForGlobalGC(MM_EnvironmentVLHGC *env)
 {
 	Assert_MM_true(MM_CycleState::CT_GLOBAL_GARBAGE_COLLECTION == env->_cycleState->_collectionType);
@@ -478,28 +462,16 @@ MM_ProjectedSurvivalCollectionSetDelegate::createRegionCollectionSetForGlobalGC(
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	while (NULL != (region = regionIterator.nextRegion())) {
 		Assert_MM_true(MM_RegionValidator(region).validate(env));
-		Assert_MM_false(region->_reclaimData._shouldReclaim);
+		/* Have been set by previous GlobalGC */
+		region->_reclaimData._shouldReclaim = false;
+		/* Not really used for Global GC, but let's clear it, too - might have been set by previous PGC */
+		region->_markData._shouldMark = false;
+
 		if (region->containsObjects()) {
 			region->_reclaimData._shouldReclaim = true;
 			region->_defragmentationTarget = false;
 			region->_compactData._shouldCompact = false;
 		}
-	}
-}
-
-void
-MM_ProjectedSurvivalCollectionSetDelegate::deleteRegionCollectionSetForGlobalGC(MM_EnvironmentVLHGC *env)
-{
-	Assert_MM_true(MM_CycleState::CT_GLOBAL_GARBAGE_COLLECTION == env->_cycleState->_collectionType);
-
-	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
-	MM_HeapRegionDescriptorVLHGC *region = NULL;
-	while (NULL != (region = regionIterator.nextRegion())) {
-		/* there shouldn't be any regions that have some occupancy but not marked left */
-		Assert_MM_false(MM_HeapRegionDescriptor::ADDRESS_ORDERED == region->getRegionType());
-		Assert_MM_true(MM_RegionValidator(region).validate(env));
-
-		region->_reclaimData._shouldReclaim = false;
 	}
 }
 

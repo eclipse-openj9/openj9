@@ -798,7 +798,10 @@ MM_CopyForwardScheme::acquireEmptyRegion(MM_EnvironmentVLHGC *env, MM_ReservedRe
 
 			Assert_MM_true(NULL == newRegion->getUnfinalizedObjectList()->getHeadOfList());
 			Assert_MM_true(NULL == newRegion->getContinuationObjectList()->getHeadOfList());
-			Assert_MM_false(newRegion->_markData._shouldMark);
+			/* Might have been set by a PGC in past, and contracted meanwhile,
+			 * so it would be missed to clear at the start of PGC. */
+			newRegion->_markData._shouldMark = false;
+			newRegion->_reclaimData._shouldReclaim = false;
 
 			/*
 			 * set logical age here to have a compact groups working properly
