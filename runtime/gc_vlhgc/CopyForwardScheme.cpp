@@ -798,8 +798,8 @@ MM_CopyForwardScheme::acquireEmptyRegion(MM_EnvironmentVLHGC *env, MM_ReservedRe
 
 			Assert_MM_true(NULL == newRegion->getUnfinalizedObjectList()->getHeadOfList());
 			Assert_MM_true(NULL == newRegion->getContinuationObjectList()->getHeadOfList());
-			/* Might have been set by a PGC in past, and contracted meanwhile,
-			 * so it would be missed to clear at the start of PGC. */
+			/* Might have been set by a PGC in past, and meanwhile removed from the active region list (via heap contraction),
+			 * so that it would be missed to clear at the start of PGC (as any other active region in the list would). */
 			newRegion->_markData._shouldMark = false;
 			newRegion->_reclaimData._shouldReclaim = false;
 
@@ -815,6 +815,8 @@ MM_CopyForwardScheme::acquireEmptyRegion(MM_EnvironmentVLHGC *env, MM_ReservedRe
 			Assert_MM_true(newRegion->getReferenceObjectList()->isPhantomListEmpty());
 
 			setRegionAsSurvivor(env, newRegion, true);
+			/* Make sure that all the attributes set are visible to other CPUs, before exposing the region in a globally visible list */
+			MM_AtomicOperations::storeSync();
 			insertRegionIntoLockedList(env, regionList, newRegion);
 		} else {
 			/* record that we failed to expand so that we stop trying during this collection */
