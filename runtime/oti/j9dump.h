@@ -67,6 +67,7 @@ typedef struct J9RASdumpAgent {
 	UDATA requestMask;
 	UDATA prepState;
 	char* subFilter;
+	BOOLEAN executedEarly;
 } J9RASdumpAgent;
 
 /* Dump flags. Definitions must be simple so that DDR can process them. */
@@ -97,7 +98,8 @@ typedef struct J9RASdumpAgent {
 #define J9RAS_DUMP_ON_USER2_SIGNAL  0x1000000
 #define J9RAS_DUMP_ON_VM_CRIU_CHECKPOINT  0x2000000
 #define J9RAS_DUMP_ON_VM_CRIU_RESTORE  0x4000000
-#define J9RAS_DUMP_ON_ANY 0x7FFFFFF /* mask of all bit flags above */
+#define J9RAS_DUMP_ON_EARLY_EXECUTION  0x8000000
+#define J9RAS_DUMP_ON_ANY 0xFFFFFFF /* mask of all bit flags above */
 
 /* ...additional VM requests... */
 #define J9RAS_DUMP_DO_EXCLUSIVE_VM_ACCESS  0x01
@@ -150,6 +152,7 @@ typedef struct J9RASdumpFunctions {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	IDATA  (*criuReloadXDumpAgents)(struct J9JavaVM *vm, struct J9VMInitArgs *j9vm_args) ;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+	omr_error_t  (*handleOutOfMemoryError)(struct J9JavaVM *vm) ;
 } J9RASdumpFunctions;
 
 #endif /* j9dump_h */

@@ -47,14 +47,14 @@
 
 #define RAS_NETWORK_WARNING_TIME 60000
 
-static omr_error_t primordialTriggerDumpAgents (struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData);
-static omr_error_t primordialSeekDumpAgent (struct J9JavaVM *vm, struct J9RASdumpAgent **agentPtr, J9RASdumpFn dumpFn);
-static omr_error_t primordialInsertDumpAgent (struct J9JavaVM *vm, struct J9RASdumpAgent *agent);
+static omr_error_t primordialTriggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData);
+static omr_error_t primordialSeekDumpAgent(struct J9JavaVM *vm, struct J9RASdumpAgent **agentPtr, J9RASdumpFn dumpFn);
+static omr_error_t primordialInsertDumpAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent);
 static omr_error_t primordialTriggerOneOffDump(struct J9JavaVM *vm, char *optionString, char *caller, char *fileName, size_t fileNameLength);
-static omr_error_t primordialSetDumpOption (struct J9JavaVM *vm, char *optionString);
-static omr_error_t primordialResetDumpOption (struct J9JavaVM *vm);
-static omr_error_t primordialRemoveDumpAgent (struct J9JavaVM *vm, struct J9RASdumpAgent *agent);
-static omr_error_t primordialQueryVmDump(struct J9JavaVM *vm, int buffer_size, void* options_buffer, int* data_size);
+static omr_error_t primordialSetDumpOption(struct J9JavaVM *vm, char *optionString);
+static omr_error_t primordialResetDumpOption(struct J9JavaVM *vm);
+static omr_error_t primordialRemoveDumpAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent);
+static omr_error_t primordialQueryVmDump(struct J9JavaVM *vm, int buffer_size, void *options_buffer, int *data_size);
 static omr_error_t primordialPrintDumpAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent);
 #if defined(OMR_TDUMP_VALIDATION)
 static omr_error_t primordialValidateDumpAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent);
@@ -62,12 +62,13 @@ static omr_error_t primordialValidateDumpAgent(struct J9JavaVM *vm, struct J9RAS
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 static IDATA primordialCriuReloadXDumpAgents(struct J9JavaVM *vm, struct J9VMInitArgs *j9vm_args);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+static omr_error_t primordialHandleOutOfMemoryError(struct J9JavaVM *vm);
 
-void J9RASInitialize (J9JavaVM* javaVM);
-void J9RASShutdown (J9JavaVM* javaVM);
+void J9RASInitialize(J9JavaVM *javaVM);
+void J9RASShutdown(J9JavaVM *javaVM);
 IDATA J9RASCheckDump(J9JavaVM *javaVM);
-void populateRASNetData (J9JavaVM *javaVM, J9RAS *rasStruct);
-static J9RAS* allocateRASStruct(J9JavaVM *javaVM);
+void populateRASNetData(J9JavaVM *javaVM, J9RAS *rasStruct);
+static J9RAS *allocateRASStruct(J9JavaVM *javaVM);
 
 JNIEXPORT struct {
 	union {
@@ -100,6 +101,7 @@ primordialDumpFacade = {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	primordialCriuReloadXDumpAgents,
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+	primordialHandleOutOfMemoryError,
 };
 
 static omr_error_t
@@ -114,6 +116,16 @@ primordialTriggerOneOffDump(struct J9JavaVM *vm, char *optionString, char *calle
 	}
 
 	return OMR_ERROR_INTERNAL;
+}
+
+static omr_error_t
+primordialHandleOutOfMemoryError(struct J9JavaVM *vm)
+{
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_VM_MISSING_DUMP_DLL_HANDLE_OUT_OF_MEMORY_ERROR, J9_RAS_DUMP_DLL_NAME);
+
+	return OMR_ERROR_NONE;
 }
 
 static omr_error_t
@@ -198,7 +210,7 @@ primordialResetDumpOption(struct J9JavaVM *vm)
 }
 
 static omr_error_t
-primordialQueryVmDump(struct J9JavaVM *vm, int buffer_size, void* options_buffer, int* data_size)
+primordialQueryVmDump(struct J9JavaVM *vm, int buffer_size, void *options_buffer, int *data_size)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
@@ -284,7 +296,7 @@ gpThreadDump(struct J9JavaVM *vm, struct J9VMThread *currentThread)
 				UDATA priority = vm->internalVMFunctions->getJavaThreadPriority(vm, currentThread);
 				UDATA isDaemon = J9VMJAVALANGTHREAD_ISDAEMON(currentThread, threadObject);
 #endif /* JAVA_SPEC_VERSION >= 19 */
-				char* name = getOMRVMThreadName(currentThread->omrVMThread);
+				char *name = getOMRVMThreadName(currentThread->omrVMThread);
 
 				j9tty_printf(
 					PORTLIB,
@@ -318,7 +330,7 @@ configureRasDump(J9JavaVM *vm)
 }
 
 void
-J9RASInitialize(J9JavaVM* javaVM)
+J9RASInitialize(J9JavaVM *javaVM)
 {
 #if defined(OSX)
 	char **environ = *_NSGetEnviron();
@@ -477,10 +489,10 @@ j9rasSetServiceLevel(J9JavaVM *vm, const char *runtimeVersion) {
 #define USE_STATIC_RAS_STRUCT
 #endif /* defined(J9ZOS390) || (defined(AIXPPC) && !defined(J9VM_ENV_DATA64)) */
 
-static J9RAS*
-allocateRASStruct(J9JavaVM *javaVM)
+static J9RAS
+*allocateRASStruct(J9JavaVM *javaVM)
 {
-	J9RAS* candidate = (J9RAS*)GLOBAL_DATA(_j9ras_);
+	J9RAS *candidate = (J9RAS*)GLOBAL_DATA(_j9ras_);
 	/*
 	 * z/OS: For zOS we need to use the _j9ras_ symbol because a zOS dump may contain more than one JVM
 	 * in a single address space, and going in via the eyecatcher would not allow us to
@@ -498,7 +510,7 @@ allocateRASStruct(J9JavaVM *javaVM)
 
 		J9PortVmemParams params;
 		J9PortVmemIdentifier identifier;
-		J9AllocatedRAS* result = NULL;
+		J9AllocatedRAS *result = NULL;
 		UDATA pageSize;
 		UDATA roundedSize;
 
@@ -538,7 +550,7 @@ allocateRASStruct(J9JavaVM *javaVM)
 	return candidate;
 }
 
-void J9RelocateRASData(J9JavaVM* javaVM) {
+void J9RelocateRASData(J9JavaVM *javaVM) {
 	/* See comments for allocateRASStruct concerning compressed references and z/OS */
 #if !defined(USE_STATIC_RAS_STRUCT)
 	if (ALLOCATE_RAS_DATA_IN_SUBALLOCATOR && J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
@@ -556,7 +568,7 @@ void J9RelocateRASData(J9JavaVM* javaVM) {
 }
 
 static void
-freeRASStruct(J9JavaVM *javaVM, J9RAS* rasStruct)
+freeRASStruct(J9JavaVM *javaVM, J9RAS *rasStruct)
 {
 #if !defined(USE_STATIC_RAS_STRUCT)
 	if (rasStruct != GLOBAL_DATA(_j9ras_)) { /* dynamic allocation may have failed */
@@ -565,7 +577,7 @@ freeRASStruct(J9JavaVM *javaVM, J9RAS* rasStruct)
 		if (ALLOCATE_RAS_DATA_IN_SUBALLOCATOR && J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM)) {
 			j9mem_free_memory32(rasStruct);
 		} else {
-			J9AllocatedRAS* allocatedStruct = (J9AllocatedRAS*)rasStruct;
+			J9AllocatedRAS *allocatedStruct = (J9AllocatedRAS*)rasStruct;
 			J9PortVmemIdentifier identifier;
 
 #ifdef J9ZTPF
@@ -688,7 +700,7 @@ populateRASNetData(J9JavaVM *javaVM, J9RAS *rasStruct)
 /**
  * Function J9RASCheckDump(), implementation for -Xcheck:dump support.
  *
- * @param J9JavaVM* javaVM, JVM top-level structure pointer
+ * @param J9JavaVM *javaVM, JVM top-level structure pointer
  * @return 0 on success, non-zero if the VM should not continue
  */
 IDATA

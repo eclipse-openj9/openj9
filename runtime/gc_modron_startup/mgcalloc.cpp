@@ -65,6 +65,12 @@ static bool traceObjectCheck(J9VMThread *vmThread, bool *shouldTriggerAllocation
 
 #define STACK_FRAMES_TO_DUMP	8
 
+static void
+handleOOM(J9JavaVM *javaVm)
+{
+	javaVm->j9rasDumpFunctions->handleOutOfMemoryError(javaVm);
+}
+
 /**
  * High level fast path allocate routine (used by VM and JIT) to allocate a single object.  This method does not need to be called with
  * a resolve frame as it cannot cause a GC.  If the attempt at allocation fails, the method will return null and it is the caller's 
@@ -498,6 +504,7 @@ J9AllocateObject(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFlags)
 		/* we're going to return NULL, trace this */
 		Trc_MM_ObjectAllocationFailed(vmThread, sizeInBytesRequired, clazz, memorySpace->getName(), memorySpace);
 		dumpStackFrames(vmThread);
+		handleOOM(vmThread->javaVM);
 		TRIGGER_J9HOOK_MM_PRIVATE_OUT_OF_MEMORY(extensions->privateHookInterface, vmThread->omrVMThread, j9time_hires_clock(), J9HOOK_MM_PRIVATE_OUT_OF_MEMORY, memorySpace, memorySpace->getName());
 	} else {
 		objectPtr = traceAllocateObject(vmThread, objectPtr, clazz, sizeInBytesRequired);
@@ -669,6 +676,7 @@ J9AllocateIndexableObject(J9VMThread *vmThread, J9Class *clazz, uint32_t numberO
 		MM_MemorySpace *memorySpace = indexableOAM.getAllocateDescription()->getMemorySpace();
 		Trc_MM_ArrayObjectAllocationFailed(vmThread, sizeInBytesRequired, clazz, memorySpace->getName(), memorySpace);
 		dumpStackFrames(vmThread);
+		handleOOM(vmThread->javaVM);
 		TRIGGER_J9HOOK_MM_PRIVATE_OUT_OF_MEMORY(extensions->privateHookInterface, vmThread->omrVMThread, j9time_hires_clock(), J9HOOK_MM_PRIVATE_OUT_OF_MEMORY, memorySpace, memorySpace->getName());
 	}
 
