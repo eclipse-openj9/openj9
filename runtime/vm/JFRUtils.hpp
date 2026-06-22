@@ -47,6 +47,7 @@ private:
 protected:
 
 public:
+	static constexpr int THREAD_DUMP_EVENT_SIZE_PER_THREAD = 1000;
 
 	/*
 	 * Function members

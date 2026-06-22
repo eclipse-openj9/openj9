@@ -229,7 +229,6 @@ private:
 	static constexpr int CLASS_LOADER_STATISTICS_EVENT_SIZE = (3 * LEB128_32_SIZE) + (9 * LEB128_64_SIZE);
 	static constexpr int THREAD_CONTEXT_SWITCH_RATE_SIZE = sizeof(float) + (3 * sizeof(I_64));
 	static constexpr int THREAD_STATISTICS_EVENT_SIZE = (6 * sizeof(U_64)) + sizeof(U_32);
-	static constexpr int THREAD_DUMP_EVENT_SIZE_PER_THREAD = 1000;
 	static constexpr int SYSTEM_PROCESS_EVENT_SIZE = (4 * sizeof(U_64)) + 32 /* pid string */;
 	static constexpr int NATIVE_LIBRARY_ADDRESS_SIZE = (4 * sizeof(U_64)) + (2 * sizeof(UDATA)) + sizeof(U_8);
 	static constexpr int SYSTEM_GC_EVENT_SIZE = (2 * LEB128_64_SIZE) + (3 * LEB128_32_SIZE) + sizeof(U_8);
@@ -486,6 +485,8 @@ done:
 
 			pool_do(_constantPoolTypes.getNativeLibraryTable(), &writeNativeLibraryEvent, this);
 
+			pool_do(_constantPoolTypes.getThreadDumpTable(), &writeThreadDumpEvent, this);
+
 			if (J9_ARE_NO_BITS_SET(_vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JFR_V2_SUPPORT)) {
 				/* Only write constant events in first chunk. */
 				if (0 == _vm->jfrState.jfrChunkCount) {
@@ -507,10 +508,6 @@ done:
 				}
 
 				writePhysicalMemoryEvent();
-
-				if (dumpCalled) {
-					writeThreadDumpEvent();
-				}
 			} else {
 				if (_constantPoolTypes.shouldWriteJVMInformation()) {
 					writeJVMInformationEvent();
@@ -546,10 +543,6 @@ done:
 
 				if (_constantPoolTypes.shouldWritePhysicalMemory()) {
 					writePhysicalMemoryEvent();
-				}
-
-				if (_constantPoolTypes.shouldWriteThreadDump()) {
-					writeThreadDumpEvent();
 				}
 			}
 
@@ -910,8 +903,6 @@ done:
 
 	void writeStringLiteral(const char *string, UDATA len);
 
-	void writeFormattedString(const char *format, ...);
-
 	U_8 *writeThreadStateCheckpointEvent();
 
 	U_8 *writePackageCheckpointEvent();
@@ -945,8 +936,6 @@ done:
 	U_8 *writeVirtualizationInformationEvent();
 
 	U_8 *writeOSInformationEvent();
-
-	U_8 *writeThreadDumpEvent();
 
 	void writeNarrowOOPModeTypesEvent();
 
@@ -994,6 +983,7 @@ done:
 
 	static void writeDataLossEvent(void *anElement, void *userData);
 
+	static void writeThreadDumpEvent(void *anElement, void *userData);
 
 	UDATA
 	calculateRequiredBufferSize()
@@ -1073,7 +1063,7 @@ done:
 
 		requiredBufferSize += _constantPoolTypes.getThreadStatisticsCount() * THREAD_STATISTICS_EVENT_SIZE;
 
-		requiredBufferSize += _vm->peakThreadCount * THREAD_DUMP_EVENT_SIZE_PER_THREAD;
+		requiredBufferSize += _constantPoolTypes.getThreadDumpCount() * _vm->peakThreadCount * VM_JFRUtils::THREAD_DUMP_EVENT_SIZE_PER_THREAD;
 
 		requiredBufferSize += (_constantPoolTypes.getSystemProcessCount() * SYSTEM_PROCESS_EVENT_SIZE)
 				+ _constantPoolTypes.getSystemProcessStringSizeTotal();

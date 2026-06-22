@@ -578,6 +578,13 @@ typedef struct J9JFRDataLoss {
 	U_64 total;
 } J9JFRDataLoss;
 
+typedef struct J9JFRThreadDump {
+	J9JFR_EVENT_COMMON_FIELDS
+	U_8 *result;
+	UDATA resultLength;
+	UDATA bufferSize;
+} J9JFRThreadDump;
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 /* @ddr_namespace: map_to_type=J9CfrError */

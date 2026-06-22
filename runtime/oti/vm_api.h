@@ -6020,6 +6020,17 @@ jfrEmitDataLoss(J9VMThread *currentThread, U_64 bytes);
 jboolean
 requestJFREvent(J9VMThread *currentThread, jlong id);
 
+/**
+ * Get a thread dump string for ThreadDump event and write it to the given buffer
+ *
+ * @param[in] currentThread the current J9VMThread
+ * @param[in] buffer the buffer that the thread dump will be written to
+ * @param[in] bufferSize size of the buffer
+ * @return the length of the thread dump string.
+ * */
+UDATA
+getThreadDump(J9VMThread *currentThread, U_8 *buffer, UDATA bufferSize);
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 #ifdef __cplusplus

@@ -1528,6 +1528,26 @@ done:
 }
 
 void
+VM_JFRConstantPoolTypes::addThreadDumpEntry(J9JFRThreadDump *threadDumpData)
+{
+	ThreadDumpEntry *entry = (ThreadDumpEntry *)pool_newElement(_threadDumpTable);
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = threadDumpData->startTicks;
+	entry->result = threadDumpData->result;
+	entry->resultLength = threadDumpData->resultLength;
+
+	_threadDumpCount += threadDumpData->resultLength;
+
+done:
+	return;
+}
+
+void
 VM_JFRConstantPoolTypes::printTables()
 {
 	j9tty_printf(PORTLIB, "--------------- StringUTF8Table ---------------\n");

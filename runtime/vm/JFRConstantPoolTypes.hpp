@@ -455,6 +455,12 @@ struct DataLossEntry {
 	U_64 total;
 };
 
+struct ThreadDumpEntry {
+	I_64 ticks;
+	U_8 *result;
+	UDATA resultLength;
+};
+
 struct JFRConstantEvents {
 	JVMInformationEntry JVMInfoEntry;
 	CPUInformationEntry CPUInfoEntry;
@@ -547,6 +553,8 @@ private:
 	UDATA _networkUtilizationCount;
 	J9Pool *_dataLossTable;
 	UDATA _dataLossCount;
+	J9Pool *_threadDumpTable;
+	UDATA _threadDumpCount;
 
 	/* Periodic events. */
 	bool _shouldWriteJVMInformation;
@@ -563,7 +571,6 @@ private:
 	bool _shouldWriteModuleRequire;
 	bool _shouldWriteModuleExport;
 	bool _shouldWriteClassLoaderStatistics;
-	bool _shouldWriteThreadDump;
 
 	/* Processing buffers */
 	StackFrame *_currentStackFrameBuffer;
@@ -870,6 +877,8 @@ public:
 	void addNetworkUtilizationEntry(J9JFRNetworkUtilization *networkUtilizationData);
 	void addDataLossEntry(J9JFRDataLoss *dataLossData);
 
+	void addThreadDumpEntry(J9JFRThreadDump *threadDumpData);
+
 	void addThreadObjectEntry(J9JFRThreadObject *tableEntry);
 
 	J9Pool *getExecutionSampleTable()
@@ -1030,6 +1039,16 @@ public:
 	UDATA getDataLossCount()
 	{
 		return _dataLossCount;
+	}
+
+	J9Pool *getThreadDumpTable()
+	{
+		return _threadDumpTable;
+	}
+
+	UDATA getThreadDumpCount()
+	{
+		return _threadDumpCount;
 	}
 
 	UDATA getThreadStartCount()
@@ -1307,11 +1326,6 @@ public:
 		return _shouldWriteClassLoaderStatistics;
 	}
 
-	bool shouldWriteThreadDump()
-	{
-		return _shouldWriteThreadDump;
-	}
-
 	/**
 	* Helper to get JFR constantEvents field.
 	*
@@ -1434,7 +1448,7 @@ public:
 				_shouldWriteClassLoaderStatistics = true;
 				break;
 			case J9JFR_EVENT_TYPE_THREAD_DUMP:
-				_shouldWriteThreadDump = true;
+				addThreadDumpEntry((J9JFRThreadDump *)event);
 				break;
 			case J9JFR_EVENT_TYPE_DATA_LOSS:
 				addDataLossEntry((J9JFRDataLoss *)event);
@@ -1458,6 +1472,7 @@ public:
 				loadNativeLibraries(_currentThread);
 				loadModuleRequireAndModuleExportEvents();
 				loadClassLoaderStatisticsEvents(_currentThread);
+				loadThreadDumpEvents(_currentThread);
 			}
 		} else {
 			if (_shouldWriteSystemProcess) {
@@ -2045,6 +2060,38 @@ done:
 		vmFuncs->allClassLoadersEndDo(&walkState);
 	}
 
+	/**
+	 * @brief Generate and add ThreadDump events to _threadDumpTable.
+	 * This function is only used by JFR v1.
+	 *
+	 * @param currentThread[in] The pointer to the current J9VMThread
+	 */
+	void loadThreadDumpEvents(J9VMThread *currentThread)
+	{
+		J9JavaVM *vm = currentThread->javaVM;
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		UDATA bufferSize = vm->peakThreadCount * VM_JFRUtils::THREAD_DUMP_EVENT_SIZE_PER_THREAD;
+		ThreadDumpEntry *entry = (ThreadDumpEntry *)pool_newElement(_threadDumpTable);
+
+		if (NULL == entry) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+
+		entry->ticks = (I_64)j9time_nano_time();
+		entry->result = (U_8 *)j9mem_allocate_memory(sizeof(U_8) * bufferSize, J9MEM_CATEGORY_JFR);
+		if (NULL == entry->result) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+		entry->resultLength = getThreadDump(currentThread, entry->result, bufferSize);
+
+		_threadDumpCount += 1;
+
+	done:
+		return;
+	}
+
 	VM_JFRConstantPoolTypes(J9VMThread *currentThread)
 		: _currentThread(currentThread)
 		, _vm(currentThread->javaVM)
@@ -2121,6 +2168,8 @@ done:
 		, _networkUtilizationCount(0)
 		, _dataLossTable(NULL)
 		, _dataLossCount(0)
+		, _threadDumpTable(NULL)
+		, _threadDumpCount(0)
 		, _shouldWriteJVMInformation(false)
 		, _shouldWriteCPUInformationEvent(false)
 		, _shouldWriteVirtualizationInformationEvent(false)
@@ -2135,7 +2184,6 @@ done:
 		, _shouldWriteModuleRequire(false)
 		, _shouldWriteModuleExport(false)
 		, _shouldWriteClassLoaderStatistics(false)
-		, _shouldWriteThreadDump(false)
 		, _previousStackTraceEntry(NULL)
 		, _firstStackTraceEntry(NULL)
 		, _previousThreadEntry(NULL)
@@ -2356,6 +2404,12 @@ done:
 			goto done;
 		}
 
+		_threadDumpTable = pool_new(sizeof(ThreadDumpEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		if (NULL == _threadDumpTable) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+
 		/* Add reserved index for default entries. For strings zero is the empty or NUll string.
 		 * For package zero is the deafult package, for Module zero is the unnamed module. ThreadGroup
 		 * zero is NULL threadGroup.
@@ -2461,6 +2515,7 @@ done:
 		pool_kill(_gcHeapSummaryTable);
 		pool_kill(_networkUtilizationTable);
 		pool_kill(_dataLossTable);
+		pool_kill(_threadDumpTable);
 		freeNetworkInterfaceNames();
 		j9mem_free_memory(_globalStringTable);
 	}
