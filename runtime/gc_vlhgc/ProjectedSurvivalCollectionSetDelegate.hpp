@@ -234,25 +234,11 @@ public:
 	void createRegionCollectionSetForPartialGC(MM_EnvironmentVLHGC *env);
 
 	/**
-	 * Delete the internal representation of the set of regions that participated in the collection cycle.
-	 * This should only be called during a partial garbage collect.
-	 * @param env[in] The main GC thread
-	 */
-	void deleteRegionCollectionSetForPartialGC(MM_EnvironmentVLHGC *env);
-
-	/**
 	 * Build the internal representation of the set of regions that are to be collected for this cycle.
 	 * This should only be called during a global garbage collect.
 	 * @param env[in] The main GC thread
 	 */
 	void createRegionCollectionSetForGlobalGC(MM_EnvironmentVLHGC *env);
-
-	/**
-	 * Delete the internal representation of the set of regions that participated in the collection cycle.
-	 * This should only be called during a global garbage collect.
-	 * @param env[in] The main GC thread
-	 */
-	void deleteRegionCollectionSetForGlobalGC(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Record pre-sweep region information in order to calculate rate of return on tracing for age groups.

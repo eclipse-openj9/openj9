@@ -1231,12 +1231,6 @@ MM_IncrementalGenerationalGC::runGlobalGarbageCollection(MM_EnvironmentVLHGC *en
 	_reclaimDelegate.estimateReclaimableRegions(env, _schedulingDelegate.getAverageEmptinessOfCopyForwardedRegions(), &reclaimableRegions, &defragmentReclaimableRegions);
 	_schedulingDelegate.globalGarbageCollectCompleted(env, reclaimableRegions, defragmentReclaimableRegions);
 
-	if (_extensions->tarokUseProjectedSurvivalCollectionSet) {
-		_projectedSurvivalCollectionSetDelegate.deleteRegionCollectionSetForGlobalGC(env);
-	} else {
-		_collectionSetDelegate.deleteRegionCollectionSetForGlobalGC(env);
-	}
-
 	env->_cycleState->_markMap = NULL;
 	env->_cycleState->_currentIncrement = 0;
 
@@ -1465,12 +1459,6 @@ MM_IncrementalGenerationalGC::postProcessPGCUsingCopyForward(MM_EnvironmentVLHGC
 	UDATA reclaimableRegions = 0;
 	_reclaimDelegate.estimateReclaimableRegions(env, _schedulingDelegate.getAverageEmptinessOfCopyForwardedRegions(), &reclaimableRegions, &defragmentReclaimableRegions);
 	_schedulingDelegate.partialGarbageCollectCompleted(env, reclaimableRegions, defragmentReclaimableRegions);
-
-	if (_extensions->tarokUseProjectedSurvivalCollectionSet) {
-		_projectedSurvivalCollectionSetDelegate.deleteRegionCollectionSetForPartialGC(env);
-	} else {
-		_collectionSetDelegate.deleteRegionCollectionSetForPartialGC(env);
-	}
 
 	Assert_MM_false(_workPacketsForGlobalGC->getOverflowFlag());
 	Assert_MM_false(_workPacketsForPartialGC->getOverflowFlag());
