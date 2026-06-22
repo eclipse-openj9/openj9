@@ -1054,3 +1054,5 @@ TraceEvent=Trc_VM_internalCreateRAMClassDone_hotswapping_set_state Overhead=1 Le
 TraceEvent=Trc_VM_internalCreateRAMClassDone_bootstrap_state Overhead=1 Level=2 Template="className (%.*s), state(%p)->classObject is NULL"
 
 TraceExit-Exception=Trc_VM_objectMonitorExit_Exit_ValueType Overhead=1 Level=4 Template="IllegalMonitorState in objectMonitorExit. obj=%p is a value type."
+
+TraceException=Trc_VM_JFR_getThreadDump_bufferOverflow NoEnv Overhead=1 Level=1 Template="Buffer overflow happened while generating thread dump string."
