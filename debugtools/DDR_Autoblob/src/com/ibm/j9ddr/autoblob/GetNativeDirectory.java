@@ -75,7 +75,7 @@ public class GetNativeDirectory
 		String osArch = System.getProperty("os.arch");
 
 		// if the current system is a 390 machine use 390 as the osArch
-		if (osArch.length() >= 4 && osArch.substring(0, 4).equals("s390")) {
+		if (osArch.startsWith("s390")) {
 			osArch = "390";
 		}
 
@@ -87,13 +87,6 @@ public class GetNativeDirectory
 		// if the current system is PPC64 use ppc as the osArch
 		else if (osArch.equals("ppc64")) {
 			osArch = "ppc";
-		}
-
-		// if the current system is i?86 where ? is a digit use x86
-		else if (osArch.length() == 4 && osArch.charAt(0) == 'i'
-				&& Character.isDigit(osArch.charAt(1))
-				&& osArch.substring(2).equals("86")) {
-			osArch = "x86";
 		}
 
 		return osArch;

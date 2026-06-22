@@ -173,7 +173,7 @@ public final class Dump extends ImageInputStreamImpl {
 	 * @throws FileNotFoundException
 	 */
 	private Dump(String filename, SearchListener[] listeners, boolean buildAddressSpaces, ImageInputStream instream, boolean createCacheFile) throws FileNotFoundException {
-		log.fine("opening dump " + filename+" stream "+instream);
+		log.fine("opening dump " + filename + " stream " + instream);
 		this.filename = filename;
 		if (listeners != null)
 			throw new Error("tbc");
@@ -191,8 +191,9 @@ public final class Dump extends ImageInputStreamImpl {
 			}
 			return;
 		} catch (Exception e) {
-			if (!System.getProperty("os.arch").equals("390")) {
-				FileNotFoundException e2 = new FileNotFoundException("Could not find: " + filename+ " stream " + instream);
+			/* The call to openMvsDataset() below is only reasonable on z/OS. */
+			if (!System.getProperty("os.name").equals("z/OS")) {
+				FileNotFoundException e2 = new FileNotFoundException("Could not find: " + filename + " stream " + instream);
 				e2.initCause(e);
 				throw e2;
 			}
