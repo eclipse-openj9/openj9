@@ -64,16 +64,16 @@ public class Runner {
 		UNKNOWN;
 
 		public static OSArch current() {
-			String archSpec = System.getProperty("os.arch", "?").toLowerCase();
+			String archSpec = System.getProperty("os.arch", "?");
 
 			/* Get arch from spec string. */
-			if (archSpec.contains("aarch64")) {
+			if (archSpec.equals("aarch64")) {
 				return AARCH64;
-			} else if (archSpec.contains("ppc")) {
+			} else if (archSpec.startsWith("ppc")) {
 				return PPC;
-			} else if (archSpec.contains("s390")) {
+			} else if (archSpec.startsWith("s390")) {
 				return S390X;
-			} else if (archSpec.contains("amd64") || archSpec.contains("x86")) {
+			} else if (archSpec.equals("amd64") || archSpec.equals("x86")) {
 				return X86;
 			} else {
 				System.out.println("Runner couldn't determine underlying architecture. Got OS Arch:" + archSpec);
