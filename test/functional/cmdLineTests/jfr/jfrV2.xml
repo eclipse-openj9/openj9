@@ -95,4 +95,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output type="failure" caseSensitive="yes" regex="no">bytes were not freed before shutdown</output>
 	</test>
 	-->
+	<test id="Test JFRv2 with Recording API">
+		<command>$EXE$ -XX:+EnableOpenJ9ExperimentalFlightRecording -Xshare:off -cp $RESJAR$ org.openj9.test.TestRecording</command>
+		<output type="success" caseSensitive="yes" regex="no">recording created</output>
+		<output type="required" caseSensitive="yes" regex="no">start test</output>
+		<output type="failure" caseSensitive="yes" regex="no">Found additional fields in mirror class</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error</output>
+	</test>
 </suite>
