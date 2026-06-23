@@ -1,0 +1,23 @@
+by1 i23 i24 = 65,58500,63385
+i25 i26 b3 = 36922,-206,0
+i27 i28 i29 = -232,216,-14
+i30 i31 lArr2 = 11,-12,9234
+iArr3 dArr = 12248,4669814226818543659
+Test.instanceCount Test.dFld Test.sFld = 107,4619567317775286272,107
+Test.lFld Test.fFld Test.bArrFld = 64070,1062232654,5586
+Test.byArrFld fArrFld = 564992,0
+dMeth_check_sum: -1077094944136131765
+vMeth1_check_sum: -4561091251205009424
+vMeth_check_sum: -1077094945221066670
+by1 i23 i24 = 65,58500,63385
+i25 i26 b3 = 36922,-206,0
+i27 i28 i29 = -232,216,-14
+i30 i31 lArr2 = 11,-12,9234
+iArr3 dArr = 12248,4669814226818543659
+Test.instanceCount Test.dFld Test.sFld = 107,4619567317775286272,107
+Test.lFld Test.fFld Test.bArrFld = 64070,1062232654,5586
+Test.byArrFld fArrFld = 564992,0
+dMeth_check_sum: -1077094943031388257
+vMeth1_check_sum: -9122182501367278592
+vMeth_check_sum: -1077094945217491846
+java.lang.NullPointerException
