@@ -493,12 +493,19 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 	case LIBRARIES_ONUNLOAD :
 	case JVM_EXIT_STAGE :
 		j9shr_guaranteed_exit(vm, FALSE);
-		break;
-
-	case HEAP_STRUCTURES_FREED :
+#if JAVA_SPEC_VERSION > 8
 		if (vm != NULL) {
 			j9shr_shutdown(vm);
 		}
+#endif /* #if JAVA_SPEC_VERSION > 8 */
+		break;
+
+	case HEAP_STRUCTURES_FREED :
+#if JAVA_SPEC_VERSION == 8
+		if (vm != NULL) {
+			j9shr_shutdown(vm);
+		}
+#endif /* JAVA_SPEC_VERSION == 8 */
 		break;
 
 	default :

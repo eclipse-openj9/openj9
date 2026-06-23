@@ -280,7 +280,7 @@ createCPEntries(JNIEnv* env, jint helperID, jint urlCount, J9ClassPathEntry*** c
 	newCacheItem->header.magic = CP_MAGIC;
 	newCacheItem->header.type = CP_TYPE_CLASSPATH;
 	newCacheItem->header.id = helperID;
-	newCacheItem->header.jclData = cpEntries;
+	newCacheItem->header.jclData = (J9ClassPathEntry*)cpePtrArray;
 	newCacheItem->header.cpData = NULL;
 
 	newCacheItem->entryCount = urlCount;
