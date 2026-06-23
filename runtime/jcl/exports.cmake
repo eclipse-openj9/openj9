@@ -300,6 +300,7 @@ omr_add_exports(jclse
 	Java_com_ibm_oti_vm_VM_getVMArgsImpl
 	Java_com_ibm_oti_vm_VM_globalGC
 	Java_com_ibm_oti_vm_VM_localGC
+	Java_com_ibm_oti_vm_VM_isOlder
 	Java_com_ibm_oti_vm_VM_markCurrentThreadAsSystemImpl
 	Java_com_ibm_oti_vm_VM_setCommonData
 	Java_com_ibm_oti_vm_VM_getJ9ConstantPoolFromJ9Class

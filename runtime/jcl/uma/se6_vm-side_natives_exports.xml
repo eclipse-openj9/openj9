@@ -27,6 +27,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<export name="Java_com_ibm_oti_vm_VM_getVMArgsImpl" />
 	<export name="Java_com_ibm_oti_vm_VM_globalGC" />
 	<export name="Java_com_ibm_oti_vm_VM_localGC" />
+	<export name="Java_com_ibm_oti_vm_VM_isOlder" />
 	<export name="J9VMDllMain" />
 	<export name="Java_com_ibm_jvm_Dump_HeapDumpImpl" />
 	<export name="Java_com_ibm_jvm_Dump_JavaDumpImpl" />
