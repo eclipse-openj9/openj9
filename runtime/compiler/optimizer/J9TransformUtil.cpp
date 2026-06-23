@@ -2044,7 +2044,20 @@ bool J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR
                         // class won't be unloaded while this body is still valid, so
                         // the keepalive is redundant but harmless.
                         //
-                        comp->addKeepaliveClass(clazz);
+                        // This must be skipped for peeking ILGen, as the peeking IL
+                        // is always discared, with no guarantees that the peeked method
+                        // would eventually be inlined. In such cases, a keepalive class
+                        // would be registered for an entire compilation simply through
+                        // peeking during ECS, and there is no mechanism to un-register
+                        // the keepalive class. This would not be a problem if the peeked
+                        // method registering the keepalive class got inlined eventually,
+                        // but if not, then the registered class lives in a class loader
+                        // that has no lifetime relationship with the final compiled body,
+                        // resulting in keepalive constrefs not having a reachable owning
+                        // class in the const provenance graph.
+                        if (!comp->isPeekingMethod()) {
+                            comp->addKeepaliveClass(clazz);
+                        }
                     } else {
                         return false;
                     }
