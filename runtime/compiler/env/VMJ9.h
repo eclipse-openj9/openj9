@@ -530,6 +530,26 @@ public:
     virtual TR_ResolvedMethod *getResolvedMethodForConstructorWithSig(TR_Memory *trMemory,
         TR_OpaqueClassBlock *classPointer, const char *signature);
 
+    /**
+     * @brief Checks if a class has any native methods
+     *
+     * Should be called with VMAccess.
+     *
+     * @param classPointer The class to check
+     * @return true if the class has any native methods, false otherwise
+     */
+    virtual bool classHasNativeMethods(TR_OpaqueClassBlock *classPointer);
+
+    /**
+     * @brief Checks if a class has any synchronized methods
+     *
+     * Should be called with VMAccess.
+     *
+     * @param classPointer The class to check
+     * @return true if the class has any synchronized methods, false otherwise
+     */
+    virtual bool classHasSynchronizedMethods(TR_OpaqueClassBlock *classPointer);
+
     virtual TR_OpaqueMethodBlock *getResolvedVirtualMethod(TR_OpaqueClassBlock *classObject, int32_t cpIndex,
         bool ignoreReResolve = true);
     virtual TR_OpaqueMethodBlock *getResolvedInterfaceMethod(TR_OpaqueMethodBlock *ownerMethod,
