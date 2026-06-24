@@ -80,7 +80,7 @@ public class GetNativeDirectory
 		}
 
 		// if the current system is AMD64 use x86 as the osArch
-		else if (osArch.equals("amd64")) {
+		else if (osArch.equals("amd64") || osArch.equals("x86_64")) {
 			osArch = "x86";
 		}
 

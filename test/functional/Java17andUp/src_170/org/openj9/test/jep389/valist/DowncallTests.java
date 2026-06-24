@@ -57,7 +57,7 @@ import jdk.incubator.foreign.ValueLayout;
 public class DowncallTests {
 	private static final String osName = System.getProperty("os.name");
 	private static final String arch = System.getProperty("os.arch");
-	private static final boolean isX64 = arch.equals("amd64");
+	private static final boolean isX64 = arch.equals("amd64") || arch.equals("x86_64");
 	private static final boolean isWinX64 = osName.startsWith("Windows") && isX64;
 	private static final boolean isLinuxAarch64 = osName.equals("Linux") && arch.equals("aarch64");
 	/* The padding of struct is not required on Power in terms of VaList */

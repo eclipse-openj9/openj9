@@ -56,7 +56,7 @@ import jdk.incubator.foreign.ValueLayout;
 final class LayoutStrPreprocessor {
 	private static final String osName = System.getProperty("os.name");
 	private static final String arch = System.getProperty("os.arch");
-	private static final boolean isX86_64 = arch.equals("amd64");
+	private static final boolean isX86_64 = arch.equals("amd64") || arch.equals("x86_64");
 	private static final boolean isLinuxS390x = arch.equals("s390x") && osName.equals("Linux");
 
 	/*[IF JAVA_SPEC_VERSION == 17]*/
