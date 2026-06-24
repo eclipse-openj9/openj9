@@ -370,6 +370,10 @@ void TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool v
 
             bool aliasTemps = false;
 
+            // Only an aload of an auto can hold a vector value in a temp, so only such a load is aliased
+            // into the temp class to build the web that validateSymRef() later validates.
+            bool isLoadOfAuto = rhs->getOpCodeValue() == TR::aload && rhs->getSymbolReference()->getSymbol()->isAuto();
+
             if (rhs->getOpCode().isFunctionCall()
                 && isVectorAPIMethod(rhs->getSymbolReference()->getSymbol()->castToMethodSymbol())) {
                 // propagate vector info from VectorAPI call to temp
@@ -392,13 +396,13 @@ void TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool v
                     if (boxingAllowed() && !_nodeTable[rhs->getGlobalIndex()]._canVectorize)
                         dontVectorizeNode(node);
                 } // end of Vector API call as RHS
-            } else if (boxingAllowed() && rhs->getOpCodeValue() != TR::aload) {
+            } else if (boxingAllowed() && !isLoadOfAuto) {
                 dontVectorizeNode(node);
 
                 logprintf(_trace, log, "Making #%d a box of unknown type due to node %p\n", id1, node);
             }
 
-            if (rhs->getOpCodeValue() == TR::aload)
+            if (isLoadOfAuto)
                 aliasTemps = true;
 
             alias(node, rhs, aliasTemps);
