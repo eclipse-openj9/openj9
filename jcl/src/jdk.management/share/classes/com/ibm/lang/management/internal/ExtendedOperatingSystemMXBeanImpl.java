@@ -113,7 +113,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	ExtendedOperatingSystemMXBeanImpl() {
 		super();
 		// only launch the notification thread if the environment could change
-		if (isDLPAREnabled()) {
+		if (isDLPAREnabled() && (ExtendedOperatingSystemMXBeanImpl.class == this.getClass())) {
 			/*[IF JAVA_SPEC_VERSION >= 24]*/
 			Thread thread = VM.getVMLangAccess().createThread(new OperatingSystemNotificationThread(this),
 					"OperatingSystemMXBean notification dispatcher", true, false, true, ClassLoader.getSystemClassLoader()); //$NON-NLS-1$
