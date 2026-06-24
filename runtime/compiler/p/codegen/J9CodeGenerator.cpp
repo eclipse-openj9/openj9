@@ -197,6 +197,8 @@ bool J9::Power::CodeGenerator::canEmitDataForExternallyRelocatableInstructions()
     return !self()->comp()->compileRelocatableCode();
 }
 
+bool J9::Power::CodeGenerator::canTransformUnsafeSetMemory() { return (comp()->target().is64Bit()); }
+
 // Get or create the TR::Linkage object that corresponds to the given linkage
 // convention.
 // Even though this method is common, its implementation is machine-specific.

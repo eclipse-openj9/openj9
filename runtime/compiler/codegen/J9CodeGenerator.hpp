@@ -138,6 +138,13 @@ public:
 
     TR::Linkage *createLinkageForCompilation();
 
+    /**
+     * @brief Answers whether Unsafe.setMemory transformation to arrayset is supported.
+     *
+     * @return : true if the transformation is supported; false otherwise.
+     */
+    bool canTransformUnsafeSetMemory() { return false; }
+
     bool enableAESInHardwareTransformations() { return false; }
 
     bool isMethodInAtomicLongGroup(TR::RecognizedMethod rm);
