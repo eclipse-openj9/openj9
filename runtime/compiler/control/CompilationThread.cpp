@@ -21,6 +21,8 @@
  * Assisted-by: IBM Bob
  *******************************************************************************/
 
+#include <cstdint>
+#include <sys/wait.h>
 #define J9_EXTERNAL_TO_VM
 
 #if SOLARIS || AIXPPC || LINUX || OSX
@@ -807,6 +809,7 @@ bool TR::CompilationInfo::createCompilationInfo(J9JITConfig *jitConfig)
         memset(alloc, 0, sizeof(TR::CompilationInfo));
         _compilationRuntime = new (alloc) TR::CompilationInfo(jitConfig);
         jitConfig->compilationRuntime = (void *)_compilationRuntime;
+        jitConfig->syncCompStats = &_compilationRuntime->_syncCompStats;
 #ifdef DEBUG
         if (debug("traceThreadCompile"))
             _compilationRuntime->_traceCompiling = true;
@@ -6160,6 +6163,12 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread *vmThread, TR::IlG
 
         // Before releasing the compilation monitor, mark that we have one more thead waiting for this entry
         //
+        uint64_t waitStart = 0;
+        if (!async && entry->_numThreadsWaiting == 0) {
+            PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+            waitStart = j9time_hires_clock();
+        }
+
         entry->_numThreadsWaiting++;
 
         // Release the compilation monitor
@@ -6258,6 +6267,19 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread *vmThread, TR::IlG
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
         entry->_numThreadsWaiting--;
+
+        if (!async && waitStart > 0) {
+            PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+            uint64_t waitEnd = j9time_hires_clock();
+            uint64_t duration = j9time_hires_delta(waitStart, waitEnd, J9PORT_TIME_DELTA_IN_MICROSECONDS);
+
+            _syncCompStats.totalCount++;
+            _syncCompStats.totalWaitTime += duration;
+
+            if (duration > _syncCompStats.longestWaitTime) {
+                _syncCompStats.longestWaitTime = duration;
+            }
+        }
 
         TR_ASSERT_FATAL(!(entry->_freeTag & (ENTRY_DEALLOCATED | ENTRY_IN_POOL_FREE)),
             "Java thread waking up with a freed entry");

@@ -4320,6 +4320,13 @@ typedef struct J9ClassCastParms {
 	struct J9Class* castClass;
 } J9ClassCastParms;
 
+typedef struct J9JITSyncCompilationStatistics {
+	uint32_t totalCount;
+    uint32_t invalidationCount;
+    uint64_t totalWaitTime;
+    uint64_t longestWaitTime;
+} J9JITSyncCompilationStatistics;
+
 /* @ddr_namespace: map_to_type=J9JITConfig */
 
 typedef struct J9JITConfig {
@@ -4593,6 +4600,7 @@ typedef struct J9JITConfig {
 	IDATA verboseOutputLevel;
 	omrthread_monitor_t compilationMonitor;
 	void* compilationInfo;
+	J9JITSyncCompilationStatistics* syncCompStats;
 	void* aotCompilationInfo;
 	void* pseudoTOC;
 	void* i2jTransition;

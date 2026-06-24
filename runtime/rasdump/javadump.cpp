@@ -307,6 +307,7 @@ private :
 	void writeMonitorSection(void);
 	void writeThreadSection(void);
 	void writeClassSection(void);
+	void writeSynchronousCompilationSection(void);
 #if defined(OMR_OPT_CUDA)
 	void writeCudaSection(void);
 #endif /* defined(OMR_OPT_CUDA) */
@@ -557,6 +558,7 @@ JavaCoreDumpWriter::JavaCoreDumpWriter(
 #endif
 	CALL_PROTECT(writeClassSection, _Error);
 	CALL_PROTECT(writeTrailer, _Error);
+	CALL_PROTECT(writeSynchronousCompilationSection, _Error);
 
 	/* Record the status of the operation */
 	_FileMode = _FileMode || _OutputStream.isOpen();
@@ -2913,6 +2915,42 @@ JavaCoreDumpWriter::writeHookSection(void)
 
 	/* Write the section trailer */
 	_OutputStream.writeCharacters("NULL           ------------------------------------------------------------------------\n");
+}
+
+void
+JavaCoreDumpWriter::writeSynchronousCompilationSection(void)
+{
+	J9JITConfig *jitConfig = _VirtualMachine->jitConfig;
+    if (NULL == jitConfig || NULL == jitConfig->syncCompStats) {
+        return;
+    }
+
+	J9JITSyncCompilationStatistics *stats = jitConfig->syncCompStats;
+
+	_OutputStream.writeCharacters("0SECTION       Synchronous compliations info dump routine\n");
+	_OutputStream.writeCharacters("NULL           ==============================\n");
+	_OutputStream.writeCharacters("1NOTE          This data is reset after each javacore file is written\n");
+	_OutputStream.writeCharacters("NULL           ------------------------------------------------------------------------\n");
+	_OutputStream.writeCharacters("1JITSYNCSTATS  Synchronous Compilation Statistics\n");
+    _OutputStream.writeCharacters("NULL           ------------------------------------------------------------------------\n");
+	_OutputStream.writeCharacters("2JITSYNCCOUNT    Total synchronous compilations: ");
+    _OutputStream.writeInteger(stats->totalCount, "%u");
+    _OutputStream.writeCharacters("\n");
+	_OutputStream.writeCharacters("2JITINVALCOUNT   Due to invalidations: ");
+    _OutputStream.writeInteger(stats->invalidationCount, "%u");
+    _OutputStream.writeCharacters("\n");
+	_OutputStream.writeCharacters("2JITTOTALWAIT    Total application wait time: ");
+    _OutputStream.writeInteger(stats->totalWaitTime, "%llu");
+    _OutputStream.writeCharacters("us\n");
+	_OutputStream.writeCharacters("2JITLONGEST      Longest Synchronous Compilation\n");
+	_OutputStream.writeCharacters("3JITWAITTIME       Wait time: ");
+	_OutputStream.writeInteger(stats->longestWaitTime, "%llu");
+	_OutputStream.writeCharacters("us\n");
+
+	stats->totalCount = 0;
+    stats->invalidationCount = 0;
+    stats->totalWaitTime = 0;
+    stats->longestWaitTime = 0;
 }
 
 #if defined(OMR_OPT_CUDA)
