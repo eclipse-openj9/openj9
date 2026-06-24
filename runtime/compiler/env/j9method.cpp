@@ -3148,6 +3148,7 @@ void TR_ResolvedJ9Method::construct()
             "(Ljava/lang/String;[BLjava/util/Locale;)Ljava/lang/String;") },
         { x(TR::java_lang_StringLatin1_toUpperCase, "toUpperCase",
             "(Ljava/lang/String;[BLjava/util/Locale;)Ljava/lang/String;") },
+	{ x(TR::java_lang_StringLatin1_compareToUTF16Values, "compareToUTF16Values", "([B[BII)I") },
         { x(TR::java_lang_StringLatin1_trim, "trim", "([B)Ljava/lang/String;") }, { TR::unknownMethod } };
 
     static X StringUTF16Methods[] = { { x(TR::java_lang_StringUTF16_charAt, "charAt", "([BI)C") },
