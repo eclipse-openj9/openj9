@@ -59,7 +59,7 @@ public class ContendedFieldsTests {
 			CACHE_LINE_SIZE = 128;
 		} else if (osArch.startsWith("s390")) {
 			CACHE_LINE_SIZE = 256;
-		} else if (osArch.equals("amd64") || osArch.equals("x86")) {
+		} else if (osArch.equals("amd64") || osArch.equals("x86") || osArch.equals("x86_64")) {
 			CACHE_LINE_SIZE = 64;
 		} else if (osArch.equals("aarch64")) {
 			String osName = System.getProperty("os.name");

@@ -73,7 +73,7 @@ public class Runner {
 				return PPC;
 			} else if (archSpec.startsWith("s390")) {
 				return S390X;
-			} else if (archSpec.equals("amd64") || archSpec.equals("x86")) {
+			} else if (archSpec.equals("amd64") || archSpec.equals("x86") || archSpec.equals("x86_64")) {
 				return X86;
 			} else {
 				System.out.println("Runner couldn't determine underlying architecture. Got OS Arch:" + archSpec);
