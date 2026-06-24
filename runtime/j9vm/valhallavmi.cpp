@@ -38,6 +38,8 @@ JVM_CopyOfSpecialArray(JNIEnv *env, jarray orig, jint from, jint to)
 	J9Class *origClass = NULL;
 	UDATA origLength = 0;
 	jint len = 0;
+	jint numElementsToCopy = 0;
+	jint minTo = 0;
 	jarray out = NULL;
 	I_32 rc = 0;
 	J9VMThread *currentThread = (J9VMThread *)env;
@@ -51,35 +53,43 @@ JVM_CopyOfSpecialArray(JNIEnv *env, jarray orig, jint from, jint to)
 	origObj = J9_JNI_UNWRAP_REFERENCE(orig);
 	origClass = J9OBJECT_CLAZZ(currentThread, origObj);
 	origLength = J9INDEXABLEOBJECT_SIZE(currentThread, origObj);
-	if ((from < 0) || (to > (jint)origLength)) {
-		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYINDEXOUTOFBOUNDSEXCEPTION, NULL);
-		goto done;
-	}
-	if (from >= to) {
-		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
-		goto done;
-	}
 
 	len = to - from;
+	/* For null-restricted arrays, verify no padding is needed */
+	if (J9_IS_J9ARRAYCLASS_NULL_RESTRICTED(origClass)) {
+		if ((len != 0)
+			&& ((from >= (jint)origLength) || (to > (jint)origLength))
+		) {
+			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
+			goto done;
+		}
+	}
+
+	minTo = OMR_MIN(to, (jint)origLength);
+	numElementsToCopy = minTo - from;
+
 	newArrayObj = currentThread->javaVM->memoryManagerFunctions->J9AllocateIndexableObject(currentThread, origClass, len, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 	if (!newArrayObj) {
 		vmFuncs->setHeapOutOfMemoryError(currentThread);
 		goto done;
 	}
 
-	VM_VMHelpers::pushObjectInSpecialFrame(currentThread, newArrayObj);
-	origObj = J9_JNI_UNWRAP_REFERENCE(orig);
+	if (numElementsToCopy > 0) {
+		VM_VMHelpers::pushObjectInSpecialFrame(currentThread, newArrayObj);
+		origObj = J9_JNI_UNWRAP_REFERENCE(orig);
 
-	rc = vmFuncs->copyFlattenableArray(currentThread, origObj, newArrayObj, from, 0, len);
-	if (-1 == rc) {
-		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYSTOREEXCEPTION, NULL);
-		goto done;
-	} else if (-2 == rc) {
-		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
-		goto done;
+		rc = vmFuncs->copyFlattenableArray(currentThread, origObj, newArrayObj, from, 0, numElementsToCopy);
+
+		newArrayObj = VM_VMHelpers::popObjectInSpecialFrame(currentThread);
+		if (-1 == rc) {
+			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYSTOREEXCEPTION, NULL);
+			goto done;
+		} else if (-2 == rc) {
+			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+			goto done;
+		}
 	}
 
-	newArrayObj = VM_VMHelpers::popObjectInSpecialFrame(currentThread);
 	out = (jarray)vmFuncs->j9jni_createLocalRef(env, newArrayObj);
 done:
 	vmFuncs->internalExitVMToJNI(currentThread);
