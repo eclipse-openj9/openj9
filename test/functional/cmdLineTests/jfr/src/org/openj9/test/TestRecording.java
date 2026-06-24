@@ -21,22 +21,21 @@
  */
 package org.openj9.test;
 
-import jdk.jfr.Recording;
-import java.nio.file.Path;
 import java.nio.file.Paths;
+
 import jdk.jfr.Configuration;
+import jdk.jfr.Recording;
 
 public class TestRecording {
 
 	public static void main(String[] args) throws Throwable {
 		System.out.println("TestRecording: start test");
-	    Recording r = new Recording(Configuration.getConfiguration("default"));
-            r.start();
-            r.stop();
-            r.dump(Paths.get("testrecording.jfr"));
-            r.close();
-			System.out.println("TestRecording: recording created");
-            return;
-
+		Recording r = new Recording(Configuration.getConfiguration("default"));
+		r.start();
+		r.stop();
+		r.dump(Paths.get("testrecording.jfr"));
+		r.close();
+		System.out.println("TestRecording: recording created");
+		return;
 	}
 }
