@@ -1836,7 +1836,12 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 
 	/* If an object was pre-hashed and a hash was stored within the fields of the object restore it.*/
 	if (isDestObjectPreHashed) {
-		UDATA hashcodeOffset = _extensions->mixedObjectModel.getHashcodeOffset(destObject);
+		UDATA hashcodeOffset = 0;
+		if (_extensions->objectModel.isIndexable(destObject)) {
+			hashcodeOffset = _extensions->indexableObjectModel.getHashcodeOffset((J9IndexableObject*)destObject);
+		} else {
+			hashcodeOffset = _extensions->mixedObjectModel.getHashcodeOffset(destObject);
+		}
 		if (hashcodeOffset <= limit) {
 			I_32 *hashcodePointer = (I_32*)((U_8*)destObject + hashcodeOffset);
 			*hashcodePointer = hashCode;
