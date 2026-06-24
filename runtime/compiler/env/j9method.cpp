@@ -1811,15 +1811,6 @@ TR_J9Method::TR_J9Method() {}
 //
 /////////////////////////
 
-static bool supportsFastJNI(TR_FrontEnd *fe)
-{
-#if defined(TR_TARGET_S390) || defined(TR_TARGET_X86) || defined(TR_TARGET_POWER) || defined(TR_TARGET_ARM64)
-    return true;
-#else
-    return false;
-#endif
-}
-
 TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock *aMethod, TR_FrontEnd *fe, TR_Memory *trMemory,
     TR_ResolvedMethod *owner, uint32_t vTableSlot)
     : TR_J9Method(fe, trMemory, aMethod)
@@ -1836,12 +1827,16 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock *aMethod, TR_Front
     _romLiterals = (J9ROMConstantPoolItem *)((UDATA)romClassPtr() + sizeof(J9ROMClass));
     _vTableSlot = vTableSlot;
     _j9classForNewInstance = NULL;
-    if (supportsFastJNI(fe)) {
+    if (TR_J9VMBase::supportsFastJNI()) {
         TR_J9VMBase *j9fe = (TR_J9VMBase *)_fe;
         // a non-NULL target address is returned for both JNI natives and non-JNI natives with FastJNI replacements,
         // NULL otherwise properties will be non-zero IFF the target address points to a FastJNI replacement
         _jniTargetAddress = j9fe->getJ9JITConfig()->javaVM->internalVMFunctions->jniNativeMethodProperties(
             j9fe->vmThread(), _ramMethod, &_jniProperties);
+        // This assert ensures that the simplification made in classHasNativeMethods() (checking only J9AccNative)
+        // remains valid.
+        TR_ASSERT(!_jniTargetAddress || (_romMethod->modifiers & J9AccNative),
+            "Method has a non-NULL jniTargetAddress but is not declared native");
 
         // check for user specified FastJNI override
         if (TR::Options::getJniAccelerator() != NULL
@@ -5224,7 +5219,7 @@ void *TR_ResolvedJ9Method::addressContainingIsOverriddenBit() { return &ramMetho
 
 bool TR_ResolvedJ9Method::isJNINative()
 {
-    if (!supportsFastJNI(_fe)) {
+    if (!TR_J9VMBase::supportsFastJNI()) {
         return (((UDATA)ramMethod()->constantPool) & J9_STARTPC_JNI_NATIVE) != 0;
     }
     return _jniTargetAddress != NULL;
