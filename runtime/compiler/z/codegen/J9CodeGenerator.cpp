@@ -3458,6 +3458,12 @@ bool J9::Z::CodeGenerator::canUseRelativeLongInstructions(int64_t value)
     return OMR::CodeGeneratorConnector::canUseRelativeLongInstructions(value);
 }
 
+bool J9::Z::CodeGenerator::canTransformUnsafeSetMemory()
+{
+    static bool enableUnsafeSetMemoryAcceleration = (feGetEnv("TR_DisableUnsafeSetMemoryAcceleration") == NULL);
+    return (enableUnsafeSetMemoryAcceleration && self()->comp()->target().is64Bit());
+}
+
 TR::Instruction *J9::Z::CodeGenerator::generateVMCallHelperPrePrologue(TR::Instruction *cursor)
 {
     TR::Compilation *comp = self()->comp();

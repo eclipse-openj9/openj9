@@ -84,6 +84,13 @@ public:
     bool alwaysGeneratesAKnownCleanSign(TR::Node *node);
     bool alwaysGeneratesAKnownPositiveCleanSign(TR::Node *node);
     bool canUseRelativeLongInstructions(int64_t value);
+
+    /**
+     * @brief Answers whether Unsafe.setMemory transformation to arrayset is supported.
+     *
+     * @return : true if the transformation is supported; false otherwise.
+     */
+    bool canTransformUnsafeSetMemory();
     TR_RawBCDSignCode alwaysGeneratedSign(TR::Node *node);
 
     uint32_t getPDMulEncodedSize(TR::Node *pdmul, TR_PseudoRegister *multiplicand, TR_PseudoRegister *multiplier);
