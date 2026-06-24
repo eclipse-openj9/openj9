@@ -191,6 +191,8 @@ public:
     bool canTransformConverterMethod(TR::RecognizedMethod method);
     bool isConverterMethod(TR::RecognizedMethod method);
 
+    bool canTransformUnsafeSetMemory();
+
     bool useCompressedPointers();
     bool useAnchors();
 
