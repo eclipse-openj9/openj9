@@ -213,7 +213,6 @@ public class TestSharedCacheEnableBCI extends TestUtils {
 			fail("# ROMClasses statement not found in printStats output");
 		}
 
-		delayBeforeDestroyNonPersistent();
 		destroyNonPersistentCache(cacheName);
 		checkFileDoesNotExistForNonPersistentCache(cacheName);
 
@@ -244,8 +243,6 @@ public class TestSharedCacheEnableBCI extends TestUtils {
 			fail("# ROMClasses statement not found in printStats output");
 		}
 
-
-		delayBeforeDestroyNonPersistent();
 		destroyNonPersistentCache(cacheName);
 		checkFileDoesNotExistForNonPersistentCache(cacheName);
 
@@ -289,7 +286,6 @@ public class TestSharedCacheEnableBCI extends TestUtils {
 			fail("# ROMClasses statement not found in printStats output");
 		}
 
-		delayBeforeDestroyNonPersistent();
 		destroyNonPersistentCache(cacheName);
 		checkFileDoesNotExistForNonPersistentCache(cacheName);
 
@@ -443,8 +439,6 @@ public class TestSharedCacheEnableBCI extends TestUtils {
 			}
 		}
 
-
-		delayBeforeDestroyNonPersistent();
 		destroyNonPersistentCache(cacheName);
 		checkFileDoesNotExistForNonPersistentCache(cacheName);
 
@@ -538,8 +532,6 @@ public class TestSharedCacheEnableBCI extends TestUtils {
 		checkOutputContains("^.*ROMCLASS: " + classToModify + " at.*$",
 				classToModify + " not found in the cache");
 
-
-		delayBeforeDestroyNonPersistent();
 		destroyNonPersistentCache(cacheName);
 		checkFileDoesNotExistForNonPersistentCache(cacheName);
 	}

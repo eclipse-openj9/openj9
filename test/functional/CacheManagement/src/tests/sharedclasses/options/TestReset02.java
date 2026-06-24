@@ -37,8 +37,6 @@ public class TestReset02 extends TestUtils {
 	runPrintAllStats("Foo",false);
 	checkOutputContains("ROMCLASS:.*SimpleApp", "Did not find expected entry for SimpleApp in the printAllStats output");
 
-
-	delayBeforeDestroyNonPersistent();
 	runResetNonPersistentCache("Foo");
 	
 	checkOutputContains("JVMSHRC159I","Expected message about the cache being opened: JVMSHRC159I");
@@ -49,8 +47,6 @@ public class TestReset02 extends TestUtils {
 	runPrintAllStats("Foo",false);
 	checkOutputDoesNotContain("ROMCLASS:.*SimpleApp", "Did not find expected entry for SimpleApp in the printAllStats output");
 
-
-	delayBeforeDestroyNonPersistent();
 	runDestroyAllCaches();
   }
 }
