@@ -530,6 +530,35 @@ public:
     virtual TR_ResolvedMethod *getResolvedMethodForConstructorWithSig(TR_Memory *trMemory,
         TR_OpaqueClassBlock *classPointer, const char *signature);
 
+    /**
+     * @brief Checks if a class has any native methods
+     *
+     * Acquires VMAccess internally.
+     *
+     * @param classPointer The class to check
+     * @return true if the class has any native methods, false otherwise
+     */
+    virtual bool classHasNativeMethods(TR_OpaqueClassBlock *classPointer);
+
+    /**
+     * @brief Checks if a class has any synchronized methods
+     *
+     * Acquires VMAccess internally.
+     *
+     * @param classPointer The class to check
+     * @return true if the class has any synchronized methods, false otherwise
+     */
+    virtual bool classHasSynchronizedMethods(TR_OpaqueClassBlock *classPointer);
+
+    static constexpr bool supportsFastJNI()
+    {
+#if defined(TR_TARGET_S390) || defined(TR_TARGET_X86) || defined(TR_TARGET_POWER) || defined(TR_TARGET_ARM64)
+        return true;
+#else
+        return false;
+#endif
+    }
+
     virtual TR_OpaqueMethodBlock *getResolvedVirtualMethod(TR_OpaqueClassBlock *classObject, int32_t cpIndex,
         bool ignoreReResolve = true);
     virtual TR_OpaqueMethodBlock *getResolvedInterfaceMethod(TR_OpaqueMethodBlock *ownerMethod,
