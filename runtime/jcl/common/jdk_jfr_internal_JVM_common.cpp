@@ -305,7 +305,8 @@ Java_jdk_jfr_internal_JVM_setMemorySize(JNIEnv *env, jobject obj, jlong size)
 void JNICALL
 Java_jdk_jfr_internal_JVM_setOutput(JNIEnv *env, jobject obj, jstring file)
 {
-	if (NULL == file) {
+	J9VMThread *currentThread = (J9VMThread*) env;
+	if (NULL != currentThread->javaVM->jfrState.jfrFileName) {
 		Java_com_ibm_oti_vm_VM_jfrDump(env, NULL);
 	}
 	Java_com_ibm_oti_vm_VM_setJFRRecordingFileName(env, NULL, file);
