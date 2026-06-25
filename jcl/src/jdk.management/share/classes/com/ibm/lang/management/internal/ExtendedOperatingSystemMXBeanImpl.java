@@ -52,7 +52,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 
 	private enum HwEmulResult { NO, UNKNOWN, YES }
 
-	private static final ExtendedOperatingSystemMXBeanImpl instance = new ExtendedOperatingSystemMXBeanImpl();
+	private static final ExtendedOperatingSystemMXBeanImpl instance = ManagementUtils.isRunningOnUnix() ? null : new ExtendedOperatingSystemMXBeanImpl();
 
 	/*
 	 * Maintain 3 distinct sampling points of timestamps and CPU times (in static fields).
@@ -113,7 +113,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	ExtendedOperatingSystemMXBeanImpl() {
 		super();
 		// only launch the notification thread if the environment could change
-		if (isDLPAREnabled() && (ExtendedOperatingSystemMXBeanImpl.class == this.getClass())) {
+		if (isDLPAREnabled()) {
 			/*[IF JAVA_SPEC_VERSION >= 24]*/
 			Thread thread = VM.getVMLangAccess().createThread(new OperatingSystemNotificationThread(this),
 					"OperatingSystemMXBean notification dispatcher", true, false, true, ClassLoader.getSystemClassLoader()); //$NON-NLS-1$
