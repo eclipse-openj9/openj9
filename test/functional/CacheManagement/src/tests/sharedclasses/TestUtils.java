@@ -869,9 +869,13 @@ public class TestUtils {
 	
 	public static void checkFileDoesNotExistForNonPersistentCache(String cachename) {
 		if (isWindows()) {
+		System.out.println("Checking for non-persistent cache file at "+getCacheFileLocationForNonPersistentCache(cachename));
+		System.out.println("Checking for non-persistent cache semaphore file at "+ cachename);
 		checkFileDoesNotExist(getCacheFileLocationForNonPersistentCache(cachename));
 		} else {
 			checkFileDoesNotExist(getCacheFileLocationForNonPersistentCache(cachename));
+		    System.out.println("Checking for non-persistent cache semaphore file at "+ cachename);
+			System.out.println("Checking for non-persistent cache semaphore file at "+getCacheFileLocationForNonPersistentCache(cachename).replace("memory","semaphore"));
 			checkFileDoesNotExist(getCacheFileLocationForNonPersistentCache(cachename).replace("memory","semaphore"));
 		}
 	}
