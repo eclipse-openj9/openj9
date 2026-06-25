@@ -1134,8 +1134,6 @@ stopJFRRecording(J9JavaVM *vm)
 			}
 		}
 		omrthread_monitor_exit(vm->jfrSamplerMutex);
-		omrthread_monitor_destroy(vm->jfrSamplerMutex);
-		vm->jfrSamplerMutex = NULL;
 	}
 	vm->jfrSamplerState = J9JFR_SAMPLER_STATE_UNINITIALIZED;
 
@@ -1207,6 +1205,8 @@ tearDownJFR(J9JavaVM *vm)
 		J9UnregisterAsyncEvent(vm, vm->jfrThreadCPULoadAsyncKey);
 		vm->jfrThreadCPULoadAsyncKey = -1;
 	}
+	omrthread_monitor_destroy(vm->jfrSamplerMutex);
+	vm->jfrSamplerMutex = NULL;
 }
 
 static I_64
