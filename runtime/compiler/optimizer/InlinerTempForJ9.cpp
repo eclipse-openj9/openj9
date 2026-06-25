@@ -4250,7 +4250,7 @@ void TR_MultipleCallTargetInliner::weighCallSite(TR_CallStack *callStack, TR_Cal
                 }
             }
             tracer()->insertCounter(ECS_Failed, callNodeTreeTop);
-            heuristicTrace(tracer(), "Not Adding Call Target %p to list of targets to be inlined");
+            heuristicTrace(tracer(), "Not Adding Call Target %p to list of targets to be inlined", calltarget);
 
             logprintf(comp()->cg()->traceBCDCodeGen(), log,
                 "q^q : failing to inline %s into %s (callNode %p on line_no=%d) due to code size\n",
