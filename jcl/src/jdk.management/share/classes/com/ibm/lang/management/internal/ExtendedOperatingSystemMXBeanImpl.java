@@ -52,7 +52,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 
 	private enum HwEmulResult { NO, UNKNOWN, YES }
 
-	private static final ExtendedOperatingSystemMXBeanImpl instance = new ExtendedOperatingSystemMXBeanImpl();
+	private static final ExtendedOperatingSystemMXBeanImpl instance = ManagementUtils.isRunningOnUnix() ? null : new ExtendedOperatingSystemMXBeanImpl();
 
 	/*
 	 * Maintain 3 distinct sampling points of timestamps and CPU times (in static fields).
