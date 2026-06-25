@@ -194,7 +194,7 @@ void
 MM_RealtimeGC::mainSetupForGC(MM_EnvironmentBase *env)
 {
 	/* Reset memory pools of associated memory spaces */
-	env->_cycleState->_activeSubSpace->reset();
+	env->_cycleState->_activeSubSpace->reset(env);
 	
 	_workPackets->reset(env);	
 	

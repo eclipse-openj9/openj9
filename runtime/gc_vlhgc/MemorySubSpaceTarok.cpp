@@ -422,13 +422,6 @@ MM_MemorySubSpaceTarok::completeFreelistRebuildRequired(MM_EnvironmentBase *env)
  */
 
 void
-MM_MemorySubSpaceTarok::reset()
-{
-	/* unused in Tarok collectors */
-	Assert_MM_unreachable();
-}
-
-void
 MM_MemorySubSpaceTarok::reset(MM_EnvironmentBase *env)
 {
 	/* unused in Tarok collectors */

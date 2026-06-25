@@ -247,7 +247,6 @@ public:
 	virtual MM_MemorySubSpace *getDefaultMemorySubSpace();
 	virtual MM_MemorySubSpace *getTenureMemorySubSpace();
 
-	virtual void reset();
 	virtual void reset(MM_EnvironmentBase *env);
 	virtual void rebuildFreeList(MM_EnvironmentBase *env);
 	
