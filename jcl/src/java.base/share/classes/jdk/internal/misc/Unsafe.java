@@ -6711,6 +6711,12 @@ public final class Unsafe {
 	/*[IF INLINE-TYPES]*/
 
 	/**
+	 * The layout value to be checked,
+	 * other values represent some kind of flat layout opaque to Java code.
+	 */
+	public static final int NON_FLAT_LAYOUT = 0;
+
+	/**
 	 * Determines the size of the header for a specified value class
 	 *
 	 * @param clz the specified value class
