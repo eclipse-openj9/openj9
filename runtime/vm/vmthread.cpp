@@ -763,6 +763,12 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 	**(UDATA **)omrthread_global("parkSleepTime") = 0;
 #endif /* defined(J9VM_ARCH_POWER) */
 
+#if defined(J9VM_ARCH_X86)
+	**(UDATA **)omrthread_global("yieldAlgorithm") = J9THREAD_LIB_YIELD_ALGORITHM_CONSTANT_USLEEP_WITH_CUTOFF;
+	**(UDATA **)omrthread_global("yieldUsleepMultiplier") = 1;
+	**(UDATA **)omrthread_global("yieldSleepCpuUtilThreshold") = 98;
+#endif
+
 	vm->cpuUtilCacheInterval = 5;
 #endif /* defined(OMR_THR_YIELD_ALG) */
 
