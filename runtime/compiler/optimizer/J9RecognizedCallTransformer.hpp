@@ -236,7 +236,7 @@ private:
      *       <length>
      *     \endcode
      */
-    void process_java_lang_StringLatin1_inflate_BICII(TR::TreeTop *treetop, TR::Node *node);
+    void process_java_lang_StringLatin1_inflate_BICII(TR::TreeTop *treetop, TR::Node *node, bool isByteToChar);
     /** \brief
      *     Transforms java/lang/StringUTF16.toBytes([CII)[B into a fast allocate and arraycopy sequence with equivalent
      *     semantics.

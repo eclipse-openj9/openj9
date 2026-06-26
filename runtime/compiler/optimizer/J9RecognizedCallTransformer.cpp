@@ -366,7 +366,8 @@ void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_compareTo_BBI
         storeTreeTop2, comp()->getFlowGraph(), false, false);
 }
 
-void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_inflate_BICII(TR::TreeTop *treetop, TR::Node *node)
+void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_inflate_BICII(TR::TreeTop *treetop, TR::Node *node,
+    bool isByteToChar)
 {
     /*
      * Prior to JDK25, it is possible for an AbstractStringBuilder race condition to trigger a call to
@@ -397,11 +398,15 @@ void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_inflate_BICII
     TR::Node *dstArrayLenNode = TR::Node::create(TR::arraylength, 1, dstObjNode->duplicateTree());
     dstArrayLenNode->setIsNonNegative(true);
 
+    if (!isByteToChar) {
+        dstArrayLenNode = TR::Node::create(TR::ishr, 2, dstArrayLenNode, TR::Node::create(TR::iconst, 0, 1));
+    }
+
     /*
      * The call node is duplicated to set up a fast path and a slow path.
-     * The fast path has the inlineStringIntrinsic flag set so that it gets transformed by inlineDirectCall.
      * The slow path has the skipRecognizedCallTransformation flag set so it doesn't get transformed and
      * RecognizedCallTransformer won't look at it again.
+     * The fast path has the inlineStringIntrinsic flag set so that it gets transformed by inlineDirectCall.
      */
     TR::TreeTop *slowPathTreeTop = TR::TreeTop::create(comp(), treetop->getNode()->duplicateTree());
     slowPathTreeTop->getNode()->getFirstChild()->setSkipRecognizedCallTransformation(true);
@@ -410,20 +415,20 @@ void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_inflate_BICII
     fastPathTreeTop->getNode()->getFirstChild()->setIsSafeForCGToInlineStringIntrinsic(true);
 
     /*
-     * Add the following two checks to confirm that src and dst arrays are big enough:
-     *   srcArray.length >= (srcOffNode+copyLenNode)
-     *   dstArray.length >= (dstOffNode+copyLenNode)
-     * If either is false, an out of bounds exception will occur so the code must branch to the slow path.
+     * Put down the following two checks to confirm that src and dst arrays are big enough:
+     *   (srcArray.length - srcOffNode) < copyLenNode
+     *   (dstArray.length - dstOffNode) < copyLenNode
+     * If either is true, an out of bounds exception will occur so the code must branch to the slow path.
      */
-    TR::Node *srcOffsetPlusLenNode
-        = TR::Node::create(TR::iadd, 2, srcOffNode->duplicateTree(), copyLenNode->duplicateTree());
-    TR::Node *dstOffsetPlusLenNode
-        = TR::Node::create(TR::iadd, 2, dstOffNode->duplicateTree(), copyLenNode->duplicateTree());
+    TR::Node *srcLenMinusOffsetNode
+        = TR::Node::create(TR::isub, 2, srcArrayLenNode, srcOffNode->duplicateTree());
+    TR::Node *dstLenMinusOffsetNode
+        = TR::Node::create(TR::isub, 2, dstArrayLenNode, dstOffNode->duplicateTree());
 
-    TR::Node *srcCmpNode = TR::Node::createif(TR::ificmplt, srcArrayLenNode, srcOffsetPlusLenNode, NULL);
+    TR::Node *srcCmpNode = TR::Node::createif(TR::ificmplt, srcLenMinusOffsetNode, copyLenNode->duplicateTree(), NULL);
     TR::TreeTop *srcCmpTree = TR::TreeTop::create(comp(), srcCmpNode);
 
-    TR::Node *dstCmpNode = TR::Node::createif(TR::ificmplt, dstArrayLenNode, dstOffsetPlusLenNode, NULL);
+    TR::Node *dstCmpNode = TR::Node::createif(TR::ificmplt, dstLenMinusOffsetNode, copyLenNode->duplicateTree(), NULL);
     TR::TreeTop *dstCmpTree = TR::TreeTop::create(comp(), dstCmpNode);
 
     TR::Block *callBlock = treetop->getEnclosingBlock();
@@ -484,6 +489,9 @@ void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_indexOf_BIBII
      * possible for an AbstractStringBuilder race condition to trigger a call to indexOf in such a way that an out of
      * bounds exception gets triggered. This transformation checks for that possibility and calls the slow path for
      * safety if there is a chance it may occur.
+     *
+     * This section of code is also used for StringUTF16_indexOf_BIBII. In this case, the value of the isLatin1
+     * parameter will be false.
      */
 
     TransformUtil::createTempsForCall(this, treetop);
@@ -506,9 +514,9 @@ void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_indexOf_BIBII
 
     /*
      * The call node is duplicated to set up a fast path and a slow path.
-     * The fast path has the inlineStringIntrinsic flag set so that it gets transformed by inlineDirectCall.
      * The slow path has the skipRecognizedCallTransformation flag set so it doesn't get transformed and
      * RecognizedCallTransformer won't look at it again.
+     * The fast path has the inlineStringIntrinsic flag set so that it gets transformed by inlineDirectCall.
      */
     TR::TreeTop *slowPathTreeTop = TR::TreeTop::create(comp(), treetop->getNode()->duplicateTree());
     slowPathTreeTop->getNode()->getFirstChild()->setSkipRecognizedCallTransformation(true);
@@ -583,6 +591,15 @@ void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_indexOf_BIBII
 
 void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_inflate_BIBII(TR::TreeTop *treetop, TR::Node *node)
 {
+#if JAVA_SPEC_VERSION < 25
+    /*
+     * Z is handled differently than other platoforms.
+     */
+    if (comp()->target().cpu.isZ()) {
+        process_java_lang_StringLatin1_inflate_BICII(treetop, node, false /* isByteToChar */);
+    }
+#endif /* JAVA_SPEC_VERSION < 25 */
+
     /*
      * Replace the call with the following tree (+ boundary checks)
      *
@@ -2192,6 +2209,15 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop *treetop)
                 return (
                     cg()->getSupportsArrayCmpLen() && !comp()->target().cpu.isPower() && !comp()->target().cpu.isZ());
             case TR::java_lang_StringLatin1_inflate_BIBII:
+#if JAVA_SPEC_VERSION < 25
+                if (!disableStringIntrinsicFlagChk &&
+                    cg()->getSupportsInlineStringLatin1Inflate() &&
+                    !node->isSafeForCGToInlineStringIntrinsic() &&
+                    !node->checkSkipRecognizedCallTransformation() &&
+                    comp()->target().cpu.isZ()) {
+                    return true;
+                }
+#endif /* JAVA_SPEC_VERSION < 25 */
                 return (cg()->getSupportsArrayTranslateTROTNoBreak() && !comp()->target().cpu.isPower());
 #if JAVA_SPEC_VERSION < 25
             case TR::java_lang_StringLatin1_inflate_BICII:
@@ -2356,13 +2382,13 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop *treetop)
                 break;
 #if JAVA_SPEC_VERSION < 25
             case TR::java_lang_StringLatin1_inflate_BICII:
-                process_java_lang_StringLatin1_inflate_BICII(treetop, node);
+                process_java_lang_StringLatin1_inflate_BICII(treetop, node, true /* isByteToChar */);
                 break;
             case TR::java_lang_StringUTF16_indexOf:
                 process_java_lang_StringUTF16_indexOf_BIBII(treetop, node);
                 break;
             case TR::java_lang_StringLatin1_indexOf:
-                process_java_lang_StringLatin1_indexOf_BIBII(treetop, node, true);
+                process_java_lang_StringLatin1_indexOf_BIBII(treetop, node, true /* isLatin1 */);
                 break;
 #endif /* JAVA_SPEC_VERSION < 25 */
             case TR::java_lang_StrictMath_sqrt:
