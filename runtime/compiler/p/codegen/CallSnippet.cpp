@@ -39,7 +39,8 @@
 #include "ras/Logger.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
-uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg)
+uint8_t *TR::PPCCallSnippet::flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argSize,
+    TR::CodeGenerator *cg)
 {
     int32_t intArgNum = 0, floatArgNum = 0, offset;
     TR::Compilation *comp = cg->comp();
@@ -48,8 +49,13 @@ uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argS
     TR::Linkage *linkage = cg->getLinkage(callNode->getSymbol()->castToMethodSymbol()->getLinkageConvention());
     const TR::PPCLinkageProperties &linkageProperties = linkage->getProperties();
     int32_t argStart = callNode->getFirstArgumentIndex();
+    bool isJitDispatchJ9Method = callNode->isJitDispatchJ9MethodCall(comp);
+    if (isJitDispatchJ9Method) {
+        argStart += 1;
+    }
 
-    if (linkageProperties.getRightToLeft())
+    bool rightToLeft = linkageProperties.getRightToLeft() && !isJitDispatchJ9Method;
+    if (rightToLeft)
         offset = linkage->getOffsetToFirstParm();
     else
         offset = argSize + linkage->getOffsetToFirstParm();
@@ -60,29 +66,29 @@ uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argS
             case TR::Int8:
             case TR::Int16:
             case TR::Int32:
-                if (!linkageProperties.getRightToLeft())
+                if (!rightToLeft)
                     offset -= TR::Compiler->om.sizeofReferenceAddress();
                 if (intArgNum < linkageProperties.getNumIntArgRegs()) {
                     buffer = storeArgumentItem(TR::InstOpCode::stw, buffer,
                         machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum)), offset, cg);
                 }
                 intArgNum++;
-                if (linkageProperties.getRightToLeft())
+                if (rightToLeft)
                     offset += TR::Compiler->om.sizeofReferenceAddress();
                 break;
             case TR::Address:
-                if (!linkageProperties.getRightToLeft())
+                if (!rightToLeft)
                     offset -= TR::Compiler->om.sizeofReferenceAddress();
                 if (intArgNum < linkageProperties.getNumIntArgRegs()) {
                     buffer = storeArgumentItem(storeGPROp, buffer,
                         machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum)), offset, cg);
                 }
                 intArgNum++;
-                if (linkageProperties.getRightToLeft())
+                if (rightToLeft)
                     offset += TR::Compiler->om.sizeofReferenceAddress();
                 break;
             case TR::Int64:
-                if (!linkageProperties.getRightToLeft())
+                if (!rightToLeft)
                     offset -= 2 * TR::Compiler->om.sizeofReferenceAddress();
                 if (intArgNum < linkageProperties.getNumIntArgRegs()) {
                     buffer = storeArgumentItem(storeGPROp, buffer,
@@ -96,29 +102,29 @@ uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argS
                     }
                 }
                 intArgNum += comp->target().is64Bit() ? 1 : 2;
-                if (linkageProperties.getRightToLeft())
+                if (rightToLeft)
                     offset += 2 * TR::Compiler->om.sizeofReferenceAddress();
                 break;
             case TR::Float:
-                if (!linkageProperties.getRightToLeft())
+                if (!rightToLeft)
                     offset -= TR::Compiler->om.sizeofReferenceAddress();
                 if (floatArgNum < linkageProperties.getNumFloatArgRegs()) {
                     buffer = storeArgumentItem(TR::InstOpCode::stfs, buffer,
                         machine->getRealRegister(linkageProperties.getFloatArgumentRegister(floatArgNum)), offset, cg);
                 }
                 floatArgNum++;
-                if (linkageProperties.getRightToLeft())
+                if (rightToLeft)
                     offset += TR::Compiler->om.sizeofReferenceAddress();
                 break;
             case TR::Double:
-                if (!linkageProperties.getRightToLeft())
+                if (!rightToLeft)
                     offset -= 2 * TR::Compiler->om.sizeofReferenceAddress();
                 if (floatArgNum < linkageProperties.getNumFloatArgRegs()) {
                     buffer = storeArgumentItem(TR::InstOpCode::stfd, buffer,
                         machine->getRealRegister(linkageProperties.getFloatArgumentRegister(floatArgNum)), offset, cg);
                 }
                 floatArgNum++;
-                if (linkageProperties.getRightToLeft())
+                if (rightToLeft)
                     offset += 2 * TR::Compiler->om.sizeofReferenceAddress();
                 break;
         }
@@ -218,7 +224,7 @@ int32_t TR::PPCCallSnippet::instructionCountForArguments(TR::Node *callNode, TR:
     int32_t intArgNum = 0, floatArgNum = 0, count = 0;
     const TR::PPCLinkageProperties &linkage
         = cg->getLinkage(callNode->getSymbol()->castToMethodSymbol()->getLinkageConvention())->getProperties();
-    int32_t argStart = callNode->getFirstArgumentIndex();
+    int32_t argStart = callNode->getFirstArgumentIndex() + (callNode->isJitDispatchJ9MethodCall(cg->comp()) ? 1 : 0);
 
     for (int i = argStart; i < callNode->getNumChildren(); i++) {
         TR::Node *child = callNode->getChild(i);
@@ -1077,7 +1083,8 @@ uint8_t *TR_Debug::printPPCArgumentsFlush(OMR::Logger *log, TR::Node *node, uint
     else
         offset = argSize + linkage->getOffsetToFirstParm();
 
-    for (int i = node->getFirstArgumentIndex(); i < node->getNumChildren(); i++) {
+    int firstArgumentIndex = node->getFirstArgumentIndex() + (node->isJitDispatchJ9MethodCall(_cg->comp()) ? 1 : 0);
+    for (int i = firstArgumentIndex; i < node->getNumChildren(); i++) {
         TR::Node *child = node->getChild(i);
         switch (child->getDataType()) {
             case TR::Int8:
@@ -1476,4 +1483,3 @@ void TR_Debug::print(OMR::Logger *log, TR::PPCInterfaceCallSnippet *snippet)
     printPrefix(log, NULL, cursor, sizeof(intptr_t));
     log->printf(".long \t" POINTER_PRINTF_FORMAT "\t\t; J2I thunk address for private", *(intptr_t *)cursor);
 }
-
