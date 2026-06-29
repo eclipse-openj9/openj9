@@ -64,7 +64,12 @@ public class TestControlDirCacheDir02 extends TestUtils {
 		  checkForSuccessfulNonPersistentCacheOpenMessage("Foo");
 		  
 		  // Delete the cache and check it has vanished when viewed via cacheDir
-		  Thread.sleep(2000); // give the cache a chance to close down
+		  try {
+			Thread.sleep(2000);
+		  } 
+		  catch (InterruptedException e) {
+			e.printStackTrace();
+		  }
 		  destroyNonPersistentCache("Foo");
 		  setControlDir(null);
 		  setCacheDir(dir);
