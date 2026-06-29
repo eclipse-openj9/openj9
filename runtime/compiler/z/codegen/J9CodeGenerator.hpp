@@ -328,6 +328,9 @@ public:
     // See J9::CodeGenerator::guaranteesResolvedDirectDispatchForSVM
     bool guaranteesResolvedDirectDispatchForSVM() { return true; }
 
+    // See OMR::CodeGenerator::supportsNonHelper
+    bool supportsNonHelper(TR::SymbolReferenceTable::CommonNonhelperSymbol symbol);
+
 private:
     /** \brief
      *     Determines whether decimal overflow or fixed point overflow checks should be generated for instructions which
