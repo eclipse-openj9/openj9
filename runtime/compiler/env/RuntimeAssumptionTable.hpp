@@ -26,9 +26,11 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "env/jittypes.h"
+#include "env/PersistentAllocator.hpp"
 
 class TR_FrontEnd;
 class TR_OpaqueClassBlock;
+class TR_PersistentMemory;
 
 namespace OMR {
 class RuntimeAssumption;
@@ -84,7 +86,48 @@ public:
 
     bool init(); // Must call this during bootstrap on a single thread because it is not MT safe
 
+    /**
+     * @brief Get the dedicated PersistentAllocator for RuntimeAssumptions
+     *
+     * Returns either a dedicated allocator (if TR_UseDedicatedRuntimeAssumptionAllocator is set)
+     * or the global persistent allocator (default).
+     *
+     * @return TR::PersistentAllocator* Pointer to the RuntimeAssumption persistent allocator
+     */
+    static TR::PersistentAllocator *getRAPersistentAllocator() { return _raPersistentAllocator; }
+
+    /**
+     * @brief Allocate persistent memory for RuntimeAssumptions
+     *
+     * This method provides a centralized allocation point for all RuntimeAssumption objects,
+     * making it easy to track and validate allocations. All allocations are tracked under
+     * the TR_Memory::Assumption category.
+     *
+     * @param size Size of memory to allocate in bytes
+     * @return void* Pointer to allocated memory
+     */
     static void *allocateRAPersistentMemory(size_t size);
+
+    /**
+     * @brief Free persistent memory allocated for RuntimeAssumptions
+     *
+     * This method provides a centralized deallocation point for all RuntimeAssumption objects,
+     * ensuring the correct allocator is used and enabling validation.
+     *
+     * @param mem Pointer to memory to free
+     */
+    static void freeRAPersistentMemory(void *mem);
+
+    /**
+     * @brief Get the number of segments allocated by the RuntimeAssumption allocator
+     *
+     * This method returns the number of memory segments that have been allocated
+     * by the dedicated RuntimeAssumption persistent allocator. Useful for memory
+     * usage statistics and debugging.
+     *
+     * @return int Number of segments allocated
+     */
+    static int getRANumSegments() { return _raPersistentAllocator ? _raPersistentAllocator->getNumSegments() : 0; }
 
     static uintptr_t hashCode(uintptr_t key)
     {
@@ -151,6 +194,21 @@ private:
     uint32_t _marked; // Counts the number of assumptions waiting to be removed
     int32_t assumptionCount[LastAssumptionKind]; // this never gets decremented
     int32_t reclaimedAssumptionCount[LastAssumptionKind];
+
+    /**
+     * @brief Static persistent allocator for RuntimeAssumptions
+     *
+     * This can point to either:
+     * - A dedicated PersistentAllocator instance (when TR_UseDedicatedRuntimeAssumptionAllocator env var is set)
+     * - The global persistent allocator from TR::Compiler->persistentMemory() (default behavior)
+     *
+     * Using a direct PersistentAllocator reference (instead of TR_PersistentMemory) avoids
+     * creating a separate PersistentInfo object, which would cause confusion since
+     * RuntimeAssumption code needs to access the global PersistentInfo for the RuntimeAssumptionTable.
+     *
+     * Initialized in init() during JVM bootstrap.
+     */
+    static TR::PersistentAllocator *_raPersistentAllocator;
 };
 
 #endif // RUNTIMEASSUMPTIONTABLE_HPP

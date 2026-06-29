@@ -90,6 +90,7 @@
 #include "ilgen/J9ByteCodeIterator.hpp"
 #include "runtime/IProfiler.hpp"
 #include "runtime/HWProfiler.hpp"
+#include "env/RuntimeAssumptionTable.hpp"
 #include "env/SystemSegmentProvider.hpp"
 #if defined(J9VM_OPT_JITSERVER)
 #include "control/JITServerHelpers.hpp"
@@ -4449,6 +4450,23 @@ void disclaimIProfilerSegments(uint64_t crtElapsedTime)
     }
 }
 
+void disclaimRuntimeAssumptionSegments(uint64_t crtElapsedTime)
+{
+    // Find the RuntimeAssumption allocator and traverse all its segments
+    TR::PersistentAllocator *raAllocator = TR_RuntimeAssumptionTable::getRAPersistentAllocator();
+    if (raAllocator) {
+        size_t rssBefore = getRSS_Kb();
+        int numSegDisclaimed = raAllocator->disclaimAllSegments();
+        size_t rssAfter = getRSS_Kb();
+        if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
+                "t=%u JIT disclaimed %d RuntimeAssumption segments out of %d. RSS before=%zu KB, RSS after=%zu KB, "
+                "delta=%zd KB = %5.2f%%",
+                (uint32_t)crtElapsedTime, numSegDisclaimed, raAllocator->getNumSegments(), rssBefore, rssAfter,
+                rssBefore - rssAfter, ((long)(rssAfter - rssBefore) * 100.0 / rssBefore));
+    }
+}
+
 void disclaimCodeCaches(uint64_t crtElapsedTime)
 {
     size_t rssBefore = getRSS_Kb();
@@ -4469,6 +4487,8 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
     static uint64_t lastClassMemoryDisclaimTime = 0;
     static int32_t lastNumAllocatedCodeCaches = 0;
     static uint64_t lastIProfilerDisclaimTime = 0;
+    static uint64_t lastRADisclaimTime = 0;
+    static uint32_t lastNumCompilationsDuringRADisclaim = 0;
     static uint64_t lastSCCDisclaimTime = 0;
     static uint64_t lastNumAllocatedClassMemorySegments = 0;
     static uint32_t lastNumCompilationsDuringIProfilerDisclaim = 0;
@@ -4587,6 +4607,24 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
         }
     }
 #endif // J9VM_INTERP_PROFILING_BYTECODES
+
+    // Disclaim RuntimeAssumption segments periodically
+    TR::PersistentAllocator *raAllocator = TR_RuntimeAssumptionTable::getRAPersistentAllocator();
+    if (raAllocator && raAllocator->isDisclaimEnabled()) {
+        if (crtElapsedTime > lastRADisclaimTime + TR::Options::_minTimeBetweenMemoryDisclaims &&
+            // Avoid disclaiming if compilations are still to be performed
+            compInfo->getMethodQueueSize() <= TR::CompilationInfo::VERY_SMALL_QUEUE) {
+            // If there were several compilations since the last disclaim, do another
+            // disclaim now. Otherwise, wait for longer to perform the disclaim (note
+            // that runtime can touch the runtime assumption table).
+            if (compInfo->getNumTotalCompilations() > lastNumCompilationsDuringRADisclaim + 5
+                || crtElapsedTime > lastRADisclaimTime + 12 * TR::Options::_minTimeBetweenMemoryDisclaims) {
+                disclaimRuntimeAssumptionSegments(crtElapsedTime);
+                lastRADisclaimTime = crtElapsedTime; // Update the time when disclaim was last performed
+                lastNumCompilationsDuringRADisclaim = compInfo->getNumTotalCompilations();
+            }
+        }
+    }
 }
 
 // this method can be used to produce regular RSS reports

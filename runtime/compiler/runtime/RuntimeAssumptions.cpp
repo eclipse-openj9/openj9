@@ -20,21 +20,21 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
-#include "runtime/RuntimeAssumptions.hpp"
-
-#include "env/FrontEnd.hpp"
+#include "control/CompilationRuntime.hpp"
+#include "control/CompilationThread.hpp"
+#include "compile/CompilationTypes.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "env/CHTable.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/PersistentCHTable.hpp"
+#include "env/FrontEnd.hpp"
 #include "env/jittypes.h"
+#include "env/PersistentCHTable.hpp"
 #include "env/VerboseLog.hpp"
-#include "infra/Monitor.hpp"
-#include "infra/CriticalSection.hpp"
-#include "control/CompilationRuntime.hpp"
-#include "control/CompilationThread.hpp"
 #include "env/VMJ9.h"
+#include "infra/CriticalSection.hpp"
+#include "infra/Monitor.hpp"
+#include "runtime/RuntimeAssumptions.hpp"
 
 namespace TR {
 class Monitor;
@@ -48,11 +48,23 @@ TR_PatchNOPedGuardSiteOnClassPreInitialize *TR_PatchNOPedGuardSiteOnClassPreInit
     TR_PersistentMemory *persistentMemory, char *sig, uint32_t sigLen, uint8_t *loc, uint8_t *dest,
     OMR::RuntimeAssumption **sentinel)
 {
-    char *persistentSig = (char *)persistentMemory->allocatePersistentMemory(sizeof(char) * sigLen);
-    memcpy(persistentSig, sig, sigLen);
-    TR_PatchNOPedGuardSiteOnClassPreInitialize *result = new (PERSISTENT_NEW)
-        TR_PatchNOPedGuardSiteOnClassPreInitialize(persistentMemory, persistentSig, sigLen, loc, dest);
-    result->addToRAT(persistentMemory, RuntimeAssumptionOnClassPreInitialize, fe, sentinel);
+    TR_PatchNOPedGuardSiteOnClassPreInitialize *result = NULL;
+    char *persistentSig = (char *)TR_RuntimeAssumptionTable::allocateRAPersistentMemory(sizeof(char) * sigLen);
+    void *mem = persistentSig
+        ? TR_RuntimeAssumptionTable::allocateRAPersistentMemory(sizeof(TR_PatchNOPedGuardSiteOnClassPreInitialize))
+        : NULL;
+    if (mem) {
+        memcpy(persistentSig, sig, sigLen);
+        result = ::new (mem)
+            TR_PatchNOPedGuardSiteOnClassPreInitialize(persistentMemory, persistentSig, sigLen, loc, dest);
+        result->addToRAT(persistentMemory, RuntimeAssumptionOnClassPreInitialize, fe, sentinel);
+    } else {
+        if (persistentSig)
+            TR_RuntimeAssumptionTable::freeRAPersistentMemory(persistentSig);
+        TR::Compilation *comp = TR::comp();
+        if (comp)
+            comp->failCompilation<TR::CompilationException>("Out of persistent memory while creating assumptions");
+    }
     return result;
 }
 
@@ -85,7 +97,7 @@ void TR_PatchNOPedGuardSiteOnClassPreInitialize::reclaim()
 {
     TR_ASSERT_FATAL(_key != 0, "Attempt to reclaim an already freed _key");
 
-    jitPersistentFree((void *)_key);
+    TR_RuntimeAssumptionTable::freeRAPersistentMemory((void *)_key);
     _key = 0;
 }
 
@@ -111,9 +123,16 @@ TR_PatchNOPedGuardSiteOnMethodBreakPoint *TR_PatchNOPedGuardSiteOnMethodBreakPoi
     TR_PersistentMemory *pm, TR_OpaqueMethodBlock *method, uint8_t *location, uint8_t *destination,
     OMR::RuntimeAssumption **sentinel)
 {
-    TR_PatchNOPedGuardSiteOnMethodBreakPoint *result
-        = new (pm) TR_PatchNOPedGuardSiteOnMethodBreakPoint(pm, method, location, destination);
-    result->addToRAT(pm, RuntimeAssumptionOnMethodBreakPoint, fe, sentinel);
+    TR_PatchNOPedGuardSiteOnMethodBreakPoint *result = NULL;
+    void *mem = TR_RuntimeAssumptionTable::allocateRAPersistentMemory(sizeof(TR_PatchNOPedGuardSiteOnMethodBreakPoint));
+    if (mem) {
+        result = ::new (mem) TR_PatchNOPedGuardSiteOnMethodBreakPoint(pm, method, location, destination);
+        result->addToRAT(pm, RuntimeAssumptionOnMethodBreakPoint, fe, sentinel);
+    } else {
+        TR::Compilation *comp = TR::comp();
+        if (comp)
+            comp->failCompilation<TR::CompilationException>("Out of persistent memory while creating assumptions");
+    }
     return result;
 }
 

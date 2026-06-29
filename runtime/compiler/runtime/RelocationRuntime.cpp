@@ -384,7 +384,12 @@ J9JITExceptionTable *TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThr
                 // assumption be created.
                 // Another alternative is to create a sentinel entry right away to avoid
                 // having to allocate one at runtime and possibly running out of memory
-                OMR::RuntimeAssumption *raList = new (PERSISTENT_NEW) TR::SentinelRuntimeAssumption();
+                void *mem
+                    = TR_RuntimeAssumptionTable::allocateRAPersistentMemory(sizeof(TR::SentinelRuntimeAssumption));
+                if (mem == NULL)
+                    return NULL; // fail
+                OMR::RuntimeAssumption *raList = ::new (mem) TR::SentinelRuntimeAssumption();
+
                 comp->setMetadataAssumptionList(
                     raList); // copy this list to the compilation object as well (same view as for a JIT compilation)
                 static_cast<TR::SentinelRuntimeAssumption *>(*comp->getMetadataAssumptionList())

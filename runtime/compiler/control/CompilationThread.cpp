@@ -3240,8 +3240,28 @@ void TR::CompilationInfo::stopCompilationThreads()
 
     static char *printPersistentMem = feGetEnv("TR_PrintPersistentMem");
     if (printPersistentMem) {
-        if (trPersistentMemory)
+        if (trPersistentMemory) {
             trPersistentMemory->printMemStats();
+
+            // Print number of segments from the global persistent allocator.
+            int32_t globalNumSegments = TR::Compiler->persistentMemory()->_persistentAllocator.get().getNumSegments();
+            fprintf(stderr, "Global persistent allocator: %d segments\n", globalNumSegments);
+        }
+
+        // Print RuntimeAssumption allocator segment count when disclaiming is enabled.
+        if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableRuntimeAssumptionDataDisclaiming)) {
+            int32_t raNumSegments = TR_RuntimeAssumptionTable::getRANumSegments();
+            fprintf(stderr, "RuntimeAssumption allocator: %d segments\n", raNumSegments);
+        }
+
+        // Print IProfiler allocator segment count when disclaiming is enabled.
+        if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableIProfilerDataDisclaiming)) {
+            TR::PersistentAllocator *iprofilerAllocator = TR_IProfiler::allocator();
+            if (iprofilerAllocator) {
+                int32_t iProfilerNumSegments = iprofilerAllocator->getNumSegments();
+                fprintf(stderr, "IProfiler allocator: %d segments\n", iProfilerNumSegments);
+            }
+        }
     }
 
     TR_DataCacheManager::getManager()->printStatistics();
