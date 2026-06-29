@@ -872,6 +872,14 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
     mismatchByteIndex->setAndIncChild(2, lengthToCompare);
     mismatchByteIndex->setSymbolReference(getSymRefTab()->findOrCreateArrayCmpLenSymbol());
 
+    // Mark arraycmplen as inlinedByCG as it is an intrinsic that should not be treated as a regular call by the
+    // inliner
+    mismatchByteIndex->getSymbolReference()->getSymbol()->castToMethodSymbol()->setIsInlinedByCG();
+
+    // Anchor the arraycmplen call node with a treetop since it has the Call property
+    TR::Node *arraycmplenAnchorNode = TR::Node::create(TR::treetop, 1, mismatchByteIndex);
+    TR::TreeTop *arraycmplenTreeTop = TR::TreeTop::create(comp(), treetop->getPrevTreeTop(), arraycmplenAnchorNode);
+
     TR::Node *invertedRemainder = TR::Node::create(node, TR::ixor, 2,
         TR::Node::create(node, TR::l2i, 1,
             TR::Node::create(node, TR::lshr, 2, TR::Node::create(node, TR::land, 2, lengthInBytes, mask),
