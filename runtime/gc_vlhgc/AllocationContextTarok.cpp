@@ -35,5 +35,5 @@ bool
 MM_AllocationContextTarok::shouldMigrateRegionToCommonContext(MM_EnvironmentBase *env, MM_HeapRegionDescriptorVLHGC *region)
 {
 	Assert_MM_true(this == region->_allocateData._owningContext);
-	return region->getLogicalAge() == MM_GCExtensions::getExtensions(env)->tarokRegionMaxAge;
+	return region->getAge() == MM_GCExtensions::getExtensions(env)->tarokRegionMaxAge;
 }

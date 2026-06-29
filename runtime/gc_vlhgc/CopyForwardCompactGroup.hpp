@@ -80,7 +80,6 @@ public:
 	UDATA _freeMemoryMeasured;	/**< The number of bytes which were wasted while this thread was working with the given _copyCache (due to alignment, etc) which is needs to save back into the pool when giving up the cache */
 	UDATA _discardedBytes; /**< The number of bytes discarded in survivor regions for this compact group by the owning thread due to incompletely filled copy caches and other inefficiencies */
 	UDATA _TLHRemainderCount; /**< number of TLHRemainders has been created for the compact group during the copyforward */
-	U_64 _allocationAge; /**< Average allocation age for this compact group */
 	
 	/* Mark map rebuilding cache values for the active MM_CopyScanCacheVLHGC associated with this group */
 	UDATA _markMapAtomicHeadSlotIndex;  /**< Slot index of head which requires atomic update into the mark map (if any) */
@@ -116,7 +115,6 @@ public:
 		_freeMemoryMeasured = 0;
 		_discardedBytes = 0;
 		_TLHRemainderCount = 0;
-		_allocationAge = 0;
 		_markMapAtomicHeadSlotIndex = 0;
 		_markMapAtomicTailSlotIndex = 0;
 		_markMapPGCSlotIndex = 0;

@@ -63,14 +63,10 @@ public:
 	UDATA _measuredLiveBytesAfterCollectInCollectedSet;	/**< The number of bytes allocated in the collection set subset in this group at the    */
 	volatile UDATA _measuredBytesCopiedFromGroupDuringCopyForward;	/**< The total number of bytes measured to be live during a copy-forward which were copied from this compact group (the destination could be this group or another) */
 	volatile UDATA _measuredBytesCopiedToGroupDuringCopyForward; /**< The total number of bytes measured to be copied to group during a copy-forward */
-	volatile U_64 _measuredAllocationAgeToGroupDuringCopyForward; /**< The total allocation age measured on objects to be copied to group during copy-forward */
-	U_64 _averageAllocationAgeToGroup;	/**< Average allocation age for group */
-	U_64 _maxAllocationAge;  /**< max allocation age (of an object or region) in this compact group) */
-	/* TODO: lpnguyen group everything into anonymous structs */
 
 	double _projectedInstantaneousSurvivalRate; /**< survivor rate between this and previous age group */
-	double _projectedInstantaneousSurvivalRatePerAgeUnit; /**< fraction of _projectedInstantaneousSurvivalRate, in case age group is a multiple of age units. this is an average of _projectedInstantaneousSurvivalRateThisPGCPerAgeUnit */
-	double _projectedInstantaneousSurvivalRateThisPGCPerAgeUnit; /**< same as _projectedInstantaneousSurvivalRatePerAgeUnit, but for this PGC (not an average over time) */
+//	double _projectedInstantaneousSurvivalRatePerAgeUnit; /**< fraction of _projectedInstantaneousSurvivalRate, in case age group is a multiple of age units. this is an average of _projectedInstantaneousSurvivalRateThisPGCPerAgeUnit */
+	double _projectedInstantaneousSurvivalRateThisPGC; /**< same as _projectedInstantaneousSurvivalRate, but for this PGC (not an average over time) */
 
 
 	UDATA _projectedLiveBytes; /** < The sum of projected live bytes of all regions in the compact group */
