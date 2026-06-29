@@ -180,7 +180,7 @@ void TR_HashTable::remove(TR_HashIndex index)
         // to put in its place.
         TR_HashIndex firstCollision;
         if ((firstCollision = _table[index].getCollisionChain()) != 0) {
-            _table[index] = _table[firstCollision];
+            memcpy(_table + index, _table + firstCollision, sizeof(TR_HashTableEntry));
             _table[firstCollision].setCollisionChain(_nextFree);
             _table[firstCollision].invalidate();
             _nextFree = firstCollision;
@@ -287,7 +287,7 @@ void TR_HashTable::growAndRehash(TR_HashTableEntry *oldTable, TR_HashIndex oldSi
             if (index > _highestIndex)
                 _highestIndex = index;
 
-            _table[index] = oldTable[i];
+            memcpy(_table + index, oldTable + i, sizeof(TR_HashTableEntry));
             _table[index].setCollisionChain(0);
         }
     }
