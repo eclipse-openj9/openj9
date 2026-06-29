@@ -27,13 +27,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 <suite id="JFR v2 Tests" timeout="3000">
 	<test id="Test JFRv2 cmdline option - no options">
 		<command>$EXE$ -XX:+EnableOpenJ9ExperimentalFlightRecording -XX:StartFlightRecording -version</command>
-		<output type="success" caseSensitive="yes" regex="no">Eclipse OpenJ9 VM</output>
-		<output type="required" caseSensitive="yes" regex="no">OpenJDK Runtime Environment</output>
+		<output type="success" caseSensitive="yes" regex="no">OpenJ9</output>
+		<output type="required" caseSensitive="yes" regex="no">OMR</output>
 	</test>
 	<!-- See https://github.com/eclipse-openj9/openj9/issues/23980
 	<test id="Test JFRv2 cmdline option - memcheck">
 		<command>$EXE$ -XX:+EnableOpenJ9ExperimentalFlightRecording -Xcheck:memory -Dibm.java9.forceCommonCleanerShutdown=true -Xint -XX:StartFlightRecording -version</command>
-		<output type="success" caseSensitive="yes" regex="no">Eclipse OpenJ9 VM</output>
+		<output type="success" caseSensitive="yes" regex="no">OpenJ9</output>
 		<output type="required" caseSensitive="yes" regex="no">OMR</output>
 		<output type="failure" caseSensitive="yes" regex="no">bytes were not freed before shutdown</output>
 	</test>
@@ -89,13 +89,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</test>
 	<test id="Test JFRv2 with JMX">
 		<command>$EXE$ -Dcom.sun.management.jmxremote -Djava.rmi.server.hostname=127.0.0.1 -Dcom.sun.management.jmxremote.local.only=false  -Dcom.sun.management.jmxremote.port=9898 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -XX:+EnableOpenJ9ExperimentalFlightRecording -XX:StartFlightRecording=filename=test1.jfr -version</command>
-		<output type="success" caseSensitive="yes" regex="no">Eclipse OpenJ9 VM</output>
+		<output type="success" caseSensitive="yes" regex="no">OpenJ9</output>
 		<output type="required" caseSensitive="yes" regex="no">OMR</output>
 	</test>
 	<!-- See https://github.com/eclipse-openj9/openj9/issues/23980
 	<test id="Test JFRv2 with JMX and memcheck">
 		<command>$EXE$ -Xcheck:memory -Dibm.java9.forceCommonCleanerShutdown=true -Xint -Dcom.sun.management.jmxremote -Djava.rmi.server.hostname=127.0.0.1 -Dcom.sun.management.jmxremote.local.only=false  -Dcom.sun.management.jmxremote.port=9898 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -XX:+EnableOpenJ9ExperimentalFlightRecording -XX:StartFlightRecording=filename=test1.jfr -version</command>
-		<output type="success" caseSensitive="yes" regex="no">Eclipse OpenJ9 VM</output>
+		<output type="success" caseSensitive="yes" regex="no">OpenJ9</output>
 		<output type="required" caseSensitive="yes" regex="no">OMR</output>
 		<output type="failure" caseSensitive="yes" regex="no">bytes were not freed before shutdown</output>
 	</test>
