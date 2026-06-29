@@ -142,7 +142,7 @@ void JNICALL
 Java_jdk_jfr_internal_JVM_flush__(JNIEnv *env, jclass clazz)
 {
 	/* TODO Need to create a primitive similar to Java_com_ibm_oti_vm_VM_jfrDump
-	 * that flushes buffers to disk, but doesnt close the chunk so more entries
+	 * that flushes buffers to disk, but doesn't close the chunk so more entries
 	 * can be appended.
 	 */
 }

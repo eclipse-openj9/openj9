@@ -379,7 +379,7 @@ Java_jdk_jfr_internal_JVM_createJFR(JNIEnv *env, jobject obj, jboolean simulateF
 		rc = JNI_FALSE;
 	}
 
-	if (!vm->internalVMFunctions->setupChunkMonitor(currentThread)) {
+	if (!vmFuncs->setupChunkMonitor(currentThread)) {
 		rc = JNI_FALSE;
 		goto done;
 	}
