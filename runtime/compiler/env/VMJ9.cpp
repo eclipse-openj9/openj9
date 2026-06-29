@@ -1487,7 +1487,7 @@ void TR_J9VMBase::printPID()
 
 #endif /* z/OS specific ASID printing */
 
-    TR_VerboseLog::write("PID=%d, %4d/%02d/%02d", j9sysinfo_get_pid(), (p->tm_year) + 1900, (p->tm_mon) + 1,
+    TR_VerboseLog::write("PID=%d, %4d/%02d/%02d\n", j9sysinfo_get_pid(), (p->tm_year) + 1900, (p->tm_mon) + 1,
         p->tm_mday);
 #endif
 }
