@@ -277,13 +277,14 @@ void *PersistentAllocator::allocateInternal(size_t requestedSize)
             j9thread_monitor_exit(_segmentMonitor);
         }
     }
-#if defined(J9VM_OPT_JITSERVER)
-    if (_isJITServer && allocation) {
-        // keep track of which allocator this block belongs to (global/per client)
+    // Keep track of which allocator this block belongs to.
+    // This failsafe mechanism helps detect allocator mismatches where a block
+    // is allocated with one allocator but freed with another.
+    // Originally implemented for JITServer, now extended to all cases for better debugging.
+    if (allocation) {
         Block *block = reinterpret_cast<Block *>(allocation) - 1;
         block->setNext(reinterpret_cast<Block *>(this));
     }
-#endif
     return allocation;
 }
 
@@ -607,21 +608,18 @@ void PersistentAllocator::freeBlock(Block *block)
 void PersistentAllocator::deallocate(void *mem, size_t) throw()
 {
     Block *block = static_cast<Block *>(mem) - 1;
-#if defined(J9VM_OPT_JITSERVER)
-    if (_isJITServer) {
-        TR_ASSERT_FATAL(block->next() == reinterpret_cast<Block *>(this),
-            "Freeing a block that was created by another allocator or is already on the free list. mem=%p block=%p "
-            "next=%p this=%p",
-            mem, block, block->next(), reinterpret_cast<Block *>(this));
-        block->setNext(NULL);
-    } else {
-        TR_ASSERT_FATAL(block->next() == NULL, "Freeing a block that is already on the free list. block=%p next=%p",
-            block, block->next());
-    }
-#else
-    TR_ASSERT_FATAL(block->next() == NULL, "Freeing a block that is already on the free list. block=%p next=%p", block,
-        block->next());
-#endif
+
+    // Verify that the block is being freed by the same allocator that allocated it.
+    // The _next field stores the allocator pointer during the block's lifetime.
+    // This failsafe mechanism detects allocator mismatches and double-frees.
+    TR_ASSERT_FATAL(block->next() == reinterpret_cast<Block *>(this),
+        "Freeing a block that was created by another allocator or is already on the free list. mem=%p block=%p "
+        "next=%p this=%p",
+        mem, block, block->next(), reinterpret_cast<Block *>(this));
+
+    // Clear the _next field before returning the block to the free list
+    block->setNext(NULL);
+
     freeBlock(block);
 }
 

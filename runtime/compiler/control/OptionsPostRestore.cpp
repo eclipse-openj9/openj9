@@ -734,6 +734,7 @@ J9:
 
     if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableDataCacheDisclaiming)
         || !TR::Options::getCmdLineOptions()->getOption(TR_DisableIProfilerDataDisclaiming)
+        || !TR::Options::getCmdLineOptions()->getOption(TR_DisableRuntimeAssumptionDataDisclaiming)
         || TR::Options::getCmdLineOptions()->getOption(TR_EnableCodeCacheDisclaiming)
         || TR::Options::getCmdLineOptions()->getOption(TR_EnableSharedCacheDisclaiming)) {
         TR::Options::disableMemoryDisclaimIfNeeded(_jitConfig);
