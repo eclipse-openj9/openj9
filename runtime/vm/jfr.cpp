@@ -983,7 +983,6 @@ initializeJFR(J9JavaVM *vm)
 	U_8 *buffer = NULL;
 	UDATA timeSuccess = 0;
 	J9VMThread *currentThread = currentVMThread(vm);
-	Trc_VM_initializeJFR(currentThread, vm);
 	J9VMThread *walkThread = NULL;
 	J9HookInterface **vmHooks = getVMHookInterface(vm);
 
