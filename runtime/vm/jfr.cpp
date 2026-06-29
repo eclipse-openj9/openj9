@@ -711,6 +711,9 @@ jfrStartSamplingThread(J9JavaVM *vm)
 {
 	/* Start the sampler thread. */
 	IDATA rc = omrthread_create(&(vm->jfrSamplerThread), vm->defaultOSStackSize, J9THREAD_PRIORITY_NORMAL, FALSE, jfrSamplingThreadProc, (void *)vm);
+
+	Assert_VM_mustNotHaveVMAccess(currentVMThread(vm));
+
 	if (0 == rc) {
 		omrthread_monitor_enter(vm->jfrSamplerMutex);
 		while (J9JFR_SAMPLER_STATE_UNINITIALIZED == vm->jfrSamplerState) {
@@ -951,9 +954,12 @@ initializeJFR(J9JavaVM *vm)
 
 	U_8 *buffer = NULL;
 	UDATA timeSuccess = 0;
+	J9VMThread *currentThread = currentVMThread(vm);
 	J9VMThread *walkThread = NULL;
+	J9HookInterface **vmHooks = getVMHookInterface(vm);
 
 	Assert_VM_false(vm->jfrState.isCreated);
+	Assert_VM_mustHaveVMAccess(currentThread);
 
 	/* Register async handler for execution samples. */
 	vm->jfrAsyncKey = J9RegisterAsyncEvent(vm, jfrExecutionSampleCallback, NULL);
@@ -1032,6 +1038,7 @@ initializeJFR(J9JavaVM *vm)
 		goto fail;
 	}
 
+	acquireExclusiveVMAccess(currentThread);
 	/* Go through existing threads. */
 	walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
 	while (NULL != walkThread) {
@@ -1050,6 +1057,12 @@ initializeJFR(J9JavaVM *vm)
 
 		walkThread = J9_LINKED_LIST_NEXT_DO(vm->mainThread, walkThread);
 	}
+
+	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_THREAD_CREATED, jfrThreadCreated, OMR_GET_CALLSITE(), NULL)) {
+		goto done;
+	}
+
+	releaseExclusiveVMAccess(currentThread);
 
 	vm->jfrState.isCreated = TRUE;
 
@@ -1071,8 +1084,10 @@ BOOLEAN
 startJFRRecording(J9JavaVM *vm)
 {
 	J9HookInterface **vmHooks = getVMHookInterface(vm);
+	J9VMThread *currentThread = currentVMThread(vm);
 	BOOLEAN rc = FALSE;
 
+	Assert_VM_mustHaveVMAccess(currentThread);
 	Assert_VM_false(vm->jfrState.isStarted);
 	Assert_VM_true(vm->jfrState.isCreated);
 
@@ -1111,7 +1126,9 @@ startJFRRecording(J9JavaVM *vm)
 		goto done;
 	}
 
+	internalReleaseVMAccess(currentThread);
 	jfrStartSamplingThread(vm);
+	internalAcquireVMAccess(currentThread);
 
 	vm->jfrState.isStarted = TRUE;
 
@@ -2248,7 +2265,8 @@ JfrPeriodicEventSet::requestCPULoad(J9VMThread *currentThread)
 void
 JfrPeriodicEventSet::requestThreadCPULoad(J9VMThread *currentThread)
 {
-	jfrThreadCPULoad(currentThread, currentThread);
+	J9JavaVM *vm = currentThread->javaVM;
+	J9SignalAsyncEvent(vm, NULL, vm->jfrThreadCPULoadAsyncKey);
 }
 
 void
