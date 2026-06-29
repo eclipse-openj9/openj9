@@ -76,8 +76,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  */
    x5 closure
 */
 
-CNAME(ffi_call_SYSV):
 	cfi_startproc
+CNAME(ffi_call_SYSV):
 	/* Sign the lr with x1 since that is where it will be stored */
 	SIGN_LR_WITH_REG(x1)
 
@@ -268,8 +268,8 @@ CNAME(ffi_closure_SYSV_V):
 #endif
 
 	.align	4
-CNAME(ffi_closure_SYSV):
 	cfi_startproc
+CNAME(ffi_closure_SYSV):
 	SIGN_LR
 	stp     x29, x30, [sp, #-ffi_closure_SYSV_FS]!
 	cfi_adjust_cfa_offset (ffi_closure_SYSV_FS)
@@ -500,8 +500,8 @@ CNAME(ffi_go_closure_SYSV_V):
 #endif
 
 	.align	4
-CNAME(ffi_go_closure_SYSV):
 	cfi_startproc
+CNAME(ffi_go_closure_SYSV):
 	stp     x29, x30, [sp, #-ffi_closure_SYSV_FS]!
 	cfi_adjust_cfa_offset (ffi_closure_SYSV_FS)
 	cfi_rel_offset (x29, 0)
