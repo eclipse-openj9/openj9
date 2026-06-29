@@ -25,8 +25,8 @@ import com.ibm.oti.vm.VM;
 
 public class VMAPITest {
 	public static void main(String[] args) throws Throwable {
-		final WorkLoad workLoad = new WorkLoad(200, 20000, 200, false);
-		int sleepDuration = 1000;
+		final WorkLoad workLoad = new WorkLoad(50, 2000, 20, false);
+		int sleepDuration = 2000;
 
 		if (args.length > 1) {
 			sleepDuration = Integer.parseInt(args[0]);
@@ -42,7 +42,7 @@ public class VMAPITest {
 		});
 		app.start();
 
-		for (int i = 0; i < 15; i++) {
+		for (int i = 0; i < 10; i++) {
 			Thread.sleep(100);
 
 			if (VM.startJFR() != 0) {

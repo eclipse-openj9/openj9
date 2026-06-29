@@ -950,7 +950,9 @@ initializeJFR(J9JavaVM *vm)
 
 	U_8 *buffer = NULL;
 	UDATA timeSuccess = 0;
+	J9VMThread *currentThread = currentVMThread(vm);
 	J9VMThread *walkThread = NULL;
+	J9HookInterface **vmHooks = getVMHookInterface(vm);
 
 	Assert_VM_false(vm->jfrState.isCreated);
 
@@ -1031,6 +1033,7 @@ initializeJFR(J9JavaVM *vm)
 		goto fail;
 	}
 
+	acquireExclusiveVMAccess(currentThread);
 	/* Go through existing threads. */
 	walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
 	while (NULL != walkThread) {
@@ -1049,6 +1052,12 @@ initializeJFR(J9JavaVM *vm)
 
 		walkThread = J9_LINKED_LIST_NEXT_DO(vm->mainThread, walkThread);
 	}
+
+	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_THREAD_CREATED, jfrThreadCreated, OMR_GET_CALLSITE(), NULL)) {
+		goto done;
+	}
+
+	releaseExclusiveVMAccess(currentThread);
 
 	vm->jfrState.isCreated = TRUE;
 
@@ -2216,7 +2225,8 @@ JfrPeriodicEventSet::requestCPULoad(J9VMThread *currentThread)
 void
 JfrPeriodicEventSet::requestThreadCPULoad(J9VMThread *currentThread)
 {
-	jfrThreadCPULoad(currentThread, currentThread);
+	J9JavaVM *vm = currentThread->javaVM;
+	J9SignalAsyncEvent(vm, NULL, vm->jfrThreadCPULoadAsyncKey);
 }
 
 void

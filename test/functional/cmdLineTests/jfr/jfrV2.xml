@@ -107,4 +107,30 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output type="failure" caseSensitive="yes" regex="no">Found additional fields in mirror class</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error</output>
 	</test>
+	<test id="test jfr summary - approx 5 seconds">
+		<command>$JFR_EXE$ summary testrecording.jfr</command>
+		<output type="required" caseSensitive="yes" regex="no">Version: 2.1</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.ExecutionSample</output>
+		<output type="success" caseSensitive="yes" regex="no">jdk.CPULoad</output>
+		<output type="success" caseSensitive="yes" regex="no">jdk.JavaThreadStatistics</output>
+		<output type="success" caseSensitive="yes" regex="no">jdk.ClassLoadingStatistics</output>
+		<output type="success" caseSensitive="yes" regex="no">jdk.ThreadCPULoad</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.Metadata</output>
+	</test>
+	<test id="test jfr execution sample - approx 5 seconds">
+		<command>$JFR_EXE$ print --xml --events "ExecutionSample" --stack-depth 1 testrecording.jfr</command>
+		<output type="required" caseSensitive="yes" regex="no">http://www.w3.org/2001/XMLSchema-instance</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.ExecutionSample</output>
+		<output type="required" caseSensitive="yes" regex="no">startTime</output>
+		<output type="required" caseSensitive="yes" regex="no">sampledThread</output>
+		<output type="required" caseSensitive="yes" regex="no">stackTrace</output>
+		<output type="required" caseSensitive="yes" regex="no">frames</output>
+		<output type="success" caseSensitive="yes" regex="no">STATE_RUNNABLE</output>
+		<output type="failure" caseSensitive="yes" regex="no">jfr print: could not read recording</output>
+	</test>
+	<test id="Test JFRv2 with profile config">
+		<command>$EXE$ -XX:+EnableOpenJ9ExperimentalFlightRecording -XX:StartFlightRecording:filename=profile.jfr,dumponexit=true,settings=profile.jfc --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.WorkLoad</command>
+		<output type="success" caseSensitive="yes" regex="no">All runs complete</output>
+		<output type="required" caseSensitive="yes" regex="no">0 / 100 complete</output>
+	</test>
 </suite>
