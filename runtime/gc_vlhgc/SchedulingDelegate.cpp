@@ -372,7 +372,15 @@ MM_SchedulingDelegate::partialGarbageCollectCompleted(MM_EnvironmentVLHGC *env, 
 	bool globalSweepHappened = _globalSweepRequired;
 	_globalSweepRequired = false;
 	/* copy out the Eden size of the previous interval (between the last PGC and this one) before we recalculate the next one */
-	uintptr_t edenCountBeforeCollect = getCurrentEdenSizeInRegions(env);
+	/* During GC, the heap may expand to allow the current collection to continue.
+	 * A heap resize triggers an eden size recalculation without allowing further
+	 * heap expansion (heap reconfiguration). As a result, the newly calculated
+	 * eden size can differ significantly from the eden size at the start of the
+	 * collection, causing the SurvivalRate calculation to become inaccurate.
+	 * Therefore, set copyForwardStats->_edenEvacuateRegionCount (instead of getCurrentEdenSizeInRegions(env)) to
+	 * edenCountBeforeCollect.
+	 */
+	uintptr_t edenCountBeforeCollect = copyForwardStats->_edenEvacuateRegionCount;
 	
 	Trc_MM_SchedulingDelegate_partialGarbageCollectCompleted_stats(env->getLanguageVMThread(),
 			copyForwardStats->_edenEvacuateRegionCount,
@@ -393,12 +401,27 @@ MM_SchedulingDelegate::partialGarbageCollectCompleted(MM_EnvironmentVLHGC *env, 
 		Assert_MM_true( (0 == copyForwardStats->_scanBytesEden) || copyForwardStats->_aborted || (0 != copyForwardStats->_nonEvacuateRegionCount));
 		Assert_MM_true( (0 == copyForwardStats->_scanBytesNonEden) || copyForwardStats->_aborted || (0 != copyForwardStats->_nonEvacuateRegionCount));
 		edenSurvivorCount += (copyForwardStats->_scanBytesEden + regionSize - 1) / regionSize;
+		Assert_GC_true_with_message(env, copyForwardStats->_edenSurvivorRegionCount <= edenCountBeforeCollect,
+				"partialGarbageCollectCompleted copyForwardStats->_edenSurvivorRegionCount=%zu, copyForwardStats->_edenEvacuateRegionCount=%zu, edenCountBeforeCollect=%zu, edenSurvivorCount=%zu, copyForwardStats->_aborted=%zu, getCurrentEdenSizeInRegions(env)=%zu\n",
+				copyForwardStats->_edenSurvivorRegionCount, copyForwardStats->_edenEvacuateRegionCount, edenCountBeforeCollect, edenSurvivorCount, copyForwardStats->_aborted, getCurrentEdenSizeInRegions(env));
+		if (edenSurvivorCount > edenCountBeforeCollect) {
+			/* when abort is in progress, every Eden object scanned in abort-recovery contributes to _scannedBytes.
+			 * But an object that was partially copied before abort (the copy succeeded,
+			 * the forwarding pointer was installed) is also counted again during the abort scan of the source region.
+			 * So _scanBytesEden might be double-counted, then cause edenSurvivorCount is bigger than edenCountBeforeCollect.
+			 * for this case, set edenSurvivorCount = edenCountBeforeCollect.
+			 */
+			Assert_MM_true(copyForwardStats->_aborted);
+			edenSurvivorCount = edenCountBeforeCollect;
+		}
 		nonEdenSurvivorCount += (copyForwardStats->_scanBytesNonEden + regionSize - 1) / regionSize;
 
 		/* Eden count could be 0 in special case, after compaction if there is still no free region for scheduling eden(eden count = 0),
 		   will skip update Survival Rate */
 		if (0 != edenCountBeforeCollect) {
+			/* SurvivalRate should never be over 1.0 */
 			double thisSurvivalRate = (double)edenSurvivorCount / (double)edenCountBeforeCollect;
+			Assert_MM_true(1.0 >= thisSurvivalRate);
 			updateSurvivalRatesAfterCopyForward(thisSurvivalRate, nonEdenSurvivorCount);
 		}
 
