@@ -96,6 +96,7 @@ private:
 	void saveHiddenInstanceFields();
 	void restoreHiddenInstanceFields();
 	J9MemorySegmentList *copyUnPersistedMemorySegmentsToNewList(J9MemorySegmentList *oldMemorySegmentList);
+	void excludeClassesForEarlyInit();
 
 protected:
 	void *operator new(size_t size, void *memoryPointer) { return memoryPointer; }

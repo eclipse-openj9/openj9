@@ -622,6 +622,19 @@ VMSnapshotImpl::removeUnpersistedClassLoaders()
 }
 
 void
+VMSnapshotImpl::excludeClassesForEarlyInit()
+{
+	J9Class *clazz = hashClassTableAt(_vm->systemClassLoader, (U_8 *)"jdk/internal/misc/Unsafe", strlen("jdk/internal/misc/Unsafe"), 0);
+	clazz->classFlags |= J9ClassNoEarlyInit;
+	clazz = hashClassTableAt(_vm->systemClassLoader, (U_8 *)"java/lang/String", strlen("java/lang/String"), 0);
+	clazz->classFlags |= J9ClassNoEarlyInit;
+	clazz = hashClassTableAt(_vm->systemClassLoader, (U_8 *)"java/io/UnixFileSystem", strlen("java/io/UnixFileSystem"), 0);
+	clazz->classFlags |= J9ClassNoEarlyInit;
+	clazz = hashClassTableAt(_vm->systemClassLoader, (U_8 *)"java/lang/System", strlen("java/lang/System"), 0);
+	clazz->classFlags |= J9ClassNoEarlyInit;
+}
+
+void
 VMSnapshotImpl::fixupClasses()
 {
 	pool_state classLoaderWalkState = {0};
@@ -633,21 +646,24 @@ VMSnapshotImpl::fixupClasses()
 		while (NULL != currentClass) {
 			J9ROMClass *romClass = currentClass->romClass;
 
+			/* Remove dynamic Proxy classes along with unsafe classes. */
+			if (J9ROMCLASS_IS_UNSAFE(romClass)) {
+				J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
+				hashClassTableDelete(classloader, J9UTF8_DATA(className), J9UTF8_LENGTH(className));
+				currentClass = allLiveClassesNextDo(&walkState);
+				continue;
+			}
 			if (J9ROMCLASS_IS_ARRAY(romClass)) {
 				fixupArrayClass((J9ArrayClass *)currentClass);
 			} else {
 				fixupClass(currentClass);
 			}
+			fixupConstantPool(currentClass);
 
 			/* Fixup the last ITable */
 			currentClass->lastITable = (J9ITable *)currentClass->iTable;
 			if (NULL == currentClass->lastITable) {
 				currentClass->lastITable = VMSnapshotImpl::getInvalidITable();
-			}
-			/* Remove dynamic Proxy classes along with unsafe classes. */
-			if (J9ROMCLASS_IS_UNSAFE(romClass)) {
-				J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
-				hashClassTableDelete(classloader, J9UTF8_DATA(className), J9UTF8_LENGTH(className));
 			}
 
 			currentClass = allLiveClassesNextDo(&walkState);
@@ -656,6 +672,7 @@ VMSnapshotImpl::fixupClasses()
 
 		classloader = (J9ClassLoader *)pool_nextDo(&classLoaderWalkState);
 	}
+	excludeClassesForEarlyInit();
 }
 
 void
@@ -663,7 +680,6 @@ VMSnapshotImpl::fixupClass(J9Class *clazz)
 {
 	clazz->classObject = NULL;
 	fixupMethodRunAddresses(clazz);
-	fixupConstantPool(clazz);
 	clazz->initializeStatus = J9ClassInitNotInitialized;
 	clazz->jniIDs = NULL;
 	clazz->replacedClass = NULL;
@@ -751,7 +767,6 @@ void
 VMSnapshotImpl::fixupArrayClass(J9ArrayClass *clazz)
 {
 	clazz->classObject = NULL;
-	fixupConstantPool((J9Class *) clazz);
 	clazz->initializeStatus = J9ClassInitSucceeded;
 	clazz->jniIDs = NULL;
 	clazz->replacedClass = NULL;
@@ -797,17 +812,115 @@ VMSnapshotImpl::fixupMethodRunAddresses(J9Class *ramClass)
 void
 VMSnapshotImpl::fixupConstantPool(J9Class *ramClass)
 {
-	J9VMThread *vmThread = currentVMThread(_vm);
 	J9ROMClass *romClass = ramClass->romClass;
-	J9ConstantPool *ramCP = ((J9ConstantPool *)ramClass->ramConstantPool);
-	J9ConstantPool *ramCPWithoutHeader = ramCP + 1;
-	UDATA ramCPCount = romClass->ramConstantPoolCount;
-	UDATA ramCPCountWithoutHeader = ramCPCount - 1;
+	UDATA methodTypeIndex = 0;
+	UDATA ramConstantPoolCount = romClass->ramConstantPoolCount;
 
-	/* Zero the ramCP and initialize constant pool */
-	if (0 != ramCPCount) {
-		memset(ramCPWithoutHeader, 0, ramCPCountWithoutHeader * sizeof(J9RAMConstantPoolItem));
-		internalRunPreInitInstructions(ramClass, vmThread);
+	if (0 != ramConstantPoolCount) {
+		J9ConstantPool *ramConstantPool = J9_CP_FROM_CLASS(ramClass);
+		J9ROMConstantPoolItem *romConstantPool = ramConstantPool->romConstantPool;
+		U_32 *cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(romClass);
+		J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
+		UDATA descriptionCount = 0;
+		U_32 description = 0;
+		UDATA i;
+		J9ROMMethodRef *romMethodRef = NULL;
+		J9ROMNameAndSignature *nas = NULL;
+		J9ROMMethodTypeRef *romMethodTypeRef = NULL;
+		J9UTF8 *signature = NULL;
+
+		BOOLEAN isAnonClass = J9_ARE_ANY_BITS_SET(romClass->extraModifiers, J9AccClassAnonClass | J9AccClassHidden);
+
+		for (i = 0; i < ramConstantPoolCount; ++i) {
+			if (descriptionCount == 0) {
+				description = *cpShapeDescription++;
+				descriptionCount = J9_CP_DESCRIPTIONS_PER_U32;
+			}
+
+			switch(description & J9_CP_DESCRIPTION_MASK) {
+			case J9CPTYPE_CLASS:
+				if (i > 0) {
+					memset(&ramConstantPool[i], 0, sizeof(J9RAMConstantPoolItem));
+				}
+				if (isAnonClass) {
+					/* anonClass RAM constant pool fix up */
+					J9ROMClassRef *classEntry = ((J9ROMClassRef *) &(romConstantPool[i]));
+					/* pointer comparison is done here because only one constant pool entry contains the className UTF8 */
+					if (SRP_GET(classEntry->name, J9UTF8 *) == className) {
+						/* fill in classRef in RAM constantPool */
+						((J9RAMClassRef *) ramConstantPool)[i].value = ramClass;
+					}
+				}
+				break;
+			case J9CPTYPE_INT:
+			case J9CPTYPE_FLOAT:
+				*((U_32 *) &(((J9RAMSingleSlotConstantRef *) ramConstantPool)[i].value)) = ((J9ROMSingleSlotConstantRef *) romConstantPool)[i].data;
+				break;
+			case J9CPTYPE_FIELD:
+				if (J9_ARE_ALL_BITS_SET(ramClass->classFlags, J9ClassNoEarlyInit)) {
+					((J9RAMFieldRef *) ramConstantPool)[i].valueOffset = -1;
+					break;
+				} else {
+					if ((IDATA) ((J9RAMFieldRef *) ramConstantPool)[i].valueOffset < -1
+						&& (0 != ((J9RAMFieldRef *) ramConstantPool)[i].flags)
+					) {
+						J9RAMStaticFieldRef *ramStaticFieldRef = (J9RAMStaticFieldRef *) &ramConstantPool[i];
+						IDATA classAndFlags = J9CLASSANDFLAGS_FROM_FLAGSANDCLASS(ramStaticFieldRef->flagsAndClass);
+						J9Class *fieldClass = (J9Class*)(classAndFlags & ~(UDATA)J9StaticFieldRefFlagBits);
+						if (fieldClass != ramClass) {
+							ramClass->classFlags |= J9ClassInitClassInWarmLoad;
+						}
+					}
+				}
+				break;
+			case J9CPTYPE_HANDLE_METHOD:
+				romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
+				nas = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
+				((J9RAMMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = (methodTypeIndex << 8) +
+						getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
+				methodTypeIndex++;
+				/* In case MethodHandle.invoke[Exact] is called via invokestatic */
+				((J9RAMMethodRef *) ramConstantPool)[i].method = _vm->initialMethods.initialStaticMethod;
+				break;
+			case J9CPTYPE_INSTANCE_METHOD:
+			case J9CPTYPE_INTERFACE_INSTANCE_METHOD:
+				romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
+				nas = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
+				((J9RAMMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = (J9VTABLE_INITIAL_VIRTUAL_OFFSET << 8) +
+						getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
+				((J9RAMMethodRef *) ramConstantPool)[i].method = _vm->initialMethods.initialSpecialMethod;
+				break;
+			case J9CPTYPE_STATIC_METHOD:
+			case J9CPTYPE_INTERFACE_STATIC_METHOD:
+				romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
+				nas = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
+				/* In case this CP entry is shared with invokevirtual */
+				((J9RAMMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = (J9VTABLE_INITIAL_VIRTUAL_OFFSET << 8) +
+						getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
+				((J9RAMStaticMethodRef *) ramConstantPool)[i].method = _vm->initialMethods.initialStaticMethod;
+				break;
+			case J9CPTYPE_INTERFACE_METHOD:
+				romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
+				nas = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
+				((J9RAMInterfaceMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = J9_ITABLE_INDEX_UNRESOLVED | getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
+				((J9RAMInterfaceMethodRef *) ramConstantPool)[i].interfaceClass = 0;
+				break;
+			case J9CPTYPE_METHOD_TYPE:
+				romMethodTypeRef = ((J9ROMMethodTypeRef *) romConstantPool) + i;
+				signature = J9ROMMETHODTYPEREF_SIGNATURE(romMethodTypeRef);
+
+				((J9RAMMethodTypeRef *) ramConstantPool)[i].type = 0;
+				((J9RAMMethodTypeRef *) ramConstantPool)[i].slotCount = getSendSlotsFromSignature(J9UTF8_DATA(signature));
+				break;
+			default:
+				if (i > 0) {
+					memset(&ramConstantPool[i], 0, sizeof(J9RAMConstantPoolItem));
+				}
+			}
+
+			description >>= J9_CP_BITS_PER_DESCRIPTION;
+			--descriptionCount;
+		}
 	}
 }
 
@@ -1190,6 +1303,8 @@ teardownVMSnapshotImpl(J9JavaVM *javaVM)
 {
 	VMSnapshotImpl *vmSnapshotImpl = (VMSnapshotImpl *)javaVM->vmSnapshotImplPortLibrary->vmSnapshotImpl;
 	Assert_VM_notNull(vmSnapshotImpl);
+	J9VMThread *vmThread = currentVMThread(javaVM);
+	Assert_VM_mustHaveVMAccess(vmThread);
 
 	if (IS_SNAPSHOT_RUN(javaVM)) {
 		vmSnapshotImpl->writeSnapshot();
