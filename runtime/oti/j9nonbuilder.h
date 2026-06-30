@@ -4325,6 +4325,11 @@ typedef struct J9JITSyncCompilationStatistics {
     uint32_t invalidationCount;
     uint64_t totalWaitTime;
     uint64_t longestWaitTime;
+	uint64_t longestWaitTimeStart;
+	uint64_t longestWaitTimeEnd;
+	char* longestWaitMethodName;
+	char* longestWaitMethodClass;
+	char* longestWaitMethodSignature;
 } J9JITSyncCompilationStatistics;
 
 /* @ddr_namespace: map_to_type=J9JITConfig */

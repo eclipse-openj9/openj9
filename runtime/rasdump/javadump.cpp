@@ -557,8 +557,8 @@ JavaCoreDumpWriter::JavaCoreDumpWriter(
 	CALL_PROTECT(writeSharedClassSection, _Error);
 #endif
 	CALL_PROTECT(writeClassSection, _Error);
-	CALL_PROTECT(writeTrailer, _Error);
 	CALL_PROTECT(writeSynchronousCompilationSection, _Error);
+	CALL_PROTECT(writeTrailer, _Error);
 
 	/* Record the status of the operation */
 	_FileMode = _FileMode || _OutputStream.isOpen();
@@ -2920,6 +2920,11 @@ JavaCoreDumpWriter::writeHookSection(void)
 void
 JavaCoreDumpWriter::writeSynchronousCompilationSection(void)
 {
+	char timeStampStart[_MaximumTimeStampLength + 1];
+	char timeStampEnd[_MaximumTimeStampLength + 1];
+	PORT_ACCESS_FROM_PORT(_PortLibrary);
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+
 	J9JITConfig *jitConfig = _VirtualMachine->jitConfig;
     if (NULL == jitConfig || NULL == jitConfig->syncCompStats) {
         return;
@@ -2927,30 +2932,70 @@ JavaCoreDumpWriter::writeSynchronousCompilationSection(void)
 
 	J9JITSyncCompilationStatistics *stats = jitConfig->syncCompStats;
 
-	_OutputStream.writeCharacters("0SECTION       Synchronous compliations info dump routine\n");
-	_OutputStream.writeCharacters("NULL           ==============================\n");
-	_OutputStream.writeCharacters("1NOTE          This data is reset after each javacore file is written\n");
-	_OutputStream.writeCharacters("NULL           ------------------------------------------------------------------------\n");
-	_OutputStream.writeCharacters("1JITSYNCSTATS  Synchronous Compilation Statistics\n");
-    _OutputStream.writeCharacters("NULL           ------------------------------------------------------------------------\n");
-	_OutputStream.writeCharacters("2JITSYNCCOUNT    Total synchronous compilations: ");
+	_OutputStream.writeCharacters("0SECTION              Synchronous compliations info dump routine\n");
+	_OutputStream.writeCharacters("NULL                  =============================\n");
+	_OutputStream.writeCharacters("1NOTE                 This data is reset after each javacore file is written\n");
+	_OutputStream.writeCharacters("NULL                  ------------------------------------------------------------------------\n");
+	_OutputStream.writeCharacters("1JITSYNCSTATS         Synchronous Compilation Statistics\n");
+    _OutputStream.writeCharacters("NULL                  ------------------------------------------------------------------------\n");
+	_OutputStream.writeCharacters("2JITSYNCCOUNT         Total synchronous compilations: ");
     _OutputStream.writeInteger(stats->totalCount, "%u");
     _OutputStream.writeCharacters("\n");
-	_OutputStream.writeCharacters("2JITINVALCOUNT   Due to invalidations: ");
+	_OutputStream.writeCharacters("2JITINVALCOUNT        Due to invalidations: ");
     _OutputStream.writeInteger(stats->invalidationCount, "%u");
     _OutputStream.writeCharacters("\n");
-	_OutputStream.writeCharacters("2JITTOTALWAIT    Total application wait time: ");
+	_OutputStream.writeCharacters("2JITTOTALWAIT         Total application wait time: ");
     _OutputStream.writeInteger(stats->totalWaitTime, "%llu");
     _OutputStream.writeCharacters("us\n");
-	_OutputStream.writeCharacters("2JITLONGEST      Longest Synchronous Compilation\n");
-	_OutputStream.writeCharacters("3JITWAITTIME       Wait time: ");
-	_OutputStream.writeInteger(stats->longestWaitTime, "%llu");
-	_OutputStream.writeCharacters("us\n");
+	if (stats->longestWaitTime != 0) {
+		_OutputStream.writeCharacters("2JITLONGEST           Longest Synchronous Compilation\n");
+		_OutputStream.writeCharacters("3JITWAITTIME          Wait time: ");
+		_OutputStream.writeInteger(stats->longestWaitTime, "%llu");
+		_OutputStream.writeCharacters("us\n");
+
+		_OutputStream.writeCharacters("3JITSTARTTIME         Wait time start: ");
+		omrstr_ftime_ex(timeStampStart, _MaximumTimeStampLength, "%Y-%m-%dT%H:%M:%S", stats->longestWaitTimeStart, OMRSTR_FTIME_FLAG_LOCAL);
+		timeStampStart[_MaximumTimeStampLength] = '\0';
+		_OutputStream.writeCharacters(timeStampStart);
+		_OutputStream.writeInteger64(stats->longestWaitTimeStart % 1000, ".%03llu");
+		_OutputStream.writeCharacters("\n");
+
+		_OutputStream.writeCharacters("3JITENDTIME           Wait time end: ");
+		omrstr_ftime_ex(timeStampEnd, _MaximumTimeStampLength, "%Y-%m-%dT%H:%M:%S", stats->longestWaitTimeEnd, OMRSTR_FTIME_FLAG_LOCAL);
+		timeStampEnd[_MaximumTimeStampLength] = '\0';
+		_OutputStream.writeCharacters(timeStampEnd);
+		_OutputStream.writeInteger64(stats->longestWaitTimeEnd % 1000, ".%03llu");
+		_OutputStream.writeCharacters("\n");
+
+		_OutputStream.writeCharacters("3JITMETHODNAME        Method Name: ");
+		_OutputStream.writeCharacters(stats->longestWaitMethodName);
+		_OutputStream.writeCharacters("\n");
+		_OutputStream.writeCharacters("3JITMETHODCLASS       Method Class: ");
+		_OutputStream.writeCharacters(stats->longestWaitMethodClass);
+		_OutputStream.writeCharacters("\n");
+		_OutputStream.writeCharacters("3JITMETHODSIGNATURE   Method Signature: ");
+		_OutputStream.writeCharacters(stats->longestWaitMethodSignature);
+		_OutputStream.writeCharacters("\n");
+	}
+
+
 
 	stats->totalCount = 0;
     stats->invalidationCount = 0;
     stats->totalWaitTime = 0;
     stats->longestWaitTime = 0;
+	if (stats->longestWaitMethodName != NULL) {
+		free(stats->longestWaitMethodName);
+		stats->longestWaitMethodName = NULL;
+	}
+	if (stats->longestWaitMethodClass != NULL) {
+		free(stats->longestWaitMethodClass);
+		stats->longestWaitMethodClass = NULL;
+	}
+	if (stats->longestWaitMethodSignature != NULL) {
+		free(stats->longestWaitMethodSignature);
+		stats->longestWaitMethodSignature = NULL;
+	}
 }
 
 #if defined(OMR_OPT_CUDA)
