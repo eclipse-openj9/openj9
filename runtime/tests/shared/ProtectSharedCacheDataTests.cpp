@@ -377,6 +377,10 @@ testProtectSharedCacheData_test2(J9JavaVM* vm)
 	UDATA expectedUnprotectedLength = 0;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
+#if defined(J9ZOS390)
+	protectRunTimeFlags |= J9SHR_RUNTIMEFLAG_MPROTECT_PARTIAL_PAGES_ON_STARTUP;
+#endif /* defined(J9ZOS390) */
+
 	/* Set the _oscache to a dummy class so how much memory is mprotected can be monitored */
 	char *osCacheMem = NULL;
 	ProtectSharedCacheDataOSCache *myfakeoscache = NULL;
@@ -662,7 +666,9 @@ testProtectSharedCacheData_test3(J9JavaVM* vm)
 	void *metadataStartPtr = NULL;
 	void *currentSegmentPtr = NULL;
 	void *currentMetadataPtr = NULL;
-	UDATA expectedProtectedLength = 0;
+	UDATA expectedProtectedLengthStartup = 0;
+	UDATA expectedProtectedLengthNonStartup = 0;
+	UDATA phase = 0;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	/* Set the _oscache to a dummy class so how much memory is mprotected can be monitored */
@@ -724,22 +730,46 @@ testProtectSharedCacheData_test3(J9JavaVM* vm)
 	cc->_oldUpdateCount = oldUpdateCount;
 	cc->setRomClassProtectEnd(oldProtectEnd);
 	cc->_scan = (ShcItemHdr *)((UDATA)metadataStartPtr - sizeof(ShcItemHdr));
+	/**
+	 * When reading updates with mprotect=onfind, partially filled pages are mprotected only when
+	 * not in startup phase.
+	 */
+	expectedProtectedLengthStartup = (ROUND_DOWN_TO(pageSizeToUse, (UDATA)currentSegmentPtr) - ROUND_DOWN_TO(pageSizeToUse, (UDATA)segmentStartPtr))
+										+ (ROUND_UP_TO(pageSizeToUse, (UDATA)metadataStartPtr) - ROUND_UP_TO(pageSizeToUse, (UDATA)currentMetadataPtr));
+	expectedProtectedLengthNonStartup = (ROUND_UP_TO(pageSizeToUse, (UDATA)currentSegmentPtr) - ROUND_DOWN_TO(pageSizeToUse, (UDATA)segmentStartPtr))
+										+ (ROUND_UP_TO(pageSizeToUse, (UDATA)metadataStartPtr) - ROUND_DOWN_TO(pageSizeToUse, (UDATA)currentMetadataPtr));
 
 	/* ::runEntryPointChecks() is responsible for mprotecting new ROMClasses and metadata added by other JVMs. */
+	phase = vm->phase;
 	cacheMap->runEntryPointChecks(vm->mainThread, NULL, NULL);
 
-	/* When reading updates, if J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ON_FIND is hen partially filled pages are not mprotected. */
-	expectedProtectedLength = (ROUND_UP_TO(pageSizeToUse, (UDATA)currentSegmentPtr) - ROUND_DOWN_TO(pageSizeToUse, (UDATA)segmentStartPtr))
-								+ (ROUND_UP_TO(pageSizeToUse, (UDATA)metadataStartPtr) - ROUND_DOWN_TO(pageSizeToUse, (UDATA)currentMetadataPtr));
-	if (myfakeoscache->protectedLength != expectedProtectedLength) {
-		ERRPRINTF2("After calling runEntryPointChecks() the incorrect size was protected. Expected %zu, but %zu was protected",
-				expectedProtectedLength, myfakeoscache->protectedLength);
-		rc = FAIL;
-		goto done;
+	if (phase == vm->phase) {
+		if (J9VM_PHASE_NOT_STARTUP == phase) {
+			if (myfakeoscache->protectedLength != expectedProtectedLengthNonStartup) {
+				ERRPRINTF2("After calling runEntryPointChecks() the incorrect size was protected. Expected %zu, but %zu was protected",
+						expectedProtectedLengthNonStartup, myfakeoscache->protectedLength);
+				rc = FAIL;
+				goto done;
+			}
+		} else {
+			if (myfakeoscache->protectedLength != expectedProtectedLengthStartup) {
+				ERRPRINTF2("After calling runEntryPointChecks() the incorrect size was protected. Expected %zu, but %zu was protected",
+						expectedProtectedLengthStartup, myfakeoscache->protectedLength);
+				rc = FAIL;
+				goto done;
+			}
+		}
+	} else {
+		/* There is a phase change detected during runEntryPointChecks() */
+		if (myfakeoscache->protectedLength > expectedProtectedLengthNonStartup || myfakeoscache->protectedLength < expectedProtectedLengthStartup) {
+			ERRPRINTF3("After calling runEntryPointChecks() the incorrect size was protected. %zu was protected. It is expected to be between %zu and %zu",
+						myfakeoscache->protectedLength, expectedProtectedLengthStartup, expectedProtectedLengthNonStartup);
+			rc = FAIL;
+			goto done;
+		}
+
 	}
-
 	INFOPRINTF("Correctly protected shared cache data after discovering cache update\n");
-
 	INFOPRINTF("Done\n");
 done:
 	cachehelper.closeTestCache(true);
