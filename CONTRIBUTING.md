@@ -213,10 +213,11 @@ in each file where GenAI content is present. Contributors must ensure that a
 statement like the following exists in the copyright header at the beginning
 of the file that acknowledges their AI assistant. There may be multiple such
 statements (one for each AI assistant used); these statements should immediately
-follow the SPDX-License-Identifier.
+follow the SPDX-License-Identifier. Match the comment format of the existing
+SPDX-License-Identifier, which may not be the same as the following example.
 
 ```
-// Assisted-by: <YOUR AI ASSISTANT>
+ * Assisted-by: <YOUR AI ASSISTANT>
 ```
 
 In addition, individual commits that include GenAI authored content must
