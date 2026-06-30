@@ -249,7 +249,7 @@ public class JFR {
 					}
 					VM.startJFR();
 					if (duration > 0) {
-						Timer timer = new Timer();
+						Timer timer = new Timer(true);
 						TimerTask jfrDumpTask = new TimerTask() {
 							public void run() {
 								if (VM.isJFRRecordingStarted()) {
