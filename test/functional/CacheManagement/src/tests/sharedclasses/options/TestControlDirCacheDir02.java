@@ -63,6 +63,11 @@ public class TestControlDirCacheDir02 extends TestUtils {
 		  runSimpleJavaProgramWithNonPersistentCache("Foo");
 		  checkForSuccessfulNonPersistentCacheOpenMessage("Foo");
 		  
+		  try {
+			Thread.sleep(200);
+		  } catch (InterruptedException e) {
+			e.printStackTrace();
+		  }
 		  // Delete the cache and check it has vanished when viewed via cacheDir
 		  destroyNonPersistentCache("Foo");
 		  setControlDir(null);
