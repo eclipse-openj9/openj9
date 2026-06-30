@@ -313,7 +313,7 @@ public class ObjectSizeInfo extends Command
 			
 			long accum = 0;
 			if (!superclass.isNull()) {
-				accum = superclass.totalInstanceSize().intValue();
+				accum = superclass.totalInstanceSize().longValue();
 				if (superclass.backfillOffset().gt(0)) {
 					accum -= ObjectFieldInfo.BACKFILL_SIZE;
 				}

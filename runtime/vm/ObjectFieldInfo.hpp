@@ -36,12 +36,12 @@
 
 class ObjectFieldInfo {
 private:
-	U_32 _objectHeaderSize;
-	U_32 _referenceSize;
-	U_32 _cacheLineSize;
+	UDATA _objectHeaderSize;
+	UDATA _referenceSize;
+	UDATA _cacheLineSize;
 	bool _useContendedClassLayout; /* check this in constructor. Forced to false if we can't get the line size */
 	J9ROMClass *_romClass;
-	U_32 _superclassFieldsSize;
+	UDATA _superclassFieldsSize;
 	bool _objectCanUseBackfill; /* true if an object reference is the same size as a backfill slot */
 
 	/* These count uncontended instance and hidden fields */
@@ -72,17 +72,17 @@ private:
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	bool _isValue;
 	J9FlattenedClassCache *_flattenedClassCache;
-	U_32 _totalFlatFieldDoubleBytes;
-	U_32 _totalFlatFieldRefBytes;
-	U_32 _totalFlatFieldSingleBytes;
+	UDATA _totalFlatFieldDoubleBytes;
+	UDATA _totalFlatFieldRefBytes;
+	UDATA _totalFlatFieldSingleBytes;
 #if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
-	U_32 _totalFlatFieldShortBytes;
-	U_32 _totalFlatFieldByteBytes;
+	UDATA _totalFlatFieldShortBytes;
+	UDATA _totalFlatFieldByteBytes;
 #endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
-	U_32 _flatAlignedObjectInstanceBackfill;
-	U_32 _flatAlignedSingleInstanceBackfill;
-	U_32 _flatUnAlignedObjectInstanceBackfill;
-	U_32 _flatUnAlignedSingleInstanceBackfill;
+	UDATA _flatAlignedObjectInstanceBackfill;
+	UDATA _flatAlignedSingleInstanceBackfill;
+	UDATA _flatUnAlignedObjectInstanceBackfill;
+	UDATA _flatUnAlignedSingleInstanceBackfill;
 	bool _classRequiresPrePadding;
 	bool _isBackFillPostPadded;
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
@@ -97,15 +97,15 @@ private:
 	 * Calculate a position guaranteed to be on a different cache line from the header, superclass fields, and hidden fields.
 	 * @return offset from the start of the header
 	 */
-	VMINLINE U_32
+	VMINLINE UDATA
 	getPaddedTrueNonContendedSize(void) const
 	{
-		U_32 accumulator = _superclassFieldsSize +  _objectHeaderSize; /* get the true size with header */
+		UDATA accumulator = _superclassFieldsSize +  _objectHeaderSize; /* get the true size with header */
 		accumulator += (_totalObjectCount * _objectHeaderSize) + (_totalSingleCount * sizeof(U_32)) + (_totalDoubleCount * sizeof(U_64)); /* add the non-contended and hidden fields */
 #if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
-		U_32 smallTypeSize = (_totalShortCount * sizeof(U_16)) + (_totalByteCount * sizeof(U_8));
+		UDATA smallTypeSize = (_totalShortCount * sizeof(U_16)) + (_totalByteCount * sizeof(U_8));
 		/* 16 and 8-bit fields must be aligned to 32 bits. */
-		U_32 smallTypeSizeRounded = ROUND_UP_TO_POWEROF2((UDATA)smallTypeSize, sizeof(U_32));
+		UDATA smallTypeSizeRounded = ROUND_UP_TO_POWEROF2((UDATA)smallTypeSize, sizeof(U_32));
 		accumulator += smallTypeSizeRounded;
 #endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 		accumulator = ROUND_DOWN_TO_POWEROF2(accumulator, OBJECT_SIZE_INCREMENT_IN_BYTES) + _cacheLineSize; /* get the worst-case cache line boundary and add a cache size */
@@ -130,7 +130,7 @@ public:
 		_cacheLineSize(0),
 		_useContendedClassLayout(false),
 		_romClass(romClass),
-		_superclassFieldsSize((U_32) -1),
+		_superclassFieldsSize((UDATA) -1),
 		_objectCanUseBackfill(J9JAVAVM_REFERENCE_SIZE(vm) == BACKFILL_SIZE),
 		_instanceObjectCount(0),
 		_instanceSingleCount(0),
@@ -179,7 +179,7 @@ public:
 		if (J9ROMCLASS_IS_CONTENDED(romClass)) {
 			UDATA dCacheLineSize = vm->dCacheLineSize;
 			if (dCacheLineSize > 0) {
-				_cacheLineSize = (U_32) dCacheLineSize;
+				_cacheLineSize = dCacheLineSize;
 				_useContendedClassLayout = true;
 			}
 		}
@@ -413,10 +413,10 @@ public:
 	 *
 	 * @return size of backfill
 	 */
-	VMINLINE U_32
+	VMINLINE UDATA
 	getBackfillSize()
 	{
-		U_32 backFillSize = BACKFILL_SIZE;
+		UDATA backFillSize = BACKFILL_SIZE;
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		if ((0 != getInstanceSingleCount()) || (_objectCanUseBackfill && (0 != getInstanceObjectCount()))) {
 			/* BACKFILL_SIZE */
@@ -445,20 +445,20 @@ public:
 		return _myBackfillOffset + _objectHeaderSize;
 	}
 
-	VMINLINE U_32
+	VMINLINE UDATA
 	getSuperclassFieldsSize(void) const
 	{
 		return _superclassFieldsSize;
 	}
 
-	VMINLINE U_32
+	VMINLINE UDATA
 	getSuperclassObjectSize(void) const
 	{
 		return _superclassFieldsSize + _objectHeaderSize;
 	}
 
 	VMINLINE void
-	setSuperclassFieldsSize(U_32 superTotalSize)
+	setSuperclassFieldsSize(UDATA superTotalSize)
 	{
 		this->_superclassFieldsSize = superTotalSize;
 	}
@@ -480,7 +480,7 @@ public:
 	 * Update the backfill values to use for this class's fields and those of subclasses
 	 * @return size of the object in bytes, not including the header
 	 */
-	U_32
+	UDATA
 	calculateTotalFieldsSizeAndBackfill(void);
 
 #if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) && defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
@@ -495,7 +495,7 @@ public:
 	 *
 	 * @return the flat field size for value classes
 	 */
-	U_32
+	UDATA
 	calculateFlatFieldSize(void);
 #endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) && defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
@@ -505,10 +505,10 @@ public:
 	 * Since the superclass is not end-aligned it must have no embedded backfill.
 	 * @return offset to the first (non-backfilled) field.
 	 */
-	VMINLINE U_32
+	VMINLINE UDATA
 	calculateFieldDataStart(void)
 	{
-		U_32 fieldDataStart = 0;
+		UDATA fieldDataStart = 0;
 		if (!isContendedClassLayout()) {
 			bool doubleAlignment = (_totalDoubleCount > 0);
 			bool hasObjects = _totalObjectCount > 0;
@@ -681,7 +681,7 @@ public:
 	 *
 	 * @return size of flat single slot end-aligned backfill
 	 */
-	VMINLINE U_32
+	VMINLINE UDATA
 	getFlatAlignedSingleInstanceBackfillSize() const
 	{
 		return _flatAlignedSingleInstanceBackfill;
@@ -693,7 +693,7 @@ public:
 	 *
 	 * @return size of flat single slot non end-aligned backfill
 	 */
-	VMINLINE U_32
+	VMINLINE UDATA
 	getFlatUnAlignedSingleInstanceBackfillSize() const
 	{
 		return _flatUnAlignedSingleInstanceBackfill;
@@ -705,7 +705,7 @@ public:
 	 *
 	 * @return size of flat object slot end-aligned backfill
 	 */
-	VMINLINE U_32
+	VMINLINE UDATA
 	getFlatAlignedObjectInstanceBackfillSize() const
 	{
 		return _flatAlignedObjectInstanceBackfill;
@@ -717,7 +717,7 @@ public:
 	 *
 	 * @return size of flat object slot end-aligned backfill
 	 */
-	VMINLINE U_32
+	VMINLINE UDATA
 	getFlatUnAlignedObjectInstanceBackfillSize() const
 	{
 		return _flatUnAlignedObjectInstanceBackfill;
@@ -730,7 +730,7 @@ public:
 	 * @param size of flat single slot end-aligned backfill
 	 */
 	VMINLINE void
-	setFlatAlignedSingleInstanceBackfill(U_32 size)
+	setFlatAlignedSingleInstanceBackfill(UDATA size)
 	{
 		_flatAlignedSingleInstanceBackfill = size;
 	}
@@ -742,7 +742,7 @@ public:
 	 * @param size of flat single slot non end-aligned backfill
 	 */
 	VMINLINE void
-	setFlatUnAlignedSingleInstanceBackfill(U_32 size)
+	setFlatUnAlignedSingleInstanceBackfill(UDATA size)
 	{
 		_flatUnAlignedSingleInstanceBackfill = size;
 	}
@@ -754,7 +754,7 @@ public:
 	 * @param size of flat object slot end-aligned backfill
 	 */
 	VMINLINE void
-	setFlatAlignedObjectInstanceBackfill(U_32 size)
+	setFlatAlignedObjectInstanceBackfill(UDATA size)
 	{
 		_flatAlignedObjectInstanceBackfill = size;
 	}
@@ -766,7 +766,7 @@ public:
 	 * @param size of flat object slot non end-aligned backfill
 	 */
 	VMINLINE void
-	setFlatUnAlignedObjectInstanceBackfill(U_32 size)
+	setFlatUnAlignedObjectInstanceBackfill(UDATA size)
 	{
 		_flatUnAlignedObjectInstanceBackfill = size;
 	}
@@ -783,7 +783,7 @@ public:
 	 * @param size of flat object slot end-aligned backfill
 	 */
 	VMINLINE void
-	setPotentialFlatObjectInstanceBackfill(U_32 size)
+	setPotentialFlatObjectInstanceBackfill(UDATA size)
 	{
 		if (_isValue) {
 			if (isBackfillTypeEndAligned(size)) {
@@ -810,7 +810,7 @@ public:
 	 * @param size of flat single slot end-aligned backfill
 	 */
 	VMINLINE void
-	setPotentialFlatSingleInstanceBackfill(U_32 size)
+	setPotentialFlatSingleInstanceBackfill(UDATA size)
 	{
 		if (_isValue) {
 			if (isBackfillTypeEndAligned(size)) {
@@ -830,17 +830,18 @@ public:
 	 *
 	 * @return size of flat object instance bytes
 	 */
-	VMINLINE U_32
+	VMINLINE UDATA
 	getNonBackfilledFlatInstanceObjectSize(void) const
 	{
-		U_32 nonBackfilledFlatObjectsSize = _totalFlatFieldRefBytes;
+		UDATA nonBackfilledFlatObjectsSize = _totalFlatFieldRefBytes;
 		if (isBackfillSuitableInstanceObjectAvailable()
 			&& isMyBackfillSlotAvailable()
 			&& (0 == getInstanceSingleCount())
-			&& (_objectCanUseBackfill && (0 == getInstanceObjectCount()))
+			&& _objectCanUseBackfill
+			&& (0 == getInstanceObjectCount())
 			&& (0 == getFlatAlignedSingleInstanceBackfillSize())
 		) {
-			U_32 backfillSize = getFlatAlignedObjectInstanceBackfillSize();
+			UDATA backfillSize = getFlatAlignedObjectInstanceBackfillSize();
 			if (0 == backfillSize) {
 				if (0 == getFlatUnAlignedSingleInstanceBackfillSize()) {
 					backfillSize = getFlatUnAlignedObjectInstanceBackfillSize();
@@ -856,16 +857,17 @@ public:
 	 *
 	 * @return size of flat single instance bytes
 	 */
-	VMINLINE U_32
+	VMINLINE UDATA
 	getNonBackfilledFlatInstanceSingleSize(void) const
 	{
-		U_32 nonBackfilledFlatSinglesSize = _totalFlatFieldSingleBytes;
+		UDATA nonBackfilledFlatSinglesSize = _totalFlatFieldSingleBytes;
 		if (isBackfillSuitableFlatInstanceSingleAvailable()
 			&& isMyBackfillSlotAvailable()
 			&& (0 == getInstanceSingleCount())
-			&& (_objectCanUseBackfill && (0 == getInstanceObjectCount()))
+			&& _objectCanUseBackfill
+			&& (0 == getInstanceObjectCount())
 		) {
-			U_32 backfillSize = getFlatAlignedSingleInstanceBackfillSize();
+			UDATA backfillSize = getFlatAlignedSingleInstanceBackfillSize();
 			if (0 == backfillSize) {
 				if (0 == getFlatAlignedObjectInstanceBackfillSize()) {
 					backfillSize = getFlatUnAlignedSingleInstanceBackfillSize();
