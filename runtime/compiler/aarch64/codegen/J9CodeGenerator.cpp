@@ -274,3 +274,12 @@ bool J9::ARM64::CodeGenerator::callUsesHelperImplementation(TR::Symbol *sym)
             && sym->castToMethodSymbol()->getMandatoryRecognizedMethod()
                 == TR::java_lang_invoke_ComputedCalls_dispatchJ9Method);
 }
+
+bool J9::ARM64::CodeGenerator::supportsNonHelper(TR::SymbolReferenceTable::CommonNonhelperSymbol symbol)
+{
+    if (symbol == TR::SymbolReferenceTable::jitDispatchJ9MethodSymbol) {
+        return true;
+    }
+
+    return J9::CodeGenerator::supportsNonHelper(symbol);
+}
