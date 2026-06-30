@@ -64,7 +64,7 @@ public class TestControlDirCacheDir02 extends TestUtils {
 		  checkForSuccessfulNonPersistentCacheOpenMessage("Foo");
 		  
 		  try {
-			Thread.sleep(100);
+			Thread.sleep(200);
 		  } catch (InterruptedException e) {
 			e.printStackTrace();
 		  }
