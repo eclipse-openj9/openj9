@@ -269,6 +269,21 @@ public class ValueTypeHelper {
 		}
 
 		@Override
+		public boolean isJ9ClassLargestAlignmentConstraintInteger(J9ClassPointer clazz) throws CorruptDataException {
+			return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9JavaClassFlags.J9ClassLargestAlignmentConstraintInteger);
+		}
+
+		@Override
+		public boolean isJ9ClassLargestAlignmentConstraintShort(J9ClassPointer clazz) throws CorruptDataException {
+			return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9JavaClassFlags.J9ClassLargestAlignmentConstraintShort);
+		}
+
+		@Override
+		public long getFlatFieldSize(J9ClassPointer clazz) throws CorruptDataException, NoSuchFieldException {
+			return clazz.flatFieldSize().longValue();
+		}
+
+		@Override
 		public boolean isJ9ClassIsFlattened(J9ClassPointer clazz) throws CorruptDataException {
 			return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9JavaClassFlags.J9ClassIsFlattened);
 		}
@@ -424,7 +439,7 @@ public class ValueTypeHelper {
 	}
 
 	/**
-	 * Queries if class contains a field with a double (64 bit) alignment constraint
+	 * Queries if clazz contains a field with a double (64-bit) alignment constraint.
 	 * @param clazz J9Class
 	 * @return true if clazz has double alignment constraint, false otherwise
 	 */
@@ -433,12 +448,39 @@ public class ValueTypeHelper {
 	}
 
 	/**
-	 * Queries if class contains a field with a reference alignment constraint
+	 * Queries if clazz contains a field with a reference alignment constraint.
 	 * @param clazz J9Class
 	 * @return true if clazz has reference alignment constraint, false otherwise
 	 */
 	public boolean isJ9ClassLargestAlignmentConstraintReference(J9ClassPointer clazz) throws CorruptDataException {
 		return false;
+	}
+
+	/**
+	 * Queries if clazz contains a field with an int (32-bit) alignment constraint.
+	 * @param clazz J9Class
+	 * @return true if clazz has int alignment constraint, false otherwise
+	 */
+	public boolean isJ9ClassLargestAlignmentConstraintInteger(J9ClassPointer clazz) throws CorruptDataException {
+		return false;
+	}
+
+	/**
+	 * Queries if clazz contains a field with a short (16-bit) alignment constraint.
+	 * @param clazz J9Class
+	 * @return true if clazz has short alignment constraint, false otherwise
+	 */
+	public boolean isJ9ClassLargestAlignmentConstraintShort(J9ClassPointer clazz) throws CorruptDataException {
+		return false;
+	}
+
+	/**
+	 * Gets the flat field size for a value type class
+	 * @param clazz J9Class
+	 * @return flat field size in bytes
+	 */
+	public long getFlatFieldSize(J9ClassPointer clazz) throws CorruptDataException, NoSuchFieldException {
+		return 0;
 	}
 
 	/**

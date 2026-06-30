@@ -29,6 +29,11 @@ import static com.ibm.j9ddr.vm29.j9.ObjectFieldInfo.fj9object_t_SizeOf;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldFlagIsNullRestricted;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldFlagObject;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldSizeDouble;
+import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldTypeBoolean;
+import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldTypeByte;
+import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldTypeChar;
+import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldTypeMask;
+import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldTypeShort;
 import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.J9AccStatic;
 import static com.ibm.j9ddr.vm29.structure.J9ROMFieldOffsetWalkState.J9VM_FIELD_OFFSET_WALK_BACKFILL_OBJECT_FIELD;
 import static com.ibm.j9ddr.vm29.structure.J9ROMFieldOffsetWalkState.J9VM_FIELD_OFFSET_WALK_BACKFILL_SINGLE_FIELD;
@@ -62,6 +67,8 @@ import com.ibm.j9ddr.vm29.pointer.helper.ValueTypeHelper;
 import com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags;
 import com.ibm.j9ddr.vm29.types.IDATA;
 import com.ibm.j9ddr.vm29.types.Scalar;
+import com.ibm.j9ddr.vm29.types.U8;
+import com.ibm.j9ddr.vm29.types.U16;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.U64;
 import com.ibm.j9ddr.vm29.types.UDATA;
@@ -81,24 +88,32 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 	private Iterator romFieldsShapeIterator;
 	private J9ClassPointer instanceClass;
 
-	private U32 doubleSeen = new U32(0);
-	private U32 doubleStaticsSeen = new U32(0);
 	private UDATA firstDoubleOffset = new UDATA(0);
 	private UDATA firstSingleOffset = new UDATA(0);
 	private UDATA firstObjectOffset = new UDATA(0);
+	private UDATA firstShortOffset = new UDATA(0);
+	private UDATA firstByteOffset = new UDATA(0);
 
 	private UDATA firstFlatDoubleOffset = new UDATA(0);
 	private UDATA firstFlatObjectOffset = new UDATA(0);
 	private UDATA firstFlatSingleOffset = new UDATA(0);
+	private UDATA firstFlatShortOffset = new UDATA(0);
+	private UDATA firstFlatByteOffset = new UDATA(0);
 	private UDATA currentFlatDoubleOffset = new UDATA(0);
 	private UDATA currentFlatObjectOffset = new UDATA(0);
 	private UDATA currentFlatSingleOffset = new UDATA(0);
+	private UDATA currentFlatShortOffset = new UDATA(0);
+	private UDATA currentFlatByteOffset = new UDATA(0);
 	private UDATA flatBackFillSize = new UDATA(0);
 
+	private U32 doubleSeen = new U32(0);
+	private U32 doubleStaticsSeen = new U32(0);
 	private U32 objectsSeen = new U32(0);
 	private U32 objectStaticsSeen = new U32(0);
 	private U32 singlesSeen = new U32(0);
 	private U32 singleStaticsSeen = new U32(0);
+	private U32 shortsSeen = new U32(0);
+	private U32 bytesSeen = new U32(0);
 	private U32 walkFlags = new U32(0);
 
 	private J9ROMFieldShapePointer field;
@@ -129,12 +144,12 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		// Can't call init or set romClass in the constructor because they can throw a CorruptDataException
 	}
 
-	private void init() throws CorruptDataException {
+	private void init() throws CorruptDataException, NoSuchFieldException {
 		calculateInstanceSize(romClass, superClazz); //initInstanceSize(romClass, superClazz);
 		romFieldsShapeIterator = new J9ROMFieldShapeIterator(romClass.romFields(), romClass.romFieldCount());
 	}
 
-	private void nextField() throws CorruptDataException {
+	private void nextField() throws CorruptDataException, NoSuchFieldException {
 		boolean walkHiddenFields = false;
 		isHidden = false;
 		field = null;
@@ -178,8 +193,8 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		}
 	}
 
-	// Based on fieldOffsetsFindNext from resolvefield.cpp
-	private void fieldOffsetsFindNext() throws CorruptDataException {
+	// Based on fieldOffsetsFindNext from resolvefield.cpp.
+	private void fieldOffsetsFindNext() throws CorruptDataException, NoSuchFieldException {
 		/* start walking the fields to find the first one to return */
 		/* loop in case we have been told to only consider instance or static fields - we may have to skip past a few of the wrong kind */
 
@@ -228,9 +243,13 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 								UDATA size = null;
 								boolean forceDoubleAlignment;
 								if (fj9object_t_SizeOf == U32.SIZEOF) {
-									UDATA instanceSize = fieldClass.totalInstanceSize();
+									UDATA instanceSize = J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+										? fieldClass.flatFieldSize()
+										: fieldClass.totalInstanceSize();
 									UDATA doubleSize = new UDATA(U64.SIZEOF);
-									if (valueTypeHelper.classRequires4BytePrePadding(fieldClass)) {
+									if (!J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+										&& valueTypeHelper.classRequires4BytePrePadding(fieldClass)
+									) {
 										instanceSize = instanceSize.sub(U32.SIZEOF);
 									}
 									forceDoubleAlignment = (modifiers.allBitsIn(J9JavaAccessFlags.J9AccVolatile) && instanceSize.eq(doubleSize));
@@ -240,14 +259,20 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 								if (forceDoubleAlignment
 									|| valueTypeHelper.isJ9ClassLargestAlignmentConstraintDouble(fieldClass)
 								) {
-									size = fieldClass.totalInstanceSize();
-									if (valueTypeHelper.classRequires4BytePrePadding(fieldClass)) {
+									size = J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+										? fieldClass.flatFieldSize()
+										: fieldClass.totalInstanceSize();
+									if (!J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+										&& valueTypeHelper.classRequires4BytePrePadding(fieldClass)) {
 										size = size.sub(U32.SIZEOF);
 									}
 									offset = firstFlatDoubleOffset.add(currentFlatDoubleOffset);
 									currentFlatDoubleOffset = currentFlatDoubleOffset.add(Scalar.roundToSizeofU64(size));
 								} else if (valueTypeHelper.isJ9ClassLargestAlignmentConstraintReference(fieldClass)) {
-									size = Scalar.roundToSizeToFJ9object(fieldClass.totalInstanceSize());
+									size = Scalar.roundToSizeToFJ9object(
+											J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+												? fieldClass.flatFieldSize()
+												: fieldClass.totalInstanceSize());
 									if (walkFlags.anyBitsIn(J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_OBJECT_FIELD) && size.eq(flatBackFillSize)) {
 										offset = new UDATA(backfillOffsetToUse);
 										walkFlags = walkFlags.bitAnd(new U32(new UDATA(J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_OBJECT_FIELD).bitNot()));
@@ -255,16 +280,28 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 										offset = firstFlatObjectOffset.add(currentFlatObjectOffset);
 										currentFlatObjectOffset = currentFlatObjectOffset.add(size);
 									}
-								} else {
-									size = fieldClass.totalInstanceSize();
+								} else if (!J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+									|| valueTypeHelper.isJ9ClassLargestAlignmentConstraintInteger(fieldClass)
+								) {
+									size = Scalar.roundToSizeofU32(
+											J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+												? fieldClass.flatFieldSize()
+												: fieldClass.totalInstanceSize());
 									if (walkFlags.anyBitsIn(J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_SINGLE_FIELD) && size.eq(flatBackFillSize)) {
-										// Assert_VM_true(state->backfillOffsetToUse >= 0);
 										offset = new UDATA(backfillOffsetToUse);
 										walkFlags = walkFlags.bitAnd(new U32(new UDATA(J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_SINGLE_FIELD).bitNot()));
 									} else {
 										offset = firstFlatSingleOffset.add(currentFlatSingleOffset);
 										currentFlatSingleOffset = currentFlatSingleOffset.add(size);
 									}
+								} else if (valueTypeHelper.isJ9ClassLargestAlignmentConstraintShort(fieldClass)) {
+									size = Scalar.roundToSizeofU16(fieldClass.flatFieldSize());
+									offset = firstFlatShortOffset.add(currentFlatShortOffset);
+									currentFlatShortOffset = currentFlatShortOffset.add(size);
+								} else {
+									size = fieldClass.flatFieldSize();
+									offset = firstFlatByteOffset.add(currentFlatByteOffset);
+									currentFlatByteOffset = currentFlatByteOffset.add(size);
 								}
 							} else {
 								if (walkFlags.anyBitsIn(J9VM_FIELD_OFFSET_WALK_BACKFILL_OBJECT_FIELD)) {
@@ -292,6 +329,18 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 						if (modifiers.anyBitsIn(J9FieldSizeDouble)) {
 							offset = firstDoubleOffset.add(doubleSeen.mult(U64.SIZEOF));
 							doubleSeen = doubleSeen.add(1);
+						} else if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+							&& (modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeChar)
+								|| modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeShort))
+						) {
+							offset = firstShortOffset.add(shortsSeen.mult(U16.SIZEOF));
+							shortsSeen = shortsSeen.add(1);
+						} else if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+							&& (modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeBoolean)
+								|| modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeByte))
+						) {
+							offset = firstByteOffset.add(bytesSeen.mult(U8.SIZEOF));
+							bytesSeen = bytesSeen.add(1);
 						} else {
 							if (walkFlags.anyBitsIn(J9VM_FIELD_OFFSET_WALK_BACKFILL_SINGLE_FIELD)) {
 								// Assert_VM_true(state->backfillOffsetToUse >= 0);
@@ -324,7 +373,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		return list;
 	}
 
-	private void calculateInstanceSize(J9ROMClassPointer romClass, J9ClassPointer superClazz) throws CorruptDataException {
+	private void calculateInstanceSize(J9ROMClassPointer romClass, J9ClassPointer superClazz) throws CorruptDataException, NoSuchFieldException {
 		lockwordNeeded = NO_LOCKWORD_NEEDED;
 
 		/* if we only care about statics we can skip all work related to instance size calculations */
@@ -347,9 +396,9 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 			 * Note that in the J9Class, we do not store -1 to indicate no back fill,
 			 * we store the total instance size (including the header) instead.
 			 */
-			fieldInfo.setSuperclassFieldsSize( superClazz.totalInstanceSize().intValue());
+			fieldInfo.setSuperclassFieldsSize(superClazz.totalInstanceSize().longValue());
 			if (!superClazz.backfillOffset().eq(superClazz.totalInstanceSize().add(J9ObjectHelper.headerSize()))) {
-				fieldInfo.setSuperclassBackfillOffset(superClazz.backfillOffset().sub(J9ObjectHelper.headerSize()).intValue());
+				fieldInfo.setSuperclassBackfillOffset(superClazz.backfillOffset().sub(J9ObjectHelper.headerSize()).longValue());
 			}
 		} else {
 			fieldInfo.setSuperclassFieldsSize(0);
@@ -362,7 +411,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		 */
 		if ((LOCKWORD_NEEDED.equals(lockwordNeeded))||(NO_LOCKWORD_NEEDED .equals(lockwordNeeded))) {
 			if (superClazz.notNull() && !superClazz.lockOffset().eq(new UDATA(-1)) && J9ClassHelper.classDepth(superClazz).isZero()) {
-				int newSuperSize = fieldInfo.getSuperclassFieldsSize() - LOCKWORD_SIZE;
+				long newSuperSize = fieldInfo.getSuperclassFieldsSize() - LOCKWORD_SIZE;
 				/*
 				 * superClazz is java.lang.Object: subtract off non-inherited monitor field.
 				 * Note that java.lang.Object's backfill slot can be only at the end.
@@ -419,15 +468,21 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		if (valueTypeHelper.areValueTypesSupported()) {
 			flatBackFillSize = new UDATA(fieldInfo.getBackfillSize());
 			firstFlatDoubleOffset = new UDATA(fieldInfo.calculateFieldDataStart());
-			firstDoubleOffset = new UDATA(fieldInfo.addFlatDoublesArea(firstFlatDoubleOffset.intValue()));
-			firstFlatObjectOffset = new UDATA(fieldInfo.addDoublesArea(firstDoubleOffset.intValue()));
-			firstObjectOffset = new UDATA(fieldInfo.addFlatObjectsArea(firstFlatObjectOffset.intValue()));
-			firstFlatSingleOffset = new UDATA(fieldInfo.addObjectsArea(firstObjectOffset.intValue()));
-			firstSingleOffset = new UDATA(fieldInfo.addFlatSinglesArea(firstFlatSingleOffset.intValue()));
+			firstDoubleOffset = new UDATA(fieldInfo.addFlatDoublesArea(firstFlatDoubleOffset.longValue()));
+			firstFlatObjectOffset = new UDATA(fieldInfo.addDoublesArea(firstDoubleOffset.longValue()));
+			firstObjectOffset = new UDATA(fieldInfo.addFlatObjectsArea(firstFlatObjectOffset.longValue()));
+			firstFlatSingleOffset = new UDATA(fieldInfo.addObjectsArea(firstObjectOffset.longValue()));
+			firstSingleOffset = new UDATA(fieldInfo.addFlatSinglesArea(firstFlatSingleOffset.longValue()));
+			if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) {
+				firstFlatShortOffset = new UDATA(fieldInfo.addSinglesArea(firstSingleOffset.longValue()));
+				firstShortOffset = new UDATA(fieldInfo.addFlatShortsArea(firstFlatShortOffset.longValue()));
+				firstFlatByteOffset = new UDATA(fieldInfo.addShortsArea(firstShortOffset.longValue()));
+				firstByteOffset = new UDATA(fieldInfo.addFlatBytesArea(firstFlatByteOffset.longValue()));
+			}
 		} else {
 			firstDoubleOffset = new UDATA(fieldInfo.calculateFieldDataStart());
-			firstObjectOffset = new UDATA(fieldInfo.addDoublesArea(firstDoubleOffset.intValue()));
-			firstSingleOffset = new UDATA(fieldInfo.addObjectsArea(firstObjectOffset.intValue()));
+			firstObjectOffset = new UDATA(fieldInfo.addDoublesArea(firstDoubleOffset.longValue()));
+			firstSingleOffset = new UDATA(fieldInfo.addObjectsArea(firstObjectOffset.longValue()));
 		}
 
 		if (fieldInfo.isMyBackfillSlotAvailable() && fieldInfo.isBackfillSuitableFieldAvailable() ) {
@@ -464,6 +519,12 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 			UDATA hiddenSingleOffset = firstSingleOffset.add(J9ObjectHelper.headerSize() + (fieldInfo.getNonBackfilledInstanceSingleCount() * U32.SIZEOF));
 			UDATA hiddenDoubleOffset = firstDoubleOffset.add(J9ObjectHelper.headerSize() + (fieldInfo.getInstanceDoubleCount() * U64.SIZEOF));
 			UDATA hiddenObjectOffset = firstObjectOffset.add(J9ObjectHelper.headerSize() + (fieldInfo.getNonBackfilledInstanceObjectCount() * fj9object_t_SizeOf));
+			UDATA hiddenShortOffset = new UDATA(0);
+			UDATA hiddenByteOffset = new UDATA(0);
+			if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) {
+				hiddenShortOffset = firstShortOffset.add(J9ObjectHelper.headerSize() + (fieldInfo.getInstanceShortCount() * U16.SIZEOF));
+				hiddenByteOffset = firstByteOffset.add(J9ObjectHelper.headerSize() + (fieldInfo.getInstanceByteCount() * U8.SIZEOF));
+			}
 			boolean useBackfillForObject = false;
 			boolean useBackfillForSingle = false;
 
@@ -490,6 +551,18 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 				} else if (modifiers.allBitsIn(J9FieldSizeDouble)) {
 					hiddenField.setFieldOffset(hiddenDoubleOffset);
 					hiddenDoubleOffset = hiddenDoubleOffset.add(U64.SIZEOF);
+				} else if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+					&& (modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeChar)
+						|| modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeShort))
+				) {
+					hiddenField.setFieldOffset(hiddenShortOffset);
+					hiddenShortOffset = hiddenShortOffset.add(U16.SIZEOF);
+				} else if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
+					&& (modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeBoolean)
+						|| modifiers.maskAndCompare(J9FieldTypeMask, J9FieldTypeByte))
+				) {
+					hiddenField.setFieldOffset(hiddenByteOffset);
+					hiddenByteOffset = hiddenByteOffset.add(U8.SIZEOF);
 				} else {
 					if (useBackfillForSingle) {
 						hiddenField.setFieldOffset(fieldInfo.getMyBackfillOffsetForHiddenField());
@@ -503,7 +576,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 			}
 
 		}
-		backfillOffsetToUse = new IDATA(fieldInfo.getMyBackfillOffset()); /* backfill offset for this class's fields */
+		backfillOffsetToUse = new IDATA((int)fieldInfo.getMyBackfillOffset()); /* backfill offset for this class's fields */
 	}
 
 	static PrintStream err = System.err;
@@ -569,7 +642,16 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 				init();
 			} catch (CorruptDataException e) {
 				// Tell anyone listening there was corrupt data.
-				raiseCorruptDataEvent("CorruptDataException in com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffsetIterator_V1.init()", e, false);
+				raiseCorruptDataEvent(
+					"CorruptDataException in com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffsetIterator_V1.init()",
+					e,
+					false);
+				return null;
+			} catch (NoSuchFieldException nsfe) {
+				raiseCorruptDataEvent(
+					"NoSuchFieldException signals corrupt data in com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffsetIterator_V1.init()",
+					new CorruptDataException(nsfe.getMessage()),
+					false);
 				return null;
 			}
 		}
@@ -588,6 +670,12 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		} catch (CorruptDataException e) {
 			// Returning null will stop the iteration.
 			raiseCorruptDataEvent("CorruptDataException getting next field offset.", e, false);
+			return null;
+		} catch (NoSuchFieldException nsfe) {
+			raiseCorruptDataEvent(
+				"NoSuchFieldException signals corrupt data getting next field offset.",
+				new CorruptDataException(nsfe.getMessage()),
+				false);
 			return null;
 		}
 	}

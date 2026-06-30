@@ -369,6 +369,11 @@ public:
 	VMINLINE UDATA
 	mixedObjectGetDataSize(J9Class *objectClass)
 	{
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) && defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+		if (J9_IS_J9CLASS_VALUETYPE(objectClass)) {
+			return objectClass->flatFieldSize;
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) && defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		return J9CLASS_UNPADDED_INSTANCE_SIZE(objectClass);
 	}
 
@@ -433,22 +438,33 @@ public:
 		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFields(vmThread, objectClass, srcObject, srcOffset, destObject, destOffset, objectMapFunction, objectMapData, initializeLockWord);
 #else /* defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER) */
 		bool hasReferences = J9CLASS_HAS_REFERENCES(objectClass);
-		if (hasReferences && ((NULL != objectMapFunction) || (j9gc_modron_readbar_none != _readBarrierType) || (j9gc_modron_wrtbar_always == _writeBarrierType))) {
+		UDATA limit = mixedObjectGetDataSize(objectClass);
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+		bool is32BitAligned = (0 != limit) && (0 == (limit % sizeof(U_32)));
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
+		if ((hasReferences
+				&& ((NULL != objectMapFunction)
+					|| (j9gc_modron_readbar_none != _readBarrierType)
+					|| (j9gc_modron_wrtbar_always == _writeBarrierType)))
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+			|| !is32BitAligned
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
+		) {
 			vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFields(vmThread, objectClass, srcObject, srcOffset, destObject, destOffset, objectMapFunction, objectMapData, initializeLockWord);
 		} else {
 			UDATA offset = 0;
-			UDATA limit = mixedObjectGetDataSize(objectClass);
 
-			if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
-				while (offset < limit) {
-					*(uint32_t*)((UDATA)destObject + offset + destOffset) = *(uint32_t*)((UDATA)srcObject + offset + srcOffset);
-					offset += sizeof(uint32_t);
-				}
-			} else {
-				while (offset < limit) {
-					*(uintptr_t*)((UDATA)destObject + offset + destOffset) = *(uintptr_t*)((UDATA)srcObject + offset + srcOffset);
-					offset += sizeof(uintptr_t);
-				}
+			/* At this point, limit is 32-bit aligned.
+			 * First copy as many 64-bit segments as possible, then copy 32 bits if needed.
+			 */
+			UDATA limitRounded = ROUND_DOWN_TO_POWEROF2(limit, sizeof(U_64));
+			while (offset < limitRounded) {
+				*(U_64 *)((UDATA)destObject + offset + destOffset) = *(U_64 *)((UDATA)srcObject + offset + srcOffset);
+				offset += sizeof(U_64);
+			}
+			if ((offset + sizeof(U_32)) <= limit) {
+				*(U_32 *)((UDATA)destObject + offset + destOffset) = *(U_32 *)((UDATA)srcObject + offset + srcOffset);
+				offset += sizeof(U_32);
 			}
 			if (!J9_IS_J9CLASS_VALUETYPE(objectClass)) {
 				if (initializeLockWord) {

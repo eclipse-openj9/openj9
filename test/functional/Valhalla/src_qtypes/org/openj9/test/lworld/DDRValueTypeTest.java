@@ -42,20 +42,30 @@ public class DDRValueTypeTest {
 		ValueTypeTests.testCreatePoint2D();
 		ValueTypeTests.testCreateFlattenedLine2D();
 		ValueTypeTests.testCreateTriangle2D();
+		ValueTypeTests.testCreateValueBoolean();
+		ValueTypeTests.testCreateValueByte();
+		ValueTypeTests.testCreateValueChar();
+		ValueTypeTests.testCreateValueShort();
+		ValueTypeTests.testCreateLayoutsWithPrimitivesAndSmallTypes();
 		
 		// Create value types and check object
 		Class assortedValueWithSingleAlignmentClass = ValueTypeGenerator.generateValueClass("AssortedValueWithSingleAlignment", ValueTypeTests.typeWithSingleAlignmentFields);
 		
 		MethodHandle makeAssortedValueWithSingleAlignment = MethodHandles.lookup().findStatic(assortedValueWithSingleAlignmentClass,
 			"makeObjectGeneric", MethodType.methodType(Object.class, Object.class,
-						Object.class, Object.class, Object.class, Object.class, Object.class));
+						Object.class, Object.class, Object.class, Object.class, Object.class,
+						Object.class, Object.class, Object.class, Object.class));
 		
 		Object[] altFields = {
 			ValueTypeTests.defaultTrianglePositionsNew, 
 			ValueTypeTests.defaultPointPositions2, 
 			ValueTypeTests.defaultLinePositions2, 
-			ValueTypeTests.defaultIntNew, 
-			ValueTypeTests.defaultFloatNew, 
+			ValueTypeTests.defaultIntNew,
+			ValueTypeTests.defaultFloatNew,
+			ValueTypeTests.defaultByteNew,
+			ValueTypeTests.defaultShortNew,
+			ValueTypeTests.defaultCharNew,
+			ValueTypeTests.defaultBooleanNew,
 			ValueTypeTests.defaultTrianglePositionsNew
 		};
 		Object assortedValueWithSingleAlignment = ValueTypeTests.createAssorted(makeAssortedValueWithSingleAlignment, ValueTypeTests.typeWithSingleAlignmentFields);
@@ -65,10 +75,20 @@ public class DDRValueTypeTest {
 		Object[] valArray = ValueClass.newNullRestrictedAtomicArray(assortedValueWithSingleAlignmentClass, 2, assortedValueWithSingleAlignment);
 		valArray[1] = assortedValueWithSingleAlignmentAlt;
 
+		/* Compact layout offset tests */
+		Object compactBytes = ValueTypeTests.makeCompactByte.invoke(ValueTypeTests.defaultByte, ValueTypeTests.defaultByteNew, ValueTypeTests.defaultByte, ValueTypeTests.defaultByteNew);
+		Object compactShorts = ValueTypeTests.makeCompactShort.invoke(ValueTypeTests.defaultShort, ValueTypeTests.defaultShortNew, ValueTypeTests.defaultShort, ValueTypeTests.defaultShortNew);
+		Object compactByteShort = ValueTypeTests.makeCompactByteShort.invoke(ValueTypeTests.defaultByte, ValueTypeTests.defaultShort, ValueTypeTests.defaultByteNew, ValueTypeTests.defaultShortNew);
+		Object compactAssorted = ValueTypeTests.makeCompactAssorted.invoke(ValueTypeTests.defaultInt, ValueTypeTests.defaultIntNew, ValueTypeTests.defaultShort, ValueTypeTests.defaultByte);
+
+		MethodHandle make = ValueTypeTests.createObjectOfCompactLayoutScenarios();
+		Object compactLayoutScenarios = make.invoke(compactBytes, compactShorts, compactByteShort, compactAssorted);
+
 		ValueTypeTests.checkObject(assortedValueWithSingleAlignment, 
 				assortedValueWithSingleAlignmentAlt, 
 				valArray, 
-				referenceTypeWithVolatileValueTypeFields
+				referenceTypeWithVolatileValueTypeFields,
+				compactLayoutScenarios
 				);
 	}
 }
