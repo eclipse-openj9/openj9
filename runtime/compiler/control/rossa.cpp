@@ -295,6 +295,11 @@ extern "C" IDATA j9jit_testarossa_err(struct J9JITConfig *jitConfig, J9VMThread 
         if (jbi->getIsInvalidated()) {
             event._eventType = TR_MethodEvent::MethodBodyInvalidated;
             async = TR_no;
+
+            TR::CompilationInfo *compInfo = getCompilationInfo(jitConfig);
+            if (compInfo) {
+                compInfo->_syncCompStats.invalidationCount++;
+            }
         } else {
             // Async compilation is disabled or recompilations triggered from jitted code
             //
