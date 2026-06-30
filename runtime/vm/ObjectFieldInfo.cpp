@@ -55,9 +55,9 @@ ObjectFieldInfo::countInstanceFields(void)
 						_totalObjectCount += 1;
 					} else {
 #if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
-						U_32 size = (U_32)fieldClass->flatFieldSize;
+						UDATA size = fieldClass->flatFieldSize;
 #else /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
-						U_32 size = (U_32)fieldClass->totalInstanceSize;
+						UDATA size = fieldClass->totalInstanceSize;
 #endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 						bool forceDoubleAlignment = false;
 						if (sizeof(U_32) == _referenceSize) {
@@ -77,18 +77,18 @@ ObjectFieldInfo::countInstanceFields(void)
 								size -= sizeof(U_32);
 							}
 #endif /* !defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
-							_totalFlatFieldDoubleBytes += (U_32) ROUND_UP_TO_POWEROF2(size, sizeof(U_64));
+							_totalFlatFieldDoubleBytes += ROUND_UP_TO_POWEROF2(size, sizeof(U_64));
 						} else if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintReference)) {
-							size = (U_32) ROUND_UP_TO_POWEROF2(size, (UDATA)_referenceSize);
+							size = ROUND_UP_TO_POWEROF2(size, (UDATA)_referenceSize);
 							_totalFlatFieldRefBytes += size;
 							setPotentialFlatObjectInstanceBackfill(size);
 #if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
 						} else if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintInteger)) {
-							size = (U_32) ROUND_UP_TO_POWEROF2(size, sizeof(U_32));
+							size = ROUND_UP_TO_POWEROF2(size, sizeof(U_32));
 							_totalFlatFieldSingleBytes += size;
 							setPotentialFlatSingleInstanceBackfill(size);
 						} else if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintShort)) {
-							size = (U_32) ROUND_UP_TO_POWEROF2(size, sizeof(U_16));
+							size = ROUND_UP_TO_POWEROF2(size, sizeof(U_16));
 							_totalFlatFieldShortBytes += size;
 						} else {
 							_totalFlatFieldByteBytes += size;
@@ -176,10 +176,10 @@ ObjectFieldInfo::countAndCopyHiddenFields(J9HiddenInstanceField *hiddenFieldList
 	return _hiddenFieldCount;
 }
 
-U_32
+UDATA
 ObjectFieldInfo::calculateTotalFieldsSizeAndBackfill()
 {
-	U_32 accumulator = 0;
+	UDATA accumulator = 0;
 	if (isContendedClassLayout()) {
 		_superclassBackfillOffset = NO_BACKFILL_AVAILABLE;
 		_myBackfillOffset = NO_BACKFILL_AVAILABLE;
@@ -190,16 +190,16 @@ ObjectFieldInfo::calculateTotalFieldsSizeAndBackfill()
 #if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
 		accumulator += (_contendedShortCount * sizeof(U_16)) + (_contendedByteCount * sizeof(U_8));
 #endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
-		accumulator = ROUND_UP_TO_POWEROF2((UDATA)accumulator, (UDATA)_cacheLineSize) - _objectHeaderSize; /* Rounding takes care of the odd number of 4-byte fields. Remove the header */
+		accumulator = ROUND_UP_TO_POWEROF2(accumulator, _cacheLineSize) - _objectHeaderSize; /* Rounding takes care of the odd number of 4-byte fields. Remove the header */
 	} else {
 		accumulator = _superclassFieldsSize + (_totalObjectCount * _referenceSize) + (_totalSingleCount * sizeof(U_32)) + (_totalDoubleCount * sizeof(U_64));
 #if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
-		U_32 smallTypeSize = (_totalShortCount * sizeof(U_16)) + (_totalByteCount * sizeof(U_8));
+		UDATA smallTypeSize = (_totalShortCount * sizeof(U_16)) + (_totalByteCount * sizeof(U_8));
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		smallTypeSize += _totalFlatFieldShortBytes + _totalFlatFieldByteBytes;
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		/* 16 and 8-bit fields must be aligned to 32 bits. */
-		U_32 smallTypeSizeRounded = ROUND_UP_TO_POWEROF2((UDATA)smallTypeSize, sizeof(U_32));
+		UDATA smallTypeSizeRounded = ROUND_UP_TO_POWEROF2((UDATA)smallTypeSize, sizeof(U_32));
 		accumulator += smallTypeSizeRounded;
 #endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
@@ -235,7 +235,7 @@ ObjectFieldInfo::calculateTotalFieldsSizeAndBackfill()
 			 * alignment requirements of double slot fields. We will use the J9ClassHasPrePadding flag
 			 * to denote this.
 			 */
-			U_32 firstFieldOffset = calculateFieldDataStart();
+			UDATA firstFieldOffset = calculateFieldDataStart();
 			if (0 < firstFieldOffset) {
 				if (isBackfillSuitableFieldAvailable()) {
 					/*
@@ -264,10 +264,10 @@ ObjectFieldInfo::calculateTotalFieldsSizeAndBackfill()
 }
 
 #if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) && defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-U_32
+UDATA
 ObjectFieldInfo::calculateFlatFieldSize()
 {
-	U_32 accumulator = 0;
+	UDATA accumulator = 0;
 	if (isValue()) {
 		accumulator = _superclassFieldsSize
 				+ (_totalObjectCount * _referenceSize)

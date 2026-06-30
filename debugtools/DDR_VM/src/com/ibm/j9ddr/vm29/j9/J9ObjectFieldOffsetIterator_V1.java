@@ -396,9 +396,9 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 			 * Note that in the J9Class, we do not store -1 to indicate no back fill,
 			 * we store the total instance size (including the header) instead.
 			 */
-			fieldInfo.setSuperclassFieldsSize( superClazz.totalInstanceSize().intValue());
+			fieldInfo.setSuperclassFieldsSize(superClazz.totalInstanceSize().longValue());
 			if (!superClazz.backfillOffset().eq(superClazz.totalInstanceSize().add(J9ObjectHelper.headerSize()))) {
-				fieldInfo.setSuperclassBackfillOffset(superClazz.backfillOffset().sub(J9ObjectHelper.headerSize()).intValue());
+				fieldInfo.setSuperclassBackfillOffset(superClazz.backfillOffset().sub(J9ObjectHelper.headerSize()).longValue());
 			}
 		} else {
 			fieldInfo.setSuperclassFieldsSize(0);
@@ -411,7 +411,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		 */
 		if ((LOCKWORD_NEEDED.equals(lockwordNeeded))||(NO_LOCKWORD_NEEDED .equals(lockwordNeeded))) {
 			if (superClazz.notNull() && !superClazz.lockOffset().eq(new UDATA(-1)) && J9ClassHelper.classDepth(superClazz).isZero()) {
-				int newSuperSize = fieldInfo.getSuperclassFieldsSize() - LOCKWORD_SIZE;
+				long newSuperSize = fieldInfo.getSuperclassFieldsSize() - LOCKWORD_SIZE;
 				/*
 				 * superClazz is java.lang.Object: subtract off non-inherited monitor field.
 				 * Note that java.lang.Object's backfill slot can be only at the end.
@@ -468,21 +468,21 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		if (valueTypeHelper.areValueTypesSupported()) {
 			flatBackFillSize = new UDATA(fieldInfo.getBackfillSize());
 			firstFlatDoubleOffset = new UDATA(fieldInfo.calculateFieldDataStart());
-			firstDoubleOffset = new UDATA(fieldInfo.addFlatDoublesArea(firstFlatDoubleOffset.intValue()));
-			firstFlatObjectOffset = new UDATA(fieldInfo.addDoublesArea(firstDoubleOffset.intValue()));
-			firstObjectOffset = new UDATA(fieldInfo.addFlatObjectsArea(firstFlatObjectOffset.intValue()));
-			firstFlatSingleOffset = new UDATA(fieldInfo.addObjectsArea(firstObjectOffset.intValue()));
-			firstSingleOffset = new UDATA(fieldInfo.addFlatSinglesArea(firstFlatSingleOffset.intValue()));
+			firstDoubleOffset = new UDATA(fieldInfo.addFlatDoublesArea(firstFlatDoubleOffset.longValue()));
+			firstFlatObjectOffset = new UDATA(fieldInfo.addDoublesArea(firstDoubleOffset.longValue()));
+			firstObjectOffset = new UDATA(fieldInfo.addFlatObjectsArea(firstFlatObjectOffset.longValue()));
+			firstFlatSingleOffset = new UDATA(fieldInfo.addObjectsArea(firstObjectOffset.longValue()));
+			firstSingleOffset = new UDATA(fieldInfo.addFlatSinglesArea(firstFlatSingleOffset.longValue()));
 			if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) {
-				firstFlatShortOffset = new UDATA(fieldInfo.addSinglesArea(firstSingleOffset.intValue()));
-				firstShortOffset = new UDATA(fieldInfo.addFlatShortsArea(firstFlatShortOffset.intValue()));
-				firstFlatByteOffset = new UDATA(fieldInfo.addShortsArea(firstShortOffset.intValue()));
-				firstByteOffset = new UDATA(fieldInfo.addFlatBytesArea(firstFlatByteOffset.intValue()));
+				firstFlatShortOffset = new UDATA(fieldInfo.addSinglesArea(firstSingleOffset.longValue()));
+				firstShortOffset = new UDATA(fieldInfo.addFlatShortsArea(firstFlatShortOffset.longValue()));
+				firstFlatByteOffset = new UDATA(fieldInfo.addShortsArea(firstShortOffset.longValue()));
+				firstByteOffset = new UDATA(fieldInfo.addFlatBytesArea(firstFlatByteOffset.longValue()));
 			}
 		} else {
 			firstDoubleOffset = new UDATA(fieldInfo.calculateFieldDataStart());
-			firstObjectOffset = new UDATA(fieldInfo.addDoublesArea(firstDoubleOffset.intValue()));
-			firstSingleOffset = new UDATA(fieldInfo.addObjectsArea(firstObjectOffset.intValue()));
+			firstObjectOffset = new UDATA(fieldInfo.addDoublesArea(firstDoubleOffset.longValue()));
+			firstSingleOffset = new UDATA(fieldInfo.addObjectsArea(firstObjectOffset.longValue()));
 		}
 
 		if (fieldInfo.isMyBackfillSlotAvailable() && fieldInfo.isBackfillSuitableFieldAvailable() ) {
@@ -576,7 +576,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 			}
 
 		}
-		backfillOffsetToUse = new IDATA(fieldInfo.getMyBackfillOffset()); /* backfill offset for this class's fields */
+		backfillOffsetToUse = new IDATA((int)fieldInfo.getMyBackfillOffset()); /* backfill offset for this class's fields */
 	}
 
 	static PrintStream err = System.err;

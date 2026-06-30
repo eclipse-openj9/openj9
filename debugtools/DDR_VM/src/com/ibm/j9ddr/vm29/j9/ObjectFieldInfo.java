@@ -54,7 +54,7 @@ import com.ibm.j9ddr.vm29.types.UDATA;
 public class ObjectFieldInfo {
 	ValueTypeHelper valueTypeHelper = ValueTypeHelper.getValueTypeHelper();
 	J9ROMClassPointer romClass;
-	int superclassFieldsSize;
+	long superclassFieldsSize;
 	boolean objectCanUseBackfill; /* true if an object reference is the same size as a backfill slot */
 	// Sizeof constants
 	public static final int fj9object_t_SizeOf =
@@ -73,20 +73,20 @@ public class ObjectFieldInfo {
 	int totalShortCount;
 	int totalByteCount;
 	int hiddenFieldCount;
-	int superclassBackfillOffset; /* inherited backfill */
-	int myBackfillOffset; /* backfill available for this class's fields */
-	int subclassBackfillOffset; /* backfill available to subclasses */
+	long superclassBackfillOffset; /* inherited backfill */
+	long myBackfillOffset; /* backfill available for this class's fields */
+	long subclassBackfillOffset; /* backfill available to subclasses */
 	boolean isValue = false;
 	J9ClassPointer containerClazz = J9ClassPointer.NULL;
-	int totalFlatFieldDoubleBytes = 0;
-	int totalFlatFieldRefBytes = 0;
-	int totalFlatFieldSingleBytes = 0;
-	int totalFlatFieldShortBytes = 0;
-	int totalFlatFieldByteBytes = 0;
-	int flatAlignedObjectInstanceBackfill = 0;
-	int flatAlignedSingleInstanceBackfill = 0;
-	int flatUnAlignedObjectInstanceBackfill = 0;
-	int flatUnAlignedSingleInstanceBackfill = 0;
+	long totalFlatFieldDoubleBytes = 0;
+	long totalFlatFieldRefBytes = 0;
+	long totalFlatFieldSingleBytes = 0;
+	long totalFlatFieldShortBytes = 0;
+	long totalFlatFieldByteBytes = 0;
+	long flatAlignedObjectInstanceBackfill = 0;
+	long flatAlignedSingleInstanceBackfill = 0;
+	long flatUnAlignedObjectInstanceBackfill = 0;
+	long flatUnAlignedSingleInstanceBackfill = 0;
 	boolean classRequiresPrePadding = false;
 	boolean isBackFillPostPadded = false;
 
@@ -109,7 +109,7 @@ public class ObjectFieldInfo {
 		totalByteCount = 0;
 		hiddenFieldCount = 0;
 		this.romClass = romClass;
-		superclassFieldsSize = -1;
+		superclassFieldsSize = -1L;
 		superclassBackfillOffset = NO_BACKFILL_AVAILABLE;
 		myBackfillOffset = NO_BACKFILL_AVAILABLE;
 		subclassBackfillOffset = NO_BACKFILL_AVAILABLE;
@@ -271,7 +271,7 @@ public class ObjectFieldInfo {
 		return new UDATA(myBackfillOffset + J9ObjectHelper.headerSize());
 	}
 
-	int getSuperclassFieldsSize() {
+	long getSuperclassFieldsSize() {
 		return superclassFieldsSize;
 	}
 
@@ -280,17 +280,17 @@ public class ObjectFieldInfo {
 	}
 
 	void
-	setSuperclassFieldsSize(int i)
+	setSuperclassFieldsSize(long i)
 	{
 		this.superclassFieldsSize = i;
 	}
 
 	boolean isMyBackfillSlotAvailable() {
-		return (myBackfillOffset >= 0);
+		return (myBackfillOffset >= 0L);
 	}
 
 	boolean isSuperclassBackfillSlotAvailable() {
-		return (superclassBackfillOffset >= 0);
+		return (superclassBackfillOffset >= 0L);
 	}
 
 
@@ -300,8 +300,8 @@ public class ObjectFieldInfo {
 	 * Since the superclass is not end-aligned it must have no embedded backfill.
 	 * @return offset to the first (non-backfilled) field.
 	 */
-	int calculateFieldDataStart() {
-		int fieldDataStart = getSuperclassFieldsSize();
+	long calculateFieldDataStart() {
+		long fieldDataStart = getSuperclassFieldsSize();
 		
 		/* If the type has double field the doubles need to start on an 8-byte boundary. In the case of valuetypes
 		 * there is no lockword so the super class field size will be zero. This means that valueTypes in compressedrefs
@@ -332,7 +332,7 @@ public class ObjectFieldInfo {
 	 * @param start end of previous field area
 	 * @return offset to end of the doubles area
 	 */
-	int addDoublesArea(int start) {
+	long addDoublesArea(long start) {
 		return start + (totalDoubleCount * U64.SIZEOF);
 	}
 
@@ -341,7 +341,7 @@ public class ObjectFieldInfo {
 	 * @return offset to end of the objects area
 	 * @note takes into account objects which will go in the backfill
 	 */
-	int addObjectsArea(int start) {
+	long addObjectsArea(long start) {
 		int nonBackfilledObjects = getNonBackfilledObjectCount();
 		return start + (nonBackfilledObjects * fj9object_t_SizeOf);
 	}
@@ -351,7 +351,7 @@ public class ObjectFieldInfo {
 	 * @return offset to end of the singles area
 	 * @note takes into account singles which will go in the backfill
 	 */
-	int addSinglesArea(int start) {
+	long addSinglesArea(long start) {
 		return start + (getNonBackfilledInstanceSingleCount() * U32.SIZEOF);
 	}
 
@@ -359,7 +359,7 @@ public class ObjectFieldInfo {
 	 * @param start end of previous field area
 	 * @return offset to end of the shorts area
 	 */
-	int addShortsArea(int start) {
+	long addShortsArea(long start) {
 		return start + (totalShortCount * U16.SIZEOF);
 	}
 
@@ -371,7 +371,7 @@ public class ObjectFieldInfo {
 	 * at the end of the superclass.
 	 * @return backfill offset from the first field
 	 */
-	int getMyBackfillOffset() {
+	long getMyBackfillOffset() {
 		return myBackfillOffset;
 	}
 	
@@ -389,10 +389,10 @@ public class ObjectFieldInfo {
 	 *
 	 * @return size of backfill
 	 */
-	int
+	long
 	getBackfillSize()
 	{
-		int backFillSize = BACKFILL_SIZE;
+		long backFillSize = BACKFILL_SIZE;
 
 		if ((0 != getInstanceSingleCount()) || (0 != getInstanceObjectCount())) {
 			/* BACKFILL_SIZE */
@@ -409,17 +409,17 @@ public class ObjectFieldInfo {
 		return backFillSize;
 	}
 
-	int getSubclassBackfillOffset() {
+	long getSubclassBackfillOffset() {
 		return subclassBackfillOffset;
 	}
 
 	void
-	setSuperclassBackfillOffset(int superclassBackfillOffset)
+	setSuperclassBackfillOffset(long superclassBackfillOffset)
 	{
 		this.superclassBackfillOffset = superclassBackfillOffset;
 	}
 
-	int getSuperclassBackfillOffset() {
+	long getSuperclassBackfillOffset() {
 		return superclassBackfillOffset;
 	}
 
@@ -436,7 +436,7 @@ public class ObjectFieldInfo {
 					if (valueTypeHelper.isFlattenableFieldSignature(J9ROMFieldShapeHelper.getSignature(f))
 						|| modifiers.anyBitsIn(J9FieldFlagIsNullRestricted)
 					) {
-						int size = 0;
+						long size = 0;
 						J9ClassPointer fieldClass = valueTypeHelper.findJ9ClassInFlattenedClassCacheWithFieldName(containerClazz, J9ROMFieldShapeHelper.getName(f));
 						if (!valueTypeHelper.isJ9FieldIsFlattened(fieldClass, f)) {
 							instanceObjectCount += 1;
@@ -468,14 +468,14 @@ public class ObjectFieldInfo {
 								) {
 									flatFieldSize = flatFieldSize.sub(U32.SIZEOF);
 								}
-								size = Scalar.roundToSizeofU64(flatFieldSize).intValue();
+								size = Scalar.roundToSizeofU64(flatFieldSize).longValue();
 								totalFlatFieldDoubleBytes += size;
 							} else if (valueTypeHelper.isJ9ClassLargestAlignmentConstraintReference(fieldClass)) {
 								size = Scalar.roundToSizeToFJ9object(
 										J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
 											? fieldClass.flatFieldSize()
 											: fieldClass.totalInstanceSize()
-										).intValue();
+										).longValue();
 								totalFlatFieldRefBytes += size;
 								setPotentialFlatObjectInstanceBackfill(size);
 							} else if (!J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
@@ -485,14 +485,14 @@ public class ObjectFieldInfo {
 									J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
 										? fieldClass.flatFieldSize()
 										: fieldClass.totalInstanceSize()
-									).intValue();
+									).longValue();
 								totalFlatFieldSingleBytes += size;
 								setPotentialFlatSingleInstanceBackfill(size);
 							} else if (valueTypeHelper.isJ9ClassLargestAlignmentConstraintShort(fieldClass)) {
-								size = Scalar.roundToSizeofU16(fieldClass.flatFieldSize()).intValue();
+								size = Scalar.roundToSizeofU16(fieldClass.flatFieldSize()).longValue();
 								totalFlatFieldShortBytes += size;
 							} else {
-								size = fieldClass.flatFieldSize().intValue();
+								size = fieldClass.flatFieldSize().longValue();
 								totalFlatFieldByteBytes += size;
 							}
 						}
@@ -555,7 +555,7 @@ public class ObjectFieldInfo {
 		return hiddenFieldCount;
 	}
 
-	int calculateTotalFieldsSizeAndBackfill() { /* TODO update to handle contended fields */
+	long calculateTotalFieldsSizeAndBackfill() { /* TODO update to handle contended fields */
 		long accumulator = superclassFieldsSize + (totalObjectCount * J9ObjectHelper.headerSize()) + (totalSingleCount * U32.SIZEOF)
 				+ (totalDoubleCount * U64.SIZEOF);
 
@@ -574,7 +574,7 @@ public class ObjectFieldInfo {
 			 * alignment requirements of double slot fields. We will use the J9ClassHasPrePadding flag
 			 * to denote this.
 			 */
-			int firstFieldOffset = calculateFieldDataStart();
+			long firstFieldOffset = calculateFieldDataStart();
 			if (0 < firstFieldOffset) {
 				if (isBackfillSuitableFieldAvailable()) {
 					/*
@@ -611,21 +611,21 @@ public class ObjectFieldInfo {
 			}
 			if (((accumulator + J9ObjectHelper.headerSize()) % OBJECT_SIZE_INCREMENT_IN_BYTES) != 0) {
 				/* we have consumed the superclass's backfill (if any), so let our subclass use the residue at the end of this class. */
-				subclassBackfillOffset = (int)accumulator;
+				subclassBackfillOffset = accumulator;
 				accumulator += BACKFILL_SIZE;
 			} else {
 				subclassBackfillOffset = superclassBackfillOffset;
 			}
 		}
-		return (int) accumulator;
+		return accumulator;
 	}
 
 	/**
 	 * @param start end of previous field area, which should be the first field area
 	 * @return offset to end of the flat doubles area
 	 */
-	int
-	addFlatDoublesArea(int start)
+	long
+	addFlatDoublesArea(long start)
 	{
 		return start + totalFlatFieldDoubleBytes;
 	}
@@ -634,8 +634,8 @@ public class ObjectFieldInfo {
 	 * @param start end of previous field area, which should be after doubles
 	 * @return offset to end of the flat doubles area
 	 */
-	int
-	addFlatObjectsArea(int start)
+	long
+	addFlatObjectsArea(long start)
 	{
 		return start + getNonBackfilledFlatInstanceObjectSize();
 	}
@@ -644,8 +644,8 @@ public class ObjectFieldInfo {
 	 * @param start end of previous field area, which should be after objects
 	 * @return offset to end of the flat doubles area
 	 */
-	int
-	addFlatSinglesArea(int start)
+	long
+	addFlatSinglesArea(long start)
 	{
 		return start + getNonBackfilledFlatInstanceSingleSize();
 	}
@@ -654,8 +654,8 @@ public class ObjectFieldInfo {
 	 * @param start end of previous field area
 	 * @return offset to end of the flat shorts area
 	 */
-	int
-	addFlatShortsArea(int start)
+	long
+	addFlatShortsArea(long start)
 	{
 		return start + totalFlatFieldShortBytes;
 	}
@@ -664,62 +664,62 @@ public class ObjectFieldInfo {
 	 * @param start end of previous field area
 	 * @return offset to end of the flat bytes area
 	 */
-	int
-	addFlatBytesArea(int start)
+	long
+	addFlatBytesArea(long start)
 	{
 		return start + totalFlatFieldByteBytes;
 	}
 	
-	int
+	long
 	getFlatAlignedSingleInstanceBackfillSize()
 	{
 		return flatAlignedSingleInstanceBackfill;
 	}
 
-	int
+	long
 	getFlatUnAlignedSingleInstanceBackfillSize()
 	{
 		return flatUnAlignedSingleInstanceBackfill;
 	}
 
-	int
+	long
 	getFlatAlignedObjectInstanceBackfillSize()
 	{
 		return flatAlignedObjectInstanceBackfill;
 	}
 
-	int
+	long
 	getFlatUnAlignedObjectInstanceBackfillSize()
 	{
 		return flatUnAlignedObjectInstanceBackfill;
 	}
 
 	void
-	setFlatAlignedSingleInstanceBackfill(int size)
+	setFlatAlignedSingleInstanceBackfill(long size)
 	{
 		flatAlignedSingleInstanceBackfill = size;
 	}
 
 	void
-	setFlatUnAlignedSingleInstanceBackfill(int size)
+	setFlatUnAlignedSingleInstanceBackfill(long size)
 	{
 		flatUnAlignedSingleInstanceBackfill = size;
 	}
 
 	void
-	setFlatAlignedObjectInstanceBackfill(int size)
+	setFlatAlignedObjectInstanceBackfill(long size)
 	{
 		flatAlignedObjectInstanceBackfill = size;
 	}
 
 	void
-	setFlatUnAlignedObjectInstanceBackfill(int size)
+	setFlatUnAlignedObjectInstanceBackfill(long size)
 	{
 		flatUnAlignedObjectInstanceBackfill = size;
 	}
 
 	void
-	setPotentialFlatObjectInstanceBackfill(int size)
+	setPotentialFlatObjectInstanceBackfill(long size)
 	{
 		if (isValue) {
 			if (U32.SIZEOF == (size % U64.SIZEOF)) {
@@ -735,7 +735,7 @@ public class ObjectFieldInfo {
 	}
 
 	void
-	setPotentialFlatSingleInstanceBackfill(int size)
+	setPotentialFlatSingleInstanceBackfill(long size)
 	{
 		if (isValue) {
 			if (U32.SIZEOF == (size % U64.SIZEOF)) {
@@ -750,17 +750,17 @@ public class ObjectFieldInfo {
 		}
 	}
 
-	int
+	long
 	getNonBackfilledFlatInstanceObjectSize()
 	{
-		int nonBackfilledFlatObjectsSize = totalFlatFieldRefBytes;
+		long nonBackfilledFlatObjectsSize = totalFlatFieldRefBytes;
 		if (isBackfillSuitableInstanceObjectAvailable()
 			&& isMyBackfillSlotAvailable()
 			&& (0 == getInstanceSingleCount())
 			&& (objectCanUseBackfill && (0 == getInstanceObjectCount()))
 			&& (0 == getFlatAlignedSingleInstanceBackfillSize())
 		) {
-			int backfillSize = getFlatAlignedObjectInstanceBackfillSize();
+			long backfillSize = getFlatAlignedObjectInstanceBackfillSize();
 			if (0 == backfillSize) {
 				if (0 == getFlatUnAlignedSingleInstanceBackfillSize()) {
 					backfillSize = getFlatUnAlignedObjectInstanceBackfillSize();
@@ -771,16 +771,16 @@ public class ObjectFieldInfo {
 		return nonBackfilledFlatObjectsSize;
 	}
 
-	int
+	long
 	getNonBackfilledFlatInstanceSingleSize()
 	{
-		int nonBackfilledFlatSinglesSize = totalFlatFieldSingleBytes;
+		long nonBackfilledFlatSinglesSize = totalFlatFieldSingleBytes;
 		if (isBackfillSuitableFlatInstanceSingleAvailable()
 			&& isMyBackfillSlotAvailable()
 			&& (0 == getInstanceSingleCount())
 			&& (objectCanUseBackfill && (0 == getInstanceObjectCount()))
 		) {
-			int backfillSize = getFlatAlignedSingleInstanceBackfillSize();
+			long backfillSize = getFlatAlignedSingleInstanceBackfillSize();
 			if (0 == backfillSize) {
 				if (0 == getFlatAlignedObjectInstanceBackfillSize()) {
 					backfillSize = getFlatUnAlignedSingleInstanceBackfillSize();
@@ -804,7 +804,7 @@ public class ObjectFieldInfo {
 	}
 	
 	boolean
-	isBackfillTypeEndAligned(int fieldDataStart) {
+	isBackfillTypeEndAligned(long fieldDataStart) {
 		return BACKFILL_SIZE == (fieldDataStart % U64.SIZEOF);
 	}
 	
