@@ -62,7 +62,7 @@ Fast_java_lang_Object_notifyAll(J9VMThread *currentThread, j9object_t receiverOb
 		if (VM_ObjectMonitor::getMonitorForNotify(currentThread, receiverObject, &monitorPtr, true)) {
 #if JAVA_SPEC_VERSION >= 24
 			J9JavaVM *vm = currentThread->javaVM;
-			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
+			if (J9VM_ARE_PINNED_YIELDABLE_VIRTUALTHREADS_ACTIVE(vm)) {
 				j9objectmonitor_t lock = 0;
 				j9objectmonitor_t *lockEA = NULL;
 				J9ObjectMonitor *objectMonitor = NULL;
@@ -107,7 +107,7 @@ Fast_java_lang_Object_notify(J9VMThread *currentThread, j9object_t receiverObjec
 		if (VM_ObjectMonitor::getMonitorForNotify(currentThread, receiverObject, &monitorPtr, true)) {
 #if JAVA_SPEC_VERSION >= 24
 			J9JavaVM *vm = currentThread->javaVM;
-			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
+			if (J9VM_ARE_PINNED_YIELDABLE_VIRTUALTHREADS_ACTIVE(vm)) {
 				j9objectmonitor_t lock = 0;
 				j9objectmonitor_t *lockEA = NULL;
 				J9ObjectMonitor *objectMonitor = NULL;
