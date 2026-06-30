@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: IBM Bob
  *******************************************************************************/
 
 SETUP_LABEL = (params.SETUP_LABEL) ? params.SETUP_LABEL : 'worker'
@@ -67,5 +68,10 @@ timestamps {
             }
         }
     }
-    buildFile.build_all()
+    try {
+        buildFile.build_all()
+    } catch (e) {
+        currentBuild.result = 'FAILURE'
+        throw e
+    }
 }
