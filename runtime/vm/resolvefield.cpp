@@ -882,7 +882,7 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 			 * Note that in the J9Class, we do not store -1 to indicate no back fill,
 			 * we store the total instance size (including the header) instead.
 			 */
-			fieldInfo.setSuperclassFieldsSize((U_32) superClazz->totalInstanceSize);
+			fieldInfo.setSuperclassFieldsSize(superClazz->totalInstanceSize);
 			if ((superClazz->totalInstanceSize + objectHeaderSize) != (UDATA)superClazz->backfillOffset) {
 				fieldInfo.setSuperclassBackfillOffset(superClazz->backfillOffset - objectHeaderSize);
 			}
@@ -898,7 +898,7 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 		 */
 		if ((LOCKWORD_NEEDED == lockwordNeeded) || (NO_LOCKWORD_NEEDED == lockwordNeeded)) {
 			if ((NULL != superClazz) && ((UDATA)-1 != superClazz->lockOffset) && (0 == J9CLASS_DEPTH(superClazz))) {
-				U_32 newSuperSize = fieldInfo.getSuperclassFieldsSize() - referenceSize;
+				UDATA newSuperSize = fieldInfo.getSuperclassFieldsSize() - referenceSize;
 				/*
 				 * superClazz is java.lang.Object: subtract off non-inherited monitor field.
 				 * Note that java.lang.Object's backfill slot can be only at the end.

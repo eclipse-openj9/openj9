@@ -253,7 +253,7 @@ public class RamClassWalker extends ClassWalker {
 		 * then this section will display the array of instanceDescription bits.
 		 */
 		if (!ramClass.instanceDescription().allBitsIn(1)) {
-			final int totalInstanceSize = ramClass.totalInstanceSize().intValue();
+			final long totalInstanceSize = ramClass.totalInstanceSize().longValue();
 			final int fj9object_t_SizeOf = J9ObjectHelper.compressObjectReferences ? U32.SIZEOF : UDATA.SIZEOF;
 			final long totalSize = totalInstanceSize / fj9object_t_SizeOf;
 

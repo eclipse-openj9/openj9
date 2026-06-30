@@ -1792,11 +1792,7 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 				if (isValueType
 					&& (sizeof(uint32_t) == referenceSize)
 					&& (0 == (srcAddress & 7))
-#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
 					&& ((offset + sizeof(uint64_t)) <= limit)
-#else /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
-					&& ((offset + sizeof(uint64_t)) <= limit)
-#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 				) {
 					descriptionBitsNext >>= 1;
 					if (descriptionIndexNext-- == 0) {

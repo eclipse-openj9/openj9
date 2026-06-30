@@ -80,14 +80,14 @@ class GCMixedObjectIterator_V1 extends GCObjectIterator
 
 	private void initialize(J9ClassPointer clazz, VoidPointer addr) throws CorruptDataException
 	{
-		int totalInstanceSize = clazz.totalInstanceSize().intValue();
+		long totalInstanceSize = clazz.totalInstanceSize().longValue();
 
 		data = ObjectReferencePointer.cast(addr);
 		scanIndex = 0;
-		scanLimit = totalInstanceSize / bytesInObjectSlot;
+		scanLimit = (int)(totalInstanceSize / bytesInObjectSlot);
 		descriptionArray = checkCache(clazz);
 		if (null == descriptionArray) {
-			descriptionArray = new boolean[(totalInstanceSize + bytesInObjectSlot - 1) / bytesInObjectSlot];
+			descriptionArray = new boolean[(int)((totalInstanceSize + bytesInObjectSlot - 1) / bytesInObjectSlot)];
 			if ((scanLimit > 0) && clazz.instanceDescription().notNull()) {
 				initializeDescriptionArray(clazz);
 				setCache(clazz, descriptionArray);

@@ -279,8 +279,8 @@ public class ValueTypeHelper {
 		}
 
 		@Override
-		public int getFlatFieldSize(J9ClassPointer clazz) throws CorruptDataException, NoSuchFieldException {
-			return clazz.flatFieldSize().intValue();
+		public long getFlatFieldSize(J9ClassPointer clazz) throws CorruptDataException, NoSuchFieldException {
+			return clazz.flatFieldSize().longValue();
 		}
 
 		@Override
@@ -479,7 +479,7 @@ public class ValueTypeHelper {
 	 * @param clazz J9Class
 	 * @return flat field size in bytes
 	 */
-	public int getFlatFieldSize(J9ClassPointer clazz) throws CorruptDataException, NoSuchFieldException {
+	public long getFlatFieldSize(J9ClassPointer clazz) throws CorruptDataException, NoSuchFieldException {
 		return 0;
 	}
 
