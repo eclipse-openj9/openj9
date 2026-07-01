@@ -87,6 +87,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output type="required" caseSensitive="yes" regex="no">topAddress</output>
 		<output type="failure" caseSensitive="yes" regex="no">jfr print: could not read recording</output>
 	</test>
+	<test id="test jfr ThreadAllocationStatistics - approx 30 seconds">
+		<command>$JFR_EXE$ print --xml --events "ThreadAllocationStatistics" experimentalRecording.jfr</command>
+		<output type="required" caseSensitive="yes" regex="no">http://www.w3.org/2001/XMLSchema-instance</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.ThreadAllocationStatistics</output>
+		<output type="success" caseSensitive="yes" regex="no">allocated</output>
+		<output type="failure" caseSensitive="yes" regex="no">jfr print: could not read recording</output>
+	</test>
 	<test id="Test JFRv2 with JMX">
 		<command>$EXE$ -Dcom.sun.management.jmxremote -Djava.rmi.server.hostname=127.0.0.1 -Dcom.sun.management.jmxremote.local.only=false  -Dcom.sun.management.jmxremote.port=9898 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -XX:+EnableOpenJ9ExperimentalFlightRecording -XX:StartFlightRecording=filename=test1.jfr -version</command>
 		<output type="success" caseSensitive="yes" regex="no">Eclipse OpenJ9 VM</output>

@@ -676,6 +676,9 @@ jfrBufferStartDo(J9JFRBuffer *buffer, J9JFRBufferWalkState *walkState);
 J9JFREvent*
 jfrBufferNextDo(J9JFRBufferWalkState *walkState);
 
+I_64
+getThreadTID(J9VMThread *currentThread, J9VMThread *vmThread);
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 /* ------------------- ArrayCopyHelpers.cpp ----------------- */
