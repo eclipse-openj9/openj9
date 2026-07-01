@@ -474,6 +474,15 @@ bool J9::Compilation::canTransformConverterMethod(TR::RecognizedMethod rm)
     }
 }
 
+bool J9::Compilation::canTransformUnsafeSetMemory()
+{
+    if (!self()->getOptions()->realTimeGC() && !TR::Compiler->om.canGenerateArraylets()
+        && !self()->getOption(TR_DisableUnsafe) && self()->cg()->canTransformUnsafeSetMemory())
+        return true;
+
+    return false;
+}
+
 bool J9::Compilation::useCompressedPointers()
 {
     // FIXME: probably have to query the GC as well
