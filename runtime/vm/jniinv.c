@@ -50,6 +50,11 @@
 #include "ffi.h"
 #endif
 
+#if JAVA_SPEC_VERSION >= 24
+#include "HeapIteratorAPI.h"
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
+
 static J9JavaVM * vmList = NULL;
 
 #ifdef J9VM_OPT_VM_LOCAL_STORAGE
@@ -72,6 +77,9 @@ void sidecarExit(J9VMThread* shutdownThread);
 static UDATA protectedDestroyJavaVM(J9PortLibrary* portLibrary, void * userData);
 static UDATA protectedDetachCurrentThread(J9PortLibrary* portLibrary, void * userData);
 static UDATA protectedInternalAttachCurrentThread(J9PortLibrary* portLibrary, void * userData);
+#if JAVA_SPEC_VERSION >= 24
+static jvmtiIterationControl cleanContinuationMonitorEnterRecord(J9VMThread *currentThread, J9MM_IterateObjectDescriptor *object, void *userData);
+#endif /* JAVA_SPEC_VERSION >= 24 */
 static IDATA launchAttachApi(J9VMThread *currentThread);
 
 J9_DECLARE_CONSTANT_UTF8(j9_init, "<init>");
@@ -383,6 +391,13 @@ protectedDestroyJavaVM(J9PortLibrary* portLibrary, void * userData)
 	if (vm->sidecarExitHook)
 		(*(vm->sidecarExitHook))(vm);
 #endif /* defined(J9VM_OPT_SIDECAR) */
+
+#if JAVA_SPEC_VERSION >= 24
+	/* Free continuation monitor enter records. */
+	vm->memoryManagerFunctions->j9mm_iterate_all_continuation_objects(
+			vmThread, vm->portLibrary, 0,
+			cleanContinuationMonitorEnterRecord, NULL);
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
 	/*
 	 * shutdown the finalizer BEFORE we shutdown daemon threads, as
@@ -1355,3 +1370,16 @@ execute31BitExitHook(J9JavaVM * vm, jint rc)
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 
 #endif /* defined(J9VM_OPT_SIDECAR) */
+
+#if JAVA_SPEC_VERSION >= 24
+static jvmtiIterationControl
+cleanContinuationMonitorEnterRecord(J9VMThread *currentThread, J9MM_IterateObjectDescriptor *object, void *userData)
+{
+	j9object_t continuationObj = object->object;
+	J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObj);
+	if (NULL != continuation) {
+		pool_kill(continuation->monitorEnterRecordPool);
+	}
+	return JVMTI_ITERATION_CONTINUE;
+}
+#endif /* JAVA_SPEC_VERSION >= 24 */
