@@ -7476,6 +7476,45 @@ static TR::Register *inlineHasNegativesOrCountPositives(TR::Node *node, bool isH
     return indexReg;
 }
 
+/**
+ * \brief
+ *   Generate inlined instructions equivalent to java/lang/Integer.compareUnsigned or java/lang/Long.compareUnsigned
+ *
+ * \param node
+ *   The tree node
+ *
+ * \param isInt
+ *   True when the method to be inlined is Integer.compareUnsigned, false when the method is Long.compareUnsigned
+ *
+ * \param cg
+ *   The Code Generator
+ */
+static TR::Register *inlineIntegerLongCompareUnsigned(TR::Node *node, bool isInt, TR::CodeGenerator *cg)
+{
+    TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+
+    TR::Register *aReg = cg->evaluate(node->getChild(0));
+    TR::Register *bReg = cg->evaluate(node->getChild(1));
+    TR::Register *zeroReg = cg->allocateRegister();
+    TR::Register *resultReg = cg->allocateRegister();
+
+    TR::RegisterDependencyConditions *dependencies = RegDeps(0, 1, cg);
+    dependencies->addPostCondition(zeroReg, TR::RealRegister::xzr);
+
+    generateCompareInstruction(cg, node, aReg, bReg, !isInt);
+    generateCSetInstruction(cg, node, resultReg, TR::CC_HI, false);
+    generateTrg1Src2Instruction(cg, TR::InstOpCode::sbcw, node, resultReg, resultReg, zeroReg);
+    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, dependencies);
+
+    cg->stopUsingRegister(zeroReg);
+    cg->decReferenceCount(node->getChild(0));
+    cg->decReferenceCount(node->getChild(1));
+
+    node->setRegister(resultReg);
+
+    return resultReg;
+}
+
 bool J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resultReg)
 {
     TR::CodeGenerator *cg = self();
@@ -7645,6 +7684,19 @@ bool J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&r
                 }
                 break;
             }
+
+            case TR::java_lang_Integer_compareUnsigned:
+                if (cg->getSupportsInlineIntegerCompareUnsigned()) {
+                    resultReg = inlineIntegerLongCompareUnsigned(node, true /* isInt */, cg);
+                    return true;
+                }
+                break;
+            case TR::java_lang_Long_compareUnsigned:
+                if (cg->getSupportsInlineLongCompareUnsigned()) {
+                    resultReg = inlineIntegerLongCompareUnsigned(node, false /* isInt */, cg);
+                    return true;
+                }
+                break;
 
             case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z: {
                 // As above, we only want to inline the JNI methods, so add an explicit test for isNative()
