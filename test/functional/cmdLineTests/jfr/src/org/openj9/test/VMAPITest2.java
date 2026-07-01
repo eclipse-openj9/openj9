@@ -25,7 +25,7 @@ import com.ibm.oti.vm.VM;
 
 public class VMAPITest2 {
 	public static void main(String[] args) throws Throwable {
-		final WorkLoad workLoad = new WorkLoad(200, 20000, 200, false);
+		final WorkLoad workLoad = new WorkLoad(50, 2000, 20, false);
 
 		Thread app = new Thread(() -> {
 			workLoad.runWork();
