@@ -3886,7 +3886,7 @@ typedef struct J9ClassLoader {
 	omrthread_monitor_t hotFieldPoolMutex;
 	omrthread_rwmutex_t cpEntriesMutex;
 	UDATA initClassPathEntryCount;
-	UDATA asyncGetCallTraceUsed;
+	UDATA keepJNIIDs;
 	omrthread_monitor_t mapCacheMutex;
 	struct J9HashTable* localmapCache;
 	struct J9HashTable* argsbitsCache;
