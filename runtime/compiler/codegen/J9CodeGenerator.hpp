@@ -632,6 +632,26 @@ public:
      */
     void setSupportsInlineUnsafeCompareAndExchange() { _j9Flags.set(SupportsInlineUnsafeCompareAndExchange); }
 
+    /** \brief
+     *    Determines whether the code generator supports inlining of java/lang/Integer.compareUnsigned()
+     */
+    bool getSupportsInlineIntegerCompareUnsigned() { return _j9Flags.testAny(SupportsInlineIntegerCompareUnsigned); }
+
+    /** \brief
+     *    Determines whether the code generator supports inlining of java/lang/Long.compareUnsigned()
+     */
+    bool getSupportsInlineLongCompareUnsigned() { return _j9Flags.testAny(SupportsInlineLongCompareUnsigned); }
+
+    /** \brief
+     *    The code generator supports inlining of java/lang/Integer.compareUnsigned()
+     */
+    void setSupportsInlineIntegerCompareUnsigned() { _j9Flags.set(SupportsInlineIntegerCompareUnsigned); }
+
+    /** \brief
+     *    The code generator supports inlining of java/lang/Long.compareUnsigned()
+     */
+    void setSupportsInlineLongCompareUnsigned() { _j9Flags.set(SupportsInlineLongCompareUnsigned); }
+
     /**
      * \brief
      *    The number of nodes between a monext and the next monent before
@@ -848,6 +868,8 @@ private:
         SupportsInlineUnsafeCompareAndExchange = 0x00040000,
         SupportsInlineStringIndexOfString = 0x00080000, /*! codegen inlining of Java string index of string */
         SupportsInlineDecodeToLatin1Impl = 0x00100000,
+        SupportsInlineIntegerCompareUnsigned = 0x00200000,
+        SupportsInlineLongCompareUnsigned = 0x00400000,
     };
 
     flags32_t _j9Flags;
