@@ -671,6 +671,8 @@ bool J9::CompilationStrategy::ProcessJittedSample::shouldProcessSample()
             != -1) // prevent recompilation when opt level is specified
     {
         shouldProcess = false;
+    } else if (_methodInfo->inhibitRecompilation()) {
+        shouldProcess = false;
     } else {
         _isAlreadyBeingCompiled
             = TR::Recompilation::isAlreadyBeingCompiled(_methodInfo->getMethodInfo(), _startPC, _fe);
@@ -931,7 +933,6 @@ void J9::CompilationStrategy::ProcessJittedSample::determineWhetherToRecompileBa
             hotStartCountDelta = 0xffff;
         _bodyInfo->setHotStartCountDelta(hotStartCountDelta);
     }
-
     if (_recompile) {
         // One more test
         if (!_isAlreadyBeingCompiled) {
@@ -1205,7 +1206,7 @@ TR_OptimizationPlan *J9::CompilationStrategy::processHWPSample(TR_MethodEvent *e
 
     methodInfo = bodyInfo->getMethodInfo();
     hotnessLevel = bodyInfo->getHotness();
-    if (bodyInfo->getIsProfilingBody() && !bodyInfo->getUsesJProfiling()) {
+    if ((bodyInfo->getIsProfilingBody() && !bodyInfo->getUsesJProfiling()) || (methodInfo->inhibitRecompilation())) {
         // We rely on a count-based recompilation for profiled methods.
         return NULL;
     }
