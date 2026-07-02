@@ -1,0 +1,16 @@
+scorecard:
+  # Setting a global scorecard option
+  output: text
+  kubeconfig: "/root/.kube/config"
+  plugins:
+    # `basic` tests configured to test 2 CRs
+    - basic:
+        cr-manifest:
+          - "deploy/crds/openj9_cr.yaml"
+          # - “deploy/crds/openj9_jitserver_cr.yaml”
+    # `olm` tests configured to test 2 CRs
+    - olm:
+        cr-manifest:
+          - "deploy/crds/openj9_cr.yaml"
+          # - “deploy/crds/openj9_jitserver_cr.yaml”
+        csv-path: "deploy/olm-catalog/openj9-operator/0.6.0/openj9-operator.v0.6.0.clusterserviceversion.yaml"
