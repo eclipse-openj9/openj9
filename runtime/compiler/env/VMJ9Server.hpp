@@ -149,6 +149,8 @@ public:
     virtual int32_t getStringUTF8Length(uintptr_t objectPointer) override;
     virtual uint64_t getStringUTF8UnabbreviatedLength(uintptr_t objectPointer) override;
     virtual bool classInitIsFinished(TR_OpaqueClassBlock *) override;
+    virtual bool classHasNativeMethods(TR_OpaqueClassBlock *) override;
+    virtual bool classHasSynchronizedMethods(TR_OpaqueClassBlock *) override;
     virtual int32_t getNewArrayTypeFromClass(TR_OpaqueClassBlock *clazz) override;
     virtual TR_OpaqueClassBlock *getClassFromNewArrayType(int32_t arrayType) override;
     virtual TR_OpaqueClassBlock *getClassFromNewArrayTypeNonNull(int32_t arrayType) override;

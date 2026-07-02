@@ -3152,20 +3152,7 @@ bool TR_EscapeAnalysis::restrictCandidates(TR::Node *node, TR::Node *reason, res
 
                 TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
                 if (_parms && fej9->hasTwoWordObjectHeader()) {
-                    TR_ScratchList<TR_ResolvedMethod> resolvedMethodsInClass(trMemory());
-                    fej9->getResolvedMethods(trMemory(), (TR_OpaqueClassBlock *)candidate->_class,
-                        &resolvedMethodsInClass);
-                    bool containsSyncMethod = false;
-                    ListIterator<TR_ResolvedMethod> resolvedIt(&resolvedMethodsInClass);
-                    TR_ResolvedMethod *resolvedMethod;
-                    for (resolvedMethod = resolvedIt.getFirst(); resolvedMethod;
-                         resolvedMethod = resolvedIt.getNext()) {
-                        if (resolvedMethod->isSynchronized()) {
-                            containsSyncMethod = true;
-                            break;
-                        }
-                    }
-                    if (!containsSyncMethod) {
+                    if (!fej9->classHasSynchronizedMethods((TR_OpaqueClassBlock *)candidate->_class)) {
                         logprintf(trace(), log, "   Make [%p] non-local because of node [%p]\n", candidate->_node,
                             reason);
                         wasRestricted = true;

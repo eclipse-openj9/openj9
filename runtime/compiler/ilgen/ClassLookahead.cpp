@@ -76,17 +76,14 @@ int32_t TR_ClassLookahead::perform()
     if (!isClassInitialized)
         return 0;
 
+    if (fej9->classHasNativeMethods(_classPointer)) {
+        _classInfo->setCannotTrustStaticFinal();
+        return 0;
+    }
+
     TR_ScratchList<TR_ResolvedMethod> resolvedMethodsInClass(comp()->trMemory());
     fej9->getResolvedMethods(comp()->trMemory(), _classPointer, &resolvedMethodsInClass);
-
-    ListIterator<TR_ResolvedMethod> resolvedMethIt(&resolvedMethodsInClass);
     TR_ResolvedMethod *resolvedMethod = NULL;
-    for (resolvedMethod = resolvedMethIt.getFirst(); resolvedMethod; resolvedMethod = resolvedMethIt.getNext()) {
-        if (resolvedMethod->isNative() || resolvedMethod->isJNINative() || resolvedMethod->isJITInternalNative()) {
-            _classInfo->setCannotTrustStaticFinal();
-            return 0;
-        }
-    }
 
     bool b = comp()->getNeedsClassLookahead();
     comp()->setNeedsClassLookahead(false);

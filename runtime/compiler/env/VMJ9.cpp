@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: IBM Bob
  *******************************************************************************/
 
 #define J9_EXTERNAL_TO_VM
@@ -6235,6 +6236,34 @@ TR_ResolvedMethod *TR_J9VMBase::getResolvedMethodForConstructorWithSig(TR_Memory
     TR_OpaqueClassBlock *classPointer, const char *signature)
 {
     return getResolvedMethodForNameAndSignature(trMemory, classPointer, "<init>", signature);
+}
+
+bool TR_J9VMBase::classHasNativeMethods(TR_OpaqueClassBlock *classPointer)
+{
+    TR::VMAccessCriticalSection vmCS(this);
+    J9Method *j9methods = (J9Method *)getMethods(classPointer);
+    uint32_t numMethods = getNumMethods(classPointer);
+    for (uint32_t i = 0; i < numMethods; i++) {
+        J9Method *method = j9methods + i;
+        J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+        if (romMethod->modifiers & J9AccNative)
+            return true;
+    }
+    return false;
+}
+
+bool TR_J9VMBase::classHasSynchronizedMethods(TR_OpaqueClassBlock *classPointer)
+{
+    TR::VMAccessCriticalSection vmCS(this);
+    J9ROMClass *romClass = TR::Compiler->cls.romClassOf(classPointer);
+    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
+    uint32_t numMethods = getNumMethods(classPointer);
+    for (uint32_t i = 0; i < numMethods; i++) {
+        if (romMethod->modifiers & J9AccSynchronized)
+            return true;
+        romMethod = nextROMMethod(romMethod);
+    }
+    return false;
 }
 
 void *TR_J9VMBase::getMethods(TR_OpaqueClassBlock *classPointer)

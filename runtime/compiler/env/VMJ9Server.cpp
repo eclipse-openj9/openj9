@@ -1053,6 +1053,20 @@ bool TR_J9ServerVM::classInitIsFinished(TR_OpaqueClassBlock *clazz)
     return std::get<0>(stream->read<bool>());
 }
 
+bool TR_J9ServerVM::classHasNativeMethods(TR_OpaqueClassBlock *clazz)
+{
+    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+    stream->write(JITServer::MessageType::VM_classHasNativeMethods, clazz);
+    return std::get<0>(stream->read<bool>());
+}
+
+bool TR_J9ServerVM::classHasSynchronizedMethods(TR_OpaqueClassBlock *clazz)
+{
+    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+    stream->write(JITServer::MessageType::VM_classHasSynchronizedMethods, clazz);
+    return std::get<0>(stream->read<bool>());
+}
+
 int32_t TR_J9ServerVM::getNewArrayTypeFromClass(TR_OpaqueClassBlock *clazz)
 {
     JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;

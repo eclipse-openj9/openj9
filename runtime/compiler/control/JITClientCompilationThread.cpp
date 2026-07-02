@@ -607,6 +607,14 @@ static bool handleResponse(JITServer::MessageType response, JITServer::ClientStr
             TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
             client->write(response, fe->classInitIsFinished(clazz));
         } break;
+        case MessageType::VM_classHasNativeMethods: {
+            TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+            client->write(response, fe->classHasNativeMethods(clazz));
+        } break;
+        case MessageType::VM_classHasSynchronizedMethods: {
+            TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+            client->write(response, fe->classHasSynchronizedMethods(clazz));
+        } break;
         case MessageType::VM_getClassFromNewArrayType: {
             int32_t index = std::get<0>(client->getRecvData<int32_t>());
             client->write(response, fe->getClassFromNewArrayType(index));

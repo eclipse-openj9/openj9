@@ -129,6 +129,8 @@ enum MessageType : uint16_t {
     VM_getObjectClassAt,
     VM_stackWalkerMaySkipFrames,
     VM_classInitIsFinished,
+    VM_classHasNativeMethods,
+    VM_classHasSynchronizedMethods,
     VM_getClassFromNewArrayType,
     VM_getArrayClassFromComponentClass,
     VM_getNullRestrictedArrayClassFromComponentClass,
