@@ -287,7 +287,7 @@ public class ValueTypeUnsafeTests {
 	@Test
 	static public void testGetValuesOfArray() throws Throwable {
 		if (isFlatteningEnabled) {
-			int layout = myUnsafe.arrayLayout(vtPointAry.getClass());
+			int layout = myUnsafe.arrayLayout(vtPointAry);
 			ValueTypePoint2D p = myUnsafe.getFlatValue(vtPointAry, vtPointAryOffset0, layout, ValueTypePoint2D.class);
 			assertEquals(p.x.i, vtPointAry[0].x.i);
 			assertEquals(p.y.i, vtPointAry[0].y.i);
@@ -304,7 +304,7 @@ public class ValueTypeUnsafeTests {
 					2,
 					new ZeroSizeValueType());
 			long zsvtAryOffset0 = myUnsafe.arrayBaseOffset(zsvtAry.getClass());
-			int layout = myUnsafe.arrayLayout(zsvtAry.getClass());
+			int layout = myUnsafe.arrayLayout(zsvtAry);
 			assertNotNull(myUnsafe.getFlatValue(zsvtAry, zsvtAryOffset0, layout, ZeroSizeValueType.class));
 		}
 	}
@@ -427,7 +427,7 @@ public class ValueTypeUnsafeTests {
 	static public void testPutValuesOfArray() throws Throwable {
 		if (isFlatteningEnabled) {
 			ValueTypePoint2D p = new ValueTypePoint2D(new ValueTypeInt(34857), new ValueTypeInt(784382));
-			int layout = myUnsafe.arrayLayout(vtPointAry.getClass());
+			int layout = myUnsafe.arrayLayout(vtPointAry);
 			myUnsafe.putFlatValue(vtPointAry, vtPointAryOffset0, layout, ValueTypePoint2D.class, p);
 			assertEquals(vtPointAry[0].x.i, p.x.i);
 			assertEquals(vtPointAry[0].y.i, p.y.i);
@@ -446,7 +446,7 @@ public class ValueTypeUnsafeTests {
 					2,
 					new ZeroSizeValueType());
 			long zsvtAryOffset0 = myUnsafe.arrayBaseOffset(zsvtAry.getClass());
-			int layout = myUnsafe.arrayLayout(zsvtAry.getClass());
+			int layout = myUnsafe.arrayLayout(zsvtAry);
 			myUnsafe.putFlatValue(zsvtAry, zsvtAryOffset0, layout, ZeroSizeValueType.class, new ZeroSizeValueType());
 		}
 	}
@@ -640,7 +640,7 @@ public class ValueTypeUnsafeTests {
 		if (isFlatteningEnabled) {
 			int original = vtIntAry[0].i;
 			ValueTypeInt newVti = new ValueTypeInt(456);
-			int layout = myUnsafe.arrayLayout(vtIntAry.getClass());
+			int layout = myUnsafe.arrayLayout(vtIntAry);
 			boolean success = compareAndSwapValue.execute(vtIntAry, vtIntAryOffset0, layout, ValueTypeInt.class, vtIntAry[0], newVti);
 			assertEquals(newVti.i, 456);
 			assertTrue(success);
@@ -653,7 +653,7 @@ public class ValueTypeUnsafeTests {
 		if (isFlatteningEnabled) {
 			int original = vtIntAry[1].i;
 			ValueTypeInt newVti = new ValueTypeInt(456);
-			int layout = myUnsafe.arrayLayout(vtIntAry.getClass());
+			int layout = myUnsafe.arrayLayout(vtIntAry);
 			boolean success = compareAndSwapValue.execute(vtIntAry, vtIntAryOffset1, layout, ValueTypeInt.class, vtIntAry[1], newVti);
 			assertEquals(newVti.i, 456);
 			assertTrue(success);
@@ -666,7 +666,7 @@ public class ValueTypeUnsafeTests {
 		if (isFlatteningEnabled) {
 			int original = vtIntAry[0].i;
 			ValueTypeInt newVti = new ValueTypeInt(328);
-			int layout = myUnsafe.arrayLayout(vtIntAry.getClass());
+			int layout = myUnsafe.arrayLayout(vtIntAry);
 			boolean success = compareAndSwapValue.execute(vtIntAry, vtIntAryOffset0, layout, ValueTypeInt.class, new ValueTypeInt(original + 1), newVti);
 			assertEquals(newVti.i, 328);
 			assertFalse(success);
@@ -679,7 +679,7 @@ public class ValueTypeUnsafeTests {
 		if (isFlatteningEnabled) {
 			int original = vtIntAry[1].i;
 			ValueTypeInt newVti = new ValueTypeInt(328);
-			int layout = myUnsafe.arrayLayout(vtIntAry.getClass());
+			int layout = myUnsafe.arrayLayout(vtIntAry);
 			boolean success = compareAndSwapValue.execute(vtIntAry, vtIntAryOffset1, layout, ValueTypeInt.class, new ValueTypeInt(original + 1), newVti);
 			assertEquals(newVti.i, 328);
 			assertFalse(success);
@@ -779,7 +779,7 @@ public class ValueTypeUnsafeTests {
 	@Test
 	static public void testGetAndSetArray0() throws Throwable {
 		if (isFlatteningEnabled) {
-			int layout = myUnsafe.arrayLayout(vtIntAry.getClass());
+			int layout = myUnsafe.arrayLayout(vtIntAry);
 			int original = vtIntAry[0].i;
 			ValueTypeInt newVti = new ValueTypeInt(456);
 			Object result = myUnsafe.getAndSetFlatValue(vtIntAry, vtIntAryOffset0, layout, ValueTypeInt.class, newVti);
@@ -792,7 +792,7 @@ public class ValueTypeUnsafeTests {
 	@Test
 	static public void testGetAndSetArray1() throws Throwable {
 		if (isFlatteningEnabled) {
-			int layout = myUnsafe.arrayLayout(vtIntAry.getClass());
+			int layout = myUnsafe.arrayLayout(vtIntAry);
 			int original = vtIntAry[1].i;
 			ValueTypeInt newVti = new ValueTypeInt(456);
 			Object result = myUnsafe.getAndSetFlatValue(vtIntAry, vtIntAryOffset1, layout, ValueTypeInt.class, newVti);
