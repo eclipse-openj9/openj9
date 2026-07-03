@@ -858,7 +858,7 @@ def build_all() {
     stage ('Queue') {
         timeout(time: 10, unit: 'HOURS') {
             node("${NODE}") {
-                timeout(time: 5, unit: 'HOURS') {
+                timeout(time: 6, unit: 'HOURS') {
                     stage('Setup') {
                         if ("${DOCKER_IMAGE}") {
                             // TODO: Remove this workaround when https://github.com/adoptium/infrastructure/issues/3597 is resolved. Related: infra 9292.
