@@ -6005,6 +6005,34 @@ uintptr_t TR_J9VMBase::getBytecodePC(TR_OpaqueMethodBlock *method, TR_ByteCodeIn
     return methodStart + (uintptr_t)(bcInfo.getByteCodeIndex());
 }
 
+/**
+ * @brief Helper to create a symbol reference for a resolved method.
+ *        Handles static and virtual methods only.
+ *        `method` must be one of the methods in class `c`.
+ *
+ * @param comp The current compilation object
+ * @param owningMethodSym The owning method symbol, or NULL
+ * @param method The resolved method to create a symbol reference for
+ * @param c The class that contains `method`
+ * @return A symbol reference for the given method
+ */
+TR::SymbolReference *TR_J9VMBase::createMethodSymRefForResolvedMethod(TR::Compilation *comp,
+    TR::ResolvedMethodSymbol *owningMethodSym, TR_ResolvedMethod *method, TR_OpaqueClassBlock *c)
+{
+    TR::SymbolReference *symRef = NULL;
+    if (method->isStatic()) {
+        symRef = comp->getSymRefTab()->findOrCreateMethodSymbol(
+            owningMethodSym ? owningMethodSym->getResolvedMethodIndex() : JITTED_METHOD_INDEX, -1, method,
+            TR::MethodSymbol::Static);
+    } else {
+        symRef = comp->getSymRefTab()->findOrCreateMethodSymbol(
+            owningMethodSym ? owningMethodSym->getResolvedMethodIndex() : JITTED_METHOD_INDEX, -1, method,
+            TR::MethodSymbol::Virtual);
+        symRef->setOffset(getVTableSlot(method->getPersistentIdentifier(), c));
+    }
+    return symRef;
+}
+
 // Given a class signature classSig, find the symbol references of all classSig's methods
 // whose signatures are given in methodSig. methodCount is the number of methods.
 // Returns the number of methods found in the class
@@ -6015,6 +6043,27 @@ int TR_J9VMBase::findOrCreateMethodSymRef(TR::Compilation *comp, TR::ResolvedMet
     TR_OpaqueClassBlock *c = getClassFromSignature(classSig, strlen(classSig), comp->getCurrentMethod());
     if (!c) {
         logprintf(comp->getOption(TR_TraceILGen), comp->log(), "class %s not found\n", classSig);
+        return 0;
+    }
+
+    // Common case optimization: if only one symRef is needed, use getResolvedMethodForNameAndSignature directly to
+    // avoid creating TR_ResolvedMethod objects for every method in the class.
+    if (methodCount == 1 && !symRefs[0]) {
+        const char *dotPos = strchr(methodSig[0], '.');
+        TR_ASSERT(dotPos, ". not found in method signature");
+        const char *parenPos = strchr(dotPos, '(');
+        TR_ASSERT(parenPos, "( not found in method signature");
+
+        int nameLen = parenPos - dotPos - 1;
+        char *methodName = (char *)comp->trMemory()->allocateStackMemory(nameLen + 1);
+        strncpy(methodName, dotPos + 1, nameLen);
+        methodName[nameLen] = '\0';
+
+        TR_ResolvedMethod *method = getResolvedMethodForNameAndSignature(comp->trMemory(), c, methodName, parenPos);
+        if (method) {
+            symRefs[0] = createMethodSymRefForResolvedMethod(comp, owningMethodSym, method, c);
+            return 1;
+        }
         return 0;
     }
 
@@ -6040,16 +6089,7 @@ int TR_J9VMBase::findOrCreateMethodSymRef(TR::Compilation *comp, TR::ResolvedMet
         int32_t len = strlen(sig);
         for (int i = 0; i < methodCount; i++) {
             if (!symRefs[i] && !strncmp(sig, methodSig[i], methodSigLen[i])) {
-                if (method->isStatic()) {
-                    symRefs[i] = comp->getSymRefTab()->findOrCreateMethodSymbol(
-                        owningMethodSym ? owningMethodSym->getResolvedMethodIndex() : JITTED_METHOD_INDEX, -1, method,
-                        TR::MethodSymbol::Static);
-                } else {
-                    symRefs[i] = comp->getSymRefTab()->findOrCreateMethodSymbol(
-                        owningMethodSym ? owningMethodSym->getResolvedMethodIndex() : JITTED_METHOD_INDEX, -1, method,
-                        TR::MethodSymbol::Virtual);
-                    symRefs[i]->setOffset(getVTableSlot(method->getPersistentIdentifier(), c));
-                }
+                symRefs[i] = createMethodSymRefForResolvedMethod(comp, owningMethodSym, method, c);
                 numMethodsFound++;
             }
         }

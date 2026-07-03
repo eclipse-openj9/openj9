@@ -1804,6 +1804,10 @@ protected:
     // A flag notifying this thread that the JITServer AOT deserializer was reset.
     bool _deserializerWasReset;
 #endif // defined(J9VM_OPT_JITSERVER)
+
+private:
+    TR::SymbolReference *createMethodSymRefForResolvedMethod(TR::Compilation *comp,
+        TR::ResolvedMethodSymbol *owningMethodSym, TR_ResolvedMethod *method, TR_OpaqueClassBlock *c);
 };
 
 class TR_J9VM : public TR_J9VMBase {
