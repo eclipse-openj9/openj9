@@ -147,6 +147,14 @@ void J9::X86::CodeGenerator::initialize()
         cg->setSupportsInlineUnsafeCompareAndExchange();
     }
 
+    static const bool disableCompareUnsignedInlining = feGetEnv("TR_DisableCompareUnsignedInlining") != NULL;
+    if (!disableCompareUnsignedInlining) {
+        cg->setSupportsInlineIntegerCompareUnsigned();
+        if (comp->target().is64Bit()) {
+            cg->setSupportsInlineLongCompareUnsigned();
+        }
+    }
+
     // Disable fast gencon barriers for AOT compiles because relocations on
     // the inlined heap addresses are not available (yet).
     //
