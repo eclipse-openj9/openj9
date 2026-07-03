@@ -6929,14 +6929,14 @@ public final class Unsafe {
 	 * Reports the kind of layout used for an element in the storage
 	 * allocation of the given array.
 	 *
-	 * @param arrayClass array class to inspect
+	 * @param array array to inspect
 	 * @return layout kind of the array elements
 	 */
-	public int arrayLayout(Class<?> arrayClass) {
-		if (null == arrayClass) {
+	public int arrayLayout(Object[] array) {
+		if (null == array) {
 			throw new NullPointerException();
 		}
-		return isFlatArray(arrayClass) ? ARRAY_LAYOUT_FLATTENED : ARRAY_LAYOUT_REFERENCE;
+		return isFlatArray(array.getClass()) ? ARRAY_LAYOUT_FLATTENED : ARRAY_LAYOUT_REFERENCE;
 	}
 
 	/**
