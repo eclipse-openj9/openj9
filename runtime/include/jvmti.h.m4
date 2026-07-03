@@ -493,7 +493,10 @@ ifelse(eval(JAVA_SPEC_VERSION >= 11), 1,
 [	unsigned int can_generate_sampled_object_alloc_events : 1;
 ifelse(eval(JAVA_SPEC_VERSION >= 19), 1,
 [	unsigned int can_support_virtual_threads : 1;
-	unsigned int : 3;],
+ifelse(J9VM_OPT_VALHALLA_VALUE_TYPES, 1,
+[	unsigned int can_support_value_objects : 1;
+	unsigned int : 2;],
+[	unsigned int : 3;])],
 [	unsigned int : 4;])],
 [	unsigned int : 5;])],
 [	unsigned int : 7;])
