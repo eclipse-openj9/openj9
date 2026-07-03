@@ -45,6 +45,8 @@ createContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 	I_64 start = j9time_hires_clock();
 #endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
 
+	vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_VTHREAD_CREATED;
+
 	/* First check if local cache is available. */
 	if (NULL != currentThread->continuationT1Cache) {
 		for (U_32 i = 0; i < vm->continuationT1Size; i++) {
