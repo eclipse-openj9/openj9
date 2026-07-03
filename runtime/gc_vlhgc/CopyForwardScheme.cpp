@@ -535,13 +535,22 @@ MM_CopyForwardScheme::postProcessRegions(MM_EnvironmentVLHGC *env)
 	while (NULL != (region = regionIterator.nextRegion())) {
 		MM_MemoryPool *pool = region->getMemoryPool();
 		if (region->_copyForwardData._evacuateSet) {
-			if (region->isEden()) {
+			/* Use logicalAge == 0 to classify both evacuate and survivor regions consistently.
+			 * This includes true Eden regions (ADDRESS_ORDERED type) as well as non-Eden regions
+			 * that have logicalAge 0 (ADDRESS_ORDERED_MARKED, i.e. survivors from the previous GMP
+			 * at compact group 0).  Both kinds of age-0 regions produce age-0 survivor regions
+			 * (logicalAge of the destination is derived from the source compact group), so counting
+			 * them uniformly on both sides keeps _edenSurvivorRegionCount / _edenEvacuateRegionCount
+			 * a meaningful ratio.
+			 */
+//			if (region->isEden()) {
+			if (0 == region->getLogicalAge()) {
 				static_cast<MM_CycleStateVLHGC *>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._edenEvacuateRegionCount += 1;
 			} else {
 				static_cast<MM_CycleStateVLHGC *>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._nonEdenEvacuateRegionCount += 1;
 			}
 		} else if (region->isFreshSurvivorRegion()) {
-			/* check Eden Survivor Regions */
+			/* check Eden Survivor Regions — logicalAge == 0 matches the evacuate classification above */
 			if (0 == region->getLogicalAge()) {
 				static_cast<MM_CycleStateVLHGC *>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._edenSurvivorRegionCount += 1;
 			} else {
