@@ -172,6 +172,11 @@ bool TR_RuntimeAssumptionTable::init()
     return true;
 }
 
+void *TR_RuntimeAssumptionTable::allocateRAPersistentMemory(size_t size)
+{
+    return TR::Compiler->persistentMemory()->allocatePersistentMemory(size, TR_Memory::Assumption);
+}
+
 void OMR::RuntimeAssumption::addToRAT(TR_PersistentMemory *persistentMemory, TR_RuntimeAssumptionKind kind,
     TR_FrontEnd *fe, OMR::RuntimeAssumption **sentinel)
 {

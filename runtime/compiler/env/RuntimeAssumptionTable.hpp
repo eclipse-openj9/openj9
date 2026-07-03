@@ -84,6 +84,8 @@ public:
 
     bool init(); // Must call this during bootstrap on a single thread because it is not MT safe
 
+    static void *allocateRAPersistentMemory(size_t size);
+
     static uintptr_t hashCode(uintptr_t key)
     {
         return (key >> 2) * 2654435761u;
