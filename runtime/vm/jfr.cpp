@@ -1922,6 +1922,7 @@ jfrShutdownInternalStructures(J9HookInterface **hook, UDATA eventNum, void *even
 	J9VMThread *currentThread = ((J9VMInitEvent *)eventData)->vmThread;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	vm->extendedRuntimeFlags3 &= ~J9_EXTENDED_RUNTIME3_ENABLE_JFR_CLASSLOAD_TRANSFORM;
 
@@ -1933,8 +1934,11 @@ jfrShutdownInternalStructures(J9HookInterface **hook, UDATA eventNum, void *even
 	vm->jfrState.jfrEventClassRef = NULL;
 	vm->jfrState.jfrInternalEventClassRef = NULL;
 	vm->jfrState.chunkRotationMonitor = NULL;
-	if (J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JFR_V2_SUPPORT)) {
+	if (isJFRV2SupportEnabled(vm)) {
 		(*hook)->J9HookUnregister(hook, J9HOOK_VM_CLASS_INITIALIZE, jfrClassInitialize, NULL);
+		if (NULL != vm->jfrState.metaDataBlobFile) {
+			j9mem_free_memory(vm->jfrState.metaDataBlobFile);
+		}
 	}
 }
 
