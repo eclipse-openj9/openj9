@@ -69,12 +69,12 @@ void J9::ARM64::CodeGenerator::initialize()
     cg->setSupportsPrimitiveArrayCopy();
     cg->setSupportsReferenceArrayCopy();
 
-    static char *disableMonitorCacheLookup = feGetEnv("TR_disableMonitorCacheLookup");
+    static const char *disableMonitorCacheLookup = feGetEnv("TR_disableMonitorCacheLookup");
     if (!disableMonitorCacheLookup) {
         comp->setOption(TR_EnableMonitorCacheLookup);
     }
 
-    static bool disableInlineVectorizedMismatch = feGetEnv("TR_disableInlineVectorizedMismatch") != NULL;
+    static const bool disableInlineVectorizedMismatch = feGetEnv("TR_disableInlineVectorizedMismatch") != NULL;
     if (cg->getSupportsArrayCmpLen() && !disableInlineVectorizedMismatch) {
         cg->setSupportsInlineVectorizedMismatch();
     }
@@ -84,34 +84,35 @@ void J9::ARM64::CodeGenerator::initialize()
     if ((!TR::Compiler->om.canGenerateArraylets()) && (!comp->getOption(TR_DisableFastStringIndexOf))) {
         cg->setSupportsInlineStringIndexOf();
     }
-    static bool disableInlineStrIdxOfStr = feGetEnv("TR_disableInlineStrIdxOfStr") != NULL;
+    static const bool disableInlineStrIdxOfStr = feGetEnv("TR_disableInlineStrIdxOfStr") != NULL;
     if ((!TR::Compiler->om.canGenerateArraylets()) && (!comp->getOption(TR_DisableFastStringIndexOf))
         && !disableInlineStrIdxOfStr) {
         cg->setSupportsInlineStringIndexOfString();
     }
-    static bool disableInlineStringLatin1Inflate = feGetEnv("TR_disableInlineStringLatin1Inflate") != NULL;
+    static const bool disableInlineStringLatin1Inflate = feGetEnv("TR_disableInlineStringLatin1Inflate") != NULL;
     if ((!TR::Compiler->om.canGenerateArraylets()) && (!disableInlineStringLatin1Inflate)) {
         cg->setSupportsInlineStringLatin1Inflate();
     }
     if (comp->fej9()->hasFixedFrameC_CallingConvention())
         cg->setHasFixedFrameC_CallingConvention();
 
-    static bool disableCASInlining = feGetEnv("TR_DisableCASInlining") != NULL;
+    static const bool disableCASInlining = feGetEnv("TR_DisableCASInlining") != NULL;
     if (!disableCASInlining) {
         cg->setSupportsInlineUnsafeCompareAndSet();
     }
 
-    static bool disableCAEInlining = feGetEnv("TR_DisableCAEInlining") != NULL;
+    static const bool disableCAEInlining = feGetEnv("TR_DisableCAEInlining") != NULL;
     if (!disableCAEInlining) {
         cg->setSupportsInlineUnsafeCompareAndExchange();
     }
 
-    static bool disableInlineStringCodingHasNegatives = feGetEnv("TR_DisableInlineStringCodingHasNegatives") != NULL;
+    static const bool disableInlineStringCodingHasNegatives
+        = feGetEnv("TR_DisableInlineStringCodingHasNegatives") != NULL;
     if (!TR::Compiler->om.canGenerateArraylets() && !disableInlineStringCodingHasNegatives) {
         cg->setSupportsInlineStringCodingHasNegatives();
     }
 #if JAVA_SPEC_VERSION >= 19
-    static bool disableInlineStringCodingCountPositives
+    static const bool disableInlineStringCodingCountPositives
         = feGetEnv("TR_DisableInlineStringCodingCountPositives") != NULL;
     if (!TR::Compiler->om.canGenerateArraylets() && !disableInlineStringCodingCountPositives) {
         cg->setSupportsInlineStringCodingCountPositives();

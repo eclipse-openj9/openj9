@@ -3936,7 +3936,7 @@ TR::Register *J9::ARM64::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, 
     // The number of dimensions should always be an iconst
     TR_ASSERT_FATAL(secondChild->getOpCodeValue() == TR::iconst, "dims of multianewarray must be iconst");
     uint32_t nDims = secondChild->get32bitIntegralValue();
-    static bool disableInlineMultianewArray = feGetEnv("TR_DisableInlineMultianewArray") != NULL;
+    static const bool disableInlineMultianewArray = feGetEnv("TR_DisableInlineMultianewArray") != NULL;
 
     // Get the size of the elements in the leaf components
     int32_t leafArrayElementSize = TR::Compiler->om.getTwoDimensionalArrayComponentSize(node->getThirdChild());
@@ -6742,7 +6742,7 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, TR::CodeGenerator *c
  */
 static TR::Register *inlineIntrinsicStringIndexOfString(TR::Node *node, TR::CodeGenerator *cg, bool isLatin1)
 {
-    static bool verboseInlineStrIdxOfStr = (feGetEnv("TR_verboseInlineStrIdxOfStr") != NULL);
+    static const bool verboseInlineStrIdxOfStr = (feGetEnv("TR_verboseInlineStrIdxOfStr") != NULL);
     if (verboseInlineStrIdxOfStr) {
         fprintf(stderr, "*%s.indexOfString(): %s @%s\n", isLatin1 ? "Latin1" : "UTF16", cg->comp()->signature(),
             cg->comp()->getHotnessName());
@@ -7543,7 +7543,7 @@ bool J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&r
         bool disableCAEInlining = !cg->getSupportsInlineUnsafeCompareAndExchange();
         switch (methodSymbol->getRecognizedMethod()) {
             case TR::java_lang_Thread_onSpinWait: {
-                static char *disableOSW = feGetEnv("TR_noYieldOnSpinWait");
+                static const char *disableOSW = feGetEnv("TR_noYieldOnSpinWait");
                 if (!disableOSW) {
                     generateInstruction(cg, TR::InstOpCode::yield, node);
 
