@@ -759,6 +759,7 @@ createField(struct J9VMThread *vmThread, jfieldID fieldID)
 	j9object_t fieldObject = NULL;
 	J9Class *jlrFieldClass = J9VMJAVALANGREFLECTFIELD(vmThread->javaVM);
 	UDATA initStatus;
+	U_32 fieldModifiers = 0;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	U_32 fieldFlags = 0; /* used to calculate value of Field.flags in value type builds */
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
@@ -832,7 +833,14 @@ createField(struct J9VMThread *vmThread, jfieldID fieldID)
 	J9VMJAVALANGREFLECTFIELD_SET_SLOT(vmThread, fieldObject, (U_32)(j9FieldID->index));
 
 	J9VMJAVALANGREFLECTFIELD_SET_CLAZZ(vmThread, fieldObject, J9VM_J9CLASS_TO_HEAPCLASS(j9FieldID->declaringClass));
-	J9VMJAVALANGREFLECTFIELD_SET_MODIFIERS(vmThread, fieldObject, j9FieldID->field->modifiers & CFR_FIELD_ACCESS_MASK);
+
+	fieldModifiers = j9FieldID->field->modifiers & CFR_FIELD_ACCESS_MASK;
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+	if (!J9_CLASSFILE_OR_ROMCLASS_SUPPORTS_STRICT_FIELDS(j9FieldID->declaringClass->romClass)) {
+		fieldModifiers &= ~CFR_ACC_STRICT;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+	J9VMJAVALANGREFLECTFIELD_SET_MODIFIERS(vmThread, fieldObject, fieldModifiers);
 #if JAVA_SPEC_VERSION >= 15
 	/* Trust that static final fields, and final fields of hidden, record or value classes will not be modified. */
 	if (J9_ARE_ALL_BITS_SET(j9FieldID->field->modifiers, J9AccFinal)) {
