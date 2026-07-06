@@ -4785,6 +4785,68 @@ TR::KnownObjectTable::Index TR_J9VMBase::getLayoutVarHandle(TR::Compilation *com
     return result;
 }
 
+// Returns the layout object pointer when layoutIndex is a known
+// ValueLayouts$AbstractValueLayout instance, or 0 otherwise. The caller must hold VM access.
+static uintptr_t knownAbstractValueLayout(TR_J9VMBase *fej9, TR::Compilation *comp,
+    TR::KnownObjectTable::Index layoutIndex)
+{
+    TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+    if (!knot || layoutIndex == TR::KnownObjectTable::UNKNOWN || knot->isNull(layoutIndex))
+        return 0;
+
+    const char * const layoutClassName = "jdk/internal/foreign/layout/ValueLayouts$AbstractValueLayout";
+    TR_OpaqueClassBlock *layoutClass = fej9->getSystemClassFromClassName(layoutClassName, (int)strlen(layoutClassName));
+    TR_OpaqueClassBlock *layoutObjClass = fej9->getObjectClassFromKnownObjectIndex(comp, layoutIndex);
+    if (layoutClass == NULL || fej9->isInstanceOf(layoutObjClass, layoutClass, true, true) != TR_yes)
+        return 0;
+
+    return knot->getPointer(layoutIndex);
+}
+
+TR_J9VMBase::LayoutByteOrder TR_J9VMBase::getLayoutByteOrder(TR::Compilation *comp,
+    TR::KnownObjectTable::Index layoutIndex)
+{
+    TR::VMAccessCriticalSection getLayoutByteOrder(this);
+    uintptr_t layoutObj = knownAbstractValueLayout(this, comp, layoutIndex);
+    if (!layoutObj)
+        return LayoutByteOrder::UNKNOWN;
+
+    uintptr_t orderObj = getReferenceField(layoutObj, "order", "Ljava/nio/ByteOrder;");
+    if (!orderObj)
+        return LayoutByteOrder::UNKNOWN;
+
+    const char * const byteOrderClassName = "java/nio/ByteOrder";
+    const int byteOrderClassNameLen = (int)strlen(byteOrderClassName);
+    TR_OpaqueClassBlock *byteOrderClass = getSystemClassFromClassName(byteOrderClassName, byteOrderClassNameLen);
+    if (byteOrderClass == NULL)
+        return LayoutByteOrder::UNKNOWN;
+
+    void *leStaticAddr = getStaticFieldAddress(byteOrderClass, (unsigned char *)"LITTLE_ENDIAN", 13,
+        (unsigned char *)"Ljava/nio/ByteOrder;", 20);
+    if (leStaticAddr == NULL)
+        return LayoutByteOrder::UNKNOWN;
+
+    uintptr_t leObj = getStaticReferenceFieldAtAddress((uintptr_t)leStaticAddr);
+    bool layoutIsLE = (orderObj == leObj);
+    bool hostIsLE = TR::Compiler->target.cpu.isLittleEndian();
+    return (layoutIsLE == hostIsLE) ? LayoutByteOrder::NATIVE : LayoutByteOrder::REVERSED;
+}
+
+int64_t TR_J9VMBase::getLayoutByteAlignment(TR::Compilation *comp, TR::KnownObjectTable::Index layoutIndex)
+{
+    TR::VMAccessCriticalSection getLayoutByteAlignment(this);
+    uintptr_t layoutObj = knownAbstractValueLayout(this, comp, layoutIndex);
+    if (!layoutObj)
+        return 0;
+
+    // byteAlignment is declared on the AbstractLayout superclass and constrained to a
+    // power of two, and is >= 1 at construction time, so any other value means the read failed.
+    int64_t byteAlignment = getInt64Field(layoutObj, "byteAlignment");
+    if (byteAlignment < 1 || (byteAlignment & (byteAlignment - 1)) != 0)
+        return 0;
+    return byteAlignment;
+}
+
 TR::KnownObjectTable::Index TR_J9VMBase::getMethodAccessorIndex(TR::Compilation *comp,
     TR::KnownObjectTable::Index methodIndex)
 {
