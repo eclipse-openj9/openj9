@@ -315,6 +315,8 @@ public:
     virtual TR::KnownObjectTable::Index getMethodAccessorIndex(TR::Compilation *comp,
         TR::KnownObjectTable::Index methodIndex) override;
 #endif
+    virtual LayoutByteOrder getLayoutByteOrder(TR::Compilation *comp, TR::KnownObjectTable::Index layoutIndex) override;
+    virtual int64_t getLayoutByteAlignment(TR::Compilation *comp, TR::KnownObjectTable::Index layoutIndex) override;
     virtual TR::KnownObjectTable::Index getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(TR::Compilation *comp,
         TR::KnownObjectTable::Index mhIndex, const char *fieldName) override;
     virtual bool isMethodHandleExpectedType(TR::Compilation *comp, TR::KnownObjectTable::Index mhIndex,

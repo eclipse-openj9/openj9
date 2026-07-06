@@ -1094,6 +1094,16 @@ static bool handleResponse(JITServer::MessageType response, JITServer::ClientStr
                 vhObj = knot->getPointerLocation(vhIndex);
             client->write(response, vhIndex, vhObj);
         } break;
+        case MessageType::VM_getLayoutByteOrder: {
+            auto recv = client->getRecvData<TR::KnownObjectTable::Index>();
+            int32_t lbo = (int32_t)fe->getLayoutByteOrder(comp, std::get<0>(recv));
+            client->write(response, lbo);
+        } break;
+        case MessageType::VM_getLayoutByteAlignment: {
+            auto recv = client->getRecvData<TR::KnownObjectTable::Index>();
+            int64_t byteAlignment = fe->getLayoutByteAlignment(comp, std::get<0>(recv));
+            client->write(response, byteAlignment);
+        } break;
         case MessageType::VM_getMethodAccessorIndex: {
             auto recv = client->getRecvData<TR::KnownObjectTable::Index>();
             TR::KnownObjectTable::Index maIndex = fe->getMethodAccessorIndex(comp, std::get<0>(recv));
