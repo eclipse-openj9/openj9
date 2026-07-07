@@ -1338,7 +1338,7 @@ trcAddComponent(UtModuleInfo *modInfo, const char **format)
 		/*
 		 * Required space following the trace type ?
 		 */
-		if ((thisFormat = strchr(format[i], ' ')) == NULL) {
+		if ((thisFormat = (char *)strchr(format[i], ' ')) == NULL) {
 			rc = OMR_ERROR_ILLEGAL_ARGUMENT;
 			break;
 		}

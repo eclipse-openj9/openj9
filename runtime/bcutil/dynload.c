@@ -109,11 +109,11 @@ findLocallyDefinedClass(J9VMThread * vmThread, J9Module * j9module, U_8 * classN
 			if (J9_ARE_NO_BITS_SET(javaVM->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
 				module = javaVM->javaBaseModule;
 			} else {
-				char *packageEnd = strrchr((const char*)mbString, '/');
+				const char *packageEnd = strrchr((const char *)mbString, '/');
 
 				if (NULL != packageEnd) {
 					omrthread_monitor_enter(javaVM->classLoaderModuleAndLocationMutex);
-					module = J9_VM_FUNCTION(vmThread, findModuleForPackage)(vmThread, classLoader, mbString, (U_32)((U_8 *)packageEnd - mbString));
+					module = J9_VM_FUNCTION(vmThread, findModuleForPackage)(vmThread, classLoader, mbString, (U_32)((const U_8 *)packageEnd - mbString));
 					omrthread_monitor_exit(javaVM->classLoaderModuleAndLocationMutex);
 				}
 			}
@@ -144,12 +144,12 @@ findLocallyDefinedClass(J9VMThread * vmThread, J9Module * j9module, U_8 * classN
 					&& J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_FIND_MODULE_ON_FAIL)
 				) {
 					J9Module *j9moduleFromPackage = NULL;
-					char *packageEnd = strrchr((const char*)className, '/');
+					const char *packageEnd = strrchr((const char *)className, '/');
 
 					if (NULL != packageEnd) {
 						omrthread_monitor_enter(javaVM->classLoaderModuleAndLocationMutex);
 
-						j9moduleFromPackage = J9_VM_FUNCTION(vmThread, findModuleForPackage)(vmThread, classLoader, className, (U_32)((U_8 *)packageEnd - className));
+						j9moduleFromPackage = J9_VM_FUNCTION(vmThread, findModuleForPackage)(vmThread, classLoader, className, (U_32)((const U_8 *)packageEnd - className));
 
 						if ((NULL != j9moduleFromPackage) && (j9moduleFromPackage != j9module)) {
 							J9ModuleExtraInfo *moduleInfo = J9_VM_FUNCTION(vmThread, findModuleInfoForModule)(vmThread, classLoader, j9moduleFromPackage);
