@@ -137,6 +137,11 @@ void J9::X86::CodeGenerator::initialize()
         cg->setSupportsInlineVectorizedMismatch();
     }
 
+    static const bool disableStringCompressIntrinsic = feGetEnv("TR_DisableStringCompressIntrinsic") != NULL;
+    if (comp->target().is64Bit() && !TR::Compiler->om.canGenerateArraylets() && !disableStringCompressIntrinsic) {
+        cg->setSupportsInlineStringUTF16Compress();
+    }
+
     static bool disableCASInlining = feGetEnv("TR_DisableCASInlining") != NULL;
     if (!disableCASInlining) {
         cg->setSupportsInlineUnsafeCompareAndSet();
