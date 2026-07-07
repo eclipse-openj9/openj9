@@ -634,7 +634,7 @@ TR::Register *J9::Z::TreeEvaluator::inlineStringLatin1CompareToUTF16Values(TR::N
 
     // Calculate lim = min(len1, len2)
     // Use LLGFR to zero-extend 32-bit int parameters to 64-bit registers
-    generateRRInstruction(cg, TR::InstOpCode::CGR, node, len1Reg, len2Reg);
+    generateRRInstruction(cg, TR::InstOpCode::CR, node, len1Reg, len2Reg);
     generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, node, useLenLabel);
     generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, limReg, len2Reg);
     generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, continueLabel);
