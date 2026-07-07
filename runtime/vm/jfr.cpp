@@ -78,6 +78,7 @@ static void jfrShutdownInternalStructures(J9HookInterface **hook, UDATA eventNum
 static void notifyForChunkRotation(J9VMThread *currentThread);
 static void checkAvailableSpaceInGlobalBuffer(J9VMThread *currentThread);
 static void jfrClassInitialize(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
+static bool isChunkRotationMonitor(J9VMThread *currentThread, omrthread_monitor_t monitor);
 
 static void
 freeThreadIDs(J9VMThread *currentThread)
@@ -318,8 +319,8 @@ flushBufferToGlobal(J9VMThread *currentThread, J9VMThread *flushThread)
 	omrthread_monitor_enter(vm->jfrBufferMutex);
 	if (vm->jfrBuffer.bufferRemaining < bufferSize) {
 		if (isJFRV2SupportEnabled(vm)) {
-			notifyForChunkRotation(currentThread);
 			omrthread_monitor_exit(vm->jfrBufferMutex);
+			notifyForChunkRotation(currentThread);
 			success = false;
 			goto done;
 		} else if (!writeOutGlobalBuffer(currentThread, false, false)) {
@@ -747,14 +748,34 @@ jfrVMMonitorWaited(J9HookInterface **hook, UDATA eventNum, void *eventData, void
 	j9tty_printf(PORTLIB, "\n!!! VM monitor waited %p\n", currentThread);
 #endif /* defined(DEBUG) */
 
-	J9JFRMonitorWaited *jfrEvent = (J9JFRMonitorWaited *)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_OBJECT_WAIT, sizeof(*jfrEvent));
-	if (NULL != jfrEvent) {
-		jfrEvent->time = (event->millis * 1000000) + event->nanos;
-		jfrEvent->duration = j9time_nano_time() - event->startTicks;
-		jfrEvent->monitorClass = event->monitorClass;
-		jfrEvent->monitorAddress = event->monitorAddress;
-		jfrEvent->timedOut = (J9THREAD_TIMED_OUT == event->reason);
+	if (!isChunkRotationMonitor(currentThread, event->monitor)) {
+		J9JFRMonitorWaited *jfrEvent = (J9JFRMonitorWaited *)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_OBJECT_WAIT, sizeof(*jfrEvent));
+		if (NULL != jfrEvent) {
+			jfrEvent->time = (event->millis * 1000000) + event->nanos;
+			jfrEvent->duration = j9time_nano_time() - event->startTicks;
+			jfrEvent->monitorClass = event->monitorClass;
+			jfrEvent->monitorAddress = event->monitorAddress;
+			jfrEvent->timedOut = (J9THREAD_TIMED_OUT == event->reason);
+		}
 	}
+}
+
+static bool
+isChunkRotationMonitor(J9VMThread *currentThread, omrthread_monitor_t monitor)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	bool result = false;
+
+	if (isJFRV2SupportEnabled(vm)) {
+		J9ObjectMonitor *objectMonitor = monitorTableAt(currentThread, J9_JNI_UNWRAP_REFERENCE(vm->jfrState.chunkRotationMonitor));
+
+		if (objectMonitor->monitor == monitor) {
+			result = true;
+		}
+	}
+
+
+	return result;
 }
 
 /**
@@ -775,15 +796,16 @@ jfrVMMonitorEntered(J9HookInterface **hook, UDATA eventNum, void *eventData, voi
 #if defined(DEBUG)
 	j9tty_printf(PORTLIB, "\n!!! VM monitor entered %p\n", currentThread);
 #endif /* defined(DEBUG) */
+	if (!isChunkRotationMonitor(currentThread, event->monitor)) {
+		J9JFRMonitorEntered *jfrEvent = (J9JFRMonitorEntered *)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_MONITOR_ENTER, sizeof(*jfrEvent));
+		if (NULL != jfrEvent) {
+			initializeEventFields(currentThread, currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_MONITOR_ENTER);
 
-	J9JFRMonitorEntered *jfrEvent = (J9JFRMonitorEntered *)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_MONITOR_ENTER, sizeof(*jfrEvent));
-	if (NULL != jfrEvent) {
-		initializeEventFields(currentThread, currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_MONITOR_ENTER);
-
-		jfrEvent->duration = j9time_nano_time() - event->startTicks;
-		jfrEvent->monitorClass = event->monitorClass;
-		jfrEvent->monitorAddress = (UDATA)event->monitor;
-		jfrEvent->previousOwnerTID = getThreadTID(currentThread, event->previousOwner);
+			jfrEvent->duration = j9time_nano_time() - event->startTicks;
+			jfrEvent->monitorClass = event->monitorClass;
+			jfrEvent->monitorAddress = (UDATA)event->monitor;
+			jfrEvent->previousOwnerTID = getThreadTID(currentThread, event->previousOwner);
+		}
 	}
 }
 
@@ -2331,8 +2353,8 @@ JfrPeriodicEventSet::requestThreadDump(J9VMThread *currentThread)
 	omrthread_monitor_enter(vm->jfrBufferMutex);
 	if (eventSize > vm->jfrBuffer.bufferRemaining) {
 		if (isJFRV2SupportEnabled(vm)) {
-			notifyForChunkRotation(currentThread);
 			omrthread_monitor_exit(vm->jfrBufferMutex);
+			notifyForChunkRotation(currentThread);
 			return;
 		} else {
 			if (!writeOutGlobalBuffer(currentThread, false, false)) {
@@ -2450,6 +2472,7 @@ notifyForChunkRotation(J9VMThread *currentThread)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 	omrthread_monitor_t monitorPtr = NULL;
+	Assert_VM_mustHaveVMAccess(currentThread);
 
 	if (JNI_FALSE == vm->jfrState.shouldRotateDisk) {
 #if defined(DEBUG)
@@ -2458,17 +2481,22 @@ notifyForChunkRotation(J9VMThread *currentThread)
 #endif /* defined(DEBUG) */
 
 		j9object_t chunkMonitor = J9_JNI_UNWRAP_REFERENCE(vm->jfrState.chunkRotationMonitor);
-		VM_ObjectMonitor::enterObjectMonitor(currentThread, chunkMonitor);
-		VM_ObjectMonitor::getMonitorForNotify(currentThread, chunkMonitor, &monitorPtr, false);
 
-		if (NULL == monitorPtr) {
-			/* If the monitor doesnt exist then no one is waiting on it. */
+		if ((J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState)) {
+			/* If exclusive or safepoint is held then we need to bail as we cant potentially block on a lock. */
 		} else {
-			vm->jfrState.shouldRotateDisk = JNI_TRUE;
-			issueWriteBarrier();
-			omrthread_monitor_notify_all(monitorPtr);
+			VM_ObjectMonitor::enterObjectMonitor(currentThread, chunkMonitor);
+			VM_ObjectMonitor::getMonitorForNotify(currentThread, chunkMonitor, &monitorPtr, false);
+
+			if (NULL == monitorPtr) {
+				/* If the monitor doesnt exist then no one is waiting on it. */
+			} else {
+				vm->jfrState.shouldRotateDisk = JNI_TRUE;
+				issueWriteBarrier();
+				omrthread_monitor_notify_all(monitorPtr);
+			}
+			VM_ObjectMonitor::exitObjectMonitor(currentThread, chunkMonitor);
 		}
-		VM_ObjectMonitor::exitObjectMonitor(currentThread, chunkMonitor);
 	}
 }
 
