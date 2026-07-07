@@ -5470,6 +5470,15 @@ bool TR_J9InlinerPolicy::suppressInliningRecognizedInitialCallee(TR_CallSite *ca
                 return true;
             }
             break;
+#if JAVA_SPEC_VERSION < 27
+        case TR::java_lang_StringUTF16_compress_CIBII:
+#else
+        case TR::java_lang_StringUTF16_compress0_CIBII:
+#endif
+            if (cg->getSupportsInlineStringUTF16Compress()) {
+                return true;
+            }
+            break;
         case TR::java_lang_StringCoding_hasNegatives:
             if (cg->getSupportsInlineStringCodingHasNegatives()) {
                 return true;
