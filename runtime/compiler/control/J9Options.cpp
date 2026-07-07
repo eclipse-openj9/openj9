@@ -608,6 +608,9 @@ void J9::Options::setTuneFootprintOptions(J9JITConfig *jitConfig)
 
     // reduce the malloc-trim period
     _mallocTrimPeriod = 1;
+
+    // Increase the frequency of SCC disclaim (every second)
+    _minTimeBetweenSCCDisclaims = 1000; // 3000 --> 1000 ms
 }
 
 struct vmX {
