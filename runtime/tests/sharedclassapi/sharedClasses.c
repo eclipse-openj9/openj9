@@ -417,7 +417,7 @@ findOption(const char *optionString, char *optionName)
 	size_t optionNameLength = 0;
 	char *trailingCommaPos = NULL;
 	int valueLength = 0;
-	char *optionStart = strstr(optionString, optionName);
+	char *optionStart = (char *)strstr(optionString, optionName);
 
 	if (NULL == optionStart) {
 		char *convertedName = copyAndConvert(optionName);

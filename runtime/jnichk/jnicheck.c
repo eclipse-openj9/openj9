@@ -2329,20 +2329,20 @@ jniCheckCall(const char* function, JNIEnv* env, jobject receiver, UDATA methodTy
 	J9VMThread *vmThread = (J9VMThread *)env;
 	J9JavaVM *vm = vmThread->javaVM;
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	J9Method *ramMethod = ((J9JNIMethodID*)method)->method;
+	J9Method *ramMethod = ((J9JNIMethodID *)method)->method;
 	J9Class *declaringClass = J9_CLASS_FROM_METHOD(ramMethod);
-	jclass declaringClassRef;
+	jclass declaringClassRef = NULL;
 	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
 	J9UTF8 *sig = J9ROMMETHOD_SIGNATURE(romMethod);
-	char *returnSig;
+	const char *returnSig = NULL;
 	UDATA novalist = vm->checkJNIData.options & JNICHK_NOVALIST;
 
 	jniCheckNull(env, function, 0, receiver);
 
-	jniCallIn((J9VMThread *) env);
+	jniCallIn(vmThread);
 
 	if (methodType == METHOD_CONSTRUCTOR) {
-		J9UTF8* name = J9ROMMETHOD_NAME(romMethod);
+		const J9UTF8 *name = J9ROMMETHOD_NAME(romMethod);
 		if ( (J9UTF8_DATA(name)[0] != '<') || (J9UTF8_LENGTH(name) != sizeof("<init>") - 1) ) {
 			jniCheckFatalErrorNLS(J9NLS_JNICHK_METHOD_IS_NOT_CONSTRUCTOR, function);
 		}
@@ -2356,11 +2356,10 @@ jniCheckCall(const char* function, JNIEnv* env, jobject receiver, UDATA methodTy
 		}
 	}
 
-	returnSig = strchr((const char*)J9UTF8_DATA(sig), ')') + 1;
+	returnSig = strchr((const char *)J9UTF8_DATA(sig), ')') + 1;
 	if ( (UDATA)*returnSig != returnType && ((UDATA)*returnSig != '[' || returnType != 'L') ) {
 		jniCheckFatalErrorNLS(J9NLS_JNICHK_METHOD_HAS_WRONG_RETURN_TYPE, function, *returnSig);
 	}
-
 
 	declaringClassRef = (jclass)&declaringClass->classObject;
 
@@ -2381,7 +2380,6 @@ jniCheckCall(const char* function, JNIEnv* env, jobject receiver, UDATA methodTy
 			}
 			break;
 	}
-
 }
 
 
