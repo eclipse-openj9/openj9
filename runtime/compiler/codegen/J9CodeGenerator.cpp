@@ -5056,6 +5056,26 @@ void CPGSearchState::enqueue(Place p, TR_OpaqueClassBlock *owningClass)
     }
 }
 
+struct OwningClassCmp {
+    const TR::vector<TR_OpaqueClassBlock *, TR::Region &> &_owningClasses;
+
+    OwningClassCmp(const TR::vector<TR_OpaqueClassBlock *, TR::Region &> &owningClasses)
+        : _owningClasses(owningClasses)
+    {
+        // empty
+    }
+
+    bool operator()(TR::KnownObjectTable::Index i, TR::KnownObjectTable::Index j) const
+    {
+        // Use known object index as a tiebreaker, just because it will read
+        // better in log output.
+        std::less<TR_OpaqueClassBlock *> lt;
+        TR_OpaqueClassBlock *classI = _owningClasses[i];
+        TR_OpaqueClassBlock *classJ = _owningClasses[j];
+        return classI == classJ ? i < j : lt(classI, classJ);
+    }
+};
+
 } // anonymous namespace
 
 void J9::CodeGenerator::sortConstRefs()
@@ -5305,38 +5325,15 @@ void J9::CodeGenerator::sortConstRefs()
         log->println();
     }
 
-// Temporarily disable the sorting step on z/OS due to lack of support of the
-// variant of std::sort used here in the version of XLC used for z/OS builds,
-// resulting in a build error. This temporary measure is meant to allow other
-// platforms to benefit from const refs sorting while an alternative
-// implementation is worked on for z/OS.
-#if !defined(J9ZOS390)
     // Now that owning classes are assigned, sort the const refs by owning class.
     // The important thing is really just grouping by owning class, which ensures
     // that we'll create no more than one const ref array per class.
-    struct OwningClassCmp {
-        const TR::vector<TR_OpaqueClassBlock *, TR::Region &> &_owningClasses;
-
-        OwningClassCmp(const TR::vector<TR_OpaqueClassBlock *, TR::Region &> &owningClasses)
-            : _owningClasses(owningClasses)
-        {
-            // empty
-        }
-
-        bool operator()(TR::KnownObjectTable::Index i, TR::KnownObjectTable::Index j) const
-        {
-            // Use known object index as a tiebreaker, just because it will read
-            // better in log output.
-            std::less<TR_OpaqueClassBlock *> lt;
-            TR_OpaqueClassBlock *classI = _owningClasses[i];
-            TR_OpaqueClassBlock *classJ = _owningClasses[j];
-            return classI == classJ ? i < j : lt(classI, classJ);
-        }
-    };
-
     OwningClassCmp cmp(_constRefOwningClasses);
+#if defined(J9ZOS390)
+    std::stable_sort(_constRefSortOrder.begin(), _constRefSortOrder.end(), cmp);
+#else
     std::sort(_constRefSortOrder.begin(), _constRefSortOrder.end(), cmp);
-#endif // !defined(J9ZOS390)
+#endif
 
     if (trace) {
         log->prints("const ref sort order (with owning class):\n");
