@@ -596,7 +596,7 @@ void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_inflate_BIBII
      * Z is handled differently than other platoforms.
      */
     if (comp()->target().cpu.isZ()) {
-        process_java_lang_StringLatin1_inflate_BICII(treetop, node, false /* isByteToChar */);
+        return process_java_lang_StringLatin1_inflate_BICII(treetop, node, false /* isByteToChar */);
     }
 #endif /* JAVA_SPEC_VERSION < 25 */
 
