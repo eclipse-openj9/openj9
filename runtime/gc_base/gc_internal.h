@@ -139,6 +139,9 @@ extern J9_CFUNC jint  JNICALL queryGCStatus(JavaVM *vm, jint *nHeaps, GCStatus *
 extern J9_CFUNC int j9gc_finalizer_startup(J9JavaVM * vm);
 extern J9_CFUNC UDATA j9gc_wait_for_reference_processing(J9JavaVM *vm);
 extern J9_CFUNC UDATA j9gc_get_maximum_heap_size(J9JavaVM *javaVM);
+extern J9_CFUNC UDATA j9gc_get_tlh_minimum_size(J9JavaVM *javaVM);
+extern J9_CFUNC UDATA j9gc_get_tlh_refill_waste_limit(J9JavaVM *javaVM);
+extern J9_CFUNC BOOLEAN j9gc_is_tlab_enabled(J9JavaVM *javaVM);
 extern J9_CFUNC void* j9gc_get_heap_base(J9JavaVM *javaVM);
 extern J9_CFUNC void* j9gc_get_heap_top(J9JavaVM *javaVM);
 extern J9_CFUNC UDATA j9gc_get_minimum_young_generation_size(J9JavaVM *javaVM);
