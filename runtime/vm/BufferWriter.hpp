@@ -349,11 +349,13 @@ class VM_BufferWriter {
 	{
 		OMRPORT_ACCESS_FROM_J9PORT(_portLibrary);
 		va_list args;
+		va_list args_copy;
 		va_start(args, format);
+		va_copy(args_copy, args);
 		/* Minus 1 because omrstr_vprintf accounts for null terminator if buffer is null. */
 		uintptr_t totalLength = omrstr_vprintf(NULL, 0, format, args) - 1;
 		if (checkBounds(totalLength)) {
-			omrstr_vprintf((char *)_cursor, _bufferEnd - _cursor, format, args);
+			omrstr_vprintf((char *)_cursor, _bufferEnd - _cursor, format, args_copy);
 			_cursor += totalLength;
 		}
 		va_end(args);

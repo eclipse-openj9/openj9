@@ -467,6 +467,12 @@ struct ThreadDumpEntry {
 	UDATA resultLength;
 };
 
+struct PhysicalMemoryEntry {
+	I_64 ticks;
+	U_64 totalSize;
+	U_64 usedSize;
+};
+
 struct JFRConstantEvents {
 	JVMInformationEntry JVMInfoEntry;
 	CPUInformationEntry CPUInfoEntry;
@@ -563,6 +569,8 @@ private:
 	UDATA _threadDumpCount;
 	J9Pool *_threadAllocationStatisticsTable;
 	UDATA _threadAllocationStatisticsCount;
+	J9Pool *_physicalMemoryTable;
+	UDATA _physicalMemoryCount;
 
 	/* Periodic events. */
 	bool _shouldWriteJVMInformation;
@@ -573,7 +581,6 @@ private:
 	bool _shouldWriteInitialEnvironmentVariableEvents;
 	bool _shouldWritewriteGCHeapConfigurationEvent;
 	bool _shouldWriteYoungGenerationConfigurationEvent;
-	bool _shouldWritePhysicalMemory;
 	bool _shouldWriteSystemProcess;
 	bool _shouldWriteNativeLibrary;
 	bool _shouldWriteModuleRequire;
@@ -881,6 +888,9 @@ public:
 	void addGCHeapSummaryEntry(J9JFRGCHeapSummary *gcHeapSummaryData);
 
 	void addNetworkUtilizationEntry(J9JFRNetworkUtilization *networkUtilizationData);
+
+	void addPhysicalMemoryEntry(J9JFRPhysicalMemory *physicalMemoryData);
+
 	void addDataLossEntry(J9JFRDataLoss *dataLossData);
 
 	void addThreadDumpEntry(J9JFRThreadDump *threadDumpData);
@@ -1274,6 +1284,16 @@ public:
 		return _stackFrameCount;
 	}
 
+	UDATA getPhysicalMemoryCount()
+	{
+		return _physicalMemoryCount;
+	}
+
+	J9Pool *getPhysicalMemoryTable()
+	{
+		return _physicalMemoryTable;
+	}
+
 	bool shouldWriteJVMInformation()
 	{
 		return _shouldWriteJVMInformation;
@@ -1312,11 +1332,6 @@ public:
 	bool shouldWriteYoungGenerationConfigurationEvent()
 	{
 		return _shouldWriteYoungGenerationConfigurationEvent;
-	}
-
-	bool shouldWritePhysicalMemory()
-	{
-		return _shouldWritePhysicalMemory;
 	}
 
 	bool shouldWriteSystemProcess()
@@ -1448,7 +1463,7 @@ public:
 				_shouldWriteYoungGenerationConfigurationEvent = true;
 				break;
 			case J9JFR_EVENT_TYPE_PHYSICAL_MEMORY:
-				_shouldWritePhysicalMemory = true;
+				addPhysicalMemoryEntry((J9JFRPhysicalMemory *)event);
 				break;
 			case J9JFR_EVENT_TYPE_SYSTEM_PROCESS:
 				_shouldWriteSystemProcess = true;
@@ -2232,6 +2247,8 @@ done:
 		, _threadDumpCount(0)
 		, _threadAllocationStatisticsTable(NULL)
 		, _threadAllocationStatisticsCount(0)
+		, _physicalMemoryTable(NULL)
+		, _physicalMemoryCount(0)
 		, _shouldWriteJVMInformation(false)
 		, _shouldWriteCPUInformationEvent(false)
 		, _shouldWriteVirtualizationInformationEvent(false)
@@ -2240,7 +2257,6 @@ done:
 		, _shouldWriteInitialEnvironmentVariableEvents(false)
 		, _shouldWritewriteGCHeapConfigurationEvent(false)
 		, _shouldWriteYoungGenerationConfigurationEvent(false)
-		, _shouldWritePhysicalMemory(false)
 		, _shouldWriteSystemProcess(false)
 		, _shouldWriteNativeLibrary(false)
 		, _shouldWriteModuleRequire(false)
@@ -2405,6 +2421,13 @@ done:
 			_buildResult = OutOfMemory;
 			goto done;
 		}
+
+		_physicalMemoryTable = pool_new(sizeof(PhysicalMemoryEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		if (NULL == _physicalMemoryTable) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+
 
 		_systemProcessTable = pool_new(sizeof(SystemProcessEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
 		if (NULL == _systemProcessTable) {
@@ -2585,6 +2608,7 @@ done:
 		pool_kill(_dataLossTable);
 		pool_kill(_threadDumpTable);
 		pool_kill(_threadAllocationStatisticsTable);
+		pool_kill(_physicalMemoryTable);
 		freeNetworkInterfaceNames();
 		j9mem_free_memory(_globalStringTable);
 	}

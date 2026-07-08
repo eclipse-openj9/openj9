@@ -592,6 +592,12 @@ typedef struct J9JFRThreadAllocationStatistics {
 	U_64 allocated;
 } J9JFRThreadAllocationStatistics;
 
+typedef struct J9JFRPhysicalMemory {
+	J9JFR_EVENT_COMMON_FIELDS
+	U_64 totalSize;
+	U_64 usedSize;
+} J9JFRPhysicalMemory;
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 /* @ddr_namespace: map_to_type=J9CfrError */
