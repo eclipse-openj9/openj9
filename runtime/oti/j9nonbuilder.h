@@ -5138,6 +5138,9 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA  ( *j9gc_get_maximum_heap_size)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_get_max_tenuring_threshold)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_get_initial_tenuring_threshold)(struct J9JavaVM *javaVM) ;
+	UDATA  ( *j9gc_get_tlh_minimum_size)(struct J9JavaVM *javaVM) ;
+	UDATA  ( *j9gc_get_tlh_refill_waste_limit)(struct J9JavaVM *javaVM) ;
+	BOOLEAN  ( *j9gc_is_tlab_enabled)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_get_minimum_young_generation_size)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_get_maximum_young_generation_size)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_objaccess_checkClassLive)(struct J9JavaVM *javaVM, J9Class *classPtr) ;
