@@ -439,6 +439,12 @@ struct YoungGenerationConfigurationEntry {
 	U_64 newRatio;
 };
 
+struct GCTLABConfigurationEntry {
+	BOOLEAN usesTLABs;
+	U_64 minTLABSize;
+	U_64 tlabRefillWasteLimit;
+};
+
 struct VirtualizationInformationEntry {
 	const char *name;
 };
@@ -474,6 +480,7 @@ struct JFRConstantEvents {
 	OSInformationEntry OSInfoEntry;
 	GCHeapConfigurationEntry GCHeapConfigEntry;
 	YoungGenerationConfigurationEntry YoungGenConfigEntry;
+	GCTLABConfigurationEntry GCTLABConfigEntry;
 };
 
 class VM_JFRConstantPoolTypes {
@@ -579,6 +586,7 @@ private:
 	bool _shouldWriteModuleRequire;
 	bool _shouldWriteModuleExport;
 	bool _shouldWriteClassLoaderStatistics;
+	bool _shouldWriteGCTLABConfigurationEvent;
 
 	/* Processing buffers */
 	StackFrame *_currentStackFrameBuffer;
@@ -1314,6 +1322,11 @@ public:
 		return _shouldWriteYoungGenerationConfigurationEvent;
 	}
 
+	bool shouldWriteGCTLABConfigurationEvent()
+	{
+		return _shouldWriteGCTLABConfigurationEvent;
+	}
+
 	bool shouldWritePhysicalMemory()
 	{
 		return _shouldWritePhysicalMemory;
@@ -1474,6 +1487,9 @@ public:
 			case J9JFR_EVENT_TYPE_THREAD_ALLOCATION_STATISTICS:
 				addThreadAllocationStatistics((J9JFRThreadAllocationStatistics *)event);
 				break;
+			case J9JFR_EVENT_TYPE_GC_TLAB_CONFIGURATION:
+				_shouldWriteGCTLABConfigurationEvent = true;
+				break;
 			case J9JFR_EVENT_TYPE_STACKTRACE:
 			{
 				J9JFREventWithStackTrace *stackTraceEvent = (J9JFREventWithStackTrace *)event;
@@ -1575,6 +1591,7 @@ done:
 		initializeOSInformation(vm, result);
 		initializeGCHeapConfigurationEvent(vm);
 		initializeYoungGenerationConfigurationEvent(vm);
+		initializeGCTLABConfigurationEvent(vm);
 	}
 
 	/**
@@ -1832,6 +1849,27 @@ done:
 		} else {
 			youngGenConfiguration->newRatio = 0;
 		}
+	}
+
+	/**
+	 * Initialize GCTLABConfigurationEntry
+	 *
+	 * @param vm[in] the J9JavaVM
+	 */
+	static void initializeGCTLABConfigurationEvent(J9JavaVM *vm)
+	{
+		J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
+		GCTLABConfigurationEntry *tlabConfiguration = &(getJFRConstantEvents(vm)->GCTLABConfigEntry);
+
+		tlabConfiguration->usesTLABs = mmFuncs->j9gc_is_tlab_enabled(vm);
+		tlabConfiguration->minTLABSize = mmFuncs->j9gc_get_tlh_minimum_size(vm);
+		/* The closest OMR equivalent to tlabRefillWasteLimit is abandonSize in
+		 * TLHAllocationSupport::refresh(): max(tlhMinimumSize, refreshSize / 2).
+		 * We compute the maximum abandonSize across all live threads, which reflects
+		 * the warmest (fast-allocating) thread. Falls back to tlhMaximumSize / 2
+		 * if no threads have allocated yet.
+		 */
+		tlabConfiguration->tlabRefillWasteLimit = mmFuncs->j9gc_get_tlh_refill_waste_limit(vm);
 	}
 
 	static uintptr_t recordSystemProcessEvent(uintptr_t pid, const char *commandLine, void *userData)
@@ -2252,6 +2290,7 @@ done:
 		, _shouldWriteModuleRequire(false)
 		, _shouldWriteModuleExport(false)
 		, _shouldWriteClassLoaderStatistics(false)
+		, _shouldWriteGCTLABConfigurationEvent(false)
 		, _previousStackTraceEntry(NULL)
 		, _firstStackTraceEntry(NULL)
 		, _previousThreadEntry(NULL)

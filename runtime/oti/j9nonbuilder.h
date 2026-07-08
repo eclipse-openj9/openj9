@@ -595,6 +595,13 @@ typedef struct J9JFRThreadAllocationStatistics {
 	U_64 allocated;
 } J9JFRThreadAllocationStatistics;
 
+typedef struct J9JFRGCTLABConfiguration {
+	J9JFR_EVENT_COMMON_FIELDS
+	BOOLEAN usesTLABs;
+	U_64 minTLABSize;
+	U_64 tlabRefillWasteLimit;
+} J9JFRGCTLABConfiguration;
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 /* @ddr_namespace: map_to_type=J9CfrError */
@@ -5086,6 +5093,9 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA  ( *j9gc_get_softmx)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_get_initial_heap_size)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_get_maximum_heap_size)(struct J9JavaVM *javaVM) ;
+	UDATA  ( *j9gc_get_tlh_minimum_size)(struct J9JavaVM *javaVM) ;
+	UDATA  ( *j9gc_get_tlh_refill_waste_limit)(struct J9JavaVM *javaVM) ;
+	BOOLEAN  ( *j9gc_is_tlab_enabled)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_get_minimum_young_generation_size)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_get_maximum_young_generation_size)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_objaccess_checkClassLive)(struct J9JavaVM *javaVM, J9Class *classPtr) ;
