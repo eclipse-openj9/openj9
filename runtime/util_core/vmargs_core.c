@@ -234,7 +234,7 @@ addXOptionsFile(J9PortLibrary* portLib, const char *xOptionsfileArg, J9JavaVMArg
 {
 
 	PORT_ACCESS_FROM_PORT(portLib);
-	char* filePath = strchr(xOptionsfileArg, '=');
+	const char *filePath = strchr(xOptionsfileArg, '=');
 	intptr_t fd = -1;
 	J9JavaVMArgInfo *optArg = NULL;
 	int64_t length = -1;

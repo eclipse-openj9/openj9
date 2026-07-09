@@ -352,12 +352,12 @@ hasEnvOption(const char *envOptions, const char *option)
 static char *
 findStartOfMostRightOption(const char *envOptions, const char *option)
 {
-	char *result = strstr(envOptions, option);
+	const char *result = strstr(envOptions, option);
 	UDATA optionSize = strlen(option);
 	if (NULL != result) {
 		if ((result == envOptions) || OMR_ISSPACE(result[-1])) {
-			char *cursor = result;
-			char *next = NULL;
+			const char *cursor = result;
+			const char *next = NULL;
 			while (NULL != (next = strstr(cursor + optionSize, option))) {
 				if (OMR_ISSPACE(next[-1])) {
 					result = next;
@@ -366,7 +366,8 @@ findStartOfMostRightOption(const char *envOptions, const char *option)
 			}
 		}
 	}
-	return result;
+	/* FIXME this cast should be removed */
+	return (char *)result;
 }
 
 /* Scan the next unsigned number off of the argument string.
