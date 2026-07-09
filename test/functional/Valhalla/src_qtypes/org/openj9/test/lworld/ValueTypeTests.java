@@ -32,6 +32,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.lang.management.ManagementFactory;
 import jdk.internal.value.ValueClass;
 import org.testng.Assert;
 import static org.testng.Assert.*;
@@ -57,7 +59,16 @@ import static org.openj9.test.lworld.ValueTypeTestClasses.*;
 
 @Test(groups = { "level.sanity" })
 public class ValueTypeTests {
+	static boolean isFlatteningEnabled = false;
 	static Lookup lookup = MethodHandles.lookup();
+
+	@BeforeClass
+	static public void testSetUp() throws Throwable {
+		List<String> arguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
+		/* Check whether a ValueTypeFlatteningThreshold option is specified, with any configured threshold value. */
+		isFlatteningEnabled = arguments.stream().anyMatch(arg -> arg.startsWith("-XX:ValueTypeFlatteningThreshold="));
+	}
+
 	/* point2D */
 	static Class<?> point2DClass = null;
 	static MethodHandle makePoint2D = null;
@@ -3162,5 +3173,35 @@ public class ValueTypeTests {
 	
 	static void checkObject(Object ...objects) {
 		com.ibm.jvm.Dump.SystemDump();
+	}
+
+	@Test(priority=1)
+	static public void testHasBinaryPayload() throws Throwable {
+		/* Primitive type. */
+		assertTrue(ValueClass.hasBinaryPayload(int.class));
+
+		/* Value types with primitive fields. */
+		assertTrue(ValueClass.hasBinaryPayload(ValueTypeInt.class));
+
+		/* Value type with nullable value-class fields. */
+		assertFalse(ValueClass.hasBinaryPayload(ValueClassPoint2D.class));
+
+		/* Value type with an identity-class field. */
+		assertFalse(ValueClass.hasBinaryPayload(ValueClassWithIdentityField.class));
+
+		/* Value type with an object reference field. */
+		assertFalse(ValueClass.hasBinaryPayload(ValueTypeFastSubVT.class));
+
+		/* Identity types and arrays. */
+		assertFalse(ValueClass.hasBinaryPayload(Object.class));
+		assertFalse(ValueClass.hasBinaryPayload(String.class));
+		assertFalse(ValueClass.hasBinaryPayload(int[].class));
+
+		/* Value type with @NullRestricted fields. */
+		if (isFlatteningEnabled) {
+			assertTrue(ValueClass.hasBinaryPayload(ValueTypePoint2D.class));
+		} else {
+			assertFalse(ValueClass.hasBinaryPayload(ValueTypePoint2D.class));
+		}
 	}
 }
