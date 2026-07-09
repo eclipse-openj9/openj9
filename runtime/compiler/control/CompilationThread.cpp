@@ -10284,6 +10284,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(J9VMThread *vmThrea
                 || (compiler->getOption(TR_CountOptTransformations)
                     && compiler->getVerboseOptTransformationCount() >= 1)) {
                 const uint32_t bytecodeSize = TR::CompilationInfo::getMethodBytecodeSize(method);
+                const uint32_t totalBytecodeSize = TR::CompilationInfoPerThreadBase::computeTotalBytecodeSize(compiler);
                 const bool isJniNative = compilee->isJNINative();
                 TR_VerboseLog::CriticalSection vlogLock;
                 TR_VerboseLog::write(TR_Vlog_COMP, "(%s%s) %s @ " POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT,
@@ -10308,7 +10309,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(J9VMThread *vmThrea
                 TR_VerboseLog::write(" Q_SZ=%d Q_SZI=%d QW=%d", _compInfo.getMethodQueueSize(),
                     _compInfo.getNumQueuedFirstTimeCompilations(), _compInfo.getQueueWeight());
 
-                TR_VerboseLog::write(" j9m=%p bcsz=%u", method, bytecodeSize);
+                TR_VerboseLog::write(" j9m=%p bcsz=%u bcszWithInling=%u", method, bytecodeSize, totalBytecodeSize);
 
                 if (!_methodBeingCompiled->_async)
                     TR_VerboseLog::write(" sync"); // flag the synchronous compilations
@@ -10792,6 +10793,21 @@ void TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(J9VMThread *v
     } else {
         Trc_JIT_compilationFailed(vmThread, compiler->signature(), -1);
     }
+}
+
+uint32_t TR::CompilationInfoPerThreadBase::computeTotalBytecodeSize(TR::Compilation *compiler)
+{
+    TR_ResolvedMethod *method = compiler->getMethodBeingCompiled();
+    uint32_t result = method->maxBytecodeIndex();
+
+    for (uint32_t i = 0; i < compiler->getNumInlinedCallSites(); i++) {
+        TR_ResolvedMethod *m = compiler->getInlinedResolvedMethod(i);
+        if (m) {
+            result += m->maxBytecodeIndex();
+        }
+    }
+
+    return result;
 }
 
 void TR::CompilationInfo::printCompQueue()
