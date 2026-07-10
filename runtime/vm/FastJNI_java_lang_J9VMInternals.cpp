@@ -25,6 +25,7 @@
 #include "j9protos.h"
 #include "j9consts.h"
 #include "objhelp.h"
+#include "ut_j9vm.h"
 #include "vm_internal.h"
 #include "ObjectHash.hpp"
 #include "VMHelpers.hpp"
@@ -51,6 +52,7 @@ jint JNICALL
 Fast_java_lang_J9VMInternals_identityHashCode(J9VMThread *currentThread, j9object_t objectPointer)
 {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	Assert_VM_mustHaveVMAccess(currentThread);
 	bool oomOccurred = false;
 	I_32 hashValue = VM_ObjectHash::inlineObjectHashCode(currentThread->javaVM, objectPointer, &oomOccurred);
 	if (oomOccurred) {

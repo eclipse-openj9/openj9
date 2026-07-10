@@ -2083,6 +2083,7 @@ saveObjectRefs(JNIEnv *env, ThreadInfo *info)
 				info->lockedMonitors.arr_safe[i].clazz =
 					vmfns->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS(J9OBJECT_CLAZZ((J9VMThread *)env, object)));
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				Assert_JCL_mustHaveVMAccess((J9VMThread *)env);
 				hashValue = objectHashCode(vm, object, &oomOccurred);
 				if (oomOccurred) {
 					exc = J9VMCONSTANTPOOL_JAVALANGOUTOFMEMORYERROR;
