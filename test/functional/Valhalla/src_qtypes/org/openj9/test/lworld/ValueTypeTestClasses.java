@@ -254,4 +254,27 @@ public class ValueTypeTestClasses {
 			this.vy = vy;
 		}
 	}
+
+	static value class ValueTypePoint3D {
+		@NullRestricted
+		final ValueTypePoint2D point;
+		@NullRestricted
+		final ValueTypeInt z;
+		ValueTypePoint3D(ValueTypePoint2D point, ValueTypeInt z) {
+			this.point = point;
+			this.z = z;
+		}
+	}
+
+	static value class ValueTypeLine3D {
+		@NullRestricted
+		final ValueTypePoint3D start;
+		@NullRestricted
+		final ValueTypePoint3D end;
+		ValueTypeLine3D(ValueTypePoint3D start, ValueTypePoint3D end) {
+			this.start = start;
+			this.end = end;
+		}
+	}
+
 }
