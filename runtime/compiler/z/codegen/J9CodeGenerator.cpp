@@ -3460,7 +3460,7 @@ bool J9::Z::CodeGenerator::canUseRelativeLongInstructions(int64_t value)
 
 bool J9::Z::CodeGenerator::canTransformUnsafeSetMemory()
 {
-    static bool enableUnsafeSetMemoryAcceleration = (feGetEnv("TR_DisableUnsafeSetMemoryAcceleration") == NULL);
+    static bool enableUnsafeSetMemoryAcceleration = (feGetEnv("TR_EnableUnsafeSetMemoryAcceleration") != NULL);
     return (enableUnsafeSetMemoryAcceleration && self()->comp()->target().is64Bit());
 }
 
