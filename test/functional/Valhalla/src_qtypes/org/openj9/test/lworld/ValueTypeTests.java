@@ -3155,6 +3155,54 @@ public class ValueTypeTests {
 		assertEquals(h2, h2_afterGC);
 	}
 
+	/* Hash code of value object with nested fields. */
+	@Test(priority=1)
+	static public void testValueTypeHashCodeWithNestedFields() throws Throwable {
+		ValueTypePoint2D p2d = new ValueTypePoint2D(new ValueTypeInt(1), new ValueTypeInt(2));
+		ValueTypePoint3D pt1 = new ValueTypePoint3D(p2d, new ValueTypeInt(3));
+		ValueTypePoint3D pt2 = new ValueTypePoint3D(p2d, new ValueTypeInt(4));
+		Object l1 = new ValueTypeLine3D(pt1, pt2);
+		Object l2 = new ValueTypeLine3D(pt1, pt2);
+		Object l3 = new ValueTypeLine3D(new ValueTypePoint3D(new ValueTypePoint2D(new ValueTypeInt(9), new ValueTypeInt(9)), new ValueTypeInt(9)),
+				pt2);
+		int h1 = l1.hashCode();
+		int h2 = l2.hashCode();
+		int h3 = l3.hashCode();
+
+		System.gc();
+
+		int h1_afterGC = l1.hashCode();
+		int h2_afterGC = l2.hashCode();
+		int h3_afterGC = l3.hashCode();
+
+		assertEquals(h1, h2);
+		assertNotEquals(h1, h3);
+		assertEquals(h1, h1_afterGC);
+		assertEquals(h2, h2_afterGC);
+		assertEquals(h3, h3_afterGC);
+	}
+
+	/* Test hash of large flattened array allocated in the sparse heap with Balanced GC. */
+	@Test(priority=1)
+	static public void testHashCodeOfFlattenedArray() throws Throwable {
+		ValueTypePoint2D defaultVal = new ValueTypePoint2D(new ValueTypeInt(1), new ValueTypeInt(2));
+		Object arr1 = ValueClass.newNullRestrictedAtomicArray(ValueTypePoint2D.class, 200000, defaultVal);
+		Object arr2 = ValueClass.newNullRestrictedAtomicArray(ValueTypePoint2D.class, 200000, defaultVal);
+
+		int h1 = arr1.hashCode();
+		int h2 = arr2.hashCode();
+
+		System.gc();
+
+		int h1_afterGC = arr1.hashCode();
+		int h2_afterGC = arr2.hashCode();
+
+		assertNotEquals(h1, h2);
+		assertEquals(h1, h1_afterGC);
+		assertEquals(h2, h2_afterGC);
+	}
+
+
 	@Test(priority = 1, expectedExceptions = ClassFormatError.class,
 		expectedExceptionsMessageRegExp = ".*A non-interface class must have at least one of ACC_FINAL, ACC_IDENTITY, or ACC_ABSTRACT flags set.*")
 	static public void testNonInterfaceClassMustHaveFinalIdentityAbstractSet() throws Throwable {

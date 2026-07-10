@@ -65,4 +65,21 @@
 			<class name="org.openj9.test.lworld.StrictFieldTests"/>
 		</classes>
 	</test>
+	<test name="ValueTypeHashCodeTests">
+		<classes>
+			<class name="org.openj9.test.lworld.ValueTypeTests">
+				<methods>
+					<include name="testValueClassHashCode"/>
+					<include name="testValueTypeHashCodeWithNullRestrictedFields"/>
+					<include name="testValueTypeHashCodeWithIdentityField"/>
+					<include name="testValueTypeHashCodeWithNullReference"/>
+					<include name="testValueTypeHashCodeWithSameIdentityField"/>
+					<include name="testHashCodeOfEmptyValueClasses"/>
+					<include name="testHashCodeOfSimilarValueClasses"/>
+					<include name="testValueTypeHashCodeWithNestedFields"/>
+					<include name="testHashCodeOfFlattenedArray"/>
+				</methods>
+			</class>
+		</classes>
+	</test>
 </suite> <!-- Suite -->
