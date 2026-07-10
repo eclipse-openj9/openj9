@@ -6282,7 +6282,9 @@ bool TR_J9VMBase::classHasNativeMethods(TR_OpaqueClassBlock *classPointer)
 {
     // If this assert fails in the future, classHasNativeMethods() must also
     // check J9_STARTPC_JNI_NATIVE on the RAM method.
+#if !defined(J9ZOS390)
     static_assert(supportsFastJNI(), "supportsFastJNI() must return true");
+#endif
     TR::VMAccessCriticalSection vmCS(this);
     J9ROMClass *romClass = TR::Compiler->cls.romClassOf(classPointer);
     J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
