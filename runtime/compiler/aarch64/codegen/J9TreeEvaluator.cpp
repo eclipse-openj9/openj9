@@ -828,8 +828,10 @@ static void VMnonNullSrcWrtBarCardCheckEvaluator(TR::Node *node, TR::Register *d
              *   ldrimmx temp2Reg, [vmThread, #privateFlag]
              *   tbz     temp2Reg, #20, crdMrkDoneLabel
              *   ldrimmx temp2Reg, [vmThread, #activeCardTableBase]
-             *   addx    temp2Reg, temp2Reg, temp1Reg, LSR #card_size_shift ; At this moment, temp1Reg contains (dstReg
-             * - #heapBase) movzx   temp1Reg, 1 strbimm temp1Reg, [temp2Reg, 0]
+             *   ; At this moment, temp1Reg contains (dstReg - #heapBase)
+             *   addx    temp2Reg, temp2Reg, temp1Reg, LSR #card_size_shift
+             *   movzx   temp1Reg, 1
+             *   strbimm temp1Reg, [temp2Reg, 0]
              *
              * crdMrkDoneLabel:
              */
@@ -1028,8 +1030,10 @@ static void VMCardCheckEvaluator(TR::Node *node, TR::Register *dstReg, TR_ARM64S
      *  We don't call out to VM helpers.
      *
      *  ldrimmx temp2Reg, [vmThread, #activeCardTableBase]
-     *  addx    temp2Reg, temp2Reg, temp1Reg, LSR #card_size_shift ; At this moment, temp1Reg contains (dstReg -
-     * #heapBase) movzx   temp1Reg, 1 strbimm temp1Reg, [temp2Reg, 0]
+     *  ; At this moment, temp1Reg contains (dstReg - #heapBase)
+     *  addx    temp2Reg, temp2Reg, temp1Reg, LSR #card_size_shift
+     *  movzx   temp1Reg, 1
+     *  strbimm temp1Reg, [temp2Reg, 0]
      *
      */
     uintptr_t card_size_shift = trailingZeroes((uint64_t)comp->getOptions()->getGcCardSize());
@@ -4600,7 +4604,6 @@ static TR::Register *VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *cg
     TR::Instruction *gcPoint;
     TR::Snippet *snippet;
     TR::RegisterDependencyConditions *conditions = RegDeps(4, 4, cg);
-    ;
 
     TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
 
@@ -6240,20 +6243,29 @@ static TR::Register *inlineStringHashCode(TR::Node *node, bool isCompressed, TR:
      *
      *    Keep factoring out any 31^4 if possible.
      *
-     *    Vectorization is done by simultaneously calculating the four sums that hash is made of (each -> is a
-     * successive step): Vector[0] = str[0] -> multiply 31^4 -> add str[4] -> multiply 31^4 -> add str[8]  -> multiply
-     * 31^4 -> add str[12] -> multiply 31^3 Vector[1] = str[1] -> multiply 31^4 -> add str[5] -> multiply 31^4 -> add
-     * str[9]  -> multiply 31^4 -> add str[13] -> multiply 31^2 Vector[2] = str[2] -> multiply 31^4 -> add str[6] ->
-     * multiply 31^4 -> add str[10] -> multiply 31^4 -> add str[14] -> multiply 31^1 Vector[3] = str[3] -> multiply 31^4
-     * -> add str[7] -> multiply 31^4 -> add str[11] -> multiply 31^4 -> add str[15] -> multiply 1
+     *    Vectorization is done by simultaneously calculating the four sums that hash is made of
+     *    (each -> is a successive step):
+     *          Vector[0] = str[0] -> multiply 31^4 -> add str[4] -> multiply 31^4 -> add str[8]  -> multiply 31^4
+     *                      -> add str[12] -> multiply 31^3
+     *          Vector[1] = str[1] -> multiply 31^4 -> add str[5] -> multiply 31^4 -> add str[9]  -> multiply 31^4
+     *                      -> add str[13] -> multiply 31^2
+     *          Vector[2] = str[2] -> multiply 31^4 -> add str[6] -> multiply 31^4 -> add str[10] -> multiply 31^4
+     *                      -> add str[14] -> multiply 31^1
+     *          Vector[3] = str[3] -> multiply 31^4 -> add str[7] -> multiply 31^4 -> add str[11] -> multiply 31^4
+     *                      -> add str[15] -> multiply 1
      *
      *    Because the vector multiply and accumulate instruction has high latency, the subsequent multiply and
-     * accumulate has to wait for a few cycles until the result of the previous step becomes available. To avoid this,
-     * we break the dependency chain by multiplying with 31^8. (1) Vector0[0] = str[0] -> multiply 31^8 -> add str[8]
-     * (2) Vector1[0] = str[4] -> multiply 31^8 -> add str[12] Vector0[1] = str[1] -> multiply 31^8 -> add str[9]
-     * Vector1[1] = str[5] -> multiply 31^8 -> add str[13] Vector0[2] = str[2] -> multiply 31^8 -> add str[10]
-     * Vector1[2] = str[6] -> multiply 31^8 -> add str[14] Vector0[3] = str[3] -> multiply 31^8 -> add str[11]
-     * Vector1[3] = str[7] -> multiply 31^8 -> add str[15]
+     *    accumulate has to wait for a few cycles until the result of the previous step becomes available. To avoid
+     *    this, we break the dependency chain by multiplying with 31^8.
+     *      (1) Vector0[0] = str[0] -> multiply 31^8 -> add str[8]
+     *          Vector0[1] = str[1] -> multiply 31^8 -> add str[9]
+     *          Vector0[2] = str[2] -> multiply 31^8 -> add str[10]
+     *          Vector0[3] = str[3] -> multiply 31^8 -> add str[11]
+     *
+     *      (2) Vector1[0] = str[4] -> multiply 31^8 -> add str[12]
+     *          Vector1[1] = str[5] -> multiply 31^8 -> add str[13]
+     *          Vector1[2] = str[6] -> multiply 31^8 -> add str[14]
+     *          Vector1[3] = str[7] -> multiply 31^8 -> add str[15]
      *
      *      (3) Vector[0] = Vector0[0] -> multiply 31^4 -> add Vector1[0] -> multiply 31^3
      *          Vector[1] = Vector0[1] -> multiply 31^4 -> add Vector1[1] -> multiply 31^2
@@ -6492,8 +6504,11 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, TR::CodeGenerator *c
      *   else
      *     dup vtmp0Reg.8h, charReg
      *   subs lengthReg, lengthReg (#8 if isLatin1 else #4)
-     *   ; If the length < 8bytes, then it is not guaranteed that we can read the last 16bytes because the minimum size
-     * of the array header is 8bytes. b.lt Lessthan8 subs lengthReg, lengthReg (#8 if isLatin1 else #4) b.lt Lresidual
+     *   ; If the length < 8bytes, then it is not guaranteed that we can read the last 16bytes
+     *   ; because the minimum size of the array header is 8bytes.
+     *   b.lt Lessthan8
+     *   subs lengthReg, lengthReg (#8 if isLatin1 else #4)
+     *   b.lt Lresidual
      * Loop:
      *   subs lengthReg, lengthReg, (#16 if isLatin1 else #8)
      *   ldr  vtmp1Reg, [dataAddrReg], #16
@@ -6510,15 +6525,38 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, TR::CodeGenerator *c
      *   cmn lengthReg, (#16 if isLatin1 else #8)
      *   b.eq Ldone
      * Lresidual:
-     *   ldurq vtmp1Reg, [endReg, #-16]                             ; Read the last 16bytes. It would not a problem if
-     * original length >= 8 because we have a array header space. if isLatin1 cmeq vtmp1Reg.16b, vtmp0Reg.16b,
-     * vtmp1Reg.16b else cmeq vtmp1Reg.8h, vtmp0Reg.8h, vtmp1Reg.8h b Lmerge LessThan8: ldurd vtmp1Reg, [endReg, #-8] if
-     * isLatin1 cmeq vtmp1Reg.8b, vtmp0Reg.8b, vtmp1Reg.8b else cmeq vtmp1Reg.4h, vtmp0Reg.4h, vtmp1Reg.4h Lmerge: add
-     * dataAddrReg, dataAddrReg, #16 neg lengthReg, lengthReg, lsl (#2 if isLatin1 else #3)     ; 64 - (4 or 8) *
-     * remaining length if isLatin1 shrn vtmp1Reg.8b, vtmp1Reg.8h, #4 else xtn vtmp1Reg.8b, vtmp1Reg.8h, #4 umov
-     * tmp1Reg, vtmp1Reg.d[0] lsr tmp1Reg, tmp1Reg, lengthReg                            ; Move the comparison result of
-     * remaining data to LSB cmp tmp1Reg, #0 b.eq Ldone Lfound: rbit tmp1Reg, tmp1Reg sub dataAddrReg, dataAddrReg,
-     * tmp0Reg clz tmp1Reg, tmp1Reg add resultReg, dataAddrReg, tmp1Reg, lsr #2 if !isLatin lsr resultReg, resultReg, #1
+     *   ; Read the last 16bytes. It would not a problem if original length >= 8 because we have a array header space.
+     *   ldurq vtmp1Reg, [endReg, #-16]
+     *   if isLatin1
+     *     cmeq vtmp1Reg.16b, vtmp0Reg.16b, vtmp1Reg.16b
+     *   else
+     *     cmeq vtmp1Reg.8h, vtmp0Reg.8h, vtmp1Reg.8h
+     *   b Lmerge
+     * LessThan8:
+     *   ldurd vtmp1Reg, [endReg, #-8]
+     *   if isLatin1
+     *     cmeq vtmp1Reg.8b, vtmp0Reg.8b, vtmp1Reg.8b
+     *   else
+     *     cmeq vtmp1Reg.4h, vtmp0Reg.4h, vtmp1Reg.4h
+     * Lmerge:
+     *   add dataAddrReg, dataAddrReg, #16
+     *   neg lengthReg, lengthReg, lsl (#2 if isLatin1 else #3)     ; 64 - (4 or 8) * remaining length
+     *   if isLatin1
+     *     shrn vtmp1Reg.8b, vtmp1Reg.8h, #4
+     *   else
+     *     xtn vtmp1Reg.8b, vtmp1Reg.8h, #4
+     *   umov tmp1Reg, vtmp1Reg.d[0]
+     *   ; Move the comparison result of remaining data to LSB
+     *   lsr tmp1Reg, tmp1Reg, lengthReg
+     *   cmp tmp1Reg, #0
+     *   b.eq Ldone
+     * Lfound:
+     *   rbit tmp1Reg, tmp1Reg
+     *   sub dataAddrReg, dataAddrReg, tmp0Reg
+     *   clz tmp1Reg, tmp1Reg
+     *   add resultReg, dataAddrReg, tmp1Reg, lsr #2
+     *   if !isLatin
+     *     lsr resultReg, resultReg, #1
      * Ldone:
      *   csinv resultReg, resultReg, xzr, ne
      *
