@@ -550,7 +550,11 @@ public:
      */
     virtual bool classHasSynchronizedMethods(TR_OpaqueClassBlock *classPointer);
 
+#if defined(J9ZOS390)
+    static bool supportsFastJNI()
+#else
     static constexpr bool supportsFastJNI()
+#endif
     {
 #if defined(TR_TARGET_S390) || defined(TR_TARGET_X86) || defined(TR_TARGET_POWER) || defined(TR_TARGET_ARM64)
         return true;
