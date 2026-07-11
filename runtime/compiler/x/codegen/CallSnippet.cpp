@@ -414,7 +414,7 @@ void TR_Debug::print(OMR::Logger *log, TR::X86PicDataSnippet *snippet)
         uint32_t offset = bufferPos - _cg->getCodeStart();
         log->printf("\n\n" POINTER_PRINTF_FORMAT " %08x %*s", bufferPos, offset, 65, " <<< VPic Data >>>");
     } else {
-        printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet));
+        printSnippetLabel(log, snippet, bufferPos);
     }
 
     TR::SymbolReference *methodSymRef = snippet->getMethodSymRef();
@@ -541,8 +541,9 @@ void TR_Debug::print(OMR::Logger *log, TR::X86PicDataSnippet *snippet)
             }
         }
 
-        if (_comp->target().is64Bit())
-            printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet));
+        if (_comp->target().is64Bit()) {
+            printSnippetLabel(log, snippet, bufferPos);
+        }
 
         // Call through vtable.
         //
