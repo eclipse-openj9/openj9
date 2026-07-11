@@ -123,7 +123,7 @@ void TR_Debug::print(OMR::Logger *log, TR::ARM64StackCheckFailureSnippet *snippe
     TR::SymbolReference *sofRef = _comp->getSymRefTab()->findOrCreateStackOverflowSymbolRef(bodySymbol);
     uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
 
-    printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet));
+    printSnippetLabel(log, snippet, bufferPos);
 
     TR::Machine *machine = _cg->machine();
     TR::RealRegister *x9 = machine->getRealRegister(TR::RealRegister::x9);
