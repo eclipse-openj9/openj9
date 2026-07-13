@@ -3271,6 +3271,12 @@ jvmtiHookSampledObjectAlloc(J9HookInterface** hook, UDATA eventNum, void* eventD
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 			previewEnabled = J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW);
 			if (previewEnabled && J9_IS_J9CLASS_VALUETYPE(data->clazz)) {
+				if (!j9env->capabilities.can_support_value_objects) {
+					vmFuncs->internalEnterVMFromJNI(currentThread);
+					data->object = *objectRef;
+					finishedEvent(currentThread, JVMTI_EVENT_SAMPLED_OBJECT_ALLOC, hadVMAccess, javaOffloadOldState);
+					return;
+				}
 				jvmtiObject = NULL;
 			} else {
 				jvmtiObject = (jobject)objectRef;
@@ -3352,6 +3358,12 @@ jvmtiHookObjectAllocate(J9HookInterface** hook, UDATA eventNum, void* eventData,
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 				previewEnabled = J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW);
 				if (previewEnabled && J9_IS_J9CLASS_VALUETYPE(clazz)) {
+					if (!j9env->capabilities.can_support_value_objects) {
+						currentThread->javaVM->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+						data->object = J9_JNI_UNWRAP_REDIRECTED_REFERENCE(objectRef);
+						finishedEvent(currentThread, JVMTI_EVENT_VM_OBJECT_ALLOC, hadVMAccess, javaOffloadOldState);
+						return;
+					}
 					jvmtiObject = NULL;
 				} else {
 					jvmtiObject = (jobject)objectRef;
