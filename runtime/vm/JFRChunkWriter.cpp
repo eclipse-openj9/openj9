@@ -1005,6 +1005,30 @@ VM_JFRChunkWriter::writeYoungGenerationConfigurationEvent()
 }
 
 void
+VM_JFRChunkWriter::writeGCSurvivorConfigurationEvent()
+{
+	GCSurvivorConfigurationEntry *survivorConfig = &(VM_JFRConstantPoolTypes::getJFRConstantEvents(_vm)->GCSurvivorConfigEntry);
+
+	/* reserve size field */
+	U_8 *dataStart = reserveEventSize();
+
+	/* write event type */
+	_bufferWriter->writeLEB128(GCSurvivorConfigurationID);
+
+	/* write event start time */
+	_bufferWriter->writeLEB128(j9time_nano_time());
+
+	/* write maximum tenuring threshold */
+	_bufferWriter->writeLEB128(survivorConfig->maxTenuringThreshold);
+
+	/* write initial tenuring threshold */
+	_bufferWriter->writeLEB128(survivorConfig->initialTenuringThreshold);
+
+	/* write event size */
+	writeEventSize(dataStart);
+}
+
+void
 VM_JFRChunkWriter::writeInitialSystemPropertyEvents(J9JavaVM *vm)
 {
 	pool_state walkState;

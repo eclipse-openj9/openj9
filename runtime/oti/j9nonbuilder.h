@@ -590,6 +590,12 @@ typedef struct J9JFRThreadAllocationStatistics {
 	U_64 allocated;
 } J9JFRThreadAllocationStatistics;
 
+typedef struct J9JFRGCSurvivorConfiguration {
+	J9JFR_EVENT_COMMON_FIELDS
+	U_8 maxTenuringThreshold;
+	U_8 initialTenuringThreshold;
+} J9JFRGCSurvivorConfiguration;
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 /* @ddr_namespace: map_to_type=J9CfrError */
@@ -5044,6 +5050,8 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA  ( *j9gc_get_softmx)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_get_initial_heap_size)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_get_maximum_heap_size)(struct J9JavaVM *javaVM) ;
+	UDATA  ( *j9gc_get_max_tenuring_threshold)(struct J9JavaVM *javaVM) ;
+	UDATA  ( *j9gc_get_initial_tenuring_threshold)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_get_minimum_young_generation_size)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_get_maximum_young_generation_size)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_objaccess_checkClassLive)(struct J9JavaVM *javaVM, J9Class *classPtr) ;
