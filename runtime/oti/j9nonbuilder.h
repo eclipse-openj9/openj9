@@ -5151,6 +5151,7 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA  ( *j9gc_modron_global_collect)(struct J9VMThread *vmThread) ;
 	UDATA  ( *j9gc_modron_global_collect_with_overrides)(struct J9VMThread *vmThread, U_32 overrideFlags) ;
 	UDATA  ( *j9gc_modron_local_collect)(struct J9VMThread *vmThread) ;
+	IDATA  ( *j9gc_is_older)(struct J9VMThread *vmThread, j9object_t object1Ptr, j9object_t object2Ptr);
 	void  ( *j9gc_all_object_and_vm_slots_do)(struct J9JavaVM *javaVM, void *function, void *userData, UDATA walkFlags) ;
 	jvmtiIterationControl  ( *j9mm_iterate_heaps)(struct J9JavaVM *vm, J9PortLibrary *portLibrary, UDATA flags, jvmtiIterationControl (*func)(struct J9JavaVM *vm, struct J9MM_IterateHeapDescriptor *heapDesc, void *userData), void *userData) ;
 	jvmtiIterationControl  ( *j9mm_iterate_spaces)(struct J9JavaVM *javaVM, J9PortLibrary *portLibrary, struct J9MM_IterateHeapDescriptor *heap, UDATA flags, jvmtiIterationControl (*func)(struct J9JavaVM *vm, struct J9MM_IterateSpaceDescriptor *spaceDesc, void *userData), void *userData) ;
