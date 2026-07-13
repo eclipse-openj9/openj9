@@ -531,6 +531,17 @@ public:
 
     TR_Array<TR_BitVector *> &immutableSymRefNumbers() { return _immutableSymRefNumbers; }
 
+    /** \brief
+     *     Names of the built-in immutable classes whose fields are tracked for alias analysis.
+     *     One entry per class; the array is defined in J9SymbolReferenceTable.cpp.
+     */
+    static const char * const _immutableClassNames[];
+
+    /** \brief
+     *     Number of built-in immutable classes, derived from the size of \c _immutableClassNames.
+     */
+    static const int32_t _numImmutableClasses;
+
     int userFieldMethodId(TR::MethodSymbol *);
 
     bool hasUserField() { return _hasUserField; }
@@ -671,7 +682,5 @@ private:
 };
 
 } // namespace J9
-
-#define _numImmutableClasses (TR::java_lang_String_init - TR::java_lang_Boolean_init + 1)
 
 #endif

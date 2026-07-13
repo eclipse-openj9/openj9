@@ -38,7 +38,7 @@ J9::AliasBuilder::AliasBuilder(TR::SymbolReferenceTable *symRefTab, size_t sizeH
     , _tenantDataMetaSymRefs(sizeHint, c->trMemory(), heapAlloc, growable)
     , _callSiteTableEntrySymRefs(sizeHint, c->trMemory(), heapAlloc, growable)
     , _unresolvedShadowSymRefs(sizeHint, c->trMemory(), heapAlloc, growable)
-    , _immutableConstructorDefAliases(c->trMemory(), _numImmutableClasses)
+    , _immutableConstructorDefAliases(c->trMemory(), TR::SymbolReferenceTable::_numImmutableClasses)
     , _methodTypeTableEntrySymRefs(sizeHint, c->trMemory(), heapAlloc, growable)
 {
     for (int32_t i = 0; i < _numNonUserFieldClasses; i++)
@@ -158,7 +158,7 @@ void J9::AliasBuilder::createAliasInfo()
 
     int32_t i;
 
-    for (i = 0; i < _numImmutableClasses; i++) {
+    for (i = 0; i < TR::SymbolReferenceTable::_numImmutableClasses; i++) {
         symRefTab()->immutableSymRefNumbers()[i]->pack();
     }
 
@@ -208,7 +208,7 @@ void J9::AliasBuilder::createAliasInfo()
 
     defaultMethodDefAliasesWithoutImmutable() |= defaultMethodDefAliases();
 
-    for (i = 0; i < _numImmutableClasses; i++) {
+    for (i = 0; i < TR::SymbolReferenceTable::_numImmutableClasses; i++) {
         defaultMethodDefAliasesWithoutImmutable() -= *(symRefTab()->immutableSymRefNumbers()[i]);
     }
 
@@ -219,7 +219,7 @@ void J9::AliasBuilder::createAliasInfo()
         immutableClassInfoElem = immutableClassInfoElem->getNextElement();
     }
 
-    for (i = 0; i < _numImmutableClasses; i++) {
+    for (i = 0; i < TR::SymbolReferenceTable::_numImmutableClasses; i++) {
         immutableConstructorDefAliases()[i]
             = new (trHeapMemory()) TR_BitVector(symRefTab()->getNumSymRefs(), comp()->trMemory(), heapAlloc, growable);
         *(immutableConstructorDefAliases()[i]) = defaultMethodDefAliasesWithoutImmutable();
