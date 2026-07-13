@@ -59,6 +59,25 @@
 #include "env/j9methodServer.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
+// Static definitions for built-in immutable class name table.
+// _numImmutableClasses is derived at compile time from the array size, so adding or
+// removing a class name here is the only change needed (no enum arithmetic required).
+const char * const J9::SymbolReferenceTable::_immutableClassNames[] = {
+    "java/lang/Boolean",
+    "java/lang/Character",
+    "java/lang/Byte",
+    "java/lang/Short",
+    "java/lang/Integer",
+    "java/lang/Long",
+    "java/lang/Float",
+    "java/lang/Double",
+    "java/lang/String",
+    "jdk/internal/foreign/AbstractMemorySegmentImpl",
+};
+
+const int32_t J9::SymbolReferenceTable::_numImmutableClasses = sizeof(J9::SymbolReferenceTable::_immutableClassNames)
+    / sizeof(J9::SymbolReferenceTable::_immutableClassNames[0]);
+
 namespace J9 {
 enum NonUserMethod {
     unknownNonUserMethod,
@@ -2150,16 +2169,15 @@ void J9::SymbolReferenceTable::checkImmutable(TR::SymbolReference *symRef)
     if (name == NULL || length == 0)
         return;
 
-    static struct N {
-        const char *name;
-    } names[] = { "java/lang/Boolean", "java/lang/Character", "java/lang/Byte", "java/lang/Short", "java/lang/Integer",
-        "java/lang/Long", "java/lang/Float", "java/lang/Double", "java/lang/String" };
-
     if (!comp()->getOption(TR_DisableImmutableFieldAliasing)) {
-        TR_ASSERT(sizeof(names) / sizeof(char *) == _numImmutableClasses, "Size of names array is not correct\n");
+        OMR::Logger *log = comp()->log();
+        bool trace = comp()->getOption(TR_TraceAliases);
+
         int32_t i;
         for (i = 0; i < _numImmutableClasses; i++) {
-            if (strcmp(names[i].name, name) == 0) {
+            if (strncmp(_immutableClassNames[i], name, length) == 0) {
+                logprintf(trace, log, "Found immutable #%d: class %.*s in %s\n", symRef->getReferenceNumber(), length,
+                    name, comp()->signature());
                 _hasImmutable = true;
                 _immutableSymRefNumbers[i]->set(symRef->getReferenceNumber());
                 break;
