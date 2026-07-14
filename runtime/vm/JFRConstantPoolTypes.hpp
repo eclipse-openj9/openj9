@@ -34,6 +34,7 @@
 #include "vm_internal.h"
 #include "ut_j9vm.h"
 #include "BufferWriter.hpp"
+#include "GCExtensions.hpp"
 #include "JFRUtils.hpp"
 #include "ObjectAccessBarrierAPI.hpp"
 #include "VMHelpers.hpp"
@@ -439,6 +440,18 @@ struct YoungGenerationConfigurationEntry {
 	U_64 newRatio;
 };
 
+struct GCConfigurationEntry {
+	GCNameType youngCollector;
+	GCNameType oldCollector;
+	U_32 parallelGCThreads;
+	U_32 concurrentGCThreads;
+	BOOLEAN usesDynamicGCThreads;
+	BOOLEAN isExplicitGCConcurrent;
+	BOOLEAN isExplicitGCDisabled;
+	I_64 pauseTarget;
+	U_32 gcTimeRatio;
+};
+
 struct VirtualizationInformationEntry {
 	const char *name;
 };
@@ -480,6 +493,7 @@ struct JFRConstantEvents {
 	OSInformationEntry OSInfoEntry;
 	GCHeapConfigurationEntry GCHeapConfigEntry;
 	YoungGenerationConfigurationEntry YoungGenConfigEntry;
+	GCConfigurationEntry GCConfigEntry;
 };
 
 class VM_JFRConstantPoolTypes {
@@ -581,6 +595,7 @@ private:
 	bool _shouldWriteInitialEnvironmentVariableEvents;
 	bool _shouldWritewriteGCHeapConfigurationEvent;
 	bool _shouldWriteYoungGenerationConfigurationEvent;
+	bool _shouldWriteGCConfigurationEvent;
 	bool _shouldWriteSystemProcess;
 	bool _shouldWriteNativeLibrary;
 	bool _shouldWriteModuleRequire;
@@ -1334,6 +1349,11 @@ public:
 		return _shouldWriteYoungGenerationConfigurationEvent;
 	}
 
+	bool shouldWriteGCConfigurationEvent()
+	{
+		return _shouldWriteGCConfigurationEvent;
+	}
+
 	bool shouldWriteSystemProcess()
 	{
 		return _shouldWriteSystemProcess;
@@ -1461,6 +1481,9 @@ public:
 				break;
 			case J9JFR_EVENT_TYPE_YOUNG_GENERATION_CONFIGURATION:
 				_shouldWriteYoungGenerationConfigurationEvent = true;
+				break;
+			case J9JFR_EVENT_TYPE_GC_CONFIGURATION:
+				_shouldWriteGCConfigurationEvent = true;
 				break;
 			case J9JFR_EVENT_TYPE_PHYSICAL_MEMORY:
 				addPhysicalMemoryEntry((J9JFRPhysicalMemory *)event);
@@ -1590,6 +1613,7 @@ done:
 		initializeOSInformation(vm, result);
 		initializeGCHeapConfigurationEvent(vm);
 		initializeYoungGenerationConfigurationEvent(vm);
+		initializeGCConfigurationEvent(vm);
 	}
 
 	/**
@@ -1847,6 +1871,81 @@ done:
 		} else {
 			youngGenConfiguration->newRatio = 0;
 		}
+	}
+
+	/**
+	 * Initialize GCConfigurationEntry
+	 *
+	 * @param vm[in] the J9JavaVM
+	 */
+	static void initializeGCConfigurationEvent(J9JavaVM *vm)
+	{
+		J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
+		GCConfigurationEntry *gcConfiguration = &(getJFRConstantEvents(vm)->GCConfigEntry);
+		uintptr_t value = 0;
+
+		/* Determine young and old collector names based on GC policy. */
+		switch (vm->gcPolicy) {
+		case J9_GC_POLICY_GENCON:
+			gcConfiguration->youngCollector = Scavenge;
+			gcConfiguration->oldCollector = Global;
+			break;
+		case J9_GC_POLICY_OPTAVGPAUSE:
+		case J9_GC_POLICY_OPTTHRUPUT:
+		case J9_GC_POLICY_METRONOME:
+			gcConfiguration->youngCollector = Default;
+			gcConfiguration->oldCollector = Global;
+			break;
+		case J9_GC_POLICY_BALANCED:
+			gcConfiguration->youngCollector = PartialGarbageCollect;
+			gcConfiguration->oldCollector = GlobalGarbageCollect;
+			break;
+		case J9_GC_POLICY_NOGC:
+			gcConfiguration->youngCollector = Epsilon;
+			gcConfiguration->oldCollector = Epsilon;
+			break;
+		default:
+			gcConfiguration->youngCollector = Default;
+			gcConfiguration->oldCollector = Default;
+			break;
+		}
+
+		/* Parallel GC thread count. */
+		gcConfiguration->parallelGCThreads = mmFuncs->j9gc_modron_getConfigurationValueForKey(vm, j9gc_modron_configuration_gcThreadCount, &value) ? (U_32)value : 0;
+
+		/* Concurrent GC thread count. */
+		value = 0;
+		gcConfiguration->concurrentGCThreads = mmFuncs->j9gc_modron_getConfigurationValueForKey(vm, j9gc_modron_configuration_gcConcurrentThreadCount, &value) ? (U_32)value : 0;
+
+		/* Whether dynamic GC thread count is used. */
+		value = 0;
+		gcConfiguration->usesDynamicGCThreads = mmFuncs->j9gc_modron_getConfigurationValueForKey(vm, j9gc_modron_configuration_gcUsesDynamicThreads, &value) ? (BOOLEAN)value : FALSE;
+
+		/* System.gc() is never concurrent in OpenJ9. */
+		gcConfiguration->isExplicitGCConcurrent = FALSE;
+
+		/* Whether explicit GC (System.gc()) is disabled. */
+		gcConfiguration->isExplicitGCDisabled = mmFuncs->j9gc_get_explicit_GC_disabled(vm);
+
+		/* Pause target in milliseconds. Use the GC policy specific pause target where applicable,
+		 * or -1 to indicate "not applicable" for policies without a pause target concept.
+		 */
+		MM_GCExtensions *gcExtensions = MM_GCExtensions::getExtensions(vm);
+		switch (vm->gcPolicy) {
+		case J9_GC_POLICY_METRONOME:
+			/* beatMicro is in microseconds; convert to milliseconds. */
+			gcConfiguration->pauseTarget = (I_64)(gcExtensions->beatMicro / 1000);
+			break;
+		case J9_GC_POLICY_BALANCED:
+			gcConfiguration->pauseTarget = (I_64)gcExtensions->tarokTargetMaxPauseTime;
+			break;
+		default:
+			gcConfiguration->pauseTarget = -1;
+			break;
+		}
+
+		/* OpenJ9 does not have a GC time ratio concept; use 0 to indicate not applicable. */
+		gcConfiguration->gcTimeRatio = 0;
 	}
 
 	static uintptr_t recordSystemProcessEvent(uintptr_t pid, const char *commandLine, void *userData)
@@ -2263,6 +2362,7 @@ done:
 		, _shouldWriteInitialEnvironmentVariableEvents(false)
 		, _shouldWritewriteGCHeapConfigurationEvent(false)
 		, _shouldWriteYoungGenerationConfigurationEvent(false)
+		, _shouldWriteGCConfigurationEvent(false)
 		, _shouldWriteSystemProcess(false)
 		, _shouldWriteNativeLibrary(false)
 		, _shouldWriteModuleRequire(false)
