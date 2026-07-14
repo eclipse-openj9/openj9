@@ -352,6 +352,7 @@ class VM_BufferWriter {
 		va_start(args, format);
 		/* Minus 1 because omrstr_vprintf accounts for null terminator if buffer is null. */
 		uintptr_t totalLength = omrstr_vprintf(NULL, 0, format, args) - 1;
+		va_end(args);
 		if (checkBounds(totalLength)) {
 			va_list args2;
 			va_start(args2, format);
@@ -359,7 +360,6 @@ class VM_BufferWriter {
 			va_end(args2);
 			_cursor += totalLength;
 		}
-		va_end(args);
 	}
 
 	static U_32
