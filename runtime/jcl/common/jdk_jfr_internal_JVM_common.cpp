@@ -428,7 +428,29 @@ Java_jdk_jfr_internal_JVM_setThreshold(JNIEnv *env, jobject obj, jlong eventType
 void JNICALL
 Java_jdk_jfr_internal_JVM_storeMetadataDescriptor(JNIEnv *env, jobject obj, jbyteArray bytes)
 {
-	// TODO: implementation
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	jsize len = env->GetArrayLength(bytes);
+	if ((NULL == vm->jfrState.metaDataBlobFile) || ((UDATA)len > vm->jfrState.metaDataBlobFileSize)) {
+		if (NULL != vm->jfrState.metaDataBlobFile) {
+			j9mem_free_memory(vm->jfrState.metaDataBlobFile);
+		}
+		vm->jfrState.metaDataBlobFile = (U_8 *)j9mem_allocate_memory(len * sizeof(jbyte), J9MEM_CATEGORY_JFR);
+		if (NULL == vm->jfrState.metaDataBlobFile) {
+			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+			goto done;
+		}
+	}
+	VM_ArrayCopyHelpers::memcpyFromArray(
+			currentThread, J9_JNI_UNWRAP_REFERENCE(bytes), 0, len, vm->jfrState.metaDataBlobFile);
+	vm->jfrState.metaDataBlobFileSize = (UDATA)len;
+
+done:
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 jboolean JNICALL
