@@ -442,7 +442,7 @@ VM_JFRConstantPoolTypes::getClassEntry(J9Class *clazz, bool shallow)
 	entry->hidden = FALSE; //TODO
 
 	if (NULL != entry && !entry->shallow) {
-		entry->index = _classCount;
+		entry->index = clazz->classID;
 		_classCount++;
 
 		entry = (ClassEntry*) hashTableAdd(_classTable, entry);
@@ -761,7 +761,7 @@ VM_JFRConstantPoolTypes::getShallowClassEntry(J9Class *clazz)
 		entry = &entryBuffer;
 	}
 
-	entry->index = _classCount;
+	entry->index = clazz->classID;
 	_classCount++;
 
 	entry = (ClassEntry*)hashTableAdd(_classTable, entry);
@@ -1019,7 +1019,7 @@ done:
 }
 
 U_32
-VM_JFRConstantPoolTypes::addStackTraceEntry(U_64 threadTID, I_64 ticks, U_32 numOfFrames)
+VM_JFRConstantPoolTypes::addStackTraceEntry(U_64 threadTID, I_64 ticks, U_32 numOfFrames, UDATA stackTraceID)
 {
 	U_32 index = U_32_MAX;
 	StackTraceEntry *entry = NULL;
@@ -1042,7 +1042,7 @@ VM_JFRConstantPoolTypes::addStackTraceEntry(U_64 threadTID, I_64 ticks, U_32 num
 
 	_currentStackFrameBuffer = NULL;
 
-	entry->index = _stackTraceCount;
+	entry->index = stackTraceID;
 	entry->truncated = FALSE;
 
 	entry->next = NULL;
@@ -1085,7 +1085,7 @@ VM_JFRConstantPoolTypes::addExecutionSampleEntry(J9JFRExecutionSample *execution
 	/* Use the TID directly as the thread index */
 	entry->threadIndex = executionSampleData->currentThreadTID;
 
-	entry->stackTraceIndex = consumeStackTrace(executionSampleData->currentThreadTID, J9JFREXECUTIONSAMPLE_STACKTRACE(executionSampleData), executionSampleData->stackTraceSize);
+	entry->stackTraceIndex = consumeStackTrace(executionSampleData->currentThreadTID, J9JFREXECUTIONSAMPLE_STACKTRACE(executionSampleData), executionSampleData->stackTraceSize, executionSampleData->stackTraceID);
 	if (isResultNotOKay()) goto done;
 
 	_executionSampleCount += 1;
@@ -1110,7 +1110,7 @@ VM_JFRConstantPoolTypes::addThreadStartEntry(J9JFRThreadStart *threadStartData)
 	entry->threadIndex = threadStartData->threadTID;
 	entry->eventThreadIndex = threadStartData->threadTID;
 	entry->parentThreadIndex = threadStartData->parentThreadTID;
-	entry->stackTraceIndex = consumeStackTrace(threadStartData->currentThreadTID, J9JFRTHREADSTART_STACKTRACE(threadStartData), threadStartData->stackTraceSize);
+	entry->stackTraceIndex = consumeStackTrace(threadStartData->currentThreadTID, J9JFRTHREADSTART_STACKTRACE(threadStartData), threadStartData->stackTraceSize, threadStartData->stackTraceID);
 	if (isResultNotOKay()) goto done;
 
 	_threadStartCount += 1;
@@ -1159,7 +1159,7 @@ VM_JFRConstantPoolTypes::addThreadSleepEntry(J9JFRThreadSlept *threadSleepData)
 	entry->threadIndex = threadSleepData->currentThreadTID;
 	entry->eventThreadIndex = threadSleepData->currentThreadTID;
 
-	entry->stackTraceIndex = consumeStackTrace(threadSleepData->currentThreadTID, J9JFRTHREADSLEPT_STACKTRACE(threadSleepData), threadSleepData->stackTraceSize);
+	entry->stackTraceIndex = consumeStackTrace(threadSleepData->currentThreadTID, J9JFRTHREADSLEPT_STACKTRACE(threadSleepData), threadSleepData->stackTraceSize, threadSleepData->stackTraceID);
 	if (isResultNotOKay()) goto done;
 
 	_threadSleepCount += 1;
@@ -1188,7 +1188,7 @@ VM_JFRConstantPoolTypes::addMonitorWaitEntry(J9JFRMonitorWaited* threadWaitData)
 	entry->threadIndex = threadWaitData->currentThreadTID;
 	entry->eventThreadIndex = threadWaitData->currentThreadTID;
 
-	entry->stackTraceIndex = consumeStackTrace(threadWaitData->currentThreadTID, J9JFRMonitorWaitedED_STACKTRACE(threadWaitData), threadWaitData->stackTraceSize);
+	entry->stackTraceIndex = consumeStackTrace(threadWaitData->currentThreadTID, J9JFRMonitorWaitedED_STACKTRACE(threadWaitData), threadWaitData->stackTraceSize, threadWaitData->stackTraceID);
 	if (isResultNotOKay()) goto done;
 
 	entry->monitorClass = getClassEntry(threadWaitData->monitorClass);
@@ -1220,7 +1220,7 @@ VM_JFRConstantPoolTypes::addMonitorEnterEntry(J9JFRMonitorEntered *monitorEnterD
 	entry->previousOwnerThread = monitorEnterData->previousOwnerTID;
 	entry->eventThreadIndex = monitorEnterData->currentThreadTID;
 
-	entry->stackTraceIndex = consumeStackTrace(monitorEnterData->currentThreadTID, J9JFRMONITORENTERED_STACKTRACE(monitorEnterData), monitorEnterData->stackTraceSize);
+	entry->stackTraceIndex = consumeStackTrace(monitorEnterData->currentThreadTID, J9JFRMONITORENTERED_STACKTRACE(monitorEnterData), monitorEnterData->stackTraceSize, monitorEnterData->stackTraceID);
 	if (isResultNotOKay()) goto done;
 
 	entry->monitorClass = getClassEntry(monitorEnterData->monitorClass);
@@ -1249,7 +1249,7 @@ VM_JFRConstantPoolTypes::addThreadParkEntry(J9JFRThreadParked* threadParkData)
 	entry->threadIndex = threadParkData->currentThreadTID;
 	entry->eventThreadIndex = threadParkData->currentThreadTID;
 
-	entry->stackTraceIndex = consumeStackTrace(threadParkData->currentThreadTID, J9JFRTHREADPARKED_STACKTRACE(threadParkData), threadParkData->stackTraceSize);
+	entry->stackTraceIndex = consumeStackTrace(threadParkData->currentThreadTID, J9JFRTHREADPARKED_STACKTRACE(threadParkData), threadParkData->stackTraceSize, threadParkData->stackTraceID);
 	if (isResultNotOKay()) goto done;
 
 	entry->parkedClass = getClassEntry(threadParkData->parkedClass);
@@ -1381,7 +1381,7 @@ VM_JFRConstantPoolTypes::addSystemGCEntry(J9JFRSystemGC *systemGCData)
 	/* Use the TID directly as the thread index */
 	entry->eventThreadIndex = systemGCData->currentThreadTID;
 
-	entry->stackTraceIndex = consumeStackTrace(systemGCData->currentThreadTID, J9JFRSYSTEMGC_STACKTRACE(systemGCData), systemGCData->stackTraceSize);
+	entry->stackTraceIndex = consumeStackTrace(systemGCData->currentThreadTID, J9JFRSYSTEMGC_STACKTRACE(systemGCData), systemGCData->stackTraceSize, systemGCData->stackTraceID);
 	if (isResultNotOKay()) goto done;
 
 	_systemGCCount += 1;

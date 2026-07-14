@@ -2257,6 +2257,7 @@ internalCreateRAMClassDone(
 			classLoader->loadedClassCount += 1;
 		}
 		javaVM->loadedClassCount += 1;
+		state->ramClass->classID = javaVM->loadedClassCount;
 #endif /* defined(J9VM_OPT_JFR) */
 
 		/* Create all the method IDs if class load is hooked */

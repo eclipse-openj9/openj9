@@ -404,7 +404,8 @@ typedef struct J9JFRThreadObject {
 
 #define J9JFR_EVENT_WITH_STACKTRACE_FIELDS \
 	J9JFR_EVENT_COMMON_FIELDS \
-	UDATA stackTraceSize;
+	UDATA stackTraceSize; \
+	UDATA stackTraceID;
 
 typedef struct J9JFREvent {
 	J9JFR_EVENT_COMMON_FIELDS
@@ -413,6 +414,8 @@ typedef struct J9JFREvent {
 typedef struct J9JFREventWithStackTrace {
 	J9JFR_EVENT_WITH_STACKTRACE_FIELDS
 } J9JFREventWithStackTrace;
+
+#define J9JFRSTACKTRACEEVENT_STACKTRACE(jfrEvent) ((UDATA*)(((J9JFREventWithStackTrace*)(jfrEvent)) + 1))
 
 /* Variable-size structure - stackTraceSize worth of UDATA follow the fixed portion */
 typedef struct J9JFRExecutionSample {
@@ -3736,6 +3739,9 @@ typedef struct J9Class {
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	struct J9Class *nullRestrictedArrayClass;
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+#if defined(J9VM_OPT_JFR)
+	UDATA classID;
+#endif /* defined(J9VM_OPT_JFR) */
 } J9Class;
 
 /* Interface classes can never be instantiated, so the following fields in J9Class will not be used:
@@ -3841,6 +3847,9 @@ typedef struct J9ArrayClass {
 	 */
 	struct J9Class *companionArray;
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+#if defined(J9VM_OPT_JFR)
+	UDATA classID;
+#endif /* defined(J9VM_OPT_JFR) */
 } J9ArrayClass;
 
 #if defined(LINUX) && defined(J9VM_ARCH_X86) && !defined(OSX)
@@ -5682,6 +5691,8 @@ typedef struct J9InternalVMFunctions {
 	void (*jfrEmitDataLoss)(struct J9VMThread *currentThread, U_64 bytes);
 	jboolean (*requestJFREvent)(struct J9VMThread *currentThread, jlong id);
 	BOOLEAN (*setupChunkMonitor)(struct J9VMThread *currentThread);
+	I_64 (*getThreadTID)(struct J9VMThread *currentThread, struct J9VMThread *vmThread);
+	UDATA (*emitStackTrace)(struct J9VMThread *currentThread, I_32 skipCount);
 #endif /* defined(J9VM_OPT_JFR) */
 #if defined(J9VM_OPT_SNAPSHOTS)
 	void (*initializeSnapshotClassLoaderObject)(struct J9JavaVM *javaVM, struct J9ClassLoader *classLoader, j9object_t classLoaderObject);
@@ -6217,6 +6228,7 @@ typedef struct JFRState {
 	omrthread_monitor_t threadObjectsMutex;
 	jobject chunkRotationMonitor;
 	jboolean shouldRotateDisk;
+	UDATA stackTraceIDCount;
 } JFRState;
 
 typedef struct J9ReflectFunctionTable {
