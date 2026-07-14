@@ -163,7 +163,7 @@ public class DumpAPITokensTests extends TestCase {
 		}
 		//System.err.println("beforeTime = " + (new Date(beforeTime)) + " javacoreTime = " + (new Date(javacoreTime)) + " afterTime = " + (new Date(afterTime)));
 		//System.err.println("beforeTime = " + beforeTime + " javacoreTime = " + javacoreTime + " afterTime = " + afterTime);
-		assertTrue("The timestamp from the javacore was not between the timestamps taken before and after we took the dump.", javacoreTime >= beforeTime && afterTime >= javacoreTime );
+		assertTrue("The timestamp from the javacore was not between the timestamps taken before and after we took the dump. javacoreTime=" + javacoreTime + ", beforeTime=" + beforeTime + ", afterTime=" + afterTime, javacoreTime >= beforeTime && afterTime >= javacoreTime );
 		
 	}
 
