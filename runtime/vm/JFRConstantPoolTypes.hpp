@@ -739,7 +739,7 @@ private:
 
 	U_32 addThreadGroupEntry(j9object_t threadGroup);
 
-	U_32 addStackTraceEntry(U_64 walkThreadID, I_64 ticks, U_32 numOfFrames);
+	U_32 addStackTraceEntry(U_64 walkThreadID, I_64 ticks, U_32 numOfFrames, UDATA stackTraceID);
 
 	void addAllThreads();
 
@@ -1474,6 +1474,12 @@ public:
 			case J9JFR_EVENT_TYPE_THREAD_ALLOCATION_STATISTICS:
 				addThreadAllocationStatistics((J9JFRThreadAllocationStatistics *)event);
 				break;
+			case J9JFR_EVENT_TYPE_STACKTRACE:
+			{
+				J9JFREventWithStackTrace *stackTraceEvent = (J9JFREventWithStackTrace *)event;
+				consumeStackTrace(stackTraceEvent->currentThreadTID, J9JFRSTACKTRACEEVENT_STACKTRACE(stackTraceEvent), stackTraceEvent->stackTraceSize, stackTraceEvent->stackTraceID);
+				break;
+			}
 			default:
 				Assert_VM_unreachable();
 				break;
@@ -1528,7 +1534,7 @@ done:
 		return;
 	}
 
-	U_32 consumeStackTrace(U_64 walkThreadTID, UDATA *walkStateCache, UDATA numberOfFrames) {
+	U_32 consumeStackTrace(U_64 walkThreadTID, UDATA *walkStateCache, UDATA numberOfFrames, UDATA stackTraceID) {
 		U_32 index = U_32_MAX;
 		UDATA expandedStackTraceCount = 0;
 
@@ -1548,7 +1554,7 @@ done:
 
 		iterateStackTraceImpl(_currentThread, (j9object_t *)walkStateCache, &stackTraceCallback, this, FALSE, FALSE, numberOfFrames, FALSE);
 
-		index = addStackTraceEntry(walkThreadTID, j9time_nano_time(), _currentFrameCount);
+		index = addStackTraceEntry(walkThreadTID, j9time_nano_time(), _currentFrameCount, stackTraceID);
 		_stackFrameCount += (U_32)expandedStackTraceCount;
 		_currentStackFrameBuffer = NULL;
 

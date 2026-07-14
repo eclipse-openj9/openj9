@@ -195,8 +195,18 @@ Java_jdk_jfr_internal_JVM_getUnloadedEventClassCount(JNIEnv *env, jobject obj)
 jlong JNICALL
 Java_jdk_jfr_internal_JVM_getClassId(JNIEnv *env, jclass clazz, jclass targetClass)
 {
-	// TODO: implementation
-	return 0;
+	J9VMThread *currentThread = (J9VMThread*) env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	jlong classID = 0;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	j9object_t classObject = J9_JNI_UNWRAP_REFERENCE(targetClass);
+	J9Class *targetClazz = J9OBJECT_CLAZZ(currentThread, classObject);
+	classID = targetClazz->classID;
+	vmFuncs->internalExitVMToJNI(currentThread);
+
+	return classID;
 }
 
 jstring JNICALL
@@ -225,15 +235,33 @@ Java_jdk_jfr_internal_JVM_getPid(JNIEnv *env, jobject obj)
 jlong JNICALL
 Java_jdk_jfr_internal_JVM_getStackTraceId(JNIEnv *env, jobject obj, jint skipCount)
 {
-	// TODO: implementation
-	return 0;
+	J9VMThread *currentThread = (J9VMThread*) env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	jlong stackTraceID = 0;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	stackTraceID = (jlong)vmFuncs->emitStackTrace(currentThread, skipCount);
+	vmFuncs->internalExitVMToJNI(currentThread);
+
+	return stackTraceID;
 }
 
 jlong JNICALL
 Java_jdk_jfr_internal_JVM_getThreadId(JNIEnv *env, jobject obj, jobject thread)
 {
-	// TODO: implementation
-	return 0;
+	J9VMThread *currentThread = (J9VMThread*) env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	jlong threadID = 0;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
+	J9VMThread *targetThread = J9VMJAVALANGTHREAD_THREADREF(currentThread, threadObject);
+	threadID = vmFuncs->getThreadTID(currentThread, targetThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
+
+	return threadID;
 }
 
 jlong JNICALL
