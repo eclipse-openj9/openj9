@@ -74,6 +74,7 @@
 		<saveoutput regex="no" type="required" saveName="valueAddr" splitIndex="1" splitBy="= !j9object " showMatch="yes">[0] = !fj9object 0x</saveoutput>
 		<saveoutput regex="no" type="required" saveName="arrayAddr" splitIndex="1" splitBy="= !j9object " showMatch="yes">[2] = !fj9object 0x</saveoutput>
 		<saveoutput regex="no" type="required" saveName="valueAddr1" splitIndex="1" splitBy="= !j9object " showMatch="yes">[3] = !fj9object 0x</saveoutput>
+		<saveoutput regex="no" type="required" saveName="compactLayoutAddr" splitIndex="1" splitBy="= !j9object " showMatch="yes">[4] = !fj9object 0x</saveoutput>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
@@ -163,7 +164,7 @@
 		<output regex="no" type="required" showMatch="yes"> point (offset = 24) (Point2D)</output>
 		<output regex="no" type="required" showMatch="yes"> vpoint (offset = 4) (Point2D)</output>
 		<output regex="no" type="required" showMatch="yes"> line (offset = 32) (FlattenedLine2D)</output>
-		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes"> vline = !fj9object 0x[\w]+ \(offset = 12\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes"> vline = !fj9object 0x\p{XDigit}+ \(offset = 12\)</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
@@ -193,6 +194,50 @@
 		<output regex="no" type="success" showMatch="yes"> FlattenedLine2D</output>
 		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">Point2D st (.)*[\n\r](.)*I x = 0xFFEEFFEE[\n\r](.)*I y = 0xAABBAABB</output>
 		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">Point2D en (.)*[\n\r](.)*I x = 0xCCDDCCDD[\n\r](.)*I y = 0x33443344</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !j9object $compactLayoutAddr$ to verify compact layout field offsets">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $compactLayoutAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">CompactLayoutScenarios</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">compactAssorted = !j9object 0x\p{XDigit}+ compactAssorted \(offset = 0\) \(CompactAssorted\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">compactShort = !j9object 0x\p{XDigit}+ compactShort \(offset = 12\) \(CompactShort\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">compactByteShort = !j9object 0x\p{XDigit}+ compactByteShort \(offset = 20\) \(CompactByteShort\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">compactByte = !j9object 0x\p{XDigit}+ compactByte \(offset = 26\) \(CompactByte\)</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !flatobject $compactLayoutAddr$ to verify all compact layout field offsets and values">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!flatobject $compactLayoutAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">CompactLayoutScenarios</output>
+		<output regex="no" type="required" showMatch="yes">CompactByte compactByte</output>
+		<output regex="no" type="required" showMatch="yes">B b0 = 0x7F</output>
+		<output regex="no" type="required" showMatch="yes">B b1 = 0x42</output>
+		<output regex="no" type="required" showMatch="yes">B b2 = 0x7F</output>
+		<output regex="no" type="required" showMatch="yes">B b3 = 0x42</output>
+		<output regex="no" type="required" showMatch="yes">CompactShort compactShort</output>
+		<output regex="no" type="required" showMatch="yes">S s0 = 0x7FFF</output>
+		<output regex="no" type="required" showMatch="yes">S s1 = 0x1234</output>
+		<output regex="no" type="required" showMatch="yes">S s2 = 0x7FFF</output>
+		<output regex="no" type="required" showMatch="yes">S s3 = 0x1234</output>
+		<output regex="no" type="required" showMatch="yes">CompactByteShort compactByteShort</output>
+		<output regex="no" type="required" showMatch="yes">B b0 = 0x7F</output>
+		<output regex="no" type="required" showMatch="yes">S s0 = 0x7FFF</output>
+		<output regex="no" type="required" showMatch="yes">B b1 = 0x42</output>
+		<output regex="no" type="required" showMatch="yes">S s1 = 0x1234</output>
+		<output regex="no" type="required" showMatch="yes">CompactAssorted compactAssorted</output>
+		<output regex="no" type="required" showMatch="yes">I i0 = 0x12123434</output>
+		<output regex="no" type="required" showMatch="yes">I i1 = 0x45456767</output>
+		<output regex="no" type="required" showMatch="yes">S s = 0x7FFF</output>
+		<output regex="no" type="required" showMatch="yes">B b = 0x7F</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 

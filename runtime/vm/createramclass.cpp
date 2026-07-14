@@ -1983,10 +1983,11 @@ checkSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J
  * static fields in the flattenedClassCache.
  *
  * 3. Sets the J9ClassLargestAlignmentConstraintDouble flag if any
- * of the fields are double-aligned. Similarily, it sets the
+ * of the fields are double-aligned. Similarly, it sets the
  * J9ClassLargestAlignmentConstraintReference flag given there is at least one
- * reference field. For single-aligned fields, nothing else is done. Eventually,
- * only the highest prioritized flag (Double > Reference > Single) will be used.
+ * reference field, J9ClassLargestAlignmentConstraintInteger for 4-byte aligned fields,
+ * and J9ClassLargestAlignmentConstraintShort for 2-byte aligned fields. Eventually,
+ * only the highest prioritized flag (Double > Reference > Integer > Short) will be used.
  *
  * 4. Sets the J9ClassCanSupportFastSubstitutability flag in
  * valuetypeFlags given that the class does not contain any field of
@@ -2028,10 +2029,19 @@ loadFlattenableFieldClasses(J9VMThread *currentThread, J9ClassLoader *classLoade
 			UDATA signatureLength = J9UTF8_LENGTH(signature);
 			switch (signatureChars[0]) {
 			case 'D':
-				/* Fall through */
 			case 'J':
 				*valueTypeFlags |= J9ClassLargestAlignmentConstraintDouble;
 				break;
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+			case 'I':
+			case 'F':
+				*valueTypeFlags |= J9ClassLargestAlignmentConstraintInteger;
+				break;
+			case 'S':
+			case 'C':
+				*valueTypeFlags |= J9ClassLargestAlignmentConstraintShort;
+				break;
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 			case 'L':
 			{
 				if (J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagIsNullRestricted)) {
@@ -2063,7 +2073,11 @@ loadFlattenableFieldClasses(J9VMThread *currentThread, J9ClassLoader *classLoade
 						entry->offset = UDATA_MAX;
 						numberOfCacheEntries += 1;
 					}
-					*valueTypeFlags |= (valueClass->classFlags & (J9ClassLargestAlignmentConstraintDouble | J9ClassLargestAlignmentConstraintReference | J9ClassHasReferences));
+					*valueTypeFlags |= (valueClass->classFlags & (J9ClassLargestAlignmentConstraintDouble | J9ClassLargestAlignmentConstraintReference
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+						| J9ClassLargestAlignmentConstraintShort | J9ClassLargestAlignmentConstraintInteger
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
+						| J9ClassHasReferences));
 				} else {
 					*valueTypeFlags |= (J9ClassLargestAlignmentConstraintReference | J9ClassHasReferences);
 					eligibleForFastSubstitutability = false;
@@ -2074,9 +2088,13 @@ loadFlattenableFieldClasses(J9VMThread *currentThread, J9ClassLoader *classLoade
 				*valueTypeFlags |= (J9ClassLargestAlignmentConstraintReference | J9ClassHasReferences);
 				break;
 			default:
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+				/* byte and boolean aligned fields are not marked with a flag. */
+#else /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 				/* Do nothing for now. If we eventually decide to pack fields smaller than 32 bits we'll
 				 * need to modify this code.
 				 */
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 				break;
 			}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
@@ -2430,6 +2448,9 @@ nativeOOM:
 				}
 			}
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+			/* totalInstanceSize reflects the unflattened value size. Use this to be consistent
+			 * with the information given to the user through Unsafe.getObjectSize().
+			 */
 			if ((state->ramClass->totalInstanceSize <= javaVM->valueFlatteningThreshold)
 					&& !J9ROMCLASS_IS_CONTENDED(romClass)
 			) {
@@ -2443,6 +2464,12 @@ nativeOOM:
 				classFlags |= J9ClassLargestAlignmentConstraintDouble;
 			} else if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassLargestAlignmentConstraintReference)) {
 				classFlags |= J9ClassLargestAlignmentConstraintReference;
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+			} else if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassLargestAlignmentConstraintInteger)) {
+				classFlags |= J9ClassLargestAlignmentConstraintInteger;
+			} else if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassLargestAlignmentConstraintShort)) {
+				classFlags |= J9ClassLargestAlignmentConstraintShort;
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 			}
 			if (J9_ARE_ALL_BITS_SET(state->valueTypeFlags, J9ClassRequiresPrePadding)) {
 				classFlags |= J9ClassRequiresPrePadding;
@@ -3299,6 +3326,9 @@ fail:
 					ramClass->backfillOffset = classBeingRedefined->backfillOffset;
 					ramClass->finalizeLinkOffset = classBeingRedefined->finalizeLinkOffset;
 					ramClass->lockOffset = classBeingRedefined->lockOffset;
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) && defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+					ramClass->flatFieldSize = classBeingRedefined->flatFieldSize;
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) && defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 				} else {
 					instanceDescription = allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].address;
 					iTable = allocationRequests[RAM_ITABLE_FRAGMENT].address;
@@ -3479,7 +3509,7 @@ fail:
 			 *
 			 *                        + J9ClassLargestAlignmentConstraintDouble
 			 *                       + J9ClassIsExemptFromValidation (inherited)
-			 *                      + Unused
+			 *                      + J9ClassLargestAlignmentConstraintInteger
 			 *                     + J9ClassCanSupportFastSubstitutability
 			 *
 			 *                   + J9ClassHasReferences
@@ -3490,7 +3520,7 @@ fail:
 			 *              + J9ClassEnsureHashed (inherited)
 			 *             + J9ClassHasOffloadAllowSubtasksNatives
 			 *            + J9ClassIsPrimitiveValueType
-			 *           + Unused
+			 *           + J9ClassLargestAlignmentConstraintShort
 			 *
 			 *         + J9ClassNeedToPruneMemberNames
 			 *        + J9ClassArrayIsNullRestricted
@@ -3739,7 +3769,11 @@ fail:
 					 * properties from the leafComponentType. A 2D array is an array of references so it can never be flattened, however, its
 					 * elements may be flattened arrays.
 					 */
-					U_32 arrayFlags = J9ClassLargestAlignmentConstraintReference | J9ClassLargestAlignmentConstraintDouble;
+					U_32 arrayFlags = J9ClassLargestAlignmentConstraintReference | J9ClassLargestAlignmentConstraintDouble
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+						| J9ClassLargestAlignmentConstraintShort | J9ClassLargestAlignmentConstraintInteger
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
+						;
 					if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_CLASS_OPTION_NULL_RESTRICTED_ARRAY)) {
 						if (J9_ARE_ALL_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_VT_ARRAY_FLATTENING)) {
 							arrayFlags |= J9ClassIsFlattened;
@@ -3769,7 +3803,16 @@ fail:
 						J9ARRAYCLASS_SET_STRIDE(ramClass, ROUND_UP_TO_POWEROF2(J9_VALUETYPE_FLATTENED_SIZE(elementClass), sizeof(U_64)));
 					} else if (J9_ARE_ALL_BITS_SET(elementClass->classFlags, J9ClassLargestAlignmentConstraintReference)) {
 						J9ARRAYCLASS_SET_STRIDE(ramClass, ROUND_UP_TO_POWEROF2(J9_VALUETYPE_FLATTENED_SIZE(elementClass), referenceSize));
-					} else { /* VT only contains singles (int, short, etc) at this point */
+#if defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS)
+					} else if (J9_ARE_ALL_BITS_SET(elementClass->classFlags, J9ClassLargestAlignmentConstraintInteger)) {
+						J9ARRAYCLASS_SET_STRIDE(ramClass, ROUND_UP_TO_POWEROF2(J9_VALUETYPE_FLATTENED_SIZE(elementClass), sizeof(U_32)));
+					} else if (J9_ARE_ALL_BITS_SET(elementClass->classFlags, J9ClassLargestAlignmentConstraintShort)) {
+						J9ARRAYCLASS_SET_STRIDE(ramClass, ROUND_UP_TO_POWEROF2(J9_VALUETYPE_FLATTENED_SIZE(elementClass), sizeof(U_16)));
+#endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
+					} else {
+						/* VT only contains singles (int, short, etc.) at this point.
+						 * If compact layouts are enabled this case covers byte aligned objects.
+						 */
 						J9ARRAYCLASS_SET_STRIDE(ramClass, J9_VALUETYPE_FLATTENED_SIZE(elementClass));
 					}
 				} else {
