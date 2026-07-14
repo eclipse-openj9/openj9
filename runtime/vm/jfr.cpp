@@ -532,17 +532,29 @@ jfrClassesUnload(J9HookInterface **hook, UDATA eventNum, void *eventData, void *
 {
 	J9VMClassesUnloadEvent *event = (J9VMClassesUnloadEvent *)eventData;
 	J9VMThread *currentThread = event->currentThread;
+	J9JavaVM *vm = currentThread->javaVM;
 
 #if defined(DEBUG)
 	PORT_ACCESS_FROM_VMC(currentThread);
 	j9tty_printf(PORTLIB, "\n!!! class unload %p\n", currentThread);
 #endif /* defined(DEBUG) */
 
-	/* Some class pointers in the thread and global buffers are about the become
-	 * invalid, so write out all of the available data now.
-	 */
 	flushAllThreadBuffers(currentThread, false);
-	writeOutGlobalBuffer(currentThread, false, false);
+	if (isJFRV2SupportEnabled(vm)) {
+		/* In JFRv2 we need to coordinate chunk rotation with the JCL. We can't block a GC for
+		 * this so for now just dump the data and emit a data loss event.
+		 * TODO https://github.com/eclipse-openj9/openj9/issues/23853
+		 */
+		UDATA lostData = vm->jfrBuffer.bufferSize - vm->jfrBuffer.bufferRemaining;
+		vm->jfrBuffer.bufferRemaining = vm->jfrBuffer.bufferSize;
+		vm->jfrBuffer.bufferCurrent = vm->jfrBuffer.bufferStart;
+		jfrEmitDataLoss(currentThread, lostData);
+	} else {
+		/* Some class pointers in the thread and global buffers are about the become
+		 * invalid, so write out all of the available data now.
+		 */
+		writeOutGlobalBuffer(currentThread, false, false);
+	}
 }
 
 /**
