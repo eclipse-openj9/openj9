@@ -47,6 +47,7 @@ private:
 	static void requestOSInformation(J9VMThread *currentThread);
 	static void requestPhysicalMemory(J9VMThread *currentThread);
 	static void requestSystemProcess(J9VMThread *currentThread);
+	static void requestThreadAllocation(J9VMThread *currentThread);
 	static void requestThreadContextSwitchRate(J9VMThread *currentThread);
 	static void requestThreadCPULoad(J9VMThread *currentThread);
 	static void requestThreadDump(J9VMThread *currentThread);
