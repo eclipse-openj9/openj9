@@ -608,6 +608,18 @@ typedef struct J9JFRJavaEventData {
 
 #define J9JFRJAVAEVENTDATA_EVENTDATA(jfrEvent) ((U_8 *)(((J9JFRJavaEventData *)(jfrEvent)) + 1))
 
+typedef struct J9JFRClassLoaderStatistics {
+	J9JFR_EVENT_COMMON_FIELDS
+	struct J9ClassLoader *classLoader;
+	struct J9ClassLoader *parentClassLoader;
+	I_64 classCount;
+	U_64 chunkSize;
+	I_64 blockSize;
+	I_64 hiddenClassCount;
+	U_64 hiddenChunkSize;
+	U_64 hiddenBlockSize;
+} J9JFRClassLoaderStatistics;
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 /* @ddr_namespace: map_to_type=J9CfrError */
