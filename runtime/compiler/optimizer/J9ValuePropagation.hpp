@@ -268,12 +268,17 @@ public:
      *
      * \param containingClass
      *    The class that contains the fields
-     *
+     * \param callTree
+     *    The \ref TR::TreeTop that contains the \c callNode
      * \param callNode
      *    The call node for object{Inequality|Equality}Comparison
-     *
+     * \param flags
+     *    Flags controlling some optional behaviour of the transformation.
+     *    In particular, \ref RequiresLeftOpNullValueTest and \ref RequiresRightOpNullValueTest
+     *    indicate whether the left or right operand, respectively, could be a null reference,
      */
-    void transformVTObjectEqNeCompare(TR_OpaqueClassBlock *containingClass, TR::Node *callNode);
+    void transformVTObjectEqNeCompare(TR_OpaqueClassBlock *containingClass, TR::TreeTop *callTree, TR::Node *callNode,
+        flags16_t flags);
 
     /**
      * \brief
@@ -409,22 +414,24 @@ private:
 
         TR::TreeTop *_tree;
         TR::Node *_callNode;
-        flags8_t _flags;
+        flags16_t _flags;
 
         enum // flag bits
         {
-            InlineVTCompare = 0x01,
-            InsertDebugCounter = 0x02,
-            RequiresBoundCheck = 0x04,
-            RequiresStoreCheck = 0x08,
-            RequiresNullValueCheck = 0x10,
+            InlineVTCompare = 0x0001,
+            InsertDebugCounter = 0x0002,
+            RequiresBoundCheck = 0x0004,
+            RequiresStoreCheck = 0x0008,
+            RequiresNullValueCheck = 0x0010,
             IsFlattenedElement
                 = 0x20, // Indicates whether or not the array elements are flattened in array load or array store.
-            IsFlattenedElementUseTypeHint = 0x40,
-            IsUnflattenedElementUseTypeHint = 0x80,
+            IsFlattenedElementUseTypeHint = 0x0040,
+            IsUnflattenedElementUseTypeHint = 0x0080,
+            RequiresLeftOpNullValueTest = 0x0100,
+            RequiresRightOpNullValueTest = 0x0200,
         };
 
-        ValueTypesHelperCallTransform(TR::TreeTop *tree, TR::Node *callNode, flags8_t flags)
+        ValueTypesHelperCallTransform(TR::TreeTop *tree, TR::Node *callNode, flags16_t flags)
             : _tree(tree)
             , _callNode(callNode)
             , _flags(flags)
@@ -519,7 +526,7 @@ private:
     struct ObjectComparisonHelperCallTransform : ValueTypesHelperCallTransform {
         TR_OpaqueClassBlock *_containingClass;
 
-        ObjectComparisonHelperCallTransform(TR::TreeTop *tree, TR::Node *callNode, flags8_t flags,
+        ObjectComparisonHelperCallTransform(TR::TreeTop *tree, TR::Node *callNode, flags16_t flags,
             TR_OpaqueClassBlock *containingClass = NULL)
             : ValueTypesHelperCallTransform(/* ComparisonHelper, */ tree, callNode, flags)
             , _containingClass(containingClass)
@@ -544,7 +551,7 @@ private:
         TR_OpaqueClassBlock *_arrayClass;
         int32_t _arrayLength;
 
-        ArrayOperationHelperCallTransform(TR::TreeTop *tree, TR::Node *callNode, flags8_t flags, int32_t arrayLength,
+        ArrayOperationHelperCallTransform(TR::TreeTop *tree, TR::Node *callNode, flags16_t flags, int32_t arrayLength,
             TR_OpaqueClassBlock *arrayClass = NULL)
             : ValueTypesHelperCallTransform(tree, callNode, flags)
             , _arrayClass(arrayClass)
@@ -567,7 +574,7 @@ private:
      * helper calls <jitLoadFlattenableArrayElement>
      */
     struct ArrayElementLoadHelperCallTransform : ArrayOperationHelperCallTransform {
-        ArrayElementLoadHelperCallTransform(TR::TreeTop *tree, TR::Node *callNode, flags8_t flags, int32_t arrayLength,
+        ArrayElementLoadHelperCallTransform(TR::TreeTop *tree, TR::Node *callNode, flags16_t flags, int32_t arrayLength,
             TR_OpaqueClassBlock *arrayClass = NULL)
             : ArrayOperationHelperCallTransform(tree, callNode, flags, arrayLength, arrayClass)
         {}
@@ -590,8 +597,8 @@ private:
         TR_OpaqueClassBlock *_storeClassForArrayStoreCHK;
         TR_OpaqueClassBlock *_componentClassForArrayStoreCHK;
 
-        ArrayElementStoreHelperCallTransform(TR::TreeTop *tree, TR::Node *callNode, flags8_t flags, int32_t arrayLength,
-            TR_OpaqueClassBlock *arrayClass = NULL, TR_OpaqueClassBlock *storeClassForCheck = NULL,
+        ArrayElementStoreHelperCallTransform(TR::TreeTop *tree, TR::Node *callNode, flags16_t flags,
+            int32_t arrayLength, TR_OpaqueClassBlock *arrayClass = NULL, TR_OpaqueClassBlock *storeClassForCheck = NULL,
             TR_OpaqueClassBlock *componentClassForCheck = NULL)
             : ArrayOperationHelperCallTransform(tree, callNode, flags, arrayLength, arrayClass)
             , _storeClassForArrayStoreCHK(storeClassForCheck)
