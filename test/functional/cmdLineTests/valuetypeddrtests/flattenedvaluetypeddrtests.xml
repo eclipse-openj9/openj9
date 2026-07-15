@@ -197,7 +197,7 @@
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
-	<test id="Run !j9object $compactLayoutAddr$ to verify compact layout field offsets">
+	<test id="Run !j9object compactLayoutAddr to verify compact layout field offsets">
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core $DUMPFILE$</arg>
 			<input>!j9object $compactLayoutAddr$</input>
@@ -211,7 +211,7 @@
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
-	<test id="Run !flatobject $compactLayoutAddr$ to verify all compact layout field offsets and values">
+	<test id="Run !flatobject compactLayoutAddr to verify all compact layout field offsets and values">
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core $DUMPFILE$</arg>
 			<input>!flatobject $compactLayoutAddr$</input>
