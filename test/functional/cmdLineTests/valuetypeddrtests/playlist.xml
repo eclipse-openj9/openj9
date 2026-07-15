@@ -42,7 +42,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			-DCPDL=$(Q)$(P)$(Q) \
 			-jar $(CMDLINETESTER_JAR) \
 			-config $(Q)$(TEST_RESROOT)$(D)flattenedvaluetypeddrtests.xml$(Q) \
-			-outputLimit 1000 -explainExcludes -nonZeroExitWhenError; \
+			-outputLimit 1000 -explainExcludes -nonZeroExitWhenError \
+			-xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q); \
 			${TEST_STATUS}
 		</command>
 		<!-- Tests excluded on zos because it does not support DDR yet. Please see https://github.com/eclipse-openj9/openj9/issues/1511 for updates -->
@@ -81,7 +82,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			-DCPDL=$(Q)$(P)$(Q) \
 			-jar $(CMDLINETESTER_JAR) \
 			-config $(Q)$(TEST_RESROOT)$(D)unflattenedvaluetypeddrtests.xml$(Q) \
-			-outputLimit 1000 -explainExcludes -nonZeroExitWhenError; \
+			-outputLimit 1000 -explainExcludes -nonZeroExitWhenError \
+			-xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q); \
 			${TEST_STATUS}
 		</command>
 		<!-- Tests excluded on zos because it does not support DDR yet. Please see https://github.com/eclipse-openj9/openj9/issues/1511 for updates -->

@@ -160,7 +160,7 @@
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
-	<test id="Run !fj9object $compactByteAddr$ to verify byte field offsets">
+	<test id="Run !fj9object compactByteAddr to verify byte field offsets">
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core $DUMPFILE$</arg>
 			<input>!fj9object $compactByteAddr$</input>
@@ -173,7 +173,7 @@
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
-	<test id="Run !fj9object $compactShortAddr$ to verify short field offsets">
+	<test id="Run !fj9object compactShortAddr to verify short field offsets">
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core $DUMPFILE$</arg>
 			<input>!fj9object $compactShortAddr$</input>
@@ -186,7 +186,7 @@
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
-	<test id="Run !fj9object $compactByteShortAddr$ to verify mixed byte/short field offsets">
+	<test id="Run !fj9object compactByteShortAddr to verify mixed byte/short field offsets">
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core $DUMPFILE$</arg>
 			<input>!fj9object $compactByteShortAddr$</input>
