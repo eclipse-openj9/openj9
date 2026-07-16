@@ -496,6 +496,8 @@ J9InternalVMFunctions J9InternalFunctions = {
 	jfrEmitDataLoss,
 	requestJFREvent,
 	setupChunkMonitor,
+	getThreadTID,
+	emitStackTrace,
 #endif /* defined(J9VM_OPT_JFR) */
 #if defined(J9VM_OPT_SNAPSHOTS)
 	initializeSnapshotClassLoaderObject,
