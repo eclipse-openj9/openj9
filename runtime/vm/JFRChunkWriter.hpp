@@ -122,6 +122,7 @@ enum MetadataTypeID {
 	NativeLibraryID = 112,
 	ModuleRequireID = 113,
 	ModuleExportID = 114,
+	GCSurvivorConfigurationID = 131,
 	GCHeapConfigID = 133,
 	YoungGenerationConfigID = 134,
 	VirtualSpaceID = 149,
@@ -509,6 +510,8 @@ done:
 					writeGCHeapConfigurationEvent();
 
 					writeYoungGenerationConfigurationEvent();
+
+					writeGCSurvivorConfigurationEvent();
 				}
 
 				writePhysicalMemoryEvent();
@@ -543,6 +546,10 @@ done:
 
 				if (_constantPoolTypes.shouldWriteYoungGenerationConfigurationEvent()) {
 					writeYoungGenerationConfigurationEvent();
+				}
+
+				if (_constantPoolTypes.shouldWriteGCSurvivorConfigurationEvent()) {
+					writeGCSurvivorConfigurationEvent();
 				}
 
 				if (_constantPoolTypes.shouldWritePhysicalMemory()) {
@@ -952,6 +959,8 @@ done:
 	void writeGCHeapConfigurationEvent();
 
 	void writeYoungGenerationConfigurationEvent();
+
+	void writeGCSurvivorConfigurationEvent();
 
 	void writeInitialSystemPropertyEvents(J9JavaVM *vm);
 
