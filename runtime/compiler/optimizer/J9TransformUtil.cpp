@@ -2484,6 +2484,13 @@ void J9::TransformUtil::createTempsForCall(TR::Optimization *opt, TR::TreeTop *c
         TR::SymbolReference *newSymbolReference
             = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), dataType);
 
+        // An address type child is not necessarily a collected reference. The vft load
+        // child of an indirect call is one example. Storing such a value in a collected
+        // temp would have the GC treat the slot's contents as a regular object pointer,
+        // so mark the temp as not collected when the child is not a collected reference
+        if (dataType == TR::Address && child->isNotCollected())
+            newSymbolReference->getSymbol()->setNotCollected();
+
         TR::Node *storeNode = TR::Node::createStore(callNode, newSymbolReference, child);
         TR::TreeTop *storeTree = TR::TreeTop::create(comp, storeNode);
         logprintf(trace, log, "Creating store node %p for child %p\n", storeNode, child);
