@@ -23,12 +23,20 @@
 #include <algorithm>
 #include <memory.h>
 #include "j9.h"
+#include "compile/CompilationTypes.hpp"
+#include "control/CompilationRuntime.hpp"
+#include "control/Options.hpp"
+#include "control/Options_inlines.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "env/CHTable.hpp"
+#include "env/jittypes.h"
+#include "env/PersistentAllocator.hpp"
+#include "env/PersistentAllocatorKit.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/PersistentInfo.hpp"
-#include "env/jittypes.h"
+#include "env/RawAllocator.hpp"
+#include "env/TRMemory.hpp"
 #include "env/VerboseLog.hpp"
 #include "infra/Monitor.hpp"
 #include "infra/CriticalSection.hpp"
@@ -41,6 +49,7 @@
 #include "omrformatconsts.h"
 
 extern TR::Monitor *assumptionTableMutex;
+extern TR_PersistentMemory *trPersistentMemory;
 
 bool TR_PersistentClassInfo::isInitialized(bool validate)
 {
@@ -133,12 +142,50 @@ void TR_PersistentClassInfo::removeUnloadedSubClasses()
     return;
 }
 
-// Must call this during bootstrap on a single thread because it is not MT safe
+// Static member definition
+TR::PersistentAllocator *TR_RuntimeAssumptionTable::_raPersistentAllocator = NULL;
+
+// Must call this during bootstrap on a single thread because it is not MT safe.
 bool TR_RuntimeAssumptionTable::init()
 {
-    // Set default values for size tables
-    // Sizes need to be determined at bootstrap because in this implementation we cannot grow the tables
-    // A palliative would be to store a hint in te shared class cache
+#ifdef LINUX
+    if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableRuntimeAssumptionDataDisclaiming)) {
+        // Create dedicated PersistentAllocator for RuntimeAssumptions with MEMORY_TYPE_VIRTUAL
+        // to enable memory disclaiming to swap using madvise.
+        uint32_t memoryType = MEMORY_TYPE_VIRTUAL; // Force the usage of mmap for allocation
+        TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
+        if (!compInfo)
+            return false;
+        if (!compInfo->canDisclaimOnSwap())
+            memoryType |= MEMORY_TYPE_DISCLAIMABLE_TO_FILE;
+
+        // Use 1 MB segment size (same as other dedicated allocators in the codebase).
+        TR::PersistentAllocatorKit kit(1 << 20 /*1 MB*/, *TR::Compiler->javaVM, memoryType);
+        _raPersistentAllocator = new (TR::Compiler->rawAllocator) TR::PersistentAllocator(kit);
+
+        if (!_raPersistentAllocator)
+            return false;
+
+        if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance)) {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,
+                "Using dedicated persistent allocator %p for RuntimeAssumptions (memoryType=0x%x)",
+                _raPersistentAllocator, memoryType);
+        }
+    } else
+#endif // LINUX
+    {
+        // Use global persistent allocator (default, backward compatible).
+        // Get reference to the allocator from the global persistent memory.
+        _raPersistentAllocator = &trPersistentMemory->_persistentAllocator.get();
+
+        if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance)) {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Using global persistent allocator for RuntimeAssumptions");
+        }
+    }
+
+    // Set default values for size tables.
+    // Sizes need to be determined at bootstrap because in this implementation we cannot grow the tables.
+    // A palliative would be to store a hint in the shared class cache.
     size_t sizes[LastAssumptionKind];
     for (int32_t i = 0; i < LastAssumptionKind; i++)
         sizes[i] = 251;
@@ -159,9 +206,12 @@ bool TR_RuntimeAssumptionTable::init()
         reclaimedAssumptionCount[i] = 0;
         _tables[i]._spineArraySize = sizes[i];
         size_t storageSize = sizeof(OMR::RuntimeAssumption *) * _tables[i]._spineArraySize;
-        _tables[i]._htSpineArray = (OMR::RuntimeAssumption **)TR_PersistentMemory::jitPersistentAlloc(storageSize);
+
+        // Use dedicated RuntimeAssumption allocator with TR_Memory::Assumption category.
+        _tables[i]._htSpineArray = (OMR::RuntimeAssumption **)allocateRAPersistentMemory(storageSize);
         _tables[i]._markedforDetachCount
-            = (uint32_t *)TR_PersistentMemory::jitPersistentAlloc(sizeof(uint32_t) * _tables[i]._spineArraySize);
+            = (uint32_t *)allocateRAPersistentMemory(sizeof(uint32_t) * _tables[i]._spineArraySize);
+
         if (!_tables[i]._htSpineArray || !_tables[i]._markedforDetachCount)
             return false;
         memset(_tables[i]._htSpineArray, 0, storageSize);
@@ -174,7 +224,21 @@ bool TR_RuntimeAssumptionTable::init()
 
 void *TR_RuntimeAssumptionTable::allocateRAPersistentMemory(size_t size)
 {
-    return TR::Compiler->persistentMemory()->allocatePersistentMemory(size, TR_Memory::Assumption);
+    void *mem = _raPersistentAllocator->allocate(size, std::nothrow);
+    if (mem) {
+        // Update allocation tracking in the global persistent memory.
+        // This ensures proper accounting even when using a dedicated allocator.
+        trPersistentMemory->_totalPersistentAllocations[TR_Memory::Assumption] += size;
+    }
+
+    return mem;
+}
+
+void TR_RuntimeAssumptionTable::freeRAPersistentMemory(void *mem)
+{
+    TR_ASSERT(mem != NULL, "Attempting to free NULL RuntimeAssumption pointer");
+    TR_ASSERT(_raPersistentAllocator != NULL, "RuntimeAssumption allocator not initialized");
+    _raPersistentAllocator->deallocate(mem);
 }
 
 void OMR::RuntimeAssumption::addToRAT(TR_PersistentMemory *persistentMemory, TR_RuntimeAssumptionKind kind,
@@ -259,7 +323,7 @@ void OMR::RuntimeAssumption::dequeueFromListOfAssumptionsForJittedBody()
                 }
 
                 crt->paint();
-                TR_PersistentMemory::jitPersistentFree(crt);
+                TR_RuntimeAssumptionTable::freeRAPersistentMemory(crt);
             }
 
             crt = next;
@@ -281,9 +345,10 @@ bool OMR::RuntimeAssumption::enqueueInListOfAssumptionsForJittedBody(OMR::Runtim
     if (*sentinel == NULL) // sentinel does not exist yet
     {
         // Create a special RuntimeAssumption to play role of a sentinel
-        *sentinel = new (PERSISTENT_NEW) TR::SentinelRuntimeAssumption();
-        if (*sentinel == NULL) // ran ouf of memory during runtime
+        void *mem = TR_RuntimeAssumptionTable::allocateRAPersistentMemory(sizeof(TR::SentinelRuntimeAssumption));
+        if (mem == NULL) // ran out of memory during runtime
             return false;
+        *sentinel = ::new (mem) TR::SentinelRuntimeAssumption();
     }
     this->setNextAssumptionForSameJittedBody((*sentinel)->getNextAssumptionForSameJittedBodyEvenIfDead());
     (*sentinel)->setNextAssumptionForSameJittedBody(this);
@@ -316,7 +381,7 @@ void TR_RuntimeAssumptionTable::purgeAssumptionListHead(OMR::RuntimeAssumption *
     assumptionList->dequeueFromListOfAssumptionsForJittedBody();
     incReclaimedAssumptionCount(assumptionList->getAssumptionKind());
 
-    TR_PersistentMemory::jitPersistentFree(assumptionList);
+    TR_RuntimeAssumptionTable::freeRAPersistentMemory(assumptionList);
 
     assumptionList = next;
 }
@@ -431,7 +496,7 @@ void TR_RuntimeAssumptionTable::reclaimMarkedAssumptionsFromRAT(int32_t cleanupC
 
                         cursor->reclaim();
                         cursor->paint(); // RAS
-                        TR_PersistentMemory::jitPersistentFree(cursor);
+                        TR_RuntimeAssumptionTable::freeRAPersistentMemory(cursor);
                         cleanupCount--;
                     } else {
                         prev = cursor;
@@ -721,25 +786,49 @@ void TR_UnloadedClassPicSite::dumpInfo()
 TR_RedefinedClassRPicSite *TR_RedefinedClassRPicSite::make(TR_FrontEnd *fe, TR_PersistentMemory *pm, uintptr_t key,
     uint8_t *picLocation, uint32_t size, OMR::RuntimeAssumption **sentinel)
 {
-    TR_RedefinedClassRPicSite *result = new (pm) TR_RedefinedClassRPicSite(pm, key, picLocation, size);
-    result->addToRAT(pm, RuntimeAssumptionOnClassRedefinitionPIC, fe, sentinel);
-    // FAR:: we should replace RuntimeAssumptionOnClassRedefinitionPIC by result->getAssumptionKind();
+    TR_RedefinedClassRPicSite *result = NULL;
+    void *mem = TR_RuntimeAssumptionTable::allocateRAPersistentMemory(sizeof(TR_RedefinedClassRPicSite));
+    if (mem) {
+        result = ::new (mem) TR_RedefinedClassRPicSite(pm, key, picLocation, size);
+        result->addToRAT(pm, RuntimeAssumptionOnClassRedefinitionPIC, fe, sentinel);
+        // FAR:: we should replace RuntimeAssumptionOnClassRedefinitionPIC by result->getAssumptionKind();
+    } else {
+        TR::Compilation *comp = TR::comp();
+        if (comp)
+            comp->failCompilation<TR::CompilationException>("Out of persistent memory while creating assumptions");
+    }
     return result;
 }
 
 TR_RedefinedClassUPicSite *TR_RedefinedClassUPicSite::make(TR_FrontEnd *fe, TR_PersistentMemory *pm, uintptr_t key,
     uint8_t *picLocation, uint32_t size, OMR::RuntimeAssumption **sentinel)
 {
-    TR_RedefinedClassUPicSite *result = new (pm) TR_RedefinedClassUPicSite(pm, key, picLocation, size);
-    result->addToRAT(pm, RuntimeAssumptionOnClassRedefinitionUPIC, fe, sentinel);
+    TR_RedefinedClassUPicSite *result = NULL;
+    void *mem = TR_RuntimeAssumptionTable::allocateRAPersistentMemory(sizeof(TR_RedefinedClassUPicSite));
+    if (mem) {
+        result = ::new (mem) TR_RedefinedClassUPicSite(pm, key, picLocation, size);
+        result->addToRAT(pm, RuntimeAssumptionOnClassRedefinitionUPIC, fe, sentinel);
+    } else {
+        TR::Compilation *comp = TR::comp();
+        if (comp)
+            comp->failCompilation<TR::CompilationException>("Out of persistent memory while creating assumptions");
+    }
     return result;
 }
 
 TR_UnloadedClassPicSite *TR_UnloadedClassPicSite::make(TR_FrontEnd *fe, TR_PersistentMemory *pm, uintptr_t key,
     uint8_t *picLocation, uint32_t size, TR_RuntimeAssumptionKind kind, OMR::RuntimeAssumption **sentinel)
 {
-    TR_UnloadedClassPicSite *result = new (pm) TR_UnloadedClassPicSite(pm, key, picLocation, size);
-    result->addToRAT(pm, RuntimeAssumptionOnClassUnload, fe, sentinel);
+    TR_UnloadedClassPicSite *result = NULL;
+    void *mem = TR_RuntimeAssumptionTable::allocateRAPersistentMemory(sizeof(TR_UnloadedClassPicSite));
+    if (mem) {
+        result = ::new (mem) TR_UnloadedClassPicSite(pm, key, picLocation, size);
+        result->addToRAT(pm, RuntimeAssumptionOnClassUnload, fe, sentinel);
+    } else {
+        TR::Compilation *comp = TR::comp();
+        if (comp)
+            comp->failCompilation<TR::CompilationException>("Out of persistent memory while creating assumptions");
+    }
     return result;
 }
 

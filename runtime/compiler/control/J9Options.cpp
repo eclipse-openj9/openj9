@@ -2781,6 +2781,7 @@ bool J9::Options::fePreProcess(void *base)
     if (!TR::Compiler->target.isLinux()) {
         self()->setOption(TR_DisableDataCacheDisclaiming);
         self()->setOption(TR_DisableIProfilerDataDisclaiming);
+        self()->setOption(TR_DisableRuntimeAssumptionDataDisclaiming);
         self()->setOption(TR_EnableCodeCacheDisclaiming, false);
         self()->setOption(TR_EnableSharedCacheDisclaiming, false);
     }
@@ -2939,6 +2940,7 @@ bool J9::Options::fePostProcessJIT(void *base)
     }
 
     if (!self()->getOption(TR_DisableDataCacheDisclaiming) || !self()->getOption(TR_DisableIProfilerDataDisclaiming)
+        || !self()->getOption(TR_DisableRuntimeAssumptionDataDisclaiming)
         || self()->getOption(TR_EnableCodeCacheDisclaiming) || self()->getOption(TR_EnableSharedCacheDisclaiming)) {
         // Check requirements for memory disclaiming (Linux kernel and default page size)
         TR::Options::disableMemoryDisclaimIfNeeded(jitConfig);
@@ -3113,6 +3115,7 @@ bool J9::Options::disableMemoryDisclaimIfNeeded(J9JITConfig *jitConfig)
     if (!compInfo->canDisclaimOnSwap() && !compInfo->canDisclaimOnFile()) {
         TR::Options::getCmdLineOptions()->setOption(TR_DisableDataCacheDisclaiming);
         TR::Options::getCmdLineOptions()->setOption(TR_DisableIProfilerDataDisclaiming);
+        TR::Options::getCmdLineOptions()->setOption(TR_DisableRuntimeAssumptionDataDisclaiming);
         TR::Options::getCmdLineOptions()->setOption(TR_EnableCodeCacheDisclaiming, false);
         if (TR::Options::getVerboseOption(TR_VerbosePerformance)) {
             TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
@@ -3138,6 +3141,7 @@ bool J9::Options::disableMemoryDisclaimIfNeeded(J9JITConfig *jitConfig)
 #else /* if defined(LINUX) */
     TR::Options::getCmdLineOptions()->setOption(TR_DisableDataCacheDisclaiming);
     TR::Options::getCmdLineOptions()->setOption(TR_DisableIProfilerDataDisclaiming);
+    TR::Options::getCmdLineOptions()->setOption(TR_DisableRuntimeAssumptionDataDisclaiming);
     TR::Options::getCmdLineOptions()->setOption(TR_EnableCodeCacheDisclaiming, false);
     TR::Options::getCmdLineOptions()->setOption(TR_EnableSharedCacheDisclaiming, false);
     return true;

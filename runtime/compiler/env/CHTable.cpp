@@ -23,9 +23,6 @@
 #include "env/CHTable.hpp"
 
 #include "codegen/CodeGenerator.hpp"
-#include "env/FrontEnd.hpp"
-#include "env/CompilerEnv.hpp"
-#include "env/KnownObjectTable.hpp"
 #include "compile/CompilationTypes.hpp"
 #include "compile/TRResolvedMethod.hpp"
 #include "compile/VirtualGuard.hpp"
@@ -33,16 +30,19 @@
 #include "control/Options_inlines.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
+#include "env/ClassTableCriticalSection.hpp"
 #include "env/CompilerEnv.hpp"
-#include "env/PersistentCHTable.hpp"
-#include "env/PersistentInfo.hpp"
-#include "env/jittypes.h"
+#include "env/FrontEnd.hpp"
 #include "env/j9method.h"
 #include "env/J9RetainedMethodSet.hpp"
-#include "env/ClassTableCriticalSection.hpp"
+#include "env/jittypes.h"
+#include "env/KnownObjectTable.hpp"
+#include "env/PersistentCHTable.hpp"
+#include "env/PersistentInfo.hpp"
+#include "env/RuntimeAssumptionTable.hpp"
+#include "env/VerboseLog.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
-#include "env/VerboseLog.hpp"
 #include "il/MethodSymbol.hpp"
 #include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
@@ -92,8 +92,19 @@ void TR_PatchJNICallSite::dumpInfo()
 TR_PatchNOPedGuardSiteOnClassExtend *TR_PatchNOPedGuardSiteOnClassExtend::make(TR_FrontEnd *fe, TR_PersistentMemory *pm,
     TR_OpaqueClassBlock *clazz, uint8_t *loc, uint8_t *dest, OMR::RuntimeAssumption **sentinel)
 {
-    TR_PatchNOPedGuardSiteOnClassExtend *result = new (pm) TR_PatchNOPedGuardSiteOnClassExtend(pm, clazz, loc, dest);
-    result->addToRAT(pm, RuntimeAssumptionOnClassExtend, fe, sentinel);
+    TR_PatchNOPedGuardSiteOnClassExtend *result = NULL;
+    void *mem = TR_RuntimeAssumptionTable::allocateRAPersistentMemory(sizeof(TR_PatchNOPedGuardSiteOnClassExtend));
+    if (mem) {
+        result = ::new (mem) TR_PatchNOPedGuardSiteOnClassExtend(pm, clazz, loc, dest);
+        result->addToRAT(pm, RuntimeAssumptionOnClassExtend, fe, sentinel);
+    } else {
+        // The thread-local comp object is not NULL during a compilation.
+        // If that's the case, throw a CompilationException to fail this compilation.
+        // Note that std::bad_alloc exception is treated like a scratch-memory exhaution.
+        TR::Compilation *comp = TR::comp();
+        if (comp)
+            comp->failCompilation<TR::CompilationException>("Out of persistent memory while creating assumptions");
+    }
     return result;
 }
 
@@ -101,18 +112,33 @@ TR_PatchNOPedGuardSiteOnMethodOverride *TR_PatchNOPedGuardSiteOnMethodOverride::
     TR_PersistentMemory *pm, TR_OpaqueMethodBlock *method, uint8_t *loc, uint8_t *dest,
     OMR::RuntimeAssumption **sentinel)
 {
-    TR_PatchNOPedGuardSiteOnMethodOverride *result
-        = new (pm) TR_PatchNOPedGuardSiteOnMethodOverride(pm, method, loc, dest);
-    result->addToRAT(pm, RuntimeAssumptionOnMethodOverride, fe, sentinel);
+    TR_PatchNOPedGuardSiteOnMethodOverride *result = NULL;
+    void *mem = TR_RuntimeAssumptionTable::allocateRAPersistentMemory(sizeof(TR_PatchNOPedGuardSiteOnMethodOverride));
+    if (mem) {
+        result = ::new (mem) TR_PatchNOPedGuardSiteOnMethodOverride(pm, method, loc, dest);
+        result->addToRAT(pm, RuntimeAssumptionOnMethodOverride, fe, sentinel);
+    } else {
+        TR::Compilation *comp = TR::comp();
+        if (comp)
+            comp->failCompilation<TR::CompilationException>("Out of persistent memory while creating assumptions");
+    }
     return result;
 }
 
 TR_PatchNOPedGuardSiteOnClassRedefinition *TR_PatchNOPedGuardSiteOnClassRedefinition::make(TR_FrontEnd *fe,
     TR_PersistentMemory *pm, TR_OpaqueClassBlock *clazz, uint8_t *loc, uint8_t *dest, OMR::RuntimeAssumption **sentinel)
 {
-    TR_PatchNOPedGuardSiteOnClassRedefinition *result
-        = new (pm) TR_PatchNOPedGuardSiteOnClassRedefinition(pm, clazz, loc, dest);
-    result->addToRAT(pm, RuntimeAssumptionOnClassRedefinitionNOP, fe, sentinel);
+    TR_PatchNOPedGuardSiteOnClassRedefinition *result = NULL;
+    void *mem
+        = TR_RuntimeAssumptionTable::allocateRAPersistentMemory(sizeof(TR_PatchNOPedGuardSiteOnClassRedefinition));
+    if (mem) {
+        result = ::new (mem) TR_PatchNOPedGuardSiteOnClassRedefinition(pm, clazz, loc, dest);
+        result->addToRAT(pm, RuntimeAssumptionOnClassRedefinitionNOP, fe, sentinel);
+    } else {
+        TR::Compilation *comp = TR::comp();
+        if (comp)
+            comp->failCompilation<TR::CompilationException>("Out of persistent memory while creating assumptions");
+    }
     return result;
 }
 
@@ -120,10 +146,18 @@ TR_PatchMultipleNOPedGuardSitesOnClassRedefinition *TR_PatchMultipleNOPedGuardSi
     TR_FrontEnd *fe, TR_PersistentMemory *pm, TR_OpaqueClassBlock *clazz, TR::PatchSites *sites,
     OMR::RuntimeAssumption **sentinel)
 {
-    TR_PatchMultipleNOPedGuardSitesOnClassRedefinition *result
-        = new (pm) TR_PatchMultipleNOPedGuardSitesOnClassRedefinition(pm, clazz, sites);
-    sites->addReference();
-    result->addToRAT(pm, RuntimeAssumptionOnClassRedefinitionNOP, fe, sentinel);
+    TR_PatchMultipleNOPedGuardSitesOnClassRedefinition *result = NULL;
+    void *mem = TR_RuntimeAssumptionTable::allocateRAPersistentMemory(
+        sizeof(TR_PatchMultipleNOPedGuardSitesOnClassRedefinition));
+    if (mem) {
+        result = ::new (mem) TR_PatchMultipleNOPedGuardSitesOnClassRedefinition(pm, clazz, sites);
+        sites->addReference();
+        result->addToRAT(pm, RuntimeAssumptionOnClassRedefinitionNOP, fe, sentinel);
+    } else {
+        TR::Compilation *comp = TR::comp();
+        if (comp)
+            comp->failCompilation<TR::CompilationException>("Out of persistent memory while creating assumptions");
+    }
     return result;
 }
 
@@ -131,9 +165,17 @@ TR_PatchNOPedGuardSiteOnStaticFinalFieldModification *TR_PatchNOPedGuardSiteOnSt
     TR_FrontEnd *fe, TR_PersistentMemory *pm, TR_OpaqueClassBlock *clazz, uint8_t *loc, uint8_t *dest,
     OMR::RuntimeAssumption **sentinel)
 {
-    TR_PatchNOPedGuardSiteOnStaticFinalFieldModification *result
-        = new (pm) TR_PatchNOPedGuardSiteOnStaticFinalFieldModification(pm, clazz, loc, dest);
-    result->addToRAT(pm, RuntimeAssumptionOnStaticFinalFieldModification, fe, sentinel);
+    TR_PatchNOPedGuardSiteOnStaticFinalFieldModification *result = NULL;
+    void *mem = TR_RuntimeAssumptionTable::allocateRAPersistentMemory(
+        sizeof(TR_PatchNOPedGuardSiteOnStaticFinalFieldModification));
+    if (mem) {
+        result = ::new (mem) TR_PatchNOPedGuardSiteOnStaticFinalFieldModification(pm, clazz, loc, dest);
+        result->addToRAT(pm, RuntimeAssumptionOnStaticFinalFieldModification, fe, sentinel);
+    } else {
+        TR::Compilation *comp = TR::comp();
+        if (comp)
+            comp->failCompilation<TR::CompilationException>("Out of persistent memory while creating assumptions");
+    }
     return result;
 }
 
@@ -141,51 +183,99 @@ TR_PatchMultipleNOPedGuardSitesOnStaticFinalFieldModification *
 TR_PatchMultipleNOPedGuardSitesOnStaticFinalFieldModification::make(TR_FrontEnd *fe, TR_PersistentMemory *pm,
     TR_OpaqueClassBlock *clazz, TR::PatchSites *sites, OMR::RuntimeAssumption **sentinel)
 {
-    TR_PatchMultipleNOPedGuardSitesOnStaticFinalFieldModification *result
-        = new (pm) TR_PatchMultipleNOPedGuardSitesOnStaticFinalFieldModification(pm, clazz, sites);
-    sites->addReference();
-    result->addToRAT(pm, RuntimeAssumptionOnStaticFinalFieldModification, fe, sentinel);
+    TR_PatchMultipleNOPedGuardSitesOnStaticFinalFieldModification *result = NULL;
+    void *mem = TR_RuntimeAssumptionTable::allocateRAPersistentMemory(
+        sizeof(TR_PatchMultipleNOPedGuardSitesOnStaticFinalFieldModification));
+    if (mem) {
+        result = ::new (mem) TR_PatchMultipleNOPedGuardSitesOnStaticFinalFieldModification(pm, clazz, sites);
+        sites->addReference();
+        result->addToRAT(pm, RuntimeAssumptionOnStaticFinalFieldModification, fe, sentinel);
+    } else {
+        TR::Compilation *comp = TR::comp();
+        if (comp)
+            comp->failCompilation<TR::CompilationException>("Out of persistent memory while creating assumptions");
+    }
     return result;
 }
 
 TR_PatchJNICallSite *TR_PatchJNICallSite::make(TR_FrontEnd *fe, TR_PersistentMemory *pm, uintptr_t key, uint8_t *pc,
     OMR::RuntimeAssumption **sentinel)
 {
-    TR_PatchJNICallSite *result = new (pm) TR_PatchJNICallSite(pm, key, pc);
-    result->addToRAT(pm, RuntimeAssumptionOnRegisterNative, fe, sentinel);
+    TR_PatchJNICallSite *result = NULL;
+    void *mem = TR_RuntimeAssumptionTable::allocateRAPersistentMemory(sizeof(TR_PatchJNICallSite));
+    if (mem) {
+        result = ::new (mem) TR_PatchJNICallSite(pm, key, pc);
+        result->addToRAT(pm, RuntimeAssumptionOnRegisterNative, fe, sentinel);
+    } else {
+        TR::Compilation *comp = TR::comp();
+        if (comp)
+            comp->failCompilation<TR::CompilationException>("Out of persistent memory while creating assumptions");
+    }
     return result;
 }
 
 TR_PreXRecompileOnClassExtend *TR_PreXRecompileOnClassExtend::make(TR_FrontEnd *fe, TR_PersistentMemory *pm,
     TR_OpaqueClassBlock *clazz, uint8_t *startPC, OMR::RuntimeAssumption **sentinel)
 {
-    TR_PreXRecompileOnClassExtend *result = new (pm) TR_PreXRecompileOnClassExtend(pm, clazz, startPC);
-    result->addToRAT(pm, RuntimeAssumptionOnClassExtend, fe, sentinel);
+    TR_PreXRecompileOnClassExtend *result = NULL;
+    void *mem = TR_RuntimeAssumptionTable::allocateRAPersistentMemory(sizeof(TR_PreXRecompileOnClassExtend));
+    if (mem) {
+        result = ::new (mem) TR_PreXRecompileOnClassExtend(pm, clazz, startPC);
+        result->addToRAT(pm, RuntimeAssumptionOnClassExtend, fe, sentinel);
+    } else {
+        TR::Compilation *comp = TR::comp();
+        if (comp)
+            comp->failCompilation<TR::CompilationException>("Out of persistent memory while creating assumptions");
+    }
     return result;
 }
 
 TR_PreXRecompileOnMethodOverride *TR_PreXRecompileOnMethodOverride::make(TR_FrontEnd *fe, TR_PersistentMemory *pm,
     TR_OpaqueMethodBlock *method, uint8_t *startPC, OMR::RuntimeAssumption **sentinel)
 {
-    TR_PreXRecompileOnMethodOverride *result = new (pm) TR_PreXRecompileOnMethodOverride(pm, method, startPC);
-    result->addToRAT(pm, RuntimeAssumptionOnMethodOverride, fe, sentinel);
+    TR_PreXRecompileOnMethodOverride *result = NULL;
+    void *mem = TR_RuntimeAssumptionTable::allocateRAPersistentMemory(sizeof(TR_PreXRecompileOnMethodOverride));
+    if (mem) {
+        result = ::new (mem) TR_PreXRecompileOnMethodOverride(pm, method, startPC);
+        result->addToRAT(pm, RuntimeAssumptionOnMethodOverride, fe, sentinel);
+    } else {
+        TR::Compilation *comp = TR::comp();
+        if (comp)
+            comp->failCompilation<TR::CompilationException>("Out of persistent memory while creating assumptions");
+    }
     return result;
 }
 
 TR_ClassUnloadRecompile *TR_ClassUnloadRecompile::make(TR_FrontEnd *fe, TR_PersistentMemory *pm,
     TR_OpaqueClassBlock *clazz, uint8_t *startPC, OMR::RuntimeAssumption **sentinel)
 {
-    TR_ClassUnloadRecompile *result = new (pm) TR_ClassUnloadRecompile(pm, clazz, startPC);
-    result->addToRAT(pm, RuntimeAssumptionOnClassUnload, fe, sentinel);
+    TR_ClassUnloadRecompile *result = NULL;
+    void *mem = TR_RuntimeAssumptionTable::allocateRAPersistentMemory(sizeof(TR_ClassUnloadRecompile));
+    if (mem) {
+        result = ::new (mem) TR_ClassUnloadRecompile(pm, clazz, startPC);
+        result->addToRAT(pm, RuntimeAssumptionOnClassUnload, fe, sentinel);
+    } else {
+        TR::Compilation *comp = TR::comp();
+        if (comp)
+            comp->failCompilation<TR::CompilationException>("Out of persistent memory while creating assumptions");
+    }
     return result;
 }
 
 TR_PatchNOPedGuardSiteOnMutableCallSiteChange *TR_PatchNOPedGuardSiteOnMutableCallSiteChange::make(TR_FrontEnd *fe,
     TR_PersistentMemory *pm, uintptr_t key, uint8_t *location, uint8_t *destination, OMR::RuntimeAssumption **sentinel)
 {
-    TR_PatchNOPedGuardSiteOnMutableCallSiteChange *result
-        = new (pm) TR_PatchNOPedGuardSiteOnMutableCallSiteChange(pm, key, location, destination);
-    result->addToRAT(pm, RuntimeAssumptionOnMutableCallSiteChange, fe, sentinel);
+    TR_PatchNOPedGuardSiteOnMutableCallSiteChange *result = NULL;
+    void *mem
+        = TR_RuntimeAssumptionTable::allocateRAPersistentMemory(sizeof(TR_PatchNOPedGuardSiteOnMutableCallSiteChange));
+    if (mem) {
+        result = ::new (mem) TR_PatchNOPedGuardSiteOnMutableCallSiteChange(pm, key, location, destination);
+        result->addToRAT(pm, RuntimeAssumptionOnMutableCallSiteChange, fe, sentinel);
+    } else {
+        TR::Compilation *comp = TR::comp();
+        if (comp)
+            comp->failCompilation<TR::CompilationException>("Out of persistent memory while creating assumptions");
+    }
     return result;
 }
 
