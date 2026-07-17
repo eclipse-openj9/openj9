@@ -6035,7 +6035,7 @@ I_64
 getThreadTID(J9VMThread *currentThread, J9VMThread *vmThread);
 
 
-UDATA
+U_32
 emitStackTrace(J9VMThread *currentThread, I_32 skipCount);
 #endif /* defined(J9VM_OPT_JFR) */
 

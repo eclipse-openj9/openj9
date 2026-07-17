@@ -203,7 +203,7 @@ Java_jdk_jfr_internal_JVM_getClassId(JNIEnv *env, jclass clazz, jclass targetCla
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	j9object_t classObject = J9_JNI_UNWRAP_REFERENCE(targetClass);
 	J9Class *targetClazz = J9OBJECT_CLAZZ(currentThread, classObject);
-	classID = targetClazz->classID;
+	classID = (jlong)targetClazz->classID;
 	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return classID;

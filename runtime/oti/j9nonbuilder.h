@@ -407,7 +407,7 @@ typedef struct J9JFRThreadObject {
 #define J9JFR_EVENT_WITH_STACKTRACE_FIELDS \
 	J9JFR_EVENT_COMMON_FIELDS \
 	UDATA stackTraceSize; \
-	UDATA stackTraceID;
+	U_32 stackTraceID;
 
 typedef struct J9JFREvent {
 	J9JFR_EVENT_COMMON_FIELDS
@@ -3764,7 +3764,10 @@ typedef struct J9Class {
 #endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #if defined(J9VM_OPT_JFR)
-	UDATA classID;
+	U_32 classID;
+#if defined(J9VM_ENV_DATA64)
+	U_32 paddingForClassID; /* This is used to preserve alignment under 64 bit. */
+#endif /* defined(J9VM_ENV_DATA64) */
 #endif /* defined(J9VM_OPT_JFR) */
 } J9Class;
 
@@ -3875,7 +3878,10 @@ typedef struct J9ArrayClass {
 #endif /* defined(J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) */
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #if defined(J9VM_OPT_JFR)
-	UDATA classID;
+	U_32 classID;
+#if defined(J9VM_ENV_DATA64)
+	U_32 paddingForClassID; /* This is used to preserve alignment under 64 bit. */
+#endif /* defined(J9VM_ENV_DATA64) */
 #endif /* defined(J9VM_OPT_JFR) */
 } J9ArrayClass;
 
@@ -5719,7 +5725,7 @@ typedef struct J9InternalVMFunctions {
 	jboolean (*requestJFREvent)(struct J9VMThread *currentThread, jlong id);
 	BOOLEAN (*setupChunkMonitor)(struct J9VMThread *currentThread);
 	I_64 (*getThreadTID)(struct J9VMThread *currentThread, struct J9VMThread *vmThread);
-	UDATA (*emitStackTrace)(struct J9VMThread *currentThread, I_32 skipCount);
+	U_32 (*emitStackTrace)(struct J9VMThread *currentThread, I_32 skipCount);
 #endif /* defined(J9VM_OPT_JFR) */
 #if defined(J9VM_OPT_SNAPSHOTS)
 	void (*initializeSnapshotClassLoaderObject)(struct J9JavaVM *javaVM, struct J9ClassLoader *classLoader, j9object_t classLoaderObject);
@@ -6255,7 +6261,7 @@ typedef struct JFRState {
 	omrthread_monitor_t threadObjectsMutex;
 	jobject chunkRotationMonitor;
 	jboolean shouldRotateDisk;
-	UDATA stackTraceIDCount;
+	U_32 stackTraceIDCount;
 } JFRState;
 
 typedef struct J9ReflectFunctionTable {
@@ -6819,7 +6825,7 @@ typedef struct J9JavaVM {
 	omrthread_monitor_t rcpCacheMutex;
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 #if defined(J9VM_OPT_JFR)
-	UDATA loadedClassCount;
+	U_32 loadedClassCount;
 #endif /* defined(J9VM_OPT_JFR) */
 #if JAVA_SPEC_VERSION >= 24
 	J9VMContinuation *blockedContinuations;
