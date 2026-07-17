@@ -739,7 +739,7 @@ private:
 
 	U_32 addThreadGroupEntry(j9object_t threadGroup);
 
-	U_32 addStackTraceEntry(U_64 walkThreadID, I_64 ticks, U_32 numOfFrames, UDATA stackTraceID);
+	U_32 addStackTraceEntry(U_64 walkThreadID, I_64 ticks, U_32 numOfFrames, U_32 stackTraceID);
 
 	void addAllThreads();
 
@@ -1534,7 +1534,7 @@ done:
 		return;
 	}
 
-	U_32 consumeStackTrace(U_64 walkThreadTID, UDATA *walkStateCache, UDATA numberOfFrames, UDATA stackTraceID) {
+	U_32 consumeStackTrace(U_64 walkThreadTID, UDATA *walkStateCache, UDATA numberOfFrames, U_32 stackTraceID) {
 		U_32 index = U_32_MAX;
 		UDATA expandedStackTraceCount = 0;
 

@@ -1019,7 +1019,7 @@ done:
 }
 
 U_32
-VM_JFRConstantPoolTypes::addStackTraceEntry(U_64 threadTID, I_64 ticks, U_32 numOfFrames, UDATA stackTraceID)
+VM_JFRConstantPoolTypes::addStackTraceEntry(U_64 threadTID, I_64 ticks, U_32 numOfFrames, U_32 stackTraceID)
 {
 	U_32 index = U_32_MAX;
 	StackTraceEntry *entry = NULL;

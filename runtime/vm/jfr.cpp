@@ -81,10 +81,10 @@ static void jfrClassInitialize(J9HookInterface **hook, UDATA eventNum, void *eve
 static bool isChunkRotationMonitor(J9VMThread *currentThread, omrthread_monitor_t monitor);
 static J9JFREvent *reserveBufferWithStackTrace(J9VMThread *currentThread, J9VMThread *sampleThread, UDATA eventType, UDATA eventFixedSize, I_32 frameSkipCount);
 
-UDATA
+U_32
 emitStackTrace(J9VMThread *currentThread, I_32 skipCount)
 {
-	UDATA stackTraceID = 0;
+	U_32 stackTraceID = 0;
 	J9JFREventWithStackTrace *jfrEvent = (J9JFREventWithStackTrace *)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_STACKTRACE, sizeof(*jfrEvent), skipCount);
 	if (NULL != jfrEvent) {
 		stackTraceID = jfrEvent->stackTraceID;
@@ -486,7 +486,7 @@ reserveBufferWithStackTrace(J9VMThread *currentThread, J9VMThread *sampleThread,
 		UDATA eventSize = eventFixedSize + stackTraceBytes;
 		jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, sampleThread, eventSize);
 		if (NULL != jfrEvent) {
-			UDATA stackTraceID = VM_AtomicSupport::add(&vm->jfrState.stackTraceIDCount, 1);
+			U_32 stackTraceID = (U_32)VM_AtomicSupport::addU32(&vm->jfrState.stackTraceIDCount, 1);
 			Assert_VM_mustHaveVMAccess(currentThread);
 			initializeEventFields(currentThread, sampleThread, jfrEvent, eventType);
 			((J9JFREventWithStackTrace *)jfrEvent)->stackTraceSize = framesWalked;
