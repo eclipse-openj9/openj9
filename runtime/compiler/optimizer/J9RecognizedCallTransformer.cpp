@@ -688,21 +688,21 @@ void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_inflate_BIBII
     TR::Node *constZeroNode2 = TR::Node::create(node, TR::iconst, 0, 0);
     TR::Node *ifCmpNode2 = TR::Node::createif(TR::ificmplt, srcOff, constZeroNode2);
     TR::TreeTop *ifCmpTreeTop2 = TR::TreeTop::create(comp(), ifCmpTreeTop1, ifCmpNode2);
-    // if (srcObj.length < srcOff + length) { call the original method }
+    // if (srcObj.length - srcOff < length) { call the original method }
     TR::Node *arrayLenNode1 = TR::Node::create(node, TR::arraylength, 1, srcObj);
-    TR::Node *iaddNode1 = TR::Node::create(node, TR::iadd, 2, srcOff, length);
-    TR::Node *ifCmpNode3 = TR::Node::createif(TR::ificmplt, arrayLenNode1, iaddNode1);
+    TR::Node *isubNode1 = TR::Node::create(node, TR::isub, 2, arrayLenNode1, srcOff);
+    TR::Node *ifCmpNode3 = TR::Node::createif(TR::ificmplt, isubNode1, length);
     TR::TreeTop *ifCmpTreeTop3 = TR::TreeTop::create(comp(), ifCmpTreeTop2, ifCmpNode3);
     // if (dstOff < 0) { call the original method }
     TR::Node *constZeroNode3 = TR::Node::create(node, TR::iconst, 0, 0);
     TR::Node *ifCmpNode4 = TR::Node::createif(TR::ificmplt, dstOff, constZeroNode3);
     TR::TreeTop *ifCmpTreeTop4 = TR::TreeTop::create(comp(), ifCmpTreeTop3, ifCmpNode4);
-    // if ((dstObj.length >> 1) < dstOff + length) { call the original method }
+    // if ((dstObj.length >> 1) - dstOff < length) { call the original method }
     TR::Node *arrayLenNode2 = TR::Node::create(node, TR::arraylength, 1, dstObj);
     TR::Node *constOneNode = TR::Node::create(node, TR::iconst, 0, 1);
     TR::Node *ishrNode = TR::Node::create(node, TR::ishr, 2, arrayLenNode2, constOneNode);
-    TR::Node *iaddNode2 = TR::Node::create(node, TR::iadd, 2, dstOff, length);
-    TR::Node *ifCmpNode5 = TR::Node::createif(TR::ificmplt, ishrNode, iaddNode2);
+    TR::Node *isubNode2 = TR::Node::create(node, TR::isub, 2, ishrNode, dstOff);
+    TR::Node *ifCmpNode5 = TR::Node::createif(TR::ificmplt, isubNode2, length);
     TR::TreeTop *ifCmpTreeTop5 = TR::TreeTop::create(comp(), ifCmpTreeTop4, ifCmpNode5);
 
     TR::TreeTop *arrayTranslateTreeTop = TR::TreeTop::create(comp(), ifCmpTreeTop5, arraytranslateAnchorNode);
