@@ -372,7 +372,15 @@ MM_SchedulingDelegate::partialGarbageCollectCompleted(MM_EnvironmentVLHGC *env, 
 	bool globalSweepHappened = _globalSweepRequired;
 	_globalSweepRequired = false;
 	/* copy out the Eden size of the previous interval (between the last PGC and this one) before we recalculate the next one */
-	uintptr_t edenCountBeforeCollect = getCurrentEdenSizeInRegions(env);
+	/* During GC, the heap may expand to allow the current collection to continue.
+	 * A heap resize triggers an eden size recalculation without allowing further
+	 * heap expansion (heap reconfiguration). As a result, the newly calculated
+	 * eden size can differ significantly from the eden size at the start of the
+	 * collection, causing the SurvivalRate calculation to become inaccurate.
+	 * Therefore, set copyForwardStats->_edenEvacuateRegionCount (instead of getCurrentEdenSizeInRegions(env)) to
+	 * edenCountBeforeCollect.
+	 */
+	uintptr_t edenCountBeforeCollect = copyForwardStats->_edenEvacuateRegionCount;
 	
 	Trc_MM_SchedulingDelegate_partialGarbageCollectCompleted_stats(env->getLanguageVMThread(),
 			copyForwardStats->_edenEvacuateRegionCount,
@@ -384,21 +392,42 @@ MM_SchedulingDelegate::partialGarbageCollectCompleted(MM_EnvironmentVLHGC *env, 
 
 	if (env->_cycleState->_shouldRunCopyForward) {
 		uintptr_t regionSize = _regionManager->getRegionSize();
-		
-		/* count the number of survivor regions allocated specifically to support Eden survivors */
-		uintptr_t edenSurvivorCount = copyForwardStats->_edenSurvivorRegionCount;
+		uintptr_t edenEvacuateBytes = edenCountBeforeCollect * regionSize;
+		/* _copyDiscardBytesEden is excluded from edenSurvivorBytes because it is related with
+		 * a proportion of non-Eden age-0 survivor objects, making it unsuitable for
+		 * estimating Eden survivor bytes.
+		 */
+		/* TODO: _scanBytesEden could underreport the survived objects, since it will not include leaf objects that happen not to be evacuated.
+		 * have some extra stats for that case (leafMarked/leafMarked bytes in source compact group) and add to this.
+		 */
+		uintptr_t edenSurvivorBytes = copyForwardStats->_copyBytesEden;
+		/* nonEdenSurvivorCount non age0 fresh survivor region count (excludes any survivor regions for age0 non-Eden evacuate regions) */
+		/* TODO: replace nonEdenSurvivorCount with nonEdenSurvivorBytes */
 		uintptr_t nonEdenSurvivorCount = copyForwardStats->_nonEdenSurvivorRegionCount;
 		
 		/* estimate how many more regions we would have needed to avoid abort */
 		Assert_MM_true( (0 == copyForwardStats->_scanBytesEden) || copyForwardStats->_aborted || (0 != copyForwardStats->_nonEvacuateRegionCount));
 		Assert_MM_true( (0 == copyForwardStats->_scanBytesNonEden) || copyForwardStats->_aborted || (0 != copyForwardStats->_nonEvacuateRegionCount));
-		edenSurvivorCount += (copyForwardStats->_scanBytesEden + regionSize - 1) / regionSize;
+		edenSurvivorBytes += copyForwardStats->_scanBytesEden;
+		if (edenSurvivorBytes > edenEvacuateBytes) {
+			/* TODO: potential double counting _copyBytesEden due to SCAN_REASON_OVERFLOWED_REGION */
+			Assert_MM_true(copyForwardStats->_aborted);
+			/* when abort is in progress, every Eden object scanned in abort-recovery contributes to _scannedBytes.
+			 * But an object that was partially copied before abort (the copy succeeded,
+			 * the forwarding pointer was installed) is also counted again during the abort scan of the source region.
+			 * So _scanBytesEden might be double-counted, then cause edenSurvivorBytes is bigger than edenEvacuateBytes.
+			 * for the case, set edenSurvivorBytes = edenEvacuateBytes.
+			 */
+			edenSurvivorBytes = edenEvacuateBytes;
+		}
 		nonEdenSurvivorCount += (copyForwardStats->_scanBytesNonEden + regionSize - 1) / regionSize;
 
-		/* Eden count could be 0 in special case, after compaction if there is still no free region for scheduling eden(eden count = 0),
+		/* edenEvacuateBytes could be 0 in special case, after compaction if there is still no free region for scheduling eden(eden count = 0),
 		   will skip update Survival Rate */
-		if (0 != edenCountBeforeCollect) {
-			double thisSurvivalRate = (double)edenSurvivorCount / (double)edenCountBeforeCollect;
+		if (0 != edenEvacuateBytes) {
+			/* SurvivalRate should never be over 1.0 */
+			double thisSurvivalRate = (double)edenSurvivorBytes / (double)edenEvacuateBytes;
+			Assert_MM_true(1.0 >= thisSurvivalRate);
 			updateSurvivalRatesAfterCopyForward(thisSurvivalRate, nonEdenSurvivorCount);
 		}
 
