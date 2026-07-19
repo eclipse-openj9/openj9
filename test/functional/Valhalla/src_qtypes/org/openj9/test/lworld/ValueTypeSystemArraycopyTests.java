@@ -649,21 +649,21 @@ public class ValueTypeSystemArraycopyTests {
 		try {
 			initArraysForASETest(); // ifArray3[ARRAY_SIZE/2] is NULL
 			testIFVT(ifArray3, nullRestrictedVtArrayDst);
-		} catch (java.lang.ArrayStoreException ase1) {
+		} catch (java.lang.ArrayStoreException | java.lang.NullPointerException ex1) {
 			try {
 				checkResultsPartial(ifArray3, nullRestrictedVtArrayDst, ARRAY_SIZE/2);
 				checkNullRestrictedVTArrayAfterException(ARRAY_SIZE/2);
 
 				initArraysForASETest();
 				testIFVT(ifArray3, nullRestrictedVtArrayDst);
-			} catch (java.lang.ArrayStoreException ase2) {
+			} catch (java.lang.ArrayStoreException | java.lang.NullPointerException ex2) {
 				checkResultsPartial(ifArray3, nullRestrictedVtArrayDst, ARRAY_SIZE/2);
 				// pass
 				return;
 			}
 		}
 
-		Assert.fail("Expect an ArrayStoreException. No exception or wrong kind of exception thrown");
+		Assert.fail("Expect an ArrayStoreException or NullPointerException. No exception or wrong kind of exception thrown");
 	}
 
 	@Test(priority=1)
@@ -672,14 +672,14 @@ public class ValueTypeSystemArraycopyTests {
 		try {
 			initArraysForASETest(); // ifArray3[ARRAY_SIZE/2] is NULL
 			testIFIF(ifArray3, nullRestrictedVtArrayDst);
-		} catch (java.lang.ArrayStoreException ase1) {
+		} catch (java.lang.ArrayStoreException | java.lang.NullPointerException ex1) {
 			try {
 				checkResultsPartial(ifArray3, nullRestrictedVtArrayDst, ARRAY_SIZE/2);
 				checkNullRestrictedVTArrayAfterException(ARRAY_SIZE/2);
 
 				initArraysForASETest();
 				testIFIF(ifArray3, nullRestrictedVtArrayDst);
-			} catch (java.lang.ArrayStoreException ase2) {
+			} catch (java.lang.ArrayStoreException | java.lang.NullPointerException ex2) {
 				checkResultsPartial(ifArray3, nullRestrictedVtArrayDst, ARRAY_SIZE/2);
 				checkNullRestrictedVTArrayAfterException(ARRAY_SIZE/2);
 				// pass
@@ -687,7 +687,7 @@ public class ValueTypeSystemArraycopyTests {
 			}
 		}
 
-		Assert.fail("Expect a ArrayStoreException. No exception or wrong kind of exception thrown");
+		Assert.fail("Expect an ArrayStoreException or NullPointerException. No exception or wrong kind of exception thrown");
 	}
 
 	@Test(priority=1)
@@ -776,7 +776,7 @@ public class ValueTypeSystemArraycopyTests {
 		checkResults(nullRestrictedVtArraySrc, vtArrayDst);
 	}
 
-	@Test(priority=1, invocationCount=2, expectedExceptions=ArrayStoreException.class)
+	@Test(priority=1, invocationCount=2, expectedExceptions={ArrayStoreException.class, NullPointerException.class})
 	static public void testSystemArrayCopy29() throws Throwable {
 		initArraysToCopyNullToNullRestrictedArray();
 		testVTVT(vtArraySrc, nullRestrictedVtArrayDst);

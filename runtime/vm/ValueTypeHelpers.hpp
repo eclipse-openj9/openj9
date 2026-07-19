@@ -594,6 +594,11 @@ done:
 					srcObject = VM_VMHelpers::popObjectInSpecialFrame(currentThread);
 				}
 
+				/* Null cannot be stored into a null-restricted array. */
+				if ((NULL == copyObject) && J9_IS_J9ARRAYCLASS_NULL_RESTRICTED((J9ArrayClass *)destClazz)) {
+					return -2;
+				}
+
 				if (typeChecksRequired) {
 					if (!VM_VMHelpers::objectArrayStoreAllowed(currentThread, destObject, copyObject)) {
 						return -1;
