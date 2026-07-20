@@ -263,7 +263,7 @@ areJFRBuffersReadyForWrite(J9VMThread *currentThread)
 	bool result = true;
 	J9JavaVM *vm = currentThread->javaVM;
 
-	if ((!vm->jfrState.isStarted)
+	if ((!vm->jfrState.isCreated)
 	|| (NULL == currentThread->jfrBuffer.bufferStart)
 	|| (NULL == vm->jfrBuffer.bufferCurrent)
 	) {
@@ -292,7 +292,7 @@ writeOutGlobalBuffer(J9VMThread *currentThread, bool finalWrite, bool dumpCalled
 	j9tty_printf(PORTLIB, "\n!!! writing global buffer %p of size %p\n", currentThread, vm->jfrBuffer.bufferSize - vm->jfrBuffer.bufferRemaining);
 #endif /* defined(DEBUG) */
 
-	if (vm->jfrState.isStarted && (NULL != vm->jfrBuffer.bufferCurrent)) {
+	if (vm->jfrState.isCreated && (NULL != vm->jfrBuffer.bufferCurrent)) {
 		VM_JFRWriter::flushJFRDataToFile(currentThread, finalWrite, dumpCalled);
 
 		/* Reset the buffer */
