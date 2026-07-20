@@ -25,6 +25,7 @@ set(OMR_ENHANCED_WARNINGS OFF)
 j9vm_add_executable(ctest
 	basesize.c
 	ctest.c
+	j9structalign.c
 	vatest.c
 )
 
