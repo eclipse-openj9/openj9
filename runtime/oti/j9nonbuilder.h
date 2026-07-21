@@ -5508,6 +5508,7 @@ typedef struct J9InternalVMFunctions {
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 	void  ( *fatalRecursiveStackOverflow)(struct J9VMThread *currentThread) ;
 	void  ( *setIllegalAccessErrorNonPublicInvokeInterface)(struct J9VMThread *currentThread, J9Method *method) ;
+	BOOLEAN  ( *shouldThrowIllegalAccessForAbstractInvokeInterface)(struct J9VMThread *currentThread, J9ROMMethod *romMethod, J9Class *receiverClass, J9Method **foundMethod) ;
 	IDATA ( *createThreadWithCategory)(omrthread_t* handle, UDATA stacksize, UDATA priority, UDATA suspend, omrthread_entrypoint_t entrypoint, void* entryarg, U_32 category) ;
 	IDATA ( *attachThreadWithCategory)(omrthread_t* handle, U_32 category) ;
 	struct J9Method* ( *searchClassForMethod)(J9Class *clazz, U_8 *name, UDATA nameLength, U_8 *sig, UDATA sigLength) ;

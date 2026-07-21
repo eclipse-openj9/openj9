@@ -1208,6 +1208,33 @@ setIllegalAccessErrorNonPublicInvokeInterface(J9VMThread *vmThread, J9Method *me
 	j9mem_free_memory(msg);
 }
 
+BOOLEAN
+shouldThrowIllegalAccessForAbstractInvokeInterface(J9VMThread *vmThread, J9ROMMethod *romMethod, J9Class *receiverClass, J9Method **foundMethod)
+{
+	if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccAbstract)) {
+		J9Method *method = (J9Method *)javaLookupMethod(
+			vmThread,
+			receiverClass,
+			&romMethod->nameAndSignature,
+			NULL,
+			J9_LOOK_VIRTUAL | J9_LOOK_NO_THROW | J9_LOOK_INVOKE_INTERFACE);
+		if (NULL != method) {
+			U_32 modifiers = J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers;
+			if (
+#if JAVA_SPEC_VERSION == 8
+				J9_ARE_NO_BITS_SET(modifiers, J9AccPublic)
+#else /* JAVA_SPEC_VERSION == 8 */
+				J9_ARE_NO_BITS_SET(modifiers, J9AccPublic | J9AccPrivate)
+#endif /* JAVA_SPEC_VERSION == 8 */
+			) {
+				*foundMethod = method;
+				return TRUE;
+			}
+		}
+	}
+	return FALSE;
+}
+
 void  
 setThreadForkOutOfMemoryError(J9VMThread * vmThread, U_32 moduleName, U_32 messageNumber)
 {
