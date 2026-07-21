@@ -458,6 +458,8 @@ private:
     void processExceptionCommonTasks(J9VMThread *vmThread, TR::SegmentAllocator const &scratchSegmentProvider,
         TR::Compilation *compiler, const char *exceptionName, TR_MethodToBeCompiled *entry);
 
+    uint32_t computeTotalBytecodeSize(TR::Compilation *compiler);
+
 #if defined(TR_HOST_S390)
     void outputVerboseMMapEntry(TR_ResolvedMethod *compilee, const struct ::tm &date, const struct timeval &time,
         void *startPC, void *endPC, const char *fmt, const char *profiledString, const char *compileString);
