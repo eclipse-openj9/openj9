@@ -613,11 +613,15 @@ traceMethodArguments(J9VMThread* thr, J9UTF8* signature, UDATA* arg0EA, char* bu
 	}
 
 	if (cursor == endOfBuf - 1) {
-		/* insert an ellipsis if the buffer was truncated (assumes the buffer is at least 3 chars long) */
-		*--cursor = '.';
-		*--cursor = '.';
-		*--cursor = '.';
-	} else {
+		/* Insert an ellipsis if the buffer was truncated after
+		 * ensuring the buffer has room to fit at least 3 chars.
+		 */
+		if ((cursor - buf) >= 3) {
+			*--cursor = '.';
+			*--cursor = '.';
+			*--cursor = '.';
+		}
+	} else if (cursor > buf) {
 		/* remove the final comma */
 		*--cursor = '\0';
 	}
