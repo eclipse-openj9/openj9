@@ -21,7 +21,10 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 ###############################################################################
 
-allFiles=$(git diff -C --diff-filter=ACM --name-only origin/master HEAD -- | grep '^runtime/compiler/')
+# Optional argument identifies the target branch of the pull request.
+targetBranch="${1:-origin/master}"
+
+allFiles=$(git diff -C --diff-filter=ACM --name-only "$targetBranch" HEAD -- | grep '^runtime/compiler/')
 if [ x"$allFiles" = x ] ; then
     echo "There are no files to check for code formatting."
 else

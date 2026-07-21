@@ -45,7 +45,7 @@ timestamps {
                         }
                     }
                     stage('Format Check') {
-                        sh "bash buildenv/jenkins/clang_format/clangFormatCheck.sh"
+                        sh "bash buildenv/jenkins/clang_format/clangFormatCheck.sh origin/${ghprbTargetBranch}"
                     }
                     stage('Cleanup Infra') {
                         sh "bash buildenv/jenkins/clang_format/cleanupInfra.sh"
