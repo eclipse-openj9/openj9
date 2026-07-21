@@ -9096,8 +9096,33 @@ jint JNICALL Java_java_lang_invoke_InterfaceHandle_convertITableIndexToVTableInd
     UDATA *itableArray = (UDATA *)(itableEntry + 1);
     UDATA vTableOffset = itableArray[itableIndex];
     J9Method *method = *(J9Method **)((UDATA)receiverClass + vTableOffset);
-    if ((J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers & J9AccPublic) == 0)
+    J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+    if ((romMethod->modifiers & J9AccPublic) == 0)
         return -1;
+
+    /* IllegalAccessError takes priority over AbstractMethodError when the selected
+     * method is abstract but the method that invokeinterface selection would resolve
+     * to is not accessible (not public on Java 8, neither public nor private on 11+).
+     * This mirrors the interpreter check in VM_MHInterpreter::dispatchLoop (the
+     * J9_METHOD_HANDLE_KIND_INTERFACE case) so the JIT-compiled InterfaceHandle thunk
+     * throws the same exception as the interpreter. A negative return tells
+     * InterfaceHandle.vtableOffset() to throw IllegalAccessError. Non-negative returns
+     * keep the existing behaviour: dispatch through the vtable slot, where an abstract
+     * target lands on the AbstractMethodError-throwing stub.
+     */
+    if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccAbstract)) {
+        J9VMThread *vmThread = (J9VMThread *)env;
+        J9JavaVM *javaVM = vmThread->javaVM;
+        bool hadVMAccess = J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_VM_ACCESS);
+        if (!hadVMAccess)
+            javaVM->internalVMFunctions->internalEnterVMFromJNI(vmThread);
+        BOOLEAN throwIllegalAccess = javaVM->internalVMFunctions->shouldThrowIllegalAccessForAbstractInvokeInterface(
+            vmThread, romMethod, receiverClass, &method);
+        if (!hadVMAccess)
+            javaVM->internalVMFunctions->internalExitVMToJNI(vmThread);
+        if (throwIllegalAccess)
+            return -1;
+    }
 
     return (vTableOffset - sizeof(J9Class)) / sizeof(intptr_t);
 #if 0 // TODO:JSR292: We probably want to do something more like this instead, so it will properly handle exceptional
