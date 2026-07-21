@@ -183,7 +183,9 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 				method = convertITableIndexToVirtualMethod(receiverClazz, interfaceClazz, getVMSlot(methodHandle));
 				if (NULL != method) {
 					J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-					if (J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccPublic)) {
+					if (J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccPublic)
+						|| shouldThrowIllegalAccessForAbstractInvokeInterface(_currentThread, romMethod, receiverClazz, &method)
+					) {
 						prepareForExceptionThrow(_currentThread);
 						setIllegalAccessErrorNonPublicInvokeInterface(_currentThread, method);
 						goto throwCurrentException;

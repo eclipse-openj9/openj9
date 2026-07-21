@@ -1732,30 +1732,6 @@ obj:
 		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_sendMethod);
 		if (romMethod->modifiers & J9AccAbstract) {
 			exception = J9VMCONSTANTPOOL_JAVALANGABSTRACTMETHODERROR;
-			/* If the method class is an interface, do the special checks to throw the correct error */
-			J9Class *methodClass = J9_CLASS_FROM_METHOD(_sendMethod);
-			if (J9ROMCLASS_IS_INTERFACE(methodClass->romClass)) {
-				J9Method *method = (J9Method*)javaLookupMethod(
-						_currentThread,
-						J9OBJECT_CLAZZ(_currentThread, *(j9object_t*)_arg0EA),
-						&romMethod->nameAndSignature,
-						NULL,
-						J9_LOOK_VIRTUAL | J9_LOOK_NO_THROW | J9_LOOK_INVOKE_INTERFACE);
-				if (NULL != method) {
-					U_32 modifiers = J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers;
-					/* Finding a public method means it is necessarily abstract (this function only handles exceptional cases) */
-					if (J9_ARE_NO_BITS_SET(modifiers, J9AccPublic)) {
-						/* Starting with JDK11, private methods expressly do not override any methods from
-						 * superclass/superinterfaces, so AbstractMethodError is the correct error to throw.
-						 * For default or protected methods or JDK levels prior to 11, throw IllegalAccessError.
-						 */
-						if ((J2SE_VERSION(_vm) < J2SE_V11) || (J9_ARE_NO_BITS_SET(modifiers, J9AccPrivate))) {
-							exception = J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR;
-							_sendMethod = method;
-						}
-					}
-				}
-			}
 		}
 		updateVMStruct(REGISTER_ARGS);
 		j9object_t detailMessage = methodToString(_currentThread, _sendMethod);
@@ -8436,7 +8412,9 @@ foundITableCache:
 						_sendMethod = *(J9Method**)((UDATA)receiverClass + ((UDATA*)(iTable + 1))[methodIndex]);
 					}
 					romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_sendMethod);
-					if (J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccPublic | J9AccPrivate)) {
+					if (J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccPublic | J9AccPrivate)
+						|| shouldThrowIllegalAccessForAbstractInvokeInterface(_currentThread, romMethod, receiverClass, &_sendMethod)
+					) {
 						/* We need a frame to describe the method arguments (in particular, for the case where we got here directly from the JIT) */
 						buildMethodFrame(REGISTER_ARGS, _sendMethod, jitStackFrameFlags(REGISTER_ARGS, 0));
 						updateVMStruct(REGISTER_ARGS);
@@ -8445,23 +8423,6 @@ foundITableCache:
 						rc = GOTO_THROW_CURRENT_EXCEPTION;
 						goto done;
 					}
-#if JAVA_SPEC_VERSION == 8
-					if (J9_ARE_ALL_BITS_SET(romMethod->modifiers, J9AccAbstract)
-						&& !J9ROMCLASS_IS_INTERFACE(J9_CLASS_FROM_METHOD(_sendMethod)->romClass)
-					) {
-						/* If resulting method is abstract an error will be
-						 * thrown in throwUnsatisfiedLinkOrAbstractMethodError.
-						 * Return the interface class's method so the correct
-						 * exception handling is used.
-						 */
-						_sendMethod = (J9Method*)javaLookupMethod(
-							_currentThread,
-							interfaceClass,
-							&romMethod->nameAndSignature,
-							NULL,
-							J9_LOOK_INTERFACE | J9_LOOK_NO_THROW | J9_LOOK_INVOKE_INTERFACE);
-					}
-#endif /* JAVA_SPEC_VERSION == 8 */
 					profileInvokeReceiver(REGISTER_ARGS, receiverClass, _literals, _sendMethod);
 					_pc += offset;
 					goto done;
@@ -10079,7 +10040,9 @@ foundITable:
 		_sendMethod = *(J9Method **)(((UDATA)receiverClass) + vTableOffset);
 
 		romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_sendMethod);
-		if (J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccPublic | J9AccPrivate)) {
+		if (J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccPublic | J9AccPrivate)
+			|| shouldThrowIllegalAccessForAbstractInvokeInterface(_currentThread, romMethod, receiverClass, &_sendMethod)
+		) {
 			if (fromJIT) {
 				_sp -= 1;
 				buildJITResolveFrame(REGISTER_ARGS);

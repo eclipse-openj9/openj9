@@ -345,6 +345,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 	fatalRecursiveStackOverflow,
 	setIllegalAccessErrorNonPublicInvokeInterface,
+	shouldThrowIllegalAccessForAbstractInvokeInterface,
 	createThreadWithCategory,
 	attachThreadWithCategory,
 	searchClassForMethod,

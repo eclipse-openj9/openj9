@@ -1605,7 +1605,12 @@ old_slow_jitLookupInterfaceMethod(J9VMThread *currentThread)
 	if (0 == vTableOffset) {
 		setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, NULL);
 	} else {
-		J9Method* method = *(J9Method**)((UDATA)receiverClass + vTableOffset);
+		J9Method *method = *(J9Method **)((UDATA)receiverClass + vTableOffset);
+		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+		if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccPublic)) {
+			/* Ensure the correct method will be in the exception message. */
+			currentThread->javaVM->internalVMFunctions->shouldThrowIllegalAccessForAbstractInvokeInterface(currentThread, romMethod, receiverClass, &method);
+		}
 		TIDY_BEFORE_THROW();
 		currentThread->javaVM->internalVMFunctions->setIllegalAccessErrorNonPublicInvokeInterface(currentThread, method);
 	}
@@ -1664,7 +1669,10 @@ old_fast_jitLookupDynamicPublicInterfaceMethod(J9VMThread *currentThread)
 	Assert_CodertVM_false(0 == vTableOffset);
 	/* The receiver's implementation is required to be public */
 	J9Method *method = *(J9Method**)((UDATA)receiverClass + vTableOffset);
-	if (J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers, J9AccPublic)) {
+	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+	if (J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers, J9AccPublic)
+		&& !vm->internalVMFunctions->shouldThrowIllegalAccessForAbstractInvokeInterface(currentThread, romMethod, receiverClass, &method)
+	) {
 		slowPath = NULL;
 		JIT_RETURN_UDATA(vTableOffset);
 	} else {
@@ -3720,8 +3728,11 @@ fast_jitLookupInterfaceMethod(J9VMThread *currentThread, J9Class *receiverClass,
 	UDATA iTableOffset = indexAndLiteralsEA[1];
 	UDATA vTableOffset = convertITableOffsetToVTableOffset(currentThread, receiverClass, interfaceClass, iTableOffset);
 	if (0 != vTableOffset) {
-		J9Method* method = *(J9Method**)((UDATA)receiverClass + vTableOffset);
-		if (J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers, J9AccPublic)) {
+		J9Method *method = *(J9Method **)((UDATA)receiverClass + vTableOffset);
+		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+		if (J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers, J9AccPublic)
+			&& !currentThread->javaVM->internalVMFunctions->shouldThrowIllegalAccessForAbstractInvokeInterface(currentThread, romMethod, receiverClass, &method)
+		) {
 			slowPath = NULL;
 			JIT_RETURN_UDATA(vTableOffset);
 		}
