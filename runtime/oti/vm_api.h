@@ -1166,6 +1166,19 @@ setIncompatibleClassChangeErrorForDefaultConflict(J9VMThread * vmThread, J9Metho
 void
 setIllegalAccessErrorNonPublicInvokeInterface(J9VMThread *vmThread, J9Method *method);
 
+/**
+ * Check if IllegalAccessError should be thrown for abstract invokeinterface.
+ * IllegalAccessError takes priority over AbstractMethodError if the selected method
+ * is not public (Java 8) or neither public nor private (Java 11+).
+ *
+ * @param vmThread the current thread
+ * @param romMethod the ROM method being checked
+ * @param receiverClass the receiver class
+ * @param foundMethod will be updated if IllegalAccessError should be thrown
+ * @return TRUE if IllegalAccessError should be thrown, FALSE otherwise
+ */
+BOOLEAN
+shouldThrowIllegalAccessForAbstractInvokeInterface(J9VMThread *vmThread, J9ROMMethod *romMethod, J9Class *receiverClass, J9Method **foundMethod);
 
 /**
  * Error message helper for throwing IllegalAccessError when receiver class is not the same or subtype of current
