@@ -374,6 +374,10 @@ void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_inflate_BICII
      * java/lang/StringLatin1.inflate([BI[CII)V in such a way that an out of bounds exception gets triggered. This
      * transformation adds a check for that possibility and calls the slow path if an exception needs to be thrown in
      * the future.
+     *
+     * Prior to JDK under Z, these checks are also needed to accelerate java/lang/StringLatin1.inflate([BI[BII)V
+     * As a result, process_java_lang_StringLatin1_inflate_BIBII will call this function with isByteToChar set to false.
+     * isByteToChar being false indicates that this is the Byte array to Byte array case.
      */
     TransformUtil::createTempsForCall(this, treetop);
 
@@ -398,6 +402,10 @@ void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_inflate_BICII
     TR::Node *dstArrayLenNode = TR::Node::create(TR::arraylength, 1, dstObjNode->duplicateTree());
     dstArrayLenNode->setIsNonNegative(true);
 
+    /*
+     * For the Byte array to Byte Array case, the output array length is shifted right by 1.
+     * This is to account for the fact that the byte array can hold half as many characters as its length.
+     */
     if (!isByteToChar) {
         dstArrayLenNode = TR::Node::create(TR::ishr, 2, dstArrayLenNode, TR::Node::create(TR::iconst, 0, 1));
     }
@@ -536,7 +544,7 @@ void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_indexOf_BIBII
     }
 
     /*
-     * For latin1, the value of maxArrayLenNode must be greater than or equal to the value of arrayLenNode.
+     * For Latin1, the value of maxArrayLenNode must be greater than or equal to the value of arrayLenNode.
      * For UTF16, the value of (maxArrayLenNode >> 1) must be greater than or equal to the value of arrayLenNode.
      * If this isn't true, it is possible for the indexOf operation to go out of bounds so the slow path must be taken.
      */
@@ -593,7 +601,12 @@ void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_inflate_BIBII
 {
 #if JAVA_SPEC_VERSION < 25
     /*
-     * Z is handled differently than other platoforms.
+     * Prior to JDK25 on Z, it is possible for an AbstractStringBuilder race condition to trigger a call to
+     * java/lang/StringLatin1.inflate([BI[BII)V in such a way that an out of bounds exception gets triggered. This
+     * calls process_java_lang_StringLatin1_inflate_BICII to perform a transformation to add a check for that
+     * possibility and call the slow path if an exception needs to be thrown in the future.
+     *
+     * isByteToChar being false indicates that this is the Byte array to Byte array case.
      */
     if (comp()->target().cpu.isZ()) {
         return process_java_lang_StringLatin1_inflate_BICII(treetop, node, false /* isByteToChar */);
@@ -2210,10 +2223,8 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop *treetop)
                     cg()->getSupportsArrayCmpLen() && !comp()->target().cpu.isPower() && !comp()->target().cpu.isZ());
             case TR::java_lang_StringLatin1_inflate_BIBII:
 #if JAVA_SPEC_VERSION < 25
-                if (!disableStringIntrinsicFlagChk &&
-                    cg()->getSupportsInlineStringLatin1Inflate() &&
-                    !node->isSafeForCGToInlineStringIntrinsic() &&
-                    !node->checkSkipRecognizedCallTransformation() &&
+                if (!disableStringIntrinsicFlagChk && cg()->getSupportsInlineStringLatin1Inflate() &&
+                    !node->isSafeForCGToInlineStringIntrinsic() && !node->checkSkipRecognizedCallTransformation() &&
                     comp()->target().cpu.isZ()) {
                     return true;
                 }

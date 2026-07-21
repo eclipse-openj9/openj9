@@ -215,6 +215,9 @@ private:
      *       <byte array containing StringLatin1 characters to search for>
      *       <num of StringLatin1 characters in the array containing characters being searched for (1 byte each)>
      *       <offset>
+     *
+     *  \param isLatin1
+     *     Boolean is set to true for the StringLatin1 case and false for the StringUTF16 case.
      *     \endcode
      */
     void process_java_lang_StringLatin1_indexOf_BIBII(TR::TreeTop *treetop, TR::Node *node, bool isLatin1);
@@ -234,6 +237,9 @@ private:
      *       <dst char array>
      *       <dst offset>
      *       <length>
+     *
+     *  \param isByteToChar
+     *     Boolean is set to true for the byte array to char array case and false for byte array to byte array case.
      *     \endcode
      */
     void process_java_lang_StringLatin1_inflate_BICII(TR::TreeTop *treetop, TR::Node *node, bool isByteToChar);
