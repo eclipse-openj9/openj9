@@ -49,6 +49,7 @@
 #include "il/TreeTop_inlines.hpp"
 #include "p/codegen/CallSnippet.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
+#include "p/codegen/J9PPCSnippet.hpp"
 #include "p/codegen/PPCEvaluator.hpp"
 #include "p/codegen/PPCHelperCallSnippet.hpp"
 #include "p/codegen/PPCInstruction.hpp"
@@ -346,7 +347,7 @@ J9::Power::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
     _properties._computedCallTargetRegister
         = TR::RealRegister::gr0; // gr11 = interface, gr12 = virtual, so we need something else for computed
     _properties._vtableIndexArgumentRegister = TR::RealRegister::gr12;
-    _properties._j9methodArgumentRegister = TR::RealRegister::gr3; // TODO:JSR292: Confirm
+    _properties._j9methodArgumentRegister = TR::RealRegister::gr11; // TODO:JSR292: Confirm
 }
 
 const TR::PPCLinkageProperties &J9::Power::PrivateLinkage::getProperties() { return _properties; }
@@ -1380,30 +1381,32 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
     const TR::PPCLinkageProperties &properties = getProperties();
     TR::PPCMemoryArgument *pushToMemory = NULL;
     TR::Register *tempRegister;
-    int32_t argIndex = 0, memArgs = 0, from, to, step;
+    int32_t argIndex = 0, memArgs = 0, specialArgIndex = -1, firstRealArgIndex, lastArgIndex, step;
     int32_t argSize = -getOffsetToFirstParm(), totalSize = 0;
     uint32_t numIntegerArgs = 0;
     uint32_t numFloatArgs = 0;
     uint32_t firstExplicitArg = 0;
     TR::Node *child;
     void *smark;
-    uint32_t firstArgumentChild = callNode->getFirstArgumentIndex();
     TR::DataType resType = callNode->getType();
     TR_Array<TR::Register *> &tempLongRegisters = cg()->getTransientLongRegisters();
     TR::MethodSymbol *callSymbol = callNode->getSymbol()->castToMethodSymbol();
 
+    bool isJitDispatchJ9Method = callNode->isJitDispatchJ9MethodCall(comp);
     bool isHelperCall = linkage == TR_Helper || linkage == TR_CHelper;
     bool rightToLeft = isHelperCall &&
         // we want the arguments for induceOSR to be passed from left to right as in any other non-helper call
-        !callNode->getSymbolReference()->isOSRInductionHelper();
+        // jitDispatchJ9Method is a helper symbol, but it is used for java method dispatch
+        // so we must override the helper linkage properties
+        !callNode->getSymbolReference()->isOSRInductionHelper() && !isJitDispatchJ9Method;
 
     if (rightToLeft) {
-        from = callNode->getNumChildren() - 1;
-        to = firstArgumentChild;
+        firstRealArgIndex = callNode->getNumChildren() - 1;
+        lastArgIndex = callNode->getFirstArgumentIndex();
         step = -1;
     } else {
-        from = firstArgumentChild;
-        to = callNode->getNumChildren() - 1;
+        firstRealArgIndex = callNode->getFirstArgumentIndex();
+        lastArgIndex = callNode->getNumChildren() - 1;
         step = 1;
     }
 
@@ -1418,26 +1421,32 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
     TR::RealRegister::RegNum specialArgReg = TR::RealRegister::NoReg;
     switch (callSymbol->getMandatoryRecognizedMethod()) {
         // Node: special long args are still only passed in one GPR
-        case TR::java_lang_invoke_ComputedCalls_dispatchJ9Method:
-            specialArgReg = getProperties().getJ9MethodArgumentRegister();
+        case TR::java_lang_invoke_ComputedCalls_dispatchJ9Method: // old MH implementation
+            specialArgReg = TR::RealRegister::gr11;
             // Other args go in memory
             numIntArgRegs = 0;
             numFloatArgRegs = 0;
             break;
         case TR::java_lang_invoke_ComputedCalls_dispatchVirtual:
         case TR::com_ibm_jit_JITHelpers_dispatchVirtual:
-            specialArgReg = getProperties().getVTableIndexArgumentRegister();
+            specialArgReg = TR::RealRegister::gr12;
             break;
         default:
             break;
     }
 
+    if (isJitDispatchJ9Method) {
+        specialArgReg = TR::RealRegister::gr11;
+    }
+
     if (specialArgReg != TR::RealRegister::NoReg) {
-        logprintf(trace, log, "Special arg %s in %s\n", comp->getDebug()->getName(callNode->getChild(from)),
+        logprintf(trace, log, "Special arg %s in %s\n",
+            comp->getDebug()->getName(callNode->getChild(firstRealArgIndex)),
             comp->getDebug()->getName(cg()->machine()->getRealRegister(specialArgReg)));
 
         // Skip the special arg in the first loop
-        from += step;
+        specialArgIndex = firstRealArgIndex;
+        firstRealArgIndex += step;
     }
 
     // C helpers have an implicit first argument (the VM thread) that we have to account for
@@ -1447,7 +1456,10 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
         totalSize += TR::Compiler->om.sizeofReferenceAddress();
     }
 
-    for (int32_t i = from; (rightToLeft && i >= to) || (!rightToLeft && i <= to); i += step) {
+    // if there is a special child, it will not be processed in this loop
+    // special children are not arguments, but may be used for calling the J9Method
+    for (int32_t i = firstRealArgIndex; (rightToLeft && i >= lastArgIndex) || (!rightToLeft && i <= lastArgIndex);
+         i += step) {
         child = callNode->getChild(i);
         switch (child->getDataType()) {
             case TR::Int8:
@@ -1495,9 +1507,6 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
         pushToMemory = new (trStackMemory()) TR::PPCMemoryArgument[memArgs];
     }
 
-    if (specialArgReg)
-        from -= step; // we do want to process special args in the following loop
-
     numIntegerArgs = 0;
     numFloatArgs = 0;
 
@@ -1514,19 +1523,26 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
         firstExplicitArg = 1;
     }
 
+    TR::Register *j9MethodReg = NULL; // for jitDispatchJ9Method
     // Helper linkage preserves all argument registers except the return register
     // TODO: C helper linkage does not, this code needs to make sure argument registers are killed in post dependencies
-    for (int32_t i = from; (rightToLeft && i >= to) || (!rightToLeft && i <= to); i += step) {
+    int32_t specialOrFirstArgIndex = (specialArgIndex != -1 ? specialArgIndex : firstRealArgIndex);
+    int32_t firstArgumentChild = callNode->getFirstArgumentIndex();
+    for (int32_t i = specialOrFirstArgIndex; (rightToLeft && i >= lastArgIndex) || (!rightToLeft && i <= lastArgIndex);
+         i += step) {
         TR::MemoryReference *mref = NULL;
         TR::Register *argRegister;
         child = callNode->getChild(i);
-        bool isSpecialArg = (i == from && specialArgReg != TR::RealRegister::NoReg);
+        bool isSpecialArg = (i == specialArgIndex);
         switch (child->getDataType()) {
             case TR::Int8:
             case TR::Int16:
             case TR::Int32:
             case TR::Address: // have to do something for GC maps here
-                if (i == firstArgumentChild && callNode->getOpCode().isIndirect()) {
+                // first child holds the J9MethodPointer for jitDispatchJ9Method. we do not want to push this arg
+                if (isSpecialArg && isJitDispatchJ9Method) {
+                    argRegister = cg()->evaluate(child);
+                } else if (i == firstArgumentChild && callNode->getOpCode().isIndirect()) {
                     argRegister = pushThis(child);
                 } else {
                     if (child->getDataType() == TR::Address) {
@@ -1546,6 +1562,8 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
                         dependencies->addPostCondition(resultReg, properties.getIntegerReturnRegister(0));
                     } else {
                         TR::addDependency(dependencies, argRegister, specialArgReg, TR_GPR, cg());
+                        if (isJitDispatchJ9Method)
+                            cg()->decReferenceCount(child);
                     }
                 } else {
                     argSize += TR::Compiler->om.sizeofReferenceAddress();
@@ -2736,19 +2754,67 @@ void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode, TR::SymbolRe
     TR::ResolvedMethodSymbol *sym = callSymbol->getResolvedMethodSymbol();
     TR_ResolvedMethod *vmm = (sym == NULL) ? NULL : sym->getResolvedMethod();
     bool myself = comp()->isRecursiveMethodTarget(vmm);
+    bool isJitDispatchJ9Method = callNode->isJitDispatchJ9MethodCall(comp());
 
     TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
 
-    if (callSymRef->getReferenceNumber() >= TR_PPCnumRuntimeHelpers)
+    if ((callSymRef->getReferenceNumber() >= TR_PPCnumRuntimeHelpers) && !isJitDispatchJ9Method)
         fej9->reserveTrampolineIfNecessary(comp(), callSymRef, false);
 
     bool forceUnresolvedDispatch = !fej9->isResolvedDirectDispatchGuaranteed(comp());
-    if ((callSymbol->isJITInternalNative()
+    if (!isJitDispatchJ9Method
+        && (callSymbol->isJITInternalNative()
             || (!callSymRef->isUnresolved() && !callSymbol->isInterpreted()
-                && ((forceUnresolvedDispatch && callSymbol->isHelper()) || !forceUnresolvedDispatch)))) {
+                && (callSymbol->isHelper() || !forceUnresolvedDispatch)))) {
         gcPoint = generateDepImmSymInstruction(cg(), TR::InstOpCode::bl, callNode,
             myself ? 0 : (uintptr_t)callSymbol->getMethodAddress(), dependencies,
             callSymRef ? callSymRef : callNode->getSymbolReference());
+    } else if (isJitDispatchJ9Method) {
+        auto regMapMask = pp.getPreservedRegisterMapForGC();
+
+        TR::Register *scratchReg = dependencies->searchPostConditionRegister(TR::RealRegister::gr12);
+        TR::Register *scratchReg2 = dependencies->searchPreConditionRegister(TR::RealRegister::gr0);
+        TR::Register *cndReg = dependencies->searchPreConditionRegister(TR::RealRegister::cr0);
+        TR::Register *j9MethodReg = dependencies->searchPreConditionRegister(TR::RealRegister::gr11);
+
+        TR::LabelSymbol *startICFLabel = generateLabelSymbol(cg());
+        TR::LabelSymbol *doneLabel = generateLabelSymbol(cg());
+        startICFLabel->setStartInternalControlFlow();
+        doneLabel->setEndInternalControlFlow();
+
+        TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg());
+        TR::SymbolReference *helperRef
+            = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition, true, true, false);
+        TR::Snippet *interpCallSnippet = new (cg()->trHeapMemory())
+            TR::PPCArgFlushHelperCallSnippet(cg(), callNode, snippetLabel, helperRef, doneLabel, argSize);
+        interpCallSnippet->gcMap().setGCRegisterMask(regMapMask);
+        cg()->addSnippet(interpCallSnippet);
+
+        generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, startICFLabel);
+
+        // test if compiled
+        generateTrg1MemInstruction(cg(), TR::InstOpCode::ld, callNode, scratchReg,
+            TR::MemoryReference::createWithDisplacement(cg(), j9MethodReg, offsetof(J9Method, extra),
+                TR::Compiler->om.sizeofReferenceAddress()));
+        generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::andi_r, callNode, scratchReg2, scratchReg, 1);
+
+        if (cg()->stressJitDispatchJ9MethodJ2I()) {
+            generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, snippetLabel);
+        } else {
+            generateConditionalBranchInstruction(cg(), TR::InstOpCode::bne, callNode, snippetLabel, cndReg);
+        }
+
+        // compiled - jump to jit entry point
+        generateTrg1MemInstruction(cg(), TR::InstOpCode::lwz, callNode, j9MethodReg,
+            TR::MemoryReference::createWithDisplacement(cg(), scratchReg, -4, 4));
+        generateShiftRightLogicalImmediate(cg(), callNode, j9MethodReg, j9MethodReg, 16);
+        generateTrg1Src2Instruction(cg(), TR::InstOpCode::add, callNode, scratchReg2, scratchReg, j9MethodReg);
+        generateSrc1Instruction(cg(), TR::InstOpCode::mtctr, callNode, scratchReg2);
+        gcPoint = generateInstruction(cg(), TR::InstOpCode::bctrl, callNode);
+        gcPoint->PPCNeedsGCMap(regMapMask);
+
+        generateDepLabelInstruction(cg(), TR::InstOpCode::label, callNode, doneLabel, dependencies);
+        return;
     } else {
         TR::LabelSymbol *label = generateLabelSymbol(cg());
         TR::Snippet *snippet;
