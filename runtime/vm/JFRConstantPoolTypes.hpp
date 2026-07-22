@@ -36,7 +36,6 @@
 #include "BufferWriter.hpp"
 #include "JFRUtils.hpp"
 #include "ObjectAccessBarrierAPI.hpp"
-#include "VMHelpers.hpp"
 
 #include <cstring>
 
@@ -578,7 +577,6 @@ private:
 	bool _shouldWriteNativeLibrary;
 	bool _shouldWriteModuleRequire;
 	bool _shouldWriteModuleExport;
-	bool _shouldWriteClassLoaderStatistics;
 
 	/* Processing buffers */
 	StackFrame *_currentStackFrameBuffer;
@@ -888,6 +886,8 @@ public:
 	void addThreadAllocationStatistics(J9JFRThreadAllocationStatistics *threadAlocationData);
 
 	void addThreadObjectEntry(J9JFRThreadObject *tableEntry);
+
+	void addClassLoaderStatisticsEntry(J9JFRClassLoaderStatistics *classLoaderStatisticsData);
 
 	J9Pool *getExecutionSampleTable()
 	{
@@ -1339,11 +1339,6 @@ public:
 		return _shouldWriteModuleExport;
 	}
 
-	bool shouldWriteClassLoaderStatistics()
-	{
-		return _shouldWriteClassLoaderStatistics;
-	}
-
 	/**
 	* Helper to get JFR constantEvents field.
 	*
@@ -1463,7 +1458,7 @@ public:
 				_shouldWriteModuleExport = true;
 				break;
 			case J9JFR_EVENT_TYPE_CLASS_LOADER_STATISTICS:
-				_shouldWriteClassLoaderStatistics = true;
+				addClassLoaderStatisticsEntry((J9JFRClassLoaderStatistics *)event);
 				break;
 			case J9JFR_EVENT_TYPE_THREAD_DUMP:
 				addThreadDumpEntry((J9JFRThreadDump *)event);
@@ -1509,9 +1504,6 @@ public:
 			}
 			if (_shouldWriteModuleRequire || _shouldWriteModuleExport) {
 				loadModuleRequireAndModuleExportEvents();
-			}
-			if (_shouldWriteClassLoaderStatistics) {
-				loadClassLoaderStatisticsEvents(_currentThread);
 			}
 		}
 
@@ -2044,34 +2036,8 @@ done:
 				}
 			}
 			entry->classLoaderData = (U_64)classLoader;
-			if (classLoader == _vm->anonClassLoader) {
-				entry->classCount = _vm->anonClassCount;
-			} else {
-				entry->classCount = classLoader->loadedClassCount;
-			}
 
-			J9MemorySegment *segment = classLoader->classSegments;
-			while (NULL != segment) {
-				entry->chunkSize += segment->heapAlloc - segment->baseAddress;
-				segment = segment->nextSegmentInClassLoader;
-			}
-
-			entry->blockSize = (I_64)entry->chunkSize;
-
-			J9RAMClassFreeLists *sub4gBlockPtr = &classLoader->sub4gBlock;
-			J9RAMClassFreeLists *frequentlyAccessedBlockPtr = &classLoader->frequentlyAccessedBlock;
-			J9RAMClassFreeLists *inFrequentlyAccessedBlockPtr = &classLoader->inFrequentlyAccessedBlock;
-			UDATA *ramClassSub4gUDATABlockFreeListPtr = sub4gBlockPtr->ramClassUDATABlockFreeList;
-			UDATA *ramClassFreqUDATABlockFreeListPtr = frequentlyAccessedBlockPtr->ramClassUDATABlockFreeList;
-			UDATA *ramClassInFreqUDATABlockFreeListPtr = inFrequentlyAccessedBlockPtr->ramClassUDATABlockFreeList;
-
-			VM_VMHelpers::subtractUDATABlockChain(ramClassSub4gUDATABlockFreeListPtr, &entry->blockSize);
-			VM_VMHelpers::subtractUDATABlockChain(ramClassFreqUDATABlockFreeListPtr, &entry->blockSize);
-			VM_VMHelpers::subtractUDATABlockChain(ramClassInFreqUDATABlockFreeListPtr, &entry->blockSize);
-
-			VM_VMHelpers::subtractFreeListBlocks(sub4gBlockPtr, &entry->blockSize);
-			VM_VMHelpers::subtractFreeListBlocks(frequentlyAccessedBlockPtr, &entry->blockSize);
-			VM_VMHelpers::subtractFreeListBlocks(inFrequentlyAccessedBlockPtr, &entry->blockSize);
+			VM_JFRUtils::getClassloaderStats(_vm, classLoader, &(entry->classCount), &(entry->chunkSize), &(entry->blockSize));
 
 			entry->hiddenClassCount = 0;
 			entry->hiddenChunkSize = 0;
@@ -2251,7 +2217,6 @@ done:
 		, _shouldWriteNativeLibrary(false)
 		, _shouldWriteModuleRequire(false)
 		, _shouldWriteModuleExport(false)
-		, _shouldWriteClassLoaderStatistics(false)
 		, _previousStackTraceEntry(NULL)
 		, _firstStackTraceEntry(NULL)
 		, _previousThreadEntry(NULL)

@@ -1566,6 +1566,44 @@ done:
 }
 
 void
+VM_JFRConstantPoolTypes::addClassLoaderStatisticsEntry(J9JFRClassLoaderStatistics *classLoaderStatisticsData)
+{
+	ClassLoaderStatisticsEntry *entry = (ClassLoaderStatisticsEntry *)pool_newElement(_classLoaderStatisticsTable);
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = classLoaderStatisticsData->startTicks;
+	entry->classLoaderIndex = addClassLoaderEntry(classLoaderStatisticsData->classLoader);
+	if (isResultNotOKay()) {
+		goto done;
+	}
+
+	if (NULL != classLoaderStatisticsData->parentClassLoader) {
+		entry->parentClassLoaderIndex = addClassLoaderEntry(classLoaderStatisticsData->parentClassLoader);
+		if (isResultNotOKay()) {
+			goto done;
+		}
+	} else {
+		entry->parentClassLoaderIndex = 0;
+	}
+
+	entry->classLoaderData = (U_64)classLoaderStatisticsData->classLoader;
+	entry->classCount = classLoaderStatisticsData->classCount;
+	entry->chunkSize = classLoaderStatisticsData->chunkSize;
+	entry->blockSize = classLoaderStatisticsData->blockSize;
+	entry->hiddenClassCount = classLoaderStatisticsData->hiddenClassCount;
+	entry->hiddenChunkSize = classLoaderStatisticsData->hiddenChunkSize;
+	entry->hiddenBlockSize = classLoaderStatisticsData->hiddenBlockSize;
+
+	_classLoaderStatisticsCount += 1;
+done:
+	return;
+}
+
+void
 VM_JFRConstantPoolTypes::printTables()
 {
 	j9tty_printf(PORTLIB, "--------------- StringUTF8Table ---------------\n");

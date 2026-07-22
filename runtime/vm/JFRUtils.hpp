@@ -25,6 +25,7 @@
 
 #include "j9.h"
 #include "vm_api.h"
+#include "VMHelpers.hpp"
 
 #if defined(J9VM_OPT_JFR)
 
@@ -70,6 +71,40 @@ public:
 
 		return result;
 	}
+
+	static void
+	getClassloaderStats(J9JavaVM *vm, J9ClassLoader *classLoader, I_64 *classCount, U_64 *chunkSize, I_64 *blockSize)
+	{
+		if (classLoader == vm->anonClassLoader) {
+			*classCount = vm->anonClassCount;
+		} else {
+			*classCount = classLoader->loadedClassCount;
+		}
+
+		J9MemorySegment *segment = classLoader->classSegments;
+		while (NULL != segment) {
+			*chunkSize += segment->heapAlloc - segment->baseAddress;
+			segment = segment->nextSegmentInClassLoader;
+		}
+
+		*blockSize = (I_64)(*chunkSize);
+
+		J9RAMClassFreeLists *sub4gBlockPtr = &classLoader->sub4gBlock;
+		J9RAMClassFreeLists *frequentlyAccessedBlockPtr = &classLoader->frequentlyAccessedBlock;
+		J9RAMClassFreeLists *inFrequentlyAccessedBlockPtr = &classLoader->inFrequentlyAccessedBlock;
+		UDATA *ramClassSub4gUDATABlockFreeListPtr = sub4gBlockPtr->ramClassUDATABlockFreeList;
+		UDATA *ramClassFreqUDATABlockFreeListPtr = frequentlyAccessedBlockPtr->ramClassUDATABlockFreeList;
+		UDATA *ramClassInFreqUDATABlockFreeListPtr = inFrequentlyAccessedBlockPtr->ramClassUDATABlockFreeList;
+
+		VM_VMHelpers::subtractUDATABlockChain(ramClassSub4gUDATABlockFreeListPtr, blockSize);
+		VM_VMHelpers::subtractUDATABlockChain(ramClassFreqUDATABlockFreeListPtr, blockSize);
+		VM_VMHelpers::subtractUDATABlockChain(ramClassInFreqUDATABlockFreeListPtr, blockSize);
+
+		VM_VMHelpers::subtractFreeListBlocks(sub4gBlockPtr, blockSize);
+		VM_VMHelpers::subtractFreeListBlocks(frequentlyAccessedBlockPtr, blockSize);
+		VM_VMHelpers::subtractFreeListBlocks(inFrequentlyAccessedBlockPtr, blockSize);
+	}
+
 
 };
 
