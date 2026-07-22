@@ -5852,7 +5852,7 @@ void
 disableJFRRecordingOnThread(J9VMThread *currentThread, j9object_t threadObject);
 
 BOOLEAN
-isJFRRecordingDisabledOnThread(J9VMThread *currentThread, j9object_t threadObject);
+isJFRRecordingDisabledOnThread(J9VMThread *currentThread, J9VMThread *sampleThread);
 
 /**
  * Take an execution sample of the current thread.
