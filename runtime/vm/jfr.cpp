@@ -692,9 +692,9 @@ jfrThreadEndEvent(J9HookInterface **hook, UDATA eventNum, void *eventData, void 
 {
 	J9VMThreadEndEvent *event = (J9VMThreadEndEvent *)eventData;
 	J9VMThread *currentThread = event->currentThread;
-	PORT_ACCESS_FROM_VMC(currentThread);
 
 #if defined(DEBUG)
+	PORT_ACCESS_FROM_VMC(currentThread);
 	j9tty_printf(PORTLIB, "\n!!! thread end jfrevent %p\n", currentThread);
 #endif /* defined(DEBUG) */
 
