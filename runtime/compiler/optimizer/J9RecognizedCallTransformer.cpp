@@ -428,10 +428,8 @@ void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_inflate_BICII
      *   (dstArray.length - dstOffNode) < copyLenNode
      * If either is true, an out of bounds exception will occur so the code must branch to the slow path.
      */
-    TR::Node *srcLenMinusOffsetNode
-        = TR::Node::create(TR::isub, 2, srcArrayLenNode, srcOffNode->duplicateTree());
-    TR::Node *dstLenMinusOffsetNode
-        = TR::Node::create(TR::isub, 2, dstArrayLenNode, dstOffNode->duplicateTree());
+    TR::Node *srcLenMinusOffsetNode = TR::Node::create(TR::isub, 2, srcArrayLenNode, srcOffNode->duplicateTree());
+    TR::Node *dstLenMinusOffsetNode = TR::Node::create(TR::isub, 2, dstArrayLenNode, dstOffNode->duplicateTree());
 
     TR::Node *srcCmpNode = TR::Node::createif(TR::ificmplt, srcLenMinusOffsetNode, copyLenNode->duplicateTree(), NULL);
     TR::TreeTop *srcCmpTree = TR::TreeTop::create(comp(), srcCmpNode);
@@ -2223,9 +2221,9 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop *treetop)
                     cg()->getSupportsArrayCmpLen() && !comp()->target().cpu.isPower() && !comp()->target().cpu.isZ());
             case TR::java_lang_StringLatin1_inflate_BIBII:
 #if JAVA_SPEC_VERSION < 25
-                if (!disableStringIntrinsicFlagChk && cg()->getSupportsInlineStringLatin1Inflate() &&
-                    !node->isSafeForCGToInlineStringIntrinsic() && !node->checkSkipRecognizedCallTransformation() &&
-                    comp()->target().cpu.isZ()) {
+                if (!disableStringIntrinsicFlagChk && cg()->getSupportsInlineStringLatin1Inflate()
+                    && !node->isSafeForCGToInlineStringIntrinsic() && !node->checkSkipRecognizedCallTransformation()
+                    && comp()->target().cpu.isZ()) {
                     return true;
                 }
 #endif /* JAVA_SPEC_VERSION < 25 */
