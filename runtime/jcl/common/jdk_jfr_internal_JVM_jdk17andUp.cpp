@@ -106,7 +106,7 @@ Java_jdk_jfr_internal_JVM_isExcluded__Ljava_lang_Thread_2(JNIEnv *env, jobject o
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	j9object_t threadObject = J9_JNI_UNWRAP_REFERENCE(thread);
 	if (NULL != threadObject) {
-		result = vmFuncs->isJFRRecordingDisabledOnThread(currentThread, threadObject) ? JNI_TRUE : JNI_FALSE;
+		result = vmFuncs->isJFRRecordingDisabledOnThread(currentThread, J9VMJAVALANGTHREAD_THREADREF(currentThread, threadObject)) ? JNI_TRUE : JNI_FALSE;
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
 

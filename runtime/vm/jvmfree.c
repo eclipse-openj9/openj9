@@ -203,6 +203,13 @@ recycleVMThread(J9VMThread * vmThread)
 	omrthread_monitor_exit(vmThread->publicFlagsMutex);
 
 	J9_LINKED_LIST_ADD_LAST(vm->deadThreadList, vmThread);
+
+#if defined(J9VM_OPT_JFR)
+	/* Reset JFR buffers. */
+	vmThread->jfrBuffer.bufferRemaining = vmThread->jfrBuffer.bufferSize;
+	vmThread->jfrBuffer.bufferCurrent = vmThread->jfrBuffer.bufferStart;
+#endif /* defined(J9VM_OPT_JFR) */
+
 }
 
 
@@ -274,6 +281,12 @@ deallocateVMThread(J9VMThread * vmThread, UDATA decrementZombieCount, UDATA send
 		j9mem_free_memory(vmThread->continuationT1Cache);
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
+
+#if defined(J9VM_OPT_JFR)
+	/* Free JFR buffers. */
+	j9mem_free_memory((void *)vmThread->jfrBuffer.bufferStart);
+	memset(&vmThread->jfrBuffer, 0, sizeof(vmThread->jfrBuffer));
+#endif /* defined(J9VM_OPT_JFR) */
 
 	/* freeing the per thread buffers in the portlibrary */
 	j9port_tls_free();
