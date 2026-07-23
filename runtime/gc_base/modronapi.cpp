@@ -23,6 +23,7 @@
 #include "j9.h"
 #include "j9cfg.h"
 #include "j9protos.h"
+#include "omrlinkedlist.h"
 
 #include "omrgcconsts.h"
 #include "modronbase.h"
@@ -854,6 +855,61 @@ j9gc_get_maximum_heap_size(J9JavaVM *javaVM)
 {
 	UDATA size = MM_GCExtensions::getExtensions(javaVM)->memoryMax;
 	return size;
+}
+
+/**
+ * API to return the minimum TLH (Thread Local Heap) size.
+ */
+UDATA
+j9gc_get_tlh_minimum_size(J9JavaVM *javaVM)
+{
+	return MM_GCExtensions::getExtensions(javaVM)->tlhMinimumSize;
+}
+
+/**
+ * API to return the TLH refill waste limit, approximated as the maximum
+ * abandonSize across all live threads. abandonSize for a thread is
+ * max(tlhMinimumSize, refreshSize / 2). The maximum across threads gives
+ * the most representative steady-state value (warm, fast-allocating threads).
+ * Falls back to tlhMaximumSize / 2 if no threads are present.
+ */
+UDATA
+j9gc_get_tlh_refill_waste_limit(J9JavaVM *javaVM)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
+	UDATA tlhMinimumSize = extensions->tlhMinimumSize;
+	UDATA maxAbandonSize = 0;
+
+	omrthread_monitor_enter(javaVM->vmThreadListMutex);
+	J9VMThread *walkThread = J9_LINKED_LIST_START_DO(javaVM->mainThread);
+	while (NULL != walkThread) {
+		UDATA refreshSize = walkThread->allocateThreadLocalHeap.refreshSize;
+		UDATA halfRefreshSize = refreshSize >> 1;
+		UDATA abandonSize = (tlhMinimumSize > halfRefreshSize) ? tlhMinimumSize : halfRefreshSize;
+		if (abandonSize > maxAbandonSize) {
+			maxAbandonSize = abandonSize;
+		}
+		walkThread = J9_LINKED_LIST_NEXT_DO(javaVM->mainThread, walkThread);
+	}
+	omrthread_monitor_exit(javaVM->vmThreadListMutex);
+
+	/* Fall back to tlhMaximumSize / 2 if no threads present or all have refreshSize of 0. */
+	if (0 == maxAbandonSize) {
+		maxAbandonSize = extensions->tlhMaximumSize >> 1;
+	}
+
+	return maxAbandonSize;
+}
+
+/**
+ * API to return whether TLH allocation is enabled.
+ */
+BOOLEAN
+j9gc_is_tlab_enabled(J9JavaVM *javaVM)
+{
+	uintptr_t allocType = 0;
+	UDATA found = javaVM->memoryManagerFunctions->j9gc_modron_getConfigurationValueForKey(javaVM, j9gc_modron_configuration_allocationType, &allocType);
+	return (found && (j9gc_modron_allocation_type_tlh == allocType)) ? TRUE : FALSE;
 }
 
 /**
