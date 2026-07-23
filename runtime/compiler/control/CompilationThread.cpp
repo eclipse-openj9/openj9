@@ -861,13 +861,14 @@ void TR::CompilationInfo::freeAllResources()
 
     PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
     for (int i = 0; i < J9_LONGEST_SYNC_COMP; i++) {
-        if (_syncCompStats.longestWaitMethods[i].method != NULL) {
-            j9mem_free_memory(_syncCompStats.longestWaitMethods[i].method);
-            _syncCompStats.longestWaitMethods[i].method = NULL;
+        J9JITLongestSyncComp &longestWaitMethod = _syncCompStats.longestWaitMethods[i];
+        if (longestWaitMethod.method != NULL) {
+            j9mem_free_memory(longestWaitMethod.method);
+            longestWaitMethod.method = NULL;
         }
-        if (_syncCompStats.longestWaitMethods[i].thread != NULL) {
-            j9mem_free_memory(_syncCompStats.longestWaitMethods[i].thread);
-            _syncCompStats.longestWaitMethods[i].thread = NULL;
+        if (longestWaitMethod.thread != NULL) {
+            j9mem_free_memory(longestWaitMethod.thread);
+            longestWaitMethod.thread = NULL;
         }
     }
 }
@@ -6305,7 +6306,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread *vmThread, TR::IlG
             _syncCompStats.totalCount++;
             _syncCompStats.totalWaitTime += duration;
 
-            /* Obtain index to insert */
+            /* Obtain index to insert. */
             int idx = -1;
             for (int i = 0; i < J9_LONGEST_SYNC_COMP; i++) {
                 if (_syncCompStats.longestWaitMethods[i].waitTime < duration) {
@@ -6314,14 +6315,14 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread *vmThread, TR::IlG
                 }
             }
 
-            if (idx >= 0) {
-                /* Remove the shortest wait-time */
+            if (0 <= idx) {
+                /* Remove the shortest wait-time. */
                 J9JITLongestSyncComp &lastMethod = _syncCompStats.longestWaitMethods[J9_LONGEST_SYNC_COMP - 1];
-                if (lastMethod.method != NULL) {
+                if (NULL != lastMethod.method) {
                     j9mem_free_memory(lastMethod.method);
                     lastMethod.method = NULL;
                 }
-                if (lastMethod.thread != NULL) {
+                if (NULL != lastMethod.thread) {
                     j9mem_free_memory(lastMethod.thread);
                     lastMethod.thread = NULL;
                 }
@@ -6339,18 +6340,18 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread *vmThread, TR::IlG
 
                 uint32_t totalLen = J9UTF8_LENGTH(className) + J9UTF8_LENGTH(name) + J9UTF8_LENGTH(signature) + 2;
                 char *templongestWaitMethod = (char *)j9mem_allocate_memory(totalLen, J9MEM_CATEGORY_JIT);
-                if (templongestWaitMethod != NULL) {
-                    snprintf(templongestWaitMethod, totalLen, "%.*s.%.*s%.*s", J9UTF8_LENGTH(className),
+                if (NULL != templongestWaitMethod) {
+                    j9str_printf(templongestWaitMethod, totalLen, "%.*s.%.*s%.*s", J9UTF8_LENGTH(className),
                         J9UTF8_DATA(className), J9UTF8_LENGTH(name), J9UTF8_DATA(name), J9UTF8_LENGTH(signature),
                         J9UTF8_DATA(signature));
                 }
                 _syncCompStats.longestWaitMethods[idx].method = templongestWaitMethod;
 
-                char *threadName = getOMRVMThreadName(vmThread->omrVMThread);
-                uint32_t len = strlen(threadName) + 1;
-                char *tempThread = (char *)j9mem_allocate_memory(len, J9MEM_CATEGORY_JIT);
-                if (tempThread != NULL) {
-                    memcpy(tempThread, threadName, len);
+                const char *threadName = getOMRVMThreadName(vmThread->omrVMThread);
+                uint32_t len = strlen(threadName);
+                char *tempThread = (char *)j9mem_allocate_memory(len + 1, J9MEM_CATEGORY_JIT);
+                if (NULL != tempThread) {
+                    memcpy(tempThread, threadName, len + 1);
                 }
                 _syncCompStats.longestWaitMethods[idx].thread = tempThread;
                 releaseOMRVMThreadName(vmThread->omrVMThread);
