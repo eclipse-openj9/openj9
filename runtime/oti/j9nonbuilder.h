@@ -6721,6 +6721,9 @@ typedef struct J9JavaVM {
 #endif /* defined(WIN32) */
 #endif /* defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH) */
 	omrthread_monitor_t constantDynamicMutex;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	UDATA hashMaxRecDepth;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	UDATA valueFlatteningThreshold;
 	omrthread_monitor_t valueTypeVerificationMutex;

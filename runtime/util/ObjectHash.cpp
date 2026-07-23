@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "util_api.h"
+#include "ut_j9vmutil.h"
 #include "ObjectHash.hpp"
 
 extern "C" {
@@ -61,6 +62,7 @@ objectHashCode(J9JavaVM *vm, j9object_t objectPointer
 I_32
 convertObjectToHash(J9JavaVM *vm, J9VMThread *currentThread, j9object_t objectPointer, J9Class *clazz)
 {
+	Assert_VMUtil_mustHaveVMAccess(currentThread);
 	bool oomOccurred = false;
 	I_32 result = VM_ObjectHash::inlineConvertObjectToHash(vm, currentThread, objectPointer, &oomOccurred);
 	/* Return 0 if OOM occurs, skipping OOM handling from GC code. */

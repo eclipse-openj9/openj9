@@ -406,4 +406,49 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
+	<test>
+		<testCaseName>ValueTypeHashCodeTests</testCaseName>
+		<variations>
+			<variation>-Xgcpolicy:optthruput -XX:+EnableArrayFlattening -XX:ValueTypeFlatteningThreshold=99999 -XX:hashMaxRecDepth=0</variation>
+			<variation>-Xgcpolicy:optthruput -XX:+EnableArrayFlattening -XX:ValueTypeFlatteningThreshold=99999 -XX:hashMaxRecDepth=9999</variation>
+			<variation>-Xgcpolicy:optthruput -XX:+EnableArrayFlattening -XX:ValueTypeFlatteningThreshold=99999 -XX:hashMaxRecDepth=2</variation>
+			<variation>-Xgcpolicy:optthruput -XX:-EnableArrayFlattening -XX:hashMaxRecDepth=0</variation>
+			<variation>-Xgcpolicy:optthruput -XX:-EnableArrayFlattening -XX:hashMaxRecDepth=9999</variation>
+			<variation>-Xgcpolicy:optthruput -XX:-EnableArrayFlattening -XX:hashMaxRecDepth=2</variation>
+			<variation>-Xgcpolicy:gencon -XX:+EnableArrayFlattening -XX:ValueTypeFlatteningThreshold=99999 -XX:hashMaxRecDepth=0</variation>
+			<variation>-Xgcpolicy:gencon -XX:+EnableArrayFlattening -XX:ValueTypeFlatteningThreshold=99999 -XX:hashMaxRecDepth=9999</variation>
+			<variation>-Xgcpolicy:gencon -XX:+EnableArrayFlattening -XX:ValueTypeFlatteningThreshold=99999 -XX:hashMaxRecDepth=2</variation>
+			<variation>-Xgcpolicy:gencon -XX:-EnableArrayFlattening -XX:hashMaxRecDepth=0</variation>
+			<variation>-Xgcpolicy:gencon -XX:-EnableArrayFlattening -XX:hashMaxRecDepth=9999</variation>
+			<variation>-Xgcpolicy:gencon -XX:-EnableArrayFlattening -XX:hashMaxRecDepth=2</variation>
+			<variation>-Xgcpolicy:balanced -Xmx512m -XX:+EnableArrayFlattening -XX:ValueTypeFlatteningThreshold=99999 -XX:hashMaxRecDepth=0</variation>
+			<variation>-Xgcpolicy:balanced -Xmx512m -XX:+EnableArrayFlattening -XX:ValueTypeFlatteningThreshold=99999 -XX:hashMaxRecDepth=9999</variation>
+			<variation>-Xgcpolicy:balanced -Xmx512m -XX:+EnableArrayFlattening -XX:ValueTypeFlatteningThreshold=99999 -XX:hashMaxRecDepth=2</variation>
+			<variation>-Xgcpolicy:balanced -Xmx512m -XX:-EnableArrayFlattening -XX:hashMaxRecDepth=0</variation>
+			<variation>-Xgcpolicy:balanced -Xmx512m -XX:-EnableArrayFlattening -XX:hashMaxRecDepth=9999</variation>
+			<variation>-Xgcpolicy:balanced -Xmx512m -XX:-EnableArrayFlattening -XX:hashMaxRecDepth=2</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		--enable-preview \
+		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
+		--add-exports java.base/jdk.internal.value=ALL-UNNAMED \
+		-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)ValhallaTests.jar$(Q) \
+		org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames ValueTypeHashCodeTests \
+		-groups $(TEST_GROUP) \
+		-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<versions>
+			<version>Valhalla</version>
+		</versions>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
 </playlist>
