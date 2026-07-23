@@ -38,8 +38,7 @@ public:
      * @param[in] precedingInstruction : preceding instruction
      * @param[in] cg : CodeGenerator
      */
-    Instruction(TR::InstOpCode::Mnemonic op, TR::Node *node, TR::Instruction *precedingInstruction,
-        TR::CodeGenerator *cg)
+    Instruction(OP::Mnemonic op, TR::Node *node, TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
         : J9::InstructionConnector(cg, precedingInstruction, op, node)
     {}
 
@@ -49,7 +48,7 @@ public:
      * @param[in] node : node
      * @param[in] cg : CodeGenerator
      */
-    Instruction(TR::InstOpCode::Mnemonic op, TR::Node *node, TR::CodeGenerator *cg)
+    Instruction(OP::Mnemonic op, TR::Node *node, TR::CodeGenerator *cg)
         : J9::InstructionConnector(cg, op, node)
     {}
 
@@ -61,7 +60,7 @@ public:
      * @param[in] precedingInstruction : preceding instruction
      * @param[in] cg : CodeGenerator
      */
-    Instruction(TR::InstOpCode::Mnemonic op, TR::Node *node, TR::RegisterDependencyConditions *cond,
+    Instruction(OP::Mnemonic op, TR::Node *node, TR::RegisterDependencyConditions *cond,
         TR::Instruction *precedingInstruction, TR::CodeGenerator *cg)
         : J9::InstructionConnector(cg, precedingInstruction, op, node)
     {
@@ -77,8 +76,7 @@ public:
      * @param[in] cond : register dependency conditions
      * @param[in] cg : CodeGenerator
      */
-    Instruction(TR::InstOpCode::Mnemonic op, TR::Node *node, TR::RegisterDependencyConditions *cond,
-        TR::CodeGenerator *cg)
+    Instruction(OP::Mnemonic op, TR::Node *node, TR::RegisterDependencyConditions *cond, TR::CodeGenerator *cg)
         : J9::InstructionConnector(cg, op, node)
     {
         self()->setDependencyConditions(cond);

@@ -175,8 +175,7 @@ uint32_t J9::ARM64::CodeGenerator::encodeHelperBranchAndLink(TR::SymbolReference
         __LINE__, node);
 
     uintptr_t distance = target - (uintptr_t)cursor;
-    return TR::InstOpCode::getOpCodeBinaryEncoding(omitLink ? (TR::InstOpCode::b) : (TR::InstOpCode::bl))
-        | ((distance >> 2) & 0x3ffffff); /* imm26 */
+    return OP::getOpCodeBinaryEncoding(omitLink ? (OP::b) : (OP::bl)) | ((distance >> 2) & 0x3ffffff); /* imm26 */
 }
 
 void J9::ARM64::CodeGenerator::generateBinaryEncodingPrePrologue(TR_ARM64BinaryEncodingData &data)
@@ -202,9 +201,9 @@ void J9::ARM64::CodeGenerator::generateBinaryEncodingPrePrologue(TR_ARM64BinaryE
                     = reinterpret_cast<uintptr_t>(methodSymbol->getResolvedMethod()->startAddressForJNIMethod(comp));
                 uint32_t low = methodAddress & static_cast<uint32_t>(0xffffffff);
                 uint32_t high = (methodAddress >> 32) & static_cast<uint32_t>(0xffffffff);
-                TR::Instruction *cursor = new (self()->trHeapMemory())
-                    TR::ARM64ImmInstruction(TR::InstOpCode::dd, startNode, low, NULL, self());
-                generateImmInstruction(self(), TR::InstOpCode::dd, startNode, high, cursor);
+                TR::Instruction *cursor
+                    = new (self()->trHeapMemory()) TR::ARM64ImmInstruction(OP::dd, startNode, low, NULL, self());
+                generateImmInstruction(self(), OP::dd, startNode, high, cursor);
             }
         }
     }
@@ -226,22 +225,19 @@ TR::Instruction *J9::ARM64::CodeGenerator::generateSwitchToInterpreterPrePrologu
 
     // x8 must contain the saved LR; see Recompilation.s
     // cannot use generateMovInstruction() here
-    cursor = new (self()->trHeapMemory())
-        TR::ARM64Trg1Src2Instruction(TR::InstOpCode::orrx, node, x8, xzr, lr, cursor, self());
+    cursor = new (self()->trHeapMemory()) TR::ARM64Trg1Src2Instruction(OP::orrx, node, x8, xzr, lr, cursor, self());
     cursor = self()->getLinkage()->saveParametersToStack(cursor);
-    cursor = generateImmSymInstruction(self(), TR::InstOpCode::bl, node,
-        (uintptr_t)revertToInterpreterSymRef->getMethodAddress(), RegDeps(0, 0, self()), revertToInterpreterSymRef,
-        NULL, cursor);
-    cursor = generateRelocatableImmInstruction(self(), TR::InstOpCode::dd, node, (uintptr_t)ramMethod, TR_RamMethod,
-        cursor);
+    cursor = generateImmSymInstruction(self(), OP::bl, node, (uintptr_t)revertToInterpreterSymRef->getMethodAddress(),
+        RegDeps(0, 0, self()), revertToInterpreterSymRef, NULL, cursor);
+    cursor = generateRelocatableImmInstruction(self(), OP::dd, node, (uintptr_t)ramMethod, TR_RamMethod, cursor);
 
     if (comp->getOption(TR_EnableHCR))
         comp->getStaticHCRPICSites()->push_front(cursor);
 
-    cursor = generateRelocatableImmInstruction(self(), TR::InstOpCode::dd, node, (uintptr_t)helperAddr,
-        TR_AbsoluteHelperAddress, helperSymRef, cursor);
+    cursor = generateRelocatableImmInstruction(self(), OP::dd, node, (uintptr_t)helperAddr, TR_AbsoluteHelperAddress,
+        helperSymRef, cursor);
     // Used in FSD to store an instruction
-    cursor = generateImmInstruction(self(), TR::InstOpCode::dd, node, 0, cursor);
+    cursor = generateImmInstruction(self(), OP::dd, node, 0, cursor);
 
     return cursor;
 }
