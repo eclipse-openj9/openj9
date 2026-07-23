@@ -348,4 +348,13 @@ void TR_J9VM::initializeProcessorType()
 
     _jitConfig->targetProcessor = TR::Compiler->target.cpu.getProcessorDescription();
     _jitConfig->relocatableTargetProcessor = TR::Compiler->relocatableTarget.cpu.getProcessorDescription();
+
+    _jitConfig->platformInfo = TR::Compiler->target.cpu.getProcessorName();
+#if defined(TR_TARGET_X86)
+    _jitConfig->vendor = TR::Compiler->target.cpu.getX86ProcessorVendorId();
+#elif defined(TR_TARGET_S390)
+    _jitConfig->vendor = "IBM";
+#else
+    _jitConfig->vendor = "Unknown";
+#endif
 }
