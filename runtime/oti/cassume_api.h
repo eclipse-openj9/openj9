@@ -70,6 +70,17 @@ void
 verifyVAList(void);
 
 
+/* ---------------- j9structalign.c ---------------- */
+
+/**
+* @brief
+* @param void
+* @return void
+*/
+void
+verifyJ9JavaVMAlignment(void);
+
+
 /* ---------------- j9buildershadow.c ---------------- */
 
 /**

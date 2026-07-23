@@ -47,6 +47,7 @@ UDATA signalProtectedMain(struct J9PortLibrary *portLibrary, void *arg)
 	verifyJNISizes();
 	verifyVAList();
 	verifyUDATASizes();
+	verifyJ9JavaVMAlignment();
 
 	/* Ensure floatTemp1 is 8-aligned */
 	j9_assume(offsetof(J9VMThread, floatTemp1) % 8, 0);
