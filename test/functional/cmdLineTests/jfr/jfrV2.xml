@@ -69,8 +69,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output type="success" caseSensitive="yes" regex="no">STATE_RUNNABLE</output>
 		<output type="failure" caseSensitive="yes" regex="no">jfr print: could not read recording</output>
 	</test>
+	<!-- See https://github.com/eclipse-openj9/openj9/issues/24377
 	<test id="test jfr JVMInformation - approx 30 seconds">
-		<command>$JFR_EXE$ print --xml --events "JVMInformation" --stack-depth 1 experimentalRecording.jfr</command>
+		<command>$JFR_EXE$ print -/-/xml -/-/events "JVMInformation" -/-stack-depth 1 experimentalRecording.jfr</command>
 		<output type="required" caseSensitive="yes" regex="no">http://www.w3.org/2001/XMLSchema-instance</output>
 		<output type="success" caseSensitive="yes" regex="no">jdk.JVMInformation</output>
 		<output type="required" caseSensitive="yes" regex="no">startTime</output>
@@ -78,6 +79,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output type="required" caseSensitive="yes" regex="no">jvmVersion</output>
 		<output type="failure" caseSensitive="yes" regex="no">jfr print: could not read recording</output>
 	</test>
+	-->
 	<test id="test jfr native library - approx 30 seconds" platforms="aix.*,linux.*,osx.*,win.*">
 		<command>$JFR_EXE$ print --xml --events "NativeLibrary" experimentalRecording.jfr</command>
 		<output type="required" caseSensitive="yes" regex="no">http://www.w3.org/2001/XMLSchema-instance</output>
