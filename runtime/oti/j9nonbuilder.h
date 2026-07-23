@@ -297,6 +297,9 @@
 #define J9_CATCHTYPE_VALUE_FOR_SYNTHETIC_HANDLER_4BYTES 0xFFFFFFFF
 #define J9_CATCHTYPE_VALUE_FOR_SYNTHETIC_HANDLER_2BYTES 0xFFFF
 
+/* Constant for information regarding longest synchronous compilations. */
+#define J9_LONGEST_SYNC_COMP 3
+
 #if JAVA_SPEC_VERSION >= 19
 #define J9JVMTI_MAX_TLS_KEYS 124
 typedef void(*j9_tls_finalizer_t)(void *);
@@ -4376,6 +4379,19 @@ typedef struct J9ClassCastParms {
 	struct J9Class* castClass;
 } J9ClassCastParms;
 
+typedef struct J9JITLongestSyncComp {
+	uint64_t waitTime; /* microseconds */
+	uint64_t waitTimeEnd; /* absolute timestamp */
+	char *method;
+	char *thread;
+} J9JITLongestSyncComp;
+
+typedef struct J9JITSyncCompilationStatistics {
+	uint32_t totalCount;
+	uint64_t totalWaitTime; /* microseconds */
+	J9JITLongestSyncComp longestWaitMethods[J9_LONGEST_SYNC_COMP]; /* sorted in increasing order */
+} J9JITSyncCompilationStatistics;
+
 /* @ddr_namespace: map_to_type=J9JITConfig */
 
 typedef struct J9JITConfig {
@@ -4649,6 +4665,7 @@ typedef struct J9JITConfig {
 	IDATA verboseOutputLevel;
 	omrthread_monitor_t compilationMonitor;
 	void* compilationInfo;
+	J9JITSyncCompilationStatistics *syncCompStats;
 	void* aotCompilationInfo;
 	void* pseudoTOC;
 	void* i2jTransition;
