@@ -212,13 +212,15 @@ jfrEventSize(J9JFREvent *jfrEvent)
 	case J9JFR_EVENT_TYPE_INITIAL_ENVIRONMENT_VARIABLE:
 	case J9JFR_EVENT_TYPE_GC_HEAP_CONFIGURATION:
 	case J9JFR_EVENT_TYPE_YOUNG_GENERATION_CONFIGURATION:
-	case J9JFR_EVENT_TYPE_PHYSICAL_MEMORY:
 	case J9JFR_EVENT_TYPE_SYSTEM_PROCESS:
 	case J9JFR_EVENT_TYPE_MODULE_REQUIRE:
 	case J9JFR_EVENT_TYPE_MODULE_EXPORT:
 	case J9JFR_EVENT_TYPE_CLASS_LOADER_STATISTICS:
 	case J9JFR_EVENT_TYPE_NATIVE_LIBRARY:
 		size = sizeof(J9JFREvent);
+		break;
+	case J9JFR_EVENT_TYPE_PHYSICAL_MEMORY:
+		size = sizeof(J9JFRPhysicalMemory);
 		break;
 	default:
 		Assert_VM_unreachable();
@@ -1650,6 +1652,24 @@ jfrThreadStatistics(J9VMThread *currentThread)
 
 }
 
+static void
+jfrPhysicalMemory(J9VMThread *currentThread)
+{
+	PORT_ACCESS_FROM_VMC(currentThread);
+
+	J9MemoryInfo memInfo = {0};
+	I_32 rc = j9sysinfo_get_memory_info(&memInfo);
+
+	if (0 == rc) {
+		J9JFRPhysicalMemory *jfrEvent = (J9JFRPhysicalMemory *)reserveBuffer(currentThread, currentThread, sizeof(J9JFRPhysicalMemory));
+		if (NULL != jfrEvent) {
+			initializeEventFields(currentThread, currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_PHYSICAL_MEMORY);
+			jfrEvent->totalSize = memInfo.totalPhysical;
+			jfrEvent->usedSize = memInfo.totalPhysical - memInfo.availPhysical;
+		}
+	}
+}
+
 static int J9THREAD_PROC
 jfrSamplingThreadProc(void *entryArg)
 {
@@ -2381,10 +2401,7 @@ JfrPeriodicEventSet::requestClassLoaderStatistics(J9VMThread *currentThread)
 void
 JfrPeriodicEventSet::requestPhysicalMemory(J9VMThread *currentThread)
 {
-	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
-	if (NULL != jfrEvent) {
-		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_PHYSICAL_MEMORY);
-	}
+	jfrPhysicalMemory(currentThread);
 }
 
 void

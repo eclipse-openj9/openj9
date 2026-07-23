@@ -1561,6 +1561,28 @@ VM_JFRConstantPoolTypes::addThreadAllocationStatistics(J9JFRThreadAllocationStat
 	entry->threadIndex = threadAlocationData->currentThreadTID;
 	entry->allocated = threadAlocationData->allocated;
 
+	_threadAllocationStatisticsCount += 1;
+
+done:
+	return;
+}
+
+void
+VM_JFRConstantPoolTypes::addPhysicalMemoryEntry(J9JFRPhysicalMemory *physicalMemoryData)
+{
+	PhysicalMemoryEntry *entry = (PhysicalMemoryEntry *)pool_newElement(_physicalMemoryTable);
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = physicalMemoryData->startTicks;
+	entry->totalSize = physicalMemoryData->totalSize;
+	entry->usedSize = physicalMemoryData->usedSize;
+
+	_physicalMemoryCount += 1;
+
 done:
 	return;
 }
