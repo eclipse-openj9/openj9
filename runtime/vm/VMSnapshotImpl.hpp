@@ -81,6 +81,7 @@ private:
 	 */
 	void fixupClassLoaders();
 	void fixupClasses();
+	void fixupClassesDone();
 	void fixupClass(J9Class *clazz);
 	void fixupArrayClass(J9ArrayClass *clazz);
 	void fixupMethodRunAddresses(J9Class *ramClass);
