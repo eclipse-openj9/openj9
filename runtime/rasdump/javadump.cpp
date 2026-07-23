@@ -934,6 +934,19 @@ JavaCoreDumpWriter::writeProcessorSection(void)
 	_OutputStream.writeCharacters(osArchitecture);
 	_OutputStream.writeCharacters("\n");
 
+	if (NULL != _VirtualMachine->jitConfig) {
+		if (NULL != _VirtualMachine->jitConfig->platformInfo) {
+			_OutputStream.writeCharacters("3XHPROCINFO      Platform Info  : ");
+			_OutputStream.writeCharacters(_VirtualMachine->jitConfig->platformInfo);
+			_OutputStream.writeCharacters("\n");
+		}
+		if (NULL != _VirtualMachine->jitConfig->vendor) {
+			_OutputStream.writeCharacters("3XHVENDOR        Vendor         : ");
+			_OutputStream.writeCharacters(_VirtualMachine->jitConfig->vendor);
+			_OutputStream.writeCharacters("\n");
+		}
+	}
+
 	_OutputStream.writeCharacters("3XHNUMCPUS       How Many       : ");
 	_OutputStream.writeInteger(numberOfCpus, "%i");
 	_OutputStream.writeCharacters("\n");

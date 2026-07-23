@@ -4727,6 +4727,8 @@ typedef struct J9JITConfig {
 	void ( *printAOTHeaderProcessorFeatures)(struct TR_AOTHeader * aotHeaderAddress, char * buff, const size_t BUFF_SIZE);
 	struct OMRProcessorDesc targetProcessor;
 	struct OMRProcessorDesc relocatableTargetProcessor;
+	const char *platformInfo;
+	const char *vendor;
 #if defined(J9VM_OPT_JITSERVER)
 	int32_t (*startJITServer)(struct J9JITConfig *jitConfig);
 	int32_t (*waitJITServerTermination)(struct J9JITConfig *jitConfig);
