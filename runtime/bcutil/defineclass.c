@@ -54,6 +54,7 @@ static void freeAnonROMClass(J9JavaVM *vm, J9ROMClass *romClass);
 
 
 #if defined(J9VM_OPT_JFR)
+J9_DECLARE_CONSTANT_UTF8(jfrEventClassUTF8, "jdk/jfr/Event");
 /*
  * This function is used to preload the superclass of a class that is being defined. It requires th CTM to be held
  * by the caller. This function releases the CTM if there is a failure (OOM, exception, etc) or if the superClass is
@@ -152,7 +153,27 @@ internalDefineClass(
 	classLoader = GET_CLASS_LOADER_FROM_ID(vm, classLoader);
 
 #if defined(J9VM_OPT_JFR)
-	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_ENABLE_JFR_CLASSLOAD_TRANSFORM)) {
+	if (vmFuncs->isJFRV2SupportEnabled(vm)
+		&& J9UTF8_DATA_EQUALS(J9UTF8_DATA(&jfrEventClassUTF8), J9UTF8_LENGTH(&jfrEventClassUTF8), className, classNameLength)
+		&& (vm->systemClassLoader == classLoader)
+	) {
+		U_8 *jfrModifiedBytes = NULL;
+		UDATA jfrModifiedBytesLength = 0;
+		U_8 *upcallClassBytes = classData;
+		U_32 upcallClassBytesLength = classDataLength;
+
+		omrthread_monitor_exit(vm->classTableMutex);
+		vmFuncs->jvmUpcallsTransformJFREventClass(vmThread, upcallClassBytes, upcallClassBytesLength, &jfrModifiedBytes, &jfrModifiedBytesLength);
+		omrthread_monitor_enter(vm->classTableMutex);
+
+		if ((NULL == jfrModifiedBytes) || (0 == jfrModifiedBytesLength)) {
+			omrthread_monitor_exit(vm->classTableMutex);
+			vmFuncs->setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+			return NULL;
+		}
+		classData = jfrModifiedBytes;
+		classDataLength = jfrModifiedBytesLength;
+	} else if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_ENABLE_JFR_CLASSLOAD_TRANSFORM)) {
 		J9Class *superClass = preloadSuperClass(vmThread, classData, classDataLength, classLoader, options);
 		if (J9_ARE_ALL_BITS_SET(vmThread->privateFlags2, J9_PRIVATE_FLAGS2_SUPERCLASS_REQUIRED_FIRST) || (NULL != vmThread->currentException)) {
 			/* CTM is already released in this case. */

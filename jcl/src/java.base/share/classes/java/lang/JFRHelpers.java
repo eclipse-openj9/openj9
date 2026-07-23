@@ -40,13 +40,11 @@ final class JFRHelpers {
 	private static Class<?> logTagClass;
 	private static Class<?> logLeveLClass;
 	private static Class<?> loggerClass;
-	private static Class<?> jfrUpCallClass;
 	private static Object[] logTagValues;
 	private static Object[] logLevelValues;
 	private static Method log;
 	/*[IF JAVA_SPEC_VERSION >= 17]*/
 	private static Method logEvent;
-	private static Method bytesForEagerInstrumentation;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 	private static volatile boolean jfrClassesInitialized = false;
 	private static String jfrCMDLineOption = null;
@@ -249,7 +247,6 @@ final class JFRHelpers {
 				logTagClass = Class.forName("jdk.jfr.internal.LogTag");
 				logLeveLClass = Class.forName("jdk.jfr.internal.LogLevel");
 				loggerClass = Class.forName("jdk.jfr.internal.Logger");
-				jfrUpCallClass = Class.forName("jdk.jfr.internal.JVMUpcalls");
 
 				Module javabase = System.class.getModule();
 				Module jdkJFR = jfrjvmClass.getModule();
@@ -267,12 +264,9 @@ final class JFRHelpers {
 
 				/*[IF JAVA_SPEC_VERSION >= 17]*/
 				logEvent = loggerClass.getDeclaredMethod("logEvent", new Class[]{logLeveLClass, String[].class, boolean.class});
-				bytesForEagerInstrumentation = jfrUpCallClass.getDeclaredMethod("bytesForEagerInstrumentation", long.class, boolean.class, Class.class, byte[].class);
-				bytesForEagerInstrumentation.setAccessible(true);
 				/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 				Unsafe.getUnsafe().ensureClassInitialized(jfrjvmClass);
-				Unsafe.getUnsafe().ensureClassInitialized(jfrUpCallClass);
 				Unsafe.getUnsafe().ensureClassInitialized(Class.forName("jdk.jfr.events.AbstractJDKEvent"));
 				jfrClassesInitialized = true;
 			} catch (ReflectiveOperationException e) {
@@ -320,16 +314,6 @@ final class JFRHelpers {
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 	/*[IF JAVA_SPEC_VERSION == 17]*/
-	private static byte[] transformClassAndInvokebytesForEagerInstrumentation(long traceId, boolean forceInstrumentation, Class<?> superClass, byte[] oldBytes, boolean addMethods) throws ReflectiveOperationException {
-		try {
-			oldBytes = JFRClassTransformer.transformClass(oldBytes, addMethods);
-			return (byte[])bytesForEagerInstrumentation.invoke(null, traceId, forceInstrumentation, superClass, oldBytes);
-		} catch (Throwable t) {
-			t.printStackTrace();
-			throw t;
-		}
-	}
-
 	private static List<?> transformToList(Object[] array) {
 		if (array == null) {
 			return Collections.emptyList();
