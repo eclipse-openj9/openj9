@@ -2421,7 +2421,7 @@ jvmtiHookGCEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void* us
 	taggedObject = hashTableStartDo(j9env->objectTagTable, &hashState);
 	while (taggedObject != NULL) {
 		if (taggedObject->ref == NULL) {
-			taggedObject->ref = (j9object_t) deletedHead;
+			taggedObject->ref = (j9object_t)((UDATA)deletedHead | J9JVMTI_OBJECT_TAG_DEAD_ENTRY_BIT);
 			deletedHead = (J9JVMTIObjectTag *) taggedObject;
 		}
 		taggedObject = hashTableNextDo(&hashState);
@@ -2458,7 +2458,7 @@ jvmtiHookGCEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void* us
 				}
 #endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
 			}
-			deletedHead = (J9JVMTIObjectTag *) taggedObject->ref;
+			deletedHead = J9JVMTI_OBJECT_TAG_REF_NEXT(taggedObject->ref);
 			hashTableRemove(j9env->objectTagTable, taggedObject);
 		} while (deletedHead != NULL);
 	}

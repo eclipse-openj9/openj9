@@ -322,7 +322,11 @@ allocateEnvironment(J9InvocationJavaVM * invocationJavaVM, jint version, void **
 			if (j9env->threadDataPool == NULL) {
 				goto fail;
 			}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			j9env->objectTagTable = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 0, sizeof(J9JVMTIObjectTag), sizeof(jlong), 0, J9MEM_CATEGORY_JVMTI, hashObjectTag, hashEqualObjectTag, NULL, vm);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			j9env->objectTagTable = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 0, sizeof(J9JVMTIObjectTag), sizeof(jlong), 0, J9MEM_CATEGORY_JVMTI, hashObjectTag, hashEqualObjectTag, NULL, NULL);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			if (j9env->objectTagTable == NULL) {
 				goto fail;
 			}
@@ -929,18 +933,56 @@ getCurrentClass(J9Class * clazz)
 }
 
 
-
 static UDATA
 hashObjectTag(void *entry, void *userData)
 {
-	return ((UDATA) ((J9JVMTIObjectTag *) entry)->ref) / sizeof(UDATA);
+	j9object_t ref = ((J9JVMTIObjectTag *)entry)->ref;
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	/* Skip VT logic for dead entries (bit 0 of ref marks a dead entry). */
+	if ((NULL != ref) && J9JVMTI_OBJECT_TAG_REF_LIVE_ENTRY(ref)) {
+		J9JavaVM *vm = (J9JavaVM *)userData;
+		J9VMThread *currentThread = vm->internalVMFunctions->currentVMThread(vm);
+
+		if (NULL != currentThread) {
+			J9Class *clazz = J9OBJECT_CLAZZ(currentThread, ref);
+
+			if ((NULL != clazz) && J9_IS_J9CLASS_VALUETYPE(clazz)) {
+				return (UDATA)(U_32)convertObjectToHash(vm, currentThread, ref, clazz);
+			}
+		}
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
+	return ((UDATA)ref) / sizeof(UDATA);
 }
 
 
 static UDATA
 hashEqualObjectTag(void *lhsEntry, void *rhsEntry, void *userData)
 {
-	return (((J9JVMTIObjectTag *) lhsEntry)->ref == ((J9JVMTIObjectTag *) rhsEntry)->ref);
+	j9object_t lhsRef = ((J9JVMTIObjectTag *)lhsEntry)->ref;
+	j9object_t rhsRef = ((J9JVMTIObjectTag *)rhsEntry)->ref;
+
+	if (lhsRef == rhsRef) {
+		return 1;
+	}
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	/* Skip VT logic for dead entries (bit 0 of ref marks a dead entry). */
+	if ((NULL != lhsRef) && (NULL != rhsRef)
+			&& J9JVMTI_OBJECT_TAG_REF_LIVE_ENTRY(lhsRef)
+			&& J9JVMTI_OBJECT_TAG_REF_LIVE_ENTRY(rhsRef)) {
+		J9JavaVM *vm = (J9JavaVM *)userData;
+		J9VMThread *currentThread = vm->internalVMFunctions->currentVMThread(vm);
+
+		if (NULL != currentThread) {
+			return vm->internalVMFunctions->valueTypeCapableAcmp(currentThread, lhsRef, rhsRef);
+		}
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
+	return 0;
 }
 
 
