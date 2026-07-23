@@ -195,6 +195,8 @@ const char *messageNames[] = {
     "VM_mutableCallSiteEpoch",
     "VM_numInterfacesImplemented",
     "VM_getObjectClassInfoFromKnotIndex",
+    "VM_getLayoutByteOrder",
+    "VM_getLayoutByteAlignment",
     "CompInfo_isCompiled",
     "CompInfo_getPCIfCompiled",
     "CompInfo_getInvocationCount",

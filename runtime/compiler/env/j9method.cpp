@@ -4557,7 +4557,47 @@ void TR_ResolvedJ9Method::construct()
                     setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleSegmentAsX_method);
                 }
             } else if ((classNameLen == 31) && !strncmp(className, "java/lang/foreign/MemorySegment", 31)) {
-                if (nameLen >= 3 && (!strncmp(name, "get", 3) || !strncmp(name, "set", 3)))
+                // Use a fine-grained recognizer for primitive data-type MemorySegment get/set signature matches.
+                // Otherwise, fallback to using the umbrella recognizer for MemorySegment accessors.
+                TR::RecognizedMethod specific = TR::unknownMethod;
+                if (nameLen == 3 && !strncmp(name, "get", 3)) {
+                    if (sigLen == 42 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfByte;J)B", sigLen))
+                        specific = TR::java_lang_foreign_MemorySegment_get_OfByte;
+                    else if (sigLen == 43 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfShort;J)S", sigLen))
+                        specific = TR::java_lang_foreign_MemorySegment_get_OfShort;
+                    else if (sigLen == 42 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfChar;J)C", sigLen))
+                        specific = TR::java_lang_foreign_MemorySegment_get_OfChar;
+                    else if (sigLen == 41 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfInt;J)I", sigLen))
+                        specific = TR::java_lang_foreign_MemorySegment_get_OfInt;
+                    else if (sigLen == 42 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfLong;J)J", sigLen))
+                        specific = TR::java_lang_foreign_MemorySegment_get_OfLong;
+                    else if (sigLen == 43 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfFloat;J)F", sigLen))
+                        specific = TR::java_lang_foreign_MemorySegment_get_OfFloat;
+                    else if (sigLen == 44 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfDouble;J)D", sigLen))
+                        specific = TR::java_lang_foreign_MemorySegment_get_OfDouble;
+                    else if (sigLen == 45 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfBoolean;J)Z", sigLen))
+                        specific = TR::java_lang_foreign_MemorySegment_get_OfBoolean;
+                } else if (nameLen == 3 && !strncmp(name, "set", 3)) {
+                    if (sigLen == 43 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfByte;JB)V", sigLen))
+                        specific = TR::java_lang_foreign_MemorySegment_set_OfByte;
+                    else if (sigLen == 44 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfShort;JS)V", sigLen))
+                        specific = TR::java_lang_foreign_MemorySegment_set_OfShort;
+                    else if (sigLen == 43 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfChar;JC)V", sigLen))
+                        specific = TR::java_lang_foreign_MemorySegment_set_OfChar;
+                    else if (sigLen == 42 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfInt;JI)V", sigLen))
+                        specific = TR::java_lang_foreign_MemorySegment_set_OfInt;
+                    else if (sigLen == 43 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfLong;JJ)V", sigLen))
+                        specific = TR::java_lang_foreign_MemorySegment_set_OfLong;
+                    else if (sigLen == 44 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfFloat;JF)V", sigLen))
+                        specific = TR::java_lang_foreign_MemorySegment_set_OfFloat;
+                    else if (sigLen == 45 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfDouble;JD)V", sigLen))
+                        specific = TR::java_lang_foreign_MemorySegment_set_OfDouble;
+                    else if (sigLen == 46 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfBoolean;JZ)V", sigLen))
+                        specific = TR::java_lang_foreign_MemorySegment_set_OfBoolean;
+                }
+                if (specific != TR::unknownMethod)
+                    setRecognizedMethodInfo(specific);
+                else if (nameLen >= 3 && (!strncmp(name, "get", 3) || !strncmp(name, "set", 3)))
                     setRecognizedMethodInfo(TR::java_lang_foreign_MemorySegment_method);
             } else if (((classNameLen == 44) && !strncmp(className, "jdk/internal/foreign/NativeMemorySegmentImpl", 44))
                 || ((classNameLen >= 42) && !strncmp(className, "jdk/internal/foreign/HeapMemorySegmentImpl", 42))) {

@@ -118,6 +118,554 @@ static void substituteNode(TR::NodeChecklist &visited, TR::Node *subOld, TR::Nod
     }
 }
 
+#if JAVA_SPEC_VERSION >= 21
+/*
+ * Match a call-site MethodSymbol to its corresponding RecognizedMethod.
+ * This must mirror the recognizers implemented in TR_ResolvedJ9Method::construct.
+ *
+ * This is necessary because the recognizers in TR_ResolvedJ9Method::construct would
+ * not actually set the recognized method info for the MethodSymbol of unresolved
+ * invokeinterface calls that MemorySegment accessors often end up as.
+ */
+static TR::RecognizedMethod recognizeMemorySegmentGetSet(TR::MethodSymbol *methodSymbol)
+{
+    if (methodSymbol == NULL)
+        return TR::unknownMethod;
+    TR::Method *method = methodSymbol->getMethod();
+    if (method == NULL)
+        return TR::unknownMethod;
+
+    const char *cls = method->classNameChars();
+    uint16_t clsLen = method->classNameLength();
+    if (cls == NULL || clsLen != 31 || strncmp(cls, "java/lang/foreign/MemorySegment", 31) != 0)
+        return TR::unknownMethod;
+
+    const char *name = method->nameChars();
+    uint16_t nameLen = method->nameLength();
+    if (name == NULL || nameLen != 3)
+        return TR::unknownMethod;
+
+    const char *sig = method->signatureChars();
+    uint16_t sigLen = method->signatureLength();
+    if (sig == NULL)
+        return TR::unknownMethod;
+
+    if (!strncmp(name, "get", 3)) {
+        if (sigLen == 42 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfByte;J)B", 42))
+            return TR::java_lang_foreign_MemorySegment_get_OfByte;
+        if (sigLen == 42 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfChar;J)C", 42))
+            return TR::java_lang_foreign_MemorySegment_get_OfChar;
+        if (sigLen == 43 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfShort;J)S", 43))
+            return TR::java_lang_foreign_MemorySegment_get_OfShort;
+        if (sigLen == 41 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfInt;J)I", 41))
+            return TR::java_lang_foreign_MemorySegment_get_OfInt;
+        if (sigLen == 42 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfLong;J)J", 42))
+            return TR::java_lang_foreign_MemorySegment_get_OfLong;
+        if (sigLen == 43 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfFloat;J)F", 43))
+            return TR::java_lang_foreign_MemorySegment_get_OfFloat;
+        if (sigLen == 44 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfDouble;J)D", 44))
+            return TR::java_lang_foreign_MemorySegment_get_OfDouble;
+    } else if (!strncmp(name, "set", 3)) {
+        if (sigLen == 43 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfByte;JB)V", 43))
+            return TR::java_lang_foreign_MemorySegment_set_OfByte;
+        if (sigLen == 43 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfChar;JC)V", 43))
+            return TR::java_lang_foreign_MemorySegment_set_OfChar;
+        if (sigLen == 44 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfShort;JS)V", 44))
+            return TR::java_lang_foreign_MemorySegment_set_OfShort;
+        if (sigLen == 42 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfInt;JI)V", 42))
+            return TR::java_lang_foreign_MemorySegment_set_OfInt;
+        if (sigLen == 43 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfLong;JJ)V", 43))
+            return TR::java_lang_foreign_MemorySegment_set_OfLong;
+        if (sigLen == 44 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfFloat;JF)V", 44))
+            return TR::java_lang_foreign_MemorySegment_set_OfFloat;
+        if (sigLen == 45 && !strncmp(sig, "(Ljava/lang/foreign/ValueLayout$OfDouble;JD)V", 45))
+            return TR::java_lang_foreign_MemorySegment_set_OfDouble;
+    }
+    return TR::unknownMethod;
+}
+
+/*
+ * Decode the access implied by a fine-grained MemorySegment recognizer.
+ * Returns false for methods the transformer does not support (eg. boolean types).
+ */
+static bool decodeMemorySegmentAccess(TR::RecognizedMethod rm, bool &isStore, TR::DataType &dataType, bool &isChar)
+{
+    isStore = false;
+    isChar = false;
+    switch (rm) {
+        case TR::java_lang_foreign_MemorySegment_set_OfByte:
+            isStore = true;
+        case TR::java_lang_foreign_MemorySegment_get_OfByte:
+            dataType = TR::Int8;
+            return true;
+        case TR::java_lang_foreign_MemorySegment_set_OfChar:
+            isStore = true;
+        case TR::java_lang_foreign_MemorySegment_get_OfChar:
+            dataType = TR::Int16;
+            isChar = true;
+            return true;
+        case TR::java_lang_foreign_MemorySegment_set_OfShort:
+            isStore = true;
+        case TR::java_lang_foreign_MemorySegment_get_OfShort:
+            dataType = TR::Int16;
+            return true;
+        case TR::java_lang_foreign_MemorySegment_set_OfInt:
+            isStore = true;
+        case TR::java_lang_foreign_MemorySegment_get_OfInt:
+            dataType = TR::Int32;
+            return true;
+        case TR::java_lang_foreign_MemorySegment_set_OfLong:
+            isStore = true;
+        case TR::java_lang_foreign_MemorySegment_get_OfLong:
+            dataType = TR::Int64;
+            return true;
+        case TR::java_lang_foreign_MemorySegment_set_OfFloat:
+            isStore = true;
+        case TR::java_lang_foreign_MemorySegment_get_OfFloat:
+            dataType = TR::Float;
+            return true;
+        case TR::java_lang_foreign_MemorySegment_set_OfDouble:
+            isStore = true;
+        case TR::java_lang_foreign_MemorySegment_get_OfDouble:
+            dataType = TR::Double;
+            return true;
+        default:
+            return false;
+    }
+    return false;
+}
+
+/*
+ * Direct-lowering of MemorySegment.get(OfX, J)X / set(OfX, J, X)V primitive
+ * accessors on JDK 21+.
+ *
+ * These accessors otherwise dispatch through a deep VarHandle / MethodHandle /
+ * LambdaForm / VarHandleSegmentAsX / ScopedMemoryAccess chain. Even fully
+ * inlined, that chain leaves per-access guards that cost a compare + branch and
+ * cannot be hoisted out of loops. When the layout argument is a known object,
+ * bypass the chain with:
+ *
+ *   NULLCHK segment;
+ *   if ( segment.vft not in {Native, Mapped}                  // wrong class
+ *        || offset < 0 || offset > length - accessSize        // out of bounds
+ *        || (min + offset) & (byteAlignment - 1)  [aligned]   // misaligned
+ *        || segment.scope.state < 0   [volatile load]         // closed
+ *        || (owner != null && owner != currentThread)         // wrong thread
+ *        || segment.readOnly          [stores only] )         // read-only
+ *       MemorySegment.get/set(segment, layout, offset[, value]);  // slow path
+ *   else
+ *       direct load/store at segment.min + offset, byte-swapped when the
+ *       layout's order differs from the host's (both known at compile time);
+ *
+ * The conditions are OR'd into one ificmpne so loop opts hoist the invariant
+ * parts (class, length, owner) while the volatile state load is re-evaluated on
+ * every access. The slow path is the unmodified original call, preserving the
+ * exact behaviour in the interpreted path, including exceptions. Only the
+ * NativeMemorySegmentImpl hierarchy (NativeMemorySegmentImpl and its final
+ * subclass MappedMemorySegmentImpl) is targeted; heap segments fail the vft
+ * guard. AOT/relocatable compiles are skipped, as the guard's class-pointer
+ * constants would need shared class cache support.
+ *
+ * Memory safety (why no Reference.reachabilityFence is needed): the state load
+ * is a volatile load and there is no yield point between it and the access, and
+ * native segment memory is freed only after ScopedMemoryAccess.closeScope0 has
+ * taken exclusive VM access. A racing close therefore either lets an in-flight
+ * access finish before the thread parks at a yield point, or is observed as
+ * state < 0 on the next access and diverted to the slow path. This also covers
+ * Cleaner-managed implicit arenas.
+ */
+void J9::RecognizedCallTransformer::process_java_lang_foreign_MemorySegment_getset(TR::TreeTop *treetop, TR::Node *node,
+    TR::RecognizedMethod rm)
+{
+    TR_J9VMBase *fej9 = static_cast<TR_J9VMBase *>(comp()->fe());
+    OMR::Logger *log = comp()->log();
+    bool enableTrace = trace();
+
+    if (comp()->compileRelocatableCode()) {
+        logprintf(enableTrace, log, "MemorySegment.get/set: skipping for AOT compilation\n");
+        return;
+    }
+
+    bool isStore = false;
+    bool isChar = false;
+    TR::DataType dataType = TR::NoType;
+    if (!decodeMemorySegmentAccess(rm, isStore, dataType, isChar)) {
+        logprintf(enableTrace, log, "MemorySegment.get/set: unsupported recognized method on call %p, skipping\n",
+            node);
+        return;
+    }
+
+    // The interface call has the shape (X: data type)
+    //   Xcalli MemorySegment.get(OfX, J)X        / calli MemorySegment.set(OfX, J, X)V
+    //     <vft load>           // child 0  (indirect only)
+    //     segment              // child 1
+    //     layout               // child 2
+    //     offset               // child 3
+    //     [value]              // child 4  (set only)
+    int receiverIdx = node->getOpCode().isIndirect() ? 1 : 0;
+    int layoutIdx = receiverIdx + 1;
+    int offsetIdx = receiverIdx + 2;
+    int valueIdx = offsetIdx + 1;
+    int requiredChildren = isStore ? valueIdx : offsetIdx;
+    if (node->getNumChildren() <= requiredChildren) {
+        logprintf(enableTrace, log, "MemorySegment.get/set: unexpected child count %d on call %p, skipping\n",
+            node->getNumChildren(), node);
+        return;
+    }
+
+    TR::Node *layoutNode = node->getChild(layoutIdx);
+
+    TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
+    if (knot == NULL) {
+        logprintf(enableTrace, log, "MemorySegment.get/set: no KnownObjectTable, skipping\n");
+        return;
+    }
+    TR::KnownObjectTable::Index layoutKOI = layoutNode->getKnownObjectIndex();
+    // Static final field folding of layout object may have set the
+    // knot index to the symref of the aload rather than the layout node itself.
+    if (layoutKOI == TR::KnownObjectTable::UNKNOWN && layoutNode->getOpCode().hasSymbolReference())
+        layoutKOI = layoutNode->getSymbolReference()->getKnownObjectIndex();
+    if (layoutKOI == TR::KnownObjectTable::UNKNOWN || knot->isNull(layoutKOI)) {
+        logprintf(enableTrace, log, "MemorySegment.get/set: layout is not a known object, skipping\n");
+        return;
+    }
+
+    // Determine the layout's byte order relative to the host. Single-byte accesses do not matter.
+    bool reversed = false;
+    if (dataType != TR::Int8) {
+        TR_J9VMBase::LayoutByteOrder lbo = fej9->getLayoutByteOrder(comp(), layoutKOI);
+        if (lbo == TR_J9VMBase::LayoutByteOrder::UNKNOWN) {
+            logprintf(enableTrace, log, "MemorySegment.get/set: cannot determine layout byte order, skipping\n");
+            return;
+        }
+        reversed = (lbo == TR_J9VMBase::LayoutByteOrder::REVERSED);
+    }
+
+    // The layout's alignment constraint decides whether the guard needs an alignment check. Alignment-checked layouts
+    // like JAVA_INT must throw IllegalArgumentException on a misaligned offset through the slow path.
+    int64_t byteAlignment = fej9->getLayoutByteAlignment(comp(), layoutKOI);
+    if (byteAlignment <= 0) {
+        logprintf(enableTrace, log, "MemorySegment.get/set: cannot determine layout byte alignment, skipping\n");
+        return;
+    }
+
+    // The fast path is only valid for native segments. Check for both concrete classes in the
+    // NativeMemorySegmentImpl hierarchy. If neither is loaded yet we can not construct the vft guard.
+    static const char * const kNativeImplName = "jdk/internal/foreign/NativeMemorySegmentImpl";
+    static const char * const kMappedImplName = "jdk/internal/foreign/MappedMemorySegmentImpl";
+    TR_OpaqueClassBlock *nativeClass
+        = fej9->getSystemClassFromClassName(kNativeImplName, (int32_t)strlen(kNativeImplName));
+    TR_OpaqueClassBlock *mappedClass
+        = fej9->getSystemClassFromClassName(kMappedImplName, (int32_t)strlen(kMappedImplName));
+    if (nativeClass == NULL && mappedClass == NULL) {
+        logprintf(enableTrace, log,
+            "MemorySegment.get/set: neither native nor mapped segment class loaded yet, skipping\n");
+        return;
+    }
+
+    // Also check if AbstractMemorySegmentImpl and MemorySessionImpl are loaded
+    TR_OpaqueClassBlock *abstractSegClass
+        = fej9->getSystemClassFromClassName("jdk/internal/foreign/AbstractMemorySegmentImpl",
+            (int32_t)strlen("jdk/internal/foreign/AbstractMemorySegmentImpl"));
+    TR_OpaqueClassBlock *sessionImplClass = fej9->getSystemClassFromClassName("jdk/internal/foreign/MemorySessionImpl",
+        (int32_t)strlen("jdk/internal/foreign/MemorySessionImpl"));
+    if (abstractSegClass == NULL || sessionImplClass == NULL) {
+        logprintf(enableTrace, log,
+            "MemorySegment.get/set: AbstractMemorySegmentImpl or MemorySessionImpl class not loaded, skipping\n");
+        return;
+    }
+    TR_OpaqueClassBlock *minLookupClass = (nativeClass != NULL) ? nativeClass : mappedClass;
+    uint32_t lengthFieldOffset = fej9->getInstanceFieldOffset(abstractSegClass, "length", 6, "J", 1);
+    uint32_t readOnlyFieldOffset = fej9->getInstanceFieldOffset(abstractSegClass, "readOnly", 8, "Z", 1);
+    uint32_t scopeFieldOffset
+        = fej9->getInstanceFieldOffset(abstractSegClass, "scope", 5, "Ljdk/internal/foreign/MemorySessionImpl;", 40);
+    uint32_t minFieldOffset = fej9->getInstanceFieldOffset(minLookupClass, "min", 3, "J", 1);
+    uint32_t stateFieldOffset = fej9->getInstanceFieldOffset(sessionImplClass, "state", 5, "I", 1);
+    uint32_t ownerFieldOffset = fej9->getInstanceFieldOffset(sessionImplClass, "owner", 5, "Ljava/lang/Thread;", 18);
+    if (lengthFieldOffset == (uint32_t)~0 || scopeFieldOffset == (uint32_t)~0 || minFieldOffset == (uint32_t)~0
+        || stateFieldOffset == (uint32_t)~0 || ownerFieldOffset == (uint32_t)~0
+        || (isStore && readOnlyFieldOffset == (uint32_t)~0)) {
+        logprintf(enableTrace, log,
+            "MemorySegment.get/set: a required field not found: length/scope/min/state/owner/readOnly, skipping\n");
+        return;
+    }
+    int32_t headerSize = (int32_t)fej9->getObjectHeaderSizeInBytes();
+    int32_t lengthOff = (int32_t)lengthFieldOffset + headerSize;
+    int32_t readOnlyOff = (int32_t)readOnlyFieldOffset + headerSize;
+    int32_t scopeOff = (int32_t)scopeFieldOffset + headerSize;
+    int32_t minOff = (int32_t)minFieldOffset + headerSize;
+    int32_t stateOff = (int32_t)stateFieldOffset + headerSize;
+    int32_t ownerOff = (int32_t)ownerFieldOffset + headerSize;
+
+    // accessSize is implied by the recognized signature (byte=1, char,short=2, int,float=4, J,double=8).
+    int32_t accessSize = (int32_t)TR::DataType::getSize(dataType);
+
+    logprintf(enableTrace, log,
+        "MemorySegment.get/set: transforming call %p (rm=%d isStore=%d dataType=%s accessSize=%d align=%lld "
+        "reversed=%d)\n",
+        node, (int)rm, (int)isStore, TR::DataType::getName(dataType), accessSize, (long long)byteAlignment,
+        (int)reversed);
+
+    TR::SymbolReferenceTable *srTab = comp()->getSymRefTab();
+
+    // Begin setting things up for transformation. Create temps so the fast and slow trees can each load them
+    // independently.
+    TR::TransformUtil::createTempsForCall(this, treetop);
+
+    TR::Node *segmentNode = node->getChild(receiverIdx);
+    TR::Node *offsetNode = node->getChild(offsetIdx);
+    TR::Node *valueNode = isStore ? node->getChild(valueIdx) : NULL;
+
+    // ---  Compare tree: OR'd compound guard ---
+    TR::SymbolReference *vftSR = srTab->findOrCreateVftSymbolRef();
+    TR::Node *segVft = TR::Node::createWithSymRef(node, TR::aloadi, 1, segmentNode->duplicateTree(), vftSR);
+
+    // Wrong class check: If vft doesn't match Native AND vft doesn't match Mapped, fail. acmpne returns int 0/1.
+    // When only one class is loaded, the other compare is omitted entirely.
+    TR::Node *acmpneNative = NULL;
+    if (nativeClass != NULL) {
+        TR::Node *expectedNative = TR::Node::aconst(node, (uintptr_t)nativeClass);
+        expectedNative->setIsClassPointerConstant(true);
+        acmpneNative = TR::Node::create(node, TR::acmpne, 2, segVft->duplicateTree(), expectedNative);
+    }
+    TR::Node *acmpneMapped = NULL;
+    if (mappedClass != NULL) {
+        TR::Node *expectedMapped = TR::Node::aconst(node, (uintptr_t)mappedClass);
+        expectedMapped->setIsClassPointerConstant(true);
+        acmpneMapped = TR::Node::create(node, TR::acmpne, 2, segVft->duplicateTree(), expectedMapped);
+    }
+    TR::Node *fail;
+    if (acmpneNative != NULL && acmpneMapped != NULL)
+        fail = TR::Node::create(node, TR::iand, 2, acmpneNative, acmpneMapped);
+    else
+        fail = (acmpneNative != NULL) ? acmpneNative : acmpneMapped;
+
+    // Bounds check: offset < 0 OR offset > length - accessSize, fail.
+    TR::SymbolReference *lengthSR = srTab->findOrFabricateShadowSymbol(abstractSegClass, TR::Int64, (uint32_t)lengthOff,
+        /*isVolatile*/ false, /*isPrivate*/ false, /*isFinal*/ true, "length", "J");
+    TR::Node *lengthLoad = TR::Node::createWithSymRef(node, TR::lloadi, 1, segmentNode->duplicateTree(), lengthSR);
+    TR::Node *bound = TR::Node::create(node, TR::lsub, 2, lengthLoad, TR::Node::lconst(node, (int64_t)accessSize));
+    TR::Node *oobLow = TR::Node::create(node, TR::lcmplt, 2, offsetNode->duplicateTree(), TR::Node::lconst(node, 0));
+    TR::Node *oobHigh = TR::Node::create(node, TR::lcmpgt, 2, offsetNode->duplicateTree(), bound);
+    fail = TR::Node::create(node, TR::ior, 2, fail, oobLow);
+    fail = TR::Node::create(node, TR::ior, 2, fail, oobHigh);
+
+    // Load segment.min once for the alignment test and the access address.
+    TR::SymbolReference *minSR = srTab->findOrFabricateShadowSymbol(minLookupClass, TR::Int64, (uint32_t)minOff,
+        /*isVolatile*/ false, /*isPrivate*/ false, /*isFinal*/ true, "min", "J");
+
+    // Alignment check, only for alignment-constrained layouts: the access address must be a multiple of byteAlignment,
+    // otherwise the slow path throws IllegalArgumentException. Unaligned layouts (byteAlignment == 1) skip the test
+    // entirely.
+    if (byteAlignment > 1) {
+        TR::Node *alignMinLoad = TR::Node::createWithSymRef(node, TR::lloadi, 1, segmentNode->duplicateTree(), minSR);
+        TR::Node *alignAddr = TR::Node::create(node, TR::ladd, 2, alignMinLoad, offsetNode->duplicateTree());
+        TR::Node *alignBits = TR::Node::create(node, TR::land, 2, alignAddr, TR::Node::lconst(node, byteAlignment - 1));
+        TR::Node *misaligned = TR::Node::create(node, TR::lcmpne, 2, alignBits, TR::Node::lconst(node, 0));
+        fail = TR::Node::create(node, TR::ior, 2, fail, misaligned);
+    }
+
+    // Scope checks: the state load is to be set up as volatile so it is re-evaluated on every
+    // access (refer to the memory safety note in the block comment above).
+    //
+    // MemorySessionImpl.state is declared non-volatile and is also read directly by
+    // methods such as checkValidStateRaw(), so a fabricated volatile shadow would clash
+    // with the non-volatile shadow those reads create for the same field if such methods
+    // get inlined. Therefore, load it through an unsafe symref with volatile ordering instead.
+    TR::SymbolReference *scopeSR = srTab->findOrFabricateShadowSymbol(abstractSegClass, TR::Address, (uint32_t)scopeOff,
+        /*isVolatile*/ false, /*isPrivate*/ false, /*isFinal*/ true, "scope",
+        "Ljdk/internal/foreign/MemorySessionImpl;");
+    TR::SymbolReference *stateSR = srTab->findOrCreateUnsafeSymbolRef(TR::Int32, /*javaObjectReference*/ true,
+        /*javaStaticReference*/ false, TR::Symbol::MemoryOrdering::Volatile);
+    TR::Node *scopeLoadForState
+        = TR::Node::createWithSymRef(node, TR::aloadi, 1, segmentNode->duplicateTree(), scopeSR);
+    TR::Node *stateAddr = comp()->target().is64Bit()
+        ? TR::Node::create(node, TR::aladd, 2, scopeLoadForState, TR::Node::lconst(node, stateOff))
+        : TR::Node::create(node, TR::aiadd, 2, scopeLoadForState, TR::Node::iconst(node, stateOff));
+    stateAddr->setIsInternalPointer(true);
+    TR::Node *stateLoad = TR::Node::createWithSymRef(node, TR::iloadi, 1, stateAddr, stateSR);
+    TR::Node *scopeClosed = TR::Node::create(node, TR::icmplt, 2, stateLoad, TR::Node::iconst(node, 0));
+    fail = TR::Node::create(node, TR::ior, 2, fail, scopeClosed);
+
+    // Confinement check: if scope.owner != null (confined session) and owner != currentThread, fail. The slow path
+    // throws WrongThreadException. Shared, global, and implicit sessions have owner == null and stay on the fast path.
+    TR::SymbolReference *ownerSR = srTab->findOrFabricateShadowSymbol(sessionImplClass, TR::Address, (uint32_t)ownerOff,
+        /*isVolatile*/ false, /*isPrivate*/ false, /*isFinal*/ true, "owner", "Ljava/lang/Thread;");
+    TR::Node *scopeLoadForOwner
+        = TR::Node::createWithSymRef(node, TR::aloadi, 1, segmentNode->duplicateTree(), scopeSR);
+    TR::Node *ownerLoad = TR::Node::createWithSymRef(node, TR::aloadi, 1, scopeLoadForOwner, ownerSR);
+    cg()->setInlinedGetCurrentThreadMethod();
+    TR::Node *currentThread
+        = TR::Node::createWithSymRef(node, TR::aload, 0, srTab->findOrCreateCurrentThreadSymbolRef());
+    TR::Node *ownerNonNull = TR::Node::create(node, TR::acmpne, 2, ownerLoad, TR::Node::aconst(node, 0));
+    TR::Node *ownerNotCurrent = TR::Node::create(node, TR::acmpne, 2, ownerLoad->duplicateTree(), currentThread);
+    TR::Node *wrongThread = TR::Node::create(node, TR::iand, 2, ownerNonNull, ownerNotCurrent);
+    fail = TR::Node::create(node, TR::ior, 2, fail, wrongThread);
+
+    // Stores must divert read-only segments to the slow path, which throws UnsupportedOperationException.
+    // readOnly is a final boolean, so its zero-extended value can be used directly.
+    //
+    // Load it through an unsafe symref rather than a fabricated field shadow. A fabricated
+    // shadow gets cpIndex -1. AbstractMemorySegmentImpl.readOnly is an Int8 field, so if a segment
+    // constructor is inlined into the same compilation after the transformer has already run,
+    // it would reuse the fabricated shadow with cpIndex -1, resulting in crashes attempting to read from
+    // cpIndex -1 slot.
+    if (isStore) {
+        TR::SymbolReference *readOnlySR = srTab->findOrCreateUnsafeSymbolRef(TR::Int8, /*javaObjectReference*/ true);
+        TR::Node *readOnlyAddr = comp()->target().is64Bit()
+            ? TR::Node::create(node, TR::aladd, 2, segmentNode->duplicateTree(), TR::Node::lconst(node, readOnlyOff))
+            : TR::Node::create(node, TR::aiadd, 2, segmentNode->duplicateTree(), TR::Node::iconst(node, readOnlyOff));
+        readOnlyAddr->setIsInternalPointer(true);
+        TR::Node *readOnlyLoad = TR::Node::createWithSymRef(node, TR::bloadi, 1, readOnlyAddr, readOnlySR);
+        TR::Node *readOnlyBit = TR::Node::create(node, TR::bu2i, 1, readOnlyLoad);
+        fail = TR::Node::create(node, TR::ior, 2, fail, readOnlyBit);
+    }
+
+    TR::Node *cmp = TR::Node::createif(TR::ificmpne, fail, TR::Node::iconst(node, 0),
+        /*target to be set by createDiamondForCall*/ NULL);
+    TR::TreeTop *cmpTT = TR::TreeTop::create(comp(), cmp);
+
+    // --- Fast tree: direct access at min + offset ---
+    TR::Node *minLoad = TR::Node::createWithSymRef(node, TR::lloadi, 1, segmentNode->duplicateTree(), minSR);
+    TR::Node *addr = TR::Node::create(node, TR::ladd, 2, minLoad, offsetNode->duplicateTree());
+    if (!comp()->target().is64Bit())
+        addr = TR::Node::create(node, TR::l2i, 1, addr);
+
+    // The unsafe symref has the proper aliasing/no-GC semantics for raw native memory. When a reversed-order
+    // float/double access goes through integer byte-swaps, the access itself is integer-typed.
+    TR::DataType accessType = dataType;
+    if (reversed && dataType == TR::Float)
+        accessType = TR::Int32;
+    else if (reversed && dataType == TR::Double)
+        accessType = TR::Int64;
+    TR::SymbolReference *unsafeSR = srTab->findOrCreateUnsafeSymbolRef(accessType);
+    // opCodeForIndirectLoad cannot be used here as it returns iloadi for Int8 and Int16
+    TR::TreeTop *fastTT = NULL;
+    if (!isStore) {
+        TR::ILOpCodes loadOp = TR::BadILOp;
+        switch (accessType) {
+            case TR::Int8:
+                loadOp = TR::bloadi;
+                break;
+            case TR::Int16:
+                loadOp = TR::sloadi;
+                break;
+            case TR::Int32:
+                loadOp = TR::iloadi;
+                break;
+            case TR::Int64:
+                loadOp = TR::lloadi;
+                break;
+            case TR::Float:
+                loadOp = TR::floadi;
+                break;
+            case TR::Double:
+                loadOp = TR::dloadi;
+                break;
+            default:
+                TR_ASSERT_FATAL(false, "unexpected MemorySegment access type");
+        }
+        TR::Node *value = TR::Node::createWithSymRef(node, loadOp, 1, addr, unsafeSR);
+        if (reversed) {
+            switch (accessType) {
+                case TR::Int16:
+                    value = TR::Node::create(node, TR::sbyteswap, 1, value);
+                    break;
+                case TR::Int32:
+                    value = TR::Node::create(node, TR::ibyteswap, 1, value);
+                    break;
+                case TR::Int64:
+                    value = TR::Node::create(node, TR::lbyteswap, 1, value);
+                    break;
+                default:
+                    break;
+            }
+        }
+        // Match the original call's data type on the VM stack: data types narrower than int must be widened to int
+        // (char unsigned, byte/short signed). Reversed float/double accesses should be converted from their swapped
+        // integer bits.
+        if (dataType == TR::Int8)
+            value = TR::Node::create(node, TR::b2i, 1, value);
+        else if (dataType == TR::Int16)
+            value = TR::Node::create(node, isChar ? TR::su2i : TR::s2i, 1, value);
+        else if (reversed && dataType == TR::Float)
+            value = TR::Node::create(node, TR::ibits2f, 1, value);
+        else if (reversed && dataType == TR::Double)
+            value = TR::Node::create(node, TR::lbits2d, 1, value);
+
+        fastTT = TR::TreeTop::create(comp(), TR::Node::create(node, TR::treetop, 1, value));
+    } else {
+        // Convert the incoming stack value to the stored representation,
+        // byte-swapping for reversed-order layouts.
+        TR::Node *value = valueNode->duplicateTree();
+        TR::ILOpCodes storeOp = TR::BadILOp;
+        switch (dataType) {
+            case TR::Int8:
+                value = TR::Node::create(node, TR::i2b, 1, value);
+                storeOp = TR::bstorei;
+                break;
+            case TR::Int16:
+                value = TR::Node::create(node, TR::i2s, 1, value);
+                if (reversed)
+                    value = TR::Node::create(node, TR::sbyteswap, 1, value);
+                storeOp = TR::sstorei;
+                break;
+            case TR::Int32:
+                if (reversed)
+                    value = TR::Node::create(node, TR::ibyteswap, 1, value);
+                storeOp = TR::istorei;
+                break;
+            case TR::Int64:
+                if (reversed)
+                    value = TR::Node::create(node, TR::lbyteswap, 1, value);
+                storeOp = TR::lstorei;
+                break;
+            case TR::Float:
+                if (reversed) {
+                    value = TR::Node::create(node, TR::fbits2i, 1, value);
+                    value = TR::Node::create(node, TR::ibyteswap, 1, value);
+                    storeOp = TR::istorei;
+                } else {
+                    storeOp = TR::fstorei;
+                }
+                break;
+            case TR::Double:
+                if (reversed) {
+                    value = TR::Node::create(node, TR::dbits2l, 1, value);
+                    value = TR::Node::create(node, TR::lbyteswap, 1, value);
+                    storeOp = TR::lstorei;
+                } else {
+                    storeOp = TR::dstorei;
+                }
+                break;
+            default:
+                TR_ASSERT_FATAL(false, "unexpected MemorySegment data type");
+        }
+        TR::Node *store = TR::Node::createWithSymRef(storeOp, 2, 2, addr, value, unsafeSR);
+        fastTT = TR::TreeTop::create(comp(), store);
+    }
+
+    // The slow tree is the entire original treetop duplicated.
+    TR::TreeTop *slowTT = TR::TreeTop::create(comp(), treetop->getNode()->duplicateTree());
+
+    // NULLCHK on the segment before the diamond: it must precede the vft load
+    // in the guard, and the segment has to be non-null on the slow path too.
+    TR::SymbolReference *nullChkSR = srTab->findOrCreateNullCheckSymbolRef(comp()->getMethodSymbol());
+    TR::Node *passThrough = TR::Node::create(node, TR::PassThrough, 1, segmentNode->duplicateTree());
+    TR::Node *nullChk = TR::Node::createWithSymRef(node, TR::NULLCHK, 1, passThrough, nullChkSR);
+    treetop->insertBefore(TR::TreeTop::create(comp(), nullChk));
+
+    // --- Finally, create the call diamond ---
+    TR::TransformUtil::createDiamondForCall(this, treetop, cmpTT, /*if branch: fail != 0*/ slowTT,
+        /*else branch: fast path*/ fastTT, /*changeBlockExtensions*/ false, /*markCold*/ false);
+
+    TR::DebugCounter::prependDebugCounter(comp(),
+        TR::DebugCounter::debugCounterName(comp(), "MemorySegment.%s/%s/(%s)/%s", isStore ? "set" : "get",
+            TR::DataType::getName(dataType), comp()->signature(), comp()->getHotnessName()),
+        cmpTT);
+}
+#endif /* JAVA_SPEC_VERSION >= 21 */
+
 void J9::RecognizedCallTransformer::process_java_lang_Class_cast(TR::TreeTop *treetop, TR::Node *node)
 {
     // See the comment in isInlineable().
@@ -1979,8 +2527,36 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop *treetop)
                 return (cg()->getSupportsArrayTranslateTROTNoBreak() && !comp()->target().cpu.isPower());
             case TR::jdk_internal_util_ArraysSupport_vectorizedMismatch:
                 return cg()->getSupportsInlineVectorizedMismatch();
-            default:
+#if JAVA_SPEC_VERSION >= 21
+            case TR::java_lang_foreign_MemorySegment_get_OfByte:
+            case TR::java_lang_foreign_MemorySegment_get_OfChar:
+            case TR::java_lang_foreign_MemorySegment_get_OfShort:
+            case TR::java_lang_foreign_MemorySegment_get_OfInt:
+            case TR::java_lang_foreign_MemorySegment_get_OfLong:
+            case TR::java_lang_foreign_MemorySegment_get_OfFloat:
+            case TR::java_lang_foreign_MemorySegment_get_OfDouble:
+            case TR::java_lang_foreign_MemorySegment_set_OfByte:
+            case TR::java_lang_foreign_MemorySegment_set_OfChar:
+            case TR::java_lang_foreign_MemorySegment_set_OfShort:
+            case TR::java_lang_foreign_MemorySegment_set_OfInt:
+            case TR::java_lang_foreign_MemorySegment_set_OfLong:
+            case TR::java_lang_foreign_MemorySegment_set_OfFloat:
+            case TR::java_lang_foreign_MemorySegment_set_OfDouble: {
+                static const bool disableFFMDirect = feGetEnv("TR_disableFFMDirectLowering") != NULL;
+                return !disableFFMDirect && !comp()->compileRelocatableCode();
+            }
+#endif
+            default: {
+#if JAVA_SPEC_VERSION >= 21
+                // Fallback dispatch for FFM primitive accessors for unresolved
+                // invokeinterface call sites corresponding to MemorySegment.get/set
+                if (recognizeMemorySegmentGetSet(node->getSymbol()->castToMethodSymbol()) != TR::unknownMethod) {
+                    static const bool disableFFMDirect = feGetEnv("TR_disableFFMDirectLowering") != NULL;
+                    return !disableFFMDirect && !comp()->compileRelocatableCode();
+                }
+#endif
                 return false;
+            }
         }
     }
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
@@ -2141,8 +2717,34 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop *treetop)
             case TR::jdk_internal_util_ArraysSupport_vectorizedMismatch:
                 process_jdk_internal_util_ArraysSupport_vectorizedMismatch(treetop, node);
                 break;
-            default:
+#if JAVA_SPEC_VERSION >= 21
+            case TR::java_lang_foreign_MemorySegment_get_OfByte:
+            case TR::java_lang_foreign_MemorySegment_get_OfChar:
+            case TR::java_lang_foreign_MemorySegment_get_OfShort:
+            case TR::java_lang_foreign_MemorySegment_get_OfInt:
+            case TR::java_lang_foreign_MemorySegment_get_OfLong:
+            case TR::java_lang_foreign_MemorySegment_get_OfFloat:
+            case TR::java_lang_foreign_MemorySegment_get_OfDouble:
+            case TR::java_lang_foreign_MemorySegment_set_OfByte:
+            case TR::java_lang_foreign_MemorySegment_set_OfChar:
+            case TR::java_lang_foreign_MemorySegment_set_OfShort:
+            case TR::java_lang_foreign_MemorySegment_set_OfInt:
+            case TR::java_lang_foreign_MemorySegment_set_OfLong:
+            case TR::java_lang_foreign_MemorySegment_set_OfFloat:
+            case TR::java_lang_foreign_MemorySegment_set_OfDouble:
+                process_java_lang_foreign_MemorySegment_getset(treetop, node, rm);
                 break;
+#endif
+            default: {
+#if JAVA_SPEC_VERSION >= 21
+                // Mirror of the isInlineable fallback — signature match for
+                // unresolved invokeinterface MemorySegment.get/set.
+                TR::RecognizedMethod segRm = recognizeMemorySegmentGetSet(node->getSymbol()->castToMethodSymbol());
+                if (segRm != TR::unknownMethod)
+                    process_java_lang_foreign_MemorySegment_getset(treetop, node, segRm);
+#endif
+                break;
+            }
         }
     }
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
