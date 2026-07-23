@@ -3281,7 +3281,7 @@ jvmtiHookSampledObjectAlloc(J9HookInterface** hook, UDATA eventNum, void* eventD
 			vmFuncs->internalExitVMToJNI(currentThread);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 			if (previewEnabled && J9_IS_J9CLASS_VALUETYPE(clazz)) {
-				Assert_JVMTI_true(1 == j9env->capabilities.can_support_value_objects);
+				Assert_JVMTI_true(j9env->capabilities.can_support_value_objects);
 				/*
 				 * Value type allocations without the can_support_value_objects
 				 * capability are filtered out earlier, so reaching this point
@@ -3375,7 +3375,7 @@ jvmtiHookObjectAllocate(J9HookInterface** hook, UDATA eventNum, void* eventData,
 				vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 				if (previewEnabled && J9_IS_J9CLASS_VALUETYPE(clazz)) {
-					Assert_JVMTI_true(1 == j9env->capabilities.can_support_value_objects);
+					Assert_JVMTI_true(j9env->capabilities.can_support_value_objects);
 					/*
 					 * Value type allocations without the can_support_value_objects
 					 * capability are filtered out earlier, so reaching this point
