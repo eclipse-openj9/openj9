@@ -54,9 +54,9 @@ public:
 	bool _statsHaveBeenUpdatedThisCycle; /** < Indicates whether we have updated the stats shown below yet this cycle.  They will be updated only once per cycle */
 	UDATA _measuredLiveBytesBeforeCollectInCollectedSet;	/**< The number of bytes allocated in the collection set subset in this group at the beginning of the collect (both live and dead objects) */
 	UDATA _projectedLiveBytesBeforeCollectInCollectedSet;	/**< The projected number of bytes allocated in the collection set subset in this group at the beginning of the collect (the reason for the projection is that this attempts to account for only live objects) */
-	UDATA _projectedLiveBytesAfterPreviousPGCInCollectedSetForNonEdenFraction; /**< Non-Eden Fraction (in case age group spans over Eden boundary) of _projectedLiveBytesAfterPreviousPGCInCollectedSet. This could be approximation! */
+//	UDATA _projectedLiveBytesAfterPreviousPGCInCollectedSetForNonEdenFraction; /**< Non-Eden Fraction (in case age group spans over Eden boundary) of _projectedLiveBytesAfterPreviousPGCInCollectedSet. This could be approximation! */
 	UDATA _projectedLiveBytesAfterPreviousPGCInCollectedSet; /**< The projected number of bytes live at the end of previous PGC, for regions selected in this PGC for this compact group */
-	UDATA _projectedLiveBytesAfterPreviousPGCInCollectedSetForEdenFraction; /**< Eden Fraction (in case age group spans over Eden boundary) of _projectedLiveBytesAfterPreviousPGCInCollectedSet */
+//	UDATA _projectedLiveBytesAfterPreviousPGCInCollectedSetForEdenFraction; /**< Eden Fraction (in case age group spans over Eden boundary) of _projectedLiveBytesAfterPreviousPGCInCollectedSet */
 	UDATA _measuredLiveBytesBeforeCollectInGroup;	/**< The total number of bytes consumed by all the regions in this compact group before the collect, whether they are in the collection set or not */
 	UDATA _projectedLiveBytesBeforeCollectInGroup;	/**< The projected number of bytes consumed by all the regions in this compact group before the collect, whether they are in the collection set or not (the reason for the projection is that this attempts to account for only live objects) */
 	UDATA _measuredLiveBytesAfterCollectInGroup;	/**< The total number of bytes in a compact group, after a collect, determined by summing the measured bytes not in the collected set and the number of bytes in the collected set, as measured by this collect */
@@ -69,9 +69,9 @@ public:
 	/* TODO: lpnguyen group everything into anonymous structs */
 
 	double _projectedInstantaneousSurvivalRate; /**< survivor rate between this and previous age group */
-	double _projectedInstantaneousSurvivalRatePerAgeUnit; /**< fraction of _projectedInstantaneousSurvivalRate, in case age group is a multiple of age units. this is an average of _projectedInstantaneousSurvivalRateThisPGCPerAgeUnit */
-	double _projectedInstantaneousSurvivalRateThisPGCPerAgeUnit; /**< same as _projectedInstantaneousSurvivalRatePerAgeUnit, but for this PGC (not an average over time) */
-
+//	double _projectedInstantaneousSurvivalRatePerAgeUnit; /**< fraction of _projectedInstantaneousSurvivalRate, in case age group is a multiple of age units. this is an average of _projectedInstantaneousSurvivalRateThisPGCPerAgeUnit */
+//	double _projectedInstantaneousSurvivalRateThisPGCPerAgeUnit; /**< same as _projectedInstantaneousSurvivalRatePerAgeUnit, but for this PGC (not an average over time) */
+	double _projectedInstantaneousSurvivalRateThisPGC; /**< same as _projectedInstantaneousSurvivalRate, but for this PGC (not an average over time) */
 
 	UDATA _projectedLiveBytes; /** < The sum of projected live bytes of all regions in the compact group */
 	UDATA _liveBytesAbsoluteDeviation; /** < sum of the absolute value _projectedLiveBytesDeviation of every region in the compact group */
