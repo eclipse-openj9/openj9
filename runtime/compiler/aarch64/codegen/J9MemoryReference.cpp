@@ -202,7 +202,7 @@ uint8_t *J9::ARM64::MemoryReference::generateBinaryEncoding(TR::Instruction *cur
             snippet->setMemoryReference(self());
             cg->addRelocation(
                 new (cg->trHeapMemory()) TR::LabelRelative32BitRelocation(cursor, snippet->getSnippetLabel()));
-            *wcursor = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::b); // b snippetLabel
+            *wcursor = OP::getOpCodeBinaryEncoding(OP::b); // b snippetLabel
             wcursor++;
             cursor += ARM64_INSTRUCTION_LENGTH;
 
@@ -214,19 +214,19 @@ uint8_t *J9::ARM64::MemoryReference::generateBinaryEncoding(TR::Instruction *cur
             // in PicBuilder.spp
 
             // movk extraReg, #0, LSL #16
-            *wcursor = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL16 << 5);
+            *wcursor = OP::getOpCodeBinaryEncoding(OP::movkx) | (TR::MOV_LSL16 << 5);
             extraReg->setRegisterFieldRD(wcursor);
             wcursor++;
             cursor += ARM64_INSTRUCTION_LENGTH;
 
             // movk extraReg, #0, LSL #32
-            *wcursor = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL32 << 5);
+            *wcursor = OP::getOpCodeBinaryEncoding(OP::movkx) | (TR::MOV_LSL32 << 5);
             extraReg->setRegisterFieldRD(wcursor);
             wcursor++;
             cursor += ARM64_INSTRUCTION_LENGTH;
 
             // movk extraReg, #0, LSL #48
-            *wcursor = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL48 << 5);
+            *wcursor = OP::getOpCodeBinaryEncoding(OP::movkx) | (TR::MOV_LSL48 << 5);
             extraReg->setRegisterFieldRD(wcursor);
             wcursor++;
             cursor += ARM64_INSTRUCTION_LENGTH;
@@ -234,16 +234,13 @@ uint8_t *J9::ARM64::MemoryReference::generateBinaryEncoding(TR::Instruction *cur
             // finally, encode the original instruction
             *wcursor = preserve;
             TR::RealRegister *base = self()->getBaseRegister() ? toRealRegister(self()->getBaseRegister()) : NULL;
-            TR::InstOpCode::Mnemonic op = currentInstruction->getOpCodeValue();
-            if (op != TR::InstOpCode::addx) {
+            OP::Mnemonic op = currentInstruction->getOpCodeValue();
+            if (op != OP::addx) {
                 // load/store instruction
-                if (op == TR::InstOpCode::ldrimmx || op == TR::InstOpCode::strimmx || op == TR::InstOpCode::ldrimmw
-                    || op == TR::InstOpCode::strimmw || op == TR::InstOpCode::ldrhimm || op == TR::InstOpCode::strhimm
-                    || op == TR::InstOpCode::ldrshimmx || op == TR::InstOpCode::ldrshimmw
-                    || op == TR::InstOpCode::ldrbimm || op == TR::InstOpCode::strbimm || op == TR::InstOpCode::ldrsbimmx
-                    || op == TR::InstOpCode::ldrsbimmw || op == TR::InstOpCode::vldrimmd
-                    || op == TR::InstOpCode::vstrimmd || op == TR::InstOpCode::vldrimms
-                    || op == TR::InstOpCode::vstrimms) {
+                if (op == OP::ldrimmx || op == OP::strimmx || op == OP::ldrimmw || op == OP::strimmw
+                    || op == OP::ldrhimm || op == OP::strhimm || op == OP::ldrshimmx || op == OP::ldrshimmw
+                    || op == OP::ldrbimm || op == OP::strbimm || op == OP::ldrsbimmx || op == OP::ldrsbimmw
+                    || op == OP::vldrimmd || op == OP::vstrimmd || op == OP::vldrimms || op == OP::vstrimms) {
                     if (base) {
                         // if the load or store had a base, add it in as an index.
                         base->setRegisterFieldRN(wcursor);
@@ -280,7 +277,7 @@ uint8_t *J9::ARM64::MemoryReference::generateBinaryEncoding(TR::Instruction *cur
     }
 }
 
-uint32_t J9::ARM64::MemoryReference::estimateBinaryLength(TR::InstOpCode op)
+uint32_t J9::ARM64::MemoryReference::estimateBinaryLength(OP op)
 {
     if (self()->getUnresolvedSnippet()) {
         if (self()->getIndexRegister()) {
