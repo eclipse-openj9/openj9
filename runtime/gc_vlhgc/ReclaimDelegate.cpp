@@ -230,7 +230,7 @@ MM_ReclaimDelegate::tagRegionsBeforeCompactWithWorkGoal(MM_EnvironmentVLHGC *env
 			expectedBytesToReclaimThroughCompaction += freeMemory;
 			regionCount += 1;
 			UDATA regionIndex = _regionManager->mapDescriptorToRegionTableIndex(region);
-			Trc_MM_ReclaimDelegate_tagRegionsBeforeCompactWithWorkGoal_addingToCompactSet(env->getLanguageVMThread(), regionIndex, compactGroup, region->getLogicalAge(), region->_compactData._compactScore, (100 * freeMemory)/regionSize, MM_GCExtensions::getExtensions(env)->compactGroupPersistentStats[compactGroup]._weightedSurvivalRate);
+			Trc_MM_ReclaimDelegate_tagRegionsBeforeCompactWithWorkGoal_addingToCompactSet(env->getLanguageVMThread(), regionIndex, compactGroup, region->getAge(), region->_compactData._compactScore, (100 * freeMemory)/regionSize, MM_GCExtensions::getExtensions(env)->compactGroupPersistentStats[compactGroup]._weightedSurvivalRate);
 
 			if (isCopyForward) {
 				region->_markData._shouldMark = true;

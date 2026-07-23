@@ -410,7 +410,7 @@ MM_AllocationContextBalanced::lockedAllocateArrayletLeaf(MM_EnvironmentBase *env
 	}
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 
-	freeRegionForArrayletLeaf->resetAge(env, (U_64)_subspace->getBytesRemainingBeforeTaxation());
+	freeRegionForArrayletLeaf->resetAge(env);
 	/* store the base address of the leaf for the memset and the return */
 	return freeRegionForArrayletLeaf->getLowAddress();
 }
@@ -780,7 +780,7 @@ MM_AllocationContextBalanced::acquireMPRegionFromContext(MM_EnvironmentBase *env
 		if (MM_HeapRegionDescriptor::FREE == region->getRegionType()) {
 			if (region->_allocateData.taskAsMemoryPool(env, requestingContext)) {
 				/* this is a new region. Initialize it for the given pool */
-				region->resetAge(env, (U_64)_subspace->getBytesRemainingBeforeTaxation());
+				region->resetAge(env);
 				MM_MemoryPool *mpaol = region->getMemoryPool();
 				mpaol->setSubSpace(subSpace);
 				mpaol->expandWithRange(env, region->getSize(), region->getLowAddress(), region->getHighAddress(), false);
@@ -795,7 +795,7 @@ MM_AllocationContextBalanced::acquireMPRegionFromContext(MM_EnvironmentBase *env
 			/* we can't fail to convert an IDLE region to an active one */
 			Assert_MM_true(success);
 			/* also add this region into our owned region list */
-			region->resetAge(env, (U_64)_subspace->getBytesRemainingBeforeTaxation());
+			region->resetAge(env);
 			region->_allocateData._owningContext = requestingContext;
 			MM_MemoryPool *pool = region->getMemoryPool();
 			Assert_MM_true(subSpace == pool->getSubSpace());

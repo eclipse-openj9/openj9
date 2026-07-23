@@ -306,11 +306,7 @@ MM_ConfigurationIncrementalGenerational::initialize(MM_EnvironmentBase *env)
 
 	/* set default region maximum age if it is not specified yet */
 	if (0 == extensions->tarokRegionMaxAge) {
-		if (extensions->tarokAllocationAgeEnabled) {
-			extensions->tarokRegionMaxAge = DEFAULT_MAX_AGE_FOR_ALLOCATION_BASED;
-		} else {
-			extensions->tarokRegionMaxAge = DEFAULT_MAX_AGE_FOR_PGC_COUNT_BASED;
-		}
+		extensions->tarokRegionMaxAge = DEFAULT_MAX_AGE_FOR_PGC_COUNT_BASED;
 	}
 
 	if (!extensions->tarokNurseryMaxAge._wasSpecified) {
