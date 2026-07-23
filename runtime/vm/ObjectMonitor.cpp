@@ -716,14 +716,18 @@ spinOnTryEnter(J9VMThread *currentThread, J9ObjectMonitor *objectMonitor, j9obje
 #if defined(OMR_THR_THREE_TIER_LOCKING) && defined(OMR_THR_SPIN_WAKE_CONTROL)
 	bool tryEnterSpin = true;
 	if (OMRTHREAD_IGNORE_SPIN_THREAD_BOUND != lib->maxSpinThreads) {
-		if (monitor->spinThreads < lib->maxSpinThreads) {
-			VM_AtomicSupport::add(&monitor->spinThreads, 1);
-		} else {
-			tryEnterSpinCount1 = 1;
-			tryEnterSpinCount2 = 1;
-			tryEnterYieldCount = 1;
-			tryEnterSpin = false;
-		}
+		uintptr_t oldSpinThreads = 0;
+		do {
+			oldSpinThreads = monitor->spinThreads;
+			if (oldSpinThreads >= lib->maxSpinThreads) {
+				tryEnterSpinCount1 = 1;
+				tryEnterSpinCount2 = 1;
+				tryEnterYieldCount = 1;
+				tryEnterSpin = false;
+				break;
+			}
+		} while (oldSpinThreads != VM_AtomicSupport::lockCompareExchange(
+				&monitor->spinThreads, oldSpinThreads, oldSpinThreads + 1));
 	}
 #endif /* defined(OMR_THR_THREE_TIER_LOCKING) && defined(OMR_THR_SPIN_WAKE_CONTROL) */
 
