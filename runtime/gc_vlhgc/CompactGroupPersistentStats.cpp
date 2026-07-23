@@ -50,8 +50,9 @@ MM_CompactGroupPersistentStats::allocateCompactGroupPersistentStats(MM_Environme
 			result[i]._historicalSurvivalRate = 1.0;
 			result[i]._weightedSurvivalRate = 1.0;
 			result[i]._projectedInstantaneousSurvivalRate = 1.0;
-			result[i]._projectedInstantaneousSurvivalRatePerAgeUnit = 1.0;
-			result[i]._projectedInstantaneousSurvivalRateThisPGCPerAgeUnit = 1.0;
+//			result[i]._projectedInstantaneousSurvivalRatePerAgeUnit = 1.0;
+//			result[i]._projectedInstantaneousSurvivalRateThisPGCPerAgeUnit = 1.0;
+			result[i]._projectedInstantaneousSurvivalRateThisPGC = 1.0;
 			result[i]._projectedLiveBytes = 0;
 			result[i]._liveBytesAbsoluteDeviation = 0;
 			result[i]._regionCount = 0;
@@ -150,11 +151,10 @@ MM_CompactGroupPersistentStats::calculateAgeGroupFractionsAtEdenBoundary(MM_Envi
 void
 MM_CompactGroupPersistentStats::updateProjectedSurvivalRate(MM_EnvironmentVLHGC *env, MM_CompactGroupPersistentStats *persistentStatsArray, UDATA compactGroup)
 {
-	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 	const double newObservationWeight = 0.2;
-	 MM_CompactGroupPersistentStats *persistentStats = &persistentStatsArray[compactGroup];
+	MM_CompactGroupPersistentStats *persistentStats = &persistentStatsArray[compactGroup];
 
-	/* calculate the old historical survival rate */
+	/* Calculate the historical survival rate */
 	UDATA liveBeforeCollect = persistentStats->_measuredLiveBytesBeforeCollectInCollectedSet;
 	
 	if (liveBeforeCollect > 0) {
@@ -174,6 +174,7 @@ MM_CompactGroupPersistentStats::updateProjectedSurvivalRate(MM_EnvironmentVLHGC 
 		double weightOfOldStats = 1.0 - weightOfNewStats;
 
 		/* Due to dark matter estimates the survival rate could appear to exceed 1.0 by a small amount, so cap it at 1.0. */
+		/* (for _historicalSurvivalRate) thisSurvivalRate =  _measuredLiveBytesAfterCollectInCollectedSet / _measuredLiveBytesBeforeCollectInCollectedSet */
 		double thisSurvivalRate = OMR_MIN(1.0, (double)liveBytesInCollectedSetAfterCollect / (double)liveBeforeCollect);
 		Assert_MM_true(thisSurvivalRate >= 0.0);
 
@@ -181,148 +182,66 @@ MM_CompactGroupPersistentStats::updateProjectedSurvivalRate(MM_EnvironmentVLHGC 
 		Assert_MM_true(newSurvivalRate >= 0.0);
 		Assert_MM_true(newSurvivalRate <= 1.0);
 
+		PORT_ACCESS_FROM_ENVIRONMENT(env);
+		j9tty_printf(PORTLIB, "updateProjectedSurvivalRate Historical Survival Rate compactGroup=%zu, totalBytesBeforeCollect=%zu, liveBytesInCollectedSetAfterCollect=%zu, weightOfOldStats=%f, weightOfNewStats=%f, thisSurvivalRate=%f, oldSurvivalRate=%f, newSurvivalRate=%f\n",
+				compactGroup, totalBytesBeforeCollect, liveBytesInCollectedSetAfterCollect, weightOfOldStats, weightOfNewStats, thisSurvivalRate, persistentStats->_historicalSurvivalRate, newSurvivalRate);
+
 		persistentStats->_historicalSurvivalRate = newSurvivalRate;
 	}
 
-	/* Calculate the new projected survival rate */
+	/* Calculate the projected instantaneous survival rate */
 	UDATA projectedLiveBytesSelected = persistentStats->_projectedLiveBytesBeforeCollectInCollectedSet;
-	U_64 allocatedSinceLastPGC = ((MM_IncrementalGenerationalGC *)extensions->getGlobalCollector())->getAllocatedSinceLastPGC();
-	if ((projectedLiveBytesSelected > 0) && (allocatedSinceLastPGC > 0)) {
+
+	if (projectedLiveBytesSelected > 0) {
 		UDATA projectedLiveBytesBefore = persistentStats->_projectedLiveBytesBeforeCollectInGroup;
-		UDATA measuredLiveBytesNotParticipating = (persistentStats->_measuredLiveBytesBeforeCollectInGroup - persistentStats->_measuredLiveBytesBeforeCollectInCollectedSet);
-		UDATA measuredLiveBytesAfter = (persistentStats->_measuredLiveBytesAfterCollectInCollectedSet + measuredLiveBytesNotParticipating);
-		double oldSurvivalRate = persistentStats->_projectedInstantaneousSurvivalRatePerAgeUnit;
-		/* By definition Instantaneous Survival Rate = (live bytes at the end of the current age group)/(live bytes at the end of the previous age group) per tarokAllocationAgeUnit
-		 * (tarokAllocationAgeUnit defaults to Eden size, but could be far less than Eden size)
-		 */
+//		UDATA measuredLiveBytesNotParticipating = (persistentStats->_measuredLiveBytesBeforeCollectInGroup - persistentStats->_measuredLiveBytesBeforeCollectInCollectedSet);
+//		UDATA measuredLiveBytesAfter = (persistentStats->_measuredLiveBytesAfterCollectInCollectedSet + measuredLiveBytesNotParticipating);
+		double oldSurvivalRate = persistentStats->_projectedInstantaneousSurvivalRate;
 
-		/* We'll initially find survivorRate since last PGC and take out survivor rate of previous age groups to get survivor rate of current age group */
-		U_64 bytesRemaining = allocatedSinceLastPGC;
-		/* For Eden age groups, we'll take out "only" age groups since the moment they were created (they may not exist at previous PGC) */
-		/* TODO: currentAge should be average age (after GC) of collection set in this group */
-		U_64 currentAge = persistentStats->_maxAllocationAge;
-		U_64 maxAgeInThisAgeGroup = extensions->tarokAllocationAgeUnit;
-		if (MM_CompactGroupManager::getRegionAgeFromGroup(env, compactGroup) > 0) {
-			maxAgeInThisAgeGroup = currentAge - persistentStatsArray[compactGroup - 1]._maxAllocationAge;
-		}
-
-		/* normalize for large age groups, larger than Eden */
-		U_64 ageInThisAgeGroup = OMR_MIN(maxAgeInThisAgeGroup, allocatedSinceLastPGC);
-		/* ageInThisCompactGroup essentially represents the amount of bytes allocated in this compact group out of this age group */
-		U_64 ageInThisCompactGroup = 0;
-
-		UDATA currentCompactGroup = compactGroup;
-
-		U_64 edenFractionOfCompactGroup = persistentStats->_projectedLiveBytesAfterPreviousPGCInCollectedSetForEdenFraction;
-		U_64 nonEdenFractionOfCompactGroup = 0;		
-		calculateAgeGroupFractionsAtEdenBoundary(env, ageInThisAgeGroup, &ageInThisCompactGroup, currentAge, allocatedSinceLastPGC, &edenFractionOfCompactGroup, &nonEdenFractionOfCompactGroup);
-
-		/* Calculate separately survivorRate for Eden and non Eden fractions of the age group */
-		double thisSurvivalRateForEdenFraction = (double)(measuredLiveBytesAfter - measuredLiveBytesNotParticipating) / ageInThisCompactGroup;
-		/* TODO: check cases when thisSurvivalRateForEdenFraction > 1.0. Should be completely or almost non-existent */
-		if (thisSurvivalRateForEdenFraction > 1.0){
-			thisSurvivalRateForEdenFraction = 1.0;
-		}
-
-		double thisSurvivalRateForNonEdenFraction = thisSurvivalRateForEdenFraction;
-		double projectedLiveBytesAfterPreviousPGCInCollectedSetForNonEdenFraction = (double)(persistentStats->_projectedLiveBytesAfterPreviousPGCInCollectedSet - edenFractionOfCompactGroup);
-		Trc_MM_CompactGroupPersistentStats_updateProjectedSurvivalRate_Entry(env->getLanguageVMThread(),
-			compactGroup,
-			(double)persistentStats->_projectedLiveBytesAfterPreviousPGCInCollectedSetForNonEdenFraction / (1024*1024),
-			(double)persistentStats->_projectedLiveBytesAfterPreviousPGCInCollectedSet / (1024*1024),
-			(double)(measuredLiveBytesAfter - measuredLiveBytesNotParticipating)/ (1024*1024),
-			(double)measuredLiveBytesAfter/ (1024*1024),
-			(double) measuredLiveBytesNotParticipating/ (1024*1024),
-			projectedLiveBytesAfterPreviousPGCInCollectedSetForNonEdenFraction/ (1024*1024));
-		Trc_MM_CompactGroupPersistentStats_calculateAgeGroupFractions(env->getLanguageVMThread(), persistentStats->_maxAllocationAge, maxAgeInThisAgeGroup, ageInThisAgeGroup, edenFractionOfCompactGroup, nonEdenFractionOfCompactGroup);
-
-		/* TODO: check cases when projectedLiveBytesAfterPreviousPGCInCollectedSetForNonEdenFraction < 0. Should be completely or almost non-existent */
-		if (projectedLiveBytesAfterPreviousPGCInCollectedSetForNonEdenFraction > 0.0) {
-			thisSurvivalRateForNonEdenFraction = thisSurvivalRateForEdenFraction * nonEdenFractionOfCompactGroup / projectedLiveBytesAfterPreviousPGCInCollectedSetForNonEdenFraction;
-		}
-		if (thisSurvivalRateForNonEdenFraction > 1.0){
-			thisSurvivalRateForNonEdenFraction = 1.0;
-		}
-
-		/* Skip all ageUnits in current compact group, to the maximum of what we allocated since last GC - this is where we want to calculate survivorRate */
-		bytesRemaining -= ageInThisAgeGroup;
-		currentAge -= ageInThisAgeGroup;
-
-		while (((bytesRemaining > 0) || (0 != edenFractionOfCompactGroup)) && (currentAge > 0)) {
-			/* check if we moved in next age group */
-			if (MM_CompactGroupManager::getRegionAgeFromGroup(env, currentCompactGroup) != 0) {
-				if (currentAge <= persistentStatsArray[currentCompactGroup - 1]._maxAllocationAge) {
-					currentCompactGroup -= 1;
-				}
-			}
-
-			double baseSurvivalRate = persistentStatsArray[currentCompactGroup]._projectedInstantaneousSurvivalRateThisPGCPerAgeUnit;
-
-			U_64 minAllocationAgeForThisCompactGroup = 0;
-
-			if (MM_CompactGroupManager::getRegionAgeFromGroup(env, currentCompactGroup) > 0) {
-				minAllocationAgeForThisCompactGroup = persistentStatsArray[currentCompactGroup - 1]._maxAllocationAge;
-			}
-
-			U_64 ageInCurrentGroup = currentAge - minAllocationAgeForThisCompactGroup;
-			U_64 ageInCurrentGroupForEden = ageInCurrentGroup;
-			double ageUnitsInCurrentGroup = (double)ageInCurrentGroupForEden / extensions->tarokAllocationAgeUnit;
-			double survivalRate = pow(baseSurvivalRate, ageUnitsInCurrentGroup);
-
-			Trc_MM_CompactGroupPersistentStats_updateProjectedSurvivalRate_eden(env->getLanguageVMThread(), thisSurvivalRateForEdenFraction, (double)currentAge/(1024*1024),
-			 (double)bytesRemaining/(1024*1024), (double)ageInCurrentGroupForEden/(1024*1024), survivalRate, baseSurvivalRate, ageUnitsInCurrentGroup, currentCompactGroup);
-			thisSurvivalRateForEdenFraction = thisSurvivalRateForEdenFraction / survivalRate;
-
-			U_64 ageInCurrentGroupForNonEden  = OMR_MIN(ageInCurrentGroup, bytesRemaining);
-			ageUnitsInCurrentGroup = (double)ageInCurrentGroupForNonEden / extensions->tarokAllocationAgeUnit;
-			survivalRate = pow(baseSurvivalRate, ageUnitsInCurrentGroup);
-
-			Assert_MM_true(0.0 < survivalRate);
-			Trc_MM_CompactGroupPersistentStats_updateProjectedSurvivalRate_nonEden(env->getLanguageVMThread(), thisSurvivalRateForNonEdenFraction, (double)currentAge/(1024*1024),
-			 (double)bytesRemaining/(1024*1024), (double)ageInCurrentGroupForNonEden/(1024*1024), survivalRate, baseSurvivalRate, ageUnitsInCurrentGroup, currentCompactGroup);
-			thisSurvivalRateForNonEdenFraction = thisSurvivalRateForNonEdenFraction / survivalRate;
-
-			Assert_MM_true(bytesRemaining >= ageInCurrentGroupForNonEden);
-			bytesRemaining -= ageInCurrentGroupForNonEden;
-			Assert_MM_true(currentAge >= ageInCurrentGroup);
-			currentAge -= ageInCurrentGroup;
-		}
-
-		if (thisSurvivalRateForEdenFraction > 1.0){
-			thisSurvivalRateForEdenFraction = 1.0;
-		}
-		if (thisSurvivalRateForNonEdenFraction > 1.0){
-			thisSurvivalRateForNonEdenFraction = 1.0;
-		}
-
-		/* Combine Eden and non-Eden survivor rate */
+		/* projectedInstantaneousSurvivalRate = _measuredLiveBytesAfterCollectInCollectedSet / _projectedLiveBytesAfterPreviousPGCInCollectedSet */
 		double weightedMeanSurvivalRate = 0.5;
-		if (0 != ageInThisCompactGroup) {
-			weightedMeanSurvivalRate = (thisSurvivalRateForEdenFraction * edenFractionOfCompactGroup + thisSurvivalRateForNonEdenFraction * nonEdenFractionOfCompactGroup) / ageInThisCompactGroup;
+		if (0 < persistentStats->_projectedLiveBytesAfterPreviousPGCInCollectedSet) {
+			double baseSurvivalRate = (double)(persistentStats->_measuredLiveBytesAfterCollectInCollectedSet) / (double)persistentStats->_projectedLiveBytesAfterPreviousPGCInCollectedSet;
+			if (baseSurvivalRate > 1.0) {
+				baseSurvivalRate = 1.0;
+			}
+			weightedMeanSurvivalRate = baseSurvivalRate;
 		}
-		double ageUnitsInThisAgeGroup = (double)ageInThisAgeGroup / extensions->tarokAllocationAgeUnit;
-		double maxAgeUnitsInThisGroup = (double)maxAgeInThisAgeGroup / extensions->tarokAllocationAgeUnit;
 
-		double thisSurvivalRate = pow(weightedMeanSurvivalRate, 1/ageUnitsInThisAgeGroup);
+		/* Ensure survival rate is in valid range */
+		Assert_MM_true(weightedMeanSurvivalRate >= 0.0);
+		Assert_MM_true(weightedMeanSurvivalRate <= 1.0);
 
-		Assert_MM_true(thisSurvivalRate >= 0.0);
-		Assert_MM_true(thisSurvivalRate <= 1.0);
-
-		/* Approximate zero survivor rate with a low non-zero number to avoid division with zero in future calculations */
-		if (0.0 == thisSurvivalRate) {
-			thisSurvivalRate = 0.01;
+		/* Approximate zero survivor rate with a low non-zero number to avoid division by zero */
+		if (0.0 == weightedMeanSurvivalRate) {
+			weightedMeanSurvivalRate = 0.01;
 		}
-		persistentStats->_projectedInstantaneousSurvivalRateThisPGCPerAgeUnit = thisSurvivalRate;
 
+		/* Store survival rate */
+		persistentStats->_projectedInstantaneousSurvivalRateThisPGC = weightedMeanSurvivalRate;
+
+		/* Calculate weighted average with previous observations */
 		double observedWeight = 1.0;
 		if (projectedLiveBytesBefore > 0) {
 			observedWeight = newObservationWeight * (double)projectedLiveBytesSelected / (double)projectedLiveBytesBefore;
 		}
-		persistentStats->_projectedInstantaneousSurvivalRatePerAgeUnit = (observedWeight * thisSurvivalRate) + ((1.0 - observedWeight) * oldSurvivalRate);
-		persistentStats->_projectedInstantaneousSurvivalRate = pow(persistentStats->_projectedInstantaneousSurvivalRatePerAgeUnit, maxAgeUnitsInThisGroup);
 
-		Trc_MM_CompactGroupPersistentStats_updateProjectedSurvivalRate_Exit(env->getLanguageVMThread(), compactGroup, thisSurvivalRateForEdenFraction, thisSurvivalRateForNonEdenFraction,
-		 weightedMeanSurvivalRate, ageUnitsInThisAgeGroup, thisSurvivalRate, persistentStats->_projectedInstantaneousSurvivalRate, persistentStats->_projectedInstantaneousSurvivalRatePerAgeUnit);
+		persistentStats->_projectedInstantaneousSurvivalRate = (observedWeight * weightedMeanSurvivalRate) + ((1.0 - observedWeight) * oldSurvivalRate);
+
+		PORT_ACCESS_FROM_ENVIRONMENT(env);
+		j9tty_printf(PORTLIB, "updateProjectedSurvivalRate the projected instantaneous survival rate compactGroup=%zu, measuredLiveBytesAfterCollectInCollectedSet=%zu, projectedLiveBytesAfterPreviousPGCInCollectedSet=%zu, weightedMeanSurvivalRate=%f, oldSurvivalRate=%f, projectedInstantaneousSurvivalRate=%f,\n",
+				compactGroup, persistentStats->_measuredLiveBytesAfterCollectInCollectedSet, persistentStats->_projectedLiveBytesAfterPreviousPGCInCollectedSet, weightedMeanSurvivalRate, oldSurvivalRate, persistentStats->_projectedInstantaneousSurvivalRate);
+
+		Trc_MM_CompactGroupPersistentStats_updateProjectedSurvivalRate_Exit(
+			env->getLanguageVMThread(),
+			compactGroup,
+			weightedMeanSurvivalRate,
+			weightedMeanSurvivalRate,
+			weightedMeanSurvivalRate,
+			1.0, /* ageUnitsInThisAgeGroup - always 1 logical age unit */
+			weightedMeanSurvivalRate,
+			persistentStats->_projectedInstantaneousSurvivalRate,
+			persistentStats->_projectedInstantaneousSurvivalRate);
 	}
 }
 
@@ -362,8 +281,8 @@ MM_CompactGroupPersistentStats::resetLiveBytesStats(MM_EnvironmentVLHGC *env, MM
 		persistentStats[compactGroup]._measuredLiveBytesBeforeCollectInCollectedSet = 0;
 		persistentStats[compactGroup]._projectedLiveBytesBeforeCollectInCollectedSet = 0;
 		persistentStats[compactGroup]._projectedLiveBytesAfterPreviousPGCInCollectedSet = 0;
-		persistentStats[compactGroup]._projectedLiveBytesAfterPreviousPGCInCollectedSetForNonEdenFraction = 0;
-		persistentStats[compactGroup]._projectedLiveBytesAfterPreviousPGCInCollectedSetForEdenFraction = 0;
+//		persistentStats[compactGroup]._projectedLiveBytesAfterPreviousPGCInCollectedSetForNonEdenFraction = 0;
+//		persistentStats[compactGroup]._projectedLiveBytesAfterPreviousPGCInCollectedSetForEdenFraction = 0;
 		persistentStats[compactGroup]._measuredLiveBytesBeforeCollectInGroup = 0;
 		persistentStats[compactGroup]._projectedLiveBytesBeforeCollectInGroup = 0;
 		persistentStats[compactGroup]._measuredLiveBytesAfterCollectInGroup = 0;
@@ -379,94 +298,17 @@ MM_CompactGroupPersistentStats::resetLiveBytesStats(MM_EnvironmentVLHGC *env, MM
 }
 
 void
-MM_CompactGroupPersistentStats::calculateLiveBytesForRegion(MM_EnvironmentVLHGC *env,  MM_CompactGroupPersistentStats *persistentStats, UDATA compactGroup, MM_HeapRegionDescriptorVLHGC *region, UDATA measuredLiveBytes, UDATA projectedLiveBytes)
+MM_CompactGroupPersistentStats::calculateLiveBytesForRegion(
+		MM_EnvironmentVLHGC *env,
+		MM_CompactGroupPersistentStats *persistentStats,
+		UDATA compactGroup, MM_HeapRegionDescriptorVLHGC *region,
+		UDATA measuredLiveBytes,
+		UDATA projectedLiveBytes)
 {
-	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-	U_64 allocatedSinceLastPGC = ((MM_IncrementalGenerationalGC *)extensions->getGlobalCollector())->getAllocatedSinceLastPGC();
-
 	persistentStats[compactGroup]._measuredLiveBytesBeforeCollectInCollectedSet += measuredLiveBytes;
 	persistentStats[compactGroup]._projectedLiveBytesBeforeCollectInCollectedSet += projectedLiveBytes;
-
-	if (region->isEden()) {
-		persistentStats[compactGroup]._projectedLiveBytesAfterPreviousPGCInCollectedSetForEdenFraction += region->_projectedLiveBytesPreviousPGC;
-		persistentStats[compactGroup]._projectedLiveBytesAfterPreviousPGCInCollectedSet += region->_projectedLiveBytesPreviousPGC;
-	}  else	{
-
-		U_64 boundary = 0;
-		U_64 maxAllocationAge = extensions->compactGroupPersistentStats[compactGroup]._maxAllocationAge;
-		U_64 minAllocationAge = 0;
-
-		if (MM_CompactGroupManager::getRegionAgeFromGroup(env, compactGroup) > 0) {
-			minAllocationAge = extensions->compactGroupPersistentStats[compactGroup - 1]._maxAllocationAge;
-		}
-		U_64 ageSpan = maxAllocationAge - minAllocationAge;
-		/* while the region is non-Eden, the compact group it belongs to might cross Eden boundary */
-		U_64 nonEdenAgeSpan = 0;
-		/* Only the upper portion of the non-Eden span is a good representative. About to calculate the size of the sample */
-		U_64 sampleSpan = 0;
-
-		/* We use a premise: given a point of time m (expressed in MB allocated), liveness of objects are constant between m/expBase and m.
-		 * For non, linear aging this range (m/expBase,m) can span multiple age groups, which may have different liveness.
-		 */
-
-		if (maxAllocationAge > allocatedSinceLastPGC) {
-			U_64 oldestAgePointObjectsCameFrom = maxAllocationAge - allocatedSinceLastPGC;
-			sampleSpan = (U_64) ((double)(oldestAgePointObjectsCameFrom) / extensions->tarokAllocationAgeExponentBase);
-			/* between oldestAgePointObjectsCameFrom - sampleSpan and oldestAgePointObjectsCameFrom, we consider objects had same liveness. */
-			/* however, object are already forward-aged at the end of previous PGC, so we are talking about (maxAllocationAge - sampleSpan, maxAllocationAge) span */
-			boundary = maxAllocationAge - sampleSpan;
-			nonEdenAgeSpan = OMR_MIN(ageSpan, maxAllocationAge - allocatedSinceLastPGC);
-		}
-
-		double nonEdenSpanExpandRatio = 1.0;
-		if (maxAllocationAge > allocatedSinceLastPGC + sampleSpan) {
-			nonEdenSpanExpandRatio = (double)nonEdenAgeSpan / (maxAllocationAge - allocatedSinceLastPGC - sampleSpan);
-		}
-
-		UDATA liveBytesAboveBoundary = 0;
-		if (region->getAllocationAge() >= boundary) {
-			liveBytesAboveBoundary = region->_projectedLiveBytesPreviousPGC;
-
-			if (region->getLowerAgeBound() < boundary) {
-				/* not a whole region is above boundary */
-
-				/* first calculated the fraction of objects below average age */
-				UDATA liveBytesBelowAverageAge = (UDATA)(region->_projectedLiveBytesPreviousPGC
-														* (region->getUpperAgeBound() - region->getAllocationAge())
-														/ (region->getUpperAgeBound() - region->getLowerAgeBound()));
-
-				/* now, find the fraction of below boundary */
-				UDATA liveBytesBelowBoundary = (UDATA)(liveBytesBelowAverageAge
-														* (boundary - region->getLowerAgeBound())
-														/ (region->getAllocationAge() - region->getLowerAgeBound()));
-
-				liveBytesAboveBoundary -= liveBytesBelowBoundary;
-
-			}
-
-		} else {
-			if (region->getUpperAgeBound() > boundary) {
-				/* at least a fraction of the region is above boundary */
-
-				/* first calculated the fraction of objects above average age */
-				UDATA liveBytesAboveAverageAge = (UDATA)(region->_projectedLiveBytesPreviousPGC
-														* (region->getAllocationAge() - region->getLowerAgeBound())
-														/ (region->getUpperAgeBound() - region->getLowerAgeBound()));
-
-				/* now, find the fraction of above boundary */
-				 liveBytesAboveBoundary = (UDATA)(liveBytesAboveAverageAge
-														* (region->getUpperAgeBound() - boundary)
-														/ (region->getUpperAgeBound() - region->getAllocationAge()));
-			}
-
-		}
-
-		liveBytesAboveBoundary = (UDATA)(nonEdenSpanExpandRatio * liveBytesAboveBoundary);
-		persistentStats[compactGroup]._projectedLiveBytesAfterPreviousPGCInCollectedSetForNonEdenFraction += liveBytesAboveBoundary;
-		persistentStats[compactGroup]._projectedLiveBytesAfterPreviousPGCInCollectedSet += liveBytesAboveBoundary;
-	}
+	persistentStats[compactGroup]._projectedLiveBytesAfterPreviousPGCInCollectedSet += region->_projectedLiveBytesPreviousPGC;
 }
-
 
 void
 MM_CompactGroupPersistentStats::updateStatsBeforeCopyForward(MM_EnvironmentVLHGC *env, MM_CompactGroupPersistentStats *persistentStats)
@@ -681,50 +523,38 @@ MM_CompactGroupPersistentStats::decayProjectedLiveBytesForRegions(MM_Environment
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 	GC_HeapRegionIteratorVLHGC regionIterator(extensions->heapRegionManager, MM_HeapRegionDescriptor::ALL);
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
-	MM_CompactGroupPersistentStats * persistentStats = extensions->compactGroupPersistentStats;
+	MM_CompactGroupPersistentStats *persistentStats = extensions->compactGroupPersistentStats;
 
 	while (NULL != (region = regionIterator.nextRegion())) {
-		if(region->containsObjects()) {
-			/* before applying decay, take a snapshot of projectedLiveBytes used later for survivor rate calculation */
+		if (region->containsObjects()) {
+			/* Save snapshot of projectedLiveBytes before applying decay */
 			region->_projectedLiveBytesPreviousPGC = region->_projectedLiveBytes;
-			// TODO amicic: do we need to do on regions in eden (projectedLiveBytes is measuredLiveBytes)?
 
-			I_64 allocatedSinceLastPGC = ((MM_IncrementalGenerationalGC *)extensions->getGlobalCollector())->getAllocatedSinceLastPGC();
+			/* Get the compact group for this region based on its logical age */
 			UDATA compactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, region);
+			UDATA regionAge = region->getLogicalAge();
 
-			I_64 currentAge = (I_64)region->getAllocationAge();
-			I_64 bytesRemaining = allocatedSinceLastPGC;
-			UDATA currentCompactGroup = compactGroup;
+			/* Apply survival rate for this region's compact group only
+			 * The original code walked backward through age groups, but with logical aging
+			 * each region belongs to exactly one compact group based on its logical age
+			 */
+			double survivalRate = persistentStats[compactGroup]._projectedInstantaneousSurvivalRate;
 
-			while ((bytesRemaining > 0) && (currentAge > 0)) {
-				if (MM_CompactGroupManager::getRegionAgeFromGroup(env, currentCompactGroup) > 0) {
-					if ((currentAge <= (IDATA)persistentStats[currentCompactGroup - 1]._maxAllocationAge)) {
-						currentCompactGroup -= 1;
-					}
-				}
+			UDATA oldProjectedLiveBytes = region->_projectedLiveBytes;
+			region->_projectedLiveBytes = (UDATA)((double)oldProjectedLiveBytes * survivalRate);
 
-				double baseSurvivalRate = persistentStats[currentCompactGroup]._projectedInstantaneousSurvivalRatePerAgeUnit;
-
-				U_64 minAllocationAgeForThisCompactGroup = 0;
-
-				if (MM_CompactGroupManager::getRegionAgeFromGroup(env, currentCompactGroup) > 0) {
-					minAllocationAgeForThisCompactGroup = persistentStats[currentCompactGroup - 1]._maxAllocationAge;
-				}
-
-				U_64 ageInThisGroup = OMR_MIN((U_64)bytesRemaining, (U_64)currentAge - minAllocationAgeForThisCompactGroup);
-				double ageUnitsInThisGroup = (double)ageInThisGroup / extensions->tarokAllocationAgeUnit;
-				double survivalRate = pow(baseSurvivalRate, ageUnitsInThisGroup);
-
-				UDATA oldProjectedLiveBytes =  region->_projectedLiveBytes;
-				region->_projectedLiveBytes = (UDATA) ((double)oldProjectedLiveBytes * survivalRate);
-
-				Trc_MM_CompactGroupPersistentStats_decayProjectedLiveBytesForRegions(env->getLanguageVMThread(), extensions->heapRegionManager->mapDescriptorToRegionTableIndex(region),
-						(double)oldProjectedLiveBytes / (1024*1024), (double)region->_projectedLiveBytes / (1024*1024), compactGroup,
-						(double)bytesRemaining / (1024*1024), (double)currentAge / (1024*1024), survivalRate, baseSurvivalRate, ageUnitsInThisGroup, currentCompactGroup);
-
-				bytesRemaining -= ageInThisGroup;
-				currentAge -= ageInThisGroup;
-			}
+			Trc_MM_CompactGroupPersistentStats_decayProjectedLiveBytesForRegions(
+				env->getLanguageVMThread(),
+				extensions->heapRegionManager->mapDescriptorToRegionTableIndex(region),
+				(double)oldProjectedLiveBytes / (1024 * 1024),
+				(double)region->_projectedLiveBytes / (1024 * 1024),
+				compactGroup,
+				0.0, /* bytesRemaining - no longer applicable */
+				(double)regionAge, /* currentAge - now logical age */
+				survivalRate,
+				survivalRate, /* baseSurvivalRate same as survivalRate */
+				1.0, /*  ageUnitsInThisGroup - 1 logical age unit */
+				compactGroup);
 		}
 	}
 }
