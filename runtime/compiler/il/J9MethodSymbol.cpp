@@ -34,6 +34,9 @@
  */
 bool J9::MethodSymbol::isPureFunction()
 {
+    if (self()->getRecognizedMethod() >= TR::FirstVectorMethod && self()->getRecognizedMethod() <= TR::LastVectorMethod)
+        return true;
+
     switch (self()->getRecognizedMethod()) {
         case TR::java_lang_Math_abs_I:
         case TR::java_lang_Math_abs_L:
