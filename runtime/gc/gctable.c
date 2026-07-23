@@ -62,6 +62,7 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 #if defined(J9VM_GC_FINALIZATION)
 	j9gc_finalizer_startup,
 	j9gc_finalizer_shutdown,
+	j9gc_gcThreads_shutdown,
 	j9gc_wait_for_reference_processing,
 	runFinalization,
 #endif /* J9VM_GC_FINALIZATION */

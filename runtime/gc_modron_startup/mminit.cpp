@@ -806,20 +806,24 @@ gcShutdownHeapManagement(J9JavaVM *javaVM)
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
 	MM_Collector *globalCollector = extensions->getGlobalCollector();
 
-#if defined(J9VM_GC_FINALIZATION)
-	/* wait for finalizer shutdown */
-	j9gc_finalizer_shutdown(javaVM);
-#endif /* J9VM_GC_FINALIZATION */
-
-	if (extensions->dispatcher) {
-		extensions->dispatcher->shutDownThreads();
-	}
-
 	/* Kickoff shutdown of global collector */
 	if (NULL != globalCollector) {
 		globalCollector->collectorShutdown(extensions);
 	}
 }
+/**
+ * Shutdown GC threads via the dispatcher
+ */
+void
+j9gc_gcThreads_shutdown(J9JavaVM *javaVM)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
+
+	if (extensions->dispatcher) {
+		extensions->dispatcher->shutDownThreads();
+	}
+}
+
 
 /**
  * Free any resources allocated by gcInitializeWithDefaultValues

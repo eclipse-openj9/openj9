@@ -710,6 +710,8 @@ freeJavaVM(J9JavaVM * vm)
 		runShutdownStage(vm, INTERPRETER_SHUTDOWN, NULL, 0);
 	}
 
+	vm->memoryManagerFunctions->gcShutdownHeapManagement(vm);
+
 #if defined(J9VM_OPT_SNAPSHOTS)
 	if (IS_SNAPSHOTTING_ENABLED(vm)) {
 		teardownVMSnapshotImpl(vm);

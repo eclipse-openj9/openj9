@@ -5030,6 +5030,7 @@ typedef struct J9MemoryManagerFunctions {
 #if defined(J9VM_GC_FINALIZATION)
 	int  ( *j9gc_finalizer_startup)(struct J9JavaVM * vm) ;
 	void  ( *j9gc_finalizer_shutdown)(struct J9JavaVM * vm) ;
+	void  ( *j9gc_gcThreads_shutdown)(struct J9JavaVM * vm) ;
 	UDATA ( *j9gc_wait_for_reference_processing)(struct J9JavaVM * vm) ;
 	void  ( *runFinalization)(struct J9VMThread *vmThread) ;
 #endif /* defined(J9VM_GC_FINALIZATION) */
