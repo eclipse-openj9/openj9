@@ -5991,6 +5991,20 @@ shutdownJFRIDs(J9JavaVM *vm);
 void
 jvmUpcallsEagerByteInstrumentation(J9VMThread *currentThread, J9Class *superClass, U_8 *className, U_16 classNameLength, J9ClassLoader *loader, U_8 *classData, UDATA classDataLength, U_8 **newClassData, UDATA *newClassDataLength);
 
+
+/**
+ * Call the JFR transformJFREventClass method to transform the jdk.jfr.Event class.
+ * This removes the final modifier from methods so we can add these methods in subclasses.
+ *
+ * @param currentThread[in] the current J9VMThread
+ * @param classData[in] the class data
+ * @param classDataLength[in] the length of the class data
+ * @param newClassData[out] the transformed class data
+ * @param newClassDataLength[out] the length of the transformed class data
+ */
+void
+jvmUpcallsTransformJFREventClass(J9VMThread *currentThread, U_8 *classData, UDATA classDataLength, U_8 **newClassData, UDATA *newClassDataLength);
+
 /**
  * Call the JFR transform array to list method to transform an array to a list. Current exception will
  * be set if there is a failure.
