@@ -3255,22 +3255,38 @@ jvmtiHookSampledObjectAlloc(J9HookInterface** hook, UDATA eventNum, void* eventD
 		jthread threadRef = NULL;
 		UDATA hadVMAccess = 0;
 		UDATA javaOffloadOldState = 0;
+		J9Class *clazz = data->clazz;
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		BOOLEAN previewEnabled =
+			J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags2,
+				J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW);
+
+		if (previewEnabled
+			&& J9_IS_J9CLASS_VALUETYPE(clazz)
+			&& !j9env->capabilities.can_support_value_objects
+		) {
+			return;
+		}
+#endif  /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 		if (prepareForEvent(j9env, currentThread, currentThread, JVMTI_EVENT_SAMPLED_OBJECT_ALLOC, &threadRef, &hadVMAccess, TRUE, 2, &javaOffloadOldState)) {
 			j9object_t *objectRef = (j9object_t*) currentThread->arg0EA;
 			j9object_t *classRef = (j9object_t*) (currentThread->arg0EA - 1);
 			J9InternalVMFunctions const * const vmFuncs = currentThread->javaVM->internalVMFunctions;
 			jobject jvmtiObject = NULL;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-			BOOLEAN previewEnabled = FALSE;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 			*objectRef = data->object;
-			*classRef = J9VM_J9CLASS_TO_HEAPCLASS(data->clazz);
+			*classRef = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
 			vmFuncs->internalExitVMToJNI(currentThread);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-			previewEnabled = J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW);
-			if (previewEnabled && J9_IS_J9CLASS_VALUETYPE(data->clazz)) {
+			if (previewEnabled && J9_IS_J9CLASS_VALUETYPE(clazz)) {
+				Assert_JVMTI_true(1 == j9env->capabilities.can_support_value_objects);
+				/*
+				 * Value type allocations without the can_support_value_objects
+				 * capability are filtered out earlier, so reaching this point
+				 * implies the capability is enabled.
+				 */
 				jvmtiObject = NULL;
 			} else {
 				jvmtiObject = (jobject)objectRef;
@@ -3335,23 +3351,36 @@ jvmtiHookObjectAllocate(J9HookInterface** hook, UDATA eventNum, void* eventData,
 			jthread threadRef;
 			UDATA hadVMAccess;
 			UDATA javaOffloadOldState = 0;
+			J9Class *clazz = J9OBJECT_CLAZZ(currentThread, data->object);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			BOOLEAN previewEnabled =
+				J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags2,
+					J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW);
+
+			if (previewEnabled
+				&& J9_IS_J9CLASS_VALUETYPE(clazz)
+				&& !j9env->capabilities.can_support_value_objects
+			) {
+				return;
+			}
+#endif  /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 			if (prepareForEvent(j9env, currentThread, currentThread, JVMTI_EVENT_VM_OBJECT_ALLOC, &threadRef, &hadVMAccess, TRUE, 2, &javaOffloadOldState)) {
 				j9object_t * objectRef = (j9object_t*) currentThread->arg0EA;
 				j9object_t * classRef = (j9object_t*) (objectRef - 1);
-				J9Class* clazz;
 				J9JavaVM * vm = currentThread->javaVM;
 				jobject jvmtiObject = NULL;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				BOOLEAN previewEnabled = FALSE;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				*objectRef = data->object;
-				clazz = J9OBJECT_CLAZZ(currentThread, data->object);
 				*classRef = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
 				vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				previewEnabled = J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW);
 				if (previewEnabled && J9_IS_J9CLASS_VALUETYPE(clazz)) {
+					Assert_JVMTI_true(1 == j9env->capabilities.can_support_value_objects);
+					/*
+					 * Value type allocations without the can_support_value_objects
+					 * capability are filtered out earlier, so reaching this point
+					 * implies the capability is enabled.
+					 */
 					jvmtiObject = NULL;
 				} else {
 					jvmtiObject = (jobject)objectRef;
