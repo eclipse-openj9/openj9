@@ -827,8 +827,7 @@ MM_CopyForwardScheme::acquireEmptyRegion(MM_EnvironmentVLHGC *env, MM_ReservedRe
 			Assert_MM_true(newRegion->getReferenceObjectList()->isPhantomListEmpty());
 
 			setRegionAsSurvivor(env, newRegion, true);
-			/* Make sure that all the attributes set are visible to other CPUs, before exposing the region in a globally visible list */
-			MM_AtomicOperations::storeSync();
+
 			insertRegionIntoLockedList(env, regionList, newRegion);
 		} else {
 			/* record that we failed to expand so that we stop trying during this collection */
