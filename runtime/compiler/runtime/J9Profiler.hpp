@@ -39,6 +39,7 @@
 #include "env/VMJ9.h"
 #include "infra/TRlist.hpp"
 #include "runtime/J9ValueProfiler.hpp"
+#include "runtime/J9RuntimeAssumptions.hpp"
 
 #define PROFILING_INVOCATION_COUNT (2)
 
@@ -714,6 +715,20 @@ public:
         _counterDerivationInfo = counterDerivationInfo;
     }
 
+    void addJProfBlockFrequencyCounterPatchSites(TR_JProfBlockFrequencyCounterSites *patchSites)
+    {
+        _jProfilingBlockFrequencyCounterPatchSites = patchSites;
+    }
+
+    TR_JProfBlockFrequencyCounterSites *getJProfBlockFrequencyCounterPatchSites()
+    {
+        return _jProfilingBlockFrequencyCounterPatchSites;
+    }
+
+    void setTimestampDataCollectionStarted(uint64_t timeStamp) { _timeStampWhenDataCollectionStarted = timeStamp; }
+
+    uint64_t getTimestampDataCollectionStarted() { return _timeStampWhenDataCollectionStarted; }
+
     void setEntryBlockNumber(int32_t number) { _entryBlockNumber = number; }
 
     bool isJProfilingData() { return _counterDerivationInfo != NULL; }
@@ -820,6 +835,9 @@ private:
     // Following flag is checked at runtime to know if we have queued this method for recompilation and skip the
     // profiling code
     int32_t _isQueuedForRecompilation;
+    void *_startPCOfBodyCollectingProfilingData;
+    uint64_t _timeStampWhenDataCollectionStarted;
+    TR_JProfBlockFrequencyCounterSites *_jProfilingBlockFrequencyCounterPatchSites;
 };
 
 TR_BlockFrequencyInfo *TR_BlockFrequencyInfo::get(TR_PersistentProfileInfo *profileInfo)
