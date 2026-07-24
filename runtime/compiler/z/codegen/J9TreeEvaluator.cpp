@@ -308,6 +308,8 @@ TR::Register *J9::Z::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, TR
     TR::Register *charArrayReferenceRegister = cg->gprClobberEvaluate(charArrayReferenceNode);
     TR::Register *dstOffRegister = cg->gprClobberEvaluate(dstOffNode);
 
+    cg->generateDebugCounter(
+        TR::DebugCounter::debugCounterName(cg->comp(), "inlineIntrinsicInflate/(%s)", cg->comp()->signature()));
     // Offset to be added to array object pointer to get to the data elements
     int32_t offsetToDataElements = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
 #ifdef J9VM_GC_SPARSE_HEAP_ALLOCATION
@@ -1127,6 +1129,9 @@ TR::Register *J9::Z::TreeEvaluator::inlineVectorizedStringIndexOf(TR::Node *node
     TR::Register *patternValueReg = NULL;
     TR::Register *patternLenReg = cg->gprClobberEvaluate(node->getChild(firstCallArgIdx + 3));
     TR::Register *stringIndexReg = cg->gprClobberEvaluate(node->getChild(firstCallArgIdx + 4));
+
+    cg->generateDebugCounter(
+        TR::DebugCounter::debugCounterName(cg->comp(), "inlineIntrinsicIndexOf/(%s)", cg->comp()->signature()));
 
     // Offset to be added to array object pointer to get to the data elements
     int32_t offsetToDataElements = static_cast<int32_t>(TR::Compiler->om.contiguousArrayHeaderSizeInBytes());

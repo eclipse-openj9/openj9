@@ -3606,11 +3606,13 @@ bool J9::Z::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resul
 
     static const char *enableTRTRE = feGetEnv("TR_enableTRTRE");
     static const bool enableOSW = feGetEnv("TR_noPauseOnSpinWait") == NULL;
-    static const bool enableStringInflateByteToByte = feGetEnv("TR_EnableStringInflateByteToByte") != NULL;
+    static const bool disableStringInflateByteToByte = feGetEnv("TR_DisableStringInflateByteToByte") != NULL;
     static const bool disableStringInflateByteToChar = feGetEnv("TR_DisableStringInflateByteToChar") != NULL;
 
     bool disableCASInlining = !cg->getSupportsInlineUnsafeCompareAndSet();
     bool disableCAEInlining = !cg->getSupportsInlineUnsafeCompareAndExchange();
+
+    static const bool disableStringIntrinsicFlagChk = (feGetEnv("TR_DisableStringIntrinsicFlagChk") != NULL);
 
     switch (methodSymbol->getRecognizedMethod()) {
         case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
@@ -3808,13 +3810,23 @@ bool J9::Z::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resul
             break;
         }
         case TR::java_lang_StringLatin1_inflate_BIBII:
-            if (cg->getSupportsInlineStringLatin1Inflate() && enableStringInflateByteToByte) {
+            if (cg->getSupportsInlineStringLatin1Inflate() && !disableStringInflateByteToByte) {
+#if JAVA_SPEC_VERSION < 25
+                if (!disableStringIntrinsicFlagChk && !node->isSafeForCGToInlineStringIntrinsic()) {
+                    break;
+                }
+#endif /* JAVA_SPEC_VERSION < 25 */
                 resultReg = TR::TreeEvaluator::inlineStringLatin1Inflate(node, cg);
                 return resultReg != NULL;
             }
             break;
         case TR::java_lang_StringLatin1_inflate_BICII:
             if (cg->getSupportsInlineStringLatin1Inflate() && !disableStringInflateByteToChar) {
+#if JAVA_SPEC_VERSION < 25
+                if (!disableStringIntrinsicFlagChk && !node->isSafeForCGToInlineStringIntrinsic()) {
+                    break;
+                }
+#endif /* JAVA_SPEC_VERSION < 25 */
                 resultReg = TR::TreeEvaluator::inlineStringLatin1Inflate(node, cg);
                 return resultReg != NULL;
             }
@@ -3936,10 +3948,22 @@ bool J9::Z::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resul
     if (cg->getSupportsInlineStringIndexOfString()) {
         switch (methodSymbol->getRecognizedMethod()) {
             case TR::java_lang_StringLatin1_indexOf:
+#if JAVA_SPEC_VERSION < 25
+                if (!disableStringIntrinsicFlagChk && !node->isSafeForCGToInlineStringIntrinsic()) {
+                    break;
+                }
+                /* Intentional fallthrough. */
+#endif /* JAVA_SPEC_VERSION < 25 */
             case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringLatin1:
                 resultReg = TR::TreeEvaluator::inlineVectorizedStringIndexOf(node, cg, false);
                 return resultReg != NULL;
             case TR::java_lang_StringUTF16_indexOf:
+#if JAVA_SPEC_VERSION < 25
+                if (!disableStringIntrinsicFlagChk && !node->isSafeForCGToInlineStringIntrinsic()) {
+                    break;
+                }
+                /* Intentional fallthrough. */
+#endif /* JAVA_SPEC_VERSION < 25 */
             case TR::java_lang_StringUTF16_indexOfUnsafe:
             case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringUTF16:
                 resultReg = TR::TreeEvaluator::inlineVectorizedStringIndexOf(node, cg, true);
