@@ -21,7 +21,6 @@
  *******************************************************************************/
 
 /* Includes */
-#include <cstdint>
 #if defined(AIXPPC)
 #include <sys/time.h>
 #endif /* defined(AIXPPC) */
@@ -2926,11 +2925,11 @@ JavaCoreDumpWriter::writeSynchronousCompilationSection(void)
 	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
 	J9JITConfig *jitConfig = _VirtualMachine->jitConfig;
-	if ((NULL == jitConfig) || (NULL == jitConfig->syncCompStats)) {
+	if (NULL == jitConfig) {
 		return;
 	}
 
-	J9JITSyncCompilationStatistics *stats = jitConfig->syncCompStats;
+	J9JITSyncCompilationStatistics &stats = jitConfig->syncCompStats;
 
 	_OutputStream.writeCharacters("0SECTION       Synchronous compilations info dump routine\n");
 	_OutputStream.writeCharacters("NULL           ==============================\n");
@@ -2939,13 +2938,13 @@ JavaCoreDumpWriter::writeSynchronousCompilationSection(void)
 	_OutputStream.writeCharacters("1JITSYNCSTATS  Synchronous Compilation Statistics\n");
 	_OutputStream.writeCharacters("NULL           ------------------------------------------------------------------------\n");
 	_OutputStream.writeCharacters("2JITSYNCCOUNT  Total synchronous compilations: ");
-	_OutputStream.writeInteger(stats->totalCount, "%u");
+	_OutputStream.writeInteger(stats.totalCount, "%u");
 	_OutputStream.writeCharacters("\n");
 	_OutputStream.writeCharacters("2JITTOTALWAIT  Total application wait time: ");
-	_OutputStream.writeInteger64(stats->totalWaitTime, "%llu");
+	_OutputStream.writeInteger64(stats.totalWaitTime, "%llu");
 	_OutputStream.writeCharacters("us\n");
-	for (int32_t i = 0; i < J9_NUM_LONGEST_SYNC_COMP; i++) {
-		J9JITLongestSyncComp &longestWaitMethod = stats->longestWaitMethods[i];
+	for (UDATA i = 0; i < J9_NUM_LONGEST_SYNC_COMP; i++) {
+		J9JITLongestSyncComp &longestWaitMethod = stats.longestWaitMethods[i];
 		if ((0 == longestWaitMethod.waitTime) || (NULL == longestWaitMethod.methodName)) {
 			break;
 		}
@@ -2959,7 +2958,7 @@ JavaCoreDumpWriter::writeSynchronousCompilationSection(void)
 
 		_OutputStream.writeCharacters("3JITENDTIME    Wait time end: ");
 		omrstr_ftime_ex(timeStamp, _MaximumTimeStampLength, "%Y-%m-%dT%H:%M:%S",
-						longestWaitMethod.waitTimeEnd, OMRSTR_FTIME_FLAG_LOCAL);
+				longestWaitMethod.waitTimeEnd, OMRSTR_FTIME_FLAG_LOCAL);
 		timeStamp[_MaximumTimeStampLength] = '\0';
 		_OutputStream.writeCharacters(timeStamp);
 		_OutputStream.writeInteger64(longestWaitMethod.waitTimeEnd % 1000, ".%03llu");
@@ -2974,10 +2973,10 @@ JavaCoreDumpWriter::writeSynchronousCompilationSection(void)
 		_OutputStream.writeCharacters("\n");
 	}
 
-	stats->totalCount = 0;
-	stats->totalWaitTime = 0;
-	for (int32_t i = 0; i < J9_NUM_LONGEST_SYNC_COMP; i++) {
-		J9JITLongestSyncComp &longestWaitMethod = stats->longestWaitMethods[i];
+	stats.totalCount = 0;
+	stats.totalWaitTime = 0;
+	for (UDATA i = 0; i < J9_NUM_LONGEST_SYNC_COMP; i++) {
+		J9JITLongestSyncComp &longestWaitMethod = stats.longestWaitMethods[i];
 		longestWaitMethod.waitTime = 0;
 		longestWaitMethod.waitTimeEnd = 0;
 		if (NULL != longestWaitMethod.methodName) {

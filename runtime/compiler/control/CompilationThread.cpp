@@ -21,7 +21,6 @@
  * Assisted-by: IBM Bob
  *******************************************************************************/
 
-#include <cstdint>
 #define J9_EXTERNAL_TO_VM
 
 #if SOLARIS || AIXPPC || LINUX || OSX
@@ -808,7 +807,6 @@ bool TR::CompilationInfo::createCompilationInfo(J9JITConfig *jitConfig)
         memset(alloc, 0, sizeof(TR::CompilationInfo));
         _compilationRuntime = new (alloc) TR::CompilationInfo(jitConfig);
         jitConfig->compilationRuntime = (void *)_compilationRuntime;
-        jitConfig->syncCompStats = &_compilationRuntime->_syncCompStats;
 #ifdef DEBUG
         if (debug("traceThreadCompile"))
             _compilationRuntime->_traceCompiling = true;
@@ -861,8 +859,9 @@ void TR::CompilationInfo::freeAllResources()
     freeAllCompilationThreads();
 
     PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
+    J9JITSyncCompilationStatistics &syncCompStats = _jitConfig->syncCompStats;
     for (int32_t i = 0; i < J9_NUM_LONGEST_SYNC_COMP; i++) {
-        J9JITLongestSyncComp &longestWaitMethod = _syncCompStats.longestWaitMethods[i];
+        J9JITLongestSyncComp &longestWaitMethod = syncCompStats.longestWaitMethods[i];
         if (longestWaitMethod.methodName != NULL) {
             j9mem_free_memory(longestWaitMethod.methodName);
             longestWaitMethod.methodName = NULL;
@@ -6303,14 +6302,15 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread *vmThread, TR::IlG
         if (!async) {
             uint64_t waitEnd = j9time_hires_clock();
             uint64_t duration = j9time_hires_delta(waitStart, waitEnd, J9PORT_TIME_DELTA_IN_MICROSECONDS);
+            J9JITSyncCompilationStatistics &syncCompStats = _jitConfig->syncCompStats;
 
-            _syncCompStats.totalCount++;
-            _syncCompStats.totalWaitTime += duration;
+            syncCompStats.totalCount++;
+            syncCompStats.totalWaitTime += duration;
 
             /* Obtain index to insert. */
-            int idx = -1;
+            int32_t idx = -1;
             for (int32_t i = 0; i < J9_NUM_LONGEST_SYNC_COMP; i++) {
-                if (_syncCompStats.longestWaitMethods[i].waitTime < duration) {
+                if (syncCompStats.longestWaitMethods[i].waitTime < duration) {
                     idx = i;
                     break;
                 }
@@ -6318,7 +6318,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread *vmThread, TR::IlG
 
             if (0 <= idx) {
                 /* Remove the shortest wait-time. */
-                J9JITLongestSyncComp &lastMethod = _syncCompStats.longestWaitMethods[J9_NUM_LONGEST_SYNC_COMP - 1];
+                J9JITLongestSyncComp &lastMethod = syncCompStats.longestWaitMethods[J9_NUM_LONGEST_SYNC_COMP - 1];
                 if (NULL != lastMethod.methodName) {
                     j9mem_free_memory(lastMethod.methodName);
                     lastMethod.methodName = NULL;
@@ -6328,11 +6328,11 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread *vmThread, TR::IlG
                     lastMethod.threadName = NULL;
                 }
                 for (int32_t i = J9_NUM_LONGEST_SYNC_COMP - 1; i > idx; i--) {
-                    _syncCompStats.longestWaitMethods[i] = _syncCompStats.longestWaitMethods[i - 1];
+                    syncCompStats.longestWaitMethods[i] = syncCompStats.longestWaitMethods[i - 1];
                 }
 
-                _syncCompStats.longestWaitMethods[idx].waitTime = duration;
-                _syncCompStats.longestWaitMethods[idx].waitTimeEnd = j9time_current_time_millis();
+                syncCompStats.longestWaitMethods[idx].waitTime = duration;
+                syncCompStats.longestWaitMethods[idx].waitTimeEnd = j9time_current_time_millis();
 
                 J9UTF8 *className = NULL;
                 J9UTF8 *name = NULL;
@@ -6346,7 +6346,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread *vmThread, TR::IlG
                         J9UTF8_DATA(className), J9UTF8_LENGTH(name), J9UTF8_DATA(name), J9UTF8_LENGTH(signature),
                         J9UTF8_DATA(signature));
                 }
-                _syncCompStats.longestWaitMethods[idx].methodName = templongestWaitMethod;
+                syncCompStats.longestWaitMethods[idx].methodName = templongestWaitMethod;
 
                 const char *threadName = getOMRVMThreadName(vmThread->omrVMThread);
                 uint32_t len = strlen(threadName);
@@ -6354,7 +6354,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread *vmThread, TR::IlG
                 if (NULL != tempThread) {
                     memcpy(tempThread, threadName, len + 1);
                 }
-                _syncCompStats.longestWaitMethods[idx].threadName = tempThread;
+                syncCompStats.longestWaitMethods[idx].threadName = tempThread;
                 releaseOMRVMThreadName(vmThread->omrVMThread);
             }
         }

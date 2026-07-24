@@ -1510,7 +1510,6 @@ public:
 
     struct CompilationStatistics _stats;
     struct CompilationStatsPerInterval _intervalStats;
-    SyncCompilationStatistics _syncCompStats;
     TR_PersistentArray<TR_SignatureCountPair *> *_persistedMethods;
 
     // Must be less than 16 at the JITClient or non-JITServer mode because

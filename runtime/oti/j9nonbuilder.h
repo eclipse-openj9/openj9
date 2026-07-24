@@ -4389,7 +4389,7 @@ typedef struct J9JITLongestSyncComp {
 typedef struct J9JITSyncCompilationStatistics {
 	uint32_t totalCount;
 	uint64_t totalWaitTime; /* microseconds */
-	J9JITLongestSyncComp longestWaitMethods[J9_NUM_LONGEST_SYNC_COMP]; /* sorted in increasing order */
+	J9JITLongestSyncComp longestWaitMethods[J9_NUM_LONGEST_SYNC_COMP]; /* sorted in decreasing order */
 } J9JITSyncCompilationStatistics;
 
 /* @ddr_namespace: map_to_type=J9JITConfig */
@@ -4665,7 +4665,7 @@ typedef struct J9JITConfig {
 	IDATA verboseOutputLevel;
 	omrthread_monitor_t compilationMonitor;
 	void* compilationInfo;
-	J9JITSyncCompilationStatistics *syncCompStats;
+	J9JITSyncCompilationStatistics syncCompStats;
 	void* aotCompilationInfo;
 	void* pseudoTOC;
 	void* i2jTransition;
