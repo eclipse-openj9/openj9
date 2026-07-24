@@ -126,6 +126,32 @@ public:
      */
     TR::LabelSymbol *getDecLabel() { return _decLabel; }
 };
+
+/** \brief
+ *     A special type of helper call snippet that flushes in register arguments to the
+ *     stack before calling the helper
+ */
+class ARM64J9HelperCallSnippet : public TR::ARM64HelperCallSnippet {
+    int32_t _argSize;
+
+public:
+    ARM64J9HelperCallSnippet(TR::CodeGenerator *cg, TR::Node *node, TR::LabelSymbol *snippetlab,
+        TR::SymbolReference *helper, TR::LabelSymbol *restartLabel = NULL, int32_t argSize = -1)
+        : TR::ARM64HelperCallSnippet(cg, node, snippetlab, helper, restartLabel)
+        , _argSize(argSize)
+    {}
+
+    int32_t getSizeOfArguments() { return _argSize; }
+
+    virtual uint8_t *emitSnippetBody();
+
+    virtual uint32_t getLength(int32_t estimatedSnippetStart);
+
+    /**
+     * @brief Prints the Snippet
+     */
+    virtual void print(OMR::Logger *log, TR_Debug *);
+};
 } // namespace TR
 
 #endif

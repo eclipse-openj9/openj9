@@ -56,13 +56,16 @@ static uint8_t *storeArgumentItem(TR::InstOpCode::Mnemonic op, uint8_t *buffer, 
     return buffer + 4;
 }
 
-static uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg)
+uint8_t *TR::ARM64CallSnippet::flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argSize,
+    TR::CodeGenerator *cg)
 {
     uint32_t intArgNum = 0, floatArgNum = 0, offset;
     TR::Machine *machine = cg->machine();
     TR::Linkage *linkage = cg->getLinkage(callNode->getSymbol()->castToMethodSymbol()->getLinkageConvention());
     const TR::ARM64LinkageProperties &linkageProperties = linkage->getProperties();
     int32_t argStart = callNode->getFirstArgumentIndex();
+    if (callNode->isJitDispatchJ9MethodCall(cg->comp()))
+        argStart += 1;
 
     if (linkageProperties.getRightToLeft())
         offset = linkage->getOffsetToFirstParm();
@@ -135,12 +138,14 @@ static uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32
     return buffer;
 }
 
-static int32_t instructionCountForArguments(TR::Node *callNode, TR::CodeGenerator *cg)
+int32_t TR::ARM64CallSnippet::instructionCountForArguments(TR::Node *callNode, TR::CodeGenerator *cg)
 {
     uint32_t intArgNum = 0, floatArgNum = 0, count = 0;
     const TR::ARM64LinkageProperties &linkage
         = cg->getLinkage(callNode->getSymbol()->castToMethodSymbol()->getLinkageConvention())->getProperties();
     int32_t argStart = callNode->getFirstArgumentIndex();
+    if (callNode->isJitDispatchJ9MethodCall(cg->comp()))
+        argStart += 1;
 
     for (int32_t i = argStart; i < callNode->getNumChildren(); i++) {
         TR::Node *child = callNode->getChild(i);
@@ -316,8 +321,10 @@ uint8_t *TR_Debug::printARM64ArgumentsFlush(OMR::Logger *log, TR::Node *callNode
     TR::Linkage *linkage = _cg->getLinkage(callNode->getSymbol()->castToMethodSymbol()->getLinkageConvention());
     const TR::ARM64LinkageProperties &linkageProperties = linkage->getProperties();
     int32_t argStart = callNode->getFirstArgumentIndex();
-    TR::RealRegister *stackPtr = _cg->getStackPointerRegister();
+    if (callNode->isJitDispatchJ9MethodCall(_cg->comp()))
+        argStart += 1;
 
+    TR::RealRegister *stackPtr = _cg->getStackPointerRegister();
     if (linkageProperties.getRightToLeft())
         offset = linkage->getOffsetToFirstParm();
     else
