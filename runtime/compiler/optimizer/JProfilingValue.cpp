@@ -40,7 +40,7 @@
 
 /**
  * Get the operation for direct store for a type.
- * Its not possible to reuse existing methods, as they may
+ * It's not possible to reuse existing methods, as they may
  * widen the operation.
  *
  * \param The datatype to support.
@@ -66,7 +66,7 @@ TR::ILOpCodes directStore(TR::DataType dt)
 
 /**
  * Get the operation for indirect store for a type.
- * Its not possible to reuse existing methods, as they may
+ * It's not possible to reuse existing methods, as they may
  * widen the operation.
  *
  * \param The datatype to support.
@@ -92,7 +92,7 @@ TR::ILOpCodes indirectStore(TR::DataType dt)
 
 /**
  * Get the operation for indirect load for a type.
- * Its not possible to reuse existing methods, as they may
+ * It's not possible to reuse existing methods, as they may
  * widen the operation.
  *
  * \param The datatype to support.
@@ -118,7 +118,7 @@ TR::ILOpCodes indirectLoad(TR::DataType dt)
 
 /**
  * Get the operation for const for a type.
- * Its not possible to reuse existing methods, as they may
+ * It's not possible to reuse existing methods, as they may
  * widen the operation.
  *
  * \param The datatype to support.
@@ -167,21 +167,29 @@ int32_t TR_JProfilingValue::perform()
         return 0;
     }
 
-    cleanUpAndAddProfilingCandidates();
+    TR::list<TR::TreeTop *, TR::Region &> valueProfilingPlaceHolderCalls(comp()->trMemory()->currentStackRegion());
+
+    cleanUpAndAddProfilingCandidates(valueProfilingPlaceHolderCalls);
     if (trace())
         comp()->dumpMethodTrees(log, "After Cleaning up Trees");
-    lowerCalls();
+    lowerCalls(valueProfilingPlaceHolderCalls);
 
     if (comp()->isProfilingCompilation()) {
         TR::Recompilation *recomp = comp()->getRecompilationInfo();
         TR_ValueProfiler *profiler = recomp->getValueProfiler();
-        TR_ASSERT(profiler, "Recompilation should have a ValueProfiler in a profiling compilation");
+        TR_ASSERT_FATAL(profiler != NULL, "Recompilation should have a ValueProfiler in a profiling compilation");
+        // If it is a profiling compilation and optimizer found a value
+        // profiling candidate post lowering value profiling calls, then
+        // optimizer can decide to call the routine to insert the trees directly
+        // instead of generating place holder calls. This decision can be driven
+        // by checking the post lowering flag.
         profiler->setPostLowering();
     }
     return 1;
 }
 
-void TR_JProfilingValue::cleanUpAndAddProfilingCandidates()
+void TR_JProfilingValue::cleanUpAndAddProfilingCandidates(
+    TR::list<TR::TreeTop *, TR::Region &> &valueProfilingPlaceHolderCalls)
 {
     TR::TreeTop *cursor = comp()->getStartTree();
     TR_BitVector *alreadyProfiledValues = new (comp()->trStackMemory()) TR_BitVector();
@@ -210,32 +218,27 @@ void TR_JProfilingValue::cleanUpAndAddProfilingCandidates()
 
                 if ((alreadyProfiledValues->isSet(value->getGlobalIndex()) || value->getOpCode().isLoadConst())
                     && performTransformation(comp(), "%s Removing profiling treetop, node n%dn is already profiled\n",
-                        optDetailString(), value->getGlobalIndex()))
-                /* Found that second and third child were having more than one ref counts.
-                TR_ASSERT_FATAL(node->getFirstChild()->getSecondChild()->getReferenceCount() == 1 &&
-                      node->getFirstChild()->getThirdChild()->getReferenceCount() == 1,
-                      "Second and Third Child of the value calls should be referenced only once");
-                */
-                {
+                        optDetailString(), value->getGlobalIndex())) {
                     TR::TransformUtil::removeTree(comp(), cursor);
                 } else {
                     alreadyProfiledValues->set(value->getGlobalIndex());
+                    valueProfilingPlaceHolderCalls.push_back(cursor);
                 }
             }
         }
-        // Emptying a bit vector after scanning whole extended basic blocks will keep number of bits set in bit vector
-        // low.
+        // Emptying a bit vector after scanning whole extended basic blocks will
+        // keep number of bits set in bit vector low.
         else if (node->getOpCodeValue() == TR::BBStart && !node->getBlock()->isExtensionOfPreviousBlock()) {
             alreadyProfiledValues->empty();
         } else {
-            performOnNode(node, cursor, alreadyProfiledValues, &checklist);
+            performOnNode(node, cursor, alreadyProfiledValues, &checklist, valueProfilingPlaceHolderCalls);
         }
         cursor = nextTT;
     }
 }
 
 void TR_JProfilingValue::performOnNode(TR::Node *node, TR::TreeTop *cursor, TR_BitVector *alreadyProfiledValues,
-    TR::NodeChecklist *checklist)
+    TR::NodeChecklist *checklist, TR::list<TR::TreeTop *, TR::Region &> &valueProfilingPlaceHolderCalls)
 {
     if (checklist->contains(node))
         return;
@@ -295,18 +298,19 @@ void TR_JProfilingValue::performOnNode(TR::Node *node, TR::TreeTop *cursor, TR_B
         call->setAndIncChild(1, TR::Node::aconst(bciNode, (uintptr_t)info));
         TR::TreeTop *callTree = TR::TreeTop::create(comp(), preceedingTT, TR::Node::create(TR::treetop, 1, call));
         callTree->getNode()->setIsProfilingCode();
+        valueProfilingPlaceHolderCalls.push_back(callTree);
     }
 
     for (int i = 0; i < node->getNumChildren(); ++i)
-        performOnNode(node->getChild(i), cursor, alreadyProfiledValues, checklist);
+        performOnNode(node->getChild(i), cursor, alreadyProfiledValues, checklist, valueProfilingPlaceHolderCalls);
 }
 
-void TR_JProfilingValue::lowerCalls()
+void TR_JProfilingValue::lowerCalls(TR::list<TR::TreeTop *, TR::Region &> &valueProfilingPlaceHolderCalls)
 {
     TR::TreeTop *cursor = comp()->getStartTree();
     bool stopProfiling = false;
-    TR_BitVector *backwardAnalyzedAddressNodesToCheck = new (comp()->trStackMemory()) TR_BitVector();
-    while (cursor) {
+    for (auto iter = valueProfilingPlaceHolderCalls.begin(); iter != valueProfilingPlaceHolderCalls.end(); ++iter) {
+        TR::TreeTop *cursor = (*iter);
         TR::Node *node = cursor->getNode();
         TR::TreeTop *nextTreeTop = cursor->getNextTreeTop();
         int32_t ipMax = comp()->maxInternalPointers() / 2;
@@ -319,75 +323,37 @@ void TR_JProfilingValue::lowerCalls()
         if (!stopProfiling && (comp()->getSymRefTab()->getNumInternalPointers() >= ipMax))
             stopProfiling = true;
 
-        if (node->isProfilingCode() && node->getOpCodeValue() == TR::treetop
-            && node->getFirstChild()->getOpCode().isCall()
-            && (comp()->getSymRefTab()->isNonHelper(node->getFirstChild()->getSymbolReference(),
-                    TR::SymbolReferenceTable::jProfileValueSymbol)
-                || comp()->getSymRefTab()->isNonHelper(node->getFirstChild()->getSymbolReference(),
-                    TR::SymbolReferenceTable::jProfileValueWithNullCHKSymbol))) {
-            // Backward Analysis in the extended basic block to get list of address nodes
-            for (TR::TreeTop *iter = cursor->getPrevTreeTop(); iter
-                 && (iter->getNode()->getOpCodeValue() != TR::BBStart
-                     || iter->getNode()->getBlock()->isExtensionOfPreviousBlock());
-                 iter = iter->getPrevTreeTop()) {
-                TR::Node *currentTreeTopNode = iter->getNode();
-                if (currentTreeTopNode->getNumChildren() >= 1
-                    && currentTreeTopNode->getFirstChild()->getType() == TR::Address)
-                    backwardAnalyzedAddressNodesToCheck->set(currentTreeTopNode->getFirstChild()->getGlobalIndex());
-            }
-            // Forward walk to check for compressedref anchors of any evaluated address nodes identified above
-            for (TR::TreeTop *iter = cursor->getNextTreeTop(); iter
-                 && (iter->getNode()->getOpCodeValue() != TR::BBStart
-                     || iter->getNode()->getBlock()->isExtensionOfPreviousBlock());
-                 iter = iter->getNextTreeTop()) {
-                TR::Node *currentTreeTopNode = iter->getNode();
-                if (currentTreeTopNode->getOpCodeValue() == TR::compressedRefs
-                    && backwardAnalyzedAddressNodesToCheck->isSet(
-                        currentTreeTopNode->getFirstChild()->getGlobalIndex())) {
-                    dumpOptDetails(comp(),
-                        "%s Moving treetop node n%dn above the profiling call to avoid uncommoning\n",
-                        optDetailString(), iter->getNode()->getGlobalIndex());
-                    iter->unlink(false);
-                    cursor->insertBefore(iter);
-                }
-            }
-
-            backwardAnalyzedAddressNodesToCheck->empty();
-
-            if (!stopProfiling) {
-                TR::Node *child = node->getFirstChild();
-                dumpOptDetails(comp(), "%s Replacing profiling placeholder n%dn with value profiling trees\n",
-                    optDetailString(), child->getGlobalIndex());
-                // Extract the arguments and add the profiling trees
-                TR::Node *value = child->getFirstChild();
-                TR_AbstractHashTableProfilerInfo *table
-                    = (TR_AbstractHashTableProfilerInfo *)child->getSecondChild()->getAddress();
-                bool needNullTest = comp()->getSymRefTab()->isNonHelper(child->getSymbolReference(),
-                    TR::SymbolReferenceTable::jProfileValueWithNullCHKSymbol);
-                addProfilingTrees(comp(), cursor, value, table, child, needNullTest, true, trace());
-                // Remove the original trees and continue from the tree after the profiling
-            } else {
-                // Need to anchor the value node before the helper call node is removed.
-                // Otherwise, the child value node could be currently anchored under the
-                // helper call node. When the helper call node is removed, the value node
-                // will be moved down and anchored where the next reference is.
-                // It will be a problem if there is a store into this value between the helper
-                // call node and the next reference. After the helper call node is removed,
-                // the reference will load the updated value instead of the original value.
-                //
-                TR::Node *child = node->getFirstChild();
-                TR::Node *value = child->getFirstChild();
-                dumpOptDetails(comp(), "%s Anchoring n%dn before cursor n%dn is removed\n", optDetailString(),
-                    value->getGlobalIndex(), cursor->getNode()->getGlobalIndex());
-
-                cursor->insertAfter(TR::TreeTop::create(comp(), TR::Node::create(TR::treetop, 1, value)));
-            }
-
-            TR::TransformUtil::removeTree(comp(), cursor);
-            if (trace())
-                comp()->dumpMethodTrees(comp()->log(), "After Adding Profiling Trees");
+        if (!stopProfiling) {
+            TR::Node *child = node->getFirstChild();
+            // Extract the arguments and add the profiling trees
+            TR::Node *value = child->getFirstChild();
+            TR_AbstractHashTableProfilerInfo *table
+                = (TR_AbstractHashTableProfilerInfo *)child->getSecondChild()->getAddress();
+            bool needNullTest = comp()->getSymRefTab()->isNonHelper(child->getSymbolReference(),
+                TR::SymbolReferenceTable::jProfileValueWithNullCHKSymbol);
+            dumpOptDetails(comp(),
+                "%s Replacing profiling placeholder n%dn with value profiling trees, needNullTest = %s\n",
+                optDetailString(), child->getGlobalIndex(), needNullTest ? "true" : "false");
+            addProfilingTrees(comp(), cursor, value, table, child, needNullTest, true, trace());
+        } else {
+            // Need to anchor the value node before the helper call node is removed.
+            // Otherwise, the child value node could be currently anchored under the
+            // helper call node. When the helper call node is removed, the value node
+            // will be moved down and anchored where the next reference is.
+            // It will be a problem if there is a store into this value between the helper
+            // call node and the next reference. After the helper call node is removed,
+            // the reference will load the updated value instead of the original value.
+            //
+            TR::Node *child = node->getFirstChild();
+            TR::Node *value = child->getFirstChild();
+            dumpOptDetails(comp(), "%s Anchoring n%dn before cursor n%dn is removed\n", optDetailString(),
+                value->getGlobalIndex(), cursor->getNode()->getGlobalIndex());
+            cursor->insertAfter(TR::TreeTop::create(comp(), TR::Node::create(TR::treetop, 1, value)));
         }
-        cursor = nextTreeTop;
+
+        TR::TransformUtil::removeTree(comp(), cursor);
+        if (trace())
+            comp()->dumpMethodTrees(comp()->log(), "After Adding Profiling Trees");
     }
 }
 
@@ -553,57 +519,169 @@ bool TR_JProfilingValue::addProfilingTrees(TR::Compilation *comp, TR::TreeTop *i
      */
     if (bciNode == NULL)
         bciNode = value;
+    logprintf(trace, log, "\t\tProfiling value = n%dn, bciNode = n%dn\n", value->getGlobalIndex(),
+        bciNode->getGlobalIndex());
+
     /********************* mainline Return Block *********************/
     TR::Block *mainlineReturn = originalBlock->splitPostGRA(insertionPoint->getNextTreeTop(), cfg, true, NULL);
+    logprintf(trace, log, "\t\tOriginal Block = block_%d, mainlineReturn = block_%d\n", originalBlock->getNumber(),
+        mainlineReturn->getNumber());
 
-    TR::Node *origBlockGlRegDeps = originalBlock->getExit()->getNode()->getNumChildren() == 1
+    // For short-lived high opt profiling compilations, insert profiling trees
+    // in mainline as these methods are expected to be shortlived and profiling
+    // code is expected to be executed.
+    // For method bodies compiled at cold / warm with the capability of patching
+    // the body to turn off profiling, profiling trees should reside in the cold
+    // blocks so that if profiling is turned off - there is minimal penalty of
+    // having profiling trees.
+    bool generateProfilingTreesInMainline = comp->isProfilingCompilation();
+
+    TR::Node *origBlockExitGlRegDeps = originalBlock->getExit()->getNode()->getNumChildren() == 1
         ? originalBlock->getExit()->getNode()->getFirstChild()
         : NULL;
-    logprintf(trace, log, "\t\t\tUsing split mainline return block = %d\n", mainlineReturn->getNumber());
-    TR::Node *profilingValue = value;
-    /*
-     * Look if profiling value is stored into a register (In case of post GRA split) or temp slot by splitter while
-     * uncommoning. If value being profiled is referenced after the main split point, we should have stored it in either
-     * register or temp slot via splitPostGRA. Change the profiling node with the node that stores the value before
-     * adding any new trees. This will be used for the helper call.
-     */
-    for (TR::TreeTop *iterTT = insertionPoint->getNextTreeTop(); iterTT->getNode()->getOpCodeValue() != TR::BBEnd;
-         iterTT = iterTT->getNextTreeTop()) {
-        // Looking to find a node whose child if profiled value.
-        TR::Node *ttNode = iterTT->getNode();
-        if (ttNode->getOpCode().isStoreDirectOrReg() && ttNode->getFirstChild() == value) {
-            profilingValue = ttNode;
-            break;
+
+    TR::Node *mainlineReturnEntryGlRegDeps
+        = origBlockExitGlRegDeps != NULL ? mainlineReturn->getEntry()->getNode()->getFirstChild() : NULL;
+
+    TR::Node *profilingValue = generateProfilingTreesInMainline ? value : NULL;
+
+    int32_t childRegDepIndexForProfilingValue = -1;
+
+    // Check if the block splitter found the global register to store the value to be profiled.
+    if (origBlockExitGlRegDeps != NULL) {
+        for (auto childIndex = 0; childIndex < origBlockExitGlRegDeps->getNumChildren(); ++childIndex) {
+            TR::Node *child = origBlockExitGlRegDeps->getChild(childIndex);
+
+            while (child->getOpCodeValue() == TR::PassThrough) {
+                child = child->getFirstChild();
+            }
+            if (child == value) {
+                childRegDepIndexForProfilingValue = childIndex;
+                logprintf(trace, log, "\t\tValue to be profiled stored in global register = GlRegDepIndex = %d\n",
+                    childRegDepIndexForProfilingValue);
+                break;
+            }
         }
     }
-    logprintf(trace, log, "\t\t\tProfiling value n%dn\n", profilingValue->getGlobalIndex());
 
-    TR::Block *iter = originalBlock;
-    TR::TreeTop *lastBranchToMainlineReturnTT = NULL;
+    TR::SymbolReference *storeProfileValueSymRef = NULL;
+    // Block splitter could not find a global register to store the value to be
+    // profiled, the store node post insertion point to see if we have stored
+    // the value in temp slot.
+    // Block splitter creates a new temp slot and inserts the store nodes
+    // (RegStore / direct store) after the insertion point
+    if (childRegDepIndexForProfilingValue == -1) {
+        for (TR::TreeTopIterator iter(insertionPoint->getNextTreeTop(), comp); iter != originalBlock->getExit();
+             ++iter) {
+            TR::Node *currentNode = iter.currentNode();
+            if (currentNode->getOpCode().isStoreDirect() && currentNode->getFirstChild() == value) {
+                storeProfileValueSymRef = currentNode->getSymbolReference();
+                break;
+            }
+        }
+        // If we still can not find the value to be profiled stored in register
+        // or temp slot, create a new temp slot through storeNode function.
+        // This is rare, but can happen if the value to be profiled is constant.
+        if (storeProfileValueSymRef == NULL) {
+            TR::TreeTop *storeValueTT = TR::TreeTop::create(comp, storeNode(comp, value, storeProfileValueSymRef));
+            originalBlock->append(storeValueTT);
+        }
+    }
 
-    static bool disableJProfilingRecompQueueTest
-        = (feGetEnv("TR_DontGenerateJProfilingRecompQueueTestJProfilingValue") != NULL);
+    TR::Node *profilingCodeGuardNode = NULL;
+    TR::Node *glRegDepsToCopyInProfilingCodeBranches = NULL;
+    TR::Node *glRegDepsToCopyInProfilingCodeExit = NULL;
+    TR::Block *mergeBlockForProfilingCode = NULL;
+    TR::Block *profilingCodeBlock = NULL;
+    TR::TreeTop *lastTreeTop = comp->getMethodSymbol()->getLastTreeTop();
 
-    /* Adding a test to see if still need to profile value or can skip profiling */
-    if (comp->isProfilingCompilation() && !disableJProfilingRecompQueueTest) {
+    if (generateProfilingTreesInMainline) {
+        profilingCodeBlock = originalBlock->split(originalBlock->getExit(), cfg);
+        profilingCodeBlock->setIsExtensionOfPreviousBlock();
+        mergeBlockForProfilingCode = mainlineReturn;
+        glRegDepsToCopyInProfilingCodeBranches = origBlockExitGlRegDeps;
+        // In case of the hot/very-hot profiling compilations, if the method is
+        // queued for recompilation, turn-off the profiling data collection to
+        // minimize disturbance with the recompilations that is consuming this
+        // data. profilingCodeGuardNode in such case is the test to check if
+        // method is queued for recompilation.
+        // TODO: Instead of doing a test, evaluate if patching the guard node
+        // with unconditional jump which avoids memory load and test is
+        // beneficial here.
+        static bool disableJProfilingRecompQueueTest
+            = (feGetEnv("TR_DontGenerateJProfilingRecompQueueTestJProfilingValue") != NULL);
+        if (!disableJProfilingRecompQueueTest) {
+            TR_PersistentProfileInfo *profileInfo = comp->getRecompilationInfo()->findOrCreateProfileInfo();
+            TR_BlockFrequencyInfo *bfi = TR_BlockFrequencyInfo::get(profileInfo);
+            if (bfi != NULL) {
+                TR::Node *loadIsQueuedForRecompilation = TR::Node::createWithSymRef(bciNode, TR::iload, 0,
+                    comp->getSymRefTab()->createKnownStaticDataSymbolRef(bfi->getIsQueuedForRecompilation(),
+                        TR::Int32));
+                profilingCodeGuardNode = TR::Node::createif(TR::ificmpeq, loadIsQueuedForRecompilation,
+                    TR::Node::iconst(bciNode, -1), mainlineReturn->getEntry());
+            }
+        }
+    } else {
+        // Trees are inserted at the end of the code, marked cold.
+        // TODO: For cold/warm compiltions with profiling code, currently a
+        // guard node checks if enableJProfiling flag in the BlockFrequencyInfo
+        // is set or not. When the patching mechanism is added with the runtime
+        // assumptions to allow both ways patching, this guard will be changed
+        // to patchable guard.
+        profilingCodeBlock = TR::Block::createEmptyBlock(comp, MAX_COLD_BLOCK_COUNT + 1);
+        cfg->addNode(profilingCodeBlock);
+        lastTreeTop->join(profilingCodeBlock->getEntry());
+        cfg->addEdge(originalBlock, profilingCodeBlock);
+        mergeBlockForProfilingCode = profilingCodeBlock->split(profilingCodeBlock->getExit(), cfg);
+        lastTreeTop = mergeBlockForProfilingCode->getExit();
+        cfg->addEdge(mergeBlockForProfilingCode, mainlineReturn);
+        TR::Node *gotoMainlineNode = TR::Node::create(bciNode, TR::Goto, 0, mainlineReturn->getEntry());
+        TR::TreeTop *gotoMainlineTT
+            = TR::TreeTop::create(comp, mergeBlockForProfilingCode->getEntry(), gotoMainlineNode);
+        if (mainlineReturnEntryGlRegDeps != NULL) {
+            glRegDepsToCopyInProfilingCodeBranches = mainlineReturnEntryGlRegDeps->duplicateTree();
+            profilingCodeBlock->getEntry()->getNode()->addChildren(&glRegDepsToCopyInProfilingCodeBranches, 1);
+            TR::Node *glRegDepsToAttach = copyGlRegDeps(comp, glRegDepsToCopyInProfilingCodeBranches);
+            profilingValue = childRegDepIndexForProfilingValue != -1
+                ? glRegDepsToCopyInProfilingCodeBranches->getChild(childRegDepIndexForProfilingValue)
+                : NULL;
+            TR::Node *glRegDepsForMergeBlock = glRegDepsToCopyInProfilingCodeBranches->duplicateTree();
+            mergeBlockForProfilingCode->getEntry()->getNode()->addChildren(&glRegDepsForMergeBlock, 1);
+            glRegDepsForMergeBlock = copyGlRegDeps(comp, glRegDepsForMergeBlock);
+            gotoMainlineNode->addChildren(&glRegDepsForMergeBlock, 1);
+        }
+
+        if (profilingValue == NULL) {
+            TR_ASSERT_FATAL_WITH_NODE(value, storeProfileValueSymRef != NULL,
+                "Value node must be stored in register of temp slot before split point");
+            profilingValue = TR::Node::createLoad(bciNode, storeProfileValueSymRef);
+        }
+
         TR_PersistentProfileInfo *profileInfo = comp->getRecompilationInfo()->findOrCreateProfileInfo();
         TR_BlockFrequencyInfo *bfi = TR_BlockFrequencyInfo::get(profileInfo);
         if (bfi != NULL) {
-            TR::Node *loadIsQueuedForRecompilation = TR::Node::createWithSymRef(bciNode, TR::iload, 0,
-                comp->getSymRefTab()->createKnownStaticDataSymbolRef(bfi->getIsQueuedForRecompilation(), TR::Int32));
-            TR::Node *checkIfQueueForRecompilation = TR::Node::createif(TR::ificmpeq, loadIsQueuedForRecompilation,
-                TR::Node::iconst(bciNode, -1), mainlineReturn->getEntry());
-            TR::TreeTop *checkIfNeedToProfileValue = TR::TreeTop::create(comp, checkIfQueueForRecompilation);
-            iter->append(checkIfNeedToProfileValue);
-            if (origBlockGlRegDeps != NULL) {
-                TR::Node *exitGlRegDeps = copyGlRegDeps(comp, origBlockGlRegDeps);
-                checkIfQueueForRecompilation->addChildren(&exitGlRegDeps, 1);
-            }
-            lastBranchToMainlineReturnTT = checkIfNeedToProfileValue;
-            logprintf(trace, log, "\t\t\tCheck if queued for recompilation test performed in block_%d: n%dn\n",
-                iter->getNumber(), checkIfQueueForRecompilation->getGlobalIndex());
+            TR::Node *loadIsJProfilingEnabled = TR::Node::createWithSymRef(bciNode, TR::iload, 0,
+                comp->getSymRefTab()->createKnownStaticDataSymbolRef(bfi->getEnableJProfilingRecompilation(),
+                    TR::Int32));
+            profilingCodeGuardNode = TR::Node::createif(TR::ificmpeq, loadIsJProfilingEnabled,
+                TR::Node::iconst(bciNode, -1), profilingCodeBlock->getEntry());
         }
     }
+
+    // Insert the profiling code guard node
+    if (profilingCodeGuardNode != NULL) {
+        TR::TreeTop *profilingCodeGuardTT = TR::TreeTop::create(comp, profilingCodeGuardNode);
+        originalBlock->append(profilingCodeGuardTT);
+        if (origBlockExitGlRegDeps != NULL) {
+            TR::Node *profilingCodeGuardNodeGlRegDeps = copyGlRegDeps(comp, origBlockExitGlRegDeps);
+            profilingCodeGuardNode->addChildren(&profilingCodeGuardNodeGlRegDeps, 1);
+        }
+        cfg->addEdge(originalBlock, mainlineReturn);
+        logprintf(trace, log, "\t\tGuard node for profiling code = n%dn\n", profilingCodeGuardNode->getGlobalIndex());
+    }
+
+    TR::Block *iter = profilingCodeBlock;
+    TR::Node *actualValueToTest = profilingValue;
 
     /* In case profiling vft , need to do null test for the object. */
     if (addNullCheck) {
@@ -615,30 +693,25 @@ bool TR_JProfilingValue::addProfilingTrees(TR::Compilation *comp, TR::TreeTop *i
          * add the null test to guard the profiling, as due to other optimizations it might be possible that VFT load is
          * uncommoned and converted to load from the temp slot or register.
          */
-        TR::Node *nullTest
-            = TR::Node::createif(TR::ifacmpeq, value, TR::Node::aconst(bciNode, 0), mainlineReturn->getEntry());
-        TR::TreeTop *nullTestTree = TR::TreeTop::create(comp, nullTest);
-        iter->append(nullTestTree);
-        if (lastBranchToMainlineReturnTT != NULL) {
-            TR::Block *temp = iter->split(nullTestTree, cfg, false, true);
-            temp->setIsExtensionOfPreviousBlock();
-            cfg->addEdge(iter, mainlineReturn);
-            iter = temp;
+        TR::Node *nullTest = TR::Node::createif(TR::ifacmpeq, profilingValue, TR::Node::aconst(bciNode, 0),
+            mergeBlockForProfilingCode->getEntry());
+        if (glRegDepsToCopyInProfilingCodeBranches != NULL) {
+            TR::Node *glRegDepsToAttach = copyGlRegDeps(comp, glRegDepsToCopyInProfilingCodeBranches);
+            nullTest->addChildren(&glRegDepsToAttach, 1);
         }
-        if (origBlockGlRegDeps != NULL) {
-            TR::Node *exitGlRegDeps = copyGlRegDeps(comp, origBlockGlRegDeps);
-            nullTest->addChildren(&exitGlRegDeps, 1);
-        }
-        lastBranchToMainlineReturnTT = nullTestTree;
-        logprintf(trace, log, "\t\t\tNull test performed in block_%d\n", iter->getNumber());
-    }
-
-    /********************* quickTest Block *********************/
-    TR::Node *actualValueToTest = value;
-    if (addNullCheck) {
-        actualValueToTest = TR::Node::createWithSymRef(bciNode, TR::aloadi, 1, value,
+        TR::TreeTop *nullTestTT = TR::TreeTop::create(comp, nullTest);
+        iter->append(nullTestTT);
+        cfg->addEdge(iter, mergeBlockForProfilingCode);
+        logprintf(trace, log, "\t\tAdding NullTest in block_%d\n", iter->getNumber());
+        iter = iter->split(nullTestTT->getNextTreeTop(), cfg);
+        iter->setIsExtensionOfPreviousBlock();
+        actualValueToTest = TR::Node::createWithSymRef(bciNode, TR::aloadi, 1, profilingValue,
             comp->getSymRefTab()->findOrCreateVftSymbolRef());
     }
+    logprintf(trace, log, "Actual Value Node used in the profiling trees = n%dn\n",
+        actualValueToTest->getGlobalIndex());
+
+    /********************* quickTest Block *********************/
 
     TR::Node *quickTestValue = convertType(actualValueToTest, roundedType);
     TR::Node *address = TR::Node::aconst(bciNode, table->getBaseAddress());
@@ -657,21 +730,13 @@ bool TR_JProfilingValue::addProfilingTrees(TR::Compilation *comp, TR::TreeTop *i
     TR::TreeTop *incIndexTreeTop = TR::TreeTop::create(comp, TR::Node::create(TR::treetop, 1, selectNode));
     iter->append(incIndexTreeTop);
 
-    TR::Block *quickTestBlock = iter->split(incIndexTreeTop, cfg, false, true);
-    quickTestBlock->setIsExtensionOfPreviousBlock();
-    if (lastBranchToMainlineReturnTT != NULL) {
-        cfg->addEdge(iter, mainlineReturn);
-    }
-    logprintf(trace, log, "\t\t\tQuick Test to check if value is already being profiled is in block_%d\n",
-        quickTestBlock->getNumber());
-
     TR::Node *checkIfTableIsLockedNode = TR::Node::create(bciNode, comp->il.opCodeForCompareGreaterOrEquals(lockType),
         2, lock, TR::Node::sconst(bciNode, 0));
     TR::Node *checkNode = TR::Node::createif(TR::ificmpeq,
         TR::Node::create(bciNode, TR::ior, 2, conditionNode, checkIfTableIsLockedNode), TR::Node::iconst(0));
-    if (origBlockGlRegDeps != NULL) {
-        TR::Node *exitGlRegDeps = copyGlRegDeps(comp, origBlockGlRegDeps);
-        checkNode->addChildren(&exitGlRegDeps, 1);
+    if (glRegDepsToCopyInProfilingCodeBranches != NULL) {
+        TR::Node *glRegDepsToAttach = copyGlRegDeps(comp, glRegDepsToCopyInProfilingCodeBranches);
+        checkNode->addChildren(&glRegDepsToAttach, 1);
     }
     TR::TreeTop *checkNodeTreeTop = TR::TreeTop::create(comp, incIndexTreeTop, checkNode);
 
@@ -681,118 +746,57 @@ bool TR_JProfilingValue::addProfilingTrees(TR::Compilation *comp, TR::TreeTop *i
     TR::TreeTop *incTree = TR::TreeTop::create(comp, checkNodeTreeTop,
         incrementMemory(comp, counterType,
             effectiveAddress(counterType, counterBaseAddress, convertType(selectNode, systemType, true))));
-    TR::Block *quickInc = quickTestBlock->split(incTree, cfg, false, true);
-    quickInc->setIsExtensionOfPreviousBlock();
-    logprintf(trace, log, "\t\t\tQuick increment performed in block_%d\n", quickInc->getNumber());
+    TR::Block *quickTestBlock = iter;
+    iter = iter->split(incTree, cfg);
+    iter->setIsExtensionOfPreviousBlock();
+    logprintf(trace, log, "\t\tQuick Test in block_%d and trees to increment table in block_%d\n",
+        quickTestBlock->getNumber(), iter->getNumber());
 
     /********************* helper call block *********************/
-    TR::TreeTop *lastTreeTop = comp->getMethodSymbol()->getLastTreeTop();
     TR::Block *helper = TR::Block::createEmptyBlock(comp, MAX_COLD_BLOCK_COUNT + 1);
     helper->setIsCold();
     lastTreeTop->join(helper->getEntry());
     lastTreeTop = helper->getExit();
     cfg->addNode(helper);
     cfg->addEdge(quickTestBlock, helper);
-    cfg->addEdge(helper, mainlineReturn);
+    cfg->addEdge(helper, mergeBlockForProfilingCode);
     checkNode->setBranchDestination(helper->getEntry());
 
-    TR::Node *glRegDepsOfMainlineEntry = mainlineReturn->getEntry()->getNode()->getNumChildren() == 1
-        ? mainlineReturn->getEntry()->getNode()->getFirstChild()
-        : NULL;
     TR::Node *valueChildOfHelperCall = NULL;
-    TR::Node *goToMainlineNode = TR::Node::create(bciNode, TR::Goto, 0, mainlineReturn->getEntry());
-    TR::TreeTop::create(comp, helper->getEntry(), goToMainlineNode);
+    TR::Node *gotoMergeBlockNode = TR::Node::create(bciNode, TR::Goto, 0, mergeBlockForProfilingCode->getEntry());
+    TR::TreeTop::create(comp, helper->getEntry(), gotoMergeBlockNode);
 
-    if (glRegDepsOfMainlineEntry != NULL) {
-        // Copying GlRegDeps of the Mainline Entry block to the helper block.
-        TR::Node *duplicateGlRegDeps = glRegDepsOfMainlineEntry->duplicateTree();
-        helper->getEntry()->getNode()->setNumChildren(1);
-        helper->getEntry()->getNode()->setAndIncChild(0, duplicateGlRegDeps);
-        TR::Node *origDuplicateGlRegDeps = duplicateGlRegDeps;
-        duplicateGlRegDeps = TR::Node::copy(duplicateGlRegDeps);
-
-        for (int32_t i = origDuplicateGlRegDeps->getNumChildren() - 1; i >= 0; --i) {
-            TR::Node *dep = origDuplicateGlRegDeps->getChild(i);
-            duplicateGlRegDeps->setAndIncChild(i, dep);
+    if (mergeBlockForProfilingCode->getEntry()->getNode()->getNumChildren() == 1) {
+        TR::Node *helperCallBlockGlRegDeps
+            = mergeBlockForProfilingCode->getEntry()->getNode()->getFirstChild()->duplicateTree();
+        helper->getEntry()->getNode()->addChildren(&helperCallBlockGlRegDeps, 1);
+        if (childRegDepIndexForProfilingValue != -1) {
+            valueChildOfHelperCall = helperCallBlockGlRegDeps->getChild(childRegDepIndexForProfilingValue);
         }
-        duplicateGlRegDeps->setReferenceCount(0);
-        goToMainlineNode->addChildren(&duplicateGlRegDeps, 1);
-
-        if (profilingValue->getOpCode().isStoreReg() || profilingValue->getOpCode().isLoadReg()) {
-            // Looking for the regLoad in the entry
-            TR::Node *helperCallGlRegDeps = helper->getEntry()->getNode()->getFirstChild();
-            if (profilingValue->requiresRegisterPair(comp)) {
-                for (int i = 0; i < helperCallGlRegDeps->getNumChildren(); i++) {
-                    TR::Node *tempNode = helperCallGlRegDeps->getChild(i);
-                    if (profilingValue->getLowGlobalRegisterNumber() == tempNode->getLowGlobalRegisterNumber()
-                        && profilingValue->getHighGlobalRegisterNumber() == tempNode->getHighGlobalRegisterNumber()) {
-                        valueChildOfHelperCall = tempNode;
-                        break;
-                    }
-                }
-            } else {
-                for (int i = 0; i < helperCallGlRegDeps->getNumChildren(); i++) {
-                    TR::Node *tempNode = helperCallGlRegDeps->getChild(i);
-                    if (profilingValue->getGlobalRegisterNumber() == tempNode->getGlobalRegisterNumber()) {
-                        valueChildOfHelperCall = tempNode;
-                        break;
-                    }
-                }
-            }
-            if (valueChildOfHelperCall == NULL) {
-                TR_ASSERT_FATAL(profilingValue->getOpCode().isLoadReg(),
-                    "In case profiled value is in register and we can not find it in GlRegDeps of mainlineReturn, it "
-                    "must be loadReg");
-                valueChildOfHelperCall = TR::Node::copy(profilingValue);
-                valueChildOfHelperCall->setReferenceCount(0);
-                helperCallGlRegDeps->addChildren(&valueChildOfHelperCall, 1);
-                goToMainlineNode->getFirstChild()->addChildren(&valueChildOfHelperCall, 1);
-            }
-        }
+        helperCallBlockGlRegDeps = copyGlRegDeps(comp, helperCallBlockGlRegDeps);
+        gotoMergeBlockNode->addChildren(&helperCallBlockGlRegDeps, 1);
     }
 
-    /*
-     * In case we can not find value in register or temp slot, store the value to temp slot before going to helper
-     * block.
-     *
-     * When selecting an existing symref to reuse for the helper call value, do not
-     * reuse the MethodMetaData symref for ExceptionMeta loads. ExceptionMeta may be
-     * cleared to NULL, so helper calls must not reload it from the metadata slot.
-     * Instead, store to a temp slot and load from that stable location.
-     */
     if (valueChildOfHelperCall == NULL) {
-        TR::SymbolReference *storedValueSymRef = NULL;
-        if (profilingValue->getOpCode().isStoreDirect()
-            || (profilingValue->getOpCode().isLoadDirect() && !profilingValue->getOpCode().isLoadConst()
-                && !isExceptionMetaLoad(profilingValue))) {
-            storedValueSymRef = profilingValue->getSymbolReference();
-            logprintf(trace, log, "\t\t\tstoredValueSymRef #%d\n", storedValueSymRef->getReferenceNumber());
-        } else {
-            /*
-             * profiledValue is normal Node which is not referenced further. Store value to temp slot at the beginning
-             * of quick test
-             */
-            TR::TreeTop *storeValue = TR::TreeTop::create(comp, quickTestBlock->getEntry(),
-                storeNode(comp, profilingValue, storedValueSymRef));
-            logprintf(trace, log, "\t\t\tprofilingValue n%dn is stored on temp slot n%dn #%d\n",
-                profilingValue->getGlobalIndex(), storeValue->getNode()->getGlobalIndex(),
-                storedValueSymRef->getReferenceNumber());
-        }
-        valueChildOfHelperCall = TR::Node::createLoad(bciNode, storedValueSymRef);
+        TR_ASSERT_FATAL_WITH_NODE(value, storeProfileValueSymRef != NULL,
+            "Value to profile must be stored in temp slot or in register");
+        valueChildOfHelperCall = TR::Node::createLoad(bciNode, storeProfileValueSymRef);
     }
 
     if (addNullCheck) {
-        valueChildOfHelperCall = TR::Node::createWithSymRef(valueChildOfHelperCall, TR::aloadi, 1,
-            valueChildOfHelperCall, comp->getSymRefTab()->findOrCreateVftSymbolRef());
+        valueChildOfHelperCall = TR::Node::createWithSymRef(bciNode, TR::aloadi, 1, valueChildOfHelperCall,
+            comp->getSymRefTab()->findOrCreateVftSymbolRef());
     }
 
     /* Add the call to the helper and return to the mainline */
     TR::TreeTop *helperCallTreeTop = TR::TreeTop::create(comp, helper->getEntry(),
         createHelperCall(comp, valueChildOfHelperCall, TR::Node::aconst(bciNode, table->getBaseAddress())));
     logprintf(trace, log, "\t\t\tHelper call in block_%d\n", helper->getNumber());
+
     TR::NodeChecklist checklist(comp);
     checklist.add(value);
-    TR::TreeTop *tt = quickTestBlock->getEntry(), *end = mainlineReturn->getEntry();
+    TR::TreeTop *tt = profilingCodeBlock->getEntry();
+    TR::TreeTop *end = generateProfilingTreesInMainline ? mainlineReturn->getEntry() : helper->getEntry();
     while (tt && tt != end) {
         TR::Node *node = tt->getNode();
         if (node->getOpCodeValue() != TR::BBStart && node->getOpCodeValue() != TR::BBEnd)
