@@ -961,11 +961,11 @@ generateJ9RtvExceptionDetails(J9BytecodeVerificationData* verifyData, U_8* initM
 		printMessage(&msgBuf, "Invalid use of strict instance fields, field is strict static.");
 		break;
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	case BCV_ERR_ILLEGAL_WITH_UNINITIALIZED_VALUE_OBJECT:
-		printMessage(&msgBuf, "Illegal bytecode with uninitialized value object.");
+#if JAVA_SPEC_VERSION >= 27
+	case BCV_ERR_ILLEGAL_WITH_UNINITIALIZED_OBJECT:
+		printMessage(&msgBuf, "Illegal bytecode with uninitialized object.");
 		break;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 27 */
 	default:
 		Assert_VRB_ShouldNeverHappen();
 		break;
