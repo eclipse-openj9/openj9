@@ -942,7 +942,9 @@ MM_MemorySubSpaceTarok::performResize(MM_EnvironmentBase *env, MM_AllocateDescri
 		resizeAmount = -(intptr_t)performContract(env, allocDescription);
 	} else if (_expansionSize != 0) {
 		resizeAmount = performExpand(env);
-	} else {
+	}
+
+	if (0 == resizeAmount) {
 		/**
 		 * In case there is no heap resize, check if there is the case that free size is smaller than eden size
 		 * due to the conflict between eden resize and heap resize, recalculateEdenSize if it happens.
