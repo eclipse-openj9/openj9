@@ -2916,6 +2916,15 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				 */
 				vm->runtimeFlags |= J9_RUNTIME_XFUTURE;
 			}
+			{
+				IDATA disableEarlyDumps = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XDISABLEEARLYDUMPS, NULL);
+				IDATA enableEarlyDumps = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XENABLEEARLYDUMPS, NULL);
+				if (disableEarlyDumps > enableEarlyDumps) {
+					vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_DISABLE_EARLY_DUMPS;
+				} else if (disableEarlyDumps < enableEarlyDumps) {
+					vm->extendedRuntimeFlags3 &= ~(UDATA)J9_EXTENDED_RUNTIME3_DISABLE_EARLY_DUMPS;
+				}
+			}
 			if ((J2SE_VERSION(vm) & J2SE_VERSION_MASK) >= J2SE_V11) {
 				if (FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_ENABLE_PREVIEW, NULL) >= 0) {
 					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW;

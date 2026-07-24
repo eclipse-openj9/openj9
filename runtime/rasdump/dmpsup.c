@@ -1173,6 +1173,7 @@ pushDumpFacade(J9JavaVM *vm)
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 		queue->facade.criuReloadXDumpAgents = criuReloadXDumpAgents;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+		queue->facade.handleOutOfMemoryError = handleOutOfMemoryError;
 
 		/* Initialize default settings */
 		queue->settings = initDumpSettings(vm);

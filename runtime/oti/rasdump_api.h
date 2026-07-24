@@ -405,6 +405,15 @@ triggerOneOffDump(struct J9JavaVM *vm, char *optionString, char *caller, char *f
 
 
 /**
+ * Handle an OutOfMemoryError.
+ *
+ * @param *vm VM pointer
+ */
+omr_error_t
+handleOutOfMemoryError(struct J9JavaVM *vm);
+
+
+/**
  * Query the settings of the dump agents.
  * 
  * @param *vm VM pointer
