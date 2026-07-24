@@ -114,8 +114,7 @@ uint8_t *J9::ARM64::UnresolvedDataSnippet::emitSnippetBody()
     }
     cursor += 4;
 
-    *(int32_t *)cursor
-        = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movzx); // instruction template -- "movz extraReg, #0"
+    *(int32_t *)cursor = OP::getOpCodeBinaryEncoding(OP::movzx); // instruction template -- "movz extraReg, #0"
     TR_ASSERT(getMemoryReference()->getExtraRegister(), "_extraReg must have been allocated");
     toRealRegister(getMemoryReference()->getExtraRegister())->setRegisterFieldRD((uint32_t *)cursor);
 

@@ -82,8 +82,7 @@ uint8_t *TR::ARM64StackCheckFailureSnippet::emitSnippetBody()
     intptr_t destination = (intptr_t)getReStartLabel()->getCodeLocation();
     if (!cg()->directCallRequiresTrampoline(destination, (intptr_t)cursor)) {
         intptr_t distance = destination - (intptr_t)cursor;
-        *(int32_t *)cursor
-            = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::b) | ((distance >> 2) & 0x3ffffff); // imm26
+        *(int32_t *)cursor = OP::getOpCodeBinaryEncoding(OP::b) | ((distance >> 2) & 0x3ffffff); // imm26
     } else {
         TR_ASSERT(false, "Target too far away.  Not supported yet");
     }

@@ -68,13 +68,13 @@ uint8_t *TR::ARM64MonitorEnterSnippet::emitSnippetBody()
     TR::RealRegister *zeroReg = cg()->machine()->getRealRegister(TR::RealRegister::xzr);
 
     TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg()->fe());
-    TR::InstOpCode::Mnemonic op;
+    OP::Mnemonic op;
 
     uint8_t *buffer = cg()->getBinaryBufferCursor();
 
     _incLabel->setCodeLocation(buffer);
 
-    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::andimmx);
+    *(int32_t *)buffer = OP::getOpCodeBinaryEncoding(OP::andimmx);
     tempReg->setRegisterFieldRD((uint32_t *)buffer);
     dataReg->setRegisterFieldRN((uint32_t *)buffer);
     // OBJECT_HEADER_LOCK_BITS_MASK is 0xFF
@@ -83,30 +83,30 @@ uint8_t *TR::ARM64MonitorEnterSnippet::emitSnippetBody()
     *(int32_t *)buffer |= 0x79E000; // immr=57, imms=56 for 0xFFFFFFFFFFFFFF80
     buffer += ARM64_INSTRUCTION_LENGTH;
 
-    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::subsx); // for cmp
+    *(int32_t *)buffer = OP::getOpCodeBinaryEncoding(OP::subsx); // for cmp
     metaReg->setRegisterFieldRN((uint32_t *)buffer);
     tempReg->setRegisterFieldRM((uint32_t *)buffer);
     zeroReg->setRegisterFieldRD((uint32_t *)buffer);
     buffer += ARM64_INSTRUCTION_LENGTH;
 
-    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::b_cond);
+    *(int32_t *)buffer = OP::getOpCodeBinaryEncoding(OP::b_cond);
     *(int32_t *)buffer |= ((4 << 5) | TR::CC_NE); // 4 instructions forward, bne
     buffer += ARM64_INSTRUCTION_LENGTH;
 
-    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::addimmx);
+    *(int32_t *)buffer = OP::getOpCodeBinaryEncoding(OP::addimmx);
     dataReg->setRegisterFieldRD((uint32_t *)buffer);
     dataReg->setRegisterFieldRN((uint32_t *)buffer);
     *(int32_t *)buffer |= ((LOCK_INC_DEC_VALUE & 0xFFF) << 10); // imm12
     buffer += ARM64_INSTRUCTION_LENGTH;
 
-    op = fej9->generateCompressedLockWord() ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx;
-    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(op);
+    op = fej9->generateCompressedLockWord() ? OP::strimmw : OP::strimmx;
+    *(int32_t *)buffer = OP::getOpCodeBinaryEncoding(op);
     dataReg->setRegisterFieldRT((uint32_t *)buffer);
     addrReg->setRegisterFieldRN((uint32_t *)buffer);
     // offset 0 -- no need to encode
     buffer += ARM64_INSTRUCTION_LENGTH;
 
-    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::b);
+    *(int32_t *)buffer = OP::getOpCodeBinaryEncoding(OP::b);
     intptr_t destination = (intptr_t)getRestartLabel()->getCodeLocation();
     TR_ASSERT(!cg()->directCallRequiresTrampoline(destination, (intptr_t)buffer), "Jump target too far away.");
     intptr_t distance = (intptr_t)destination - (intptr_t)buffer;
@@ -176,43 +176,43 @@ uint8_t *TR::ARM64MonitorExitSnippet::emitSnippetBody()
     TR::RealRegister *zeroReg = cg()->machine()->getRealRegister(TR::RealRegister::xzr);
 
     TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg()->fe());
-    TR::InstOpCode::Mnemonic op;
+    OP::Mnemonic op;
 
     uint8_t *buffer = cg()->getBinaryBufferCursor();
 
     _decLabel->setCodeLocation(buffer);
 
-    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::andimmx);
+    *(int32_t *)buffer = OP::getOpCodeBinaryEncoding(OP::andimmx);
     tempReg->setRegisterFieldRD((uint32_t *)buffer);
     dataReg->setRegisterFieldRN((uint32_t *)buffer);
     // OBJECT_HEADER_LOCK_RECURSION_MASK is 0xF8
     *(int32_t *)buffer |= 0x78E800; // immr=56, imms=58 for 0xFFFFFFFFFFFFFF07
     buffer += ARM64_INSTRUCTION_LENGTH;
 
-    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::subsx); // for cmp
+    *(int32_t *)buffer = OP::getOpCodeBinaryEncoding(OP::subsx); // for cmp
     metaReg->setRegisterFieldRN((uint32_t *)buffer);
     tempReg->setRegisterFieldRM((uint32_t *)buffer);
     zeroReg->setRegisterFieldRD((uint32_t *)buffer);
     buffer += ARM64_INSTRUCTION_LENGTH;
 
-    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::b_cond);
+    *(int32_t *)buffer = OP::getOpCodeBinaryEncoding(OP::b_cond);
     *(int32_t *)buffer |= ((4 << 5) | TR::CC_NE); // 4 instructions forward, bne
     buffer += ARM64_INSTRUCTION_LENGTH;
 
-    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::subimmx);
+    *(int32_t *)buffer = OP::getOpCodeBinaryEncoding(OP::subimmx);
     dataReg->setRegisterFieldRD((uint32_t *)buffer);
     dataReg->setRegisterFieldRN((uint32_t *)buffer);
     *(int32_t *)buffer |= ((LOCK_INC_DEC_VALUE & 0xFFF) << 10); // imm12
     buffer += ARM64_INSTRUCTION_LENGTH;
 
-    op = fej9->generateCompressedLockWord() ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx;
-    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(op);
+    op = fej9->generateCompressedLockWord() ? OP::strimmw : OP::strimmx;
+    *(int32_t *)buffer = OP::getOpCodeBinaryEncoding(op);
     dataReg->setRegisterFieldRT((uint32_t *)buffer);
     addrReg->setRegisterFieldRN((uint32_t *)buffer);
     // offset 0 -- no need to encode
     buffer += ARM64_INSTRUCTION_LENGTH;
 
-    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::b);
+    *(int32_t *)buffer = OP::getOpCodeBinaryEncoding(OP::b);
     intptr_t destination = (intptr_t)getRestartLabel()->getCodeLocation();
     TR_ASSERT(!cg()->directCallRequiresTrampoline(destination, (intptr_t)buffer), "Jump target too far away.");
     intptr_t distance = (intptr_t)destination - (intptr_t)buffer;

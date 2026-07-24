@@ -75,16 +75,16 @@ TR::Instruction *TR_ARM64Recompilation::generatePrePrologue()
     if (useSampling() && couldBeCompiledAgain()) {
         // x8 must contain the saved LR; see Recompilation.spp
         // cannot use generateMovInstruction() here
-        cursor = new (cg()->trHeapMemory())
-            TR::ARM64Trg1Src2Instruction(TR::InstOpCode::orrx, firstNode, x8, xzr, lr, cursor, cg());
-        cursor = generateImmSymInstruction(cg(), TR::InstOpCode::bl, firstNode,
-            (uintptr_t)recompileMethodSymRef->getMethodAddress(), RegDeps(0, 0, cg()), recompileMethodSymRef, NULL,
-            cursor);
-        cursor = generateRelocatableImmInstruction(cg(), TR::InstOpCode::dd, firstNode, (uintptr_t)info,
-            TR_BodyInfoAddress, cursor);
+        cursor
+            = new (cg()->trHeapMemory()) TR::ARM64Trg1Src2Instruction(OP::orrx, firstNode, x8, xzr, lr, cursor, cg());
+        cursor
+            = generateImmSymInstruction(cg(), OP::bl, firstNode, (uintptr_t)recompileMethodSymRef->getMethodAddress(),
+                RegDeps(0, 0, cg()), recompileMethodSymRef, NULL, cursor);
+        cursor
+            = generateRelocatableImmInstruction(cg(), OP::dd, firstNode, (uintptr_t)info, TR_BodyInfoAddress, cursor);
 
         // space for preserving original jitEntry instruction
-        cursor = generateImmInstruction(cg(), TR::InstOpCode::dd, firstNode, 0, cursor);
+        cursor = generateImmInstruction(cg(), OP::dd, firstNode, 0, cursor);
     }
 
     return cursor;

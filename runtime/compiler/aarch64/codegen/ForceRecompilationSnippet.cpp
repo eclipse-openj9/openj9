@@ -47,19 +47,16 @@ uint8_t *TR::ARM64ForceRecompilationSnippet::emitSnippetBody()
     uint32_t hlval = (startPC >> 32) & 0xffff;
     uint32_t hhval = (startPC >> 48) & 0xffff;
 
-    *(uint32_t *)cursor = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movzx) | (llval << 5);
+    *(uint32_t *)cursor = OP::getOpCodeBinaryEncoding(OP::movzx) | (llval << 5);
     startPCReg->setRegisterFieldRD((uint32_t *)cursor);
     cursor += ARM64_INSTRUCTION_LENGTH;
-    *(uint32_t *)cursor
-        = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | ((lhval | TR::MOV_LSL16) << 5);
+    *(uint32_t *)cursor = OP::getOpCodeBinaryEncoding(OP::movkx) | ((lhval | TR::MOV_LSL16) << 5);
     startPCReg->setRegisterFieldRD((uint32_t *)cursor);
     cursor += ARM64_INSTRUCTION_LENGTH;
-    *(uint32_t *)cursor
-        = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | ((hlval | TR::MOV_LSL32) << 5);
+    *(uint32_t *)cursor = OP::getOpCodeBinaryEncoding(OP::movkx) | ((hlval | TR::MOV_LSL32) << 5);
     startPCReg->setRegisterFieldRD((uint32_t *)cursor);
     cursor += ARM64_INSTRUCTION_LENGTH;
-    *(uint32_t *)cursor
-        = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | ((hhval | TR::MOV_LSL48) << 5);
+    *(uint32_t *)cursor = OP::getOpCodeBinaryEncoding(OP::movkx) | ((hhval | TR::MOV_LSL48) << 5);
     startPCReg->setRegisterFieldRD((uint32_t *)cursor);
     cursor += ARM64_INSTRUCTION_LENGTH;
 
@@ -73,8 +70,7 @@ uint8_t *TR::ARM64ForceRecompilationSnippet::emitSnippetBody()
     }
 
     // bl distance
-    *(uint32_t *)cursor
-        = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::bl) | ((distance >> 2) & 0x03ffffff); // imm26
+    *(uint32_t *)cursor = OP::getOpCodeBinaryEncoding(OP::bl) | ((distance >> 2) & 0x03ffffff); // imm26
     cg()->addExternalRelocation(
         TR::ExternalRelocation::create(cursor, (uint8_t *)induceRecompilationSymRef, TR_HelperAddress, cg()), __FILE__,
         __LINE__, getNode());
@@ -84,8 +80,7 @@ uint8_t *TR::ARM64ForceRecompilationSnippet::emitSnippetBody()
         distance = (intptr_t)(_restartLabel->getCodeLocation()) - (intptr_t)cursor;
         if (constantIsSignedImm28(distance)) {
             // b distance
-            *(uint32_t *)cursor
-                = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::b) | ((distance >> 2) & 0x3ffffff); // imm26
+            *(uint32_t *)cursor = OP::getOpCodeBinaryEncoding(OP::b) | ((distance >> 2) & 0x3ffffff); // imm26
             cursor += ARM64_INSTRUCTION_LENGTH;
         } else {
             TR_ASSERT_FATAL(false, "Target too far away.  Not supported yet");

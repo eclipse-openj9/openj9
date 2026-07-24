@@ -76,7 +76,7 @@ protected:
      * @param[in] opCode : opcode for storing argument
      * @param[in] memArg : MemoryArgument
      */
-    void pushOutgoingMemArgument(TR::Register *argReg, int32_t offset, TR::InstOpCode::Mnemonic opCode,
+    void pushOutgoingMemArgument(TR::Register *argReg, int32_t offset, OP::Mnemonic opCode,
         TR::ARM64MemoryArgument &memArg);
 
 public:

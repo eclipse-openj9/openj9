@@ -36,11 +36,11 @@
 #include "il/Node_inlines.hpp"
 #include "ras/Logger.hpp"
 
-static uint8_t *storeArgumentItem(TR::InstOpCode::Mnemonic op, uint8_t *buffer, TR::RealRegister *reg, int32_t offset,
+static uint8_t *storeArgumentItem(OP::Mnemonic op, uint8_t *buffer, TR::RealRegister *reg, int32_t offset,
     TR::CodeGenerator *cg)
 {
     TR::RealRegister *stackPtr = cg->getStackPointerRegister();
-    TR::InstOpCode opCode(op);
+    OP opCode(op);
     uint32_t enc = (uint32_t)opCode.getOpCodeBinaryEncoding();
     TR_ASSERT((enc & 0x3b200000) == 0x39000000, "Instruction not supported in storeArgumentItem()");
 
@@ -78,7 +78,7 @@ static uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32
                 if (!linkageProperties.getRightToLeft())
                     offset -= TR::Compiler->om.sizeofReferenceAddress();
                 if (intArgNum < linkageProperties.getNumIntArgRegs()) {
-                    buffer = storeArgumentItem(TR::InstOpCode::strimmw, buffer,
+                    buffer = storeArgumentItem(OP::strimmw, buffer,
                         machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum)), offset, cg);
                 }
                 intArgNum++;
@@ -89,7 +89,7 @@ static uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32
                 if (!linkageProperties.getRightToLeft())
                     offset -= TR::Compiler->om.sizeofReferenceAddress();
                 if (intArgNum < linkageProperties.getNumIntArgRegs()) {
-                    buffer = storeArgumentItem(TR::InstOpCode::strimmx, buffer,
+                    buffer = storeArgumentItem(OP::strimmx, buffer,
                         machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum)), offset, cg);
                 }
                 intArgNum++;
@@ -100,7 +100,7 @@ static uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32
                 if (!linkageProperties.getRightToLeft())
                     offset -= 2 * TR::Compiler->om.sizeofReferenceAddress();
                 if (intArgNum < linkageProperties.getNumIntArgRegs()) {
-                    buffer = storeArgumentItem(TR::InstOpCode::strimmx, buffer,
+                    buffer = storeArgumentItem(OP::strimmx, buffer,
                         machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum)), offset, cg);
                 }
                 intArgNum++;
@@ -111,7 +111,7 @@ static uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32
                 if (!linkageProperties.getRightToLeft())
                     offset -= TR::Compiler->om.sizeofReferenceAddress();
                 if (floatArgNum < linkageProperties.getNumFloatArgRegs()) {
-                    buffer = storeArgumentItem(TR::InstOpCode::vstrimms, buffer,
+                    buffer = storeArgumentItem(OP::vstrimms, buffer,
                         machine->getRealRegister(linkageProperties.getFloatArgumentRegister(floatArgNum)), offset, cg);
                 }
                 floatArgNum++;
@@ -122,7 +122,7 @@ static uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32
                 if (!linkageProperties.getRightToLeft())
                     offset -= 2 * TR::Compiler->om.sizeofReferenceAddress();
                 if (floatArgNum < linkageProperties.getNumFloatArgRegs()) {
-                    buffer = storeArgumentItem(TR::InstOpCode::vstrimmd, buffer,
+                    buffer = storeArgumentItem(OP::vstrimmd, buffer,
                         machine->getRealRegister(linkageProperties.getFloatArgumentRegister(floatArgNum)), offset, cg);
                 }
                 floatArgNum++;
@@ -899,26 +899,26 @@ uint8_t *TR::ARM64CallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSi
 
     *((int32_t *)thunk + 1) = buffer - returnValue; // patch offset for AOT relocation
     // movz x15, low 16 bits
-    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movzx) | ((dispatcher & 0xFFFF) << 5);
+    *(int32_t *)buffer = OP::getOpCodeBinaryEncoding(OP::movzx) | ((dispatcher & 0xFFFF) << 5);
     x15reg->setRegisterFieldRD((uint32_t *)buffer);
     buffer += ARM64_INSTRUCTION_LENGTH;
     // movk x15, next 16 bits, lsl #16
-    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL16 << 5)
-        | (((dispatcher >> 16) & 0xFFFF) << 5);
+    *(int32_t *)buffer
+        = OP::getOpCodeBinaryEncoding(OP::movkx) | (TR::MOV_LSL16 << 5) | (((dispatcher >> 16) & 0xFFFF) << 5);
     x15reg->setRegisterFieldRD((uint32_t *)buffer);
     buffer += ARM64_INSTRUCTION_LENGTH;
     // movk x15, next 16 bits, lsl #32
-    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL32 << 5)
-        | (((dispatcher >> 32) & 0xFFFF) << 5);
+    *(int32_t *)buffer
+        = OP::getOpCodeBinaryEncoding(OP::movkx) | (TR::MOV_LSL32 << 5) | (((dispatcher >> 32) & 0xFFFF) << 5);
     x15reg->setRegisterFieldRD((uint32_t *)buffer);
     buffer += ARM64_INSTRUCTION_LENGTH;
     // movk x15, next 16 bits, lsl #48
-    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL48 << 5)
-        | (((dispatcher >> 48) & 0xFFFF) << 5);
+    *(int32_t *)buffer
+        = OP::getOpCodeBinaryEncoding(OP::movkx) | (TR::MOV_LSL48 << 5) | (((dispatcher >> 48) & 0xFFFF) << 5);
     x15reg->setRegisterFieldRD((uint32_t *)buffer);
     buffer += ARM64_INSTRUCTION_LENGTH;
     // br x15
-    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::br);
+    *(int32_t *)buffer = OP::getOpCodeBinaryEncoding(OP::br);
     x15reg->setRegisterFieldRN((uint32_t *)buffer);
     buffer += ARM64_INSTRUCTION_LENGTH;
 
@@ -978,26 +978,26 @@ TR_MHJ2IThunk *TR::ARM64CallSnippet::generateInvokeExactJ2IThunk(TR::Node *callN
     TR::RealRegister *x15reg = cg->machine()->getRealRegister(TR::RealRegister::x15);
 
     // movz x15, low 16 bits
-    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movzx) | ((dispatcher & 0xFFFF) << 5);
+    *(int32_t *)buffer = OP::getOpCodeBinaryEncoding(OP::movzx) | ((dispatcher & 0xFFFF) << 5);
     x15reg->setRegisterFieldRD((uint32_t *)buffer);
     buffer += ARM64_INSTRUCTION_LENGTH;
     // movk x15, next 16 bits, lsl #16
-    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL16 << 5)
-        | (((dispatcher >> 16) & 0xFFFF) << 5);
+    *(int32_t *)buffer
+        = OP::getOpCodeBinaryEncoding(OP::movkx) | (TR::MOV_LSL16 << 5) | (((dispatcher >> 16) & 0xFFFF) << 5);
     x15reg->setRegisterFieldRD((uint32_t *)buffer);
     buffer += ARM64_INSTRUCTION_LENGTH;
     // movk x15, next 16 bits, lsl #32
-    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL32 << 5)
-        | (((dispatcher >> 32) & 0xFFFF) << 5);
+    *(int32_t *)buffer
+        = OP::getOpCodeBinaryEncoding(OP::movkx) | (TR::MOV_LSL32 << 5) | (((dispatcher >> 32) & 0xFFFF) << 5);
     x15reg->setRegisterFieldRD((uint32_t *)buffer);
     buffer += ARM64_INSTRUCTION_LENGTH;
     // movk x15, next 16 bits, lsl #48
-    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL48 << 5)
-        | (((dispatcher >> 48) & 0xFFFF) << 5);
+    *(int32_t *)buffer
+        = OP::getOpCodeBinaryEncoding(OP::movkx) | (TR::MOV_LSL48 << 5) | (((dispatcher >> 48) & 0xFFFF) << 5);
     x15reg->setRegisterFieldRD((uint32_t *)buffer);
     buffer += ARM64_INSTRUCTION_LENGTH;
     // br x15
-    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::br);
+    *(int32_t *)buffer = OP::getOpCodeBinaryEncoding(OP::br);
     x15reg->setRegisterFieldRN((uint32_t *)buffer);
     buffer += ARM64_INSTRUCTION_LENGTH;
 
