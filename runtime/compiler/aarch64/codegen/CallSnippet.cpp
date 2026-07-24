@@ -409,7 +409,10 @@ void TR_Debug::print(OMR::Logger *log, TR::ARM64CallSnippet *snippet)
     TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
 
     uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-    printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(methodSymRef));
+    printSnippetLabel(log, snippet, bufferPos);
+    log->prints(" (");
+    log->prints(getName(methodSymRef));
+    log->printc(')');
 
     bufferPos = printARM64ArgumentsFlush(log, callNode, bufferPos, snippet->getSizeOfArguments());
 
@@ -632,7 +635,10 @@ void TR_Debug::print(OMR::Logger *log, TR::ARM64VirtualUnresolvedSnippet *snippe
     TR::SymbolReference *callSymRef = snippet->getNode()->getSymbolReference();
     uint8_t *cursor = snippet->getSnippetLabel()->getCodeLocation();
 
-    printSnippetLabel(log, snippet->getSnippetLabel(), cursor, getName(snippet), getName(callSymRef));
+    printSnippetLabel(log, snippet, cursor);
+    log->prints(" (");
+    log->prints(getName(callSymRef));
+    log->printc(')');
 
     int32_t distance = getBLDistance(cursor);
     printPrefix(log, NULL, cursor, ARM64_INSTRUCTION_LENGTH);
@@ -784,7 +790,10 @@ void TR_Debug::print(OMR::Logger *log, TR::ARM64InterfaceCallSnippet *snippet)
     TR::SymbolReference *callSymRef = snippet->getNode()->getSymbolReference();
     uint8_t *cursor = snippet->getSnippetLabel()->getCodeLocation();
 
-    printSnippetLabel(log, snippet->getSnippetLabel(), cursor, getName(snippet), getName(callSymRef));
+    printSnippetLabel(log, snippet, cursor);
+    log->prints(" (");
+    log->prints(getName(callSymRef));
+    log->printc(')');
 
     int32_t distance = getBLDistance(cursor);
     printPrefix(log, NULL, cursor, ARM64_INSTRUCTION_LENGTH);
