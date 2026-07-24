@@ -2226,6 +2226,41 @@ done:
 		if ((J9Method*)-1 == _sendMethod) {
 			_sendMethod = ((J9RAMStaticMethodRef*)&_currentThread->floatTemp1)->method;
 		}
+		if (NULL != _sendMethod) {
+			J9Class *methodClass = J9_CLASS_FROM_METHOD(_sendMethod);
+			UDATA initStatus = methodClass->initializeStatus;
+			// J9UTF8 *name = J9ROMCLASS_CLASSNAME(methodClass->romClass);
+			if (0 != (initStatus & (~J9ClassInitStatusMask))
+				&& J9ClassInitNotInitialized == (initStatus & J9ClassInitStatusMask)
+				&& NULL != _currentThread->threadObject
+				&& VM_ContinuationHelpers::isYieldableVirtualThread(_currentThread)
+					) {
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				j9object_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(methodClass);
+				j9object_t initializationLock = J9VMJAVALANGCLASS_INITIALIZATIONLOCK(_currentThread, classObject);
+
+				Assert_VM_true(getObjectMonitorOwner(_vm, initializationLock, NULL) == _currentThread);
+				UDATA newState = JAVA_LANG_VIRTUALTHREAD_WAITING;
+				/* Reset the virtual thread's notified field before releasing Object monitor. */
+				J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(_currentThread, _currentThread->threadObject, JNI_FALSE);
+				/* Prevent Object.notify() calls between prepareVirtualThreadForUnmount() and
+				* yieldPinnedContinuation() from being ignored by the unblocker.
+				*/
+				J9VMJAVALANGVIRTUALTHREAD_SET_STATE(_currentThread, _currentThread->threadObject, newState);
+				PUSH_OBJECT_IN_SPECIAL_FRAME(_currentThread, classObject);
+				// printf("[%p] Class %.*s init blocked class=%p initLock=%p currentCont=%p initStatus=%zx isMonitorEnter=%d\n", _currentThread, J9UTF8_LENGTH(name), J9UTF8_DATA(name), classObject, initializationLock, _currentThread->currentContinuation, initStatus, isMonitorEnter);
+				UDATA result = preparePinnedVirtualThreadForUnmount(_currentThread, initializationLock, TRUE);
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+
+				if (J9_OBJECT_MONITOR_OOM != result) {
+					rc = yieldPinnedContinuation(
+							REGISTER_ARGS,
+							JAVA_LANG_VIRTUALTHREAD_WAITING,
+							J9VM_CONTINUATION_RETURN_FROM_CLASS_INIT);
+				}
+				return rc;
+			}
+		}
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 		restoreGenericSpecialStackFrame(REGISTER_ARGS);
 		if (immediateAsyncPending()) {
@@ -5865,6 +5900,10 @@ ffi_OOM:
 		j9object_t syncObject = J9VMJDKINTERNALVMCONTINUATION_BLOCKER(_currentThread, continuationObject);
 		UDATA returnState = _currentThread->currentContinuation->returnState;
 		_currentThread->currentContinuation->returnState = 0;
+		// if (isResume) {
+		// printf("[%p] resume continuation _pc=%p continuationObject=%p returnState=%zd\n", _currentThread, _pc, continuationObject, returnState);
+		// }
+
 		switch (returnState) {
 		case J9VM_CONTINUATION_RETURN_FROM_YIELD:
 			returnSingleFromINL(REGISTER_ARGS, JNI_TRUE, 1);
@@ -5906,6 +5945,39 @@ ffi_OOM:
 					restoreInternalNativeStackFrame(REGISTER_ARGS);
 					updateVMStruct(REGISTER_ARGS);
 					returnVoidFromINL(REGISTER_ARGS, 4);
+				}
+			}
+			break;
+		}
+		case J9VM_CONTINUATION_RETURN_FROM_CLASS_INIT: {
+			j9object_t methodClassObj = *(j9object_t *)_sp;
+			J9Class *methodClass = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, methodClassObj);
+			syncObject = *(j9object_t *)(_sp + 1);
+
+			/* No need to enter init monitor if initialization is finished */
+			if (methodClass->initializeStatus != J9ClassInitSucceeded) {
+				rc = tryEnterBlockingMonitor(REGISTER_ARGS, syncObject, J9VM_CONTINUATION_RETURN_FROM_CLASS_INIT);
+			}
+			J9VMContinuation *continuation = _currentThread->currentContinuation;
+			if ((NULL != continuation) && (EXECUTE_BYTECODE == rc)) {
+				J9VMJDKINTERNALVMCONTINUATION_SET_BLOCKER(_currentThread, continuationObject, NULL);
+				omrthread_monitor_t monitor = getMonitorForWait(_currentThread, syncObject);
+				monitor->count = continuation->waitingMonitorEnterCount;
+				_currentThread->ownedMonitorCount += monitor->count - 1;
+				continuation->waitingMonitorEnterCount = 0;
+
+				j9object_t threadObject = _currentThread->threadObject;
+				bool interrupted = J9VMJAVALANGTHREAD_DEADINTERRUPT(_currentThread, threadObject);
+				bool notified = J9VMJAVALANGVIRTUALTHREAD_NOTIFIED(_currentThread, threadObject);
+
+				/* Only throw an exception if the virtual thread has not been notified. */
+				if (interrupted && !notified) {
+					setCurrentException(_currentThread, J9VMCONSTANTPOOL_JAVALANGINTERRUPTEDEXCEPTION, NULL);
+					VMStructHasBeenUpdated(REGISTER_ARGS);
+					rc = GOTO_THROW_CURRENT_EXCEPTION;
+				} else {
+					restoreGenericSpecialStackFrame(REGISTER_ARGS);
+					updateVMStruct(REGISTER_ARGS);
 				}
 			}
 			break;

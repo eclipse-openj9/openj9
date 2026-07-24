@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#include "ContinuationHelpers.hpp"
 #include "j9.h"
 #include "objhelp.h"
 #include "j9bcvnls.h"
@@ -234,7 +235,7 @@ performVerification(J9VMThread *currentThread, J9Class *clazz)
 			U_32 modifiers = field->modifiers;
 			if (J9_ARE_ALL_BITS_SET(modifiers, J9AccStatic)) {
 				const bool hasConstantValue = J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagConstant);
-			
+
 				if (J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagObject)) {
 					if (hasConstantValue) {
 						U_32 index = *(U_32*)romFieldInitialValueAddress(field);
@@ -324,20 +325,37 @@ setInitStatus(J9VMThread *currentThread, J9Class *clazz, UDATA status, j9object_
 	} while (NULL != clazz);
 	omrthread_monitor_t monitor = NULL;
 	if (VM_ObjectMonitor::getMonitorForNotify(currentThread, initializationLock, &monitor, false)) {
+		j9objectmonitor_t lock = 0;
+		j9objectmonitor_t *lockEA = NULL;
+		J9ObjectMonitor *objectMonitor = NULL;
+
+		if (!LN_HAS_LOCKWORD(currentThread, initializationLock)) {
+			objectMonitor = monitorTablePeek(currentThread->javaVM, initializationLock);
+		} else {
+			lockEA = J9OBJECT_MONITOR_EA(currentThread, initializationLock);
+			lock = J9_LOAD_LOCKWORD(currentThread, lockEA);
+			if (J9_LOCK_IS_INFLATED(lock)) {
+				objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
+			}
+		}
+
+		if ((NULL != objectMonitor) && (NULL != objectMonitor->waitingContinuations)) {
+			VM_ContinuationHelpers::notifyVirtualThread(currentThread, objectMonitor, true);
+		}
 		omrthread_monitor_notify_all(monitor);
 	}
 	VM_ObjectMonitor::exitObjectMonitor(currentThread, initializationLock);
 	return initializationLock;
 }
 
-void  
+void
 prepareClass(J9VMThread *currentThread, J9Class *clazz)
 {
 	classInitStateMachine(currentThread, clazz, J9_CLASS_INIT_PREPARED);
 }
 
 
-void  
+void
 initializeClass(J9VMThread *currentThread, J9Class *clazz)
 {
 	classInitStateMachine(currentThread, clazz, J9_CLASS_INIT_INITIALIZED);
@@ -848,8 +866,14 @@ initFailed:
 						goto done;
 					}
 				}
+				// J9UTF8 *name = J9ROMCLASS_CLASSNAME(clazz->romClass);
+				// printf("[%p] waiting on init of %.*s\n", currentThread, J9UTF8_LENGTH(name), J9UTF8_DATA(name));
 				Trc_VM_classInitStateMachine_waitForOtherThread(currentThread);
 				PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
+				if (VM_ContinuationHelpers::isYieldableVirtualThread(currentThread)
+					&& J9ClassInitNotInitialized == (status & J9ClassInitStatusMask)) {
+					goto done;
+				}
 				monitorWaitImpl(currentThread, initializationLock, 0, 0, FALSE);
 				initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 				clazz = VM_VMHelpers::currentClass(clazz);
