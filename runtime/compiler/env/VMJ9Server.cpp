@@ -2417,6 +2417,23 @@ TR::KnownObjectTable::Index TR_J9ServerVM::getMethodAccessorIndex(TR::Compilatio
 
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
+TR_J9VMBase::LayoutByteOrder TR_J9ServerVM::getLayoutByteOrder(TR::Compilation *comp,
+    TR::KnownObjectTable::Index layoutIndex)
+{
+    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+    stream->write(JITServer::MessageType::VM_getLayoutByteOrder, layoutIndex);
+    auto recv = stream->read<int32_t>();
+    return (LayoutByteOrder)std::get<0>(recv);
+}
+
+int64_t TR_J9ServerVM::getLayoutByteAlignment(TR::Compilation *comp, TR::KnownObjectTable::Index layoutIndex)
+{
+    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+    stream->write(JITServer::MessageType::VM_getLayoutByteAlignment, layoutIndex);
+    auto recv = stream->read<int64_t>();
+    return std::get<0>(recv);
+}
+
 TR::KnownObjectTable::Index TR_J9ServerVM::getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(TR::Compilation *comp,
     TR::KnownObjectTable::Index mhIndex, const char *fieldName)
 {

@@ -1497,9 +1497,36 @@ bool TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_C
 // in JDK21+, iterating bytecodes of MemorySegment methods with state is necesssary to obtain the segment view
 // VarHandle object through folding ValueLayouts$AbstractValueLayout.accessHandle() if the VarHandle has been created
 #if JAVA_SPEC_VERSION >= 21
-        if (calltarget->_calleeMethod->getRecognizedMethod() == TR::java_lang_foreign_MemorySegment_method) {
-            heuristicTrace(tracer(), "Callee method is a MemorySegment method. Setting iteratorWithState to true.\n");
-            iteratorWithState = true;
+        {
+            TR::RecognizedMethod rm = calltarget->_calleeMethod->getRecognizedMethod();
+            // The fine-grained get_X/set_X recognizers required for direct
+            // lowering transformations are a subset of java_lang_foreign_MemorySegment_method
+            // and need the same stateful iteration
+            switch (rm) {
+                case TR::java_lang_foreign_MemorySegment_method:
+                case TR::java_lang_foreign_MemorySegment_get_OfBoolean:
+                case TR::java_lang_foreign_MemorySegment_get_OfByte:
+                case TR::java_lang_foreign_MemorySegment_get_OfChar:
+                case TR::java_lang_foreign_MemorySegment_get_OfShort:
+                case TR::java_lang_foreign_MemorySegment_get_OfInt:
+                case TR::java_lang_foreign_MemorySegment_get_OfLong:
+                case TR::java_lang_foreign_MemorySegment_get_OfFloat:
+                case TR::java_lang_foreign_MemorySegment_get_OfDouble:
+                case TR::java_lang_foreign_MemorySegment_set_OfBoolean:
+                case TR::java_lang_foreign_MemorySegment_set_OfByte:
+                case TR::java_lang_foreign_MemorySegment_set_OfChar:
+                case TR::java_lang_foreign_MemorySegment_set_OfShort:
+                case TR::java_lang_foreign_MemorySegment_set_OfInt:
+                case TR::java_lang_foreign_MemorySegment_set_OfLong:
+                case TR::java_lang_foreign_MemorySegment_set_OfFloat:
+                case TR::java_lang_foreign_MemorySegment_set_OfDouble:
+                    heuristicTrace(tracer(),
+                        "Callee method is a MemorySegment method. Setting iteratorWithState to true.\n");
+                    iteratorWithState = true;
+                    break;
+                default:
+                    break;
+            }
         }
 #endif // JAVA_SPEC_VERSION >= 21
 

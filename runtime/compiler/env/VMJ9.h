@@ -622,6 +622,43 @@ public:
         TR::KnownObjectTable::Index layoutIndex);
 
     /**
+     * @brief Classification of a ValueLayout's byte order vs the host's native byte order.
+     */
+    enum class LayoutByteOrder {
+        NATIVE,
+        REVERSED,
+        UNKNOWN
+    };
+
+    /**
+     * @brief Determine whether a known ValueLayout's byte order matches the host's native byte order.
+     *
+     * The layout's order field (final, populated at construction time) holds a reference
+     * to either ByteOrder.LITTLE_ENDIAN or ByteOrder.BIG_ENDIAN. We read the field and
+     * compare to the LITTLE_ENDIAN static. The result lets the direct-lowering transform
+     * decide whether to emit a byte-swap on the loaded value.
+     *
+     * @param comp the compilation
+     * @param layoutIndex the ValueLayout$AbstractValueLayout known object index
+     * @return NATIVE if layout.order == native byte order, REVERSED if it disagrees,
+     *         UNKNOWN if the layout object or required helper classes aren't loaded.
+     */
+    virtual LayoutByteOrder getLayoutByteOrder(TR::Compilation *comp, TR::KnownObjectTable::Index layoutIndex);
+
+    /**
+     * @brief Determine a known ValueLayout's alignment constraint.
+     *
+     * The layout's byteAlignment field (final, a power of two >= 1 enforced at
+     * construction time) decides whether an access through the layout has to be
+     * alignment-checked.
+     *
+     * @param comp the compilation
+     * @param layoutIndex the ValueLayout$AbstractValueLayout known object index
+     * @return the byteAlignment value, or 0 if it cannot be determined.
+     */
+    virtual int64_t getLayoutByteAlignment(TR::Compilation *comp, TR::KnownObjectTable::Index layoutIndex);
+
+    /**
      * @brief Get the MethodAccessor Index of a java/lang/reflect/Method object, if the MethodAccessor has been set.
      * When the Method object is known, and its methodAccessor field is populated, we can evaluate the result of
      * java/lang/reflect/Method.acquireMethodAccessor()Ljdk/internal/reflect/MethodAccessor; at compile time.

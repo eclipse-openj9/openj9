@@ -207,6 +207,8 @@ enum MessageType : uint16_t {
     VM_mutableCallSiteEpoch,
     VM_numInterfacesImplemented,
     VM_getObjectClassInfoFromKnotIndex,
+    VM_getLayoutByteOrder,
+    VM_getLayoutByteAlignment,
 
     // For static TR::CompilationInfo methods
     CompInfo_isCompiled,

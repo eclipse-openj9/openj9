@@ -779,6 +779,15 @@ FirstJ9Method = LastOMRMethod + 1,
     jdk_internal_foreign_MemorySegmentImpl_unsafeGetBase, jdk_internal_foreign_MemorySegmentImpl_unsafeGetOffset,
     jdk_internal_foreign_MemorySegmentImpl_maxAlignMask,
 
+    java_lang_foreign_MemorySegment_get_OfBoolean, java_lang_foreign_MemorySegment_get_OfByte,
+    java_lang_foreign_MemorySegment_get_OfChar, java_lang_foreign_MemorySegment_get_OfShort,
+    java_lang_foreign_MemorySegment_get_OfInt, java_lang_foreign_MemorySegment_get_OfLong,
+    java_lang_foreign_MemorySegment_get_OfFloat, java_lang_foreign_MemorySegment_get_OfDouble,
+    java_lang_foreign_MemorySegment_set_OfBoolean, java_lang_foreign_MemorySegment_set_OfByte,
+    java_lang_foreign_MemorySegment_set_OfChar, java_lang_foreign_MemorySegment_set_OfShort,
+    java_lang_foreign_MemorySegment_set_OfInt, java_lang_foreign_MemorySegment_set_OfLong,
+    java_lang_foreign_MemorySegment_set_OfFloat, java_lang_foreign_MemorySegment_set_OfDouble,
+
     // Clone and Deep Copy
     java_lang_J9VMInternals_is32Bit, java_lang_J9VMInternals_isClassModifierPublic,
     java_lang_J9VMInternals_getArrayLengthAsObject, java_lang_J9VMInternals_rawNewInstance,

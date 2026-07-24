@@ -405,6 +405,28 @@ private:
     void makeIntoDispatchVirtualCall(TR::Node *node, TR::Node *vftOffset, TR::Node *vftNode, TR::Node *memberNameNode);
 #endif
 
+#if JAVA_SPEC_VERSION >= 21
+    /** \brief
+     *     Transforms java/lang/foreign/MemorySegment.get(layout, offset)/set(layout, offset, value) primitive
+     *     accessors into a guarded fast path that bypasses the VarHandle / MethodHandle / LambdaForm chain.
+     *     The fast path is a direct unsafe load or store against a guarded concrete segment receiver class
+     *     NativeMemorySegmentImpl/MappedMemorySegmentImpl, with class, bounds, alignment, scope-state,
+     *     thread-confinement and (for stores) read-only checks folded into a single branch. When any guard
+     *     fails, control falls back to the original interface call, which reproduces the exact slow-path
+     *     semantics including all exceptions.
+     *
+     *  \param treetop
+     *     The treetop which anchors the call node.
+     *
+     *  \param node
+     *     The call node representing the MemorySegment.get/set invocation.
+     *
+     *  \param rm
+     *     The fine-grained recognized method id
+     */
+    void process_java_lang_foreign_MemorySegment_getset(TR::TreeTop *treetop, TR::Node *node, TR::RecognizedMethod rm);
+#endif
+
 private:
     /**
      * \brief
