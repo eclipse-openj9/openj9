@@ -5467,7 +5467,7 @@ bool TR_J9InlinerPolicy::suppressInliningRecognizedInitialCallee(TR_CallSite *ca
             break;
         }
         case TR::java_lang_StringLatin1_compareTo_BBII:
-            if (cg->getSupportsArrayCmpLen() && !comp->target().cpu.isPower() && !comp->target().cpu.isZ()) {
+            if (cg->getSupportsArrayCmpLen()) {
                 return true;
             }
             break;
