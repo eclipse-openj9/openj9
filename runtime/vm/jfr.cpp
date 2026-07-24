@@ -486,7 +486,7 @@ reserveBufferWithStackTrace(J9VMThread *currentThread, J9VMThread *sampleThread,
 		UDATA eventSize = eventFixedSize + stackTraceBytes;
 		jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, sampleThread, eventSize);
 		if (NULL != jfrEvent) {
-			U_32 stackTraceID = (U_32)VM_AtomicSupport::addU32(&vm->jfrState.stackTraceIDCount, 1);
+			U_32 stackTraceID = VM_AtomicSupport::addU32(&vm->jfrState.stackTraceIDCount, 1);
 			Assert_VM_mustHaveVMAccess(currentThread);
 			initializeEventFields(currentThread, sampleThread, jfrEvent, eventType);
 			((J9JFREventWithStackTrace *)jfrEvent)->stackTraceSize = framesWalked;
