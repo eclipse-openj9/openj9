@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 /* Includes */
+#include <cstdint>
 #if defined(AIXPPC)
 #include <sys/time.h>
 #endif /* defined(AIXPPC) */
@@ -2941,15 +2942,15 @@ JavaCoreDumpWriter::writeSynchronousCompilationSection(void)
 	_OutputStream.writeInteger(stats->totalCount, "%u");
 	_OutputStream.writeCharacters("\n");
 	_OutputStream.writeCharacters("2JITTOTALWAIT  Total application wait time: ");
-	_OutputStream.writeInteger(stats->totalWaitTime, "%llu");
+	_OutputStream.writeInteger64(stats->totalWaitTime, "%llu");
 	_OutputStream.writeCharacters("us\n");
-	for (int i = 0; i < J9_LONGEST_SYNC_COMP; i++) {
+	for (int32_t i = 0; i < J9_NUM_LONGEST_SYNC_COMP; i++) {
 		J9JITLongestSyncComp &longestWaitMethod = stats->longestWaitMethods[i];
-		if ((0 == longestWaitMethod.waitTime) || (NULL == longestWaitMethod.method)) {
+		if ((0 == longestWaitMethod.waitTime) || (NULL == longestWaitMethod.methodName)) {
 			break;
 		}
 		_OutputStream.writeCharacters("2JITLONGEST    ");
-		_OutputStream.writeInteger64(i + 1, "%zu");
+		_OutputStream.writeInteger(i + 1, "%zu");
 		_OutputStream.writeCharacters(". Longest Synchronous Compilation\n");
 
 		_OutputStream.writeCharacters("3JITWAITTIME   Wait time: ");
@@ -2965,27 +2966,27 @@ JavaCoreDumpWriter::writeSynchronousCompilationSection(void)
 		_OutputStream.writeCharacters("\n");
 
 		_OutputStream.writeCharacters("3JITMETHOD     Method: ");
-		_OutputStream.writeCharacters(longestWaitMethod.method);
+		_OutputStream.writeCharacters(longestWaitMethod.methodName);
 		_OutputStream.writeCharacters("\n");
 
 		_OutputStream.writeCharacters("3JITTHREAD     Thread: ");
-		_OutputStream.writeCharacters(longestWaitMethod.thread);
+		_OutputStream.writeCharacters(longestWaitMethod.threadName);
 		_OutputStream.writeCharacters("\n");
 	}
 
 	stats->totalCount = 0;
 	stats->totalWaitTime = 0;
-	for (int i = 0; i < J9_LONGEST_SYNC_COMP; i++) {
+	for (int32_t i = 0; i < J9_NUM_LONGEST_SYNC_COMP; i++) {
 		J9JITLongestSyncComp &longestWaitMethod = stats->longestWaitMethods[i];
 		longestWaitMethod.waitTime = 0;
 		longestWaitMethod.waitTimeEnd = 0;
-		if (NULL != longestWaitMethod.method) {
-			j9mem_free_memory(longestWaitMethod.method);
-			longestWaitMethod.method = NULL;
+		if (NULL != longestWaitMethod.methodName) {
+			j9mem_free_memory(longestWaitMethod.methodName);
+			longestWaitMethod.methodName = NULL;
 		}
-		if (NULL != longestWaitMethod.thread) {
-			j9mem_free_memory(longestWaitMethod.thread);
-			longestWaitMethod.thread = NULL;
+		if (NULL != longestWaitMethod.threadName) {
+			j9mem_free_memory(longestWaitMethod.threadName);
+			longestWaitMethod.threadName = NULL;
 		}
 	}
 }
