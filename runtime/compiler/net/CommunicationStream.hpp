@@ -37,6 +37,18 @@ namespace JITServer {
 enum JITServerCompatibilityFlags {
     JITServerJavaVersionMask = 0x00000FFF,
     JITServerCompressedRef = 0x00001000,
+
+    // Platform Architecture
+    JITServerArchX86 = 1,
+    JITServerArchPowerLE = 2,
+    JITServerArchPowerBE = 3,
+    JITServerArchZ = 4,
+    JITServerArchARM = 5,
+    JITServerArchARM64 = 6,
+
+    // Bit layout configuration for architecture field
+    JITServerArchShift = 13,
+    JITServerArchMask = 0xE000,
 };
 
 class CommunicationStream {

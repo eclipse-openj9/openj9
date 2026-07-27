@@ -43,6 +43,20 @@ void CommunicationStream::initConfigurationFlags()
         CONFIGURATION_FLAGS |= JITServerCompressedRef;
     }
     CONFIGURATION_FLAGS |= JAVA_SPEC_VERSION & JITServerJavaVersionMask;
+
+    uint32_t arch = 0;
+    if (TR::Compiler->target.cpu.isX86())
+        arch = JITServerCompatibilityFlags::JITServerArchX86;
+    else if (TR::Compiler->target.cpu.isPower())
+        arch = TR::Compiler->target.cpu.isLittleEndian() ? JITServerCompatibilityFlags::JITServerArchPowerLE
+                                                         : JITServerCompatibilityFlags::JITServerArchPowerBE;
+    else if (TR::Compiler->target.cpu.isZ())
+        arch = JITServerCompatibilityFlags::JITServerArchZ;
+    else if (TR::Compiler->target.cpu.isARM())
+        arch = JITServerCompatibilityFlags::JITServerArchARM;
+    else if (TR::Compiler->target.cpu.isARM64())
+        arch = JITServerCompatibilityFlags::JITServerArchARM64;
+    CONFIGURATION_FLAGS |= arch << JITServerCompatibilityFlags::JITServerArchShift;
 }
 
 bool CommunicationStream::useSSL()
@@ -143,6 +157,15 @@ std::string CommunicationStream::showFullVersionIncompatibility(uint64_t serverF
     if (serverCompressesRefs != clientCompressesRefs)
         return "compressed refs: server " + std::to_string(serverCompressesRefs) + ", client "
             + std::to_string(clientCompressesRefs);
+
+    uint32_t serverArch = (serverFlags & JITServerCompatibilityFlags::JITServerArchMask)
+        >> JITServerCompatibilityFlags::JITServerArchShift;
+    uint32_t clientArch = (clientFlags & JITServerCompatibilityFlags::JITServerArchMask)
+        >> JITServerCompatibilityFlags::JITServerArchShift;
+    if (serverArch != clientArch) {
+        const std::string archNames[] = { "", "X86", "PowerLittleEndian", "PowerBigEndian", "Z", "ARM", "ARM64" };
+        return "architecture: server " + archNames[serverArch] + ", client " + archNames[clientArch];
+    }
 
     return "full version: server " + std::to_string(serverFullVersion) + ", client "
         + std::to_string(clientFullVersion);
