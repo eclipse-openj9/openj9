@@ -1207,7 +1207,7 @@ stopJFRRecording(J9JavaVM *vm)
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_CLASSES_UNLOAD, jfrClassesUnload, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_SHUTTING_DOWN, jfrVMShutdown, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_STARTING, jfrThreadStarting, NULL);
-	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_END, jfrThreadEnd, NULL);
+	/* (*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_END, jfrThreadEnd, NULL); */
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_SLEPT, jfrVMSlept, NULL);
 	/* Unregister it anyway even it wasn't registered for initializeJFR(vm). */
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_INITIALIZED, jfrVMInitialized, NULL);
@@ -1224,6 +1224,7 @@ void
 tearDownJFR(J9JavaVM *vm)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	J9HookInterface **vmHooks = getVMHookInterface(vm);
 	J9VMThread *currentThread = currentVMThread(vm);
 	Trc_VM_tearDownJFR(currentThread, vm);
 
@@ -1233,6 +1234,30 @@ tearDownJFR(J9JavaVM *vm)
 	if (!isJFRV2SupportEnabled(vm)) {
 		stopJFRRecording(vm);
 	}
+	/* Unregistered here (rather than in stopJFRRecording()) so that jfrThreadEnd keeps
+	 * freeing thread jfrBuffers as threads die for as long as possible, right up to
+	 * actual VM shutdown.
+	 */
+	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_END, jfrThreadEnd, NULL);
+
+	/* jfrThreadEnd only frees a thread's jfrBuffer when that thread dies through the
+	 * normal thread-end path. Daemon/internal threads still alive at real VM shutdown
+	 * are abandoned without ever going through that path (see terminateRemainingThreads()
+	 * in jniinv.c), so walk the thread list directly here to reclaim whatever's left -
+	 * this is the only place guaranteed to run exactly once, at actual teardown.
+	 */
+	{
+		bool acquiredExclusive = false;
+		if (J9_XACCESS_NONE == vm->exclusiveAccessState) {
+			acquireExclusiveVMAccess(currentThread);
+			acquiredExclusive = true;
+		}
+		flushAllThreadBuffers(currentThread, true);
+		if (acquiredExclusive) {
+			releaseExclusiveVMAccess(currentThread);
+		}
+	}
+
 	vm->jfrState.isCreated = FALSE;
 	VM_JFRWriter::teardownJFRWriter(vm);
 

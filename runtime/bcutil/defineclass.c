@@ -140,6 +140,12 @@ internalDefineClass(
 	BOOLEAN isHiddenFlagSet = J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_HIDDEN);
 	J9Class *superClass = NULL;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+#if defined(J9VM_OPT_JFR)
+	/* Non-NULL if classData was replaced with a heap-allocated buffer owned by this function
+	 * (the JFR eager-instrumentation output); used below to wire up loadData's free function.
+	 */
+	U_8 *jfrAllocatedClassData = NULL;
+#endif /* defined(J9VM_OPT_JFR) */
 
 	/* This trace point is obsolete. It is retained only because j9vm test depends on it.
 	 * Once j9vm tests are fixed, it would be marked as Obsolete in j9bcu.tdf
@@ -177,6 +183,13 @@ internalDefineClass(
 				}
 				omrthread_monitor_exit(vm->classTableMutex);
 				vmFuncs->jvmUpcallsEagerByteInstrumentation(vmThread, superClass, className, (U_16)classNameLength, classLoader, upcallClassBytes, upcallClassBytesLength, &jfrModifiedBytes, &jfrModifiedBytesLength);
+				if (upcallClassBytes != classData) {
+					/* upcallClassBytes was reconstructed from the ROM class above; it was only
+					 * needed as input to the instrumentation upcall, which has already copied it.
+					 */
+					PORT_ACCESS_FROM_JAVAVM(vm);
+					j9mem_free_memory(upcallClassBytes);
+				}
 				omrthread_monitor_enter(vm->classTableMutex);
 				if ((NULL == jfrModifiedBytes) || (0 == jfrModifiedBytesLength)) {
 					omrthread_monitor_exit(vm->classTableMutex);
@@ -185,6 +198,7 @@ internalDefineClass(
 				}
 				classData = jfrModifiedBytes;
 				classDataLength = jfrModifiedBytesLength;
+				jfrAllocatedClassData = jfrModifiedBytes;
 			}
 		}
 	}
@@ -206,8 +220,20 @@ internalDefineClass(
 	}
 	loadData.protectionDomain = protectionDomain;
 	loadData.options = options;
-	loadData.freeUserData = NULL;
-	loadData.freeFunction = NULL;
+#if defined(J9VM_OPT_JFR)
+	if (NULL != jfrAllocatedClassData) {
+		/* classData points at memory this function allocated (the JFR-instrumented bytes);
+		 * hand ownership to loadData so internalLoadROMClass frees it once it's done.
+		 */
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		loadData.freeUserData = PORTLIB;
+		loadData.freeFunction = (classDataFreeFunction) OMRPORT_FROM_J9PORT(PORTLIB)->mem_free_memory;
+	} else
+#endif /* defined(J9VM_OPT_JFR) */
+	{
+		loadData.freeUserData = NULL;
+		loadData.freeFunction = NULL;
+	}
 	loadData.romClass = existingROMClass;
 
 	loadData.hostPackageName = NULL;

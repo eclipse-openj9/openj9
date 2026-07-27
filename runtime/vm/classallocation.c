@@ -232,6 +232,19 @@ allocateClassLoader(J9JavaVM *javaVM)
 	return classLoader;
 }
 
+#if defined(J9VM_OPT_JFR)
+static UDATA
+freeClassLoaderTypeIDs(void *entry, void *userData)
+{
+	J9JFRTypeID *tableEntry = (J9JFRTypeID *) entry;
+
+	if (tableEntry->free) {
+		PORT_ACCESS_FROM_JAVAVM((J9JavaVM *)userData);
+		j9mem_free_memory(tableEntry->className);
+	}
+	return FALSE;
+}
+#endif /* defined(J9VM_OPT_JFR) */
 
 void
 freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThread, UDATA needsFrameBuild)
@@ -447,6 +460,13 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 	if (NULL != classLoader->classHashTable) {
 		hashClassTableFree(classLoader);
 	}
+#if defined(J9VM_OPT_JFR)
+	if (NULL != classLoader->typeIDs) {
+		hashTableForEachDo(classLoader->typeIDs, freeClassLoaderTypeIDs, javaVM);
+		hashTableFree(classLoader->typeIDs);
+		classLoader->typeIDs = NULL;
+	}
+#endif /* defined(J9VM_OPT_JFR) */
 	if (NULL != classLoader->moduleExtraInfoHashTable) {
 		J9HashTableState moduleExtraInfoWalkState;
 
