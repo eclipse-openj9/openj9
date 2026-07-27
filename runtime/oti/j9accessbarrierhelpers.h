@@ -43,7 +43,13 @@ static UDATA j9javaArray_BA(J9VMThread *vmThread, J9IndexableObject *array, UDAT
 	if (J9IndexableObjectLayout_NoDataAddr_NoArraylet == vmThread->indexableObjectLayout) {
 		/* Standard GCs: nothing extra to do - just explicitly listed for clarity */
 	} else if (J9IndexableObjectLayout_DataAddr_NoArraylet == vmThread->indexableObjectLayout) {
-		/* Balanced Offheap; dereference dataAddr that is just after the (base) header */
+		/*
+		 *  Balanced Offheap; dereference dataAddr that is just after the (base) header.
+		 *  There is current implementation assumption about structure of
+		 *  J9IndexableObjectContiguousCompressed and J9IndexableObjectContiguousFull headers.
+		 *  This code should be modified if it is not going to be true in the future.
+		 *  Ideally dataAddr should be read explicitly using header->dataAddr.
+		 */
 		baseAddress = *(UDATA *)baseAddress;
 	} else {
 		/* GCs that may have arraylet (Balanced arraylet or Metronome) - will recalculate baseAddress from scratch */
