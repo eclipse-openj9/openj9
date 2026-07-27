@@ -2421,7 +2421,11 @@ jvmtiHookGCEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void* us
 	taggedObject = hashTableStartDo(j9env->objectTagTable, &hashState);
 	while (taggedObject != NULL) {
 		if (taggedObject->ref == NULL) {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			taggedObject->ref = (j9object_t)((UDATA)deletedHead | J9JVMTI_OBJECT_TAG_DEAD_ENTRY_BIT);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			taggedObject->ref = (j9object_t) deletedHead;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			deletedHead = (J9JVMTIObjectTag *) taggedObject;
 		}
 		taggedObject = hashTableNextDo(&hashState);
@@ -2458,7 +2462,11 @@ jvmtiHookGCEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void* us
 				}
 #endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
 			}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			deletedHead = J9JVMTI_OBJECT_TAG_REF_NEXT(taggedObject->ref);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			deletedHead = (J9JVMTIObjectTag *) taggedObject->ref;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			hashTableRemove(j9env->objectTagTable, taggedObject);
 		} while (deletedHead != NULL);
 	}
