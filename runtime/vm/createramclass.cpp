@@ -2452,8 +2452,9 @@ nativeOOM:
 			/* totalInstanceSize reflects the unflattened value size. Use this to be consistent
 			 * with the information given to the user through Unsafe.getObjectSize().
 			 */
-			if ((state->ramClass->totalInstanceSize <= javaVM->valueFlatteningThreshold)
-					&& !J9ROMCLASS_IS_CONTENDED(romClass)
+			if (J9_ARE_ALL_BITS_SET(javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_ENABLE_VT_FLATTENING)
+				&& (state->ramClass->totalInstanceSize <= javaVM->valueFlatteningThreshold)
+				&& !J9ROMCLASS_IS_CONTENDED(romClass)
 			) {
 				Trc_VM_CreateRAMClassFromROMClass_valueTypeIsFlattened(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), state->ramClass);
 				classFlags |= J9ClassIsFlattened;
@@ -3777,6 +3778,7 @@ fail:
 						;
 					if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_CLASS_OPTION_NULL_RESTRICTED_ARRAY)) {
 						if (J9_ARE_ALL_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_VT_ARRAY_FLATTENING)) {
+							Assert_VM_true(J9_ARE_ALL_BITS_SET(javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_ENABLE_VT_FLATTENING));
 							arrayFlags |= J9ClassIsFlattened;
 						}
 						ramArrayClass->classFlags |= J9ClassArrayIsNullRestricted;

@@ -385,6 +385,8 @@ enum INIT_STAGE {
 #define VMOPT_OPT_XXNOINTERLEAVEMEMORY "-XX:-InterleaveMemory"
 #define VMOPT_OPT_XXINTERLEAVEMEMORY "-XX:+InterleaveMemory"
 #define VMOPT_ROMMETHODSORTTHRESHOLD_EQUALS "-XX:ROMMethodSortThreshold="
+#define VMOPT_ENABLEFLATTENING "-XX:+EnableFlattening"
+#define VMOPT_DISABLEFLATTENING "-XX:-EnableFlattening"
 #define VMOPT_VALUEFLATTENINGTHRESHOLD_EQUALS "-XX:ValueTypeFlatteningThreshold="
 #define VMOPT_VTARRAYFLATTENING_EQUALS "-XX:+EnableArrayFlattening"
 #define VMOPT_VTDISABLEARRAYFLATTENING_EQUALS "-XX:-EnableArrayFlattening"
