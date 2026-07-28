@@ -218,7 +218,7 @@ private:
 	static constexpr int MONITOR_ENTER_EVENT_SIZE = sizeof(U_32) + (3 * LEB128_64_SIZE) + (5 * LEB128_32_SIZE);
 	static constexpr int THREAD_PARK_EVENT_SIZE = (9 * sizeof(U_64)) + sizeof(U_32);
 	static constexpr int JVM_INFORMATION_EVENT_SIZE = 3000;
-	static constexpr int PHYSICAL_MEMORY_EVENT_SIZE = (4 * sizeof(U_64)) + sizeof(U_32);
+	static constexpr int PHYSICAL_MEMORY_EVENT_SIZE = LEB128_32_SIZE + (4 * LEB128_64_SIZE);
 	static constexpr int VIRTUALIZATION_INFORMATION_EVENT_SIZE = 50;
 	static constexpr int CPU_INFORMATION_EVENT_SIZE = 600;
 	static constexpr int OS_INFORMATION_EVENT_SIZE = 100;
@@ -479,6 +479,8 @@ done:
 
 			pool_do(_constantPoolTypes.getGarbageCollectionTable(), &writeGarbageCollectionEvent, _bufferWriter);
 
+			pool_do(_constantPoolTypes.getPhysicalMemoryTable(), &writePhysicalMemoryEventFromTable, _bufferWriter);
+
 			pool_do(_constantPoolTypes.getGCHeapSummaryTable(), &writeGCHeapSummaryEvent, _bufferWriter);
 
 			pool_do(_constantPoolTypes.getNetworkUtilizationTable(), &writeNetworkUtilizationEvent, this);
@@ -543,10 +545,6 @@ done:
 
 				if (_constantPoolTypes.shouldWriteYoungGenerationConfigurationEvent()) {
 					writeYoungGenerationConfigurationEvent();
-				}
-
-				if (_constantPoolTypes.shouldWritePhysicalMemory()) {
-					writePhysicalMemoryEvent();
 				}
 			}
 
@@ -875,6 +873,32 @@ done:
 		writeEventSize(_bufferWriter, dataStart);
 	}
 
+	static void
+	writePhysicalMemoryEventFromTable(void *anElement, void *userData)
+	{
+		PhysicalMemoryEntry *entry = (PhysicalMemoryEntry *)anElement;
+		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
+
+		/* reserve size field */
+		U_8 *dataStart = reserveEventSize(_bufferWriter);
+
+		/* write event type */
+		_bufferWriter->writeLEB128(PhysicalMemoryID);
+
+		/* write start time */
+		_bufferWriter->writeLEB128(entry->ticks);
+
+		/* write total size */
+		_bufferWriter->writeLEB128(entry->totalSize);
+
+		/* write used size */
+		_bufferWriter->writeLEB128(entry->usedSize);
+
+		/* write size */
+		writeEventSize(_bufferWriter, dataStart);
+	}
+
+
 	void
 	writeJFRChunkToFile()
 	{
@@ -1047,7 +1071,7 @@ done:
 
 		requiredBufferSize += OS_INFORMATION_EVENT_SIZE;
 
-		requiredBufferSize += PHYSICAL_MEMORY_EVENT_SIZE;
+		requiredBufferSize += (_constantPoolTypes.getPhysicalMemoryCount() * PHYSICAL_MEMORY_EVENT_SIZE);
 
 		requiredBufferSize += VIRTUALIZATION_INFORMATION_EVENT_SIZE;
 
