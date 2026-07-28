@@ -2969,22 +2969,31 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			}
 
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-			/* By default flattening is disabled */
-			vm->valueFlatteningThreshold = 0;
-			if ((argIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_VALUEFLATTENINGTHRESHOLD_EQUALS, NULL)) >= 0) {
-				UDATA threshold = 0;
-				char *optname = VMOPT_VALUEFLATTENINGTHRESHOLD_EQUALS;
-				GET_INTEGER_VALUE(argIndex, optname, threshold);
-				vm->valueFlatteningThreshold = threshold;
-			}
-
 			{
-				IDATA enableFlattenedArrays = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_VTARRAYFLATTENING_EQUALS, NULL);
-				IDATA disableFlattenedArrays = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_VTDISABLEARRAYFLATTENING_EQUALS, NULL);
-				if (disableFlattenedArrays > enableFlattenedArrays) {
-					vm->extendedRuntimeFlags2 &= ~J9_EXTENDED_RUNTIME2_ENABLE_VT_ARRAY_FLATTENING;
-				} else if (disableFlattenedArrays < enableFlattenedArrays) {
-					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_VT_ARRAY_FLATTENING;
+				IDATA enableFlattening  = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_ENABLEFLATTENING, NULL);
+				IDATA disableFlattening = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_DISABLEFLATTENING, NULL);
+				if (enableFlattening > disableFlattening) {
+					/* By default flattening is disabled */
+					vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_ENABLE_VT_FLATTENING;
+				}
+			}
+			vm->valueFlatteningThreshold = 0;
+			if (J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_ENABLE_VT_FLATTENING)) {
+				if ((argIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_VALUEFLATTENINGTHRESHOLD_EQUALS, NULL)) >= 0) {
+					UDATA threshold = 0;
+					char *optname = VMOPT_VALUEFLATTENINGTHRESHOLD_EQUALS;
+					GET_INTEGER_VALUE(argIndex, optname, threshold);
+					vm->valueFlatteningThreshold = threshold;
+				}
+
+				{
+					IDATA enableFlattenedArrays  = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_VTARRAYFLATTENING_EQUALS, NULL);
+					IDATA disableFlattenedArrays = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_VTDISABLEARRAYFLATTENING_EQUALS, NULL);
+					if (disableFlattenedArrays > enableFlattenedArrays) {
+						vm->extendedRuntimeFlags2 &= ~J9_EXTENDED_RUNTIME2_ENABLE_VT_ARRAY_FLATTENING;
+					} else if (disableFlattenedArrays < enableFlattenedArrays) {
+						vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_VT_ARRAY_FLATTENING;
+					}
 				}
 			}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */

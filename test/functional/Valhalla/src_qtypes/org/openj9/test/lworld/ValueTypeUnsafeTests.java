@@ -63,8 +63,9 @@ public class ValueTypeUnsafeTests {
 	@BeforeClass
 	static public void testSetUp() throws Throwable {
 		List<String> arguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
-		isFlatteningEnabled = arguments.contains("-XX:ValueTypeFlatteningThreshold=99999");
-		isArrayFlatteningEnabled = arguments.contains("-XX:+EnableArrayFlattening");
+		boolean enableFlatOptionFound = arguments.contains("-XX:+EnableFlattening");
+		isFlatteningEnabled = enableFlatOptionFound && arguments.contains("-XX:ValueTypeFlatteningThreshold=99999");
+		isArrayFlatteningEnabled = enableFlatOptionFound && arguments.contains("-XX:+EnableArrayFlattening");
 		isCompressedRefsEnabled = arguments.contains("-Xcompressedrefs");
 		// If dual header shape is disabled array header will have dataAddr field, 8 bytes in size, regardless of GC policy
 		isDualHeaderShapeDisabled = arguments.contains("-XXgc:disableIndexableDualHeaderShape");
