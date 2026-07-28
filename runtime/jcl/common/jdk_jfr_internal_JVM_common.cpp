@@ -380,7 +380,14 @@ Java_jdk_jfr_internal_JVM_retransformClasses(JNIEnv *env, jobject obj, jobjectAr
 void JNICALL
 Java_jdk_jfr_internal_JVM_setEnabled(JNIEnv *env, jobject obj, jlong eventTypeId, jboolean enabled)
 {
-	// TODO: implementation
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	if ((NULL != vm->jfrState.jfrEventEnabledFlags)
+		&& (0 <= eventTypeId)
+		&& (eventTypeId < vm->jfrState.jfrEventEnabledFlagsSize)
+	) {
+		vm->jfrState.jfrEventEnabledFlags[(UDATA)eventTypeId] = (JNI_TRUE == enabled) ? 1 : 0;
+	}
 }
 
 void JNICALL

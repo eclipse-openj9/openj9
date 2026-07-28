@@ -607,6 +607,22 @@ jfrVMShutdown(J9HookInterface **hook, UDATA eventNum, void *eventData, void *use
 	}
 }
 
+#if JAVA_SPEC_VERSION >= 17
+/* Returns whether the JFR event identified by jfrEventId is currently enabled. */
+static BOOLEAN
+isJFREventEnabled(J9JavaVM *vm, jlong jfrEventId)
+{
+	BOOLEAN result = TRUE;
+	if (isJFRV2SupportEnabled(vm)) {
+		result = (NULL != vm->jfrState.jfrEventEnabledFlags)
+			&& (0 <= jfrEventId)
+			&& (jfrEventId < vm->jfrState.jfrEventEnabledFlagsSize)
+			&& vm->jfrState.jfrEventEnabledFlags[(UDATA)jfrEventId];
+	}
+	return result;
+}
+#endif /* JAVA_SPEC_VERSION >= 17 */
+
 /**
  * Hook for thread starting.
  *
@@ -623,6 +639,12 @@ jfrThreadStarting(J9HookInterface **hook, UDATA eventNum, void *eventData, void 
 	J9VMThread *startedThread = event->startedThread;
 
 	Trc_VM_jfrThreadStarting(currentThread, startedThread);
+
+#if JAVA_SPEC_VERSION >= 17
+	if (!isJFREventEnabled(currentThread->javaVM, JfrThreadStartEvent)) {
+		return;
+	}
+#endif /* JAVA_SPEC_VERSION >= 17 */
 
 	/* Skip recording the ThreadStart event if the started thread is JFR-excluded.
 	 * reserveBuffer checks the sample thread (currentThread here), not the started thread.
@@ -658,9 +680,17 @@ jfrThreadEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *user
 	Trc_VM_jfrThreadEnd(currentThread);
 
 	internalAcquireVMAccess(currentThread);
-	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
-	if (NULL != jfrEvent) {
-		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_THREAD_END);
+	if (
+#if JAVA_SPEC_VERSION >= 17
+		isJFREventEnabled(currentThread->javaVM, JfrThreadEndEvent)
+#else /* JAVA_SPEC_VERSION >= 17 */
+		TRUE
+#endif /* JAVA_SPEC_VERSION >= 17 */
+	) {
+		J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
+		if (NULL != jfrEvent) {
+			initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_THREAD_END);
+		}
 	}
 	flushBufferToGlobal(currentThread, currentThread);
 
@@ -686,6 +716,13 @@ jfrVMSlept(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userDa
 	PORT_ACCESS_FROM_VMC(currentThread);
 
 	Trc_VM_jfrVMSlept(currentThread);
+
+#if JAVA_SPEC_VERSION == 17
+	/* ThreadSleep is not defined in the JFR metadata for other JDK versions. */
+	if (!isJFREventEnabled(currentThread->javaVM, JfrThreadSleepEvent)) {
+		return;
+	}
+#endif /* JAVA_SPEC_VERSION == 17 */
 
 	J9JFRThreadSlept *jfrEvent = (J9JFRThreadSlept *)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_THREAD_SLEEP, sizeof(*jfrEvent), 0);
 	if (NULL != jfrEvent) {
@@ -756,6 +793,12 @@ jfrVMMonitorWaited(J9HookInterface **hook, UDATA eventNum, void *eventData, void
 
 	Trc_VM_jfrVMMonitorWaited(currentThread);
 
+#if JAVA_SPEC_VERSION >= 17
+	if (!isJFREventEnabled(currentThread->javaVM, JfrJavaMonitorWaitEvent)) {
+		return;
+	}
+#endif /* JAVA_SPEC_VERSION >= 17 */
+
 	if (!isChunkRotationMonitor(currentThread, event->monitor)) {
 		J9JFRMonitorWaited *jfrEvent = (J9JFRMonitorWaited *)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_OBJECT_WAIT, sizeof(*jfrEvent), 0);
 		if (NULL != jfrEvent) {
@@ -802,6 +845,13 @@ jfrVMMonitorEntered(J9HookInterface **hook, UDATA eventNum, void *eventData, voi
 	PORT_ACCESS_FROM_VMC(currentThread);
 
 	Trc_VM_jfrVMMonitorEntered(currentThread);
+
+#if JAVA_SPEC_VERSION >= 17
+	if (!isJFREventEnabled(currentThread->javaVM, JfrJavaMonitorEnterEvent)) {
+		return;
+	}
+#endif /* JAVA_SPEC_VERSION >= 17 */
+
 	if (!isChunkRotationMonitor(currentThread, event->monitor)) {
 		J9JFRMonitorEntered *jfrEvent = (J9JFRMonitorEntered *)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_MONITOR_ENTER, sizeof(*jfrEvent), 0);
 		if (NULL != jfrEvent) {
@@ -832,6 +882,12 @@ jfrVMThreadParked(J9HookInterface **hook, UDATA eventNum, void *eventData, void 
 
 	Trc_VM_jfrVMThreadParked(currentThread);
 
+#if JAVA_SPEC_VERSION >= 17
+	if (!isJFREventEnabled(currentThread->javaVM, JfrThreadParkEvent)) {
+		return;
+	}
+#endif /* JAVA_SPEC_VERSION >= 17 */
+
 	J9JFRThreadParked *jfrEvent = (J9JFRThreadParked *)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_THREAD_PARK, sizeof(*jfrEvent), 0);
 	if (NULL != jfrEvent) {
 		// TODO: worry about overflow?
@@ -859,6 +915,12 @@ jfrSystemGC(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userD
 	J9VMThread *currentThread = event->currentThread;
 	PORT_ACCESS_FROM_VMC(currentThread);
 
+#if JAVA_SPEC_VERSION >= 17
+	if (!isJFREventEnabled(currentThread->javaVM, JfrSystemGCEvent)) {
+		return;
+	}
+#endif /* JAVA_SPEC_VERSION >= 17 */
+
 	J9JFRSystemGC *jfrEvent = (J9JFRSystemGC *)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_SYSTEM_GC, sizeof(*jfrEvent), 0);
 	if (NULL != jfrEvent) {
 		jfrEvent->startTicks = event->startTicks;
@@ -876,6 +938,12 @@ jfrOldGarbageCollection(OMR_VMThread *omrVMThread)
 {
 	J9VMThread *currentThread = (J9VMThread *)omrVMThread->_language_vmthread;
 	J9JavaVM *javaVM = currentThread->javaVM;
+
+#if JAVA_SPEC_VERSION >= 17
+	if (!isJFREventEnabled(javaVM, JfrOldGarbageCollectionEvent)) {
+		return;
+	}
+#endif /* JAVA_SPEC_VERSION >= 17 */
 
 	J9JFROldGarbageCollection *jfrEvent = (J9JFROldGarbageCollection *)reserveBuffer(currentThread, currentThread, sizeof(J9JFROldGarbageCollection));
 	if (NULL != jfrEvent) {
@@ -896,6 +964,12 @@ jfrYoungGarbageCollection(OMR_VMThread *omrVMThread)
 {
 	J9VMThread *currentThread = (J9VMThread *)omrVMThread->_language_vmthread;
 	J9JavaVM *javaVM = currentThread->javaVM;
+
+#if JAVA_SPEC_VERSION >= 17
+	if (!isJFREventEnabled(javaVM, JfrYoungGarbageCollectionEvent)) {
+		return;
+	}
+#endif /* JAVA_SPEC_VERSION >= 17 */
 
 	J9JFRYoungGarbageCollection *jfrEvent = (J9JFRYoungGarbageCollection *)reserveBuffer(currentThread, currentThread, sizeof(J9JFRYoungGarbageCollection));
 	if (NULL != jfrEvent) {
@@ -918,6 +992,12 @@ jfrGarbageCollection(OMR_VMThread *omrVMThread)
 	/* Extract the J9VMThread from the OMR_VMThread */
 	J9VMThread *currentThread = (J9VMThread *)omrVMThread->_language_vmthread;
 	J9JavaVM *javaVM = currentThread->javaVM;
+
+#if JAVA_SPEC_VERSION >= 17
+	if (!isJFREventEnabled(javaVM, JfrGarbageCollectionEvent)) {
+		return;
+	}
+#endif /* JAVA_SPEC_VERSION >= 17 */
 
 	/* Reserve buffer space for the JFR event */
 	J9JFRGarbageCollection *jfrEvent = (J9JFRGarbageCollection *)reserveBuffer(currentThread, currentThread, sizeof(J9JFRGarbageCollection));
@@ -942,6 +1022,12 @@ jfrGCHeapSummary(OMR_VMThread *omrVMThread, U_32 gcWhenID)
 	/* Extract the J9VMThread from the OMR_VMThread */
 	J9VMThread *currentThread = (J9VMThread *)omrVMThread->_language_vmthread;
 	J9JavaVM *javaVM = currentThread->javaVM;
+
+#if JAVA_SPEC_VERSION >= 17
+	if (!isJFREventEnabled(javaVM, JfrGCHeapSummaryEvent)) {
+		return;
+	}
+#endif /* JAVA_SPEC_VERSION >= 17 */
 
 	/* Reserve buffer space for the JFR event */
 	J9JFRGCHeapSummary *jfrEvent = (J9JFRGCHeapSummary *)reserveBuffer(currentThread, currentThread, sizeof(J9JFRGCHeapSummary));
@@ -1373,6 +1459,12 @@ isJFRCreated(J9JavaVM *vm)
 void
 jfrExecutionSample(J9VMThread *currentThread, J9VMThread *sampleThread)
 {
+#if JAVA_SPEC_VERSION >= 17
+	if (!isJFREventEnabled(currentThread->javaVM, JfrExecutionSampleEvent)) {
+		return;
+	}
+#endif /* JAVA_SPEC_VERSION >= 17 */
+
 	Trc_VM_jfrExecutionSampleCallback(currentThread, sampleThread);
 
 	J9JFRExecutionSample *jfrEvent = (J9JFRExecutionSample *)reserveBufferWithStackTrace(currentThread, sampleThread, J9JFR_EVENT_TYPE_EXECUTION_SAMPLE, sizeof(*jfrEvent), 0);
@@ -1390,6 +1482,11 @@ jfrExecutionSampleCallback(J9VMThread *currentThread, IDATA handlerKey, void *us
 static void
 jfrCPULoad(J9VMThread *currentThread)
 {
+#if JAVA_SPEC_VERSION >= 17
+	if (!isJFREventEnabled(currentThread->javaVM, JfrCPULoadEvent)) {
+		return;
+	}
+#endif /* JAVA_SPEC_VERSION >= 17 */
 	PORT_ACCESS_FROM_VMC(currentThread);
 	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
@@ -1465,12 +1562,22 @@ jfrThreadCPULoad(J9VMThread *currentThread, J9VMThread *sampleThread)
 static void
 jfrThreadCPULoadCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData)
 {
+#if JAVA_SPEC_VERSION >= 17
+	if (!isJFREventEnabled(currentThread->javaVM, JfrThreadCPULoadEvent)) {
+		return;
+	}
+#endif /* JAVA_SPEC_VERSION >= 17 */
 	jfrThreadCPULoad(currentThread, currentThread);
 }
 
 static void
 jfrClassLoadingStatistics(J9VMThread *currentThread)
 {
+#if JAVA_SPEC_VERSION >= 17
+	if (!isJFREventEnabled(currentThread->javaVM, JfrClassLoadingStatisticsEvent)) {
+		return;
+	}
+#endif /* JAVA_SPEC_VERSION >= 17 */
 	J9JavaVM *vm = currentThread->javaVM;
 	J9JFRClassLoadingStatistics *jfrEvent = (J9JFRClassLoadingStatistics *)reserveBuffer(currentThread, currentThread, sizeof(J9JFRClassLoadingStatistics));
 
@@ -1488,6 +1595,11 @@ jfrClassLoadingStatistics(J9VMThread *currentThread)
 static void
 jfrThreadContextSwitchRate(J9VMThread *currentThread)
 {
+#if JAVA_SPEC_VERSION >= 17
+	if (!isJFREventEnabled(currentThread->javaVM, JfrThreadContextSwitchRateEvent)) {
+		return;
+	}
+#endif /* JAVA_SPEC_VERSION >= 17 */
 	PORT_ACCESS_FROM_VMC(currentThread);
 	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
@@ -1590,6 +1702,11 @@ networkStatsCallback(const char *interfaceName, uint64_t rxBytes, uint64_t txByt
 static void
 jfrNetworkUtilization(J9VMThread *currentThread)
 {
+#if JAVA_SPEC_VERSION >= 17
+	if (!isJFREventEnabled(currentThread->javaVM, JfrNetworkUtilizationEvent)) {
+		return;
+	}
+#endif /* JAVA_SPEC_VERSION >= 17 */
 	PORT_ACCESS_FROM_VMC(currentThread);
 	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
@@ -1609,6 +1726,11 @@ jfrNetworkUtilization(J9VMThread *currentThread)
 static void
 jfrThreadStatistics(J9VMThread *currentThread)
 {
+#if JAVA_SPEC_VERSION >= 17
+	if (!isJFREventEnabled(currentThread->javaVM, JfrJavaThreadStatisticsEvent)) {
+		return;
+	}
+#endif /* JAVA_SPEC_VERSION >= 17 */
 	J9JavaVM *vm = currentThread->javaVM;
 	J9JFRThreadStatistics *jfrEvent = (J9JFRThreadStatistics *)reserveBuffer(currentThread, currentThread, sizeof(J9JFRThreadStatistics));
 
@@ -1742,6 +1864,8 @@ initializeJFRIDs(J9JavaVM *vm)
 	}
 
 	vm->jfrState.typeIDcount = 0;
+	vm->jfrState.jfrEventEnabledFlags = NULL;
+	vm->jfrState.jfrEventEnabledFlagsSize = 0;
 
 done:
 	return result;
@@ -1753,6 +1877,12 @@ shutdownJFRIDs(J9JavaVM *vm)
 	if (NULL != vm->jfrState.typeIDMonitor) {
 		omrthread_monitor_destroy(vm->jfrState.typeIDMonitor);
 		vm->jfrState.typeIDMonitor = NULL;
+	}
+	if (NULL != vm->jfrState.jfrEventEnabledFlags) {
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		j9mem_free_memory(vm->jfrState.jfrEventEnabledFlags);
+		vm->jfrState.jfrEventEnabledFlags = NULL;
+		vm->jfrState.jfrEventEnabledFlagsSize = 0;
 	}
 }
 
@@ -1841,6 +1971,20 @@ getTypeIdImpl(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *cla
 				setNativeOutOfMemoryError(currentThread, 0, 0);
 				goto done;
 			}
+
+			/* Allocate enabled-flag array indexed by JFR event/type ID. */
+			jlong jfrEventEnabledFlagsArraySize = vm->jfrState.typeIDcount + 1;
+			UDATA jfrEventEnabledFlagsArrayBytes = (UDATA)(jfrEventEnabledFlagsArraySize * sizeof(U_8));
+			U_8 *jfrEventEnabledFlagsArray = (U_8 *)j9mem_allocate_memory(jfrEventEnabledFlagsArrayBytes, J9MEM_CATEGORY_JFR);
+			if (NULL == jfrEventEnabledFlagsArray) {
+				hashTableFree(typeIDTable);
+				classLoader->typeIDs = NULL;
+				setNativeOutOfMemoryError(currentThread, 0, 0);
+				goto done;
+			}
+			memset(jfrEventEnabledFlagsArray, 0, jfrEventEnabledFlagsArrayBytes);
+			vm->jfrState.jfrEventEnabledFlags = jfrEventEnabledFlagsArray;
+			vm->jfrState.jfrEventEnabledFlagsSize = jfrEventEnabledFlagsArraySize;
 		}
 #endif /* JAVA_SPEC_VERSION >= 17 */
 
@@ -2083,6 +2227,10 @@ done:
 static void
 jfrPhysicalMemory(J9VMThread *currentThread)
 {
+	if (!isJFREventEnabled(currentThread->javaVM, JfrPhysicalMemoryEvent)) {
+		return;
+	}
+
 	PORT_ACCESS_FROM_VMC(currentThread);
 
 	J9MemoryInfo memInfo = {0};
@@ -2265,6 +2413,9 @@ JfrPeriodicEventSet::requestEvent(J9VMThread *currentThread, jlong id)
 void
 JfrPeriodicEventSet::requestJVMInformation(J9VMThread *currentThread)
 {
+	if (!isJFREventEnabled(currentThread->javaVM, JfrJVMInformationEvent)) {
+		return;
+	}
 	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
 	if (NULL != jfrEvent) {
 		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_JVM_INFORMATION);
@@ -2274,6 +2425,9 @@ JfrPeriodicEventSet::requestJVMInformation(J9VMThread *currentThread)
 void
 JfrPeriodicEventSet::requestOSInformation(J9VMThread *currentThread)
 {
+	if (!isJFREventEnabled(currentThread->javaVM, JfrOSInformationEvent)) {
+		return;
+	}
 	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
 	if (NULL != jfrEvent) {
 		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_OS_INFORMATION);
@@ -2283,6 +2437,9 @@ JfrPeriodicEventSet::requestOSInformation(J9VMThread *currentThread)
 void
 JfrPeriodicEventSet::requestVirtualizationInformation(J9VMThread *currentThread)
 {
+	if (!isJFREventEnabled(currentThread->javaVM, JfrVirtualizationInformationEvent)) {
+		return;
+	}
 	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
 	if (NULL != jfrEvent) {
 		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_VIRTUALIZATION_INFORMATION);
@@ -2292,6 +2449,9 @@ JfrPeriodicEventSet::requestVirtualizationInformation(J9VMThread *currentThread)
 void
 JfrPeriodicEventSet::requestInitialSystemProperty(J9VMThread *currentThread)
 {
+	if (!isJFREventEnabled(currentThread->javaVM, JfrInitialSystemPropertyEvent)) {
+		return;
+	}
 	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
 	if (NULL != jfrEvent) {
 		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_INITIAL_SYSTEM_PROPERTY);
@@ -2301,6 +2461,9 @@ JfrPeriodicEventSet::requestInitialSystemProperty(J9VMThread *currentThread)
 void
 JfrPeriodicEventSet::requestInitialEnvironmentVariable(J9VMThread *currentThread)
 {
+	if (!isJFREventEnabled(currentThread->javaVM, JfrInitialEnvironmentVariableEvent)) {
+		return;
+	}
 	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
 	if (NULL != jfrEvent) {
 		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_INITIAL_ENVIRONMENT_VARIABLE);
@@ -2310,6 +2473,9 @@ JfrPeriodicEventSet::requestInitialEnvironmentVariable(J9VMThread *currentThread
 void
 JfrPeriodicEventSet::requestSystemProcess(J9VMThread *currentThread)
 {
+	if (!isJFREventEnabled(currentThread->javaVM, JfrSystemProcessEvent)) {
+		return;
+	}
 	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
 	if (NULL != jfrEvent) {
 		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_SYSTEM_PROCESS);
@@ -2319,6 +2485,9 @@ JfrPeriodicEventSet::requestSystemProcess(J9VMThread *currentThread)
 void
 JfrPeriodicEventSet::requestCPUInformation(J9VMThread *currentThread)
 {
+	if (!isJFREventEnabled(currentThread->javaVM, JfrCPUInformationEvent)) {
+		return;
+	}
 	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
 	if (NULL != jfrEvent) {
 		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_CPU_INFORMATION);
@@ -2365,6 +2534,9 @@ JfrPeriodicEventSet::requestClassLoadingStatistics(J9VMThread *currentThread)
 void
 JfrPeriodicEventSet::requestClassLoaderStatistics(J9VMThread *currentThread)
 {
+	if (!isJFREventEnabled(currentThread->javaVM, JfrClassLoaderStatisticsEvent)) {
+		return;
+	}
 	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
 	if (NULL != jfrEvent) {
 		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_CLASS_LOADER_STATISTICS);
@@ -2387,6 +2559,10 @@ void
 JfrPeriodicEventSet::requestThreadDump(J9VMThread *currentThread)
 {
 	J9JavaVM *vm = currentThread->javaVM;
+
+	if (!isJFREventEnabled(vm, JfrThreadDumpEvent)) {
+		return;
+	}
 
 	const U_64 bufferSize = VM_JFRUtils::THREAD_DUMP_EVENT_SIZE_PER_THREAD * vm->peakThreadCount;
 	const UDATA eventSize = bufferSize + sizeof(J9JFRThreadDump);
@@ -2425,6 +2601,9 @@ JfrPeriodicEventSet::requestThreadDump(J9VMThread *currentThread)
 void
 JfrPeriodicEventSet::requestNativeLibrary(J9VMThread *currentThread)
 {
+	if (!isJFREventEnabled(currentThread->javaVM, JfrNativeLibraryEvent)) {
+		return;
+	}
 	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
 	if (NULL != jfrEvent) {
 		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_NATIVE_LIBRARY);
@@ -2434,6 +2613,9 @@ JfrPeriodicEventSet::requestNativeLibrary(J9VMThread *currentThread)
 void
 JfrPeriodicEventSet::requestModuleRequire(J9VMThread *currentThread)
 {
+	if (!isJFREventEnabled(currentThread->javaVM, JfrModuleRequireEvent)) {
+		return;
+	}
 	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
 	if (NULL != jfrEvent) {
 		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_MODULE_REQUIRE);
@@ -2443,6 +2625,9 @@ JfrPeriodicEventSet::requestModuleRequire(J9VMThread *currentThread)
 void
 JfrPeriodicEventSet::requestModuleExport(J9VMThread *currentThread)
 {
+	if (!isJFREventEnabled(currentThread->javaVM, JfrModuleExportEvent)) {
+		return;
+	}
 	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
 	if (NULL != jfrEvent) {
 		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_MODULE_EXPORT);
@@ -2452,6 +2637,9 @@ JfrPeriodicEventSet::requestModuleExport(J9VMThread *currentThread)
 void
 JfrPeriodicEventSet::requestGCHeapConfiguration(J9VMThread *currentThread)
 {
+	if (!isJFREventEnabled(currentThread->javaVM, JfrGCHeapConfigurationEvent)) {
+		return;
+	}
 	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
 	if (NULL != jfrEvent) {
 		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_GC_HEAP_CONFIGURATION);
@@ -2461,6 +2649,9 @@ JfrPeriodicEventSet::requestGCHeapConfiguration(J9VMThread *currentThread)
 void
 JfrPeriodicEventSet::requestYoungGenerationConfiguration(J9VMThread *currentThread)
 {
+	if (!isJFREventEnabled(currentThread->javaVM, JfrYoungGenerationConfigurationEvent)) {
+		return;
+	}
 	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
 	if (NULL != jfrEvent) {
 		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_YOUNG_GENERATION_CONFIGURATION);
@@ -2477,6 +2668,9 @@ JfrPeriodicEventSet::requestThreadAllocation(J9VMThread *currentThread)
 static void
 jfrThreadAllocationStatisticsCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData)
 {
+	if (!isJFREventEnabled(currentThread->javaVM, JfrThreadAllocationStatisticsEvent)) {
+		return;
+	}
 	J9JavaVM *vm = currentThread->javaVM;
 	J9MemoryManagerFunctions *mmfns = vm->memoryManagerFunctions;
 	J9JFRThreadAllocationStatistics *jfrEvent = (J9JFRThreadAllocationStatistics *)reserveBuffer(currentThread, currentThread, sizeof(J9JFRThreadAllocationStatistics));
