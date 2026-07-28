@@ -1071,7 +1071,11 @@ done:
 
 		requiredBufferSize += OS_INFORMATION_EVENT_SIZE;
 
-		requiredBufferSize += (_constantPoolTypes.getPhysicalMemoryCount() * PHYSICAL_MEMORY_EVENT_SIZE);
+		if (isJFRV2SupportEnabled(_vm)) {
+			requiredBufferSize += (_constantPoolTypes.getPhysicalMemoryCount() * PHYSICAL_MEMORY_EVENT_SIZE);
+		} else {
+			requiredBufferSize += PHYSICAL_MEMORY_EVENT_SIZE;
+		}
 
 		requiredBufferSize += VIRTUALIZATION_INFORMATION_EVENT_SIZE;
 
