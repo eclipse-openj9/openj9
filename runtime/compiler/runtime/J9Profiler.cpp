@@ -2845,3 +2845,38 @@ void TR_JProfBlockFrequencyCounterSites::compensate(TR_FrontEnd *vm, bool disabl
         }
     }
 }
+
+TR_JProfValueSites *TR_JProfValueSites::make(TR_FrontEnd *fe, TR_PersistentMemory *pm, uintptr_t key,
+    TR::PatchSites *sites, OMR::RuntimeAssumption **sentinel)
+{
+    TR_JProfValueSites *res = NULL;
+    void *mem = TR_RuntimeAssumptionTable::allocateRAPersistentMemory(sizeof(TR_JProfValueSites));
+    if (mem) {
+        res = ::new (mem) TR_JProfValueSites(pm, key, sites);
+        res->addToRAT(pm, RuntimeAssumptionOnPatchJProfValueBranch, fe, sentinel);
+    } else {
+        TR::Compilation *comp = TR::comp();
+        if (comp)
+            comp->failCompilation<TR::CompilationException>("Out of persistent memory while creating assumption");
+    }
+    return res;
+}
+
+void TR_JProfValueSites::compensate(TR_FrontEnd *vm, bool disableDataCollection, void *newKey)
+{
+    if (disableDataCollection) {
+        for (size_t i; i < _patchSites->getSize(); i++) {
+            uint8_t *cursor = _patchSites->getLocation(i);
+#if defined(TR_TARGET_S390)
+            *(cursor + 1) &= 0x0F;
+#endif
+        }
+    } else {
+        for (size_t i = 0; i < _patchSites->getSize(); i++) {
+            uint8_t *cursor = _patchSites->getLocation(i);
+#if defined(TR_TARGET_S390)
+            *(cursor + 1) |= 0xF0;
+#endif
+        }
+    }
+}
