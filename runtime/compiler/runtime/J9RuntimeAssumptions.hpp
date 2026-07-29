@@ -224,4 +224,105 @@ private:
      */
     uint8_t _patchFlag;
 };
+
+/**
+ * @brief A runtime assumption for patching guards that controls execution of
+ * JProfiling Value code. This assumption can patch the branch both ways - From
+ * unconditional Jump to NOP and vice-versa.
+ */
+class TR_JProfValueSites : public OMR::LocationRedirectRuntimeAssumption {
+protected:
+    /**
+     * @brief Construct a new TR_JProfValueSites assumption for the method.
+     *
+     * @param pm TR_PersistentMemory object for allocating the runtime assumption
+     * @param key key against which this runtime assumption is stored in table
+     * @param sites TR::PatchSites object that contains the list of location and
+     *              destination pairs.
+     */
+    TR_JProfValueSites(TR_PersistentMemory *pm, uintptr_t key, TR::PatchSites *sites)
+        : OMR::LocationRedirectRuntimeAssumption(pm, key)._patchSites(sites)
+    {}
+
+public:
+    /**
+     * @brief Get the location of first instruction in _patchsites for patching
+     *
+     * @return uint8_t* First instruction pointer in _patchsites
+     */
+    virtual uint8_t *getFirstAssumingPC() { return _patchSites->getFirstLocation(); }
+
+    /**
+     * @brief Get the location of last instruction in _patchsites for patching
+     *
+     * @return uint8_t*  Last instruction pointer in _patchsites
+     */
+    virtual uint8_t *getLastAssumingPC() { return _patchSites->getLastLocation(); }
+
+    /**
+     * @brief Goes through the list of instruction and location pair in the
+     * _patchSites and based on the passed boolean, patches the instruction from
+     * unconditional jump to NOP and vice-versa.
+     *
+     * @param vm TR_FrontEnd vm object
+     * @param disableDataCollection boolean flag to disable / enable data collection
+     * @param newKey
+     */
+    virtual void compensate(TR_FrontEnd *vm, bool disableDataCollection, void *newKey);
+
+    virtual void dumpInfo() { return; }
+
+    /**
+     * @brief Get the Assumption Kind object
+     *
+     * @return TR_RuntimeAssumptionKind
+     */
+    virtual TR_RuntimeAssumptionKind getAssumptionKind() { return RuntimeAssumptionOnPatchJProfValueBranch; }
+
+    /**
+     * @brief Construct a new TR_JProfValueSites runtime assumption for the method
+     *
+     * @param fe TR_FrontEnd object to facilitate adding constructed runtime assumption to RAT
+     * @param pm TR_PersistentMemory Persistent Memory object to allocate the persistent object
+     * @param key key using which the runtime assumption will be added in the RAT
+     * @param sites TR::PatchSites object containing information about
+     *                instructions to be patched in method
+     * @param sentinel Setinnel node for the RAT
+     * @return TR_JProfValueSites* returns constructed TR_JProfValueSites object for
+     * this method.
+     */
+    static TR_JProfValueSites *make(TR_FrontEnd *fe, TR_PersistentMemory *pm, uintptr_t key, TR::PatchSites *sites,
+        OMR::RuntimeAssumption **sentinel);
+
+    /**
+     * @brief Cleans up data structure associated with this runtime assumption.
+     */
+    void reclaim() { TR::PatchSites::reclaim(_patchSites); }
+
+    /**
+     * @brief et TR::PatchSites object containing information about instructions to be patched in method.
+     *
+     * @return TR::PatchSites*
+     */
+    TR::PatchSites *getPatchSites() { return _patchSites; }
+
+    /**
+     * @brief Compares this runtime assumption with another one.
+     *
+     * @param other Other Runtime Assumption agains which this one will be compared.alignas
+     * @return true if equal
+     * @return false if not equal
+     */
+    virtual bool equals(OMR::RuntimeAssumption &other)
+    {
+        if (other.getAssumptionKind() != RuntimeAssumptionOnPatchJProfValueBranch)
+            return false;
+
+        TR_JProfValueSites *otherSite = reinterpret_cast<TR_JProfValueSites *>(&other);
+        return _patchSites->equals(otherSite->getPatchSites());
+    }
+
+private:
+    TR::PatchSites *_patchSites;
+};
 #endif
