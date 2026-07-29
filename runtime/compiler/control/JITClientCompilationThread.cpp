@@ -462,6 +462,7 @@ static bool handleResponse(JITServer::MessageType response, JITServer::ClientStr
             fe->getNurserySpaceBounds(&vmInfo._nurserySpaceBoundsBase, &vmInfo._nurserySpaceBoundsTop);
             vmInfo._lowTenureAddress = fe->getLowTenureAddress();
             vmInfo._highTenureAddress = fe->getHighTenureAddress();
+            vmInfo._valueFlatteningThreshold = TR::Compiler->om.valueTypesFlatteningThreshold();
 
             {
                 TR::VMAccessCriticalSection getVMInfo(fe);
@@ -479,6 +480,7 @@ static bool handleResponse(JITServer::MessageType response, JITServer::ClientStr
                     vmInfo._srConstructorAccessorClass = NULL;
 #endif // J9VM_OPT_SIDECAR
                 vmInfo._extendedRuntimeFlags2 = javaVM->extendedRuntimeFlags2;
+                vmInfo._extendedRuntimeFlags3 = javaVM->extendedRuntimeFlags3;
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
                 // These offsets are initialized later on
                 vmInfo._vmtargetOffset = 0;
