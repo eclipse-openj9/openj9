@@ -289,7 +289,7 @@ TR::CompilationInfoPerThreadRemote::CompilationInfoPerThreadRemote(TR::Compilati
     , _fieldAttributesCache(NULL)
     , _staticAttributesCache(NULL)
     , _nullClassSignatureCache(NULL)
-    , _isUnresolvedStrCache(NULL)
+    , _stringConstantCache(NULL)
     , _classUnloadReadMutexDepth(0)
     , _aotCacheStore(false)
     , _methodIndex((uint32_t)-1)
@@ -1705,32 +1705,16 @@ bool TR::CompilationInfoPerThreadRemote::classIsInNullClassSignatureCache(const 
     return _nullClassSignatureCache->find(clsp) != _nullClassSignatureCache->end();
 }
 
-/**
- * @brief Method executed by JITServer to cache unresolved string
- *
- * @param ramClass The ramClass of interest as part of the key
- * @param cpIndex The cpIndex of interest as part of the key
- * @param stringAttrs The value we are going to cache
- * @return void
- */
-void TR::CompilationInfoPerThreadRemote::cacheIsUnresolvedStr(TR_OpaqueClassBlock *ramClass, int32_t cpIndex,
-    const TR_IsUnresolvedString &stringAttrs)
+void TR::CompilationInfoPerThreadRemote::cacheStringConstantData(TR_OpaqueClassBlock *ramClass, int32_t cpIndex,
+    const TR_StringConstantData &data)
 {
-    cacheToPerCompilationMap(_isUnresolvedStrCache, std::make_pair(ramClass, cpIndex), stringAttrs);
+    cacheToPerCompilationMap(_stringConstantCache, std::make_pair(ramClass, cpIndex), data);
 }
 
-/**
- * @brief Method executed by JITServer to retrieve unresolved string
- *
- * @param ramClass The ramClass of interest as part of the key
- * @param cpIndex The cpIndex of interest as part of the key
- * @param attrs The value to be set by the API
- * @return returns true if found in cache else false
- */
-bool TR::CompilationInfoPerThreadRemote::getCachedIsUnresolvedStr(TR_OpaqueClassBlock *ramClass, int32_t cpIndex,
-    TR_IsUnresolvedString &stringAttrs)
+bool TR::CompilationInfoPerThreadRemote::getCachedStringConstantData(TR_OpaqueClassBlock *ramClass, int32_t cpIndex,
+    TR_StringConstantData &data)
 {
-    return getCachedValueFromPerCompilationMap(_isUnresolvedStrCache, std::make_pair(ramClass, cpIndex), stringAttrs);
+    return getCachedValueFromPerCompilationMap(_stringConstantCache, std::make_pair(ramClass, cpIndex), data);
 }
 
 /**
@@ -1745,7 +1729,7 @@ void TR::CompilationInfoPerThreadRemote::clearPerCompilationCaches()
     clearPerCompilationCache(_fieldAttributesCache);
     clearPerCompilationCache(_staticAttributesCache);
     clearPerCompilationCache(_nullClassSignatureCache);
-    clearPerCompilationCache(_isUnresolvedStrCache);
+    clearPerCompilationCache(_stringConstantCache);
 }
 
 /**
