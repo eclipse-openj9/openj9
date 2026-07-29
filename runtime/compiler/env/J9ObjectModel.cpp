@@ -127,6 +127,45 @@ bool J9::ObjectModel::areFlattenableValueTypesEnabled()
     return javaVM->internalVMFunctions->areFlattenableValueTypesEnabled(javaVM);
 }
 
+bool J9::ObjectModel::isValueTypeFlatteningEnabled()
+{
+#if defined(J9VM_OPT_JITSERVER)
+    if (auto stream = TR::CompilationInfo::getStream()) {
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+        auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+        return J9_ARE_ANY_BITS_SET(vmInfo->_extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_ENABLE_VT_FLATTENING);
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+        return false;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+    }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+    J9JavaVM *javaVM = TR::Compiler->javaVM;
+
+    if (javaVM->internalVMFunctions->areFlattenableValueTypesEnabled(javaVM))
+        return J9_ARE_ALL_BITS_SET(javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_ENABLE_VT_FLATTENING);
+    else
+        return false;
+}
+
+uintptr_t J9::ObjectModel::valueTypesFlatteningThreshold()
+{
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+#if defined(J9VM_OPT_JITSERVER)
+    if (auto stream = TR::CompilationInfo::getStream()) {
+        auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+        return vmInfo->_valueFlatteningThreshold;
+    }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+    J9JavaVM *javaVM = TR::Compiler->javaVM;
+
+    return javaVM->valueFlatteningThreshold;
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+    return 0;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+}
+
 bool J9::ObjectModel::areValueBasedMonitorChecksEnabled()
 {
 #if defined(J9VM_OPT_JITSERVER)
