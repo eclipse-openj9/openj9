@@ -1121,7 +1121,7 @@ Operand *InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
             if (knot && mhIndex != TR::KnownObjectTable::UNKNOWN && mtIndex != TR::KnownObjectTable::UNKNOWN
                 && !knot->isNull(mhIndex) && !knot->isNull(mtIndex)) {
                 if (comp()->fej9()->isMethodHandleExpectedType(comp(), mhIndex, mtIndex)) {
-                    result = new (trStackMemory()) KnownObjOperand(mhIndex);
+                    result = knownObjOperand(mhIndex);
                     debugTrace(tracer(), "MH.asType: exact match\n");
                     break;
                 }
@@ -1131,7 +1131,7 @@ Operand *InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
                 if (TR::KnownObjectTable::UNKNOWN != convertedMHIndex) {
                     J9::ConstProvenanceGraph *cpg = comp()->constProvenanceGraph();
                     cpg->addEdge(cpg->knownObject(mhIndex), cpg->knownObject(convertedMHIndex));
-                    result = new (trStackMemory()) KnownObjOperand(convertedMHIndex);
+                    result = knownObjOperand(convertedMHIndex);
                     debugTrace(tracer(), "MH.asType: subtype match\n");
                 }
             }
