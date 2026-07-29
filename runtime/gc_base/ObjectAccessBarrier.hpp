@@ -459,7 +459,16 @@ public:
 	 * @return the persistent, basic hash code for the object 
 	 */
 	I_32 getObjectHashCode(J9JavaVM *vm, J9Object *object);
-	
+
+	/**
+	 * Determine the byte offset from the start of an indexable object to the hash slot.
+	 *
+	 * @param vm[in] the VM
+	 * @param arrayPtr[in] the indexable object
+	 * @return the offset of the hash slot
+	 */
+	UDATA getIndexableObjectHashSlotOffset(J9JavaVM *vm, J9IndexableObject *arrayPtr);
+
 	/**
 	 * Set the finalize link field of object to value.
 	 * @param object the object to modify

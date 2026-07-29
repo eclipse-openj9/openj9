@@ -25,6 +25,7 @@
 #define OBJECTACCESSBARRIERAPI_HPP_
 
 #include "j9cfg.h"
+#include <assert.h>
 
 #if defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
 #if OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES
@@ -2441,6 +2442,98 @@ public:
 		{
 			return false;
 		}
+	}
+
+	static VMINLINE UDATA
+	inlineIndexableObjectDataSize(U_32 numElements, J9Class *objectClass)
+	{
+		UDATA dataSize = 0;
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+		if (J9_IS_J9CLASS_FLATTENED(objectClass)) {
+			dataSize = (UDATA)numElements * J9ARRAYCLASS_GET_STRIDE(objectClass);
+		} else
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+		{
+			J9ROMArrayClass *romClass = (J9ROMArrayClass *)objectClass->romClass;
+			dataSize = (UDATA)numElements << (romClass->arrayShape & 0x0000FFFF);
+		}
+		return dataSize;
+	}
+
+	static VMINLINE UDATA
+	inlineIndexableObjectHashSlotOffset(J9JavaVM *vm, j9object_t objectPointer, J9Class *objectClass)
+	{
+		UDATA offset = 0;
+		U_32 numElements = 0;
+		if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+			numElements = ((J9IndexableObjectContiguousCompressed *)objectPointer)->size;
+		} else {
+			numElements = ((J9IndexableObjectContiguousFull *)objectPointer)->size;
+		}
+#if defined(J9VM_ENV_DATA64)
+		if (J9IndexableObjectLayout_NoDataAddr_NoArraylet == vm->indexableObjectLayout) {
+			/* Standard GC. */
+			if (0 != numElements) {
+				/* Hash slot is after array data. */
+				UDATA dataSize = inlineIndexableObjectDataSize(numElements, objectClass);
+				offset = ROUND_UP_TO_POWEROF2(dataSize + vm->contiguousIndexableHeaderSize, sizeof(I_32));
+			} else {
+				/* Zero-length array: hash slot is right after the discontiguous header. */
+				offset = vm->discontiguousIndexableHeaderSize;
+			}
+		} else if (J9IndexableObjectLayout_DataAddr_NoArraylet == vm->indexableObjectLayout) {
+			/* Balanced GC. */
+			if (0 != numElements) {
+				void *dataAddr = NULL;
+				void *inlineDataStart = NULL;
+				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+					dataAddr = ((J9IndexableObjectWithDataAddressContiguousCompressed *)objectPointer)->dataAddr;
+				} else {
+					dataAddr = ((J9IndexableObjectWithDataAddressContiguousFull *)objectPointer)->dataAddr;
+				}
+				inlineDataStart = (void *)((UDATA)objectPointer + vm->contiguousIndexableHeaderSize);
+				if (dataAddr == inlineDataStart) {
+					/* Adjacent data: hash slot is after the array data. */
+					UDATA dataSize = inlineIndexableObjectDataSize(numElements, objectClass);
+					offset = ROUND_UP_TO_POWEROF2(dataSize + vm->contiguousIndexableHeaderSize, sizeof(I_32));
+				} else {
+					/* Non-adjacent data: hash slot is right after the contiguous header. */
+					offset = vm->contiguousIndexableHeaderSize;
+				}
+			} else {
+				/* Zero-length array: hash slot is right after the discontiguous header. */
+				offset = vm->discontiguousIndexableHeaderSize;
+			}
+		} else {
+			/* Arraylet Layout. */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			/* Value types are not compatible with arraylets and shouldn't reach this path. */
+			assert(!J9_IS_J9CLASS_VALUETYPE(objectClass));
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+			offset = vm->memoryManagerFunctions->j9gc_objaccess_getIndexableObjectHashSlotOffset(vm, (J9IndexableObject *)objectPointer);
+		}
+#else /* defined(J9VM_ENV_DATA64) */
+		if (0 != numElements) {
+			/* Contiguous non-zero length array. */
+			UDATA dataSize = inlineIndexableObjectDataSize(numElements, objectClass);
+			offset = ROUND_UP_TO_POWEROF2(dataSize + vm->contiguousIndexableHeaderSize, sizeof(I_32));
+		} else {
+			/*
+			 * If numElements is zero, this could be either a zero-length array
+			 * or an arraylet. Read the second size field, which is non-zero
+			 * for an arraylet.
+			 */
+			U_32 numArrayletElements = ((J9IndexableObjectDiscontiguous *)objectPointer)->size;
+			if (0 == numArrayletElements) {
+				/* Zero length Array. */
+				offset = vm->discontiguousIndexableHeaderSize;
+			} else {
+				/* Arraylet layout. */
+				offset = vm->memoryManagerFunctions->j9gc_objaccess_getIndexableObjectHashSlotOffset(vm, (J9IndexableObject *)objectPointer);
+			}
+		}
+#endif /* defined(J9VM_ENV_DATA64) */
+		return offset;
 	}
 
 protected:
