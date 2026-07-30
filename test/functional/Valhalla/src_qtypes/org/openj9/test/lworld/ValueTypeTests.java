@@ -65,8 +65,9 @@ public class ValueTypeTests {
 	@BeforeClass
 	static public void testSetUp() throws Throwable {
 		List<String> arguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
+		boolean enableFlatOptionFound = arguments.contains("-XX:+EnableFlattening");
 		/* Check whether a ValueTypeFlatteningThreshold option is specified, with any configured threshold value. */
-		isFlatteningEnabled = arguments.stream().anyMatch(arg -> arg.startsWith("-XX:ValueTypeFlatteningThreshold="));
+		isFlatteningEnabled = enableFlatOptionFound && arguments.stream().anyMatch(arg -> arg.startsWith("-XX:ValueTypeFlatteningThreshold="));
 	}
 
 	/* point2D */
