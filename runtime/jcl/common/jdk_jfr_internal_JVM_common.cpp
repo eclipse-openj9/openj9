@@ -498,6 +498,7 @@ Java_jdk_jfr_internal_JVM_createJFR(JNIEnv *env, jobject obj, jboolean simulateF
 
 	if (simulateFailure) {
 		rc = JNI_FALSE;
+		throwNewIllegalStateException(env, (char *)"Unable to start Jfr");
 		goto done;
 	}
 	vmFuncs->internalEnterVMFromJNI(currentThread);
