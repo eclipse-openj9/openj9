@@ -106,8 +106,13 @@ Java_jdk_jfr_internal_JVM_isExcluded__Ljava_lang_Thread_2(JNIEnv *env, jobject o
 jlong JNICALL
 Java_jdk_jfr_internal_JVM_getChunkStartNanos(JNIEnv *env, jobject obj)
 {
-	// TODO: implementation
-	return 0;
+	J9VMThread *currentThread = (J9VMThread *) env;
+	J9JavaVM *vm = currentThread->javaVM;
+
+	if (!vm->internalVMFunctions->isJFRRecordingStarted(vm)) {
+		return -1;
+	}
+	return (jlong) vm->jfrState.chunkStartTime;
 }
 
 jlong JNICALL
