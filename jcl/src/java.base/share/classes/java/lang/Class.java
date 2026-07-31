@@ -42,10 +42,11 @@ import java.security.PrivilegedExceptionAction;
 import java.security.Permissions;
 import java.security.ProtectionDomain;
 import java.util.Collection;
-/*[IF INLINE-TYPES]*/
+/*[IF JAVA_SPEC_VERSION >= 28]*/
 import java.util.Collections;
 import jdk.internal.misc.PreviewFeatures;
-/*[ENDIF] INLINE-TYPES */
+import jdk.internal.reflect.PreviewAccessFlags;
+/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
 import java.util.HashMap;
 /*[IF (JAVA_SPEC_VERSION >= 16) | INLINE-TYPES]*/
 import java.util.HashSet;
@@ -6187,37 +6188,42 @@ public Class<?>[] getNestMembers()
 	public Set<AccessFlag> accessFlags() {
 		final int rawModifiers = getModifiersImpl();
 		final boolean isArrayClass = isArray();
-		/* Uses the implementation from getModifiers() and adds SUPER access flag to
-		 * the mask, instead of directly invoking getModifiers(), because the SUPER flag
-		 * may or may not be set in the rawModifiers.
+		/* Mask raw modifier bits to the supported access flags, including ACC_IDENTITY
+		 * when preview features are enabled.
 		 */
 		int maskedModifiers = rawModifiers;
 		AccessFlag.Location location = AccessFlag.Location.CLASS;
+/*[IF JAVA_SPEC_VERSION >= 28]*/
+		final boolean previewEnabled = PreviewFeatures.isEnabled();
+/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
+
 		if (isArrayClass) {
 			maskedModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED
 					| Modifier.ABSTRACT | Modifier.FINAL;
+/*[IF JAVA_SPEC_VERSION >= 28]*/
+			maskedModifiers |= previewEnabled ? ACC_IDENTITY : 0;
+/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
 			location = AccessFlag.Location.INNER_CLASS;
 		} else {
 			maskedModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED
 					| Modifier.STATIC | Modifier.FINAL | Modifier.INTERFACE
 					| Modifier.ABSTRACT | SYNTHETIC | ENUM | ANNOTATION
 					| AccessFlag.SUPER.mask() | AccessFlag.MODULE.mask();
+/*[IF JAVA_SPEC_VERSION >= 26]*/
+			maskedModifiers |= previewEnabled ? ACC_IDENTITY : 0;
+/*[ENDIF] JAVA_SPEC_VERSION >= 26 */
 			if (isMemberClass() || isLocalClass() || isAnonymousClass()) {
 				location = AccessFlag.Location.INNER_CLASS;
 			}
 		}
 
-		Set<AccessFlag> flags = AccessFlag.maskToAccessFlags(maskedModifiers, location);
-/*[IF INLINE-TYPES]*/
-		if (PreviewFeatures.isEnabled()) {
-			if (isArrayClass || (rawModifiers & ACC_IDENTITY) != 0) {
-				flags = new HashSet<>(flags);
-				flags.add(AccessFlag.IDENTITY);
-				flags = Collections.unmodifiableSet(flags);
-			}
-		}
-/*[ENDIF] INLINE-TYPES */
-		return flags;
+/*[IF JAVA_SPEC_VERSION >= 28]*/
+		return previewEnabled
+				? PreviewAccessFlags.maskToAccessFlags(maskedModifiers, location)
+				: AccessFlag.maskToAccessFlags(maskedModifiers, location);
+/*[ELSE] JAVA_SPEC_VERSION >= 28 */
+		return AccessFlag.maskToAccessFlags(maskedModifiers, location);
+/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
 	}
 
 	/**
