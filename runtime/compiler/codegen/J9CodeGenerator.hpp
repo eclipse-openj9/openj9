@@ -406,6 +406,9 @@ private:
 
     TR_BitVector *_liveMonitors;
 
+    TR::list<TR::Instruction *> *_jProfilingCounterBumpInstructionList;
+    TR::list<TR::Instruction *> *_jProfilingValueProfilingBranchInstructions;
+
 protected:
     // isTemporaryBased storageReferences just have a symRef but some other routines expect a node so use the below to
     // fill in this symRef on this node
@@ -426,6 +429,20 @@ public:
 
     // J9
     int32_t getInternalPtrMapBit() { return 31; }
+
+    // Patchable JProfiling
+    void initJProfCounterBumpInstrList();
+    void addInstrToJProfCounterBumpInstrList(TR::Instruction *instr);
+
+    TR::list<TR::Instruction *> *getJProfilingCounterBumpInstructionList()
+    {
+        return _jProfilingCounterBumpInstructionList;
+    }
+
+    void initJProfValueBranchInstrList();
+    void addInstrToJProfValueBranchInstrList(TR::Instruction *instr);
+
+    TR::list<TR::Instruction *> *getJProfValueBranchInstrList() { return _jProfilingValueProfilingBranchInstructions; }
 
     // --------------------------------------------------------------------------
     // GPU
