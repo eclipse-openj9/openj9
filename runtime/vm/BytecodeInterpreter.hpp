@@ -3380,6 +3380,7 @@ done:
 		/* Caller has null-checked obj already */
 		_pc += 3;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		Assert_VM_mustHaveVMAccess(_currentThread);
 		bool oomOccurred = false;
 		I_32 hashValue = VM_ObjectHash::inlineObjectHashCode(_vm, obj, &oomOccurred);
 		if (oomOccurred) {

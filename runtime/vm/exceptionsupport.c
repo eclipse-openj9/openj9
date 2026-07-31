@@ -890,6 +890,7 @@ setClassLoadingConstraintError(J9VMThread * currentThread, J9ClassLoader * initi
 		U_8 * existingClassName = J9UTF8_DATA(existingClassNameUTF);
 		UDATA msgLen = 0;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		Assert_VM_mustHaveVMAccess(currentThread);
 		jboolean oomOccurred = JNI_FALSE;
 		I_32 hashValue = 0;
 		hashValue = objectHashCode(currentThread->javaVM, initiatingLoaderObject, &oomOccurred);
@@ -964,6 +965,7 @@ setClassLoadingConstraintSignatureError(J9VMThread *currentThread, J9ClassLoader
 
 		UDATA msgLen = 0;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		Assert_VM_mustHaveVMAccess(currentThread);
 		jboolean oomOccurred = JNI_FALSE;
 		I_32 hashValue = 0;
 		hashValue = objectHashCode(currentThread->javaVM, loader1Object, &oomOccurred);
@@ -1048,6 +1050,7 @@ setClassLoadingConstraintOverrideError(J9VMThread *currentThread, J9UTF8 *newCla
 
 		UDATA msgLen = 0;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		Assert_VM_mustHaveVMAccess(currentThread);
 		jboolean oomOccurred = JNI_FALSE;
 		I_32 hashValue = 0;
 		hashValue = objectHashCode(currentThread->javaVM, loader1Object, &oomOccurred);

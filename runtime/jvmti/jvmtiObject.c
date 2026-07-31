@@ -100,6 +100,7 @@ jvmtiGetObjectHashCode(jvmtiEnv *env,
 
 		obj = *((j9object_t *)object);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		Assert_JVMTI_mustHaveVMAccess(currentThread);
 		hash = (jint)objectHashCode(vm, obj, &oomOccurred);
 		if (JNI_FALSE == oomOccurred) {
 			rv_hash_code = hash;
