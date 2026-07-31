@@ -521,9 +521,13 @@ public:
 
     void dumpInfo(OMR::Logger *log);
 
+    void addJProfValueSites(TR_JProfValueSites *patchSites) { _jProfValueProfSites = patchSites; }
+    TR_JProfValueSites *getJProfValueSites() { return _jProfValueProfSites; }
+
 private:
     TR_AbstractProfilerInfo *_values[LastProfiler];
     TR_CallSiteInfo *_callSiteInfo;
+    TR_JProfValueSites *_jProfValueProfSites;
 };
 
 TR_ValueProfileInfo *TR_ValueProfileInfo::get(TR_PersistentProfileInfo *profileInfo)
@@ -744,6 +748,16 @@ public:
     TR::Node *generateBlockRawCountCalculationSubTree(TR::Compilation *comp, int32_t blockNumber, TR::Node *node);
     TR::Node *generateBlockRawCountCalculationSubTree(TR::Compilation *comp, TR::Node *node, bool trace);
     void dumpInfo(OMR::Logger *log);
+
+    void setJProfBlockFrequencyCounterSites(TR_JProfBlockFrequencyCounterSites *patchSites)
+    {
+        _jProfilingBlockFrequencyCounterPatchSites = patchSites;
+    }
+
+    TR_JProfBlockFrequencyCounterSites *getJProfBlockFrequencyCounterSites()
+    {
+        return _jProfilingBlockFrequencyCounterPatchSites;
+    }
 
     int32_t getCallCount();
     int32_t getMaxRawCount(int32_t callerIndex);
