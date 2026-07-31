@@ -2283,7 +2283,43 @@ exit:
 		indicateAsyncMessagePending(targetThread);
 	}
 
-	static U_32
+	/**
+	 * Set the Java thread state without reading or returning the old state.
+	 * Use this when the caller does not need to restore the previous state,
+	 * saving one barriered field read per call.
+	 *
+	 * @param[in] currentThread the current J9VMThread
+	 * @param[in] state the new thread state to set
+	 */
+	static VMINLINE void
+	setThreadStateNoSave(J9VMThread *currentThread, U_32 state)
+	{
+#if JAVA_SPEC_VERSION >= 19
+		j9object_t receiverObject = currentThread->carrierThreadObject;
+		if (NULL != receiverObject) {
+			/* Platform threads must have a non-null FieldHolder object. */
+			j9object_t threadHolder = J9VMJAVALANGTHREAD_HOLDER(currentThread, receiverObject);
+			if (NULL != threadHolder) {
+				J9VMJAVALANGTHREADFIELDHOLDER_SET_THREADSTATUS(currentThread, threadHolder, state);
+			}
+		}
+#else /* JAVA_SPEC_VERSION >= 19 */
+		j9object_t receiverObject = currentThread->threadObject;
+		if (NULL != receiverObject) {
+			J9VMJAVALANGTHREAD_SET_THREADSTATUS(currentThread, receiverObject, state);
+		}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+	}
+
+	/**
+	 * Set the Java thread state and return the previous state.
+	 * Use this when the caller must later restore the original state.
+	 *
+	 * @param[in] currentThread the current J9VMThread
+	 * @param[in] state the new thread state to set
+	 * @return the previous thread state, or 0 if no thread object is available
+	 */
+	static VMINLINE U_32
 	setThreadState(J9VMThread *currentThread, U_32 state)
 	{
 		U_32 oldState = 0;
