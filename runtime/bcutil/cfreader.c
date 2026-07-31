@@ -3104,8 +3104,6 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 				goto _errorFound;
 			}
 		}
-	} else {
-		classfile->accessFlags &= ~CFR_ACC_IDENTITY;
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
