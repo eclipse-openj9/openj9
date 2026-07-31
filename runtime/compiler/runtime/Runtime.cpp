@@ -1016,8 +1016,8 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
     SET(TR_newValueNoZeroInit, (void *)jitNewValueNoZeroInit, TR_CHelper);
 
     SET(TR_getFlattenableField, (void *)jitGetFlattenableField, TR_Helper);
-    SET(TR_withFlattenableField, (void *)jitWithFlattenableField, TR_Helper);
     SET(TR_putFlattenableField, (void *)jitPutFlattenableField, TR_Helper);
+    SET(TR_resolveFlattenableField, (void *)jitResolveFlattenableField, TR_Helper);
     SET(TR_getFlattenableStaticField, (void *)jitGetFlattenableStaticField, TR_Helper);
     SET(TR_putFlattenableStaticField, (void *)jitPutFlattenableStaticField, TR_Helper);
     SET(TR_ldFlattenableArrayElement, (void *)jitLoadFlattenableArrayElement, TR_Helper);

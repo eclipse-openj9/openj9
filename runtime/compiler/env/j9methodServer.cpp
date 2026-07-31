@@ -1825,8 +1825,9 @@ U_16 TR_ResolvedJ9JITServerMethod::archetypeArgPlaceholderSlot()
 bool TR_ResolvedJ9JITServerMethod::isFieldNullRestricted(TR::Compilation *comp, int32_t cpIndex, bool isStatic,
     bool isStore)
 {
-    if (!TR::Compiler->om.areFlattenableValueTypesEnabled() || (-1 == cpIndex))
+    if (!TR::Compiler->om.areFlattenableValueTypesEnabled() || (-1 == cpIndex)) {
         return false;
+    }
 
     _stream->write(JITServer::MessageType::ResolvedMethod_isFieldNullRestricted, _remoteMirror, cpIndex, isStatic,
         isStore);
