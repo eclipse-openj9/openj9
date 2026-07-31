@@ -363,7 +363,7 @@ aarch64_linux_jit:
 # Windows x86 64bits
 #========================================#
 x86-64_windows:
-  extends: ['boot_jdk_default', 'cuda', 'debuginfo', 'openjdk_reference_repo', 'openssl', 'openssl_bundle']
+  extends: ['boot_jdk_default', 'cuda', 'debuginfo', 'openssl', 'openssl_bundle']
   boot_jdk:
     arch: 'x64'
     os: 'windows'
@@ -373,6 +373,7 @@ x86-64_windows:
     11: 'windows-x86_64-normal-server-release'
   extra_configure_options:
     all: '--with-toolchain-version=2022 --disable-ccache --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
+  openjdk_reference_repo: '${HOME}/openjdk_cache'
   node_labels:
     build: 'ci.role.build && hw.arch.x86 && sw.os.windows'
   build_env:
@@ -382,7 +383,7 @@ x86-64_windows:
 # Windows x86 32bits
 #========================================#
 x86-32_windows:
-  extends: ['boot_jdk_default', 'debuginfo', 'openjdk_reference_repo', 'openssl', 'openssl_bundle']
+  extends: ['boot_jdk_default', 'debuginfo', 'openssl', 'openssl_bundle']
   boot_jdk:
     arch: 'x64'
     os: 'windows'
@@ -390,6 +391,7 @@ x86-32_windows:
     8: 'windows-x86-normal-server-release'
   extra_configure_options:
     8: '--with-toolchain-version=2022 --with-target-bits=32 --disable-ccache'
+  openjdk_reference_repo: '${HOME}/openjdk_cache'
   node_labels:
     build:
       8: 'ci.role.build && hw.arch.x86 && sw.os.windows'
