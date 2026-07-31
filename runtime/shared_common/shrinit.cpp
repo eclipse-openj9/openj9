@@ -5275,13 +5275,8 @@ done:
 static char*
 generateStartupHintsKey(J9JavaVM* vm)
 {
-	JavaVMInitArgs *actualArgs = vm->vmArgsArray->actualVMArgs;
-	UDATA keyLength = 0;
-	UDATA extraLen = 0;
-	UDATA i = 0;
-	UDATA nOptions = vm->vmArgsArray->nOptions;
 	char* key = NULL;
-	bool firstOption = true;
+	UDATA keyLength = 0;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	/* Check if portable shared cache mode is enabled */
@@ -5294,38 +5289,48 @@ generateStartupHintsKey(J9JavaVM* vm)
 		if (NULL != key) {
 			memcpy(key, J9VM_VERSION_STRING, keyLength);
 		}
-		goto done;
-	}
+	} else {
+		J9VMInitArgs *vmArgsArray = vm->vmArgsArray;
+		JavaVMInitArgs *actualArgs = NULL;
+		UDATA extraLen = 0;
+		UDATA i = 0;
+		UDATA nOptions = 0;
+		bool firstOption = true;
 
-	for (i = 0; i < nOptions; ++i) {
-		char* option = actualArgs->options[i].optionString;
-		if ((NULL != option && strlen(option) > 0)
-			&& (NULL == strstr(option,"-Dsun.java.launcher.pid="))
-		) {
-			keyLength += strlen(actualArgs->options[i].optionString);
-			extraLen += 1;
+		Trc_SHR_Assert_True(NULL != vmArgsArray);
+		actualArgs = vmArgsArray->actualVMArgs;
+		nOptions = vmArgsArray->nOptions;
+
+		for (i = 0; i < nOptions; ++i) {
+			char* option = actualArgs->options[i].optionString;
+			if ((NULL != option && strlen(option) > 0)
+				&& (NULL == strstr(option,"-Dsun.java.launcher.pid="))
+			) {
+				keyLength += strlen(actualArgs->options[i].optionString);
+				extraLen += 1;
+			}
 		}
-	}
-	if (keyLength == 0) {
-		goto done;
-	}
-	keyLength += extraLen; /* space between options and terminating null char */
+		if (keyLength == 0) {
+			goto done;
+		}
+		keyLength += extraLen; /* space between options and terminating null char */
 
-	key = (char*)j9mem_allocate_memory(keyLength, J9MEM_CATEGORY_VM);
-	if (NULL == key) {
-		goto done;
-	}
-	memset(key, 0, keyLength);
-	for (i = 0; i < nOptions; ++i) {
-		char* option = actualArgs->options[i].optionString;
-		if ((NULL != option && strlen(option) > 0)
-			&& (NULL == strstr(option,"sun.java.launcher.pid"))
-		) {
-			if (firstOption) {
-				firstOption = false;
-				j9str_printf(key, keyLength, "%s%s", key, option);
-			} else {
-				j9str_printf(key, keyLength, "%s%s%s", key, " ", option);
+		key = (char*)j9mem_allocate_memory(keyLength, J9MEM_CATEGORY_VM);
+		if (NULL == key) {
+			goto done;
+		}
+		memset(key, 0, keyLength);
+		for (i = 0; i < nOptions; ++i) {
+			char* option = actualArgs->options[i].optionString;
+			if ((NULL != option && strlen(option) > 0)
+				&& (NULL == strstr(option,"sun.java.launcher.pid"))
+			) {
+				if (firstOption) {
+					firstOption = false;
+					j9str_printf(key, keyLength, "%s%s", key, option);
+				} else {
+					j9str_printf(key, keyLength, "%s%s%s", key, " ", option);
+				}
 			}
 		}
 	}
