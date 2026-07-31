@@ -516,6 +516,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 				<version>8</version>
 				<impl>ibm</impl>
 			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/20835</comment>
+				<version>27+</version>
+			</disable>
 		</disables>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 			$(SQ)$(JAVA_SHARED_LIBRARIES_DIR)$(D)thrstatetest$(SQ) $(JVM_OPTIONS) -Djava.home=$(THRSTATETEST_JRE_HOME) -Dcom.ibm.tools.attach.enable=no -Dibm.java9.forceCommonCleanerShutdown=true ; \
