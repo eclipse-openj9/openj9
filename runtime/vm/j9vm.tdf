@@ -1,4 +1,4 @@
-// Copyright IBM Corp. and others 2006
+/ Copyright IBM Corp. and others 2006
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1084,3 +1084,13 @@ TraceEvent=Trc_VM_jfrGarbageCollection Overhead=1 Level=5 Template="garbage coll
 TraceEvent=Trc_VM_jfrGCHeapSummary Overhead=1 Level=5 Template="GC heap summary"
 TraceEvent=Trc_VM_jfrReserveBuffer_nullBuffer Overhead=1 Level=5 Template="reserveBuffer returned null sampleThread=%p size=%zu areBuffersReady=%d isJFRDisabledOnThread=%d"
 TraceException=Trc_VM_jfr_ErrorWritingChunk2 Overhead=1 Level=1 Template="Error writing JFR chunk in JFRWriter; error=%d"
+
+TraceEvent=Trc_VM_jfr_convertLogLevel noEnv Overhead=1 Level=5 Template="convertLogLevel() logLevel(%d) jfrLogLevel(%s)"
+TraceEvent=Trc_VM_jfr_convertTagName noEnv Overhead=1 Level=5 Template="convertTagName() tag(%d) jfrLogTag(%s)"
+TraceEvent=Trc_VM_jfr_parseJFRTags noEnv Overhead=1 Level=5 Template="parseJFRTags() tagMask(0x%zx) jfrTags(%s) wildcardSpecified(%zu)"
+TraceEvent=Trc_VM_jfr_parseXlog_options noEnv Overhead=1 Level=5 Template="parseXlogJFR() xlogindex(%zd) upToColon(%s) fullOptions(%s)"
+TraceEvent=Trc_VM_jfr_parseXlog_upToCommaColon noEnv Overhead=1 Level=5 Template="parseXlogJFR() fullOptions(%s) upToComma(%s) upToColon(%s)"
+TraceEvent=Trc_VM_jfr_parseXlog_upToEqualsComma noEnv Overhead=1 Level=5 Template="parseXlogJFR() fullOptions(%s) upToEquals(%s) upToComma(%s)"
+TraceEvent=Trc_VM_jfr_parseXlog_logTags noEnv Overhead=1 Level=5 Template="parseXlogJFR() logTags (0x%zx) jfrLog (0x%zx)"
+TraceEvent=Trc_VM_jfr_parseXlog_output_upToColon noEnv Overhead=1 Level=5 Template="parseXlogJFR() output method: upToColon(%s) fullOptions(%s)"
+TraceEvent=Trc_VM_jfr_parseXlog_output noEnv Overhead=1 Level=5 Template="parseXlogJFR() output method: output(%s) upToColon(%s)"

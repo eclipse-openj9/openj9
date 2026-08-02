@@ -715,3 +715,6 @@ TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitFail3 Noenv Overh
 TraceEntry=Trc_JCL_com_ibm_oti_shared_getCachedURL_Entry_1 Overhead=1 Level=2 Template="JCL: com.ibm.oti.shared getCachedURL: Entering for helperID=%d"
 
 TraceEvent=Trc_JCL_signal_pid noEnv Overhead=1 Level=1 Template="%s received from process id %zu name '%s'"
+
+TraceEvent=Trc_JCL_JFRLOG_subscribeLogLevel Overhead=1 Level=3 Template="JVM.subscribeLogLevel() logTagInstance(%p) tagSetLevelOffset(%zd) idOffset(%zd) jfrLogTagSet[%d] = %d"
+TraceException=Trc_JCL_JFRLOG_fileWrite_error Overhead=1 Level=1 Template="JFR log message j9file_write(%zu) returns %zu"

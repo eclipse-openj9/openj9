@@ -358,6 +358,11 @@ public class JFR {
 						+ ", memorySize = " + memorySize
 						+ ", maxChunkSize = " + maxChunkSize
 						+ ", sampleThreads = " + sampleThreads);
+				if ((maxChunkSize != null) && (maxChunkSize < 0)) {
+					result = DiagnosticProperties.makeErrorProperties(
+							"java.lang.IllegalArgumentException: Parsing error memory size value: negative values not allowed");
+					break;
+				}
 				jfrDcmdResult = access.doJFRDCmdConfigureExecute(
 						true, // verbose on
 						repositoryPath,

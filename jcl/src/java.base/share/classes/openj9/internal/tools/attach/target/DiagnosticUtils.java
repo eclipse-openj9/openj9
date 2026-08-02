@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.ibm.oti.vm.VM;
 
@@ -223,7 +224,13 @@ public class DiagnosticUtils {
 			}
 		}
 /*[ENDIF] JFR_SUPPORT */
-		String cmd = String.join(DIAGNOSTICS_OPTION_SEPARATOR, Arrays.asList(options).subList(skip, optionsLength));
+		// executeDiagnosticCommand() splits an incoming command with DIAGNOSTICS_OPTION_SEPARATOR,
+		// the space(s) are to be replaced with DIAGNOSTICS_OPTION_SEPARATOR, otherwise wrong command.
+		String cmd = Arrays.stream(options)
+				.skip(skip)
+				.map(str -> str.replace(" ", DIAGNOSTICS_OPTION_SEPARATOR))
+				.collect(Collectors.joining(DIAGNOSTICS_OPTION_SEPARATOR));
+		IPC.logMessage("makeJcmdCommand: cmd = ", cmd);
 		return cmd;
 	}
 

@@ -109,11 +109,13 @@ attachVMToOMR(J9JavaVM *vm)
 	UDATA omrRuntimeOffset = ROUND_TO(8, sizeof(J9JavaVM));
 	UDATA omrVMOffset = ROUND_TO(8, omrRuntimeOffset + sizeof(OMR_Runtime));
 	OMR_Runtime *omrRuntime = (OMR_Runtime*)(((UDATA)vm) + omrRuntimeOffset);
+	/* _vmCount could be an uninitialized non-zero value. */
+	memset(omrRuntime, 0, sizeof(OMR_Runtime));
 	omrRuntime->_configuration._maximum_vm_count = 1;
 	omrRuntime->_portLibrary = OMRPORT_FROM_J9PORT(vm->portLibrary);
 	if (OMR_ERROR_NONE == omr_initialize_runtime(omrRuntime)) {
 		OMR_VM *omrVM = (OMR_VM*)(((UDATA)vm) + omrVMOffset);
-		omrVM->_configuration._maximum_thread_count = 0;
+		memset(omrVM, 0, sizeof(OMR_VM));
 		omrVM->_language_vm = (void*)vm;
 		omrVM->_runtime = omrRuntime;
 #if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
