@@ -1578,7 +1578,18 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 			J9CfrAttributeLocalVariableTypeTable *localVariableTypeTableAttribute = _methodsInfo[methodIndex].localVariablesInfo[varIndex].localVariableTypeTableAttribute;
 
 			/* This may occur if the variable type does not require signature information, or if there is no entry for this variable. */
-			if ((NULL == localVariableTypeTableAttribute) || (NULL == localVariableTableAttribute)) {
+			if (NULL == localVariableTypeTableAttribute) {
+				continue;
+			}
+
+			/* Each LVTT entry should correspond to a local variable.
+			 * If not LVT entry exists for this index then the entry is invalid.
+			 * If no LVTs exist LVTT data can be ignored.
+			 */
+			if (NULL == localVariableTableAttribute) {
+				if (_methodsInfo[methodIndex].localVariablesCount > 0) {
+					throwGenericErrorWithCustomMsg(J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT__ID, varIndex);
+				}
 				continue;
 			}
 
