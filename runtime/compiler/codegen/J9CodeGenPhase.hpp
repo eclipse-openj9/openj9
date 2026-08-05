@@ -48,6 +48,7 @@ protected:
 public:
     void reportPhase(PhaseValue phase);
     static void performFixUpProfiledInterfaceGuardTestPhase(TR::CodeGenerator *cg, TR::CodeGenPhase *);
+    static void performRecompDueToPhaseChangeCode(TR::CodeGenerator *cg, TR::CodeGenPhase *);
     static void performAllocateLinkageRegistersPhase(TR::CodeGenerator *cg, TR::CodeGenPhase *);
     static void performPopulateOSRBufferPhase(TR::CodeGenerator *cg, TR::CodeGenPhase *);
     static void performMoveUpArrayLengthStoresPhase(TR::CodeGenerator *cg, TR::CodeGenPhase *);
