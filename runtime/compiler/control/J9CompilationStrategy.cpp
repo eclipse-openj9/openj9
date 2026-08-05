@@ -149,10 +149,9 @@ TR_OptimizationPlan *J9::CompilationStrategy::processEvent(TR_MethodEvent *event
                 }
                 plan = TR_OptimizationPlan::alloc(hotnessLevel);
                 // Recompilation of the method due to phase change is a one-time
-                // event per method. Update plan and persistent method info to
-                // prevent inserting the recompilation trigger due to phase change
+                // event per method. Update persistent method info to prevent
+                // inserting the recompilation trigger due to phase change
                 // repeatedly.
-                plan->setDoNotInsertPhaseChangeRecomp(true);
                 methodInfo->setHasRecompiledDueToPhaseChange();
                 if (insertInstrumentation) {
                     plan->setInsertInstrumentation(true);

@@ -121,6 +121,20 @@ public:
 
     /**
      * \brief
+     *    Goes through all nopable virtual guards in this method and inserts
+     *    calls to recompile the method due to a phase change, placed before the
+     *    virtual call tree for each guard node. At runtime, if a nopable virtual
+     *    guard has been patched and we are taking the slow path to call the virtual
+     *    method instead of executing the optimized inlined code, the inserted call
+     *    will trigger recompilation and attribute it to the phase change event.
+     *    This should only be done at very high optimization levels, as the
+     *    performance cost of patching nopable guards in such a compilation is
+     *    significant.
+     */
+    void insertRecompDueToPhaseChangeCode();
+
+    /**
+     * \brief
      *      This query is used by both fixUpProfiledInterfaceGuardTest (a codegen level optimization) and virtual guard
      * evaluators to decide whether a NOP guard should be generated. It's used on all platforms and compilation phases
      * so that the decision of generating VG NOPs is made in a consistent way.

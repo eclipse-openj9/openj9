@@ -60,6 +60,11 @@ void J9::CodeGenPhase::performFixUpProfiledInterfaceGuardTestPhase(TR::CodeGener
     cg->fixUpProfiledInterfaceGuardTest();
 }
 
+void J9::CodeGenPhase::performRecompDueToPhaseChangeCode(TR::CodeGenerator *cg, TR::CodeGenPhase *phase)
+{
+    cg->insertRecompDueToPhaseChangeCode();
+}
+
 void J9::CodeGenPhase::performAllocateLinkageRegistersPhase(TR::CodeGenerator *cg, TR::CodeGenPhase *phase)
 {
     TR::Compilation *comp = cg->comp();
@@ -124,6 +129,8 @@ const char *J9::CodeGenPhase::getName(TR::CodeGenPhase::PhaseValue phase)
             return "IdentifyUnneededByteConvsPhase";
         case FixUpProfiledInterfaceGuardTest:
             return "FixUpProfiledInterfaceGuardTest";
+        case RecompDueToPhaseChangeCode:
+            return "RecompDueToPhaseChangeCode";
         default:
             return OMR::CodeGenPhaseConnector::getName(phase);
     }
