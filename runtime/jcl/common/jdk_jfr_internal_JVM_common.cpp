@@ -58,8 +58,9 @@ Java_jdk_jfr_internal_JVM_beginRecording(JNIEnv *env, jobject obj)
 jlong JNICALL
 Java_jdk_jfr_internal_JVM_counterTime(JNIEnv *env, jclass clazz)
 {
-	// TODO: implementation
-	return 0;
+	J9VMThread *currentThread = (J9VMThread *) env;
+	PORT_ACCESS_FROM_VMC(currentThread);
+	return (jlong) j9time_nano_time();
 }
 
 jboolean JNICALL
@@ -543,8 +544,7 @@ Java_jdk_jfr_internal_JVM_isAvailable(JNIEnv *env, jobject obj)
 jdouble JNICALL
 Java_jdk_jfr_internal_JVM_getTimeConversionFactor(JNIEnv *env, jobject obj)
 {
-	// TODO: implementation
-	return 0.0;
+	return 1.0;
 }
 
 jlong JNICALL
