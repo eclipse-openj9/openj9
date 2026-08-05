@@ -136,6 +136,19 @@ TR_OptimizationPlan *J9::CompilationStrategy::processEvent(TR_MethodEvent *event
                 hotnessLevel = bodyInfo->getHotness();
                 plan = TR_OptimizationPlan::alloc(hotnessLevel);
                 *newPlanCreated = true;
+            } else if (methodInfo->getReasonForRecompilation() == TR_PersistentMethodInfo::RecompDueToPhaseChange) {
+                TR_Hotness currentHotnessLevel = bodyInfo->getHotness();
+                if (currentHotnessLevel == scorching) {
+                    hotnessLevel = veryHot;
+                    plan = TR_OptimizationPlan::alloc(hotnessLevel);
+                } else {
+                    hotnessLevel = bodyInfo->getHotness();
+                    plan = TR_OptimizationPlan::alloc(hotnessLevel);
+                }
+                plan->setInsertInstrumentation(true);
+                plan->setDoNotInsertPhaseChangeRecomp(true);
+                methodInfo->setHasRecompiledDueToPhaseChange();
+                *newPlanCreated = true;
             } else {
                 hotnessLevel = TR::Recompilation::getNextCompileLevel(event->_oldStartPC);
                 plan = TR_OptimizationPlan::alloc(hotnessLevel);
@@ -145,7 +158,7 @@ TR_OptimizationPlan *J9::CompilationStrategy::processEvent(TR_MethodEvent *event
             TR_OptimizationPlan::_optimizationPlanMonitor->enter();
             attachedPlan = methodInfo->_optimizationPlan;
             if (attachedPlan) {
-                TR_ASSERT(!TR::CompilationController::getCompilationInfo()->asynchronousCompilation(),
+                TR_ASSERT(!TR::CompilationController::getCompilationInfo()->asynchronouscompilation(),
                     "This case should happen only for sync recompilation");
                 plan->clone(attachedPlan); // override
             }
