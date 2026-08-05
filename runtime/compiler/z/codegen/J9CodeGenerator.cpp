@@ -3705,6 +3705,40 @@ bool J9::Z::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resul
                 }
             }
             break;
+        case TR::jdk_internal_misc_Unsafe_setMemory0:
+            if (comp->canTransformUnsafeSetMemory()
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+                && !TR::Compiler->om.isOffHeapAllocationEnabled()
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
+            ) {
+                TR::Node *dest = node->getChild(1);
+                TR::Node *destOffset = node->getChild(2);
+                TR::Node *len = node->getChild(3);
+                TR::Node *byteValue = node->getChild(4);
+
+                // aladd for 64-bit ptr
+                dest = TR::Node::create(TR::aladd, 2, dest, destOffset);
+                // fill value from setMemory0 will always be a byte.
+                byteValue = TR::Node::create(TR::i2b, 1, byteValue);
+
+                TR::Node *copyMemNode
+                    = TR::Node::createWithSymRef(TR::arrayset, 3, 3, dest, byteValue, len, node->getSymbolReference());
+                copyMemNode->setByteCodeInfo(node->getByteCodeInfo());
+                TR::TreeEvaluator::arraysetEvaluator(copyMemNode, cg);
+
+                if (node->getChild(0)->getRegister())
+                    cg->decReferenceCount(node->getChild(0));
+                else
+                    node->getChild(0)->recursivelyDecReferenceCount();
+
+                cg->decReferenceCount(node->getChild(1));
+                cg->decReferenceCount(node->getChild(2));
+                cg->decReferenceCount(node->getChild(3));
+                cg->decReferenceCount(node->getChild(4));
+
+                return true;
+            }
+            break;
 
         case TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet:
         case TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd:
