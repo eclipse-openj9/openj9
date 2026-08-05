@@ -132,6 +132,10 @@ public:
 
     bool profilingDisabled() { return _flags.testAny(ProfilingDisabled); }
 
+    void setHasRecompiledDueToPhaseChange() { _flags.set(HasRecompiledDueToPhaseChange); }
+
+    bool getHasRecompiledDueToPhaseChange() { return _flags.testAny(HasRecompiledDueToPhaseChange); }
+
     void setDisableMiscSamplingCounterDecrementation() { _flags.set(DisableMiscSamplingCounterDecrementation); }
 
     bool disableMiscSamplingCounterDecrementation() { return _flags.testAny(DisableMiscSamplingCounterDecrementation); }
@@ -305,6 +309,7 @@ public:
         RecompDueToJProfiling = 0x000B0000,
         RecompDueToInlinedMethodRedefinition = 0x000C0000,
         RecompDueToCRIU = 0x000D0000,
+        RecompDueToPhaseChange = 0x000E0000,
 
         // NOTE: recompilations due to EDO decrementation cannot be tracked precisely
         // because they are triggered from a snippet (must change the code for snippet)
@@ -322,6 +327,10 @@ public:
         IsInDataCache = 0x00800000, // This TR_PersistentMethodInfo is stored in the datacache for AOT
 
         IsInhibitRecompilation = 0x01000000,
+
+        HasRecompiledDueToPhaseChange
+            = 0x02000000, // Flag is set on persistent method info to prevent further compilations of this method with
+                          // recompilation trigger due to phase change.
 
         lastFlag = 0x80000000
     };

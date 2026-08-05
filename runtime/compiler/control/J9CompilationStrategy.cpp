@@ -136,6 +136,28 @@ TR_OptimizationPlan *J9::CompilationStrategy::processEvent(TR_MethodEvent *event
                 hotnessLevel = bodyInfo->getHotness();
                 plan = TR_OptimizationPlan::alloc(hotnessLevel);
                 *newPlanCreated = true;
+            } else if (methodInfo->getReasonForRecompilation() == TR_PersistentMethodInfo::RecompDueToPhaseChange) {
+                TR_Hotness currentHotnessLevel = bodyInfo->getHotness();
+                hotnessLevel = currentHotnessLevel;
+                bool insertInstrumentation = false;
+                if (currentHotnessLevel == scorching) {
+                    hotnessLevel = veryHot;
+                    insertInstrumentation = true;
+                } else if (currentHotnessLevel == veryHot) {
+                    hotnessLevel = hot;
+                    insertInstrumentation = true;
+                }
+                plan = TR_OptimizationPlan::alloc(hotnessLevel);
+                // Recompilation of the method due to phase change is a one-time
+                // event per method. Update plan and persistent method info to
+                // prevent inserting the recompilation trigger due to phase change
+                // repeatedly.
+                plan->setDoNotInsertPhaseChangeRecomp(true);
+                methodInfo->setHasRecompiledDueToPhaseChange();
+                if (insertInstrumentation) {
+                    plan->setInsertInstrumentation();
+                }
+                *newPlanCreated = true;
             } else {
                 hotnessLevel = TR::Recompilation::getNextCompileLevel(event->_oldStartPC);
                 plan = TR_OptimizationPlan::alloc(hotnessLevel);
