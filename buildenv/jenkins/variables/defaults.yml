@@ -417,7 +417,7 @@ x86-64_mac:
     8: '--with-toolchain-type=clang'
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
   node_labels:
-    build: 'ci.role.build && hw.arch.x86 && sw.os.mac && sw.tool.xcode.15_2'
+    build: 'ci.role.build && hw.arch.x86 && sw.os.mac && sw.tool.xcode.15_4'
   build_env:
     vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
   fail_pattern: 'IOException caught during compilation:'
@@ -439,7 +439,7 @@ aarch64_mac:
     all: '--with-noncompressedrefs'
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
   node_labels:
-    build: 'ci.role.build && hw.arch.aarch64 && sw.os.mac && sw.tool.xcode.15_2'
+    build: 'ci.role.build && hw.arch.aarch64 && sw.os.mac && sw.tool.xcode.15_4'
   fail_pattern: 'IOException caught during compilation:'
 #========================================#
 # Linux PPCLE 64bits with OpenJDK JSR292
