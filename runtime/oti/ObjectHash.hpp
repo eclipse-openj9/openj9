@@ -311,8 +311,11 @@ private:
 				frame->clazz->romClass,
 				VM_VMHelpers::getSuperclass(frame->clazz),
 				&frame->walkState,
-				J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE,
-				frame->clazz->flattenedClassCache);
+				J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+				, frame->clazz->flattenedClassCache
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+				);
 	}
 
 	/**
@@ -375,8 +378,11 @@ private:
 				clazz->romClass,
 				VM_VMHelpers::getSuperclass(clazz),
 				&walkState,
-				J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE,
-				clazz->flattenedClassCache);
+				J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+				, clazz->flattenedClassCache
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+				);
 
 		while (NULL != result->field) {
 			UDATA fieldOffset = startOffset + result->offset;
