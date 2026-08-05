@@ -119,6 +119,8 @@ public:
 
     void fixUpProfiledInterfaceGuardTest();
 
+    void insertRecompDueToPhaseChangeCode();
+
     /**
      * \brief
      *      This query is used by both fixUpProfiledInterfaceGuardTest (a codegen level optimization) and virtual guard
