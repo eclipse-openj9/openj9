@@ -1433,11 +1433,13 @@ static J9JITExceptionTable * jitGetExceptionTable(J9StackWalkState * walkState)
 		return result;
 	}
 
-	/* Try loading jitInfo again with synchronization. */
-	result = jitGetExceptionTableFromPCSync(walkState->walkThread, (UDATA)walkState->pc, TRUE);
+	/* Try loading jitInfo again with synchronization (skip this during ASGCT). */
+	if (J9_ARE_NO_BITS_SET(walkState->currentThread->privateFlags2, J9_PRIVATE_FLAGS2_ASYNC_GET_CALL_TRACE)) {
+		result = jitGetExceptionTableFromPCSync(walkState->walkThread, (UDATA)walkState->pc, TRUE);
 
-	if (result) {
-		return result;
+		if (result) {
+			return result;
+		}
 	}
 
 	/* Check to see if the PC is a decompilation return point and if so, use the real PC for finding the metaData */
