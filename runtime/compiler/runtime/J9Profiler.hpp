@@ -1325,4 +1325,213 @@ protected:
     uint32_t _methodsAddedToPatchList;
 };
 
+/**
+ * @brief Central coordinator for the JProfiler thread pool which manages set of
+ *  native JVM threads which collectively performs following two distinct jobs.
+ * 1. Analysis - Main thread designed to perform analyze the profiling data and
+ *    decide if it requires recompilation or patched to enable or disable the data
+ *    collection.
+ * 2. Patching - Worker threads desinged to carry out mechanical work of
+ *    patching the methods.
+ *
+ * Each thread in the pool follows simple finite-state machine, declared as the nested enum State.
+ * 1. Initial - Thread has been created but not ready
+ * 2. Wait - Thread is idle - waiting for work
+ * 3. Reserve - Thread is reserved by dispatcher to perform the work
+ * 4. Run - Thread is actively executing the work-unit
+ * 5. Stop Thread is shutting down
+ */
+class TR_JProfilerThreadsDispatcher {
+public:
+    TR_PERSISTENT_ALLOC(TR_Memory::TR_JProfiler);
+
+    enum State {
+        Initial,
+        Wait,
+        Reserve,
+        Run,
+        Stop
+    };
+
+    TR_JProfilerThreadsDispatcher() {}
+
+    ~TR_JProfilerThreadsDispatcher();
+
+    /**
+     * @brief Allocates a Dispatcher object
+     *
+     * @return TR_JProfilerThreadsDispatcher* constructed JProfiler Thread Pool disaptcher
+     */
+    static TR_JProfilerThreadsDispatcher *allocate();
+
+    /**
+     * @brief Checks if the thread is main thread
+     *
+     * @param threadID Integer ID of the thread
+     * @return true If it is main thread
+     * @return false If it is worker thread
+     */
+    bool isMainThread(uint32_t threadID) { return threadID == 0; }
+
+    /**
+     * @brief Analysis thread's run loop
+     *
+     * @param javaVM J9JavaVM object
+     * @param threadID Thread ID
+     */
+    void analysisThreadEntryPoint(J9JavaVM *javaVM, uint32_t threadID);
+
+    /**
+     * @brief Worker thread's run loop
+     *
+     * @param javaVM J9JavaVM object
+     * @param threadID Thread ID
+     */
+    void workerThreadEntryPoint(J9JavaVM *javaVM, uint32_t threadID);
+
+    /**
+     * @brief Initializes various field of the JProfiler Thread Pool dispatcher
+     * object
+     *
+     * @param numberOfJProfilerThreads - Number of JProfiler Threads to create
+     * in this thread pool
+     */
+    void initializeDispatcher(uint32_t numberOfJProfilerThreads);
+
+    /**
+     * @brief Start all threads in the thread pool
+     *
+     * @param javaVM J9JavaVM object
+     */
+    void startThreads(J9JavaVM *javaVM);
+
+    /**
+     * @brief Stop all threads in the thread pool
+     *
+     * @param javaVM J9JavaVM object
+     */
+    void stopThreads(J9JavaVM *javaVM);
+
+    /**
+     * @brief A cyclic counting barrier for synchronizing between active threads
+     * in the pool
+     *
+     * @param threadID ID of the thread calling this rendezvous point
+     */
+    void synchronizeJProfilerThreads(uint32_t threadID);
+
+    /**
+     * @brief Returns native OS thread that is backing up the thread
+     *
+     * @param threadID Thread ID
+     * @return j9thread_t native j9thread_t object backing this JVM thread
+     */
+    j9thread_t getJProfilerOSThreadFromIndex(int32_t threadID) { return jProfilerOSThreadList[threadID]; }
+
+    /**
+     * @brief Returns the Analysis Work-Unit object
+     *
+     * @return TR_JProfilerAnalysisTask*
+     */
+    TR_JProfilerAnalysisTask *getJProfilerAnalysisTask() { return task; }
+
+    /**
+     * @brief Sets the JVM Thread that represents the Thread ID in the thread pool
+     *
+     * @param threadID ID of the thread
+     * @param vmThread JVM thread object
+     */
+    void setJProfilerVMThread(int32_t threadID, J9VMThread *vmThread) { jProfilerVMThreadList[threadID] = vmThread; }
+
+    /**
+     * @brief Returns the J9VMThread of the threadID thread
+     *
+     * @param threadID ID of the thread in the pool
+     * @return J9VMThread*
+     */
+    J9VMThread *getJProfilerVMThread(int32_t threadID) { return jProfilerVMThreadList[threadID]; }
+
+    /**
+     * @brief Get the Total JProfiler Threads in the thread pool
+     *
+     * @return int32_t number of threads in the thread pool
+     */
+    int32_t getTotalJProfilerThreads() { return _maxJProfilerThreadCount; }
+
+    /**
+     * @brief Performs the clean-up task for threadID
+     *
+     * @param javaVM J9JavaVM object
+     * @param threadID Thread ID
+     */
+    void cleanUpThread(J9JavaVM *javaVM, uint32_t threadID);
+
+    /**
+     * @brief Sets the state of the thread once the intialization work for
+     * threadID in the thread pool is finished.
+     *
+     * @param threadID Thread ID
+     * @param isAnalysisThread Boolean flag that conveys that this threadID
+     * contains an analysis work-unit
+     */
+    void completeThreadInitialization(uint32_t threadID, bool isAnalysisThread = false);
+
+    /**
+     * @brief Set the Analysis Thread Sleep Time
+     *
+     * @param sleepTime time in milliseconds at which analysis thread will be
+     * woken-up to perform analysis
+     */
+    void setAnalysisThreadSleepTime(int32_t sleepTime) { _analysisThreadSleepTime = sleepTime; }
+
+    /**
+     * @brief Set the Analysis Task List Size To Trigger Patching object
+     *
+     * @param val Number of methods held by analysis task for patching to start patching
+     */
+    void setAnalysisTaskListSizeToTriggerPatching(uint32_t val) { task->setNumberOfMethodsToTriggerPatching(val); }
+
+    /**
+     * @brief Set the Analysis Cut Off
+     *
+     * @param val Number of methods to inspect when analysis thread in the thread pool is woken up.
+     */
+    void setAnalysisCutOff(uint32_t val) { task->setAnalysisCutOff(val); }
+
+protected:
+    j9thread_t *jProfilerOSThreadList;
+
+    J9VMThread **jProfilerVMThreadList;
+
+    State *stateTable;
+
+    uint32_t _maxJProfilerThreadCount;
+
+    TR_JProfilerAnalysisTask *task;
+
+    TR_JProfilerPatchingTask **patchingTaskList;
+
+private:
+    volatile bool _inShutdown;
+
+    volatile bool _threadsReservedForPatchingWork;
+
+    volatile uint32_t _analysisThreadSleepTime;
+
+    uint32_t _numberOfThreadsToWakeUpForPatching;
+
+    TR::Monitor *_dispatcherMonitor;
+
+    TR::Monitor *_workerThreadMonitor;
+
+    TR::Monitor *_synchronizationMonitor;
+
+    uint32_t _synchronizationThreadCount;
+
+    uint32_t _synchronizationThreadIndex;
+
+    uint32_t _totalThreadCountForSynchronization;
+
+    uint32_t _totalExclusivePatchPhase;
+};
 #endif
