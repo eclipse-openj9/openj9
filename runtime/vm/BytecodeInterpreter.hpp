@@ -3110,7 +3110,7 @@ done:
 		return EXECUTE_BYTECODE;
 	}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	/* java.lang.Class: public native boolean isValue(); */
 	VMINLINE VM_BytecodeAction
 	inlClassIsValue(REGISTER_ARGS_LIST)
@@ -3129,9 +3129,9 @@ done:
 		returnSingleFromINL(REGISTER_ARGS, (isValue ? 1 : 0), 1);
 		return EXECUTE_BYTECODE;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
-#if (JAVA_SPEC_VERSION >= 20) || defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 20
 	/* java.lang.Class: private native int getClassFileVersion0(); */
 	VMINLINE VM_BytecodeAction
 	inlGetClassFileVersion(REGISTER_ARGS_LIST)
@@ -3141,7 +3141,7 @@ done:
 		returnSingleFromINL(REGISTER_ARGS, classFileVersion, 1);
 		return EXECUTE_BYTECODE;
 	}
-#endif /* (JAVA_SPEC_VERSION >= 20) || defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 20 */
 
 	/* java.lang.Class: public native boolean isInstance(Object object); */
 	VMINLINE VM_BytecodeAction
@@ -3186,7 +3186,7 @@ done:
 			/* OR in the required Sun bits */
 			modifiers |= (J9AccAbstract | J9AccFinal);
 		}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		if (J9_ARE_ANY_BITS_SET(_vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW)) {
 			if ((!J9_IS_J9CLASS_VALUETYPE(receiverClazz)
 					&& !J9ROMCLASS_IS_INTERFACE(romClass)
@@ -3196,7 +3196,7 @@ done:
 				modifiers |= J9AccClassHasIdentity;
 			}
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		returnSingleFromINL(REGISTER_ARGS, modifiers, 1);
 		return EXECUTE_BYTECODE;
 	}
@@ -3379,7 +3379,7 @@ done:
 		j9object_t obj = *(j9object_t*)_sp;
 		/* Caller has null-checked obj already */
 		_pc += 3;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		Assert_VM_mustHaveVMAccess(_currentThread);
 		bool oomOccurred = false;
 		I_32 hashValue = VM_ObjectHash::inlineObjectHashCode(_vm, obj, &oomOccurred);
@@ -3387,9 +3387,9 @@ done:
 			return THROW_NATIVE_OOM;
 		}
 		*(I_32*)_sp = hashValue;
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 		*(I_32*)_sp = VM_ObjectHash::inlineObjectHashCode(_vm, obj);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		return EXECUTE_BYTECODE;
 	}
 
@@ -4426,6 +4426,7 @@ done:
 	}
 
 #if JAVA_SPEC_VERSION >= 28
+
 	/* jdk.internal.misc.Unsafe: public native void notifyStrictStaticAccess0(Class<?> clz, long staticFieldOffset, boolean writing); */
 	VMINLINE VM_BytecodeAction
 	inlUnsafeNotifyStrictStaticAccess0(REGISTER_ARGS_LIST)
@@ -4498,8 +4499,7 @@ done:
 done:
 		return rc;
 	}
-#endif /* JAVA_SPEC_VERSION >= 28 */
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+
 	/* jdk.internal.misc.Unsafe: public native <V> long valueHeaderSize(Class<V> clz); */
 	VMINLINE VM_BytecodeAction
 	inlUnsafeValueHeaderSize(REGISTER_ARGS_LIST)
@@ -4542,7 +4542,9 @@ done:
 
 		return rc;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
+#endif /* JAVA_SPEC_VERSION >= 28 */
+
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	/* jdk.internal.misc.Unsafe: public native <V> V getFlatValue(Object obj, long offset, int layoutKind, Class<?> clz); */
 	VMINLINE VM_BytecodeAction
@@ -10695,12 +10697,12 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_ASSIGNABLE_FROM),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_ARRAY),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_PRIMITIVE),
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_VALUE),
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-#if (JAVA_SPEC_VERSION >= 20) || defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#endif /* JAVA_SPEC_VERSION >= 28 */
+#if JAVA_SPEC_VERSION >= 20
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_CLASS_FILEVERSION),
-#endif /* (JAVA_SPEC_VERSION >= 20) || defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 20 */
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_MODIFIERS_IMPL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_COMPONENT_TYPE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_THREAD_CURRENT_THREAD),
@@ -10779,11 +10781,9 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPINT),
 #if JAVA_SPEC_VERSION >= 28
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_NOTIFYSTRICTSTATICACCESS0),
-#endif /* JAVA_SPEC_VERSION >= 28 */
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_VALUEHEADERSIZE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECTSIZE),
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETFLATVALUE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTFLATVALUE),
@@ -11252,14 +11252,14 @@ runMethod: {
 		PERFORM_ACTION(inlClassIsArray(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_PRIMITIVE):
 		PERFORM_ACTION(inlClassIsPrimitive(REGISTER_ARGS));
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_VALUE):
 		PERFORM_ACTION(inlClassIsValue(REGISTER_ARGS));
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-#if (JAVA_SPEC_VERSION >= 20) || defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#endif /* JAVA_SPEC_VERSION >= 28 */
+#if JAVA_SPEC_VERSION >= 20
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_CLASS_FILEVERSION):
 		PERFORM_ACTION(inlGetClassFileVersion(REGISTER_ARGS));
-#endif /* (JAVA_SPEC_VERSION >= 20) || defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 20 */
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_MODIFIERS_IMPL):
 		PERFORM_ACTION(inlClassGetModifiersImpl(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_COMPONENT_TYPE):
@@ -11407,13 +11407,11 @@ runMethod: {
 #if JAVA_SPEC_VERSION >= 28
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_NOTIFYSTRICTSTATICACCESS0):
 		PERFORM_ACTION(inlUnsafeNotifyStrictStaticAccess0(REGISTER_ARGS));
-#endif /* JAVA_SPEC_VERSION >= 28 */
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_VALUEHEADERSIZE):
 		PERFORM_ACTION(inlUnsafeValueHeaderSize(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECTSIZE):
 		PERFORM_ACTION(inlUnsafeGetObjectSize(REGISTER_ARGS));
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETFLATVALUE):
 		PERFORM_ACTION(inlUnsafeGetFlatValue(REGISTER_ARGS));
@@ -11634,11 +11632,11 @@ valueTypeIllegalMonitorState:
 	updateVMStruct(REGISTER_ARGS);
 	prepareForExceptionThrow(_currentThread);
 #define badClassName J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(_currentThread, (j9object_t)_currentThread->tempSlot)->romClass)
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	if (J9_IS_J9CLASS_VALUETYPE(J9OBJECT_CLAZZ(_currentThread, (j9object_t)_currentThread->tempSlot))) {
 		setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGIDENTITYEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
 	} else
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	{
 		Assert_VM_true(J9_ARE_ALL_BITS_SET(_vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION));
 		setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED, J9VMCONSTANTPOOL_JAVALANGVIRTUALMACHINEERROR, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));

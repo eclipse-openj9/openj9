@@ -319,9 +319,9 @@ struct JNINativeInterface_ EsJNIFunctions = {
 #if JAVA_SPEC_VERSION >= 24
 	GetStringUTFLengthAsLong,
 #endif /* JAVA_SPEC_VERSION >= 24 */
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	HasIdentity,
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 };
 
 static void initializeJNIEnv31(JNIEnv31 * jniEnv31, jlong jniEnv64);
@@ -868,19 +868,19 @@ IsVirtualThread(JNIEnv *env, jobject obj)
 }
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 jboolean JNICALL
 HasIdentity(JNIEnv *env, jobject obj)
 {
 	const jint NUM_ARGS = 2;
-	 J9_CEL4RO64_ArgType argTypes[NUM_ARGS] = { CEL4RO64_type_JNIEnv64, CEL4RO64_type_jobject };
-	 uint64_t argValues[NUM_ARGS] = { JNIENV64_FROM_JNIENV31(env), obj };
-	 jboolean returnValue = JNI_FALSE;
-	 FUNCTION_DESCRIPTOR_FROM_JNIENV31(env, HasIdentity);
-	 j9_cel4ro64_call_function(functionDescriptor, argTypes, argValues, NUM_ARGS, CEL4RO64_type_jboolean, &returnValue);
-	 return returnValue;
+	J9_CEL4RO64_ArgType argTypes[NUM_ARGS] = { CEL4RO64_type_JNIEnv64, CEL4RO64_type_jobject };
+	uint64_t argValues[NUM_ARGS] = { JNIENV64_FROM_JNIENV31(env), obj };
+	jboolean returnValue = JNI_FALSE;
+	FUNCTION_DESCRIPTOR_FROM_JNIENV31(env, HasIdentity);
+	j9_cel4ro64_call_function(functionDescriptor, argTypes, argValues, NUM_ARGS, CEL4RO64_type_jboolean, &returnValue);
+	return returnValue;
 }
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 /**
  * Following set of functions are JNIEnv31 utility routines.

@@ -131,7 +131,7 @@ Fast_java_lang_Class_isPrimitive(J9VMThread *currentThread, j9object_t classObje
 	return J9ROMCLASS_IS_PRIMITIVE_TYPE(receiverClazz->romClass) ? JNI_TRUE : JNI_FALSE;
 }
 
-#if (JAVA_SPEC_VERSION >= 20) || defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 20
 /* java.lang.Class: private native int getClassFileVersion0(); */
 jint JNICALL
 Fast_java_lang_Class_getClassFileVersion0(J9VMThread *currentThread, j9object_t classObject)
@@ -139,7 +139,7 @@ Fast_java_lang_Class_getClassFileVersion0(J9VMThread *currentThread, j9object_t 
 	J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, classObject);
 	return (jint)getClassFileVersion(currentThread, receiverClazz);
 }
-#endif /* (JAVA_SPEC_VERSION >= 20) || defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 20 */
 
 /* java.lang.Class: public native boolean isInstance(Object object); */
 jboolean JNICALL
@@ -182,7 +182,7 @@ Fast_java_lang_Class_getModifiersImpl(J9VMThread *currentThread, j9object_t rece
 		/* OR in the required Sun bits */
 		modifiers |= (J9AccAbstract | J9AccFinal);
 	}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	if (J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW)) {
 		if ((!J9_IS_J9CLASS_VALUETYPE(receiverClazz)
 				&& !J9ROMCLASS_IS_INTERFACE(romClass)
@@ -192,7 +192,7 @@ Fast_java_lang_Class_getModifiersImpl(J9VMThread *currentThread, j9object_t rece
 			modifiers |= J9AccClassHasIdentity;
 		}
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	return (jint)modifiers;
 }
 
@@ -253,11 +253,11 @@ J9_FAST_JNI_METHOD_TABLE(java_lang_Class)
 	J9_FAST_JNI_METHOD("isPrimitive", "()Z", Fast_java_lang_Class_isPrimitive,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NOT_GC_POINT | J9_FAST_JNI_NO_NATIVE_METHOD_FRAME | J9_FAST_JNI_NO_EXCEPTION_THROW |
 		J9_FAST_JNI_NO_SPECIAL_TEAR_DOWN | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	J9_FAST_JNI_METHOD("getClassFileVersion0", "()I", Fast_java_lang_Class_getClassFileVersion0,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NOT_GC_POINT | J9_FAST_JNI_NO_NATIVE_METHOD_FRAME | J9_FAST_JNI_NO_EXCEPTION_THROW |
 		J9_FAST_JNI_NO_SPECIAL_TEAR_DOWN | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	J9_FAST_JNI_METHOD("isInstance", "(Ljava/lang/Object;)Z", Fast_java_lang_Class_isInstance,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NOT_GC_POINT | J9_FAST_JNI_NO_NATIVE_METHOD_FRAME | J9_FAST_JNI_NO_EXCEPTION_THROW |
 		J9_FAST_JNI_NO_SPECIAL_TEAR_DOWN | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)

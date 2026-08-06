@@ -1636,7 +1636,7 @@ hookFindSharedClass(J9HookInterface** hookInterface, UDATA eventNum, void* voidD
 		}
 	}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	if ((NULL != eventData->result)
 		&& (J9_IS_CLASSFILE_OR_ROMCLASS_PREVIEW_VERSION(eventData->result))
 		&& J9_ARE_NO_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW)
@@ -1645,7 +1645,7 @@ hookFindSharedClass(J9HookInterface** hookInterface, UDATA eventNum, void* voidD
 		eventData->result = NULL;
 		goto _donePostFixedClassname;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	if (eventData->doPreventStore && (NULL == eventData->result)) {
 		omrthread_monitor_enter(classSegmentMutex);

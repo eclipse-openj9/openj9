@@ -45,7 +45,7 @@ class VM_ObjectHash
  * Data members
  */
 private:
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	struct ValueTypeHashStackEntry {
 		j9object_t objectPointer;
 		J9Class *clazz;
@@ -157,7 +157,7 @@ private:
 			top -= 1;
 		}
 	};
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 protected:
 public:
 
@@ -182,9 +182,9 @@ private:
 
 	static VMINLINE U_32
 	getSalt(J9JavaVM *vm, UDATA objectPointer
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 			, bool isValueType = false
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	)
 	{
 		/* set up the default salt */
@@ -192,11 +192,11 @@ private:
 
 		J9IdentityHashData *hashData = vm->identityHashData;
 		UDATA saltPolicy = hashData->hashSaltPolicy;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		if (isValueType) {
 			saltPolicy = J9_IDENTITY_HASH_SALT_POLICY_NONE;
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		switch(saltPolicy) {
 		case J9_IDENTITY_HASH_SALT_POLICY_STANDARD:
 			/* Gencon/optavgpause/optthruput use the default salt for non heap and
@@ -293,7 +293,7 @@ private:
 		return hashValue;
 	}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	/**
 	 * Initialize the hash value of the current entry.
 	 *
@@ -688,11 +688,11 @@ oom:
 		*oomOccurred = true;
 		return 0;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 protected:
 
 public:
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	/**
 	 * Convert object to hash, handling both regular objects and ValueTypes.
 	 * Requires VM access.
@@ -715,7 +715,7 @@ public:
 		}
 		return hashValue;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	/**
 	 * Hash an UDATA via murmur3 algorithm
@@ -858,15 +858,15 @@ public:
 	 */
 	static VMINLINE I_32
 	inlineObjectHashCode(J9JavaVM *vm, j9object_t objectPointer
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 			, bool *oomOccurred
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	)
 	{
 		I_32 hashValue = 0;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		J9VMThread *currentThread = vm->internalVMFunctions->currentVMThread(vm);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		if (VM_VMHelpers::mustCallWriteAccessBarrier(vm)) {
 			hashValue = vm->memoryManagerFunctions->j9gc_objaccess_getObjectHashCode(vm, objectPointer);
 		} else {
@@ -884,7 +884,7 @@ public:
 				} else {
 					hashValue = *(I_32 *)((UDATA)objectPointer + objectClass->backfillOffset);
 				}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 				if (0 == hashValue) {
 					if (J9_IS_J9CLASS_VALUETYPE(objectClass)) {
 						hashValue = convertValueObjectAtOffsetToHash(vm, currentThread, objectPointer, objectClass, J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread), oomOccurred);
@@ -894,23 +894,23 @@ public:
 						}
 					}
 				}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 			} else {
 				if (J9_ARE_NO_BITS_SET(flags, OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS)) {
 					setHasBeenHashed(vm, objectPointer);
 				}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 				hashValue = inlineConvertObjectToHash(vm, currentThread, objectPointer, oomOccurred);
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 				hashValue = inlineConvertValueToHash(vm, (UDATA)objectPointer);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 			}
 #else /* defined(J9VM_GC_MODRON_COMPACTION) || defined(J9VM_GC_GENERATIONAL) */
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 			hashValue = inlineConvertObjectToHash(vm, currentThread, objectPointer, oomOccurred);
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 			hashValue = inlineConvertValueToHash(vm, (UDATA)objectPointer);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 #endif /* defined(J9VM_GC_MODRON_COMPACTION) || defined(J9VM_GC_GENERATIONAL) */
 		}
 		return hashValue;

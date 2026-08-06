@@ -603,23 +603,23 @@ monitorTablePeek(J9JavaVM *vm, j9object_t object)
 		omrthread_monitor_t mutex = vm->monitorTableMutex;
 		J9ObjectMonitor key_objectMonitor;
 		J9ThreadAbstractMonitor key_monitor;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		jboolean oomOccurred = JNI_FALSE;
 		I_32 hashValue = 0;
 		J9Class *clazz = NULL;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 		/* Create a "fake" monitor just to probe the hash-table */
 		key_monitor.userData = (UDATA)object;
 		key_objectMonitor.monitor = (omrthread_monitor_t) &key_monitor;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		clazz = J9OBJECT_CLAZZ_VM(vm, object);
 		/* Value objects cannot be used as monitors as they don't have an identity. */
 		Assert_VMUtil_false(J9_IS_J9CLASS_VALUETYPE(clazz));
 		key_objectMonitor.hash = objectHashCode(vm, object, NULL);
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 		key_objectMonitor.hash = objectHashCode(vm, object);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 		omrthread_monitor_enter(mutex);
 		if (NULL == monitorTable) {
@@ -633,5 +633,3 @@ monitorTablePeek(J9JavaVM *vm, j9object_t object)
 	}
 	return monitor;
 }
-
-

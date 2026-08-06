@@ -99,11 +99,11 @@ bool J9::ObjectModel::areValueTypesEnabled()
 {
 #if defined(J9VM_OPT_JITSERVER)
     if (auto stream = TR::CompilationInfo::getStream()) {
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
         return true;
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 28 */
         return false;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
     }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 

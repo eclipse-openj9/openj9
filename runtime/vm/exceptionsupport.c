@@ -889,7 +889,7 @@ setClassLoadingConstraintError(J9VMThread * currentThread, J9ClassLoader * initi
 		U_16 existingClassNameLength = J9UTF8_LENGTH(existingClassNameUTF);
 		U_8 * existingClassName = J9UTF8_DATA(existingClassNameUTF);
 		UDATA msgLen = 0;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		Assert_VM_mustHaveVMAccess(currentThread);
 		jboolean oomOccurred = JNI_FALSE;
 		I_32 hashValue = 0;
@@ -905,10 +905,10 @@ setClassLoadingConstraintError(J9VMThread * currentThread, J9ClassLoader * initi
 			return;
 		}
 		definingLoaderHash = hashValue;
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 		initiatingLoaderHash = objectHashCode(currentThread->javaVM, initiatingLoaderObject);
 		definingLoaderHash = objectHashCode(currentThread->javaVM, definingLoaderObject);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		msgLen = j9str_printf(NULL, 0, nlsMessage,
 			initiatingLoaderClassNameLength, initiatingLoaderClassName, initiatingLoaderHash,
 			existingClassNameLength, existingClassName,
@@ -964,7 +964,7 @@ setClassLoadingConstraintSignatureError(J9VMThread *currentThread, J9ClassLoader
 		U_8 * exceptionClassName = J9UTF8_DATA(exceptionClassNameUTF);
 
 		UDATA msgLen = 0;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		Assert_VM_mustHaveVMAccess(currentThread);
 		jboolean oomOccurred = JNI_FALSE;
 		I_32 hashValue = 0;
@@ -980,10 +980,10 @@ setClassLoadingConstraintSignatureError(J9VMThread *currentThread, J9ClassLoader
 			return;
 		}
 		loader2Hash = hashValue;
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 		loader1Hash = objectHashCode(currentThread->javaVM, loader1Object);
 		loader2Hash = objectHashCode(currentThread->javaVM, loader2Object);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		msgLen = j9str_printf(NULL, 0, nlsMessage,
 				exceptionClassNameLength, exceptionClassName,
 				methodNameLength, methodName,
@@ -1049,7 +1049,7 @@ setClassLoadingConstraintOverrideError(J9VMThread *currentThread, J9UTF8 *newCla
 		U_8 * newClassName = J9UTF8_DATA(newClassNameUTF);
 
 		UDATA msgLen = 0;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		Assert_VM_mustHaveVMAccess(currentThread);
 		jboolean oomOccurred = JNI_FALSE;
 		I_32 hashValue = 0;
@@ -1065,10 +1065,10 @@ setClassLoadingConstraintOverrideError(J9VMThread *currentThread, J9UTF8 *newCla
 			return;
 		}
 		loader2Hash = hashValue;
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 		loader1Hash = objectHashCode(currentThread->javaVM, loader1Object);
 		loader2Hash = objectHashCode(currentThread->javaVM, loader2Object);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		msgLen = j9str_printf(NULL, 0, nlsMessage,
 				exceptionClassNameLength, exceptionClassName,
 				methodNameLength, methodName,

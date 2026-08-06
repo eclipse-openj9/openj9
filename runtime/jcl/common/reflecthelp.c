@@ -760,9 +760,9 @@ createField(struct J9VMThread *vmThread, jfieldID fieldID)
 	J9Class *jlrFieldClass = J9VMJAVALANGREFLECTFIELD(vmThread->javaVM);
 	UDATA initStatus;
 	U_32 fieldModifiers = 0;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	U_32 fieldFlags = 0; /* used to calculate value of Field.flags in value type builds */
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	if (NULL == jlrFieldClass) {
 		return NULL;
@@ -849,20 +849,20 @@ createField(struct J9VMThread *vmThread, jfieldID fieldID)
 				|| J9ROMCLASS_IS_RECORD(j9FieldID->declaringClass->romClass)
 				|| J9ROMCLASS_IS_VALUE(j9FieldID->declaringClass->romClass)
 		) {
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 			fieldFlags |= TRUST_FINAL;
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 			J9VMJAVALANGREFLECTFIELD_SET_TRUSTEDFINAL(vmThread, fieldObject, JNI_TRUE);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		}
 	}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	if (J9ROMFIELD_IS_NULL_RESTRICTED(j9FieldID->field)) {
 		fieldFlags |= NULL_RESTRICTED;
 	}
 	/* Field is "int flags;" in value types. */
 	J9VMJAVALANGREFLECTFIELD_SET_FLAGS(vmThread, fieldObject, fieldFlags);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 #endif /* JAVA_SPEC_VERSION >= 15 */
 
 	return fieldObject;

@@ -79,10 +79,10 @@ private:
 	bool _isInjectedInvoker;
 	J9UTF8* _anonClassName;
 	J9UTF8* _originalClassName;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	U_32 _numOfInjectedInterfaces;
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
-	
+#endif /* JAVA_SPEC_VERSION >= 28 */
+
 protected:
 
 public:
@@ -348,9 +348,9 @@ public:
 		, _isInjectedInvoker(FALSE)
 		, _anonClassName(NULL)
 		, _originalClassName(NULL)
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		, _numOfInjectedInterfaces(0)
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	{
 		/* anonClasses have the following name format: '[originalName]/[ROMSegmentAddress]' */
 		if (J9_ARE_ANY_BITS_SET(_romClass->extraModifiers, J9AccClassAnonClass | J9AccClassHidden)) {

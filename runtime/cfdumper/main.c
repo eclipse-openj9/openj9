@@ -920,7 +920,7 @@ static void dumpAttribute(J9CfrClassFile* classfile, J9CfrAttribute* attrib, U_3
 			}
 			break;
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		case CFR_ATTRIBUTE_LoadableDescriptors:
 			for (i = 0; i < ((J9CfrAttributeLoadableDescriptors *)attrib)->numberOfDescriptors; i++) {
 				U_16 descriptorIndex = ((J9CfrAttributeLoadableDescriptors *)attrib)->descriptors[i];
@@ -930,7 +930,7 @@ static void dumpAttribute(J9CfrClassFile* classfile, J9CfrAttribute* attrib, U_3
 				j9tty_printf(PORTLIB, "Loadable descriptor index, name: %i -> %s\n", descriptorIndex, classfile->constantPool[descriptorIndex].bytes);
 			}
 			break;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		case CFR_ATTRIBUTE_StrippedLineNumberTable:
 		case CFR_ATTRIBUTE_StrippedLocalVariableTable:
 		case CFR_ATTRIBUTE_StrippedLocalVariableTypeTable:
@@ -963,9 +963,9 @@ static void printClassFile(J9CfrClassFile* classfile)
 	if(classfile->accessFlags & CFR_ACC_PROTECTED) j9tty_printf( PORTLIB, "private ");
 	/* JEP 360: note: non-sealed will not be indicated for subclasses. There's no way of knowing until classes are linked. */
 	if(classfile->j9Flags & CFR_J9FLAG_IS_SEALED) j9tty_printf( PORTLIB, "sealed ");
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	if (J9_IS_CLASSFILE_VALUETYPE(classfile)) j9tty_printf( PORTLIB, "value ");
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	if(classfile->accessFlags & CFR_ACC_INTERFACE)
 		j9tty_printf( PORTLIB, "interface ");
 	else if (classfile->j9Flags & CFR_J9FLAG_IS_RECORD)

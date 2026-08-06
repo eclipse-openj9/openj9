@@ -473,7 +473,7 @@ release:
 
 			if (objectFetched) {
 				j9object_t obj = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 				/* For value types, create defensive copy to preserve immutability during inspection */
 				if ((NULL != obj) && J9_IS_J9CLASS_VALUETYPE(J9OBJECT_CLAZZ(currentThread, obj))) {
 					obj = vm->internalVMFunctions->cloneValueType(currentThread,
@@ -481,7 +481,7 @@ release:
 							obj,
 							FALSE);
 				}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 				*((jobject *)value_ptr) = vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *)currentThread, obj);
 			}
 			releaseVMThread(currentThread, targetThread, thread);

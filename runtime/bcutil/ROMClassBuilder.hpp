@@ -37,13 +37,13 @@
 #include "ClassFileParser.hpp"  /* included to obtain definition of VerifyClassFunction */
 #include "StringInternTable.hpp"
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 #define MAX_INTERFACE_INJECTION 1
 typedef struct InterfaceInjectionInfo {
 	J9UTF8 *interfaces[MAX_INTERFACE_INJECTION];
 	U_16 numOfInterfaces;
 } InterfaceInjectionInfo;
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 class BufferManager;
 class ClassFileOracle;
@@ -126,14 +126,14 @@ private:
 	UDATA _anonClassNameBufferSize;
 	U_8 *_bufferManagerBuffer;
 	StringInternTable _stringInternTable;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	InterfaceInjectionInfo _interfaceInjectionInfo;
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	BuildResult handleAnonClassName(J9CfrClassFile *classfile, ROMClassCreationContext *context);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	BuildResult injectInterfaces(ClassFileOracle *classFileOracle);
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	bool checkPreviewClass(ROMClassCreationContext *context, J9CfrClassFile *classFile);
 	U_32 computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClassCreationContext *context);
 	U_32 computeOptionalFlags(ClassFileOracle *classFileOracle, ROMClassCreationContext *context);

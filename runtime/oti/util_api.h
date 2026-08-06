@@ -1346,7 +1346,8 @@ getNumberOfPermittedSubclassesPtr(J9ROMClass *romClass);
 J9UTF8*
 permittedSubclassesNameAtIndex(U_32* permittedSubclassesCountPtr, U_32 index);
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
+
 /**
  * Retrieves number of interfaces injected into a class.
  * @param J9ROMClass class with injected interfaces
@@ -1378,7 +1379,8 @@ getLoadableDescriptorsInfoPtr(J9ROMClass *romClass);
  */
 J9UTF8*
 loadableDescriptorAtIndex(U_32 *permittedSubclassesCountPtr, U_32 index);
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 /**
  * Retrieves number of record components in this record. Assumes that
@@ -2622,7 +2624,7 @@ I_32 convertValueToHash(J9JavaVM *vm, UDATA value);
  */
 I_32 computeObjectAddressToHash(J9JavaVM *vm, j9object_t objectPointer);
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 /**
  * Compute object hash.
  * Handles both identity types and value types.
@@ -2635,7 +2637,7 @@ I_32 computeObjectAddressToHash(J9JavaVM *vm, j9object_t objectPointer);
  * @return hash value           an I_32 that may be negative or zero (if OOM occurs)
  */
 I_32 convertObjectToHash(J9JavaVM *vm, J9VMThread *currentThread, j9object_t objectPointer, J9Class *clazz);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 /**
  * Fetch objectPointer's hashcode
@@ -2648,9 +2650,9 @@ I_32 convertObjectToHash(J9JavaVM *vm, J9VMThread *currentThread, j9object_t obj
  * @return hash value       a I_32 that may be negative or zero
  */
 I_32 objectHashCode(J9JavaVM *vm, j9object_t objectPointer
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		, jboolean *oomOccurred
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 );
 
 #if defined(WIN32)

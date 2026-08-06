@@ -532,7 +532,7 @@ if(J9VM_OPT_JITSERVER)
 	)
 endif()
 
-if(J9VM_OPT_VALHALLA_VALUE_TYPES)
+if(NOT JAVA_SPEC_VERSION LESS 28)
 	jvm_add_exports(jvm
 		JVM_CopyOfSpecialArray
 		JVM_IsAtomicArray
@@ -542,6 +542,5 @@ if(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		JVM_NewNullRestrictedAtomicArray
 		JVM_NewNullRestrictedNonAtomicArray
 		JVM_NewReferenceArray
-		JVM_VirtualThreadHideFrames
 	)
 endif()

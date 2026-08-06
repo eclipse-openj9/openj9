@@ -1033,11 +1033,11 @@ extern "C" {
 #define J9_CLASSFILE_OR_ROMCLASS_SUPPORTS_STRICT_FIELDS(classfileOrRomClass) (((classfileOrRomClass)->majorVersion >= STRICT_FIELDS_MAJOR_VERSION) && (PREVIEW_MINOR_VERSION == (classfileOrRomClass)->minorVersion))
 #define J9_IS_CLASSFILE_OR_ROMCLASS_PREVIEW_VERSION(classfileOrRomClass) (PREVIEW_MINOR_VERSION == (classfileOrRomClass)->minorVersion)
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 /* Constants for java.lang.reflect.Field flags. */
 #define TRUST_FINAL 0x10
 #define NULL_RESTRICTED 0x20
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 #define J9VM_DISCLAIMCLASSMEMORY_STOP_ON_FIRST_FAILURE 1
 

@@ -23,7 +23,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 <vmconstantpool>
 	<classref name="java/lang/ArrayStoreException"/>
 	<classref name="java/lang/ClassCastException"/>
-	<classref name="java/lang/IdentityException" flags="opt_valhallaValueTypes"/>
+	<classref name="java/lang/IdentityException" versions="28-"/>
 	<classref name="java/lang/IllegalMonitorStateException"/>
 	<classref name="java/lang/IllegalStateException" versions="28-"/>
 	<classref name="java/lang/IndexOutOfBoundsException"/>
@@ -299,8 +299,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<fieldref class="java/lang/reflect/Field" name="type" signature="Ljava/lang/Class;"/>
 	<fieldref class="java/lang/reflect/Field" name="signature" signature="Ljava/lang/String;"/>
 	<fieldref class="java/lang/reflect/Field" name="modifiers" signature="I"/>
-	<fieldref class="java/lang/reflect/Field" name="trustedFinal" signature="Z" versions="15-" flags="!opt_valhallaValueTypes"/>
-	<fieldref class="java/lang/reflect/Field" name="flags" signature="I" flags="opt_valhallaValueTypes"/>
+	<fieldref class="java/lang/reflect/Field" name="trustedFinal" signature="Z" versions="15-27"/>
+	<fieldref class="java/lang/reflect/Field" name="flags" signature="I" versions="28-"/>
 	<fieldref class="java/lang/reflect/Field" name="annotations" signature="[B"/>
 	<fieldref class="java/lang/reflect/Field" name="slot" signature="I"/>
 	<fieldref class="java/lang/reflect/Field" name="clazz" signature="Ljava/lang/Class;"/>

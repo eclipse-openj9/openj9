@@ -2138,7 +2138,7 @@ loadFlattenableFieldClasses(J9VMThread *currentThread, J9ClassLoader *classLoade
 	flattenedClassCache->numberOfEntries = numberOfCacheEntries;
 	flattenedClassCache->strictStaticFieldCounter = strictStaticFieldCounter;
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	/* Speculatively load classes listed in the LoadableDescriptors attribute.
 	 * By this point classes of fields that may be eligible for
 	 * flattening have already been loaded.
@@ -2165,7 +2165,7 @@ loadFlattenableFieldClasses(J9VMThread *currentThread, J9ClassLoader *classLoade
 			currentThread->currentException = NULL;
 		}
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 done:
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
@@ -2437,7 +2437,7 @@ nativeOOM:
 
 		if (J9ROMCLASS_IS_VALUE(romClass)) {
 			classFlags |= J9ClassIsValueType;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 			/* superclass can be NULL since primitive classes are value types. */
 			if ((NULL != superclass) && !J9_IS_J9CLASS_VALUETYPE(superclass)) {
 				J9UTF8 *superclassName = J9ROMCLASS_SUPERCLASSNAME(romClass);
@@ -2477,7 +2477,7 @@ nativeOOM:
 				classFlags |= J9ClassRequiresPrePadding;
 			}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		} else if (!J9ROMCLASS_IS_VALUE(romClass) && !J9ROMCLASS_IS_INTERFACE(romClass)
 				&& !J9ROMCLASS_IS_PRIMITIVE_TYPE(romClass)) {
 			/* All classes which are not value classes,interfaces or classes of primitive types are identity types. */

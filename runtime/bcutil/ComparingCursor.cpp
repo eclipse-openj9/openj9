@@ -212,7 +212,7 @@ ComparingCursor::writeSRP(UDATA srpKey, DataType dataType)
 				} else {
 					U_16 cpIndex = _srpKeyProducer->mapKeyToCfrConstantPoolIndex(srpKey);
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 					/**
 					 * cpIndex greater than or equal than the cpCount are injected interfaces, which should not be written into
 					 * the classfile bytes
@@ -220,7 +220,7 @@ ComparingCursor::writeSRP(UDATA srpKey, DataType dataType)
 					if ( cpIndex >= _classFileOracle->getConstantPoolCount() ) {
 						break;
 					}
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 					if ( J9UTF8_LENGTH(utf8) != _classFileOracle->getUTF8Length(cpIndex) ) {
 						markUnEqual();

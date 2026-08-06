@@ -140,9 +140,9 @@ static jobject JNICALL getModule(JNIEnv *env, jclass clazz);
 static jboolean JNICALL isVirtualThread(JNIEnv *env, jobject obj);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 static jboolean JNICALL hasIdentity(JNIEnv *env, jobject obj);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 #define FIND_CLASS gpCheckFindClass
 #define TO_REFLECTED_METHOD gpCheckToReflectedMethod
@@ -1084,7 +1084,7 @@ allocateGlobalRef(JNIEnv *env, jobject localOrGlobalRef, jboolean isWeak)
 		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 		obj = *((j9object_t*) localOrGlobalRef);
 		if (obj != NULL) {
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 			if (isWeak) {
 				J9Class* objClass = J9OBJECT_CLAZZ(vmThread, obj);
 				if (J9_IS_J9CLASS_VALUETYPE(objClass)) {
@@ -1096,14 +1096,14 @@ allocateGlobalRef(JNIEnv *env, jobject localOrGlobalRef, jboolean isWeak)
 					goto done;
 				}
 			}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 			result = j9jni_createGlobalRef(env, obj, isWeak);
 		}
 		VM_VMAccess::inlineExitVMToJNI(vmThread);
 	}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 done:
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	return result;
 }
 
@@ -1595,9 +1595,9 @@ struct JNINativeInterface_ EsJNIFunctions = {
 #if JAVA_SPEC_VERSION >= 24
 	getStringUTFLengthAsLong,
 #endif /* JAVA_SPEC_VERSION >= 24 */
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	hasIdentity,
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 };
 
 void  initializeJNITable(J9JavaVM *vm)
@@ -2078,11 +2078,11 @@ fail:
 		case J9_OBJECT_MONITOR_VALUE_TYPE_IMSE: {
 			J9Class* badClass = J9OBJECT_CLAZZ(vmThread, object);
 			J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(badClass->romClass);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 			if (J9_IS_J9CLASS_VALUETYPE(badClass)) {
 				setCurrentExceptionNLSWithArgs(vmThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGIDENTITYEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
 			} else
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 			{
 				Assert_VM_true(J9_ARE_ALL_BITS_SET(vmThread->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION));
 				setCurrentExceptionNLSWithArgs(vmThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED, J9VMCONSTANTPOOL_JAVALANGVIRTUALMACHINEERROR, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
@@ -2535,7 +2535,7 @@ isVirtualThread(JNIEnv *env, jobject obj)
 }
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 static jboolean JNICALL
 hasIdentity(JNIEnv *env, jobject obj)
 {
@@ -2557,7 +2557,7 @@ hasIdentity(JNIEnv *env, jobject obj)
 	}
 	return result;
 }
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 IDATA
 jniParseArguments(J9JavaVM *vm, char *optArg)

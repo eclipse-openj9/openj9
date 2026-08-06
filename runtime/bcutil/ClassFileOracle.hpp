@@ -860,22 +860,22 @@ class RecordComponentIterator
 	 * Also iterates over the injected interface names (UTF8s) in the "extra" cp slots.
 	 * numOfInjectedInterfaces represents the number of extra slots containing the UTF8s.
 	 */
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	void interfacesDo(ConstantPoolIndexVisitor *visitor, U_16 numOfInjectedInterfaces)
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 	void interfacesDo(ConstantPoolIndexVisitor *visitor)
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	{
 		U_16 *end = _classFile->interfaces + getInterfacesCount();
 		for (U_16 *interface = _classFile->interfaces; interface != end; ++interface) {
 			/* Each interface is a constantClass, use slot1 to get at the underlying UTF8 */
 			visitor->visitConstantPoolIndex(U_16(_classFile->constantPool[ *interface ].slot1));
 		}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		for (int i = 0; i < numOfInjectedInterfaces; i++) {
 			visitor->visitConstantPoolIndex(getConstantPoolCount() + i);
 		}
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	}
 
 	/*
@@ -1058,7 +1058,7 @@ class RecordComponentIterator
 	bool isSealed() const { return _isSealed; }
 	U_16 getPermittedSubclassesClassCount() const { return _isSealed ? _permittedSubclassesAttribute->numberOfClasses : 0; }
 	bool isValueBased() const { return _isClassValueBased; }
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	bool hasLoadableDescriptors() const { return NULL != _loadableDescriptorsAttribute; }
 	U_16 getLoadableDescriptorsCount() const { return  hasLoadableDescriptors() ? _loadableDescriptorsAttribute->numberOfDescriptors : 0; }
 
@@ -1069,7 +1069,7 @@ class RecordComponentIterator
 		}
 		return result;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	U_16 getPermittedSubclassesClassNameAtIndex(U_16 index) const {
 		U_16 result = 0;
@@ -1179,9 +1179,9 @@ private:
 	bool _isRecord;
 	bool _isSealed;
 	bool _isClassValueBased;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	bool _hasNonStaticSynchronizedMethod;
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	FieldInfo *_fieldsInfo;
 	MethodInfo *_methodsInfo;
@@ -1196,9 +1196,9 @@ private:
 	J9CfrAttributeInnerClasses *_innerClasses;
 	J9CfrAttributeBootstrapMethods *_bootstrapMethodsAttribute;
 	J9CfrAttributePermittedSubclasses *_permittedSubclassesAttribute;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	J9CfrAttributeLoadableDescriptors *_loadableDescriptorsAttribute;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 #if JAVA_SPEC_VERSION >= 11
 	J9CfrAttributeNestMembers *_nestMembers;
 #endif /* JAVA_SPEC_VERSION >= 11 */
@@ -1238,9 +1238,9 @@ private:
 	bool methodIsObjectConstructor(U_16 methodIndex);
 	bool methodIsClinit(U_16 methodIndex);
 	bool methodIsNonStaticNonAbstract(U_16 methodIndex);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	bool methodIsNonStaticSynchronized(U_16 methodIndex);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	bool shouldConvertInvokeVirtualToInvokeSpecialForMethodRef(U_16 methodRefCPIndex);
 	UDATA shouldConvertInvokeVirtualToMethodHandleBytecodeForMethodRef(U_16 methodRefCPIndex);
