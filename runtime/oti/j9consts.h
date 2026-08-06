@@ -613,12 +613,12 @@ extern "C" {
 #define BCV_ERR_BYTECODE_ERROR                          (-34)
 #define BCV_ERR_NEW_OJBECT_MISMATCH                     (-35)
 #define BCV_ERR_INIT_FLAGS_MISMATCH                     (-36)
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 #define BCV_ERR_STRICT_FIELDS_UNASSIGNED                (-37)
 #define BCV_ERR_STRICT_FIELD_NOT_VALID                  (-38)
 #define BCV_ERR_STRICT_FIELD_STACK_MAP_INCONSISTENT     (-39)
 #define BCV_ERR_INVALID_USE_STRICT_INSTANCE_FIELDS      (-40)
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 #if JAVA_SPEC_VERSION >= 27
 #define BCV_ERR_ILLEGAL_WITH_UNINITIALIZED_OBJECT       (-41)
 #endif /* JAVA_SPEC_VERSION >= 27 */

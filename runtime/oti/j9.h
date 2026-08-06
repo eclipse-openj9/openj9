@@ -373,9 +373,9 @@ static const struct { \
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #define IS_CLASS_SIGNATURE(firstChar) ('L' == (firstChar))
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 #define J9ROMFIELD_IS_STRICT(fieldModifiers) J9_ARE_ALL_BITS_SET(fieldModifiers, J9AccStrictInit)
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 #define J9_IS_CRIU_OR_CRAC_CHECKPOINT_ENABLED(vm) (J9_ARE_ANY_BITS_SET(vm->checkpointState.flags, J9VM_CRAC_IS_CHECKPOINT_ENABLED | J9VM_CRIU_IS_CHECKPOINT_ENABLED))

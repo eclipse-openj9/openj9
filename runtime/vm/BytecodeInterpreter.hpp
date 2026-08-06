@@ -4425,7 +4425,7 @@ done:
 		return rc;
 	}
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 	/* jdk.internal.misc.Unsafe: public native void notifyStrictStaticAccess0(Class<?> clz, long staticFieldOffset, boolean writing); */
 	VMINLINE VM_BytecodeAction
 	inlUnsafeNotifyStrictStaticAccess0(REGISTER_ARGS_LIST)
@@ -4498,7 +4498,7 @@ done:
 done:
 		return rc;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	/* jdk.internal.misc.Unsafe: public native <V> long valueHeaderSize(Class<V> clz); */
 	VMINLINE VM_BytecodeAction
@@ -7764,7 +7764,7 @@ retry:
 		classAndFlags = J9CLASSANDFLAGS_FROM_FLAGSANDCLASS(flagsAndClass);
 		valueAddress = J9STATICADDRESS(flagsAndClass, valueOffset);
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 		if ((J9ClassInitNotInitialized == (ramConstantPool->ramClass->initializeStatus & J9ClassInitStatusMask))
 			&& (NULL != ramConstantPool->ramClass->flattenedClassCache)
 		) {
@@ -7778,7 +7778,7 @@ retry:
 				}
 			}
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 #if defined(DO_HOOKS)
 		if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_GET_STATIC_FIELD)) {
@@ -7860,7 +7860,7 @@ done:
 		classAndFlags = J9CLASSANDFLAGS_FROM_FLAGSANDCLASS(flagsAndClass);
 		valueAddress = J9STATICADDRESS(flagsAndClass, valueOffset);
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 		if (J9ClassInitNotInitialized == (ramConstantPool->ramClass->initializeStatus & J9ClassInitStatusMask)) {
 			J9FlattenedClassCache *flattenedClassCache = ramConstantPool->ramClass->flattenedClassCache;
 			if ((NULL != flattenedClassCache)
@@ -7882,7 +7882,7 @@ done:
 				}
 			}
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 #if defined(DO_HOOKS)
 		if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_PUT_STATIC_FIELD)) {
@@ -10777,9 +10777,9 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPOBJECT),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPLONG),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPINT),
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_NOTIFYSTRICTSTATICACCESS0),
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_VALUEHEADERSIZE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECTSIZE),
@@ -10882,17 +10882,17 @@ public:
 #define PERFORM_ACTION_CRIU_STM_THROW
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 #define PERFORM_ACTION_THROW_GET_STRICT_STATIC_NOT_SET \
 	case THROW_GET_STRICT_STATIC_NOT_SET: \
 		goto illegalStateException_getStrictStaticNotSet;
 #define PERFORM_ACTION_THROW_PUT_STRICT_STATIC_FINAL_AFTER_READ \
 	case THROW_PUT_STRICT_STATIC_FINAL_AFTER_READ: \
 		goto illegalStateException_putStrictStaticFinalAfterRead;
-#else /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 #define PERFORM_ACTION_THROW_GET_STRICT_STATIC_NOT_SET
 #define PERFORM_ACTION_THROW_PUT_STRICT_STATIC_FINAL_AFTER_READ
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 #define PERFORM_ACTION(functionCall) \
 	do { \
@@ -11404,10 +11404,10 @@ runMethod: {
 		PERFORM_ACTION(inlUnsafeCompareAndSwapLong(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPINT):
 		PERFORM_ACTION(inlUnsafeCompareAndSwapInt(REGISTER_ARGS));
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_NOTIFYSTRICTSTATICACCESS0):
 		PERFORM_ACTION(inlUnsafeNotifyStrictStaticAccess0(REGISTER_ARGS));
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_VALUEHEADERSIZE):
 		PERFORM_ACTION(inlUnsafeValueHeaderSize(REGISTER_ARGS));
@@ -11665,7 +11665,7 @@ incompatibleClassChange:
 	VMStructHasBeenUpdated(REGISTER_ARGS);
 	goto throwCurrentException;
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 illegalStateException_getStrictStaticNotSet:
 	updateVMStruct(REGISTER_ARGS);
 	prepareForExceptionThrow(_currentThread);
@@ -11678,7 +11678,7 @@ illegalStateException_putStrictStaticFinalAfterRead:
 	setCurrentExceptionNLS(_currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALSTATEEXCEPTION, J9NLS_VM_PUT_STRICT_STATIC_FINAL_AFTER_READ);
 	VMStructHasBeenUpdated(REGISTER_ARGS);
 	goto throwCurrentException;
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 illegalArgumentException:
 	updateVMStruct(REGISTER_ARGS);
 	prepareForExceptionThrow(_currentThread);

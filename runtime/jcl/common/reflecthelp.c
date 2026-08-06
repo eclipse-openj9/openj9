@@ -835,11 +835,11 @@ createField(struct J9VMThread *vmThread, jfieldID fieldID)
 	J9VMJAVALANGREFLECTFIELD_SET_CLAZZ(vmThread, fieldObject, J9VM_J9CLASS_TO_HEAPCLASS(j9FieldID->declaringClass));
 
 	fieldModifiers = j9FieldID->field->modifiers & CFR_FIELD_ACCESS_MASK;
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 	if (!J9_CLASSFILE_OR_ROMCLASS_SUPPORTS_STRICT_FIELDS(j9FieldID->declaringClass->romClass)) {
 		fieldModifiers &= ~CFR_ACC_STRICT;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	J9VMJAVALANGREFLECTFIELD_SET_MODIFIERS(vmThread, fieldObject, fieldModifiers);
 #if JAVA_SPEC_VERSION >= 15
 	/* Trust that static final fields, and final fields of hidden, record or value classes will not be modified. */

@@ -616,7 +616,7 @@ done:
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 	/**
 	 * Finds the J9FlattenedClassCacheEntry in the ramClass corresponding
 	 * to an offset. Asserts that an entry exists to a strict field.
@@ -642,7 +642,7 @@ done:
 		}
 		return entry;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 };
 
 #endif /* VALUETYPEHELPERS_HPP_ */

@@ -1327,20 +1327,20 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 			StackMapFrameInfo *stackMapFramesInfo = _methodsInfo[methodIndex].stackMapFramesInfo;
 			U_8 *framePointer = stackMap->entries;
 			U_16 entryCount = U_16(stackMap->numberOfEntries);
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 			bool walkBaseFrame = false;
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 			U_16 entryIndex = 0;
 			while (entryIndex < entryCount) {
 				U_8 frameType = 0;
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 				if (walkBaseFrame) {
 					/* Save the base frame type and walk the base frame. */
 					NEXT_U8(stackMapFramesInfo[entryIndex].baseFrameType, framePointer);
 					frameType = stackMapFramesInfo[entryIndex].baseFrameType;
 					walkBaseFrame = false;
 				} else
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 				{
 					NEXT_U8(stackMapFramesInfo[entryIndex].frameType, framePointer);
 					frameType = stackMapFramesInfo[entryIndex].frameType;
@@ -1357,14 +1357,14 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 					stackMapFramesInfo[entryIndex].stackItemsCount = 1;
 					stackMapFramesInfo[entryIndex].stackItemsTypeInfo = framePointer;
 					framePointer = walkStackMapSlots(framePointer, stackMapFramesInfo[entryIndex].stackItemsCount);
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 				} else if (CFR_STACKMAP_EARLY_LARVAL > frameType) { /* 128..245 */
-#else /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 				} else if (CFR_STACKMAP_SAME_LOCALS_1_STACK_EXTENDED > frameType) { /* 128..246 */
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 					/* Reserved frame types - no extra data */
 					Trc_BCU_Assert_ShouldNeverHappen();
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 				} else if (CFR_STACKMAP_EARLY_LARVAL == frameType) { /* 246 */
 					/*
 					 * EARLY_LARVAL {
@@ -1379,7 +1379,7 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 					/* Walk the base frame during the next iteration. */
 					walkBaseFrame = true;
 					continue;
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 				} else if (CFR_STACKMAP_SAME_LOCALS_1_STACK_EXTENDED == frameType) { /* 247 */
 					/*
 					 * SAME_LOCALS_1_STACK_EXTENDED {
@@ -2221,7 +2221,7 @@ ClassFileOracle::walkMethodCodeAttributeCode(U_16 methodIndex)
 #undef PARAM_U16
 #undef PARAM_U8
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 U_8 *
 ClassFileOracle::walkUnsetFields(U_8 *framePointer, U_16 numberOfUnsetFields)
 {
@@ -2233,7 +2233,7 @@ ClassFileOracle::walkUnsetFields(U_8 *framePointer, U_16 numberOfUnsetFields)
 	}
 	return framePointer;
 }
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 U_8 *
 ClassFileOracle::walkStackMapSlots(U_8 *framePointer, U_16 typeInfoCount)

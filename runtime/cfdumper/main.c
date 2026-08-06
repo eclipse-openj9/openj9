@@ -163,9 +163,9 @@ static J9ROMClass *translateClassBytes (U_8 * data, U_32 dataLength, char *reque
 static void printDisassembledMethod (J9CfrClassFile* classfile, J9CfrMethod* method, BOOLEAN bigEndian, U_8* bytecodes, U_32 bytecodesLength);
 static void printDisassembledMethods (J9CfrClassFile *classfile);
 static void dumpClassFile (J9CfrClassFile* classfile);
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 static U_8 *dumpUnsetFields(J9CfrClassFile *classfile, U_8 *slotData, U_32 tabLevel);
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 static U_8 * dumpStackMapSlots (J9CfrClassFile* classfile, U_8 * slotData, U_16 slotCount);
 static I_32 processClassFile (J9CfrClassFile* classfile, U_32 dataLength, char* requestedFile, U_32 flags);
 static I_32 getBytes (const char* filename, U_8** dataHandle);
@@ -1263,9 +1263,9 @@ static void printField(J9CfrClassFile* classfile, J9CfrField* field)
 	if(field->accessFlags & CFR_ACC_FINAL) j9tty_printf( PORTLIB, "final ");
 	if(field->accessFlags & CFR_ACC_VOLATILE) j9tty_printf( PORTLIB, "volatile ");
 	if(field->accessFlags & CFR_ACC_TRANSIENT) j9tty_printf( PORTLIB, "transient ");
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 	if(field->accessFlags & CFR_ACC_STRICT_INIT) j9tty_printf( PORTLIB, "strict ");
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	/* Return type. */
 	string = classfile->constantPool[field->descriptorIndex].bytes;
@@ -7382,9 +7382,9 @@ static void dumpStackMap(J9CfrAttributeStackMap * stackMap, J9CfrClassFile* clas
 	U_8 *framePointer = stackMap->entries;
 	U_8 *frameEnd = framePointer+stackMap->mapLength;
 	U_16 offset = 0;
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 	BOOLEAN writeBaseFrame = FALSE;
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	PORT_ACCESS_FROM_PORT(portLib);
 
@@ -7401,18 +7401,18 @@ static void dumpStackMap(J9CfrAttributeStackMap * stackMap, J9CfrClassFile* clas
 			frameType = 255;
 		} else {
 			frameType = *framePointer++;
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 			if (!writeBaseFrame)
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 				framePC += 1;
 		}
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 		if (writeBaseFrame) {
 			j9tty_printf( PORTLIB, "  base frame: ");
 			writeBaseFrame = FALSE;
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 		if (frameType < 64) {
 			framePC += (U_32) frameType;
@@ -7424,7 +7424,7 @@ static void dumpStackMap(J9CfrAttributeStackMap * stackMap, J9CfrClassFile* clas
 			framePointer = dumpStackMapSlots(classfile, framePointer, 1);
 			j9tty_printf( PORTLIB, "\n");
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 		} else if (frameType < 246) {
 			j9tty_printf( PORTLIB, "UNKNOWN FRAME TAG %02x\n", frameType);
 
@@ -7434,11 +7434,11 @@ static void dumpStackMap(J9CfrAttributeStackMap * stackMap, J9CfrClassFile* clas
 			writeBaseFrame = TRUE;
 			continue;
 
-#else /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 		} else if (frameType < 247) {
 			j9tty_printf( PORTLIB, "UNKNOWN FRAME TAG %02x\n", frameType);
 
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		} else if (frameType == 247) {
 			offset = (framePointer[0] << 8) + framePointer[1];
 			framePointer +=2;
@@ -7491,7 +7491,7 @@ static void dumpStackMap(J9CfrAttributeStackMap * stackMap, J9CfrClassFile* clas
 	return;
 }
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 static U_8 *
 dumpUnsetFields(J9CfrClassFile *classfile, U_8 *slotData, U_32 tabLevel)
 {
@@ -7521,7 +7521,7 @@ dumpUnsetFields(J9CfrClassFile *classfile, U_8 *slotData, U_32 tabLevel)
 	tabLevel -= 1;
 	return slotData;
 }
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 static U_8 * dumpStackMapSlots(J9CfrClassFile* classfile, U_8 * slotData, U_16 slotCount)
 {

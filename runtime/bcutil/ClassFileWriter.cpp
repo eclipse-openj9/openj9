@@ -1699,7 +1699,7 @@ readdWide:
 	}
 }
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 void
 ClassFileWriter::writeUnsetFields(U_16 numberOfUnsetFields, U_8 **typeInfo)
 {
@@ -1711,7 +1711,7 @@ ClassFileWriter::writeUnsetFields(U_16 numberOfUnsetFields, U_8 **typeInfo)
 	}
 	*typeInfo = cursor;
 }
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 void
 ClassFileWriter::writeVerificationTypeInfo(U_16 count, U_8 ** typeInfo)
@@ -1806,7 +1806,7 @@ ClassFileWriter::writeStackMapTableAttribute(J9ROMMethod * romMethod)
 			 */
 			writeVerificationTypeInfo(1, &stackMap);
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 		} else if (CFR_STACKMAP_EARLY_LARVAL > frameType) { /* 128..245 */
 			/* Reserved frame types - no extra data */
 			Trc_BCU_Assert_ShouldNeverHappen();
@@ -1824,11 +1824,11 @@ ClassFileWriter::writeStackMapTableAttribute(J9ROMMethod * romMethod)
 			writeUnsetFields(numberOfUnsetFields, &stackMap);
 			/* Write base frame. */
 			continue;
-#else /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 		} else if (CFR_STACKMAP_SAME_LOCALS_1_STACK_EXTENDED > frameType) { /* 128..246 */
 			/* Reserved frame types - no extra data */
 			Trc_BCU_Assert_ShouldNeverHappen();
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		} else if (CFR_STACKMAP_SAME_LOCALS_1_STACK_EXTENDED == frameType) { /* 247 */
 			/*
 			 * SAME_LOCALS_1_STACK_EXTENDED {

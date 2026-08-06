@@ -947,7 +947,7 @@ generateJ9RtvExceptionDetails(J9BytecodeVerificationData* verifyData, U_8* initM
 	case BCV_ERR_NEW_OJBECT_MISMATCH:
 		printMessage(&msgBuf, "The arity (0x%x) of the new object is greater than zero", verifyData->errorTempData);
 		break;
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 	case BCV_ERR_STRICT_FIELDS_UNASSIGNED:
 		printMessage(&msgBuf, "All strict final fields must be initialized before super().");
 		break;
@@ -960,7 +960,7 @@ generateJ9RtvExceptionDetails(J9BytecodeVerificationData* verifyData, U_8* initM
 	case BCV_ERR_INVALID_USE_STRICT_INSTANCE_FIELDS:
 		printMessage(&msgBuf, "Invalid use of strict instance fields, field is strict static.");
 		break;
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 #if JAVA_SPEC_VERSION >= 27
 	case BCV_ERR_ILLEGAL_WITH_UNINITIALIZED_OBJECT:
 		printMessage(&msgBuf, "Illegal bytecode with uninitialized object.");

@@ -905,11 +905,11 @@ isFieldAccessCompatible(
 	UDATA bytecode,
 	UDATA receiver,
 	IDATA *reasonCode
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 	,
 	BOOLEAN isInitMethod,
 	BOOLEAN anotherInstanceInitCalled
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 ) {
 	J9ROMClass *romClass = verifyData->romClass;
 	J9ROMConstantPoolItem *constantPool = (J9ROMConstantPoolItem *)(romClass + 1);
@@ -921,7 +921,7 @@ isFieldAccessCompatible(
 		J9BranchTargetStack *liveStack = (J9BranchTargetStack *)verifyData->liveStack;
 		J9ROMFieldShape *field = findFieldFromCurrentRomClass(romClass, fieldRef);
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 		if (J9_CLASSFILE_OR_ROMCLASS_SUPPORTS_STRICT_FIELDS(verifyData->romClass)
 			&& (NULL != field) && J9ROMFIELD_IS_STRICT(field->modifiers)
 		) {
@@ -951,7 +951,7 @@ isFieldAccessCompatible(
 				}
 			}
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 		if (J9_ARE_ALL_BITS_SET(receiver, BCV_SPECIAL_INIT)) {
 			J9UTF8 *classString = ((J9UTF8 *) J9ROMCLASS_CLASSNAME(romClass));
@@ -1294,7 +1294,7 @@ findFieldFromCurrentRomClass(J9ROMClass *romClass, J9ROMFieldRef *field)
 	return currentField;
 }
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 void
 createOrResetStrictFieldsList(J9BytecodeVerificationData *verifyData, BOOLEAN *addToStrictFieldTable)
 {
@@ -1355,4 +1355,4 @@ resetEarlyLarvalFrames(J9BytecodeVerificationData *verifyData)
 	}
 	verifyData->earlyLarvalFramePrevious = NULL;
 }
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */

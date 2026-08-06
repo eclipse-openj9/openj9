@@ -96,9 +96,9 @@ ROMClassCreationContext::verbosePrintPhase(ROMClassCreationPhase phase, bool *pr
 		"ParseClassFileInlineJSRs",
 		"ConstantPoolMapping",
 		"SRPOffsetTableCreation",
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 		"WalkUnsetFields",
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	};
 
 	if (!printedPhases[phase]) {

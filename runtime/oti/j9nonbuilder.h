@@ -2313,13 +2313,13 @@ typedef struct J9TranslationBufferSet {
 #define BCU_ENABLE_INVARIANT_INTERNING  8
 #define BCU_ENABLE_ROMCLASS_RESIZING  0x100
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 typedef struct J9EarlyLarvalFrame {
 	IDATA baseFramePC; /* The only field used to determine equality. */
 	U_16 numberOfUnsetFields;
 	J9ROMNameAndSignature **unsetFieldNASList;
 } J9EarlyLarvalFrame;
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 typedef struct J9BytecodeVerificationData {
 	IDATA  ( *verifyBytecodesFunction)(struct J9PortLibrary *portLib, struct J9Class *ramClass, struct J9ROMClass *romClass, struct J9BytecodeVerificationData *verifyData) ;
@@ -2373,12 +2373,12 @@ typedef struct J9BytecodeVerificationData {
 	struct J9PortLibrary * portLib;
 	struct J9JavaVM* javaVM;
 	BOOLEAN createdStackMap;
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 	J9HashTable *strictFields;
 	UDATA strictFieldsUnsetCount;
 	J9HashTable *earlyLarvalFrames;
 	J9EarlyLarvalFrame *earlyLarvalFramePrevious;
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 } J9BytecodeVerificationData;
 
 typedef struct J9BytecodeOffset {

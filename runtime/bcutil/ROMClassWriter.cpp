@@ -953,12 +953,12 @@ private:
 		_cursor->writeU32(_constantPoolMap->getROMClassCPIndexForReference(exceptionClassCPIndex), Cursor::GENERIC);
 	}
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 	void visitUnsetField(U_16 nasCpIndex)
 	{
 		_cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(nasCpIndex), Cursor::SRP_TO_NAME_AND_SIGNATURE);
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	void visitStackMapObject(U_8 slotType, U_16 classCPIndex, U_16 classNameCPIndex)
 	{
@@ -1039,10 +1039,10 @@ private:
 		U_16 offsetDelta,
 		U_8 stackMapFrameType,
 		ClassFileOracle::VerificationTypeInfo *typeInfo
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 		, U_8 baseFrameType,
 		U_16 numberOfUnsetFields
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	)
 	{
 		/*
@@ -1071,7 +1071,7 @@ private:
 		/* output the frame tag */
 		_cursor->writeU8(frameType, Cursor::GENERIC);
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 		if (CFR_STACKMAP_EARLY_LARVAL == frameType) { /* 246 */
 			/*
 			 * EARLY_LARVAL {
@@ -1085,7 +1085,7 @@ private:
 			frameType = baseFrameType;
 			_cursor->writeU8(frameType, Cursor::GENERIC);
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 		if (CFR_STACKMAP_SAME_LOCALS_1_STACK > frameType) { /* 0..63 */
 			/* SAME frame - no extra data */

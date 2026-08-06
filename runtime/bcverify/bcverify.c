@@ -72,9 +72,9 @@
 
 static IDATA buildBranchMap (J9BytecodeVerificationData * verifyData);
 static IDATA decompressStackMaps (J9BytecodeVerificationData * verifyData, IDATA localsCount, U_8 * stackMapData);
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 static J9EarlyLarvalFrame *parseUnsetFields(J9BytecodeVerificationData *verifyData, U_8 **stackMapData);
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 static VMINLINE IDATA parseLocals (J9BytecodeVerificationData * verifyData, U_8** stackMapData, J9BranchTargetStack * liveStack, IDATA localDelta, IDATA localsCount, IDATA maxLocals);
 static VMINLINE IDATA parseStack (J9BytecodeVerificationData * verifyData, U_8** stackMapData, J9BranchTargetStack * liveStack, UDATA stackCount, UDATA maxStack);
 static UDATA parseElement (J9BytecodeVerificationData * verifyData, U_8 ** stackMapData);
@@ -89,12 +89,12 @@ static IDATA simulateStack (J9BytecodeVerificationData * verifyData);
 static IDATA parseOptions(J9JavaVM *vm, const char *optionValues, const char **errorString);
 static IDATA setVerifyState(J9JavaVM *vm, const char *option, const char **errorString );
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 static UDATA strictFieldHashFn(void *key, void *userData);
 static UDATA strictFieldHashEqualFn(void *leftKey, void *rightKey, void *userData);
 static UDATA earlyLarvalFrameHashFn(void *key, void *userData);
 static UDATA earlyLarvalFrameEqualFn(void *leftKey, void *rightKey, void *userData);
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 /**
  * Walk the J9-format stack maps and set the uninitialized_this flag appropriately
@@ -373,22 +373,22 @@ decompressStackMaps (J9BytecodeVerificationData * verifyData, IDATA localsCount,
 
 	Trc_BCV_decompressStackMaps_Entry(verifyData->vmStruct, localsCount);
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 	resetEarlyLarvalFrames(verifyData);
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	/* localsCount records the current locals depth as all stack maps (except full frame) are relative to the previous frame */
 	for (i = 0; i < (UDATA) verifyData->stackMapsCount; i++) {
 		IDATA localDelta = 0;
 		UDATA stackCount = 0;
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 		J9EarlyLarvalFrame *earlyLarvalFrame = NULL;
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 		NEXT_U8(mapType, stackMapData);
 		mapPC++;
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 		if (J9_CLASSFILE_OR_ROMCLASS_SUPPORTS_STRICT_FIELDS(verifyData->romClass)) {
 			if (mapType == CFR_STACKMAP_EARLY_LARVAL) {
 				earlyLarvalFrame = parseUnsetFields(verifyData, &stackMapData);
@@ -400,7 +400,7 @@ decompressStackMaps (J9BytecodeVerificationData * verifyData, IDATA localsCount,
 				NEXT_U8(mapType, stackMapData);
 			}
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 		if (mapType < CFR_STACKMAP_SAME_LOCALS_1_STACK) {
 			/* Same frame 0-63 */
@@ -432,7 +432,7 @@ decompressStackMaps (J9BytecodeVerificationData * verifyData, IDATA localsCount,
 			}
 		}
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 		/* Set base frame pc once it has been calculated.
 		 * Wait to add it to the table until this point
 		 * because the hash function is dependent on the pc.
@@ -441,7 +441,7 @@ decompressStackMaps (J9BytecodeVerificationData * verifyData, IDATA localsCount,
 			earlyLarvalFrame->baseFramePC = mapPC;
 			hashTableAdd(verifyData->earlyLarvalFrames, earlyLarvalFrame);
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 		localsCount = parseLocals (verifyData, &stackMapData, liveStack, localDelta, localsCount, maxLocals);
 		if (localsCount < 0) {
@@ -512,7 +512,7 @@ decompressStackMaps (J9BytecodeVerificationData * verifyData, IDATA localsCount,
 	return rc;
 }
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 static J9EarlyLarvalFrame *
 parseUnsetFields(J9BytecodeVerificationData *verifyData, U_8 **stackMapData)
 {
@@ -541,7 +541,7 @@ done:
 	*stackMapData = mapData;
 	return newEntry;
 }
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 /* Specifically returns BCV_ERR_INTERNAL_ERROR for failure */
 
@@ -2374,11 +2374,11 @@ j9bcv_freeVerificationData (J9PortLibrary * portLib, J9BytecodeVerificationData 
 {
 	PORT_ACCESS_FROM_PORT(portLib);
 	if (verifyData) {
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 		hashTableFree(verifyData->strictFields);
 		resetEarlyLarvalFrames(verifyData);
 		hashTableFree(verifyData->earlyLarvalFrames);
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 #ifdef J9VM_THR_PREEMPTIVE
 		JavaVM* jniVM = (JavaVM*)verifyData->javaVM;
 		J9ThreadEnv* threadEnv;
@@ -2421,7 +2421,7 @@ j9bcv_initializeVerificationData(J9JavaVM* javaVM)
 		goto error_no_memory;
 	}
 #endif
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 	verifyData->strictFields = hashTableNew(
 		OMRPORT_FROM_J9PORT(PORTLIB),
 		J9_GET_CALLSITE(),
@@ -2450,7 +2450,7 @@ j9bcv_initializeVerificationData(J9JavaVM* javaVM)
 		goto error_no_memory;
 	}
 	verifyData->earlyLarvalFramePrevious = NULL;
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	verifyData->verifyBytecodesFunction = j9bcv_verifyBytecodes;
 	verifyData->checkClassLoadingConstraintForNameFunction = j9bcv_checkClassLoadingConstraintForName;
@@ -2524,9 +2524,9 @@ j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * clazz, J9ROMClass * ro
 	BOOLEAN classVersionRequiresStackmaps = romClass->majorVersion >= CFR_MAJOR_VERSION_REQUIRING_STACKMAPS;
 	BOOLEAN newFormat = (classVersionRequiresStackmaps || hasStackMaps);
 	BOOLEAN verboseVerification = (J9_VERIFY_VERBOSE_VERIFICATION == (verifyData->verificationFlags & J9_VERIFY_VERBOSE_VERIFICATION));
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 	BOOLEAN addToStrictFieldTable = TRUE;
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	PORT_ACCESS_FROM_PORT(portLib);
 
@@ -2685,11 +2685,11 @@ _fallBack:
 				if (isInitMethod) {
 					/* CMVC 199785: Jazz103 45899: Only run this when the stack has been built correctly */
 					setInitializedThisStatus(verifyData);
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 					if (J9_CLASSFILE_OR_ROMCLASS_SUPPORTS_STRICT_FIELDS(romClass)) {
 						createOrResetStrictFieldsList(verifyData, &addToStrictFieldTable);
 					}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 				}
 
 				if (newFormat && verboseVerification) {
@@ -2984,7 +2984,7 @@ bcvHookClassesUnload(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
 }
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 static UDATA strictFieldHashFn(void *key, void *userData)
 {
 	J9StrictFieldEntry *entry = key;
@@ -3014,4 +3014,4 @@ static UDATA earlyLarvalFrameEqualFn(void *leftKey, void *rightKey, void *userDa
 	J9EarlyLarvalFrame *rightEntry = rightKey;
 	return (leftEntry->baseFramePC == rightEntry->baseFramePC);
 }
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
