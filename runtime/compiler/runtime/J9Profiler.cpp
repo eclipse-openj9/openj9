@@ -2880,3 +2880,29 @@ void TR_JProfValueSites::compensate(TR_FrontEnd *vm, bool disableDataCollection,
         }
     }
 }
+
+uint32_t TR_JProfilerPatchingTask::patchAllMethods(TR_J9VMBase *vm)
+{
+    uint32_t numberOfPatchedMethods = 0;
+    TR_PersistentProfileInfo *info = _listOfMethodsToPatch.pop();
+    while (info != NULL) {
+        if (patchMethod(vm, info)) {
+            _listOfPatchedMethods.append(info);
+            numberOfPatchedMethods++;
+        }
+        info = _listOfMethodsToPatch.pop();
+    }
+    return numberOfPatchedMethods;
+}
+
+bool TR_JProfilerPatchingTask::patchMethod(TR_J9VMBase *vm, TR_PersistentProfileInfo *info)
+{
+    if (info->isActive()) {
+        if (info->getValueProfileInfo() != NULL && info->getValueProfileInfo()->getJProfValueProfSites() != NULL) {
+            info->getValueProfileInfo()->getJProfValueProfSites()->compensate(vm, true, 0);
+        }
+        info->getBlockFrequencyInfo()->getJProfBlockFrequencyCounterSites()->compensate(vm, true, 0);
+        return true;
+    }
+    return false;
+}

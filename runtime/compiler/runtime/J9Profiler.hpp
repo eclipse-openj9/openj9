@@ -1124,4 +1124,66 @@ protected:
     static const uint32_t _waitMillis = 500;
 };
 
+/**
+ * @brief A work-unit class that contains the list of compiled methods that
+ * needs their profiling code patches and performs patching. Depending number of
+ * worker threads created for Patchable JProfiler, functionality provided by
+ * this task allows infrastructure to differentiate analaysis and code patching
+ * execution.
+ *
+ */
+class TR_JProfilerPatchingTask {
+public:
+    TR_PERSISTENT_ALLOC(TR_Memory::TR_JProfiler);
+
+    TR_JProfilerPatchingTask() {}
+
+    ~TR_JProfilerPatchingTask();
+
+    /**
+     * @brief Add the Persistent Method Info to the list of methods that will be
+     * patched by this work-unit when worker thread holing this work-unit will
+     * be scheduled.
+     *
+     * @param info TR_PersistentProfileInfo to add to the list
+     */
+    void addProfilingInfoToListOfMethodsToPatch(TR_PersistentProfileInfo *info) { _listOfMethodsToPatch.append(info); }
+
+    /**
+     * @brief Goes through the list of methods to patch and patch the methods.
+     * This function will patch all the methods in the list.
+     *
+     * @param vm TR_J9VMBase vm object
+     * @return uint32_t Returns number of methods patches by this work-unit in this pass.
+     */
+    uint32_t patchAllMethods(TR_J9VMBase *vm);
+
+    /**
+     * @brief Patch the method represented by info.
+     *
+     * @param vm TR_J9VMBase vm object
+     * @param info TR_PersistentProfileInfo of the method to patch
+     * @return true If the method was patches
+     * @return false If the method was not patched (When it is inactive)
+     */
+    static bool patchMethod(TR_J9VMBase *vm, TR_PersistentProfileInfo *info);
+
+    /**
+     * @brief Get the Size of the list
+     *
+     * @return uint32_t Size of the listOfMethodsToPatch
+     */
+    uint32_t getSize() { return _listOfMethodsToPatch.getSize(); }
+
+protected:
+    /**
+     * @brief List contains a method to patch by this work-unit
+     */
+    TR_LinkHeadAndTail<TR_PersistentProfileInfo> _listOfMethodsToPatch;
+    /**
+     * @brief List contains method patched by this work-unit
+     */
+    TR_LinkHeadAndTail<TR_PersistentProfileInfo> _listOfPatchedMethods;
+};
+
 #endif
