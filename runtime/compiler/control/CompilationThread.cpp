@@ -8425,7 +8425,7 @@ TR_MethodMetaData *TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrar
                         if (TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableSVMDuringStartup))
                             options->setOption(TR_UseSymbolValidationManager, false);
                     }
-
+                    static const char *compileWithGCRDuringIdle = feGetEnv("TR_CompileWithGCRDuringIdle");
                     // See if we need to insert GCR trees
                     if (!details.supportsInvalidation()
                         || options->getOptLevel()
@@ -8434,8 +8434,9 @@ TR_MethodMetaData *TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrar
                         options->setOption(TR_DisableGuardedCountingRecompilations);
                     } else if (vm->isAOT_DEPRECATED_DO_NOT_USE()
                         || (options->getOptLevel() < warm
-                            && !(that->_methodBeingCompiled->_jitStateWhenQueued == IDLE_STATE
-                                && that->getCompilationInfo()->getPersistentInfo()->getJitState() == IDLE_STATE))) {
+                            && (!(that->_methodBeingCompiled->_jitStateWhenQueued == IDLE_STATE
+                                    && that->getCompilationInfo()->getPersistentInfo()->getJitState() == IDLE_STATE)
+                                || compileWithGCRDuringIdle))) {
                         options->setInsertGCRTrees(); // This is a recommendation not a directive
                     }
 
