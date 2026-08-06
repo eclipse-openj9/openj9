@@ -1186,4 +1186,143 @@ protected:
     TR_LinkHeadAndTail<TR_PersistentProfileInfo> _listOfPatchedMethods;
 };
 
+/**
+ * @brief A work-unit that analyzes the frequency information of various methods and based on the information takes one
+ * of the following decision for the method.
+ *  1. If it is executed a lot (can be decided based on high max-raw count) by
+ *     the application, recompile it at warm
+ *  2. If it is not executed a lot and application has already spend good amount
+ *     of CPU Time since the method is compiled, patch the method to disable the
+ *     profiling data collection as at this point, recompilation is not needed.
+ *  3. If application has not executed enough since the method started profiling
+ *     data collection, let it profile and check other methods.
+ */
+class TR_JProfilerAnalysisTask {
+public:
+    TR_PERSISTENT_ALLOC(TR_Memory::TR_JProfiler);
+
+    TR_JProfilerAnalysisTask()
+        : _methodsAddedToPatchList(0)
+        , _methodsRecompiledToWarm(0)
+        , _infoInvalidatedAsInActive(0)
+        , _totalMethodsAddedForAnalysis(0)
+        , _activeProfilingListTail(NULL)
+    {
+        _recompilationCutOff = TR::Options::_patchableJProfilingRecompilationFreq;
+        _ageCutOffForPatching = TR::Options::_patchableJProfilingPatchingAgeCutOff;
+        _numOfMethodsToTriggerPatching = TR::Options::_numOfMethodsToTriggerPatching;
+        _listUpdateMonitor = TR::Monitor::create("JIT-JProfilerAnalysisTaskListMonitor");
+        _analysisCutOff = 256;
+    }
+
+    /**
+     * @brief Add the Persistent Profile Info of a method to list of active profiling methods.
+     *
+     * @param info TR_PersistentProfileInfo of the method
+     */
+    void addProfilingInfoToListOfActiveProfilingInfo(TR_PersistentProfileInfo *info);
+
+    /**
+     * @brief Remove the Persistent Profile Info of a method to list of active profiling methods.
+     *
+     * @param prev TR_PersistentProfileInfo of the previous method in the list
+     * @param info TR_PersistentProfileInfo of the method to remove from list
+     */
+    void removeProfilingInfoFromListOfActiveProfilingInfo(TR_PersistentProfileInfo *prev,
+        TR_PersistentProfileInfo *info);
+
+    /**
+     * @brief Creates a new optimization plan for the method and induces recompilation
+     *
+     * @param jitConfig J9JITConfig object
+     * @param info TR_PersistentProfileInfo of the method that will be recompiled
+     * @param vmThread J9VMThread of the threads that is performing analysis
+     * @param recompHotness TR_Hotness at which recompilation will be induced
+     * @return true If it was queued for recompilation successfully
+     * @return false If it failed to queue the method for recompilation
+     */
+    bool recompileMethod(J9JITConfig *jitConfig, TR_PersistentProfileInfo *info, J9VMThread *vmThread,
+        TR_Hotness recompHotness);
+
+    /**
+     * @brief Function works as a core-engine that does the analysis and decides
+     * if method will be patched or recompiled.
+     *
+     * @param jitConfig J9JITConfig object
+     * @param vmThread J9VMThread of the thread performing analysis
+     */
+    void performAnalysis(J9JITConfig *jitConfig, J9VMThread *vmThread);
+
+    /**
+     * @brief Inspect the list of methods to be patched an divides it between
+     * different JProfilerPatchingTask work-unit so that it can be passed to
+     * worker thread to perform patching.
+     *
+     * @param patchingTaskList TR_JProfilerPatchingTask array of the Patching Task
+     * @param numberOfThreadsToUse Number of threads amongst which the work will be divided
+     * @param jitConfig J9JITConfig object
+     * @return true If we have gathered significant amount of work to trigger
+     * patching function will distribute methods through multiple patching
+     * work-unit and returns true so that main thread can signal worker thread
+     * that there is a work available
+     * @return false If there is not many methods to patch - returns false
+     */
+    bool inspectListOfMethodsToBePatchedAndPreparePatchingTask(TR_JProfilerPatchingTask **patchingTaskList,
+        uint32_t numberOfThreadsToUse, J9JITConfig *jitConfig);
+
+    void printCounts();
+
+    /**
+     * @brief Get the Recompilation Cut Off count
+     *
+     * @return uint32_t recompilationCutOff count
+     */
+    uint32_t getRecompilationCutOff() { return _recompilationCutOff; }
+
+    /**
+     * @brief Get the Age Cut Off For Patching
+     *
+     * @return uint32_t Age at which method will be patched
+     */
+    uint32_t getAgeCutOffForPatching() { return _ageCutOffForPatching; }
+
+    /**
+     * @brief Set the Number Of Methods To Trigger Patching object
+     *
+     * @param numbersOfMethodsToTriggerPatching
+     */
+
+    void setNumberOfMethodsToTriggerPatching(uint32_t numbersOfMethodsToTriggerPatching)
+    {
+        _numOfMethodsToTriggerPatching = numbersOfMethodsToTriggerPatching;
+    }
+
+    /**
+     * @brief Set the Analysis Cut Off object
+     *
+     * @param val
+     */
+    void setAnalysisCutOff(uint32_t val) { _analysisCutOff = val; }
+
+protected:
+    TR_LinkHead<TR_PersistentProfileInfo> _activeProfilingList;
+    TR_PersistentProfileInfo *_activeProfilingListTail;
+
+    TR_LinkHead<TR_PersistentProfileInfo> _listOfProfileInfoToBePatched;
+
+    TR_LinkHead<TR_PersistentProfileInfo> _listOfPatchedMethodProfileInfo;
+
+    TR::Monitor *_listUpdateMonitor;
+
+    uint32_t _recompilationCutOff;
+    uint32_t _ageCutOffForPatching;
+    uint32_t _numOfMethodsToTriggerPatching;
+    uint32_t _analysisCutOff;
+
+    uint32_t _totalMethodsAddedForAnalysis;
+    uint32_t _infoInvalidatedAsInActive;
+    uint32_t _methodsRecompiledToWarm;
+    uint32_t _methodsAddedToPatchList;
+};
+
 #endif
