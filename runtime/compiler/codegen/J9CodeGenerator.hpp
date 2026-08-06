@@ -408,6 +408,7 @@ private:
 
     TR::list<TR::Instruction *> *_jProfilingCounterBumpInstructionList;
     TR::list<TR::Instruction *> *__jProfilingValueProfilingBranchInstructions;
+
 protected:
     // isTemporaryBased storageReferences just have a symRef but some other routines expect a node so use the below to
     // fill in this symRef on this node
@@ -432,11 +433,17 @@ public:
     // Patchable JProfiling
     void initJProfCounterBumpInstrList();
     void addInstrToJProfCounterBumpInstrList(TR::Instruction *instr);
-    TR::list<TR::Instruction *> *getJProfilingCounterBumpInstructionList() { return _jProfilingCounterBumpInstructionList; }
+
+    TR::list<TR::Instruction *> *getJProfilingCounterBumpInstructionList()
+    {
+        return _jProfilingCounterBumpInstructionList;
+    }
 
     void initJProfValueBranchInstrList();
     void addInstrToJProfValueBranchInstrList(TR::Instruction *instr);
+
     TR::list<TR::Instruction *> *getJProfValueBranchInstrList() { return __jProfilingValueProfilingBranchInstructions; }
+
     // --------------------------------------------------------------------------
     // GPU
     //
