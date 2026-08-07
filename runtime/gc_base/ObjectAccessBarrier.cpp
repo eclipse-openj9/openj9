@@ -2549,6 +2549,12 @@ MM_ObjectAccessBarrier::getObjectHashCode(J9JavaVM *vm, J9Object *object)
 	return _extensions->objectModel.getObjectHashCode(vm, object);
 }
 
+UDATA
+MM_ObjectAccessBarrier::getIndexableObjectHashSlotOffset(J9JavaVM *vm, J9IndexableObject *arrayPtr)
+{
+	return _extensions->indexableObjectModel.getHashcodeOffset(arrayPtr);
+}
+
 void
 MM_ObjectAccessBarrier::setFinalizeLink(j9object_t object, j9object_t value)
 {

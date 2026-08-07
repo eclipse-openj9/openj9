@@ -5230,6 +5230,7 @@ typedef struct J9MemoryManagerFunctions {
 	void  ( *j9gc_objaccess_postStoreClassToClassLoader)(struct J9VMThread *vmThread, J9ClassLoader *destClassLoader, J9Class *srcClass) ;
 	void  ( *j9gc_objaccess_postStoreModuleToClassLoader)(struct J9VMThread *vmThread, J9ClassLoader *destClassLoader, J9Module *srcModule) ;
 	I_32  ( *j9gc_objaccess_getObjectHashCode)(struct J9JavaVM *vm, J9Object* object) ;
+	UDATA  ( *j9gc_objaccess_getIndexableObjectHashSlotOffset)(struct J9JavaVM *vm, J9IndexableObject *arrayPtr) ;
 	j9object_t  ( *j9gc_createJavaLangString)(struct J9VMThread *vmThread, U_8 *data, UDATA length, UDATA stringFlags) ;
 	j9object_t  ( *j9gc_createJavaLangStringWithUTFCache)(struct J9VMThread *vmThread, struct J9UTF8 *utf) ;
 	j9object_t  ( *j9gc_internString)(struct J9VMThread *vmThread, j9object_t sourceString) ;

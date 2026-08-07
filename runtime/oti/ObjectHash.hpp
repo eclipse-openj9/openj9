@@ -457,14 +457,12 @@ private:
 						J9Class *fieldClazz = J9OBJECT_CLAZZ(currentThread, fieldObject);
 						if (J9_ARE_ANY_BITS_SET(J9OBJECT_FLAGS_FROM_CLAZZ(currentThread, fieldObject), OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS)) {
 							I_32 storedHash = 0;
+							UDATA hashSlotOffset = 0;
 							if (J9CLASS_IS_ARRAY(fieldClazz)) {
-								if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
-									storedHash = inlineIndexableObjectHashCodeCompressed(vm, fieldObject, fieldClazz);
-								} else {
-									storedHash = inlineIndexableObjectHashCodeFull(vm, fieldObject, fieldClazz);
-								}
+								hashSlotOffset = MM_ObjectAccessBarrierAPI::inlineIndexableObjectHashSlotOffset(vm, fieldObject, fieldClazz);
+								storedHash = *(I_32 *)((UDATA)fieldObject + hashSlotOffset);
 							} else {
-								UDATA hashSlotOffset = fieldClazz->backfillOffset;
+								hashSlotOffset = fieldClazz->backfillOffset;
 								storedHash = objectAccessBarrier.inlineMixedObjectReadI32(currentThread, fieldObject, hashSlotOffset);
 							}
 							if (0 != storedHash) {
@@ -640,14 +638,12 @@ mixHash:
 						J9Class *fieldClazz = J9OBJECT_CLAZZ(currentThread, fieldObject);
 						if (J9_ARE_ANY_BITS_SET(J9OBJECT_FLAGS_FROM_CLAZZ(currentThread, fieldObject), OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS)) {
 							I_32 storedHash = 0;
+							UDATA hashSlotOffset = 0;
 							if (J9CLASS_IS_ARRAY(fieldClazz)) {
-								if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
-									storedHash = inlineIndexableObjectHashCodeCompressed(vm, fieldObject, fieldClazz);
-								} else {
-									storedHash = inlineIndexableObjectHashCodeFull(vm, fieldObject, fieldClazz);
-								}
+								hashSlotOffset = MM_ObjectAccessBarrierAPI::inlineIndexableObjectHashSlotOffset(vm, fieldObject, fieldClazz);
+								storedHash = *(I_32 *)((UDATA)fieldObject + hashSlotOffset);
 							} else {
-								UDATA hashSlotOffset = fieldClazz->backfillOffset;
+								hashSlotOffset = fieldClazz->backfillOffset;
 								storedHash = objectAccessBarrier.inlineMixedObjectReadI32(currentThread, fieldObject, hashSlotOffset);
 							}
 							if (0 != storedHash) {
@@ -761,91 +757,6 @@ public:
 	}
 
 	/**
-	 * Fetch objectPointer's hashcode when objectPointer is a contiguous object.
-	 *
-	 * @pre objectPointer must be a valid object reference
-	 *
-	 * @param vm			a java VM
-	 * @param objectPointer 	a valid object reference
-	 * @param objectClass 	class of objectPointer
-	 * @param offset 	objectPointer size offset
-	 */
-	static VMINLINE I_32
-	inlineIndexableContiguousObjectHashCode(J9JavaVM *vm, j9object_t objectPointer, J9Class *objectClass, UDATA offset)
-	{
-		uintptr_t dataSize = 0;
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		if (J9_IS_J9CLASS_FLATTENED(objectClass)) {
-			dataSize = offset * J9ARRAYCLASS_GET_STRIDE(objectClass);
-		} else
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-		{
-			J9ROMArrayClass *romClass = (J9ROMArrayClass *)objectClass->romClass;
-			dataSize = offset << (romClass->arrayShape & 0x0000FFFF);
-		}
-		offset = ROUND_UP_TO_POWEROF2(dataSize + vm->contiguousIndexableHeaderSize, sizeof(I_32));
-		return *(I_32 *)((UDATA)objectPointer + offset);
-	}
-
-	/**
-	 * Fetch the objectPointer's hashcode when compressed references are enabled.
-	 *
-	 * @pre objectPointer must be a valid object reference
-	 *
-	 * @param vm			a java VM
-	 * @param objectPointer 	a valid object reference
-	 * @param objectClass 	class of objectPointer
-	 */
-	static VMINLINE I_32
-	inlineIndexableObjectHashCodeCompressed(J9JavaVM *vm, j9object_t objectPointer, J9Class *objectClass)
-	{
-		I_32 hashValue = 0;
-		UDATA offset = ((J9IndexableObjectContiguousCompressed *)objectPointer)->size;
-		if (0 != offset) {
-			hashValue = inlineIndexableContiguousObjectHashCode(vm, objectPointer, objectClass, offset);
-		} else {
-			if (0 == ((J9IndexableObjectDiscontiguousCompressed *)objectPointer)->size) {
-				/* Zero-sized array */
-				hashValue = *(I_32 *)((UDATA)objectPointer + vm->discontiguousIndexableHeaderSize);
-			} else {
-				/* Discontiguous array */
-				hashValue = vm->memoryManagerFunctions->j9gc_objaccess_getObjectHashCode(vm, objectPointer);
-			}
-		}
-
-		return hashValue;
-	}
-
-	/**
-	 * Fetch the objectPointer's hashcode when compressed references are disabled.
-	 *
-	 * @pre objectPointer must be a valid object reference
-	 *
-	 * @param vm			a java VM
-	 * @param objectPointer 	a valid object reference
-	 * @param objectClass 	class of objectPointer
-	 */
-	static VMINLINE I_32
-	inlineIndexableObjectHashCodeFull(J9JavaVM *vm, j9object_t objectPointer, J9Class *objectClass)
-	{
-		I_32 hashValue = 0;
-		UDATA offset = ((J9IndexableObjectContiguousFull *)objectPointer)->size;
-		if (0 != offset) {
-			hashValue = inlineIndexableContiguousObjectHashCode(vm, objectPointer, objectClass, offset);
-		} else {
-			if (0 == ((J9IndexableObjectDiscontiguousFull *)objectPointer)->size) {
-				/* Zero-sized array */
-				hashValue = *(I_32 *)((UDATA)objectPointer + vm->discontiguousIndexableHeaderSize);
-			} else {
-				/* Discontiguous array */
-				hashValue = vm->memoryManagerFunctions->j9gc_objaccess_getObjectHashCode(vm, objectPointer);
-			}
-		}
-
-		return hashValue;
-	}
-
-	/**
 	 * Fetch the objectPointer's hashcode.
 	 * Requires VM access for the hash computation
 	 * of value objects.
@@ -876,11 +787,8 @@ public:
 
 			if (J9_ARE_ANY_BITS_SET(flags, OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS)) {
 				if (J9CLASS_IS_ARRAY(objectClass)) {
-					if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
-						hashValue = inlineIndexableObjectHashCodeCompressed(vm, objectPointer, objectClass);
-					} else {
-						hashValue = inlineIndexableObjectHashCodeFull(vm, objectPointer, objectClass);
-					}
+					UDATA hashSlotOffset = MM_ObjectAccessBarrierAPI::inlineIndexableObjectHashSlotOffset(vm, objectPointer, objectClass);
+					hashValue = *(I_32 *)((UDATA)objectPointer + hashSlotOffset);
 				} else {
 					hashValue = *(I_32 *)((UDATA)objectPointer + objectClass->backfillOffset);
 				}

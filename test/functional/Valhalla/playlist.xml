@@ -421,6 +421,12 @@
 			<variation>-Xgcpolicy:gencon -XX:-EnableArrayFlattening -XX:-EnableFlattening -XX:hashMaxRecDepth=0</variation>
 			<variation>-Xgcpolicy:gencon -XX:-EnableArrayFlattening -XX:-EnableFlattening -XX:hashMaxRecDepth=9999</variation>
 			<variation>-Xgcpolicy:gencon -XX:-EnableArrayFlattening -XX:-EnableFlattening -XX:hashMaxRecDepth=2</variation>
+			<variation>-Xgcpolicy:balanced -XX:+EnableArrayFlattening -XX:+EnableFlattening -XX:ValueTypeFlatteningThreshold=99999 -XX:hashMaxRecDepth=0</variation>
+			<variation>-Xgcpolicy:balanced -XX:+EnableArrayFlattening -XX:+EnableFlattening -XX:ValueTypeFlatteningThreshold=99999 -XX:hashMaxRecDepth=9999</variation>
+			<variation>-Xgcpolicy:balanced -XX:+EnableArrayFlattening -XX:+EnableFlattening -XX:ValueTypeFlatteningThreshold=99999 -XX:hashMaxRecDepth=2</variation>
+			<variation>-Xgcpolicy:balanced -XX:-EnableArrayFlattening -XX:-EnableFlattening -XX:hashMaxRecDepth=0</variation>
+			<variation>-Xgcpolicy:balanced -XX:-EnableArrayFlattening -XX:-EnableFlattening -XX:hashMaxRecDepth=9999</variation>
+			<variation>-Xgcpolicy:balanced -XX:-EnableArrayFlattening -XX:-EnableFlattening -XX:hashMaxRecDepth=2</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 		--enable-preview \

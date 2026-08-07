@@ -779,6 +779,13 @@ j9gc_objaccess_getObjectHashCode(J9JavaVM *vm, J9Object* object)
 	return barrier->getObjectHashCode(vm, object);
 }
 
+UDATA
+j9gc_objaccess_getIndexableObjectHashSlotOffset(J9JavaVM *vm, J9IndexableObject *arrayPtr)
+{
+	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vm)->accessBarrier;
+	return barrier->getIndexableObjectHashSlotOffset(vm, arrayPtr);
+}
+
 void*
 j9gc_objaccess_jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray array, jboolean *isCopy)
 {
