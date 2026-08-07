@@ -590,6 +590,7 @@ private:
     void *_mapTable; // must be at offset 12 (24 for 64bit)
 
     // ### IMPORTANT ###
+    int32_t _coldPathRecompTriggerCount;
 
     static TR_PersistentJittedBodyInfo *allocate(TR_PersistentMethodInfo *methodInfo, TR_Hotness hotness,
         bool profiling, TR::Compilation *comp = 0);
@@ -599,6 +600,8 @@ private:
     int32_t *getCounterAddress() { return &_counter; }
 
     int32_t decCounter() { return --_counter; } // FIXME verify implementation
+
+    int32_t *getColdPathRecompTriggerCountAddress() { return &_coldPathRecompTriggerCount; }
 
     uint8_t getSampleIntervalCount() { return _sampleIntervalCount; }
 
