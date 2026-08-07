@@ -188,7 +188,7 @@ objectMonitorEnterBlocking(J9VMThread *currentThread)
 
 		if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_MONITOR_CONTENDED_ENTER)) {
 			bool frameBuilt = saveBlockingEnterObject(currentThread);
-			VM_VMHelpers::setThreadState(currentThread, J9VMTHREAD_STATE_BLOCKED);
+			VM_VMHelpers::setThreadStateNoSave(currentThread, J9VMTHREAD_STATE_BLOCKED);
 			VM_VMAccess::setPublicFlags(currentThread, J9_PUBLIC_FLAGS_THREAD_BLOCKED);
 			ALWAYS_TRIGGER_J9HOOK_VM_MONITOR_CONTENDED_ENTER(vm->hookInterface, currentThread, monitor);
 			restoreBlockingEnterObject(currentThread, frameBuilt);
@@ -201,7 +201,7 @@ objectMonitorEnterBlocking(J9VMThread *currentThread)
 			goto releasedAccess;
 		}
 restart:
-		VM_VMHelpers::setThreadState(currentThread, J9VMTHREAD_STATE_BLOCKED);
+		VM_VMHelpers::setThreadStateNoSave(currentThread, J9VMTHREAD_STATE_BLOCKED);
 		internalReleaseVMAccessSetStatus(currentThread, J9_PUBLIC_FLAGS_THREAD_BLOCKED);
 releasedAccess:
 		omrthread_monitor_enter_using_threadId(monitor, osThread);
@@ -291,7 +291,7 @@ releasedAccess:
 				J9_STORE_LOCKWORD(currentThread, lwEA, lock);
 				goto done;
 			}
-			VM_VMHelpers::setThreadState(currentThread, J9VMTHREAD_STATE_BLOCKED);
+			VM_VMHelpers::setThreadStateNoSave(currentThread, J9VMTHREAD_STATE_BLOCKED);
 			internalReleaseVMAccessSetStatus(currentThread, J9_PUBLIC_FLAGS_THREAD_BLOCKED);
 			SET_IGNORE_ENTER(monitor);
 			omrthread_monitor_wait_timed(monitor, (I_64)waitTime, 0);
@@ -303,7 +303,7 @@ releasedAccess:
 		}
 done:
 		clearEventFlag(currentThread, J9_PUBLIC_FLAGS_THREAD_BLOCKED);
-		VM_VMHelpers::setThreadState(currentThread, J9VMTHREAD_STATE_RUNNING);
+		VM_VMHelpers::setThreadStateNoSave(currentThread, J9VMTHREAD_STATE_RUNNING);
 
 		/* Clear the SUPPRESS_CONTENDED_EXITS bit in the monitor saying that CONTENDED EXIT can be sent again */
 		((J9ThreadMonitor*)monitor)->flags &= ~(UDATA)J9THREAD_MONITOR_SUPPRESS_CONTENDED_EXIT;
