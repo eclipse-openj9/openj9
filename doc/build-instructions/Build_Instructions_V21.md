@@ -68,14 +68,27 @@ Optionally, skip to [Setting up your build environment without Docker](#setting-
 #### Setting up your build environment with Docker :whale:
 If you want to build a binary by using a Docker container, follow these steps to prepare your system:
 
-1. The first thing you need to do is install Docker. You can download the free Community edition from [here](https://docs.docker.com/engine/installation/), which also contains instructions for installing Docker on your system.  You should also read the [Getting started](https://docs.docker.com/get-started/) guide to familiarise yourself with the basic Docker concepts and terminology.
+1. The first thing you need to do is install Docker. You can download the free Community edition from [here](https://docs.docker.com/engine/installation/), which also contains instructions for installing Docker on your system.  You should also read the [Getting started](https://docs.docker.com/get-started/) guide to familiarise yourself with the basic Docker concepts and terminology. If, for some reason, you cannot use Docker, then [Podman](https://podman.io) also works.
 
-2. Next, run the following command to build a Docker image, called **openj9**:
+Now you need to get the Docker image for the build environment. You can either use an image available via the github container registry, or build one yourself. To do the former, follow step 2. To do the latter, see steps 3 and 4.
+
+2. If you want to use the github container registry image, you can run the following command. Notice that, if you decide to use this image, then the bookjdk is not included inside the image. As a result, you will need to ensure that it is included inside of your host directory. For steps on how to get your bootjdk, refer to step 3 in [this](###setting-up-your-build-environment-without-docker) section. The most commonly used container is the one below, however if you need a different container, refer to the list [here](https://github.com/orgs/adoptium/packages/container/package/adoptium_build_image).
+```
+docker run \
+  -it \
+  -v <host_directory>:/root/hostdir \
+  -e CC=/usr/local/gcc14/bin/gcc-14.2 \
+  -e CXX=/usr/local/gcc14/bin/g++-14.2 \
+  ghcr.io/adoptium/adoptium_build_image:centos7
+```
+
+
+3. To build a Docker image using our mkdocker.sh script, run the following command. The final image will be called **openj9**.
 ```
 bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=22 --gitcache=no --jdk=21 --build
 ```
 
-3. Start a Docker container from the **openj9** image with the following command, where `-v` maps any directory, `<host_directory>`,
+4. If you built the **openj9** image, you can start it with the following command, where `-v` maps any directory, `<host_directory>`,
 on your local system to the containers `/root/hostdir` directory so that you can store the binaries, once they are built:
 ```
 docker run -v <host_directory>:/root/hostdir -it openj9
@@ -139,7 +152,7 @@ When you have all the source files that you need, run the configure script, whic
 ```
 bash configure --with-boot-jdk=/home/jenkins/bootjdks/jdk21
 ```
-:warning: The path in the example `--with-boot-jdk=` option is appropriate for the Docker installation. If you're not using the Docker environment, set the path that's appropriate for your setup, such as `<my_home_dir>/bootjdk21`.
+:warning: The path in the example `--with-boot-jdk=` option is appropriate for the Docker installation. If not using the Docker environment, or using the image from the github container registry, set the path appropriate for your setup, such as `<my_home_dir>/bootjdk21` as setup in the previous instructions.
 
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
 Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
