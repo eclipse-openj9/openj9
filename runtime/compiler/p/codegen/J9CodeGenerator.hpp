@@ -91,6 +91,7 @@ public:
     bool canEmitDataForExternallyRelocatableInstructions();
 
     bool canTransformUnsafeSetMemory();
+    bool supportsNonHelper(TR::SymbolReferenceTable::CommonNonhelperSymbol symbol);
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
     bool suppressInliningOfCryptoMethod(TR::RecognizedMethod method);
