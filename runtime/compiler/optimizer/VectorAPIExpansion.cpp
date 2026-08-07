@@ -176,7 +176,7 @@ void TR_VectorAPIExpansion::getElementTypeAndNumLanes(TR::Node *node, TR::DataTy
 
     int32_t i = getElementTypeIndex(methodSymbol);
     TR::Node *elementTypeNode = node->getChild(i);
-    elementType = getDataTypeFromClassNode(comp(), elementTypeNode);
+    elementType = getDataTypeFromNode(comp(), elementTypeNode);
 
     i = getNumLanesIndex(methodSymbol);
     TR::Node *numLanesNode = node->getChild(i);
@@ -519,7 +519,7 @@ void TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool v
             // Update method element type and vector length
             if (i == getElementTypeIndex(methodSymbol)) {
                 TR::Node *elementTypeNode = node->getChild(i);
-                methodElementType = getDataTypeFromClassNode(comp(), elementTypeNode);
+                methodElementType = getDataTypeFromNode(comp(), elementTypeNode);
                 _aliasTable[methodRefNum]._vinfo._elementType = methodElementType;
                 _nodeTable[nodeIndex]._vinfo._elementType = methodElementType;
             } else if (i == getNumLanesIndex(methodSymbol)) {
@@ -846,15 +846,37 @@ TR_OpaqueClassBlock *TR_VectorAPIExpansion::getOpaqueClassBlockFromClassNode(TR:
     return clazz;
 }
 
-TR::DataType TR_VectorAPIExpansion::getDataTypeFromClassNode(TR::Compilation *comp, TR::Node *classNode)
+TR::DataType TR_VectorAPIExpansion::getDataTypeFromNode(TR::Compilation *comp, TR::Node *elementTypeNode)
 {
-    TR_OpaqueClassBlock *clazz = getOpaqueClassBlockFromClassNode(comp, classNode);
+#if JAVA_SPEC_VERSION >= 27
+    if (elementTypeNode->getOpCodeValue() != TR::iconst)
+        return TR::NoType;
+
+    switch (elementTypeNode->getConstValue()) {
+        case LT_FLOAT:
+            return TR::Float;
+        case LT_DOUBLE:
+            return TR::Double;
+        case LT_BYTE:
+            return TR::Int8;
+        case LT_SHORT:
+            return TR::Int16;
+        case LT_INT:
+            return TR::Int32;
+        case LT_LONG:
+            return TR::Int64;
+        default:
+            return TR::NoType;
+    }
+#else
+    TR_OpaqueClassBlock *clazz = getOpaqueClassBlockFromClassNode(comp, elementTypeNode);
 
     if (!clazz)
         return TR::NoType;
 
     TR_J9VMBase *fej9 = comp->fej9();
     return fej9->getClassPrimitiveDataType(clazz);
+#endif /* JAVA_SPEC_VERSION >= 27 */
 }
 
 TR_VectorAPIExpansion::vapiObjType TR_VectorAPIExpansion::getObjectTypeFromClassNode(TR::Compilation *comp,
@@ -884,19 +906,13 @@ TR_VectorAPIExpansion::vapiObjType TR_VectorAPIExpansion::getObjectTypeFromClass
 
     char *cursor = classNameChars + length;
 
-    if (!strncmp(cursor - 6, "Vector", 6)) {
-        objectType = Vector;
-        cursor -= 6;
-    } else if (!strncmp(cursor - 4, "Mask", 4)) {
-        objectType = Mask;
-        cursor -= 4;
-    } else if (!strncmp(cursor - 7, "Shuffle", 7)) {
-        objectType = Shuffle;
-        cursor -= 7;
-    } else {
-        return Unknown;
-    }
-
+#if JAVA_SPEC_VERSION >= 27
+    /*
+     * In jdk27+, the vector length is at the end of the type name, for example:
+     *   DoubleVector512
+     *   DoubleVector512$DoubleMask512
+     *   DoubleVector512$DoubleShuffle512
+     */
     if (!strncmp(cursor - 2, "64", 2)) {
         vectorLength = TR::VectorLength64;
         cursor -= 2;
@@ -916,6 +932,44 @@ TR_VectorAPIExpansion::vapiObjType TR_VectorAPIExpansion::getObjectTypeFromClass
     } else {
         return Unknown;
     }
+#endif /* JAVA_SPEC_VERSION >= 27 */
+
+    if (!strncmp(cursor - 6, "Vector", 6)) {
+        objectType = Vector;
+        cursor -= 6;
+    } else if (!strncmp(cursor - 4, "Mask", 4)) {
+        objectType = Mask;
+        cursor -= 4;
+    } else if (!strncmp(cursor - 7, "Shuffle", 7)) {
+        objectType = Shuffle;
+        cursor -= 7;
+    } else {
+        return Unknown;
+    }
+
+#if JAVA_SPEC_VERSION < 27
+    /*
+     * Before jdk27, the vector length is at the end of the species name, for example:
+     *   Double512Vector
+     *   Double512Vector$Double512Mask
+     *   Double512Vector$Double512Shuffle
+     */
+    if (!strncmp(cursor - 2, "64", 2)) {
+        vectorLength = TR::VectorLength64;
+        cursor -= 2;
+    } else if (!strncmp(cursor - 3, "128", 3)) {
+        vectorLength = TR::VectorLength128;
+        cursor -= 3;
+    } else if (!strncmp(cursor - 3, "256", 3)) {
+        vectorLength = TR::VectorLength256;
+        cursor -= 3;
+    } else if (!strncmp(cursor - 3, "512", 3)) {
+        vectorLength = TR::VectorLength512;
+        cursor -= 3;
+    } else {
+        return Unknown;
+    }
+#endif /* JAVA_SPEC_VERSION < 27 */
 
     if (!strncmp(cursor - 4, "Byte", 4)) {
         elementType = TR::Int8;
@@ -2653,7 +2707,7 @@ bool TR_VectorAPIExpansion::getConvertSourceType(TR_VectorAPIExpansion *opt, TR:
 
     // For convert, source vector type info is in children 2 and 3
     TR::Node *sourceElementTypeNode = node->getChild(2);
-    sourceElementType = getDataTypeFromClassNode(comp, sourceElementTypeNode);
+    sourceElementType = getDataTypeFromNode(comp, sourceElementTypeNode);
 
     TR::Node *sourceNumLanesNode = node->getChild(3);
 
