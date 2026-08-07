@@ -24,10 +24,25 @@ package java.lang;
 
 import jdk.internal.org.objectweb.asm.*;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
 final class JFRClassTransformer {
+
+    /*[IF JAVA_SPEC_VERSION == 17]*/
+    private static Method bytesForEagerInstrumentation;
+
+    static {
+        try {
+            Class<?> jfrUpCallClass = Class.forName("jdk.jfr.internal.JVMUpcalls");
+            bytesForEagerInstrumentation = jfrUpCallClass.getDeclaredMethod("bytesForEagerInstrumentation", long.class, boolean.class, Class.class, byte[].class);
+            bytesForEagerInstrumentation.setAccessible(true);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    /*[ENDIF] JAVA_SPEC_VERSION == 17 */
 
     private static final String EVENT_HANDLER_FIELD = "eventHandler";
     private static final String START_TIME_FIELD = "startTime";
@@ -124,7 +139,7 @@ final class JFRClassTransformer {
 	 * @param addMethods whether to add the JFR event handler methods
 	 * @return the transformed class bytes
 	 */
-    static byte[] transformClass(byte[] classBytes, boolean addMethods) {
+    static byte[] transformClass(byte[] classBytes) {
         List<FieldDescriptor> fields = new ArrayList<>();
 
         fields.add(FieldDescriptor.staticField(EVENT_HANDLER_FIELD, OBJECT_DESC));
@@ -135,35 +150,62 @@ final class JFRClassTransformer {
 
         List<MethodDescriptor> methods = new ArrayList<>();
 
-        if (addMethods) {
-            methods.add(MethodDescriptor.publicMethod("isEnabled", "()Z", mv -> {
-                mv.visitInsn(Opcodes.ICONST_0);
-                mv.visitInsn(Opcodes.IRETURN);
-                mv.visitMaxs(1, 1);
-            }));
+        methods.add(MethodDescriptor.publicMethod("isEnabled", "()Z", mv -> {
+            mv.visitInsn(Opcodes.ICONST_0);
+            mv.visitInsn(Opcodes.IRETURN);
+            mv.visitMaxs(1, 1);
+        }));
 
-            methods.add(MethodDescriptor.publicMethod("shouldCommit", "()Z", mv -> {
-                mv.visitInsn(Opcodes.ICONST_0);
-                mv.visitInsn(Opcodes.IRETURN);
-                mv.visitMaxs(1, 1);
-            }));
+        methods.add(MethodDescriptor.publicMethod("shouldCommit", "()Z", mv -> {
+            mv.visitInsn(Opcodes.ICONST_0);
+            mv.visitInsn(Opcodes.IRETURN);
+            mv.visitMaxs(1, 1);
+        }));
 
-            methods.add(MethodDescriptor.publicMethod("commit", "()V", mv -> {
-                mv.visitInsn(Opcodes.RETURN);
-                mv.visitMaxs(0, 1);
-            }));
+        methods.add(MethodDescriptor.publicMethod("commit", "()V", mv -> {
+            mv.visitInsn(Opcodes.RETURN);
+            mv.visitMaxs(0, 1);
+        }));
 
-            methods.add(MethodDescriptor.publicMethod("end", "()V", mv -> {
-                mv.visitInsn(Opcodes.RETURN);
-                mv.visitMaxs(0, 1);
-            }));
+        methods.add(MethodDescriptor.publicMethod("end", "()V", mv -> {
+            mv.visitInsn(Opcodes.RETURN);
+            mv.visitMaxs(0, 1);
+        }));
 
-            methods.add(MethodDescriptor.publicMethod("begin", "()V", mv -> {
-                mv.visitInsn(Opcodes.RETURN);
-                mv.visitMaxs(0, 1);
-            }));
-        }
+        methods.add(MethodDescriptor.publicMethod("begin", "()V", mv -> {
+            mv.visitInsn(Opcodes.RETURN);
+            mv.visitMaxs(0, 1);
+        }));
 
         return addFieldsAndMethods(classBytes, fields, methods);
     }
+
+    /*[IF JAVA_SPEC_VERSION == 17]*/
+    static byte[] transformJFREventClass(byte[] classBytes) {
+        ClassReader reader = new ClassReader(classBytes);
+        ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
+
+        ClassVisitor visitor = new ClassVisitor(Opcodes.ASM7, writer) {
+            @Override
+            public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+                // Remove the ACC_FINAL flag from the method access modifiers
+                int modifiedAccess = access & ~Opcodes.ACC_FINAL;
+                return super.visitMethod(modifiedAccess, name, descriptor, signature, exceptions);
+            }
+        };
+
+        reader.accept(visitor, 0);
+        return writer.toByteArray();
+    }
+
+    static byte[] transformClassAndInvokebytesForEagerInstrumentation(long traceId, boolean forceInstrumentation, Class<?> superClass, byte[] oldBytes) throws ReflectiveOperationException {
+        try {
+            oldBytes = transformClass(oldBytes);
+            return (byte[])bytesForEagerInstrumentation.invoke(null, traceId, forceInstrumentation, superClass, oldBytes);
+        } catch (Throwable t) {
+            t.printStackTrace();
+            throw t;
+        }
+    }
+    /*[ENDIF] JAVA_SPEC_VERSION == 17 */
 }
