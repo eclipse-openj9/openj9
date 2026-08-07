@@ -41,7 +41,17 @@ Java_jdk_jfr_internal_JVM_isRecording(JNIEnv *env, jobject obj)
 void JNICALL
 Java_jdk_jfr_internal_JVM_setMethodSamplingPeriod(JNIEnv *env, jobject obj, jlong type, jlong periodMillis)
 {
-	// TODO: implementation
+	/* TODO: implementation is not complete. periodMillis should be stored
+	 * per type.
+	 */
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	if ((NULL != vm->jfrState.jfrEventEnabledFlags)
+		&& (0 <= type)
+		&& (type < vm->jfrState.jfrEventEnabledFlagsSize)
+	) {
+		vm->jfrState.jfrEventEnabledFlags[(UDATA)type] = (0 < periodMillis) ? 1 : 0;
+	}
 }
 
 jboolean JNICALL

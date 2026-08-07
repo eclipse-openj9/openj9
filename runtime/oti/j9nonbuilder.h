@@ -6271,6 +6271,12 @@ typedef struct JFRState {
 	jobject chunkRotationMonitor;
 	jboolean shouldRotateDisk;
 	U_32 stackTraceIDCount;
+	/**
+	 * Enabled-flag array indexed by JFR event/type ID, sized to
+	 * jfrEventEnabledFlagsSize; NULL until allocated.
+	 */
+	U_8 *jfrEventEnabledFlags;
+	jlong jfrEventEnabledFlagsSize;
 } JFRState;
 
 typedef struct J9ReflectFunctionTable {
