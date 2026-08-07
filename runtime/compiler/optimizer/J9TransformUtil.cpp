@@ -68,6 +68,92 @@ int32_t J9::TransformUtil::getLoopNestingDepth(TR::Compilation *comp, TR::Block 
     return nestingDepth;
 }
 
+/**
+ * @brief Inserts a cold-path recompilation counter decrement and trigger into
+ *  the given block, splitting it so that recompilation fires once the counter
+ *  reaches zero.
+ *
+ * @details
+ *  Transforms the passed block from:
+ *
+ *    BBStart <block_x>
+ *    ... // original code
+ *    BBEnd <block_x>
+ *
+ *  into the following three-block structure:
+ *
+ *    BBStart <block_x>           // counter decrement + branch
+ *        istore <jittedBodyInfo->_coldPathRecompTriggerCount>
+ *            iadd
+ *                iload <jittedBodyInfo->_coldPathRecompTriggerCount>
+ *                iconst -1
+ *        ificmpne => goto <block_z>  // skip recompile if count != 0
+ *            => iadd
+ *            iconst 0
+ *    BBEnd <block_x>
+ *    BBStart <block_y>           // recompile path (count reached zero)
+ *        call translateCallerWithPrep (RecompDueToPhaseChange)
+ *        ...
+ *    BBEnd <block_y>
+ *    BBStart <block_z>           // fall-through: original code continues here
+ *    ... // original code
+ *    BBEnd <block_z>
+ *
+ * @warning The passed @p block is structurally modified by this function.
+ *  After the call, @p block no longer contains its original trees which
+ *  now have been moved into the returned block_z. Caller must ensure that
+ *  it has added the passed @p block to CFG and created the necessary edges
+ *  before calling this routine.
+ *
+ * @param comp  The current compilation object.
+ * @param block The block into which the counter decrement and recompile call
+ *              will be inserted. Its original content becomes block_z.
+ * @return      The block containing the original code (block_z above).
+ *              If the persistent JITed body info does not exist, it returns original
+ *              block without inserting any code.
+ */
+TR::Block *J9::TransformUtil::insertColdPathCounterRecompilation(TR::Compilation *comp, TR::Block *block)
+{
+    TR_ASSERT_FATAL(!comp->getOptimizationPlan()->getDoNotInsertPhaseChangeRecomp(),
+        "Recompilation due to phase change call can not be inserted if optimization plan has set flag to not insert "
+        "it");
+    TR_ASSERT_FATAL(comp->getRecompilationInfo() != NULL,
+        "Recompilation due to phase change call can not be inserted in the method which can not be recompiled.");
+    TR_PersistentJittedBodyInfo *bodyInfo = comp->getRecompilationInfo()->getJittedBodyInfo();
+    if (bodyInfo == NULL) {
+        // We do not have persistent jitted body info yet - return without
+        // emitting the trigger to recompile.
+        // Codegenerators are signalled through the flag set in the persistent
+        // Jittedbody info so that it can generate necessary pre-prologue
+        // for patching the method if it gets recompiled due to phase change.
+        return block;
+    }
+
+    bodyInfo->setCanRecompileDueToPhaseChange();
+
+    TR::CFG *cfg = comp->getFlowGraph();
+    TR::Node *node = block->getEntry()->getNode();
+    TR::TreeTop *iter = TR::TreeTop::createIncTree(comp, node,
+        comp->getRecompilationInfo()->getColdPathRecompTriggerCounterSymRef(), -1, block->getEntry());
+    TR::Node *bumpNode
+        = iter->getNode()->getNumChildren() > 1 ? iter->getNode()->getSecondChild() : iter->getNode()->getFirstChild();
+    TR::Node *cmpCountNode = TR::Node::createif(TR::ificmpne, bumpNode, TR::Node::create(TR::iconst, 0, 0));
+    iter = TR::TreeTop::create(comp, iter, cmpCountNode);
+    const char *dc1 = TR::DebugCounter::debugCounterName(comp, "phase-change-recomptest/(%s)/%s", comp->signature(),
+        comp->getHotnessName(comp->getMethodHotness()));
+    TR::DebugCounter::prependDebugCounter(comp, dc1, iter);
+    TR::Block *iterBlock = block->split(iter->getNextTreeTop(), cfg);
+    iter = generateRetranslateCallerWithPrepTrees(node, TR_PersistentMethodInfo::RecompDueToPhaseChange, comp);
+    iterBlock->prepend(iter);
+    const char *debugCounter = TR::DebugCounter::debugCounterName(comp, "phase-change-recompcall/(%s)/%s",
+        comp->signature(), comp->getHotnessName(comp->getMethodHotness()));
+    TR::DebugCounter::prependDebugCounter(comp, debugCounter, iter);
+    iterBlock = iterBlock->split(iter->getNextTreeTop(), cfg, true, true);
+    cmpCountNode->setBranchDestination(iterBlock->getEntry());
+    cfg->addEdge(block, iterBlock);
+    return iterBlock;
+}
+
 /*
  * Generate trees for call to jitRetranslateCallerWithPrep to trigger recompilation from JIT-Compiled code.
  */
