@@ -91,6 +91,8 @@ public:
 
     TR::SymbolReference *getCounterSymRef();
 
+    TR::SymbolReference *getColdPathRecompTriggerCounterSymRef();
+
     void *getCounterAddress() { return _bodyInfo->getCounterAddress(); }
 
     bool isRecompilation() { return !_firstCompile; }

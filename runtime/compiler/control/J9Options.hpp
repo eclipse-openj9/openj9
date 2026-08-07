@@ -349,6 +349,7 @@ public:
     static int32_t _iProfilerBufferInterarrivalTimeToExitDeepIdle; // ms
     static int32_t _iprofilerBufferSize; // iprofilerbuffer size in kb
 
+    static int32_t _coldPathRecompTriggerCount; // initial value in counter placed in cold path that triggers recompilation when reaches zero.
     static int32_t _maxIprofilingCount; // when invocation count is larger than
                                         // this value Iprofiler will not collect data
     static int32_t _maxIprofilingCountInStartupMode; // same as above but value is used

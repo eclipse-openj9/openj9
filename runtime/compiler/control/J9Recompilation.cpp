@@ -467,6 +467,10 @@ TR::SymbolReference *J9::Recompilation::getCounterSymRef()
     return _compilation->getSymRefTab()->findOrCreateRecompilationCounterSymbolRef(_bodyInfo->getCounterAddress());
 }
 
+TR::SymbolReference *J9::Recompilation::getColdPathRecompTriggerCounterSymRef()
+{
+    return _compilation->getSymRefTab()->findOrCreateColdPathRecompTriggerCounterSymbolRef(_bodyInfo->getColdPathRecompTriggerCountAddress());
+}
 /////////////////////////
 // DEBUG
 //////////////////////////
@@ -559,6 +563,7 @@ TR_PersistentJittedBodyInfo::TR_PersistentJittedBodyInfo(TR_PersistentMethodInfo
     , _hwpInducedRecompilation(false)
     , _hwpReducedWarmCompileRequested(false)
     , _hwpReducedWarmCompileInQueue(false)
+    , _coldPathRecompTriggerCount(TR::Options::_coldPathRecompTriggerCount)
 {
     setIsProfilingBody(profile);
 }

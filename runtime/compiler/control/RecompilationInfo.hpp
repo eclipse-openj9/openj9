@@ -583,6 +583,7 @@ private:
     TR_PersistentMethodInfo *_methodInfo; // must be at offset 4 (8 for 64bit)
     void *_startPCAfterPreviousCompile;
     void *_mapTable; // must be at offset 12 (24 for 64bit)
+    int32_t _coldPathRecompTriggerCount;
 
     // ### IMPORTANT ###
 
@@ -594,6 +595,8 @@ private:
     int32_t *getCounterAddress() { return &_counter; }
 
     int32_t decCounter() { return --_counter; } // FIXME verify implementation
+
+    int32_t *getColdPathRecompTriggerCountAddress() { return &_coldPathRecompTriggerCount; }
 
     uint8_t getSampleIntervalCount() { return _sampleIntervalCount; }
 
