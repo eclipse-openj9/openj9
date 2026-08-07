@@ -8290,6 +8290,9 @@ TR_MethodMetaData *TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrar
                             if (methodInfo->getNumberOfInlinedMethodRedefinition() >= 2)
                                 options->setOption(TR_DisableNextGenHCR);
 
+                            if (methodInfo->getHasRecompiledDueToPhaseChange()) {
+                                p->_optimizationPlan->setDoNotInsertPhaseChangeRecomp(true);
+                            }
                             // If this method has been invalidated due to unloading of
                             // inlined code, then from now on we should only inline
                             // methods that will not be unloaded before this one.
@@ -10276,6 +10279,9 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(J9VMThread *vmThrea
                             break;
                         case TR_PersistentMethodInfo::RecompDueToJProfiling:
                             recompReason = 'J';
+                            break;
+                        case TR_PersistentMethodInfo::RecompDueToPhaseChange:
+                            recompReason = 'P';
                             break;
                         case TR_PersistentMethodInfo::RecompDueToInlinedMethodRedefinition:
                             recompReason = 'H';

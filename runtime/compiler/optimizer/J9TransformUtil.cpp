@@ -68,6 +68,48 @@ int32_t J9::TransformUtil::getLoopNestingDepth(TR::Compilation *comp, TR::Block 
     return nestingDepth;
 }
 
+/**
+ * @brief Inserts following code in the passed block.
+ * BBStart <block_x>
+ *  ...
+ * BBEnd <block_x>
+ *
+ * BBStart <block_x>
+ *  istore <jittedBodyInfo->_coldPathRecompTriggerCount>
+ *      iadd
+ *          iload <jittedBodyInfo->_coldPathRecompTriggerCount>
+ *          iconst -1
+ *  ificmpgt => goTo <block_y>
+ *      => iadd
+ *      iconst 0
+ * BBEnd <block_x>
+ * BBStart <block_y> (Extension of previous block)
+ *  Call translateCallerWithPrep (Recompile)
+ * BBEnd <block_y>
+ * BBStart <block_z> - original block
+ *  ...
+ * BBEnd <block_z>
+ */
+
+TR::Block *J9::TransformUtil::insertColdPathCounterRecompilation(TR::Compilation *comp, TR::Block *block)
+{
+    TR::CFG *cfg = comp->getFlowGraph();
+    cfg->setStructure(0);
+    OMR::Logger *log = comp->log();
+    TR::Node *node = block->getEntry()->getNode();
+    TR::TreeTop *iter = TR::TreeTop::createIncTree(comp, node, comp->getRecompilationInfo()->getColdPathRecompTriggerCounterSymRef(), -1, block->getEntry())
+    TR::Node *bumpNode = iter->getNode()->getNumChildren() > 1 ? iter->getNode()->getSecondChild()
+                                                                  : iter->getNode()->getFirstChild();
+    TR::Node *cmpCountNode = TR::Node::createif(TR::ificmpgt, bumpNode, TR::Node::create(TR::iconst, 0, 0));
+    iter = TR::TreeTop::create(comp, iter, cmpCountNode);
+    TR::Block *iterBlock = block->split(iter->getNextTreeTop(), cfg);
+    iterBlock->setIsExtensionOfPreviousBlock();
+    iter = generateRetranslateCallerWithPrepTrees(node, TR_PersistentMethodInfo::RecompDueToPhaseChange, comp);
+    iterBlock->prepend(iter);
+    iterBlock = iterBlock->split(iter->getNextTreeTop(), cfg, true, true);
+    return iterBlock;
+}
+
 /*
  * Generate trees for call to jitRetranslateCallerWithPrep to trigger recompilation from JIT-Compiled code.
  */

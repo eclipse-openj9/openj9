@@ -3611,6 +3611,38 @@ bool J9::CodeGenerator::willGenerateNOPForVirtualGuard(TR::Node *node)
     return true;
 }
 
+void J9::CodeGenerator::insertRecompDueToPhaseChangeCode()
+{
+    TR::Compilation *comp = self()->comp();
+
+    if (!comp->getOption(TR_EnableRecompDueToPatchedNopableGuards) || comp->getMethodHotness() < hot
+        || comp->getOptimizationPlan()->getDoNotInsertPhaseChangeRecomp() || comp->isProfilingCompilation())
+        return;
+
+    OMR::Logger *log = comp->log();
+    TR::NodeChecklist checklist(comp);
+    TR::CFG *cfg = comp->getFlowGraph();
+    for (TR::AllBlockIterator iter(cfg, comp); iter.currentBlock() != NULL; ++iter) {
+        TR::Block *block = iter.currentBlock();
+        TR::TreeTop *treeTop = block->getLastRealTreeTop();
+        TR::Node *node = treeTop->getNode();
+        if (node->getOpCode().isIf() && node->isTheVirtualGuardForAGuardedInlinedCall()
+            && node->isNopableInlineGuard()) {
+            TR::Node *callNode = node->getVirtualCallNodeForGuard();
+
+            if (callNode != NULL && !checklist.contains(callNode)) {
+                TR::TreeTop *cursor = node->getVirtualCallTreeForGuard();
+                TR::TreeTop *recompCallTT = TR::TransformUtil::generateRetranslateCallerWithPrepTrees(callNode,
+                    TR_PersistentMethodInfo::RecompDueToPhaseChange, comp);
+                logprintf(comp->getOption(TR_TraceCG), log,
+                    "Inserting call to recompile method before call node n%dn\n", callNode->getGlobalIndex());
+                cursor->insertBefore(recompCallTT);
+                checklist.add(callNode);
+            }
+        }
+    }
+}
+
 /** \brief
  *       Following codegen phase walks the blocks in the CFG and checks for the virtual guard performing TR_MethodTest
  *       and guarding an inlined interface call.

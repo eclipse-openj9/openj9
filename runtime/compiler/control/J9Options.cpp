@@ -139,6 +139,7 @@ int32_t J9::Options::_availableCPUPercentage = 100;
 int32_t J9::Options::_cpuCompTimeExpensiveThreshold = 4000;
 uintptr_t J9::Options::_compThreadAffinityMask = 0;
 
+int32_t J9::Options::_coldPathRecompTriggerCount = 100;
 #if defined(J9VM_OPT_JITSERVER)
 int64_t J9::Options::_oldAge = 1000 * 60 * 90; // 90 minutes
 int64_t J9::Options::_oldAgeUnderLowMemory = 1000 * 60 * 5; // 5 minutes
@@ -934,6 +935,9 @@ TR::OptionTable OMR::Options::_feOptions[] = {
      offsetof(J9JITConfig, codeCachePadKB), 0, "F%d (KB)" },
     { "codetotal=", "C<nnn>\ttotal code memory limit, in KB", TR::Options::setJitConfigNumericValue,
      offsetof(J9JITConfig, codeCacheTotalKB), 0, "F%d (KB)" },
+    { "coldPathRecompTriggerCount=", "R<nnn>\tInitial value in the counter placed in cold path that triggers recompilation",
+     TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_coldPathRecompTriggerCount, 0, "F%d",
+        NOT_IN_SUBSET },
     { "compilationBudget=",
      "O<nnn>\tnumber of usec. Used to better interleave compilation"
         "with computation. Use 80000 as a starting point", TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_compilationBudget, 0, "P%d", NOT_IN_SUBSET },

@@ -28,7 +28,7 @@
 #include "codegen/OMRCodeGenPhaseFunctionTable.hpp"
 
 // The entries in this file must be kept in sync with codegen/J9CodeGenPhaseEnum.hpp
-TR::CodeGenPhase::performFixUpProfiledInterfaceGuardTestPhase,
+TR::CodeGenPhase::performFixUpProfiledInterfaceGuardTestPhase, TR::CodeGenPhase::performRecompDueToPhaseChangeCode,
     TR::CodeGenPhase::performAllocateLinkageRegistersPhase, // AllocateLinkageRegisters
     TR::CodeGenPhase::performPopulateOSRBufferPhase, // PopulateOSRBufferPhase
     TR::CodeGenPhase::performMoveUpArrayLengthStoresPhase, // MoveUpArrayLengthStoresPhase
