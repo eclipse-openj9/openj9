@@ -512,15 +512,16 @@ public:
         if (!comp->target().cpu.isPower() && !(comp->target().cpu.isZ() && comp->cg()->getSupportsVectorRegisters())
             && !comp->target().cpu.isARM64() && !comp->target().cpu.isX86()) {
             length = TR::NoVectorLength;
-        } else if (vectorLength == 64
-            || (vectorLength != 128
-                && !(comp->target().cpu.isX86() && comp->getOption(TR_EnableExtendedVectorLengths)))) {
-            length = TR::NoVectorLength;
-        } else {
+        } else if (vectorLength == 128) {
+            length = TR::VectorLength128;
+        } else if ((vectorLength == 256 || vectorLength == 512) && comp->target().cpu.isX86()
+            && comp->getOption(TR_EnableExtendedVectorLengths)) {
             length = OMR::DataType::bitsToVectorLength(vectorLength);
-
+            // safety check if the length is within the range.
             TR_ASSERT_FATAL(length > TR::NoVectorLength && length <= TR::NumVectorLengths,
-                "VectorAPIExpansion requested invalid vector length %d\n", length);
+                "VectorAPIExpansion got invalid TR::VectorLength %d for %d-bit vector\n", length, vectorLength);
+        } else {
+            length = TR::NoVectorLength;
         }
 
         if (length == TR::NoVectorLength && TR::Options::getVerboseOption(TR_VerboseVectorAPI)) {
