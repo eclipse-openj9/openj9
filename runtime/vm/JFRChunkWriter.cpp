@@ -700,6 +700,7 @@ VM_JFRChunkWriter::writeNetworkInterfaceNameCheckpointEvent()
 U_8 *
 VM_JFRChunkWriter::writeJVMInformationEvent()
 {
+	Trc_VM_JFRChunkWriter_writeJVMInformationEvent();
 	JVMInformationEntry *jvmInfo= &(VM_JFRConstantPoolTypes::getJFRConstantEvents(_vm)->JVMInfoEntry);
 
 	/* reserve size field */
@@ -741,6 +742,7 @@ VM_JFRChunkWriter::writeJVMInformationEvent()
 U_8 *
 VM_JFRChunkWriter::writePhysicalMemoryEvent()
 {
+	Trc_VM_JFRChunkWriter_writePhysicalMemoryEvent();
 	/* reserve size field */
 	U_8 *dataStart = reserveEventSize();
 
@@ -768,6 +770,7 @@ VM_JFRChunkWriter::writePhysicalMemoryEvent()
 U_8 *
 VM_JFRChunkWriter::writeCPUInformationEvent()
 {
+	Trc_VM_JFRChunkWriter_writeCPUInformationEvent();
 	CPUInformationEntry *cpuInfo= &(VM_JFRConstantPoolTypes::getJFRConstantEvents(_vm)->CPUInfoEntry);
 
 	/* reserve size field */
@@ -803,6 +806,7 @@ VM_JFRChunkWriter::writeCPUInformationEvent()
 U_8 *
 VM_JFRChunkWriter::writeVirtualizationInformationEvent()
 {
+	Trc_VM_JFRChunkWriter_writeVirtualizationInformationEvent();
 	VirtualizationInformationEntry *virtualizationInfo= &(VM_JFRConstantPoolTypes::getJFRConstantEvents(_vm)->VirtualizationInfoEntry);
 
 	/* reserve size field */
@@ -826,6 +830,7 @@ VM_JFRChunkWriter::writeVirtualizationInformationEvent()
 U_8 *
 VM_JFRChunkWriter::writeOSInformationEvent()
 {
+	Trc_VM_JFRChunkWriter_writeOSInformationEvent();
 	OSInformationEntry *osInfo = &(VM_JFRConstantPoolTypes::getJFRConstantEvents(_vm)->OSInfoEntry);
 
 	/* reserve size field */
@@ -941,6 +946,7 @@ VM_JFRChunkWriter::writeGCWhenTypesEvent()
 void
 VM_JFRChunkWriter::writeGCHeapConfigurationEvent()
 {
+	Trc_VM_JFRChunkWriter_writeGCHeapConfigurationEvent();
 	GCHeapConfigurationEntry *gcConfig = &(VM_JFRConstantPoolTypes::getJFRConstantEvents(_vm)->GCHeapConfigEntry);
 
 	/* reserve size field */
@@ -980,6 +986,7 @@ VM_JFRChunkWriter::writeGCHeapConfigurationEvent()
 void
 VM_JFRChunkWriter::writeYoungGenerationConfigurationEvent()
 {
+	Trc_VM_JFRChunkWriter_writeYoungGenerationConfigurationEvent();
 	YoungGenerationConfigurationEntry *youngGenConfig = &(VM_JFRConstantPoolTypes::getJFRConstantEvents(_vm)->YoungGenConfigEntry);
 
 	/* reserve size field */
@@ -1007,6 +1014,7 @@ VM_JFRChunkWriter::writeYoungGenerationConfigurationEvent()
 void
 VM_JFRChunkWriter::writeInitialSystemPropertyEvents(J9JavaVM *vm)
 {
+	Trc_VM_JFRChunkWriter_writeInitialSystemPropertyEvents(vm);
 	pool_state walkState;
 
 	J9VMSystemProperty *property = (J9VMSystemProperty *)pool_startDo(vm->systemProperties, &walkState);
@@ -1036,6 +1044,7 @@ VM_JFRChunkWriter::writeInitialSystemPropertyEvents(J9JavaVM *vm)
 void
 VM_JFRChunkWriter::writeInitialEnvironmentVariableEvents()
 {
+	Trc_VM_JFRChunkWriter_writeInitialEnvironmentVariableEvents();
 	J9SysinfoEnvIteratorState envState;
 	memset(&envState, 0, sizeof(envState));
 
@@ -1332,6 +1341,7 @@ VM_JFRChunkWriter::writeSystemProcessEvent(void *anElement, void *userData)
 void
 VM_JFRChunkWriter::writeSystemGCEvent(void *anElement, void *userData)
 {
+	Trc_VM_JFRChunkWriter_writeSystemGCEvent();
 	SystemGCEntry *entry = (SystemGCEntry *)anElement;
 	VM_BufferWriter *bufferWriter = (VM_BufferWriter *)userData;
 
@@ -1363,6 +1373,7 @@ VM_JFRChunkWriter::writeSystemGCEvent(void *anElement, void *userData)
 void
 VM_JFRChunkWriter::writeOldGarbageCollectionEvent(void *anElement, void *userData)
 {
+	Trc_VM_JFRChunkWriter_writeOldGarbageCollectionEvent();
 	OldGarbageCollectionEntry *entry = (OldGarbageCollectionEntry *)anElement;
 	VM_BufferWriter *bufferWriter = (VM_BufferWriter *)userData;
 
@@ -1388,6 +1399,7 @@ VM_JFRChunkWriter::writeOldGarbageCollectionEvent(void *anElement, void *userDat
 void
 VM_JFRChunkWriter::writeYoungGarbageCollectionEvent(void *anElement, void *userData)
 {
+	Trc_VM_JFRChunkWriter_writeYoungGarbageCollectionEvent();
 	YoungGarbageCollectionEntry *entry = (YoungGarbageCollectionEntry *)anElement;
 	VM_BufferWriter *bufferWriter = (VM_BufferWriter *)userData;
 
@@ -1416,6 +1428,7 @@ VM_JFRChunkWriter::writeYoungGarbageCollectionEvent(void *anElement, void *userD
 void
 VM_JFRChunkWriter::writeGarbageCollectionEvent(void *anElement, void *userData)
 {
+	Trc_VM_JFRChunkWriter_writeGarbageCollectionEvent();
 	GarbageCollectionEntry *entry = (GarbageCollectionEntry *)anElement;
 	VM_BufferWriter *bufferWriter = (VM_BufferWriter *)userData;
 
@@ -1517,6 +1530,7 @@ VM_JFRChunkWriter::writeNetworkUtilizationEvent(void *anElement, void *userData)
 void
 VM_JFRChunkWriter::writeDataLossEvent(void *anElement, void *userData)
 {
+	Trc_VM_JFRChunkWriter_writeDataLossEvent();
 	DataLossEntry *entry = (DataLossEntry *)anElement;
 	VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
 

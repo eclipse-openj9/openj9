@@ -313,6 +313,7 @@ public:
 	void
 	loadEvents(bool dumpCalled)
 	{
+		Trc_VM_JFRChunkWriter_loadEvents(dumpCalled);
 		_constantPoolTypes.loadEvents(dumpCalled);
 		_buildResult = _constantPoolTypes.getBuildResult();
 	}
@@ -910,7 +911,7 @@ done:
 			_buildResult = FileIOError;
 		}
 
-		if (_debug) {
+		if (true) {
 			writeIntermediateJFRChunkToFile();
 		}
 
