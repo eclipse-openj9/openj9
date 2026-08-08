@@ -505,7 +505,7 @@ public:
         TR::MemoryReference *tempMR, TR::Instruction *iCursor);
     static TR::Instruction *generateVFTMaskInstruction(TR::Node *node, TR::Register *reg, TR::CodeGenerator *cg,
         TR::Instruction *preced = NULL);
-    static TR::Register *VMifInstanceOfEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+    static bool VMifInstanceOfEvaluator(TR::Node *node, TR::CodeGenerator *cg);
     static bool VMinlineCallEvaluator(TR::Node *node, bool, TR::CodeGenerator *cg);
 
     /** \brief
@@ -543,9 +543,9 @@ public:
         TR::Register *srcAddrReg, TR::Register *dstAddrReg, TR::Register *lengthReg, TR::CodeGenerator *cg);
     static void genWrtbarForArrayCopy(TR::Node *node, TR::Register *srcObjReg, TR::Register *dstObjReg, bool srcNonNull,
         TR::CodeGenerator *cg);
-    static TR::Register *VMgenCoreInstanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg, TR::LabelSymbol *trueLabel,
-        TR::LabelSymbol *falseLabel, bool initialResult, bool needResult, TR::RegisterDependencyConditions *conditions,
-        bool ifInstanceOf = false);
+    static TR::Register *VMgenCoreInstanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg, bool needResult,
+        int32_t initialResult, bool &ifInstanceOfSuccess, bool isIfInstanceOf = false,
+        TR::LabelSymbol *trueLabel = NULL, TR::LabelSymbol *falseLabel = NULL, TR::Node *graDepNode = NULL);
     static TR::Register *VMmonentEvaluator(TR::Node *node, TR::CodeGenerator *cg);
     static TR::Register *VMmonexitEvaluator(TR::Node *node, TR::CodeGenerator *cg);
     static TR::Register *VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg);

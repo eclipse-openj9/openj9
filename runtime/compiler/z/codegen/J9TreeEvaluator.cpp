@@ -4223,10 +4223,15 @@ static void genInstanceOfOrCheckcastArrayOfJavaLangObjectTest(TR::Node *node, TR
 TR::Register *J9::Z::TreeEvaluator::instanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 {
     TR::Compilation *comp = cg->comp();
-    static bool initialResult = feGetEnv("TR_instanceOfInitialValue") != NULL;
-    logprintf(comp->getOption(TR_TraceCG), comp->log(), "Initial result = %d\n", initialResult);
-    // Complementing Initial Result to True if the floag is not passed.
-    return VMgenCoreInstanceofEvaluator(node, cg, NULL, NULL, !initialResult, 1, NULL, false);
+    static bool falseInitialResult = feGetEnv("TR_InstanceOfInitialFalseResult") != NULL;
+    logprintf(comp->getOption(TR_TraceCG), comp->log(), "Initial result = %d\n", falseInitialResult ? 0 : 1);
+    // Core evaluator for instanceOf is also used to combine instructions
+    // generated for if compare and branch and instanceOf which is denoted as
+    // ifInstanceOf. As this is standalone instanceOf evaluator,
+    // ifInstanceOfSuccess would not be needed but is being passed here as
+    // the core evaluator expects it.
+    bool ifInstanceOfSuccess = false;
+    return VMgenCoreInstanceofEvaluator(node, cg, true, falseInitialResult ? 0 : 1, ifInstanceOfSuccess);
 }
 
 /** \brief
@@ -8367,10 +8372,10 @@ static bool graDepsConflictWithInstanceOfDeps(TR::Node *depNode, TR::Node *node,
  */
 static void genInstanceOfDynamicCacheAndHelperCall(TR::Node *node, TR::CodeGenerator *cg, TR::Register *castClassReg,
     TR::Register *objClassReg, TR::Register *resultReg, TR::RegisterDependencyConditions *deps,
-    TR_S390ScratchRegisterManager *srm, TR::LabelSymbol *doneLabel, TR::LabelSymbol *helperCallLabel,
-    TR::LabelSymbol *dynamicCacheTestLabel, TR::LabelSymbol *branchLabel, TR::LabelSymbol *trueLabel,
-    TR::LabelSymbol *falseLabel, bool dynamicCastClass, bool generateDynamicCache, bool cacheCastClass,
-    bool ifInstanceOf, bool trueFallThrough)
+    TR::RegisterDependencyConditions *graDeps, TR_S390ScratchRegisterManager *srm, TR::LabelSymbol *doneLabel,
+    TR::LabelSymbol *helperCallLabel, TR::LabelSymbol *dynamicCacheTestLabel, TR::LabelSymbol *branchLabel,
+    TR::LabelSymbol *trueLabel, TR::LabelSymbol *falseLabel, bool dynamicCastClass, bool generateDynamicCache,
+    bool cacheCastClass, bool ifInstanceOf, bool trueFallThrough)
 {
     TR::Compilation *comp = cg->comp();
     bool needResult = resultReg != NULL;
@@ -8559,7 +8564,7 @@ static void genInstanceOfDynamicCacheAndHelperCall(TR::Node *node, TR::CodeGener
 
     if (generateDynamicCache) {
         TR::RegisterDependencyConditions *OOLConditions
-            = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 9, cg);
+            = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(graDeps, 0, 9, cg);
         if (cacheCastClass && isTarget64Bit && !comp->useCompressedPointers()) {
             OOLConditions->addPostCondition(cachedObjectClass, TR::RealRegister::LegalEvenOfPair);
             OOLConditions->addPostCondition(cachedCastClass, TR::RealRegister::LegalOddOfPair);
@@ -8661,9 +8666,9 @@ static void genInstanceOfDynamicCacheAndHelperCall(TR::Node *node, TR::CodeGener
  *    It calls common function to generate list of inlined tests and generates instructions handling both instanceOf and
  * ifInstanceOf case.
  */
-TR::Register *J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg,
-    TR::LabelSymbol *trueLabel, TR::LabelSymbol *falseLabel, bool initialResult, bool needResult,
-    TR::RegisterDependencyConditions *graDeps, bool ifInstanceOf)
+TR::Register *J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg, bool needResult,
+    int32_t initialResult, bool &ifInstanceOfSuccess, bool isIfInstanceOf, TR::LabelSymbol *trueLabel,
+    TR::LabelSymbol *falseLabel, TR::Node *graDepNode)
 {
     TR::Compilation *comp = cg->comp();
     OMR::Logger *log = comp->log();
@@ -8675,16 +8680,6 @@ TR::Register *J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node *node,
     InstanceOfOrCheckCastProfiledClasses *profiledClassesList = (InstanceOfOrCheckCastProfiledClasses *)alloca(
         maxProfiledClasses * sizeof(InstanceOfOrCheckCastProfiledClasses));
 
-    TR::Node *objectNode = node->getFirstChild();
-    TR::Node *castClassNode = node->getSecondChild();
-
-    TR::Register *objectReg = cg->evaluate(objectNode);
-    TR::Register *objClassReg = NULL;
-    TR::Register *resultReg = NULL;
-    TR::Register *castClassReg = NULL;
-
-    TR_S390ScratchRegisterManager *srm = cg->generateScratchRegisterManager(2);
-
     bool topClassWasCastClass = false;
     float topClassProbability = 0.0;
     InstanceOfOrCheckCastSequences sequences[InstanceOfOrCheckCastMaxSequences];
@@ -8692,6 +8687,37 @@ TR::Register *J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node *node,
     uint32_t numSequencesRemaining
         = calculateInstanceOfOrCheckCastSequences(node, sequences, &compileTimeGuessClass, cg, profiledClassesList,
             &numberOfProfiledClass, maxProfiledClasses, &topClassProbability, &topClassWasCastClass);
+    TR_S390ScratchRegisterManager *srm = cg->generateScratchRegisterManager(2);
+
+    /**
+     * This evaluator at max allocates 6 GPRs in addition to a pool of 2 scratch
+     * register manager. If we have ifInstanceOf node, we may have a GlRegDeps
+     * for the branch node. The following checks ensure that total registers
+     * including ones for GlRegDeps are within the maximum number of assignable
+     * GPRs before proceeding to generate instructions. If it is not within the
+     * range, bail out generating ifInstanceOf.
+     * If the evaluator needs to allocate more registers, rather than allocating
+     * a separate register, use scratch register manager and if needed, increase
+     * the pool size that way following check would still work.
+     */
+    if (isIfInstanceOf && graDepNode != NULL) {
+        int32_t maxNumberOfUsedRegs
+            = srm->getCapacity() + ((comp->target().is64Bit() && !comp->useCompressedPointers()) ? 3 : 0) + 4;
+        if (graDepNode->getNumChildren() + maxNumberOfUsedRegs > cg->getMaximumNumbersOfAssignableGPRs()) {
+            ifInstanceOfSuccess = false;
+            return NULL;
+        }
+    }
+
+    TR::Node *objectNode = node->getFirstChild();
+    TR::Node *castClassNode = node->getSecondChild();
+
+    TR::Register *objectReg = cg->evaluate(objectNode);
+    TR::Register *objClassReg = NULL;
+    TR::Register *resultReg = NULL;
+    TR::Register *castClassReg = NULL;
+    TR::RegisterDependencyConditions *graDeps = NULL;
+
     bool outLinedSuperClass = false;
     TR::Instruction *cursor = NULL;
     TR::Instruction *gcPoint = NULL;
@@ -8723,7 +8749,7 @@ TR::Register *J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node *node,
     bool dynamicCastClass = false;
     bool generateGoToFalseBRC = true;
 
-    if (ifInstanceOf) {
+    if (isIfInstanceOf) {
         if (trueLabel) {
             logprints(trace, log, "IfInstanceOf Node : Branch True\n");
             falseLabel = (needResult) ? oppositeResultLabel : doneLabel;
@@ -8774,15 +8800,12 @@ TR::Register *J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node *node,
                     generateS390MemoryReference(objectReg,
                         static_cast<int32_t>(TR::Compiler->om.offsetOfObjectVftField()), cg),
                     NULL);
-                startICFLabel = generateLabelSymbol(cg);
-                startICFLabel->setStartInternalControlFlow();
-                generateS390LabelInstruction(cg, TR::InstOpCode::label, node, startICFLabel);
                 break;
             case GoToTrue:
                 logprintf(trace, log, "%s: Emitting GoToTrue\n", node->getOpCode().getName());
                 // If fall through in True (Initial Result False)
                 // if (trueLabel != oppositeResultLabel)
-                if (trueLabel != oppositeResultLabel || (ifInstanceOf && !trueFallThrough))
+                if (trueLabel != oppositeResultLabel || (isIfInstanceOf && !trueFallThrough))
                     generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BC, node, trueLabel);
                 break;
             case GoToFalse:
@@ -8971,14 +8994,31 @@ TR::Register *J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node *node,
         }
         --numSequencesRemaining;
         ++iter;
+        if (*iter != EvaluateCastClass && *iter != LoadObjectClass) {
+            // Every other test except these two would generate a branch that would
+            // go to true / false result so if startOfICFLabel is not generated,
+            // generate it now and ensure that we evaluate graDepNode before the
+            // starting of internal control flow. At this point, all children of the
+            // instanceOf would be evaluated so it is safe to evaluate the
+            // graDepNode.
+            if (startICFLabel == NULL) {
+                if (graDepNode != NULL) {
+                    cg->evaluate(graDepNode);
+                    graDeps = generateRegisterDependencyConditions(cg, graDepNode, 0);
+                }
+                startICFLabel = generateLabelSymbol(cg);
+                startICFLabel->setStartInternalControlFlow();
+                generateS390LabelInstruction(cg, TR::InstOpCode::label, node, startICFLabel);
+            }
+        }
     }
 
     TR::RegisterDependencyConditions *conditions
         = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(graDeps, 0, 8 + srm->numAvailableRegisters(), cg);
     if (numSequencesRemaining > 0 && *iter == HelperCall)
-        genInstanceOfDynamicCacheAndHelperCall(node, cg, castClassReg, objClassReg, resultReg, conditions, srm,
+        genInstanceOfDynamicCacheAndHelperCall(node, cg, castClassReg, objClassReg, resultReg, conditions, graDeps, srm,
             doneLabel, callLabel, dynamicCacheTestLabel, branchLabel, trueLabel, falseLabel, dynamicCastClass,
-            generateDynamicCache, cacheCastClass, ifInstanceOf, trueFallThrough);
+            generateDynamicCache, cacheCastClass, isIfInstanceOf, trueFallThrough);
 
     if (needResult) {
         generateS390LabelInstruction(cg, TR::InstOpCode::label, node, oppositeResultLabel);
@@ -9021,7 +9061,7 @@ TR::Register *J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node *node,
  *    For ifInstanceOf node, it checks if the node has GRA dependency node as third child and if it has, calls normal
  * instanceOf Otherwise calls VMgenCoreInstanceOfEvaluator with parameters to generate instructions for ifInstanceOf.
  */
-TR::Register *J9::Z::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+bool J9::Z::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 {
     TR::Node *graDepNode = NULL;
     TR::ILOpCodes opCode = node->getOpCodeValue();
@@ -9038,29 +9078,26 @@ TR::Register *J9::Z::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node *node, TR::
         graDepNode = node->getChild(2);
     }
 
-    if (graDepNode && graDepsConflictWithInstanceOfDeps(graDepNode, instanceOfNode, cg)) {
-        return (TR::Register *)1;
-    }
-
-    bool needResult = (instanceOfNode->getReferenceCount() > 1);
-
     if ((opCode == TR::ificmpeq && value == 1) || (opCode != TR::ificmpeq && value == 0))
         trueLabel = branchLabel;
     else
         falseLabel = branchLabel;
 
-    if (graDepNode) {
-        cg->evaluate(graDepNode);
-        graDeps = generateRegisterDependencyConditions(cg, graDepNode, 0);
-    }
-    bool initialResult = trueLabel != NULL;
+    int32_t initialResult = trueLabel != NULL ? 1 : 0;
 
-    VMgenCoreInstanceofEvaluator(instanceOfNode, cg, trueLabel, falseLabel, initialResult, needResult, graDeps, true);
+    bool ifInstanceOfSuccess = true;
+
+    VMgenCoreInstanceofEvaluator(instanceOfNode, cg, (instanceOfNode->getReferenceCount() > 1), initialResult,
+        ifInstanceOfSuccess, true, trueLabel, falseLabel, graDepNode);
+
+    if (!ifInstanceOfSuccess) {
+        return false;
+    }
 
     cg->decReferenceCount(instanceOfNode);
     node->setRegister(NULL);
 
-    return NULL;
+    return true;
 }
 
 /**
