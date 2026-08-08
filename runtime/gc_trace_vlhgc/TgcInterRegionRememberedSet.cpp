@@ -146,10 +146,10 @@ calculateAndPrintHistogram(J9VMThread *vmThread, MM_HeapRegionManager *regionMan
 		}
 		tgcExtensions->printf("      OF");
 
-		for (UDATA age = 0; age <= extensions->tarokRegionMaxAge; age++) {
+		for (uintptr_t age = 0; age <= extensions->tarokRegionMaxAge; age++) {
 			for (i = 0; i < regionCount; i++) {
 				MM_HeapRegionDescriptorVLHGC *region = (MM_HeapRegionDescriptorVLHGC *)regionManager->physicalTableDescriptorForIndex(i);
-				if (age == region->getLogicalAge()) {
+				if (age == region->getAge()) {
 					UDATA cardCount = region->getRememberedSetCardList()->getSize(env);
 					UDATA duplicates = getUpperBoundDuplicatesCount(env, region->getRememberedSetCardList());
 					UDATA bucketIndex;

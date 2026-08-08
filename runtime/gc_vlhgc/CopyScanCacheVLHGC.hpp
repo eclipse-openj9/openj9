@@ -48,10 +48,7 @@ protected:
 public:
 	GC_ObjectIteratorState _objectIteratorState; /**< the scan state of the partially scanned object */
 	uintptr_t _compactGroup; /**< The compact group this cache belongs to */
-	double _allocationAgeSizeProduct; /**< sum of (age * size) products for each object copied to this copy cache */
 	uintptr_t _objectSize;   /**< sum of objects sizes copied to this copy cache */
-	uint64_t _lowerAgeBound; /**< lowest possible age of any object in this copy cache */
-	uint64_t _upperAgeBound; /**< highest possible age of any object in this copy cache */
 	uintptr_t _arraySplitIndex; /**< The index within the array in scanCurrent to start scanning from (meaningful is OMR_COPYSCAN_CACHE_TYPE_SPLIT_ARRAY is set) */
 
 	/* Members Function */
@@ -83,10 +80,7 @@ public:
 	MM_CopyScanCacheVLHGC()
 		: MM_CopyScanCache()
 		, _compactGroup(UDATA_MAX)
-		, _allocationAgeSizeProduct(0.0)
 		, _objectSize(0)
-		, _lowerAgeBound(U_64_MAX)
-		, _upperAgeBound(0)
 		, _arraySplitIndex(0)
 	{}
 };
