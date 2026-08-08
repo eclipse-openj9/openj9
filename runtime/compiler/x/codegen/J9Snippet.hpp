@@ -46,6 +46,10 @@ class LabelSymbol;
 class Node;
 } // namespace TR
 
+namespace OMR {
+class Logger;
+} // namespace OMR
+
 namespace J9 { namespace X86 {
 
 class OMR_EXTENSIBLE Snippet : public J9::Snippet {
@@ -59,6 +63,11 @@ public:
     {}
 
     virtual TR::X86GuardedDevirtualSnippet *getGuardedDevirtualSnippet();
+
+    /**
+     * @copydoc OMR::Snippet::printName(OMR::Logger *)
+     */
+    void printName(OMR::Logger *log);
 };
 
 }} // namespace J9::X86
