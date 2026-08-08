@@ -27,27 +27,27 @@
 #include "ClassFileOracle.hpp"
 #include "ut_j9bcu.h"
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 SRPKeyProducer::SRPKeyProducer(ClassFileOracle *classFileOracle, InterfaceInjectionInfo *interfaceInjectionInfo) :
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 SRPKeyProducer::SRPKeyProducer(ClassFileOracle *classFileOracle) :
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	_cfrConstantPoolCount(classFileOracle->getConstantPoolCount()),
 	_methodCount(classFileOracle->getMethodsCount()),
 	_startStackMapKeys(0),
 	_startMethodDebugInfoKeys(0),
 	_startVariableInfoKeys(0),
 	_maxKey(0),
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	_numOfInterfacesToInject(interfaceInjectionInfo->numOfInterfaces),
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	_getMaxKeyWasCalled(false)
 
 {
 	_startStackMapKeys = _cfrConstantPoolCount;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	_startStackMapKeys += interfaceInjectionInfo->numOfInterfaces;
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	_startMethodDebugInfoKeys = _startStackMapKeys + UDATA(_methodCount);
 	_startVariableInfoKeys = _startMethodDebugInfoKeys + UDATA(_methodCount);
 	_maxKey = _startVariableInfoKeys + UDATA(_methodCount);

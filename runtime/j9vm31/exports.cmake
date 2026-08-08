@@ -272,6 +272,6 @@ if(NOT JAVA_SPEC_VERSION LESS 24)
 	omr_add_exports(jvm31 GetStringUTFLengthAsLong)
 endif()
 
-if(J9VM_OPT_VALHALLA_VALUE_TYPES)
+if(NOT JAVA_SPEC_VERSION LESS 28)
 	omr_add_exports(jvm31 HasIdentity)
 endif()

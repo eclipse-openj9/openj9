@@ -241,7 +241,7 @@ findAndMatchStack (J9BytecodeVerificationData *verifyData, IDATA targetPC, IDATA
 		/* Never considered an inline match if we perform a find */
 		rc = matchStack (verifyData, liveStack, targetStack, FALSE);
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 		if (J9_CLASSFILE_OR_ROMCLASS_SUPPORTS_STRICT_FIELDS(verifyData->romClass)
 			&& liveStack->uninitializedThis
 			&& (hashTableGetCount(verifyData->strictFields) > 0)
@@ -305,7 +305,7 @@ findAndMatchStack (J9BytecodeVerificationData *verifyData, IDATA targetPC, IDATA
 				}
 			}
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	} else {
 		/* failed to find map */
 		Trc_RTV_findAndMatchStack_StackNotFound(verifyData->vmStruct, 
@@ -536,9 +536,9 @@ verifyBytecodes (J9BytecodeVerificationData * verifyData)
 	UDATA errorTargetType = (UDATA)-1;
 	UDATA errorStackIndex = (UDATA)-1;
 	UDATA errorTempData = (UDATA)-1;
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 	BOOLEAN anotherInstanceInitCalled = FALSE;
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	Trc_RTV_verifyBytecodes_Entry(verifyData->vmStruct, 
 			(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_NAME(romMethod)),
@@ -1498,20 +1498,20 @@ _illegalPrimitiveReturn:
 			}
 
 			rc = isFieldAccessCompatible (verifyData, (J9ROMFieldRef *) info, bc, receiver, &reasonCode
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 					, isInitMethod, anotherInstanceInitCalled
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 				);
 			if (BCV_ERR_INSUFFICIENT_MEMORY == reasonCode) {
 				goto _outOfMemoryError;
 			}
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 			if (BCV_ERR_INVALID_USE_STRICT_INSTANCE_FIELDS == reasonCode) {
 				errorType = J9NLS_BCV_ERR_UNKNOWN_STRICT_FIELD__ID;
 				verboseErrorCode = BCV_ERR_INVALID_USE_STRICT_INSTANCE_FIELDS;
 				goto _miscError;
 			}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 			inconsistentStack |= (FALSE == rc);
 			if (inconsistentStack) {
 				constantPool = (J9ROMConstantPoolItem *) (romClass + 1);
@@ -1747,7 +1747,7 @@ _illegalPrimitiveReturn:
 									goto _inconsistentStack2;
 								}
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 								if (J9_CLASSFILE_OR_ROMCLASS_SUPPORTS_STRICT_FIELDS(verifyData->romClass)) {
 									if (classIndex == superClassIndex) {
 										/* All strict instance fields must be assigned before
@@ -1762,7 +1762,7 @@ _illegalPrimitiveReturn:
 										anotherInstanceInitCalled = TRUE;
 									}
 								}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 							}
 
 							/* This invoke special will make all copies of this "type" on the stack a real

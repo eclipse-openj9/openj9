@@ -1762,12 +1762,12 @@ slow_jitMonitorEnterImpl(J9VMThread *currentThread, bool forMethod)
 			J9Class* badClass = J9OBJECT_CLAZZ(currentThread, syncObject);
 			J9UTF8 *className = J9ROMCLASS_CLASSNAME(badClass->romClass);
 			TIDY_BEFORE_THROW();
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 			if (J9_IS_J9CLASS_VALUETYPE(badClass)) {
 				currentThread->javaVM->internalVMFunctions->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE,
 					J9VMCONSTANTPOOL_JAVALANGIDENTITYEXCEPTION, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
 			} else
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 			{
 				Assert_CodertVM_true(J9_ARE_ALL_BITS_SET(currentThread->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION));
 				currentThread->javaVM->internalVMFunctions->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED,
@@ -2777,13 +2777,13 @@ void* J9FASTCALL
 old_slow_jitThrowIdentityException(J9VMThread *currentThread)
 {
 	void *exception = NULL;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	OLD_JIT_HELPER_PROLOGUE(0);
 	buildJITResolveFrameForRuntimeCheck(currentThread);
 	exception = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGIDENTITYEXCEPTION, NULL);
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 	exception = (void *)-1;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	return exception;
 }
 

@@ -226,10 +226,10 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_isInnerClass(false),
 	_needsStaticConstantInit(false),
 	_isRecord(false),
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	_hasNonStaticSynchronizedMethod(false),
 	_loadableDescriptorsAttribute(NULL),
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	_recordComponentCount(0),
 	_permittedSubclassesAttribute(NULL),
 	_isSealed(false),
@@ -288,7 +288,7 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 		walkFields();
 	}
 	
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	if (OK == _buildResult) {
 		if (J9_IS_CLASSFILE_VALUETYPE(_classFile)) {
 			if (_hasNonStaticSynchronizedMethod) {
@@ -296,7 +296,7 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 			}
 		}
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	if (OK == _buildResult) {
 		_constantPoolMap->computeConstantPoolMapAndSizes();
@@ -612,7 +612,7 @@ ClassFileOracle::walkAttributes()
 			}
 			break;
 		}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		case CFR_ATTRIBUTE_LoadableDescriptors: {
 			_loadableDescriptorsAttribute = (J9CfrAttributeLoadableDescriptors *)attrib;
 			for (U_16 numberOfDescriptors = 0; numberOfDescriptors < _loadableDescriptorsAttribute->numberOfDescriptors; numberOfDescriptors++) {
@@ -621,7 +621,7 @@ ClassFileOracle::walkAttributes()
 			}
 			break;
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 #if JAVA_SPEC_VERSION >= 11
 		case CFR_ATTRIBUTE_NestMembers:
 			/* ignore CFR_ATTRIBUTE_NestMembers for hidden classes, as the nest members never know the name of hidden classes */
@@ -801,11 +801,11 @@ ClassFileOracle::walkInterfaces()
 	ROMClassVerbosePhase v(_context, ClassFileInterfacesAnalysis);
 
 	InterfaceVisitor interfaceVisitor(this, _constantPoolMap);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	interfacesDo(&interfaceVisitor, 0);
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 	interfacesDo(&interfaceVisitor);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	_isCloneable = interfaceVisitor.wasCloneableSeen();
 	_isSerializable = interfaceVisitor.wasSerializableSeen();
 }
@@ -862,11 +862,11 @@ ClassFileOracle::walkMethods()
 				_hasEmptyFinalizeMethod = true;
 			}
 		}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		if (!_hasNonStaticSynchronizedMethod) {
 			_hasNonStaticSynchronizedMethod = methodIsNonStaticSynchronized(methodIndex);
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 		computeSendSlotCount(methodIndex);
 
@@ -1327,20 +1327,20 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 			StackMapFrameInfo *stackMapFramesInfo = _methodsInfo[methodIndex].stackMapFramesInfo;
 			U_8 *framePointer = stackMap->entries;
 			U_16 entryCount = U_16(stackMap->numberOfEntries);
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 			bool walkBaseFrame = false;
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 			U_16 entryIndex = 0;
 			while (entryIndex < entryCount) {
 				U_8 frameType = 0;
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 				if (walkBaseFrame) {
 					/* Save the base frame type and walk the base frame. */
 					NEXT_U8(stackMapFramesInfo[entryIndex].baseFrameType, framePointer);
 					frameType = stackMapFramesInfo[entryIndex].baseFrameType;
 					walkBaseFrame = false;
 				} else
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 				{
 					NEXT_U8(stackMapFramesInfo[entryIndex].frameType, framePointer);
 					frameType = stackMapFramesInfo[entryIndex].frameType;
@@ -1357,14 +1357,14 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 					stackMapFramesInfo[entryIndex].stackItemsCount = 1;
 					stackMapFramesInfo[entryIndex].stackItemsTypeInfo = framePointer;
 					framePointer = walkStackMapSlots(framePointer, stackMapFramesInfo[entryIndex].stackItemsCount);
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 				} else if (CFR_STACKMAP_EARLY_LARVAL > frameType) { /* 128..245 */
-#else /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 				} else if (CFR_STACKMAP_SAME_LOCALS_1_STACK_EXTENDED > frameType) { /* 128..246 */
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 					/* Reserved frame types - no extra data */
 					Trc_BCU_Assert_ShouldNeverHappen();
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 				} else if (CFR_STACKMAP_EARLY_LARVAL == frameType) { /* 246 */
 					/*
 					 * EARLY_LARVAL {
@@ -1379,7 +1379,7 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 					/* Walk the base frame during the next iteration. */
 					walkBaseFrame = true;
 					continue;
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 				} else if (CFR_STACKMAP_SAME_LOCALS_1_STACK_EXTENDED == frameType) { /* 247 */
 					/*
 					 * SAME_LOCALS_1_STACK_EXTENDED {
@@ -2221,7 +2221,7 @@ ClassFileOracle::walkMethodCodeAttributeCode(U_16 methodIndex)
 #undef PARAM_U16
 #undef PARAM_U8
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 U_8 *
 ClassFileOracle::walkUnsetFields(U_8 *framePointer, U_16 numberOfUnsetFields)
 {
@@ -2233,7 +2233,7 @@ ClassFileOracle::walkUnsetFields(U_8 *framePointer, U_16 numberOfUnsetFields)
 	}
 	return framePointer;
 }
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 U_8 *
 ClassFileOracle::walkStackMapSlots(U_8 *framePointer, U_16 typeInfoCount)
@@ -2423,7 +2423,7 @@ ClassFileOracle::methodIsNonStaticNonAbstract(U_16 methodIndex)
 	return J9_ARE_NO_BITS_SET(_classFile->methods[methodIndex].accessFlags, (CFR_ACC_STATIC | CFR_ACC_ABSTRACT));
 }
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 bool
 ClassFileOracle::methodIsNonStaticSynchronized(U_16 methodIndex)
 {
@@ -2435,7 +2435,7 @@ ClassFileOracle::methodIsNonStaticSynchronized(U_16 methodIndex)
 	}
 	return false;
 }
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 /**
  * Method to determine if an invokevirtual instruction should be re-written to be an

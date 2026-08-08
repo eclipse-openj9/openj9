@@ -146,9 +146,9 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 	J9CfrAttributeBootstrapMethods *bootstrapMethods;
 	J9CfrAttributeRecord *record;
 	J9CfrAttributePermittedSubclasses *permittedSubclasses;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	J9CfrAttributeLoadableDescriptors *loadableDescriptors;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 #if JAVA_SPEC_VERSION >= 11
 	J9CfrAttributeNestHost *nestHost;
 	J9CfrAttributeNestMembers *nestMembers;
@@ -171,9 +171,9 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 	BOOLEAN invisibleParameterAnnotationsRead  = FALSE;
 	BOOLEAN recordAttributeRead = FALSE;
 	BOOLEAN permittedSubclassesAttributeRead = FALSE;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	BOOLEAN loadableDescriptorsAttributeRead = FALSE;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	BOOLEAN nullRestrictedAttributeRead = FALSE;
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
@@ -940,7 +940,7 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 			}
 			break;
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		case CFR_ATTRIBUTE_LoadableDescriptors:
 			/* JVMS: There may be at most one LoadableDescriptors attribute
 			 * in the attributes table of a ClassFile structure...
@@ -968,7 +968,7 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 				NEXT_U16(loadableDescriptors->descriptors[j], index);
 			}
 			break;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	case CFR_ATTRIBUTE_NullRestricted:
 		/* JVMS: There must be no more than one NullRestricted attribute in the attributes table of a field_info structure */
@@ -1677,9 +1677,9 @@ checkFields(J9PortLibrary* portLib, J9CfrClassFile * classfile, U_8 * segment, U
 	U_32 value, maskedValue, errorCode, offset = 0;
 	U_32 i;
 	U_8 sigChar, sigTag, constantTag;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	BOOLEAN valueTypeClass = J9_IS_CLASSFILE_VALUETYPE(classfile);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	for (i = 0; i < classfile->fieldsCount; i++) {
 		field = &(classfile->fields[i]);
@@ -1711,7 +1711,7 @@ checkFields(J9PortLibrary* portLib, J9CfrClassFile * classfile, U_8 * segment, U
 			goto _errorFound;
 		}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		if (valueTypeClass) {
 			if (J9_ARE_NO_BITS_SET(field->accessFlags, CFR_ACC_STATIC)) {
 				if (!J9_ARE_ALL_BITS_SET(field->accessFlags, CFR_ACC_FINAL | CFR_ACC_STRICT_INIT)) {
@@ -1720,7 +1720,7 @@ checkFields(J9PortLibrary* portLib, J9CfrClassFile * classfile, U_8 * segment, U
 				}
 			}
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 		offset = 2;
 		value = field->nameIndex;
@@ -1930,7 +1930,7 @@ checkMethods(J9PortLibrary* portLib, J9CfrClassFile* classfile, U_8* segment, U_
 			goto _errorFound;
 		}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		if (J9_IS_CLASSFILE_VALUETYPE(classfile)) {
 			if (J9_ARE_ALL_BITS_SET(value, CFR_ACC_SYNCHRONIZED)) {
 				if (J9_ARE_NO_BITS_SET(value, CFR_ACC_STATIC)) {
@@ -1939,7 +1939,7 @@ checkMethods(J9PortLibrary* portLib, J9CfrClassFile* classfile, U_8* segment, U_
 				}
 			}
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 _nameCheck:
 
@@ -2525,7 +2525,7 @@ checkAttributes(J9PortLibrary* portLib, J9CfrClassFile* classfile, J9CfrAttribut
 			}
 			break;
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		case CFR_ATTRIBUTE_LoadableDescriptors:
 			value = ((J9CfrAttributeLoadableDescriptors *)attrib)->nameIndex;
 			if ((0 == value) || (value >= cpCount)) {
@@ -2559,7 +2559,7 @@ checkAttributes(J9PortLibrary* portLib, J9CfrClassFile* classfile, J9CfrAttribut
 				}
 			}
 			break;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		case CFR_ATTRIBUTE_NullRestricted:
 			value = ((J9CfrAttributeNullRestricted*)attrib)->nameIndex;
@@ -3083,7 +3083,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 		goto _errorFound;
 	}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	if (J9_IS_CLASSFILE_OR_ROMCLASS_VALUETYPE_VERSION(classfile)) {
 		if (J9_ARE_NO_BITS_SET(
 				classfile->accessFlags,
@@ -3107,7 +3107,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	} else {
 		classfile->accessFlags &= ~CFR_ACC_IDENTITY;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	/* mask access flags to remove unused access bits */
 	classfile->accessFlags &= CFR_CLASS_ACCESS_MASK;

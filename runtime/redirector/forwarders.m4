@@ -449,7 +449,7 @@ _IF([JAVA_SPEC_VERSION >= 20],
 	[_X(JVM_GetClassFileVersion, JNICALL, false, jint, JNIEnv *env, jclass cls)])
 _IF([(20 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 23)],
 	[_X(JVM_VirtualThreadHideFrames, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean hide)])
-_IF([(JAVA_SPEC_VERSION == 23) || defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
+_IF([JAVA_SPEC_VERSION == 23],
 	[_X(JVM_VirtualThreadHideFrames, JNICALL, false, void, JNIEnv *env, jclass clz, jboolean hide)])
 _IF([JAVA_SPEC_VERSION >= 21],
 	[_X(JVM_IsForeignLinkerSupported, JNICALL, false, jboolean, void)])
@@ -463,21 +463,21 @@ _IF([(21 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 26)],
 	[_X(JVM_VirtualThreadStart, JNICALL, false, void, JNIEnv *env, jobject vthread)])
 _IF([(21 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION < 26)],
 	[_X(JVM_VirtualThreadUnmount, JNICALL, false, void, JNIEnv *env, jobject vthread, jboolean hide)])
-_IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
+_IF([JAVA_SPEC_VERSION >= 28],
 	[_X(JVM_CopyOfSpecialArray, JNICALL, false, jarray, JNIEnv *env, jarray orig, jint from, jint to)])
-_IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
+_IF([JAVA_SPEC_VERSION >= 28],
 	[_X(JVM_IsAtomicArray, JNICALL, false, jboolean, JNIEnv *env, jarray obj)])
-_IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
+_IF([JAVA_SPEC_VERSION >= 28],
 	[_X(JVM_IsFlatArray, JNICALL, false, jboolean, JNIEnv *env, jarray obj)])
-_IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
+_IF([JAVA_SPEC_VERSION >= 28],
 	[_X(JVM_IsNullRestrictedArray, JNICALL, false, jboolean, JNIEnv *env, jarray obj)])
-_IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
+_IF([JAVA_SPEC_VERSION >= 28],
 	[_X(JVM_NewNullableAtomicArray, JNICALL, false, jarray, JNIEnv *env, jclass cls, jint length)])
-_IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
+_IF([JAVA_SPEC_VERSION >= 28],
 	[_X(JVM_NewNullRestrictedAtomicArray, JNICALL, false, jarray, JNIEnv *env, jclass cls, jint length, jobject initialValue)])
-_IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
+_IF([JAVA_SPEC_VERSION >= 28],
 	[_X(JVM_NewNullRestrictedNonAtomicArray, JNICALL, false, jarray, JNIEnv *env, jclass elmClass, jint len, jobject initialValue)])
-_IF([defined(J9VM_OPT_VALHALLA_VALUE_TYPES)],
+_IF([JAVA_SPEC_VERSION >= 28],
 	[_X(JVM_NewReferenceArray, JNICALL, false, jarray, JNIEnv *env, jclass componentType, jint length)])
 _IF([JAVA_SPEC_VERSION >= 22],
 	[_X(JVM_ExpandStackFrameInfo, JNICALL, false, void, JNIEnv *env, jobject object)])

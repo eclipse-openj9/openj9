@@ -37,11 +37,11 @@ class ClassFileOracle;
 class SRPKeyProducer
 {
 public:
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	SRPKeyProducer(ClassFileOracle *classFileOracle, InterfaceInjectionInfo *interfaceInjectionInfo);
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 	SRPKeyProducer(ClassFileOracle *classFileOracle);
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	/* generateKey can no-longer be called after getMaxKey has been called */
 	UDATA generateKey();
@@ -51,9 +51,9 @@ public:
 	{
 		U_16 maxIndex = _cfrConstantPoolCount;
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		maxIndex += _numOfInterfacesToInject;
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 		Trc_BCU_Assert_LessThan(index, maxIndex);
 		return index;
@@ -63,9 +63,9 @@ public:
 	{
 		U_16 maxIndex = _cfrConstantPoolCount;
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		maxIndex += _numOfInterfacesToInject;
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 		Trc_BCU_Assert_LessThan(key, maxIndex);
 		return U_16(key);
@@ -99,9 +99,9 @@ private:
 	UDATA _startVariableInfoKeys;
 	UDATA _maxKey;
 	bool _getMaxKeyWasCalled;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	U_16 _numOfInterfacesToInject;
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 };
 
 #endif /* SRPKEYPRODUCER_HPP_ */

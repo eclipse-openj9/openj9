@@ -2838,7 +2838,7 @@ loadFlattenableArrayElement(J9VMThread *currentThread, j9object_t receiverObject
 void
 storeFlattenableArrayElement(J9VMThread *currentThread, j9object_t receiverObject, U_32 index, j9object_t paramObject);
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 /**
  * Copies an array of non-primitive objects
  * Handles flattened and non-flattened cases.
@@ -2857,7 +2857,7 @@ storeFlattenableArrayElement(J9VMThread *currentThread, j9object_t receiverObjec
  */
 I_32
 copyFlattenableArray(J9VMThread *currentThread, j9object_t srcObject, j9object_t destObject, U_32 srcIndex, U_32 destIndex, U_32 lengthInSlots);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 /**
 * @brief Iterate over fields of the specified class in JVMTI order.

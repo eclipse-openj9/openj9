@@ -338,12 +338,12 @@ checkLockwordNeeded(J9JavaVM *vm, J9ROMClass *romClass, J9Class *ramSuperClass, 
 	if (J9ROMCLASS_IS_ARRAY(romClass)) {
 		return NO_LOCKWORD_NEEDED;
 	}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	/* ValueTypes don not have lockwords */
 	if (J9ROMCLASS_IS_VALUE(romClass)) {
 		return NO_LOCKWORD_NEEDED;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	
 	/* check for primitive types or java.lang.Object */
 	if (ramSuperClass == NULL) {
@@ -475,6 +475,3 @@ checkLockwordNeeded(J9JavaVM *vm, J9ROMClass *romClass, J9Class *ramSuperClass, 
 	/* We should never get here due to the checking done in jvmint */
 	return NO_LOCKWORD_NEEDED;
 }
-
-
-

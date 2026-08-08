@@ -28,7 +28,7 @@
 
 extern "C" {
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 
 JNIEXPORT jarray JNICALL
 JVM_CopyOfSpecialArray(JNIEnv *env, jarray orig, jint from, jint to)
@@ -239,6 +239,7 @@ JVM_NewReferenceArray(JNIEnv *env, jclass componentType, jint length)
 {
 	return newArrayHelper(env, componentType, length, false, NULL);
 }
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 } /* extern "C" */

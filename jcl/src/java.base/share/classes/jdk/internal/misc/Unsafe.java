@@ -230,7 +230,7 @@ public final class Unsafe {
 	/* Mask byte offset of an int. */
 	private static final long BYTE_OFFSET_MASK = 0b11L;
 
-	/*[IF INLINE-TYPES]*/
+	/*[IF JAVA_SPEC_VERSION >= 28]*/
 	private static final class InlineTypesLock { InlineTypesLock() {} }
 	private static final InlineTypesLock inlineTypesLock = new InlineTypesLock();
 
@@ -241,7 +241,7 @@ public final class Unsafe {
 	/* Array Layout constants */
 	public static final int ARRAY_LAYOUT_FLATTENED = 1;
 	public static final int ARRAY_LAYOUT_REFERENCE = 0;
-	/*[ENDIF] INLINE-TYPES */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
 
 	static {
 		registerNatives();
@@ -4491,7 +4491,7 @@ public final class Unsafe {
 		}
 	}
 
-	/*[IF INLINE-TYPES]*/
+	/*[IF JAVA_SPEC_VERSION >= 28]*/
 	public final Object getAndSetReference(Object obj, long offset, Class<?> valueType, Object value) {
 		for (;;) {
 			Object objectAtOffset = getReferenceVolatile(obj, offset);
@@ -4520,7 +4520,7 @@ public final class Unsafe {
 		Objects.requireNonNull(clz);
 		throw new Error("getFieldMap() unimplemented"); //$NON-NLS-1$
 	}
-	/*[ENDIF] INLINE-TYPES */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
 
 	/**
 	 * Atomically sets value at offset in obj
@@ -6708,7 +6708,7 @@ public final class Unsafe {
 		return (IS_BIG_ENDIAN == isBigEndian) ? value : Character.reverseBytes(value);
 	}
 
-	/*[IF INLINE-TYPES]*/
+	/*[IF JAVA_SPEC_VERSION >= 28]*/
 
 	/**
 	 * The layout value to be checked,
@@ -7321,5 +7321,5 @@ public final class Unsafe {
 	 * @return true if the class no object references, false otherwise
 	 */
 	public native boolean isFlatPayloadBinary(Class<?> valueType);
-	/*[ENDIF] INLINE-TYPES */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
 }

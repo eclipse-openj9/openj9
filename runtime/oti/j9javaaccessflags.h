@@ -82,15 +82,15 @@
 #define J9AccMethodHasParameterAnnotations 0x40000000 /* method */
 #define J9AccMethodHasDefaultAnnotation    0x80000000 /* method */
 /* Masks and helpers */
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 /* J9AccClassHasIdentity needs to be compared specially. The flag
  * is only meaningful if the class file version supports
  * value types.
  */
 #define J9AccClassCompatibilityMask 0x7FDF
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 #define J9AccClassCompatibilityMask 0x7FFF
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 #define J9AccMethodReturnMask 0x1C0000
 #define J9AccMethodReturnShift 0x12
 /* Used in HookedByTheJit.cpp */

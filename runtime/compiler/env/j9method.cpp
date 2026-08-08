@@ -4111,7 +4111,7 @@ void TR_ResolvedJ9Method::construct()
         { "java/lang/invoke/ExplicitCastHandle", ExplicitCastHandleMethods },
 #if JAVA_SPEC_VERSION >= 15
         { "jdk/internal/loader/NativeLibraries", NativeLibrariesMethods },
-#endif  /* JAVA_SPEC_VERSION >= 15 */
+#endif /* JAVA_SPEC_VERSION >= 15 */
         { "java/lang/invoke/DirectMethodHandle", DirectMethodHandleMethods },
         { 0 }
     };

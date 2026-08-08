@@ -2968,7 +2968,7 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				}
 			}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 			vm->hashMaxRecDepth = 16;
 			if ((argIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_HASHMAXRECDEPTH_EQUALS, NULL)) >= 0) {
 				UDATA depth = 0;
@@ -2976,7 +2976,7 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				GET_INTEGER_VALUE(argIndex, optname, depth);
 				vm->hashMaxRecDepth = depth;
 			}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 			{

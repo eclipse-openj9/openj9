@@ -2421,11 +2421,11 @@ jvmtiHookGCEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void* us
 	taggedObject = hashTableStartDo(j9env->objectTagTable, &hashState);
 	while (taggedObject != NULL) {
 		if (taggedObject->ref == NULL) {
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 			taggedObject->ref = (j9object_t)((UDATA)deletedHead | J9JVMTI_OBJECT_TAG_DEAD_ENTRY_BIT);
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 			taggedObject->ref = (j9object_t) deletedHead;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 			deletedHead = (J9JVMTIObjectTag *) taggedObject;
 		}
 		taggedObject = hashTableNextDo(&hashState);
@@ -2462,11 +2462,11 @@ jvmtiHookGCEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void* us
 				}
 #endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
 			}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 			deletedHead = J9JVMTI_OBJECT_TAG_REF_NEXT(taggedObject->ref);
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 			deletedHead = (J9JVMTIObjectTag *) taggedObject->ref;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 			hashTableRemove(j9env->objectTagTable, taggedObject);
 		} while (deletedHead != NULL);
 	}
@@ -3265,7 +3265,7 @@ jvmtiHookSampledObjectAlloc(J9HookInterface** hook, UDATA eventNum, void* eventD
 		UDATA javaOffloadOldState = 0;
 		J9Class *clazz = data->clazz;
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		BOOLEAN previewEnabled =
 			J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags2,
 				J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW);
@@ -3276,7 +3276,7 @@ jvmtiHookSampledObjectAlloc(J9HookInterface** hook, UDATA eventNum, void* eventD
 		) {
 			return;
 		}
-#endif  /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 		if (prepareForEvent(j9env, currentThread, currentThread, JVMTI_EVENT_SAMPLED_OBJECT_ALLOC, &threadRef, &hadVMAccess, TRUE, 2, &javaOffloadOldState)) {
 			j9object_t *objectRef = (j9object_t*) currentThread->arg0EA;
@@ -3287,7 +3287,7 @@ jvmtiHookSampledObjectAlloc(J9HookInterface** hook, UDATA eventNum, void* eventD
 			*objectRef = data->object;
 			*classRef = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
 			vmFuncs->internalExitVMToJNI(currentThread);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 			if (previewEnabled && J9_IS_J9CLASS_VALUETYPE(clazz)) {
 				Assert_JVMTI_true(j9env->capabilities.can_support_value_objects);
 				/*
@@ -3299,9 +3299,9 @@ jvmtiHookSampledObjectAlloc(J9HookInterface** hook, UDATA eventNum, void* eventD
 			} else {
 				jvmtiObject = (jobject)objectRef;
 			}
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 			jvmtiObject = (jobject)objectRef;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 			callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, jvmtiObject, (jclass) classRef, (jlong) data->objectSize);
 			vmFuncs->internalEnterVMFromJNI(currentThread);
 			data->object = *objectRef;
@@ -3360,7 +3360,7 @@ jvmtiHookObjectAllocate(J9HookInterface** hook, UDATA eventNum, void* eventData,
 			UDATA hadVMAccess;
 			UDATA javaOffloadOldState = 0;
 			J9Class *clazz = J9OBJECT_CLAZZ(currentThread, data->object);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 			BOOLEAN previewEnabled =
 				J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags2,
 					J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW);
@@ -3371,7 +3371,7 @@ jvmtiHookObjectAllocate(J9HookInterface** hook, UDATA eventNum, void* eventData,
 			) {
 				return;
 			}
-#endif  /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 			if (prepareForEvent(j9env, currentThread, currentThread, JVMTI_EVENT_VM_OBJECT_ALLOC, &threadRef, &hadVMAccess, TRUE, 2, &javaOffloadOldState)) {
 				j9object_t * objectRef = (j9object_t*) currentThread->arg0EA;
@@ -3381,7 +3381,7 @@ jvmtiHookObjectAllocate(J9HookInterface** hook, UDATA eventNum, void* eventData,
 				*objectRef = data->object;
 				*classRef = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
 				vm->internalVMFunctions->internalExitVMToJNI(currentThread);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 				if (previewEnabled && J9_IS_J9CLASS_VALUETYPE(clazz)) {
 					Assert_JVMTI_true(j9env->capabilities.can_support_value_objects);
 					/*
@@ -3393,9 +3393,9 @@ jvmtiHookObjectAllocate(J9HookInterface** hook, UDATA eventNum, void* eventData,
 				} else {
 					jvmtiObject = (jobject)objectRef;
 				}
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 				jvmtiObject = (jobject)objectRef;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 				callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, jvmtiObject, (jclass) classRef, (jlong) data->size);
 				currentThread->javaVM->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 				data->object = J9_JNI_UNWRAP_REDIRECTED_REFERENCE(objectRef);

@@ -42,14 +42,14 @@ import java.security.PrivilegedExceptionAction;
 import java.security.Permissions;
 import java.security.ProtectionDomain;
 import java.util.Collection;
-/*[IF INLINE-TYPES]*/
+/*[IF JAVA_SPEC_VERSION >= 28]*/
 import java.util.Collections;
 import jdk.internal.misc.PreviewFeatures;
-/*[ENDIF] INLINE-TYPES */
+/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
 import java.util.HashMap;
-/*[IF (JAVA_SPEC_VERSION >= 16) | INLINE-TYPES]*/
+/*[IF JAVA_SPEC_VERSION >= 16]*/
 import java.util.HashSet;
-/*[ENDIF] (JAVA_SPEC_VERSION >= 16) | INLINE-TYPES */
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -175,9 +175,9 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	private static final int ANNOTATION = 0x2000;
 	private static final int ENUM = 0x4000;
 	private static final int MEMBER_INVALID_TYPE = -1;
-/*[IF INLINE-TYPES]*/
+/*[IF JAVA_SPEC_VERSION >= 28]*/
 	private static final int ACC_IDENTITY = 0x0020;
-/*[ENDIF] INLINE-TYPES */
+/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
 
 /*[IF]*/
 	/**
@@ -2417,15 +2417,15 @@ public int getModifiers() {
 	int rawModifiers = getModifiersImpl();
 	if (isArray()) {
 		rawModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED
-/*[IF INLINE-TYPES]*/
+/*[IF JAVA_SPEC_VERSION >= 28]*/
 				| ACC_IDENTITY
-/*[ENDIF] INLINE-TYPES */
+/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
 				| Modifier.ABSTRACT | Modifier.FINAL;
 	} else {
 		rawModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED
-/*[IF INLINE-TYPES]*/
+/*[IF JAVA_SPEC_VERSION >= 28]*/
 				| ACC_IDENTITY
-/*[ENDIF] INLINE-TYPES */
+/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
 				| Modifier.STATIC | Modifier.FINAL | Modifier.INTERFACE
 				| Modifier.ABSTRACT | SYNTHETIC | ENUM | ANNOTATION;
 	}
@@ -2834,7 +2834,7 @@ public boolean isInterface() {
  */
 public native boolean isPrimitive();
 
-/*[IF INLINE-TYPES]*/
+/*[IF JAVA_SPEC_VERSION >= 28]*/
 /**
  * Answers true if the receiver represents a value class type. Array classes
  * return false.
@@ -2842,7 +2842,7 @@ public native boolean isPrimitive();
  * @return	true if receiver is a value class type, and false otherwise.
  */
 public native boolean isValue();
-/*[ENDIF] INLINE-TYPES */
+/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
 
 /**
  * Answers a new instance of the class represented by the
@@ -2992,14 +2992,14 @@ public String toGenericString() {
 	boolean isArray = isArray();
 	boolean isInterface = !isArray && (0 != (modifiers & Modifier.INTERFACE));
 
-/*[IF INLINE-TYPES]*/
+/*[IF JAVA_SPEC_VERSION >= 28]*/
 	String valueType;
 	if (isValue()) {
 		valueType = "value "; //$NON-NLS-1$
 	} else {
 		valueType = ""; //$NON-NLS-1$
 	}
-/*[ENDIF] INLINE-TYPES */
+/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
 	// Get kind of type before modifying the modifiers
 	String kindOfType;
 	if ((!isArray) && ((modifiers & ANNOTATION) != 0)) {
@@ -3020,14 +3020,14 @@ public String toGenericString() {
 	if (isInterface) {
 		modifiers -= Modifier.INTERFACE;
 	}
-/*[IF INLINE-TYPES]*/
+/*[IF JAVA_SPEC_VERSION >= 28]*/
 	/**
 	 * IDENTITY shares the same bit as SYNCHRONIZED.
 	 * Modifier.toString() is used later in this function which translates them to "synchronized" and "volatile",
 	 * which is incorrect. So remove these bits if they are set.
 	 */
 	modifiers &= ~(ACC_IDENTITY | Modifier.STRICT);
-/*[ENDIF] INLINE-TYPES */
+/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
 
 	// Build generic string
 /*[IF JAVA_SPEC_VERSION >= 9]*/
@@ -3083,9 +3083,9 @@ public String toGenericString() {
 	// include them for Java 23 and later.
 	/*[ENDIF] JAVA_SPEC_VERSION >= 23 */
 
-/*[IF INLINE-TYPES]*/
+/*[IF JAVA_SPEC_VERSION >= 28]*/
 	result.append(valueType);
-/*[ENDIF] INLINE-TYPES */
+/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
 	result.append(kindOfType);
 	result.append(getName());
 
@@ -6208,7 +6208,7 @@ public Class<?>[] getNestMembers()
 		}
 
 		Set<AccessFlag> flags = AccessFlag.maskToAccessFlags(maskedModifiers, location);
-/*[IF INLINE-TYPES]*/
+/*[IF JAVA_SPEC_VERSION >= 28]*/
 		if (PreviewFeatures.isEnabled()) {
 			if (isArrayClass || (rawModifiers & ACC_IDENTITY) != 0) {
 				flags = new HashSet<>(flags);
@@ -6216,7 +6216,7 @@ public Class<?>[] getNestMembers()
 				flags = Collections.unmodifiableSet(flags);
 			}
 		}
-/*[ENDIF] INLINE-TYPES */
+/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
 		return flags;
 	}
 
@@ -6225,9 +6225,9 @@ public Class<?>[] getNestMembers()
 	 *
 	 * @return	the class file version
 	 */
-	/*[IF (JAVA_SPEC_VERSION < 25) & !INLINE-TYPES]*/
+	/*[IF JAVA_SPEC_VERSION < 25]*/
 	private
-	/*[ENDIF] (JAVA_SPEC_VERSION < 25) & !INLINE-TYPES */
+	/*[ENDIF] JAVA_SPEC_VERSION < 25 */
 	int getClassFileVersion() {
 		Class<?> thisObject = this;
 		while (thisObject.isArray()) {

@@ -49,9 +49,9 @@ static IDATA buildInstructionMap (J9CfrClassFile * classfile, J9CfrAttributeCode
 static IDATA checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA length, U_8 * map, J9CfrError * error, U_32 flags, I_32 *hasRET);
 static IDATA checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCode * code, U_8 * map, UDATA flags, StackmapExceptionDetails* exceptionDetails);
 static I_32 checkStackMapEntries (J9CfrClassFile* classfile, J9CfrAttributeCode * code, U_8 * map, U_8 ** entries, UDATA slotCount, U_8 * end, UDATA checkAppendArraySize);
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 static I_32 checkUnsetFields(J9CfrClassFile *classfile, U_16 numberOfUnsetFields, U_8 *unsetFields, StackmapExceptionDetails *exceptionDetails);
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 static IDATA 
 buildInstructionMap (J9CfrClassFile * classfile, J9CfrAttributeCode * code, U_8 * map, UDATA methodIndex, J9CfrError * error)
@@ -1264,10 +1264,10 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 				UDATA delta;
 				IDATA slotCount;
 				UDATA checkAppendArraySize = FALSE;
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 				U_16 numberOfUnsetFields = 0;
 				U_8 *unsetFields = NULL;
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 				if ((entries + 1) > end) {
 					errorCode = FATAL_CLASS_FORMAT_ERROR;
@@ -1275,7 +1275,7 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 				}
 				frameType = *entries++;
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 				/* The offset for an early_larval frame comes from
 				 * its base frame. Verify the unset fields list
 				 * once this has been calculated.
@@ -1311,7 +1311,7 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 						goto _failedCheck;
 					}
 				}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 				if (frameType < CFR_STACKMAP_SAME_LOCALS_1_STACK) {
 					offset += (UDATA) frameType;
@@ -1343,14 +1343,14 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 					goto _failedCheck;
 				}
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 				if (numberOfUnsetFields > 0) {
 					errorCode = checkUnsetFields(classfile, numberOfUnsetFields, unsetFields, exceptionDetails);
 					if (0 != errorCode) {
 						goto _failedCheck;
 					}
 				}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 				if (frameType != CFR_STACKMAP_FULL) {
 					/* Only executed with StackMapTable */
@@ -1413,7 +1413,7 @@ _failedCheck:
 	return errorCode;
 }
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 static I_32
 checkUnsetFields(J9CfrClassFile *classfile, U_16 numberOfUnsetFields, U_8 *unsetFields, StackmapExceptionDetails* exceptionDetails)
 {
@@ -1435,7 +1435,7 @@ checkUnsetFields(J9CfrClassFile *classfile, U_16 numberOfUnsetFields, U_8 *unset
 	}
 	return 0;
 }
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 static I_32
 checkStackMapEntries (J9CfrClassFile* classfile, J9CfrAttributeCode * code, U_8 * map, U_8 ** entries, UDATA slotCount, U_8 * end, UDATA checkAppendArraySize)

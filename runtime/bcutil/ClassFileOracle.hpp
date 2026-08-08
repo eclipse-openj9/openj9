@@ -79,11 +79,11 @@ public:
 		U_16 stackItemsCount;
 		U_8 *localsTypeInfo;
 		U_8 *stackItemsTypeInfo;
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 		U_16 numberOfUnsetFields;
 		U_8 *unsetFields;
 		U_8 baseFrameType;
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	};
 
 	struct LocalVariableInfo
@@ -160,9 +160,9 @@ public:
 		virtual void visitStackMapObject(U_8 slotType, U_16 classCPIndex, U_16 classNameCPIndex) = 0;
 		virtual void visitStackMapNewObject(U_8 slotType, U_16 offset) = 0;
 		virtual void visitStackMapItem(U_8 slotType) = 0;
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 		virtual void visitUnsetField(U_16 nasCpIndex) = 0;
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	};
 
 	struct StackMapFrameVisitor
@@ -173,10 +173,10 @@ public:
 			U_16 offsetDelta,
 			U_8 frameType,
 			VerificationTypeInfo *typeInfo
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 			, U_8 baseFrameType,
 			U_16 numberOfUnsetFields
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		) = 0;
 	};
 
@@ -226,14 +226,14 @@ class VerificationTypeInfo
 
 		void localsDo(VerificationTypeInfoVisitor *visitor) { slotsDo(_stackMapFrameInfo->localsCount, _stackMapFrameInfo->localsTypeInfo, visitor); }
 		void stackItemsDo(VerificationTypeInfoVisitor *visitor) { slotsDo(_stackMapFrameInfo->stackItemsCount, _stackMapFrameInfo->stackItemsTypeInfo, visitor); }
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 		void unsetFieldsDo(VerificationTypeInfoVisitor *visitor) {
 			for (U_16 i = 0; i < _stackMapFrameInfo->numberOfUnsetFields; i++) {
 				U_16 nasCpIndex = getUnsetFieldIndex(_stackMapFrameInfo->unsetFields + (i * sizeof(U_16)));
 				visitor->visitUnsetField(nasCpIndex);
 			}
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	private:
 		U_16 getParameter(U_8 *bytes) const { return (U_16(bytes[1]) << 8) | U_16(bytes[2]); }
@@ -260,9 +260,9 @@ class VerificationTypeInfo
 				}
 			}
 		}
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 		U_16 getUnsetFieldIndex(U_8 *bytes) const { return (U_16(bytes[0]) << 8) | U_16(bytes[1]); }
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 		StackMapFrameInfo *_stackMapFrameInfo;
 		J9CfrClassFile *_classFile;
@@ -571,10 +571,10 @@ class MethodIterator
 					info->offsetDelta,
 					info->frameType,
 					&typeInfo
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 					, info->baseFrameType,
 					info->numberOfUnsetFields
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 				);
 			}
 		}
@@ -860,22 +860,22 @@ class RecordComponentIterator
 	 * Also iterates over the injected interface names (UTF8s) in the "extra" cp slots.
 	 * numOfInjectedInterfaces represents the number of extra slots containing the UTF8s.
 	 */
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	void interfacesDo(ConstantPoolIndexVisitor *visitor, U_16 numOfInjectedInterfaces)
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 	void interfacesDo(ConstantPoolIndexVisitor *visitor)
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	{
 		U_16 *end = _classFile->interfaces + getInterfacesCount();
 		for (U_16 *interface = _classFile->interfaces; interface != end; ++interface) {
 			/* Each interface is a constantClass, use slot1 to get at the underlying UTF8 */
 			visitor->visitConstantPoolIndex(U_16(_classFile->constantPool[ *interface ].slot1));
 		}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		for (int i = 0; i < numOfInjectedInterfaces; i++) {
 			visitor->visitConstantPoolIndex(getConstantPoolCount() + i);
 		}
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	}
 
 	/*
@@ -1058,7 +1058,7 @@ class RecordComponentIterator
 	bool isSealed() const { return _isSealed; }
 	U_16 getPermittedSubclassesClassCount() const { return _isSealed ? _permittedSubclassesAttribute->numberOfClasses : 0; }
 	bool isValueBased() const { return _isClassValueBased; }
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	bool hasLoadableDescriptors() const { return NULL != _loadableDescriptorsAttribute; }
 	U_16 getLoadableDescriptorsCount() const { return  hasLoadableDescriptors() ? _loadableDescriptorsAttribute->numberOfDescriptors : 0; }
 
@@ -1069,7 +1069,7 @@ class RecordComponentIterator
 		}
 		return result;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	U_16 getPermittedSubclassesClassNameAtIndex(U_16 index) const {
 		U_16 result = 0;
@@ -1179,9 +1179,9 @@ private:
 	bool _isRecord;
 	bool _isSealed;
 	bool _isClassValueBased;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	bool _hasNonStaticSynchronizedMethod;
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	FieldInfo *_fieldsInfo;
 	MethodInfo *_methodsInfo;
@@ -1196,9 +1196,9 @@ private:
 	J9CfrAttributeInnerClasses *_innerClasses;
 	J9CfrAttributeBootstrapMethods *_bootstrapMethodsAttribute;
 	J9CfrAttributePermittedSubclasses *_permittedSubclassesAttribute;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	J9CfrAttributeLoadableDescriptors *_loadableDescriptorsAttribute;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 #if JAVA_SPEC_VERSION >= 11
 	J9CfrAttributeNestMembers *_nestMembers;
 #endif /* JAVA_SPEC_VERSION >= 11 */
@@ -1226,9 +1226,9 @@ private:
 	void walkMethodCodeAttributeCode(U_16 methodIndex);
 	void walkMethodMethodParametersAttribute(U_16 methodIndex);
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 	U_8 * walkUnsetFields(U_8 *framePointer, U_16 unsetFieldCount);
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	U_8 * walkStackMapSlots(U_8 *framePointer, U_16 typeInfoCount);
 
 	bool methodIsFinalize(U_16 methodIndex);
@@ -1238,9 +1238,9 @@ private:
 	bool methodIsObjectConstructor(U_16 methodIndex);
 	bool methodIsClinit(U_16 methodIndex);
 	bool methodIsNonStaticNonAbstract(U_16 methodIndex);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	bool methodIsNonStaticSynchronized(U_16 methodIndex);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	bool shouldConvertInvokeVirtualToInvokeSpecialForMethodRef(U_16 methodRefCPIndex);
 	UDATA shouldConvertInvokeVirtualToMethodHandleBytecodeForMethodRef(U_16 methodRefCPIndex);

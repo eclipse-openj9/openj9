@@ -42,9 +42,9 @@ getMethodForSpecialSend(J9VMThread *vmStruct, J9Class *currentClass, J9Class *re
 	 *	D) Skip checking vTables if resolved or current class is an interface
 	 */
 	if (
-#if !defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION < 28
 		J9_ARE_ALL_BITS_SET(currentClass->romClass->modifiers, J9AccSuper) ||
-#endif /* !defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION < 28 */
 		J9_ARE_NO_BITS_SET(vmStruct->javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_ALLOW_NON_VIRTUAL_CALLS)
 	) {
 		J9Class *methodClass = J9_CLASS_FROM_METHOD(method);

@@ -361,47 +361,47 @@ public:
 	MMINLINE int32_t
 	internalConvertObjectToHash(J9JavaVM *vm, j9object_t object)
 	{
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		J9Class *clazz = J9OBJECT_CLAZZ_VM(vm, object);
 		J9VMThread *currentThread = vm->internalVMFunctions->currentVMThread(vm);
 		return convertObjectToHash(vm, currentThread, object, clazz);
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 		return convertValueToHash(vm, (uintptr_t)object);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	}
 
 	MMINLINE int32_t
 	convertValueToHashForObject(J9JavaVM *vm, j9object_t object)
 	{
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		J9Class *clazz = J9OBJECT_CLAZZ_VM(vm, object);
 		if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
 			return 0;
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		return convertValueToHash(vm, (uintptr_t)object);
 	}
 
 	MMINLINE int32_t
 	computeObjectAddressToHashForObject(J9JavaVM *vm, j9object_t object)
 	{
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		J9Class *clazz = J9OBJECT_CLAZZ_VM(vm, object);
 		if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
 			return 0;
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		return computeObjectAddressToHash(vm, object);
 	}
 
 	MMINLINE int32_t
 	convertValueToHashForObject(J9JavaVM *vm, uintptr_t value, J9Class *clazz)
 	{
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
 			return 0;
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		return convertValueToHash(vm, value);
 	}
 
@@ -422,12 +422,12 @@ public:
 			uintptr_t hashOffset = getHashcodeOffset(object);
 			int32_t *hashCodePointer = (int32_t *)((uint8_t *)object + hashOffset);
 			result = *hashCodePointer;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 			if (0 == result) {
 				result = internalConvertObjectToHash(vm, object);
 				*hashCodePointer = result;
 			}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		} else {
 			atomicSetObjectFlags(object, 0, OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS);
 			result = internalConvertObjectToHash(vm, object);

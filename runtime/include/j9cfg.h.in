@@ -250,8 +250,6 @@ extern "C" {
 #cmakedefine J9VM_OPT_USE_FFI_ONLY
 #cmakedefine J9VM_OPT_VALHALLA_COMPACT_LAYOUTS
 #cmakedefine J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES
-#cmakedefine J9VM_OPT_VALHALLA_STRICT_FIELDS
-#cmakedefine J9VM_OPT_VALHALLA_VALUE_TYPES
 #cmakedefine J9VM_OPT_VEE_SUPPORT
 #cmakedefine J9VM_OPT_VM_LOCAL_STORAGE
 #cmakedefine J9VM_OPT_ZERO
@@ -282,7 +280,7 @@ extern "C" {
 #cmakedefine J9VM_THR_SMART_DEFLATION
 #cmakedefine J9VM_ZOS_3164_INTEROPERABILITY
 
-/* CMake build only supports OMR DDR */
+/* CMake builds only support OMR DDR. */
 #define J9VM_OPT_USE_OMR_DDR
 
 #if defined(J9VM_ENV_DATA64)
@@ -293,6 +291,15 @@ extern "C" {
 	&& (defined(J9VM_ARCH_AARCH64) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_X86))
 #define J9VM_OPT_PORTABLE_SHARED_CACHE
 #endif
+
+#if JAVA_SPEC_VERSION >= 28
+/*
+ * Use of this macro should be restricted to DDR code (e.g. ValueTypeHelper)
+ * which must recognize system dumps from JVMs that support value types. It
+ * should not appear anywhere else (i.e. in C or C++ code).
+ */
+#define J9VM_OPT_VALHALLA_VALUE_TYPES
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 #ifdef __cplusplus
 } /* extern "C" */

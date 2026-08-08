@@ -274,9 +274,9 @@
 #define J9_ROMCLASS_OPTINFO_VERIFY_EXCLUDE 0x4000
 #define J9_ROMCLASS_OPTINFO_CLASS_ANNOTATION_INFO 0x8000
 #define J9_ROMCLASS_OPTINFO_VARIABLE_TABLE_HAS_GENERIC 0x10000
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 #define J9_ROMCLASS_OPTINFO_LOADABLEDESCRIPTORS_ATTRIBUTE 0x20000
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 /* unused: 0x40000 0x80000 0x100000 0x200000 */
 #define J9_ROMCLASS_OPTINFO_TYPE_ANNOTATION_INFO 0x400000
 #define J9_ROMCLASS_OPTINFO_RECORD_ATTRIBUTE 0x800000
@@ -2313,13 +2313,13 @@ typedef struct J9TranslationBufferSet {
 #define BCU_ENABLE_INVARIANT_INTERNING  8
 #define BCU_ENABLE_ROMCLASS_RESIZING  0x100
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 typedef struct J9EarlyLarvalFrame {
 	IDATA baseFramePC; /* The only field used to determine equality. */
 	U_16 numberOfUnsetFields;
 	J9ROMNameAndSignature **unsetFieldNASList;
 } J9EarlyLarvalFrame;
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 typedef struct J9BytecodeVerificationData {
 	IDATA  ( *verifyBytecodesFunction)(struct J9PortLibrary *portLib, struct J9Class *ramClass, struct J9ROMClass *romClass, struct J9BytecodeVerificationData *verifyData) ;
@@ -2373,12 +2373,12 @@ typedef struct J9BytecodeVerificationData {
 	struct J9PortLibrary * portLib;
 	struct J9JavaVM* javaVM;
 	BOOLEAN createdStackMap;
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 	J9HashTable *strictFields;
 	UDATA strictFieldsUnsetCount;
 	J9HashTable *earlyLarvalFrames;
 	J9EarlyLarvalFrame *earlyLarvalFramePrevious;
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 } J9BytecodeVerificationData;
 
 typedef struct J9BytecodeOffset {
@@ -5642,9 +5642,9 @@ typedef struct J9InternalVMFunctions {
 #endif /* JAVA_SPEC_VERSION >= 15 */
 	void ( *storeFlattenableArrayElement)(struct J9VMThread *currentThread, j9object_t receiverObject, U_32 index, j9object_t paramObject);
 	j9object_t ( *loadFlattenableArrayElement)(struct J9VMThread *currentThread, j9object_t receiverObject, U_32 index, BOOLEAN fast);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	I_32 ( *copyFlattenableArray)(struct J9VMThread *currentThread, j9object_t srcObject, j9object_t destObject, U_32 srcIndex, U_32 destIndex, U_32 lengthInSlots);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	UDATA ( *jniIsInternalClassRef)(struct J9JavaVM *vm, jobject ref);
 	BOOLEAN (*objectIsBeingWaitedOn)(struct J9VMThread *currentThread, struct J9VMThread *targetThread, j9object_t obj);
 	BOOLEAN (*areValueBasedMonitorChecksEnabled)(struct J9JavaVM *vm);
@@ -6729,9 +6729,9 @@ typedef struct J9JavaVM {
 #endif /* defined(WIN32) */
 #endif /* defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH) */
 	omrthread_monitor_t constantDynamicMutex;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	UDATA hashMaxRecDepth;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	UDATA valueFlatteningThreshold;
 	omrthread_monitor_t valueTypeVerificationMutex;
