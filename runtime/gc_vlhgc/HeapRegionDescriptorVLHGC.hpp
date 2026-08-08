@@ -94,6 +94,9 @@ private:
 	U_64 _lowerAgeBound; /**< lowest possible age of any object in this region */
 	U_64 _upperAgeBound; /**< highest possible age of any object in this region */
 	double _allocationAgeSizeProduct; /**< sum of (age * size) products for each object in the region. used for age merging math in survivor regions */
+
+	uintptr_t _usedAllocationBytes;
+
 	uintptr_t _age; /**< logical allocation age (number of GC cycles since the last attempted allocation) */
 	MM_RememberedSetCardList _rememberedSetCardList; /**< remembered set card list */
 	MM_RememberedSetCard *_rsclBufferPool;			 /**< RSCL Buffer pool owned by this region (Buffers can still be shared among other regions) */
@@ -128,23 +131,32 @@ public:
 		 return _allocationAgeSizeProduct;
 	}
 
-	/**
-	 * set current value of (age * size) product used for survivor regions (used for setting its initial value)
-	 */
-	MMINLINE void setAllocationAgeSizeProduct(double allocationAgeSizeProduct)
+	MMINLINE uintptr_t getUsedAllocationBytes()
 	{
-		 _allocationAgeSizeProduct = allocationAgeSizeProduct;
+		 return _usedAllocationBytes;
 	}
 
+	/**
+	 * Set current value of (age × size) product used for survivor regions
+	 * @param allocationAgeSizeProduct age to increment with
+	 * @param usedAllocationBytes actual bytes allocated (copied) in the region
+	 */
+	MMINLINE void setAllocationAgeSizeProduct(double allocationAgeSizeProduct, uintptr_t usedAllocationBytes)
+	{
+		_usedAllocationBytes = usedAllocationBytes;
+		 _allocationAgeSizeProduct = allocationAgeSizeProduct;
+	}
 
 	/**
 	 * increment atomically allocation (age * size) product
 	 * @param allocationAgeSizeProduct age to increment with
+	 * @param copiedBytes
 	 * @return new allocationAgeSizeProduct value
 	 */
-	MMINLINE double atomicIncrementAllocationAgeSizeProduct(double allocationAgeSizeProduct)
+	MMINLINE double atomicIncrementAllocationAgeSizeProduct(double allocationAgeSizeProduct, uintptr_t copiedBytes)
 	{
-		 return MM_AtomicOperations::addDouble(&_allocationAgeSizeProduct, allocationAgeSizeProduct);
+		MM_AtomicOperations::add(&_usedAllocationBytes, copiedBytes);
+		return MM_AtomicOperations::addDouble(&_allocationAgeSizeProduct, allocationAgeSizeProduct);
 	}
 
 	/**
