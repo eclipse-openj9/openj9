@@ -39,6 +39,7 @@
 #include "env/VMJ9.h"
 #include "infra/TRlist.hpp"
 #include "runtime/J9ValueProfiler.hpp"
+#include "runtime/J9RuntimeAssumptions.hpp"
 
 #define PROFILING_INVOCATION_COUNT (2)
 
@@ -520,9 +521,13 @@ public:
 
     void dumpInfo(OMR::Logger *log);
 
+    void addJProfValueSites(TR_JProfValueSites *patchSites) { _jProfValueProfSites = patchSites; }
+    TR_JProfValueSites *getJProfValueSites() { return _jProfValueProfSites; }
+
 private:
     TR_AbstractProfilerInfo *_values[LastProfiler];
     TR_CallSiteInfo *_callSiteInfo;
+    TR_JProfValueSites *_jProfValueProfSites;
 };
 
 TR_ValueProfileInfo *TR_ValueProfileInfo::get(TR_PersistentProfileInfo *profileInfo)
@@ -714,6 +719,20 @@ public:
         _counterDerivationInfo = counterDerivationInfo;
     }
 
+    void addJProfBlockFrequencyCounterPatchSites(TR_JProfBlockFrequencyCounterSites *patchSites)
+    {
+        _jProfilingBlockFrequencyCounterPatchSites = patchSites;
+    }
+
+    TR_JProfBlockFrequencyCounterSites *getJProfBlockFrequencyCounterPatchSites()
+    {
+        return _jProfilingBlockFrequencyCounterPatchSites;
+    }
+
+    void setTimestampDataCollectionStarted(uint64_t timeStamp) { _timeStampWhenDataCollectionStarted = timeStamp; }
+
+    uint64_t getTimestampDataCollectionStarted() { return _timeStampWhenDataCollectionStarted; }
+
     void setEntryBlockNumber(int32_t number) { _entryBlockNumber = number; }
 
     bool isJProfilingData() { return _counterDerivationInfo != NULL; }
@@ -729,6 +748,16 @@ public:
     TR::Node *generateBlockRawCountCalculationSubTree(TR::Compilation *comp, int32_t blockNumber, TR::Node *node);
     TR::Node *generateBlockRawCountCalculationSubTree(TR::Compilation *comp, TR::Node *node, bool trace);
     void dumpInfo(OMR::Logger *log);
+
+    void setJProfBlockFrequencyCounterSites(TR_JProfBlockFrequencyCounterSites *patchSites)
+    {
+        _jProfilingBlockFrequencyCounterPatchSites = patchSites;
+    }
+
+    TR_JProfBlockFrequencyCounterSites *getJProfBlockFrequencyCounterSites()
+    {
+        return _jProfilingBlockFrequencyCounterPatchSites;
+    }
 
     int32_t getCallCount();
     int32_t getMaxRawCount(int32_t callerIndex);
@@ -820,6 +849,9 @@ private:
     // Following flag is checked at runtime to know if we have queued this method for recompilation and skip the
     // profiling code
     int32_t _isQueuedForRecompilation;
+    void *_startPCOfBodyCollectingProfilingData;
+    uint64_t _timeStampWhenDataCollectionStarted;
+    TR_JProfBlockFrequencyCounterSites *_jProfilingBlockFrequencyCounterPatchSites;
 };
 
 TR_BlockFrequencyInfo *TR_BlockFrequencyInfo::get(TR_PersistentProfileInfo *profileInfo)

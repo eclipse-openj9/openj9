@@ -55,6 +55,42 @@ void J9::CodeGenPhase::reportPhase(PhaseValue phase)
 
 int J9::CodeGenPhase::getNumPhases() { return static_cast<int>(TR::CodeGenPhase::LastJ9Phase); }
 
+void J9::CodeGenPhase::performJProfilingPatchSitesInitPhase(TR::CodeGenerator *cg, TR::CodeGenPhase *phase)
+{
+    TR::Compilation *comp = cg->comp();
+    if (comp->getOptimizationPlan()->insertPatchableJProfiling() && comp->getRecompilationInfo() != NULL) {
+        uintptr_t key = reinterpret_cast<uintptr_t>(comp->getRecompilationInfo()->getJittedBodyInfo());
+        TR_BlockFrequencyInfo *info = TR_BlockFrequencyInfo::getCurrent(comp);
+        if (info != NULL) {
+            TR::list<TR::Instruction *> *counterBumpInstrList = cg->getJProfilingCounterBumpInstructionList();
+            if (!counterBumpInstrList->empty()) {
+                TR::JProfBFPatchSites *sites = new (comp->trPersistentMemory()) TR::JProfBFPatchSites(comp->trPersistentMemory(), counterBumpInstrList->size(), static_cast<size_t>(cg->getMaxLengthOfIncMemoryInstruction()));
+                for (auto iter = counterBumpInstrList->begin(); iter != counterBumpInstrList->end(); ++iter) {
+                    uint8_t *location = (*iter)->getBinaryEncoding();
+                    sites->add(location, (*iter)->getBinaryLength());
+                }
+                TR_JProfBlockFrequencyCounterSites *patchSites = TR_JProfBlockFrequencyCounterSites::make(comp->fe(), comp->trPersistentMemory(), key, sites, comp->getMetadataAssumptionList());
+                info->addJProfBlockFrequencyCounterPatchSites(patchSites);
+            }
+        }
+        TR_ValueProfileInfo *ValueInfo = TR_ValueProfileInfo::getCurrent(comp);
+        if (valueInfo != NULL) {
+            TR::list<TR::Instruction *> *jProfValueJmpInstrList = cg->getJProfValueBranchInstrList();
+            if (jProfValueJmpInstrList != NULL && !jProfValueJmpInstrList->empty()) {
+                TR::PatchSites *sites = new (comp->trPersistentMemory()) TR::PatchSites(comp->trPersistentMemory(), jProfJmpInstrList->size());
+                for (auto iter = jProfJmpInstrList->begin(); iter != jProfJmpInstrList->end(); ++iter) {
+                    uint8_t *location = (*iter)->getBinaryEncoding();
+                    uint8_t *destination = (*iter)->getLabelSymbol()->getCodeLocation();
+                    sites->add(location, destination);
+                }
+                uintptr_t key = reinterpret_cast<uintptr_t>(comp->getRecompilationInfo()->getJittedBodyInfo());
+                TR_JProfValueSites *valueProfPatchSites = TR_JProfValueSites::make(comp->fe(), comp->trPersistentMemory(), key, sites comp->getMetadataAssumptionList());
+                valueInfo->addJProfValueSites(valueProfPatchSites);
+            }
+        }
+    }
+}
+
 void J9::CodeGenPhase::performFixUpProfiledInterfaceGuardTestPhase(TR::CodeGenerator *cg, TR::CodeGenPhase *phase)
 {
     cg->fixUpProfiledInterfaceGuardTest();
@@ -124,6 +160,8 @@ const char *J9::CodeGenPhase::getName(TR::CodeGenPhase::PhaseValue phase)
             return "IdentifyUnneededByteConvsPhase";
         case FixUpProfiledInterfaceGuardTest:
             return "FixUpProfiledInterfaceGuardTest";
+        case JProfilingPatchSitesInitPhase:
+            return "JProfilingPatchSitesInitPhase";
         default:
             return OMR::CodeGenPhaseConnector::getName(phase);
     }

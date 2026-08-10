@@ -35,3 +35,4 @@ TR::CodeGenPhase::performFixUpProfiledInterfaceGuardTestPhase,
     TR::CodeGenPhase::performInsertEpilogueYieldPointsPhase, // InsertEpilogueYieldPointsPhase
     TR::CodeGenPhase::performCompressedReferenceRematerializationPhase,
     TR::CodeGenPhase::performIdentifyUnneededByteConvsPhase, // IdentifyUnneededByteConvsPhase
+    TR::CodeGenPhase::performJProfilingPatchSitesInitPhase, // JProfilingPatchSitesInitPhase

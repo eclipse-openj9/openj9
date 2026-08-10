@@ -48,13 +48,14 @@ protected:
 public:
     void reportPhase(PhaseValue phase);
     static void performFixUpProfiledInterfaceGuardTestPhase(TR::CodeGenerator *cg, TR::CodeGenPhase *);
+    static void performProcessRelocationPhase(TR::CodeGenerator *cg, TR::CodeGenPhase *);
     static void performAllocateLinkageRegistersPhase(TR::CodeGenerator *cg, TR::CodeGenPhase *);
     static void performPopulateOSRBufferPhase(TR::CodeGenerator *cg, TR::CodeGenPhase *);
     static void performMoveUpArrayLengthStoresPhase(TR::CodeGenerator *cg, TR::CodeGenPhase *);
     static void performInsertEpilogueYieldPointsPhase(TR::CodeGenerator *cg, TR::CodeGenPhase *);
     static void performCompressedReferenceRematerializationPhase(TR::CodeGenerator *cg, TR::CodeGenPhase *);
     static void performIdentifyUnneededByteConvsPhase(TR::CodeGenerator *cg, TR::CodeGenPhase *);
-
+    static void performJProfilingPatchSitesInitPhase(TR::CodeGenerator *cg, TR::CodeGenPhase *);
     // override base class implementation because new phases are being added
     static int getNumPhases();
     const char *getName();
