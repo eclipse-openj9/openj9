@@ -388,7 +388,8 @@ bool J9::Recompilation::couldBeCompiledAgain()
 {
     TR_ResolvedMethod *bondMethod = NULL;
     return self()->shouldBeCompiledAgain() || _compilation->usesPreexistence() || _compilation->getOption(TR_EnableHCR)
-        || _compilation->retainedMethods()->bondMethods().next(&bondMethod);
+        || _compilation->retainedMethods()->bondMethods().next(&bondMethod)
+        || self()->getJittedBodyInfo()->getCanRecompileDueToPhaseChange();
 }
 
 bool J9::Recompilation::shouldBeCompiledAgain() { return TR::Options::canJITCompile() && !_doNotCompileAgain; }

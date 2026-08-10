@@ -489,6 +489,10 @@ public:
 
     void setUsesJProfiling() { _flags.set(UsesJProfiling, true); }
 
+    bool getCanRecompileDueToPhaseChange() { return _flags.testAny(CanRecompileDueToPhaseChange); }
+
+    void setCanRecompileDueToPhaseChange() { _flags.set(CanRecompileDueToPhaseChange, true); }
+
     // used in dump recompilations
     void *getStartPCAfterPreviousCompile() { return _startPCAfterPreviousCompile; }
 
@@ -573,7 +577,8 @@ public:
         UsesGCR = 0x0800,
         ReducedWarm = 0x1000, // Warm body was optimized to a lesser extent (NoServer) to reduce compilation time
         UsesSamplingJProfiling = 0x2000, // Body has samplingJProfiling code
-        UsesJProfiling = 0x4000 // Body has jProfiling code
+        UsesJProfiling = 0x4000, // Body has jProfiling code
+        CanRecompileDueToPhaseChange = 0x8000 // Body has code to identify phase change and recompile
     };
 
     // ### IMPORTANT ###
