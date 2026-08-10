@@ -4508,7 +4508,8 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
 #if defined(J9VM_OPT_SHARED_CLASSES) && defined(LINUX)
     TR_J9VMBase *fej9 = TR_J9VMBase::get(jitConfig, compInfo->getSamplerThread(), TR_J9VMBase::AOT_VM);
     TR_J9SharedCache *sharedCache = fej9->sharedCache();
-    if (sharedCache && sharedCache->isDisclaimEnabled()) {
+    if (sharedCache && sharedCache->isDisclaimEnabled()
+        && TR::Options::getCmdLineOptions()->getOption(TR_EnableSharedCacheDisclaiming)) {
         // Ensure we don't do it too often
         if (crtElapsedTime > lastSCCDisclaimTime + TR::Options::_minTimeBetweenSCCDisclaims) {
             // Disclaim if there were many AOT compilations/loads since the last disclaim
@@ -4528,7 +4529,8 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
     }
 #endif // defined(J9VM_OPT_SHARED_CLASSES) && defined(LINUX)
 
-    if (TR_DataCacheManager::getManager()->isDisclaimEnabled()) {
+    if (TR_DataCacheManager::getManager()->isDisclaimEnabled()
+        && !TR::Options::getCmdLineOptions()->getOption(TR_DisableDataCacheDisclaiming)) {
         // Ensure we don't do it too often
         if (crtElapsedTime > lastDataCacheDisclaimTime + TR::Options::_minTimeBetweenMemoryDisclaims) {
             // Disclaim if at least one data cache has been allocated since the last disclaim
@@ -4543,7 +4545,8 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
     }
 
     // Use logic similar to Data caches above
-    if (TR::CodeCacheManager::instance()->isDisclaimEnabled()) {
+    if (TR::CodeCacheManager::instance()->isDisclaimEnabled()
+        && TR::Options::getCmdLineOptions()->getOption(TR_EnableCodeCacheDisclaiming)) {
         // Ensure we don't do it too often
         if (crtElapsedTime > lastCodeCacheDisclaimTime + TR::Options::_minTimeBetweenMemoryDisclaims) {
             // Disclaim if at least one code cache has been allocated since the last disclaim
@@ -4590,7 +4593,8 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
 #if defined(J9VM_INTERP_PROFILING_BYTECODES)
     if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling)) {
         TR::PersistentAllocator *iprofilerAllocator = TR_IProfiler::allocator();
-        if (iprofilerAllocator->isDisclaimEnabled()) {
+        if (iprofilerAllocator->isDisclaimEnabled()
+            && !TR::Options::getCmdLineOptions()->getOption(TR_DisableIProfilerDataDisclaiming)) {
             if (crtElapsedTime > lastIProfilerDisclaimTime + TR::Options::_minTimeBetweenMemoryDisclaims &&
                 // Avoid disclaiming IProfiler segments if IProfiler is still active
                 returnIprofilerState() == IPROFILING_STATE_OFF &&
@@ -4610,7 +4614,8 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
 
     // Disclaim RuntimeAssumption segments periodically
     TR::PersistentAllocator *raAllocator = TR_RuntimeAssumptionTable::getRAPersistentAllocator();
-    if (raAllocator && raAllocator->isDisclaimEnabled()) {
+    if (raAllocator && raAllocator->isDisclaimEnabled()
+        && !TR::Options::getCmdLineOptions()->getOption(TR_DisableRuntimeAssumptionDataDisclaiming)) {
         if (crtElapsedTime > lastRADisclaimTime + TR::Options::_minTimeBetweenMemoryDisclaims &&
             // Avoid disclaiming if compilations are still to be performed
             compInfo->getMethodQueueSize() <= TR::CompilationInfo::VERY_SMALL_QUEUE) {
