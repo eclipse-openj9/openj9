@@ -24,6 +24,7 @@
 #define TR_SIMPLIFIER_INCL
 
 #include "optimizer/J9Simplifier.hpp"
+#include "optimizer/OMRSimplifier.hpp"
 
 namespace TR {
 class OptimizationManager;
@@ -35,6 +36,13 @@ class Simplifier : public J9::Simplifier {
 public:
     Simplifier(TR::OptimizationManager *manager)
         : J9::Simplifier(manager)
+    {}
+};
+
+class SimplifierWithReassociation : public OMR::SimplifierWithReassociation {
+public:
+    SimplifierWithReassociation(TR::OptimizationManager *manager)
+        : OMR::SimplifierWithReassociation(manager)
     {}
 };
 
