@@ -117,11 +117,11 @@ final class J9VMInternals {
 					throw new InternalError(e);
 				}
 
-				threads = new Thread[threadGroup.activeCount()];
-				threadGroup.enumerate(threads, false);
-
 				CleanerShutdown.shutdownCleaner();
 
+				// JDK27 Common-Cleaner thread instantiation occurs sometimes after CleanerShutdown.shutdownCleaner().
+				threads = new Thread[threadGroup.activeCount()];
+				threadGroup.enumerate(threads, false);
 				for (Thread t : threads) {
 					String threadName = t.getName();
 					if (threadName.equals("Common-Cleaner") //$NON-NLS-1$
