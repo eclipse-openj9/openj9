@@ -1,0 +1,236 @@
+= Quick Start: Enabling JITServer Technology
+
+This quick start guide walks you through an example of enabling JITServer Technology for your java application. This guide uses link:++https://openliberty.io++[Open Liberty WebServer] as an example java application, JITServer can be enabled on any java application that runs on OpenJ9 JVM. You will be provided with a basic understanding of JITServer technology and how it works with your java application. 
+
+== Installing Open Liberty WebServer
+
+This quick start guide uses Open Liberty WebServer as an example java application, and shows how to enable JITServer technology even after your java application is deployed. 
+
+Please follow Open Liberty Operator link:++https://github.com/OpenLiberty/open-liberty-operator#operator-installation++[Installation Guide] to install Open Liberty on your cluster. 
+
+* Set Environment Variables
+
+Set operator namespace and the namespace to watch.
+
+``` bash
+$ export OPERATOR_NAMESPACE="my-project"
+$ export WATCH_NAMESPACE="my-project"
+```
+
+* Install Open Liberty Operator
+
+Install Custom Resource Definitions (CRD) and operator deployment on your cluster.
+
+``` bash
+$ oc apply -f https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/master/deploy/releases/0.6.0/openliberty-app-crd.yaml
+customresourcedefinition.apiextensions.k8s.io/openlibertyapplications.openliberty.io created
+customresourcedefinition.apiextensions.k8s.io/openlibertytraces.openliberty.io created
+customresourcedefinition.apiextensions.k8s.io/openlibertydumps.openliberty.io created
+
+$ curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/master/deploy/releases/0.6.0/openliberty-app-operator.yaml \
+| sed -e "s/OPEN_LIBERTY_WATCH_NAMESPACE/${WATCH_NAMESPACE}/" \
+| oc apply -n ${OPERATOR_NAMESPACE} -f -
+serviceaccount/open-liberty-operator created
+role.rbac.authorization.k8s.io/open-liberty-operator created
+rolebinding.rbac.authorization.k8s.io/open-liberty-operator created
+deployment.apps/open-liberty-operator created
+```
+
+* Create Open Liberty Instance
+
+Create Custom Resource (CR) and install an Open Liberty instance on your cluster.
+
+``` bash
+$ cat openliberty.io_openlibertyapplications_cr.yaml
+apiVersion: openliberty.io/v1beta1
+kind: OpenLibertyApplication
+metadata:
+  name: demo-app
+spec:
+  replicas: 1
+  applicationImage: openliberty/open-liberty:full-java8-openj9-ubi
+
+$ oc create -f openliberty.io_openlibertyapplications_cr.yaml
+openlibertyapplication.openliberty.io/demo-app created
+```
+
+* Verify Open Liberty Application Deployment
+
+Operator (`open-liberty-operator`) and an Open Liberty instance (`demo-app`) is running on your cluster.
+
+``` bash
+$ oc get all
+NAME                                         READY     STATUS    RESTARTS   AGE
+pod/demo-app-f4f7b68d7-mk7m2                 1/1       Running   0          10s
+pod/open-liberty-operator-78b69bc568-sv2mb   1/1       Running   0          2m55s
+
+NAME               TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+service/demo-app   ClusterIP   172.30.209.80   <none>        9080/TCP   11s
+
+NAME                                    READY     UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/demo-app                1/1       1            1           11s
+deployment.apps/open-liberty-operator   1/1       1            1           2m56s
+
+NAME                                               DESIRED   CURRENT   READY     AGE
+replicaset.apps/demo-app-f4f7b68d7                 1         1         1         11s
+replicaset.apps/open-liberty-operator-78b69bc568   1         1         1         2m56s
+
+NAME                                HOST/PORT                                             PATH      SERVICES   PORT       TERMINATION   WILDCARD
+route.route.openshift.io/demo-app   demo-app-my-project.apps.acmeair.os.fyre.ibm.com             demo-app   9080-tcp                 None
+```
+
+== Install JITServer
+
+* Install OpenJ9 Operator
+
+Clone this repo and follow below steps to install OpenJ9 operator on your cluster. 
+
+``` bash
+$ cd <operator-directory>
+
+$ oc create -f service_account.yaml
+serviceaccount/openj9-operator created
+
+$ oc create -f role.yaml
+role.rbac.authorization.k8s.io/openj9-operator created
+
+$ oc create -f role_binding.yaml
+rolebinding.rbac.authorization.k8s.io/openj9-operator created
+
+$ oc create -f crds/open.j9_runtimecomponents_crd.yaml
+customresourcedefinition.apiextensions.k8s.io/runtimecomponents.open.j9 created
+
+$ oc create -f operator.yaml
+deployment.apps/openj9-operator created
+```
+
+* Create JITServer Instance
+
+Before installing JITServer instance, replace jitserver image with your application image name. This makes sure that JITServer is running the same JVM build version as well as the application JMV supports JITServer. In this case, open liberty application uses `openliberty/open-liberty:full-java8-openj9-ubi`. 
+
+``` yaml
+apiVersion: open.j9/v1beta1
+kind: RuntimeComponent
+metadata:
+  name: openj9-jitserver
+spec:
+  applicationImage: openliberty/open-liberty:full-java8-openj9-ubi
+  command: ["jitserver"]
+  service: 
+    port: 38400
+    targetPort: 38400
+```
+
+Upon completing above step, install a JITServer instance on your cluster. 
+
+``` bash
+$ oc create -f crds/open.j9_runtimecomponents_jitserver_cr.yaml
+runtimecomponent.open.j9/openj9-jitserver created
+```
+
+* Verify JITServer and java application is running
+
+OpenJ9 operator (`openj9-operator`) and JITServer instance (`openj9-jitserver`) are running on your cluster. Notice that JITServer service name is `openj9-jitserver`. 
+
+``` bash
+$ oc get all
+NAME                                         READY     STATUS    RESTARTS   AGE
+pod/demo-app-f4f7b68d7-jnqs2                 1/1       Running   0          8m51s
+pod/open-liberty-operator-78b69bc568-sv2mb   1/1       Running   0          13m
+pod/openj9-jitserver-6d944d8958-qv95l        1/1       Running   0          57s
+pod/openj9-operator-5bdfc7bf98-bvpj4         1/1       Running   0          84s
+
+NAME                       TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)     AGE
+service/demo-app           ClusterIP   172.30.150.199   <none>        9080/TCP    8m52s
+service/openj9-jitserver   ClusterIP   172.30.93.47     <none>        38400/TCP   57s
+
+NAME                                    READY     UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/demo-app                1/1       1            1           8m52s
+deployment.apps/open-liberty-operator   1/1       1            1           13m
+deployment.apps/openj9-jitserver        1/1       1            1           57s
+deployment.apps/openj9-operator         1/1       1            1           84s
+
+NAME                                               DESIRED   CURRENT   READY     AGE
+replicaset.apps/demo-app-f4f7b68d7                 1         1         1         8m52s
+replicaset.apps/open-liberty-operator-78b69bc568   1         1         1         13m
+replicaset.apps/openj9-jitserver-6d944d8958        1         1         1         57s
+replicaset.apps/openj9-operator-5bdfc7bf98         1         1         1         84s
+
+NAME                                HOST/PORT                                             PATH      SERVICES   PORT       TERMINATION   WILDCARD
+route.route.openshift.io/demo-app   demo-app-my-project.apps.acmeair.os.fyre.ibm.com             demo-app   9080-tcp                 None
+```
+
+== Enable JITServer by upgrading WebServer
+
+* Update Java Application Instance
+
+Set environment variable in JVM to enable JITServer technology. Replace `<REPLACE_JITSERVER_SERVICE_NAME>` with JITServer service name. Default configuration uses `openj9-jitserver` as service name. 
+
+``` bash
+OPENJ9_JAVA_OPTIONS = "-XX:+UseJITServer -XX:JITServerAddress=<REPLACE_JITSERVER_SERVICE_NAME>"
+```
+
+Update the Custom Reourse (CR) of the java application instance and include `OPENJ9_JAVA_OPTIONS`. In this case, we would like to use `JVM_ARGS` for open liberty application since `OPENJ9_JAVA_OPTIONS` overrides the OpenJ9 Shard Class Cache (SCC) information which results performance drop. 
+
+``` yaml
+apiVersion: openliberty.io/v1beta1
+kind: OpenLibertyApplication
+metadata:
+  name: demo-app
+spec:
+  replicas: 1
+  applicationImage: openliberty/open-liberty:full-java8-openj9-ubi
+  expose: true
+  env:
+    - name: JVM_ARGS
+      value: "-XX:+UseJITServer -XX:JITServerAddress=openj9-jitserver"
+```
+
+* Re-deploy Java Application
+
+Apply changes and upgrade java application after setting `OPENJ9_JAVA_OPTIONS`. 
+
+``` bash
+$ oc apply -f openliberty.io_openlibertyapplications_cr.yaml
+Warning: oc apply should be used on resource created by either oc create --save-config or oc apply
+openlibertyapplication.openliberty.io/demo-app configured
+```
+
+* Verify JITServer is Enabled
+
+Java application is restarted and JITServer is enabled. 
+
+``` bash
+$ oc get all
+NAME                                         READY     STATUS    RESTARTS   AGE
+pod/demo-app-796c4945b6-cg74s                1/1       Running   0          13s
+pod/open-liberty-operator-78b69bc568-sv2mb   1/1       Running   0          17m
+pod/openj9-jitserver-6d944d8958-qv95l        1/1       Running   0          5m4s
+pod/openj9-operator-5bdfc7bf98-bvpj4         1/1       Running   0          5m31s
+
+NAME                       TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)     AGE
+service/demo-app           ClusterIP   172.30.150.199   <none>        9080/TCP    12m
+service/openj9-jitserver   ClusterIP   172.30.93.47     <none>        38400/TCP   5m4s
+
+NAME                                    READY     UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/demo-app                1/1       1            1           12m
+deployment.apps/open-liberty-operator   1/1       1            1           17m
+deployment.apps/openj9-jitserver        1/1       1            1           5m4s
+deployment.apps/openj9-operator         1/1       1            1           5m31s
+
+NAME                                               DESIRED   CURRENT   READY     AGE
+replicaset.apps/demo-app-796c4945b6                1         1         1         13s
+replicaset.apps/demo-app-f4f7b68d7                 0         0         0         12m
+replicaset.apps/open-liberty-operator-78b69bc568   1         1         1         17m
+replicaset.apps/openj9-jitserver-6d944d8958        1         1         1         5m4s
+replicaset.apps/openj9-operator-5bdfc7bf98         1         1         1         5m31s
+
+NAME                                HOST/PORT                                             PATH      SERVICES   PORT       TERMINATION   WILDCARD
+route.route.openshift.io/demo-app   demo-app-my-project.apps.acmeair.os.fyre.ibm.com             demo-app   9080-tcp                 None
+```
+
+See `oc logs <JITSERVER_POD_NAME>` to check JITServer verbose logs. 
+
+== Limitations 
+
+* JITServer needs to run with the same build version as the java application. Please make sure you are using the same OpenJ9 release inside java applcation and JITServer containers. 
