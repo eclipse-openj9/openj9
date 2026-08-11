@@ -6127,6 +6127,36 @@ emitStackTrace(J9VMThread *currentThread, I_32 skipCount);
 
 void
 flushJavaJFRBuffer(J9VMThread *currentThread, jobject eventWriterRef, I_32 uncommited, I_32 needed);
+
+/**
+ * Enable or disable the ObjectAllocationSample event at runtime.
+ *
+ * When enabling, the sampling interval is derived from the current throttle rate. Sampling is only
+ * enabled while JFR recording is started and the throttle rate is not 0. When disabling, sampling
+ * is turned off in the GC.
+ *
+ * The caller must have VM access. VM access is released while this function waits for and holds
+ * the interval mutex, and is re-acquired before it returns.
+ *
+ * @param[in] currentThread the current VM thread
+ * @param[in] enable TRUE to enable sampling, FALSE to disable it
+ */
+void
+enableJFRObjectAllocationSample(J9VMThread *currentThread, BOOLEAN enable);
+
+/**
+ * Set the target ObjectAllocationSample event rate.
+ *
+ * The rate is eventSampleSize events per periodMs milliseconds (e.g. 1/ms, 1/s, 1/m, 1/h, 1/d).
+ * Rates below 1/d are raised to 1/d. An eventSampleSize or periodMs of 0 disables sampling.
+ *
+ * @param[in] currentThread the current VM thread
+ * @param[in] eventSampleSize the number of events allowed per period
+ * @param[in] periodMs the length of the period in milliseconds
+ */
+void
+setJFRObjectAllocationSampleThrottle(J9VMThread *currentThread, U_64 eventSampleSize, U_64 periodMs);
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 #ifdef __cplusplus
