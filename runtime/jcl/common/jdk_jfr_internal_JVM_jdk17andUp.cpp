@@ -24,6 +24,11 @@
 #include "jni.h"
 #include "jclprots.h"
 
+#include "JFRTypeMappings.hpp"
+
+/* jdk.jfr.internal.Utils.THROTTLE_OFF: the value of the throttle setting "off", i.e. unthrottled. */
+#define JFR_THROTTLE_OFF (-2)
+
 extern "C" {
 
 void JNICALL
@@ -57,8 +62,28 @@ Java_jdk_jfr_internal_JVM_setMethodSamplingPeriod(JNIEnv *env, jobject obj, jlon
 jboolean JNICALL
 Java_jdk_jfr_internal_JVM_setThrottle(JNIEnv *env, jobject obj, jlong eventTypeId, jlong eventSampleSize, jlong period_ms)
 {
-	// TODO: implementation
-	return JNI_FALSE;
+	jboolean result = JNI_FALSE;
+
+	if ((JfrObjectAllocationSampleEvent == eventTypeId)
+		&& (0 < period_ms)
+		&& ((0 <= eventSampleSize) || (JFR_THROTTLE_OFF == eventSampleSize))) {
+		J9VMThread *currentThread = (J9VMThread *)env;
+		J9JavaVM *vm = currentThread->javaVM;
+		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+		U_64 sampleSize = (U_64)eventSampleSize;
+		U_64 periodMs = (U_64)period_ms;
+		if (JFR_THROTTLE_OFF == eventSampleSize) {
+			/* Unthrottled: request the maximum rate; it saturates and the interval is clamped to its minimum. */
+			sampleSize = U_64_MAX;
+			periodMs = 1;
+		}
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+		vmFuncs->setJFRObjectAllocationSampleThrottle(currentThread, sampleSize, periodMs);
+		vmFuncs->internalExitVMToJNI(currentThread);
+		result = JNI_TRUE;
+	}
+
+	return result;
 }
 
 void JNICALL
