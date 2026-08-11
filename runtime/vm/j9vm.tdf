@@ -1093,3 +1093,6 @@ TraceEvent=Trc_VM_jfr_parseXlog_upToEqualsComma noEnv Overhead=1 Level=5 Templat
 TraceEvent=Trc_VM_jfr_parseXlog_logTags noEnv Overhead=1 Level=5 Template="parseXlogJFR() logTags (0x%zx) jfrLog (0x%zx)"
 TraceEvent=Trc_VM_jfr_parseXlog_output_upToColon noEnv Overhead=1 Level=5 Template="parseXlogJFR() output method: upToColon(%s) fullOptions(%s)"
 TraceEvent=Trc_VM_jfr_parseXlog_output noEnv Overhead=1 Level=5 Template="parseXlogJFR() output method: output(%s) upToColon(%s)"
+TraceEvent=Trc_VM_jfrObjectAllocationSample Overhead=1 Level=5 Template="jfrObjectAllocationSample class=%.*s weight=%zu objectSize=%zu"
+TraceEvent=Trc_VM_jfrObjectAllocationSample_indexableObject Overhead=1 Level=5 Template="jfrObjectAllocationSample class=%.*s%.*s; weight=%zu objectSize=%zu"
+TraceEvent=Trc_VM_jfrRecalibrateObjectAllocationSampleInterval NoEnv Overhead=1 Level=5 Template="jfrRecalibrateObjectAllocationSampleInterval totalBytes=%zu elapsedSeconds=%zu oldInterval=%zu newInterval=%zu"
