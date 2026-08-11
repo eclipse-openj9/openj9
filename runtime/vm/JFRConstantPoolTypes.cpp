@@ -469,6 +469,7 @@ done:
 	return index;
 }
 
+
 U_32
 VM_JFRConstantPoolTypes::addPackageEntry(J9Class *clazz)
 {
@@ -1599,6 +1600,38 @@ VM_JFRConstantPoolTypes::addPhysicalMemoryEntry(J9JFRPhysicalMemory *physicalMem
 	entry->usedSize = physicalMemoryData->usedSize;
 
 	_physicalMemoryCount += 1;
+
+done:
+	return;
+}
+
+void
+VM_JFRConstantPoolTypes::addObjectAllocationSampleEntry(J9JFRObjectAllocationSample *objectAllocationSampleData)
+{
+	ObjectAllocationSampleEntry *entry =
+		(ObjectAllocationSampleEntry *)pool_newElement(_objectAllocationSampleTable);
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks  = objectAllocationSampleData->startTicks;
+	entry->weight = objectAllocationSampleData->weight;
+
+	entry->eventThreadIndex = objectAllocationSampleData->currentThreadTID;
+
+	entry->stackTraceIndex = consumeStackTrace(objectAllocationSampleData->currentThreadTID, J9JFROBJECTALLOCATIONSAMPLE_STACKTRACE(objectAllocationSampleData), objectAllocationSampleData->stackTraceSize, objectAllocationSampleData->stackTraceID);
+	if (isResultNotOKay()) {
+		goto done;
+	}
+
+	entry->objectClassIndex = getClassEntry(objectAllocationSampleData->objectClass);
+	if (isResultNotOKay()) {
+		goto done;
+	}
+
+	_objectAllocationSampleCount += 1;
 
 done:
 	return;
