@@ -140,7 +140,7 @@ static UDATA performOSR(J9VMThread *currentThread, J9StackWalkState *walkState, 
 static UDATA* jitLocalSlotAddress(J9VMThread * currentThread, J9StackWalkState *walkState, UDATA slot, UDATA inlineDepth);
 static void jitResetAllMethods(J9VMThread *currentThread);
 static void fixStackForNewDecompilation(J9VMThread * currentThread, J9StackWalkState * walkState, J9JITDecompilationInfo *info, UDATA reason, J9JITDecompilationInfo **link);
-static UDATA roundedOSRScratchBufferSize(J9VMThread * currentThread, J9JITExceptionTable *metaData, void *jitPC);
+static UDATA roundedOSRScratchBufferSize(UDATA scratchBufferSize);
 static j9object_t* getObjectSlotAddress(J9OSRData *osrData, U_16 slot);
 static UDATA createMonitorEnterRecords(J9VMThread *currentThread, J9OSRData *osrData);
 static UDATA initializeOSRFrame(J9VMThread *currentThread, J9OSRData *osrData);
@@ -1200,7 +1200,7 @@ addDecompilationHelper(J9VMThread * currentThread, J9StackWalkState * walkState,
 	}
 
 	if (osrFrame) {
-		UDATA scratchBufferSize = roundedOSRScratchBufferSize(currentThread, metaData, walkState->pc);
+		UDATA scratchBufferSize = roundedOSRScratchBufferSize(osrScratchBufferSize(currentThread, metaData, walkState->pc));
 		UDATA jitStackFrameSize = (UDATA)(walkState->arg0EA + 1) - (UDATA)walkState->unwindSP;
 		void *osrScratchBuffer = j9mem_allocate_memory(scratchBufferSize + jitStackFrameSize, OMRMEM_CATEGORY_JIT);
 		UDATA mustDecompile = FALSE;
@@ -2160,24 +2160,25 @@ jitLocalSlotAddress(J9VMThread * currentThread, J9StackWalkState *walkState, UDA
 /**
  * Compute the required size of the OSR scratch buffer.
  *
- * @param[in] *currentThread current thread
- * @param[in] *metadata JIT metadata for this compilation
- * @param[in] *jitPC compiled PC at which to OSR
+ * @param[in] scratchBufferSize OSR scratch buffer size
  *
- * @return the scratch buffer size
+ * @return the extended aand rounded scratch buffer size
  */
 static UDATA
-roundedOSRScratchBufferSize(J9VMThread * currentThread, J9JITExceptionTable *metaData, void *jitPC)
+roundedOSRScratchBufferSize(UDATA scratchBufferSize)
 {
-	J9JavaVM *vm = currentThread->javaVM;
-	UDATA scratchBufferSize = osrScratchBufferSize(currentThread, metaData, jitPC);
-
 	/* Ensure a minimum size for the scratch buffer to allow for possible calls while the stack is active
 	 * (in particular, Linux on x86 performs a call in order to compute the GOT).  Currently, the minimum
 	 * size is 8 UDATAs.  Round the size of the scratch buffer up to UDATA.
 	 */
 	scratchBufferSize = OMR_MAX(scratchBufferSize, (8 * sizeof(UDATA)));
 	scratchBufferSize = ROUND_TO(sizeof(UDATA), scratchBufferSize);
+
+#if defined(J9VM_ARCH_X86)
+	/* Account for any space required by a signal handler running while the native SP points to the OSR area. */
+	scratchBufferSize += (J9_EXTRA_STACK_SPACE_FOR_SIGNALS + J9_STACK_OVERFLOW_RESERVED_SIZE);
+#endif /* J9VM_ARCH_X86 */
+
 	return scratchBufferSize;
 }
 
@@ -2439,7 +2440,7 @@ induceOSROnCurrentThread(J9VMThread * currentThread)
 	 */
 	decompRecordSize = osrAllFramesSize(currentThread, metaData, jitPC, walkState.resolveFrameFlags);
 	decompRecordSize += sizeof(J9JITDecompilationInfo);
-	scratchBufferSize = roundedOSRScratchBufferSize(currentThread, metaData, jitPC);
+	scratchBufferSize = roundedOSRScratchBufferSize(osrScratchBufferSize(currentThread, metaData, jitPC));
 	jitStackFrameSize = (UDATA)(walkState.arg0EA + 1) - (UDATA)walkState.unwindSP;
 	totalSize = decompRecordSize + scratchBufferSize + jitStackFrameSize;
 	Assert_CodertVM_true(totalSize <= vm->osrGlobalBufferSize);
@@ -2500,7 +2501,7 @@ ensureOSRBufferSize(J9JavaVM *vm, UDATA osrFramesByteSize, UDATA osrScratchBuffe
 	UDATA result = TRUE;
 	UDATA osrGlobalBufferSize = sizeof(J9JITDecompilationInfo);
 	osrGlobalBufferSize += ROUND_TO(sizeof(UDATA), osrFramesByteSize);
-	osrGlobalBufferSize += ROUND_TO(sizeof(UDATA), osrScratchBufferByteSize);
+	osrGlobalBufferSize += roundedOSRScratchBufferSize(osrScratchBufferByteSize);
 	osrGlobalBufferSize += ROUND_TO(sizeof(UDATA), osrStackFrameByteSize);
 	if (osrGlobalBufferSize > vm->osrGlobalBufferSize) {
 		omrthread_monitor_enter(vm->osrGlobalBufferLock);
