@@ -105,6 +105,9 @@ U_64 j9gc_get_sum_of_pauses(J9VMThread *vmThread);
 j9object_t j9gc_get_memoryController(J9VMThread *vmContext, j9object_t objectPtr);
 void j9gc_set_memoryController(J9VMThread *vmThread, j9object_t objectPtr, j9object_t memoryController);
 void j9gc_set_allocation_sampling_interval(J9JavaVM *vm, UDATA samplingInterval);
+#if defined(J9VM_OPT_JFR)
+void j9gc_set_jfr_allocation_sampling_interval_ns(J9JavaVM *vm, U_64 intervalNs);
+#endif /* defined(J9VM_OPT_JFR) */
 void j9gc_set_allocation_threshold(J9VMThread *vmThread, UDATA low, UDATA high);
 UDATA j9gc_get_bytes_allocated_by_thread(J9VMThread *vmThread);
 BOOLEAN j9gc_get_cumulative_bytes_allocated_by_thread(J9VMThread *vmThread, UDATA *cumulativeValue);
