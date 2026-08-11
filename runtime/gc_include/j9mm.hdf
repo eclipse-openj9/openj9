@@ -78,6 +78,21 @@ struct J9VMThread;
 	</event>
 
 	<event>
+		<name>J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING_INTERNAL</name>
+		<description>
+			Triggered by JFR when the per-thread time threshold for ObjectAllocationSample is reached. The current thread has VM access.
+		</description>
+		<struct>MM_ObjectAllocationSamplingInternalEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="U_64" name="timestamp" description="time of event" />
+		<data type="UDATA" name="eventid" description="unique identifier for event" />
+		<data type="j9object_t" name="object" return="true" description="the object which has been allocated." />
+		<data type="struct J9Class*" name="clazz" description="the class of the object just allocated" />
+		<data type="uintptr_t" name="objectSize" description="the size of the object just allocated" />
+		<data type="uintptr_t" name="weight" description="bytes allocated by thread since last JFR sample" />
+	</event>
+
+	<event>
 		<name>J9HOOK_MM_WALKCONTINUATION</name>
 		<description>
 			Triggered when iterating live continuation from continuation Object List during GC clearable phase.

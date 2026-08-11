@@ -100,6 +100,7 @@ enum MetadataTypeID {
 	SystemGCID = 36,
 	YoungGarbageCollectionID = 38,
 	OldGarbageCollectionID = 39,
+	ObjectAllocationSampleID = 83, /* jdk.ObjectAllocationSample -- must match JFR metadata blob */
 	JVMInformationID = 87,
 	OSInformationID = 88,
 	VirtualizationInformationID = 89,
@@ -242,6 +243,8 @@ private:
 	static constexpr int NETWORK_UTILIZATION_EVENT_SIZE = (4 * sizeof(U_64)) + sizeof(U_32);
 	static constexpr int DATA_LOSS_EVENT_SIZE = sizeof(U_8) + LEB128_32_SIZE + (3 * LEB128_64_SIZE);
 	static constexpr int THREAD_ALLOCATION_STATISTICS_EVENT_SIZE = sizeof(U_8) + LEB128_32_SIZE + (3 * LEB128_64_SIZE);
+	/* OBJECT_ALLOCATION_SAMPLE_EVENT_SIZE: eventSize + eventType(U_32) + ticks(I_64) + eventThread(U_64) + stackTrace(U_32) + objectClass(U_32) + weight(U_64) */
+	static constexpr int OBJECT_ALLOCATION_SAMPLE_EVENT_SIZE = sizeof(U_8) + (3 * LEB128_64_SIZE) + (2 * LEB128_32_SIZE);
 
 	static constexpr int METADATA_ID = 1;
 
@@ -492,6 +495,8 @@ done:
 			pool_do(_constantPoolTypes.getNativeLibraryTable(), &writeNativeLibraryEvent, this);
 
 			pool_do(_constantPoolTypes.getThreadDumpTable(), &writeThreadDumpEvent, this);
+
+			pool_do(_constantPoolTypes.getObjectAllocationSampleTable(), &writeObjectAllocationSampleEvent, _bufferWriter);
 
 			if (J9_ARE_NO_BITS_SET(_vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JFR_V2_SUPPORT)) {
 				/* Only write constant events in first chunk. */
@@ -1015,6 +1020,8 @@ done:
 
 	static void writeThreadDumpEvent(void *anElement, void *userData);
 
+	static void writeObjectAllocationSampleEvent(void *anElement, void *userData);
+
 	UDATA
 	calculateRequiredBufferSize()
 	{
@@ -1124,6 +1131,8 @@ done:
 		requiredBufferSize += (_constantPoolTypes.getNetworkUtilizationCount() * NETWORK_UTILIZATION_EVENT_SIZE);
 
 		requiredBufferSize += (_constantPoolTypes.getDataLossCount() * DATA_LOSS_EVENT_SIZE);
+
+		requiredBufferSize += (_constantPoolTypes.getObjectAllocationSampleCount() * OBJECT_ALLOCATION_SAMPLE_EVENT_SIZE);
 
 		requiredBufferSize *= 2;
 
