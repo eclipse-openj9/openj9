@@ -1220,6 +1220,36 @@ j9gc_set_allocation_sampling_interval(J9JavaVM *vm, UDATA samplingInterval)
 }
 
 /**
+ * Sets the byte interval between Internal ObjectAllocationSample events per thread,
+ * mirroring j9gc_set_allocation_sampling_interval.
+ * Pass UDATA_MAX to disable Internal allocation sampling.
+ *
+ * @param[in] vm The J9JavaVM
+ * @param[in] samplingInterval The allocation byte interval; UDATA_MAX = disabled
+ */
+void
+j9gc_set_internal_allocation_sampling_interval(J9JavaVM *vm, UDATA samplingInterval)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
+	if (0 == samplingInterval) {
+		/* avoid (env->_recorderTraceAllocationBytes) % 0 which could be undefined. */
+		samplingInterval = 1;
+	}
+
+	if (samplingInterval != extensions->recorderObjectSamplingBytesGranularity) {
+		extensions->recorderObjectSamplingBytesGranularity = samplingInterval;
+		J9VMThread *currentThread = vm->internalVMFunctions->currentVMThread(vm);
+		j9gc_allocation_threshold_changed(currentThread);
+	}
+}
+
+UDATA
+j9gc_get_internal_allocation_sampling_interval(J9JavaVM *vm)
+{
+	return  MM_GCExtensions::getExtensions(vm)->recorderObjectSamplingBytesGranularity;
+}
+
+/**
  * Sets the allocation threshold (VMDESIGN 2006) to trigger a J9HOOK_MM_ALLOCATION_THRESHOLD event
  * whenever an object is allocated on the heap whose is between the lower bound and the upper bound
  * of the allocation threshold range.

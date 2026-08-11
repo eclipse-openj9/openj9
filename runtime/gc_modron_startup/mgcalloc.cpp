@@ -61,7 +61,7 @@ static uintptr_t stackIterator(J9VMThread *currentThread, J9StackWalkState *walk
 static void dumpStackFrames(J9VMThread *currentThread);
 static void traceAllocateIndexableObject(J9VMThread *vmThread, J9Class* clazz, uintptr_t objSize, uintptr_t numberOfIndexedFields);
 static J9Object * traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uintptr_t objSize, uintptr_t numberOfIndexedFields=0);
-static bool traceObjectCheck(J9VMThread *vmThread, bool *shouldTriggerAllocationSampling = NULL);
+static bool traceObjectCheck(J9VMThread *vmThread, bool *shouldTriggerAllocationSampling = NULL, bool *shouldTriggerInternalSampling = NULL);
 
 #define STACK_FRAMES_TO_DUMP	8
 
@@ -227,17 +227,18 @@ traceAllocateIndexableObject(J9VMThread *vmThread, J9Class* clazz, uintptr_t obj
 }
 
 static J9Object *
-traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uintptr_t objSize, uintptr_t numberOfIndexedFields)
+traceAllocateObject(J9VMThread *vmThread, J9Object *object, J9Class *clazz, uintptr_t objSize, uintptr_t numberOfIndexedFields)
 {
 	bool shouldTrigggerObjectAllocationSampling = false;
+	bool shouldTriggerInternalSampling = false;
 	uintptr_t byteGranularity = 0;
 
-	if (traceObjectCheck(vmThread, &shouldTrigggerObjectAllocationSampling)){
+	if (traceObjectCheck(vmThread, &shouldTrigggerObjectAllocationSampling, &shouldTriggerInternalSampling)) {
 		MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 		J9ROMClass *romClass = clazz->romClass;
 		byteGranularity = extensions->oolObjectSamplingBytesGranularity;
-	
+
 		if (J9ROMCLASS_IS_ARRAY(romClass)){
 			traceAllocateIndexableObject(vmThread, clazz, objSize, numberOfIndexedFields);
 		}else{
@@ -251,33 +252,95 @@ traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uin
 		env->_oolTraceAllocationBytes = (env->_oolTraceAllocationBytes) % byteGranularity;
 	}
 
-	if (shouldTrigggerObjectAllocationSampling) {
+	if (shouldTrigggerObjectAllocationSampling || shouldTriggerInternalSampling) {
 		PORT_ACCESS_FROM_VMC(vmThread);
+		U_64 sampleTimestamp = j9time_hires_clock();
 		MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 
-		byteGranularity = extensions->objectSamplingBytesGranularity;
-		/* Keep the remainder, want this to happen so that we don't miss objects
-		 * after seeing large objects
-		 */
-		uintptr_t allocSizeInsideTLH = env->getAllocatedSizeInsideTLH();
-		uintptr_t remainder = (env->_traceAllocationBytes + allocSizeInsideTLH) % byteGranularity;
-		env->_traceAllocationBytesCurrentTLH = allocSizeInsideTLH + (env->_traceAllocationBytes % byteGranularity) - remainder;
-		env->_traceAllocationBytes = (env->_traceAllocationBytes) % byteGranularity;
+		uintptr_t externalSamplingBytesToNext = UDATA_MAX;
+		uintptr_t internalSamplingBytesToNext = UDATA_MAX;
+		if (shouldTrigggerObjectAllocationSampling) {
+			byteGranularity = extensions->objectSamplingBytesGranularity;
+			/* Keep the remainder, want this to happen so that we don't miss objects
+			 * after seeing large objects
+			 */
+			uintptr_t allocSizeInsideTLH = env->getAllocatedSizeInsideTLH();
+			uintptr_t remainder = (env->_traceAllocationBytes + allocSizeInsideTLH) % byteGranularity;
+			env->_traceAllocationBytesCurrentTLH = allocSizeInsideTLH + (env->_traceAllocationBytes % byteGranularity) - remainder;
+			env->_traceAllocationBytes = (env->_traceAllocationBytes) % byteGranularity;
 
-		if (!extensions->needDisableInlineAllocation()) {
+			if (!extensions->needDisableInlineAllocation()) {
+				externalSamplingBytesToNext = byteGranularity - remainder;
+				if (!shouldTriggerInternalSampling) {
+					/* When Internal sampling is also active, arm the TLH top at the nearer of the two
+					 * next-trigger points so that neither sampler fires late.
+					 */
+					uintptr_t internalSamplingBytesGranularity = extensions->recorderObjectSamplingBytesGranularity;
+					if (UDATA_MAX != internalSamplingBytesGranularity) {
+						uintptr_t internalSamplingAccumulated = env->_recorderTraceAllocationBytes + allocSizeInsideTLH - env->_recorderTraceAllocationBytesCurrentTLH;
+						internalSamplingBytesToNext = internalSamplingBytesGranularity - (internalSamplingAccumulated % internalSamplingBytesGranularity);
+					}
+					env->setTLHSamplingTop(OMR_MIN(externalSamplingBytesToNext, internalSamplingBytesToNext));
+				}
+			}
 
-			env->setTLHSamplingTop(byteGranularity - remainder);
+			TRIGGER_J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING(
+				extensions->hookInterface,
+				vmThread,
+				sampleTimestamp,
+				J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING,
+				object,
+				clazz,
+				objSize);
 		}
+		if (shouldTriggerInternalSampling) {
+			uintptr_t internalSamplingBytesGranularity = extensions->recorderObjectSamplingBytesGranularity;
+			uintptr_t allocSizeInsideTLH = env->getAllocatedSizeInsideTLH();
 
-		TRIGGER_J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING(
-			extensions->hookInterface,
-			vmThread,
-			j9time_hires_clock(),
-			J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING,
-			object,
-			clazz,
-			objSize);
+			/* Compute weight: bytes allocated since last internal sampling on this thread. */
+			uintptr_t weight = env->_recorderTraceAllocationBytes
+							 + allocSizeInsideTLH
+							 - env->_recorderTraceAllocationBytesCurrentTLH;
+
+			/* Reset internal sampling counters and re-arm the internal TLH sampling top (mirrors external pattern). */
+			uintptr_t internalSamplingRemainder = (env->_recorderTraceAllocationBytes + allocSizeInsideTLH) % internalSamplingBytesGranularity;
+			env->_recorderTraceAllocationBytesCurrentTLH = allocSizeInsideTLH + (env->_recorderTraceAllocationBytes % internalSamplingBytesGranularity) - internalSamplingRemainder;
+			env->_recorderTraceAllocationBytes = env->_recorderTraceAllocationBytes % internalSamplingBytesGranularity;
+
+			if (!extensions->needDisableInlineAllocation()) {
+				internalSamplingBytesToNext = internalSamplingBytesGranularity - internalSamplingRemainder;
+				/* When External sampling is also active, arm the TLH top at the nearer of the two
+				 * next-trigger points so that neither sampler fires late.
+				 */
+				if (!shouldTrigggerObjectAllocationSampling) {
+					uintptr_t externalSamplingBytesGranularity = extensions->objectSamplingBytesGranularity;
+					if (UDATA_MAX != externalSamplingBytesGranularity) {
+						uintptr_t externalSamplingAccumulated = env->_traceAllocationBytes + allocSizeInsideTLH - env->_traceAllocationBytesCurrentTLH;
+						externalSamplingBytesToNext = externalSamplingBytesGranularity - (externalSamplingAccumulated % externalSamplingBytesGranularity);
+					}
+				}
+				env->setTLHSamplingTop(OMR_MIN(externalSamplingBytesToNext, internalSamplingBytesToNext));
+			}
+
+			if (NULL != object) {
+				env->saveObjects((omrobjectptr_t)object);
+			}
+
+			TRIGGER_J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING_INTERNAL(
+				extensions->hookInterface,
+				vmThread,
+				sampleTimestamp,
+				J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING_INTERNAL,
+				object,
+				clazz,
+				objSize,
+				weight);
+
+			if (NULL != object) {
+				env->restoreObjects((omrobjectptr_t*)&object);
+			}
+		}
 	}
 	return object;
 }
@@ -288,7 +351,7 @@ traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uin
  * Returns true if we should trace the object
  *  */
 static bool
-traceObjectCheck(J9VMThread *vmThread, bool *shouldTriggerAllocationSampling)
+traceObjectCheck(J9VMThread *vmThread, bool *shouldTriggerAllocationSampling, bool *shouldTriggerInternalSampling)
 {
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
@@ -296,7 +359,14 @@ traceObjectCheck(J9VMThread *vmThread, bool *shouldTriggerAllocationSampling)
 
 	if (NULL != shouldTriggerAllocationSampling) {
 		byteGranularity = extensions->objectSamplingBytesGranularity;
-		*shouldTriggerAllocationSampling = (env->_traceAllocationBytes + env->getAllocatedSizeInsideTLH() - env->_traceAllocationBytesCurrentTLH) >= byteGranularity;
+		*shouldTriggerAllocationSampling = (UDATA_MAX != byteGranularity)
+			&& ((intptr_t)(env->_traceAllocationBytes + env->getAllocatedSizeInsideTLH() - env->_traceAllocationBytesCurrentTLH) >= (intptr_t)byteGranularity);
+	}
+
+	if (NULL != shouldTriggerInternalSampling) {
+		uintptr_t internalSamplingBytesGranularity = extensions->recorderObjectSamplingBytesGranularity;
+		*shouldTriggerInternalSampling = (UDATA_MAX != internalSamplingBytesGranularity)
+			&& ((intptr_t)(env->_recorderTraceAllocationBytes + env->getAllocatedSizeInsideTLH() - env->_recorderTraceAllocationBytesCurrentTLH) >= (intptr_t)internalSamplingBytesGranularity);
 	}
 
 	if (extensions->doOutOfLineAllocationTrace){
@@ -749,9 +819,22 @@ memoryManagerTLHAsyncCallbackHandler(J9VMThread *vmThread, IDATA handlerKey, voi
 
 		if (allocationInterface->cachedAllocationsEnabled(env)) {
 			uintptr_t samplingBytesGranularity = extensions->objectSamplingBytesGranularity;
-			if (UDATA_MAX != extensions->objectSamplingBytesGranularity) {
+			if (UDATA_MAX != samplingBytesGranularity) {
 				env->_traceAllocationBytes = 0;
 				env->_traceAllocationBytesCurrentTLH = 0;
+			}
+			uintptr_t internalSamplingBytesGranularity = extensions->recorderObjectSamplingBytesGranularity;
+			if (UDATA_MAX != internalSamplingBytesGranularity) {
+				env->_recorderTraceAllocationBytes = 0;
+				env->_recorderTraceAllocationBytesCurrentTLH = 0;
+			}
+			/* Arm the TLH sampling top at the minimum of all active sampling intervals so
+			 * that the TLH triggers at whichever sampling point comes first.
+			 */
+			if (samplingBytesGranularity > internalSamplingBytesGranularity) {
+				samplingBytesGranularity = internalSamplingBytesGranularity;
+			}
+			if (UDATA_MAX != samplingBytesGranularity) {
 				env->setTLHSamplingTop(samplingBytesGranularity);
 			} else if (!env->isInlineTLHAllocateEnabled()) {
 				env->resetTLHSamplingTop();
