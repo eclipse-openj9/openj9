@@ -85,6 +85,17 @@ void
 jfrPrivateGCEndHook(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 
 /**
+ * Hook callback for the JFR-internal object allocation sampling event.
+ *
+ * @param hook[in] the hook interface
+ * @param eventNum[in] the event number
+ * @param eventData[in] the event data
+ * @param userData[in] the registered user data
+ */
+void
+jfrObjectAllocationSampleHook(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
+
+/**
  * Deregister GC-related JFR hooks.
  *
  * This function unregisters all garbage collection related hooks that were

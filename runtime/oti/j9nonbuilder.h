@@ -608,6 +608,14 @@ typedef struct J9JFRJavaEventData {
 
 #define J9JFRJAVAEVENTDATA_EVENTDATA(jfrEvent) ((U_8 *)(((J9JFRJavaEventData *)(jfrEvent)) + 1))
 
+/* Variable-size structure - stackTraceSize worth of UDATA follow the fixed portion */
+typedef struct J9JFRObjectAllocationSample {
+	J9JFR_EVENT_WITH_STACKTRACE_FIELDS
+	struct J9Class *objectClass; /**< class of the allocated object */
+	UDATA weight;                /**< bytes allocated by this thread since last JFR sample */
+} J9JFRObjectAllocationSample;
+#define J9JFROBJECTALLOCATIONSAMPLE_STACKTRACE(jfrEvent) ((UDATA*)(((J9JFRObjectAllocationSample*)(jfrEvent)) + 1))
+
 typedef struct J9JFRClassLoaderStatistics {
 	J9JFR_EVENT_COMMON_FIELDS
 	struct J9ClassLoader *classLoader;
@@ -5244,7 +5252,10 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA  ( *j9gc_arraylet_getLeafLogSize)(struct J9JavaVM* javaVM) ;
 	void  ( *j9gc_get_offheap_data)(struct J9JavaVM *javaVM, void **offheapControlStructure, void **base, void **top, UDATA *usage);
 	void  ( *j9gc_set_allocation_sampling_interval)(struct J9JavaVM *vm, UDATA samplingInterval);
-	void  ( *j9gc_set_allocation_threshold)(struct J9VMThread *vmThread, UDATA low, UDATA high) ;
+#if defined(J9VM_OPT_JFR)
+	void  ( *j9gc_set_jfr_allocation_sampling_interval_ns)(struct J9JavaVM *vm, U_64 intervalNs);
+#endif /* defined(J9VM_OPT_JFR) */
+void  ( *j9gc_set_allocation_threshold)(struct J9VMThread *vmThread, UDATA low, UDATA high) ;
 	void  ( *j9gc_objaccess_recentlyAllocatedObject)(struct J9VMThread *vmThread, J9Object *dstObject) ;
 	void  ( *j9gc_objaccess_postStoreClassToClassLoader)(struct J9VMThread *vmThread, J9ClassLoader *destClassLoader, J9Class *srcClass) ;
 	void  ( *j9gc_objaccess_postStoreModuleToClassLoader)(struct J9VMThread *vmThread, J9ClassLoader *destClassLoader, J9Module *srcModule) ;
@@ -5758,6 +5769,7 @@ typedef struct J9InternalVMFunctions {
 	I_64 (*getThreadTID)(struct J9VMThread *currentThread, struct J9VMThread *vmThread);
 	U_32 (*emitStackTrace)(struct J9VMThread *currentThread, I_32 skipCount);
 	void (*flushJavaJFRBuffer)(struct J9VMThread *currentThread, jobject eventWriterRef, I_32 uncommited, I_32 needed);
+	void (*jfrObjectAllocationSample)(struct J9VMThread *currentThread, J9Class *clazz, U_64 weight);
 #endif /* defined(J9VM_OPT_JFR) */
 #if defined(J9VM_OPT_SNAPSHOTS)
 	void (*initializeSnapshotClassLoaderObject)(struct J9JavaVM *javaVM, struct J9ClassLoader *classLoader, j9object_t classLoaderObject);
@@ -6270,6 +6282,7 @@ typedef struct JFRState {
 	IDATA blobFileDescriptor;
 	void *jfrWriter;
 	UDATA jfrChunkCount;
+	UDATA objectAllocationSampleThrottleRate;
 	I_64 chunkStartTime;
 	I_64 chunkStartTicks;
 	void *constantEvents;

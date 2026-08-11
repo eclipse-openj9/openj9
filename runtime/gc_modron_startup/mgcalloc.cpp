@@ -60,8 +60,8 @@ extern "C" {
 static uintptr_t stackIterator(J9VMThread *currentThread, J9StackWalkState *walkState);
 static void dumpStackFrames(J9VMThread *currentThread);
 static void traceAllocateIndexableObject(J9VMThread *vmThread, J9Class* clazz, uintptr_t objSize, uintptr_t numberOfIndexedFields);
-static J9Object * traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uintptr_t objSize, uintptr_t numberOfIndexedFields=0);
-static bool traceObjectCheck(J9VMThread *vmThread, bool *shouldTriggerAllocationSampling = NULL);
+static J9Object * traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uintptr_t objSize, uintptr_t numberOfIndexedFields=0);static bool traceObjectCheck(J9VMThread *vmThread, bool *shouldTriggerAllocationSampling = NULL);
+static bool traceObjectCheck(J9VMThread *vmThread, bool *shouldTriggerAllocationSampling = NULL, bool *shouldTriggerJFRSample = NULL);
 
 #define STACK_FRAMES_TO_DUMP	8
 
@@ -230,14 +230,15 @@ static J9Object *
 traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uintptr_t objSize, uintptr_t numberOfIndexedFields)
 {
 	bool shouldTrigggerObjectAllocationSampling = false;
+	bool shouldTriggerJFRSample = false;
 	uintptr_t byteGranularity = 0;
 
-	if (traceObjectCheck(vmThread, &shouldTrigggerObjectAllocationSampling)){
+	if (traceObjectCheck(vmThread, &shouldTrigggerObjectAllocationSampling, &shouldTriggerJFRSample)) {
 		MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 		J9ROMClass *romClass = clazz->romClass;
 		byteGranularity = extensions->oolObjectSamplingBytesGranularity;
-	
+
 		if (J9ROMCLASS_IS_ARRAY(romClass)){
 			traceAllocateIndexableObject(vmThread, clazz, objSize, numberOfIndexedFields);
 		}else{
@@ -250,34 +251,60 @@ traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uin
 		 */
 		env->_oolTraceAllocationBytes = (env->_oolTraceAllocationBytes) % byteGranularity;
 	}
-
-	if (shouldTrigggerObjectAllocationSampling) {
+	if (shouldTrigggerObjectAllocationSampling
+#if defined(J9VM_OPT_JFR)
+			|| shouldTriggerJFRSample
+#endif /* defined(J9VM_OPT_JFR) */
+			) {
 		PORT_ACCESS_FROM_VMC(vmThread);
+		U_64 sampleTimestamp = j9time_hires_clock();
 		MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 
-		byteGranularity = extensions->objectSamplingBytesGranularity;
-		/* Keep the remainder, want this to happen so that we don't miss objects
-		 * after seeing large objects
-		 */
-		uintptr_t allocSizeInsideTLH = env->getAllocatedSizeInsideTLH();
-		uintptr_t remainder = (env->_traceAllocationBytes + allocSizeInsideTLH) % byteGranularity;
-		env->_traceAllocationBytesCurrentTLH = allocSizeInsideTLH + (env->_traceAllocationBytes % byteGranularity) - remainder;
-		env->_traceAllocationBytes = (env->_traceAllocationBytes) % byteGranularity;
+		if (shouldTrigggerObjectAllocationSampling) {
+			byteGranularity = extensions->objectSamplingBytesGranularity;
+			/* Keep the remainder, want this to happen so that we don't miss objects
+			 * after seeing large objects
+			 */
+			uintptr_t allocSizeInsideTLH = env->getAllocatedSizeInsideTLH();
+			uintptr_t remainder = (env->_traceAllocationBytes + allocSizeInsideTLH) % byteGranularity;
+			env->_traceAllocationBytesCurrentTLH = allocSizeInsideTLH + (env->_traceAllocationBytes % byteGranularity) - remainder;
+			env->_traceAllocationBytes = (env->_traceAllocationBytes) % byteGranularity;
 
-		if (!extensions->needDisableInlineAllocation()) {
+			if (!extensions->needDisableInlineAllocation()) {
 
-			env->setTLHSamplingTop(byteGranularity - remainder);
+				env->setTLHSamplingTop(byteGranularity - remainder);
+			}
+
+			TRIGGER_J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING(
+				extensions->hookInterface,
+				vmThread,
+				sampleTimestamp,
+				J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING,
+				object,
+				clazz,
+				objSize);
 		}
+	#if defined(J9VM_OPT_JFR)
+		if (shouldTriggerJFRSample) {
+			uintptr_t weight = env->_traceAllocationBytes
+							 + env->getAllocatedSizeInsideTLH()
+							 - env->_traceAllocationBytesCurrentTLH;
 
-		TRIGGER_J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING(
-			extensions->hookInterface,
-			vmThread,
-			j9time_hires_clock(),
-			J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING,
-			object,
-			clazz,
-			objSize);
+			/* Capture timestamp once; reset before triggering to prevent re-entrant re-trigger. */
+			env->_lastSampleTimestamp = sampleTimestamp;
+
+			TRIGGER_J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING_INTERNAL(
+				jfrExt->hookInterface,
+				vmThread,
+				sampleTimestamp,
+				J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING_INTERNAL,
+				object,
+				clazz,
+				objSize,
+				weight);
+		}
+	#endif /* defined(J9VM_OPT_JFR) */
 	}
 	return object;
 }
@@ -288,7 +315,7 @@ traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uin
  * Returns true if we should trace the object
  *  */
 static bool
-traceObjectCheck(J9VMThread *vmThread, bool *shouldTriggerAllocationSampling)
+traceObjectCheck(J9VMThread *vmThread, bool *shouldTriggerAllocationSampling, bool *shouldTriggerJFRSample)
 {
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
@@ -298,6 +325,18 @@ traceObjectCheck(J9VMThread *vmThread, bool *shouldTriggerAllocationSampling)
 		byteGranularity = extensions->objectSamplingBytesGranularity;
 		*shouldTriggerAllocationSampling = (env->_traceAllocationBytes + env->getAllocatedSizeInsideTLH() - env->_traceAllocationBytesCurrentTLH) >= byteGranularity;
 	}
+
+#if defined(J9VM_OPT_JFR)
+	if (NULL != shouldTriggerJFRSample) {
+		U_64 intervalNs = extensions->jfrObjectSamplingIntervalNs;
+		if (UDATA_MAX != intervalNs) {
+			PORT_ACCESS_FROM_VMC(vmThread);
+			U_64 now  = j9time_hires_clock();
+			U_64 last = env->_lastSampleTimestamp;
+			*shouldTriggerJFRSample = (0 == last) || ((now - last) >= intervalNs);
+		}
+	}
+#endif /* defined(J9VM_OPT_JFR) */
 
 	if (extensions->doOutOfLineAllocationTrace){
 		byteGranularity = extensions->oolObjectSamplingBytesGranularity;

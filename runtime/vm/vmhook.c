@@ -143,6 +143,9 @@ hookAboutToBootstrapEvent(J9HookInterface **hook, UDATA eventNum, void *voidEven
 		omrthread_monitor_exit(vm->runtimeFlagsMutex);
 	}
 
+	/* The JFR-internal sampled allocate hook does NOT disable safepoint OSR */
+	(*gcHook)->J9HookDisable(gcHook, J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING_INTERNAL);
+
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	if (isDebugOnRestoreEnabled(vm)) {
 		debugModeRequested = J9_EVENT_IS_HOOKED_OR_RESERVED(vm->hookInterface, J9HOOK_VM_METHOD_ENTER)

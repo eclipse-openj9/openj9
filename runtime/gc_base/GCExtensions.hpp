@@ -251,6 +251,9 @@ public:
 	bool testContainerMemLimit; /**< if set simulates a container with memory limit set - for GC testing only*/
 	double testRAMSizePercentage; /**< a percentage to increase/decrease usablePhysicalMemory - for GC testing only, only applies to CRIU restore VM */
 	bool enableOriginalJDK8HeapSizeCompatibilityOption; /**< if set use JDK8 heap size default */
+#if defined(J9VM_OPT_JFR)
+	U_64 jfrObjectSamplingIntervalNs; /**< nanosecond interval between JFR ObjectAllocationSample events per thread; UDATA_MAX = disabled */
+#endif /* defined(J9VM_OPT_JFR) */
 protected:
 private:
 protected:
@@ -436,6 +439,9 @@ public:
 		, testContainerMemLimit(false)
 		, testRAMSizePercentage(-1.0)
 		, enableOriginalJDK8HeapSizeCompatibilityOption(false)
+#if defined(J9VM_OPT_JFR)
+		,jfrObjectSamplingIntervalNs(UDATA_MAX)
+#endif /* defined(J9VM_OPT_JFR) */
 	{
 		_typeId = __FUNCTION__;
 	}

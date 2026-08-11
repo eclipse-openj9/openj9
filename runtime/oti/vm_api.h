@@ -5906,6 +5906,17 @@ void
 jfrGCHeapSummary(OMR_VMThread *omrVMThread, U_32 gcWhenID);
 
 /**
+ * JFR Object Allocation Sample event.
+ *
+ * @param currentThread[in] the current J9VMThread
+ * @param clazz[in] clazz of object being allocated
+ * @param weight[in] number of bytes allocated by thread since the last sample was taken
+ */
+void
+jfrObjectAllocationSample(J9VMThread *currentThread, J9Class *clazz, UDATA weight);
+
+
+/**
  * Set JFR recording file name.
  *
  * @param vm[in] the J9JavaVM
