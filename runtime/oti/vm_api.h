@@ -5905,6 +5905,7 @@ jfrGarbageCollection(OMR_VMThread *omrVMThread);
 void
 jfrGCHeapSummary(OMR_VMThread *omrVMThread, U_32 gcWhenID);
 
+
 /**
  * Set JFR recording file name.
  *
