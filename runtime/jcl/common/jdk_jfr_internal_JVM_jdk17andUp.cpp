@@ -24,6 +24,8 @@
 #include "jni.h"
 #include "jclprots.h"
 
+#include "JFRTypeMappings.hpp"
+
 extern "C" {
 
 void JNICALL
@@ -57,8 +59,18 @@ Java_jdk_jfr_internal_JVM_setMethodSamplingPeriod(JNIEnv *env, jobject obj, jlon
 jboolean JNICALL
 Java_jdk_jfr_internal_JVM_setThrottle(JNIEnv *env, jobject obj, jlong eventTypeId, jlong eventSampleSize, jlong period_ms)
 {
-	// TODO: implementation
-	return JNI_FALSE;
+	jboolean result = JNI_FALSE;
+
+	if ((JfrObjectAllocationSampleEvent == eventTypeId) && (0 < period_ms) && (0 <= eventSampleSize)) {
+		J9VMThread *currentThread = (J9VMThread *)env;
+		J9JavaVM *vm = currentThread->javaVM;
+		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+		vmFuncs->setJFRObjectAllocationSampleThrottle(currentThread, eventSampleSize * 1000 / period_ms);
+		vmFuncs->internalExitVMToJNI(currentThread);
+		result = JNI_TRUE;
+	}
+	return result;
 }
 
 void JNICALL
