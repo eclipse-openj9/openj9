@@ -63,6 +63,9 @@ J9_DECLARE_CONSTANT_UTF8(jfrEventClassUTF8, "jdk/jfr/Event");
 #define J9JFR_GLOBAL_BUFFER_SIZE (10 * J9JFR_THREAD_BUFFER_SIZE)
 #define J9JFR_SAMPLING_RATE 10
 #define J9JFR_CLASSNAME_BUFFER_SIZE 128
+#define J9TIME_NANOSECONDS_PER_SECOND	(1000000000ULL)
+#define J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_THROTTLE_RATE 150	/* events per second */
+#define J9JFR_OBJECT_ALLOCATION_SAMPLE_PROFILING_THROTTLE_RATE 300	/* events per second */
 
 #define INVALID_TYPE_ID -1
 
@@ -226,7 +229,11 @@ jfrEventSize(J9JFREvent *jfrEvent)
 	case J9JFR_EVENT_TYPE_PHYSICAL_MEMORY:
 		size = sizeof(J9JFRPhysicalMemory);
 		break;
-	default:
+	case J9JFR_EVENT_TYPE_OBJECT_ALLOCATION_SAMPLE:
+		size = sizeof(J9JFRObjectAllocationSample)
+			+ (((J9JFRObjectAllocationSample*)jfrEvent)->stackTraceSize * sizeof(UDATA));
+		break;
+default:
 		Assert_VM_unreachable();
 		break;
 	}
@@ -1090,6 +1097,25 @@ jfrGCHeapSummary(OMR_VMThread *omrVMThread, U_32 gcWhenID)
 	}
 }
 
+void
+jfrObjectAllocationSample(J9VMThread *currentThread, J9Class *clazz, UDATA weight)
+{
+	//	if (!areJFRBuffersReadyForWrite(currentThread)) {
+	//		return;
+	//
+	//	J9JFRObjectAllocationSample *jfrEvent =
+	//		(J9JFRObjectAllocationSample *)reserveBufferWithStackTrace(
+	//			currentThread, currentThread,
+	//			J9JFR_EVENT_TYPE_OBJECT_ALLOCATION_SAMPLE,
+	//			sizeof(J9JFRObjectAllocationSample));
+	//
+	//	if (NULL != jfrEvent) {
+	//		jfrEvent->objectClass = clazz;
+	//		jfrEvent->weight      = weight;
+	//	}
+
+}
+
 jint
 initializeJFR(J9JavaVM *vm)
 {
@@ -1233,6 +1259,17 @@ fail:
 	goto done;
 }
 
+void
+setJFRObjectAllocationSampleThrottleRate(J9JavaVM *vm, UDATA throttleRate)
+{
+	vm->jfrState.objectAllocationSampleThrottleRate = throttleRate;
+	U_64 objectAllocationSampleIntervalNs = (U_64)UDATA_MAX;
+	if (0 != throttleRate) {
+		objectAllocationSampleIntervalNs =  J9TIME_NANOSECONDS_PER_SECOND / vm->jfrState.objectAllocationSampleThrottleRate;
+	}
+	vm->memoryManagerFunctions->j9gc_set_jfr_allocation_sampling_interval_ns(vm, objectAllocationSampleIntervalNs);
+}
+
 BOOLEAN
 startJFRRecording(J9JavaVM *vm)
 {
@@ -1272,6 +1309,9 @@ startJFRRecording(J9JavaVM *vm)
 	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_SYSTEM_GC_CALLED, jfrSystemGC, OMR_GET_CALLSITE(), NULL)) {
 		goto done;
 	}
+
+	/* enable JFRObjectAllocationSample */
+	setJFRObjectAllocationSampleThrottleRate(vm, J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_THROTTLE_RATE);
 	/* Register GC-related hooks via gc_base */
 	if (0 != (vm->memoryManagerFunctions->j9gc_register_jfr_hooks(vm))) {
 		goto done;
@@ -1327,6 +1367,8 @@ stopJFRRecording(J9JavaVM *vm)
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_UNPARKED, jfrVMThreadParked, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_SYSTEM_GC_CALLED, jfrSystemGC, NULL);
 
+	/* disable JFRObjectAllocationSample */
+	setJFRObjectAllocationSampleThrottleRate(vm, 0);
 	/* Deregister GC-related hooks via gc_base */
 	vm->memoryManagerFunctions->j9gc_deregister_jfr_hooks(vm);
 }
