@@ -43,8 +43,8 @@ import java.security.Permissions;
 import java.security.ProtectionDomain;
 import java.util.Collection;
 /*[IF INLINE-TYPES]*/
-import java.util.Collections;
 import jdk.internal.misc.PreviewFeatures;
+import jdk.internal.reflect.PreviewAccessFlags;
 /*[ENDIF] INLINE-TYPES */
 import java.util.HashMap;
 /*[IF (JAVA_SPEC_VERSION >= 16) | INLINE-TYPES]*/
@@ -6193,11 +6193,19 @@ public Class<?>[] getNestMembers()
 		 */
 		int maskedModifiers = rawModifiers;
 		AccessFlag.Location location = AccessFlag.Location.CLASS;
+/*[IF INLINE-TYPES]*/
+		final boolean previewEnabled = PreviewFeatures.isEnabled();
+/*[ENDIF] INLINE-TYPES */
+
 		if (isArrayClass) {
 			maskedModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED
 					| Modifier.ABSTRACT | Modifier.FINAL;
+/*[IF INLINE-TYPES]*/
+			maskedModifiers |= previewEnabled ? ACC_IDENTITY : 0;
+/*[ENDIF] INLINE-TYPES */
 			location = AccessFlag.Location.INNER_CLASS;
 		} else {
+			/* ACC_SUPER is reused for ACC_IDENTITY when Valhalla preview features are enabled. */
 			maskedModifiers &= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED
 					| Modifier.STATIC | Modifier.FINAL | Modifier.INTERFACE
 					| Modifier.ABSTRACT | SYNTHETIC | ENUM | ANNOTATION
@@ -6207,17 +6215,13 @@ public Class<?>[] getNestMembers()
 			}
 		}
 
-		Set<AccessFlag> flags = AccessFlag.maskToAccessFlags(maskedModifiers, location);
 /*[IF INLINE-TYPES]*/
-		if (PreviewFeatures.isEnabled()) {
-			if (isArrayClass || (rawModifiers & ACC_IDENTITY) != 0) {
-				flags = new HashSet<>(flags);
-				flags.add(AccessFlag.IDENTITY);
-				flags = Collections.unmodifiableSet(flags);
-			}
-		}
+		return previewEnabled
+				? PreviewAccessFlags.maskToAccessFlags(maskedModifiers, location)
+				: AccessFlag.maskToAccessFlags(maskedModifiers, location);
+/*[ELSE] INLINE-TYPES */
+		return AccessFlag.maskToAccessFlags(maskedModifiers, location);
 /*[ENDIF] INLINE-TYPES */
-		return flags;
 	}
 
 	/**
