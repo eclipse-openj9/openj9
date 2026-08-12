@@ -226,7 +226,7 @@ BOOLEAN
 areValueTypesEnabled(J9JavaVM *vm)
 {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	return TRUE;
+	return J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW);
 #else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	return FALSE;
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
@@ -236,7 +236,7 @@ BOOLEAN
 areFlattenableValueTypesEnabled(J9JavaVM *vm)
 {
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	return TRUE;
+	return J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW);
 #else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	return FALSE;
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
