@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: Claude
  *******************************************************************************/
 
 #ifndef INLINERTEMPFORJ9_INCL
@@ -283,7 +284,7 @@ protected:
         TR::DataType, TR::Symbol::MemoryOrdering ordering = TR::Symbol::MemoryOrdering::Transparent,
         bool needNullCheck = false, bool isUnaligned = false);
     TR::Node *createUnsafeAddressWithOffset(TR::Node *);
-    bool createUnsafeFence(TR::TreeTop *, TR::Node *, TR::ILOpCodes);
+    bool createUnsafeFence(TR::TreeTop *, TR::Node *, TR::ILOpCodes, bool canOmitSync = false);
 
     TR::Node *createUnsafeMonitorOp(TR::ResolvedMethodSymbol *calleeSymbol, TR::ResolvedMethodSymbol *callerSymbol,
         TR::TreeTop *callNodeTreeTop, TR::Node *unsafeCall, bool isEnter);

@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: Claude
  *******************************************************************************/
 
 #ifndef J9_RECOGNIZEDMETHODS_ENUM_INCL
@@ -293,6 +294,7 @@ FirstJ9Method = LastOMRMethod + 1,
     sun_misc_Unsafe_copyMemory, sun_misc_Unsafe_setMemory,
 
     sun_misc_Unsafe_loadFence, sun_misc_Unsafe_storeFence, sun_misc_Unsafe_fullFence,
+    jdk_internal_misc_Unsafe_storeStoreFence,
 
     sun_misc_Unsafe_ensureClassInitialized, sun_misc_Unsafe_allocateInstance,
     sun_misc_Unsafe_allocateUninitializedArray0,
