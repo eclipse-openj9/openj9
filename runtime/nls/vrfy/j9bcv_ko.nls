@@ -454,3 +454,12 @@ J9NLS_BCV_ERR_UNKNOWN_STRICT_FIELD.system_action=The JVM will throw a java.lang.
 J9NLS_BCV_ERR_UNKNOWN_STRICT_FIELD.user_response=Contact the provider of the classfile for a corrected version.
 
 # END NON-TRANSLATABLE
+
+# Acmpeq, acmpne, ifnonnull and ifnull are not translatable.
+J9NLS_BCV_ERR_UNINITIALIZED_OBJECT=acmpeq, acmpne, ifnonnull \ub610\ub294 ifnull \ud568\uc218\ub97c \uc0ac\uc6a9\ud560 \ub54c \ucd08\uae30\ud654\ub418\uc9c0 \uc54a\uc740 \uac1d\uccb4\uac00 \uc0ac\uc6a9\ub418\uc5c8\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_BCV_ERR_UNINITIALIZED_OBJECT.explanation=Verification failed because a newly created but uninitialized object was used with if_acmpeq, if_acmpne, ifnonnull or ifnull.
+J9NLS_BCV_ERR_UNINITIALIZED_OBJECT.system_action=The JVM will throw a verification or classloading related exception such as java.lang.VerifyError.
+J9NLS_BCV_ERR_UNINITIALIZED_OBJECT.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
