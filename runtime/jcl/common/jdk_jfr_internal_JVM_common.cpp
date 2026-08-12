@@ -386,7 +386,7 @@ Java_jdk_jfr_internal_JVM_setEnabled(JNIEnv *env, jobject obj, jlong eventTypeId
 		&& (0 <= eventTypeId)
 		&& (eventTypeId < vm->jfrState.jfrEventEnabledFlagsSize)
 	) {
-		vm->jfrState.jfrEventEnabledFlags[(UDATA)eventTypeId] = (JNI_TRUE == enabled) ? 1 : 0;
+		vm->jfrState.jfrEventEnabledFlags[(UDATA)eventTypeId] = enabled ? 1 : 0;
 	}
 }
 
