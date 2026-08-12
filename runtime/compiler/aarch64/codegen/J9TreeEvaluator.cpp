@@ -1606,6 +1606,7 @@ TR::Register *J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::Cod
 
     // Avoid zeroReg from being reused by scratch register manager
     TR::Register *zeroReg = cg->allocateRegister();
+    zeroReg->setAssignZeroRegister();
 
     generateMemSrc1Instruction(cg, op, node, MRef_disp(cg, addrReg, 0), zeroReg);
 
@@ -1702,9 +1703,8 @@ TR::Register *J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::Cod
         MRef_disp(cg, metaReg, fej9->thisThreadGetOwnedMonitorCountOffset()), addrReg);
 #endif
 
-    TR::RegisterDependencyConditions *deps = RegDeps(0, 2 + srm->numAvailableRegisters(), cg);
+    TR::RegisterDependencyConditions *deps = RegDeps(0, 1 + srm->numAvailableRegisters(), cg);
     deps->addPostCondition(objReg, TR::RealRegister::NoReg);
-    deps->addPostCondition(zeroReg, TR::RealRegister::xzr);
     srm->addScratchRegistersToDependencyList(deps);
 
     generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
@@ -3282,13 +3282,14 @@ TR::Register *J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
     TR::LabelSymbol *callReturnLabel = generateLabelSymbol(cg);
     TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
 
+    zeroReg->setAssignZeroRegister();
+
     // 4. Setup register dependencies
-    const int numReg = isVariableLength ? 7 : 6;
+    const int numReg = isVariableLength ? 6 : 5;
     TR::RegisterDependencyConditions *conditions = RegDeps(numReg, numReg, cg);
     TR::addDependency(conditions, classReg, TR::RealRegister::NoReg, TR_GPR, cg);
     TR::addDependency(conditions, resultReg, TR::RealRegister::NoReg, TR_GPR, cg);
     TR::addDependency(conditions, lengthReg, TR::RealRegister::NoReg, TR_GPR, cg);
-    TR::addDependency(conditions, zeroReg, TR::RealRegister::xzr, TR_GPR, cg);
     TR::addDependency(conditions, tempReg1, TR::RealRegister::NoReg, TR_GPR, cg);
     TR::addDependency(conditions, tempReg2, TR::RealRegister::NoReg, TR_GPR, cg);
     if (isVariableLength) {
@@ -6710,6 +6711,8 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, TR::CodeGenerator *c
     generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, dataAddrReg, dataAddrReg, 16);
 
     TR::Register *zeroReg = cg->allocateRegister();
+    zeroReg->setAssignZeroRegister();
+
     generateTrg1Src2ShiftedInstruction(cg, TR::InstOpCode::subx, node, lengthReg, zeroReg, lengthReg, TR::SH_LSL,
         (isLatin1 ? 2 : 3));
     if (isLatin1) {
@@ -6740,14 +6743,13 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, TR::CodeGenerator *c
     generateCondTrg1Src2Instruction(cg, TR::InstOpCode::csinvx, node, resultReg, resultReg, zeroReg, TR::CC_NE);
 
     TR::RegisterDependencyConditions *conditions
-        = RegDeps(0, (isOffsetConstZero ? 5 : 6) + srm->numAvailableRegisters(), cg);
+        = RegDeps(0, (isOffsetConstZero ? 4 : 5) + srm->numAvailableRegisters(), cg);
     conditions->addPostCondition(arrayReg, TR::RealRegister::NoReg);
     conditions->addPostCondition(charReg, TR::RealRegister::NoReg);
     conditions->addPostCondition(savedLengthReg, TR::RealRegister::NoReg);
     if (!isOffsetConstZero) {
         conditions->addPostCondition(offsetReg, TR::RealRegister::NoReg);
     }
-    conditions->addPostCondition(zeroReg, TR::RealRegister::xzr);
     conditions->addPostCondition(resultReg, TR::RealRegister::NoReg);
     srm->addScratchRegistersToDependencyList(conditions);
 
@@ -7529,20 +7531,15 @@ static TR::Register *inlineHasNegativesOrCountPositives(TR::Node *node, bool isH
  */
 static TR::Register *inlineIntegerLongCompareUnsigned(TR::Node *node, bool isInt, TR::CodeGenerator *cg)
 {
-    TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
-
     TR::Register *aReg = cg->evaluate(node->getChild(0));
     TR::Register *bReg = cg->evaluate(node->getChild(1));
     TR::Register *zeroReg = cg->allocateRegister();
+    zeroReg->setAssignZeroRegister();
     TR::Register *resultReg = cg->allocateRegister();
-
-    TR::RegisterDependencyConditions *dependencies = RegDeps(0, 1, cg);
-    dependencies->addPostCondition(zeroReg, TR::RealRegister::xzr);
 
     generateCompareInstruction(cg, node, aReg, bReg, !isInt);
     generateCSetInstruction(cg, node, resultReg, TR::CC_HI, false);
     generateTrg1Src2Instruction(cg, TR::InstOpCode::sbcw, node, resultReg, resultReg, zeroReg);
-    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, dependencies);
 
     cg->stopUsingRegister(zeroReg);
     cg->decReferenceCount(node->getChild(0));

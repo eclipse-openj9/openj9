@@ -1007,13 +1007,7 @@ TR::Register *J9::ARM64::JNILinkage::buildDirectDispatch(TR::Node *callNode)
     const int maxRegisters
         = getProperties()._numAllocatableIntegerRegisters + getProperties()._numAllocatableFloatRegisters;
     // Extra post dependency for killing vector registers (see KillVectorRegs)
-    const int extraPostReg = killsVectorRegisters() ? 1 : 0;
-#ifdef J9VM_INTERP_ATOMIC_FREE_JNI
-    // Extra post dependency for xzr
-    const int maxPostRegisters = maxRegisters + extraPostReg + 1;
-#else
-    const int maxPostRegisters = maxRegisters + extraPostReg;
-#endif
+    const int maxPostRegisters = maxRegisters + (killsVectorRegisters() ? 1 : 0);
     TR::RegisterDependencyConditions *deps = RegDeps(maxRegisters, maxPostRegisters, cg());
 
     buildJNIArgs(callNode, deps, passThread, passReceiver, killNonVolatileGPRs);
@@ -1022,7 +1016,7 @@ TR::Register *J9::ARM64::JNILinkage::buildDirectDispatch(TR::Node *callNode)
 
 #ifdef J9VM_INTERP_ATOMIC_FREE_JNI
     TR::Register *zeroReg = cg()->allocateRegister();
-    deps->addPostCondition(zeroReg, TR::RealRegister::xzr);
+    zeroReg->setAssignZeroRegister();
 #endif
     auto postLabelDeps = deps->clonePost(cg());
     TR::RealRegister *vmThreadReg = machine()->getRealRegister(getProperties().getMethodMetaDataRegister()); // x19
