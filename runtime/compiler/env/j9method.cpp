@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: Claude
  *******************************************************************************/
 
 #include "env/j9method.h"
@@ -2787,6 +2788,7 @@ void TR_ResolvedJ9Method::construct()
         { x(TR::sun_misc_Unsafe_loadFence, "loadFence", "()V") },
         { x(TR::sun_misc_Unsafe_storeFence, "storeFence", "()V") },
         { x(TR::sun_misc_Unsafe_fullFence, "fullFence", "()V") },
+        { x(TR::jdk_internal_misc_Unsafe_storeStoreFence, "storeStoreFence", "()V") },
 
         { x(TR::sun_misc_Unsafe_ensureClassInitialized, "ensureClassInitialized", "(Ljava/lang/Class;)V") },
         { x(TR::sun_misc_Unsafe_allocateInstance, "allocateInstance", "(Ljava/lang/Class;)Ljava/lang/Object;") },
@@ -4856,6 +4858,7 @@ void TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
                 case TR::sun_misc_Unsafe_loadFence:
                 case TR::sun_misc_Unsafe_storeFence:
                 case TR::sun_misc_Unsafe_fullFence:
+                case TR::jdk_internal_misc_Unsafe_storeStoreFence:
                 case TR::sun_misc_Unsafe_ensureClassInitialized:
                 case TR::sun_misc_Unsafe_getAndAddInt:
                 case TR::sun_misc_Unsafe_getAndSetInt:

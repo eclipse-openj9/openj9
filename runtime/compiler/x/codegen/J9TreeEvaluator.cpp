@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: Claude
  *******************************************************************************/
 
 #include <assert.h>
@@ -3789,11 +3790,18 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node
  *
  * Due to performance penalty of mfence, a faster lockor on RSP is used
  * it achieve the same functionality but runs faster.
+ *
+ * A storeFence node marked with canOmitSync() is generated only for
+ * jdk.internal.misc.Unsafe.storeStoreFence() (see
+ * TR_J9InlinerPolicy::createUnsafeFence). x86's TSO memory model already
+ * guarantees store-store ordering, so that fence is emitted as a no-op here.
+ * A genuine Unsafe.storeFence() (load/store -> store ordering) never carries
+ * this flag and still lowers to a real fence below.
  */
 TR::Register *J9::X86::TreeEvaluator::barrierFenceEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 {
     TR::ILOpCodes opCode = node->getOpCodeValue();
-    if (opCode == TR::fullFence && node->canOmitSync()) {
+    if ((opCode == TR::fullFence || opCode == TR::storeFence) && node->canOmitSync()) {
         Inst_Label(OP::label, node, generateLabelSymbol(cg), cg);
     } else if (cg->comp()->getOption(TR_X86UseMFENCE)) {
         Inst(OP::MFENCE, node, cg);

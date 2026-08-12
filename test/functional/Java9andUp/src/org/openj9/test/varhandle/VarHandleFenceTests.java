@@ -18,13 +18,20 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: Claude
  */
 package org.openj9.test.varhandle;
 
+import java.lang.invoke.VarHandle;
+
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test(groups = { "level.extended" })
 public class VarHandleFenceTests {
+	int intField;
+	long longField;
+
 	@Test
 	public void testFullFence() {
 
@@ -45,9 +52,19 @@ public class VarHandleFenceTests {
 
 	}
 
+	/**
+	 * @tests java.lang.invoke.VarHandle.storeStoreFence()
+	 */
 	@Test
 	public void testStoreStoreFence() {
-
+		intField = 1;
+		longField = 2L;
+		VarHandle.storeStoreFence();
+		intField = 3;
+		longField = 4L;
+		VarHandle.storeStoreFence();
+		Assert.assertEquals(intField, 3);
+		Assert.assertEquals(longField, 4L);
 	}
 
 }

@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: Claude
  *******************************************************************************/
 #include <algorithm>
 #include "j9cfg.h"
@@ -2265,9 +2266,12 @@ bool TR_J9InlinerPolicy::createUnsafeGet(TR::ResolvedMethodSymbol *calleeSymbol,
     return true;
 }
 
-bool TR_J9InlinerPolicy::createUnsafeFence(TR::TreeTop *callNodeTreeTop, TR::Node *callNode, TR::ILOpCodes opCode)
+bool TR_J9InlinerPolicy::createUnsafeFence(
+    TR::TreeTop *callNodeTreeTop, TR::Node *callNode, TR::ILOpCodes opCode, bool canOmitSync)
 {
     TR::Node *fenceNode = TR::Node::createWithSymRef(callNode, opCode, 0, callNode->getSymbolReference());
+    if (canOmitSync)
+        fenceNode->setOmitSync(true);
     TR::Node::recreate(callNode, TR::PassThrough);
     TR::TreeTop *fenceTop = TR::TreeTop::create(comp(), fenceNode);
     callNodeTreeTop->insertAfter(fenceTop);
@@ -2671,6 +2675,8 @@ bool TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol
             return createUnsafeFence(callNodeTreeTop, callNode, TR::storeFence);
         case TR::sun_misc_Unsafe_fullFence:
             return createUnsafeFence(callNodeTreeTop, callNode, TR::fullFence);
+        case TR::jdk_internal_misc_Unsafe_storeStoreFence:
+            return createUnsafeFence(callNodeTreeTop, callNode, TR::storeFence, true);
 
         case TR::sun_misc_Unsafe_staticFieldBase:
             return false; // todo
@@ -2803,6 +2809,7 @@ bool TR_J9InlinerPolicy::isInlineableJNI(TR_ResolvedMethod *method, TR::Node *ca
         case TR::sun_misc_Unsafe_loadFence:
         case TR::sun_misc_Unsafe_storeFence:
         case TR::sun_misc_Unsafe_fullFence:
+        case TR::jdk_internal_misc_Unsafe_storeStoreFence:
             return true;
 
         case TR::sun_misc_Unsafe_staticFieldBase:
