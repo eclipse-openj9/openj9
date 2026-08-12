@@ -1150,13 +1150,13 @@ _inconsistentStack2:
 							goto _inconsistentStack;
 						}
 					} else {
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 27
 						if ((JBifacmpeq == bc) || (JBifacmpne == bc) || (JBifnonnull == bc) || (JBifnull == bc)) {
-							errorType = J9NLS_BCV_ERR_UNINITIALIZED_VALUE_OBJECT__ID;
-							verboseErrorCode = BCV_ERR_ILLEGAL_WITH_UNINITIALIZED_VALUE_OBJECT;
+							errorType = J9NLS_BCV_ERR_UNINITIALIZED_OBJECT__ID;
+							verboseErrorCode = BCV_ERR_ILLEGAL_WITH_UNINITIALIZED_OBJECT;
 							goto _miscError;
 						}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 27 */
 					}
 				} else {
 					POP_TOS_INTEGER;
