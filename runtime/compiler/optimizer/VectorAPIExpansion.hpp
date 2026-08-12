@@ -94,7 +94,7 @@ private:
     static int32_t const _maxNumberOperands = 5;
 
 public:
-    // Start of opcodes from VectorSupport.java (have to be kept up-to-date)
+    // Start of constants from VectorSupport.java (have to be kept up-to-date)
 
     // Unary
     static int32_t const VECTOR_OP_ABS = 0;
@@ -192,7 +192,10 @@ public:
     static int32_t const MODE_BROADCAST = 0;
     static int32_t const MODE_BITS_COERCED_LONG_TO_MASK = 1;
 
-    // End of opcodes from VectorSupport.java
+    static int32_t const LT_FLOAT = 0, LT_DOUBLE = 1, LT_BYTE = 2, LT_SHORT = 3, LT_INT = 4, LT_LONG = 5;
+    static int32_t const LT_FLOAT16 = 6; // Float16 is in VectorSupport in jdk27+ but not supported by openj9 yet
+
+    // End of opcodes and constants from VectorSupport.java
 
     // Position of the parameters in the intrinsics.
     static int32_t const BROADCAST_TYPE_CHILD = 4;
@@ -958,10 +961,10 @@ public:
      *  \param comp
      *     Compilation
      *
-     *  \param classNode
-     *     Node that loads SPECIES object
+     *  \param elementTypeNode
+     *     Class object before JDK27, iconst after
      */
-    static TR::DataType getDataTypeFromClassNode(TR::Compilation *comp, TR::Node *classNode);
+    static TR::DataType getDataTypeFromNode(TR::Compilation *comp, TR::Node *elementTypeNode);
 
     /** \brief
      *     Anchors all node's children before transforming it into a new node
