@@ -23,9 +23,9 @@
 #include "jvmtiHelpers.h"
 #include "jvmti_internal.h"
 #include "j9cp.h"
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 #include "ObjectHash.hpp"
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 #if JAVA_SPEC_VERSION >= 19
 #include "HeapIteratorAPI.h"
@@ -325,11 +325,11 @@ allocateEnvironment(J9InvocationJavaVM * invocationJavaVM, jint version, void **
 			if (j9env->threadDataPool == NULL) {
 				goto fail;
 			}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 			j9env->objectTagTable = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 0, sizeof(J9JVMTIObjectTag), sizeof(jlong), 0, J9MEM_CATEGORY_JVMTI, hashObjectTag, hashEqualObjectTag, NULL, vm);
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 			j9env->objectTagTable = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 0, sizeof(J9JVMTIObjectTag), sizeof(jlong), 0, J9MEM_CATEGORY_JVMTI, hashObjectTag, hashEqualObjectTag, NULL, NULL);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 			if (j9env->objectTagTable == NULL) {
 				goto fail;
 			}
@@ -942,7 +942,7 @@ hashObjectTag(void *entry, void *userData)
 {
 	j9object_t ref = ((J9JVMTIObjectTag *)entry)->ref;
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	/* Skip VT logic for dead entries (bit 0 of ref marks a dead entry). */
 	if ((NULL != ref) && J9JVMTI_OBJECT_TAG_REF_LIVE_ENTRY(ref)) {
 		J9JavaVM *vm = (J9JavaVM *)userData;
@@ -959,7 +959,7 @@ hashObjectTag(void *entry, void *userData)
 			}
 		}
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	return ((UDATA)ref) / sizeof(UDATA);
 }
@@ -975,7 +975,7 @@ hashEqualObjectTag(void *lhsEntry, void *rhsEntry, void *userData)
 		return 1;
 	}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	/* Skip VT logic for dead entries (bit 0 of ref marks a dead entry). */
 	if ((NULL != lhsRef)
 		&& (NULL != rhsRef)
@@ -989,7 +989,7 @@ hashEqualObjectTag(void *lhsEntry, void *rhsEntry, void *userData)
 			return vm->internalVMFunctions->valueTypeCapableAcmp(currentThread, lhsRef, rhsRef);
 		}
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	return 0;
 }

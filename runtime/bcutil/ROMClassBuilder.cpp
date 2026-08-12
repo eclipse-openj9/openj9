@@ -253,7 +253,7 @@ bool
 ROMClassBuilder::checkPreviewClass(ROMClassCreationContext *context, J9CfrClassFile *classFile)
 {
 	bool rc = true;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	if (context->isBootstrapLoader()) {
 		/**
 		 * Store the classes from the JDK to the SCC when preview is on.
@@ -263,15 +263,15 @@ ROMClassBuilder::checkPreviewClass(ROMClassCreationContext *context, J9CfrClassF
 		 */
 		rc = J9_ARE_ALL_BITS_SET(_javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW);
 	}
-#else  /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 	if (J9_IS_CLASSFILE_OR_ROMCLASS_PREVIEW_VERSION(classFile)) {
 		rc = false;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	return rc;
 }
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 BuildResult
 ROMClassBuilder::injectInterfaces(ClassFileOracle *classFileOracle)
 {
@@ -279,7 +279,7 @@ ROMClassBuilder::injectInterfaces(ClassFileOracle *classFileOracle)
 	_interfaceInjectionInfo.numOfInterfaces = numOfInterfaces;
 	return OK;
 }
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 BuildResult
 ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, ROMClassCreationContext *context)
@@ -576,24 +576,24 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 		return classFileOracle.getBuildResult();
 	}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	result = injectInterfaces(&classFileOracle);
 	if (OK != result) {
 		return result;
 	}
 	SRPKeyProducer srpKeyProducer(&classFileOracle, &_interfaceInjectionInfo);
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 	SRPKeyProducer srpKeyProducer(&classFileOracle);
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	/*
 	 * The ROMClassWriter must be constructed before the SRPOffsetTable because it generates additional SRP keys.
 	 * There must be no SRP keys generated after the SRPOffsetTable is initialized.
 	 */
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	ROMClassWriter romClassWriter(bufferManager, &classFileOracle, &srpKeyProducer, &constantPoolMap, context, &_interfaceInjectionInfo);
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 	ROMClassWriter romClassWriter(bufferManager, &classFileOracle, &srpKeyProducer, &constantPoolMap, context);
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	if ( !romClassWriter.isOK() ) {
 		return romClassWriter.getBuildResult();
 	}
@@ -1457,14 +1457,14 @@ ROMClassBuilder::computeOptionalFlags(ClassFileOracle *classFileOracle, ROMClass
 	if (classFileOracle->isSealed()) {
 		optionalFlags |= J9_ROMCLASS_OPTINFO_PERMITTEDSUBCLASSES_ATTRIBUTE;
 	}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	if (_interfaceInjectionInfo.numOfInterfaces > 0) {
 		optionalFlags |= J9_ROMCLASS_OPTINFO_INJECTED_INTERFACE_INFO;
 	}
 	if (classFileOracle->hasLoadableDescriptors()) {
 		optionalFlags |= J9_ROMCLASS_OPTINFO_LOADABLEDESCRIPTORS_ATTRIBUTE;
 	}
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	return optionalFlags;
 }
 

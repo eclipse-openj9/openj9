@@ -207,7 +207,7 @@ loadFlattenableArrayElement(J9VMThread *currentThread, j9object_t receiverObject
         return VM_ValueTypeHelpers::loadFlattenableArrayElement(currentThread, objectAccessBarrier, objectAllocate, receiverObject, index, fast != false);
 }
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 I_32
 copyFlattenableArray(J9VMThread *currentThread, j9object_t srcObject, j9object_t destObject, U_32 srcIndex, U_32 destIndex, U_32 lengthInSlots)
 {
@@ -215,21 +215,22 @@ copyFlattenableArray(J9VMThread *currentThread, j9object_t srcObject, j9object_t
 	MM_ObjectAllocationAPI objectAllocate(currentThread);
 	return VM_ValueTypeHelpers::copyFlattenableArray(currentThread, objectAccessBarrier, objectAllocate, srcObject, destObject, srcIndex, destIndex, lengthInSlots);
 }
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 BOOLEAN
 areValueBasedMonitorChecksEnabled(J9JavaVM *vm)
 {
 	return J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION | J9_EXTENDED_RUNTIME2_VALUE_BASED_WARNING);
 }
+
 BOOLEAN
 areValueTypesEnabled(J9JavaVM *vm)
 {
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	return TRUE;
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 	return FALSE;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 }
 
 BOOLEAN

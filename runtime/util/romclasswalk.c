@@ -851,7 +851,7 @@ allSlotsInPermittedSubclassesDo(J9ROMClass* romClass, U_32* permittedSubclassesP
 	callbacks->sectionCallback(romClass, permittedSubclassesPointer, (UDATA)cursor - (UDATA)permittedSubclassesPointer, "permittedSubclassesInfo", userData);
 }
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 static void
 allSlotsInloadableDescriptorsAttributeDo(J9ROMClass *romClass, U_32 *loadableDescriptorsAttributePointer, J9ROMClassWalkCallbacks *callbacks, void *userData)
 {
@@ -879,7 +879,7 @@ allSlotsInloadableDescriptorsAttributeDo(J9ROMClass *romClass, U_32 *loadableDes
 
 	callbacks->sectionCallback(romClass, loadableDescriptorsAttributePointer, (UDATA)cursor - (UDATA)loadableDescriptorsAttributePointer, "loadableDescriptorsAttributeInfo", userData);
 }
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 /*
  * See ROMClassWriter::writeOptionalInfo for illustration of the layout.
@@ -970,7 +970,7 @@ allSlotsInOptionalInfoDo(J9ROMClass* romClass, J9ROMClassWalkCallbacks* callback
 		}
 		cursor++;
 	}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	if (J9_ARE_ANY_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_INJECTED_INTERFACE_INFO)) {
 		rangeValid = callbacks->validateRangeCallback(romClass, cursor, sizeof(J9SRP), userData);
 		if (rangeValid) {
@@ -987,7 +987,7 @@ allSlotsInOptionalInfoDo(J9ROMClass* romClass, J9ROMClassWalkCallbacks* callback
 		}
 		cursor++;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	callbacks->sectionCallback(romClass, optionalInfo, (UDATA)cursor - (UDATA)optionalInfo, "optionalInfo", userData);
 }
 

@@ -290,11 +290,11 @@ public final void wait(long time, int frac) throws InterruptedException {
 		}
 	}
 /*[ELSE] JAVA_SPEC_VERSION < 24 */
-/*[IF INLINE-TYPES]*/
+/*[IF JAVA_SPEC_VERSION >= 28]*/
 	if (this.getClass().isValue()) {
 		throw new IllegalMonitorStateException();
 	}
-/*[ENDIF] INLINE-TYPES */
+/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
 	if ((time < 0) || (frac < 0)) {
 		throw new IllegalArgumentException("timeout value is negative");
 	}

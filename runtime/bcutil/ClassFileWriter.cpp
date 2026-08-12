@@ -64,9 +64,9 @@ DECLARE_UTF8_ATTRIBUTE_NAME(ANNOTATION_DEFAULT, "AnnotationDefault");
 DECLARE_UTF8_ATTRIBUTE_NAME(BOOTSTRAP_METHODS, "BootstrapMethods");
 DECLARE_UTF8_ATTRIBUTE_NAME(RECORD, "Record");
 DECLARE_UTF8_ATTRIBUTE_NAME(PERMITTED_SUBCLASSES, "PermittedSubclasses");
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 DECLARE_UTF8_ATTRIBUTE_NAME(LOADABLEDESCRIPTORS, "LoadableDescriptors");
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 DECLARE_UTF8_ATTRIBUTE_NAME(NULLRESTRICTED, "NullRestricted");
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
@@ -84,11 +84,11 @@ ClassFileWriter::analyzeROMClass()
 		return;
 	}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	if (J9_ARE_ALL_BITS_SET(_romClass->optionalFlags, J9_ROMCLASS_OPTINFO_INJECTED_INTERFACE_INFO)) {
 		_numOfInjectedInterfaces = getNumberOfInjectedInterfaces(_romClass);
 	}
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	/* Walk ROM class adding hashtable entries for all referenced UTF8s and NASs, with index=0 */
 	analyzeConstantPool();
@@ -116,7 +116,7 @@ ClassFileWriter::analyzeROMClass()
 		}
 	}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	if (J9_ARE_ALL_BITS_SET(_romClass->optionalFlags, J9_ROMCLASS_OPTINFO_LOADABLEDESCRIPTORS_ATTRIBUTE)) {
 		addEntry((void *) &LOADABLEDESCRIPTORS, 0, CFR_CONSTANT_Utf8);
 
@@ -127,7 +127,7 @@ ClassFileWriter::analyzeROMClass()
 			addEntry(loadableDescriptorUtf8, 0, CFR_CONSTANT_Utf8);
 		}
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	J9EnclosingObject * enclosingObject = getEnclosingMethodForROMClass(_javaVM, NULL, _romClass);
 	J9UTF8 * genericSignature = getGenericSignatureForROMClass(_javaVM, NULL, _romClass);
 	J9UTF8 * sourceFileName = getSourceFileNameForROMClass(_javaVM, NULL, _romClass);
@@ -373,9 +373,9 @@ ClassFileWriter::analyzeInterfaces()
 {
 	J9SRP * interfaceNames = J9ROMCLASS_INTERFACES(_romClass);
 	UDATA interfaceCount = _romClass->interfaceCount;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	interfaceCount -=  _numOfInjectedInterfaces;
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#if JAVA_SPEC_VERSION >= 28
+	interfaceCount -= _numOfInjectedInterfaces;
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	for (UDATA i = 0; i < interfaceCount; i++) {
 		J9UTF8 * interfaceName = NNSRP_GET(interfaceNames[i], J9UTF8*);
 		addClassEntry(interfaceName, 0);
@@ -771,9 +771,9 @@ ClassFileWriter::writeInterfaces()
 {
 	J9SRP * interfaceNames = J9ROMCLASS_INTERFACES(_romClass);
 	UDATA interfaceCount = _romClass->interfaceCount;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	interfaceCount -= _numOfInjectedInterfaces;
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	writeU16(U_16(interfaceCount));
 	for (UDATA i = 0; i < interfaceCount; i++) {
@@ -1035,11 +1035,11 @@ ClassFileWriter::writeAttributes()
 		attributesCount += 1;
 	}
 #endif /* JAVA_SPEC_VERSION >= 11 */
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	if (J9_ARE_ALL_BITS_SET(_romClass->optionalFlags, J9_ROMCLASS_OPTINFO_LOADABLEDESCRIPTORS_ATTRIBUTE)) {
 		attributesCount += 1;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	writeU16(attributesCount);
 
 	if ((0 != _romClass->innerClassCount)
@@ -1208,7 +1208,7 @@ ClassFileWriter::writeAttributes()
 		}
 	}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	/* write LoadableDescriptors attribute */
 	if (J9_ARE_ALL_BITS_SET(_romClass->optionalFlags, J9_ROMCLASS_OPTINFO_LOADABLEDESCRIPTORS_ATTRIBUTE)) {
 		U_32 *loadableDescriptorsInfoPtr = getLoadableDescriptorsInfoPtr(_romClass);
@@ -1222,8 +1222,7 @@ ClassFileWriter::writeAttributes()
 			writeU16(indexForUTF8(loadableDescriptorUtf8));
 		}
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-
+#endif /* JAVA_SPEC_VERSION >= 28 */
 }
 
 void ClassFileWriter::writeRecordAttribute()
@@ -1699,7 +1698,7 @@ readdWide:
 	}
 }
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 void
 ClassFileWriter::writeUnsetFields(U_16 numberOfUnsetFields, U_8 **typeInfo)
 {
@@ -1711,7 +1710,7 @@ ClassFileWriter::writeUnsetFields(U_16 numberOfUnsetFields, U_8 **typeInfo)
 	}
 	*typeInfo = cursor;
 }
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 void
 ClassFileWriter::writeVerificationTypeInfo(U_16 count, U_8 ** typeInfo)
@@ -1806,7 +1805,7 @@ ClassFileWriter::writeStackMapTableAttribute(J9ROMMethod * romMethod)
 			 */
 			writeVerificationTypeInfo(1, &stackMap);
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 		} else if (CFR_STACKMAP_EARLY_LARVAL > frameType) { /* 128..245 */
 			/* Reserved frame types - no extra data */
 			Trc_BCU_Assert_ShouldNeverHappen();
@@ -1824,11 +1823,11 @@ ClassFileWriter::writeStackMapTableAttribute(J9ROMMethod * romMethod)
 			writeUnsetFields(numberOfUnsetFields, &stackMap);
 			/* Write base frame. */
 			continue;
-#else /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 		} else if (CFR_STACKMAP_SAME_LOCALS_1_STACK_EXTENDED > frameType) { /* 128..246 */
 			/* Reserved frame types - no extra data */
 			Trc_BCU_Assert_ShouldNeverHappen();
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		} else if (CFR_STACKMAP_SAME_LOCALS_1_STACK_EXTENDED == frameType) { /* 247 */
 			/*
 			 * SAME_LOCALS_1_STACK_EXTENDED {

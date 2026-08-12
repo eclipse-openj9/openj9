@@ -79,9 +79,9 @@ static I_32 dumpPermittedSubclasses(J9PortLibrary *portLib, J9ROMClass *romClass
 #if JAVA_SPEC_VERSION >= 11
 static I_32 dumpNest (J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
 #endif /* JAVA_SPEC_VERSION >= 11 */
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 static I_32 dumpLoadableDescriptors(J9PortLibrary *portLib, J9ROMClass *romClass);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 static I_32 dumpSimpleName (J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
 static I_32 dumpUTF ( J9UTF8 *utfString, J9PortLibrary *portLib, U_32 flags);
 static I_32 dumpSourceDebugExtension (J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
@@ -193,11 +193,11 @@ IDATA j9bcutil_dumpRomClass( J9ROMClass *romClass, J9PortLibrary *portLib, J9Tra
 	dumpNest(portLib, romClass, flags);
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	if (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_LOADABLEDESCRIPTORS_ATTRIBUTE)) {
 		dumpLoadableDescriptors(portLib, romClass);
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	j9tty_printf( PORTLIB, "Fields (%i):\n", romClass->romFieldCount);
 	currentField = romFieldsStartDo(romClass, &state);
@@ -880,7 +880,7 @@ dumpNest(J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags)
 }
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 static I_32
 dumpLoadableDescriptors(J9PortLibrary *portLib, J9ROMClass *romClass)
 {
@@ -896,7 +896,7 @@ dumpLoadableDescriptors(J9PortLibrary *portLib, J9ROMClass *romClass)
 	}
 	return BCT_ERR_NO_ERROR;
 }
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 static I_32
 dumpSimpleName(J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags)
@@ -1324,12 +1324,12 @@ printModifiers(J9PortLibrary *portLib, U_32 modifiers, modifierScope modScope, m
 		}
 	}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	if (MODIFIERSOURCE_CLASS == modifierSrc && valueTypeClass) {
 		j9tty_printf(PORTLIB, "value");
 		if(modifiers) j9tty_printf(PORTLIB, " ");
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	if (modifiers) j9tty_printf(PORTLIB, "unknown_flags = 0x%X" , modifiers);
 }
@@ -1437,6 +1437,3 @@ printMethodExtendedModifiers(J9PortLibrary *portLib, U_32 modifiers)
 	}
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 }
-
-
-

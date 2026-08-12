@@ -41,24 +41,24 @@ convertValueToHash(J9JavaVM *vm, UDATA value)
 
 I_32
 objectHashCode(J9JavaVM *vm, j9object_t objectPointer
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		, jboolean *oomOccurred
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 )
 {
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	bool oomOccurredBool = false;
 	I_32 result = VM_ObjectHash::inlineObjectHashCode(vm, objectPointer, &oomOccurredBool);
 	if (NULL != oomOccurred) {
 		*oomOccurred = oomOccurredBool ? JNI_TRUE : JNI_FALSE;
 	}
 	return result;
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 	return VM_ObjectHash::inlineObjectHashCode(vm, objectPointer);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 }
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 I_32
 convertObjectToHash(J9JavaVM *vm, J9VMThread *currentThread, j9object_t objectPointer, J9Class *clazz)
 {
@@ -68,6 +68,6 @@ convertObjectToHash(J9JavaVM *vm, J9VMThread *currentThread, j9object_t objectPo
 	/* Return 0 if OOM occurs, skipping OOM handling from GC code. */
 	return oomOccurred ? 0 : result;
 }
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 } /* extern "C" */

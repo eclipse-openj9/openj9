@@ -86,10 +86,10 @@ jvmtiGetObjectHashCode(jvmtiEnv *env,
 	rc = getCurrentVMThread(vm, &currentThread);
 	if (JVMTI_ERROR_NONE == rc) {
 		j9object_t obj = NULL;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		jboolean oomOccurred = JNI_FALSE;
 		jint hash = 0;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
@@ -99,7 +99,7 @@ jvmtiGetObjectHashCode(jvmtiEnv *env,
 		ENSURE_NON_NULL(hash_code_ptr);
 
 		obj = *((j9object_t *)object);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		Assert_JVMTI_mustHaveVMAccess(currentThread);
 		hash = (jint)objectHashCode(vm, obj, &oomOccurred);
 		if (JNI_FALSE == oomOccurred) {
@@ -107,9 +107,9 @@ jvmtiGetObjectHashCode(jvmtiEnv *env,
 		} else {
 			rc = JVMTI_ERROR_OUT_OF_MEMORY;
 		}
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 		rv_hash_code = (jint)objectHashCode(vm, obj);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 done:
 		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}

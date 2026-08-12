@@ -282,20 +282,20 @@ private:
 		_cursor->writeU32(length, Cursor::GENERIC); /* Native Endian */
 	}
 };
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 ROMClassWriter::ROMClassWriter(BufferManager *bufferManager, ClassFileOracle *classFileOracle, SRPKeyProducer *srpKeyProducer, ConstantPoolMap *constantPoolMap, ROMClassCreationContext *context, InterfaceInjectionInfo *interfaceInjectionInfo) :
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 ROMClassWriter::ROMClassWriter(BufferManager *bufferManager, ClassFileOracle *classFileOracle, SRPKeyProducer *srpKeyProducer, ConstantPoolMap *constantPoolMap, ROMClassCreationContext *context) :
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	_bufferManager(bufferManager),
 	_classFileOracle(classFileOracle),
 	_srpKeyProducer(srpKeyProducer),
 	_constantPoolMap(constantPoolMap),
 	_srpOffsetTable(NULL),
 	_context(context),
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	_interfaceInjectionInfo(interfaceInjectionInfo),
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	_buildResult(OK),
 	_interfacesSRPKey(srpKeyProducer->generateKey()),
 	_methodsSRPKey(srpKeyProducer->generateKey()),
@@ -319,10 +319,10 @@ ROMClassWriter::ROMClassWriter(BufferManager *bufferManager, ClassFileOracle *cl
 #if defined(J9VM_OPT_METHOD_HANDLE)
 	_varHandleMethodTypeLookupTableSRPKey(srpKeyProducer->generateKey()),
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	_injectedInterfaceInfoSRPKey(srpKeyProducer->generateKey()),
 	_loadableDescriptorsInfoSRPKey(srpKeyProducer->generateKey()),
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	_permittedSubclassesInfoSRPKey(srpKeyProducer->generateKey())
 {
 	_methodNotes = (MethodNotes *) _bufferManager->alloc(classFileOracle->getMethodsCount() * sizeof(MethodNotes));
@@ -371,11 +371,11 @@ ROMClassWriter::writeROMClass(Cursor *cursor,
 		cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(_classFileOracle->getSuperClassNameIndex()), Cursor::SRP_TO_UTF8);
 		cursor->writeU32(modifiers, Cursor::GENERIC);
 		cursor->writeU32(extraModifiers, Cursor::GENERIC);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		cursor->writeU32(_classFileOracle->getInterfacesCount() + _interfaceInjectionInfo->numOfInterfaces, Cursor::GENERIC);
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 		cursor->writeU32(_classFileOracle->getInterfacesCount(), Cursor::GENERIC);
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		cursor->writeSRP(_interfacesSRPKey, Cursor::SRP_TO_GENERIC);
 		cursor->writeU32(_classFileOracle->getMethodsCount(), Cursor::GENERIC);
 		cursor->writeSRP(_methodsSRPKey, Cursor::SRP_TO_GENERIC);
@@ -455,10 +455,10 @@ ROMClassWriter::writeROMClass(Cursor *cursor,
 	writeSourceDebugExtension(cursor);
 	writeRecordComponents(cursor, markAndCountOnly);
 	writePermittedSubclasses(cursor, markAndCountOnly);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	writeInjectedInterfaces(cursor, markAndCountOnly);
 	writeloadableDescriptors(cursor, markAndCountOnly);
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	writeOptionalInfo(cursor);
 	writeCallSiteData(cursor, markAndCountOnly);
 #if defined(J9VM_OPT_METHOD_HANDLE)
@@ -742,23 +742,23 @@ class ROMClassWriter::Helper :
 	private ConstantPoolMap::CallSiteVisitor
 {
 public:
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	Helper(Cursor *cursor, bool markAndCountOnly,
 			ClassFileOracle *classFileOracle, SRPKeyProducer *srpKeyProducer, SRPOffsetTable *srpOffsetTable, ConstantPoolMap *constantPoolMap,
 			UDATA expectedSize, InterfaceInjectionInfo *interfaceInjectionInfo) :
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 	Helper(Cursor *cursor, bool markAndCountOnly,
 			ClassFileOracle *classFileOracle, SRPKeyProducer *srpKeyProducer, SRPOffsetTable *srpOffsetTable, ConstantPoolMap *constantPoolMap,
 			UDATA expectedSize) :
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		_cursor(cursor),
 		_classFileOracle(classFileOracle),
 		_srpKeyProducer(srpKeyProducer),
 		_srpOffsetTable(srpOffsetTable),
 		_constantPoolMap(constantPoolMap),
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		_interfaceInjectionInfo(interfaceInjectionInfo),
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		_markAndCountOnly(markAndCountOnly)
 	{
 		if (_markAndCountOnly) {
@@ -792,11 +792,11 @@ public:
 	void writeInterfaces()
 	{
 		if (!_markAndCountOnly) {
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 			_classFileOracle->interfacesDo(this, _interfaceInjectionInfo->numOfInterfaces); /* visitConstantPoolIndex */
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 			_classFileOracle->interfacesDo(this); /* visitConstantPoolIndex */
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		}
 	}
 
@@ -840,13 +840,13 @@ public:
 					}
 				}
 			}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 			for (int i = 0; i < _interfaceInjectionInfo->numOfInterfaces; i++) {
 				/* if the class requires injected interfaces an "extra" CP slot in the key table is added for each interface */
 				_cursor->mark(_classFileOracle->getConstantPoolCount() + i);
 				_cursor->writeUTF8((U_8*)J9UTF8_DATA(_interfaceInjectionInfo->interfaces[i]), J9UTF8_LENGTH(_interfaceInjectionInfo->interfaces[i]), Cursor::GENERIC);
 			}
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		}
 	}
 
@@ -953,12 +953,12 @@ private:
 		_cursor->writeU32(_constantPoolMap->getROMClassCPIndexForReference(exceptionClassCPIndex), Cursor::GENERIC);
 	}
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 	void visitUnsetField(U_16 nasCpIndex)
 	{
 		_cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(nasCpIndex), Cursor::SRP_TO_NAME_AND_SIGNATURE);
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	void visitStackMapObject(U_8 slotType, U_16 classCPIndex, U_16 classNameCPIndex)
 	{
@@ -1039,10 +1039,10 @@ private:
 		U_16 offsetDelta,
 		U_8 stackMapFrameType,
 		ClassFileOracle::VerificationTypeInfo *typeInfo
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 		, U_8 baseFrameType,
 		U_16 numberOfUnsetFields
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	)
 	{
 		/*
@@ -1071,7 +1071,7 @@ private:
 		/* output the frame tag */
 		_cursor->writeU8(frameType, Cursor::GENERIC);
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 		if (CFR_STACKMAP_EARLY_LARVAL == frameType) { /* 246 */
 			/*
 			 * EARLY_LARVAL {
@@ -1085,7 +1085,7 @@ private:
 			frameType = baseFrameType;
 			_cursor->writeU8(frameType, Cursor::GENERIC);
 		}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 		if (CFR_STACKMAP_SAME_LOCALS_1_STACK > frameType) { /* 0..63 */
 			/* SAME frame - no extra data */
@@ -1185,9 +1185,9 @@ private:
 	SRPKeyProducer *_srpKeyProducer;
 	SRPOffsetTable *_srpOffsetTable;
 	ConstantPoolMap *_constantPoolMap;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	InterfaceInjectionInfo *_interfaceInjectionInfo;
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	bool _markAndCountOnly;
 };
 
@@ -1196,15 +1196,15 @@ ROMClassWriter::writeInterfaces(Cursor *cursor, bool markAndCountOnly)
 {
 	cursor->mark(_interfacesSRPKey);
 	UDATA size = UDATA(_classFileOracle->getInterfacesCount()) * sizeof(J9SRP);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	size += UDATA(_interfaceInjectionInfo->numOfInterfaces) * sizeof(J9SRP);
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	CheckSize _(cursor, size);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size, _interfaceInjectionInfo).writeInterfaces();
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 	Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size).writeInterfaces();
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 }
 
 void
@@ -1213,11 +1213,11 @@ ROMClassWriter::writeInnerClasses(Cursor *cursor, bool markAndCountOnly)
 	cursor->mark(_innerClassesSRPKey);
 	UDATA size = UDATA(_classFileOracle->getInnerClassCount()) * sizeof(J9SRP);
 	CheckSize _(cursor, size);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size, _interfaceInjectionInfo).writeInnerClasses();
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 	Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size).writeInnerClasses();
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 }
 
 void
@@ -1226,11 +1226,11 @@ ROMClassWriter::writeEnclosedInnerClasses(Cursor *cursor, bool markAndCountOnly)
 	cursor->mark(_enclosedInnerClassesSRPKey);
 	UDATA size = UDATA(_classFileOracle->getEnclosedInnerClassCount()) * sizeof(J9SRP);
 	CheckSize _(cursor, size);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size, _interfaceInjectionInfo).writeEnclosedInnerClasses();
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 	Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size).writeEnclosedInnerClasses();
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 }
 
 #if JAVA_SPEC_VERSION >= 11
@@ -1240,32 +1240,32 @@ ROMClassWriter::writeNestMembers(Cursor *cursor, bool markAndCountOnly)
 	cursor->mark(_nestMembersSRPKey);
 	UDATA size = UDATA(_classFileOracle->getNestMembersCount()) * sizeof(J9SRP);
 	CheckSize _(cursor,size);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size, _interfaceInjectionInfo).writeNestMembers();
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 	Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size).writeNestMembers();
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 }
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
 void
 ROMClassWriter::writeNameAndSignatureBlock(Cursor *cursor)
 {
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	Helper(cursor, false, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, 0, _interfaceInjectionInfo).writeNameAndSignatureBlock();
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 	Helper(cursor, false, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, 0).writeNameAndSignatureBlock();
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 }
 
 void 
 ROMClassWriter::writeUTF8s(Cursor *cursor)
 {
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	Helper(cursor, false, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, 0, _interfaceInjectionInfo).writeUTF8Block();
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 	Helper(cursor, false, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, 0).writeUTF8Block();
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	/* aligned to U_64 required by the shared classes */
 	cursor->padToAlignment(sizeof(U_64), Cursor::GENERIC);
 }
@@ -1448,11 +1448,11 @@ ROMClassWriter::writeMethods(Cursor *cursor, Cursor *lineNumberCursor, Cursor *v
 					UDATA(iterator.getExceptionHandlersCount()) * sizeof(J9ExceptionHandler) +
 					UDATA(iterator.getExceptionsThrownCount()) * sizeof(J9SRP);
 			CheckSize _(cursor, size);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 			Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size, _interfaceInjectionInfo).writeExceptionBlock(&iterator);
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 			Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size).writeExceptionBlock(&iterator);
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		}
 
 		if (iterator.hasAnnotationsData()) {
@@ -1538,11 +1538,11 @@ ROMClassWriter::writeMethods(Cursor *cursor, Cursor *lineNumberCursor, Cursor *v
 			/* output the number of frames */
 			cursor->writeBigEndianU16(iterator.getStackMapFramesCount(), Cursor::GENERIC); /* TODO: don't write this stuff in BigEndian??? */
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 			Helper(cursor, false, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, 0, _interfaceInjectionInfo).writeStackMap(&iterator);
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 			Helper(cursor, false, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, 0).writeStackMap(&iterator);
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 			cursor->padToAlignment(sizeof(U_32), Cursor::GENERIC);
 			if (markAndCountOnly) {
 				/* Following is adding PAD to stackmap size. First round is always markAndCountOnly.
@@ -1566,11 +1566,11 @@ ROMClassWriter::writeMethods(Cursor *cursor, Cursor *lineNumberCursor, Cursor *v
 			} else {
 				cursor->writeU8(mthParamCount, Cursor::GENERIC);
 				CheckSize _(cursor, size);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 				Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size, _interfaceInjectionInfo).writeMethodParameters(&iterator);
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 				Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size).writeMethodParameters(&iterator);
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 			}
 			cursor->padToAlignment(sizeof(U_32), Cursor::GENERIC);
 		}
@@ -1927,7 +1927,8 @@ ROMClassWriter::writePermittedSubclasses(Cursor *cursor, bool markAndCountOnly)
 	}
 }
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
+
 /*
  * LoadableDescriptors ROM class layout:
  * 4 bytes for number of descriptors (actually takes up two, but use 4 for alignment)
@@ -1971,7 +1972,9 @@ ROMClassWriter::writeInjectedInterfaces(Cursor *cursor, bool markAndCountOnly)
 		}
 	}
 }
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
+#endif /* JAVA_SPEC_VERSION >= 28 */
+
 void
 ROMClassWriter::writeOptionalInfo(Cursor *cursor)
 {
@@ -2051,14 +2054,14 @@ ROMClassWriter::writeOptionalInfo(Cursor *cursor)
 	if (_classFileOracle->isSealed()) {
 		cursor->writeSRP(_permittedSubclassesInfoSRPKey, Cursor::SRP_TO_GENERIC);
 	}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	if (_interfaceInjectionInfo->numOfInterfaces > 0) {
 		cursor->writeSRP(_injectedInterfaceInfoSRPKey, Cursor::SRP_TO_GENERIC);
 	}
 	if (_classFileOracle->hasLoadableDescriptors()) {
 		cursor->writeSRP(_loadableDescriptorsInfoSRPKey, Cursor::SRP_TO_GENERIC);
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 }
 
 void
@@ -2070,18 +2073,18 @@ ROMClassWriter::writeCallSiteData(Cursor *cursor, bool markAndCountOnly)
 	if (_constantPoolMap->hasCallSites()) {
 		UDATA size = UDATA(_constantPoolMap->getCallSiteCount()) * (sizeof(J9SRP) + sizeof(U_16));
 		CheckSize _(cursor, size);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size, _interfaceInjectionInfo).writeCallSiteData();
-#else  /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 		Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size).writeCallSiteData();
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	}
 	if (_classFileOracle->hasBootstrapMethods()) {
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		Helper(cursor, false, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, 0, _interfaceInjectionInfo).writeBootstrapMethods();
-#else  /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 		Helper(cursor, false, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, 0).writeBootstrapMethods();
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	}
 }
 
@@ -2093,11 +2096,11 @@ ROMClassWriter::writeVarHandleMethodTypeLookupTable(Cursor *cursor, bool markAnd
 		cursor->mark(_varHandleMethodTypeLookupTableSRPKey);
 		UDATA size = _constantPoolMap->getVarHandleMethodTypePaddedCount() * sizeof(U_16);
 		CheckSize _(cursor, size);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size, _interfaceInjectionInfo).writeVarHandleMethodTypeLookupTable();
-#else  /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 		Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size).writeVarHandleMethodTypeLookupTable();
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	}
 }
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */
@@ -2109,11 +2112,11 @@ ROMClassWriter::writeStaticSplitTable(Cursor *cursor, bool markAndCountOnly)
 		cursor->mark(_staticSplitTableSRPKey);
 		UDATA size = UDATA(_constantPoolMap->getStaticSplitEntryCount()) * sizeof(U_16);
 		CheckSize _(cursor, size);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size, _interfaceInjectionInfo).writeStaticSplitTable();
-#else  /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 		Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size).writeStaticSplitTable();
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	}
 }
 
@@ -2124,11 +2127,11 @@ ROMClassWriter::writeSpecialSplitTable(Cursor *cursor, bool markAndCountOnly)
 		cursor->mark(_specialSplitTableSRPKey);
 		UDATA size = UDATA(_constantPoolMap->getSpecialSplitEntryCount()) * sizeof(U_16);
 		CheckSize _(cursor, size);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size, _interfaceInjectionInfo).writeSpecialSplitTable();
-#else  /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 		Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size).writeSpecialSplitTable();
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	}
 }
 

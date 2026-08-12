@@ -44,9 +44,9 @@
 #define	CFR_STACKMAP_SAME														(U_8) 0
 #define	CFR_STACKMAP_SAME_LOCALS_1_STACK						(U_8) 64
 #define	CFR_STACKMAP_SAME_LOCALS_1_STACK_END				(U_8) 128
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 #define	CFR_STACKMAP_EARLY_LARVAL										(U_8) 246
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 #define	CFR_STACKMAP_SAME_LOCALS_1_STACK_EXTENDED		(U_8) 247
 #define	CFR_STACKMAP_CHOP_3													(U_8) 248
 #define	CFR_STACKMAP_CHOP_1													(U_8) 250
@@ -218,4 +218,3 @@
 #endif	
 
 #endif     /* cfreader_h */
-

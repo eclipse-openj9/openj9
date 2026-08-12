@@ -457,15 +457,15 @@ JVM_GetClassFileVersion(JNIEnv *env, jclass cls)
 }
 #endif /* JAVA_SPEC_VERSION >= 20 */
 
-#if ((20 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION <= 23)) || defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if (20 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION <= 23)
 JNIEXPORT void JNICALL
 JVM_VirtualThreadHideFrames(
 		JNIEnv *env,
-#if (JAVA_SPEC_VERSION == 23) || defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if (JAVA_SPEC_VERSION == 23) || (JAVA_SPEC_VERSION >= 28)
 		jclass clz,
-#else /* (JAVA_SPEC_VERSION == 23) || defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* (JAVA_SPEC_VERSION == 23) || (JAVA_SPEC_VERSION >= 28) */
 		jobject vthread,
-#endif /* (JAVA_SPEC_VERSION == 23) || defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* (JAVA_SPEC_VERSION == 23) || (JAVA_SPEC_VERSION >= 28) */
 		jboolean hide)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
@@ -498,7 +498,7 @@ JVM_VirtualThreadHideFrames(
 
 	vmFuncs->internalExitVMToJNI(currentThread);
 }
-#endif /* ((20 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION <= 23)) || defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* (20 <= JAVA_SPEC_VERSION) && (JAVA_SPEC_VERSION <= 23) */
 
 #if JAVA_SPEC_VERSION >= 21
 JNIEXPORT jboolean JNICALL

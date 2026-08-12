@@ -53,7 +53,7 @@ typedef struct J9BranchTargetStack {
 	UDATA stackElements[1];
 } J9BranchTargetStack;
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 typedef struct J9StrictFieldEntry {
 	/* nas is the only field used to determine equality. */
 	J9ROMNameAndSignature *nas;
@@ -63,7 +63,7 @@ typedef struct J9StrictFieldEntry {
 	 */
 	BOOLEAN isReferenced;
 } J9StrictFieldEntry;
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 #define	BCV_TARGET_STACK_HEADER_UDATA_SIZE			4
 #define	BCV_STACK_OVERFLOW_BUFFER_UDATA_SIZE		2
@@ -300,5 +300,3 @@ typedef struct J9BCVAlloc {
 	liveStack->stackTopIndex = (IDATA) (stackTop - liveStack->stackElements)
 
 #endif     /* bcverify_h */
-
-

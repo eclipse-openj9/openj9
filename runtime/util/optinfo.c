@@ -706,7 +706,8 @@ getNumberOfRecordComponents(J9ROMClass *romClass)
 	return *SRP_PTR_GET(ptr, U_32*);
 }
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
+
 U_32
 getNumberOfInjectedInterfaces(J9ROMClass *romClass) {
 	U_32 *ptr = getSRPPtr(J9ROMCLASS_OPTIONALINFO(romClass), romClass->optionalFlags, J9_ROMCLASS_OPTINFO_INJECTED_INTERFACE_INFO);
@@ -734,7 +735,8 @@ loadableDescriptorAtIndex(U_32 *loadableDescriptorsInfoPtr, U_32 index)
 
 	return NNSRP_PTR_GET(loadableDescriptorsPtr, J9UTF8 *);
 }
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 BOOLEAN
 recordComponentHasSignature(J9ROMRecordComponentShape* recordComponent)
@@ -839,4 +841,3 @@ recordComponentNextDo(J9ROMRecordComponentShape* recordComponent)
 	}
 	return (J9ROMRecordComponentShape*)((U_8*)recordComponent + recordComponentSize);
 }
-

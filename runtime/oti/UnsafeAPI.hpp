@@ -552,7 +552,7 @@ public:
 	compareAndSwapObject(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI *objectAccessBarrier, j9object_t object, UDATA offset, j9object_t *compareValue, j9object_t *swapValue)
 	{
 		bool result = false;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		bool isValueType = (NULL != *compareValue) && J9_IS_J9CLASS_VALUETYPE(J9OBJECT_CLAZZ(currentThread, *compareValue));
 
 		if (isValueType) {
@@ -586,7 +586,7 @@ public:
 				}
 			}
 		} else
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		{
 			if (VM_VMHelpers::objectIsArray(currentThread, object)) {
 				UDATA index = convertOffsetToIndex(currentThread, offset, logFJ9ObjectSize(currentThread));
@@ -674,7 +674,7 @@ public:
 			return result;
 		}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		bool isValueType = (NULL != *compareValue) && J9_IS_J9CLASS_VALUETYPE(J9OBJECT_CLAZZ(currentThread, *compareValue));
 
 		if (isValueType) {
@@ -710,7 +710,7 @@ public:
 				}
 			}
 		} else
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		{
 			if (VM_VMHelpers::objectIsArray(currentThread, object)) {
 				/* Aligned array access */

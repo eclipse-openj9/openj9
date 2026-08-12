@@ -426,11 +426,11 @@ isFieldAccessCompatible(
 	UDATA bytecode,
 	UDATA receiver,
 	IDATA *reasonCode
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 	,
 	BOOLEAN isInitMethod,
 	BOOLEAN anotherInstanceInitCalled
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 );
 
 /**
@@ -508,7 +508,7 @@ pushLdcType(J9BytecodeVerificationData *verifyData, J9ROMClass * romClass, UDATA
 UDATA*
 pushReturnType(J9BytecodeVerificationData *verifyData, J9UTF8 * utf8string, UDATA * stackTop);
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 /**
  * Create or reset the list of strict instance fields for the class being
  * verified. This list is used to track which strict fields have been
@@ -527,7 +527,7 @@ createOrResetStrictFieldsList(J9BytecodeVerificationData *verifyData, BOOLEAN *a
  */
 void
 resetEarlyLarvalFrames(J9BytecodeVerificationData *verifyData);
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 /**
  * Classification of Unicode characters for use in Java identifiers.

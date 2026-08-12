@@ -36,23 +36,23 @@ objectMonitorExit(J9VMThread* vmStruct, j9object_t object)
 	IDATA rc = J9THREAD_ILLEGAL_MONITOR_STATE;
 	j9objectmonitor_t *lockEA = NULL;
 	j9objectmonitor_t lock = 0;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	J9Class *clazz = NULL;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	Assert_VM_true(vmStruct != NULL);
 	Assert_VM_true(J9_ARE_NO_BITS_SET((UDATA)vmStruct, OBJECT_HEADER_LOCK_BITS_MASK));
 
 	Trc_VM_objectMonitorExit_Entry(vmStruct, object);
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	/* There is a test that calls monitorExit without monitorEnter. */
 	clazz = J9OBJECT_CLAZZ(vmStruct, object);
 	if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
 		Trc_VM_objectMonitorExit_Exit_ValueType(vmStruct, object);
 		goto done;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	if (!LN_HAS_LOCKWORD(vmStruct, object)) {
 		J9ObjectMonitor *objectMonitor = NULL;
@@ -305,7 +305,7 @@ restart:
 		}
 #if JAVA_SPEC_VERSION >= 24
 		Trc_VM_objectMonitorExit_OMRThread_Monitor_Exit(vmStruct, monitor, monitor->count);
-#endif /*  JAVA_SPEC_VERSION >= 24 */
+#endif /* JAVA_SPEC_VERSION >= 24 */
 		rc = omrthread_monitor_exit((omrthread_monitor_t)monitor);
 #if JAVA_SPEC_VERSION >= 24
 		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
@@ -521,4 +521,3 @@ objectMonitorDestroyComplete(J9JavaVM *vm, J9VMThread *vmThread)
 {
 	omrthread_monitor_flush_destroyed_monitor_list(vmThread->osThread);
 }
-

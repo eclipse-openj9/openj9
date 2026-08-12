@@ -34,9 +34,9 @@
 #include "ConstantPoolMap.hpp"
 #include "SRPOffsetTable.hpp"
 #include "ROMClassCreationContext.hpp"
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 #include "ROMClassBuilder.hpp" /* included to obtain definition of InterfaceInjectionInfo */
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 class Cursor;
 class SRPKeyProducer;
@@ -45,11 +45,11 @@ class BufferManager;
 class ROMClassWriter
 {
 public:
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	ROMClassWriter(BufferManager *bufferManager, ClassFileOracle *classFileOracle, SRPKeyProducer *srpKeyProducer, ConstantPoolMap *constantPoolMap, ROMClassCreationContext *context, InterfaceInjectionInfo *interfaceInjectionInfo);
-#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#else /* JAVA_SPEC_VERSION >= 28 */
 	ROMClassWriter(BufferManager *bufferManager, ClassFileOracle *classFileOracle, SRPKeyProducer *srpKeyProducer, ConstantPoolMap *constantPoolMap, ROMClassCreationContext *context);
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	~ROMClassWriter();
 
 	void setSRPOffsetTable(SRPOffsetTable *srpOffsetTable)
@@ -152,10 +152,10 @@ private:
 	U_32 computeNativeSignatureSize(U_8 *methodDescriptor);
 	void writeNativeSignature(Cursor *cursor, U_8 *methodDescriptor, U_8 nativeArgCount);
 	void writePermittedSubclasses(Cursor *cursor, bool markAndCountOnly);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	void writeInjectedInterfaces(Cursor *cursor, bool markAndCountOnly);
 	void writeloadableDescriptors(Cursor *cursor, bool markAndCountOnly);
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 	BufferManager *_bufferManager;
 	ClassFileOracle *_classFileOracle;
@@ -163,9 +163,9 @@ private:
 	ConstantPoolMap *_constantPoolMap;
 	SRPOffsetTable *_srpOffsetTable;
 	ROMClassCreationContext *_context;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	InterfaceInjectionInfo *_interfaceInjectionInfo;
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	MethodNotes *_methodNotes;
 	BuildResult _buildResult;
 	UDATA _interfacesSRPKey;
@@ -192,10 +192,10 @@ private:
 	UDATA _specialSplitTableSRPKey;
 	UDATA _recordInfoSRPKey;
 	UDATA _permittedSubclassesInfoSRPKey;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	UDATA _injectedInterfaceInfoSRPKey;
 	UDATA _loadableDescriptorsInfoSRPKey;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 };
 
 #endif /* ROMCLASSWRITER_HPP_ */

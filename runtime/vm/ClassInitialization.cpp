@@ -410,7 +410,7 @@ doVerify:
 					}
 				}
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 				/* Verify fields in J9FlattenedClassCache. Set object addresses.
 				 * Set class addresses for static fields.
 				 */
@@ -499,7 +499,7 @@ doVerify:
 						}
 					}
 				}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 				/* Verify this class */
 				PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
@@ -607,14 +607,14 @@ doVerify:
 									setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_VALUE_CLASS, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(romClassName), J9UTF8_DATA(romClassName));
 									goto done;
 								}
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 								/* A static null-restricted field must also be strict to guarantee an initial value is set. */
 								if (J9_ARE_NO_BITS_SET(fieldModifiers, J9AccStrictInit)) {
 									J9UTF8 *romClassName = J9ROMCLASS_CLASSNAME(entryRomClass);
 									setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_STRICT, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(romClassName), J9UTF8_DATA(romClassName));
 									goto done;
 								}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 							}
 
 							initializationLock = enterInitializationLock(currentThread, initializationLock);
@@ -794,7 +794,7 @@ initFailed:
 					clazz = VM_VMHelpers::currentClass(clazz);
 					goto done;
 				}
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+#if JAVA_SPEC_VERSION >= 28
 				/* All strict static fields must be set by the end of <clinit>. */
 				if ((NULL != clazz->flattenedClassCache) && (clazz->flattenedClassCache->strictStaticFieldCounter > 0)) {
 					J9UTF8 *className = J9ROMCLASS_CLASSNAME(clazz->romClass);
@@ -809,7 +809,7 @@ initFailed:
 					clazz = VM_VMHelpers::currentClass(clazz);
 					goto initFailed;
 				}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 				initializationLock = setInitStatus(currentThread, clazz, J9ClassInitSucceeded, initializationLock);
 				clazz = VM_VMHelpers::currentClass(clazz);
 				classObject = J9VM_J9CLASS_TO_HEAPCLASS(clazz);

@@ -49,9 +49,9 @@ enum BuildResult {
 	LineNumberTableDecompressFailed = BCT_ERR_LINE_NUMBER_TABLE_DECOMPRESS_FAILED,
 	InvalidBytecodeSize = BCT_ERR_INVALID_BYTECODE_SIZE,
 	InvalidClassType = BCT_ERR_INVALID_CLASS_TYPE,
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	InvalidValueType = BCT_ERR_INVALID_VALUE_TYPE,
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	DuplicateName = BCT_ERR_DUPLICATE_NAME,
 };
 

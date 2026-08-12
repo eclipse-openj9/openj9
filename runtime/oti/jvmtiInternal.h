@@ -100,7 +100,7 @@ typedef struct J9JVMTIObjectTag {
 	jlong tag;
 } J9JVMTIObjectTag;
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 /* Bit 0 of ref marks an object tag entry as part of the dead-entry chain. */
 #define J9JVMTI_OBJECT_TAG_DEAD_ENTRY_BIT ((UDATA)1)
 /* True when ref points to a live object (dead-entry bit is clear). */
@@ -109,7 +109,7 @@ typedef struct J9JVMTIObjectTag {
 /* Extract the next-chain pointer from a dead-entry ref by clearing the dead-entry bit. */
 #define J9JVMTI_OBJECT_TAG_REF_NEXT(ref) \
 	((J9JVMTIObjectTag *)((UDATA)(ref) & ~J9JVMTI_OBJECT_TAG_DEAD_ENTRY_BIT))
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 #define J9JVMTI_WATCHED_FIELD_BITS_PER_FIELD 2
 #define J9JVMTI_WATCHED_FIELDS_PER_UDATA \

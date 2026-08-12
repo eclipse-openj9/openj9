@@ -68,7 +68,7 @@ private:
 	static bool
 	isSubstitutable(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI objectAccessBarrier, j9object_t lhs, j9object_t rhs, UDATA startOffset, J9Class *clazz)
 	{
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		J9JavaVM *vm = currentThread->javaVM;
 		U_32 walkFlags = J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE;
 		J9ROMFieldOffsetWalkState state;
@@ -190,10 +190,10 @@ private:
 
 	done:
 		return rc;
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 28 */
 		Assert_VM_unreachable();
 		return true;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	}
 
 protected:
@@ -203,7 +203,7 @@ public:
 	acmp(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI objectAccessBarrier, j9object_t lhs, j9object_t rhs)
 	{
 		bool acmpResult = (rhs == lhs);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 		if (!acmpResult) {
 			if ((NULL != rhs) && (NULL != lhs)) {
 				J9Class * lhsClass = J9OBJECT_CLAZZ(currentThread, lhs);
@@ -215,7 +215,7 @@ public:
 				}
 			}
 		}
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		return acmpResult;
 	}
 
@@ -515,7 +515,8 @@ done:
 		return value;
 	}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
+
 	/**
 	 * Copies an array of non-primitive objects
 	 * Handles flattened and non-flattened cases
@@ -614,9 +615,7 @@ done:
 
 		return 0;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 	/**
 	 * Finds the J9FlattenedClassCacheEntry in the ramClass corresponding
 	 * to an offset. Asserts that an entry exists to a strict field.
@@ -642,7 +641,8 @@ done:
 		}
 		return entry;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+
+#endif /* JAVA_SPEC_VERSION >= 28 */
 };
 
 #endif /* VALUETYPEHELPERS_HPP_ */

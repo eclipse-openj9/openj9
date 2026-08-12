@@ -347,12 +347,12 @@ objectMonitorEnterNonBlocking(J9VMThread *currentThread, j9object_t object)
 	BOOLEAN retry = FALSE;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 28
 	if (J9_IS_J9CLASS_VALUETYPE(objClass)) {
 		result = J9_OBJECT_MONITOR_VALUE_TYPE_IMSE;
 		goto done;
 	}
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+#endif /* JAVA_SPEC_VERSION >= 28 */
 	lwEA = VM_ObjectMonitor::inlineGetLockAddress(currentThread, object);
 #if JAVA_SPEC_VERSION >= 16
 	if (J9_IS_J9CLASS_VALUEBASED(objClass)) {
