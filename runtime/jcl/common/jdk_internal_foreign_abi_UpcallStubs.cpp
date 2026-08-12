@@ -49,6 +49,7 @@ Java_jdk_internal_foreign_abi_UpcallStubs_freeUpcallStub0(JNIEnv *env, jclass cl
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	const J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	jobject mhMetaDataRef = NULL;
 #if defined(AIXPPC) || defined(J9ZOS390)
 	/* The first element of the function pointer holds the thunk memory address,
 	 * as specified in vm/ap64/UpcallThunkGen.cpp and vm/mz64/UpcallThunkGen.cpp.
@@ -79,11 +80,13 @@ Java_jdk_internal_foreign_abi_UpcallStubs_freeUpcallStub0(JNIEnv *env, jclass cl
 					j9mem_free_memory(nativeFuncSig);
 					nativeFuncSig = NULL;
 				}
-				vmFuncs->internalEnterVMFromJNI(currentThread);
-				vmFuncs->j9jni_deleteGlobalRef(env, metaData->mhMetaData, JNI_FALSE);
-				vmFuncs->internalExitVMToJNI(currentThread);
-				j9mem_free_memory(metaData);
+				/* Remove the hash table entry before freeing metaData so that
+				 * metaData is no longer reachable through metaDataHashTable.
+				 * This ensures the hash table never points to freed memory.
+				 */
+				mhMetaDataRef = metaData->mhMetaData;
 				hashTableRemove(metaDataHashTable, result);
+				j9mem_free_memory(metaData);
 
 				if (NULL != thunkHeap) {
 					omrthread_jit_write_protect_disable();
@@ -94,6 +97,12 @@ Java_jdk_internal_foreign_abi_UpcallStubs_freeUpcallStub0(JNIEnv *env, jclass cl
 		}
 	}
 	omrthread_monitor_exit(vm->thunkHeapListMutex);
+
+	if (NULL != mhMetaDataRef) {
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+		vmFuncs->j9jni_deleteGlobalRef(env, mhMetaDataRef, JNI_FALSE);
+		vmFuncs->internalExitVMToJNI(currentThread);
+	}
 
 	return JNI_TRUE;
 }
