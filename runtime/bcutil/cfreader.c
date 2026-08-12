@@ -179,6 +179,7 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #if JAVA_SPEC_VERSION >= 11
 	BOOLEAN nestAttributeRead = FALSE;
+	BOOLEAN signatureAttributeRead = FALSE;
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
 	if (NULL != syntheticFound) {
@@ -221,6 +222,17 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 			break;
 
 		case CFR_ATTRIBUTE_Signature:
+#if JAVA_SPEC_VERSION >= 11
+			/* JVMS 4.7.9: There may be at most one Signature attribute in the attributes table of a
+			 * ClassFile, field_info, method_info, or record_component_info structure.
+			 */
+			if (signatureAttributeRead) {
+				errorCode = J9NLS_CFR_ERR_MULTIPLE_SIGNATURE_ATTRIBUTES__ID;
+				offset = address;
+				goto _errorFound;
+			}
+			signatureAttributeRead = TRUE;
+#endif /* JAVA_SPEC_VERSION >= 11 */
 			if (!ALLOC_CAST(attrib, J9CfrAttributeSignature, J9CfrAttribute)) {
 				return -2;
 			}
