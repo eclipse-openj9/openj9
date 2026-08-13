@@ -267,6 +267,7 @@ extern J9_CFUNC void j9gc_objaccess_recentlyAllocatedObject(J9VMThread *vmThread
 extern J9_CFUNC void j9gc_objaccess_postStoreClassToClassLoader(J9VMThread *vmThread, J9ClassLoader *destClassLoader, J9Class *srcClass);
 extern J9_CFUNC void j9gc_objaccess_postStoreModuleToClassLoader(J9VMThread *vmThread, J9ClassLoader *destClassLoader, J9Module *srcModule);
 extern J9_CFUNC I_32 j9gc_objaccess_getObjectHashCode(J9JavaVM *vm, J9Object* object);
+extern J9_CFUNC UDATA j9gc_objaccess_getIndexableObjectHashSlotOffset(J9JavaVM *vm, J9IndexableObject *arrayPtr);
 extern J9_CFUNC void* j9gc_objaccess_jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray array, jboolean *isCopy);
 extern J9_CFUNC void j9gc_objaccess_jniReleasePrimitiveArrayCritical(J9VMThread* vmThread, jarray array, void * elems, jint mode);
 extern J9_CFUNC const jchar* j9gc_objaccess_jniGetStringCritical(J9VMThread* vmThread, jstring str, jboolean *isCopy);
