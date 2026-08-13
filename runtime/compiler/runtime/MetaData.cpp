@@ -770,9 +770,13 @@ static void createMonitorMask(uint8_t *callSiteCursor, List<TR::RegisterMappedSy
         ListIterator<TR::RegisterMappedSymbol> iterator(autos);
         for (TR::RegisterMappedSymbol *a = iterator.getFirst(); a; a = iterator.getNext()) {
             int32_t bitNumber = a->getGCMapIndex();
-            // TODO: add this important assert in the future
-            // TR_ASSERT(bitNumber >= 0, "bitNumber is negative\n");
-            callSiteCursor[bitNumber >> 3] |= 1 << (bitNumber & 7);
+
+            // A monitor auto that did not get a GC slot assigned would have a GC map index
+            // of -1. Ensure bitNumber is non-negative to avoid out-of-bounds writes that can
+            // result from such unmapped autos.
+            if (bitNumber >= 0) {
+                callSiteCursor[bitNumber >> 3] |= 1 << (bitNumber & 7);
+            }
         }
     }
 }
