@@ -32,6 +32,8 @@ public class TestRecording {
 		System.out.println("TestRecording: start test");
 		Recording r = new Recording(Configuration.getConfiguration("default"));
 		r.start();
+		WorkLoad workload = new WorkLoad(2, 2000, 3, false);
+		workload.runWork();
 		r.stop();
 		r.dump(Paths.get("testrecording.jfr"));
 		r.close();
