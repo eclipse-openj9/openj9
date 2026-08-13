@@ -185,8 +185,7 @@ jfrDeregisterGCHooks(J9JavaVM *vm)
 	(*gcOmrHooks)->J9HookUnregister(gcOmrHooks, J9HOOK_MM_OMR_GC_CYCLE_END, jfrPublicGCEndHook, NULL);
 	(*gcPrivateHooks)->J9HookUnregister(gcPrivateHooks, J9HOOK_MM_PRIVATE_GC_POST_CYCLE_END, jfrPrivateGCEndHook, NULL);
 
-	(*gcHooks)->J9HookUnregister(gcHooks, J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING_INTERNAL, jfrObjectAllocationSample, NULL);
-	vm->memoryManagerFunctions->j9gc_set_jfr_allocation_sampling_interval_ns(vm, (U_64)UDATA_MAX);
+	(*gcHooks)->J9HookUnregister(gcHooks, J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING_INTERNAL, jfrObjectAllocationSampleHook, NULL);
 }
 
 #endif /* J9VM_OPT_JFR */
