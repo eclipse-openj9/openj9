@@ -27,7 +27,7 @@
 
 ReserveCodeCachePhase, FixUpProfiledInterfaceGuardTest,
 
-    InliningReportPhase,
+    RecompDueToPhaseChangeCode, InliningReportPhase,
 
     PopulateOSRBufferPhase, MoveUpArrayLengthStoresPhase, InsertEpilogueYieldPointsPhase, CleanUpFlagsPhase,
     LowerTreesPhase, InsertDebugCountersPhase, CompressedReferenceRematerializationPhase, AllocateLinkageRegisters,

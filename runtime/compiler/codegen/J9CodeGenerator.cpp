@@ -3611,6 +3611,47 @@ bool J9::CodeGenerator::willGenerateNOPForVirtualGuard(TR::Node *node)
     return true;
 }
 
+void J9::CodeGenerator::insertRecompDueToPhaseChangeCode()
+{
+    TR::Compilation *comp = self()->comp();
+
+    if (!comp->getOption(TR_EnableRecompDueToPatchedNopableGuards) || comp->getMethodHotness() < hot
+        || comp->getOptimizationPlan()->getDoNotInsertPhaseChangeRecomp() || comp->isProfilingCompilation())
+        return;
+
+    OMR::Logger *log = comp->log();
+    TR::NodeChecklist checklist(comp);
+    TR::CFG *cfg = comp->getFlowGraph();
+    bool callToRecompDueToPhaseChangeAdded = false;
+    for (TR::AllBlockIterator iter(cfg, comp); iter.currentBlock() != NULL; ++iter) {
+        TR::Block *block = iter.currentBlock();
+        TR::TreeTop *treeTop = block->getLastRealTreeTop();
+        TR::Node *node = treeTop->getNode();
+        if (node->getOpCode().isIf() && node->isTheVirtualGuardForAGuardedInlinedCall()
+            && node->isNopableInlineGuard()) {
+            TR::Node *callNode = node->getVirtualCallNodeForGuard();
+            // If we have a callNode for this nopable virtual guard and have not yet
+            // inserted a recompilation trigger for it, insert a call to trigger
+            // recompilation due to phase change before the virtual call tree.
+            // The checklist prevents inserting duplicate triggers for the same callNode
+            // shared by multiple guards.
+            if (callNode != NULL && !checklist.contains(callNode)) {
+                TR::TreeTop *cursor = node->getVirtualCallTreeForGuard();
+                TR::TreeTop *recompCallTT = TR::TransformUtil::generateRetranslateCallerWithPrepTrees(callNode,
+                    TR_PersistentMethodInfo::RecompDueToPhaseChange, comp);
+                logprintf(comp->getOption(TR_TraceCG), log,
+                    "Inserting call to recompile method before call node n%dn\n", callNode->getGlobalIndex());
+                cursor->insertBefore(recompCallTT);
+                checklist.add(callNode);
+                if (!callToRecompDueToPhaseChangeAdded) {
+                    comp->getRecompilationInfo()->getJittedBodyInfo()->setCanRecompileDueToPhaseChange();
+                    callToRecompDueToPhaseChangeAdded = true;
+                }
+            }
+        }
+    }
+}
+
 /** \brief
  *       Following codegen phase walks the blocks in the CFG and checks for the virtual guard performing TR_MethodTest
  *       and guarding an inlined interface call.
