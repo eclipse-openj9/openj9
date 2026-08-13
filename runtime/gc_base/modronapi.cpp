@@ -1221,22 +1221,26 @@ j9gc_set_allocation_sampling_interval(J9JavaVM *vm, UDATA samplingInterval)
 
 #if defined(J9VM_OPT_JFR)
 /**
- * Sets the nanosecond time interval between JFR ObjectAllocationSample events per thread.
+ * Sets the byte interval between JFR ObjectAllocationSample events per thread,
+ * mirroring j9gc_set_allocation_sampling_interval.
  * Pass UDATA_MAX to disable JFR allocation sampling.
- * Unlike j9gc_set_allocation_sampling_interval, no zero-clamp is needed because time
- * arithmetic handles a zero interval safely.
  *
  * @param[in] vm The J9JavaVM
- * @param[in] intervalNs The nanosecond interval between samples; UDATA_MAX = disabled
+ * @param[in] samplingInterval The allocation byte interval; UDATA_MAX = disabled
  */
 void
-j9gc_set_jfr_allocation_sampling_interval_ns(J9JavaVM *vm, U_64 intervalNs)
+j9gc_set_jfr_allocation_sampling_interval(J9JavaVM *vm, UDATA samplingInterval)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
-	if (intervalNs != extensions->jfrObjectSamplingIntervalNs) {
-		extensions->jfrObjectSamplingIntervalNs = intervalNs;
-//		J9VMThread *currentThread = vm->internalVMFunctions->currentVMThread(vm);
-//		j9gc_allocation_threshold_changed(currentThread);
+	if (0 == samplingInterval) {
+		/* avoid (env->_jfrTraceAllocationBytes) % 0 which could be undefined. */
+		samplingInterval = 1;
+	}
+
+	if (samplingInterval != extensions->jfrObjectSamplingBytesGranularity) {
+		extensions->jfrObjectSamplingBytesGranularity = samplingInterval;
+		J9VMThread *currentThread = vm->internalVMFunctions->currentVMThread(vm);
+		j9gc_allocation_threshold_changed(currentThread);
 	}
 }
 #endif /* defined(J9VM_OPT_JFR) */

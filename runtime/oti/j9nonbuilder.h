@@ -5235,7 +5235,7 @@ typedef struct J9MemoryManagerFunctions {
 	void  ( *j9gc_get_offheap_data)(struct J9JavaVM *javaVM, void **offheapControlStructure, void **base, void **top, UDATA *usage);
 	void  ( *j9gc_set_allocation_sampling_interval)(struct J9JavaVM *vm, UDATA samplingInterval);
 #if defined(J9VM_OPT_JFR)
-	void  ( *j9gc_set_jfr_allocation_sampling_interval_ns)(struct J9JavaVM *vm, U_64 intervalNs);
+	void  ( *j9gc_set_jfr_allocation_sampling_interval)(struct J9JavaVM *vm, UDATA samplingInterval);
 #endif /* defined(J9VM_OPT_JFR) */
 void  ( *j9gc_set_allocation_threshold)(struct J9VMThread *vmThread, UDATA low, UDATA high) ;
 	void  ( *j9gc_objaccess_recentlyAllocatedObject)(struct J9VMThread *vmThread, J9Object *dstObject) ;
@@ -5732,6 +5732,7 @@ typedef struct J9InternalVMFunctions {
 	void (*disableJFRRecordingOnThread)(struct J9VMThread *currentThread, j9object_t threadObject);
 	BOOLEAN (*isJFRRecordingDisabledOnThread)(struct J9VMThread *currentThread, struct J9VMThread *sampleThread);
 	void (*jfrExecutionSample)(struct J9VMThread *currentThread, struct J9VMThread *sampleThread);
+	void (*jfrObjectAllocationSample)(struct J9VMThread *currentThread, J9Class *clazz, UDATA weight);
 	void  (*jfrOldGarbageCollection)(struct OMR_VMThread *omrVMThread) ;
 	void  (*jfrYoungGarbageCollection)(struct OMR_VMThread *omrVMThread) ;
 	void  (*jfrGarbageCollection)(struct OMR_VMThread *omrVMThread) ;
@@ -5748,7 +5749,6 @@ typedef struct J9InternalVMFunctions {
 	BOOLEAN (*setupChunkMonitor)(struct J9VMThread *currentThread);
 	I_64 (*getThreadTID)(struct J9VMThread *currentThread, struct J9VMThread *vmThread);
 	U_32 (*emitStackTrace)(struct J9VMThread *currentThread, I_32 skipCount);
-	void (*jfrObjectAllocationSample)(struct J9VMThread *currentThread, J9Class *clazz, U_64 weight);
 #endif /* defined(J9VM_OPT_JFR) */
 #if defined(J9VM_OPT_SNAPSHOTS)
 	void (*initializeSnapshotClassLoaderObject)(struct J9JavaVM *javaVM, struct J9ClassLoader *classLoader, j9object_t classLoaderObject);
@@ -6259,7 +6259,8 @@ typedef struct JFRState {
 	IDATA blobFileDescriptor;
 	void *jfrWriter;
 	UDATA jfrChunkCount;
-	UDATA objectAllocationSampleThrottleRate;
+	UDATA objectAllocationSampleThrottleRate;   /**< target ObjectAllocationSample events per second (default 150) */
+	uint64_t lastGCCycleEndTicks; /**< hires-clock ticks when the last GC cycle ended; 0 if no GC has occurred */
 	I_64 chunkStartTime;
 	I_64 chunkStartTicks;
 	void *constantEvents;

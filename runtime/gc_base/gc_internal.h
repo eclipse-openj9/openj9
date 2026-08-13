@@ -263,7 +263,7 @@ extern J9_CFUNC void j9gc_startGCIfTimeExpired(OMR_VMThread* vmThread);
 extern J9_CFUNC void j9gc_allocation_threshold_changed(J9VMThread* currentThread);
 extern J9_CFUNC void j9gc_set_allocation_sampling_interval(J9JavaVM *vm, UDATA samplingInterval);
 #if defined(J9VM_OPT_JFR)
-extern J9_CFUNC void j9gc_set_jfr_allocation_sampling_interval_ns(J9JavaVM *vm, U_64 intervalNs);
+extern J9_CFUNC void j9gc_set_jfr_allocation_sampling_interval(J9JavaVM *vm, UDATA samplingInterval);
 #endif /* defined(J9VM_OPT_JFR) */
 extern J9_CFUNC void j9gc_set_allocation_threshold(J9VMThread* vmThread, UDATA low, UDATA high);
 extern J9_CFUNC void j9gc_objaccess_recentlyAllocatedObject(J9VMThread *vmThread, J9Object *dstObject);
