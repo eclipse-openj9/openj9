@@ -33,11 +33,10 @@ void J9::ARM64::InstructionDelegate::encodeBranchToLabel(TR::CodeGenerator *cg, 
     ((TR::ARM64CallSnippet *)ins->getCallSnippet())->setCallRA(cursor + ARM64_INSTRUCTION_LENGTH);
 }
 
-static bool isNPEThrowingInstruction(TR::InstOpCode::Mnemonic opCodeValue)
+static bool isNPEThrowingInstruction(OP::Mnemonic opCodeValue)
 {
-    return (opCodeValue != TR::InstOpCode::addimmx) && (opCodeValue != TR::InstOpCode::addx)
-        && (opCodeValue != TR::InstOpCode::prfm) && (opCodeValue != TR::InstOpCode::prfmimm)
-        && (opCodeValue != TR::InstOpCode::prfmoff);
+    return (opCodeValue != OP::addimmx) && (opCodeValue != OP::addx) && (opCodeValue != OP::prfm)
+        && (opCodeValue != OP::prfmimm) && (opCodeValue != OP::prfmoff);
 }
 
 static void setupImplicitNullPointerExceptionImpl(TR::CodeGenerator *cg, TR::Instruction *instr, TR::Node *node,
