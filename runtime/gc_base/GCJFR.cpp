@@ -26,7 +26,6 @@
 
 #include "j9.h"
 #include "j9protos.h"
-#include "mmhook_internal.h"
 #include "mmprivatehook.h"
 #include "mmomrhook.h"
 #include "modronapi.hpp"
@@ -41,7 +40,6 @@
  * - jfrGCCycleStartHook (corresponding to public OMR GC cycle start trigger)
  * - jfrPublicGCEndHook (corresponding to public OMR GC cycle end trigger)
  * - jfrPrivateGCEndHook (corresponding to private OMR GC cycle end trigger)
- * - jfrObjectAllocationSampleHook (corresponding to public Java-layer object allocation sample trigger)
  *
  * @param vm[in] The Java VM
  * @return 0 on success, non-zero on failure
@@ -49,9 +47,8 @@
 jint
 jfrRegisterGCHooks(J9JavaVM *vm)
 {
-	J9HookInterface **gcOmrHooks = vm->memoryManagerFunctions->j9gc_get_omr_hook_interface(vm->omrVM);
-	J9HookInterface **gcPrivateHooks = vm->memoryManagerFunctions->j9gc_get_private_hook_interface(vm);
-	J9HookInterface **gcHooks = vm->memoryManagerFunctions->j9gc_get_hook_interface(vm);
+	J9HookInterface** gcOmrHooks = vm->memoryManagerFunctions->j9gc_get_omr_hook_interface(vm->omrVM);
+	J9HookInterface** gcPrivateHooks = vm->memoryManagerFunctions->j9gc_get_private_hook_interface(vm);
 
 	if ((*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_GC_CYCLE_START, jfrGCCycleStartHook, OMR_GET_CALLSITE(), NULL)) {
 		return -1;
@@ -68,9 +65,6 @@ jfrRegisterGCHooks(J9JavaVM *vm)
 		return -1;
 	}
 
-	if ((*gcHooks)->J9HookRegisterWithCallSite(gcHooks, J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING_INTERNAL, jfrObjectAllocationSampleHook, OMR_GET_CALLSITE(), NULL)) {
-		return -1;
-	}
 	return 0;
 }
 
@@ -149,24 +143,6 @@ jfrPrivateGCEndHook(J9HookInterface **hook, UDATA eventNum, void *eventData, voi
 }
 
 /**
- * Hook callback for the JFR-internal object allocation sampling event.
- *
- * @param hook[in] the hook interface
- * @param eventNum[in] the event number
- * @param eventData[in] the event data
- * @param userData[in] the registered user data
- */
-void
-jfrObjectAllocationSampleHook(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
-{
-	MM_ObjectAllocationSamplingInternalEvent *data = (MM_ObjectAllocationSamplingInternalEvent *)eventData;
-	J9VMThread *currentThread = data->currentThread;
-	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
-
-	vmFuncs->jfrObjectAllocationSample(currentThread, data->clazz, data->weight);
-}
-
-/**
  * Deregister GC-related JFR hooks.
  *
  * This function unregisters all garbage collection related hooks that were
@@ -177,15 +153,12 @@ jfrObjectAllocationSampleHook(J9HookInterface **hook, UDATA eventNum, void *even
 void
 jfrDeregisterGCHooks(J9JavaVM *vm)
 {
-	J9HookInterface **gcOmrHooks = vm->memoryManagerFunctions->j9gc_get_omr_hook_interface(vm->omrVM);
-	J9HookInterface **gcPrivateHooks = vm->memoryManagerFunctions->j9gc_get_private_hook_interface(vm);
-	J9HookInterface **gcHooks = vm->memoryManagerFunctions->j9gc_get_hook_interface(vm);
+	J9HookInterface** gcOmrHooks = vm->memoryManagerFunctions->j9gc_get_omr_hook_interface(vm->omrVM);
+	J9HookInterface** gcPrivateHooks = vm->memoryManagerFunctions->j9gc_get_private_hook_interface(vm);
 
 	(*gcOmrHooks)->J9HookUnregister(gcOmrHooks, J9HOOK_MM_OMR_GC_CYCLE_START, jfrGCCycleStartHook, NULL);
 	(*gcOmrHooks)->J9HookUnregister(gcOmrHooks, J9HOOK_MM_OMR_GC_CYCLE_END, jfrPublicGCEndHook, NULL);
 	(*gcPrivateHooks)->J9HookUnregister(gcPrivateHooks, J9HOOK_MM_PRIVATE_GC_POST_CYCLE_END, jfrPrivateGCEndHook, NULL);
-
-	(*gcHooks)->J9HookUnregister(gcHooks, J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING_INTERNAL, jfrObjectAllocationSampleHook, NULL);
 }
 
 #endif /* J9VM_OPT_JFR */

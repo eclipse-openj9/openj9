@@ -483,7 +483,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 	disableJFRRecordingOnThread,
 	isJFRRecordingDisabledOnThread,
 	jfrExecutionSample,
-	jfrObjectAllocationSample,
 	jfrOldGarbageCollection,
 	jfrYoungGarbageCollection,
 	jfrGarbageCollection,

@@ -1084,3 +1084,5 @@ TraceEvent=Trc_VM_jfrGarbageCollection Overhead=1 Level=5 Template="garbage coll
 TraceEvent=Trc_VM_jfrGCHeapSummary Overhead=1 Level=5 Template="GC heap summary"
 TraceEvent=Trc_VM_jfrReserveBuffer_nullBuffer Overhead=1 Level=5 Template="reserveBuffer returned null sampleThread=%p size=%zu areBuffersReady=%d isJFRDisabledOnThread=%d"
 TraceException=Trc_VM_jfr_ErrorWritingChunk2 Overhead=1 Level=1 Template="Error writing JFR chunk in JFRWriter; error=%d"
+TraceEvent=Trc_VM_jfrObjectAllocationSample Overhead=1 Level=5 Template="jfrObjectAllocationSample class=%.*s weight=%zu objectSize=%zu"
+TraceEvent=Trc_VM_jfrSamplingThreadProc_recalibrate NoEnv Overhead=1 Level=5 Template="jfrSamplingThreadProc recalibrate: totalBytes=%zu elapsedMicroSeconds=%zu oldInterval=%zu newInterval=%zu"

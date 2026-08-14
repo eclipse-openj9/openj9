@@ -1243,6 +1243,13 @@ j9gc_set_jfr_allocation_sampling_interval(J9JavaVM *vm, UDATA samplingInterval)
 		j9gc_allocation_threshold_changed(currentThread);
 	}
 }
+
+UDATA
+j9gc_get_jfr_allocation_sampling_interval(J9JavaVM *vm)
+{
+	return  MM_GCExtensions::getExtensions(vm)->jfrObjectSamplingBytesGranularity;
+}
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 /**
