@@ -3137,15 +3137,27 @@ bool J9::Options::disableMemoryDisclaimIfNeeded(J9JITConfig *jitConfig)
     if (shouldDisableMemoryDisclaim) {
         TR::Options::getCmdLineOptions()->setOption(TR_EnableSharedCacheDisclaiming, false);
     }
+    J9JITMemDisclaimInfo &info = jitConfig->memDisclaimInfo;
+    info.dataCacheDisclaimEnabled
+        = TR::Options::getCmdLineOptions()->getOption(TR_DisableDataCacheDisclaiming) ? FALSE : TRUE;
+    info.iProfilerDisclaimEnabled
+        = TR::Options::getCmdLineOptions()->getOption(TR_DisableIProfilerDataDisclaiming) ? FALSE : TRUE;
+    info.runtimeAssumptionDisclaimEnabled
+        = TR::Options::getCmdLineOptions()->getOption(TR_DisableRuntimeAssumptionDataDisclaiming) ? FALSE : TRUE;
+    info.codeCacheDisclaimEnabled
+        = TR::Options::getCmdLineOptions()->getOption(TR_EnableCodeCacheDisclaiming) ? TRUE : FALSE;
+    info.disclaimOnSwap = compInfo->canDisclaimOnSwap() ? TRUE : FALSE;
+    info.disclaimOnFile = compInfo->canDisclaimOnFile() ? TRUE : FALSE;
+    info.disclaimDir = compInfo->canDisclaimOnFile() ? disclaimDir : NULL;
     return shouldDisableMemoryDisclaim;
-#else /* if defined(LINUX) */
+#else /* defined(LINUX) */
     TR::Options::getCmdLineOptions()->setOption(TR_DisableDataCacheDisclaiming);
     TR::Options::getCmdLineOptions()->setOption(TR_DisableIProfilerDataDisclaiming);
     TR::Options::getCmdLineOptions()->setOption(TR_DisableRuntimeAssumptionDataDisclaiming);
     TR::Options::getCmdLineOptions()->setOption(TR_EnableCodeCacheDisclaiming, false);
     TR::Options::getCmdLineOptions()->setOption(TR_EnableSharedCacheDisclaiming, false);
     return true;
-#endif
+#endif /* defined(LINUX) */
 }
 
 bool J9::Options::disableSCCDisclaimIfNeeded(J9JITConfig *jitConfig)
@@ -3200,7 +3212,9 @@ bool J9::Options::disableSCCDisclaimIfNeeded(J9JITConfig *jitConfig)
             TR::Options::getCmdLineOptions()->setOption(TR_EnableSharedCacheDisclaiming, false);
         }
     }
-#endif // if defined(LINUX) && defined(J9VM_OPT_SHARED_CLASSES)
+    jitConfig->memDisclaimInfo.sccDisclaimEnabled
+        = TR::Options::getCmdLineOptions()->getOption(TR_EnableSharedCacheDisclaiming) ? TRUE : FALSE;
+#endif // defined(LINUX) && defined(J9VM_OPT_SHARED_CLASSES)
     return shouldDisableMemoryDisclaim;
 }
 
