@@ -82,4 +82,9 @@
 			</class>
 		</classes>
 	</test>
+	<test name="AOTValhallaFeaturesTests">
+		<classes>
+			<class name="org.openj9.test.lworld.Sample"/>
+		</classes>
+	</test>
 </suite> <!-- Suite -->
