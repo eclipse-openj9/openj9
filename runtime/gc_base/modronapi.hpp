@@ -107,6 +107,7 @@ void j9gc_set_memoryController(J9VMThread *vmThread, j9object_t objectPtr, j9obj
 void j9gc_set_allocation_sampling_interval(J9JavaVM *vm, UDATA samplingInterval);
 #if defined(J9VM_OPT_JFR)
 void j9gc_set_jfr_allocation_sampling_interval(J9JavaVM *vm, UDATA samplingInterval);
+UDATA j9gc_get_jfr_allocation_sampling_interval(J9JavaVM *vm);
 #endif /* defined(J9VM_OPT_JFR) */
 void j9gc_set_allocation_threshold(J9VMThread *vmThread, UDATA low, UDATA high);
 UDATA j9gc_get_bytes_allocated_by_thread(J9VMThread *vmThread);
