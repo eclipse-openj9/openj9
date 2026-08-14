@@ -451,4 +451,37 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
+	<test>
+		<testCaseName>AOTValhallaFeaturesTests</testCaseName>
+		<variations>
+			<variation>-DVALHFLATMODE=310 -DVALHARRFLATMODE=320 -DVALHFLATTHRESHMODE=330</variation>
+			<variation>-DVALHFLATMODE=311 -DVALHARRFLATMODE=320 -DVALHFLATTHRESHMODE=330</variation>
+			<variation>-DVALHFLATMODE=311 -DVALHARRFLATMODE=321 -DVALHFLATTHRESHMODE=330</variation>
+			<variation>-DVALHFLATMODE=311 -DVALHARRFLATMODE=320 -DVALHFLATTHRESHMODE=331</variation>
+			<variation>-DVALHFLATMODE=311 -DVALHARRFLATMODE=321 -DVALHFLATTHRESHMODE=331</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
+		$(JVM_OPTIONS) \
+		-DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
+		-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)ValhallaTests.jar$(Q) \
+		-DRESJAR=$(CMDLINETESTER_RESJAR) -jar $(CMDLINETESTER_JAR) \
+		-config $(Q)$(TEST_RESROOT)$(D)AOTValhallaFeaturesTests.xml$(Q) \
+		-outputLimit 1000 -explainExcludes -xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) \
+		-xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
+		-nonZeroExitWhenError; \
+		$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<versions>
+			<version>Valhalla</version>
+		</versions>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
 </playlist>
