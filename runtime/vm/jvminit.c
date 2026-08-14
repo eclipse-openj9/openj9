@@ -8193,6 +8193,27 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		goto error;
 	}
 
+#if defined(J9VM_OPT_SNAPSHOTS) && defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	/* On restore run, clear stale constRefArrays from all classes since the
+	 * constRefArrayPool has been recreated and old nodes are no longer valid.
+	 * This must happen before JIT_INITIALIZED so that JIT compilation threads
+	 * do not see stale pointers into the old constRefArrayPool.
+	 */
+	if (IS_RESTORE_RUN(vm)) {
+		J9MemorySegment *segment = vm->classMemorySegments->nextSegment;
+		while (NULL != segment) {
+			if (J9_ARE_ALL_BITS_SET(segment->type, MEMORY_TYPE_RAM_CLASS)) {
+				J9Class *clazz = *(J9Class **)segment->heapBase;
+				while (NULL != clazz) {
+					clazz->constRefArrays = NULL;
+					clazz = clazz->nextClassInSegment;
+				}
+			}
+			segment = segment->nextSegment;
+		}
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) && defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
 	if (JNI_OK != (stageRC = runInitializationStage(vm, JIT_INITIALIZED))) {
 		goto error;
 	}
