@@ -249,6 +249,14 @@ private:
 // to allocate it dynamically and store a pointer into TR::CompilationInfo
 struct TR_CpuEntitlement {
 public:
+    TR_CpuEntitlement()
+        : _hypervisorPresent(TR_maybe)
+        , _numTargetCpu(0)
+        , _guestCpuEntitlement(0.0)
+        , _jvmCpuEntitlement(0.0)
+        , _jitConfig(NULL)
+    {}
+
     // The constructor cannot set all fields correctly because we have to make
     // sure te portlib is up and running
     void init(J9JITConfig *jitConfig)
