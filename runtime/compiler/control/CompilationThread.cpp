@@ -801,10 +801,6 @@ bool TR::CompilationInfo::createCompilationInfo(J9JITConfig *jitConfig)
     try {
         TR::RawAllocator rawAllocator(jitConfig->javaVM);
         void *alloc = rawAllocator.allocate(sizeof(TR::CompilationInfo));
-        /* FIXME: Replace this with the appropriate initializers in the constructor */
-        /* Note: there are embedded objects in TR::CompilationInfo that rely on the fact
-           that we do memset this object to 0 */
-        memset(alloc, 0, sizeof(TR::CompilationInfo));
         _compilationRuntime = new (alloc) TR::CompilationInfo(jitConfig);
         jitConfig->compilationRuntime = (void *)_compilationRuntime;
 #ifdef DEBUG
@@ -1024,6 +1020,7 @@ TR::CompilationInfoPerThreadBase::CompilationInfoPerThreadBase(TR::CompilationIn
     , _compilationCanBeInterrupted(false)
     , _uninterruptableOperationDepth(0)
     , _compilationThreadState(COMPTHREAD_UNINITIALIZED)
+    , _previousCompilationThreadState(COMPTHREAD_UNINITIALIZED)
     , _compilationShouldBeInterrupted(false)
     ,
 #if defined(J9VM_OPT_JITSERVER)
@@ -1134,7 +1131,8 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig)
     , _classesCachedAtServer(decltype(_classesCachedAtServer)::allocator_type(TR::Compiler->persistentAllocator()))
     ,
 #endif /* defined(J9VM_OPT_JITSERVER) */
-    _persistentMemory(pointer_cast<TR_PersistentMemory *>(jitConfig->scratchSegment))
+    _jitConfig(jitConfig)
+    , _persistentMemory(pointer_cast<TR_PersistentMemory *>(jitConfig->scratchSegment))
     , _sharedCacheReloRuntime(jitConfig)
     , _samplingThreadWaitTimeInDeepIdleToNotifyVM(-1)
     ,
@@ -1151,26 +1149,145 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig)
     , _lastCompThreadID(0)
     , _lastDiagnosticTheadID(0)
     , _arrayOfCompilationInfoPerThread(NULL)
+    , _compInfoForDiagnosticCompilationThread(NULL)
     , _lastAllocatedCompThreadID(0)
+    , _stats()
+    , _intervalStats()
+    , _persistedMethods(NULL)
+    , _methodQueue(NULL)
+    , _methodPool(NULL)
+    , _methodPoolSize(0)
+    , _compilationMonitor(NULL)
+    , _classUnloadMonitor(NULL)
+    , _logMonitor(NULL)
+    , _schedulingMonitor(NULL)
+#if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)
+    , _dltMonitor(NULL)
+    , _freeDLTRecord(NULL)
+    , _numDLTRecords(0)
+#endif
+    , _dltHT(NULL)
+    , _vlogMonitor(NULL)
+    , _rtlogMonitor(NULL)
+    , _iprofilerBufferArrivalMonitor(NULL)
+    , _j9MonitorTable(NULL)
+    , _numSyncCompilations(0)
+    , _numAsyncCompilations(0)
+    , _numCompsUsedForCompDensityCalculations(0)
+    , _numCompThreadsActive(0)
+    , _numCompThreadsJobless(0)
+    , _numCompThreadsCompilingHotterMethods(0)
+    , _numAppThreadsActive(0)
+    , _elapsedTimeNumAppThreadsActiveWasSet(0)
+    , _numQueuedMethods(0)
+    , _maxQueueSize(0)
+    , _numQueuedFirstTimeCompilations(0)
+    , _queueWeight(0)
+    , _cpuUtil(NULL)
+    , _overallCompCpuUtilization(0)
+    , _idleThreshold(0)
+    , _compilationBudget(0)
+    , _warmSCC(TR_maybe)
+    , _compBudgetSupport(false)
+    , _rampDownMCT(false)
+    , _exceedsCompCpuEntitlement(TR_maybe)
+    , _samplerThread(NULL)
+    , _samplerState(TR::CompilationInfo::SAMPLER_NOT_INITIALIZED)
+    , _prevSamplerState(TR::CompilationInfo::SAMPLER_NOT_INITIALIZED)
+    , _samplingThreadLifetimeState(TR::CompilationInfo::SAMPLE_THR_NOT_CREATED)
+    , _numMethodsFoundInSharedCache(0)
+    , _numInvRequestsInCompQueue(0)
+    , _lastReqStartTime(0)
+    , _lastCompilationsShouldBeInterruptedTime(0)
+    , _statNumAotedMethods(0)
+    , _statNumMethodsFromSharedCache(0)
+    , _statNumAotedMethodsRecompiled(0)
+    , _statNumForcedAotUpgrades(0)
+    , _statNumJNIMethodsCompiled(0)
+    , statCompErrors()
+    , _statNumPriorityChanges(0)
+    , _statNumYields(0)
+    , _statNumUpgradeInterpretedMethod(0)
+    , _statNumDowngradeInterpretedMethod(0)
+    , _statNumUpgradeJittedMethod(0)
+    , _statNumQueuePromotions(0)
+    , _statNumGCRInducedCompilations(0)
+    , _statNumSamplingJProfilingBodies(0)
+    , _statNumJProfilingBodies(0)
+    , _statNumRecompilationForBodiesWithJProfiling(0)
+    , _statNumMethodsFromJProfilingQueue(0)
+    , _statTotalAotQueryTime(0)
+    , _statTotalAotRelocationTime(0)
+    , _numberBytesReadInaccessible(0)
+    , _numberBytesWriteInaccessible(0)
+    , _flags()
+    , _numSeriousFailures(0)
+    , _gpuInitMonitor(NULL)
+#ifdef DEBUG
+    , _traceCompiling(false)
+#endif
+    , _isInShutdownMode(false)
+    , _isSwapMemoryDisabled(false)
+    , _canDisclaimOnSwap(false)
+    , _canDisclaimOnFile(false)
+    , _iprofilerMaxCount(0)
+    , _numGCRQueued(0)
+    , _appSleepNano(0)
+    , _starvationDetected(false)
+    , _totalCompThreadCpuUtilWhenStarvationComputed(0)
+    , _numActiveCompThreadsWhenStarvationComputed(0)
+    , _vmStateOfCrashedThread(0)
+    , _crashWasDueToOrphanedConstRefs(false)
+    , _cachedFreePhysicalMemoryB(0)
+    , _cachedIncompleteFreePhysicalMemory(false)
+    , _cgroupMemorySubsystemEnabled(false)
+    , _suspendThreadDueToLowPhysicalMemory(false)
+    , _interpSamplTrackingInfo(NULL)
+    , _lowCompDensityMode(false)
+    , _hasEnteredLowCompDensityModeInThePast(false)
+    , _compileFromLPQRegardlessOfCPU(false)
+    , _jvmIsStarved(false)
+#if defined(J9VM_OPT_JITSERVER)
+    , _clientSessionHT(NULL)
+    , _classesCachedAtServerMonitor(NULL)
+    , _unloadedClassesTempList(NULL)
+    , _illegalFinalFieldModificationList(NULL)
+    , _sequencingMonitor(NULL)
+    , _compReqSeqNo(0)
+    , _lastCriticalCompReqSeqNo(0)
+    , _newlyExtendedClasses(NULL)
+    , _chTableUpdateFlags(0)
+    , _localGCCounter(0)
+    , _sslRootCerts()
+    , _activationPolicy(JITServer::CompThreadActivationPolicy::AGGRESSIVE)
+    , _sharedROMClassCache(NULL)
+    , _JITServerAOTCacheMap(NULL)
+    , _JITServerAOTDeserializer(NULL)
+#endif
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+    , _crRuntime(NULL)
+#endif
 {
-    // The object is zero-initialized before this method is called
-    //
+#if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)
+    memset(_dltHash, 0, sizeof(_dltHash)); ///< in C++11 notation: _dltHash = {0};
+#endif
+    memset(_statsOptLevels, 0, sizeof(_statsOptLevels)); ///< in C++11 notation: _statsOptLevels = {0};
+#if defined(J9VM_OPT_JITSERVER)
+    memset(_statsRemoteOptLevels, 0,
+        sizeof(_statsRemoteOptLevels)); ///< in C++11 notation: _statsRemoteOptLevels = {0};
+#endif
+#if defined(J9VM_OPT_SHARED_CLASSES)
+    memset(&_javacoreData, 0, sizeof(_javacoreData)); ///< in C++11 notation: _javacoreData = {0};
+#endif
     ::jitConfig = jitConfig;
-    _jitConfig = jitConfig;
 
     // For normal case with compilation on application thread this
     // initialization will be done later after we are sure that
     // the options have been processed
 
-    _vmStateOfCrashedThread = 0;
-    _crashWasDueToOrphanedConstRefs = false;
-
-    _cachedFreePhysicalMemoryB = 0;
-    _cachedIncompleteFreePhysicalMemory = false;
     OMRPORT_ACCESS_FROM_J9PORT(jitConfig->javaVM->portLibrary);
     _cgroupMemorySubsystemEnabled
         = (OMR_CGROUP_SUBSYSTEM_MEMORY == omrsysinfo_cgroup_are_subsystems_enabled(OMR_CGROUP_SUBSYSTEM_MEMORY));
-    _suspendThreadDueToLowPhysicalMemory = false;
     J9MemoryInfo memInfo;
     _isSwapMemoryDisabled = ((omrsysinfo_get_memory_info(&memInfo) == 0) && (0 == memInfo.totalSwap));
 
@@ -1235,19 +1352,8 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig)
     _JProfilingQueue.setCompInfo(this);
     _interpSamplTrackingInfo = new (PERSISTENT_NEW) TR_InterpreterSamplingTracking(this);
 #if defined(J9VM_OPT_JITSERVER)
-    _clientSessionHT = NULL; // This will be set later when options are processed
-    _unloadedClassesTempList = NULL;
-    _illegalFinalFieldModificationList = NULL;
-    _newlyExtendedClasses = NULL;
     _sequencingMonitor = TR::Monitor::create("JIT-SequencingMonitor");
     _classesCachedAtServerMonitor = TR::Monitor::create("JIT-ClassesCachedAtServerMonitor");
-    _compReqSeqNo = 0;
-    _chTableUpdateFlags = 0;
-    _localGCCounter = 0;
-    _activationPolicy = JITServer::CompThreadActivationPolicy::AGGRESSIVE;
-    _sharedROMClassCache = NULL;
-    _JITServerAOTCacheMap = NULL;
-    _JITServerAOTDeserializer = NULL;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 }
 
@@ -11304,10 +11410,12 @@ void TR::CompilationInfo::storeAOTInSharedCache(J9VMThread *vmThread, J9ROMMetho
 
 //===========================================================
 TR_LowPriorityCompQueue::TR_LowPriorityCompQueue()
-    : _firstLPQentry(NULL)
+    : _compInfo(NULL)
+    , _firstLPQentry(NULL)
     , _lastLPQentry(NULL)
     , _sizeLPQ(0)
     , _LPQWeight(0)
+    , _threshold(0)
     , _trackingEnabled(false)
     , _spine(NULL)
     , _STAT_compReqQueuedByIProfiler(0)

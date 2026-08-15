@@ -153,24 +153,55 @@ const char *TR_RelocationRuntime::_reloErrorCodeNames[] = {
 };
 
 TR_RelocationRuntime::TR_RelocationRuntime(J9JITConfig *jitCfg)
+    : _relocationStatus(RelocationNoError)
+    , _reloErrorCode(TR_RelocationError::relocationOK)
+    , _jitConfig(jitCfg)
+    , _javaVM(jitCfg->javaVM)
+    , _fe(NULL)
+    , _trMemory(NULL)
+    , _compInfo(TR::CompilationInfo::get(jitCfg))
+    , _reloTarget(NULL)
+    , _reloLogger(NULL)
+    , _aotStats(((TR_JitPrivateConfig *)jitCfg->privateConfig)->aotStats)
+    , _exceptionTable(NULL)
+    , _newExceptionTableStart(NULL)
+    , _newPersistentInfo(NULL)
+    , _dataCacheDelta(0)
+    , _codeCacheDelta(0)
+    , _aotHeader(NULL)
+    , _classReloAmount(0)
+    , _codeCache(NULL)
+    , _dataCache(NULL)
+    , _useCompiledCopy(false)
+    , _metaDataAllocSize(0)
+    , _aotMethodHeaderEntry(NULL)
+    , _exceptionTableCacheEntry(NULL)
+    , _currentThread(NULL)
+    , _method(NULL)
+    , _ramCP(NULL)
+    , _newMethodCodeStart(NULL)
+    , _haveReservedCodeCache(false)
+    , _reloStartTime(0)
+    , _reloEndTime(0)
+    , _returnCode(0)
+    , _options(TR::Options::getAOTCmdLineOptions())
+    , _comp(NULL)
+    , _currentResolvedMethod(NULL)
+    , _isLoading(false)
+    , _isRelocating(false)
+    , _numValidations(0)
+    , _numFailedValidations(0)
+    , _numInlinedMethodRelos(0)
+    , _numFailedInlinedMethodRelos(0)
+    , _numInlinedAllocRelos(0)
+    , _numFailedInlinedAllocRelos(0)
 {
-    _method = NULL;
-    _ramCP = NULL;
-
-    _jitConfig = jitCfg;
-    _javaVM = jitCfg->javaVM;
-    _trMemory = NULL;
-    _options = TR::Options::getAOTCmdLineOptions();
-    _compInfo = TR::CompilationInfo::get(_jitConfig);
-
     PORT_ACCESS_FROM_JAVAVM(javaVM());
     _reloLogger = new (PERSISTENT_NEW) TR_RelocationRuntimeLogger(this);
     if (_reloLogger == NULL) {
         // TODO: need error condition here
         return;
     }
-
-    _aotStats = ((TR_JitPrivateConfig *)jitConfig()->privateConfig)->aotStats;
 
 #if defined(TR_HOST_X86)
 #if defined(TR_HOST_64BIT)
@@ -216,18 +247,6 @@ TR_RelocationRuntime::TR_RelocationRuntime(J9JITConfig *jitCfg)
             (uintptr_t) & (javaVM()->hookInterface.flags[J9HOOK_VM_METHOD_RETURN]));
         _globalValuesInitialized = true;
     }
-
-    _isLoading = false;
-    _isRelocating = false;
-
-#if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
-    _numValidations = 0;
-    _numFailedValidations = 0;
-    _numInlinedMethodRelos = 0;
-    _numFailedInlinedMethodRelos = 0;
-    _numInlinedAllocRelos = 0;
-    _numFailedInlinedAllocRelos = 0;
-#endif
 }
 
 // Prepare to relocate an AOT method from either a JXE or shared cache

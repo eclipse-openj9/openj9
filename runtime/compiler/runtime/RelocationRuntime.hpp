@@ -519,15 +519,12 @@ protected:
     bool _isLoading;
     bool _isRelocating;
 
-#if 1 // defined(DEBUG) || defined(PROD_WITH_ASSUMES)
-      // Detect unexpected scenarios when build has assumes
     uint32_t _numValidations;
     uint32_t _numFailedValidations;
     uint32_t _numInlinedMethodRelos;
     uint32_t _numFailedInlinedMethodRelos;
     uint32_t _numInlinedAllocRelos;
     uint32_t _numFailedInlinedAllocRelos;
-#endif
 };
 
 class TR_SharedCacheRelocationRuntime : public TR_RelocationRuntime {
