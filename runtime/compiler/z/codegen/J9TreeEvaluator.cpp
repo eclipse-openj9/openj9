@@ -4812,36 +4812,9 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node, 
     dependencies->addPostCondition(classReg, TR::RealRegister::AssignAny);
 
     TR::Register *dim1SizeReg = cg->allocateRegister();
-    dependencies->addPostCondition(dim1SizeReg, TR::RealRegister::AssignAny);
-    cursor = generateRXInstruction(cg, TR::InstOpCode::LTGF, node, dim1SizeReg,
-        generateS390MemoryReference(dimsPtrReg, 4, cg));
-    iComment("Load 1st dim length.");
-
-    // Start of the internal control flow.
-    TR::LabelSymbol *controlFlowStartLabel = generateLabelSymbol(cg);
-    controlFlowStartLabel->setStartInternalControlFlow();
-    cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, controlFlowStartLabel, cursor);
-    // If first dimension length is zero, there is only one discontiguous array for dim 1.
-    // Zero size arrays are considered "discontiguous" and the "mustBeZero" field of discontiguous arrays must be
-    // located where the
-    //  "size" field of contiguous arrays is.
-    // To handle zero length arrays, discontiguous header size is loaded in size register so we can bypass the size
-    // calculation if
-    //  the length is zero. Otherwise, the size is calculated and overwrite the value in size register.
-    // Check runtime/oti/j9nonbuilder.h for layout details. Simplified layout would look like:
-    // Discontiguous array layout: |  class  | mustBeZero |  size   | ...
-    // Contiguous array layout:    |  class  |    size    | ...
-    TR::LabelSymbol *heapTopTestLabel = generateLabelSymbol(cg);
-    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, heapTopTestLabel,
-        cursor);
-    // Make sure first dim length is not negative.
-    TR::LabelSymbol *inlineAllocFailLabel = generateLabelSymbol(cg);
-    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, node, inlineAllocFailLabel,
-        cursor);
-
     TR::Register *dim2SizeReg = cg->allocateRegister();
+    dependencies->addPostCondition(dim1SizeReg, TR::RealRegister::AssignAny);
     dependencies->addPostCondition(dim2SizeReg, TR::RealRegister::AssignAny);
-
     if (componentSize == 1) {
         // Load int32 second dim length to a 64 bit register and set condition mask.
         cursor = generateRXInstruction(cg, TR::InstOpCode::LTGF, node, dim2SizeReg,
@@ -4853,22 +4826,44 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node, 
             generateS390MemoryReference(dimsPtrReg, 0, cg), cursor);
         iComment("Load 2st dim length.");
         // By using SLA, we can make sure that the size of all elements (length * component size) in the leaf array is
-        // positive and
-        //  within INT32_MAX range. It limits the allocation size but simplifies the instruction selection and guarantee
-        //  no overflow in the following instructions. Assuming allocation of 2D arrays with leaf size > INT32_MAX and
-        //  having large enough TLH to allocate inline is not frequent.
+        // positive and within INT32_MAX range. It limits the allocation size but simplifies the instruction selection
+        // and guarantee no overflow in the following instructions. Assuming allocation of 2D arrays with
+        // leaf size > INT32_MAX and having large enough TLH to allocate inline is not frequent.
         cursor
             = generateRSInstruction(cg, TR::InstOpCode::SLA, node, dim2SizeReg, trailingZeroes(componentSize), cursor);
     }
+    TR::LabelSymbol *inlineAllocFailLabel = generateLabelSymbol(cg);
+    // Call helper if the second length is negative or length * componentSize is larger that INT32_MAX (overflow).
+    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK5, node,
+        inlineAllocFailLabel, cursor);
+
+    cursor = generateRXInstruction(cg, TR::InstOpCode::LTGF, node, dim1SizeReg,
+        generateS390MemoryReference(dimsPtrReg, 4, cg));
+    iComment("Load 1st dim length.");
+
+    // Start of the internal control flow.
+    TR::LabelSymbol *controlFlowStartLabel = generateLabelSymbol(cg);
+    controlFlowStartLabel->setStartInternalControlFlow();
+    cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, controlFlowStartLabel, cursor);
+    // If first dimension length is zero, there is only one discontiguous array for dim 1.
+    // Zero size arrays are considered "discontiguous" and the "mustBeZero" field of discontiguous arrays must be
+    // located where the "size" field of contiguous arrays is.
+    // To handle zero length arrays, discontiguous header size is loaded in size register so we can bypass the size
+    // calculation if the length is zero. Otherwise, the size is calculated and overwrite the value in size register.
+    // Check runtime/oti/j9nonbuilder.h for layout details. Simplified layout would look like:
+    // Discontiguous array layout: |  class  | mustBeZero |  size   | ...
+    // Contiguous array layout:    |  class  |    size    | ...
+    TR::LabelSymbol *heapTopTestLabel = generateLabelSymbol(cg);
+    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, heapTopTestLabel,
+        cursor);
+    // Make sure first dim length is not negative.
+    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, node, inlineAllocFailLabel,
+        cursor);
 
     TR::LabelSymbol *zeroSecondDimLabel = generateLabelSymbol(cg);
 
-    // Bypass dim2 size calculation if the size is zero.
-    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, zeroSecondDimLabel,
-        cursor);
-    // Call helper if the length is negative or length * componentSize is larger that INT32_MAX (overflow).
-    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK5, node,
-        inlineAllocFailLabel, cursor);
+    cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CL, node, dim2SizeReg, 0,
+        TR::InstOpCode::COND_BE, zeroSecondDimLabel, false /* needsCC */, cursor);
 
     int32_t headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
     // size = (size + alignmentConstant - 1) & -alignmentConstant equation round up the size to a factor of
