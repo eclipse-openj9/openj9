@@ -153,6 +153,30 @@ const char *TR_RelocationRuntime::_reloErrorCodeNames[] = {
 };
 
 TR_RelocationRuntime::TR_RelocationRuntime(J9JITConfig *jitCfg)
+    : _relocationStatus(RelocationNoError)
+    , _reloErrorCode(TR_RelocationErrorCode::relocationOK)
+    , _fe(NULL)
+    , _exceptionTable(NULL)
+    , _newExceptionTableStart(NULL)
+    , _newPersistentInfo(NULL)
+    , _dataCacheDelta(0)
+    , _codeCacheDelta(0)
+    , _aotHeader(NULL)
+    , _classReloAmount(0)
+    , _codeCache(NULL)
+    , _dataCache(NULL)
+    , _useCompiledCopy(false)
+    , _metaDataAllocSize(0)
+    , _aotMethodHeaderEntry(NULL)
+    , _exceptionTableCacheEntry(NULL)
+    , _currentThread(NULL)
+    , _newMethodCodeStart(NULL)
+    , _haveReservedCodeCache(false)
+    , _reloStartTime(0)
+    , _reloEndTime(0)
+    , _returnCode(0)
+    , _comp(NULL)
+    , _currentResolvedMethod(NULL)
 {
     _method = NULL;
     _ramCP = NULL;
