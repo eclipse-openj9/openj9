@@ -4553,7 +4553,7 @@ bool TR::MonitorElimination::treesAllowCoarsening(TR::TreeTop *startTree, TR::Tr
                         TR::SymbolReference *symRef = symRefTab->getSymRef(symRefNum);
                         if (symRef->getSymbol()->isStatic()
                             || (symRef->getSymbol()->isShadow() && !symRef->getSymbol()->isArrayShadowSymbol())) {
-                            char *sig = NULL;
+                            const char *sig = NULL;
                             int32_t length = 0;
                             if (symRef->getSymbol()->isStatic()) {
                                 if (symRef->getSymbol()->isConstObjectRef())
@@ -4566,7 +4566,7 @@ bool TR::MonitorElimination::treesAllowCoarsening(TR::TreeTop *startTree, TR::Tr
                                     trMemory());
                             }
 
-                            char *currSig = NULL;
+                            const char *currSig = NULL;
                             int32_t currLength = 0;
                             if (currSymReference->getSymbol()->isStatic()) {
                                 if (currSymReference->getSymbol()->isConstObjectRef())
