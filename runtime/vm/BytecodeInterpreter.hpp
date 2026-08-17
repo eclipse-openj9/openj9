@@ -4542,6 +4542,36 @@ done:
 
 		return rc;
 	}
+
+	/* jdk.internal.misc.Unsafe: public native boolean isFlatField(Field field); */
+	VMINLINE VM_BytecodeAction
+	inlUnsafeIsFlatField(REGISTER_ARGS_LIST)
+	{
+		j9object_t field = *(j9object_t*)_sp;
+		VM_BytecodeAction rc = EXECUTE_BYTECODE;
+
+		updateVMStruct(REGISTER_ARGS);
+		buildInternalNativeStackFrame(REGISTER_ARGS);
+
+		if (NULL == field) {
+			rc = THROW_NPE;
+		} else {
+			J9JNIFieldID *fieldID = _vm->reflectFunctions.idFromFieldObject(_currentThread, NULL, field);
+			if (VM_VMHelpers::exceptionPending(_currentThread)) {
+				rc = GOTO_THROW_CURRENT_EXCEPTION;
+			} else {
+				I_32 result = false;
+				if (J9ROMFIELD_IS_NULL_RESTRICTED(fieldID->field)) {
+					result = (I_32)isFlattenableFieldFlattened(fieldID->declaringClass, fieldID->field);
+				}
+				restoreInternalNativeStackFrame(REGISTER_ARGS);
+				returnSingleFromINL(REGISTER_ARGS, result, 2);
+			}
+		}
+
+		return rc;
+	}
+
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	/* jdk.internal.misc.Unsafe: public native <V> V getFlatValue(Object obj, long offset, int layoutKind, Class<?> clz); */
@@ -4650,36 +4680,6 @@ done:
 		returnSingleFromINL(REGISTER_ARGS, result, 2);
 		return EXECUTE_BYTECODE;
 	}
-
-	/* jdk.internal.misc.Unsafe: public native boolean isFlatField(Field field); */
-	VMINLINE VM_BytecodeAction
-	inlUnsafeIsFlatField(REGISTER_ARGS_LIST)
-	{
-		j9object_t field = *(j9object_t*)_sp;
-		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-
-		updateVMStruct(REGISTER_ARGS);
-		buildInternalNativeStackFrame(REGISTER_ARGS);
-
-		if (NULL == field) {
-			rc = THROW_NPE;
-		} else {
-			J9JNIFieldID *fieldID = _vm->reflectFunctions.idFromFieldObject(_currentThread, NULL, field);
-			if (VM_VMHelpers::exceptionPending(_currentThread)) {
-				rc = GOTO_THROW_CURRENT_EXCEPTION;
-			} else {
-				I_32 result = false;
-				if (J9ROMFIELD_IS_NULL_RESTRICTED(fieldID->field)) {
-					result = (I_32)isFlattenableFieldFlattened(fieldID->declaringClass, fieldID->field);
-				}
-				restoreInternalNativeStackFrame(REGISTER_ARGS);
-				returnSingleFromINL(REGISTER_ARGS, result, 2);
-			}
-		}
-
-		return rc;
-	}
-
 	VMINLINE VM_BytecodeAction
 	inlUnsafeIsFieldAtOffsetFlattened(REGISTER_ARGS_LIST)
 	{
@@ -10783,12 +10783,12 @@ public:
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_VALUEHEADERSIZE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECTSIZE),
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATFIELD),
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETFLATVALUE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTFLATVALUE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATARRAY),
-		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATFIELD),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFIELDATOFFSETFLATTENED),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATPAYLOADBINARY),
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
@@ -11413,6 +11413,8 @@ runMethod: {
 		PERFORM_ACTION(inlUnsafeValueHeaderSize(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECTSIZE):
 		PERFORM_ACTION(inlUnsafeGetObjectSize(REGISTER_ARGS));
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATFIELD):
+		PERFORM_ACTION(inlUnsafeIsFlatField(REGISTER_ARGS));
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETFLATVALUE):
@@ -11421,8 +11423,6 @@ runMethod: {
 		PERFORM_ACTION(inlUnsafePutFlatValue(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATARRAY):
 		PERFORM_ACTION(inlUnsafeIsFlatArray(REGISTER_ARGS));
-	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATFIELD):
-		PERFORM_ACTION(inlUnsafeIsFlatField(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFIELDATOFFSETFLATTENED):
 		PERFORM_ACTION(inlUnsafeIsFieldAtOffsetFlattened(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATPAYLOADBINARY):
