@@ -481,9 +481,6 @@ if [ $arch = x86_64 ] ; then
   echo " && $wget_O gettext.tar.gz http://ftp.gnu.org/gnu/gettext/gettext-$gettext_version.tar.gz \\"
   echo " && tar -xzf gettext.tar.gz \\"
   echo " && cd gettext-$gettext_version \\"
-if [ $version != 6 ] ; then
-  echo " && ./autogen.sh --skip-gnulib \\"
-fi
   echo " && ./configure --disable-nls \\"
   echo " && make \\"
   echo " && make install \\"
