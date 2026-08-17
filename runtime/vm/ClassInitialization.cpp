@@ -61,7 +61,7 @@ static char const *statusNames[] = {
 #define STATE_NAME(state) (J9_ARE_ANY_BITS_SET(state, ~(UDATA)J9ClassInitStatusMask) ? "IN_PROGRESS" : statusNames[state])
 
 static j9object_t setInitStatus(J9VMThread *currentThread, J9Class *clazz, UDATA status, j9object_t initializationLock);
-static void classInitStateMachine(J9VMThread *currentThread, J9Class *clazz, J9ClassInitState desiredState);
+static void classInitStateMachine(J9VMThread *currentThread, J9Class *clazz, J9ClassInitState desiredState, bool initSuperInterfaces);
 
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 static BOOLEAN
@@ -333,14 +333,18 @@ setInitStatus(J9VMThread *currentThread, J9Class *clazz, UDATA status, j9object_
 void  
 prepareClass(J9VMThread *currentThread, J9Class *clazz)
 {
-	classInitStateMachine(currentThread, clazz, J9_CLASS_INIT_PREPARED);
+	classInitStateMachine(currentThread, clazz, J9_CLASS_INIT_PREPARED, true);
 }
 
 
 void  
 initializeClass(J9VMThread *currentThread, J9Class *clazz)
 {
-	classInitStateMachine(currentThread, clazz, J9_CLASS_INIT_INITIALIZED);
+	bool initSuperInterfaces = true;
+	if (J9ROMCLASS_IS_INTERFACE(clazz->romClass)) {
+		initSuperInterfaces = false;
+	}
+	classInitStateMachine(currentThread, clazz, J9_CLASS_INIT_INITIALIZED, initSuperInterfaces);
 }
 
 /**
@@ -351,7 +355,7 @@ initializeClass(J9VMThread *currentThread, J9Class *clazz)
  * @param[in] desiredState how far to initialize the class
  */
 static void
-classInitStateMachine(J9VMThread *currentThread, J9Class *clazz, J9ClassInitState desiredState)
+classInitStateMachine(J9VMThread *currentThread, J9Class *clazz, J9ClassInitState desiredState, bool initSuperInterfaces)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 	Assert_VM_true(clazz == VM_VMHelpers::currentClass(clazz));
@@ -400,7 +404,7 @@ doVerify:
 				if (NULL != superclazz) {
 					Trc_VM_classInitStateMachine_verifySuperclass(currentThread);
 					PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
-					classInitStateMachine(currentThread, superclazz, J9_CLASS_INIT_VERIFIED);
+					classInitStateMachine(currentThread, superclazz, J9_CLASS_INIT_VERIFIED, true);
 					initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 					clazz = VM_VMHelpers::currentClass(clazz);
 					if (VM_VMHelpers::exceptionPending(currentThread)) {
@@ -480,7 +484,7 @@ doVerify:
 
 						Trc_VM_classInitStateMachine_verifyFlattenableField(currentThread, entryClazz);
 						PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
-						classInitStateMachine(currentThread, entryClazz, J9_CLASS_INIT_VERIFIED);
+						classInitStateMachine(currentThread, entryClazz, J9_CLASS_INIT_VERIFIED, true);
 						initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 						clazz = VM_VMHelpers::currentClass(clazz);
 
@@ -545,7 +549,7 @@ doVerify:
 				if (NULL != superclazz) {
 					Trc_VM_classInitStateMachine_prepareSuperclass(currentThread);
 					PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
-					classInitStateMachine(currentThread, superclazz, J9_CLASS_INIT_PREPARED);
+					classInitStateMachine(currentThread, superclazz, J9_CLASS_INIT_PREPARED, true);
 					initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 					clazz = VM_VMHelpers::currentClass(clazz);
 					superclazz = VM_VMHelpers::getSuperclass(clazz);
@@ -562,7 +566,7 @@ doVerify:
 					if (interfaceClazz != clazz) {
 						Trc_VM_classInitStateMachine_prepareSuperinterface(currentThread);
 						PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
-						classInitStateMachine(currentThread, interfaceClazz, J9_CLASS_INIT_PREPARED);
+						classInitStateMachine(currentThread, interfaceClazz, J9_CLASS_INIT_PREPARED, true);
 						initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 						clazz = VM_VMHelpers::currentClass(clazz);
 						if (VM_VMHelpers::exceptionPending(currentThread)) {
@@ -629,7 +633,7 @@ doVerify:
 						Trc_VM_classInitStateMachine_prepareFlattenableField(currentThread, entryClazz);
 
 						PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
-						classInitStateMachine(currentThread, entryClazz, J9_CLASS_INIT_PREPARED);
+						classInitStateMachine(currentThread, entryClazz, J9_CLASS_INIT_PREPARED, true);
 						initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 						clazz = VM_VMHelpers::currentClass(clazz);
 
@@ -712,7 +716,7 @@ doVerify:
 				if (NULL != superclazz) {
 					Trc_VM_classInitStateMachine_initSuperclass(currentThread);
 					PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
-					classInitStateMachine(currentThread, superclazz, J9_CLASS_INIT_INITIALIZED);
+					classInitStateMachine(currentThread, superclazz, J9_CLASS_INIT_INITIALIZED, true);
 					initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 					clazz = VM_VMHelpers::currentClass(clazz);
 					superclazz = VM_VMHelpers::getSuperclass(clazz);
@@ -721,29 +725,30 @@ doVerify:
 					}
 					superITable = (J9ITable*)superclazz->iTable;
 				}
-				/* Do not initialize the superinterfaces of interfaces */
-				if (!J9_ARE_ANY_BITS_SET(clazz->romClass->modifiers, J9AccInterface)) {
-					/* Initialize super-interfaces with non-static, non-abstract methods */
+
+				if (initSuperInterfaces) {
+					/* Initialize super-interfaces with non-static, non-abstract methods. */
 					Trc_VM_classInitStateMachine_initSuperInterfacesWithNonStaticNonAbstractMethods(currentThread, clazz);
-					/* Don't traverse all iTables - indirect super-interfaces are initialized with the superclass */
-					firstITable = (J9ITable*)clazz->iTable;
+					/* Don't traverse all iTables - indirect super-interfaces are initialized with the superclass. */
+					firstITable = (J9ITable *)clazz->iTable;
 					iTable = firstITable;
 					while (iTable != superITable) {
 						J9Class *interfaceClazz = iTable->interfaceClass;
+
 						if (J9_ARE_ANY_BITS_SET(interfaceClazz->romClass->extraModifiers, J9AccClassHasNonStaticNonAbstractMethods)) {
 							PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
-							classInitStateMachine(currentThread, interfaceClazz, J9_CLASS_INIT_INITIALIZED);
+							classInitStateMachine(currentThread, interfaceClazz, J9_CLASS_INIT_INITIALIZED, true);
 							initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 							clazz = VM_VMHelpers::currentClass(clazz);
 							if (VM_VMHelpers::exceptionPending(currentThread)) {
 								goto initFailed;
 							}
-							/* Ensure that we are still traversing a valid iTable chain */
-							if (firstITable != (J9ITable*)clazz->iTable) {
-								iTable = (J9ITable*)clazz->iTable;
+							/* Ensure that we are still traversing a valid iTable chain. */
+							if (firstITable != (J9ITable *)clazz->iTable) {
+								iTable = (J9ITable *)clazz->iTable;
 								if (NULL != superclazz) {
 									superclazz = VM_VMHelpers::getSuperclass(clazz);
-									superITable = (J9ITable*)superclazz->iTable;
+									superITable = (J9ITable *)superclazz->iTable;
 								}
 								continue;
 							}
@@ -765,7 +770,7 @@ doVerify:
 						J9Class *entryClazz = J9_VM_FCC_CLASS_FROM_ENTRY(entry);
 						Trc_VM_classInitStateMachine_initFlattenableField(currentThread, entryClazz);
 						PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
-						classInitStateMachine(currentThread, entryClazz, J9_CLASS_INIT_INITIALIZED);
+						classInitStateMachine(currentThread, entryClazz, J9_CLASS_INIT_INITIALIZED, true);
 						initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 						clazz = VM_VMHelpers::currentClass(clazz);
 
