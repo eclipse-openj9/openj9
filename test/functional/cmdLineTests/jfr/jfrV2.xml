@@ -39,14 +39,20 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</test>
 	-->
 	<test id="Test JFRv2 2min test">
-		<command>$EXE$ -XX:+EnableOpenJ9ExperimentalFlightRecording -XX:StartFlightRecording=filename=experimentalRecording.jfr --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.WorkLoad 200 20000 200</command>
+		<command>$EXE$ -Xtrace:print={j9vm.760,j9vm.773,j9vm.819} -XX:+EnableOpenJ9ExperimentalFlightRecording -XX:StartFlightRecording=filename=experimentalRecording.jfr --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.WorkLoad 200 20000 200</command>
 		<output type="success" caseSensitive="yes" regex="no">All runs complete</output>
 		<output type="required" caseSensitive="yes" regex="no">0 / 200 complete</output>
+		<output type="failure" caseSensitive="yes" regex="no">omrthread_create(jfrSamplingThreadProc) failed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error writing JFR chunk</output>
+		<output type="failure" caseSensitive="yes" regex="no">Buffer overflow happened while generating thread dump string</output>
 	</test>
 	<test id="Test JFRv2 with file">
-		<command>$EXE$ -XX:+EnableOpenJ9ExperimentalFlightRecording -XX:StartFlightRecording=filename=experimentalRecording.jfr --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.WorkLoad</command>
+		<command>$EXE$ -Xtrace:print={j9vm.760,j9vm.773,j9vm.819} -XX:+EnableOpenJ9ExperimentalFlightRecording -XX:StartFlightRecording=filename=experimentalRecording.jfr --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.WorkLoad</command>
 		<output type="success" caseSensitive="yes" regex="no">All runs complete</output>
 		<output type="required" caseSensitive="yes" regex="no">0 / 100 complete</output>
+		<output type="failure" caseSensitive="yes" regex="no">omrthread_create(jfrSamplingThreadProc) failed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error writing JFR chunk</output>
+		<output type="failure" caseSensitive="yes" regex="no">Buffer overflow happened while generating thread dump string</output>
 	</test>
 	<test id="test jfr summary - approx 30 seconds">
 		<command>$JFR_EXE$ summary experimentalRecording.jfr</command>

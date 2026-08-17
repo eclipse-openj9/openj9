@@ -31,29 +31,44 @@ Assisted-by: IBM Bob
 		<return type="success" value="0" />
 	</test>
 	<test id="runWorkload - approx 30seconds">
-		<command>$EXE$ -XX:StartFlightRecording --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.WorkLoad</command>
+		<command>$EXE$ -Xtrace:print={j9vm.760,j9vm.773,j9vm.819} -XX:StartFlightRecording --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.WorkLoad</command>
 		<output type="success" caseSensitive="yes" regex="no">All runs complete.</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">omrthread_create(jfrSamplingThreadProc) failed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error writing JFR chunk</output>
+		<output type="failure" caseSensitive="yes" regex="no">Buffer overflow happened while generating thread dump string</output>
 	</test>
 	<test id="runWorkload 2 - approx 2mins">
-		<command>$EXE$ -XX:StartFlightRecording --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.WorkLoad 200 20000 200</command>
+		<command>$EXE$ -Xtrace:print={j9vm.760,j9vm.773,j9vm.819} -XX:StartFlightRecording --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.WorkLoad 200 20000 200</command>
 		<output type="success" caseSensitive="yes" regex="no">All runs complete.</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">omrthread_create(jfrSamplingThreadProc) failed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error writing JFR chunk</output>
+		<output type="failure" caseSensitive="yes" regex="no">Buffer overflow happened while generating thread dump string</output>
 	</test>
 	<test id="VM API Test - approx 2mins">
-		<command>$EXE$ --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.VMAPITest</command>
+		<command>$EXE$ -Xtrace:print={j9vm.760,j9vm.773,j9vm.819} --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.VMAPITest</command>
 		<output type="success" caseSensitive="yes" regex="no">All runs complete.</output>
 		<output type="failure" caseSensitive="yes" regex="no">Failed</output>
+		<output type="failure" caseSensitive="yes" regex="no">omrthread_create(jfrSamplingThreadProc) failed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error writing JFR chunk</output>
+		<output type="failure" caseSensitive="yes" regex="no">Buffer overflow happened while generating thread dump string</output>
 	</test>
 	<test id="VM API Test aggressive start and stop - approx 2mins">
-		<command>$EXE$ --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.VMAPITest 1</command>
+		<command>$EXE$ -Xtrace:print={j9vm.760,j9vm.773,j9vm.819} --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.VMAPITest 1</command>
 		<output type="success" caseSensitive="yes" regex="no">All runs complete.</output>
 		<output type="failure" caseSensitive="yes" regex="no">Failed</output>
+		<output type="failure" caseSensitive="yes" regex="no">omrthread_create(jfrSamplingThreadProc) failed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error writing JFR chunk</output>
+		<output type="failure" caseSensitive="yes" regex="no">Buffer overflow happened while generating thread dump string</output>
 	</test>
 	<test id="VM API Test2 - approx 2mins">
-		<command>$EXE$ --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.VMAPITest2</command>
+		<command>$EXE$ -Xtrace:print={j9vm.760,j9vm.773,j9vm.819} --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.VMAPITest2</command>
 		<output type="success" caseSensitive="yes" regex="no">All runs complete.</output>
 		<output type="failure" caseSensitive="yes" regex="no">Failed</output>
+		<output type="failure" caseSensitive="yes" regex="no">omrthread_create(jfrSamplingThreadProc) failed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error writing JFR chunk</output>
+		<output type="failure" caseSensitive="yes" regex="no">Buffer overflow happened while generating thread dump string</output>
 	</test>
 	<test id="Test JFR enablement 1">
 		<command>$EXE$ --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.JFRCMDLineTest</command>
