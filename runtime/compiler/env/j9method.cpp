@@ -3139,10 +3139,10 @@ void TR_ResolvedJ9Method::construct()
         { x(TR::com_ibm_jit_JITHelpers_dispatchComputedStaticCall, "dispatchComputedStaticCall", "()V") },
         { x(TR::com_ibm_jit_JITHelpers_dispatchVirtual, "dispatchVirtual", "()V") }, { TR::unknownMethod } };
 
-    // clang-format off
     static X StringLatin1Methods[] = {
         { x(TR::java_lang_StringLatin1_charAt,               "charAt",      "([BI)C") },
         { x(TR::java_lang_StringLatin1_compareTo_BBII,       "compareTo",   "([B[BII)I") },
+	{ x(TR::java_lang_StringLatin1_compareToUTF16Values, "compareToUTF16Values", "([B[BII)I") },
         { x(TR::java_lang_StringLatin1_indexOf,              "indexOf",     "([BI[BII)I") },
         { x(TR::java_lang_StringLatin1_indexOf_BB,           "indexOf",     "([B[B)I") },
         { x(TR::java_lang_StringLatin1_indexOf_BIII,         "indexOf",     "([BIII)I") },
