@@ -53,6 +53,7 @@ enum BuildResult {
 	InvalidValueType = BCT_ERR_INVALID_VALUE_TYPE,
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	DuplicateName = BCT_ERR_DUPLICATE_NAME,
+	StackOverflow = BCT_ERR_STACK_OVERFLOW
 };
 
 #endif /* BUILDRESULT_HPP_ */

@@ -61,8 +61,8 @@ ClassFileParser::parseClassFile(ROMClassCreationContext *context, UDATA *initial
 				buffer, bufferSize,
 				context->bctFlags(),
 				NULL,
-				context->isVerbose() ? context : NULL, 
-				context->findClassFlags(), romMethodSortThreshold);
+				context->isVerbose() ? context : NULL,
+				context->findClassFlags(), romMethodSortThreshold, context->getAvailableOSStackSpace());
 
 		if (BCT_ERR_OUT_OF_ROM == result) {
 			context->recordOutOfMemory(bufferSize);
