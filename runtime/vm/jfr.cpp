@@ -287,6 +287,7 @@ writeOutGlobalBuffer(J9VMThread *currentThread, bool finalWrite, bool dumpCalled
 {
 	J9JavaVM *vm = currentThread->javaVM;
 	Assert_VM_mustHaveVMAccess(currentThread);
+	Assert_VM_true((J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState) || omrthread_monitor_owned_by_self(vm->jfrBufferMutex));
 	Trc_VM_jfr_writeOutGlobalBuffer(currentThread, vm->jfrBuffer.bufferSize - vm->jfrBuffer.bufferRemaining);
 
 	if (vm->jfrState.isCreated && (NULL != vm->jfrBuffer.bufferCurrent)) {
@@ -305,47 +306,45 @@ writeOutGlobalBuffer(J9VMThread *currentThread, bool finalWrite, bool dumpCalled
 }
 
 U_8 *
-allocateMemFromGlobalBuffer(J9VMThread *currentThread, UDATA size)
+allocateMemFromGlobalBuffer(J9VMThread *currentThread, UDATA size, bool *hasExclusive)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 	Assert_VM_mustHaveVMAccess(currentThread);
 	U_8 *bytes = NULL;
 
-	bool hasExclusive = (J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState);
+	*hasExclusive = (J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState);
 
-	if (!hasExclusive) {
+	if (!*hasExclusive) {
 		internalReleaseVMAccess(currentThread);
 		omrthread_monitor_enter(vm->jfrBufferMutex);
 	}
 	if (vm->jfrBuffer.bufferRemaining < size) {
 		if (isJFRV2SupportEnabled(vm)) {
-			if (!hasExclusive) {
+			if (!*hasExclusive) {
 				omrthread_monitor_exit(vm->jfrBufferMutex);
 				internalAcquireVMAccess(currentThread);
 				notifyForChunkRotation(currentThread);
 			}
 			goto done;
 		} else {
-			if (!hasExclusive) {
+			if (!*hasExclusive) {
 				internalAcquireVMAccess(currentThread);
 			}
 			bool result = writeOutGlobalBuffer(currentThread, false, false);
-			if (!hasExclusive) {
+			if (!*hasExclusive) {
 				internalReleaseVMAccess(currentThread);
-				if (!result) {
+			}
+			if (!result) {
+				if (!*hasExclusive) {
 					omrthread_monitor_exit(vm->jfrBufferMutex);
-					goto done;
 				}
+				goto done;
 			}
 		}
 	}
 	bytes = vm->jfrBuffer.bufferCurrent;
 	vm->jfrBuffer.bufferCurrent += size;
 	vm->jfrBuffer.bufferRemaining -= size;
-	if (!hasExclusive) {
-		omrthread_monitor_exit(vm->jfrBufferMutex);
-		internalAcquireVMAccess(currentThread);
-	}
 
 done:
 	return bytes;
@@ -368,6 +367,7 @@ flushBufferToGlobal(J9VMThread *currentThread, J9VMThread *flushThread)
 	UDATA bufferSize = flushThread->jfrBuffer.bufferCurrent - flushThread->jfrBuffer.bufferStart;
 	bool success = true;
 	U_8 *allocStart = NULL;
+	bool hasExclusive = false;
 
 	Trc_VM_jfr_flushBufferToGlobal(currentThread, flushThread, (U_32)bufferSize, flushThread->jfrBuffer.bufferStart, flushThread->jfrBuffer.bufferCurrent);
 
@@ -375,13 +375,18 @@ flushBufferToGlobal(J9VMThread *currentThread, J9VMThread *flushThread)
 		goto done;
 	}
 
-	allocStart = allocateMemFromGlobalBuffer(currentThread, bufferSize);
+	allocStart = allocateMemFromGlobalBuffer(currentThread, bufferSize, &hasExclusive);
 
 	if (NULL == allocStart) {
 		success = false;
 		goto done;
 	}
 	memcpy(allocStart, flushThread->jfrBuffer.bufferStart, bufferSize);
+
+	if (!hasExclusive) {
+		omrthread_monitor_exit(flushThread->javaVM->jfrBufferMutex);
+		internalAcquireVMAccess(currentThread);
+	}
 
 	/* Reset the buffer */
 	flushThread->jfrBuffer.bufferRemaining = flushThread->jfrBuffer.bufferSize;
@@ -2402,7 +2407,7 @@ JfrPeriodicEventSet::requestThreadDump(J9VMThread *currentThread)
 
 	const U_64 bufferSize = VM_JFRUtils::THREAD_DUMP_EVENT_SIZE_PER_THREAD * vm->peakThreadCount;
 	const UDATA eventSize = bufferSize + sizeof(J9JFRThreadDump);
-	J9JFRThreadDump *jfrEvent = (J9JFRThreadDump *)allocateMemFromGlobalBuffer(currentThread, eventSize);
+	J9JFRThreadDump *jfrEvent = (J9JFRThreadDump *)reserveBuffer(currentThread, currentThread, eventSize);
 
 	if (NULL == jfrEvent) {
 		return;
@@ -2417,6 +2422,7 @@ JfrPeriodicEventSet::requestThreadDump(J9VMThread *currentThread)
 	jfrEvent->bufferSize = bufferSize;
 	jfrEvent->result = buffer;
 	jfrEvent->resultLength = length;
+
 	return;
 }
 
