@@ -35,7 +35,11 @@ extern "C" {
 #define JIMAGE_HEADER_MAGIC 0xCAFEDADA
 
 /* Major and minor versions in jimage header */
+#if JAVA_SPEC_VERSION < 27
 #define JIMAGE_MAJOR_VERSION 0
+#else /* JAVA_SPEC_VERSION < 27 */
+#define JIMAGE_MAJOR_VERSION 1
+#endif /* JAVA_SPEC_VERSION < 27 */
 #define JIMAGE_MINOR_VERSION 1
 
 /* Macros to get type and length from "type" byte in attribute */
