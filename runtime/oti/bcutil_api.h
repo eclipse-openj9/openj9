@@ -73,7 +73,8 @@ j9bcutil_buildRomClassIntoBuffer(U_8 * classFileBytes, UDATA classFileSize, J9Po
 		U_8 * romSegment, UDATA romSegmentSize,
 		U_8 * lineNumberBuffer, UDATA lineNumberBufferSize,
 		U_8 * varInfoBuffer, UDATA varInfoBufferSize,
-		U_8 ** classFileBufferPtr);
+		U_8 ** classFileBufferPtr,
+		UDATA availableOSStackSpace);
 
 /**
 * @brief
@@ -100,7 +101,7 @@ j9bcutil_transformROMClass(J9JavaVM *javaVM, J9PortLibrary *portLibrary, J9ROMCl
 * @return IDATA
 */
 IDATA
-j9bcutil_buildRomClass(J9LoadROMClassData *loadData, U_8 * intermediateData, UDATA intermediateDataLength, J9JavaVM *javaVM, UDATA bctFlags, UDATA classFileBytesReplaced, UDATA isIntermediateROMClass, J9TranslationLocalBuffer *localBuffer);
+j9bcutil_buildRomClass(J9LoadROMClassData *loadData, U_8 * intermediateData, UDATA intermediateDataLength, J9JavaVM *javaVM, UDATA bctFlags, UDATA classFileBytesReplaced, UDATA isIntermediateROMClass, J9TranslationLocalBuffer *localBuffer, UDATA availableOSStackSpace);
 
 void
 shutdownROMClassBuilder(J9JavaVM *vm);
@@ -114,7 +115,8 @@ j9bcutil_compareRomClass(
 		struct J9BytecodeVerificationData * verifyBuffers,
 		UDATA bctFlags,
 		UDATA bcuFlags,
-		J9ROMClass *romClass );
+		J9ROMClass *romClass,
+		UDATA availableOSStackSpace);
 #endif
 /**
 * @brief
@@ -175,10 +177,11 @@ bcutil_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved);
 * @param verboseContext
 * @param findClassFlags
 * @param romClassSortingThreshold
+* @param availableOSStackSpace
 * @return I_32
 */
 I_32
-j9bcutil_readClassFileBytes (J9PortLibrary *portLib, IDATA (*verifyFunction) (J9PortLibrary *aPortLib, J9CfrClassFile* classfile, U_8* segment, U_8* segmentLength, U_8* freePointer, U_32 vmVersionShifted, U_32 flags, I_32 *hasRET), U_8* data, UDATA dataLength, U_8* segment, UDATA segmentLength, U_32 flags, U_8** segmentFreePointer, void *verboseContext, UDATA findClassFlags, UDATA romClassSortingThreshold);
+j9bcutil_readClassFileBytes (J9PortLibrary *portLib, IDATA (*verifyFunction) (J9PortLibrary *aPortLib, J9CfrClassFile* classfile, U_8* segment, U_8* segmentLength, U_8* freePointer, U_32 vmVersionShifted, U_32 flags, I_32 *hasRET), U_8* data, UDATA dataLength, U_8* segment, UDATA segmentLength, U_32 flags, U_8** segmentFreePointer, void *verboseContext, UDATA findClassFlags, UDATA romClassSortingThreshold, UDATA availableOSStackSpace);
 
 
 /**
@@ -191,7 +194,7 @@ j9bcutil_readClassFileBytes (J9PortLibrary *portLib, IDATA (*verifyFunction) (J9
 * @return I_32
 */
 I_32
-j9bcutil_readSuperClassFromClassFileBytes(J9PortLibrary *portLib, U_8 *classData, UDATA classDataLength, UDATA *superClassNameLength, U_8 **nameBuffer, UDATA bufferLength);
+j9bcutil_readSuperClassFromClassFileBytes(J9PortLibrary *portLib, U_8 *classData, UDATA classDataLength, UDATA *superClassNameLength, U_8 **nameBuffer, UDATA bufferLength, UDATA availableStackSpace);
 
 
 #if JAVA_SPEC_VERSION >= 15
@@ -206,7 +209,7 @@ j9bcutil_readSuperClassFromClassFileBytes(J9PortLibrary *portLib, U_8 *classData
  * @param return 0 class bytes is legal or a negative value otherwise.
  */
 I_32
-checkClassBytes(J9VMThread *currentThread, U_8* classBytes, UDATA classBytesLength, U_8* segment, U_32 segmentLength);
+checkClassBytes(J9VMThread *currentThread, U_8* classBytes, UDATA classBytesLength, U_8* segment, U_32 segmentLength, UDATA availableOSStackSpace);
 #endif /* JAVA_SPEC_VERSION >= 15 */
 
 /* ---------------- defineclass.c ---------------- */

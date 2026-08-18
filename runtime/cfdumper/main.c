@@ -254,11 +254,11 @@ static I_32 getBytes(const char* filename, U_8** dataHandle)
 /**
  * Converts list of class names to file names by converting '.' to '/' and
  * by appending ".class" extension if not already present.
- * 
+ *
  * @param [in] files list of class names
  * @param [out] classFiles if not NULL then on exit points to list of converted class file names
  * @param [out] fileCount size of the list pointed by classFiles
- * 
+ *
  * @return RET_SUCCESS on success, negative error code on failure
  */
 static I_32
@@ -283,7 +283,7 @@ convertToClassFilename(const char **files, char ***classFiles, I_32 *fileCount) 
 	/*
 	 * convertedFiles is an array of pointers with each element pointing to the converted file name.
 	 * Just after the array we store the strings for converted file names. So the memory layout is:
-	 * 
+	 *
 	 * 		pointer to 1st file name string
 	 * 		pointer to 2nd file name string
 	 * 		...
@@ -2844,11 +2844,11 @@ _exit:
 
 /**
  * Process all ".class" files in the given jimage file.
- * 
+ *
  * @param [in] jimage pointer to J9JImage representing the jimage file
  * @param [in] jimageFileName name of the jimage file to be used
  * @param [in] flags build flags used during processing of class files
- * 
+ *
  * @return RET_SUCCESS on success, negative error code on failure
  */
 static I_32
@@ -2922,12 +2922,12 @@ cleanExit:
 /**
  * Search list of resources in the given jimage file.
  * If the resource is found, then process it as requested by the user.
- * 
+ *
  * @param [in] jimage pointer to J9JImage representing the jimage file
  * @param [in] jimageFileName name of the jimage file to be used
  * @param [in] resources list of resources to be searched in the jimage file
  * @param [in] flags build flags used during processing of class files
- * 
+ *
  * @return RET_SUCCESS on success, negative error code on failure
  */
 static I_32
@@ -3025,7 +3025,7 @@ static J9CfrClassFile* loadClassFromBytes(U_8* data, U_32 dataLength, char* requ
 		if(segment == NULL) goto outOfMemory;
 
 		result = j9bcutil_readClassFileBytes(PORTLIB, verifyBuffers ? j9bcv_verifyClassStructure : NULL,
-			data, dataLength, segment, segmentLength, flags, NULL, NULL, 0, UDATA_MAX);
+			data, dataLength, segment, segmentLength, flags, NULL, NULL, 0, UDATA_MAX, UDATA_MAX);
 
 		if(result == -2)
 		{
@@ -3075,7 +3075,7 @@ retry:
 
 	xl8_startTime = j9time_hires_clock();
 	result = j9bcutil_buildRomClassIntoBuffer(data, dataLength, PORTLIB, verifyBuffers, flags,
-		translationBuffers->flags, 0, segment, bufferSize, NULL, 0, NULL, 0, &classFileBuffer);
+		translationBuffers->flags, 0, segment, bufferSize, NULL, 0, NULL, 0, &classFileBuffer, UDATA_MAX);
 	xl8_endTime = j9time_hires_clock();
 
 	if (0 != (options.options & OPTION_verbose)) {
