@@ -245,20 +245,22 @@ findAndMatchStack (J9BytecodeVerificationData *verifyData, IDATA targetPC, IDATA
 		if (J9_CLASSFILE_OR_ROMCLASS_SUPPORTS_STRICT_FIELDS(verifyData->romClass)
 			&& liveStack->uninitializedThis
 			&& (hashTableGetCount(verifyData->strictFields) > 0)
-			&& (hashTableGetCount(verifyData->earlyLarvalFrames) > 0)
 		) {
-			J9EarlyLarvalFrame query = {0};
-			query.baseFramePC = targetPC;
-			J9EarlyLarvalFrame *earlyLarvalFrame = hashTableFind(verifyData->earlyLarvalFrames, &query);
-			if (NULL == earlyLarvalFrame) {
-				earlyLarvalFrame = verifyData->earlyLarvalFramePrevious;
-			} else {
-				verifyData->earlyLarvalFramePrevious = earlyLarvalFrame;
+			/* If there is no early larval frame for this pc the unset fields
+			 * are inferred from the previous frame.
+			 */
+			J9EarlyLarvalFrame *earlyLarvalFrame = verifyData->earlyLarvalFramePrevious;
+			if (hashTableGetCount(verifyData->earlyLarvalFrames) > 0) {
+				J9EarlyLarvalFrame query = {0};
+				query.baseFramePC = targetPC;
+				J9EarlyLarvalFrame *earlyLarvalFrameTemp = hashTableFind(verifyData->earlyLarvalFrames, &query);
+				if (NULL != earlyLarvalFrameTemp) {
+					earlyLarvalFrame = earlyLarvalFrameTemp;
+					verifyData->earlyLarvalFramePrevious = earlyLarvalFrame;
+				}
 			}
 
 			if (NULL != earlyLarvalFrame) {
-				J9ROMClass *romClass = verifyData->romClass;
-				J9ROMConstantPoolItem *constantPool = J9_ROM_CP_FROM_ROM_CLASS(romClass);
 				U_16 unsetFieldIndex = 0;
 				J9StrictFieldEntry *entry = NULL;
 				/* Mark each strict field that is in the target frame unset field list as referenced. */
@@ -274,35 +276,36 @@ findAndMatchStack (J9BytecodeVerificationData *verifyData, IDATA targetPC, IDATA
 					}
 					entry->isReferenced = TRUE;
 				}
+			}
 
-				/* The unset fields list is used to track which fields are guaranteed to be
-				 * set. If a field appears in the list it is either unset or it might be
-				 * unset on this new branch.
-				 * For fields that are in the unset list make sure they are tracked as unset
-				 * so we can verify whether they will be set in the new path.
-				 * For fields that are not in the unset list make sure they were set, otherwise
-				 * throw an error.
-				*/
-				J9HashTableState hashTableState = {0};
-				entry = (J9StrictFieldEntry *)hashTableStartDo(verifyData->strictFields, &hashTableState);
-				while (NULL != entry) {
-					if (entry->isReferenced) {
-						if (entry->isSet) {
-							entry->isSet = FALSE;
-							verifyData->strictFieldsUnsetCount++;
-						}
-						/* Reset for the next stack map frame match. */
-						entry->isReferenced = FALSE;
-					} else {
-						if (!entry->isSet) {
-							verifyData->errorDetailCode = BCV_ERR_STRICT_FIELD_STACK_MAP_INCONSISTENT;
-							rc = BCV_FAIL;
-							goto exit;
-						}
+			/* The unset fields list is used to track which fields are guaranteed to be
+			 * set. If a field appears in the list it is either unset or it might be
+			 * unset on this new branch.
+			 * For fields that are in the unset list make sure they are tracked as unset
+			 * so we can verify whether they will be set in the new path.
+			 * For fields that are not in the unset list make sure they were set, otherwise
+			 * throw an error.
+			 */
+			J9HashTableState hashTableState = {0};
+			J9StrictFieldEntry *entry = (J9StrictFieldEntry *)hashTableStartDo(verifyData->strictFields, &hashTableState);
+			while (NULL != entry) {
+				/* The implicit first frame of a strict instance initialization
+				 * method (NULL == earlyLarvalFrame) treats all strict fields as unset.
+				 */
+				if ((NULL == earlyLarvalFrame) || entry->isReferenced) {
+					if (entry->isSet) {
+						entry->isSet = FALSE;
+						verifyData->strictFieldsUnsetCount++;
 					}
-
-					entry = hashTableNextDo(&hashTableState);
+					/* Reset for the next stack map frame match. */
+					entry->isReferenced = FALSE;
+				} else if (!entry->isSet) {
+					verifyData->errorDetailCode = BCV_ERR_STRICT_FIELD_STACK_MAP_INCONSISTENT;
+					rc = BCV_FAIL;
+					goto exit;
 				}
+
+				entry = hashTableNextDo(&hashTableState);
 			}
 		}
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
