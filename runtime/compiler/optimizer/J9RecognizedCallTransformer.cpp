@@ -2789,7 +2789,11 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop *treetop)
                     && !node->isSafeForCGToInlineStringIntrinsic() && !node->isSkippedInRecognizedCallTransformation());
 #endif /* JAVA_SPEC_VERSION < 25 */
             case TR::jdk_internal_util_ArraysSupport_vectorizedMismatch:
+#if JAVA_SPEC_VERSION >= 28
+                return false;
+#else /* JAVA_SPEC_VERSION >= 28 */
                 return cg()->getSupportsInlineVectorizedMismatch();
+#endif /* JAVA_SPEC_VERSION >= 28 */
 #if JAVA_SPEC_VERSION >= 21
             case TR::java_lang_foreign_MemorySegment_get_OfByte:
             case TR::java_lang_foreign_MemorySegment_get_OfChar:
