@@ -137,6 +137,18 @@ monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos
 		internalReleaseVMAccessSetStatus(vmThread, thrstate);
 		rc = timeCompensationHelper(vmThread,
 			interruptable ? HELPER_TYPE_MONITOR_WAIT_INTERRUPTABLE : HELPER_TYPE_MONITOR_WAIT_TIMED, monitor, millis, nanos);
+		/* If the thread was suspended while waiting then it would have re-acquired the monitor when it shoudn't have
+		 * since omrthread_monitor_wait doesn't check the thread public flags before allowing the thread to re-acquire. To
+		 * account for this the thread should release the lock and try to acquire VMAccess again. This will block until the
+		 * thread is no longer suspended. Then is should release VMAccess and re-aquire the lock and proceed.
+		 */
+		if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_SUSPEND_ANY)) {
+			omrthread_monitor_exit(monitor);
+			internalAcquireVMAccess(vmThread);
+			internalReleaseVMAccess(vmThread);
+			omrthread_monitor_enter(monitor);
+		}
+
 		internalAcquireVMAccessClearStatus(vmThread, thrstate);
 		VM_VMHelpers::setThreadState(vmThread, oldState);
 		J9VMTHREAD_SET_BLOCKINGENTEROBJECT(vmThread, vmThread, NULL);
