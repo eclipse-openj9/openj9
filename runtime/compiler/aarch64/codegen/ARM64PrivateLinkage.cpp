@@ -511,41 +511,41 @@ static TR::Instruction *initializeLocals(TR::Instruction *cursor, uint32_t numSl
         if (!constantIsImm7(offset >> 3)) {
             // If offset does not fit in imm7, update baseReg and reset offset to 0
             if (constantIsUnsignedImm12(offset)) {
-                cursor = generateTrg1Src1ImmInstruction(cg, OP::addimmx, NULL, baseReg, javaSP, offset, cursor);
+                cursor = Inst_Trg1Src1Imm(cg, OP::addimmx, NULL, baseReg, javaSP, offset, cursor);
             } else {
                 cursor = loadConstant32(cg, NULL, offset, baseReg, cursor);
-                cursor = generateTrg1Src2Instruction(cg, OP::addx, NULL, baseReg, javaSP, baseReg, cursor);
+                cursor = Inst_Trg1Src2(cg, OP::addx, NULL, baseReg, javaSP, baseReg, cursor);
             }
             offset = 0;
         } else {
             // mov baseReg, javaSP
-            cursor = generateTrg1Src2Instruction(cg, OP::orrx, NULL, baseReg, zeroReg, javaSP, cursor);
+            cursor = Inst_Trg1Src2(cg, OP::orrx, NULL, baseReg, zeroReg, javaSP, cursor);
         }
 
         for (int32_t i = 0; i < loopCount; i++) {
             if (!constantIsImm7(offset >> 3)) {
                 // If offset does not fit in imm7, update baseReg and reset offset to 0
-                cursor = generateTrg1Src1ImmInstruction(cg, OP::addimmx, NULL, baseReg, baseReg, offset, cursor);
+                cursor = Inst_Trg1Src1Imm(cg, OP::addimmx, NULL, baseReg, baseReg, offset, cursor);
                 offset = 0;
             }
             TR::MemoryReference *localMR = MRef_disp(cg, baseReg, offset);
-            cursor = generateMemSrc2Instruction(cg, OP::stpoffx, NULL, localMR, zeroReg, zeroReg, cursor);
+            cursor = Inst_MemSrc2(cg, OP::stpoffx, NULL, localMR, zeroReg, zeroReg, cursor);
             offset += (TR::Compiler->om.sizeofReferenceAddress() * 2);
         }
         if (numSlotsToBeInitialized % 2) {
             // clear residue
             TR::MemoryReference *localMR = MRef_disp(cg, baseReg, offset);
-            cursor = generateMemSrc1Instruction(cg, OP::strimmx, NULL, localMR, zeroReg, cursor);
+            cursor = Inst_MemSrc1(cg, OP::strimmx, NULL, localMR, zeroReg, cursor);
         }
     } else {
         for (int32_t i = 0; i < loopCount; i++, offset += (TR::Compiler->om.sizeofReferenceAddress() * 2)) {
             TR::MemoryReference *localMR = MRef_disp(cg, javaSP, offset);
-            cursor = generateMemSrc2Instruction(cg, OP::stpoffx, NULL, localMR, zeroReg, zeroReg, cursor);
+            cursor = Inst_MemSrc2(cg, OP::stpoffx, NULL, localMR, zeroReg, zeroReg, cursor);
         }
         if (numSlotsToBeInitialized % 2) {
             // clear residue
             TR::MemoryReference *localMR = MRef_disp(cg, javaSP, offset);
-            cursor = generateMemSrc1Instruction(cg, OP::strimmx, NULL, localMR, zeroReg, cursor);
+            cursor = Inst_MemSrc1(cg, OP::strimmx, NULL, localMR, zeroReg, cursor);
         }
     }
 
@@ -576,7 +576,7 @@ void J9::ARM64::PrivateLinkage::createPrologue(TR::Instruction *cursor)
     // Entry breakpoint
     //
     if (comp()->getOption(TR_EntryBreakPoints)) {
-        cursor = generateExceptionInstruction(cg(), OP::brkarm64, NULL, 0, cursor);
+        cursor = Inst_Exception(cg(), OP::brkarm64, NULL, 0, cursor);
     }
 
     // --------------------------------------------------------------------------
@@ -648,16 +648,16 @@ void J9::ARM64::PrivateLinkage::createPrologue(TR::Instruction *cursor)
     // Store return address (RA)
     //
     TR::MemoryReference *returnAddressMR = MRef_disp(cg(), javaSP, firstLocalOffset);
-    cursor = generateMemSrc1Instruction(cg(), OP::sturx, NULL, returnAddressMR,
-        machine->getRealRegister(TR::RealRegister::lr), cursor);
+    cursor
+        = Inst_MemSrc1(cg(), OP::sturx, NULL, returnAddressMR, machine->getRealRegister(TR::RealRegister::lr), cursor);
 
     // --------------------------------------------------------------------------
     // Speculatively adjust Java SP with the needed frame size.
     // This includes the preserved RA slot.
     //
     if (constantIsUnsignedImm12(alignedFrameSizeIncludingReturnAddress)) {
-        cursor = generateTrg1Src1ImmInstruction(cg(), OP::subimmx, NULL, javaSP, javaSP,
-            alignedFrameSizeIncludingReturnAddress, cursor);
+        cursor
+            = Inst_Trg1Src1Imm(cg(), OP::subimmx, NULL, javaSP, javaSP, alignedFrameSizeIncludingReturnAddress, cursor);
     } else {
         TR::RealRegister *x9Reg = machine->getRealRegister(TR::RealRegister::RegNum::x9);
 
@@ -665,7 +665,7 @@ void J9::ARM64::PrivateLinkage::createPrologue(TR::Instruction *cursor)
             // x9 will contain the aligned frame size
             //
             cursor = loadConstant32(cg(), NULL, alignedFrameSizeIncludingReturnAddress, x9Reg, cursor);
-            cursor = generateTrg1Src2Instruction(cg(), OP::subx, NULL, javaSP, javaSP, x9Reg, cursor);
+            cursor = Inst_Trg1Src2(cg(), OP::subx, NULL, javaSP, javaSP, x9Reg, cursor);
         } else {
             TR_ASSERT_FATAL(0, "Large frame size not supported in prologue yet");
         }
@@ -682,16 +682,16 @@ void J9::ARM64::PrivateLinkage::createPrologue(TR::Instruction *cursor)
         //
         TR::MemoryReference *somMR = MRef_disp(cg(), vmThread, cg()->getStackLimitOffset());
         TR::RealRegister *somReg = machine->getRealRegister(TR::RealRegister::RegNum::x10);
-        cursor = generateTrg1MemInstruction(cg(), OP::ldrimmx, NULL, somReg, somMR, cursor);
+        cursor = Inst_Trg1Mem(cg(), OP::ldrimmx, NULL, somReg, somMR, cursor);
 
         TR::RealRegister *zeroReg = machine->getRealRegister(TR::RealRegister::xzr);
-        cursor = generateTrg1Src2Instruction(cg(), OP::subsx, NULL, zeroReg, javaSP, somReg, cursor);
+        cursor = Inst_Trg1Src2(cg(), OP::subsx, NULL, zeroReg, javaSP, somReg, cursor);
 
         TR::LabelSymbol *stackOverflowSnippetLabel = generateLabelSymbol(cg());
-        cursor = generateConditionalBranchInstruction(cg(), NULL, stackOverflowSnippetLabel, TR::CC_LS, cursor);
+        cursor = Inst_ConditionalBranch(cg(), NULL, stackOverflowSnippetLabel, TR::CC_LS, cursor);
 
         TR::LabelSymbol *stackOverflowRestartLabel = generateLabelSymbol(cg());
-        cursor = generateLabelInstruction(cg(), OP::label, NULL, stackOverflowRestartLabel, cursor);
+        cursor = Inst_Label(cg(), NULL, stackOverflowRestartLabel, cursor);
 
         cg()->addSnippet(new (cg()->trHeapMemory())
                 TR::ARM64StackCheckFailureSnippet(cg(), NULL, stackOverflowRestartLabel, stackOverflowSnippetLabel));
@@ -729,8 +729,8 @@ void J9::ARM64::PrivateLinkage::createPrologue(TR::Instruction *cursor)
                 if (pendingRegToStore) {
                     TR::MemoryReference *preservedRegMR = MRef_disp(cg(), javaSP, preservedRegisterOffsetFromJavaSP);
                     // Register pair instruction
-                    cursor = generateMemSrc2Instruction(cg(), OP::stpoffx, NULL, preservedRegMR, pendingRegToStore,
-                        preservedRealReg, cursor);
+                    cursor = Inst_MemSrc2(cg(), OP::stpoffx, NULL, preservedRegMR, pendingRegToStore, preservedRealReg,
+                        cursor);
                     preservedRegisterOffsetFromJavaSP += 16;
                     numGPRsSaved -= 2;
                     pendingRegToStore = NULL;
@@ -740,8 +740,7 @@ void J9::ARM64::PrivateLinkage::createPrologue(TR::Instruction *cursor)
                     } else {
                         TR::MemoryReference *preservedRegMR
                             = MRef_disp(cg(), javaSP, preservedRegisterOffsetFromJavaSP);
-                        cursor = generateMemSrc1Instruction(cg(), OP::strimmx, NULL, preservedRegMR, preservedRealReg,
-                            cursor);
+                        cursor = Inst_MemSrc1(cg(), OP::strimmx, NULL, preservedRegMR, preservedRealReg, cursor);
                         preservedRegisterOffsetFromJavaSP += 8;
                         numGPRsSaved--;
                     }
@@ -750,7 +749,7 @@ void J9::ARM64::PrivateLinkage::createPrologue(TR::Instruction *cursor)
         }
         if (pendingRegToStore) {
             TR::MemoryReference *preservedRegMR = MRef_disp(cg(), javaSP, preservedRegisterOffsetFromJavaSP);
-            cursor = generateMemSrc1Instruction(cg(), OP::strimmx, NULL, preservedRegMR, pendingRegToStore, cursor);
+            cursor = Inst_MemSrc1(cg(), OP::strimmx, NULL, preservedRegMR, pendingRegToStore, cursor);
             preservedRegisterOffsetFromJavaSP += 8;
             numGPRsSaved--;
             pendingRegToStore = NULL;
@@ -848,8 +847,7 @@ void J9::ARM64::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
             if (pendingRegToLoad) {
                 TR::MemoryReference *preservedRegMR = MRef_disp(cg(), javaSP, preservedRegisterOffsetFromJavaSP);
                 // Register pair instruction
-                cursor = generateTrg2MemInstruction(cg(), OP::ldpoffx, lastNode, pendingRegToLoad, rr, preservedRegMR,
-                    cursor);
+                cursor = Inst_Trg2Mem(cg(), OP::ldpoffx, lastNode, pendingRegToLoad, rr, preservedRegMR, cursor);
                 preservedRegisterOffsetFromJavaSP += 16;
                 pendingRegToLoad = NULL;
             } else {
@@ -857,7 +855,7 @@ void J9::ARM64::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
                     pendingRegToLoad = rr;
                 } else {
                     TR::MemoryReference *preservedRegMR = MRef_disp(cg(), javaSP, preservedRegisterOffsetFromJavaSP);
-                    cursor = generateTrg1MemInstruction(cg(), OP::ldrimmx, lastNode, rr, preservedRegMR, cursor);
+                    cursor = Inst_Trg1Mem(cg(), OP::ldrimmx, lastNode, rr, preservedRegMR, cursor);
                     preservedRegisterOffsetFromJavaSP += 8;
                 }
             }
@@ -865,7 +863,7 @@ void J9::ARM64::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
     }
     if (pendingRegToLoad) {
         TR::MemoryReference *preservedRegMR = MRef_disp(cg(), javaSP, preservedRegisterOffsetFromJavaSP);
-        cursor = generateTrg1MemInstruction(cg(), OP::ldrimmx, lastNode, pendingRegToLoad, preservedRegMR, cursor);
+        cursor = Inst_Trg1Mem(cg(), OP::ldrimmx, lastNode, pendingRegToLoad, preservedRegMR, cursor);
         preservedRegisterOffsetFromJavaSP += 8;
         pendingRegToLoad = NULL;
     }
@@ -875,23 +873,23 @@ void J9::ARM64::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
 
     uint32_t alignedFrameSizeIncludingReturnAddress = cg()->getFrameSizeInBytes() - firstLocalOffset;
     if (constantIsUnsignedImm12(alignedFrameSizeIncludingReturnAddress)) {
-        cursor = generateTrg1Src1ImmInstruction(cg(), OP::addimmx, lastNode, javaSP, javaSP,
-            alignedFrameSizeIncludingReturnAddress, cursor);
+        cursor = Inst_Trg1Src1Imm(cg(), OP::addimmx, lastNode, javaSP, javaSP, alignedFrameSizeIncludingReturnAddress,
+            cursor);
     } else {
         TR::RealRegister *x9Reg = machine->getRealRegister(TR::RealRegister::RegNum::x9);
         cursor = loadConstant32(cg(), lastNode, alignedFrameSizeIncludingReturnAddress, x9Reg, cursor);
-        cursor = generateTrg1Src2Instruction(cg(), OP::addx, lastNode, javaSP, javaSP, x9Reg, cursor);
+        cursor = Inst_Trg1Src2(cg(), OP::addx, lastNode, javaSP, javaSP, x9Reg, cursor);
     }
 
     // restore return address
     TR::RealRegister *lr = machine->getRealRegister(TR::RealRegister::lr);
     if (machine->getLinkRegisterKilled()) {
         TR::MemoryReference *returnAddressMR = MRef_disp(cg(), javaSP, firstLocalOffset);
-        cursor = generateTrg1MemInstruction(cg(), OP::ldurx, lastNode, lr, returnAddressMR, cursor);
+        cursor = Inst_Trg1Mem(cg(), OP::ldurx, lastNode, lr, returnAddressMR, cursor);
     }
 
     // return
-    generateRegBranchInstruction(cg(), OP::ret, lastNode, lr, cursor);
+    Inst_RegBranch(cg(), OP::ret, lastNode, lr, cursor);
 }
 
 void J9::ARM64::PrivateLinkage::pushOutgoingMemArgument(TR::Register *argReg, int32_t offset, OP::Mnemonic opCode,
@@ -1040,7 +1038,7 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
     if (linkage == TR_CHelper) {
         TR_ASSERT(numIntArgRegs > 0, "This code doesn't handle passing this implicit arg on the stack");
         TR::Register *vmThreadArgRegister = cg()->allocateRegister();
-        generateMovInstruction(cg(), callNode, vmThreadArgRegister, cg()->getMethodMetaDataRegister());
+        Inst_Mov(cg(), callNode, vmThreadArgRegister, cg()->getMethodMetaDataRegister());
         dependencies->addPreCondition(vmThreadArgRegister, properties.getIntegerArgumentRegister(numIntegerArgs));
         if (resType.getDataType() == TR::NoType)
             dependencies->addPostCondition(vmThreadArgRegister, properties.getIntegerArgumentRegister(numIntegerArgs));
@@ -1090,7 +1088,7 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
                             tempReg = cg()->allocateCollectedReferenceRegister();
                         else
                             tempReg = cg()->allocateRegister();
-                        generateMovInstruction(cg(), callNode, tempReg, argRegister);
+                        Inst_Mov(cg(), callNode, tempReg, argRegister);
                         argRegister = tempReg;
                     }
                     if (numIntegerArgs < numIntArgRegs) {
@@ -1131,7 +1129,7 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
                 if (!cg()->canClobberNodesRegister(child, 0)) {
                     tempReg = cg()->allocateRegister(TR_FPR);
                     op = (childType == TR::Float) ? OP::fmovs : OP::fmovd;
-                    generateTrg1Src1Instruction(cg(), op, callNode, tempReg, argRegister);
+                    Inst_Trg1Src1(cg(), op, callNode, tempReg, argRegister);
                     argRegister = tempReg;
                 }
                 if (numFloatArgs < numFloatArgRegs) {
@@ -1205,8 +1203,7 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
     if (numMemArgs > 0) {
         for (argIndex = 0; argIndex < numMemArgs; argIndex++) {
             TR::Register *aReg = pushToMemory[argIndex].argRegister;
-            generateMemSrc1Instruction(cg(), pushToMemory[argIndex].opCode, callNode, pushToMemory[argIndex].argMemory,
-                aReg);
+            Inst_MemSrc1(cg(), pushToMemory[argIndex].opCode, callNode, pushToMemory[argIndex].argMemory, aReg);
             cg()->stopUsingRegister(aReg);
         }
     }
@@ -1232,9 +1229,8 @@ void J9::ARM64::PrivateLinkage::buildDirectCall(TR::Node *callNode, TR::SymbolRe
             && (callSymbol->isHelper() || !forceUnresolvedDispatch))) {
         bool isMyself = comp()->isRecursiveMethodTarget(callSymbol);
 
-        gcPoint = generateImmSymInstruction(cg(), OP::bl, callNode,
-            isMyself ? 0 : (uintptr_t)callSymbol->getMethodAddress(), dependencies,
-            callSymRef ? callSymRef : callNode->getSymbolReference(), NULL);
+        gcPoint = Inst_ImmSym(cg(), OP::bl, callNode, isMyself ? 0 : (uintptr_t)callSymbol->getMethodAddress(),
+            dependencies, callSymRef ? callSymRef : callNode->getSymbolReference(), NULL);
     } else {
         TR::LabelSymbol *label = generateLabelSymbol(cg());
         TR::Snippet *snippet;
@@ -1247,7 +1243,7 @@ void J9::ARM64::PrivateLinkage::buildDirectCall(TR::Node *callNode, TR::SymbolRe
         }
 
         cg()->addSnippet(snippet);
-        gcPoint = generateImmSymInstruction(cg(), OP::bl, callNode, 0, dependencies,
+        gcPoint = Inst_ImmSym(cg(), OP::bl, callNode, 0, dependencies,
             new (trHeapMemory()) TR::SymbolReference(comp()->getSymRefTab(), label), snippet);
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
@@ -1434,9 +1430,9 @@ static TR::Instruction *buildStaticPICCall(TR::CodeGenerator *cg, TR::Node *call
             loadAddressConstant(cg, false, callNode, reinterpret_cast<intptr_t>(profiledClass), tempReg);
         }
     }
-    generateCompareInstruction(cg, callNode, vftReg, tempReg, true);
+    Inst_Compare(cg, callNode, vftReg, tempReg, true);
 
-    generateConditionalBranchInstruction(cg, callNode, missLabel, TR::CC_NE);
+    Inst_ConditionalBranch(cg, callNode, missLabel, TR::CC_NE);
     if (comp->getOptions()->enableDebugCounters()) {
         TR::MethodSymbol *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
         if (methodSymbol->isInterface()) {
@@ -1452,7 +1448,7 @@ static TR::Instruction *buildStaticPICCall(TR::CodeGenerator *cg, TR::Node *call
         }
     }
 
-    TR::Instruction *gcPoint = generateImmSymInstruction(cg, OP::bl, callNode,
+    TR::Instruction *gcPoint = Inst_ImmSym(cg, OP::bl, callNode,
         (uintptr_t)profiledMethod->startAddressForJittedMethod(), NULL, profiledMethodSymRef, NULL);
     gcPoint->ARM64NeedsGCMap(cg, regMapForGC);
     fej9->reserveTrampolineIfNecessary(comp, profiledMethodSymRef, false);
@@ -1476,15 +1472,15 @@ static void buildVirtualCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Regi
 
     // jitVTableIndex() in oti/JITInterface.hpp assumes the instruction sequence below
     if (offset >= -65536) {
-        generateTrg1ImmInstruction(cg, OP::movnx, callNode, x9, ~offset & 0xFFFF);
+        Inst_Trg1Imm(cg, OP::movnx, callNode, x9, ~offset & 0xFFFF);
     } else {
-        generateTrg1ImmInstruction(cg, OP::movzx, callNode, x9, offset & 0xFFFF);
-        generateTrg1ImmInstruction(cg, OP::movkx, callNode, x9, (((offset >> 16) & 0xFFFF) | TR::MOV_LSL16));
-        generateTrg1Src1ImmInstruction(cg, OP::sbfmx, callNode, x9, x9, 0x1F); // sxtw x9, w9
+        Inst_Trg1Imm(cg, OP::movzx, callNode, x9, offset & 0xFFFF);
+        Inst_Trg1Imm(cg, OP::movkx, callNode, x9, (((offset >> 16) & 0xFFFF) | TR::MOV_LSL16));
+        Inst_Trg1Src1Imm(cg, OP::sbfmx, callNode, x9, x9, 0x1F); // sxtw x9, w9
     }
     TR::MemoryReference *tempMR = MRef_idxReg(cg, vftReg, x9);
-    generateTrg1MemInstruction(cg, OP::ldroffx, callNode, x9, tempMR);
-    TR::Instruction *gcPoint = generateRegBranchInstruction(cg, OP::blr, callNode, x9);
+    Inst_Trg1Mem(cg, OP::ldroffx, callNode, x9, tempMR);
+    TR::Instruction *gcPoint = Inst_RegBranch(cg, OP::blr, callNode, x9);
     gcPoint->ARM64NeedsGCMap(cg, regMapForGC);
 }
 
@@ -1611,10 +1607,10 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
 
     TR::LabelSymbol *ifcSnippetLabel = ifcSnippet->getSnippetLabel();
     TR::LabelSymbol *firstClassCacheSlotLabel = ifcSnippet->getFirstClassCacheSlotLabel();
-    generateTrg1ImmSymInstruction(cg, OP::ldrx, callNode, x10Reg, 0, firstClassCacheSlotLabel);
+    Inst_Trg1ImmSym(cg, OP::ldrx, callNode, x10Reg, 0, firstClassCacheSlotLabel);
 
     TR::LabelSymbol *hitLabel = generateLabelSymbol(cg);
-    generateCompareInstruction(cg, callNode, vftReg, x10Reg, true);
+    Inst_Compare(cg, callNode, vftReg, x10Reg, true);
     TR::LabelSymbol *firstBranchAddressCacheSlotLabel = ifcSnippet->getFirstBranchAddressCacheSlotLabel();
 
     TR::Compilation *comp = cg->comp();
@@ -1638,11 +1634,10 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
             /* Debug counter was generated. Generating instructions before debug counter instructions. */
             TR::LabelSymbol *slot1MissedLabel = generateLabelSymbol(cg);
             TR::Instruction *branchToSlot1MissedLabelInstr
-                = generateConditionalBranchInstruction(cg, callNode, slot1MissedLabel, TR::CC_NE, prevCursor);
-            generateTrg1ImmSymInstruction(cg, OP::ldrx, callNode, x10Reg, 0, firstBranchAddressCacheSlotLabel);
-            TR::Instruction *branchToHitLabelInstr = generateLabelInstruction(cg, OP::b, callNode, hitLabel);
-            TR::Instruction *slot1MissedLabelInstr
-                = generateLabelInstruction(cg, OP::label, callNode, slot1MissedLabel);
+                = Inst_ConditionalBranch(cg, callNode, slot1MissedLabel, TR::CC_NE, prevCursor);
+            Inst_Trg1ImmSym(cg, OP::ldrx, callNode, x10Reg, 0, firstBranchAddressCacheSlotLabel);
+            TR::Instruction *branchToHitLabelInstr = Inst_Branch(cg, callNode, hitLabel);
+            TR::Instruction *slot1MissedLabelInstr = Inst_Label(cg, callNode, slot1MissedLabel);
             if (debugObj) {
                 debugObj->addInstructionComment(branchToSlot1MissedLabelInstr, "Jumps to slot1MissedLabel");
                 debugObj->addInstructionComment(branchToHitLabelInstr, "Jumps to hitLabel");
@@ -1651,9 +1646,8 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
         }
     }
     if (!isDebugCounterGenerated) {
-        generateTrg1ImmSymInstruction(cg, OP::ldrx, callNode, x10Reg, 0, firstBranchAddressCacheSlotLabel);
-        TR::Instruction *branchToHitLabelInstr
-            = generateConditionalBranchInstruction(cg, callNode, hitLabel, TR::CC_EQ);
+        Inst_Trg1ImmSym(cg, OP::ldrx, callNode, x10Reg, 0, firstBranchAddressCacheSlotLabel);
+        TR::Instruction *branchToHitLabelInstr = Inst_ConditionalBranch(cg, callNode, hitLabel, TR::CC_EQ);
         if (debugObj) {
             debugObj->addInstructionComment(branchToHitLabelInstr, "Jumps to hitLabel");
         }
@@ -1661,7 +1655,7 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
 
     TR::LabelSymbol *secondClassCacheSlotLabel = ifcSnippet->getSecondClassCacheSlotLabel();
 
-    generateTrg1ImmSymInstruction(cg, OP::ldrx, callNode, x10Reg, 0, secondClassCacheSlotLabel);
+    Inst_Trg1ImmSym(cg, OP::ldrx, callNode, x10Reg, 0, secondClassCacheSlotLabel);
 
     if (enableDebugCounters) {
         TR::Instruction *prevCursor1 = cg->getAppendInstruction();
@@ -1685,18 +1679,16 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
                 TR::LabelSymbol *slot2DoneLabel = generateLabelSymbol(cg);
                 /* Debug counter was generated. Generating instructions before debug counter instructions recording hit
                  * for second cache slot. */
-                TR::Instruction *cursor = generateCompareInstruction(cg, callNode, vftReg, x10Reg, true, prevCursor1);
+                TR::Instruction *cursor = Inst_Compare(cg, callNode, vftReg, x10Reg, true, prevCursor1);
                 TR::Instruction *branchToSlot2MissedLabelInstr
-                    = generateConditionalBranchInstruction(cg, callNode, slot2MissedLabel, TR::CC_NE, cursor);
+                    = Inst_ConditionalBranch(cg, callNode, slot2MissedLabel, TR::CC_NE, cursor);
 
                 /* Generating instructions before debug counter instructions recording cache miss. */
-                cursor = generateLabelInstruction(cg, OP::b, callNode, slot2DoneLabel, prevCursor2);
-                TR::Instruction *slot2MissedLabelInstr
-                    = generateLabelInstruction(cg, OP::label, callNode, slot2MissedLabel, cursor);
+                cursor = Inst_Branch(cg, callNode, slot2DoneLabel, prevCursor2);
+                TR::Instruction *slot2MissedLabelInstr = Inst_Label(cg, callNode, slot2MissedLabel, cursor);
 
                 /* Generating instructions after debug counter instructions. */
-                TR::Instruction *slot2DoneLabelInstr
-                    = generateLabelInstruction(cg, OP::label, callNode, slot2DoneLabel);
+                TR::Instruction *slot2DoneLabelInstr = Inst_Label(cg, callNode, slot2DoneLabel);
                 if (debugObj) {
                     debugObj->addInstructionComment(branchToSlot2MissedLabelInstr, "Jumps to slot2MissedLabel");
                     debugObj->addInstructionComment(cursor, "Jumps to slot2DoneLabel");
@@ -1709,12 +1701,11 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
                 TR::LabelSymbol *slot2DoneLabel = generateLabelSymbol(cg);
                 /* Debug counter was generated. Generating instructions before debug counter instructions recording hit
                  * for second cache slot. */
-                TR::Instruction *cursor = generateCompareInstruction(cg, callNode, vftReg, x10Reg, true, prevCursor1);
+                TR::Instruction *cursor = Inst_Compare(cg, callNode, vftReg, x10Reg, true, prevCursor1);
                 TR::Instruction *branchToSlot2DoneLabelInstr
-                    = generateConditionalBranchInstruction(cg, callNode, slot2DoneLabel, TR::CC_NE, cursor);
+                    = Inst_ConditionalBranch(cg, callNode, slot2DoneLabel, TR::CC_NE, cursor);
                 /* Generating instructions after debug counter instructions. */
-                TR::Instruction *slot2DoneLabelInstr
-                    = generateLabelInstruction(cg, OP::label, callNode, slot2DoneLabel);
+                TR::Instruction *slot2DoneLabelInstr = Inst_Label(cg, callNode, slot2DoneLabel);
                 if (debugObj) {
                     debugObj->addInstructionComment(branchToSlot2DoneLabelInstr, "Jumps to slot2DoneLabel");
                     debugObj->addInstructionComment(slot2DoneLabelInstr, "slot2DoneLabel");
@@ -1723,7 +1714,7 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
         }
     }
 
-    generateCompareInstruction(cg, callNode, vftReg, x10Reg, true);
+    Inst_Compare(cg, callNode, vftReg, x10Reg, true);
 
     TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
     TR_ResolvedMethod *owningMethod = methodSymRef->getOwningMethod(comp);
@@ -1736,16 +1727,16 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
         TR_J9VMBase *fej9 = cg->fej9();
 
         TR::LabelSymbol *secondBranchAddressCacheSlotLabel = ifcSnippet->getSecondBranchAddressCacheSlotLabel();
-        generateTrg1ImmSymInstruction(cg, OP::ldrx, callNode, x10Reg, 0, secondBranchAddressCacheSlotLabel);
-        generateConditionalBranchInstruction(cg, callNode, hitLabel, TR::CC_EQ);
+        Inst_Trg1ImmSym(cg, OP::ldrx, callNode, x10Reg, 0, secondBranchAddressCacheSlotLabel);
+        Inst_ConditionalBranch(cg, callNode, hitLabel, TR::CC_EQ);
 
-        generateTrg1MemInstruction(cg, OP::ldrimmx, callNode, x10Reg,
+        Inst_Trg1Mem(cg, OP::ldrimmx, callNode, x10Reg,
             MRef_disp(cg, vftReg, fej9->getOffsetOfLastITableFromClassField()));
         TR::LabelSymbol *interfacedClassSlotLabel = ifcSnippet->getInterfaceClassSlotLabel();
-        generateTrg1ImmSymInstruction(cg, OP::ldrx, callNode, x9Reg, 0, interfacedClassSlotLabel);
-        generateTrg1MemInstruction(cg, OP::ldrimmx, callNode, x11Reg,
+        Inst_Trg1ImmSym(cg, OP::ldrx, callNode, x9Reg, 0, interfacedClassSlotLabel);
+        Inst_Trg1Mem(cg, OP::ldrimmx, callNode, x11Reg,
             MRef_disp(cg, x10Reg, fej9->getOffsetOfInterfaceClassFromITableField()));
-        generateCompareInstruction(cg, callNode, x9Reg, x11Reg, true);
+        Inst_Compare(cg, callNode, x9Reg, x11Reg, true);
 
         if (enableDebugCounters) {
             TR::Instruction *prevCursor1 = cg->getAppendInstruction();
@@ -1768,19 +1759,17 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
                 /* Debug counter was generated. Generating instructions before debug counter instructions recording hit
                  * for lastITable cache. */
                 TR::Instruction *branchToLastITableMissedLabelInstr
-                    = generateConditionalBranchInstruction(cg, callNode, lastITableMissedLabel, TR::CC_NE, prevCursor1);
+                    = Inst_ConditionalBranch(cg, callNode, lastITableMissedLabel, TR::CC_NE, prevCursor1);
 
                 /* Generating instructions before debug counter instructions recording cache miss. */
                 TR::Instruction *cmpInstr1
-                    = generateCompareInstruction(cg, callNode, x9Reg, x9Reg, true, prevCursor2); /* to set Z flag */
-                TR::Instruction *cursor = generateLabelInstruction(cg, OP::b, callNode, lastITableDoneLabel, cmpInstr1);
-                TR::Instruction *lastITableMissedLabelInstr
-                    = generateLabelInstruction(cg, OP::label, callNode, lastITableMissedLabel, cursor);
+                    = Inst_Compare(cg, callNode, x9Reg, x9Reg, true, prevCursor2); /* to set Z flag */
+                TR::Instruction *cursor = Inst_Branch(cg, callNode, lastITableDoneLabel, cmpInstr1);
+                TR::Instruction *lastITableMissedLabelInstr = Inst_Label(cg, callNode, lastITableMissedLabel, cursor);
 
                 /* Generating instructions after debug counter instructions. */
-                generateCompareImmInstruction(cg, callNode, x10Reg, 0, true); /* to unset Z flag */
-                TR::Instruction *lastITableDoneLabelInstr
-                    = generateLabelInstruction(cg, OP::label, callNode, lastITableDoneLabel);
+                Inst_CompareImm(cg, callNode, x10Reg, 0, true); /* to unset Z flag */
+                TR::Instruction *lastITableDoneLabelInstr = Inst_Label(cg, callNode, lastITableDoneLabel);
                 if (debugObj) {
                     debugObj->addInstructionComment(branchToLastITableMissedLabelInstr,
                         "Jumps to lastITableMissedLabel");
@@ -1793,21 +1782,21 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
 
         /* This conditional branch instruction with "always" condition code will be patched to b.ne instruction after
          * second cache slot is filled. */
-        gcPoint = generateConditionalBranchInstruction(cg, callNode, ifcSnippetLabel, TR::CC_AL);
+        gcPoint = Inst_ConditionalBranch(cg, callNode, ifcSnippetLabel, TR::CC_AL);
         loadConstant32(cg, callNode, fej9->getITableEntryJitVTableOffset(), x9Reg);
-        generateTrg1MemInstruction(cg, OP::ldrimmx, callNode, x11Reg,
+        Inst_Trg1Mem(cg, OP::ldrimmx, callNode, x11Reg,
             MRef_disp(cg, x10Reg, fej9->convertITableIndexToOffset(itableIndex)));
         /* PicBuilder.spp checks this instruction. It needs to be 'sub x9, x9, x11'. */
-        generateTrg1Src2Instruction(cg, OP::subx, callNode, x9Reg, x9Reg, x11Reg);
-        generateTrg1MemInstruction(cg, OP::ldroffx, callNode, x10Reg, MRef_idxReg(cg, vftReg, x9Reg));
+        Inst_Trg1Src2(cg, OP::subx, callNode, x9Reg, x9Reg, x11Reg);
+        Inst_Trg1Mem(cg, OP::ldroffx, callNode, x10Reg, MRef_idxReg(cg, vftReg, x9Reg));
         if (debugObj) {
             debugObj->addInstructionComment(gcPoint, "Jumps to Snippet. Will be patched to b.ne");
         }
     } else {
-        gcPoint = generateConditionalBranchInstruction(cg, callNode, ifcSnippetLabel, TR::CC_NE);
+        gcPoint = Inst_ConditionalBranch(cg, callNode, ifcSnippetLabel, TR::CC_NE);
         TR::LabelSymbol *secondBranchAddressCacheSlotLabel = ifcSnippet->getSecondBranchAddressCacheSlotLabel();
 
-        generateTrg1ImmSymInstruction(cg, OP::ldrx, callNode, x10Reg, 0, secondBranchAddressCacheSlotLabel);
+        Inst_Trg1ImmSym(cg, OP::ldrx, callNode, x10Reg, 0, secondBranchAddressCacheSlotLabel);
         if (debugObj) {
             debugObj->addInstructionComment(gcPoint, "Jumps to snippet");
         }
@@ -1817,11 +1806,11 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
     if (enableDebugCounters) {
         srm->stopUsingRegisters();
     }
-    TR::Instruction *hitLabelInstr = generateLabelInstruction(cg, OP::label, callNode, hitLabel);
+    TR::Instruction *hitLabelInstr = Inst_Label(cg, callNode, hitLabel);
     if (debugObj) {
         debugObj->addInstructionComment(hitLabelInstr, "hitLabel");
     }
-    gcPoint = generateRegBranchInstruction(cg, OP::blr, callNode, x10Reg);
+    gcPoint = Inst_RegBranch(cg, OP::blr, callNode, x10Reg);
     gcPoint->ARM64NeedsGCMap(cg, regMapForGC);
 }
 
@@ -1886,7 +1875,7 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode, TR::Reg
                 break;
         }
 
-        TR::Instruction *gcPoint = generateRegBranchInstruction(cg(), OP::blr, callNode, vftReg, dependencies);
+        TR::Instruction *gcPoint = Inst_RegBranch(cg(), OP::blr, callNode, vftReg, dependencies);
         gcPoint->ARM64NeedsGCMap(cg(), regMapForGC);
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
@@ -1927,14 +1916,14 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode, TR::Reg
             // in aarch64/runtime/PicBuilder.spp to load the vTable index in x9
 
             // This `b` instruction is modified to movzx x9, lower 16bit of offset
-            generateLabelInstruction(cg(), OP::b, callNode, vcSnippetLabel);
-            generateTrg1ImmInstruction(cg(), OP::movkx, callNode, x9, TR::MOV_LSL16);
-            generateTrg1Src1ImmInstruction(cg(), OP::sbfmx, callNode, x9, x9, 0x1F); // sxtw x9, w9
+            Inst_Branch(cg(), callNode, vcSnippetLabel);
+            Inst_Trg1Imm(cg(), OP::movkx, callNode, x9, TR::MOV_LSL16);
+            Inst_Trg1Src1Imm(cg(), OP::sbfmx, callNode, x9, x9, 0x1F); // sxtw x9, w9
             tempMR = MRef_idxReg(cg(), vftReg, x9);
-            generateTrg1MemInstruction(cg(), OP::ldroffx, callNode, x9, tempMR);
-            gcPoint = generateRegBranchInstruction(cg(), OP::blr, callNode, x9);
+            Inst_Trg1Mem(cg(), OP::ldroffx, callNode, x9, tempMR);
+            gcPoint = Inst_RegBranch(cg(), OP::blr, callNode, x9);
             gcPoint->ARM64NeedsGCMap(cg(), regMapForGC);
-            generateLabelInstruction(cg(), OP::label, callNode, doneLabel, dependencies);
+            Inst_Label(cg(), callNode, doneLabel, dependencies);
 
             return;
         }
@@ -2024,8 +2013,8 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode, TR::Reg
                         ? 0
                         : (uintptr_t)resolvedMethod->startAddressForJittedMethod();
                     TR::Instruction *gcPoint
-                        = generateImmSymInstruction(cg(), OP::bl, callNode, methodAddress, NULL, methodSymRef, NULL);
-                    generateLabelInstruction(cg(), OP::label, callNode, doneLabel, dependencies);
+                        = Inst_ImmSym(cg(), OP::bl, callNode, methodAddress, NULL, methodSymRef, NULL);
+                    Inst_Label(cg(), callNode, doneLabel, dependencies);
                     gcPoint->ARM64NeedsGCMap(cg(), regMapForGC);
 
                     fej9->reserveTrampolineIfNecessary(comp(), methodSymRef, false);
@@ -2036,8 +2025,7 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode, TR::Reg
                         = new (trHeapMemory()) TR_ARM64OutOfLineCodeSection(virtualCallLabel, doneLabel, cg());
 
                     virtualCallOOL->swapInstructionListsWithCompilation();
-                    TR::Instruction *OOLLabelInstr
-                        = generateLabelInstruction(cg(), OP::label, callNode, virtualCallLabel);
+                    TR::Instruction *OOLLabelInstr = Inst_Label(cg(), callNode, virtualCallLabel);
 
                     // XXX: Temporary fix, OOL instruction stream does not pick up live locals or monitors correctly.
                     TR_ASSERT(!OOLLabelInstr->getLiveLocals() && !OOLLabelInstr->getLiveMonitors(),
@@ -2047,7 +2035,7 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode, TR::Reg
 
                     buildVirtualCall(cg(), callNode, vftReg, x9, regMapForGC);
 
-                    generateLabelInstruction(cg(), OP::b, callNode, doneLabel);
+                    Inst_Branch(cg(), callNode, doneLabel);
                     virtualCallOOL->swapInstructionListsWithCompilation();
                     cg()->getARM64OutOfLineCodeSectionList().push_front(virtualCallOOL);
 
@@ -2114,7 +2102,7 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode, TR::Reg
 
                 TR::Instruction *gcPoint = buildStaticPICCall(cg(), callNode, pic->_clazz, pic->_method, vftReg, x9,
                     x10, 1, slowCallLabel, regMapForGC);
-                generateLabelInstruction(cg(), OP::label, callNode, doneLabel, dependencies);
+                Inst_Label(cg(), callNode, doneLabel, dependencies);
 
                 // Out of line virtual/interface call
                 //
@@ -2122,7 +2110,7 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode, TR::Reg
                     = new (trHeapMemory()) TR_ARM64OutOfLineCodeSection(slowCallLabel, doneLabel, cg());
 
                 slowCallOOL->swapInstructionListsWithCompilation();
-                TR::Instruction *OOLLabelInstr = generateLabelInstruction(cg(), OP::label, callNode, slowCallLabel);
+                TR::Instruction *OOLLabelInstr = Inst_Label(cg(), callNode, slowCallLabel);
 
                 // XXX: Temporary fix, OOL instruction stream does not pick up live locals or monitors correctly.
                 TR_ASSERT_FATAL(!OOLLabelInstr->getLiveLocals() && !OOLLabelInstr->getLiveMonitors(),
@@ -2150,8 +2138,8 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode, TR::Reg
                     buildVirtualCall(cg(), callNode, vftReg, x9, regMapForGC);
                 }
 
-                generateLabelInstruction(cg(), OP::label, callNode, doneOOLLabel);
-                generateLabelInstruction(cg(), OP::b, callNode, doneLabel);
+                Inst_Label(cg(), callNode, doneOOLLabel);
+                Inst_Branch(cg(), callNode, doneLabel);
                 slowCallOOL->swapInstructionListsWithCompilation();
                 cg()->getARM64OutOfLineCodeSectionList().push_front(slowCallOOL);
 
@@ -2166,8 +2154,8 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode, TR::Reg
 
                     buildStaticPICCall(cg(), callNode, pic->_clazz, pic->_method, vftReg, x9, x10, slotCount++,
                         nextLabel, regMapForGC);
-                    generateLabelInstruction(cg(), OP::b, callNode, doneLabel);
-                    generateLabelInstruction(cg(), OP::label, callNode, nextLabel);
+                    Inst_Branch(cg(), callNode, doneLabel);
+                    Inst_Label(cg(), callNode, nextLabel);
                     pic = i.getNext();
                 }
                 // Regular virtual/interface call will be built below
@@ -2197,7 +2185,7 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode, TR::Reg
     } else {
         buildVirtualCall(cg(), callNode, vftReg, x9, regMapForGC);
     }
-    generateLabelInstruction(cg(), OP::label, callNode, doneLabel, dependencies);
+    Inst_Label(cg(), callNode, doneLabel, dependencies);
 }
 
 TR::Register *J9::ARM64::PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
@@ -2269,7 +2257,7 @@ TR::Instruction *J9::ARM64::PrivateLinkage::loadStackParametersToLinkageRegister
             }
 
             TR::MemoryReference *stackMR = MRef_disp(cg(), javaSP, parmCursor->getParameterOffset());
-            cursor = generateTrg1MemInstruction(cg(), op, NULL, linkageReg, stackMR, cursor);
+            cursor = Inst_Trg1Mem(cg(), op, NULL, linkageReg, stackMR, cursor);
         }
     }
 
@@ -2303,7 +2291,7 @@ TR::Instruction *J9::ARM64::PrivateLinkage::saveParametersToStack(TR::Instructio
             }
 
             TR::MemoryReference *stackMR = MRef_disp(cg(), javaSP, parmCursor->getParameterOffset());
-            cursor = generateMemSrc1Instruction(cg(), op, NULL, stackMR, linkageReg, cursor);
+            cursor = Inst_MemSrc1(cg(), op, NULL, stackMR, linkageReg, cursor);
         }
     }
 
