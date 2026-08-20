@@ -3616,7 +3616,8 @@ void J9::CodeGenerator::insertRecompDueToPhaseChangeCode()
     TR::Compilation *comp = self()->comp();
 
     if (!comp->getOption(TR_EnableRecompDueToPatchedNopableGuards) || comp->getMethodHotness() < hot
-        || comp->getOptimizationPlan()->getDoNotInsertPhaseChangeRecomp() || comp->isProfilingCompilation())
+        || comp->getOptimizationPlan()->getDoNotInsertPhaseChangeRecomp() || comp->isProfilingCompilation()
+        || comp->getRecompilationInfo() == NULL)
         return;
 
     OMR::Logger *log = comp->log();
