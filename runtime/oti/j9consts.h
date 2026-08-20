@@ -76,6 +76,17 @@ extern "C" {
  * Extra space is added to the stack on windows x86 in allocateJavaStack to account for
  * the additional space required for AMX.
  */
+
+#if defined(WIN32)
+/* Extra space is needed for the XSAVE buffer when the processor has AMX capabilities. The amount
+ * amount of space needed in XSAVE for AMX is 8K. TODO in the future we should detect AMX
+ * capabilities and selectively increase the buffer size.
+ */
+#define J9_EXTRA_STACK_SPACE_FOR_SIGNALS (8 * 1024)
+#else /* defined(WIN32) */
+#define J9_EXTRA_STACK_SPACE_FOR_SIGNALS 0
+#endif /* defined(WIN32) */
+
 #if defined(J9VM_ENV_DATA64)
 #if defined(J9VM_ARCH_X86)
 #define J9_STACK_OVERFLOW_RESERVED_SIZE 0x2000
