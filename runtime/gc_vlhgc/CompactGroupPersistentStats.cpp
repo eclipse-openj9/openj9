@@ -55,15 +55,6 @@ MM_CompactGroupPersistentStats::allocateCompactGroupPersistentStats(MM_Environme
 			result[i]._liveBytesAbsoluteDeviation = 0;
 			result[i]._regionCount = 0;
 			result[i]._statsHaveBeenUpdatedThisCycle = false;
-			/* this is not really stats, but a constant; calculate only if unit is set */
-			if (0 != extensions->tarokAllocationAgeUnit) {
-				UDATA ageGroup = MM_CompactGroupManager::getRegionAgeFromGroup(env, i);
-				if (ageGroup != extensions->tarokRegionMaxAge) {
-					result[i]._maxAllocationAge = MM_CompactGroupManager::calculateMaximumAllocationAge(env, ageGroup + 1);
-				} else {
-					result[i]._maxAllocationAge = UDATA_MAX;
-				}
-			}
 		}
 	}
 	return result;
@@ -224,7 +215,7 @@ MM_CompactGroupPersistentStats::updateProjectedSurvivalRate(MM_EnvironmentVLHGC 
 			thisSurvivalRate,
 			thisSurvivalRate,
 			thisSurvivalRate,
-			1.0, /* ageUnitsInThisAgeGroup - always 1 logical age unit */
+			1.0, /* ageUnitsInThisAgeGroup - always 1 */
 			thisSurvivalRate,
 			persistentStats->_projectedInstantaneousSurvivalRate,
 			persistentStats->_projectedInstantaneousSurvivalRate);
@@ -273,8 +264,6 @@ MM_CompactGroupPersistentStats::resetLiveBytesStats(MM_EnvironmentVLHGC *env, MM
 		persistentStats[compactGroup]._measuredLiveBytesAfterCollectInCollectedSet = 0;
 		persistentStats[compactGroup]._measuredBytesCopiedFromGroupDuringCopyForward = 0;
 		persistentStats[compactGroup]._measuredBytesCopiedToGroupDuringCopyForward = 0;
-		persistentStats[compactGroup]._measuredAllocationAgeToGroupDuringCopyForward = 0;
-		persistentStats[compactGroup]._averageAllocationAgeToGroup = 0;
 
 		/* TODO: lpnguyen move this or rename this function (not a live bytes stat */
 		persistentStats[compactGroup]._regionsInRegionCollectionSetForPGC = 0;
@@ -514,9 +503,9 @@ MM_CompactGroupPersistentStats::decayProjectedLiveBytesForRegions(MM_Environment
 			/* Save snapshot of projectedLiveBytes before applying decay */
 			region->_projectedLiveBytesPreviousPGC = region->_projectedLiveBytes;
 
-			/* Get the compact group for this region based on its logical age */
+			/* Get the compact group for this region based on its age */
 			UDATA compactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, region);
-			UDATA regionAge = region->getLogicalAge();
+			uintptr_t regionAge = region->getAge();
 
 			/* Apply survival rate for this region's compact group only. */
 			double survivalRate = persistentStats[compactGroup]._projectedInstantaneousSurvivalRate;
@@ -532,10 +521,10 @@ MM_CompactGroupPersistentStats::decayProjectedLiveBytesForRegions(MM_Environment
 				(double)region->_projectedLiveBytes / (1024 * 1024),
 				compactGroup,
 				0.0, /* bytesRemaining - no longer applicable */
-				(double)regionAge, /* currentAge - now logical age */
+				(double)regionAge, /* currentAge */
 				survivalRate,
 				survivalRate, /* baseSurvivalRate same as survivalRate */
-				1.0, /*  ageUnitsInThisGroup - 1 logical age unit */
+				1.0, /*  ageUnitsInThisGroup = 1 */
 				compactGroup);
 		}
 	}
