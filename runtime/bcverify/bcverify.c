@@ -122,12 +122,23 @@ setInitializedThisStatus(J9BytecodeVerificationData *verifyData)
 			 * which means 'Locals' starts from 0 to stackBaseIndex while 'Stacks' starts from stackBaseIndex
 			 * to stackTopIndex.
 			 *
+			 * Before Java 27:
 			 * The JVM Spec at 4.10.1.4 Stack Map Frame Representation says that if any local variable in 'Locals'
 			 * has the type 'uninitializedThis', then 'Flags' has the single element 'flagThisUninit'; otherwise
 			 * 'Flags' is an empty list. That is to say, we only check the elements of 'Locals' rather than the
 			 * whole operation stack frame to determine whether to set the flags.
+			 *
+			 * In Java 27 the spec changed so that flagThisUninit must be set when
+			 * uninitializedThis appears in either locals or the stack. While this
+			 * change appears in the JVMS for Java 27 it was not enforced in the ri
+			 * until Java 28. To match this behavior OpenJ9 also will not enforce
+			 * this until Java 28.
 			 */
+#if JAVA_SPEC_VERSION >= 28
+			for (; i < currentStack->stackTopIndex; i++) {
+#else /* JAVA_SPEC_VERSION >= 28 */
 			for (; i < currentStack->stackBaseIndex; i++) {
+#endif /* JAVA_SPEC_VERSION >= 28 */
 				if (J9_ARE_ALL_BITS_SET(currentStack->stackElements[i], BCV_SPECIAL_INIT)) {
 					flag_uninitialized = TRUE;
 					break;
