@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: IBM Bob
  *******************************************************************************/
 
 #ifndef INLINERTEMPFORJ9_INCL
@@ -110,14 +111,22 @@ private:
     void weighCallSite(TR_CallStack *callStack, TR_CallSite *callsite, bool currentBlockHasExceptionSuccessors,
         bool dontAddCalls = false);
 
+    bool callTargetIsGeneratedReflectionMethod(TR_CallTarget *calltarget);
+    int32_t estimateCallTargetSize(TR_CallTarget *calltarget, TR_CallStack *callStack, TR::Node *callNode,
+        TR::TreeTop *callNodeTreeTop, TR_EstimateCodeSize *ecs, bool currentBlockHasExceptionSuccessors,
+        bool &inlineit);
+    int32_t applySizeAdjustmentHeuristics(TR_CallTarget *calltarget, int32_t size, bool &wouldBenefitFromInlining);
+    void getFrequencyThresholds(TR_CallTarget *calltarget, int32_t &borderFrequency, int32_t &coldBorderFrequency,
+        int32_t &veryColdBorderFrequency);
+    int32_t scaleBasedOnFrequency(TR_CallTarget *calltarget, TR::Node *callNode, TR_EstimateCodeSize *ecs, int32_t size,
+        int32_t frequency, int32_t borderFrequency, int32_t coldBorderFrequency, int32_t veryColdBorderFrequency);
+
     int32_t applyArgumentHeuristics(TR_LinkHead<TR_ParameterMapping> &map, int32_t originalWeight,
         TR_CallTarget *target);
     bool eliminateTailRecursion(TR::ResolvedMethodSymbol *, TR_CallStack *, TR::TreeTop *, TR::Node *, TR::Node *,
         TR_VirtualGuardSelection *);
     void assignArgumentsToParameters(TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *);
-    bool isLargeCompiledMethod(TR_ResolvedMethod *calleeResolvedMethod, int32_t bytecodeSize, int32_t freq,
-        int32_t exemptionFreqCutoff, int32_t veryLargeCompiledMethodThreshold,
-        int32_t veryLargeCompiledMethodFaninThreshold);
+    bool isLargeCompiledMethod(TR_ResolvedMethod *calleeResolvedMethod, int32_t bytecodeSize, int32_t freq);
     /* \brief
      *    This API processes the call targets got chopped off from \ref _calltargets
      *
