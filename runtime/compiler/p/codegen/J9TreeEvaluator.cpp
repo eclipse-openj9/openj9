@@ -14287,6 +14287,61 @@ static void inlineArrayCopy_ICF(TR::Node *node, int64_t byteLen, TR::Register *s
     return;
 }
 
+static TR::Register *inlineIntegerLongCompareUnsigned(TR::Node *node, bool isInt, TR::CodeGenerator *cg)
+{
+    TR::Compilation *comp = cg->comp();
+    TR::Node *secondChild = node->getChild(1);
+    bool isAtLeastP9 = comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9);
+    bool secondChildConstant = (secondChild->getOpCode().isLoadConst() && secondChild->getRegister() == NULL);
+
+    TR::Register *condReg = cg->allocateRegister(TR_CCR);
+    TR::Register *resultReg = cg->allocateRegister();
+    TR::Register *aReg = cg->evaluate(node->getChild(0));
+
+    TR::Register *const1Reg = !isAtLeastP9 ? cg->allocateRegister() : nullptr;
+    TR::Register *constNeg1Reg = !isAtLeastP9 ? cg->allocateRegister() : nullptr;
+    TR::Register *const0Reg = !isAtLeastP9 ? cg->allocateRegister() : nullptr;
+
+    bool useImmediate = false;
+    if (secondChildConstant) {
+        int64_t value = isInt ? secondChild->getInt() : secondChild->getLongInt();
+        if (value >= 0 && value <= 0xFFFF) {
+            generateTrg1Src1ImmInstruction(cg, (isInt ? TR::InstOpCode::cmpli4 : TR::InstOpCode::cmpli8), node, condReg,
+                aReg, value);
+            useImmediate = true;
+        }
+    }
+    if (!useImmediate) {
+        TR::Register *bReg = cg->evaluate(secondChild);
+        generateTrg1Src2Instruction(cg, (isInt ? TR::InstOpCode::cmpl4 : TR::InstOpCode::cmpl8), node, condReg, aReg,
+            bReg);
+    }
+    if (isAtLeastP9) {
+        generateTrg1Src1Instruction(cg, TR::InstOpCode::setb, node, resultReg, condReg);
+    } else {
+        generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, const1Reg, 1);
+        generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, constNeg1Reg, -1);
+        generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, const0Reg, 0);
+        generateTrg1Src3Instruction(cg, TR::InstOpCode::isellt, node, resultReg, constNeg1Reg, const1Reg, condReg);
+        generateTrg1Src3Instruction(cg, TR::InstOpCode::iseleq, node, resultReg, const0Reg, resultReg, condReg);
+    }
+
+    if (const1Reg)
+        cg->stopUsingRegister(const1Reg);
+    if (constNeg1Reg)
+        cg->stopUsingRegister(constNeg1Reg);
+    if (const0Reg)
+        cg->stopUsingRegister(const0Reg);
+
+    cg->stopUsingRegister(condReg);
+    cg->decReferenceCount(node->getChild(0));
+    cg->decReferenceCount(secondChild);
+
+    node->setRegister(resultReg);
+
+    return resultReg;
+}
+
 bool J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resultReg)
 {
     TR::CodeGenerator *cg = self();
@@ -14762,6 +14817,19 @@ bool J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&r
 
                 break;
             }
+
+            case TR::java_lang_Integer_compareUnsigned:
+                if (cg->getSupportsInlineIntegerCompareUnsigned()) {
+                    resultReg = inlineIntegerLongCompareUnsigned(node, true, cg);
+                    return true;
+                }
+                break;
+            case TR::java_lang_Long_compareUnsigned:
+                if (cg->getSupportsInlineLongCompareUnsigned()) {
+                    resultReg = inlineIntegerLongCompareUnsigned(node, false, cg);
+                    return true;
+                }
+                break;
 
             default:
                 break;
