@@ -50,6 +50,7 @@ MM_HeapRegionDescriptorVLHGC::MM_HeapRegionDescriptorVLHGC(MM_EnvironmentVLHGC *
 	,_extensions(MM_GCExtensions::getExtensions(env))
 	,_allocationAge(0)
 	,_allocationAgeSizeProduct(0.0)
+	,_usedAllocationBytes(0)
 	,_age(0)
 	,_rememberedSetCardList()
 	,_rsclBufferPool(NULL)
