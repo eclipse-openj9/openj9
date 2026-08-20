@@ -284,7 +284,8 @@ private:
      *     \endcode
      *
      *  \details
-     *     The call node is transformed to the following shape:
+     *     The call node is transformed to the following shape (where \c <lengthToCompare> and \c <noMatchResult>
+     *     differ between JDK versions):
      *
      *     \code
      *     iselect ()
@@ -296,19 +297,37 @@ private:
      *           aladd
      *             <b>
      *             <bOffset>
-     *           land
+     *           <lengthToCompare>
+     *         ==>arraycmplen
+     *       <noMatchResult>
+     *       l2i
+     *         lshr
+     *           ==>arraycmplen
+     *           <log2ArrayIndexScale>
+     *     \endcode
+     *
+     *     On JDK < 28, \c <lengthToCompare> expands to  the following:
+     *
+     *     \code
+     *     <lengthToCompare> :=
+     *       land
+     *         lshl
+     *           iu2l
+     *             <length>
+     *           <log2ArrayIndexScale>
+     *         lxor
+     *           lor
      *             lshl
-     *               i2l
-     *                 <length>
-     *               <log2ArrayIndexScale>
-     *             lxor
-     *               lor
-     *                 lshl
-     *                   ==>i2l
-     *                   iconst 1
-     *                 lconst 3
-     *               lconst -1
-     *         ==>land
+     *               ==>iu2l
+     *               iconst 1
+     *             lconst 3
+     *           lconst -1
+     *     \endcode
+     *
+     *     And \c <noMatchResult> expands to:
+     *
+     *     \code
+     *     <noMatchResult> :=
      *       ixor
      *         l2i
      *           lshr
@@ -317,10 +336,6 @@ private:
      *               ==>lor
      *             <log2ArrayIndexScale>
      *         iconst -1
-     *       l2i
-     *         lshr
-     *           ==>arraycmplen
-     *           <log2ArrayIndexScale>
      *     \endcode
      *
      *     This transformation is valid because vectorizedMismatch is functionally equivalent to the following
@@ -343,6 +358,24 @@ private:
      * converted from byte-wise index to element-wise index else // mismatch found return mismatchIndex >>
      * log2ArrayIndexScale                    // convert byte-wise index to element-wise index
      *     }
+     *     \endcode
+     *
+     *     On JDK >= 28, we always use the full length, so all we need is the number of elements
+     *     shifted by the element size scale to get the number of bytes
+     *
+     *     \code
+     *     <lengthToCompare> :=
+     *       lshl
+     *         iu2l
+     *           <length>
+     *         <log2ArrayIndexScale>
+     *     \endcode
+     *
+     *     On JDK >= 28 all elements are checked, so when no mismatch is found the result is simply \c -1:
+     *
+     *     \code
+     *     <noMatchResult> :=
+     *       iconst -1
      *     \endcode
      */
     void process_jdk_internal_util_ArraysSupport_vectorizedMismatch(TR::TreeTop *treetop, TR::Node *node);
