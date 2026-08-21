@@ -392,6 +392,9 @@ fi
   echo "    perl-IPC-Cmd \\" # required for openssl v3 compiles
   echo "    perl-libwww-perl \\"
   echo "    perl-Time-HiRes \\"
+if [ $version != 6 ] ; then
+  echo "    perl-Time-Piece \\" # required for openssl v3.5 compiles
+fi
   echo "    systemtap-devel \\"
   echo "    texinfo \\" # required to update make
   echo "    unzip \\"
