@@ -1643,18 +1643,22 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
         }
     }
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
-
-    TR::Node *log2ArrayIndexScale64Bits = TR::Node::create(node, TR::iu2l, 1, log2ArrayIndexScale);
-
     TR::Node *lengthInBytes
         = TR::Node::create(node, TR::lshl, 2, TR::Node::create(node, TR::iu2l, 1, length), log2ArrayIndexScale);
+    TR::Node *lengthToCompare = NULL;
+
+#if JAVA_SPEC_VERSION < 28
+    TR::Node *log2ArrayIndexScale64Bits = TR::Node::create(node, TR::iu2l, 1, log2ArrayIndexScale);
 
     TR::Node *mask = TR::Node::create(node, TR::lor, 2,
         TR::Node::create(node, TR::lshl, 2, log2ArrayIndexScale64Bits, TR::Node::iconst(node, 1)),
         TR::Node::lconst(node, 3));
 
-    TR::Node *lengthToCompare = TR::Node::create(node, TR::land, 2, lengthInBytes,
+    lengthToCompare = TR::Node::create(node, TR::land, 2, lengthInBytes,
         TR::Node::create(node, TR::lxor, 2, mask, TR::Node::lconst(node, -1)));
+#else /* JAVA_SPEC_VERSION < 28 */
+    lengthToCompare = lengthInBytes;
+#endif /* JAVA_SPEC_VERSION < 28 */
 
     TR::Node *mismatchByteIndex = TR::Node::create(node, TR::arraycmplen, 3);
 
@@ -1671,22 +1675,28 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
     TR::Node *arraycmplenAnchorNode = TR::Node::create(TR::treetop, 1, mismatchByteIndex);
     TR::TreeTop *arraycmplenTreeTop = TR::TreeTop::create(comp(), treetop->getPrevTreeTop(), arraycmplenAnchorNode);
 
-    TR::Node *invertedRemainder = TR::Node::create(node, TR::ixor, 2,
+    TR::Node *noMatchResult = NULL;
+#if JAVA_SPEC_VERSION < 28
+    // inverted remainder (complement of the number of elements left unchecked)
+    noMatchResult = TR::Node::create(node, TR::ixor, 2,
         TR::Node::create(node, TR::l2i, 1,
             TR::Node::create(node, TR::lshr, 2, TR::Node::create(node, TR::land, 2, lengthInBytes, mask),
                 log2ArrayIndexScale)),
         TR::Node::iconst(node, -1));
+#else /* JAVA_SPEC_VERSION < 28 */
+    noMatchResult = TR::Node::iconst(node, -1);
+#endif /* JAVA_SPEC_VERSION < 28 */
 
     TR::Node *mismatchElementIndex = TR::Node::create(node, TR::l2i, 1,
         TR::Node::create(node, TR::lshr, 2, mismatchByteIndex, log2ArrayIndexScale));
-    TR::Node *noMismatchFound = TR::Node::create(node, TR::lcmpeq, 2, mismatchByteIndex, lengthToCompare);
+    TR::Node *isNoMismatchFound = TR::Node::create(node, TR::lcmpeq, 2, mismatchByteIndex, lengthToCompare);
 
     prepareToReplaceNode(node);
 
     TR::Node::recreate(node, TR::iselect);
     node->setNumChildren(3);
-    node->setAndIncChild(0, noMismatchFound);
-    node->setAndIncChild(1, invertedRemainder);
+    node->setAndIncChild(0, isNoMismatchFound);
+    node->setAndIncChild(1, noMatchResult);
     node->setAndIncChild(2, mismatchElementIndex);
 
     TR::TransformUtil::removeTree(comp(), treetop);
@@ -2789,11 +2799,7 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop *treetop)
                     && !node->isSafeForCGToInlineStringIntrinsic() && !node->isSkippedInRecognizedCallTransformation());
 #endif /* JAVA_SPEC_VERSION < 25 */
             case TR::jdk_internal_util_ArraysSupport_vectorizedMismatch:
-#if JAVA_SPEC_VERSION >= 28
-                return false;
-#else /* JAVA_SPEC_VERSION >= 28 */
                 return cg()->getSupportsInlineVectorizedMismatch();
-#endif /* JAVA_SPEC_VERSION >= 28 */
 #if JAVA_SPEC_VERSION >= 21
             case TR::java_lang_foreign_MemorySegment_get_OfByte:
             case TR::java_lang_foreign_MemorySegment_get_OfChar:
