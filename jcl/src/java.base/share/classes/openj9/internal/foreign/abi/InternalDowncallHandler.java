@@ -210,6 +210,9 @@ public class InternalDowncallHandler {
 	private static synchronized native void resolveRequiredFields();
 	private native void initCifNativeThunkData(String[] argLayouts, String retLayout, boolean newArgTypes, int varArgIndex);
 	private native long invokeNative(
+			/*[IF JAVA_SPEC_VERSION >= 25]*/
+			int capturedCallStateMask,
+			/*[ENDIF] JAVA_SPEC_VERSION >= 25 */
 			/*[IF JAVA_SPEC_VERSION >= 24]*/
 			Object returnStateMemBase,
 			/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
@@ -931,6 +934,9 @@ public class InternalDowncallHandler {
 		try (Arena arena = Arena.ofConfined()) {
 			setDependency(arena.scope());
 			returnVal = invokeNative(
+					/*[IF JAVA_SPEC_VERSION >= 25]*/
+					linkerOpts.capturedCallStateMask(),
+					/*[ENDIF] JAVA_SPEC_VERSION >= 25 */
 					/*[IF JAVA_SPEC_VERSION >= 24]*/
 					returnStateMemBase,
 					/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
