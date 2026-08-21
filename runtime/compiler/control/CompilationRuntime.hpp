@@ -512,6 +512,8 @@ public:
         }
     }; // CompilationStatsPerInterval
 
+    typedef J9JITSyncCompilationStatistics SyncCompilationStatistics;
+
     static bool createCompilationInfo(J9JITConfig *jitConfig);
     static void freeCompilationInfo(J9JITConfig *jitConfig);
 
