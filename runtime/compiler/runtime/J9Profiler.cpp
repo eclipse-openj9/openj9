@@ -67,7 +67,9 @@
 #include "runtime/ExternalProfiler.hpp"
 #include "runtime/J9Runtime.hpp"
 #include "runtime/J9ValueProfiler.hpp"
-
+#if defined(TR_TARGET_X86)
+#include "x/runtime/X86Runtime.hpp"
+#endif
 //*************************************************************************
 //
 // Optimization passes to insert recompilation counters, etc
@@ -2762,4 +2764,665 @@ TR_PersistentProfileInfo *TR_JProfilerThread::deleteProfileInfo(TR_PersistentPro
     }
 
     return next;
+}
+
+TR_JProfBlockFrequencyCounterSites *TR_JProfBlockFrequencyCounterSites::make(TR_FrontEnd *fe, TR_PersistentMemory *pm,
+    uintptr_t key, TR::JProfBFPatchSites *sites, OMR::RuntimeAssumption **sentinel)
+{
+    TR_JProfBlockFrequencyCounterSites *res = NULL;
+    void *mem = TR_RuntimeAssumptionTable::allocateRAPersistentMemory(sizeof(TR_JProfBlockFrequencyCounterSites));
+    if (mem) {
+        res = ::new (mem) TR_JProfBlockFrequencyCounterSites(pm, key, sites);
+        res->addToRAT(pm, RuntimeAssumptionOnPatchJProfBlockFreqCounters, fe, sentinel);
+    } else {
+        TR::Compilation *comp = TR::comp();
+        if (comp)
+            comp->failCompilation<TR::CompilationException>("Out of persistent memory while creating assumptions");
+    }
+
+    return res;
+}
+
+void TR_JProfBlockFrequencyCounterSites::compensate(TR_FrontEnd *vm, bool disableDataCollection, void *newKey)
+{
+    // Instead of patching flag, this routine will update the whole instruction
+    // (E.g, 6 Bytes on Z with NOP. PatchSites will hold two pointers, first one
+    // will have a location to update, second one is the original instruction
+    // which we would be caching. If modifying instruction to be NOP, the second
+    // entry would not be used, but in case if if we are enabling the profiling
+    // again, we will  update. NOP with the instruction to update counter which
+    // is already stored in the patch site second entry. _patchFlag zero means
+    // data collection is ON, in that case update all the increment code with
+    // NOP.
+    if (disableDataCollection && _patchFlag == 0) {
+        for (size_t i = 0; i < _patchSites->getSize(); i++) {
+            uint8_t *cursor = _patchSites->getLocation(i);
+            uint8_t instructionLength = *(uint8_t *)(_patchSites->getBumpInstructionPointer(i));
+#if defined(TR_TARGET_S390)
+            *(uint16_t *)cursor = 0xC004;
+#elif defined(TR_TARGET_X86)
+            if (instructionLength == 2) {
+                *(uint16_t *)cursor = 0x9066;
+            } else if (instructionLength == 3) {
+                *(uint16_t *)cursor = 0xfeeb;
+                patchingFence16(cursor);
+                // byte 2
+                cursor[2] = 0x00;
+                patchingFence16(cursor);
+                *(uint16_t *)cursor = 0x1F0F
+            } else if (instructionLength == 4) {
+                *(uint32_t *)cursor = 0x00401F0F;
+            } else {
+                TR_ASSERT_FATAL(0, "Unexpected instruction lenght - Can not patch");
+            }
+#endif
+            _patchFlag = 1;
+        }
+    } else if (_patchFlag == 1) {
+        for (size_t i = 0; i < _patchSites->getSize(); i++) {
+            uint8_t *cursor = _patchSites->getLocation(i);
+            uint8_t *bumpInstruction = _patchSites->getBumpInstructionPointer(i);
+            uint8_t instructionLength = *bumpInstruction;
+            bumpInstruction += sizeof(uint8_t);
+#if defined(TR_TARGET_S390)
+            *(uint16_t *)cursor = *(uint16_t *)(bumpInstruction);
+#elif defined(TR_TARGET_X86)
+            if (instructionLength == 2) {
+                *(uint16_t *)cursor = *(uint16_t *)(bumpInstruction);
+            } else if (instructionLength == 3) {
+                *(uint16_t *)cursor = 0xfeeb;
+                patchingFence16(cursor);
+                cursor[2] = *(uint8_t *)(bumpInstruction + 2);
+                patchingFence16(cursor);
+                *(uint16_t *)cursor = *(uint16_t *)(bumpInstruction);
+            } else if (instructionLength == 4) {
+                *(uint32_t *)cursor = *(uint32_t *)(bumpInstruction);
+            } else {
+                TR_ASSERT_FATAL(0, "Unexpected instruction lenght - Can not patch");
+            }
+#endif
+            _patchFlag = 0;
+        }
+    }
+}
+
+TR_JProfValueSites *TR_JProfValueSites::make(TR_FrontEnd *fe, TR_PersistentMemory *pm, uintptr_t key,
+    TR::PatchSites *sites, OMR::RuntimeAssumption **sentinel)
+{
+    TR_JProfValueSites *res = NULL;
+    void *mem = TR_RuntimeAssumptionTable::allocateRAPersistentMemory(sizeof(TR_JProfValueSites));
+    if (mem) {
+        res = ::new (mem) TR_JProfValueSites(pm, key, sites);
+        res->addToRAT(pm, RuntimeAssumptionOnPatchJProfValueBranch, fe, sentinel);
+    } else {
+        TR::Compilation *comp = TR::comp();
+        if (comp)
+            comp->failCompilation<TR::CompilationException>("Out of persistent memory while creating assumption");
+    }
+    return res;
+}
+
+void TR_JProfValueSites::compensate(TR_FrontEnd *vm, bool disableDataCollection, void *newKey)
+{
+    if (disableDataCollection) {
+        for (size_t i; i < _patchSites->getSize(); i++) {
+            uint8_t *cursor = _patchSites->getLocation(i);
+#if defined(TR_TARGET_S390)
+            *(cursor + 1) &= 0x0F;
+#endif
+        }
+    } else {
+        for (size_t i = 0; i < _patchSites->getSize(); i++) {
+            uint8_t *cursor = _patchSites->getLocation(i);
+#if defined(TR_TARGET_S390)
+            *(cursor + 1) |= 0xF0;
+#endif
+        }
+    }
+}
+
+uint32_t TR_JProfilerPatchingTask::patchAllMethods(TR_J9VMBase *vm)
+{
+    uint32_t numberOfPatchedMethods = 0;
+    TR_PersistentProfileInfo *info = _listOfMethodsToPatch.pop();
+    while (info != NULL) {
+        if (patchMethod(vm, info)) {
+            _listOfPatchedMethods.append(info);
+            numberOfPatchedMethods++;
+        }
+        info = _listOfMethodsToPatch.pop();
+    }
+    return numberOfPatchedMethods;
+}
+
+bool TR_JProfilerPatchingTask::patchMethod(TR_J9VMBase *vm, TR_PersistentProfileInfo *info)
+{
+    if (info->isActive()) {
+        if (info->getValueProfileInfo() != NULL && info->getValueProfileInfo()->getJProfValueProfSites() != NULL) {
+            info->getValueProfileInfo()->getJProfValueProfSites()->compensate(vm, true, 0);
+        }
+        info->getBlockFrequencyInfo()->getJProfBlockFrequencyCounterSites()->compensate(vm, true, 0);
+        return true;
+    }
+    return false;
+}
+
+static void logVerboseProfilingMessage(const char *message, TR_PersistentProfileInfo *info)
+{
+    if (TR::Options::getVerboseOption(TR_VerboseProfiling)) {
+        J9UTF8 *className;
+        J9UTF8 *name;
+        J9UTF8 *signature;
+        J9Method *method = (J9Method *)TR::Recompilation::getJittedBodyInfoFromPC(
+            info->getBlockFrequencyInfo()->getStartPCOfBodyCollectingProfilingData())
+                               ->getMethodInfo()
+                               ->getMethodInfo();
+        getClassNameSignatureFromMethod(method, className, name, signature);
+        TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING, "%s : %.*s.%.*s%.*s", message, J9UTF8_LENGTH(className),
+            (char *)J9UTF8_DATA(className), J9UTF8_LENGTH(name), (char *)J9UTF8_DATA(name), J9UTF8_LENGTH(signature),
+            (char *)J9UTF8_DATA(signature));
+    }
+}
+
+void TR_JProfilerAnalysisTask::addProfilingInfoToListOfActiveProfilingInfo(TR_PersistentProfileInfo *info)
+{
+    // TODO: As we are adding a PersistentProfileInfo to the list of active profiling info,
+    // Increase the reference count
+    // When the information is not referenced by the JProfiling anymore, decrement reference count
+    // To get the memory reclaimed.
+    // There is a possibility that, the info is marked inactive and gets cleaned up. In that case,
+    // We may have stale copy of the info which is not active anymore and reclaimed.
+    _listUpdateMonitor->enter();
+    _activeProfilingList.insertAfter(_activeProfilingListTail, info);
+    _activeProfilingListTail = info;
+    _totalMethodsAddedForAnalysis++;
+    char message[128];
+    sprintf(message, "Added method to list of active profiling info - current size = %d",
+        _activeProfilingList.getSize());
+    logVerboseProfilingMessage(message, info);
+    _listUpdateMonitor->exit();
+}
+
+void TR_JProfilerAnalysisTask::removeProfilingInfoFromListOfActiveProfilingInfo(TR_PersistentProfileInfo *prev,
+    TR_PersistentProfileInfo *info)
+{
+    _listUpdateMonitor->enter();
+    if (info == _activeProfilingListTail)
+        _activeProfilingListTail = prev;
+    _activeProfilingList.removeAfter(prev, info);
+    char message[128];
+    sprintf(message, "Removed method to list of active profiling info - current size = %d",
+        _activeProfilingList.getSize());
+    logVerboseProfilingMessage(message, info);
+    _listUpdateMonitor->exit();
+}
+
+bool TR_JProfilerAnalysisTask::recompileMethod(J9JITConfig *jitConfig, TR_PersistentProfileInfo *info,
+    J9VMThread *vmThread, TR_Hotness recompHotness)
+{
+    void *startPC = info->getBlockFrequencyInfo()->getStartPCOfBodyCollectingProfilingData();
+    TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(startPC);
+
+    TR_Hotness methodHotness = bodyInfo->getHotness();
+
+    TR_MethodEvent event;
+
+    event._eventType = TR_MethodEvent::JProfilerRecompilationTrigger;
+    event._j9method = reinterpret_cast<J9Method *>(bodyInfo->getMethodInfo()->getMethodInfo());
+    event._samplePC = NULL;
+    event._vmThread = vmThread;
+    event._classNeedingThunk = 0;
+    event._oldStartPC = startPC;
+    event._nextOptLevel = recompHotness;
+
+    bool newPlanCreated;
+
+    TR_OptimizationPlan *plan
+        = TR::CompilationController::getCompilationStrategy()->processEvent(&event, &newPlanCreated);
+
+    bool queued = false;
+    if (plan) {
+        TR_FrontEnd *fe = TR_J9VMBase::get(jitConfig, vmThread);
+        plan->setInducedByPatchableJProfiling(true);
+        bool rc = TR::Recompilation::induceRecompilation(fe, startPC, &queued, plan);
+        if (!queued && plan != NULL)
+            TR_OptimizationPlan::freeOptimizationPlan(plan);
+
+        if (TR::Options::getVerboseOption(TR_VerboseProfiling)) {
+            J9UTF8 *className;
+            J9UTF8 *name;
+            J9UTF8 *signature;
+            J9Method *method = (J9Method *)TR::Recompilation::getJittedBodyInfoFromPC(
+                info->getBlockFrequencyInfo()->getStartPCOfBodyCollectingProfilingData())
+                                   ->getMethodInfo()
+                                   ->getMethodInfo();
+            getClassNameSignatureFromMethod(method, className, name, signature);
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING,
+                "%s in queuing %.*s.%.*s%.*s for recompilation, optLevel = %d", rc ? "Success" : "Failure",
+                J9UTF8_LENGTH(className), (char *)J9UTF8_DATA(className), J9UTF8_LENGTH(name),
+                (char *)J9UTF8_DATA(name), J9UTF8_LENGTH(signature), (char *)J9UTF8_DATA(signature), recompHotness);
+        }
+        return rc;
+    }
+    return false;
+}
+
+void TR_JProfilerAnalysisTask::performAnalysis(J9JITConfig *jitConfig, J9VMThread *vmThread)
+{
+    if (TR::Options::getVerboseOption(TR_VerboseProfiling)) {
+        TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING,
+            "Starting the analysis of the profile info list, elapsed Time = %lu, currentActiveListSize = %d, "
+            "patchCandidateSize = %d",
+            TR::CompilationInfo::get(jitConfig)->getPersistentInfo()->getElapsedTime(), _activeProfilingList.getSize(),
+            _listOfProfileInfoToBePatched.getSize());
+    }
+
+    uint32_t processedNodes = 0;
+    TR_PersistentProfileInfo *prev = NULL;
+    TR_PersistentProfileInfo *current = _activeProfilingList.getFirst();
+    while (current != NULL && processedNodes < _analysisCutOff) {
+        TR_PersistentProfileInfo *next = current->getNext();
+        TR_PersistentProfileInfo *nextPrev = current;
+        if (current->isActive()) {
+            if (!current->getBlockFrequencyInfo()->isQueuedForRecompilation()) {
+                TR_BlockFrequencyInfo *bfi = current->getBlockFrequencyInfo();
+                int32_t maxFreq = bfi->getMaxRawCount();
+                if (maxFreq >= _recompilationCutOff) {
+                    removeProfilingInfoFromListOfActiveProfilingInfo(prev, current);
+                    nextPrev = prev;
+                    static bool patchRecompCandidate = feGetEnv("TR_PatchRecompCandidateFirst") != NULL;
+                    if (patchRecompCandidate) {
+                        TR_JProfilerPatchingTask::patchMethod(TR_J9VMBase::get(jitConfig, NULL), current, false);
+                    }
+                    bool rc = recompileMethod(jitConfig, current, vmThread, warm);
+                    _methodsRecompiledToWarm++;
+                    if (TR::Options::getVerboseOption(TR_VerboseProfiling)) {
+                        J9UTF8 *className;
+                        J9UTF8 *name;
+                        J9UTF8 *signature;
+                        J9Method *method = (J9Method *)TR::Recompilation::getJittedBodyInfoFromPC(
+                            current->getBlockFrequencyInfo()->getStartPCOfBodyCollectingProfilingData())
+                                               ->getMethodInfo()
+                                               ->getMethodInfo();
+                        getClassNameSignatureFromMethod(method, className, name, signature);
+                        TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING,
+                            "Called recompile Method for %.*s.%.*s%.*s with %s", J9UTF8_LENGTH(className),
+                            (char *)J9UTF8_DATA(className), J9UTF8_LENGTH(name), (char *)J9UTF8_DATA(name),
+                            J9UTF8_LENGTH(signature), (char *)J9UTF8_DATA(signature), rc ? "Success" : "Failure");
+                    }
+                } else {
+                    uint64_t ageOfMethod = TR::Compiler->vm.getUSecClock() - bfi->getTimestampDataCollectionStarted();
+                    if (TR::Options::getVerboseOption(TR_VerboseProfiling)) {
+                        J9UTF8 *className;
+                        J9UTF8 *name;
+                        J9UTF8 *signature;
+                        J9Method *method = (J9Method *)TR::Recompilation::getJittedBodyInfoFromPC(
+                            current->getBlockFrequencyInfo()->getStartPCOfBodyCollectingProfilingData())
+                                               ->getMethodInfo()
+                                               ->getMethodInfo();
+                        getClassNameSignatureFromMethod(method, className, name, signature);
+                        TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING, "Age of method %.*s.%.*s%.*s : %lu",
+                            J9UTF8_LENGTH(className), (char *)J9UTF8_DATA(className), J9UTF8_LENGTH(name),
+                            (char *)J9UTF8_DATA(name), J9UTF8_LENGTH(signature), (char *)J9UTF8_DATA(signature),
+                            ageOfMethod);
+                    }
+                    if (ageOfMethod > _ageCutOffForPatching) {
+                        removeProfilingInfoFromListOfActiveProfilingInfo(prev, current);
+                        nextPrev = prev;
+                        // TR_JProfilerPatchingTask::patchMethod(TR_J9VMBase::get(jitConfig, NULL), current, true);
+                        _listOfProfileInfoToBePatched.add(current);
+                        _methodsAddedToPatchList++;
+                    }
+                }
+            }
+        } else {
+            // If the method has been redefined / class is unloaded, profiling info would be marked inactive.
+            // Do not patch or even recompile method using JProfiling, let the new method reach proper invocation count
+            // to get compiled, for now remove the information from Active Profiling Info List.
+            _infoInvalidatedAsInActive++;
+            removeProfilingInfoFromListOfActiveProfilingInfo(prev, current);
+            nextPrev = prev;
+        }
+        current = next;
+        prev = nextPrev;
+        processedNodes++;
+    }
+    if (TR::Options::getVerboseOption(TR_VerboseProfiling)) {
+        TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING,
+            "Finished the analysis of the profile info list, elapsed Time = %lu, currentActiveListSize = %d, "
+            "patchCandidateSize = %d",
+            TR::CompilationInfo::get(jitConfig)->getPersistentInfo()->getElapsedTime(), _activeProfilingList.getSize(),
+            _listOfProfileInfoToBePatched.getSize());
+    }
+}
+
+bool TR_JProfilerAnalysisTask::inspectListOfMethodsToBePatchedAndPreparePatchingTask(
+    TR_JProfilerPatchingTask **patchingTaskList, uint32_t numberOfThreadsToUse, J9JITConfig *jitConfig)
+{
+    if (TR::Options::getVerboseOption(TR_VerboseProfiling)) {
+        TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING,
+            "Inspecting the list of methods to Patch, elapsed Time = %lu, patchCandidateSize = %d",
+            TR::CompilationInfo::get(jitConfig)->getPersistentInfo()->getElapsedTime(),
+            _listOfProfileInfoToBePatched.getSize());
+    }
+    if (_listOfProfileInfoToBePatched.getSize() >= _numOfMethodsToTriggerPatching) {
+        TR_PersistentProfileInfo *info = _listOfProfileInfoToBePatched.pop();
+        uint32_t numberOfMethodInfoPoppedFromList = 0;
+        while (info != NULL) {
+            TR_JProfilerPatchingTask::patchMethod(TR_J9VMBase::get(jitConfig, NULL), info, true);
+            /*
+            patchingTaskList[numberOfMethodInfoPoppedFromList %
+            numberOfThreadsToUse]->addProfilingInfoToListOfMethodsToPatch(info); numberOfMethodInfoPoppedFromList++;
+            */
+            info = _listOfProfileInfoToBePatched.pop();
+        }
+        return false;
+    }
+    return false;
+}
+
+void TR_JProfilerAnalysisTask::printCounts()
+{
+    printf("In the run\n\ttotal methods added for analysis : %d\n\ttotal methods invalidated as info was marked "
+           "inActive = %d\n\ttotal method recompiled to warm : %d\n\ttotal method set for patching : %d",
+        _totalMethodsAddedForAnalysis, _infoInvalidatedAsInActive, _methodsRecompiledToWarm, _methodsAddedToPatchList);
+}
+
+typedef struct jProfilerThreadInfoPerThread {
+    uint32_t jProfilerThreadID;
+    TR_JProfilerThreadsDispatcher *dispatcher;
+    J9JavaVM *javaVM;
+    uint32_t initializationComplete;
+} jProfilerThreadInfoPerThread;
+
+#define JPROFILER_THREAD_INIT 0
+#define JPROFILER_THREAD_INIT_SUCCESS 1
+
+static int32_t J9THREAD_PROC jProfilerDispatcherProc(void *entryArg)
+{
+    // Task of this function to -
+    // 1. Attach this thread to VM
+    // 2. Change the state to Run/Wait
+    jProfilerThreadInfoPerThread *info = reinterpret_cast<jProfilerThreadInfoPerThread *>(entryArg);
+    J9JavaVM *javaVM = info->javaVM;
+    TR_JProfilerThreadsDispatcher *dispatcher = info->dispatcher;
+    uint32_t jProfilerThreadID = info->jProfilerThreadID;
+    bool isMainThread = dispatcher->isMainThread(jProfilerThreadID);
+
+    J9VMThread *jProfilerVMThread = NULL;
+
+    PORT_ACCESS_FROM_JAVAVM(javaVM);
+
+    int rc = javaVM->internalVMFunctions->internalAttachCurrentThread(javaVM, &jProfilerVMThread, NULL,
+        J9_PRIVATE_FLAGS_DAEMON_THREAD | J9_PRIVATE_FLAGS_NO_OBJECT | J9_PRIVATE_FLAGS_SYSTEM_THREAD
+            | J9_PRIVATE_FLAGS_ATTACHED_THREAD,
+        dispatcher->getJProfilerOSThreadFromIndex(jProfilerThreadID));
+
+    if (rc == JNI_OK) {
+        info->initializationComplete = JPROFILER_THREAD_INIT_SUCCESS;
+        dispatcher->setJProfilerVMThread(jProfilerThreadID, jProfilerVMThread);
+        if (isMainThread)
+            dispatcher->analysisThreadEntryPoint(javaVM, jProfilerThreadID);
+        else
+            dispatcher->workerThreadEntryPoint(javaVM, jProfilerThreadID);
+    } else {
+        return JNI_ERR;
+    }
+    return 0;
+}
+
+void TR_JProfilerThreadsDispatcher::analysisThreadEntryPoint(J9JavaVM *javaVM, uint32_t threadID)
+{
+    completeThreadInitialization(threadID, true);
+    if (TR::Options::getVerboseOption(TR_VerboseProfiling)) {
+        TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING,
+            "Analysis Thread Entrypoint, recompilation freq. cut-off = %u, ageCutOff = %u",
+            task->getRecompilationCutOff(), task->getAgeCutOffForPatching());
+    }
+
+    J9VMThread *jProfilerMainThread = getJProfilerVMThread(threadID);
+    while (stateTable[threadID] == Run) {
+        j9thread_sleep(_analysisThreadSleepTime);
+        _workerThreadMonitor->enter();
+        if (_inShutdown || stateTable[threadID] == Stop) {
+            _workerThreadMonitor->exit();
+            break;
+        }
+        _workerThreadMonitor->exit();
+
+        task->performAnalysis(javaVM->jitConfig, jProfilerMainThread);
+
+        // TODO: Currently we check the size of the list containing methods to be patched to initiate patching
+        // Need to add parameters to track last time patching was done and size of active profile info list
+        // To trigger another patching phase.
+        if (task->inspectListOfMethodsToBePatchedAndPreparePatchingTask(patchingTaskList, _maxJProfilerThreadCount,
+                javaVM->jitConfig)) {
+            TR_J9VMBase *vm = TR_J9VMBase::get(javaVM->jitConfig, NULL);
+            bool threadHadNoVMAccess = (!(jProfilerMainThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS));
+            if (threadHadNoVMAccess)
+                javaVM->internalVMFunctions->internalAcquireVMAccess(jProfilerMainThread);
+            javaVM->internalVMFunctions->acquireExclusiveVMAccess(jProfilerMainThread);
+            _totalExclusivePatchPhase += 1;
+
+            _workerThreadMonitor->enter();
+            _threadsReservedForPatchingWork = true;
+            _numberOfThreadsToWakeUpForPatching = _maxJProfilerThreadCount - 1;
+            _totalThreadCountForSynchronization = _maxJProfilerThreadCount;
+            _synchronizationThreadCount = 0;
+            if (TR::Options::getVerboseOption(TR_VerboseProfiling)) {
+                TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING,
+                    "Acquired Exclusive Access, waking up threads - _numberOfThreadsToWakeUpForPatching = %d, "
+                    "_totalThreadCountForSynchronization = %d",
+                    _numberOfThreadsToWakeUpForPatching, _totalThreadCountForSynchronization);
+            }
+            _workerThreadMonitor->notifyAll();
+            _workerThreadMonitor->exit();
+            if (TR::Options::getVerboseOption(TR_VerboseProfiling)) {
+                TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING,
+                    "Patching started in Analysis Thread - Number of methods to patch = %d",
+                    patchingTaskList[threadID]->getSize());
+            }
+            uint32_t numberOfMethodsPatched
+                = patchingTaskList[threadID]->patchMethods(TR_J9VMBase::get(javaVM->jitConfig, NULL), threadID);
+            if (TR::Options::getVerboseOption(TR_VerboseProfiling))
+                TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING, "JProfiler Analysis Thread Patched %d methods",
+                    numberOfMethodsPatched);
+            synchronizeJProfilerThreads(threadID);
+            _threadsReservedForPatchingWork = false;
+            _totalThreadCountForSynchronization = 0;
+            javaVM->internalVMFunctions->releaseExclusiveVMAccess(jProfilerMainThread);
+            if (threadHadNoVMAccess)
+                javaVM->internalVMFunctions->internalReleaseVMAccess(jProfilerMainThread);
+        }
+    }
+    task->printCounts();
+    cleanUpThread(javaVM, threadID);
+}
+
+void TR_JProfilerThreadsDispatcher::workerThreadEntryPoint(J9JavaVM *javaVM, uint32_t threadID)
+{
+    completeThreadInitialization(threadID, false);
+    _workerThreadMonitor->enter();
+    while (stateTable[threadID] != Stop) {
+        while (stateTable[threadID] == Wait) {
+            if (_threadsReservedForPatchingWork && _numberOfThreadsToWakeUpForPatching > 0) {
+                stateTable[threadID] = Reserve;
+                _numberOfThreadsToWakeUpForPatching -= 1;
+                if (TR::Options::getVerboseOption(TR_VerboseProfiling))
+                    TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING,
+                        "JProfiler Worker Thread - %d reserved, threadsToWakeUpForPatching = %d", threadID,
+                        _numberOfThreadsToWakeUpForPatching);
+            } else {
+                _workerThreadMonitor->wait();
+            }
+        }
+
+        if (stateTable[threadID] == Reserve) {
+            _workerThreadMonitor->exit();
+            if (TR::Options::getVerboseOption(TR_VerboseProfiling)) {
+                TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING,
+                    "Worker Thread - %d reserved for patching, Number of methods to patch = %d", threadID,
+                    patchingTaskList[threadID]->getSize());
+            }
+            uint32_t numberOfPatchedMethods
+                = patchingTaskList[threadID]->patchMethods(TR_J9VMBase::get(javaVM->jitConfig, NULL), threadID);
+            if (TR::Options::getVerboseOption(TR_VerboseProfiling))
+                TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING, "JProfiler WorkerThread -%d Patched %d methods",
+                    threadID, numberOfPatchedMethods);
+            synchronizeJProfilerThreads(threadID);
+            _workerThreadMonitor->enter();
+            if (stateTable[threadID] != Stop)
+                stateTable[threadID] = Wait;
+        }
+    }
+    _workerThreadMonitor->exit();
+    cleanUpThread(javaVM, threadID);
+}
+
+void TR_JProfilerThreadsDispatcher::startThreads(J9JavaVM *javaVM)
+{
+    if (_dispatcherMonitor == NULL || _workerThreadMonitor == NULL || _synchronizationMonitor == NULL) {
+        if (TR::Options::getVerboseOption(TR_VerboseProfiling))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING,
+                "FAILED TO START JPROFILER THREADS AS MONITOR OBJECTS ARE NOT INITIALIZED");
+        return;
+    }
+    _dispatcherMonitor->enter();
+    for (auto jProfilerThreadID = 0; jProfilerThreadID < _maxJProfilerThreadCount; ++jProfilerThreadID) {
+        jProfilerThreadInfoPerThread info;
+        info.dispatcher = this;
+        info.javaVM = javaVM;
+        info.jProfilerThreadID = jProfilerThreadID;
+        info.initializationComplete = JPROFILER_THREAD_INIT;
+        if (J9THREAD_SUCCESS
+            != javaVM->internalVMFunctions->createThreadWithCategory(&(jProfilerOSThreadList[jProfilerThreadID]),
+                TR::Options::_profilerStackSize << 10,
+                isMainThread(jProfilerThreadID) ? J9THREAD_PRIORITY_USER_MAX : J9THREAD_PRIORITY_USER_MIN, 0,
+                &jProfilerDispatcherProc, reinterpret_cast<void *>(&info), J9THREAD_CATEGORY_SYSTEM_JIT_THREAD)) {
+            if (isMainThread(jProfilerThreadID)) {
+                // We can not even start the main thread - Disable the Patcheable JProfiling.
+                if (TR::Options::getVerboseOption(TR_VerboseProfiling))
+                    TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING,
+                        "Can not start the JProfiling Analysis Thread - Disabling Patchable JProfiling");
+                TR::Options::getJITCmdLineOptions()->setOption(TR_EnablePatchableJProfiling, false);
+            }
+            _maxJProfilerThreadCount = jProfilerThreadID;
+            break;
+        } else {
+            do {
+                if (_inShutdown) {
+                    // If a shutdown is initiated while starting JProfiler Threads, then Set the
+                    // _maxJProfilerThreadCount to number of threads created so far and break out of the loop. This will
+                    // ensure that the _maxJProfilerThreadCount is set to the number of threads created so that the
+                    // shutdown routine can take care of cleaning up the threads.
+                    _maxJProfilerThreadCount = jProfilerThreadID + 1;
+                    break;
+                }
+                // printf("Started thread %d, waiting for initialization to complete\n",jProfilerThreadID);
+                _dispatcherMonitor->wait();
+            } while (info.initializationComplete == JPROFILER_THREAD_INIT);
+            // printf("Started thread %d, initialization complete\n",jProfilerThreadID);
+        }
+    }
+    _dispatcherMonitor->exit();
+}
+
+void TR_JProfilerThreadsDispatcher::stopThreads(J9JavaVM *javaVM)
+{
+    _inShutdown = true;
+    // printf("Dispatcher Shutdown threads Enter\n");
+    _dispatcherMonitor->enter();
+    _dispatcherMonitor->notifyAll();
+    _dispatcherMonitor->exit();
+    // printf("Dispatcher Shutdown threads - Notified all waiting on dispatcherMonitor\n");
+    //  Now Use the Worker Thread Monitor to set up the thread state to Stop
+    _workerThreadMonitor->enter();
+    for (auto threadID = 0; threadID < _maxJProfilerThreadCount; ++threadID) {
+        stateTable[threadID] = Stop;
+    }
+
+    // Main Thread will be stopped as it will continue to inspect the list of the methods with active profiling. So
+    // setting state to stop would stop the main thread. Worker threads would be either performing a patching work or
+    // waiting for the work, so we need to wake up the threads.
+    _workerThreadMonitor->notifyAll();
+    _workerThreadMonitor->exit();
+    // printf("Dispatcher Shutdown threads - All thread State changed to Stop\n");
+    _dispatcherMonitor->enter();
+    while (0 != _maxJProfilerThreadCount) {
+        // printf("Dispatcher Shutdown threads _maxJProfilerThreadCount = %d\n", _maxJProfilerThreadCount);
+        _dispatcherMonitor->wait();
+    }
+    _dispatcherMonitor->exit();
+}
+
+void TR_JProfilerThreadsDispatcher::cleanUpThread(J9JavaVM *javaVM, uint32_t threadID)
+{
+    javaVM->internalVMFunctions->DetachCurrentThread((JavaVM *)javaVM);
+    setJProfilerVMThread(threadID, NULL);
+    _dispatcherMonitor->enter();
+    _maxJProfilerThreadCount -= 1;
+    _dispatcherMonitor->notify();
+    j9thread_exit((J9ThreadMonitor *)_dispatcherMonitor->getVMMonitor());
+}
+
+void TR_JProfilerThreadsDispatcher::synchronizeJProfilerThreads(uint32_t threadID)
+{
+    if (1 < _totalThreadCountForSynchronization) {
+        _synchronizationMonitor->enter();
+
+        _synchronizationThreadCount += 1;
+        if (_synchronizationThreadCount == _totalThreadCountForSynchronization) {
+            _synchronizationThreadCount = 0;
+            _synchronizationThreadIndex += 1;
+            printf("Finished Sync On all threads, notifying others\n");
+            _synchronizationMonitor->notifyAll();
+        } else {
+            volatile uint32_t index = _synchronizationThreadIndex;
+            do {
+                _synchronizationMonitor->wait();
+            } while (index == _synchronizationThreadIndex);
+        }
+        _synchronizationMonitor->exit();
+    }
+}
+
+void TR_JProfilerThreadsDispatcher::completeThreadInitialization(uint32_t threadID, bool isAnalysisThread)
+{
+    _dispatcherMonitor->enter();
+    stateTable[threadID] = isAnalysisThread ? TR_JProfilerThreadsDispatcher::Run : TR_JProfilerThreadsDispatcher::Wait;
+    _dispatcherMonitor->notifyAll();
+    _dispatcherMonitor->exit();
+}
+
+TR_JProfilerThreadsDispatcher *TR_JProfilerThreadsDispatcher::allocate()
+{
+    TR_JProfilerThreadsDispatcher *dispatcher = new (PERSISTENT_NEW) TR_JProfilerThreadsDispatcher();
+    return dispatcher;
+}
+
+void TR_JProfilerThreadsDispatcher::initializeDispatcher(uint32_t numberOfJProfilerThreads)
+{
+    _dispatcherMonitor = TR::Monitor::create("JIT-JProfilerDispatcherMonitor");
+    _workerThreadMonitor = TR::Monitor::create("JIT-JProfilerWorkerThreadMonitor");
+    _synchronizationMonitor = TR::Monitor::create("JIT-JProfilerSynchronizationMonitor");
+    _inShutdown = false;
+    _threadsReservedForPatchingWork = false;
+    _numberOfThreadsToWakeUpForPatching = 0;
+    _totalThreadCountForSynchronization = 0;
+    _synchronizationThreadIndex = 0;
+    _synchronizationThreadCount = 0;
+    _totalExclusivePatchPhase = 0;
+    _maxJProfilerThreadCount = numberOfJProfilerThreads;
+    stateTable = static_cast<State *>(jitPersistentAlloc(numberOfJProfilerThreads * sizeof(State)));
+    jProfilerOSThreadList
+        = static_cast<j9thread_t *>(jitPersistentAlloc(numberOfJProfilerThreads * sizeof(j9thread_t)));
+    jProfilerVMThreadList
+        = static_cast<J9VMThread **>(jitPersistentAlloc(numberOfJProfilerThreads * sizeof(J9VMThread *)));
+    task = new (PERSISTENT_NEW) TR_JProfilerAnalysisTask();
+    patchingTaskList = static_cast<TR_JProfilerPatchingTask **>(
+        jitPersistentAlloc(numberOfJProfilerThreads * sizeof(TR_JProfilerPatchingTask *)));
+    for (auto threadID = 0; threadID < numberOfJProfilerThreads; ++threadID) {
+        patchingTaskList[threadID] = new (PERSISTENT_NEW) TR_JProfilerPatchingTask();
+    }
+    _analysisThreadSleepTime = 60000;
 }

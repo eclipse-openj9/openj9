@@ -265,6 +265,10 @@ TR_YesNoMaybe J9::Options::_hwProfilerEnabled = TR_maybe;
 TR_YesNoMaybe J9::Options::_perfToolEnabled = TR_no;
 int32_t J9::Options::_hwprofilerNumOutstandingBuffers = 256; // 1MB / 4KB buffers
 
+uint32_t J9::Options::_patchableJProfilingRecompilationFreq = 2000;
+uint32_t J9::Options::_patchableJProfilingPatchingAgeCutOff = 50000000;
+uint32_t J9::Options::_numOfMethodsToTriggerPatching = 10000;
+
 // These numbers are cast into floats divided by 10000
 uint32_t J9::Options::_hwprofilerWarmOptLevelThreshold = 1; // 0.0001
 uint32_t J9::Options::_hwprofilerReducedWarmOptLevelThreshold
@@ -1223,12 +1227,21 @@ TR::OptionTable OMR::Options::_feOptions[] = {
     { "numInterpCompReqToExitIdleMode=", "M<nnn>\tNumber of first time comp. req. that takes the JIT out of idle mode",
      TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_numFirstTimeCompilationsToExitIdleMode, 0, "F%d",
      NOT_IN_SUBSET },
+    { "numOfMethodsToTriggerPatching=", "O<nnn<\tNumber of methods in the patching list to trigger patching phase",
+     TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_numOfMethodsToTriggerPatching, 0, "F%d",
+     NOT_IN_SUBSET },
 #if defined(J9VM_OPT_JITSERVER)
     { "oldAge=", " \tDefines what an old JITServer cache entry means", TR::Options::setStaticNumeric,
      (intptr_t)&TR::Options::_oldAge, 0, "F%d" },
     { "oldAgeUnderLowMemory=", " \tDefines what an old JITServer cache entry means when memory is low",
      TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_oldAgeUnderLowMemory, 0, "F%d" },
 #endif  /* defined(J9VM_OPT_JITSERVER) */
+    { "patchableJProfilingPatchingAgeCutOff=",
+     "O<nnn<\tCutoff age in milliseconds for method to be patched to disable JProfiling", TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_patchableJProfilingPatchingAgeCutOff, 0, "F%d",
+     NOT_IN_SUBSET },
+    { "patchableJProfilingRecompilationFreq=", "O<nnn<\tFrequency to queue up method for recompilation",
+     TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_patchableJProfilingRecompilationFreq, 0, "F%d",
+     NOT_IN_SUBSET },
     { "profileAllTheTime=", "R<nnn>\tInterpreter profiling will be on all the time", TR::Options::setStaticNumeric,
      (intptr_t)&TR::Options::_profileAllTheTime, 0, "F%d", NOT_IN_SUBSET },
     { "queuedInvReqThresholdToDowngradeOptLevel=", "M<nnn>\tDowngrade opt level if too many inv req",
