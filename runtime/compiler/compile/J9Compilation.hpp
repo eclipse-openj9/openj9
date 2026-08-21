@@ -528,7 +528,7 @@ public:
      *
      * \return true if fear points may be placed (almost) anywhere
      */
-    bool isFearPointPlacementUnrestricted() { return false; }
+    bool isFearPointPlacementUnrestricted() { return _isFearPointPlacementUnrestricted; }
 
     // Flag to record whether fear-point analysis has already been done.
     void setFearPointAnalysisDone() { _wasFearPointAnalysisDone = true; }
@@ -807,6 +807,7 @@ private:
     ConstProvenanceGraph *_constProvenanceGraph;
     bool _osrProhibitedOverRangeOfTrees;
     bool _wasFearPointAnalysisDone;
+    bool _isFearPointPlacementUnrestricted;
     bool _permanentLoadersInitialized;
     bool _crashedDueToOrphanedConstRefs;
 };
