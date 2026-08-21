@@ -137,6 +137,26 @@ monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos
 		internalReleaseVMAccessSetStatus(vmThread, thrstate);
 		rc = timeCompensationHelper(vmThread,
 			interruptable ? HELPER_TYPE_MONITOR_WAIT_INTERRUPTABLE : HELPER_TYPE_MONITOR_WAIT_TIMED, monitor, millis, nanos);
+		/* While waiting in timeCompensationHelper this thread could be suspended.
+		 * A halted thread should not hold the monitor until resumed. If a halt
+		 * flag is pending, release the monitor then re-enter once the halt has
+		 * been cleared.
+		 * This should be skipped for an interrupted thread which will return
+		 * without holding the monitor.
+		 */
+		if (J9THREAD_INTERRUPTED_MONITOR_ENTER != rc) {
+			while (J9_UNEXPECTED(J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_SUSPEND_ANY))) {
+				uintptr_t const savedCount = ((J9ThreadAbstractMonitor *)monitor)->count;
+				for (uintptr_t i = 0; i < savedCount; i++) {
+					omrthread_monitor_exit(monitor);
+				}
+				internalAcquireVMAccess(vmThread);
+				internalReleaseVMAccess(vmThread);
+				for (uintptr_t i = 0; i < savedCount; i++) {
+					omrthread_monitor_enter(monitor);
+				}
+			}
+		}
 		internalAcquireVMAccessClearStatus(vmThread, thrstate);
 		VM_VMHelpers::setThreadState(vmThread, oldState);
 		J9VMTHREAD_SET_BLOCKINGENTEROBJECT(vmThread, vmThread, NULL);
