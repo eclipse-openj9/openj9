@@ -255,7 +255,7 @@ bool
 ROMClassBuilder::checkPreviewClass(ROMClassCreationContext *context, J9CfrClassFile *classFile)
 {
 	bool rc = true;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	if (context->isBootstrapLoader()) {
 		/**
 		 * Store the classes from the JDK to the SCC when preview is on.
@@ -265,11 +265,11 @@ ROMClassBuilder::checkPreviewClass(ROMClassCreationContext *context, J9CfrClassF
 		 */
 		rc = J9_ARE_ALL_BITS_SET(_javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW);
 	}
-#else  /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else  /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	if (J9_IS_CLASSFILE_OR_ROMCLASS_PREVIEW_VERSION(classFile)) {
 		rc = false;
 	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	return rc;
 }
 
