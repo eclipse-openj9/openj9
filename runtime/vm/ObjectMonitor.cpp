@@ -53,6 +53,28 @@ spinOnFlatLock(J9VMThread *currentThread, j9objectmonitor_t volatile *lwEA, j9ob
 static bool
 spinOnTryEnter(J9VMThread *currentThread, J9ObjectMonitor *objectMonitor, j9objectmonitor_t volatile *lwEA, j9object_t object);
 
+/**
+ * Give back a monitor this thread just won natively (via omrthread_monitor_enter_using_threadId)
+ * because VM access could not be acquired without blocking (e.g. a JVMTI suspend is pending on
+ * this thread, even though it just won ownership as the successor picked when the previous owner
+ * released it). Blocking here while still holding the monitor would starve any other waiters
+ * behind it, potentially indefinitely, so the monitor is released first, then this thread blocks
+ * for VM access. The caller is expected to retry the whole blocking acquire (goto restart) once
+ * this returns.
+ *
+ * @param[in] currentThread the current J9VMThread
+ * @param[in] monitor the just-won native monitor to release
+ * @param[in] osThread currentThread's osThread
+ */
+static VMINLINE void
+giveBackMonitorAndReacquireVMAccess(J9VMThread *currentThread, omrthread_monitor_t monitor, omrthread_t osThread)
+{
+	Trc_VM_objectMonitorEnterBlocking_tryAcquireVMAccessFailed(currentThread);
+	SET_IGNORE_ENTER(monitor);
+	omrthread_monitor_exit_using_threadId(monitor, osThread);
+	internalAcquireVMAccess(currentThread);
+}
+
 void
 monitorExitWriteBarrier()
 {
@@ -213,17 +235,19 @@ releasedAccess:
 			/* if the INFLATED bit is set, then we own the object and can safely block in acquireVMAccess */
 			if (J9_ARE_ANY_BITS_SET(((J9ThreadMonitor*)monitor)->flags, J9THREAD_MONITOR_INFLATED)) {
 				Trc_VM_objectMonitorEnterBlocking_alreadyInflated(currentThread);
-				internalAcquireVMAccess(currentThread);
+				if (0 != internalTryAcquireVMAccess(currentThread)) {
+					/* A JVMTI suspend can be pending on this thread even though it just won
+					 * ownership as successor; see giveBackMonitorAndReacquireVMAccess(). */
+					giveBackMonitorAndReacquireVMAccess(currentThread, monitor, osThread);
+					goto restart;
+				}
 #if JAVA_SPEC_VERSION >= 19
 				currentThread->ownedMonitorCount += 1;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 				goto done;
 			}
 			if (0 != internalTryAcquireVMAccess(currentThread)) {
-				Trc_VM_objectMonitorEnterBlocking_tryAcquireVMAccessFailed(currentThread);
-				SET_IGNORE_ENTER(monitor);
-				omrthread_monitor_exit_using_threadId(monitor, osThread);
-				internalAcquireVMAccess(currentThread);
+				giveBackMonitorAndReacquireVMAccess(currentThread, monitor, osThread);
 				goto restart;
 			}
 			/* In a Concurrent GC where monitor object can *move* in a middle of GC cycle,
