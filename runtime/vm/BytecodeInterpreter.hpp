@@ -23,17 +23,6 @@
 #if !defined(BYTECODEINTERPRETER_HPP_)
 #define BYTECODEINTERPRETER_HPP_
 
-#if JAVA_SPEC_VERSION >= 21
-#include <errno.h>
-#if defined(WIN32)
-/* Ignore the definition of UDATA as it is defined in <windows.h>. */
-#define UDATA UDATA_win32_
-#include <windows.h>
-#undef UDATA /* This is safe because our UDATA is a typedef rather than a macro. */
-#include <winsock2.h>
-#endif /* defined(WIN32) */
-#endif /* JAVA_SPEC_VERSION >= 21 */
-
 #include "bcnames.h"
 #define FFI_BUILDING /* Needed on Windows to link libffi statically */
 #include "ffi.h"
@@ -79,6 +68,7 @@
 #include "LayoutFFITypeHelpers.hpp"
 #endif /* JAVA_SPEC_VERSION >= 16 */
 #if JAVA_SPEC_VERSION >= 21
+#include "ForeignCallHelpers.hpp"
 #include "ContinuationHelpers.hpp"
 #endif /* JAVA_SPEC_VERSION >= 21 */
 #if JAVA_SPEC_VERSION >= 24
@@ -5481,7 +5471,11 @@ done:
 	}
 
 #if JAVA_SPEC_VERSION >= 16
-#if JAVA_SPEC_VERSION >= 24
+#if JAVA_SPEC_VERSION >= 25
+	/* openj9.internal.foreign.abi.InternalDowncallHandler:
+	 * private native long invokeNative(int capturedCallStateMask, Object returnStateMemBase, Object[] bases, long[] offsets, boolean isInCriticalDownCall, long returnStateMemAddr, long returnStructMemAddr, long functionAddr, long calloutThunk, long[] argValues);
+	 */
+#elif JAVA_SPEC_VERSION >= 24
 	/* openj9.internal.foreign.abi.InternalDowncallHandler:
 	 * private native long invokeNative(Object returnStateMemBase, Object[] bases, long[] offsets, boolean isInCriticalDownCall, long returnStateMemAddr, long returnStructMemAddr, long functionAddr, long calloutThunk, long[] argValues);
 	 */
@@ -5526,10 +5520,17 @@ done:
 		UDATA *returnStorage = &(_currentThread->returnValue);
 		U_64 *ffiArgs = _currentThread->ffiArgs;
 		U_64 sFfiArgs[16];
+#if JAVA_SPEC_VERSION >= 21
+		I_32 capturedCallStateMask = DowncallCapturableState::J9_CAPTURE_ALL_STATES;
+#endif /* JAVA_SPEC_VERSION >= 21 */
 #if JAVA_SPEC_VERSION >= 22
 #if JAVA_SPEC_VERSION >= 24
+#if JAVA_SPEC_VERSION >= 25
+		UDATA argSlots = 15;
+#else /* JAVA_SPEC_VERSION >= 25 */
 		UDATA argSlots = 14;
-		UDATA returnStateMemAddr;
+#endif /* JAVA_SPEC_VERSION >= 25 */
+		UDATA returnStateMemAddr = 0;
 		j9object_t returnStateMemBase = NULL;
 #else /* JAVA_SPEC_VERSION >= 24 */
 		UDATA argSlots = 13;
@@ -5572,6 +5573,9 @@ done:
 		} else {
 			returnState = (I_32 *)returnStateMemAddr;
 		}
+#if JAVA_SPEC_VERSION >= 25
+		capturedCallStateMask = *(I_32 *)(_sp + 13); /* capturedCallStateMask */
+#endif /* JAVA_SPEC_VERSION >= 25 */
 #else /* JAVA_SPEC_VERSION >= 24 */
 		returnState = (I_32 *)(UDATA)*(I_64 *)(_sp + 7); /* returnStateMemAddr */
 #endif /* JAVA_SPEC_VERSION >= 24 */
@@ -5715,11 +5719,21 @@ done:
 			VM_VMAccess::inlineExitVMToJNI(_currentThread);
 		}
 		VM_VMHelpers::beforeJNICall(_currentThread);
+
+#if JAVA_SPEC_VERSION >= 25
+		ForeignCallHelpers::restoreCapturedCallState(returnState, capturedCallStateMask);
+#endif /* JAVA_SPEC_VERSION >= 25 */
+
 #if FFI_NATIVE_RAW_API
 		ffiCallWithSetJmpForUpcall(_currentThread, cif, function, returnStorage, values, values_raw);
 #else /* FFI_NATIVE_RAW_API */
 		ffiCallWithSetJmpForUpcall(_currentThread, cif, function, returnStorage, values);
 #endif /* FFI_NATIVE_RAW_API */
+
+#if JAVA_SPEC_VERSION >= 21
+		ForeignCallHelpers::storeCapturedCallState(returnState, capturedCallStateMask);
+#endif /* JAVA_SPEC_VERSION >= 21 */
+
 		VM_VMHelpers::afterJNICall(_currentThread);
 #if JAVA_SPEC_VERSION >= 21
 		/* Re-enter VM after non-critical downcalls. */
@@ -5765,21 +5779,6 @@ done:
 		}
 #endif /* JAVA_SPEC_VERSION >= 22 */
 
-#if JAVA_SPEC_VERSION >= 21
-		/* Set the execution state after the downcall as required in the linker options. */
-		if (NULL != returnState) {
-			/* The error code layout on Windows in JDK21 is changed to a segment for an array of integers
-			 * which saves the return value of GetLastError(), WSAGetLastError() and errno.
-			 */
-#if defined(WIN32)
-			returnState[0] = GetLastError();
-			returnState[1] = WSAGetLastError();
-			returnState[2] = (I_32)errno;
-#else /* defined(WIN32) */
-			*returnState = (I_32)errno;
-#endif /* defined(WIN32) */
-		}
-#endif /* JAVA_SPEC_VERSION >= 21 */
 		VM_VMHelpers::convertFFIReturnValue(_currentThread, returnType, returnTypeSize, returnStorage);
 		returnDoubleFromINL(REGISTER_ARGS, _currentThread->returnValue, argSlots);
 
