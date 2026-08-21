@@ -1345,7 +1345,8 @@ bool J9::TransformUtil::attemptStaticFinalFieldFoldingImpl(TR::Optimization *opt
     }
 
     int32_t fieldNameLen;
-    char *fieldName = symRef->getOwningMethod(comp)->fieldName(cpIndex, fieldNameLen, comp->trMemory(), stackAlloc);
+    const char *fieldName
+        = symRef->getOwningMethod(comp)->fieldName(cpIndex, fieldNameLen, comp->trMemory(), stackAlloc);
     int32_t fieldSigLength;
     char *fieldSignature = symRef->getOwningMethod(comp)->staticSignatureChars(cpIndex, fieldSigLength);
 
