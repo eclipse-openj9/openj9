@@ -709,47 +709,50 @@ doVerify:
 				J9ITable *superITable = NULL;
 				J9ITable *firstITable = NULL;
 				J9ITable *iTable = NULL;
-				if (NULL != superclazz) {
-					Trc_VM_classInitStateMachine_initSuperclass(currentThread);
-					PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
-					classInitStateMachine(currentThread, superclazz, J9_CLASS_INIT_INITIALIZED);
-					initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
-					clazz = VM_VMHelpers::currentClass(clazz);
-					superclazz = VM_VMHelpers::getSuperclass(clazz);
-					if (VM_VMHelpers::exceptionPending(currentThread)) {
-						goto initFailed;
-					}
-					superITable = (J9ITable*)superclazz->iTable;
-				}
-				/* Do not initialize the superinterfaces of interfaces */
-				if (!J9_ARE_ANY_BITS_SET(clazz->romClass->modifiers, J9AccInterface)) {
-					/* Initialize super-interfaces with non-static, non-abstract methods */
-					Trc_VM_classInitStateMachine_initSuperInterfacesWithNonStaticNonAbstractMethods(currentThread, clazz);
-					/* Don't traverse all iTables - indirect super-interfaces are initialized with the superclass */
-					firstITable = (J9ITable*)clazz->iTable;
-					iTable = firstITable;
-					while (iTable != superITable) {
-						J9Class *interfaceClazz = iTable->interfaceClass;
-						if (J9_ARE_ANY_BITS_SET(interfaceClazz->romClass->extraModifiers, J9AccClassHasNonStaticNonAbstractMethods)) {
-							PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
-							classInitStateMachine(currentThread, interfaceClazz, J9_CLASS_INIT_INITIALIZED);
-							initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
-							clazz = VM_VMHelpers::currentClass(clazz);
-							if (VM_VMHelpers::exceptionPending(currentThread)) {
-								goto initFailed;
-							}
-							/* Ensure that we are still traversing a valid iTable chain */
-							if (firstITable != (J9ITable*)clazz->iTable) {
-								iTable = (J9ITable*)clazz->iTable;
-								if (NULL != superclazz) {
-									superclazz = VM_VMHelpers::getSuperclass(clazz);
-									superITable = (J9ITable*)superclazz->iTable;
-								}
-								continue;
-							}
+
+				/* Do not initialize the superclass java.lang.Object of interfaces */
+				if (!J9ROMCLASS_IS_INTERFACE(clazz->romClass)) {
+					if (NULL != superclazz) {
+						Trc_VM_classInitStateMachine_initSuperclass(currentThread);
+						PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
+						classInitStateMachine(currentThread, superclazz, J9_CLASS_INIT_INITIALIZED);
+						initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+						clazz = VM_VMHelpers::currentClass(clazz);
+						superclazz = VM_VMHelpers::getSuperclass(clazz);
+						if (VM_VMHelpers::exceptionPending(currentThread)) {
+							goto initFailed;
 						}
-						iTable = iTable->next;
+						superITable = (J9ITable*)superclazz->iTable;
 					}
+				}
+
+				/* Initialize super-interfaces with non-static, non-abstract methods */
+				Trc_VM_classInitStateMachine_initSuperInterfacesWithNonStaticNonAbstractMethods(currentThread, clazz);
+				/* Don't traverse all iTables - indirect super-interfaces are initialized with the superclass */
+				firstITable = (J9ITable*)clazz->iTable;
+				iTable = firstITable;
+				while (iTable != superITable) {
+					J9Class *interfaceClazz = iTable->interfaceClass;
+
+					if (J9_ARE_ANY_BITS_SET(interfaceClazz->romClass->extraModifiers, J9AccClassHasNonStaticNonAbstractMethods)) {
+						PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
+						classInitStateMachine(currentThread, interfaceClazz, J9_CLASS_INIT_INITIALIZED);
+						initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+						clazz = VM_VMHelpers::currentClass(clazz);
+						if (VM_VMHelpers::exceptionPending(currentThread)) {
+							goto initFailed;
+						}
+						/* Ensure that we are still traversing a valid iTable chain */
+						if (firstITable != (J9ITable*)clazz->iTable) {
+							iTable = (J9ITable*)clazz->iTable;
+							if (NULL != superclazz) {
+								superclazz = VM_VMHelpers::getSuperclass(clazz);
+								superITable = (J9ITable*)superclazz->iTable;
+							}
+							continue;
+						}
+					}
+					iTable = iTable->next;
 				}
 
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
