@@ -3065,7 +3065,7 @@ void setImplicitNULLCHKExceptionInfo(TR::Node *node, TR::CodeGenerator *cg)
         // The last instruction is a branch, the comparison is before.
         TR::Instruction *cmpInstruction = cg->getAppendInstruction()->getPrev();
         OP::Mnemonic mnemonic = cmpInstruction->getOpCodeValue();
-        bool isComparisonMemForm = mnemonic == OP::CMP4MemReg || mnemonic == OP::CMP4RegMem;
+        bool isComparisonMemForm = mnemonic == OP::CMP4MemReg;
         if (comp->useCompressedPointers() && faultingInstruction != cmpInstruction && isComparisonMemForm) {
             logprintf(isTraceCG, comp->log(), "Faulting instruction (previously %p) updated to %p\n",
                 faultingInstruction, cmpInstruction);
