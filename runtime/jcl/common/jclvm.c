@@ -71,6 +71,24 @@ static UDATA printHeapStatistics(JNIEnv *env,J9HeapStatisticsTableEntry **statsA
 		UDATA numClasses, char *stringBuffer, UDATA bufferSize);
 static int compareByAggregateSize(const void *a, const void *b);
 
+jint JNICALL
+Java_com_ibm_oti_vm_VM_isOlder(JNIEnv *env, jclass unused, jobject jobject1, jobject jobject2)
+{
+	jint older = 0;
+
+	J9VMThread *currentThread = (J9VMThread*)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	j9object_t object1 = J9_JNI_UNWRAP_REFERENCE(jobject1);
+	j9object_t object2 = J9_JNI_UNWRAP_REFERENCE(jobject2);
+	older = (jint)vm->memoryManagerFunctions->j9gc_is_older(currentThread, object1, object2);
+	vmFuncs->internalExitVMToJNI(currentThread);
+
+	return older;
+}
+
 void JNICALL
 Java_com_ibm_oti_vm_VM_localGC(JNIEnv *env, jclass clazz)
 {
