@@ -33,6 +33,7 @@
  * Currently does not allow MAP_FIXED because it is not supported on all platforms.
  */
 #include <sys/mman.h>
+#include <stdlib.h>
 
 void snapshot_mem_free_memory(struct OMRPortLibrary *portLibrary, void *memoryPointer);
 void *snapshot_mem_allocate_memory(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount, const char *callSite, uint32_t category);
@@ -49,8 +50,9 @@ VMSnapshotImpl::VMSnapshotImpl(J9PortLibrary *portLibrary, const char *vmSnapsho
 	_heap32(NULL),
 	_invalidITable(NULL),
 	_vmSnapshotFilePath(vmSnapshotFilePath),
-	_vmSnapshotImplMonitor(NULL),
-	_vmSnapshotImplPortLibrary(NULL)
+	_vmSnapshotImplPortLibrary(NULL),
+	_allocator(NULL),
+	_allocator4G(NULL)
 {
 }
 
@@ -72,10 +74,45 @@ VMSnapshotImpl::getJ9JavaVM()
 	return _vm;
 }
 
+void
+VMSnapshotImpl::setSuballocator(Suballocator *allocator)
+{
+	_allocator = allocator;
+}
+
+void
+VMSnapshotImpl::setSuballocator4G(Suballocator *allocator)
+{
+	_allocator4G = allocator;
+}
+
+void
+VMSnapshotImpl::setGeneralMemSize(UDATA size)
+{
+	GENERAL_MEMORY_SECTION_SIZE = size * 1024 * 1024;
+}
+
+void
+VMSnapshotImpl::setSub4GMemSize(UDATA size)
+{
+	SUB4G_MEMORY_SECTION_SIZE = size * 1024 * 1024;
+}
+
 VMSnapshotImpl::~VMSnapshotImpl()
 {
 	PORT_ACCESS_FROM_JAVAVM(_vm);
-	destroyMonitor();
+
+	if (NULL != _allocator) {
+		_allocator->~Suballocator();
+		j9mem_free_memory(_allocator);
+		_allocator = NULL;
+	}
+	if (NULL != _allocator4G) {
+		_allocator4G->~Suballocator();
+		j9mem_free_memory(_allocator4G);
+		_allocator4G = NULL;
+	}
+
 	if (IS_SNAPSHOT_RUN(_vm)) {
 		for (int i = 0; i < NUM_OF_MEMORY_SECTIONS; i++) {
 			if (SUB4G == _memoryRegions[i].type) {
@@ -110,14 +147,6 @@ VMSnapshotImpl::initBaseClasses()
 	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->longReflectClass);
 }
 
-bool
-VMSnapshotImpl::initializeMonitor()
-{
-	bool success = (0 == omrthread_monitor_init_with_name(&_vmSnapshotImplMonitor, 0, "JVM Snapshot Heap Monitor"));
-
-	return success;
-}
-
 void
 VMSnapshotImpl::storeInitialMethods(J9Method *cInitialStaticMethod, J9Method *cInitialSpecialMethod, J9Method *cInitialVirtualMethod)
 {
@@ -149,12 +178,6 @@ VMSnapshotImpl::initializeInvalidITable()
 	return true;
 }
 
-void
-VMSnapshotImpl::destroyMonitor()
-{
-	omrthread_monitor_destroy(_vmSnapshotImplMonitor);
-}
-
 VMSnapshotImpl *
 VMSnapshotImpl::createInstance(J9PortLibrary *portLibrary, const char *vmSnapshotFilePath)
 {
@@ -174,7 +197,11 @@ VMSnapshotImpl::setupRestoreRun()
 		return false;
 	}
 
-	if (!initializeMonitor()) {
+	if (!_allocator->initializeSubs(true, _heap, _memoryRegions[GENERAL].mappableSize)) {
+		return false;
+	}
+
+	if (!_allocator4G->initializeSubs(true, _heap32, _memoryRegions[SUB4G].mappableSize)) {
 		return false;
 	}
 
@@ -197,10 +224,6 @@ VMSnapshotImpl::setupSnapshotRun()
 	}
 
 	if (NULL == initializeHeap()) {
-		return false;
-	}
-
-	if (!initializeMonitor()) {
 		return false;
 	}
 
@@ -265,6 +288,7 @@ VMSnapshotImpl::allocateSnapshotMemory()
 	_memoryRegions[SUB4G].type = SUB4G;
 
 done:
+	j9tty_printf(PORTLIB,"GENERAL_MEMORY_SECTION_SIZE %lu MB, SUB4G_MEMORY_SECTION_SIZE %lu MB\n", GENERAL_MEMORY_SECTION_SIZE/(1024*1024), SUB4G_MEMORY_SECTION_SIZE/(1024*1024));
 	return _snapshotHeader;
 
 freeGeneralMemorySection:
@@ -296,12 +320,19 @@ VMSnapshotImpl::reallocateSnapshotMemory(UDATA size)
 void *
 VMSnapshotImpl::initializeHeap()
 {
-	PORT_ACCESS_FROM_PORT(_portLibrary);
+	_heap = (J9Heap *)_memoryRegions[GENERAL].alignedStartAddr;
+	_heap32 = (J9Heap *)_memoryRegions[SUB4G].alignedStartAddr;
 
-	_heap = j9heap_create((J9Heap *)_memoryRegions[GENERAL].alignedStartAddr, _memoryRegions[GENERAL].mappableSize, 0);
-	_heap32 = j9heap_create((J9Heap *)_memoryRegions[SUB4G].alignedStartAddr, _memoryRegions[SUB4G].mappableSize, 0);
+	bool result = _allocator->initializeSubs(false, _heap, _memoryRegions[GENERAL].mappableSize);
+	if (!result) {
+		return NULL;
+	}
+	result = _allocator4G->initializeSubs(false, _heap32, _memoryRegions[SUB4G].mappableSize);
+	if (!result) {
+		return NULL;
+	}
 
-	return (NULL == _heap || NULL == _heap32) ? NULL : _heap;
+	return _heap;
 }
 
 void *
@@ -309,21 +340,13 @@ VMSnapshotImpl::subAllocateMemory(uintptr_t byteAmount, bool sub4G)
 {
 	Trc_VM_snapshot_subAllocateSnapshotMemory_Entry(_snapshotHeader, byteAmount);
 
-	J9Heap *heap = sub4G ? _heap32 : _heap;
+	void *memStart = NULL;
 
-	omrthread_monitor_enter(_vmSnapshotImplMonitor);
-
-	OMRPortLibrary *portLibrary = VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(_vmSnapshotImplPortLibrary);
-	void *memStart = portLibrary->heap_allocate(portLibrary, heap, byteAmount);
-	/* Snapshot memory is not large enough and needs to be reallocated. */
-	if (NULL == memStart) {
-		/* Guarantee that size of heap will accomodate byteAmount. */
-		UDATA newSnapshotSize = _snapshotHeader->snapshotSize * 2 + byteAmount;
-		reallocateSnapshotMemory(newSnapshotSize);
-		memStart = portLibrary->heap_allocate(portLibrary, heap, byteAmount);
+	if (sub4G) {
+		memStart = _allocator4G->alloc(byteAmount);
+	} else {
+		memStart = _allocator->alloc(byteAmount);
 	}
-
-	omrthread_monitor_exit(_vmSnapshotImplMonitor);
 
 	Trc_VM_snapshot_subAllocateSnapshotMemory_Exit(memStart);
 
@@ -333,21 +356,13 @@ VMSnapshotImpl::subAllocateMemory(uintptr_t byteAmount, bool sub4G)
 void *
 VMSnapshotImpl::reallocateMemory(void *address, uintptr_t byteAmount, bool sub4G)
 {
-	J9Heap *heap = sub4G ? _heap32 : _heap;
+	void *memStart = NULL;
 
-	omrthread_monitor_enter(_vmSnapshotImplMonitor);
-
-	OMRPortLibrary *portLibrary = VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(_vmSnapshotImplPortLibrary);
-	void *memStart = portLibrary->heap_reallocate(portLibrary, heap, address, byteAmount);
-	/* Snapshot memory is not large enough and needs to be reallocated. */
-	if (NULL == memStart) {
-		/* Guarantee that size of heap will accomodate byteAmount. */
-		UDATA newSnapshotSize = _snapshotHeader->snapshotSize * 2 + byteAmount;
-		reallocateSnapshotMemory(newSnapshotSize);
-		memStart = portLibrary->heap_reallocate(portLibrary, heap, address, byteAmount);
+	if (sub4G) {
+		memStart = _allocator4G->realloc(address,byteAmount);
+	} else {
+		memStart = _allocator->realloc(address, byteAmount);
 	}
-
-	omrthread_monitor_exit(_vmSnapshotImplMonitor);
 
 	return memStart;
 }
@@ -355,14 +370,11 @@ VMSnapshotImpl::reallocateMemory(void *address, uintptr_t byteAmount, bool sub4G
 void
 VMSnapshotImpl::freeSubAllocatedMemory(void *address, bool sub4G)
 {
-	J9Heap *heap = sub4G ? _heap32 : _heap;
-
-	omrthread_monitor_enter(_vmSnapshotImplMonitor);
-
-	OMRPortLibrary *portLibrary = VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(_vmSnapshotImplPortLibrary);
-	portLibrary->heap_free(portLibrary, heap, address);
-
-	omrthread_monitor_exit(_vmSnapshotImplMonitor);
+	if (sub4G) {
+		_allocator4G->dealloc(address);
+	} else {
+		_allocator->dealloc(address);
+	}
 }
 
 void
@@ -827,6 +839,13 @@ VMSnapshotImpl::readSnapshotFromFile()
 		goto done;
 	}
 
+	if (0 == _allocator->deserializeSubs(fileDescriptor)) {
+		goto done;
+	}
+	if (0 == _allocator4G->deserializeSubs(fileDescriptor)) {
+		goto done;
+	}
+
 	_snapshotHeader = (J9SnapshotHeader *)j9mem_allocate_memory(sizeof(J9SnapshotHeader), J9MEM_CATEGORY_CLASSES);
 	if (NULL == _snapshotHeader) {
 		goto done;
@@ -957,6 +976,8 @@ VMSnapshotImpl::writeSnapshotToFile()
 
 	/* Calculate aligned file offsets of memory regions. */
 	UDATA offset = sizeof(J9SnapshotHeader) + (NUM_OF_MEMORY_SECTIONS * sizeof(J9MemoryRegion));
+	offset += _allocator->getSerializedSize();
+	offset += _allocator4G->getSerializedSize();
 	for (int i = 0; i < NUM_OF_MEMORY_SECTIONS; i++) {
 		offset = ROUND_UP_TO_POWEROF2(offset, pageSize);
 		_memoryRegions[i].fileOffset = offset;
@@ -970,6 +991,18 @@ VMSnapshotImpl::writeSnapshotToFile()
 		goto done;
 	}
 
+	bytesWritten = _allocator->serializeSubs(fileDescriptor);
+	if (0 == bytesWritten) {
+		goto done;
+	}
+
+	currentFileOffset += bytesWritten;
+	bytesWritten = _allocator4G->serializeSubs(fileDescriptor);
+	if (0 == bytesWritten) {
+		goto done;
+	}
+
+	currentFileOffset += bytesWritten;
 	bytesWritten = j9file_write(fileDescriptor, (void *)_snapshotHeader, sizeof(J9SnapshotHeader));
 	if (sizeof(J9SnapshotHeader) != bytesWritten) {
 		goto done;
@@ -1046,6 +1079,10 @@ setupVMSnapshotImplPortLibrary(J9PortLibrary *portLibrary)
 extern "C" void *
 createVMSnapshotImpl(J9PortLibrary *portLibrary, BOOLEAN isSnapshotRun, const char *vmSnapshotFilePath)
 {
+	Suballocator *allocator = NULL;
+	char *buf = NULL;
+	UDATA nSubs = 20;
+	PORT_ACCESS_FROM_PORT(portLibrary);
 	VMSnapshotImplPortLibrary *vmSnapshotImplPortLibrary = setupVMSnapshotImplPortLibrary(portLibrary);
 	VMSnapshotImpl *vmSnapshotImpl = VMSnapshotImpl::createInstance(portLibrary, vmSnapshotFilePath);
 	if ((NULL == vmSnapshotImplPortLibrary) || (NULL == vmSnapshotImpl)) {
@@ -1054,6 +1091,52 @@ createVMSnapshotImpl(J9PortLibrary *portLibrary, BOOLEAN isSnapshotRun, const ch
 
 	vmSnapshotImplPortLibrary->vmSnapshotImpl = vmSnapshotImpl;
 	((VMSnapshotImpl *)vmSnapshotImplPortLibrary->vmSnapshotImpl)->setSnapshotPortLib(vmSnapshotImplPortLibrary);
+
+	buf = getenv("RCP_GENERAL_MEM_MB");
+	if (NULL != buf) {
+		errno=0;
+
+		UDATA size = strtol(buf, NULL, 10);
+		if (0 != errno) {
+			j9tty_printf(PORTLIB,"Error: invalid RCP_GENERAL_MEM_MB %s, error=%d\n", buf, errno);
+			goto _error;
+		}
+		vmSnapshotImpl->setGeneralMemSize(size);
+	}
+
+	buf = getenv("RCP_SUB4G_MEM_MB");
+	if (NULL != buf) {
+		errno=0;
+
+		UDATA size = strtol(buf, NULL, 10);
+		if (0 != errno) {
+			j9tty_printf(PORTLIB,"Error: invalid RCP_SUB4G_MEM_MB %s, error=%d\n", buf, errno);
+			goto _error;
+		}
+		vmSnapshotImpl->setSub4GMemSize(size);
+	}
+
+	buf = getenv("RCP_N_SUBS");
+	if (NULL != buf) {
+		errno=0;
+		nSubs = strtol(buf, NULL, 10);
+		if (0 != errno) {
+			j9tty_printf(PORTLIB,"Error: invalid RCP_N_SUBS %s, error=%d\n", buf, errno);
+			goto _error;
+		}
+	}
+	j9tty_printf(PORTLIB,"RCP Heap partitions: %lu\n", nSubs);
+	allocator = Suballocator::create(portLibrary, nSubs);
+	if (NULL == allocator ) {
+		goto _error;
+	}
+	vmSnapshotImpl->setSuballocator(allocator);
+
+	allocator = Suballocator::create(portLibrary, nSubs);
+	if (NULL == allocator ) {
+		goto _error;
+	}
+	vmSnapshotImpl->setSuballocator4G(allocator);
 
 	if (isSnapshotRun) {
 		if (!vmSnapshotImpl->setupSnapshotRun()) {
