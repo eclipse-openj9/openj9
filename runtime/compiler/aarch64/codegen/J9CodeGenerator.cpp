@@ -203,7 +203,7 @@ void J9::ARM64::CodeGenerator::generateBinaryEncodingPrePrologue(TR_ARM64BinaryE
                 uint32_t high = (methodAddress >> 32) & static_cast<uint32_t>(0xffffffff);
                 TR::Instruction *cursor
                     = new (self()->trHeapMemory()) TR::ARM64ImmInstruction(OP::dd, startNode, low, NULL, self());
-                generateImmInstruction(self(), OP::dd, startNode, high, cursor);
+                Inst_Imm(self(), OP::dd, startNode, high, cursor);
             }
         }
     }
@@ -224,20 +224,20 @@ TR::Instruction *J9::ARM64::CodeGenerator::generateSwitchToInterpreterPrePrologu
     uintptr_t helperAddr = (uintptr_t)helperSymRef->getMethodAddress();
 
     // x8 must contain the saved LR; see Recompilation.s
-    // cannot use generateMovInstruction() here
+    // cannot use Inst_Mov() here
     cursor = new (self()->trHeapMemory()) TR::ARM64Trg1Src2Instruction(OP::orrx, node, x8, xzr, lr, cursor, self());
     cursor = self()->getLinkage()->saveParametersToStack(cursor);
-    cursor = generateImmSymInstruction(self(), OP::bl, node, (uintptr_t)revertToInterpreterSymRef->getMethodAddress(),
+    cursor = Inst_ImmSym(self(), OP::bl, node, (uintptr_t)revertToInterpreterSymRef->getMethodAddress(),
         RegDeps(0, 0, self()), revertToInterpreterSymRef, NULL, cursor);
-    cursor = generateRelocatableImmInstruction(self(), OP::dd, node, (uintptr_t)ramMethod, TR_RamMethod, cursor);
+    cursor = Inst_RelocatableImm(self(), OP::dd, node, (uintptr_t)ramMethod, TR_RamMethod, cursor);
 
     if (comp->getOption(TR_EnableHCR))
         comp->getStaticHCRPICSites()->push_front(cursor);
 
-    cursor = generateRelocatableImmInstruction(self(), OP::dd, node, (uintptr_t)helperAddr, TR_AbsoluteHelperAddress,
-        helperSymRef, cursor);
+    cursor = Inst_RelocatableImm(self(), OP::dd, node, (uintptr_t)helperAddr, TR_AbsoluteHelperAddress, helperSymRef,
+        cursor);
     // Used in FSD to store an instruction
-    cursor = generateImmInstruction(self(), OP::dd, node, 0, cursor);
+    cursor = Inst_Imm(self(), OP::dd, node, 0, cursor);
 
     return cursor;
 }
