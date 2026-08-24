@@ -5730,6 +5730,7 @@ typedef struct J9InternalVMFunctions {
 	jlong (*getTypeId)(struct J9VMThread *currentThread, struct J9Class *clazz);
 	void (*jvmUpcallsEagerByteInstrumentation)(struct J9VMThread *currentThread, struct J9Class *superClass, U_8 *className, U_16 classNameLength, struct J9ClassLoader *loader, U_8 *classData, UDATA classDataLength, U_8 **newClassData, UDATA *newClassDataLength);
 	j9object_t (*jvmUpcallTransformArrayToList)(struct J9VMThread *currentThread, j9object_t array);
+	void (*jvmUpcallsTransformJFREventClass)(struct J9VMThread *currentThread, U_8 *classData, UDATA classDataLength, U_8 **newClassData, UDATA *newClassDataLength);
 	void (*jfrInitializeInternalStructures)(struct J9VMThread *currentThread);
 	void (*jfrEmitDataLoss)(struct J9VMThread *currentThread, U_64 bytes);
 	jboolean (*requestJFREvent)(struct J9VMThread *currentThread, jlong id);
@@ -6267,6 +6268,7 @@ typedef struct JFRState {
 	jclass jfrEventClassRef;
 	J9Method *onRetransformUpcallMethod;
 	J9Method *transformToListMethod;
+	J9Method *transformJFREventClassMethod;
 	J9HashTable *threadObjectJNIRefTable;
 	omrthread_monitor_t threadObjectsMutex;
 	jobject chunkRotationMonitor;

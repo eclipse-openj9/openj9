@@ -493,6 +493,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	getTypeId,
 	jvmUpcallsEagerByteInstrumentation,
 	jvmUpcallTransformArrayToList,
+	jvmUpcallsTransformJFREventClass,
 	jfrInitializeInternalStructures,
 	jfrEmitDataLoss,
 	requestJFREvent,
