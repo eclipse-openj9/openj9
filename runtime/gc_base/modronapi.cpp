@@ -1233,12 +1233,12 @@ j9gc_set_jfr_allocation_sampling_interval(J9JavaVM *vm, UDATA samplingInterval)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
 	if (0 == samplingInterval) {
-		/* avoid (env->_jfrTraceAllocationBytes) % 0 which could be undefined. */
+		/* avoid (env->_recorderTraceAllocationBytes) % 0 which could be undefined. */
 		samplingInterval = 1;
 	}
 
-	if (samplingInterval != extensions->jfrObjectSamplingBytesGranularity) {
-		extensions->jfrObjectSamplingBytesGranularity = samplingInterval;
+	if (samplingInterval != extensions->recorderObjectSamplingBytesGranularity) {
+		extensions->recorderObjectSamplingBytesGranularity = samplingInterval;
 		J9VMThread *currentThread = vm->internalVMFunctions->currentVMThread(vm);
 		j9gc_allocation_threshold_changed(currentThread);
 	}
@@ -1247,7 +1247,7 @@ j9gc_set_jfr_allocation_sampling_interval(J9JavaVM *vm, UDATA samplingInterval)
 UDATA
 j9gc_get_jfr_allocation_sampling_interval(J9JavaVM *vm)
 {
-	return  MM_GCExtensions::getExtensions(vm)->jfrObjectSamplingBytesGranularity;
+	return  MM_GCExtensions::getExtensions(vm)->recorderObjectSamplingBytesGranularity;
 }
 
 #endif /* defined(J9VM_OPT_JFR) */

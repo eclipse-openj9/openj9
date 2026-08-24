@@ -281,9 +281,9 @@ traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uin
 					/* When JFR sampling is also active, arm the TLH top at the nearer of the two
 					 * next-trigger points so that neither sampler fires late.
 					 */
-					uintptr_t jfrByteGranularity = extensions->jfrObjectSamplingBytesGranularity;
+					uintptr_t jfrByteGranularity = extensions->recorderObjectSamplingBytesGranularity;
 					if (UDATA_MAX != jfrByteGranularity) {
-						uintptr_t jfrAccumulated = env->_jfrTraceAllocationBytes + allocSizeInsideTLH - env->_jfrTraceAllocationBytesCurrentTLH;
+						uintptr_t jfrAccumulated = env->_recorderTraceAllocationBytes + allocSizeInsideTLH - env->_recorderTraceAllocationBytesCurrentTLH;
 						jfrBytesToNext = jfrByteGranularity - (jfrAccumulated % jfrByteGranularity);
 					}
 #endif /* defined(J9VM_OPT_JFR) */
@@ -302,18 +302,18 @@ traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uin
 		}
 #if defined(J9VM_OPT_JFR)
 		if (shouldTriggerJFRSample) {
-			uintptr_t jfrByteGranularity = extensions->jfrObjectSamplingBytesGranularity;
+			uintptr_t jfrByteGranularity = extensions->recorderObjectSamplingBytesGranularity;
 			uintptr_t jfrAllocSizeInsideTLH = env->getAllocatedSizeInsideTLH();
 
 			/* Compute weight: bytes allocated since last JFR sample on this thread. */
-			uintptr_t weight = env->_jfrTraceAllocationBytes
+			uintptr_t weight = env->_recorderTraceAllocationBytes
 							 + jfrAllocSizeInsideTLH
-							 - env->_traceAllocationBytesCurrentTLH;
+							 - env->_recorderTraceAllocationBytesCurrentTLH;
 
 			/* Reset JFR counters and re-arm the JFR TLH sampling top (mirrors JVMTI pattern). */
-			uintptr_t jfrRemainder = (env->_jfrTraceAllocationBytes + jfrAllocSizeInsideTLH) % jfrByteGranularity;
-			env->_jfrTraceAllocationBytesCurrentTLH = jfrAllocSizeInsideTLH + (env->_jfrTraceAllocationBytes % jfrByteGranularity) - jfrRemainder;
-			env->_jfrTraceAllocationBytes = env->_jfrTraceAllocationBytes % jfrByteGranularity;
+			uintptr_t jfrRemainder = (env->_recorderTraceAllocationBytes + jfrAllocSizeInsideTLH) % jfrByteGranularity;
+			env->_recorderTraceAllocationBytesCurrentTLH = jfrAllocSizeInsideTLH + (env->_recorderTraceAllocationBytes % jfrByteGranularity) - jfrRemainder;
+			env->_recorderTraceAllocationBytes = env->_recorderTraceAllocationBytes % jfrByteGranularity;
 
 			if (!extensions->needDisableInlineAllocation()) {
 				jfrBytesToNext = jfrByteGranularity - jfrRemainder;
@@ -328,12 +328,12 @@ traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uin
 					}
 				}
 				env->setTLHSamplingTop(OMR_MIN(jvmtiBytesToNext, jfrBytesToNext));
-				j9tty_printf(PORTLIB, "traceAllocateObject vmThread=%p, setTLHSamplingTop=%zu\n", vmThread,
-						OMR_MIN(jvmtiBytesToNext, jfrBytesToNext));
+//				j9tty_printf(PORTLIB, "traceAllocateObject vmThread=%p, setTLHSamplingTop=%zu\n", vmThread,
+//						OMR_MIN(jvmtiBytesToNext, jfrBytesToNext));
 			}
 
-			j9tty_printf(PORTLIB, "traceAllocateObject vmThread=%p, jvmtiBytesToNext=%zu, jfrBytesToNext=%zu, jfrByteGranularity=%zu, weight=%zu\n", vmThread,
-					jvmtiBytesToNext, jfrBytesToNext, jfrByteGranularity, weight);
+//			j9tty_printf(PORTLIB, "traceAllocateObject vmThread=%p, jvmtiBytesToNext=%zu, jfrBytesToNext=%zu, jfrByteGranularity=%zu, weight=%zu\n", vmThread,
+//					jvmtiBytesToNext, jfrBytesToNext, jfrByteGranularity, weight);
 
 			TRIGGER_J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING_INTERNAL(
 				extensions->hookInterface,
@@ -370,14 +370,14 @@ traceObjectCheck(J9VMThread *vmThread, bool *shouldTriggerAllocationSampling, bo
 
 #if defined(J9VM_OPT_JFR)
 	if (NULL != shouldTriggerJFRSample) {
-		uintptr_t jfrByteGranularity = extensions->jfrObjectSamplingBytesGranularity;
+		uintptr_t jfrByteGranularity = extensions->recorderObjectSamplingBytesGranularity;
 		*shouldTriggerJFRSample = (UDATA_MAX != jfrByteGranularity)
-			&& ((env->_jfrTraceAllocationBytes + env->getAllocatedSizeInsideTLH() - env->_jfrTraceAllocationBytesCurrentTLH) >= jfrByteGranularity);
-		if (UDATA_MAX != jfrByteGranularity) {
-			PORT_ACCESS_FROM_VMC(vmThread);
-			j9tty_printf(PORTLIB, "traceObjectCheck vmThread=%p, jfrByteGranularity=%zu, env->_jfrTraceAllocationBytes=%zu, env->getAllocatedSizeInsideTLH()=%zu, env->_jfrTraceAllocationBytesCurrentTLH=%zu, *shouldTriggerJFRSample=%zu\n", vmThread,
-					jfrByteGranularity, env->_jfrTraceAllocationBytes, env->getAllocatedSizeInsideTLH(), env->_jfrTraceAllocationBytesCurrentTLH, *shouldTriggerJFRSample);
-		}
+			&& ((env->_recorderTraceAllocationBytes + env->getAllocatedSizeInsideTLH() - env->_recorderTraceAllocationBytesCurrentTLH) >= jfrByteGranularity);
+//		if (UDATA_MAX != jfrByteGranularity) {
+//			PORT_ACCESS_FROM_VMC(vmThread);
+//			j9tty_printf(PORTLIB, "traceObjectCheck vmThread=%p, jfrByteGranularity=%zu, env->_recorderTraceAllocationBytes=%zu, env->getAllocatedSizeInsideTLH()=%zu, env->_recorderTraceAllocationBytesCurrentTLH=%zu, *shouldTriggerJFRSample=%zu\n", vmThread,
+//					jfrByteGranularity, env->_recorderTraceAllocationBytes, env->getAllocatedSizeInsideTLH(), env->_recorderTraceAllocationBytesCurrentTLH, *shouldTriggerJFRSample);
+//		}
 	}
 #endif /* defined(J9VM_OPT_JFR) */
 
@@ -834,26 +834,26 @@ memoryManagerTLHAsyncCallbackHandler(J9VMThread *vmThread, IDATA handlerKey, voi
 			if (UDATA_MAX != samplingBytesGranularity) {
 				env->_traceAllocationBytes = 0;
 				env->_traceAllocationBytesCurrentTLH = 0;
-			} 
+			}
 #if defined(J9VM_OPT_JFR)
-			uintptr_t jfrGranularity = extensions->jfrObjectSamplingBytesGranularity;
+			uintptr_t jfrGranularity = extensions->recorderObjectSamplingBytesGranularity;
 			if (UDATA_MAX != jfrGranularity) {
-				env->_jfrTraceAllocationBytes = 0;
-				env->_jfrTraceAllocationBytesCurrentTLH = 0;
+				env->_recorderTraceAllocationBytes = 0;
+				env->_recorderTraceAllocationBytesCurrentTLH = 0;
 			}
 			/* Arm the TLH sampling top at the minimum of all active sampling intervals so
 			 * that the TLH triggers at whichever sampling point comes first.
 			 */
-			PORT_ACCESS_FROM_VMC(vmThread);
-			j9tty_printf(PORTLIB, "memoryManagerTLHAsyncCallbackHandler vmThread=%p, samplingBytesGranularity=%zu, jfrGranularity=%zu\n", vmThread,
-					samplingBytesGranularity, jfrGranularity);
+//			PORT_ACCESS_FROM_VMC(vmThread);
+//			j9tty_printf(PORTLIB, "memoryManagerTLHAsyncCallbackHandler vmThread=%p, samplingBytesGranularity=%zu, jfrGranularity=%zu\n", vmThread,
+//					samplingBytesGranularity, jfrGranularity);
 
 			if (samplingBytesGranularity > jfrGranularity) {
 				samplingBytesGranularity = jfrGranularity;
-			}			
+			}
 #else /* defined(J9VM_OPT_JFR) */
 			if (UDATA_MAX != samplingBytesGranularity) {
-				j9tty_printf(PORTLIB, "memoryManagerTLHAsyncCallbackHandler vmThread=%p,setTLHSamplingTop=%zu\n", vmThread, samplingBytesGranularity);
+//				j9tty_printf(PORTLIB, "memoryManagerTLHAsyncCallbackHandler vmThread=%p,setTLHSamplingTop=%zu\n", vmThread, samplingBytesGranularity);
 				env->setTLHSamplingTop(samplingBytesGranularity);
 			} else if (!env->isInlineTLHAllocateEnabled()) {
 				env->resetTLHSamplingTop();

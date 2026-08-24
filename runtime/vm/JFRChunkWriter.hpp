@@ -100,6 +100,7 @@ enum MetadataTypeID {
 	SystemGCID = 36,
 	YoungGarbageCollectionID = 38,
 	OldGarbageCollectionID = 39,
+	ObjectAllocationSampleID = 83, /* jdk.ObjectAllocationSample -- must match JFR metadata blob */
 	JVMInformationID = 87,
 	OSInformationID = 88,
 	VirtualizationInformationID = 89,
@@ -142,7 +143,6 @@ enum MetadataTypeID {
 	StackTraceID = 188,
 	FrameTypeID = 189,
 	StackFrameID = 197,
-	ObjectAllocationSampleID = 200, /* jdk.ObjectAllocationSample */
 };
 
 enum ReservedEvent {
@@ -243,8 +243,8 @@ private:
 	static constexpr int NETWORK_UTILIZATION_EVENT_SIZE = (4 * sizeof(U_64)) + sizeof(U_32);
 	static constexpr int DATA_LOSS_EVENT_SIZE = sizeof(U_8) + LEB128_32_SIZE + (3 * LEB128_64_SIZE);
 	static constexpr int THREAD_ALLOCATION_STATISTICS_EVENT_SIZE = sizeof(U_8) + LEB128_32_SIZE + (3 * LEB128_64_SIZE);
-	/* OBJECT_ALLOCATION_SAMPLE_EVENT_SIZE: eventSize + eventType(U_32) + ticks(I_64) + eventThread(U_32) + stackTrace(U_32) + objectClass(U_32) + weight(U_64) */
-	static constexpr int OBJECT_ALLOCATION_SAMPLE_EVENT_SIZE = sizeof(U_8) + (2 * LEB128_64_SIZE) + (4 * LEB128_32_SIZE);
+	/* OBJECT_ALLOCATION_SAMPLE_EVENT_SIZE: eventSize + eventType(U_32) + ticks(I_64) + eventThread(U_64) + stackTrace(U_32) + objectClass(U_32) + weight(U_64) */
+	static constexpr int OBJECT_ALLOCATION_SAMPLE_EVENT_SIZE = sizeof(U_8) + (3 * LEB128_64_SIZE) + (2 * LEB128_32_SIZE);
 
 	static constexpr int METADATA_ID = 1;
 

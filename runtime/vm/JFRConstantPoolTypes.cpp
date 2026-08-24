@@ -429,7 +429,37 @@ VM_JFRConstantPoolTypes::getClassEntry(J9Class *clazz, bool shallow)
 		entry = &entryBuffer;
 	}
 
-	entry->nameStringUTF8Index = addStringUTF8Entry(J9ROMCLASS_CLASSNAME(clazz->romClass));
+	if (J9ROMCLASS_IS_ARRAY(clazz->romClass)) {
+		J9ArrayClass *arrayClass = (J9ArrayClass *)clazz;
+		J9Class *leafComponentType = arrayClass->leafComponentType;
+		J9ROMClass *leafROMClass = leafComponentType->romClass;
+		if (J9ROMCLASS_IS_PRIMITIVE_TYPE(leafROMClass)) {
+			/* Primitive array classes ([B, [C, [I, etc.) have complete, standalone ROM class names. */
+			entry->nameStringUTF8Index = addStringUTF8Entry(J9ROMCLASS_CLASSNAME(clazz->romClass));
+		} else {
+			/* Reference array classes share a single ROM class whose className is "[L" (incomplete).
+			 * Build the full descriptor "[L<leafComponentType>;" so every array type is distinguishable.
+			 */
+			J9UTF8 *leafName = J9ROMCLASS_CLASSNAME(leafROMClass);
+			const U_16 leafLen = J9UTF8_LENGTH(leafName);
+			/* "[L" + leafName + ";" */
+			const UDATA arrayNameLen = 2 + leafLen + 1;
+			J9UTF8 *arrayName = (J9UTF8 *)j9mem_allocate_memory(sizeof(J9UTF8) + arrayNameLen, J9MEM_CATEGORY_JFR);
+			if (NULL == arrayName) {
+				_buildResult = OutOfMemory;
+				goto done;
+			}
+			J9UTF8_SET_LENGTH(arrayName, (U_16)arrayNameLen);
+			U_8 *cursor = J9UTF8_DATA(arrayName);
+			cursor[0] = '[';
+			cursor[1] = 'L';
+			memcpy(cursor + 2, J9UTF8_DATA(leafName), leafLen);
+			cursor[2 + leafLen] = ';';
+			entry->nameStringUTF8Index = addStringUTF8Entry(arrayName, true);
+		}
+	} else {
+		entry->nameStringUTF8Index = addStringUTF8Entry(J9ROMCLASS_CLASSNAME(clazz->romClass));
+	}
 	if (isResultNotOKay()) goto done;
 
 	entry->classLoaderIndex = addClassLoaderEntry(clazz->classLoader, shallow);

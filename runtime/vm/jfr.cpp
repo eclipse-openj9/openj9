@@ -1121,15 +1121,28 @@ jfrObjectAllocationSample(J9HookInterface **hook, UDATA eventNum, void *eventDat
 		(MM_ObjectAllocationSamplingInternalEvent *)eventData;
 	J9VMThread *currentThread = data->currentThread;
 
-	Trc_VM_jfrObjectAllocationSample(currentThread,
-		J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(data->clazz->romClass)),
-		J9UTF8_DATA(J9ROMCLASS_CLASSNAME(data->clazz->romClass)),
-		data->weight,
-		data->objectSize);
+	U_8 *className = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(data->clazz->romClass));
+	UDATA lenClassName = J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(data->clazz->romClass));
 
-//	PORT_ACCESS_FROM_VMC(currentThread);
-//	j9tty_printf(PORTLIB, "jfrObjectAllocationSample currentThread=%p,  classname=%.*s, weight=%zu, startTime=%zu, objectSize=%zu\n", currentThread, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(data->clazz->romClass)),
-//            J9UTF8_DATA(J9ROMCLASS_CLASSNAME(data->clazz->romClass)), data->weight, data->timestamp, data->objectSize);
+	if (J9ROMCLASS_IS_ARRAY(data->clazz->romClass)) {
+	    J9ArrayClass *arrayClass = (J9ArrayClass *)data->clazz;
+	    U_8 *classLeafName = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(arrayClass->leafComponentType->romClass));
+	    UDATA lenClassLeafName = J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(arrayClass->leafComponentType->romClass));
+		Trc_VM_jfrObjectAllocationSample_indexableObject(currentThread,
+			lenClassName,
+			className,
+			lenClassLeafName,
+			classLeafName,
+			data->weight,
+			data->objectSize);
+	}
+	else {
+		Trc_VM_jfrObjectAllocationSample(currentThread,
+			lenClassName,
+			className,
+			data->weight,
+			data->objectSize);
+	}
 
 	J9JFRObjectAllocationSample *jfrEvent = (J9JFRObjectAllocationSample *)reserveBufferWithStackTrace(
 			currentThread, currentThread, J9JFR_EVENT_TYPE_OBJECT_ALLOCATION_SAMPLE, sizeof(J9JFRObjectAllocationSample), 0);
@@ -1138,9 +1151,6 @@ jfrObjectAllocationSample(J9HookInterface **hook, UDATA eventNum, void *eventDat
 		jfrEvent->objectClass = data->clazz;
 		jfrEvent->weight      = data->weight;
 	}
-	//else {
-	//	j9tty_printf(PORTLIB, "jfrObjectAllocationSample reserveBufferWithStackTrace failed currentThread=%p\n", currentThread);
-	//}
 }
 
 jint
@@ -1888,13 +1898,16 @@ jfrSamplingThreadProc(void *entryArg)
 						PORT_ACCESS_FROM_JAVAVM(vm);
 						OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 						UDATA throttleRate = vm->jfrState.objectAllocationSampleThrottleRate;
-						if (0 != throttleRate) {
+						UDATA oldInterval = vm->memoryManagerFunctions->j9gc_get_jfr_allocation_sampling_interval(vm);
+						if ((0 != throttleRate) && (UDATA_MAX != oldInterval)) {
 							UDATA totalBytes = 0;
+							acquireExclusiveVMAccess(currentThread);
 							J9VMThread *walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
 							while (NULL != walkThread) {
 								totalBytes += vm->memoryManagerFunctions->j9gc_get_bytes_allocated_by_thread(walkThread);
 								walkThread = J9_LINKED_LIST_NEXT_DO(vm->mainThread, walkThread);
 							}
+							releaseExclusiveVMAccess(currentThread);
 
 							/* Compute elapsed microseconds since the last GC cycle ended. */
 							uint64_t elapsedMicros = 1;
@@ -1916,7 +1929,6 @@ jfrSamplingThreadProc(void *entryArg)
 								newInterval = 64 * 1024 * 1024;
 							}
 
-							UDATA oldInterval = vm->memoryManagerFunctions->j9gc_get_jfr_allocation_sampling_interval(vm);
 							if (oldInterval != newInterval) {
 //								j9tty_printf(PORTLIB, "jfrSamplingThreadProc Recalibrate JFR allocation sample interval currentThread=%p, totalBytes=%zu, elapsedMicros=%zu, oldInterval=%zu, newInterval=%zu\n", currentThread,
 //										totalBytes, elapsedMicros, oldInterval, newInterval);
