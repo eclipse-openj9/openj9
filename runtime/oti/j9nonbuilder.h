@@ -614,7 +614,7 @@ typedef struct J9JFRObjectAllocationSample {
 	struct J9Class *objectClass; /**< class of the allocated object */
 	UDATA weight;                /**< bytes allocated by this thread since last JFR sample */
 } J9JFRObjectAllocationSample;
-#define J9JFROBJECTALLOCATIONSAMPLE_STACKTRACE(jfrEvent) ((UDATA*)(((J9JFRObjectAllocationSample*)(jfrEvent)) + 1))
+#define J9JFROBJECTALLOCATIONSAMPLE_STACKTRACE(jfrEvent) ((UDATA *)(((J9JFRObjectAllocationSample *)(jfrEvent)) + 1))
 
 typedef struct J9JFRClassLoaderStatistics {
 	J9JFR_EVENT_COMMON_FIELDS
@@ -5256,7 +5256,7 @@ typedef struct J9MemoryManagerFunctions {
 	void   ( *j9gc_set_jfr_allocation_sampling_interval)(struct J9JavaVM *vm, UDATA samplingInterval);
 	UDATA  ( *j9gc_get_jfr_allocation_sampling_interval)(struct J9JavaVM *vm);
 #endif /* defined(J9VM_OPT_JFR) */
-void  ( *j9gc_set_allocation_threshold)(struct J9VMThread *vmThread, UDATA low, UDATA high) ;
+	void  ( *j9gc_set_allocation_threshold)(struct J9VMThread *vmThread, UDATA low, UDATA high) ;
 	void  ( *j9gc_objaccess_recentlyAllocatedObject)(struct J9VMThread *vmThread, J9Object *dstObject) ;
 	void  ( *j9gc_objaccess_postStoreClassToClassLoader)(struct J9VMThread *vmThread, J9ClassLoader *destClassLoader, J9Class *srcClass) ;
 	void  ( *j9gc_objaccess_postStoreModuleToClassLoader)(struct J9VMThread *vmThread, J9ClassLoader *destClassLoader, J9Module *srcModule) ;
@@ -5769,11 +5769,7 @@ typedef struct J9InternalVMFunctions {
 	BOOLEAN (*setupChunkMonitor)(struct J9VMThread *currentThread);
 	I_64 (*getThreadTID)(struct J9VMThread *currentThread, struct J9VMThread *vmThread);
 	U_32 (*emitStackTrace)(struct J9VMThread *currentThread, I_32 skipCount);
-<<<<<<< Upstream, based on Upstream/master
 	void (*flushJavaJFRBuffer)(struct J9VMThread *currentThread, jobject eventWriterRef, I_32 uncommited, I_32 needed);
-	void (*jfrObjectAllocationSample)(struct J9VMThread *currentThread, J9Class *clazz, U_64 weight);
-=======
->>>>>>> 40f96ec Version2
 #endif /* defined(J9VM_OPT_JFR) */
 #if defined(J9VM_OPT_SNAPSHOTS)
 	void (*initializeSnapshotClassLoaderObject)(struct J9JavaVM *javaVM, struct J9ClassLoader *classLoader, j9object_t classLoaderObject);

@@ -492,8 +492,7 @@ struct PhysicalMemoryEntry {
 
 struct ObjectAllocationSampleEntry {
 	I_64 ticks;
-	U_32 threadIndex;
-	U_32 eventThreadIndex;
+	U_64 eventThreadIndex;
 	U_32 stackTraceIndex;
 	U_32 objectClassIndex; /**< class constant-pool index for the allocated object class */
 	U_64 weight;           /**< bytes allocated since last JFR sample on this thread */
@@ -1558,7 +1557,6 @@ public:
 			case J9JFR_EVENT_TYPE_JAVA_EVENT_DATA:
 				addJavaEventDataEntry((J9JFRJavaEventData *)event);
 				break;
-
 			case J9JFR_EVENT_TYPE_OBJECT_ALLOCATION_SAMPLE:
 				addObjectAllocationSampleEntry((J9JFRObjectAllocationSample *)event);
 				break;
