@@ -307,6 +307,7 @@ private :
 	void writeMonitorSection(void);
 	void writeThreadSection(void);
 	void writeClassSection(void);
+	void writeMemoryDisclaimInfoSection(void);
 #if defined(OMR_OPT_CUDA)
 	void writeCudaSection(void);
 #endif /* defined(OMR_OPT_CUDA) */
@@ -556,6 +557,7 @@ JavaCoreDumpWriter::JavaCoreDumpWriter(
 	CALL_PROTECT(writeSharedClassSection, _Error);
 #endif
 	CALL_PROTECT(writeClassSection, _Error);
+	CALL_PROTECT(writeMemoryDisclaimInfoSection, _Error);
 	CALL_PROTECT(writeTrailer, _Error);
 
 	/* Record the status of the operation */
@@ -2926,6 +2928,143 @@ JavaCoreDumpWriter::writeHookSection(void)
 
 	/* Write the section trailer */
 	_OutputStream.writeCharacters("NULL           ------------------------------------------------------------------------\n");
+}
+
+void
+JavaCoreDumpWriter::writeMemoryDisclaimInfoSection(void)
+{
+#if defined(LINUX)
+	J9JITConfig *jitConfig = _VirtualMachine->jitConfig;
+	if (NULL == jitConfig) {
+		return;
+	}
+
+	J9JITMemDisclaimInfo &info = jitConfig->memDisclaimInfo;
+
+	_OutputStream.writeCharacters("0SECTION       Memory disclaim info dump routine\n");
+	_OutputStream.writeCharacters("NULL           ------------------------------------------------------------------------\n");
+	_OutputStream.writeCharacters("1CIDISCLSUBS   Disclaim subsystem status\n");
+	_OutputStream.writeCharacters("NULL           ------------------------------------------------------------------------\n");
+	_OutputStream.writeCharacters("2CIDISCLDATA   Data cache disclaim:               ");
+	_OutputStream.writeCharacters(info.dataCacheDisclaimEnabled ? "enabled\n" : "disabled\n");
+	_OutputStream.writeCharacters("2CIDISCLIPRO   IProfiler data disclaim:           ");
+	_OutputStream.writeCharacters(info.iProfilerDisclaimEnabled ? "enabled\n" : "disabled\n");
+	_OutputStream.writeCharacters("2CIDISCLRTAM   Runtime assumption disclaim:       ");
+	_OutputStream.writeCharacters(info.runtimeAssumptionDisclaimEnabled ? "enabled\n" : "disabled\n");
+	_OutputStream.writeCharacters("2CIDISCLCODE   Code cache disclaim:               ");
+	_OutputStream.writeCharacters(info.codeCacheDisclaimEnabled ? "enabled\n" : "disabled\n");
+	_OutputStream.writeCharacters("2CIDISCLSCC    Shared class cache disclaim:       ");
+	_OutputStream.writeCharacters(info.sccDisclaimEnabled ? "enabled\n" : "disabled\n");
+	_OutputStream.writeCharacters("NULL           ------------------------------------------------------------------------\n");
+
+	bool memDis = info.dataCacheDisclaimEnabled || info.iProfilerDisclaimEnabled || info.runtimeAssumptionDisclaimEnabled
+		|| info.codeCacheDisclaimEnabled || info.sccDisclaimEnabled;
+
+	if (memDis) {
+		if (info.disclaimOnSwap) {
+			_OutputStream.writeCharacters("1CIDISCLBMED   Disclaim backing medium:           swap\n");
+		} else if (info.disclaimOnFile) {
+			_OutputStream.writeCharacters("1CIDISCLBMED   Disclaim backing medium:           file\n");
+			_OutputStream.writeCharacters("2CIDISCLBDIR   Backing directory:                 ");
+			_OutputStream.writeCharacters((NULL == info.disclaimDir) ? "(none)" : info.disclaimDir);
+			_OutputStream.writeCharacters("\n");
+		}
+		_OutputStream.writeCharacters("NULL           ------------------------------------------------------------------------\n");
+
+		OMRPORT_ACCESS_FROM_J9PORT(_PortLibrary);
+		const char *sccDevice = NULL;
+		if (info.sccDisclaimEnabled
+			&& (NULL != info.disclaimDir)
+			&& (NULL != info.sccDisclaimDir)
+			&& (0 != strcmp(info.disclaimDir, info.sccDisclaimDir))
+		) {
+			_OutputStream.writeCharacters("1CIDISCLBMED   SCC disclaim backing medium:       file\n");
+			_OutputStream.writeCharacters("2CIDISCLBDIR   Backing directory:                 ");
+			_OutputStream.writeCharacters(info.sccDisclaimDir);
+			_OutputStream.writeCharacters("\n");
+			_OutputStream.writeCharacters("NULL           ------------------------------------------------------------------------\n");
+			sccDevice = omrsysinfo_get_block_device_for_path(info.sccDisclaimDir);
+		}
+
+		const char *device = NULL;
+		if (info.disclaimOnSwap) {
+			device = omrsysinfo_get_block_device_for_swap();
+		} else if (info.disclaimOnFile && (NULL != info.disclaimDir)) {
+			device = omrsysinfo_get_block_device_for_path(info.disclaimDir);
+		}
+
+		if (NULL != device) {
+			_OutputStream.writeCharacters("1CIDISCLDEV    Backing device I/O statistics\n");
+			_OutputStream.writeCharacters("NULL           ------------------------------------------------------------------------\n");
+			_OutputStream.writeCharacters("2CIDISCLDEVN   Device name:                       ");
+			_OutputStream.writeCharacters(device);
+			_OutputStream.writeCharacters("\n");
+
+			OMRBlockDeviceStats devStats;
+			if (0 == omrsysinfo_get_block_device_stats(device, &devStats)) {
+				_OutputStream.writeCharacters("2CIDISCLRDIO   Read I/Os:                         ");
+				_OutputStream.writeInteger64(devStats.rdIos, "%llu\n");
+				_OutputStream.writeCharacters("2CIDISCLRDTK   Read ticks (ms):                   ");
+				_OutputStream.writeInteger64(devStats.rdTicksMs, "%llu\n");
+				_OutputStream.writeCharacters("2CIDISCLWRIO   Write I/Os:                        ");
+				_OutputStream.writeInteger64(devStats.wrIos, "%llu\n");
+				_OutputStream.writeCharacters("2CIDISCLWRTK   Write ticks (ms):                  ");
+				_OutputStream.writeInteger64(devStats.wrTicksMs, "%llu\n");
+				_OutputStream.writeCharacters("2CIDISCLIOFLT  I/Os in flight:                    ");
+				_OutputStream.writeInteger64(devStats.inFlight, "%llu\n");
+				_OutputStream.writeCharacters("2CIDISCLIOTK   I/O ticks (ms):                    ");
+				_OutputStream.writeInteger64(devStats.ioTicksMs, "%llu\n");
+
+				if ((0 < devStats.rdIos) || (0 < devStats.wrIos)) {
+					const double readWeight  = 3.0;
+					const double writeWeight = 1.0;
+					const double weightedOps  = (readWeight * devStats.rdIos) + (writeWeight * devStats.wrIos);
+					const double weightedTime = (readWeight * devStats.rdTicksMs) + (writeWeight * devStats.wrTicksMs);
+					const double latency = (weightedTime / weightedOps) * 1000.0;
+
+					_OutputStream.writeCharacters("2CIDISCLLAVG   Weighted average latency (us):     ");
+					_OutputStream.writeInteger64(latency, "%llu\n");
+				}
+			}
+			_OutputStream.writeCharacters("NULL           ------------------------------------------------------------------------\n");
+
+			if ((NULL != sccDevice) && (0 != strcmp(device, sccDevice))) {
+				_OutputStream.writeCharacters("1CIDISCLDEV    SCC backing device I/O statistics\n");
+				_OutputStream.writeCharacters("NULL           ------------------------------------------------------------------------\n");
+				_OutputStream.writeCharacters("2CIDISCLDEVN   Device name:                       ");
+				_OutputStream.writeCharacters(sccDevice);
+				_OutputStream.writeCharacters("\n");
+				OMRBlockDeviceStats sccDevStats;
+				if (0 == omrsysinfo_get_block_device_stats(sccDevice, &sccDevStats)) {
+					_OutputStream.writeCharacters("2CIDISCLRDIO   Read I/Os:                         ");
+					_OutputStream.writeInteger64(sccDevStats.rdIos, "%llu\n");
+					_OutputStream.writeCharacters("2CIDISCLRDTK   Read ticks (ms):                   ");
+					_OutputStream.writeInteger64(sccDevStats.rdTicksMs, "%llu\n");
+					_OutputStream.writeCharacters("2CIDISCLWRIO   Write I/Os:                        ");
+					_OutputStream.writeInteger64(sccDevStats.wrIos, "%llu\n");
+					_OutputStream.writeCharacters("2CIDISCLWRTK   Write ticks (ms):                  ");
+					_OutputStream.writeInteger64(sccDevStats.wrTicksMs, "%llu\n");
+					_OutputStream.writeCharacters("2CIDISCLIOFLT  I/Os in flight:                    ");
+					_OutputStream.writeInteger64(sccDevStats.inFlight, "%llu\n");
+					_OutputStream.writeCharacters("2CIDISCLIOTK   I/O ticks (ms):                    ");
+					_OutputStream.writeInteger64(sccDevStats.ioTicksMs, "%llu\n");
+
+					if ((0 < sccDevStats.rdIos) || (0 < sccDevStats.wrIos)) {
+						const double readWeight  = 3.0;
+						const double writeWeight = 1.0;
+						const double weightedOps  = (readWeight * sccDevStats.rdIos) + (writeWeight * sccDevStats.wrIos);
+						const double weightedTime = (readWeight * sccDevStats.rdTicksMs) + (writeWeight * sccDevStats.wrTicksMs);
+						const double latency = (weightedTime / weightedOps) * 1000.0;
+
+						_OutputStream.writeCharacters("2CIDISCLLAVG   Weighted average latency (us):     ");
+						_OutputStream.writeInteger64(latency, "%llu\n");
+					}
+				}
+				_OutputStream.writeCharacters("NULL           ------------------------------------------------------------------------\n");
+			}
+		}
+	}
+#endif /* defined(LINUX) */
 }
 
 #if defined(OMR_OPT_CUDA)
