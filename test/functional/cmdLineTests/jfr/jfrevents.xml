@@ -26,20 +26,38 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 
 <suite id="JFR Tests" timeout="3000">
 	<test id="runWorkload - approx 300 seconds">
-		<command>$EXE$ -XX:StartFlightRecording -Dibm.java9.forceCommonCleanerShutdown=true -Xint -Xcheck:memory  --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.WorkLoad 10 100 10 false</command>
+		<command>$EXE$ -Xtrace:print={j9vm.760,j9vm.773,j9vm.819,6,j9vm.837,j9vm.820,j9vm.847} -XX:StartFlightRecording -Dibm.java9.forceCommonCleanerShutdown=true -Xint -Xcheck:memory  --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.WorkLoad 10 100 10 false</command>
 		<output type="required" caseSensitive="yes" regex="no">All runs complete.</output>
 		<output type="required" caseSensitive="yes" regex="no">Memory checker statistics:</output>
 		<output type="failure" caseSensitive="yes" regex="no">unfreed blocks remaining at shutdown!</output>
 		<output type="success" caseSensitive="yes" regex="no">All allocated blocks were freed.</output>
+		<output type="failure" caseSensitive="yes" regex="no">omrthread_create(jfrSamplingThreadProc) failed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error writing JFR chunk</output>
+		<output type="failure" caseSensitive="yes" regex="no">Buffer overflow happened while generating thread dump string</output>
+		<output type="failure" caseSensitive="yes" regex="no">areBuffersReady=1</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error writing JFR chunk in JFRWriter</output>
 	</test>
 	<test id="test jfr summary - approx 30seconds">
 		<command>$JFR_EXE$ summary defaultJ9recording.jfr</command>
-		<output type="required" caseSensitive="yes" regex="no">Version: 2.1</output>
+		<output type="success" caseSensitive="yes" regex="no">Version: 2.1</output>
 		<output type="required" caseSensitive="yes" regex="no">jdk.ExecutionSample</output>
-		<output type="success" caseSensitive="yes" regex="no">jdk.CPULoad</output>
-		<output type="success" caseSensitive="yes" regex="no">jdk.JavaThreadStatistics</output>
-		<output type="success" caseSensitive="yes" regex="no">jdk.ClassLoadingStatistics</output>
-		<output type="success" caseSensitive="yes" regex="no">jdk.ThreadCPULoad</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.ThreadStart</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.JavaMonitorEnter</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.GCHeapConfiguration</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.YoungGenerationConfiguration</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.SystemProcess</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.NativeLibrary</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.SystemGC</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.ModuleRequire</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.ModuleExport</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.ClassLoaderStatistics</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.OldGarbageCollection</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.YoungGarbageCollection</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.GarbageCollection</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.GCHeapSummary</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.NetworkUtilization</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.DataLoss</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.ThreadAllocationStatistics</output>
 		<output type="required" caseSensitive="yes" regex="no">jdk.Metadata</output>
 	</test>
 	<test id="test jfr execution sample - approx 30seconds">

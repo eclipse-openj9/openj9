@@ -263,7 +263,7 @@ areJFRBuffersReadyForWrite(J9VMThread *currentThread)
 	bool result = true;
 	J9JavaVM *vm = currentThread->javaVM;
 
-	if ((!vm->jfrState.isStarted)
+	if ((!vm->jfrState.isCreated)
 	|| (NULL == currentThread->jfrBuffer.bufferStart)
 	|| (NULL == vm->jfrBuffer.bufferCurrent)
 	) {
@@ -286,13 +286,11 @@ static bool
 writeOutGlobalBuffer(J9VMThread *currentThread, bool finalWrite, bool dumpCalled)
 {
 	J9JavaVM *vm = currentThread->javaVM;
+	Assert_VM_mustHaveVMAccess(currentThread);
+	Assert_VM_true((J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState) || omrthread_monitor_owned_by_self(vm->jfrBufferMutex));
+	Trc_VM_jfr_writeOutGlobalBuffer(currentThread, vm->jfrBuffer.bufferSize - vm->jfrBuffer.bufferRemaining);
 
-#if defined(DEBUG)
-	PORT_ACCESS_FROM_VMC(currentThread);
-	j9tty_printf(PORTLIB, "\n!!! writing global buffer %p of size %p\n", currentThread, vm->jfrBuffer.bufferSize - vm->jfrBuffer.bufferRemaining);
-#endif /* defined(DEBUG) */
-
-	if (vm->jfrState.isStarted && (NULL != vm->jfrBuffer.bufferCurrent)) {
+	if (vm->jfrState.isCreated && (NULL != vm->jfrBuffer.bufferCurrent)) {
 		VM_JFRWriter::flushJFRDataToFile(currentThread, finalWrite, dumpCalled);
 
 		/* Reset the buffer */
@@ -305,6 +303,51 @@ writeOutGlobalBuffer(J9VMThread *currentThread, bool finalWrite, bool dumpCalled
 	}
 
 	return true;
+}
+
+U_8 *
+allocateMemFromGlobalBuffer(J9VMThread *currentThread, UDATA size, bool *hasExclusive)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	Assert_VM_mustHaveVMAccess(currentThread);
+	U_8 *bytes = NULL;
+
+	*hasExclusive = (J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState);
+
+	if (!*hasExclusive) {
+		internalReleaseVMAccess(currentThread);
+		omrthread_monitor_enter(vm->jfrBufferMutex);
+	}
+	if (vm->jfrBuffer.bufferRemaining < size) {
+		if (isJFRV2SupportEnabled(vm)) {
+			if (!*hasExclusive) {
+				omrthread_monitor_exit(vm->jfrBufferMutex);
+				internalAcquireVMAccess(currentThread);
+				notifyForChunkRotation(currentThread);
+			}
+			goto done;
+		} else {
+			if (!*hasExclusive) {
+				internalAcquireVMAccess(currentThread);
+			}
+			bool result = writeOutGlobalBuffer(currentThread, false, false);
+			if (!*hasExclusive) {
+				internalReleaseVMAccess(currentThread);
+			}
+			if (!result) {
+				if (!*hasExclusive) {
+					omrthread_monitor_exit(vm->jfrBufferMutex);
+				}
+				goto done;
+			}
+		}
+	}
+	bytes = vm->jfrBuffer.bufferCurrent;
+	vm->jfrBuffer.bufferCurrent += size;
+	vm->jfrBuffer.bufferRemaining -= size;
+
+done:
+	return bytes;
 }
 
 /**
@@ -321,36 +364,29 @@ writeOutGlobalBuffer(J9VMThread *currentThread, bool finalWrite, bool dumpCalled
 static bool
 flushBufferToGlobal(J9VMThread *currentThread, J9VMThread *flushThread)
 {
-	J9JavaVM *vm = currentThread->javaVM;
 	UDATA bufferSize = flushThread->jfrBuffer.bufferCurrent - flushThread->jfrBuffer.bufferStart;
 	bool success = true;
+	U_8 *allocStart = NULL;
+	bool hasExclusive = false;
 
-#if defined(DEBUG)
-	PORT_ACCESS_FROM_VMC(currentThread);
-	j9tty_printf(PORTLIB, "\n!!! flushing %p of size %u start=%p current=%p\n", flushThread, (U_32)bufferSize, flushThread->jfrBuffer.bufferStart, flushThread->jfrBuffer.bufferCurrent);
-#endif /* defined(DEBUG) */
+	Trc_VM_jfr_flushBufferToGlobal(currentThread, flushThread, (U_32)bufferSize, flushThread->jfrBuffer.bufferStart, flushThread->jfrBuffer.bufferCurrent);
 
 	if (!areJFRBuffersReadyForWrite(flushThread)) {
 		goto done;
 	}
 
-	omrthread_monitor_enter(vm->jfrBufferMutex);
-	if (vm->jfrBuffer.bufferRemaining < bufferSize) {
-		if (isJFRV2SupportEnabled(vm)) {
-			omrthread_monitor_exit(vm->jfrBufferMutex);
-			notifyForChunkRotation(currentThread);
-			success = false;
-			goto done;
-		} else if (!writeOutGlobalBuffer(currentThread, false, false)) {
-			omrthread_monitor_exit(vm->jfrBufferMutex);
-			success = false;
-			goto done;
-		}
+	allocStart = allocateMemFromGlobalBuffer(currentThread, bufferSize, &hasExclusive);
+
+	if (NULL == allocStart) {
+		success = false;
+		goto done;
 	}
-	memcpy(vm->jfrBuffer.bufferCurrent, flushThread->jfrBuffer.bufferStart, bufferSize);
-	vm->jfrBuffer.bufferCurrent += bufferSize;
-	vm->jfrBuffer.bufferRemaining -= bufferSize;
-	omrthread_monitor_exit(vm->jfrBufferMutex);
+	memcpy(allocStart, flushThread->jfrBuffer.bufferStart, bufferSize);
+
+	if (!hasExclusive) {
+		omrthread_monitor_exit(flushThread->javaVM->jfrBufferMutex);
+		internalAcquireVMAccess(currentThread);
+	}
 
 	/* Reset the buffer */
 	flushThread->jfrBuffer.bufferRemaining = flushThread->jfrBuffer.bufferSize;
@@ -435,11 +471,10 @@ reserveBuffer(J9VMThread *currentThread, J9VMThread *sampleThread, UDATA size)
 	/* Either we are holding on to VM access or this operation is driven by another thread that has exclusive. */
 	Assert_VM_mustHaveVMAccess(currentThread);
 	Assert_VM_true((currentThread != sampleThread) ? ((J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState)) : TRUE);
+	bool areBuffersReady = areJFRBuffersReadyForWrite(sampleThread);
+	bool isJFRDisabledOnThread = isJFRRecordingDisabledOnThread(currentThread, sampleThread);
 
-	if (!areJFRBuffersReadyForWrite(sampleThread)
-		|| ((NULL != sampleThread->threadObject)
-			&& isJFRRecordingDisabledOnThread(currentThread, sampleThread->threadObject))
-	) {
+	if (!areBuffersReady || isJFRDisabledOnThread) {
 		goto done;
 	}
 
@@ -456,6 +491,9 @@ reserveBuffer(J9VMThread *currentThread, J9VMThread *sampleThread, UDATA size)
 		sampleThread->jfrBuffer.bufferRemaining -= size;
 	}
 done:
+	if (NULL == jfrEvent) {
+		Trc_VM_jfrReserveBuffer_nullBuffer(currentThread, sampleThread, size, areBuffersReady, isJFRDisabledOnThread);
+	}
 	return jfrEvent;
 }
 
@@ -515,29 +553,29 @@ jfrThreadCreated(J9HookInterface **hook, UDATA eventNum, void *eventData, void *
 	J9VMThread *currentThread = event->vmThread;
 	PORT_ACCESS_FROM_VMC(currentThread);
 
-#if defined(DEBUG)
-	j9tty_printf(PORTLIB, "\n!!! thread created %p\n", currentThread);
-#endif /* defined(DEBUG) */
+	Trc_VM_jfrThreadCreated(currentThread);
 
-	/* TODO: allow different buffer sizes on different threads. */
-	U_8 *buffer = (U_8 *)j9mem_allocate_memory(J9JFR_THREAD_BUFFER_SIZE, J9MEM_CATEGORY_JFR);
-	if (NULL == buffer) {
-		event->continueInitialization = FALSE;
-	} else {
-		currentThread->jfrBuffer.bufferStart = buffer;
-		currentThread->jfrBuffer.bufferCurrent = buffer;
-		currentThread->jfrBuffer.bufferSize = J9JFR_THREAD_BUFFER_SIZE;
-		currentThread->jfrBuffer.bufferRemaining = J9JFR_THREAD_BUFFER_SIZE;
+	if (NULL == currentThread->jfrBuffer.bufferStart) {
+		/* TODO: allow different buffer sizes on different threads. */
+		U_8 *buffer = (U_8 *)j9mem_allocate_memory(J9JFR_THREAD_BUFFER_SIZE, J9MEM_CATEGORY_JFR);
+		if (NULL == buffer) {
+			event->continueInitialization = FALSE;
+		} else {
+			currentThread->jfrBuffer.bufferStart = buffer;
+			currentThread->jfrBuffer.bufferCurrent = buffer;
+			currentThread->jfrBuffer.bufferSize = J9JFR_THREAD_BUFFER_SIZE;
+			currentThread->jfrBuffer.bufferRemaining = J9JFR_THREAD_BUFFER_SIZE;
 #if defined(DEBUG)
-		memset(currentThread->jfrBuffer.bufferStart, 0, J9JFR_THREAD_BUFFER_SIZE);
+			memset(currentThread->jfrBuffer.bufferStart, 0, J9JFR_THREAD_BUFFER_SIZE);
 #endif /* defined(DEBUG) */
+		}
 	}
 }
 
 /**
  * Hook for classes being unloaded.
  *
- * Fkushes all thread buffers. Current thread has exclusive VM access.
+ * Flushes all thread buffers. Current thread has exclusive VM access.
  *
  * @param hook[in] the VM hook interface
  * @param eventNum[in] the event number
@@ -551,10 +589,7 @@ jfrClassesUnload(J9HookInterface **hook, UDATA eventNum, void *eventData, void *
 	J9VMThread *currentThread = event->currentThread;
 	J9JavaVM *vm = currentThread->javaVM;
 
-#if defined(DEBUG)
-	PORT_ACCESS_FROM_VMC(currentThread);
-	j9tty_printf(PORTLIB, "\n!!! class unload %p\n", currentThread);
-#endif /* defined(DEBUG) */
+	Trc_VM_jfrClassesUnload(currentThread);
 
 	flushAllThreadBuffers(currentThread, false);
 	if (isJFRV2SupportEnabled(vm)) {
@@ -590,10 +625,7 @@ jfrVMShutdown(J9HookInterface **hook, UDATA eventNum, void *eventData, void *use
 	bool needsVMAccess = J9_ARE_NO_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_VM_ACCESS);
 	bool acquiredExclusive = false;
 
-#if defined(DEBUG)
-	PORT_ACCESS_FROM_VMC(currentThread);
-	j9tty_printf(PORTLIB, "\n!!! shutdown %p\n", currentThread);
-#endif /* defined(DEBUG) */
+	Trc_VM_jfrVMShutdown(currentThread);
 
 	if (needsVMAccess) {
 		internalAcquireVMAccess(currentThread);
@@ -634,17 +666,12 @@ jfrThreadStarting(J9HookInterface **hook, UDATA eventNum, void *eventData, void 
 	J9VMThread *currentThread = event->currentThread;
 	J9VMThread *startedThread = event->startedThread;
 
-#if defined(DEBUG)
-	PORT_ACCESS_FROM_VMC(currentThread);
-	j9tty_printf(PORTLIB, "\n!!! thread starting %p %p\n", currentThread, startedThread);
-#endif /* defined(DEBUG) */
+	Trc_VM_jfrThreadStarting(currentThread, startedThread);
 
 	/* Skip recording the ThreadStart event if the started thread is JFR-excluded.
 	 * reserveBuffer checks the sample thread (currentThread here), not the started thread.
 	 */
-	if ((NULL != startedThread->threadObject)
-		&& isJFRRecordingDisabledOnThread(currentThread, startedThread->threadObject)
-	) {
+	if (isJFRRecordingDisabledOnThread(currentThread, startedThread)) {
 		return;
 	}
 
@@ -670,9 +697,7 @@ jfrThreadEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *user
 	J9VMThread *currentThread = event->currentThread;
 	PORT_ACCESS_FROM_VMC(currentThread);
 
-#if defined(DEBUG)
-	j9tty_printf(PORTLIB, "\n!!! thread end %p\n", currentThread);
-#endif /* defined(DEBUG) */
+	Trc_VM_jfrThreadEnd(currentThread);
 
 	internalAcquireVMAccess(currentThread);
 	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
@@ -702,9 +727,7 @@ jfrVMSlept(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userDa
 	J9VMThread *currentThread = event->currentThread;
 	PORT_ACCESS_FROM_VMC(currentThread);
 
-#if defined(DEBUG)
-	j9tty_printf(PORTLIB, "\n!!! thread sleep %p\n", currentThread);
-#endif /* defined(DEBUG) */
+	Trc_VM_jfrVMSlept(currentThread);
 
 	J9JFRThreadSlept *jfrEvent = (J9JFRThreadSlept *)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_THREAD_SLEEP, sizeof(*jfrEvent), 0);
 	if (NULL != jfrEvent) {
@@ -714,26 +737,6 @@ jfrVMSlept(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userDa
 		I_64 currentNanos = j9time_nano_time();
 		jfrEvent->duration = currentNanos - event->startTicks;
 	}
-}
-
-/**
- * Hook for VM intialized. Called without VM access.
- *
- * @param hook[in] the VM hook interface, not used
- * @param eventNum[in] the event number, not used
- * @param eventData[in] the event data
- * @param userData[in] the registered user data, not used
- */
-static void
-jfrVMInitialized(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
-{
-	J9VMThread *currentThread = ((J9VMInitEvent *)eventData)->vmThread;
-
-#if defined(DEBUG)
-	PORT_ACCESS_FROM_VMC(currentThread);
-	j9tty_printf(PORTLIB, "\n!!! VM init %p\n", currentThread);
-#endif /* defined(DEBUG) */
-	jfrStartSamplingThread(currentThread->javaVM);
 }
 
 /**
@@ -776,9 +779,7 @@ jfrVMMonitorWaited(J9HookInterface **hook, UDATA eventNum, void *eventData, void
 	J9VMThread *currentThread = event->currentThread;
 	PORT_ACCESS_FROM_VMC(currentThread);
 
-#if defined(DEBUG)
-	j9tty_printf(PORTLIB, "\n!!! VM monitor waited %p\n", currentThread);
-#endif /* defined(DEBUG) */
+	Trc_VM_jfrVMMonitorWaited(currentThread);
 
 	if (!isChunkRotationMonitor(currentThread, event->monitor)) {
 		J9JFRMonitorWaited *jfrEvent = (J9JFRMonitorWaited *)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_OBJECT_WAIT, sizeof(*jfrEvent), 0);
@@ -825,9 +826,7 @@ jfrVMMonitorEntered(J9HookInterface **hook, UDATA eventNum, void *eventData, voi
 	J9VMThread *currentThread = event->currentThread;
 	PORT_ACCESS_FROM_VMC(currentThread);
 
-#if defined(DEBUG)
-	j9tty_printf(PORTLIB, "\n!!! VM monitor entered %p\n", currentThread);
-#endif /* defined(DEBUG) */
+	Trc_VM_jfrVMMonitorEntered(currentThread);
 	if (!isChunkRotationMonitor(currentThread, event->monitor)) {
 		J9JFRMonitorEntered *jfrEvent = (J9JFRMonitorEntered *)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_MONITOR_ENTER, sizeof(*jfrEvent), 0);
 		if (NULL != jfrEvent) {
@@ -856,9 +855,7 @@ jfrVMThreadParked(J9HookInterface **hook, UDATA eventNum, void *eventData, void 
 	J9VMThread *currentThread = event->currentThread;
 	PORT_ACCESS_FROM_VMC(currentThread);
 
-#if defined(DEBUG)
-	j9tty_printf(PORTLIB, "\n!!! thread park %p\n", currentThread);
-#endif /* defined(DEBUG) */
+	Trc_VM_jfrVMThreadParked(currentThread);
 
 	J9JFRThreadParked *jfrEvent = (J9JFRThreadParked *)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_THREAD_PARK, sizeof(*jfrEvent), 0);
 	if (NULL != jfrEvent) {
@@ -1011,6 +1008,7 @@ initializeJFR(J9JavaVM *vm)
 	U_8 *buffer = NULL;
 	UDATA timeSuccess = 0;
 	J9VMThread *currentThread = currentVMThread(vm);
+	Trc_VM_initializeJFR(currentThread, vm);
 	J9VMThread *walkThread = NULL;
 	J9HookInterface **vmHooks = getVMHookInterface(vm);
 
@@ -1149,14 +1147,12 @@ startJFRRecording(J9JavaVM *vm)
 	J9HookInterface **vmHooks = getVMHookInterface(vm);
 	J9VMThread *currentThread = currentVMThread(vm);
 	BOOLEAN rc = FALSE;
+	Trc_VM_startJFRRecording(currentThread, vm);
 
 	Assert_VM_mustHaveVMAccess(currentThread);
 	Assert_VM_false(vm->jfrState.isStarted);
 	Assert_VM_true(vm->jfrState.isCreated);
 
-	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_THREAD_CREATED, jfrThreadCreated, OMR_GET_CALLSITE(), NULL)) {
-		goto done;
-	}
 	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CLASSES_UNLOAD, jfrClassesUnload, OMR_GET_CALLSITE(), NULL)) {
 		goto done;
 	}
@@ -1205,6 +1201,7 @@ stopJFRRecording(J9JavaVM *vm)
 {
 	J9VMThread *currentThread = currentVMThread(vm);
 	J9HookInterface **vmHooks = getVMHookInterface(vm);
+	Trc_VM_stopJFRRecording(currentThread, vm);
 	Assert_VM_mustHaveVMAccess(currentThread);
 	internalReleaseVMAccess(currentThread);
 
@@ -1228,14 +1225,11 @@ stopJFRRecording(J9JavaVM *vm)
 	internalAcquireVMAccess(currentThread);
 
 	/* Unhook all the events */
-	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_CREATED, jfrThreadCreated, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_CLASSES_UNLOAD, jfrClassesUnload, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_SHUTTING_DOWN, jfrVMShutdown, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_STARTING, jfrThreadStarting, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_END, jfrThreadEnd, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_SLEPT, jfrVMSlept, NULL);
-	/* Unregister it anyway even it wasn't registered for initializeJFR(vm). */
-	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_INITIALIZED, jfrVMInitialized, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_MONITOR_WAITED, jfrVMMonitorWaited, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_MONITOR_CONTENDED_ENTERED, jfrVMMonitorEntered, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_UNPARKED, jfrVMThreadParked, NULL);
@@ -1250,6 +1244,7 @@ tearDownJFR(J9JavaVM *vm)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	J9VMThread *currentThread = currentVMThread(vm);
+	Trc_VM_tearDownJFR(currentThread, vm);
 
 	Assert_VM_mustHaveVMAccess(currentThread);
 	Assert_VM_true(vm->jfrState.isCreated);
@@ -1397,10 +1392,7 @@ isJFRCreated(J9JavaVM *vm)
 void
 jfrExecutionSample(J9VMThread *currentThread, J9VMThread *sampleThread)
 {
-#if defined(DEBUG)
-	PORT_ACCESS_FROM_VMC(currentThread);
-	j9tty_printf(PORTLIB, "\n!!! execution sample %p %p\n", currentThread, sampleThread);
-#endif /* defined(DEBUG) */
+	Trc_VM_jfrExecutionSampleCallback(currentThread, sampleThread);
 
 	J9JFRExecutionSample *jfrEvent = (J9JFRExecutionSample *)reserveBufferWithStackTrace(currentThread, sampleThread, J9JFR_EVENT_TYPE_EXECUTION_SAMPLE, sizeof(*jfrEvent), 0);
 	if (NULL != jfrEvent) {
@@ -1466,9 +1458,9 @@ jfrThreadCPULoad(J9VMThread *currentThread, J9VMThread *sampleThread)
 	intptr_t rc = omrthread_get_thread_times(&threadTimes);
 
 	if (-1 != rc) {
-		J9JFRThreadCPULoad *jfrEvent = (J9JFRThreadCPULoad *)reserveBuffer(currentThread, currentThread, sizeof(J9JFRThreadCPULoad));
+		J9JFRThreadCPULoad *jfrEvent = (J9JFRThreadCPULoad *)reserveBuffer(currentThread, sampleThread, sizeof(J9JFRThreadCPULoad));
 		if (NULL != jfrEvent) {
-			initializeEventFields(currentThread, currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_THREAD_CPU_LOAD);
+			initializeEventFields(currentThread, sampleThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_THREAD_CPU_LOAD);
 
 			J9ThreadJFRState *jfrState = &sampleThread->threadJfrState;
 			int64_t currentTime = j9time_nano_time();
@@ -1657,6 +1649,7 @@ jfrSamplingThreadProc(void *entryArg)
 	J9VMThread *currentThread = NULL;
 
 	if (JNI_OK == attachSystemDaemonThread(vm, &currentThread, "JFR sampler")) {
+		internalReleaseVMAccess(currentThread);
 		omrthread_monitor_enter(vm->jfrSamplerMutex);
 		vm->jfrSamplerState = J9JFR_SAMPLER_STATE_RUNNING;
 		omrthread_monitor_notify_all(vm->jfrSamplerMutex);
@@ -1671,7 +1664,9 @@ jfrSamplingThreadProc(void *entryArg)
 					jfrClassLoadingStatistics(currentThread);
 					jfrThreadStatistics(currentThread);
 					if (0 == (count % 1000)) { // 10 seconds
+						internalReleaseVMAccess(currentThread);
 						J9SignalAsyncEvent(vm, NULL, vm->jfrThreadCPULoadAsyncKey);
+						internalAcquireVMAccess(currentThread);
 						jfrThreadContextSwitchRate(currentThread);
 					}
 					if (0 == (count % 500)) { // 5 seconds
@@ -1685,6 +1680,7 @@ jfrSamplingThreadProc(void *entryArg)
 			omrthread_monitor_wait_timed(vm->jfrSamplerMutex, J9JFR_SAMPLING_RATE, 0);
 		}
 		omrthread_monitor_exit(vm->jfrSamplerMutex);
+		internalAcquireVMAccess(currentThread);
 		DetachCurrentThread((JavaVM *)vm);
 	}
 
@@ -1734,10 +1730,17 @@ disableJFRRecordingOnThread(J9VMThread *currentThread, j9object_t threadObject)
 }
 
 BOOLEAN
-isJFRRecordingDisabledOnThread(J9VMThread *currentThread, j9object_t threadObject)
+isJFRRecordingDisabledOnThread(J9VMThread *currentThread, J9VMThread *sampleThread)
 {
+	BOOLEAN rc = FALSE;
 	J9JavaVM *vm = currentThread->javaVM;
-	return J9OBJECT_I32_LOAD(currentThread, threadObject, vm->isJFRExcludedOffset);
+	if (isJFRV2SupportEnabled(vm)) {
+		j9object_t threadObject = sampleThread->threadObject;
+		if (NULL != threadObject) {
+			rc =  J9OBJECT_I32_LOAD(currentThread, threadObject, vm->isJFRExcludedOffset);
+		}
+	}
+	return rc;
 }
 
 static UDATA
@@ -2193,6 +2196,8 @@ addTypeIds(J9JavaVM *vm) {
 jboolean
 JfrPeriodicEventSet::requestEvent(J9VMThread *currentThread, jlong id)
 {
+	Trc_VM_JfrPeriodicEventSet_requestEvent(currentThread, id);
+
 	switch (id) {
 	case JfrClassLoaderStatisticsEvent:
 		requestClassLoaderStatistics(currentThread);
@@ -2342,7 +2347,9 @@ void
 JfrPeriodicEventSet::requestThreadCPULoad(J9VMThread *currentThread)
 {
 	J9JavaVM *vm = currentThread->javaVM;
+	internalReleaseVMAccess(currentThread);
 	J9SignalAsyncEvent(vm, NULL, vm->jfrThreadCPULoadAsyncKey);
+	internalAcquireVMAccess(currentThread);
 }
 
 void
@@ -2400,25 +2407,11 @@ JfrPeriodicEventSet::requestThreadDump(J9VMThread *currentThread)
 
 	const U_64 bufferSize = VM_JFRUtils::THREAD_DUMP_EVENT_SIZE_PER_THREAD * vm->peakThreadCount;
 	const UDATA eventSize = bufferSize + sizeof(J9JFRThreadDump);
-	J9JFRThreadDump *jfrEvent = NULL;
+	J9JFRThreadDump *jfrEvent = (J9JFRThreadDump *)reserveBuffer(currentThread, currentThread, eventSize);
 
-	omrthread_monitor_enter(vm->jfrBufferMutex);
-	if (eventSize > vm->jfrBuffer.bufferRemaining) {
-		if (isJFRV2SupportEnabled(vm)) {
-			omrthread_monitor_exit(vm->jfrBufferMutex);
-			notifyForChunkRotation(currentThread);
-			return;
-		} else {
-			if (!writeOutGlobalBuffer(currentThread, false, false)) {
-				omrthread_monitor_exit(vm->jfrBufferMutex);
-				return;
-			}
-		}
+	if (NULL == jfrEvent) {
+		return;
 	}
-	jfrEvent = (J9JFRThreadDump *)vm->jfrBuffer.bufferCurrent;
-	vm->jfrBuffer.bufferCurrent += eventSize;
-	vm->jfrBuffer.bufferRemaining -= eventSize;
-	omrthread_monitor_exit(vm->jfrBufferMutex);
 
 	U_8 *buffer = NULL;
 	UDATA length = 0;
@@ -2429,6 +2422,7 @@ JfrPeriodicEventSet::requestThreadDump(J9VMThread *currentThread)
 	jfrEvent->bufferSize = bufferSize;
 	jfrEvent->result = buffer;
 	jfrEvent->resultLength = length;
+
 	return;
 }
 
@@ -2481,7 +2475,9 @@ void
 JfrPeriodicEventSet::requestThreadAllocation(J9VMThread *currentThread)
 {
 	J9JavaVM *vm = currentThread->javaVM;
+	internalReleaseVMAccess(currentThread);
 	J9SignalAsyncEvent(vm, NULL, vm->jfrThreadAllocationStatisticsAsyncKey);
+	internalAcquireVMAccess(currentThread);
 }
 
 static void
@@ -2503,6 +2499,7 @@ jfrThreadAllocationStatisticsCallback(J9VMThread *currentThread, IDATA handlerKe
 void
 jfrEmitDataLoss(J9VMThread *currentThread, U_64 bytes)
 {
+	Trc_VM_jfrEmitDataLoss(currentThread, bytes);
 	J9JFRDataLoss *jfrEvent = (J9JFRDataLoss *)reserveBuffer(currentThread, currentThread, sizeof(J9JFRDataLoss));
 	if (NULL != jfrEvent) {
 		currentThread->threadJfrState.dataLostTotal += bytes;
@@ -2549,10 +2546,7 @@ notifyForChunkRotation(J9VMThread *currentThread)
 	Assert_VM_mustHaveVMAccess(currentThread);
 
 	if (JNI_FALSE == vm->jfrState.shouldRotateDisk) {
-#if defined(DEBUG)
-		PORT_ACCESS_FROM_VMC(currentThread);
-		j9tty_printf(PORTLIB, "\n!!! notifyForChunkRotation called\n");
-#endif /* defined(DEBUG) */
+		Trc_VM_notifyForChunkRotation(currentThread);
 
 		j9object_t chunkMonitor = J9_JNI_UNWRAP_REFERENCE(vm->jfrState.chunkRotationMonitor);
 

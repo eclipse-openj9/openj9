@@ -5709,7 +5709,7 @@ typedef struct J9InternalVMFunctions {
 	void (*jfrDump)(struct J9VMThread *currentThread, BOOLEAN finalWrite);
 	void (*enableJFRRecordingOnThread)(struct J9VMThread *currentThread, j9object_t threadObject);
 	void (*disableJFRRecordingOnThread)(struct J9VMThread *currentThread, j9object_t threadObject);
-	BOOLEAN (*isJFRRecordingDisabledOnThread)(struct J9VMThread *currentThread, j9object_t threadObject);
+	BOOLEAN (*isJFRRecordingDisabledOnThread)(struct J9VMThread *currentThread, struct J9VMThread *sampleThread);
 	void (*jfrExecutionSample)(struct J9VMThread *currentThread, struct J9VMThread *sampleThread);
 	void  (*jfrOldGarbageCollection)(struct OMR_VMThread *omrVMThread) ;
 	void  (*jfrYoungGarbageCollection)(struct OMR_VMThread *omrVMThread) ;

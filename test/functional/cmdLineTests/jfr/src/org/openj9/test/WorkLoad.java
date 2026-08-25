@@ -81,9 +81,16 @@ public class WorkLoad {
 			vthreads = Boolean.parseBoolean(args[3]);
 		}
 
-		WorkLoad workload = new WorkLoad(numberOfThreads, sizeOfNumberList, repeats, vthreads);
-		workload.runWork();
-		System.gc();
+		try {
+			WorkLoad workload = new WorkLoad(numberOfThreads, sizeOfNumberList, repeats, vthreads);
+			workload.runWork();
+			System.gc();
+		} catch (Throwable t) {
+			t.printStackTrace();
+		} finally {
+			System.out.println("Test ended");
+		}
+
 	}
 
 	public void runWork() {
