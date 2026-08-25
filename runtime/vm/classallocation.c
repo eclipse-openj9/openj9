@@ -336,6 +336,11 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 		classLoader->outlivingLoaders = NULL;
 	}
 
+	if (NULL != classLoader->redefinedClasses) {
+		hashTableFree(classLoader->redefinedClasses);
+		classLoader->redefinedClasses = NULL;
+	}
+
 #ifdef J9VM_NEEDS_JNI_REDIRECTION
 	if (classLoader->jniRedirectionBlocks != NULL) {
 		J9JNIRedirectionBlock* block = classLoader->jniRedirectionBlocks;

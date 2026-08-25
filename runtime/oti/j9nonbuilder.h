@@ -5736,6 +5736,7 @@ typedef struct J9InternalVMFunctions {
 	jlong (*getTypeIdUTF8)(struct J9VMThread *currentThread, struct J9ClassLoader *classLoader, struct J9UTF8 *className, BOOLEAN freeName);
 	jlong (*getTypeId)(struct J9VMThread *currentThread, struct J9Class *clazz);
 	void (*jvmUpcallsEagerByteInstrumentation)(struct J9VMThread *currentThread, struct J9Class *superClass, U_8 *className, U_16 classNameLength, struct J9ClassLoader *loader, U_8 *classData, UDATA classDataLength, U_8 **newClassData, UDATA *newClassDataLength);
+	void (*jvmUpcallsOnRetransform)(jvmtiEnv *jvmtiEnv, JNIEnv *jniEnv, jclass classBeingRedefined, jobject loader, const char *name, jobject protectionDomain, jint classDataLen, const unsigned char *classData, jint *newClassDataLen, unsigned char **newClassData);
 	j9object_t (*jvmUpcallTransformArrayToList)(struct J9VMThread *currentThread, j9object_t array);
 	void (*jvmUpcallsTransformJFREventClass)(struct J9VMThread *currentThread, U_8 *classData, UDATA classDataLength, U_8 **newClassData, UDATA *newClassDataLength);
 	jobject (*createNewEventWriter)(struct J9VMThread *currentThread);
@@ -6278,6 +6279,7 @@ typedef struct JFRState {
 	jclass jfrInternalEventClassRef;
 	jclass jfrEventClassRef;
 	J9Method *onRetransformUpcallMethod;
+	J9Method *bytesForEagerInstrumentation;
 	J9Method *transformToListMethod;
 	J9Method *transformJFREventClassMethod;
 	J9Method *constructorEventWriterMethod;
@@ -6296,6 +6298,7 @@ typedef struct JFRState {
 	IDATA startPositionAddressOffset;
 	IDATA currentPositionOffset;
 	IDATA maxPositionOffset;
+	jvmtiEnv *jvmtiAgent;
 } JFRState;
 
 typedef struct J9ReflectFunctionTable {

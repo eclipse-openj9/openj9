@@ -5991,6 +5991,22 @@ shutdownJFRIDs(J9JavaVM *vm);
 void
 jvmUpcallsEagerByteInstrumentation(J9VMThread *currentThread, J9Class *superClass, U_8 *className, U_16 classNameLength, J9ClassLoader *loader, U_8 *classData, UDATA classDataLength, U_8 **newClassData, UDATA *newClassDataLength);
 
+/**
+ * Call the JFR retransform method to modify the JFR event class. Current exception will
+ * be set if there is a failure.
+ *
+ * @param jvmtiEnv[in] the jvmtienv
+ * @param classBeingRedefined[in] the class being redefined
+ * @param loader[in] the classloader
+ * @param className[in] the name of the class
+ * @param protectionDomain[in] the protection domain
+ * @param classDataLength[in] the length of the class data
+ * @param classData[in] the class data
+ * @param newClassDataLength[out] the new class data length
+ * @param newClassData[out] the new class data
+ */
+void
+jvmUpcallsOnRetransform(jvmtiEnv *jvmtiEnv, JNIEnv *jniEnv, jclass classBeingRedefined, jobject loader, const char *name, jobject protectionDomain, jint classDataLen, const unsigned char *classData, jint *newClassDataLen, unsigned char **newClassData);
 
 /**
  * Call the JFR transformJFREventClass method to transform the jdk.jfr.Event class.
