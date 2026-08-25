@@ -1567,10 +1567,9 @@ getLocalsMap(J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * 
 			/* j9localmap_ArgBitsForPC0 only deals with args, so zero out the result array to make sure the temps are non-object */
 			memset(result, 0, copySize);
 			if (J9_ARE_ANY_BITS_SET(romMethodInfo->flags, J9MAPCACHE_ARGBITS_CACHED)) {
-				if (copySize > sizeof(romMethodInfo->argBits)) {
-					copySize = sizeof(romMethodInfo->argBits);
-				}
-				memcpy(result, romMethodInfo->argBits, copySize);
+				/* argBits covers only arg slots — use argCount */
+				UDATA argCopySize = (((UDATA)romMethodInfo->argCount + 31) >> 5) * sizeof(U_32);
+				memcpy(result, romMethodInfo->argBits, argCopySize);
 			} else {
 				j9localmap_ArgBitsForPC0(romClass, romMethod, result);
 			}
