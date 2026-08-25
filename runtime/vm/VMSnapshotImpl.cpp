@@ -859,11 +859,6 @@ VMSnapshotImpl::fixupConstantPool(J9Class *ramClass)
 				break;
 			case J9CPTYPE_INSTANCE_METHOD:
 			case J9CPTYPE_INTERFACE_INSTANCE_METHOD:
-				romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
-				nas = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
-				((J9RAMMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = (J9VTABLE_INITIAL_VIRTUAL_OFFSET << 8) +
-						getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
-				((J9RAMMethodRef *) ramConstantPool)[i].method = _vm->initialMethods.initialSpecialMethod;
 				break;
 			case J9CPTYPE_STATIC_METHOD:
 			case J9CPTYPE_INTERFACE_STATIC_METHOD:
@@ -875,10 +870,6 @@ VMSnapshotImpl::fixupConstantPool(J9Class *ramClass)
 				((J9RAMStaticMethodRef *) ramConstantPool)[i].method = _vm->initialMethods.initialStaticMethod;
 				break;
 			case J9CPTYPE_INTERFACE_METHOD:
-				romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
-				nas = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
-				((J9RAMInterfaceMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = J9_ITABLE_INDEX_UNRESOLVED | getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
-				((J9RAMInterfaceMethodRef *) ramConstantPool)[i].interfaceClass = 0;
 				break;
 			case J9CPTYPE_METHOD_TYPE:
 				romMethodTypeRef = ((J9ROMMethodTypeRef *) romConstantPool) + i;
