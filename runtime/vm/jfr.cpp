@@ -57,6 +57,11 @@ J9_DECLARE_CONSTANT_UTF8(transformJFREventClassSigUTF8, "([B)[B");
 J9_DECLARE_CONSTANT_NAS(transformJFREventClassNAS, transformJFREventClassUTF8, transformJFREventClassSigUTF8);
 J9_DECLARE_CONSTANT_UTF8(jfrInternalEventClassUTF8, "jdk/internal/event/Event");
 J9_DECLARE_CONSTANT_UTF8(jfrEventClassUTF8, "jdk/jfr/Event");
+J9_DECLARE_CONSTANT_UTF8(jfrEventWriterClassUTF8, "jdk/jfr/internal/EventWriter");
+J9_DECLARE_CONSTANT_UTF8(constructorEventWriterUTF8, "constructorEventWriter");
+J9_DECLARE_CONSTANT_UTF8(constructorEventWriterSigUTF8, "(JJJJZ)Ljava/lang/Object;");
+J9_DECLARE_CONSTANT_NAS(constructorEventWriterNAS, constructorEventWriterUTF8, constructorEventWriterSigUTF8);
+
 
 // TODO: allow configureable values
 #define J9JFR_THREAD_BUFFER_SIZE (128 * 1024)
@@ -78,6 +83,8 @@ static bool addEventIds(J9JavaVM *vm);
 static bool addTypeIds(J9JavaVM *vm);
 static void jfrThreadAllocationStatisticsCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData);
 #endif /* JAVA_SPEC_VERSION >= 17 */
+static bool initializeEventWriterFields(J9VMThread *currentThread);
+static void asyncflushJavaJFRBuffer(J9VMThread *currentThread, J9VMThread *flushThread);
 static void jfrShutdownInternalStructures(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void notifyForChunkRotation(J9VMThread *currentThread);
 static void checkAvailableSpaceInGlobalBuffer(J9VMThread *currentThread);
@@ -226,6 +233,9 @@ jfrEventSize(J9JFREvent *jfrEvent)
 	case J9JFR_EVENT_TYPE_PHYSICAL_MEMORY:
 		size = sizeof(J9JFRPhysicalMemory);
 		break;
+	case J9JFR_EVENT_TYPE_JAVA_EVENT_DATA:
+		size = sizeof(J9JFRJavaEventData) + ((J9JFRJavaEventData *)jfrEvent)->size;
+		break;
 	default:
 		Assert_VM_unreachable();
 		break;
@@ -368,12 +378,19 @@ done:
  * @returns true on success, false on failure
  */
 static bool
-flushBufferToGlobal(J9VMThread *currentThread, J9VMThread *flushThread)
+flushBufferToGlobal(J9VMThread *currentThread, J9VMThread *flushThread, bool flushJavaBuffer)
 {
-	UDATA bufferSize = flushThread->jfrBuffer.bufferCurrent - flushThread->jfrBuffer.bufferStart;
+	UDATA bufferSize = 0;
 	bool success = true;
 	U_8 *allocStart = NULL;
 	bool hasExclusive = false;
+
+	/* Flush Java buffer first. */
+	if ((NULL != flushThread->eventWriterRef) && flushJavaBuffer) {
+		asyncflushJavaJFRBuffer(currentThread, flushThread);
+	}
+
+	bufferSize = flushThread->jfrBuffer.bufferCurrent - flushThread->jfrBuffer.bufferStart;
 
 	Trc_VM_jfr_flushBufferToGlobal(currentThread, flushThread, (U_32)bufferSize, flushThread->jfrBuffer.bufferStart, flushThread->jfrBuffer.bufferCurrent);
 
@@ -431,7 +448,7 @@ flushAllThreadBuffers(J9VMThread *currentThread, bool freeBuffers)
 	Assert_VM_true((J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState));
 
 	do {
-		if (!flushBufferToGlobal(currentThread, loopThread)) {
+		if (!flushBufferToGlobal(currentThread, loopThread, true)) {
 			allSucceeded = false;
 		}
 		if (freeBuffers) {
@@ -448,7 +465,7 @@ flushAllThreadBuffers(J9VMThread *currentThread, bool freeBuffers)
 
 	if (!flushedCurrentThread) {
 		/* current thread will not be in thread list */
-		if (!flushBufferToGlobal(currentThread, currentThread)) {
+		if (!flushBufferToGlobal(currentThread, currentThread, true)) {
 			allSucceeded = false;
 		}
 		if (freeBuffers) {
@@ -488,7 +505,8 @@ reserveBuffer(J9VMThread *currentThread, J9VMThread *sampleThread, UDATA size)
 	if (size <= sampleThread->jfrBuffer.bufferSize) {
 		/* If there isn't enough space, flush the thread buffer to global */
 		if (size > sampleThread->jfrBuffer.bufferRemaining) {
-			if (!flushBufferToGlobal(currentThread, sampleThread)) {
+			/* Dont flush Java buffer as it will recusrively call reserveBuffer. */
+			if (!flushBufferToGlobal(currentThread, sampleThread, false)) {
 				goto done;
 			}
 		}
@@ -740,7 +758,7 @@ jfrThreadEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *user
 			initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_THREAD_END);
 		}
 	}
-	flushBufferToGlobal(currentThread, currentThread);
+	flushBufferToGlobal(currentThread, currentThread, true);
 
 	/* Free the thread local buffer */
 	j9mem_free_memory((void *)currentThread->jfrBuffer.bufferStart);
@@ -2165,18 +2183,14 @@ jvmUpcallsEagerByteInstrumentation(J9VMThread *currentThread, J9Class *superClas
 	j9object_t outputByteArray = NULL;
 	UDATA args[5];
 	BOOLEAN freeName = FALSE;
+	J9UTF8 *nameUTF8 = (J9UTF8 *)j9mem_allocate_memory(classNameLength + sizeof(U_16), OMRMEM_CATEGORY_VM);
 
-	U_8 buf[J9JFR_CLASSNAME_BUFFER_SIZE + sizeof(U_16)];
-	J9UTF8 *nameUTF8 = (J9UTF8 *)buf;
-
-	if (classNameLength > J9JFR_CLASSNAME_BUFFER_SIZE) {
-		nameUTF8 = (J9UTF8 *)j9mem_allocate_memory(classNameLength + sizeof(U_16), OMRMEM_CATEGORY_VM);
-		if (NULL == nameUTF8) {
-			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
-			goto done;
-		}
-		freeName = TRUE;
+	if (NULL == nameUTF8) {
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+		goto done;
 	}
+	freeName = TRUE;
+
 	J9UTF8_LENGTH(nameUTF8) = (U_16)classNameLength;
 	memcpy(J9UTF8_DATA(nameUTF8), className, classNameLength);
 
@@ -2331,6 +2345,231 @@ popInputArrayAndDone:
 	goto done;
 
 }
+
+j9object_t
+jvmUpcallsConstructorEventWriter(J9VMThread *currentThread, UDATA startPos, UDATA maxPos, UDATA startPosAddress, I_64 threadID, BOOLEAN valid)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	j9object_t eventWriterObject = NULL;
+	UDATA args[9];
+
+	if (NULL == vm->jfrState.constructorEventWriterMethod) {
+		J9Class *jfrHelpersClass = vmFuncs->internalFindClassUTF8(currentThread, (U_8 *)J9UTF8_DATA(&jfrHelpersUTF8), J9UTF8_LENGTH(&jfrHelpersUTF8), vm->systemClassLoader, J9_FINDCLASS_FLAG_THROW_ON_FAIL);
+		if (NULL == jfrHelpersClass) {
+			goto done;
+		}
+		vm->jfrState.constructorEventWriterMethod = (J9Method *)vmFuncs->javaLookupMethodImpl(currentThread, jfrHelpersClass, (J9ROMNameAndSignature *)&constructorEventWriterNAS, jfrHelpersClass, J9_LOOK_STATIC | J9_LOOK_DIRECT_NAS, NULL);
+		if (NULL == vm->jfrState.constructorEventWriterMethod) {
+			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+			goto done;
+		}
+		vmFuncs->initializeClass(currentThread, jfrHelpersClass);
+		if (VM_VMHelpers::exceptionPending(currentThread)) {
+			vm->jfrState.constructorEventWriterMethod = NULL;
+			goto done;
+		}
+	}
+
+	args[0] = (UDATA)0;
+	args[1] = (UDATA)startPos;
+	args[2] = (UDATA)0;
+	args[3] = (UDATA)maxPos;
+	args[4] = (UDATA)0;
+	args[5] = (UDATA)startPosAddress;
+	args[6] = (UDATA)0;
+	args[7] = (UDATA)threadID;
+	args[8] = (UDATA)valid;
+
+	vmFuncs->internalRunStaticMethod(currentThread, vm->jfrState.constructorEventWriterMethod, TRUE, 9, args);
+	eventWriterObject = (j9object_t)currentThread->returnValue;
+
+done:
+	return eventWriterObject;
+}
+
+jobject
+createNewEventWriter(J9VMThread *currentThread)
+{
+	PORT_ACCESS_FROM_VMC(currentThread);
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	jobject eventWriterRef = NULL;
+	j9object_t eventWriter = NULL;
+
+	if (NULL == currentThread->jfrJavaEventBuffer.bufferStart) {
+		/* TODO: allow different buffer sizes on different threads. */
+		U_8 *buffer = (U_8 *)j9mem_allocate_memory(J9JFR_THREAD_BUFFER_SIZE, J9MEM_CATEGORY_JFR);
+
+		if (NULL == buffer) {
+			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+			goto done;
+		}
+
+		/* Java code will write the current posistion to the start of the buffer.
+		 * So the actual payload will start sizeof(I_64) after.
+		 */
+		currentThread->jfrJavaEventBuffer.bufferStart = buffer;
+		currentThread->jfrJavaEventBuffer.bufferCurrent = buffer + sizeof(I_64);
+		currentThread->jfrJavaEventBuffer.bufferSize = J9JFR_THREAD_BUFFER_SIZE;
+		currentThread->jfrJavaEventBuffer.bufferRemaining = J9JFR_THREAD_BUFFER_SIZE - sizeof(I_64);
+#if defined(DEBUG)
+		memset(currentThread->jfrJavaEventBuffer.bufferStart, 0, J9JFR_THREAD_BUFFER_SIZE);
+#endif /* defined(DEBUG) */
+	}
+
+	eventWriter = jvmUpcallsConstructorEventWriter(currentThread,
+							(UDATA)currentThread->jfrJavaEventBuffer.bufferCurrent,
+							(UDATA)currentThread->jfrJavaEventBuffer.bufferStart + J9JFR_THREAD_BUFFER_SIZE,
+							(UDATA)currentThread->jfrJavaEventBuffer.bufferStart,
+							getThreadTID(currentThread, currentThread),
+							TRUE);
+	if (NULL == eventWriter) {
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+		goto done;
+	}
+
+	eventWriterRef = vmFuncs->j9jni_createGlobalRef((JNIEnv *)currentThread, eventWriter, FALSE);
+	if (NULL == eventWriterRef) {
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+		goto done;
+	}
+
+	if (0 == vm->jfrState.startPositionOffset) {
+		if (!initializeEventWriterFields(currentThread)) {
+			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+			goto done;
+		}
+	}
+
+done:
+	return eventWriterRef;
+}
+
+bool
+initializeEventWriterFields(J9VMThread *currentThread)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	JFRState *jfrState = &vm->jfrState;
+	bool result = true;
+
+	J9Class *eventWriterClass = vmFuncs->internalFindClassUTF8(currentThread,
+										(U_8 *)J9UTF8_DATA(&jfrEventWriterClassUTF8),
+										J9UTF8_LENGTH(&jfrEventWriterClassUTF8),
+										vm->systemClassLoader,
+										J9_FINDCLASS_FLAG_THROW_ON_FAIL);
+	if (NULL == eventWriterClass) {
+		result = false;
+		goto done;
+	}
+	jfrState->startPositionOffset = VM_VMHelpers::findinstanceFieldOffset(currentThread, eventWriterClass, "startPosition", "J");
+	jfrState->startPositionAddressOffset = VM_VMHelpers::findinstanceFieldOffset(currentThread, eventWriterClass, "startPositionAddress", "J");
+	jfrState->currentPositionOffset = VM_VMHelpers::findinstanceFieldOffset(currentThread, eventWriterClass, "currentPosition", "J");
+	jfrState->maxPositionOffset = VM_VMHelpers::findinstanceFieldOffset(currentThread, eventWriterClass, "maxPosition", "J");
+
+	if ((-1 == jfrState->startPositionOffset)
+		|| (-1 == jfrState->startPositionAddressOffset)
+		|| (-1 == jfrState->currentPositionOffset)
+		|| (-1 == jfrState->maxPositionOffset)
+	) {
+		result = false;
+		goto done;
+	}
+
+done:
+	return result;
+}
+
+
+void
+asyncflushJavaJFRBuffer(J9VMThread *currentThread, J9VMThread *flushThread)
+{
+	I_64 currentPosition = *(I_64 *)currentThread->jfrJavaEventBuffer.bufferStart;
+
+	/* The Java thread will be writing events between currentPosition and maxPosition so anything up to
+	 * currentPosition is safe to read. Start the reading from the internal currentPosition and not the start
+	 * of this buffer as we may have read part of this buffer in the past.
+	 */
+	UDATA amountToRead = (UDATA)currentPosition - (UDATA)flushThread->jfrJavaEventBuffer.bufferCurrent;
+
+	if (amountToRead > 0) {
+		J9JFRJavaEventData *jfrEvent = (J9JFRJavaEventData *)reserveBuffer(currentThread, flushThread, sizeof(J9JFRJavaEventData) + amountToRead);
+		if (NULL != jfrEvent) {
+			initializeEventFields(currentThread, flushThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_JAVA_EVENT_DATA);
+			jfrEvent->size = amountToRead;
+			U_8 *dest = J9JFRJAVAEVENTDATA_EVENTDATA(jfrEvent);
+			memcpy(dest, flushThread->jfrJavaEventBuffer.bufferCurrent, amountToRead);
+			flushThread->jfrJavaEventBuffer.bufferCurrent += amountToRead;
+		}
+	}
+}
+
+void
+flushJavaJFRBuffer(J9VMThread *currentThread, jobject eventWriterRef, I_32 uncommited, I_32 needed)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	j9object_t eventWriter = J9_JNI_UNWRAP_REFERENCE(eventWriterRef);
+	JFRState *jfrState = &vm->jfrState;
+	PORT_ACCESS_FROM_VMC(currentThread);
+	MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
+	UDATA newEventSize = uncommited + needed;
+	U_8 *oldBuffer = NULL;
+	Assert_VM_mustHaveVMAccess(currentThread);
+
+	/* We can also get current position directly from the object. */
+	I_64 currentPosition = *(I_64 *)currentThread->jfrJavaEventBuffer.bufferStart;
+	UDATA amountToRead = (UDATA)currentPosition - (UDATA)currentThread->jfrJavaEventBuffer.bufferCurrent;
+
+	if (amountToRead > 0) {
+		J9JFRJavaEventData *jfrEvent = (J9JFRJavaEventData *)reserveBuffer(currentThread, currentThread, sizeof(J9JFRJavaEventData) + amountToRead);
+		if (NULL != jfrEvent) {
+			initializeEventFields(currentThread, currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_JAVA_EVENT_DATA);
+			jfrEvent->size = amountToRead;
+			U_8 *dest = J9JFRJAVAEVENTDATA_EVENTDATA(jfrEvent);
+			memcpy(dest, currentThread->jfrJavaEventBuffer.bufferCurrent, amountToRead);
+			currentThread->jfrJavaEventBuffer.bufferCurrent += amountToRead;
+		}
+	}
+
+	/* If what is needed + what is currently being written is larger
+	 * than the an empty local thread buffer, then we need a larger buffer.
+	 */
+	if (newEventSize > J9JFR_THREAD_BUFFER_SIZE) {
+		oldBuffer = currentThread->jfrJavaEventBuffer.bufferStart;
+		UDATA roundedNewEventSize = ROUND_UP_TO_POWEROF2(newEventSize, sizeof(UDATA));
+		U_8 *buffer = (U_8 *)j9mem_allocate_memory(roundedNewEventSize, J9MEM_CATEGORY_JFR);
+
+		if (NULL == buffer) {
+			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+			goto done;
+		}
+		/* TODO when we expand the buffer there is a possibility we can't move a large
+		 * continguous chunk into the local vmthread buffer. We may need to move it directly
+		 * into the global buffer.
+		 */
+		currentThread->jfrJavaEventBuffer.bufferStart = buffer;
+		currentThread->jfrJavaEventBuffer.bufferCurrent = buffer + sizeof(I_64);
+		currentThread->jfrJavaEventBuffer.bufferSize = roundedNewEventSize;
+		currentThread->jfrJavaEventBuffer.bufferRemaining = roundedNewEventSize - sizeof(I_64);
+
+		objectAccessBarrier.inlineMixedObjectStoreI64(currentThread, eventWriter, jfrState->maxPositionOffset, (I_64)currentThread->jfrJavaEventBuffer.bufferStart + roundedNewEventSize, TRUE);
+		objectAccessBarrier.inlineMixedObjectStoreI64(currentThread, eventWriter, jfrState->startPositionAddressOffset, (I_64)currentThread->jfrJavaEventBuffer.bufferStart, TRUE);
+	}
+
+	/* Reset the buffer variables and move uncommited data back to the start of the new buffer. */
+	currentThread->jfrJavaEventBuffer.bufferCurrent = currentThread->jfrJavaEventBuffer.bufferStart + sizeof(I_64);
+	memmove(currentThread->jfrJavaEventBuffer.bufferCurrent, (const void *)(UDATA)currentPosition, uncommited);
+	objectAccessBarrier.inlineMixedObjectStoreI64(currentThread, eventWriter, jfrState->startPositionOffset, (I_64)currentThread->jfrJavaEventBuffer.bufferCurrent, TRUE);
+	objectAccessBarrier.inlineMixedObjectStoreI64(currentThread, eventWriter, jfrState->currentPositionOffset, (I_64)currentThread->jfrJavaEventBuffer.bufferCurrent, TRUE);
+
+	j9mem_free_memory(oldBuffer);
+done:
+	return;
+}
+
+
 
 #if JAVA_SPEC_VERSION >= 17
 static void

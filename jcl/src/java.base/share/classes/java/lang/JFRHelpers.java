@@ -40,12 +40,14 @@ final class JFRHelpers {
 	private static Class<?> logTagClass;
 	private static Class<?> logLeveLClass;
 	private static Class<?> loggerClass;
+	private static Class<?> eventWriter;
 	private static Object[] logTagValues;
 	private static Object[] logLevelValues;
 	private static Method log;
 	/*[IF JAVA_SPEC_VERSION >= 17]*/
 	private static Method logEvent;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+	private static Constructor<?> constructorEventWriter;
 	private static volatile boolean jfrClassesInitialized = false;
 	private static String jfrCMDLineOption = null;
 
@@ -247,6 +249,7 @@ final class JFRHelpers {
 				logTagClass = Class.forName("jdk.jfr.internal.LogTag");
 				logLeveLClass = Class.forName("jdk.jfr.internal.LogLevel");
 				loggerClass = Class.forName("jdk.jfr.internal.Logger");
+				eventWriter = Class.forName("jdk.jfr.internal.EventWriter");
 
 				Module javabase = System.class.getModule();
 				Module jdkJFR = jfrjvmClass.getModule();
@@ -265,6 +268,11 @@ final class JFRHelpers {
 				/*[IF JAVA_SPEC_VERSION >= 17]*/
 				logEvent = loggerClass.getDeclaredMethod("logEvent", new Class[]{logLeveLClass, String[].class, boolean.class});
 				/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+
+				/*[IF JAVA_SPEC_VERSION == 17]*/
+				constructorEventWriter = eventWriter.getDeclaredConstructor(long.class, long.class, long.class, long.class, boolean.class);
+				constructorEventWriter.setAccessible(true);
+				/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 
 				Unsafe.getUnsafe().ensureClassInitialized(jfrjvmClass);
 				Unsafe.getUnsafe().ensureClassInitialized(Class.forName("jdk.jfr.events.AbstractJDKEvent"));
@@ -312,6 +320,17 @@ final class JFRHelpers {
 		}
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+
+	/*[IF JAVA_SPEC_VERSION == 17]*/
+	private static Object constructorEventWriter(long startPos, long maxPos, long startPosAddress, long threadID, boolean valid) {
+		try {
+			return constructorEventWriter.newInstance(startPos, maxPos, startPosAddress, threadID, valid);
+		} catch (Throwable t) {
+			t.printStackTrace();
+			throw new RuntimeException(t);
+		}
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 
 	/*[IF JAVA_SPEC_VERSION == 17]*/
 	private static List<?> transformToList(Object[] array) {

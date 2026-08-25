@@ -1297,6 +1297,16 @@ VM_JFRChunkWriter::writeThreadDumpEvent(void *anElement, void *userData)
 }
 
 void
+VM_JFRChunkWriter::writeJavaEventData(void *anElement, void *userData)
+{
+	JavaEventDataEntry *eventData = (JavaEventDataEntry *)anElement;
+	VM_JFRChunkWriter *writer = (VM_JFRChunkWriter *)userData;
+	VM_BufferWriter *bufferWriter = writer->_bufferWriter;
+
+	bufferWriter->writeData(eventData->data, eventData->size);
+}
+
+void
 VM_JFRChunkWriter::writeSystemProcessEvent(void *anElement, void *userData)
 {
 	SystemProcessEntry *entry = (SystemProcessEntry *)anElement;
