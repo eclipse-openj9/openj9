@@ -461,7 +461,7 @@ void threadCleanup(J9VMThread * vmThread, UDATA forkedByVM)
 		/* Safe to call this whether handleUncaughtException clears the exception or not */
 		internalExceptionDescribe(vmThread);
 	}
-	VM_VMHelpers::setThreadState(vmThread, J9VMTHREAD_STATE_DEAD);
+	VM_VMHelpers::setThreadStateNoSave(vmThread, J9VMTHREAD_STATE_DEAD);
 	releaseVMAccess(vmThread);
 
 	/* Mark this thread as dead */
