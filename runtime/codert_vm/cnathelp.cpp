@@ -711,7 +711,10 @@ old_slow_jitGetFlattenableField(J9VMThread *currentThread)
 
 	buildJITResolveFrameWithPC(currentThread, J9_STACK_FLAGS_JIT_ALLOCATION_RESOLVE | J9_SSF_JIT_RESOLVE, parmCount, true, 0, oldPC);
 	returnObject = currentThread->javaVM->internalVMFunctions->getFlattenableField(currentThread, cpEntry, receiver, FALSE);
-	if (NULL == returnObject) {
+
+	/* A NULL return from getFlattenableField() indicates an allocation failure
+	 * only for flattened fields. For non-flattened fields, NULL is a valid value. */
+	if (J9_ARE_ALL_BITS_SET(cpEntry->flags, J9FieldFlagFlattened) && (NULL == returnObject)) {
 		rc = setHeapOutOfMemoryErrorFromJIT(currentThread);
 		goto done;
 	}
@@ -732,6 +735,7 @@ done:
 void* J9FASTCALL
 old_fast_jitGetFlattenableField(J9VMThread *currentThread)
 {
+	/* used for getfield on both value type and non-value type fields */
 	OLD_JIT_HELPER_PROLOGUE(2);
 	DECLARE_JIT_PARM(J9RAMFieldRef*, cpEntry, 1);
 	DECLARE_JIT_PARM(j9object_t, receiver, 2);
@@ -917,6 +921,7 @@ old_slow_jitPutFlattenableField(J9VMThread *currentThread)
 void* J9FASTCALL
 old_fast_jitPutFlattenableField(J9VMThread *currentThread)
 {
+	/* used for putfield on both value type and non-value type fields */
 	OLD_JIT_HELPER_PROLOGUE(3);
 	DECLARE_JIT_PARM(J9RAMFieldRef*, cpEntry, 1);
 	DECLARE_JIT_PARM(j9object_t, receiver, 2);
@@ -925,6 +930,11 @@ old_fast_jitPutFlattenableField(J9VMThread *currentThread)
 	void *rc = NULL;
 
 	if (NULL == receiver) {
+		goto slow;
+	}
+
+	/* NullRestricted field cannot be set to null. */
+	if (J9_ARE_ALL_BITS_SET(cpEntry->flags, J9FieldFlagIsNullRestricted) && (NULL == paramObject)) {
 		goto slow;
 	}
 
