@@ -1005,51 +1005,6 @@ VM_JFRChunkWriter::writeYoungGenerationConfigurationEvent()
 }
 
 void
-VM_JFRChunkWriter::writeGCConfigurationEvent()
-{
-	GCConfigurationEntry *gcConfig = &(VM_JFRConstantPoolTypes::getJFRConstantEvents(_vm)->GCConfigEntry);
-
-	/* reserve size field */
-	U_8 *dataStart = reserveEventSize();
-
-	/* write event type */
-	_bufferWriter->writeLEB128(GCConfigurationID);
-
-	/* write event start time */
-	_bufferWriter->writeLEB128(j9time_nano_time());
-
-	/* write young collector name */
-	_bufferWriter->writeLEB128(gcConfig->youngCollector);
-
-	/* write old collector name */
-	_bufferWriter->writeLEB128(gcConfig->oldCollector);
-
-	/* write parallel GC thread count */
-	_bufferWriter->writeLEB128(gcConfig->parallelGCThreads);
-
-	/* write concurrent GC thread count */
-	_bufferWriter->writeLEB128(gcConfig->concurrentGCThreads);
-
-	/* write whether dynamic GC threads are used */
-	_bufferWriter->writeBoolean(gcConfig->usesDynamicGCThreads);
-
-	/* write whether explicit GC is concurrent */
-	_bufferWriter->writeBoolean(gcConfig->isExplicitGCConcurrent);
-
-	/* write whether explicit GC is disabled */
-	_bufferWriter->writeBoolean(gcConfig->isExplicitGCDisabled);
-
-	/* write pause target */
-	_bufferWriter->writeLEB128(gcConfig->pauseTarget);
-
-	/* write GC time ratio */
-	_bufferWriter->writeLEB128(gcConfig->gcTimeRatio);
-
-	/* write event size */
-	writeEventSize(dataStart);
-}
-
-void
 VM_JFRChunkWriter::writeInitialSystemPropertyEvents(J9JavaVM *vm)
 {
 	pool_state walkState;
