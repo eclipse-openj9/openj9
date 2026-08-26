@@ -563,9 +563,6 @@ TR::Register *J9::Z::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, TR
 
 TR::Register *J9::Z::TreeEvaluator::inlineStringLatin1CompareToUTF16Values(TR::Node *node, TR::CodeGenerator *cg)
 {
-    TR_ASSERT_FATAL(cg->getSupportsInlineStringLatin1CompareToUTF16Values(),
-        "This evaluator should only be triggered when inlining StringLatin1.compareToUTF16Values is enabled!\n");
-
     // inlinesprivate static int compareToUTF16Values(byte[] value, byte[] other, int len1, int len2)
     // Returns: c1 - c2 if characters differ, or len1 - len2 if all compared characters are equal
     TR::Node *latin1ArrayNode = node->getChild(0);
