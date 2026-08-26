@@ -642,7 +642,7 @@ TR::Register *J9::Z::TreeEvaluator::inlineStringLatin1CompareToUTF16Values(TR::N
     // CRJ fuses the compare and conditional branch into one instruction.
     generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, limReg, len1Reg);
     generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CR, node, len1Reg, len2Reg,
-        TR::InstOpCode::COND_BL, minDoneLabel, false, false, NULL, NULL);
+        TR::InstOpCode::COND_BL, minDoneLabel, false, false);
     generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, limReg, len2Reg);
     generateS390LabelInstruction(cg, TR::InstOpCode::label, node, minDoneLabel);
 
