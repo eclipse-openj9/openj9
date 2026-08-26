@@ -618,8 +618,7 @@ TR::Register *J9::Z::TreeEvaluator::inlineStringLatin1CompareToUTF16Values(TR::N
     TR::LabelSymbol *returnLenDiffLabel = generateLabelSymbol(cg);
     TR::LabelSymbol *foundDifferenceLabel = generateLabelSymbol(cg);
     TR::LabelSymbol *foundDifferenceBLabel = generateLabelSymbol(cg);
-    TR::LabelSymbol *useLenLabel = generateLabelSymbol(cg);
-    TR::LabelSymbol *continueLabel = generateLabelSymbol(cg);
+    TR::LabelSymbol *minDoneLabel = generateLabelSymbol(cg);
     TR::LabelSymbol *gprFastPathLabel = generateLabelSymbol(cg);
     TR::LabelSymbol *gprDiffLabel = generateLabelSymbol(cg);
     TR::LabelSymbol *zeroLenExitLabel = generateLabelSymbol(cg);
@@ -639,14 +638,13 @@ TR::Register *J9::Z::TreeEvaluator::inlineStringLatin1CompareToUTF16Values(TR::N
         TR::InstOpCode::COND_BE);
 
     // Calculate lim = min(len1, len2)
-    // CR compares the raw 32-bit int parameters; LLGFR zero-extends the chosen value into limReg
-    generateRRInstruction(cg, TR::InstOpCode::CR, node, len1Reg, len2Reg);
-    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, node, useLenLabel);
-    generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, limReg, len2Reg);
-    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, continueLabel);
-    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, useLenLabel);
+    // Pre-load limReg with len1 (zero-extended); overwrite with len2 only if len2 < len1.
+    // CRJ fuses the compare and conditional branch into one instruction.
     generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, limReg, len1Reg);
-    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, continueLabel);
+    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CR, node, len1Reg, len2Reg,
+        TR::InstOpCode::COND_BL, minDoneLabel, false, false, NULL, NULL);
+    generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, limReg, len2Reg);
+    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, minDoneLabel);
 
     // Advance array pointers past the header. After each loop iteration latin1ArrayReg and
     // utf16ArrayReg are bumped in lock-step with indexReg, so at any point after the loop:
