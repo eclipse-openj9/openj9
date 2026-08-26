@@ -1491,8 +1491,17 @@ initialArgumentScan(JavaVMInitArgs *args, J9SpecialArguments *specialArgs, J9Cre
 		}
 	}
 
-	if ((NULL != classPathValue) && (NULL != javaCommandValue) && (strcmp(javaCommandValue, classPathValue) == 0)) {
-		specialArgs->executableJarPath = javaCommandValue;
+	if ((NULL != classPathValue) && (NULL != javaCommandValue)) {
+		size_t len = strlen(classPathValue);
+		if ((0 == strncmp(javaCommandValue, classPathValue, len))
+			&& (('\0' == javaCommandValue[len]) || (' ' == javaCommandValue[len]))
+		) {
+			/*
+			 * Set executableJarPath if the classPathValue might be a jar file. When -jar is used the
+			 * -Dsun.java.command= starts with the same value as -Djava.class.path=, with java arguments
+			 * following after a space. */
+			specialArgs->executableJarPath = classPathValue;
+		}
 	}
 
 	if (xCheckFound) {
