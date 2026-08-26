@@ -1162,7 +1162,14 @@ addJarArguments(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, c
 			zipEntryFlags |= J9ZIP_GETENTRY_USE_CENTRAL_DIRECTORY;
 		}
 
-		if (0 == status) {
+		if (0 != status) {
+			/*
+			 * If not a valid jar file return no error, otherwise the JVM will stop. The calling code may
+			 * have incorrectly determined -jar mode if the -cp and main class are the same. Or it's
+			 * just not a jar, in which case there will be an error elsewhere.
+			 */
+			status = 0;
+		} else {
 			J9ZipEntry entry;
 			U_32 dataBufferSize = 0;
 			U_8 *dataBuffer = NULL; /* executable JARs tend to have huge manifests, so go straight to a heap-allocated buffer */
