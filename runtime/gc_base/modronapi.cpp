@@ -857,6 +857,38 @@ j9gc_get_maximum_heap_size(J9JavaVM *javaVM)
 }
 
 /**
+ * API to return the minimum TLH (Thread Local Heap) size.
+ */
+UDATA
+j9gc_get_tlh_minimum_size(J9JavaVM *javaVM)
+{
+	return MM_GCExtensions::getExtensions(javaVM)->tlhMinimumSize;
+}
+
+/**
+ * API to return the TLH refill waste limit.
+ * Returns tlhMaxAbandonSize, which is maintained by TLHAllocationSupport::restart()
+ * as a cycle-average estimate of abandonSize (= max(tlhMinimumSize, refreshSize / 2))
+ * across all threads. Falls back to tlhMaximumSize / 2 if no GC cycle has occurred yet.
+ */
+UDATA
+j9gc_get_tlh_refill_waste_limit(J9JavaVM *javaVM)
+{
+	return MM_GCExtensions::getExtensions(javaVM)->tlhMaxAbandonSize;
+}
+
+/**
+ * API to return whether TLH allocation is enabled.
+ */
+BOOLEAN
+j9gc_is_tlab_enabled(J9JavaVM *javaVM)
+{
+	uintptr_t allocType = 0;
+	UDATA found = javaVM->memoryManagerFunctions->j9gc_modron_getConfigurationValueForKey(javaVM, j9gc_modron_configuration_allocationType, &allocType);
+	return (found && (j9gc_modron_allocation_type_tlh == allocType)) ? TRUE : FALSE;
+}
+
+/**
  * API to return the heap base address
  */
 void *
