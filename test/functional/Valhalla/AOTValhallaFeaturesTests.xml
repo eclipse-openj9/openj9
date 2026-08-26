@@ -41,12 +41,26 @@
 	<exec command="$JAVA_EXE$ -cp $TESTSJARPATH$ --enable-preview -Xshareclasses:name=flat.arr,reset -Xscminaot10K -Xscmaxaot100K -Xaot:forceaot,limit={org/openj9/test/jep401/Sample.sub*} -XX:+EnableFlattening -XX:+EnableArrayFlattening org.openj9.test.jep401.Sample" quiet="false"/>
 	<exec command="$JAVA_EXE$ -cp $TESTSJARPATH$ --enable-preview -Xshareclasses:name=flat.thr4,reset -Xscminaot10K -Xscmaxaot100K -Xaot:forceaot,limit={org/openj9/test/jep401/Sample.sub*} -XX:+EnableFlattening -XX:ValueTypeFlatteningThreshold=4 org.openj9.test.jep401.Sample" quiet="false"/>
 	<exec command="$JAVA_EXE$ -cp $TESTSJARPATH$ --enable-preview -Xshareclasses:name=flat.arr.thr4,reset -Xscminaot10K -Xscmaxaot100K -Xaot:forceaot,limit={org/openj9/test/jep401/Sample.sub*} -XX:+EnableFlattening -XX:+EnableArrayFlattening -XX:ValueTypeFlatteningThreshold=4 org.openj9.test.jep401.Sample" quiet="false"/>
+	<exec command="$JAVA_EXE$ -cp $TESTSJARPATH$ --enable-preview -Xshareclasses:name=flat.thr8,reset -Xscminaot10K -Xscmaxaot100K -Xaot:forceaot,limit={org/openj9/test/jep401/Sample.sub*} -XX:+EnableFlattening -XX:ValueTypeFlatteningThreshold=8 org.openj9.test.jep401.Sample" quiet="false"/>
+	<exec command="$JAVA_EXE$ -cp $TESTSJARPATH$ --enable-preview -Xshareclasses:name=flat.arr.thr8,reset -Xscminaot10K -Xscmaxaot100K -Xaot:forceaot,limit={org/openj9/test/jep401/Sample.sub*} -XX:+EnableFlattening -XX:+EnableArrayFlattening -XX:ValueTypeFlatteningThreshold=8 org.openj9.test.jep401.Sample" quiet="false"/>
 
 	<!--
 	   - Set variables indicating whether tests should be run with value types flattening
 	   - enabled, array element flattening enabled and the flattening threshold option.
 	   - The array element flattening and flattening threshold only take effect if value
 	   - types flattening itself is enabled.
+	   -
+	   - VALHFLATMODE=310 sets -XX:-EnableFlattening
+	   - VALHFLATMODE=311 sets -XX:+EnableFlattening
+	   -
+	   - VALHARRFLATMODE=320 sets -XX:-EnableArrayFlattening
+	   - VALHARRFLATMODE=321 sets -XX:+EnableArrayFlattening
+	   -
+	   - VALHARRFLATMODE=330 uses the default -XX:ValueTypeFlatteningThreshold setting
+	   - VALHARRFLATMODE=334 sets -XX:ValueTypeFlatteningThreshold=4
+	   - VALHARRFLATMODE=338 sets -XX:ValueTypeFlatteningThreshold=8
+	   -
+	   - If VALHFLATMODE is 310, the -XX:-EnableArrayFlattening option and default -XX:ValueTypeFlatteningThreshold take effect
 	  -->
 	<if testVariable="VALHFLATMODE" testValue="310" resultVariable="ENABLEFLATTENING" resultValue="no"/>
 	<if testVariable="VALHFLATMODE" testValue="311" resultVariable="ENABLEFLATTENING" resultValue="yes"/>
@@ -56,7 +70,8 @@
 	<if testVariable="VALHFLATMODE" testValue="310" resultVariable="ENABLEARRAYFLATTENING" resultValue="no"/>
 
 	<if testVariable="VALHFLATTHRESHMODE" testValue="330" resultVariable="USEFLATTENINGTHREHSOLD" resultValue="no"/>
-	<if testVariable="VALHFLATTHRESHMODE" testValue="331" resultVariable="USEFLATTENINGTHREHSOLD" resultValue="yes"/>
+	<if testVariable="VALHFLATTHRESHMODE" testValue="334" resultVariable="USEFLATTENINGTHREHSOLD" resultValue="4"/>
+	<if testVariable="VALHFLATTHRESHMODE" testValue="338" resultVariable="USEFLATTENINGTHREHSOLD" resultValue="8"/>
 	<if testVariable="VALHFLATMODE" testValue="310" resultVariable="USEFLATTENINGTHRESHOLD" resultValue="no"/>
 
 	<!--
@@ -68,8 +83,9 @@
 	<if testVariable="ENABLEARRAYFLATTENING" testValue="no" resultVariable="ARRAYFLATTENINGOPT" resultValue="-XX:-EnableArrayFlattening"/>
 	<if testVariable="ENABLEARRAYFLATTENING" testValue="yes" resultVariable="ARRAYFLATTENINGOPT" resultValue="-XX:+EnableArrayFlattening"/>
 
+
+	<variable name="FLATTENINGTHRESHOLDOPT" value="-XX:ValueTypeFlatteningThreshold=$USEFLATTENINGTHREHSOLD$"/>
 	<if testVariable="USEFLATTENINGTHREHSOLD" testValue="no" resultVariable="FLATTENINGTHRESHOLDOPT" resultValue=""/>
-	<if testVariable="USEFLATTENINGTHREHSOLD" testValue="yes" resultVariable="FLATTENINGTHRESHOLDOPT" resultValue="-XX:ValueTypeFlatteningThreshold=4"/>
 
 	<echo value=" "/>
 	<echo value="###########################################################################"/>
@@ -123,7 +139,7 @@
 		<if testVariable="ENABLEARRAYFLATTENING" testValue="no" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="failure"/>
 
 		<!-- If flattening threshold option is specified, expect a mismatch warning; otherwise, fail if the warning is produced -->
-		<if testVariable="USEFLATTENINGTHREHSOLD" testValue="yes" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="required"/>
+		<variable name="EXPECTFLATTENINGTHRESHOLDMISMATCH" value="required"/>
 		<if testVariable="USEFLATTENINGTHREHSOLD" testValue="no" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
 
 		<!-- Flattening threshold mismatch should only be reported if flattening was enabled, but array flattening was not -->
@@ -161,7 +177,7 @@
 		<if testVariable="ENABLEARRAYFLATTENING" testValue="yes" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="failure"/>
 
 		<!-- If flattening threshold option is specified, expect a mismatch warning; otherwise, fail if the warning is produced -->
-		<if testVariable="USEFLATTENINGTHREHSOLD" testValue="yes" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="required"/>
+		<variable name="EXPECTFLATTENINGTHRESHOLDMISMATCH" value="required"/>
 		<if testVariable="USEFLATTENINGTHREHSOLD" testValue="no" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
 
 		<!-- Flattening threshold mismatch should only be reported if flattening and array flattening were both enabled -->
@@ -198,9 +214,9 @@
 		<if testVariable="ENABLEARRAYFLATTENING" testValue="yes" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="required"/>
 		<if testVariable="ENABLEARRAYFLATTENING" testValue="no" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="failure"/>
 
-		<!-- If flattening threshold option is not specified, expect a mismatch warning; otherwise, fail if the warning is produced -->
-		<if testVariable="USEFLATTENINGTHREHSOLD" testValue="no" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="required"/>
-		<if testVariable="USEFLATTENINGTHREHSOLD" testValue="yes" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+		<!-- If flattening threshold option is not specified or does not have a value of 4, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<variable name="EXPECTFLATTENINGTHRESHOLDMISMATCH" value="required"/>
+		<if testVariable="USEFLATTENINGTHREHSOLD" testValue="4" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
 
 		<!-- Flattening threshold mismatch should only be reported if flattening was enabled, but array flattening was not -->
 		<if testVariable="ENABLEFLATTENING" testValue="no" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
@@ -236,9 +252,9 @@
 		<if testVariable="ENABLEARRAYFLATTENING" testValue="no" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="required"/>
 		<if testVariable="ENABLEARRAYFLATTENING" testValue="yes" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="failure"/>
 
-		<!-- If flattening threshold option is not specified, expect a mismatch warning; otherwise, fail if the warning is produced -->
-		<if testVariable="USEFLATTENINGTHREHSOLD" testValue="no" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="required"/>
-		<if testVariable="USEFLATTENINGTHREHSOLD" testValue="yes" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+		<!-- If flattening threshold option is not specified or does not have a value of 4, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<variable name="EXPECTFLATTENINGTHRESHOLDMISMATCH" value="required"/>
+		<if testVariable="USEFLATTENINGTHREHSOLD" testValue="4" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
 
 		<!-- Flattening threshold mismatch should only be reported if flattening and array flattening were both enabled -->
 		<if testVariable="ENABLEFLATTENING" testValue="no" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
@@ -246,6 +262,82 @@
 
 		<!-- Run the test and look for warning messages -->
 		<command>$JAVA_EXE$ -cp $TESTSJARPATH$ --enable-preview -Xshareclasses:name=flat.arr.thr4,verbose -Xaot:forceaot,limit={org/openj9/test/jep401/Sample.sub*} $FLATTENINGOPT$ $ARRAYFLATTENINGOPT$ $FLATTENINGTHRESHOLDOPT$ org.openj9.test.jep401.Sample</command>
+
+		<!-- Ignore regularly seen AOT messages -->
+		<output type="success" caseSensitive="yes" regex="yes">\[-Xshareclasses .* enabled\]</output>
+		<output type="success" caseSensitive="yes" regex="yes">JVMSHRC.*</output>
+		<output type="success" caseSensitive="yes" regex="yes">AOT for ROMMethod 0x[0-9a-f]* in shared cache</output>
+
+		<!-- Verify test actually runs -->
+		<output type="required" caseSensitive="yes" regex="no">In Sample.sub</output>
+		<output type="required" caseSensitive="yes" regex="no">In Sample.main</output>
+		<output type="required" caseSensitive="yes" regex="no">Leaving Sample.main</output>
+
+		<!-- These are the messages we're interested in -->
+		<output type="$EXPECTFLATTENINGMISMATCH$" caseSensitive="yes" regex="no">Flattening of null-restricted types feature mismatch. Ignoring AOT code in shared class cache.</output>
+		<output type="$EXPECTARRFLATTENINGMISMATCH$" caseSensitive="yes" regex="no">Flattening of null-restricted array elements feature mismatch. Ignoring AOT code in shared class cache.</output>
+		<output type="$EXPECTFLATTENINGTHRESHOLDMISMATCH$" caseSensitive="yes" regex="no">Null-restricted types flattening threshold mismatch. Ignoring AOT code in shared class cache.</output>
+	</test>
+
+	<test id="testAOTFieldFlatteningThreshold8SCC">
+		<!-- Test with SCC built with flattening enabled and flattening threshold of four -->
+
+		<!-- If flattening is disabled, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<if testVariable="ENABLEFLATTENING" testValue="no" resultVariable="EXPECTFLATTENINGMISMATCH" resultValue="required"/>
+		<if testVariable="ENABLEFLATTENING" testValue="yes" resultVariable="EXPECTFLATTENINGMISMATCH" resultValue="failure"/>
+
+		<!-- If array element flattening is enabled, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="yes" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="required"/>
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="no" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="failure"/>
+
+		<!-- If flattening threshold option is not specified or does not have a value of 8, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<variable name="EXPECTFLATTENINGTHRESHOLDMISMATCH" value="required"/>
+		<if testVariable="USEFLATTENINGTHREHSOLD" testValue="8" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+
+		<!-- Flattening threshold mismatch should only be reported if flattening was enabled, but array flattening was not -->
+		<if testVariable="ENABLEFLATTENING" testValue="no" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="yes" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+
+		<!-- Run the test and look for warning messages -->
+		<command>$JAVA_EXE$ -cp $TESTSJARPATH$ --enable-preview -Xshareclasses:name=flat.thr8,verbose -Xaot:forceaot,limit={org/openj9/test/jep401/Sample.sub*} $FLATTENINGOPT$ $ARRAYFLATTENINGOPT$ $FLATTENINGTHRESHOLDOPT$ org.openj9.test.jep401.Sample</command>
+
+		<!-- Ignore regularly seen AOT messages -->
+		<output type="success" caseSensitive="yes" regex="yes">\[-Xshareclasses .* enabled\]</output>
+		<output type="success" caseSensitive="yes" regex="yes">JVMSHRC.*</output>
+		<output type="success" caseSensitive="yes" regex="yes">AOT for ROMMethod 0x[0-9a-f]* in shared cache</output>
+
+		<!-- Verify test actually runs -->
+		<output type="required" caseSensitive="yes" regex="no">In Sample.sub</output>
+		<output type="required" caseSensitive="yes" regex="no">In Sample.main</output>
+		<output type="required" caseSensitive="yes" regex="no">Leaving Sample.main</output>
+
+		<!-- These are the messages we're interested in -->
+		<output type="$EXPECTFLATTENINGMISMATCH$" caseSensitive="yes" regex="no">Flattening of null-restricted types feature mismatch. Ignoring AOT code in shared class cache.</output>
+		<output type="$EXPECTARRFLATTENINGMISMATCH$" caseSensitive="yes" regex="no">Flattening of null-restricted array elements feature mismatch. Ignoring AOT code in shared class cache.</output>
+		<output type="$EXPECTFLATTENINGTHRESHOLDMISMATCH$" caseSensitive="yes" regex="no">Null-restricted types flattening threshold mismatch. Ignoring AOT code in shared class cache.</output>
+	</test>
+
+	<test id="testAOTFieldAndArrayFlatteningThreshold8SCC">
+		<!-- Test with SCC built with flattening enabled, array element flattening enabled and flattening threshold of four -->
+
+		<!-- If flattening is disabled, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<if testVariable="ENABLEFLATTENING" testValue="no" resultVariable="EXPECTFLATTENINGMISMATCH" resultValue="required"/>
+		<if testVariable="ENABLEFLATTENING" testValue="yes" resultVariable="EXPECTFLATTENINGMISMATCH" resultValue="failure"/>
+
+		<!-- If array element flattening is disabled, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="no" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="required"/>
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="yes" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="failure"/>
+
+		<!-- If flattening threshold option is not specified or does not have a value of 8, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<variable name="EXPECTFLATTENINGTHRESHOLDMISMATCH" value="required"/>
+		<if testVariable="USEFLATTENINGTHREHSOLD" testValue="8" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+
+		<!-- Flattening threshold mismatch should only be reported if flattening and array flattening were both enabled -->
+		<if testVariable="ENABLEFLATTENING" testValue="no" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="no" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+
+		<!-- Run the test and look for warning messages -->
+		<command>$JAVA_EXE$ -cp $TESTSJARPATH$ --enable-preview -Xshareclasses:name=flat.arr.thr8,verbose -Xaot:forceaot,limit={org/openj9/test/jep401/Sample.sub*} $FLATTENINGOPT$ $ARRAYFLATTENINGOPT$ $FLATTENINGTHRESHOLDOPT$ org.openj9.test.jep401.Sample</command>
 
 		<!-- Ignore regularly seen AOT messages -->
 		<output type="success" caseSensitive="yes" regex="yes">\[-Xshareclasses .* enabled\]</output>
