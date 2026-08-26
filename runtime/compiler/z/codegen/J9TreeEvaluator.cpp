@@ -603,13 +603,11 @@ TR::Register *J9::Z::TreeEvaluator::inlineStringLatin1CompareToUTF16Values(TR::N
     if (TR::Compiler->om.isOffHeapAllocationEnabled()) {
         // Load first data element address for Latin1 array
         generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, latin1ArrayReg,
-            generateS390MemoryReference(latin1ArrayReg,
-                cg->comp()->fej9()->getOffsetOfContiguousDataAddrField(), cg));
+            generateS390MemoryReference(latin1ArrayReg, cg->comp()->fej9()->getOffsetOfContiguousDataAddrField(), cg));
 
         // Load first data element address for UTF16 array
         generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, utf16ArrayReg,
-            generateS390MemoryReference(utf16ArrayReg,
-                cg->comp()->fej9()->getOffsetOfContiguousDataAddrField(), cg));
+            generateS390MemoryReference(utf16ArrayReg, cg->comp()->fej9()->getOffsetOfContiguousDataAddrField(), cg));
 
         offsetToDataElements = 0;
     }
@@ -638,8 +636,10 @@ TR::Register *J9::Z::TreeEvaluator::inlineStringLatin1CompareToUTF16Values(TR::N
     // is len1-len2. Check before the min() block and both LA pointer advances to skip all
     // of that overhead. The hot path (lim>=1) pays 2 CIJ instructions; the degenerate lim=0
     // case saves the entire min() block + CG check + both LA instructions.
-    generateRIEInstruction(cg, TR::InstOpCode::CIJ, node, len1Reg, (int8_t)0, zeroLenExitLabel, TR::InstOpCode::COND_BE);
-    generateRIEInstruction(cg, TR::InstOpCode::CIJ, node, len2Reg, (int8_t)0, zeroLenExitLabel, TR::InstOpCode::COND_BE);
+    generateRIEInstruction(cg, TR::InstOpCode::CIJ, node, len1Reg, (int8_t)0, zeroLenExitLabel,
+        TR::InstOpCode::COND_BE);
+    generateRIEInstruction(cg, TR::InstOpCode::CIJ, node, len2Reg, (int8_t)0, zeroLenExitLabel,
+        TR::InstOpCode::COND_BE);
 
     // Calculate lim = min(len1, len2)
     // CR compares the raw 32-bit int parameters; LLGFR zero-extends the chosen value into limReg
@@ -665,7 +665,8 @@ TR::Register *J9::Z::TreeEvaluator::inlineStringLatin1CompareToUTF16Values(TR::N
     // GPR fast path for lim in [1,7]: skip all vector setup overhead (~17 instructions).
     // latin1ArrayReg and utf16ArrayReg already point past the header at this point.
     // lim=0 was already caught above; CGIJ with COND_BL catches lim in [1,7].
-    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, limReg, (int8_t)8, gprFastPathLabel, TR::InstOpCode::COND_BL);
+    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, limReg, (int8_t)8, gprFastPathLabel,
+        TR::InstOpCode::COND_BL);
 
     // Initialize index to 0 (use 64-bit XOR to clear all bits)
     generateRRInstruction(cg, TR::InstOpCode::XGR, node, indexReg, indexReg);
@@ -689,14 +690,10 @@ TR::Register *J9::Z::TreeEvaluator::inlineStringLatin1CompareToUTF16Values(TR::N
     generateS390LabelInstruction(cg, TR::InstOpCode::label, node, vectorLoopLabel);
 
     // Load chunk A (chars [index, index+8)) and chunk B (chars [index+8, index+16))
-    generateVRXInstruction(cg, TR::InstOpCode::VL, node, vLatin1,
-        generateS390MemoryReference(latin1ArrayReg, 0, cg));
-    generateVRXInstruction(cg, TR::InstOpCode::VL, node, vUTF16,
-        generateS390MemoryReference(utf16ArrayReg, 0, cg));
-    generateVRXInstruction(cg, TR::InstOpCode::VL, node, vLatin1_B,
-        generateS390MemoryReference(latin1ArrayReg, 8, cg));
-    generateVRXInstruction(cg, TR::InstOpCode::VL, node, vUTF16_B,
-        generateS390MemoryReference(utf16ArrayReg, 16, cg));
+    generateVRXInstruction(cg, TR::InstOpCode::VL, node, vLatin1, generateS390MemoryReference(latin1ArrayReg, 0, cg));
+    generateVRXInstruction(cg, TR::InstOpCode::VL, node, vUTF16, generateS390MemoryReference(utf16ArrayReg, 0, cg));
+    generateVRXInstruction(cg, TR::InstOpCode::VL, node, vLatin1_B, generateS390MemoryReference(latin1ArrayReg, 8, cg));
+    generateVRXInstruction(cg, TR::InstOpCode::VL, node, vUTF16_B, generateS390MemoryReference(utf16ArrayReg, 16, cg));
 
     // Expand and compare chunk A
     generateVRRaInstruction(cg, TR::InstOpCode::VUPLH, node, vLatin1Expanded, vLatin1, 0, 0, 0, 0);
@@ -716,8 +713,8 @@ TR::Register *J9::Z::TreeEvaluator::inlineStringLatin1CompareToUTF16Values(TR::N
         generateS390MemoryReference(latin1ArrayReg, 16, cg));
     generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, utf16ArrayReg,
         generateS390MemoryReference(utf16ArrayReg, 32, cg));
-    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CGR, node, indexReg, resultReg,
-        TR::InstOpCode::COND_BL, vectorLoopLabel, false, false);
+    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CGR, node, indexReg, resultReg, TR::InstOpCode::COND_BL,
+        vectorLoopLabel, false, false);
 
     // Two-stage residual: handle 0-15 remaining characters after the 16-char loop.
     generateS390LabelInstruction(cg, TR::InstOpCode::label, node, residualLabel);
@@ -727,20 +724,18 @@ TR::Register *J9::Z::TreeEvaluator::inlineStringLatin1CompareToUTF16Values(TR::N
     generateRRInstruction(cg, TR::InstOpCode::SGR, node, tempReg, indexReg);
 
     // No residual — all done
-    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, tempReg, 0,
-        TR::InstOpCode::COND_BE, returnLenDiffLabel, false, false);
+    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, tempReg, 0, TR::InstOpCode::COND_BE,
+        returnLenDiffLabel, false, false);
 
     // If residual < 8, skip straight to the VLL path
-    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, tempReg, 8,
-        TR::InstOpCode::COND_BL, smallResidualLabel, false, false);
+    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, tempReg, 8, TR::InstOpCode::COND_BL,
+        smallResidualLabel, false, false);
 
     // First residual stage: process first 8 of 8–15 remaining chars with a full VL,
     // then fall into the VLL stage for the remaining 0–7.
-    generateVRXInstruction(cg, TR::InstOpCode::VL, node, vLatin1,
-        generateS390MemoryReference(latin1ArrayReg, 0, cg));
+    generateVRXInstruction(cg, TR::InstOpCode::VL, node, vLatin1, generateS390MemoryReference(latin1ArrayReg, 0, cg));
     generateVRRaInstruction(cg, TR::InstOpCode::VUPLH, node, vLatin1Expanded, vLatin1, 0, 0, 0, 0);
-    generateVRXInstruction(cg, TR::InstOpCode::VL, node, vUTF16,
-        generateS390MemoryReference(utf16ArrayReg, 0, cg));
+    generateVRXInstruction(cg, TR::InstOpCode::VL, node, vUTF16, generateS390MemoryReference(utf16ArrayReg, 0, cg));
     generateVRRbInstruction(cg, TR::InstOpCode::VCEQ, node, vLatin1, vLatin1Expanded, vUTF16, 1, 1);
     generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, foundDifferenceLabel);
     generateRILInstruction(cg, TR::InstOpCode::AGFI, node, indexReg, 8);
@@ -757,8 +752,8 @@ TR::Register *J9::Z::TreeEvaluator::inlineStringLatin1CompareToUTF16Values(TR::N
     generateRRInstruction(cg, TR::InstOpCode::SGR, node, tempReg, indexReg);
 
     // No residual — all done
-    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, tempReg, 0,
-        TR::InstOpCode::COND_BE, returnLenDiffLabel, false, false);
+    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, tempReg, 0, TR::InstOpCode::COND_BE,
+        returnLenDiffLabel, false, false);
 
     // Compute Latin1 VLL length: tempReg - 1, save in temp2Reg (use 64-bit)
     generateRRInstruction(cg, TR::InstOpCode::LGR, node, temp2Reg, tempReg);
@@ -795,64 +790,56 @@ TR::Register *J9::Z::TreeEvaluator::inlineStringLatin1CompareToUTF16Values(TR::N
     generateS390LabelInstruction(cg, TR::InstOpCode::label, node, gprFastPathLabel);
 
     // char 0 — always present (lim >= 1)
-    generateRXInstruction(cg, TR::InstOpCode::LLC, node, tempReg,
-        generateS390MemoryReference(latin1ArrayReg, 0, cg));
-    generateRXInstruction(cg, TR::InstOpCode::LLH, node, temp2Reg,
-        generateS390MemoryReference(utf16ArrayReg, 0, cg));
+    generateRXInstruction(cg, TR::InstOpCode::LLC, node, tempReg, generateS390MemoryReference(latin1ArrayReg, 0, cg));
+    generateRXInstruction(cg, TR::InstOpCode::LLH, node, temp2Reg, generateS390MemoryReference(utf16ArrayReg, 0, cg));
     generateRRInstruction(cg, TR::InstOpCode::SGR, node, tempReg, temp2Reg);
     generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, tempReg, (int8_t)0, gprDiffLabel, TR::InstOpCode::COND_BNE);
-    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, limReg, (int8_t)1, returnLenDiffLabel, TR::InstOpCode::COND_BNH);
+    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, limReg, (int8_t)1, returnLenDiffLabel,
+        TR::InstOpCode::COND_BNH);
 
     // char 1
-    generateRXInstruction(cg, TR::InstOpCode::LLC, node, tempReg,
-        generateS390MemoryReference(latin1ArrayReg, 1, cg));
-    generateRXInstruction(cg, TR::InstOpCode::LLH, node, temp2Reg,
-        generateS390MemoryReference(utf16ArrayReg, 2, cg));
+    generateRXInstruction(cg, TR::InstOpCode::LLC, node, tempReg, generateS390MemoryReference(latin1ArrayReg, 1, cg));
+    generateRXInstruction(cg, TR::InstOpCode::LLH, node, temp2Reg, generateS390MemoryReference(utf16ArrayReg, 2, cg));
     generateRRInstruction(cg, TR::InstOpCode::SGR, node, tempReg, temp2Reg);
     generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, tempReg, (int8_t)0, gprDiffLabel, TR::InstOpCode::COND_BNE);
-    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, limReg, (int8_t)2, returnLenDiffLabel, TR::InstOpCode::COND_BNH);
+    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, limReg, (int8_t)2, returnLenDiffLabel,
+        TR::InstOpCode::COND_BNH);
 
     // char 2
-    generateRXInstruction(cg, TR::InstOpCode::LLC, node, tempReg,
-        generateS390MemoryReference(latin1ArrayReg, 2, cg));
-    generateRXInstruction(cg, TR::InstOpCode::LLH, node, temp2Reg,
-        generateS390MemoryReference(utf16ArrayReg, 4, cg));
+    generateRXInstruction(cg, TR::InstOpCode::LLC, node, tempReg, generateS390MemoryReference(latin1ArrayReg, 2, cg));
+    generateRXInstruction(cg, TR::InstOpCode::LLH, node, temp2Reg, generateS390MemoryReference(utf16ArrayReg, 4, cg));
     generateRRInstruction(cg, TR::InstOpCode::SGR, node, tempReg, temp2Reg);
     generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, tempReg, (int8_t)0, gprDiffLabel, TR::InstOpCode::COND_BNE);
-    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, limReg, (int8_t)3, returnLenDiffLabel, TR::InstOpCode::COND_BNH);
+    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, limReg, (int8_t)3, returnLenDiffLabel,
+        TR::InstOpCode::COND_BNH);
 
     // char 3
-    generateRXInstruction(cg, TR::InstOpCode::LLC, node, tempReg,
-        generateS390MemoryReference(latin1ArrayReg, 3, cg));
-    generateRXInstruction(cg, TR::InstOpCode::LLH, node, temp2Reg,
-        generateS390MemoryReference(utf16ArrayReg, 6, cg));
+    generateRXInstruction(cg, TR::InstOpCode::LLC, node, tempReg, generateS390MemoryReference(latin1ArrayReg, 3, cg));
+    generateRXInstruction(cg, TR::InstOpCode::LLH, node, temp2Reg, generateS390MemoryReference(utf16ArrayReg, 6, cg));
     generateRRInstruction(cg, TR::InstOpCode::SGR, node, tempReg, temp2Reg);
     generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, tempReg, (int8_t)0, gprDiffLabel, TR::InstOpCode::COND_BNE);
-    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, limReg, (int8_t)4, returnLenDiffLabel, TR::InstOpCode::COND_BNH);
+    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, limReg, (int8_t)4, returnLenDiffLabel,
+        TR::InstOpCode::COND_BNH);
 
     // char 4
-    generateRXInstruction(cg, TR::InstOpCode::LLC, node, tempReg,
-        generateS390MemoryReference(latin1ArrayReg, 4, cg));
-    generateRXInstruction(cg, TR::InstOpCode::LLH, node, temp2Reg,
-        generateS390MemoryReference(utf16ArrayReg, 8, cg));
+    generateRXInstruction(cg, TR::InstOpCode::LLC, node, tempReg, generateS390MemoryReference(latin1ArrayReg, 4, cg));
+    generateRXInstruction(cg, TR::InstOpCode::LLH, node, temp2Reg, generateS390MemoryReference(utf16ArrayReg, 8, cg));
     generateRRInstruction(cg, TR::InstOpCode::SGR, node, tempReg, temp2Reg);
     generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, tempReg, (int8_t)0, gprDiffLabel, TR::InstOpCode::COND_BNE);
-    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, limReg, (int8_t)5, returnLenDiffLabel, TR::InstOpCode::COND_BNH);
+    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, limReg, (int8_t)5, returnLenDiffLabel,
+        TR::InstOpCode::COND_BNH);
 
     // char 5
-    generateRXInstruction(cg, TR::InstOpCode::LLC, node, tempReg,
-        generateS390MemoryReference(latin1ArrayReg, 5, cg));
-    generateRXInstruction(cg, TR::InstOpCode::LLH, node, temp2Reg,
-        generateS390MemoryReference(utf16ArrayReg, 10, cg));
+    generateRXInstruction(cg, TR::InstOpCode::LLC, node, tempReg, generateS390MemoryReference(latin1ArrayReg, 5, cg));
+    generateRXInstruction(cg, TR::InstOpCode::LLH, node, temp2Reg, generateS390MemoryReference(utf16ArrayReg, 10, cg));
     generateRRInstruction(cg, TR::InstOpCode::SGR, node, tempReg, temp2Reg);
     generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, tempReg, (int8_t)0, gprDiffLabel, TR::InstOpCode::COND_BNE);
-    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, limReg, (int8_t)6, returnLenDiffLabel, TR::InstOpCode::COND_BNH);
+    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, limReg, (int8_t)6, returnLenDiffLabel,
+        TR::InstOpCode::COND_BNH);
 
     // char 6 — last possible (lim <= 7, so lim==7 means indices 0..6)
-    generateRXInstruction(cg, TR::InstOpCode::LLC, node, tempReg,
-        generateS390MemoryReference(latin1ArrayReg, 6, cg));
-    generateRXInstruction(cg, TR::InstOpCode::LLH, node, temp2Reg,
-        generateS390MemoryReference(utf16ArrayReg, 12, cg));
+    generateRXInstruction(cg, TR::InstOpCode::LLC, node, tempReg, generateS390MemoryReference(latin1ArrayReg, 6, cg));
+    generateRXInstruction(cg, TR::InstOpCode::LLH, node, temp2Reg, generateS390MemoryReference(utf16ArrayReg, 12, cg));
     generateRRInstruction(cg, TR::InstOpCode::SGR, node, tempReg, temp2Reg);
     generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, tempReg, (int8_t)0, gprDiffLabel, TR::InstOpCode::COND_BNE);
     // lim must be 7 here (only value left); no CGIJ needed — fall through to returnLenDiffLabel
@@ -896,8 +883,7 @@ TR::Register *J9::Z::TreeEvaluator::inlineStringLatin1CompareToUTF16Values(TR::N
     generateVRRbInstruction(cg, TR::InstOpCode::VFENE, node, vFirstDiff, vLatin1Expanded, vUTF16, 0, 1);
 
     // Extract byte index from vector element 7
-    generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, tempReg, vFirstDiff, 
-        generateS390MemoryReference(7, cg), 0);
+    generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, tempReg, vFirstDiff, generateS390MemoryReference(7, cg), 0);
 
     // Convert byte index to character index (divide by 2)
     generateRSInstruction(cg, TR::InstOpCode::SRLG, node, tempReg, tempReg, 1);

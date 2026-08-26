@@ -104,9 +104,10 @@ void J9::Z::CodeGenerator::initialize()
         cg->setSupportsInlineStringLatin1Inflate();
     }
 
-    static bool disableStringLatin1CompareToUTF16Values = feGetEnv("TR_DisableStringLatin1CompareToUTF16Values") != NULL;
-    if (!disableStringLatin1CompareToUTF16Values && cg->getSupportsVectorRegisters() && comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z14)
-        && !TR::Compiler->om.canGenerateArraylets()) {
+    static bool disableStringLatin1CompareToUTF16Values
+        = feGetEnv("TR_DisableStringLatin1CompareToUTF16Values") != NULL;
+    if (!disableStringLatin1CompareToUTF16Values && cg->getSupportsVectorRegisters()
+        && comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z14) && !TR::Compiler->om.canGenerateArraylets()) {
         cg->setSupportsInlineStringLatin1CompareToUTF16Values();
     }
 
