@@ -308,7 +308,9 @@ def fetchRef (REF1, REF2) {
 }
 
 def checkoutRef (REF) {
-    sh "git checkout refs/remotes/origin/${REF}"
+    // Remove git's index file, forcing all files to be checked out and
+    // encoded according to any .gitattributes files in the new branch.
+    sh "rm -f .git/index && git checkout -f refs/remotes/origin/${REF}"
 }
 
 def build() {
@@ -584,7 +586,7 @@ def archive_diagnostics(javaVersionJdkImageDir = null) {
                         break;
                 }
                 dest = 'core' + '.' + filename + '.' + 'dmp'
-                fetchFile(src,dest)
+                fetchFile(src, dest)
             }
         }
         // Note: to preserve the files ACLs set _OS390_USTAR=Y env variable (see variable files)
