@@ -30,14 +30,14 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output type="success" caseSensitive="yes" regex="no">OpenJ9</output>
 		<output type="required" caseSensitive="yes" regex="no">OMR</output>
 	</test>
-	<!-- See https://github.com/eclipse-openj9/openj9/issues/23980
-	<test id="Test JFRv2 cmdline option - memcheck">
+
+	<test id="Test JFRv2 cmdline option - memcheck - approx 2 minutes">
 		<command>$EXE$ -XX:+EnableOpenJ9ExperimentalFlightRecording -Xshare:off -Xcheck:memory -Dibm.java9.forceCommonCleanerShutdown=true -Xint -XX:StartFlightRecording -version</command>
 		<output type="success" caseSensitive="yes" regex="no">OpenJ9</output>
 		<output type="required" caseSensitive="yes" regex="no">OMR</output>
 		<output type="failure" caseSensitive="yes" regex="no">bytes were not freed before shutdown</output>
 	</test>
-	-->
+
 	<test id="Test JFRv2 2min test">
 		<command>$EXE$ -Xtrace:print={j9vm.760,j9vm.773,j9vm.819} -XX:+EnableOpenJ9ExperimentalFlightRecording -XX:StartFlightRecording=filename=experimentalRecording.jfr -Xshare:off --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.WorkLoad 200 20000 200</command>
 		<output type="success" caseSensitive="yes" regex="no">All runs complete</output>
