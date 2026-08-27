@@ -53,7 +53,6 @@ private:
 	static void requestThreadDump(J9VMThread *currentThread);
 	static void requestVirtualizationInformation(J9VMThread *currentThread);
 	static void requestYoungGenerationConfiguration(J9VMThread *currentThread);
-	static void requestGCConfiguration(J9VMThread *currentThread);
 };
 
 #endif /* !defined(JFRPERIODIC_HPP_) */
