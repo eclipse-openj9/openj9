@@ -309,8 +309,9 @@ def fetchRef (REF1, REF2) {
 
 def checkoutRef (REF) {
     // Remove git's index file, forcing all files to be checked out and
-    // encoded according to any .gitattributes files in the new branch.
-    sh "rm -f .git/index && git checkout -f refs/remotes/origin/${REF}"
+    // encoded according to any .gitattributes files in the new branch,
+    // then "clean" to remove any unwanted files.
+    sh "rm -f .git/index && git checkout -f refs/remotes/origin/${REF} && git clean -fdx"
 }
 
 def build() {
