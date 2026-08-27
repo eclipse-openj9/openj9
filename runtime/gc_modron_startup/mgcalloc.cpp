@@ -331,10 +331,10 @@ traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uin
 //				j9tty_printf(PORTLIB, "traceAllocateObject vmThread=%p, setTLHSamplingTop=%zu\n", vmThread,
 //						OMR_MIN(jvmtiBytesToNext, jfrBytesToNext));
 			}
-
-//			j9tty_printf(PORTLIB, "traceAllocateObject vmThread=%p, jvmtiBytesToNext=%zu, jfrBytesToNext=%zu, jfrByteGranularity=%zu, weight=%zu\n", vmThread,
-//					jvmtiBytesToNext, jfrBytesToNext, jfrByteGranularity, weight);
-
+			if (J9_PUBLIC_FLAGS_VM_ACCESS != (vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)) {
+				j9tty_printf(PORTLIB, "traceAllocateObject no VM_ACCESS vmThread=%p, jvmtiBytesToNext=%zu, jfrBytesToNext=%zu, jfrByteGranularity=%zu, weight=%zu\n", vmThread,
+					jvmtiBytesToNext, jfrBytesToNext, jfrByteGranularity, weight);
+			}
 			TRIGGER_J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING_INTERNAL(
 				extensions->hookInterface,
 				vmThread,
@@ -582,6 +582,10 @@ J9AllocateObject(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFlags)
 		dumpStackFrames(vmThread);
 		TRIGGER_J9HOOK_MM_PRIVATE_OUT_OF_MEMORY(extensions->privateHookInterface, vmThread->omrVMThread, j9time_hires_clock(), J9HOOK_MM_PRIVATE_OUT_OF_MEMORY, memorySpace, memorySpace->getName());
 	} else {
+		if (!mixedOAM.getAllocateDescription()->isThreadAtSafePoint()) {
+			PORT_ACCESS_FROM_VMC(vmThread);
+			j9tty_printf(PORTLIB, "J9AllocateObject vmThread=%p, not ThreadAtSafePoint, VM_ACCESS=%zu\n", vmThread, J9_PUBLIC_FLAGS_VM_ACCESS == (vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) );
+		}
 		objectPtr = traceAllocateObject(vmThread, objectPtr, clazz, sizeInBytesRequired);
 		if (extensions->isStandardGC()) {
 			if (OMR_GC_ALLOCATE_OBJECT_TENURED == (allocateFlags & OMR_GC_ALLOCATE_OBJECT_TENURED)) {

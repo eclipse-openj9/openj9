@@ -99,6 +99,9 @@ public:
 	MM_OwnableSynchronizerObjectList* ownableSynchronizerObjectLists; /**< -UNUSED- The global linked list of ownable synchronizer object lists. */
 	bool requiresHeapWalkForRebuildingOwnableSynchronizerObjectList;
 	MM_StringTable* stringTable; /**< top level String Table structure (internally organized as a set of hash sub-tables */
+#if defined(J9VM_OPT_JFR)
+	UDATA fixJFRObjectAllocationSampleThrottleRate;
+#endif /* defined(J9VM_OPT_JFR) */
 
 	void* gcchkExtensions;
 
@@ -385,6 +388,9 @@ public:
 		, ownableSynchronizerObjectLists(NULL)
 		, requiresHeapWalkForRebuildingOwnableSynchronizerObjectList(true)
 		, stringTable(NULL)
+#if defined(J9VM_OPT_JFR)
+		, fixJFRObjectAllocationSampleThrottleRate(0)
+#endif /* defined(J9VM_OPT_JFR) */
 		, gcchkExtensions(NULL)
 		, tgcExtensions(NULL)
 #if defined(J9VM_GC_FINALIZATION)

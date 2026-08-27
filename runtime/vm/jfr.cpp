@@ -31,6 +31,7 @@
 #if defined(J9VM_OPT_JFR)
 
 #include "AtomicSupport.hpp"
+#include "GCExtensions.hpp"
 #if JAVA_SPEC_VERSION >= 17
 #include "JFRTypeMappings.hpp"
 #include "JFRPeriodic.hpp"
@@ -68,6 +69,9 @@ J9_DECLARE_CONSTANT_UTF8(jfrEventClassUTF8, "jdk/jfr/Event");
 #define J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_INTERVAL (512 * 1024)  /* bytes; same as JVMTI default per JEP 331 */
 #define J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_THROTTLE_RATE 150	/* events per second */
 #define J9JFR_OBJECT_ALLOCATION_SAMPLE_PROFILING_THROTTLE_RATE 300	/* events per second */
+
+#define BEFORE_GC 0
+#define AFTER_GC 1
 
 #define INVALID_TYPE_ID -1
 
@@ -1063,12 +1067,87 @@ jfrGarbageCollection(OMR_VMThread *omrVMThread)
 	}
 }
 
+/**
+ * Recalibrate the JFR ObjectAllocationSample byte interval.
+ * Called at GC cycle start, after flushCachesForGC() has already merged all per-thread
+ * allocation stats into extensions->allocationStats.  Computes the allocation rate over
+ * the interval since the previous GC cycle ended and adjusts the per-thread sampling interval
+ * so that the observed event rate stays close to the configured throttle rate.
+ *
+ * @param currentThread[in] the current VM thread
+ */
+void
+jfrRecalibrateObjectAllocationSampleInterval(J9VMThread *currentThread)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	UDATA throttleRate = vm->jfrState.objectAllocationSampleThrottleRate;
+	UDATA oldInterval = vm->jfrState.objectAllocationSampleInterval;
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
+
+	/* Skip recalibration if the sampler is not active. */
+	if ( (0 != extensions->fixJFRObjectAllocationSampleThrottleRate) || (0 == throttleRate) || (UDATA_MAX == oldInterval)) {
+		return;
+	}
+	uint64_t currentGCStart = vm->memoryManagerFunctions->j9gc_get_cycle_start_time(currentThread);
+	uint64_t lastGCEnd = vm->jfrState.lastGCCycleEndTicks;
+
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+
+	/* Skip if no previous GC cycle has completed yet or clock going backwards. */
+	if ((0 == lastGCEnd) || (currentGCStart < lastGCEnd)) {
+		return;
+	}
+	uint64_t elapsedMicros = omrtime_hires_delta(lastGCEnd, currentGCStart, OMRPORT_TIME_DELTA_IN_MICROSECONDS);
+	if (0 == elapsedMicros) {
+		elapsedMicros = 1;
+	}
+
+	/* Bytes allocated by all mutator threads since the previous GC cycle ended,
+	 * flushed and merged into the global allocationStats by flushCachesForGC()
+	 * which runs before this call.
+	 */
+	UDATA totalBytes = extensions->allocationStats.bytesAllocated();
+	if (0 == totalBytes) {
+		return;
+	}
+
+	UDATA newInterval = totalBytes * 1000000 / (elapsedMicros * throttleRate);
+	if (newInterval < 64 * 1024) {
+		newInterval = 64 * 1024;
+	} else if (newInterval > (64 * 1024 * 1024)) {
+		newInterval = 64 * 1024 * 1024;
+	}
+
+	newInterval = (newInterval + 64 * 1024 - 1) / (64 * 1024) * (64 * 1024);
+
+    int64_t diff = newInterval - oldInterval;
+    if (diff < 0) { diff = -diff; }
+
+    /* diff / oldInterval > 5 / 100 */
+	bool changedOver5Percent = (UDATA)diff * 100 > oldInterval * 5;
+    if (changedOver5Percent) {
+		j9tty_printf(PORTLIB, "jfrRecalibrateObjectAllocationSampleInterval changedOver5Percent currentThread=%p, oldInterval=%zu, newInterval=%zu\n", currentThread,
+				oldInterval, newInterval);
+		vm->jfrState.objectAllocationSampleInterval = newInterval;
+		Trc_VM_jfrRecalibrateObjectAllocationSampleInterval(
+			totalBytes,
+			elapsedMicros,
+			oldInterval,
+			newInterval);
+	}
+}
+
 void
 jfrGCHeapSummary(OMR_VMThread *omrVMThread, U_32 gcWhenID)
 {
 	/* Extract the J9VMThread from the OMR_VMThread */
 	J9VMThread *currentThread = (J9VMThread *)omrVMThread->_language_vmthread;
 	J9JavaVM *javaVM = currentThread->javaVM;
+
+	if (BEFORE_GC == gcWhenID) {
+		jfrRecalibrateObjectAllocationSampleInterval(currentThread);
+	}
 
 #if JAVA_SPEC_VERSION >= 17
 	if (!isJFREventEnabled(javaVM, JfrGCHeapSummaryEvent)) {
@@ -1305,6 +1384,7 @@ startJFRRecording(J9JavaVM *vm)
 //
 	J9HookInterface **vmHooks = getVMHookInterface(vm);
 	J9HookInterface **gcHooks = vm->memoryManagerFunctions->j9gc_get_hook_interface(vm);
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
 	BOOLEAN rc = FALSE;
 	Trc_VM_startJFRRecording(currentThread, vm);
 
@@ -1341,8 +1421,14 @@ startJFRRecording(J9JavaVM *vm)
 	}
 
 	/* enable JFRObjectAllocationSample */
-	vm->jfrState.objectAllocationSampleThrottleRate  = J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_THROTTLE_RATE;
-	vm->memoryManagerFunctions->j9gc_set_jfr_allocation_sampling_interval(vm, J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_INTERVAL);
+	if ((0 == extensions->fixJFRObjectAllocationSampleThrottleRate)) {
+		vm->jfrState.objectAllocationSampleThrottleRate  = J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_THROTTLE_RATE;
+		vm->jfrState.objectAllocationSampleInterval = J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_INTERVAL;
+	} else {
+		vm->jfrState.objectAllocationSampleThrottleRate  = extensions->fixJFRObjectAllocationSampleThrottleRate;
+		vm->jfrState.objectAllocationSampleInterval = J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_INTERVAL * J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_THROTTLE_RATE / vm->jfrState.objectAllocationSampleThrottleRate;
+	}
+	vm->memoryManagerFunctions->j9gc_set_jfr_allocation_sampling_interval(vm, vm->jfrState.objectAllocationSampleInterval);
 	if ((*gcHooks)->J9HookRegisterWithCallSite(gcHooks, J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING_INTERNAL, jfrObjectAllocationSample, OMR_GET_CALLSITE(), NULL)) {
 		goto done;
 	}
@@ -1412,11 +1498,9 @@ stopJFRRecording(J9JavaVM *vm)
 	/* disable JFRObjectAllocationSample */
 	(*gcHooks)->J9HookUnregister(gcHooks, J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING_INTERNAL, jfrObjectAllocationSample, NULL);
 	vm->jfrState.objectAllocationSampleThrottleRate = 0;
-	vm->memoryManagerFunctions->j9gc_set_jfr_allocation_sampling_interval(vm, UDATA_MAX);
+	vm->jfrState.objectAllocationSampleInterval = UDATA_MAX;
+	vm->memoryManagerFunctions->j9gc_set_jfr_allocation_sampling_interval(vm, vm->jfrState.objectAllocationSampleInterval);
 
-//	j9tty_printf(PORTLIB, "stopJFRRecording disable JFRObjectAllocationSample currentThread=%p,  objectAllocationSampleThrottleRate=%zu, jfr_allocation_sampling_interval=%zu\n", currentThread,
-//			vm->jfrState.objectAllocationSampleThrottleRate, UDATA_MAX);
-//
 	/* Deregister GC-related hooks via gc_base */
 	vm->memoryManagerFunctions->j9gc_deregister_jfr_hooks(vm);
 }
@@ -1882,64 +1966,15 @@ jfrSamplingThreadProc(void *entryArg)
 					jfrClassLoadingStatistics(currentThread);
 					jfrThreadStatistics(currentThread);
 
-					/* Recalibrate JFR allocation sample byte interval to maintain throttleRate events/s.
-					 *
-					 * totalBytes is accumulated since the last GC cycle end, so it covers a window that
-					 * may be longer than 1 second.  Dividing by the elapsed seconds since the last GC
-					 * converts it to a per-second allocation rate before applying the throttle ratio:
-					 *
-					 *   newInterval = (totalBytes / elapsedSeconds) / throttleRate
-					 *               = totalBytes / (elapsedSeconds * throttleRate)
-					 *
-					 * When no GC has occurred yet (lastGCCycleEndTicks == 0) we treat elapsedSeconds as 1
-					 * to preserve the original behaviour.
-					 */
+					/* set JFR Object Allocation Sample Bytes interval */
 					{
-						PORT_ACCESS_FROM_JAVAVM(vm);
-						OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
-						UDATA throttleRate = vm->jfrState.objectAllocationSampleThrottleRate;
-						UDATA oldInterval = vm->memoryManagerFunctions->j9gc_get_jfr_allocation_sampling_interval(vm);
-						if ((0 != throttleRate) && (UDATA_MAX != oldInterval)) {
-							UDATA totalBytes = 0;
-							acquireExclusiveVMAccess(currentThread);
-							J9VMThread *walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
-							while (NULL != walkThread) {
-								totalBytes += vm->memoryManagerFunctions->j9gc_get_bytes_allocated_by_thread(walkThread);
-								walkThread = J9_LINKED_LIST_NEXT_DO(vm->mainThread, walkThread);
-							}
-							releaseExclusiveVMAccess(currentThread);
-
-							/* Compute elapsed microseconds since the last GC cycle ended. */
-							uint64_t elapsedMicros = 1;
-							uint64_t lastGCEnd = vm->jfrState.lastGCCycleEndTicks;
-							if (0 != lastGCEnd) {
-								uint64_t now = omrtime_hires_clock();
-								elapsedMicros = omrtime_hires_delta(lastGCEnd, now, OMRPORT_TIME_DELTA_IN_MICROSECONDS);
-								if (0 == elapsedMicros) {
-									elapsedMicros = 1;
-								}
-							}
-
-							UDATA newInterval = ((0 != totalBytes) && (0 != lastGCEnd))
-								? (totalBytes * 1000000 / (elapsedMicros * throttleRate))
-								: J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_INTERVAL;
-							if (newInterval < 1024) {
-								newInterval = 1024;
-							} else if (newInterval > (64 * 1024 * 1024)) {
-								newInterval = 64 * 1024 * 1024;
-							}
-
+						UDATA newInterval = vm->jfrState.objectAllocationSampleInterval;
+						if (UDATA_MAX != newInterval) {
+							UDATA oldInterval = vm->memoryManagerFunctions->j9gc_get_jfr_allocation_sampling_interval(vm);
 							if (oldInterval != newInterval) {
-//								j9tty_printf(PORTLIB, "jfrSamplingThreadProc Recalibrate JFR allocation sample interval currentThread=%p, totalBytes=%zu, elapsedMicros=%zu, oldInterval=%zu, newInterval=%zu\n", currentThread,
-//										totalBytes, elapsedMicros, oldInterval, newInterval);
 								internalReleaseVMAccess(currentThread);
 								vm->memoryManagerFunctions->j9gc_set_jfr_allocation_sampling_interval(vm, newInterval);
 								internalAcquireVMAccess(currentThread);
-								Trc_VM_jfrSamplingThreadProc_recalibrate(
-									totalBytes,
-									elapsedMicros,
-									oldInterval,
-									newInterval);
 							}
 						}
 					}
