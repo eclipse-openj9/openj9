@@ -1105,12 +1105,11 @@ static void populateInlineCalls(TR::Compilation *comp, TR_J9VMBase *vm, TR_Metho
         TR_InlinedCallSite *inlinedCallSite = &comp->getInlinedCallSite(i);
 
         List<TR::RegisterMappedSymbol> *autos = (i + 1 < monitorAutos.size()) ? monitorAutos[i + 1] : 0;
-        bool hasLiveMonitors = (i + 1 < monitorAutos.size() && monitorAutos[i + 1]);
 
         // _isSameReceiver is an overloaded bit that in this context means that the live monitor data for this
         // inlined call site contains some nonzero bits
         //
-        if (autos != 0)
+        if (autos && !autos->isEmpty())
             inlinedCallSite->_byteCodeInfo.setIsSameReceiver(1);
 
         if (vm->isAOT_DEPRECATED_DO_NOT_USE()) {

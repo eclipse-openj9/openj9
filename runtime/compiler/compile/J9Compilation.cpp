@@ -1151,6 +1151,27 @@ void J9::Compilation::addAsMonitorAuto(TR::SymbolReference *symRef, bool dontAdd
     }
 }
 
+void J9::Compilation::removeMonitorAuto(TR::RegisterMappedSymbol *sym)
+{
+    TR_Array<List<TR::RegisterMappedSymbol> *> &monitorAutos = self()->getMonitorAutos();
+    for (uint32_t i = 0; i < monitorAutos.size(); i++) {
+        List<TR::RegisterMappedSymbol> *autos = monitorAutos.element(i);
+        if (autos && autos->remove(sym) != NULL) {
+            // remove all possible duplicates that may have been added
+            while (autos->remove(sym) != NULL) {
+            }
+
+            if (self()->getOption(TR_TraceLiveMonitorMetadata)) {
+                self()->log()->printf("removed monitor auto %p from caller index %d\n", sym, (int32_t)i - 1);
+            }
+
+            if (autos->isEmpty()) {
+                monitorAutos.element(i) = NULL;
+            }
+        }
+    }
+}
+
 TR_OpaqueClassBlock *J9::Compilation::getClassClassPointer(bool isVettedForAOT)
 {
     if (!isVettedForAOT || self()->getOption(TR_UseSymbolValidationManager)) {

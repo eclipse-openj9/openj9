@@ -336,6 +336,18 @@ public:
     void addMonitorAuto(TR::RegisterMappedSymbol *, int32_t callerIndex);
     void addAsMonitorAuto(TR::SymbolReference *symRef, bool dontAddIfDLT);
 
+    /**
+     * \brief Removes a monitor auto symbol from all callerIndex buckets in the
+     *        monitor autos table.
+     *
+     * Iterates over every per-call-site list stored in _monitorAutos and
+     * removes all occurrences of sym (duplicates included).  If a list
+     * becomes empty after removal its slot is set to NULL.
+     *
+     * \param sym The RegisterMappedSymbol to remove
+     */
+    void removeMonitorAuto(TR::RegisterMappedSymbol *sym);
+
     TR::list<TR::SymbolReference *> *getMonitorAutoSymRefsInCompiledMethod()
     {
         return &_monitorAutoSymRefsInCompiledMethod;
