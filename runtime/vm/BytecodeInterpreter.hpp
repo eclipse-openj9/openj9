@@ -5752,6 +5752,7 @@ done:
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		if (VM_VMHelpers::exceptionPending(_currentThread)) {
 			rc = GOTO_THROW_CURRENT_EXCEPTION;
+			goto done;
 		}
 		bp = _arg0EA - argSlots;
 		recordJNIReturn(REGISTER_ARGS, bp);
@@ -5799,6 +5800,7 @@ done:
 		return rc;
 
 ffi_OOM:
+		buildInternalNativeStackFrame(REGISTER_ARGS);
 		updateVMStruct(REGISTER_ARGS);
 		setNativeOutOfMemoryError(_currentThread, J9NLS_VM_NATIVE_OOM);
 		VMStructHasBeenUpdated(REGISTER_ARGS);
