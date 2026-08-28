@@ -9737,12 +9737,14 @@ static TR::Register *inlineStringHashCode(TR::Node *node, bool isCompressed, TR:
     auto deps = RegDeps((uint8_t)6, (uint8_t)6, cg);
     deps->addPreCondition(address, TR::RealRegister::NoReg, cg);
     deps->addPreCondition(index, TR::RealRegister::NoReg, cg);
+    deps->addPreCondition(tmp, TR::RealRegister::NoReg, cg);
     deps->addPreCondition(length, TR::RealRegister::NoReg, cg);
     deps->addPreCondition(multiplierXMM, TR::RealRegister::NoReg, cg);
     deps->addPreCondition(tmpXMM, TR::RealRegister::NoReg, cg);
     deps->addPreCondition(hashXMM, TR::RealRegister::NoReg, cg);
     deps->addPostCondition(address, TR::RealRegister::NoReg, cg);
     deps->addPostCondition(index, TR::RealRegister::NoReg, cg);
+    deps->addPostCondition(tmp, TR::RealRegister::NoReg, cg);
     deps->addPostCondition(length, TR::RealRegister::NoReg, cg);
     deps->addPostCondition(multiplierXMM, TR::RealRegister::NoReg, cg);
     deps->addPostCondition(tmpXMM, TR::RealRegister::NoReg, cg);
