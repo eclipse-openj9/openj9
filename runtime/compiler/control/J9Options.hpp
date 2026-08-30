@@ -533,6 +533,9 @@ public:
 
     static int32_t _expensiveCompWeight; // weight of a comp request to be considered expensive
     static int32_t _jProfilingEnablementSampleThreshold;
+    static uint32_t _patchableJProfilingRecompilationFreq;
+    static uint32_t _patchableJProfilingPatchingAgeCutOff;
+    static uint32_t _numOfMethodsToTriggerPatching;
 
     static bool _aggressiveLockReservation;
 
