@@ -744,6 +744,10 @@ private static void ensureProperties(boolean isInitialization) {
 	}
 	/*[ENDIF] JFR_SUPPORT */
 
+	/*[IF RAM_CLASS_CACHE_SUPPORT]*/
+	initializedProperties.put("org.eclipse.openj9.rcp.isRCPEnabled", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+	/*[ENDIF] RAM_CLASS_CACHE_SUPPORT */
+
 	/*[IF JAVA_SPEC_VERSION >= 17]*/
 	initializedProperties.putAll(SystemProps.initProperties());
 	/*[ELSE] JAVA_SPEC_VERSION >= 17 */
