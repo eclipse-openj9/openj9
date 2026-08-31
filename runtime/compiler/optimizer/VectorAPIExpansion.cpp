@@ -222,12 +222,6 @@ void TR_VectorAPIExpansion::alias(TR::Node *node1, TR::Node *node2, bool aliasTe
     _aliasTable[id1]._aliases->set(id2);
     _aliasTable[id2]._aliases->set(id1);
 
-    logprintf(_trace, comp()->log(), "Ehsan id1 %d id2 %d\n", id1, id2);
-    _aliasTable[id1]._vinfo.print(_trace, comp()->log());
-    logprintf(_trace, comp()->log(), "\n");
-    _aliasTable[id2]._vinfo.print(_trace, comp()->log());
-    logprintf(_trace, comp()->log(), "\n");
-
     if (aliasTemps) {
         if (_aliasTable[id1]._tempAliases == NULL)
             _aliasTable[id1]._tempAliases
@@ -1299,13 +1293,6 @@ bool TR_VectorAPIExpansion::isVectorizedOrScalarizedNode(TR::Node *node, vectorI
 
             refId = _useDefBasedAliasing ? nodeAliasId(node) : origSymRef->getReferenceNumber();
         }
-        // if (TR::Options::getVerboseOption(TR_VerboseVectorAPI)) {
-        //     TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Ehsan RefID=%d is unknown=%d",
-        //         refId, _aliasTable[refId]._vinfo.isUnknown());
-        // }
-        logprintf(_trace, comp()->log(), "Ehsan RefID=%d is unknown=%d _useDefBasedAliasing=%d _tempClassId=%d _classId=%d\n", refId, _aliasTable[refId]._vinfo.isUnknown(), _useDefBasedAliasing, _aliasTable[refId]._tempClassId, _aliasTable[refId]._classId);
-        _aliasTable[refId]._vinfo.print(_trace, comp()->log());
-        logprintf(_trace, comp()->log(), "\n");
 
         if (_aliasTable[refId]._vinfo.isUnknown())
             return false;
