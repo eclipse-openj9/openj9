@@ -1312,7 +1312,7 @@ bool TR_VectorAPIExpansion::isVectorizedOrScalarizedNode(TR::Node *node, vectorI
             return false;
 
         if (_aliasTable[refId]._tempClassId <= 0)
-                return false;
+            return false;
 
     } else if (node->getOpCode().isFunctionCall()
         && isVectorAPIMethod(node->getSymbolReference()->getSymbol()->castToMethodSymbol())) {
