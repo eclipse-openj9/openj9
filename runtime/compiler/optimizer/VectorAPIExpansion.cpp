@@ -405,10 +405,6 @@ void TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool v
             if (isLoadOfAuto){
                 aliasTemps = true;
                 _aliasTable[id1]._vinfo = _aliasTable[id2]._vinfo;
-                logprintf(_trace, log, "Set vector info of #%d to #d\n", id1, id2);
-                _aliasTable[id1]._vinfo.print(_trace, log);
-                logprintf(_trace, log, "\n");
-
             }
 
             alias(node, rhs, aliasTemps);
@@ -1303,10 +1299,8 @@ bool TR_VectorAPIExpansion::isVectorizedOrScalarizedNode(TR::Node *node, vectorI
             if (classId <= 0)
                 return false;
 
-            if (_aliasTable[classId]._classId <= 0){
-                logprintf(_trace, comp()->log(), "class classID=%d\n", _aliasTable[classId]._classId);
+            if (_aliasTable[classId]._classId <= 0)
                 return false;
-            }
 
             if (_aliasTable[classId]._cantVectorize && !_aliasTable[classId]._cantScalarize)
                 scalarized = true;
@@ -1317,10 +1311,8 @@ bool TR_VectorAPIExpansion::isVectorizedOrScalarizedNode(TR::Node *node, vectorI
         if (refId <= 0)
             return false;
 
-        if (_aliasTable[refId]._tempClassId <= 0){
-                logprintf(_trace, comp()->log(), "_tempClassId=%d\n", _aliasTable[refId]._tempClassId);
+        if (_aliasTable[refId]._tempClassId <= 0)
                 return false;
-            }
 
     } else if (node->getOpCode().isFunctionCall()
         && isVectorAPIMethod(node->getSymbolReference()->getSymbol()->castToMethodSymbol())) {
