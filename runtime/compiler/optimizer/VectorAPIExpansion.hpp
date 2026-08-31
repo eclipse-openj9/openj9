@@ -295,7 +295,7 @@ public:
 
         bool operator==(const vectorInfo &other) const
         {
-            return _vecLen == other._vecLen && _elementType.getDataType() == other._elementType.getDataType()
+            return _vecLen == other._vecLen && _elementType == other._elementType
                 && _objectType == other._objectType && _classMax == other._classMax;
         }
 
@@ -304,7 +304,7 @@ public:
         bool isSet()
         {
             // _classMax is set iff _objectType is set
-            return _vecLen != vec_len_default && _elementType.getDataType() != TR::NoType && _objectType != NotSet;
+            return _vecLen != vec_len_default && _elementType != TR::NoType && _objectType != NotSet;
         }
 
         void setIsUnknown()
@@ -316,7 +316,7 @@ public:
 
         bool isUnknown()
         {
-            return _vecLen == vec_len_unknown || _elementType.getDataType() == TR::Address || _objectType == Unknown;
+            return _vecLen == vec_len_unknown || _elementType == TR::Address || _objectType == Unknown;
         }
 
         /** \brief
