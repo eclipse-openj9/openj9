@@ -1297,7 +1297,7 @@ bool TR_VectorAPIExpansion::isVectorizedOrScalarizedNode(TR::Node *node, vectorI
             TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Ehsan RefID=%d is unknown=%d",
                 refId, _aliasTable[refId]._vinfo.isUnknown());
         }
-        logprintf(_trace, comp()->log(), "Ehsan RefID=%d is unknown=%d", refId, _aliasTable[refId]._vinfo.isUnknown());
+        logprintf(_trace, comp()->log(), "Ehsan RefID=%d is unknown=%d _useDefBasedAliasing=%d _tempClassId=%d _classId=%d\n", refId, _aliasTable[refId]._vinfo.isUnknown(), _useDefBasedAliasing, _aliasTable[refId]._tempClassId, _aliasTable[refId]._classId);
         _aliasTable[refId]._vinfo.print(_trace, comp()->log());
         logprintf(_trace, comp()->log(), "\n");
 
