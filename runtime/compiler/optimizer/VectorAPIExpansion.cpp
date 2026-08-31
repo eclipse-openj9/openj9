@@ -1293,10 +1293,10 @@ bool TR_VectorAPIExpansion::isVectorizedOrScalarizedNode(TR::Node *node, vectorI
 
             refId = _useDefBasedAliasing ? nodeAliasId(node) : origSymRef->getReferenceNumber();
         }
-        if (TR::Options::getVerboseOption(TR_VerboseVectorAPI)) {
-            TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Ehsan RefID=%d is unknown=%d",
-                refId, _aliasTable[refId]._vinfo.isUnknown());
-        }
+        // if (TR::Options::getVerboseOption(TR_VerboseVectorAPI)) {
+        //     TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Ehsan RefID=%d is unknown=%d",
+        //         refId, _aliasTable[refId]._vinfo.isUnknown());
+        // }
         logprintf(_trace, comp()->log(), "Ehsan RefID=%d is unknown=%d _useDefBasedAliasing=%d _tempClassId=%d _classId=%d\n", refId, _aliasTable[refId]._vinfo.isUnknown(), _useDefBasedAliasing, _aliasTable[refId]._tempClassId, _aliasTable[refId]._classId);
         _aliasTable[refId]._vinfo.print(_trace, comp()->log());
         logprintf(_trace, comp()->log(), "\n");
@@ -1310,8 +1310,10 @@ bool TR_VectorAPIExpansion::isVectorizedOrScalarizedNode(TR::Node *node, vectorI
             if (classId <= 0)
                 return false;
 
-            if (_aliasTable[classId]._classId <= 0)
+            if (_aliasTable[classId]._classId <= 0){
+                logprintf(_trace, comp()->log(), "class classID=%d\n", _aliasTable[classId]._classId);
                 return false;
+            }
 
             if (_aliasTable[classId]._cantVectorize && !_aliasTable[classId]._cantScalarize)
                 scalarized = true;
@@ -1322,8 +1324,10 @@ bool TR_VectorAPIExpansion::isVectorizedOrScalarizedNode(TR::Node *node, vectorI
         if (refId <= 0)
             return false;
 
-        if (_aliasTable[refId]._tempClassId <= 0)
-            return false;
+        if (_aliasTable[refId]._tempClassId <= 0){
+                logprintf(_trace, comp()->log(), "_tempClassId=%d\n", _aliasTable[refId]._tempClassId);
+                return false;
+            }
 
     } else if (node->getOpCode().isFunctionCall()
         && isVectorAPIMethod(node->getSymbolReference()->getSymbol()->castToMethodSymbol())) {
