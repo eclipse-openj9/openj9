@@ -1366,6 +1366,9 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 					Trc_BCU_Assert_ShouldNeverHappen();
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 				} else if (CFR_STACKMAP_EARLY_LARVAL == frameType) { /* 246 */
+					if ((STRICT_FIELDS_MAJOR_VERSION != _classFile->majorVersion) || (PREVIEW_MINOR_VERSION != _classFile->minorVersion)) {
+						throwGenericErrorWithCustomMsg(J9NLS_CFR_LVT_EARLY_LARVAL_WRONG_VERSION__ID, entryIndex);
+					}
 					/*
 					 * EARLY_LARVAL {
 					 *		U_16 numberOfUnsetFields
