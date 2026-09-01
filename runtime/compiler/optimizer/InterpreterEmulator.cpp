@@ -889,9 +889,11 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
         }
 
         case J9BCpop:
-        case J9BCputfield:
         case J9BCputstatic:
             pop();
+            break;
+        case J9BCputfield:
+            popn(2);
             break;
         case J9BCbipush:
             push(new (trStackMemory()) IconstOperand(nextByte()));
