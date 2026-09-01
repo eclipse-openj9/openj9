@@ -404,7 +404,11 @@ void TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool v
 
             if (isLoadOfAuto) {
                 aliasTemps = true;
-                _aliasTable[id1]._vinfo = _aliasTable[id2]._vinfo;
+                // Temporary make it conditional for testing!
+                static bool copyVInfo = feGetEnv("TR_CopyVInfo") != NULL;
+                if (copyVInfo) {
+                    _aliasTable[id1]._vinfo = _aliasTable[id2]._vinfo;
+                }
             }
 
             alias(node, rhs, aliasTemps);
