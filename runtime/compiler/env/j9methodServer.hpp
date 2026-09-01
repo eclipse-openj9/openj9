@@ -104,24 +104,6 @@ struct TR_IsUnresolvedString {
     bool _optimizeForAOTFalseResult;
 };
 
-struct TR_StringConstantData {
-    TR_StringConstantData()
-        : _stringConstant(NULL)
-        , _optimizeForAOTTrueResult(false)
-        , _optimizeForAOTFalseResult(false)
-    {}
-
-    TR_StringConstantData(void *stringConstant, bool optimizeForAOTTrueResult, bool optimizeForAOTFalseResult)
-        : _stringConstant(stringConstant)
-        , _optimizeForAOTTrueResult(optimizeForAOTTrueResult)
-        , _optimizeForAOTFalseResult(optimizeForAOTFalseResult)
-    {}
-
-    void *_stringConstant;
-    bool _optimizeForAOTTrueResult;
-    bool _optimizeForAOTFalseResult;
-};
-
 // define a hash function for TR_ResolvedMethodKey
 namespace std {
 template<> struct hash<TR_ResolvedMethodKey> {
