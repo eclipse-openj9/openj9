@@ -628,6 +628,10 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
             push(new (trStackMemory()) IconstOperand(0));
             maintainStackForIf(J9BCificmpeq);
             break;
+        case J9BCifacmpeq:
+        case J9BCifacmpne:
+            maintainStackForIf(bc);
+            break;
         case J9BCgoto:
             genTarget(bcIndex() + next2BytesSigned());
             break;
@@ -635,6 +639,12 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
         case J9BCputfield:
         case J9BCputstatic:
             pop();
+            break;
+        case J9BCbipush:
+            push(new (trStackMemory()) IconstOperand(nextByte()));
+            break;
+        case J9BCsipush:
+            push(new (trStackMemory()) IconstOperand(next2Bytes()));
             break;
         case J9BCladd:
         case J9BCiadd:
