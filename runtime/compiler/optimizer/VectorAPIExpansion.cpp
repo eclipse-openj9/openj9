@@ -402,7 +402,7 @@ void TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool v
                 logprintf(_trace, log, "Making #%d a box of unknown type due to node %p\n", id1, node);
             }
 
-            if (isLoadOfAuto){
+            if (isLoadOfAuto) {
                 aliasTemps = true;
                 _aliasTable[id1]._vinfo = _aliasTable[id2]._vinfo;
             }
