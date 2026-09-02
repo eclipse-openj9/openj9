@@ -50,11 +50,38 @@ final class JFRHelpers {
 	private static Constructor<?> constructorEventWriter;
 	private static volatile boolean jfrClassesInitialized = false;
 	private static String jfrCMDLineOption = null;
+	private static String[] jfrModuleUnavailableMessage = new String[] { "Flight Recorder can not be enabled." };
 
 	static {
 		if (VM.isJFREnabled() && VM.isJFRV2SupportEnabled()) {
-			VM.initializeInternalJFRStructures();
-			initJFRClasses();
+			if (ensureJfrModuleAvailable()) {
+				VM.initializeInternalJFRStructures();
+				initJFRClasses();
+			}
+		}
+	}
+
+	/**
+	 * Ensure jdk.jfr is resolved into the running module graph, loading it on
+	 * demand if the launched application never itself required it (e.g. a
+	 * --module launch, or a jcmd-triggered command with no -XX:StartFlightRecording
+	 * on the original command line).
+	 *
+	 * @return true if jdk.jfr is available, false if it could not be loaded
+	 */
+	private static boolean ensureJfrModuleAvailable() {
+		if (ModuleLayer.boot().findModule("jdk.jfr").isPresent()) {
+			return true;
+		}
+		try {
+			jdk.internal.module.Modules.loadModule("jdk.jfr");
+			return true;
+		} catch (Exception e) {
+			jfrModuleUnavailableMessage = new String[] {
+				"Flight Recorder can not be enabled.",
+				e.toString() + "."
+			};
+			return false;
 		}
 	}
 
@@ -217,14 +244,16 @@ final class JFRHelpers {
 				null
 			);
 			if (null != results) {
-				logJFR(results, 0, 2);
+				/* tag 13 = LogTag.JFR_START, the tag reserved for -XX:StartFlightRecording output. */
+				logJFR(results, 13, 2);
 			}
 			/*[ELSE] JAVA_SPEC_VERSION == 11 */
 			String[] results = (String []) dcmdStart.getDcmdExecute().invoke(
 					dcmdStart.getDCmdInstance(), "internal", jfrCMDLineOption, ',');
 			if (null != results) {
 				for (String result : results) {
-					logJFR(result, 0, 2);
+					/* tag 13 = LogTag.JFR_START, the tag reserved for -XX:StartFlightRecording output. */
+					logJFR(result, 13, 2);
 				}
 			}
 			/*[ENDIF] JAVA_SPEC_VERSION == 11 */
@@ -505,6 +534,9 @@ final class JFRHelpers {
 	 * @return A string array returned from DCmdStart.execute()
 	 */
 	public static String[] doJFRDCmdStartExecute(String execArgs) {
+		if (!jfrClassesInitialized) {
+			return jfrModuleUnavailableMessage;
+		}
 		dcmdStart = initDCmdInvocation(dcmdStart, "jdk.jfr.internal.dcmd.DCmdStart");
 		try {
 			return (String[]) dcmdStart.getDcmdExecute().invoke(dcmdStart.getDCmdInstance(), "internal", execArgs, ',');
@@ -522,6 +554,9 @@ final class JFRHelpers {
 	 * @return A string array returned from DCmdStop.execute()
 	 */
 	public static String[] doJFRDCmdStopExecute(String execArgs) {
+		if (!jfrClassesInitialized) {
+			return jfrModuleUnavailableMessage;
+		}
 		dcmdStop = initDCmdInvocation(dcmdStop, "jdk.jfr.internal.dcmd.DCmdStop");
 		try {
 			return (String[]) dcmdStop.getDcmdExecute().invoke(dcmdStop.getDCmdInstance(), "internal", execArgs, ',');
@@ -550,6 +585,9 @@ final class JFRHelpers {
 	public static String[] doJFRDCmdConfigureExecute(
 			boolean verbose, String repositoryPath, String dumpPath, Integer stackDepth, Long globalBufferCount,
 			Long globalBufferSize, Long threadBufferSize, Long memorySize, Long maxChunkSize, Boolean sampleThreads) {
+		if (!jfrClassesInitialized) {
+			return jfrModuleUnavailableMessage;
+		}
 		dcmdConfigure = initDCmdInvocation(dcmdConfigure, "jdk.jfr.internal.dcmd.DCmdConfigure");
 		try {
 			return (String[]) dcmdConfigure.getDcmdExecute().invoke(
@@ -578,6 +616,9 @@ final class JFRHelpers {
 	 * @return A string array returned from DCmdDump.execute()
 	 */
 	public static String[] doJFRDCmdDumpExecute(String execArgs) {
+		if (!jfrClassesInitialized) {
+			return jfrModuleUnavailableMessage;
+		}
 		dcmdDump = initDCmdInvocation(dcmdDump, "jdk.jfr.internal.dcmd.DCmdDump");
 		try {
 			return (String[]) dcmdDump.getDcmdExecute().invoke(dcmdDump.getDCmdInstance(), "internal", execArgs, ',');
