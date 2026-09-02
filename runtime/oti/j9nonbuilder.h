@@ -602,8 +602,15 @@ typedef struct J9JFRPhysicalMemory {
 } J9JFRPhysicalMemory;
 
 /* Variable-size structure - stackTraceSize worth of UDATA follow the fixed portion */
+//typedef struct J9JFRObjectAllocationSample {
+//	J9JFR_EVENT_WITH_STACKTRACE_FIELDS
+//	struct J9Class *objectClass; /**< class of the allocated object */
+//	UDATA weight;                /**< bytes allocated by this thread since last JFR sample */
+//} J9JFRObjectAllocationSample;
+
+//debug
 typedef struct J9JFRObjectAllocationSample {
-	J9JFR_EVENT_WITH_STACKTRACE_FIELDS
+	J9JFR_EVENT_COMMON_FIELDS
 	struct J9Class *objectClass; /**< class of the allocated object */
 	UDATA weight;                /**< bytes allocated by this thread since last JFR sample */
 } J9JFRObjectAllocationSample;

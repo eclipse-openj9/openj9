@@ -1634,10 +1634,11 @@ VM_JFRConstantPoolTypes::addObjectAllocationSampleEntry(J9JFRObjectAllocationSam
 	entry->threadIndex = objectAllocationSampleData->currentThreadTID;
 	entry->eventThreadIndex = objectAllocationSampleData->currentThreadTID;
 
-	entry->stackTraceIndex = consumeStackTrace(objectAllocationSampleData->currentThreadTID, J9JFROBJECTALLOCATIONSAMPLE_STACKTRACE(objectAllocationSampleData), objectAllocationSampleData->stackTraceSize, objectAllocationSampleData->stackTraceID);
-	if (isResultNotOKay()) {
-		goto done;
-	}
+//Debug
+//	entry->stackTraceIndex = consumeStackTrace(objectAllocationSampleData->currentThreadTID, J9JFROBJECTALLOCATIONSAMPLE_STACKTRACE(objectAllocationSampleData), objectAllocationSampleData->stackTraceSize, objectAllocationSampleData->stackTraceID);
+//	if (isResultNotOKay()) {
+//		goto done;
+//	}
 
 	entry->objectClassIndex = getClassEntry(objectAllocationSampleData->objectClass);
 	if (isResultNotOKay()) {

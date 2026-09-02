@@ -1624,7 +1624,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 				returnValue = JNI_EINVAL;
 				break;
 			}
-			if ((throttleRate > 900) || (throttleRate < 50)) {
+			if ((throttleRate > 1000) || (throttleRate < 1)) {
 				returnValue = JNI_EINVAL;
 				break;
 			}

@@ -477,7 +477,8 @@ struct ObjectAllocationSampleEntry {
 	I_64 ticks;
 	U_64 threadIndex;
 	U_64 eventThreadIndex;
-	U_32 stackTraceIndex;
+//Debug
+//	U_32 stackTraceIndex;
 	U_32 objectClassIndex; /**< class constant-pool index for the allocated object class */
 	U_64 weight;           /**< bytes allocated since last JFR sample on this thread */
 };

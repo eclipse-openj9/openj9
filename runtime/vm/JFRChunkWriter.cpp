@@ -1607,8 +1607,9 @@ VM_JFRChunkWriter::writeObjectAllocationSampleEvent(void *anElement, void *userD
 	/* Write event thread index */
 	bufferWriter->writeLEB128(entry->eventThreadIndex);
 
+//Debug
 	/* Write stack trace index */
-	bufferWriter->writeLEB128(entry->stackTraceIndex);
+//	bufferWriter->writeLEB128(entry->stackTraceIndex);
 
 	/* Write objectClass constant-pool index */
 	bufferWriter->writeLEB128(entry->objectClassIndex);
