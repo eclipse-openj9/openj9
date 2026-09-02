@@ -950,11 +950,7 @@ walkBytecodeFrameSlots(J9StackWalkState *walkState, J9Method *method, UDATA offs
 		}
 
 		if (0 != numberOfMappedLocals) {
-			if (J9_ARE_ANY_BITS_SET(flags, J9MAPCACHE_LOCALMAP_CACHED)) {
-				memcpy(result, romMethodInfo->localMap, ((numberOfMappedLocals + 31) >> 5) * sizeof(U_32));
-			} else {
-				getLocalsMap(walkState, romClass, romMethod, offsetPC, result, numberOfMappedLocals, alwaysLocalMap);
-			}
+			getLocalsMap(walkState, romClass, romMethod, offsetPC, result, numberOfMappedLocals, alwaysLocalMap);
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 			swPrintf(walkState, 4, "\tLocals starting at %p for %d slots\n", localBase, numberOfMappedLocals);
 #endif
@@ -1567,8 +1563,13 @@ getLocalsMap(J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * 
 			/* j9localmap_ArgBitsForPC0 only deals with args, so zero out the result array to make sure the temps are non-object */
 			memset(result, 0, copySize);
 			if (J9_ARE_ANY_BITS_SET(romMethodInfo->flags, J9MAPCACHE_ARGBITS_CACHED)) {
-				/* argBits covers only arg slots — use argCount */
+				/* argBits covers only arg slots - copy argCount words */
 				UDATA argCopySize = (((UDATA)romMethodInfo->argCount + 31) >> 5) * sizeof(U_32);
+#if defined(J9VM_INTERP_STACKWALK_TRACING)
+				Assert_VRB_true(argCopySize <= sizeof(romMethodInfo->argBits));
+#else /* J9VM_INTERP_STACKWALK_TRACING */
+				Assert_VM_true(argCopySize <= sizeof(romMethodInfo->argBits));
+#endif /* J9VM_INTERP_STACKWALK_TRACING */
 				memcpy(result, romMethodInfo->argBits, argCopySize);
 			} else {
 				j9localmap_ArgBitsForPC0(romClass, romMethod, result);

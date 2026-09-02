@@ -125,15 +125,17 @@ getROMMethodInfoCommon(J9StackWalkState *walkState, J9ClassLoader *classLoader, 
 	J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
 	J9JavaVM *vm = walkState->javaVM;
 
-	/* Only compute argBits if method has arguments. */
-	if (romMethodInfo->argCount > 0) {
-		if (romMethodInfo->argCount <= J9_ARGBITS_CACHE_BITS) {
+	/* Set argBits for methods whose argument count fits in the cache.
+	 * argBits is already zeroed for argCount == 0 by initializeBasicROMMethodInfo.
+	 */
+	if (romMethodInfo->argCount <= J9_ARGBITS_CACHE_BITS) {
+		if (romMethodInfo->argCount > 0) {
 			j9localmap_ArgBitsForPC0(
 					romClass,
 					romMethod,
 					romMethodInfo->argBits);
-			romMethodInfo->flags |= J9MAPCACHE_ARGBITS_CACHED;
 		}
+		romMethodInfo->flags |= J9MAPCACHE_ARGBITS_CACHED;
 	}
 
 	updateROMMethodInfoCache(vm, classLoader, romMethodInfo);
@@ -148,8 +150,11 @@ getROMMethodInfoForBytecodePCInternal(J9StackWalkState *walkState, J9ClassLoader
 	initializeBasicROMMethodInfo(walkState, romMethod);
 	romMethodInfo->key = bytecodePC;
 
-	/* Only compute maps when walking object slots. */
-	if (J9_ARE_ANY_BITS_SET(walkState->flags, J9_STACKWALK_ITERATE_O_SLOTS)) {
+	/* Compute local and stack maps if caching is enabled, to store a complete entry on
+	 * a cache miss. If caching is disabled, compute maps only when iterating object slots.
+	 */
+	bool cacheEnabled = (NULL != classLoader->mapCacheMutex);
+	if (cacheEnabled || J9_ARE_ANY_BITS_SET(walkState->flags, J9_STACKWALK_ITERATE_O_SLOTS)) {
 		if (numberOfLocals <= J9_LOCALMAP_CACHE_BITS) {
 			/* Verify the result will fit in the cache array */
 			UDATA mapWords = (numberOfLocals + 31) >> 5;
@@ -238,18 +243,24 @@ getROMMethodInfoForBytecodeFrame(J9StackWalkState *walkState)
 	J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
 	J9Method *method = walkState->method;
 	J9ClassLoader *classLoader = J9_CLASS_FROM_METHOD(method)->classLoader;
+
+	/* Compute the bytecode PC offset and use it as the cache key. */
+	UDATA pcOffset = (UDATA)(walkState->pc - J9_BYTECODE_START_FROM_RAM_METHOD(method));
+	void *bytecodePC = (void *)(J9_BYTECODE_START_FROM_RAM_METHOD(method) + pcOffset);
+
+	/* Check the cache. */
+	if (checkROMMethodInfoCache(classLoader, bytecodePC, romMethodInfo)) {
+		return;
+	}
+
+	/* Cache miss - look up the ROM method. */
 	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 	J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
 
-	UDATA pcOffset = (UDATA)(walkState->pc - J9_BYTECODE_START_FROM_RAM_METHOD(method));
+	/* Fall back to a ROM-method-keyed entry for out-of-range PCs. */
 	if (pcOffset >= (UDATA)J9_BYTECODE_SIZE_FROM_ROM_METHOD(romMethod)) {
 		initializeBasicROMMethodInfo(walkState, romMethod);
 		romMethodInfo->key = (void *)romMethod;
-		return;
-	}
-	void *bytecodePC = (void *)(J9_BYTECODE_START_FROM_ROM_METHOD(romMethod) + pcOffset);
-
-	if (checkROMMethodInfoCache(classLoader, bytecodePC, romMethodInfo)) {
 		return;
 	}
 
