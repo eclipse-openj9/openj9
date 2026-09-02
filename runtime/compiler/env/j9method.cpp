@@ -9471,33 +9471,28 @@ void TR_J9ByteCodeIlGenerator::packReferenceChainOffsets(TR::Node *node, std::ve
 
 bool TR_ResolvedJ9Method::isFieldNullRestricted(TR::Compilation *comp, int32_t cpIndex, bool isStatic, bool isStore)
 {
-    if (!TR::Compiler->om.areFlattenableValueTypesEnabled() || (-1 == cpIndex))
+    if (!TR::Compiler->om.areFlattenableValueTypesEnabled() || (-1 == cpIndex)) {
         return false;
+    }
 
     J9VMThread *vmThread = fej9()->vmThread();
     J9ROMFieldShape *fieldShape = NULL;
 
-    bool failCompilation = false;
     {
         TR::VMAccessCriticalSection isFieldNullRestricted(fej9());
         if (isStatic) {
             void *staticAddress
                 = jitCTResolveStaticFieldRefWithMethod(vmThread, ramMethod(), cpIndex, isStore, &fieldShape);
             if (!staticAddress) {
-                failCompilation = true;
+                return false;
             }
         } else {
             IDATA fieldOffset
                 = jitCTResolveInstanceFieldRefWithMethod(vmThread, ramMethod(), cpIndex, isStore, &fieldShape);
             if (fieldOffset == -1) {
-                failCompilation = true;
+                return false;
             }
         }
-    }
-
-    if (failCompilation) {
-        comp->failCompilation<TR::CompilationException>(
-            isStatic ? "jitCTResolveStaticFieldRefWithMethod failed" : "jitCTResolveInstanceFieldRefWithMethod failed");
     }
 
     return vmThread->javaVM->internalVMFunctions->isFieldNullRestricted(fieldShape);
