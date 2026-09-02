@@ -84,6 +84,8 @@ public class DDRValueTypeTest {
 		MethodHandle make = ValueTypeTests.createObjectOfCompactLayoutScenarios();
 		Object compactLayoutScenarios = make.invoke(compactBytes, compactShorts, compactByteShort, compactAssorted);
 
+		System.out.format("HASHCODE=%08X%n", assortedValueWithSingleAlignment.hashCode());
+
 		ValueTypeTests.checkObject(assortedValueWithSingleAlignment, 
 				assortedValueWithSingleAlignmentAlt, 
 				valArray, 

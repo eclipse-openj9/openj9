@@ -38,6 +38,7 @@
 		<command showMatch="yes">$EXE$ -Xmx24m $ARGS$ $JARS$ $PROGRAM$</command>
 		<output regex="no" type="success" showMatch="yes">System dump written</output>
 		<saveoutput regex="no" type="required" saveName="DUMPFILE" splitIndex="1" splitBy="System dump written to ">System dump written to </saveoutput>
+		<saveoutput regex="no" type="required" saveName="javaHashCode" splitIndex="1" splitBy="HASHCODE=">HASHCODE=</saveoutput>
 		<output regex="no" type="failure">Exception caught!</output>
 	</test>
 
@@ -210,5 +211,15 @@
 		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">S s = 0x7fff \(offset = 8\) \(.*CompactAssorted\)</output>
 		<output regex="yes" javaUtilPattern="yes" type="success" showMatch="yes">B b = 0x7f \(offset = 10\) \(.*CompactAssorted\)</output>
 		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !hashcode $valueAddr1$ and verify it matches the VM hashCode()">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!hashcode $valueAddr1$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">0x$javaHashCode$</output>
+		<output regex="no" type="failure">Error in hash calculation</output>
 	</test>
 </suite>
