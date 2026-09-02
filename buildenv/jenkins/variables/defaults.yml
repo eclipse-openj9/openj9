@@ -415,6 +415,7 @@ x86-64_mac:
     11: 'macosx-x86_64-normal-server-release'
   extra_configure_options:
     8: '--with-toolchain-type=clang'
+    next: '--enable-deprecated-ports'
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
   node_labels:
     build: 'ci.role.build && hw.arch.x86 && sw.os.mac && sw.tool.xcode.15_4'
