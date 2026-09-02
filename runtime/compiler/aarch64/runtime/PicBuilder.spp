@@ -1100,12 +1100,57 @@ FUNC_LABEL(_interfaceSlotsUnavailable):
 	stp	x5, x4, [J9SP, #16]
 	stp	x3, x2, [J9SP, #32]
 	stp	x1, x0, [J9SP, #48]
-	mov	x7, x30						// preserve LR
+	mov	x8, x30						// preserve LR
 	ldr	x10, [x30, #J9TR_ICSnippet_codeCacheReturnAddress]	// protect code cache RA in x10 (in L_commonJitDispatch, it is expected)
+//#define NO_HELPER_LASTITABLE_CHECK
+//#define NO_ITABLEWALK_CHECK
+//#define NO_ITERATION_LIMIT
+//    b   L_callHelper
+#ifndef NO_HELPER_LASTITABLE_CHECK
+	// Before iTable walk or going to the VM helper, check if the receiver class lastITable matches the interface
+	// class of the method being called and if so, use it to quickly look up the vtable offset and make the call
+	LOAD_CLASS(x14, w14, x0)				// Load the class
+	and	x14, x14, #~(J9TR_RequiredClassAlignment-1)	// mask VFT bits
+	ldr	x11, [x8, #J9TR_ICSnippet_InterfaceClass]	// Load the interface class of the method from the snippet
+	ldr	x12, [x14, #J9TR_J9Class_lastITable]		// Load the cached last ITable
+	ldr	x13, [x12, #J9TR_J9ITable_interfaceClass]	// Load the interface class whose ITable this is
+	cmp	x11, x13
+#ifndef NO_ITABLEWALK_CHECK
+	beq	L_hitITable
+	// Before going to the VM helper, walk up to 4 iTable entries
+	ldr	x12, [x14, #J9TR_J9Class_iTable]		// Load the iTable pointer
+#ifndef NO_ITERATION_LIMIT
+	mov	x9, #4						// iteration limit
+#endif /* NO_ITERATION_LIMIT */
+L_iTableLoop:
+	cbz	x12, L_callHelper				// check iTable != null
+	ldr	x13, [x12, #J9TR_J9ITable_interfaceClass]	// Load iTable class
+	cmp	x11, x13
+	beq	L_hitITable
+#ifndef NO_ITERATION_LIMIT
+	subs	x9, x9, #1					// decrement counter, set flags
+	beq	L_callHelper					// limit reached, fall back to helper
+#endif /* NO_ITERATION_LIMIT */
+	ldr	x12, [x12, #J9TR_J9ITable_next]		// Load the next iTable pointer
+	b	L_iTableLoop
+#else /* ~NO_ITABLEWALK_CHECK */
+	bne	L_callHelper
+#endif /* ~NO_ITABLEWALK_CHECK */
+	// ITable entry is a match
+L_hitITable:
+	ldr	x11, [x8, #J9TR_ICSnippet_ITableIndex]		// Load the itable offset from the snippet
+	tst	x11, #J9TR_J9_ITABLE_OFFSET_TAG_BITS		// Call the helper if the itable offset is tagged
+	bne	L_callHelper
+	ldr	x0, [x12, x11]					// Load the interpreter vft offset
+	b	L_commonJitDispatch
 
+L_callHelper:
+#endif /* ~NO_HELPER_LASTITABLE_CHECK */
+
+	// Frame already pushed at function entry; x8 = snippet address, x10 = code cache RA
 	LOAD_CLASS(x3, w3, x0)					// Load class pointer
 	and	x0, x3, #~(J9TR_RequiredClassAlignment-1)	// mask VFT bits
-	add	x1, x7, #J9TR_ICSnippet_InterfaceClass		// Address of interface info
+	add	x1, x8, #J9TR_ICSnippet_InterfaceClass		// Address of interface info
 	mov	x2, x10						// Load code cache RA
 	bl	FUNC_LABEL(jitLookupInterfaceMethod)		// call the helper
 	b	L_commonJitDispatch
