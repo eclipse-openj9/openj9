@@ -386,5 +386,19 @@ public class JFR {
 
 		return result;
 	}
+
+	/**
+	 * Handle a JFR.* command when Flight Recorder is unavailable, reporting the reason.
+	 *
+	 * @param diagnosticCommand the full command string (ignored)
+	 * @return a result carrying the unavailability message
+	 */
+	static DiagnosticProperties getJFRModuleUnavailableMessage(String diagnosticCommand) {
+		String[] message = VM.getVMLangAccess().getJFRModuleUnavailableMessage();
+		if (null == message) {
+			return DiagnosticProperties.makeStringResult("Flight Recorder can not be enabled.");
+		}
+		return DiagnosticProperties.makeStringResult(Stream.of(message).collect(Collectors.joining("\n")));
+	}
 /*[ENDIF] JAVA_SPEC_VERSION == 17 */
 }

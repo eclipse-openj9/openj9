@@ -774,6 +774,12 @@ public static native Module getUnnamedModuleForSystemLoader();
  * Native used to initialize internal JFR structures
  */
 public static native void initializeInternalJFRStructures();
+
+/**
+ * Native used to unregister the JFR V2 hooks when jdk.jfr
+ * could not be made available.
+ */
+public static native void disableJFRV2Support();
 /*[ENDIF] JFR_SUPPORT */
 
 /*[IF JAVA_SPEC_VERSION >= 24]*/

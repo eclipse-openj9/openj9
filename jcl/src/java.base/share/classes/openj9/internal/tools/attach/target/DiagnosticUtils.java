@@ -685,6 +685,21 @@ public class DiagnosticUtils {
 				commandTable.put(JFR.DIAGNOSTICS_JFR_STOP, JFR::doJFR);
 				helpTable.put(JFR.DIAGNOSTICS_JFR_STOP, JFR.DIAGNOSTICS_JFR_STOP_HELP);
 			}
+/*[IF JAVA_SPEC_VERSION == 17]*/
+		} else {
+			/* JFR unavailable: route JFR.* to a handler that reports why, instead of leaving them unrecognized. */
+			commandTable.put(JFR.DIAGNOSTICS_JFR_START, JFR::getJFRModuleUnavailableMessage);
+			helpTable.put(JFR.DIAGNOSTICS_JFR_START, JFR.DIAGNOSTICS_JFR_START_HELP);
+
+			commandTable.put(JFR.DIAGNOSTICS_JFR_DUMP, JFR::getJFRModuleUnavailableMessage);
+			helpTable.put(JFR.DIAGNOSTICS_JFR_DUMP, JFR.DIAGNOSTICS_JFR_DUMP_HELP);
+
+			commandTable.put(JFR.DIAGNOSTICS_JFR_STOP, JFR::getJFRModuleUnavailableMessage);
+			helpTable.put(JFR.DIAGNOSTICS_JFR_STOP, JFR.DIAGNOSTICS_JFR_STOP_HELP);
+
+			commandTable.put(JFR.DIAGNOSTICS_JFR_CONFIGURE, JFR::getJFRModuleUnavailableMessage);
+			helpTable.put(JFR.DIAGNOSTICS_JFR_CONFIGURE, JFR.DIAGNOSTICS_JFR_CONFIGURE_HELP);
+/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 		}
 /*[ENDIF] JFR_SUPPORT */
 	}

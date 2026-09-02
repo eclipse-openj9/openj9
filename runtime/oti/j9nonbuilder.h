@@ -5753,6 +5753,7 @@ typedef struct J9InternalVMFunctions {
 	void (*jvmUpcallsTransformJFREventClass)(struct J9VMThread *currentThread, U_8 *classData, UDATA classDataLength, U_8 **newClassData, UDATA *newClassDataLength);
 	jobject (*createNewEventWriter)(struct J9VMThread *currentThread);
 	void (*jfrInitializeInternalStructures)(struct J9VMThread *currentThread);
+	void (*jfrDisableJFRV2Support)(struct J9VMThread *currentThread);
 	void (*jfrEmitDataLoss)(struct J9VMThread *currentThread, U_64 bytes);
 	jboolean (*requestJFREvent)(struct J9VMThread *currentThread, jlong id);
 	BOOLEAN (*setupChunkMonitor)(struct J9VMThread *currentThread);

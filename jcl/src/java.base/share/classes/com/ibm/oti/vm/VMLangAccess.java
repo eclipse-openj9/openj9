@@ -224,6 +224,13 @@ public interface VMLangAccess {
 
 	/*[IF JAVA_SPEC_VERSION == 17]*/
 	/**
+	 * Get the message describing why Flight Recorder could not be enabled.
+	 *
+	 * @return the message lines, or null if jdk.jfr was available
+	 */
+	public String[] getJFRModuleUnavailableMessage();
+
+	/**
 	 * Invoke jdk.jfr.internal.dcmd.DCmdStart.execute().
 	 *
 	 * @param execArgs The string arguments separated by a delimiter
