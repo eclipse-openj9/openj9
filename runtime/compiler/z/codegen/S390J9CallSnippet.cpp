@@ -88,7 +88,7 @@ uint8_t *TR::S390J9CallSnippet::generateVIThunk(TR::Node *callNode, int32_t argS
                 comp->getDebug()->getName(callNode->getDataType()));
     }
 
-    cursor = S390flushArgumentsToStack(cursor, callNode, argSize, cg);
+    cursor = S390FlushArgumentsToStack(cursor, callNode, argSize, cg);
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //  if you change the following code,
@@ -172,7 +172,7 @@ TR_MHJ2IThunk *TR::S390J9CallSnippet::generateInvokeExactJ2IThunk(TR::Node *call
                 comp->getDebug()->getName(callNode->getDataType()));
     }
 
-    cursor = S390flushArgumentsToStack(cursor, callNode, argSize, cg);
+    cursor = S390FlushArgumentsToStack(cursor, callNode, argSize, cg);
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //  if you change the following code,
@@ -242,6 +242,24 @@ TR_MHJ2IThunk *TR::S390J9CallSnippet::generateInvokeExactJ2IThunk(TR::Node *call
     return thunk;
 }
 
+uint8_t *TR::S390J9CallSnippet::S390FlushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argSize,
+    TR::CodeGenerator *cg)
+{
+    TR::Linkage *linkage = cg->getLinkage(callNode->getSymbol()->castToMethodSymbol()->getLinkageConvention());
+
+    bool isJitDispatchJ9Method = callNode->isJitDispatchJ9MethodCall(cg->comp());
+    int32_t argStart = callNode->getFirstArgumentIndex();
+    // we want the arguments for induceOSR to be passed from left to right as in any other non-helper call
+    bool rightToLeft = linkage->getRightToLeft() && !callNode->getSymbolReference()->isOSRInductionHelper()
+        && !isJitDispatchJ9Method;
+
+    if (isJitDispatchJ9Method) {
+        argStart++;
+    }
+
+    return S390FlushArgumentsToStackHelper(buffer, callNode, argSize, cg, argStart, rightToLeft, linkage);
+}
+
 uint8_t *TR::S390J9CallSnippet::emitSnippetBody()
 {
     TR::Compilation *comp = cg()->comp();
@@ -259,7 +277,7 @@ uint8_t *TR::S390J9CallSnippet::emitSnippetBody()
     getSnippetLabel()->setCodeLocation(cursor);
 
     // Flush in-register arguments back to the stack for interpreter
-    cursor = S390flushArgumentsToStack(cursor, callNode, getSizeOfArguments(), cg());
+    cursor = S390FlushArgumentsToStack(cursor, callNode, getSizeOfArguments(), cg());
 
     TR_RuntimeHelper runtimeHelper = getInterpretedDispatchHelper(methodSymRef, callNode->getDataType());
     TR::SymbolReference *glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(runtimeHelper);
@@ -505,7 +523,8 @@ void TR::S390J9CallSnippet::print(OMR::Logger *log, TR_Debug *debug)
     debug->printSnippetLabel(log, getSnippetLabel(), bufferPos,
         methodSymRef->isUnresolved() ? "Unresolved Call Snippet" : "Call Snippet");
 
-    bufferPos = debug->printS390ArgumentsFlush(log, callNode, bufferPos, getSizeOfArguments());
+    bufferPos = TR::S390CallSnippet::printS390ArgumentsFlush(log, callNode, bufferPos, getSizeOfArguments(), debug,
+        getNode()->getFirstArgumentIndex(), cg()->machine(), cg()->getLinkage(methodSymbol->getLinkageConvention()));
 
     if (methodSymRef->isUnresolved()
         || (cg()->comp()->compileRelocatableCode() && !cg()->comp()->getOption(TR_UseSymbolValidationManager))) {
@@ -1635,4 +1654,84 @@ void TR::S390JNICallDataSnippet::print(OMR::Logger *log, TR_Debug *debug)
     debug->printPrefix(log, NULL, bufferPos, sizeof(intptr_t));
     log->printf("DC   \t%p \t\t# targetAddress", *((intptr_t *)bufferPos));
     bufferPos += sizeof(intptr_t);
+}
+
+uint8_t *TR::S390J9HelperCallSnippet::emitSnippetBody()
+{
+    uint8_t *cursor = cg()->getBinaryBufferCursor();
+    getSnippetLabel()->setCodeLocation(cursor);
+
+    TR::Node *callNode = getNode();
+    TR::SymbolReference *helperSymRef = getHelperSymRef();
+    bool jitInduceOSR = helperSymRef->isOSRInductionHelper();
+    bool isJitDispatchJ9Method = callNode->isJitDispatchJ9MethodCall(cg()->comp());
+
+    if (_needsArgFlush)
+        cursor = TR::S390J9CallSnippet::S390FlushArgumentsToStack(cursor, callNode, getSizeOfArguments(), cg());
+
+    /* The J9Method pointer to be passed to be interpreter is in the entry point register, but the interpreter expects
+     * it to be in R1. Since the first integer argument register is also R1, we only load it after we have flushed the
+     * args to the stack.
+     */
+    uint32_t rEP = (uint32_t)cg()->getEntryPointRegister() - 1;
+    if (getNode()->isJitDispatchJ9MethodCall(comp())) {
+        bool is64Bit = comp()->target().is64Bit();
+
+        if (comp()->target().is64Bit()) {
+            *(int32_t *)cursor = 0xB9040010 + rEP; // LGR R1, R4/15
+            cursor += sizeof(int32_t);
+        } else {
+            *(int16_t *)cursor = (int16_t)(0x1810 + rEP); // LR R1, R4/15
+            cursor += sizeof(int16_t);
+        }
+    }
+
+    return TR::S390HelperCallSnippet::emitSnippetBodyInner(cursor, helperSymRef);
+}
+
+void TR::S390J9HelperCallSnippet::print(OMR::Logger *log, TR_Debug *debug)
+{
+    if (log == NULL) {
+        return;
+    }
+
+    TR::SymbolReference *helperSymRef = getHelperSymRef();
+
+    uint8_t *bufferPos = getSnippetLabel()->getCodeLocation();
+    debug->printSnippetLabel(log, getSnippetLabel(), bufferPos, "Helper Call Snippet", debug->getName(helperSymRef));
+
+    TR::Node *callNode = getNode();
+    TR::MethodSymbol *methodSymbol = callNode->getSymbol()->castToMethodSymbol();
+    TR::Linkage *privateLinkage = cg()->getLinkage(methodSymbol->getLinkageConvention());
+    TR::Machine *machine = cg()->machine();
+    int32_t argStart = callNode->getFirstArgumentIndex() + (callNode->isJitDispatchJ9MethodCall(comp()) ? 1 : 0);
+
+    if (_needsArgFlush)
+        bufferPos = TR::S390CallSnippet::printS390ArgumentsFlush(log, getNode(), bufferPos, getSizeOfArguments(), debug,
+            argStart, cg()->machine(), privateLinkage);
+
+    if (getNode()->isJitDispatchJ9MethodCall(comp())) {
+        debug->printPrefix(log, NULL, bufferPos, comp()->target().is64Bit() ? 4 : 2);
+        log->printf("%s  \t%s,%s \t %s", comp()->target().is64Bit() ? "LGR" : "LR", "R1",
+            comp()->target().isLinux() ? "R4" : "R15", "move j9method pointer to R1 for interpreter");
+        bufferPos += comp()->target().is64Bit() ? 4 : 2;
+    }
+    printInner(log, debug, bufferPos);
+}
+
+uint32_t TR::S390J9HelperCallSnippet::getLength(int32_t estimatedSnippetStart)
+{
+    uint32_t length = _needsArgFlush ? TR::S390J9CallSnippet::instructionCountForArguments(getNode(), cg()) : 0;
+    if (getNode()->isJitDispatchJ9MethodCall(comp())) {
+        length += comp()->target().is64Bit() ? 4 : 2; // register move
+    }
+    return length + TR::S390HelperCallSnippet::getLength(length + estimatedSnippetStart);
+}
+
+int32_t TR::S390J9CallSnippet::instructionCountForArguments(TR::Node *callNode, TR::CodeGenerator *cg)
+{
+    int32_t argStart = callNode->getFirstArgumentIndex();
+    if (callNode->isJitDispatchJ9MethodCall(comp()))
+        argStart += 1;
+    return TR::S390CallSnippet::instructionCountForArgumentsInner(callNode, cg, argStart);
 }
