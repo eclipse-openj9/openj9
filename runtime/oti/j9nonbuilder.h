@@ -4382,6 +4382,18 @@ typedef struct J9ClassCastParms {
 	struct J9Class* castClass;
 } J9ClassCastParms;
 
+typedef struct J9JITMemDisclaimInfo {
+	BOOLEAN dataCacheDisclaimEnabled;
+	BOOLEAN iProfilerDisclaimEnabled;
+	BOOLEAN runtimeAssumptionDisclaimEnabled;
+	BOOLEAN codeCacheDisclaimEnabled;
+	BOOLEAN sccDisclaimEnabled;
+	BOOLEAN disclaimOnSwap;
+	BOOLEAN disclaimOnFile;
+	const char *disclaimDir;
+	const char *sccDisclaimDir;
+} J9JITMemDisclaimInfo;
+
 /* @ddr_namespace: map_to_type=J9JITConfig */
 
 typedef struct J9JITConfig {
@@ -4655,6 +4667,7 @@ typedef struct J9JITConfig {
 	IDATA verboseOutputLevel;
 	omrthread_monitor_t compilationMonitor;
 	void* compilationInfo;
+	J9JITMemDisclaimInfo memDisclaimInfo;
 	void* aotCompilationInfo;
 	void* pseudoTOC;
 	void* i2jTransition;
