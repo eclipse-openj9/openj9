@@ -607,8 +607,7 @@ typedef struct J9JFRObjectAllocationSample {
 	struct J9Class *objectClass; /**< class of the allocated object */
 	UDATA weight;                /**< bytes allocated by this thread since last JFR sample */
 } J9JFRObjectAllocationSample;
-#define J9JFROBJECTALLOCATIONSAMPLE_STACKTRACE(jfrEvent) \
-	((UDATA*)(((J9JFRObjectAllocationSample*)(jfrEvent)) + 1))
+#define J9JFROBJECTALLOCATIONSAMPLE_STACKTRACE(jfrEvent) ((UDATA *)(((J9JFRObjectAllocationSample *)(jfrEvent)) + 1))
 
 #endif /* defined(J9VM_OPT_JFR) */
 

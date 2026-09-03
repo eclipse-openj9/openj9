@@ -735,6 +735,10 @@ J9AllocateIndexableObject(J9VMThread *vmThread, J9Class *clazz, uint32_t numberO
 				highThreshold);
 		}
 		
+		if (!indexableOAM.getAllocateDescription()->isThreadAtSafePoint()) {
+			PORT_ACCESS_FROM_VMC(vmThread);
+			j9tty_printf(PORTLIB, "J9AllocateIndexableObject vmThread=%p, not ThreadAtSafePoint, VM_ACCESS=%zu\n", vmThread, J9_PUBLIC_FLAGS_VM_ACCESS == (vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) );
+		}
 		objectPtr = traceAllocateObject(vmThread, objectPtr, clazz, sizeInBytesRequired, (uintptr_t)numberOfIndexedFields);
 		if (extensions->isStandardGC()) {
 			if (OMR_GC_ALLOCATE_OBJECT_TENURED == (allocateFlags & OMR_GC_ALLOCATE_OBJECT_TENURED)) {
