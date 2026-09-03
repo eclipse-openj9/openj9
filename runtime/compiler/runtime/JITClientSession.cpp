@@ -1485,6 +1485,7 @@ ClientSessionData::ClassInfo::ClassInfo(TR_PersistentMemory *persistentMemory)
           decltype(_fieldOrStaticDefiningClassCache)::allocator_type(persistentMemory->_persistentAllocator.get()))
     , _J9MethodNameCache(decltype(_J9MethodNameCache)::allocator_type(persistentMemory->_persistentAllocator.get()))
     , _isStableCache(decltype(_isStableCache)::allocator_type(persistentMemory->_persistentAllocator.get()))
+    , _stringConstantCache(decltype(_stringConstantCache)::allocator_type(persistentMemory->_persistentAllocator.get()))
     , _referencingClassLoaders(
           decltype(_referencingClassLoaders)::allocator_type(persistentMemory->_persistentAllocator.get()))
     , _referenceSlotsInClass(
