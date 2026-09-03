@@ -1214,6 +1214,11 @@ jfrObjectAllocationSample(J9HookInterface **hook, UDATA eventNum, void *eventDat
 			classLeafName,
 			data->weight,
 			data->objectSize);
+		PORT_ACCESS_FROM_VMC(currentThread);
+		j9tty_printf(PORTLIB, "jfrObjectAllocationSample currentThread=%p,  classname=%.*s%.*s;, weight=%zu, startTime=%zu, objectSize=%zu\n", currentThread,
+				lenClassName, className,
+				lenClassLeafName, classLeafName,
+				data->weight, data->timestamp, data->objectSize);
 	}
 	else {
 		Trc_VM_jfrObjectAllocationSample(currentThread,
@@ -1221,11 +1226,15 @@ jfrObjectAllocationSample(J9HookInterface **hook, UDATA eventNum, void *eventDat
 			className,
 			data->weight,
 			data->objectSize);
+
+		PORT_ACCESS_FROM_VMC(currentThread);
+		j9tty_printf(PORTLIB, "jfrObjectAllocationSample currentThread=%p,  classname=%.*s, weight=%zu, startTime=%zu, objectSize=%zu\n", currentThread, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(data->clazz->romClass)),
+	            J9UTF8_DATA(J9ROMCLASS_CLASSNAME(data->clazz->romClass)), data->weight, data->timestamp, data->objectSize);
 	}
 
-	J9JFRObjectAllocationSample *jfrEvent = (J9JFRObjectAllocationSample *)reserveBufferWithStackTrace(
-			currentThread, currentThread, J9JFR_EVENT_TYPE_OBJECT_ALLOCATION_SAMPLE, sizeof(J9JFRObjectAllocationSample), 0);
-
+//	J9JFRObjectAllocationSample *jfrEvent = (J9JFRObjectAllocationSample *)reserveBufferWithStackTrace(
+//			currentThread, currentThread, J9JFR_EVENT_TYPE_OBJECT_ALLOCATION_SAMPLE, sizeof(J9JFRObjectAllocationSample), 0);
+	J9JFRObjectAllocationSample *jfrEvent = NULL;
 	if (NULL != jfrEvent) {
 		jfrEvent->objectClass = data->clazz;
 		jfrEvent->weight      = data->weight;
