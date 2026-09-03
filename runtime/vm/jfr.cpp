@@ -237,10 +237,8 @@ jfrEventSize(J9JFREvent *jfrEvent)
 		size = sizeof(J9JFRPhysicalMemory);
 		break;
 	case J9JFR_EVENT_TYPE_OBJECT_ALLOCATION_SAMPLE:
-//Debug
-//		size = sizeof(J9JFRObjectAllocationSample)
-//			+ (((J9JFRObjectAllocationSample*)jfrEvent)->stackTraceSize * sizeof(UDATA));
-		size = sizeof(J9JFRObjectAllocationSample);
+		size = sizeof(J9JFRObjectAllocationSample)
+			+ (((J9JFRObjectAllocationSample*)jfrEvent)->stackTraceSize * sizeof(UDATA));
 		break;
 default:
 		Assert_VM_unreachable();
@@ -1225,13 +1223,10 @@ jfrObjectAllocationSample(J9HookInterface **hook, UDATA eventNum, void *eventDat
 			data->objectSize);
 	}
 
-//Debug
-//	J9JFRObjectAllocationSample *jfrEvent = (J9JFRObjectAllocationSample *)reserveBufferWithStackTrace(
-//			currentThread, currentThread, J9JFR_EVENT_TYPE_OBJECT_ALLOCATION_SAMPLE, sizeof(J9JFRObjectAllocationSample), 0);
-	J9JFRObjectAllocationSample *jfrEvent = (J9JFRObjectAllocationSample *)reserveBuffer(
-			currentThread, currentThread, sizeof(J9JFRObjectAllocationSample));
+	J9JFRObjectAllocationSample *jfrEvent = (J9JFRObjectAllocationSample *)reserveBufferWithStackTrace(
+			currentThread, currentThread, J9JFR_EVENT_TYPE_OBJECT_ALLOCATION_SAMPLE, sizeof(J9JFRObjectAllocationSample), 0);
+
 	if (NULL != jfrEvent) {
-		initializeEventFields(currentThread, currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_OBJECT_ALLOCATION_SAMPLE);
 		jfrEvent->objectClass = data->clazz;
 		jfrEvent->weight      = data->weight;
 	}
