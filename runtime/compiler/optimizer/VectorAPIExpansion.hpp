@@ -217,7 +217,7 @@ public:
      *
      */
     enum vapiObjType {
-        Unknown = 0,
+        NotSet = 0,
         Vector,
         Mask,
         Shuffle,
@@ -225,7 +225,7 @@ public:
         ElementType,
         NumLanes,
         Scalar,
-        NotSet
+        Unknown
     };
 
     static const char *vapiObjTypeNames[];
