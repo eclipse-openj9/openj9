@@ -208,6 +208,9 @@ jfrEventSize(J9JFREvent *jfrEvent)
 	case J9JFR_EVENT_TYPE_STACKTRACE:
 		size = sizeof(J9JFREventWithStackTrace) + (((J9JFREventWithStackTrace *)jfrEvent)->stackTraceSize * sizeof(UDATA));
 		break;
+	case J9JFR_EVENT_TYPE_CLASS_LOADER_STATISTICS:
+		size = sizeof(J9JFRClassLoaderStatistics);
+		break;
 	case J9JFR_EVENT_TYPE_JVM_INFORMATION:
 	case J9JFR_EVENT_TYPE_CPU_INFORMATION:
 	case J9JFR_EVENT_TYPE_VIRTUALIZATION_INFORMATION:
@@ -219,7 +222,6 @@ jfrEventSize(J9JFREvent *jfrEvent)
 	case J9JFR_EVENT_TYPE_SYSTEM_PROCESS:
 	case J9JFR_EVENT_TYPE_MODULE_REQUIRE:
 	case J9JFR_EVENT_TYPE_MODULE_EXPORT:
-	case J9JFR_EVENT_TYPE_CLASS_LOADER_STATISTICS:
 	case J9JFR_EVENT_TYPE_NATIVE_LIBRARY:
 		size = sizeof(J9JFREvent);
 		break;
@@ -2642,15 +2644,72 @@ JfrPeriodicEventSet::requestClassLoadingStatistics(J9VMThread *currentThread)
 	jfrClassLoadingStatistics(currentThread);
 }
 
+struct TempJFRClassLoaderStatistics {
+	TempJFRClassLoaderStatistics *next;
+	struct J9ClassLoader *classLoader;
+};
+
 void
 JfrPeriodicEventSet::requestClassLoaderStatistics(J9VMThread *currentThread)
 {
 	if (!isJFREventEnabled(currentThread->javaVM, JfrClassLoaderStatisticsEvent)) {
 		return;
 	}
-	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
-	if (NULL != jfrEvent) {
-		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_CLASS_LOADER_STATISTICS);
+
+	internalReleaseVMAccess(currentThread);
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9ClassLoaderWalkState walkState;
+	J9ClassLoader *classLoader = vmFuncs->allClassLoadersStartDo(&walkState, vm, 0);
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	TempJFRClassLoaderStatistics *root = NULL;
+
+	while (NULL != classLoader) {
+		TempJFRClassLoaderStatistics *node = (TempJFRClassLoaderStatistics *)j9mem_allocate_memory(sizeof(TempJFRClassLoaderStatistics), J9MEM_CATEGORY_JFR);
+
+		if (NULL == node) {
+			break;
+		}
+
+		node->classLoader = classLoader;
+
+		node->next = root;
+		root = node;
+
+		classLoader = vmFuncs->allClassLoadersNextDo(&walkState);
+	}
+
+	vmFuncs->allClassLoadersEndDo(&walkState);
+	internalAcquireVMAccess(currentThread);
+
+	TempJFRClassLoaderStatistics *node = root;
+	while (NULL != node) {
+		J9JFRClassLoaderStatistics *jfrEvent = (J9JFRClassLoaderStatistics *)reserveBuffer(currentThread, currentThread, sizeof(J9JFRClassLoaderStatistics));
+
+		if (NULL != jfrEvent) {
+			initializeEventFields(currentThread, currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_CLASS_LOADER_STATISTICS);
+
+			classLoader = node->classLoader;
+			jfrEvent->classLoader = node->classLoader;
+
+			j9object_t parentLoaderObject = J9VMJAVALANGCLASSLOADER_PARENT(currentThread, classLoader->classLoaderObject);
+			if (NULL != parentLoaderObject) {
+				jfrEvent->parentClassLoader = J9VMJAVALANGCLASSLOADER_VMREF(currentThread, parentLoaderObject);
+			} else {
+				jfrEvent->parentClassLoader = NULL;
+			}
+
+			VM_JFRUtils::getClassloaderStats(vm, classLoader, &(jfrEvent->classCount), &(jfrEvent->chunkSize), &(jfrEvent->blockSize));
+
+			jfrEvent->hiddenClassCount = 0;
+			jfrEvent->hiddenChunkSize = 0;
+			jfrEvent->hiddenBlockSize = 0;
+		}
+
+		TempJFRClassLoaderStatistics *oldNode = node;
+		node = node->next;
+		j9mem_free_memory(oldNode);
 	}
 }
 
