@@ -7484,6 +7484,18 @@ TR_OpaqueMethodBlock *TR_J9VMBase::getResolvedVirtualMethod(TR_OpaqueClassBlock 
 
     TR::Compilation *comp = _compInfoPT->getCompilation();
 
+    // It is possible to end up attempting to look up the vtable of an obsolete class in some scenarios,
+    // such as during peeking ILGen. Under fast HCR, the obsolete class vtable would be empty. However,
+    // under extended HCR, it is possible for obsolete classes to have a non-empty vtable, so the check
+    // below that would terminate when vftHeader size is 0 is not sufficient on its own.
+    if (J9_IS_CLASS_OBSOLETE(j9class)) {
+        OMR::Logger *log = comp->log();
+        logprintf(comp->getOption(TR_TraceOptDetails), log,
+            "getResolvedVirtualMethod: class %p is obsolete; failing query for virtualCallOffset=%d\n", (void *)j9class,
+            virtualCallOffset);
+        return 0;
+    }
+
     // virtualCallOffset is a vtable slot computed against the class the call was resolved
     // against, while classObject is the receiver's (possibly refined) type.  When those
     // differ, such as when an interface accessor whose vtable slot was taken from one
@@ -7526,12 +7538,22 @@ TR_OpaqueMethodBlock *TR_J9VMBase::getResolvedInterfaceMethod(J9ConstantPool *ow
 
     // the classObject is the fixed type of the this pointer.  The result of this method is going to be
     // used to call the interface function directly.
-    //
-    J9Method *ramMethod = jitGetInterfaceMethodFromCP(vmThread(), ownerCP, cpIndex,
-        TR::Compiler->cls.convertClassOffsetToClassPtr(classObject));
+
+    TR::Compilation *comp = _compInfoPT->getCompilation();
+    J9Class *j9class = (J9Class *)TR::Compiler->cls.convertClassOffsetToClassPtr(classObject);
+
+    // A redefined class is never a valid target for a direct interface dispatch.
+    if (J9_IS_CLASS_OBSOLETE(j9class)) {
+        OMR::Logger *log = comp->log();
+        logprintf(comp->getOption(TR_TraceOptDetails), log,
+            "getResolvedInterfaceMethod: class %p is obsolete; failing query for cpIndex=%d\n", (void *)j9class,
+            cpIndex);
+        return 0;
+    }
+
+    J9Method *ramMethod = jitGetInterfaceMethodFromCP(vmThread(), ownerCP, cpIndex, j9class);
 
     // ramMethod might have been inherited from a superclass
-    TR::Compilation *comp = _compInfoPT->getCompilation();
     comp->constProvenanceGraph()->addEdge(classObject, ramMethod);
 
     return (TR_OpaqueMethodBlock *)ramMethod;
