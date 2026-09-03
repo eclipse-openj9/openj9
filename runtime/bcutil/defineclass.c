@@ -1054,6 +1054,9 @@ createROMClassFromClassFile(J9VMThread *currentThread, J9LoadROMClassData *loadD
 			/* This case is handled below */
 			break;
 
+		case BCT_ERR_STACK_OVERFLOW:
+			exceptionNumber = J9VMCONSTANTPOOL_JAVALANGSTACKOVERFLOWERROR;
+			break;
 		/*
 		 * Error messages are contents of vm->dynamicLoadBuffers->classFileError if anything is assigned
 		 * otherwise just the classname.
