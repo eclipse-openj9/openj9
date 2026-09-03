@@ -709,6 +709,8 @@ VMSnapshotImpl::fixupClass(J9Class *clazz)
 		}
 	}
 	omrthread_monitor_exit(_vm->memberNameListsMutex);
+	/* Clear stale constRefArrays from the class before writing the snapshot. */
+	clazz->constRefArrays = NULL;
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	if (NULL != clazz->methodTypes) {
 		memset(clazz->methodTypes, 0, sizeof(UDATA) * clazz->romClass->methodTypeCount);
