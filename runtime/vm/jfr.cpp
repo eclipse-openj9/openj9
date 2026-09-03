@@ -2085,6 +2085,14 @@ initializeJFRv2(J9JavaVM *vm)
 		goto done;
 	}
 
+	if (NULL != vm->jfrState.jfrLogFileName) {
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		vm->jfrState.logFileDescriptor = j9file_open(vm->jfrState.jfrLogFileName, EsOpenWrite | EsOpenCreate | EsOpenTruncate , 0666);
+		if (-1 == vm->jfrState.logFileDescriptor) {
+			goto done;
+		}
+	}
+
 	rc = JNI_OK;
 
 done:

@@ -30,14 +30,7 @@
 
 extern "C" {
 
-/* Make sure these logging levels lineup with jdk/jfr/internal/LogLevel.java */
-#define LOG_LEVEL_TRACE 1
-#define LOG_LEVEL_DEBUG 2
-#define LOG_LEVEL_INFO 3
-#define LOG_LEVEL_WARN 4
-#define LOG_LEVEL_ERROR 5
-
-#define JFR_STRING_BUFFER 256
+#define JFR_STRING_BUFFER_SIZE 256
 
 void JNICALL
 Java_jdk_jfr_internal_JVM_registerNatives(JNIEnv *env, jclass clazz)
@@ -272,21 +265,38 @@ Java_jdk_jfr_internal_JVM_getTicksFrequency(JNIEnv *env, jobject obj)
 	return 0;
 }
 
-/**
- * TODO Note this is a draft implementation.
- */
 static void
 logJFRMessage(J9VMThread *currentThread, j9object_t stringMessage)
 {
 	PORT_ACCESS_FROM_VMC(currentThread);
 	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
-	char buf[JFR_STRING_BUFFER];
+	char buf[JFR_STRING_BUFFER_SIZE];
 
-	J9UTF8* utf8Message = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, stringMessage, J9_STR_NONE, "", 0, buf, JFR_STRING_BUFFER);
+	J9UTF8 *utf8Message = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, stringMessage, J9_STR_NONE, "", 0, buf, sizeof(buf));
 	if (NULL == utf8Message) {
 		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 	} else {
-		j9tty_printf(PORTLIB, "%.*s\n", J9UTF8_LENGTH(utf8Message), J9UTF8_DATA(utf8Message));
+		UDATA msgLength = J9UTF8_LENGTH(utf8Message);
+		switch (currentThread->javaVM->jfrState.jfrLogOutput) {
+		case JFROUTPUT_STDOUT:
+			j9file_printf(J9PORT_TTY_OUT, "%.*s\n", msgLength, J9UTF8_DATA(utf8Message));
+			break;
+		case JFROUTPUT_STDERR:
+			j9tty_printf(PORTLIB, "%.*s\n", msgLength, J9UTF8_DATA(utf8Message));
+			break;
+		case JFROUTPUT_FILE:
+			{
+				UDATA written = j9file_write(currentThread->javaVM->jfrState.logFileDescriptor, J9UTF8_DATA(utf8Message), msgLength);
+				if (msgLength != written) {
+					/* Ignore log file writing error. */
+					Trc_JCL_JFRLOG_fileWrite_error(currentThread, msgLength, written);
+				}
+			}
+			break;
+		default:
+			Assert_JCL_unreachable();
+			break;
+		}
 		if (buf != (char*)utf8Message) {
 			j9mem_free_memory(utf8Message);
 		}
@@ -343,9 +353,6 @@ Java_jdk_jfr_internal_JVM_logEvent(JNIEnv *env, jclass clazz, jint level, jobjec
 }
 #endif /* JAVA_SPEC_VERSION >= 17 */
 
-/**
- * Note this is a draft implementation.
- */
 void JNICALL
 Java_jdk_jfr_internal_JVM_subscribeLogLevel(JNIEnv *env, jclass clazz, jobject lt, jint tagSetId)
 {
@@ -362,8 +369,14 @@ Java_jdk_jfr_internal_JVM_subscribeLogLevel(JNIEnv *env, jclass clazz, jobject l
 	if (-1 != tagSetLevelOffset) {
 		MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
 
-		/* TODO for now we will use warn as the default, in the future we will parse -Xlog to determine actual level */
-		objectAccessBarrier.inlineMixedObjectStoreI32(currentThread, logTagInstance, tagSetLevelOffset, LOG_LEVEL_WARN, TRUE);
+		IDATA idOffset = VM_VMHelpers::findinstanceFieldOffset(currentThread, loggerClass, "id", "I");
+		if (-1 != idOffset) {
+			I_32 logTagID = objectAccessBarrier.inlineMixedObjectReadI32(currentThread, logTagInstance, idOffset, FALSE);
+			Trc_JCL_JFRLOG_subscribeLogLevel(currentThread, logTagInstance, tagSetLevelOffset, idOffset, logTagID, (I_32)vm->jfrState.jfrLogTagSet[logTagID]);
+			objectAccessBarrier.inlineMixedObjectStoreI32(currentThread, logTagInstance, tagSetLevelOffset, (I_32)vm->jfrState.jfrLogTagSet[logTagID], TRUE);
+		} else {
+			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+		}
 	} else {
 		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
 	}
