@@ -1042,4 +1042,20 @@ final class Access implements JavaLangAccess {
 		Thread.currentThread().setNativeThreadID(id);
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 27 */
+
+	/*[IF JAVA_SPEC_VERSION >= 28]*/
+	// @Override
+	// To be restored after Valhalla extension repo has JavaLangAccess.getConfinedMemoryPools() as well.
+	// https://github.com/eclipse-openj9/openj9/issues/24710
+	public long[] getConfinedMemoryPools(Thread thread) {
+		return thread.confinedMemoryPools();
+	}
+
+	// @Override
+	// To be restored after Valhalla extension repo has JavaLangAccess.getOrCreateConfinedMemoryPools() as well.
+	// https://github.com/eclipse-openj9/openj9/issues/24710
+	public long[] getOrCreateConfinedMemoryPools(Thread thread, int poolSlots) {
+		return thread.getOrCreateConfinedMemoryPools(poolSlots);
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
 }
