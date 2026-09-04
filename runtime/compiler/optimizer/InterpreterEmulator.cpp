@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 #include "optimizer/InterpreterEmulator.hpp"
+#include "optimizer/J9DeferredOSRAssumptions.hpp"
 #include "optimizer/J9EstimateCodeSize.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/JSR292Methods.h"
@@ -29,6 +30,7 @@
 #include "ilgen/IlGenRequest.hpp"
 #include "jilconsts.h"
 #include "il/ParameterSymbol.hpp"
+#include "infra/ILWalk.hpp"
 #include "optimizer/PreExistence.hpp"
 #include "optimizer/TransformUtil.hpp"
 #include "il/Node_inlines.hpp"
@@ -48,43 +50,14 @@ char *ObjectOperand::getSignature(TR::Compilation *comp, TR_Memory *trMemory)
     return _signature;
 }
 
-KnownObjOperand::KnownObjOperand(TR::KnownObjectTable::Index koi, TR_OpaqueClassBlock *clazz)
+KnownObjOperand::KnownObjOperand(TR::KnownObjectTable *knot, TR::KnownObjectTable::Index koi,
+    TR_OpaqueClassBlock *clazz)
     : knownObjIndex(koi)
     , FixedClassOperand(clazz)
 {
     TR_ASSERT_FATAL(knownObjIndex != TR::KnownObjectTable::UNKNOWN, "Unexpected unknown object");
-}
-
-TR_OpaqueClassBlock *KnownObjOperand::getClass()
-{
-    if (_clazz)
-        return _clazz;
-
-    TR::Compilation *comp = TR::comp();
-    auto knot = comp->getOrCreateKnownObjectTable();
-    if (!knot || knot->isNull(knownObjIndex))
-        return NULL;
-
-    _clazz = comp->fej9()->getObjectClassFromKnownObjectIndex(comp, knownObjIndex);
-
-    return _clazz;
-}
-
-ObjectOperand *KnownObjOperand::asObjectOperand()
-{
-    if (getClass())
-        return this;
-
-    return NULL;
-}
-
-// FixedClassOperand need the class, if we can't get the class, return NULL
-FixedClassOperand *KnownObjOperand::asFixedClassOperand()
-{
-    if (getClass())
-        return this;
-
-    return NULL;
+    TR_ASSERT_FATAL(!knot->isNull(knownObjIndex), "Unexpected null index");
+    TR_ASSERT_FATAL(clazz != NULL, "missing type of known object");
 }
 
 Operand *Operand::merge(Operand *other)
@@ -101,6 +74,13 @@ Operand *Operand::merge1(Operand *other)
         return this;
     else
         return NULL;
+}
+
+Operand *NullOperand::merge1(Operand *other)
+{
+    TR_ASSERT(other->getKnowledgeLevel() >= this->getKnowledgeLevel(), "Should be calling other->merge1(this)");
+    TR_ASSERT_FATAL(other->isNull(), "knowledge level should restrict other to null");
+    return this;
 }
 
 Operand *IconstOperand::merge1(Operand *other)
@@ -120,6 +100,8 @@ Operand *ObjectOperand::merge1(Operand *other)
     ObjectOperand *otherObject = other->asObjectOperand();
     if (otherObject && this->_clazz == otherObject->_clazz)
         return this;
+    else if (other->isNull())
+        return this;
     else
         return NULL;
 }
@@ -131,6 +113,8 @@ Operand *PreexistentObjectOperand::merge1(Operand *other)
     PreexistentObjectOperand *otherPreexistentObjectOperand = other->asPreexistentObjectOperand();
     if (otherPreexistentObjectOperand && this->_clazz == otherPreexistentObjectOperand->_clazz)
         return this;
+    else if (other->isNull())
+        return this;
     else
         return NULL;
 }
@@ -141,12 +125,15 @@ Operand *FixedClassOperand::merge1(Operand *other)
     FixedClassOperand *otherFixedClass = other->asFixedClassOperand();
     if (otherFixedClass && this->_clazz == otherFixedClass->_clazz)
         return this;
+    else if (other->isNull())
+        return this;
     else
         return NULL;
 }
 
 Operand *KnownObjOperand::merge1(Operand *other)
 {
+    // TODO: allow null like in VP? add a non-null boolean?
     TR_ASSERT(other->getKnowledgeLevel() >= this->getKnowledgeLevel(), "Should be calling other->merge1(this)");
     KnownObjOperand *otherKnownObj = other->asKnownObject();
     if (otherKnownObj && this->knownObjIndex == otherKnownObj->knownObjIndex)
@@ -168,6 +155,8 @@ Operand *MutableCallsiteTargetOperand::merge1(Operand *other)
 
 void Operand::printToString(TR::StringBuf *buf) { buf->appendf("(unknown)"); }
 
+void NullOperand::printToString(TR::StringBuf *buf) { buf->appendf("(null)"); }
+
 void IconstOperand::printToString(TR::StringBuf *buf) { buf->appendf("(iconst=%d)", intValue); }
 
 void ObjectOperand::printToString(TR::StringBuf *buf)
@@ -180,6 +169,26 @@ void KnownObjOperand::printToString(TR::StringBuf *buf) { buf->appendf("(obj%d)"
 void MutableCallsiteTargetOperand::printToString(TR::StringBuf *buf)
 {
     buf->appendf("(mh=%d, mcs=%d)", getMethodHandleIndex(), getMutableCallsiteIndex());
+}
+
+Operand *InterpreterEmulator::knownObjOperand(TR::KnownObjectTable::Index i, TR_OpaqueClassBlock *clazz)
+{
+    if (i == TR::KnownObjectTable::UNKNOWN)
+        return _unknownOperand;
+
+    TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
+    if (knot->isNull(i))
+        return _nullOperand;
+
+    if (clazz == NULL) {
+        clazz = comp()->fej9()->getObjectClassFromKnownObjectIndex(comp(), i);
+
+        // TODO: assuming that #22364 has been merged, clazz can't be null.
+        if (clazz == NULL)
+            return _unknownOperand;
+    }
+
+    return new (trStackMemory()) KnownObjOperand(knot, i, clazz);
 }
 
 void InterpreterEmulator::printOperandArray(OperandArray *operands)
@@ -200,6 +209,10 @@ void InterpreterEmulator::printOperandArray(OperandArray *operands)
 void InterpreterEmulator::mergeOperandArray(OperandArray *first, OperandArray *second)
 {
     OMR::Logger *log = comp()->log();
+
+    uint32_t size = first->size();
+    TR_ASSERT_FATAL(second->size() == size, "attempt to merge operand arrays of different sizes");
+
     bool enableTrace = tracer()->debugLevel();
     if (enableTrace) {
         log->prints("Operands before merging:\n");
@@ -207,16 +220,18 @@ void InterpreterEmulator::mergeOperandArray(OperandArray *first, OperandArray *s
     }
 
     bool changed = false;
-    for (int i = 0; i < _numSlots; i++) {
-        Operand *firstObj = (*first)[i];
-        Operand *secondObj = (*second)[i];
 
-        firstObj = firstObj->merge(secondObj);
-        if (firstObj == NULL)
-            firstObj = _unknownOperand;
+    for (uint32_t i = 0; i < size; i++) {
+        Operand *firstVal = (*first)[i];
+        Operand *secondVal = (*second)[i];
+        Operand *merged = firstVal->merge(secondVal);
+        if (merged == NULL)
+            merged = _unknownOperand;
 
-        if (firstObj != (*first)[i])
+        if (merged != firstVal) {
             changed = true;
+            (*first)[i] = merged;
+        }
     }
 
     if (enableTrace) {
@@ -250,61 +265,93 @@ TR::RequiredConst &InterpreterEmulator::addRequiredConst(TR::AnyConst value)
 
 void InterpreterEmulator::maintainStackForIf(TR_J9ByteCode bc)
 {
-    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
-    TR_ASSERT_FATAL(bc == J9BCificmpeq || bc == J9BCificmpne,
-        "InterpreterEmulator::maintainStackForIf can only be called with J9BCificmpeq and J9BCificmpne\n");
+    assertHasState();
+
     int32_t branchBC = _bcIndex + next2BytesSigned();
-    int32_t fallThruBC = _bcIndex + 3;
-    IconstOperand *second = pop()->asIconst();
-    IconstOperand *first = pop()->asIconst();
-    bool canBranch = true;
-    bool canFallThru = true;
-    // Comment out the branch folding as all the paths have to be interpreted in order
-    // to propagate object info in operand stack or local slots. Since branch folding
-    // currently only affects thunk archetypes, with similar branch folding in ilgen,
-    // calls in dead path won't be inlined, disabling the following code doesn't affect
-    // performance
-    // TODO: add code to record dead path and ignore it in object info propagation, enable
-    // the following code if branch folding is possible in LambdaForm methods
-    //
-    if (false && second && first) {
-        switch (bc) {
-            case J9BCificmpeq:
-                canBranch = second->intValue == first->intValue;
-                debugTrace(tracer(), "maintainStackForIf ifcmpeq %d == %d\n", second->intValue, first->intValue);
-                break;
-            case J9BCificmpne:
-                canBranch = second->intValue != first->intValue;
-                debugTrace(tracer(), "maintainStackForIf ifcmpne %d != %d\n", second->intValue, first->intValue);
-                break;
 
-            default:
-                break;
+    // The conditional is expected to pop and somehow compare two values from
+    // the stack. For unary comparisons (e.g. ifeq, ifnull), the caller should
+    // push the implied operand first. The values are irrelevant for now.
+    Operand *rhs = pop();
+    Operand *lhs = pop();
+
+    if (tracer()->debugLevel()) {
+        _operandBuf->clear();
+        lhs->printToString(_operandBuf);
+        debugTrace(tracer(), "compare lhs %s", _operandBuf->text());
+        _operandBuf->clear();
+        rhs->printToString(_operandBuf);
+        debugTrace(tracer(), "     vs rhs %s\n", _operandBuf->text());
+    }
+
+    TR_YesNoMaybe isTaken = TR_maybe;
+    switch (bc) {
+        case J9BCifacmpeq:
+        case J9BCifacmpne: {
+            bool lhsConstant = lhs->isNull() || lhs->asKnownObject() != NULL;
+            bool rhsConstant = rhs->isNull() || rhs->asKnownObject() != NULL;
+            if (lhsConstant && rhsConstant) {
+                bool equal = lhs->isNull() == rhs->isNull() && lhs->getKnownObjectIndex() == rhs->getKnownObjectIndex();
+
+                isTaken = (bc == J9BCifacmpeq) == equal ? TR_yes : TR_no;
+            }
+
+            break;
         }
-        canFallThru = !canBranch;
+        default:
+            break;
     }
 
-    // The branch target can be successor of the fall through, so gen fall through block first such
-    // that the predecessor is interpreted before the successor in order to propagate the operand
-    // stack and local slots state.
-    // This doesn't work when the fall through contain control flow, but there is no functional issue
-    // as the object info won't be propagated if there exists unvisited predecessor. This will be
-    // fixed when we traverse the bytecodes in reverse post order at CFG level.
-    //
-    if (canFallThru) {
-        debugTrace(tracer(), "maintainStackForIf canFallThrough to bcIndex=%d\n", fallThruBC);
-        genTarget(fallThruBC);
+    if (isTaken == TR_no) {
+        markEdgeUnreachable(branchBC);
+    } else {
+        debugTrace(tracer(), "conditional can jump to +%d\n", branchBC);
+        saveStack(branchBC);
+        _outEdgesStillReachable.insert(_currentInlinedBlock->getEdge(blocks(branchBC)));
     }
 
-    if (canBranch) {
-        debugTrace(tracer(), "maintainStackForIf canBranch to bcIndex=%d\n", branchBC);
-        genTarget(branchBC);
+    if (isTaken == TR_yes) {
+        _currentBcCanFallThrough = false;
+    } else {
+        debugTrace(tracer(), "conditional can fall through\n");
+        // fallthrough stack will be saved in findAndCreateCallsitesFromBytecodes()
+        // in the same way as for blocks that don't end with control flow
     }
+}
+
+void InterpreterEmulator::maintainStackForTableSwitch()
+{
+    assertHasState();
+
+    _currentBcCanFallThrough = false;
+
+    pop();
+
+    int32_t bcIndex = _bcIndex + 1; // skip opcode
+    while ((bcIndex & 3) != 0) // skip padding to align to a 4 byte boundary
+        bcIndex++;
+
+    int32_t defTarget = _bcIndex + nextSwitchValue(bcIndex);
+    int32_t lo = nextSwitchValue(bcIndex);
+    int32_t hi = nextSwitchValue(bcIndex);
+
+    TR_ASSERT_FATAL(lo <= hi, "tableswitch bounds out of order: [%d, %d]", lo, hi);
+
+    for (int32_t i = lo; i <= hi; i++) {
+        int32_t target = _bcIndex + nextSwitchValue(bcIndex);
+        debugTrace(tracer(), "case %d -> +%d", i, target);
+        _outEdgesStillReachable.insert(_currentInlinedBlock->getEdge(blocks(target)));
+        saveStack(target);
+    }
+
+    debugTrace(tracer(), "default -> +%d", defTarget);
+    _outEdgesStillReachable.insert(_currentInlinedBlock->getEdge(blocks(defTarget)));
+    saveStack(defTarget);
 }
 
 void InterpreterEmulator::maintainStackForGetField()
 {
-    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
+    assertHasState();
     TR::DataType type = TR::NoType;
     uint32_t fieldOffset;
     int32_t cpIndex = next2Bytes();
@@ -313,7 +360,7 @@ void InterpreterEmulator::maintainStackForGetField()
         _calltarget->_calleeMethod, cpIndex, &type, &fieldOffset, false);
 
     TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
-    if (knot && top()->asKnownObject() && !knot->isNull(top()->getKnownObjectIndex()) && type == TR::Address) {
+    if (knot && top()->asKnownObject() && type == TR::Address) {
         if (fieldSymbol == NULL) {
             debugTrace(tracer(), "field is unresolved");
         } else if (!comp()->fej9()->canDereferenceAtCompileTimeWithFieldSymbol(fieldSymbol, cpIndex,
@@ -376,12 +423,16 @@ void InterpreterEmulator::maintainStackForGetField()
                 // - printing the object's address, then allowing it to move; and
                 // - observing the objects's address, then allowing it to move,
                 //   then finally printing the observed address.
-                newOperand = new (trStackMemory()) KnownObjOperand(resultIndex);
-                int32_t len = 0;
-                debugTrace(tracer(), "dereference obj%d (%p)from field %s(offset = %d) of base obj%d(%p)\n",
-                    newOperand->getKnownObjectIndex(), (void *)fieldAddress,
-                    _calltarget->_calleeMethod->fieldName(cpIndex, len, this->trMemory()), fieldOffset, baseObjectIndex,
-                    baseObjectAddress);
+                newOperand = knownObjOperand(resultIndex);
+                if (tracer()->debugLevel()) {
+                    _operandBuf->clear();
+                    newOperand->printToString(_operandBuf);
+                    int32_t len = 0;
+                    debugTrace(tracer(), "dereference obj%d (%p), field +0x%x %s -> value %p: %s\n", baseObjectIndex,
+                        baseObjectAddress, fieldOffset,
+                        _calltarget->_calleeMethod->fieldName(cpIndex, len, this->trMemory()), (void *)fieldAddress,
+                        _operandBuf->text());
+                }
 
                 if (resultIndex != TR::KnownObjectTable::UNKNOWN) {
                     auto value = TR::AnyConst::makeKnownObject(resultIndex);
@@ -399,21 +450,135 @@ void InterpreterEmulator::maintainStackForGetField()
     push(newOperand);
 }
 
+void InterpreterEmulator::maintainStackForArraylength()
+{
+    assertHasState();
+    Operand *obj = pop();
+    TR::KnownObjectTable::Index koi = obj->getKnownObjectIndex();
+    if (koi == TR::KnownObjectTable::UNKNOWN
+        || !TR::Compiler->cls.isClassArray(comp(), obj->asObjectOperand()->getClass())) {
+        pushUnknownOperand();
+    } else {
+        TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
+        TR::VMAccessCriticalSection arrayLength(comp()->fej9());
+        uintptr_t objAddr = knot->getPointer(koi);
+        auto len = TR::Compiler->om.getArrayLengthInElements(comp(), objAddr);
+        push(new (trStackMemory()) IconstOperand((int32_t)len));
+    }
+}
+
+void InterpreterEmulator::maintainStackForArrayLoad(TR::DataTypes type, TR_J9ByteCode bc)
+{
+    assertHasState();
+    IconstOperand *index = pop()->asIconst();
+    Operand *obj = pop();
+    Operand *result = foldArrayLoad(obj, index, type, bc);
+    push(result == NULL ? _unknownOperand : result);
+}
+
+Operand *InterpreterEmulator::foldArrayLoad(Operand *obj, IconstOperand *indexOperand, TR::DataTypes type,
+    TR_J9ByteCode bc)
+{
+#if defined(J9VM_OPT_JITSERVER)
+    if (comp()->isOutOfProcessCompilation())
+        return NULL;
+#endif
+
+    if (type == TR::Int64 || type == TR::Float || type == TR::Double)
+        return NULL; // no Operand to represent the result
+
+    TR::KnownObjectTable::Index koi = obj->getKnownObjectIndex();
+    if (koi == TR::KnownObjectTable::UNKNOWN || indexOperand == NULL)
+        return NULL;
+
+    int32_t index = indexOperand->intValue;
+    if (index < 0)
+        return NULL;
+
+    TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
+    bool constElems = knot->isArrayWithConstantElements(koi);
+    int32_t stableArrayRank = knot->getArrayWithStableElementsRank(koi);
+    if (!constElems && stableArrayRank == 0)
+        return NULL;
+
+    TR_OpaqueClassBlock *arrayClass = obj->asObjectOperand()->getClass();
+    bool arrayClassOk = type == TR::Address ? TR::Compiler->cls.isReferenceArray(comp(), arrayClass)
+                                            : type == TR::Compiler->cls.primitiveArrayComponentType(comp(), arrayClass);
+
+    if (!arrayClassOk)
+        return NULL;
+
+    TR::VMAccessCriticalSection foldArrayLoadCriticalSection(comp()->fej9());
+    uintptr_t objAddr = knot->getPointer(koi);
+    auto len = (int32_t)TR::Compiler->om.getArrayLengthInElements(comp(), objAddr);
+    if (index >= len)
+        return NULL;
+
+    int64_t offset = TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
+        + index * TR::Compiler->om.getArrayElementWidthInBytes(type);
+
+    // TODO: on success, create a RequiredConst and add a provenance edge
+    uintptr_t elemAddr = TR::Compiler->om.getAddressOfElement(comp(), objAddr, offset);
+    switch (type) {
+        case TR::Address: {
+            uintptr_t value = comp()->fej9()->getReferenceFieldAtAddress(elemAddr);
+            if (!constElems && value == 0)
+                return NULL;
+
+            TR::KnownObjectTable::Index elemKoi = knot->getOrCreateIndex(value);
+            if (stableArrayRank >= 2)
+                knot->addStableArray(elemKoi, stableArrayRank - 1);
+
+            return knownObjOperand(elemKoi);
+        }
+
+        case TR::Int32: {
+            int32_t value = *(int32_t *)elemAddr;
+            if (!constElems && value == 0)
+                return NULL;
+
+            return new (trStackMemory()) IconstOperand(value);
+        }
+
+        case TR::Int16: {
+            int16_t value = *(int16_t *)elemAddr;
+            if (!constElems && value == 0)
+                return NULL;
+
+            int32_t value32 = bc == J9BCsaload ? (int32_t)value : (int32_t)(uint16_t)value;
+
+            return new (trStackMemory()) IconstOperand(value32);
+        }
+
+        case TR::Int8: {
+            int8_t value = *(int8_t *)elemAddr;
+            if (!constElems && value == 0)
+                return NULL;
+
+            return new (trStackMemory()) IconstOperand((int32_t)value);
+        }
+
+        default:
+            TR_ASSERT_FATAL(false, "unhandled type %d", type);
+            return NULL;
+    }
+}
+
 void InterpreterEmulator::saveStack(int32_t targetIndex)
 {
     if (!_iteratorWithState)
         return;
 
+    TR_ASSERT_FATAL(_currentInlinedBlock->hasSuccessor(blocks(targetIndex)),
+        "saving stack for edge %d -> %d which is not in CFG", _currentInlinedBlock->getNumber(),
+        blocks(_bcIndex)->getNumber());
+
     // Propagate stack state to successor
     if (!_stack->isEmpty()) {
         if (!_stacks[targetIndex])
             _stacks[targetIndex] = new (trStackMemory()) ByteCodeStack(*_stack);
-        else {
-            TR_ASSERT_FATAL(_stacks[targetIndex]->size() == _stack->size(),
-                "operand stack from two paths must have the same size, predecessor bci %d target bci %d\n", _bcIndex,
-                targetIndex);
+        else
             mergeOperandArray(_stacks[targetIndex], _stack);
-        }
     }
 
     // Propagate local object info to successor
@@ -429,6 +594,7 @@ void InterpreterEmulator::initializeIteratorWithState()
 {
     _iteratorWithState = true;
     _unknownOperand = new (trStackMemory()) Operand();
+    _nullOperand = new (trStackMemory()) NullOperand();
     uint32_t size = this->maxByteCodeIndex() + 5;
     _flags = (flags8_t *)this->trMemory()->allocateStackMemory(size * sizeof(flags8_t));
     _stacks = (ByteCodeStack **)this->trMemory()->allocateStackMemory(size * sizeof(ByteCodeStack *));
@@ -441,9 +607,16 @@ void InterpreterEmulator::initializeIteratorWithState()
     int32_t numParmSlots = method()->numberOfParameterSlots();
     _numSlots = numParmSlots + method()->numberOfTemps();
 
-    genBBStart(0);
-    setupBBStartContext(0);
-    this->setIndex(0);
+    TR::AllBlockIterator it(_cfg, comp());
+    for (; it.currentBlock() != NULL; it.stepForward()) {
+        TR::Block *block = it.currentBlock();
+        uint32_t rc = 0;
+        TR_PredecessorIterator preds(block);
+        for (auto *pred = preds.getFirst(); pred != NULL; pred = preds.getNext())
+            rc++;
+
+        _blockRc[block] = rc;
+    }
 }
 
 void InterpreterEmulator::setupMethodEntryLocalObjectState()
@@ -485,15 +658,23 @@ void InterpreterEmulator::setupMethodEntryLocalObjectState()
     }
 }
 
+bool InterpreterEmulator::hasVisitedPred(TR::Block *block)
+{
+    TR_PredecessorIterator pi(block);
+    for (TR::CFGEdge *edge = pi.getFirst(); edge != NULL; edge = pi.getNext()) {
+        if (!isEdgeUnreachable(edge) && _visitedBlocks.contains(toBlock(edge->getFrom())))
+            return true;
+    }
+
+    return false;
+}
+
 bool InterpreterEmulator::hasUnvisitedPred(TR::Block *block)
 {
     TR_PredecessorIterator pi(block);
     for (TR::CFGEdge *edge = pi.getFirst(); edge != NULL; edge = pi.getNext()) {
-        TR::Block *fromBlock = toBlock(edge->getFrom());
-        auto fromBCIndex = fromBlock->getEntry()->getNode()->getByteCodeIndex();
-        if (!isGenerated(fromBCIndex)) {
+        if (!isEdgeUnreachable(edge) && !_visitedBlocks.contains(toBlock(edge->getFrom())))
             return true;
-        }
     }
 
     return false;
@@ -520,22 +701,30 @@ void InterpreterEmulator::setupBBStartLocalObjectState(int32_t index)
     if (_numSlots == 0)
         return;
 
-    if (!_localObjectInfos[index]) {
+    bool localsAreUnknown = _localObjectInfos[index] == NULL;
+    if (localsAreUnknown) {
         _localObjectInfos[index] = new (trStackMemory()) OperandArray(trMemory(), _numSlots, false, stackAlloc);
-        for (int32_t i = 0; i < _numSlots; i++)
-            (*_localObjectInfos[index])[i] = _unknownOperand;
-    } else if (hasUnvisitedPred(blocks(index))) {
-        heuristicTrace(tracer(),
-            "block_%d at bc index %d has unvisited predecessor, setting local object info to unknown",
-            blocks(index)->getNumber(), index);
+    } else if (hasUnvisitedPred(_currentInlinedBlock)) {
+        localsAreUnknown = true;
+        heuristicTrace(tracer(), "block_%d at bc index %d has unvisited predecessor; conservative locals",
+            _currentInlinedBlock->getNumber(), index);
+    } else if (!_currentInlinedBlock->getExceptionPredecessors().empty()) {
+        localsAreUnknown = true;
+        heuristicTrace(tracer(), "block_%d at bc index %d is a catch block; conservative locals",
+            _currentInlinedBlock->getNumber(), index);
+    }
+
+    if (localsAreUnknown) {
         for (int32_t i = 0; i < _numSlots; i++)
             (*_localObjectInfos[index])[i] = _unknownOperand;
     }
 
     _currentLocalObjectInfo = _localObjectInfos[index];
 
-    if (index == 0)
+    if (index == 0 && _currentInlinedBlock->getPredecessors().size() == 1
+        && _currentInlinedBlock->getPredecessors().front()->getFrom() == _cfg->getStart()) {
         setupMethodEntryLocalObjectState();
+    }
 }
 
 int32_t InterpreterEmulator::setupBBStartContext(int32_t index)
@@ -544,17 +733,54 @@ int32_t InterpreterEmulator::setupBBStartContext(int32_t index)
         setupBBStartStackState(index);
         setupBBStartLocalObjectState(index);
     }
+
     Base::setupBBStartContext(index);
+
+    if (_iteratorWithState && !_currentInlinedBlock->getExceptionPredecessors().empty()) {
+        heuristicTrace(tracer(), "block_%d at bc index %d is a catch block; push unknown exception object",
+            _currentInlinedBlock->getNumber(), index);
+        pushUnknownOperand(); // exception object
+    }
+
     return index;
 }
 
 bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
 {
-    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
+    assertHasState();
     int slotIndex = -1;
     switch (bc) {
+        case J9BCnop:
+        case J9BCinvokeinterface2: // ilgen treats this the same way as nop
+            break;
+
         case J9BCgetfield:
             maintainStackForGetField();
+            break;
+        case J9BCarraylength:
+            maintainStackForArraylength();
+            break;
+        case J9BCaaload:
+            maintainStackForArrayLoad(TR::Address, bc);
+            break;
+        case J9BClaload:
+            maintainStackForArrayLoad(TR::Int64, bc);
+            break;
+        case J9BCiaload:
+            maintainStackForArrayLoad(TR::Int32, bc);
+            break;
+        case J9BCsaload: // fall through
+        case J9BCcaload:
+            maintainStackForArrayLoad(TR::Int16, bc);
+            break;
+        case J9BCbaload:
+            maintainStackForArrayLoad(TR::Int8, bc);
+            break;
+        case J9BCfaload:
+            maintainStackForArrayLoad(TR::Float, bc);
+            break;
+        case J9BCdaload:
+            maintainStackForArrayLoad(TR::Double, bc);
             break;
         case J9BCaload0:
             slotIndex = 0;
@@ -584,12 +810,14 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
         case J9BCinvokespecial:
         case J9BCinvokespecialsplit:
         case J9BCinvokevirtual:
+        case J9BCinvokeinterface:
         case J9BCinvokestatic:
         case J9BCinvokestaticsplit:
         case J9BCinvokedynamic:
         case J9BCinvokehandle:
             maintainStackForCall();
             break;
+
         case J9BCiconstm1:
             push(new (trStackMemory()) IconstOperand(-1));
             break;
@@ -611,31 +839,54 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
         case J9BCiconst5:
             push(new (trStackMemory()) IconstOperand(5));
             break;
-        case J9BCaconstnull: {
-            TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
-            if (knot) {
-                TR::KnownObjectTable::Index koi = 0; // special index for null
-                push(new (trStackMemory()) KnownObjOperand(koi));
-            } else
-                pushUnknownOperand();
+
+        case J9BCaconstnull:
+            push(_nullOperand);
             break;
-        }
+
         case J9BCifne:
             push(new (trStackMemory()) IconstOperand(0));
             maintainStackForIf(J9BCificmpne);
             break;
+
         case J9BCifeq:
             push(new (trStackMemory()) IconstOperand(0));
             maintainStackForIf(J9BCificmpeq);
             break;
-        case J9BCgoto:
-            genTarget(bcIndex() + next2BytesSigned());
+
+        case J9BCifnonnull:
+            push(_nullOperand);
+            maintainStackForIf(J9BCifacmpne);
             break;
+
+        case J9BCifnull:
+            push(_nullOperand);
+            maintainStackForIf(J9BCifacmpeq);
+            break;
+
+        case J9BCificmpne:
+        case J9BCificmpeq:
+            maintainStackForIf(bc);
+            break;
+
+        case J9BCtableswitch:
+            maintainStackForTableSwitch();
+            break;
+
+        case J9BCgoto: {
+            int32_t target = bcIndex() + next2BytesSigned();
+            _outEdgesStillReachable.insert(_currentInlinedBlock->getEdge(blocks(target)));
+            saveStack(target);
+            _currentBcCanFallThrough = false;
+            break;
+        }
+
         case J9BCpop:
         case J9BCputfield:
         case J9BCputstatic:
             pop();
             break;
+
         case J9BCladd:
         case J9BCiadd:
         case J9BCisub:
@@ -643,6 +894,7 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
             popn(2);
             pushUnknownOperand();
             break;
+
         case J9BCistore:
         case J9BClstore:
         case J9BCfstore:
@@ -669,6 +921,7 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
         case J9BCdstore3:
             pop();
             break;
+
         // Maintain stack for object store
         case J9BCastorew:
             maintainStackForAstore(next2Bytes());
@@ -715,9 +968,15 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
         case J9BCdload:
             pushUnknownOperand();
             break;
+
         case J9BCgetstatic:
             maintainStackForGetStatic();
             break;
+
+        // NOTE: athrow acts like return w.r.t. normal control flow edges.
+        // Exception successors will still be processed, which is OK because we
+        // get conservative at the start of catch blocks.
+        case J9BCathrow:
         case J9BCgenericReturn:
         case J9BCReturnC:
         case J9BCReturnS:
@@ -725,16 +984,29 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
         case J9BCReturnZ:
             maintainStackForReturn();
             break;
+
         case J9BCi2l:
             break;
+
         case J9BCcheckcast:
             break;
+
         case J9BCdup:
             push(top());
             break;
+
         case J9BCldc:
             maintainStackForldc(nextByte());
             break;
+
+        case J9BCnew:
+            maintainStackForNew(next2Bytes());
+            break;
+
+        case J9BCinstanceof:
+            maintainStackForInstanceof(next2Bytes());
+            break;
+
         default:
             static const bool assertfatal
                 = feGetEnv("TR_AssertFatalForUnexpectedBytecodeInMethodHandleThunk") ? true : false;
@@ -759,13 +1031,19 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
 
 void InterpreterEmulator::maintainStackForReturn()
 {
-    if (method()->returnType() != TR::NoType)
-        pop();
+    assertHasState();
+    TR_ASSERT_FATAL(_currentInlinedBlock->getSuccessors().size() == 1
+            && _currentInlinedBlock->getSuccessors().front()->getTo() == _cfg->getEnd(),
+        "block_%d returns and has incorrect successors", _currentInlinedBlock->getNumber());
+
+    // Because this method doesn't continue running past the return, it doesn't
+    // matter what happens to the stack.
+    _currentBcCanFallThrough = false;
 }
 
 void InterpreterEmulator::maintainStackForGetStatic()
 {
-    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
+    assertHasState();
     if (comp()->compileRelocatableCode()) {
         pushUnknownOperand();
         return;
@@ -783,48 +1061,54 @@ void InterpreterEmulator::maintainStackForGetStatic()
 
     TR_YesNoMaybe canFold = TR_no;
     TR::Symbol::RecognizedField recField = TR::Symbol::UnknownField;
+    TR_OpaqueClassBlock *declaringClass = NULL;
     if (resolved && isFinal) {
         bool isStatic = true;
         recField = TR::Symbol::searchRecognizedField(comp(), owningMethod, cpIndex, isStatic);
 
-        TR_OpaqueClassBlock *declaringClass = owningMethod->getDeclaringClassFromFieldOrStatic(comp(), cpIndex);
+        declaringClass = owningMethod->getDeclaringClassFromFieldOrStatic(comp(), cpIndex);
 
         canFold = TR::TransformUtil::canFoldStaticFinalField(comp(), declaringClass, recField, owningMethod, cpIndex);
     }
 
     TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN;
-    if (canFold == TR_yes && type == TR::Address) {
+    if (type == TR::Address
+        && (canFold == TR_yes
+            || (canFold == TR_maybe && TR::TransformUtil::enableEarlyGuardedStaticFinalFieldFolding()
+                && TR::TransformUtil::canDoGuardedStaticFinalFieldFolding(comp())
+                && comp()->isFearPointPlacementUnrestricted()))) {
         TR::AnyConst value = TR::AnyConst::makeAddress(0);
         bool gotValue = TR::TransformUtil::staticFinalFieldValue(comp(), owningMethod, cpIndex, dataAddress,
             TR::Address, recField, &value);
 
         if (gotValue && value.isKnownObject()) {
             knownObjectIndex = value.getKnownObjectIndex();
-            addRequiredConst(value);
+            TR::RequiredConst &reqConst = addRequiredConst(value);
+            if (canFold == TR_maybe) {
+                TR::Region &stackRegion = comp()->trMemory()->currentStackRegion();
+                reqConst._assumptions.push_back(new (stackRegion) TR::DeferredStaticFinalOSRAssumption(declaringClass));
+            }
         }
     }
 
-    if (knownObjectIndex != TR::KnownObjectTable::UNKNOWN)
-        push(new (trStackMemory()) KnownObjOperand(knownObjectIndex));
-    else
-        pushUnknownOperand();
+    push(knownObjOperand(knownObjectIndex));
 }
 
 void InterpreterEmulator::maintainStackForAload(int slotIndex)
 {
-    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
-
+    assertHasState();
     push((*_currentLocalObjectInfo)[slotIndex]);
 }
 
 void InterpreterEmulator::maintainStackForAstore(int slotIndex)
 {
-    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
+    assertHasState();
     (*_currentLocalObjectInfo)[slotIndex] = pop();
 }
 
 void InterpreterEmulator::maintainStackForldc(int32_t cpIndex)
 {
+    assertHasState();
     TR::DataType type = method()->getLDCType(cpIndex);
     switch (type) {
         case TR::Address:
@@ -837,7 +1121,7 @@ void InterpreterEmulator::maintainStackForldc(int32_t cpIndex)
                 TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
                 if (knot) {
                     TR::KnownObjectTable::Index koi = knot->getOrCreateIndexAt(location);
-                    push(new (trStackMemory()) KnownObjOperand(koi));
+                    push(knownObjOperand(koi));
                     debugTrace(tracer(), "aload known obj%d from ldc %d", koi, cpIndex);
 
                     J9::ConstProvenanceGraph *cpg = comp()->constProvenanceGraph();
@@ -854,9 +1138,49 @@ void InterpreterEmulator::maintainStackForldc(int32_t cpIndex)
     pushUnknownOperand();
 }
 
+void InterpreterEmulator::maintainStackForNew(int32_t cpIndex)
+{
+    assertHasState();
+
+    TR_OpaqueClassBlock *clazz = method()->getClassFromConstantPool(comp(), cpIndex);
+    if (clazz != NULL)
+        push(new (trStackMemory()) FixedClassOperand(clazz));
+    else
+        pushUnknownOperand();
+}
+
+void InterpreterEmulator::maintainStackForInstanceof(int32_t cpIndex)
+{
+    assertHasState();
+
+    ObjectOperand *obj = pop()->asObjectOperand();
+    Operand *result = NULL;
+    if (obj != NULL) {
+        TR_OpaqueClassBlock *castClass = method()->getClassFromConstantPool(comp(), cpIndex);
+        TR_OpaqueClassBlock *objClass = obj->getClass();
+        if (castClass != NULL && objClass != NULL) {
+            Operand::KnowledgeLevel level = obj->getKnowledgeLevel();
+            bool fixedCast = true;
+            bool fixedObj = level == Operand::FIXED_CLASS || level == Operand::KNOWN_OBJECT;
+
+            TR_YesNoMaybe isInstance = comp()->fe()->isInstanceOf(objClass, castClass, fixedObj, fixedCast);
+
+            if (isInstance == TR_yes)
+                result = new (trStackMemory()) IconstOperand(1);
+            else if (isInstance == TR_no)
+                result = new (trStackMemory()) IconstOperand(0);
+        }
+    }
+
+    if (result != NULL)
+        push(result);
+    else
+        pushUnknownOperand();
+}
+
 void InterpreterEmulator::maintainStackForCall(Operand *result, int32_t numArgs, TR::DataType returnType)
 {
-    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
+    assertHasState();
 
     for (int i = 1; i <= numArgs; i++)
         pop();
@@ -869,7 +1193,8 @@ void InterpreterEmulator::maintainStackForCall(Operand *result, int32_t numArgs,
 
 void InterpreterEmulator::maintainStackForCall()
 {
-    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
+    assertHasState();
+
     int32_t numOfArgs = -1;
     TR::DataType returnType = TR::NoType;
     Operand *result = NULL;
@@ -945,14 +1270,18 @@ void InterpreterEmulator::dumpStack()
     if (!tracer()->debugLevel())
         return;
 
-    debugTrace(tracer(), "operandStack after bytecode %d : %s ", _bcIndex,
-        comp()->fej9()->getByteCodeName(nextByte(0)));
-    for (int i = 0; i < _stack->size(); i++) {
-        Operand *x = (*_stack)[i];
-        _operandBuf->clear();
-        x->printToString(_operandBuf);
-        debugTrace(tracer(), "[%d]=%s", i, _operandBuf->text());
+    if (_stack->size() == 0) {
+        debugTrace(tracer(), "        (empty)");
+    } else {
+        for (int i = 0; i < _stack->size(); i++) {
+            Operand *x = (*_stack)[i];
+            _operandBuf->clear();
+            x->printToString(_operandBuf);
+            debugTrace(tracer(), "        [%d]=%s", i, _operandBuf->text());
+        }
     }
+
+    debugTrace(tracer(), ""); // blank line
 }
 
 Operand *InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
@@ -988,7 +1317,7 @@ Operand *InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
             if (targetIndex == TR::KnownObjectTable::UNKNOWN)
                 return NULL;
 
-            result = new (trStackMemory()) KnownObjOperand(targetIndex);
+            result = knownObjOperand(targetIndex);
             break;
         }
 #endif
@@ -1060,11 +1389,11 @@ Operand *InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
             TR::KnownObjectTable::Index mhIndex = top()->getKnownObjectIndex();
             debugTrace(tracer(), "Known DirectMethodHandle koi %d\n", mhIndex);
             TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
-            if (knot && mhIndex != TR::KnownObjectTable::UNKNOWN && !knot->isNull(mhIndex)) {
+            if (knot && mhIndex != TR::KnownObjectTable::UNKNOWN) {
                 TR::KnownObjectTable::Index memberIndex
                     = comp()->fej9()->getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(comp(), mhIndex, "member");
                 debugTrace(tracer(), "Known internal member name koi %d\n", memberIndex);
-                result = new (trStackMemory()) KnownObjOperand(memberIndex);
+                result = knownObjOperand(memberIndex);
             }
             break;
         }
@@ -1073,12 +1402,12 @@ Operand *InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
             TR::KnownObjectTable::Index mhIndex = top()->getKnownObjectIndex();
             debugTrace(tracer(), "Known DirectMethodHandle koi %d\n", mhIndex);
             TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
-            if (knot && mhIndex != TR::KnownObjectTable::UNKNOWN && !knot->isNull(mhIndex)) {
+            if (knot && mhIndex != TR::KnownObjectTable::UNKNOWN) {
                 TR::KnownObjectTable::Index memberIndex
                     = comp()->fej9()->getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(comp(), mhIndex,
                         "initMethod");
                 debugTrace(tracer(), "Known internal member name koi %d\n", memberIndex);
-                result = new (trStackMemory()) KnownObjOperand(memberIndex);
+                result = knownObjOperand(memberIndex);
             }
             break;
         }
@@ -1092,8 +1421,7 @@ Operand *InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
                 && !knot->isNull(vhIndex) && !knot->isNull(adIndex)) {
                 TR::KnownObjectTable::Index mhIndex
                     = comp()->fej9()->getMethodHandleTableEntryIndex(comp(), vhIndex, adIndex);
-                if (mhIndex != TR::KnownObjectTable::UNKNOWN)
-                    result = new (trStackMemory()) KnownObjOperand(mhIndex);
+                result = knownObjOperand(mhIndex);
             }
             break;
         }
@@ -1111,7 +1439,7 @@ Operand *InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
             if (knot && mhIndex != TR::KnownObjectTable::UNKNOWN && mtIndex != TR::KnownObjectTable::UNKNOWN
                 && !knot->isNull(mhIndex) && !knot->isNull(mtIndex)) {
                 if (comp()->fej9()->isMethodHandleExpectedType(comp(), mhIndex, mtIndex)) {
-                    result = new (trStackMemory()) KnownObjOperand(mhIndex);
+                    result = knownObjOperand(mhIndex);
                     debugTrace(tracer(), "MH.asType: exact match\n");
                     break;
                 }
@@ -1121,7 +1449,7 @@ Operand *InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
                 if (TR::KnownObjectTable::UNKNOWN != convertedMHIndex) {
                     J9::ConstProvenanceGraph *cpg = comp()->constProvenanceGraph();
                     cpg->addEdge(cpg->knownObject(mhIndex), cpg->knownObject(convertedMHIndex));
-                    result = new (trStackMemory()) KnownObjOperand(convertedMHIndex);
+                    result = knownObjOperand(convertedMHIndex);
                     debugTrace(tracer(), "MH.asType: subtype match\n");
                 }
             }
@@ -1133,8 +1461,7 @@ Operand *InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
             TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
             if (knot && layoutIndex != TR::KnownObjectTable::UNKNOWN && !knot->isNull(layoutIndex)) {
                 TR::KnownObjectTable::Index vhIndex = comp()->fej9()->getLayoutVarHandle(comp(), layoutIndex);
-                if (vhIndex != TR::KnownObjectTable::UNKNOWN)
-                    result = new (trStackMemory()) KnownObjOperand(vhIndex);
+                result = knownObjOperand(vhIndex);
             }
             break;
         }
@@ -1143,7 +1470,7 @@ Operand *InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
             break;
     }
 
-    if (result != NULL) {
+    if (result != NULL && result != _unknownOperand) {
         if (result->asIconst() != NULL) {
             auto value = TR::AnyConst::makeInt32(result->asIconst()->intValue);
             addRequiredConst(value);
@@ -1167,9 +1494,9 @@ void InterpreterEmulator::refineResolvedCalleeForInvokestatic(TR_ResolvedMethod 
     TR::KnownObjectTable::Index &mcsIndex, TR::KnownObjectTable::Index &mhIndex, bool &isIndirectCall,
     TR_OpaqueClassBlock *&receiverClass)
 {
+    assertHasState();
     receiverClass = NULL;
 
-    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
     if (!comp()->getOrCreateKnownObjectTable())
         return;
 
@@ -1289,95 +1616,220 @@ void InterpreterEmulator::refineResolvedCalleeForInvokestatic(TR_ResolvedMethod 
     }
 }
 
+bool InterpreterEmulator::shouldIterateWithState()
+{
+    if (comp()->compileRelocatableCode())
+        return false;
+
+    // Use state if any argument is a known object.
+    TR_PrexArgInfo *argInfo = _calltarget->_ecsPrexArgInfo;
+    if (argInfo != NULL) {
+        TR_ASSERT_FATAL(argInfo->getNumArgs() == method()->numberOfParameters(),
+            "wrong number of prex args %d, should be %d", argInfo->getNumArgs(), method()->numberOfParameters());
+
+        method()->makeParameterList(_methodSymbol);
+        ListIterator<TR::ParameterSymbol> parms(&_methodSymbol->getParameterList());
+        for (TR::ParameterSymbol *p = parms.getFirst(); p != NULL; p = parms.getNext()) {
+            TR_PrexArgument *prexArg = argInfo->get(p->getOrdinal());
+            if (prexArg != NULL && TR_PrexArgument::knowledgeLevel(prexArg) == KNOWN_OBJECT) {
+                heuristicTrace(tracer(), "known object argument found: iterating with state");
+                return true;
+            }
+        }
+    }
+
+    // Look for getstatic instructions loading from final static fields.
+    TR_J9ByteCode bc = first();
+    for (TR_J9ByteCode bc = first(); bc != J9BCunknown; bc = next()) {
+        if (bc != J9BCgetstatic)
+            continue;
+
+        int32_t cpIndex = next2Bytes();
+
+        void *dataAddress;
+        bool isVolatile, isPrivate, isUnresolvedInCP, isFinal;
+        TR::DataType type = TR::NoType;
+        auto owningMethod = _calltarget->_calleeMethod;
+        bool resolved = owningMethod->staticAttributes(comp(), cpIndex, &dataAddress, &type, &isVolatile, &isFinal,
+            &isPrivate, false, &isUnresolvedInCP);
+
+        if (resolved && isFinal && type == TR::Address) {
+            heuristicTrace(tracer(), "static final load found: iterating with state");
+            return true;
+        }
+    }
+
+    // Nothing interesting to propagate
+    return false;
+}
+
 bool InterpreterEmulator::findAndCreateCallsitesFromBytecodes(bool wasPeekingSuccessfull, bool withState)
 {
+    static const bool enableMore = feGetEnv("TR_moreInterpreterEmulator") != NULL;
+    if (enableMore) {
+        // ignore withState and determine on our own whether to use state
+        withState = shouldIterateWithState();
+    }
+
     heuristicTrace(tracer(), "Find and create callsite %s\n", withState ? "with state" : "without state");
 
     if (withState)
         initializeIteratorWithState();
+
     _wasPeekingSuccessfull = wasPeekingSuccessfull;
-    _currentInlinedBlock = NULL;
-    TR_J9ByteCode bc = first();
-    while (bc != J9BCunknown) {
-        heuristicTrace(tracer(), "%4d: %s\n", _bcIndex, comp()->fej9()->getByteCodeName(_code[_bcIndex]));
 
-        _currentCallSite = NULL;
-        _currentCallMethod = NULL;
-        _currentCallMethodUnrefined = NULL;
-
-        if (_InterpreterEmulatorFlags[_bcIndex].testAny(InterpreterEmulator::BytecodePropertyFlag::bbStart)) {
-            _currentInlinedBlock
-                = TR_J9EstimateCodeSize::getBlock(comp(), _blocks, _calltarget->_calleeMethod, _bcIndex, *_cfg);
-            debugTrace(tracer(), "Found current block %p, number %d for bci %d\n", _currentInlinedBlock,
-                (_currentInlinedBlock) ? _currentInlinedBlock->getNumber() : -1, _bcIndex);
+    TR::ReversePostorderSnapshotBlockIterator blockIt(_cfg, comp());
+    _currentInlinedBlock = blockIt.currentBlock();
+    for (; blockIt.currentBlock() != NULL; blockIt.stepForward()) {
+        TR::Block *block = blockIt.currentBlock();
+        if (block == _cfg->getStart() || block == _cfg->getEnd()) {
+            _visitedBlocks.add(block);
+            continue; // no corresponding bytecode
         }
 
-        TR_ASSERT_FATAL(!isGenerated(_bcIndex),
-            "InterpreterEmulator::findCallsitesFromBytecodes bcIndex %d has been generated\n", _bcIndex);
-        _newBCInfo->setByteCodeIndex(_bcIndex);
+        int32_t blockStartBci = block->getBlockBCIndex();
+        debugTrace(tracer(), "Start block_%d [%p], bci %+d\n", block->getNumber(), block, blockStartBci);
 
-        switch (bc) {
-            case J9BCinvokedynamic:
-                visitInvokedynamic();
-                break;
-            case J9BCinvokevirtual:
-                visitInvokevirtual();
-                break;
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-            case J9BCinvokehandle:
-                visitInvokehandle();
-                break;
-#endif
-            case J9BCinvokespecial:
-            case J9BCinvokespecialsplit:
-                visitInvokespecial();
-                break;
-            case J9BCinvokestatic:
-            case J9BCinvokestaticsplit:
-                visitInvokestatic();
-                break;
-            case J9BCinvokeinterface:
-                visitInvokeinterface();
-                break;
-
-            default:
-                break;
-        }
+        _currentInlinedBlock = block;
 
         if (_iteratorWithState) {
-            if (maintainStack(bc))
+            _outEdgesStillReachable.clear();
+
+            if (_potentialCycleBlocks.contains(block)) {
+                // Some but not all of block's incoming edges have been found to be
+                // unreachable. Block could belong to an unreachable cycle.
+                //
+                // On the simplifying assumption that visited blocks are always
+                // reachable, block must also be reachable if it has a visited
+                // predecessor (from which the edge is not known to be unreachable).
+                //
+                if (!hasVisitedPred(block)) {
+                    // Do mark/sweep to determine precise reachability based on the
+                    // current state of the analysis. This will search through all
+                    // of the current CFG, but it shouldn't happen too often. If the
+                    // CFG is reducible - which it should almost always be - then
+                    // at this point block must be an unreachable loop header. To
+                    // see why, note that back-edges don't affect the order in which
+                    // blocks appear in a DFS, so reverse postorder is a topological
+                    // sort of the CFG after deleting back-edges. Furthermore, back-
+                    // edges are also irrelevant to reachability. So if block is
+                    // reachable, it has a visited predecessor, and otherwise only a
+                    // back-edge could prevent its refcount from reaching zero.
+                    //
+                    // Unfortunately we can't correctly conclude that block is
+                    // unreachable here without performing a search. It might still
+                    // be reachable if it's part of an improper loop.
+                    //
+                    markSweepCFG();
+                }
+            }
+
+            if (isBlockUnreachable(block)) {
+                debugTrace(tracer(), "unreachable block");
+
+                // Because it's not possible to enter block at all, all of its
+                // outgoing edges are unreachable, including exception edges.
+                markSuccessorsUnreachable(block->getSuccessors());
+                markSuccessorsUnreachable(block->getExceptionSuccessors());
+                debugTrace(tracer(), "skip\n");
+
+                continue;
+            }
+
+            _visitedBlocks.add(block);
+            setupBBStartContext(blockStartBci);
+            if (tracer()->debugLevel()) {
+                debugTrace(tracer(), "      operand stack at start of block");
                 dumpStack();
-            else
-                return false;
+            }
         }
 
-        _pca.updateArg(bc);
-        bc = findNextByteCodeToVisit();
+        setIndex(blockStartBci);
+
+        TR_J9ByteCode bc = current();
+        while (true) {
+            heuristicTrace(tracer(), "%4d: %s\n", _bcIndex, comp()->fej9()->getByteCodeName(_code[_bcIndex]));
+
+            _currentCallSite = NULL;
+            _currentCallMethod = NULL;
+            _currentCallMethodUnrefined = NULL;
+
+            TR_ASSERT_FATAL(!isGenerated(_bcIndex),
+                "InterpreterEmulator::findCallsitesFromBytecodes bcIndex %d has been generated\n", _bcIndex);
+            _newBCInfo->setByteCodeIndex(_bcIndex);
+
+            switch (bc) {
+                case J9BCinvokedynamic:
+                    visitInvokedynamic();
+                    break;
+                case J9BCinvokevirtual:
+                    visitInvokevirtual();
+                    break;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+                case J9BCinvokehandle:
+                    visitInvokehandle();
+                    break;
+#endif
+                case J9BCinvokespecial:
+                case J9BCinvokespecialsplit:
+                    visitInvokespecial();
+                    break;
+                case J9BCinvokestatic:
+                case J9BCinvokestaticsplit:
+                    visitInvokestatic();
+                    break;
+                case J9BCinvokeinterface:
+                    visitInvokeinterface();
+                    break;
+
+                default:
+                    break;
+            }
+
+            if (_iteratorWithState) {
+                _currentBcCanFallThrough = true; // may be reset by maintainStack()
+                if (!maintainStack(bc))
+                    return false;
+
+                setIsGenerated(_bcIndex);
+
+                if (tracer()->debugLevel()) {
+                    debugTrace(tracer(), "      operand stack after bytecode %+d : %s", _bcIndex,
+                        comp()->fej9()->getByteCodeName(nextByte(0)));
+
+                    dumpStack();
+                }
+
+                if (!_currentBcCanFallThrough) {
+                    debugTrace(tracer(), "instruction cannot fall through to next");
+                    // Only mark regular successors unreachable. There may have been
+                    // an exception point in the current block.
+                    markSuccessorsUnreachable(block->getSuccessors());
+                    break;
+                }
+            }
+
+            _pca.updateArg(bc);
+
+            bc = next();
+            if (bc == J9BCunknown) {
+                break;
+            } else if (_InterpreterEmulatorFlags[_bcIndex].testAny(
+                           InterpreterEmulator::BytecodePropertyFlag::bbStart)) {
+                if (_iteratorWithState) {
+                    saveStack(_bcIndex);
+                    debugTrace(tracer(), "fall through to block_%d at +%d", blocks(_bcIndex)->getNumber(), _bcIndex);
+                }
+
+                break;
+            }
+        }
+
+        debugTrace(tracer(), "End of block_%d\n", _currentInlinedBlock->getNumber());
     }
 
     heuristicTrace(tracer(), "Finish findAndCreateCallsitesFromBytecodes\n");
     return true;
-}
-
-TR_J9ByteCode InterpreterEmulator::findNextByteCodeToVisit()
-{
-    if (!_iteratorWithState)
-        next();
-    else {
-        setIsGenerated(_bcIndex);
-        if (_InterpreterEmulatorFlags[_bcIndex].testAny(InterpreterEmulator::BytecodePropertyFlag::isBranch)) {
-            setIndex(Base::findNextByteCodeToGen());
-            debugTrace(tracer(), "current bc is branch next bytecode to generate is %d\n", _bcIndex);
-        } else
-            next();
-    }
-
-    if (_bcIndex < _maxByteCodeIndex
-        && _InterpreterEmulatorFlags[_bcIndex].testAny(InterpreterEmulator::BytecodePropertyFlag::bbStart)) {
-        if (isGenerated(_bcIndex))
-            setIndex(Base::findNextByteCodeToGen());
-    }
-    return current();
 }
 
 void InterpreterEmulator::prepareToFindAndCreateCallsites(TR::Block **blocks, flags8_t *flags, TR_CallSite **callSites,
@@ -1465,12 +1917,8 @@ void InterpreterEmulator::updateKnotAndCreateCallSiteUsingInvokeCacheArray(TR_Re
 {
     TR_J9VMBase *fej9 = comp()->fej9();
     TR::KnownObjectTable::Index idx = fej9->getKnotIndexOfInvokeCacheArrayAppendixElement(comp(), invokeCacheArray);
-    if (_iteratorWithState) {
-        if (idx != TR::KnownObjectTable::UNKNOWN)
-            push(new (trStackMemory()) KnownObjOperand(idx));
-        else
-            pushUnknownOperand();
-    }
+    if (_iteratorWithState)
+        push(knownObjOperand(idx));
 
     TR_ResolvedMethod *targetMethod
         = fej9->targetMethodFromInvokeCacheArrayMemberNameObj(comp(), owningMethod, invokeCacheArray);
@@ -1555,7 +2003,7 @@ void InterpreterEmulator::debugUnresolvedOrCold(TR_ResolvedMethod *resolvedMetho
 
 void InterpreterEmulator::refineResolvedCalleeForInvokevirtual(TR_ResolvedMethod *&callee, bool &isIndirectCall)
 {
-    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
+    assertHasState();
     if (!comp()->getOrCreateKnownObjectTable())
         return;
 
@@ -1903,7 +2351,7 @@ Operand *InterpreterEmulator::createOperandFromPrexArg(TR_PrexArgument *prexArgu
     auto prexKnowledge = TR_PrexArgument::knowledgeLevel(prexArgument);
     switch (prexKnowledge) {
         case KNOWN_OBJECT:
-            return new (trStackMemory()) KnownObjOperand(prexArgument->getKnownObjectIndex(), prexArgument->getClass());
+            return knownObjOperand(prexArgument->getKnownObjectIndex(), prexArgument->getClass());
         case FIXED_CLASS:
             return new (trStackMemory()) FixedClassOperand(prexArgument->getClass());
         case PREEXISTENT:
@@ -1919,7 +2367,7 @@ TR_PrexArgument *InterpreterEmulator::createPrexArgFromOperand(Operand *operand)
     if (operand->asKnownObject()) {
         auto koi = operand->getKnownObjectIndex();
         auto knot = comp()->getOrCreateKnownObjectTable();
-        if (knot && !knot->isNull(koi))
+        if (knot)
             return new (comp()->trHeapMemory()) TR_PrexArgument(operand->getKnownObjectIndex(), comp());
     } else if (operand->asObjectOperand() && operand->asObjectOperand()->getClass()) {
         TR_OpaqueClassBlock *clazz = operand->asObjectOperand()->getClass();
@@ -1988,6 +2436,8 @@ TR_PrexArgInfo *InterpreterEmulator::computePrexInfo(TR_CallSite *callsite, TR::
         TR_ASSERT_FATAL(comp()->fej9()->isLambdaFormGeneratedMethod(callsite->_initialCalleeMethod),
             "appendix with non-LambdaForm method - expected a call site adapter");
 
+        // Since the appendix is described not by an Operand but only by a known
+        // object index, the null index can occur here.
         TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
         if (!knot->isNull(appendix)) {
             TR_PrexArgInfo *prexArgInfo = new (comp()->trHeapMemory()) TR_PrexArgInfo(numOfArgs, comp()->trMemory());
@@ -2028,4 +2478,112 @@ void InterpreterEmulator::findTargetAndUpdateInfoForCallsite(TR_CallSite *callsi
         // support counters
         _calltarget->addDeadCallee(callsite);
     }
+}
+
+void InterpreterEmulator::assertHasState() { TR_ASSERT_FATAL(_iteratorWithState, "expected iteration with state"); }
+
+bool InterpreterEmulator::isEdgeUnreachable(TR::CFGEdge *edge) { return _unreachableEdges.count(edge) != 0; }
+
+bool InterpreterEmulator::isBlockUnreachable(TR::Block *block) { return _blockRc[block] == 0; }
+
+void InterpreterEmulator::markSuccessorsUnreachable(const TR::CFGEdgeList &edges)
+{
+    assertHasState();
+    auto end = edges.end();
+    for (auto it = edges.begin(); it != end; it++) {
+        TR::CFGEdge *edge = *it;
+        if (_outEdgesStillReachable.count(edge) == 0)
+            markEdgeUnreachable(edge);
+    }
+}
+
+void InterpreterEmulator::markEdgeUnreachable(TR::CFGEdge *edge)
+{
+    TR::Block *src = toBlock(edge->getFrom());
+    TR::Block *dest = toBlock(edge->getTo());
+    debugTrace(tracer(), "%sedge %d (bci +%d) -> %d (bci +%d) is unreachable", dest->isCatchBlock() ? "exception " : "",
+        src->getNumber(), src->getEntry()->getNode()->getByteCodeIndex(), dest->getNumber(),
+        dest->getEntry()->getNode()->getByteCodeIndex());
+
+    bool newlyAdded = _unreachableEdges.insert(edge).second;
+    TR_ASSERT_FATAL(newlyAdded, ".."); // TODO: message
+
+    uint32_t &rc = _blockRc[dest];
+    TR_ASSERT_FATAL(rc != 0, "dest block %d already unreachable", dest->getNumber());
+    rc--;
+    if (rc == 0)
+        _potentialCycleBlocks.remove(dest);
+    else
+        _potentialCycleBlocks.add(dest);
+}
+
+void InterpreterEmulator::markEdgeUnreachable(int32_t destBcIndex)
+{
+    markEdgeUnreachable(_currentInlinedBlock->getEdge(blocks(destBcIndex)));
+}
+
+void InterpreterEmulator::markSweepCFG()
+{
+    TR::BlockChecklist reachable(comp());
+    TR::list<TR::Block *, TR::Region &> queue(comp()->trMemory()->currentStackRegion());
+
+    TR::AllBlockIterator rootIt(_cfg, comp());
+    for (; rootIt.currentBlock() != NULL; rootIt.stepForward()) {
+        TR::Block *block = rootIt.currentBlock();
+        if (_visitedBlocks.contains(block)) {
+            reachable.add(block);
+            queue.push_back(block);
+        }
+    }
+
+    TR::Block *startBlock = toBlock(_cfg->getStart());
+    if (!reachable.contains(startBlock)) {
+        reachable.add(startBlock);
+        queue.push_back(startBlock);
+    }
+
+    while (!queue.empty()) {
+        TR::Block *block = queue.front();
+        queue.pop_front();
+
+        TR_SuccessorIterator succs(block);
+        for (auto *succ = succs.getFirst(); succ != NULL; succ = succs.getNext()) {
+            if (isEdgeUnreachable(succ))
+                continue;
+
+            TR::Block *dest = toBlock(succ->getTo());
+            if (!reachable.contains(dest)) {
+                reachable.add(dest);
+                queue.push_back(dest);
+            }
+        }
+    }
+
+    TR::AllBlockIterator sweepIt(_cfg, comp());
+    for (; sweepIt.currentBlock() != NULL; sweepIt.stepForward()) {
+        TR::Block *block = sweepIt.currentBlock();
+        if (reachable.contains(block))
+            continue;
+
+        // block is unreachable
+        uint32_t &rc = _blockRc[block];
+        if (rc == 0)
+            continue; // already known to be unreachable
+
+        rc = 0;
+
+        debugTrace(tracer(), "CFG mark/sweep: block %d is unreachable", block->getNumber());
+
+        TR_PredecessorIterator preds(block);
+        for (auto *edge = preds.getFirst(); edge != NULL; edge = preds.getNext())
+            _unreachableEdges.insert(edge); // might already be known to be unreachable
+
+        TR_SuccessorIterator succs(block);
+        for (auto *edge = succs.getFirst(); edge != NULL; edge = succs.getNext()) {
+            if (reachable.contains(toBlock(edge->getTo())))
+                markEdgeUnreachable(edge);
+        }
+    }
+
+    _potentialCycleBlocks.clear();
 }

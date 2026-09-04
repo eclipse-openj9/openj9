@@ -348,6 +348,19 @@ public:
 
     /**
      * \brief
+     *    Determine whether guarded static final field folding should be done
+     *    early (during inlining) when possible.
+     *
+     *    The result is determined once for the entire process, so a result of
+     *    true does not mean that guarded static final field folding is possible
+     *    in the current compilation.
+     *
+     * \return true if an effort should be made to fold static final fields early
+     */
+    static bool enableEarlyGuardedStaticFinalFieldFolding();
+
+    /**
+     * \brief
      *    Get the value of a static final field.
      *
      *    canFoldStaticFinalField() must have already run for the given field in
