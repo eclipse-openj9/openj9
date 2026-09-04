@@ -1616,6 +1616,23 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			extensions->requiresHeapWalkForRebuildingOwnableSynchronizerObjectList = false;
 			continue;
 		}
+
+#if defined(J9VM_OPT_JFR)
+		if (try_scan(&scan_start, "fixJFRObjectAllocationSampleThrottleRate=")) {
+			UDATA throttleRate = 0;
+			if(!scan_udata_helper(vm, &scan_start, &throttleRate, "fixJFRObjectAllocationSampleThrottleRate=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if ((throttleRate > 1000) || (throttleRate < 1)) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->fixJFRObjectAllocationSampleThrottleRate = throttleRate;
+			continue;
+		}
+#endif /* defined(J9VM_OPT_JFR) */
+
 		/* Couldn't find a match for arguments */
 		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTION_UNKNOWN, error_scan);
 		returnValue = JNI_EINVAL;
