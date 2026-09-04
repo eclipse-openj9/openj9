@@ -3563,7 +3563,10 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node, 
 
     Inst_CompareBranch(cg, OP::cbnzw, node, firstDimLenReg, nonZeroFirstDimLabel);
 
-    // if we reach here, both dimensions are zero, just allocate a zero-length object array
+    // if we reach here, the first dimension is zero, just allocate a zero-length object array
+    Inst_CompareImm(cg, node, secondDimLenReg, 0, /* is64bit */ false);
+    Inst_ConditionalBranch(cg, node, oolFailLabel, TR::CC_LT);
+
     Inst_Trg1Mem(cg, loadAddrOp, node, targetReg, MRef_disp(cg, vmThreadReg, offsetof(J9VMThread, heapAlloc)));
 
     // see if we will have a heap overflow, if so go back to the ool call
