@@ -784,10 +784,13 @@ public:
      *  \param methodSymbol
      *     Method symbol
      *
+     *  \param objectType
+     *     Object type
+     *
      *  \return
      *     Index of a child node that contains first operand
      */
-    int32_t getFirstOperandIndex(TR::MethodSymbol *methodSymbol);
+    int32_t getFirstOperandIndex(TR::MethodSymbol *methodSymbol, vapiObjType objectType);
 
     /** \brief
      *     Returns number of operands
@@ -795,10 +798,13 @@ public:
      *  \param methodSymbol
      *     Method symbol
      *
+     *  \param objectType
+     *     Object type
+     *
      *  \return
      *     Number of operands
      */
-    int32_t getNumOperands(TR::MethodSymbol *methodSymbol);
+    int32_t getNumOperands(TR::MethodSymbol *methodSymbol, vapiObjType objectType);
 
     /** \brief
      *     Returns index of a child node that contains mask
