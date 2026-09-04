@@ -217,7 +217,7 @@ public:
      *
      */
     enum vapiObjType {
-        Unknown = 0,
+        NotSet = 0,
         Vector,
         Mask,
         Shuffle,
@@ -225,7 +225,7 @@ public:
         ElementType,
         NumLanes,
         Scalar,
-        NotSet
+        Unknown
     };
 
     static const char *vapiObjTypeNames[];
@@ -279,6 +279,8 @@ public:
     public:
         TR_ALLOC(TR_Memory::Inliner); // TODO: add new type
 
+        // all default values should be zeros since TR_Array does not call
+        // the default constructor -- only zeros memory out
         vectorInfo()
             : _vecLen(vec_len_default)
             , _elementType(TR::NoType)
