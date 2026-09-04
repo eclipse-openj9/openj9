@@ -22,7 +22,6 @@
 package com.ibm.j9ddr.vm29.j9;
 
 import java.util.Iterator;
-import java.util.LinkedList;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.pointer.I32Pointer;
@@ -31,7 +30,6 @@ import com.ibm.j9ddr.vm29.pointer.U8Pointer;
 import com.ibm.j9ddr.vm29.pointer.U16Pointer;
 import com.ibm.j9ddr.vm29.pointer.U32Pointer;
 import com.ibm.j9ddr.vm29.pointer.U64Pointer;
-import com.ibm.j9ddr.vm29.pointer.UDATAPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9IdentityHashDataPointer;
@@ -61,18 +59,6 @@ public class ObjectHash {
 	private static final U32 MIX_ADD1 = new U32(0xe6546b64);
 	private static final U32 FINALIZE_MUL1 = new U32(0x85ebca6b);
 	private static final U32 FINALIZE_MUL2 = new U32(0xc2b2ae35);
-
-	private static final class ValueTypeHashQueueEntry {
-		final J9ObjectPointer objectPointer;
-		final J9ClassPointer clazz;
-		final UDATA startOffset;
-
-		ValueTypeHashQueueEntry(J9ObjectPointer objectPointer, J9ClassPointer clazz, UDATA startOffset) {
-			this.objectPointer = objectPointer;
-			this.clazz = clazz;
-			this.startOffset = startOffset;
-		}
-	}
 
 	private static U32 getSalt(J9JavaVMPointer vm, UDATA objectPointer, boolean isValueType) throws CorruptDataException
 	{
@@ -165,142 +151,127 @@ public class ObjectHash {
 
 	private static I32 convertValueObjectAtOffsetToHash(J9JavaVMPointer vm, J9ObjectPointer objectPointer, J9ClassPointer clazz, UDATA startOffset) throws CorruptDataException
 	{
-		U32 hashValue = getSalt(vm, UDATA.cast(objectPointer), true);
-		U32 numBytesHashed = new U32(0);
-		LinkedList<ValueTypeHashQueueEntry> queue = new LinkedList<>();
-		ValueTypeHashQueueEntry entry = new ValueTypeHashQueueEntry(objectPointer, clazz, startOffset);
 		ValueTypeHelper valueTypeHelper = ValueTypeHelper.getValueTypeHelper();
 
+		U32 hashValue = getSalt(vm, UDATA.cast(objectPointer), true);
 		hashValue = mix(hashValue, new U32(UDATA.cast(clazz)));
-		numBytesHashed = numBytesHashed.add(UDATA.SIZEOF);
+		U32 numBytesHashed = new U32(UDATA.SIZEOF);
 
-		while (true) {
-			U32 walkFlags = new U32(J9ROMFieldOffsetWalkState.J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE);
-			J9ClassPointer superClass = J9ClassHelper.superclass(entry.clazz);
-			Iterator<J9ObjectFieldOffset> fieldIterator = J9ObjectFieldOffsetIterator.J9ObjectFieldOffsetIteratorFor(entry.clazz, superClass, walkFlags);
-			while (fieldIterator.hasNext()) {
-				J9ObjectFieldOffset fieldOffset = fieldIterator.next();
-				UDATA offset = entry.startOffset.add(fieldOffset.getOffsetOrAddress());
-				String signature = J9ROMFieldShapeHelper.getSignature(fieldOffset.getField());
-				char sigChar = signature.charAt(0);
-				switch (sigChar) {
-				case 'Z': /* boolean */
-				case 'B': /* byte */ {
-					if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) {
-						U8 datum8 = U8Pointer.cast(entry.objectPointer.addOffset(offset)).at(0);
-						hashValue = mix(hashValue, new U32(datum8));
-						numBytesHashed = numBytesHashed.add(1);
-						break;
-					}
-					/* Fall through to 32-bit case if compact layouts are not enabled. */
-				}
-				case 'C': /* char */
-				case 'S': /* short */ {
-					if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) {
-						U16 datum16 = U16Pointer.cast(entry.objectPointer.addOffset(offset)).at(0);
-						hashValue = mix(hashValue, new U32(datum16));
-						numBytesHashed = numBytesHashed.add(2);
-						break;
-					}
-					/* Fall through to 32-bit case if compact layouts are not enabled. */
-				}
-				case 'I': /* int */
-				case 'F': /* float */ {
-					U32 datum32 = U32Pointer.cast(entry.objectPointer.addOffset(offset)).at(0);
-					hashValue = mix(hashValue, datum32);
-					numBytesHashed = numBytesHashed.add(4);
+		U32 walkFlags = new U32(J9ROMFieldOffsetWalkState.J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE);
+		J9ClassPointer superClass = J9ClassHelper.superclass(clazz);
+		Iterator<J9ObjectFieldOffset> fieldIterator = J9ObjectFieldOffsetIterator.J9ObjectFieldOffsetIteratorFor(clazz, superClass, walkFlags);
+
+		while (fieldIterator.hasNext()) {
+			J9ObjectFieldOffset fieldOffset = fieldIterator.next();
+			UDATA offset = startOffset.add(fieldOffset.getOffsetOrAddress());
+			String signature = J9ROMFieldShapeHelper.getSignature(fieldOffset.getField());
+			char sigChar = signature.charAt(0);
+
+			switch (sigChar) {
+			case 'Z': /* boolean */
+			case 'B': /* byte */ {
+				if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) {
+					U8 datum8 = U8Pointer.cast(objectPointer.addOffset(offset)).at(0);
+					hashValue = mix(hashValue, new U32(datum8));
+					numBytesHashed = numBytesHashed.add(1);
 					break;
 				}
-
-				case 'J': /* long */
-				case 'D': /* double */ {
-					U64 datum64 = U64Pointer.cast(entry.objectPointer.addOffset(offset)).at(0);
-					hashValue = mix(hashValue, new U32(datum64.bitAnd(0xffffffffL)));
-					hashValue = mix(hashValue, new U32(datum64.rightShift(32)));
-					numBytesHashed = numBytesHashed.add(8);
+				/* Fall through to 32-bit case if compact layouts are not enabled. */
+			}
+			case 'C': /* char */
+			case 'S': /* short */ {
+				if (J9BuildFlags.J9VM_OPT_VALHALLA_COMPACT_LAYOUTS) {
+					U16 datum16 = U16Pointer.cast(objectPointer.addOffset(offset)).at(0);
+					hashValue = mix(hashValue, new U32(datum16));
+					numBytesHashed = numBytesHashed.add(2);
 					break;
 				}
-
-				case '[': /* array */
-				case 'L': /* object */ {
-					U32 datum = new U32(0);
-					UDATA modifiers = fieldOffset.getField().modifiers();
-					if (modifiers.anyBitsIn(J9FieldFlags.J9FieldFlagIsNullRestricted)) {
-						/* Null-restricted field. */
-						if (valueTypeHelper.isFieldInClassFlattened(entry.clazz, fieldOffset.getField())) {
-							/* Null-restricted flattened field. */
-							J9ClassPointer flatClazz = valueTypeHelper.findJ9ClassInFlattenedClassCacheWithFieldName(entry.clazz, J9ROMFieldShapeHelper.getName(fieldOffset.getField()));
-							if (flatClazz.notNull()) {
-								queue.add(new ValueTypeHashQueueEntry(entry.objectPointer, flatClazz, offset));
-							}
-						} else {
-							/* Null-restricted non-flattened field. */
-							J9ObjectPointer fieldObject = ObjectReferencePointer.cast(entry.objectPointer.addOffset(offset)).at(0);
-							if (fieldObject.notNull()) {
-								J9ClassPointer fieldClazz = J9ObjectHelper.clazz(fieldObject);
-								UDATA flags = new UDATA(J9ObjectHelper.flags(fieldObject));
-								boolean addToQueue = true;
-								if (flags.anyBitsIn(J9Object.OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS)) {
-									UDATA hashSlotOffset = ObjectModel.getHashcodeOffset(fieldObject);
-									I32 storedHash = I32Pointer.cast(fieldObject.addOffset(hashSlotOffset)).at(0);
-									if (!storedHash.eq(0)) {
-										datum = new U32(storedHash);
-										hashValue = mix(hashValue, datum);
-										numBytesHashed = numBytesHashed.add(4);
-										addToQueue = false;
-									}
-								}
-								if (addToQueue) {
-									UDATA objectHeaderSize = new UDATA(J9ObjectHelper.headerSize());
-									queue.add(new ValueTypeHashQueueEntry(fieldObject, fieldClazz, objectHeaderSize));
-								}
-							}
+				/* Fall through to 32-bit case if compact layouts are not enabled. */
+			}
+			case 'I': /* int */
+			case 'F': /* float */ {
+				U32 datum32 = U32Pointer.cast(objectPointer.addOffset(offset)).at(0);
+				hashValue = mix(hashValue, datum32);
+				numBytesHashed = numBytesHashed.add(4);
+				break;
+			}
+			case 'J': /* long */
+			case 'D': /* double */ {
+				U64 datum64 = U64Pointer.cast(objectPointer.addOffset(offset)).at(0);
+				hashValue = mix(hashValue, new U32(datum64.bitAnd(0xffffffffL)));
+				hashValue = mix(hashValue, new U32(datum64.rightShift(32)));
+				numBytesHashed = numBytesHashed.add(8);
+				break;
+			}
+			case '[': /* array */
+			case 'L': /* object */ {
+				U32 datum = new U32(0);
+				UDATA modifiers = fieldOffset.getField().modifiers();
+				if (modifiers.anyBitsIn(J9FieldFlags.J9FieldFlagIsNullRestricted)) {
+					/* Null-restricted field. */
+					if (valueTypeHelper.isFieldInClassFlattened(clazz, fieldOffset.getField())) {
+						/* Null-restricted flattened field. */
+						J9ClassPointer flatClazz = valueTypeHelper.findJ9ClassInFlattenedClassCacheWithFieldName(clazz, J9ROMFieldShapeHelper.getName(fieldOffset.getField()));
+						if (flatClazz.notNull()) {
+							datum = new U32(convertValueObjectAtOffsetToHash(vm, objectPointer, flatClazz, offset));
 						}
 					} else {
-						J9ObjectPointer fieldObject = ObjectReferencePointer.cast(entry.objectPointer.addOffset(offset)).at(0);
+						/* Null-restricted non-flattened field. */
+						J9ObjectPointer fieldObject = ObjectReferencePointer.cast(objectPointer.addOffset(offset)).at(0);
 						if (fieldObject.notNull()) {
 							J9ClassPointer fieldClazz = J9ObjectHelper.clazz(fieldObject);
 							UDATA flags = new UDATA(J9ObjectHelper.flags(fieldObject));
 							if (flags.anyBitsIn(J9Object.OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS)) {
-								boolean addToQueue = true;
 								UDATA hashSlotOffset = ObjectModel.getHashcodeOffset(fieldObject);
 								I32 storedHash = I32Pointer.cast(fieldObject.addOffset(hashSlotOffset)).at(0);
-
 								if (!storedHash.eq(0)) {
 									datum = new U32(storedHash);
 									hashValue = mix(hashValue, datum);
 									numBytesHashed = numBytesHashed.add(4);
-									addToQueue = false;
+									break;
 								}
-
-								if (addToQueue) {
-									UDATA objectHeaderSize = new UDATA(J9ObjectHelper.headerSize());
-									queue.add(new ValueTypeHashQueueEntry(fieldObject, fieldClazz, objectHeaderSize));
-								}
-							} else if (valueTypeHelper.isJ9ClassAValueType(fieldClazz)) {
-								UDATA objectHeaderSize = new UDATA(J9ObjectHelper.headerSize());
-								queue.add(new ValueTypeHashQueueEntry(fieldObject, fieldClazz, objectHeaderSize));
-							} else {
-								datum = new U32(inlineConvertValueToHash(vm, UDATA.cast(fieldObject)));
-								hashValue = mix(hashValue, datum);
-								numBytesHashed = numBytesHashed.add(4);
 							}
+							UDATA objectHeaderSize = new UDATA(J9ObjectHelper.headerSize());
+							datum = new U32(convertValueObjectAtOffsetToHash(vm, fieldObject, fieldClazz, objectHeaderSize));
 						}
 					}
-					break;
+				} else {
+					J9ObjectPointer fieldObject = ObjectReferencePointer.cast(objectPointer.addOffset(offset)).at(0);
+					if (fieldObject.notNull()) {
+						J9ClassPointer fieldClazz = J9ObjectHelper.clazz(fieldObject);
+						UDATA flags = new UDATA(J9ObjectHelper.flags(fieldObject));
+						if (flags.anyBitsIn(J9Object.OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS)) {
+							UDATA hashSlotOffset = ObjectModel.getHashcodeOffset(fieldObject);
+							I32 storedHash = I32Pointer.cast(fieldObject.addOffset(hashSlotOffset)).at(0);
+							if (!storedHash.eq(0)) {
+								datum = new U32(storedHash);
+								hashValue = mix(hashValue, datum);
+								numBytesHashed = numBytesHashed.add(4);
+								break;
+							}
+							UDATA objectHeaderSize = new UDATA(J9ObjectHelper.headerSize());
+							datum = new U32(convertValueObjectAtOffsetToHash(vm, fieldObject, fieldClazz, objectHeaderSize));
+						} else if (valueTypeHelper.isJ9ClassAValueType(fieldClazz)) {
+							UDATA objectHeaderSize = new UDATA(J9ObjectHelper.headerSize());
+							datum = new U32(convertValueObjectAtOffsetToHash(vm, fieldObject, fieldClazz, objectHeaderSize));
+						} else {
+							datum = new U32(inlineConvertValueToHash(vm, UDATA.cast(fieldObject)));
+						}
+					}
 				}
-				default:
-					/* Invalid field signature. */
-					break;
-				}
-			}
-			if (queue.isEmpty()) {
+				hashValue = mix(hashValue, datum);
+				numBytesHashed = numBytesHashed.add(4);
 				break;
 			}
-			entry = queue.removeFirst();
+			default:
+				/* Invalid field signature. */
+				break;
+			}
 		}
+
 		hashValue = finalizeMurmur3Hash(hashValue, numBytesHashed);
 		if (hashValue.eq(0)) {
+			/* Hash code for value types must not be zero. */
 			hashValue = new U32(1);
 		}
 		return new I32(hashValue);
