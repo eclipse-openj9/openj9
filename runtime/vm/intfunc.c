@@ -494,12 +494,14 @@ J9InternalVMFunctions J9InternalFunctions = {
 	jvmUpcallsEagerByteInstrumentation,
 	jvmUpcallTransformArrayToList,
 	jvmUpcallsTransformJFREventClass,
+	createNewEventWriter,
 	jfrInitializeInternalStructures,
 	jfrEmitDataLoss,
 	requestJFREvent,
 	setupChunkMonitor,
 	getThreadTID,
 	emitStackTrace,
+	flushJavaJFRBuffer,
 #endif /* defined(J9VM_OPT_JFR) */
 #if defined(J9VM_OPT_SNAPSHOTS)
 	initializeSnapshotClassLoaderObject,

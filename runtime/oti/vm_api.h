@@ -6017,6 +6017,9 @@ jvmUpcallsTransformJFREventClass(J9VMThread *currentThread, U_8 *classData, UDAT
 j9object_t
 jvmUpcallTransformArrayToList(J9VMThread *currentThread, j9object_t array);
 
+jobject
+createNewEventWriter(J9VMThread *currentThread);
+
 /**
  * Initialize internal VM structures for JFR. This must be called before triggering
  * JFR initialization in the JCL.
@@ -6064,6 +6067,9 @@ getThreadTID(J9VMThread *currentThread, J9VMThread *vmThread);
 
 U_32
 emitStackTrace(J9VMThread *currentThread, I_32 skipCount);
+
+void
+flushJavaJFRBuffer(J9VMThread *currentThread, jobject eventWriterRef, I_32 uncommited, I_32 needed);
 #endif /* defined(J9VM_OPT_JFR) */
 
 #ifdef __cplusplus

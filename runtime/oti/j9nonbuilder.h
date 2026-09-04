@@ -601,6 +601,13 @@ typedef struct J9JFRPhysicalMemory {
 	U_64 usedSize;
 } J9JFRPhysicalMemory;
 
+typedef struct J9JFRJavaEventData {
+	J9JFR_EVENT_COMMON_FIELDS
+	UDATA size;
+} J9JFRJavaEventData;
+
+#define J9JFRJAVAEVENTDATA_EVENTDATA(jfrEvent) ((U_8 *)(((J9JFRJavaEventData *)(jfrEvent)) + 1))
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 /* @ddr_namespace: map_to_type=J9CfrError */
@@ -5731,12 +5738,14 @@ typedef struct J9InternalVMFunctions {
 	void (*jvmUpcallsEagerByteInstrumentation)(struct J9VMThread *currentThread, struct J9Class *superClass, U_8 *className, U_16 classNameLength, struct J9ClassLoader *loader, U_8 *classData, UDATA classDataLength, U_8 **newClassData, UDATA *newClassDataLength);
 	j9object_t (*jvmUpcallTransformArrayToList)(struct J9VMThread *currentThread, j9object_t array);
 	void (*jvmUpcallsTransformJFREventClass)(struct J9VMThread *currentThread, U_8 *classData, UDATA classDataLength, U_8 **newClassData, UDATA *newClassDataLength);
+	jobject (*createNewEventWriter)(struct J9VMThread *currentThread);
 	void (*jfrInitializeInternalStructures)(struct J9VMThread *currentThread);
 	void (*jfrEmitDataLoss)(struct J9VMThread *currentThread, U_64 bytes);
 	jboolean (*requestJFREvent)(struct J9VMThread *currentThread, jlong id);
 	BOOLEAN (*setupChunkMonitor)(struct J9VMThread *currentThread);
 	I_64 (*getThreadTID)(struct J9VMThread *currentThread, struct J9VMThread *vmThread);
 	U_32 (*emitStackTrace)(struct J9VMThread *currentThread, I_32 skipCount);
+	void (*flushJavaJFRBuffer)(struct J9VMThread *currentThread, jobject eventWriterRef, I_32 uncommited, I_32 needed);
 #endif /* defined(J9VM_OPT_JFR) */
 #if defined(J9VM_OPT_SNAPSHOTS)
 	void (*initializeSnapshotClassLoaderObject)(struct J9JavaVM *javaVM, struct J9ClassLoader *classLoader, j9object_t classLoaderObject);
@@ -6136,6 +6145,8 @@ typedef struct J9VMThread {
 	struct J9HashTable * volatile utfCache;
 #if defined(J9VM_OPT_JFR)
 	J9JFRBuffer jfrBuffer;
+	J9JFRBuffer jfrJavaEventBuffer;
+	jobject eventWriterRef;
 #endif /* defined(J9VM_OPT_JFR) */
 #if JAVA_SPEC_VERSION >= 16
 	U_64 *ffiArgs;
@@ -6269,6 +6280,7 @@ typedef struct JFRState {
 	J9Method *onRetransformUpcallMethod;
 	J9Method *transformToListMethod;
 	J9Method *transformJFREventClassMethod;
+	J9Method *constructorEventWriterMethod;
 	J9HashTable *threadObjectJNIRefTable;
 	omrthread_monitor_t threadObjectsMutex;
 	jobject chunkRotationMonitor;
@@ -6280,6 +6292,10 @@ typedef struct JFRState {
 	 */
 	U_8 *jfrEventEnabledFlags;
 	jlong jfrEventEnabledFlagsSize;
+	IDATA startPositionOffset;
+	IDATA startPositionAddressOffset;
+	IDATA currentPositionOffset;
+	IDATA maxPositionOffset;
 } JFRState;
 
 typedef struct J9ReflectFunctionTable {

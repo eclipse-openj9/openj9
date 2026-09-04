@@ -104,7 +104,37 @@ final class JFRClassTransformer {
         ClassReader reader = new ClassReader(classBytes);
         ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
 
+        String[] className = new String[1];
+        boolean[] hasClinitSeen = { false };
+        boolean[] shouldNotInject = { false };
+
         ClassVisitor visitor = new ClassVisitor(Opcodes.ASM7, writer) {
+            @Override
+            public void visit(int version, int access, String name, String signature,
+                              String superName, String[] interfaces) {
+                className[0] = name;
+                shouldNotInject[0] = (access & Opcodes.ACC_ABSTRACT) != 0;
+                super.visit(version, access, name, signature, superName, interfaces);
+            }
+
+            @Override
+            public MethodVisitor visitMethod(int access, String name, String descriptor,
+                                             String signature, String[] exceptions) {
+                MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
+                if (!shouldNotInject[0] && "<clinit>".equals(name)) {
+                    hasClinitSeen[0] = true;
+
+					return new MethodVisitor(Opcodes.ASM7, mv) {
+                        @Override
+                        public void visitCode() {
+                            super.visitCode();
+                            emitRegister(mv, className[0]);
+                        }
+                    };
+                }
+                return mv;
+            }
+
             @Override
             public void visitEnd() {
                 for (FieldDescriptor field : fields) {
@@ -123,12 +153,33 @@ final class JFRClassTransformer {
                     }
                 }
 
+                if (!shouldNotInject[0] && !hasClinitSeen[0]) {
+                    MethodVisitor mv = super.visitMethod(
+                        Opcodes.ACC_STATIC, "<clinit>", "()V", null, null);
+                    if (mv != null) {
+                        mv.visitCode();
+                        emitRegister(mv, className[0]);
+                        mv.visitInsn(Opcodes.RETURN);
+                        mv.visitMaxs(1, 0);
+                        mv.visitEnd();
+                    }
+                }
+
                 super.visitEnd();
             }
         };
 
         reader.accept(visitor, 0);
         return writer.toByteArray();
+    }
+
+    private static void emitRegister(MethodVisitor mv, String className) {
+        mv.visitLdcInsn(Type.getObjectType(className));
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC,
+            "jdk/jfr/FlightRecorder",
+            "register",
+            "(Ljava/lang/Class;)V",
+            false);
     }
 
 	/**

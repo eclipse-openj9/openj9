@@ -197,10 +197,6 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	private transient Module module;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
-	/*[IF JAVA_SPEC_VERSION == 17]*/
-	private transient Object eventHandler;
-	/*[ENDIF] JAVA_SPEC_VERSION == 17 */
-
 	/*[PR CMVC 125822] Move RAM class fields onto the heap to fix hotswap crash */
 	private transient ProtectionDomain protectionDomain;
 	private transient String classNameString;

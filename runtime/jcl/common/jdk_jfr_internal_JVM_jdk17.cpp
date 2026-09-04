@@ -24,8 +24,12 @@
 #include "j9.h"
 #include "j9vmconstantpool.h"
 #include "ut_j9jcl.h"
+#include "ObjectAccessBarrierAPI.hpp"
 
 extern "C" {
+
+J9_DECLARE_CONSTANT_UTF8(eventHandlerName, "eventHandler");
+J9_DECLARE_CONSTANT_UTF8(eventHandlerSig, "Ljava/lang/Object;");
 
 void JNICALL
 Java_jdk_jfr_internal_JVM_setSampleThreads(JNIEnv *env, jobject obj, jboolean sampleThreads)
@@ -39,19 +43,31 @@ Java_jdk_jfr_internal_JVM_setHandler(JNIEnv *env, jobject obj, jclass eventClass
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	j9object_t handlerObj = NULL;
+	jboolean rc = JNI_FALSE;
 
 	Assert_JCL_notNull(eventClass);
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-	if (NULL != handler) {
-		handlerObj = J9_JNI_UNWRAP_REFERENCE(handler);
+	J9Class *definingClass = NULL;
+	void *eventHandlerAddr = vmFuncs->staticFieldAddress(currentThread,
+															J9VMJAVALANGCLASS_VMREF(currentThread,
+															J9_JNI_UNWRAP_REFERENCE(eventClass)),
+															(U_8 *)J9UTF8_DATA(&eventHandlerName),
+															J9UTF8_LENGTH(&eventHandlerName),
+															(U_8 *)J9UTF8_DATA(&eventHandlerSig),
+															J9UTF8_LENGTH(&eventHandlerSig),
+															&definingClass,
+															NULL,
+															0,
+															NULL);
+	if (NULL != eventHandlerAddr) {
+		MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
+		objectAccessBarrier.inlineStaticStoreObject(currentThread, definingClass, (j9object_t*)eventHandlerAddr, J9_JNI_UNWRAP_REFERENCE(handler), FALSE);
+		rc = JNI_TRUE;
 	}
-
-	J9VMJAVALANGCLASS_SET_EVENTHANDLER(currentThread, J9_JNI_UNWRAP_REFERENCE(eventClass), handlerObj);
 	vmFuncs->internalExitVMToJNI(currentThread);
 
-	return JNI_TRUE;
+	return rc;
 }
 
 jobject JNICALL
@@ -65,7 +81,23 @@ Java_jdk_jfr_internal_JVM_getHandler(JNIEnv *env, jobject obj, jclass eventClass
 	Assert_JCL_notNull(eventClass);
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-	handler = vmFuncs->j9jni_createLocalRef(env, J9VMJAVALANGCLASS_EVENTHANDLER(currentThread, J9_JNI_UNWRAP_REFERENCE(eventClass)));
+	J9Class *definingClass = NULL;
+	void *eventHandlerAddr = vmFuncs->staticFieldAddress(currentThread,
+															J9VMJAVALANGCLASS_VMREF(currentThread,
+															J9_JNI_UNWRAP_REFERENCE(eventClass)),
+															(U_8 *)J9UTF8_DATA(&eventHandlerName),
+															J9UTF8_LENGTH(&eventHandlerName),
+															(U_8 *)J9UTF8_DATA(&eventHandlerSig),
+															J9UTF8_LENGTH(&eventHandlerSig),
+															&definingClass,
+															NULL,
+															0,
+															NULL);
+	if (NULL != eventHandlerAddr) {
+		MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
+		j9object_t eventHandler = objectAccessBarrier.inlineStaticReadObject(currentThread, definingClass, (j9object_t*)eventHandlerAddr, FALSE);
+		handler = vmFuncs->j9jni_createLocalRef(env, eventHandler);
+	}
 	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return handler;

@@ -909,6 +909,23 @@ done:
 	return;
 }
 
+void
+VM_JFRConstantPoolTypes::addJavaEventDataEntry(J9JFRJavaEventData *event)
+{
+	JavaEventDataEntry *eventData = (JavaEventDataEntry *)pool_newElement(_javaEventDataTable);
+	if (NULL == eventData) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+	eventData->size = event->size;
+	eventData->data = (U_8 *)J9JFRJAVAEVENTDATA_EVENTDATA(event);
+
+	_javaEventDataCount += event->size;
+
+done:
+	return;
+}
+
 U_32
 VM_JFRConstantPoolTypes::addNetworkInterfaceNameEntry(const char *networkInterfaceName)
 {

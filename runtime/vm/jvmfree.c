@@ -158,6 +158,7 @@ freeSharedCacheCLEntries(J9VMThread * vmThread, J9ClassLoader * classloader)
 static void
 recycleVMThread(J9VMThread * vmThread)
 {
+	PORT_ACCESS_FROM_VMC(vmThread);
 	J9JavaVM * vm = vmThread->javaVM;
 
 	/* Preserve J9VMThread->startOfMemoryBlock and J9VMThread->J9RIParameters */
@@ -205,6 +206,10 @@ recycleVMThread(J9VMThread * vmThread)
 	/* Reset JFR buffers. */
 	vmThread->jfrBuffer.bufferRemaining = vmThread->jfrBuffer.bufferSize;
 	vmThread->jfrBuffer.bufferCurrent = vmThread->jfrBuffer.bufferStart;
+
+	/* Free Java JFR buffer. */
+	j9mem_free_memory((void *)vmThread->jfrJavaEventBuffer.bufferStart);
+	memset(&vmThread->jfrJavaEventBuffer, 0, sizeof(vmThread->jfrJavaEventBuffer));
 #endif /* defined(J9VM_OPT_JFR) */
 
 }
@@ -283,6 +288,10 @@ deallocateVMThread(J9VMThread * vmThread, UDATA decrementZombieCount, UDATA send
 	/* Free JFR buffers. */
 	j9mem_free_memory((void *)vmThread->jfrBuffer.bufferStart);
 	memset(&vmThread->jfrBuffer, 0, sizeof(vmThread->jfrBuffer));
+
+	/* Free Java JFR buffer. */
+	j9mem_free_memory((void *)vmThread->jfrJavaEventBuffer.bufferStart);
+	memset(&vmThread->jfrJavaEventBuffer, 0, sizeof(vmThread->jfrJavaEventBuffer));
 #endif /* defined(J9VM_OPT_JFR) */
 
 	/* freeing the per thread buffers in the portlibrary */

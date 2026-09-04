@@ -489,6 +489,11 @@ void threadCleanup(J9VMThread * vmThread, UDATA forkedByVM)
 	/* Do the java dance to indicate thread death */
 	acquireVMAccess(vmThread);
 	cleanUpAttachedThread(vmThread);
+#if defined(J9VM_OPT_JFR)
+	/* Delete the EventWriter global ref while VM access is still held. */
+	vm->internalVMFunctions->j9jni_deleteGlobalRef((JNIEnv *)vmThread, vmThread->eventWriterRef, FALSE);
+	vmThread->eventWriterRef = NULL;
+#endif /* defined(J9VM_OPT_JFR) */
 	releaseVMAccess(vmThread);
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER) && defined(J9VM_ARCH_S390)

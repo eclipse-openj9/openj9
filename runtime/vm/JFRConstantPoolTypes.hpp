@@ -467,6 +467,11 @@ struct ThreadDumpEntry {
 	UDATA resultLength;
 };
 
+struct JavaEventDataEntry {
+	UDATA size;
+	U_8 *data;
+};
+
 struct PhysicalMemoryEntry {
 	I_64 ticks;
 	U_64 totalSize;
@@ -571,6 +576,8 @@ private:
 	UDATA _threadAllocationStatisticsCount;
 	J9Pool *_physicalMemoryTable;
 	UDATA _physicalMemoryCount;
+	J9Pool *_javaEventDataTable;
+	UDATA _javaEventDataCount;
 
 	/* Periodic events. */
 	bool _shouldWriteJVMInformation;
@@ -899,6 +906,8 @@ public:
 
 	void addThreadObjectEntry(J9JFRThreadObject *tableEntry);
 
+	void addJavaEventDataEntry(J9JFRJavaEventData *event);
+
 	J9Pool *getExecutionSampleTable()
 	{
 		return _executionSampleTable;
@@ -1062,6 +1071,16 @@ public:
 	UDATA getDataLossCount()
 	{
 		return _dataLossCount;
+	}
+
+	J9Pool *getJavaEventDataTable()
+	{
+		return _javaEventDataTable;
+	}
+
+	UDATA getJavaEventDataCount()
+	{
+		return _javaEventDataCount;
 	}
 
 	J9Pool *getThreadDumpTable()
@@ -1495,6 +1514,9 @@ public:
 				consumeStackTrace(stackTraceEvent->currentThreadTID, J9JFRSTACKTRACEEVENT_STACKTRACE(stackTraceEvent), stackTraceEvent->stackTraceSize, stackTraceEvent->stackTraceID);
 				break;
 			}
+			case J9JFR_EVENT_TYPE_JAVA_EVENT_DATA:
+				addJavaEventDataEntry((J9JFRJavaEventData *)event);
+				break;
 			default:
 				Assert_VM_unreachable();
 				break;
@@ -2255,6 +2277,8 @@ done:
 		, _threadAllocationStatisticsCount(0)
 		, _physicalMemoryTable(NULL)
 		, _physicalMemoryCount(0)
+		, _javaEventDataTable(NULL)
+		, _javaEventDataCount(0)
 		, _shouldWriteJVMInformation(false)
 		, _shouldWriteCPUInformationEvent(false)
 		, _shouldWriteVirtualizationInformationEvent(false)
@@ -2507,6 +2531,12 @@ done:
 			goto done;
 		}
 
+		_javaEventDataTable = pool_new(sizeof(JavaEventDataEntry), 0, sizeof(UDATA), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		if (NULL == _javaEventDataTable) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+
 		/* Add reserved index for default entries. For strings zero is the empty or NUll string.
 		 * For package zero is the deafult package, for Module zero is the unnamed module. ThreadGroup
 		 * zero is NULL threadGroup.
@@ -2615,6 +2645,7 @@ done:
 		pool_kill(_threadDumpTable);
 		pool_kill(_threadAllocationStatisticsTable);
 		pool_kill(_physicalMemoryTable);
+		pool_kill(_javaEventDataTable);
 		freeNetworkInterfaceNames();
 		j9mem_free_memory(_globalStringTable);
 	}

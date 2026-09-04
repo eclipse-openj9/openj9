@@ -493,6 +493,8 @@ done:
 
 			pool_do(_constantPoolTypes.getThreadDumpTable(), &writeThreadDumpEvent, this);
 
+			pool_do(_constantPoolTypes.getJavaEventDataTable(), &writeJavaEventData, this);
+
 			if (J9_ARE_NO_BITS_SET(_vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JFR_V2_SUPPORT)) {
 				/* Only write constant events in first chunk. */
 				if (0 == _vm->jfrState.jfrChunkCount) {
@@ -1015,6 +1017,8 @@ done:
 
 	static void writeThreadDumpEvent(void *anElement, void *userData);
 
+	static void writeJavaEventData(void *anElement, void *userData);
+
 	UDATA
 	calculateRequiredBufferSize()
 	{
@@ -1124,6 +1128,8 @@ done:
 		requiredBufferSize += (_constantPoolTypes.getNetworkUtilizationCount() * NETWORK_UTILIZATION_EVENT_SIZE);
 
 		requiredBufferSize += (_constantPoolTypes.getDataLossCount() * DATA_LOSS_EVENT_SIZE);
+
+		requiredBufferSize += _constantPoolTypes.getJavaEventDataCount();
 
 		requiredBufferSize *= 2;
 

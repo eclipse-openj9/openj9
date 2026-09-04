@@ -583,15 +583,27 @@ Java_jdk_jfr_internal_JVM_getTypeId__Ljava_lang_Class_2(JNIEnv *env, jobject obj
 jobject JNICALL
 Java_jdk_jfr_internal_JVM_getEventWriter(JNIEnv *env, jclass clazz)
 {
-	// TODO: implementation
-	return NULL;
+	J9VMThread *currentThread = (J9VMThread *)env;
+
+	return currentThread->eventWriterRef;
 }
 
 jobject JNICALL
 Java_jdk_jfr_internal_JVM_newEventWriter(JNIEnv *env, jclass clazz)
 {
-	// TODO: implementation
-	return NULL;
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	jobject eventWriterRef = currentThread->eventWriterRef;
+
+	if (NULL == eventWriterRef) {
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+		eventWriterRef = vmFuncs->createNewEventWriter(currentThread);
+		currentThread->eventWriterRef = eventWriterRef;
+		vmFuncs->internalExitVMToJNI(currentThread);
+	}
+
+	return eventWriterRef;
 }
 
 void JNICALL
@@ -603,7 +615,13 @@ Java_jdk_jfr_internal_JVM_flush__Ljdk_jfr_internal_EventWriter_2II(JNIEnv *env, 
 Java_jdk_jfr_internal_JVM_flush__Ljdk_jfr_internal_event_EventWriter_2II(JNIEnv *env, jclass clazz, jobject writer, jint uncommittedSize, jint requestedSize)
 #endif /* JAVA_SPEC_VERSION == 11 */
 {
-	// TODO: implementation
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	vmFuncs->flushJavaJFRBuffer(currentThread, writer, uncommittedSize, requestedSize);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 void JNICALL
