@@ -516,6 +516,42 @@ done:
 }
 
 #define ADDMODS_PROPERTY_BASE "jdk.module.addmods."
+
+/* Add moduleName as an implicit --add-modules entry via a numbered
+ * jdk.module.addmods.<n> system property. Returns 0 on success, 1 on failure.
+ */
+static UDATA
+addRequiredModuleProperty(J9VMThread *vmThread, const char *moduleName)
+{
+	J9JavaVM *vm = vmThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	J9VMSystemProperty *systemProperty = NULL;
+
+	Trc_JCL_initializeRequiredClasses_addAgentModuleEntry(vmThread, moduleName);
+	/* Handle the case where there are no user-specified modules. In this case, there
+	 * is typically one system property but no user-set "add-modules" arguments.
+	 */
+	if ((0 == vm->addModulesCount)
+		&& (J9SYSPROP_ERROR_NONE == vmFuncs->getSystemProperty(vm, ADDMODS_PROPERTY_BASE "0", &systemProperty)))
+	{
+		/* this is implicitly an unused property */
+		vmFuncs->setSystemProperty(vm, systemProperty, moduleName);
+	} else {
+		UDATA indexLen = j9str_printf(NULL, 0, "%zu", vm->addModulesCount); /* get the length of the number string */
+		char *propNameBuffer = j9mem_allocate_memory(sizeof(ADDMODS_PROPERTY_BASE) + indexLen, OMRMEM_CATEGORY_VM);
+		if (NULL == propNameBuffer) {
+			Trc_JCL_initializeRequiredClasses_addAgentModuleOutOfMemory(vmThread);
+			return 1;
+		}
+		j9str_printf(propNameBuffer, sizeof(ADDMODS_PROPERTY_BASE) + indexLen, ADDMODS_PROPERTY_BASE "%zu", vm->addModulesCount);
+		Trc_JCL_initializeRequiredClasses_addAgentModuleSetProperty(vmThread, propNameBuffer, moduleName);
+		vmFuncs->addSystemProperty(vm, propNameBuffer, moduleName, J9SYSPROP_FLAG_NAME_ALLOCATED);
+	}
+	vm->addModulesCount += 1;
+	return 0;
+}
+
 UDATA
 initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 {
@@ -532,7 +568,6 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	J9ClassWalkState state;
 	J9NativeLibrary* nativeLibrary = NULL;
 	j9object_t oom;
-	PORT_ACCESS_FROM_JAVAVM(vm);
 	static UDATA requiredClasses[] = {
 			J9VMCONSTANTPOOL_JAVALANGTHREAD,
 			J9VMCONSTANTPOOL_JAVALANGCLASSLOADER,
@@ -777,28 +812,9 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 		} else
 #endif /* JAVA_SPEC_VERSION < 26 */
 		{
-			J9VMSystemProperty *systemProperty = NULL;
-			Trc_JCL_initializeRequiredClasses_addAgentModuleEntry(vmThread, moduleName);
-			/* Handle the case where there are no user-specified modules. In this case, there
-			 * is typically one system property but no user-set "add-modules" arguments.
-			 */
-			if ((0 == vm->addModulesCount)
-				&& (J9SYSPROP_ERROR_NONE == vmFuncs->getSystemProperty(vm, ADDMODS_PROPERTY_BASE "0", &systemProperty)))
-			{
-				/* this is implicitly an unused property */
-				vmFuncs->setSystemProperty(vm, systemProperty, moduleName);
-			} else {
-				UDATA indexLen = j9str_printf(NULL, 0, "%zu", vm->addModulesCount); /* get the length of the number string */
-				char *propNameBuffer = j9mem_allocate_memory(sizeof(ADDMODS_PROPERTY_BASE) + indexLen, OMRMEM_CATEGORY_VM);
-				if (NULL == propNameBuffer) {
-					Trc_JCL_initializeRequiredClasses_addAgentModuleOutOfMemory(vmThread);
-					return 1;
-				}
-				j9str_printf(propNameBuffer, sizeof(ADDMODS_PROPERTY_BASE) + indexLen, ADDMODS_PROPERTY_BASE "%zu", vm->addModulesCount);
-				Trc_JCL_initializeRequiredClasses_addAgentModuleSetProperty(vmThread, propNameBuffer, moduleName);
-				vmFuncs->addSystemProperty(vm, propNameBuffer, moduleName, J9SYSPROP_FLAG_NAME_ALLOCATED);
+			if (0 != addRequiredModuleProperty(vmThread, moduleName)) {
+				return 1;
 			}
-			vm->addModulesCount += 1;
 		}
 	}
 
@@ -819,30 +835,26 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 		} else
 #endif /* JAVA_SPEC_VERSION < 26 */
 		{
-			J9VMSystemProperty *systemProperty = NULL;
-			Trc_JCL_initializeRequiredClasses_addAgentModuleEntry(vmThread, moduleName);
-			/* Handle the case where there are no user-specified modules. In this case, there
-			 * is typically one system property but no user-set "add-modules" arguments.
-			 */
-			if ((0 == vm->addModulesCount)
-				&& (J9SYSPROP_ERROR_NONE == vmFuncs->getSystemProperty(vm, ADDMODS_PROPERTY_BASE "0", &systemProperty)))
-			{
-				/* this is implicitly an unused property */
-				vmFuncs->setSystemProperty(vm, systemProperty, moduleName);
-			} else {
-				UDATA indexLen = j9str_printf(NULL, 0, "%zu", vm->addModulesCount); /* get the length of the number string */
-				char *propNameBuffer = j9mem_allocate_memory(sizeof(ADDMODS_PROPERTY_BASE) + indexLen, OMRMEM_CATEGORY_VM);
-				if (NULL == propNameBuffer) {
-					Trc_JCL_initializeRequiredClasses_addAgentModuleOutOfMemory(vmThread);
-					return 1;
-				}
-				j9str_printf(propNameBuffer, sizeof(ADDMODS_PROPERTY_BASE) + indexLen, ADDMODS_PROPERTY_BASE "%zu", vm->addModulesCount);
-				Trc_JCL_initializeRequiredClasses_addAgentModuleSetProperty(vmThread, propNameBuffer, moduleName);
-				vmFuncs->addSystemProperty(vm, propNameBuffer, moduleName, J9SYSPROP_FLAG_NAME_ALLOCATED);
+			if (0 != addRequiredModuleProperty(vmThread, moduleName)) {
+				return 1;
 			}
-			vm->addModulesCount += 1;
 		}
 	}
+
+#if defined(J9VM_OPT_JFR)
+	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JFR_V2_SUPPORT)
+		&& (NULL != vm->jfrState.jfrCMDLineOption))
+	{
+		/* -XX:StartFlightRecording implies jdk.jfr even if the launched application
+		 * doesn't itself require it (e.g. a --module launch with no such requires).
+		 * No pre-check here: if jdk.jfr isn't in the image, resolution below fails
+		 * with the standard FindException, which is the expected behaviour.
+		 */
+		if (0 != addRequiredModuleProperty(vmThread, "jdk.jfr")) {
+			return 1;
+		}
+	}
+#endif /* defined(J9VM_OPT_JFR) */
 
 	vmThread->privateFlags &= (~J9_PRIVATE_FLAGS_REPORT_ERROR_LOADING_CLASS);
 

@@ -292,6 +292,7 @@ public abstract class ClassLoader {
 			System.bootLayer = jdk.internal.module.ModuleBootstrap.boot();
 		/*[IF JAVA_SPEC_VERSION >= 10]*/
 		} catch (Exception ex) {
+			System.out.println("Error occurred during initialization of boot layer"); //$NON-NLS-1$
 			System.out.println(ex);
 			Throwable t = ex.getCause();
 			while (t != null) {

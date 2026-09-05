@@ -37,6 +37,9 @@ extern "C" {
 #define LOG_LEVEL_WARN 4
 #define LOG_LEVEL_ERROR 5
 
+/* Must match JFR_START's id in jdk/jfr/internal/LogTag.java */
+#define J9JFR_LOGTAG_JFR_START 13
+
 #define JFR_STRING_BUFFER 256
 
 void JNICALL
@@ -362,8 +365,13 @@ Java_jdk_jfr_internal_JVM_subscribeLogLevel(JNIEnv *env, jclass clazz, jobject l
 	if (-1 != tagSetLevelOffset) {
 		MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
 
-		/* TODO for now we will use warn as the default, in the future we will parse -Xlog to determine actual level */
-		objectAccessBarrier.inlineMixedObjectStoreI32(currentThread, logTagInstance, tagSetLevelOffset, LOG_LEVEL_WARN, TRUE);
+		/* TODO for now we will use warn as the default for most tags, in the future we
+		 * will parse -Xlog to determine actual level. JFR_START is special-cased to INFO,
+		 * so the -XX:StartFlightRecording banner ("Started recording ...") is visible
+		 * by default.
+		 */
+		I_32 defaultLevel = (J9JFR_LOGTAG_JFR_START == tagSetId) ? LOG_LEVEL_INFO : LOG_LEVEL_WARN;
+		objectAccessBarrier.inlineMixedObjectStoreI32(currentThread, logTagInstance, tagSetLevelOffset, defaultLevel, TRUE);
 	} else {
 		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
 	}
