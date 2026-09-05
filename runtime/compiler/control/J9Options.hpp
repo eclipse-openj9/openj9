@@ -142,7 +142,9 @@ enum ExternalOptions {
     XXminusTrackAOTDependencies = 78,
     XXplusJITServerUseProfileCache = 79,
     XXminusJITServerUseProfileCache = 80,
-    TR_NumExternalOptions = 81
+    XXplusMemoryDisclaim = 81,
+    XXminusMemoryDisclaim = 82,
+    TR_NumExternalOptions = 83
 };
 
 /**
