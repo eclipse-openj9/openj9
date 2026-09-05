@@ -442,8 +442,7 @@ bool TR_NewInitialization::findAllocationNode(TR::TreeTop *treeTop, TR::Node *no
 
     // An allocation node has been found. Create a new candidate entry.
     //
-    Candidate *candidate = new (trStackMemory()) Candidate;
-    memset(candidate, 0, sizeof(Candidate));
+    Candidate *candidate = new (trStackMemory()) Candidate();
     candidate->treeTop = treeTop;
     candidate->node = node;
     candidate->size = size;
