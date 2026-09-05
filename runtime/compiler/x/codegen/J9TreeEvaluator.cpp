@@ -3065,7 +3065,16 @@ void setImplicitNULLCHKExceptionInfo(TR::Node *node, TR::CodeGenerator *cg)
         // The last instruction is a branch, the comparison is before.
         TR::Instruction *cmpInstruction = cg->getAppendInstruction()->getPrev();
         OP::Mnemonic mnemonic = cmpInstruction->getOpCodeValue();
-        bool isComparisonMemForm = mnemonic == OP::CMP4MemReg || mnemonic == OP::CMP4RegMem;
+
+        // CMP4MemReg: cmp [arr+4], idx_reg
+        // The memory operand loads the array length from the array.
+        // This instruction can fault if arr is null, making it the correct faulting instruction.
+        //
+        // CMP4RegMem: cmp arraylength_reg, [this+idx_offset]
+        // The memory operand loads idx from 'this', not from the array.
+        // This instruction cannot fault due to a null array access, so it
+        // shouldn't be selected as the faulting instruction.
+        bool isComparisonMemForm = mnemonic == OP::CMP4MemReg;
         if (comp->useCompressedPointers() && faultingInstruction != cmpInstruction && isComparisonMemForm) {
             logprintf(isTraceCG, comp->log(), "Faulting instruction (previously %p) updated to %p\n",
                 faultingInstruction, cmpInstruction);
