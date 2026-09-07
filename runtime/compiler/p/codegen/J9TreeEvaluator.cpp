@@ -1996,7 +1996,10 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node, 
     generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, condReg, firstDimLenReg, 0);
     generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, nonZeroFirstDimLabel, condReg);
 
-    // if we reach here, both dimensions are zero, just allocate a zero-length object array
+    // if we reach here, the first dimension is zero, just allocate a zero-length object array
+    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, condReg, secondDimLenReg, 0);
+    generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, oolJumpLabel, condReg);
+
     generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, targetReg,
         TR::MemoryReference::createWithDisplacement(cg, vmThreadReg, offsetof(J9VMThread, heapAlloc), addrSize));
 
