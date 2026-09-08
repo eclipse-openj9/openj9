@@ -627,7 +627,22 @@ Java_jdk_jfr_internal_JVM_flush__Ljdk_jfr_internal_event_EventWriter_2II(JNIEnv 
 void JNICALL
 Java_jdk_jfr_internal_JVM_setRepositoryLocation(JNIEnv *env, jobject obj, jstring dirText)
 {
-	// TODO: implementation
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	if (NULL != dirText) {
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+		j9object_t dirTextObject = J9_JNI_UNWRAP_REFERENCE(dirText);
+		char *dirText = vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, dirTextObject, J9_STR_NULL_TERMINATE_RESULT, "", 0, NULL, 0, NULL);
+		if (NULL == dirText) {
+			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+		} else {
+			Assert_JCL_true(NULL == vm->jfrState.jfrRepositoryLocation);
+			vm->jfrState.jfrRepositoryLocation = dirText;
+		}
+		vmFuncs->internalExitVMToJNI(currentThread);
+	}
 }
 
 void JNICALL
