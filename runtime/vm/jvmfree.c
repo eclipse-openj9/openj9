@@ -158,7 +158,9 @@ freeSharedCacheCLEntries(J9VMThread * vmThread, J9ClassLoader * classloader)
 static void
 recycleVMThread(J9VMThread * vmThread)
 {
+#if defined(J9VM_OPT_JFR)
 	PORT_ACCESS_FROM_VMC(vmThread);
+#endif /* defined(J9VM_OPT_JFR) */
 	J9JavaVM * vm = vmThread->javaVM;
 
 	/* Preserve J9VMThread->startOfMemoryBlock and J9VMThread->J9RIParameters */
