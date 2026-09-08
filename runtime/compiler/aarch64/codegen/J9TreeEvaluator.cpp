@@ -3611,10 +3611,7 @@ static TR::Register *generateMultianewArrayWithInlineAllocators(TR::Node *node, 
 
     generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzw, node, firstDimLenReg, nonZeroFirstDimLabel);
 
-    // if we reach here, the first dimension is zero, just allocate a zero-length object array
-    generateCompareImmInstruction(cg, node, secondDimLenReg, 0, /* is64bit */ false);
-    generateConditionalBranchInstruction(cg, node, oolFailLabel, TR::CC_LT);
-
+    // if we reach here, both dimensions are zero, just allocate a zero-length object array
     generateTrg1MemInstruction(cg, loadAddrOp, node, targetReg,
         MRef_disp(cg, vmThreadReg, offsetof(J9VMThread, heapAlloc)));
 
