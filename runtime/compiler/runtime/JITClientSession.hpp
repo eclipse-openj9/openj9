@@ -337,6 +337,7 @@ public:
         uint32_t _enableGlobalLockReservation;
         uintptr_t _nurserySpaceBoundsBase;
         uintptr_t _nurserySpaceBoundsTop;
+        uintptr_t _valueFlatteningThreshold;
         UDATA _lowTenureAddress;
         UDATA _highTenureAddress;
 #if defined(J9VM_OPT_SIDECAR)
@@ -344,6 +345,7 @@ public:
         TR_OpaqueClassBlock *_srConstructorAccessorClass;
 #endif // J9VM_OPT_SIDECAR
         U_32 _extendedRuntimeFlags2;
+        U_32 _extendedRuntimeFlags3;
 #if defined(TR_HOST_POWER)
         void *_helperAddresses[TR_numRuntimeHelpers];
 #endif

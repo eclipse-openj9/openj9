@@ -885,6 +885,10 @@ void TR_RelocationRuntime::fillAOTHeader(J9JavaVM *vm, TR_FrontEnd *fe, TR_AOTHe
         vm->internalVMFunctions->currentVMThread(vm));
     aotHeader->processorDescription = TR::Compiler->relocatableTarget.cpu.getProcessorDescription();
 
+#if JAVA_SPEC_VERSION >= 28
+    aotHeader->valueTypesFlatteningThreshold = TR::Compiler->om.valueTypesFlatteningThreshold();
+#endif /* JAVA_SPEC_VERSION >= 28 */
+
     // Set up other feature flags
     aotHeader->featureFlags = generateFeatureFlags(fe);
 
@@ -976,6 +980,24 @@ uintptr_t TR_RelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
     if (!TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableCHOpts) && cht && cht->isActive()) {
         featureFlags |= TR_FeatureFlag_CHTableEnabled;
     }
+
+#if JAVA_SPEC_VERSION >= 28
+    if (TR::Compiler->om.areValueTypesEnabled()) {
+        featureFlags |= TR_FeatureFlag_ValueTypesEnabled;
+
+        if (TR::Compiler->om.areFlattenableValueTypesEnabled()) {
+            featureFlags |= TR_FeatureFlag_FlattenableValueTypesEnabled;
+
+            if (TR::Compiler->om.isValueTypeFlatteningEnabled()) {
+                featureFlags |= TR_FeatureFlag_ValueTypesFlatteningEnabled;
+            }
+
+            if (TR::Compiler->om.isValueTypeArrayFlatteningEnabled()) {
+                featureFlags |= TR_FeatureFlag_ValueTypesArrayFlatteningEnabled;
+            }
+        }
+    }
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
     return featureFlags;
 }
@@ -1222,6 +1244,29 @@ void TR_SharedCacheRelocationRuntime::checkAOTHeaderFlags(const TR_AOTHeader *hd
         defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_HEADER_END_SANITY_BIT_MANGLED,
             "AOT header validation failed: Trailing sanity bit mismatch.");
 
+#if JAVA_SPEC_VERSION >= 28
+    if ((featureFlags & TR_FeatureFlag_ValueTypesEnabled)
+        != (hdrInCache->featureFlags & TR_FeatureFlag_ValueTypesEnabled)) {
+        defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_HEADER_VALUE_TYPES_ENABLED_MISMATCH,
+            "AOT header validation failed: Value types feature mismatch.");
+    }
+    if ((featureFlags & TR_FeatureFlag_FlattenableValueTypesEnabled)
+        != (hdrInCache->featureFlags & TR_FeatureFlag_FlattenableValueTypesEnabled)) {
+        defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_HEADER_FLATTENABLE_VALUE_TYPES_ENABLED_MISMATCH,
+            "AOT header validation failed: Null-restricted types feature mismatch.");
+    }
+    if ((featureFlags & TR_FeatureFlag_ValueTypesFlatteningEnabled)
+        != (hdrInCache->featureFlags & TR_FeatureFlag_ValueTypesFlatteningEnabled)) {
+        defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_HEADER_VALUE_TYPES_FLATTENING_ENABLED_MISMATCH,
+            "AOT header validation failed: Null-restricted flattening feature mismatch.");
+    }
+    if ((featureFlags & TR_FeatureFlag_ValueTypesArrayFlatteningEnabled)
+        != (hdrInCache->featureFlags & TR_FeatureFlag_ValueTypesArrayFlatteningEnabled)) {
+        defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_HEADER_VALUE_TYPES_ARRAY_FLATTENING_ENABLED_MISMATCH,
+            "AOT header validation failed: Null-restricted array element flattening feature mismatch.");
+    }
+#endif /* JAVA_SPEC_VERSION >= 28 */
+
     if (defaultMessage)
         generateError(J9NLS_RELOCATABLE_CODE_UNKNOWN_PROBLEM,
             "AOT header validation failed: Unkown problem with processor features.");
@@ -1315,6 +1360,13 @@ bool TR_SharedCacheRelocationRuntime::validateAOTHeader(TR_FrontEnd *fe, J9VMThr
         } else if (hdrInCache->compressedPointerShift != TR::Compiler->om.compressedReferenceShift()) {
             incompatibleCache(J9NLS_RELOCATABLE_CODE_CMPRS_REF_SHIFT_MISMATCH,
                 "AOT header validation failed: incompatible compressed pointer shift");
+#if JAVA_SPEC_VERSION >= 28
+        } else if (TR::Compiler->om.areValueTypesEnabled() && TR::Compiler->om.areFlattenableValueTypesEnabled()
+            && TR::Compiler->om.isValueTypeFlatteningEnabled()
+            && (hdrInCache->valueTypesFlatteningThreshold != TR::Compiler->om.valueTypesFlatteningThreshold())) {
+            incompatibleCache(J9NLS_RELOCATABLE_CODE_HEADER_VALUE_TYPES_FLATTENING_THRESHOLD_MISMATCH,
+                "AOT header validation failed: incompatible null-restricted type flattening threshold amounts");
+#endif /* JAVA_SPEC_VERSION >= 28 */
         } else {
             static_cast<TR_JitPrivateConfig *>(jitConfig()->privateConfig)->aotValidHeader = TR_yes;
             return true;
