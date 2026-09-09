@@ -949,7 +949,7 @@ generateJ9RtvExceptionDetails(J9BytecodeVerificationData* verifyData, U_8* initM
 		break;
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 	case BCV_ERR_STRICT_FIELDS_UNASSIGNED:
-		printMessage(&msgBuf, "All strict final fields must be initialized before super().");
+		printMessage(&msgBuf, "All strict fields must be initialized before super().");
 		break;
 	case BCV_ERR_STRICT_FIELD_NOT_VALID:
 		printMessage(&msgBuf, "Strict fields not a subset of initial strict instance fields.");
