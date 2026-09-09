@@ -240,6 +240,7 @@ uint32_t J9::Options::_minDiskSpaceForDisclaimMB = 1024; // 1 GB
 int32_t J9::Options::_minTimeBetweenMemoryDisclaims = 5000; // ms (for non-SCC memory areas)
 int32_t J9::Options::_minTimeBetweenSCCDisclaims = 3000; // ms (for Shared Class Cache)
 uint32_t J9::Options::_maxDeviceLatencyForDisclaimUs = 1500; // us (disable disclaiming to slow devices)
+bool J9::Options::_enableDisclaimBecauseAllDisksSuitable = false;
 int32_t J9::Options::_mallocTrimPeriod = 0; // seconds; 0 means disabled
 
 int32_t J9::Options::_numFirstTimeCompilationsToExitIdleMode = 25; // Use a large number to disable the feature
@@ -3089,6 +3090,36 @@ bool J9::Options::disableMemoryDisclaimIfNeeded(J9JITConfig *jitConfig)
         bool diskSuitableForDisclaiming = device != NULL && omrsysinfo_get_block_device_stats(device, &deviceStats) == 0
             && analyzeDiskCharacteristicsForDisclaiming(deviceStats, recommendedIntervalMs);
 
+        // If we couldn't map the disclaim directory or swap area to a device, it could be because we're on
+        // a filesystem that obscures that info (e.g. overlayfs, common in containers).
+        // In such cases we can look at all the block devices on the system and if none appears slow
+        // we can enable disclaiming without needing to know where individual files might reside.
+        if (device == NULL) {
+            OMRDiskStatsEntry *diskStats = NULL;
+            uintptr_t numEntries = 0;
+            if (omrsysinfo_get_all_diskstats(&diskStats, &numEntries) == 0) {
+                diskSuitableForDisclaiming = true;
+                for (uintptr_t i = 0; i < numEntries && diskSuitableForDisclaiming; i++) {
+                    // Skip devices that don't have any recorded reads/writes.
+                    // That should be extremely unlikely if we found the device from the swap or disclaim directory, but
+                    // if we're looking at all devices we could find loopback devices, seemingly unused devices, and so
+                    // on.
+                    if (diskStats[i].stats.rdIos == 0 && diskStats[i].stats.wrIos == 0)
+                        continue;
+                    diskSuitableForDisclaiming
+                        = analyzeDiskCharacteristicsForDisclaiming(diskStats[i].stats, recommendedIntervalMs);
+                }
+                // shouldDisableMemoryDisclaim is set above based on kernel version, page size, and so on,
+                // and checked below to determine if we should disable SCC disclaiming. If we end up on this path
+                // and we know that there are no suitable devices for disclaiming, we set shouldDisableMemoryDisclaim
+                // to disable SCC disclaiming now, since we don't want to check all disks again later.
+                if (!diskSuitableForDisclaiming)
+                    shouldDisableMemoryDisclaim = true;
+                else
+                    J9::Options::_enableDisclaimBecauseAllDisksSuitable = true;
+            }
+        }
+
         if (TR::Options::getVerboseOption(TR_VerbosePerformance)) {
             if (!diskSuitableForDisclaiming) {
                 TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
@@ -3133,7 +3164,9 @@ bool J9::Options::disableMemoryDisclaimIfNeeded(J9JITConfig *jitConfig)
     // SCC disclaiming does not need swap or additional files
     // For the SCC the current decision is made based on kernel version and page size.
     // Later we'll make a decision based on disk performance, similar to what was done for the private memory areas
-    // above.
+    // above, unless we could not map files to devices and instead had to check all disk devices.
+    // If we checked all disk devices and did not find a suitable one, shouldDisableMemoryDisclaim should be true
+    // and we should disable SCC disclaim now because there is no point in repeating the same checks again later.
     if (shouldDisableMemoryDisclaim) {
         TR::Options::getCmdLineOptions()->setOption(TR_EnableSharedCacheDisclaiming, false);
     }
@@ -3151,57 +3184,62 @@ bool J9::Options::disableMemoryDisclaimIfNeeded(J9JITConfig *jitConfig)
 bool J9::Options::disableSCCDisclaimIfNeeded(J9JITConfig *jitConfig)
 {
     // Disable SCC disclaiming unless the following code runs successfully and decides otherwise.
-    bool shouldDisableMemoryDisclaim = true;
+    bool shouldDisableSCCDisclaim = true;
 #if defined(LINUX) && defined(J9VM_OPT_SHARED_CLASSES)
     // Make a decision for the SCC, which has a permanent backing file that may be on a different device from other
     // memory areas.
     //
     if (TR::Options::getCmdLineOptions()->getOption(TR_EnableSharedCacheDisclaiming)) {
-        J9JavaVM *javaVM = jitConfig->javaVM;
-        PORT_ACCESS_FROM_JAVAVM(javaVM); // for j9vmem_supported_page_sizes
-        OMRPORT_ACCESS_FROM_J9PORT(javaVM->portLibrary); // for omrsysinfo_os_kernel_info
+        // If we've already checked all disks and all are suitable, we don't need to do any checks for the SCC here.
+        if (J9::Options::_enableDisclaimBecauseAllDisksSuitable) {
+            shouldDisableSCCDisclaim = false;
+        } else {
+            J9JavaVM *javaVM = jitConfig->javaVM;
+            PORT_ACCESS_FROM_JAVAVM(javaVM);
+            OMRPORT_ACCESS_FROM_J9PORT(javaVM->portLibrary);
 
-        if (javaVM->sharedClassConfig != NULL && javaVM->sharedClassConfig->getJavacoreData != NULL) {
-            J9SharedClassJavacoreDataDescriptor javacoreData;
-            memset(&javacoreData, 0, sizeof(J9SharedClassJavacoreDataDescriptor));
+            if (javaVM->sharedClassConfig != NULL && javaVM->sharedClassConfig->getJavacoreData != NULL) {
+                J9SharedClassJavacoreDataDescriptor javacoreData;
+                memset(&javacoreData, 0, sizeof(J9SharedClassJavacoreDataDescriptor));
 
-            if (javaVM->sharedClassConfig->getJavacoreData(javaVM, &javacoreData)) {
-                // cacheDir contains the full path of the base layer SCC file, despite the name.
-                char *sccDevice = omrsysinfo_get_block_device_for_path(javacoreData.cacheDir);
-                OMRBlockDeviceStats deviceStats;
-                int32_t recommendedIntervalMs = J9::Options::_minTimeBetweenSCCDisclaims;
-                bool diskSuitableForDisclaiming = sccDevice != NULL
-                    && omrsysinfo_get_block_device_stats(sccDevice, &deviceStats) == 0
-                    && analyzeDiskCharacteristicsForDisclaiming(deviceStats, recommendedIntervalMs);
+                if (javaVM->sharedClassConfig->getJavacoreData(javaVM, &javacoreData)) {
+                    // cacheDir contains the full path of the base layer SCC file, despite the name.
+                    char *sccDevice = omrsysinfo_get_block_device_for_path(javacoreData.cacheDir);
+                    OMRBlockDeviceStats deviceStats;
+                    int32_t recommendedIntervalMs = J9::Options::_minTimeBetweenSCCDisclaims;
+                    bool diskSuitableForDisclaiming = sccDevice != NULL
+                        && omrsysinfo_get_block_device_stats(sccDevice, &deviceStats) == 0
+                        && analyzeDiskCharacteristicsForDisclaiming(deviceStats, recommendedIntervalMs);
 
-                if (TR::Options::getVerboseOption(TR_VerbosePerformance)) {
-                    if (!diskSuitableForDisclaiming) {
-                        TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
-                            "WARNING: Disclaim for SCC disabled based on disk characteristics analysis");
-                    } else if (J9::Options::_minTimeBetweenSCCDisclaims != recommendedIntervalMs) {
-                        TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
-                            "Disclaim interval for SCC adjusted from %d to %d ms based on disk characteristics",
-                            J9::Options::_minTimeBetweenSCCDisclaims, recommendedIntervalMs);
+                    if (TR::Options::getVerboseOption(TR_VerbosePerformance)) {
+                        if (!diskSuitableForDisclaiming) {
+                            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
+                                "WARNING: Disclaim for SCC disabled based on disk characteristics analysis");
+                        } else if (J9::Options::_minTimeBetweenSCCDisclaims != recommendedIntervalMs) {
+                            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
+                                "Disclaim interval for SCC adjusted from %d to %d ms based on disk characteristics",
+                                J9::Options::_minTimeBetweenSCCDisclaims, recommendedIntervalMs);
+                        }
                     }
-                }
 
-                if (diskSuitableForDisclaiming) {
-                    shouldDisableMemoryDisclaim = false;
-                    J9::Options::_minTimeBetweenSCCDisclaims = recommendedIntervalMs;
-                }
+                    if (diskSuitableForDisclaiming) {
+                        shouldDisableSCCDisclaim = false;
+                        J9::Options::_minTimeBetweenSCCDisclaims = recommendedIntervalMs;
+                    }
 
-                if (sccDevice) {
-                    j9mem_free_memory(sccDevice);
+                    if (sccDevice) {
+                        j9mem_free_memory(sccDevice);
+                    }
                 }
             }
         }
 
-        if (shouldDisableMemoryDisclaim) {
+        if (shouldDisableSCCDisclaim) {
             TR::Options::getCmdLineOptions()->setOption(TR_EnableSharedCacheDisclaiming, false);
         }
     }
 #endif // if defined(LINUX) && defined(J9VM_OPT_SHARED_CLASSES)
-    return shouldDisableMemoryDisclaim;
+    return shouldDisableSCCDisclaim;
 }
 
 bool J9::Options::fePostProcessAOT(void *base)
