@@ -1180,8 +1180,12 @@ jfrObjectAllocationSample(J9HookInterface **hook, UDATA eventNum, void *eventDat
 	}
 
 
-	J9JFRObjectAllocationSample *jfrEvent = (J9JFRObjectAllocationSample *)reserveBufferWithStackTrace(
+
+	J9JFRObjectAllocationSample *jfrEvent = NULL;
+	if (!J9ROMCLASS_IS_ARRAY(data->clazz->romClass)) {
+		jfrEvent = (J9JFRObjectAllocationSample *)reserveBufferWithStackTrace(
 			currentThread, currentThread, J9JFR_EVENT_TYPE_OBJECT_ALLOCATION_SAMPLE, sizeof(J9JFRObjectAllocationSample), 0);
+	}
 	if (NULL != jfrEvent) {
 		jfrEvent->objectClass = data->clazz;
 		jfrEvent->weight      = data->weight;
