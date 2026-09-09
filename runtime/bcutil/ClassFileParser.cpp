@@ -95,6 +95,9 @@ ClassFileParser::parseClassFile(ROMClassCreationContext *context, UDATA *initial
 		context->recordCFRError(buffer);
 		Trc_BCU_createRomClassEndian_Error(result, I_32(ClassRead));
 		buildResult = ClassRead;
+	} else if (BCT_ERR_STACK_OVERFLOW == result) {
+		Trc_BCU_createRomClassEndian_Error(result, I_32(StackOverflow));
+		buildResult = StackOverflow;
 	} else {
 		Trc_BCU_createRomClassEndian_Error(result, I_32(GenericError));
 		buildResult = GenericError;

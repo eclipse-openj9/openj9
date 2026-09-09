@@ -486,8 +486,10 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 				result = readAnnotations(classfile, annotations->annotations, annotations->numberOfAnnotations, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags, availableOSStackSpace, startingSP);
 			}
 
-			if (BCT_ERR_OUT_OF_ROM == result) {
-				/* Return out of memory error code to allocate larger buffer for classfile */
+			if ((BCT_ERR_OUT_OF_ROM == result) || (BCT_ERR_STACK_OVERFLOW == result)) {
+				/* Return out of memory error code to allocate larger buffer for classfile
+				 * or bail if we run out of stack space.
+				 */
 				return result;
 			} else if ((BCT_ERR_NO_ERROR != result) || (0 == length) || (index != end)) {
 				U_32 cursor = 0;
