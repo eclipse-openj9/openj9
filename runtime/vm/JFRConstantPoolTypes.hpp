@@ -439,6 +439,11 @@ struct YoungGenerationConfigurationEntry {
 	U_64 newRatio;
 };
 
+struct GCSurvivorConfigurationEntry {
+	U_8 maxTenuringThreshold;
+	U_8 initialTenuringThreshold;
+};
+
 struct VirtualizationInformationEntry {
 	const char *name;
 };
@@ -485,6 +490,7 @@ struct JFRConstantEvents {
 	OSInformationEntry OSInfoEntry;
 	GCHeapConfigurationEntry GCHeapConfigEntry;
 	YoungGenerationConfigurationEntry YoungGenConfigEntry;
+	GCSurvivorConfigurationEntry GCSurvivorConfigEntry;
 };
 
 class VM_JFRConstantPoolTypes {
@@ -593,6 +599,7 @@ private:
 	bool _shouldWriteModuleRequire;
 	bool _shouldWriteModuleExport;
 	bool _shouldWriteClassLoaderStatistics;
+	bool _shouldWriteGCSurvivorConfigurationEvent;
 
 	/* Processing buffers */
 	StackFrame *_currentStackFrameBuffer;
@@ -1353,6 +1360,10 @@ public:
 		return _shouldWriteYoungGenerationConfigurationEvent;
 	}
 
+	bool shouldWriteGCSurvivorConfigurationEvent()
+	{
+		return _shouldWriteGCSurvivorConfigurationEvent;
+	}
 	bool shouldWriteSystemProcess()
 	{
 		return _shouldWriteSystemProcess;
@@ -1508,6 +1519,9 @@ public:
 			case J9JFR_EVENT_TYPE_THREAD_ALLOCATION_STATISTICS:
 				addThreadAllocationStatistics((J9JFRThreadAllocationStatistics *)event);
 				break;
+			case J9JFR_EVENT_TYPE_GC_SURVIVOR_CONFIGURATION:
+				_shouldWriteGCSurvivorConfigurationEvent = true;
+				break;
 			case J9JFR_EVENT_TYPE_STACKTRACE:
 			{
 				J9JFREventWithStackTrace *stackTraceEvent = (J9JFREventWithStackTrace *)event;
@@ -1612,6 +1626,7 @@ done:
 		initializeOSInformation(vm, result);
 		initializeGCHeapConfigurationEvent(vm);
 		initializeYoungGenerationConfigurationEvent(vm);
+		initializeGCSurvivorConfigurationEvent(vm);
 	}
 
 	/**
@@ -1869,6 +1884,20 @@ done:
 		} else {
 			youngGenConfiguration->newRatio = 0;
 		}
+	}
+
+	/**
+	 * Initialize GCSurvivorConfigurationEntry
+	 *
+	 * @param vm[in] the J9JavaVM
+	 */
+	static void initializeGCSurvivorConfigurationEvent(J9JavaVM *vm)
+	{
+		J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
+		GCSurvivorConfigurationEntry *survivorConfiguration = &(getJFRConstantEvents(vm)->GCSurvivorConfigEntry);
+
+		survivorConfiguration->maxTenuringThreshold = (U_8)mmFuncs->j9gc_get_max_tenuring_threshold(vm);
+		survivorConfiguration->initialTenuringThreshold = (U_8)mmFuncs->j9gc_get_initial_tenuring_threshold(vm);
 	}
 
 	static uintptr_t recordSystemProcessEvent(uintptr_t pid, const char *commandLine, void *userData)
@@ -2292,6 +2321,7 @@ done:
 		, _shouldWriteModuleRequire(false)
 		, _shouldWriteModuleExport(false)
 		, _shouldWriteClassLoaderStatistics(false)
+		, _shouldWriteGCSurvivorConfigurationEvent(false)
 		, _previousStackTraceEntry(NULL)
 		, _firstStackTraceEntry(NULL)
 		, _previousThreadEntry(NULL)

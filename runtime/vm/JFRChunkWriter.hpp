@@ -122,6 +122,7 @@ enum MetadataTypeID {
 	NativeLibraryID = 112,
 	ModuleRequireID = 113,
 	ModuleExportID = 114,
+	GCSurvivorConfigurationID = 131,
 	GCHeapConfigID = 133,
 	YoungGenerationConfigID = 134,
 	VirtualSpaceID = 149,
@@ -242,6 +243,7 @@ private:
 	static constexpr int NETWORK_UTILIZATION_EVENT_SIZE = (4 * sizeof(U_64)) + sizeof(U_32);
 	static constexpr int DATA_LOSS_EVENT_SIZE = sizeof(U_8) + LEB128_32_SIZE + (3 * LEB128_64_SIZE);
 	static constexpr int THREAD_ALLOCATION_STATISTICS_EVENT_SIZE = sizeof(U_8) + LEB128_32_SIZE + (3 * LEB128_64_SIZE);
+	static constexpr int GC_SURVIVOR_CONFIGURATION_EVENT_SIZE = (2 * LEB128_64_SIZE) + (3 * LEB128_32_SIZE);
 
 	static constexpr int METADATA_ID = 1;
 
@@ -513,6 +515,8 @@ done:
 					writeGCHeapConfigurationEvent();
 
 					writeYoungGenerationConfigurationEvent();
+
+					writeGCSurvivorConfigurationEvent();
 				}
 
 				writePhysicalMemoryEvent();
@@ -547,6 +551,10 @@ done:
 
 				if (_constantPoolTypes.shouldWriteYoungGenerationConfigurationEvent()) {
 					writeYoungGenerationConfigurationEvent();
+				}
+
+				if (_constantPoolTypes.shouldWriteGCSurvivorConfigurationEvent()) {
+					writeGCSurvivorConfigurationEvent();
 				}
 			}
 
@@ -979,6 +987,8 @@ done:
 
 	void writeYoungGenerationConfigurationEvent();
 
+	void writeGCSurvivorConfigurationEvent();
+
 	void writeInitialSystemPropertyEvents(J9JavaVM *vm);
 
 	void writeInitialEnvironmentVariableEvents();
@@ -1077,8 +1087,12 @@ done:
 
 		if (isJFRV2SupportEnabled(_vm)) {
 			requiredBufferSize += (_constantPoolTypes.getPhysicalMemoryCount() * PHYSICAL_MEMORY_EVENT_SIZE);
+
+			requiredBufferSize += (_constantPoolTypes.shouldWriteGCSurvivorConfigurationEvent() * GC_SURVIVOR_CONFIGURATION_EVENT_SIZE);
 		} else {
 			requiredBufferSize += PHYSICAL_MEMORY_EVENT_SIZE;
+
+			requiredBufferSize += GC_SURVIVOR_CONFIGURATION_EVENT_SIZE;
 		}
 
 		requiredBufferSize += VIRTUALIZATION_INFORMATION_EVENT_SIZE;
