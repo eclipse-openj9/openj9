@@ -450,6 +450,13 @@ bool J9::X86::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMe
     switch (method) {
         case TR::java_lang_Object_clone:
             return true;
+        /* Unlike CRC32's update* which are JNI methods, CRC32C have Java implementation
+         * and therefore we need the check to prevent the inliner from eliminating the calls so
+         * we can redirect them to our optimized helpers.
+         */
+        case TR::java_util_zip_CRC32C_updateBytes:
+        case TR::java_util_zip_CRC32C_updateDirectByteBuffer:
+            return true;
         case TR::java_lang_Math_fma_F:
         case TR::java_lang_Math_fma_D:
         case TR::java_lang_StrictMath_fma_F:

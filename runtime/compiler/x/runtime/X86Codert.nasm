@@ -146,6 +146,8 @@ segment .text
         DECLARE_EXTERN jProfile64BitValue
 %endif
 
+        DECLARE_GLOBAL java_util_zip_CRC32C_updateBytes_impl
+
         align 16
 jitFPHelpersBegin:
 
@@ -452,7 +454,7 @@ doSSEdoubleRemainder:
         ; note, the sign of the divisor has no affect on the final result
         andpd xmm1, oword  [_rel ABSMASK]                            ; xmm1 = {|a|, |b|}
         movapd xmm2, [_rel NULL_INF_MASK]                            ; xmm2 = {+inf, 0.0}
-        
+
         cmppd xmm2, xmm1, 4                             ; compare xmm2 != xmm1, leave mask in xmm1
 
         ; xmm1 = {(|a| != +inf ? |a| : 0, |b| != 0.0 ? |b| : 0}
@@ -787,6 +789,179 @@ SSEd2l_NaN:                         ; if the number is a NaN, return 0 (note: no
 
 jitFPHelpersEnd:
 
+%ifdef TR_HOST_64BIT
+; java_util_zip_CRC32C_updateBytes_impl
+;
+; This algorithm uses the crc32 instruction. While at least 384 bytes remain, the data is processed in blocks of
+; three equal lanes, with one independent crc32 chain per lane (rax, r8, and r9), so the chains compute in parallel
+; instead of each waiting for the previous result. The three lane CRCs are merged with pclmulqdq. Blocks of three
+; 1024-byte lanes are used first, then blocks of three 128-byte lanes. The rest (less than 384 bytes) uses a single
+; chain in three sections. The first section is unrolled to process 64 bytes at a time. Next, we process 8 bytes at a
+; time. The residue is then processed one byte at a time.
+;
+; Arguments:
+; rdi - initial CRC32C value (clobbered to use as scratch once copied to eax)
+; rsi - pointer to the address of the buffer's first byte
+; rdx - starting offset
+; rcx - exclusive ending offset
+;
+; Return:
+; eax - updated CRC32C value
+;
+; Also clobbered: r8, r9, xmm0, xmm1, and xmm2. callCRC32CUpdateHelper declares them as killed at the call.
+; Requires SSE4.2 and PCLMULQDQ.
+        align 16
+java_util_zip_CRC32C_updateBytes_impl:
+        mov eax, edi ; Copy current crc value into rax (result register)
+        mov edx, edx ; zero-extend start offset, JIT only guarantees low 32 bits of an int
+        mov ecx, ecx ; zero-extend end offset
+
+crc32c_3parallel_1024_loop:
+        lea rdi, [rdx+3*1024]                   ; offset where a full block of three 1024-byte lanes would end
+        cmp rdi, rcx
+        ja crc32c_3parallel_128_loop            ; no full 3072-byte block left
+        xor r8d, r8d                            ; lane 1 CRC starts at 0
+        xor r9d, r9d                            ; lane 2 CRC starts at 0
+        lea rdi, [rdx+1024]                     ; offset where lane 0 ends
+
+crc32c_3parallel_1024_body:
+%assign crc_off 0
+%rep 8
+        crc32 rax, qword [rsi+rdx+crc_off]      ; lane 0
+        crc32 r8,  qword [rsi+rdx+crc_off+1024] ; lane 1
+        crc32 r9,  qword [rsi+rdx+crc_off+2048] ; lane 2
+%assign crc_off crc_off+8
+%endrep
+        add rdx, 64
+        cmp rdx, rdi
+        jb crc32c_3parallel_1024_body
+        movd xmm0, eax                          ; lane 0 CRC, to be advanced by 2048 bytes
+        mov edi, 0xa51b6135
+        movq xmm2, rdi
+        pclmulqdq xmm0, xmm2, 0
+        movd xmm1, r8d                          ; lane 1 CRC, to be advanced by 1024 bytes
+        mov edi, 0x170076fa
+        movq xmm2, rdi
+        pclmulqdq xmm1, xmm2, 0
+        pxor xmm0, xmm1
+        movq rdi, xmm0
+        xor eax, eax
+        crc32 rax, rdi                          ; reduce 64 bits back to a 32-bit CRC
+        xor eax, r9d                            ; add lane 2, which does not need to be shifted
+        add rdx, 2*1024                         ; rdx only moved through lane 0, skip lanes 1 and 2
+        jmp crc32c_3parallel_1024_loop
+
+crc32c_3parallel_128_loop:
+        lea rdi, [rdx+3*128]
+        cmp rdi, rcx
+        ja crc32c_64byte_loop
+        xor r8d, r8d
+        xor r9d, r9d
+        lea rdi, [rdx+128]
+
+crc32c_3parallel_128_body:
+%assign crc_off 0
+%rep 8
+        crc32 rax, qword [rsi+rdx+crc_off]
+        crc32 r8,  qword [rsi+rdx+crc_off+128]
+        crc32 r9,  qword [rsi+rdx+crc_off+256]
+%assign crc_off crc_off+8
+%endrep
+        add rdx, 64
+        cmp rdx, rdi
+        jb crc32c_3parallel_128_body
+        movd xmm0, eax
+        mov edi, 0xb9e02b86
+        movq xmm2, rdi
+        pclmulqdq xmm0, xmm2, 0
+        movd xmm1, r8d
+        mov edi, 0x0d3b6092
+        movq xmm2, rdi
+        pclmulqdq xmm1, xmm2, 0
+        pxor xmm0, xmm1
+        movq rdi, xmm0
+        xor eax, eax
+        crc32 rax, rdi
+        xor eax, r9d
+        add rdx, 2*128
+        jmp crc32c_3parallel_128_loop
+
+
+crc32c_64byte_loop:
+        lea rdi, [rdx + 64]
+        cmp rdi, rcx
+        ja crc32c_8byte_loop ;Skip loop if less than 64 bytes in buffer
+
+        crc32 rax, qword [rsi+rdx] ; else go into 64 byte unrolled crc32c loop body to process words
+        crc32 rax, qword [rsi+rdx+8]
+        crc32 rax, qword [rsi+rdx+16]
+        crc32 rax, qword [rsi+rdx+24]
+        crc32 rax, qword [rsi+rdx+32]
+        crc32 rax, qword [rsi+rdx+40]
+        crc32 rax, qword [rsi+rdx+48]
+        crc32 rax, qword [rsi+rdx+56]
+        add rdx, 0x00000040
+        jmp crc32c_64byte_loop
+
+crc32c_8byte_loop: ; crc 8 bytes at a time in loop
+        lea rdi, [rdx+8]
+        cmp rdi, rcx
+        ja crc32c_residue
+
+        crc32 rax, qword [rsi+rdx]
+        add rdx, 8
+        jmp crc32c_8byte_loop
+
+crc32c_residue: ; one byte loop as Duff device implementation for residue bytes processing
+        cmp rdx, rcx
+        jae crc32c_done
+
+        crc32 eax, byte [rsi+rdx]
+        inc rdx
+        jmp crc32c_residue
+
+crc32c_done:
+        ret
+
+%else ; TR_HOST_32BIT
+; Arguments:
+; eax - CRC accumulator result
+; edx - data pointer to first byte of the buffer
+; ecx - starting offset
+; ebx - exclusive ending offset
+; esi - dummy register
+
+        align 16
+java_util_zip_CRC32C_updateBytes_impl:
+crc32c_4byte_loop:
+        lea esi, [ecx+4]
+        cmp esi, ebx
+        ja crc32c_2byte_loop
+
+        crc32 eax, dword [edx+ecx]
+        add ecx, 4
+        jmp crc32c_4byte_loop
+
+crc32c_2byte_loop:
+        lea esi, [ecx+2]
+        cmp esi, ebx
+        ja crc32c_residue
+
+        crc32 eax, word [edx+ecx]
+        add ecx, 2
+
+crc32c_residue:
+        cmp ecx, ebx
+        jae crc32c_done
+
+        crc32 eax, byte [edx+ecx]
+        inc ecx
+        jmp crc32c_residue
+
+crc32c_done:
+        ret
+
+%endif ; TR_HOST_64BIT
 
 eq_J9VMThread_heapAlloc      equ J9TR_VMThread_heapAlloc
 eq_J9VMThread_heapTop        equ J9TR_VMThread_heapTop
