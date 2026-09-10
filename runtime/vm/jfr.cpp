@@ -1129,6 +1129,65 @@ jfrGCHeapSummary(OMR_VMThread *omrVMThread, U_32 gcWhenID)
 	}
 }
 
+/**
+ * Hook callback for the JFR-internal object allocation sampling event.
+ *
+ * @param hook[in] the hook interface
+ * @param eventNum[in] the event number
+ * @param eventData[in] the event data
+ * @param userData[in] the registered user data
+ */
+static void
+jfrObjectAllocationSample(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
+{
+	MM_ObjectAllocationSamplingInternalEvent *data =
+		(MM_ObjectAllocationSamplingInternalEvent *)eventData;
+	J9VMThread *currentThread = data->currentThread;
+
+	U_8 *className = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(data->clazz->romClass));
+	UDATA lenClassName = J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(data->clazz->romClass));
+
+	UDATA sampleCount = VM_AtomicSupport::add(&currentThread->javaVM->jfrState.objectAllocationSampleCount, 1);
+
+	if (J9ROMCLASS_IS_ARRAY(data->clazz->romClass)) {
+	    J9ArrayClass *arrayClass = (J9ArrayClass *)data->clazz;
+	    U_8 *classLeafName = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(arrayClass->leafComponentType->romClass));
+	    UDATA lenClassLeafName = J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(arrayClass->leafComponentType->romClass));
+		Trc_VM_jfrObjectAllocationSample_indexableObject(currentThread,
+			lenClassName,
+			className,
+			lenClassLeafName,
+			classLeafName,
+			data->weight,
+			data->objectSize);
+		PORT_ACCESS_FROM_VMC(currentThread);
+		j9tty_printf(PORTLIB, "jfrObjectAllocationSample currentThread=%p,  classname=%.*s%.*s;, weight=%zu, startTime=%zu, objectSize=%zu, sampleCount=%zu\n", currentThread,
+				lenClassName, className,
+				lenClassLeafName, classLeafName,
+				data->weight, data->timestamp, data->objectSize,
+				sampleCount);
+	}
+	else {
+		Trc_VM_jfrObjectAllocationSample(currentThread,
+			lenClassName,
+			className,
+			data->weight,
+			data->objectSize);
+
+		PORT_ACCESS_FROM_VMC(currentThread);
+		j9tty_printf(PORTLIB, "jfrObjectAllocationSample currentThread=%p,  classname=%.*s, weight=%zu, startTime=%zu, objectSize=%zu, sampleCount=%zu\n", currentThread, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(data->clazz->romClass)),
+	            J9UTF8_DATA(J9ROMCLASS_CLASSNAME(data->clazz->romClass)), data->weight, data->timestamp, data->objectSize, sampleCount);
+	}
+
+
+	J9JFRObjectAllocationSample *jfrEvent = (J9JFRObjectAllocationSample *)reserveBufferWithStackTrace(
+			currentThread, currentThread, J9JFR_EVENT_TYPE_OBJECT_ALLOCATION_SAMPLE, sizeof(J9JFRObjectAllocationSample), 0);
+	if (NULL != jfrEvent) {
+		jfrEvent->objectClass = data->clazz;
+		jfrEvent->weight      = data->weight;
+	}
+}
+
 jint
 initializeJFR(J9JavaVM *vm)
 {
@@ -1311,6 +1370,21 @@ startJFRRecording(J9JavaVM *vm)
 	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_SYSTEM_GC_CALLED, jfrSystemGC, OMR_GET_CALLSITE(), NULL)) {
 		goto done;
 	}
+
+	/* enable JFRObjectAllocationSample */
+	vm->jfrState.objectAllocationSampleCount = 0;
+	if ((0 == extensions->fixJFRObjectAllocationSampleThrottleRate)) {
+		vm->jfrState.objectAllocationSampleThrottleRate  = J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_THROTTLE_RATE;
+		vm->jfrState.objectAllocationSampleInterval = J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_INTERVAL;
+	} else {
+		vm->jfrState.objectAllocationSampleThrottleRate  = extensions->fixJFRObjectAllocationSampleThrottleRate;
+		vm->jfrState.objectAllocationSampleInterval = J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_INTERVAL * J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_THROTTLE_RATE / vm->jfrState.objectAllocationSampleThrottleRate;
+	}
+	vm->memoryManagerFunctions->j9gc_set_jfr_allocation_sampling_interval(vm, vm->jfrState.objectAllocationSampleInterval);
+	if ((*gcHooks)->J9HookRegisterWithCallSite(gcHooks, J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING_INTERNAL, jfrObjectAllocationSample, OMR_GET_CALLSITE(), NULL)) {
+		goto done;
+	}
+
 	/* Register GC-related hooks via gc_base */
 	if (0 != (vm->memoryManagerFunctions->j9gc_register_jfr_hooks(vm))) {
 		goto done;
