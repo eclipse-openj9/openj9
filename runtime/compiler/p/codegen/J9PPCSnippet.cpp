@@ -42,6 +42,7 @@
 #include "p/codegen/PPCEvaluator.hpp"
 #include "p/codegen/PPCInstruction.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
+#include "p/codegen/CallSnippet.hpp"
 #include "ras/Logger.hpp"
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheManager.hpp"
@@ -275,7 +276,7 @@ void TR::PPCReadMonitorSnippet::print(OMR::Logger *log, TR_Debug *debug)
     log->printf("%s \t%s, [%s, %d]\t; Load", TR::InstOpCode::metadata[getLoadOpCode()].name,
         debug->getName(loadResultReg), debug->getName(loadBaseReg), getLoadOffset());
 
-    debug->print(log, (TR::PPCHelperCallSnippet *)this);
+    TR::PPCHelperCallSnippet::print(log, debug);
 }
 
 uint32_t TR::PPCReadMonitorSnippet::getLength(int32_t estimatedSnippetStart)
@@ -290,6 +291,50 @@ int32_t TR::PPCReadMonitorSnippet::setEstimatedCodeLocation(int32_t estimatedSni
     _recurCheckLabel->setEstimatedCodeLocation(estimatedSnippetStart);
     getSnippetLabel()->setEstimatedCodeLocation(estimatedSnippetStart + 28);
     return (estimatedSnippetStart);
+}
+
+uint8_t *TR::PPCArgFlushHelperCallSnippet::emitSnippetBody()
+{
+    uint8_t *buffer = cg()->getBinaryBufferCursor();
+
+    getSnippetLabel()->setCodeLocation(buffer);
+    buffer = TR::PPCCallSnippet::flushArgumentsToStack(buffer, this->getNode(), this->getSizeOfArguments(), cg());
+
+    if (this->getNode()->isJitDispatchJ9MethodCall(cg()->comp())) {
+        TR::RealRegister *j9MethodReg = cg()->machine()->getRealRegister(TR::RealRegister::gr11);
+        TR::RealRegister *interpreterReg = cg()->machine()->getRealRegister(TR::RealRegister::gr3);
+
+        // move r11 to r3 for the interpreter
+        TR::InstOpCode opcode;
+        opcode.setOpCodeValue(TR::InstOpCode::OR);
+        buffer = opcode.copyBinaryToBuffer(buffer);
+        interpreterReg->setRegisterFieldRA((uint32_t *)buffer);
+        j9MethodReg->setRegisterFieldRS((uint32_t *)buffer);
+        j9MethodReg->setRegisterFieldRB((uint32_t *)buffer);
+        buffer += PPC_INSTRUCTION_LENGTH;
+    }
+
+    return this->genHelperCall(buffer);
+}
+
+uint32_t TR::PPCArgFlushHelperCallSnippet::getLength(int32_t estimatedSnippetStart)
+{
+    uint32_t len = (1 + TR::PPCCallSnippet::instructionCountForArguments(getNode(), cg())) * PPC_INSTRUCTION_LENGTH;
+    return len + TR::PPCHelperCallSnippet::getLength(len + estimatedSnippetStart);
+}
+
+void TR::PPCArgFlushHelperCallSnippet::print(OMR::Logger *log, TR_Debug *debug)
+{
+    uint8_t *cursor = getSnippetLabel()->getCodeLocation();
+
+    debug->printSnippetLabel(log, getSnippetLabel(), cursor, "J9 Helper Call Snippet");
+
+    cursor = debug->printPPCArgumentsFlush(log, getNode(), cursor, getSizeOfArguments());
+
+    debug->printPrefix(log, NULL, cursor, 4);
+    log->printf("%s \t\t\t; %s", "mov gr3 gr11", "move j9method pointer to x0 for interpreter");
+    cursor += PPC_INSTRUCTION_LENGTH;
+    TR::PPCHelperCallSnippet::printInner(log, debug, cursor);
 }
 
 TR::PPCAllocPrefetchSnippet::PPCAllocPrefetchSnippet(TR::CodeGenerator *codeGen, TR::Node *node,
