@@ -492,7 +492,7 @@ private void readObject(ObjectInputStream s)
 					}
 				}
 			} else {
-				/*[MSG "K0C00", "Non-standard List class not permitted in suppressedExceptions serial stream"]*/
+				/*[MSG "K0C00", "Nonstandard List class not permitted in suppressedExceptions serial stream"]*/
 				throw new java.io.StreamCorruptedException(com.ibm.oti.util.Msg.getString("K0C00")); //$NON-NLS-1$
 /*[IF JAVA_SPEC_VERSION >= 9]*/
 			}

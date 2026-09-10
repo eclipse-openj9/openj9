@@ -63,7 +63,7 @@ MM_ObjectAccessBarrier::initialize(MM_EnvironmentBase *env)
 		 */
 		if (_extensions->isMetronomeGC()) {
 			if (DEFAULT_LOW_MEMORY_HEAP_CEILING_SHIFT < omrVM->_compressedPointersShift) {
-				/* Non-standard NLS message required */
+				/* Nonstandard NLS message required */
 				_extensions->heapInitializationFailureReason = MM_GCExtensionsBase::HEAP_INITIALIZATION_FAILURE_REASON_METRONOME_DOES_NOT_SUPPORT_4BIT_SHIFT;
 				return false;
 			}

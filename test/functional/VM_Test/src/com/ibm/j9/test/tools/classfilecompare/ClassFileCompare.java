@@ -119,7 +119,7 @@ public class ClassFileCompare {
 		new ClassReader(classFile2).accept(classNode2, debugMode);
 		
 		/*
-		 * Non-standard attributes and runtime invisible annotations are stripped by the JVM - don't compare them.
+		 * Nonstandard attributes and runtime invisible annotations are stripped by the JVM - don't compare them.
 		 * Constant pools are reordered by the JVM - don't compare them.
 		 * BootstrapMethods attribute is referenced by invokedynamic instructions 
 		 * - BSM entries are compared in the case of INVOKE_DYNAMIC_INSN in the method "compareInstructions"
@@ -254,7 +254,7 @@ public class ClassFileCompare {
 				FieldNode field1 = iter.next();
 
 				/*
-				 * Non-standard attributes and runtime invisible annotations are stripped by the JVM - don't compare them.
+				 * Nonstandard attributes and runtime invisible annotations are stripped by the JVM - don't compare them.
 				 * ACC_SYNTHETIC or Synthetic attribute is part of access flag computed as a composition value.
 				 */
 				compareAccessFlag(field1.access, field2.access, "Field (" + field1.name + ") access flags", true);
@@ -479,7 +479,7 @@ public class ClassFileCompare {
 				MethodNode method1 = iter.next();
 
 				/*
-				 * Non-standard attributes and runtime invisible annotations are stripped by the JVM - don't compare them.
+				 * Nonstandard attributes and runtime invisible annotations are stripped by the JVM - don't compare them.
 				 * LocalVariableTypeTable is implicitly checked by local variable comparison.
 				 * LineNumberTable attribute is stripped out with SKIP_DEBUG specified
 				 * ACC_SYNTHETIC or Synthetic attribute is part of access flag computed as a composition value 

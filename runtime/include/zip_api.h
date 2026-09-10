@@ -61,7 +61,7 @@ extern "C" {
 /* Do extra work to read the data pointer. If false the dataPointer will be 0. */
 #define J9ZIP_GETENTRY_READ_DATA_POINTER 2
 
-/* Look for the entry using the central directory without a cache.  This handles non-standard ZIP files. */
+/* Look for the entry using the central directory without a cache.  This handles nonstandard ZIP files. */
 #define J9ZIP_GETENTRY_USE_CENTRAL_DIRECTORY 4
 
 typedef struct J9ZipFunctionTable {

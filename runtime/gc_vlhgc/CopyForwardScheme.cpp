@@ -306,7 +306,7 @@ MM_CopyForwardScheme::initialize(MM_EnvironmentVLHGC *env)
 		}
 	}
 
-	/* Set the min/max sizes for copy scan cache allocation when allocating a general purpose area (does not include non-standard sized objects) */
+	/* Set the min/max sizes for copy scan cache allocation when allocating a general purpose area (does not include nonstandard sized objects) */
 	_minCacheSize = _extensions->scavengerScanCacheMinimumSize;
 	_maxCacheSize = _extensions->scavengerScanCacheMaximumSize;
 

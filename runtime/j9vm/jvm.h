@@ -96,7 +96,7 @@ extern "C" {
 #endif
 
 #ifndef O_TEMPORARY
-#define O_TEMPORARY 0x10000 /* non-standard flag on Unix */
+#define O_TEMPORARY 0x10000 /* nonstandard flag on Unix */
 #endif
 
 /*
