@@ -1052,6 +1052,7 @@ createROMClassFromClassFile(J9VMThread *currentThread, J9LoadROMClassData *loadD
 
 		case BCT_ERR_DUPLICATE_NAME:
 			/* This case is handled below */
+			errorUTF = vm->dynamicLoadBuffers->classFileError;
 			break;
 
 		case BCT_ERR_STACK_OVERFLOW:
@@ -1105,7 +1106,7 @@ createROMClassFromClassFile(J9VMThread *currentThread, J9LoadROMClassData *loadD
 				if (NULL != errorUTF ){
 					nameLength = strlen((const char*)errorUTF);
 				}
-				J9_VM_FUNCTION(currentThread, setCurrentExceptionNLSWithArgs)(currentThread, J9NLS_JCL_DUPLICATE_CLASS_DEFINITION, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, (const char*)errorUTF, nameLength);
+				J9_VM_FUNCTION(currentThread, setCurrentExceptionNLSWithArgs)(currentThread, J9NLS_JCL_DUPLICATE_CLASS_DEFINITION, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, nameLength, (const char *)errorUTF);
 			} else {
 				J9_VM_FUNCTION(currentThread, setCurrentExceptionUTF)(currentThread, exceptionNumber, (const char*)errorUTF);
 			}
