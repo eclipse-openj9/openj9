@@ -1558,7 +1558,7 @@ public:
 				addJavaEventDataEntry((J9JFRJavaEventData *)event);
 				break;
 			case J9JFR_EVENT_TYPE_OBJECT_ALLOCATION_SAMPLE:
-				addObjectAllocationSampleEntry((J9JFRObjectAllocationSample *)event);
+//				addObjectAllocationSampleEntry((J9JFRObjectAllocationSample *)event);
 				break;
 			default:
 				Assert_VM_unreachable();
