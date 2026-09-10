@@ -27,12 +27,6 @@
 #include "JFRChunkWriter.hpp"
 #include "JFRConstantPoolTypes.hpp"
 
-#define J9VM_JFR_GC_DEBUG_DUMP 1
-
-#include <cstdio>
-#include <cstdint>
-#include <cstring>
-
 void
 VM_JFRChunkWriter::writeJFRHeader()
 {
@@ -999,6 +993,53 @@ VM_JFRChunkWriter::writeYoungGenerationConfigurationEvent()
 
 	/* write young generation to old generation ratio */
 	_bufferWriter->writeLEB128(youngGenConfig->newRatio);
+
+	/* write event size */
+	writeEventSize(dataStart);
+}
+
+void
+VM_JFRChunkWriter::writeGCConfigurationEvent()
+{
+	GCConfigurationEntry *gcConfig = &(VM_JFRConstantPoolTypes::getJFRConstantEvents(_vm)->GCConfigEntry);
+
+	/* reserve size field */
+	U_8 *dataStart = reserveEventSize();
+
+	/* write event type */
+	_bufferWriter->writeLEB128(GCConfigurationID);
+
+	/* write event start time */
+	_bufferWriter->writeLEB128(j9time_nano_time());
+
+	/* write young collector name */
+	_bufferWriter->writeLEB128(gcConfig->youngCollector);
+
+	/* write old collector name */
+	_bufferWriter->writeLEB128(gcConfig->oldCollector);
+
+	/* write parallel GC thread count */
+	_bufferWriter->writeLEB128(gcConfig->parallelGCThreads);
+
+	/* write concurrent GC thread count */
+	_bufferWriter->writeLEB128(gcConfig->concurrentGCThreads);
+
+	/* write whether dynamic GC threads are used */
+	_bufferWriter->writeBoolean(gcConfig->usesDynamicGCThreads);
+
+	/* write whether explicit GC is concurrent */
+	_bufferWriter->writeBoolean(gcConfig->isExplicitGCConcurrent);
+
+	/* write whether explicit GC is disabled */
+	_bufferWriter->writeBoolean(gcConfig->isExplicitGCDisabled);
+
+	/* write pause target (use padded U72 form to handle -1 sentinel for "not applicable",
+	 * which as U_64 = 0xFFFFFFFFFFFFFFFF needs 10 bytes in variable-length LEB128 but
+	 * only 9 bytes with the padded form — matching LEB128_64_SIZE in GC_CONFIGURATION_EVENT_SIZE) */
+	_bufferWriter->writeLEB128PaddedU72((U_64)gcConfig->pauseTarget);
+
+	/* write GC time ratio */
+	_bufferWriter->writeLEB128(gcConfig->gcTimeRatio);
 
 	/* write event size */
 	writeEventSize(dataStart);
