@@ -61,7 +61,10 @@ J9_DECLARE_CONSTANT_UTF8(jfrEventWriterClassUTF8, "jdk/jfr/internal/EventWriter"
 J9_DECLARE_CONSTANT_UTF8(constructorEventWriterUTF8, "constructorEventWriter");
 J9_DECLARE_CONSTANT_UTF8(constructorEventWriterSigUTF8, "(JJJJZ)Ljava/lang/Object;");
 J9_DECLARE_CONSTANT_NAS(constructorEventWriterNAS, constructorEventWriterUTF8, constructorEventWriterSigUTF8);
-
+J9_DECLARE_CONSTANT_UTF8(jvmUpcallClassUTF8, "jdk/jfr/internal/JVMUpcalls");
+J9_DECLARE_CONSTANT_UTF8(onRetransformUTF8, "onRetransform");
+J9_DECLARE_CONSTANT_UTF8(onRetransformSigUTF8, "(JZLjava/lang/Class;[B)[B");
+J9_DECLARE_CONSTANT_NAS(onRetransformNAS, onRetransformUTF8, onRetransformSigUTF8);
 
 // TODO: allow configureable values
 #define J9JFR_THREAD_BUFFER_SIZE (128 * 1024)
@@ -91,6 +94,21 @@ static void checkAvailableSpaceInGlobalBuffer(J9VMThread *currentThread);
 static void jfrClassInitialize(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static bool isChunkRotationMonitor(J9VMThread *currentThread, omrthread_monitor_t monitor);
 static J9JFREvent *reserveBufferWithStackTrace(J9VMThread *currentThread, J9VMThread *sampleThread, UDATA eventType, UDATA eventFixedSize, I_32 frameSkipCount);
+
+static bool
+isJFRHostEventClass(const char *name)
+{
+	UDATA nameLength = strlen(name);
+	return J9UTF8_LITERAL_EQUALS(name, nameLength, "sun/nio/ch/FileChannelImpl")
+		|| J9UTF8_LITERAL_EQUALS(name, nameLength, "java/io/FileInputStream")
+		|| J9UTF8_LITERAL_EQUALS(name, nameLength, "java/io/FileOutputStream")
+		|| J9UTF8_LITERAL_EQUALS(name, nameLength, "java/io/RandomAccessFile")
+		|| J9UTF8_LITERAL_EQUALS(name, nameLength, "java/net/Socket$SocketInputStream")
+		|| J9UTF8_LITERAL_EQUALS(name, nameLength, "java/net/Socket$SocketOutputStream")
+		|| J9UTF8_LITERAL_EQUALS(name, nameLength, "sun/nio/ch/SocketChannelImpl")
+		|| J9UTF8_LITERAL_EQUALS(name, nameLength, "java/lang/Throwable")
+		|| J9UTF8_LITERAL_EQUALS(name, nameLength, "java/lang/Error");
+}
 
 U_32
 emitStackTrace(J9VMThread *currentThread, I_32 skipCount)
@@ -2174,6 +2192,147 @@ jfrCheckJFRCMDLineOptions(J9HookInterface **hook, UDATA eventNum, void *eventDat
 	internalReleaseVMAccess(currentThread);
 }
 
+static bool
+canRetransformClass(J9VMThread *currentThread, const char *name, jclass classBeingRedefined)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	bool result = true;
+	J9Class *clazz = NULL;
+
+	if (isJFRHostEventClass(name)) {
+		goto done;
+	}
+
+	if (NULL == classBeingRedefined) {
+		result = false;
+		goto done;
+	}
+
+	clazz = J9VMJAVALANGCLASS_VMREF(currentThread, J9_JNI_UNWRAP_REFERENCE(classBeingRedefined));
+
+	if (!isSameOrSuperClassOf(J9VMJAVALANGCLASS_VMREF(currentThread, J9_JNI_UNWRAP_REFERENCE(vm->jfrState.jfrEventClassRef)), clazz)
+		|| J9_ARE_ANY_BITS_SET(clazz->romClass->modifiers, J9AccAbstract)
+	) {
+		result = false;
+		goto done;
+	}
+
+done:
+	return result;
+}
+
+void
+jvmUpcallsOnRetransform(jvmtiEnv *jvmtiEnv,
+            JNIEnv *jniEnv,
+            jclass classBeingRedefined,
+            jobject classLoaderRef,
+            const char *name,
+            jobject protectionDomain,
+            jint classDataLen,
+            const unsigned char *classData,
+            jint *newClassDataLen,
+            unsigned char **newClassData)
+{
+	J9VMThread *currentThread = (J9VMThread *)jniEnv;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9MemoryManagerFunctions *mmfns = vm->memoryManagerFunctions;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	jlong traceID = 0;
+	j9object_t inputByteArray = NULL;
+	j9object_t outputByteArray = NULL;
+	UDATA args[5];
+	jint classNameLength = (jint)strlen(name);
+	const char *className = name;
+	jint classDataLength = classDataLen;
+	jint newClassDataLength = 0;
+	J9ClassLoader *loader = vm->systemClassLoader;
+	U_8 buf[J9JFR_CLASSNAME_BUFFER_SIZE + sizeof(U_16)];
+	J9UTF8 *nameUTF8 = (J9UTF8 *)buf;
+
+	if (!canRetransformClass(currentThread, name, classBeingRedefined)) {
+		goto done;
+	}
+
+	if (classNameLength > J9JFR_CLASSNAME_BUFFER_SIZE) {
+		nameUTF8 = (J9UTF8 *)j9mem_allocate_memory(classNameLength + sizeof(U_16), OMRMEM_CATEGORY_VM);
+		if (NULL == nameUTF8) {
+			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+			goto done;
+		}
+	}
+
+	J9UTF8_SET_LENGTH(nameUTF8, (U_16)classNameLength);
+	memcpy(J9UTF8_DATA(nameUTF8), className, classNameLength);
+
+	if (NULL != classLoaderRef) {
+		loader = J9VMJAVALANGCLASSLOADER_VMREF(currentThread, J9_JNI_UNWRAP_REFERENCE(classLoaderRef));
+	}
+
+	traceID = getTypeIdUTF8(currentThread, loader, nameUTF8, FALSE);
+
+	inputByteArray = mmfns->J9AllocateIndexableObject(currentThread, vm->byteReflectClass->arrayClass, (U_32)classDataLength, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+	if (NULL == inputByteArray) {
+		vmFuncs->setHeapOutOfMemoryError(currentThread);
+		goto done;
+	}
+
+	VM_ArrayCopyHelpers::memcpyToArray(currentThread, inputByteArray, (UDATA)0, classDataLength, (void *)classData);
+
+	if (NULL == vm->jfrState.onRetransformUpcallMethod) {
+		PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, inputByteArray);
+		J9Class *jvmUpCallsClass = vmFuncs->internalFindClassUTF8(currentThread, (U_8 *)J9UTF8_DATA(&jvmUpcallClassUTF8), J9UTF8_LENGTH(&jvmUpcallClassUTF8), vm->systemClassLoader, J9_FINDCLASS_FLAG_THROW_ON_FAIL);
+		if (NULL == jvmUpCallsClass) {
+			goto popInputArrayAndDone;
+		}
+		vm->jfrState.onRetransformUpcallMethod = (J9Method *)vmFuncs->javaLookupMethodImpl(currentThread, jvmUpCallsClass, (J9ROMNameAndSignature *)&onRetransformNAS, jvmUpCallsClass, J9_LOOK_STATIC | J9_LOOK_DIRECT_NAS, NULL);
+		if (NULL == vm->jfrState.onRetransformUpcallMethod) {
+			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+			goto popInputArrayAndDone;
+		}
+		vmFuncs->initializeClass(currentThread, jvmUpCallsClass);
+		inputByteArray = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+
+		if (VM_VMHelpers::exceptionPending(currentThread)) {
+			goto done;
+		}
+	}
+
+	args[0] = 0;
+	args[1] = (UDATA)traceID;
+	args[2] = (UDATA)FALSE;
+	args[3] = (UDATA)J9_JNI_UNWRAP_REFERENCE(classBeingRedefined);
+	args[4] = (UDATA)inputByteArray;
+
+	vmFuncs->internalRunStaticMethod(currentThread, vm->jfrState.onRetransformUpcallMethod, TRUE, 5, args);
+	outputByteArray = (j9object_t)currentThread->returnValue;
+
+	if (VM_VMHelpers::exceptionPending(currentThread) || (NULL == outputByteArray)) {
+		goto done;
+	}
+
+	newClassDataLength = (jint)J9INDEXABLEOBJECT_SIZE(currentThread, outputByteArray);
+	*newClassData = (U_8 *)j9mem_allocate_memory(newClassDataLength, OMRMEM_CATEGORY_VM);
+	if (NULL == *newClassData) {
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+		goto done;
+	}
+	*newClassDataLen = newClassDataLength;
+
+	VM_ArrayCopyHelpers::memcpyFromArray(currentThread, outputByteArray, (UDATA)0, (UDATA)0, newClassDataLength, *newClassData);
+
+done:
+	if (nameUTF8 != (J9UTF8 *)buf) {
+		j9mem_free_memory(nameUTF8);
+	}
+
+	return;
+
+popInputArrayAndDone:
+	inputByteArray = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+	goto done;
+}
+
 void
 jvmUpcallsEagerByteInstrumentation(J9VMThread *currentThread, J9Class *superClass, U_8 *className, U_16 classNameLength, J9ClassLoader *loader, U_8 *classData, UDATA classDataLength, U_8 **newClassData, UDATA *newClassDataLength)
 {
@@ -2194,7 +2353,7 @@ jvmUpcallsEagerByteInstrumentation(J9VMThread *currentThread, J9Class *superClas
 	}
 	freeName = TRUE;
 
-	J9UTF8_LENGTH(nameUTF8) = (U_16)classNameLength;
+	J9UTF8_SET_LENGTH(nameUTF8, (U_16)classNameLength);
 	memcpy(J9UTF8_DATA(nameUTF8), className, classNameLength);
 
 	traceID = getTypeIdUTF8(currentThread, loader, nameUTF8, freeName);
@@ -2209,14 +2368,14 @@ jvmUpcallsEagerByteInstrumentation(J9VMThread *currentThread, J9Class *superClas
 
 	VM_ArrayCopyHelpers::memcpyToArray(currentThread, inputByteArray, (UDATA)0, classDataLength, (void *)classData);
 
-	if (NULL == vm->jfrState.onRetransformUpcallMethod) {
+	if (NULL == vm->jfrState.bytesForEagerInstrumentation) {
 		PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, inputByteArray);
 		J9Class *jfrClassTransformerClass = vmFuncs->internalFindClassUTF8(currentThread, (U_8 *)J9UTF8_DATA(&jfrClassTransformerUTF8), J9UTF8_LENGTH(&jfrClassTransformerUTF8), vm->systemClassLoader, J9_FINDCLASS_FLAG_THROW_ON_FAIL);
 		if (NULL == jfrClassTransformerClass) {
 			goto popInputArrayAndDone;
 		}
-		vm->jfrState.onRetransformUpcallMethod = (J9Method *)vmFuncs->javaLookupMethodImpl(currentThread, jfrClassTransformerClass, (J9ROMNameAndSignature *)&bytesForEagerInstrumentationNAS, jfrClassTransformerClass, J9_LOOK_STATIC | J9_LOOK_DIRECT_NAS, NULL);
-		if (NULL == vm->jfrState.onRetransformUpcallMethod) {
+		vm->jfrState.bytesForEagerInstrumentation = (J9Method *)vmFuncs->javaLookupMethodImpl(currentThread, jfrClassTransformerClass, (J9ROMNameAndSignature *)&bytesForEagerInstrumentationNAS, jfrClassTransformerClass, J9_LOOK_STATIC | J9_LOOK_DIRECT_NAS, NULL);
+		if (NULL == vm->jfrState.bytesForEagerInstrumentation) {
 			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
 			goto popInputArrayAndDone;
 		}
@@ -2233,7 +2392,7 @@ jvmUpcallsEagerByteInstrumentation(J9VMThread *currentThread, J9Class *superClas
 	args[3] = (UDATA)superClass->classObject;
 	args[4] = (UDATA)inputByteArray;
 
-	vmFuncs->internalRunStaticMethod(currentThread, vm->jfrState.onRetransformUpcallMethod, TRUE, 5, args);
+	vmFuncs->internalRunStaticMethod(currentThread, vm->jfrState.bytesForEagerInstrumentation, TRUE, 5, args);
 	outputByteArray = (j9object_t)currentThread->returnValue;
 
 	if (VM_VMHelpers::exceptionPending(currentThread) || (NULL == outputByteArray)) {
@@ -2415,7 +2574,8 @@ createNewEventWriter(J9VMThread *currentThread)
 		currentThread->jfrJavaEventBuffer.bufferStart = buffer;
 		currentThread->jfrJavaEventBuffer.bufferCurrent = buffer + sizeof(I_64);
 		currentThread->jfrJavaEventBuffer.bufferSize = J9JFR_THREAD_BUFFER_SIZE;
-		currentThread->jfrJavaEventBuffer.bufferRemaining = J9JFR_THREAD_BUFFER_SIZE - sizeof(I_64);
+		currentThread->jfrJavaEventBuffer.bufferRemaining = J9JFR_THREAD_BUFFER_SIZE;
+		*(I_64 *)currentThread->jfrJavaEventBuffer.bufferStart = (I_64)currentThread->jfrJavaEventBuffer.bufferCurrent;
 #if defined(DEBUG)
 		memset(currentThread->jfrJavaEventBuffer.bufferStart, 0, J9JFR_THREAD_BUFFER_SIZE);
 #endif /* defined(DEBUG) */
@@ -2488,7 +2648,7 @@ done:
 void
 asyncflushJavaJFRBuffer(J9VMThread *currentThread, J9VMThread *flushThread)
 {
-	I_64 currentPosition = *(I_64 *)currentThread->jfrJavaEventBuffer.bufferStart;
+	I_64 currentPosition = *(I_64 *)flushThread->jfrJavaEventBuffer.bufferStart;
 
 	/* The Java thread will be writing events between currentPosition and maxPosition so anything up to
 	 * currentPosition is safe to read. Start the reading from the internal currentPosition and not the start
@@ -2564,8 +2724,9 @@ flushJavaJFRBuffer(J9VMThread *currentThread, jobject eventWriterRef, I_32 uncom
 	/* Reset the buffer variables and move uncommited data back to the start of the new buffer. */
 	currentThread->jfrJavaEventBuffer.bufferCurrent = currentThread->jfrJavaEventBuffer.bufferStart + sizeof(I_64);
 	memmove(currentThread->jfrJavaEventBuffer.bufferCurrent, (const void *)(UDATA)currentPosition, uncommited);
+	*(I_64 *)currentThread->jfrJavaEventBuffer.bufferStart = (I_64)currentThread->jfrJavaEventBuffer.bufferCurrent;
 	objectAccessBarrier.inlineMixedObjectStoreI64(currentThread, eventWriter, jfrState->startPositionOffset, (I_64)currentThread->jfrJavaEventBuffer.bufferCurrent, TRUE);
-	objectAccessBarrier.inlineMixedObjectStoreI64(currentThread, eventWriter, jfrState->currentPositionOffset, (I_64)currentThread->jfrJavaEventBuffer.bufferCurrent, TRUE);
+	objectAccessBarrier.inlineMixedObjectStoreI64(currentThread, eventWriter, jfrState->currentPositionOffset, (I_64)currentThread->jfrJavaEventBuffer.bufferCurrent + uncommited, TRUE);
 
 	j9mem_free_memory(oldBuffer);
 done:

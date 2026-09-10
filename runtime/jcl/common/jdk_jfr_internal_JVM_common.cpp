@@ -37,7 +37,8 @@ extern "C" {
 #define LOG_LEVEL_WARN 4
 #define LOG_LEVEL_ERROR 5
 
-#define JFR_STRING_BUFFER 256
+#define JFR_STRING_BUFFER_SIZE 256
+#define JFR_CLASS_BUFFER_SIZE 32
 
 void JNICALL
 Java_jdk_jfr_internal_JVM_registerNatives(JNIEnv *env, jclass clazz)
@@ -280,9 +281,9 @@ logJFRMessage(J9VMThread *currentThread, j9object_t stringMessage)
 {
 	PORT_ACCESS_FROM_VMC(currentThread);
 	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
-	char buf[JFR_STRING_BUFFER];
+	char buf[JFR_STRING_BUFFER_SIZE];
 
-	J9UTF8* utf8Message = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, stringMessage, J9_STR_NONE, "", 0, buf, JFR_STRING_BUFFER);
+	J9UTF8* utf8Message = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, stringMessage, J9_STR_NONE, "", 0, buf, JFR_STRING_BUFFER_SIZE);
 	if (NULL == utf8Message) {
 		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 	} else {
@@ -374,7 +375,47 @@ Java_jdk_jfr_internal_JVM_subscribeLogLevel(JNIEnv *env, jclass clazz, jobject l
 void JNICALL
 Java_jdk_jfr_internal_JVM_retransformClasses(JNIEnv *env, jobject obj, jobjectArray classes)
 {
-	// TODO: implementation
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	jvmtiEnv *jvmtiAgent = vm->jfrState.jvmtiAgent;
+	jclass buf[JFR_CLASS_BUFFER_SIZE];
+	jsize arrayLength = env->GetArrayLength(classes);
+	jclass *classesPtr = buf;
+
+	if (arrayLength > (jsize)(sizeof(buf)/sizeof(jclass))) {
+		classesPtr = (jclass *)j9mem_allocate_memory(arrayLength, J9MEM_CATEGORY_JFR);
+		if (NULL == classesPtr) {
+			vmFuncs->internalEnterVMFromJNI(currentThread);
+			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+			vmFuncs->internalExitVMToJNI(currentThread);
+			goto done;
+		}
+	}
+
+	for (jsize i = 0; i < arrayLength; i++) {
+		classesPtr[i] = (jclass)env->GetObjectArrayElement(classes, i);
+	}
+
+	if (JVMTI_ERROR_NONE != jvmtiAgent->SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_CLASS_FILE_LOAD_HOOK, NULL)) {
+		throwNewInternalError(env, (char *)"Unable to retransform JFR event classes.");
+		goto done;
+	}
+
+	if (JVMTI_ERROR_NONE != jvmtiAgent->RetransformClasses(arrayLength, classesPtr)) {
+		throwNewInternalError(env, (char *)"Unable to retransform JFR event classes.");
+	}
+
+	if (JVMTI_ERROR_NONE != jvmtiAgent->SetEventNotificationMode(JVMTI_DISABLE, JVMTI_EVENT_CLASS_FILE_LOAD_HOOK, NULL)) {
+		throwNewInternalError(env, (char *)"Unable to retransform JFR event classes.");
+		goto done;
+	}
+
+done:
+	if (classesPtr != buf) {
+		j9mem_free_memory(classesPtr);
+	}
 }
 
 void JNICALL
@@ -492,8 +533,84 @@ done:
 jboolean JNICALL
 Java_jdk_jfr_internal_JVM_getAllowedToDoEventRetransforms(JNIEnv *env, jobject obj)
 {
-	// TODO: implementation
-	return JNI_FALSE;
+	return JNI_TRUE;
+}
+
+static void JNICALL
+jfrClassFileLoadHook(jvmtiEnv *jvmtiEnv,
+            JNIEnv *jniEnv,
+            jclass classBeingRedefined,
+            jobject loader,
+            const char *name,
+            jobject protectionDomain,
+            jint classDataLen,
+            const unsigned char *classData,
+            jint *newClassDataLen,
+            unsigned char **newClassData)
+{
+	J9VMThread *currentThread = (J9VMThread *)jniEnv;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	vmFuncs->jvmUpcallsOnRetransform(jvmtiEnv, jniEnv, classBeingRedefined, loader, name, protectionDomain, classDataLen, classData, newClassDataLen, newClassData);
+	vmFuncs->internalExitVMToJNI(currentThread);
+}
+
+static bool
+setupJFRAgent(JNIEnv *env)
+{
+	bool result = true;
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	jvmtiCapabilities capabilities;
+	jvmtiEventCallbacks callbacks;
+	JavaVM *jniVM = NULL;
+	jvmtiEnv *jvmtiAgent = NULL;
+
+	if (NULL != vm->jfrState.jvmtiAgent) {
+		goto done;
+	}
+
+	env->GetJavaVM(&jniVM);
+
+	if (NULL == jniVM) {
+		result = false;
+		goto done;
+	}
+
+	if (JNI_ERR == jniVM->GetEnv((void **)&jvmtiAgent, JVMTI_VERSION_1_2)) {
+		result = false;
+		goto done;
+	}
+
+	vm->jfrState.jvmtiAgent = jvmtiAgent;
+
+	memset(&capabilities, 0, sizeof(capabilities));
+	capabilities.can_retransform_classes = 1;
+
+	if (JVMTI_ERROR_NONE != jvmtiAgent->AddCapabilities(&capabilities)) {
+		result = false;
+		goto disposeEnv;
+	}
+
+	memset(&callbacks, 0, sizeof(callbacks));
+	callbacks.ClassFileLoadHook = &jfrClassFileLoadHook;
+
+	if (JVMTI_ERROR_NONE != jvmtiAgent->SetEventCallbacks(&callbacks, sizeof(jvmtiEventCallbacks))) {
+		result = false;
+		goto disposeEnv;
+	}
+
+done:
+	return result;
+
+disposeEnv:
+	if (NULL != vm->jfrState.jvmtiAgent) {
+		vm->jfrState.jvmtiAgent->DisposeEnvironment();
+		vm->jfrState.jvmtiAgent = NULL;
+	}
+	goto done;
 }
 
 jboolean JNICALL
@@ -509,16 +626,27 @@ Java_jdk_jfr_internal_JVM_createJFR(JNIEnv *env, jobject obj, jboolean simulateF
 		throwNewIllegalStateException(env, (char *)"Unable to start Jfr");
 		goto done;
 	}
+
+	if (!setupJFRAgent(env)) {
+		rc = JNI_FALSE;
+		throwNewIllegalStateException(env, (char *)"Unable to setup JFR agent");
+		goto done;
+	}
+
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	if (JNI_OK != vmFuncs->initializeJFR(vm)) {
 		rc = JNI_FALSE;
-		goto done;
+		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+		goto exit;
 	}
 
 	if (!vmFuncs->setupChunkMonitor(currentThread)) {
 		rc = JNI_FALSE;
-		goto done;
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+		goto exit;
 	}
+
+exit:
 	vmFuncs->internalExitVMToJNI(currentThread);
 
 done:
@@ -532,6 +660,11 @@ Java_jdk_jfr_internal_JVM_destroyJFR(JNIEnv *env, jobject obj)
 	J9VMThread *currentThread = (J9VMThread*) env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	if (NULL != vm->jfrState.jvmtiAgent) {
+		vm->jfrState.jvmtiAgent->DisposeEnvironment();
+		vm->jfrState.jvmtiAgent = NULL;
+	}
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	vmFuncs->tearDownJFR(vm);
