@@ -113,7 +113,9 @@ void J9::OptionsPostRestore::iterateOverExternalOptions()
             case J9::ExternalOptions::Xaotcolon:
             case J9::ExternalOptions::Xnoaot:
             case J9::ExternalOptions::XXplusMergeCompilerOptions:
-            case J9::ExternalOptions::XXminusMergeCompilerOptions: {
+            case J9::ExternalOptions::XXminusMergeCompilerOptions:
+            case J9::ExternalOptions::XXminusMemoryDisclaim:
+            case J9::ExternalOptions::XXplusMemoryDisclaim: {
                 // These will have already been consumed
             } break;
 
@@ -601,6 +603,20 @@ void J9::OptionsPostRestore::preProcessInternalCompilerOptions()
         J9::Options::getExternalOptionString(J9::ExternalOptions::XXplusMergeCompilerOptions), 0);
     _argIndexMergeOptionsDisabled = FIND_AND_CONSUME_RESTORE_ARG(EXACT_MATCH,
         J9::Options::getExternalOptionString(J9::ExternalOptions::XXminusMergeCompilerOptions), 0);
+
+    uint32_t argIndexDisableMemoryDisclaim = FIND_AND_CONSUME_RESTORE_ARG(EXACT_MATCH,
+        J9::Options::getExternalOptionString(J9::ExternalOptions::XXminusMemoryDisclaim), 0);
+
+    uint32_t argIndexMemoryDisclaim = FIND_AND_CONSUME_RESTORE_ARG(EXACT_MATCH,
+        J9::Options::getExternalOptionString(J9::ExternalOptions::XXplusMemoryDisclaim), 0);
+
+    if (argIndexDisableMemoryDisclaim > argIndexMemoryDisclaim) {
+        TR::Options::getCmdLineOptions()->setOption(TR_DisableDataCacheDisclaiming);
+        TR::Options::getCmdLineOptions()->setOption(TR_DisableIProfilerDataDisclaiming);
+        TR::Options::getCmdLineOptions()->setOption(TR_DisableRuntimeAssumptionDataDisclaiming);
+        TR::Options::getCmdLineOptions()->setOption(TR_EnableCodeCacheDisclaiming, false);
+        TR::Options::getCmdLineOptions()->setOption(TR_EnableSharedCacheDisclaiming, false);
+    }
 }
 
 void J9::OptionsPostRestore::postProcessInternalCompilerOptions()

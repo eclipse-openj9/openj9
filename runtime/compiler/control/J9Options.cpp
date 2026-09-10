@@ -446,8 +446,10 @@ J9::ExternalOptionsMetadata J9::Options::_externalOptionsMetadata[J9::ExternalOp
     {                   "-XX:+TrackAOTDependencies",         EXACT_MATCH, -1,  true }, // = 77
     {                   "-XX:-TrackAOTDependencies",         EXACT_MATCH, -1,  true }, // = 78
     {               "-XX:+JITServerUseProfileCache",         EXACT_MATCH, -1,  true }, // = 79
-    {               "-XX:-JITServerUseProfileCache",         EXACT_MATCH, -1,  true }  // = 80
-    // TR_NumExternalOptions                                                              = 81
+    {               "-XX:-JITServerUseProfileCache",         EXACT_MATCH, -1,  true }, // = 80
+    {                         "-XX:+MemoryDisclaim",         EXACT_MATCH, -1,  true }, // = 81
+    {                         "-XX:-MemoryDisclaim",         EXACT_MATCH, -1,  true }  // = 82
+    // TR_NumExternalOptions                                                              = 83
 };
 
 //************************************************************************
@@ -2777,8 +2779,11 @@ bool J9::Options::fePreProcess(void *base)
     // Forcing inlining of unrecognized intrinsics needs more performance investigation
     self()->setOption(TR_DisableInliningUnrecognizedIntrinsics);
 
-    // Memory disclaiming is available only on Linux
-    if (!TR::Compiler->target.isLinux()) {
+    int32_t xxPlusMemoryDisclaim = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXplusMemoryDisclaim);
+    int32_t xxMinusMemoryDisclaim = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXminusMemoryDisclaim);
+
+    // Memory disclaiming is available only on Linux or if memory disclaiming isn't disabled
+    if (!TR::Compiler->target.isLinux() || xxMinusMemoryDisclaim > xxPlusMemoryDisclaim) {
         self()->setOption(TR_DisableDataCacheDisclaiming);
         self()->setOption(TR_DisableIProfilerDataDisclaiming);
         self()->setOption(TR_DisableRuntimeAssumptionDataDisclaiming);
