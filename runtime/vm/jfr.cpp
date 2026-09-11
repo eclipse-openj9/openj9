@@ -105,6 +105,21 @@ static bool isChunkRotationMonitor(J9VMThread *currentThread, omrthread_monitor_
 static J9JFREvent *reserveBufferWithStackTrace(J9VMThread *currentThread, J9VMThread *sampleThread, UDATA eventType, UDATA eventFixedSize, I_32 frameSkipCount);
 static void jfrObjectAllocationSample(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 
+static bool
+isJFRHostEventClass(const char *name)
+{
+	UDATA nameLength = strlen(name);
+	return J9UTF8_LITERAL_EQUALS(name, nameLength, "sun/nio/ch/FileChannelImpl")
+		|| J9UTF8_LITERAL_EQUALS(name, nameLength, "java/io/FileInputStream")
+		|| J9UTF8_LITERAL_EQUALS(name, nameLength, "java/io/FileOutputStream")
+		|| J9UTF8_LITERAL_EQUALS(name, nameLength, "java/io/RandomAccessFile")
+		|| J9UTF8_LITERAL_EQUALS(name, nameLength, "java/net/Socket$SocketInputStream")
+		|| J9UTF8_LITERAL_EQUALS(name, nameLength, "java/net/Socket$SocketOutputStream")
+		|| J9UTF8_LITERAL_EQUALS(name, nameLength, "sun/nio/ch/SocketChannelImpl")
+		|| J9UTF8_LITERAL_EQUALS(name, nameLength, "java/lang/Throwable")
+		|| J9UTF8_LITERAL_EQUALS(name, nameLength, "java/lang/Error");
+}
+
 U_32
 emitStackTrace(J9VMThread *currentThread, I_32 skipCount)
 {
