@@ -524,13 +524,13 @@ END_RETURN_POINT(jitExitInterpreterD)
 	DECLARE_EXTERN(old_slow_jitInterpretNewInstanceMethod)
 	DECLARE_EXTERN(old_slow_jitTranslateNewInstanceMethod)
 
-dnl Non-standard - Called via an invoke - arguments are reversed on stack and doesn't return to caller right away
+dnl Nonstandard - Called via an invoke - arguments are reversed on stack and doesn't return to caller right away
 BEGIN_HELPER(jitInterpretNewInstanceMethod)
 	CALL_SLOW_PATH_ONLY_HELPER_NO_EXCEPTION_NO_RETURN_VALUE(jitInterpretNewInstanceMethod)
 	BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
 END_PROC(jitInterpretNewInstanceMethod)
 
-dnl Non-standard - Called via an invoke - arguments are reversed on stack and doesn't return to caller right away
+dnl Nonstandard - Called via an invoke - arguments are reversed on stack and doesn't return to caller right away
 BEGIN_HELPER(jitTranslateNewInstanceMethod)
 	CALL_SLOW_PATH_ONLY_HELPER_NO_EXCEPTION_NO_RETURN_VALUE(jitTranslateNewInstanceMethod)
 	BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)

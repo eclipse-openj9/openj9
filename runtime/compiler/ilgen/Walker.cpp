@@ -3946,7 +3946,7 @@ TR::Node *TR_J9ByteCodeIlGenerator::genOrFindAdjunct(TR::Node *node)
         }                                    \
     }
 
-// Definition of operation to be executed when converting the non standard lengths
+// Definition of operation to be executed when converting the nonstandard lengths
 struct OperationDescriptor {
     int32_t shiftDistance; // distance to shift, the direction depends on load or store
     int32_t offsetAdjustment; // adjustment of the memory offset

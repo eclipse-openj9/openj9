@@ -555,7 +555,7 @@ END_PROC(jitRunOnJavaStack)
 
 	FASTCALL_EXTERN(fast_jitAcquireVMAccess,1)
 
-dnl Non-standard - _RSP points to C stack when this is called
+dnl Nonstandard - _RSP points to C stack when this is called
 BEGIN_HELPER(jitAcquireVMAccess)
 dnl Ensure _rsp is pointing to the C interpreter stack frame
 	pop uword ptr J9TR_VMThread_jitReturnAddress[_rbp]
@@ -570,7 +570,7 @@ dnl currently declared by JIT, but could move here
 
 	FASTCALL_EXTERN(fast_jitReleaseVMAccess)
 
-dnl Non-standard - _RSP points to C stack when this is called
+dnl Nonstandard - _RSP points to C stack when this is called
 dnl Extra JNI arguments may be pushed on the stack, so the code
 dnl below is incorrect.
 BEGIN_HELPER(jitReleaseVMAccess)
@@ -586,13 +586,13 @@ END_HELPER(jitReleaseVMAccess,0)
 	FASTCALL_EXTERN(old_slow_jitInterpretNewInstanceMethod,1)
 	FASTCALL_EXTERN(old_slow_jitTranslateNewInstanceMethod,1)
 
-dnl Non-standard - Called via an invoke - arguments are reversed on stack and doesn't return to caller right away
+dnl Nonstandard - Called via an invoke - arguments are reversed on stack and doesn't return to caller right away
 BEGIN_HELPER(jitInterpretNewInstanceMethod)
 	CALL_SLOW_PATH_ONLY_HELPER_NO_EXCEPTION_NO_RETURN_VALUE(jitInterpretNewInstanceMethod)
 	jmp uword ptr J9TR_VMThread_tempSlot[_rbp]
 END_HELPER(jitInterpretNewInstanceMethod,0)
 
-dnl Non-standard - Called via an invoke - arguments are reversed on stack and doesn't return to caller right away
+dnl Nonstandard - Called via an invoke - arguments are reversed on stack and doesn't return to caller right away
 BEGIN_HELPER(jitTranslateNewInstanceMethod)
 	CALL_SLOW_PATH_ONLY_HELPER_NO_EXCEPTION_NO_RETURN_VALUE(jitTranslateNewInstanceMethod)
 	jmp uword ptr J9TR_VMThread_tempSlot[_rbp]

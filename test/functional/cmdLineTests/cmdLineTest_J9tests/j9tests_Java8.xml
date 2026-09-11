@@ -32,9 +32,9 @@
  <test id="X">
   <command>$EXE$ $CP$ -X $TARGET$</command>
   <!-- Java 7 and prior -->
-  <output type="success">.*following.options.are.non.standard.*</output>
+  <output type="success">.*following.options.are.nonstandard.*</output>
   <!-- Java 8 -->
-  <output type="success">.*The.-X.options.are.non-standard.and.subject.to.change.without.notice.*</output>
+  <output type="success">.*The.-X.options.are.nonstandard.and.subject.to.change.without.notice.*</output>
  </test>
 
  <test id="Xbootclasspath">

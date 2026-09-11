@@ -45,7 +45,7 @@ J9NLS.HEADER=j9exelibnls.h
 
 # J9SourceExeLibArgumentsParsing - describeInternalOptions
 
-J9NLS_EXELIB_INTERNAL_HELP_1_1=The following options are non-standard and subject to change without notice.\n
+J9NLS_EXELIB_INTERNAL_HELP_1_1=The following options are nonstandard and subject to change without notice.\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_1.system_action=

@@ -558,7 +558,7 @@ BEGIN_RETURN_POINT(jitExitInterpreterD)
     ld fpr0,J9TR_VMThread_returnValue(J9VMTHREAD)
 END_RETURN_POINT
 
-dnl Non-standard - Called via an invoke
+dnl Nonstandard - Called via an invoke
 dnl Arguments are reversed on stack and doesn't
 dnl return to caller right away.
 
@@ -567,7 +567,7 @@ BEGIN_HELPER(jitInterpretNewInstanceMethod)
     BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
 END_CURRENT
 
-dnl Non-standard - Called via an invoke
+dnl Nonstandard - Called via an invoke
 dnl Arguments are reversed on stack and doesn't
 dnl return to caller right away.
 

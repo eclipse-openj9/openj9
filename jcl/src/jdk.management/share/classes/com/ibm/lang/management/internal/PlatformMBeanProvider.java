@@ -48,7 +48,7 @@ import jdk.management.VirtualThreadSchedulerMXBean;
 /**
  * This class implements the service-provider interface to make OpenJ9-specific
  * MXBeans available. These beans are either in addition to the basic set or
- * implement non-standard interfaces.
+ * implement nonstandard interfaces.
  */
 public final class PlatformMBeanProvider extends sun.management.spi.PlatformMBeanProvider {
 
