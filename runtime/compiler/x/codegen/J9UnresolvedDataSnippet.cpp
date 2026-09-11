@@ -536,7 +536,7 @@ uint32_t J9::X86::UnresolvedDataSnippet::getLength(int32_t estimatedSnippetStart
 void TR_Debug::print(OMR::Logger *log, TR::UnresolvedDataSnippet *snippet)
 {
     uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-    printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet));
+    printSnippetLabel(log, snippet, bufferPos);
     log->printf(" for instr [%s]", getName(snippet->getDataReferenceInstruction()));
 
     if (_comp->target().is64Bit()) {

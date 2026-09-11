@@ -20,6 +20,43 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#include "ras/Logger.hpp"
 #include "codegen/Snippet.hpp"
 
 TR::X86GuardedDevirtualSnippet *J9::X86::Snippet::getGuardedDevirtualSnippet() { return NULL; }
+
+void J9::X86::Snippet::printName(OMR::Logger *log)
+{
+    const char *name;
+
+    switch (getKind()) {
+        case TR::Snippet::IsCall:
+            name = "Call Snippet";
+            break;
+        case TR::Snippet::IsVPicData:
+            name = "VPic Data";
+            break;
+        case TR::Snippet::IsIPicData:
+            name = "IPic Data";
+            break;
+        case TR::Snippet::IsForceRecompilation:
+            name = "Force Recompilation Snippet";
+            break;
+        case TR::Snippet::IsRecompilation:
+            name = "Recompilation Snippet";
+            break;
+        case TR::Snippet::IsGuardedDevirtual:
+            name = "Guarded Devirtual Snippet";
+            break;
+        default:
+            name = NULL;
+            break;
+    }
+
+    if (name) {
+        log->prints(name);
+    } else {
+        // Delegate to superclass to print name
+        J9::Snippet::printName(log);
+    }
+}
