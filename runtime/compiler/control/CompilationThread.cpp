@@ -857,6 +857,20 @@ void TR::CompilationInfo::freeAllResources()
     }
 
     freeAllCompilationThreads();
+
+    PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
+    J9JITSyncCompilationStatistics &syncCompStats = _jitConfig->syncCompStats;
+    for (int32_t i = 0; i < J9_NUM_LONGEST_SYNC_COMP; i++) {
+        J9JITLongestSyncComp &longestWaitMethod = syncCompStats.longestWaitMethods[i];
+        if (longestWaitMethod.methodName != NULL) {
+            j9mem_free_memory(longestWaitMethod.methodName);
+            longestWaitMethod.methodName = NULL;
+        }
+        if (longestWaitMethod.threadName != NULL) {
+            j9mem_free_memory(longestWaitMethod.threadName);
+            longestWaitMethod.threadName = NULL;
+        }
+    }
 }
 
 void TR::CompilationInfo::freeCompilationInfo(J9JITConfig *jitConfig)
@@ -6182,6 +6196,12 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread *vmThread, TR::IlG
         //
         entry->_numThreadsWaiting++;
 
+        uint64_t waitStart = 0;
+        PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
+        if (!async) {
+            waitStart = j9time_hires_clock();
+        }
+
         // Release the compilation monitor
         //
         debugPrint(vmThread, "\tapplication thread releasing compilation monitor\n");
@@ -6278,6 +6298,66 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread *vmThread, TR::IlG
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
         entry->_numThreadsWaiting--;
+
+        if (!async) {
+            uint64_t waitEnd = j9time_hires_clock();
+            uint64_t duration = j9time_hires_delta(waitStart, waitEnd, J9PORT_TIME_DELTA_IN_MICROSECONDS);
+            J9JITSyncCompilationStatistics &syncCompStats = _jitConfig->syncCompStats;
+
+            syncCompStats.totalCount++;
+            syncCompStats.totalWaitTime += duration;
+
+            /* Obtain index to insert. */
+            int32_t idx = -1;
+            for (int32_t i = 0; i < J9_NUM_LONGEST_SYNC_COMP; i++) {
+                if (syncCompStats.longestWaitMethods[i].waitTime < duration) {
+                    idx = i;
+                    break;
+                }
+            }
+
+            if (0 <= idx) {
+                /* Remove the shortest wait-time. */
+                J9JITLongestSyncComp &lastMethod = syncCompStats.longestWaitMethods[J9_NUM_LONGEST_SYNC_COMP - 1];
+                if (NULL != lastMethod.methodName) {
+                    j9mem_free_memory(lastMethod.methodName);
+                    lastMethod.methodName = NULL;
+                }
+                if (NULL != lastMethod.threadName) {
+                    j9mem_free_memory(lastMethod.threadName);
+                    lastMethod.threadName = NULL;
+                }
+                for (int32_t i = J9_NUM_LONGEST_SYNC_COMP - 1; i > idx; i--) {
+                    syncCompStats.longestWaitMethods[i] = syncCompStats.longestWaitMethods[i - 1];
+                }
+
+                syncCompStats.longestWaitMethods[idx].waitTime = duration;
+                syncCompStats.longestWaitMethods[idx].waitTimeEnd = j9time_current_time_millis();
+
+                J9UTF8 *className = NULL;
+                J9UTF8 *name = NULL;
+                J9UTF8 *signature = NULL;
+                getClassNameSignatureFromMethod(method, className, name, signature);
+
+                uint32_t totalLen = J9UTF8_LENGTH(className) + J9UTF8_LENGTH(name) + J9UTF8_LENGTH(signature) + 2;
+                char *templongestWaitMethod = (char *)j9mem_allocate_memory(totalLen, J9MEM_CATEGORY_JIT);
+                if (NULL != templongestWaitMethod) {
+                    j9str_printf(templongestWaitMethod, totalLen, "%.*s.%.*s%.*s", J9UTF8_LENGTH(className),
+                        J9UTF8_DATA(className), J9UTF8_LENGTH(name), J9UTF8_DATA(name), J9UTF8_LENGTH(signature),
+                        J9UTF8_DATA(signature));
+                }
+                syncCompStats.longestWaitMethods[idx].methodName = templongestWaitMethod;
+
+                const char *threadName = getOMRVMThreadName(vmThread->omrVMThread);
+                uint32_t len = strlen(threadName);
+                char *tempThread = (char *)j9mem_allocate_memory(len + 1, J9MEM_CATEGORY_JIT);
+                if (NULL != tempThread) {
+                    memcpy(tempThread, threadName, len + 1);
+                }
+                syncCompStats.longestWaitMethods[idx].threadName = tempThread;
+                releaseOMRVMThreadName(vmThread->omrVMThread);
+            }
+        }
 
         TR_ASSERT_FATAL(!(entry->_freeTag & (ENTRY_DEALLOCATED | ENTRY_IN_POOL_FREE)),
             "Java thread waking up with a freed entry");
