@@ -137,6 +137,7 @@ static UDATA writeJITInfo (J9VMThread* vmThread, char* s, UDATA length, void* gp
 #endif /* J9VM_INTERP_NATIVE_SUPPORT */
 
 static void printBacktrace(struct J9JavaVM *vm, void* gpInfo);
+static void writeJFREmergencyDump(struct J9JavaVM *vm, J9VMThread *vmThread);
 
 #if defined(J9VM_ARCH_X86) && defined(J9VM_ENV_DATA64)
 #define UNSAFE_TARGET_REGISTER J9PORT_SIG_GPR_AMD64_RDI
@@ -1155,6 +1156,7 @@ generateDiagnosticFiles(struct J9PortLibrary* portLibrary, void* userData)
 	if (vmThread) {
 		vmThread->gpInfo = gpInfo;
 		printBacktrace(vm, gpInfo);
+		writeJFREmergencyDump(vm, vmThread);
 	}
 
 	/* Trigger dump only if RASdump is activated */
@@ -1345,6 +1347,114 @@ printBacktrace(struct J9JavaVM *vm, void *gpInfo)
 	}
 
 	omrtty_printf("---------------------------------------\n");
+}
+
+static void
+writeJFREmergencyDump(struct J9JavaVM *vm, J9VMThread *vmThread)
+{
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+	BOOLEAN failed = FALSE;
+
+	/* Dump to disk even if disk option is set to false. */
+	if (NULL == vm->jfrState.jfrFileName) {
+		if (-1 != vm->jfrState.blobFileDescriptor) {
+			j9file_close(vm->jfrState.blobFileDescriptor);
+		}
+		vm->jfrState.blobFileDescriptor = j9file_open(JFR_EMERGENCY_DUMP_FILE_NAME, EsOpenWrite | EsOpenCreate | EsOpenTruncate , 0666);
+
+		if (-1 == vm->jfrState.blobFileDescriptor) {
+			failed = TRUE;
+			goto done;
+		}
+	}
+
+	internalAcquireVMAccess(vmThread);
+	acquireExclusiveVMAccess(vmThread);
+
+	jfrDump(vmThread, FALSE);
+
+	releaseExclusiveVMAccess(vmThread);
+	internalReleaseVMAccess(vmThread);
+
+	if (NULL != vm->jfrState.jfrFileName) {
+		IDATA emergencyDumpDescriptor = j9file_open(JFR_EMERGENCY_DUMP_FILE_NAME, EsOpenWrite | EsOpenCreate | EsOpenTruncate, 0666);
+		if (-1 != emergencyDumpDescriptor) {
+			char *repositoryLocation = vm->jfrState.jfrRepositoryLocation;
+			if (NULL != repositoryLocation) {
+				char fileName[EsMaxPath];
+				UDATA findHandle = 0;
+				I_32 findResult = 0;
+
+				findHandle = j9file_findfirst(repositoryLocation, fileName);
+				if ((UDATA)-1 != findHandle) {
+					do {
+						/* Skip "." and "..". */
+						if ((0 != strcmp(fileName, ".")) && (0 != strcmp(fileName, ".."))) {
+							char fullPath[EsMaxPath];
+							IDATA srcDescriptor = -1;
+							UDATA repoLen = strlen(repositoryLocation);
+
+							/* Build full path. */
+							if (repoLen + strlen(fileName) + 2 < EsMaxPath) {
+								strcpy(fullPath, repositoryLocation);
+								if (fullPath[repoLen - 1] != '/' && fullPath[repoLen - 1] != '\\') {
+									strcat(fullPath, "/");
+								}
+								strcat(fullPath, fileName);
+
+								/* Open source JFR file. */
+								srcDescriptor = j9file_open(fullPath, EsOpenRead, 0);
+								if (-1 != srcDescriptor) {
+									char buffer[4096];
+									IDATA bytesRead = 0;
+
+									/* Copy file contents to emergency dump. */
+									while ((bytesRead = j9file_read(srcDescriptor, buffer, sizeof(buffer))) > 0) {
+										j9file_write(emergencyDumpDescriptor, buffer, bytesRead);
+									}
+
+									j9file_close(srcDescriptor);
+								}
+							}
+						}
+						findResult = j9file_findnext(findHandle, fileName);
+					} while (findResult >= 0);
+
+					j9file_findclose(findHandle);
+				}
+			}
+			j9file_close(emergencyDumpDescriptor);
+		} else {
+			failed = TRUE;
+		}
+	}
+done:
+	if (failed) {
+		omrtty_printf("JFR emergency dump file could not be created.\n");
+	} else {
+		char absolutePath[EsMaxPath];
+		char *cwd = NULL;
+#if defined(J9ZOS390)
+		cwd = atoe_getcwd(absolutePath, EsMaxPath);
+#else
+		cwd = getcwd(absolutePath, EsMaxPath);
+#endif
+		if (NULL != cwd) {
+			UDATA cwdLen = strlen(absolutePath);
+			if (cwdLen + strlen(JFR_EMERGENCY_DUMP_FILE_NAME) + 2 < EsMaxPath) {
+				if (absolutePath[cwdLen - 1] != '/' && absolutePath[cwdLen - 1] != '\\') {
+					strcat(absolutePath, "/");
+				}
+				strcat(absolutePath, JFR_EMERGENCY_DUMP_FILE_NAME);
+				omrtty_printf("JFR emergency dump file has been written to %s\n", absolutePath);
+			} else {
+				omrtty_printf("JFR emergency dump file has been written to %s\n", JFR_EMERGENCY_DUMP_FILE_NAME);
+			}
+		} else {
+			omrtty_printf("JFR emergency dump file has been written to %s\n", JFR_EMERGENCY_DUMP_FILE_NAME);
+		}
+	}
 }
 
 #if defined(J9VM_PORT_ZOS_CEEHDLRSUPPORT)
