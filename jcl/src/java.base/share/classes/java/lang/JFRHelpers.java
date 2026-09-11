@@ -36,11 +36,12 @@ import jdk.internal.misc.Unsafe;
 
 @SuppressWarnings("nls")
 final class JFRHelpers {
-	/* Indices into logTagValues[] / logLevelValues[]; keep in sync with the enum
-	 * declaration order in jdk.jfr.internal.LogTag and jdk.jfr.internal.LogLevel.
+	/* Indices into logTagValues[] / logLevelValues[] to retrieve LogTag and LogLevel objects;
+	 * keep in sync with the enum declaration order in jdk.jfr.internal.LogTag
+	 * and jdk.jfr.internal.LogLevel.
 	 */
-	private static final int LOGTAG_JFR_START = 13; // LogTag.JFR_START
-	private static final int LOGLEVEL_INFO = 2; // LogLevel.INFO
+	private static final int LOGTAG_JFR_START_ORDINAL = 13; // LogTag.JFR_START.ordinal()
+	private static final int LOGLEVEL_WARN_ORDINAL = 3; // LogLevel.WARN.ordinal()
 
 	private static Class<?> jfrjvmClass;
 	private static Class<?> logTagClass;
@@ -252,14 +253,14 @@ final class JFRHelpers {
 				null
 			);
 			if (null != results) {
-				logJFR(results, LOGTAG_JFR_START, LOGLEVEL_INFO);
+				logJFR(results, LOGTAG_JFR_START_ORDINAL, LOGLEVEL_WARN_ORDINAL);
 			}
 			/*[ELSE] JAVA_SPEC_VERSION == 11 */
 			String[] results = (String []) dcmdStart.getDcmdExecute().invoke(
 					dcmdStart.getDCmdInstance(), "internal", jfrCMDLineOption, ',');
 			if (null != results) {
 				for (String result : results) {
-					logJFR(result, LOGTAG_JFR_START, LOGLEVEL_INFO);
+					logJFR(result, LOGTAG_JFR_START_ORDINAL, LOGLEVEL_WARN_ORDINAL);
 				}
 			}
 			/*[ENDIF] JAVA_SPEC_VERSION == 11 */

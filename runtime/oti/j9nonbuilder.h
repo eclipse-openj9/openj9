@@ -6383,6 +6383,8 @@ typedef struct JFRState {
 	IDATA logFileDescriptor;
 	/* The array is indexed by jdk.jfr.internal.LogTag ordinals. */
 	JFRLogLevel jfrLogTagSet[JFRCOMBINATION_JFRTAG_COUNT];
+	/* JFR logging is enabled by default; can be disabled via -Xlog:disable. */
+	jboolean jfrLogEnabled;
 } JFRState;
 #endif /* defined(J9VM_OPT_JFR) */
 

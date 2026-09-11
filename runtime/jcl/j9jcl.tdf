@@ -717,6 +717,6 @@ TraceEntry=Trc_JCL_com_ibm_oti_shared_getCachedURL_Entry_1 Overhead=1 Level=2 Te
 TraceEvent=Trc_JCL_signal_pid noEnv Overhead=1 Level=1 Template="%s received from process id %zu name '%s'"
 
 TraceEvent=Trc_JCL_JFRLOG_subscribeLogLevel Overhead=1 Level=3 Template="JVM.subscribeLogLevel() logTagInstance(%p) tagSetLevelOffset(%zd) idOffset(%zd) jfrLogTagSet[%d] = %d"
-TraceException=Trc_JCL_JFRLOG_fileWrite_error Overhead=1 Level=1 Template="JFR log message j9file_write(%zu) returns %zu"
-TraceEvent=Trc_JCL_logJFRMessage_incoming Overhead=1 Level=3 Template="logJFRMessage() jfrLogTagCombination(0x%zx) level(%zd) stringMessage = %.*s"
-TraceEvent=Trc_JCL_logJFRMessage_generated Overhead=1 Level=3 Template="logJFRMessage() generated message (%zd) = %s"
+TraceException=Trc_JCL_JFRLOG_fileWrite_error Overhead=1 Level=1 Template="logJFRMessageHelper() j9file_write(%zd) returns %zd"
+TraceEvent=Trc_JCL_JFRLOG_incoming Overhead=1 Level=3 Template="logJFRMessageHelper() jfrLogTagCombination(0x%x) level(%d) utf8Message = %s"
+TraceEvent=Trc_JCL_JFRLOG_generated Overhead=1 Level=3 Template="logJFRMessageHelper() generated message (%zd) = %s"

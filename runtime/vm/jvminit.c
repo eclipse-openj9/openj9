@@ -7559,6 +7559,8 @@ parseXlogJFR(J9JavaVM *vm)
 	IDATA rc = JNI_OK;
 	J9VMInitArgs *j9vm_args = vm->vmArgsArray;
 	IDATA xlogindex = FIND_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, MAPOPT_XLOG_OPT_COLON_JFR, NULL);
+	IDATA lastLogIndex = -1;
+	IDATA lastLogDisabledIndex = -1;
 	BOOLEAN unrecognizedOption = FALSE;
 
 	/* By default, JFR log level is JFRLOG_LEVEL_WARN. */
@@ -7574,6 +7576,7 @@ parseXlogJFR(J9JavaVM *vm)
 		/* Include room for the trailing NULL. */
 		UDATA optionSize = strlen(j9vm_args->actualVMArgs->options[xlogindex].optionString) + 1;
 		CONSUME_ARG(j9vm_args, xlogindex);
+		lastLogIndex = xlogindex;
 
 		if (optionSize > sizeof(xlogoptionsbuf)) {
 			xlogoptions = j9mem_allocate_memory(optionSize, OMRMEM_CATEGORY_VM);
@@ -7712,6 +7715,17 @@ xlogret:
 		xlogindex = FIND_NEXT_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, MAPOPT_XLOG_OPT_COLON_JFR, NULL, xlogindex);
 	}
 
+	vm->jfrState.jfrLogEnabled = JNI_TRUE;
+	if (lastLogIndex >= 0) {
+		/* Only check -Xlog:disable when there is at least one -Xlog:jfr specified. */
+		lastLogDisabledIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, MAPOPT_XLOG_OPT_COLON_DISABLE, NULL);
+		if (lastLogDisabledIndex > lastLogIndex) {
+			/* If the last -Xlog:disable is after all -Xlog:jfr options, JFR log is disabled. */
+			vm->jfrState.jfrLogEnabled = JNI_FALSE;
+			Trc_VM_jfr_parseXlog_disabled();
+		}
+	}
+
 	return rc;
 }
 #endif /* defined(J9VM_OPT_JFR) */
@@ -7818,6 +7832,12 @@ xlogerr:
 									unrecognizedOption = TRUE;
 								}
 							} else if (0 == j9_cmdla_stricmp("disable", tag)) {
+#if defined(J9VM_OPT_JFR)
+								if (IS_CONSUMED(j9vm_args, xlogindex) || !IS_CONSUMABLE(j9vm_args, xlogindex)) {
+									/* -Xlog:disable has been processed by parseXlogJFR(). */
+									goto xlogret;
+								}
+#endif /* defined(J9VM_OPT_JFR) */
 								if ((numtags > 0)
 									|| (NULL != upToEquals)
 									|| (NULL != upToComma)

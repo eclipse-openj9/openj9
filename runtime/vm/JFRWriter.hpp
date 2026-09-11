@@ -154,18 +154,16 @@ public:
 	{
 		bool result = true;
 
-		if (!openJFRFile(vm)) {
-			result = false;
-			goto done;
-		}
-
 		if (!isJFRV2SupportEnabled(vm)) {
-			if (!loadJFRMetadataBlob(vm)) {
-				PORT_ACCESS_FROM_JAVAVM(vm);
-				j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_LOAD);
+			if (openJFRFile(vm)) {
+				if (!loadJFRMetadataBlob(vm)) {
+					PORT_ACCESS_FROM_JAVAVM(vm);
+					j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_LOAD);
+				}
+			} else {
+				result = false;
 			}
 		}
-done:
 		return result;
 	}
 
