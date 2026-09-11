@@ -65,6 +65,22 @@ protected:
     };
 
     struct Candidate : public TR_Link<Candidate> {
+        Candidate()
+            : treeTop(NULL)
+            , node(NULL)
+            , uninitializedWords(NULL)
+            , initializedBytes(NULL)
+            , uninitializedBytes(NULL)
+            // localStores, localLoads, and inlinedCalls are automatically constructed
+            , size(0)
+            , startOffset(0)
+            , numUninitializedWords(0)
+            , numInitializedBytes(0)
+            , numUninitializedBytes(0)
+            , isArrayNew(false)
+            , isInSniffedMethod(false)
+        {}
+
         TR::TreeTop *treeTop;
         TR::Node *node;
         TR_BitVector *uninitializedWords;
