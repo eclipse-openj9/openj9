@@ -697,6 +697,29 @@ enum INIT_STAGE {
 #define VMOPT_XSYSLOG_OPT "-Xsyslog"
 #define MAPOPT_XSYSLOG_OPT_COLON "-Xsyslog:"
 
+#if defined(J9VM_OPT_JFR)
+#define MAPOPT_XLOG_OPT_COLON_JFR "-Xlog:jfr"
+
+#define JFRLOGLEVEL_STRING_INVALID "invalid"
+#define JFRLOGLEVEL_STRING_TRACE "trace"
+#define JFRLOGLEVEL_STRING_DEBUG "debug"
+#define JFRLOGLEVEL_STRING_INFO "info"
+#define JFRLOGLEVEL_STRING_WARN "warn"
+#define JFRLOGLEVEL_STRING_ERROR "error"
+
+#define JFRLOGTAG_STRING_JFR "jfr"
+#define JFRLOGTAG_STRING_SYSTEM "system"
+#define JFRLOGTAG_STRING_EVENT "event"
+#define JFRLOGTAG_STRING_SETTING "setting"
+#define JFRLOGTAG_STRING_BYTECODE "bytecode"
+#define JFRLOGTAG_STRING_PARSER "parser"
+#define JFRLOGTAG_STRING_METADATA "metadata"
+#define JFRLOGTAG_STRING_STREAMING "streaming"
+#define JFRLOGTAG_STRING_THROTTLE "throttle"
+#define JFRLOGTAG_STRING_DCMD "dcmd"
+#define JFRLOGTAG_STRING_START "start"
+#endif /* defined(J9VM_OPT_JFR) */
+
 #define VMOPT_XXENABLEDYNAMICAGENTLOADING "-XX:+EnableDynamicAgentLoading"
 #define VMOPT_XXNOENABLEDYNAMICAGENTLOADING "-XX:-EnableDynamicAgentLoading"
 

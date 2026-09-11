@@ -78,7 +78,7 @@ public class Jcmd {
 		if ((providers == null) || providers.isEmpty()) {
 			IPC.logMessage("Jcmd exits when no attach providers available"); //$NON-NLS-1$
 			System.err.println("no attach providers available"); //$NON-NLS-1$
-			return;
+			System.exit(1);
 		}
 
 		AttachProvider openj9Provider = providers.get(0);
@@ -86,7 +86,7 @@ public class Jcmd {
 		if ((vmds == null) || vmds.isEmpty()) {
 			IPC.logMessage("Jcmd exits when no VMs found"); //$NON-NLS-1$
 			System.err.println("no VMs found"); //$NON-NLS-1$
-			return;
+			System.exit(1);
 		}
 
 		/* An empty argument list is a request for a list of VMs. */
@@ -98,77 +98,80 @@ public class Jcmd {
 				Util.getTargetInformation(openj9Provider, vmd, false, false, true, outputBuffer);
 				System.out.println(outputBuffer.toString());
 			}
-		} else {
-			String command = DiagnosticUtils.makeJcmdCommand(args, 1);
-			if (command.isEmpty()) {
-				IPC.logMessage("Jcmd exits when there is no jcmd command"); //$NON-NLS-1$
-				System.err.printf("There is no jcmd command.%n"); //$NON-NLS-1$
-				System.out.printf(HELPTEXT);
-			} else {
-				AttacherDiagnosticsProvider diagProvider = new AttacherDiagnosticsProvider();
-				List<String> vmids = Util.findMatchVMIDs(vmds, firstArgument);
-				boolean exceptionThrown = false;
-				int retry = 0;
-				for (String vmid : vmids) {
-					if (!vmid.equals(firstArgument)) {
-						// skip following if firstArgument is a VMID
-						// keep the output compatible with the old behavior (only one VMID accepted)
-						System.out.println(vmid + ":"); //$NON-NLS-1$
-					}
-					do {
-						try {
-							IPC.logMessage("attaching vmid = " + vmid + ", retry = " + retry); //$NON-NLS-1$ //$NON-NLS-2$
-							diagProvider.attach(vmid);
-							try {
-								Util.runCommandAndPrintResult(diagProvider, command, command);
-							} finally {
-								try {
-									diagProvider.detach();
-								} catch (SocketException se) {
-									IPC.logMessage("SocketException thrown at diagProvider.detach() vmid = " + vmid, se); //$NON-NLS-1$
-									break;
-									// ignore this SocketException since the attaching finished anyway
-								}
-							}
-							// attaching succeeded
-							break;
-						} catch (SocketException se) {
-							/* Following SocketException is seen occationally at Windows
-							 * https://learn.microsoft.com/en-us/previous-versions/ms832256(v=msdn.10)?redirectedfrom=MSDN
-							 * java.net.SocketException: Software caused connection abort: socket write error
-							 *     at java.base/java.net.SocketOutputStream.socketWrite0(Native Method)
-							 *     at java.base/java.net.SocketOutputStream.socketWrite(SocketOutputStream.java:110)
-							 *     at java.base/java.net.SocketOutputStream.write(SocketOutputStream.java:129)
-							 *     at java.base/openj9.internal.tools.attach.target.AttachmentConnection.streamSend(AttachmentConnection.java:105)
-							 *     at jdk.attach/com.ibm.tools.attach.attacher.OpenJ9VirtualMachine.executeDiagnosticCommand(OpenJ9VirtualMachine.java:318)
-							 *     at jdk.jcmd/openj9.tools.attach.diagnostics.attacher.AttacherDiagnosticsProvider.executeDiagnosticCommand(AttacherDiagnosticsProvider.java:55)
-							 *     at jdk.jcmd/openj9.tools.attach.diagnostics.tools.Util.runCommandAndPrintResult(Util.java:78)
-							 *     at jdk.jcmd/openj9.tools.attach.diagnostics.tools.Jcmd.main(Jcmd.java:120)
-							 */
-							IPC.logMessage("SocketException thrown while attaching vmid = " + vmid, se); //$NON-NLS-1$
-						} catch (IOException e) {
-							IPC.logMessage("IOException thrown while attaching vmid = " + vmid, e); //$NON-NLS-1$
-							Util.handleCommandException(vmid, e);
-							exceptionThrown = true;
-							break;
-							// keep iterating the rest of VMIDs
-						}
-						if (!IPC.isWindows) {
-							IPC.logMessage("Only retry on Windows platform, vmid = " + vmid); //$NON-NLS-1$
-							break;
-						}
-						retry += 1;
-						try {
-							Thread.sleep(10);
-						} catch (InterruptedException e) {
-							IPC.logMessage("Ignore Thread.sleep() InterruptedException, vmid = " + vmid); //$NON-NLS-1$
-						}
-					} while (retry < Util.retry);
-				}
-				if (exceptionThrown) {
-					System.out.printf(HELPTEXT);
-				}
+			return;
+		}
+
+		String command = DiagnosticUtils.makeJcmdCommand(args, 1);
+		if (command.isEmpty()) {
+			IPC.logMessage("Jcmd exits when there is no jcmd command"); //$NON-NLS-1$
+			System.err.printf("There is no jcmd command.%n"); //$NON-NLS-1$
+			System.out.printf(HELPTEXT);
+			return;
+		}
+
+		AttacherDiagnosticsProvider diagProvider = new AttacherDiagnosticsProvider();
+		List<String> vmids = Util.findMatchVMIDs(vmds, firstArgument);
+		boolean exitWithError = false;
+		int retry = 0;
+		for (String vmid : vmids) {
+			if (!vmid.equals(firstArgument)) {
+				// skip following if firstArgument is a VMID
+				// keep the output compatible with the old behavior (only one VMID accepted)
+				System.out.println(vmid + ":"); //$NON-NLS-1$
 			}
+			do {
+				try {
+					IPC.logMessage("attaching vmid = " + vmid + ", retry = " + retry); //$NON-NLS-1$ //$NON-NLS-2$
+					diagProvider.attach(vmid);
+					try {
+						exitWithError |= Util.runCommandAndPrintResult(diagProvider, command, command);
+					} finally {
+						try {
+							diagProvider.detach();
+						} catch (SocketException se) {
+							IPC.logMessage("SocketException thrown at diagProvider.detach() vmid = " + vmid, se); //$NON-NLS-1$
+							break;
+							// ignore this SocketException since the attaching finished anyway
+						}
+					}
+					break;
+					// keep iterating the rest of VMIDs
+				} catch (SocketException se) {
+					/* Following SocketException is seen occationally at Windows
+					 * https://learn.microsoft.com/en-us/previous-versions/ms832256(v=msdn.10)?redirectedfrom=MSDN
+					 * java.net.SocketException: Software caused connection abort: socket write error
+					 *     at java.base/java.net.SocketOutputStream.socketWrite0(Native Method)
+					 *     at java.base/java.net.SocketOutputStream.socketWrite(SocketOutputStream.java:110)
+					 *     at java.base/java.net.SocketOutputStream.write(SocketOutputStream.java:129)
+					 *     at java.base/openj9.internal.tools.attach.target.AttachmentConnection.streamSend(AttachmentConnection.java:105)
+					 *     at jdk.attach/com.ibm.tools.attach.attacher.OpenJ9VirtualMachine.executeDiagnosticCommand(OpenJ9VirtualMachine.java:318)
+					 *     at jdk.jcmd/openj9.tools.attach.diagnostics.attacher.AttacherDiagnosticsProvider.executeDiagnosticCommand(AttacherDiagnosticsProvider.java:55)
+					 *     at jdk.jcmd/openj9.tools.attach.diagnostics.tools.Util.runCommandAndPrintResult(Util.java:78)
+					 *     at jdk.jcmd/openj9.tools.attach.diagnostics.tools.Jcmd.main(Jcmd.java:120)
+					 */
+					IPC.logMessage("SocketException thrown while attaching vmid = " + vmid, se); //$NON-NLS-1$
+				} catch (IOException e) {
+					IPC.logMessage("IOException thrown while attaching vmid = " + vmid, e); //$NON-NLS-1$
+					Util.handleCommandException(vmid, e);
+					exitWithError = true;
+					break;
+					// keep iterating the rest of VMIDs
+				}
+				if (!IPC.isWindows) {
+					IPC.logMessage("Only retry on Windows platform, vmid = " + vmid); //$NON-NLS-1$
+					break;
+				}
+				retry += 1;
+				try {
+					Thread.sleep(10);
+				} catch (InterruptedException e) {
+					IPC.logMessage("Ignore Thread.sleep() InterruptedException, vmid = " + vmid); //$NON-NLS-1$
+				}
+			} while (retry < Util.retry);
+		}
+		if (exitWithError) {
+			System.out.printf(HELPTEXT);
+			System.exit(1);
 		}
 	}
 }
