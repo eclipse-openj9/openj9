@@ -608,6 +608,14 @@ typedef struct J9JFRJavaEventData {
 
 #define J9JFRJAVAEVENTDATA_EVENTDATA(jfrEvent) ((U_8 *)(((J9JFRJavaEventData *)(jfrEvent)) + 1))
 
+/* Variable-size structure - stackTraceSize worth of UDATA follow the fixed portion */
+typedef struct J9JFRObjectAllocationSample {
+	J9JFR_EVENT_WITH_STACKTRACE_FIELDS
+	struct J9Class *objectClass; /**< class of the allocated object */
+	UDATA weight;                /**< bytes allocated by this thread since last JFR sample */
+} J9JFRObjectAllocationSample;
+#define J9JFROBJECTALLOCATIONSAMPLE_STACKTRACE(jfrEvent) ((UDATA *)(((J9JFRObjectAllocationSample *)(jfrEvent)) + 1))
+
 typedef struct J9JFRClassLoaderStatistics {
 	J9JFR_EVENT_COMMON_FIELDS
 	struct J9ClassLoader *classLoader;
@@ -5244,6 +5252,10 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA  ( *j9gc_arraylet_getLeafLogSize)(struct J9JavaVM* javaVM) ;
 	void  ( *j9gc_get_offheap_data)(struct J9JavaVM *javaVM, void **offheapControlStructure, void **base, void **top, UDATA *usage);
 	void  ( *j9gc_set_allocation_sampling_interval)(struct J9JavaVM *vm, UDATA samplingInterval);
+#if defined(J9VM_OPT_JFR)
+	void   ( *j9gc_set_jfr_allocation_sampling_interval)(struct J9JavaVM *vm, UDATA samplingInterval);
+	UDATA  ( *j9gc_get_jfr_allocation_sampling_interval)(struct J9JavaVM *vm);
+#endif /* defined(J9VM_OPT_JFR) */
 	void  ( *j9gc_set_allocation_threshold)(struct J9VMThread *vmThread, UDATA low, UDATA high) ;
 	void  ( *j9gc_objaccess_recentlyAllocatedObject)(struct J9VMThread *vmThread, J9Object *dstObject) ;
 	void  ( *j9gc_objaccess_postStoreClassToClassLoader)(struct J9VMThread *vmThread, J9ClassLoader *destClassLoader, J9Class *srcClass) ;
@@ -6271,6 +6283,8 @@ typedef struct JFRState {
 	IDATA blobFileDescriptor;
 	void *jfrWriter;
 	UDATA jfrChunkCount;
+	UDATA objectAllocationSampleThrottleRate;   /**< target ObjectAllocationSample events per second (default 150) */
+	uint64_t lastGCCycleEndTicks; /**< hires-clock ticks when the last GC cycle ended; 0 if no GC has occurred */
 	I_64 chunkStartTime;
 	I_64 chunkStartTicks;
 	void *constantEvents;
