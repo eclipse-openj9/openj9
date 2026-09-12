@@ -497,6 +497,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	jvmUpcallsTransformJFREventClass,
 	createNewEventWriter,
 	jfrInitializeInternalStructures,
+	jfrDisableJFRV2Support,
 	jfrEmitDataLoss,
 	requestJFREvent,
 	setupChunkMonitor,

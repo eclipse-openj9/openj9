@@ -1305,6 +1305,8 @@ jobject JNICALL
 Java_com_ibm_oti_vm_VM_getUnnamedModuleForSystemLoader(JNIEnv *env, jclass clazz);
 void JNICALL
 Java_com_ibm_oti_vm_VM_initializeInternalJFRStructures(JNIEnv *env, jclass clazz);
+void JNICALL
+Java_com_ibm_oti_vm_VM_disableJFRV2Support(JNIEnv *env, jclass clazz);
 jboolean JNICALL
 Java_com_ibm_oti_vm_VM_isStartFlightRecordingSpecified(JNIEnv *env, jclass clazz);
 jboolean JNICALL

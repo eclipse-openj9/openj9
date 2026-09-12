@@ -6048,6 +6048,15 @@ void
 jfrInitializeInternalStructures(J9VMThread *currentThread);
 
 /**
+ * Disable JFR V2 when jdk.jfr could not be made available: clear the JFR
+ * enablement flags and unregister the hooks registered by initializeJFRv2().
+ *
+ * @param currentThread[in] the current J9VMThread
+ */
+void
+jfrDisableJFRV2Support(J9VMThread *currentThread);
+
+/**
  * Emit a jdk.DataLoss event for the specified number of bytes lost.
  *
  * @param currentThread[in] the current J9VMThread

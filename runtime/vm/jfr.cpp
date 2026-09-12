@@ -2156,6 +2156,24 @@ jfrInitializeInternalStructures(J9VMThread *currentThread)
 	return;
 }
 
+/**
+ * Disable JFR V2 when jdk.jfr could not be made available: clear the JFR
+ * enablement flags and unregister the hooks registered by initializeJFRv2().
+ */
+void
+jfrDisableJFRV2Support(J9VMThread *currentThread)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9HookInterface **vmHooks = getVMHookInterface(vm);
+
+	vm->extendedRuntimeFlags2 &= ~J9_EXTENDED_RUNTIME2_JFR_ENABLED;
+	vm->extendedRuntimeFlags3 &= ~J9_EXTENDED_RUNTIME3_JFR_V2_SUPPORT;
+
+	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_INITIALIZED, jfrCheckJFRCMDLineOptions, NULL);
+	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_SHUTTING_DOWN, jfrShutdownInternalStructures, NULL);
+	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_CLASS_INITIALIZE, jfrClassInitialize, NULL);
+}
+
 static void
 jfrShutdownInternalStructures(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
 {
@@ -2178,6 +2196,7 @@ jfrShutdownInternalStructures(J9HookInterface **hook, UDATA eventNum, void *even
 		(*hook)->J9HookUnregister(hook, J9HOOK_VM_CLASS_INITIALIZE, jfrClassInitialize, NULL);
 		if (NULL != vm->jfrState.metaDataBlobFile) {
 			j9mem_free_memory(vm->jfrState.metaDataBlobFile);
+			vm->jfrState.metaDataBlobFile = NULL;
 		}
 	}
 }

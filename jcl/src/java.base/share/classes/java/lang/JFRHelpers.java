@@ -36,6 +36,12 @@ import jdk.internal.misc.Unsafe;
 
 @SuppressWarnings("nls")
 final class JFRHelpers {
+	/* Indices into logTagValues[] / logLevelValues[]; keep in sync with the enum
+	 * declaration order in jdk.jfr.internal.LogTag and jdk.jfr.internal.LogLevel.
+	 */
+	private static final int LOGTAG_JFR_START = 13; // LogTag.JFR_START
+	private static final int LOGLEVEL_INFO = 2; // LogLevel.INFO
+
 	private static Class<?> jfrjvmClass;
 	private static Class<?> logTagClass;
 	private static Class<?> logLeveLClass;
@@ -50,11 +56,40 @@ final class JFRHelpers {
 	private static Constructor<?> constructorEventWriter;
 	private static volatile boolean jfrClassesInitialized = false;
 	private static String jfrCMDLineOption = null;
+	// Non-null exactly when ensureJfrModuleAvailable() has run and failed.
+	private static String[] jfrModuleUnavailableMessage;
 
 	static {
 		if (VM.isJFREnabled() && VM.isJFRV2SupportEnabled()) {
-			VM.initializeInternalJFRStructures();
-			initJFRClasses();
+			if (ensureJfrModuleAvailable()) {
+				VM.initializeInternalJFRStructures();
+				initJFRClasses();
+			}
+		}
+	}
+
+	/**
+	 * Ensure jdk.jfr is resolved into the running module graph, loading it on
+	 * demand if the launched application never itself required it (e.g. a
+	 * --module launch, or a jcmd-triggered command with no -XX:StartFlightRecording
+	 * on the original command line).
+	 *
+	 * @return true if jdk.jfr is available, false if it could not be loaded
+	 */
+	private static boolean ensureJfrModuleAvailable() {
+		if (ModuleLayer.boot().findModule("jdk.jfr").isPresent()) {
+			return true;
+		}
+		try {
+			jdk.internal.module.Modules.loadModule("jdk.jfr");
+			return true;
+		} catch (Throwable t) {
+			jfrModuleUnavailableMessage = new String[] {
+				"Flight Recorder can not be enabled.",
+				t.toString() + "."
+			};
+			VM.disableJFRV2Support();
+			return false;
 		}
 	}
 
@@ -217,14 +252,14 @@ final class JFRHelpers {
 				null
 			);
 			if (null != results) {
-				logJFR(results, 0, 2);
+				logJFR(results, LOGTAG_JFR_START, LOGLEVEL_INFO);
 			}
 			/*[ELSE] JAVA_SPEC_VERSION == 11 */
 			String[] results = (String []) dcmdStart.getDcmdExecute().invoke(
 					dcmdStart.getDCmdInstance(), "internal", jfrCMDLineOption, ',');
 			if (null != results) {
 				for (String result : results) {
-					logJFR(result, 0, 2);
+					logJFR(result, LOGTAG_JFR_START, LOGLEVEL_INFO);
 				}
 			}
 			/*[ENDIF] JAVA_SPEC_VERSION == 11 */
@@ -497,6 +532,15 @@ final class JFRHelpers {
 			}
 		}
 		return dcmdInvocation;
+	}
+
+	/**
+	 * Get the message describing why Flight Recorder could not be enabled.
+	 *
+	 * @return the message lines, or null if jdk.jfr was available
+	 */
+	public static String[] getJFRModuleUnavailableMessage() {
+		return jfrModuleUnavailableMessage;
 	}
 
 	/**

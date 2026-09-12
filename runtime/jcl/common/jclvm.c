@@ -652,6 +652,18 @@ Java_com_ibm_oti_vm_VM_initializeInternalJFRStructures(JNIEnv *env, jclass clazz
 	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
+void JNICALL
+Java_com_ibm_oti_vm_VM_disableJFRV2Support(JNIEnv *env, jclass clazz)
+{
+	J9VMThread *currentThread = (J9VMThread *) env;
+	J9JavaVM *javaVM = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = javaVM->internalVMFunctions;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	vmFuncs->jfrDisableJFRV2Support(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
+}
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 /*
