@@ -27,40 +27,22 @@ package com.ibm.dtfj.utils.file;
  * i.e. core file, javacore or PHD.
  *
  * @author adam
- *
  */
 public enum ImageSourceType {
-	CORE {
-		private static final String FACTORY_DTFJ = "com.ibm.dtfj.image.j9.DTFJImageFactory";
-		private static final String FACTORY_DDR = "com.ibm.j9ddr.view.dtfj.image.J9DDRImageFactory";
 
-		@Override
-		public String[] getFactoryNames() {
-			return new String[]{FACTORY_DDR, FACTORY_DTFJ};		//DDR factory is given precedence
-		}
-	},
-	JAVACORE {
-		private static final String FACTORY_JAVACORE = "com.ibm.dtfj.image.javacore.JCImageFactory";
+	CORE("com.ibm.j9ddr.view.dtfj.image.J9DDRImageFactory"), //$NON-NLS-1$
+	JAVACORE("com.ibm.dtfj.image.javacore.JCImageFactory"), //$NON-NLS-1$
+	PHD("com.ibm.dtfj.phd.PHDImageFactory"), //$NON-NLS-1$
+	META;
 
-		@Override
-		public String[] getFactoryNames() {
-			return new String[]{FACTORY_JAVACORE};
-		}
-	},
-	PHD {
-		private static final String FACTORY_PHD = "com.ibm.dtfj.phd.PHDImageFactory";
+	private final String[] factoryNames;
 
-		@Override
-		public String[] getFactoryNames() {
-			return new String[]{FACTORY_PHD};
-		}
-	},
-	META {		//meta-data file which is associated with an image source, so has no factories of it's own
-		@Override
-		public String[] getFactoryNames() {
-			return new String[]{};
-		}
-	};
+	ImageSourceType(String... factoryNames) {
+		this.factoryNames = factoryNames;
+	}
 
-	public abstract String[] getFactoryNames();
+	public String[] getFactoryNames() {
+		return factoryNames;
+	}
+
 }
