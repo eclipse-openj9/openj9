@@ -31,6 +31,7 @@
 
  <test id="X">
   <command>$EXE$ $CP$ -X $TARGET$</command>
+  <output type="success">.*following.options.are.non-?standard.*</output>
   <output type="success">.*The.-X.options.are.non-?standard.and.subject.to.change.without.notice.*</output>
  </test>
 
