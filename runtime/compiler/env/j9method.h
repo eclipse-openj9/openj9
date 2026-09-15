@@ -556,7 +556,8 @@ public:
     virtual void makeParameterList(TR::ResolvedMethodSymbol *methodSym);
 
     /**
-     * @brief Check if a field has the NullRestricted attribute.
+     * @brief Check if a field has the NullRestricted attribute.  Should only be called
+     *        for a field that is already resolved.
      *
      * @param[in] comp : The current compilation object
      * @param[in] cpIndex : the constant pool index of the field
