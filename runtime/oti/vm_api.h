@@ -325,6 +325,25 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 /* ---------------- classsname.cpp ---------------- */
 
 /**
+ * Build a J9UTF8 containing the name for a class.
+ *
+ * For non-array classes the returned pointer is J9ROMCLASS_CLASSNAME(clazz->romClass),
+ * which points into the ROM class (no allocation; *freeResult is always false).
+ * For array classes a J9UTF8 is constructed.  The caller-supplied buffer is used
+ * when sizeof(J9UTF8) + name length fits; otherwise memory is heap-allocated and *freeResult is set to true.
+ *
+ * @param[in] currentThread the current J9VMThread
+ * @param[in] memCategory memory category for any heap allocation
+ * @param[in] clazz the class whose name is to be built
+ * @param[in] buffer caller-supplied buffer aligned for J9UTF8, or NULL
+ * @param[in] bufferSize size of buffer in bytes
+ * @param[out] freeResult set to TRUE when the caller must free the returned pointer
+ * @return the class name, or NULL on out of memory
+ */
+J9UTF8 *
+buildClassNameJ9UTF8(J9VMThread *currentThread, U_32 memCategory, J9Class *clazz, U_8 *buffer, UDATA bufferSize, BOOLEAN *freeResult);
+
+/**
  * Get the String representing the name of a Class. If the String has not been created
  * yet, create it and optionally intern and assign it to the Class.
  *
