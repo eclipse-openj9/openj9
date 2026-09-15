@@ -1890,7 +1890,7 @@ JavaCoreDumpWriter::writeMemoryCountersSection(void)
 		struct immap_privatemstats ztpfNativeStats;
 		int rc = mprivatestats(&ztpfNativeStats);
 
-		_OutputStream.writeCharacters("0SECTION       Native configuration information for z/TPF\n");
+		_OutputStream.writeCharacters("0SECTION       Native z/TPF configuration subcomponent\n");
 		_OutputStream.writeCharacters("NULL           ==========================================\n");
 		if (0 != rc) {
 			_OutputStream.writeCharacters("1TPFCONFIG     Unavailable: ");
@@ -2941,7 +2941,7 @@ JavaCoreDumpWriter::writeMemoryDisclaimInfoSection(void)
 
 	J9JITMemDisclaimInfo &info = jitConfig->memDisclaimInfo;
 
-	_OutputStream.writeCharacters("0SECTION       Memory disclaim info dump routine\n");
+	_OutputStream.writeCharacters("0SECTION       Memory disclaim subcomponent dump routine\n");
 	_OutputStream.writeCharacters("NULL           ------------------------------------------------------------------------\n");
 	_OutputStream.writeCharacters("1CIDISCLSUBS   Disclaim subsystem status\n");
 	_OutputStream.writeCharacters("NULL           ------------------------------------------------------------------------\n");
