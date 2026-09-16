@@ -57,7 +57,10 @@ void TR_Debug::print(OMR::Logger *log, TR::X86RecompilationSnippet *snippet)
 
     uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
 
-    printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(snippet->getDestination()));
+    printSnippetLabel(log, snippet, bufferPos);
+    log->prints(" (");
+    log->prints(getName(snippet->getDestination()));
+    log->printc(')');
 
     printPrefix(log, NULL, bufferPos, 5);
     log->printf("call\t%s \t\t%s Helper Address = " POINTER_PRINTF_FORMAT, getName(snippet->getDestination()),
