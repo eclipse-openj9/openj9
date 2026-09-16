@@ -1348,7 +1348,9 @@ TR::Register *J9::X86::TreeEvaluator::newEvaluator(TR::Node *node, TR::CodeGener
  *
  * The inline code runs as follows:
  *   @code
- *   if (m == 0) {
+ *   if (n < 0) { // if any dimension is negative
+ *     goto OOL VM helper
+ *   } else if (m == 0) {
  *     totalSize = zero array size
  *   } else if (m < 0) { // negative array size
  *     goto OOL VM helper call
@@ -1356,12 +1358,10 @@ TR::Register *J9::X86::TreeEvaluator::newEvaluator(TR::Node *node, TR::CodeGener
  *     spineSize = spineArrayHeaderSize + m * referenceSize
  *     if (n == 0) {
  *       leafSize = zero array size
- *     } else if (n < 0) { // negative array size
- *       goto OOL VM helper
  *     } else {
  *       leafSize = leafArrayHeaderSize + n * leafArrayElementSize
- *       leafBlockSize = m * leafSize
  *     }
+ *     leafBlockSize = m * leafSize
  *     totalSize = spineSize + leafBlockSize
  *   }
  *   spinePtr = vmThread->heapAlloc
@@ -1520,6 +1520,13 @@ static TR::Register *generate2DArrayWithInlineAllocators(TR::Node *node, TR::Cod
     TR::Register *tempReg = cg->allocateRegister();
     Inst_RegImm(OP::MOV8RegImm4, node, tempReg, zeroArraySizeAligned, cg);
 
+    TR::Register *secondDimReg = cg->allocateRegister();
+    Inst_RegMem(OP::MOVSXReg8Mem4, node, secondDimReg, MRef_Bdisp32(dimsPtrReg, 0, cg), cg);
+
+    // Check if second dim < 0 go to OOL helper before we branch away on first dim = 0
+    Inst_RegReg(OP::TEST8RegReg, node, secondDimReg, secondDimReg, cg);
+    Inst_Label(OP::JL4, node, helperLabel, cg);
+
     TR::Register *firstDimReg = cg->allocateRegister();
     Inst_RegMem(OP::MOVSXReg8Mem4, node, firstDimReg, MRef_Bdisp32(dimsPtrReg, 4, cg), cg);
 
@@ -1551,16 +1558,10 @@ static TR::Register *generate2DArrayWithInlineAllocators(TR::Node *node, TR::Cod
     Inst_RegImm(OP::MOV8RegImm4, node, leafSizeReg, contiguousArrayHeaderSize, cg);
 
     // if second dim = 0 load the zero array size and skip over calculating the leaf size
-    TR::Register *secondDimReg = cg->allocateRegister();
-    Inst_RegMem(OP::MOVSXReg8Mem4, node, secondDimReg, MRef_Bdisp32(dimsPtrReg, 0, cg), cg);
-
     Inst_RegReg(OP::TEST8RegReg, node, secondDimReg, secondDimReg, cg);
     Inst_RegReg(OP::CMOVE8RegReg, node, leafSizeReg, tempReg, cg);
     TR::LabelSymbol *calculateLeafBlockSize = generateLabelSymbol(cg);
     Inst_Label(OP::JE4, node, calculateLeafBlockSize, cg);
-
-    // if second dim < 0 go to OOL helper
-    Inst_Label(OP::JL4, node, helperLabel, cg);
 
     // leaf size = header size + second dim * leaf element size
     Inst_RegMem(OP::LEA8RegMem, node, leafSizeReg,
@@ -1909,14 +1910,13 @@ static TR::Register *generate2DZeroLengthArrayWithInlineAllocators(TR::Node *nod
     classReg = cg->evaluate(thirdChild);
 
     // inlined code for allocating zero length arrays where the zero len is in either the first or second dimension
-
     Inst_RegMem(OP::L4RegMem, node, secondDimLenReg, MRef_Bdisp32(dimsPtrReg, 0, cg), cg);
     // Load the 32-bit length value as a 64-bit value so that the top half of the register
     // can be zeroed out. This will allow us to treat the value as 64-bit when performing
     // calculations later on.
     Inst_RegMem(OP::MOVSXReg8Mem4, node, firstDimLenReg, MRef_Bdisp32(dimsPtrReg, 4, cg), cg);
 
-    Inst_RegImm(OP::CMP4RegImm4, node, secondDimLenReg, 0, cg);
+    Inst_RegReg(OP::TEST4RegReg, node, secondDimLenReg, secondDimLenReg, cg);
 
     Inst_Label(OP::JNE4, node, oolJumpPoint, cg);
     // Second Dim length is 0
