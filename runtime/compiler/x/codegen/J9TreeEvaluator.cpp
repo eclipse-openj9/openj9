@@ -1523,6 +1523,13 @@ static TR::Register *generate2DArrayWithInlineAllocators(TR::Node *node, TR::Cod
     TR::Register *firstDimReg = cg->allocateRegister();
     Inst_RegMem(OP::MOVSXReg8Mem4, node, firstDimReg, MRef_Bdisp32(dimsPtrReg, 4, cg), cg);
 
+    TR::Register *secondDimReg = cg->allocateRegister();
+    Inst_RegMem(OP::MOVSXReg8Mem4, node, secondDimReg, MRef_Bdisp32(dimsPtrReg, 0, cg), cg);
+
+    // Check if second dim < 0 go to OOL helper before we branch away on first dim = 0
+    Inst_RegReg(OP::TEST8RegReg, node, secondDimReg, secondDimReg, cg);
+    Inst_Label(OP::JL4, node, helperLabel, cg);
+
     // if first dim = 0 load the zero array size and skip over calculating the leaf block size
     Inst_RegReg(OP::TEST8RegReg, node, firstDimReg, firstDimReg, cg);
     Inst_RegReg(OP::CMOVE8RegReg, node, spineSizeReg, tempReg, cg);
@@ -1551,16 +1558,10 @@ static TR::Register *generate2DArrayWithInlineAllocators(TR::Node *node, TR::Cod
     Inst_RegImm(OP::MOV8RegImm4, node, leafSizeReg, contiguousArrayHeaderSize, cg);
 
     // if second dim = 0 load the zero array size and skip over calculating the leaf size
-    TR::Register *secondDimReg = cg->allocateRegister();
-    Inst_RegMem(OP::MOVSXReg8Mem4, node, secondDimReg, MRef_Bdisp32(dimsPtrReg, 0, cg), cg);
-
     Inst_RegReg(OP::TEST8RegReg, node, secondDimReg, secondDimReg, cg);
     Inst_RegReg(OP::CMOVE8RegReg, node, leafSizeReg, tempReg, cg);
     TR::LabelSymbol *calculateLeafBlockSize = generateLabelSymbol(cg);
     Inst_Label(OP::JE4, node, calculateLeafBlockSize, cg);
-
-    // if second dim < 0 go to OOL helper
-    Inst_Label(OP::JL4, node, helperLabel, cg);
 
     // leaf size = header size + second dim * leaf element size
     Inst_RegMem(OP::LEA8RegMem, node, leafSizeReg,
