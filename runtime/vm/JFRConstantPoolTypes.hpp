@@ -490,6 +490,14 @@ struct PhysicalMemoryEntry {
 	U_64 usedSize;
 };
 
+struct ObjectAllocationSampleEntry {
+	I_64 ticks;
+	U_64 eventThreadIndex;
+	U_32 stackTraceIndex;
+	U_32 objectClassIndex; /**< class constant-pool index for the allocated object class */
+	U_64 weight;           /**< bytes allocated since last JFR sample on this thread */
+};
+
 struct JFRConstantEvents {
 	JVMInformationEntry JVMInfoEntry;
 	CPUInformationEntry CPUInfoEntry;
@@ -591,6 +599,8 @@ private:
 	UDATA _physicalMemoryCount;
 	J9Pool *_javaEventDataTable;
 	UDATA _javaEventDataCount;
+	J9Pool *_objectAllocationSampleTable;
+	UDATA _objectAllocationSampleCount;
 
 	/* Periodic events. */
 	bool _shouldWriteJVMInformation;
@@ -923,6 +933,8 @@ public:
 
 	void addClassLoaderStatisticsEntry(J9JFRClassLoaderStatistics *classLoaderStatisticsData);
 
+	void addObjectAllocationSampleEntry(J9JFRObjectAllocationSample *objectAllocationSampleData);
+
 	J9Pool *getExecutionSampleTable()
 	{
 		return _executionSampleTable;
@@ -1106,6 +1118,16 @@ public:
 	UDATA getThreadDumpCount()
 	{
 		return _threadDumpCount;
+	}
+
+	J9Pool *getObjectAllocationSampleTable()
+	{
+		return _objectAllocationSampleTable;
+	}
+
+	UDATA getObjectAllocationSampleCount()
+	{
+		return _objectAllocationSampleCount;
 	}
 
 	UDATA getThreadStartCount()
@@ -1534,6 +1556,9 @@ public:
 			}
 			case J9JFR_EVENT_TYPE_JAVA_EVENT_DATA:
 				addJavaEventDataEntry((J9JFRJavaEventData *)event);
+				break;
+			case J9JFR_EVENT_TYPE_OBJECT_ALLOCATION_SAMPLE:
+//				addObjectAllocationSampleEntry((J9JFRObjectAllocationSample *)event);
 				break;
 			default:
 				Assert_VM_unreachable();
@@ -2344,6 +2369,8 @@ done:
 		, _physicalMemoryCount(0)
 		, _javaEventDataTable(NULL)
 		, _javaEventDataCount(0)
+		, _objectAllocationSampleTable(NULL)
+		, _objectAllocationSampleCount(0)
 		, _shouldWriteJVMInformation(false)
 		, _shouldWriteCPUInformationEvent(false)
 		, _shouldWriteVirtualizationInformationEvent(false)
@@ -2602,6 +2629,13 @@ done:
 			goto done;
 		}
 
+		_objectAllocationSampleTable = pool_new(sizeof(ObjectAllocationSampleEntry), 0, sizeof(U_64),
+			0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		if (NULL == _objectAllocationSampleTable) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+
 		/* Add reserved index for default entries. For strings zero is the empty or NUll string.
 		 * For package zero is the deafult package, for Module zero is the unnamed module. ThreadGroup
 		 * zero is NULL threadGroup.
@@ -2711,6 +2745,7 @@ done:
 		pool_kill(_threadAllocationStatisticsTable);
 		pool_kill(_physicalMemoryTable);
 		pool_kill(_javaEventDataTable);
+		pool_kill(_objectAllocationSampleTable);
 		freeNetworkInterfaceNames();
 		j9mem_free_memory(_globalStringTable);
 	}
