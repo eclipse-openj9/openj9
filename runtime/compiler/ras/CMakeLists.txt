@@ -21,7 +21,10 @@
 ################################################################################
 
 j9jit_files(
+	ras/DataSink.cpp
 	ras/HashTable.cpp
 	ras/InternalFunctions.cpp
 	ras/kca_offsets_generator.cpp
+	ras/MethodTreeWriter.cpp
+	ras/XMLMethodTreeWriter.cpp
 )
