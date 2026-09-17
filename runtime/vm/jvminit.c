@@ -784,9 +784,11 @@ freeJavaVM(J9JavaVM * vm)
 
 #if defined(J9VM_OPT_JFR)
 	j9mem_free_memory(vm->jfrState.jfrFileName);
+	j9mem_free_memory(vm->jfrState.jfrRepositoryLocation);
 	j9mem_free_memory(vm->jfrState.delay);
 	j9mem_free_memory(vm->jfrState.duration);
 	vm->jfrState.jfrFileName = NULL;
+	vm->jfrState.jfrRepositoryLocation = NULL;
 	vm->jfrState.delay = NULL;
 	vm->jfrState.duration = NULL;
 #endif /* defined(J9VM_OPT_JFR) */
