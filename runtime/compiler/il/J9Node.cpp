@@ -290,7 +290,10 @@ TR::Node *J9::Node::processJNICall(TR::TreeTop *callNodeTreeTop, TR::ResolvedMet
     if (comp->canTransformUnsafeCopyToArrayCopy() && self()->isUnsafeCopyMemoryIntrinsic()) {
         return self();
     }
-    if (comp->canTransformUnsafeSetMemory() && (methodSymbol->getRecognizedMethod() == TR::sun_misc_Unsafe_setMemory)) {
+
+    if (comp->canTransformUnsafeSetMemory()
+        && ((methodSymbol->getRecognizedMethod() == TR::sun_misc_Unsafe_setMemory)
+            || (methodSymbol->getRecognizedMethod() == TR::jdk_internal_misc_Unsafe_setMemory0))) {
         return self();
     }
 
