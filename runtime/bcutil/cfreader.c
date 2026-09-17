@@ -75,11 +75,7 @@ checkStackOverflow(UDATA startingSP, UDATA availableStackSpace)
 {
 	UDATA localVar = 0;
 	UDATA currentSP  = (UDATA)&localVar;
-	UDATA usedStack = 0;
-
-	if (currentSP < startingSP) {
-		usedStack = startingSP - currentSP;
-	}
+	UDATA usedStack = abs(startingSP - currentSP);
 
 	if ((availableStackSpace - usedStack) < J9_OS_STACK_GUARD) {
 		return FALSE;
