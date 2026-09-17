@@ -38,6 +38,7 @@
 	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
 	<property name="LIB" value="asm,jcommander,testng"/>
 	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
+	<import file="${TEST_ROOT}/functional/cmdLineTests/buildTools.xml" />
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
@@ -82,7 +83,7 @@
 		</copy>
 	</target>
 
-	<target name="build" >
+	<target name="build" depends="buildCmdLineTestTools" >
 		<condition property="is_JDK_VERSION_Valhalla">
 			<equals arg1="${JDK_VERSION}" arg2="Valhalla"/>
 		</condition>
