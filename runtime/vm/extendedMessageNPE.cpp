@@ -468,8 +468,9 @@ getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romCl
 			}
 			break;
 		}
-		case JBgetfield: /* FALLTHROUGH */
-		case JBputfield: {
+		case JBgetfield:
+		case JBputfield:
+		case JBputstatic: {
 			U_16 index = PARAM_16(bcCurrentPtr, 1);
 			UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(romClass), index);
 
@@ -481,27 +482,38 @@ getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romCl
 				J9UTF8 *fieldName = J9ROMNAMEANDSIGNATURE_NAME(fieldNameAndSig);
 
 				if (NULL == npeCauseMsg) {
-					if (JBputfield == bcCurrent) {
-						msgTemplate = "Cannot assign field \"%.*s\"";
-					} else {
+					if (JBgetfield == bcCurrent) {
 						msgTemplate = "Cannot read field \"%.*s\"";
-					}
-					npeMsg = getMsgWithAllocation(vmThread, msgTemplate, J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName));
-				} else {
-					if (JBputfield == bcCurrent) {
-						if (isMethodFlag) {
-							msgTemplate = "Cannot assign field \"%.*s\" because the return value of \"%s\" is null";
-						} else {
-							msgTemplate = "Cannot assign field \"%.*s\" because \"%s\" is null";
-						}
 					} else {
-						if (isMethodFlag) {
-							msgTemplate = "Cannot read field \"%.*s\" because the return value of \"%s\" is null";
-						} else {
-							msgTemplate = "Cannot read field \"%.*s\" because \"%s\" is null";
-						}
+						msgTemplate = "Cannot assign field \"%.*s\"";
 					}
-					npeMsg = getMsgWithAllocation(vmThread, msgTemplate, J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName), npeCauseMsg);
+					npeMsg = getMsgWithAllocation(vmThread, msgTemplate,
+						J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName));
+				} else if (JBputstatic == bcCurrent) {
+					if (isMethodFlag) {
+						msgTemplate = "Cannot assign field \"%.*s\" because the return value of \"%s\" cannot be stored into a null-restricted field";
+					} else {
+						msgTemplate = "Cannot assign field \"%.*s\" because \"%s\" cannot be stored into a null-restricted field";
+					}
+					npeMsg = getMsgWithAllocation(vmThread, msgTemplate,
+						J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName), npeCauseMsg);
+				} else if (JBputfield == bcCurrent) {
+					if (isMethodFlag) {
+						msgTemplate = "Cannot assign field \"%.*s\" because the return value of \"%s\" is null or \"%.*s\" is a null-restricted field and there's an attempt to store null in it";
+					} else {
+						msgTemplate = "Cannot assign field \"%.*s\" because \"%s\" is null or \"%.*s\" is a null-restricted field and there's an attempt to store null in it";
+					}
+					npeMsg = getMsgWithAllocation(vmThread, msgTemplate,
+						J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName), npeCauseMsg,
+						J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName));
+				} else {
+					if (isMethodFlag) {
+						msgTemplate = "Cannot read field \"%.*s\" because the return value of \"%s\" is null";
+					} else {
+						msgTemplate = "Cannot read field \"%.*s\" because \"%s\" is null";
+					}
+					npeMsg = getMsgWithAllocation(vmThread, msgTemplate,
+						J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName), npeCauseMsg);
 				}
 			} else {
 				Trc_VM_GetCompleteNPEMessage_UnexpectedCPType(vmThread, cpType, bcCurrent);
@@ -1115,6 +1127,14 @@ computeNPEMsgAtPC(J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romC
 				break;
 			}
 
+			case JBputstatic: {
+				UDATA bcCausePos = bytecodeOffset[npePC].first;
+				if (npeFinalFlag) {
+					computeNPEMsgAtPC(vmThread, romMethod, romClass, bcCausePos, false, npeMsg, isMethodFlag, temps, bytecodeOffset);
+				}
+				break;
+			}
+
 			case JBputfield: {
 				UDATA bcCausePos = bytecodeOffset[npePC].first;
 				char *npeMsgObjref = NULL;
@@ -1587,7 +1607,7 @@ simulateStack(J9NPEMessageData *npeMsgData)
 				NPEMSG_DROP(1);
 			}
 			if (currentBytecode & 1) {
-				if (JBputfield == currentBytecode) {
+				if ((JBputfield == currentBytecode) || (JBputstatic == currentBytecode)) {
 					setSrcBytecodeOffset(bytecodeOffset, bcPos, *(stackTop - 1), 0);
 				}
 				/* JBputfield/JBpustatic - odd currentBytecode's */

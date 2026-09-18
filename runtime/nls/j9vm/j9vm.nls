@@ -2603,3 +2603,10 @@ J9NLS_VM_INVALID_DUMP_AGENTS.explanation=One or more -Xdump:system options conta
 J9NLS_VM_INVALID_DUMP_AGENTS.system_action=The JVM will fail to start.
 J9NLS_VM_INVALID_DUMP_AGENTS.user_response=Check and correct the listed -Xdump:system options.
 # END NON-TRANSLATABLE
+
+J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_ARRAY=Cannot store null in a null-restricted array
+# START NON-TRANSLATABLE
+J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_ARRAY.explanation=Cannot store null in a null-restricted array.
+J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_ARRAY.system_action=The JVM will throw a NullPointerException.
+J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_ARRAY.user_response=Do not store null in a null-restricted array.
+# END NON-TRANSLATABLE

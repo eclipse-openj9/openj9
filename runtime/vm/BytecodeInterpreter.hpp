@@ -7335,11 +7335,12 @@ done:
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 					J9ArrayClass *arrayClass = (J9ArrayClass *)J9OBJECT_CLAZZ(_currentThread, arrayref);
 					if ((NULL == value) && J9_IS_J9ARRAYCLASS_NULL_RESTRICTED(arrayClass)) {
-						rc = THROW_NPE;
-						return rc;
-					}
+						rc = THROW_NULL_RESTRICTED_ARRAY_NPE;
+					} else
 #endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
-					rc = THROW_ARRAY_STORE;
+					{
+						rc = THROW_ARRAY_STORE;
+					}
 				} else {
 					VM_ValueTypeHelpers::storeFlattenableArrayElement(_currentThread, _objectAccessBarrier, arrayref, index, value);
 					_pc += 1;
@@ -10883,6 +10884,14 @@ public:
 #define PERFORM_ACTION_CRIU_STM_THROW
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+#define PERFORM_ACTION_THROW_NULL_RESTRICTED_ARRAY_NPE \
+	case THROW_NULL_RESTRICTED_ARRAY_NPE: \
+		goto nullRestrictedArrayNPE;
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+#define PERFORM_ACTION_THROW_NULL_RESTRICTED_ARRAY_NPE
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 #define PERFORM_ACTION_THROW_GET_STRICT_STATIC_NOT_SET \
 	case THROW_GET_STRICT_STATIC_NOT_SET: \
@@ -10933,6 +10942,7 @@ public:
 			goto negativeArraySize; \
 		case THROW_NPE: \
 			goto nullPointer; \
+		PERFORM_ACTION_THROW_NULL_RESTRICTED_ARRAY_NPE \
 		case THROW_AIOB: \
 			goto arrayIndex; \
 		case THROW_ARRAY_STORE: \
@@ -11592,6 +11602,15 @@ nullPointer:
 	setCurrentExceptionUTF(_currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
 	VMStructHasBeenUpdated(REGISTER_ARGS);
 	goto throwCurrentException;
+
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+nullRestrictedArrayNPE:
+	updateVMStruct(REGISTER_ARGS);
+	prepareForExceptionThrow(_currentThread);
+	setCurrentExceptionNLS(_currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_ARRAY);
+	VMStructHasBeenUpdated(REGISTER_ARGS);
+	goto throwCurrentException;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 wrongMethodType:
 	updateVMStruct(REGISTER_ARGS);
