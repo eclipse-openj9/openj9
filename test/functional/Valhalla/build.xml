@@ -34,7 +34,12 @@
 	<!--Properties for this particular build-->
 	<property name="src" location="./src"/>
 	<property name="src_qtypes" location="./src_qtypes"/>
+	<property name="src_aotvtv1" location="./src_aotvtv1"/>
+	<property name="src_aotvtv2" location="./src_aotvtv2"/>
 	<property name="build" location="./bin"/>
+	<property name="build_aotvtv1" location="./bin_aotvtv1"/>
+	<property name="build_aotvtv2" location="./bin_aotvtv2"/>
+	<property name="build_aotvtholder" location="./bin_aotvtholder"/>
 	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
 	<property name="LIB" value="asm,jcommander,testng"/>
 	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
@@ -43,6 +48,12 @@
 	<target name="init">
 		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}"/>
+		<mkdir dir="${build_aotvtv1}"/>
+		<mkdir dir="${build_aotvtv2}"/>
+		<mkdir dir="${build_aotvtholder}/v0/org/openj9/test/lworld"/>
+		<mkdir dir="${build_aotvtholder}/v1/org/openj9/test/lworld"/>
+		<mkdir dir="${build_aotvtholder}/v2/org/openj9/test/lworld"/>
+		<mkdir dir="${build_aotvtholder}/v3/org/openj9/test/lworld"/>
 		<copy todir="${DEST}">
 			<fileset dir="${TEST_ROOT}/functional/Valhalla" includes="libvalhallatest.so" />
 		</copy>
@@ -69,6 +80,52 @@
 				<pathelement location="${LIB_DIR}/asm.jar"/>
 			</classpath>
 		</javac>
+
+		<!--
+		   - Generate different versions of a class that has value type fields marking some
+		   - fields null-restricted and some non-null-restricted versions
+		  -->
+		<java classname="org.openj9.test.lworld.ValhallaAOTTestClassGenerator" fork="true">
+			<classpath>
+				<pathelement location="${build}"/>
+				<pathelement location="${LIB_DIR}/testng.jar"/>
+				<pathelement location="${LIB_DIR}/jcommander.jar"/>
+				<pathelement location="${LIB_DIR}/asm.jar"/>
+			</classpath>
+			<jvmarg value="--enable-preview"/>
+			<arg value="org.openj9.test.lworld.ContainerWithValueTypeFields"/>  <!-- Container class name -->
+			<arg value="org.openj9.test.lworld.Node"/>                          <!-- Fields value type class name -->
+			<arg value="2"/>                                                    <!-- Number of fields -->
+			<arg value="${build_aotvtholder}/v%d"/>                             <!-- Class file output directory pattern -->
+		</java>
+
+		<!-- Compile value type classes that will be defined differently during AOT compilations and loads -->
+		<javac srcdir="${src_aotvtv1}" destdir="${build_aotvtv1}" debug="true" fork="true" executable="${compiler.javac}" encoding="ISO-8859-1">
+			<src path="${src_aotvtv1}"/>
+			<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED' />
+			<compilerarg line='--add-exports java.base/jdk.internal.value=ALL-UNNAMED' />
+			<compilerarg line='--add-exports java.base/jdk.internal.vm.annotation=ALL-UNNAMED' />
+			<compilerarg line='--enable-preview -source 28'/>
+			<classpath>
+				<pathelement location="${LIB_DIR}/testng.jar"/>
+				<pathelement location="${LIB_DIR}/jcommander.jar"/>
+				<pathelement location="${LIB_DIR}/asm.jar"/>
+			</classpath>
+		</javac>
+
+		<!-- Compile value type classes that will be defined differently during AOT compilations and loads -->
+		<javac srcdir="${src_aotvtv2}" destdir="${build_aotvtv2}" debug="true" fork="true" executable="${compiler.javac}" encoding="ISO-8859-1">
+			<src path="${src_aotvtv2}"/>
+			<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED' />
+			<compilerarg line='--add-exports java.base/jdk.internal.value=ALL-UNNAMED' />
+			<compilerarg line='--add-exports java.base/jdk.internal.vm.annotation=ALL-UNNAMED' />
+			<compilerarg line='--enable-preview -source 28'/>
+			<classpath>
+				<pathelement location="${LIB_DIR}/testng.jar"/>
+				<pathelement location="${LIB_DIR}/jcommander.jar"/>
+				<pathelement location="${LIB_DIR}/asm.jar"/>
+			</classpath>
+		</javac>
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution" >
@@ -77,6 +134,36 @@
 			<fileset dir="${build}"/>
 			<fileset dir="${src}/../" includes="*.properties,*.xml"/>
 		</jar>
+
+		<!-- Jar files with value type classes that will be defined differently for AOT compiles and loads -->
+		<jar jarfile="${DEST}/ValhallaAOTVTV1.jar" filesonly="true">
+			<fileset dir="${build_aotvtv1}"/>
+		</jar>
+
+		<jar jarfile="${DEST}/ValhallaAOTVTV2.jar" filesonly="true">
+			<fileset dir="${build_aotvtv2}"/>
+		</jar>
+
+		<!--
+		   - Jar files with identity type classes that will have value type fields
+		   - with varying null-restricted attributes for AOT compiles and loads.
+		  -->
+		<jar jarfile="${DEST}/ValhallaAOTContainerV0.jar" filesonly="true">
+			<fileset dir="${build_aotvtholder}/v0"/>
+		</jar>
+
+		<jar jarfile="${DEST}/ValhallaAOTContainerV1.jar" filesonly="true">
+			<fileset dir="${build_aotvtholder}/v1"/>
+		</jar>
+
+		<jar jarfile="${DEST}/ValhallaAOTContainerV2.jar" filesonly="true">
+			<fileset dir="${build_aotvtholder}/v2"/>
+		</jar>
+
+		<jar jarfile="${DEST}/ValhallaAOTContainerV3.jar" filesonly="true">
+			<fileset dir="${build_aotvtholder}/v3"/>
+		</jar>
+
 		<copy todir="${DEST}">
 			<fileset dir="${src}/../" includes="*.xml" />
 			<fileset dir="${src}/../" includes="*.mk" />
@@ -94,5 +181,8 @@
 	<target name="clean" depends="dist" description="clean up" >
 		<!-- Delete the ${build} directory trees -->
 		<delete dir="${build}"/>
+		<delete dir="${build_aotvtv1}"/>
+		<delete dir="${build_aotvtv2}"/>
+		<delete dir="${build_aotvtholder}"/>
 	</target>
 </project>
