@@ -497,4 +497,47 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
+	<test>
+		<testCaseName>AOTValhallaFlattenableFieldsTests</testCaseName>
+		<variations>
+			<variation>-DVALHNODEDEF=341 -DVALHCONTAINERDEF=350</variation>
+			<variation>-DVALHNODEDEF=341 -DVALHCONTAINERDEF=351</variation>
+			<variation>-DVALHNODEDEF=341 -DVALHCONTAINERDEF=352</variation>
+			<variation>-DVALHNODEDEF=341 -DVALHCONTAINERDEF=353</variation>
+			<variation>-DVALHNODEDEF=342 -DVALHCONTAINERDEF=350</variation>
+			<variation>-DVALHNODEDEF=342 -DVALHCONTAINERDEF=351</variation>
+			<variation>-DVALHNODEDEF=342 -DVALHCONTAINERDEF=352</variation>
+			<variation>-DVALHNODEDEF=342 -DVALHCONTAINERDEF=353</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) \
+		$(JVM_OPTIONS) \
+		-DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
+		-DSEP=$(Q)$(P)$(Q) \
+		-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)ValhallaTests.jar$(Q) \
+		-DTESTAOTVTV1PATH=$(Q)$(TEST_RESROOT)$(D)ValhallaAOTVTV1.jar$(Q) \
+		-DTESTAOTVTV2PATH=$(Q)$(TEST_RESROOT)$(D)ValhallaAOTVTV2.jar$(Q) \
+		-DTESTAOTVTVCONTAINERV0PATH=$(Q)$(TEST_RESROOT)$(D)ValhallaAOTContainerV0.jar$(Q) \
+		-DTESTAOTVTVCONTAINERV1PATH=$(Q)$(TEST_RESROOT)$(D)ValhallaAOTContainerV1.jar$(Q) \
+		-DTESTAOTVTVCONTAINERV2PATH=$(Q)$(TEST_RESROOT)$(D)ValhallaAOTContainerV2.jar$(Q) \
+		-DTESTAOTVTVCONTAINERV3PATH=$(Q)$(TEST_RESROOT)$(D)ValhallaAOTContainerV3.jar$(Q) \
+		-DRESJAR=$(CMDLINETESTER_RESJAR) -jar $(CMDLINETESTER_JAR) \
+		-config $(Q)$(TEST_RESROOT)$(D)AOTValhallaFlattenableFieldsTests.xml$(Q) \
+		-outputLimit 1000 -explainExcludes -xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) \
+		-xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
+		-nonZeroExitWhenError; \
+		$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<versions>
+			<version>Valhalla</version>
+		</versions>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
 </playlist>
