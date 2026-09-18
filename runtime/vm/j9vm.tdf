@@ -1094,3 +1094,4 @@ TraceEvent=Trc_VM_jfr_parseXlog_logTags noEnv Overhead=1 Level=5 Template="parse
 TraceEvent=Trc_VM_jfr_parseXlog_output_upToColon noEnv Overhead=1 Level=5 Template="parseXlogJFR() output method: upToColon(%s) fullOptions(%s)"
 TraceEvent=Trc_VM_jfr_parseXlog_output noEnv Overhead=1 Level=5 Template="parseXlogJFR() output method: output(%s) upToColon(%s)"
 TraceEvent=Trc_VM_jfr_parseXlog_disabled noEnv Overhead=1 Level=5 Template="parseXlogJFR() JFR log is disabled"
+TraceEvent=Trc_VM_GetCompleteNPEMessage_JBputstatic_npeCauseMsg Overhead=1 Level=3 Template="GetCompleteNPEMessage JBputstatic has npeCauseMsg (%s)"
