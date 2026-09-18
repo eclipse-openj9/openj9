@@ -354,6 +354,13 @@ static IDATA initializeModulesPathEntry(J9JavaVM *javaVM, J9ClassPathEntry *cpEn
 static jint prependJimageVMOptions(J9JavaVM *vm);
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
+#if defined(J9VM_OPT_JFR)
+static JFRLogLevel convertLogLevel(const char *jfrLogLevel);
+static JFRLogTag convertTagName(const char *jfrLogTag);
+static UDATA parseJFRTags(char *jfrTags, BOOLEAN *wildcardSpecified);
+static IDATA parseXlogJFR(J9JavaVM *vm);
+#endif /* defined(J9VM_OPT_JFR) */
+
 #if defined(COUNT_BYTECODE_PAIRS)
 static jint
 initializeBytecodePairs(J9JavaVM *vm)
@@ -658,6 +665,12 @@ freeJavaVM(J9JavaVM * vm)
 #if defined(J9VM_OPT_JFR)
 	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_JFR_ENABLED)) {
 		shutdownJFRIDs(vm);
+		if (NULL != vm->jfrState.jfrLogFileName) {
+			PORT_ACCESS_FROM_JAVAVM(vm);
+			j9mem_free_memory(vm->jfrState.jfrLogFileName);
+			j9file_close(vm->jfrState.logFileDescriptor);
+			vm->jfrState.logFileDescriptor = -1;
+		}
 	}
 #endif /* defined(J9VM_OPT_JFR) */
 
@@ -1212,6 +1225,7 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 	vm->jfrState.isStarted = FALSE;
 	vm->jfrState.shouldRotateDisk = FALSE;
 	vm->jfrState.stackTraceIDCount = 0;
+	vm->jfrState.logFileDescriptor = -1;
 #endif /* defined(J9VM_OPT_JFR) */
 	vm->defaultPageSize = j9vmem_supported_page_sizes()[0];
 #if JAVA_SPEC_VERSION >= 19
@@ -7391,6 +7405,317 @@ strUpToDelimiter(char **source, char delimiter)
 	return result;
 }
 
+#if defined(J9VM_OPT_JFR)
+/**
+ * Convert a log level string to a JFRLogLevel.
+ *
+ * @param[in] jfrLogLevel pointer to a jfr log level string
+ *
+ * @return JFRLogLevel
+ */
+static JFRLogLevel
+convertLogLevel(const char *jfrLogLevel)
+{
+	JFRLogLevel logLevel = JFRLOG_LEVEL_INVALID;
+
+	Assert_VM_notNull(jfrLogLevel);
+	if (0 == j9_cmdla_stricmp(jfrLogLevel, JFRLOGLEVEL_STRING_TRACE)) {
+		logLevel = JFRLOG_LEVEL_TRACE;
+	} else if (0 == j9_cmdla_stricmp(jfrLogLevel, JFRLOGLEVEL_STRING_DEBUG)) {
+		logLevel = JFRLOG_LEVEL_DEBUG;
+	} else if (0 == j9_cmdla_stricmp(jfrLogLevel, JFRLOGLEVEL_STRING_INFO)) {
+		logLevel = JFRLOG_LEVEL_INFO;
+	} else if (0 == j9_cmdla_stricmp(jfrLogLevel, JFRLOGLEVEL_STRING_WARN)) {
+		logLevel = JFRLOG_LEVEL_WARN;
+	} else if (0 == j9_cmdla_stricmp(jfrLogLevel, JFRLOGLEVEL_STRING_ERROR)) {
+		logLevel = JFRLOG_LEVEL_ERROR;
+	}
+
+	Trc_VM_jfr_convertLogLevel((I_32)logLevel, jfrLogLevel);
+	return logLevel;
+}
+
+/**
+ * Convert a log tag string to a JFRLogTag.
+ *
+ * @param[in] jfrLogTag pointer to a jfr log tag string
+ *
+ * @return JFRLogTag
+ */
+static JFRLogTag
+convertTagName(const char *jfrLogTag)
+{
+	JFRLogTag tag = JFRTAG_INVALID;
+
+	Assert_VM_notNull(jfrLogTag);
+	if (0 == j9_cmdla_stricmp(jfrLogTag, JFRLOGTAG_STRING_JFR)) {
+		tag = JFRTAG_JFR;
+	} else if (0 == j9_cmdla_stricmp(jfrLogTag, JFRLOGTAG_STRING_SYSTEM)) {
+		tag = JFRTAG_SYSTEM;
+	} else if (0 == j9_cmdla_stricmp(jfrLogTag, JFRLOGTAG_STRING_EVENT)) {
+		tag = JFRTAG_EVENT;
+	} else if (0 == j9_cmdla_stricmp(jfrLogTag, JFRLOGTAG_STRING_SETTING)) {
+		tag = JFRTAG_SETTING;
+	} else if (0 == j9_cmdla_stricmp(jfrLogTag, JFRLOGTAG_STRING_BYTECODE)) {
+		tag = JFRTAG_BYTECODE;
+	} else if (0 == j9_cmdla_stricmp(jfrLogTag, JFRLOGTAG_STRING_PARSER)) {
+		tag = JFRTAG_PARSER;
+	} else if (0 == j9_cmdla_stricmp(jfrLogTag, JFRLOGTAG_STRING_METADATA)) {
+		tag = JFRTAG_METADATA;
+	} else if (0 == j9_cmdla_stricmp(jfrLogTag, JFRLOGTAG_STRING_STREAMING)) {
+		tag = JFRTAG_STREAMING;
+	} else if (0 == j9_cmdla_stricmp(jfrLogTag, JFRLOGTAG_STRING_THROTTLE)) {
+		tag = JFRTAG_THROTTLE;
+	} else if (0 == j9_cmdla_stricmp(jfrLogTag, JFRLOGTAG_STRING_DCMD)) {
+		tag = JFRTAG_DCMD;
+	} else if (0 == j9_cmdla_stricmp(jfrLogTag, JFRLOGTAG_STRING_START)) {
+		tag = JFRTAG_START;
+	}
+
+	Trc_VM_jfr_convertTagName((I_32)tag, jfrLogTag);
+	return tag;
+}
+
+/**
+ * Parse JFR log tags combined with '+', optionally ended with '*'.
+ *
+ * @param[in] jfrTags pointer to a jfr tag combination string
+ * @param[in/out] wildcardSpecified a flag for wildcard presence
+ *
+ * @return a tag combination of JFRLogTag values
+ */
+static UDATA
+parseJFRTags(char *jfrTags, BOOLEAN *wildcardSpecified)
+{
+	Assert_VM_notNull(jfrTags);
+	UDATA tagMask = JFRCOMBINATION_JFRTAG_INVALID;
+	UDATA tagsLength = strlen(jfrTags);
+
+	*wildcardSpecified = FALSE;
+	if (tagsLength > 0) {
+		char *token = NULL;
+		/* Check for the wildcard at the string end. */
+		if ('*' == jfrTags[tagsLength - 1]) {
+			*wildcardSpecified = TRUE;
+			/* Remove the wildcard for further processing. */
+			jfrTags[tagsLength - 1] = '\0';
+		}
+
+		/* Parse jfr tag string combined with '+'. */
+		token = strtok(jfrTags, "+");
+		while (NULL != token) {
+			JFRLogTag tag = convertTagName(token);
+			if (JFRTAG_INVALID == tag) {
+				tagMask = JFRCOMBINATION_JFRTAG_INVALID;
+				break;
+			}
+			tagMask |= tag;
+			token = strtok(NULL, "+");
+		}
+	}
+
+	Trc_VM_jfr_parseJFRTags(tagMask, jfrTags, wildcardSpecified);
+	return tagMask;
+}
+
+/* This has to match first JFRCOMBINATION_JFRTAG_COUNT(14) of JFRLogTagCombination in j9nonbuilder.h. */
+static const enum JFRLogTagCombination jfrLogTagsOrder[] = {
+	JFRCOMBINATION_JFR,                  /* 0 */
+	JFRCOMBINATION_JFR_SYSTEM,           /* 1 */
+	JFRCOMBINATION_JFR_SYSTEM_EVENT,     /* 2 */
+	JFRCOMBINATION_JFR_SYSTEM_SETTING,   /* 3 */
+	JFRCOMBINATION_JFR_SYSTEM_BYTECODE,  /* 4 */
+	JFRCOMBINATION_JFR_SYSTEM_PARSER,    /* 5 */
+	JFRCOMBINATION_JFR_SYSTEM_METADATA,  /* 6 */
+	JFRCOMBINATION_JFR_SYSTEM_STREAMING, /* 7 */
+	JFRCOMBINATION_JFR_SYSTEM_THROTTLE,  /* 8 */
+	JFRCOMBINATION_JFR_METADATA,         /* 9 */
+	JFRCOMBINATION_JFR_EVENT,            /* 10 */
+	JFRCOMBINATION_JFR_SETTING,          /* 11 */
+	JFRCOMBINATION_JFR_DCMD,             /* 12 */
+	JFRCOMBINATION_JFR_START             /* 13 */
+};
+
+/**
+ * Parse JFR log command line options, convert it to vm->jfrState.jfrLogFileName
+ * and values in vm->jfrState.jfrLogTagSet.
+ * Processed in left-to-right order and rightmost options override leftmost.
+ * A few examples:
+ * -Xlog:jfr
+ * -Xlog:jfr=trace
+ * -Xlog:jfr*=info
+ * -Xlog:jfr+event*=info:file=jfr.log
+ * -Xlog:jfr+event*=jfr.log
+ * -Xlog:jfr+event*=warn,jfr+system=debug:file=jfr.log
+ *
+ * @param[in] vm pointer to a J9JavaVM
+ *
+ * @return JNI_OK if no errors otherwise JNI_ERR
+ */
+static IDATA
+parseXlogJFR(J9JavaVM *vm)
+{
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	IDATA rc = JNI_OK;
+	J9VMInitArgs *j9vm_args = vm->vmArgsArray;
+	IDATA xlogindex = FIND_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, MAPOPT_XLOG_OPT_COLON_JFR, NULL);
+	BOOLEAN unrecognizedOption = FALSE;
+
+	/* By default, JFR log level is JFRLOG_LEVEL_WARN. */
+	for (int i = 0; i < JFRCOMBINATION_JFRTAG_COUNT; i++) {
+		vm->jfrState.jfrLogTagSet[i] = JFRLOG_LEVEL_WARN;
+	}
+	while (xlogindex >= 0) {
+		char *fullOptions = NULL;
+		char *upToColon = NULL;
+		char *upToComma = NULL;
+		char xlogoptionsbuf[LARGE_STRING_BUF_SIZE];
+		char *xlogoptions = xlogoptionsbuf;
+		/* Include room for the trailing NULL. */
+		UDATA optionSize = strlen(j9vm_args->actualVMArgs->options[xlogindex].optionString) + 1;
+		CONSUME_ARG(j9vm_args, xlogindex);
+
+		if (optionSize > sizeof(xlogoptionsbuf)) {
+			xlogoptions = j9mem_allocate_memory(optionSize, OMRMEM_CATEGORY_VM);
+			if (NULL == xlogoptions) {
+				rc = JNI_ERR;
+				goto xlogret;
+			}
+		}
+		if (OPTION_OK != COPY_OPTION_VALUE(xlogindex, ':', &xlogoptions, optionSize)) {
+			rc = JNI_ERR;
+			goto xlogret;
+		}
+		/* jfr is after the ':', xlogoptions can't be NULL. */
+		Assert_VM_notNull(xlogoptions);
+
+		fullOptions = xlogoptions;
+		upToColon = strUpToDelimiter(&fullOptions, ':');
+		Trc_VM_jfr_parseXlog_options(xlogindex, upToColon, fullOptions);
+		/* upToColon starts with "jfr", can't be NULL. */
+		upToComma = strUpToDelimiter(&upToColon, ',');
+		/* upToComma starts with "jfr", can't be NULL. */
+		Assert_VM_notNull(upToComma);
+		while (TRUE) {
+			char *upToEquals = NULL;
+			JFRLogLevel logLevel = JFRLOG_LEVEL_WARN;
+			Trc_VM_jfr_parseXlog_upToCommaColon(fullOptions, upToComma, upToColon);
+			upToEquals = strUpToDelimiter(&upToComma, '=');
+			Trc_VM_jfr_parseXlog_upToEqualsComma(fullOptions, upToEquals, upToComma);
+
+			if (NULL != upToComma) {
+				logLevel = convertLogLevel(upToComma);
+				if (JFRLOG_LEVEL_INVALID == logLevel) {
+					unrecognizedOption = TRUE;
+					break;
+				}
+			}
+
+			if ('\0' == *upToEquals) {
+				/* Missing tag */
+				rc = JNI_ERR;
+				goto xlogret;
+			} else {
+				UDATA jfrLog = 0;
+				BOOLEAN wildcardSpecified = FALSE;
+				UDATA logTags = parseJFRTags(upToEquals, &wildcardSpecified);
+				if (JFRCOMBINATION_JFRTAG_INVALID == logTags) {
+					unrecognizedOption = TRUE;
+					break;
+				}
+				for (int i = 0; i < JFRCOMBINATION_JFRTAG_COUNT; i++) {
+					jfrLog = jfrLogTagsOrder[i];
+					if (wildcardSpecified) {
+						if ((logTags & jfrLog) == logTags) {
+							vm->jfrState.jfrLogTagSet[i] = logLevel;
+							/* Continue searching for wildcard. */
+						}
+					} else {
+						if (logTags == jfrLog) {
+							vm->jfrState.jfrLogTagSet[i] = logLevel;
+							break;
+						}
+					}
+				}
+				Trc_VM_jfr_parseXlog_logTags(logTags, jfrLog);
+			}
+			if (NULL == upToColon) {
+				break;
+			}
+			upToComma = strUpToDelimiter(&upToColon, ',');
+		}
+		if (NULL != fullOptions) {
+			/* Look at the output method: stderr | stdout | file=<filename> | <filename>. */
+			char *output = NULL;
+			upToColon = strUpToDelimiter(&fullOptions, ':');
+			Trc_VM_jfr_parseXlog_output_upToColon(upToColon, fullOptions);
+			output = strUpToDelimiter(&upToColon, '=');
+			Trc_VM_jfr_parseXlog_output(output, upToColon);
+			if (0 == j9_cmdla_stricmp("stderr", output)) {
+				if (NULL != upToColon) {
+					rc = JNI_ERR;
+					goto xlogret;
+				}
+				vm->jfrState.jfrLogOutput = JFROUTPUT_STDERR;
+			} else if (0 == j9_cmdla_stricmp("stdout", output)) {
+				if (NULL != upToColon) {
+					rc = JNI_ERR;
+					goto xlogret;
+				}
+				vm->jfrState.jfrLogOutput = JFROUTPUT_STDOUT;
+			} else {
+				char *fileName = NULL;
+				if ((NULL == upToColon) && (NULL != output)) {
+					/* Without `=` anything non-empty is a filename. */
+					fileName = output;
+				} else if (0 == j9_cmdla_stricmp("file", output)) {
+					if (NULL == upToColon) {
+						/* 'file=' with no filename specified */
+						rc = JNI_ERR;
+						goto xlogret;
+					}
+					fileName = upToColon;
+				}
+				if (NULL != fileName) {
+					UDATA fileNameLength = strlen(fileName);
+					vm->jfrState.jfrLogOutput = JFROUTPUT_FILE;
+					if (NULL != vm->jfrState.jfrLogFileName) {
+						j9mem_free_memory(vm->jfrState.jfrLogFileName);
+					}
+					vm->jfrState.jfrLogFileName = (char *)j9mem_allocate_memory(fileNameLength + 1, OMRMEM_CATEGORY_VM);
+					memcpy(vm->jfrState.jfrLogFileName, fileName, fileNameLength);
+					*(vm->jfrState.jfrLogFileName + fileNameLength) = '\0';
+				} else {
+					/* Anything else such as `<something>=<something>` is an error. */
+					rc = JNI_ERR;
+					goto xlogret;
+				}
+			}
+
+			if (NULL != fullOptions) {
+				/* Anything besides trailing ':'s is unrecognized. */
+				unrecognizedOption = TRUE;
+				break;
+			}
+		}
+
+xlogret:
+		if (xlogoptionsbuf != xlogoptions) {
+			j9mem_free_memory(xlogoptions);
+		}
+		if (JNI_OK != rc) {
+			break;
+		}
+		if (unrecognizedOption) {
+			j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT, j9vm_args->actualVMArgs->options[xlogindex].optionString);
+		}
+		xlogindex = FIND_NEXT_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, MAPOPT_XLOG_OPT_COLON_JFR, NULL, xlogindex);
+	}
+
+	return rc;
+}
+#endif /* defined(J9VM_OPT_JFR) */
+
 /**
  * For compatibility when -XX:-LegacyXlogOption is not set, parse -Xlog:gc options and add mappings.
  * Anything besides -Xlog:gc, -Xlog:gc:stderr|<file>|file=<file>[:[:]] gives an unrecognized warning,
@@ -7477,6 +7802,12 @@ xlogerr:
 								/* Missing tag */
 								goto xlogerr;
 							}
+#if defined(J9VM_OPT_JFR)
+							if (0 == j9_cmdla_strnicmp("jfr", tag, 3)) {
+								/* jfr has been processed by parseXlogJFR(). */
+								goto xlogret;
+							}
+#endif /* defined(J9VM_OPT_JFR) */
 							if (0 == j9_cmdla_stricmp("all", tag)) {
 								if ((numtags > 0) || (NULL != upToEquals)) {
 									/* Invalid use of keyword all */
@@ -8023,6 +8354,11 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	}
 #endif /* JAVA_SPEC_VERSION < 21 */
 
+#if defined(J9VM_OPT_JFR)
+	/* Ignore JFR log parsing error. */
+	parseXlogJFR(vm);
+	/* Continue log compatibility parsing. */
+#endif /* defined(J9VM_OPT_JFR) */
 	if (doParseXlogForCompatibility) {
 		if (JNI_OK != parseXlogForCompatibility(vm)) {
 			parseError = TRUE;

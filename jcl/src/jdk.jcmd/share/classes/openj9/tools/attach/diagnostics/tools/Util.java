@@ -76,13 +76,15 @@ public class Util {
 		return stdinList;
 	}
 
-	static void runCommandAndPrintResult(AttacherDiagnosticsProvider diagProvider, String cmd, String commandName)
+	static boolean runCommandAndPrintResult(AttacherDiagnosticsProvider diagProvider, String cmd, String commandName)
 			throws IOException {
 		Properties props = diagProvider.executeDiagnosticCommand(cmd);
+		boolean runCommandError = Boolean.parseBoolean(props.getProperty(IPC.PROPERTY_DIAGNOSTICS_ERROR));
 		DiagnosticProperties.dumpPropertiesIfDebug(commandName + " result:", props); //$NON-NLS-1$
 		String responseString = new DiagnosticProperties(props).printStringResult();
 		IPC.logMessage("Util.runCommandAndPrintResult(): " + responseString); //$NON-NLS-1$
 		System.out.print(responseString);
+		return runCommandError;
 	}
 
 	static void handleCommandException(String vmid, Exception e) {
