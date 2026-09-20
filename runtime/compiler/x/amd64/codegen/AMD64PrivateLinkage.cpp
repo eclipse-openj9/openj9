@@ -961,7 +961,7 @@ int32_t J9::X86::AMD64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNo
 
         if (vreg) {
             cg()->decReferenceCount(child);
-            ////if (child->getOpCode().isLoadConst() && !childReg)
+            //if (child->getOpCode().isLoadConst() && !childReg)
             if (!willKeepConstRegLiveAcrossCall) {
                 child->setReferenceCount(oldRefCount - 1);
                 child->setRegister(NULL);

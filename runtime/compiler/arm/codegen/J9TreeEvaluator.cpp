@@ -95,10 +95,10 @@ TR::Register *J9::ARM::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Nod
         // before the null check, so that exceptions are handled in the correct
         // order.
         //
-        ///// if (needsResolve)
-        /////    {
-        /////    ...
-        /////    }
+        // if (needsResolve)
+        //   {
+        //   ...
+        //   }
 
         TR::Register *targetRegister = cg->evaluate(reference);
 
@@ -132,7 +132,7 @@ TR::Register *J9::ARM::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Nod
     // that the GC point exists, since maps before this point and after it cannot
     // be merged.
     //
-    /////if (!needCode && comp->getMethodSymbol()->isEHAwareMethod())
+    //if (!needCode && comp->getMethodSymbol()->isEHAwareMethod())
     if (!needCode) {
         TR::Instruction *faultingInstruction = cg->getImplicitExceptionPoint();
         if (faultingInstruction)
