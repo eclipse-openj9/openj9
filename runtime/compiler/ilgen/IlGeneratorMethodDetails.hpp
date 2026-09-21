@@ -265,6 +265,12 @@ public:
 
     uintptr_t *getArgRef() const { return _data._methodHandleData._argRef; }
 
+    void clearRefs()
+    {
+        _data._methodHandleData._handleRef = NULL;
+        _data._methodHandleData._argRef = NULL;
+    }
+
     virtual bool sameAs(TR::IlGeneratorMethodDetails &other, TR_FrontEnd *fe)
     {
         return other.isMethodHandleThunk() && sameMethod(other)

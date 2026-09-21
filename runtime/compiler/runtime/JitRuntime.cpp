@@ -1422,10 +1422,10 @@ uint8_t *compileMethodHandleThunk(j9object_t methodHandle, j9object_t arg, J9VMT
         }
         TR_VerboseLog::writeLine("");
     }
+    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
     bool disabled = false;
 #if defined(J9VM_OPT_JITSERVER)
     // Do not allow local compilations in JITServer server mode
-    TR::CompilationInfo *compInfo = getCompilationInfo(jitConfig);
     if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER) {
         disabled = true;
     } else
@@ -1439,6 +1439,18 @@ uint8_t *compileMethodHandleThunk(j9object_t methodHandle, j9object_t arg, J9VMT
     if (disabled) {
         if (verbose) {
             TR_VerboseLog::writeLineLocked(TR_Vlog_MH, "%p   * Disabled -- aborting.", vmThread);
+        }
+        return NULL;
+    }
+
+    // A request cannot be completed if the the JIT code/data caches are full or further compilation is disabled.
+    // Otherwise, every dispatch through j2iInvokeExact would attempt compilations of thunks and keep failing.
+    //
+    if (compInfo->getPersistentInfo()->getDisableFurtherCompilation()
+        || (jitConfig->runtimeFlags & (J9JIT_CODE_CACHE_FULL | J9JIT_DATA_CACHE_FULL))) {
+        if (verbose) {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_MH,
+                "%p   * JIT code/data cache full or compilation disabled. Compile MH thunk aborting.", vmThread);
         }
         return NULL;
     }
@@ -1506,17 +1518,8 @@ uint8_t *compileMethodHandleThunk(j9object_t methodHandle, j9object_t arg, J9VMT
             return NULL;
         }
 
-        // Create a global reference for the MethodHandle object.
-        // Note that the compilation thread has the responsibility to delete this when it's done.
-        //
-        jobject handleRef = vmThread->javaVM->internalVMFunctions->j9jni_createGlobalRef((JNIEnv *)vmThread,
-            methodHandle, false); // TODO:JSR292: Make this weak?
-        jobject argRef
-            = arg ? vmThread->javaVM->internalVMFunctions->j9jni_createGlobalRef((JNIEnv *)vmThread, arg, false) : NULL;
-
         // Create optimization plan
         //
-        TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
         TR_MethodEvent event
             = { isCustom ? TR_MethodEvent::CustomMethodHandleThunk : TR_MethodEvent::ShareableMethodHandleThunk,
                   invokeExact, 0, 0, vmThread };
@@ -1524,6 +1527,12 @@ uint8_t *compileMethodHandleThunk(j9object_t methodHandle, j9object_t arg, J9VMT
         TR_OptimizationPlan *plan
             = TR::CompilationController::getCompilationStrategy()->processEvent(&event, &newPlanCreated);
         if (plan) {
+            jobject handleRef = vmThread->javaVM->internalVMFunctions->j9jni_createGlobalRef((JNIEnv *)vmThread,
+                methodHandle, false); // TODO:JSR292: Make this weak?
+            jobject argRef = arg
+                ? vmThread->javaVM->internalVMFunctions->j9jni_createGlobalRef((JNIEnv *)vmThread, arg, false)
+                : NULL;
+
             // Compile
             //
             TR_YesNoMaybe isAsync = (flags & TRANSLATE_METHODHANDLE_FLAG_SYNCHRONOUS) ? TR_no : TR_maybe;
@@ -1534,9 +1543,13 @@ uint8_t *compileMethodHandleThunk(j9object_t methodHandle, j9object_t arg, J9VMT
             if (isCustom) {
                 J9::CustomInvokeExactThunkDetails details(invokeExact, (uintptr_t *)handleRef, (uintptr_t *)argRef);
                 startPC = (uint8_t *)compInfo->compileMethod(vmThread, details, 0, isAsync, NULL, &queued, plan);
+                if (!queued)
+                    TR::CompilationInfo::releaseMethodHandleThunkRefs(vmThread, details);
             } else {
                 J9::ShareableInvokeExactThunkDetails details(invokeExact, (uintptr_t *)handleRef, (uintptr_t *)argRef);
                 startPC = (uint8_t *)compInfo->compileMethod(vmThread, details, 0, isAsync, NULL, &queued, plan);
+                if (!queued)
+                    TR::CompilationInfo::releaseMethodHandleThunkRefs(vmThread, details);
             }
 
             if (details)
