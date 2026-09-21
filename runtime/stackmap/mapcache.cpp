@@ -22,6 +22,7 @@
 
 #include "rommeth.h"
 #include "stackmap_api.h"
+#include "ut_map.h"
 
 extern "C" {
 
@@ -75,6 +76,9 @@ checkROMMethodInfoCache(J9ClassLoader *classLoader, void *key, J9ROMMethodInfo *
 			if (NULL != entry) {
 				*outInfo = *entry;
 				found = true;
+				Trc_Map_mapcache_Hit(key);
+			} else {
+				Trc_Map_mapcache_Miss(key);
 			}
 		}
 
@@ -130,6 +134,7 @@ getROMMethodInfoCommon(J9StackWalkState *walkState, J9ClassLoader *classLoader, 
 	 */
 	if (romMethodInfo->argCount <= J9_ARGBITS_CACHE_BITS) {
 		if (romMethodInfo->argCount > 0) {
+			Trc_Map_mapcache_ArgBitsComputed(romMethod, romMethodInfo->argCount);
 			j9localmap_ArgBitsForPC0(
 					romClass,
 					romMethod,
@@ -156,6 +161,7 @@ getROMMethodInfoForBytecodePCInternal(J9StackWalkState *walkState, J9ClassLoader
 	bool cacheEnabled = (NULL != classLoader->mapCacheMutex);
 	if (cacheEnabled || J9_ARE_ANY_BITS_SET(walkState->flags, J9_STACKWALK_ITERATE_O_SLOTS)) {
 		if (numberOfLocals <= J9_LOCALMAP_CACHE_BITS) {
+			Trc_Map_mapcache_LocalMapComputed(bytecodePC);
 			IDATA rc = vm->localMapFunction(
 					vm->portLibrary,
 					romClass,
@@ -171,6 +177,7 @@ getROMMethodInfoForBytecodePCInternal(J9StackWalkState *walkState, J9ClassLoader
 		}
 
 		if ((0 != pendingCount) && (pendingCount <= J9_STACKMAP_CACHE_BITS)) {
+			Trc_Map_mapcache_StackMapComputed(bytecodePC, pendingCount);
 			IDATA rc = j9stackmap_StackBitsForPC(
 					vm->portLibrary,
 					pcOffset,
