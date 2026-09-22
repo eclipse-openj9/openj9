@@ -463,3 +463,11 @@ J9NLS_BCV_ERR_UNINITIALIZED_OBJECT.system_action=The JVM will throw a verificati
 J9NLS_BCV_ERR_UNINITIALIZED_OBJECT.user_response=Contact the provider of the classfile for a corrected version.
 
 # END NON-TRANSLATABLE
+
+J9NLS_BCV_ERR_EARLY_LARVAL_NO_UNINIT_THIS=Cannot have uninitialized strict fields without an uninitializedThis
+# START NON-TRANSLATABLE
+J9NLS_BCV_ERR_EARLY_LARVAL_NO_UNINIT_THIS.explanation=Verification failed because an early_larval stackmap frame was found whose base frame does not have the uninitializedThis flag set.
+J9NLS_BCV_ERR_EARLY_LARVAL_NO_UNINIT_THIS.system_action=The JVM will throw a java.lang.VerifyError.
+J9NLS_BCV_ERR_EARLY_LARVAL_NO_UNINIT_THIS.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
