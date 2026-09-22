@@ -6277,6 +6277,59 @@ typedef struct J9VMThread {
 #define J9VMTHREAD_DISCONTIGUOUS_INDEXABLE_HEADER_SIZE(vmThread) ((vmThread)->discontiguousIndexableHeaderSize)
 #define J9VMTHREAD_UNSAFE_INDEXABLE_HEADER_SIZE(vmThread) ((vmThread)->unsafeIndexableHeaderSize)
 
+#if defined(J9VM_OPT_JFR)
+/* This matches jdk.jfr.internal.LogLevel. */
+typedef enum JFRLogLevel {
+	JFRLOG_LEVEL_INVALID = 0,
+	JFRLOG_LEVEL_TRACE   = 1,
+	JFRLOG_LEVEL_DEBUG   = 2,
+	JFRLOG_LEVEL_INFO    = 3,
+	JFRLOG_LEVEL_WARN    = 4,
+	JFRLOG_LEVEL_ERROR   = 5,
+} JFRLogLevel;
+
+/* JFR individual tags */
+typedef enum JFRLogTag {
+	JFRTAG_INVALID    = 0,
+	JFRTAG_JFR        = 0x0001,
+	JFRTAG_SYSTEM     = 0x0002,
+	JFRTAG_EVENT      = 0x0004,
+	JFRTAG_SETTING    = 0x0008,
+	JFRTAG_BYTECODE   = 0x0010,
+	JFRTAG_PARSER     = 0x0020,
+	JFRTAG_METADATA   = 0x0040,
+	JFRTAG_STREAMING  = 0x0080,
+	JFRTAG_THROTTLE   = 0x0100,
+	JFRTAG_DCMD       = 0x0200,
+	JFRTAG_START      = 0x0400
+} JFRLogTag;
+
+/* These are valid tag combinations, and should match jdk.jfr.internal.LogTag. */
+typedef enum JFRLogTagCombination {
+	JFRCOMBINATION_JFRTAG_INVALID       = 0, /* invalid JFR tag */
+	JFRCOMBINATION_JFR                  = JFRTAG_JFR,
+	JFRCOMBINATION_JFR_SYSTEM           = JFRTAG_JFR | JFRTAG_SYSTEM,
+	JFRCOMBINATION_JFR_SYSTEM_EVENT     = JFRTAG_JFR | JFRTAG_SYSTEM | JFRTAG_EVENT,
+	JFRCOMBINATION_JFR_SYSTEM_SETTING   = JFRTAG_JFR | JFRTAG_SYSTEM | JFRTAG_SETTING,
+	JFRCOMBINATION_JFR_SYSTEM_BYTECODE  = JFRTAG_JFR | JFRTAG_SYSTEM | JFRTAG_BYTECODE,
+	JFRCOMBINATION_JFR_SYSTEM_PARSER    = JFRTAG_JFR | JFRTAG_SYSTEM | JFRTAG_PARSER,
+	JFRCOMBINATION_JFR_SYSTEM_METADATA  = JFRTAG_JFR | JFRTAG_SYSTEM | JFRTAG_METADATA,
+	JFRCOMBINATION_JFR_SYSTEM_STREAMING = JFRTAG_JFR | JFRTAG_SYSTEM | JFRTAG_STREAMING,
+	JFRCOMBINATION_JFR_SYSTEM_THROTTLE  = JFRTAG_JFR | JFRTAG_SYSTEM | JFRTAG_THROTTLE,
+	JFRCOMBINATION_JFR_METADATA         = JFRTAG_JFR | JFRTAG_METADATA,
+	JFRCOMBINATION_JFR_EVENT            = JFRTAG_JFR | JFRTAG_EVENT,
+	JFRCOMBINATION_JFR_SETTING          = JFRTAG_JFR | JFRTAG_SETTING,
+	JFRCOMBINATION_JFR_DCMD             = JFRTAG_JFR | JFRTAG_DCMD,
+	JFRCOMBINATION_JFR_START            = JFRTAG_JFR | JFRTAG_START,
+	JFRCOMBINATION_JFRTAG_COUNT         = 14 /* the number of valid log tag combinations */
+} JFRLogTagCombination;
+
+typedef enum JFRLogOutputType {
+	JFROUTPUT_STDOUT,   /* 0 */
+	JFROUTPUT_STDERR,   /* 1 */
+	JFROUTPUT_FILE      /* 2 */
+} JFRLogOutputType;
+
 typedef struct JFRState {
 	char *jfrFileName;
 	const char *jfrCMDLineOption;
@@ -6325,7 +6378,13 @@ typedef struct JFRState {
 	IDATA currentPositionOffset;
 	IDATA maxPositionOffset;
 	jvmtiEnv *jvmtiAgent;
+	JFRLogOutputType jfrLogOutput;
+	char *jfrLogFileName;
+	IDATA logFileDescriptor;
+	/* The array is indexed by jdk.jfr.internal.LogTag ordinals. */
+	JFRLogLevel jfrLogTagSet[JFRCOMBINATION_JFRTAG_COUNT];
 } JFRState;
+#endif /* defined(J9VM_OPT_JFR) */
 
 typedef struct J9ReflectFunctionTable {
 	jobject  ( *idToReflectMethod)(struct J9VMThread* vmThread, jmethodID methodID) ;
