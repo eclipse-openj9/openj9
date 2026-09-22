@@ -70,16 +70,18 @@ static BOOLEAN checkStackOverflow(UDATA startingSP, UDATA availableStackSpace);
 
 #define OUTSIDE_CODE	((U_32) -1)
 
+/* Disable the inline of checkStackOverflow(). */
+#if defined(_MSC_VER)
+__declspec(noinline)
+#else /* defined(_MSC_VER) */
+__attribute__((__noinline__))
+#endif /* defined(_MSC_VER) */
 static BOOLEAN
 checkStackOverflow(UDATA startingSP, UDATA availableStackSpace)
 {
 	UDATA localVar = 0;
 	UDATA currentSP  = (UDATA)&localVar;
-	UDATA usedStack = 0;
-
-	if (currentSP < startingSP) {
-		usedStack = startingSP - currentSP;
-	}
+	UDATA usedStack = (startingSP > currentSP) ? (startingSP - currentSP) : (currentSP - startingSP);
 
 	if ((availableStackSpace - usedStack) < J9_OS_STACK_GUARD) {
 		return FALSE;
