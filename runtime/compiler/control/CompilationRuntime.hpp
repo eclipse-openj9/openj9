@@ -524,6 +524,26 @@ public:
     static void *compilationEnd(J9VMThread *context, TR::IlGeneratorMethodDetails &details, J9JITConfig *jitConfig,
         void *startPC, void *oldStartPC, bool preventFutureMethodCountingOnFailure = true, TR_FrontEnd *vm = 0,
         TR_MethodToBeCompiled *entry = NULL, TR::Compilation *comp = NULL);
+
+    /**
+     * @brief
+     *    Releases the JNI global references that a MethodHandle thunk compile request holds
+     *    on its MethodHandle and argument. Must be called with VM access.
+     *
+     * @param vmThread the current J9VMThread
+     * @param details the TR::IlGeneratorMethodDetails
+     */
+    static void releaseMethodHandleThunkRefs(J9VMThread *vmThread, TR::IlGeneratorMethodDetails &details);
+
+    /**
+     * @brief
+     *    Releases the JNI global references held by a finished compilation queue entry that
+     *    was created for a MethodHandle thunk request. Does nothing in JITServer mode.
+     *
+     * @param vmThread the current J9VMThread
+     * @param entry the TR_MethodToBeCompiled
+     */
+    static void releaseMethodHandleThunkRefs(J9VMThread *vmThread, TR_MethodToBeCompiled *entry);
 #if defined(J9VM_OPT_JITSERVER)
     static JITServer::ServerStream *getStream();
 #endif /* defined(J9VM_OPT_JITSERVER) */

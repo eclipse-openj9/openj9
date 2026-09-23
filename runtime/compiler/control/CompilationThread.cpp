@@ -1862,7 +1862,8 @@ bool TR::CompilationInfo::SmoothCompilation(TR_MethodToBeCompiled *entry, int32_
         *optLevelAdjustment = 0; // unchanged opt level (default)
     }
 
-    if (shouldAddRequestToUpgradeQueue && entry->getMethodDetails().isNewInstanceThunk())
+    if (shouldAddRequestToUpgradeQueue
+        && (entry->getMethodDetails().isNewInstanceThunk() || entry->getMethodDetails().isMethodHandleThunk()))
         shouldAddRequestToUpgradeQueue = false;
     return shouldAddRequestToUpgradeQueue;
 }
@@ -2097,6 +2098,8 @@ void TR::CompilationInfo::invalidateRequestsForUnloadedMethods(TR_OpaqueClassBlo
                 updateCompQueueAccountingOnDequeue(cur);
                 // decrease the queue weight
                 decreaseQueueWeightBy(cur->_weight);
+                if (vmThread && (vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))
+                    releaseMethodHandleThunkRefs(vmThread, cur);
                 // put back into the pool
                 recycleCompilationEntry(cur);
             } else {
@@ -2447,6 +2450,8 @@ void TR::CompilationInfo::purgeMethodQueue(TR_CompilationErrorCode errorCode)
 
         startPC = compilationEnd(vmThread, cur->getMethodDetails(), _jitConfig, NULL, cur->_oldStartPC,
             false /*preventFutureMethodCountingOnFailure*/);
+        if (vmThread && (vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))
+            releaseMethodHandleThunkRefs(vmThread, cur);
         cur->_newStartPC = startPC;
         cur->_compErrCode = errorCode;
 
@@ -4225,6 +4230,8 @@ void TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry,
         compInfo->acquireCompMonitor(compThread);
         compInfo->debugPrint(compThread, "+CM\n");
 
+        TR::CompilationInfo::releaseMethodHandleThunkRefs(compThread, &entry);
+
         // Release VM access
         //
         compInfo->debugPrint(compThread, "\tcompilation thread releasing VM access\n");
@@ -5528,23 +5535,37 @@ void TR::CompilationInfo::recycleCompilationEntry(TR_MethodToBeCompiled *entry)
     }
 }
 
-static void deleteMethodHandleRef(J9::MethodHandleThunkDetails &details, J9VMThread *vmThread, TR_FrontEnd *fe)
+void TR::CompilationInfo::releaseMethodHandleThunkRefs(J9VMThread *vmThread, TR::IlGeneratorMethodDetails &details)
 {
-    bool verboseDetails = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseMethodHandleDetails);
-    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
+    TR_ASSERT(vmThread && (vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS),
+        "%p must have VM access to release MethodHandle thunk refs", vmThread);
 
-    if (verboseDetails) {
-        TR::VMAccessCriticalSection deleteMethodHandleRef(fej9);
-        uintptr_t methodHandle = *details.getHandleRef();
+    if (!details.isMethodHandleThunk())
+        return;
+
+    J9::MethodHandleThunkDetails &thunkDetails = static_cast<J9::MethodHandleThunkDetails &>(details);
+    uintptr_t *handleRef = thunkDetails.getHandleRef();
+    uintptr_t *argRef = thunkDetails.getArgRef();
+    if (!handleRef) // already released
+        return;
+
+    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseMethodHandleDetails))
         TR_VerboseLog::writeLineLocked(TR_Vlog_MHD, "%p   Deleting MethodHandle %p global reference", vmThread,
-            (j9object_t)methodHandle);
-    }
+            (void *)*handleRef);
 
-    vmThread->javaVM->internalVMFunctions->j9jni_deleteGlobalRef((JNIEnv *)vmThread, (jobject)details.getHandleRef(),
-        false);
-    if (details.getArgRef())
-        vmThread->javaVM->internalVMFunctions->j9jni_deleteGlobalRef((JNIEnv *)vmThread, (jobject)details.getArgRef(),
-            false);
+    J9InternalVMFunctions *vmFuncs = vmThread->javaVM->internalVMFunctions;
+    vmFuncs->j9jni_deleteGlobalRef((JNIEnv *)vmThread, (jobject)handleRef, false);
+    if (argRef)
+        vmFuncs->j9jni_deleteGlobalRef((JNIEnv *)vmThread, (jobject)argRef, false);
+    thunkDetails.clearRefs();
+}
+
+void TR::CompilationInfo::releaseMethodHandleThunkRefs(J9VMThread *vmThread, TR_MethodToBeCompiled *entry)
+{
+    // do nothing in JITServer mode as the references belong to the client
+    if (entry->isOutOfProcessCompReq())
+        return;
+    releaseMethodHandleThunkRefs(vmThread, entry->getMethodDetails());
 }
 
 /**
@@ -7643,6 +7664,10 @@ void *TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread *vmThrea
             _compInfo._statNumAotedMethods++;
     }
 
+    // Unless _tryCompilingAgain is true, the MH thunk ref is no longer needed
+    if (!entry->_tryCompilingAgain)
+        TR::CompilationInfo::releaseMethodHandleThunkRefs(vmThread, entry);
+
 #if defined(J9VM_OPT_JITSERVER) && defined(J9VM_OPT_OPENJDK_METHODHANDLE)
     // The known object table may not have been freed above.
     if (_compiler != NULL && _compiler->getKnownObjectTable() != NULL) {
@@ -9640,6 +9665,8 @@ void *TR::CompilationInfo::compilationEnd(J9VMThread *vmThread, TR::IlGeneratorM
     TR_J9VMBase *trvm = (TR_J9VMBase *)fe;
 
     if (details.isMethodHandleThunk()) {
+        // Note: whether or not the compilation succeeded, the JNI global refs in the details are
+        // released by their owner, not here.
 #if defined(J9VM_OPT_JITSERVER)
         if (isJITServerMode) {
             if (startPC) // compilation succeeded
@@ -9678,9 +9705,6 @@ void *TR::CompilationInfo::compilationEnd(J9VMThread *vmThread, TR::IlGeneratorM
                 trvm->setInt64Field(thunks, "invokeExactThunk", jitEntryPoint);
                 trvm->setInt64Field(thunks, "i2jInvokeExactThunk", (intptr_t)startPC);
 #endif
-                deleteMethodHandleRef(mhDetails, vmThread, trvm);
-            } else // TODO:JSR292: Handle compile failures gracefully
-            {
             }
         }
 
