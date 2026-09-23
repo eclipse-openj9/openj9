@@ -112,16 +112,15 @@ getStackTraceElementIterator(J9VMThread *vmThread, void *voidUserData, UDATA byt
 }
 
 #if defined(DEBUG_BCV)
-static void cfdumpBytecodePrintFunction(void *userData, char *format, ...)
+static void
+cfdumpBytecodePrintFunction(void *userData, const char *format, ...)
 {
-	PORT_ACCESS_FROM_PORT((J9PortLibrary*)userData);
+	PORT_ACCESS_FROM_PORT((J9PortLibrary *)userData);
 	va_list args;
-	char outputBuffer[512] = {0};
 
 	va_start(args, format);
-	j9str_vprintf(outputBuffer, 512, format, args);
+	j9tty_vprintf(format, args);
 	va_end(args);
-	j9tty_printf(PORTLIB, "%s", outputBuffer);
 }
 #endif /* defined(DEBUG_BCV) */
 

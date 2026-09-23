@@ -1683,9 +1683,9 @@ printVerificationInfo(J9PortLibrary* portLibrary, VerboseVerificationBuffer* buf
 	}
 
 	va_start(args, msgFormat);
-
 	printable = buf->size - buf->cursor;
 	msgLen = j9str_vprintf((char*)&buf->buffer[buf->cursor], printable, msgFormat, args);
+	va_end(args);
 	/*
 	 * str_vprintf always null terminates and
 	 * returns number characters written excluding the null terminator
@@ -1700,24 +1700,28 @@ printVerificationInfo(J9PortLibrary* portLibrary, VerboseVerificationBuffer* buf
 	 * we have to determine the real message length then print to the buffer.
 	 */
 
+	va_start(args, msgFormat);
 	msgLen = j9str_vprintf(NULL, (U_32)-1, msgFormat, args);
+	va_end(args);
 
 	if (buf->size < msgLen) {
 		flushVerificationBuffer(PORTLIB, buf);
+		va_start(args, msgFormat);
 		j9tty_vprintf(msgFormat, args);
+		va_end(args);
 	} else {
 		while (buf->cursor < buf->size) {
 			printable = buf->size - buf->cursor;
 			if (msgLen <= printable) {
+				va_start(args, msgFormat);
 				buf->cursor += j9str_vprintf((char*)&buf->buffer[buf->cursor], msgLen, msgFormat, args);
+				va_end(args);
 				break;
 			} else {
 				flushVerificationBuffer(PORTLIB, buf);
 			}
 		}
 	}
-
-	va_end(args);
 }
 
 /*

@@ -969,8 +969,9 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 		if (trace && *code) {
 			j9tty_printf(PORTLIB, ", ");
 		}
-
 	}
+
+	va_end(va);
 
 	if (trace) {
 		if (!strncmp("Call", function, 4)) {
@@ -979,8 +980,6 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 			j9tty_printf(PORTLIB, ")\n");
 		}
 	}
-
-
 }
 
 

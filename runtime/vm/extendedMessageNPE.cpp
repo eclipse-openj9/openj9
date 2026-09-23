@@ -1302,8 +1302,10 @@ getMsgWithAllocation(J9VMThread *vmThread, const char *msgTemplate, ...)
 
 	va_start(args, msgTemplate);
 	UDATA msgLen = j9str_vprintf(NULL, 0, msgTemplate, args);
+	va_end(args);
 	char *resultMsg = (char *)j9mem_allocate_memory(msgLen, OMRMEM_CATEGORY_VM);
 	/* NULL check omitted since j9str_vprintf accepts NULL (as above) */
+	va_start(args, msgTemplate);
 	j9str_vprintf(resultMsg, msgLen, msgTemplate, args);
 	va_end(args);
 
