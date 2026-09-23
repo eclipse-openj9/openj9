@@ -1098,15 +1098,19 @@ BOOLEAN
 loadWarmClassFromSnapshot(J9VMThread *currentThread, J9Class *clazz)
 {
 	BOOLEAN rc = TRUE;
+#if 0
 	J9JavaVM *vm = currentThread->javaVM;
 
 	if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
 		omrthread_monitor_enter(vm->rcpCacheMutex);
+#endif
 		if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
 			rc = loadWarmClassFromSnapshotInternal(currentThread, clazz);
 		}
+#if 0
 		omrthread_monitor_exit(vm->rcpCacheMutex);
 	}
+#endif
 
 	return rc;
 }
