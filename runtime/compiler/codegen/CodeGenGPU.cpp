@@ -566,22 +566,21 @@ public:
     void print(const char *format, ...)
     {
         va_list args;
-        va_start(args, format);
         int32_t left = size - (s - buffer);
 
-        va_list args_copy;
-        va_copy(args_copy, args);
-        int32_t len = vsnprintf(s, left, format, args_copy);
-        va_copy_end(args_copy);
+        va_start(args, format);
+        int32_t len = vsnprintf(s, left, format, args);
+        va_end(args);
 
         if ((len + 1) > left) {
             expand(len + 1 - left);
             left = size - (s - buffer);
+            va_start(args, format);
             len = vsnprintf(s, left, format, args);
+            va_end(args);
         }
 
         s += len;
-        va_end(args);
     }
 
     char *getString() { return buffer; }
