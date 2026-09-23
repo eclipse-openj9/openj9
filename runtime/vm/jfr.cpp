@@ -1773,7 +1773,6 @@ jfrSamplingThreadProc(void *entryArg)
 	J9VMThread *currentThread = NULL;
 
 	if (JNI_OK == attachSystemDaemonThread(vm, &currentThread, "JFR sampler")) {
-		internalReleaseVMAccess(currentThread);
 		omrthread_monitor_enter(vm->jfrSamplerMutex);
 		vm->jfrSamplerState = J9JFR_SAMPLER_STATE_RUNNING;
 		omrthread_monitor_notify_all(vm->jfrSamplerMutex);
