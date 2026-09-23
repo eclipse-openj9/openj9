@@ -240,6 +240,7 @@ uint32_t J9::Options::_minDiskSpaceForDisclaimMB = 1024; // 1 GB
 int32_t J9::Options::_minTimeBetweenMemoryDisclaims = 5000; // ms (for non-SCC memory areas)
 int32_t J9::Options::_minTimeBetweenSCCDisclaims = 3000; // ms (for Shared Class Cache)
 uint32_t J9::Options::_maxDeviceLatencyForDisclaimUs = 1500; // us (disable disclaiming to slow devices)
+uint32_t J9::Options::_minAOTLoadsBetweenAOTCodeCacheDisclaims = 100;
 bool J9::Options::_enableDisclaimBecauseAllDisksSuitable = false;
 int32_t J9::Options::_mallocTrimPeriod = 0; // seconds; 0 means disabled
 
@@ -1205,6 +1206,10 @@ TR::OptionTable OMR::Options::_feOptions[] = {
      NOT_IN_SUBSET },
     { "maxOnsiteCacheSlotForInstanceOf=", "R<nnn>\tnumber of onsite cache slots for instanceOf",
      TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_maxOnsiteCacheSlotForInstanceOf, 0, "F%d",
+     NOT_IN_SUBSET },
+    { "minAOTLoadsBetweenAOTCodeCacheDisclaims=",
+     "I<nnn>\tIf at least this many AOT loads have happened since the previous AOT Code Cache disclaim, then the "
+        "time between AOT Code Cache Disclaims is reduced. Only applicable when enableAOTCodeCacheDisclaiming is set", TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_minAOTLoadsBetweenAOTCodeCacheDisclaims, 100, "F%d",
      NOT_IN_SUBSET },
     { "minDiskSpaceForDisclaim=", "M<nnn>\tMinimum available disk space (MB) needed to enable memory disclaim",
      TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_minDiskSpaceForDisclaimMB, 1024, "F%d", NOT_IN_SUBSET },
@@ -2789,6 +2794,7 @@ bool J9::Options::fePreProcess(void *base)
         self()->setOption(TR_DisableIProfilerDataDisclaiming);
         self()->setOption(TR_DisableRuntimeAssumptionDataDisclaiming);
         self()->setOption(TR_EnableCodeCacheDisclaiming, false);
+        self()->setOption(TR_EnableAOTCodeCacheDisclaiming, false);
         self()->setOption(TR_EnableSharedCacheDisclaiming, false);
     }
 
@@ -2947,7 +2953,8 @@ bool J9::Options::fePostProcessJIT(void *base)
 
     if (!self()->getOption(TR_DisableDataCacheDisclaiming) || !self()->getOption(TR_DisableIProfilerDataDisclaiming)
         || !self()->getOption(TR_DisableRuntimeAssumptionDataDisclaiming)
-        || self()->getOption(TR_EnableCodeCacheDisclaiming) || self()->getOption(TR_EnableSharedCacheDisclaiming)) {
+        || self()->getOption(TR_EnableCodeCacheDisclaiming) || self()->getOption(TR_EnableAOTCodeCacheDisclaiming)
+        || self()->getOption(TR_EnableSharedCacheDisclaiming)) {
         // Check requirements for memory disclaiming (Linux kernel and default page size)
         TR::Options::disableMemoryDisclaimIfNeeded(jitConfig);
     }
@@ -2956,8 +2963,9 @@ bool J9::Options::fePostProcessJIT(void *base)
     int32_t argIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::Xcodecache);
 
     if (argIndex >= 0) {
-        if (jitConfig->codeCacheKB < 4 * 1024 * 1024)
+        if (jitConfig->codeCacheKB < 4 * 1024 * 1024) {
             self()->setOption(TR_EnableCodeCacheDisclaiming, false);
+        }
     } else if (TR::Compiler->target.isLinux() && self()->getOption(TR_EnableCodeCacheDisclaiming)) {
         jitConfig->codeCacheKB *= 2;
     }
@@ -3157,6 +3165,7 @@ bool J9::Options::disableMemoryDisclaimIfNeeded(J9JITConfig *jitConfig)
         TR::Options::getCmdLineOptions()->setOption(TR_DisableIProfilerDataDisclaiming);
         TR::Options::getCmdLineOptions()->setOption(TR_DisableRuntimeAssumptionDataDisclaiming);
         TR::Options::getCmdLineOptions()->setOption(TR_EnableCodeCacheDisclaiming, false);
+        TR::Options::getCmdLineOptions()->setOption(TR_EnableAOTCodeCacheDisclaiming, false);
         if (TR::Options::getVerboseOption(TR_VerbosePerformance)) {
             TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
                 "WARNING: Disclaim feature disabled because swap and %s are not suitable", disclaimDir);
@@ -3188,6 +3197,8 @@ bool J9::Options::disableMemoryDisclaimIfNeeded(J9JITConfig *jitConfig)
         = TR::Options::getCmdLineOptions()->getOption(TR_DisableRuntimeAssumptionDataDisclaiming) ? FALSE : TRUE;
     info.codeCacheDisclaimEnabled
         = TR::Options::getCmdLineOptions()->getOption(TR_EnableCodeCacheDisclaiming) ? TRUE : FALSE;
+    info.AOTCodeCacheDisclaimEnabled
+        = TR::Options::getCmdLineOptions()->getOption(TR_EnableAOTCodeCacheDisclaiming) ? TRUE : FALSE;
     info.disclaimOnSwap = compInfo->canDisclaimOnSwap() ? TRUE : FALSE;
     info.disclaimOnFile = compInfo->canDisclaimOnFile() ? TRUE : FALSE;
     info.disclaimDir = compInfo->canDisclaimOnFile() ? disclaimDir : NULL;
@@ -3198,6 +3209,7 @@ bool J9::Options::disableMemoryDisclaimIfNeeded(J9JITConfig *jitConfig)
     TR::Options::getCmdLineOptions()->setOption(TR_DisableRuntimeAssumptionDataDisclaiming);
     TR::Options::getCmdLineOptions()->setOption(TR_EnableCodeCacheDisclaiming, false);
     TR::Options::getCmdLineOptions()->setOption(TR_EnableSharedCacheDisclaiming, false);
+    TR::Options::getCmdLineOptions()->setOption(TR_EnableAOTCodeCacheDisclaiming, false);
     return true;
 #endif /* defined(LINUX) */
 }
