@@ -8759,8 +8759,12 @@ TR_MethodMetaData *TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrar
             } else
 #endif /* defined(J9VM_OPT_JITSERVER) */
             {
-                TR::SimpleRegex *regex = compiler->getOptions()->getTransientClassRegex();
-                if (regex) {
+                if (that->_methodBeingCompiled->isAotLoad()
+                    && TR::Options::getCmdLineOptions()->getOption(TR_SegregateAOTCodeCache)) {
+                    compiler->getOptions()->setCodeCacheKind(TR::CodeCacheKind::AOT);
+                }
+
+                if (TR::SimpleRegex *regex = compiler->getOptions()->getTransientClassRegex()) {
                     J9Method *method = details.getMethod();
                     J9Class *clazz = J9_CLASS_FROM_METHOD(method);
                     J9UTF8 *className = J9ROMCLASS_CLASSNAME(clazz->romClass);

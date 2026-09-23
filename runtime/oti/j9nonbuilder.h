@@ -4406,6 +4406,7 @@ typedef struct J9JITMemDisclaimInfo {
 	BOOLEAN iProfilerDisclaimEnabled;
 	BOOLEAN runtimeAssumptionDisclaimEnabled;
 	BOOLEAN codeCacheDisclaimEnabled;
+	BOOLEAN segregateAOTCodeCache;
 	BOOLEAN sccDisclaimEnabled;
 	BOOLEAN disclaimOnSwap;
 	BOOLEAN disclaimOnFile;

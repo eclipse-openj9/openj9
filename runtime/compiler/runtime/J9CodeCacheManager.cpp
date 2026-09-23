@@ -67,6 +67,7 @@ J9::CodeCacheManager::CodeCacheManager(TR_FrontEnd *fe, TR::RawAllocator rawAllo
 {
     _codeCacheManager = reinterpret_cast<TR::CodeCacheManager *>(this);
     _disclaimEnabled = TR::Options::getCmdLineOptions()->getOption(TR_EnableCodeCacheDisclaiming);
+    _aotDisclaimEnabled = TR::Options::getCmdLineOptions()->getOption(TR_SegregateAOTCodeCache);
 }
 
 TR::CodeCacheManager *J9::CodeCacheManager::self() { return static_cast<TR::CodeCacheManager *>(this); }
@@ -387,7 +388,7 @@ TR::CodeCacheMemorySegment *J9::CodeCacheManager::allocateCodeCacheSegment(size_
 #endif
 
 #ifdef LINUX
-    if (_disclaimEnabled) {
+    if (_disclaimEnabled || _aotDisclaimEnabled) {
         // If swap is enabled, we can allocate memory with mmap(MAP_ANOYNMOUS|MAP_PRIVATE) and disclaim to swap
         // If swap is not enabled we can disclaim to a backing file
         TR::CompilationInfo *compInfo = TR::CompilationInfo::get(_jitConfig);
@@ -735,6 +736,27 @@ int32_t J9::CodeCacheManager::disclaimAllCodeCaches()
         numDisclaimed += codeCache->disclaim(self(), compInfo->canDisclaimOnSwap(), compInfo->canDisclaimOnFile());
     }
 #endif // LINUX
+
+    return numDisclaimed;
+}
+
+int32_t J9::CodeCacheManager::disclaimAOTCodeCaches()
+{
+    if (!_aotDisclaimEnabled)
+        return 0;
+
+    int32_t numDisclaimed = 0;
+
+#ifdef LINUX
+    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(_jitConfig);
+
+    for (TR::CodeCache *codeCache = self()->getFirstCodeCache(); codeCache; codeCache = codeCache->next()) {
+        if (codeCache->_kind == TR::CodeCacheKind::AOT || codeCache->_kind == TR::CodeCacheKind::FILE_BACKED_CC) {
+            numDisclaimed
+                += codeCache->disclaimAOT(self(), compInfo->canDisclaimOnSwap(), compInfo->canDisclaimOnFile());
+        }
+    }
+#endif
 
     return numDisclaimed;
 }
