@@ -95,7 +95,6 @@
 #define J9ClassLargestAlignmentConstraintShort 0x800000
 #define J9ClassNeedToPruneMemberNames 0x1000000
 #define J9ClassArrayIsNullRestricted 0x2000000
-#define J9ClassIsLoadedFromSnapshot 0x4000000
 /*
  * The frozen flag is set when a J9Class is returned from persisted state and has not yet
  * been fully loaded for the restore run. Note, this flag can only be set in a restore run.
@@ -3794,6 +3793,9 @@ typedef struct J9Class {
 	U_32 paddingForClassID; /* This is used to preserve alignment under 64 bit. */
 #endif /* defined(J9VM_ENV_DATA64) */
 #endif /* defined(J9VM_OPT_JFR) */
+#if defined(J9VM_OPT_SNAPSHOTS)
+	U_32 loadedFromSnapshot;
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 } J9Class;
 
 /* Interface classes can never be instantiated, so the following fields in J9Class will not be used:
@@ -3908,6 +3910,9 @@ typedef struct J9ArrayClass {
 	U_32 paddingForClassID; /* This is used to preserve alignment under 64 bit. */
 #endif /* defined(J9VM_ENV_DATA64) */
 #endif /* defined(J9VM_OPT_JFR) */
+#if defined(J9VM_OPT_SNAPSHOTS)
+	U_32 loadedFromSnapshot;
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 } J9ArrayClass;
 
 #if defined(LINUX) && defined(J9VM_ARCH_X86) && !defined(OSX)
@@ -6952,7 +6957,6 @@ typedef struct J9JavaVM {
 #if defined(J9VM_OPT_SNAPSHOTS)
 	VMSnapshotImplPortLibrary *vmSnapshotImplPortLibrary;
 	const char *vmSnapshotFilePath;
-	omrthread_monitor_t rcpCacheMutex;
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 #if defined(J9VM_OPT_JFR)
 	U_32 loadedClassCount;
