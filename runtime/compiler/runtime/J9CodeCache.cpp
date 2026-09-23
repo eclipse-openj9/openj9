@@ -38,6 +38,7 @@
 #include "vmaccess.h"
 #include "infra/Monitor.hpp"
 #include "control/Recompilation.hpp"
+#include "control/CompilationRuntime.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "env/FrontEnd.hpp"
 #ifdef CODECACHE_STATS
@@ -92,6 +93,9 @@ TR::CodeCache *J9::CodeCache::allocate(TR::CodeCacheManager *cacheManager, size_
 bool J9::CodeCache::initialize(TR::CodeCacheManager *manager, TR::CodeCacheMemorySegment *codeCacheSegment,
     size_t allocatedCodeCacheSizeInBytes, TR::CodeCacheKind kind)
 {
+    // initialize backing file to invalid
+    _backingFile = OMRPORT_INVALID_FD;
+
     // make J9 memory segment look all used up
     // J9MemorySegment *j9segment = _segment->segment();
     // j9segment->heapAlloc = j9segment->heapTop;
@@ -209,6 +213,111 @@ bool J9::CodeCache::initialize(TR::CodeCacheManager *manager, TR::CodeCacheMemor
                     TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Failed to set MADV_RANDOM for cold code cache");
             }
         }
+    } else if (manager->isAOTDisclaimEnabled()) {
+        // Advise the kernel on huge page usage for the code segment backing memory.
+        // AOT-loaded code uses 4KB pages to avoid pinning large THP mappings for
+        // rarely-executed code. Similarly, code in file-backed code caches is also
+        // rarely executed. All other kinds request 2MB transparent huge pages (the
+        // default).
+
+        bool codeCacheKindCorrect = (kind == TR::CodeCacheKind::AOT || kind == TR::CodeCacheKind::FILE_BACKED_CC);
+        bool canDisclaimToSwap = TR::CompilationInfo::get(jitConfig)->canDisclaimOnSwap();
+        if (codeCacheKindCorrect) {
+            J9JavaVM *javaVM = jitConfig->javaVM;
+            PORT_ACCESS_FROM_JAVAVM(javaVM); // for j9vmem_supported_page_sizes
+            uintptr_t round = (uintptr_t)(j9vmem_supported_page_sizes()[0] - 1);
+
+            // At the beginning of the memory region that all code caches are allocated in, a small amount of
+            // metadata is written. Thi results in codeCacheSegment sometimes not being small page aligned. As
+            // a result, the starting address and size may need to be adjusted.
+            uint8_t *startAddr
+                = reinterpret_cast<uint8_t *>(reinterpret_cast<uintptr_t>(codeCacheSegment->segmentBase()) & ~round);
+            uint8_t *end_addr
+                = reinterpret_cast<uint8_t *>(reinterpret_cast<uintptr_t>(codeCacheSegment->segmentTop()) & ~round);
+            size_t size = end_addr - startAddr;
+
+            if (canDisclaimToSwap) {
+                if (0 != madvise(startAddr, size, MADV_NOHUGEPAGE)) {
+                    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCodeCache)) {
+                        TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE,
+                            "Warning: madvise failed while providing hint to use non-huge pages for the code cache "
+                            "starting at "
+                            "%p",
+                            startAddr);
+                    }
+                }
+
+                if (0 != madvise(startAddr, size, MADV_RANDOM)) {
+                    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCodeCache)) {
+                        TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE,
+                            "Warning: madvise failed while providing hint to prevent prefetching for the code cache "
+                            "starting "
+                            "at %p",
+                            startAddr);
+                    }
+                }
+            } else {
+                char filename[128 + 1];
+                size_t filenameLen = 0;
+                char *filenameBuf = filename;
+
+                /* Check for user-specified temporary directory. */
+                OMRPORT_ACCESS_FROM_J9PORT(javaVM->portLibrary);
+                const char *tmpdir = omrvmem_disclaim_dir();
+                /* Fall back to /tmp if not set. */
+                if (NULL == tmpdir) {
+                    tmpdir = "/tmp";
+                }
+                filenameLen = strlen(tmpdir) + 1 + 8 + 9 + 7
+                    + 1; /* +1 for '/', +8 for "aotcode_", +9 for PID, +7 for "_XXXXXX", +1 for '\0' */
+                if (filenameLen > sizeof(filename)) {
+                    /* Static buffer is not big enough. Must allocate buffer dynamically. */
+                    filenameBuf = (char *)j9mem_allocate_memory(filenameLen, OMRMEM_CATEGORY_JIT);
+                }
+                if (NULL != filenameBuf) {
+                    snprintf(filenameBuf, filenameLen, "%s/aotcode_%09d_XXXXXX", tmpdir, getpid());
+                    _backingFile = mkostemp(filenameBuf, 0);
+                    if (OMRPORT_INVALID_FD != _backingFile) {
+                        unlink(filenameBuf);
+                        /* Set the file size with fallocate. */
+                        if (OMRPORT_INVALID_FD
+                            != fallocate(_backingFile, 0, 0, size)) { // Make this specific code cache file backed
+                            void *retval = mmap(startAddr, size, PROT_EXEC | PROT_WRITE | PROT_READ,
+                                MAP_SHARED | MAP_FIXED, _backingFile, 0);
+
+                            if ((void *)-1 == retval) {
+                                if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCodeCache)) {
+                                    TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE,
+                                        "Warning: failed mmap code cade "
+                                        "starting "
+                                        "at %p",
+                                        startAddr);
+                                }
+                                _backingFile = OMRPORT_INVALID_FD;
+                            }
+                        } else {
+                            close(_backingFile);
+                            _backingFile = OMRPORT_INVALID_FD;
+                        }
+                    } else {
+                        if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCodeCache)) {
+                            TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE,
+                                "Warning: failed to allocate filename %s to back code cache "
+                                "starting "
+                                "at %p",
+                                filenameBuf, startAddr);
+                        }
+                    }
+                    /* If the filename buffer was allocated dynamically, free it. */
+                    if (filenameBuf != filename) {
+                        j9mem_free_memory(filenameBuf);
+                    }
+                }
+            }
+        }
+        // Note: if _smallPageAreaStart and _smallPageAreaEnd are the same, there will be no disclaim attempted
+        _smallPageAreaStart = _coldCodeAllocBase;
+        _smallPageAreaEnd = _coldCodeAllocBase;
     } else // Disclaim is not allowed
     {
         // Note: if _smallPageAreaStart and _smallPageAreaEnd are the same, there will be no disclaim attempted
@@ -804,6 +913,48 @@ int32_t J9::CodeCache::disclaim(TR::CodeCacheManager *manager, bool canDisclaimO
             manager->setDisclaimEnabled(false); // Don't try to disclaim again, since support seems to be missing
             if (trace)
                 TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "WARNING: Disabling data cache disclaiming from now on");
+        }
+    } else {
+        disclaimDone = 1;
+    }
+#endif // ifdef LINUX
+
+    return disclaimDone;
+}
+
+int32_t J9::CodeCache::disclaimAOT(TR::CodeCacheManager *manager, bool canDisclaimOnSwap, bool canDisclaimOnFile)
+{
+    int32_t disclaimDone = 0;
+
+#ifdef LINUX
+    if (_kind != TR::CodeCacheKind::AOT || (OMRPORT_INVALID_FD == _backingFile && !canDisclaimOnSwap))
+        return disclaimDone;
+
+    // At the beginning of the memory region that all code caches are allocated in, a small amount of
+    // metadata is written. This results in codeCacheSegment sometimes not being page aligned. As
+    // a result, the starting address and size may need to be adjusted.
+    J9JavaVM *javaVM = jitConfig->javaVM;
+    PORT_ACCESS_FROM_JAVAVM(javaVM); // for j9vmem_supported_page_sizes
+    uintptr_t round = (uintptr_t)(j9vmem_supported_page_sizes()[0] - 1);
+    uint8_t *start_addr = reinterpret_cast<uint8_t *>(reinterpret_cast<uintptr_t>(_segment->segmentBase()) & ~round);
+    uint8_t *end_addr = reinterpret_cast<uint8_t *>(reinterpret_cast<uintptr_t>(getHelperTop()) & ~round);
+
+    size_t size = (end_addr - start_addr);
+
+    if (0 != madvise(start_addr, size, MADV_PAGEOUT)) {
+        if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance)) {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
+                "Warning: madvise failed while disclaiming code cache "
+                "%p",
+                start_addr);
+        }
+
+        if (errno != EAGAIN) {
+            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance)) {
+                TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
+                    "WARNING: Disabling AOT code cache disclaiming due to madvise error");
+            }
+            manager->setAOTDisclaimEnabled(false);
         }
     } else {
         disclaimDone = 1;

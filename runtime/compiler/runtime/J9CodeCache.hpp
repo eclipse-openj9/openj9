@@ -105,6 +105,7 @@ public:
     void resetCodeCache();
 
     int32_t disclaim(TR::CodeCacheManager *manager, bool canDisclaimOnSwap, bool canDisclaimOnFile);
+    int32_t disclaimAOT(TR::CodeCacheManager *manager, bool canDisclaimOnSwap, bool canDisclaimOnFile);
 
 private:
     /**
@@ -125,6 +126,8 @@ private:
 #ifdef LINUX
     uint8_t *_smallPageAreaStart; // used for code cache disclaiming to remember where the small page area starts/ends
     uint8_t *_smallPageAreaEnd;
+
+    int _backingFile;
 #endif
 };
 
