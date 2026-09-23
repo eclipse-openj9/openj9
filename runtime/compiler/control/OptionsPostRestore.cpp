@@ -94,6 +94,7 @@ J9::OptionsPostRestore::OptionsPostRestore(J9VMThread *vmThread, J9JITConfig *ji
         = J9::Options::_xrsSync || options->getOption(TR_NoResumableTrapHandler) || options->getOption(TR_DisableTraps);
 
     _enableCodeCacheDisclaimingPreCheckpoint = options->getOption(TR_EnableCodeCacheDisclaiming);
+    _segregateAOTCodeCachePreCheckpoint = options->getOption(TR_EnableAOTCodeCacheDisclaiming);
 }
 
 void J9::OptionsPostRestore::iterateOverExternalOptions()
@@ -615,6 +616,7 @@ void J9::OptionsPostRestore::preProcessInternalCompilerOptions()
         TR::Options::getCmdLineOptions()->setOption(TR_DisableIProfilerDataDisclaiming);
         TR::Options::getCmdLineOptions()->setOption(TR_DisableRuntimeAssumptionDataDisclaiming);
         TR::Options::getCmdLineOptions()->setOption(TR_EnableCodeCacheDisclaiming, false);
+        TR::Options::getCmdLineOptions()->setOption(TR_EnableAOTCodeCacheDisclaiming, false);
         TR::Options::getCmdLineOptions()->setOption(TR_EnableSharedCacheDisclaiming, false);
     }
 }
@@ -746,6 +748,15 @@ J9:
         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
             TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
                 "WARNING: Code Cache disclaiming disabled since it was disabled before checkpoint");
+    }
+
+    if (!_segregateAOTCodeCachePreCheckpoint
+        && TR::Options::getCmdLineOptions()->getOption(TR_EnableAOTCodeCacheDisclaiming)) {
+        TR::Options::getCmdLineOptions()->setOption(TR_EnableAOTCodeCacheDisclaiming, false);
+
+        if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
+                "WARNING: AOT Code Cache disclaiming and segregation disabled since it was disabled before checkpoint");
     }
 
     if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableDataCacheDisclaiming)
