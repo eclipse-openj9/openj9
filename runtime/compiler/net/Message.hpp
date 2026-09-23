@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include "net/MessageBuffer.hpp"
 #include "net/MessageTypes.hpp"
+#include "net/StreamExceptions.hpp"
 #include "OMR/Bytes.hpp" // for alignNoCheck
 
 namespace JITServer {
@@ -213,6 +214,19 @@ public:
 
         uint32_t print(uint32_t nestingLevel);
 
+        /**
+            @brief Throw exception if the current descriptor looks malformed.
+        */
+        void validate()
+        {
+            if (_paddingSize > 3)
+                throw JITServer::StreamFailure(std::string("_paddingSize cannot be larger than 3"));
+            if (_dataOffset != 0 && _dataOffset != 4)
+                throw JITServer::StreamFailure(std::string("_dataOffset can only be 0 or 4"));
+            if (_paddingSize + _dataOffset > _size)
+                throw JITServer::StreamFailure(std::string("descriptor size must include paddingSize and dataOffset"));
+        }
+
     private:
         DataType _type; // Message type on 8 bits
         uint8_t _paddingSize; // How many bytes are actually used for padding (0-3)
@@ -338,6 +352,11 @@ public:
        @brief Set serialized size of the message
     */
     void setSerializedSize(uint32_t serializedSize) { _buffer.writeValue(serializedSize); }
+
+    /**
+       @brief Return the serialized size of the message
+     */
+    uint32_t getSerializedSize() const { return *_buffer.getValueAtOffset<uint32_t>(0); }
 
     /**
        @brief Expand the internal buffer when requiredSize is greater than the capacity
