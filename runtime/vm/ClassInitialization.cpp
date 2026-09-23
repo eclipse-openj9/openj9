@@ -360,6 +360,18 @@ classInitStateMachine(J9VMThread *currentThread, J9Class *clazz, J9ClassInitStat
 	J9JavaVM *vm = currentThread->javaVM;
 	Assert_VM_true(clazz == VM_VMHelpers::currentClass(clazz));
 	j9object_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+	while ((NULL == classObject) || J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
+		omrthread_monitor_enter(vm->rcpCacheMutex);
+		internalReleaseVMAccess(currentThread);
+		/* TODO: set timeout by a jvm opt based on servers such as Liberty or Quarkus. */
+		omrthread_monitor_wait_timed(vm->rcpCacheMutex, 0, 100000);
+		omrthread_monitor_exit(vm->rcpCacheMutex);
+		internalAcquireVMAccess(currentThread);
+		classObject = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	j9object_t initializationLock = J9VMJAVALANGCLASS_INITIALIZATIONLOCK(currentThread, classObject);
 	Trc_VM_classInitStateMachine_Entry(
 			currentThread,
