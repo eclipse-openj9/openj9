@@ -3805,6 +3805,9 @@ typedef struct J9Class {
 	U_32 paddingForClassID; /* This is used to preserve alignment under 64 bit. */
 #endif /* defined(J9VM_ENV_DATA64) */
 #endif /* defined(J9VM_OPT_JFR) */
+#if defined(J9VM_OPT_SNAPSHOTS)
+	struct J9VMThread *rcpThread; /* This is used to preserve the loading thread from RCP cache */
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 } J9Class;
 
 /* Interface classes can never be instantiated, so the following fields in J9Class will not be used:
@@ -3919,6 +3922,9 @@ typedef struct J9ArrayClass {
 	U_32 paddingForClassID; /* This is used to preserve alignment under 64 bit. */
 #endif /* defined(J9VM_ENV_DATA64) */
 #endif /* defined(J9VM_OPT_JFR) */
+#if defined(J9VM_OPT_SNAPSHOTS)
+	struct J9VMThread *rcpThread; /* This is used to preserve the loading thread from RCP cache */
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 } J9ArrayClass;
 
 #if defined(LINUX) && defined(J9VM_ARCH_X86) && !defined(OSX)
