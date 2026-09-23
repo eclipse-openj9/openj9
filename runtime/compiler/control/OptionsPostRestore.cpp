@@ -46,6 +46,7 @@
 #endif
 #include "runtime/CodeRuntime.hpp"
 #include "runtime/CRRuntime.hpp"
+#include "runtime/CodeCacheManager.hpp"
 
 #define FIND_AND_CONSUME_RESTORE_ARG(match, optionName, optionValue) \
     FIND_AND_CONSUME_ARG(vm->checkpointState.restoreArgsList, match, optionName, optionValue)
@@ -94,6 +95,7 @@ J9::OptionsPostRestore::OptionsPostRestore(J9VMThread *vmThread, J9JITConfig *ji
         = J9::Options::_xrsSync || options->getOption(TR_NoResumableTrapHandler) || options->getOption(TR_DisableTraps);
 
     _enableCodeCacheDisclaimingPreCheckpoint = options->getOption(TR_EnableCodeCacheDisclaiming);
+    _segregateAOTCodeCachePreCheckpoint = !options->getOption(TR_DisableAOTCodeCacheDisclaiming);
 }
 
 void J9::OptionsPostRestore::iterateOverExternalOptions()
@@ -615,6 +617,7 @@ void J9::OptionsPostRestore::preProcessInternalCompilerOptions()
         TR::Options::getCmdLineOptions()->setOption(TR_DisableIProfilerDataDisclaiming);
         TR::Options::getCmdLineOptions()->setOption(TR_DisableRuntimeAssumptionDataDisclaiming);
         TR::Options::getCmdLineOptions()->setOption(TR_EnableCodeCacheDisclaiming, false);
+        TR::Options::getCmdLineOptions()->setOption(TR_DisableAOTCodeCacheDisclaiming);
         TR::Options::getCmdLineOptions()->setOption(TR_EnableSharedCacheDisclaiming, false);
     }
 }
@@ -743,9 +746,22 @@ J9:
         && TR::Options::getCmdLineOptions()->getOption(TR_EnableCodeCacheDisclaiming)) {
         TR::Options::getCmdLineOptions()->setOption(TR_EnableCodeCacheDisclaiming, false);
 
+        TR::CodeCacheManager::instance()->setDisclaimEnabled(false);
+
         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
             TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
                 "WARNING: Code Cache disclaiming disabled since it was disabled before checkpoint");
+    }
+
+    if (!_segregateAOTCodeCachePreCheckpoint
+        && !TR::Options::getCmdLineOptions()->getOption(TR_DisableAOTCodeCacheDisclaiming)) {
+        TR::Options::getCmdLineOptions()->setOption(TR_DisableAOTCodeCacheDisclaiming);
+
+        TR::CodeCacheManager::instance()->setAOTDisclaimEnabled(false);
+
+        if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
+                "WARNING: AOT Code Cache disclaiming and segregation disabled since it was disabled before checkpoint");
     }
 
     if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableDataCacheDisclaiming)
