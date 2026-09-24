@@ -36,7 +36,7 @@
 #include "GCExtensions.hpp"
 #include "HeapMemorySnapshot.hpp"
 #include "Heap.hpp"
-#include "HeapRegionDescriptor.hpp"
+#include "HeapRegionDescriptorVLHGC.hpp"
 #include "HeapRegionIterator.hpp"
 #include "HeapRegionManager.hpp"
 #include "GlobalCollector.hpp"
@@ -454,6 +454,38 @@ j9gc_is_local_collector(J9JavaVM *javaVM, UDATA gcID)
 	}
 
 	return local;
+}
+
+/**
+ * check which of two objects is older in the heap
+ * returns 1 if object1 is older, -1 if object2 is older, 0 if no object or same age
+ */
+IDATA
+j9gc_is_older(J9VMThread *vmThread, j9object_t object1Ptr, j9object_t object2Ptr)
+{
+	if ((NULL == object1Ptr) || (NULL == object2Ptr)) {
+		return 0;
+	}
+
+	OMR_VM *omrVM = vmThread->javaVM->omrVM;
+
+	if ( OMR_GC_POLICY_BALANCED != omrVM->gcPolicy ) {
+		return 0;
+	}
+
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vmThread);
+
+	MM_HeapRegionManager *regionManager = extensions->heapRegionManager;
+
+	MM_HeapRegionDescriptorVLHGC *vlhgcRegion1 = (MM_HeapRegionDescriptorVLHGC *)regionManager->tableDescriptorForAddress(object1Ptr);
+	MM_HeapRegionDescriptorVLHGC *vlhgcRegion2 = (MM_HeapRegionDescriptorVLHGC *)regionManager->tableDescriptorForAddress(object2Ptr);
+
+	uintptr_t age1 = vlhgcRegion1->getLogicalAge();
+	uintptr_t age2 = vlhgcRegion2->getLogicalAge();
+
+	if (age1 > age2) return 1;
+	if (age1 < age2) return -1;
+	return 0;
 }
 
 /**
