@@ -27,6 +27,11 @@
  */
 @SuppressWarnings("module")
 module openj9.sharedclasses {
-  exports com.ibm.oti.shared;
-  provides com.ibm.sharedclasses.spi.SharedClassProvider with com.ibm.oti.shared.provider.SharedClassProviderImpl;
+	exports com.ibm.oti.shared;
+	provides com.ibm.sharedclasses.spi.SharedClassProvider with
+		com.ibm.oti.shared.provider.SharedClassProviderImpl
+/*[IF RAM_CLASS_CACHE_SUPPORT] */
+		,com.ibm.oti.shared.provider.SharedClassProviderImplRcp
+/*[ENDIF] RAM_CLASS_CACHE_SUPPORT */
+		;
 }
