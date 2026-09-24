@@ -42,7 +42,7 @@
 
 typedef void (* DISASSEMBLY_PRINT_FN)(void *userData, char *format, ...);
 
-static void cfdumpBytecodePrintFunction (void *userData, char *format, ...);
+static void cfdumpBytecodePrintFunction(void *userData, const char *format, ...);
 
 
 IDATA j9bcutil_dumpBytecodes(J9PortLibrary * portLib, J9ROMClass * romClass,
@@ -573,16 +573,13 @@ IDATA dumpBytecodes(J9PortLibrary * portLib, J9ROMClass * romClass, J9ROMMethod 
 }
 
 
-
-static void cfdumpBytecodePrintFunction(void *userData, char *format, ...)
+static void
+cfdumpBytecodePrintFunction(void *userData, const char *format, ...)
 {
-	PORT_ACCESS_FROM_PORT((J9PortLibrary*)userData);
+	PORT_ACCESS_FROM_PORT((J9PortLibrary *)userData);
 	va_list args;
-	char outputBuffer[512];
 
 	va_start(args, format);
-	j9str_vprintf(outputBuffer, 512, format, args);
+	j9tty_vprintf(format, args);
 	va_end(args);
-
-	j9tty_printf(PORTLIB, "%s", outputBuffer);
 }
