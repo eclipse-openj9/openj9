@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 ################################################################################
 
-list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -O3 -g -fstack-protector)
+list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -O0 -g3 -fstack-protector)
 if(OMR_DDR AND NOT (CMAKE_C_COMPILER_VERSION VERSION_LESS 11))
 	# In gcc 11+ the default is to use DWARF version 5 which is not yet
 	# supported by ddrgen: tell the compiler to use DWARF version 4.
