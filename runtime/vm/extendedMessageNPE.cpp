@@ -26,7 +26,6 @@
 #include "rommeth.h"
 #include "stackwalk.h"
 #include "ut_j9vm.h"
-#include "util_api.h"
 #include "vrfytbl.h"
 
 extern "C" {
@@ -41,7 +40,7 @@ static void computeNPEMsgAtPC(J9VMThread *vmThread, J9ROMMethod *romMethod, J9RO
 static char* convertToJavaFullyQualifiedName(J9VMThread *vmThread, J9UTF8 *fullyQualifiedNameUTF);
 static char* convertMethodSignature(J9VMThread *vmThread, J9UTF8 *methodSig);
 static IDATA copyToTargetStack(J9NPEMessageData *npeMsgData, UDATA target);
-static char* getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romClass, char *npeCauseMsg, bool isMethodFlag, bool receiverNull);
+static char* getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romClass, char *npeCauseMsg, bool isMethodFlag);
 static char* getFullyQualifiedMethodName(J9VMThread *vmThread, J9ROMClass *romClass, U_8 *bcIndex);
 static char* getLocalsName(J9VMThread *vmThread, J9ROMMethod *romMethod, U_16 localVar, UDATA bcCausePos, UDATA *temps);
 static char* getMsgWithAllocation(J9VMThread *vmThread, const char *msgTemplate, ...);
@@ -342,8 +341,7 @@ convertMethodSignature(J9VMThread *vmThread, J9UTF8 *methodSig)
  *
  * @return an extended NPE message or NULL if such a message can't be generated
  */
-static char*
-getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romClass, char *npeCauseMsg, bool isMethodFlag, bool receiverNull)
+static char* getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romClass, char *npeCauseMsg, bool isMethodFlag)
 {
 	char *npeMsg = NULL;
 	const char *msgTemplate = NULL;
@@ -469,9 +467,8 @@ getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romCl
 			}
 			break;
 		}
-		case JBgetfield:
-		case JBputfield:
-		case JBputstatic: {
+		case JBgetfield: /* FALLTHROUGH */
+		case JBputfield: {
 			U_16 index = PARAM_16(bcCurrentPtr, 1);
 			UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(romClass), index);
 
@@ -483,51 +480,27 @@ getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romCl
 				J9UTF8 *fieldName = J9ROMNAMEANDSIGNATURE_NAME(fieldNameAndSig);
 
 				if (NULL == npeCauseMsg) {
-					if (JBgetfield == bcCurrent) {
-						msgTemplate = "Cannot read field \"%.*s\"";
-					} else {
+					if (JBputfield == bcCurrent) {
 						msgTemplate = "Cannot assign field \"%.*s\"";
-					}
-					npeMsg = getMsgWithAllocation(vmThread, msgTemplate,
-						J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName));
-				} else if (JBputstatic == bcCurrent) {
-					if (isMethodFlag) {
-						msgTemplate = "Cannot assign field \"%.*s\" because the return value of \"%s\" cannot be stored into a null-restricted field";
 					} else {
-						msgTemplate = "Cannot assign field \"%.*s\" because \"%s\" cannot be stored into a null-restricted field";
+						msgTemplate = "Cannot read field \"%.*s\"";
 					}
-					npeMsg = getMsgWithAllocation(vmThread, msgTemplate,
-						J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName), npeCauseMsg);
-				} else if (JBputfield == bcCurrent) {
-					/* receiverNull is determined by the caller (computeNPEMsgAtPC) by inspecting
-					 * the value's bytecode offset stored in bytecodeOffset[npePC].second.
-					 */
-					if (receiverNull) {
+					npeMsg = getMsgWithAllocation(vmThread, msgTemplate, J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName));
+				} else {
+					if (JBputfield == bcCurrent) {
 						if (isMethodFlag) {
 							msgTemplate = "Cannot assign field \"%.*s\" because the return value of \"%s\" is null";
 						} else {
 							msgTemplate = "Cannot assign field \"%.*s\" because \"%s\" is null";
 						}
-						npeMsg = getMsgWithAllocation(vmThread, msgTemplate,
-							J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName), npeCauseMsg);
 					} else {
 						if (isMethodFlag) {
-							msgTemplate = "Cannot assign field \"%.*s\" because the return value of \"%s\" is null or \"%.*s\" is a null-restricted field and there's an attempt to store null in it";
+							msgTemplate = "Cannot read field \"%.*s\" because the return value of \"%s\" is null";
 						} else {
-							msgTemplate = "Cannot assign field \"%.*s\" because \"%s\" is null or \"%.*s\" is a null-restricted field and there's an attempt to store null in it";
+							msgTemplate = "Cannot read field \"%.*s\" because \"%s\" is null";
 						}
-						npeMsg = getMsgWithAllocation(vmThread, msgTemplate,
-							J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName), npeCauseMsg,
-							J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName));
 					}
-				} else {
-					if (isMethodFlag) {
-						msgTemplate = "Cannot read field \"%.*s\" because the return value of \"%s\" is null";
-					} else {
-						msgTemplate = "Cannot read field \"%.*s\" because \"%s\" is null";
-					}
-					npeMsg = getMsgWithAllocation(vmThread, msgTemplate,
-						J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName), npeCauseMsg);
+					npeMsg = getMsgWithAllocation(vmThread, msgTemplate, J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName), npeCauseMsg);
 				}
 			} else {
 				Trc_VM_GetCompleteNPEMessage_UnexpectedCPType(vmThread, cpType, bcCurrent);
@@ -1175,58 +1148,7 @@ computeNPEMsgAtPC(J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romC
 		}
 
 		if (npeFinalFlag) {
-			/* For JBputfield, determine whether the receiver is the cause of the NPE. */
-			bool receiverNull = false;
-			if (JBputfield == bcCurrent) {
-				/* Check whether the field is null-restricted. */
-				U_16 fieldIndex = PARAM_16(bcCurrentPtr, 1);
-				J9ROMConstantPoolItem *fieldCp = J9_ROM_CP_FROM_ROM_CLASS(romClass) + fieldIndex;
-				J9ROMFieldRef *fieldRef = (J9ROMFieldRef *)fieldCp;
-				J9ROMNameAndSignature *fieldNAS = J9ROMFIELDREF_NAMEANDSIGNATURE(fieldRef);
-				J9UTF8 *fieldName = J9ROMNAMEANDSIGNATURE_NAME(fieldNAS);
-				J9UTF8 *fieldSig  = J9ROMNAMEANDSIGNATURE_SIGNATURE(fieldNAS);
-				J9UTF8 *defClass  = J9ROMCLASSREF_NAME((J9ROMClassRef *)(J9_ROM_CP_FROM_ROM_CLASS(romClass) + fieldRef->classRefCPIndex));
-				J9UTF8 *thisClass = J9ROMCLASS_CLASSNAME(romClass);
-				bool fieldIsNullRestricted = false;
-				if (J9UTF8_DATA_EQUALS(J9UTF8_DATA(defClass), J9UTF8_LENGTH(defClass),
-						J9UTF8_DATA(thisClass), J9UTF8_LENGTH(thisClass))) {
-					J9ROMFieldWalkState fwState = {0};
-					J9ROMFieldShape *romField = romFieldsStartDo(romClass, &fwState);
-					while (NULL != romField) {
-						if (J9UTF8_DATA_EQUALS(J9UTF8_DATA(J9ROMFIELDSHAPE_NAME(romField)), J9UTF8_LENGTH(J9ROMFIELDSHAPE_NAME(romField)),
-								J9UTF8_DATA(fieldName), J9UTF8_LENGTH(fieldName))
-							&& J9UTF8_DATA_EQUALS(J9UTF8_DATA(J9ROMFIELDSHAPE_SIGNATURE(romField)), J9UTF8_LENGTH(J9ROMFIELDSHAPE_SIGNATURE(romField)),
-								J9UTF8_DATA(fieldSig), J9UTF8_LENGTH(fieldSig))
-						) {
-							fieldIsNullRestricted = J9ROMFIELD_IS_NULL_RESTRICTED(romField) ? true : false;
-							break;
-						}
-						romField = romFieldsNextDo(&fwState);
-					}
-				} else {
-					fieldIsNullRestricted = true;
-				}
-
-				if (!fieldIsNullRestricted) {
-					/* Not null-restricted: the only possible NPE cause is a null receiver. */
-					receiverNull = true;
-				} else {
-					/* Field is null-restricted. Check whether the value bytecode can produce null.
-					 * If the value is an object allocation, it cannot be null, so the receiver must be null.
-					 */
-					UDATA valueBcOffset = bytecodeOffset[npePC].second;
-					if (BYTECODE_BRANCH_TARGET != valueBcOffset) {
-						U_8 valueBc = *(J9_BYTECODE_START_FROM_ROM_METHOD(romMethod) + valueBcOffset);
-						if ((JBnew == valueBc) || (JBnewdup == valueBc)
-							|| (JBanewarray == valueBc) || (JBnewarray == valueBc)
-							|| (JBmultianewarray == valueBc)
-						) {
-							receiverNull = true;
-						}
-					}
-				}
-			}
-			*npeMsg = getCompleteNPEMessage(vmThread, bcCurrentPtr, romClass, *npeMsg, *isMethodFlag, receiverNull);
+			*npeMsg = getCompleteNPEMessage(vmThread, bcCurrentPtr, romClass, *npeMsg, *isMethodFlag);
 		}
 		Trc_VM_ComputeNPEMsgAtPC_end(vmThread, bcCurrent, npePC, npeFinalFlag, *isMethodFlag, *npeMsg);
 	}
@@ -1666,28 +1588,16 @@ simulateStack(J9NPEMessageData *npeMsgData)
 			J9ROMConstantPoolItem *info = &constantPool[index];
 			J9UTF8 *fieldSig = ((J9UTF8 *) (J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMFIELDREF_NAMEANDSIGNATURE((J9ROMFieldRef *) info))));
 			if (currentBytecode >= JBgetfield) {
-				/* For JBputfield, save the value bc-offset in .second so the message generator
-				 * can tell whether the value being stored is probably non-null. For all other
-				 * bytecodes in this group the offset of the receiver bytecode goes in .first.
-				 */
-				if (JBputfield == currentBytecode) {
-					setSrcBytecodeOffset(bytecodeOffset, bcPos, 0, *(stackTop - 1));
-				} else {
-					/* the offset of the bytecode putting the field receiver onto the operand stack */
-					setSrcBytecodeOffset(bytecodeOffset, bcPos, *(stackTop - 1), 0);
-				}
+				/* the offset of the bytecode putting the field receiver onto the operand stack is *(stackTop - 1) */
+				setSrcBytecodeOffset(bytecodeOffset, bcPos, *(stackTop - 1), 0);
 				/* field bytecode receiver */
 				NPEMSG_DROP(1);
 			}
 			if (currentBytecode & 1) {
-				if ((JBputfield == currentBytecode) || (JBputstatic == currentBytecode)) {
-					/* Overwrite .first with the receiver bc-offset.
-					 * For JBputfield, preserve .second which holds the value bc-offset saved above.
-					 */
-					UDATA savedSecond = (JBputfield == currentBytecode) ? bytecodeOffset[bcPos].second : 0;
-					setSrcBytecodeOffset(bytecodeOffset, bcPos, *(stackTop - 1), savedSecond);
+				if (JBputfield == currentBytecode) {
+					setSrcBytecodeOffset(bytecodeOffset, bcPos, *(stackTop - 1), 0);
 				}
-				/* JBputfield/JBputstatic - odd currentBytecode's */
+				/* JBputfield/JBpustatic - odd currentBytecode's */
 				NPEMSG_DROP(1);
 				if ((*J9UTF8_DATA(fieldSig) == 'D') || (*J9UTF8_DATA(fieldSig) == 'J')) {
 					NPEMSG_DROP(1);

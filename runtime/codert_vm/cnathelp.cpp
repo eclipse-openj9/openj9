@@ -1063,7 +1063,7 @@ old_slow_jitStoreFlattenableArrayElement(J9VMThread *currentThread)
 			addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYINDEXOUTOFBOUNDSEXCEPTION, NULL);
 		} else {
 			if (false == VM_VMHelpers::objectArrayStoreAllowed(currentThread, arrayref, value)) {
-				addr = setCurrentExceptionNLSFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYSTOREEXCEPTION, J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_ARRAY);
+				addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYSTOREEXCEPTION, NULL);
 			} else {
 				J9ArrayClass *arrayrefClass = (J9ArrayClass *) J9OBJECT_CLAZZ(currentThread, arrayref);
 				addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
@@ -2821,7 +2821,7 @@ old_slow_jitThrowArrayStoreException(J9VMThread *currentThread)
 {
 	OLD_JIT_HELPER_PROLOGUE(0);
 	buildJITResolveFrameForRuntimeCheck(currentThread);
-	return setCurrentExceptionNLSFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYSTOREEXCEPTION, J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_ARRAY);
+	return setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYSTOREEXCEPTION, NULL);
 }
 
 void* J9FASTCALL
