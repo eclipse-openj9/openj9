@@ -568,6 +568,22 @@ public:
     void setSupportsInlineStringLatin1Inflate() { _j9Flags.set(SupportsInlineStringLatin1Inflate); }
 
     /** \brief
+     *    Determines whether the code generator supports inlining of java/lang/StringLatin1.compareToUTF16Values
+     */
+    bool getSupportsInlineStringLatin1CompareToUTF16Values()
+    {
+        return _j9Flags.testAny(SupportsInlineStringLatin1CompareToUTF16Values);
+    }
+
+    /** \brief
+     *    The code generator supports inlining of java/lang/StringLatin1.compareToUTF16Values
+     */
+    void setSupportsInlineStringLatin1CompareToUTF16Values()
+    {
+        _j9Flags.set(SupportsInlineStringLatin1CompareToUTF16Values);
+    }
+
+    /** \brief
      *    Determines whether the code generator supports inlining of java_util_concurrent_ConcurrentLinkedQueue_tm*
      *    methods
      */
@@ -891,6 +907,7 @@ private:
         SupportsInlineDecodeToLatin1Impl = 0x00100000,
         SupportsInlineIntegerCompareUnsigned = 0x00200000,
         SupportsInlineLongCompareUnsigned = 0x00400000,
+        SupportsInlineStringLatin1CompareToUTF16Values = 0x00800000,
     };
 
     flags32_t _j9Flags;
