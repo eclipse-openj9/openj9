@@ -25,6 +25,7 @@
 
 #include "z/codegen/CallSnippet.hpp"
 #include "z/codegen/ConstantDataSnippet.hpp"
+#include "z/codegen/S390HelperCallSnippet.hpp"
 #include "z/codegen/S390Instruction.hpp"
 
 class TR_MHJ2IThunk;
@@ -64,6 +65,10 @@ public:
     virtual void print(OMR::Logger *log, TR_Debug *debug);
 
     virtual uint8_t *emitSnippetBody();
+
+    static uint8_t *S390FlushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argSize,
+        TR::CodeGenerator *cg);
+    static int32_t instructionCountForArguments(TR::Node *, TR::CodeGenerator *);
 };
 
 class S390UnresolvedCallSnippet : public TR::S390J9CallSnippet {
@@ -275,6 +280,31 @@ public:
     virtual uint32_t getLength(int32_t estimatedSnippetStart);
     virtual uint8_t *emitSnippetBody();
 };
+
+/**
+ * @brief A helper-call snippet that has access to J9-specific methods
+ *
+ * Calls the given helper, optionally flushes the given node's arguments to the stack.
+ *
+ * For the case of jitDispatchJ9Method, moves the J9Method pointer in GPR4/GPR15 to GPR1 after flushing the args to the
+ * stack so it is where the interpreter expects it to be.
+ */
+class S390J9HelperCallSnippet : public TR::S390HelperCallSnippet {
+public:
+    S390J9HelperCallSnippet(TR::CodeGenerator *cg, TR::Node *node, TR::LabelSymbol *snippetlab,
+        TR::SymbolReference *helper, TR::LabelSymbol *restartlab = NULL, int32_t s = 0, bool needsArgFlush = false)
+        : TR::S390HelperCallSnippet(cg, node, snippetlab, helper, restartlab, s)
+        , _needsArgFlush(needsArgFlush)
+    {}
+
+    virtual uint8_t *emitSnippetBody();
+    virtual void print(OMR::Logger *log, TR_Debug *);
+    virtual uint32_t getLength(int32_t estimatedSnippetStart);
+
+private:
+    bool _needsArgFlush;
+};
+
 } // namespace TR
 
 #endif
