@@ -59,10 +59,19 @@ extern "C" {
  *    3.1    Java7.1
  *    4.1    Java8 (828)
  *    5.0    Java9 (929 AND 829)
+ *    5.1    Relaxed AOT processor check to permit superset of processor features rather than requiring exact match
+ *    6.0    Introduction of variable heap base
+ *    7.0    Java 28 (Value types support)
  */
 
+#if JAVA_SPEC_VERSION >= 28
+#define TR_AOTHeaderMajorVersion 7
+#define TR_AOTHeaderMinorVersion 0
+#else /* JAVA_SPEC_VERSION >= 28 */
 #define TR_AOTHeaderMajorVersion 6
 #define TR_AOTHeaderMinorVersion 0
+#endif /* JAVA_SPEC_VERSION >= 28 */
+
 #define TR_AOTHeaderEyeCatcher 0xA0757A27
 
 /* AOT Header Flags */
@@ -85,6 +94,12 @@ typedef enum TR_AOTFeatureFlags {
     TR_FeatureFlag_IsVariableHeapSizeForBarrierRange0 = 0x00008000,
     TR_FeatureFlag_IsVariableActiveCardTableBase = 0x00010000,
     TR_FeatureFlag_CHTableEnabled = 0x00020000,
+#if JAVA_SPEC_VERSION >= 28
+    TR_FeatureFlag_ValueTypesEnabled = 0x00040000,
+    TR_FeatureFlag_FlattenableValueTypesEnabled = 0x00080000,
+    TR_FeatureFlag_ValueTypesFlatteningEnabled = 0x00100000,
+    TR_FeatureFlag_ValueTypesArrayFlatteningEnabled = 0x00200000,
+#endif /* JAVA_SPEC_VERSION >= 28 */
     TR_FeatureFlag_SanityCheckEnd = 0x80000000
 } TR_AOTFeatureFlags;
 
@@ -106,6 +121,9 @@ typedef struct TR_AOTHeader {
     uintptr_t vendorId;
     uintptr_t gcPolicyFlag;
     uintptr_t compressedPointerShift;
+#if JAVA_SPEC_VERSION >= 28
+    uintptr_t valueTypesFlatteningThreshold;
+#endif /* JAVA_SPEC_VERSION >= 28 */
     uint32_t lockwordOptionHashValue;
     int32_t arrayLetLeafSize;
     OMRProcessorDesc processorDescription;

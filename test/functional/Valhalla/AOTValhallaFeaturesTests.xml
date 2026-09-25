@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  Copyright IBM Corp. and others 2026
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] https://openjdk.org/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+<suite id="AOTValhallaFeatures">
+
+	<exec command="$JAVA_EXE$ -Xshareclasses:destroyAll" quiet="false"/>
+
+	<!--
+	   - Build shared classes caches with various settings of value types features enabled:
+	   -
+	   -   Flattening enabled or disabled:  -XX:{+|-}EnableFlattening
+	   -   Array element flattening enabled or disabled:  -XX:{+|-}EnableArrayFlattening
+	   -   Flattening threshold size specified or default (0):  -XX:ValueTypeFlatteningThreshold
+	   -
+	   - If OpenJ9 ever has an option that controls whether value type are enabled or disabled or
+	   - null-restricted types are enabled or disabled, we can add tests for those options as well.
+	  -->
+	<exec command="$JAVA_EXE$ -cp $TESTSJARPATH$ --enable-preview -Xshareclasses:name=noflat,reset -Xscminaot10K -Xscmaxaot100K -Xaot:forceaot,limit={org/openj9/test/jep401/Sample.sub*} org.openj9.test.jep401.Sample" quiet="false"/>
+	<exec command="$JAVA_EXE$ -cp $TESTSJARPATH$ --enable-preview -Xshareclasses:name=flat,reset -Xscminaot10K -Xscmaxaot100K -Xaot:forceaot,limit={org/openj9/test/jep401/Sample.sub*} -XX:+EnableFlattening org.openj9.test.jep401.Sample" quiet="false"/>
+	<exec command="$JAVA_EXE$ -cp $TESTSJARPATH$ --enable-preview -Xshareclasses:name=flat.arr,reset -Xscminaot10K -Xscmaxaot100K -Xaot:forceaot,limit={org/openj9/test/jep401/Sample.sub*} -XX:+EnableFlattening -XX:+EnableArrayFlattening org.openj9.test.jep401.Sample" quiet="false"/>
+	<exec command="$JAVA_EXE$ -cp $TESTSJARPATH$ --enable-preview -Xshareclasses:name=flat.thr4,reset -Xscminaot10K -Xscmaxaot100K -Xaot:forceaot,limit={org/openj9/test/jep401/Sample.sub*} -XX:+EnableFlattening -XX:ValueTypeFlatteningThreshold=4 org.openj9.test.jep401.Sample" quiet="false"/>
+	<exec command="$JAVA_EXE$ -cp $TESTSJARPATH$ --enable-preview -Xshareclasses:name=flat.arr.thr4,reset -Xscminaot10K -Xscmaxaot100K -Xaot:forceaot,limit={org/openj9/test/jep401/Sample.sub*} -XX:+EnableFlattening -XX:+EnableArrayFlattening -XX:ValueTypeFlatteningThreshold=4 org.openj9.test.jep401.Sample" quiet="false"/>
+	<exec command="$JAVA_EXE$ -cp $TESTSJARPATH$ --enable-preview -Xshareclasses:name=flat.thr8,reset -Xscminaot10K -Xscmaxaot100K -Xaot:forceaot,limit={org/openj9/test/jep401/Sample.sub*} -XX:+EnableFlattening -XX:ValueTypeFlatteningThreshold=8 org.openj9.test.jep401.Sample" quiet="false"/>
+	<exec command="$JAVA_EXE$ -cp $TESTSJARPATH$ --enable-preview -Xshareclasses:name=flat.arr.thr8,reset -Xscminaot10K -Xscmaxaot100K -Xaot:forceaot,limit={org/openj9/test/jep401/Sample.sub*} -XX:+EnableFlattening -XX:+EnableArrayFlattening -XX:ValueTypeFlatteningThreshold=8 org.openj9.test.jep401.Sample" quiet="false"/>
+
+	<!--
+	   - Set variables indicating whether tests should be run with value types flattening
+	   - enabled, array element flattening enabled and the flattening threshold option.
+	   - The array element flattening and flattening threshold only take effect if value
+	   - types flattening itself is enabled.
+	   -
+	   - VALHFLATMODE=310 sets -XX:-EnableFlattening
+	   - VALHFLATMODE=311 sets -XX:+EnableFlattening
+	   -
+	   - VALHARRFLATMODE=320 sets -XX:-EnableArrayFlattening
+	   - VALHARRFLATMODE=321 sets -XX:+EnableArrayFlattening
+	   -
+	   - VALHARRFLATMODE=330 uses the default -XX:ValueTypeFlatteningThreshold setting
+	   - VALHARRFLATMODE=334 sets -XX:ValueTypeFlatteningThreshold=4
+	   - VALHARRFLATMODE=338 sets -XX:ValueTypeFlatteningThreshold=8
+	   -
+	   - If VALHFLATMODE is 310, the -XX:-EnableArrayFlattening option and default -XX:ValueTypeFlatteningThreshold take effect
+	  -->
+	<if testVariable="VALHFLATMODE" testValue="310" resultVariable="ENABLEFLATTENING" resultValue="no"/>
+	<if testVariable="VALHFLATMODE" testValue="311" resultVariable="ENABLEFLATTENING" resultValue="yes"/>
+
+	<if testVariable="VALHARRFLATMODE" testValue="320" resultVariable="ENABLEARRAYFLATTENING" resultValue="no"/>
+	<if testVariable="VALHARRFLATMODE" testValue="321" resultVariable="ENABLEARRAYFLATTENING" resultValue="yes"/>
+	<if testVariable="VALHFLATMODE" testValue="310" resultVariable="ENABLEARRAYFLATTENING" resultValue="no"/>
+
+	<if testVariable="VALHFLATTHRESHMODE" testValue="330" resultVariable="USEFLATTENINGTHREHSOLD" resultValue="no"/>
+	<if testVariable="VALHFLATTHRESHMODE" testValue="334" resultVariable="USEFLATTENINGTHREHSOLD" resultValue="4"/>
+	<if testVariable="VALHFLATTHRESHMODE" testValue="338" resultVariable="USEFLATTENINGTHREHSOLD" resultValue="8"/>
+	<if testVariable="VALHFLATMODE" testValue="310" resultVariable="USEFLATTENINGTHRESHOLD" resultValue="no"/>
+
+	<!--
+	   - Set variables that contain the settings of the various options with which to run the tests.
+	  -->
+	<if testVariable="ENABLEFLATTENING" testValue="no" resultVariable="FLATTENINGOPT" resultValue="-XX:-EnableFlattening"/>
+	<if testVariable="ENABLEFLATTENING" testValue="yes" resultVariable="FLATTENINGOPT" resultValue="-XX:+EnableFlattening"/>
+
+	<if testVariable="ENABLEARRAYFLATTENING" testValue="no" resultVariable="ARRAYFLATTENINGOPT" resultValue="-XX:-EnableArrayFlattening"/>
+	<if testVariable="ENABLEARRAYFLATTENING" testValue="yes" resultVariable="ARRAYFLATTENINGOPT" resultValue="-XX:+EnableArrayFlattening"/>
+
+
+	<variable name="FLATTENINGTHRESHOLDOPT" value="-XX:ValueTypeFlatteningThreshold=$USEFLATTENINGTHREHSOLD$"/>
+	<if testVariable="USEFLATTENINGTHREHSOLD" testValue="no" resultVariable="FLATTENINGTHRESHOLDOPT" resultValue=""/>
+
+	<echo value=" "/>
+	<echo value="###########################################################################"/>
+	<echo value="Running AOT tests with various combinations of value types features enabled"/>
+	<echo value="$FLATTENINGOPT$ $ARRAYFLATTENINGOPT$ $FLATTENINGTHRESHOLDOPT$"/>
+	<echo value="###########################################################################"/>
+	<echo value=" "/>
+
+	<test id="testAOTNoFlatteningSCC">
+		<!-- Test with SCC that was built with flattening disabled -->
+
+		<!-- If flattening is enabled, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<if testVariable="ENABLEFLATTENING" testValue="yes" resultVariable="EXPECTFLATTENINGMISMATCH" resultValue="required"/>
+		<if testVariable="ENABLEFLATTENING" testValue="no" resultVariable="EXPECTFLATTENINGMISMATCH" resultValue="failure"/>
+
+		<!-- If array element flattening is enabled, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="yes" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="required"/>
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="no" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="failure"/>
+
+		<!-- Flattening threshold mismatch should never be reported; mismatches will only occur for flattening enablement settings -->
+		<variable name="EXPECTFLATTENINGTHRESHOLDMISMATCH" value="failure"/>
+
+		<!-- Run the test and look for warning messages -->
+		<command>$JAVA_EXE$ -cp $TESTSJARPATH$ --enable-preview -Xshareclasses:name=noflat,verbose -Xaot:forceaot,limit={org/openj9/test/jep401/Sample.sub*} $FLATTENINGOPT$ $ARRAYFLATTENINGOPT$ $FLATTENINGTHRESHOLDOPT$ org.openj9.test.jep401.Sample</command>
+
+		<!-- Ignore regularly seen AOT messages -->
+		<output type="success" caseSensitive="yes" regex="yes">\[-Xshareclasses .* enabled\]</output>
+		<output type="success" caseSensitive="yes" regex="yes">JVMSHRC.*</output>
+		<output type="success" caseSensitive="yes" regex="yes">AOT for ROMMethod 0x[0-9a-f]* in shared cache</output>
+
+		<!-- Verify test actually runs -->
+		<output type="required" caseSensitive="yes" regex="no">In Sample.sub</output>
+		<output type="required" caseSensitive="yes" regex="no">In Sample.main</output>
+		<output type="required" caseSensitive="yes" regex="no">Leaving Sample.main</output>
+
+		<!-- These are the messages we're interested in -->
+		<output type="$EXPECTFLATTENINGMISMATCH$" caseSensitive="yes" regex="no">Flattening of null-restricted types feature mismatch. Ignoring AOT code in shared class cache.</output>
+		<output type="$EXPECTARRFLATTENINGMISMATCH$" caseSensitive="yes" regex="no">Flattening of null-restricted array elements feature mismatch. Ignoring AOT code in shared class cache.</output>
+		<output type="$EXPECTFLATTENINGTHRESHOLDMISMATCH$" caseSensitive="yes" regex="no">Null-restricted types flattening threshold mismatch. Ignoring AOT code in shared class cache.</output>
+	</test>
+
+	<test id="testAOTFieldFlatteningSCC">
+		<!-- Test with SCC built with flattening enabled -->
+
+		<!-- If flattening is disabled, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<if testVariable="ENABLEFLATTENING" testValue="no" resultVariable="EXPECTFLATTENINGMISMATCH" resultValue="required"/>
+		<if testVariable="ENABLEFLATTENING" testValue="yes" resultVariable="EXPECTFLATTENINGMISMATCH" resultValue="failure"/>
+
+		<!-- If array element flattening is enabled, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="yes" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="required"/>
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="no" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="failure"/>
+
+		<!-- If flattening threshold option is specified, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<variable name="EXPECTFLATTENINGTHRESHOLDMISMATCH" value="required"/>
+		<if testVariable="USEFLATTENINGTHREHSOLD" testValue="no" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+
+		<!-- Flattening threshold mismatch should only be reported if flattening was enabled, but array flattening was not -->
+		<if testVariable="ENABLEFLATTENING" testValue="no" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="yes" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+
+		<!-- Run the test and look for warning messages -->
+		<command>$JAVA_EXE$ -cp $TESTSJARPATH$ --enable-preview -Xshareclasses:name=flat,verbose -Xaot:forceaot,limit={org/openj9/test/jep401/Sample.sub*} $FLATTENINGOPT$ $ARRAYFLATTENINGOPT$ $FLATTENINGTHRESHOLDOPT$ org.openj9.test.jep401.Sample</command>
+
+		<!-- Ignore regularly seen AOT messages -->
+		<output type="success" caseSensitive="yes" regex="yes">\[-Xshareclasses .* enabled\]</output>
+		<output type="success" caseSensitive="yes" regex="yes">JVMSHRC.*</output>
+		<output type="success" caseSensitive="yes" regex="yes">AOT for ROMMethod 0x[0-9a-f]* in shared cache</output>
+
+		<!-- Verify test actually runs -->
+		<output type="required" caseSensitive="yes" regex="no">In Sample.sub</output>
+		<output type="required" caseSensitive="yes" regex="no">In Sample.main</output>
+		<output type="required" caseSensitive="yes" regex="no">Leaving Sample.main</output>
+
+		<!-- These are the messages we're interested in -->
+		<output type="$EXPECTFLATTENINGMISMATCH$" caseSensitive="yes" regex="no">Flattening of null-restricted types feature mismatch. Ignoring AOT code in shared class cache.</output>
+		<output type="$EXPECTARRFLATTENINGMISMATCH$" caseSensitive="yes" regex="no">Flattening of null-restricted array elements feature mismatch. Ignoring AOT code in shared class cache.</output>
+		<output type="$EXPECTFLATTENINGTHRESHOLDMISMATCH$" caseSensitive="yes" regex="no">Null-restricted types flattening threshold mismatch. Ignoring AOT code in shared class cache.</output>
+	</test>
+
+	<test id="testAOTFieldAndArrayFlatteningSCC">
+		<!-- Test with SCC built with flattening enabled and array element flattening enabled -->
+
+		<!-- If flattening is disabled, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<if testVariable="ENABLEFLATTENING" testValue="no" resultVariable="EXPECTFLATTENINGMISMATCH" resultValue="required"/>
+		<if testVariable="ENABLEFLATTENING" testValue="yes" resultVariable="EXPECTFLATTENINGMISMATCH" resultValue="failure"/>
+
+		<!-- If array element flattening is disabled, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="no" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="required"/>
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="yes" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="failure"/>
+
+		<!-- If flattening threshold option is specified, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<variable name="EXPECTFLATTENINGTHRESHOLDMISMATCH" value="required"/>
+		<if testVariable="USEFLATTENINGTHREHSOLD" testValue="no" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+
+		<!-- Flattening threshold mismatch should only be reported if flattening and array flattening were both enabled -->
+		<if testVariable="ENABLEFLATTENING" testValue="no" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="no" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+
+		<!-- Run the test and look for warning messages -->
+		<command>$JAVA_EXE$ -cp $TESTSJARPATH$ --enable-preview -Xshareclasses:name=flat.arr,verbose -Xaot:forceaot,limit={org/openj9/test/jep401/Sample.sub*} $FLATTENINGOPT$ $ARRAYFLATTENINGOPT$ $FLATTENINGTHRESHOLDOPT$ org.openj9.test.jep401.Sample</command>
+
+		<!-- Ignore regularly seen AOT messages -->
+		<output type="success" caseSensitive="yes" regex="yes">\[-Xshareclasses .* enabled\]</output>
+		<output type="success" caseSensitive="yes" regex="yes">JVMSHRC.*</output>
+		<output type="success" caseSensitive="yes" regex="yes">AOT for ROMMethod 0x[0-9a-f]* in shared cache</output>
+
+		<!-- Verify test actually runs -->
+		<output type="required" caseSensitive="yes" regex="no">In Sample.sub</output>
+		<output type="required" caseSensitive="yes" regex="no">In Sample.main</output>
+		<output type="required" caseSensitive="yes" regex="no">Leaving Sample.main</output>
+
+		<!-- These are the messages we're interested in -->
+		<output type="$EXPECTFLATTENINGMISMATCH$" caseSensitive="yes" regex="no">Flattening of null-restricted types feature mismatch. Ignoring AOT code in shared class cache.</output>
+		<output type="$EXPECTARRFLATTENINGMISMATCH$" caseSensitive="yes" regex="no">Flattening of null-restricted array elements feature mismatch. Ignoring AOT code in shared class cache.</output>
+		<output type="$EXPECTFLATTENINGTHRESHOLDMISMATCH$" caseSensitive="yes" regex="no">Null-restricted types flattening threshold mismatch. Ignoring AOT code in shared class cache.</output>
+	</test>
+
+	<test id="testAOTFieldFlatteningThreshold4SCC">
+		<!-- Test with SCC built with flattening enabled and flattening threshold of four -->
+
+		<!-- If flattening is disabled, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<if testVariable="ENABLEFLATTENING" testValue="no" resultVariable="EXPECTFLATTENINGMISMATCH" resultValue="required"/>
+		<if testVariable="ENABLEFLATTENING" testValue="yes" resultVariable="EXPECTFLATTENINGMISMATCH" resultValue="failure"/>
+
+		<!-- If array element flattening is enabled, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="yes" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="required"/>
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="no" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="failure"/>
+
+		<!-- If flattening threshold option is not specified or does not have a value of 4, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<variable name="EXPECTFLATTENINGTHRESHOLDMISMATCH" value="required"/>
+		<if testVariable="USEFLATTENINGTHREHSOLD" testValue="4" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+
+		<!-- Flattening threshold mismatch should only be reported if flattening was enabled, but array flattening was not -->
+		<if testVariable="ENABLEFLATTENING" testValue="no" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="yes" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+
+		<!-- Run the test and look for warning messages -->
+		<command>$JAVA_EXE$ -cp $TESTSJARPATH$ --enable-preview -Xshareclasses:name=flat.thr4,verbose -Xaot:forceaot,limit={org/openj9/test/jep401/Sample.sub*} $FLATTENINGOPT$ $ARRAYFLATTENINGOPT$ $FLATTENINGTHRESHOLDOPT$ org.openj9.test.jep401.Sample</command>
+
+		<!-- Ignore regularly seen AOT messages -->
+		<output type="success" caseSensitive="yes" regex="yes">\[-Xshareclasses .* enabled\]</output>
+		<output type="success" caseSensitive="yes" regex="yes">JVMSHRC.*</output>
+		<output type="success" caseSensitive="yes" regex="yes">AOT for ROMMethod 0x[0-9a-f]* in shared cache</output>
+
+		<!-- Verify test actually runs -->
+		<output type="required" caseSensitive="yes" regex="no">In Sample.sub</output>
+		<output type="required" caseSensitive="yes" regex="no">In Sample.main</output>
+		<output type="required" caseSensitive="yes" regex="no">Leaving Sample.main</output>
+
+		<!-- These are the messages we're interested in -->
+		<output type="$EXPECTFLATTENINGMISMATCH$" caseSensitive="yes" regex="no">Flattening of null-restricted types feature mismatch. Ignoring AOT code in shared class cache.</output>
+		<output type="$EXPECTARRFLATTENINGMISMATCH$" caseSensitive="yes" regex="no">Flattening of null-restricted array elements feature mismatch. Ignoring AOT code in shared class cache.</output>
+		<output type="$EXPECTFLATTENINGTHRESHOLDMISMATCH$" caseSensitive="yes" regex="no">Null-restricted types flattening threshold mismatch. Ignoring AOT code in shared class cache.</output>
+	</test>
+
+	<test id="testAOTFieldAndArrayFlatteningThreshold4SCC">
+		<!-- Test with SCC built with flattening enabled, array element flattening enabled and flattening threshold of four -->
+
+		<!-- If flattening is disabled, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<if testVariable="ENABLEFLATTENING" testValue="no" resultVariable="EXPECTFLATTENINGMISMATCH" resultValue="required"/>
+		<if testVariable="ENABLEFLATTENING" testValue="yes" resultVariable="EXPECTFLATTENINGMISMATCH" resultValue="failure"/>
+
+		<!-- If array element flattening is disabled, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="no" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="required"/>
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="yes" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="failure"/>
+
+		<!-- If flattening threshold option is not specified or does not have a value of 4, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<variable name="EXPECTFLATTENINGTHRESHOLDMISMATCH" value="required"/>
+		<if testVariable="USEFLATTENINGTHREHSOLD" testValue="4" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+
+		<!-- Flattening threshold mismatch should only be reported if flattening and array flattening were both enabled -->
+		<if testVariable="ENABLEFLATTENING" testValue="no" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="no" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+
+		<!-- Run the test and look for warning messages -->
+		<command>$JAVA_EXE$ -cp $TESTSJARPATH$ --enable-preview -Xshareclasses:name=flat.arr.thr4,verbose -Xaot:forceaot,limit={org/openj9/test/jep401/Sample.sub*} $FLATTENINGOPT$ $ARRAYFLATTENINGOPT$ $FLATTENINGTHRESHOLDOPT$ org.openj9.test.jep401.Sample</command>
+
+		<!-- Ignore regularly seen AOT messages -->
+		<output type="success" caseSensitive="yes" regex="yes">\[-Xshareclasses .* enabled\]</output>
+		<output type="success" caseSensitive="yes" regex="yes">JVMSHRC.*</output>
+		<output type="success" caseSensitive="yes" regex="yes">AOT for ROMMethod 0x[0-9a-f]* in shared cache</output>
+
+		<!-- Verify test actually runs -->
+		<output type="required" caseSensitive="yes" regex="no">In Sample.sub</output>
+		<output type="required" caseSensitive="yes" regex="no">In Sample.main</output>
+		<output type="required" caseSensitive="yes" regex="no">Leaving Sample.main</output>
+
+		<!-- These are the messages we're interested in -->
+		<output type="$EXPECTFLATTENINGMISMATCH$" caseSensitive="yes" regex="no">Flattening of null-restricted types feature mismatch. Ignoring AOT code in shared class cache.</output>
+		<output type="$EXPECTARRFLATTENINGMISMATCH$" caseSensitive="yes" regex="no">Flattening of null-restricted array elements feature mismatch. Ignoring AOT code in shared class cache.</output>
+		<output type="$EXPECTFLATTENINGTHRESHOLDMISMATCH$" caseSensitive="yes" regex="no">Null-restricted types flattening threshold mismatch. Ignoring AOT code in shared class cache.</output>
+	</test>
+
+	<test id="testAOTFieldFlatteningThreshold8SCC">
+		<!-- Test with SCC built with flattening enabled and flattening threshold of four -->
+
+		<!-- If flattening is disabled, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<if testVariable="ENABLEFLATTENING" testValue="no" resultVariable="EXPECTFLATTENINGMISMATCH" resultValue="required"/>
+		<if testVariable="ENABLEFLATTENING" testValue="yes" resultVariable="EXPECTFLATTENINGMISMATCH" resultValue="failure"/>
+
+		<!-- If array element flattening is enabled, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="yes" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="required"/>
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="no" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="failure"/>
+
+		<!-- If flattening threshold option is not specified or does not have a value of 8, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<variable name="EXPECTFLATTENINGTHRESHOLDMISMATCH" value="required"/>
+		<if testVariable="USEFLATTENINGTHREHSOLD" testValue="8" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+
+		<!-- Flattening threshold mismatch should only be reported if flattening was enabled, but array flattening was not -->
+		<if testVariable="ENABLEFLATTENING" testValue="no" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="yes" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+
+		<!-- Run the test and look for warning messages -->
+		<command>$JAVA_EXE$ -cp $TESTSJARPATH$ --enable-preview -Xshareclasses:name=flat.thr8,verbose -Xaot:forceaot,limit={org/openj9/test/jep401/Sample.sub*} $FLATTENINGOPT$ $ARRAYFLATTENINGOPT$ $FLATTENINGTHRESHOLDOPT$ org.openj9.test.jep401.Sample</command>
+
+		<!-- Ignore regularly seen AOT messages -->
+		<output type="success" caseSensitive="yes" regex="yes">\[-Xshareclasses .* enabled\]</output>
+		<output type="success" caseSensitive="yes" regex="yes">JVMSHRC.*</output>
+		<output type="success" caseSensitive="yes" regex="yes">AOT for ROMMethod 0x[0-9a-f]* in shared cache</output>
+
+		<!-- Verify test actually runs -->
+		<output type="required" caseSensitive="yes" regex="no">In Sample.sub</output>
+		<output type="required" caseSensitive="yes" regex="no">In Sample.main</output>
+		<output type="required" caseSensitive="yes" regex="no">Leaving Sample.main</output>
+
+		<!-- These are the messages we're interested in -->
+		<output type="$EXPECTFLATTENINGMISMATCH$" caseSensitive="yes" regex="no">Flattening of null-restricted types feature mismatch. Ignoring AOT code in shared class cache.</output>
+		<output type="$EXPECTARRFLATTENINGMISMATCH$" caseSensitive="yes" regex="no">Flattening of null-restricted array elements feature mismatch. Ignoring AOT code in shared class cache.</output>
+		<output type="$EXPECTFLATTENINGTHRESHOLDMISMATCH$" caseSensitive="yes" regex="no">Null-restricted types flattening threshold mismatch. Ignoring AOT code in shared class cache.</output>
+	</test>
+
+	<test id="testAOTFieldAndArrayFlatteningThreshold8SCC">
+		<!-- Test with SCC built with flattening enabled, array element flattening enabled and flattening threshold of four -->
+
+		<!-- If flattening is disabled, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<if testVariable="ENABLEFLATTENING" testValue="no" resultVariable="EXPECTFLATTENINGMISMATCH" resultValue="required"/>
+		<if testVariable="ENABLEFLATTENING" testValue="yes" resultVariable="EXPECTFLATTENINGMISMATCH" resultValue="failure"/>
+
+		<!-- If array element flattening is disabled, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="no" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="required"/>
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="yes" resultVariable="EXPECTARRFLATTENINGMISMATCH" resultValue="failure"/>
+
+		<!-- If flattening threshold option is not specified or does not have a value of 8, expect a mismatch warning; otherwise, fail if the warning is produced -->
+		<variable name="EXPECTFLATTENINGTHRESHOLDMISMATCH" value="required"/>
+		<if testVariable="USEFLATTENINGTHREHSOLD" testValue="8" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+
+		<!-- Flattening threshold mismatch should only be reported if flattening and array flattening were both enabled -->
+		<if testVariable="ENABLEFLATTENING" testValue="no" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+		<if testVariable="ENABLEARRAYFLATTENING" testValue="no" resultVariable="EXPECTFLATTENINGTHRESHOLDMISMATCH" resultValue="failure"/>
+
+		<!-- Run the test and look for warning messages -->
+		<command>$JAVA_EXE$ -cp $TESTSJARPATH$ --enable-preview -Xshareclasses:name=flat.arr.thr8,verbose -Xaot:forceaot,limit={org/openj9/test/jep401/Sample.sub*} $FLATTENINGOPT$ $ARRAYFLATTENINGOPT$ $FLATTENINGTHRESHOLDOPT$ org.openj9.test.jep401.Sample</command>
+
+		<!-- Ignore regularly seen AOT messages -->
+		<output type="success" caseSensitive="yes" regex="yes">\[-Xshareclasses .* enabled\]</output>
+		<output type="success" caseSensitive="yes" regex="yes">JVMSHRC.*</output>
+		<output type="success" caseSensitive="yes" regex="yes">AOT for ROMMethod 0x[0-9a-f]* in shared cache</output>
+
+		<!-- Verify test actually runs -->
+		<output type="required" caseSensitive="yes" regex="no">In Sample.sub</output>
+		<output type="required" caseSensitive="yes" regex="no">In Sample.main</output>
+		<output type="required" caseSensitive="yes" regex="no">Leaving Sample.main</output>
+
+		<!-- These are the messages we're interested in -->
+		<output type="$EXPECTFLATTENINGMISMATCH$" caseSensitive="yes" regex="no">Flattening of null-restricted types feature mismatch. Ignoring AOT code in shared class cache.</output>
+		<output type="$EXPECTARRFLATTENINGMISMATCH$" caseSensitive="yes" regex="no">Flattening of null-restricted array elements feature mismatch. Ignoring AOT code in shared class cache.</output>
+		<output type="$EXPECTFLATTENINGTHRESHOLDMISMATCH$" caseSensitive="yes" regex="no">Null-restricted types flattening threshold mismatch. Ignoring AOT code in shared class cache.</output>
+	</test>
+
+	<!-- Get rid of the shared classes caches that were created at the start of testing above -->
+	<exec command="$JAVA_EXE$ -Xshareclasses:destroyAll" quiet="false"/>
+</suite>

@@ -75,6 +75,17 @@ public:
     bool areFlattenableValueTypesEnabled();
 
     /**
+     * @brief Indicates whether support for flattening of null-restricted types is enabled
+     */
+    bool isValueTypeFlatteningEnabled();
+
+    /**
+     * @brief Indicates the maximum length in bytes for which flattening of a null-restricted type might be
+     *        permitted.  The result only has meaning if the result of @ref isNullRestrictedFlatteningEnabled() is true.
+     */
+    uintptr_t valueTypesFlatteningThreshold();
+
+    /**
      * @brief Whether the check is enabled on monitor object being value based class type
      */
     bool areValueBasedMonitorChecksEnabled();
