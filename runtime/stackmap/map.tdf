@@ -60,3 +60,9 @@ TraceException=Trc_Map_fixReturns_UnknownBytecode Noenv Overhead=1 Level=1 Templ
 TraceException=Trc_Map_fixReturns_WalkOffEndOfBytecodeArray Noenv Overhead=1 Level=1 Template="fixReturns - Walked off end of bytecode array"
 
 TraceException=Trc_Map_fixReturnsWithStackMaps_UnknownBytecode Noenv Overhead=1 Level=1 Template="fixReturnsWithStackMaps - Unknown bytecode 0x%x at pc %d"
+
+TraceEvent=Trc_Map_mapcache_Hit Noenv Overhead=1 Level=5 Template="mapcache - Hit for key %p"
+TraceEvent=Trc_Map_mapcache_Miss Noenv Overhead=1 Level=5 Template="mapcache - Miss for key %p"
+TraceEvent=Trc_Map_mapcache_LocalMapComputed Noenv Overhead=1 Level=5 Template="mapcache - Local map computed for bytecodePC %p"
+TraceEvent=Trc_Map_mapcache_StackMapComputed Noenv Overhead=1 Level=5 Template="mapcache - Stack map computed for bytecodePC %p pendingCount %zu"
+TraceEvent=Trc_Map_mapcache_ArgBitsComputed Noenv Overhead=1 Level=5 Template="mapcache - Arg bits computed for romMethod %p argCount %u"
