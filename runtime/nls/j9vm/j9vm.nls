@@ -2608,19 +2608,12 @@ J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_ARRAY=Cannot store null in a null-
 # START NON-TRANSLATABLE
 J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_ARRAY.explanation=This exception is thrown when there is an attempt to store null in a null-restricted array.
 J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_ARRAY.system_action=The JVM will throw an ArrayStoreException.
-J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_ARRAY.user_response=Investigate the source of the exception.
+J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_ARRAY.user_response=Correct the application code to avoid storing null in a null-restricted array.
 # END NON-TRANSLATABLE
 
 J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_FIELD=Cannot store null in a null-restricted field
 # START NON-TRANSLATABLE
-J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_FIELD.explanation=This exception is thrown when there is an attempt to store null in a null-restricted instance field.
+J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_FIELD.explanation=This exception is thrown when there is an attempt to store null in a null-restricted field.
 J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_FIELD.system_action=The JVM will throw a NullPointerException.
-J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_FIELD.user_response=Investigate the source of the exception.
-# END NON-TRANSLATABLE
-
-J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_STATIC_FIELD=Cannot store null in a null-restricted static field
-# START NON-TRANSLATABLE
-J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_STATIC_FIELD.explanation=This exception is thrown when there is an attempt to store null in a null-restricted static field.
-J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_STATIC_FIELD.system_action=The JVM will throw a NullPointerException.
-J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_STATIC_FIELD.user_response=Investigate the source of the exception.
+J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_FIELD.user_response=Correct the application code to avoid storing null in a null-restricted field.
 # END NON-TRANSLATABLE

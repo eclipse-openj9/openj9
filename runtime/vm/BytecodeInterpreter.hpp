@@ -7902,11 +7902,11 @@ done:
 #endif
 		{
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-			/* NullRestricted static field cannot be set to null. */
+			/* Null-restricted static field cannot be set to null. */
 			if (J9_ARE_ALL_BITS_SET(classAndFlags, J9StaticFieldRefNullRestricted)) {
 				j9object_t valueref = *(j9object_t*)_sp;
 				if (NULL == valueref) {
-					rc = THROW_NULL_RESTRICTED_STATIC_FIELD_NPE;
+					rc = THROW_NULL_RESTRICTED_FIELD_NPE;
 					goto done;
 				}
 			}
@@ -10892,13 +10892,9 @@ public:
 #define PERFORM_ACTION_THROW_NULL_RESTRICTED_FIELD_NPE \
 	case THROW_NULL_RESTRICTED_FIELD_NPE: \
 		goto nullRestrictedFieldNPE;
-#define PERFORM_ACTION_THROW_NULL_RESTRICTED_STATIC_FIELD_NPE \
-	case THROW_NULL_RESTRICTED_STATIC_FIELD_NPE: \
-		goto nullRestrictedStaticFieldNPE;
 #else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #define PERFORM_ACTION_THROW_NULL_RESTRICTED_ARRAY_ASE
 #define PERFORM_ACTION_THROW_NULL_RESTRICTED_FIELD_NPE
-#define PERFORM_ACTION_THROW_NULL_RESTRICTED_STATIC_FIELD_NPE
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
@@ -10953,7 +10949,6 @@ public:
 			goto nullPointer; \
 		PERFORM_ACTION_THROW_NULL_RESTRICTED_ARRAY_ASE \
 		PERFORM_ACTION_THROW_NULL_RESTRICTED_FIELD_NPE \
-		PERFORM_ACTION_THROW_NULL_RESTRICTED_STATIC_FIELD_NPE \
 		case THROW_AIOB: \
 			goto arrayIndex; \
 		case THROW_ARRAY_STORE: \
@@ -11626,13 +11621,6 @@ nullRestrictedFieldNPE:
 	updateVMStruct(REGISTER_ARGS);
 	prepareForExceptionThrow(_currentThread);
 	setCurrentExceptionNLS(_currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_FIELD);
-	VMStructHasBeenUpdated(REGISTER_ARGS);
-	goto throwCurrentException;
-
-nullRestrictedStaticFieldNPE:
-	updateVMStruct(REGISTER_ARGS);
-	prepareForExceptionThrow(_currentThread);
-	setCurrentExceptionNLS(_currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_STATIC_FIELD);
 	VMStructHasBeenUpdated(REGISTER_ARGS);
 	goto throwCurrentException;
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
