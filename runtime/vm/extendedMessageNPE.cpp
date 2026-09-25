@@ -341,7 +341,7 @@ convertMethodSignature(J9VMThread *vmThread, J9UTF8 *methodSig)
  *
  * @return an extended NPE message or NULL if such a message can't be generated
  */
-static char*
+static char *
 getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romClass, char *npeCauseMsg, bool isMethodFlag)
 {
 	char *npeMsg = NULL;
@@ -468,6 +468,19 @@ getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romCl
 			}
 			break;
 		}
+		case JBputstatic:
+			/* A putstatic NPE can only be caused by storing null into a
+			 * null-restricted static field. */
+			if (NULL != npeCauseMsg) {
+				npeMsg = npeCauseMsg;
+				npeCauseMsg = NULL;
+			} else {
+				printf("I am here");
+				npeMsg = getMsgWithAllocation(
+					vmThread,
+					"Cannot store null in a null-restricted field");
+			}
+			break;
 		case JBgetfield: /* FALLTHROUGH */
 		case JBputfield: {
 			U_16 index = PARAM_16(bcCurrentPtr, 1);

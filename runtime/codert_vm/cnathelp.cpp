@@ -913,7 +913,15 @@ old_slow_jitPutFlattenableField(J9VMThread *currentThread)
 	void *rc = NULL;
 
 	buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
-	rc = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+	if (NULL == currentThread->floatTemp2) {
+		rc = setCurrentExceptionFromJIT(
+				currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION,
+				NULL);
+	} else {
+		rc = setCurrentExceptionNLSFromJIT(
+				currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION,
+				J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_FIELD);
+	}
 
 	SLOW_JIT_HELPER_EPILOGUE();
 	return rc;
@@ -945,6 +953,7 @@ done:
 	return rc;
 
 slow:
+	currentThread->floatTemp2 = (void*)receiver;
 	rc = (void *) old_slow_jitPutFlattenableField;
 	goto done;
 }
