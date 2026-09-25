@@ -6332,6 +6332,7 @@ typedef enum JFRLogOutputType {
 
 typedef struct JFRState {
 	char *jfrFileName;
+	char *jfrRepositoryLocation;
 	const char *jfrCMDLineOption;
 	U_8 *metaDataBlobFile;
 	UDATA metaDataBlobFileSize;
