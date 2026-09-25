@@ -219,7 +219,8 @@ class TR_JProfilingQueue {
 public:
     TR_PERSISTENT_ALLOC(TR_Memory::PersistentInfo); // TODO: define its own category
     TR_JProfilingQueue()
-        : _firstQentry(NULL)
+        : _compInfo(NULL)
+        , _firstQentry(NULL)
         , _lastQentry(NULL)
         , _size(0)
         , _weight(0)
@@ -470,6 +471,21 @@ public:
     };
 
     struct CompilationStatistics {
+        CompilationStatistics()
+            : _heartbeatWindowCount(0)
+            , _windowStartTick(0)
+            , _sampleMessagesSent(0)
+            , _sampleMessagesReceived(0)
+            , _interpretedMethodSamples(0)
+            , _compiledMethodSamples(0)
+            , _compiledMethodSamplesIgnored(0)
+            , _ticksInIdleMode(0)
+            , _methodsCompiledOnCount(0)
+            , _methodsReachingSampleInterval(0)
+            , _methodsSelectedToRecompile(0)
+            , _methodsSampleWindowReset(0)
+        {}
+
         // perhaps not the greatest way to do this, but TR_Stats classes weren't an exact match
         uint32_t _heartbeatWindowCount;
         uint32_t _windowStartTick;
@@ -486,6 +502,8 @@ public:
     }; // CompilationStatistics
 
     struct CompilationStatsPerInterval {
+        CompilationStatsPerInterval() { reset(); }
+
         uint32_t _interpretedMethodSamples;
         uint32_t _compiledMethodSamples;
         uint32_t _numFirstTimeCompilationsInInterval;
