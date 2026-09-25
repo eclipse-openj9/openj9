@@ -985,26 +985,58 @@ TR_ResolvedMethod *TR_ResolvedJ9JITServerMethod::getResolvedVirtualMethod(TR::Co
 void *TR_ResolvedJ9JITServerMethod::stringConstant(I_32 cpIndex)
 {
     TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
+    auto compInfoPT = static_cast<TR::CompilationInfoPerThreadRemote *>(_fe->_compInfoPT);
+    TR_StringConstantData data;
+    // Check the fast per-compilation cache first (no locking needed)
+    if (compInfoPT->getCachedStringConstantData((TR_OpaqueClassBlock *)_ramClass, cpIndex, data))
+        return data._stringConstant;
+    // Check the per-client ClassInfo cache (survives across compilations)
+    {
+        OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
+        auto &perClientCache = JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._stringConstantCache;
+        auto it = perClientCache.find(cpIndex);
+        if (it != perClientCache.end()) {
+            compInfoPT->cacheStringConstantData((TR_OpaqueClassBlock *)_ramClass, cpIndex, it->second);
+            return it->second._stringConstant;
+        }
+    }
     _stream->write(JITServer::MessageType::ResolvedMethod_stringConstant, _remoteMirror, cpIndex);
     auto recv = _stream->read<void *, bool, bool>();
-
-    auto compInfoPT = static_cast<TR::CompilationInfoPerThreadRemote *>(_fe->_compInfoPT);
-    compInfoPT->cacheIsUnresolvedStr((TR_OpaqueClassBlock *)_ramClass, cpIndex,
-        TR_IsUnresolvedString(std::get<1>(recv), std::get<2>(recv)));
+    TR_StringConstantData newData(std::get<0>(recv), std::get<1>(recv), std::get<2>(recv));
+    {
+        OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
+        JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._stringConstantCache.insert({ cpIndex, newData });
+    }
+    compInfoPT->cacheStringConstantData((TR_OpaqueClassBlock *)_ramClass, cpIndex, newData);
     return std::get<0>(recv);
 }
 
 bool TR_ResolvedJ9JITServerMethod::isUnresolvedString(I_32 cpIndex, bool optimizeForAOT)
 {
     auto compInfoPT = static_cast<TR::CompilationInfoPerThreadRemote *>(_fe->_compInfoPT);
-    TR_IsUnresolvedString stringAttrs;
-    if (compInfoPT->getCachedIsUnresolvedStr((TR_OpaqueClassBlock *)_ramClass, cpIndex, stringAttrs)) {
-        return optimizeForAOT ? stringAttrs._optimizeForAOTTrueResult : stringAttrs._optimizeForAOTFalseResult;
-    } else {
-        _stream->write(JITServer::MessageType::ResolvedMethod_isUnresolvedString, _remoteMirror, cpIndex,
-            optimizeForAOT);
-        return std::get<0>(_stream->read<bool>());
+    TR_StringConstantData data;
+    // Check the fast per-compilation cache first (no locking needed)
+    if (compInfoPT->getCachedStringConstantData((TR_OpaqueClassBlock *)_ramClass, cpIndex, data))
+        return optimizeForAOT ? data._optimizeForAOTTrueResult : data._optimizeForAOTFalseResult;
+    // Check the per-client ClassInfo cache (survives across compilations)
+    {
+        OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
+        auto &perClientCache = JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._stringConstantCache;
+        auto it = perClientCache.find(cpIndex);
+        if (it != perClientCache.end()) {
+            compInfoPT->cacheStringConstantData((TR_OpaqueClassBlock *)_ramClass, cpIndex, it->second);
+            return optimizeForAOT ? it->second._optimizeForAOTTrueResult : it->second._optimizeForAOTFalseResult;
+        }
     }
+    _stream->write(JITServer::MessageType::ResolvedMethod_stringConstant, _remoteMirror, cpIndex);
+    auto recv = _stream->read<void *, bool, bool>();
+    TR_StringConstantData newData(std::get<0>(recv), std::get<1>(recv), std::get<2>(recv));
+    {
+        OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
+        JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._stringConstantCache.insert({ cpIndex, newData });
+    }
+    compInfoPT->cacheStringConstantData((TR_OpaqueClassBlock *)_ramClass, cpIndex, newData);
+    return optimizeForAOT ? std::get<1>(recv) : std::get<2>(recv);
 }
 
 bool TR_ResolvedJ9JITServerMethod::isSubjectToPhaseChange(TR::Compilation *comp)
