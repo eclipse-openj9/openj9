@@ -1861,13 +1861,18 @@ jboolean
 setJFRRecordingFileName(J9JavaVM *vm, char *newFileName)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	jboolean success = JNI_TRUE;
 	if (isJFRV2SupportEnabled(vm)) {
 		vm->jfrState.shouldRotateDisk = JNI_FALSE;
 	}
 	VM_JFRWriter::closeJFRFile(vm);
 	j9mem_free_memory(vm->jfrState.jfrFileName);
 	vm->jfrState.jfrFileName = newFileName;
-	return VM_JFRWriter::openJFRFile(vm) ? JNI_TRUE : JNI_FALSE;
+	/* Open JFR file only if JFR has been created. */
+	if (isJFRCreated(vm)) {
+		success = (VM_JFRWriter::openJFRFile(vm) ? JNI_TRUE : JNI_FALSE);
+	}
+	return success;
 }
 
 /**
