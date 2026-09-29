@@ -232,7 +232,7 @@ MM_MarkingDelegate::startRootListProcessing(MM_EnvironmentBase *env)
 void
 MM_MarkingDelegate::doSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr)
 {
-	if ((_extensions->isConcurrentScavengerEnabled() || shadUnifyEnabled) && _extensions->isScavengerBackOutFlagRaised()) {
+	if ((_extensions->isConcurrentScavengerEnabled() || _extensions->enableUnifiedAbort) && _extensions->isScavengerBackOutFlagRaised()) {
 		_markingScheme->fixupForwardedSlot(slotPtr);
 	}
 	_markingScheme->inlineMarkObject(env, *slotPtr);
