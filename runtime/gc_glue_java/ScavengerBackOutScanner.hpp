@@ -62,7 +62,7 @@ public:
 	virtual void
 	doSlot(omrobjectptr_t *slotPtr) {
 		// DEV: unify
-#if defined(SHAD_UNIFY_SCAVENGE) || defined(OMR_GC_CONCURRENT_SCAVENGER)
+#if defined(UNIFY_ABORTED_SCAVENGE) || defined(OMR_GC_CONCURRENT_SCAVENGER)
 		// todo: create MM_ConcurrentScavengerBackOutScanner
 		if (_extensions->enableUnifiedAbort || _extensions->concurrentScavenger) {
 			_scavenger->fixupSlotWithoutCompression(slotPtr);
