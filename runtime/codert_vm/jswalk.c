@@ -1422,31 +1422,37 @@ static void jitAddSpilledRegistersForJ2I(J9StackWalkState * walkState)
 
 #if (defined(J9VM_JIT_FULL_SPEED_DEBUG)) /* priv. proto (autogen) */
 
-static J9JITExceptionTable * jitGetExceptionTable(J9StackWalkState * walkState)
+static J9JITExceptionTable *
+jitGetExceptionTable(J9StackWalkState *walkState)
 {
 #ifdef J9VM_INTERP_STACKWALK_TRACING
-	J9JITDecompilationInfo * stack;
+	J9JITDecompilationInfo *stack = NULL;
 #endif
-	J9JITExceptionTable * result = jitGetExceptionTableFromPC(walkState->walkThread, (UDATA) walkState->pc);
+	J9JITExceptionTable *result = jitGetExceptionTableFromPC(walkState->walkThread, (UDATA)walkState->pc);
 
-	if (result) {
+	if (NULL != result) {
 		return result;
 	}
 
-	/* Try loading jitInfo again with synchronization (skip this during ASGCT). */
-	if (J9_ARE_NO_BITS_SET(walkState->currentThread->privateFlags2, J9_PRIVATE_FLAGS2_ASYNC_GET_CALL_TRACE)) {
+	/* Try loading jitInfo again with synchronization.
+	 * Skip this during ASGCT, or within a signal handler
+	 * (when there is no current thread).
+	 */
+	if ((NULL != walkState->currentThread)
+		&& J9_ARE_NO_BITS_SET(walkState->currentThread->privateFlags2, J9_PRIVATE_FLAGS2_ASYNC_GET_CALL_TRACE)
+	) {
 		result = jitGetExceptionTableFromPCSync(walkState->walkThread, (UDATA)walkState->pc, TRUE);
 
-		if (result) {
+		if (NULL != result) {
 			return result;
 		}
 	}
 
 	/* Check to see if the PC is a decompilation return point and if so, use the real PC for finding the metaData */
 
-	if (walkState->decompilationStack) {
+	if (NULL != walkState->decompilationStack) {
 #ifdef J9VM_INTERP_STACKWALK_TRACING
-/*		swPrintf(walkState, 1, "(ws pcaddr = %p, dc tos = %p, pcaddr = %p, pc = %p)\n", walkState->pcAddress, walkState->decompilationStack, walkState->decompilationStack->pcAddress, walkState->decompilationStack->pc); */
+		/* swPrintf(walkState, 1, "(ws pcaddr = %p, dc tos = %p, pcaddr = %p, pc = %p)\n", walkState->pcAddress, walkState->decompilationStack, walkState->decompilationStack->pcAddress, walkState->decompilationStack->pc); */
 #endif
 		if (walkState->pcAddress == walkState->decompilationStack->pcAddress) {
 			walkState->pc = walkState->decompilationStack->pc;
@@ -1455,11 +1461,11 @@ static J9JITExceptionTable * jitGetExceptionTable(J9StackWalkState * walkState)
 			}
 			walkState->decompilationRecord = walkState->decompilationStack;
 			walkState->decompilationStack = walkState->decompilationStack->next;
-			return jitGetExceptionTableFromPC(walkState->walkThread, (UDATA) walkState->pc);
+			return jitGetExceptionTableFromPC(walkState->walkThread, (UDATA)walkState->pc);
 		}
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 		stack = walkState->decompilationStack;
-		while ((stack = stack->next) != NULL) {
+		while (NULL != (stack = stack->next)) {
 			if (walkState->pcAddress == walkState->decompilationStack->pcAddress) {
 				swPrintf(walkState, 0, "\n");
 				swPrintf(walkState, 0, "\n");
