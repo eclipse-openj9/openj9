@@ -235,11 +235,15 @@ class VM_BufferWriter {
 		_cursor = cursor;
 	}
 
+	/* The JFR reader consumes bits 56-63 directly from a 9th byte,
+	 * if present, so this differs from standard LEB128 encoding.
+	 */
 	void
 	writeLEB128(U_64 val)
 	{
 		if (checkBounds(9)) {
 			U_64 newVal = val;
+			U_8 bytesUsed = 0;
 
 			do {
 				U_8 byte = newVal & 0x7F;
@@ -249,7 +253,8 @@ class VM_BufferWriter {
 					byte |= 0x80;
 				}
 				writeU8NoCheck(byte);
-			} while (newVal > 0);
+				bytesUsed += 1;
+			} while ((newVal > 0) && (bytesUsed < 9));
 		}
 	}
 
