@@ -957,8 +957,8 @@ generateJ9RtvExceptionDetails(J9BytecodeVerificationData* verifyData, U_8* initM
 	case BCV_ERR_STRICT_FIELD_STACK_MAP_INCONSISTENT:
 		printMessage(&msgBuf, "Inconsistent stackmap frames at branch target.");
 		break;
-	case BCV_ERR_INVALID_USE_STRICT_INSTANCE_FIELDS:
-		printMessage(&msgBuf, "Invalid use of strict instance fields, field is strict static.");
+	case BCV_ERR_EARLY_LARVAL_NO_UNINIT_THIS:
+		printMessage(&msgBuf, "Invalid use of strict instance fields");
 		break;
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 #if JAVA_SPEC_VERSION >= 27

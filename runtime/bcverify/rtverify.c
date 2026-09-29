@@ -257,6 +257,21 @@ findAndMatchStack (J9BytecodeVerificationData *verifyData, IDATA targetPC, IDATA
 				if (NULL != earlyLarvalFrameTemp) {
 					earlyLarvalFrame = earlyLarvalFrameTemp;
 					verifyData->earlyLarvalFramePrevious = earlyLarvalFrame;
+				} else if (targetStack->uninitializedThis) {
+					/* When a restricted (uninitializedThis is true) frame has no
+					 * explicit early_larval wrapper the unset fields are inferred as:
+					 * - if the previous frame was restricted, the unset fields are
+					 * the same as the unset fields of the previous frame (earlyLarvalFramePrevious)
+					 * - otherwise the list of unset fields is empty
+					 */
+					if ((stackIndex > 0) && !BCV_INDEX_STACK(stackIndex - 1)->uninitializedThis) {
+						/* Predecessor is not restricted: inferred unset fields = {}.
+						 * Use a zero-field sentinel so the check below treats every
+						 * strict field that is not already set as an error.
+						 */
+						static J9EarlyLarvalFrame emptyUnsetFields = {-1, 0, NULL};
+						earlyLarvalFrame = &emptyUnsetFields;
+					}
 				}
 			}
 
@@ -1508,13 +1523,6 @@ _illegalPrimitiveReturn:
 			if (BCV_ERR_INSUFFICIENT_MEMORY == reasonCode) {
 				goto _outOfMemoryError;
 			}
-#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
-			if (BCV_ERR_INVALID_USE_STRICT_INSTANCE_FIELDS == reasonCode) {
-				errorType = J9NLS_BCV_ERR_UNKNOWN_STRICT_FIELD__ID;
-				verboseErrorCode = BCV_ERR_INVALID_USE_STRICT_INSTANCE_FIELDS;
-				goto _miscError;
-			}
-#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 			inconsistentStack |= (FALSE == rc);
 			if (inconsistentStack) {
 				constantPool = (J9ROMConstantPoolItem *) (romClass + 1);

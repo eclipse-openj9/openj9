@@ -94,6 +94,7 @@ static UDATA strictFieldHashFn(void *key, void *userData);
 static UDATA strictFieldHashEqualFn(void *leftKey, void *rightKey, void *userData);
 static UDATA earlyLarvalFrameHashFn(void *key, void *userData);
 static UDATA earlyLarvalFrameEqualFn(void *leftKey, void *rightKey, void *userData);
+static IDATA validateEarlyLarvalUninitializedThis(J9BytecodeVerificationData *verifyData);
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 /**
@@ -524,6 +525,34 @@ decompressStackMaps (J9BytecodeVerificationData * verifyData, IDATA localsCount,
 }
 
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+/**
+ * Walk every early_larval frame and verify that its base frame has uninitializedThis.
+ * An early_larval frame without uninitializedThis in the base frame is invalid because
+ * unset strict fields are only meaningful before super() has been called.
+ *
+ * Returns BCV_SUCCESS or BCV_ERR_INTERNAL_ERROR (with verifyData error fields set).
+ */
+static IDATA
+validateEarlyLarvalUninitializedThis(J9BytecodeVerificationData *verifyData)
+{
+	J9HashTableState hashTableState = {0};
+	J9EarlyLarvalFrame *entry = (J9EarlyLarvalFrame *)hashTableStartDo(verifyData->earlyLarvalFrames, &hashTableState);
+	while (NULL != entry) {
+		UDATA baseFramePC = (UDATA)entry->baseFramePC;
+		UDATA stackIndex = verifyData->bytecodeMap[baseFramePC] >> BRANCH_INDEX_SHIFT;
+		J9BranchTargetStack *baseStack = BCV_INDEX_STACK(stackIndex);
+		if (!baseStack->uninitializedThis) {
+			verifyData->errorPC = baseFramePC;
+			verifyData->errorModule = J9NLS_BCV_ERR_EARLY_LARVAL_NO_UNINIT_THIS__MODULE;
+			verifyData->errorCode = J9NLS_BCV_ERR_EARLY_LARVAL_NO_UNINIT_THIS__ID;
+			verifyData->errorDetailCode = BCV_ERR_EARLY_LARVAL_NO_UNINIT_THIS;
+			return BCV_ERR_INTERNAL_ERROR;
+		}
+		entry = (J9EarlyLarvalFrame *)hashTableNextDo(&hashTableState);
+	}
+	return BCV_SUCCESS;
+}
+
 static J9EarlyLarvalFrame *
 parseUnsetFields(J9BytecodeVerificationData *verifyData, U_8 **stackMapData)
 {
@@ -2698,6 +2727,10 @@ _fallBack:
 					setInitializedThisStatus(verifyData);
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 					if (J9_CLASSFILE_OR_ROMCLASS_SUPPORTS_STRICT_FIELDS(romClass)) {
+						result = validateEarlyLarvalUninitializedThis(verifyData);
+						if (BCV_SUCCESS != result) {
+							goto _done;
+						}
 						createOrResetStrictFieldsList(verifyData, &addToStrictFieldTable);
 					}
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */

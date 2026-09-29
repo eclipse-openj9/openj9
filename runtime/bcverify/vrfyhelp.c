@@ -895,8 +895,6 @@ j9bcv_createVerifyErrorString(J9PortLibrary * portLib, J9BytecodeVerificationDat
  * returns FALSE it not compatible
  * 		reasonCode:
  *			BCV_ERR_INSUFFICIENT_MEMORY in OOM error case (set by isClassCompatibleByName)
- *			BCV_ERR_INVALID_USE_STRICT_INSTANCE_FIELDS if putfield tries to set a
- * 				static field in early larval phase
  */
 IDATA 
 isFieldAccessCompatible(
@@ -936,15 +934,10 @@ isFieldAccessCompatible(
 			}
 
 			if (isInitMethod && liveStack->uninitializedThis) {
-				if (J9_ARE_ALL_BITS_SET(field->modifiers, J9AccStatic)) {
-					*reasonCode = BCV_ERR_INVALID_USE_STRICT_INSTANCE_FIELDS;
-					return (IDATA)FALSE;
-				}
 				J9StrictFieldEntry query = {0};
 				query.nas = J9ROMFIELDREF_NAMEANDSIGNATURE(fieldRef);
 				J9StrictFieldEntry *entry = hashTableFind(verifyData->strictFields, &query);
-				Assert_RTV_true(NULL != entry);
-				if (!entry->isSet) {
+				if ((NULL != entry) && !entry->isSet) {
 					Assert_RTV_true(verifyData->strictFieldsUnsetCount > 0);
 					entry->isSet = TRUE;
 					verifyData->strictFieldsUnsetCount--;
