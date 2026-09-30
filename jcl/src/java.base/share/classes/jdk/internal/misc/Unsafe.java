@@ -521,7 +521,7 @@ public final class Unsafe {
 	public native long reallocateDBBMemory(long address, long size);
 
 	/**
-	 * Removes the block from the list.  Note that the pointers are located
+	 * Removes the block from the list. Note that the pointers are located
 	 * immediately before the address value.
 	 *
 	 * @param address of buffer
@@ -900,13 +900,13 @@ public final class Unsafe {
 
 	/**
 	 * Inserts a release memory fence, ensuring that no stores before this fence
-	 *  are reordered with any loads/stores after the fence.
+	 * are reordered with any loads/stores after the fence.
 	 */
 	public native void storeFence();
 
 	/**
 	 * Inserts a complete memory fence, ensuring that no loads/stores before this
-	 *  fence are reordered with any loads/stores after the fence.
+	 * fence are reordered with any loads/stores after the fence.
 	 */
 	public native void fullFence();
 
@@ -1469,7 +1469,7 @@ public final class Unsafe {
 	 * @param size the number of bytes to be copied
 	 *
 	 * @throws IllegalArgumentException if srcAddress or destAddress
-	 *  is illegal, or if size is invalid
+	 * is illegal, or if size is invalid
 	 */
 	public void copyMemory(long srcAddress, long destAddress, long size) {
 		copyMemory(null, srcAddress, null, destAddress, size);
@@ -2368,7 +2368,7 @@ public final class Unsafe {
 	 * @return value in obj at offset before this operation. This will be compareValue if the exchange was successful
 	 *
 	/*[IF COMPACT_LAYOUT]
-	 *  @throws IllegalArgumentException if value at offset is not 16-bit aligned
+	 * @throws IllegalArgumentException if value at offset is not 16-bit aligned
 	/*[ELSE] COMPACT_LAYOUT
 	 * @throws IllegalArgumentException if value at offset spans over multiple aligned words (4 bytes) in memory
 	/*[ENDIF] COMPACT_LAYOUT
@@ -2528,7 +2528,7 @@ public final class Unsafe {
 	 * @return boolean value indicating whether the field was updated
 	 *
 	/*[IF COMPACT_LAYOUT]
-	 *  @throws IllegalArgumentException if value at offset is not 16-bit aligned
+	 * @throws IllegalArgumentException if value at offset is not 16-bit aligned
 	/*[ELSE] COMPACT_LAYOUT
 	 * @throws IllegalArgumentException if value at offset spans over multiple aligned words (4 bytes) in memory
 	/*[ENDIF] COMPACT_LAYOUT
@@ -5671,7 +5671,7 @@ public final class Unsafe {
 
 	/**
 	 * Inserts a release memory fence, ensuring that no stores before this fence
-	 *  are reordered with any loads/stores after the fence.
+	 * are reordered with any loads/stores after the fence.
 	 */
 	public final void storeStoreFence() {
 		storeFence();
@@ -5693,7 +5693,7 @@ public final class Unsafe {
 
 	/**
 	 * Gets the value of the int in the obj parameter referenced by offset
-	 *  that may be unaligned in memory.
+	 * that may be unaligned in memory.
 	 * This is a non-volatile operation.
 	 *
 	 * @param obj object from which to retrieve the value
@@ -5722,8 +5722,8 @@ public final class Unsafe {
 
 	/**
 	 * Gets the value of the int in the obj parameter referenced by offset
-	 *  that may be unaligned in memory. Value may be reversed according to
-	 *  the endianness parameter.
+	 * that may be unaligned in memory. Value may be reversed according to
+	 * the endianness parameter.
 	 * This is a non-volatile operation.
 	 *
 	 * @param obj object from which to retrieve the value
@@ -5778,7 +5778,7 @@ public final class Unsafe {
 	/**
 	 * Gets the value of the long in the obj parameter referenced by offset
 	 * that may be unaligned in memory. Value may be reversed according to
-	 *  the endianness parameter.
+	 * the endianness parameter.
 	 * This is a non-volatile operation.
 	 *
 	 * @param obj object from which to retrieve the value
@@ -5793,7 +5793,7 @@ public final class Unsafe {
 
 	/**
 	 * Gets the value of the short in the obj parameter referenced by offset
-	 *  that may be unaligned in memory.
+	 * that may be unaligned in memory.
 	 * This is a non-volatile operation.
 	 *
 	 * @param obj object from which to retrieve the value
@@ -5816,8 +5816,8 @@ public final class Unsafe {
 
 	/**
 	 * Gets the value of the short in the obj parameter referenced by offset
-	 *  that may be unaligned in memory. Value may be reversed according to
-	 *  the endianness parameter.
+	 * that may be unaligned in memory. Value may be reversed according to
+	 * the endianness parameter.
 	 * This is a non-volatile operation.
 	 *
 	 * @param obj object from which to retrieve the value
@@ -5832,7 +5832,7 @@ public final class Unsafe {
 
 	/**
 	 * Gets the value of the char in the obj parameter referenced by offset
-	 *  that may be unaligned in memory.
+	 * that may be unaligned in memory.
 	 * This is a non-volatile operation.
 	 *
 	 * @param obj object from which to retrieve the value
@@ -5855,8 +5855,8 @@ public final class Unsafe {
 
 	/**
 	 * Gets the value of the char in the obj parameter referenced by offset
-	 *  that may be unaligned in memory. Value may be reversed according to
-	 *  the endianness parameter.
+	 * that may be unaligned in memory. Value may be reversed according to
+	 * the endianness parameter.
 	 * This is a non-volatile operation.
 	 *
 	 * @param obj object into which to retrieve the value
@@ -5871,7 +5871,7 @@ public final class Unsafe {
 
 	/**
 	 * Sets the value of the int in the obj parameter at memory offset
-	 *  that may be unaligned in memory.
+	 * that may be unaligned in memory.
 	 * This is a non-volatile operation.
 	 *
 	 * @param obj object into which to store the value
@@ -5891,8 +5891,8 @@ public final class Unsafe {
 
 	/**
 	 * Sets the value of the int in the obj parameter at memory offset
-	 *  that may be unaligned in memory. Value may be reversed according to
-	 *  the endianness parameter.
+	 * that may be unaligned in memory. Value may be reversed according to
+	 * the endianness parameter.
 	 * This is a non-volatile operation.
 	 *
 	 * @param obj object into which to store the value
@@ -5907,7 +5907,7 @@ public final class Unsafe {
 
 	/**
 	 * Sets the value of the long in the obj parameter at memory offset
-	 *  that may be unaligned in memory.
+	 * that may be unaligned in memory.
 	 * This is a non-volatile operation.
 	 *
 	 * @param obj object into which to store the value
@@ -5931,8 +5931,8 @@ public final class Unsafe {
 
 	/**
 	 * Sets the value of the long in the obj parameter at memory offset
-	 *  that may be unaligned in memory. Value may be reversed according to
-	 *  the endianness parameter.
+	 * that may be unaligned in memory. Value may be reversed according to
+	 * the endianness parameter.
 	 * This is a non-volatile operation.
 	 *
 	 * @param obj object into which to store the value
@@ -5947,7 +5947,7 @@ public final class Unsafe {
 
 	/**
 	 * Sets the value of the short in the obj parameter at memory offset
-	 *  that may be unaligned in memory.
+	 * that may be unaligned in memory.
 	 * This is a non-volatile operation.
 	 *
 	 * @param obj object into which to store the value
@@ -5964,8 +5964,8 @@ public final class Unsafe {
 
 	/**
 	 * Sets the value of the short in the obj parameter at memory offset
-	 *  that may be unaligned in memory. Value may be reversed according to
-	 *  the endianness parameter.
+	 * that may be unaligned in memory. Value may be reversed according to
+	 * the endianness parameter.
 	 * This is a non-volatile operation.
 	 *
 	 * @param obj object into which to store the value
@@ -5980,7 +5980,7 @@ public final class Unsafe {
 
 	/**
 	 * Sets the value of the char in the obj parameter at memory offset
-	 *  that may be unaligned in memory.
+	 * that may be unaligned in memory.
 	 * This is a non-volatile operation.
 	 *
 	 * @param obj object into which to store the value
@@ -5993,8 +5993,8 @@ public final class Unsafe {
 
 	/**
 	 * Sets the value of the char in the obj parameter at memory offset
-	 *  that may be unaligned in memory. Value may be reversed according to
-	 *  the endianness parameter.
+	 * that may be unaligned in memory. Value may be reversed according to
+	 * the endianness parameter.
 	 * This is a non-volatile operation.
 	 *
 	 * @param obj object into which to store the value
@@ -6461,7 +6461,7 @@ public final class Unsafe {
 		return (char) value;
 	}
 
-	/*  Convert char primitive to short. */
+	/* Convert char primitive to short. */
 	private short c2s(char value) {
 		return (short) value;
 	}
@@ -7322,4 +7322,16 @@ public final class Unsafe {
 	 */
 	public native boolean isFlatPayloadBinary(Class<?> valueType);
 	/*[ENDIF] INLINE-TYPES */
+
+	/*[IF JAVA_SPEC_VERSION >= 28]*/
+	/*[REM These two methods are referenced, but unused in OpenJ9 builds.]*/
+	public int hashCodeMask() {
+		return -1;
+	}
+
+	public int hashCodeNoHash() {
+		return 0;
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
+
 }
