@@ -145,6 +145,12 @@ template<typename T> struct RawTypeConvert<T, typename std::enable_if<std::is_tr
     static inline T onRecv(Message::DataDescriptor *desc)
     {
         TR_ASSERT(desc->getDataType() == Message::DataDescriptor::DataType::OBJECT, "onRecv type missmatch OBJECT");
+        // Validate that the payload is large enough to hold a T.
+        // getPayloadSize() is derived from untrusted wire fields; an attacker could craft
+        // a descriptor whose payload is smaller than sizeof(T), causing an OOB read.
+        if (desc->getPayloadSize() < sizeof(T)) {
+            throw JITServer::StreamFailure(std::string("OBJECT payload too small for the expected type"));
+        }
         return *static_cast<T *>(desc->getDataStart());
     }
 
@@ -164,7 +170,15 @@ struct RawTypeConvert<T, typename std::enable_if<std::is_same<T, std::vector<typ
             return std::vector<typename T::value_type>();
         }
         if (desc->getDataType() == Message::DataDescriptor::DataType::SIMPLE_VECTOR) {
-            TR_ASSERT(desc->getVectorElementSize() == sizeof(typename T::value_type), "Vector element size missmatch");
+            // The element size is read from the wire and must match the expected type.
+            if (desc->getVectorElementSize() != sizeof(typename T::value_type)) {
+                throw JITServer::StreamFailure("SIMPLE_VECTOR element size mismatch");
+            }
+            // Guard against a zero element size to prevent division by zero and ensure
+            // getPayloadSize() / elementSize is well defined.
+            if (desc->getVectorElementSize() == 0) {
+                throw JITServer::StreamFailure("SIMPLE_VECTOR element size is zero");
+            }
             typename T::value_type *dataStart = static_cast<typename T::value_type *>(desc->getDataStart());
             typename T::value_type *dataEnd = reinterpret_cast<typename T::value_type *>(
                 reinterpret_cast<uintptr_t>(dataStart) + desc->getPayloadSize());
@@ -172,9 +186,38 @@ struct RawTypeConvert<T, typename std::enable_if<std::is_same<T, std::vector<typ
         }
 
         TR_ASSERT(desc->getDataType() == Message::DataDescriptor::DataType::VECTOR, "onRecv type missmatch VECTOR");
-        // The first element is another descriptor to represent the number of elements in the vector
+
+        // Compute the exclusive end boundary of the outer vector descriptor's data payload.
+        // No element descriptor or its data may begin at or beyond this address.
+        const char *vectorDataEnd = static_cast<const char *>(desc->getDataStart()) + desc->getTotalSize();
+
+        // The first element is another descriptor to represent the number of elements in the vector.
+        // Before dereferencing sizeDesc, verify that both the descriptor struct itself and its
+        // attached uint32_t payload fit within vectorDataEnd.
+        // Minimum payload: sizeof(DataDescriptor) for sizeDesc + sizeof(uint32_t) rounded to 4 bytes.
+        static constexpr uint32_t minVectorPayload = sizeof(Message::DataDescriptor) + sizeof(uint32_t);
+        if (desc->getTotalSize() < minVectorPayload) {
+            throw JITServer::StreamFailure("VECTOR payload too small to contain size descriptor");
+        }
         Message::DataDescriptor *sizeDesc = static_cast<Message::DataDescriptor *>(desc->getDataStart());
+        // Verify that sizeDesc's own descriptor struct fits within the vector's bounds.
+        if (reinterpret_cast<const char *>(sizeDesc) + sizeof(Message::DataDescriptor) > vectorDataEnd) {
+            throw JITServer::StreamFailure("size descriptor is outside vector bounds");
+        }
+        sizeDesc->validate();
+        // Verify that sizeDesc's data (the element count) also fits within the vector's bounds.
+        if (reinterpret_cast<const char *>(sizeDesc->getDataStart()) + sizeDesc->getTotalSize() > vectorDataEnd) {
+            throw JITServer::StreamFailure(
+                "JITServer detected a malformed message: size descriptor data is outside vector bounds");
+        }
         uint32_t size = RawTypeConvert<uint32_t>::onRecv(sizeDesc);
+
+        // Each iteration of the loop below reads at least one DataDescriptor (8 bytes) plus its
+        // data. If the claimed element count would require more space than the outer descriptor's
+        // payload actually contains, the message is malformed.
+        if (size > desc->getTotalSize() / sizeof(Message::DataDescriptor)) {
+            throw JITServer::StreamFailure("vector element count exceeds available data");
+        }
 
         std::vector<typename T::value_type> values;
         values.reserve(size);
@@ -182,6 +225,15 @@ struct RawTypeConvert<T, typename std::enable_if<std::is_same<T, std::vector<typ
         // Find the descriptor of the first element in the array
         auto curDesc = sizeDesc->getNextDescriptor();
         for (uint32_t i = 0; i < size; ++i) {
+            // Verify that the current element descriptor lies fully within the outer vector's data.
+            if (reinterpret_cast<const char *>(curDesc) + sizeof(Message::DataDescriptor) > vectorDataEnd) {
+                throw JITServer::StreamFailure("vector element descriptor is outside vector bounds");
+            }
+            curDesc->validate();
+            // Verify that the element's data also lies within the outer vector's data.
+            if (reinterpret_cast<const char *>(curDesc->getDataStart()) + curDesc->getTotalSize() > vectorDataEnd) {
+                throw JITServer::StreamFailure("vector element data is outside vector bounds");
+            }
             values.push_back(RawTypeConvert<typename T::value_type>::onRecv(curDesc));
             curDesc = curDesc->getNextDescriptor();
         }
@@ -244,10 +296,20 @@ template<> struct index_tuple_gen_raw<0> {
 };
 
 template<size_t n, typename Arg1, typename... Args> struct TupleTypeConvert {
-    static inline std::tuple<Arg1, Args...> onRecvImpl(Message::DataDescriptor *desc)
+    static inline std::tuple<Arg1, Args...> onRecvImpl(Message::DataDescriptor *desc, const char *tupleDataEnd)
     {
-        return std::tuple_cat(TupleTypeConvert<n, Arg1>::onRecvImpl(desc),
-            TupleTypeConvert<n + 1, Args...>::onRecvImpl(desc->getNextDescriptor()));
+        // Validate current element descriptor and its data before reading it.
+        if (reinterpret_cast<const char *>(desc->getDataStart()) + desc->getTotalSize() > tupleDataEnd) {
+            throw JITServer::StreamFailure("tuple element data is outside tuple bounds");
+        }
+        // Compute the next element descriptor and verify it fits before recursing.
+        Message::DataDescriptor *nextDesc = desc->getNextDescriptor();
+        if (reinterpret_cast<const char *>(nextDesc) + sizeof(Message::DataDescriptor) > tupleDataEnd) {
+            throw JITServer::StreamFailure("next tuple element descriptor is outside tuple bounds");
+        }
+        nextDesc->validate();
+        return std::tuple_cat(TupleTypeConvert<n, Arg1>::onRecvImpl(desc, tupleDataEnd),
+            TupleTypeConvert<n + 1, Args...>::onRecvImpl(nextDesc, tupleDataEnd));
     }
 
     static inline uint32_t onSendImpl(Message &msg, const Arg1 &arg1, const Args &...args)
@@ -259,8 +321,12 @@ template<size_t n, typename Arg1, typename... Args> struct TupleTypeConvert {
 };
 
 template<size_t n, typename Arg1> struct TupleTypeConvert<n, Arg1> {
-    static inline std::tuple<Arg1> onRecvImpl(Message::DataDescriptor *desc)
+    static inline std::tuple<Arg1> onRecvImpl(Message::DataDescriptor *desc, const char *tupleDataEnd)
     {
+        // Validate the last element descriptor's data before reading it.
+        if (reinterpret_cast<const char *>(desc->getDataStart()) + desc->getTotalSize() > tupleDataEnd) {
+            throw JITServer::StreamFailure("last tuple element data is outside tuple bounds");
+        }
         return std::make_tuple(RawTypeConvert<Arg1>::onRecv(desc));
     }
 
@@ -273,8 +339,23 @@ template<size_t n, typename Arg1> struct TupleTypeConvert<n, Arg1> {
 template<typename... T> struct RawTypeConvert<const std::tuple<T...> > {
     static inline std::tuple<T...> onRecv(Message::DataDescriptor *desc)
     {
-        TR_ASSERT(desc->getDataType() == Message::DataDescriptor::DataType::TUPLE, "onRecv type missmatch TUPLE");
-        return TupleTypeConvert<0, T...>::onRecvImpl(static_cast<Message::DataDescriptor *>(desc->getDataStart()));
+        if (desc->getDataType() != Message::DataDescriptor::DataType::TUPLE) {
+            throw JITServer::StreamFailure("onRecv type missmatch TUPLE");
+        }
+        // Compute the exclusive end boundary of this tuple's payload.
+        // The tuple has sizeof...(T) elements; each occupies at least one DataDescriptor.
+        // Reject trivially impossible payloads before walking any element descriptor.
+        static constexpr uint32_t minTuplePayload = sizeof...(T) * sizeof(Message::DataDescriptor);
+        if (desc->getTotalSize() < minTuplePayload) {
+            throw JITServer::StreamFailure("TUPLE payload too small for the expected element count");
+        }
+        const char *tupleDataEnd = static_cast<const char *>(desc->getDataStart()) + desc->getTotalSize();
+        // Verify that the first element descriptor fits before handing control to onRecvImpl.
+        auto *firstElemDesc = static_cast<Message::DataDescriptor *>(desc->getDataStart());
+        if (reinterpret_cast<const char *>(firstElemDesc) + sizeof(Message::DataDescriptor) > tupleDataEnd) {
+            throw JITServer::StreamFailure("first tuple element descriptor is outside tuple bounds");
+        }
+        return TupleTypeConvert<0, T...>::onRecvImpl(firstElemDesc, tupleDataEnd);
     }
 
     template<typename Tuple, size_t... Idx>
