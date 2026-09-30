@@ -429,73 +429,26 @@ VM_JFRConstantPoolTypes::getClassEntry(J9Class *clazz, bool shallow)
 		entry = &entryBuffer;
 	}
 
-	entry->hidden = FALSE;
-
-	if (J9ROMCLASS_IS_ARRAY(clazz->romClass)) {
-		J9ArrayClass *arrayClass = (J9ArrayClass *)clazz;
-		UDATA arity = arrayClass->arity;
-		Assert_VM_true(0 < arity);
-		J9Class *leafComponentType = arrayClass->leafComponentType;
-		J9ROMClass *leafROMClass = leafComponentType->romClass;
-		entry->hidden = J9_ARE_ANY_BITS_SET(leafROMClass->extraModifiers, J9AccClassAnonClass | J9AccClassHidden);
-		if (J9ROMCLASS_IS_PRIMITIVE_TYPE(leafROMClass)) {
-			if (1 == arity) {
-				/* Primitive array classes ([B, [C, [I, etc.) have complete, standalone ROM class names. */
-				entry->nameStringUTF8Index = addStringUTF8Entry(J9ROMCLASS_CLASSNAME(clazz->romClass));
-			} else {
-				/* Construct "[[...I" (arity '[' chars + single type letter).
-				 * The ROM class of a multi-dimensional primitive array is the same shared
-				 * 1D ROM class (e.g. int[][] uses the same ROM class as int[]), so
-				 * J9ROMCLASS_CLASSNAME(clazz->romClass) always returns the 1D name (e.g. "[I")
-				 * regardless of arity.  We must build the full descriptor explicitly.
-				 * arrayNameLen = arity + 1; arity is bounded by JVM array limits (max 255), no overflow.
-				 */
-				/* arity '[' + single type letter (e.g. 'I', 'B') */
-				const UDATA arrayNameLen = arity + 1;
-				J9UTF8 *arrayName = (J9UTF8 *)j9mem_allocate_memory(sizeof(J9UTF8) + arrayNameLen, J9MEM_CATEGORY_JFR);
-				if (NULL == arrayName) {
-					_buildResult = OutOfMemory;
-					goto done;
-				}
-				J9UTF8_SET_LENGTH(arrayName, arrayNameLen);
-
-				/* The type letter is at position [1] of the 1D primitive array ROM class name (e.g. "[I" -> 'I'). */
-				U_8 typeChar = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(clazz->romClass))[1];
-
-				memset(J9UTF8_DATA(arrayName), '[', arity);
-				J9UTF8_DATA(arrayName)[arity] = typeChar;
-
-				entry->nameStringUTF8Index = addStringUTF8Entry(arrayName, true);
-			}
-		} else {
-			/* Reference array classes share a single ROM class whose className is "[L" (incomplete).
-			 * Build the full descriptor "[L<leafComponentType>;" so every array type is distinguishable.
-			 */
-			J9UTF8 *leafName = J9ROMCLASS_CLASSNAME(leafROMClass);
-			const U_16 leafLen = J9UTF8_LENGTH(leafName);
-			/* arity '[' + 'L' + leafName + ';' */
-			const UDATA arrayNameLen = arity + 1 + leafLen + 1;
-			J9UTF8 *arrayName = (J9UTF8 *)j9mem_allocate_memory(sizeof(J9UTF8) + arrayNameLen, J9MEM_CATEGORY_JFR);
-			if (NULL == arrayName) {
-				_buildResult = OutOfMemory;
-				goto done;
-			}
-			J9UTF8_SET_LENGTH(arrayName, arrayNameLen);
-
-			U_8 *cursor = J9UTF8_DATA(arrayName);
-			memset(cursor, '[', arity);
-			cursor[arity] = 'L';
-			memcpy(cursor + arity + 1, J9UTF8_DATA(leafName), leafLen);
-			cursor[arity + 1 + leafLen] = ';';
-
-			entry->nameStringUTF8Index = addStringUTF8Entry(arrayName, true);
+	{
+		BOOLEAN freeUTF8 = FALSE;
+		J9UTF8 *className = buildClassNameJ9UTF8(_currentThread, J9MEM_CATEGORY_JFR, clazz, NULL, 0, &freeUTF8);
+		if (NULL == className) {
+			_buildResult = OutOfMemory;
+			goto done;
 		}
-	} else {
-		entry->hidden = J9_ARE_ANY_BITS_SET(clazz->romClass->extraModifiers, J9AccClassAnonClass | J9AccClassHidden);
-		entry->nameStringUTF8Index = addStringUTF8Entry(J9ROMCLASS_CLASSNAME(clazz->romClass));
+		entry->nameStringUTF8Index = addStringUTF8Entry(className, FALSE != freeUTF8);
+		if (isResultNotOKay()) {
+			goto done;
+		}
 	}
-	if (isResultNotOKay()) {
-		goto done;
+
+	{
+		J9ROMClass *romClass = clazz->romClass;
+		if (J9ROMCLASS_IS_ARRAY(romClass)) {
+			J9ArrayClass *arrayClass = (J9ArrayClass *)clazz;
+			romClass = arrayClass->leafComponentType->romClass;
+		}
+		entry->hidden = J9_ARE_ANY_BITS_SET(romClass->extraModifiers, J9AccClassAnonClass | J9AccClassHidden);
 	}
 
 	entry->classLoaderIndex = addClassLoaderEntry(clazz->classLoader, shallow);
