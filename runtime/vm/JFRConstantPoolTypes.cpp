@@ -429,12 +429,15 @@ VM_JFRConstantPoolTypes::getClassEntry(J9Class *clazz, bool shallow)
 		entry = &entryBuffer;
 	}
 
+	entry->hidden = FALSE;
+
 	if (J9ROMCLASS_IS_ARRAY(clazz->romClass)) {
 		J9ArrayClass *arrayClass = (J9ArrayClass *)clazz;
 		UDATA arity = arrayClass->arity;
 		Assert_VM_true(0 < arity);
 		J9Class *leafComponentType = arrayClass->leafComponentType;
 		J9ROMClass *leafROMClass = leafComponentType->romClass;
+		entry->hidden = J9_ARE_ANY_BITS_SET(leafROMClass->extraModifiers, J9AccClassAnonClass | J9AccClassHidden);
 		if (J9ROMCLASS_IS_PRIMITIVE_TYPE(leafROMClass)) {
 			if (1 == arity) {
 				/* Primitive array classes ([B, [C, [I, etc.) have complete, standalone ROM class names. */
@@ -488,6 +491,7 @@ VM_JFRConstantPoolTypes::getClassEntry(J9Class *clazz, bool shallow)
 			entry->nameStringUTF8Index = addStringUTF8Entry(arrayName, true);
 		}
 	} else {
+		entry->hidden = J9_ARE_ANY_BITS_SET(clazz->romClass->extraModifiers, J9AccClassAnonClass | J9AccClassHidden);
 		entry->nameStringUTF8Index = addStringUTF8Entry(J9ROMCLASS_CLASSNAME(clazz->romClass));
 	}
 	if (isResultNotOKay()) {
@@ -505,7 +509,6 @@ VM_JFRConstantPoolTypes::getClassEntry(J9Class *clazz, bool shallow)
 	}
 
 	entry->modifiers = clazz->romClass->modifiers;
-	entry->hidden = FALSE; //TODO
 
 	if (NULL != entry && !entry->shallow) {
 		entry->index = clazz->classID;
