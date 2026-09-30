@@ -26,6 +26,7 @@
 #include "jvminit.h"
 #include "ut_j9jcl.h"
 
+#include "JFRTypeMappings.hpp"
 #include "ObjectAccessBarrierAPI.hpp"
 #include "VMHelpers.hpp"
 
@@ -633,11 +634,15 @@ Java_jdk_jfr_internal_JVM_setEnabled(JNIEnv *env, jobject obj, jlong eventTypeId
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
+
 	if ((NULL != vm->jfrState.jfrEventEnabledFlags)
 		&& (0 <= eventTypeId)
 		&& (eventTypeId < vm->jfrState.jfrEventEnabledFlagsSize)
 	) {
 		vm->jfrState.jfrEventEnabledFlags[(UDATA)eventTypeId] = enabled ? 1 : 0;
+	}
+	if (JfrObjectAllocationSampleEvent == eventTypeId) {
+		vm->internalVMFunctions->enableJFRObjectAllocationSample(currentThread, JNI_TRUE == enabled);
 	}
 }
 
