@@ -345,7 +345,7 @@ void J9::CodeCache::resolveHashEntry(OMR::CodeCacheHashEntry *entry, TR_OpaqueMe
     // extract the entry from the unresolved hash table
     if (!_unresolvedMethodHT->remove(entry)) {
         // suspicious: should any asserts actually happen? why is this commented out?
-        /////TR_ASSERT(0);     // internal inconsistency, should never happen
+        //TR_ASSERT(0);     // internal inconsistency, should never happen
     }
 
     entry->_key = _resolvedMethodHT->hashResolvedMethod(method);
