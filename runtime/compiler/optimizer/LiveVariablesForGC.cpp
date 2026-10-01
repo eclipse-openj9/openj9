@@ -237,6 +237,8 @@ int32_t TR_GlobalLiveVariablesForGC::perform()
             if (blockNum > 0 && liveLocals->_blockAnalysisInfo[blockNum]) {
                 liveVars = new (trHeapMemory()) TR_BitVector(numLocals, trMemory());
                 *liveVars = *(liveLocals->_blockAnalysisInfo[blockNum]);
+                if (block->getLiveLocals())
+                    *liveVars |= *(block->getLiveLocals());
                 block->setLiveLocals(liveVars);
             }
         }
