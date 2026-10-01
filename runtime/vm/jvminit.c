@@ -8484,6 +8484,8 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		goto error;
 	}
 
+	vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_GC_STRUCTURES_INITIALIZED;
+
 #if defined(OMR_THR_YIELD_ALG)
 	omrthread_monitor_init_with_name(&vm->cpuUtilCacheMutex, 0, "CPU Utilization Cache Mutex");
 #endif /* defined(OMR_THR_YIELD_ALG) */
