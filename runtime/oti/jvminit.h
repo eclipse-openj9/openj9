@@ -697,6 +697,8 @@ enum INIT_STAGE {
 #define VMOPT_XSYSLOG_OPT "-Xsyslog"
 #define MAPOPT_XSYSLOG_OPT_COLON "-Xsyslog:"
 
+#define MAPOPT_XLOG_OPT_COLON_DISABLE "-Xlog:disable"
+
 #if defined(J9VM_OPT_JFR)
 #define MAPOPT_XLOG_OPT_COLON_JFR "-Xlog:jfr"
 

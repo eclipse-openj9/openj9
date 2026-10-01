@@ -52,6 +52,11 @@ typedef enum JFRLogTagType {
 	JFR_START = 13
 } JFRLogTagType;
 
+#define JFRLOG_STRING_START_RECORDING "Starting a recording"
+
+static void logJFRMessageHelper(J9VMThread *currentThread, jint jfrLogTagCombination, jint level, const char *utf8Message);
+static void logJFRMessage(J9VMThread *currentThread, jint jfrLogTagCombination, jint level, j9object_t stringMessage);
+
 /**
  * Convert jdk.jfr.internal.LogLevel to a string such as
  * "trace", "debug", "info", "warn", "error", or "invalid".
@@ -159,6 +164,7 @@ Java_jdk_jfr_internal_JVM_beginRecording(JNIEnv *env, jobject obj)
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
+	logJFRMessageHelper(currentThread, JFRCOMBINATION_JFR_SYSTEM, JFRLOG_LEVEL_TRACE, JFRLOG_STRING_START_RECORDING);
 	vmFuncs->startJFRRecording(vm);
 }
 
@@ -447,30 +453,35 @@ buildJFRLogTagString(jint jfrLogTagCombination, char *buffer, size_t bufferSize)
 	*cursor = '\0';
 }
 
+/**
+ * Log JFR utf8Message according to jfrLogTagCombination and level.
+ *
+ * @param currentThread[in] current J9VMThread
+ * @param jfrLogTagCombination[in] one of JFRLogTagCombination
+ * @param level[in] one of JFRLogLevel
+ * @param utf8Message[in] a NULL terminated string containing the log message
+ */
 static void
-logJFRMessage(J9VMThread *currentThread, jint jfrLogTagCombination, jint level, j9object_t stringMessage)
+logJFRMessageHelper(J9VMThread *currentThread, jint jfrLogTagCombination, jint level, const char *utf8Message)
 {
-	PORT_ACCESS_FROM_VMC(currentThread);
-	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
-	char buf[JFR_STRING_BUFFER_SIZE];
-
-	J9UTF8 *utf8Message = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, stringMessage, J9_STR_NONE, "", 0, buf, sizeof(buf));
-	if (NULL == utf8Message) {
-		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
-	} else {
+	if (currentThread->javaVM->jfrState.jfrLogEnabled) {
+		PORT_ACCESS_FROM_VMC(currentThread);
+		const JFRState &jfrState = currentThread->javaVM->jfrState;
 		char logTagBuffer[JFR_STRING_BUFFER_SIZE];
-		UDATA msgLength = J9UTF8_LENGTH(utf8Message);
 		const char *jfrLogLevelString = jfrLogLevelLookup(level);
 
-		Trc_JCL_logJFRMessage_incoming(currentThread, jfrLogTagCombination, level, msgLength, J9UTF8_DATA(utf8Message));
-		buildJFRLogTagString(jfrLogTagCombination, logTagBuffer, JFR_STRING_BUFFER_SIZE);
-		UDATA logMsgLength = j9str_printf(NULL, 0, "[%s][%s] %.*s\n", jfrLogLevelString, logTagBuffer, msgLength, J9UTF8_DATA(utf8Message));
-		char *logMsg = (char *)j9mem_allocate_memory(logMsgLength, J9MEM_CATEGORY_JFR);
-		if (NULL != logMsg) {
-			j9str_printf(logMsg, logMsgLength, "[%s][%s] %.*s\n", jfrLogLevelString, logTagBuffer, msgLength, J9UTF8_DATA(utf8Message));
-			Trc_JCL_logJFRMessage_generated(currentThread, logMsgLength, logMsg);
+		Trc_JCL_JFRLOG_incoming(currentThread, jfrLogTagCombination, level, utf8Message);
+		buildJFRLogTagString(jfrLogTagCombination, logTagBuffer, sizeof(logTagBuffer));
+		UDATA logMsgSize = j9str_printf(NULL, 0, "[%s][%s] %s\n", jfrLogLevelString, logTagBuffer, utf8Message);
+		char *logMsg = (char *)j9mem_allocate_memory(logMsgSize, J9MEM_CATEGORY_JFR);
+		if (NULL == logMsg) {
+			currentThread->javaVM->internalVMFunctions->setNativeOutOfMemoryError(currentThread, 0, 0);
+		} else {
+			j9str_printf(logMsg, logMsgSize, "[%s][%s] %s\n", jfrLogLevelString, logTagBuffer, utf8Message);
+			IDATA logMsgLength = (IDATA)logMsgSize - 1;
+			Trc_JCL_JFRLOG_generated(currentThread, logMsgLength, logMsg);
 
-			switch (currentThread->javaVM->jfrState.jfrLogOutput) {
+			switch (jfrState.jfrLogOutput) {
 			case JFROUTPUT_STDOUT:
 				j9file_printf(J9PORT_TTY_OUT, "%s", logMsg);
 				break;
@@ -479,7 +490,7 @@ logJFRMessage(J9VMThread *currentThread, jint jfrLogTagCombination, jint level, 
 				break;
 			case JFROUTPUT_FILE:
 				{
-					UDATA written = j9file_write(currentThread->javaVM->jfrState.logFileDescriptor, logMsg, logMsgLength);
+					IDATA written = j9file_write(jfrState.logFileDescriptor, logMsg, logMsgLength);
 					if (logMsgLength != written) {
 						/* Ignore log file writing error. */
 						Trc_JCL_JFRLOG_fileWrite_error(currentThread, logMsgLength, written);
@@ -492,15 +503,40 @@ logJFRMessage(J9VMThread *currentThread, jint jfrLogTagCombination, jint level, 
 			}
 			j9mem_free_memory(logMsg);
 		}
-		if (buf != (char*)utf8Message) {
-			j9mem_free_memory(utf8Message);
-		}
 	}
 }
 
 /**
- * TODO Note this is a draft implementation.
+ * Log JFR stringMessage according to jfrLogTagCombination and level.
+ *
+ * @param currentThread[in] current J9VMThread
+ * @param jfrLogTagCombination[in] one of JFRLogTagCombination
+ * @param level[in] one of JFRLogLevel
+ * @param stringMessage[in] a j9object_t string containing the log message
  */
+static void
+logJFRMessage(J9VMThread *currentThread, jint jfrLogTagCombination, jint level, j9object_t stringMessage)
+{
+	if (currentThread->javaVM->jfrState.jfrLogEnabled) {
+		J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+		char buf[JFR_STRING_BUFFER_SIZE];
+		UDATA utf8Length = 0;
+
+		char *utf8Message = vmFuncs->copyStringToUTF8WithMemAlloc(
+				currentThread, stringMessage, J9_STR_NULL_TERMINATE_RESULT,
+				"", 0, buf, sizeof(buf), &utf8Length);
+		if (NULL == utf8Message) {
+			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+		} else {
+			logJFRMessageHelper(currentThread, jfrLogTagCombination, level, utf8Message);
+			if (buf != utf8Message) {
+				PORT_ACCESS_FROM_VMC(currentThread);
+				j9mem_free_memory(utf8Message);
+			}
+		}
+	}
+}
+
 void JNICALL
 Java_jdk_jfr_internal_JVM_log(JNIEnv *env, jclass clazz, jint tagSetId, jint level, jstring message)
 {
@@ -566,10 +602,7 @@ Java_jdk_jfr_internal_JVM_subscribeLogLevel(JNIEnv *env, jclass clazz, jobject l
 		IDATA idOffset = VM_VMHelpers::findinstanceFieldOffset(currentThread, loggerClass, "id", "I");
 		if (-1 != idOffset) {
 			I_32 logTagID = objectAccessBarrier.inlineMixedObjectReadI32(currentThread, logTagInstance, idOffset, FALSE);
-			/* JFR_START is special-cased to INFO so the -XX:StartFlightRecording banner ("Started recording ...")
-			 * is visible by default.
-			 */
-			I_32 defaultLevel = (JFR_START == tagSetId) ? JFRLOG_LEVEL_INFO : (I_32)vm->jfrState.jfrLogTagSet[logTagID];
+			I_32 defaultLevel = (I_32)vm->jfrState.jfrLogTagSet[logTagID];
 			Trc_JCL_JFRLOG_subscribeLogLevel(currentThread, logTagInstance, tagSetLevelOffset, idOffset, logTagID, defaultLevel);
 			objectAccessBarrier.inlineMixedObjectStoreI32(currentThread, logTagInstance, tagSetLevelOffset, defaultLevel, TRUE);
 		} else {
