@@ -1005,7 +1005,8 @@ void *TR_ResolvedJ9JITServerMethod::stringConstant(I_32 cpIndex)
     TR_StringConstantData newData(std::get<0>(recv), std::get<1>(recv), std::get<2>(recv));
     {
         OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
-        JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._stringConstantCache.insert({ cpIndex, newData });
+        if (!newData._optimizeForAOTFalseResult)
+            JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._stringConstantCache.insert({ cpIndex, newData });
     }
     compInfoPT->cacheStringConstantData((TR_OpaqueClassBlock *)_ramClass, cpIndex, newData);
     return std::get<0>(recv);
@@ -1033,7 +1034,8 @@ bool TR_ResolvedJ9JITServerMethod::isUnresolvedString(I_32 cpIndex, bool optimiz
     TR_StringConstantData newData(std::get<0>(recv), std::get<1>(recv), std::get<2>(recv));
     {
         OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
-        JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._stringConstantCache.insert({ cpIndex, newData });
+        if (!newData._optimizeForAOTFalseResult)
+            JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._stringConstantCache.insert({ cpIndex, newData });
     }
     compInfoPT->cacheStringConstantData((TR_OpaqueClassBlock *)_ramClass, cpIndex, newData);
     return optimizeForAOT ? std::get<1>(recv) : std::get<2>(recv);
