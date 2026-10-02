@@ -1041,6 +1041,40 @@ bool TR_ResolvedJ9JITServerMethod::isUnresolvedString(I_32 cpIndex, bool optimiz
     return optimizeForAOT ? std::get<1>(recv) : std::get<2>(recv);
 }
 
+bool TR_ResolvedJ9JITServerMethod::isUnresolvedString(I_32 cpIndex, void **stringAddress)
+{
+    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
+    auto compInfoPT = static_cast<TR::CompilationInfoPerThreadRemote *>(_fe->_compInfoPT);
+    TR_StringConstantData data;
+    // Check the fast per-compilation cache first (no locking needed)
+    if (compInfoPT->getCachedStringConstantData((TR_OpaqueClassBlock *)_ramClass, cpIndex, data)) {
+        *stringAddress = data._stringConstant;
+        return data._optimizeForAOTFalseResult;
+    }
+    // Check the per-client ClassInfo cache (survives across compilations)
+    {
+        OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
+        auto &perClientCache = JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._stringConstantCache;
+        auto it = perClientCache.find(cpIndex);
+        if (it != perClientCache.end()) {
+            compInfoPT->cacheStringConstantData((TR_OpaqueClassBlock *)_ramClass, cpIndex, it->second);
+            *stringAddress = it->second._stringConstant;
+            return it->second._optimizeForAOTFalseResult;
+        }
+    }
+    _stream->write(JITServer::MessageType::ResolvedMethod_stringConstant, _remoteMirror, cpIndex);
+    auto recv = _stream->read<void *, bool, bool>();
+    TR_StringConstantData newData(std::get<0>(recv), std::get<1>(recv), std::get<2>(recv));
+    {
+        OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
+        if (!newData._optimizeForAOTFalseResult)
+            JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._stringConstantCache.insert({ cpIndex, newData });
+    }
+    compInfoPT->cacheStringConstantData((TR_OpaqueClassBlock *)_ramClass, cpIndex, newData);
+    *stringAddress = std::get<0>(recv);
+    return std::get<2>(recv);
+}
+
 bool TR_ResolvedJ9JITServerMethod::isSubjectToPhaseChange(TR::Compilation *comp)
 {
     bool candidate = comp->getOptLevel() <= warm &&
