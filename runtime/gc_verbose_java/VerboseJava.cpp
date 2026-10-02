@@ -272,6 +272,9 @@ gcDumpMemorySizes(J9JavaVM *javaVM)
 		gcDumpQualifiedSize(PORTLIB, extensions->softMx, "-Xsoftmx", J9NLS_GC_VERB_SIZES_XSOFTMX);
 	}
 
+	gcDumpQualifiedSize(PORTLIB, extensions->tlhInitialSize, "-Xgc:tlhInitialSize=", J9NLS_GC_VERB_SIZES_XGC_TLH_INITIAL_SIZE);
+	gcDumpQualifiedSize(PORTLIB, extensions->tlhMaximumSize, "-Xgc:tlhMaximumSize=", J9NLS_GC_VERB_SIZES_XGC_TLH_MAXIMUM_SIZE);
+	gcDumpQualifiedSize(PORTLIB, extensions->tlhIncrementSize, "-Xgc:tlhIncrementSize=", J9NLS_GC_VERB_SIZES_XGC_TLH_INCREMENT_SIZE);
 
 	pageSizes = j9vmem_supported_page_sizes();
 	/* If entry at index 1 of supported page size array is non zero, then large pages are available */
