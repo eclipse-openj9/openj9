@@ -145,9 +145,9 @@ extern void CEEJNIWrapper(J9VMThread *currentThread);
 extern "C" {
 extern void
 #if FFI_NATIVE_RAW_API
-ffiCallWithSetJmpForUpcall(J9VMThread *currentThread, ffi_cif *cif, void *function, UDATA *returnStorage, void **values, ffi_raw *values_raw);
+ffiCallWithSetJmpForUpcall(J9VMThread *currentThread, ffi_cif *cif, void *function, UDATA *returnStorage, void **values, I_32 capturedCallStateMask, I_32 *returnState, ffi_raw *values_raw);
 #else /* FFI_NATIVE_RAW_API */
-ffiCallWithSetJmpForUpcall(J9VMThread *currentThread, ffi_cif *cif, void *function, UDATA *returnStorage, void **values);
+ffiCallWithSetJmpForUpcall(J9VMThread *currentThread, ffi_cif *cif, void *function, UDATA *returnStorage, void **values, I_32 capturedCallStateMask, I_32 *returnState);
 #endif /* FFI_NATIVE_RAW_API */
 }
 #endif /* JAVA_SPEC_VERSION >= 16 */
@@ -5520,9 +5520,6 @@ done:
 		UDATA *returnStorage = &(_currentThread->returnValue);
 		U_64 *ffiArgs = _currentThread->ffiArgs;
 		U_64 sFfiArgs[16];
-#if JAVA_SPEC_VERSION >= 21
-		I_32 capturedCallStateMask = DowncallCapturableState::J9_CAPTURE_ALL_STATES;
-#endif /* JAVA_SPEC_VERSION >= 21 */
 #if JAVA_SPEC_VERSION >= 22
 #if JAVA_SPEC_VERSION >= 24
 #if JAVA_SPEC_VERSION >= 25
@@ -5535,13 +5532,11 @@ done:
 #else /* JAVA_SPEC_VERSION >= 24 */
 		UDATA argSlots = 13;
 #endif /* JAVA_SPEC_VERSION >= 24 */
-		I_32 *returnState = NULL;
 		UDATA curPtrArgIdx = 0;
 		j9object_t heapBase = NULL;
 		BOOLEAN isHeapPassed = FALSE;
 #elif JAVA_SPEC_VERSION == 21
 		UDATA argSlots = 11;
-		I_32 *returnState = NULL;
 #else /* JAVA_SPEC_VERSION >= 21 */
 		UDATA argSlots = 8;
 #endif /* JAVA_SPEC_VERSION >= 21 */
@@ -5555,6 +5550,13 @@ done:
 		U_32 ffiArgCount = J9INDEXABLEOBJECT_SIZE(currentThread, argValues);
 		const U_8 minimalCallout = 16;
 		bool isMinimal = (ffiArgCount <= minimalCallout);
+
+		I_32 *returnState = NULL;
+#if JAVA_SPEC_VERSION >= 21
+		I_32 capturedCallStateMask = DowncallCapturableState::J9_CAPTURE_ALL_STATES;
+#else /* JAVA_SPEC_VERSION >= 21 */
+		I_32 capturedCallStateMask = 0;
+#endif /* JAVA_SPEC_VERSION >= 21 */
 
 		PORT_ACCESS_FROM_JAVAVM(_vm);
 
@@ -5720,19 +5722,14 @@ done:
 		}
 		VM_VMHelpers::beforeJNICall(_currentThread);
 
-#if JAVA_SPEC_VERSION >= 25
-		ForeignCallHelpers::restoreCapturedCallState(returnState, capturedCallStateMask);
-#endif /* JAVA_SPEC_VERSION >= 25 */
-
+		/* Handle captured call state in the out-of-line FFI wrapper to avoid
+		 * increasing the size of the interpreter hot path.
+		 */
 #if FFI_NATIVE_RAW_API
-		ffiCallWithSetJmpForUpcall(_currentThread, cif, function, returnStorage, values, values_raw);
+		ffiCallWithSetJmpForUpcall(_currentThread, cif, function, returnStorage, values, capturedCallStateMask, returnState, values_raw);
 #else /* FFI_NATIVE_RAW_API */
-		ffiCallWithSetJmpForUpcall(_currentThread, cif, function, returnStorage, values);
+		ffiCallWithSetJmpForUpcall(_currentThread, cif, function, returnStorage, values, capturedCallStateMask, returnState);
 #endif /* FFI_NATIVE_RAW_API */
-
-#if JAVA_SPEC_VERSION >= 21
-		ForeignCallHelpers::storeCapturedCallState(returnState, capturedCallStateMask);
-#endif /* JAVA_SPEC_VERSION >= 21 */
 
 		VM_VMHelpers::afterJNICall(_currentThread);
 #if JAVA_SPEC_VERSION >= 21
