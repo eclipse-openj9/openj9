@@ -240,15 +240,25 @@ class VM_BufferWriter {
 	{
 		if (checkBounds(9)) {
 			U_64 newVal = val;
+			U_8 bytesUsed = 0;
 
 			do {
-				U_8 byte = newVal & 0x7F;
-				newVal >>= 7;
+				U_8 byte = 0;
+				/* 9-th byte is write raw to matche RI's parsing code so
+				 * technically this isn't correct LEB128 encoding. */
+				if (bytesUsed == 8) {
+					byte = newVal;
+					newVal = 0;
+				} else {
+					byte = (newVal & 0x7F);
+					newVal >>= 7;
 
-				if (newVal > 0) {
-					byte |= 0x80;
+					if (newVal > 0) {
+						byte |= 0x80;
+					}
 				}
 				writeU8NoCheck(byte);
+				bytesUsed += 1;
 			} while (newVal > 0);
 		}
 	}
