@@ -7335,11 +7335,18 @@ done:
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 					J9ArrayClass *arrayClass = (J9ArrayClass *)J9OBJECT_CLAZZ(_currentThread, arrayref);
 					if ((NULL == value) && J9_IS_J9ARRAYCLASS_NULL_RESTRICTED(arrayClass)) {
-						rc = THROW_NPE;
-						return rc;
-					}
+						updateVMStruct(REGISTER_ARGS);
+						prepareForExceptionThrow(_currentThread);
+						setCurrentExceptionNLS(
+							_currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYSTOREEXCEPTION,
+							J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_ARRAY);
+						VMStructHasBeenUpdated(REGISTER_ARGS);
+						rc = GOTO_THROW_CURRENT_EXCEPTION;
+					} else
 #endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
-					rc = THROW_ARRAY_STORE;
+					{
+						rc = THROW_ARRAY_STORE;
+					}
 				} else {
 					VM_ValueTypeHelpers::storeFlattenableArrayElement(_currentThread, _objectAccessBarrier, arrayref, index, value);
 					_pc += 1;
@@ -7901,11 +7908,20 @@ done:
 #endif
 		{
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-			/* NullRestricted field cannot be set to null. */
+			/* Null-restricted static field cannot be set to null. */
 			if (J9_ARE_ALL_BITS_SET(classAndFlags, J9StaticFieldRefNullRestricted)) {
 				j9object_t valueref = *(j9object_t*)_sp;
 				if (NULL == valueref) {
-					rc = THROW_NPE;
+					J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *)(J9_ROM_CP_FROM_ROM_CLASS(ramConstantPool->ramClass->romClass) + index);
+					J9UTF8 *fieldName = J9ROMNAMEANDSIGNATURE_NAME(J9ROMFIELDREF_NAMEANDSIGNATURE(romFieldRef));
+					updateVMStruct(REGISTER_ARGS);
+					prepareForExceptionThrow(_currentThread);
+					setCurrentExceptionNLSWithArgs(
+						_currentThread, J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_FIELD,
+						J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION,
+						J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName));
+					VMStructHasBeenUpdated(REGISTER_ARGS);
+					rc = GOTO_THROW_CURRENT_EXCEPTION;
 					goto done;
 				}
 			}
@@ -8139,7 +8155,17 @@ done:
 					if (J9_ARE_ALL_BITS_SET(flags, J9FieldFlagIsNullRestricted)) {
 						j9object_t valueref = *(j9object_t*)_sp;
 						if (NULL == valueref) {
-							rc = THROW_NPE;
+							/* Receiver is non-null; NPE is due to storing null into a null-restricted field. */
+							J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *)(J9_ROM_CP_FROM_ROM_CLASS(ramConstantPool->ramClass->romClass) + index);
+							J9UTF8 *fieldName = J9ROMNAMEANDSIGNATURE_NAME(J9ROMFIELDREF_NAMEANDSIGNATURE(romFieldRef));
+							updateVMStruct(REGISTER_ARGS);
+							prepareForExceptionThrow(_currentThread);
+							setCurrentExceptionNLSWithArgs(
+								_currentThread, J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_FIELD,
+								J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION,
+								J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName));
+							VMStructHasBeenUpdated(REGISTER_ARGS);
+							rc = GOTO_THROW_CURRENT_EXCEPTION;
 							goto done;
 						}
 					}
