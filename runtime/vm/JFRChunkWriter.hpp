@@ -31,6 +31,10 @@
 
 #include "BufferWriter.hpp"
 #include "JFRConstantPoolTypes.hpp"
+#if JAVA_SPEC_VERSION >= 17
+#include "JFRTypeMappings.hpp"
+#include "JFRPeriodic.hpp"
+#endif /* JAVA_SPEC_VERSION >= 17 */
 #include "JFRUtils.hpp"
 #include "ObjectAccessBarrierAPI.hpp"
 #include "VMHelpers.hpp"
@@ -86,63 +90,6 @@ enum StringEnconding {
 	UTF8,
 	UTF16,
 	Latin1,
-};
-
-enum MetadataTypeID {
-	ThreadStartID = 2,
-	ThreadEndID = 3,
-	ThreadSleepID = 4,
-	ThreadParkID = 5,
-	MonitorEnterID = 6,
-	MonitorWaitID = 7,
-	GCHeapSummaryID = 27,
-	GarbageCollectionID = 35,
-	SystemGCID = 36,
-	YoungGarbageCollectionID = 38,
-	OldGarbageCollectionID = 39,
-	JVMInformationID = 87,
-	OSInformationID = 88,
-	VirtualizationInformationID = 89,
-	InitialSystemPropertyID = 90,
-	InitialEnvironmentVariableID = 91,
-	SystemProcessID = 92,
-	CPUInformationID = 93,
-	CPULoadID = 95,
-	ThreadCPULoadID = 96,
-	ThreadContextSwitchRateID = 97,
-	NetworkUtilizationID = 98,
-	ThreadStatisticsID = 99,
-	DataLossID = 86,
-	ClassLoadingStatisticsID = 100,
-	ClassLoaderStatisticsID = 101,
-	ThreadAllocationStatisticsID = 107,
-	PhysicalMemoryID = 108,
-	ExecutionSampleID = 109,
-	ThreadDumpID = 111,
-	NativeLibraryID = 112,
-	ModuleRequireID = 113,
-	ModuleExportID = 114,
-	GCConfigurationID = 130,
-	GCHeapConfigID = 133,
-	YoungGenerationConfigID = 134,
-	VirtualSpaceID = 149,
-	NetworkInterfaceNameID = 163,
-	ThreadID = 164,
-	ThreadGroupID = 165,
-	ClassID = 166,
-	ClassLoaderID = 167,
-	MethodID = 168,
-	SymbolID = 169,
-	ThreadStateID = 170,
-	GCNamesID = 171,
-	GCCausesID = 172,
-	GCWhensID = 173,
-	NarrowOopModesID = 180,
-	ModuleID = 186,
-	PackageID = 187,
-	StackTraceID = 188,
-	FrameTypeID = 189,
-	StackFrameID = 197,
 };
 
 enum ReservedEvent {
@@ -247,6 +194,59 @@ private:
 
 	static constexpr int METADATA_ID = 1;
 
+	static int ThreadStartID;
+	static int ThreadEndID;
+	static int ThreadSleepID;
+	static int ThreadParkID;
+	static int MonitorEnterID;
+	static int MonitorWaitID;
+	static int GCHeapSummaryID;
+	static int GarbageCollectionID;
+	static int SystemGCID;
+	static int YoungGarbageCollectionID;
+	static int OldGarbageCollectionID;
+	static int JVMInformationID;
+	static int OSInformationID;
+	static int VirtualizationInformationID;
+	static int InitialSystemPropertyID;
+	static int InitialEnvironmentVariableID;
+	static int SystemProcessID;
+	static int CPUInformationID;
+	static int CPULoadID;
+	static int ThreadCPULoadID;
+	static int ThreadContextSwitchRateID;
+	static int NetworkUtilizationID;
+	static int ThreadStatisticsID;
+	static int DataLossID;
+	static int ClassLoadingStatisticsID;
+	static int ClassLoaderStatisticsID;
+	static int ThreadAllocationStatisticsID;
+	static int PhysicalMemoryID;
+	static int ExecutionSampleID;
+	static int ThreadDumpID;
+	static int NativeLibraryID;
+	static int ModuleRequireID;
+	static int ModuleExportID;
+	static int GCConfigurationID;
+	static int GCHeapConfigID;
+	static int YoungGenerationConfigID;
+	static int NetworkInterfaceNameID;
+	static int ThreadID;
+	static int ThreadGroupID;
+	static int ClassID;
+	static int ClassLoaderID;
+	static int MethodID;
+	static int SymbolID;
+	static int ThreadStateID;
+	static int GCNamesID;
+	static int GCCausesID;
+	static int GCWhensID;
+	static int NarrowOopModesID;
+	static int ModuleID;
+	static int PackageID;
+	static int StackTraceID;
+	static int FrameTypeID;
+
 protected:
 
 public:
@@ -288,6 +288,65 @@ private:
 				bufferWriter->getCursor() - eventStart);
 	}
 
+#if JAVA_SPEC_VERSION >= 17
+	static void initializeJFRv2MetadataTypeID() {
+		ThreadStartID = JfrThreadStartEvent;
+		ThreadEndID = JfrThreadEndEvent;
+#if JAVA_SPEC_VERSION == 17
+		ThreadSleepID = JfrThreadSleepEvent;
+#endif /* JAVA_SPEC_VERSION == 17 */
+		ThreadParkID = JfrThreadParkEvent;
+		MonitorEnterID = JfrJavaMonitorEnterEvent;
+		MonitorWaitID = JfrJavaMonitorWaitEvent;
+		GCHeapSummaryID = JfrGCHeapSummaryEvent;
+		GarbageCollectionID = JfrGarbageCollectionEvent;
+		SystemGCID = JfrSystemGCEvent;
+		YoungGarbageCollectionID = JfrYoungGarbageCollectionEvent;
+		OldGarbageCollectionID = JfrOldGarbageCollectionEvent;
+		JVMInformationID = JfrJVMInformationEvent;
+		OSInformationID = JfrOSInformationEvent;
+		VirtualizationInformationID = JfrVirtualizationInformationEvent;
+		InitialSystemPropertyID = JfrInitialSystemPropertyEvent;
+		InitialEnvironmentVariableID = JfrInitialEnvironmentVariableEvent;
+		SystemProcessID = JfrSystemProcessEvent;
+		CPUInformationID = JfrCPUInformationEvent;
+		CPULoadID = JfrCPULoadEvent;
+		ThreadCPULoadID = JfrThreadCPULoadEvent;
+		ThreadContextSwitchRateID = JfrThreadContextSwitchRateEvent;
+		NetworkUtilizationID = JfrNetworkUtilizationEvent;
+		ThreadStatisticsID = JfrJavaThreadStatisticsEvent;
+		DataLossID = JfrDataLossEvent;
+		ClassLoadingStatisticsID = JfrClassLoadingStatisticsEvent;
+		ClassLoaderStatisticsID = JfrClassLoaderStatisticsEvent;
+		ThreadAllocationStatisticsID = JfrThreadAllocationStatisticsEvent;
+		PhysicalMemoryID = JfrPhysicalMemoryEvent;
+		ExecutionSampleID = JfrExecutionSampleEvent;
+		ThreadDumpID = JfrThreadDumpEvent;
+		NativeLibraryID = JfrNativeLibraryEvent;
+		ModuleRequireID = JfrModuleRequireEvent;
+		ModuleExportID = JfrModuleExportEvent;
+		GCConfigurationID = JfrGCConfigurationEvent;
+		GCHeapConfigID = JfrGCHeapConfigurationEvent;
+		YoungGenerationConfigID = JfrYoungGenerationConfigurationEvent;
+		NetworkInterfaceNameID = TYPE_NETWORKINTERFACENAME;
+		ThreadID = TYPE_THREAD;
+		ThreadGroupID = TYPE_THREADGROUP;
+		ClassID = TYPE_CLASS;
+		ClassLoaderID = TYPE_CLASSLOADER;
+		MethodID = TYPE_METHOD;
+		SymbolID = TYPE_SYMBOL;
+		ThreadStateID = TYPE_THREADSTATE;
+		GCNamesID = TYPE_GCNAME;
+		GCCausesID = TYPE_GCCAUSE;
+		GCWhensID = TYPE_GCWHEN;
+		NarrowOopModesID = TYPE_NARROWOOPMODE;
+		ModuleID = TYPE_MODULE;
+		PackageID = TYPE_PACKAGE;
+		StackTraceID = TYPE_STACKTRACE;
+		FrameTypeID = TYPE_FRAMETYPE;
+	}
+#endif /* JAVA_SPEC_VERSION >= 17 */
+
 protected:
 
 public:
@@ -310,6 +369,11 @@ public:
 		, _previousCheckpointDelta(NULL)
 		, _lastDataStart(NULL)
 	{
+#if JAVA_SPEC_VERSION >= 17
+		if (isJFRV2SupportEnabled(_vm)) {
+			initializeJFRv2MetadataTypeID();
+		}
+#endif /* JAVA_SPEC_VERSION >= 17 */
 	}
 
 	void

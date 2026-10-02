@@ -27,6 +27,59 @@
 #include "JFRChunkWriter.hpp"
 #include "JFRConstantPoolTypes.hpp"
 
+int VM_JFRChunkWriter::ThreadStartID = 2;
+int VM_JFRChunkWriter::ThreadEndID = 3;
+int VM_JFRChunkWriter::ThreadSleepID = 4;
+int VM_JFRChunkWriter::ThreadParkID = 5;
+int VM_JFRChunkWriter::MonitorEnterID = 6;
+int VM_JFRChunkWriter::MonitorWaitID = 7;
+int VM_JFRChunkWriter::GCHeapSummaryID = 27;
+int VM_JFRChunkWriter::GarbageCollectionID = 35;
+int VM_JFRChunkWriter::SystemGCID = 36;
+int VM_JFRChunkWriter::YoungGarbageCollectionID = 38;
+int VM_JFRChunkWriter::OldGarbageCollectionID = 39;
+int VM_JFRChunkWriter::JVMInformationID = 87;
+int VM_JFRChunkWriter::OSInformationID = 88;
+int VM_JFRChunkWriter::VirtualizationInformationID = 89;
+int VM_JFRChunkWriter::InitialSystemPropertyID = 90;
+int VM_JFRChunkWriter::InitialEnvironmentVariableID = 91;
+int VM_JFRChunkWriter::SystemProcessID = 92;
+int VM_JFRChunkWriter::CPUInformationID = 93;
+int VM_JFRChunkWriter::CPULoadID = 95;
+int VM_JFRChunkWriter::ThreadCPULoadID = 96;
+int VM_JFRChunkWriter::ThreadContextSwitchRateID = 97;
+int VM_JFRChunkWriter::NetworkUtilizationID = 98;
+int VM_JFRChunkWriter::ThreadStatisticsID = 99;
+int VM_JFRChunkWriter::DataLossID = 86;
+int VM_JFRChunkWriter::ClassLoadingStatisticsID = 100;
+int VM_JFRChunkWriter::ClassLoaderStatisticsID = 101;
+int VM_JFRChunkWriter::ThreadAllocationStatisticsID = 107;
+int VM_JFRChunkWriter::PhysicalMemoryID = 108;
+int VM_JFRChunkWriter::ExecutionSampleID = 109;
+int VM_JFRChunkWriter::ThreadDumpID = 111;
+int VM_JFRChunkWriter::NativeLibraryID = 112;
+int VM_JFRChunkWriter::ModuleRequireID = 113;
+int VM_JFRChunkWriter::ModuleExportID = 114;
+int VM_JFRChunkWriter::GCConfigurationID = 130;
+int VM_JFRChunkWriter::GCHeapConfigID = 133;
+int VM_JFRChunkWriter::YoungGenerationConfigID = 134;
+int VM_JFRChunkWriter::NetworkInterfaceNameID = 163;
+int VM_JFRChunkWriter::ThreadID = 164;
+int VM_JFRChunkWriter::ThreadGroupID = 165;
+int VM_JFRChunkWriter::ClassID = 166;
+int VM_JFRChunkWriter::ClassLoaderID = 167;
+int VM_JFRChunkWriter::MethodID = 168;
+int VM_JFRChunkWriter::SymbolID = 169;
+int VM_JFRChunkWriter::ThreadStateID = 170;
+int VM_JFRChunkWriter::GCNamesID = 171;
+int VM_JFRChunkWriter::GCCausesID = 172;
+int VM_JFRChunkWriter::GCWhensID = 173;
+int VM_JFRChunkWriter::NarrowOopModesID = 180;
+int VM_JFRChunkWriter::ModuleID = 186;
+int VM_JFRChunkWriter::PackageID = 187;
+int VM_JFRChunkWriter::StackTraceID = 188;
+int VM_JFRChunkWriter::FrameTypeID = 189;
+
 void
 VM_JFRChunkWriter::writeJFRHeader()
 {
