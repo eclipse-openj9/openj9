@@ -55,7 +55,6 @@ buildClassNameJ9UTF8(J9VMThread *currentThread, U_32 memCategory, J9Class *clazz
 	 * Object arrays are one '[' per level, plus 'L', plus the leaf type name, plus ';'
 	 *  e.g. [[[[Lpackage.name.Class;
 	 */
-	Assert_VM_true(0 != arity);
 	UDATA nameLen = arity;
 	if (isPrimitive) {
 		nameLen += 1;
