@@ -1062,7 +1062,9 @@ loadWarmClassFromSnapshotInternal(J9VMThread *vmThread, J9Class *clazz)
 		}
 		if (J9_ARE_ANY_BITS_SET(vmThread->javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_CLASS_OBJECT_ASSIGNED)) {
 			Assert_VM_Null(clazz->classObject);
+			omrthread_monitor_exit(vm->rcpCacheMutex);
 			clazz = initializeSnapshotClassObject(vm, clazz->classLoader, clazz);
+			omrthread_monitor_enter(vm->rcpCacheMutex);
 			if (NULL == clazz) {
 				goto done;
 			}
@@ -1087,10 +1089,17 @@ loadWarmClassFromSnapshotInternal(J9VMThread *vmThread, J9Class *clazz)
 
 		Trc_VM_snapshot_loadWarmClassFromSnapshot_ClassInfo(vmThread, clazz, className);
 	}
-	clazz->classFlags &= ~J9ClassIsFrozen;
+
+	if (NULL != clazz->classObject) {
+		clazz->classFlags &= ~J9ClassIsFrozen;
+	} else {
+		clazz->classFlags &= J9ClassIsLoadedFromSnapshot;
+	}
+
 	rc = TRUE;
 
 done:
+
 	return rc;
 }
 
@@ -1102,7 +1111,7 @@ loadWarmClassFromSnapshot(J9VMThread *currentThread, J9Class *clazz)
 
 	if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
 		omrthread_monitor_enter(vm->rcpCacheMutex);
-		if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
+		if (J9_ARE_NO_BITS_SET(clazz->classFlags, J9ClassIsLoadedFromSnapshot)) {
 			rc = loadWarmClassFromSnapshotInternal(currentThread, clazz);
 		}
 		omrthread_monitor_exit(vm->rcpCacheMutex);
