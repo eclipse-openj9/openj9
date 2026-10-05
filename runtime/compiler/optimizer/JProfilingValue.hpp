@@ -47,12 +47,12 @@ public:
      * Identify place holder calls to jProfileValueSymbol and jProfileValueWithNullCHKSymbol, lowering them
      * into the fast, slow and helper paths.
      */
-    void lowerCalls();
+    void lowerCalls(TR::list<TR::TreeTop *, TR::Region &> &valueProfilingPlaceHolderCalls);
     /**
      * Clean up duplicate profiling candidates and add profiling placeholder calls
      * for profiling target of virtual call dispatch and instanceOf/checkCast.
      */
-    void cleanUpAndAddProfilingCandidates();
+    void cleanUpAndAddProfilingCandidates(TR::list<TR::TreeTop *, TR::Region &> &valueProfilingPlaceHolderCalls);
     /**
      * Examines node to identify profiling candidate and add place holder calls for profiling it.
      * This routine checks node and it's children for mainly two type of nodes.
@@ -68,7 +68,7 @@ public:
      * times.
      */
     void performOnNode(TR::Node *node, TR::TreeTop *cursor, TR_BitVector *alreadyProfiledValues,
-        TR::NodeChecklist *checklist);
+        TR::NodeChecklist *checklist, TR::list<TR::TreeTop *, TR::Region &> &valueProfilingPlaceHolderCalls);
 
     static bool addProfilingTrees(TR::Compilation *comp, TR::TreeTop *insertionPoint, TR::Node *value,
         TR_AbstractHashTableProfilerInfo *table, TR::Node *bciNode = NULL, bool addNullCheck = false,
