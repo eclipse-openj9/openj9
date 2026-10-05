@@ -50,7 +50,7 @@ Once it has been determined that the method body is stale, it is added to the Fa
 Cache Block list. However, not all of the stale body is slated to get reclaimed; the 
 pre-prologue and some number of instructions are kept intact. This is to ensure that
 other code that has a call to the stale body can continue execution - as described
-in the [Recompilation doc](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/runtime/Recompilation.md), 
+in the [Recompilation doc](https://github.com/eclipse-openj9/openj9/blob/main/doc/compiler/runtime/Recompilation.md),
 the Start PC is patched to jump to a helper.
 
 At the end of a GC cycle, `jitReleaseCodeStackWalk` is invoked, which first walks

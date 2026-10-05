@@ -212,8 +212,8 @@ In the end code generators perform binary encoding to write the appropriate bits
 
 * <details><summary><b>13. Testing</b></summary>
 
-  * [OpenJ9 Test Quick Start (OpenJ9)](https://github.com/eclipse-openj9/openj9/tree/master/test)
-  * [OpenJ9 Test User Guide (OpenJ9)](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md)
+  * [OpenJ9 Test Quick Start (OpenJ9)](https://github.com/eclipse-openj9/openj9/tree/main/test)
+  * [OpenJ9 Test User Guide (OpenJ9)](https://github.com/eclipse-openj9/openj9/blob/main/test/docs/OpenJ9TestUserGuide.md)
   * [Reproducing Test Failures Locally (OpenJ9)](https://github.com/eclipse-openj9/openj9/wiki/Reproducing-Test-Failures-Locally)
   * [AQA Lightning Talk Series (OpenJ9)](https://github.com/eclipse-openj9/openj9/wiki/AQA-Lightning-Talk-Series)
   * [AQA Tests WiKi (aqa-tests)](https://github.com/adoptium/aqa-tests/wiki)

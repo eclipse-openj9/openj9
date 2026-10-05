@@ -131,7 +131,7 @@ Adoptium. These builds need to have extra configure options which will
 stopship issues with the milestone build.  If any are found, a
 determination can be made to either:
 	* Apply a targeted fix to the release branch and re-tag, or
-	* Rebase the release branch on the master branch if the
+	* Rebase the release branch on the main branch if the
 	changes that have gone in between the initial milestone tag and now are safe.
 1. Retag the `-mX` level as `openj9-#releaseNumber#`.  For the `0.8.0` release this
 will be `openj9-0.8.0`.

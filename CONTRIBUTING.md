@@ -58,7 +58,7 @@ Following these guidelines will help us merge your pull requests smoothly:
    at the user documentation repository. The OpenJ9 pull request should be labeled with `depends:doc` as well. Committers
    should not merge the OpenJ9 pull request until at least a doc issue is created, and ideally not until the doc pull
    request is ready for merge. Rather than doing it separately, the pull request should add or update the
-   [release notes](https://github.com/eclipse-openj9/openj9/tree/master/doc/release-notes) for the next release with a
+   [release notes](https://github.com/eclipse-openj9/openj9/tree/main/doc/release-notes) for the next release with a
    short summary of the change. Examples of an external change include
    a new command line option, a change in behavior, or a restriction.
 
@@ -78,7 +78,7 @@ Following these guidelines will help us merge your pull requests smoothly:
 
 ## Building and testing
 
-In order to build OpenJ9, see the [build instructions](https://github.com/eclipse-openj9/openj9/tree/master/doc/build-instructions).
+In order to build OpenJ9, see the [build instructions](https://github.com/eclipse-openj9/openj9/tree/main/doc/build-instructions).
 Once the build system is prepared, building consists of a few simple steps. If
 building the original source fails, check the [level of the compiler](https://eclipse-openj9.github.io/openj9-docs/openj9_support/)
 being used.
@@ -90,7 +90,7 @@ committers from pull requests. You can see the latest results on the
 [Eclipse OpenJ9 Jenkins instance](https://openj9-jenkins.osuosl.org/).
 
 The tests can also be run manually on your own machine, refer to the
-[OpenJ9 test quick start guide](https://github.com/eclipse-openj9/openj9/blob/master/test/README.md).
+[OpenJ9 test quick start guide](https://github.com/eclipse-openj9/openj9/blob/main/test/README.md).
 
 
 ## Commit Guidelines

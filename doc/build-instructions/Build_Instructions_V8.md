@@ -56,12 +56,12 @@ See also [AArch64 section](#aarch64) for building for AArch64 Linux.
 :penguin:
 Instructions are provided for preparing your system with and without the use of Docker technology.
 
-Obtain the [docker build script](https://github.com/eclipse-openj9/openj9/blob/master/buildenv/docker/mkdocker.sh) to determine the correct software pre-requisites for both.
+Obtain the [docker build script](https://github.com/eclipse-openj9/openj9/blob/main/buildenv/docker/mkdocker.sh) to determine the correct software pre-requisites for both.
 
 Download the docker build script to your local system or copy and paste the following command:
 
 ```
-wget https://raw.githubusercontent.com/eclipse-openj9/openj9/master/buildenv/docker/mkdocker.sh
+wget https://raw.githubusercontent.com/eclipse-openj9/openj9/main/buildenv/docker/mkdocker.sh
 ```
 
 Optionally, skip to [Setting up your build environment without Docker](#setting-up-your-build-environment-without-docker).
@@ -186,7 +186,7 @@ Two Java builds are produced: a full developer kit (jdk) and a runtime environme
 :pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
 To use it, copy the contents of `debug-image` over the jdk `jre` directory before using the jdk with a native debugger.
 Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
-For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
+For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/main/test/docs/OpenJ9TestUserGuide.md).
 
 ### 5. Test
 :penguin:
@@ -308,7 +308,7 @@ Two Java builds are produced: a full developer kit (jdk) and a runtime environme
 :pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
 To use it, copy the contents of `debug-image` over the jdk `jre` directory before using the jdk with a native debugger.
 Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
-For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
+For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/main/test/docs/OpenJ9TestUserGuide.md).
 
 ### 5. Test
 :blue_book:
@@ -479,7 +479,7 @@ Two Java builds are produced: a full developer kit (jdk) and a runtime environme
 :pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
 To use it, copy the contents of `debug-image` over the jdk `jre` directory before using the jdk with a native debugger.
 Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
-For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
+For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/main/test/docs/OpenJ9TestUserGuide.md).
 
 ### 5. Test
 :ledger:
@@ -498,7 +498,7 @@ Here is some sample output:
 ```
 openjdk version "1.8.0_172-internal"
 OpenJDK Runtime Environment (build 1.8.0_172-internal-administrator_2018_05_07_15_35-b00)
-Eclipse OpenJ9 VM (build master-9329b7b9, JRE 1.8.0 Windows 7 amd64-64-Bit Compressed References 20180507_000000 (JIT enabled, AOT enabled)
+Eclipse OpenJ9 VM (build main-9329b7b9, JRE 1.8.0 Windows 7 amd64-64-Bit Compressed References 20180507_000000 (JIT enabled, AOT enabled)
 OpenJ9   - 9329b7b9
 OMR      - 884959f4
 JCL      - 7f27c537a8 based on jdk8u172-b11)
@@ -516,7 +516,7 @@ Here is some sample output:
 ```
 openjdk version "1.8.0_172-internal"
 OpenJDK Runtime Environment (build 1.8.0_172-internal-administrator_2018_05_11_07_22-b00)
-Eclipse OpenJ9 VM (build master-9f924a1a, JRE 1.8.0 Windows 7 x86-32-Bit 20180511_000000 (JIT enabled, AOT enabled)
+Eclipse OpenJ9 VM (build main-9f924a1a, JRE 1.8.0 Windows 7 x86-32-Bit 20180511_000000 (JIT enabled, AOT enabled)
 OpenJ9   - 9f924a1a
 OMR      - e5db96ba
 JCL      - 7f27c537a8 based on jdk8u172-b11)
@@ -646,7 +646,7 @@ Four Java builds are produced, which include two full developer kits (jdk) and t
 :pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
 To use it, copy the contents of `debug-image` over the jdk `jre` directory before using the jdk with a native debugger.
 Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
-For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
+For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/main/test/docs/OpenJ9TestUserGuide.md).
 
 ### 5. Test
 :apple:
@@ -663,7 +663,7 @@ Here is some sample output:
 ```
 openjdk version "1.8.0_192-internal"
 OpenJDK Runtime Environment (build 1.8.0_192-internal-jenkins_2018_10_17_11_24-b00)
-Eclipse OpenJ9 VM (build master-2c817c52c, JRE 1.8.0 Mac OS X amd64-64-Bit Compressed References 20181017_000000 (JIT enabled, AOT enabled)
+Eclipse OpenJ9 VM (build main-2c817c52c, JRE 1.8.0 Mac OS X amd64-64-Bit Compressed References 20181017_000000 (JIT enabled, AOT enabled)
 OpenJ9   - 2c817c52c
 OMR      - 4d96857a
 JCL      - fcd436bf56 based on jdk8u192-b03)
@@ -756,7 +756,7 @@ Two Java builds are produced: a full developer kit (jdk) and a runtime environme
 :pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
 To use it, copy the contents of `debug-image` over the jdk `jre` directory before using the jdk with a native debugger.
 Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
-For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
+For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/main/test/docs/OpenJ9TestUserGuide.md).
 
 ### 6. Test
 :penguin:
@@ -775,7 +775,7 @@ Here is some sample output:
 ```
 openjdk version "1.8.0_265-internal"
 OpenJDK Runtime Environment (build 1.8.0_265-internal-ubuntu_2020_07_28_13_28-b00)
-Eclipse OpenJ9 VM (build master-e724f249c, JRE 1.8.0 Linux aarch64-64-Bit Compressed References 20200728_000000 (JIT enabled, AOT enabled)
+Eclipse OpenJ9 VM (build main-e724f249c, JRE 1.8.0 Linux aarch64-64-Bit Compressed References 20200728_000000 (JIT enabled, AOT enabled)
 OpenJ9   - e724f249c
 OMR      - 8124c1385
 JCL      - 28815f64 based on jdk8u265-b01)

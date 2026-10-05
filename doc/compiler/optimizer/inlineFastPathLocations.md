@@ -33,10 +33,10 @@ in a certain way, and optimizing it, sometimes using opcode, sometimes using a s
 
 There are multiple locations in our code where we do inline fast path optimizations:
 
-1. [IL Generator](https://github.com/eclipse-openj9/openj9/tree/master/runtime/compiler/ilgen)
+1. [IL Generator](https://github.com/eclipse-openj9/openj9/tree/main/runtime/compiler/ilgen)
 2. [Inliner](https://github.com/eclipse-omr/omr/blob/master/compiler/optimizer/Inliner.cpp)
 3. [RecognizedCallTransformer](https://github.com/eclipse-omr/omr/blob/master/compiler/optimizer/OMRRecognizedCallTransformer.cpp)
-4. [UnsafeFastPath](https://github.com/eclipse-openj9/openj9/blob/master/runtime/compiler/optimizer/UnsafeFastPath.cpp)
+4. [UnsafeFastPath](https://github.com/eclipse-openj9/openj9/blob/main/runtime/compiler/optimizer/UnsafeFastPath.cpp)
 
 ## Inlining Fast Path Optimization In ILGen
 
@@ -106,7 +106,7 @@ the load or store.
 It does a relatively simple substitution of certain calls very early without adding control flow before the inliner even
 runs (so it never sees these calls in the IL trees).
 
-Not all unsafe fast path is done in [UnsafeFastPath.cpp](https://github.com/eclipse-openj9/openj9/blob/master/runtime/compiler/optimizer/UnsafeFastPath.cpp). It is only used when there is no control flow. Inliner does the general unsafe inlining.
+Not all unsafe fast path is done in [UnsafeFastPath.cpp](https://github.com/eclipse-openj9/openj9/blob/main/runtime/compiler/optimizer/UnsafeFastPath.cpp). It is only used when there is no control flow. Inliner does the general unsafe inlining.
 It checks many conditions before it does unsafe inlining such as if it accesses an array or accesses a static variable,
 or if it is `NULL` or non `NULL`. There are various ways that these things can be checked.
 

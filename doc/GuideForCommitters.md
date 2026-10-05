@@ -37,7 +37,7 @@ as well as the
 
 * Committers should not merge their own pull requests.
 
-* If a pull request modifies the [Contribution Guidelines](https://github.com/eclipse-openj9/openj9/blob/master/CONTRIBUTING.md),
+* If a pull request modifies the [Contribution Guidelines](https://github.com/eclipse-openj9/openj9/blob/main/CONTRIBUTING.md),
 request the author to post a detailed summary of the changes on the
 `openj9-dev@eclipse.org` mailing list after the pull request is merged.
 
@@ -75,7 +75,7 @@ changes in the pull request.
 
 ## Pre-Merge Checklist
 
-* Ensure the pull request adheres to all the Eclipse OpenJ9 [Contribution Guidelines](https://github.com/eclipse-openj9/openj9/blob/master/CONTRIBUTING.md).
+* Ensure the pull request adheres to all the Eclipse OpenJ9 [Contribution Guidelines](https://github.com/eclipse-openj9/openj9/blob/main/CONTRIBUTING.md).
 
 * Ensure pull requests and issues are annotated with descriptive metadata by
 attaching GitHub labels. The current set of labels can be found [here](https://github.com/eclipse-openj9/openj9/labels).
@@ -92,7 +92,7 @@ same pull request.
 
 * You must initiate pull request builds sufficient to cover
 all affected architectures and language levels prior to merging. To launch a pull
-request build, see [Triggering PR Builds](https://github.com/eclipse-openj9/openj9/tree/master/buildenv/jenkins).
+request build, see [Triggering PR Builds](https://github.com/eclipse-openj9/openj9/tree/main/buildenv/jenkins).
 
    If testing is only warranted on a subset of platforms (for example, only files
 built on x86 are modified) then pull request testing can be limited to only those
@@ -195,7 +195,7 @@ possible between them.
 
     At this point, the OMR commit should now be in the `openj9` branch of
     the `eclipse-openj9/openj9-omr` repo, and the OpenJ9 commit should now be
-    in the `master` branch of the `eclipse-openj9/openj9` repo.
+    in the `main` branch of the `eclipse-openj9/openj9` repo.
 
 10. Announce in the `#committers-public` Slack channel that the coordinated
     merge has completed.
