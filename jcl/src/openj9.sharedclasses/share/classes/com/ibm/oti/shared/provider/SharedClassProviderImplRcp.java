@@ -1,6 +1,6 @@
-/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 9) & SharedClasses & RAM_CLASS_CACHE_SUPPORT]*/
+/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 9) & SharedClasses]*/
 /*
- * Copyright IBM Corp. and others 2017
+ * Copyright IBM Corp. and others 2016
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,7 +44,7 @@ import com.ibm.oti.shared.SharedClassURLHelper;
 /**
  * Implementation of SharedClassProvider.
  */
-public class SharedClassProviderImpl implements SharedClassProvider {
+public class SharedClassProviderImplRcp implements SharedClassProvider {
 	static class IndexHolderImpl implements SharedClassURLClasspathHelper.IndexHolder {
 		public int index;
 		@Override
@@ -69,7 +69,7 @@ public class SharedClassProviderImpl implements SharedClassProvider {
 		if (!isSharedClassEnabled()) {
 			return null;
 		}
-		if (VM.isRCPEnabled()) {
+		if (!VM.isRCPEnabled()) {
 			return null;
 		}
 		SharedClassHelperFactory sharedClassHelperFactory = Shared.getSharedClassHelperFactory();
