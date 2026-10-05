@@ -2926,16 +2926,26 @@ void J9::ValuePropagation::transformVTObjectEqNeCompare(TR_OpaqueClassBlock *con
         // It will be transformed into the following IL.  The blocks that are marked with
         // asterisks are optional - the block labelled block_8 is only generated if
         // requiresLeftOpNullTest is true, the block labelled block_7 is only generated
-        // if requiresRightOpNullTest is true, and the block labelled block_5 is only
+        // if requiresRightOpNullTest is true, and the block labelled block_4 is only
         // generated if either of those conditions is true.
         //
         // If the value type has no fields, the ifacmpeq that appears at the end of
-        // block_2 is not generated, and instead the first ifacmpeq that would ordinarily
-        // appear following block_2 will instead appear at the end of block_2.
+        // block_2 is only generated if either operand could be null; if that ifacmpeq
+        // is not generated, block_5 is not generated, and the result of the comparison
+        // is always equality.
+        //
+        // The goto at the end of the block labelled block_5 is only generated if block_4
+        // is generated - otherwise, block_5 falls through to the block where the final
+        // result is loaded.  Similarly, if neither block_4 nor block_5 is generated, the
+        // goto at the end of block_6 is not generated.
+        //
+        // If the non-helper in the original call is <objectEqualityComparison> rather
+        // than <objectInequalityComparison>, the positions of the result values in the
+        // transformed IL, iconst 1 and iconst 0, will be swapped.
         //
         // n99n  astore <lhsTemp>
         // n7n     aload  <lhs>
-        // n98n  astore <lhsTemp>
+        // n98n  astore <rhsTemp>
         // n8n     aload  <rhs>
         // n97n  ifacmpeq ----------------->+
         // n96n    aload <lhsTemp>          |
@@ -2960,18 +2970,18 @@ void J9::ValuePropagation::transformVTObjectEqNeCompare(TR_OpaqueClassBlock *con
         // n50n  goto --------------->+  |  |
         // n49n  BBEnd </block_6>     |  |  |
         //                            |  |  |
-        // n48n  BBStart <block_5> <-----+  |
-        // n47n  istore <result> (*)  |     |
-        // n46n    iconst 0           |     |
-        // n45n  goto --------------->+     |
-        // n44n  BBEnd </block_5>     |     |
-        //                            |     |
-        // n43n  BBStart <block_4> <--------+
+        // n48n  BBStart <block_5>(*)<------+
+        // n47n  istore <result>      |  |
+        // n46n    iconst 0           |  |
+        // n45n  goto --------------->+  |
+        // n44n  BBEnd </block_5>     |  |
+        //                            |  |
+        // n43n  BBStart <block_4>(*)<---+
         // n42n  istore <result>      |
         // n41n    iconst 1           |
         // n40n  BBEnd </block_4>     |
         //                            |
-        // n43n  BBStart <block_4> <--+
+        // n39n  BBStart <block_3> <--+
         // n10n  treetop
         // n9n     iload <result>
         //   ...
@@ -3198,7 +3208,7 @@ void J9::ValuePropagation::transformVTObjectEqNeCompare(TR_OpaqueClassBlock *con
 
         if (requiresReferenceComparisonTest) {
             // This test, if present, must be the first, so it needs to be in its own block.
-            // The test conditionally branches to the unequalResultBlock, so add an edge for that.
+            // The test conditionally branches to the equalResultBlock, so add an edge for that.
             //
             TR_ASSERT_FATAL(firstTestTT == referenceCompareTestTT,
                 "Expected a reference comparison test to be the first test in the inline expansion of "
