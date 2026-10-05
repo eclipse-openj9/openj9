@@ -57,7 +57,7 @@ void TR_Debug::print(OMR::Logger *log, TR::ARM64RecompilationSnippet *snippet)
 {
     uint8_t *cursor = snippet->getSnippetLabel()->getCodeLocation();
 
-    printSnippetLabel(log, snippet->getSnippetLabel(), cursor, getName(snippet));
+    printSnippetLabel(log, snippet, cursor);
 
     int32_t distance;
     distance = *((int32_t *)cursor) & 0x03ffffff; // imm26

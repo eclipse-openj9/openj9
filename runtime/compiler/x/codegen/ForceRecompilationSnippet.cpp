@@ -81,7 +81,7 @@ uint8_t *TR::X86ForceRecompilationSnippet::emitSnippetBody()
 void TR_Debug::print(OMR::Logger *log, TR::X86ForceRecompilationSnippet *snippet)
 {
     uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-    printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet));
+    printSnippetLabel(log, snippet, bufferPos);
 
     TR::SymbolReference *helper
         = _cg->getSymRef(_comp->target().is64Bit() ? TR_AMD64induceRecompilation : TR_IA32induceRecompilation);
