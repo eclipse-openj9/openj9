@@ -22,7 +22,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 #
 
-echo "start running script";
+echo "start running script"
 # the expected arguments are:
 # $1 is the TEST_ROOT
 # $2 is the JAVA_COMMAND
@@ -33,20 +33,26 @@ echo "start running script";
 # $7 is the NUM_CHECKPOINT
 # $8 is the KEEP_CHECKPOINT
 # $9 is the KEEP_TEST_OUTPUT
+ENABLE_COMMAND_LINE_RESTORE=${10}
+COMMAND_LINE_RESTORE_OPTIONS="${11}"
 
-echo "export GLIBC_TUNABLES=glibc.cpu.hwcaps=-XSAVEC,-XSAVE,-AVX2,-ERMS,-AVX,-AVX_Fast_Unaligned_Load";
+echo "export GLIBC_TUNABLES=glibc.cpu.hwcaps=-XSAVEC,-XSAVE,-AVX2,-ERMS,-AVX,-AVX_Fast_Unaligned_Load"
 export GLIBC_TUNABLES=glibc.pthread.rseq=0:glibc.cpu.hwcaps=-XSAVEC,-XSAVE,-AVX2,-ERMS,-AVX,-AVX_Fast_Unaligned_Load
-echo "export LD_BIND_NOT=on";
+echo "export LD_BIND_NOT=on"
 export LD_BIND_NOT=on
 echo "$2 $3 -cp "$1/criu.jar:$4" $5 $6 $7"
-$2 $3 -cp "$1/criu.jar:$4" $5 $6 $7 >testOutput 2>&1;
+$2 $3 -cp "$1/criu.jar:$4" $5 $6 $7 >testOutput 2>&1
 
 if [ "$8" != true ]; then
     NUM_CHECKPOINT=$7
     for ((i=0; i<$NUM_CHECKPOINT; i++)); do
-        sleep 2;
+        sleep 2
         echo "initiate restore" >>criuOutput
-        criu restore -D ./cpData -v2 --shell-job >>criuOutput 2>&1;
+        if [ "$ENABLE_COMMAND_LINE_RESTORE" == true ]; then
+            $2 $COMMAND_LINE_RESTORE_OPTIONS --shell-job >>criuOutput 2>&1
+        else
+            criu restore -D ./cpData -v2 --shell-job >>criuOutput 2>&1
+        fi
     done
 fi
 
@@ -62,4 +68,4 @@ if  [ "$8" != true ]; then
         echo "Removed test output files"
     fi
 fi
-echo "finished script";
+echo "finished script"
