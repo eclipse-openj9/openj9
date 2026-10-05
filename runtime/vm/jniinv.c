@@ -311,6 +311,7 @@ protectedDestroyJavaVM(J9PortLibrary* portLibrary, void * userData)
 	J9VMThread * vmThread = userData;
 	J9JavaVM * vm = vmThread->javaVM;
 	J9JavaVM**pvmList = GLOBAL_DATA(vmList);
+	J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
 
 	/* Note: we don't have a matching exit call because by the time we leave this function the trace engine
 	 * has been shutdown
@@ -385,10 +386,11 @@ protectedDestroyJavaVM(J9PortLibrary* portLibrary, void * userData)
 #endif /* defined(J9VM_OPT_SIDECAR) */
 
 	/*
-	 * shutdown the finalizer BEFORE we shutdown daemon threads, as
-	 * finalize methods could spawn more threads
+	 * Shutdown the finalizer BEFORE we shutdown daemon threads, as
+	 * finalize methods could spawn more threads.
 	 */
-	vm->memoryManagerFunctions->gcShutdownHeapManagement(vm);
+	mmFuncs->j9gc_finalizer_shutdown(vm);
+	mmFuncs->j9gc_gcThreads_shutdown(vm);
 
 	Trc_JNIinv_protectedDestroyJavaVM_HeapManagementShutdown();
 

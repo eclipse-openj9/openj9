@@ -99,6 +99,15 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 		case JCL_INITIALIZED :
 			break;
 
+		case INTERPRETER_SHUTDOWN :
+			/* Shut down the GC after the JIT threads have stopped,
+			 * and before trace shuts down so GC threads still report their thread end.
+			 */
+			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_GC_STRUCTURES_INITIALIZED)) {
+				vm->memoryManagerFunctions->gcShutdownHeapManagement(vm);
+			}
+			break;
+
 		case LIBRARIES_ONUNLOAD :
 		case JVM_EXIT_STAGE:
 			if (J9_IS_GCCONTAINERHEURISTICS(vm)
