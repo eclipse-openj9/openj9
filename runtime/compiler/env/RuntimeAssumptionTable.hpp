@@ -51,6 +51,8 @@ enum TR_RuntimeAssumptionKind {
     RuntimeAssumptionOnStaticFinalFieldModification,
     RuntimeAssumptionOnMutableCallSiteChange,
     RuntimeAssumptionOnMethodBreakPoint,
+    RuntimeAssumptionOnPatchJProfBlockFreqCounters,
+    RuntimeAssumptionOnPatchJProfValueBranch,
     LastAssumptionKind,
     // If you add another kind, add its name to the runtimeAssumptionKindNames array
     RuntimeAssumptionSentinel // This is special as there is no hashtable associated with it and we only create one of
@@ -69,6 +71,7 @@ char const * const runtimeAssumptionKindNames[LastAssumptionKind] = {
     "StaticFinalFieldModification",
     "MutableCallSiteChange",
     "OnMethodBreakpoint",
+    "OnPatchJProfValueBranch",
 };
 
 struct TR_RatHT {

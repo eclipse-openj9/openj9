@@ -67,7 +67,9 @@
 #include "runtime/ExternalProfiler.hpp"
 #include "runtime/J9Runtime.hpp"
 #include "runtime/J9ValueProfiler.hpp"
-
+#if defined(TR_TARGET_X86)
+#include "x/runtime/X86Runtime.hpp"
+#endif
 //*************************************************************************
 //
 // Optimization passes to insert recompilation counters, etc
@@ -2762,4 +2764,147 @@ TR_PersistentProfileInfo *TR_JProfilerThread::deleteProfileInfo(TR_PersistentPro
     }
 
     return next;
+}
+
+TR_JProfBlockFrequencyCounterSites *TR_JProfBlockFrequencyCounterSites::make(TR_FrontEnd *fe, TR_PersistentMemory *pm,
+    uintptr_t key, TR::JProfBFPatchSites *sites, OMR::RuntimeAssumption **sentinel)
+{
+    TR_JProfBlockFrequencyCounterSites *res = NULL;
+    void *mem = TR_RuntimeAssumptionTable::allocateRAPersistentMemory(sizeof(TR_JProfBlockFrequencyCounterSites));
+    if (mem) {
+        res = ::new (mem) TR_JProfBlockFrequencyCounterSites(pm, key, sites);
+        res->addToRAT(pm, RuntimeAssumptionOnPatchJProfBlockFreqCounters, fe, sentinel);
+    } else {
+        TR::Compilation *comp = TR::comp();
+        if (comp)
+            comp->failCompilation<TR::CompilationException>("Out of persistent memory while creating assumptions");
+    }
+
+    return res;
+}
+
+void TR_JProfBlockFrequencyCounterSites::compensate(TR_FrontEnd *vm, bool disableDataCollection, void *newKey)
+{
+    // Instead of patching flag, this routine will update the whole instruction
+    // (E.g, 6 Bytes on Z with NOP. PatchSites will hold two pointers, first one
+    // will have a location to update, second one is the original instruction
+    // which we would be caching. If modifying instruction to be NOP, the second
+    // entry would not be used, but in case if if we are enabling the profiling
+    // again, we will  update. NOP with the instruction to update counter which
+    // is already stored in the patch site second entry. _patchFlag zero means
+    // data collection is ON, in that case update all the increment code with
+    // NOP.
+    if (disableDataCollection && _patchFlag == 0) {
+        for (size_t i = 0; i < _patchSites->getSize(); i++) {
+            uint8_t *cursor = _patchSites->getLocation(i);
+            uint8_t instructionLength = *(uint8_t *)(_patchSites->getBumpInstructionPointer(i));
+#if defined(TR_TARGET_S390)
+            *(uint16_t *)cursor = 0xC004;
+#elif defined(TR_TARGET_X86)
+            if (instructionLength == 2) {
+                *(uint16_t *)cursor = 0x9066;
+            } else if (instructionLength == 3) {
+                *(uint16_t *)cursor = 0xfeeb;
+                patchingFence16(cursor);
+                // byte 2
+                cursor[2] = 0x00;
+                patchingFence16(cursor);
+                *(uint16_t *)cursor = 0x1F0F
+            } else if (instructionLength == 4) {
+                *(uint32_t *)cursor = 0x00401F0F;
+            } else {
+                TR_ASSERT_FATAL(0, "Unexpected instruction lenght - Can not patch");
+            }
+#endif
+            _patchFlag = 1;
+        }
+    } else if (_patchFlag == 1) {
+        for (size_t i = 0; i < _patchSites->getSize(); i++) {
+            uint8_t *cursor = _patchSites->getLocation(i);
+            uint8_t *bumpInstruction = _patchSites->getBumpInstructionPointer(i);
+            uint8_t instructionLength = *bumpInstruction;
+            bumpInstruction += sizeof(uint8_t);
+#if defined(TR_TARGET_S390)
+            *(uint16_t *)cursor = *(uint16_t *)(bumpInstruction);
+#elif defined(TR_TARGET_X86)
+            if (instructionLength == 2) {
+                *(uint16_t *)cursor = *(uint16_t *)(bumpInstruction);
+            } else if (instructionLength == 3) {
+                *(uint16_t *)cursor = 0xfeeb;
+                patchingFence16(cursor);
+                cursor[2] = *(uint8_t *)(bumpInstruction + 2);
+                patchingFence16(cursor);
+                *(uint16_t *)cursor = *(uint16_t *)(bumpInstruction);
+            } else if (instructionLength == 4) {
+                *(uint32_t *)cursor = *(uint32_t *)(bumpInstruction);
+            } else {
+                TR_ASSERT_FATAL(0, "Unexpected instruction lenght - Can not patch");
+            }
+#endif
+            _patchFlag = 0;
+        }
+    }
+}
+
+TR_JProfValueSites *TR_JProfValueSites::make(TR_FrontEnd *fe, TR_PersistentMemory *pm, uintptr_t key,
+    TR::PatchSites *sites, OMR::RuntimeAssumption **sentinel)
+{
+    TR_JProfValueSites *res = NULL;
+    void *mem = TR_RuntimeAssumptionTable::allocateRAPersistentMemory(sizeof(TR_JProfValueSites));
+    if (mem) {
+        res = ::new (mem) TR_JProfValueSites(pm, key, sites);
+        res->addToRAT(pm, RuntimeAssumptionOnPatchJProfValueBranch, fe, sentinel);
+    } else {
+        TR::Compilation *comp = TR::comp();
+        if (comp)
+            comp->failCompilation<TR::CompilationException>("Out of persistent memory while creating assumption");
+    }
+    return res;
+}
+
+void TR_JProfValueSites::compensate(TR_FrontEnd *vm, bool disableDataCollection, void *newKey)
+{
+    if (disableDataCollection) {
+        for (size_t i; i < _patchSites->getSize(); i++) {
+            uint8_t *cursor = _patchSites->getLocation(i);
+#if defined(TR_TARGET_S390)
+            *(cursor + 1) &= 0x0F;
+#elif defined(TR_TARGET_X86)
+            if (*cursor == 0xeb) {
+                *(cursor + 1) = 0x00;
+            } else {
+                *(uint16_t *)cursor = 0xfeeb;
+                patchingFence16(cursor);
+                cursor[2] = 0x00;
+                cursor[3] = 0x00;
+                cursor[4] = 0x00;
+                patchingFence16(cursor);
+                *(uint16_t *)cursor = 0x00e9;
+            }
+#endif
+        }
+    } else {
+        for (size_t i = 0; i < _patchSites->getSize(); i++) {
+            uint8_t *cursor = _patchSites->getLocation(i);
+#if defined(TR_TARGET_S390)
+            *(cursor + 1) |= 0xF0;
+#elif defined(TR_TARGET_X86)
+            uint8_t *destination = _patchSites->getDestination(i);
+            intptr_t destinationDistance = destination - cursor;
+            if (-126 <= destinationDistance && destinationDistance <= 129) {
+                intptr_t displacement = destinationDistance - 2;
+                *(uint16_t *)cursor = 0xeb + (displacement << 8);
+            } else {
+                intptrt_t displacement = destinationDistance - 5;
+                *(uint16_t *)cursor = 0xfeeb;
+                patchingFence16(cursor);
+                cursor[2] = (displacement >> 8);
+                cursor[3] = (displacement >> 16);
+                cursor[4] = (displacement >> 24);
+                patchingFence16(cursor);
+                *(uint16_t *)cursor = 0xe9 + ((displacement & 0xff) << 8);
+            }
+#endif
+        }
+    }
 }
