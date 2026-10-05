@@ -25,6 +25,12 @@
 #pragma optimize("y",off)
 #endif
 
+#if defined(OMR_MUSL_CLIB)
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 
