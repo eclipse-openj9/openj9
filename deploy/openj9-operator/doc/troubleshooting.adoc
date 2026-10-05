@@ -1,0 +1,79 @@
+= Troubleshooting
+
+Here are some basic troubleshooting methods to check if the operator is running fine:
+
+* Run the following and check if the output is similar to the following:
+
+[source,sh]
+----
+  $ oc get pods -l name=openj9-operator
+  NAME                               READY     STATUS    RESTARTS   AGE
+  openj9-operator-5bdfc7bf98-jt87l   1/1       Running   0          60m
+----
+
+* Check the operators events:
+
+[source,sh]
+----
+  $ oc describe pod openj9-operator-5bdfc7bf98-jt87l
+----
+
+* Check the operator logs:
+
+[source,sh]
+----
+  $ oc logs openj9-operator-5bdfc7bf98-jt87l
+----
+
+If the operator is running fine, check the status of the `RuntimeComponent` Custom Resource (CR) instance:
+
+* Check the CR status:
+
+[source,sh]
+----
+  $ oc get runtimecomponent -o wide
+  NAME            IMAGE                 EXPOSED   RECONCILED   REASON    MESSAGE   DEPENDENCIESSATISFIED   AGE
+  sample-openj9   adoptopenjdk:openj9             True                             True                    33s
+----
+
+* Check the CR effective fields:
+
+[source,sh]
+----
+  $ oc get runtimecomponent example-openj9 -o yaml
+----
+
+  Ensure that the effective CR values are what you want.
+
+* Check the `status` section of the CR. If the CR was successfully reconciled, the output should look like the following:
+
+[source,sh]
+----
+  $ oc get runtimecomponent sample-openj9 -o yaml
+  apiVersion: open.j9/v1beta1
+  kind: RuntimeComponent
+  metadata:
+    ...
+  status:
+    conditions:
+    - lastTransitionTime: 2020-08-18T01:58:51Z
+      lastUpdateTime: 2020-08-18T01:58:52Z
+      status: "True"
+      type: DependenciesSatisfied
+    - lastTransitionTime: 2020-08-18T01:58:52Z
+      lastUpdateTime: 2020-08-18T01:58:52Z
+      status: "True"
+      type: Reconciled
+    imageReference: adoptopenjdk:openj9
+----
+
+* Check the CR events:
+
+[source,sh]
+----
+  $ oc describe runtimecomponent sample-openj9
+----
+
+= Known Issues
+
+The OpenJ9 Operator uses Runtime Component as a template, please refer to link:++Known Issue++[https://github.com/application-stacks/runtime-component-operator/blob/master/doc/troubleshooting.adoc#known-issues]. 
