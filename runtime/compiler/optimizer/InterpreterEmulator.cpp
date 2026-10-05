@@ -514,8 +514,11 @@ Operand *InterpreterEmulator::foldArrayLoad(Operand *obj, IconstOperand *indexOp
     if (index >= len)
         return NULL;
 
-    int64_t offset = TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
-        + index * TR::Compiler->om.getArrayElementWidthInBytes(type);
+    // getAddressOfElement() requires the header included in the offset, except
+    // with OffHeap, where the offset is relative to the data address.
+    int64_t offset = index * TR::Compiler->om.getArrayElementWidthInBytes(type);
+    if (!TR::Compiler->om.isOffHeapAllocationEnabled())
+        offset += TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
 
     // TODO: on success, create a RequiredConst and add a provenance edge
     uintptr_t elemAddr = TR::Compiler->om.getAddressOfElement(comp(), objAddr, offset);
