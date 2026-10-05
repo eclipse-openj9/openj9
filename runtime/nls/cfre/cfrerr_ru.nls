@@ -1871,3 +1871,10 @@ J9NLS_CFR_ERR_MULTIPLE_SIGNATURE_ATTRIBUTES.explanation=A ClassFile, field_info,
 J9NLS_CFR_ERR_MULTIPLE_SIGNATURE_ATTRIBUTES.system_action=The JVM will throw a classloading related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_MULTIPLE_SIGNATURE_ATTRIBUTES.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
+
+J9NLS_CFR_LVT_EARLY_LARVAL_WRONG_VERSION=StackMapTable \u043e\u0448\u0438\u0431\u043a\u0430 \u0444\u043e\u0440\u043c\u0430\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f: \u0437\u0430\u0440\u0435\u0437\u0435\u0440\u0432\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0439 \u0442\u0438\u043f \u043a\u0430\u0434\u0440\u0430
+# START NON-TRANSLATABLE
+J9NLS_CFR_LVT_EARLY_LARVAL_WRONG_VERSION.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_LVT_EARLY_LARVAL_WRONG_VERSION.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_LVT_EARLY_LARVAL_WRONG_VERSION.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE

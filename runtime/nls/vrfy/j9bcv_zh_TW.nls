@@ -18,7 +18,7 @@
 # [2] https://openjdk.org/legal/assembly-exception.html
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
-#
+# Assisted-by: IBM Bob
 
 # Externalised messages for the Bytecode Verification errors.
 #
@@ -461,5 +461,13 @@ J9NLS_BCV_ERR_UNINITIALIZED_OBJECT=\u5728 acmpeq\u3001acmpne\u3001ifnonnull \u62
 J9NLS_BCV_ERR_UNINITIALIZED_OBJECT.explanation=Verification failed because a newly created but uninitialized object was used with if_acmpeq, if_acmpne, ifnonnull or ifnull.
 J9NLS_BCV_ERR_UNINITIALIZED_OBJECT.system_action=The JVM will throw a verification or classloading related exception such as java.lang.VerifyError.
 J9NLS_BCV_ERR_UNINITIALIZED_OBJECT.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_BCV_ERR_EARLY_LARVAL_NO_UNINIT_THIS=\u5728\u63a5\u6536\u8005\u88ab\u521d\u59cb\u5316\u4e4b\u524d\uff0c\u624d\u5141\u8a31\u4f7f\u7528\u672a\u521d\u59cb\u5316\u7684\u56b4\u683c\u6b04\u4f4d
+# START NON-TRANSLATABLE
+J9NLS_BCV_ERR_EARLY_LARVAL_NO_UNINIT_THIS.explanation=Verification failed because an early_larval stackmap frame was found whose base frame does not have the uninitializedThis flag set.
+J9NLS_BCV_ERR_EARLY_LARVAL_NO_UNINIT_THIS.system_action=The JVM will throw a java.lang.VerifyError.
+J9NLS_BCV_ERR_EARLY_LARVAL_NO_UNINIT_THIS.user_response=Contact the provider of the classfile for a corrected version.
 
 # END NON-TRANSLATABLE

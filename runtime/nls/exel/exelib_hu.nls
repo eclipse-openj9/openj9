@@ -45,7 +45,7 @@ J9NLS.HEADER=j9exelibnls.h
 
 # J9SourceExeLibArgumentsParsing - describeInternalOptions
 
-J9NLS_EXELIB_INTERNAL_HELP_1_1=A k\u00f6vetkez\u0151 param\u00e9terek nem szabv\u00e1nyosak, \u00e9s lehets\u00e9ges, hogy k\u00fcl\u00f6n \u00e9rtes\u00edt\u00e9s n\u00e9lk\u00fcl m\u00f3dos\u00edt\u00e1sra ker\u00fclnek:\n
+J9NLS_EXELIB_INTERNAL_HELP_1_1=Az al\u00e1bbi be\u00e1ll\u00edt\u00e1sok nem szabv\u00e1nyosak, \u00e9s el\u0151zetes \u00e9rtes\u00edt\u00e9s n\u00e9lk\u00fcl v\u00e1ltozhatnak.\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_1.system_action=
