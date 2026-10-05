@@ -32,7 +32,7 @@
 - name: Get script to build docker image
   get_url:
     dest: "{{ build_dir }}/mkdocker.sh"
-    url: "https://raw.githubusercontent.com/eclipse-openj9/openj9/master/buildenv/docker/mkdocker.sh"
+    url: "https://raw.githubusercontent.com/eclipse-openj9/openj9/main/buildenv/docker/mkdocker.sh"
     mode: 0644
     validate_certs: no
   tags:

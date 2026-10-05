@@ -21,7 +21,7 @@
  *******************************************************************************/
 
 // TAG_NAME and TAG_ANNOTATION are passed in Jenkins parameters (Mandatory)
-// OPENJ9_SHA, OMR_SHA default to master/openj9 respectively if not set on Jenkins
+// OPENJ9_SHA, OMR_SHA default to main/openj9 respectively if not set on Jenkins
 
 HTTP = 'https://'
 OMR_REPO = 'github.com/eclipse-openj9/openj9-omr.git'
@@ -87,7 +87,7 @@ node ('worker') {
         currentBuild.description = "Tag: ${TAG_NAME}<br/>Annotation: ${TAG_ANNOTATION}"
     }
     if (OPENJ9_SHA == '') {
-        OPENJ9_SHA = 'master'
+        OPENJ9_SHA = 'main'
         OPENJ9_TAG_POINT_TYPE = 'BRANCH'
     }
     if (OMR_SHA == '') {

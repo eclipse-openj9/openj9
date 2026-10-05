@@ -44,9 +44,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 
    Follow the instructions in the following two links
 
-   > https://github.com/eclipse-openj9/openj9/blob/master/doc/build-instructions
+   > https://github.com/eclipse-openj9/openj9/blob/main/doc/build-instructions
 
-   > https://github.com/eclipse-openj9/openj9/blob/master/test/README.md
+   > https://github.com/eclipse-openj9/openj9/blob/main/test/README.md
 
    Highly recommend mounting folders to Docker container rather
    than cloning them within Docker container. e.g.

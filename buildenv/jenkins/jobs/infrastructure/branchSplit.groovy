@@ -26,7 +26,7 @@ HTTP = 'https://'
 OMR_REPO = 'github.com/eclipse-openj9/openj9-omr.git'
 OPENJ9_REPO = 'github.com/eclipse-openj9/openj9.git'
 
-DEFAULT_SPLIT_OPENJ9 = 'remotes/origin/master'
+DEFAULT_SPLIT_OPENJ9 = 'remotes/origin/main'
 DEFAULT_SPLIT_OMR = 'remotes/origin/openj9'
 
 if (OPENJ9_SHA == '') {

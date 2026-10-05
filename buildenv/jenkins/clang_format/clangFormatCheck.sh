@@ -22,7 +22,7 @@
 ###############################################################################
 
 # Optional argument identifies the target branch of the pull request.
-targetBranch="${1:-origin/master}"
+targetBranch="${1:-origin/main}"
 
 allFiles=$(git diff -C --diff-filter=ACM --name-only "$targetBranch" HEAD -- | grep '^runtime/compiler/')
 if [ x"$allFiles" = x ] ; then

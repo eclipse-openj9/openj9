@@ -309,7 +309,7 @@ def set_repos_variables(BUILD_SPECS=null) {
         echo "Using OPENJDK_REPO = ${OPENJDK_REPO.toString()} OPENJDK_BRANCH = ${OPENJDK_BRANCH.toString()} OPENJDK_SHA = ${OPENJDK_SHA.toString()}"
 
         // default URL and branch for the OpenJ9 and OMR repositories (no entries in defaults.yml)
-        EXTENSIONS = ['OpenJ9': ['repo': 'https://github.com/eclipse-openj9/openj9.git',     'branch': 'master'],
+        EXTENSIONS = ['OpenJ9': ['repo': 'https://github.com/eclipse-openj9/openj9.git',     'branch': 'main'],
                       'OMR'   : ['repo': 'https://github.com/eclipse-openj9/openj9-omr.git', 'branch': 'openj9'],
                       'VENDOR_CODE' : ['repo': '', 'branch': '']]
 

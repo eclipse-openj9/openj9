@@ -38,7 +38,7 @@ if (!binding.hasVariable('VENDOR_CREDENTIALS_ID_DEFAULT')) VENDOR_CREDENTIALS_ID
 if (!binding.hasVariable('DISCARDER_NUM_BUILDS')) DISCARDER_NUM_BUILDS = '1'
 if (!binding.hasVariable('SCM_REPO')) SCM_REPO = 'https://github.com/eclipse-openj9/openj9.git'
 if (SCM_BRANCH ==~ /origin\/pr\/[0-9]+\/merge/) {
-    SCM_BRANCH = 'master'
+    SCM_BRANCH = 'main'
 }
 if (!binding.hasVariable('USER_CREDENTIALS_ID')) USER_CREDENTIALS_ID = ''
 
