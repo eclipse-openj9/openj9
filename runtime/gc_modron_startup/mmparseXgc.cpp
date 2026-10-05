@@ -58,7 +58,7 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
 	if (try_scan(scan_start, "tlhInitialSize=")) {
-		if (!scan_udata_helper(javaVM, scan_start, &extensions->tlhInitialSize, "tlhInitialSize=")) {
+		if (!scan_udata_memory_size_helper(javaVM, scan_start, &extensions->tlhInitialSize, "tlhInitialSize=")) {
 			goto _error;
 		}
 		if (MINIMUM_TLH_SIZE > extensions->tlhInitialSize) {
@@ -68,7 +68,7 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 	if (try_scan(scan_start, "tlhMinimumSize=")) {
-		if (!scan_udata_helper(javaVM, scan_start, &extensions->tlhMinimumSize, "tlhMinimumSize=")) {
+		if (!scan_udata_memory_size_helper(javaVM, scan_start, &extensions->tlhMinimumSize, "tlhMinimumSize=")) {
 			goto _error;
 		}
 		if (MINIMUM_TLH_SIZE > extensions->tlhMinimumSize) {
@@ -78,7 +78,7 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 	if (try_scan(scan_start, "tlhMaximumSize=")) {
-		if (!scan_udata_helper(javaVM, scan_start, &extensions->tlhMaximumSize, "tlhMaximumSize=")) {
+		if (!scan_udata_memory_size_helper(javaVM, scan_start, &extensions->tlhMaximumSize, "tlhMaximumSize=")) {
 			goto _error;
 		}
 		if (MINIMUM_TLH_SIZE > extensions->tlhMaximumSize) {
@@ -89,19 +89,19 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 	if (try_scan(scan_start, "tlhIncrementSize=")) {
-		if (!scan_udata_helper(javaVM, scan_start, &extensions->tlhIncrementSize, "tlhIncrementSize=")) {
+		if (!scan_udata_memory_size_helper(javaVM, scan_start, &extensions->tlhIncrementSize, "tlhIncrementSize=")) {
 			goto _error;
 		}
 		goto _exit;
 	}
 	if (try_scan(scan_start, "tlhSurvivorDiscardThreshold=")) {
-		if (!scan_udata_helper(javaVM, scan_start, &extensions->tlhSurvivorDiscardThreshold, "tlhSurvivorDiscardThreshold=")) {
+		if (!scan_udata_memory_size_helper(javaVM, scan_start, &extensions->tlhSurvivorDiscardThreshold, "tlhSurvivorDiscardThreshold=")) {
 			goto _error;
 		}
 		goto _exit;
 	}	
 	if (try_scan(scan_start, "tlhTenureDiscardThreshold=")) {
-		if (!scan_udata_helper(javaVM, scan_start, &extensions->tlhTenureDiscardThreshold, "tlhTenureDiscardThreshold=")) {
+		if (!scan_udata_memory_size_helper(javaVM, scan_start, &extensions->tlhTenureDiscardThreshold, "tlhTenureDiscardThreshold=")) {
 			goto _error;
 		}
 		goto _exit;
