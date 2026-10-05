@@ -233,7 +233,7 @@ Test pipelines for all platforms and versions are available [**here**](https://o
         - This job is used in other pipelines but can be launched manually
 
 Mode details could be found on [Adoptium AQA Testing](https://github.com/adoptium/aqa-tests).
-The [Running Adoptium AQA Tests](https://github.com/adoptium/aqa-tests/blob/master/doc/userGuide.md) provides further details on how to set up Jenkins test pipelines.
+The [Running Adoptium AQA Tests](https://github.com/adoptium/aqa-tests/blob/main/doc/userGuide.md) provides further details on how to set up Jenkins test pipelines.
 
 #### Infrastructure
 
