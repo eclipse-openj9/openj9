@@ -1,0 +1,120 @@
+s2 i22 i23 = 1,123,-49318
+i24 i25 l2 = 121,13205899,1
+i26 i27 i28 = -209,2,-163
+l3 i29 sArr = -1238629402,3,115561
+lArr1 = -256
+Test.instanceCount Test.bFld Test.iFld = 0,1,-6
+Test.byFld fFld dFld = -1,1056427737,4634957792478122685
+iFld1 Test.iFld2 Test.iArrFld = -166,14,9649
+byArrFld fArrFld = 0,4681548963457794048
+vMeth_check_sum: 5828174290091282130
+fMeth_check_sum: 4941575413
+vSmallMeth_check_sum: -140833846577
+s2 i22 i23 = 1,123,-49318
+i24 i25 l2 = 121,13205899,1
+i26 i27 i28 = -209,2,-163
+l3 i29 sArr = -1238629402,3,115561
+lArr1 = -253
+Test.instanceCount Test.bFld Test.iFld = 0,1,-6
+Test.byFld fFld dFld = -1,1056427737,4634957792478122685
+iFld1 Test.iFld2 Test.iArrFld = -166,14,9649
+byArrFld fArrFld = 0,4685984152846073856
+vMeth_check_sum: -6790395493526987356
+fMeth_check_sum: 9882743936
+vSmallMeth_check_sum: -281667712399
+s2 i22 i23 = 1,123,-49318
+i24 i25 l2 = 121,13205899,1
+i26 i27 i28 = -209,2,-163
+l3 i29 sArr = -1238629402,3,115561
+lArr1 = -253
+Test.instanceCount Test.bFld Test.iFld = 0,1,-6
+Test.byFld fFld dFld = -1,1056427737,4634957792478122685
+iFld1 Test.iFld2 Test.iArrFld = -166,14,9649
+byArrFld fArrFld = 0,4688789700134043648
+vMeth_check_sum: -962221203435705226
+fMeth_check_sum: 14823912459
+vSmallMeth_check_sum: -422501578221
+s2 i22 i23 = 1,123,-49318
+i24 i25 l2 = 121,13205899,1
+i26 i27 i28 = -209,2,-163
+l3 i29 sArr = -1238629402,3,115561
+lArr1 = -253
+Test.instanceCount Test.bFld Test.iFld = 0,1,-6
+Test.byFld fFld dFld = -1,1056427737,4634957792478122685
+iFld1 Test.iFld2 Test.iArrFld = -166,14,9649
+byArrFld fArrFld = 0,4690458855933476864
+vMeth_check_sum: 4865953086655576904
+fMeth_check_sum: 19765080982
+vSmallMeth_check_sum: -563335444043
+s2 i22 i23 = 1,123,-49318
+i24 i25 l2 = 121,13205899,1
+i26 i27 i28 = -209,2,-163
+l3 i29 sArr = -1238629402,3,115561
+lArr1 = -253
+Test.instanceCount Test.bFld Test.iFld = 0,1,-6
+Test.byFld fFld dFld = -1,1056427737,4634957792478122685
+iFld1 Test.iFld2 Test.iArrFld = -166,14,9649
+byArrFld fArrFld = 0,4692131052515229696
+vMeth_check_sum: -7752616696962692582
+fMeth_check_sum: 24706249505
+vSmallMeth_check_sum: -704169309865
+s2 i22 i23 = 1,123,-49318
+i24 i25 l2 = 121,13205899,1
+i26 i27 i28 = -209,2,-163
+l3 i29 sArr = -1238629402,3,115561
+lArr1 = -253
+Test.instanceCount Test.bFld Test.iFld = 0,1,-6
+Test.byFld fFld dFld = -1,1056427737,4634957792478122685
+iFld1 Test.iFld2 Test.iArrFld = -166,14,9649
+byArrFld fArrFld = 0,4693278559433654272
+vMeth_check_sum: -1924442406871410452
+fMeth_check_sum: 29647418028
+vSmallMeth_check_sum: -845003175687
+s2 i22 i23 = 1,123,-49318
+i24 i25 l2 = 121,13205899,1
+i26 i27 i28 = -209,2,-163
+l3 i29 sArr = -1238629402,3,115561
+lArr1 = -253
+Test.instanceCount Test.bFld Test.iFld = 0,1,-6
+Test.byFld fFld dFld = -1,1056427737,4634957792478122685
+iFld1 Test.iFld2 Test.iArrFld = -166,14,9649
+byArrFld fArrFld = 0,4694115104401129472
+vMeth_check_sum: 3903731883219871678
+fMeth_check_sum: 34588586551
+vSmallMeth_check_sum: -985837041509
+s2 i22 i23 = 1,123,-49318
+i24 i25 l2 = 121,13205899,1
+i26 i27 i28 = -209,2,-163
+l3 i29 sArr = -1238629402,3,115561
+lArr1 = -253
+Test.instanceCount Test.bFld Test.iFld = 0,1,-6
+Test.byFld fFld dFld = -1,1056427737,4634957792478122685
+iFld1 Test.iFld2 Test.iArrFld = -166,14,9649
+byArrFld fArrFld = 0,4694948977953472512
+vMeth_check_sum: -8714837900398397808
+fMeth_check_sum: 39529755074
+vSmallMeth_check_sum: -1126670907331
+s2 i22 i23 = 1,123,-49318
+i24 i25 l2 = 121,13205899,1
+i26 i27 i28 = -209,2,-163
+l3 i29 sArr = -1238629402,3,115561
+lArr1 = -253
+Test.instanceCount Test.bFld Test.iFld = 0,1,-6
+Test.byFld fFld dFld = -1,1056427737,4634957792478122685
+iFld1 Test.iFld2 Test.iArrFld = -166,14,9649
+byArrFld fArrFld = 0,4695786545070735360
+vMeth_check_sum: -2886663610307115678
+fMeth_check_sum: 44470923597
+vSmallMeth_check_sum: -1267504773153
+s2 i22 i23 = 1,123,-49318
+i24 i25 l2 = 121,13205899,1
+i26 i27 i28 = -209,2,-163
+l3 i29 sArr = -1238629402,3,115561
+lArr1 = -253
+Test.instanceCount Test.bFld Test.iFld = 0,1,-6
+Test.byFld fFld dFld = -1,1056427737,4634957792478122685
+iFld1 Test.iFld2 Test.iArrFld = -166,14,9649
+byArrFld fArrFld = 0,4696618666274324480
+vMeth_check_sum: 2941510679784166452
+fMeth_check_sum: 49412092120
+vSmallMeth_check_sum: -1408338638975
