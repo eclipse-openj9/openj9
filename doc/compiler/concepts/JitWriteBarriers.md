@@ -213,7 +213,7 @@ object checks can be eliminated or if the write barrier can be skipped entirely.
 
 The ultimate reference for the operation of each write barrier kind is the
 garbage collector code itself. These implementations can be found in
-[gc_include/ObjectAccessBarrierAPI.hpp](https://github.com/eclipse-openj9/openj9/blob/master/runtime/gc_include/ObjectAccessBarrierAPI.hpp).
+[gc_include/ObjectAccessBarrierAPI.hpp](https://github.com/eclipse-openj9/openj9/blob/main/runtime/gc_include/ObjectAccessBarrierAPI.hpp).
 
 The following pseudocode is derived largely from those implementations.
 

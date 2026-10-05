@@ -67,7 +67,7 @@ If the container is capable of building openj9 it will also have
 reference repos and bootJDKs. The reference repos can be used to
 improve clone times, and the bootJDKs can be used for compiling
 openj9. The locations of the reference repos and bootJDKs can be
-found [here](https://github.com/eclipse-openj9/openj9/blob/master/buildenv/jenkins/variables/defaults.yml).
+found [here](https://github.com/eclipse-openj9/openj9/blob/main/buildenv/jenkins/variables/defaults.yml).
 A full list of docker commands for managing/using containers can
 be found [here](https://docs.docker.com/engine/reference/commandline/docker/).
 ## Docker and Jenkins

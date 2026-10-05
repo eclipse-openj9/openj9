@@ -29,7 +29,7 @@ the process described below:
 2. Announce the deprecation that is to occur in version n in the
 release notes of version n-1. Furthermore, update any documentation
 to warn about the upcoming changes.
-3. Change the codebase in the `master` branch following the split for
+3. Change the codebase in the `main` branch following the split for
 version n-1, as well as update any relevant documentation,
 to reflect the deprecation.
 4. Remove any relevant documentation once all versions prior to the

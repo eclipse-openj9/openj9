@@ -56,7 +56,7 @@ Open a new terminal window and launch a simple program as **client**:
 $ java -XX:+UseJITServer -version
 openjdk version "11.0.12-internal" 2021-07-20
 OpenJDK Runtime Environment (build 11.0.12-internal+0-adhoc.root.openj9-openjdk-jdk11)
-Eclipse OpenJ9 VM (build master-1b998a73d, JRE 11 Linux amd64-64-Bit Compressed References 20210708_000000 (JIT enabled, AOT enabled)
+Eclipse OpenJ9 VM (build main-1b998a73d, JRE 11 Linux amd64-64-Bit Compressed References 20210708_000000 (JIT enabled, AOT enabled)
 OpenJ9   - 1b998a73d
 OMR      - 5567b92f2
 JCL      - 6a9be9a140 based on jdk-11.0.12+6)

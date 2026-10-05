@@ -32,7 +32,7 @@ javacore dump (in which it is referred to as "VM flags"), and serves
 as a first-order indicator of the failing component during problem
 determination.
 
-[1]: https://github.com/eclipse-openj9/openj9/blob/master/runtime/oti/j9nonbuilder.h
+[1]: https://github.com/eclipse-openj9/openj9/blob/main/runtime/oti/j9nonbuilder.h
 
 ## Decoding
 
@@ -83,7 +83,7 @@ the Building value numbers analysis phase of Global Value Numbering is active.
 
 
 [2]: https://github.com/eclipse-omr/omr/blob/master/compiler/optimizer/Optimizations.hpp
-[3]: https://github.com/eclipse-openj9/openj9/blob/master/runtime/compiler/codegen/J9CodeGenPhaseEnum.hpp
+[3]: https://github.com/eclipse-openj9/openj9/blob/main/runtime/compiler/codegen/J9CodeGenPhaseEnum.hpp
 [4]: https://github.com/eclipse-omr/omr/blob/master/compiler/optimizer/OMROptimizerAnalysisPhases.enum
 
 ## Finding the VM state examples

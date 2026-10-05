@@ -56,12 +56,12 @@ See [AArch64 section](#aarch64) for building for AArch64 Linux.
 :penguin:
 Instructions are provided for preparing your system with and without the use of Docker technology.
 
-Obtain the [docker build script](https://github.com/eclipse-openj9/openj9/blob/master/buildenv/docker/mkdocker.sh) to determine the correct software pre-requisites for both.
+Obtain the [docker build script](https://github.com/eclipse-openj9/openj9/blob/main/buildenv/docker/mkdocker.sh) to determine the correct software pre-requisites for both.
 
 Download the docker build script to your local system or copy and paste the following command:
 
 ```
-wget https://raw.githubusercontent.com/eclipse-openj9/openj9/master/buildenv/docker/mkdocker.sh
+wget https://raw.githubusercontent.com/eclipse-openj9/openj9/main/buildenv/docker/mkdocker.sh
 ```
 
 Optionally, skip to [Setting up your build environment without Docker](#setting-up-your-build-environment-without-docker).
@@ -187,7 +187,7 @@ A binary for the full developer kit (jdk) is built and stored in the following d
 :pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
 To use it, copy the contents of `debug-image` over the jdk before using the jdk with a native debugger.
 Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
-For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
+For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/main/test/docs/OpenJ9TestUserGuide.md).
 
 ### 5. Test
 :penguin:
@@ -206,7 +206,7 @@ Here is some sample output:
 ```
 openjdk version "11-internal" 2018-09-25
 OpenJDK Runtime Environment (build 11-internal+0-adhoc..jdk11)
-Eclipse OpenJ9 VM (build master-ee517c1, JRE 11 Linux amd64-64-Bit Compressed References 20180910_000000 (JIT enabled, AOT enabled)
+Eclipse OpenJ9 VM (build main-ee517c1, JRE 11 Linux amd64-64-Bit Compressed References 20180910_000000 (JIT enabled, AOT enabled)
 OpenJ9   - ee517c1
 OMR      - f29d158
 JCL      - 98f2038 based on jdk-11+28)
@@ -313,7 +313,7 @@ A binary for the full developer kit (jdk) is built and stored in the following d
 :pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
 To use it, copy the contents of `debug-image` over the jdk before using the jdk with a native debugger.
 Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
-For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
+For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/main/test/docs/OpenJ9TestUserGuide.md).
 
 ### 5. Test
 :blue_book:
@@ -332,7 +332,7 @@ Here is some sample output:
 ```
 openjdk version "11-internal" 2018-09-25
 OpenJDK Runtime Environment (build 11-internal+0-adhoc..openj9-openjdk-jdk11)
-Eclipse OpenJ9 VM (build master-06905e2, JRE 11 AIX ppc64-64 Compressed References 20180726_000000 (JIT enabled, AOT enabled)
+Eclipse OpenJ9 VM (build main-06905e2, JRE 11 AIX ppc64-64 Compressed References 20180726_000000 (JIT enabled, AOT enabled)
 OpenJ9   - 06905e2
 OMR      - 28139f2
 JCL      - e5c64f5 based on jdk-11+21)
@@ -466,7 +466,7 @@ A binary for the full developer kit (jdk) is built and stored in the following d
 :pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
 To use it, copy the contents of `debug-image` over the jdk before using the jdk with a native debugger.
 Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
-For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
+For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/main/test/docs/OpenJ9TestUserGuide.md).
 
 ### 5. Test
 :ledger:
@@ -485,7 +485,7 @@ Here is some sample output:
 ```
 openjdk version "11-internal" 2018-09-25
 OpenJDK Runtime Environment (build 11-internal+0-adhoc.Administrator.openj9-openjdk-jdk11)
-Eclipse OpenJ9 VM (build master-11410ac2, JRE 11 Windows 7 amd64-64-Bit Compressed References 20180724_000000 (JIT enabled, AOT enabled)
+Eclipse OpenJ9 VM (build main-11410ac2, JRE 11 Windows 7 amd64-64-Bit Compressed References 20180724_000000 (JIT enabled, AOT enabled)
 OpenJ9   - 11410ac2
 OMR      - e2e4b67c
 JCL      - a786f96b13 based on jdk-11+21)
@@ -612,7 +612,7 @@ Two builds of OpenJDK with Eclipse OpenJ9 are built and stored in the following 
 :pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
 To use it, copy the contents of `debug-image` over the jdk before using the jdk with a native debugger.
 Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
-For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
+For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/main/test/docs/OpenJ9TestUserGuide.md).
 
 ### 5. Test
 :apple:
@@ -771,7 +771,7 @@ Copy its contents to your AArch64 Linux device.
 :pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
 To use it, copy the contents of `debug-image` over the jdk before using the jdk with a native debugger.
 Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
-For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
+For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/main/test/docs/OpenJ9TestUserGuide.md).
 
 ### 6. Test
 :penguin:
@@ -790,7 +790,7 @@ Here is some sample output:
 ```
 openjdk version "11.0.6-internal" 2020-01-14
 OpenJDK Runtime Environment (build 11.0.6-internal+0-adhoc..openj9-openjdk-jdk11)
-Eclipse OpenJ9 VM (build master-83baf0b, JRE 11 Linux aarch64-64-Bit 20191204_000000 (JIT enabled, AOT enabled)
+Eclipse OpenJ9 VM (build main-83baf0b, JRE 11 Linux aarch64-64-Bit 20191204_000000 (JIT enabled, AOT enabled)
 OpenJ9   - 83baf0b
 OMR      - 7b2e5df
 JCL      - d247952 based on jdk-11.0.6+6)
@@ -1267,7 +1267,7 @@ A binary for the full developer kit (JDK without DDR support) is built and store
 :pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
 To use it, copy the contents of `debug-image` over the jdk before using the jdk with a native debugger.
 Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
-For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
+For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/main/test/docs/OpenJ9TestUserGuide.md).
 
 ### 8. Test the JDK on Fedora/QEMU
 
@@ -1303,7 +1303,7 @@ Here is some sample output:
 $ ./bin/java -version
 openjdk version "11.0.5-internal" 2019-11-15
 OpenJDK Runtime Environment (build 11.0.5-internal+0-adhoc.root.openj9-openjdk-jdk11)
-Eclipse OpenJ9 VM (build master-41621b6b6, JRE 11 Linux riscv64-64-Bit Compressed References 20191119_000000 (JIT disabled, AOT disabled)
+Eclipse OpenJ9 VM (build main-41621b6b6, JRE 11 Linux riscv64-64-Bit Compressed References 20191119_000000 (JIT disabled, AOT disabled)
 OpenJ9   - 41621b6b6
 OMR      - 92c14ce2
 JCL      - e5937725d3 based on jdk-11.0.5+10)
