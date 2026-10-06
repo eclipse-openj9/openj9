@@ -250,6 +250,8 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9gc_arraylet_getLeafLogSize,
 	j9gc_get_offheap_data,
 	j9gc_set_allocation_sampling_interval,
+	j9gc_set_internal_allocation_sampling_interval,
+	j9gc_get_internal_allocation_sampling_interval,
 	j9gc_set_allocation_threshold,
 	j9gc_objaccess_recentlyAllocatedObject,
 	j9gc_objaccess_postStoreClassToClassLoader,
