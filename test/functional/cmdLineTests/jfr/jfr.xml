@@ -27,8 +27,10 @@ Assisted-by: IBM Bob
 <suite id="JFR Tests" timeout="3000">
 	<envvar name="OPENJ9_METADATA_BLOB_FILE_PATH" value="$METADATA_BLOB_PATH$" />
 	<test id="triggerExecutionSample">
-		<command>$EXE$ -XX:StartFlightRecording --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.TriggerExecutionSample</command>
-		<return type="success" value="0" />
+		<command>$EXE$ --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.TriggerExecutionSample</command>
+		<output type="success" caseSensitive="yes" regex="no">Test completed.</output>
+		<output type="failure" caseSensitive="yes" regex="no">Failed</output>
+		<output type="failure" caseSensitive="yes" regex="no">ASSERTION FAILED</output>
 	</test>
 	<test id="runWorkload - approx 30seconds">
 		<command>$EXE$ -Xtrace:print={j9vm.760,j9vm.773,j9vm.819} -XX:StartFlightRecording --add-opens java.base/java.lang=ALL-UNNAMED --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-opens jdk.jfr/jdk.jfr.internal=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.WorkLoad</command>
