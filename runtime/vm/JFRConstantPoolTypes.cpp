@@ -429,17 +429,39 @@ VM_JFRConstantPoolTypes::getClassEntry(J9Class *clazz, bool shallow)
 		entry = &entryBuffer;
 	}
 
-	entry->nameStringUTF8Index = addStringUTF8Entry(J9ROMCLASS_CLASSNAME(clazz->romClass));
-	if (isResultNotOKay()) goto done;
+	{
+		BOOLEAN freeUTF8 = FALSE;
+		J9UTF8 *className = buildClassNameJ9UTF8(_currentThread, J9MEM_CATEGORY_JFR, clazz, NULL, 0, &freeUTF8);
+		if (NULL == className) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+		entry->nameStringUTF8Index = addStringUTF8Entry(className, FALSE != freeUTF8);
+		if (isResultNotOKay()) {
+			goto done;
+		}
+	}
+
+	{
+		J9ROMClass *romClass = clazz->romClass;
+		if (J9ROMCLASS_IS_ARRAY(romClass)) {
+			J9ArrayClass *arrayClass = (J9ArrayClass *)clazz;
+			romClass = arrayClass->leafComponentType->romClass;
+		}
+		entry->hidden = J9_ARE_ANY_BITS_SET(romClass->extraModifiers, J9AccClassAnonClass | J9AccClassHidden);
+	}
 
 	entry->classLoaderIndex = addClassLoaderEntry(clazz->classLoader, shallow);
-	if (isResultNotOKay()) goto done;
+	if (isResultNotOKay()) {
+		goto done;
+	}
 
 	entry->packageIndex = addPackageEntry(clazz);
-	if (isResultNotOKay()) goto done;
+	if (isResultNotOKay()) {
+		goto done;
+	}
 
 	entry->modifiers = clazz->romClass->modifiers;
-	entry->hidden = FALSE; //TODO
 
 	if (NULL != entry && !entry->shallow) {
 		entry->index = clazz->classID;
@@ -824,6 +846,9 @@ VM_JFRConstantPoolTypes::addStringUTF8Entry(J9UTF8 *string, bool free)
 
 	if (NULL == hashTableAdd(_stringUTF8Table, &entryBuffer)) {
 		_buildResult = OutOfMemory;
+		if (free) {
+			j9mem_free_memory(string);
+		}
 		goto done;
 	}
 	index = entry->index;
