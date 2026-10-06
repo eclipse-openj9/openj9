@@ -11,7 +11,7 @@ jobs:
     if: startsWith(github.event.comment.body, 'triagerx')
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: eclipse-openj9/openj9
           ref: main
