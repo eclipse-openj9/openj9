@@ -34,8 +34,6 @@ Build instructions are available for the following platforms:
 - [AIX :blue_book:](#aix)
 - [Windows :ledger:](#windows)
 - [macOS :apple:](#macOS)
-- [AArch64](#aarch64)
-
 
 User documentation for the latest release of Eclipse OpenJ9 is available at the [Eclipse Foundation](https://eclipse.dev/openj9/docs).
 If you build a binary from the current OpenJ9 source, new features and changes might be in place for the next release of OpenJ9. Draft user
@@ -296,7 +294,7 @@ where:
 
   If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
 
-### 4. build
+### 4. Build
 :blue_book:
 Now you're ready to build OpenJDK with OpenJ9:
 ```
@@ -319,7 +317,7 @@ For local testing set the NATIVE_TEST_LIBS environment variable to the test imag
 ### 5. Test
 :blue_book:
 For a simple test, try running the `java -version` command.
-Change to the /jdk directory:
+Change to the jdk directory:
 ```
 cd build/aix-ppc64-server-release/images/jdk
 ```
@@ -449,7 +447,7 @@ Mixed references is the default to build when no options are specified. `configu
 
   If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
 
-### 4. build
+### 4. Build
 :ledger:
 Now you're ready to build OpenJDK with OpenJ9:
 ```
@@ -591,7 +589,7 @@ Mixed references is the default to build when no options are specified. `configu
 
   If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
 
-### 4. build
+### 4. Build
 :apple:
 Now you're ready to build OpenJDK with OpenJ9:
 
@@ -643,160 +641,3 @@ JCL      - c8a5053e1e5 based on jdk-21+35)
 - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
 
 :ledger: *Congratulations!* :tada:
-
-----------------------------------
-
-## AArch64
-
-:penguin:
-The following instructions guide you through the process of building an **OpenJDK V21** binary that contains Eclipse OpenJ9 for AArch64 (ARMv8 64-bit) Linux.
-
-### 1. Prepare your system
-
-The binary can be built on your AArch64 Linux system, or in a Docker container :whale: on x86-64 Linux.
-
-### 2. Get the source
-:penguin:
-First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repository is a git mirror of OpenJDK without the HotSpot JVM, but with an **openj9** branch that contains a few necessary patches. Run the following command:
-```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk21.git
-```
-Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
-```
-cd openj9-openjdk-jdk21
-```
-Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
-
-```
-bash get_source.sh
-```
-
-:pencil: **OpenSSL support:** On an AArch64 Linux system if you want to build an OpenJDK with OpenJ9 binary with OpenSSL support and you do not have a built version of OpenSSL v3.x available locally, you must specify `-openssl-branch=<branch>` where `<branch>` is an OpenSSL branch (or tag) like `openssl-3.5.2`. If the specified version of OpenSSL is already available in the standard location (SRC_DIR/openssl), `get_source.sh` uses it. Otherwise, the script deletes the content and downloads the specified version of OpenSSL source to the standard location and builds it. If you already have the version of OpenSSL in the standard location but you want a fresh copy, you must delete your current copy.
-
-### 3. Prepare for build on AArch64 Linux
-
-You must install a number of software dependencies to create a suitable build environment on your AArch64 Linux system:
-
-- GNU C/C++ compiler 10.3 (The Docker image uses GCC 7.5)
-- [AArch64 Linux JDK](https://api.adoptopenjdk.net/v3/binary/latest/21/ga/linux/aarch64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
-
-See [Setting up your build environment without Docker](#setting-up-your-build-environment-without-docker) in [Linux section](#linux) for other dependencies to be installed.
-
-### 4. Create the Docker image
-
-If you build the binary on x86-64 Linux, run the following commands to build a Docker image for AArch64 cross-compilation, called **openj9aarch64**:
-```
-cd openj9/buildenv/docker/aarch64-linux_CC
-docker build -t openj9aarch64 -f Dockerfile .
-```
-
-Start a Docker container from the **openj9aarch64** image with the following command, where `<host_directory>` is the directory that contains `openj9-openjdk-jdk21` in your local system:
-```
-docker run -v <host_directory>/openj9-openjdk-jdk21:/root/openj9-openjdk-jdk21 -it openj9aarch64
-```
-
-Then go to the `openj9-openjdk-jdk21` directory:
-```
-cd /root/openj9-openjdk-jdk21
-```
-
-### 5. Configure
-:penguin:
-When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
-
-For building on AArch64 Linux:
-```
-bash configure --with-boot-jdk=<path_to_boot_JDK> \
-               --disable-warnings-as-errors
-```
-
-For building in the Docker container:
-```
-bash configure --openjdk-target=${OPENJ9_CC_PREFIX} \
-               --with-x=${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/ \
-               --with-freetype-include=${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/libc/usr/include/freetype2 \
-               --with-freetype-lib=${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/libc/usr/lib \
-               --with-boot-jdk=/root/bootjdk21 \
-               --with-build-jdk=/root/bootjdk21 \
-               --disable-warnings-as-errors \
-               --disable-ddr
-```
-
-:pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
-Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
-For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ibmruntimes/openj9-openjdk-jdk21/blob/openj9/doc/building.html#troubleshooting).
-
-:pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
-- [compressed references](https://eclipse.dev/openj9/docs/gc_overview/#compressed-references) (only)
-- non-compressed references (only)
-- mixed references, either compressed or non-compressed references is selected when starting Java
-
-Mixed references is the default to build when no options are specified. `configure` options include:
-- `--with-noncompressedrefs=no` create a build supporting compressed references only
-- `--with-noncompressedrefs` create a build supporting non-compressed references only
-
-:pencil: **OpenSSL support:** If you want to build an OpenJDK that uses OpenSSL, you must specify `--with-openssl={fetched|system|path_to_library}`
-
-  where:
-
-  - `fetched` uses the OpenSSL source downloaded by `get-source.sh` in step **2. Get the source**. Using `--with-openssl=fetched` will fail during the build in the Docker environment.
-  - `system` uses the package installed OpenSSL library in the system.  Use this option when you build on your AArch64 Linux system.
-  - `path_to_library` uses an OpenSSL v3.x library that's already built.  You can use `${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/libc/usr` as `path_to_library` when you are configuring in the Docker container.
-
-:pencil: **DDR support:** You can build DDR support only on AArch64 Linux.  If you are building in a cross-compilation environment, you need the `--disable-ddr` option.
-
-:pencil: **CUDA support:** You can enable CUDA support if you are building on NVIDIA Jetson Developer Kit series.  Add `--enable-cuda --with-cuda=/usr/local/cuda` when you run `configure`.  The path `/usr/local/cuda` may be different depending on the version of JetPack.
-
-:pencil: You may need to add `--disable-warnings-as-errors-openj9` depending on the toolchain version.
-
-### 6. Build
-:penguin:
-Now you're ready to build OpenJDK with OpenJ9:
-```
-make all
-```
-:warning: If you just type `make`, rather than `make all` your build will be incomplete, because the default `make` target is `exploded-image`.
-If you want to specify `make` instead of `make all`, you must add `--default-make-target=images` when you run the configure script.
-
-A binary for the full developer kit (jdk) is built and stored in the following directory:
-
-- **build/linux-aarch64-normal-server-release/images/jdk**
-
-Copy its contents to your AArch64 Linux device.
-
-:pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/linux-aarch64-normal-server-release/images/jre** directory.
-
-:pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
-To use it, copy the contents of `debug-image` over the jdk before using the jdk with a native debugger.
-Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
-For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/main/test/docs/OpenJ9TestUserGuide.md).
-
-### 6. Test
-:penguin:
-For a simple test, try running the `java -version` command.
-Change to your jdk directory on AArch64 Linux:
-```
-cd build/linux-aarch64-normal-server-release/images/jdk
-```
-Run:
-```
-./bin/java -version
-```
-
-Here is some sample output:
-
-```
-openjdk version "21-internal" 2023-09-19
-OpenJDK Runtime Environment (build 21-internal-adhoc.jenkins.BuildJDK21aarch64linuxNightly)
-Eclipse OpenJ9 VM (build main-5a7404ec286, JRE 21 Linux aarch64-64-Bit Compressed References 20230825_48 (JIT enabled, AOT enabled)
-OpenJ9   - 5a7404ec286
-OMR      - 9659cbcdcef
-JCL      - c8a5053e1e5 based on jdk-21+35)
-```
-
-:pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.x support, the following acknowledgments apply in accordance with the license terms:
-
-  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (https://www.openssl.org/).*
-  - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
-
-:penguin: *Congratulations!* :tada:
