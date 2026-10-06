@@ -442,20 +442,15 @@ void J9::Power::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
 
     stackIndex -= numberOfLocalSlotsMapped * TR::Compiler->om.sizeofReferenceAddress();
 
-    if (comp()->useCompressedPointers()) {
-        // If we have any local objects we have to make sure they're aligned properly when compressed pointers are used,
-        // otherwise pointer compression may clobber part of the pointer.
-        // Each auto's GC index will have already been aligned, we just need to make sure
-        // we align the starting stack offset.
-        uint32_t unalignedStackIndex = stackIndex;
-        stackIndex &= ~(TR::Compiler->om.getObjectAlignmentInBytes() - 1);
-        uint32_t paddingBytes = unalignedStackIndex - stackIndex;
-        if (paddingBytes > 0) {
-            TR_ASSERT((paddingBytes & (TR::Compiler->om.sizeofReferenceAddress() - 1)) == 0,
-                "Padding bytes should be a multiple of the slot/pointer size");
-            uint32_t paddingSlots = paddingBytes / TR::Compiler->om.sizeofReferenceAddress();
-            atlas->setNumberOfSlotsMapped(atlas->getNumberOfSlotsMapped() + paddingSlots);
-        }
+    // align base of GC reference block to 16 bytes
+    uint32_t unalignedStackIndex = stackIndex;
+    stackIndex &= ~0xFu;
+    uint32_t paddingBytes = unalignedStackIndex - stackIndex;
+    if (paddingBytes > 0) {
+        TR_ASSERT((paddingBytes & (TR::Compiler->om.sizeofReferenceAddress() - 1)) == 0,
+            "Padding bytes should be a multiple of the slot/pointer size");
+        atlas->setNumberOfSlotsMapped(
+            atlas->getNumberOfSlotsMapped() + paddingBytes / TR::Compiler->om.sizeofReferenceAddress());
     }
 
     // Map local references again to set the stack position correct according to
