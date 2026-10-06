@@ -45,7 +45,7 @@ J9NLS.HEADER=j9exelibnls.h
 
 # J9SourceExeLibArgumentsParsing - describeInternalOptions
 
-J9NLS_EXELIB_INTERNAL_HELP_1_1=A\u015fa\u011f\u0131daki se\u00e7enekler standart d\u0131\u015f\u0131d\u0131r ve haber verilmeden de\u011fi\u015ftirilebilir.\n
+J9NLS_EXELIB_INTERNAL_HELP_1_1=A\u015fa\u011f\u0131daki se\u00e7enekler standart d\u0131\u015f\u0131d\u0131r ve \u00f6nceden haber verilmeksizin de\u011fi\u015ftirilebilir.\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_1.system_action=

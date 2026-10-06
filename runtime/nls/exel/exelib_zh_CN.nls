@@ -45,7 +45,7 @@ J9NLS.HEADER=j9exelibnls.h
 
 # J9SourceExeLibArgumentsParsing - describeInternalOptions
 
-J9NLS_EXELIB_INTERNAL_HELP_1_1=\u4ee5\u4e0b\u9009\u9879\u662f\u975e\u6807\u51c6\u9009\u9879\uff0c\u53ef\u968f\u65f6\u66f4\u6539\uff0c\u800c\u4e0d\u53e6\u884c\u901a\u77e5\u3002\n
+J9NLS_EXELIB_INTERNAL_HELP_1_1=\u4ee5\u4e0b\u9009\u9879\u5c5e\u4e8e\u975e\u6807\u51c6\u9009\u9879\uff0c\u53ef\u80fd\u4f1a\u968f\u65f6\u66f4\u6539\uff0c\u6055\u4e0d\u53e6\u884c\u901a\u77e5\u3002\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_1.system_action=

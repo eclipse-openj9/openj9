@@ -45,7 +45,7 @@ J9NLS.HEADER=j9exelibnls.h
 
 # J9SourceExeLibArgumentsParsing - describeInternalOptions
 
-J9NLS_EXELIB_INTERNAL_HELP_1_1=N\u00e1sleduj\u00edc\u00ed volby nejsou standardn\u00ed a mohou b\u00fdt zm\u011bn\u011bny bez upozorn\u011bn\u00ed.\n
+J9NLS_EXELIB_INTERNAL_HELP_1_1=N\u00e1sleduj\u00edc\u00ed mo\u017enosti nejsou standardn\u00ed a mohou se zm\u011bnit bez p\u0159edchoz\u00edho upozorn\u011bn\u00ed.\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_1.system_action=

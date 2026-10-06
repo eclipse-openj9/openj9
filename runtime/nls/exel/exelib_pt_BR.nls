@@ -45,7 +45,7 @@ J9NLS.HEADER=j9exelibnls.h
 
 # J9SourceExeLibArgumentsParsing - describeInternalOptions
 
-J9NLS_EXELIB_INTERNAL_HELP_1_1=As op\u00e7\u00f5es a seguir n\u00e3o s\u00e3o op\u00e7\u00f5es padr\u00e3o e est\u00e3o sujeitas a altera\u00e7\u00f5es sem aviso pr\u00e9vio.\n
+J9NLS_EXELIB_INTERNAL_HELP_1_1=As op\u00e7\u00f5es a seguir n\u00e3o s\u00e3o padr\u00e3o e est\u00e3o sujeitas a altera\u00e7\u00f5es sem aviso pr\u00e9vio.\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_1.system_action=

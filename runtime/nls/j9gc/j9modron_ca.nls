@@ -1024,3 +1024,24 @@ J9NLS_GC_OPTIONS_ARRAYLET_DOUBLE_MAPPING_NOT_SUPPORTED_WARN.system_action=The JV
 J9NLS_GC_OPTIONS_ARRAYLET_DOUBLE_MAPPING_NOT_SUPPORTED_WARN.user_response=Refer to the OpenJ9 documentation for -Xgc:enableArrayletDoubleMapping.
 J9NLS_GC_OPTIONS_ARRAYLET_DOUBLE_MAPPING_NOT_SUPPORTED_WARN.sample_input_1=gencon
 # END NON-TRANSLATABLE
+
+J9NLS_GC_VERB_SIZES_XGC_TLH_INITIAL_SIZE=Mida inicial del heap local del fil
+# START NON-TRANSLATABLE
+J9NLS_GC_VERB_SIZES_XGC_TLH_INITIAL_SIZE.explanation=Explains the -Xgc:tlhInitialSize option when -verbose:sizes is specified
+J9NLS_GC_VERB_SIZES_XGC_TLH_INITIAL_SIZE.system_action=None
+J9NLS_GC_VERB_SIZES_XGC_TLH_INITIAL_SIZE.user_response=None
+# END NON-TRANSLATABLE
+
+J9NLS_GC_VERB_SIZES_XGC_TLH_MAXIMUM_SIZE=Mida m\u00e0xima del heap local del fil
+# START NON-TRANSLATABLE
+J9NLS_GC_VERB_SIZES_XGC_TLH_MAXIMUM_SIZE.explanation=Explains the -Xgc:tlhMaximumSize option when -verbose:sizes is specified
+J9NLS_GC_VERB_SIZES_XGC_TLH_MAXIMUM_SIZE.system_action=None
+J9NLS_GC_VERB_SIZES_XGC_TLH_MAXIMUM_SIZE.user_response=None
+# END NON-TRANSLATABLE
+
+J9NLS_GC_VERB_SIZES_XGC_TLH_INCREMENT_SIZE=Mida d'increment del heap local del fil
+# START NON-TRANSLATABLE
+J9NLS_GC_VERB_SIZES_XGC_TLH_INCREMENT_SIZE.explanation=Explains the -Xgc:tlhIncrementSize option when -verbose:sizes is specified
+J9NLS_GC_VERB_SIZES_XGC_TLH_INCREMENT_SIZE.system_action=None
+J9NLS_GC_VERB_SIZES_XGC_TLH_INCREMENT_SIZE.user_response=None
+# END NON-TRANSLATABLE

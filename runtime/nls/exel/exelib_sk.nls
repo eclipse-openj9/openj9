@@ -45,7 +45,7 @@ J9NLS.HEADER=j9exelibnls.h
 
 # J9SourceExeLibArgumentsParsing - describeInternalOptions
 
-J9NLS_EXELIB_INTERNAL_HELP_1_1=Tieto vo\u013eby nie s\u00fa \u0161tandardn\u00e9 a m\u00f4\u017eu sa zmeni\u0165 bez ozn\u00e1menia. \n
+J9NLS_EXELIB_INTERNAL_HELP_1_1=Nasleduj\u00face mo\u017enosti nie s\u00fa \u0161tandardn\u00e9 a m\u00f4\u017eu sa zmeni\u0165 bez predch\u00e1dzaj\u00faceho upozornenia.\n
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_1_1.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_1_1.system_action=
