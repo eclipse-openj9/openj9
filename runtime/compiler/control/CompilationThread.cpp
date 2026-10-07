@@ -8559,18 +8559,13 @@ TR_MethodMetaData *TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrar
                         if (TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableSVMDuringStartup))
                             options->setOption(TR_UseSymbolValidationManager, false);
                     }
-                    static const char *compileWithGCRDuringIdle = feGetEnv("TR_CompileWithGCRDuringIdle");
                     // See if we need to insert GCR trees
                     if (!details.supportsInvalidation()
                         || options->getOptLevel()
                             >= hot) // Workaround for a bug with GCR inserted in hot bodies. See #4549 for details.
                     { // Upgrades hot-->scorching should be done through sampling, not GCR
                         options->setOption(TR_DisableGuardedCountingRecompilations);
-                    } else if (vm->isAOT_DEPRECATED_DO_NOT_USE()
-                        || (options->getOptLevel() < warm
-                            && (!(that->_methodBeingCompiled->_jitStateWhenQueued == IDLE_STATE
-                                    && that->getCompilationInfo()->getPersistentInfo()->getJitState() == IDLE_STATE)
-                                || compileWithGCRDuringIdle))) {
+                    } else if (vm->isAOT_DEPRECATED_DO_NOT_USE() || (options->getOptLevel() < warm)) {
                         options->setInsertGCRTrees(); // This is a recommendation not a directive
                     }
 
