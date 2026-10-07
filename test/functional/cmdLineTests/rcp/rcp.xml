@@ -31,11 +31,13 @@
   <test id="Create RCP cache">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ '$JVM_OPTIONS$' $MAINCLASS_SIMPLE$ none </command>
     <output type="success" caseSensitive="yes" regex="no">Hello World[SATURDAY, SUNDAY]</output>
-    <output type="failure" caseSensitive="no" regex="yes">exception</output>
+    <output type="failure" caseSensitive="yes" regex="yes">Test failed:.+</output>
+    <output type="failure" caseSensitive="no" regex="yes">.+exception.+</output>
   </test>
   <test id="Restore RCP cache once">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ '$JVM_OPTIONS$' $MAINCLASS_SIMPLE$ none </command>
     <output type="success" caseSensitive="yes" regex="no">Hello World[SATURDAY, SUNDAY]</output>
-    <output type="failure" caseSensitive="no" regex="yes">exception</output>
+    <output type="failure" caseSensitive="yes" regex="yes">Test failed:.+</output>
+    <output type="failure" caseSensitive="no" regex="yes">.+exception.+</output>
   </test>
 </suite>
