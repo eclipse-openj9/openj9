@@ -1640,4 +1640,32 @@ VM_JFRChunkWriter::writeModuleExport(void *anElement, void *userData)
 	writeEventSize(bufferWriter, dataStart);
 }
 
+void
+VM_JFRChunkWriter::writeObjectAllocationSampleEvent(void *anElement, void *userData)
+{
+	ObjectAllocationSampleEntry *entry = (ObjectAllocationSampleEntry *)anElement;
+	VM_BufferWriter *bufferWriter = (VM_BufferWriter *)userData;
+
+	/* Reserve size field. */
+	U_8 *dataStart = reserveEventSize(bufferWriter);
+
+	/* Write event type. */
+	bufferWriter->writeLEB128(ObjectAllocationSampleID);
+
+	/* Write start time. */
+	bufferWriter->writeLEB128(entry->ticks);
+
+	bufferWriter->writeLEB128(entry->eventThreadIndex);
+
+	bufferWriter->writeLEB128(entry->stackTraceIndex);
+
+	/* Write objectClass constant-pool index. */
+	bufferWriter->writeLEB128(entry->objectClassIndex);
+
+	/* Write weight (bytes allocated since last sample). */
+	bufferWriter->writeLEB128(entry->weight);
+
+	/* Write event size. */
+	writeEventSize(bufferWriter, dataStart);
+}
 #endif /* defined(J9VM_OPT_JFR) */
