@@ -6519,6 +6519,11 @@ typedef struct J9JavaVM {
 	UDATA daemonThreadCount;
 	UDATA accumulatedThreadCount;
 	UDATA peakThreadCount;
+#if JAVA_SPEC_VERSION >= 21
+	UDATA startedVirtualThreadCount;  /* total virtual threads ever started (monotonically increasing) */
+	UDATA finishedVirtualThreadCount; /* total virtual threads that have ended (monotonically increasing) */
+	UDATA carrierThreadCount;         /* platform threads currently running a virtual thread (= mounted count) */
+#endif /* JAVA_SPEC_VERSION >= 21 */
 	omrthread_t finalizeMainThread;
 	omrthread_monitor_t finalizeMainMonitor;
 	omrthread_monitor_t processReferenceMonitor; /* the monitor for synchronizing between reference process and j9gc_wait_for_reference_processing() (only for Java 9 and later) */

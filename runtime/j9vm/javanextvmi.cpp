@@ -344,6 +344,7 @@ virtualThreadMountEnd(JNIEnv *env, jobject thread)
 	/* Allow thread to be inspected again. */
 	vmFuncs->exitVThreadTransitionCritical(currentThread, thread);
 
+	VM_AtomicSupport::add(&vm->carrierThreadCount, 1);
 	TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_MOUNT(vm->hookInterface, currentThread);
 }
 
@@ -371,6 +372,7 @@ virtualThreadUnmountBegin(JNIEnv *env, jobject thread)
 				J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObj));
 	}
 
+	VM_AtomicSupport::subtract(&vm->carrierThreadCount, 1);
 	TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_UNMOUNT(vm->hookInterface, currentThread);
 
 	vmFuncs->enterVThreadTransitionCritical(currentThread, thread);
@@ -595,6 +597,7 @@ JVM_VirtualThreadStart(JNIEnv *env, jobject vthread)
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
 	virtualThreadMountEnd(env, vthread);
+	VM_AtomicSupport::add(&vm->startedVirtualThreadCount, 1);
 	TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_STARTED(vm->hookInterface, currentThread);
 
 	vmFuncs->internalExitVMToJNI(currentThread);
@@ -617,6 +620,7 @@ JVM_VirtualThreadEnd(JNIEnv *env, jobject vthread)
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
+	VM_AtomicSupport::add(&vm->finishedVirtualThreadCount, 1);
 	TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_END(vm->hookInterface, currentThread);
 	setContinuationStateToLastUnmount((J9VMThread *)env, vthread);
 	virtualThreadUnmountBegin(env, vthread);
