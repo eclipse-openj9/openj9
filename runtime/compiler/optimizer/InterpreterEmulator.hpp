@@ -53,10 +53,12 @@
 #include "il/Block.hpp"
 #include "ilgen/ByteCodeIteratorWithState.hpp"
 #include "ilgen/J9ByteCodeIterator.hpp"
+#include "infra/Checklist.hpp"
 #include "infra/String.hpp"
 #include "optimizer/Inliner.hpp"
 #include "optimizer/J9EstimateCodeSize.hpp"
 #include "optimizer/J9Inliner.hpp"
+#include <set>
 
 class IconstOperand;
 class KnownObjOperand;
@@ -84,10 +86,13 @@ public:
         PREEXISTENT,
         FIXED_CLASS,
         KNOWN_OBJECT,
-        ICONST
+        ICONST,
+        NULLREF
     };
 
     static const char *KnowledgeStrings[];
+
+    virtual bool isNull() { return false; }
 
     virtual IconstOperand *asIconst() { return NULL; }
 
@@ -110,6 +115,21 @@ public:
     virtual KnowledgeLevel getKnowledgeLevel() { return NONE; }
 
     Operand *merge(Operand *other);
+    virtual Operand *merge1(Operand *other);
+};
+
+class NullOperand : public Operand {
+public:
+    TR_ALLOC(TR_Memory::EstimateCodeSize);
+
+    NullOperand() {}
+
+    virtual bool isNull() { return true; }
+
+    virtual void printToString(TR::StringBuf *buf);
+
+    virtual KnowledgeLevel getKnowledgeLevel() { return NULLREF; }
+
     virtual Operand *merge1(Operand *other);
 };
 
@@ -210,13 +230,9 @@ public:
 class KnownObjOperand : public FixedClassOperand {
 public:
     TR_ALLOC(TR_Memory::EstimateCodeSize);
-    KnownObjOperand(TR::KnownObjectTable::Index koi, TR_OpaqueClassBlock *clazz = NULL);
+    KnownObjOperand(TR::KnownObjectTable *knot, TR::KnownObjectTable::Index koi, TR_OpaqueClassBlock *clazz);
 
     virtual KnownObjOperand *asKnownObject() { return this; }
-
-    virtual FixedClassOperand *asFixedClassOperand();
-    virtual ObjectOperand *asObjectOperand();
-    virtual TR_OpaqueClassBlock *getClass();
 
     virtual TR::KnownObjectTable::Index getKnownObjectIndex() { return knownObjIndex; }
 
@@ -278,6 +294,12 @@ public:
         , _tracer(tracer)
         , _ecs(ecs)
         , _iteratorWithState(false)
+        , _currentBcCanFallThrough(true)
+        , _unreachableEdges(std::less<TR::CFGEdge *>(), comp->trMemory()->currentStackRegion())
+        , _outEdgesStillReachable(std::less<TR::CFGEdge *>(), comp->trMemory()->currentStackRegion())
+        , _blockRc(std::less<TR::Block *>(), comp->trMemory()->currentStackRegion())
+        , _potentialCycleBlocks(comp)
+        , _visitedBlocks(comp)
     {
         TR_J9ByteCodeIterator::initialize(static_cast<TR_ResolvedJ9Method *>(methodSymbol->getResolvedMethod()), fe);
         _flags = NULL;
@@ -361,10 +383,19 @@ public:
 private:
     // the following methods can only be called when the iterator has state
 
+    /**
+     * \brief Determine whether to maintain state during iteration.
+     * \return true if state should be used
+     */
+    bool shouldIterateWithState();
+
     /*
      * Initialize the data structures needed for iterator with state
      */
     void initializeIteratorWithState();
+
+    void assertHasState();
+
     /*
      * push and pop operands on stack according to given bytecode
      *
@@ -372,7 +403,11 @@ private:
      */
     bool maintainStack(TR_J9ByteCode bc);
     void maintainStackForIf(TR_J9ByteCode bc);
+    void maintainStackForTableSwitch();
     void maintainStackForGetField();
+    void maintainStackForArraylength();
+    void maintainStackForArrayLoad(TR::DataTypes type, TR_J9ByteCode bc);
+    Operand *foldArrayLoad(Operand *obj, IconstOperand *indexOperand, TR::DataTypes type, TR_J9ByteCode bc);
     void maintainStackForAload(int slotIndex);
     void maintainStackForReturn();
     /*
@@ -409,6 +444,8 @@ private:
 
     void pushUnknownOperand() { Base::push(_unknownOperand); }
 
+    Operand *knownObjOperand(TR::KnownObjectTable::Index i, TR_OpaqueClassBlock *clazz = NULL);
+
     // doesn't need to handle execeptions yet as they don't exist in method handle thunk archetypes
     virtual void findAndMarkExceptionRanges() {}
 
@@ -418,13 +455,6 @@ private:
     virtual void saveStack(int32_t targetIndex);
 
     // the following methods can be used in both stateless and with state mode
-
-    /*
-     * \brief look for and set the next bytecode index to visit
-     *
-     * \return the bytecode value to visit
-     */
-    TR_J9ByteCode findNextByteCodeToVisit();
 
     /*
      * \brief tell whether the given bcIndex has been generated.
@@ -475,11 +505,22 @@ private:
     void debugUnresolvedOrCold(TR_ResolvedMethod *resolvedMethod);
     void maintainStackForAstore(int slotIndex);
     void maintainStackForldc(int32_t cpIndex);
+    void maintainStackForNew(int32_t cpIndex);
+    void maintainStackForInstanceof(int32_t cpIndex);
     void maintainStackForGetStatic();
     /*
      * \brief Check if a block has predecessors whose bytecodes haven't been visited
      */
     bool hasUnvisitedPred(TR::Block *block);
+
+    bool hasVisitedPred(TR::Block *block);
+
+    bool isEdgeUnreachable(TR::CFGEdge *edge);
+    bool isBlockUnreachable(TR::Block *block);
+    void markSuccessorsUnreachable(const TR::CFGEdgeList &edges);
+    void markEdgeUnreachable(TR::CFGEdge *edge);
+    void markEdgeUnreachable(int32_t destBcIndex);
+    void markSweepCFG();
 
     typedef TR_Array<Operand *> OperandArray;
     void printOperandArray(OperandArray *operands);
@@ -493,8 +534,10 @@ private:
     TR_LogTracer *_tracer;
     TR_EstimateCodeSize *_ecs;
     Operand *_unknownOperand; // used whenever the iterator can't reason about an operand
+    NullOperand *_nullOperand; // represents a null reference - no need for multiple instances
     TR_CallTarget *_calltarget; // the target method to inline
     bool _iteratorWithState;
+    bool _currentBcCanFallThrough;
     flags8_t *_InterpreterEmulatorFlags; // flags with bits to indicate property of each bytecode.
     TR_CallSite **_callSites;
     TR_CallSite *_currentCallSite; // Store created callsite if visiting invoke* bytecodes
@@ -516,6 +559,40 @@ private:
     OperandArray **_localObjectInfos;
     // Number of local slots
     int32_t _numSlots;
+
+    typedef TR::typed_allocator<TR::CFGEdge *, TR::Region &> EdgePtrAlloc;
+    typedef std::set<TR::CFGEdge *, std::less<TR::CFGEdge *>, EdgePtrAlloc> EdgeSet;
+    EdgeSet _unreachableEdges;
+    EdgeSet _outEdgesStillReachable; // from current block when !_currentBcCanFallThrough
+
+    typedef TR::typed_allocator<std::pair<TR::Block * const, uint32_t>, TR::Region &> BlockRcAlloc;
+    typedef std::map<TR::Block *, uint32_t, std::less<TR::Block *>, BlockRcAlloc> BlockRcMap;
+    BlockRcMap _blockRc; // number of potentially reachable incoming edges
+
+    // Blocks whose refcount has dropped, but hasn't yet reached zero.
+    //
+    // If a cycle becomes unreachable (based on currently-known unreachable
+    // edges), then at least one of its blocks will be in this set. Further,
+    // if a proper loop becomes unreachable, exactly one of its blocks will
+    // be in this set, and that block will be its loop header.
+    //
+    // This helps in determining when the CFG should be searched to detect
+    // unreachable cycles.
+    //
+    TR::BlockChecklist _potentialCycleBlocks;
+
+    // Blocks that have been processed already, including the one currently
+    // being processed.
+    //
+    // These were considered to be potentially reachable when they were
+    // encountered by the reverse postorder traversal. Operand values have
+    // already been propagated along their outgoing edges, and some of their
+    // successors may have already been processed as well, so there's little
+    // benefit to recognizing after the fact that one of these blocks is
+    // actually unreachable. As such, they will be assumed reachable. This
+    // assumption helps to avoid unnecessary CFG searches.
+    //
+    TR::BlockChecklist _visitedBlocks;
 
     TR::StringBuf *_operandBuf; // for debug printing
 };
