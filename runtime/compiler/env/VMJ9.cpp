@@ -2363,7 +2363,7 @@ bool TR_MarkHotField::markHotField(J9Class *clazz, bool rootClass)
     if (_comp->getOption(TR_TraceMarkingOfHotFields)) {
         if (rootClass) {
             int32_t len;
-            char *s = _symRef->getOwningMethod(_comp)->fieldName(_symRef->getCPIndex(), len, _comp->trMemory());
+            const char *s = _symRef->getOwningMethod(_comp)->fieldName(_symRef->getCPIndex(), len, _comp->trMemory());
             printf("hot field %*s with bitValue=%" OMR_PRIuPTR " and slotIndex=%" OMR_PRIuPTR
                    " found while compiling \n   %s\n",
                 len, s, _bitValue, _slotIndex, _comp->signature());
