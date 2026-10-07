@@ -411,7 +411,7 @@ static IDATA j9shr_aotMethodOperation(J9JavaVM* vm, char* methodSpecs, UDATA act
 static bool recoverMethodSpecSeparator(char* string, char* end);
 static void adjustCacheSizes(J9PortLibrary* portlib, UDATA verboseFlags, J9SharedClassPreinitConfig* piconfig, U_64 newSize);
 static IDATA checkIfCacheExists(J9JavaVM* vm, const char* ctrlDirName, char* cacheDirName, const char* cacheName, J9PortShcVersion* versionData, U_32 cacheType, I_8 layer);
-static bool isClassFromPatchedModule(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader);
+static bool isMultiClassVersionsPossible(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader);
 static J9Module* getModule(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader);
 static bool isFreeDiskSpaceLow(J9JavaVM *vm, U_64* maxsize, U_64 runtimeFlags);
 static char* generateStartupHintsKey(J9JavaVM *vm);
@@ -1500,7 +1500,7 @@ hookFindSharedClass(J9HookInterface** hookInterface, UDATA eventNum, void* voidD
 		module = getModule(currentThread, (U_8*)eventData->className, realClassNameLength, eventData->classloader);
 	}
 
-	if (isClassFromPatchedModule(currentThread, module, (U_8*)eventData->className, realClassNameLength, eventData->classloader)) {
+	if (isMultiClassVersionsPossible(currentThread, module, (U_8*)eventData->className, realClassNameLength, eventData->classloader)) {
 		Trc_SHR_INIT_hookFindSharedClass_exit_Noop(currentThread);
 		return;
 	}
@@ -5144,22 +5144,40 @@ checkIfCacheExists(J9JavaVM* vm, const char* ctrlDirName, char* cacheDirName, co
 }
 
 /**
- * This function checks if a class is from a patched module
+ * This function checks if it is possible there are multiple versions of the class on the class/module path. The following 2 cases are checked:
+ * 1. If the JVM is running with preview enabled in a JDK supports Value Type. However this check is skipped for Valhalla build, which tests
+ * preview Valhalla features and always run with --enable-preview. We want our Valhalla build to fully test SCC + Valhalla features.
+ * 2. If the class is from a patched module.
+ *
  * @param[in] vmThread The current VM thread
  * @param[in] j9module Pointer to J9Module
  * @param[in] className The name of the class
  * @param[in] classNameLength The number of bytes in className
  * @param[in] classLoader Pointer to the classLoader
  *
- * @return true if the class is from a patched module, false otherwise.
+ * @return true if it is a non-Valhalla JDK that supports Value Type running in preview mode or the class is from a patched module.
+ *         false otherwise.
  */
 static bool
-isClassFromPatchedModule(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader)
+isMultiClassVersionsPossible(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader)
 {
 	bool ret = false;
 	J9Module *module = j9module;
 	J9JavaVM* vm = vmThread->javaVM;
 	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	/* Valhalla build. Valhalla build mainly tests preview Valhalla features and always run with --enable-preview.
+	 * Let SCC fully enabled for this setting so that we can test SCC + Valhalla features. */
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+	/* A normal JDK28+ build that supports Value Type with --enable-preview */
+	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW)) {
+		ret = true;
+		return ret;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 	if (J9_ARE_NO_BITS_SET(vm->jclFlags, J9_JCL_FLAG_JDK_MODULE_PATCH_PROP)) {
 		return ret;
