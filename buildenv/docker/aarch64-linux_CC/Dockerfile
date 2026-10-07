@@ -22,7 +22,7 @@
 #   docker build -t=openj9aarch64 .
 #   docker run -it openj9aarch64
 
-FROM ubuntu:22.04@sha256:ac58ff7fe25edc58bdf0067ca99df00014dbd032e2246d30a722fa348fd799a5
+FROM ubuntu:26.04@sha256:f144425ff09be612d6d9ad965196e9cdc23dae1f42110a8a11a3e9a8198759f7
 
 # Define default user name
 ARG user=jenkins
