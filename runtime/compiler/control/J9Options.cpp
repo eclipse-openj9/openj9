@@ -482,12 +482,10 @@ const char *getLargePageTypeString(UDATA pageFlags)
         return "not used";
 }
 
-// Formats size to be in terms of X bytes to XX(K/M/G) for printing
+// Formats size of XX bytes to YY(K/M/G/T) for printing.
 void qualifiedSize(UDATA *byteSize, const char **qualifier)
 {
-    UDATA size;
-
-    size = *byteSize;
+    UDATA size = *byteSize;
     *qualifier = "";
     if (!(size % 1024)) {
         size /= 1024;
@@ -498,6 +496,10 @@ void qualifiedSize(UDATA *byteSize, const char **qualifier)
             if (size && !(size % 1024)) {
                 size /= 1024;
                 *qualifier = "G";
+                if (size && !(size % 1024)) {
+                    size /= 1024;
+                    *qualifier = "T";
+                }
             }
         }
     }
@@ -2112,7 +2114,7 @@ bool J9::Options::preProcessCodeCacheXlpCodeCache(J9JavaVM *vm, J9JITConfig *jit
                 UDATA oldSize = requestedLargeCodePageSize;
                 UDATA newSize = largePageSize;
 
-                // Convert size to K,M,G qualifiers.
+                // Convert size to K,M,G,T qualifiers.
                 qualifiedSize(&oldSize, &oldQualifier);
                 qualifiedSize(&newSize, &newQualifier);
 
