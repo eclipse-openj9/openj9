@@ -5667,6 +5667,7 @@ typedef struct J9InternalVMFunctions {
 	BOOLEAN ( *isFieldNullRestricted)(J9ROMFieldShape *field);
 	UDATA ( *getFlattenableFieldOffset)(struct J9Class *fieldOwner, J9ROMFieldShape *field);
 	BOOLEAN ( *isFlattenableFieldFlattened)(J9Class *fieldOwner, J9ROMFieldShape *field);
+	BOOLEAN ( *isFieldFlattened)(J9Class *fieldOwner, J9ROMFieldShape *field);
 	struct J9Class* ( *getFlattenableFieldType)(J9Class *fieldOwner, J9ROMFieldShape *field);
 	UDATA ( *getFlattenableFieldSize)(struct J9VMThread* currentThread, J9Class *fieldOwner, J9ROMFieldShape *field);
 	UDATA ( *arrayElementSize)(J9ArrayClass* arrayClass);

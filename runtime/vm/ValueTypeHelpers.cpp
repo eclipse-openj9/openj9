@@ -88,6 +88,15 @@ isFieldNullRestricted(J9ROMFieldShape *field)
 	return VM_ValueTypeHelpers::isFieldNullRestricted(field);
 }
 
+BOOLEAN
+isFieldFlattened(J9Class *fieldOwner, J9ROMFieldShape *field)
+{
+	if (isFieldNullRestricted(field)) {
+		return isFlattenableFieldFlattened(fieldOwner, field);
+	}
+	return FALSE;
+}
+
 UDATA
 findIndexInFlattenedClassCache(J9FlattenedClassCache *flattenedClassCache, J9ROMNameAndSignature *nameAndSignature)
 {
