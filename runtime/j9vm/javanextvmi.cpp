@@ -292,13 +292,13 @@ static void
 virtualThreadMountBegin(JNIEnv *env, jobject thread)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
-	J9InternalVMFunctions const * const vmFuncs = currentThread->javaVM->internalVMFunctions;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
 
 	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 	Assert_SC_true(IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObj));
 
 	if (TrcEnabled_Trc_SC_VirtualThread_Info) {
-		J9JavaVM *vm = currentThread->javaVM;
 		j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObj);
 		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObj);
 		Trc_SC_VirtualThread_Info(
