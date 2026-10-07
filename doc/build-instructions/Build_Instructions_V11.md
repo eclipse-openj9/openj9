@@ -21,7 +21,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 -->
 
 Building OpenJDK Version 11 with OpenJ9
-======================================
+=======================================
 
 Building OpenJDK 11 with OpenJ9 will be familiar to anyone who has already built OpenJDK. The easiest method
 involves the use of Docker and Dockerfiles to create a build environment that contains everything
@@ -34,7 +34,6 @@ Build instructions are available for the following platforms:
 - [AIX :blue_book:](#aix)
 - [Windows :ledger:](#windows)
 - [macOS :apple:](#macOS)
-- [AArch64](#aarch64)
 - [Riscv64 :rocket:](#riscv64)
 
 User documentation for the latest release of Eclipse OpenJ9 is available at the [Eclipse Foundation](https://eclipse.dev/openj9/docs).
@@ -50,7 +49,6 @@ This build process provides detailed instructions for building a Linux x86-64 bi
 If you are using a different Linux distribution, you might have to review the list of libraries that are bundled with your distribution and/or modify the instructions to use equivalent commands to the Advanced Packaging Tool (APT). For example, for Centos, substitute the `apt-get` command with `yum`.
 
 If you want to build a binary for Linux on a different architecture, such as Power Systems&trade; or z Systems&trade;, the process is very similar and any additional information for those architectures are included as Notes :pencil: as we go along.
-See [AArch64 section](#aarch64) for building for AArch64 Linux.
 
 ### 1. Prepare your system
 :penguin:
@@ -140,7 +138,7 @@ When you have all the source files that you need, run the configure script, whic
 ```
 bash configure --with-boot-jdk=/home/jenkins/bootjdks/jdk11
 ```
-:warning: The path in the example --with-boot-jdk= option is appropriate for the Docker installation. If not using the Docker environment, set the path appropriate for your setup, such as "<my_home_dir>/bootjdk11" as setup in the previous instructions.
+:warning: The path in the example `--with-boot-jdk=` option is appropriate for the Docker installation. If you're not using the Docker environment, set the path that's appropriate for your setup, such as `<my_home_dir>/bootjdk11`.
 
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
 Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
@@ -180,7 +178,7 @@ A binary for the full developer kit (jdk) is built and stored in the following d
 
     :whale: If you built your binaries in a Docker container, copy the binaries to the containers **/root/hostdir** directory so that you can access them on your local system. You'll find them in the directory you set for `<host_directory>` when you started your Docker container. See [Setting up your build environment with Docker](#setting-up-your-build-environment-with-docker-whale).
 
-    :pencil: On other architectures the **/jdk** directory is in **build/linux-ppc64le-normal-server-release/images** (Linux on 64-bit Power systems) and **build/linux-s390x-normal-server-release/images** (Linux on 64-bit z Systems).
+    :pencil: On other architectures the **jdk** directory is in **build/linux-ppc64le-normal-server-release/images** (Linux on 64-bit Power systems) and **build/linux-s390x-normal-server-release/images** (Linux on 64-bit z Systems).
 
 :pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/linux-x86_64-normal-server-release/images/jre** directory.
 
@@ -192,7 +190,7 @@ For local testing set the NATIVE_TEST_LIBS environment variable to the test imag
 ### 5. Test
 :penguin:
 For a simple test, try running the `java -version` command.
-Change to the /jdk directory:
+Change to the jdk directory:
 ```
 cd build/linux-x86_64-normal-server-release/images/jdk
 ```
@@ -243,7 +241,7 @@ This file contains a list of required RPM packages that you can install by speci
 yum shell yum_install_aix-ppc64.txt
 ```
 
-It is important to take the list of package dependencies from this file because it is kept right up to date by our developers.
+It is important to take the list of package dependencies from this file because it is kept up to date by our developers.
 
 ### 2. Get the source
 :blue_book:
@@ -261,14 +259,16 @@ Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Ec
 bash get_source.sh
 ```
 
-:pencil: **OpenSSL support:** If you want to build an OpenJDK with OpenJ9 binary with OpenSSL support and you do not have a built version of OpenSSL v3.x available locally, you must specify `-openssl-branch=<branch>` where `<branch>` is an OpenSSL branch (or tag) like `openssl-3.5.2`. If the specified version of OpenSSL is already available in the standard location (SRC_DIR/openssl), `get_source.sh` uses it. Otherwise, the script deletes the content and downloads the specified version of OpenSSL source to the standard location and builds it. If you already have the version of OpenSSL in the standard location but you want a fresh copy, you must delete your current copy.
+:pencil: **OpenSSL support:** If you want to build an OpenJDK with OpenJ9 binary with OpenSSL support and you do not have a built version of OpenSSL v3.x available locally, you must specify `-openssl-branch=<branch>` where `<branch>` is an OpenSSL branch (or tag) like `openssl-3.5.2`. If the specified version of OpenSSL is already available in the standard location (`SRC_DIR/openssl`), `get_source.sh` uses it. Otherwise, the script deletes the content and downloads the specified version of OpenSSL source to the standard location and builds it. If you already have the version of OpenSSL in the standard location but you want a fresh copy, you must delete your current copy.
 
 ### 3. Configure
 :blue_book:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
-bash configure --with-cups-include=<cups_include_path> \
-               --disable-warnings-as-errors
+bash configure \
+    --with-boot-jdk=<path_to_boot_JDK> \
+    --with-cups-include=<cups_include_path> \
+    --disable-warnings-as-errors
 ```
 where `<cups_include_path>` is the absolute path to CUPS. For example, `/opt/freeware/include`.
 
@@ -295,7 +295,7 @@ where:
 
   If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
 
-### 4. build
+### 4. Build
 :blue_book:
 Now you're ready to build OpenJDK with OpenJ9:
 ```
@@ -318,7 +318,7 @@ For local testing set the NATIVE_TEST_LIBS environment variable to the test imag
 ### 5. Test
 :blue_book:
 For a simple test, try running the `java -version` command.
-Change to the /jdk directory:
+Change to the jdk directory:
 ```
 cd build/aix-ppc64-normal-server-release/images/jdk
 ```
@@ -383,6 +383,7 @@ cd /cygdrive/c/temp
 ```
 wget https://aka.ms/vs/17/release/vs_community.exe -O vs2022.exe
 ```
+
 - Before installing Visual Studio, change the permissions on the installation file by running `chmod u+x vs2022.exe`.
 - Install Visual Studio by running the file `vs2022.exe` (There is no special step required for installing. Please follow the guide of the installer to install all desired components, the C++ compiler is required).
 
@@ -448,7 +449,7 @@ Mixed references is the default to build when no options are specified. `configu
 
   If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
 
-### 4. build
+### 4. Build
 :ledger:
 Now you're ready to build OpenJDK with OpenJ9:
 ```
@@ -471,7 +472,7 @@ For local testing set the NATIVE_TEST_LIBS environment variable to the test imag
 ### 5. Test
 :ledger:
 For a simple test, try running the `java -version` command.
-Change to the /jdk directory:
+Change to the jdk directory:
 ```
 cd build/windows-x86_64-normal-server-release/images/jdk
 ```
@@ -524,7 +525,7 @@ The following dependencies can be installed by using [Homebrew](https://brew.sh/
 - [pkg-config 0.29.2](https://formulae.brew.sh/formula/pkg-config)
 - [wget 1.19.5](https://formulae.brew.sh/formula/wget)
 
-Bash version 4 is required by the `./get_source.sh` script that you will use in step 2, which is installed to `/usr/local/bin/bash`. To prevent problems during the build process, make Bash v4 your default shell by typing the following commands:
+Bash version 4 is required by the `get_source.sh` script that you will use in step 2, which is installed to `/usr/local/bin/bash`. To prevent problems during the build process, make Bash v4 your default shell by typing the following commands:
 
 ```
 # Find the <CURRENT_SHELL> for <USERNAME>
@@ -562,7 +563,7 @@ bash get_source.sh
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 
 ```
-bash configure --with-boot-jdk=<path_to_boot_JDK11>
+bash configure --with-boot-jdk=<path_to_boot_JDK>
 ```
 
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
@@ -590,9 +591,9 @@ Mixed references is the default to build when no options are specified. `configu
 
   If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
 
-### 4. build
+### 4. Build
 :apple:
-Now you're ready to build OpenJDK with OpenJ9:
+Now you're ready to build OpenJDK with OpenJ9.
 
 ```
 make all
@@ -616,8 +617,7 @@ For local testing set the NATIVE_TEST_LIBS environment variable to the test imag
 
 ### 5. Test
 :apple:
-For a simple test, try running the `java -version` command.
-Change to the /jdk directory:
+For a simple test, try running the `java -version` command. Change to the jdk directory:
 ```
 cd build/macosx-x86_64-normal-server-release/images/jdk
 ```
@@ -643,167 +643,6 @@ JCL      - 9da99f8b97 based on jdk-11+28)
 - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
 
 :ledger: *Congratulations!* :tada:
-
-----------------------------------
-
-## AArch64
-
-:penguin:
-The following instructions guide you through the process of building an **OpenJDK V11** binary that contains Eclipse OpenJ9 for AArch64 (ARMv8 64-bit) Linux.
-
-### 1. Prepare your system
-
-The binary can be built on your AArch64 Linux system, or in a Docker container :whale: on x86-64 Linux.
-
-### 2. Get the source
-:penguin:
-First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repository is a git mirror of OpenJDK without the HotSpot JVM, but with an **openj9** branch that contains a few necessary patches. Run the following command:
-```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk11.git
-```
-Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
-```
-cd openj9-openjdk-jdk11
-```
-Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
-
-```
-bash get_source.sh
-```
-
-:pencil: **OpenSSL support:** On an AArch64 Linux system if you want to build an OpenJDK with OpenJ9 binary with OpenSSL support and you do not have a built version of OpenSSL v3.x available locally, you must specify `-openssl-branch=<branch>` where `<branch>` is an OpenSSL branch (or tag) like `openssl-3.5.2`. If the specified version of OpenSSL is already available in the standard location (SRC_DIR/openssl), `get_source.sh` uses it. Otherwise, the script deletes the content and downloads the specified version of OpenSSL source to the standard location and builds it. If you already have the version of OpenSSL in the standard location but you want a fresh copy, you must delete your current copy.
-
-### 3. Prepare for build on AArch64 Linux
-
-You must install a number of software dependencies to create a suitable build environment on your AArch64 Linux system:
-
-- GNU C/C++ compiler 10.3 (The Docker image uses GCC 7.5)
-- [AArch64 Linux JDK](https://api.adoptopenjdk.net/v3/binary/latest/11/ga/linux/aarch64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
-
-See [Setting up your build environment without Docker](#setting-up-your-build-environment-without-docker) in [Linux section](#linux) for other dependencies to be installed.
-
-### 4. Create the Docker image
-
-If you build the binary on x86-64 Linux, run the following commands to build a Docker image for AArch64 cross-compilation, called **openj9aarch64**:
-```
-cd openj9/buildenv/docker/aarch64-linux_CC
-docker build -t openj9aarch64 -f Dockerfile .
-```
-
-Start a Docker container from the **openj9aarch64** image with the following command, where `<host_directory>` is the directory that contains `openj9-openjdk-jdk11` in your local system:
-```
-docker run -v <host_directory>/openj9-openjdk-jdk11:/root/openj9-openjdk-jdk11 -it openj9aarch64
-```
-
-Then go to the `openj9-openjdk-jdk11` directory:
-```
-cd /root/openj9-openjdk-jdk11
-```
-
-### 5. Configure
-:penguin:
-When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
-
-For building on AArch64 Linux:
-```
-bash configure --with-boot-jdk=<path_to_boot_JDK> \
-               --disable-warnings-as-errors
-```
-
-For building in the Docker container:
-```
-bash configure --openjdk-target=${OPENJ9_CC_PREFIX} \
-               --with-x=${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/ \
-               --with-freetype-include=${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/libc/usr/include/freetype2 \
-               --with-freetype-lib=${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/libc/usr/lib \
-               --with-boot-jdk=/root/bootjdk11 \
-               --with-build-jdk=/root/bootjdk11 \
-               --disable-warnings-as-errors \
-               --disable-ddr
-```
-
-:pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
-Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
-For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ibmruntimes/openj9-openjdk-jdk11/blob/openj9/doc/building.html#troubleshooting).
-
-:pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
-- [compressed references](https://eclipse.dev/openj9/docs/gc_overview/#compressed-references) (only)
-- non-compressed references (only)
-- mixed references, either compressed or non-compressed references is selected when starting Java
-
-Mixed references is the default to build when no options are specified. `configure` options include:
-- `--with-noncompressedrefs=no` create a build supporting compressed references only
-- `--with-noncompressedrefs` create a build supporting non-compressed references only
-
-::pencil: **OpenSSL support:** If you want to build an OpenJDK that uses OpenSSL, you must specify `--with-openssl={fetched|system|path_to_library}`
-
-  where:
-
-  - `fetched` uses the OpenSSL source downloaded by `get-source.sh` in step **2. Get the source**. Using `--with-openssl=fetched` will fail during the build in the Docker environment.
-  - `system` uses the package installed OpenSSL library in the system.  Use this option when you build on your AArch64 Linux system.
-  - `path_to_library` uses an OpenSSL v3.x library that's already built.  You can use `${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/libc/usr` as `path_to_library` when you are configuring in the Docker container.
-
-  If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
-
-:pencil: **DDR support:** You can build DDR support only on AArch64 Linux.  If you are building in a cross-compilation environment, you need the `--disable-ddr` option.
-
-:pencil: **CUDA support:** You can enable CUDA support if you are building on NVIDIA Jetson Developer Kit series.  Add `--enable-cuda --with-cuda=/usr/local/cuda` when you run `configure`.  The path `/usr/local/cuda` may be different depending on the version of JetPack.
-
-:pencil: You may need to add `--disable-warnings-as-errors-openj9` depending on the toolchain version.
-
-### 6. Build
-:penguin:
-Now you're ready to build OpenJDK with OpenJ9:
-```
-make all
-```
-:warning: If you just type `make`, rather than `make all` your build will be incomplete, because the default `make` target is `exploded-image`.
-If you want to specify `make` instead of `make all`, you must add `--default-make-target=images` when you run the configure script.
-
-A binary for the full developer kit (jdk) is built and stored in the following directory:
-
-- **build/linux-aarch64-normal-server-release/images/jdk**
-
-Copy its contents to your AArch64 Linux device.
-
-:pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/linux-aarch64-normal-server-release/images/jre** directory.
-
-:pencil: One of the images created with `make all` is the `debug-image`. This directory contains files that provide debug information for executables and shared libraries when using native debuggers.
-To use it, copy the contents of `debug-image` over the jdk before using the jdk with a native debugger.
-Another image created is the `test` image, which contains executables and native libraries required when running some functional and OpenJDK testing.
-For local testing set the NATIVE_TEST_LIBS environment variable to the test image location, see the [OpenJ9 test user guide](https://github.com/eclipse-openj9/openj9/blob/main/test/docs/OpenJ9TestUserGuide.md).
-
-### 6. Test
-:penguin:
-For a simple test, try running the `java -version` command.
-Change to your jdk directory on AArch64 Linux:
-```
-cd build/linux-aarch64-normal-server-release/images/jdk
-```
-Run:
-```
-./bin/java -version
-```
-
-Here is some sample output:
-
-```
-openjdk version "11.0.6-internal" 2020-01-14
-OpenJDK Runtime Environment (build 11.0.6-internal+0-adhoc..openj9-openjdk-jdk11)
-Eclipse OpenJ9 VM (build main-83baf0b, JRE 11 Linux aarch64-64-Bit 20191204_000000 (JIT enabled, AOT enabled)
-OpenJ9   - 83baf0b
-OMR      - 7b2e5df
-JCL      - d247952 based on jdk-11.0.6+6)
-```
-
-:construction: AArch64 JIT compiler is not fully optimized at the time of writing this, compared with other platforms.
-
-:pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.x support, the following acknowledgments apply in accordance with the license terms:
-
-  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (https://www.openssl.org/).*
-  - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
-
-:penguin: *Congratulations!* :tada:
 
 ----------------------------------
 
@@ -914,7 +753,7 @@ e.g.
    -nographic \
    -machine virt \
    -smp 4 \
-   -m 4G \   #the memory can be adjusted depending on the capability of your host system
+   -m 4G \ # the memory can be adjusted depending on the capability of your host system
    -kernel bbl \
    -object rng-random,filename=/dev/urandom,id=rng0 \
    -device virtio-rng-device,rng=rng0 \
@@ -922,7 +761,7 @@ e.g.
    -device virtio-blk-device,drive=hd0 \
    -drive file=stage4-disk.img,format=raw,id=hd0 \
    -device virtio-net-device,netdev=usernet \
-   -netdev user,id=usernet,hostfwd=tcp::10000-:22  #the remote port number is 10000 for SSH to login
+   -netdev user,id=usernet,hostfwd=tcp::10000-:22 # the remote port number is 10000 for SSH to login
 ```
 Login: `root`
 Password: `riscv`
@@ -962,14 +801,14 @@ e.g.
    -nographic \
    -machine virt \
    -smp 8 \
-   -m 8G \   #the memory can be adjusted depending on the capability of your host system
+   -m 8G \ # the memory can be adjusted depending on the capability of your host system
    -kernel Fedora-Developer-Rawhide-20200108.n.0-fw_payload-uboot-qemu-virt-smode.elf \
    -object rng-random,filename=/dev/urandom,id=rng0 \
    -device virtio-rng-device,rng=rng0 \
    -device virtio-blk-device,drive=hd0 \
    -drive file=Fedora-Developer-Rawhide-20200108.n.0-sda.raw,format=raw,id=hd0 \
    -device virtio-net-device,netdev=usernet \
-   -netdev user,id=usernet,hostfwd=tcp::10000-:22  #the remote port number is 10000 for SSH to login
+   -netdev user,id=usernet,hostfwd=tcp::10000-:22 # the remote port number is 10000 for SSH to login
 ```
 Login: `root`
 Password: `riscv`
@@ -1026,10 +865,10 @@ user_riscv@localhost's password: riscv
 [4] Install all X11/development related software packages required in building the JDK on Fedora/QEMU.
 ```
 dnf install libX11-devel libXtst-devel libXt-devel libXrender-devel libXrandr-devel libXi-devel libXext-devel
-dnf install cups-devel fontconfig-devel alsa-lib-devel freetype-devel  #freetype might be skipped if already installed
-dnf install libdwarf-devel libstdc++-static #optional if the DDR is enabled for compilation on the target system
-dnf install wget git autoconf automake  #mostly used in the compilation on the target system
-dnf install openssl-devel  #optional if the OpenSSL support is required
+dnf install cups-devel fontconfig-devel alsa-lib-devel freetype-devel # freetype might be skipped if already installed
+dnf install libdwarf-devel libstdc++-static # optional if the DDR is enabled for compilation on the target system
+dnf install wget git autoconf automake # mostly used in the compilation on the target system
+dnf install openssl-devel # optional if the OpenSSL support is required
 ```
 
 :bulb:
@@ -1079,7 +918,7 @@ Device          Start      End  Sectors  Size Type
 /dev/loop14p1    2048  1435647  1433600  700M Linux filesystem
 /dev/loop14p2 1435648  1435711       64   32K HiFive Unleashed FSBL
 /dev/loop14p3 1435776  1452159    16384    8M HiFive Unleashed BBL
-/dev/loop14p4 1452160 31454591 30002432 14.3G Linux filesystem   #the file system to be mounted
+/dev/loop14p4 1452160 31454591 30002432 14.3G Linux filesystem # the file system to be mounted
 
 <3> mkdir <your_fedora_mount_directory>
 
@@ -1125,7 +964,7 @@ $ sudo apt-get install \
 [3] Set up the installation path and build the cross-toolchain on your system:
 ```
 cd riscv-gnu-toolchain
-./configure --prefix=/opt/riscv_toolchain_linux  #the path to install the cross-toolchain
+./configure --prefix=/opt/riscv_toolchain_linux # the path to install the cross-toolchain
 make linux
 ```
 
@@ -1205,27 +1044,27 @@ Please move the generated build-JDK at `build/linux-x86_64-normal-server-release
 :rocket:
 Run the following configure command to set up the cross-compilation environment in the same `openj9-openjdk-jdk11` directory where the `build-JDK` is created at [step 5](#5-generate-the-build-jdk-for-the-cross-compilation) after removing the existing `build` directory:
 ```
-export RISCV64=<path_to_gnu_cross_toolchain>  #e.g. /opt/riscv_toolchain_linux
+export RISCV64=<path_to_gnu_cross_toolchain> # e.g. /opt/riscv_toolchain_linux
 export PATH="$RISCV64/bin:$PATH"
 
 bash configure --disable-warnings-as-errors \
                --disable-ddr \
-               --with-boot-jdk=<path_to_build_JDK_for_cross_compilation> \   #the `build-JDK` created at step 5
-               --with-build-jdk=<path_to_build_JDK_for_cross_compilation> \  #the `build-JDK` created at step 5
-               --openjdk-target=riscv64-unknown-linux-gnu \                   #the prefix for the compiled cross-toolchain
+               --with-boot-jdk=<path_to_build_JDK_for_cross_compilation> \  # the `build-JDK` created at step 5
+               --with-build-jdk=<path_to_build_JDK_for_cross_compilation> \ # the `build-JDK` created at step 5
+               --openjdk-target=riscv64-unknown-linux-gnu \                 # the prefix for the compiled cross-toolchain
                --with-sysroot=<path_to_your_fedora_mount_directory>
 ```
 
 :bulb:
 For installed cross-toolchain package, run the following configure command to set up the cross-compilation environment:
 ```
-export RISCV_TOOLCHAIN_TYPE=install  #specify the install type to use the installed cross-toolchain for the cross-compilation
+export RISCV_TOOLCHAIN_TYPE=install # specify the install type to use the installed cross-toolchain for the cross-compilation
 
 bash configure --disable-warnings-as-errors \
                --disable-ddr \
-               --with-boot-jdk=<path_to_build_JDK_for_cross_compilation> \   #the `build-JDK` created at step 5
-               --with-build-jdk=<path_to_build_JDK_for_cross_compilation> \  #the `build-JDK` created at step 5
-               --openjdk-target=riscv64-linux-gnu \                           #the prefix for the installed cross-toolchain
+               --with-boot-jdk=<path_to_build_JDK_for_cross_compilation> \  # the `build-JDK` created at step 5
+               --with-build-jdk=<path_to_build_JDK_for_cross_compilation> \ # the `build-JDK` created at step 5
+               --openjdk-target=riscv64-linux-gnu \                         # the prefix for the installed cross-toolchain
                --with-sysroot=<path_to_your_fedora_mount_directory>
 ```
 
