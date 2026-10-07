@@ -60,7 +60,7 @@ jobs:
         run: |
           curl -u github-actions:${{ secrets.GITHUB_TOKEN }} -d '{ "body":  "The specified test cannot be excluded. Action run: https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}" }' -X POST ${{ github.event.issue.comments_url }}
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@153407881ec5c347639a548ade7d8ad1d6740e38 # v5.0.2
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           path: 'tests'
           title: '${{ github.event.comment.body }}'
