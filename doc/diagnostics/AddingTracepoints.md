@@ -32,7 +32,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 - Advanced use #1 - testing at runtime whether your tracepoint is enabled
 - Advanced use #2 - adding assert type tracepoints
 - Parameters to Assertions/Tracepoints and Side-effects (A warning)
- 
 
 ## Rules for adding tracepoint definitions to .tdf files
 
@@ -41,10 +40,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 
 These rules are in place to enforce the service requirements that a) any given tracepoint will keep its number between releases, and that b) the formatter from a newer release can be used to format a trace file from an older release. Following the rules is vital also for the Health Center tool (which captures and formats tracepoint data).
 
-This requires all newer .tdf files to be supersets of old .tdf files. Ordering in .tdf files governs numbering, starting with the first tracepoint in the file being 0 and incrementing down the file. This is why tracepoints must be added at the end - otherwise each subsequent tracepoint's number will be incremented, and the formatter will attempt to format the tracepoint using the format string of another tracepoint. 
+This requires all newer .tdf files to be supersets of old .tdf files. Ordering in .tdf files governs numbering, starting with the first tracepoint in the file being 0 and incrementing down the file. This is why tracepoints must be added at the end - otherwise each subsequent tracepoint's number will be incremented, and the formatter will attempt to format the tracepoint using the format string of another tracepoint.
 
 Setting the `Obsolete` keyword guards against usage of the old tracepoint in the current code stream, but keeps it available for the formatter to use when processing trace from older releases.
-
 
 ## Adding tracepoints to a module that already has some
 
@@ -67,7 +65,9 @@ For example:
 
 This breaks down as follows:
 
-`TraceEvent=Trc_VM_getMethodOrFieldID_dereferencedClass`  This specifies the type and the name of the tracepoint. `Trc_VM_getMethodOrFieldID_dereferencedClass` is the name of the generated macro to use in your code. The `TraceEvent=` denotes this is an event trace point. Other tracepoint types are:
+`TraceEvent=Trc_VM_getMethodOrFieldID_dereferencedClass`: This specifies the type and the name of the tracepoint. `Trc_VM_getMethodOrFieldID_dereferencedClass` is the name of the generated macro to use in your code. The `TraceEvent=` denotes this is an event trace point.
+
+Other tracepoint types are:
 
 - `TraceEntry`, `TraceEntry-Exception`:
   Tracepoint to be placed at the entry point of a non-trivial function.
@@ -100,7 +100,6 @@ Other parameters:
 
 `Test` See the Advanced use #1 section.
 
-
 ### Tracepoint Format Specifiers
 
 | Specifier | Description |
@@ -119,19 +118,20 @@ Other parameters:
 | %s | pointer to null-terminated character array, formatted as character string |
 | %.*s | 32-bit unsigned integer followed by pointer to character array, formatted as character string of specified length |
 
-
-The `ut_xxx.h` and `ut_xxx.c` files are refreshed by the tracegen step of the build. `ut_xxx.h` contains the macro you need.
+The `ut_xxx.h` and `ut_xxx.c` files are refreshed by the `tracegen` step of the build. `ut_xxx.h` contains the macro you need.
 
 The .tdf entry above generates the following macro in `ut_j9vm.h`:
 
-```
+```c
 #if UT_TRACE_OVERHEAD >= 1
-#define Trc_VM_getMethodOrFieldID_dereferencedClass(thr, P1, P2, P3) do { /* tracepoint name: j9vm.123 */ \
-	if ((unsigned char) j9vm_UtActive[123] != 0){ \
-		j9vm_UtModuleInfo.intf->Trace(UT_THREAD(thr), &j9vm_UtModuleInfo, ((123u << 8) | j9vm_UtActive[123]), "\6\12\377", P1, P2, P3);} \
-	} while(0)
+#define Trc_VM_getMethodOrFieldID_dereferencedClass(thr, P1, P2, P3) \
+    do { /* tracepoint name: j9vm.123 */ \
+        if (0 != j9vm_UtActive[123]) { \
+            j9vm_UtModuleInfo.intf->Trace(UT_THREAD(thr), &j9vm_UtModuleInfo, ((123u << 8) | j9vm_UtActive[123]), "\6\12\377", P1, P2, P3); \
+        } \
+    } while (0)
 #else
-#define Trc_VM_getMethodOrFieldID_dereferencedClass(thr, P1, P2, P3)   /* tracepoint name: j9vm.123 */
+#define Trc_VM_getMethodOrFieldID_dereferencedClass(thr, P1, P2, P3) /* tracepoint name: j9vm.123 */
 #endif
 ```
 
@@ -141,16 +141,15 @@ Tracegen also updates `lib/J9TraceFormat.dat`, which contains the tracepoint inf
 
 3) Nearly there - add the tracepoint macro to your source code:
 
-```
-Trc_VM_getMethodOrFieldID_dereferencedClass(vmThread, clazz,
-        (U_32)J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(clazz->romClass)),
-        J9UTF8_DATA(J9ROMCLASS_CLASSNAME(clazz->romClass)));
+```c
+    Trc_VM_getMethodOrFieldID_dereferencedClass(vmThread, clazz,
+            (U_32)J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(clazz->romClass)),
+            J9UTF8_DATA(J9ROMCLASS_CLASSNAME(clazz->romClass)));
 ```
 
 A `J9VMThread` pointer is passed in as the first parameter (unless the tracepoint has been defined as `NoEnv`, see above). This must be the VM thread that the current code is executing on. It allows the trace engine to store the tracepoint in the per-thread trace buffer belonging to that thread, without the use of locks.
 
 There is no compile-time or run-time checking that the parameters you supply on a tracepoint match the format specifiers you put in the tracepoint definition. Any mis-matches, eg passing an integer when the tracepoint definition was `%s`, or passing in a 64-bit pointer where the tracepoint definition was `%x`, will typically damage the next parameter if any, or cause a crash in the trace engine.
- 
 
 4) All done, now test it:
 
@@ -176,7 +175,6 @@ traceformat trace.out
 ```
 
 Note that in addition to the tracepoints selected on the `-Xtrace` option, you will see the default tracepoints in the output file as well, unless you specify `-Xtrace:none` ahead of your trace option.
-
 
 ## J9TraceFormat.dat
 
@@ -212,7 +210,6 @@ The format of each tracepoint entry in the .dat file is:
 
 `<template>` is the template (in double quotation marks) that is used to format the entry.
 
-
 ## Adding the first tracepoint to a dynamic module
 
 Ok, you want to enable a new module for trace. You need to set up this module as a trace module. Fortunately this isn't too hard, but there are several steps to follow.
@@ -231,7 +228,7 @@ You are largely on your own here, but search the source to make sure you choose 
 
 2) Create a .tdf file for your module
 
-Start it with the key value pair `Executable=modName` where modName is what you came up with in 1).
+Start it with the key value pair `Executable=modName` where modName is what you came up with in 1.
 
 Add a clause that lets the trace engine know which .dat file your tracepoints are to be recorded in. For an OpenJ9 component, this will be:
 
@@ -267,8 +264,8 @@ The macro `UT_MODULE_LOADED` is defined in the trace header to perform this for 
 
 Example:
 
-```
-case JIT_INITIALIZED :
+```c
+    case JIT_INITIALIZED:
         /* Register this module with trace */
         UT_MODULE_LOADED(vm);
         Trc_MM_VMInitStages_Event1(NULL);
@@ -277,12 +274,9 @@ case JIT_INITIALIZED :
 
 Note the tracepoint immediately after the module_loaded message. This is a convention that proves very useful.
 
-
 7) Optionally add a call to shutdown your module with trace when it unloads
 
 The macro `UT_MODULE_UNLOADED` is defined in the trace header to perform this for you. It's not strictly necessary to call this function. Indeed, currently only two modules do.
-
- 
 
 ## Adding the first tracepoint to a static module
 
@@ -292,43 +286,41 @@ Your static module does not have a startup and shutdown, you must therefore add 
 
 `executable=j9shr Submodules=j9vmutil,j9util,pool,avl,simplepool DATFileName=J9TraceFormat.dat`
 
-
 If you do not include your module in a submodules (list typically from the statically linked modules that a dynamic module uses) then the tracepoints and asserts in this modules will be disabled when another module calls a function containing them. They will only be enabled when called by the dynamic modules that have listed your module as a submodule. Every dynamic module which uses a static module needs to include it in it's submodule list.
-
-
 
 ## Advanced use #1 - testing at runtime whether your tracepoint is enabled
 
-There is a facility to define a tracepoint with an additional option `Test`. The Tracegen processor will then generate an additional macro, which can be used to test at runtime whether your tracepoint is enabled. This is useful if your runtime code needs to do extra, expensive, work to prepare data for the tracepoint, which would be wasteful if the tracepoint is not enabled.
+There is a facility to define a tracepoint with an additional option `Test`. The `tracegen` processor will then generate an additional macro, which can be used to test at runtime whether your tracepoint is enabled. This is useful if your runtime code needs to do extra, expensive, work to prepare data for the tracepoint, which would be wasteful if the tracepoint is not enabled.
 
 For example:
 
-`TraceEvent=Trc_dump_reportDumpStart_Event1 NoEnv Overhead=1 Level=1 Test Template="JVM Requesting %s Dump using filename=%s"`
+`TraceEvent=Trc_VM_FieldOffset Test Overhead=1 Level=10 Template="field offset for %.*s.%.*s = %d"`
 
 Note the additional `Test` option in this tracepoint definition. The generated macros look like this:
- 
-```
+
+```c
 #if UT_TRACE_OVERHEAD >= 1
-#define TrcEnabled_Trc_dump_reportDumpStart_Event1  (j9dmp_UtActive[2] != 0)
-#define Trc_dump_reportDumpStart_Event1(P1, P2) do { /* tracepoint name: j9dmp.2 */ \
-   if ((unsigned char) j9dmp_UtActive[2] != 0){ \
-      j9dmp_UtModuleInfo.intf->Trace(. . . .
-   } while(0)
+#define TrcEnabled_Trc_VM_FieldOffset (0 != j9vm_UtActive[565])
+#define Trc_VM_FieldOffset(thr, P1, P2, P3, P4, P5) \
+    do { /* tracepoint name: j9vm.565 */ \
+        if (0 != j9vm_UtActive[565]) { \
+            j9vm_UtModuleInfo.intf->Trace(UT_THREAD(thr), &j9vm_UtModuleInfo, ((565u << 8) | j9vm_UtActive[565]), "\12\377\12\377\4", P1, P2, P3, P4, P5); \
+        } \
+    } while (0)
 #else
- . . . .
+#define TrcEnabled_Trc_VM_FieldOffset 0
+#define Trc_VM_FieldOffset(thr, P1, P2, P3, P4, P5) /* tracepoint name: j9vm.565 */
 #endif
 ```
 
 The additional `TrcEnabled_Trc_dump_reportDumpStart_Event1` macro expands to just the test whether the tracepoint is enabled, and can be used in advance of the tracepoint, for example:
 
+```c
+    if (TrcEnabled_Trc_dump_reportDumpStart_Event1) {
+        /* do expensive extra preparation */
+    }
+    Trc_dump_reportDumpStart_Event1(. . .
 ```
-   if (TrcEnabled_Trc_dump_reportDumpStart_Event1) {
-     . . . do expensive extra preparation
-
-   }
-   Trc_dump_reportDumpStart_Event1(. . . 
-```
-
 
 ## Advanced use #2 - adding assert type tracepoints
 
@@ -346,18 +338,20 @@ For example:
 
 Note the `TraceAssert` tracepoint type and the `Assert` keyword. The generated macro looks like this:
 
-```
-#define Trc_Assert_PRT_memory_corruption_detected(P1) do { /* tracepoint name: j9prt.748 */ \
-   if ((unsigned char) j9prt_UtActive[748] != 0){ \
-      if ((P1)) { /* assertion satisfied */ } else { \
-         if (j9prt_UtModuleInfo.intf != NULL) { \
-            j9prt_UtModuleInfo.intf->Trace((void *)NULL, &j9prt_UtModuleInfo, (UT_SPECIAL_ASSERTION | (748 << 8) | j9prt_UtActive[748]), "\377\4\377", __FILE__, __LINE__, UT_STR(((P1)))); \
-            Trace_Unreachable(); \
-         } else { \
-            fprintf(stderr, "** ASSERTION FAILED ** j9prt.748 at %s:%d Trc_Assert_PRT_memory_corruption_detected%s\n", __FILE__, __LINE__, UT_STR(((P1)))); \
-         } \
-      }} \
-   } while(0)
+```c
+#define Trc_Assert_PRT_memory_corruption_detected(P1) \
+    do { /* tracepoint name: omrport.359 */ \
+        if (0 != omrport_UtActive[359]) { \
+            if ((P1)) { /* assertion satisfied */ } else { \
+                if (omrport_UtModuleInfo.intf != NULL) { \
+                    omrport_UtModuleInfo.intf->Trace((void *)NULL, &omrport_UtModuleInfo, (UT_SPECIAL_ASSERTION | (359u << 8) | omrport_UtActive[359]), "\377\4\377", __FILE__, __LINE__, UT_STR(((P1)))); \
+                    Trace_Unreachable(); \
+                } else { \
+                    fprintf(stderr, "** ASSERTION FAILED ** omrport.359 at %s:%d Trc_Assert_PRT_memory_corruption_detected%s\n", __FILE__, __LINE__, UT_STR(((P1)))); \
+                } \
+            } \
+        } \
+    } while (0)
 ```
 
 The "else" clause following the `(j9prt_UtModuleInfo.intf != NULL)` test ensures that asserts are not silent if trace has not been initialized for the module. This can happen in these cases:
@@ -368,16 +362,16 @@ The "else" clause following the `(j9prt_UtModuleInfo.intf != NULL)` test ensures
 
 Example usage in the port library (in this case the tests are being done in advance of the tracepoint):
 
-```
-        /* Check the tags and update only if not corrupted*/
-        if ((checkTagSumCheck (headerTag, J9MEMTAG_EYECATCHER_ALLOC_HEADER) == 0)
-                && (checkTagSumCheck (footerTag, J9MEMTAG_EYECATCHER_ALLOC_FOOTER) == 0)
-                && (checkPadding(headerTag) == 0)){
- 
- .....
-        } else {
-                BOOLEAN memoryCorruptionDetected= FALSE;
-                Trc_Assert_PRT_memory_corruption_detected(memoryCorruptionDetected);
+```c
+    /* Check the tags and update only if not corrupted. */
+    if ((checkTagSumCheck (headerTag, J9MEMTAG_EYECATCHER_ALLOC_HEADER) == 0)
+            && (checkTagSumCheck (footerTag, J9MEMTAG_EYECATCHER_ALLOC_FOOTER) == 0)
+            && (checkPadding(headerTag) == 0)) {
+        /* ..... */
+    } else {
+        BOOLEAN memoryCorruptionDetected = FALSE;
+        Trc_Assert_PRT_memory_corruption_detected(memoryCorruptionDetected);
+    }
 ```
 
 Example of an assert tracepoint firing, in this case GC assert j9mm.107:
@@ -405,7 +399,7 @@ This means that if the tracepoint is disabled (either individually or globally w
 
 will result in `some_function` not being called if `Assert_VM_true` is disabled by any means. Using:
 
-```
+```c
 int rc = some_function(arg1, arg2);
 Assert_VM_true(0 == rc);
 ```
