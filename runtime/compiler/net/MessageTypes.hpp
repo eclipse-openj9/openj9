@@ -152,7 +152,6 @@ enum MessageType : uint16_t {
     VM_getMethodFromName,
     VM_getMethodFromClass,
     VM_isClassVisible,
-    VM_markClassForTenuredAlignment,
     VM_reportHotField,
     VM_getReferenceSlotsInClass,
     VM_getMethodSize,

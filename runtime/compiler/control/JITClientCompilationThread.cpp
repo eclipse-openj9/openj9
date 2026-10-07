@@ -819,13 +819,6 @@ static bool handleResponse(JITServer::MessageType response, JITServer::ClientStr
             TR_OpaqueClassBlock *destClass = std::get<1>(recv);
             client->write(response, fe->isClassVisible(sourceClass, destClass));
         } break;
-        case MessageType::VM_markClassForTenuredAlignment: {
-            auto recv = client->getRecvData<TR_OpaqueClassBlock *, uint32_t>();
-            TR_OpaqueClassBlock *clazz = std::get<0>(recv);
-            uint32_t alignFromStart = std::get<1>(recv);
-            fe->markClassForTenuredAlignment(comp, clazz, alignFromStart);
-            client->write(response, JITServer::Void());
-        } break;
         case MessageType::VM_reportHotField: {
             auto recv = client->getRecvData<int32_t, J9Class *, uint8_t, uint32_t>();
             fe->reportHotField(std::get<0>(recv), std::get<1>(recv), std::get<2>(recv), std::get<3>(recv));
