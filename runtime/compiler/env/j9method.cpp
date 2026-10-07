@@ -2976,6 +2976,7 @@ void TR_ResolvedJ9Method::construct()
         { TR::java_lang_reflect_Method_invoke, 6, "invoke", (int16_t)-1, "*" },
         { x(TR::java_lang_reflect_Method_acquireMethodAccessor, "acquireMethodAccessor",
          "()Ljdk/internal/reflect/MethodAccessor;") },
+        { x(TR::java_lang_reflect_Method_isCallerSensitive, "isCallerSensitive", "()Z") },
         { TR::unknownMethod }
     };
 
