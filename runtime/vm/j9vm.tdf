@@ -220,7 +220,7 @@ TraceEntry=Trc_VM_resolveStaticFieldRef_Entry_old Obsolete Overhead=1 Level=3 Te
 TraceExit=Trc_VM_resolveStaticFieldRef_Exit Overhead=1 Level=3 Template="resolveStaticFieldRef --> result=%p"
 
 TraceEntry=Trc_VM_resolveInstanceFieldRef_Entry_old Obsolete Overhead=1 Level=3 Template="resolveInstanceFieldRef(ramCP=%p, cpIndex=%zu, flags=%zx, returnAddress=%p)"
-TraceExit=Trc_VM_resolveInstanceFieldRef_Exit Overhead=1 Level=3 Template="resolveInstanceFieldRef --> result=%d"
+TraceExit=Trc_VM_resolveInstanceFieldRef_Exit Overhead=1 Level=3 Template="resolveInstanceFieldRef --> result=%d, field=%.*s"
 
 TraceEntry=Trc_VM_romFieldOffsetsStartDo_Entry Overhead=1 Level=6 Template="romFieldOffsetsStartDo(romClass=%p, ramSuperClass=%p, flags=%x)"
 TraceExit=Trc_VM_romFieldOffsetsStartDo_earlyExit Overhead=1 Level=6 Template="romFieldOffsetsStartDo size calculation only --> field=%p, offset=%zx, index=%zx, instanceSize=%zx, superTotalInstanceSize=%zx"
