@@ -341,7 +341,7 @@ convertMethodSignature(J9VMThread *vmThread, J9UTF8 *methodSig)
  *
  * @return an extended NPE message or NULL if such a message can't be generated
  */
-static char*
+static char *
 getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romClass, char *npeCauseMsg, bool isMethodFlag)
 {
 	char *npeMsg = NULL;
@@ -468,7 +468,8 @@ getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romCl
 			}
 			break;
 		}
-		case JBgetfield: /* FALLTHROUGH */
+		case JBputstatic:
+		case JBgetfield:
 		case JBputfield: {
 			U_16 index = PARAM_16(bcCurrentPtr, 1);
 			UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(romClass), index);
@@ -480,7 +481,23 @@ getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romCl
 				J9ROMNameAndSignature *fieldNameAndSig = J9ROMFIELDREF_NAMEANDSIGNATURE((J9ROMFieldRef *)cpItem);
 				J9UTF8 *fieldName = J9ROMNAMEANDSIGNATURE_NAME(fieldNameAndSig);
 
-				if (NULL == npeCauseMsg) {
+				if (JBputstatic == bcCurrent) {
+					/* A putstatic NPE can only be caused by storing null into a
+					 * null-restricted static field.
+					 */
+					if (NULL != npeCauseMsg) {
+						/* The interpreter already built a detailed message.
+						 * Use it directly as the final NPE message.
+						 */
+						Trc_VM_GetCompleteNPEMessage_JBputstatic_npeCauseMsg(vmThread, npeCauseMsg);
+						npeMsg = npeCauseMsg;
+						npeCauseMsg = NULL;
+					} else {
+						/* Message here matches J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_FIELD. */
+						msgTemplate = "Cannot assign null to null-restricted field \"%.*s\"";
+						npeMsg = getMsgWithAllocation(vmThread, msgTemplate, J9UTF8_LENGTH(fieldName), J9UTF8_DATA(fieldName));
+					}
+				} else if (NULL == npeCauseMsg) {
 					if (JBputfield == bcCurrent) {
 						msgTemplate = "Cannot assign field \"%.*s\"";
 					} else {

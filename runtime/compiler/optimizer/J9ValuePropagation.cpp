@@ -2506,6 +2506,14 @@ bool J9::ValuePropagation::transformFlattenedArrayElementStore(TR_OpaqueClassBlo
 
     // The value that is being stored into the array element has to be non null.
     if (needsNullValueCheck) {
+        // Store the value into vmThread->floatTemp1 before the ZEROCHK so that
+        // old_slow_jitThrowArrayStoreException can detect the null-into-null-restricted-array
+        // case by checking floatTemp1 == NULL.
+        TR::Node *floatTemp1StoreNode = TR::Node::createStore(
+            comp()->getSymRefTab()->findOrCreateVMThreadFloatTemp1SymbolRef(), valueNode, TR::astore);
+        floatTemp1StoreNode->setByteCodeIndex(callNode->getByteCodeIndex());
+        callTree->insertBefore(TR::TreeTop::create(comp(), floatTemp1StoreNode));
+
         TR::Node *isNonNull = TR::Node::create(callNode, TR::acmpne, 2, valueNode, TR::Node::aconst(0));
         TR::Node *nullCheck = TR::Node::createWithSymRef(callNode, TR::ZEROCHK, 1, isNonNull,
             comp()->getSymRefTab()->findOrCreateArrayStoreExceptionSymbolRef(comp()->getMethodSymbol()));

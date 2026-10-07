@@ -703,13 +703,6 @@ void NonNullableArrayNullStoreCheckTransformer::lower(TR::Node * const node, TR:
 
         TR::ResolvedMethodSymbol *currentMethod = comp()->getMethodSymbol();
 
-        TR::SymbolReference *jitThrowArrayStoreException
-            = comp()->getSymRefTab()->findOrCreateArrayStoreExceptionSymbolRef(currentMethod);
-        TR::Node *checkNotNullRestrictedArray
-            = TR::Node::createWithSymRef(TR::ZEROCHK, 1, 1, testIsNotNullRestrictedArray, jitThrowArrayStoreException);
-        TR::TreeTop *checkNotNullRestrictedArrayTT
-            = prevBlock->append(TR::TreeTop::create(comp(), checkNotNullRestrictedArray));
-
         bool enableTrace = trace();
         auto * const nullConst = TR::Node::aconst(0);
         auto * const checkValueNull = TR::Node::createif(TR::ifacmpne, sourceChild, nullConst, nextBlock->getEntry());
@@ -720,13 +713,28 @@ void NonNullableArrayNullStoreCheckTransformer::lower(TR::Node * const node, TR:
         //
         copyRegisterDependency(prevBlock->getExit()->getNode(), checkValueNull);
 
-        TR::TreeTop *checkValueNullTT
-            = checkNotNullRestrictedArrayTT->insertBefore(TR::TreeTop::create(comp(), checkValueNull));
+        prevBlock->append(TR::TreeTop::create(comp(), checkValueNull));
+
+        // Store the value being stored (sourceChild) into vmThread->floatTemp1 so that
+        // old_slow_jitThrowArrayStoreException can detect the null-restricted case by
+        // checking floatTemp1 == NULL. This store is placed after the null check so it
+        // only executes on the null-value path, avoiding overhead for the common case.
+        //
+        TR::Node *floatTemp1StoreNode = TR::Node::createStore(
+            comp()->getSymRefTab()->findOrCreateVMThreadFloatTemp1SymbolRef(), sourceChild, TR::astore);
+        floatTemp1StoreNode->setByteCodeIndex(node->getByteCodeIndex());
+        TR::TreeTop *floatTemp1StoreTT = prevBlock->append(TR::TreeTop::create(comp(), floatTemp1StoreNode));
+
+        TR::SymbolReference *jitThrowArrayStoreException
+            = comp()->getSymRefTab()->findOrCreateArrayStoreExceptionSymbolRef(currentMethod);
+        TR::Node *checkNotNullRestrictedArray
+            = TR::Node::createWithSymRef(TR::ZEROCHK, 1, 1, testIsNotNullRestrictedArray, jitThrowArrayStoreException);
+        prevBlock->append(TR::TreeTop::create(comp(), checkNotNullRestrictedArray));
 
         logprintf(enableTrace, comp()->log(), "checkValueNull n%dn is inserted before  n%dn in prevBlock %d\n",
             checkValueNull->getGlobalIndex(), checkNotNullRestrictedArray->getGlobalIndex(), prevBlock->getNumber());
 
-        TR::Block *checkNotNullRestrictedBlock = prevBlock->split(checkNotNullRestrictedArrayTT, cfg);
+        TR::Block *checkNotNullRestrictedBlock = prevBlock->split(floatTemp1StoreTT, cfg);
         checkNotNullRestrictedBlock->setIsExtensionOfPreviousBlock(true);
 
         cfg->addEdge(prevBlock, nextBlock);

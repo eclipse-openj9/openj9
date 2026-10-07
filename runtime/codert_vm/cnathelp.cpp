@@ -913,7 +913,18 @@ old_slow_jitPutFlattenableField(J9VMThread *currentThread)
 	void *rc = NULL;
 
 	buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
-	rc = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	if (NULL != currentThread->floatTemp2) {
+		rc = setCurrentExceptionNLSFromJIT(
+				currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION,
+				J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_FIELD);
+	} else
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+	{
+		rc = setCurrentExceptionFromJIT(
+				currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION,
+				NULL);
+	}
 
 	SLOW_JIT_HELPER_EPILOGUE();
 	return rc;
@@ -945,6 +956,9 @@ done:
 	return rc;
 
 slow:
+	currentThread->floatTemp1 = (void *) cpEntry;
+	currentThread->floatTemp2 = (void *) receiver;
+	currentThread->floatTemp3 = (void *) paramObject;
 	rc = (void *) old_slow_jitPutFlattenableField;
 	goto done;
 }
@@ -1063,7 +1077,17 @@ old_slow_jitStoreFlattenableArrayElement(J9VMThread *currentThread)
 			addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYINDEXOUTOFBOUNDSEXCEPTION, NULL);
 		} else {
 			if (false == VM_VMHelpers::objectArrayStoreAllowed(currentThread, arrayref, value)) {
-				addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYSTOREEXCEPTION, NULL);
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+				if (NULL == value) {
+					/* Storing null into a null-restricted array. */
+					addr = setCurrentExceptionNLSFromJIT(
+							currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYSTOREEXCEPTION,
+							J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_ARRAY);
+				} else
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+				{
+					addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYSTOREEXCEPTION, NULL);
+				}
 			} else {
 				J9ArrayClass *arrayrefClass = (J9ArrayClass *) J9OBJECT_CLAZZ(currentThread, arrayref);
 				addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
@@ -2821,6 +2845,14 @@ old_slow_jitThrowArrayStoreException(J9VMThread *currentThread)
 {
 	OLD_JIT_HELPER_PROLOGUE(0);
 	buildJITResolveFrameForRuntimeCheck(currentThread);
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	if (NULL == currentThread->floatTemp1) {
+		/* Value being stored is null - this is a null-into-null-restricted-array case. */
+		return setCurrentExceptionNLSFromJIT(
+				currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYSTOREEXCEPTION,
+				J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_ARRAY);
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	return setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYSTOREEXCEPTION, NULL);
 }
 
@@ -2886,6 +2918,14 @@ old_slow_jitTypeCheckArrayStoreWithNullCheck(J9VMThread *currentThread)
 {
 	SLOW_JIT_HELPER_PROLOGUE();
 	buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	if (NULL == currentThread->floatTemp2) {
+		/* objectBeingStored is null and destination is a null-restricted array. */
+		return setCurrentExceptionNLSFromJIT(
+				currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYSTOREEXCEPTION,
+				J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_ARRAY);
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	return setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYSTOREEXCEPTION, NULL);
 }
 
@@ -2893,17 +2933,26 @@ static VMINLINE bool
 fast_jitTypeCheckArrayStoreImpl(J9VMThread *currentThread, j9object_t destinationObject, j9object_t objectBeingStored)
 {
 	bool slowPathRequired = false;
-	if ((NULL != destinationObject) && (NULL != objectBeingStored)) {
-		J9Class *objectClass = J9OBJECT_CLAZZ(currentThread, objectBeingStored);
-		J9Class *componentType = ((J9ArrayClass*)J9OBJECT_CLAZZ(currentThread, destinationObject))->componentType;
-		/* Quick check -- is this a store of a C into a C[]? */
-		if (objectClass != componentType) {
-			/* Quick check -- is this a store of a C into a java.lang.Object[]? */
-			if (0 != VM_VMHelpers::getClassDepth(componentType)) {
-				if (!VM_VMHelpers::inlineCheckCast(objectClass, componentType)) {
-					slowPathRequired = true;
+	if (NULL != destinationObject) {
+		if (NULL != objectBeingStored) {
+			J9Class *objectClass = J9OBJECT_CLAZZ(currentThread, objectBeingStored);
+			J9Class *componentType = ((J9ArrayClass *)J9OBJECT_CLAZZ(currentThread, destinationObject))->componentType;
+			/* Quick check -- is this a store of a C into a C[]? */
+			if (objectClass != componentType) {
+				/* Quick check -- is this a store of a C into a java.lang.Object[]? */
+				if (0 != VM_VMHelpers::getClassDepth(componentType)) {
+					if (!VM_VMHelpers::inlineCheckCast(objectClass, componentType)) {
+						slowPathRequired = true;
+					}
 				}
 			}
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+		} else {
+			J9ArrayClass *arrayClass = (J9ArrayClass *)J9OBJECT_CLAZZ(currentThread, destinationObject);
+			if (J9_IS_J9ARRAYCLASS_NULL_RESTRICTED(arrayClass)) {
+				slowPathRequired = true;
+			}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		}
 	}
 	return slowPathRequired;
@@ -2917,7 +2966,9 @@ old_fast_jitTypeCheckArrayStoreWithNullCheck(J9VMThread *currentThread)
 	DECLARE_JIT_PARM(j9object_t, destinationObject, 1);
 	DECLARE_JIT_PARM(j9object_t, objectBeingStored, 2);
 	if (fast_jitTypeCheckArrayStoreImpl(currentThread, destinationObject, objectBeingStored)) {
-		slowPath = (void*)old_slow_jitTypeCheckArrayStoreWithNullCheck;
+		currentThread->floatTemp1 = (void *)destinationObject;
+		currentThread->floatTemp2 = (void *)objectBeingStored;
+		slowPath = (void *)old_slow_jitTypeCheckArrayStoreWithNullCheck;
 	}
 	return slowPath;
 }
@@ -3816,7 +3867,9 @@ fast_jitTypeCheckArrayStoreWithNullCheck(J9VMThread *currentThread, j9object_t d
 	void *slowPath = NULL;
 	if (J9_UNEXPECTED(fast_jitTypeCheckArrayStoreImpl(currentThread, destinationObject, objectBeingStored))) {
 		SET_PARM_COUNT(0);
-		slowPath = (void*)old_slow_jitTypeCheckArrayStoreWithNullCheck;
+		currentThread->floatTemp1 = (void *)destinationObject;
+		currentThread->floatTemp2 = (void *)objectBeingStored;
+		slowPath = (void *)old_slow_jitTypeCheckArrayStoreWithNullCheck;
 	}
 	return slowPath;
 }
