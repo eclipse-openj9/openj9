@@ -2744,7 +2744,7 @@ int32_t TR_CISCTransformer::perform()
     OMR::Logger *log = comp()->log();
 
     // TO_BE_ENABLED
-    /// return 0;
+    // return 0;
 
     static int enable = -1;
     if (enable < 0) {
