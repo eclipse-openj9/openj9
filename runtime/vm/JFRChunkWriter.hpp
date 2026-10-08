@@ -88,63 +88,6 @@ enum StringEnconding {
 	Latin1,
 };
 
-enum MetadataTypeID {
-	ThreadStartID = 2,
-	ThreadEndID = 3,
-	ThreadSleepID = 4,
-	ThreadParkID = 5,
-	MonitorEnterID = 6,
-	MonitorWaitID = 7,
-	GCHeapSummaryID = 27,
-	GarbageCollectionID = 35,
-	SystemGCID = 36,
-	YoungGarbageCollectionID = 38,
-	OldGarbageCollectionID = 39,
-	JVMInformationID = 87,
-	OSInformationID = 88,
-	VirtualizationInformationID = 89,
-	InitialSystemPropertyID = 90,
-	InitialEnvironmentVariableID = 91,
-	SystemProcessID = 92,
-	CPUInformationID = 93,
-	CPULoadID = 95,
-	ThreadCPULoadID = 96,
-	ThreadContextSwitchRateID = 97,
-	NetworkUtilizationID = 98,
-	ThreadStatisticsID = 99,
-	DataLossID = 86,
-	ClassLoadingStatisticsID = 100,
-	ClassLoaderStatisticsID = 101,
-	ThreadAllocationStatisticsID = 107,
-	PhysicalMemoryID = 108,
-	ExecutionSampleID = 109,
-	ThreadDumpID = 111,
-	NativeLibraryID = 112,
-	ModuleRequireID = 113,
-	ModuleExportID = 114,
-	GCConfigurationID = 130,
-	GCHeapConfigID = 133,
-	YoungGenerationConfigID = 134,
-	VirtualSpaceID = 149,
-	NetworkInterfaceNameID = 163,
-	ThreadID = 164,
-	ThreadGroupID = 165,
-	ClassID = 166,
-	ClassLoaderID = 167,
-	MethodID = 168,
-	SymbolID = 169,
-	ThreadStateID = 170,
-	GCNamesID = 171,
-	GCCausesID = 172,
-	GCWhensID = 173,
-	NarrowOopModesID = 180,
-	ModuleID = 186,
-	PackageID = 187,
-	StackTraceID = 188,
-	FrameTypeID = 189,
-	StackFrameID = 197,
-};
-
 enum ReservedEvent {
 	EventMetadata = 0,
 	EventCheckpoint,
@@ -156,6 +99,169 @@ enum CheckpointTypeMask {
 	ChunkHeader = 2,
 	Statics = 4,
 	Thread = 8,
+};
+
+struct EventIds {
+	int ThreadStartID;
+	int ThreadEndID;
+	int ThreadSleepID;
+	int ThreadParkID;
+	int MonitorEnterID;
+	int MonitorWaitID;
+	int GCHeapSummaryID;
+	int GarbageCollectionID;
+	int SystemGCID;
+	int YoungGarbageCollectionID;
+	int OldGarbageCollectionID;
+	int JVMInformationID;
+	int OSInformationID;
+	int VirtualizationInformationID;
+	int InitialSystemPropertyID;
+	int InitialEnvironmentVariableID;
+	int SystemProcessID;
+	int CPUInformationID;
+	int CPULoadID;
+	int ThreadCPULoadID;
+	int ThreadContextSwitchRateID;
+	int NetworkUtilizationID;
+	int ThreadStatisticsID;
+	int DataLossID;
+	int ClassLoadingStatisticsID;
+	int ClassLoaderStatisticsID;
+	int ThreadAllocationStatisticsID;
+	int PhysicalMemoryID;
+	int ExecutionSampleID;
+	int ThreadDumpID;
+	int NativeLibraryID;
+	int ModuleRequireID;
+	int ModuleExportID;
+	int GCConfigurationID;
+	int GCHeapConfigID;
+	int YoungGenerationConfigID;
+	int NetworkInterfaceNameID;
+	int ThreadID;
+	int ThreadGroupID;
+	int ClassID;
+	int ClassLoaderID;
+	int MethodID;
+	int SymbolID;
+	int ThreadStateID;
+	int GCNamesID;
+	int GCCausesID;
+	int GCWhensID;
+	int NarrowOopModesID;
+	int ModuleID;
+	int PackageID;
+	int StackTraceID;
+	int FrameTypeID;
+
+	// Forces all event IDs to be supplied in initialization.
+	EventIds(
+		int ThreadStartID,
+		int ThreadEndID,
+		int ThreadSleepID,
+		int ThreadParkID,
+		int MonitorEnterID,
+		int MonitorWaitID,
+		int GCHeapSummaryID,
+		int GarbageCollectionID,
+		int SystemGCID,
+		int YoungGarbageCollectionID,
+		int OldGarbageCollectionID,
+		int JVMInformationID,
+		int OSInformationID,
+		int VirtualizationInformationID,
+		int InitialSystemPropertyID,
+		int InitialEnvironmentVariableID,
+		int SystemProcessID,
+		int CPUInformationID,
+		int CPULoadID,
+		int ThreadCPULoadID,
+		int ThreadContextSwitchRateID,
+		int NetworkUtilizationID,
+		int ThreadStatisticsID,
+		int DataLossID,
+		int ClassLoadingStatisticsID,
+		int ClassLoaderStatisticsID,
+		int ThreadAllocationStatisticsID,
+		int PhysicalMemoryID,
+		int ExecutionSampleID,
+		int ThreadDumpID,
+		int NativeLibraryID,
+		int ModuleRequireID,
+		int ModuleExportID,
+		int GCConfigurationID,
+		int GCHeapConfigID,
+		int YoungGenerationConfigID,
+		int NetworkInterfaceNameID,
+		int ThreadID,
+		int ThreadGroupID,
+		int ClassID,
+		int ClassLoaderID,
+		int MethodID,
+		int SymbolID,
+		int ThreadStateID,
+		int GCNamesID,
+		int GCCausesID,
+		int GCWhensID,
+		int NarrowOopModesID,
+		int ModuleID,
+		int PackageID,
+		int StackTraceID,
+		int FrameTypeID)
+		: ThreadStartID(ThreadStartID)
+		, ThreadEndID(ThreadEndID)
+		, ThreadSleepID(ThreadSleepID)
+		, ThreadParkID(ThreadParkID)
+		, MonitorEnterID(MonitorEnterID)
+		, MonitorWaitID(MonitorWaitID)
+		, GCHeapSummaryID(GCHeapSummaryID)
+		, GarbageCollectionID(GarbageCollectionID)
+		, SystemGCID(SystemGCID)
+		, YoungGarbageCollectionID(YoungGarbageCollectionID)
+		, OldGarbageCollectionID(OldGarbageCollectionID)
+		, JVMInformationID(JVMInformationID)
+		, OSInformationID(OSInformationID)
+		, VirtualizationInformationID(VirtualizationInformationID)
+		, InitialSystemPropertyID(InitialSystemPropertyID)
+		, InitialEnvironmentVariableID(InitialEnvironmentVariableID)
+		, SystemProcessID(SystemProcessID)
+		, CPUInformationID(CPUInformationID)
+		, CPULoadID(CPULoadID)
+		, ThreadCPULoadID(ThreadCPULoadID)
+		, ThreadContextSwitchRateID(ThreadContextSwitchRateID)
+		, NetworkUtilizationID(NetworkUtilizationID)
+		, ThreadStatisticsID(ThreadStatisticsID)
+		, DataLossID(DataLossID)
+		, ClassLoadingStatisticsID(ClassLoadingStatisticsID)
+		, ClassLoaderStatisticsID(ClassLoaderStatisticsID)
+		, ThreadAllocationStatisticsID(ThreadAllocationStatisticsID)
+		, PhysicalMemoryID(PhysicalMemoryID)
+		, ExecutionSampleID(ExecutionSampleID)
+		, ThreadDumpID(ThreadDumpID)
+		, NativeLibraryID(NativeLibraryID)
+		, ModuleRequireID(ModuleRequireID)
+		, ModuleExportID(ModuleExportID)
+		, GCConfigurationID(GCConfigurationID)
+		, GCHeapConfigID(GCHeapConfigID)
+		, YoungGenerationConfigID(YoungGenerationConfigID)
+		, NetworkInterfaceNameID(NetworkInterfaceNameID)
+		, ThreadID(ThreadID)
+		, ThreadGroupID(ThreadGroupID)
+		, ClassID(ClassID)
+		, ClassLoaderID(ClassLoaderID)
+		, MethodID(MethodID)
+		, SymbolID(SymbolID)
+		, ThreadStateID(ThreadStateID)
+		, GCNamesID(GCNamesID)
+		, GCCausesID(GCCausesID)
+		, GCWhensID(GCWhensID)
+		, NarrowOopModesID(NarrowOopModesID)
+		, ModuleID(ModuleID)
+		, PackageID(PackageID)
+		, StackTraceID(StackTraceID)
+		, FrameTypeID(FrameTypeID)
+		{}
 };
 
 class VM_JFRChunkWriter {
@@ -247,6 +353,12 @@ private:
 
 	static constexpr int METADATA_ID = 1;
 
+	const EventIds * const events;
+	static const EventIds v1Events;
+#if JAVA_SPEC_VERSION >= 17
+	static const EventIds v2Events;
+#endif /* JAVA_SPEC_VERSION >= 17 */
+
 protected:
 
 public:
@@ -309,6 +421,11 @@ public:
 		, _metadataOffset(NULL)
 		, _previousCheckpointDelta(NULL)
 		, _lastDataStart(NULL)
+#if JAVA_SPEC_VERSION >= 17
+		, events(isJFRV2SupportEnabled(_vm) ? &v2Events : &v1Events)
+#else /* JAVA_SPEC_VERSION >= 17 */
+		, events(&v1Events)
+#endif /* JAVA_SPEC_VERSION >= 17 */
 	{
 	}
 
@@ -441,53 +558,53 @@ done:
 
 			writeNetworkInterfaceNameCheckpointEvent();
 
-			pool_do(_constantPoolTypes.getExecutionSampleTable(), &writeExecutionSampleEvent, _bufferWriter);
+			pool_do(_constantPoolTypes.getExecutionSampleTable(), &writeExecutionSampleEvent, this);
 
-			pool_do(_constantPoolTypes.getThreadStartTable(), &writeThreadStartEvent, _bufferWriter);
+			pool_do(_constantPoolTypes.getThreadStartTable(), &writeThreadStartEvent, this);
 
-			pool_do(_constantPoolTypes.getThreadEndTable(), &writeThreadEndEvent, _bufferWriter);
+			pool_do(_constantPoolTypes.getThreadEndTable(), &writeThreadEndEvent, this);
 
-			pool_do(_constantPoolTypes.getThreadSleepTable(), &writeThreadSleepEvent, _bufferWriter);
+			pool_do(_constantPoolTypes.getThreadSleepTable(), &writeThreadSleepEvent, this);
 
-			pool_do(_constantPoolTypes.getMonitorWaitTable(), &writeMonitorWaitEvent, _bufferWriter);
+			pool_do(_constantPoolTypes.getMonitorWaitTable(), &writeMonitorWaitEvent, this);
 
-			pool_do(_constantPoolTypes.getMonitorEnterTable(), &writeMonitorEnterEvent, _bufferWriter);
+			pool_do(_constantPoolTypes.getMonitorEnterTable(), &writeMonitorEnterEvent, this);
 
-			pool_do(_constantPoolTypes.getThreadParkTable(), &writeThreadParkEvent, _bufferWriter);
+			pool_do(_constantPoolTypes.getThreadParkTable(), &writeThreadParkEvent, this);
 
-			pool_do(_constantPoolTypes.getCPULoadTable(), &writeCPULoadEvent, _bufferWriter);
+			pool_do(_constantPoolTypes.getCPULoadTable(), &writeCPULoadEvent, this);
 
-			pool_do(_constantPoolTypes.getThreadCPULoadTable(), &writeThreadCPULoadEvent, _bufferWriter);
+			pool_do(_constantPoolTypes.getThreadCPULoadTable(), &writeThreadCPULoadEvent, this);
 
-			pool_do(_constantPoolTypes.getClassLoadingStatisticsTable(), &writeClassLoadingStatisticsEvent, _bufferWriter);
+			pool_do(_constantPoolTypes.getClassLoadingStatisticsTable(), &writeClassLoadingStatisticsEvent, this);
 
-			pool_do(_constantPoolTypes.getClassLoaderStatisticsTable(), &writeClassLoaderStatisticsEvent, _bufferWriter);
+			pool_do(_constantPoolTypes.getClassLoaderStatisticsTable(), &writeClassLoaderStatisticsEvent, this);
 
-			pool_do(_constantPoolTypes.getThreadAllocationStatisticsTable(), &writeThreadAllocationStatisticsEvent, _bufferWriter);
+			pool_do(_constantPoolTypes.getThreadAllocationStatisticsTable(), &writeThreadAllocationStatisticsEvent, this);
 
-			pool_do(_constantPoolTypes.getThreadContextSwitchRateTable(), &writeThreadContextSwitchRateEvent, _bufferWriter);
+			pool_do(_constantPoolTypes.getThreadContextSwitchRateTable(), &writeThreadContextSwitchRateEvent, this);
 
-			pool_do(_constantPoolTypes.getThreadStatisticsTable(), &writeThreadStatisticsEvent, _bufferWriter);
+			pool_do(_constantPoolTypes.getThreadStatisticsTable(), &writeThreadStatisticsEvent, this);
 
-			pool_do(_constantPoolTypes.getSystemGCTable(), &writeSystemGCEvent, _bufferWriter);
+			pool_do(_constantPoolTypes.getSystemGCTable(), &writeSystemGCEvent, this);
 
-			pool_do(_constantPoolTypes.getModuleRequireTable(), &writeModuleRequire, _bufferWriter);
+			pool_do(_constantPoolTypes.getModuleRequireTable(), &writeModuleRequire, this);
 
-			pool_do(_constantPoolTypes.getModuleExportTable(), &writeModuleExport, _bufferWriter);
+			pool_do(_constantPoolTypes.getModuleExportTable(), &writeModuleExport, this);
 
-			pool_do(_constantPoolTypes.getOldGarbageCollectionTable(), &writeOldGarbageCollectionEvent, _bufferWriter);
+			pool_do(_constantPoolTypes.getOldGarbageCollectionTable(), &writeOldGarbageCollectionEvent, this);
 
-			pool_do(_constantPoolTypes.getYoungGarbageCollectionTable(), &writeYoungGarbageCollectionEvent, _bufferWriter);
+			pool_do(_constantPoolTypes.getYoungGarbageCollectionTable(), &writeYoungGarbageCollectionEvent, this);
 
-			pool_do(_constantPoolTypes.getGarbageCollectionTable(), &writeGarbageCollectionEvent, _bufferWriter);
+			pool_do(_constantPoolTypes.getGarbageCollectionTable(), &writeGarbageCollectionEvent, this);
 
-			pool_do(_constantPoolTypes.getPhysicalMemoryTable(), &writePhysicalMemoryEventFromTable, _bufferWriter);
+			pool_do(_constantPoolTypes.getPhysicalMemoryTable(), &writePhysicalMemoryEventFromTable, this);
 
-			pool_do(_constantPoolTypes.getGCHeapSummaryTable(), &writeGCHeapSummaryEvent, _bufferWriter);
+			pool_do(_constantPoolTypes.getGCHeapSummaryTable(), &writeGCHeapSummaryEvent, this);
 
 			pool_do(_constantPoolTypes.getNetworkUtilizationTable(), &writeNetworkUtilizationEvent, this);
 
-			pool_do(_constantPoolTypes.getDataLossTable(), &writeDataLossEvent, _bufferWriter);
+			pool_do(_constantPoolTypes.getDataLossTable(), &writeDataLossEvent, this);
 
 			pool_do(_constantPoolTypes.getSystemProcessTable(), &writeSystemProcessEvent, this);
 
@@ -588,13 +705,14 @@ done:
 	writeExecutionSampleEvent(void *anElement, void *userData)
 	{
 		ExecutionSampleEntry *entry = (ExecutionSampleEntry *)anElement;
-		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
+		VM_JFRChunkWriter *writer = (VM_JFRChunkWriter *)userData;
+		VM_BufferWriter *_bufferWriter = writer->_bufferWriter;
 
 		/* reserve size field */
 		U_8 *dataStart = reserveEventSize(_bufferWriter);
 
 		/* write event type */
-		_bufferWriter->writeLEB128(ExecutionSampleID);
+		_bufferWriter->writeLEB128(writer->events->ExecutionSampleID);
 
 		/* write start time */
 		_bufferWriter->writeLEB128(entry->ticks);
@@ -616,13 +734,14 @@ done:
 	writeThreadStartEvent(void *anElement, void *userData)
 	{
 		ThreadStartEntry *entry = (ThreadStartEntry *)anElement;
-		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
+		VM_JFRChunkWriter *writer = (VM_JFRChunkWriter *)userData;
+		VM_BufferWriter *_bufferWriter = writer->_bufferWriter;
 
 		/* reserve size field */
 		U_8 *dataStart = reserveEventSize(_bufferWriter);
 
 		/* write event type */
-		_bufferWriter->writeLEB128(ThreadStartID);
+		_bufferWriter->writeLEB128(writer->events->ThreadStartID);
 
 		/* write start time */
 		_bufferWriter->writeLEB128(entry->ticks);
@@ -647,13 +766,14 @@ done:
 	writeThreadEndEvent(void *anElement, void *userData)
 	{
 		ThreadEndEntry *entry = (ThreadEndEntry *)anElement;
-		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
+		VM_JFRChunkWriter *writer = (VM_JFRChunkWriter *)userData;
+		VM_BufferWriter *_bufferWriter = writer->_bufferWriter;
 
 		/* reserve size field */
 		U_8 *dataStart = reserveEventSize(_bufferWriter);
 
 		/* write event type */
-		_bufferWriter->writeLEB128(ThreadEndID);
+		_bufferWriter->writeLEB128(writer->events->ThreadEndID);
 
 		/* write start time */
 		_bufferWriter->writeLEB128(entry->ticks);
@@ -672,13 +792,14 @@ done:
 	writeThreadSleepEvent(void *anElement, void *userData)
 	{
 		ThreadSleepEntry *entry = (ThreadSleepEntry *)anElement;
-		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *) userData;
+		VM_JFRChunkWriter *writer = (VM_JFRChunkWriter *)userData;
+		VM_BufferWriter *_bufferWriter = writer->_bufferWriter;
 
 		/* reserve size field */
 		U_8 *dataStart = reserveEventSize(_bufferWriter);
 
 		/* write event type */
-		_bufferWriter->writeLEB128(ThreadSleepID);
+		_bufferWriter->writeLEB128(writer->events->ThreadSleepID);
 
 		/* write start time - this is when the sleep started not when it ended so we
 		 * need to subtract the duration since the event is emitted when the sleep ends.
@@ -705,13 +826,14 @@ done:
 	writeMonitorWaitEvent(void *anElement, void *userData)
 	{
 		MonitorWaitEntry *entry = (MonitorWaitEntry *)anElement;
-		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *) userData;
+		VM_JFRChunkWriter *writer = (VM_JFRChunkWriter *)userData;
+		VM_BufferWriter *_bufferWriter = writer->_bufferWriter;
 
 		/* reserve size field */
 		U_8 *dataStart = reserveEventSize(_bufferWriter);
 
 		/* write event type */
-		_bufferWriter->writeLEB128(MonitorWaitID);
+		_bufferWriter->writeLEB128(writer->events->MonitorWaitID);
 
 		/* write start time - this is when the sleep started not when it ended so we
 		 * need to subtract the duration since the event is emitted when the sleep ends.
@@ -750,13 +872,14 @@ done:
 	writeMonitorEnterEvent(void *anElement, void *userData)
 	{
 		MonitorEnterEntry *entry = (MonitorEnterEntry *)anElement;
-		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
+		VM_JFRChunkWriter *writer = (VM_JFRChunkWriter *)userData;
+		VM_BufferWriter *_bufferWriter = writer->_bufferWriter;
 
 		/* reserve size field */
 		U_8 *dataStart = reserveEventSize(_bufferWriter);
 
 		/* write event type */
-		_bufferWriter->writeLEB128(MonitorEnterID);
+		_bufferWriter->writeLEB128(writer->events->MonitorEnterID);
 
 		/* write start time - this is when the monitor enter started not when it ended so we
 		 * need to subtract the duration since the event is emitted when the monitor enter ends.
@@ -789,13 +912,14 @@ done:
 	writeThreadParkEvent(void *anElement, void *userData)
 	{
 		ThreadParkEntry *entry = (ThreadParkEntry *)anElement;
-		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
+		VM_JFRChunkWriter *writer = (VM_JFRChunkWriter *)userData;
+		VM_BufferWriter *_bufferWriter = writer->_bufferWriter;
 
 		/* reserve size field */
 		U_8 *dataStart = reserveEventSize(_bufferWriter);
 
 		/* write event type */
-		_bufferWriter->writeLEB128(ThreadParkID);
+		_bufferWriter->writeLEB128(writer->events->ThreadParkID);
 
 		/* write start time - this is when the sleep started not when it ended so we
 		 * need to subtract the duration since the event is emitted when the sleep ends.
@@ -831,13 +955,14 @@ done:
 	writeCPULoadEvent(void *anElement, void *userData)
 	{
 		CPULoadEntry *entry = (CPULoadEntry *)anElement;
-		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
+		VM_JFRChunkWriter *writer = (VM_JFRChunkWriter *)userData;
+		VM_BufferWriter *_bufferWriter = writer->_bufferWriter;
 
 		/* reserve size field */
 		U_8 *dataStart = reserveEventSize(_bufferWriter);
 
 		/* write event type */
-		_bufferWriter->writeLEB128(CPULoadID);
+		_bufferWriter->writeLEB128(writer->events->CPULoadID);
 
 		/* write start time */
 		_bufferWriter->writeLEB128(entry->ticks);
@@ -859,13 +984,14 @@ done:
 	writeThreadCPULoadEvent(void *anElement, void *userData)
 	{
 		ThreadCPULoadEntry *entry = (ThreadCPULoadEntry *)anElement;
-		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
+		VM_JFRChunkWriter *writer = (VM_JFRChunkWriter *)userData;
+		VM_BufferWriter *_bufferWriter = writer->_bufferWriter;
 
 		/* reserve size field */
 		U_8 *dataStart = reserveEventSize(_bufferWriter);
 
 		/* write event type */
-		_bufferWriter->writeLEB128(ThreadCPULoadID);
+		_bufferWriter->writeLEB128(writer->events->ThreadCPULoadID);
 
 		/* write start time */
 		_bufferWriter->writeLEB128(entry->ticks);
@@ -887,13 +1013,14 @@ done:
 	writePhysicalMemoryEventFromTable(void *anElement, void *userData)
 	{
 		PhysicalMemoryEntry *entry = (PhysicalMemoryEntry *)anElement;
-		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
+		VM_JFRChunkWriter *writer = (VM_JFRChunkWriter *)userData;
+		VM_BufferWriter *_bufferWriter = writer->_bufferWriter;
 
 		/* reserve size field */
 		U_8 *dataStart = reserveEventSize(_bufferWriter);
 
 		/* write event type */
-		_bufferWriter->writeLEB128(PhysicalMemoryID);
+		_bufferWriter->writeLEB128(writer->events->PhysicalMemoryID);
 
 		/* write start time */
 		_bufferWriter->writeLEB128(entry->ticks);
