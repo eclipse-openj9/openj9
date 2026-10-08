@@ -2954,6 +2954,19 @@ BOOLEAN
 isFlattenableFieldFlattened(J9Class *fieldOwner, J9ROMFieldShape *field);
 
 /**
+ * Checks if a field is both null-restricted and flattened.
+ * Only null-restricted fields can be flattened, so a TRUE result
+ * also implies that the field is null-restricted.
+ *
+ * @param[in] fieldOwner the J9Class that defines the field
+ * @param[in] field the J9ROMFieldShape of the field
+ *
+ * @return TRUE if the field is null-restricted and flattened, FALSE otherwise
+ */
+BOOLEAN
+isFieldFlattened(J9Class *fieldOwner, J9ROMFieldShape *field);
+
+/**
  * Returns the type of an instance field.
  * This helper assumes field is null-restricted.
  *
