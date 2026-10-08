@@ -23,12 +23,41 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TKG/resources/playlist.xsd">
 	<include>../variables.mk</include>
 	<test>
-		<testCaseName>cmdLineTester_rcp</testCaseName>
+		<testCaseName>RCP Hello World</testCaseName>
 		<command>
 			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)rcpScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
 			-DJAVA_COMMAND=$(JAVA_COMMAND) -DJVM_OPTIONS=$(SQ)$(JVM_OPTIONS)$(SQ) \
 			-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)rcp.xml$(Q) \
+			-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
+			$(TEST_STATUS)
+		</command>
+		<platformRequirementsList>
+			<platformRequirements>os.linux.ubuntu.22+</platformRequirements>
+			<platformRequirements>os.linux.rhel.8+</platformRequirements>
+			<platformRequirements>os.linux.sles.15+</platformRequirements>
+			<platformRequirements>os.linux.cent.8+</platformRequirements>
+		</platformRequirementsList>
+		<features>
+			<feature>RCP:required</feature>
+		</features>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>RCP presolved instance field reference</testCaseName>
+		<command>
+			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
+			-DSCRIPPATH=$(TEST_RESROOT)$(D)rcpScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
+			-DJAVA_COMMAND=$(JAVA_COMMAND) -DJVM_OPTIONS=$(SQ)$(JVM_OPTIONS)$(SQ) \
+			-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)rcp_twoWords.xml$(Q) \
 			-explainExcludes -xids all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 			$(TEST_STATUS)
 		</command>
