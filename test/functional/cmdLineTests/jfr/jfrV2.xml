@@ -32,7 +32,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</test>
 
 	<test id="Test JFRv2 cmdline option - memcheck - approx 2 minutes">
-		<command>$EXE$ -XX:+EnableOpenJ9ExperimentalFlightRecording -Xshare:off -Xcheck:memory -Dibm.java9.forceCommonCleanerShutdown=true -Xint -XX:StartFlightRecording -version</command>
+		<command>$EXE$ -XX:+EnableOpenJ9ExperimentalFlightRecording -Xshare:off -Xcheck:memory -Dibm.java9.forceCommonCleanerShutdown=true -Dcom.ibm.tools.attach.enable=no -Xint -XX:StartFlightRecording -version</command>
 		<output type="success" caseSensitive="yes" regex="no">OpenJ9</output>
 		<output type="required" caseSensitive="yes" regex="no">OMR</output>
 		<output type="failure" caseSensitive="yes" regex="no">bytes were not freed before shutdown</output>
