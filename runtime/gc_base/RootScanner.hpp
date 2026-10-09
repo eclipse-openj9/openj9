@@ -518,7 +518,6 @@ public:
 	virtual CompletePhaseCode scanContinuationObjectsComplete(MM_EnvironmentBase *env);
 
 	virtual void doMonitorReference(J9ObjectMonitor *objectMonitor, GC_HashTableIterator *monitorReferenceIterator);
-	virtual void doMonitorLookupCacheSlot(j9objectmonitor_t* slotPtr);
 
 	virtual void doJNIWeakGlobalReference(J9Object **slotPtr);
 	virtual void doJNIGlobalReferenceSlot(J9Object **slotPtr, GC_JNIGlobalReferenceIterator *jniGlobalReferenceIterator);
