@@ -1038,7 +1038,6 @@ jfrOldGarbageCollection(OMR_VMThread *omrVMThread)
 
 	U_64 endTicks = javaVM->memoryManagerFunctions->j9gc_get_cycle_end_time(currentThread);
 	javaVM->jfrState.lastGCCycleEndTicks = endTicks;
-	VM_AtomicSupport::writeBarrier();
 
 	J9JFROldGarbageCollection *jfrEvent = (J9JFROldGarbageCollection *)reserveBuffer(currentThread, currentThread, sizeof(J9JFROldGarbageCollection));
 	if (NULL != jfrEvent) {
@@ -1068,7 +1067,6 @@ jfrYoungGarbageCollection(OMR_VMThread *omrVMThread)
 
 	U_64 endTicks = javaVM->memoryManagerFunctions->j9gc_get_cycle_end_time(currentThread);
 	javaVM->jfrState.lastGCCycleEndTicks = endTicks;
-	VM_AtomicSupport::writeBarrier();
 
 	J9JFRYoungGarbageCollection *jfrEvent = (J9JFRYoungGarbageCollection *)reserveBuffer(currentThread, currentThread, sizeof(J9JFRYoungGarbageCollection));
 	if (NULL != jfrEvent) {
