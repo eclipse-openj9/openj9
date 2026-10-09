@@ -179,6 +179,7 @@ public:
     virtual void *dynamicConstant(int32_t cpIndex, uintptr_t *obj) override;
 
     virtual bool isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false) override;
+    virtual bool isUnresolvedString(int32_t cpIndex, void **stringAddress) override;
     virtual TR_ResolvedMethod *getResolvedVirtualMethod(TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve,
         bool *unresolvedInCP) override;
     virtual TR_ResolvedMethod *getResolvedPossiblyPrivateVirtualMethod(TR::Compilation *, int32_t cpIndex,
