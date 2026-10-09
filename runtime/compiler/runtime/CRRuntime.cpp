@@ -690,7 +690,8 @@ void TR::CRRuntime::prepareForCheckpoint()
 
         // Make sure the limit for the ghost files is at least as big as the data cache size
         if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableDataCacheDisclaiming)
-            || TR::Options::getCmdLineOptions()->getOption(TR_EnableCodeCacheDisclaiming)) {
+            || TR::Options::getCmdLineOptions()->getOption(TR_EnableCodeCacheDisclaiming)
+            || TR::Options::getCmdLineOptions()->getOption(TR_SegregateAOTCodeCache)) {
             U_32 ghostFileLimit
                 = std::max(vm->jitConfig->dataCacheKB, vm->jitConfig->codeCacheTotalKB) * 1024; // convert to bytes
             vm->internalVMFunctions->setRequiredGhostFileLimit(vmThread, ghostFileLimit);

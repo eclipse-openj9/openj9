@@ -2789,6 +2789,7 @@ bool J9::Options::fePreProcess(void *base)
         self()->setOption(TR_DisableIProfilerDataDisclaiming);
         self()->setOption(TR_DisableRuntimeAssumptionDataDisclaiming);
         self()->setOption(TR_EnableCodeCacheDisclaiming, false);
+        self()->setOption(TR_SegregateAOTCodeCache, false);
         self()->setOption(TR_EnableSharedCacheDisclaiming, false);
     }
 
@@ -2947,7 +2948,8 @@ bool J9::Options::fePostProcessJIT(void *base)
 
     if (!self()->getOption(TR_DisableDataCacheDisclaiming) || !self()->getOption(TR_DisableIProfilerDataDisclaiming)
         || !self()->getOption(TR_DisableRuntimeAssumptionDataDisclaiming)
-        || self()->getOption(TR_EnableCodeCacheDisclaiming) || self()->getOption(TR_EnableSharedCacheDisclaiming)) {
+        || self()->getOption(TR_EnableCodeCacheDisclaiming) || self()->getOption(TR_SegregateAOTCodeCache)
+        || self()->getOption(TR_EnableSharedCacheDisclaiming)) {
         // Check requirements for memory disclaiming (Linux kernel and default page size)
         TR::Options::disableMemoryDisclaimIfNeeded(jitConfig);
     }
@@ -2956,8 +2958,10 @@ bool J9::Options::fePostProcessJIT(void *base)
     int32_t argIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::Xcodecache);
 
     if (argIndex >= 0) {
-        if (jitConfig->codeCacheKB < 4 * 1024 * 1024)
+        if (jitConfig->codeCacheKB < 4 * 1024 * 1024) {
             self()->setOption(TR_EnableCodeCacheDisclaiming, false);
+            self()->setOption(TR_SegregateAOTCodeCache, false);
+        }
     } else if (TR::Compiler->target.isLinux() && self()->getOption(TR_EnableCodeCacheDisclaiming)) {
         jitConfig->codeCacheKB *= 2;
     }
@@ -3157,6 +3161,7 @@ bool J9::Options::disableMemoryDisclaimIfNeeded(J9JITConfig *jitConfig)
         TR::Options::getCmdLineOptions()->setOption(TR_DisableIProfilerDataDisclaiming);
         TR::Options::getCmdLineOptions()->setOption(TR_DisableRuntimeAssumptionDataDisclaiming);
         TR::Options::getCmdLineOptions()->setOption(TR_EnableCodeCacheDisclaiming, false);
+        TR::Options::getCmdLineOptions()->setOption(TR_SegregateAOTCodeCache, false);
         if (TR::Options::getVerboseOption(TR_VerbosePerformance)) {
             TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
                 "WARNING: Disclaim feature disabled because swap and %s are not suitable", disclaimDir);
@@ -3188,6 +3193,7 @@ bool J9::Options::disableMemoryDisclaimIfNeeded(J9JITConfig *jitConfig)
         = TR::Options::getCmdLineOptions()->getOption(TR_DisableRuntimeAssumptionDataDisclaiming) ? FALSE : TRUE;
     info.codeCacheDisclaimEnabled
         = TR::Options::getCmdLineOptions()->getOption(TR_EnableCodeCacheDisclaiming) ? TRUE : FALSE;
+    info.segregateAOTCodeCache = TR::Options::getCmdLineOptions()->getOption(TR_SegregateAOTCodeCache) ? TRUE : FALSE;
     info.disclaimOnSwap = compInfo->canDisclaimOnSwap() ? TRUE : FALSE;
     info.disclaimOnFile = compInfo->canDisclaimOnFile() ? TRUE : FALSE;
     info.disclaimDir = compInfo->canDisclaimOnFile() ? disclaimDir : NULL;
