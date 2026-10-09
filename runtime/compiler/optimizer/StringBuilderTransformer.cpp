@@ -85,6 +85,12 @@ int32_t TR_StringBuilderTransformer::perform()
         return 0;
     }
 
+    // Unrestricted fear point placement requires every yield point to remain inducible, so skip this transformation
+    // as otherwise the recreated node's bytecode info will be marked doNotProfile which removes that ability
+    if (comp()->isFearPointPlacementUnrestricted()) {
+        return 0;
+    }
+
     for (TR::AllBlockIterator iter(optimizer()->getMethodSymbol()->getFlowGraph(), comp()); iter.currentBlock() != NULL;
          ++iter) {
         TR::Block *block = iter.currentBlock();
