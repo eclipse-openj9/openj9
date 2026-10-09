@@ -1783,13 +1783,9 @@ public:
     uint32_t getInstanceFieldOffsetIncludingHeader(const char *classSignature, const char *fieldName,
         const char *fieldSig, TR_ResolvedMethod *method);
 
-    virtual void markHotField(TR::Compilation *, TR::SymbolReference *, TR_OpaqueClassBlock *, bool);
     virtual void reportHotField(int32_t reducedCpuUtil, J9Class *clazz, uint8_t fieldOffset, uint32_t reducedFrequency);
-    virtual bool isHotReferenceFieldRequired();
     virtual bool isIndexableDataAddrPresent();
     virtual bool isOffHeapAllocationEnabled();
-    virtual void markClassForTenuredAlignment(TR::Compilation *comp, TR_OpaqueClassBlock *opclazz,
-        uint32_t alignFromStart);
 
     virtual bool shouldDelayAotLoad() { return false; }
 
