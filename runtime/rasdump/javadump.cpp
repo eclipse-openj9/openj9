@@ -4519,14 +4519,38 @@ JavaCoreDumpWriter::writeMonitorObject(J9ThreadMonitor* monitor, j9object_t obj,
 	bool inflated = J9_ARE_ANY_BITS_SET(lock->flags, J9THREAD_MONITOR_INFLATED);
 
 	if (IS_J9_OBJECT_MONITOR_OWNER_DETACHED(lockOwner)) {
-		if (inflated) {
-			_OutputStream.writeCharacters("owner \"");
-		} else {
-			_OutputStream.writeCharacters("Flat locked by \"");
+		_OutputStream.writeCharacters("owner \"");
+#if JAVA_SPEC_VERSION >= 24
+		/* Resolve the owning virtual thread name via the continuation's vthread reference. */
+		bool vthreadNameWritten = false;
+		if (NULL != obj) {
+			J9VMThread *vmThread = _Context->onThread;
+			J9ObjectMonitor *objectMonitor = monitorTablePeek(_VirtualMachine, obj);
+			if ((NULL != objectMonitor) && (NULL != objectMonitor->ownerContinuation)) {
+				J9VMContinuation *ownerCont = objectMonitor->ownerContinuation;
+				if (NULL != ownerCont->vthread) {
+					j9object_t nameObject = J9VMJAVALANGTHREAD_NAME(vmThread, ownerCont->vthread);
+					PORT_ACCESS_FROM_VMC(vmThread);
+					char *vthreadName = getVMThreadNameFromString(vmThread, nameObject);
+					if (NULL != vthreadName) {
+						_OutputStream.writeCharacters(vthreadName);
+						j9mem_free_memory(vthreadName);
+						_OutputStream.writeCharacters("\" (J9VMContinuation:");
+						_OutputStream.writePointer(ownerCont);
+						_OutputStream.writeCharacters("), entry count ");
+						_OutputStream.writeInteger(count, "%zu");
+						vthreadNameWritten = true;
+					}
+				}
+			}
 		}
-		_OutputStream.writeCharacters("<detached virtual thread>");
-		_OutputStream.writeCharacters(", entry count ");
-		_OutputStream.writeInteger(count, "%zu");
+		if (!vthreadNameWritten)
+#endif /* JAVA_SPEC_VERSION >= 24 */
+		{
+			_OutputStream.writeCharacters("<detached virtual thread>");
+			_OutputStream.writeCharacters(", entry count ");
+			_OutputStream.writeInteger(count, "%zu");
+		}
 	} else if ((NULL != owner) || (NULL != lockOwner)) {
 		if (inflated) {
 			_OutputStream.writeCharacters("owner \"");
@@ -6256,8 +6280,27 @@ continuationIteratorCallback(J9VMThread *vmThread, J9MM_IterateObjectDescriptor 
 		walkState.userData1 = (void *)jcw;
 		walkState.userData2 = &depth; /* Use this for a depth count. */
 		walkState.frameWalkFunction = writeFrameCallBack;
+#if JAVA_SPEC_VERSION >= 24
+		/* Gather owned monitor information from the continuation so writeFrame
+		 * can include the monitors associated with the correct stack frames.
+		 */
+		J9ObjectMonitorInfo monitorInfos[JavaCoreDumpWriter::_MaximumMonitorInfosPerThread];
+		IDATA monitorCount = 0;
+		memset(monitorInfos, 0, sizeof(monitorInfos));
+		{
+			struct walkClosure monitorClosure;
+			void *monitorArgs[] = { &stackThread, monitorInfos, &monitorCount };
+			monitorClosure.jcw = jcw;
+			monitorClosure.state = monitorArgs;
+			j9sig_protect(protectedGetOwnedObjectMonitors, &monitorClosure, handlerGetOwnedObjectMonitors, jcw,
+					J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_RETURN, &sink);
+		}
+		walkState.userData3 = monitorInfos;
+		walkState.userData4 = (void *)monitorCount;
+#else /* JAVA_SPEC_VERSION >= 24 */
 		walkState.userData3 = NULL;
 		walkState.userData4 = 0;
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
 		closure.jcw = jcw;
 		closure.state = &walkState;
