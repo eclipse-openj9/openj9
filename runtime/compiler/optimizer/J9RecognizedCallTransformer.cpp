@@ -858,6 +858,9 @@ void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_compareTo_BBI
     arraycmplenNode->setAndIncChild(2, lim);
     arraycmplenNode->setSymbolReference(getSymRefTab()->findOrCreateArrayCmpLenSymbol());
 
+    // arraycmplenNode is an intrinsic that should not be treated as a regular callee by the inliner
+    arraycmplenNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->setIsInlinedByCG();
+
     TR::DataType arraycmplenDataType = arraycmplenNode->getDataType();
     TR::SymbolReference *arraycmplenSymRef
         = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), arraycmplenDataType);
