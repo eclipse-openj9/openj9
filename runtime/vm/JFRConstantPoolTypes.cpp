@@ -1630,6 +1630,38 @@ done:
 }
 
 void
+VM_JFRConstantPoolTypes::addObjectAllocationSampleEntry(J9JFRObjectAllocationSample *objectAllocationSampleData)
+{
+	ObjectAllocationSampleEntry *entry =
+		(ObjectAllocationSampleEntry *)pool_newElement(_objectAllocationSampleTable);
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = objectAllocationSampleData->startTicks;
+	entry->weight = objectAllocationSampleData->weight;
+
+	entry->eventThreadIndex = objectAllocationSampleData->currentThreadTID;
+
+	entry->stackTraceIndex = consumeStackTrace(objectAllocationSampleData->currentThreadTID, J9JFROBJECTALLOCATIONSAMPLE_STACKTRACE(objectAllocationSampleData), objectAllocationSampleData->stackTraceSize, objectAllocationSampleData->stackTraceID);
+	if (isResultNotOKay()) {
+		goto done;
+	}
+
+	entry->objectClassIndex = getClassEntry(objectAllocationSampleData->objectClass);
+	if (isResultNotOKay()) {
+		goto done;
+	}
+
+	_objectAllocationSampleCount += 1;
+
+done:
+	return;
+}
+
+void
 VM_JFRConstantPoolTypes::addClassLoaderStatisticsEntry(J9JFRClassLoaderStatistics *classLoaderStatisticsData)
 {
 	ClassLoaderStatisticsEntry *entry = (ClassLoaderStatisticsEntry *)pool_newElement(_classLoaderStatisticsTable);

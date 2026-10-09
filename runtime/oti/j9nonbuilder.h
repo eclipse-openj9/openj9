@@ -608,6 +608,15 @@ typedef struct J9JFRJavaEventData {
 
 #define J9JFRJAVAEVENTDATA_EVENTDATA(jfrEvent) ((U_8 *)(((J9JFRJavaEventData *)(jfrEvent)) + 1))
 
+/* Variable-size structure - stackTraceSize worth of UDATA follow the fixed portion */
+typedef struct J9JFRObjectAllocationSample {
+	J9JFR_EVENT_WITH_STACKTRACE_FIELDS
+	struct J9Class *objectClass;
+	UDATA weight;
+} J9JFRObjectAllocationSample;
+
+#define J9JFROBJECTALLOCATIONSAMPLE_STACKTRACE(jfrEvent) ((UDATA *)(((J9JFRObjectAllocationSample *)(jfrEvent)) + 1))
+
 typedef struct J9JFRClassLoaderStatistics {
 	J9JFR_EVENT_COMMON_FIELDS
 	struct J9ClassLoader *classLoader;
@@ -6342,6 +6351,12 @@ typedef struct JFRState {
 	IDATA blobFileDescriptor;
 	void *jfrWriter;
 	UDATA jfrChunkCount;
+	/* target ObjectAllocationSample events per second (default 150) */
+	UDATA objectAllocationSampleThrottleRate;
+	/* bytes interval between ObjectAllocationSample events per thread */
+	UDATA objectAllocationSampleInterval;
+	/* hires-clock ticks when the last GC cycle ended; 0 if no GC has occurred */
+	uint64_t lastGCCycleEndTicks;
 	I_64 chunkStartTime;
 	I_64 chunkStartTicks;
 	void *constantEvents;

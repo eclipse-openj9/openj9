@@ -1095,3 +1095,6 @@ TraceEvent=Trc_VM_jfr_parseXlog_output_upToColon noEnv Overhead=1 Level=5 Templa
 TraceEvent=Trc_VM_jfr_parseXlog_output noEnv Overhead=1 Level=5 Template="parseXlogJFR() output method: output(%s) upToColon(%s)"
 TraceEvent=Trc_VM_jfr_parseXlog_disabled noEnv Overhead=1 Level=5 Template="parseXlogJFR() JFR log is disabled"
 TraceEvent=Trc_VM_GetCompleteNPEMessage_JBputstatic_npeCauseMsg Overhead=1 Level=3 Template="GetCompleteNPEMessage JBputstatic has npeCauseMsg (%s)"
+TraceEvent=Trc_VM_jfrObjectAllocationSample Overhead=1 Level=5 Template="jfrObjectAllocationSample class=%.*s weight=%zu objectSize=%zu"
+TraceEvent=Trc_VM_jfrObjectAllocationSample_indexableObject Overhead=1 Level=5 Template="jfrObjectAllocationSample class=%.*s%.*s; weight=%zu objectSize=%zu"
+TraceEvent=Trc_VM_jfrRecalibrateObjectAllocationSampleInterval NoEnv Overhead=1 Level=5 Template="jfrRecalibrateObjectAllocationSampleInterval totalBytes=%zu elapsedSeconds=%zu oldInterval=%zu newInterval=%zu"
