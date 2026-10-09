@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  Copyright IBM Corp. and others 2026
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] https://openjdk.org/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+<suite id="AOTValhallaFlattenableFields">
+	<exec command="$JAVA_EXE$ -Xshareclasses:destroyAll" quiet="false"/>
+
+	<variable name="FLATTENINGOPTIONS" value="-XX:+EnableFlattening -XX:-EnableArrayFlattening -XX:ValueTypeFlatteningThreshold=8"/>
+	<variable name="AOTBASEOPTIONS" value="-Xaot:forceaot,limit={org/openj9/test/lworld/ValhallaAOTTestFlattened.test*},dontInline={*ContainerWithValueTypeFields*.?init?*},verbose={compileEnd}"/>
+
+	<!--
+	   - Build eight versions of SCC using two different versions of value type class Node and
+	   - four different versions of a ValhAOTContainer class which has fields of type Node,
+	   - some of which might be null-restricted.
+	  -->
+        <exec command="$JAVA_EXE$ -cp $TESTAOTVTV1PATH$$SEP$$TESTAOTVTVCONTAINERV0PATH$$SEP$$TESTSJARPATH$ --enable-preview -Xshareclasses:name=vt1.cont0,reset -Xscminaot10K -Xscmaxaot100K $AOTBASEOPTIONS$ $FLATTENINGOPTIONS$ org.openj9.test.lworld.ValhallaAOTTestFlattened" quiet="false"/>
+        <exec command="$JAVA_EXE$ -cp $TESTAOTVTV1PATH$$SEP$$TESTAOTVTVCONTAINERV1PATH$$SEP$$TESTSJARPATH$ --enable-preview -Xshareclasses:name=vt1.cont1,reset -Xscminaot10K -Xscmaxaot100K $AOTBASEOPTIONS$ $FLATTENINGOPTIONS$ org.openj9.test.lworld.ValhallaAOTTestFlattened" quiet="false"/>
+        <exec command="$JAVA_EXE$ -cp $TESTAOTVTV1PATH$$SEP$$TESTAOTVTVCONTAINERV2PATH$$SEP$$TESTSJARPATH$ --enable-preview -Xshareclasses:name=vt1.cont2,reset -Xscminaot10K -Xscmaxaot100K $AOTBASEOPTIONS$ $FLATTENINGOPTIONS$ org.openj9.test.lworld.ValhallaAOTTestFlattened" quiet="false"/>
+        <exec command="$JAVA_EXE$ -cp $TESTAOTVTV1PATH$$SEP$$TESTAOTVTVCONTAINERV3PATH$$SEP$$TESTSJARPATH$ --enable-preview -Xshareclasses:name=vt1.cont3,reset -Xscminaot10K -Xscmaxaot100K $AOTBASEOPTIONS$ $FLATTENINGOPTIONS$ org.openj9.test.lworld.ValhallaAOTTestFlattened" quiet="false"/>
+
+        <exec command="$JAVA_EXE$ -cp $TESTAOTVTV2PATH$$SEP$$TESTAOTVTVCONTAINERV0PATH$$SEP$$TESTSJARPATH$ --enable-preview -Xshareclasses:name=vt2.cont0,reset -Xscminaot10K -Xscmaxaot100K $AOTBASEOPTIONS$ $FLATTENINGOPTIONS$ org.openj9.test.lworld.ValhallaAOTTestFlattened" quiet="false"/>
+        <exec command="$JAVA_EXE$ -cp $TESTAOTVTV2PATH$$SEP$$TESTAOTVTVCONTAINERV1PATH$$SEP$$TESTSJARPATH$ --enable-preview -Xshareclasses:name=vt2.cont1,reset -Xscminaot10K -Xscmaxaot100K $AOTBASEOPTIONS$ $FLATTENINGOPTIONS$ org.openj9.test.lworld.ValhallaAOTTestFlattened" quiet="false"/>
+        <exec command="$JAVA_EXE$ -cp $TESTAOTVTV2PATH$$SEP$$TESTAOTVTVCONTAINERV2PATH$$SEP$$TESTSJARPATH$ --enable-preview -Xshareclasses:name=vt2.cont2,reset -Xscminaot10K -Xscmaxaot100K $AOTBASEOPTIONS$ $FLATTENINGOPTIONS$ org.openj9.test.lworld.ValhallaAOTTestFlattened" quiet="false"/>
+        <exec command="$JAVA_EXE$ -cp $TESTAOTVTV2PATH$$SEP$$TESTAOTVTVCONTAINERV3PATH$$SEP$$TESTSJARPATH$ --enable-preview -Xshareclasses:name=vt2.cont3,reset -Xscminaot10K -Xscmaxaot100K $AOTBASEOPTIONS$ $FLATTENINGOPTIONS$ org.openj9.test.lworld.ValhallaAOTTestFlattened" quiet="false"/>
+
+	<if testVariable="VALHNODEDEF" testValue="341" resultVariable="TESTAOTVTPATH" resultValue="$TESTAOTVTV1PATH$"/>
+	<if testVariable="VALHNODEDEF" testValue="342" resultVariable="TESTAOTVTPATH" resultValue="$TESTAOTVTV2PATH$"/>
+
+	<if testVariable="VALHCONTAINERDEF" testValue="350" resultVariable="TESTAOTVTVCONTAINERPATH" resultValue="$TESTAOTVTVCONTAINERV0PATH$"/>
+	<if testVariable="VALHCONTAINERDEF" testValue="351" resultVariable="TESTAOTVTVCONTAINERPATH" resultValue="$TESTAOTVTVCONTAINERV1PATH$"/>
+	<if testVariable="VALHCONTAINERDEF" testValue="352" resultVariable="TESTAOTVTVCONTAINERPATH" resultValue="$TESTAOTVTVCONTAINERV2PATH$"/>
+	<if testVariable="VALHCONTAINERDEF" testValue="353" resultVariable="TESTAOTVTVCONTAINERPATH" resultValue="$TESTAOTVTVCONTAINERV3PATH$"/>
+
+	<test id="testAOTFieldVT1Cont0">
+		<variable name="VTDEFMATCHES" value="no"/>
+		<if testVariable="VALHNODEDEF" testValue="341" resultVariable="VTDEFMATCHES" resultValue="yes"/>
+
+		<variable name="CONTAINERMATCHES" value="no"/>
+		<if testVariable="VALHCONTAINERDEF" testValue="350" resultVariable="CONTAINERMATCHES" resultValue="yes"/>
+		<if testVariable="VALHCONTAINERDEF" testValue="350" resultVariable="VTDEFMATCHES" resultValue="yes"/>
+
+		<variable name="SCCMATCHES" value="yes"/>
+		<if testVariable="VTDEFMATCHES" testValue="no" resultVariable="SCCMATCHES" resultValue="no"/>
+		<if testVariable="CONTAINERMATCHES" testValue="no" resultVariable="SCCMATCHES" resultValue="no"/>
+
+		<variable name="LOADSUCCESSSEEN" value="required"/>
+		<if testVariable="SCCMATCHES" testValue="no" resultVariable="LOADSUCCESSSEEN" resultValue="failure"/>
+
+		<variable name="LOADFAILEDSEEN" value="required"/>
+		<if testVariable="SCCMATCHES" testValue="yes" resultVariable="LOADFAILEDSEEN" resultValue="failure"/>
+
+		<command>$JAVA_EXE$ -cp $TESTAOTVTPATH$$SEP$$TESTAOTVTVCONTAINERPATH$$SEP$$TESTSJARPATH$ --enable-preview -Xshareclasses:name=vt1.cont0 $AOTBASEOPTIONS$ $FLATTENINGOPTIONS$ org.openj9.test.lworld.ValhallaAOTTestFlattened</command>
+
+		<output type="success" regex="yes">#INFO: .*</output>
+		<output type="success" regex="yes">\+ ([cwhvs][oaec][lrto]</output>
+		<output type="$LOADSUCCESSSEEN$" regex="no">+ (AOT load) org/openj9/test/lworld/ValhallaAOTTestFlattened.test</output>
+		<output type="$LOADSUCCESSSEEN$" regex="no">+ (AOT load) org/openj9/test/lworld/ValhallaAOTTestFlattened.test</output>
+		<output type="$LOADFAILEDSEEN$" regex="no">! (AOT load) org/openj9/test/lworld/ValhallaAOTTestFlattened.test</output>
+	</test>
+
+	<test id="testAOTFieldVT1Cont1">
+                <variable name="VTDEFMATCHES" value="no"/>
+                <if testVariable="VALHNODEDEF" testValue="341" resultVariable="VTDEFMATCHES" resultValue="yes"/>
+
+                <variable name="CONTAINERMATCHES" value="no"/>
+                <if testVariable="VALHCONTAINERDEF" testValue="351" resultVariable="CONTAINERMATCHES" resultValue="yes"/>
+
+                <variable name="SCCMATCHES" value="yes"/>
+		<if testVariable="VTDEFMATCHES" testValue="no" resultVariable="SCCMATCHES" resultValue="no"/>
+		<if testVariable="CONTAINERMATCHES" testValue="no" resultVariable="SCCMATCHES" resultValue="no"/>
+
+                <variable name="LOADSUCCESSSEEN" value="required"/>
+                <if testVariable="SCCMATCHES" testValue="no" resultVariable="LOADSUCCESSSEEN" resultValue="failure"/>
+
+                <variable name="LOADFAILEDSEEN" value="required"/>
+                <if testVariable="SCCMATCHES" testValue="yes" resultVariable="LOADFAILEDSEEN" resultValue="failure"/>
+
+		<command>$JAVA_EXE$ -cp $TESTAOTVTPATH$$SEP$$TESTAOTVTVCONTAINERPATH$$SEP$$TESTSJARPATH$ --enable-preview -Xshareclasses:name=vt1.cont1 $AOTBASEOPTIONS$ $FLATTENINGOPTIONS$ org.openj9.test.lworld.ValhallaAOTTestFlattened</command>
+
+		<output type="success" regex="yes">#INFO: .*</output>
+		<output type="success" regex="yes">\+ ([cwhvs][oaec][lrto]</output>
+		<output type="$LOADSUCCESSSEEN$" regex="no">+ (AOT load) org/openj9/test/lworld/ValhallaAOTTestFlattened.test</output>
+		<output type="$LOADSUCCESSSEEN$" regex="no">+ (AOT load) org/openj9/test/lworld/ValhallaAOTTestFlattened.test</output>
+		<output type="$LOADFAILEDSEEN$" regex="no">! (AOT load) org/openj9/test/lworld/ValhallaAOTTestFlattened.test</output>
+	</test>
+
+	<test id="testAOTFieldVT1Cont2">
+                <variable name="VTDEFMATCHES" value="no"/>
+                <if testVariable="VALHNODEDEF" testValue="341" resultVariable="VTDEFMATCHES" resultValue="yes"/>
+
+                <variable name="CONTAINERMATCHES" value="no"/>
+                <if testVariable="VALHCONTAINERDEF" testValue="352" resultVariable="CONTAINERMATCHES" resultValue="yes"/>
+
+                <variable name="SCCMATCHES" value="yes"/>
+		<if testVariable="VTDEFMATCHES" testValue="no" resultVariable="SCCMATCHES" resultValue="no"/>
+		<if testVariable="CONTAINERMATCHES" testValue="no" resultVariable="SCCMATCHES" resultValue="no"/>
+
+                <variable name="LOADSUCCESSSEEN" value="required"/>
+                <if testVariable="SCCMATCHES" testValue="no" resultVariable="LOADSUCCESSSEEN" resultValue="failure"/>
+
+                <variable name="LOADFAILEDSEEN" value="required"/>
+                <if testVariable="SCCMATCHES" testValue="yes" resultVariable="LOADFAILEDSEEN" resultValue="failure"/>
+
+		<command>$JAVA_EXE$ -cp $TESTAOTVTPATH$$SEP$$TESTAOTVTVCONTAINERPATH$$SEP$$TESTSJARPATH$ --enable-preview -Xshareclasses:name=vt1.cont2 $AOTBASEOPTIONS$ $FLATTENINGOPTIONS$ org.openj9.test.lworld.ValhallaAOTTestFlattened</command>
+
+		<output type="success" regex="yes">#INFO: .*</output>
+		<output type="success" regex="yes">\+ ([cwhvs][oaec][lrto]</output>
+		<output type="$LOADSUCCESSSEEN$" regex="no">+ (AOT load) org/openj9/test/lworld/ValhallaAOTTestFlattened.test</output>
+		<output type="$LOADSUCCESSSEEN$" regex="no">+ (AOT load) org/openj9/test/lworld/ValhallaAOTTestFlattened.test</output>
+		<output type="$LOADFAILEDSEEN$" regex="no">! (AOT load) org/openj9/test/lworld/ValhallaAOTTestFlattened.test</output>
+	</test>
+
+	<test id="testAOTFieldVT1Cont3">
+                <variable name="VTDEFMATCHES" value="no"/>
+                <if testVariable="VALHNODEDEF" testValue="341" resultVariable="VTDEFMATCHES" resultValue="yes"/>
+
+                <variable name="CONTAINERMATCHES" value="no"/>
+                <if testVariable="VALHCONTAINERDEF" testValue="353" resultVariable="CONTAINERMATCHES" resultValue="yes"/>
+
+                <variable name="SCCMATCHES" value="yes"/>
+		<if testVariable="VTDEFMATCHES" testValue="no" resultVariable="SCCMATCHES" resultValue="no"/>
+		<if testVariable="CONTAINERMATCHES" testValue="no" resultVariable="SCCMATCHES" resultValue="no"/>
+
+                <variable name="LOADSUCCESSSEEN" value="required"/>
+                <if testVariable="SCCMATCHES" testValue="no" resultVariable="LOADSUCCESSSEEN" resultValue="failure"/>
+
+                <variable name="LOADFAILEDSEEN" value="required"/>
+                <if testVariable="SCCMATCHES" testValue="yes" resultVariable="LOADFAILEDSEEN" resultValue="failure"/>
+
+		<command>$JAVA_EXE$ -cp $TESTAOTVTPATH$$SEP$$TESTAOTVTVCONTAINERPATH$$SEP$$TESTSJARPATH$ --enable-preview -Xshareclasses:name=vt1.cont3 $AOTBASEOPTIONS$ $FLATTENINGOPTIONS$ org.openj9.test.lworld.ValhallaAOTTestFlattened</command>
+
+		<output type="success" regex="yes">#INFO: .*</output>
+		<output type="success" regex="yes">\+ ([cwhvs][oaec][lrto]</output>
+		<output type="$LOADSUCCESSSEEN$" regex="no">+ (AOT load) org/openj9/test/lworld/ValhallaAOTTestFlattened.test</output>
+		<output type="$LOADSUCCESSSEEN$" regex="no">+ (AOT load) org/openj9/test/lworld/ValhallaAOTTestFlattened.test</output>
+		<output type="$LOADFAILEDSEEN$" regex="no">! (AOT load) org/openj9/test/lworld/ValhallaAOTTestFlattened.test</output>
+	</test>
+
+	<test id="testAOTFieldVT2Cont0">
+                <variable name="VTDEFMATCHES" value="no"/>
+                <if testVariable="VALHNODEDEF" testValue="342" resultVariable="VTDEFMATCHES" resultValue="yes"/>
+
+                <variable name="CONTAINERMATCHES" value="no"/>
+                <if testVariable="VALHCONTAINERDEF" testValue="350" resultVariable="CONTAINERMATCHES" resultValue="yes"/>
+		<if testVariable="VALHCONTAINERDEF" testValue="350" resultVariable="VTDEFMATCHES" resultValue="yes"/>
+
+                <variable name="SCCMATCHES" value="yes"/>
+		<if testVariable="VTDEFMATCHES" testValue="no" resultVariable="SCCMATCHES" resultValue="no"/>
+		<if testVariable="CONTAINERMATCHES" testValue="no" resultVariable="SCCMATCHES" resultValue="no"/>
+
+                <variable name="LOADSUCCESSSEEN" value="required"/>
+                <if testVariable="SCCMATCHES" testValue="no" resultVariable="LOADSUCCESSSEEN" resultValue="failure"/>
+
+                <variable name="LOADFAILEDSEEN" value="required"/>
+                <if testVariable="SCCMATCHES" testValue="yes" resultVariable="LOADFAILEDSEEN" resultValue="failure"/>
+
+		<command>$JAVA_EXE$ -cp $TESTAOTVTPATH$$SEP$$TESTAOTVTVCONTAINERPATH$$SEP$$TESTSJARPATH$ --enable-preview -Xshareclasses:name=vt2.cont0 $AOTBASEOPTIONS$ $FLATTENINGOPTIONS$ org.openj9.test.lworld.ValhallaAOTTestFlattened</command>
+
+		<output type="success" regex="yes">#INFO: .*</output>
+		<output type="success" regex="yes">\+ ([cwhvs][oaec][lrto]</output>
+		<output type="$LOADSUCCESSSEEN$" regex="no">+ (AOT load) org/openj9/test/lworld/ValhallaAOTTestFlattened.test</output>
+		<output type="$LOADSUCCESSSEEN$" regex="no">+ (AOT load) org/openj9/test/lworld/ValhallaAOTTestFlattened.test</output>
+		<output type="$LOADFAILEDSEEN$" regex="no">! (AOT load) org/openj9/test/lworld/ValhallaAOTTestFlattened.test</output>
+	</test>
+
+	<test id="testAOTFieldVT2Cont1">
+                <variable name="VTDEFMATCHES" value="no"/>
+                <if testVariable="VALHNODEDEF" testValue="342" resultVariable="VTDEFMATCHES" resultValue="yes"/>
+
+                <variable name="CONTAINERMATCHES" value="no"/>
+                <if testVariable="VALHCONTAINERDEF" testValue="351" resultVariable="CONTAINERMATCHES" resultValue="yes"/>
+
+                <variable name="SCCMATCHES" value="yes"/>
+		<if testVariable="VTDEFMATCHES" testValue="no" resultVariable="SCCMATCHES" resultValue="no"/>
+		<if testVariable="CONTAINERMATCHES" testValue="no" resultVariable="SCCMATCHES" resultValue="no"/>
+
+                <variable name="LOADSUCCESSSEEN" value="required"/>
+                <if testVariable="SCCMATCHES" testValue="no" resultVariable="LOADSUCCESSSEEN" resultValue="failure"/>
+
+                <variable name="LOADFAILEDSEEN" value="required"/>
+                <if testVariable="SCCMATCHES" testValue="yes" resultVariable="LOADFAILEDSEEN" resultValue="failure"/>
+
+		<command>$JAVA_EXE$ -cp $TESTAOTVTPATH$$SEP$$TESTAOTVTVCONTAINERPATH$$SEP$$TESTSJARPATH$ --enable-preview -Xshareclasses:name=vt2.cont1 $AOTBASEOPTIONS$ $FLATTENINGOPTIONS$ org.openj9.test.lworld.ValhallaAOTTestFlattened</command>
+
+		<output type="success" regex="yes">#INFO: .*</output>
+		<output type="success" regex="yes">\+ ([cwhvs][oaec][lrto]</output>
+		<output type="$LOADSUCCESSSEEN$" regex="no">+ (AOT load) org/openj9/test/lworld/ValhallaAOTTestFlattened.test</output>
+		<output type="$LOADSUCCESSSEEN$" regex="no">+ (AOT load) org/openj9/test/lworld/ValhallaAOTTestFlattened.test</output>
+		<output type="$LOADFAILEDSEEN$" regex="no">! (AOT load) org/openj9/test/lworld/ValhallaAOTTestFlattened.test</output>
+	</test>
+
+	<test id="testAOTFieldVT2Cont2">
+                <variable name="VTDEFMATCHES" value="no"/>
+                <if testVariable="VALHNODEDEF" testValue="342" resultVariable="VTDEFMATCHES" resultValue="yes"/>
+
+                <variable name="CONTAINERMATCHES" value="no"/>
+                <if testVariable="VALHCONTAINERDEF" testValue="352" resultVariable="CONTAINERMATCHES" resultValue="yes"/>
+
+                <variable name="SCCMATCHES" value="yes"/>
+		<if testVariable="VTDEFMATCHES" testValue="no" resultVariable="SCCMATCHES" resultValue="no"/>
+		<if testVariable="CONTAINERMATCHES" testValue="no" resultVariable="SCCMATCHES" resultValue="no"/>
+
+                <variable name="LOADSUCCESSSEEN" value="required"/>
+                <if testVariable="SCCMATCHES" testValue="no" resultVariable="LOADSUCCESSSEEN" resultValue="failure"/>
+
+                <variable name="LOADFAILEDSEEN" value="required"/>
+                <if testVariable="SCCMATCHES" testValue="yes" resultVariable="LOADFAILEDSEEN" resultValue="failure"/>
+
+		<command>$JAVA_EXE$ -cp $TESTAOTVTPATH$$SEP$$TESTAOTVTVCONTAINERPATH$$SEP$$TESTSJARPATH$ --enable-preview -Xshareclasses:name=vt2.cont2 $AOTBASEOPTIONS$ $FLATTENINGOPTIONS$ org.openj9.test.lworld.ValhallaAOTTestFlattened</command>
+
+		<output type="success" regex="yes">#INFO: .*</output>
+		<output type="success" regex="yes">\+ ([cwhvs][oaec][lrto]</output>
+		<output type="$LOADSUCCESSSEEN$" regex="no">+ (AOT load) org/openj9/test/lworld/ValhallaAOTTestFlattened.test</output>
+		<output type="$LOADFAILEDSEEN$" regex="no">! (AOT load) org/openj9/test/lworld/ValhallaAOTTestFlattened.test</output>
+	</test>
+
+	<test id="testAOTFieldVT2Cont3">
+                <variable name="VTDEFMATCHES" value="no"/>
+                <if testVariable="VALHNODEDEF" testValue="342" resultVariable="VTDEFMATCHES" resultValue="yes"/>
+
+                <variable name="CONTAINERMATCHES" value="no"/>
+                <if testVariable="VALHCONTAINERDEF" testValue="353" resultVariable="CONTAINERMATCHES" resultValue="yes"/>
+
+                <variable name="SCCMATCHES" value="yes"/>
+		<if testVariable="VTDEFMATCHES" testValue="no" resultVariable="SCCMATCHES" resultValue="no"/>
+		<if testVariable="CONTAINERMATCHES" testValue="no" resultVariable="SCCMATCHES" resultValue="no"/>
+
+                <variable name="LOADSUCCESSSEEN" value="required"/>
+                <if testVariable="SCCMATCHES" testValue="no" resultVariable="LOADSUCCESSSEEN" resultValue="failure"/>
+
+                <variable name="LOADFAILEDSEEN" value="required"/>
+                <if testVariable="SCCMATCHES" testValue="yes" resultVariable="LOADFAILEDSEEN" resultValue="failure"/>
+
+		<command>$JAVA_EXE$ -cp $TESTAOTVTPATH$$SEP$$TESTAOTVTVCONTAINERPATH$$SEP$$TESTSJARPATH$ --enable-preview -Xshareclasses:name=vt2.cont3 $AOTBASEOPTIONS$ $FLATTENINGOPTIONS$ org.openj9.test.lworld.ValhallaAOTTestFlattened</command>
+
+		<output type="success" regex="yes">#INFO: .*</output>
+		<output type="success" regex="yes">\+ ([cwhvs][oaec][lrto]</output>
+		<output type="$LOADSUCCESSSEEN$" regex="no">+ (AOT load) org/openj9/test/lworld/ValhallaAOTTestFlattened.test</output>
+		<output type="$LOADFAILEDSEEN$" regex="no">! (AOT load) org/openj9/test/lworld/ValhallaAOTTestFlattened.test</output>
+	</test>
+
+	<exec command="$JAVA_EXE$ -Xshareclasses:destroyAll" quiet="false"/>
+</suite>
