@@ -183,10 +183,6 @@ VMSnapshotImpl::setupRestoreRun()
 		return false;
 	}
 
-	if (0 != omrthread_monitor_init_with_name(&_vm->rcpCacheMutex, 0, "JVM RCP class Warm Load Monitor")) {
-		return false;
-	}
-
 	return true;
 }
 
@@ -671,6 +667,7 @@ VMSnapshotImpl::fixupClass(J9Class *clazz)
 	clazz->gcLink = NULL;
 	clazz->jitMetaDataList = NULL;
 	clazz->classFlags |= J9ClassIsFrozen;
+	clazz->loadedFromSnapshot = FALSE;
 
 	UDATA totalStaticSlots = totalStaticSlotsForClass(clazz->romClass);
 	memset(clazz->ramStatics, 0, totalStaticSlots * sizeof(UDATA));
@@ -767,6 +764,7 @@ VMSnapshotImpl::fixupArrayClass(J9ArrayClass *clazz)
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	clazz->gcLink = NULL;
 	clazz->classFlags |= J9ClassIsFrozen;
+	clazz->loadedFromSnapshot = FALSE;
 
 	UDATA i;
 	if (NULL != clazz->staticSplitMethodTable) {
