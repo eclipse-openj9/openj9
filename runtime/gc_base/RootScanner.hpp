@@ -529,30 +529,6 @@ public:
 
 #if defined(J9VM_OPT_JVMTI)
 	virtual void doJVMTIObjectTagSlot(J9Object **slotPtr, GC_JVMTIObjectTagTableIterator *objectTagTableIterator);
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	/**
-	 * Called once per proxy object in the valueTypeObjectTagTable.
-	 * Each collector overrides this to either mark the proxy as live
-	 * or update its address if the GC moved it to a new location.
-	 *
-	 * @param slotPtr  pointer to the stored object reference
-	 *
-	 * @note If the object moved, write the new address back into *slotPtr.
-	 * @note Never remove the entry here — only the agent or env shutdown does that.
-	 * @note The default empty body is fine for collectors that do not move objects.
-	 */
-	virtual void doValueTypeObjectTagSlot(J9Object **slotPtr) {}
-	/**
-	 * Walk every proxy object in the valueTypeObjectTagTable of each JVMTI
-	 * environment and call doValueTypeObjectTagSlot() on it.
-	 *
-	 * Runs early in the GC cycle, before any object is declared dead,
-	 * so proxies are kept alive even though nothing else points to them.
-	 *
-	 * @param env  the GC environment for the current thread
-	 */
-	void scanValueTypeObjectTagTables(MM_EnvironmentBase *env);
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #endif /* J9VM_OPT_JVMTI */
 
 	virtual void doStringTableSlot(J9Object **slotPtr, GC_StringTableIterator *stringTableIterator);

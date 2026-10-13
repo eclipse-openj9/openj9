@@ -410,20 +410,3 @@ MM_MarkingSchemeRootClearer::doJVMTIObjectTagSlot(omrobjectptr_t *slotPtr, GC_JV
 		objectTagTableIterator->removeSlot();
 	}
 }
-
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-/**
- * Mark a value-type proxy object so it survives the current GC cycle.
- * Called during scanRoots() Phase 1 for each entry in valueTypeObjectTagTable.
- * The entry is never removed; proxy objects are kept alive for the lifetime
- * of the JVMTI environment.
- */
-void
-MM_MarkingSchemeRootClearer::doValueTypeObjectTagSlot(J9Object **slotPtr)
-{
-	omrobjectptr_t object = *slotPtr;
-	if (NULL != object) {
-		_markingScheme->markObject(_env, object);
-	}
-}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */

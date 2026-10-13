@@ -4163,23 +4163,6 @@ private:
 			*slotPtr = forwardedHeader.getForwardedObject();
 		}
 	}
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	virtual void doValueTypeObjectTagSlot(J9Object **slotPtr)
-	{
-		/* If CopyForward moved this proxy to a new region, update the table entry.
-		 * The entry is never removed; proxy objects are kept alive for the lifetime
-		 * of the JVMTI environment. */
-		J9Object *objectPtr = *slotPtr;
-		if (NULL != objectPtr && !_copyForwardScheme->isLiveObject(objectPtr)) {
-			Assert_MM_true(_copyForwardScheme->isObjectInEvacuateMemory(objectPtr));
-			MM_ForwardedHeader forwardedHeader(objectPtr, _extensions->compressObjectReferences());
-			J9Object *forwardPtr = forwardedHeader.getForwardedObject();
-			if (NULL != forwardPtr) {
-				*slotPtr = forwardPtr;
-			}
-		}
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #endif /* J9VM_OPT_JVMTI */
 
 #if defined(J9VM_GC_FINALIZATION)

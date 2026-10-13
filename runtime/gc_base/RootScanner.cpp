@@ -899,43 +899,6 @@ MM_RootScanner::scanJVMTIObjectTagTables(MM_EnvironmentBase *env)
 		reportScanningEnded(RootScannerEntity_JVMTIObjectTagTables);
 	}
 }
-
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-/**
- * Walk every proxy object stored in the JVMTI valueTypeObjectTagTable
- * and tell the GC to keep it alive (or update its address if it moved).
- *
- * This runs before the GC decides what is live, so proxies are never
- * accidentally freed even though nothing else points to them.
- *
- * Entries are only removed when the agent sets a tag to zero or when
- * the JVMTI environment is shut down — the GC never removes them.
- */
-void
-MM_RootScanner::scanValueTypeObjectTagTables(MM_EnvironmentBase *env)
-{
-	if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-		reportScanningStarted(RootScannerEntity_JVMTIObjectTagTables);
-
-		J9JVMTIData *jvmtiData = J9JVMTI_DATA_FROM_VM(_javaVM);
-		J9JVMTIEnv *jvmtiEnv = NULL;
-		J9Object **slotPtr = NULL;
-		if (NULL != jvmtiData) {
-			GC_JVMTIObjectTagTableListIterator envList(jvmtiData->environments);
-			while (NULL != (jvmtiEnv = (J9JVMTIEnv *)envList.nextSlot())) {
-				if (NULL != jvmtiEnv->valueTypeObjectTagTable) {
-					GC_JVMTIObjectTagTableIterator vtTableIterator(jvmtiEnv->valueTypeObjectTagTable);
-					while (NULL != (slotPtr = (J9Object **)vtTableIterator.nextSlot())) {
-						doValueTypeObjectTagSlot(slotPtr);
-					}
-				}
-			}
-		}
-
-		reportScanningEnded(RootScannerEntity_JVMTIObjectTagTables);
-	}
-}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #endif /* J9VM_OPT_JVMTI */
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
@@ -999,13 +962,6 @@ MM_RootScanner::scanRoots(MM_EnvironmentBase *env)
 	scanFinalizableObjects(env);
 #endif /* J9VM_GC_FINALIZATION */
 	scanJNIGlobalReferences(env);
-
-#if defined(J9VM_OPT_JVMTI) && defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	/* Scan value-type proxy table as hard roots so proxies survive GC and retain their tags. */
-	if (_includeJVMTIObjectTagTables) {
-		scanValueTypeObjectTagTables(env);
-	}
-#endif /* J9VM_OPT_JVMTI && J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 
 	if (_jniWeakGlobalReferencesTableAsRoot) {
 		/* JNI Weak Global References table should be scanned as a hard root */

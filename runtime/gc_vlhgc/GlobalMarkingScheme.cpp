@@ -1439,17 +1439,6 @@ private:
 			objectTagTableIterator->removeSlot();
 		}
 	}
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	virtual void doValueTypeObjectTagSlot(J9Object **slotPtr) {
-		/* Mark this value-type proxy as live so it survives the current GC cycle.
-		 * The entry is never removed; proxy objects are kept alive for the lifetime
-		 * of the JVMTI environment. */
-		J9Object *objectPtr = *slotPtr;
-		if (NULL != objectPtr) {
-			_markingScheme->markObject((MM_EnvironmentVLHGC *)_env, objectPtr);
-		}
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #endif /* defined(J9VM_OPT_JVMTI) */
 
 public:

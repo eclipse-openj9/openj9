@@ -267,24 +267,6 @@ public:
 			*slotPtr = forwardedHeader.getForwardedObject();
 		}
 	}
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	virtual void
-	doValueTypeObjectTagSlot(omrobjectptr_t *slotPtr)
-	{
-		/* If the Scavenger moved this proxy to a new region, update the table entry.
-		 * The entry is never removed; proxy objects are kept alive for the lifetime
-		 * of the JVMTI environment. */
-		bool const compressed = _extensions->compressObjectReferences();
-		omrobjectptr_t objectPtr = *slotPtr;
-		if (objectPtr && _scavenger->isObjectInEvacuateMemory(objectPtr)) {
-			MM_ForwardedHeader forwardedHeader(objectPtr, compressed);
-			omrobjectptr_t forwardPtr = forwardedHeader.getForwardedObject();
-			if (NULL != forwardPtr) {
-				*slotPtr = forwardPtr;
-			}
-		}
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #endif /* J9VM_OPT_JVMTI */
 #if defined(J9VM_GC_FINALIZATION)
 	virtual void

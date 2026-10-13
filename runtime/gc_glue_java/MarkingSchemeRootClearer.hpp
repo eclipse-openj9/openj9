@@ -72,9 +72,6 @@ public:
 	virtual void doStringTableSlot(omrobjectptr_t *slotPtr, GC_StringTableIterator *stringTableIterator);
 	virtual void doStringCacheTableSlot(omrobjectptr_t *slotPtr);
 	virtual void doJVMTIObjectTagSlot(omrobjectptr_t *slotPtr, GC_JVMTIObjectTagTableIterator *objectTagTableIterator);
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	virtual void doValueTypeObjectTagSlot(J9Object **slotPtr);
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	virtual void doFinalizableObject(omrobjectptr_t object);
 
 protected:
