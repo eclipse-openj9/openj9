@@ -1563,8 +1563,9 @@ static bool handleResponse(JITServer::MessageType response, JITServer::ClientStr
             auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t>();
             auto mirror = std::get<0>(recv);
             auto cpIndex = std::get<1>(recv);
-            bool isUnresolved = mirror->isUnresolvedString(cpIndex, true);
-            client->write(response, mirror->stringConstant(cpIndex), isUnresolved, isUnresolved);
+            void *stringConst = mirror->stringConstant(cpIndex);
+            bool isUnresolved = mirror->isUnresolvedString(cpIndex, false);
+            client->write(response, stringConst, isUnresolved);
         } break;
         case MessageType::ResolvedMethod_getMultipleResolvedMethods: {
             auto recv
