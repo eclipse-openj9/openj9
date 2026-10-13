@@ -36,17 +36,17 @@ import com.ibm.j9ddr.vm29.pointer.generated.OMR_VMThreadPointer;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
 public class J9ThreadHelper {
-	
-	private static WeakReference<Map<Long, IOSThread>> cachedThreads = null;
-	
+
+	private static WeakReference<Map<UDATA, IOSThread>> cachedThreads;
+
 	public static VoidPointer getTLS(J9ThreadPointer threadPointer, UDATA key) throws CorruptDataException
 	{
 		return VoidPointer.cast(threadPointer.tlsEA().at(key.sub(1)));
 	}
-	
+
 	public static J9VMThreadPointer getVMThread(J9ThreadPointer threadPointer) throws CorruptDataException
 	{
-		J9VMThreadPointer vmThread = null;
+		J9VMThreadPointer vmThread;
 		OMR_VMThreadPointer omrVmThread = OMR_VMThreadPointer.cast(getTLS(threadPointer, J9RASHelper.getVM(DataType.getJ9RASPointer()).omrVM()._vmThreadKey()));
 		if (omrVmThread.isNull()) {
 			vmThread = J9VMThreadPointer.NULL;
@@ -55,39 +55,30 @@ public class J9ThreadHelper {
 		}
 		return vmThread;
 	}
-	
-	public static IOSThread getOSThread(J9ThreadPointer threadPointer) throws CorruptDataException {
-		return getOSThread(threadPointer.tid().longValue());
-	}
 
-	public static IOSThread getOSThread(long tid) throws CorruptDataException {
-		Map<Long, IOSThread> threadMap = getThreadMap();
-		return threadMap.get(tid);
+	public static IOSThread getOSThread(J9ThreadPointer threadPointer) throws CorruptDataException {
+		return getThreadMap().get(threadPointer.tid());
 	}
 
 	public static Iterator<IOSThread> getOSThreads() throws CorruptDataException {
-		Map<Long, IOSThread> threadMap = getThreadMap();
-		return threadMap.values().iterator();
+		return getThreadMap().values().iterator();
 	}
 
-	private static Map<Long, IOSThread> getThreadMap() throws CorruptDataException {
-		Map<Long, IOSThread> thrMap = null;
+	private static Map<UDATA, IOSThread> getThreadMap() throws CorruptDataException {
+		Map<UDATA, IOSThread> thrMap;
 		if (cachedThreads != null) {
 			thrMap = cachedThreads.get();
-		}
-		if (thrMap != null) {
-			return thrMap;
+			if (thrMap != null) {
+				return thrMap;
+			}
 		}
 
-		/*
-		 * There was no cache of threads, populate a new one while we find the
-		 * thread the caller wanted.
-		 */
-		thrMap = new TreeMap<Long, IOSThread>();
+		/* Create a new map for to cache. */
+		thrMap = new TreeMap<>(UDATA.comparator());
 		for (IOSThread thread : DataType.getProcess().getThreads()) {
-			thrMap.put(thread.getThreadId(), thread);
+			thrMap.put(new UDATA(thread.getThreadId()), thread);
 		}
-		cachedThreads = new WeakReference<Map<Long, IOSThread>>(thrMap);
+		cachedThreads = new WeakReference<>(thrMap);
 		return thrMap;
 	}
 
