@@ -22,6 +22,7 @@
 package com.ibm.j9ddr.vm29.types;
 
 import java.math.BigInteger;
+import java.util.Comparator;
 
 import com.ibm.j9ddr.InvalidDataTypeException;
 import com.ibm.j9ddr.vm29.pointer.AbstractPointer;
@@ -45,6 +46,10 @@ public class UDATA extends UScalar {
 		}
 		MIN = new UDATA(0);
 		MAX = new UDATA(MASK);
+	}
+
+	public static Comparator<UDATA> comparator() {
+		return (lhs, rhs) -> Long.compareUnsigned(lhs.data, rhs.data);
 	}
 
 	public UDATA(long value) {
