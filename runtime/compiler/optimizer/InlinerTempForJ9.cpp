@@ -4040,15 +4040,17 @@ int32_t TR_MultipleCallTargetInliner::estimateCallTargetSize(TR_CallTarget *call
             calltarget, callNode, tracer()->traceSignature(calltarget), size);
 
         // Adjust size for exception successors
-        if (currentBlockHasExceptionSuccessors && ecs->aggressivelyInlineThrows() && size > 0) {
+        if (currentBlockHasExceptionSuccessors && ecs->aggressivelyInlineThrows()) {
             _maxRecursiveCallByteCodeSizeEstimate >>= 3;
-            size >>= 3;
-            size = std::max<uint32_t>(1, size);
 
-            heuristicTrace(tracer(),
-                "Setting size to %d because current block has exception successors and want to aggressively inline "
-                "throws 2",
-                size);
+            if (size > 0) {
+                size >>= 3;
+                size = std::max<uint32_t>(1, size);
+                heuristicTrace(tracer(),
+                    "Setting size to %d because current block has exception successors and want to aggressively inline "
+                    "throws 2",
+                    size);
+            }
         }
     }
 
