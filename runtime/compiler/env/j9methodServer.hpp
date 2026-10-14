@@ -89,21 +89,6 @@ struct TR_ResolvedMethodKey {
     }
 };
 
-struct TR_IsUnresolvedString {
-    TR_IsUnresolvedString()
-        : _optimizeForAOTTrueResult(false)
-        , _optimizeForAOTFalseResult(false)
-    {}
-
-    TR_IsUnresolvedString(bool optimizeForAOTTrueResult, bool optimizeForAOTFalseResult)
-        : _optimizeForAOTTrueResult(optimizeForAOTTrueResult)
-        , _optimizeForAOTFalseResult(optimizeForAOTFalseResult)
-    {}
-
-    bool _optimizeForAOTTrueResult;
-    bool _optimizeForAOTFalseResult;
-};
-
 // define a hash function for TR_ResolvedMethodKey
 namespace std {
 template<> struct hash<TR_ResolvedMethodKey> {

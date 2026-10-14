@@ -1003,7 +1003,7 @@ bool TR_ResolvedJ9JITServerMethod::isUnresolvedString(I_32 cpIndex, void **strin
     // Check the fast per-compilation cache first (no locking needed)
     if (compInfoPT->getCachedStringConstantData((TR_OpaqueClassBlock *)_ramClass, cpIndex, data)) {
         *stringAddress = data._stringConstant;
-        return data._optimizeForAOTFalseResult;
+        return data._isUnresolved;
     }
     // Check the per-client ClassInfo cache (survives across compilations)
     {
@@ -1013,15 +1013,15 @@ bool TR_ResolvedJ9JITServerMethod::isUnresolvedString(I_32 cpIndex, void **strin
         if (it != perClientCache.end()) {
             compInfoPT->cacheStringConstantData((TR_OpaqueClassBlock *)_ramClass, cpIndex, it->second);
             *stringAddress = it->second._stringConstant;
-            return it->second._optimizeForAOTFalseResult;
+            return it->second._isUnresolved;
         }
     }
     _stream->write(JITServer::MessageType::ResolvedMethod_stringConstant, _remoteMirror, cpIndex);
     auto recv = _stream->read<void *, bool>();
-    TR_StringConstantData newData(std::get<0>(recv), std::get<1>(recv), std::get<1>(recv));
+    TR_StringConstantData newData(std::get<0>(recv), std::get<1>(recv));
     {
         OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
-        if (!newData._optimizeForAOTFalseResult)
+        if (!newData._isUnresolved)
             JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._stringConstantCache.insert({ cpIndex, newData });
     }
     compInfoPT->cacheStringConstantData((TR_OpaqueClassBlock *)_ramClass, cpIndex, newData);

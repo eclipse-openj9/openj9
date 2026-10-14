@@ -176,19 +176,16 @@ struct J9MethodNameAndSignature {
 struct TR_StringConstantData {
     TR_StringConstantData()
         : _stringConstant(NULL)
-        , _optimizeForAOTTrueResult(false)
-        , _optimizeForAOTFalseResult(false)
+        , _isUnresolved(false)
     {}
 
-    TR_StringConstantData(void *stringConstant, bool optimizeForAOTTrueResult, bool optimizeForAOTFalseResult)
+    TR_StringConstantData(void *stringConstant, bool isUnresolved)
         : _stringConstant(stringConstant)
-        , _optimizeForAOTTrueResult(optimizeForAOTTrueResult)
-        , _optimizeForAOTFalseResult(optimizeForAOTFalseResult)
+        , _isUnresolved(isUnresolved)
     {}
 
     void *_stringConstant;
-    bool _optimizeForAOTTrueResult;
-    bool _optimizeForAOTFalseResult;
+    bool _isUnresolved;
 };
 
 /**
