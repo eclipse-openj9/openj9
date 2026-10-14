@@ -227,7 +227,7 @@ excludeLocalGc(J9JavaVM *javaVM)
 	 * between aborted CS and following percolated global GC. The check will be done after percolate GC is complete (which will do most of heap fixup).
 	 * Since gcCheck->_scavengerBackout is only set if J9MODRON_GCCHK_SCAVENGER_BACKOUT is requested, relying on gcExtensions->isScavengerBackOutFlagRaised() instead.
 	 */
-	if (gcExtensions->isConcurrentScavengerEnabled() && gcExtensions->isScavengerBackOutFlagRaised()) {
+	if ((gcExtensions->enableUnifiedAbort || gcExtensions->isConcurrentScavengerEnabled()) && gcExtensions->isScavengerBackOutFlagRaised()) {
 		return true;
 	}
 
@@ -312,7 +312,7 @@ excludeGlobalGc(J9VMThread* vmThread)
 		 * Recovery from the aborted CS is mostly done in the global GC and Nursery is not walkable between aborted CS and percolate global.
 		 * Since GC check is done in global GC cycle end hook, gcExtensions->isScavengerBackOutFlagRaised just has been reset, so we have to rely
 		 * on gcCheck->_scavengerBackout, which is yet to be cleared in the initialization of this check cycle  */
-		if (!((gcExtensions->enableUnifiedAbort || gcExtensions->isConcurrentScavengerEnabled()) && gcCheck->_scavengerBackout)) {
+		if (!(gcExtensions->isConcurrentScavengerEnabled() && gcCheck->_scavengerBackout)) {
 			return true;
 		}
 	}
