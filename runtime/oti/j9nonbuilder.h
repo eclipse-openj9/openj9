@@ -5380,7 +5380,7 @@ typedef struct J9InternalVMFunctions {
 	struct J9Class*  ( *internalCreateRAMClassFromROMClass)(struct J9VMThread *vmThread, struct J9ClassLoader *classLoader, struct J9ROMClass *romClass, UDATA options, struct J9Class* elementClass, j9object_t protectionDomain, struct J9ROMMethod ** methodRemapArray, IDATA entryIndex, I_32 locationType, struct J9Class *classBeingRedefined, struct J9Class *hostClass) ;
 	j9object_t  ( *resolveStringRef)(struct J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA cpIndex, UDATA resolveFlags) ;
 	void  ( *exitJavaVM)(struct J9VMThread * vmThread, IDATA rc) ;
-	void  ( *internalRunPreInitInstructions)(struct J9Class * ramClass, struct J9VMThread * vmThread) ;
+	void  ( *internalRunPreInitInstructions)(struct J9Class * ramClass, struct J9VMThread * vmThread, BOOLEAN initResolvedInstFieldRef) ;
 	struct J9Class*  ( *resolveClassRef)(struct J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA cpIndex, UDATA resolveFlags) ;
 	struct J9VMThread*  ( *currentVMThread)(struct J9JavaVM * vm) ;
 	void  ( *freeMemorySegment)(struct J9JavaVM *javaVM, struct J9MemorySegment *segment, BOOLEAN freeDescriptor) ;
