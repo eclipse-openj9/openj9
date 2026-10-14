@@ -294,7 +294,7 @@ excludeGlobalGc(J9VMThread* vmThread)
 
 	/* If Concurrent Scavenger aborted, do not check before global GC (regardless if J9MODRON_GCCHK_SCAVENGER_BACKOUT is requested or not).
 	 * Since checkEngine->_scavengerBackout is set only if J9MODRON_GCCHK_SCAVENGER_BACKOUT requested, gcExtensions->isScavengerBackOutFlagRaised() is checked instead.  */
-	if (gcExtensions->isConcurrentScavengerEnabled() && gcExtensions->isScavengerBackOutFlagRaised() && (OMRVMSTATE_GC_CHECK_BEFORE_GC == vmThread->omrVMThread->vmState)) {
+	if ((gcExtensions->enableUnifiedAbort || gcExtensions->isConcurrentScavengerEnabled()) && gcExtensions->isScavengerBackOutFlagRaised() && (OMRVMSTATE_GC_CHECK_BEFORE_GC == vmThread->omrVMThread->vmState)) {
 		return true;
 	}
 
@@ -312,7 +312,7 @@ excludeGlobalGc(J9VMThread* vmThread)
 		 * Recovery from the aborted CS is mostly done in the global GC and Nursery is not walkable between aborted CS and percolate global.
 		 * Since GC check is done in global GC cycle end hook, gcExtensions->isScavengerBackOutFlagRaised just has been reset, so we have to rely
 		 * on gcCheck->_scavengerBackout, which is yet to be cleared in the initialization of this check cycle  */
-		if (!(gcExtensions->isConcurrentScavengerEnabled() && gcCheck->_scavengerBackout)) {
+		if (!((gcExtensions->enableUnifiedAbort || gcExtensions->isConcurrentScavengerEnabled()) && gcCheck->_scavengerBackout)) {
 			return true;
 		}
 	}
