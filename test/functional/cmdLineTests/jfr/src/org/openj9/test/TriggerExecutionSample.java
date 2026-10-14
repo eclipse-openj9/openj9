@@ -26,6 +26,17 @@ import com.ibm.oti.vm.VM;
 
 public class TriggerExecutionSample {
 	public static void main(String[] args) {
+		if (VM.startJFR() != 0) {
+			System.out.println("Failed to start.");
+			return;
+		}
+
+		if (!VM.isJFRRecordingStarted()) {
+			System.out.println("Failed to record.");
+			return;
+		}
+
 		VM.triggerExecutionSample();
+		System.out.println("Test completed.");
 	}
 }
