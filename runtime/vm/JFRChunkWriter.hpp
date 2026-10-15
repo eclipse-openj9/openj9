@@ -118,6 +118,7 @@ private:
 		int SystemGCID;
 		int YoungGarbageCollectionID;
 		int OldGarbageCollectionID;
+		int ObjectAllocationSampleID;
 		int JVMInformationID;
 		int OSInformationID;
 		int VirtualizationInformationID;
@@ -241,6 +242,7 @@ private:
 	static constexpr int NETWORK_UTILIZATION_EVENT_SIZE = (4 * sizeof(U_64)) + sizeof(U_32);
 	static constexpr int DATA_LOSS_EVENT_SIZE = sizeof(U_8) + LEB128_32_SIZE + (3 * LEB128_64_SIZE);
 	static constexpr int THREAD_ALLOCATION_STATISTICS_EVENT_SIZE = sizeof(U_8) + LEB128_32_SIZE + (3 * LEB128_64_SIZE);
+	static constexpr int OBJECT_ALLOCATION_SAMPLE_EVENT_SIZE = (4 * LEB128_64_SIZE) + (3 * LEB128_32_SIZE);
 	static constexpr int GC_CONFIGURATION_EVENT_SIZE = (3 * LEB128_64_SIZE) + (6 * LEB128_32_SIZE) + (3 * sizeof(U_8));
 
 	static constexpr int METADATA_ID = 1;
@@ -506,6 +508,8 @@ done:
 			pool_do(_constantPoolTypes.getThreadDumpTable(), &writeThreadDumpEvent, this);
 
 			pool_do(_constantPoolTypes.getJavaEventDataTable(), &writeJavaEventData, this);
+
+			pool_do(_constantPoolTypes.getObjectAllocationSampleTable(), &writeObjectAllocationSampleEvent, this);
 
 			if (J9_ARE_NO_BITS_SET(_vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JFR_V2_SUPPORT)) {
 				/* Only write constant events in first chunk. */
@@ -1049,6 +1053,8 @@ done:
 
 	static void writeJavaEventData(void *anElement, void *userData);
 
+	static void writeObjectAllocationSampleEvent(void *anElement, void *userData);
+
 	UDATA
 	calculateRequiredBufferSize()
 	{
@@ -1164,6 +1170,8 @@ done:
 		requiredBufferSize += (_constantPoolTypes.getDataLossCount() * DATA_LOSS_EVENT_SIZE);
 
 		requiredBufferSize += _constantPoolTypes.getJavaEventDataCount();
+
+		requiredBufferSize += (_constantPoolTypes.getObjectAllocationSampleCount() * OBJECT_ALLOCATION_SAMPLE_EVENT_SIZE);
 
 		requiredBufferSize *= 2;
 
