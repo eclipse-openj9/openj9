@@ -721,7 +721,7 @@ bool TR::InterProceduralAnalyzer::addSingleClassThatShouldNotBeNewlyExtended(TR_
 
 bool TR::InterProceduralAnalyzer::addWrittenGlobal(TR::SymbolReference *symRef)
 {
-    char *sig = NULL;
+    const char *sig = NULL;
     int32_t length = 0;
     if (symRef->getSymbol()->isStaticField())
         sig = symRef->getOwningMethod(comp())->staticName(symRef->getCPIndex(), length, trMemory());
@@ -732,7 +732,7 @@ bool TR::InterProceduralAnalyzer::addWrittenGlobal(TR::SymbolReference *symRef)
     for (ListElement<TR::GlobalSymbol> *currSymRef = _globalsWrittenInCurrentPeek.getListHead();
          currSymRef != _prevSymRef; currSymRef = currSymRef->getNextElement()) {
         TR::SymbolReference *currSymReference = currSymRef->getData()->_symRef;
-        char *currSig = NULL;
+        const char *currSig = NULL;
         int32_t currLength = 0;
         if (currSymReference->getSymbol()->isStaticField())
             currSig = currSymReference->getOwningMethod(comp())->staticName(currSymReference->getCPIndex(), currLength,
@@ -752,7 +752,7 @@ bool TR::InterProceduralAnalyzer::addWrittenGlobal(TR::SymbolReference *symRef)
 
     for (TR::GlobalSymbol *currSym = _globalsWritten.getFirst(); currSym; currSym = currSym->getNext()) {
         TR::SymbolReference *currSymReference = currSym->_symRef;
-        char *currSig = NULL;
+        const char *currSig = NULL;
         int32_t currLength = 0;
         if (currSymReference->getSymbol()->isStaticField())
             currSig = currSymReference->getOwningMethod(comp())->staticName(currSymReference->getCPIndex(), currLength,
