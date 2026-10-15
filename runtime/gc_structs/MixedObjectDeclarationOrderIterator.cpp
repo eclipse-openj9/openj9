@@ -42,6 +42,17 @@ GC_MixedObjectDeclarationOrderIterator::nextSlot()
 		return NULL;
 	}
 
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	/* Skip flattened fields — inline bytes are not heap pointers.
+	 * jvmtiFollowReferences reports them separately via followReferencesCallback().
+	 */
+	J9Class *flatClass = _walkState.fieldOffsetWalkState.result.flattenedClass;
+	if ((NULL != flatClass) && J9_IS_FIELD_FLATTENED(flatClass, _fieldShape)) {
+		_fieldShape = _javaVM->internalVMFunctions->fullTraversalFieldOffsetsNextDo(&_walkState);
+		return nextSlot();
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+
 	_slotObject.writeAddressToSlot((fomrobject_t*)((uintptr_t)_objectPtr + _walkState.fieldOffsetWalkState.result.offset + J9JAVAVM_OBJECT_HEADER_SIZE(_javaVM)));
 	_index = _walkState.referenceIndexOffset + _walkState.classIndexAdjust + _walkState.fieldOffsetWalkState.result.index - 1;
 	_fieldShape = _javaVM->internalVMFunctions->fullTraversalFieldOffsetsNextDo(&_walkState);

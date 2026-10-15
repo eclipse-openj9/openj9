@@ -179,6 +179,13 @@ typedef struct J9JVMTIEnv {
 	omrthread_monitor_t threadDataPoolMutex;
 	J9Pool *threadDataPool;
 	J9HashTable *objectTagTable;
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	/* Separate hash table for value-type proxy objects (flattened and standalone).
+	 * Scanned as hard GC roots in scanRoots() Phase 1 so proxies survive collection
+	 * and their tags persist across consecutive FollowReferences() calls.
+	 * Entries are never removed by GC — only by explicit SetTag(obj,0) or env teardown. */
+	J9HashTable *valueTypeObjectTagTable;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	J9JVMTIEventEnableMap globalEventEnable;
 	J9HashTable *watchedClasses;
 	J9Pool *breakpoints;

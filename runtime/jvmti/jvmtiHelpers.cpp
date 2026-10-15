@@ -230,6 +230,13 @@ disposeEnvironment(J9JVMTIEnv * j9env, UDATA freeData)
 			j9env->objectTagTable = NULL;
 		}
 
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+		if (NULL != j9env->valueTypeObjectTagTable) {
+			hashTableFree(j9env->valueTypeObjectTagTable);
+			j9env->valueTypeObjectTagTable = NULL;
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+
 		if (NULL != j9env->watchedClasses) {
 			J9HashTableState walkState;
 			J9JVMTIWatchedClass *watchedClass = (J9JVMTIWatchedClass*)hashTableStartDo(j9env->watchedClasses, &walkState);
@@ -333,6 +340,14 @@ allocateEnvironment(J9InvocationJavaVM * invocationJavaVM, jint version, void **
 			if (j9env->objectTagTable == NULL) {
 				goto fail;
 			}
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+			/* Uses value-type equality (content-based hash) so a new proxy for the same
+			 * flattened value matches an existing entry from a previous FollowReferences() call. */
+			j9env->valueTypeObjectTagTable = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 0, sizeof(J9JVMTIObjectTag), sizeof(jlong), 0, J9MEM_CATEGORY_JVMTI, hashObjectTag, hashEqualObjectTag, NULL, vm);
+			if (j9env->valueTypeObjectTagTable == NULL) {
+				goto fail;
+			}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			j9env->watchedClasses = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 0, sizeof(J9JVMTIWatchedClass), sizeof(UDATA), 0, J9MEM_CATEGORY_JVMTI, watchedClassHash, watchedClassEqual, NULL, NULL);
 			if (j9env->watchedClasses == NULL) {
 				goto fail;
