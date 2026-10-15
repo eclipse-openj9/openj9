@@ -395,11 +395,14 @@ done:
  *
  * @param currentThread[in] the current J9VMThread
  * @param flushThread[in] the J9VMThread to flush
+ * @param flushJavaBuffer[in] true to flush the Java buffer first
+ * @param forceReset[in] true to reset the thread buffer even if space could not be allocated
+ *                       in the global buffer (the buffered data is discarded)
  *
  * @returns true on success, false on failure
  */
 static bool
-flushBufferToGlobal(J9VMThread *currentThread, J9VMThread *flushThread, bool flushJavaBuffer)
+flushBufferToGlobal(J9VMThread *currentThread, J9VMThread *flushThread, bool flushJavaBuffer, bool forceReset)
 {
 	UDATA bufferSize = 0;
 	bool success = true;
@@ -423,6 +426,11 @@ flushBufferToGlobal(J9VMThread *currentThread, J9VMThread *flushThread, bool flu
 
 	if (NULL == allocStart) {
 		success = false;
+		if (forceReset) {
+			/* Discard the thread buffer contents. */
+			flushThread->jfrBuffer.bufferRemaining = flushThread->jfrBuffer.bufferSize;
+			flushThread->jfrBuffer.bufferCurrent = flushThread->jfrBuffer.bufferStart;
+		}
 		goto done;
 	}
 	memcpy(allocStart, flushThread->jfrBuffer.bufferStart, bufferSize);
@@ -452,11 +460,12 @@ done:
  *
  * @param currentThread[in] the current J9VMThread
  * @param freeBuffers[in] true to free the buffers after flush, false to retain the buffers
+ * @param forceReset[in] true to reset thread buffers even if the flush to the global buffer fails
  *
  * @returns true if all buffers flushed successfully, false if not
  */
 static bool
-flushAllThreadBuffers(J9VMThread *currentThread, bool freeBuffers)
+flushAllThreadBuffers(J9VMThread *currentThread, bool freeBuffers, bool forceReset)
 {
 	PORT_ACCESS_FROM_VMC(currentThread);
 	J9JavaVM *vm = currentThread->javaVM;
@@ -469,7 +478,7 @@ flushAllThreadBuffers(J9VMThread *currentThread, bool freeBuffers)
 	Assert_VM_true((J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState));
 
 	do {
-		if (!flushBufferToGlobal(currentThread, loopThread, true)) {
+		if (!flushBufferToGlobal(currentThread, loopThread, true, forceReset)) {
 			allSucceeded = false;
 		}
 		if (freeBuffers) {
@@ -486,7 +495,7 @@ flushAllThreadBuffers(J9VMThread *currentThread, bool freeBuffers)
 
 	if (!flushedCurrentThread) {
 		/* current thread will not be in thread list */
-		if (!flushBufferToGlobal(currentThread, currentThread, true)) {
+		if (!flushBufferToGlobal(currentThread, currentThread, true, forceReset)) {
 			allSucceeded = false;
 		}
 		if (freeBuffers) {
@@ -527,7 +536,7 @@ reserveBuffer(J9VMThread *currentThread, J9VMThread *sampleThread, UDATA size)
 		/* If there isn't enough space, flush the thread buffer to global */
 		if (size > sampleThread->jfrBuffer.bufferRemaining) {
 			/* Dont flush Java buffer as it will recusrively call reserveBuffer. */
-			if (!flushBufferToGlobal(currentThread, sampleThread, false)) {
+			if (!flushBufferToGlobal(currentThread, sampleThread, false, false)) {
 				goto done;
 			}
 		}
@@ -636,15 +645,16 @@ jfrClassesUnload(J9HookInterface **hook, UDATA eventNum, void *eventData, void *
 
 	Trc_VM_jfrClassesUnload(currentThread);
 
-	flushAllThreadBuffers(currentThread, false);
+	flushAllThreadBuffers(currentThread, false, true);
 	if (isJFRV2SupportEnabled(vm)) {
 		/* In JFRv2 we need to coordinate chunk rotation with the JCL. We can't block a GC for
-		 * this so for now just dump the data and emit a data loss event.
+		 * this so for now just discard the data and emit a data loss event.
 		 * TODO https://github.com/eclipse-openj9/openj9/issues/23853
 		 */
 		UDATA lostData = vm->jfrBuffer.bufferSize - vm->jfrBuffer.bufferRemaining;
 		vm->jfrBuffer.bufferRemaining = vm->jfrBuffer.bufferSize;
 		vm->jfrBuffer.bufferCurrent = vm->jfrBuffer.bufferStart;
+
 		jfrEmitDataLoss(currentThread, lostData);
 	} else {
 		/* Some class pointers in the thread and global buffers are about the become
@@ -682,7 +692,7 @@ jfrVMShutdown(J9HookInterface **hook, UDATA eventNum, void *eventData, void *use
 	}
 
 	/* Flush and free all the thread buffers and write out the global buffer */
-	flushAllThreadBuffers(currentThread, true);
+	flushAllThreadBuffers(currentThread, true, false);
 	writeOutGlobalBuffer(currentThread, true, true);
 
 	if (acquiredExclusive) {
@@ -779,7 +789,7 @@ jfrThreadEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *user
 			initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_THREAD_END);
 		}
 	}
-	flushBufferToGlobal(currentThread, currentThread, true);
+	flushBufferToGlobal(currentThread, currentThread, true, false);
 
 	/* Free the thread local buffer */
 	j9mem_free_memory((void *)currentThread->jfrBuffer.bufferStart);
@@ -1882,7 +1892,7 @@ void
 jfrDump(J9VMThread *currentThread, BOOLEAN finalWrite)
 {
 	/* Flush all the thread buffers and write out the global buffer. */
-	flushAllThreadBuffers(currentThread, finalWrite);
+	flushAllThreadBuffers(currentThread, finalWrite, false);
 	writeOutGlobalBuffer(currentThread, finalWrite, true);
 }
 
@@ -3082,6 +3092,9 @@ JfrPeriodicEventSet::requestClassLoadingStatistics(J9VMThread *currentThread)
 struct TempJFRClassLoaderStatistics {
 	TempJFRClassLoaderStatistics *next;
 	struct J9ClassLoader *classLoader;
+	I_64 classCount;
+	U_64 chunkSize;
+	I_64 blockSize;
 };
 
 void
@@ -3091,7 +3104,6 @@ JfrPeriodicEventSet::requestClassLoaderStatistics(J9VMThread *currentThread)
 		return;
 	}
 
-	internalReleaseVMAccess(currentThread);
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9ClassLoaderWalkState walkState;
@@ -3101,6 +3113,9 @@ JfrPeriodicEventSet::requestClassLoaderStatistics(J9VMThread *currentThread)
 
 	TempJFRClassLoaderStatistics *root = NULL;
 
+#if defined(J9VM_THR_PREEMPTIVE)
+	omrthread_monitor_enter(vm->classTableMutex);
+#endif /* defined(J9VM_THR_PREEMPTIVE) */
 	while (NULL != classLoader) {
 		TempJFRClassLoaderStatistics *node = (TempJFRClassLoaderStatistics *)j9mem_allocate_memory(sizeof(TempJFRClassLoaderStatistics), J9MEM_CATEGORY_JFR);
 
@@ -3111,14 +3126,18 @@ JfrPeriodicEventSet::requestClassLoaderStatistics(J9VMThread *currentThread)
 
 		node->classLoader = classLoader;
 
+		VM_JFRUtils::getClassloaderStats(vm, classLoader, &(node->classCount), &(node->chunkSize), &(node->blockSize));
+
 		node->next = root;
 		root = node;
 
 		classLoader = vmFuncs->allClassLoadersNextDo(&walkState);
 	}
+#if defined(J9VM_THR_PREEMPTIVE)
+	omrthread_monitor_exit(vm->classTableMutex);
+#endif /* defined(J9VM_THR_PREEMPTIVE) */
 
 	vmFuncs->allClassLoadersEndDo(&walkState);
-	internalAcquireVMAccess(currentThread);
 
 	if (outOfMemory) {
 		setNativeOutOfMemoryError(currentThread, 0, 0);
@@ -3141,8 +3160,9 @@ JfrPeriodicEventSet::requestClassLoaderStatistics(J9VMThread *currentThread)
 				jfrEvent->parentClassLoader = NULL;
 			}
 
-			VM_JFRUtils::getClassloaderStats(vm, classLoader, &(jfrEvent->classCount), &(jfrEvent->chunkSize), &(jfrEvent->blockSize));
-
+			jfrEvent->classCount = node->classCount;
+			jfrEvent->chunkSize = node->chunkSize;
+			jfrEvent->blockSize = node->blockSize;
 			jfrEvent->hiddenClassCount = 0;
 			jfrEvent->hiddenChunkSize = 0;
 			jfrEvent->hiddenBlockSize = 0;
