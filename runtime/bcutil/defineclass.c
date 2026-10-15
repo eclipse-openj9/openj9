@@ -168,9 +168,11 @@ internalDefineClass(
 		U_8 *upcallClassBytes = classData;
 		U_32 upcallClassBytesLength = classDataLength;
 
+		PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, protectionDomain);
 		omrthread_monitor_exit(vm->classTableMutex);
 		vmFuncs->jvmUpcallsTransformJFREventClass(vmThread, upcallClassBytes, upcallClassBytesLength, &jfrModifiedBytes, &jfrModifiedBytesLength);
 		omrthread_monitor_enter(vm->classTableMutex);
+		protectionDomain = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
 
 		if ((NULL == jfrModifiedBytes) || (0 == jfrModifiedBytesLength)) {
 			omrthread_monitor_exit(vm->classTableMutex);
@@ -203,6 +205,8 @@ internalDefineClass(
 						return NULL;
 					}
 				}
+
+				PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, protectionDomain);
 				omrthread_monitor_exit(vm->classTableMutex);
 				vmFuncs->jvmUpcallsEagerByteInstrumentation(vmThread, superClass, className, (U_16)classNameLength, classLoader, upcallClassBytes, upcallClassBytesLength, &jfrModifiedBytes, &jfrModifiedBytesLength);
 				if (upcallClassBytes != classData) {
@@ -213,6 +217,8 @@ internalDefineClass(
 					j9mem_free_memory(upcallClassBytes);
 				}
 				omrthread_monitor_enter(vm->classTableMutex);
+				protectionDomain = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
+
 				if ((NULL == jfrModifiedBytes) || (0 == jfrModifiedBytesLength)) {
 					omrthread_monitor_exit(vm->classTableMutex);
 					vmFuncs->setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
