@@ -7764,6 +7764,13 @@ TR::Node *TR_J9VM::inlineNativeCall(TR::Compilation *comp, TR::TreeTop *callNode
             return callNode;
         }
         case TR::java_lang_J9VMInternals_getSuperclass: {
+            // Recreating the call as JITHelpers.getSuperclass marks its bytecode info as "doNotProfile". If the
+            // resulting Java calls are not subsequently inlined, they become OSR yield points that cannot induce
+            // an OSR transition, which is invalid when fear point placement is unrestricted. When that's the case,
+            // keep the original native call, so it remains an inducible OSR yield point.
+            if (comp->isFearPointPlacementUnrestricted())
+                return callNode;
+
             TR_OpaqueClassBlock *jitHelpersClass = comp->getJITHelpersClassPointer();
             if (jitHelpersClass && isClassInitialized(jitHelpersClass)) {
                 // fish for the getSuperclass method in JITHelpers
