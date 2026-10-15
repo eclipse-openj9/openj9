@@ -307,7 +307,8 @@ internalDefineClass(
 		romClass = createROMClassFromClassFile(vmThread, &loadData, localBuffer);
 	}
 	if (romClass) {
-		/* Host class can only be set for anonymous classes which are defined by Unsafe.defineAnonymousClass, or hidden classes.
+		/* Host class is set for anonymous classes defined by Unsafe.defineAnonymousClass, hidden classes defined by
+		 * Lookup.defineHiddenClass, and normal classes defined by Lookup.defineClass, where it is the lookup class.
 		 * For other cases, host class is set to NULL.
 		 */
 		if ((NULL != hostClass) && (J2SE_VERSION(vm) >= J2SE_V11)) {

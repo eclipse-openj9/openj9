@@ -294,7 +294,6 @@ final class JFRHelpers {
 				jdkJFR.implAddExports("jdk.jfr.internal.dcmd", javabase);
 				jdkJFR.implAddExports("jdk.jfr.internal.handlers", systemUnnamedModule);
 				jdkJFR.implAddExportsToAllUnnamed("jdk.jfr.internal.handlers");
-				jdkJFR.implAddExportsToAllUnnamed("jdk.jfr.internal");
 				VM.getUnnamedModuleForSystemLoader().implAddReads(jdkJFR);
 
 				logTagValues = (Object[])logTagClass.getDeclaredMethod("values", (Class[])null).invoke(logTagClass);
