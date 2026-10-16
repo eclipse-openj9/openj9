@@ -2135,16 +2135,30 @@ JavaCoreDumpWriter::writeThreadSection(void)
 		"1XMPOOLINFO    JVM Thread pool info:\n");
 	_OutputStream.writeCharacters(
 		"2XMPOOLTOTAL       Current total number of pooled threads: ");
-	_OutputStream.writeInteger(_AllocatedVMThreadCount, "%i");
+	_OutputStream.writeInteger(_AllocatedVMThreadCount, "%zu");
 	_OutputStream.writeCharacters("\n");
 	_OutputStream.writeCharacters(
 		"2XMPOOLLIVE        Current total number of live threads: ");
-	_OutputStream.writeInteger(_VirtualMachine->totalThreadCount, "%i");
+	_OutputStream.writeInteger(_VirtualMachine->totalThreadCount, "%zu");
 	_OutputStream.writeCharacters("\n");
 		_OutputStream.writeCharacters(
 		"2XMPOOLDAEMON      Current total number of live daemon threads: ");
-	_OutputStream.writeInteger(_VirtualMachine->daemonThreadCount, "%i");
+	_OutputStream.writeInteger(_VirtualMachine->daemonThreadCount, "%zu");
 	_OutputStream.writeCharacters("\n");
+#if JAVA_SPEC_VERSION >= 21
+	_OutputStream.writeCharacters(
+		"2XMVIRTUALACTIVE     Active virtual threads: ");
+	_OutputStream.writeInteger(_VirtualMachine->activeVirtualThreadCount, "%zu");
+	_OutputStream.writeCharacters("\n");
+	_OutputStream.writeCharacters(
+		"2XMVIRTUALSTARTED     Total virtual threads started: ");
+	_OutputStream.writeInteger(_VirtualMachine->startedVirtualThreadCount, "%zu");
+	_OutputStream.writeCharacters("\n");
+	_OutputStream.writeCharacters(
+		"2XMVIRTUALFINISHED    Total virtual threads finished: ");
+	_OutputStream.writeInteger(_VirtualMachine->finishedVirtualThreadCount, "%zu");
+	_OutputStream.writeCharacters("\n");
+#endif /* JAVA_SPEC_VERSION >= 21 */
 
 #if !defined(OSX)
 	/* if thread preempt is enabled, and we have the lock, then collect the native stacks */
@@ -6265,6 +6279,24 @@ continuationIteratorCallback(J9VMThread *vmThread, J9MM_IterateObjectDescriptor 
 			jcw->_OutputStream.writeCharacters("3XMTHREADINFO3           No Java callstack associated with this thread\n");
 		}
 		jcw->_OutputStream.writeCharacters("NULL\n");
+	} else {
+		/* continuation == NULL with vthread != NULL means the vthread has never been mounted.
+		 * Show minimal info (no continuation address, no stack).
+		 */
+		j9object_t vthread = J9VMJDKINTERNALVMCONTINUATION_VTHREAD(vmThread, object->object);
+		if (NULL != vthread) {
+			PORT_ACCESS_FROM_VMC(vmThread);
+			JavaCoreDumpWriter *jcw = (JavaCoreDumpWriter *)userData;
+			j9object_t nameObject = J9VMJAVALANGTHREAD_NAME(vmThread, vthread);
+			char *threadName = getVMThreadNameFromString(vmThread, nameObject);
+			jcw->_OutputStream.writeCharacters("3XMVTHDINFO        \"");
+			jcw->_OutputStream.writeCharacters(threadName);
+			jcw->_OutputStream.writeCharacters("\" J9VMContinuation:0x0, java/lang/Thread:");
+			jcw->_OutputStream.writePointer(vthread);
+			jcw->_OutputStream.writeCharacters("\n3XMVTHDINFO1             Type: Virtual (not yet mounted)\n");
+			jcw->_OutputStream.writeCharacters("NULL\n");
+			j9mem_free_memory(threadName);
+		}
 	}
 
 	return JVMTI_ITERATION_CONTINUE;
