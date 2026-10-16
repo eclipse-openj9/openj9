@@ -459,6 +459,7 @@ static_assert((LITERAL_STRLEN(J9_UNMODIFIABLE_CLASS_ANNOTATION) < (size_t)'/'), 
 #if defined(J9VM_OPT_JFR)
 
 #define DEFAULT_JFR_FILE_NAME "defaultJ9recording.jfr"
+#define JFR_EMERGENCY_DUMP_FILE_NAME "OpenJ9-error.jfr"
 
 #endif /* defined(J9VM_OPT_JFR) */
 
