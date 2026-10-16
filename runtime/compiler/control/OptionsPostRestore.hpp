@@ -168,6 +168,7 @@ private:
     bool _disableTrapsPreCheckpoint;
     bool _disableAOTPostRestore;
     bool _enableCodeCacheDisclaimingPreCheckpoint;
+    bool _segregateAOTCodeCachePreCheckpoint;
 
     int32_t _argIndexXjit;
     int32_t _argIndexXjitcolon;
