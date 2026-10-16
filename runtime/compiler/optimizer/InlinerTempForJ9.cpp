@@ -4163,7 +4163,8 @@ int32_t TR_MultipleCallTargetInliner::scaleBasedOnFrequency(TR_ResolvedMethod *c
     } else if ((frequency > 0) && (frequency < veryColdBorderFrequency)) {
         // Luke-warm block: increase size to discourage inlining
         float factor = (float)frequency / (float)maxFrequency;
-        size = (int)((float)size / (factor * factor));
+        float scaledSize = (float)size / (factor * factor);
+        size = (scaledSize >= (float)0x7fffffff) ? 0x7fffffff : ((int32_t)scaledSize);
 
         if (comp()->trace(OMR::inlining))
             heuristicTrace(tracer(), "WeighCallSite: Adjusted call-graph size for call node %p, from %d to %d\n",
@@ -4172,7 +4173,8 @@ int32_t TR_MultipleCallTargetInliner::scaleBasedOnFrequency(TR_ResolvedMethod *c
         // Very cold block: significantly increase size to discourage inlining
         int adjFrequency = frequency ? frequency : 1;
         float factor = (float)adjFrequency / (float)maxFrequency;
-        size = (int)((float)size / factor);
+        float scaledSize = (float)size / factor;
+        size = (scaledSize >= (float)0x7fffffff) ? 0x7fffffff : ((int32_t)scaledSize);
 
         if (comp()->trace(OMR::inlining))
             heuristicTrace(tracer(), "WeighCallSite: Adjusted call-graph size for call node %p, from %d to %d\n",
