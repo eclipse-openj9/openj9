@@ -441,6 +441,16 @@ tryAgain:
 			/* No need to check for JITCompileTimeResolve, since it wouldn't have got this far
 			 * if the class weren't already initialized.
 			 */
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if ((NULL == resolvedClass->classObject)
+				&& IS_RESTORE_RUN(vm)
+				&& J9_ARE_ANY_BITS_SET(resolvedClass->classFlags, J9ClassIsFrozen)
+			) {
+				/* load still in progress */
+				omrthread_yield();
+				goto tryAgain;
+			}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 			initializeClass(vmStruct, resolvedClass);
 			if (J9_ARE_ANY_BITS_SET(vmStruct->publicFlags, J9_PUBLIC_FLAGS_POP_FRAMES_INTERRUPT)) {
 				goto bail;
@@ -753,6 +763,16 @@ tryAgain:
 					if (canRunJavaCode) {
 						UDATA preCount = javaVM->hotSwapCount;
 
+#if defined(J9VM_OPT_SNAPSHOTS)
+						if ((NULL == resolvedClass->classObject)
+							&& IS_RESTORE_RUN(javaVM)
+							&& J9_ARE_ANY_BITS_SET(resolvedClass->classFlags, J9ClassIsFrozen)
+						) {
+							/* load still in progress */
+							omrthread_yield();
+							goto tryAgain;
+						}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 						initializeClass(vmStruct, definingClass);
 						if (threadEventsPending(vmStruct)) {
 							staticAddress = NULL;
