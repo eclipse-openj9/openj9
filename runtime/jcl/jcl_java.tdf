@@ -26,3 +26,4 @@ TraceEvent=Trc_io_fileDescriptorClose_err Noenv Overhead=1 Level=3 Template="io_
 TraceEvent=Trc_io_handleOpen Noenv Overhead=1 Level=3 Test Template="io_handleOpen(filename=%s, access=0x%x, sharing=0x%x, creation=0x%x, attributes=0x%x, handle=%lld)"
 TraceEvent=Trc_io_handleOpen_err Noenv Overhead=1 Level=3 Test Template="io_handleOpen_err(filename=%s, access=0x%x, sharing=0x%x, creation=0x%x, attributes=0x%x, error=%d)"
 TraceEvent=Trc_io_UnixFileSystem_createFileExclusively_close Noenv Overhead=1 Level=3 Template="io_createFileExclusively_close(handle=%d)"
+TraceAssert=Assert_JCL_JAVA_notNull noEnv Overhead=1 Level=1 Assert="(P1) != NULL"
