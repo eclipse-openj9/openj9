@@ -173,6 +173,21 @@ struct J9MethodNameAndSignature {
     std::string _methodSignatureStr;
 };
 
+struct TR_StringConstantData {
+    TR_StringConstantData()
+        : _stringConstant(NULL)
+        , _isUnresolved(false)
+    {}
+
+    TR_StringConstantData(void *stringConstant, bool isUnresolved)
+        : _stringConstant(stringConstant)
+        , _isUnresolved(isUnresolved)
+    {}
+
+    void *_stringConstant;
+    bool _isUnresolved;
+};
+
 /**
    @class ClientSessionData
    @brief Data structure that holds data specific to a client
@@ -248,6 +263,8 @@ public:
         PersistentUnorderedMap<int32_t, J9MethodNameAndSignature> _J9MethodNameCache; // key is a cpIndex
         PersistentUnorderedMap<int32_t, bool>
             _isStableCache; // Store the presence of the Stable annotation for the field indicated by a cpIndex
+        PersistentUnorderedMap<int32_t, TR_StringConstantData>
+            _stringConstantCache; // Cache for stringConstant/isUnresolvedString keyed by cpIndex
         PersistentUnorderedSet<J9ClassLoader *> _referencingClassLoaders;
         // The following vector caches information about the offsets of the reference slots in the class.
         // An empty vector means I don't have any information yet.

@@ -1371,10 +1371,10 @@ TR::SymbolReference *J9::SymbolReferenceTable::findOrCreateStringSymbol(TR::Reso
     int32_t cpIndex)
 {
     TR_ResolvedMethod *owningMethod = owningMethodSymbol->getResolvedMethod();
-    void *stringConst = owningMethod->stringConstant(cpIndex);
+    void *stringConst = NULL;
     TR::SymbolReference *symRef;
     bool isString = true;
-    if (owningMethod->isUnresolvedString(cpIndex)) {
+    if (owningMethod->isUnresolvedString(cpIndex, &stringConst)) {
         symRef = findOrCreateCPSymbol(owningMethodSymbol, cpIndex, TR::Address, false, 0);
         symRef->setOffset((uintptr_t)stringConst);
     } else {
