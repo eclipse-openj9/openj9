@@ -117,10 +117,10 @@ class VM_BufferWriter {
 		return _overflow;
 	}
 
-	U_64
+	I_64
 	getFileOffset(U_8 *bufferOffset, U_8 *from)
 	{
-		return (U_64)((UDATA)bufferOffset - (UDATA)from);
+		return (I_64)((UDATA)bufferOffset - (UDATA)from);
 	}
 
 	U_64
@@ -246,15 +246,23 @@ class VM_BufferWriter {
 			U_8 bytesUsed = 0;
 
 			do {
-				U_8 byte = newVal & 0x7F;
-				newVal >>= 7;
-
-				if (newVal > 0) {
-					byte |= 0x80;
-				}
-				writeU8NoCheck(byte);
 				bytesUsed += 1;
-			} while ((newVal > 0) && (bytesUsed < 9));
+				U_8 byte = 0;
+
+				/* 9th byte carries bits 56-63 raw. */
+				if (9 == bytesUsed) {
+					byte = newVal & 0xFF;
+					newVal = 0;
+				} else {
+					byte = newVal & 0x7F;
+					newVal >>= 7;
+					if (newVal > 0) {
+						byte |= 0x80;
+					}
+				}
+
+				writeU8NoCheck(byte);
+			} while (newVal > 0);
 		}
 	}
 
@@ -281,35 +289,7 @@ class VM_BufferWriter {
 			writeU8NoCheck(((newVal >> 35) & 0x7F) | 0x80);
 			writeU8NoCheck(((newVal >> 42) & 0x7F) | 0x80);
 			writeU8NoCheck(((newVal >> 49) & 0x7F) | 0x80);
-			writeU8NoCheck(((newVal >> 56) & 0x7F));
-		}
-	}
-
-	void
-	writeLEB128PaddedU64(U_8 *cursor, U_64 val)
-	{
-		U_8 *old = _cursor;
-		_cursor = cursor;
-		writeLEB128PaddedU64(val);
-		_cursor = old;
-	}
-
-	void
-	writeLEB128PaddedU64(U_64 val)
-	{
-		if (0 != (val >> 56)) {
-			_overflow = true;
-		} else if (checkBounds(8)) {
-			U_64 newVal = val;
-
-			writeU8NoCheck((newVal & 0x7F) | 0x80);
-			writeU8NoCheck(((newVal >> 7) & 0x7F) | 0x80);
-			writeU8NoCheck(((newVal >> 14) & 0x7F) | 0x80);
-			writeU8NoCheck(((newVal >> 21) & 0x7F) | 0x80);
-			writeU8NoCheck(((newVal >> 28) & 0x7F) | 0x80);
-			writeU8NoCheck(((newVal >> 35) & 0x7F) | 0x80);
-			writeU8NoCheck(((newVal >> 42) & 0x7F) | 0x80);
-			writeU8NoCheck(((newVal >> 49) & 0x7F));
+			writeU8NoCheck(((newVal >> 56) & 0xFF));
 		}
 	}
 
@@ -432,7 +412,7 @@ class VM_BufferWriter {
 
 		if (J9_ARE_ALL_BITS_SET(*start, 0x80)) {
 			start++;
-			val |= (U_64)(*start & 0X7F) << 56;
+			val |= (U_64)(*start & 0XFF) << 56;
 		}
 
 		return val;

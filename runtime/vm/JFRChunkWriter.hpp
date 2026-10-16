@@ -182,7 +182,6 @@ private:
 	VM_BufferWriter *_bufferWriter;
 	U_8 *_metadataOffset;
 	U_8 *_checkPointEventOffset;
-	U_8 *_previousCheckpointDelta;
 	U_8 *_lastDataStart;
 
 	static constexpr int STRING_BUFFER_LENGTH = 128;
@@ -295,6 +294,168 @@ private:
 				bufferWriter->getCursor() - eventStart);
 	}
 
+	void writeCheckpointEvents()
+	{
+		writeThreadStateCheckpointEvent();
+
+		writeFrameTypeCheckpointEvent();
+
+		if (0 == _vm->jfrState.jfrChunkCount) {
+			writeNarrowOOPModeTypesEvent();
+		}
+
+		writeGCNameTypesEvent();
+
+		writeGCCauseTypesEvent();
+
+		writeGCWhenTypesEvent();
+
+		writeThreadCheckpointEvent();
+
+		writeThreadGroupCheckpointEvent();
+
+		writeSymbolTableCheckpointEvent();
+
+		writeModuleCheckpointEvent();
+
+		writeClassloaderCheckpointEvent();
+
+		writeClassCheckpointEvent();
+
+		writePackageCheckpointEvent();
+
+		writeMethodCheckpointEvent();
+
+		writeStacktraceCheckpointEvent();
+
+		writeNetworkInterfaceNameCheckpointEvent();
+
+		/* The chunk header points to the last checkpoint event written, which is the head of the reverse linked list. */
+		_checkPointEventOffset = _lastDataStart;
+	}
+
+	void writeEvents()
+	{
+		pool_do(_constantPoolTypes.getExecutionSampleTable(), &writeExecutionSampleEvent, this);
+
+		pool_do(_constantPoolTypes.getThreadStartTable(), &writeThreadStartEvent, this);
+
+		pool_do(_constantPoolTypes.getThreadEndTable(), &writeThreadEndEvent, this);
+
+		pool_do(_constantPoolTypes.getThreadSleepTable(), &writeThreadSleepEvent, this);
+
+		pool_do(_constantPoolTypes.getMonitorWaitTable(), &writeMonitorWaitEvent, this);
+
+		pool_do(_constantPoolTypes.getMonitorEnterTable(), &writeMonitorEnterEvent, this);
+
+		pool_do(_constantPoolTypes.getThreadParkTable(), &writeThreadParkEvent, this);
+
+		pool_do(_constantPoolTypes.getCPULoadTable(), &writeCPULoadEvent, this);
+
+		pool_do(_constantPoolTypes.getThreadCPULoadTable(), &writeThreadCPULoadEvent, this);
+
+		pool_do(_constantPoolTypes.getClassLoadingStatisticsTable(), &writeClassLoadingStatisticsEvent, this);
+
+		pool_do(_constantPoolTypes.getClassLoaderStatisticsTable(), &writeClassLoaderStatisticsEvent, this);
+
+		pool_do(_constantPoolTypes.getThreadAllocationStatisticsTable(), &writeThreadAllocationStatisticsEvent, this);
+
+		pool_do(_constantPoolTypes.getThreadContextSwitchRateTable(), &writeThreadContextSwitchRateEvent, this);
+
+		pool_do(_constantPoolTypes.getThreadStatisticsTable(), &writeThreadStatisticsEvent, this);
+
+		pool_do(_constantPoolTypes.getSystemGCTable(), &writeSystemGCEvent, this);
+
+		pool_do(_constantPoolTypes.getModuleRequireTable(), &writeModuleRequire, this);
+
+		pool_do(_constantPoolTypes.getModuleExportTable(), &writeModuleExport, this);
+
+		pool_do(_constantPoolTypes.getOldGarbageCollectionTable(), &writeOldGarbageCollectionEvent, this);
+
+		pool_do(_constantPoolTypes.getYoungGarbageCollectionTable(), &writeYoungGarbageCollectionEvent, this);
+
+		pool_do(_constantPoolTypes.getGarbageCollectionTable(), &writeGarbageCollectionEvent, this);
+
+		pool_do(_constantPoolTypes.getPhysicalMemoryTable(), &writePhysicalMemoryEventFromTable, this);
+
+		pool_do(_constantPoolTypes.getGCHeapSummaryTable(), &writeGCHeapSummaryEvent, this);
+
+		pool_do(_constantPoolTypes.getNetworkUtilizationTable(), &writeNetworkUtilizationEvent, this);
+
+		pool_do(_constantPoolTypes.getDataLossTable(), &writeDataLossEvent, this);
+
+		pool_do(_constantPoolTypes.getSystemProcessTable(), &writeSystemProcessEvent, this);
+
+		pool_do(_constantPoolTypes.getNativeLibraryTable(), &writeNativeLibraryEvent, this);
+
+		pool_do(_constantPoolTypes.getThreadDumpTable(), &writeThreadDumpEvent, this);
+
+		pool_do(_constantPoolTypes.getJavaEventDataTable(), &writeJavaEventData, this);
+
+		pool_do(_constantPoolTypes.getObjectAllocationSampleTable(), &writeObjectAllocationSampleEvent, this);
+
+		if (J9_ARE_NO_BITS_SET(_vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JFR_V2_SUPPORT)) {
+			/* Only write constant events in first chunk. */
+			if (0 == _vm->jfrState.jfrChunkCount) {
+				writeJVMInformationEvent();
+
+				writeCPUInformationEvent();
+
+				writeVirtualizationInformationEvent();
+
+				writeOSInformationEvent();
+
+				writeInitialSystemPropertyEvents(_vm);
+
+				writeInitialEnvironmentVariableEvents();
+
+				writeGCHeapConfigurationEvent();
+
+				writeYoungGenerationConfigurationEvent();
+
+				writeGCConfigurationEvent();
+			}
+
+			writePhysicalMemoryEvent();
+		} else {
+			if (_constantPoolTypes.shouldWriteJVMInformation()) {
+				writeJVMInformationEvent();
+			}
+
+			if (_constantPoolTypes.shouldWriteCPUInformationEvent()) {
+				writeCPUInformationEvent();
+			}
+
+			if (_constantPoolTypes.shouldWriteVirtualizationInformationEvent()) {
+				writeVirtualizationInformationEvent();
+			}
+
+			if (_constantPoolTypes.shouldWriteOSInformationEvent()) {
+				writeOSInformationEvent();
+			}
+
+			if (_constantPoolTypes.shouldWriteInitialSystemPropertyEvents()) {
+				writeInitialSystemPropertyEvents(_vm);
+			}
+
+			if (_constantPoolTypes.shouldWriteInitialEnvironmentVariableEvents()) {
+				writeInitialEnvironmentVariableEvents();
+			}
+
+			if (_constantPoolTypes.shouldWriteGCHeapConfigurationEvent()) {
+				writeGCHeapConfigurationEvent();
+			}
+
+			if (_constantPoolTypes.shouldWriteYoungGenerationConfigurationEvent()) {
+				writeYoungGenerationConfigurationEvent();
+			}
+
+			if (_constantPoolTypes.shouldWriteGCConfigurationEvent()) {
+				writeGCConfigurationEvent();
+			}
+		}
+	}
+
 protected:
 
 public:
@@ -314,7 +475,7 @@ public:
 		, _jfrHeaderCursor(NULL)
 		, _bufferWriter(NULL)
 		, _metadataOffset(NULL)
-		, _previousCheckpointDelta(NULL)
+		, _checkPointEventOffset(NULL)
 		, _lastDataStart(NULL)
 #if JAVA_SPEC_VERSION >= 17
 		, events(isJFRV2SupportEnabled(_vm) ? &v2Events : &v1Events)
@@ -419,158 +580,9 @@ done:
 			/* Metadata is always written first, checkpoint events can be in any order */
 			_metadataOffset = writeJFRMetadata();
 
-			_checkPointEventOffset = writeThreadStateCheckpointEvent();
+			writeEvents();
 
-			writeFrameTypeCheckpointEvent();
-
-			if (0 == _vm->jfrState.jfrChunkCount) {
-				writeNarrowOOPModeTypesEvent();
-			}
-
-			writeGCNameTypesEvent();
-
-			writeGCCauseTypesEvent();
-
-			writeGCWhenTypesEvent();
-
-			writeThreadCheckpointEvent();
-
-			writeThreadGroupCheckpointEvent();
-
-			writeSymbolTableCheckpointEvent();
-
-			writeModuleCheckpointEvent();
-
-			writeClassloaderCheckpointEvent();
-
-			writeClassCheckpointEvent();
-
-			writePackageCheckpointEvent();
-
-			writeMethodCheckpointEvent();
-
-			writeStacktraceCheckpointEvent();
-
-			writeNetworkInterfaceNameCheckpointEvent();
-
-			pool_do(_constantPoolTypes.getExecutionSampleTable(), &writeExecutionSampleEvent, this);
-
-			pool_do(_constantPoolTypes.getThreadStartTable(), &writeThreadStartEvent, this);
-
-			pool_do(_constantPoolTypes.getThreadEndTable(), &writeThreadEndEvent, this);
-
-			pool_do(_constantPoolTypes.getThreadSleepTable(), &writeThreadSleepEvent, this);
-
-			pool_do(_constantPoolTypes.getMonitorWaitTable(), &writeMonitorWaitEvent, this);
-
-			pool_do(_constantPoolTypes.getMonitorEnterTable(), &writeMonitorEnterEvent, this);
-
-			pool_do(_constantPoolTypes.getThreadParkTable(), &writeThreadParkEvent, this);
-
-			pool_do(_constantPoolTypes.getCPULoadTable(), &writeCPULoadEvent, this);
-
-			pool_do(_constantPoolTypes.getThreadCPULoadTable(), &writeThreadCPULoadEvent, this);
-
-			pool_do(_constantPoolTypes.getClassLoadingStatisticsTable(), &writeClassLoadingStatisticsEvent, this);
-
-			pool_do(_constantPoolTypes.getClassLoaderStatisticsTable(), &writeClassLoaderStatisticsEvent, this);
-
-			pool_do(_constantPoolTypes.getThreadAllocationStatisticsTable(), &writeThreadAllocationStatisticsEvent, this);
-
-			pool_do(_constantPoolTypes.getThreadContextSwitchRateTable(), &writeThreadContextSwitchRateEvent, this);
-
-			pool_do(_constantPoolTypes.getThreadStatisticsTable(), &writeThreadStatisticsEvent, this);
-
-			pool_do(_constantPoolTypes.getSystemGCTable(), &writeSystemGCEvent, this);
-
-			pool_do(_constantPoolTypes.getModuleRequireTable(), &writeModuleRequire, this);
-
-			pool_do(_constantPoolTypes.getModuleExportTable(), &writeModuleExport, this);
-
-			pool_do(_constantPoolTypes.getOldGarbageCollectionTable(), &writeOldGarbageCollectionEvent, this);
-
-			pool_do(_constantPoolTypes.getYoungGarbageCollectionTable(), &writeYoungGarbageCollectionEvent, this);
-
-			pool_do(_constantPoolTypes.getGarbageCollectionTable(), &writeGarbageCollectionEvent, this);
-
-			pool_do(_constantPoolTypes.getPhysicalMemoryTable(), &writePhysicalMemoryEventFromTable, this);
-
-			pool_do(_constantPoolTypes.getGCHeapSummaryTable(), &writeGCHeapSummaryEvent, this);
-
-			pool_do(_constantPoolTypes.getNetworkUtilizationTable(), &writeNetworkUtilizationEvent, this);
-
-			pool_do(_constantPoolTypes.getDataLossTable(), &writeDataLossEvent, this);
-
-			pool_do(_constantPoolTypes.getSystemProcessTable(), &writeSystemProcessEvent, this);
-
-			pool_do(_constantPoolTypes.getNativeLibraryTable(), &writeNativeLibraryEvent, this);
-
-			pool_do(_constantPoolTypes.getThreadDumpTable(), &writeThreadDumpEvent, this);
-
-			pool_do(_constantPoolTypes.getJavaEventDataTable(), &writeJavaEventData, this);
-
-			pool_do(_constantPoolTypes.getObjectAllocationSampleTable(), &writeObjectAllocationSampleEvent, this);
-
-			if (J9_ARE_NO_BITS_SET(_vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JFR_V2_SUPPORT)) {
-				/* Only write constant events in first chunk. */
-				if (0 == _vm->jfrState.jfrChunkCount) {
-					writeJVMInformationEvent();
-
-					writeCPUInformationEvent();
-
-					writeVirtualizationInformationEvent();
-
-					writeOSInformationEvent();
-
-					writeInitialSystemPropertyEvents(_vm);
-
-					writeInitialEnvironmentVariableEvents();
-
-					writeGCHeapConfigurationEvent();
-
-					writeYoungGenerationConfigurationEvent();
-
-					writeGCConfigurationEvent();
-				}
-
-				writePhysicalMemoryEvent();
-			} else {
-				if (_constantPoolTypes.shouldWriteJVMInformation()) {
-					writeJVMInformationEvent();
-				}
-
-				if (_constantPoolTypes.shouldWriteCPUInformationEvent()) {
-					writeCPUInformationEvent();
-				}
-
-				if (_constantPoolTypes.shouldWriteVirtualizationInformationEvent()) {
-					writeVirtualizationInformationEvent();
-				}
-
-				if (_constantPoolTypes.shouldWriteOSInformationEvent()) {
-					writeOSInformationEvent();
-				}
-
-				if (_constantPoolTypes.shouldWriteInitialSystemPropertyEvents()) {
-					writeInitialSystemPropertyEvents(_vm);
-				}
-
-				if (_constantPoolTypes.shouldWriteInitialEnvironmentVariableEvents()) {
-					writeInitialEnvironmentVariableEvents();
-				}
-
-				if (_constantPoolTypes.shouldWriteGCHeapConfigurationEvent()) {
-					writeGCHeapConfigurationEvent();
-				}
-
-				if (_constantPoolTypes.shouldWriteYoungGenerationConfigurationEvent()) {
-					writeYoungGenerationConfigurationEvent();
-				}
-
-				if (_constantPoolTypes.shouldWriteGCConfigurationEvent()) {
-					writeGCConfigurationEvent();
-				}
-			}
+			writeCheckpointEvents();
 
 			writeJFRHeader();
 
