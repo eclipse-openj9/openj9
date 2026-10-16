@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: IBM Bob
  *******************************************************************************/
 // #10071 This is a Jenkins class
 import hudson.slaves.OfflineCause
@@ -64,6 +65,21 @@ if (!TIMEOUT_UNITS) {
 
 SLACK_CHANNEL = params.SLACK_CHANNEL
 
+// Windows only: recover idle nodes that the test pipeline took offline because workspace
+// cleanup failed or the disk was full (see RECOVERABLE_CAUSES), instead of skipping them.
+RECOVER_OFFLINE_NODES = params.RECOVER_OFFLINE_NODES ? params.RECOVER_OFFLINE_NODES.toString().toBoolean() : false
+MIN_FREE_GB = (params.MIN_FREE_GB ?: '10').toString().toInteger()
+
+// Substrings of the offline cause set by checkErrors() in aqa-tests openjdk_tests.
+RECOVERABLE_CAUSES = ['ERROR: Cannot delete workspace',
+                      'There is not enough space in the file system',
+                      'No space left on device']
+// Added to the offline cause when recovery fails, so the node is not retried until a human clears it.
+FAILED_MARKER = '[auto-recovery failed, manual intervention required]'
+// Labels a node carries while it is being recovered, so queued test jobs cannot be scheduled on it.
+// sw.os.windows must stay: sanitize_node() uses it to choose reboot over kill -9.
+RECOVERING_LABELS = 'sw.os.windows ci.recovering'
+
 RECONNECT_TIMEOUT = params.RECONNECT_TIMEOUT
 if (!RECONNECT_TIMEOUT) {
     RECONNECT_TIMEOUT = defaultReconnectTimeout
@@ -81,6 +97,8 @@ PARAMETERS = [string(name: 'SETUP_LABEL', defaultValue: defaultSetupLabel),
               string(name: 'TIMEOUT_UNITS', defaultValue: defaultUnits),
               string(name: 'RECONNECT_TIMEOUT', defaultValue: defaultReconnectTimeout),
               string(name: 'SLEEP_TIME', defaultValue: defaultSleepTime),
+              booleanParam(name: 'RECOVER_OFFLINE_NODES', defaultValue: false),
+              string(name: 'MIN_FREE_GB', defaultValue: '10'),
               string(name: 'SLACK_CHANNEL', defaultValue: '')]
 /*
 properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')),
@@ -92,6 +110,7 @@ properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKe
 jobs = [:]
 offlineNodes = [:]
 buildNodes = []
+recoveryResults = [:] // nodeName -> 'recovered' | 'failed', used for the report only
 
 timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
     timestamps {
@@ -152,18 +171,28 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
 
                 for (aNode in jenkins.model.Jenkins.instance.getLabel(LABEL).getNodes()) {
                     def nodeName = aNode.getDisplayName()
+                    def computer = aNode.toComputer()
 
-                    if (aNode.toComputer().isOffline()) {
-                        // skip offline nodes
-                        def offlineCause = aNode.toComputer().getOfflineCause()
-                        if (offlineCause instanceof OfflineCause.UserCause) {
-                            // skip offline node disconnected by users
-                            offlineNodes.put(nodeName, offlineCause.toString())
+                    // recovering: this offline node is brought back instead of skipped (see is_recoverable).
+                    def recovering = false
+                    // originalCause: why it was offline, kept so it can be restored if recovery fails.
+                    def originalCause = null
+                    if (computer.isOffline()) {
+                        def offlineCause = computer.getOfflineCause()
+                        if (is_recoverable(aNode, computer, offlineCause)) {
+                            recovering = true
+                            originalCause = offlineCause.toString()
                         } else {
-                            // cache nodes, will attempt to reconnect nodes disconnected by system later
-                            buildNodes.add(nodeName)
+                            // skip offline nodes
+                            if (offlineCause instanceof OfflineCause.UserCause) {
+                                // skip offline node disconnected by users
+                                offlineNodes.put(nodeName, offlineCause.toString())
+                            } else {
+                                // cache nodes, will attempt to reconnect nodes disconnected by system later
+                                buildNodes.add(nodeName)
+                            }
+                            continue
                         }
-                        continue
                     }
 
                     def nodeLabels = []
@@ -174,9 +203,9 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
                     buildNodes.add(nodeName)
 
                     // cache job
-                    jobs["${nodeName}"] = {
+                    def nodeJob = {
                         node("${nodeName}") {
-                            if (MODES.contains('cleanup')) {
+                            if (recovering || MODES.contains('cleanup')) {
                                 stage("${nodeName} - Cleanup Workspaces") {
                                     def buildWorkspace = "${env.WORKSPACE}"
                                     def cleanPaths = cleanDirs.collect { "/tmp/${it}" }
@@ -244,13 +273,23 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
                                 }
                             }
 
-                            if (MODES.contains('sanitize')) {
+                            if (recovering) {
+                                stage("${nodeName} - Verify disk space") {
+                                    def freeKb = sh(script: "df -Pk . | awk 'NR==2 { print \$4 }'", returnStdout: true).trim().toLong()
+                                    def freeGb = freeKb.intdiv(1024 * 1024)
+                                    println("${nodeName}: ${freeGb} GB free")
+                                    if (freeGb < MIN_FREE_GB) {
+                                        error("${nodeName}: only ${freeGb} GB free, need ${MIN_FREE_GB} GB")
+                                    }
+                                }
+                            } else if (MODES.contains('sanitize')) {
                                 stage("${nodeName} - Sanitize node") {
                                     sanitize_node(nodeName)
                                 }
                             }
                         }
                     }
+                    jobs["${nodeName}"] = recovering ? { recover_node(nodeName, computer, originalCause, nodeJob) } : nodeJob
                 }
 
                 if (offlineNodes) {
@@ -270,6 +309,7 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
         try {
             parallel jobs
         } finally {
+            report_recovery()
             if (MODES.contains('sanitize')) {
                 def offlineNodes = []
                 for (label in buildNodes.sort()) {
@@ -300,6 +340,95 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
 }
 
 /*
+ * True if an offline node should be recovered instead of skipped. Windows only: the node must have
+ * been taken offline by checkErrors() in aqa-tests openjdk_tests because workspace cleanup failed or
+ * the disk was full, must not have failed recovery before, and must be idle.
+ */
+def is_recoverable(aNode, computer, offlineCause) {
+    if (!RECOVER_OFFLINE_NODES || !(offlineCause instanceof OfflineCause.UserCause)) {
+        return false
+    }
+    if (!aNode.getLabelString() || !aNode.getLabelString().tokenize(' ').contains('sw.os.windows')) {
+        return false
+    }
+    def cause = offlineCause.toString()
+    if (cause.contains(FAILED_MARKER) || !RECOVERABLE_CAUSES.any { cause.contains(it) }) {
+        return false
+    }
+    return computer.countBusy() == 0
+}
+
+/*
+ * Recover one offline Windows node: reboot it, then run its cleanup job (nodeJob), which also checks
+ * free disk space. While this runs, the node's labels are replaced by RECOVERING_LABELS, so queued
+ * test jobs cannot be scheduled on it before it is clean. The original labels are restored when
+ * recovery ends, whether it succeeded or not. If anything fails the node is put straight back
+ * offline with its original cause plus FAILED_MARKER, so it takes no work and is not retried until
+ * a human clears it. A failed recovery marks the build UNSTABLE instead of failing it, so the other
+ * nodes are not affected.
+ */
+def recover_node(nodeName, computer, originalCause, nodeJob) {
+    def originalLabels = jenkins.model.Jenkins.instance.getNode(nodeName).getLabelString()
+    try {
+        // Logged so the labels can be restored by hand if the controller dies before they are.
+        println("${nodeName}: original labels: ${originalLabels}")
+        set_node_labels(nodeName, RECOVERING_LABELS)
+
+        // Reboot first: it releases the file handles that stopped the workspace cleanup.
+        // node() cannot schedule on an offline node, so bring it online for the reboot.
+        // The cleanup job is scheduled by node name, which every node keeps as a label.
+        computer.setTemporarilyOffline(null)
+        node("${nodeName}") {
+            stage("${nodeName} - Reboot") {
+                sanitize_node(nodeName)
+            }
+        }
+        nodeJob()
+        recoveryResults[nodeName] = 'recovered'
+    } catch (e) {
+        println("${nodeName}: recovery failed: ${e.getMessage()}")
+        computer.setTemporarilyOffline(new OfflineCause.UserCause(null, "${originalCause} ${FAILED_MARKER}"))
+        recoveryResults[nodeName] = 'failed'
+        currentBuild.result = 'UNSTABLE'
+    } finally {
+        set_node_labels(nodeName, originalLabels)
+    }
+}
+
+/*
+ * Replace the labels of a node and save the change.
+ */
+def set_node_labels(nodeName, labels) {
+    def aNode = jenkins.model.Jenkins.instance.getNode(nodeName)
+    aNode.setLabelString(labels)
+    jenkins.model.Jenkins.instance.updateNode(aNode)
+}
+
+/*
+ * Report recovered and failed nodes to Slack.
+ */
+def report_recovery() {
+    if (!SLACK_CHANNEL) {
+        return
+    }
+    def recovered = []
+    def failed = []
+    for (entry in recoveryResults.entrySet().toList()) {
+        if (entry.value == 'recovered') {
+            recovered.add(entry.key)
+        } else {
+            failed.add(entry.key)
+        }
+    }
+    if (recovered) {
+        slackSend channel: SLACK_CHANNEL, color: 'good', message: "${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>) recovered offline Windows nodes: ${recovered.join(',')}"
+    }
+    if (failed) {
+        slackSend channel: SLACK_CHANNEL, color: 'danger', message: "${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>) could not recover Windows nodes, left offline: ${failed.join(',')}"
+    }
+}
+
+/*
  * Return a list of workspace directories (current build workspace excluded)
  */
 def get_other_workspaces(workspaceDir) {
@@ -322,7 +451,7 @@ def sanitize_node(nodeName) {
     def workingNode = jenkins.model.Jenkins.instance.getNode(nodeName)
     def workingComputer = workingNode.toComputer()
 
-    workingComputer.setTemporarilyOffline(true, null)
+    workingComputer.setTemporarilyOffline(new OfflineCause.UserCause(null, "sanitizing node ${nodeName}"))
     try {
         def cmd = ''
 
@@ -355,7 +484,7 @@ def sanitize_node(nodeName) {
 
         println("\t ${nodeName}: Connecting...")
         workingComputer.connect(false)
-        workingComputer.setTemporarilyOffline(false, null)
+        workingComputer.setTemporarilyOffline(null)
         workingComputer.waitUntilOnline()
         println("\t ${nodeName} is back online: ${workingComputer.isOnline()}")
     }
