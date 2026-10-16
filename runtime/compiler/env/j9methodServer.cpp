@@ -1019,10 +1019,9 @@ bool TR_ResolvedJ9JITServerMethod::isUnresolvedString(I_32 cpIndex, void **strin
     _stream->write(JITServer::MessageType::ResolvedMethod_stringConstant, _remoteMirror, cpIndex);
     auto recv = _stream->read<void *, bool>();
     TR_StringConstantData newData(std::get<0>(recv), std::get<1>(recv));
-    {
+    if (!newData._isUnresolved) {
         OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
-        if (!newData._isUnresolved)
-            JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._stringConstantCache.insert({ cpIndex, newData });
+        JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._stringConstantCache.insert({ cpIndex, newData });
     }
     compInfoPT->cacheStringConstantData((TR_OpaqueClassBlock *)_ramClass, cpIndex, newData);
     *stringAddress = std::get<0>(recv);
@@ -2243,6 +2242,16 @@ bool TR_ResolvedRelocatableJ9JITServerMethod::isUnresolvedString(I_32 cpIndex, b
 
     if (optimizeForAOT)
         return TR_ResolvedJ9JITServerMethod::isUnresolvedString(cpIndex);
+    return true;
+}
+
+bool TR_ResolvedRelocatableJ9JITServerMethod::isUnresolvedString(I_32 cpIndex, void **stringAddress)
+{
+    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
+    // For AOT compilations with optimizeForAOT=false, strings are always treated as
+    // unresolved. Fetch the address from the base implementation but return true so
+    // the server never treats an AOT compilation's string slot as a resolved heap object.
+    TR_ResolvedJ9JITServerMethod::isUnresolvedString(cpIndex, stringAddress);
     return true;
 }
 

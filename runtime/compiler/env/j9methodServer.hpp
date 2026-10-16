@@ -343,7 +343,7 @@ public:
     virtual bool getUnresolvedStaticMethodInCP(int32_t cpIndex) override;
     virtual bool getUnresolvedSpecialMethodInCP(I_32 cpIndex) override;
     virtual bool getUnresolvedVirtualMethodInCP(int32_t cpIndex) override;
-    /* No need to override the stringConstant method as the parent method will be sufficient */
+    virtual bool isUnresolvedString(int32_t cpIndex, void **stringAddress) override;
     virtual bool fieldAttributes(TR::Compilation *comp, int32_t cpIndex, uint32_t *fieldOffset, TR::DataType *type,
         bool *volatileP, bool *isFinal, bool *isPrivate, bool isStore, bool *unresolvedInCP,
         bool needAOTValidation) override;
