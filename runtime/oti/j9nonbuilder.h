@@ -5786,6 +5786,8 @@ typedef struct J9InternalVMFunctions {
 	I_64 (*getThreadTID)(struct J9VMThread *currentThread, struct J9VMThread *vmThread);
 	U_32 (*emitStackTrace)(struct J9VMThread *currentThread, I_32 skipCount);
 	void (*flushJavaJFRBuffer)(struct J9VMThread *currentThread, jobject eventWriterRef, I_32 uncommited, I_32 needed);
+	void (*enableJFRObjectAllocationSample)(struct J9VMThread *currentThread, BOOLEAN enable);
+	void (*setJFRObjectAllocationSampleThrottle)(struct J9VMThread *currentThread, UDATA throttle);
 #endif /* defined(J9VM_OPT_JFR) */
 #if defined(J9VM_OPT_SNAPSHOTS)
 	void (*initializeSnapshotClassLoaderObject)(struct J9JavaVM *javaVM, struct J9ClassLoader *classLoader, j9object_t classLoaderObject);
@@ -6353,8 +6355,11 @@ typedef struct JFRState {
 	UDATA jfrChunkCount;
 	/* target ObjectAllocationSample events per second (default 150) */
 	UDATA objectAllocationSampleThrottleRate;
+	/* bytes interval between ObjectAllocationSample events per thread */
+	UDATA objectAllocationSampleInterval;
+	omrthread_monitor_t setObjectAllocationSampleIntervalMutex;
 	/* hires-clock ticks when the last GC cycle ended; 0 if no GC has occurred */
-	volatile uint64_t lastGCCycleEndTicks;
+	uint64_t lastGCCycleEndTicks;
 	I_64 chunkStartTime;
 	I_64 chunkStartTicks;
 	void *constantEvents;

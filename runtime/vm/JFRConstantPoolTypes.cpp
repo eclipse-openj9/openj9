@@ -491,6 +491,7 @@ done:
 	return index;
 }
 
+
 U_32
 VM_JFRConstantPoolTypes::addPackageEntry(J9Class *clazz)
 {
