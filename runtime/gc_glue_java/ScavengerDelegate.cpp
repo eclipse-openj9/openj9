@@ -292,7 +292,7 @@ MM_ScavengerDelegate::doSlot(MM_EnvironmentStandard *env, omrobjectptr_t *slotPt
 		break;
 	case SCAN_REASON_BACKOUT:
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
-		if (_extensions->concurrentScavenger) {
+		if (_extensions->enableUnifiedAbort || _extensions->concurrentScavenger) {
 			scavenger->fixupSlotWithoutCompression(slotPtr);
 		} else
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */

@@ -66,8 +66,7 @@ MM_ScavengerBackOutScanner::scanAllSlots(MM_EnvironmentBase *env)
 	while (NULL != (region = regionIterator.nextRegion())) {
 		MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
 		for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
-			//TODO: do we unify this?
-			if (_extensions->isConcurrentScavengerEnabled()) {
+			if (_extensions->enableUnifiedAbort || _extensions->isConcurrentScavengerEnabled()) {
 				if (_scavenger->isObjectInEvacuateMemory((omrobjectptr_t )region->getLowAddress())) {
 					/* for concurrent scavenger case, only backout lists in Evacuate region. */
 					regionExtension->_continuationObjectLists[i].backoutList();
