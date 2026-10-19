@@ -257,16 +257,8 @@ VM_JFRChunkWriter::writeJFRMetadata()
 U_8 *
 VM_JFRChunkWriter::writeCheckpointEventHeader(CheckpointTypeMask typeMask, U_32 cpCount)
 {
-	/* write delta offset in previous checkpoint event */
-	if (NULL != _previousCheckpointDelta) {
-		_bufferWriter->writeLEB128PaddedU72(
-				_previousCheckpointDelta,
-				_bufferWriter->getFileOffset(_bufferWriter->getCursor(), _lastDataStart));
-	}
-
 	/* reserve size field */
 	U_8 *dataStart = reserveEventSize();
-	_lastDataStart = dataStart;
 
 	if (_debug) {
 		j9tty_printf(
@@ -284,17 +276,13 @@ VM_JFRChunkWriter::writeCheckpointEventHeader(CheckpointTypeMask typeMask, U_32 
 	/* duration */
 	_bufferWriter->writeLEB128((U_64)0);
 
-	/* reserve delta offset to next checkpoint event */
-	_previousCheckpointDelta = _bufferWriter->getCursor();
-	_bufferWriter->writeLEB128PaddedU72(0);
-
-	if (_debug) {
-		j9tty_printf(
-				PORTLIB,
-				"next pointer=0x%llX val=%llu\n",
-				_bufferWriter->getFileOffsetFromStart(_previousCheckpointDelta),
-				VM_BufferWriter::convertFromLEB128ToU64(_previousCheckpointDelta));
+	/* Write the negative delta offset to the previous checkpoint event, or 0 if there is none. */
+	U_64 deltaToPrevious = 0;
+	if (NULL != _lastDataStart) {
+		deltaToPrevious = (U_64)((I_64)_bufferWriter->getFileOffset(_lastDataStart, dataStart));
 	}
+	_bufferWriter->writeLEB128(deltaToPrevious);
+	_lastDataStart = dataStart;
 
 	/* type mask */
 	_bufferWriter->writeU8(typeMask);
@@ -337,7 +325,7 @@ VM_JFRChunkWriter::writeStringLiteral(const char *string)
 U_8 *
 VM_JFRChunkWriter::writeThreadStateCheckpointEvent()
 {
-	U_8 *dataStart = writeCheckpointEventHeader(Generic, 1);
+	U_8 *dataStart = writeCheckpointEventHeader(Statics, 1);
 
 	/* class ID */
 	_bufferWriter->writeLEB128(events->ThreadStateID);
@@ -574,7 +562,7 @@ VM_JFRChunkWriter::writeThreadCheckpointEvent()
 	U_8 *dataStart = NULL;
 
 	if (_constantPoolTypes.getThreadCount() > 0) {
-		dataStart = writeCheckpointEventHeader(Generic, 1);
+		dataStart = writeCheckpointEventHeader(Thread, 1);
 
 		/* class ID */
 		_bufferWriter->writeLEB128(events->ThreadID);
@@ -650,7 +638,7 @@ VM_JFRChunkWriter::writeThreadGroupCheckpointEvent()
 U_8 *
 VM_JFRChunkWriter::writeFrameTypeCheckpointEvent()
 {
-	U_8 *dataStart = writeCheckpointEventHeader(Generic, 1);
+	U_8 *dataStart = writeCheckpointEventHeader(Statics, 1);
 
 	/* class ID */
 	_bufferWriter->writeLEB128(events->FrameTypeID);
@@ -965,7 +953,7 @@ VM_JFRChunkWriter::writeOSInformationEvent()
 void
 VM_JFRChunkWriter::writeNarrowOOPModeTypesEvent()
 {
-	U_8 *dataStart = writeCheckpointEventHeader(Generic, 1);
+	U_8 *dataStart = writeCheckpointEventHeader(Statics, 1);
 
 	/* class ID */
 	_bufferWriter->writeLEB128(events->NarrowOopModesID);
@@ -988,7 +976,7 @@ VM_JFRChunkWriter::writeNarrowOOPModeTypesEvent()
 void
 VM_JFRChunkWriter::writeGCNameTypesEvent()
 {
-	U_8 *dataStart = writeCheckpointEventHeader(Generic, 1);
+	U_8 *dataStart = writeCheckpointEventHeader(Statics, 1);
 
 	/* class ID */
 	_bufferWriter->writeLEB128(events->GCNamesID);
@@ -1011,7 +999,7 @@ VM_JFRChunkWriter::writeGCNameTypesEvent()
 void
 VM_JFRChunkWriter::writeGCCauseTypesEvent()
 {
-	U_8 *dataStart = writeCheckpointEventHeader(Generic, 1);
+	U_8 *dataStart = writeCheckpointEventHeader(Statics, 1);
 
 	/* class ID */
 	_bufferWriter->writeLEB128(events->GCCausesID);
@@ -1034,7 +1022,7 @@ VM_JFRChunkWriter::writeGCCauseTypesEvent()
 void
 VM_JFRChunkWriter::writeGCWhenTypesEvent()
 {
-	U_8 *dataStart = writeCheckpointEventHeader(Generic, 1);
+	U_8 *dataStart = writeCheckpointEventHeader(Statics, 1);
 
 	/* class ID */
 	_bufferWriter->writeLEB128(events->GCWhensID);
