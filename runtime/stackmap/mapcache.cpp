@@ -27,9 +27,8 @@
 extern "C" {
 
 void
-initializeBasicROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod)
+initializeBasicROMMethodInfo(J9ROMMethodInfo *romMethodInfo, J9StackWalkState *walkState, J9ROMMethod *romMethod)
 {
-	J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
 	memset(romMethodInfo, 0, sizeof(*romMethodInfo));
 	romMethodInfo->argCount = romMethod->argCount;
 	romMethodInfo->tempCount = romMethod->tempCount;
@@ -124,9 +123,8 @@ updateROMMethodInfoCache(J9JavaVM *vm, J9ClassLoader *classLoader, J9ROMMethodIn
 }
 
 static void
-getROMMethodInfoCommon(J9StackWalkState *walkState, J9ClassLoader *classLoader, J9ROMClass *romClass, J9ROMMethod *romMethod)
+getROMMethodInfoCommon(J9ROMMethodInfo *romMethodInfo, J9StackWalkState *walkState, J9ClassLoader *classLoader, J9ROMClass *romClass, J9ROMMethod *romMethod)
 {
-	J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
 	J9JavaVM *vm = walkState->javaVM;
 
 	/* Set argBits for methods whose argument count fits in the cache.
@@ -147,12 +145,11 @@ getROMMethodInfoCommon(J9StackWalkState *walkState, J9ClassLoader *classLoader, 
 }
 
 static void
-getROMMethodInfoForBytecodePCInternal(J9StackWalkState *walkState, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA pcOffset, void *bytecodePC, UDATA numberOfLocals, UDATA pendingCount, J9ROMMethod *romMethod)
+getROMMethodInfoForBytecodePCInternal(J9ROMMethodInfo *romMethodInfo, J9StackWalkState *walkState, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA pcOffset, void *bytecodePC, UDATA numberOfLocals, UDATA pendingCount, J9ROMMethod *romMethod)
 {
-	J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
 	J9JavaVM *vm = walkState->javaVM;
 
-	initializeBasicROMMethodInfo(walkState, romMethod);
+	initializeBasicROMMethodInfo(romMethodInfo, walkState, romMethod);
 	romMethodInfo->key = bytecodePC;
 
 	/* Compute local and stack maps if caching is enabled, to store a complete entry on
@@ -194,13 +191,12 @@ getROMMethodInfoForBytecodePCInternal(J9StackWalkState *walkState, J9ClassLoader
 		}
 	}
 
-	getROMMethodInfoCommon(walkState, classLoader, romClass, romMethod);
+	getROMMethodInfoCommon(romMethodInfo, walkState, classLoader, romClass, romMethod);
 }
 
 void
-getROMMethodInfoForROMMethod(J9StackWalkState *walkState, J9ROMMethod *romMethod)
+getROMMethodInfoForROMMethod(J9ROMMethodInfo *romMethodInfo, J9StackWalkState *walkState, J9ROMMethod *romMethod)
 {
-	J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
 	J9JavaVM *vm = walkState->javaVM;
 	J9Method *method = walkState->method;
 
@@ -226,20 +222,19 @@ getROMMethodInfoForROMMethod(J9StackWalkState *walkState, J9ROMMethod *romMethod
 	}
 
 	/* Cache miss - initialize and compute. */
-	initializeBasicROMMethodInfo(walkState, romMethod);
+	initializeBasicROMMethodInfo(romMethodInfo, walkState, romMethod);
 	romMethodInfo->key = key;
 
 	/* Method frames require argBits, but not local/stack maps. */
 	J9ROMClass *romClass = (NULL != clazz) ? clazz->romClass : NULL;
 
 	/* Compute argBits and update cache. */
-	getROMMethodInfoCommon(walkState, classLoader, romClass, romMethod);
+	getROMMethodInfoCommon(romMethodInfo, walkState, classLoader, romClass, romMethod);
 }
 
 void
-getROMMethodInfoForBytecodeFrame(J9StackWalkState *walkState)
+getROMMethodInfoForBytecodeFrame(J9ROMMethodInfo *romMethodInfo, J9StackWalkState *walkState)
 {
-	J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
 	J9Method *method = walkState->method;
 	J9ClassLoader *classLoader = J9_CLASS_FROM_METHOD(method)->classLoader;
 
@@ -257,7 +252,7 @@ getROMMethodInfoForBytecodeFrame(J9StackWalkState *walkState)
 
 	/* Fall back to a ROM-method-keyed entry for out-of-range PCs. */
 	if (pcOffset >= (UDATA)J9_BYTECODE_SIZE_FROM_ROM_METHOD(romMethod)) {
-		getROMMethodInfoForROMMethod(walkState, romMethod);
+		getROMMethodInfoForROMMethod(romMethodInfo, walkState, romMethod);
 		return;
 	}
 
@@ -284,6 +279,7 @@ getROMMethodInfoForBytecodeFrame(J9StackWalkState *walkState)
 	UDATA pendingCount = (UDATA)(unwindSP - walkState->walkSP);
 
 	getROMMethodInfoForBytecodePCInternal(
+			romMethodInfo,
 			walkState,
 			classLoader,
 			romClass,
@@ -295,10 +291,8 @@ getROMMethodInfoForBytecodeFrame(J9StackWalkState *walkState)
 }
 
 void
-getROMMethodInfoForOSRFrame(J9StackWalkState *walkState, J9OSRFrame *osrFrame)
+getROMMethodInfoForOSRFrame(J9ROMMethodInfo *romMethodInfo, J9StackWalkState *walkState, J9OSRFrame *osrFrame)
 {
-	J9ROMMethodInfo *romMethodInfo = &walkState->romMethodInfo;
-
 	J9Method *method = osrFrame->method;
 	J9ClassLoader *classLoader = J9_CLASS_FROM_METHOD(method)->classLoader;
 
@@ -319,6 +313,7 @@ getROMMethodInfoForOSRFrame(J9StackWalkState *walkState, J9OSRFrame *osrFrame)
 	}
 
 	getROMMethodInfoForBytecodePCInternal(
+			romMethodInfo,
 			walkState,
 			classLoader,
 			romClass,

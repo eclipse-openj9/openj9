@@ -3942,7 +3942,7 @@ swWalkObjectSlot(J9StackWalkState * walkState, j9object_t * objectSlot, void * i
 * @return UDATA
 */
 UDATA
-walkFrame(J9StackWalkState * walkState);
+walkFrame(J9ROMMethodInfo * romMethodInfo, J9StackWalkState * walkState);
 
 
 /**
@@ -3978,7 +3978,7 @@ invalidJITReturnAddress(J9StackWalkState *walkState);
  * @param[in] alwaysLocalMap TRUE to force use of the local mapper, FALSE to use normal walkState logic
  */
 void
-walkBytecodeFrameSlots(J9StackWalkState *walkState, J9Method *method, UDATA offsetPC, UDATA *pendingBase, UDATA pendingStackHeight, UDATA *localBase, UDATA numberOfLocals, UDATA alwaysLocalMap);
+walkBytecodeFrameSlots(J9ROMMethodInfo *romMethodInfo, J9StackWalkState *walkState, J9Method *method, UDATA offsetPC, UDATA *pendingBase, UDATA pendingStackHeight, UDATA *localBase, UDATA numberOfLocals, UDATA alwaysLocalMap);
 
 
 /* ---------------- trace.c ---------------- */
