@@ -4562,6 +4562,48 @@ done:
 		return rc;
 	}
 
+	/* jdk.internal.misc.Unsafe: public native boolean isFlatPayloadBinary(Class<?> valueType); */
+	VMINLINE VM_BytecodeAction
+	inlUnsafeIsFlatPayloadBinary(REGISTER_ARGS_LIST)
+	{
+		j9object_t cls = *(j9object_t*)_sp;
+
+		I_32 result = (I_32)FALSE;
+		if (NULL != cls) {
+			J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, cls);
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+			if (!J9CLASS_HAS_REFERENCES(clazz)) {
+				result = (I_32)TRUE;
+			}
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+			if (J9ROMCLASS_IS_PRIMITIVE_TYPE(clazz->romClass)) {
+				result = (I_32)TRUE;
+			} else if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
+				J9ROMFieldWalkState fieldWalkState;
+				J9ROMFieldShape *field = romFieldsStartDo(clazz->romClass, &fieldWalkState);
+				BOOLEAN hasRef = FALSE;
+				while (NULL != field) {
+					if (J9_ARE_NO_BITS_SET(field->modifiers, J9AccStatic)) {
+						J9UTF8 *sig = J9ROMFIELDSHAPE_SIGNATURE(field);
+						U_8 firstChar = J9UTF8_DATA(sig)[0];
+						if (('L' == firstChar) || ('[' == firstChar)) {
+							hasRef = TRUE;
+							break;
+						}
+					}
+					field = romFieldsNextDo(&fieldWalkState);
+				}
+				if (!hasRef) {
+					result = (I_32)TRUE;
+				}
+			}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+		}
+
+		returnSingleFromINL(REGISTER_ARGS, result, 2);
+		return EXECUTE_BYTECODE;
+	}
+
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	/* jdk.internal.misc.Unsafe: public native <V> V getFlatValue(Object obj, long offset, int layoutKind, Class<?> clz); */
@@ -4698,24 +4740,6 @@ done:
 		}
 
 		returnSingleFromINL(REGISTER_ARGS, isFlattened, 4);
-		return EXECUTE_BYTECODE;
-	}
-
-	/* jdk.internal.misc.Unsafe: public native boolean isFlatPayloadBinary(Class<?> valueType); */
-	VMINLINE VM_BytecodeAction
-	inlUnsafeIsFlatPayloadBinary(REGISTER_ARGS_LIST)
-	{
-		j9object_t cls = *(j9object_t*)_sp;
-
-		I_32 result = (I_32)FALSE;
-		if (NULL != cls) {
-			J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, cls);
-			if (!J9CLASS_HAS_REFERENCES(clazz)) {
-				result = (I_32)TRUE;
-			}
-		}
-
-		returnSingleFromINL(REGISTER_ARGS, result, 2);
 		return EXECUTE_BYTECODE;
 	}
 
@@ -10811,13 +10835,13 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_VALUEHEADERSIZE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETOBJECTSIZE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATFIELD),
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATPAYLOADBINARY),
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETFLATVALUE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTFLATVALUE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATARRAY),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFIELDATOFFSETFLATTENED),
-		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATPAYLOADBINARY),
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_INTERNALS_GET_INTERFACES),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_ARRAY_NEW_ARRAY_IMPL),
@@ -11442,6 +11466,8 @@ runMethod: {
 		PERFORM_ACTION(inlUnsafeGetObjectSize(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATFIELD):
 		PERFORM_ACTION(inlUnsafeIsFlatField(REGISTER_ARGS));
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATPAYLOADBINARY):
+		PERFORM_ACTION(inlUnsafeIsFlatPayloadBinary(REGISTER_ARGS));
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETFLATVALUE):
@@ -11452,8 +11478,6 @@ runMethod: {
 		PERFORM_ACTION(inlUnsafeIsFlatArray(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFIELDATOFFSETFLATTENED):
 		PERFORM_ACTION(inlUnsafeIsFieldAtOffsetFlattened(REGISTER_ARGS));
-	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATPAYLOADBINARY):
-		PERFORM_ACTION(inlUnsafeIsFlatPayloadBinary(REGISTER_ARGS));
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_INTERNALS_GET_INTERFACES):
 		PERFORM_ACTION(inlInternalsGetInterfaces(REGISTER_ARGS));
