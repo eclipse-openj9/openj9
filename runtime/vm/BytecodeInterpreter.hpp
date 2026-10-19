@@ -3185,6 +3185,8 @@ done:
 			) {
 				modifiers |= J9AccClassHasIdentity;
 			}
+		} else {
+			modifiers &= ~J9AccClassHasIdentity;
 		}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		returnSingleFromINL(REGISTER_ARGS, modifiers, 1);
