@@ -85,6 +85,7 @@ const VM_JFRChunkWriter::EventIds VM_JFRChunkWriter::v1Events = {
 	187,
 	188,
 	189,
+	198,
 };
 
 #if JAVA_SPEC_VERSION >= 17
@@ -146,13 +147,14 @@ const VM_JFRChunkWriter::EventIds VM_JFRChunkWriter::v2Events = {
 	TYPE_PACKAGE,
 	TYPE_STACKTRACE,
 	TYPE_FRAMETYPE,
+	TYPE_CHUNKHEADER,
 };
 #endif /* JAVA_SPEC_VERSION >= 17 */
 
 void
-VM_JFRChunkWriter::writeJFRHeader()
+VM_JFRChunkWriter::writeJFRHeader(U_8 *headerStart)
 {
-	_bufferWriter->setCursor(_jfrHeaderCursor);
+	_bufferWriter->setCursor(headerStart);
 
 	/* Magic number "FLR\0" in ASCII */
 	_bufferWriter->writeU32(0x464c5200); // 0
@@ -162,19 +164,19 @@ VM_JFRChunkWriter::writeJFRHeader()
 	_bufferWriter->writeU16(1);
 
 	/* chunk size */
-	_bufferWriter->writeU64(_bufferWriter->getSize()); // 8
+	_bufferWriter->writeU64(_vm->jfrState.lastGenerationFileCursor + _bufferWriter->getSize()); // 8
 
 	/* checkpoint offset */
-	_bufferWriter->writeU64(_bufferWriter->getFileOffsetFromStart(_checkPointEventOffset)); // 16
+	_bufferWriter->writeU64(_vm->jfrState.lastGenerationFileCursor + _bufferWriter->getFileOffsetFromStart(_checkPointEventOffset)); // 16
 
 	/* metadata offset */
-	_bufferWriter->writeU64(_bufferWriter->getFileOffsetFromStart(_metadataOffset)); // 24
+	_bufferWriter->writeU64(_vm->jfrState.lastGenerationFileCursor + _bufferWriter->getFileOffsetFromStart(_metadataOffset)); // 24
 
 	/* start time */
 	_bufferWriter->writeU64(_vm->jfrState.chunkStartTime); // 32
 
-	/* duration */
-	_bufferWriter->writeU64(0); // 40
+	/* duration in nanos */
+	_bufferWriter->writeU64(j9time_nano_time() - _vm->jfrState.chunkStartTicks); // 40
 
 	/* start ticks */
 	_bufferWriter->writeU64(_vm->jfrState.chunkStartTicks); // 48
@@ -183,7 +185,7 @@ VM_JFRChunkWriter::writeJFRHeader()
 	_bufferWriter->writeU64(1000000000); // 56
 
 	/* file state or generation */
-	_bufferWriter->writeU8(0); // 64 // TODO ???
+	_bufferWriter->writeU8(_finalWrite ? 0 : _vm->jfrState.chunkGeneration); // 64
 
 	/* pad */
 	_bufferWriter->writeU16(0); // 65
@@ -193,6 +195,37 @@ VM_JFRChunkWriter::writeJFRHeader()
 		flags |= JFR_HEADER_SPECIALFLAGS_LAST_CHUNK;
 	}
 	_bufferWriter->writeU8(flags);
+}
+
+U_8 *
+VM_JFRChunkWriter::writeCheckpointHeader()
+{
+	U_8 *dataStart = writeCheckpointEventHeader(FlushHeader, 1);
+
+	/* class ID */
+	_bufferWriter->writeLEB128(events->ChunkHeaderID);
+
+	/* entry count */
+	_bufferWriter->writeLEB128(1);
+
+	/* write index */
+	_bufferWriter->writeLEB128(1);
+
+	/* header length */
+	_bufferWriter->writeLEB128(VM_JFRChunkWriter::JFR_CHUNK_HEADER_SIZE);
+
+	_checkpointHeaderStart = _bufferWriter->getAndIncCursor(JFR_CHUNK_HEADER_SIZE);
+
+	/* write size */
+	writeEventSize(dataStart);
+
+	/* The chunk header points to the last checkpoint event written. */
+	_checkPointEventOffset = dataStart;
+
+	/* Write the header inside the checkpoint event, then the one at the start of the chunk. */
+	writeJFRHeader(_checkpointHeaderStart);
+
+	return dataStart;
 }
 
 U_8 *
@@ -374,7 +407,7 @@ VM_JFRChunkWriter::writePackageCheckpointEvent()
 			_bufferWriter->writeLEB128(entry->index);
 
 			/* name index */
-			_bufferWriter->writeLEB128(_constantPoolTypes.getStringUTF8Count() + entry->index);
+			_bufferWriter->writeLEB128(entry->symbolTableEntry);
 
 			/* module index */
 			_bufferWriter->writeLEB128(entry->moduleIndex);
@@ -681,6 +714,7 @@ VM_JFRChunkWriter::writeSymbolTableCheckpointEvent()
 	U_8 *dataStart = NULL;
 
 	if (_constantPoolTypes.getPackageCount() > 0) {
+		UDATA globalStringTableCount = _vm->jfrState.checkpointEventTables.globalStringTableCount;
 		dataStart = writeCheckpointEventHeader(Generic, 1);
 
 		/* class ID */
@@ -691,18 +725,47 @@ VM_JFRChunkWriter::writeSymbolTableCheckpointEvent()
 		UDATA packageCount = _constantPoolTypes.getPackageCount();
 		_bufferWriter->writeLEB128(stringCount + packageCount);
 
-		for (UDATA i = 0; i < stringCount; i++) {
-			StringUTF8Entry *stringEntry = (StringUTF8Entry*)_constantPoolTypes.getSymbolTableEntry(i);
+		if (0 == globalStringTableCount) {
+			_bufferWriter->writeLEB128(0);
+			writeUTF8String(((StringUTF8Entry *)_constantPoolTypes.getSymbolTableEntry(0))->string);
+			_bufferWriter->writeLEB128(1);
+			writeUTF8String(((StringUTF8Entry *)_constantPoolTypes.getSymbolTableEntry(1))->string);
+			_bufferWriter->writeLEB128(2);
+			writeUTF8String(((StringUTF8Entry *)_constantPoolTypes.getSymbolTableEntry(2))->string);
+			_bufferWriter->writeLEB128(3);
+			writeUTF8String(((StringUTF8Entry *)_constantPoolTypes.getSymbolTableEntry(3))->string);
+			_bufferWriter->writeLEB128(4);
+			PackageEntry *defaultPackage = ((PackageEntry *)_constantPoolTypes.getSymbolTableEntry(4));
+			writeUTF8String(defaultPackage->packageName, defaultPackage->packageNameLength);
 
-			/* write index */
-			_bufferWriter->writeLEB128(i);
+			for (UDATA i = 5; i < stringCount; i++) {
+				StringUTF8Entry *stringEntry = (StringUTF8Entry *)_constantPoolTypes.getSymbolTableEntry(i);
 
-			/* write string */
-			writeUTF8String(stringEntry->string);
+				/* write index */
+				_bufferWriter->writeLEB128(i);
+
+				/* write string */
+				writeUTF8String(stringEntry->string);
+			}
+		} else {
+			for (UDATA i = globalStringTableCount; i < stringCount; i++) {
+				StringUTF8Entry *stringEntry = (StringUTF8Entry *)_constantPoolTypes.getSymbolTableEntry(i);
+
+				/* write index */
+				_bufferWriter->writeLEB128(i);
+
+				/* write string */
+				writeUTF8String(stringEntry->string);
+			}
 		}
 
-		for (UDATA i = stringCount; i < (stringCount + packageCount); i++) {
-			PackageEntry *packageEntry = (PackageEntry*)_constantPoolTypes.getSymbolTableEntry(i);
+		UDATA packageLimit = stringCount + packageCount;
+		if (0 == globalStringTableCount) {
+			packageLimit -= 1;
+		}
+
+		for (UDATA i = globalStringTableCount + stringCount; i < packageLimit; i++) {
+			PackageEntry *packageEntry = (PackageEntry *)_constantPoolTypes.getSymbolTableEntry(i);
 
 			/* write index */
 			_bufferWriter->writeLEB128(i);

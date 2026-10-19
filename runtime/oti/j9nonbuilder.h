@@ -6343,6 +6343,28 @@ typedef enum JFRLogOutputType {
 	JFROUTPUT_FILE      /* 2 */
 } JFRLogOutputType;
 
+typedef struct JFRCheckpointEventTables {
+	J9HashTable *classTable;
+	J9HashTable *packageTable;
+	J9HashTable *moduleTable;
+	J9HashTable *classLoaderTable;
+	J9HashTable *methodTable;
+	J9HashTable *stringUTF8Table;
+	J9Pool *threadTable;
+	J9HashTable *threadGroupTable;
+	U_32 classCount;
+	U_32 packageCount;
+	U_32 moduleCount;
+	U_32 classLoaderCount;
+	U_32 methodCount;
+	U_32 stringUTF8Count;
+	U_32 threadCount;
+	U_32 threadGroupCount;
+	U_32 packageNameCount;
+	void **globalStringTable;
+	U_32 globalStringTableCount;
+} JFRCheckpointEventTables;
+
 typedef struct JFRState {
 	char *jfrFileName;
 	const char *jfrCMDLineOption;
@@ -6357,6 +6379,10 @@ typedef struct JFRState {
 	volatile uint64_t lastGCCycleEndTicks;
 	I_64 chunkStartTime;
 	I_64 chunkStartTicks;
+	U_8 chunkGeneration;
+	U_64 lastGenerationFileCursor;
+	U_8 *lastCheckpointEvent;
+	JFRCheckpointEventTables checkpointEventTables;
 	void *constantEvents;
 	BOOLEAN isConstantEventsInitialized;
 	BOOLEAN isStarted;
