@@ -201,40 +201,44 @@ j9stackmap_StackBitsForPC(J9PortLibrary * portLib, UDATA pc, J9ROMClass * romCla
 /**
  * @brief Initialize basic J9ROMMethodInfo fields from the given ROM method,
  *        including argument count, temporary count, modifiers, and constructor flag.
+ * @param romMethodInfo pointer to the J9ROMMethodInfo to initialize
  * @param walkState pointer to the current stack walk state
  * @param romMethod pointer to the ROM method to extract information from
  */
 void
-initializeBasicROMMethodInfo(J9StackWalkState *walkState, J9ROMMethod *romMethod);
+initializeBasicROMMethodInfo(J9ROMMethodInfo *romMethodInfo, J9StackWalkState *walkState, J9ROMMethod *romMethod);
 
 /**
  * @brief Populate J9ROMMethodInfo for the given ROM method, retrieving cached
  *        information if available or initializing the structure and computing
  *        argument reference bits before updating the cache.
+ * @param romMethodInfo pointer to the J9ROMMethodInfo to populate
  * @param walkState pointer to the current stack walk state
  * @param romMethod pointer to the ROM method to extract information from
  */
 void
-getROMMethodInfoForROMMethod(J9StackWalkState *walkState, J9ROMMethod *romMethod);
+getROMMethodInfoForROMMethod(J9ROMMethodInfo *romMethodInfo, J9StackWalkState *walkState, J9ROMMethod *romMethod);
 
 /**
  * @brief Populate J9ROMMethodInfo for the current bytecode frame by determining
  *        the bytecode PC offset, checking the cache, and computing stack and local
  *        maps through the internal helper if the information is not cached.
+ * @param romMethodInfo pointer to the J9ROMMethodInfo to populate
  * @param walkState pointer to the current stack walk state
  */
 void
-getROMMethodInfoForBytecodeFrame(J9StackWalkState *walkState);
+getROMMethodInfoForBytecodeFrame(J9ROMMethodInfo *romMethodInfo, J9StackWalkState *walkState);
 
 /**
  * @brief Populates the J9ROMMethodInfo for an OSR frame by determining the bytecode PC,
  *        checking the cache, and computing the stack and local maps through the internal
  *        helper if the information is not cached.
+ * @param romMethodInfo pointer to the J9ROMMethodInfo to populate
  * @param walkState pointer to the current stack walk state
  * @param osrFrame pointer to the OSR frame containing pre-computed frame metadata
  */
 void
-getROMMethodInfoForOSRFrame(J9StackWalkState *walkState, J9OSRFrame *osrFrame);
+getROMMethodInfoForOSRFrame(J9ROMMethodInfo *romMethodInfo, J9StackWalkState *walkState, J9OSRFrame *osrFrame);
 
 #ifdef __cplusplus
 }
