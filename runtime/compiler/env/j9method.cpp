@@ -2972,6 +2972,10 @@ void TR_ResolvedJ9Method::construct()
     static X ArrayMethods[]
         = { { x(TR::java_lang_reflect_Array_getLength, "getLength", "(Ljava/lang/Object;)I") }, { TR::unknownMethod } };
 
+    static X FieldMethods[] = { { x(TR::java_lang_reflect_Field_getFieldAccessor, "getFieldAccessor",
+                                    "()Ljdk/internal/reflect/FieldAccessor;") },
+        { TR::unknownMethod } };
+
     static X MethodMethods[] = {
         { TR::java_lang_reflect_Method_invoke, 6, "invoke", (int16_t)-1, "*" },
         { x(TR::java_lang_reflect_Method_acquireMethodAccessor, "acquireMethodAccessor",
@@ -4010,15 +4014,16 @@ void TR_ResolvedJ9Method::construct()
         { "com/ibm/simt/SPMDKernel", SPMDKernelBaseMethods }, // 23
 #endif
         { "x10/runtime/VMInterface", X10Methods },
-         { "java/lang/J9VMInternals", VMInternalsMethods },
+        { "java/lang/J9VMInternals", VMInternalsMethods },
         { "java/lang/ref/Reference", ReferenceMethods },
-         { "java/lang/StringBuilder", StringBuilderMethods },
+        { "java/lang/StringBuilder", StringBuilderMethods },
         { "java/lang/reflect/Array", ArrayMethods },
-         { "java/nio/HeapByteBuffer", HeapByteBufferMethods },
+        { "java/lang/reflect/Field", FieldMethods },
+        { "java/nio/HeapByteBuffer", HeapByteBufferMethods },
         { "sun/nio/ch/NativeThread", NativeThreadMethods },
-         { "java/util/regex/Matcher", JavaUtilRegexMatcherMethods },
+        { "java/util/regex/Matcher", JavaUtilRegexMatcherMethods },
         { "java/lang/VirtualThread", VirtualThreadMethods },
-         { 0 }
+        { 0 }
     };
 
     static Y class24[] = {
