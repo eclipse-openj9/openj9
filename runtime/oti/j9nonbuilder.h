@@ -3052,7 +3052,6 @@ typedef struct J9StackWalkState {
 	void* stackMap;
 	void* inlineMap;
 	UDATA loopBreaker;
-	J9ROMMethodInfo romMethodInfo; /* 64-bit aligned */
 	/* The size of J9StackWalkState must be a multiple of 8 because it is inlined into
 	 * J9VMThread where alignment assumptions are being made.
 	 */
@@ -5630,7 +5629,7 @@ typedef struct J9InternalVMFunctions {
 	void  ( *javaAndCStacksMustBeInSync)(struct J9VMThread * vmThread, BOOLEAN fromJIT) ;
 #endif /* defined(J9VM_PORT_ZOS_CEEHDLRSUPPORT) */
 	struct J9Class*  ( *findFieldSignatureClass)(struct J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA fieldRefCpIndex) ;
-	void  ( *walkBytecodeFrameSlots)(J9StackWalkState *walkState, struct J9Method *method, UDATA offsetPC, UDATA *pendingBase, UDATA pendingStackHeight, UDATA *localBase, UDATA numberOfLocals, UDATA alwaysLocalMap) ;
+	void  ( *walkBytecodeFrameSlots)(J9ROMMethodInfo *romMethodInfo, J9StackWalkState *walkState, struct J9Method *method, UDATA offsetPC, UDATA *pendingBase, UDATA pendingStackHeight, UDATA *localBase, UDATA numberOfLocals, UDATA alwaysLocalMap) ;
 	void*  ( *jniNativeMethodProperties)(struct J9VMThread *currentThread, struct J9Method *jniNativeMethod, UDATA *properties) ;
 	void  ( *invalidJITReturnAddress)(J9StackWalkState *walkState) ;
 	struct J9ClassLoader*  ( *internalAllocateClassLoader)(struct J9JavaVM *javaVM, j9object_t classLoaderObject) ;
@@ -6638,7 +6637,7 @@ typedef struct J9JavaVM {
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 	UDATA  ( *jitExceptionHandlerSearch)(struct J9VMThread *currentThread, struct J9StackWalkState *walkState) ;
 	UDATA  ( *walkStackFrames)(struct J9VMThread *currentThread, struct J9StackWalkState *walkState) ;
-	UDATA  ( *walkFrame)(struct J9StackWalkState *walkState) ;
+	UDATA  ( *walkFrame)(J9ROMMethodInfo *romMethodInfo, struct J9StackWalkState *walkState) ;
 	UDATA  ( *jitWalkStackFrames)(struct J9StackWalkState *walkState) ;
 	UDATA  ( *jitGetOwnedObjectMonitors)(struct J9StackWalkState *walkState) ;
 	UDATA jniArrayCacheMaxSize;
