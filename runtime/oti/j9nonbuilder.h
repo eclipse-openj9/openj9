@@ -6353,8 +6353,10 @@ typedef struct JFRState {
 	UDATA jfrChunkCount;
 	/* target ObjectAllocationSample events per second (default 150) */
 	UDATA objectAllocationSampleThrottleRate;
+	/* bytes interval between ObjectAllocationSample events per thread */
+	UDATA objectAllocationSampleInterval;
 	/* hires-clock ticks when the last GC cycle ended; 0 if no GC has occurred */
-	volatile uint64_t lastGCCycleEndTicks;
+	uint64_t lastGCCycleEndTicks;
 	I_64 chunkStartTime;
 	I_64 chunkStartTicks;
 	void *constantEvents;
