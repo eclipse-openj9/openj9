@@ -4879,6 +4879,39 @@ TR::KnownObjectTable::Index TR_J9VMBase::getMethodAccessorIndex(TR::Compilation 
     return result;
 }
 
+TR::KnownObjectTable::Index TR_J9VMBase::getFieldAccessorIndex(TR::Compilation *comp,
+    TR::KnownObjectTable::Index fieldIndex)
+{
+    TR::KnownObjectTable::Index result = TR::KnownObjectTable::UNKNOWN;
+    TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+    if (!knot)
+        return result;
+
+    TR::VMAccessCriticalSection getFAIndex(this);
+
+    const char * const fieldClassName = "java/lang/reflect/Field";
+    const int32_t fieldClassNameLen = (int32_t)strlen(fieldClassName);
+    TR_OpaqueClassBlock *fieldClass = getSystemClassFromClassName(fieldClassName, fieldClassNameLen);
+
+    TR_OpaqueClassBlock *fieldObjClass = getObjectClassFromKnownObjectIndex(comp, fieldIndex);
+
+    if (fieldClass == NULL || isInstanceOf(fieldObjClass, fieldClass, true, true) != TR_yes) {
+        logprintf(comp->getOption(TR_TraceOptDetails), comp->log(),
+            "getFieldAccessorIndex: failed java/lang/reflect/Field type check.\n");
+        return result;
+    }
+
+    uintptr_t fieldObj = knot->getPointer(fieldIndex);
+    uintptr_t faObject = getReferenceField(fieldObj, "fieldAccessor", "Ljdk/internal/reflect/FieldAccessor;");
+    if (!faObject)
+        return result;
+    result = knot->getOrCreateIndex(faObject);
+
+    J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
+    cpg->addEdge(cpg->knownObject(fieldIndex), cpg->knownObject(result));
+    return result;
+}
+
 int32_t TR_J9VMBase::getVarHandleAccessDescriptorMode(TR::Compilation *comp, TR::KnownObjectTable::Index adIndex)
 {
     TR::VMAccessCriticalSection getAccessDescriptorMode(this);
