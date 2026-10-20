@@ -97,6 +97,13 @@ void CommunicationStream::readMessage(Message &msg)
         throw JITServer::StreamFailure("JITServer I/O error: read more than the message size");
     }
 
+    // Safety check: make sure that the advertised message size is sensible.
+    // A very large value would make the server allocate a lot of memory.
+    if (serializedSize > (1 << 30)) {
+        throw JITServer::StreamFailure(
+            "JITServer detected a malformed message: message size cannot be larger than 1 GB");
+    }
+
     // serializedSize >= bytesRead
     uint32_t bytesLeftToRead = serializedSize - bytesRead;
 
