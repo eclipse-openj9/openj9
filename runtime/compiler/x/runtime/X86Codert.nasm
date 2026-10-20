@@ -146,6 +146,8 @@ segment .text
         DECLARE_EXTERN jProfile64BitValue
 %endif
 
+        DECLARE_GLOBAL java_util_zip_CRC32C_updateBytes_impl
+
         align 16
 jitFPHelpersBegin:
 
@@ -452,7 +454,7 @@ doSSEdoubleRemainder:
         ; note, the sign of the divisor has no affect on the final result
         andpd xmm1, oword  [_rel ABSMASK]                            ; xmm1 = {|a|, |b|}
         movapd xmm2, [_rel NULL_INF_MASK]                            ; xmm2 = {+inf, 0.0}
-        
+
         cmppd xmm2, xmm1, 4                             ; compare xmm2 != xmm1, leave mask in xmm1
 
         ; xmm1 = {(|a| != +inf ? |a| : 0, |b| != 0.0 ? |b| : 0}
@@ -787,6 +789,100 @@ SSEd2l_NaN:                         ; if the number is a NaN, return 0 (note: no
 
 jitFPHelpersEnd:
 
+%ifdef TR_HOST_64BIT
+; java_util_zip_CRC32C_updateBytes_impl
+;
+; This algorithm uses the crc32 instruction to accumulate the checksum in three sections. The first section is unrolled
+; to process 64 bytes at a time. Next, we process 8 bytes at a time. The residue is then processed using a duff device,
+; which uses 7 inline crc32b instructions and jumps to the correct spot in the instruction sequence, depending on the
+; number of bytes left.
+;
+; Arguments:
+; rdi - initial CRC32C value
+; rsi - pointer to the address of the buffer's first byte
+; rdx - starting offset
+; rcx - exclusive ending offset
+;
+; Return:
+; eax - updated CRC32C value
+        align 16
+java_util_zip_CRC32C_updateBytes_impl:
+        mov eax, edi ; Copy current crc value into rax (result register)
+crc32c_64byte_loop:
+        lea r8, [rdx + 64]
+        cmp r8, rcx
+        ja crc32c_8byte_loop ;Skip loop if less than 64 bytes in buffer
+
+        crc32 rax, qword [rsi+rdx] ; else go into 64 byte unrolled crc32c loop body to process words
+        crc32 rax, qword [rsi+rdx+8]
+        crc32 rax, qword [rsi+rdx+16]
+        crc32 rax, qword [rsi+rdx+24]
+        crc32 rax, qword [rsi+rdx+32]
+        crc32 rax, qword [rsi+rdx+40]
+        crc32 rax, qword [rsi+rdx+48]
+        crc32 rax, qword [rsi+rdx+56]
+        add rdx, 0x00000040
+        jmp crc32c_64byte_loop
+
+crc32c_8byte_loop: ; crc 8 bytes at a time in loop
+        lea r8, [rdx+8]
+        cmp r8, rcx
+        ja crc32c_residue
+
+        crc32 rax, qword [rsi+rdx]
+        add rdx, 8
+        jmp crc32c_8byte_loop
+
+crc32c_residue: ; one byte loop as Duff device implementation for residue bytes processing
+        cmp rdx, rcx
+        jae crc32c_done
+
+        crc32 eax, byte [rsi+rdx]
+        inc rdx
+        jmp crc32c_residue
+
+crc32c_done:
+        ret
+
+%else ; TR_HOST_32BIT
+; Arguments:
+; eax - CRC accumulator result
+; edx - data pointer to first byte of the buffer
+; ecx - starting offset
+; ebx - exclusive ending offset
+; esi - dummy register
+
+        align 16
+java_util_zip_CRC32C_updateBytes_impl:
+crc32c_4byte_loop:
+        lea esi, [ecx+4]
+        cmp esi, ebx
+        ja crc32c_2byte_loop
+
+        crc32 eax, dword [edx+ecx]
+        add ecx, 4
+        jmp crc32c_4byte_loop
+
+crc32c_2byte_loop:
+        lea esi, [ecx+2]
+        cmp esi, ebx
+        ja crc32c_residue
+
+        crc32 eax, word [edx+ecx]
+        add ecx, 2
+
+crc32c_residue:
+        cmp ecx, ebx
+        jae crc32c_done
+
+        crc32 eax, byte [edx+ecx]
+        inc ecx
+        jmp crc32c_residue
+
+crc32c_done:
+        ret
+
+%endif ; TR_HOST_64BIT
 
 eq_J9VMThread_heapAlloc      equ J9TR_VMThread_heapAlloc
 eq_J9VMThread_heapTop        equ J9TR_VMThread_heapTop
