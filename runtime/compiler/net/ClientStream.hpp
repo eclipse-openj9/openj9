@@ -132,6 +132,7 @@ public:
         _cMsg.setType(type);
         if (type == MessageType::compilationInterrupted || type == MessageType::connectionTerminate) {
             // _cMsg.clear();
+            _cMsg.getMetaData()->_numDataPoints = 0;
         } else
             setArgsRaw<T...>(_cMsg, args...);
         writeMessage(_cMsg);

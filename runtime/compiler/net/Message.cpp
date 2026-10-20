@@ -56,15 +56,35 @@ void Message::deserialize()
     // Reconstruct the message by setting metadata and pointers to descriptors
     // Note that the size of the entire message buffer has already been stripped
     //
+    // Safety check: the buffer must contain at least the leading uint32_t size
+    // field plus a full MetaData struct before we attempt to read MetaData.
+    uint32_t serializedSize = getSerializedSize();
+    if (serializedSize < sizeof(uint32_t) + sizeof(MetaData)) {
+        throw JITServer::StreamFailure("declared message size too small to contain metadata");
+    }
+
     _buffer.readValue<MetaData>(); // This only advances curPtr in the MessageBuffer
 
     uint32_t numDataPoints = getMetaData()->_numDataPoints;
+
+    // Safety check: the number of advertised data points must be reasonable.
+    // Each data point is a parameter for the sent message.
+    if (numDataPoints > 256) {
+        throw JITServer::StreamFailure("a message cannot have more than 256 parameters");
+    }
 
     _descriptorOffsets.reserve(numDataPoints);
     // TODO: do I need to clear the vector of _descriptorOffsets just in case?
     for (uint32_t i = 0; i < numDataPoints; ++i) {
         uint32_t descOffset = _buffer.readValue<DataDescriptor>(); // Read the descriptor itself
         _descriptorOffsets.push_back(descOffset);
+
+        // Validate the descriptor.
+        DataDescriptor *lastDescriptor = getLastDescriptor();
+        lastDescriptor->validate();
+        if (descOffset + lastDescriptor->getTotalSize() > serializedSize) {
+            throw JITServer::StreamFailure("descriptor data is outside message bounds");
+        }
 
         // skip the data segment, which is processed in getArgs
         _buffer.readData(getLastDescriptor()->getTotalSize());
