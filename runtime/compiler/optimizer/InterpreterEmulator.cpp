@@ -298,6 +298,47 @@ void InterpreterEmulator::maintainStackForIf(TR_J9ByteCode bc)
 
             break;
         }
+
+        case J9BCificmpeq:
+        case J9BCificmpne:
+        case J9BCificmplt:
+        case J9BCificmpge:
+        case J9BCificmpgt:
+        case J9BCificmple: {
+            IconstOperand *lhsConst = lhs->asIconst();
+            IconstOperand *rhsConst = rhs->asIconst();
+            if (lhsConst != NULL && rhsConst != NULL) {
+                int32_t l = lhsConst->intValue;
+                int32_t r = rhsConst->intValue;
+                bool taken = false;
+                switch (bc) {
+                    case J9BCificmpeq:
+                        taken = l == r;
+                        break;
+                    case J9BCificmpne:
+                        taken = l != r;
+                        break;
+                    case J9BCificmplt:
+                        taken = l < r;
+                        break;
+                    case J9BCificmpge:
+                        taken = l >= r;
+                        break;
+                    case J9BCificmpgt:
+                        taken = l > r;
+                        break;
+                    case J9BCificmple:
+                        taken = l <= r;
+                        break;
+                    default:
+                        break;
+                }
+                isTaken = taken ? TR_yes : TR_no;
+            }
+
+            break;
+        }
+
         default:
             break;
     }
