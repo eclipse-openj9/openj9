@@ -77,6 +77,10 @@ void Message::deserialize()
     // TODO: do I need to clear the vector of _descriptorOffsets just in case?
     for (uint32_t i = 0; i < numDataPoints; ++i) {
         uint32_t descOffset = _buffer.readValue<DataDescriptor>(); // Read the descriptor itself
+        // The descriptor offset cannot be larger than the size of the whole message.
+        if (descOffset + sizeof(DataDescriptor) > serializedSize) {
+            throw JITServer::StreamFailure("descriptor offset is outside message bounds");
+        }
         _descriptorOffsets.push_back(descOffset);
 
         // Validate the descriptor.

@@ -124,6 +124,12 @@ void CommunicationStream::readMessage(Message &msg)
     // rebuild the message
     msg.deserialize();
 
+    // Validate the message type before using it as an array index.
+    // The type field is read from the wire and must be a known value.
+    if (msg.type() >= MessageType::MessageType_MAXTYPE) {
+        throw JITServer::StreamFailure("JITServer detected an invalid message type");
+    }
+
     // Update message count and size statistics
     _msgTypeCount[msg.type()] += 1;
     _totalMsgSize += serializedSize;
