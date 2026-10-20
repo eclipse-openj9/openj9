@@ -379,7 +379,7 @@ def recover_node(nodeName, computer, originalCause, nodeJob) {
         // The cleanup job is scheduled by node name, which every node keeps as a label.
         // The node is already relabelled above, so jobs queued for the usual test labels
         // cannot match it while it is online; only a job asking for sw.os.windows alone could.
-        computer.setTemporarilyOffline(null)
+        computer.setTemporaryOfflineCause(null)
         node("${nodeName}") {
             stage("${nodeName} - Reboot") {
                 sanitize_node(nodeName)
@@ -389,7 +389,7 @@ def recover_node(nodeName, computer, originalCause, nodeJob) {
         recoveryResults[nodeName] = 'recovered'
     } catch (e) {
         println("${nodeName}: recovery failed: ${e.getMessage()}")
-        computer.setTemporarilyOffline(new OfflineCause.UserCause(null, "${originalCause} ${FAILED_MARKER}"))
+        computer.setTemporaryOfflineCause(new OfflineCause.UserCause(null, "${originalCause} ${FAILED_MARKER}"))
         recoveryResults[nodeName] = 'failed'
         currentBuild.result = 'UNSTABLE'
     } finally {
@@ -456,7 +456,7 @@ def sanitize_node(nodeName) {
     def workingNode = jenkins.model.Jenkins.instance.getNode(nodeName)
     def workingComputer = workingNode.toComputer()
 
-    workingComputer.setTemporarilyOffline(new OfflineCause.UserCause(null, "sanitizing node ${nodeName}"))
+    workingComputer.setTemporaryOfflineCause(new OfflineCause.UserCause(null, "sanitizing node ${nodeName}"))
     try {
         def cmd = ''
 
@@ -489,7 +489,7 @@ def sanitize_node(nodeName) {
 
         println("\t ${nodeName}: Connecting...")
         workingComputer.connect(false)
-        workingComputer.setTemporarilyOffline(null)
+        workingComputer.setTemporaryOfflineCause(null)
         workingComputer.waitUntilOnline()
         println("\t ${nodeName} is back online: ${workingComputer.isOnline()}")
     }
