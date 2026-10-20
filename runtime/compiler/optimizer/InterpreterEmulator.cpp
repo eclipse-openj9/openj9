@@ -1501,6 +1501,27 @@ Operand *InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
         case TR::java_lang_invoke_ILGenMacros_isShareableThunk:
             result = new (trStackMemory()) IconstOperand(0);
             break;
+        case TR::java_lang_reflect_Field_getFieldAccessor: {
+            TR::KnownObjectTable::Index fieldIndex = top()->getKnownObjectIndex();
+            if (knot && fieldIndex != TR::KnownObjectTable::UNKNOWN && !knot->isNull(fieldIndex)) {
+                TR::KnownObjectTable::Index faIndex = comp()->fej9()->getFieldAccessorIndex(comp(), fieldIndex);
+                debugTrace(tracer(), "Field.getFieldAccessor with known Field obj%d gives FieldAccessor obj%d\n",
+                    fieldIndex, faIndex);
+                if (faIndex != TR::KnownObjectTable::UNKNOWN)
+                    result = knownObjOperand(faIndex);
+            }
+            break;
+        }
+        case TR::java_lang_invoke_MethodHandleImpl_isCompileConstant: {
+            // isCompileConstant's Java implementation conservatively returns false. When the
+            // argument is a known object, it really is a CompileConstant, so that
+            // alone is sufficient in folding it to true. This lets branch folding eliminate
+            // the slow paths.
+            Operand *arg = top();
+            if (arg->asKnownObject() != NULL || arg->isNull())
+                result = new (trStackMemory()) IconstOperand(1);
+            break;
+        }
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
         case TR::java_lang_invoke_DelegatingMethodHandle_getTarget: {
@@ -2544,6 +2565,30 @@ void InterpreterEmulator::visitInvokeinterface()
 
     OMR::RetainedMethodSet *retainedMethods = _calltarget->_retainedMethods;
     bool wasRefinedFromKnownObject = false;
+
+    // When the receiver is a known object or has a fixed class, the interface dispatch can be resolved exactly,
+    // allowing the callee to be inlined with the receiver's known object info. Without this, we can run into cases
+    // where profiled dispatch alone would lose the known object info and prevent folding MethodHandles that may be
+    // part of certain call chains (eg. jdk/internal/reflect/FieldAccessor.getInt())
+    if (isInterface && _iteratorWithState) {
+        Operand *receiver = topn(explicitParams);
+        bool classIsExact = receiver->asKnownObject() != NULL || receiver->asFixedClassOperand() != NULL;
+        TR_OpaqueClassBlock *receiverClass = classIsExact ? receiver->asObjectOperand()->getClass() : NULL;
+        if (receiverClass != NULL) {
+            TR_ResolvedMethod *refined = calleeMethod->getResolvedInterfaceMethod(comp(), receiverClass, cpIndex);
+            if (refined != NULL) {
+                heuristicTrace(tracer(), "Refine interface call to %s using %s receiver",
+                    refined->signature(trMemory(), stackAlloc),
+                    receiver->asKnownObject() != NULL ? "known object" : "fixed class");
+                _currentCallMethod = refined;
+                isInterface = false;
+                isIndirectCall = false;
+                interfaceMethod = NULL;
+                wasRefinedFromKnownObject = true;
+            }
+        }
+    }
+
     TR_CallSite *callsite = NULL;
     if (isInterface) {
         TR_OpaqueClassBlock *thisClass = NULL;
