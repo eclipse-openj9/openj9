@@ -1734,8 +1734,16 @@ checkFields(J9PortLibrary* portLib, J9CfrClassFile * classfile, U_8 * segment, U
 
 
 		if (classfile->accessFlags & CFR_ACC_INTERFACE) {
+			U_32 interfaceMask = CFR_INTERFACE_FIELD_ACCESS_MASK;
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+			/* ACC_STRICT is allowed for interface fields only when the class file version supports strict fields. */
+			if (J9_CLASSFILE_OR_ROMCLASS_SUPPORTS_STRICT_FIELDS(classfile)) {
+				interfaceMask |= CFR_ACC_STRICT;
+			}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+
 			/* check that there are no flags set that are not allowed AND the required flags are set */
-			if ((value & ~CFR_INTERFACE_FIELD_ACCESS_MASK) ||
+			if ((value & ~interfaceMask) ||
 				 ((value & CFR_INTERFACE_FIELD_ACCESS_REQUIRED) != CFR_INTERFACE_FIELD_ACCESS_REQUIRED)) {
 				errorCode = J9NLS_CFR_ERR_INTERFACE_FIELD__ID;
 				goto _errorFound;
