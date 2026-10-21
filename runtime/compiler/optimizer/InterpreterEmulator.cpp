@@ -523,6 +523,15 @@ void InterpreterEmulator::maintainStackForArraylength()
 {
     assertHasState();
     Operand *obj = pop();
+
+#if defined(J9VM_OPT_JITSERVER)
+    // The array cannot be read on the server. Object pointers are only valid on the client.
+    if (comp()->isOutOfProcessCompilation()) {
+        pushUnknownOperand();
+        return;
+    }
+#endif
+
     TR::KnownObjectTable::Index koi = obj->getKnownObjectIndex();
     if (koi == TR::KnownObjectTable::UNKNOWN
         || !TR::Compiler->cls.isClassArray(comp(), obj->asObjectOperand()->getClass())) {
