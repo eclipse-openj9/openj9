@@ -1293,9 +1293,6 @@ static TR_YesNoMaybe safeToAddFearPointAt(TR::Optimization *opt, TR::TreeTop *tt
         return TR_yes;
     }
 
-    TR_ASSERT_FATAL(!comp->isFearPointPlacementUnrestricted(),
-        "unrestricted fear point placement should have prevented prohibition");
-
     // Look for an OSR point dominating tt in block
     TR::Block *block = tt->getEnclosingBlock();
     TR::TreeTop *firstTT = block->getEntry();

@@ -25,6 +25,7 @@
 #include "env/StackMemoryRegion.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "compile/Compilation.hpp"
+#include "compile/CompilationException.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/TRMemory.hpp"
@@ -34,6 +35,18 @@
 #include "infra/BitVector.hpp"
 #include "infra/Checklist.hpp"
 #include "optimizer/FearPointAnalysis.hpp"
+
+static bool hasOSRFearPointHelperCall(TR::Compilation *comp)
+{
+    for (TR::TreeTop *treeTop = comp->getStartTree(); treeTop; treeTop = treeTop->getNextTreeTop()) {
+        TR::Node *ttNode = treeTop->getNode();
+        if (ttNode->getNumChildren() == 1 && ttNode->getFirstChild()->isOSRFearPointHelperCall()) {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 static bool containsPrepareForOSR(TR::Block *block)
 {
@@ -168,7 +181,16 @@ void TR_HCRGuardAnalysis::initializeGenAndKillSetInfo()
                 isKill = true;
                 isGen = false;
             } else {
-                TR_ASSERT_FATAL(!comp()->isFearPointPlacementUnrestricted(), "unexpected uninducible OSR yield point");
+                // Unrestricted fear point placement assumes every yield point can induce an OSR transition, so that
+                // fear points, such as from early guarded static final field folding, are protected by OSR guards at
+                // every yield point. Optimizations that recreate call nodes mark them doNotProfile, which makes them
+                // uninducible OSR points. If fear points were already committed, their protection cannot be
+                // guaranteed, so fail the compilation. Without committed fear points, treating the yield point as a
+                // fear gen (as in restricted mode) is correct for HCR guard removal.
+                if (comp()->isFearPointPlacementUnrestricted() && hasOSRFearPointHelperCall(comp())) {
+                    comp()->failCompilation<TR::ExcessiveComplexity>(
+                        "uninducible OSR yield point with unrestricted fear point placement");
+                }
 
                 isGen = true;
                 isKill = false;
