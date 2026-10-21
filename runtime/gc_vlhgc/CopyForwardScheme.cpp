@@ -173,6 +173,7 @@ MM_CopyForwardScheme::MM_CopyForwardScheme(MM_EnvironmentVLHGC *env, MM_HeapRegi
 	, _workQueueWaitCountPtr(&_scanCacheWaitCount)
 	, _workQueueMonitorPtr(&_scanCacheMonitor)
 	, _doneIndex(0)
+	, _preservedGcReadBarrierType(J9_GC_READ_BARRIER_TYPE_NONE)
 	, _markMap(NULL)
 	, _heapBase(NULL)
 	, _heapTop(NULL)
@@ -4335,7 +4336,6 @@ MM_CopyForwardScheme::workThreadGarbageCollect(MM_EnvironmentVLHGC *env)
 	/* ensure that all buffers have been flushed before we start reference processing */
 	env->getGCEnvironment()->_referenceObjectBuffer->flush(env);
 	
-	uintptr_t preservedGcReadBarrierType = 0;
 	if (env->_currentTask->synchronizeGCThreadsAndReleaseSingleThread(env, UNIQUE_ID)) {
 		_clearableProcessingStarted = true;
 
@@ -4345,12 +4345,12 @@ MM_CopyForwardScheme::workThreadGarbageCollect(MM_EnvironmentVLHGC *env)
 		 * An example of that is string comparator, that may be used when removing
 		 * an entry from the string table, as part of AVL rebalancing.
 		 * String comparator happens to be used also in  the context of mutator thread when adding new elements,
-		 * and it already uses Read Barrier (to support concurrent evacuating GCs).
+		 * and it already uses Read Barrier (to support concurrent evacuating GCs) - see preWeakRootSlotRead.
 		 * That read barrier will do exactly what we need for our clearable pass (well it will do more,
 		 * not just locally resolve FP, but even fix the slot, but it's correct for this pass, too). We just need
 		 * to enable the RB, if not already enabled.
 		 */
-		preservedGcReadBarrierType = _javaVM->gcReadBarrierType;
+		_preservedGcReadBarrierType = _javaVM->gcReadBarrierType;
 		_javaVM->gcReadBarrierType = J9_GC_READ_BARRIER_TYPE_ALWAYS;
 
 		/* Soft and weak references resurrected by finalization need to be cleared immediately since weak and soft processing has already completed.
@@ -4380,7 +4380,8 @@ MM_CopyForwardScheme::workThreadGarbageCollect(MM_EnvironmentVLHGC *env)
 	Assert_MM_true(NULL == env->_workStack.popNoWait(env));
 
 	if (env->_currentTask->synchronizeGCThreadsAndReleaseSingleThread(env, UNIQUE_ID)) {
-		_javaVM->gcReadBarrierType = preservedGcReadBarrierType;
+		/* Restore the original RB type */
+		_javaVM->gcReadBarrierType = _preservedGcReadBarrierType;
 		env->_currentTask->releaseSynchronizedGCThreads(env);
 	}
 
