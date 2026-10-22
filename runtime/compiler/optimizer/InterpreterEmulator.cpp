@@ -349,6 +349,34 @@ void InterpreterEmulator::maintainStackForTableSwitch()
     saveStack(defTarget);
 }
 
+void InterpreterEmulator::maintainStackForLookupSwitch()
+{
+    assertHasState();
+
+    _currentBcCanFallThrough = false;
+
+    pop();
+
+    int32_t bcIndex = _bcIndex + 1; // skip opcode
+    while ((bcIndex & 3) != 0) // skip padding to align to a 4 byte boundary
+        bcIndex++;
+
+    int32_t defTarget = _bcIndex + nextSwitchValue(bcIndex);
+    int32_t numPairs = nextSwitchValue(bcIndex);
+
+    for (int32_t i = 0; i < numPairs; i++) {
+        bcIndex += 4; // skip the match value
+        int32_t target = _bcIndex + nextSwitchValue(bcIndex);
+        debugTrace(tracer(), "pair %d -> +%d", i, target);
+        _outEdgesStillReachable.insert(_currentInlinedBlock->getEdge(blocks(target)));
+        saveStack(target);
+    }
+
+    debugTrace(tracer(), "default -> +%d", defTarget);
+    _outEdgesStillReachable.insert(_currentInlinedBlock->getEdge(blocks(defTarget)));
+    saveStack(defTarget);
+}
+
 void InterpreterEmulator::maintainStackForGetField()
 {
     assertHasState();
@@ -842,6 +870,24 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
         case J9BCiconst5:
             push(new (trStackMemory()) IconstOperand(5));
             break;
+        case J9BCbipush:
+            push(new (trStackMemory()) IconstOperand(nextByteSigned()));
+            break;
+        case J9BCsipush:
+            push(new (trStackMemory()) IconstOperand(next2BytesSigned()));
+            break;
+
+        case J9BClconst0:
+        case J9BClconst1:
+        case J9BCfconst0:
+        case J9BCfconst1:
+        case J9BCfconst2:
+        case J9BCdconst0:
+        case J9BCdconst1:
+        case J9BCldc2lw:
+        case J9BCldc2dw:
+            pushUnknownOperand();
+            break;
 
         case J9BCaconstnull:
             push(_nullOperand);
@@ -867,13 +913,40 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
             maintainStackForIf(J9BCifacmpeq);
             break;
 
+        case J9BCiflt:
+            push(new (trStackMemory()) IconstOperand(0));
+            maintainStackForIf(J9BCificmplt);
+            break;
+        case J9BCifge:
+            push(new (trStackMemory()) IconstOperand(0));
+            maintainStackForIf(J9BCificmpge);
+            break;
+        case J9BCifgt:
+            push(new (trStackMemory()) IconstOperand(0));
+            maintainStackForIf(J9BCificmpgt);
+            break;
+        case J9BCifle:
+            push(new (trStackMemory()) IconstOperand(0));
+            maintainStackForIf(J9BCificmple);
+            break;
+
         case J9BCificmpne:
         case J9BCificmpeq:
+        case J9BCificmplt:
+        case J9BCificmpge:
+        case J9BCificmpgt:
+        case J9BCificmple:
+        case J9BCifacmpeq:
+        case J9BCifacmpne:
             maintainStackForIf(bc);
             break;
 
         case J9BCtableswitch:
             maintainStackForTableSwitch();
+            break;
+
+        case J9BClookupswitch:
+            maintainStackForLookupSwitch();
             break;
 
         case J9BCgoto: {
@@ -884,17 +957,132 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
             break;
         }
 
+        case J9BCgotow: {
+            int32_t target = bcIndex() + next4BytesSigned();
+            _outEdgesStillReachable.insert(_currentInlinedBlock->getEdge(blocks(target)));
+            saveStack(target);
+            _currentBcCanFallThrough = false;
+            break;
+        }
+
         case J9BCpop:
-        case J9BCputfield:
         case J9BCputstatic:
+        case J9BCmonitorenter:
+        case J9BCmonitorexit:
             pop();
+            break;
+
+        case J9BCputfield:
+            popn(2);
             break;
 
         case J9BCladd:
         case J9BCiadd:
         case J9BCisub:
         case J9BCiand:
+        case J9BClsub:
+        case J9BCimul:
+        case J9BClmul:
+        case J9BCidiv:
+        case J9BCldiv:
+        case J9BCirem:
+        case J9BClrem:
+        case J9BCishl:
+        case J9BClshl:
+        case J9BCishr:
+        case J9BClshr:
+        case J9BCiushr:
+        case J9BClushr:
+        case J9BCior:
+        case J9BClor:
+        case J9BCixor:
+        case J9BClxor:
+        case J9BCland:
+        case J9BCfadd:
+        case J9BCfsub:
+        case J9BCfmul:
+        case J9BCfdiv:
+        case J9BCfrem:
+        case J9BCdadd:
+        case J9BCdsub:
+        case J9BCdmul:
+        case J9BCddiv:
+        case J9BCdrem:
+        case J9BClcmp:
+        case J9BCfcmpl:
+        case J9BCfcmpg:
+        case J9BCdcmpl:
+        case J9BCdcmpg:
             popn(2);
+            pushUnknownOperand();
+            break;
+
+        case J9BCineg:
+        case J9BClneg:
+        case J9BCfneg:
+        case J9BCdneg:
+        case J9BCi2f:
+        case J9BCi2d:
+        case J9BCl2i:
+        case J9BCl2f:
+        case J9BCl2d:
+        case J9BCf2i:
+        case J9BCf2l:
+        case J9BCf2d:
+        case J9BCd2i:
+        case J9BCd2l:
+        case J9BCd2f:
+        case J9BCi2b:
+        case J9BCi2c:
+        case J9BCi2s:
+            pop();
+            pushUnknownOperand();
+            break;
+
+        case J9BCiinc:
+        case J9BCiincw:
+            break;
+
+        case J9BCswap: {
+            Operand *value1 = pop();
+            Operand *value2 = pop();
+            push(value1);
+            push(value2);
+            break;
+        }
+
+        // J9BCdupx1 can be supported without value category tracking. From JVMS: "both value1
+        // and value2 are values of a category 1 computational type". Other dup2/pop2 forms would
+        // require operands to track value categories, as the stack shape would depend on whether
+        // value2 is of category 2 computational type or not.
+        case J9BCdupx1: {
+            Operand *value1 = pop();
+            Operand *value2 = pop();
+            push(value1);
+            push(value2);
+            push(value1);
+            break;
+        }
+
+        case J9BCiastore:
+        case J9BClastore:
+        case J9BCfastore:
+        case J9BCdastore:
+        case J9BCaastore:
+        case J9BCbastore:
+        case J9BCcastore:
+        case J9BCsastore:
+            popn(3);
+            break;
+
+        case J9BCnewarray:
+        case J9BCanewarray:
+            pop();
+            pushUnknownOperand();
+            break;
+
+        case J9BCmultianewarray:
+            popn(nextByte(3));
             pushUnknownOperand();
             break;
 
@@ -1000,6 +1188,10 @@ bool InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
 
         case J9BCldc:
             maintainStackForldc(nextByte());
+            break;
+
+        case J9BCldcw:
+            maintainStackForldc(next2Bytes());
             break;
 
         case J9BCnew:
@@ -1619,10 +1811,39 @@ void InterpreterEmulator::refineResolvedCalleeForInvokestatic(TR_ResolvedMethod 
     }
 }
 
+bool InterpreterEmulator::isBytecodeSupportedForStatefulIteration(TR_J9ByteCode bc)
+{
+    switch (bc) {
+        case J9BCpop2:
+        case J9BCdupx2:
+        case J9BCdup2:
+        case J9BCdup2x1:
+        case J9BCdup2x2:
+        case J9BCinvokehandlegeneric:
+        case J9BCwide:
+        case J9BCasyncCheck:
+        case J9BCbreakpoint:
+        case J9BCunknown:
+            return false;
+        default:
+            return true;
+    }
+}
+
 bool InterpreterEmulator::shouldIterateWithState()
 {
     if (comp()->compileRelocatableCode())
         return false;
+
+    // If any bytecode is unsupported by maintainStack(), iterating with state would abort callsite discovery
+    // partway through, which would prevent inlining of this callee entirely. Verify all the bytecodes are supported
+    // and return false to fall back to stateless iteration if not.
+    for (TR_J9ByteCode bc = first(); bc != J9BCunknown; bc = next()) {
+        if (!isBytecodeSupportedForStatefulIteration(bc)) {
+            heuristicTrace(tracer(), "unsupported bytecode %d at bcIndex %d: not iterating with state", bc, bcIndex());
+            return false;
+        }
+    }
 
     // Use state if any argument is a known object.
     TR_PrexArgInfo *argInfo = _calltarget->_ecsPrexArgInfo;

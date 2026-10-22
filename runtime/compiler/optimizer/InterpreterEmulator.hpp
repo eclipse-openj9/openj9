@@ -404,6 +404,15 @@ private:
     bool maintainStack(TR_J9ByteCode bc);
     void maintainStackForIf(TR_J9ByteCode bc);
     void maintainStackForTableSwitch();
+    void maintainStackForLookupSwitch();
+    /*
+     * \brief helper to answer whether maintainStack() can model a bytecode's effect on the the stack to
+     *     determine whether the bytecode can be iterated with state
+     *
+     * \param bc the TR_J9ByteCode
+     * \return true if stateful iteration is possible, false otherwise
+     */
+    static bool isBytecodeSupportedForStatefulIteration(TR_J9ByteCode bc);
     void maintainStackForGetField();
     void maintainStackForArraylength();
     void maintainStackForArrayLoad(TR::DataTypes type, TR_J9ByteCode bc);
