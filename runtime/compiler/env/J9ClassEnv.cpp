@@ -475,8 +475,7 @@ static void addEntryForFieldImpl(TR_VMField *field, TR::TypeLayoutBuilder &tlb, 
     uint32_t mergedLength = 0;
     J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(field->shape);
     if (TR::Compiler->om.areFlattenableValueTypesEnabled()
-        && vm->internalVMFunctions->isFieldNullRestricted(field->shape)
-        && vm->internalVMFunctions->isFlattenableFieldFlattened(definingClass, field->shape)) {
+        && vm->internalVMFunctions->isFieldFlattened(definingClass, field->shape)) {
         char *prefixForChild = buildTransitiveFieldNames(prefix, prefixLength, field->shape,
             comp->trMemory()->currentStackRegion(), mergedLength);
         uint32_t prefixLengthForChild = mergedLength - 1;

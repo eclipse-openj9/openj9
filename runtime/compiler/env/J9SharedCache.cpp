@@ -1153,8 +1153,7 @@ bool TR_J9SharedCache::writeFlattenedFieldsToChain(J9ROMClass *currRomClass, J9C
             J9ROMFieldShape *currentField = result->field;
 
             /* Find flattened instance fields */
-            if (_javaVM->internalVMFunctions->isFieldNullRestricted(currentField)
-                && _javaVM->internalVMFunctions->isFlattenableFieldFlattened(nextClass, currentField)) {
+            if (_javaVM->internalVMFunctions->isFieldFlattened(nextClass, currentField)) {
                 LOG(3, "\t\tFlattened field index %d\n", nextInstanceFieldIndex);
 
                 /* We'll need two slots for each flattened field; make sure there's enough space for both.
@@ -1346,8 +1345,7 @@ bool TR_J9SharedCache::validateFlattenedFieldsInClassChain(J9ROMClass *currRomCl
              result->field != NULL; result = _javaVM->internalVMFunctions->fieldOffsetsNextDo(&state)) {
             J9ROMFieldShape *currentField = result->field;
 
-            if (_javaVM->internalVMFunctions->isFieldNullRestricted(currentField)
-                && _javaVM->internalVMFunctions->isFlattenableFieldFlattened(nextClass, currentField)) {
+            if (_javaVM->internalVMFunctions->isFieldFlattened(nextClass, currentField)) {
                 /* Two slots are needed for each flattened field - the index of the flattened field
                  * among all instance fields and the size of the flattened field in bytes.  Validate
                  * that the data recorded in the class chain matches the information associated with
