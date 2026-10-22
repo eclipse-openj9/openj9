@@ -2405,7 +2405,6 @@ typedef struct J9BytecodeVerificationData {
 	J9HashTable *strictFields;
 	UDATA strictFieldsUnsetCount;
 	J9HashTable *earlyLarvalFrames;
-	J9EarlyLarvalFrame *earlyLarvalFramePrevious;
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 } J9BytecodeVerificationData;
 

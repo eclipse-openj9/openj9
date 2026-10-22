@@ -1346,6 +1346,5 @@ resetEarlyLarvalFrames(J9BytecodeVerificationData *verifyData)
 		hashTableDoRemove(&hashTableState);
 		entry = hashTableNextDo(&hashTableState);
 	}
-	verifyData->earlyLarvalFramePrevious = NULL;
 }
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
